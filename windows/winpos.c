@@ -187,13 +187,13 @@ void WINAPI SwitchToThisWindow( HWND hwnd, BOOL restore )
  */
 void WINAPI GetWindowRect16( HWND16 hwnd, LPRECT16 rect ) 
 {
-    WND * wndPtr = WIN_FindWndPtr( hwnd ); 
-    if (!wndPtr) return;
-    
-    CONV_RECT32TO16( &wndPtr->rectWindow, rect );
-    if (wndPtr->parent)
-	MapWindowPoints16( wndPtr->parent->hwndSelf, 0, (POINT16 *)rect, 2 );
-    WIN_ReleaseWndPtr(wndPtr);
+    RECT rect32;
+
+    GetWindowRect( hwnd, &rect32 );
+    rect->left   = rect32.left;
+    rect->top    = rect32.top;
+    rect->right  = rect32.right;
+    rect->bottom = rect32.bottom;
 }
 
 
@@ -202,13 +202,11 @@ void WINAPI GetWindowRect16( HWND16 hwnd, LPRECT16 rect )
  */
 BOOL WINAPI GetWindowRect( HWND hwnd, LPRECT rect ) 
 {
-    WND * wndPtr = WIN_FindWndPtr( hwnd ); 
+    WND * wndPtr = WIN_FindWndPtr( hwnd );
     if (!wndPtr) return FALSE;
-    
     *rect = wndPtr->rectWindow;
-    if (wndPtr->parent)
-	MapWindowPoints( wndPtr->parent->hwndSelf, 0, (POINT *)rect, 2 );
     WIN_ReleaseWndPtr(wndPtr);
+    MapWindowPoints( GetAncestor( hwnd, GA_PARENT ), 0, (POINT *)rect, 2 );
     TRACE("hwnd %04x (%d,%d)-(%d,%d)\n",
 	  hwnd, rect->left, rect->top, rect->right, rect->bottom);
     return TRUE;
@@ -528,38 +526,7 @@ HWND16 WINAPI ChildWindowFromPoint16( HWND16 hwndParent, POINT16 pt )
  */
 HWND WINAPI ChildWindowFromPoint( HWND hwndParent, POINT pt )
 {
-    /* pt is in the client coordinates */
-
-    WND* wnd = WIN_FindWndPtr(hwndParent);
-    RECT rect;
-    HWND retvalue;
-
-    if( !wnd ) return 0;
-
-    /* get client rect fast */
-    rect.top = rect.left = 0;
-    rect.right = wnd->rectClient.right - wnd->rectClient.left;
-    rect.bottom = wnd->rectClient.bottom - wnd->rectClient.top;
-
-    if (!PtInRect( &rect, pt ))
-    {
-        retvalue = 0;
-        goto end;
-    }
-    WIN_UpdateWndPtr(&wnd,wnd->child);
-    while ( wnd )
-    {
-        if (PtInRect( &wnd->rectWindow, pt ))
-        {
-            retvalue = wnd->hwndSelf;
-            goto end;
-        }
-        WIN_UpdateWndPtr(&wnd,wnd->next);
-    }
-    retvalue = hwndParent;
-end:
-    WIN_ReleaseWndPtr(wnd);
-    return retvalue;
+    return ChildWindowFromPointEx( hwndParent, pt, CWP_ALL );
 }
 
 /*******************************************************************
@@ -576,50 +543,36 @@ HWND16 WINAPI ChildWindowFromPointEx16( HWND16 hwndParent, POINT16 pt, UINT16 uF
 /*******************************************************************
  *		ChildWindowFromPointEx (USER32.@)
  */
-HWND WINAPI ChildWindowFromPointEx( HWND hwndParent, POINT pt,
-		UINT uFlags)
+HWND WINAPI ChildWindowFromPointEx( HWND hwndParent, POINT pt, UINT uFlags)
 {
     /* pt is in the client coordinates */
-
-    WND* wnd = WIN_FindWndPtr(hwndParent);
+    HWND *list;
+    int i;
     RECT rect;
-    HWND retvalue;
+    HWND retvalue = 0;
 
-    if( !wnd ) return 0;
+    GetClientRect( hwndParent, &rect );
+    if (!PtInRect( &rect, pt )) return 0;
+    if (!(list = WIN_BuildWinArray( hwndParent ))) return 0;
 
-    /* get client rect fast */
-    rect.top = rect.left = 0;
-    rect.right = wnd->rectClient.right - wnd->rectClient.left;
-    rect.bottom = wnd->rectClient.bottom - wnd->rectClient.top;
-
-    if (!PtInRect( &rect, pt ))
+    for (i = 0; list[i] && !retvalue; i++)
     {
-        retvalue = 0;
-        goto end;
+        WND *wnd = WIN_FindWndPtr( list[i] );
+        if (!wnd) continue;
+        if (PtInRect( &wnd->rectWindow, pt ))
+        {
+            if ( (uFlags & CWP_SKIPINVISIBLE) &&
+                 !(wnd->dwStyle & WS_VISIBLE) );
+            else if ( (uFlags & CWP_SKIPDISABLED) &&
+                      (wnd->dwStyle & WS_DISABLED) );
+            else if ( (uFlags & CWP_SKIPTRANSPARENT) &&
+                      (wnd->dwExStyle & WS_EX_TRANSPARENT) );
+            else retvalue = list[i];
+        }
+        WIN_ReleaseWndPtr( wnd );
     }
-    WIN_UpdateWndPtr(&wnd,wnd->child);
-
-    while ( wnd )
-    {
-        if (PtInRect( &wnd->rectWindow, pt )) {
-		if ( (uFlags & CWP_SKIPINVISIBLE) && 
-				!(wnd->dwStyle & WS_VISIBLE) );
-		else if ( (uFlags & CWP_SKIPDISABLED) && 
-				(wnd->dwStyle & WS_DISABLED) );
-		else if ( (uFlags & CWP_SKIPTRANSPARENT) && 
-				(wnd->dwExStyle & WS_EX_TRANSPARENT) );
-		else
-                {
-                    retvalue = wnd->hwndSelf;
-                    goto end;
-	        }
-                
-	}
-	WIN_UpdateWndPtr(&wnd,wnd->next);
-    }
-    retvalue = hwndParent;
-end:
-    WIN_ReleaseWndPtr(wnd);
+    WIN_ReleaseWinArray( list );
+    if (!retvalue) retvalue = hwndParent;
     return retvalue;
 }
 
@@ -787,11 +740,10 @@ HWND WINAPI GetActiveWindow(void)
 /*******************************************************************
  *         WINPOS_CanActivate
  */
-static BOOL WINPOS_CanActivate(WND* pWnd)
+static BOOL WINPOS_CanActivate(HWND hwnd)
 {
-    if( pWnd && ( (pWnd->dwStyle & (WS_DISABLED | WS_VISIBLE | WS_CHILD))
-       == WS_VISIBLE ) ) return TRUE;
-    return FALSE;
+    if (!hwnd) return FALSE;
+    return ((GetWindowLongW( hwnd, GWL_STYLE ) & (WS_DISABLED|WS_VISIBLE|WS_CHILD)) == WS_VISIBLE);
 }
 
 
@@ -1601,11 +1553,8 @@ BOOL WINPOS_SetActiveWindow( HWND hWnd, BOOL fMouse, BOOL fChangeFocus)
     if (hWnd)
     {
         /* walk up to the first unowned window */
-        wndTemp = WIN_LockWndPtr(wndPtr);
-        while (wndTemp->owner)
-        {
-            WIN_UpdateWndPtr(&wndTemp,wndTemp->owner);
-        }
+        HWND tmp = GetAncestor( hWnd, GA_ROOTOWNER );
+        wndTemp = WIN_FindWndPtr( tmp );
         /* and set last active owned popup */
         wndTemp->hwndLastActive = hWnd;
 
@@ -1625,7 +1574,7 @@ BOOL WINPOS_SetActiveWindow( HWND hWnd, BOOL fMouse, BOOL fChangeFocus)
         {
             HWND hOldFocus = PERQDATA_GetFocusWnd( pNewActiveQueue->pQData );
 
-            if ( hOldFocus && WIN_GetTopParent( hOldFocus ) != hwndActive )
+            if ( hOldFocus && GetAncestor( hOldFocus, GA_ROOT ) != hwndActive )
                 FOCUS_SwitchFocus( pNewActiveQueue, hOldFocus, 
                                    (wndPtr && (wndPtr->dwStyle & WS_MINIMIZE))?
                                    0 : hwndActive );
@@ -1673,8 +1622,9 @@ CLEANUP_END:
 BOOL WINPOS_ActivateOtherWindow(HWND hwnd)
 {
     BOOL bRet = 0;
-    WND *pWnd, *pWndTo = NULL;
+    WND *pWnd;
     HWND hwndActive = 0;
+    HWND hwndTo = 0;
 
     /* Get current active window from the active queue */
     if ( hActiveQueue )
@@ -1699,27 +1649,21 @@ BOOL WINPOS_ActivateOtherWindow(HWND hwnd)
     }
 
     if( !(pWnd->dwStyle & WS_POPUP) || !(pWnd->owner) ||
-        !WINPOS_CanActivate((pWndTo = WIN_GetTopParentPtr(pWnd->owner))) )
+        !WINPOS_CanActivate((hwndTo = GetAncestor( pWnd->owner->hwndSelf, GA_ROOT ))) )
     {
-        WND* pWndPtr = WIN_GetTopParentPtr(pWnd);
+        HWND tmp = GetAncestor( pWnd->hwndSelf, GA_ROOT );
+        hwndTo = hwndPrevActive;
 
-        WIN_ReleaseWndPtr(pWndTo);
-        pWndTo = WIN_FindWndPtr(hwndPrevActive);
-
-        while( !WINPOS_CanActivate(pWndTo) )
+        while( !WINPOS_CanActivate(hwndTo) )
         {
             /* by now owned windows should've been taken care of */
-            WIN_UpdateWndPtr(&pWndTo,pWndPtr->next);
-            WIN_UpdateWndPtr(&pWndPtr,pWndTo);
-            if( !pWndTo ) break;
+            tmp = hwndTo = GetWindow( tmp, GW_HWNDNEXT );
+            if( !hwndTo ) break;
         }
-        WIN_ReleaseWndPtr(pWndPtr);
     }
     WIN_ReleaseWndPtr( pWnd );
 
-    bRet = WINPOS_SetActiveWindow( pWndTo ? pWndTo->hwndSelf : 0, FALSE, TRUE );
-
-    if( pWndTo ) WIN_ReleaseWndPtr(pWndTo);
+    bRet = WINPOS_SetActiveWindow( hwndTo, FALSE, TRUE );
 
     hwndPrevActive = 0;
     return bRet;

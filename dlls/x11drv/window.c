@@ -488,22 +488,17 @@ int X11DRV_sync_whole_window_position( Display *display, WND *win, int zorder )
     if (zorder)
     {
         /* find window that this one must be after */
-        WND *prev = win->parent->child;
-        if (prev == win)  /* top child */
+        HWND prev = GetWindow( win->hwndSelf, GW_HWNDPREV );
+        if (!prev)  /* top child */
         {
             changes.stack_mode = Above;
             mask |= CWStackMode;
         }
         else
         {
-            while (prev && prev->next != win) prev = prev->next;
-            if (prev)
-            {
-                changes.stack_mode = Below;
-                changes.sibling = get_whole_window(prev);
-                mask |= CWStackMode | CWSibling;
-            }
-            else ERR( "previous window not found for %x, list corrupted?\n", win->hwndSelf );
+            changes.stack_mode = Below;
+            changes.sibling = X11DRV_get_whole_window(prev);
+            mask |= CWStackMode | CWSibling;
         }
     }
 
@@ -970,27 +965,6 @@ Window X11DRV_get_whole_window( HWND hwnd )
 }
 
 
-/***********************************************************************
- *		X11DRV_get_top_window
- *
- * Return the X window associated with the top-level parent of a window
- */
-Window X11DRV_get_top_window( HWND hwnd )
-{
-    Window ret = 0;
-    WND *win = WIN_FindWndPtr( hwnd );
-    while (win && win->parent->hwndSelf != GetDesktopWindow())
-        WIN_UpdateWndPtr( &win, win->parent );
-    if (win)
-    {
-        struct x11drv_win_data *data = win->pDriverData;
-        ret = data->whole_window;
-        WIN_ReleaseWndPtr( win );
-    }
-    return ret;
-}
-
-
 /*****************************************************************
  *		SetParent   (X11DRV.@)
  */
@@ -1142,45 +1116,37 @@ void X11DRV_SetFocus( HWND hwnd )
     Display *display = thread_display();
     XWindowAttributes win_attr;
     Window win;
-    WND *wndPtr = WIN_FindWndPtr( hwnd );
-    WND *w = wndPtr;
-
-    if (!wndPtr) return;
 
     /* Only mess with the X focus if there's */
     /* no desktop window and if the window is not managed by the WM. */
-    if (root_window != DefaultRootWindow(display)) goto done;
-
-    while (w && !get_whole_window(w)) w = w->parent;
-    if (!w) goto done;
-    if (w->dwExStyle & WS_EX_MANAGED) goto done;
+    if (root_window != DefaultRootWindow(display)) return;
 
     if (!hwnd)  /* If setting the focus to 0, uninstall the colormap */
     {
         if (X11DRV_PALETTE_PaletteFlags & X11DRV_PALETTE_PRIVATE)
             TSXUninstallColormap( display, X11DRV_PALETTE_PaletteXColormap );
+        return;
     }
-    else if ((win = get_whole_window(w)))
+
+    hwnd = GetAncestor( hwnd, GA_ROOT );
+    if (GetWindowLongW( hwnd, GWL_EXSTYLE ) & WS_EX_MANAGED) return;
+    if (!(win = X11DRV_get_whole_window( hwnd ))) return;
+
+    /* Set X focus and install colormap */
+    wine_tsx11_lock();
+    if (XGetWindowAttributes( display, win, &win_attr ) &&
+        (win_attr.map_state == IsViewable))
     {
-        /* Set X focus and install colormap */
-        wine_tsx11_lock();
-        if (XGetWindowAttributes( display, win, &win_attr ) &&
-            (win_attr.map_state == IsViewable))
-        {
-            /* If window is not viewable, don't change anything */
+        /* If window is not viewable, don't change anything */
 
-            /* we must not use CurrentTime (ICCCM), so try to use last message time instead */
-            /* FIXME: this is not entirely correct */
-            XSetInputFocus( display, win, RevertToParent,
-                            /*CurrentTime*/ GetMessageTime() + X11DRV_server_startticks );
-            if (X11DRV_PALETTE_PaletteFlags & X11DRV_PALETTE_PRIVATE)
-                XInstallColormap( display, X11DRV_PALETTE_PaletteXColormap );
-        }
-        wine_tsx11_unlock();
+        /* we must not use CurrentTime (ICCCM), so try to use last message time instead */
+        /* FIXME: this is not entirely correct */
+        XSetInputFocus( display, win, RevertToParent,
+                        /*CurrentTime*/ GetMessageTime() + X11DRV_server_startticks );
+        if (X11DRV_PALETTE_PaletteFlags & X11DRV_PALETTE_PRIVATE)
+            XInstallColormap( display, X11DRV_PALETTE_PaletteXColormap );
     }
-
- done:
-    WIN_ReleaseWndPtr( wndPtr );
+    wine_tsx11_unlock();
 }
 
 

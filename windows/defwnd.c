@@ -162,14 +162,14 @@ static void DEFWND_SetRedraw( HWND hwnd, WPARAM wParam )
     WND *wndPtr = WIN_FindWndPtr( hwnd );
     BOOL bVisible = wndPtr->dwStyle & WS_VISIBLE;
 
-    TRACE("%04x %i\n", wndPtr->hwndSelf, (wParam!=0) );
+    TRACE("%04x %i\n", hwnd, (wParam!=0) );
 
     if( wParam )
     {
 	if( !bVisible )
 	{
 	    wndPtr->dwStyle |= WS_VISIBLE;
-	    DCE_InvalidateDCE( wndPtr, &wndPtr->rectWindow );
+            DCE_InvalidateDCE( hwnd, &wndPtr->rectWindow );
 	}
     }
     else if( bVisible )
@@ -177,8 +177,8 @@ static void DEFWND_SetRedraw( HWND hwnd, WPARAM wParam )
 	if( wndPtr->dwStyle & WS_MINIMIZE ) wParam = RDW_VALIDATE;
 	else wParam = RDW_ALLCHILDREN | RDW_VALIDATE;
 
-	RedrawWindow( wndPtr->hwndSelf, NULL, 0, wParam );
-	DCE_InvalidateDCE( wndPtr, &wndPtr->rectWindow );
+        RedrawWindow( hwnd, NULL, 0, wParam );
+        DCE_InvalidateDCE( hwnd, &wndPtr->rectWindow );
 	wndPtr->dwStyle &= ~WS_VISIBLE;
     }
     WIN_ReleaseWndPtr( wndPtr );
@@ -520,7 +520,7 @@ static LRESULT DEFWND_DefWinProc( HWND hwnd, UINT msg, WPARAM wParam, LPARAM lPa
 
 	    if( wParam == VK_F4 )	/* try to close the window */
 	    {
-                HWND top = WIN_GetTopParent( hwnd );
+                HWND top = GetAncestor( hwnd, GA_ROOT );
                 if (!(GetClassLongW( top, GCL_STYLE ) & CS_NOCLOSE))
                     PostMessageW( top, WM_SYSCOMMAND, SC_CLOSE, 0 );
 	    }
@@ -537,7 +537,7 @@ static LRESULT DEFWND_DefWinProc( HWND hwnd, UINT msg, WPARAM wParam, LPARAM lPa
 	/* Press and release F10 or ALT */
 	if (((wParam == VK_MENU) && iMenuSysKey) ||
             ((wParam == VK_F10) && iF10Key))
-              SendMessageW( WIN_GetTopParent(hwnd), WM_SYSCOMMAND, SC_KEYMENU, 0L );
+              SendMessageW( GetAncestor( hwnd, GA_ROOT ), WM_SYSCOMMAND, SC_KEYMENU, 0L );
 	iMenuSysKey = iF10Key = 0;
         break;
 

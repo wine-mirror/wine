@@ -395,7 +395,6 @@ typedef struct x11drv_win_data X11DRV_WND_DATA;
 
 extern Window X11DRV_get_client_window( HWND hwnd );
 extern Window X11DRV_get_whole_window( HWND hwnd );
-extern Window X11DRV_get_top_window( HWND hwnd );
 
 inline static Window get_client_window( WND *wnd )
 {

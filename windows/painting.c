@@ -96,12 +96,8 @@ static void add_paint_count( HWND hwnd, int incr )
  *              RDW_Paint() method.
  * 
  */
-static BOOL WIN_HaveToDelayNCPAINT(
-  WND* wndPtr, 
-  UINT uncFlags)
+static BOOL WIN_HaveToDelayNCPAINT( HWND hwnd, UINT uncFlags)
 {
-  WND* parentWnd = NULL;
-
   /*
    * Test the shortcut first. (duh)
    */
@@ -122,22 +118,16 @@ static BOOL WIN_HaveToDelayNCPAINT(
    * that doesn't have the WS_CLIPCHILDREN style and that
    * has an invalid region. 
    */
-  parentWnd = WIN_LockWndPtr(wndPtr->parent);
-
-  while (parentWnd!=NULL)
+  while ((hwnd = GetAncestor( hwnd, GA_PARENT )))
   {
-    if ( ((parentWnd->dwStyle & WS_CLIPCHILDREN) == 0) &&
-	 (parentWnd->hrgnUpdate != 0) )
-    {
-      WIN_ReleaseWndPtr(parentWnd);
-      return TRUE;
-    }
-
-    WIN_UpdateWndPtr(&parentWnd, parentWnd->parent);    
+      WND* parentWnd = WIN_FindWndPtr( hwnd );
+      if (!(parentWnd->dwStyle & WS_CLIPCHILDREN) && parentWnd->hrgnUpdate)
+      {
+          WIN_ReleaseWndPtr( parentWnd );
+          return TRUE;
+      }
+      WIN_ReleaseWndPtr( parentWnd );
   }
-
-  WIN_ReleaseWndPtr(parentWnd);
-
   return FALSE;
 }
 
@@ -188,7 +178,7 @@ static HRGN WIN_UpdateNCRgn(WND* wnd, HRGN hRgn, UINT uncFlags )
      * If the window's non-client area needs to be painted, 
      */
     if ( ( wnd->flags & WIN_NEEDS_NCPAINT ) &&
-	 !WIN_HaveToDelayNCPAINT(wnd, uncFlags) )
+	 !WIN_HaveToDelayNCPAINT(wnd->hwndSelf, uncFlags) )
     {
 	    RECT r2, r3;
 
@@ -495,7 +485,7 @@ HBRUSH16 WINAPI GetControlBrush16( HWND16 hwnd, HDC16 hdc, UINT16 ctlType )
  */
 static void RDW_ValidateParent(WND *wndChild)
 {
-    WND *wndParent = WIN_LockWndPtr(wndChild->parent);
+    HWND parent;
     HRGN hrg;
 
     if (wndChild->hrgnUpdate == 1 ) {
@@ -508,7 +498,10 @@ static void RDW_ValidateParent(WND *wndChild)
     } else
         hrg = wndChild->hrgnUpdate;
 
-    while ((wndParent) && (wndParent->hwndSelf != GetDesktopWindow()) ) {
+    parent = GetAncestor( wndChild->hwndSelf, GA_PARENT );
+    while (parent && parent != GetDesktopWindow())
+    {
+        WND *wndParent = WIN_FindWndPtr( parent );
         if (!(wndParent->dwStyle & WS_CLIPCHILDREN))
         {
             if (wndParent->hrgnUpdate != 0)
@@ -536,10 +529,10 @@ static void RDW_ValidateParent(WND *wndChild)
                 OffsetRgn( hrg, -ptOffset.x, -ptOffset.y );
             }
         }
-        WIN_UpdateWndPtr(&wndParent, wndParent->parent);    
+        WIN_ReleaseWndPtr( wndParent );
+        parent = GetAncestor( parent, GA_PARENT );
     }
     if (hrg != wndChild->hrgnUpdate) DeleteObject( hrg );
-    WIN_ReleaseWndPtr(wndParent);
 }
 
 /***********************************************************************
@@ -559,8 +552,8 @@ static void RDW_UpdateRgns( WND* wndPtr, HRGN hRgn, UINT flags, BOOL firstRecurs
      */
 
     BOOL bHadOne =  wndPtr->hrgnUpdate && hRgn;
-    BOOL bChildren =  ( wndPtr->child && !(flags & RDW_NOCHILDREN) && !(wndPtr->dwStyle & WS_MINIMIZE) 
-			&& ((flags & RDW_ALLCHILDREN) || !(wndPtr->dwStyle & WS_CLIPCHILDREN)) );
+    BOOL bChildren =  (!(flags & RDW_NOCHILDREN) && !(wndPtr->dwStyle & WS_MINIMIZE) &&
+                       ((flags & RDW_ALLCHILDREN) || !(wndPtr->dwStyle & WS_CLIPCHILDREN)) );
     RECT r;
 
     r.left = 0;
@@ -657,43 +650,48 @@ static void RDW_UpdateRgns( WND* wndPtr, HRGN hRgn, UINT flags, BOOL firstRecurs
 
     if( flags & (RDW_INVALIDATE | RDW_VALIDATE) )
     {
-	if( hRgn > 1 && bChildren )
+        HWND *list;
+	if( hRgn > 1 && bChildren && (list = WIN_BuildWinArray( wndPtr->hwndSelf )))
 	{
-            WND* wnd = wndPtr->child;
 	    POINT ptTotal, prevOrigin = {0,0};
             POINT ptClient;
+            INT i;
 
             ptClient.x = wndPtr->rectClient.left - wndPtr->rectWindow.left;
             ptClient.y = wndPtr->rectClient.top - wndPtr->rectWindow.top;
 
-            for( ptTotal.x = ptTotal.y = 0; wnd; wnd = wnd->next )
+            for(i = ptTotal.x = ptTotal.y = 0; list[i]; i++)
             {
+                WND *wnd = WIN_FindWndPtr( list[i] );
+                if (!wnd) continue;
                 if( wnd->dwStyle & WS_VISIBLE )
                 {
-		    POINT ptOffset;
+                    POINT ptOffset;
 
                     r.left = wnd->rectWindow.left + ptClient.x;
                     r.right = wnd->rectWindow.right + ptClient.x;
                     r.top = wnd->rectWindow.top + ptClient.y;
                     r.bottom = wnd->rectWindow.bottom + ptClient.y;
 
-		    ptOffset.x = r.left - prevOrigin.x; 
-		    ptOffset.y = r.top - prevOrigin.y;
+                    ptOffset.x = r.left - prevOrigin.x;
+                    ptOffset.y = r.top - prevOrigin.y;
                     OffsetRect( &r, -ptTotal.x, -ptTotal.y );
 
                     if( RectInRegion( hRgn, &r ) )
                     {
                         OffsetRgn( hRgn, -ptOffset.x, -ptOffset.y );
                         RDW_UpdateRgns( wnd, hRgn, flags, FALSE );
-			prevOrigin.x = r.left + ptTotal.x;
-			prevOrigin.y = r.top + ptTotal.y;
+                        prevOrigin.x = r.left + ptTotal.x;
+                        prevOrigin.y = r.top + ptTotal.y;
                         ptTotal.x += ptOffset.x;
                         ptTotal.y += ptOffset.y;
                     }
                 }
+                WIN_ReleaseWndPtr( wnd );
             }
+            WIN_ReleaseWinArray( list );
             OffsetRgn( hRgn, ptTotal.x, ptTotal.y );
-	    bChildren = 0;
+            bChildren = 0;
 	}
     }
 
@@ -701,10 +699,20 @@ static void RDW_UpdateRgns( WND* wndPtr, HRGN hRgn, UINT flags, BOOL firstRecurs
 
     if( bChildren )
     {
-	WND* wnd;
-	for( wnd = wndPtr->child; wnd; wnd = wnd->next )
-	     if( wnd->dwStyle & WS_VISIBLE )
-		 RDW_UpdateRgns( wnd, hRgn, flags, FALSE );
+        HWND *list;
+        if ((list = WIN_BuildWinArray( wndPtr->hwndSelf )))
+        {
+            INT i;
+            for (i = 0; list[i]; i++)
+            {
+                WND *wnd = WIN_FindWndPtr( list[i] );
+                if (!wnd) continue;
+                if( wnd->dwStyle & WS_VISIBLE )
+                    RDW_UpdateRgns( wnd, hRgn, flags, FALSE );
+                WIN_ReleaseWndPtr( wnd );
+            }
+            WIN_ReleaseWinArray( list );
+        }
     }
 
 end:
@@ -762,7 +770,7 @@ static HRGN RDW_Paint( WND* wndPtr, HRGN hrgn, UINT flags, UINT ex )
      * Check if this window should delay it's processing of WM_NCPAINT.
      * See WIN_HaveToDelayNCPAINT for a description of the mechanism
      */
-    if ((ex & RDW_EX_DELAY_NCPAINT) || WIN_HaveToDelayNCPAINT(wndPtr, 0) )
+    if ((ex & RDW_EX_DELAY_NCPAINT) || WIN_HaveToDelayNCPAINT(wndPtr->hwndSelf, 0) )
 	ex |= RDW_EX_DELAY_NCPAINT;
 
     if (flags & RDW_UPDATENOW)
@@ -807,8 +815,8 @@ static HRGN RDW_Paint( WND* wndPtr, HRGN hrgn, UINT flags, UINT ex )
 
       /* ... and its child windows */
 
-    if( wndPtr->child && !(flags & RDW_NOCHILDREN) && !(wndPtr->dwStyle & WS_MINIMIZE) 
-	&& ((flags & RDW_ALLCHILDREN) || !(wndPtr->dwStyle & WS_CLIPCHILDREN)) )
+    if(!(flags & RDW_NOCHILDREN) && !(wndPtr->dwStyle & WS_MINIMIZE) &&
+       ((flags & RDW_ALLCHILDREN) || !(wndPtr->dwStyle & WS_CLIPCHILDREN)) )
     {
         HWND *list, *phwnd;
 
@@ -1209,7 +1217,7 @@ INT WINAPI ExcludeUpdateRgn( HDC hdc, HWND hwnd )
 
 	/* do ugly coordinate translations in dce.c */
 
-	ret = DCE_ExcludeRgn( hdc, wndPtr, hrgn );
+	ret = DCE_ExcludeRgn( hdc, hwnd, hrgn );
 	DeleteObject( hrgn );
         WIN_ReleaseWndPtr(wndPtr);
 	return ret;

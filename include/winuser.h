@@ -1089,6 +1089,11 @@ typedef struct {
 #define GW_OWNER	4
 #define GW_CHILD	5
 
+/* GetAncestor() constants */
+#define GA_PARENT       1
+#define GA_ROOT         2
+#define GA_ROOTOWNER    3
+
   /* WM_GETMINMAXINFO struct */
 typedef struct
 {
@@ -3537,16 +3542,17 @@ HWND      WINAPI FindWindowW(LPCWSTR,LPCWSTR);
 HWND      WINAPI FindWindowExA(HWND,HWND,LPCSTR,LPCSTR);
 HWND      WINAPI FindWindowExW(HWND,HWND,LPCWSTR,LPCWSTR);
 #define     FindWindowEx WINELIB_NAME_AW(FindWindowEx)
-BOOL      WINAPI FlashWindow(HWND,BOOL);
-INT       WINAPI FrameRect(HDC,const RECT*,HBRUSH);
-HWND      WINAPI GetActiveWindow(void);
+BOOL        WINAPI FlashWindow(HWND,BOOL);
+INT         WINAPI FrameRect(HDC,const RECT*,HBRUSH);
+HWND        WINAPI GetActiveWindow(void);
+HWND        WINAPI GetAncestor(HWND,UINT);
 DWORD       WINAPI GetAppCompatFlags(HTASK);
 WORD        WINAPI GetAsyncKeyState(INT);
-HWND      WINAPI GetCapture(void);
-UINT      WINAPI GetCaretBlinkTime(void);
-BOOL      WINAPI GetCaretPos(LPPOINT);
-BOOL      WINAPI GetClassInfoA(HINSTANCE,LPCSTR,WNDCLASSA *);
-BOOL      WINAPI GetClassInfoW(HINSTANCE,LPCWSTR,WNDCLASSW *);
+HWND        WINAPI GetCapture(void);
+UINT        WINAPI GetCaretBlinkTime(void);
+BOOL        WINAPI GetCaretPos(LPPOINT);
+BOOL        WINAPI GetClassInfoA(HINSTANCE,LPCSTR,WNDCLASSA *);
+BOOL        WINAPI GetClassInfoW(HINSTANCE,LPCWSTR,WNDCLASSW *);
 #define     GetClassInfo WINELIB_NAME_AW(GetClassInfo)
 BOOL      WINAPI GetClassInfoExA(HINSTANCE,LPCSTR,WNDCLASSEXA *);
 BOOL      WINAPI GetClassInfoExW(HINSTANCE,LPCWSTR,WNDCLASSEXW *);

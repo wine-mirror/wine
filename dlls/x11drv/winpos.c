@@ -557,13 +557,15 @@ static UINT SWP_DoNCCalcSize( WND* wndPtr, WINDOWPOS* pWinpos,
  *
  * FIXME: hide/show owned popups when owner visibility changes.
  */
-static HWND SWP_DoOwnedPopups(WND* pDesktop, WND* wndPtr, HWND hwndInsertAfter, WORD flags)
+static HWND SWP_DoOwnedPopups(HWND hwnd, HWND hwndInsertAfter)
 {
-    WND *w = WIN_LockWndPtr(pDesktop->child);
+    HWND *list = NULL;
+    HWND owner = GetWindow( hwnd, GW_OWNER );
+    LONG style = GetWindowLongW( hwnd, GWL_STYLE );
 
-    WARN("(%04x) hInsertAfter = %04x\n", wndPtr->hwndSelf, hwndInsertAfter );
+    WARN("(%04x) hInsertAfter = %04x\n", hwnd, hwndInsertAfter );
 
-    if( (wndPtr->dwStyle & WS_POPUP) && wndPtr->owner )
+    if ((style & WS_POPUP) && owner)
     {
         /* make sure this popup stays above the owner */
 
@@ -571,35 +573,40 @@ static HWND SWP_DoOwnedPopups(WND* pDesktop, WND* wndPtr, HWND hwndInsertAfter, 
 
         if( hwndInsertAfter != HWND_TOP )
         {
-            while( w && w != wndPtr->owner )
+            if ((list = WIN_BuildWinArray( GetDesktopWindow() )))
             {
-                if (w != wndPtr) hwndLocalPrev = w->hwndSelf;
-                if( hwndLocalPrev == hwndInsertAfter ) break;
-                WIN_UpdateWndPtr(&w,w->next);
+                int i;
+                for (i = 0; list[i]; i++)
+                {
+                    if (list[i] == owner) break;
+                    if (list[i] != hwnd) hwndLocalPrev = list[i];
+                    if (hwndLocalPrev == hwndInsertAfter) break;
+                }
+                hwndInsertAfter = hwndLocalPrev;
             }
-            hwndInsertAfter = hwndLocalPrev;
         }
     }
-    else if( wndPtr->dwStyle & WS_CHILD )
-        goto END;
+    else if (style & WS_CHILD) return hwndInsertAfter;
 
-    WIN_UpdateWndPtr(&w, pDesktop->child);
-
-    while( w )
+    if (!list) list = WIN_BuildWinArray( GetDesktopWindow() );
+    if (list)
     {
-        if( w == wndPtr ) break;
-
-        if( (w->dwStyle & WS_POPUP) && w->owner == wndPtr )
+        int i;
+        for (i = 0; list[i]; i++)
         {
-            SetWindowPos(w->hwndSelf, hwndInsertAfter, 0, 0, 0, 0,
-                         SWP_NOMOVE | SWP_NOSIZE | SWP_NOACTIVATE | SWP_NOSENDCHANGING | SWP_DEFERERASE);
-            hwndInsertAfter = w->hwndSelf;
+            if (list[i] == hwnd) break;
+            if ((GetWindowLongW( list[i], GWL_STYLE ) & WS_POPUP) &&
+                GetWindow( list[i], GW_OWNER ) == hwnd)
+            {
+                SetWindowPos( list[i], hwndInsertAfter, 0, 0, 0, 0,
+                              SWP_NOMOVE | SWP_NOSIZE | SWP_NOACTIVATE |
+                              SWP_NOSENDCHANGING | SWP_DEFERERASE );
+                hwndInsertAfter = list[i];
+            }
         }
-        WIN_UpdateWndPtr(&w, w->next);
+        WIN_ReleaseWinArray( list );
     }
 
-END:
-    WIN_ReleaseWndPtr(w);
     return hwndInsertAfter;
 }
 
@@ -705,9 +712,8 @@ BOOL X11DRV_SetWindowPos( WINDOWPOS *winpos )
 
     if((winpos->flags & (SWP_NOZORDER | SWP_HIDEWINDOW | SWP_SHOWWINDOW)) != SWP_NOZORDER)
     {
-        if( wndPtr->parent->hwndSelf == GetDesktopWindow() )
-            winpos->hwndInsertAfter = SWP_DoOwnedPopups( wndPtr->parent, wndPtr,
-                                                         winpos->hwndInsertAfter, winpos->flags );
+        if (GetAncestor( winpos->hwnd, GA_PARENT ) == GetDesktopWindow())
+            winpos->hwndInsertAfter = SWP_DoOwnedPopups( winpos->hwnd, winpos->hwndInsertAfter );
     }
 
     /* Common operations */
@@ -729,7 +735,7 @@ BOOL X11DRV_SetWindowPos( WINDOWPOS *winpos )
         RECT rect;
 
         UnionRect(&rect, &newWindowRect, &wndPtr->rectWindow);
-        DCE_InvalidateDCE(wndPtr, &rect);
+        DCE_InvalidateDCE(wndPtr->hwndSelf, &rect);
     }
 
     oldWindowRect = wndPtr->rectWindow;
@@ -1152,7 +1158,7 @@ void X11DRV_MapNotify( HWND hwnd, XMapEvent *event )
         Window root, top;
         RECT rect;
 
-        DCE_InvalidateDCE( win, &win->rectWindow );
+        DCE_InvalidateDCE( hwnd, &win->rectWindow );
         win->dwStyle &= ~WS_MINIMIZE;
         win->dwStyle |= WS_VISIBLE;
         WIN_InternalShowOwnedPopups( hwnd, TRUE, TRUE );

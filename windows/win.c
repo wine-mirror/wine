@@ -406,7 +406,7 @@ static WND* WIN_DestroyWindow( WND* wndPtr )
 	wndPtr->hSysMenu = 0;
     }
     USER_Driver.pDestroyWindow( wndPtr->hwndSelf );
-    DCE_FreeWindowDCE( wndPtr );    /* Always do this to catch orphaned DCs */ 
+    DCE_FreeWindowDCE( wndPtr->hwndSelf );    /* Always do this to catch orphaned DCs */
     WINPROC_FreeProc( wndPtr->winproc, WIN_PROC_WINDOW );
     CLASS_RemoveWindow( wndPtr->class );
     wndPtr->class = NULL;
@@ -423,34 +423,21 @@ static WND* WIN_DestroyWindow( WND* wndPtr )
  * Destroy all children of 'wnd' owned by the current thread.
  * Return TRUE if something was done.
  */
-BOOL WIN_DestroyThreadWindows( HWND hwnd )
+void WIN_DestroyThreadWindows( HWND hwnd )
 {
-    BOOL ret = FALSE;
-    WND *wnd = WIN_FindWndPtr( hwnd );
+    HWND *list;
+    int i;
 
-    if (!wnd) return FALSE;
-    while (wnd->child)
+    if (!(list = WIN_BuildWinArray( hwnd ))) return;
+    for (i = 0; list[i]; i++)
     {
-        WND *tmp = WIN_LockWndPtr(wnd->child);
-        ret = FALSE;
-        while (tmp)
-        {
-            if (GetWindowThreadProcessId( tmp->hwndSelf, NULL ) == GetCurrentThreadId())
-            {
-                DestroyWindow( tmp->hwndSelf );
-                ret = TRUE;
-                break;
-            }
-            if (tmp->child && WIN_DestroyThreadWindows( tmp->hwndSelf ))
-                ret = TRUE;
-            else
-                WIN_UpdateWndPtr(&tmp,tmp->next);
-        }
-        WIN_ReleaseWndPtr(tmp);
-        if (!ret) break;
+        if (!IsWindow( list[i] )) continue;
+        if (GetWindowThreadProcessId( list[i], NULL ) == GetCurrentThreadId())
+            DestroyWindow( list[i] );
+        else
+            WIN_DestroyThreadWindows( list[i] );
     }
-    WIN_ReleaseWndPtr( wnd );
-    return ret;
+    WIN_ReleaseWinArray( list );
 }
 
 /***********************************************************************
@@ -698,10 +685,8 @@ static HWND WIN_CreateWindowEx( CREATESTRUCTA *cs, ATOM classAtom,
             wndPtr->owner = NULL;
         else
         {
-            WND *tmpWnd = WIN_FindWndPtr(cs->hwndParent);
-            wndPtr->owner = WIN_GetTopParentPtr(tmpWnd);
+            wndPtr->owner = WIN_FindWndPtr( GetAncestor( cs->hwndParent, GA_ROOT ));
             WIN_ReleaseWndPtr(wndPtr->owner);
-            WIN_ReleaseWndPtr(tmpWnd);
 	}
     }
     
@@ -1053,92 +1038,40 @@ HWND WINAPI CreateWindowExW( DWORD exStyle, LPCWSTR className,
     return WIN_CreateWindowEx( (CREATESTRUCTA *)&cs, classAtom, WIN_PROC_32W );
 }
 
+
 /***********************************************************************
  *           WIN_SendDestroyMsg
  */
-static void WIN_SendDestroyMsg( WND* pWnd )
+static void WIN_SendDestroyMsg( HWND hwnd )
 {
-    if( CARET_GetHwnd() == pWnd->hwndSelf ) DestroyCaret();
+    if( CARET_GetHwnd() == hwnd) DestroyCaret();
     if (USER_Driver.pResetSelectionOwner)
-        USER_Driver.pResetSelectionOwner( pWnd->hwndSelf, TRUE );
+        USER_Driver.pResetSelectionOwner( hwnd, TRUE );
 
     /*
      * Send the WM_DESTROY to the window.
      */
-    SendMessageA( pWnd->hwndSelf, WM_DESTROY, 0, 0);
+    SendMessageA( hwnd, WM_DESTROY, 0, 0);
 
     /*
      * This WM_DESTROY message can trigger re-entrant calls to DestroyWindow
      * make sure that the window still exists when we come back.
      */
-    if (IsWindow(pWnd->hwndSelf))
+    if (IsWindow(hwnd))
     {
-      HWND* pWndArray = NULL;
-      WND*  pChild    = NULL;
-      int   nKidCount = 0;
+        HWND* pWndArray;
+        int i;
 
-      /*
-       * Now, if the window has kids, we have to send WM_DESTROY messages 
-       * recursively to it's kids. It seems that those calls can also
-       * trigger re-entrant calls to DestroyWindow for the kids so we must 
-       * protect against corruption of the list of siblings. We first build
-       * a list of HWNDs representing all the kids.
-       */
-      pChild = WIN_LockWndPtr(pWnd->child);
-      while( pChild )
-      {
-	nKidCount++;
-	WIN_UpdateWndPtr(&pChild,pChild->next);
-      }
+        if (!(pWndArray = WIN_BuildWinArray( hwnd ))) return;
 
-      /*
-       * If there are no kids, we're done.
-       */
-      if (nKidCount==0)
-	return;
+        /* start from the end (FIXME: is this needed?) */
+        for (i = 0; pWndArray[i]; i++) ;
 
-      pWndArray = HeapAlloc(GetProcessHeap(), 0, nKidCount*sizeof(HWND));
-
-      /*
-       * Sanity check
-       */
-      if (pWndArray==NULL)
-	return;
-
-      /*
-       * Now, enumerate all the kids in a list, since we wait to make the SendMessage
-       * call, our linked list of siblings should be safe.
-       */
-      nKidCount = 0;
-      pChild = WIN_LockWndPtr(pWnd->child);
-      while( pChild )
-      {
-	pWndArray[nKidCount] = pChild->hwndSelf;
-	nKidCount++;
-	WIN_UpdateWndPtr(&pChild,pChild->next);
-      }
-
-      /*
-       * Now that we have a list, go through that list again and send the destroy
-       * message to those windows. We are using the HWND to retrieve the
-       * WND pointer so we are effectively checking that all the kid windows are
-       * still valid before sending the message.
-       */
-      while (nKidCount>0)
-      {
-	pChild = WIN_FindWndPtr(pWndArray[--nKidCount]);
-
-	if (pChild!=NULL)
-	{
-	  WIN_SendDestroyMsg( pChild );
-	  WIN_ReleaseWndPtr(pChild);	  
-	}
-      }
-
-      /*
-       * Cleanup
-       */
-      HeapFree(GetProcessHeap(), 0, pWndArray);
+        while (--i >= 0)
+        {
+            if (IsWindow( pWndArray[i] )) WIN_SendDestroyMsg( pWndArray[i] );
+        }
+        WIN_ReleaseWinArray( pWndArray );
     }
     else
       WARN("\tdestroyed itself while in WM_DESTROY!\n");
@@ -1162,46 +1095,29 @@ BOOL WINAPI DestroyWindow( HWND hwnd )
     WND * wndPtr;
     BOOL retvalue;
     HWND h;
-    BOOL bFocusSet = FALSE;
 
     TRACE("(%04x)\n", hwnd);
 
     /* Initialization */
 
     if (hwnd == GetDesktopWindow()) return FALSE;   /* Can't destroy desktop */
-    if (!(wndPtr = WIN_FindWndPtr( hwnd ))) return FALSE;
 
     /* Look whether the focus is within the tree of windows we will
      * be destroying.
      */
-    h = GetFocus16();
-    while (h && (GetWindowLongA(h,GWL_STYLE) & WS_CHILD))
+    h = GetFocus();
+    if (h == hwnd || IsChild( hwnd, h ))
     {
-	if (h == hwnd)
-	{
-	    SetFocus(GetParent(h));
-	    bFocusSet = TRUE;
-	    break;
-	}
-	h = GetParent(h);
-    }
-    /* If the focus is on the window we will destroy and it has no parent,
-     * set the focus to 0.
-     */
-    if (! bFocusSet && (h == hwnd))
-    {                   
-	if (!(GetWindowLongA(h,GWL_STYLE) & WS_CHILD))
-	    SetFocus(0);
+        HWND parent = GetAncestor( hwnd, GA_PARENT );
+        if (parent == GetDesktopWindow()) parent = 0;
+        SetFocus( parent );
     }
 
       /* Call hooks */
 
-    if( HOOK_CallHooksA( WH_CBT, HCBT_DESTROYWND, hwnd, 0L) )
-    {
-        retvalue = FALSE;
-        goto end;
-    }
+    if( HOOK_CallHooksA( WH_CBT, HCBT_DESTROYWND, hwnd, 0L) ) return FALSE;
 
+    if (!(wndPtr = WIN_FindWndPtr( hwnd ))) return FALSE;
     if (!(wndPtr->dwStyle & WS_CHILD) && !wndPtr->owner)
     {
         HOOK_CallHooksA( WH_SHELL, HSHELL_WINDOWDESTROYED, hwnd, 0L );
@@ -1271,7 +1187,7 @@ BOOL WINAPI DestroyWindow( HWND hwnd )
 
       /* Send destroy messages */
 
-    WIN_SendDestroyMsg( wndPtr );
+    WIN_SendDestroyMsg( hwnd );
     if (!IsWindow(hwnd))
     {
         retvalue = TRUE;
@@ -1348,70 +1264,50 @@ BOOL WINAPI OpenIcon( HWND hwnd )
  *
  * Implementation of FindWindow() and FindWindowEx().
  */
-static HWND WIN_FindWindow( HWND parent, HWND child, ATOM className,
-                              LPCWSTR title )
+static HWND WIN_FindWindow( HWND parent, HWND child, ATOM className, LPCWSTR title )
 {
-    WND *pWnd;
+    HWND *list;
     HWND retvalue;
+    int i = 0, len = 0;
+    WCHAR *buffer = NULL;
+
+    if (!parent) parent = GetDesktopWindow();
+    if (title)
+    {
+        len = strlenW(title) + 1;  /* one extra char to check for chars beyond the end */
+        if (!(buffer = HeapAlloc( GetProcessHeap(), 0, (len + 1) * sizeof(WCHAR) ))) return 0;
+    }
+
+    if (!(list = WIN_BuildWinArray( parent )))
+    {
+        if (buffer) HeapFree( GetProcessHeap(), 0, buffer );
+        return 0;
+    }
 
     if (child)
     {
-        if (!(pWnd = WIN_FindWndPtr( child ))) return 0;
-        if (parent)
-        {
-            if (!pWnd->parent || (pWnd->parent->hwndSelf != parent))
-            {
-                retvalue = 0;
-                goto end;
-            }
-        }
-        else if (pWnd->parent != pWndDesktop)
-        {
-            retvalue = 0;
-            goto end;
-        }
-        WIN_UpdateWndPtr(&pWnd,pWnd->next);
-    }
-    else
-    {
-        if (!(pWnd = parent ? WIN_FindWndPtr(parent) : WIN_LockWndPtr(pWndDesktop)))
-        {
-            retvalue = 0;
-            goto end;
-        }
-        WIN_UpdateWndPtr(&pWnd,pWnd->child);
-    }
-    if (!pWnd)
-    {
-        retvalue = 0;
-        goto end;
+        while (list[i] && list[i] != child) i++;
+        if (!list[i]) return 0;
+        i++;  /* start from next window */
     }
 
-    for ( ; pWnd ; WIN_UpdateWndPtr(&pWnd,pWnd->next))
+    for ( ; list[i]; i++)
     {
-        if (className && (GetClassWord(pWnd->hwndSelf, GCW_ATOM) != className))
+        if (className && (GetClassWord(list[i], GCW_ATOM) != className))
             continue;  /* Not the right class */
 
         /* Now check the title */
-
-        if (!title)
-        {
-            retvalue = pWnd->hwndSelf;
-            goto end;
-        }
-        if (pWnd->text && !strcmpW( pWnd->text, title ))
-        {
-            retvalue = pWnd->hwndSelf;
-            goto end;
-        }
+        if (!title) break;
+        if (GetWindowTextW( list[i], buffer, len ) && !strcmpiW( buffer, title )) break;
     }
-    retvalue = 0;
+    retvalue = list[i];
+    WIN_ReleaseWinArray( list );
+    if (buffer) HeapFree( GetProcessHeap(), 0, buffer );
+
     /* In this case we need to check whether other processes
        own a window with the given paramters on the Desktop,
        but we don't, so let's at least warn about it */
-    FIXME("Returning 0 without checking other processes\n");
-end:
-    WIN_ReleaseWndPtr(pWnd);
+    if (!retvalue) FIXME("Returning 0 without checking other processes\n");
     return retvalue;
 }
 
@@ -2165,38 +2061,38 @@ end:
     
 }
 
-/*****************************************************************
- *         WIN_GetTopParent
- *
- * Get the top-level parent for a child window.
- * returns a locked pointer
- */
-WND* WIN_GetTopParentPtr( WND* pWnd )
-{
-    WND *tmpWnd = WIN_LockWndPtr(pWnd);
-    
-    while( tmpWnd && (tmpWnd->dwStyle & WS_CHILD))
-    {
-        WIN_UpdateWndPtr(&tmpWnd,tmpWnd->parent);
-    }
-    return tmpWnd;
-}
 
 /*****************************************************************
- *         WIN_GetTopParent
- *
- * Get the top-level parent for a child window.
+ *		GetAncestor (USER32.@)
  */
-HWND WIN_GetTopParent( HWND hwnd )
+HWND WINAPI GetAncestor( HWND hwnd, UINT type )
 {
-    HWND retvalue;
-    WND *tmpPtr = WIN_FindWndPtr(hwnd);
-    WND *wndPtr = WIN_GetTopParentPtr (tmpPtr );
-    
-    retvalue = wndPtr ? wndPtr->hwndSelf : 0;
-    WIN_ReleaseWndPtr(tmpPtr);
-    WIN_ReleaseWndPtr(wndPtr);
-    return retvalue;
+    HWND ret;
+    WND *wndPtr, *parent;
+
+    if (hwnd == GetDesktopWindow()) return 0;
+    if (!(wndPtr = WIN_FindWndPtr(hwnd))) return 0;
+    parent = wndPtr->parent;
+
+    switch(type)
+    {
+    case GA_PARENT:
+        WIN_UpdateWndPtr( &wndPtr, wndPtr->parent );
+        break;
+    case GA_ROOT:
+        while (wndPtr->parent->hwndSelf != GetDesktopWindow())
+            WIN_UpdateWndPtr( &wndPtr, wndPtr->parent );
+        break;
+    case GA_ROOTOWNER:
+        while (wndPtr->parent->hwndSelf != GetDesktopWindow())
+            WIN_UpdateWndPtr( &wndPtr, wndPtr->parent );
+        while (wndPtr->owner)
+            WIN_UpdateWndPtr( &wndPtr, wndPtr->owner );
+        break;
+    }
+    ret = wndPtr->hwndSelf;
+    WIN_ReleaseWndPtr( wndPtr );
+    return ret;
 }
 
 
@@ -2481,6 +2377,7 @@ HWND16 WINAPI GetNextWindow16( HWND16 hwnd, WORD flag )
 BOOL WIN_InternalShowOwnedPopups( HWND owner, BOOL fShow, BOOL unmanagedOnly )
 {
     int count = 0;
+    WND *pWnd;
     HWND *win_array = WIN_BuildWinArray( GetDesktopWindow() );
 
     if (!win_array) return TRUE;
@@ -2491,10 +2388,10 @@ BOOL WIN_InternalShowOwnedPopups( HWND owner, BOOL fShow, BOOL unmanagedOnly )
     while (win_array[count]) count++;
     while (--count >= 0)
     {
-        WND *pWnd = WIN_FindWndPtr( win_array[count] );
-        if (!pWnd) continue;
+        if (GetWindow( win_array[count], GW_OWNER ) != owner) continue;
+        if (!(pWnd = WIN_FindWndPtr( win_array[count] ))) continue;
 
-        if (pWnd->owner && (pWnd->owner->hwndSelf == owner) && (pWnd->dwStyle & WS_POPUP))
+        if (pWnd->dwStyle & WS_POPUP)
         {
             if (fShow)
             {
@@ -2545,7 +2442,7 @@ void WINAPI ShowOwnedPopups16( HWND16 owner, BOOL16 fShow )
 BOOL WINAPI ShowOwnedPopups( HWND owner, BOOL fShow )
 {
     int count = 0;
-
+    WND *pWnd;
     HWND *win_array = WIN_BuildWinArray(GetDesktopWindow());
 
     if (!win_array) return TRUE;
@@ -2553,10 +2450,10 @@ BOOL WINAPI ShowOwnedPopups( HWND owner, BOOL fShow )
     while (win_array[count]) count++;
     while (--count >= 0)
     {
-        WND *pWnd = WIN_FindWndPtr( win_array[count] );
-        if (!pWnd) continue;
+        if (GetWindow( win_array[count], GW_OWNER ) != owner) continue;
+        if (!(pWnd = WIN_FindWndPtr( win_array[count] ))) continue;
 
-        if (pWnd->owner && (pWnd->owner->hwndSelf == owner) && (pWnd->dwStyle & WS_POPUP))
+        if (pWnd->dwStyle & WS_POPUP)
         {
             if (fShow)
             {
@@ -2797,21 +2694,17 @@ BOOL16 WINAPI AnyPopup16(void)
  */
 BOOL WINAPI AnyPopup(void)
 {
-    WND *wndPtr = WIN_LockWndPtr(pWndDesktop->child);
+    int i;
     BOOL retvalue;
-    
-    while (wndPtr)
+    HWND *list = WIN_BuildWinArray( GetDesktopWindow() );
+
+    if (!list) return FALSE;
+    for (i = 0; list[i]; i++)
     {
-        if (wndPtr->owner && (wndPtr->dwStyle & WS_VISIBLE))
-        {
-            retvalue = TRUE;
-            goto end;
-	}
-        WIN_UpdateWndPtr(&wndPtr,wndPtr->next);
+        if (IsWindowVisible( list[i] ) && GetWindow( list[i], GW_OWNER )) break;
     }
-    retvalue = FALSE;
-end:
-    WIN_ReleaseWndPtr(wndPtr);
+    retvalue = (list[i] != 0);
+    WIN_ReleaseWinArray( list );
     return retvalue;
 }
 

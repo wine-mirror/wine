@@ -193,25 +193,24 @@ static MDICLIENTINFO *get_client_info( HWND client )
 /**********************************************************************
  *			MDI_MenuModifyItem
  */
-static BOOL MDI_MenuModifyItem( HWND client, HWND hWndChild )
+static void MDI_MenuModifyItem( HWND client, HWND hWndChild )
 {
-    static const WCHAR format[] = {'%','d',' ',0};
-
     MDICLIENTINFO *clientInfo = get_client_info( client );
     WCHAR buffer[128];
     UINT n, id;
-    BOOL bRet;
 
-    if (!clientInfo || !clientInfo->hWindowMenu) return FALSE;
+    if (!clientInfo || !clientInfo->hWindowMenu) return;
 
     id = GetWindowLongA( hWndChild, GWL_ID );
-    n = wsprintfW(buffer, format, id - clientInfo->idFirstChild + 1);
-    GetWindowTextW( hWndChild, buffer + n, sizeof(buffer)/sizeof(WCHAR) - n );
+    if (id >= clientInfo->idFirstChild + MDI_MOREWINDOWSLIMIT) return;
+    buffer[0] = '&';
+    buffer[1] = '1' + id - clientInfo->idFirstChild;
+    buffer[2] = ' ';
+    GetWindowTextW( hWndChild, buffer + 3, sizeof(buffer)/sizeof(WCHAR) - 3 );
 
-    n    = GetMenuState(clientInfo->hWindowMenu, id, MF_BYCOMMAND);
-    bRet = ModifyMenuW(clientInfo->hWindowMenu, id, MF_BYCOMMAND | MF_STRING, id, buffer );
+    n = GetMenuState(clientInfo->hWindowMenu, id, MF_BYCOMMAND);
+    ModifyMenuW(clientInfo->hWindowMenu, id, MF_BYCOMMAND | MF_STRING, id, buffer );
     CheckMenuItem(clientInfo->hWindowMenu, id, n & MF_CHECKED);
-    return bRet;
 }
 
 /**********************************************************************
@@ -276,28 +275,37 @@ static BOOL MDI_MenuDeleteItem( HWND client, HWND hWndChild )
 static HWND MDI_GetWindow(MDICLIENTINFO *clientInfo, HWND hWnd, BOOL bNext,
                             DWORD dwStyleMask )
 {
-    WND *wndPtr, *pWnd, *pWndLast = NULL;
-    
+    int i;
+    HWND *list;
+    HWND last = 0;
+
     dwStyleMask |= WS_DISABLED | WS_VISIBLE;
     if( !hWnd ) hWnd = clientInfo->hwndActiveChild;
 
-    if( !(wndPtr = WIN_FindWndPtr(hWnd)) ) return 0;
+    if (!(list = WIN_BuildWinArray( GetParent(hWnd) ))) return 0;
+    i = 0;
+    /* start from next after hWnd */
+    while (list[i] && list[i] != hWnd) i++;
+    if (list[i]) i++;
 
-    for ( pWnd = WIN_LockWndPtr(wndPtr->next); ; WIN_UpdateWndPtr(&pWnd,pWnd->next))
+    for ( ; list[i]; i++)
     {
-        if (!pWnd ) WIN_UpdateWndPtr(&pWnd,wndPtr->parent->child);
-
-        if ( pWnd == wndPtr ) break; /* went full circle */
-
-        if (!pWnd->owner && (pWnd->dwStyle & dwStyleMask) == WS_VISIBLE )
-        {
-	    pWndLast = pWnd;
-	    if ( bNext ) break;
-        }
+        if (GetWindow( list[i], GW_OWNER )) continue;
+        if ((GetWindowLongW( list[i], GWL_STYLE ) & dwStyleMask) != WS_VISIBLE) continue;
+        last = list[i];
+        if (bNext) goto found;
     }
-    WIN_ReleaseWndPtr(wndPtr);
-    WIN_ReleaseWndPtr(pWnd);
-    return pWndLast ? pWndLast->hwndSelf : 0;
+    /* now restart from the beginning */
+    for (i = 0; list[i] && list[i] != hWnd; i++)
+    {
+        if (GetWindow( list[i], GW_OWNER )) continue;
+        if ((GetWindowLongW( list[i], GWL_STYLE ) & dwStyleMask) != WS_VISIBLE) continue;
+        last = list[i];
+        if (bNext) goto found;
+    }
+ found:
+    WIN_ReleaseWinArray( list );
+    return last;
 }
 
 /**********************************************************************
@@ -775,7 +783,9 @@ static LONG MDI_ChildActivate( HWND client, HWND child )
         /* The window to be activated must be displayed in the "Windows" menu */
         if (id >= clientInfo->idFirstChild + MDI_MOREWINDOWSLIMIT)
         {
-            MDI_SwapMenuItems( GetParent(child), id, clientInfo->idFirstChild + MDI_MOREWINDOWSLIMIT - 1);
+            MDI_SwapMenuItems( GetParent(child),
+                               id, clientInfo->idFirstChild + MDI_MOREWINDOWSLIMIT - 1);
+            id = clientInfo->idFirstChild + MDI_MOREWINDOWSLIMIT - 1;
             MDI_MenuModifyItem( GetParent(child), child );
         }
 
@@ -1129,7 +1139,7 @@ static void MDI_UpdateFrameText( HWND frame, HWND hClient,
     WCHAR   lpBuffer[MDI_MAXTITLELENGTH+1];
     MDICLIENTINFO *ci = get_client_info( hClient );
 
-    TRACE("repaint %i, frameText %s\n", repaint, (lpTitle)?debugstr_w(lpTitle):"NULL");
+    TRACE("repaint %i, frameText %s\n", repaint, debugstr_w(lpTitle));
 
     if (!ci) return;
 
@@ -1149,42 +1159,30 @@ static void MDI_UpdateFrameText( HWND frame, HWND hClient,
 
     if (ci->frameTitle)
     {
-	WND* childWnd = WIN_FindWndPtr( ci->hwndChildMaximized );     
-
-	if( childWnd && childWnd->text )
+	if (ci->hwndChildMaximized)
 	{
 	    /* combine frame title and child title if possible */
 
 	    static const WCHAR lpBracket[]  = {' ','-',' ','[',0};
 	    static const WCHAR lpBracket2[]  = {']',0};
 	    int	i_frame_text_length = strlenW(ci->frameTitle);
-	    int	i_child_text_length = strlenW(childWnd->text);
 
 	    lstrcpynW( lpBuffer, ci->frameTitle, MDI_MAXTITLELENGTH);
 
 	    if( i_frame_text_length + 6 < MDI_MAXTITLELENGTH )
             {
 		strcatW( lpBuffer, lpBracket );
-
-		if( i_frame_text_length + i_child_text_length + 6 < MDI_MAXTITLELENGTH )
-		{
-		    strcatW( lpBuffer, childWnd->text );
-		    strcatW( lpBuffer, lpBracket2 );
-		}
-		else
-		{
-		    lstrcpynW( lpBuffer + i_frame_text_length + 4, 
-				 childWnd->text, MDI_MAXTITLELENGTH - i_frame_text_length - 5 );
-		    strcatW( lpBuffer, lpBracket2 );
-		}
-	    }
+                if (GetWindowTextW( ci->hwndChildMaximized, lpBuffer + i_frame_text_length + 4,
+                                    MDI_MAXTITLELENGTH - i_frame_text_length - 5 ))
+                    strcatW( lpBuffer, lpBracket2 );
+                else
+                    lpBuffer[i_frame_text_length] = 0;  /* remove bracket */
+            }
 	}
 	else
 	{
             lstrcpynW(lpBuffer, ci->frameTitle, MDI_MAXTITLELENGTH+1 );
 	}
-        WIN_ReleaseWndPtr(childWnd);
-
     }
     else
 	lpBuffer[0] = '\0';
@@ -1514,7 +1512,7 @@ LRESULT WINAPI DefFrameProcW( HWND hwnd, HWND hwndMDIClient,
                     HWND childHwnd;
                     if (id - ci->idFirstChild == MDI_MOREWINDOWSLIMIT)
                         /* User chose "More Windows..." */
-                        childHwnd = MDI_MoreWindowsDialog(hwnd);
+                        childHwnd = MDI_MoreWindowsDialog(hwndMDIClient);
                     else
                         /* User chose one of the windows listed in the "Windows" menu */
                         childHwnd = MDI_GetChildByID(hwndMDIClient,id);
@@ -1945,24 +1943,32 @@ void WINAPI CalcChildScroll( HWND hwnd, INT scroll )
     SCROLLINFO info;
     RECT childRect, clientRect;
     INT  vmin, vmax, hmin, hmax, vpos, hpos;
-    WND *pWnd;
+    HWND *list;
 
-    if (!(pWnd = WIN_FindWndPtr( hwnd ))) return;
     GetClientRect( hwnd, &clientRect );
     SetRectEmpty( &childRect );
 
-    for ( WIN_UpdateWndPtr(&pWnd,pWnd->child); pWnd; WIN_UpdateWndPtr(&pWnd,pWnd->next))
+    if ((list = WIN_BuildWinArray( hwnd )))
     {
-	  if( pWnd->dwStyle & WS_MAXIMIZE )
-	  {
-              WIN_ReleaseWndPtr(pWnd);
-	      ShowScrollBar(hwnd, SB_BOTH, FALSE);
-	      return;
-	  }
-          if( pWnd->dwStyle & WS_VISIBLE )
-              UnionRect( &childRect, &pWnd->rectWindow, &childRect );
-    } 
-    WIN_ReleaseWndPtr(pWnd);
+        int i;
+        for (i = 0; list[i]; i++)
+        {
+            DWORD style = GetWindowLongW( list[i], GWL_STYLE );
+            if (style & WS_MAXIMIZE)
+            {
+                WIN_ReleaseWinArray( list );
+                ShowScrollBar( hwnd, SB_BOTH, FALSE );
+                return;
+            }
+            if (style & WS_VISIBLE)
+            {
+                WND *pWnd = WIN_FindWndPtr( list[i] );
+                UnionRect( &childRect, &pWnd->rectWindow, &childRect );
+                WIN_ReleaseWndPtr( pWnd );
+            }
+        }
+        WIN_ReleaseWinArray( list );
+    }
     UnionRect( &childRect, &clientRect, &childRect );
 
     hmin = childRect.left;
@@ -2132,28 +2138,38 @@ static BOOL WINAPI MDI_MoreWindowsDlgProc (HWND hDlg, UINT iMsg, WPARAM wParam, 
     {
        case WM_INITDIALOG:
        {
-           WND  *pWnd;
            UINT widest       = 0;
            UINT length;
            UINT i;
-           WND  *pParentWnd  = (WND *)WIN_FindWndPtr(lParam);
-           MDICLIENTINFO *ci = (MDICLIENTINFO*)pParentWnd->wExtra;
+           MDICLIENTINFO *ci = get_client_info( (HWND)lParam );
            HWND hListBox = GetDlgItem(hDlg, MDI_IDC_LISTBOX);
+           HWND *list, *sorted_list;
+
+           if (!(list = WIN_BuildWinArray( (HWND)lParam ))) return TRUE;
+           if (!(sorted_list = HeapAlloc( GetProcessHeap(), HEAP_ZERO_MEMORY,
+                                          sizeof(HWND) * ci->nActiveChildren )))
+           {
+               WIN_ReleaseWinArray( list );
+               return FALSE;
+           }
 
            /* Fill the list, sorted by id... */
+           for (i = 0; list[i]; i++)
+           {
+               UINT id = GetWindowLongW( list[i], GWL_ID ) - ci->idFirstChild;
+               if (id < ci->nActiveChildren) sorted_list[id] = list[i];
+           }
+           WIN_ReleaseWinArray( list );
+
            for (i = 0; i < ci->nActiveChildren; i++)
            {
+               WCHAR buffer[128];
 
-               /* Find the window with the current ID */
-               for (pWnd = WIN_LockWndPtr(pParentWnd->child); pWnd; WIN_UpdateWndPtr(&pWnd, pWnd->next))
-                   if (pWnd->wIDmenu == ci->idFirstChild + i)
-                       break;
-
-               SendMessageW(hListBox, LB_ADDSTRING, 0, (LPARAM) pWnd->text);
-               SendMessageW(hListBox, LB_SETITEMDATA, i, (LPARAM) pWnd);
-               length = strlenW(pWnd->text);
-               WIN_ReleaseWndPtr(pWnd);
-
+               if (!GetWindowTextW( sorted_list[i], buffer, sizeof(buffer)/sizeof(WCHAR) ))
+                   continue;
+               SendMessageW(hListBox, LB_ADDSTRING, 0, (LPARAM)buffer );
+               SendMessageW(hListBox, LB_SETITEMDATA, i, (LPARAM)sorted_list[i] );
+               length = strlenW(buffer);  /* FIXME: should use GetTextExtentPoint */
                if (length > widest)
                    widest = length;
            }
@@ -2168,6 +2184,9 @@ static BOOL WINAPI MDI_MoreWindowsDlgProc (HWND hDlg, UINT iMsg, WPARAM wParam, 
        case WM_COMMAND:
            switch (LOWORD(wParam))
            {
+                default:
+                    if (HIWORD(wParam) != LBN_DBLCLK) break;
+                    /* fall through */
                 case IDOK:
                 {
                     /*  windows are sorted by menu ID, so we must return the
@@ -2175,32 +2194,14 @@ static BOOL WINAPI MDI_MoreWindowsDlgProc (HWND hDlg, UINT iMsg, WPARAM wParam, 
                      */
                     HWND hListBox     = GetDlgItem(hDlg, MDI_IDC_LISTBOX);
                     UINT index        = SendMessageW(hListBox, LB_GETCURSEL, 0, 0);
-                    WND *pWnd         = (WND *)SendMessageW(hListBox, LB_GETITEMDATA, index, 0);
+                    HWND hwnd         = SendMessageW(hListBox, LB_GETITEMDATA, index, 0);
 
-                    EndDialog(hDlg, pWnd->hwndSelf);
+                    EndDialog(hDlg, hwnd);
                     return TRUE;
                 }
                 case IDCANCEL:
                     EndDialog(hDlg, 0);
                     return TRUE;
-
-                default:
-                    switch (HIWORD(wParam))
-                    {
-                        case LBN_DBLCLK:
-                        {
-                            /*  windows are sorted by menu ID, so we must return the
-                             *  window associated to the given id
-                             */
-                            HWND hListBox     = GetDlgItem(hDlg, MDI_IDC_LISTBOX);
-                            UINT index        = SendMessageW(hListBox, LB_GETCURSEL, 0, 0);
-                            WND *pWnd         = (WND *)SendMessageW(hListBox, LB_GETITEMDATA, index, 0);
-
-                            EndDialog(hDlg, pWnd->hwndSelf);
-                            return TRUE;
-                        }
-                    }
-                    break;
            }
            break;
     }
@@ -2256,17 +2257,16 @@ static HWND MDI_MoreWindowsDialog(HWND hwnd)
 
 static void MDI_SwapMenuItems(HWND parent, UINT pos1, UINT pos2)
 {
-    WND *pWnd;
+    HWND *list;
+    int i;
 
-    pWnd = WIN_FindWndPtr( GetWindow( parent, GW_CHILD ) );
-    while (pWnd)
+    if (!(list = WIN_BuildWinArray( parent ))) return;
+    for (i = 0; list[i]; i++)
     {
-        if (pWnd->wIDmenu == pos1)
-            pWnd->wIDmenu = pos2;
-        else
-            if (pWnd->wIDmenu == pos2)
-                pWnd->wIDmenu = pos1;
-        WIN_UpdateWndPtr(&pWnd,pWnd->next);
+        UINT id = GetWindowLongW( list[i], GWL_ID );
+        if (id == pos1) SetWindowLongW( list[i], GWL_ID, pos2 );
+        else if (id == pos2) SetWindowLongW( list[i], GWL_ID, pos1 );
     }
+    WIN_ReleaseWinArray( list );
 }
 

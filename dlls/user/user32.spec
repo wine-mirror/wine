@@ -655,6 +655,7 @@ debug_channels (accel caret class clipboard combo cursor dc dde ddeml dialog dri
 # win98/win2k
 @ stdcall AllowSetForegroundWindow (long) AllowSetForegroundWindow
 @ stdcall AnimateWindow(long long long) AnimateWindow
+@ stdcall GetAncestor(long long) GetAncestor
 @ stdcall DrawMenuBarTemp(long long) DrawMenuBarTemp
 @ stdcall EnumDisplaySettingsExA(str long ptr long) EnumDisplaySettingsExA
 @ stdcall EnumDisplaySettingsExW(wstr long ptr long) EnumDisplaySettingsExW

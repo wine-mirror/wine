@@ -1787,7 +1787,7 @@ void NC_GetSysPopupPos( HWND hwnd, RECT* rect )
         NC_GetInsideRect( hwnd, rect );
         OffsetRect( rect, wndPtr->rectWindow.left, wndPtr->rectWindow.top);
         if (wndPtr->dwStyle & WS_CHILD)
-            ClientToScreen( wndPtr->parent->hwndSelf, (POINT *)rect );
+            ClientToScreen( GetParent(hwnd), (POINT *)rect );
         if (TWEAK_WineLook == WIN31_LOOK) {
             rect->right = rect->left + GetSystemMetrics(SM_CXSIZE);
             rect->bottom = rect->top + GetSystemMetrics(SM_CYSIZE);
@@ -2065,7 +2065,7 @@ LONG NC_HandleNCLButtonDown( HWND hwnd, WPARAM wParam, LPARAM lParam )
     {
     case HTCAPTION:
         {
-            HWND top = WIN_GetTopParent(hwnd);
+            HWND top = GetAncestor( hwnd, GA_ROOT );
 
             if( WINPOS_SetActiveWindow(top, TRUE, TRUE) || (GetActiveWindow() == top) )
                 SendMessageW( hwnd, WM_SYSCOMMAND, SC_MOVE + HTCAPTION, lParam );
@@ -2187,8 +2187,11 @@ LONG NC_HandleSysCommand( HWND hwnd, WPARAM wParam, POINT pt )
 
     TRACE("Handling WM_SYSCOMMAND %x %ld,%ld\n", wParam, pt.x, pt.y );
 
-    if (wndPtr->parent && (uCommand != SC_KEYMENU))
-        ScreenToClient( wndPtr->parent->hwndSelf, &pt );
+    if (uCommand != SC_KEYMENU)
+    {
+        HWND parent = GetAncestor( hwnd, GA_PARENT );
+        if (parent != GetDesktopWindow()) ScreenToClient( parent, &pt );
+    }
 
     switch (uCommand)
     {

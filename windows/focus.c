@@ -59,39 +59,40 @@ HWND16 WINAPI SetFocus16( HWND16 hwnd )
 HWND WINAPI SetFocus( HWND hwnd )
 {
     HWND hWndFocus = 0, hwndTop = hwnd;
-    WND *wndPtr = WIN_FindWndPtr( hwnd );
     MESSAGEQUEUE *pMsgQ = 0, *pCurMsgQ = 0;
-    BOOL16 bRet = 0;
+    BOOL bRet = 0;
 
     /* Get the messageQ for the current thread */
     if (!(pCurMsgQ = QUEUE_Current()))
     {
         WARN("\tCurrent message queue not found. Exiting!\n" );
-        goto CLEANUP;
+        return 0;
     }
 
-    if (wndPtr)
+    if (hwnd)
     {
-	  /* Check if we can set the focus to this window */
+        /* Check if we can set the focus to this window */
+        WND *wndPtr;
 
-	while ( (wndPtr->dwStyle & (WS_CHILD | WS_POPUP)) == WS_CHILD  )
-	{
-	    if ( wndPtr->dwStyle & ( WS_MINIMIZE | WS_DISABLED) )
-		 goto CLEANUP;
-            WIN_UpdateWndPtr(&wndPtr,wndPtr->parent);
-            if (!wndPtr) goto CLEANUP;
-	    hwndTop = wndPtr->hwndSelf;
-	}
+        for (;;)
+        {
+            HWND parent;
+            LONG style = GetWindowLongW( hwndTop, GWL_STYLE );
+            if (style & (WS_MINIMIZE | WS_DISABLED)) return 0;
+            parent = GetAncestor( hwndTop, GA_PARENT );
+            if (!parent || parent == GetDesktopWindow()) break;
+            hwndTop = parent;
+        }
 
-        /* definitely at the top window now */
-        if ( wndPtr->dwStyle & ( WS_MINIMIZE | WS_DISABLED) ) goto CLEANUP;
+        if (!(wndPtr = WIN_FindWndPtr( hwndTop ))) return 0;
 
         /* Retrieve the message queue associated with this window */
         pMsgQ = (MESSAGEQUEUE *)QUEUE_Lock( wndPtr->hmemTaskQ );
+        WIN_ReleaseWndPtr( wndPtr );
         if ( !pMsgQ )
         {
             WARN("\tMessage queue not found. Exiting!\n" );
-            goto CLEANUP;
+            return 0;
         }
 
         /* Make sure that message queue for the window we are setting focus to
@@ -133,7 +134,7 @@ HWND WINAPI SetFocus( HWND hwnd )
     else /* NULL hwnd passed in */
     {
         if( HOOK_CallHooksA( WH_CBT, HCBT_SETFOCUS, 0, (LPARAM)hWndFocus ) )
-            goto CLEANUP;
+            return 0;
 
         /* Get the current focus from the perQ data of the current message Q */
         hWndFocus = PERQDATA_GetFocusWnd( pCurMsgQ->pQData );
@@ -150,7 +151,6 @@ CLEANUP:
     if ( pMsgQ )
         QUEUE_Unlock( pMsgQ );
 
-    WIN_ReleaseWndPtr(wndPtr);
     return bRet ? hWndFocus : 0;
 }
 

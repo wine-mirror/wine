@@ -386,16 +386,15 @@ static void get_coords( HWND *hwnd, Window window, int x, int y, POINT *pt )
         x -= data->client_rect.left;
         y -= data->client_rect.top;
     }
-    while (win->parent && win->parent->hwndSelf != GetDesktopWindow())
-    {
-        x += win->rectClient.left;
-        y += win->rectClient.top;
-        WIN_UpdateWndPtr( &win, win->parent );
-    }
-    pt->x = x + win->rectClient.left;
-    pt->y = y + win->rectClient.top;
-    *hwnd = win->hwndSelf;
     WIN_ReleaseWndPtr( win );
+
+    pt->x = x;
+    pt->y = y;
+    if (*hwnd != GetDesktopWindow())
+    {
+        ClientToScreen( *hwnd, pt );
+        *hwnd = GetAncestor( *hwnd, GA_ROOT );
+    }
 }
 
 

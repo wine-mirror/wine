@@ -433,7 +433,7 @@ static BOOL process_cooked_mouse_message( MSG *msg, BOOL remove )
         (raw_message == WM_RBUTTONDOWN) ||
         (raw_message == WM_MBUTTONDOWN))
     {
-        HWND hwndTop = WIN_GetTopParent( msg->hwnd );
+        HWND hwndTop = GetAncestor( msg->hwnd, GA_ROOT );
 
         /* Send the WM_PARENTNOTIFY,
          * note that even for double/nonclient clicks

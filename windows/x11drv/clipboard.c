@@ -353,7 +353,7 @@ int X11DRV_CLIPBOARD_CacheDataFormats( Atom SelectionName )
     /*
      * Query the selection owner for the TARGETS property
      */
-    w = X11DRV_get_top_window(hWnd);
+    w = X11DRV_get_whole_window( GetAncestor(hWnd,GA_ROOT) );
 
     aTargets = TSXInternAtom(display, "TARGETS", False);
 
@@ -892,7 +892,8 @@ void X11DRV_AcquireClipboard(void)
     if ( !(selectionAcquired == (S_PRIMARY | S_CLIPBOARD)) )
     {
         Atom xaClipboard = TSXInternAtom(display, _CLIPBOARD, False);
-        owner = X11DRV_get_top_window( hWndClipWindow ? hWndClipWindow : AnyPopup() );
+        owner = X11DRV_get_whole_window( GetAncestor( hWndClipWindow ? hWndClipWindow : AnyPopup(),
+                                                      GA_ROOT ) );
 
         /* Grab PRIMARY selection if not owned */
         if ( !(selectionAcquired & S_PRIMARY) )
@@ -1047,7 +1048,7 @@ BOOL X11DRV_GetClipboardData(UINT wFormat)
     {
 	XEvent xe;
         Atom propRequest;
-	Window w = X11DRV_get_top_window(hWnd);
+	Window w = X11DRV_get_whole_window( GetAncestor( hWnd, GA_ROOT ));
 
         /* Map the format ID requested to an X selection property.
          * If the format is in the cache, use the atom associated

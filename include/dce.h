@@ -9,8 +9,6 @@
 
 #include "windef.h"
 
-struct tagWND;
-
 /* internal DCX flags */
 #define DCX_DCEEMPTY		0x00000800
 #define DCX_DCEBUSY		0x00001000
@@ -40,8 +38,8 @@ typedef struct tagDCE
 
 extern DCE*  DCE_AllocDCE( HWND hWnd, DCE_TYPE type );
 extern DCE*  DCE_FreeDCE( DCE *dce );
-extern void  DCE_FreeWindowDCE( struct tagWND* );
-extern INT  DCE_ExcludeRgn( HDC, struct tagWND*, HRGN );
-extern BOOL DCE_InvalidateDCE( struct tagWND*, const RECT* );
+extern void  DCE_FreeWindowDCE( HWND );
+extern INT  DCE_ExcludeRgn( HDC, HWND, HRGN );
+extern BOOL DCE_InvalidateDCE( HWND, const RECT* );
 
 #endif  /* __WINE_DCE_H */

@@ -100,14 +100,13 @@ const struct builtin_class_descr DIALOG_builtin_class =
  * Helper function for modal dialogs to enable again the
  * owner of the dialog box.
  */
-void DIALOG_EnableOwner( HWND hOwner, BOOL ownerWasEnabled)
+void DIALOG_EnableOwner( HWND hOwner )
 {
     /* Owner must be a top-level window */
     if (hOwner)
-        hOwner = WIN_GetTopParent( hOwner );
+        hOwner = GetAncestor( hOwner, GA_ROOT );
     if (!hOwner) return;
-    if (ownerWasEnabled)
-        EnableWindow( hOwner, TRUE );
+    EnableWindow( hOwner, TRUE );
 }
 
 
@@ -121,7 +120,7 @@ BOOL DIALOG_DisableOwner( HWND hOwner )
 {
     /* Owner must be a top-level window */
     if (hOwner)
-        hOwner = WIN_GetTopParent( hOwner );
+        hOwner = GetAncestor( hOwner, GA_ROOT );
     if (!hOwner) return FALSE;
     if (IsWindowEnabled( hOwner ))
     {
@@ -841,8 +840,7 @@ static HWND DIALOG_CreateIndirect( HINSTANCE hInst, LPCSTR dlgTemplate,
     {
 	if (hFont) DeleteObject( hFont );
 	if (hMenu) DestroyMenu( hMenu );
-        if (modal)
-            DIALOG_EnableOwner(owner, ownerEnabled);
+        if (modal && ownerEnabled) DIALOG_EnableOwner(owner);
 	return 0;
     }
     wndPtr = WIN_FindWndPtr( hwnd );
@@ -904,8 +902,7 @@ static HWND DIALOG_CreateIndirect( HINSTANCE hInst, LPCSTR dlgTemplate,
     }
     WIN_ReleaseWndPtr(wndPtr);
     if( IsWindow(hwnd) ) DestroyWindow( hwnd );
-    if (modal)
-        DIALOG_EnableOwner(owner, ownerEnabled);
+    if (modal && ownerEnabled) DIALOG_EnableOwner(owner);
     return 0;
 }
 
@@ -1044,7 +1041,7 @@ static INT DIALOG_DoDialogBox( HWND hwnd, HWND owner )
     DIALOGINFO * dlgInfo;
     MSG msg;
     INT retval;
-    HWND ownerMsg = WIN_GetTopParent( owner );
+    HWND ownerMsg = GetAncestor( owner, GA_ROOT );
 
     if (!(wndPtr = WIN_FindWndPtr( hwnd ))) return -1;
     dlgInfo = (DIALOGINFO *)wndPtr->wExtra;
@@ -1075,7 +1072,7 @@ static INT DIALOG_DoDialogBox( HWND hwnd, HWND owner )
             if (dlgInfo->flags & DF_END) break;
         }
     }
-    DIALOG_EnableOwner( owner, (dlgInfo->flags & DF_OWNERENABLED) );
+    if (dlgInfo->flags & DF_OWNERENABLED) DIALOG_EnableOwner( owner );
     retval = dlgInfo->idResult; 
     WIN_ReleaseWndPtr(wndPtr);
     DestroyWindow( hwnd );
@@ -1242,6 +1239,7 @@ BOOL WINAPI EndDialog( HWND hwnd, INT retval )
     WND * wndPtr = WIN_FindWndPtr( hwnd );
     BOOL wasEnabled = TRUE;
     DIALOGINFO * dlgInfo;
+    HWND owner;
 
     TRACE("%04x %d\n", hwnd, retval );
 
@@ -1257,14 +1255,15 @@ BOOL WINAPI EndDialog( HWND hwnd, INT retval )
         dlgInfo->flags |= DF_END;
         wasEnabled = (dlgInfo->flags & DF_OWNERENABLED);
     }
+    WIN_ReleaseWndPtr(wndPtr);
 
-    if(wndPtr->owner)
-       DIALOG_EnableOwner( wndPtr->owner->hwndSelf, wasEnabled );
- 
+    if (wasEnabled && (owner = GetWindow( hwnd, GW_OWNER )))
+        DIALOG_EnableOwner( owner );
+
     /* Windows sets the focus to the dialog itself in EndDialog */
 
     if (IsChild(hwnd, GetFocus()))
-       SetFocus(wndPtr->hwndSelf);
+       SetFocus( hwnd );
 
     /* Don't have to send a ShowWindow(SW_HIDE), just do
        SetWindowPos with SWP_HIDEWINDOW as done in Windows */
@@ -1272,7 +1271,6 @@ BOOL WINAPI EndDialog( HWND hwnd, INT retval )
     SetWindowPos(hwnd, (HWND)0, 0, 0, 0, 0, SWP_NOMOVE | SWP_NOSIZE
                  | SWP_NOZORDER | SWP_NOACTIVATE | SWP_HIDEWINDOW);
 
-    WIN_ReleaseWndPtr(wndPtr);
     /* unblock dialog loop */
     PostMessageA(hwnd, WM_NULL, 0, 0); 
     return TRUE;
@@ -1286,89 +1284,76 @@ static BOOL DIALOG_IsAccelerator( HWND hwnd, HWND hwndDlg, WPARAM vKey )
 {
     HWND hwndControl = hwnd;
     HWND hwndNext;
-    WND *wndPtr;
-    BOOL RetVal = FALSE;
     INT dlgCode;
+    WCHAR buffer[128];
 
-        do
+    do
+    {
+        DWORD style = GetWindowLongW( hwndControl, GWL_STYLE );
+        if ((style & (WS_VISIBLE | WS_DISABLED)) == WS_VISIBLE)
         {
-            wndPtr = WIN_FindWndPtr( hwndControl );
-            if ( (wndPtr != NULL) && 
-                 ((wndPtr->dwStyle & (WS_VISIBLE | WS_DISABLED)) == WS_VISIBLE) )
+            dlgCode = SendMessageA( hwndControl, WM_GETDLGCODE, 0, 0 );
+            if ( (dlgCode & (DLGC_BUTTON | DLGC_STATIC)) &&
+                 GetWindowTextW( hwndControl, buffer, sizeof(buffer)/sizeof(WCHAR) ))
             {
-                dlgCode = SendMessageA( hwndControl, WM_GETDLGCODE, 0, 0 );
-                if ( (dlgCode & (DLGC_BUTTON | DLGC_STATIC)) && 
-                     (wndPtr->text!=NULL))
+                /* find the accelerator key */
+                LPWSTR p = buffer - 2;
+                char a_char = vKey;
+                WCHAR w_char = 0;
+
+                do
                 {
-                    /* find the accelerator key */
-                    LPWSTR p = wndPtr->text - 2;
-		    char a_char = vKey;
-		    WCHAR w_char = 0;
-
-                    do
-                    {
-                        p = strchrW( p + 2, '&' );
-                    }
-                    while (p != NULL && p[1] == '&');
-
-                    /* and check if it's the one we're looking for */
-		    MultiByteToWideChar(CP_ACP, 0, &a_char, 1, &w_char, 1);
-                    if (p != NULL && toupperW( p[1] ) == toupperW( w_char ) )
-                    {
-                        if ((dlgCode & DLGC_STATIC) || 
-                            (wndPtr->dwStyle & 0x0f) == BS_GROUPBOX )
-                        {
-                            /* set focus to the control */
-                            SendMessageA( hwndDlg, WM_NEXTDLGCTL,
-                                    hwndControl, 1);
-                            /* and bump it on to next */
-                            SendMessageA( hwndDlg, WM_NEXTDLGCTL, 0, 0);
-                        }
-                        else if (dlgCode & DLGC_BUTTON)
-                        {
-                            /* send BM_CLICK message to the control */
-                            SendMessageA( hwndControl, BM_CLICK, 0, 0 );
-                        }
-
-                        RetVal = TRUE;
-			WIN_ReleaseWndPtr(wndPtr);
-                        break;
-                    }
+                    p = strchrW( p + 2, '&' );
                 }
-		hwndNext = GetWindow( hwndControl, GW_CHILD );
-            }
-	    else
-	    {
-		hwndNext = 0;
-	    }
-            WIN_ReleaseWndPtr(wndPtr);
-	    if (!hwndNext)
-	    {
-	        hwndNext = GetWindow( hwndControl, GW_HWNDNEXT );
-	    }
-	    while (!hwndNext && hwndControl)
-	    {
-		hwndControl = GetParent( hwndControl );
-		if (hwndControl == hwndDlg)
-		{
-		    if(hwnd==hwndDlg){  /* prevent endless loop */
-		        hwndNext=hwnd;
-			break;
-		    }
-		    hwndNext = GetWindow( hwndDlg, GW_CHILD );
-		}
-		else
-		{
-		    hwndNext = GetWindow( hwndControl, GW_HWNDNEXT );
-		}
-	    }
-            hwndControl = hwndNext;
-        }
-        while (hwndControl && (hwndControl != hwnd));
+                while (p != NULL && p[1] == '&');
 
-    return RetVal;
+                /* and check if it's the one we're looking for */
+                MultiByteToWideChar(CP_ACP, 0, &a_char, 1, &w_char, 1);
+                if (p != NULL && toupperW( p[1] ) == toupperW( w_char ) )
+                {
+                    if ((dlgCode & DLGC_STATIC) || (style & 0x0f) == BS_GROUPBOX )
+                    {
+                        /* set focus to the control */
+                        SendMessageA( hwndDlg, WM_NEXTDLGCTL, hwndControl, 1);
+                        /* and bump it on to next */
+                        SendMessageA( hwndDlg, WM_NEXTDLGCTL, 0, 0);
+                    }
+                    else if (dlgCode & DLGC_BUTTON)
+                    {
+                        /* send BM_CLICK message to the control */
+                        SendMessageA( hwndControl, BM_CLICK, 0, 0 );
+                    }
+                    return TRUE;
+                }
+            }
+            hwndNext = GetWindow( hwndControl, GW_CHILD );
+        }
+        else hwndNext = 0;
+
+        if (!hwndNext) hwndNext = GetWindow( hwndControl, GW_HWNDNEXT );
+
+        while (!hwndNext && hwndControl)
+        {
+            hwndControl = GetParent( hwndControl );
+            if (hwndControl == hwndDlg)
+            {
+                if(hwnd==hwndDlg)   /* prevent endless loop */
+                {
+                    hwndNext=hwnd;
+                    break;
+                }
+                hwndNext = GetWindow( hwndDlg, GW_CHILD );
+            }
+            else
+                hwndNext = GetWindow( hwndControl, GW_HWNDNEXT );
+        }
+        hwndControl = hwndNext;
+    }
+    while (hwndControl && (hwndControl != hwnd));
+
+    return FALSE;
 }
- 
+
 /***********************************************************************
  *           DIALOG_FindMsgDestination
  *
@@ -1596,47 +1581,25 @@ BOOL WINAPI IsDialogMessageW( HWND hwndDlg, LPMSG msg )
  */
 INT16 WINAPI GetDlgCtrlID16( HWND16 hwnd )
 {
-    WND *wndPtr = WIN_FindWndPtr(hwnd);
-    INT16 retvalue;
-    
-    if (!wndPtr) return 0;
-
-    retvalue = wndPtr->wIDmenu;
-    WIN_ReleaseWndPtr(wndPtr);
-    return retvalue;
+    return GetDlgCtrlID( hwnd );
 }
- 
+
 
 /***********************************************************************
  *		GetDlgCtrlID (USER32.@)
  */
 INT WINAPI GetDlgCtrlID( HWND hwnd )
 {
-    INT retvalue;
-    WND *wndPtr = WIN_FindWndPtr(hwnd);
-    if (!wndPtr) return 0;
-    retvalue = wndPtr->wIDmenu;
-    WIN_ReleaseWndPtr(wndPtr);
-    return retvalue;
+    return GetWindowLongW( hwnd, GWL_ID );
 }
- 
+
 
 /***********************************************************************
  *		GetDlgItem (USER.91)
  */
 HWND16 WINAPI GetDlgItem16( HWND16 hwndDlg, INT16 id )
 {
-    WND *pWnd;
-
-    if (!(pWnd = WIN_FindWndPtr( hwndDlg ))) return 0;
-    for (WIN_UpdateWndPtr(&pWnd,pWnd->child); pWnd; WIN_UpdateWndPtr(&pWnd,pWnd->next))
-        if (pWnd->wIDmenu == (UINT16)id)
-        {
-            HWND16 retvalue = pWnd->hwndSelf;
-            WIN_ReleaseWndPtr(pWnd);
-            return retvalue;
-        }
-    return 0;
+    return GetDlgItem( hwndDlg, id );
 }
 
 
@@ -1645,17 +1608,16 @@ HWND16 WINAPI GetDlgItem16( HWND16 hwndDlg, INT16 id )
  */
 HWND WINAPI GetDlgItem( HWND hwndDlg, INT id )
 {
-    WND *pWnd;
+    int i;
+    HWND *list = WIN_BuildWinArray( hwndDlg );
+    HWND ret = 0;
 
-    if (!(pWnd = WIN_FindWndPtr( hwndDlg ))) return 0;
-    for (WIN_UpdateWndPtr(&pWnd,pWnd->child); pWnd;WIN_UpdateWndPtr(&pWnd,pWnd->next))
-        if (pWnd->wIDmenu == (UINT16)id)
-        {
-            HWND retvalue = pWnd->hwndSelf;
-            WIN_ReleaseWndPtr(pWnd);
-            return retvalue;
-        }
-    return 0;
+    if (!list) return 0;
+
+    for (i = 0; list[i]; i++) if (GetWindowLongW( list[i], GWL_ID ) == id) break;
+    ret = list[i];
+    WIN_ReleaseWinArray( list );
+    return ret;
 }
 
 
@@ -1989,11 +1951,7 @@ HWND16 WINAPI GetNextDlgGroupItem16( HWND16 hwndDlg, HWND16 hwndCtrl,
 HWND WINAPI GetNextDlgGroupItem( HWND hwndDlg, HWND hwndCtrl,
                                      BOOL fPrevious )
 {
-    WND *pWnd = NULL,
-        *pWndLast = NULL,
-        *pWndCtrl = NULL,
-        *pWndDlg = NULL;
-    HWND retvalue;
+    HWND hwnd, retvalue;
 
     if(hwndCtrl)
     {
@@ -2003,71 +1961,44 @@ HWND WINAPI GetNextDlgGroupItem( HWND hwndDlg, HWND hwndCtrl,
             hwndDlg = GetParent(hwndCtrl);
     }
 
-    if (!(pWndDlg = WIN_FindWndPtr( hwndDlg ))) return 0;
     if (hwndCtrl)
     {
-        if (!(pWndCtrl = WIN_FindWndPtr( hwndCtrl )))
-    {
-            retvalue = 0;
-            goto END;
-        }
         /* Make sure hwndCtrl is a top-level child */
-        while (pWndCtrl->parent && (pWndCtrl->parent != pWndDlg))
-            WIN_UpdateWndPtr(&pWndCtrl,pWndCtrl->parent);
-        if (pWndCtrl->parent != pWndDlg)
-        {
-            retvalue = 0;
-            goto END;
-        }
+        HWND parent = GetParent( hwndCtrl );
+        while (parent && parent != hwndDlg) parent = GetParent(parent);
+        if (parent != hwndDlg) return 0;
     }
     else
     {
         /* No ctrl specified -> start from the beginning */
-        if (!(pWndCtrl = WIN_LockWndPtr(pWndDlg->child)))
-        {
-            retvalue = 0;
-            goto END;
-        }
-        if (fPrevious)
-            while (pWndCtrl->next) WIN_UpdateWndPtr(&pWndCtrl,pWndCtrl->next);
+        if (!(hwndCtrl = GetWindow( hwndDlg, GW_CHILD ))) return 0;
+        if (fPrevious) hwndCtrl = GetWindow( hwndCtrl, GW_HWNDLAST );
     }
 
-    pWndLast = WIN_LockWndPtr(pWndCtrl);
-    pWnd = WIN_LockWndPtr(pWndCtrl->next);
-
+    retvalue = hwndCtrl;
+    hwnd = GetWindow( hwndCtrl, GW_HWNDNEXT );
     while (1)
     {
-        if (!pWnd || (pWnd->dwStyle & WS_GROUP))
+        if (!hwnd || (GetWindowLongW( hwnd, GWL_STYLE ) & WS_GROUP))
         {
             /* Wrap-around to the beginning of the group */
-            WND *pWndTemp;
+            HWND tmp;
 
-            WIN_UpdateWndPtr( &pWnd, pWndDlg->child );
-            for ( pWndTemp = WIN_LockWndPtr( pWnd ); 
-                  pWndTemp;
-                  WIN_UpdateWndPtr( &pWndTemp, pWndTemp->next) )
+            hwnd = GetWindow( hwndDlg, GW_CHILD );
+            for (tmp = hwnd; tmp; tmp = GetWindow( tmp, GW_HWNDNEXT ) )
             {
-                if (pWndTemp->dwStyle & WS_GROUP) WIN_UpdateWndPtr( &pWnd, pWndTemp );
-                if (pWndTemp == pWndCtrl) break;
+                if (GetWindowLongW( tmp, GWL_STYLE ) & WS_GROUP) hwnd = tmp;
+                if (tmp == hwndCtrl) break;
             }
-            WIN_ReleaseWndPtr( pWndTemp );
         }
-        if (pWnd == pWndCtrl) break;
-	if ((pWnd->dwStyle & WS_VISIBLE) && !(pWnd->dwStyle & WS_DISABLED))
-	{
-            WIN_UpdateWndPtr(&pWndLast,pWnd);
+        if (hwnd == hwndCtrl) break;
+        if ((GetWindowLongW( hwnd, GWL_STYLE ) & (WS_VISIBLE|WS_DISABLED)) == WS_VISIBLE)
+        {
+            retvalue = hwnd;
 	    if (!fPrevious) break;
 	}
-        WIN_UpdateWndPtr(&pWnd,pWnd->next);
+        hwnd = GetWindow( hwnd, GW_HWNDNEXT );
     }
-    retvalue = pWndLast->hwndSelf;
-
-    WIN_ReleaseWndPtr(pWndLast);
-    WIN_ReleaseWndPtr(pWnd);
-END:
-    WIN_ReleaseWndPtr(pWndCtrl);
-    WIN_ReleaseWndPtr(pWndDlg);
-
     return retvalue;
 }
 
