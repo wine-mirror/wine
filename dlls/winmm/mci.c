@@ -593,7 +593,7 @@ static	LPCSTR		MCI_FindCommand(UINT uTbl, LPCSTR verb)
      * array look up
      */
     for (idx = 0; idx < S_MciCmdTable[uTbl].nVerbs; idx++) {
-	if (strcmp(S_MciCmdTable[uTbl].aVerbs[idx], verb) == 0)
+	if (strcasecmp(S_MciCmdTable[uTbl].aVerbs[idx], verb) == 0)
 	    return S_MciCmdTable[uTbl].aVerbs[idx];
     }
 
@@ -885,6 +885,7 @@ DWORD WINAPI mciSendStringA(LPCSTR lpstrCommand, LPSTR lpstrRet,
     if (!(verb = HeapAlloc(GetProcessHeap(), 0, strlen(lpstrCommand)+1)))
 	return MCIERR_OUT_OF_MEMORY;
     strcpy( verb, lpstrCommand );
+    CharLowerA(verb);
 
     memset(data, 0, sizeof(data));
 
@@ -898,7 +899,7 @@ DWORD WINAPI mciSendStringA(LPCSTR lpstrCommand, LPSTR lpstrRet,
     }
 
     /* case dev == 'new' has to be handled */
-    if (!strcasecmp(dev, "new")) {
+    if (!strcmp(dev, "new")) {
 	FIXME("'new': NIY as device name\n");
 	dwRet = MCIERR_MISSING_DEVICE_NAME;
 	goto errCleanUp;
@@ -956,6 +957,8 @@ DWORD WINAPI mciSendStringA(LPCSTR lpstrCommand, LPSTR lpstrRet,
 	}
 
 	dwRet = MCI_LoadMciDriver(devType, &wmd);
+	if (dwRet == MCIERR_DEVICE_NOT_INSTALLED)
+	    dwRet = MCIERR_INVALID_DEVICE_NAME;
 	HeapFree(GetProcessHeap(), 0, devType);
 	if (dwRet) {
 	    MCI_UnLoadMciDriver(wmd);
