@@ -2706,6 +2706,89 @@ static void test_paint_messages(void)
     DestroyWindow( hwnd );
 }
 
+struct wnd_event
+{
+    HWND hwnd;
+    HANDLE event;
+};
+
+static DWORD WINAPI thread_proc(void *param)
+{
+    MSG msg;
+    struct wnd_event *wnd_event = (struct wnd_event *)param;
+
+    wnd_event->hwnd = CreateWindowExA(0, "TestWindowClass", "window caption text", WS_OVERLAPPEDWINDOW,
+                                      100, 100, 200, 200, 0, 0, 0, NULL);
+    ok(wnd_event->hwnd != 0, "Failed to create overlapped window\n");
+
+    SetEvent(wnd_event->event);
+
+    while (GetMessage(&msg, 0, 0, 0))
+    {
+	TranslateMessage(&msg);
+	DispatchMessage(&msg);
+    }
+
+    return 0;
+}
+
+static void test_interthread_messages(void)
+{
+    HANDLE hThread;
+    DWORD tid;
+    WNDPROC proc;
+    MSG msg;
+    char buf[256];
+    int len, expected_len;
+    struct wnd_event wnd_event;
+
+    wnd_event.event = CreateEvent(NULL, 0, 0, NULL);
+
+    hThread = CreateThread(NULL, 0, thread_proc, &wnd_event, 0, &tid);
+    ok(hThread != NULL, "CreateThread failed, error %ld\n", GetLastError());
+
+    ok(WaitForSingleObject(wnd_event.event, INFINITE) == WAIT_OBJECT_0, "WaitForSingleObject failed\n");
+
+    CloseHandle(wnd_event.event);
+
+    SetLastError(0xdeadbeef);
+    ok(!DestroyWindow(wnd_event.hwnd), "DestroyWindow succeded\n");
+    ok(GetLastError() == ERROR_ACCESS_DENIED, "wrong error code %ld\n", GetLastError());
+
+    proc = (WNDPROC)GetWindowLongPtrA(wnd_event.hwnd, GWLP_WNDPROC);
+    ok(proc != NULL, "GetWindowLongPtrA(GWLP_WNDPROC) error %ld\n", GetLastError());
+
+    expected_len = lstrlenA("window caption text");
+    memset(buf, 0, sizeof(buf));
+    SetLastError(0xdeadbeef);
+    len = CallWindowProcA(proc, wnd_event.hwnd, WM_GETTEXT, sizeof(buf), (LPARAM)buf);
+    ok(len == expected_len, "CallWindowProcA(WM_GETTEXT) error %ld, len %d, expected len %d\n", GetLastError(), len, expected_len);
+    ok(!lstrcmpA(buf, "window caption text"), "window text mismatch\n");
+
+    msg.hwnd = wnd_event.hwnd;
+    msg.message = WM_GETTEXT;
+    msg.wParam = sizeof(buf);
+    msg.lParam = (LPARAM)buf;
+    memset(buf, 0, sizeof(buf));
+    SetLastError(0xdeadbeef);
+    len = DispatchMessageA(&msg);
+    ok(!len && GetLastError() == ERROR_MESSAGE_SYNC_ONLY,
+       "DispatchMessageA(WM_GETTEXT) succeded on another thread window: ret %d, error %ld\n", len, GetLastError());
+
+    msg.hwnd = wnd_event.hwnd;
+    msg.message = WM_TIMER;
+    msg.wParam = 0;
+    msg.lParam = GetWindowLongW(wnd_event.hwnd,GWL_WNDPROC);
+    SetLastError(0xdeadbeef);
+    len = DispatchMessageA(&msg);
+    ok(!len && GetLastError() == 0xdeadbeef,
+       "DispatchMessageA(WM_TIMER) failed on another thread window: ret %d, error %ld\n", len, GetLastError());
+
+    ok(PostMessageA(wnd_event.hwnd, WM_QUIT, 0, 0), "PostMessageA(WM_QUIT) error %ld\n", GetLastError());
+
+    ok(WaitForSingleObject(hThread, INFINITE) == WAIT_OBJECT_0, "WaitForSingleObject failed\n");
+    CloseHandle(hThread);
+}
 
 /************* window procedures ********************/
 
@@ -3074,6 +3157,7 @@ START_TEST(msg)
     test_mdi_messages();
     test_button_messages();
     test_paint_messages();
+    test_interthread_messages();
     test_message_conversion();
 
     UnhookWindowsHookEx(hCBT_hook);
