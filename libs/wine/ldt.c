@@ -94,7 +94,7 @@ static inline int set_thread_area( struct modify_ldt_s *ptr )
                           "int $0x80\n\t"
                           "popl %%ebx"
                           : "=a" (res)
-                          : "0" (243) /* SYS_set_thread_area */, "r" (ptr) );
+                          : "0" (243) /* SYS_set_thread_area */, "q" (ptr) );
     if (res >= 0) return res;
     errno = -res;
     return -1;

@@ -672,7 +672,7 @@ static void *unaligned_mmap( void *addr, size_t length, unsigned int prot,
                              "popl %%ebx"
                              : "=a" (ret)
                              : "0" (90), /* SYS_mmap */
-                               "g" (&args)
+                               "q" (&args)
                              : "memory" );
         if (ret < 0 && ret > -4096)
         {

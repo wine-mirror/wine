@@ -87,7 +87,7 @@ static inline int epoll_create( int size )
 {
     int ret;
     __asm__( "pushl %%ebx; movl %2,%%ebx; int $0x80; popl %%ebx"
-             : "=a" (ret) : "0" (254 /*NR_epoll_create*/), "g" (size) );
+             : "=a" (ret) : "0" (254 /*NR_epoll_create*/), "r" (size) );
     SYSCALL_RET(ret);
 }
 
@@ -96,7 +96,7 @@ static inline int epoll_ctl( int epfd, int op, int fd, const struct epoll_event 
     int ret;
     __asm__( "pushl %%ebx; movl %2,%%ebx; int $0x80; popl %%ebx"
              : "=a" (ret)
-             : "0" (255 /*NR_epoll_ctl*/), "g" (epfd), "c" (op), "d" (fd), "S" (event), "m" (*event) );
+             : "0" (255 /*NR_epoll_ctl*/), "r" (epfd), "c" (op), "d" (fd), "S" (event), "m" (*event) );
     SYSCALL_RET(ret);
 }
 
@@ -105,7 +105,7 @@ static inline int epoll_wait( int epfd, struct epoll_event *events, int maxevent
     int ret;
     __asm__( "pushl %%ebx; movl %2,%%ebx; int $0x80; popl %%ebx"
              : "=a" (ret)
-             : "0" (256 /*NR_epoll_wait*/), "g" (epfd), "c" (events), "d" (maxevents), "S" (timeout)
+             : "0" (256 /*NR_epoll_wait*/), "r" (epfd), "c" (events), "d" (maxevents), "S" (timeout)
              : "memory" );
     SYSCALL_RET(ret);
 }

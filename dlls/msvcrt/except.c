@@ -76,7 +76,7 @@ inline static DWORD call_filter( void *func, void *arg, void *ebp )
     DWORD ret;
     __asm__ __volatile__ ("pushl %%ebp; pushl %3; movl %2,%%ebp; call *%%eax; popl %%ebp; popl %%ebp"
                           : "=a" (ret)
-                          : "0" (func), "g" (ebp), "g" (arg)
+                          : "0" (func), "r" (ebp), "r" (arg)
                           : "ecx", "edx", "memory" );
     return ret;
 }

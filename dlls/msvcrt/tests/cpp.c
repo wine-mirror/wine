@@ -154,19 +154,18 @@ inline static void* do_call_func2(void *func, void *_this, void* arg)
 static void* do_call_func1(void *func, void *_this)
 {
   void* ret;
-  __asm__ __volatile__ ("pushl %%ecx;\n\tmovl %2, %%ecx;\n\tcall *%1;\n\tpopl %%ecx;"
+  __asm__ __volatile__ ("call *%1"
                         : "=a" (ret)
-                        : "g" (func), "m" (_this)
+                        : "g" (func), "c" (_this)
                         : "memory" );
   return ret;
 }
 static void* do_call_func2(void *func, void *_this, void* arg)
 {
   void* ret;
-  __asm__ __volatile__ ("pushl %%ecx;\n\tpushl %2;\n\t"
-                        "movl %3, %%ecx;\n\tcall *%1;\n\tpopl %%ecx;"
+  __asm__ __volatile__ ("pushl %2\n\tcall *%1"
                         : "=a" (ret)
-                        : "g" (func), "m" (arg), "m" (_this)
+                        : "r" (func), "g" (arg), "c" (_this)
                         : "memory" );
   return ret;
 }

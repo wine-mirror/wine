@@ -111,7 +111,7 @@ static inline int wine_sigaction( int sig, struct kernel_sigaction *new,
                           "int $0x80\n\t"
                           "popl %%ebx"
                           : "=a" (sig)
-                          : "0" (SYS_sigaction), "r" (sig), "c" (new), "d" (old) );
+                          : "0" (SYS_sigaction), "S" (sig), "c" (new), "d" (old) );
     if (sig>=0) return 0;
     errno = -sig;
     return -1;
@@ -128,7 +128,7 @@ static inline int wine_sigaltstack( const struct sigaltstack *new,
                           "int $0x80\n\t"
                           "popl %%ebx"
                           : "=a" (ret)
-                          : "0" (SYS_sigaltstack), "r" (new), "c" (old) );
+                          : "0" (SYS_sigaltstack), "q" (new), "c" (old) );
     if (ret >= 0) return 0;
     errno = -ret;
     return -1;
