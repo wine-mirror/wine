@@ -153,19 +153,24 @@ typedef struct _CONTEXT		/* Note 1 */
 #define SS_sig(context)      ((context)->sc_ss)
                             
 #ifdef linux
-/* fs and gs are not supported on *BSD. */
+/* FS and GS are now in the sigcontext struct of FreeBSD, but not 
+ * saved by the exception handling. duh.
+ */
 #define FS_sig(context)      ((context)->sc_fs)
 #define GS_sig(context)      ((context)->sc_gs)
 #define CR2_sig(context)     ((context)->cr2)
 #define TRAP_sig(context)    ((context)->sc_trapno)
 #endif
-                            
-#ifndef __FreeBSD__         
+
+#ifndef __FreeBSD__
 #define EFL_sig(context)     ((context)->sc_eflags)
 #else                       
 #define EFL_sig(context)     ((context)->sc_efl)
+/* FreeBSD, see i386/i386/traps.c::trap_pfault va->err kludge  */
+#define CR2_sig(context)     ((context)->sc_err)
 #endif                      
-                            
+
+
 #define EIP_sig(context)     (*((unsigned long*)&(context)->sc_eip))
 #define ESP_sig(context)     (*((unsigned long*)&(context)->sc_esp))
 

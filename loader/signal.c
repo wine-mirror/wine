@@ -7,6 +7,7 @@
 #include "config.h"
 
 #include <stdlib.h>
+#include <unistd.h>
 #include <string.h>
 #include <signal.h>
 #include <string.h>
@@ -43,6 +44,10 @@ void (*fnWINE_Debugger)(int,SIGCONTEXT*) = NULL;
 void (*ctx_debug_call)(int sig,CONTEXT*ctx)=NULL;
 BOOL (*fnINSTR_EmulateInstruction)(SIGCONTEXT*ctx)=NULL;
 
+
+#define SIGACTION sigaction
+#define SIGALTSTACK sigaltstack
+
 #ifdef __i386__
 
 /* i386 specific faults */
@@ -75,6 +80,7 @@ static const char * const SIGNAL_traps[] =
 
 #if defined(linux) && defined(__i386__)
 /* This is the sigaction structure from the Linux 2.1.20 kernel.  */
+
 #undef sa_handler
 struct kernel_sigaction
 {
@@ -112,7 +118,18 @@ static __inline__ int wine_sigaction( int sig, struct kernel_sigaction *new,
     errno = -sig;
     return -1;
 }
+#undef SIGACTION
+#define SIGACTION wine_sigaction
 #endif /* linux && __i386__ */
+
+#ifdef __FreeBSD__
+#undef SIGACTION
+#define SIGACTION _thread_sys_sigaction
+extern int _thread_sys_sigaction(int sig,const struct sigaction*act,struct sigaction* oact);
+#undef SIGALTSTACK
+#define SIGALTSTACK _thread_sys_sigaltstack
+extern int _thread_sys_sigaltstack(const struct sigaltstack *ss,struct sigaltstack *oss);
+#endif
 
 /* Signal stack */
 
@@ -172,7 +189,7 @@ void SIGNAL_SetHandler( int sig, void (*func)(), int flags )
 # else
     sig_act.sa_flags = 0;
 # endif
-    ret = sigaction( sig, &sig_act, NULL );
+    ret = SIGACTION( sig, &sig_act, NULL );
 
 #endif  /* linux && __i386__ */
 
@@ -298,9 +315,9 @@ BOOL SIGNAL_Init(void)
     ss.ss_sp    = SIGNAL_Stack;
     ss.ss_size  = sizeof(SIGNAL_Stack);
     ss.ss_flags = 0;
-    if (sigaltstack(&ss, NULL) < 0)
+    if (SIGALTSTACK(&ss, NULL) < 0)
     {
-        perror("sigstack");
+        perror("sigaltstack");
         return FALSE;
     }
 #endif  /* HAVE_SIGALTSTACK */

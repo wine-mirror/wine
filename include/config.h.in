@@ -102,6 +102,9 @@
 /* Define if you have the memmove function.  */
 #undef HAVE_MEMMOVE
 
+/* Define if you have the rfork function.  */
+#undef HAVE_RFORK
+
 /* Define if you have the sendmsg function.  */
 #undef HAVE_SENDMSG
 
@@ -242,6 +245,9 @@
 
 /* Define if you have the <wctype.h> header file.  */
 #undef HAVE_WCTYPE_H
+
+/* Define if you have the c_r library (-lc_r).  */
+#undef HAVE_LIBC_R
 
 /* Define if you have the curses library (-lcurses).  */
 #undef HAVE_LIBCURSES

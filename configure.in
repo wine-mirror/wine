@@ -91,6 +91,8 @@ then
 fi
 dnl Check for -lxpg4 for FreeBSD
 AC_CHECK_LIB(xpg4,setrunelocale)
+dnl Check for -lc_r for FreeBSD
+AC_CHECK_LIB(c_r,__error)
 dnl Check for -ldl
 AC_CHECK_LIB(dl,dlopen)
 AC_SUBST(XLIB)
@@ -342,13 +344,29 @@ dnl
 dnl For cross-compiling we blindly assume that libc is reentrant. This is
 dnl ok since non-reentrant libc is quite rare (mostly old libc5 versions).
 
+dnl 
+dnl Linux style errno location
+dnl 
 AC_CACHE_CHECK("for reentrant libc", wine_cv_libc_reentrant,
   [AC_TRY_RUN([int myerrno = 0;
 char buf[256];
 int *__errno_location(){return &myerrno;}
 main(){connect(0,buf,255); exit(!myerrno);}],
   wine_cv_libc_reentrant=yes, wine_cv_libc_reentrant=no,
-  wine_cv_libc_reentrant=yes ) ] )
+  wine_cv_libc_reentrant=yes )
+dnl
+dnl FreeBSD style errno location
+dnl 
+  if test "$wine_cv_libc_reentrant" = "no" 
+  then
+    AC_TRY_RUN([int myerrno = 0;
+char buf[256];
+int *__error(){return &myerrno;}
+main(){connect(0,buf,255); exit(!myerrno);}],
+    wine_cv_libc_reentrant=yes, wine_cv_libc_reentrant=no,
+    wine_cv_libc_reentrant=yes )
+  fi
+])
 if test "$wine_cv_libc_reentrant" = "no" 
 then
   AC_DEFINE(NO_REENTRANT_LIBC)
@@ -399,7 +417,7 @@ fi
 
 dnl **** Check for functions and header files ****
 
-AC_CHECK_FUNCS(clone getpagesize memmove sendmsg sigaltstack strerror stricmp tcgetattr timegm usleep wait4 waitpid vfscanf)
+AC_CHECK_FUNCS(rfork clone getpagesize memmove sendmsg sigaltstack strerror stricmp tcgetattr timegm usleep wait4 waitpid vfscanf)
 AC_CHECK_HEADERS(wctype.h sys/syscall.h syscall.h sys/param.h sys/vfs.h sys/mount.h sys/statfs.h float.h linux/cdrom.h linux/ucdrom.h sys/cdio.h sys/filio.h sys/modem.h strings.h sys/strtio.h dlfcn.h unistd.h sys/sockio.h net/if.h netinet/in.h sys/file.h libio.h curses.h ncurses.h elf.h arpa/nameser.h resolv.h)
 AC_HEADER_STAT()
 AC_C_CONST()

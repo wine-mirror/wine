@@ -4,6 +4,8 @@
  * Copyright 1998 Alexandre Julliard
  */
 
+#include "config.h"
+
 /* Get pointers to the static errno and h_errno variables used by Xlib. This
    must be done before including <errno.h> makes the variables invisible.  */
 extern int errno;
@@ -14,10 +16,14 @@ static int *ph_errno = &h_errno;
 #include <signal.h>
 #include <stdio.h>
 #include <unistd.h>
+#ifdef HAVE_SYS_SYSCALL_H
+# include <sys/syscall.h>
+#endif
 #include "thread.h"
 #include "server.h"
 #include "winbase.h"
 #include "debug.h"
+
 
 /* Xlib critical section (FIXME: does not belong here) */
 CRITICAL_SECTION X11DRV_CritSection = { 0, };
@@ -39,6 +45,7 @@ extern int clone( int (*fn)(void *arg), void *stack, int flags, void *arg );
 
 
 #ifdef USE_THREADS
+#ifdef linux
 /***********************************************************************
  *           __errno_location
  *
@@ -72,6 +79,20 @@ int *__h_errno_location()
 #endif
     return &thdb->thread_h_errno;
 }
+#endif
+
+#ifdef __FreeBSD__
+int *__error() {
+    THDB *thdb = THREAD_Current();
+    if (!thdb) return perrno;
+#ifdef NO_REENTRANT_X11
+    /* Use static libc errno while running in Xlib. */
+    if (X11DRV_CritSection.OwningThread == (HANDLE)thdb->server_tid)
+        return perrno;
+#endif
+    return &thdb->thread_errno;
+}
+#endif
 
 /***********************************************************************
  *           SYSDEPS_StartThread
@@ -107,7 +128,23 @@ int SYSDEPS_SpawnThread( THDB *thread )
 #endif
 
 #ifdef HAVE_RFORK
-    FIXME(thread, "Threads using rfork() not implemented\n" );
+    DWORD *sp = (DWORD *)thread->teb.stack_top;
+    *--sp = (DWORD)thread;
+    *--sp = 0;
+    *--sp = (DWORD)SYSDEPS_StartThread;
+    __asm__(
+    "pushl %2;\n\t"		/* RFPROC|RMEM */
+    "pushl $0;\n\t"		/* 0 ? */
+    "movl %1,%%eax;\n\t"	/* SYS_rfork */
+    ".byte 0x9a; .long 0; .word 7;\n\t"	/* lcall 7:0... FreeBSD syscall */
+    "cmpl $0, %%edx;\n\t"
+    "je 1f;\n\t"
+    "movl %0,%%esp;\n\t"	/* father -> new thread */
+    "ret;\n"
+    "1:\n\t"		/* child -> caller thread */
+    "addl $8,%%esp" :
+    : "r" (sp), "g" (SYS_rfork), "g" (RFPROC|RFMEM)
+    : "eax", "edx");
 #endif
 
 #else  /* !USE_THREADS */
