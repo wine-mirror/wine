@@ -672,7 +672,8 @@ static INT FONT_GetObjectA( HGDIOBJ handle, void *obj, INT count, LPVOID buffer 
     FONT_LogFontWToA( &font->logfont, &lfA );
 
     if (count > sizeof(lfA)) count = sizeof(lfA);
-    memcpy( buffer, &lfA, count );
+    if(buffer)
+        memcpy( buffer, &lfA, count );
     return count;
 }
 
@@ -683,7 +684,8 @@ static INT FONT_GetObjectW( HGDIOBJ handle, void *obj, INT count, LPVOID buffer 
 {
     FONTOBJ *font = obj;
     if (count > sizeof(LOGFONTW)) count = sizeof(LOGFONTW);
-    memcpy( buffer, &font->logfont, count );
+    if(buffer)
+        memcpy( buffer, &font->logfont, count );
     return count;
 }
 
