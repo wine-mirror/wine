@@ -113,7 +113,7 @@ static void server_perror( const char *err )
 
 
 /***********************************************************************
- *           __wine_server_exception_handler
+ *           __wine_server_exception_handler (NTDLL.@)
  */
 DWORD __wine_server_exception_handler( PEXCEPTION_RECORD record, EXCEPTION_FRAME *frame,
                                        CONTEXT *context, EXCEPTION_FRAME **pdispatcher )
@@ -126,7 +126,7 @@ DWORD __wine_server_exception_handler( PEXCEPTION_RECORD record, EXCEPTION_FRAME
 
 
 /***********************************************************************
- *           wine_server_alloc_req
+ *           wine_server_alloc_req (NTDLL.@)
  */
 void *wine_server_alloc_req( size_t fixed_size, size_t var_size )
 {
@@ -232,7 +232,7 @@ static void wait_reply(void)
 
 
 /***********************************************************************
- *           wine_server_call
+ *           wine_server_call (NTDLL.@)
  *
  * Perform a server call.
  */

@@ -113,7 +113,7 @@ static HENHMETAFILE EMF_GetEnhMetaFile( HANDLE hFile )
 
 
 /*****************************************************************************
- *          GetEnhMetaFileA (GDI32.174)
+ *          GetEnhMetaFileA (GDI32.@)
  *
  *
  */
@@ -137,7 +137,7 @@ HENHMETAFILE WINAPI GetEnhMetaFileA(
 }
 
 /*****************************************************************************
- *          GetEnhMetaFileW  (GDI32.180)
+ *          GetEnhMetaFileW  (GDI32.@)
  */
 HENHMETAFILE WINAPI GetEnhMetaFileW(
              LPCWSTR lpszMetaFile)  /* [in] filename of enhanced metafile */ 
@@ -158,7 +158,7 @@ HENHMETAFILE WINAPI GetEnhMetaFileW(
 }
 
 /*****************************************************************************
- *        GetEnhMetaFileHeader  (GDI32.178)
+ *        GetEnhMetaFileHeader  (GDI32.@)
  *
  *  If buf is NULL, returns the size of buffer required.
  *  Otherwise, copy up to bufsize bytes of enhanced metafile header into 
@@ -188,7 +188,7 @@ UINT WINAPI GetEnhMetaFileHeader(
 
 
 /*****************************************************************************
- *          GetEnhMetaFileDescriptionA  (GDI32.176)
+ *          GetEnhMetaFileDescriptionA  (GDI32.@)
  */
 UINT WINAPI GetEnhMetaFileDescriptionA( 
        HENHMETAFILE hmf, /* [in] enhanced metafile */
@@ -220,7 +220,7 @@ UINT WINAPI GetEnhMetaFileDescriptionA(
 }
 
 /*****************************************************************************
- *          GetEnhMetaFileDescriptionW  (GDI32.177)
+ *          GetEnhMetaFileDescriptionW  (GDI32.@)
  *
  *  Copies the description string of an enhanced metafile into a buffer 
  *  _buf_.
@@ -253,7 +253,7 @@ UINT WINAPI GetEnhMetaFileDescriptionW(
 }
 
 /****************************************************************************
- *    SetEnhMetaFileBits (GDI32.315)
+ *    SetEnhMetaFileBits (GDI32.@)
  *
  *  Creates an enhanced metafile by copying _bufsize_ bytes from _buf_.
  */
@@ -265,7 +265,7 @@ HENHMETAFILE WINAPI SetEnhMetaFileBits(UINT bufsize, const BYTE *buf)
 }
 
 /*****************************************************************************
- *  GetEnhMetaFileBits (GDI32.175)
+ *  GetEnhMetaFileBits (GDI32.@)
  *
  */
 UINT WINAPI GetEnhMetaFileBits(
@@ -293,7 +293,7 @@ UINT WINAPI GetEnhMetaFileBits(
 }
 
 /*****************************************************************************
- *           PlayEnhMetaFileRecord  (GDI32.264)
+ *           PlayEnhMetaFileRecord  (GDI32.@)
  *
  *  Render a single enhanced metafile record in the device context hdc.
  *
@@ -1517,7 +1517,7 @@ BOOL WINAPI PlayEnhMetaFileRecord(
 
 /*****************************************************************************
  *
- *        EnumEnhMetaFile  (GDI32.79)
+ *        EnumEnhMetaFile  (GDI32.@)
  *
  *  Walk an enhanced metafile, calling a user-specified function _EnhMetaFunc_
  *  for each
@@ -1666,7 +1666,7 @@ static INT CALLBACK EMF_PlayEnhMetaFileCallback(HDC hdc, HANDLETABLE *ht,
 }
 						
 /**************************************************************************
- *    PlayEnhMetaFile  (GDI32.263)
+ *    PlayEnhMetaFile  (GDI32.@)
  *
  *    Renders an enhanced metafile into a specified rectangle *lpRect
  *    in device context hdc.
@@ -1683,7 +1683,7 @@ BOOL WINAPI PlayEnhMetaFile(
 }
 
 /*****************************************************************************
- *  DeleteEnhMetaFile (GDI32.68)
+ *  DeleteEnhMetaFile (GDI32.@)
  *
  *  Deletes an enhanced metafile and frees the associated storage.
  */
@@ -1693,7 +1693,7 @@ BOOL WINAPI DeleteEnhMetaFile(HENHMETAFILE hmf)
 }
 
 /*****************************************************************************
- *  CopyEnhMetaFileA (GDI32.21)  Duplicate an enhanced metafile
+ *  CopyEnhMetaFileA (GDI32.@)  Duplicate an enhanced metafile
  *
  *   
  */
@@ -1767,7 +1767,7 @@ INT CALLBACK cbEnhPaletteCopy( HDC a,
 }
 
 /*****************************************************************************
- *  GetEnhMetaFilePaletteEntries (GDI32.179)  
+ *  GetEnhMetaFilePaletteEntries (GDI32.@)  
  * 
  *  Copy the palette and report size  
  * 
@@ -1827,7 +1827,7 @@ done:
 }
 
 /******************************************************************
- *         SetWinMetaFileBits   (GDI32.343)
+ *         SetWinMetaFileBits   (GDI32.@)
  *      
  *         Translate from old style to new style.
  *

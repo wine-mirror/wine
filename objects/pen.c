@@ -31,7 +31,7 @@ HPEN16 WINAPI CreatePen16( INT16 style, INT16 width, COLORREF color )
 
 
 /***********************************************************************
- *           CreatePen    (GDI32.55)
+ *           CreatePen    (GDI32.@)
  */
 HPEN WINAPI CreatePen( INT style, INT width, COLORREF color )
 {
@@ -67,7 +67,7 @@ HPEN16 WINAPI CreatePenIndirect16( const LOGPEN16 * pen )
 
 
 /***********************************************************************
- *           CreatePenIndirect    (GDI32.56)
+ *           CreatePenIndirect    (GDI32.@)
  */
 HPEN WINAPI CreatePenIndirect( const LOGPEN * pen )
 {
@@ -83,7 +83,7 @@ HPEN WINAPI CreatePenIndirect( const LOGPEN * pen )
 }
 
 /***********************************************************************
- *           ExtCreatePen    (GDI32.93)
+ *           ExtCreatePen    (GDI32.@)
  *
  * FIXME: PS_USERSTYLE not handled
  */

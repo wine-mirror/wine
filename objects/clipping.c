@@ -50,7 +50,7 @@ INT16 WINAPI SelectClipRgn16( HDC16 hdc, HRGN16 hrgn )
 
 
 /***********************************************************************
- *           SelectClipRgn    (GDI32.297)
+ *           SelectClipRgn    (GDI32.@)
  */
 INT WINAPI SelectClipRgn( HDC hdc, HRGN hrgn )
 {
@@ -66,7 +66,7 @@ INT16 WINAPI ExtSelectClipRgn16( HDC16 hdc, HRGN16 hrgn, INT16 fnMode )
 }
 
 /******************************************************************************
- *		ExtSelectClipRgn	[GDI32.97]
+ *		ExtSelectClipRgn	[GDI32.@]
  */
 INT WINAPI ExtSelectClipRgn( HDC hdc, HRGN hrgn, INT fnMode )
 {
@@ -145,7 +145,7 @@ INT16 WINAPI OffsetClipRgn16( HDC16 hdc, INT16 x, INT16 y )
 
 
 /***********************************************************************
- *           OffsetClipRgn    (GDI32.255)
+ *           OffsetClipRgn    (GDI32.@)
  */
 INT WINAPI OffsetClipRgn( HDC hdc, INT x, INT y )
 {
@@ -241,7 +241,7 @@ INT16 WINAPI ExcludeClipRect16( HDC16 hdc, INT16 left, INT16 top,
 
 
 /***********************************************************************
- *           ExcludeClipRect    (GDI32.92)
+ *           ExcludeClipRect    (GDI32.@)
  */
 INT WINAPI ExcludeClipRect( HDC hdc, INT left, INT top,
                                 INT right, INT bottom )
@@ -278,7 +278,7 @@ INT16 WINAPI IntersectClipRect16( HDC16 hdc, INT16 left, INT16 top,
 
 
 /***********************************************************************
- *           IntersectClipRect    (GDI32.245)
+ *           IntersectClipRect    (GDI32.@)
  */
 INT WINAPI IntersectClipRect( HDC hdc, INT left, INT top,
                                   INT right, INT bottom )
@@ -411,7 +411,7 @@ BOOL16 WINAPI PtVisible16( HDC16 hdc, INT16 x, INT16 y )
 
 
 /***********************************************************************
- *           PtVisible    (GDI32.279)
+ *           PtVisible    (GDI32.@)
  */
 BOOL WINAPI PtVisible( HDC hdc, INT x, INT y )
 {
@@ -431,7 +431,7 @@ BOOL WINAPI PtVisible( HDC hdc, INT x, INT y )
 
 
 /***********************************************************************
- *           RectVisible16    (GDI.104)
+ *           RectVisible16    (GDI.465)
  */
 BOOL16 WINAPI RectVisible16( HDC16 hdc, const RECT16* rect )
 {
@@ -458,7 +458,7 @@ BOOL16 WINAPI RectVisible16( HDC16 hdc, const RECT16* rect )
 
 
 /***********************************************************************
- *           RectVisible    (GDI32.282)
+ *           RectVisible    (GDI32.@)
  */
 BOOL WINAPI RectVisible( HDC hdc, const RECT* rect )
 {
@@ -489,7 +489,7 @@ INT16 WINAPI GetClipBox16( HDC16 hdc, LPRECT16 rect )
 
 
 /***********************************************************************
- *           GetClipBox    (GDI32.162)
+ *           GetClipBox    (GDI32.@)
  */
 INT WINAPI GetClipBox( HDC hdc, LPRECT rect )
 {
@@ -508,7 +508,7 @@ INT WINAPI GetClipBox( HDC hdc, LPRECT rect )
 
 
 /***********************************************************************
- *           GetClipRgn  (GDI32.163)
+ *           GetClipRgn  (GDI32.@)
  */
 INT WINAPI GetClipRgn( HDC hdc, HRGN hRgn )
 {

@@ -62,7 +62,7 @@ BOOL RELAY_Init(void)
  */
 #ifndef __i386__
 /***********************************************************************
- *		wine_call_to_16_word
+ *		wine_call_to_16_word (KERNEL32.@)
  */
 WORD WINAPI wine_call_to_16_word( FARPROC16 target, INT nArgs )
 {
@@ -70,7 +70,7 @@ WORD WINAPI wine_call_to_16_word( FARPROC16 target, INT nArgs )
 }
 
 /***********************************************************************
- *		wine_call_to_16_long
+ *		wine_call_to_16_long (KERNEL32.@)
  */
 LONG WINAPI wine_call_to_16_long( FARPROC16 target, INT nArgs )
 {
@@ -78,7 +78,7 @@ LONG WINAPI wine_call_to_16_long( FARPROC16 target, INT nArgs )
 }
 
 /***********************************************************************
- *		wine_call_to_16_regs_short
+ *		wine_call_to_16_regs_short (KERNEL32.@)
  */
 void WINAPI wine_call_to_16_regs_short( CONTEXT86 *context, INT nArgs )
 {
@@ -86,7 +86,7 @@ void WINAPI wine_call_to_16_regs_short( CONTEXT86 *context, INT nArgs )
 }
 
 /***********************************************************************
- *		wine_call_to_16_regs_long
+ *		wine_call_to_16_regs_long (KERNEL32.@)
  */
 void WINAPI wine_call_to_16_regs_long ( CONTEXT86 *context, INT nArgs )
 {
@@ -94,7 +94,7 @@ void WINAPI wine_call_to_16_regs_long ( CONTEXT86 *context, INT nArgs )
 }
 
 /***********************************************************************
- *		__wine_call_from_16_word
+ *		__wine_call_from_16_word (KERNEL32.@)
  */
 WORD __cdecl __wine_call_from_16_word(void)
 {
@@ -102,7 +102,7 @@ WORD __cdecl __wine_call_from_16_word(void)
 }
 
 /***********************************************************************
- *		__wine_call_from_16_long
+ *		__wine_call_from_16_long (KERNEL32.@)
  */
 LONG __cdecl __wine_call_from_16_long(void)
 {
@@ -110,7 +110,7 @@ LONG __cdecl __wine_call_from_16_long(void)
 }
 
 /***********************************************************************
- *		__wine_call_from_16_regs
+ *		__wine_call_from_16_regs (KERNEL32.@)
  */
 void __cdecl __wine_call_from_16_regs(void)
 {
@@ -118,7 +118,7 @@ void __cdecl __wine_call_from_16_regs(void)
 }
 
 /***********************************************************************
- *		__wine_call_from_16_thunk
+ *		__wine_call_from_16_thunk (KERNEL32.@)
  */
 void __cdecl __wine_call_from_16_thunk(void)
 {

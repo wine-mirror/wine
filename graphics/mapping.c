@@ -54,7 +54,7 @@ BOOL16 WINAPI DPtoLP16( HDC16 hdc, LPPOINT16 points, INT16 count )
 
 
 /***********************************************************************
- *           DPtoLP    (GDI32.65)
+ *           DPtoLP    (GDI32.@)
  */
 BOOL WINAPI DPtoLP( HDC hdc, LPPOINT points, INT count )
 {
@@ -92,7 +92,7 @@ BOOL16 WINAPI LPtoDP16( HDC16 hdc, LPPOINT16 points, INT16 count )
 
 
 /***********************************************************************
- *           LPtoDP    (GDI32.247)
+ *           LPtoDP    (GDI32.@)
  */
 BOOL WINAPI LPtoDP( HDC hdc, LPPOINT points, INT count )
 {
@@ -119,7 +119,7 @@ INT16 WINAPI SetMapMode16( HDC16 hdc, INT16 mode )
 
 
 /***********************************************************************
- *           SetMapMode    (GDI32.321)
+ *           SetMapMode    (GDI32.@)
  */
 INT WINAPI SetMapMode( HDC hdc, INT mode )
 {
@@ -218,7 +218,7 @@ BOOL16 WINAPI SetViewportExtEx16( HDC16 hdc, INT16 x, INT16 y, LPSIZE16 size )
 
 
 /***********************************************************************
- *           SetViewportExtEx    (GDI32.340)
+ *           SetViewportExtEx    (GDI32.@)
  */
 BOOL WINAPI SetViewportExtEx( HDC hdc, INT x, INT y, LPSIZE size )
 {
@@ -276,7 +276,7 @@ BOOL16 WINAPI SetViewportOrgEx16( HDC16 hdc, INT16 x, INT16 y, LPPOINT16 pt )
 
 
 /***********************************************************************
- *           SetViewportOrgEx    (GDI32.341)
+ *           SetViewportOrgEx    (GDI32.@)
  */
 BOOL WINAPI SetViewportOrgEx( HDC hdc, INT x, INT y, LPPOINT pt )
 {
@@ -325,7 +325,7 @@ BOOL16 WINAPI SetWindowExtEx16( HDC16 hdc, INT16 x, INT16 y, LPSIZE16 size )
 
 
 /***********************************************************************
- *           SetWindowExtEx    (GDI32.344)
+ *           SetWindowExtEx    (GDI32.@)
  */
 BOOL WINAPI SetWindowExtEx( HDC hdc, INT x, INT y, LPSIZE size )
 {
@@ -383,7 +383,7 @@ BOOL16 WINAPI SetWindowOrgEx16( HDC16 hdc, INT16 x, INT16 y, LPPOINT16 pt )
 
 
 /***********************************************************************
- *           SetWindowOrgEx    (GDI32.345)
+ *           SetWindowOrgEx    (GDI32.@)
  */
 BOOL WINAPI SetWindowOrgEx( HDC hdc, INT x, INT y, LPPOINT pt )
 {
@@ -431,7 +431,7 @@ BOOL16 WINAPI OffsetViewportOrgEx16( HDC16 hdc, INT16 x, INT16 y, LPPOINT16 pt)
 
 
 /***********************************************************************
- *           OffsetViewportOrgEx    (GDI32.257)
+ *           OffsetViewportOrgEx    (GDI32.@)
  */
 BOOL WINAPI OffsetViewportOrgEx( HDC hdc, INT x, INT y, LPPOINT pt)
 {
@@ -480,7 +480,7 @@ BOOL16 WINAPI OffsetWindowOrgEx16( HDC16 hdc, INT16 x, INT16 y, LPPOINT16 pt )
 
 
 /***********************************************************************
- *           OffsetWindowOrgEx    (GDI32.258)
+ *           OffsetWindowOrgEx    (GDI32.@)
  */
 BOOL WINAPI OffsetWindowOrgEx( HDC hdc, INT x, INT y, LPPOINT pt )
 {
@@ -533,7 +533,7 @@ BOOL16 WINAPI ScaleViewportExtEx16( HDC16 hdc, INT16 xNum, INT16 xDenom,
 
 
 /***********************************************************************
- *           ScaleViewportExtEx    (GDI32.293)
+ *           ScaleViewportExtEx    (GDI32.@)
  */
 BOOL WINAPI ScaleViewportExtEx( HDC hdc, INT xNum, INT xDenom,
                                     INT yNum, INT yDenom, LPSIZE size )
@@ -598,7 +598,7 @@ BOOL16 WINAPI ScaleWindowExtEx16( HDC16 hdc, INT16 xNum, INT16 xDenom,
 
 
 /***********************************************************************
- *           ScaleWindowExtEx    (GDI32.294)
+ *           ScaleWindowExtEx    (GDI32.@)
  */
 BOOL WINAPI ScaleWindowExtEx( HDC hdc, INT xNum, INT xDenom,
                                   INT yNum, INT yDenom, LPSIZE size )

@@ -700,7 +700,7 @@ DWORD PRTDRV_ExtTextOut(LPPDEVICE lpDestDev, WORD wDestXOrg, WORD wDestYOrg,
 }
 
 /***********************************************************************
- *		dmEnumDFonts16
+ *		dmEnumDFonts16 (GDI.206)
  */
 int WINAPI dmEnumDFonts16(LPPDEVICE lpDestDev, LPSTR lpFaceName, FARPROC16 lpCallbackFunc, LPVOID lpClientData)
 {
@@ -709,7 +709,7 @@ int WINAPI dmEnumDFonts16(LPPDEVICE lpDestDev, LPSTR lpFaceName, FARPROC16 lpCal
 }
 
 /***********************************************************************
- *		dmRealizeObject16
+ *		dmRealizeObject16 (GDI.210)
  */
 int WINAPI dmRealizeObject16(LPPDEVICE lpDestDev, INT16 wStyle, LPSTR lpInObj, LPSTR lpOutObj, SEGPTR lpTextXForm)
 {

@@ -99,7 +99,8 @@ typedef struct IAVIStreamImpl {
 } IAVIStreamImpl;
 
 /***********************************************************************
- *		AVIFileInit
+ *		AVIFileInit (AVIFIL32.@)
+ *		AVIFileInit (AVIFILE.100)
  */
 void WINAPI
 AVIFileInit(void) {
@@ -205,7 +206,8 @@ static HRESULT WINAPI IAVIFile_fnDeleteStream(IAVIFile*iface,DWORD fccType,LONG 
 }
 
 /***********************************************************************
- *		AVIFileOpenA
+ *		AVIFileOpenA (AVIFIL32.@)
+ *		AVIFileOpenA (AVIFILE.102)
  */
 HRESULT WINAPI AVIFileOpenA(
 	PAVIFILE * ppfile,LPCSTR szFile,UINT uMode,LPCLSID lpHandler
@@ -363,7 +365,7 @@ static HRESULT WINAPI IAVIStream_fnSetInfo(IAVIStream*iface,AVISTREAMINFOW*info,
 }
 
 /***********************************************************************
- *		AVIFileCreateStreamA
+ *		AVIFileCreateStreamA (AVIFIL32.@)
  */
 HRESULT WINAPI AVIFileCreateStreamA(PAVIFILE iface,PAVISTREAM *ppavi,AVISTREAMINFOA * psi) {
 	AVISTREAMINFOW	psiw;
@@ -376,7 +378,7 @@ HRESULT WINAPI AVIFileCreateStreamA(PAVIFILE iface,PAVISTREAM *ppavi,AVISTREAMIN
 }
 
 /***********************************************************************
- *		AVIFileCreateStreamW
+ *		AVIFileCreateStreamW (AVIFIL32.@)
  */
 HRESULT WINAPI AVIFileCreateStreamW(IAVIFile*iface,PAVISTREAM*avis,AVISTREAMINFOW*asi) {
 	return IAVIFile_CreateStream(iface,avis,asi);
@@ -384,14 +386,15 @@ HRESULT WINAPI AVIFileCreateStreamW(IAVIFile*iface,PAVISTREAM*avis,AVISTREAMINFO
 
 
 /***********************************************************************
- *		AVIFileGetStream
+ *		AVIFileGetStream (AVIFIL32.@)
+ *		AVIFileGetStream (AVIFILE.143)
  */
 HRESULT WINAPI AVIFileGetStream(IAVIFile*iface,PAVISTREAM*avis,DWORD fccType,LONG lParam) {
 	return IAVIFile_GetStream(iface,avis,fccType,lParam);
 }
 
 /***********************************************************************
- *		AVIFileInfoA
+ *		AVIFileInfoA (AVIFIL32.@)
  */
 HRESULT WINAPI AVIFileInfoA(PAVIFILE iface,LPAVIFILEINFOA afi,LONG size) {
 	AVIFILEINFOW	afiw;
@@ -408,7 +411,7 @@ HRESULT WINAPI AVIFileInfoA(PAVIFILE iface,LPAVIFILEINFOA afi,LONG size) {
 }
 
 /***********************************************************************
- *		AVIStreamInfoW
+ *		AVIStreamInfoW (AVIFIL32.@)
  */
 HRESULT WINAPI AVIStreamInfoW(PAVISTREAM iface,AVISTREAMINFOW *asi,LONG
  size) {
@@ -416,7 +419,7 @@ HRESULT WINAPI AVIStreamInfoW(PAVISTREAM iface,AVISTREAMINFOW *asi,LONG
 }
 
 /***********************************************************************
- *		AVIStreamInfoA
+ *		AVIStreamInfoA (AVIFIL32.@)
  */
 HRESULT WINAPI AVIStreamInfoA(PAVISTREAM iface,AVISTREAMINFOA *asi,LONG
  size) {
@@ -434,14 +437,14 @@ HRESULT WINAPI AVIStreamInfoA(PAVISTREAM iface,AVISTREAMINFOA *asi,LONG
 }
 
 /***********************************************************************
- *		AVIFileInfoW
+ *		AVIFileInfoW (AVIFIL32.@)
  */
 HRESULT WINAPI AVIFileInfoW(PAVIFILE iface,LPAVIFILEINFOW afi,LONG size) {
 	return IAVIFile_Info(iface,afi,size);
 }
 
 /***********************************************************************
- *		AVIMakeCompressedStream
+ *		AVIMakeCompressedStream (AVIFIL32.@)
  */
 HRESULT WINAPI AVIMakeCompressedStream(PAVISTREAM *ppsCompressed,PAVISTREAM ppsSource,AVICOMPRESSOPTIONS *aco,CLSID *pclsidHandler) {
 	char			fcc[5];
@@ -487,49 +490,49 @@ HRESULT WINAPI AVIMakeCompressedStream(PAVISTREAM *ppsCompressed,PAVISTREAM ppsS
 }
 
 /***********************************************************************
- *		AVIStreamSetFormat
+ *		AVIStreamSetFormat (AVIFIL32.@)
  */
 HRESULT WINAPI AVIStreamSetFormat(PAVISTREAM iface,LONG pos,LPVOID format,LONG formatsize) {
 	return IAVIStream_SetFormat(iface,pos,format,formatsize);
 }
 
 /***********************************************************************
- *		AVIStreamReadFormat
+ *		AVIStreamReadFormat (AVIFIL32.@)
  */
 HRESULT WINAPI AVIStreamReadFormat(PAVISTREAM iface,LONG pos,LPVOID format,LONG *formatsize) {
 	return IAVIStream_ReadFormat(iface,pos,format,formatsize);
 }
 
 /***********************************************************************
- *		AVIStreamWrite(
+ *		AVIStreamWrite (AVIFIL32.@)
  */
 HRESULT WINAPI AVIStreamWrite(PAVISTREAM iface,LONG start,LONG samples,LPVOID buffer,LONG buffersize,DWORD flags,LONG *sampwritten,LONG *byteswritten) {
 	return IAVIStream_Write(iface,start,samples,buffer,buffersize,flags,sampwritten,byteswritten);
 }
 
 /***********************************************************************
- *		AVIStreamRead
+ *		AVIStreamRead (AVIFIL32.@)
  */
 HRESULT WINAPI AVIStreamRead(PAVISTREAM iface,LONG start,LONG samples,LPVOID buffer,LONG buffersize,LONG *bytesread,LONG *samplesread) {
 	return IAVIStream_Read(iface,start,samples,buffer,buffersize,bytesread,samplesread);
 }
 
 /***********************************************************************
- *		AVIStreamWriteData
+ *		AVIStreamWriteData (AVIFIL32.@)
  */
 HRESULT WINAPI AVIStreamWriteData(PAVISTREAM iface,DWORD fcc,LPVOID lp,LONG size) {
 	return IAVIStream_WriteData(iface,fcc,lp,size);
 }
 
 /***********************************************************************
- *		AVIStreamReadData
+ *		AVIStreamReadData (AVIFIL32.@)
  */
 HRESULT WINAPI AVIStreamReadData(PAVISTREAM iface,DWORD fcc,LPVOID lp,LONG *lpread) {
 	return IAVIStream_ReadData(iface,fcc,lp,lpread);
 }
 
 /***********************************************************************
- *		AVIStreamStart
+ *		AVIStreamStart (AVIFIL32.@)
  */
 LONG WINAPI AVIStreamStart(PAVISTREAM iface) {
 	AVISTREAMINFOW	si;
@@ -539,7 +542,7 @@ LONG WINAPI AVIStreamStart(PAVISTREAM iface) {
 }
 
 /***********************************************************************
- *		AVIStreamLength
+ *		AVIStreamLength (AVIFIL32.@)
  */
 LONG WINAPI AVIStreamLength(PAVISTREAM iface) {
 	AVISTREAMINFOW	si;
@@ -552,14 +555,14 @@ LONG WINAPI AVIStreamLength(PAVISTREAM iface) {
 }
 
 /***********************************************************************
- *		AVIStreamRelease
+ *		AVIStreamRelease (AVIFIL32.@)
  */
 ULONG WINAPI AVIStreamRelease(PAVISTREAM iface) {
 	return IAVIStream_Release(iface);
 }
 
 /***********************************************************************
- *		AVIStreamGetFrameOpen
+ *		AVIStreamGetFrameOpen (AVIFIL32.@)
  */
 PGETFRAME WINAPI AVIStreamGetFrameOpen(PAVISTREAM iface,LPBITMAPINFOHEADER bmi) {
 	FIXME("(%p)->(%p),stub!\n",iface,bmi);
@@ -567,14 +570,14 @@ PGETFRAME WINAPI AVIStreamGetFrameOpen(PAVISTREAM iface,LPBITMAPINFOHEADER bmi) 
 }
 
 /***********************************************************************
- *		AVIStreamGetFrame
+ *		AVIStreamGetFrame (AVIFIL32.@)
  */
 LPVOID WINAPI AVIStreamGetFrame(PGETFRAME pg,LONG pos) {
 	return IGetFrame_GetFrame(pg,pos);
 }
 
 /***********************************************************************
- *		AVIStreamGetFrameClose
+ *		AVIStreamGetFrameClose (AVIFIL32.@)
  */
 HRESULT WINAPI AVIStreamGetFrameClose(PGETFRAME pg) {
 	if (pg) IGetFrame_Release(pg);
@@ -582,14 +585,16 @@ HRESULT WINAPI AVIStreamGetFrameClose(PGETFRAME pg) {
 }
 
 /***********************************************************************
- *		AVIFileRelease
+ *		AVIFileRelease (AVIFIL32.@)
+ *		AVIFileRelease (AVIFILE.141)
  */
 ULONG WINAPI AVIFileRelease(PAVIFILE iface) {
 	return IAVIFile_Release(iface);
 }
 
 /***********************************************************************
- *		AVIFileExit
+ *		AVIFileExit (AVIFIL32.@)
+ *		AVIFileExit (AVIFILE.101)
  */
 void WINAPI AVIFileExit(void) {
 	FIXME("(), stub.\n");

@@ -174,6 +174,7 @@ static BOOL MFDRV_DeleteDC( DC *dc )
 
 /**********************************************************************
  *	     CreateMetaFile16   (GDI.125)
+ *	     CreateMetaFile16   (GDI32.@)
  *
  *  Create a new DC and associate it with a metafile. Pass a filename
  *  to create a disk-based metafile, NULL to create a memory metafile.
@@ -223,7 +224,7 @@ HDC16 WINAPI CreateMetaFile16(
 }
 
 /**********************************************************************
- *	     CreateMetaFileA   (GDI32.51)
+ *	     CreateMetaFileA   (GDI32.@)
  */
 HDC WINAPI CreateMetaFileA( 
 			      LPCSTR filename /* [in] Filename of disk metafile */
@@ -233,7 +234,7 @@ HDC WINAPI CreateMetaFileA(
 }
 
 /**********************************************************************
- *          CreateMetaFileW   (GDI32.52)
+ *          CreateMetaFileW   (GDI32.@)
  */
 HDC WINAPI CreateMetaFileW(LPCWSTR filename)
 {
@@ -295,6 +296,7 @@ static DC *MFDRV_CloseMetaFile( HDC hdc )
 
 /******************************************************************
  *	     CloseMetaFile16   (GDI.126)
+ *	     CloseMetaFile16   (GDI32.@)
  */
 HMETAFILE16 WINAPI CloseMetaFile16( 
 				   HDC16 hdc /* [in] Metafile DC to close */
@@ -316,7 +318,7 @@ HMETAFILE16 WINAPI CloseMetaFile16(
 }
 
 /******************************************************************
- *	     CloseMetaFile   (GDI32.17)
+ *	     CloseMetaFile   (GDI32.@)
  *
  *  Stop recording graphics operations in metafile associated with
  *  hdc and retrieve metafile.

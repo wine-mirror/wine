@@ -158,7 +158,7 @@ BOOL16 WINAPI DeleteMetaFile16(  HMETAFILE16 hmf )
 }
 
 /******************************************************************
- *          DeleteMetaFile  (GDI32.69)
+ *          DeleteMetaFile  (GDI32.@)
  *
  *  Delete a memory-based metafile.
  */
@@ -233,7 +233,7 @@ HMETAFILE16 WINAPI GetMetaFile16( LPCSTR lpFilename )
 }
 
 /******************************************************************
- *         GetMetaFileA   (GDI32.197)
+ *         GetMetaFileA   (GDI32.@)
  *
  *  Read a metafile from a file. Returns handle to a memory-based metafile.
  */
@@ -260,7 +260,7 @@ HMETAFILE WINAPI GetMetaFileA( LPCSTR lpFilename )
 
 
 /******************************************************************
- *         GetMetaFileW   (GDI32.199)
+ *         GetMetaFileW   (GDI32.@)
  */
 HMETAFILE WINAPI GetMetaFileW( LPCWSTR lpFilename )
 {
@@ -367,7 +367,7 @@ HMETAFILE16 WINAPI CopyMetaFile16( HMETAFILE16 hSrcMetaFile, LPCSTR lpFilename)
 
 
 /******************************************************************
- *         CopyMetaFileA   (GDI32.23)
+ *         CopyMetaFileA   (GDI32.@)
  *
  *  Copies the metafile corresponding to hSrcMetaFile to either
  *  a disk file, if a filename is given, or to a new memory based
@@ -417,7 +417,7 @@ HMETAFILE WINAPI CopyMetaFileA(
 
 
 /******************************************************************
- *         CopyMetaFileW   (GDI32.24)
+ *         CopyMetaFileW   (GDI32.@)
  */
 HMETAFILE WINAPI CopyMetaFileW( HMETAFILE hSrcMetaFile,
                                     LPCWSTR lpFilename )
@@ -540,7 +540,7 @@ BOOL16 WINAPI PlayMetaFile16( HDC16 hdc, HMETAFILE16 hmf )
 }
 
 /******************************************************************
- *         PlayMetaFile   (GDI32.265)
+ *         PlayMetaFile   (GDI32.@)
  *
  *  Renders the metafile specified by hmf in the DC specified by
  *  hdc. Returns FALSE on failure, TRUE on success.
@@ -639,7 +639,7 @@ BOOL16 WINAPI EnumMetaFile16( HDC16 hdc, HMETAFILE16 hmf,
 }
 
 /******************************************************************
- *            EnumMetaFile   (GDI32.88)
+ *            EnumMetaFile   (GDI32.@)
  *
  *  Loop through the metafile records in hmf, calling the user-specified
  *  function for each one, stopping when the user's function returns FALSE
@@ -1210,7 +1210,7 @@ break;
 }
 
 /******************************************************************
- *         PlayMetaFileRecord   (GDI32.266)
+ *         PlayMetaFileRecord   (GDI32.@)
  */
 BOOL WINAPI PlayMetaFileRecord( HDC hdc,  HANDLETABLE *handletable, 
 				METARECORD *metarecord, UINT handles )
@@ -1281,7 +1281,7 @@ HMETAFILE16 WINAPI SetMetaFileBitsBetter16( HMETAFILE16 hMeta )
 }
 
 /******************************************************************
- *         SetMetaFileBitsEx    (GDI32.323)
+ *         SetMetaFileBitsEx    (GDI32.@)
  * 
  *  Create a metafile from raw data. No checking of the data is performed.
  *  Use _GetMetaFileBitsEx_ to get raw data from a metafile.
@@ -1298,7 +1298,7 @@ HMETAFILE WINAPI SetMetaFileBitsEx(
 }
 
 /*****************************************************************
- *  GetMetaFileBitsEx     (GDI32.198)  Get raw metafile data
+ *  GetMetaFileBitsEx     (GDI32.@)  Get raw metafile data
  * 
  *  Copies the data from metafile _hmf_ into the buffer _buf_.
  *  If _buf_ is zero, returns size of buffer required. Otherwise,
@@ -1329,7 +1329,7 @@ UINT WINAPI GetMetaFileBitsEx(
 }
 
 /******************************************************************
- *         GetWinMetaFileBits [GDI32.241]
+ *         GetWinMetaFileBits [GDI32.@]
  */
 UINT WINAPI GetWinMetaFileBits(HENHMETAFILE hemf,
                                 UINT cbBuffer, LPBYTE lpbBuffer,

@@ -145,7 +145,8 @@ static const struct tagLOCALE_NAME2ID {
 static char *GetLocaleSubkeyName( DWORD lctype );
 
 /***********************************************************************
- *           GetUserDefaultLCID       [KERNEL32.425]
+ *		GetUserDefaultLCID (KERNEL32.@)
+ *		GetUserDefaultLCID (OLE2NLS.1)
  */
 LCID WINAPI GetUserDefaultLCID(void)
 {
@@ -153,7 +154,8 @@ LCID WINAPI GetUserDefaultLCID(void)
 }
 
 /***********************************************************************
- *         GetSystemDefaultLCID       [KERNEL32.400]
+ *		GetSystemDefaultLCID (KERNEL32.@)
+ *		GetSystemDefaultLCID (OLE2NLS.2)
  */
 LCID WINAPI GetSystemDefaultLCID(void)
 {
@@ -330,7 +332,8 @@ END:
 }
 
 /***********************************************************************
- *         GetUserDefaultLangID       [KERNEL32.426]
+ *		GetUserDefaultLangID (KERNEL32.@)
+ *		GetUserDefaultLangID (OLE2NLS.3)
  */
 LANGID WINAPI GetUserDefaultLangID(void)
 {
@@ -378,7 +381,8 @@ LANGID WINAPI GetUserDefaultLangID(void)
 }
 
 /***********************************************************************
- *         GetSystemDefaultLangID     [KERNEL32.401]
+ *		GetSystemDefaultLangID (KERNEL32.@)
+ *		GetSystemDefaultLangID (OLE2NLS.4)
  */
 LANGID WINAPI GetSystemDefaultLangID(void)
 {
@@ -386,7 +390,7 @@ LANGID WINAPI GetSystemDefaultLangID(void)
 }
 
 /******************************************************************************
- * ConvertDefaultLocale [KERNEL32.147]
+ *		ConvertDefaultLocale (KERNEL32.@)
  */
 LCID WINAPI ConvertDefaultLocale (LCID lcid)
 {	switch (lcid)
@@ -443,7 +447,7 @@ static INT NLS_LoadStringExW(HMODULE hModule, LANGID lang_id, UINT res_id, LPWST
 }
 
 /******************************************************************************
- * GetLocaleInfoA [KERNEL32.342]
+ *		GetLocaleInfoA (KERNEL32.@)
  *
  * NOTES 
  *  LANG_NEUTRAL is equal to LOCALE_SYSTEM_DEFAULT
@@ -561,7 +565,7 @@ INT WINAPI GetLocaleInfoA(LCID lcid,LCTYPE LCType,LPSTR buf,INT len)
 }
 
 /******************************************************************************
- *		GetLocaleInfoW	[KERNEL32.343]
+ *		GetLocaleInfoW (KERNEL32.@)
  *
  * NOTES
  *  MS documentation states that len "specifies the size, in bytes (ANSI version)
@@ -3848,7 +3852,7 @@ INT WINAPI GetNumberFormatA(LCID locale, DWORD dwflags,
 }
 
 /**************************************************************************
- *              GetNumberFormatW	(KERNEL32.xxx)
+ *              GetNumberFormatW	(KERNEL32.@)
  */
 INT WINAPI GetNumberFormatW(LCID locale, DWORD dwflags,
 			       LPCWSTR lpvalue,  const NUMBERFMTW * lpFormat,

@@ -197,7 +197,7 @@ int EMFDRV_AddHandleDC( DC *dc )
 
 
 /**********************************************************************
- *          CreateEnhMetaFileA   (GDI32.41)
+ *          CreateEnhMetaFileA   (GDI32.@)
  */
 HDC WINAPI CreateEnhMetaFileA( 
     HDC hdc,           /* [in] optional reference DC */
@@ -233,7 +233,7 @@ HDC WINAPI CreateEnhMetaFileA(
 }
 
 /**********************************************************************
- *          CreateEnhMetaFileW   (GDI32.42)
+ *          CreateEnhMetaFileW   (GDI32.@)
  */
 HDC WINAPI CreateEnhMetaFileW(
     HDC           hdc,        /* [in] optional reference DC */
@@ -341,7 +341,7 @@ HDC WINAPI CreateEnhMetaFileW(
 }
 
 /******************************************************************
- *             CloseEnhMetaFile
+ *             CloseEnhMetaFile (GDI32.@)
  */
 HENHMETAFILE WINAPI CloseEnhMetaFile(HDC hdc) /* [in] metafile DC */
 {

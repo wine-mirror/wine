@@ -419,7 +419,7 @@ INT16 WINAPI SaveDC16( HDC16 hdc )
 
 
 /***********************************************************************
- *           SaveDC    (GDI32.292)
+ *           SaveDC    (GDI32.@)
  */
 INT WINAPI SaveDC( HDC hdc )
 {
@@ -478,7 +478,7 @@ BOOL16 WINAPI RestoreDC16( HDC16 hdc, INT16 level )
 
 
 /***********************************************************************
- *           RestoreDC    (GDI32.290)
+ *           RestoreDC    (GDI32.@)
  */
 BOOL WINAPI RestoreDC( HDC hdc, INT level )
 {
@@ -571,7 +571,7 @@ HDC16 WINAPI CreateDC16( LPCSTR driver, LPCSTR device, LPCSTR output,
 
 
 /***********************************************************************
- *           CreateDCA    (GDI32.)
+ *           CreateDCA    (GDI32.@)
  */
 HDC WINAPI CreateDCA( LPCSTR driver, LPCSTR device, LPCSTR output,
                           const DEVMODEA *initData )
@@ -581,7 +581,7 @@ HDC WINAPI CreateDCA( LPCSTR driver, LPCSTR device, LPCSTR output,
 
 
 /***********************************************************************
- *           CreateDCW    (GDI32.)
+ *           CreateDCW    (GDI32.@)
  */
 HDC WINAPI CreateDCW( LPCWSTR driver, LPCWSTR device, LPCWSTR output,
                           const DEVMODEW *initData )
@@ -610,7 +610,7 @@ HDC16 WINAPI CreateIC16( LPCSTR driver, LPCSTR device, LPCSTR output,
 
 
 /***********************************************************************
- *           CreateICA    (GDI32.49)
+ *           CreateICA    (GDI32.@)
  */
 HDC WINAPI CreateICA( LPCSTR driver, LPCSTR device, LPCSTR output,
                           const DEVMODEA* initData )
@@ -621,7 +621,7 @@ HDC WINAPI CreateICA( LPCSTR driver, LPCSTR device, LPCSTR output,
 
 
 /***********************************************************************
- *           CreateICW    (GDI32.50)
+ *           CreateICW    (GDI32.@)
  */
 HDC WINAPI CreateICW( LPCWSTR driver, LPCWSTR device, LPCWSTR output,
                           const DEVMODEW* initData )
@@ -641,7 +641,7 @@ HDC16 WINAPI CreateCompatibleDC16( HDC16 hdc )
 
 
 /***********************************************************************
- *           CreateCompatibleDC   (GDI32.31)
+ *           CreateCompatibleDC   (GDI32.@)
  */
 HDC WINAPI CreateCompatibleDC( HDC hdc )
 {
@@ -696,7 +696,7 @@ BOOL16 WINAPI DeleteDC16( HDC16 hdc )
 
 
 /***********************************************************************
- *           DeleteDC    (GDI32.67)
+ *           DeleteDC    (GDI32.@)
  */
 BOOL WINAPI DeleteDC( HDC hdc )
 {
@@ -759,7 +759,7 @@ HDC16 WINAPI ResetDC16( HDC16 hdc, const DEVMODEA *devmode )
 
 
 /***********************************************************************
- *           ResetDCA    (GDI32.287)
+ *           ResetDCA    (GDI32.@)
  */
 HDC WINAPI ResetDCA( HDC hdc, const DEVMODEA *devmode )
 {
@@ -769,7 +769,7 @@ HDC WINAPI ResetDCA( HDC hdc, const DEVMODEA *devmode )
 
 
 /***********************************************************************
- *           ResetDCW    (GDI32.288)
+ *           ResetDCW    (GDI32.@)
  */
 HDC WINAPI ResetDCW( HDC hdc, const DEVMODEW *devmode )
 {
@@ -791,7 +791,7 @@ INT16 WINAPI GetDeviceCaps16( HDC16 hdc, INT16 cap )
 
 
 /***********************************************************************
- *           GetDeviceCaps    (GDI32.171)
+ *           GetDeviceCaps    (GDI32.@)
  */
 INT WINAPI GetDeviceCaps( HDC hdc, INT cap )
 {
@@ -863,7 +863,7 @@ COLORREF WINAPI SetBkColor16( HDC16 hdc, COLORREF color )
 
 
 /***********************************************************************
- *           SetBkColor    (GDI32.305)
+ *           SetBkColor    (GDI32.@)
  */
 COLORREF WINAPI SetBkColor( HDC hdc, COLORREF color )
 {
@@ -892,7 +892,7 @@ COLORREF WINAPI SetTextColor16( HDC16 hdc, COLORREF color )
 
 
 /***********************************************************************
- *           SetTextColor    (GDI32.338)
+ *           SetTextColor    (GDI32.@)
  */
 COLORREF WINAPI SetTextColor( HDC hdc, COLORREF color )
 {
@@ -920,7 +920,7 @@ UINT16 WINAPI SetTextAlign16( HDC16 hdc, UINT16 align )
 
 
 /***********************************************************************
- *           SetTextAlign    (GDI32.336)
+ *           SetTextAlign    (GDI32.@)
  */
 UINT WINAPI SetTextAlign( HDC hdc, UINT align )
 {
@@ -938,7 +938,7 @@ UINT WINAPI SetTextAlign( HDC hdc, UINT align )
 }
 
 /***********************************************************************
- *           GetDCOrgEx  (GDI32.168)
+ *           GetDCOrgEx  (GDI32.@)
  */
 BOOL WINAPI GetDCOrgEx( HDC hDC, LPPOINT lpp )
 {
@@ -985,7 +985,7 @@ DWORD WINAPI SetDCOrg16( HDC16 hdc, INT16 x, INT16 y )
 
 
 /***********************************************************************
- *           SetGraphicsMode    (GDI32.317)
+ *           SetGraphicsMode    (GDI32.@)
  */
 INT WINAPI SetGraphicsMode( HDC hdc, INT mode )
 {
@@ -1018,7 +1018,7 @@ INT16 WINAPI SetArcDirection16( HDC16 hdc, INT16 nDirection )
 
 
 /***********************************************************************
- *           SetArcDirection    (GDI32.302)
+ *           SetArcDirection    (GDI32.@)
  */
 INT WINAPI SetArcDirection( HDC hdc, INT nDirection )
 {
@@ -1042,7 +1042,7 @@ INT WINAPI SetArcDirection( HDC hdc, INT nDirection )
 
 
 /***********************************************************************
- *           GetWorldTransform    (GDI32.244)
+ *           GetWorldTransform    (GDI32.@)
  */
 BOOL WINAPI GetWorldTransform( HDC hdc, LPXFORM xform )
 {
@@ -1056,7 +1056,7 @@ BOOL WINAPI GetWorldTransform( HDC hdc, LPXFORM xform )
 
 
 /***********************************************************************
- *           SetWorldTransform    (GDI32.346)
+ *           SetWorldTransform    (GDI32.@)
  */
 BOOL WINAPI SetWorldTransform( HDC hdc, const XFORM *xform )
 {
@@ -1079,7 +1079,7 @@ BOOL WINAPI SetWorldTransform( HDC hdc, const XFORM *xform )
 
 
 /****************************************************************************
- * ModifyWorldTransform [GDI32.253]
+ * ModifyWorldTransform [GDI32.@]
  * Modifies the world transformation for a device context.
  *
  * PARAMS
@@ -1144,7 +1144,7 @@ BOOL WINAPI ModifyWorldTransform( HDC hdc, const XFORM *xform,
 
 
 /****************************************************************************
- * CombineTransform [GDI32.20]
+ * CombineTransform [GDI32.@]
  * Combines two transformation matrices.
  *
  * PARAMS
@@ -1271,7 +1271,7 @@ WORD WINAPI SetHookFlags16(HDC16 hDC, WORD flags)
 }
 
 /***********************************************************************
- *           SetICMMode    (GDI32.318)
+ *           SetICMMode    (GDI32.@)
  */
 INT WINAPI SetICMMode(HDC hdc, INT iEnableICM)
 {
@@ -1283,7 +1283,7 @@ INT WINAPI SetICMMode(HDC hdc, INT iEnableICM)
 }
 
 /***********************************************************************
- *           GetDeviceGammaRamp    (GDI32.*)
+ *           GetDeviceGammaRamp    (GDI32.@)
  */
 BOOL WINAPI GetDeviceGammaRamp(HDC hdc,LPVOID ptr) {
     FIXME("(%x,%p), empty stub!\n",hdc,ptr);
@@ -1291,7 +1291,7 @@ BOOL WINAPI GetDeviceGammaRamp(HDC hdc,LPVOID ptr) {
 }
 
 /***********************************************************************
- *           GetColorSpace    (GDI32.165)
+ *           GetColorSpace    (GDI32.@)
  */
 HCOLORSPACE WINAPI GetColorSpace(HDC hdc)
 {
@@ -1300,7 +1300,7 @@ HCOLORSPACE WINAPI GetColorSpace(HDC hdc)
 }
 
 /***********************************************************************
- *           CreateColorSpaceA    (GDI32.???)
+ *           CreateColorSpaceA    (GDI32.@)
  */
 HCOLORSPACE WINAPI CreateColorSpaceA( LPLOGCOLORSPACEA lpLogColorSpace )
 {
@@ -1309,7 +1309,7 @@ HCOLORSPACE WINAPI CreateColorSpaceA( LPLOGCOLORSPACEA lpLogColorSpace )
 }
 
 /***********************************************************************
- *           CreateColorSpaceW    (GDI32.???)
+ *           CreateColorSpaceW    (GDI32.@)
  */
 HCOLORSPACE WINAPI CreateColorSpaceW( LPLOGCOLORSPACEW lpLogColorSpace )
 {
@@ -1318,7 +1318,7 @@ HCOLORSPACE WINAPI CreateColorSpaceW( LPLOGCOLORSPACEW lpLogColorSpace )
 }
 
 /***********************************************************************
- *           DeleteColorSpace     (GDI32.???)
+ *           DeleteColorSpace     (GDI32.@)
  */
 BOOL WINAPI DeleteColorSpace( HCOLORSPACE hColorSpace )
 {
@@ -1328,7 +1328,7 @@ BOOL WINAPI DeleteColorSpace( HCOLORSPACE hColorSpace )
 }
 
 /***********************************************************************
- *           SetColorSpace     (GDI32.???)
+ *           SetColorSpace     (GDI32.@)
  */
 HCOLORSPACE WINAPI SetColorSpace( HDC hDC, HCOLORSPACE hColorSpace )
 {
@@ -1346,7 +1346,7 @@ UINT16 WINAPI GetBoundsRect16(HDC16 hdc, LPRECT16 rect, UINT16 flags)
 }
 
 /***********************************************************************
- *           GetBoundsRect    (GDI32.147)
+ *           GetBoundsRect    (GDI32.@)
  */
 UINT WINAPI GetBoundsRect(HDC hdc, LPRECT rect, UINT flags)
 {
@@ -1366,7 +1366,7 @@ UINT16 WINAPI SetBoundsRect16(HDC16 hdc, const RECT16* rect, UINT16 flags)
 }
 
 /***********************************************************************
- *           SetBoundsRect    (GDI32.307)
+ *           SetBoundsRect    (GDI32.@)
  */
 UINT WINAPI SetBoundsRect(HDC hdc, const RECT* rect, UINT flags)
 {
@@ -1376,7 +1376,7 @@ UINT WINAPI SetBoundsRect(HDC hdc, const RECT* rect, UINT flags)
 
 
 /***********************************************************************
- *		GetRelAbs		(GDI32.218)
+ *		GetRelAbs		(GDI32.@)
  */
 INT WINAPI GetRelAbs( HDC hdc, DWORD dwIgnore )
 {
@@ -1411,7 +1411,7 @@ void WINAPI Resurrection16(HDC16 hDC,
 }
 
 /***********************************************************************
- *           GetLayout    (GDI32.321)
+ *           GetLayout    (GDI32.@)
  *
  * Gets left->right or right->left text layout flags of a dc.
  * win98 just returns 0 and sets ERROR_CALL_NOT_IMPLEMENTED so we do the same
@@ -1425,7 +1425,7 @@ DWORD WINAPI GetLayout(HDC hdc)
 }
 
 /***********************************************************************
- *           SetLayout    (GDI32.450)
+ *           SetLayout    (GDI32.@)
  *
  * Sets left->right or right->left text layout flags of a dc.
  * win98 just returns 0 and sets ERROR_CALL_NOT_IMPLEMENTED so we do the same

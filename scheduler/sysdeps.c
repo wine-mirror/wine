@@ -238,7 +238,7 @@ void SYSDEPS_SwitchToThreadStack( void (*func)(void) )
 }
 
 /**********************************************************************
- *           NtCurrentTeb   (NTDLL.89)
+ *           NtCurrentTeb   (NTDLL.@)
  *
  * This will crash and burn if called before threading is initialized
  */

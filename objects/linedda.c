@@ -11,7 +11,7 @@
 
 
 /**********************************************************************
- *           LineDDA   (GDI32.248)
+ *           LineDDA   (GDI32.@)
  */
 BOOL WINAPI LineDDA(INT nXStart, INT nYStart, INT nXEnd, INT nYEnd,
                         LINEDDAPROC callback, LPARAM lParam )

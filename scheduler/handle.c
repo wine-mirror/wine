@@ -15,7 +15,9 @@
 DEFAULT_DEBUG_CHANNEL(win32);
 
 /*********************************************************************
- *           CloseHandle   (KERNEL32.23)
+ *           CloseHandle   (KERNEL.11)
+ *           CloseHandle   (WIN32S16.11)
+ *           CloseHandle   (KERNEL32.@)
  */
 BOOL WINAPI CloseHandle( HANDLE handle )
 {
@@ -106,7 +108,8 @@ BOOL WINAPI DuplicateHandle( HANDLE source_process, HANDLE source,
 
 
 /***********************************************************************
- *           ConvertToGlobalHandle    		(KERNEL32)
+ *           ConvertToGlobalHandle    		(KERNEL.476)
+ *           ConvertToGlobalHandle    		(KERNEL32.@)
  */
 HANDLE WINAPI ConvertToGlobalHandle(HANDLE hSrc)
 {
@@ -117,7 +120,7 @@ HANDLE WINAPI ConvertToGlobalHandle(HANDLE hSrc)
 }
 
 /***********************************************************************
- *           SetHandleContext    		(KERNEL32)
+ *           SetHandleContext    		(KERNEL32.@)
  */
 BOOL WINAPI SetHandleContext(HANDLE hnd,DWORD context) {
     FIXME("(%d,%ld), stub. In case this got called by WSOCK32/WS2_32: the external WINSOCK DLLs won't work with WINE, don't use them.\n",hnd,context);
@@ -126,7 +129,7 @@ BOOL WINAPI SetHandleContext(HANDLE hnd,DWORD context) {
 }
 
 /***********************************************************************
- *           GetHandleContext    		(KERNEL32)
+ *           GetHandleContext    		(KERNEL32.@)
  */
 DWORD WINAPI GetHandleContext(HANDLE hnd) {
     FIXME("(%d), stub. In case this got called by WSOCK32/WS2_32: the external WINSOCK DLLs won't work with WINE, don't use them.\n",hnd);
@@ -135,7 +138,7 @@ DWORD WINAPI GetHandleContext(HANDLE hnd) {
 }
 
 /***********************************************************************
- *           CreateSocketHandle    		(KERNEL32)
+ *           CreateSocketHandle    		(KERNEL32.@)
  */
 HANDLE WINAPI CreateSocketHandle(void) {
     FIXME("(), stub. In case this got called by WSOCK32/WS2_32: the external WINSOCK DLLs won't work with WINE, don't use them.\n");

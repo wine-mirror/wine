@@ -208,7 +208,7 @@ LPCSTR BUILTIN_GetEntryPoint16( STACK16FRAME *frame, LPSTR name, WORD *pOrd )
 
 
 /***********************************************************************
- *           __wine_register_dll_16
+ *           __wine_register_dll_16 (KERNEL32.@)
  *
  * Register a built-in DLL descriptor.
  */

@@ -300,7 +300,7 @@ static void THREAD_Start(void)
 
 
 /***********************************************************************
- *           CreateThread   (KERNEL32.63)
+ *           CreateThread   (KERNEL32.@)
  */
 HANDLE WINAPI CreateThread( SECURITY_ATTRIBUTES *sa, DWORD stack,
                             LPTHREAD_START_ROUTINE start, LPVOID param,
@@ -432,7 +432,7 @@ BOOL WINAPI SetThreadContext( HANDLE handle,           /* [in]  Handle to thread
 
 
 /***********************************************************************
- * GetThreadContext [KERNEL32.294]  Retrieves context of thread.
+ * GetThreadContext [KERNEL32.@]  Retrieves context of thread.
  *
  * RETURNS
  *    Success: TRUE
@@ -458,7 +458,7 @@ BOOL WINAPI GetThreadContext( HANDLE handle,     /* [in]  Handle to thread with 
 
 
 /**********************************************************************
- * GetThreadPriority [KERNEL32.296]  Returns priority for thread.
+ * GetThreadPriority [KERNEL32.@]  Returns priority for thread.
  *
  * RETURNS
  *    Success: Thread's priority level.
@@ -481,7 +481,7 @@ INT WINAPI GetThreadPriority(
 
 
 /**********************************************************************
- * SetThreadPriority [KERNEL32.514]  Sets priority for thread.
+ * SetThreadPriority [KERNEL32.@]  Sets priority for thread.
  *
  * RETURNS
  *    Success: TRUE
@@ -578,7 +578,10 @@ BOOL WINAPI TerminateThread( HANDLE handle,    /* [in] Handle to thread */
 
 
 /**********************************************************************
- * GetExitCodeThread [KERNEL32.???]  Gets termination status of thread.
+ *		GetExitCodeThread (KERNEL32.@)
+ *		GetExitCodeThread (WIN32S16.13)
+ *
+ * Gets termination status of thread.
  * 
  * RETURNS
  *    Success: TRUE
@@ -671,7 +674,7 @@ DWORD WINAPI QueueUserAPC( PAPCFUNC func, HANDLE hthread, ULONG_PTR data )
 
 
 /**********************************************************************
- * GetThreadTimes [KERNEL32.???]  Obtains timing information.
+ * GetThreadTimes [KERNEL32.@]  Obtains timing information.
  *
  * NOTES
  *    What are the fields where these values are stored?
@@ -711,7 +714,7 @@ VOID WINAPI VWin32_BoostThreadStatic( DWORD threadId, INT boost )
 
 
 /***********************************************************************
- *           GetThreadLocale    (KERNEL32.295)
+ *           GetThreadLocale    (KERNEL32.@)
  */
 LCID WINAPI GetThreadLocale(void)
 {
@@ -750,7 +753,7 @@ BOOL WINAPI SetThreadLocale(
 
 
 /***********************************************************************
- * GetCurrentThread [KERNEL32.200]  Gets pseudohandle for current thread
+ * GetCurrentThread [KERNEL32.@]  Gets pseudohandle for current thread
  *
  * RETURNS
  *    Pseudohandle for the current thread
@@ -763,7 +766,7 @@ HANDLE WINAPI GetCurrentThread(void)
 
 
 /***********************************************************************
- * ProcessIdToSessionId   (KERNEL32)
+ * ProcessIdToSessionId   (KERNEL32.@)
  * This function is available on Terminal Server 4SP4 and Windows 2000
  */
 BOOL WINAPI ProcessIdToSessionId( DWORD procid, DWORD *sessionid_ptr )
@@ -797,7 +800,10 @@ __ASM_GLOBAL_FUNC( GetCurrentThreadId, ".byte 0x64\n\tmovl 0x24,%eax\n\tret" );
 #else  /* __i386__ */
 
 /**********************************************************************
- * SetLastError [KERNEL.147] [KERNEL32.497]  Sets the last-error code.
+ *		SetLastError (KERNEL.147)
+ *		SetLastError (KERNEL32.@)
+ *
+ * Sets the last-error code.
  */
 void WINAPI SetLastError( DWORD error ) /* [in] Per-thread error code */
 {
@@ -805,7 +811,11 @@ void WINAPI SetLastError( DWORD error ) /* [in] Per-thread error code */
 }
 
 /**********************************************************************
- * GetLastError [KERNEL.148] [KERNEL32.227]  Returns last-error code.
+ *		GetLastError (KERNEL.10)
+ *              GetLastError (KERNEL32.@)
+ *              GetLastError (WIN32S16.10)
+ *
+ * Returns last-error code.
  */
 DWORD WINAPI GetLastError(void)
 {
@@ -813,7 +823,10 @@ DWORD WINAPI GetLastError(void)
 }
 
 /***********************************************************************
- * GetCurrentProcessId [KERNEL32.199]  Returns process identifier.
+ *		GetCurrentProcessId (KERNEL.471)
+ *		GetCurrentProcessId (KERNEL32.@)
+ *
+ * Returns process identifier.
  */
 DWORD WINAPI GetCurrentProcessId(void)
 {
@@ -821,7 +834,10 @@ DWORD WINAPI GetCurrentProcessId(void)
 }
 
 /***********************************************************************
- * GetCurrentThreadId [KERNEL32.201]  Returns thread identifier.
+ *		GetCurrentThreadId (KERNEL.462)
+ *		GetCurrentThreadId (KERNEL32.@)
+ *
+ * Returns thread identifier.
  */
 DWORD WINAPI GetCurrentThreadId(void)
 {

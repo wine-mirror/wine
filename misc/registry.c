@@ -1578,7 +1578,7 @@ void SHELL_LoadRegistry( void )
 /***************************************************************************/
 
 /******************************************************************************
- * RegFlushKey [KERNEL.227] [ADVAPI32.143]
+ * RegFlushKey [KERNEL.227] [ADVAPI32.@]
  * Immediately writes key to registry.
  * Only returns after data has been written to disk.
  *
@@ -1599,7 +1599,7 @@ DWORD WINAPI RegFlushKey( HKEY hkey )
 
 
 /******************************************************************************
- * RegUnLoadKeyA [ADVAPI32.172]
+ * RegUnLoadKeyA [ADVAPI32.@]
  */
 LONG WINAPI RegUnLoadKeyA( HKEY hkey, LPCSTR lpSubKey )
 {
@@ -1609,7 +1609,7 @@ LONG WINAPI RegUnLoadKeyA( HKEY hkey, LPCSTR lpSubKey )
 
 
 /******************************************************************************
- * RegRestoreKeyW [ADVAPI32.164]
+ * RegRestoreKeyW [ADVAPI32.@]
  *
  * PARAMS
  *    hkey    [I] Handle of key where restore begins
@@ -1633,7 +1633,7 @@ LONG WINAPI RegRestoreKeyW( HKEY hkey, LPCWSTR lpFile, DWORD dwFlags )
 
 
 /******************************************************************************
- * RegRestoreKeyA [ADVAPI32.163]
+ * RegRestoreKeyA [ADVAPI32.@]
  */
 LONG WINAPI RegRestoreKeyA( HKEY hkey, LPCSTR lpFile, DWORD dwFlags )
 {
@@ -1645,7 +1645,7 @@ LONG WINAPI RegRestoreKeyA( HKEY hkey, LPCSTR lpFile, DWORD dwFlags )
 
 
 /******************************************************************************
- * RegReplaceKeyA [ADVAPI32.161]
+ * RegReplaceKeyA [ADVAPI32.@]
  */
 LONG WINAPI RegReplaceKeyA( HKEY hkey, LPCSTR lpSubKey, LPCSTR lpNewFile,
                               LPCSTR lpOldFile )

@@ -140,7 +140,7 @@ BOOL WINAPI FlushInstructionCache(DWORD x,DWORD y,DWORD z) {
 }
 
 /***********************************************************************
- *           GetSystemPowerStatus      (KERNEL32.621)
+ *           GetSystemPowerStatus      (KERNEL32.@)
  */
 BOOL WINAPI GetSystemPowerStatus(LPSYSTEM_POWER_STATUS sps_ptr)
 {
@@ -149,7 +149,7 @@ BOOL WINAPI GetSystemPowerStatus(LPSYSTEM_POWER_STATUS sps_ptr)
 
 
 /***********************************************************************
- *           SetSystemPowerState      (KERNEL32.630)
+ *           SetSystemPowerState      (KERNEL32.@)
  */
 BOOL WINAPI SetSystemPowerState(BOOL suspend_or_hibernate,
                                   BOOL force_flag)
@@ -289,7 +289,7 @@ BOOL WINAPI SetComputerNameW( LPCWSTR lpComputerName )
 }
 
 /******************************************************************************
- *		CreateIoCompletionPort
+ *		CreateIoCompletionPort (KERNEL32.@)
  */
 HANDLE WINAPI CreateIoCompletionPort(HANDLE hFileHandle,
 HANDLE hExistingCompletionPort, DWORD dwCompletionKey,

@@ -39,7 +39,7 @@ static PTOP_LEVEL_EXCEPTION_FILTER top_filter;
 
 
 /*******************************************************************
- *         RaiseException  (KERNEL32.418)
+ *         RaiseException  (KERNEL32.@)
  */
 void WINAPI RaiseException( DWORD code, DWORD flags, DWORD nbargs, const LPDWORD args )
 {
@@ -181,7 +181,7 @@ static int send_debug_event( EXCEPTION_RECORD *rec, int first_chance, CONTEXT *c
 
 
 /*******************************************************************
- *         UnhandledExceptionFilter   (KERNEL32.537)
+ *         UnhandledExceptionFilter   (KERNEL32.@)
  */
 DWORD WINAPI UnhandledExceptionFilter(PEXCEPTION_POINTERS epointers)
 {
@@ -288,7 +288,7 @@ DWORD WINAPI UnhandledExceptionFilter(PEXCEPTION_POINTERS epointers)
 
 
 /***********************************************************************
- *            SetUnhandledExceptionFilter   (KERNEL32.516)
+ *            SetUnhandledExceptionFilter   (KERNEL32.@)
  */
 LPTOP_LEVEL_EXCEPTION_FILTER WINAPI SetUnhandledExceptionFilter(
                                           LPTOP_LEVEL_EXCEPTION_FILTER filter )
@@ -300,7 +300,7 @@ LPTOP_LEVEL_EXCEPTION_FILTER WINAPI SetUnhandledExceptionFilter(
 
 
 /**************************************************************************
- *           FatalAppExitA   (KERNEL32.108)
+ *           FatalAppExitA   (KERNEL32.@)
  */
 void WINAPI FatalAppExitA( UINT action, LPCSTR str )
 {
@@ -314,7 +314,7 @@ void WINAPI FatalAppExitA( UINT action, LPCSTR str )
 
 
 /**************************************************************************
- *           FatalAppExitW   (KERNEL32.109)
+ *           FatalAppExitW   (KERNEL32.@)
  */
 void WINAPI FatalAppExitW( UINT action, LPCWSTR str )
 {

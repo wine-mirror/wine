@@ -90,7 +90,7 @@ BOOL16 WINAPI BeginPath16(HDC16 hdc)
 
 
 /***********************************************************************
- *           BeginPath    (GDI32.9)
+ *           BeginPath    (GDI32.@)
  */
 BOOL WINAPI BeginPath(HDC hdc)
 {
@@ -129,7 +129,7 @@ BOOL16 WINAPI EndPath16(HDC16 hdc)
 
 
 /***********************************************************************
- *           EndPath    (GDI32.78)
+ *           EndPath    (GDI32.@)
  */
 BOOL WINAPI EndPath(HDC hdc)
 {
@@ -166,7 +166,7 @@ BOOL16 WINAPI AbortPath16(HDC16 hdc)
 
 
 /******************************************************************************
- * AbortPath [GDI32.1]
+ * AbortPath [GDI32.@]
  * Closes and discards paths from device context
  *
  * NOTES
@@ -203,7 +203,7 @@ BOOL16 WINAPI CloseFigure16(HDC16 hdc)
 
 
 /***********************************************************************
- *           CloseFigure    (GDI32.16)
+ *           CloseFigure    (GDI32.@)
  *
  * FIXME: Check that SetLastError is being called correctly 
  */
@@ -254,7 +254,7 @@ INT16 WINAPI GetPath16(HDC16 hdc, LPPOINT16 pPoints, LPBYTE pTypes,
 
 
 /***********************************************************************
- *           GetPath    (GDI32.210)
+ *           GetPath    (GDI32.@)
  */
 INT WINAPI GetPath(HDC hdc, LPPOINT pPoints, LPBYTE pTypes,
    INT nSize)
@@ -309,7 +309,7 @@ HRGN16 WINAPI PathToRegion16(HDC16 hdc)
 }
 
 /***********************************************************************
- *           PathToRegion    (GDI32.261)
+ *           PathToRegion    (GDI32.@)
  *
  * FIXME 
  *   Check that SetLastError is being called correctly 
@@ -420,7 +420,7 @@ BOOL16 WINAPI FillPath16(HDC16 hdc)
 }
 
 /***********************************************************************
- *           FillPath    (GDI32.100)
+ *           FillPath    (GDI32.@)
  *
  * FIXME
  *    Check that SetLastError is being called correctly 
@@ -457,7 +457,7 @@ BOOL16 WINAPI SelectClipPath16(HDC16 hdc, INT16 iMode)
 }
 
 /***********************************************************************
- *           SelectClipPath    (GDI32.296)
+ *           SelectClipPath    (GDI32.@)
  * FIXME 
  *  Check that SetLastError is being called correctly 
  */
@@ -1438,7 +1438,7 @@ BOOL16 WINAPI FlattenPath16(HDC16 hdc)
 }
 
 /*******************************************************************
- *      FlattenPath [GDI32.103]
+ *      FlattenPath [GDI32.@]
  *
  *
  */
@@ -1523,7 +1523,7 @@ BOOL16 WINAPI StrokeAndFillPath16(HDC16 hdc)
 }
 
 /*******************************************************************
- *      StrokeAndFillPath [GDI32.352]
+ *      StrokeAndFillPath [GDI32.@]
  *
  *
  */
@@ -1557,7 +1557,7 @@ BOOL16 WINAPI StrokePath16(HDC16 hdc)
 }
 
 /*******************************************************************
- *      StrokePath [GDI32.353]
+ *      StrokePath [GDI32.@]
  *
  *
  */
@@ -1593,7 +1593,7 @@ BOOL16 WINAPI WidenPath16(HDC16 hdc)
 }
 
 /*******************************************************************
- *      WidenPath [GDI32.360]
+ *      WidenPath [GDI32.@]
  *
  *
  */

@@ -34,7 +34,7 @@ INT16 WINAPI Escape16( HDC16 hdc, INT16 nEscape, INT16 cbInput,
 }
 
 /************************************************************************
- *             Escape  [GDI32.200]
+ *             Escape  [GDI32.@]
  */
 INT WINAPI Escape( HDC hdc, INT nEscape, INT cbInput,
 		   LPCSTR lpszInData, LPVOID lpvOutData )
@@ -240,7 +240,7 @@ INT WINAPI Escape( HDC hdc, INT nEscape, INT cbInput,
 }
 
 /******************************************************************************
- *		ExtEscape	[GDI32.95]
+ *		ExtEscape	[GDI32.@]
  *
  * PARAMS
  *    hdc         [I] Handle to device context
@@ -275,7 +275,7 @@ INT WINAPI ExtEscape( HDC hdc, INT nEscape, INT cbInput,
 }
 
 /*******************************************************************
- *      DrawEscape [GDI32.74]
+ *      DrawEscape [GDI32.@]
  *
  *
  */

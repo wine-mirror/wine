@@ -25,7 +25,7 @@ static WINE_EXCEPTION_FILTER(page_fault)
 }
 
 /***********************************************************************
- *              GetComputerNameA         (KERNEL32.165)
+ *              GetComputerNameA         (KERNEL32.@)
  */
 BOOL WINAPI GetComputerNameA(LPSTR name,LPDWORD size)
 {
@@ -48,7 +48,7 @@ BOOL WINAPI GetComputerNameA(LPSTR name,LPDWORD size)
 }
 
 /***********************************************************************
- *              GetComputerNameW         (KERNEL32.166)
+ *              GetComputerNameW         (KERNEL32.@)
  */
 BOOL WINAPI GetComputerNameW(LPWSTR name,LPDWORD size)
 {

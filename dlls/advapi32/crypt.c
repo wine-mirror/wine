@@ -12,7 +12,7 @@
 DEFAULT_DEBUG_CHANNEL(advapi);
 
 /******************************************************************************
- * CryptAcquireContextA
+ * CryptAcquireContextA (ADVAPI32.@)
  * Acquire a crypto provider context handle.
  * 
  * PARAMS
@@ -35,7 +35,7 @@ CryptAcquireContextA( HCRYPTPROV *phProv, LPCSTR pszContainer,
 }
 
 /******************************************************************************
- * CryptSetKeyParam
+ * CryptSetKeyParam (ADVAPI32.@)
  */
 BOOL WINAPI
 CryptSetKeyParam( HCRYPTKEY hKey, DWORD dwParam, BYTE *pbData, DWORD dwFlags)
@@ -46,7 +46,7 @@ CryptSetKeyParam( HCRYPTKEY hKey, DWORD dwParam, BYTE *pbData, DWORD dwFlags)
 
 
 /******************************************************************************
- * CryptGenRandom
+ * CryptGenRandom (ADVAPI32.@)
  */
 BOOL WINAPI
 CryptGenRandom (HCRYPTPROV hProv, DWORD dwLen, BYTE *pbBuffer)
@@ -84,7 +84,7 @@ CryptGenRandom (HCRYPTPROV hProv, DWORD dwLen, BYTE *pbBuffer)
 
 
 /******************************************************************************
- * CryptReleaseContext
+ * CryptReleaseContext (ADVAPI32.@)
  */
 BOOL WINAPI
 CryptReleaseContext (HCRYPTPROV hProv, DWORD dwFlags)

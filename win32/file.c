@@ -29,7 +29,7 @@
 DEFAULT_DEBUG_CHANNEL(file);
 
 /***********************************************************************
- *              ReadFileEx                (KERNEL32.)
+ *              ReadFileEx                (KERNEL32.@)
  */
 BOOL WINAPI ReadFileEx(HFILE hFile, LPVOID lpBuffer, DWORD numtoread,
 			 LPOVERLAPPED lpOverlapped, 
@@ -52,7 +52,7 @@ BOOL16 WINAPI SetFileAttributes16( LPCSTR lpFileName, DWORD attributes )
 
 
 /**************************************************************************
- *              SetFileAttributesA	(KERNEL32.490)
+ *              SetFileAttributesA	(KERNEL32.@)
  */
 BOOL WINAPI SetFileAttributesA(LPCSTR lpFileName, DWORD attributes)
 {
@@ -110,7 +110,7 @@ BOOL WINAPI SetFileAttributesA(LPCSTR lpFileName, DWORD attributes)
 
 
 /**************************************************************************
- *              SetFileAttributesW	(KERNEL32.491)
+ *              SetFileAttributesW	(KERNEL32.@)
  */
 BOOL WINAPI SetFileAttributesW(LPCWSTR lpFileName, DWORD attributes)
 {
@@ -140,7 +140,7 @@ VOID WINAPI SetFileApisToANSI(void)
 
 
 /******************************************************************************
- * AreFileApisANSI [KERNEL32.105]  Determines if file functions are using ANSI
+ * AreFileApisANSI [KERNEL32.@]  Determines if file functions are using ANSI
  *
  * RETURNS
  *    TRUE:  Set of file functions is using ANSI code page

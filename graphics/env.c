@@ -73,7 +73,7 @@ static ATOM PortNameToAtom(LPCSTR lpPortName, BOOL16 add)
 
 
 /***********************************************************************
- *           GetEnvironment   (GDI.134)
+ *           GetEnvironment   (GDI.133)
  */
 INT16 WINAPI GetEnvironment16(LPCSTR lpPortName, LPDEVMODEA lpdev, UINT16 nMaxSize)
 {

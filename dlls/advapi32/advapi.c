@@ -18,7 +18,7 @@
 
 
 /******************************************************************************
- * GetUserNameA [ADVAPI32.67]
+ * GetUserNameA [ADVAPI32.@]
  */
 BOOL WINAPI
 GetUserNameA( LPSTR lpszName, LPDWORD lpSize )
@@ -40,7 +40,7 @@ GetUserNameA( LPSTR lpszName, LPDWORD lpSize )
 }
 
 /******************************************************************************
- * GetUserNameW [ADVAPI32.68]
+ * GetUserNameW [ADVAPI32.@]
  *
  * PARAMS
  *   lpszName []

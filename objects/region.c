@@ -497,7 +497,7 @@ INT16 WINAPI OffsetRgn16( HRGN16 hrgn, INT16 x, INT16 y )
 }
 
 /***********************************************************************
- *           OffsetRgn   (GDI32.256)
+ *           OffsetRgn   (GDI32.@)
  */
 INT WINAPI OffsetRgn( HRGN hrgn, INT x, INT y )
 {
@@ -545,7 +545,7 @@ INT16 WINAPI GetRgnBox16( HRGN16 hrgn, LPRECT16 rect )
 }
 
 /***********************************************************************
- *           GetRgnBox    (GDI32.219)
+ *           GetRgnBox    (GDI32.@)
  */
 INT WINAPI GetRgnBox( HRGN hrgn, LPRECT rect )
 {
@@ -584,7 +584,7 @@ HRGN16 WINAPI CreateRectRgn16(INT16 left, INT16 top, INT16 right, INT16 bottom)
 
 
 /***********************************************************************
- *           CreateRectRgn   (GDI32.59)
+ *           CreateRectRgn   (GDI32.@)
  */
 HRGN WINAPI CreateRectRgn(INT left, INT top, INT right, INT bottom)
 {
@@ -609,7 +609,7 @@ HRGN16 WINAPI CreateRectRgnIndirect16( const RECT16* rect )
 
 
 /***********************************************************************
- *           CreateRectRgnIndirect    (GDI32.60)
+ *           CreateRectRgnIndirect    (GDI32.@)
  */
 HRGN WINAPI CreateRectRgnIndirect( const RECT* rect )
 {
@@ -633,7 +633,7 @@ VOID WINAPI SetRectRgn16( HRGN16 hrgn, INT16 left, INT16 top,
 
 
 /***********************************************************************
- *           SetRectRgn    (GDI32.332)
+ *           SetRectRgn    (GDI32.@)
  *
  * Allows either or both left and top to be greater than right or bottom.
  */
@@ -687,7 +687,7 @@ HRGN16 WINAPI CreateRoundRectRgn16( INT16 left, INT16 top,
 }
 
 /***********************************************************************
- *           CreateRoundRectRgn    (GDI32.61)
+ *           CreateRoundRectRgn    (GDI32.@)
  */
 HRGN WINAPI CreateRoundRectRgn( INT left, INT top,
 				    INT right, INT bottom,
@@ -807,7 +807,7 @@ HRGN16 WINAPI CreateEllipticRgn16( INT16 left, INT16 top,
 
 
 /***********************************************************************
- *           CreateEllipticRgn    (GDI32.39)
+ *           CreateEllipticRgn    (GDI32.@)
  */
 HRGN WINAPI CreateEllipticRgn( INT left, INT top,
 				   INT right, INT bottom )
@@ -829,7 +829,7 @@ HRGN16 WINAPI CreateEllipticRgnIndirect16( const RECT16 *rect )
 
 
 /***********************************************************************
- *           CreateEllipticRgnIndirect    (GDI32.40)
+ *           CreateEllipticRgnIndirect    (GDI32.@)
  */
 HRGN WINAPI CreateEllipticRgnIndirect( const RECT *rect )
 {
@@ -839,7 +839,7 @@ HRGN WINAPI CreateEllipticRgnIndirect( const RECT *rect )
 }
 
 /***********************************************************************
- *           GetRegionData   (GDI32.217)
+ *           GetRegionData   (GDI32.@)
  * 
  * MSDN: GetRegionData, Return Values:
  *
@@ -895,7 +895,7 @@ DWORD WINAPI GetRegionData16(HRGN16 hrgn, DWORD count, LPRGNDATA rgndata)
 }
 
 /***********************************************************************
- *           ExtCreateRegion   (GDI32.94)
+ *           ExtCreateRegion   (GDI32.@)
  * 
  */
 HRGN WINAPI ExtCreateRegion( const XFORM* lpXform, DWORD dwCount, const RGNDATA* rgndata)
@@ -947,7 +947,7 @@ BOOL16 WINAPI PtInRegion16( HRGN16 hrgn, INT16 x, INT16 y )
 
 
 /***********************************************************************
- *           PtInRegion    (GDI32.278)
+ *           PtInRegion    (GDI32.@)
  */
 BOOL WINAPI PtInRegion( HRGN hrgn, INT x, INT y )
 {
@@ -972,7 +972,7 @@ BOOL WINAPI PtInRegion( HRGN hrgn, INT x, INT y )
 
 
 /***********************************************************************
- *           RectInRegion16    (GDI.181)
+ *           RectInRegion16    (GDI.466)
  */
 BOOL16 WINAPI RectInRegion16( HRGN16 hrgn, const RECT16 *rect )
 {
@@ -984,7 +984,7 @@ BOOL16 WINAPI RectInRegion16( HRGN16 hrgn, const RECT16 *rect )
 
 
 /***********************************************************************
- *           RectInRegion    (GDI32.281)
+ *           RectInRegion    (GDI32.@)
  *
  * Returns TRUE if rect is at least partly inside hrgn
  */
@@ -1036,7 +1036,7 @@ BOOL16 WINAPI EqualRgn16( HRGN16 rgn1, HRGN16 rgn2 )
 
 
 /***********************************************************************
- *           EqualRgn    (GDI32.90)
+ *           EqualRgn    (GDI32.@)
  */
 BOOL WINAPI EqualRgn( HRGN hrgn1, HRGN hrgn2 )
 {
@@ -1208,7 +1208,7 @@ BOOL REGION_LPTODP( HDC hdc, HRGN hDest, HRGN hSrc )
 }
     
 /***********************************************************************
- *           CombineRgn16    (GDI.451)
+ *           CombineRgn16    (GDI.47)
  */
 INT16 WINAPI CombineRgn16(HRGN16 hDest, HRGN16 hSrc1, HRGN16 hSrc2, INT16 mode)
 {
@@ -1217,7 +1217,7 @@ INT16 WINAPI CombineRgn16(HRGN16 hDest, HRGN16 hSrc1, HRGN16 hSrc2, INT16 mode)
 
 
 /***********************************************************************
- *           CombineRgn   (GDI32.19)
+ *           CombineRgn   (GDI32.@)
  *
  * Note: The behavior is correct even if src and dest regions are the same.
  */
@@ -2693,7 +2693,7 @@ static int REGION_PtsToRegion(int numFullPtBlocks, int iCurPtBlock,
 }
 
 /***********************************************************************
- *           CreatePolyPolygonRgn    (GDI32.57)
+ *           CreatePolyPolygonRgn    (GDI32.@)
  */
 HRGN WINAPI CreatePolyPolygonRgn(const POINT *Pts, const INT *Count, 
 		      INT nbpolygons, INT mode)
@@ -2911,7 +2911,7 @@ HRGN16 WINAPI CreatePolyPolygonRgn16( const POINT16 *points,
 }
 
 /***********************************************************************
- *           CreatePolygonRgn    (GDI32.58)
+ *           CreatePolygonRgn    (GDI32.@)
  */
 HRGN WINAPI CreatePolygonRgn( const POINT *points, INT count,
                                   INT mode )
@@ -2921,7 +2921,7 @@ HRGN WINAPI CreatePolygonRgn( const POINT *points, INT count,
 
 
 /***********************************************************************
- * GetRandomRgn [GDI32.215]
+ * GetRandomRgn [GDI32.@]
  *
  * NOTES
  *     This function is documented in MSDN online
@@ -3225,6 +3225,7 @@ done:
 
 /***********************************************************************
  *           GetMetaRgn    (GDI.328)
+ *           GetMetaRgn    (GDI32.@)
  */
 INT WINAPI GetMetaRgn( HDC hdc, HRGN hRgn )
 {
@@ -3236,6 +3237,7 @@ INT WINAPI GetMetaRgn( HDC hdc, HRGN hRgn )
 
 /***********************************************************************
  *           SetMetaRgn    (GDI.455)
+ *           SetMetaRgn    (GDI32.@)
  */
 INT WINAPI SetMetaRgn( HDC hdc )
 {

@@ -38,7 +38,7 @@ static void dumpLsaAttributes( PLSA_OBJECT_ATTRIBUTES oa )
 */
 
 /******************************************************************************
- * OpenProcessToken			[ADVAPI32.109]
+ * OpenProcessToken			[ADVAPI32.@]
  * Opens the access token associated with a process
  *
  * PARAMS
@@ -56,7 +56,7 @@ OpenProcessToken( HANDLE ProcessHandle, DWORD DesiredAccess,
 }
 
 /******************************************************************************
- * OpenThreadToken [ADVAPI32.114]
+ * OpenThreadToken [ADVAPI32.@]
  *
  * PARAMS
  *   thread        []
@@ -72,7 +72,7 @@ OpenThreadToken( HANDLE ThreadHandle, DWORD DesiredAccess,
 }
 
 /******************************************************************************
- * AdjustTokenPrivileges [ADVAPI32.10]
+ * AdjustTokenPrivileges [ADVAPI32.@]
  *
  * PARAMS
  *   TokenHandle          []
@@ -91,7 +91,7 @@ AdjustTokenPrivileges( HANDLE TokenHandle, BOOL DisableAllPrivileges,
 }
 
 /******************************************************************************
- * GetTokenInformation [ADVAPI32.66]
+ * GetTokenInformation [ADVAPI32.@]
  *
  * PARAMS
  *   token           []
@@ -109,7 +109,7 @@ GetTokenInformation( HANDLE token, TOKEN_INFORMATION_CLASS tokeninfoclass,
 }
 
 /*************************************************************************
- * SetThreadToken [ADVAPI32.231]
+ * SetThreadToken [ADVAPI32.@]
  *
  * Assigns an "impersonation token" to a thread so it can assume the
  * security privledges of another thread or process.  Can also remove
@@ -133,7 +133,7 @@ BOOL WINAPI SetThreadToken(PHANDLE thread, HANDLE token)
 */
 
 /******************************************************************************
- * AllocateAndInitializeSid [ADVAPI32.11]
+ * AllocateAndInitializeSid [ADVAPI32.@]
  *
  * PARAMS
  *   pIdentifierAuthority []
@@ -165,7 +165,7 @@ AllocateAndInitializeSid( PSID_IDENTIFIER_AUTHORITY pIdentifierAuthority,
 }
 
 /******************************************************************************
- * FreeSid [ADVAPI32.42]
+ * FreeSid [ADVAPI32.@]
  *
  * PARAMS
  *   pSid []
@@ -178,7 +178,7 @@ FreeSid( PSID pSid )
 }
 
 /******************************************************************************
- * CopySid [ADVAPI32.24]
+ * CopySid [ADVAPI32.@]
  *
  * PARAMS
  *   nDestinationSidLength []
@@ -192,7 +192,7 @@ CopySid( DWORD nDestinationSidLength, PSID pDestinationSid, PSID pSourceSid )
 }
 
 /******************************************************************************
- * IsValidSid [ADVAPI32.80]
+ * IsValidSid [ADVAPI32.@]
  *
  * PARAMS
  *   pSid []
@@ -204,7 +204,7 @@ IsValidSid( PSID pSid )
 }
 
 /******************************************************************************
- * EqualSid [ADVAPI32.40]
+ * EqualSid [ADVAPI32.@]
  *
  * PARAMS
  *   pSid1 []
@@ -217,7 +217,7 @@ EqualSid( PSID pSid1, PSID pSid2 )
 }
 
 /******************************************************************************
- * EqualPrefixSid [ADVAPI32.39]
+ * EqualPrefixSid [ADVAPI32.@]
  */
 BOOL WINAPI EqualPrefixSid (PSID pSid1, PSID pSid2) 
 {
@@ -225,7 +225,7 @@ BOOL WINAPI EqualPrefixSid (PSID pSid1, PSID pSid2)
 }
 
 /******************************************************************************
- * GetSidLengthRequired [ADVAPI32.63]
+ * GetSidLengthRequired [ADVAPI32.@]
  *
  * PARAMS
  *   nSubAuthorityCount []
@@ -237,7 +237,7 @@ GetSidLengthRequired( BYTE nSubAuthorityCount )
 }
 
 /******************************************************************************
- * InitializeSid [ADVAPI32.74]
+ * InitializeSid [ADVAPI32.@]
  *
  * PARAMS
  *   pIdentifierAuthority []
@@ -252,7 +252,7 @@ InitializeSid (
 }
 
 /******************************************************************************
- * GetSidIdentifierAuthority [ADVAPI32.62]
+ * GetSidIdentifierAuthority [ADVAPI32.@]
  *
  * PARAMS
  *   pSid []
@@ -264,7 +264,7 @@ GetSidIdentifierAuthority( PSID pSid )
 }
 
 /******************************************************************************
- * GetSidSubAuthority [ADVAPI32.64]
+ * GetSidSubAuthority [ADVAPI32.@]
  *
  * PARAMS
  *   pSid          []
@@ -277,7 +277,7 @@ GetSidSubAuthority( PSID pSid, DWORD nSubAuthority )
 }
 
 /******************************************************************************
- * GetSidSubAuthorityCount [ADVAPI32.65]
+ * GetSidSubAuthorityCount [ADVAPI32.@]
  *
  * PARAMS
  *   pSid []
@@ -289,7 +289,7 @@ GetSidSubAuthorityCount (PSID pSid)
 }
 
 /******************************************************************************
- * GetLengthSid [ADVAPI32.48]
+ * GetLengthSid [ADVAPI32.@]
  *
  * PARAMS
  *   pSid []
@@ -306,7 +306,7 @@ GetLengthSid (PSID pSid)
 */
 	
 /******************************************************************************
- * InitializeSecurityDescriptor [ADVAPI32.73]
+ * InitializeSecurityDescriptor [ADVAPI32.@]
  *
  * PARAMS
  *   pDescr   []
@@ -319,7 +319,7 @@ InitializeSecurityDescriptor( SECURITY_DESCRIPTOR *pDescr, DWORD revision )
 }
 
 /******************************************************************************
- * GetSecurityDescriptorLength [ADVAPI32.55]
+ * GetSecurityDescriptorLength [ADVAPI32.@]
  */
 DWORD WINAPI GetSecurityDescriptorLength( SECURITY_DESCRIPTOR *pDescr)
 {
@@ -327,7 +327,7 @@ DWORD WINAPI GetSecurityDescriptorLength( SECURITY_DESCRIPTOR *pDescr)
 }
 
 /******************************************************************************
- * GetSecurityDescriptorOwner [ADVAPI32.56]
+ * GetSecurityDescriptorOwner [ADVAPI32.@]
  *
  * PARAMS
  *   pOwner            []
@@ -341,7 +341,7 @@ GetSecurityDescriptorOwner( SECURITY_DESCRIPTOR *pDescr, PSID *pOwner,
 }
 
 /******************************************************************************
- * SetSecurityDescriptorOwner [ADVAPI32]
+ * SetSecurityDescriptorOwner [ADVAPI32.@]
  *
  * PARAMS
  */
@@ -351,7 +351,7 @@ BOOL WINAPI SetSecurityDescriptorOwner( PSECURITY_DESCRIPTOR pSecurityDescriptor
 	CallWin32ToNt (RtlSetOwnerSecurityDescriptor(pSecurityDescriptor, pOwner, bOwnerDefaulted));
 }
 /******************************************************************************
- * GetSecurityDescriptorGroup			[ADVAPI32.54]
+ * GetSecurityDescriptorGroup			[ADVAPI32.@]
  */
 BOOL WINAPI GetSecurityDescriptorGroup(
 	PSECURITY_DESCRIPTOR SecurityDescriptor,
@@ -361,7 +361,7 @@ BOOL WINAPI GetSecurityDescriptorGroup(
 	CallWin32ToNt (RtlGetGroupSecurityDescriptor(SecurityDescriptor, Group, (PBOOLEAN)GroupDefaulted));
 }	
 /******************************************************************************
- * SetSecurityDescriptorGroup
+ * SetSecurityDescriptorGroup [ADVAPI32.@]
  */
 BOOL WINAPI SetSecurityDescriptorGroup ( PSECURITY_DESCRIPTOR SecurityDescriptor,
 					   PSID Group, BOOL GroupDefaulted)
@@ -370,7 +370,7 @@ BOOL WINAPI SetSecurityDescriptorGroup ( PSECURITY_DESCRIPTOR SecurityDescriptor
 }
 
 /******************************************************************************
- * IsValidSecurityDescriptor [ADVAPI32.79]
+ * IsValidSecurityDescriptor [ADVAPI32.@]
  *
  * PARAMS
  *   lpsecdesc []
@@ -382,7 +382,7 @@ IsValidSecurityDescriptor( PSECURITY_DESCRIPTOR SecurityDescriptor )
 }
 
 /******************************************************************************
- *  GetSecurityDescriptorDacl			[ADVAPI.91]
+ *  GetSecurityDescriptorDacl			[ADVAPI32.@]
  */
 BOOL WINAPI GetSecurityDescriptorDacl(
 	IN PSECURITY_DESCRIPTOR pSecurityDescriptor,
@@ -395,7 +395,7 @@ BOOL WINAPI GetSecurityDescriptorDacl(
 }	
 
 /******************************************************************************
- *  SetSecurityDescriptorDacl			[ADVAPI.224]
+ *  SetSecurityDescriptorDacl			[ADVAPI32.@]
  */
 BOOL WINAPI 
 SetSecurityDescriptorDacl (
@@ -407,7 +407,7 @@ SetSecurityDescriptorDacl (
 	CallWin32ToNt (RtlSetDaclSecurityDescriptor (lpsd, daclpresent, dacl, dacldefaulted ));
 }
 /******************************************************************************
- *  GetSecurityDescriptorSacl			[ADVAPI.]
+ *  GetSecurityDescriptorSacl			[ADVAPI32.@]
  */
 BOOL WINAPI GetSecurityDescriptorSacl(
 	IN PSECURITY_DESCRIPTOR lpsd,
@@ -420,7 +420,7 @@ BOOL WINAPI GetSecurityDescriptorSacl(
 }	
 
 /**************************************************************************
- * SetSecurityDescriptorSacl			[NTDLL.488]
+ * SetSecurityDescriptorSacl			[ADVAPI32.@]
  */
 BOOL WINAPI SetSecurityDescriptorSacl (
 	PSECURITY_DESCRIPTOR lpsd,
@@ -431,7 +431,7 @@ BOOL WINAPI SetSecurityDescriptorSacl (
 	CallWin32ToNt (RtlSetSaclSecurityDescriptor(lpsd, saclpresent, lpsacl, sacldefaulted));
 }
 /******************************************************************************
- * MakeSelfRelativeSD [ADVAPI32.95]
+ * MakeSelfRelativeSD [ADVAPI32.@]
  *
  * PARAMS
  *   lpabssecdesc  []
@@ -448,7 +448,7 @@ MakeSelfRelativeSD(
 }
 
 /******************************************************************************
- * GetSecurityDescriptorControl			[ADVAPI32]
+ * GetSecurityDescriptorControl			[ADVAPI32.@]
  */
 
 BOOL WINAPI GetSecurityDescriptorControl ( PSECURITY_DESCRIPTOR  pSecurityDescriptor,
@@ -463,7 +463,7 @@ BOOL WINAPI GetSecurityDescriptorControl ( PSECURITY_DESCRIPTOR  pSecurityDescri
 */
 
 /*************************************************************************
- * InitializeAcl [ADVAPI32.111]
+ * InitializeAcl [ADVAPI32.@]
  */
 DWORD WINAPI InitializeAcl(PACL acl, DWORD size, DWORD rev)
 {
@@ -476,7 +476,7 @@ DWORD WINAPI InitializeAcl(PACL acl, DWORD size, DWORD rev)
 */
 
 /******************************************************************************
- * LookupPrivilegeValueW			[ADVAPI32.93]
+ * LookupPrivilegeValueW			[ADVAPI32.@]
  * Retrieves LUID used on a system to represent the privilege name.
  *
  * NOTES
@@ -498,7 +498,7 @@ LookupPrivilegeValueW( LPCWSTR lpSystemName, LPCWSTR lpName, LPVOID lpLuid )
 }
 
 /******************************************************************************
- * LookupPrivilegeValueA			[ADVAPI32.92]
+ * LookupPrivilegeValueA			[ADVAPI32.@]
  */
 BOOL WINAPI
 LookupPrivilegeValueA( LPCSTR lpSystemName, LPCSTR lpName, LPVOID lpLuid )
@@ -514,7 +514,7 @@ LookupPrivilegeValueA( LPCSTR lpSystemName, LPCSTR lpName, LPVOID lpLuid )
 }
 
 /******************************************************************************
- * GetFileSecurityA [ADVAPI32.45]
+ * GetFileSecurityA [ADVAPI32.@]
  *
  * Obtains Specified information about the security of a file or directory
  * The information obtained is constrained by the callers access rights and
@@ -531,7 +531,7 @@ GetFileSecurityA( LPCSTR lpFileName,
 }
 
 /******************************************************************************
- * GetFileSecurityW [ADVAPI32.46]
+ * GetFileSecurityW [ADVAPI32.@]
  *
  * Obtains Specified information about the security of a file or directory
  * The information obtained is constrained by the callers access rights and
@@ -556,7 +556,7 @@ GetFileSecurityW( LPCWSTR lpFileName,
 
 
 /******************************************************************************
- * LookupAccountSidA [ADVAPI32.86]
+ * LookupAccountSidA [ADVAPI32.@]
  */
 BOOL WINAPI
 LookupAccountSidA(
@@ -589,7 +589,7 @@ LookupAccountSidA(
 }
 
 /******************************************************************************
- * LookupAccountSidW [ADVAPI32.87]
+ * LookupAccountSidW [ADVAPI32.@]
  *
  * PARAMS
  *   system      []
@@ -631,7 +631,7 @@ LookupAccountSidW(
 }
 
 /******************************************************************************
- * SetFileSecurityA [ADVAPI32.182]
+ * SetFileSecurityA [ADVAPI32.@]
  * Sets the security of a file or directory
  */
 BOOL WINAPI SetFileSecurityA( LPCSTR lpFileName,
@@ -643,7 +643,7 @@ BOOL WINAPI SetFileSecurityA( LPCSTR lpFileName,
 }
 
 /******************************************************************************
- * SetFileSecurityW [ADVAPI32.183]
+ * SetFileSecurityW [ADVAPI32.@]
  * Sets the security of a file or directory
  *
  * PARAMS
@@ -661,7 +661,7 @@ SetFileSecurityW( LPCWSTR lpFileName,
 }
 
 /******************************************************************************
- * QueryWindows31FilesMigration [ADVAPI32.266]
+ * QueryWindows31FilesMigration [ADVAPI32.@]
  *
  * PARAMS
  *   x1 []
@@ -674,7 +674,7 @@ QueryWindows31FilesMigration( DWORD x1 )
 }
 
 /******************************************************************************
- * SynchronizeWindows31FilesAndWindowsNTRegistry [ADVAPI32.265]
+ * SynchronizeWindows31FilesAndWindowsNTRegistry [ADVAPI32.@]
  *
  * PARAMS
  *   x1 []
@@ -691,7 +691,7 @@ SynchronizeWindows31FilesAndWindowsNTRegistry( DWORD x1, DWORD x2, DWORD x3,
 }
 
 /******************************************************************************
- * LsaOpenPolicy [ADVAPI32.200]
+ * LsaOpenPolicy [ADVAPI32.@]
  *
  * PARAMS
  *   x1 []
@@ -715,7 +715,7 @@ LsaOpenPolicy(
 }
 
 /******************************************************************************
- * LsaQueryInformationPolicy [ADVAPI32.242]
+ * LsaQueryInformationPolicy [ADVAPI32.@]
  */
 NTSTATUS WINAPI
 LsaQueryInformationPolicy( 
@@ -773,7 +773,7 @@ LsaQueryInformationPolicy(
 }			  
 
 /******************************************************************************
- * LsaLookupSids [ADVAPI32.240]
+ * LsaLookupSids [ADVAPI32.@]
  */
 typedef struct
 {
@@ -808,7 +808,7 @@ LsaLookupSids(
 }
 
 /******************************************************************************
- * LsaFreeMemory [ADVAPI32.241]
+ * LsaFreeMemory [ADVAPI32.@]
  */
 NTSTATUS WINAPI
 LsaFreeMemory(IN PVOID Buffer)
@@ -817,7 +817,7 @@ LsaFreeMemory(IN PVOID Buffer)
 	return HeapFree(GetProcessHeap(), 0, Buffer);
 }
 /******************************************************************************
- * LsaClose [ADVAPI32.243]
+ * LsaClose [ADVAPI32.@]
  */
 NTSTATUS WINAPI
 LsaClose(IN LSA_HANDLE ObjectHandle)
@@ -826,7 +826,7 @@ LsaClose(IN LSA_HANDLE ObjectHandle)
 	return 0xc0000000;
 }
 /******************************************************************************
- * NotifyBootConfigStatus [ADVAPI32.97]
+ * NotifyBootConfigStatus [ADVAPI32.@]
  *
  * PARAMS
  *   x1 []
@@ -839,7 +839,7 @@ NotifyBootConfigStatus( DWORD x1 )
 }
 
 /******************************************************************************
- * RevertToSelf [ADVAPI32.180]
+ * RevertToSelf [ADVAPI32.@]
  *
  * PARAMS
  *   void []
@@ -852,7 +852,7 @@ RevertToSelf( void )
 }
 
 /******************************************************************************
- * ImpersonateSelf [ADVAPI32.71]
+ * ImpersonateSelf [ADVAPI32.@]
  */
 BOOL WINAPI
 ImpersonateSelf(SECURITY_IMPERSONATION_LEVEL ImpersonationLevel)
@@ -861,7 +861,7 @@ ImpersonateSelf(SECURITY_IMPERSONATION_LEVEL ImpersonationLevel)
 }
 
 /******************************************************************************
- * AccessCheck [ADVAPI32.71]
+ * AccessCheck [ADVAPI32.@]
  *
  * FIXME check cast LPBOOL to PBOOLEAN
  */
@@ -881,7 +881,7 @@ AccessCheck(
 }
 
 /*************************************************************************
- * SetKernelObjectSecurity [ADVAPI32.223]
+ * SetKernelObjectSecurity [ADVAPI32.@]
  */
 BOOL WINAPI SetKernelObjectSecurity (
 	IN HANDLE Handle,
@@ -892,7 +892,7 @@ BOOL WINAPI SetKernelObjectSecurity (
 }
 
 /******************************************************************************
- *  AddAccessAllowedAce
+ *  AddAccessAllowedAce [ADVAPI32.@]
  */
 BOOL WINAPI AddAccessAllowedAce(
         IN OUT PACL pAcl,

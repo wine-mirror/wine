@@ -15,7 +15,7 @@
 DEFAULT_DEBUG_CHANNEL(win32);
 
 /***********************************************************************
- *              GetLocalTime            (KERNEL32.228)
+ *              GetLocalTime            (KERNEL32.@)
  */
 VOID WINAPI GetLocalTime(LPSYSTEMTIME systime)
 {
@@ -38,7 +38,7 @@ VOID WINAPI GetLocalTime(LPSYSTEMTIME systime)
 }
 
 /***********************************************************************
- *              GetSystemTime            (KERNEL32.285)
+ *              GetSystemTime            (KERNEL32.@)
  */
 VOID WINAPI GetSystemTime(LPSYSTEMTIME systime)
 {

@@ -21,6 +21,7 @@ DEFAULT_DEBUG_CHANNEL(text);
 
 
 /***********************************************************************
+ *           ExtTextOut16    (DISPLAY.351)
  *           ExtTextOut16    (GDI.351)
  */
 BOOL16 WINAPI ExtTextOut16( HDC16 hdc, INT16 x, INT16 y, UINT16 flags,
@@ -45,7 +46,7 @@ BOOL16 WINAPI ExtTextOut16( HDC16 hdc, INT16 x, INT16 y, UINT16 flags,
 
 
 /***********************************************************************
- *           ExtTextOutA    (GDI32.98)
+ *           ExtTextOutA    (GDI32.@)
  */
 BOOL WINAPI ExtTextOutA( HDC hdc, INT x, INT y, UINT flags,
                              const RECT *lprect, LPCSTR str, UINT count,
@@ -95,7 +96,7 @@ BOOL WINAPI ExtTextOutA( HDC hdc, INT x, INT y, UINT flags,
 
 
 /***********************************************************************
- *           ExtTextOutW    (GDI32.99)
+ *           ExtTextOutW    (GDI32.@)
  */
 BOOL WINAPI ExtTextOutW( HDC hdc, INT x, INT y, UINT flags,
                              const RECT *lprect, LPCWSTR str, UINT count,
@@ -123,7 +124,7 @@ BOOL16 WINAPI TextOut16( HDC16 hdc, INT16 x, INT16 y, LPCSTR str, INT16 count )
 
 
 /***********************************************************************
- *           TextOutA    (GDI32.355)
+ *           TextOutA    (GDI32.@)
  */
 BOOL WINAPI TextOutA( HDC hdc, INT x, INT y, LPCSTR str, INT count )
 {
@@ -132,7 +133,7 @@ BOOL WINAPI TextOutA( HDC hdc, INT x, INT y, LPCSTR str, INT count )
 
 
 /***********************************************************************
- *           TextOutW    (GDI32.356)
+ *           TextOutW    (GDI32.@)
  */
 BOOL WINAPI TextOutW(HDC hdc, INT x, INT y, LPCWSTR str, INT count)
 {
@@ -141,7 +142,7 @@ BOOL WINAPI TextOutW(HDC hdc, INT x, INT y, LPCWSTR str, INT count)
 
 
 /***********************************************************************
- * GetTextCharset [GDI32.226]  Gets character set for font in DC
+ * GetTextCharset [GDI32.@]  Gets character set for font in DC
  *
  * NOTES
  *    Should it return a UINT32 instead of an INT32?
@@ -167,7 +168,7 @@ UINT16 WINAPI GetTextCharset16(HDC16 hdc)
 }
 
 /***********************************************************************
- * GetTextCharsetInfo [GDI32.381]  Gets character set for font
+ * GetTextCharsetInfo [GDI32.@]  Gets character set for font
  *
  * NOTES
  *    Should csi be an LPFONTSIGNATURE instead of an LPCHARSETINFO?
@@ -203,7 +204,10 @@ UINT WINAPI GetTextCharsetInfo(
 }
 
 /***********************************************************************
- * PolyTextOutA [GDI.402]  Draw several Strings
+ *		PolyTextOutA (GDI.402)
+ *		PolyTextOutA (GDI32.@)
+ *
+ * Draw several Strings
  */
 BOOL WINAPI PolyTextOutA (
 			  HDC hdc,               /* [in] Handle to device context */			  
@@ -219,7 +223,10 @@ BOOL WINAPI PolyTextOutA (
 
 
 /***********************************************************************
- * PolyTextOutW [GDI.403] Draw several Strings
+ *		PolyTextOutW (GDI.403)
+ *		PolyTextOutW (GDI32.@)
+ *
+ * Draw several Strings
  */
 BOOL WINAPI PolyTextOutW ( 
 			  HDC hdc,               /* [in] Handle to device context */			  

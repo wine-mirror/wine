@@ -32,7 +32,7 @@ BOOL16 WINAPI LineTo16( HDC16 hdc, INT16 x, INT16 y )
 
 
 /***********************************************************************
- *           LineTo    (GDI32.249)
+ *           LineTo    (GDI32.@)
  */
 BOOL WINAPI LineTo( HDC hdc, INT x, INT y )
 {
@@ -80,7 +80,7 @@ BOOL16 WINAPI MoveToEx16( HDC16 hdc, INT16 x, INT16 y, LPPOINT16 pt )
 
 
 /***********************************************************************
- *           MoveToEx    (GDI32.254)
+ *           MoveToEx    (GDI32.@)
  */
 BOOL WINAPI MoveToEx( HDC hdc, INT x, INT y, LPPOINT pt )
 {
@@ -117,7 +117,7 @@ BOOL16 WINAPI Arc16( HDC16 hdc, INT16 left, INT16 top, INT16 right,
 
 
 /***********************************************************************
- *           Arc    (GDI32.7)
+ *           Arc    (GDI32.@)
  */
 BOOL WINAPI Arc( HDC hdc, INT left, INT top, INT right,
                      INT bottom, INT xstart, INT ystart,
@@ -137,7 +137,7 @@ BOOL WINAPI Arc( HDC hdc, INT left, INT top, INT right,
 }
 
 /***********************************************************************
- *           ArcTo    (GDI32.8)
+ *           ArcTo    (GDI32.@)
  */
 BOOL WINAPI ArcTo( HDC hdc, 
                      INT left,   INT top, 
@@ -189,7 +189,7 @@ BOOL16 WINAPI Pie16( HDC16 hdc, INT16 left, INT16 top,
 
 
 /***********************************************************************
- *           Pie   (GDI32.262)
+ *           Pie   (GDI32.@)
  */
 BOOL WINAPI Pie( HDC hdc, INT left, INT top,
                      INT right, INT bottom, INT xstart, INT ystart,
@@ -221,7 +221,7 @@ BOOL16 WINAPI Chord16( HDC16 hdc, INT16 left, INT16 top,
 
 
 /***********************************************************************
- *           Chord    (GDI32.14)
+ *           Chord    (GDI32.@)
  */
 BOOL WINAPI Chord( HDC hdc, INT left, INT top,
                        INT right, INT bottom, INT xstart, INT ystart,
@@ -252,7 +252,7 @@ BOOL16 WINAPI Ellipse16( HDC16 hdc, INT16 left, INT16 top,
 
 
 /***********************************************************************
- *           Ellipse    (GDI32.75)
+ *           Ellipse    (GDI32.@)
  */
 BOOL WINAPI Ellipse( HDC hdc, INT left, INT top,
                          INT right, INT bottom )
@@ -282,7 +282,7 @@ BOOL16 WINAPI Rectangle16( HDC16 hdc, INT16 left, INT16 top,
 
 
 /***********************************************************************
- *           Rectangle    (GDI32.283)
+ *           Rectangle    (GDI32.@)
  */
 BOOL WINAPI Rectangle( HDC hdc, INT left, INT top,
                            INT right, INT bottom )
@@ -312,7 +312,7 @@ BOOL16 WINAPI RoundRect16( HDC16 hdc, INT16 left, INT16 top, INT16 right,
 
 
 /***********************************************************************
- *           RoundRect    (GDI32.291)
+ *           RoundRect    (GDI32.@)
  */
 BOOL WINAPI RoundRect( HDC hdc, INT left, INT top, INT right,
                            INT bottom, INT ell_width, INT ell_height )
@@ -341,7 +341,7 @@ COLORREF WINAPI SetPixel16( HDC16 hdc, INT16 x, INT16 y, COLORREF color )
 
 
 /***********************************************************************
- *           SetPixel    (GDI32.327)
+ *           SetPixel    (GDI32.@)
  */
 COLORREF WINAPI SetPixel( HDC hdc, INT x, INT y, COLORREF color )
 {
@@ -356,7 +356,7 @@ COLORREF WINAPI SetPixel( HDC hdc, INT x, INT y, COLORREF color )
 }
 
 /***********************************************************************
- *           SetPixelV    (GDI32.329)
+ *           SetPixelV    (GDI32.@)
  */
 BOOL WINAPI SetPixelV( HDC hdc, INT x, INT y, COLORREF color )
 {
@@ -384,7 +384,7 @@ COLORREF WINAPI GetPixel16( HDC16 hdc, INT16 x, INT16 y )
 
 
 /***********************************************************************
- *           GetPixel    (GDI32.211)
+ *           GetPixel    (GDI32.@)
  */
 COLORREF WINAPI GetPixel( HDC hdc, INT x, INT y )
 {
@@ -405,7 +405,7 @@ COLORREF WINAPI GetPixel( HDC hdc, INT x, INT y )
 
 
 /******************************************************************************
- * ChoosePixelFormat [GDI32.13]
+ * ChoosePixelFormat [GDI32.@]
  * Matches a pixel format to given format
  *
  * PARAMS
@@ -434,7 +434,7 @@ INT WINAPI ChoosePixelFormat( HDC hdc, const LPPIXELFORMATDESCRIPTOR ppfd )
 
 
 /******************************************************************************
- * SetPixelFormat [GDI32.328]
+ * SetPixelFormat [GDI32.@]
  * Sets pixel format of device context
  *
  * PARAMS
@@ -463,7 +463,7 @@ BOOL WINAPI SetPixelFormat( HDC hdc, INT iPixelFormat,
 
 
 /******************************************************************************
- * GetPixelFormat [GDI32.212]
+ * GetPixelFormat [GDI32.@]
  * Gets index of pixel format of DC
  *
  * PARAMETERS
@@ -491,7 +491,7 @@ INT WINAPI GetPixelFormat( HDC hdc )
 
 
 /******************************************************************************
- * DescribePixelFormat [GDI32.71]
+ * DescribePixelFormat [GDI32.@]
  * Gets info about pixel format from DC
  *
  * PARAMS
@@ -529,7 +529,7 @@ INT WINAPI DescribePixelFormat( HDC hdc, INT iPixelFormat, UINT nBytes,
 
 
 /******************************************************************************
- * SwapBuffers [GDI32.354]
+ * SwapBuffers [GDI32.@]
  * Exchanges front and back buffers of window
  *
  * PARAMS
@@ -568,7 +568,7 @@ BOOL16 WINAPI PaintRgn16( HDC16 hdc, HRGN16 hrgn )
 
 
 /***********************************************************************
- *           PaintRgn    (GDI32.259)
+ *           PaintRgn    (GDI32.@)
  */
 BOOL WINAPI PaintRgn( HDC hdc, HRGN hrgn )
 {
@@ -593,7 +593,7 @@ BOOL16 WINAPI FillRgn16( HDC16 hdc, HRGN16 hrgn, HBRUSH16 hbrush )
 
     
 /***********************************************************************
- *           FillRgn    (GDI32.101)
+ *           FillRgn    (GDI32.@)
  */
 BOOL WINAPI FillRgn( HDC hdc, HRGN hrgn, HBRUSH hbrush )
 {
@@ -625,7 +625,7 @@ BOOL16 WINAPI FrameRgn16( HDC16 hdc, HRGN16 hrgn, HBRUSH16 hbrush,
 
 
 /***********************************************************************
- *           FrameRgn     (GDI32.105)
+ *           FrameRgn     (GDI32.@)
  */
 BOOL WINAPI FrameRgn( HDC hdc, HRGN hrgn, HBRUSH hbrush,
                           INT nWidth, INT nHeight )
@@ -664,7 +664,7 @@ BOOL16 WINAPI InvertRgn16( HDC16 hdc, HRGN16 hrgn )
 
 
 /***********************************************************************
- *           InvertRgn    (GDI32.246)
+ *           InvertRgn    (GDI32.@)
  */
 BOOL WINAPI InvertRgn( HDC hdc, HRGN hrgn )
 {
@@ -707,7 +707,7 @@ BOOL16 WINAPI Polyline16( HDC16 hdc, const POINT16* pt, INT16 count )
 
 
 /**********************************************************************
- *          Polyline   (GDI32.276)
+ *          Polyline   (GDI32.@)
  */
 BOOL WINAPI Polyline( HDC hdc, const POINT* pt, INT count )
 {
@@ -723,7 +723,7 @@ BOOL WINAPI Polyline( HDC hdc, const POINT* pt, INT count )
 }
 
 /**********************************************************************
- *          PolylineTo   (GDI32.277)
+ *          PolylineTo   (GDI32.@)
  */
 BOOL WINAPI PolylineTo( HDC hdc, const POINT* pt, DWORD cCount )
 {
@@ -777,7 +777,7 @@ BOOL16 WINAPI Polygon16( HDC16 hdc, const POINT16* pt, INT16 count )
 
 
 /**********************************************************************
- *          Polygon  (GDI32.275)
+ *          Polygon  (GDI32.@)
  */
 BOOL WINAPI Polygon( HDC hdc, const POINT* pt, INT count )
 {
@@ -794,7 +794,7 @@ BOOL WINAPI Polygon( HDC hdc, const POINT* pt, INT count )
 
 
 /**********************************************************************
- *          PolyPolygon16  (GDI.450)
+ *          PolyPolygon (GDI.450)
  */
 BOOL16 WINAPI PolyPolygon16( HDC16 hdc, const POINT16* pt, const INT16* counts,
                              UINT16 polygons )
@@ -825,7 +825,7 @@ BOOL16 WINAPI PolyPolygon16( HDC16 hdc, const POINT16* pt, const INT16* counts,
 }
 
 /**********************************************************************
- *          PolyPolygon  (GDI.450)
+ *          PolyPolygon  (GDI32.@)
  */
 BOOL WINAPI PolyPolygon( HDC hdc, const POINT* pt, const INT* counts,
                              UINT polygons )
@@ -842,7 +842,7 @@ BOOL WINAPI PolyPolygon( HDC hdc, const POINT* pt, const INT* counts,
 }
 
 /**********************************************************************
- *          PolyPolyline  (GDI32.272)
+ *          PolyPolyline  (GDI32.@)
  */
 BOOL WINAPI PolyPolyline( HDC hdc, const POINT* pt, const DWORD* counts,
                             DWORD polylines )
@@ -869,7 +869,7 @@ BOOL16 WINAPI ExtFloodFill16( HDC16 hdc, INT16 x, INT16 y, COLORREF color,
 
 
 /**********************************************************************
- *          ExtFloodFill   (GDI32.96)
+ *          ExtFloodFill   (GDI32.@)
  */
 BOOL WINAPI ExtFloodFill( HDC hdc, INT x, INT y, COLORREF color,
                               UINT fillType )
@@ -895,7 +895,7 @@ BOOL16 WINAPI FloodFill16( HDC16 hdc, INT16 x, INT16 y, COLORREF color )
 
 
 /**********************************************************************
- *          FloodFill   (GDI32.104)
+ *          FloodFill   (GDI32.@)
  */
 BOOL WINAPI FloodFill( HDC hdc, INT x, INT y, COLORREF color )
 {
@@ -936,7 +936,7 @@ BOOL16 WINAPI PolyBezierTo16( HDC16 hDc, const POINT16* lppt, INT16 cPoints )
 }
 
 /******************************************************************************
- * PolyBezier [GDI32.268]
+ * PolyBezier [GDI32.@]
  * Draws one or more Bezier curves
  *
  * PARAMS
@@ -975,7 +975,7 @@ BOOL WINAPI PolyBezier( HDC hdc, const POINT* lppt, DWORD cPoints )
 }
 
 /******************************************************************************
- * PolyBezierTo [GDI32.269]
+ * PolyBezierTo [GDI32.@]
  * Draws one or more Bezier curves
  *
  * PARAMS
@@ -1015,7 +1015,7 @@ BOOL WINAPI PolyBezierTo( HDC hdc, const POINT* lppt, DWORD cPoints )
 }
 
 /***********************************************************************
- *      AngleArc (GDI32.5)
+ *      AngleArc (GDI32.@)
  */
 BOOL WINAPI AngleArc(HDC hdc, INT x, INT y, DWORD dwRadius, FLOAT eStartAngle, FLOAT eSweepAngle)
 {
@@ -1061,7 +1061,7 @@ BOOL WINAPI AngleArc(HDC hdc, INT x, INT y, DWORD dwRadius, FLOAT eStartAngle, F
 }
 
 /***********************************************************************
- *      PolyDraw (GDI32.270)
+ *      PolyDraw (GDI32.@)
  */
 BOOL WINAPI PolyDraw(HDC hdc, const POINT *lppt, const BYTE *lpbTypes,
                        DWORD cCount)

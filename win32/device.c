@@ -477,12 +477,16 @@ static BOOL DeviceIo_VTDAPI(DWORD dwIoControlCode, LPVOID lpvInBuffer, DWORD cbI
     return retv;
 }
 
-
-
-
-
 /***********************************************************************
- *           VxDCall                   (KERNEL32.[1-9])
+ *		VxDCall0 (KERNEL32.1)
+ *		VxDCall1 (KERNEL32.2)
+ *		VxDCall2 (KERNEL32.3)
+ *		VxDCall3 (KERNEL32.4)
+ *		VxDCall4 (KERNEL32.5)
+ *		VxDCall5 (KERNEL32.6)
+ *		VxDCall6 (KERNEL32.7)
+ *		VxDCall7 (KERNEL32.8)
+ *		VxDCall8 (KERNEL32.9)
  */
 void VxDCall( DWORD service, CONTEXT86 *context )
 {
@@ -1221,7 +1225,7 @@ static BOOL DeviceIo_PCCARD (DWORD dwIoControlCode,
 }
 
 /***********************************************************************
- *		OpenVxDHandle
+ *		OpenVxDHandle (KERNEL32.@)
  */
 DWORD	WINAPI	OpenVxDHandle(DWORD pmt)
 {

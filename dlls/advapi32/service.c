@@ -51,7 +51,7 @@ EnumServicesStatusW( SC_HANDLE hSCManager, DWORD dwServiceType,
 }
 
 /******************************************************************************
- * StartServiceCtrlDispatcherA [ADVAPI32.196]
+ * StartServiceCtrlDispatcherA [ADVAPI32.@]
  */
 BOOL WINAPI
 StartServiceCtrlDispatcherA( LPSERVICE_TABLE_ENTRYA servent )
@@ -110,7 +110,7 @@ StartServiceCtrlDispatcherA( LPSERVICE_TABLE_ENTRYA servent )
 }
 
 /******************************************************************************
- * StartServiceCtrlDispatcherW [ADVAPI32.197]
+ * StartServiceCtrlDispatcherW [ADVAPI32.@]
  *
  * PARAMS
  *   servent []
@@ -152,7 +152,7 @@ StartServiceCtrlDispatcherW( LPSERVICE_TABLE_ENTRYW servent )
 }
 
 /******************************************************************************
- * RegisterServiceCtrlHandlerA [ADVAPI32.176]
+ * RegisterServiceCtrlHandlerA [ADVAPI32.@]
  */
 SERVICE_STATUS_HANDLE WINAPI
 RegisterServiceCtrlHandlerA( LPCSTR lpServiceName,
@@ -162,7 +162,7 @@ RegisterServiceCtrlHandlerA( LPCSTR lpServiceName,
 }
 
 /******************************************************************************
- * RegisterServiceCtrlHandlerW [ADVAPI32.177]
+ * RegisterServiceCtrlHandlerW [ADVAPI32.@]
  *
  * PARAMS
  *   lpServiceName []
@@ -176,7 +176,7 @@ RegisterServiceCtrlHandlerW( LPCWSTR lpServiceName,
 }
 
 /******************************************************************************
- * SetServiceStatus [ADVAPI32.192]
+ * SetServiceStatus [ADVAPI32.@]
  *
  * PARAMS
  *   hService []
@@ -196,7 +196,7 @@ SetServiceStatus( SERVICE_STATUS_HANDLE hService, LPSERVICE_STATUS lpStatus )
 }
 
 /******************************************************************************
- * OpenSCManagerA [ADVAPI32.110]
+ * OpenSCManagerA [ADVAPI32.@]
  */
 SC_HANDLE WINAPI
 OpenSCManagerA( LPCSTR lpMachineName, LPCSTR lpDatabaseName,
@@ -212,7 +212,7 @@ OpenSCManagerA( LPCSTR lpMachineName, LPCSTR lpDatabaseName,
 }
 
 /******************************************************************************
- * OpenSCManagerW [ADVAPI32.111]
+ * OpenSCManagerW [ADVAPI32.@]
  * Establishes a connection to the service control manager and opens database
  *
  * NOTES
@@ -254,7 +254,7 @@ OpenSCManagerW( LPCWSTR lpMachineName, LPCWSTR lpDatabaseName,
 
 
 /******************************************************************************
- * AllocateLocallyUniqueId [ADVAPI32.12]
+ * AllocateLocallyUniqueId [ADVAPI32.@]
  *
  * PARAMS
  *   lpluid []
@@ -269,7 +269,7 @@ AllocateLocallyUniqueId( PLUID lpluid )
 
 
 /******************************************************************************
- * ControlService [ADVAPI32.23]
+ * ControlService [ADVAPI32.@]
  * Sends a control code to a Win32-based service.
  *
  * PARAMS
@@ -289,7 +289,7 @@ ControlService( SC_HANDLE hService, DWORD dwControl,
 
 
 /******************************************************************************
- * CloseServiceHandle [ADVAPI32.22]
+ * CloseServiceHandle [ADVAPI32.@]
  * Close handle to service or service control manager
  *
  * PARAMS
@@ -309,7 +309,7 @@ CloseServiceHandle( SC_HANDLE hSCObject )
 
 
 /******************************************************************************
- * OpenServiceA [ADVAPI32.112]
+ * OpenServiceA [ADVAPI32.@]
  */
 SC_HANDLE WINAPI
 OpenServiceA( SC_HANDLE hSCManager, LPCSTR lpServiceName, 
@@ -329,7 +329,7 @@ OpenServiceA( SC_HANDLE hSCManager, LPCSTR lpServiceName,
 
 
 /******************************************************************************
- * OpenServiceW [ADVAPI32.113]
+ * OpenServiceW [ADVAPI32.@]
  * Opens a handle to an existing service
  *
  * PARAMS
@@ -369,7 +369,7 @@ OpenServiceW(SC_HANDLE hSCManager, LPCWSTR lpServiceName,
 }
 
 /******************************************************************************
- * CreateServiceW [ADVAPI32.29]
+ * CreateServiceW [ADVAPI32.@]
  */
 SC_HANDLE WINAPI
 CreateServiceW( SC_HANDLE hSCManager, LPCWSTR lpServiceName,
@@ -386,7 +386,7 @@ CreateServiceW( SC_HANDLE hSCManager, LPCWSTR lpServiceName,
 
 
 /******************************************************************************
- * CreateServiceA [ADVAPI32.28]
+ * CreateServiceA [ADVAPI32.@]
  */
 SC_HANDLE WINAPI
 CreateServiceA( SC_HANDLE hSCManager, LPCSTR lpServiceName,
@@ -482,7 +482,7 @@ CreateServiceA( SC_HANDLE hSCManager, LPCSTR lpServiceName,
 
 
 /******************************************************************************
- * DeleteService [ADVAPI32.31]
+ * DeleteService [ADVAPI32.@]
  *
  * PARAMS
  *    hService [I] Handle to service
@@ -499,7 +499,7 @@ DeleteService( SC_HANDLE hService )
 
 
 /******************************************************************************
- * StartServiceA [ADVAPI32.195]
+ * StartServiceA [ADVAPI32.@]
  *
  */
 BOOL WINAPI
@@ -534,7 +534,7 @@ StartServiceA( SC_HANDLE hService, DWORD dwNumServiceArgs,
 
 
 /******************************************************************************
- * StartServiceW [ADVAPI32.198]
+ * StartServiceW [ADVAPI32.@]
  * Starts a service
  *
  * PARAMS
@@ -651,7 +651,7 @@ StartServiceW( SC_HANDLE hService, DWORD dwNumServiceArgs,
 }
 
 /******************************************************************************
- * QueryServiceStatus [ADVAPI32.123]
+ * QueryServiceStatus [ADVAPI32.@]
  *
  * PARAMS
  *   hService        []

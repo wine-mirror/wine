@@ -863,7 +863,7 @@ error:
 
 
 /***********************************************************************
- *           ExitProcess   (KERNEL32.100)
+ *           ExitProcess   (KERNEL32.@)
  */
 void WINAPI ExitProcess( DWORD status )
 {
@@ -1058,7 +1058,7 @@ DWORD WINAPI MapProcessHandle( HANDLE handle )
 }
 
 /***********************************************************************
- *           SetPriorityClass   (KERNEL32.503)
+ *           SetPriorityClass   (KERNEL32.@)
  */
 BOOL WINAPI SetPriorityClass( HANDLE hprocess, DWORD priorityclass )
 {
@@ -1077,7 +1077,7 @@ BOOL WINAPI SetPriorityClass( HANDLE hprocess, DWORD priorityclass )
 
 
 /***********************************************************************
- *           GetPriorityClass   (KERNEL32.250)
+ *           GetPriorityClass   (KERNEL32.@)
  */
 DWORD WINAPI GetPriorityClass(HANDLE hprocess)
 {
@@ -1094,7 +1094,7 @@ DWORD WINAPI GetPriorityClass(HANDLE hprocess)
 
 
 /***********************************************************************
- *          SetProcessAffinityMask   (KERNEL32.662)
+ *          SetProcessAffinityMask   (KERNEL32.@)
  */
 BOOL WINAPI SetProcessAffinityMask( HANDLE hProcess, DWORD affmask )
 {
@@ -1136,7 +1136,7 @@ BOOL WINAPI GetProcessAffinityMask( HANDLE hProcess,
 
 
 /***********************************************************************
- *           GetProcessVersion    (KERNEL32)
+ *           GetProcessVersion    (KERNEL32.@)
  */
 DWORD WINAPI GetProcessVersion( DWORD processid )
 {
@@ -1154,7 +1154,7 @@ DWORD WINAPI GetProcessVersion( DWORD processid )
 }
 
 /***********************************************************************
- *           GetProcessFlags    (KERNEL32)
+ *           GetProcessFlags    (KERNEL32.@)
  */
 DWORD WINAPI GetProcessFlags( DWORD processid )
 {
@@ -1186,7 +1186,7 @@ BOOL WINAPI SetProcessWorkingSetSize(HANDLE hProcess,DWORD minset,
 }
 
 /***********************************************************************
- *           GetProcessWorkingSetSize    (KERNEL32)
+ *           GetProcessWorkingSetSize    (KERNEL32.@)
  */
 BOOL WINAPI GetProcessWorkingSetSize(HANDLE hProcess,LPDWORD minset,
                                        LPDWORD maxset)
@@ -1199,7 +1199,7 @@ BOOL WINAPI GetProcessWorkingSetSize(HANDLE hProcess,LPDWORD minset,
 }
 
 /***********************************************************************
- *           SetProcessShutdownParameters    (KERNEL32)
+ *           SetProcessShutdownParameters    (KERNEL32.@)
  *
  * CHANGED - James Sutherland (JamesSutherland@gmx.de)
  * Now tracks changes made (but does not act on these changes)
@@ -1217,7 +1217,7 @@ BOOL WINAPI SetProcessShutdownParameters(DWORD level, DWORD flags)
 
 
 /***********************************************************************
- * GetProcessShutdownParameters                 (KERNEL32)
+ * GetProcessShutdownParameters                 (KERNEL32.@)
  *
  */
 BOOL WINAPI GetProcessShutdownParameters( LPDWORD lpdwLevel, LPDWORD lpdwFlags )
@@ -1229,7 +1229,7 @@ BOOL WINAPI GetProcessShutdownParameters( LPDWORD lpdwLevel, LPDWORD lpdwFlags )
 
 
 /***********************************************************************
- *           SetProcessPriorityBoost    (KERNEL32)
+ *           SetProcessPriorityBoost    (KERNEL32.@)
  */
 BOOL WINAPI SetProcessPriorityBoost(HANDLE hprocess,BOOL disableboost)
 {
@@ -1240,7 +1240,8 @@ BOOL WINAPI SetProcessPriorityBoost(HANDLE hprocess,BOOL disableboost)
 
 
 /***********************************************************************
- *           ReadProcessMemory    		(KERNEL32)
+ *		ReadProcessMemory (KERNEL32.@)
+ *		ReadProcessMemory (WIN32S16.6)
  */
 BOOL WINAPI ReadProcessMemory( HANDLE process, LPCVOID addr, LPVOID buffer, DWORD size,
                                LPDWORD bytes_read )
@@ -1287,7 +1288,7 @@ BOOL WINAPI ReadProcessMemory( HANDLE process, LPCVOID addr, LPVOID buffer, DWOR
 
 
 /***********************************************************************
- *           WriteProcessMemory    		(KERNEL32)
+ *           WriteProcessMemory    		(KERNEL32.@)
  */
 BOOL WINAPI WriteProcessMemory( HANDLE process, LPVOID addr, LPVOID buffer, DWORD size,
                                 LPDWORD bytes_written )
@@ -1356,7 +1357,8 @@ BOOL WINAPI WriteProcessMemory( HANDLE process, LPVOID addr, LPVOID buffer, DWOR
 
 
 /***********************************************************************
- *           RegisterServiceProcess             (KERNEL, KERNEL32)
+ *		RegisterServiceProcess (KERNEL.491)
+ *		RegisterServiceProcess (KERNEL32.@)
  *
  * A service process calls this function to ensure that it continues to run
  * even after a user logged off.
@@ -1394,7 +1396,7 @@ BOOL WINAPI GetExitCodeProcess(
 
 
 /***********************************************************************
- *           SetErrorMode   (KERNEL32.486)
+ *           SetErrorMode   (KERNEL32.@)
  */
 UINT WINAPI SetErrorMode( UINT mode )
 {
@@ -1405,7 +1407,7 @@ UINT WINAPI SetErrorMode( UINT mode )
 
 
 /**********************************************************************
- * TlsAlloc [KERNEL32.530]  Allocates a TLS index.
+ * TlsAlloc [KERNEL32.@]  Allocates a TLS index.
  *
  * Allocates a thread local storage index
  *
@@ -1437,7 +1439,7 @@ DWORD WINAPI TlsAlloc( void )
 
 
 /**********************************************************************
- * TlsFree [KERNEL32.531]  Releases a TLS index.
+ * TlsFree [KERNEL32.@]  Releases a TLS index.
  *
  * Releases a thread local storage index, making it available for reuse
  * 
@@ -1472,7 +1474,7 @@ BOOL WINAPI TlsFree(
 
 
 /**********************************************************************
- * TlsGetValue [KERNEL32.532]  Gets value in a thread's TLS slot
+ * TlsGetValue [KERNEL32.@]  Gets value in a thread's TLS slot
  *
  * RETURNS
  *    Success: Value stored in calling thread's TLS slot for index
@@ -1492,7 +1494,7 @@ LPVOID WINAPI TlsGetValue(
 
 
 /**********************************************************************
- * TlsSetValue [KERNEL32.533]  Stores a value in the thread's TLS slot.
+ * TlsSetValue [KERNEL32.@]  Stores a value in the thread's TLS slot.
  *
  * RETURNS
  *    Success: TRUE
@@ -1513,7 +1515,7 @@ BOOL WINAPI TlsSetValue(
 
 
 /***********************************************************************
- *           GetCurrentProcess   (KERNEL32.198)
+ *           GetCurrentProcess   (KERNEL32.@)
  */
 #undef GetCurrentProcess
 HANDLE WINAPI GetCurrentProcess(void)

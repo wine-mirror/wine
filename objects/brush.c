@@ -124,7 +124,7 @@ HBRUSH16 WINAPI CreateBrushIndirect16( const LOGBRUSH16 * brush )
 
 
 /***********************************************************************
- *           CreateBrushIndirect    (GDI32.27)
+ *           CreateBrushIndirect    (GDI32.@)
  *
  * BUGS
  *      As for Windows 95 and Windows 98:
@@ -163,7 +163,7 @@ HBRUSH16 WINAPI CreateHatchBrush16( INT16 style, COLORREF color )
 
 
 /***********************************************************************
- *           CreateHatchBrush    (GDI32.48)
+ *           CreateHatchBrush    (GDI32.@)
  */
 HBRUSH WINAPI CreateHatchBrush( INT style, COLORREF color )
 {
@@ -189,7 +189,7 @@ HBRUSH16 WINAPI CreatePatternBrush16( HBITMAP16 hbitmap )
 
 
 /***********************************************************************
- *           CreatePatternBrush    (GDI32.54)
+ *           CreatePatternBrush    (GDI32.@)
  */
 HBRUSH WINAPI CreatePatternBrush( HBITMAP hbitmap )
 {
@@ -219,7 +219,7 @@ HBRUSH16 WINAPI CreateDIBPatternBrush16( HGLOBAL16 hbitmap, UINT16 coloruse )
 
 
 /***********************************************************************
- *           CreateDIBPatternBrush    (GDI32.34)
+ *           CreateDIBPatternBrush    (GDI32.@)
  *
  *	Create a logical brush which has the pattern specified by the DIB
  *
@@ -251,7 +251,7 @@ HBRUSH WINAPI CreateDIBPatternBrush(
 
 
 /***********************************************************************
- *           CreateDIBPatternBrushPt    (GDI32.35)
+ *           CreateDIBPatternBrushPt    (GDI32.@)
  *
  *	Create a logical brush which has the pattern specified by the DIB
  *
@@ -291,7 +291,7 @@ HBRUSH16 WINAPI CreateSolidBrush16( COLORREF color )
 
 
 /***********************************************************************
- *           CreateSolidBrush    (GDI32.64)
+ *           CreateSolidBrush    (GDI32.@)
  */
 HBRUSH WINAPI CreateSolidBrush( COLORREF color )
 {
@@ -324,7 +324,7 @@ DWORD WINAPI SetBrushOrg16( HDC16 hdc, INT16 x, INT16 y )
 
 
 /***********************************************************************
- *           SetBrushOrgEx    (GDI32.308)
+ *           SetBrushOrgEx    (GDI32.@)
  */
 BOOL WINAPI SetBrushOrgEx( HDC hdc, INT x, INT y, LPPOINT oldorg )
 {
@@ -343,7 +343,7 @@ BOOL WINAPI SetBrushOrgEx( HDC hdc, INT x, INT y, LPPOINT oldorg )
 }
 
 /***********************************************************************
- *           FixBrushOrgEx    (GDI32.102)
+ *           FixBrushOrgEx    (GDI32.@)
  * SDK says discontinued, but in Win95 GDI32 this is the same as SetBrushOrgEx
  */
 BOOL WINAPI FixBrushOrgEx( HDC hdc, INT x, INT y, LPPOINT oldorg )
