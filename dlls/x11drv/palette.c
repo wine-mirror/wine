@@ -24,7 +24,6 @@
 #include <string.h>
 
 #include "gdi.h"
-#include "palette.h"
 #include "windef.h"
 #include "winreg.h"
 #include "x11drv.h"

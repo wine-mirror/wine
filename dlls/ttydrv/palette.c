@@ -22,7 +22,7 @@
 
 #include <stdlib.h>
 
-#include "palette.h"
+#include "gdi.h"
 #include "winbase.h"
 #include "ttydrv.h"
 #include "wine/debug.h"

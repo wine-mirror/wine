@@ -50,7 +50,7 @@
 
 #include "wine/winbase16.h"
 #include "wine/wingdi16.h"
-#include "bitmap.h"
+#include "gdi.h"
 #include "wownt32.h"
 #include "winreg.h"
 #include "winternl.h"

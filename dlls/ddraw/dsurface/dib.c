@@ -28,13 +28,16 @@
 #define NONAMELESSUNION
 #define NONAMELESSSTRUCT
 #include "winerror.h"
-#include "bitmap.h"
 #include "wine/debug.h"
 #include "ddraw_private.h"
 #include "dsurface/main.h"
 #include "dsurface/dib.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(ddraw);
+
+/* FIXME */
+extern HBITMAP DIB_CreateDIBSection( HDC hdc, BITMAPINFO *bmi, UINT usage, LPVOID *bits,
+                                     HANDLE section, DWORD offset, DWORD ovr_pitch );
 
 static ICOM_VTABLE(IDirectDrawSurface7) DIB_IDirectDrawSurface7_VTable;
 

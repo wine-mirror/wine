@@ -34,7 +34,7 @@
 #include "windef.h"
 #include "wingdi.h"
 #include "ddrawi.h"
-#include "bitmap.h"
+#include "gdi.h"
 #include "wine/debug.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(x11drv);

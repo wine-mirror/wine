@@ -36,7 +36,7 @@
 #include <string.h>
 #include "windef.h"
 #include "winbase.h"
-#include "bitmap.h"
+#include "gdi.h"
 #include "x11drv.h"
 #include "wine/debug.h"
 

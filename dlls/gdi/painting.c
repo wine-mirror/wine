@@ -32,7 +32,6 @@
 #include "wingdi.h"
 #include "winerror.h"
 #include "gdi.h"
-#include "bitmap.h"
 #include "gdi_private.h"
 #include "wine/debug.h"
 

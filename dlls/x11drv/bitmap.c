@@ -24,7 +24,6 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include "gdi.h"
-#include "bitmap.h"
 #include "wine/debug.h"
 #include "x11drv.h"
 #include "wingdi.h"

@@ -31,9 +31,7 @@
 #include "winreg.h"
 #include "winerror.h"
 
-#include "bitmap.h"
 #include "local.h"
-#include "palette.h"
 #include "gdi.h"
 #include "gdi_private.h"
 #include "wine/debug.h"

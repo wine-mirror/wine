@@ -21,10 +21,14 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
+#include <stdarg.h>
 
-#include "bitmap.h"
+#include "windef.h"
+#include "winbase.h"
+#include "wingdi.h"
 #include "wownt32.h"
 #include "mfdrv/metafiledrv.h"
+#include "gdi.h"
 #include "gdi_private.h"
 #include "wine/debug.h"
 

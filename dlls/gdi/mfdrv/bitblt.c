@@ -23,7 +23,6 @@
 #include "gdi.h"
 #include "mfdrv/metafiledrv.h"
 #include "wine/debug.h"
-#include "bitmap.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(metafile);
 

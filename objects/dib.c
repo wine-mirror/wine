@@ -24,12 +24,10 @@
 
 #include "windef.h"
 #include "winbase.h"
-#include "bitmap.h"
 #include "gdi.h"
 #include "wownt32.h"
 #include "gdi_private.h"
 #include "wine/debug.h"
-#include "palette.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(bitmap);
 

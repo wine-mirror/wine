@@ -26,7 +26,6 @@
 #include "wingdi.h"
 #include "gdi.h"
 #include "enhmetafiledrv.h"
-#include "bitmap.h"
 #include "wine/debug.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(enhmetafile);

@@ -22,7 +22,7 @@
 #include <stdio.h>
 #include <string.h>
 
-#include "bitmap.h"
+#include "gdi.h"
 #include "enhmfdrv/enhmetafiledrv.h"
 #include "gdi_private.h"
 #include "wine/debug.h"

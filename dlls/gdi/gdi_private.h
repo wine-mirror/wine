@@ -46,6 +46,8 @@ struct hdc_list
 
 /* Device functions for the Wine driver interface */
 
+typedef struct { int opaque; } *PHYSDEV;  /* PHYSDEV is an opaque pointer */
+
 typedef struct tagDC_FUNCS
 {
     INT      (*pAbortDoc)(PHYSDEV);
@@ -170,6 +172,92 @@ typedef struct tagDC_FUNCS
     BOOL     (*pWidenPath)(PHYSDEV);
 } DC_FUNCTIONS;
 
+/* It should not be necessary to access the contents of the GdiPath
+ * structure directly; if you find that the exported functions don't
+ * allow you to do what you want, then please place a new exported
+ * function that does this job in path.c.
+ */
+typedef enum tagGdiPathState
+{
+   PATH_Null,
+   PATH_Open,
+   PATH_Closed
+} GdiPathState;
+
+typedef struct tagGdiPath
+{
+   GdiPathState state;
+   POINT      *pPoints;
+   BYTE         *pFlags;
+   int          numEntriesUsed, numEntriesAllocated;
+   BOOL       newStroke;
+} GdiPath;
+
+typedef struct tagGdiFont *GdiFont;
+
+typedef struct tagDC
+{
+    GDIOBJHDR    header;
+    HDC          hSelf;            /* Handle to this DC */
+    const struct tagDC_FUNCS *funcs; /* DC function table */
+    PHYSDEV      physDev;         /* Physical device (driver-specific) */
+    INT          saveLevel;
+    DWORD        dwHookData;
+    FARPROC16    hookProc;         /* the original SEGPTR ... */
+    DCHOOKPROC   hookThunk;        /* ... and the thunk to call it */
+
+    INT          wndOrgX;          /* Window origin */
+    INT          wndOrgY;
+    INT          wndExtX;          /* Window extent */
+    INT          wndExtY;
+    INT          vportOrgX;        /* Viewport origin */
+    INT          vportOrgY;
+    INT          vportExtX;        /* Viewport extent */
+    INT          vportExtY;
+
+    int           flags;
+    HRGN          hClipRgn;     /* Clip region (may be 0) */
+    HRGN          hVisRgn;      /* Visible region (must never be 0) */
+    HPEN          hPen;
+    HBRUSH        hBrush;
+    HFONT         hFont;
+    HBITMAP       hBitmap;
+    HANDLE        hDevice;
+    HPALETTE      hPalette;
+
+    GdiFont       gdiFont;
+    GdiPath       path;
+
+    WORD          ROPmode;
+    WORD          polyFillMode;
+    WORD          stretchBltMode;
+    WORD          relAbsMode;
+    WORD          backgroundMode;
+    COLORREF      backgroundColor;
+    COLORREF      textColor;
+    COLORREF      dcBrushColor;
+    COLORREF      dcPenColor;
+    short         brushOrgX;
+    short         brushOrgY;
+
+    WORD          textAlign;         /* Text alignment from SetTextAlign() */
+    INT           charExtra;         /* Spacing from SetTextCharacterExtra() */
+    INT           breakExtra;        /* breakTotalExtra / breakCount */
+    INT           breakRem;          /* breakTotalExtra % breakCount */
+    INT           MapMode;
+    INT           GraphicsMode;      /* Graphics mode */
+    ABORTPROC     pAbortProc;        /* AbortProc for Printing */
+    ABORTPROC16   pAbortProc16;
+    INT           CursPosX;          /* Current position */
+    INT           CursPosY;
+    INT           ArcDirection;
+    XFORM         xformWorld2Wnd;    /* World-to-window transformation */
+    XFORM         xformWorld2Vport;  /* World-to-viewport transformation */
+    XFORM         xformVport2World;  /* Inverse of the above transformation */
+    BOOL          vport2WorldValid;  /* Is xformVport2World valid? */
+    RECT          BoundsRect;        /* Current bounding rect */
+} DC;
+
   /* DC flags */
 #define DC_SAVED         0x0002   /* It is a saved DC */
 #define DC_DIRTY         0x0004   /* hVisRgn has to be updated */
@@ -179,6 +267,15 @@ typedef struct tagDC_FUNCS
 /* Certain functions will do no further processing if the driver returns this.
    Used by mfdrv for example. */
 #define GDI_NO_MORE_WORK 2
+
+/* Rounds a floating point number to integer. The world-to-viewport
+ * transformation process is done in floating point internally. This function
+ * is then used to round these coordinates to integer values.
+ */
+static inline INT WINE_UNUSED GDI_ROUND(FLOAT val)
+{
+   return (int)floor(val + 0.5);
+}
 
 /* bidi.c */
 
@@ -196,6 +293,10 @@ extern BOOL BIDI_Reorder( LPCWSTR lpString, INT uCount, DWORD dwFlags, DWORD dwW
                           LPWSTR lpOutString, INT uCountOut, UINT *lpOrder );
 extern BOOL BidiAvail;
 
+/* bitmap.c */
+extern HBITMAP BITMAP_CopyBitmap( HBITMAP hbitmap );
+extern BOOL BITMAP_SetOwnerDC( HBITMAP hbitmap, DC *dc );
+
 /* clipping.c */
 extern void CLIPPING_UpdateGCRegion( DC * dc );
 
@@ -205,6 +306,11 @@ extern DC * DC_GetDCUpdate( HDC hdc );
 extern DC * DC_GetDCPtr( HDC hdc );
 extern void DC_InitDC( DC * dc );
 extern void DC_UpdateXforms( DC * dc );
+
+/* dib.c */
+extern int DIB_GetDIBWidthBytes( int width, int depth );
+extern int DIB_GetDIBImageBytes( int width, int height, int depth );
+extern int DIB_BitmapInfoSize( const BITMAPINFO * info, WORD coloruse );
 
 /* driver.c */
 extern const DC_FUNCTIONS *DRIVER_load_driver( LPCWSTR name );
@@ -286,6 +392,7 @@ extern POINT *GDI_Bezier( const POINT *Points, INT count, INT *nPtsOut );
 /* palette.c */
 extern HPALETTE WINAPI GDISelectPalette( HDC hdc, HPALETTE hpal, WORD wBkg);
 extern UINT WINAPI GDIRealizePalette( HDC hdc );
+extern HPALETTE PALETTE_Init(void);
 
 /* region.c */
 extern BOOL REGION_FrameRgn( HRGN dest, HRGN src, INT x, INT y );
