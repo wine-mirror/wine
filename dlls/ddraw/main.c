@@ -491,29 +491,32 @@ DDCF_QueryInterface(LPCLASSFACTORY iface,REFIID riid,LPVOID *ppobj)
     return E_NOINTERFACE;
 }
 
-static ULONG WINAPI DDCF_AddRef(LPCLASSFACTORY iface) {
+static ULONG WINAPI DDCF_AddRef(LPCLASSFACTORY iface)
+{
     IClassFactoryImpl *This = (IClassFactoryImpl *)iface;
 
     TRACE("(%p)->() incrementing from %ld.\n", This, This->ref);
     
-    return ++(This->ref);
+    return InterlockedIncrement(&This->ref);
 }
 
-static ULONG WINAPI DDCF_Release(LPCLASSFACTORY iface) {
+static ULONG WINAPI DDCF_Release(LPCLASSFACTORY iface)
+{
     IClassFactoryImpl *This = (IClassFactoryImpl *)iface;
+    ULONG ref = InterlockedDecrement(&This->ref);
+    TRACE("(%p)->() decrementing from %ld.\n", This, ref+1);
 
-    TRACE("(%p)->() decrementing from %ld.\n", This, This->ref);
-
-    if (--This->ref == 0)
+    if (ref == 0)
 	HeapFree(GetProcessHeap(), 0, This);
 
-    return This->ref;
+    return ref;
 }
 
 
 static HRESULT WINAPI DDCF_CreateInstance(
 	LPCLASSFACTORY iface,LPUNKNOWN pOuter,REFIID riid,LPVOID *ppobj
-) {
+)
+{
     IClassFactoryImpl *This = (IClassFactoryImpl *)iface;
 
     TRACE("(%p)->(%p,%s,%p)\n",This,pOuter,debugstr_guid(riid),ppobj);
@@ -521,7 +524,8 @@ static HRESULT WINAPI DDCF_CreateInstance(
     return This->pfnCreateInstance(pOuter, riid, ppobj);
 }
 
-static HRESULT WINAPI DDCF_LockServer(LPCLASSFACTORY iface,BOOL dolock) {
+static HRESULT WINAPI DDCF_LockServer(LPCLASSFACTORY iface,BOOL dolock)
+{
     IClassFactoryImpl *This = (IClassFactoryImpl *)iface;
     FIXME("(%p)->(%d),stub!\n",This,dolock);
     return S_OK;

@@ -103,15 +103,17 @@ ITSSCF_QueryInterface(LPCLASSFACTORY iface,REFIID riid,LPVOID *ppobj)
     return E_NOINTERFACE;
 }
 
-static ULONG WINAPI ITSSCF_AddRef(LPCLASSFACTORY iface) {
+static ULONG WINAPI ITSSCF_AddRef(LPCLASSFACTORY iface)
+{
     IClassFactoryImpl *This = (IClassFactoryImpl *)iface;
-    return ++(This->ref);
+    return InterlockedIncrement(&This->ref);
 }
 
-static ULONG WINAPI ITSSCF_Release(LPCLASSFACTORY iface) {
+static ULONG WINAPI ITSSCF_Release(LPCLASSFACTORY iface)
+{
     IClassFactoryImpl *This = (IClassFactoryImpl *)iface;
 
-    ULONG ref = --This->ref;
+    ULONG ref = InterlockedDecrement(&This->ref);
 
     if (ref == 0)
 	HeapFree(GetProcessHeap(), 0, This);
@@ -121,28 +123,25 @@ static ULONG WINAPI ITSSCF_Release(LPCLASSFACTORY iface) {
 
 
 static HRESULT WINAPI ITSSCF_CreateInstance(LPCLASSFACTORY iface, LPUNKNOWN pOuter,
-					  REFIID riid, LPVOID *ppobj) {
+					  REFIID riid, LPVOID *ppobj)
+{
     IClassFactoryImpl *This = (IClassFactoryImpl *)iface;
     HRESULT hres;
     LPUNKNOWN punk;
     
     TRACE("(%p)->(%p,%s,%p)\n",This,pOuter,debugstr_guid(riid),ppobj);
 
+    *ppobj = NULL;
     hres = This->pfnCreateInstance(pOuter, (LPVOID *) &punk);
-    if (FAILED(hres)) {
-        *ppobj = NULL;
-        return hres;
+    if (SUCCEEDED(hres)) {
+        hres = IUnknown_QueryInterface(punk, riid, ppobj);
+        IUnknown_Release(punk);
     }
-    hres = IUnknown_QueryInterface(punk, riid, ppobj);
-    if (FAILED(hres)) {
-        *ppobj = NULL;
-	return hres;
-    }
-    IUnknown_Release(punk);
     return hres;
 }
 
-static HRESULT WINAPI ITSSCF_LockServer(LPCLASSFACTORY iface,BOOL dolock) {
+static HRESULT WINAPI ITSSCF_LockServer(LPCLASSFACTORY iface,BOOL dolock)
+{
     IClassFactoryImpl *This = (IClassFactoryImpl *)iface;
     FIXME("(%p)->(%d),stub!\n",This,dolock);
     return S_OK;

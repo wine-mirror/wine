@@ -97,14 +97,14 @@ static HRESULT WINAPI XFCF_QueryInterface(LPCLASSFACTORY iface,REFIID riid, LPVO
 static ULONG WINAPI XFCF_AddRef(LPCLASSFACTORY iface)
 {
     IClassFactoryImpl *This = (IClassFactoryImpl *)iface;
-    return ++(This->ref);
+    return InterlockedIncrement(&This->ref);
 }
 
 static ULONG WINAPI XFCF_Release(LPCLASSFACTORY iface)
 {
     IClassFactoryImpl *This = (IClassFactoryImpl *)iface;
 
-    ULONG ref = --This->ref;
+    ULONG ref = InterlockedDecrement(&This->ref);
 
     if (ref == 0)
 	HeapFree(GetProcessHeap(), 0, This);
@@ -120,17 +120,12 @@ static HRESULT WINAPI XFCF_CreateInstance(LPCLASSFACTORY iface, LPUNKNOWN pOuter
     
     TRACE("(%p)->(%p,%s,%p)\n",This,pOuter,debugstr_guid(riid),ppobj);
 
+    *ppobj = NULL;
     hres = This->pfnCreateInstance(pOuter, (LPVOID *) &punk);
-    if (FAILED(hres)) {
-        *ppobj = NULL;
-        return hres;
+    if (SUCCEEDED(hres)) {
+        hres = IUnknown_QueryInterface(punk, riid, ppobj);
+        IUnknown_Release(punk);
     }
-    hres = IUnknown_QueryInterface(punk, riid, ppobj);
-    if (FAILED(hres)) {
-        *ppobj = NULL;
-	return hres;
-    }
-    IUnknown_Release(punk);
     return hres;
 }
 

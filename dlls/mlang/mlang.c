@@ -681,12 +681,14 @@ MLANGCF_QueryInterface(LPCLASSFACTORY iface,REFIID riid,LPVOID *ppobj)
     return E_NOINTERFACE;
 }
 
-static ULONG WINAPI MLANGCF_AddRef(LPCLASSFACTORY iface) {
+static ULONG WINAPI MLANGCF_AddRef(LPCLASSFACTORY iface)
+{
     IClassFactoryImpl *This = (IClassFactoryImpl *)iface;
     return InterlockedIncrement(&This->ref);
 }
 
-static ULONG WINAPI MLANGCF_Release(LPCLASSFACTORY iface) {
+static ULONG WINAPI MLANGCF_Release(LPCLASSFACTORY iface)
+{
     IClassFactoryImpl *This = (IClassFactoryImpl *)iface;
 
     ULONG ref = InterlockedDecrement(&This->ref);
@@ -701,29 +703,26 @@ static ULONG WINAPI MLANGCF_Release(LPCLASSFACTORY iface) {
 }
 
 static HRESULT WINAPI MLANGCF_CreateInstance(LPCLASSFACTORY iface, LPUNKNOWN pOuter,
-					  REFIID riid, LPVOID *ppobj) {
+					  REFIID riid, LPVOID *ppobj)
+{
     IClassFactoryImpl *This = (IClassFactoryImpl *)iface;
     HRESULT hres;
     LPUNKNOWN punk;
     
     TRACE("(%p)->(%p,%s,%p)\n",This,pOuter,debugstr_guid(riid),ppobj);
 
+    *ppobj = NULL;
     hres = This->pfnCreateInstance(pOuter, (LPVOID *) &punk);
-    if (FAILED(hres)) {
-        *ppobj = NULL;
-        return hres;
+    if (SUCCEEDED(hres)) {
+        hres = IUnknown_QueryInterface(punk, riid, ppobj);
+        IUnknown_Release(punk);
     }
-    hres = IUnknown_QueryInterface(punk, riid, ppobj);
-    if (FAILED(hres)) {
-        *ppobj = NULL;
-	return hres;
-    }
-    IUnknown_Release(punk);
     TRACE("returning (%p) -> %lx\n", *ppobj, hres);
     return hres;
 }
 
-static HRESULT WINAPI MLANGCF_LockServer(LPCLASSFACTORY iface,BOOL dolock) {
+static HRESULT WINAPI MLANGCF_LockServer(LPCLASSFACTORY iface,BOOL dolock)
+{
     IClassFactoryImpl *This = (IClassFactoryImpl *)iface;
     FIXME("(%p)->(%d),stub!\n",This,dolock);
     return S_OK;

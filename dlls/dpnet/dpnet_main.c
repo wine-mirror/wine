@@ -80,13 +80,13 @@ static HRESULT WINAPI DICF_QueryInterface(LPCLASSFACTORY iface,REFIID riid,LPVOI
 
 static ULONG WINAPI DICF_AddRef(LPCLASSFACTORY iface) {
   IClassFactoryImpl *This = (IClassFactoryImpl *)iface;
-  return ++(This->ref);
+  return InterlockedIncrement(&This->ref);
 }
 
 static ULONG WINAPI DICF_Release(LPCLASSFACTORY iface) {
   IClassFactoryImpl *This = (IClassFactoryImpl *)iface;
   /* static class, won't be  freed */
-  return --(This->ref);
+  return InterlockedDecrement(&This->ref);
 }
 
 static HRESULT WINAPI DICF_CreateInstance(LPCLASSFACTORY iface,LPUNKNOWN pOuter,REFIID riid,LPVOID *ppobj) {
