@@ -67,19 +67,6 @@ typedef struct
     HANDLE16    entries[1];
 } ATOMTABLE;
 
-static WORD ATOM_UserDS = 0;  /* USER data segment */
-
-/***********************************************************************
- *           ATOM_Init
- *
- * Global table initialisation.
- */
-BOOL ATOM_Init( WORD globalTableSel )
-{
-    ATOM_UserDS = globalTableSel;
-    return TRUE;
-}
-
 
 /***********************************************************************
  *           ATOM_GetTable
@@ -200,18 +187,6 @@ WORD WINAPI InitAtomTable16( WORD entries )
     HANDLE16 handle;
     ATOMTABLE *table;
 
-      /* We consider the first table to be initialized as the global table.
-       * This works, as USER (both built-in and native) is the first one to
-       * register ...
-       */
-
-    if (!ATOM_UserDS)
-    {
-        ATOM_UserDS = CURRENT_DS;
-        /* return dummy local handle */
-        return LocalAlloc16( LMEM_FIXED, 1 );
-    }
-
       /* Allocate the table */
 
     if (!entries) entries = DEFAULT_ATOMTABLE_SIZE;  /* sanity check */
@@ -268,7 +243,6 @@ ATOM WINAPI AddAtom16( LPCSTR str )
 
     len = strlen( buffer );
     if (!(table = ATOM_GetTable( TRUE ))) return 0;
-    if (CURRENT_DS == ATOM_UserDS) return GlobalAddAtomA( str );
 
     hash = ATOM_Hash( table->size, buffer, len );
     entry = table->entries[hash];
@@ -314,7 +288,6 @@ ATOM WINAPI DeleteAtom16( ATOM atom )
     WORD hash;
 
     if (atom < MAXINTATOM) return 0;  /* Integer atom */
-    if (CURRENT_DS == ATOM_UserDS) return GlobalDeleteAtom( atom );
 
     TRACE("0x%x\n",atom);
 
@@ -352,8 +325,6 @@ ATOM WINAPI FindAtom16( LPCSTR str )
     HANDLE16 entry;
     int len;
 
-    if (CURRENT_DS == ATOM_UserDS) return GlobalFindAtomA( str );
-
     TRACE("%s\n",debugstr_a(str));
 
     if (ATOM_IsIntAtomA( str, &iatom )) return iatom;
@@ -388,8 +359,6 @@ UINT16 WINAPI GetAtomName16( ATOM atom, LPSTR buffer, INT16 count )
     char * strPtr;
     UINT len;
     char text[8];
-
-    if (CURRENT_DS == ATOM_UserDS) return GlobalGetAtomNameA( atom, buffer, count );
 
     TRACE("%x\n",atom);
 

@@ -217,9 +217,6 @@ static BOOL process_attach(void)
     if ((instance = LoadLibrary16( "USER.EXE" )) < 32) return FALSE;
     USER_HeapSel = instance | 7;
 
-     /* Global atom table initialisation */
-    if (!ATOM_Init( USER_HeapSel )) return FALSE;
-
     /* Load the graphics driver */
     tweak_init();
     if (!load_driver()) return FALSE;

@@ -201,7 +201,7 @@ typedef struct
 {
     SEGPTR		segptrPDEVICE;	/* PDEVICE used by 16 bit printer drivers */
     LOGFONT16		lf;		/* Current font details */
-    TEXTMETRIC16	tm;		/* Current font metrics */
+    TEXTMETRICW		tm;		/* Current font metrics */
     LPFONTINFO16       	FontInfo;       /* Current font realized by printer driver */
     LPLOGBRUSH16	BrushInfo;      /* Current brush realized by printer driver */
     LPLOGPEN16		PenInfo;        /* Current pen realized by printer driver */

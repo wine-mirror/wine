@@ -432,7 +432,7 @@ static void X11DRV_TextExtents_normal( fontObject* pfo, XChar2b* pstr, int count
     *pwidth = info.width;
 }
 
-static void X11DRV_GetTextMetricsA_normal( fontObject* pfo, LPTEXTMETRICA pTM )
+static void X11DRV_GetTextMetricsW_normal( fontObject* pfo, LPTEXTMETRICW pTM )
 {
     LPIFONTINFO16 pdf = &pfo->fi->df;
 
@@ -611,7 +611,7 @@ void X11DRV_TextExtents_dbcs_2fonts( fontObject* pfo, XChar2b* pstr, int count,
     *pwidth = width;
 }
 
-static void X11DRV_GetTextMetricsA_cp932( fontObject* pfo, LPTEXTMETRICA pTM )
+static void X11DRV_GetTextMetricsW_cp932( fontObject* pfo, LPTEXTMETRICW pTM )
 {
     fontObject* pfo_ansi = XFONT_GetFontObject( pfo->prefobjs[0] );
     LPIFONTINFO16 pdf = &pfo->fi->df;
@@ -691,7 +691,7 @@ const X11DRV_CP X11DRV_cptable[X11DRV_CPTABLE_COUNT] =
 	X11DRV_TextWidth_normal,
 	X11DRV_DrawText_normal,
 	X11DRV_TextExtents_normal,
-	X11DRV_GetTextMetricsA_normal,
+	X11DRV_GetTextMetricsW_normal,
     },
     { /* UNICODE */
 	X11DRV_enum_subfont_charset_normal,
@@ -700,7 +700,7 @@ const X11DRV_CP X11DRV_cptable[X11DRV_CPTABLE_COUNT] =
 	X11DRV_TextWidth_normal,
 	X11DRV_DrawText_normal,
 	X11DRV_TextExtents_normal,
-        X11DRV_GetTextMetricsA_normal,
+        X11DRV_GetTextMetricsW_normal,
     },
     { /* CP932 */
 	X11DRV_enum_subfont_charset_cp932,
@@ -709,7 +709,7 @@ const X11DRV_CP X11DRV_cptable[X11DRV_CPTABLE_COUNT] =
 	X11DRV_TextWidth_dbcs_2fonts,
 	X11DRV_DrawText_dbcs_2fonts,
 	X11DRV_TextExtents_dbcs_2fonts,
-        X11DRV_GetTextMetricsA_cp932,
+        X11DRV_GetTextMetricsW_cp932,
     },
     { /* CP936 */
 	X11DRV_enum_subfont_charset_cp936,
@@ -718,7 +718,7 @@ const X11DRV_CP X11DRV_cptable[X11DRV_CPTABLE_COUNT] =
 	X11DRV_TextWidth_dbcs_2fonts,
 	X11DRV_DrawText_dbcs_2fonts,
 	X11DRV_TextExtents_dbcs_2fonts,
-        X11DRV_GetTextMetricsA_normal, /* FIXME */
+        X11DRV_GetTextMetricsW_normal, /* FIXME */
     },
     { /* CP949 */
 	X11DRV_enum_subfont_charset_cp949,
@@ -727,7 +727,7 @@ const X11DRV_CP X11DRV_cptable[X11DRV_CPTABLE_COUNT] =
 	X11DRV_TextWidth_dbcs_2fonts,
 	X11DRV_DrawText_dbcs_2fonts,
 	X11DRV_TextExtents_dbcs_2fonts,
-        X11DRV_GetTextMetricsA_normal, /* FIXME */
+        X11DRV_GetTextMetricsW_normal, /* FIXME */
     },
     { /* CP950 */
 	X11DRV_enum_subfont_charset_cp950,
@@ -736,7 +736,7 @@ const X11DRV_CP X11DRV_cptable[X11DRV_CPTABLE_COUNT] =
 	X11DRV_TextWidth_dbcs_2fonts,
 	X11DRV_DrawText_dbcs_2fonts,
 	X11DRV_TextExtents_dbcs_2fonts,
-        X11DRV_GetTextMetricsA_cp932,
+        X11DRV_GetTextMetricsW_cp932,
     },
     { /* SYMBOL */
 	X11DRV_enum_subfont_charset_normal,
@@ -745,6 +745,6 @@ const X11DRV_CP X11DRV_cptable[X11DRV_CPTABLE_COUNT] =
 	X11DRV_TextWidth_normal,
 	X11DRV_DrawText_normal,
 	X11DRV_TextExtents_normal,
-	X11DRV_GetTextMetricsA_normal,
+	X11DRV_GetTextMetricsW_normal,
     }
 };

@@ -23,11 +23,64 @@
 #include "winnls.h"
 #include "wine/winbase16.h"
 #include "win16drv/win16drv.h"
-#include "font.h"
 #include "gdi.h"
 #include "wine/debug.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(win16drv);
+
+
+static void WIN16DRV_NewTextMetric16ToW(const NEWTEXTMETRIC16 *ptm16, LPNEWTEXTMETRICW ptmW )
+{
+    ptmW->tmHeight = ptm16->tmHeight;
+    ptmW->tmAscent = ptm16->tmAscent;
+    ptmW->tmDescent = ptm16->tmDescent;
+    ptmW->tmInternalLeading = ptm16->tmInternalLeading;
+    ptmW->tmExternalLeading = ptm16->tmExternalLeading;
+    ptmW->tmAveCharWidth = ptm16->tmAveCharWidth;
+    ptmW->tmMaxCharWidth = ptm16->tmMaxCharWidth;
+    ptmW->tmWeight = ptm16->tmWeight;
+    ptmW->tmOverhang = ptm16->tmOverhang;
+    ptmW->tmDigitizedAspectX = ptm16->tmDigitizedAspectX;
+    ptmW->tmDigitizedAspectY = ptm16->tmDigitizedAspectY;
+    ptmW->tmFirstChar = ptm16->tmFirstChar;
+    ptmW->tmLastChar = ptm16->tmLastChar;
+    ptmW->tmDefaultChar = ptm16->tmDefaultChar;
+    ptmW->tmBreakChar = ptm16->tmBreakChar;
+    ptmW->tmItalic = ptm16->tmItalic;
+    ptmW->tmUnderlined = ptm16->tmUnderlined;
+    ptmW->tmStruckOut = ptm16->tmStruckOut;
+    ptmW->tmPitchAndFamily = ptm16->tmPitchAndFamily;
+    ptmW->tmCharSet = ptm16->tmCharSet;
+    ptmW->ntmFlags = ptm16->ntmFlags;
+    ptmW->ntmSizeEM = ptm16->ntmSizeEM;
+    ptmW->ntmCellHeight = ptm16->ntmCellHeight;
+    ptmW->ntmAvgWidth = ptm16->ntmAvgWidth;
+}
+
+
+static void WIN16DRV_EnumLogFont16ToW( const ENUMLOGFONT16 *font16, LPENUMLOGFONTW font32 )
+{
+    font32->elfLogFont.lfHeight = font16->elfLogFont.lfHeight;
+    font32->elfLogFont.lfWidth = font16->elfLogFont.lfWidth;
+    font32->elfLogFont.lfEscapement = font16->elfLogFont.lfEscapement;
+    font32->elfLogFont.lfOrientation = font16->elfLogFont.lfOrientation;
+    font32->elfLogFont.lfWeight = font16->elfLogFont.lfWeight;
+    font32->elfLogFont.lfItalic = font16->elfLogFont.lfItalic;
+    font32->elfLogFont.lfUnderline = font16->elfLogFont.lfUnderline;
+    font32->elfLogFont.lfStrikeOut = font16->elfLogFont.lfStrikeOut;
+    font32->elfLogFont.lfCharSet = font16->elfLogFont.lfCharSet;
+    font32->elfLogFont.lfOutPrecision = font16->elfLogFont.lfOutPrecision;
+    font32->elfLogFont.lfClipPrecision = font16->elfLogFont.lfClipPrecision;
+    font32->elfLogFont.lfQuality = font16->elfLogFont.lfQuality;
+    font32->elfLogFont.lfPitchAndFamily = font16->elfLogFont.lfPitchAndFamily;
+    MultiByteToWideChar( CP_ACP, 0, font16->elfLogFont.lfFaceName, -1,
+                         font32->elfLogFont.lfFaceName, LF_FACESIZE );
+    font32->elfLogFont.lfFaceName[LF_FACESIZE-1] = 0;
+    MultiByteToWideChar( CP_ACP, 0, font16->elfFullName, -1, font32->elfFullName, LF_FULLFACESIZE );
+    font32->elfFullName[LF_FULLFACESIZE-1] = 0;
+    MultiByteToWideChar( CP_ACP, 0, font16->elfStyle, -1, font32->elfStyle, LF_FACESIZE );
+    font32->elfStyle[LF_FACESIZE-1] = 0;
+}
 
 
 /***********************************************************************
@@ -69,7 +122,7 @@ BOOL WIN16DRV_GetTextMetrics( PHYSDEV dev, TEXTMETRICW *metrics )
 
     TRACE("%04x \n", physDev->hdc);
 
-    FONT_TextMetric16ToW( &physDev->tm, metrics );
+    *metrics = physDev->tm;
 
     TRACE(
 	  "H %ld, A %ld, D %ld, Int %ld, Ext %ld, AW %ld, MW %ld, W %ld\n",
@@ -130,8 +183,7 @@ HFONT WIN16DRV_SelectFont( PHYSDEV dev, HFONT hfont)
 #define fi physDev->FontInfo
     physDev->tm.tmHeight           = YDSTOLS(dc, fi->dfPixHeight);
     physDev->tm.tmAscent           = YDSTOLS(dc, fi->dfAscent);
-    physDev->tm.tmDescent          = physDev->tm.tmHeight -
-					    physDev->tm.tmAscent;
+    physDev->tm.tmDescent          = physDev->tm.tmHeight - physDev->tm.tmAscent;
     physDev->tm.tmInternalLeading  = YDSTOLS(dc, fi->dfInternalLeading);
     physDev->tm.tmExternalLeading  = YDSTOLS(dc, fi->dfExternalLeading);
     physDev->tm.tmAveCharWidth     = XDSTOLS(dc, fi->dfAvgWidth);
@@ -151,7 +203,7 @@ HFONT WIN16DRV_SelectFont( PHYSDEV dev, HFONT hfont)
     physDev->tm.tmCharSet          = fi->dfCharSet;
 #undef fi
 
-    TRACE("H %d, A %d, D %d, Int %d, Ext %d, AW %d, MW %d, W %d\n",
+    TRACE("H %ld, A %ld, D %ld, Int %ld, Ext %ld, AW %ld, MW %ld, W %ld\n",
            physDev->tm.tmHeight,
            physDev->tm.tmAscent,
            physDev->tm.tmDescent,
@@ -236,24 +288,15 @@ WORD WINAPI EnumCallback16(LPENUMLOGFONT16 lpLogFont,
                            WORD wFontType, LONG lpClientData)
 {
     ENUMLOGFONTEXW lfW;
-    ENUMLOGFONTEX16 lf16;
-
     NEWTEXTMETRICEXW tmW;
-    NEWTEXTMETRICEX16 tm16;
 
     TRACE("In EnumCallback16 plf=%p\n", lpLogFont);
 
-    /* we have a ENUMLOGFONT16 which is a subset of ENUMLOGFONTEX16,
-       so we copy it into one of these and then convert to ENUMLOGFONTEXW */
+    memset(&lfW, 0, sizeof(lfW));
+    WIN16DRV_EnumLogFont16ToW(lpLogFont, (ENUMLOGFONTW *)&lfW);
 
-    memset(&lf16, 0, sizeof(lf16));
-    memcpy(&lf16, lpLogFont, sizeof(*lpLogFont));
-    FONT_EnumLogFontEx16ToW(&lf16, &lfW);
-
-    /* and a similar idea for NEWTEXTMETRIC16 */
-    memset(&tm16, 0, sizeof(tm16));
-    memcpy(&tm16, lpTextMetrics, sizeof(*lpTextMetrics));
-    FONT_NewTextMetricEx16ToW(&tm16, &tmW);
+    memset(&tmW, 0, sizeof(tmW));
+    WIN16DRV_NewTextMetric16ToW(lpTextMetrics, (NEWTEXTMETRICW *)&tmW);
 
     return (*(((WEPFC *)lpClientData)->proc))( &lfW, &tmW, wFontType,
 					       ((WEPFC *)lpClientData)->lp );

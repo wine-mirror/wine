@@ -24,18 +24,6 @@
 #include "gdi.h"
 
 extern BOOL FONT_Init( UINT16* pTextCaps );
-extern void FONT_LogFontATo16( const LOGFONTA* font32, LPLOGFONT16 font16 );
-extern void FONT_LogFontWTo16( const LOGFONTW* font32, LPLOGFONT16 font16 );
-extern void FONT_LogFont16ToA( const LOGFONT16* font16, LPLOGFONTA font32 );
-extern void FONT_LogFont16ToW( const LOGFONT16* font16, LPLOGFONTW font32 );
-extern void FONT_TextMetricATo16(const TEXTMETRICA *ptm32, LPTEXTMETRIC16 ptm16 );
-extern void FONT_TextMetricWTo16(const TEXTMETRICW *ptm32, LPTEXTMETRIC16 ptm16 );
-extern void FONT_TextMetric16ToA(const TEXTMETRIC16 *ptm16, LPTEXTMETRICA ptm32 );
-extern void FONT_TextMetric16ToW(const TEXTMETRIC16 *ptm16, LPTEXTMETRICW ptm32 );
-extern void FONT_TextMetricAToW(const TEXTMETRICA *ptm32A, LPTEXTMETRICW ptm32W );
-extern void FONT_NewTextMetricEx16ToW(const NEWTEXTMETRICEX16*, LPNEWTEXTMETRICEXW);
-extern void FONT_EnumLogFontEx16ToW(const ENUMLOGFONTEX16*, LPENUMLOGFONTEXW);
-
 extern LPWSTR FONT_mbtowc(HDC, LPCSTR, INT, INT*, UINT*);
 
 extern INT WineEngAddFontResourceEx(LPCWSTR, DWORD, PVOID);

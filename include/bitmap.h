@@ -40,7 +40,6 @@ typedef struct tagBITMAPOBJ
 } BITMAPOBJ;
 
   /* objects/bitmap.c */
-extern INT   BITMAP_GetWidthBytes( INT width, INT depth );
 extern HBITMAP BITMAP_CopyBitmap( HBITMAP hbitmap );
 extern BOOL BITMAP_SetOwnerDC( HBITMAP hbitmap, DC *dc );
 
@@ -48,8 +47,6 @@ extern BOOL BITMAP_SetOwnerDC( HBITMAP hbitmap, DC *dc );
 extern int DIB_GetDIBWidthBytes( int width, int depth );
 extern int DIB_GetDIBImageBytes( int width, int height, int depth );
 extern int DIB_BitmapInfoSize( const BITMAPINFO * info, WORD coloruse );
-extern int DIB_GetBitmapInfo( const BITMAPINFOHEADER *header, DWORD *width,
-                              int *height, WORD *bpp, WORD *compr );
 extern HBITMAP DIB_CreateDIBSection( HDC hdc, BITMAPINFO *bmi, UINT usage, LPVOID *bits,
                                      HANDLE section, DWORD offset, DWORD ovr_pitch );
 extern void DIB_UpdateDIBSection( DC *dc, BOOL toDIB );

@@ -134,6 +134,37 @@ XImage *X11DRV_DIB_CreateXImage( int width, int height, int depth )
 
 
 /***********************************************************************
+ *           DIB_GetBitmapInfo
+ *
+ * Get the info from a bitmap header.
+ * Return 1 for INFOHEADER, 0 for COREHEADER, -1 for error.
+ */
+static int DIB_GetBitmapInfo( const BITMAPINFOHEADER *header, DWORD *width,
+                              int *height, WORD *bpp, WORD *compr )
+{
+    if (header->biSize == sizeof(BITMAPCOREHEADER))
+    {
+        BITMAPCOREHEADER *core = (BITMAPCOREHEADER *)header;
+        *width  = core->bcWidth;
+        *height = core->bcHeight;
+        *bpp    = core->bcBitCount;
+        *compr  = 0;
+        return 0;
+    }
+    if (header->biSize >= sizeof(BITMAPINFOHEADER))
+    {
+        *width  = header->biWidth;
+        *height = header->biHeight;
+        *bpp    = header->biBitCount;
+        *compr  = header->biCompression;
+        return 1;
+    }
+    ERR("(%ld): unknown/wrong size for header\n", header->biSize );
+    return -1;
+}
+
+
+/***********************************************************************
  *           X11DRV_DIB_GenColorMap
  *
  * Fills the color map of a bitmap palette. Should not be called

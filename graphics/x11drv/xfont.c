@@ -377,6 +377,27 @@ inline static BOOL is_stock_font( HFONT font )
 }
 
 
+static void FONT_LogFontWTo16( const LOGFONTW* font32, LPLOGFONT16 font16 )
+{
+    font16->lfHeight = font32->lfHeight;
+    font16->lfWidth = font32->lfWidth;
+    font16->lfEscapement = font32->lfEscapement;
+    font16->lfOrientation = font32->lfOrientation;
+    font16->lfWeight = font32->lfWeight;
+    font16->lfItalic = font32->lfItalic;
+    font16->lfUnderline = font32->lfUnderline;
+    font16->lfStrikeOut = font32->lfStrikeOut;
+    font16->lfCharSet = font32->lfCharSet;
+    font16->lfOutPrecision = font32->lfOutPrecision;
+    font16->lfClipPrecision = font32->lfClipPrecision;
+    font16->lfQuality = font32->lfQuality;
+    font16->lfPitchAndFamily = font32->lfPitchAndFamily;
+    WideCharToMultiByte( CP_ACP, 0, font32->lfFaceName, -1,
+                         font16->lfFaceName, LF_FACESIZE, NULL, NULL );
+    font16->lfFaceName[LF_FACESIZE-1] = 0;
+}
+
+
 /***********************************************************************
  *           Checksums
  */
@@ -3326,17 +3347,17 @@ BOOL X11DRV_EnumDeviceFonts( X11DRV_PDEVICE *physDev, LPLOGFONTW plf,
     NEWTEXTMETRICEXW	tm;
     fontResource*	pfr = fontList;
     BOOL	  	b, bRet = 0;
-    LOGFONT16           lf16;
 
     /* don't enumerate x11 fonts if we're using client side fonts */
     if (physDev->dc->gdiFont) return FALSE;
 
-    FONT_LogFontWTo16(plf, &lf16);
-
-    if( lf16.lfFaceName[0] )
+    if( plf->lfFaceName[0] )
     {
+        char facename[LF_FACESIZE+1];
+        WideCharToMultiByte( CP_ACP, 0, plf->lfFaceName, -1,
+                             facename, sizeof(facename), NULL, NULL );
 	/* enum all entries in this resource */
-	pfr = XFONT_FindFIList( pfr, lf16.lfFaceName );
+	pfr = XFONT_FindFIList( pfr, facename );
 	if( pfr )
 	{
 	    fontInfo*	pfi;
@@ -3346,8 +3367,8 @@ BOOL X11DRV_EnumDeviceFonts( X11DRV_PDEVICE *physDev, LPLOGFONTW plf,
 		   release the crit section, font list will
 		   have to be retraversed on return */
 
-	        if(lf16.lfCharSet == DEFAULT_CHARSET ||
-		   lf16.lfCharSet == pfi->df.dfCharSet) {
+	        if(plf->lfCharSet == DEFAULT_CHARSET ||
+		   plf->lfCharSet == pfi->df.dfCharSet) {
 		    if( (b = (*proc)( &lf, &tm,
 			       XFONT_GetFontMetric( pfi, &lf, &tm ), lp )) )
 		        bRet = b;
@@ -3376,13 +3397,10 @@ BOOL X11DRV_EnumDeviceFonts( X11DRV_PDEVICE *physDev, LPLOGFONTW plf,
  */
 BOOL X11DRV_GetTextMetrics(X11DRV_PDEVICE *physDev, TEXTMETRICW *metrics)
 {
-    TEXTMETRICA tmA;
-
     if( CHECK_PFONT(physDev->font) )
     {
 	fontObject* pfo = __PFONT(physDev->font);
-	X11DRV_cptable[pfo->fi->cptable].pGetTextMetricsA( pfo, &tmA );
-	FONT_TextMetricAToW(&tmA, metrics);
+	X11DRV_cptable[pfo->fi->cptable].pGetTextMetricsW( pfo, metrics );
 	return TRUE;
     }
     return FALSE;

@@ -62,7 +62,7 @@
 #include "winerror.h"
 #include "msvcrt/excpt.h"
 
-WINE_DECLARE_DEBUG_CHANNEL(cursor);
+WINE_DEFAULT_DEBUG_CHANNEL(cursor);
 WINE_DECLARE_DEBUG_CHANNEL(icon);
 WINE_DECLARE_DEBUG_CHANNEL(resource);
 
@@ -120,6 +120,37 @@ static void *map_fileW( LPCWSTR name )
         }
     }
     return ptr;
+}
+
+
+/***********************************************************************
+ *           get_bitmap_width_bytes
+ *
+ * Return number of bytes taken by a scanline of 16-bit aligned Windows DDB
+ * data.
+ */
+static int get_bitmap_width_bytes( int width, int bpp )
+{
+    switch(bpp)
+    {
+    case 1:
+        return 2 * ((width+15) / 16);
+    case 4:
+        return 2 * ((width+3) / 4);
+    case 24:
+        width *= 3;
+        /* fall through */
+    case 8:
+        return width + (width & 1);
+    case 16:
+    case 15:
+        return width * 2;
+    case 32:
+        return width * 4;
+    default:
+        WARN("Unknown depth %d, please report.\n", bpp );
+    }
+    return -1;
 }
 
 
@@ -1157,9 +1188,9 @@ HGLOBAL16 WINAPI CreateCursorIconIndirect16( HINSTANCE16 hInstance,
 
     hInstance = GetExePtr( hInstance );  /* Make it a module handle */
     if (!lpXORbits || !lpANDbits || info->bPlanes != 1) return 0;
-    info->nWidthBytes = BITMAP_GetWidthBytes(info->nWidth,info->bBitsPerPixel);
+    info->nWidthBytes = get_bitmap_width_bytes(info->nWidth,info->bBitsPerPixel);
     sizeXor = info->nHeight * info->nWidthBytes;
-    sizeAnd = info->nHeight * BITMAP_GetWidthBytes( info->nWidth, 1 );
+    sizeAnd = info->nHeight * get_bitmap_width_bytes( info->nWidth, 1 );
     if (!(handle = GlobalAlloc16( GMEM_MOVEABLE,
                                   sizeof(CURSORICONINFO) + sizeXor + sizeAnd)))
         return 0;
@@ -1301,7 +1332,7 @@ BOOL WINAPI DrawIcon( HDC hdc, INT x, INT y, HICON hIcon )
                                (char *)(ptr+1) );
     hXorBits = CreateBitmap( ptr->nWidth, ptr->nHeight, ptr->bPlanes,
                                ptr->bBitsPerPixel, (char *)(ptr + 1)
-                        + ptr->nHeight * BITMAP_GetWidthBytes(ptr->nWidth,1) );
+                        + ptr->nHeight * get_bitmap_width_bytes(ptr->nWidth,1) );
     oldFg = SetTextColor( hdc, RGB(0,0,0) );
     oldBg = SetBkColor( hdc, RGB(255,255,255) );
 
@@ -1345,7 +1376,7 @@ DWORD WINAPI DumpIcon16( SEGPTR pInfo, WORD *lpLen,
 
     if (!info) return 0;
     sizeXor = info->nHeight * info->nWidthBytes;
-    sizeAnd = info->nHeight * BITMAP_GetWidthBytes( info->nWidth, 1 );
+    sizeAnd = info->nHeight * get_bitmap_width_bytes( info->nWidth, 1 );
     if (lpAndBits) *lpAndBits = pInfo + sizeof(CURSORICONINFO);
     if (lpXorBits) *lpXorBits = pInfo + sizeof(CURSORICONINFO) + sizeAnd;
     if (lpLen) *lpLen = sizeof(CURSORICONINFO) + sizeAnd + sizeXor;
@@ -1737,7 +1768,7 @@ BOOL WINAPI GetIconInfo(HICON hIcon,PICONINFO iconinfo) {
                                 ciconinfo->bPlanes, ciconinfo->bBitsPerPixel,
                                 (char *)(ciconinfo + 1)
                                 + ciconinfo->nHeight *
-                                BITMAP_GetWidthBytes (ciconinfo->nWidth,1) );
+                                get_bitmap_width_bytes (ciconinfo->nWidth,1) );
     iconinfo->hbmMask = CreateBitmap ( ciconinfo->nWidth, ciconinfo->nHeight,
                                 1, 1, (char *)(ciconinfo + 1));
 
@@ -1900,7 +1931,7 @@ BOOL WINAPI DrawIconEx( HDC hdc, INT x0, INT y0, HICON hIcon,
 				    ptr->bPlanes, ptr->bBitsPerPixel,
 				    (char *)(ptr + 1)
 				    + ptr->nHeight *
-				    BITMAP_GetWidthBytes(ptr->nWidth,1) );
+				    get_bitmap_width_bytes(ptr->nWidth,1) );
 	hAndBits = CreateBitmap ( ptr->nWidth, ptr->nHeight,
 				    1, 1, (char *)(ptr+1) );
 	oldFg = SetTextColor( hdc, RGB(0,0,0) );
@@ -2224,7 +2255,21 @@ HICON WINAPI CopyImage( HANDLE hnd, UINT type, INT desiredx,
     switch (type)
     {
 	case IMAGE_BITMAP:
-		return BITMAP_CopyBitmap(hnd);
+        {
+            HBITMAP res;
+            BITMAP bm;
+
+            if (!GetObjectW( hnd, sizeof(bm), &bm )) return 0;
+            bm.bmBits = NULL;
+            if ((res = CreateBitmapIndirect(&bm)))
+            {
+                char *buf = HeapAlloc( GetProcessHeap(), 0, bm.bmWidthBytes * bm.bmHeight );
+                GetBitmapBits( hnd, bm.bmWidthBytes * bm.bmHeight, buf );
+                SetBitmapBits( res, bm.bmWidthBytes * bm.bmHeight, buf );
+                HeapFree( GetProcessHeap(), 0, buf );
+            }
+            return res;
+        }
 	case IMAGE_ICON:
 		return CURSORICON_ExtCopy(hnd,type, desiredx, desiredy, flags);
 	case IMAGE_CURSOR:

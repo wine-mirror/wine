@@ -103,7 +103,7 @@ int DIB_BitmapInfoSize( const BITMAPINFO * info, WORD coloruse )
  * Return 1 for INFOHEADER, 0 for COREHEADER,
  * 4 for V4HEADER, 5 for V5HEADER, -1 for error.
  */
-int DIB_GetBitmapInfo( const BITMAPINFOHEADER *header, DWORD *width,
+static int DIB_GetBitmapInfo( const BITMAPINFOHEADER *header, DWORD *width,
                               int *height, WORD *bpp, WORD *compr )
 {
     if (header->biSize == sizeof(BITMAPINFOHEADER))

@@ -53,7 +53,7 @@ static const struct gdi_obj_funcs bitmap_funcs =
  * Return number of bytes taken by a scanline of 16-bit aligned Windows DDB
  * data.
  */
-INT BITMAP_GetWidthBytes( INT bmWidth, INT bpp )
+static INT BITMAP_GetWidthBytes( INT bmWidth, INT bpp )
 {
     switch(bpp)
     {

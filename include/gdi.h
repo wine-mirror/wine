@@ -453,7 +453,6 @@ extern HMETAFILE16 MF_Create_HMETAFILE16(METAHEADER *mh);
 extern METAHEADER *MF_CreateMetaHeaderDisk(METAHEADER *mr, LPCSTR filename);
 
 /* region.c */
-extern HRGN REGION_CropRgn( HRGN hDst, HRGN hSrc, const RECT *lpRect, const POINT *lpPt );
 extern BOOL REGION_FrameRgn( HRGN dest, HRGN src, INT x, INT y );
 
 #define WINE_GGO_GRAY16_BITMAP 0x7f

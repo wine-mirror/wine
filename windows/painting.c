@@ -93,6 +93,28 @@ static void add_paint_count( HWND hwnd, int incr )
 
 
 /***********************************************************************
+ *           crop_rgn
+ *
+ * hSrc: 	Region to crop.
+ * lpRect: 	Clipping rectangle.
+ *
+ * hDst: Region to hold the result (a new region is created if it's 0).
+ *       Allowed to be the same region as hSrc in which case everything
+ *	 will be done in place, with no memory reallocations.
+ *
+ * Returns: hDst if success, 0 otherwise.
+ */
+static HRGN crop_rgn( HRGN hDst, HRGN hSrc, const RECT *rect )
+{
+    HRGN h = CreateRectRgnIndirect( rect );
+    if (hDst == 0) hDst = h;
+    CombineRgn( hDst, hSrc, h, RGN_AND );
+    if (hDst != h) DeleteObject( h );
+    return hDst;
+}
+
+
+/***********************************************************************
  *           WIN_HaveToDelayNCPAINT
  *
  * Currently, in the Wine painting mechanism, the WM_NCPAINT message
@@ -188,7 +210,10 @@ static HRGN WIN_UpdateNCRgn(WND* wnd, HRGN hRgn, UINT uncFlags )
     {
         wnd->flags &= ~WIN_NEEDS_NCPAINT;
 	if( wnd->hrgnUpdate > 1 )
-	    hrgnRet = REGION_CropRgn( hRgn, wnd->hrgnUpdate, NULL, NULL );
+        {
+            CombineRgn( hRgn, wnd->hrgnUpdate, 0, RGN_COPY );
+            hrgnRet = hRgn;
+        }
 	else
 	{
 	    hrgnRet = wnd->hrgnUpdate;
@@ -229,7 +254,7 @@ static HRGN WIN_UpdateNCRgn(WND* wnd, HRGN hRgn, UINT uncFlags )
 		     * case that places a valid region handle in hClip */
 
 		    hClip = wnd->hrgnUpdate;
-		    wnd->hrgnUpdate = REGION_CropRgn( hRgn, hClip, &r, NULL );
+		    wnd->hrgnUpdate = crop_rgn( hRgn, hClip, &r );
 		    if( uncFlags & UNC_REGION ) hrgnRet = hClip;
 		}
 
@@ -266,7 +291,10 @@ static HRGN WIN_UpdateNCRgn(WND* wnd, HRGN hRgn, UINT uncFlags )
 	{
 copyrgn:
 	    if( uncFlags & UNC_REGION )
-		hrgnRet = REGION_CropRgn( hRgn, wnd->hrgnUpdate, NULL, NULL );
+            {
+                CombineRgn( hRgn, wnd->hrgnUpdate, 0, RGN_COPY );
+                hrgnRet = hRgn;
+            }
 	}
 	else
 	if( wnd->hrgnUpdate == 1 && (uncFlags & UNC_UPDATE) )
@@ -406,9 +434,9 @@ static void RDW_UpdateRgns( WND* wndPtr, HRGN hRgn, UINT flags, BOOL firstRecurs
 			CombineRgn( wndPtr->hrgnUpdate, wndPtr->hrgnUpdate, hRgn, RGN_OR );
 			/* fall through */
 		case 0:
-			wndPtr->hrgnUpdate = REGION_CropRgn( wndPtr->hrgnUpdate,
-							     wndPtr->hrgnUpdate ? wndPtr->hrgnUpdate : hRgn,
-							     &r, NULL );
+			wndPtr->hrgnUpdate = crop_rgn( wndPtr->hrgnUpdate,
+                                                       wndPtr->hrgnUpdate ? wndPtr->hrgnUpdate : hRgn,
+                                                       &r );
 			if( !bHadOne )
 			{
 			    GetRgnBox( wndPtr->hrgnUpdate, &r );
@@ -735,9 +763,16 @@ BOOL WINAPI RedrawWindow( HWND hwnd, const RECT *rectUpdate,
 	if( hrgnUpdate )
 	{
 	    if( wndPtr->hrgnUpdate )
-	        hRgn = REGION_CropRgn( 0, hrgnUpdate, NULL, &pt );
+            {
+                hRgn = CreateRectRgn( 0, 0, 0, 0 );
+                CombineRgn( hRgn, hrgnUpdate, 0, RGN_COPY );
+                OffsetRgn( hRgn, pt.x, pt.y );
+            }
 	    else
-		wndPtr->hrgnUpdate = REGION_CropRgn( 0, hrgnUpdate, &r, &pt );
+            {
+		wndPtr->hrgnUpdate = crop_rgn( 0, hrgnUpdate, &r );
+                OffsetRgn( wndPtr->hrgnUpdate, pt.x, pt.y );
+            }
 	}
 	else if( rectUpdate )
 	{
@@ -770,7 +805,8 @@ BOOL WINAPI RedrawWindow( HWND hwnd, const RECT *rectUpdate,
 	/* In this we cannot leave with zero hRgn */
 	if( hrgnUpdate )
 	{
-	    hRgn = REGION_CropRgn( hRgn, hrgnUpdate,  &r, &pt );
+	    hRgn = crop_rgn( hRgn, hrgnUpdate,  &r );
+            OffsetRgn( hRgn, pt.x, pt.y );
 	    GetRgnBox( hRgn, &r2 );
 	    if( IsRectEmpty( &r2 ) ) goto END;
 	}
