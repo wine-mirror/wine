@@ -755,8 +755,6 @@ void RELAY_SetupDLL( HMODULE module )
             debug->call = 0xe9;  /* jmp relative */
             debug->callfrom32 = (char *)debug->orig - (char *)&debug->ret;
         }
-
-        debug->orig = (FARPROC)((char *)module + (DWORD)*funcs);
         *funcs = (char *)debug - (char *)module;
     }
 }
