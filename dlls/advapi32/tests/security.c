@@ -280,7 +280,7 @@ static void test_lookupPrivilegeName(void)
      cchName == strlen("SeCreateTokenPrivilege"),
      "LookupPrivilegeNameA returned an incorrect output length for\n"
      "SeCreateTokenPrivilege (got %ld, expected %d)\n", cchName,
-     strlen("SeCreateTokenPrivilege"));
+     (int)strlen("SeCreateTokenPrivilege"));
     /* check known values */
     for (i = SE_MIN_WELL_KNOWN_PRIVILEGE; i < SE_MAX_WELL_KNOWN_PRIVILEGE; i++)
     {
