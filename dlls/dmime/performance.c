@@ -50,35 +50,41 @@ struct DMUS_PMSGItem {
 #define PROCESSMSG_ADD             (WM_APP + 4)
 
 
-static void ProceedMsg(IDirectMusicPerformance8Impl* This, DMUS_PMSGItem* cur) {
+static DMUS_PMSGItem* ProceedMsg(IDirectMusicPerformance8Impl* This, DMUS_PMSGItem* cur) {
   if (cur->pMsg.dwType == DMUS_PMSGT_NOTIFICATION) {
     SetEvent(This->hNotification);
   }	
   DMUS_ItemRemoveFromQueue(This, cur);
   switch (cur->pMsg.dwType) {
+  case DMUS_PMSGT_WAVE:
+  case DMUS_PMSGT_TEMPO:   
   case DMUS_PMSGT_STOP:
   default:
     FIXME("Unhandled PMsg Type: 0x%lx\n", cur->pMsg.dwType);
     break;
   }
-  HeapFree(GetProcessHeap(), 0, cur); 
+  return cur;
 }
 
 static DWORD WINAPI ProcessMsgThread(LPVOID lpParam) {
   IDirectMusicPerformance8Impl* This = (IDirectMusicPerformance8Impl*) lpParam;
-  /*DWORD timeOut = INFINITE;*/
+  DWORD timeOut = INFINITE;
   MSG msg;
   HRESULT hr;
+  REFERENCE_TIME rtLastTime;
   REFERENCE_TIME rtCurTime;
   DMUS_PMSGItem* it = NULL;
+  DMUS_PMSGItem* cur = NULL;
   DMUS_PMSGItem* it_next = NULL;
 
   while (TRUE) {
     DWORD dwDec = This->rtLatencyTime + This->dwBumperLength;
 
-    /*if (timeOut > 0) MsgWaitForMultipleObjects(0, NULL, FALSE, timeOut, QS_POSTMESSAGE|QS_SENDMESSAGE|QS_TIMER);*/
-    
+    if (timeOut > 0) MsgWaitForMultipleObjects(0, NULL, FALSE, timeOut, QS_POSTMESSAGE|QS_SENDMESSAGE|QS_TIMER);
+    timeOut = INFINITE;
+
     EnterCriticalSection(&This->safe);
+    rtLastTime = rtCurTime;
     hr = IDirectMusicPerformance8Impl_GetTime((IDirectMusicPerformance8*) This, &rtCurTime, NULL);
     if (FAILED(hr)) {
       goto outrefresh;
@@ -86,14 +92,23 @@ static DWORD WINAPI ProcessMsgThread(LPVOID lpParam) {
     
     for (it = This->imm_head; NULL != it; ) {
       it_next = it->next;
-      ProceedMsg(This, it);  
+      cur = ProceedMsg(This, it);  
+      if (NULL != cur) {
+	HeapFree(GetProcessHeap(), 0, cur); 
+      }
       it = it_next;
     }
 
     for (it = This->head; NULL != it && it->rtItemTime < rtCurTime + dwDec; ) {
       it_next = it->next;
-      ProceedMsg(This, it);
+      cur = ProceedMsg(This, it);
+      if (NULL != cur) {
+	HeapFree(GetProcessHeap(), 0, cur);
+      }
       it = it_next;
+    }
+    if (NULL != it) {
+      timeOut = ( it->rtItemTime - rtCurTime ) + This->rtLatencyTime;
     }
 
 outrefresh:
@@ -122,6 +137,9 @@ outrefresh:
 	}
       }
     }
+
+    /** here we should run a little of current AudioPath */
+
   }
 
 outofthread:
@@ -974,7 +992,7 @@ HRESULT WINAPI DMUSIC_CreateDirectMusicPerformanceImpl (LPCGUID lpcGUID, LPVOID 
 	/**
 	 * @see http://msdn.microsoft.com/archive/default.asp?url=/archive/en-us/directx9_c/directx/htm/latencyandbumpertime.asp
 	 */
-	obj->rtLatencyTime  = 1000; /* 1s TO FIX */
+	obj->rtLatencyTime  = 100;  /* 100ms TO FIX */
 	obj->dwBumperLength =   50; /* 50ms default */
 	obj->dwPrepareTime  = 1000; /* 1000ms default */
 	return IDirectMusicPerformance8Impl_QueryInterface ((LPDIRECTMUSICPERFORMANCE8)obj, lpcGUID, ppobj);
