@@ -115,6 +115,7 @@ BASEDIRS = \
 	uxtheme \
 	vdhcp.vxd \
 	version \
+	vmm.vxd \
 	vnb.vxd \
 	vnetbios.vxd \
 	vtdapi.vxd \
@@ -330,6 +331,7 @@ SYMLINKS = \
 	uxtheme.dll$(DLLEXT) \
 	vdhcp.vxd$(DLLEXT) \
 	version.dll$(DLLEXT) \
+	vmm.vxd$(DLLEXT) \
 	vnb.vxd$(DLLEXT) \
 	vnetbios.vxd$(DLLEXT) \
 	vtdapi.vxd$(DLLEXT) \
@@ -758,6 +760,9 @@ version.dll$(DLLEXT): version/version.dll$(DLLEXT)
 
 ver.dll$(DLLEXT) : version.dll$(DLLEXT)
 	$(RM) $@ && $(LN_S) version.dll$(DLLEXT) $@
+
+vmm.vxd$(DLLEXT): vmm.vxd/vmm.vxd$(DLLEXT)
+	$(RM) $@ && $(LN_S) vmm.vxd/vmm.vxd$(DLLEXT) $@
 
 vnb.vxd$(DLLEXT): vnb.vxd/vnb.vxd$(DLLEXT)
 	$(RM) $@ && $(LN_S) vnb.vxd/vnb.vxd$(DLLEXT) $@
@@ -1780,6 +1785,7 @@ user/user32.dll$(DLLEXT): user
 uxtheme/uxtheme.dll$(DLLEXT): uxtheme
 vdhcp.vxd/vdhcp.vxd$(DLLEXT): vdhcp.vxd
 version/version.dll$(DLLEXT): version
+vmm.vxd/vmm.vxd$(DLLEXT): vmm.vxd
 vnb.vxd/vnb.vxd$(DLLEXT): vnb.vxd
 vnetbios.vxd/vnetbios.vxd$(DLLEXT): vnetbios.vxd
 vtdapi.vxd/vtdapi.vxd$(DLLEXT): vtdapi.vxd

@@ -31,6 +31,13 @@ WINE_DEFAULT_DEBUG_CHANNEL(vxd);
 
 extern void WINAPI CallBuiltinHandler( CONTEXT86 *context, BYTE intnum );  /* from winedos */
 
+/* Pop a DWORD from the 32-bit stack */
+static inline DWORD stack32_pop( CONTEXT86 *context )
+{
+    DWORD ret = *(DWORD *)context->Esp;
+    context->Esp += sizeof(DWORD);
+    return ret;
+}
 
 static void DIOCRegs_2_CONTEXT( DIOC_REGISTERS *pIn, CONTEXT86 *pCxt )
 {
@@ -148,5 +155,57 @@ BOOL WINAPI VWIN32_DeviceIoControl(DWORD dwIoControlCode,
     default:
         FIXME( "Unknown Control %ld\n", dwIoControlCode);
         return FALSE;
+    }
+}
+
+
+/***********************************************************************
+ *           VxDCall   (VWIN32.VXD.@)
+ *
+ *  Service numbers taken from page 448 of Pietrek's "Windows 95 System
+ *  Programming Secrets".  Parameters from experimentation on real Win98.
+ *
+ */
+DWORD WINAPI VWIN32_VxDCall( DWORD service, CONTEXT86 *context )
+{
+    switch ( LOWORD(service) )
+    {
+    case 0x0000: /* GetVersion */
+        {
+            DWORD vers = GetVersion();
+            return (LOBYTE(vers) << 8) | HIBYTE(vers);
+        }
+    case 0x0020: /* Get VMCPD Version */
+        {
+            DWORD parm = stack32_pop(context);
+
+            FIXME("Get VMCPD Version(%08lx): partial stub!\n", parm);
+
+            /* FIXME: This is what Win98 returns, it may
+             *        not be correct in all situations.
+             *        It makes Bleem! happy though.
+             */
+            return 0x0405;
+        }
+    case 0x0029: /* Int31/DPMI dispatch */
+        {
+            DWORD callnum = stack32_pop(context);
+            DWORD parm    = stack32_pop(context);
+
+            TRACE("Int31/DPMI dispatch(%08lx)\n", callnum);
+
+            context->Eax = callnum;
+            context->Ecx = parm;
+            CallBuiltinHandler( context, 0x31 );
+            return LOWORD(context->Eax);
+        }
+    case 0x002a: /* Int41 dispatch - parm = int41 service number */
+        {
+            DWORD callnum = stack32_pop(context);
+            return callnum; /* FIXME: should really call INT_Int41Handler() */
+        }
+    default:
+        FIXME("Unknown service %08lx\n", service);
+        return 0xffffffff;
     }
 }
