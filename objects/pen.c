@@ -97,7 +97,8 @@ HPEN WINAPI ExtCreatePen( DWORD style, DWORD width,
                               const LOGBRUSH * brush, DWORD style_count,
                               const DWORD *style_bits )
 {
-    LOGPEN logpen;
+    PENOBJ * penPtr;
+    HPEN hpen;
 
     if ((style & PS_STYLE_MASK) == PS_USERSTYLE)
 	FIXME("PS_USERSTYLE not handled\n");
@@ -105,11 +106,22 @@ HPEN WINAPI ExtCreatePen( DWORD style, DWORD width,
 	if (brush->lbHatch)
 	    FIXME("Hatches not implemented\n");
 
-    logpen.lopnStyle = style & ~PS_TYPE_MASK;
-    logpen.lopnWidth.x = (style & PS_GEOMETRIC) ? width : 1;
-    logpen.lopnWidth.y = 0;
-    logpen.lopnColor = brush->lbColor;
-    return CreatePenIndirect( &logpen );
+    hpen = GDI_AllocObject( sizeof(PENOBJ), PEN_MAGIC );
+    if (!hpen) return 0;
+    penPtr = (PENOBJ *)GDI_HEAP_LOCK( hpen );
+    penPtr->logpen.lopnStyle = style & ~PS_TYPE_MASK; 
+    
+    /* PS_USERSTYLE and PS_ALTERNATE workaround */   
+    if((penPtr->logpen.lopnStyle & PS_STYLE_MASK) > PS_INSIDEFRAME)
+       penPtr->logpen.lopnStyle = 
+         (penPtr->logpen.lopnStyle & ~PS_STYLE_MASK) | PS_SOLID;
+    
+    penPtr->logpen.lopnWidth.x = (style & PS_GEOMETRIC) ? width : 1; 
+    penPtr->logpen.lopnWidth.y = 0;
+    penPtr->logpen.lopnColor = brush->lbColor;
+    GDI_HEAP_UNLOCK( hpen );
+
+    return hpen;
 }
 
 /***********************************************************************
