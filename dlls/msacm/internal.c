@@ -70,11 +70,10 @@ BOOL MSACM_FindFormatTagInCache(WINE_ACMDRIVERID* padid, DWORD fmtTag, LPDWORD i
  */
 static BOOL MSACM_FillCache(PWINE_ACMDRIVERID padid) 
 {
-    HACMDRIVER		had = 0;
-    int			ntag;
-    ACMDRIVERDETAILSW	add;
-    ACMFORMATDETAILSW	aftd;
-    WAVEFORMATEX	wfx;
+    HACMDRIVER		        had = 0;
+    int			        ntag;
+    ACMDRIVERDETAILSW	        add;
+    ACMFORMATTAGDETAILSW        aftd;
 
     if (acmDriverOpen(&had, (HACMDRIVERID)padid, 0) != 0)
 	return FALSE;
@@ -95,20 +94,17 @@ static BOOL MSACM_FillCache(PWINE_ACMDRIVERID padid)
     padid->fdwSupport  = add.fdwSupport;
 
     aftd.cbStruct = sizeof(aftd);
-    /* don't care about retrieving full struct... so a bare WAVEFORMATEX should do */
-    aftd.pwfx = &wfx;
-    aftd.cbwfx = sizeof(wfx);
-
+ 
     for (ntag = 0; ntag < add.cFormatTags; ntag++) {
-	aftd.dwFormatIndex = ntag;
-	if (MSACM_Message(had, ACMDM_FORMAT_DETAILS, (LPARAM)&aftd, ACM_FORMATDETAILSF_INDEX)) {
+	aftd.dwFormatTagIndex = ntag;
+	if (MSACM_Message(had, ACMDM_FORMATTAG_DETAILS, (LPARAM)&aftd, ACM_FORMATTAGDETAILSF_INDEX)) {
 	    TRACE("IIOs (%s)\n", padid->pszDriverAlias);
 	    goto errCleanUp;
 	}
 	padid->aFormatTag[ntag].dwFormatTag = aftd.dwFormatTag;
-	padid->aFormatTag[ntag].cbwfx = aftd.cbwfx;
+	padid->aFormatTag[ntag].cbwfx = aftd.cbFormatSize;
     }
-	    
+
     acmDriverClose(had, 0);
 
     return TRUE;
