@@ -14,7 +14,7 @@
 @ stub CloseIMsgSession@4
 @ stub CreateIProp@24
 @ stub CreateTable@36
-@ stub DeinitMapiUtil@0
+@ stdcall DeinitMapiUtil() DeinitMapiUtil
 @ stub DeregisterIdleRoutine@4
 @ stub DllCanUnloadNow
 @ stub DllGetClassObject

@@ -53,7 +53,12 @@ lpszPassword, FLAGS flFlags, VOID* lppSession)
     return MAPI_E_LOGON_FAILURE;
 }
 
-VOID WINAPI MAPIUninitialize()
+VOID WINAPI MAPIUninitialize(void)
+{
+    ERR("Stub\n");
+}
+
+VOID WINAPI DeinitMapiUtil(void)
 {
     ERR("Stub\n");
 }
