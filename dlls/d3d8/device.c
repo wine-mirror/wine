@@ -1153,9 +1153,68 @@ BOOL     WINAPI  IDirect3DDevice8Impl_ShowCursor(LPDIRECT3DDEVICE8 iface, BOOL b
     return D3D_OK;
 }
 HRESULT  WINAPI  IDirect3DDevice8Impl_CreateAdditionalSwapChain(LPDIRECT3DDEVICE8 iface, D3DPRESENT_PARAMETERS* pPresentationParameters, IDirect3DSwapChain8** pSwapChain) {
+    IDirect3DSwapChain8Impl* object;
     ICOM_THIS(IDirect3DDevice8Impl,iface);
     FIXME("(%p) : stub\n", This);
-    *pSwapChain = NULL;
+
+    object = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(IDirect3DDevice8Impl));
+    if (NULL == object) {
+      return D3DERR_OUTOFVIDEOMEMORY;
+    }
+    object->lpVtbl = &Direct3DSwapChain8_Vtbl;
+    object->ref = 1;
+
+    TRACE("(%p)->(DepthStencil:(%u,%s), BackBufferFormat:(%u,%s))\n", This, 
+	  pPresentationParameters->AutoDepthStencilFormat, debug_d3dformat(pPresentationParameters->AutoDepthStencilFormat),
+	  pPresentationParameters->BackBufferFormat, debug_d3dformat(pPresentationParameters->BackBufferFormat));
+
+    if (pPresentationParameters->Windowed && ((pPresentationParameters->BackBufferWidth  == 0) ||
+                                              (pPresentationParameters->BackBufferHeight == 0))) {
+      RECT Rect;
+      
+      GetClientRect(This->win_handle, &Rect);
+      
+      if (pPresentationParameters->BackBufferWidth == 0) {
+	pPresentationParameters->BackBufferWidth = Rect.right;
+	TRACE("Updating width to %d\n", pPresentationParameters->BackBufferWidth);
+      }
+      if (pPresentationParameters->BackBufferHeight == 0) {
+	pPresentationParameters->BackBufferHeight = Rect.bottom;
+	TRACE("Updating height to %d\n", pPresentationParameters->BackBufferHeight);
+      }
+    }
+    
+    /* Save the presentation parms now filled in correctly */
+    memcpy(&object->PresentParms, pPresentationParameters, sizeof(D3DPRESENT_PARAMETERS));
+
+    IDirect3DDevice8Impl_CreateRenderTarget((LPDIRECT3DDEVICE8) object,
+                                            pPresentationParameters->BackBufferWidth,
+                                            pPresentationParameters->BackBufferHeight,
+                                            pPresentationParameters->BackBufferFormat,
+					    pPresentationParameters->MultiSampleType,
+					    TRUE,
+                                            (LPDIRECT3DSURFACE8*) &object->frontBuffer);
+    
+    IDirect3DDevice8Impl_CreateRenderTarget((LPDIRECT3DDEVICE8) object,
+                                            pPresentationParameters->BackBufferWidth,
+                                            pPresentationParameters->BackBufferHeight,
+                                            pPresentationParameters->BackBufferFormat,
+					    pPresentationParameters->MultiSampleType,
+					    TRUE,
+                                            (LPDIRECT3DSURFACE8*) &object->backBuffer);
+
+    if (pPresentationParameters->EnableAutoDepthStencil) {
+       IDirect3DDevice8Impl_CreateDepthStencilSurface((LPDIRECT3DDEVICE8) object,
+	  					      pPresentationParameters->BackBufferWidth,
+						      pPresentationParameters->BackBufferHeight,
+						      pPresentationParameters->AutoDepthStencilFormat,
+						      D3DMULTISAMPLE_NONE,
+						      (LPDIRECT3DSURFACE8*) &object->depthStencilBuffer);
+    } else {
+      object->depthStencilBuffer = NULL;
+    }
+
+    *pSwapChain = (IDirect3DSwapChain8*) object;
     return D3D_OK;
 }
 HRESULT  WINAPI  IDirect3DDevice8Impl_Reset(LPDIRECT3DDEVICE8 iface, D3DPRESENT_PARAMETERS* pPresentationParameters) {

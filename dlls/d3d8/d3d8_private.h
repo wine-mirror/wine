@@ -394,18 +394,12 @@ struct IDirect3DDevice8Impl
     GLXContext                    glCtx;
     XVisualInfo                  *visInfo;
     Display                      *display;
+    HWND                          win_handle;
     Window                        win;
     GLXContext                    render_ctx;
     Drawable                      drawable;
 
     /* OpenGL Extension related */
-#if 0
-    BOOL                          isMultiTexture;
-    BOOL                          isDot3;
-    UINT                          TextureUnits;
-    UINT                          clipPlanes;
-    UINT                          maxLights;
-#endif
 
     /* Cursor management */
     BOOL                          bCursorVisible;
@@ -590,7 +584,13 @@ struct IDirect3DSwapChain8Impl
     /* IDirect3DSwapChain8 fields */
     IDirect3DSurface8Impl  *frontBuffer;
     IDirect3DSurface8Impl  *backBuffer;
+    IDirect3DSurface8Impl  *depthStencilBuffer;
     D3DPRESENT_PARAMETERS   PresentParms;
+
+    /* OpenGL/GLX related */
+    GLXContext              swap_ctx;
+    Drawable                swap_drawable;
+    
 };
 
 /* IUnknown: */

@@ -56,8 +56,9 @@ ULONG WINAPI IDirect3DSwapChain8Impl_Release(LPDIRECT3DSWAPCHAIN8 iface) {
     ICOM_THIS(IDirect3DSwapChain8Impl,iface);
     ULONG ref = --This->ref;
     TRACE("(%p) : ReleaseRef to %ld\n", This, This->ref);
-    if (ref == 0)
+    if (ref == 0) {
         HeapFree(GetProcessHeap(), 0, This);
+    }
     return ref;
 }
 
@@ -67,10 +68,19 @@ HRESULT WINAPI IDirect3DSwapChain8Impl_Present(LPDIRECT3DSWAPCHAIN8 iface, CONST
     FIXME("(%p) : stub\n", This);
     return D3D_OK;
 }
-HRESULT WINAPI IDirect3DSwapChain8Impl_GetBackBuffer(LPDIRECT3DSWAPCHAIN8 iface, UINT BackBuffer, D3DBACKBUFFER_TYPE Type,IDirect3DSurface8** ppBackBuffer) {
+
+HRESULT WINAPI IDirect3DSwapChain8Impl_GetBackBuffer(LPDIRECT3DSWAPCHAIN8 iface, UINT BackBuffer, D3DBACKBUFFER_TYPE Type, IDirect3DSurface8** ppBackBuffer) {
     ICOM_THIS(IDirect3DSwapChain8Impl,iface);
-    FIXME("(%p) : stub\n", This);    
-    *ppBackBuffer = NULL;
+    *ppBackBuffer = (LPDIRECT3DSURFACE8) This->backBuffer;
+    TRACE("(%p) : BackBuf %d Type %d returning %p\n", This, BackBuffer, Type, *ppBackBuffer);
+
+    if (BackBuffer > This->PresentParms.BackBufferCount - 1) {
+        FIXME("Only one backBuffer currently supported\n");
+        return D3DERR_INVALIDCALL;
+    }
+
+    /* Note inc ref on returned surface */
+    IDirect3DSurface8Impl_AddRef((LPDIRECT3DSURFACE8) *ppBackBuffer);
     return D3D_OK;
 }
 

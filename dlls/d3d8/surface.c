@@ -243,19 +243,6 @@ HRESULT WINAPI IDirect3DSurface8Impl_LockRect(LPDIRECT3DSURFACE8 iface, D3DLOCKE
 	
 	if (SUCCEEDED(hr) && NULL != cont) {
 	  IDirect3DBaseTexture8Impl_SetDirty(cont, TRUE);
-#if 0
-	  /* Now setup the texture appropraitly */
-	  D3DRESOURCETYPE containerType = IDirect3DBaseTexture8Impl_GetType(cont);
-	  if (containerType == D3DRTYPE_TEXTURE) {
-            IDirect3DTexture8Impl* pTexture = (IDirect3DTexture8Impl*) cont;
-            pTexture->Dirty = TRUE;
-	  } else if (containerType == D3DRTYPE_CUBETEXTURE) {
-            IDirect3DCubeTexture8Impl* pTexture = (IDirect3DCubeTexture8Impl*) cont;
-            pTexture->Dirty = TRUE;
-	  } else {
-            FIXME("Set dirty on container type %d\n", containerType);
-	  }
-#endif
 	  IDirect3DBaseTexture8_Release(cont);
 	  cont = NULL;
 	}
