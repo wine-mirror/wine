@@ -244,10 +244,10 @@ static int thread_signaled( struct object *obj, struct thread *thread )
 }
 
 /* get a thread pointer from a thread id (and increment the refcount) */
-struct thread *get_thread_from_id( void *id )
+struct thread *get_thread_from_id( thread_id_t id )
 {
     struct thread *t = first_thread;
-    while (t && (t != id)) t = t->next;
+    while (t && (get_thread_id(t) != id)) t = t->next;
     if (t) grab_object( t );
     else set_error( STATUS_INVALID_PARAMETER );
     return t;
@@ -778,7 +778,7 @@ DECL_HANDLER(new_thread)
     if ((thread = create_thread( request_fd, current->process )))
     {
         if (req->suspend) thread->suspend++;
-        reply->tid = thread;
+        reply->tid = get_thread_id( thread );
         if ((reply->handle = alloc_handle( current->process, thread,
                                            THREAD_ALL_ACCESS, req->inherit )))
         {

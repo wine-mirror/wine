@@ -442,7 +442,7 @@ static void WINECON_Delete(struct inner_data* data)
  * Initialisation part I. Creation of server object (console input and
  * active screen buffer)
  */
-static struct inner_data* WINECON_Init(HINSTANCE hInst, void* pid, LPCWSTR appname,
+static struct inner_data* WINECON_Init(HINSTANCE hInst, DWORD pid, LPCWSTR appname,
                                        BOOL (*backend)(struct inner_data*))
 {
     struct inner_data*	data = NULL;
@@ -635,7 +635,7 @@ int PASCAL WinMain(HINSTANCE hInst, HINSTANCE hPrev, LPSTR lpCmdLine, INT nCmdSh
         while (*src && *src != ' ') *dst++ = *src++;
         *dst = 0;
 
-        if (!(data = WINECON_Init(hInst, (void*)GetCurrentProcessId(), buffer, backend))) return 0;
+        if (!(data = WINECON_Init(hInst, GetCurrentProcessId(), buffer, backend))) return 0;
 	ret = WINECON_Spawn(data, wcmdLine);
         if (!ret)
 	{

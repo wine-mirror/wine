@@ -58,8 +58,8 @@ typedef struct _TEB
     struct _TEB *self;           /* 12-  18 Pointer to this structure */
     WORD         tibflags;       /* 1!n  1c Flags (NT: EnvironmentPointer) */
     WORD         mutex_count;    /* 1-n  1e Win16 mutex count */
-    void        *pid;            /* !2-  20 Process id (win95: debug context) */
-    void        *tid;            /* -2-  24 Thread id */
+    DWORD        pid;            /* !2-  20 Process id (win95: debug context) */
+    DWORD        tid;            /* -2-  24 Thread id */
     HQUEUE16     queue;          /* 1!-  28 Message queue (NT: DWORD ActiveRpcHandle)*/
     WORD         pad1;           /* --n  2a */
     LPVOID      *tls_ptr;        /* 1--  2c Pointer to TLS array */

@@ -1488,7 +1488,7 @@ HANDLE WINAPI OpenProcess( DWORD access, BOOL inherit, DWORD id )
     HANDLE ret = 0;
     SERVER_START_REQ( open_process )
     {
-        req->pid     = (void *)id;
+        req->pid     = id;
         req->access  = access;
         req->inherit = inherit;
         if (!wine_server_call_err( req )) ret = reply->handle;

@@ -104,7 +104,7 @@ extern struct thread *current;
 /* thread functions */
 
 extern struct thread *create_thread( int fd, struct process *process );
-extern struct thread *get_thread_from_id( void *id );
+extern struct thread *get_thread_from_id( thread_id_t id );
 extern struct thread *get_thread_from_handle( obj_handle_t handle, unsigned int access );
 extern struct thread *get_thread_from_pid( int pid );
 extern int suspend_thread( struct thread *thread, int check_limit );
@@ -139,6 +139,6 @@ static inline unsigned int get_error(void)       { return current ? current->err
 static inline void set_error( unsigned int err ) { global_error = err; if (current) current->error = err; }
 static inline void clear_error(void)    { set_error(0); }
 
-static inline void *get_thread_id( struct thread *thread ) { return thread; }
+static inline thread_id_t get_thread_id( struct thread *thread ) { return (thread_id_t)thread; }
 
 #endif  /* __WINE_SERVER_THREAD_H */

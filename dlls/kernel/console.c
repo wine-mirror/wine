@@ -1406,7 +1406,7 @@ BOOL WINAPI GenerateConsoleCtrlEvent(DWORD dwCtrlEvent,
     SERVER_START_REQ( send_console_signal )
     {
         req->signal = dwCtrlEvent;
-        req->group_id = (void*)dwProcessGroupID;
+        req->group_id = dwProcessGroupID;
         ret = !wine_server_call_err( req );
     }
     SERVER_END_REQ;

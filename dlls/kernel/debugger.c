@@ -149,8 +149,8 @@ BOOL WINAPI ContinueDebugEvent(
     BOOL ret;
     SERVER_START_REQ( continue_debug_event )
     {
-        req->pid    = (void *)pid;
-        req->tid    = (void *)tid;
+        req->pid    = pid;
+        req->tid    = tid;
         req->status = status;
         ret = !wine_server_call_err( req );
     }
@@ -174,7 +174,7 @@ BOOL WINAPI DebugActiveProcess(
     BOOL ret;
     SERVER_START_REQ( debug_process )
     {
-        req->pid = (void *)pid;
+        req->pid = pid;
         req->attach = 1;
         ret = !wine_server_call_err( req );
     }
@@ -197,7 +197,7 @@ BOOL WINAPI DebugActiveProcessStop(
     BOOL ret;
     SERVER_START_REQ( debug_process )
     {
-        req->pid = (void *)pid;
+        req->pid = pid;
         req->attach = 0;
         ret = !wine_server_call_err( req );
     }

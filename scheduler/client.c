@@ -71,7 +71,7 @@ struct cmsg_fd
 };
 #endif  /* HAVE_MSGHDR_ACCRIGHTS */
 
-static void *boot_thread_id;
+static DWORD boot_thread_id;
 static sigset_t block_set;  /* signals to block during server calls */
 static int fd_socket;  /* socket to exchange file descriptors with the server */
 
@@ -114,7 +114,7 @@ void server_protocol_error( const char *err, ... )
     va_list args;
 
     va_start( args, err );
-    fprintf( stderr, "wine client error:%p: ", NtCurrentTeb()->tid );
+    fprintf( stderr, "wine client error:%lx: ", NtCurrentTeb()->tid );
     vfprintf( stderr, err, args );
     va_end( args );
     SYSDEPS_AbortThread(1);
@@ -126,7 +126,7 @@ void server_protocol_error( const char *err, ... )
  */
 void server_protocol_perror( const char *err )
 {
-    fprintf( stderr, "wine client error:%p: ", NtCurrentTeb()->tid );
+    fprintf( stderr, "wine client error:%lx: ", NtCurrentTeb()->tid );
     perror( err );
     SYSDEPS_AbortThread(1);
 }
@@ -263,7 +263,7 @@ void wine_server_send_fd( int fd )
     msghdr.msg_flags      = 0;
 #endif  /* HAVE_MSGHDR_ACCRIGHTS */
 
-    data.tid = (void *)GetCurrentThreadId();
+    data.tid = GetCurrentThreadId();
     data.fd  = fd;
 
     for (;;)

@@ -218,7 +218,7 @@ struct thread *create_process( int fd )
     process->exe.dbg_size    = 0;
     process->exe.namelen     = 0;
     process->exe.filename    = NULL;
-    process->group_id        = NULL;
+    process->group_id        = 0;
 
     gettimeofday( &process->start_time, NULL );
     if ((process->next = first_process) != NULL) process->next->prev = process;
@@ -292,7 +292,7 @@ static struct startup_info *init_process( int ppid, struct init_process_reply *r
     /* set the process console */
     if (!set_process_console( process, parent_thread, info, reply )) return NULL;
 
-    process->group_id = process;
+    process->group_id = get_process_id( process );
     if (parent)
     {
         /* attach to the debugger if requested */
@@ -397,10 +397,10 @@ static int startup_info_signaled( struct object *obj, struct thread *thread )
 }
 
 /* get a process from an id (and increment the refcount) */
-struct process *get_process_from_id( void *id )
+struct process *get_process_from_id( process_id_t id )
 {
     struct process *p = first_process;
-    while (p && (p != id)) p = p->next;
+    while (p && (get_process_id(p) != id)) p = p->next;
     if (p) grab_object( p );
     else set_error( STATUS_INVALID_PARAMETER );
     return p;

@@ -35,6 +35,8 @@ struct request_max_size
 typedef int obj_handle_t;
 typedef unsigned short atom_t;
 typedef unsigned int user_handle_t;
+typedef unsigned int process_id_t;
+typedef unsigned int thread_id_t;
 
 #define FIRST_USER_HANDLE 0x0020
 #define LAST_USER_HANDLE  0xffef
@@ -115,8 +117,8 @@ typedef struct
 
 struct send_fd
 {
-    void  *tid;
-    int    fd;
+    thread_id_t tid;
+    int         fd;
 };
 
 
@@ -207,9 +209,9 @@ struct get_new_process_info_request
 struct get_new_process_info_reply
 {
     struct reply_header __header;
-    void*        pid;
+    process_id_t pid;
     obj_handle_t phandle;
-    void*        tid;
+    thread_id_t  tid;
     obj_handle_t thandle;
     int          success;
 };
@@ -226,7 +228,7 @@ struct new_thread_request
 struct new_thread_reply
 {
     struct reply_header __header;
-    void*        tid;
+    thread_id_t  tid;
     obj_handle_t handle;
 };
 
@@ -307,8 +309,8 @@ struct init_thread_request
 struct init_thread_reply
 {
     struct reply_header __header;
-    void*        pid;
-    void*        tid;
+    process_id_t pid;
+    thread_id_t  tid;
     int          boot;
     int          version;
 };
@@ -352,7 +354,7 @@ struct get_process_info_request
 struct get_process_info_reply
 {
     struct reply_header __header;
-    void*        pid;
+    process_id_t pid;
     int          debugged;
     int          exit_code;
     int          priority;
@@ -383,12 +385,12 @@ struct get_thread_info_request
 {
     struct request_header __header;
     obj_handle_t handle;
-    void*        tid_in;
+    thread_id_t  tid_in;
 };
 struct get_thread_info_reply
 {
     struct reply_header __header;
-    void*        tid;
+    thread_id_t  tid;
     void*        teb;
     int          exit_code;
     int          priority;
@@ -555,7 +557,7 @@ struct dup_handle_reply
 struct open_process_request
 {
     struct request_header __header;
-    void*        pid;
+    process_id_t pid;
     unsigned int access;
     int          inherit;
 };
@@ -570,7 +572,7 @@ struct open_process_reply
 struct open_thread_request
 {
     struct request_header __header;
-    void*        tid;
+    thread_id_t  tid;
     unsigned int access;
     int          inherit;
 };
@@ -1014,7 +1016,7 @@ struct alloc_console_request
     struct request_header __header;
     unsigned int access;
     int          inherit;
-    void*        pid;
+    process_id_t pid;
 };
 struct alloc_console_reply
 {
@@ -1389,7 +1391,7 @@ struct send_console_signal_request
 {
     struct request_header __header;
     int          signal;
-    void*        group_id;
+    process_id_t group_id;
 };
 struct send_console_signal_reply
 {
@@ -1495,7 +1497,7 @@ struct create_snapshot_request
     struct request_header __header;
     int          inherit;
     int          flags;
-    void*        pid;
+    process_id_t pid;
 };
 struct create_snapshot_reply
 {
@@ -1515,8 +1517,8 @@ struct next_process_reply
 {
     struct reply_header __header;
     int          count;
-    void*        pid;
-    void*        ppid;
+    process_id_t pid;
+    process_id_t ppid;
     void*        heap;
     void*        module;
     int          threads;
@@ -1536,8 +1538,8 @@ struct next_thread_reply
 {
     struct reply_header __header;
     int          count;
-    void*        pid;
-    void*        tid;
+    process_id_t pid;
+    thread_id_t  tid;
     int          base_pri;
     int          delta_pri;
 };
@@ -1553,7 +1555,7 @@ struct next_module_request
 struct next_module_reply
 {
     struct reply_header __header;
-    void*        pid;
+    process_id_t pid;
     void*        base;
     size_t       size;
     /* VARARG(filename,string); */
@@ -1569,8 +1571,8 @@ struct wait_debug_event_request
 struct wait_debug_event_reply
 {
     struct reply_header __header;
-    void*         pid;
-    void*         tid;
+    process_id_t  pid;
+    thread_id_t   tid;
     obj_handle_t  wait;
     /* VARARG(event,debug_event); */
 };
@@ -1622,8 +1624,8 @@ struct output_debug_string_reply
 struct continue_debug_event_request
 {
     struct request_header __header;
-    void*        pid;
-    void*        tid;
+    process_id_t pid;
+    thread_id_t  tid;
     int          status;
 };
 struct continue_debug_event_reply
@@ -1636,7 +1638,7 @@ struct continue_debug_event_reply
 struct debug_process_request
 {
     struct request_header __header;
-    void*        pid;
+    process_id_t pid;
     int          attach;
 };
 struct debug_process_reply
@@ -2118,7 +2120,7 @@ struct wait_input_idle_reply
 struct send_message_request
 {
     struct request_header __header;
-    void*           id;
+    thread_id_t     id;
     int             type;
     user_handle_t   win;
     unsigned int    msg;
@@ -2505,8 +2507,8 @@ struct get_window_info_reply
 {
     struct reply_header __header;
     user_handle_t  full_handle;
-    void*          pid;
-    void*          tid;
+    process_id_t   pid;
+    thread_id_t    tid;
     atom_t         atom;
 };
 
@@ -2559,7 +2561,7 @@ struct get_window_children_request
     struct request_header __header;
     user_handle_t  parent;
     atom_t         atom;
-    void*          tid;
+    thread_id_t    tid;
 };
 struct get_window_children_reply
 {
@@ -3211,6 +3213,6 @@ union generic_reply
     struct get_window_properties_reply get_window_properties_reply;
 };
 
-#define SERVER_PROTOCOL_VERSION 83
+#define SERVER_PROTOCOL_VERSION 84
 
 #endif /* __WINE_WINE_SERVER_PROTOCOL_H */

@@ -64,7 +64,7 @@ TEB *THREAD_IdToTEB( DWORD id )
     SERVER_START_REQ( get_thread_info )
     {
         req->handle = 0;
-        req->tid_in = (void *)id;
+        req->tid_in = id;
         if (!wine_server_call( req )) ret = reply->teb;
     }
     SERVER_END_REQ;
@@ -277,7 +277,7 @@ HANDLE WINAPI CreateThread( SECURITY_ATTRIBUTES *sa, SIZE_T stack,
 {
     HANDLE handle = 0;
     TEB *teb;
-    void *tid = 0;
+    DWORD tid = 0;
     int request_pipe[2];
 
     if (pipe( request_pipe ) == -1)
@@ -316,7 +316,7 @@ HANDLE WINAPI CreateThread( SECURITY_ATTRIBUTES *sa, SIZE_T stack,
     teb->startup     = THREAD_Start;
     teb->htask16     = GetCurrentTask();
 
-    if (id) *id = (DWORD)tid;
+    if (id) *id = tid;
     if (SYSDEPS_SpawnThread( teb ) == -1)
     {
         CloseHandle( handle );
@@ -395,7 +395,7 @@ HANDLE WINAPI OpenThread( DWORD dwDesiredAccess, BOOL bInheritHandle, DWORD dwTh
     HANDLE ret = 0;
     SERVER_START_REQ( open_thread )
     {
-        req->tid     = (void *)dwThreadId;
+        req->tid     = dwThreadId;
         req->access  = dwDesiredAccess;
         req->inherit = bInheritHandle;
         if (!wine_server_call_err( req )) ret = reply->handle;

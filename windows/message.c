@@ -116,7 +116,7 @@ static void queue_hardware_message( MSG *msg, ULONG_PTR extra_info, enum message
     SERVER_START_REQ( send_message )
     {
         req->type   = type;
-        req->id     = (void *)GetWindowThreadProcessId( msg->hwnd, NULL );
+        req->id     = GetWindowThreadProcessId( msg->hwnd, NULL );
         req->win    = msg->hwnd;
         req->msg    = msg->message;
         req->wparam = msg->wParam;

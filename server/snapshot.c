@@ -73,7 +73,7 @@ static const struct object_ops snapshot_ops =
 
 
 /* create a new snapshot */
-static struct snapshot *create_snapshot( void *pid, int flags )
+static struct snapshot *create_snapshot( process_id_t pid, int flags )
 {
     struct process *process = NULL;
     struct snapshot *snapshot;

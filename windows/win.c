@@ -181,7 +181,7 @@ static HWND *list_window_children( HWND hwnd, ATOM atom, DWORD tid )
         {
             req->parent = hwnd;
             req->atom = atom;
-            req->tid = (void *)tid;
+            req->tid = tid;
             wine_server_set_reply( req, list, (size-1) * sizeof(HWND) );
             if (!wine_server_call( req )) count = reply->count;
         }

@@ -112,7 +112,7 @@ static void queue_raw_hardware_message( UINT message, WPARAM wParam, LPARAM lPar
 {
     SERVER_START_REQ( send_message )
     {
-        req->id     = (void *)GetCurrentThreadId();
+        req->id     = GetCurrentThreadId();
         req->type   = MSG_HARDWARE_RAW;
         req->win    = 0;
         req->msg    = message;

@@ -51,6 +51,8 @@ struct request_max_size
 typedef int obj_handle_t;
 typedef unsigned short atom_t;
 typedef unsigned int user_handle_t;
+typedef unsigned int process_id_t;
+typedef unsigned int thread_id_t;
 
 #define FIRST_USER_HANDLE 0x0020  /* first possible value for low word of user handle */
 #define LAST_USER_HANDLE  0xffef  /* last possible value for low word of user handle */
@@ -131,8 +133,8 @@ typedef struct
 /* structure used in sending an fd from client to server */
 struct send_fd
 {
-    void  *tid;  /* thread id */
-    int    fd;   /* file descriptor on client-side */
+    thread_id_t tid;  /* thread id */
+    int         fd;   /* file descriptor on client-side */
 };
 
 /* structure sent by the server on the wait fifo */
@@ -213,9 +215,9 @@ typedef struct
     int          pinherit;     /* process handle inherit flag */
     int          tinherit;     /* thread handle inherit flag */
 @REPLY
-    void*        pid;          /* process id */
+    process_id_t pid;          /* process id */
     obj_handle_t phandle;      /* process handle (in the current process) */
-    void*        tid;          /* thread id */
+    thread_id_t  tid;          /* thread id */
     obj_handle_t thandle;      /* thread handle (in the current process) */
     int          success;      /* did the process start successfully? */
 @END
@@ -227,7 +229,7 @@ typedef struct
     int          inherit;      /* inherit flag */
     int          request_fd;   /* fd for request pipe */
 @REPLY
-    void*        tid;          /* thread id */
+    thread_id_t  tid;          /* thread id */
     obj_handle_t handle;       /* thread handle (in the current process) */
 @END
 
@@ -282,8 +284,8 @@ typedef struct
     int          reply_fd;     /* fd for reply pipe */
     int          wait_fd;      /* fd for blocking calls pipe */
 @REPLY
-    void*        pid;          /* process id of the new thread's process */
-    void*        tid;          /* thread id of the new thread */
+    process_id_t pid;          /* process id of the new thread's process */
+    thread_id_t  tid;          /* thread id of the new thread */
     int          boot;         /* is this the boot thread? */
     int          version;      /* protocol version */
 @END
@@ -312,7 +314,7 @@ typedef struct
 @REQ(get_process_info)
     obj_handle_t handle;           /* process handle */
 @REPLY
-    void*        pid;              /* server process id */
+    process_id_t pid;              /* server process id */
     int          debugged;         /* debugged? */
     int          exit_code;        /* process exit code */
     int          priority;         /* priority class */
@@ -335,9 +337,9 @@ typedef struct
 /* Retrieve information about a thread */
 @REQ(get_thread_info)
     obj_handle_t handle;       /* thread handle */
-    void*        tid_in;       /* thread id (optional) */
+    thread_id_t  tid_in;       /* thread id (optional) */
 @REPLY
-    void*        tid;          /* server thread id */
+    thread_id_t  tid;          /* server thread id */
     void*        teb;          /* thread teb pointer */
     int          exit_code;    /* thread exit code */
     int          priority;     /* thread priority level */
@@ -448,7 +450,7 @@ enum apc_type { APC_NONE, APC_USER, APC_TIMER, APC_ASYNC, APC_ASYNC_IO };
 
 /* Open a handle to a process */
 @REQ(open_process)
-    void*        pid;          /* process id to open */
+    process_id_t pid;          /* process id to open */
     unsigned int access;       /* wanted access rights */
     int          inherit;      /* inherit flag */
 @REPLY
@@ -458,7 +460,7 @@ enum apc_type { APC_NONE, APC_USER, APC_TIMER, APC_ASYNC, APC_ASYNC_IO };
 
 /* Open a handle to a thread */
 @REQ(open_thread)
-    void*        tid;          /* thread id to open */
+    thread_id_t  tid;          /* thread id to open */
     unsigned int access;       /* wanted access rights */
     int          inherit;      /* inherit flag */
 @REPLY
@@ -751,7 +753,7 @@ enum fd_type
 @REQ(alloc_console)
     unsigned int access;        /* wanted access rights */
     int          inherit;       /* inherit flag */
-    void*        pid;           /* pid of process which shall be attached to the console */
+    process_id_t pid;           /* pid of process which shall be attached to the console */
 @REPLY
     obj_handle_t handle_in;     /* handle to console input */
     obj_handle_t event;         /* handle to renderer events change notification */
@@ -1025,7 +1027,7 @@ enum char_info_mode
 /* Sends a signal to a process group */
 @REQ(send_console_signal)
     int          signal;        /* the signal to send */
-    void*        group_id;      /* the group to send the signal to */
+    process_id_t group_id;      /* the group to send the signal to */
 @END
 
 
@@ -1100,7 +1102,7 @@ enum char_info_mode
 @REQ(create_snapshot)
     int          inherit;       /* inherit flag */
     int          flags;         /* snapshot flags (TH32CS_*) */
-    void*        pid;           /* process id */
+    process_id_t pid;           /* process id */
 @REPLY
     obj_handle_t handle;        /* handle to the snapshot */
 @END
@@ -1112,8 +1114,8 @@ enum char_info_mode
     int          reset;         /* reset snapshot position? */
 @REPLY
     int          count;         /* process usage count */
-    void*        pid;           /* process id */
-    void*        ppid;          /* parent process id */
+    process_id_t pid;           /* process id */
+    process_id_t ppid;          /* parent process id */
     void*        heap;          /* heap base */
     void*        module;        /* main module */
     int          threads;       /* number of threads */
@@ -1128,8 +1130,8 @@ enum char_info_mode
     int          reset;         /* reset snapshot position? */
 @REPLY
     int          count;         /* thread usage count */
-    void*        pid;           /* process id */
-    void*        tid;           /* thread id */
+    process_id_t pid;           /* process id */
+    thread_id_t  tid;           /* thread id */
     int          base_pri;      /* base priority */
     int          delta_pri;     /* delta priority */
 @END
@@ -1140,7 +1142,7 @@ enum char_info_mode
     obj_handle_t handle;        /* handle to the snapshot */
     int          reset;         /* reset snapshot position? */
 @REPLY
-    void*        pid;           /* process id */
+    process_id_t pid;           /* process id */
     void*        base;          /* module base address */
     size_t       size;          /* module size */
     VARARG(filename,string);    /* file name of module */
@@ -1151,8 +1153,8 @@ enum char_info_mode
 @REQ(wait_debug_event)
     int           get_handle;  /* should we alloc a handle for waiting? */
 @REPLY
-    void*         pid;         /* process id */
-    void*         tid;         /* thread id */
+    process_id_t  pid;         /* process id */
+    thread_id_t   tid;         /* thread id */
     obj_handle_t  wait;        /* wait handle if no event ready */
     VARARG(event,debug_event); /* debug event data */
 @END
@@ -1186,15 +1188,15 @@ enum char_info_mode
 
 /* Continue a debug event */
 @REQ(continue_debug_event)
-    void*        pid;          /* process id to continue */
-    void*        tid;          /* thread id to continue */
+    process_id_t pid;          /* process id to continue */
+    thread_id_t  tid;          /* thread id to continue */
     int          status;       /* continuation status */
 @END
 
 
 /* Start/stop debugging an existing process */
 @REQ(debug_process)
-    void*        pid;          /* id of the process to debug */
+    process_id_t pid;          /* id of the process to debug */
     int          attach;       /* 1=attaching / 0=detaching from the process */
 @END
 
@@ -1496,7 +1498,7 @@ enum char_info_mode
 
 /* Send a message to a thread queue */
 @REQ(send_message)
-    void*           id;        /* thread id */
+    thread_id_t     id;        /* thread id */
     int             type;      /* message type (see below) */
     user_handle_t   win;       /* window handle */
     unsigned int    msg;       /* message code */
@@ -1760,8 +1762,8 @@ enum message_type
     user_handle_t  handle;      /* handle to the window */
 @REPLY
     user_handle_t  full_handle; /* full 32-bit handle */
-    void*          pid;         /* process owning the window */
-    void*          tid;         /* thread owning the window */
+    process_id_t   pid;         /* process owning the window */
+    thread_id_t    tid;         /* thread owning the window */
     atom_t         atom;        /* class atom */
 @END
 
@@ -1802,7 +1804,7 @@ enum message_type
 @REQ(get_window_children)
     user_handle_t  parent;        /* parent window */
     atom_t         atom;          /* class atom for the listed children */
-    void*          tid;           /* thread owning the listed children */
+    thread_id_t    tid;           /* thread owning the listed children */
 @REPLY
     int            count;         /* total count of children */
     VARARG(children,user_handles); /* children handles */

@@ -223,7 +223,7 @@ HANDLE WINAPI CreateToolhelp32Snapshot( DWORD flags, DWORD process )
     {
         req->flags   = flags & ~TH32CS_INHERIT;
         req->inherit = (flags & TH32CS_INHERIT) != 0;
-        req->pid     = (void *)process;
+        req->pid     = process;
         wine_server_call_err( req );
         ret = reply->handle;
     }
@@ -373,7 +373,7 @@ static BOOL TOOLHELP_Module32Next( HANDLE handle, LPMODULEENTRY32 lpme, BOOL fir
             lpme->ProccntUsage   = 0; /* FIXME */
             lpme->modBaseAddr    = reply->base;
             lpme->modBaseSize    = reply->size;
-            lpme->hModule        = (DWORD)reply->base;
+            lpme->hModule        = (HMODULE)reply->base;
             lpme->szModule[0]    = 0;  /* FIXME */
             lpme->szExePath[wine_server_reply_size(reply)] = 0;
         }

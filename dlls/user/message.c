@@ -1229,7 +1229,7 @@ static BOOL post_dde_message( DWORD dest_tid, struct packed_message *data, const
     }
     SERVER_START_REQ( send_message )
     {
-        req->id      = (void *)dest_tid;
+        req->id      = dest_tid;
         req->type    = info->type;
         req->win     = info->hwnd;
         req->msg     = info->msg;
@@ -1606,7 +1606,7 @@ static BOOL put_message_in_queue( DWORD dest_tid, const struct send_message_info
 
     SERVER_START_REQ( send_message )
     {
-        req->id      = (void *)dest_tid;
+        req->id      = dest_tid;
         req->type    = info->type;
         req->win     = info->hwnd;
         req->msg     = info->msg;

@@ -73,7 +73,7 @@ struct process
     struct process_dll   exe;             /* main exe file */
     void                *ldt_copy;        /* pointer to LDT copy in client addr space */
     void                *ldt_flags;       /* pointer to LDT flags in client addr space */
-    void                *group_id;        /* group ID of the process */
+    process_id_t         group_id;        /* group ID of the process */
 };
 
 struct process_snapshot
@@ -95,7 +95,7 @@ struct module_snapshot
 /* process functions */
 
 extern struct thread *create_process( int fd );
-extern struct process *get_process_from_id( void *id );
+extern struct process *get_process_from_id( process_id_t id );
 extern struct process *get_process_from_handle( obj_handle_t handle, unsigned int access );
 extern int process_set_debugger( struct process *process, struct thread *thread );
 extern int debugger_detach( struct process* process, struct thread* debugger );
@@ -115,7 +115,7 @@ extern struct process_snapshot *process_snap( int *count );
 extern struct module_snapshot *module_snap( struct process *process, int *count );
 extern void enum_processes( int (*cb)(struct process*, void*), void *user);
 
-inline static void *get_process_id( struct process *process ) { return process; }
+inline static process_id_t get_process_id( struct process *process ) { return (process_id_t)process; }
 inline static int is_process_init_done( struct process *process )
 {
     return process->startup_state == STARTUP_DONE;

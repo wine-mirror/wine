@@ -388,7 +388,7 @@ static int console_input_signaled( struct object *obj, struct thread *thread )
 
 struct console_signal_info {
     struct console_input        *console;
-    struct process              *group;
+    process_id_t                 group;
     int                          signal;
 };
 
@@ -397,7 +397,7 @@ static int propagate_console_signal_cb(struct process *process, void *user)
     struct console_signal_info* csi = (struct console_signal_info*)user;
 
     if (process->console == csi->console && process->running_threads &&
-        (csi->group == NULL || process->group_id == csi->group))
+        (!csi->group || process->group_id == csi->group))
     {
         struct thread *thread = process->thread_list;
 
@@ -412,7 +412,7 @@ static int propagate_console_signal_cb(struct process *process, void *user)
 }
 
 static void propagate_console_signal( struct console_input *console,
-                                      int sig, void* group_id )
+                                      int sig, process_id_t group_id )
 {
     struct console_signal_info csi;
 
@@ -510,7 +510,7 @@ static int write_console_input( struct console_input* console, int count,
                 if (records[i].Event.KeyEvent.bKeyDown)
                 {
                     /* send SIGINT to all processes attached to this console */
-                    propagate_console_signal( console, CTRL_C_EVENT, NULL );
+                    propagate_console_signal( console, CTRL_C_EVENT, 0 );
                 }
             }
             else i++;
@@ -1461,7 +1461,7 @@ DECL_HANDLER(move_console_output)
 /* sends a signal to a console (process, group...) */
 DECL_HANDLER(send_console_signal)
 {
-    void*       group;
+    process_id_t group;
 
     group = req->group_id ? req->group_id : current->process->group_id;
 

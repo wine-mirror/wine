@@ -83,7 +83,7 @@ VOID WINAPI _EnterSysLevel(SYSLEVEL *lock)
     TEB *teb = NtCurrentTeb();
     int i;
 
-    TRACE("(%p, level %d): thread %p (fs %04x, pid %ld) count before %ld\n",
+    TRACE("(%p, level %d): thread %lx (fs %04x, pid %ld) count before %ld\n",
                   lock, lock->level, teb->tid, teb->teb_sel, (long) getpid(),
                   teb->sys_count[lock->level] );
 
@@ -99,7 +99,7 @@ VOID WINAPI _EnterSysLevel(SYSLEVEL *lock)
     teb->sys_count[lock->level]++;
     teb->sys_mutex[lock->level] = lock;
 
-    TRACE("(%p, level %d): thread %p (fs %04x, pid %ld) count after  %ld\n",
+    TRACE("(%p, level %d): thread %lx (fs %04x, pid %ld) count after  %ld\n",
                   lock, lock->level, teb->tid, teb->teb_sel, (long) getpid(),
                   teb->sys_count[lock->level] );
 
@@ -115,7 +115,7 @@ VOID WINAPI _LeaveSysLevel(SYSLEVEL *lock)
 {
     TEB *teb = NtCurrentTeb();
 
-    TRACE("(%p, level %d): thread %p (fs %04x, pid %ld) count before %ld\n",
+    TRACE("(%p, level %d): thread %lx (fs %04x, pid %ld) count before %ld\n",
                   lock, lock->level, teb->tid, teb->teb_sel, (long) getpid(),
                   teb->sys_count[lock->level] );
 
@@ -133,7 +133,7 @@ VOID WINAPI _LeaveSysLevel(SYSLEVEL *lock)
 
     LeaveCriticalSection( &lock->crst );
 
-    TRACE("(%p, level %d): thread %p (fs %04x, pid %ld) count after  %ld\n",
+    TRACE("(%p, level %d): thread %lx (fs %04x, pid %ld) count after  %ld\n",
                   lock, lock->level, teb->tid, teb->teb_sel, (long) getpid(),
                   teb->sys_count[lock->level] );
 }

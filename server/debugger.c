@@ -593,8 +593,8 @@ DECL_HANDLER(wait_debug_event)
         size_t size = get_reply_max_size();
         event->state = EVENT_SENT;
         event->sender->debug_event = event;
-        reply->pid = event->sender->process;
-        reply->tid = event->sender;
+        reply->pid = get_process_id( event->sender->process );
+        reply->tid = get_thread_id( event->sender );
         if (size > sizeof(debug_event_t)) size = sizeof(debug_event_t);
         set_reply_data( &event->data, size );
     }
