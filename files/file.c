@@ -1172,7 +1172,7 @@ BOOL32 WINAPI WriteFile( HANDLE32 hFile, LPCVOID buffer, DWORD bytesToWrite,
     if (!bytesToWrite) return TRUE;
 
     if ((req.handle = HANDLE_GetServerHandle( PROCESS_Current(), hFile,
-                                              K32OBJ_UNKNOWN, GENERIC_READ )) == -1)
+                                              K32OBJ_UNKNOWN, GENERIC_WRITE )) == -1)
         return FALSE;
     CLIENT_SendRequest( REQ_GET_WRITE_FD, -1, 1, &req, sizeof(req) );
     CLIENT_WaitReply( NULL, &unix_handle, 0 );
