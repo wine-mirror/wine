@@ -262,6 +262,8 @@ static BOOL WINAPI proc_PlaySound(LPCSTR lpszSoundName, UINT uFlags)
     WAVEHDR		waveHdr;
     INT			count, bufsize, left;
     
+    waveHdr.lpData = NULL;
+
     TRACE("SoundName='%s' uFlags=%04X !\n", lpszSoundName, uFlags);
     if (lpszSoundName == NULL) {
 	TRACE("Stop !\n");
