@@ -703,19 +703,19 @@ inline static VOID IDirect3DVertexShaderImpl_GenerateProgramArbHW(IDirect3DVerte
         case 11: numTemps=12; 
                  numConstants=96;
                  strcpy(tmpLine, "!!ARBvp1.0\n");
-                 TRACE_(d3d_hw_shader)("GL HW (%u) : %s", strlen(pgmStr), tmpLine); /* Dont add /n to this line as already in tmpLine */
+                 TRACE_(d3d_hw_shader)("GL HW (%u) : %s", strlen(pgmStr), tmpLine); /* Don't add \n to this line as already in tmpLine */
                  break;
         case 20: numTemps=12;
                  numConstants=256;
                  strcpy(tmpLine, "!!ARBvp2.0\n");
                  FIXME_(d3d_hw_shader)("No work done yet to support vs2.0 in hw\n");
-                 TRACE_(d3d_hw_shader)("GL HW (%u) : %s", strlen(pgmStr), tmpLine); /* Dont add /n to this line as already in tmpLine */
+                 TRACE_(d3d_hw_shader)("GL HW (%u) : %s", strlen(pgmStr), tmpLine); /* Don't add \n to this line as already in tmpLine */
                  break;
         case 30: numTemps=32; 
                  numConstants=256;
                  strcpy(tmpLine, "!!ARBvp3.0\n");
                  FIXME_(d3d_hw_shader)("No work done yet to support vs3.0 in hw\n");
-                 TRACE_(d3d_hw_shader)("GL HW (%u) : %s", strlen(pgmStr), tmpLine); /* Dont add /n to this line as already in tmpLine */
+                 TRACE_(d3d_hw_shader)("GL HW (%u) : %s", strlen(pgmStr), tmpLine); /* Don't add \n to this line as already in tmpLine */
                  break;
         default:
                  numTemps=12;
@@ -729,7 +729,7 @@ inline static VOID IDirect3DVertexShaderImpl_GenerateProgramArbHW(IDirect3DVerte
         for (i = 0; i < nUseTempRegister/*we should check numTemps here*/; i++) {
             sprintf(tmpLine, "TEMP T%ld;\n", i);
 	    ++lineNum;
-            TRACE_(d3d_hw_shader)("GL HW (%u, %u) : %s", lineNum, strlen(pgmStr), tmpLine); /* Dont add /n to this line as already in tmpLine */
+            TRACE_(d3d_hw_shader)("GL HW (%u, %u) : %s", lineNum, strlen(pgmStr), tmpLine); /* Don't add \n to this line as already in tmpLine */
             strcat(pgmStr,tmpLine);
         }
 	for (i = 0; i < nUseAddressRegister; i++) {
@@ -822,7 +822,7 @@ inline static VOID IDirect3DVertexShaderImpl_GenerateProgramArbHW(IDirect3DVerte
             continue;
 
         default:
-            FIXME_(d3d_hw_shader)("Cant handle opcode %s in hwShader\n", curOpcode->name);
+            FIXME_(d3d_hw_shader)("Can't handle opcode %s in hwShader\n", curOpcode->name);
         }
 
 	if (curOpcode->num_params > 0) {
@@ -837,13 +837,13 @@ inline static VOID IDirect3DVertexShaderImpl_GenerateProgramArbHW(IDirect3DVerte
 	}
         strcat(tmpLine,";\n");
 	++lineNum;
-        TRACE_(d3d_hw_shader)("GL HW (%u, %u) : %s", lineNum, strlen(pgmStr), tmpLine); /* Dont add /n to this line as already in tmpLine */
+        TRACE_(d3d_hw_shader)("GL HW (%u, %u) : %s", lineNum, strlen(pgmStr), tmpLine); /* Don't add \n to this line as already in tmpLine */
         strcat(pgmStr, tmpLine);
       }
     }
     strcpy(tmpLine, "END\n"); 
     ++lineNum;
-    TRACE_(d3d_hw_shader)("GL HW (%u, %u) : %s", lineNum, strlen(pgmStr), tmpLine); /* Dont add /n to this line as already in tmpLine */
+    TRACE_(d3d_hw_shader)("GL HW (%u, %u) : %s", lineNum, strlen(pgmStr), tmpLine); /* Don't add \n to this line as already in tmpLine */
     strcat(pgmStr, tmpLine);
   }
   
