@@ -436,7 +436,6 @@ INT WINAPI wvsnprintfA( LPSTR buffer, UINT maxlen, LPCSTR spec,
             for (i = len; i < format.precision; i++, maxlen--) *p++ = '0';
             memcpy( p, number, len );
             p += len;
-            /* Go to the next arg */
             break;
         case WPR_UNKNOWN:
             continue;
@@ -464,6 +463,8 @@ INT WINAPI wvsnprintfW( LPWSTR buffer, UINT maxlen, LPCWSTR spec,
     CHAR number[20];
     WPRINTF_DATA argData;
 
+    TRACE("%p %u %s\n", buffer, maxlen, debugstr_w(spec));
+
     while (*spec && (maxlen > 1))
     {
         if (*spec != '%') { *p++ = *spec++; maxlen--; continue; }
@@ -478,25 +479,25 @@ INT WINAPI wvsnprintfW( LPWSTR buffer, UINT maxlen, LPCWSTR spec,
         switch(format.type)
         {
         case WPR_WCHAR:
-	    *p = va_arg( args, WCHAR );
+	    *p = argData.wchar_view;
             if (*p != '\0') p++;
             else if (format.width > 1) *p++ = ' ';
             else len = 0;
             break;
         case WPR_CHAR:
-	    *p = (WCHAR)va_arg( args, CHAR );
+	    *p = argData.char_view;
             if (*p != '\0') p++;
             else if (format.width > 1) *p++ = ' ';
             else len = 0;
             break;
         case WPR_STRING:
             {
-                LPCSTR ptr = va_arg( args, LPCSTR );
+                LPCSTR ptr = argData.lpcstr_view;
                 for (i = 0; i < len; i++) *p++ = (WCHAR)*ptr++;
             }
             break;
         case WPR_WSTRING:
-            if (len) memcpy( p, va_arg( args, LPCWSTR ), len * sizeof(WCHAR) );
+            if (len) memcpy( p, argData.lpcwstr_view, len * sizeof(WCHAR) );
             p += len;
             break;
         case WPR_HEXA:
@@ -512,7 +513,6 @@ INT WINAPI wvsnprintfW( LPWSTR buffer, UINT maxlen, LPCWSTR spec,
         case WPR_UNSIGNED:
             for (i = len; i < format.precision; i++, maxlen--) *p++ = '0';
             for (i = 0; i < len; i++) *p++ = (WCHAR)number[i];
-            (void)va_arg( args, INT ); /* Go to the next arg */
             break;
         case WPR_UNKNOWN:
             continue;
