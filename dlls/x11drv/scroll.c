@@ -187,6 +187,7 @@ INT X11DRV_ScrollWindowEx( HWND hwnd, INT dx, INT dy,
             ReleaseDC( hwnd, hDC );
             if (bUpdate) CombineRgn( hrgnUpdate, hrgnUpdate, hrgn, RGN_OR );
             else RedrawWindow( hwnd, NULL, hrgn, RDW_INVALIDATE | RDW_ERASE );
+            DeleteObject( hrgn );
         }
 
         /* Take into account the fact that some damages may have occured during the scroll */
