@@ -908,6 +908,13 @@
 @="dsound.dll"
 "ThreadingModel"="Both"
 
+[HKEY_CLASSES_ROOT\CLSID\{2FE8F810-B2A5-11d0-A787-0000F803ABFC}]
+@="DirectPlayLobby Object"
+
+[HKEY_CLASSES_ROOT\CLSID\{2FE8F810-B2A5-11d0-A787-0000F803ABFC}\InProcServer32]
+@="dplayx.dll"
+"ThreadingModel"="Both"
+
 #
 # Entries used by Internet Explorer installer
 #
