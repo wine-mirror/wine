@@ -3092,6 +3092,29 @@ struct open_token_reply
 #define OPEN_TOKEN_AS_SELF  2
 
 
+
+struct set_global_windows_request
+{
+    struct request_header __header;
+    unsigned int   flags;
+    user_handle_t  shell_window;
+    user_handle_t  shell_listview;
+    user_handle_t  progman_window;
+    user_handle_t  taskman_window;
+};
+struct set_global_windows_reply
+{
+    struct reply_header __header;
+    user_handle_t  old_shell_window;
+    user_handle_t  old_shell_listview;
+    user_handle_t  old_progman_window;
+    user_handle_t  old_taskman_window;
+};
+#define SET_GLOBAL_SHELL_WINDOWS   0x01
+#define SET_GLOBAL_PROGMAN_WINDOW  0x02
+#define SET_GLOBAL_TASKMAN_WINDOW  0x04
+
+
 enum request
 {
     REQ_new_process,
@@ -3272,6 +3295,7 @@ enum request
     REQ_get_next_hook,
     REQ_set_clipboard_info,
     REQ_open_token,
+    REQ_set_global_windows,
     REQ_NB_REQUESTS
 };
 
@@ -3457,6 +3481,7 @@ union generic_request
     struct get_next_hook_request get_next_hook_request;
     struct set_clipboard_info_request set_clipboard_info_request;
     struct open_token_request open_token_request;
+    struct set_global_windows_request set_global_windows_request;
 };
 union generic_reply
 {
@@ -3640,8 +3665,9 @@ union generic_reply
     struct get_next_hook_reply get_next_hook_reply;
     struct set_clipboard_info_reply set_clipboard_info_reply;
     struct open_token_reply open_token_reply;
+    struct set_global_windows_reply set_global_windows_reply;
 };
 
-#define SERVER_PROTOCOL_VERSION 123
+#define SERVER_PROTOCOL_VERSION 124
 
 #endif /* __WINE_WINE_SERVER_PROTOCOL_H */

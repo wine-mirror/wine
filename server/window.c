@@ -81,6 +81,11 @@ struct window
 
 static struct window *top_window;  /* top-level (desktop) window */
 
+/* global window pointers */
+static struct window *shell_window;
+static struct window *shell_listview;
+static struct window *progman_window;
+static struct window *taskman_window;
 
 /* retrieve a pointer to a window from its handle */
 inline static struct window *get_window( user_handle_t handle )
@@ -245,6 +250,11 @@ static void destroy_window( struct window *win )
         if (win->paint_count) inc_queue_paint_count( win->thread, -win->paint_count );
         queue_cleanup_window( win->thread, win->handle );
     }
+    /* reset global window pointers, if the corresponding window is destroyed */
+    if (win == shell_window) shell_window = NULL;
+    if (win == shell_listview) shell_listview = NULL;
+    if (win == progman_window) progman_window = NULL;
+    if (win == taskman_window) taskman_window = NULL;
     free_user_handle( win->handle );
     destroy_properties( win );
     unlink_window( win );
@@ -819,4 +829,55 @@ DECL_HANDLER(get_window_properties)
         data++;
         count--;
     }
+}
+
+
+/* get the new window pointer for a global window, checking permissions */
+/* helper for set_global_windows request */
+static int get_new_global_window( struct window **win, user_handle_t handle )
+{
+    if (*win && (*win)->thread != current)
+    {
+        set_error( STATUS_ACCESS_DENIED );
+        return 0;
+    }
+    if (!handle)
+    {
+        *win = NULL;
+        return 1;
+    }
+    *win = get_window( handle );
+    return (*win != NULL);
+}
+
+/* Set/get the global windows */
+DECL_HANDLER(set_global_windows)
+{
+    struct window *new_shell_window   = shell_window;
+    struct window *new_shell_listview = shell_listview;
+    struct window *new_progman_window = progman_window;
+    struct window *new_taskman_window = taskman_window;
+
+    reply->old_shell_window   = shell_window ? shell_window->handle : 0;
+    reply->old_shell_listview = shell_listview ? shell_listview->handle : 0;
+    reply->old_progman_window = progman_window ? progman_window->handle : 0;
+    reply->old_taskman_window = taskman_window ? taskman_window->handle : 0;
+
+    if (req->flags & SET_GLOBAL_SHELL_WINDOWS)
+    {
+        if (!get_new_global_window( &new_shell_window, req->shell_window )) return;
+        if (!get_new_global_window( &new_shell_listview, req->shell_listview )) return;
+    }
+    if (req->flags & SET_GLOBAL_PROGMAN_WINDOW)
+    {
+        if (!get_new_global_window( &new_progman_window, req->progman_window )) return;
+    }
+    if (req->flags & SET_GLOBAL_TASKMAN_WINDOW)
+    {
+        if (!get_new_global_window( &new_taskman_window, req->taskman_window )) return;
+    }
+    shell_window   = new_shell_window;
+    shell_listview = new_shell_listview;
+    progman_window = new_progman_window;
+    taskman_window = new_taskman_window;
 }

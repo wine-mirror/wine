@@ -2532,6 +2532,23 @@ static void dump_open_token_reply( const struct open_token_reply *req )
     fprintf( stderr, " token=%p", req->token );
 }
 
+static void dump_set_global_windows_request( const struct set_global_windows_request *req )
+{
+    fprintf( stderr, " flags=%08x,", req->flags );
+    fprintf( stderr, " shell_window=%p,", req->shell_window );
+    fprintf( stderr, " shell_listview=%p,", req->shell_listview );
+    fprintf( stderr, " progman_window=%p,", req->progman_window );
+    fprintf( stderr, " taskman_window=%p", req->taskman_window );
+}
+
+static void dump_set_global_windows_reply( const struct set_global_windows_reply *req )
+{
+    fprintf( stderr, " old_shell_window=%p,", req->old_shell_window );
+    fprintf( stderr, " old_shell_listview=%p,", req->old_shell_listview );
+    fprintf( stderr, " old_progman_window=%p,", req->old_progman_window );
+    fprintf( stderr, " old_taskman_window=%p", req->old_taskman_window );
+}
+
 static const dump_func req_dumpers[REQ_NB_REQUESTS] = {
     (dump_func)dump_new_process_request,
     (dump_func)dump_get_new_process_info_request,
@@ -2711,6 +2728,7 @@ static const dump_func req_dumpers[REQ_NB_REQUESTS] = {
     (dump_func)dump_get_next_hook_request,
     (dump_func)dump_set_clipboard_info_request,
     (dump_func)dump_open_token_request,
+    (dump_func)dump_set_global_windows_request,
 };
 
 static const dump_func reply_dumpers[REQ_NB_REQUESTS] = {
@@ -2892,6 +2910,7 @@ static const dump_func reply_dumpers[REQ_NB_REQUESTS] = {
     (dump_func)dump_get_next_hook_reply,
     (dump_func)dump_set_clipboard_info_reply,
     (dump_func)dump_open_token_reply,
+    (dump_func)dump_set_global_windows_reply,
 };
 
 static const char * const req_names[REQ_NB_REQUESTS] = {
@@ -3073,6 +3092,7 @@ static const char * const req_names[REQ_NB_REQUESTS] = {
     "get_next_hook",
     "set_clipboard_info",
     "open_token",
+    "set_global_windows",
 };
 
 /* ### make_requests end ### */

@@ -67,10 +67,6 @@ typedef struct
 
 /* ----- internal variables ----- */
 
-static HWND hGlobalShellWindow=0; /*the shell*/
-static HWND hGlobalTaskmanWindow=0;
-static HWND hGlobalProgmanWindow=0;
-
 static LPCSTR atomInternalPos;
 
 
@@ -629,27 +625,6 @@ BOOL WINAPI LockSetForegroundWindow( UINT lockcode )
     /* FIXME: If Win98/2000 style SetForegroundWindow behavior is
      * implemented, then fix this function. */
     return TRUE;
-}
-
-
-/*******************************************************************
- *		SetShellWindow (USER32.@)
- */
-HWND WINAPI SetShellWindow(HWND hwndshell)
-{   WARN("(hWnd=%p) semi stub\n",hwndshell );
-
-    hGlobalShellWindow = WIN_GetFullHandle( hwndshell );
-    return hGlobalShellWindow;
-}
-
-
-/*******************************************************************
- *		GetShellWindow (USER32.@)
- */
-HWND WINAPI GetShellWindow(void)
-{   WARN("(hWnd=%p) semi stub\n",hGlobalShellWindow );
-
-    return hGlobalShellWindow;
 }
 
 
@@ -1345,60 +1320,4 @@ void WINAPI TileChildWindows16( HWND16 parent, WORD action )
 void WINAPI CascadeChildWindows16( HWND16 parent, WORD action )
 {
     FIXME("(%04x, %d): stub\n", parent, action);
-}
-
-/***********************************************************************
- *		SetProgmanWindow (USER32.@)
- */
-HWND WINAPI SetProgmanWindow ( HWND hwnd )
-{
-	hGlobalProgmanWindow = hwnd;
-	return hGlobalProgmanWindow;
-}
-
-/***********************************************************************
- *		GetProgmanWindow (USER32.@)
- */
-HWND WINAPI GetProgmanWindow(void)
-{
-	return hGlobalProgmanWindow;
-}
-
-/***********************************************************************
- *		SetShellWindowEx (USER32.@)
- * hwndProgman =  Progman[Program Manager]
- *                |-> SHELLDLL_DefView
- * hwndListView = |   |-> SysListView32
- *                |   |   |-> tooltips_class32
- *                |   |
- *                |   |-> SysHeader32
- *                |
- *                |-> ProxyTarget
- */
-HWND WINAPI SetShellWindowEx ( HWND hwndProgman, HWND hwndListView )
-{
-	FIXME("%p %p stub\n",hwndProgman ,hwndListView );
-	hGlobalShellWindow = hwndProgman;
-	return hGlobalShellWindow;
-
-}
-
-/***********************************************************************
- *		SetTaskmanWindow (USER32.@)
- * NOTES
- *   hwnd = MSTaskSwWClass
- *          |-> SysTabControl32
- */
-HWND WINAPI SetTaskmanWindow ( HWND hwnd )
-{
-	hGlobalTaskmanWindow = hwnd;
-	return hGlobalTaskmanWindow;
-}
-
-/***********************************************************************
- *		GetTaskmanWindow (USER32.@)
- */
-HWND WINAPI GetTaskmanWindow(void)
-{
-	return hGlobalTaskmanWindow;
 }

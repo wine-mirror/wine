@@ -344,3 +344,134 @@ HWND WINAPI GetForegroundWindow(void)
     SERVER_END_REQ;
     return ret;
 }
+
+
+/***********************************************************************
+*		SetShellWindowEx (USER32.@)
+* hwndShell =    Progman[Program Manager]
+*                |-> SHELLDLL_DefView
+* hwndListView = |   |-> SysListView32
+*                |   |   |-> tooltips_class32
+*                |   |
+*                |   |-> SysHeader32
+*                |
+*                |-> ProxyTarget
+*/
+BOOL WINAPI SetShellWindowEx(HWND hwndShell, HWND hwndListView)
+{
+    BOOL ret;
+
+    SERVER_START_REQ(set_global_windows)
+    {
+        req->flags          = SET_GLOBAL_SHELL_WINDOWS;
+        req->shell_window   = hwndShell;
+        req->shell_listview = hwndListView;
+        ret = !wine_server_call_err(req);
+    }
+    SERVER_END_REQ;
+
+    if (ret)
+    {
+        if (hwndListView && hwndListView!=hwndShell)
+            SetWindowPos(hwndListView, HWND_BOTTOM, 0, 0, 0, 0, SWP_NOMOVE|SWP_NOSIZE|SWP_NOACTIVATE);
+
+        SetWindowPos(hwndShell, HWND_BOTTOM, 0, 0, 0, 0, SWP_NOMOVE|SWP_NOSIZE|SWP_NOACTIVATE);
+    }
+    return ret;
+}
+
+
+/*******************************************************************
+*		SetShellWindow (USER32.@)
+*/
+BOOL WINAPI SetShellWindow(HWND hwndShell)
+{
+    return SetShellWindowEx(hwndShell, hwndShell);
+}
+
+
+/*******************************************************************
+*		GetShellWindow (USER32.@)
+*/
+HWND WINAPI GetShellWindow(void)
+{
+    HWND hwndShell = 0;
+
+    SERVER_START_REQ(set_global_windows)
+    {
+        req->flags = 0;
+        if (!wine_server_call_err(req))
+            hwndShell = reply->old_shell_window;
+    }
+    SERVER_END_REQ;
+
+    return hwndShell;
+}
+
+
+/***********************************************************************
+ *		SetProgmanWindow (USER32.@)
+ */
+HWND WINAPI SetProgmanWindow ( HWND hwnd )
+{
+    SERVER_START_REQ(set_global_windows)
+    {
+        req->flags          = SET_GLOBAL_PROGMAN_WINDOW;
+        req->progman_window = hwnd;
+        if (wine_server_call_err( req )) hwnd = 0;
+    }
+    SERVER_END_REQ;
+    return hwnd;
+}
+
+
+/***********************************************************************
+ *		GetProgmanWindow (USER32.@)
+ */
+HWND WINAPI GetProgmanWindow(void)
+{
+    HWND ret = 0;
+
+    SERVER_START_REQ(set_global_windows)
+    {
+        req->flags = 0;
+        if (!wine_server_call_err(req)) ret = reply->old_progman_window;
+    }
+    SERVER_END_REQ;
+    return ret;
+}
+
+
+/***********************************************************************
+ *		SetTaskmanWindow (USER32.@)
+ * NOTES
+ *   hwnd = MSTaskSwWClass
+ *          |-> SysTabControl32
+ */
+HWND WINAPI SetTaskmanWindow ( HWND hwnd )
+{
+    SERVER_START_REQ(set_global_windows)
+    {
+        req->flags          = SET_GLOBAL_TASKMAN_WINDOW;
+        req->taskman_window = hwnd;
+        if (wine_server_call_err( req )) hwnd = 0;
+    }
+    SERVER_END_REQ;
+    return hwnd;
+}
+
+/***********************************************************************
+ *		GetTaskmanWindow (USER32.@)
+ */
+HWND WINAPI GetTaskmanWindow(void)
+{
+    HWND ret = 0;
+
+    SERVER_START_REQ(set_global_windows)
+    {
+        req->flags = 0;
+        if (!wine_server_call_err(req)) ret = reply->old_taskman_window;
+    }
+    SERVER_END_REQ;
+    return ret;
+}

@@ -281,6 +281,7 @@ DECL_HANDLER(finish_hook_chain);
 DECL_HANDLER(get_next_hook);
 DECL_HANDLER(set_clipboard_info);
 DECL_HANDLER(open_token);
+DECL_HANDLER(set_global_windows);
 
 #ifdef WANT_REQUEST_HANDLERS
 
@@ -465,6 +466,7 @@ static const req_handler req_handlers[REQ_NB_REQUESTS] =
     (req_handler)req_get_next_hook,
     (req_handler)req_set_clipboard_info,
     (req_handler)req_open_token,
+    (req_handler)req_set_global_windows,
 };
 #endif  /* WANT_REQUEST_HANDLERS */
 
