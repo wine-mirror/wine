@@ -44,6 +44,24 @@ static int vga_depth;
 static BYTE vga_text_attr;
 static char *textbuf_old = NULL;
 
+/*
+ * VGA controller ports 0x3c0, 0x3c4, 0x3ce and 0x3d4 are
+ * indexed registers. These ports are used to select VGA controller 
+ * subregister that can be written to or read from using ports 0x3c1, 
+ * 0x3c5, 0x3cf or 0x3d5. Selected subregister indexes are
+ * stored in variables vga_index_*.
+ *
+ * Port 0x3c0 is special because it is both index and
+ * data-write register. Flip-flop vga_address_3c0 tells whether
+ * the port acts currently as an address register. Reading from port
+ * 0x3da resets the flip-flop to address mode.
+ */
+static BYTE vga_index_3c0;
+static BYTE vga_index_3c4;
+static BYTE vga_index_3ce;
+static BYTE vga_index_3d4; 
+static BOOL vga_address_3c0 = TRUE;
+
 static BOOL vga_mode_initialized = FALSE;
 
 static CRITICAL_SECTION vga_lock = CRITICAL_SECTION_INIT("VGA");
@@ -808,6 +826,21 @@ static PALETTEENTRY paldat;
 void VGA_ioport_out( WORD port, BYTE val )
 {
     switch (port) {
+        case 0x3c0:
+           if (vga_address_3c0)
+               vga_index_3c0 = val;
+           else
+               FIXME("Unsupported index, register 0x3c0: 0x%02x (value 0x%02x)\n",  
+                     vga_index_3c0, val);            
+           vga_address_3c0 = !vga_address_3c0;
+           break;
+        case 0x3c4:
+           vga_index_3c4 = val;
+           break;
+        case 0x3c5:
+           FIXME("Unsupported index, register 0x3c4: 0x%02x (value 0x%02x)\n", 
+                 vga_index_3c4, val); 
+           break;        
         case 0x3c8:
             palreg=val; palcnt=0; break;
         case 0x3c9:
@@ -817,6 +850,20 @@ void VGA_ioport_out( WORD port, BYTE val )
                 palcnt=0;
             }
             break;
+        case 0x3ce: 
+            vga_index_3ce = val; 
+           break; 
+        case 0x3cf: 
+           FIXME("Unsupported index, register 0x3ce: 0x%02x (value 0x%02x)\n",
+                 vga_index_3ce, val);
+           break;
+        case 0x3d4:
+           vga_index_3d4 = val;
+           break;
+        case 0x3d5:
+           FIXME("Unsupported index, register 0x3d4: 0x%02x (value 0x%02x)\n",
+                 vga_index_3d4, val);
+           break;
         default:
             FIXME("Unsupported VGA register: 0x%04x (value 0x%02x)\n", port, val);
     }
@@ -827,7 +874,27 @@ BYTE VGA_ioport_in( WORD port )
     BYTE ret;
 
     switch (port) {
+        case 0x3c1:
+           FIXME("Unsupported index, register 0x3c0: 0x%02x\n", 
+                 vga_index_3c0); 
+           return 0xff;
+        case 0x3c5: 
+            FIXME("Unsupported index, register 0x3c4: 0x%02x\n",  
+                 vga_index_3c4);  
+           return 0xff; 
+        case 0x3cf:
+           FIXME("Unsupported index, register 0x3ce: 0x%02x\n",   
+                 vga_index_3ce);   
+           return 0xff;
+        case 0x3d5: 
+           FIXME("Unsupported index, register 0x3d4: 0x%02x\n",   
+                 vga_index_3d4);   
+           return 0xff;
         case 0x3da:
+           /*
+            * Read from this register resets register 0x3c0 address flip-flop.
+            */
+           vga_address_3c0 = TRUE;
             /* since we don't (yet?) serve DOS VM requests while VGA_Poll is running,
                we need to fake the occurrence of the vertical refresh */
             ret=vga_refresh?0x00:0x0b; /* toggle video RAM and lightpen and VGA refresh bits ! */
