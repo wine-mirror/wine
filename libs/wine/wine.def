@@ -38,6 +38,7 @@ EXPORTS
     wine_get_server_dir
     wine_get_ss
     wine_get_user_name
+    wine_init
     wine_ldt_alloc_entries
     wine_ldt_alloc_fs
     wine_ldt_copy
