@@ -1448,6 +1448,7 @@ typedef struct tagWINDOWPOS
 /* WM_GETICON/WM_SETICON params values */
 #define ICON_SMALL              0
 #define ICON_BIG                1
+#define ICON_SMALL2             2
 
   /* WM_NCCALCSIZE parameter structure */
 typedef struct
@@ -4438,6 +4439,7 @@ INT       WINAPI ShowCursor(BOOL);
 BOOL      WINAPI ShowScrollBar(HWND,INT,BOOL);
 BOOL      WINAPI ShowOwnedPopups(HWND,BOOL);
 BOOL      WINAPI ShowWindow(HWND,INT);
+BOOL      WINAPI ShowWindowAsync(HWND,INT);
 BOOL      WINAPI SubtractRect(LPRECT,const RECT*,const RECT*);
 BOOL      WINAPI SwapMouseButton(BOOL);
 VOID        WINAPI SwitchToThisWindow(HWND,BOOL);
