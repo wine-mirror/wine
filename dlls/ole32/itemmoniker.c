@@ -342,8 +342,9 @@ HRESULT WINAPI ItemMonikerImpl_GetSizeMax(IMoniker* iface,
 HRESULT WINAPI ItemMonikerImpl_Construct(ItemMonikerImpl* This, LPCOLESTR lpszDelim,LPCOLESTR lpszItem)
 {
 
-    int sizeStr1=lstrlenW(lpszItem);
-    int sizeStr2=lstrlenW(lpszDelim);
+    int sizeStr1=lstrlenW(lpszItem), sizeStr2;
+    static const OLECHAR emptystr[1];
+    LPCOLESTR	delim;
 
     TRACE("(%p,%p)\n",This,lpszItem);
 
@@ -353,14 +354,22 @@ HRESULT WINAPI ItemMonikerImpl_Construct(ItemMonikerImpl* This, LPCOLESTR lpszDe
     This->ref          = 0;
 
     This->itemName=HeapAlloc(GetProcessHeap(),0,sizeof(WCHAR)*(sizeStr1+1));
-    This->itemDelimiter=HeapAlloc(GetProcessHeap(),0,sizeof(WCHAR)*(sizeStr2+1));
-
-    if ((This->itemName==NULL)||(This->itemDelimiter==NULL))
-        return E_OUTOFMEMORY;
-
+    if (!This->itemName)
+	return E_OUTOFMEMORY;
     strcpyW(This->itemName,lpszItem);
-    strcpyW(This->itemDelimiter,lpszDelim);
 
+    if (!lpszDelim)
+	FIXME("lpszDelim is NULL. Using empty string which is possibly wrong.\n");
+
+    delim = lpszDelim ? lpszDelim : emptystr;
+
+    sizeStr2=strlenW(delim);
+    This->itemDelimiter=HeapAlloc(GetProcessHeap(),0,sizeof(WCHAR)*(sizeStr2+1));
+    if (!This->itemDelimiter) {
+	HeapFree(GetProcessHeap(),0,This->itemName);
+	return E_OUTOFMEMORY;
+    }
+    strcpyW(This->itemDelimiter,delim);
     return S_OK;
 }
 
