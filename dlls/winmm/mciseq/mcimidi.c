@@ -48,6 +48,8 @@ typedef struct tagWINE_MCIMIDI {
     HANDLE 		hCallback;         	/* Callback handle for pending notification  */
     HMMIO		hFile;	            	/* mmio file handle open as Element          */
     LPCSTR		lpstrElementName;	/* Name of file */
+    LPCSTR		lpstrCopyright;
+    LPCSTR		lpstrName;	       	
     WORD		dwStatus;		/* one from MCI_MODE_xxxx */
     DWORD		dwMciTimeFormat;	/* One of the supported MCI_FORMAT_xxxx */	       
     WORD		wFormat;		/* Format of MIDI hFile (0, 1 or 2) */
@@ -368,9 +370,44 @@ static DWORD MIDI_mciReadMTrk(WINE_MCIMIDI* wmm, MCI_MIDITRACK* mmt)
     mmt->dwIndex = mmt->dwFirst;
     mmt->dwEventPulse = 0;
     
-    while (MIDI_mciReadNextEvent(wmm, mmt) == 0 && 
-	   LOWORD(mmt->dwEventData) != 0x2FFF) {	
+    while (MIDI_mciReadNextEvent(wmm, mmt) == 0 && LOWORD(mmt->dwEventData) != 0x2FFF) {
+	char	buf[1024];
+	WORD	len;
+
 	mmt->dwIndex += mmt->wEventLength;
+
+	switch (LOWORD(mmt->dwEventData)) {
+	case 0x02FF:
+	case 0x03FF:
+	    /* position after meta data header */
+	    mmioSeek(wmm->hFile, mmt->dwIndex + HIWORD(mmt->dwEventData), SEEK_SET);
+	    len = mmt->wEventLength - HIWORD(mmt->dwEventData);
+		    
+	    if (len >= sizeof(buf)) {
+		WARN("Buffer for text is too small (%d bytes, when %u are needed)\n", sizeof(buf) - 1, len);
+		len = sizeof(buf) - 1;
+	    }
+	    if (mmioRead(wmm->hFile, (HPSTR)buf, len) == len) {
+		buf[len] = 0;	/* end string in case */
+		switch (HIBYTE(LOWORD(mmt->dwEventData))) {
+		case 0x02:
+		    if (wmm->lpstrCopyright) {
+			WARN("Two copyright notices (%s|%s)\n", wmm->lpstrCopyright, buf);
+		    } else {
+			wmm->lpstrCopyright = HEAP_strdupA(GetProcessHeap(), 0, buf);
+		    }
+		    break;
+		case 0x03:
+		    if (wmm->lpstrCopyright) {
+			WARN("Two names (%s|%s)\n", wmm->lpstrName, buf);
+		    } else {
+			wmm->lpstrName = HEAP_strdupA(GetProcessHeap(), 0, buf);
+		    }
+		    break;
+		}
+	    }
+	    break;
+	}
     }
     mmt->dwLength = mmt->dwEventPulse;
     
@@ -678,16 +715,12 @@ static DWORD MIDI_mciOpen(UINT wDevID, DWORD dwFlags, LPMCI_OPEN_PARMSA lpParms)
     /*	lpParms->wDeviceID = wDevID;*/
     
     if (dwFlags & MCI_OPEN_ELEMENT) {
-	LPSTR		lpstrElementName;
-	
-	lpstrElementName = lpParms->lpstrElementName;
-	
-	TRACE("MCI_OPEN_ELEMENT '%s' !\n", lpstrElementName);
-	if (lpstrElementName && strlen(lpstrElementName) > 0) {
-	    wmm->hFile = mmioOpenA(lpstrElementName, NULL, 
+	TRACE("MCI_OPEN_ELEMENT '%s' !\n", lpParms->lpstrElementName);
+	if (lpParms->lpstrElementName && strlen(lpParms->lpstrElementName) > 0) {
+	    wmm->hFile = mmioOpenA(lpParms->lpstrElementName, NULL, 
 				   MMIO_ALLOCBUF | MMIO_READ | MMIO_DENYWRITE);
 	    if (wmm->hFile == 0) {
-		WARN("Can't find file '%s' !\n", lpstrElementName);
+		WARN("Can't find file '%s' !\n", lpParms->lpstrElementName);
 		wmm->nUseCount--;
 		return MCIERR_FILE_NOT_FOUND;
 	    }
@@ -698,8 +731,10 @@ static DWORD MIDI_mciOpen(UINT wDevID, DWORD dwFlags, LPMCI_OPEN_PARMSA lpParms)
     TRACE("hFile=%u\n", wmm->hFile);
     
     /* FIXME: should I get a strdup() of it instead? */
-    wmm->lpstrElementName = lpParms->lpstrElementName;
-    
+    wmm->lpstrElementName = HEAP_strdupA(GetProcessHeap(), 0, lpParms->lpstrElementName);
+    wmm->lpstrCopyright = NULL;
+    wmm->lpstrName = NULL;
+
     wmm->wNotifyDeviceID = dwDeviceID;
     wmm->dwStatus = MCI_MODE_NOT_READY;	/* while loading file contents */
     /* spec says it should be the default format from the MIDI file... */
@@ -798,6 +833,9 @@ static DWORD MIDI_mciClose(UINT wDevID, DWORD dwFlags, LPMCI_GENERIC_PARMS lpPar
 	    TRACE("hFile closed !\n");
 	}
 	HeapFree(GetProcessHeap(), 0, wmm->tracks);
+	HeapFree(GetProcessHeap(), 0, (LPSTR)wmm->lpstrElementName);
+	HeapFree(GetProcessHeap(), 0, (LPSTR)wmm->lpstrCopyright);
+	HeapFree(GetProcessHeap(), 0, (LPSTR)wmm->lpstrName);
     } else {
 	TRACE("Shouldn't happen... nUseCount=%d\n", wmm->nUseCount);
 	return MCIERR_INTERNAL;
@@ -903,8 +941,8 @@ static DWORD MIDI_mciPlay(UINT wDevID, DWORD dwFlags, LPMCI_PLAY_PARMS lpParms)
     wmm->dwPositionMS = 0;
     wmm->wStartedPlaying = FALSE;
     
-    dwRet = midiOutOpen(&wmm->hMidi, 0, 0L, 0L, CALLBACK_NULL);
-    /*	dwRet = midiInOpen(&wmm->hMidi, 0, 0L, 0L, CALLBACK_NULL);*/
+    dwRet = midiOutOpen(&wmm->hMidi, MIDIMAPPER, 0L, 0L, CALLBACK_NULL);
+    /*	dwRet = midiInOpen(&wmm->hMidi, MIDIMAPPER, 0L, 0L, CALLBACK_NULL);*/
 
     while (wmm->dwStatus != MCI_MODE_STOP) {
 	/* it seems that in case of multi-threading, gcc is optimizing just a little bit 
@@ -984,7 +1022,7 @@ static DWORD MIDI_mciPlay(UINT wDevID, DWORD dwFlags, LPMCI_PLAY_PARMS lpParms)
 			buf[len] = 0;	/* end string in case */
 			TRACE("%s => \"%s\"\n", (idx < 8 ) ? info[idx] : "", buf);
 		    } else {
-			WARN("Couldn't read data for %s\n", (idx < 8 ) ? info[idx] : "");
+			WARN("Couldn't read data for %s\n", (idx < 8) ? info[idx] : "");
 		    }
 		}
 		break;
@@ -1505,20 +1543,19 @@ static DWORD MIDI_mciInfo(UINT wDevID, DWORD dwFlags, LPMCI_INFO_PARMSA lpParms)
 
     TRACE("buf=%p, len=%lu\n", lpParms->lpstrReturn, lpParms->dwRetSize);
     
-    switch (dwFlags) {
+    switch (dwFlags & ~(MCI_WAIT|MCI_NOTIFY)) {
     case MCI_INFO_PRODUCT:
 	str = "Wine's MIDI sequencer";
 	break;
     case MCI_INFO_FILE:
 	str = wmm->lpstrElementName;
 	break;
-#if 0
-	/* FIXME: the following manifest constants are not defined in <WINE>/include/mmsystem.h */
     case MCI_INFO_COPYRIGHT:
-	break;
+	str = wmm->lpstrCopyright;
+	break;  
     case MCI_INFO_NAME:
+	str = wmm->lpstrName;
 	break;
-#endif
     default:
 	WARN("Don't know this info command (%lu)\n", dwFlags);
 	return MCIERR_UNRECOGNIZED_COMMAND;
