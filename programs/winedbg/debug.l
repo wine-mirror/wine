@@ -316,8 +316,12 @@ char* DEBUG_MakeSymbol(const char* symbol)
     assert(0 <= next_symbol && next_symbol < alloc_symbol + 1);
     if (next_symbol >= alloc_symbol)
     {
-        local_symbols = HeapReAlloc(GetProcessHeap(), 0, local_symbols,
-                                    (alloc_symbol += 32) * sizeof(local_symbols[0]));
+        if (!local_symbols)
+            local_symbols = HeapAlloc(GetProcessHeap(), 0,
+                                      (alloc_symbol += 32) * sizeof(local_symbols[0]));
+        else
+            local_symbols = HeapReAlloc(GetProcessHeap(), 0, local_symbols,
+                                        (alloc_symbol += 32) * sizeof(local_symbols[0]));
         assert(local_symbols);
     }
     return local_symbols[next_symbol++] = DBG_strdup(symbol);
