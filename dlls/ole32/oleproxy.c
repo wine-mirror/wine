@@ -102,7 +102,7 @@ CFStub_QueryInterface(LPRPCSTUBBUFFER iface, REFIID riid, LPVOID *ppv) {
 
 static ULONG WINAPI
 CFStub_AddRef(LPRPCSTUBBUFFER iface) {
-    ICOM_THIS(CFStub,iface);
+    CFStub *This = (CFStub *)iface;
 
     This->ref++;
     return This->ref;
@@ -110,7 +110,7 @@ CFStub_AddRef(LPRPCSTUBBUFFER iface) {
 
 static ULONG WINAPI
 CFStub_Release(LPRPCSTUBBUFFER iface) {
-    ICOM_THIS(CFStub,iface);
+    CFStub *This = (CFStub *)iface;
 
     This->ref--;
     if (This->ref)
@@ -121,7 +121,7 @@ CFStub_Release(LPRPCSTUBBUFFER iface) {
 
 static HRESULT WINAPI
 CFStub_Connect(LPRPCSTUBBUFFER iface, IUnknown *pUnkServer) {
-    ICOM_THIS(CFStub,iface);
+    CFStub *This = (CFStub *)iface;
 
     This->pUnkServer = pUnkServer;
     IUnknown_AddRef(pUnkServer);
@@ -130,7 +130,7 @@ CFStub_Connect(LPRPCSTUBBUFFER iface, IUnknown *pUnkServer) {
 
 static void WINAPI
 CFStub_Disconnect(LPRPCSTUBBUFFER iface) {
-    ICOM_THIS(CFStub,iface);
+    CFStub *This = (CFStub *)iface;
 
     IUnknown_Release(This->pUnkServer);
     This->pUnkServer = NULL;
@@ -139,7 +139,7 @@ static HRESULT WINAPI
 CFStub_Invoke(
     LPRPCSTUBBUFFER iface,RPCOLEMESSAGE* msg,IRpcChannelBuffer* chanbuf
 ) {
-    ICOM_THIS(CFStub,iface);
+    CFStub *This = (CFStub *)iface;
     HRESULT hres;
 
     if (msg->iMethod == 3) { /* CreateInstance */

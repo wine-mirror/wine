@@ -1498,7 +1498,7 @@ TMStubImpl_QueryInterface(LPRPCSTUBBUFFER iface, REFIID riid, LPVOID *ppv)
 static ULONG WINAPI
 TMStubImpl_AddRef(LPRPCSTUBBUFFER iface)
 {
-    ICOM_THIS(TMStubImpl,iface);
+    TMStubImpl *This = (TMStubImpl *)iface;
         
     TRACE("(%p) before %lu\n", This, This->ref);
 
@@ -1509,7 +1509,7 @@ static ULONG WINAPI
 TMStubImpl_Release(LPRPCSTUBBUFFER iface)
 {
     ULONG refs;
-    ICOM_THIS(TMStubImpl,iface);
+    TMStubImpl *This = (TMStubImpl *)iface;
 
     TRACE("(%p) after %lu\n", This, This->ref-1);
 
@@ -1525,7 +1525,7 @@ TMStubImpl_Release(LPRPCSTUBBUFFER iface)
 static HRESULT WINAPI
 TMStubImpl_Connect(LPRPCSTUBBUFFER iface, LPUNKNOWN pUnkServer)
 {
-    ICOM_THIS(TMStubImpl,iface);
+    TMStubImpl *This = (TMStubImpl *)iface;
 
     TRACE("(%p)->(%p)\n", This, pUnkServer);
 
@@ -1537,7 +1537,7 @@ TMStubImpl_Connect(LPRPCSTUBBUFFER iface, LPUNKNOWN pUnkServer)
 static void WINAPI
 TMStubImpl_Disconnect(LPRPCSTUBBUFFER iface)
 {
-    ICOM_THIS(TMStubImpl,iface);
+    TMStubImpl *This = (TMStubImpl *)iface;
 
     TRACE("(%p)->()\n", This);
 
@@ -1552,7 +1552,7 @@ TMStubImpl_Invoke(
 {
     int		i;
     FUNCDESC	*fdesc;
-    ICOM_THIS(TMStubImpl,iface);
+    TMStubImpl *This = (TMStubImpl *)iface;
     HRESULT	hres;
     DWORD	*args, res, *xargs, nrofargs;
     marshal_state	buf;
@@ -1737,7 +1737,7 @@ TMStubImpl_IsIIDSupported(LPRPCSTUBBUFFER iface, REFIID riid) {
 
 static ULONG WINAPI
 TMStubImpl_CountRefs(LPRPCSTUBBUFFER iface) {
-    ICOM_THIS(TMStubImpl,iface);
+    TMStubImpl *This = (TMStubImpl *)iface;
 
     return This->ref; /*FIXME? */
 }

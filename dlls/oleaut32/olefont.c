@@ -2078,7 +2078,7 @@ typedef struct
 
 static HRESULT WINAPI
 SFCF_QueryInterface(LPCLASSFACTORY iface,REFIID riid,LPVOID *ppobj) {
-	ICOM_THIS(IClassFactoryImpl,iface);
+	IClassFactoryImpl *This = (IClassFactoryImpl *)iface;
 
 	FIXME("(%p)->(%s,%p),stub!\n",This,debugstr_guid(riid),ppobj);
 	return E_NOINTERFACE;
@@ -2086,12 +2086,12 @@ SFCF_QueryInterface(LPCLASSFACTORY iface,REFIID riid,LPVOID *ppobj) {
 
 static ULONG WINAPI
 SFCF_AddRef(LPCLASSFACTORY iface) {
-	ICOM_THIS(IClassFactoryImpl,iface);
+	IClassFactoryImpl *This = (IClassFactoryImpl *)iface;
 	return ++(This->ref);
 }
 
 static ULONG WINAPI SFCF_Release(LPCLASSFACTORY iface) {
-	ICOM_THIS(IClassFactoryImpl,iface);
+	IClassFactoryImpl *This = (IClassFactoryImpl *)iface;
 	/* static class, won't be  freed */
 	return --(This->ref);
 }
@@ -2104,7 +2104,7 @@ static HRESULT WINAPI SFCF_CreateInstance(
 }
 
 static HRESULT WINAPI SFCF_LockServer(LPCLASSFACTORY iface,BOOL dolock) {
-	ICOM_THIS(IClassFactoryImpl,iface);
+	IClassFactoryImpl *This = (IClassFactoryImpl *)iface;
 	FIXME("(%p)->(%d),stub!\n",This,dolock);
 	return S_OK;
 }

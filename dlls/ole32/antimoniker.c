@@ -146,7 +146,7 @@ static IROTDataVtbl VT_ROTDataImpl =
  *******************************************************************************/
 HRESULT WINAPI AntiMonikerImpl_QueryInterface(IMoniker* iface,REFIID riid,void** ppvObject)
 {
-    ICOM_THIS(AntiMonikerImpl,iface);
+    AntiMonikerImpl *This = (AntiMonikerImpl *)iface;
 
   TRACE("(%p,%p,%p)\n",This,riid,ppvObject);
 
@@ -182,7 +182,7 @@ HRESULT WINAPI AntiMonikerImpl_QueryInterface(IMoniker* iface,REFIID riid,void**
  ******************************************************************************/
 ULONG WINAPI AntiMonikerImpl_AddRef(IMoniker* iface)
 {
-    ICOM_THIS(AntiMonikerImpl,iface);
+    AntiMonikerImpl *This = (AntiMonikerImpl *)iface;
 
     TRACE("(%p)\n",This);
 
@@ -194,7 +194,7 @@ ULONG WINAPI AntiMonikerImpl_AddRef(IMoniker* iface)
  ******************************************************************************/
 ULONG WINAPI AntiMonikerImpl_Release(IMoniker* iface)
 {
-    ICOM_THIS(AntiMonikerImpl,iface);
+    AntiMonikerImpl *This = (AntiMonikerImpl *)iface;
 
     TRACE("(%p)\n",This);
 

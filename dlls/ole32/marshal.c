@@ -216,14 +216,14 @@ StdMarshalImpl_QueryInterface(LPMARSHAL iface,REFIID riid,LPVOID *ppv) {
 
 static ULONG WINAPI
 StdMarshalImpl_AddRef(LPMARSHAL iface) {
-  ICOM_THIS(StdMarshalImpl,iface);
+  StdMarshalImpl *This = (StdMarshalImpl *)iface;
   This->ref++;
   return This->ref;
 }
 
 static ULONG WINAPI
 StdMarshalImpl_Release(LPMARSHAL iface) {
-  ICOM_THIS(StdMarshalImpl,iface);
+  StdMarshalImpl *This = (StdMarshalImpl *)iface;
   This->ref--;
 
   if (This->ref)

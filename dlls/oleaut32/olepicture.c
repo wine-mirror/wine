@@ -306,7 +306,7 @@ static HRESULT WINAPI OLEPictureImpl_QueryInterface(
   REFIID  riid,
   void**  ppvObject)
 {
-  ICOM_THIS(OLEPictureImpl, iface);
+  OLEPictureImpl *This = (OLEPictureImpl *)iface;
   TRACE("(%p)->(%s, %p)\n", This, debugstr_guid(riid), ppvObject);
 
   /*
@@ -397,7 +397,7 @@ static void OLEPicture_SendNotify(OLEPictureImpl* this, DISPID dispID)
 static ULONG WINAPI OLEPictureImpl_AddRef(
   IPicture* iface)
 {
-  ICOM_THIS(OLEPictureImpl, iface);
+  OLEPictureImpl *This = (OLEPictureImpl *)iface;
   TRACE("(%p)->(ref=%ld)\n", This, This->ref);
   This->ref++;
 
@@ -412,7 +412,7 @@ static ULONG WINAPI OLEPictureImpl_AddRef(
 static ULONG WINAPI OLEPictureImpl_Release(
       IPicture* iface)
 {
-  ICOM_THIS(OLEPictureImpl, iface);
+  OLEPictureImpl *This = (OLEPictureImpl *)iface;
   TRACE("(%p)->(ref=%ld)\n", This, This->ref);
 
   /*
@@ -440,7 +440,7 @@ static ULONG WINAPI OLEPictureImpl_Release(
 static HRESULT WINAPI OLEPictureImpl_get_Handle(IPicture *iface,
 						OLE_HANDLE *phandle)
 {
-  ICOM_THIS(OLEPictureImpl, iface);
+  OLEPictureImpl *This = (OLEPictureImpl *)iface;
   TRACE("(%p)->(%p)\n", This, phandle);
   switch(This->desc.picType) {
   case PICTYPE_BITMAP:
@@ -469,7 +469,7 @@ static HRESULT WINAPI OLEPictureImpl_get_Handle(IPicture *iface,
 static HRESULT WINAPI OLEPictureImpl_get_hPal(IPicture *iface,
 					      OLE_HANDLE *phandle)
 {
-  ICOM_THIS(OLEPictureImpl, iface);
+  OLEPictureImpl *This = (OLEPictureImpl *)iface;
   FIXME("(%p)->(%p): stub\n", This, phandle);
   return E_NOTIMPL;
 }
@@ -480,7 +480,7 @@ static HRESULT WINAPI OLEPictureImpl_get_hPal(IPicture *iface,
 static HRESULT WINAPI OLEPictureImpl_get_Type(IPicture *iface,
 					      short *ptype)
 {
-  ICOM_THIS(OLEPictureImpl, iface);
+  OLEPictureImpl *This = (OLEPictureImpl *)iface;
   TRACE("(%p)->(%p): type is %d\n", This, ptype, This->desc.picType);
   *ptype = This->desc.picType;
   return S_OK;
@@ -492,7 +492,7 @@ static HRESULT WINAPI OLEPictureImpl_get_Type(IPicture *iface,
 static HRESULT WINAPI OLEPictureImpl_get_Width(IPicture *iface,
 					       OLE_XSIZE_HIMETRIC *pwidth)
 {
-  ICOM_THIS(OLEPictureImpl, iface);
+  OLEPictureImpl *This = (OLEPictureImpl *)iface;
   TRACE("(%p)->(%p): width is %ld\n", This, pwidth, This->himetricWidth);
   *pwidth = This->himetricWidth;
   return S_OK;
@@ -504,7 +504,7 @@ static HRESULT WINAPI OLEPictureImpl_get_Width(IPicture *iface,
 static HRESULT WINAPI OLEPictureImpl_get_Height(IPicture *iface,
 						OLE_YSIZE_HIMETRIC *pheight)
 {
-  ICOM_THIS(OLEPictureImpl, iface);
+  OLEPictureImpl *This = (OLEPictureImpl *)iface;
   TRACE("(%p)->(%p): height is %ld\n", This, pheight, This->himetricHeight);
   *pheight = This->himetricHeight;
   return S_OK;
@@ -521,7 +521,7 @@ static HRESULT WINAPI OLEPictureImpl_Render(IPicture *iface, HDC hdc,
 					    OLE_YSIZE_HIMETRIC cySrc,
 					    LPCRECT prcWBounds)
 {
-  ICOM_THIS(OLEPictureImpl, iface);
+  OLEPictureImpl *This = (OLEPictureImpl *)iface;
   TRACE("(%p)->(%p, (%ld,%ld), (%ld,%ld) <- (%ld,%ld), (%ld,%ld), %p)\n",
 	This, hdc, x, y, cx, cy, xSrc, ySrc, cxSrc, cySrc, prcWBounds);
   if(prcWBounds)
@@ -596,7 +596,7 @@ static HRESULT WINAPI OLEPictureImpl_Render(IPicture *iface, HDC hdc,
 static HRESULT WINAPI OLEPictureImpl_set_hPal(IPicture *iface,
 					      OLE_HANDLE hpal)
 {
-  ICOM_THIS(OLEPictureImpl, iface);
+  OLEPictureImpl *This = (OLEPictureImpl *)iface;
   FIXME("(%p)->(%08x): stub\n", This, hpal);
   OLEPicture_SendNotify(This,DISPID_PICT_HPAL);
   return E_NOTIMPL;
@@ -608,7 +608,7 @@ static HRESULT WINAPI OLEPictureImpl_set_hPal(IPicture *iface,
 static HRESULT WINAPI OLEPictureImpl_get_CurDC(IPicture *iface,
 					       HDC *phdc)
 {
-  ICOM_THIS(OLEPictureImpl, iface);
+  OLEPictureImpl *This = (OLEPictureImpl *)iface;
   TRACE("(%p), returning %p\n", This, This->hDCCur);
   if (phdc) *phdc = This->hDCCur;
   return S_OK;
@@ -622,7 +622,7 @@ static HRESULT WINAPI OLEPictureImpl_SelectPicture(IPicture *iface,
 						   HDC *phdcOut,
 						   OLE_HANDLE *phbmpOut)
 {
-  ICOM_THIS(OLEPictureImpl, iface);
+  OLEPictureImpl *This = (OLEPictureImpl *)iface;
   TRACE("(%p)->(%p, %p, %p)\n", This, hdcIn, phdcOut, phbmpOut);
   if (This->desc.picType == PICTYPE_BITMAP) {
       SelectObject(hdcIn,This->desc.u.bmp.hbitmap);
@@ -645,7 +645,7 @@ static HRESULT WINAPI OLEPictureImpl_SelectPicture(IPicture *iface,
 static HRESULT WINAPI OLEPictureImpl_get_KeepOriginalFormat(IPicture *iface,
 							    BOOL *pfKeep)
 {
-  ICOM_THIS(OLEPictureImpl, iface);
+  OLEPictureImpl *This = (OLEPictureImpl *)iface;
   TRACE("(%p)->(%p)\n", This, pfKeep);
   if (!pfKeep)
       return E_POINTER;
@@ -659,7 +659,7 @@ static HRESULT WINAPI OLEPictureImpl_get_KeepOriginalFormat(IPicture *iface,
 static HRESULT WINAPI OLEPictureImpl_put_KeepOriginalFormat(IPicture *iface,
 							    BOOL keep)
 {
-  ICOM_THIS(OLEPictureImpl, iface);
+  OLEPictureImpl *This = (OLEPictureImpl *)iface;
   TRACE("(%p)->(%d)\n", This, keep);
   This->keepOrigFormat = keep;
   /* FIXME: what DISPID notification here? */
@@ -671,7 +671,7 @@ static HRESULT WINAPI OLEPictureImpl_put_KeepOriginalFormat(IPicture *iface,
  */
 static HRESULT WINAPI OLEPictureImpl_PictureChanged(IPicture *iface)
 {
-  ICOM_THIS(OLEPictureImpl, iface);
+  OLEPictureImpl *This = (OLEPictureImpl *)iface;
   TRACE("(%p)->()\n", This);
   OLEPicture_SendNotify(This,DISPID_PICT_HANDLE);
   return S_OK;
@@ -685,7 +685,7 @@ static HRESULT WINAPI OLEPictureImpl_SaveAsFile(IPicture *iface,
 						BOOL SaveMemCopy,
 						LONG *pcbSize)
 {
-  ICOM_THIS(OLEPictureImpl, iface);
+  OLEPictureImpl *This = (OLEPictureImpl *)iface;
   FIXME("(%p)->(%p, %d, %p), hacked stub.\n", This, pstream, SaveMemCopy, pcbSize);
   return IStream_Write(pstream,This->data,This->datalen,(ULONG*)pcbSize);
 }
@@ -696,7 +696,7 @@ static HRESULT WINAPI OLEPictureImpl_SaveAsFile(IPicture *iface,
 static HRESULT WINAPI OLEPictureImpl_get_Attributes(IPicture *iface,
 						    DWORD *pdwAttr)
 {
-  ICOM_THIS(OLEPictureImpl, iface);
+  OLEPictureImpl *This = (OLEPictureImpl *)iface;
   TRACE("(%p)->(%p).\n", This, pdwAttr);
   *pdwAttr = 0;
   switch (This->desc.picType) {
@@ -1655,7 +1655,7 @@ typedef struct
 
 static HRESULT WINAPI
 SPCF_QueryInterface(LPCLASSFACTORY iface,REFIID riid,LPVOID *ppobj) {
-	ICOM_THIS(IClassFactoryImpl,iface);
+	IClassFactoryImpl *This = (IClassFactoryImpl *)iface;
 
 	FIXME("(%p)->(%s,%p),stub!\n",This,debugstr_guid(riid),ppobj);
 	return E_NOINTERFACE;
@@ -1663,12 +1663,12 @@ SPCF_QueryInterface(LPCLASSFACTORY iface,REFIID riid,LPVOID *ppobj) {
 
 static ULONG WINAPI
 SPCF_AddRef(LPCLASSFACTORY iface) {
-	ICOM_THIS(IClassFactoryImpl,iface);
+	IClassFactoryImpl *This = (IClassFactoryImpl *)iface;
 	return ++(This->ref);
 }
 
 static ULONG WINAPI SPCF_Release(LPCLASSFACTORY iface) {
-	ICOM_THIS(IClassFactoryImpl,iface);
+	IClassFactoryImpl *This = (IClassFactoryImpl *)iface;
 	/* static class, won't be  freed */
 	return --(This->ref);
 }
@@ -1686,7 +1686,7 @@ static HRESULT WINAPI SPCF_CreateInstance(
 }
 
 static HRESULT WINAPI SPCF_LockServer(LPCLASSFACTORY iface,BOOL dolock) {
-	ICOM_THIS(IClassFactoryImpl,iface);
+	IClassFactoryImpl *This = (IClassFactoryImpl *)iface;
 	FIXME("(%p)->(%d),stub!\n",This,dolock);
 	return S_OK;
 }

@@ -171,11 +171,11 @@
  *
  * This continues the above example. This example assumes that the implementation is in C.
  *
- *    typedef struct _IDirect3D {
+ *    typedef struct IDirect3DImpl {
  *        void* lpVtbl;
  *        // ...
  *
- *    } _IDirect3D;
+ *    } IDirect3DImpl;
  *
  *    static IDirect3DVtbl d3dvt;
  *
@@ -183,7 +183,7 @@
  *
  *    int IDirect3D_QueryInterface(IDirect3D* me)
  *    {
- *        ICOM_THIS(IDirect3D,me);
+ *        IDirect3DImpl *This = (IDirect3DImpl *)me;
  *        // ...
  *    }
  *
@@ -198,13 +198,13 @@
  *    };
  *
  * Comments:
- *  - We first define what the interface really contains. This is th e_IDirect3D structure. The
+ *  - We first define what the interface really contains. This is the IDirect3DImpl structure. The
  *    first field must of course be the virtual table pointer. Everything else is free.
  *  - Then we predeclare our static virtual table variable, we will need its address in some
  *    methods to initialize the virtual table pointer of the returned interface objects.
  *  - Then we implement the interface methods. To match what has been declared in the header file
- *    they must take a pointer to a IDirect3D structure and we must cast it to an _IDirect3D so that
- *    we can manipulate the fields. This is performed by the ICOM_THIS macro.
+ *    they must take a pointer to a IDirect3D structure and we must cast it to an IDirect3DImpl so
+ *    that we can manipulate the fields.
  *  - Finally we initialize the virtual table.
  */
 
@@ -266,10 +266,6 @@
 #define END_INTERFACE
 
 #endif  /* __cplusplus && !CINTERFACE */
-
-/* Wine-specific macros */
-
-#define ICOM_THIS(impl,iface)    impl* const This=(impl*)(iface)
 
 #include <objidl.h>
 
