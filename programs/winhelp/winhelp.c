@@ -814,6 +814,8 @@ static LRESULT CALLBACK WINHELP_TextWndProc(HWND hWnd, UINT msg, WPARAM wParam, 
 	RECT  rect;
 	INT   Min, Max;
 	INT   CurPos = GetScrollPos(hWnd, SB_VERT);
+	INT   dy;
+	
 	GetScrollRange(hWnd, SB_VERT, &Min, &Max);
 	GetClientRect(hWnd, &rect);
 
@@ -831,7 +833,11 @@ static LRESULT CALLBACK WINHELP_TextWndProc(HWND hWnd, UINT msg, WPARAM wParam, 
         }
 	if (update)
         {
-	    INT dy = GetScrollPos(hWnd, SB_VERT) - CurPos;
+	    if (CurPos > Max)
+                CurPos = Max;
+	    else if (CurPos < Min)
+                CurPos = Min;		    
+	    dy = GetScrollPos(hWnd, SB_VERT) - CurPos;
 	    SetScrollPos(hWnd, SB_VERT, CurPos, TRUE);
 	    ScrollWindow(hWnd, 0, dy, NULL, NULL);
 	    UpdateWindow(hWnd);
