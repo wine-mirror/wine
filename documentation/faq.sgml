@@ -336,7 +336,7 @@
           </varlistentry>
  
 	  <varlistentry>
-          <term><ulink url="http://www.codeweavers.com/products/crossover/">CodeWeavers' Crossover Plugin</ulink></term>
+          <term><ulink url="http://www.codeweavers.com/products/crossover/">CodeWeavers' CrossOver Plugin</ulink></term>
           <listitem>
             <para>
               Special Wine installation to be used for running Windows
@@ -348,7 +348,7 @@
           </varlistentry>
 
 	  <varlistentry>
-          <term><ulink url="http://www.codeweavers.com/products/office/">CodeWeavers' Crossover Office</ulink></term>
+          <term><ulink url="http://www.codeweavers.com/products/office/">CodeWeavers' CrossOver Office</ulink></term>
           <listitem>
             <para>
               Wine version with special packaging to make sure almost all 
@@ -361,7 +361,7 @@
           </varlistentry>
           
           <varlistentry>
-          <term><ulink url="http://www.codeweavers.com/products/cxofficeserver/">Codeweavers' CrossOver Office Server Edition</ulink></term>
+          <term><ulink url="http://www.codeweavers.com/products/cxofficeserver/">CodeWeavers' CrossOver Office Server Edition</ulink></term>
           <listitem>
             <para>
              Allows you to run your favorite Windows productivity applications in 
@@ -658,7 +658,7 @@
 	  so it's not specifically listed here.
 	</para>
         <para>
-          NetBSD, OpenBSD, Unixware, and SCO OpenServer 5 worked at one time,
+          NetBSD, OpenBSD, UnixWare, and SCO OpenServer 5 worked at one time,
           but Wine now requires kernel-level threads which are not currently 
           available (or understood by the Wine team) on those platforms.
         </para>

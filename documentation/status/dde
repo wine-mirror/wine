@@ -5,7 +5,7 @@ by changes in the server and related parts of wine.  AFAIK no-one has tried to f
 and I have not tried to test them.
 
 ddeml was untouched until December 1998 when some of the Corel/Macadamian team started
-writing bits that were needed by Corel for the Wordperfect Suite port. These were mainly
+writing bits that were needed by Corel for the WordPerfect Suite port. These were mainly
 around string handling and have been identified in the change history for each routine.
 They were written to cope with a single instance only. About a week later I started 
 looking at ddeml as a whole.

@@ -3,7 +3,7 @@
  *
  * (based on cvinfo.h and cvexefmt.h from the Win32 SDK)
  *
- * Copyright 2000 John R. Sheets for Codeweavers
+ * Copyright 2000 John R. Sheets for CodeWeavers
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public

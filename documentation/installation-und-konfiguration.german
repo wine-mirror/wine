@@ -101,7 +101,7 @@ Möglichkeit gesteigert, sinnvolle Fehlerberichte an die
 WINE-Entwickler schicken zu können. 
 
 Die Installation von Binärpaketen ist abhängig vom eingesetzten
-Paketformat der Distribution (zumeist wird das Redhat- oder
+Paketformat der Distribution (zumeist wird das RedHat- oder
 Debian-Format benutzt) sowie der Distribution selbst. Die hierzu
 benötigten Informationen sollten sich in der Dokumentation der von
 Ihnen eingesetzten Distribution finden. In diesem Text wird die

@@ -1,7 +1,7 @@
 /*
  * Wininet resource definitions
  *
- * Copyright 2003 Mike McCormack for Codeweavers
+ * Copyright 2003 Mike McCormack for CodeWeavers
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public

@@ -1,7 +1,7 @@
 /*
  *             MAPI basics
  *
- * Copyright 2001 Codeweavers Inc.
+ * Copyright 2001 CodeWeavers Inc.
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public

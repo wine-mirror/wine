@@ -73,7 +73,6 @@ void updateGUIForDesktopMode(HWND hDlg) {
 void initX11DrvDlg (HWND hDlg)
 {
     char *buf;
-    int x, y;
     char *i;
 
     updatingUI = TRUE;
@@ -147,7 +146,7 @@ X11DrvDlgProc (HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
 		    break;
 		}
 		case BN_CLICKED: {
-		    WINE_TRACE("%ld\n", LOWORD(wParam));
+		    WINE_TRACE("%d\n", LOWORD(wParam));
 		    switch(LOWORD(wParam)) {
 			case IDC_ENABLE_DESKTOP: onEnableDesktopClicked(hDlg); break;
 		    };

@@ -1,7 +1,7 @@
 /*
  *  RPCRT4
  *
- * Copyright 2000 Huw D M Davies for Codeweavers
+ * Copyright 2000 Huw D M Davies for CodeWeavers
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public

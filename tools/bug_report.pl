@@ -358,7 +358,7 @@ if ($debuglevel > 1) {
 	$extraops=" ";
 }
 
-print "\nEnter the name of your distribution (Example: Redhat 6.1): ";
+print "\nEnter the name of your distribution (Example: RedHat 6.1): ";
 $dist=<STDIN>;
 chomp $dist;
 

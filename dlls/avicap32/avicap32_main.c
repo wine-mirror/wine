@@ -1,5 +1,5 @@
 /*
- * Copyright 2002 Dmitry Timoshkov for Codeweavers
+ * Copyright 2002 Dmitry Timoshkov for CodeWeavers
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public

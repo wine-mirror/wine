@@ -959,7 +959,7 @@ EOF
 	echo i386-sequent-sysv4
 	exit 0 ;;
     i*86:UNIX_SV:4.2MP:2.*)
-        # Unixware is an offshoot of SVR4, but it has its own version
+        # UnixWare is an offshoot of SVR4, but it has its own version
         # number series starting with 2...
         # I am not positive that other SVR4 systems won't match this,
 	# I just have to hope.  -- rms.

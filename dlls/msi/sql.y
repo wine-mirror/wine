@@ -3,7 +3,7 @@
 /*
  * Implementation of the Microsoft Installer (msi.dll)
  *
- * Copyright 2002 Mike McCormack for Codeweavers
+ * Copyright 2002 Mike McCormack for CodeWeavers
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -111,10 +111,12 @@ static struct expr * EXPR_sval( LPWSTR string );
 %token TK_VACUUM TK_VALUES TK_VIEW
 %token TK_WHEN TK_WHERE
 
-// These are extra tokens used by the lexer but never seen by the
-// parser.  We put them in a rule so that the parser generator will
-// add them to the parse.h output file.
-//
+/*
+ * These are extra tokens used by the lexer but never seen by the
+ * parser.  We put them in a rule so that the parser generator will
+ * add them to the parse.h output file.
+ *
+ */
 %nonassoc END_OF_FILE ILLEGAL SPACE UNCLOSED_STRING COMMENT FUNCTION
           COLUMN AGG_FUNCTION.
 
@@ -514,4 +516,3 @@ UINT MSI_ParseSQL( MSIDATABASE *db, LPCWSTR command, MSIVIEW **phview )
 
     return ERROR_SUCCESS;
 }
-

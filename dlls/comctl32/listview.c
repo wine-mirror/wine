@@ -4,7 +4,7 @@
  * Copyright 1998, 1999 Eric Kohl
  * Copyright 1999 Luc Tourangeau
  * Copyright 2000 Jason Mawdsley
- * Copyright 2001 Codeweavers Inc.
+ * Copyright 2001 CodeWeavers Inc.
  * Copyright 2002 Dimitrie O. Paun
  *
  * This library is free software; you can redistribute it and/or

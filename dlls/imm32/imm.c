@@ -2,7 +2,7 @@
  * IMM32 library
  *
  * Copyright 1998 Patrik Stridvall
- * Copyright 2002 Codeweavers, Aric Stewart
+ * Copyright 2002 CodeWeavers, Aric Stewart
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public

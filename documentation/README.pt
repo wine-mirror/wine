@@ -213,7 +213,7 @@ Fazer isto requer que os pacotes das ferramentas sgml (para db2html,
 db2ps, db2pdf) chamados:
 Debian:		docbook-utils
 Mandrake: 		sgml-tools-A.B.C-DDmdk
-SuSe:		docbktls-A.BB.C-DD
+SuSE:		docbktls-A.BB.C-DD
 
 8.ARRANJAR MAIS INFORMAÇÃO
 

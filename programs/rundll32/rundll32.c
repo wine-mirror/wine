@@ -2,8 +2,8 @@
  * PURPOSE: Load a DLL and run an entry point with the specified parameters
  *
  * Copyright 2002 Alberto Massari
- * Copyright 2001-2003 Aric Stewart for Codeweavers
- * Copyright 2003 Mike McCormack for Codeweavers
+ * Copyright 2001-2003 Aric Stewart for CodeWeavers
+ * Copyright 2003 Mike McCormack for CodeWeavers
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
