@@ -253,7 +253,7 @@ void COMPUTERNAME_Init (void)
     
     st = NtQueryValueKey( hsubkey, &nameW, KeyValuePartialInformation, buf, len, &len );
 
-    if ( st == STATUS_OBJECT_NAME_NOT_FOUND || ( st == STATUS_SUCCESS && get_use_dns_option()))
+    if ( st != STATUS_SUCCESS || get_use_dns_option() )
     {
         char hbuf[256];
         int hlen = sizeof (hbuf);
