@@ -146,8 +146,9 @@ void *next_user_handle( user_handle_t *handle, enum user_object type )
     if (!*handle) entry = handles;
     else
     {
-        if (!(entry = handle_to_entry( *handle ))) return NULL;
-        entry++;  /* start from the next one */
+        int index = (*handle & 0xffff) - FIRST_USER_HANDLE;
+        if (index < 0 || index >= nb_handles) return NULL;
+        entry = handles + index + 1;  /* start from the next one */
     }
     while (entry < handles + nb_handles)
     {
