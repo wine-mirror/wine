@@ -746,8 +746,6 @@ static BOOL PROFILE_Open( LPCWSTR filename )
         WARN("Error %ld opening file %s\n", GetLastError(), debugstr_w(buffer));
         return FALSE;
     }
-    
-    GetFileTime(hFile, NULL, NULL, &LastWriteTime);
 
     for(i=0;i<N_CACHED_PROFILES;i++)
     {
@@ -762,6 +760,7 @@ static BOOL PROFILE_Open( LPCWSTR filename )
                 MRUProfile[j]=MRUProfile[j-1];
              CurProfile=tempProfile;
           }
+          GetFileTime(hFile, NULL, NULL, &LastWriteTime);
           if(memcmp(&CurProfile->LastWriteTime, &LastWriteTime, sizeof(FILETIME)))
              TRACE("(%s): already opened (mru=%d)\n",
                              debugstr_w(buffer), i );
@@ -793,8 +792,8 @@ static BOOL PROFILE_Open( LPCWSTR filename )
     if (hFile != INVALID_HANDLE_VALUE)
     {
         CurProfile->section = PROFILE_Load(hFile, &CurProfile->encoding);
+        GetFileTime(hFile, NULL, NULL, &CurProfile->LastWriteTime);
         CloseHandle(hFile);
-        memcpy(&CurProfile->LastWriteTime, &LastWriteTime, sizeof(FILETIME));
     }
     else
     {
