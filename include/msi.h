@@ -137,10 +137,8 @@ typedef enum tagINSTALLTYPE
 
 #define MAX_FEATURE_CHARS 38
 
-typedef INT (CALLBACK *INSTALLUI_HANDLERA)(LPVOID pvContext, UINT iMessageType,
-                                       LPCSTR szMessage);
-typedef INT (CALLBACK *INSTALLUI_HANDLERW)(LPVOID pvContext, UINT iMessageType,
-                                       LPCWSTR szMessage);
+typedef INT (CALLBACK *INSTALLUI_HANDLERA)(LPVOID, UINT, LPCSTR);
+typedef INT (CALLBACK *INSTALLUI_HANDLERW)(LPVOID, UINT, LPCWSTR);
 
 UINT WINAPI MsiAdvertiseProductA(LPCSTR, LPCSTR, LPCSTR, LANGID);
 UINT WINAPI MsiAdvertiseProductW(LPCWSTR, LPCWSTR, LPCWSTR, LANGID);
@@ -218,20 +216,20 @@ INSTALLSTATE WINAPI MsiQueryProductStateA(LPCSTR);
 INSTALLSTATE WINAPI MsiQueryProductStateW(LPCWSTR);
 #define      MsiQueryProductState WINELIB_NAME_AW(MsiQueryProductState)
 
-UINT WINAPI MsiConfigureProductA(LPCSTR szProduct, int iInstallLevel, INSTALLSTATE eInstallState);
-UINT WINAPI MsiConfigureProductW(LPCWSTR szProduct, int iInstallLevel, INSTALLSTATE eInstallState);
+UINT WINAPI MsiConfigureProductA(LPCSTR, int, INSTALLSTATE);
+UINT WINAPI MsiConfigureProductW(LPCWSTR, int, INSTALLSTATE);
 #define     MsiConfigureProduct WINELIB_NAME_AW(MsiConfigureProduct);
 
-UINT WINAPI MsiGetProductCodeA(LPCSTR szComponent, LPSTR szBuffer);
-UINT WINAPI MsiGetProductCodeW(LPCWSTR szComponent, LPWSTR szBuffer);
+UINT WINAPI MsiGetProductCodeA(LPCSTR, LPSTR);
+UINT WINAPI MsiGetProductCodeW(LPCWSTR, LPWSTR);
 #define     MsiGetProductCode WINELIB_NAME_AW(MsiGetProductCode)
 
-UINT WINAPI MsiGetProductInfoA(LPCSTR szProduct, LPCSTR szAttribute, LPSTR szBuffer, DWORD *pcchValueBuf);
-UINT WINAPI MsiGetProductInfoW(LPCWSTR szProduct, LPCWSTR szAttribute, LPWSTR szBuffer, DWORD *pcchValueBuf);
+UINT WINAPI MsiGetProductInfoA(LPCSTR, LPCSTR, LPSTR, DWORD *);
+UINT WINAPI MsiGetProductInfoW(LPCWSTR, LPCWSTR, LPWSTR, DWORD *);
 #define     MsiGetProductInfo WINELIB_NAME_AW(MsiGetProductInfo)
 
-UINT WINAPI MsiEnableLogA(DWORD dwLogMode, LPCSTR szLogFile, DWORD attributes);
-UINT WINAPI MsiEnableLogW(DWORD dwLogMode, LPCWSTR szLogFile, DWORD attributes);
+UINT WINAPI MsiEnableLogA(DWORD, LPCSTR, DWORD);
+UINT WINAPI MsiEnableLogW(DWORD, LPCWSTR, DWORD);
 #define     MsiEnableLog WINELIB_NAME_AW(MsiEnableLog)
 
 INSTALLUI_HANDLERA WINAPI MsiSetExternalUIA(INSTALLUI_HANDLERA, DWORD, LPVOID);
@@ -242,17 +240,31 @@ INSTALLSTATE WINAPI MsiGetComponentPathA(LPCSTR, LPCSTR, LPSTR, DWORD*);
 INSTALLSTATE WINAPI MsiGetComponentPathW(LPCWSTR, LPCWSTR, LPWSTR, DWORD*);
 #define MsiGetComponentPath WINELIB_NAME_AW(MsiGetComponentPath)
 
-INSTALLSTATE WINAPI MsiQueryFeatureStateA(LPCSTR szProduct, LPCSTR szFeature);
-INSTALLSTATE WINAPI MsiQueryFeatureStateW(LPCWSTR szProduct, LPCWSTR szFeature);
+INSTALLSTATE WINAPI MsiQueryFeatureStateA(LPCSTR, LPCSTR);
+INSTALLSTATE WINAPI MsiQueryFeatureStateW(LPCWSTR, LPCWSTR);
 #define MsiQueryFeatureState WINELIB_NAME_AW(MsiQueryFeatureState)
 
-UINT WINAPI MsiGetFileVersionA(LPCSTR szFilePath, LPSTR lpVersionBuf, DWORD* pcchVersionBuf, LPSTR lpLangBuf, DWORD* pcchLangBuf);
-UINT WINAPI MsiGetFileVersionW(LPCWSTR szFilePath, LPWSTR lpVersionBuf, DWORD* pcchVersionBuf, LPWSTR lpLangBuf, DWORD* pcchLangBuf);
+UINT WINAPI MsiGetFeatureUsageA(LPCSTR, LPCSTR, DWORD*, WORD*);
+UINT WINAPI MsiGetFeatureUsageW(LPCWSTR, LPCWSTR, DWORD*, WORD*);
+#define MsiGetFeatureUsage WINELIB_NAME_AW(MsiGetFeatureUsage)
+
+UINT WINAPI MsiEnumRelatedProductsA(LPCSTR, DWORD, DWORD, LPSTR);
+UINT WINAPI MsiEnumRelatedProductsW(LPCWSTR, DWORD, DWORD, LPWSTR);
+#define MsiEnumRelatedProducts WINELIB_NAME_AW(MsiEnumRelatedProducts)
+
+UINT WINAPI MsiProvideAssemblyA(LPCSTR, LPCSTR, DWORD, DWORD, LPSTR, DWORD*);
+UINT WINAPI MsiProvideAssemblyW(LPCWSTR, LPCWSTR, DWORD, DWORD, LPWSTR, DWORD*);
+#define MsiProvideAssembly WINELIB_NAME_AW(MsiProvideAssembly)
+
+UINT WINAPI MsiEnumComponentQualifiersA(LPSTR, DWORD, LPSTR, DWORD*, LPSTR, DWORD*);
+UINT WINAPI MsiEnumComponentQualifiersW(LPWSTR, DWORD, LPWSTR, DWORD*, LPWSTR, DWORD*);
+#define MsiEnumComponentQualifiers WINELIB_NAME_AW(MsiEnumComponentQualifiers)
+
+UINT WINAPI MsiGetFileVersionA(LPCSTR, LPSTR, DWORD*, LPSTR, DWORD*);
+UINT WINAPI MsiGetFileVersionW(LPCWSTR, LPWSTR, DWORD*, LPWSTR, DWORD*);
 #define MsiGetFileVersion WINELIB_NAME_AW(MsiGetFileVersion)
 
-/**
- * Non Unicode
- */
+/* Non Unicode */
 UINT WINAPI MsiCloseHandle(MSIHANDLE);
 UINT WINAPI MsiCloseAllHandles(void);
 INSTALLUILEVEL WINAPI MsiSetInternalUI(INSTALLUILEVEL, HWND*);
