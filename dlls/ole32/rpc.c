@@ -180,18 +180,23 @@ static DWORD WINAPI stub_dispatch_thread(LPVOID);
 
 static HRESULT
 PIPE_RegisterPipe(wine_marshal_id *mid, HANDLE hPipe, BOOL startreader) {
+
+/* FIXME: this pipe caching code is commented out because it is breaks the
+ * tests, causing them hang due to writing to or reading from the wrong pipe.
+ */
+#if 0
   int	i;
-  char	pipefn[100];
 
   for (i=0;i<nrofpipes;i++)
     if (pipes[i].mid.oxid==mid->oxid)
       return S_OK;
+#endif
+
   if (nrofpipes + 1 >= MAX_WINE_PIPES)
   {
     FIXME("Out of pipes, please increase MAX_WINE_PIPES\n");
     return E_OUTOFMEMORY;
   }
-  sprintf(pipefn,OLESTUBMGR"_%08lx%08lx",(DWORD)(mid->oxid >> 32),(DWORD)mid->oxid);
   memcpy(&(pipes[nrofpipes].mid),mid,sizeof(*mid));
   pipes[nrofpipes].hPipe	= hPipe;
   pipes[nrofpipes].apt          = COM_CurrentApt();
@@ -788,7 +793,7 @@ COM_RpcReceive(wine_pipe *xpipe) {
         hres = read_pipe(xhPipe, &header, sizeof(header));
         if (hres) {
             ERR("could not read disconnect header\n");
-            goto end;
+            goto disconnect_end;
         }
 
         TRACE("read disconnect header\n");
@@ -796,15 +801,15 @@ COM_RpcReceive(wine_pipe *xpipe) {
         if (!(stubmgr = get_stub_manager(header.mid.oxid, header.mid.oid)))
         {
             ERR("could not locate stub to disconnect, mid.oid=%s\n", wine_dbgstr_longlong(header.mid.oid));
-            goto end;
+            goto disconnect_end;
         }
 
         stub_manager_ext_release(stubmgr, 1);
 
         stub_manager_int_release(stubmgr);
 
+disconnect_end:
         write_pipe(xhPipe, &magic, sizeof(magic));
-        
         goto end;
     } else if (reqtype == REQTYPE_REQUEST) {
 	wine_rpc_request	*xreq;
