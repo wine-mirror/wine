@@ -51,7 +51,7 @@ init	MAIN_UserInit
  47 stdcall CheckMenuRadioItem(long long long long long) CheckMenuRadioItem32
  48 stdcall CheckRadioButton(long long long long) CheckRadioButton32
  49 stdcall ChildWindowFromPoint(long long long) ChildWindowFromPoint32
- 50 stub ChildWindowFromPointEx
+ 50 stdcall ChildWindowFromPointEx(long long long long) ChildWindowFromPointEx32
  51 stub ClientThreadConnect
  52 stdcall ClientToScreen(long ptr) ClientToScreen32
  53 stdcall ClipCursor(ptr) ClipCursor32

@@ -497,6 +497,57 @@ HWND32 WINAPI ChildWindowFromPoint32( HWND32 hwndParent, POINT32 pt )
     return hwndParent;
 }
 
+/*******************************************************************
+ *         ChildWindowFromPointEx16   (USER.50)
+ */
+HWND16 WINAPI ChildWindowFromPointEx16( HWND16 hwndParent, POINT16 pt, UINT16 uFlags)
+{
+    POINT32 pt32;
+    CONV_POINT16TO32( &pt, &pt32 );
+    return (HWND16)ChildWindowFromPointEx32( hwndParent, pt32, uFlags );
+}
+
+
+/*******************************************************************
+ *         ChildWindowFromPointEx32   (USER32.50)
+ */
+HWND32 WINAPI ChildWindowFromPointEx32( HWND32 hwndParent, POINT32 pt,
+		UINT32 uFlags)
+{
+    /* pt is in the client coordinates */
+
+    WND* wnd = WIN_FindWndPtr(hwndParent);
+    RECT32 rect;
+
+    if( !wnd ) return 0;
+
+    /* get client rect fast */
+    rect.top = rect.left = 0;
+    rect.right = wnd->rectClient.right - wnd->rectClient.left;
+    rect.bottom = wnd->rectClient.bottom - wnd->rectClient.top;
+
+    if (!PtInRect32( &rect, pt )) return 0;
+
+    wnd = wnd->child;
+    while ( wnd )
+    {
+        if (PtInRect32( &wnd->rectWindow, pt )) {
+		if ( (uFlags & CWP_SKIPINVISIBLE) && 
+				!(wnd->dwStyle & WS_VISIBLE) )
+		        wnd = wnd->next;
+		else if ( (uFlags & CWP_SKIPDISABLED) && 
+				(wnd->dwStyle & WS_DISABLED) )
+		        wnd = wnd->next;
+		else if ( (uFlags & CWP_SKIPTRANSPARENT) && 
+				(wnd->dwExStyle & WS_EX_TRANSPARENT) )
+		        wnd = wnd->next;
+		else
+			return wnd->hwndSelf;
+	}
+    }
+    return hwndParent;
+}
+
 
 /*******************************************************************
  *         WINPOS_GetWinOffset
