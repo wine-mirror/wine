@@ -160,7 +160,8 @@ HRESULT WINAPI LoadTypeLib16(
  *    Success: S_OK
  *    Failure: Status
  */
-int TLB_ReadTypeLib(PCHAR file, ITypeLib **ppTypelib);
+int TLB_ReadTypeLib(PCHAR file, ITypeLib2 **ppTypelib);
+
 HRESULT WINAPI LoadTypeLib(
     OLECHAR *szFile,   /* [in] Name of file to load from */
     ITypeLib * *pptLib) /* [out] Pointer to pointer to loaded type library */
@@ -191,7 +192,7 @@ HRESULT WINAPI LoadTypeLibEx(
     if(regkind != REGKIND_NONE)
         FIXME ("registration of typelibs not supported yet!\n");
 
-    res= TLB_ReadTypeLib(p, pptLib);
+    res= TLB_ReadTypeLib(p, (ITypeLib2**)pptLib);
     HeapFree(GetProcessHeap(),0,p);
     TRACE(" returns %08lx\n",res);
 
@@ -351,7 +352,7 @@ typedef struct tagITypeLibImpl
 static struct ICOM_VTABLE(ITypeLib2) tlbvt;
 
 /* ITypeLib methods */
-static ITypeLib2* ITypeLib2_Constructor();
+static ITypeLib2* ITypeLib2_Constructor(LPVOID pLib);
 
 /*======================= ITypeInfo implementation =======================*/
 
@@ -1072,231 +1073,263 @@ ITypeInfoImpl * TLB_DoTypeInfo(
     return ptiRet;
 }
 
-int TLB_ReadTypeLib(LPSTR pszFileName, ITypeLib **ppTypeLib)
+/****************************************************************************
+ *	TLB_ReadTypeLib
+ *
+ * find the type of the typelib file and map the typelib resource into
+ * the memory
+ */
+#define MSFT_SIGNATURE 0x5446534D /* "MSFT" */
+int TLB_ReadTypeLib(LPSTR pszFileName, ITypeLib2 **ppTypeLib)
 {
-    TLBContext cx;
-    long lPSegDir;
-    ITypeLibImpl* pLibInfo=NULL;
-    TLB2Header tlbHeader;
-    TLBSegDir tlbSegDir;
-    HINSTANCE hinstDLL;
     int ret = E_FAIL;
-    HRSRC hrsrc;
-    HGLOBAL hGlobal;
-    LPVOID pLib;
+    DWORD dwSignature = 0;
+    HFILE hFile;
 
     TRACE("%s\n", pszFileName);
 
-    /* find the typelibrary resource*/
-    hinstDLL = LoadLibraryExA(pszFileName, 0, DONT_RESOLVE_DLL_REFERENCES|LOAD_LIBRARY_AS_DATAFILE|LOAD_WITH_ALTERED_SEARCH_PATH);
-    if (!hinstDLL)
+    *ppTypeLib = NULL;
+
+    /* check the signature of the file */
+    hFile = CreateFileA( pszFileName, GENERIC_READ, FILE_SHARE_READ, NULL, OPEN_EXISTING, 0, -1 );
+    if (INVALID_HANDLE_VALUE != hFile)
     {
-        ERR("error: couldn't load the DLL %s\n", pszFileName);
-	goto err1;
+      HANDLE hMapping = CreateFileMappingA( hFile, NULL, PAGE_READONLY | SEC_COMMIT, 0, 0, NULL );
+      if (hMapping)
+      {
+        LPVOID pBase = MapViewOfFile(hMapping, FILE_MAP_READ, 0, 0, 0);
+	if(pBase)
+	{
+	  /* first try to load as *.tlb */
+	  dwSignature = *((DWORD*) pBase);
+	  if ( dwSignature == MSFT_SIGNATURE)
+	  {
+	    *ppTypeLib = ITypeLib2_Constructor(pBase);
+	  }
+	  UnmapViewOfFile(pBase);
+	}
+	CloseHandle(hMapping);
+      }
+      CloseHandle(hFile);
     }
 
-    hrsrc = FindResourceA(hinstDLL, MAKEINTRESOURCEA(1), "TYPELIB");
-    if (!hrsrc)
+    if( (WORD)dwSignature == IMAGE_DOS_SIGNATURE )
     {
-        ERR("error: couldn't find initial TLB data\n");
-	goto err2;
+      /* find the typelibrary resource*/
+      HINSTANCE hinstDLL = LoadLibraryExA(pszFileName, 0, DONT_RESOLVE_DLL_REFERENCES|
+                                          LOAD_LIBRARY_AS_DATAFILE|LOAD_WITH_ALTERED_SEARCH_PATH);
+      if (hinstDLL)
+      {
+        HRSRC hrsrc = FindResourceA(hinstDLL, MAKEINTRESOURCEA(1), "TYPELIB");
+        if (hrsrc)
+        {
+          HGLOBAL hGlobal = LoadResource(hinstDLL, hrsrc);
+          if (hGlobal)
+          {
+            LPVOID pBase = LockResource(hGlobal);
+            if (pBase)
+            {
+              *ppTypeLib = ITypeLib2_Constructor(pBase);
+            }
+            FreeResource( hGlobal );
+          }
+        }
+        FreeLibrary(hinstDLL);
+      }
     }
 
-    hGlobal = LoadResource(hinstDLL, hrsrc);
-    if (!hGlobal)
-    {
-        ERR("error: couldn't load TLB data from DLL\n");
-	goto err2;
-    }
+    if(*ppTypeLib)
+      ret = S_OK;
+    else
+      ERR("Loading of typelib %s failed with error 0x%08lx\n", pszFileName, GetLastError());
 
-    pLib = LockResource(hGlobal);
-    if (! pLib)
-    {
-	goto err3;
-    }
+    return ret;
+}
 
-    TRACE("found at %p\n", pLib);
+/*================== ITypeLib(2) Methods ===================================*/
+
+/****************************************************************************
+ *	ITypeLib2_Constructor
+ *
+ * loading a typelib from a in-memory image
+ */
+static ITypeLib2* ITypeLib2_Constructor(LPVOID pLib)
+{
+    TLBContext cx;
+    long lPSegDir;
+    TLB2Header tlbHeader;
+    TLBSegDir tlbSegDir;
+    ITypeLibImpl * pTypeLibImpl;
+
+    TRACE("%p\n", pLib);
+
+    pTypeLibImpl = HeapAlloc(GetProcessHeap(),HEAP_ZERO_MEMORY,sizeof(ITypeLibImpl));
+    if (!pTypeLibImpl) return NULL;
+
+    ICOM_VTBL(pTypeLibImpl) = &tlbvt;
+    pTypeLibImpl->ref = 1;
 
     /* get pointer to beginning of typelib data */
     cx.pos = 0;
     cx.oStart=0;
     cx.mapping = pLib;
-
-    pLibInfo = (ITypeLibImpl*) ITypeLib2_Constructor();
-
-    if (!pLibInfo)
-    {
-        ret = E_OUTOFMEMORY;
-	goto err3;
-    }
-
-    cx.pLibInfo=pLibInfo;
+    cx.pLibInfo = pTypeLibImpl;
 
     /* read header */
-    TRACE("read header\n");
     TLB_Read((void*)&tlbHeader, sizeof(tlbHeader), &cx, 0);
     TRACE("read header (0x%08x 0x%08x)\n",tlbHeader.magic1,tlbHeader.magic2 );
 
     /* there is a small number of information here until the next important
      * part:
      * the segment directory . Try to calculate the amount of data */
-    lPSegDir=sizeof(tlbHeader)+
-            (tlbHeader.nrtypeinfos)*4+
-            (tlbHeader.varflags & HELPDLLFLAG? 4 :0);
+    lPSegDir = sizeof(tlbHeader) + (tlbHeader.nrtypeinfos)*4 + (tlbHeader.varflags & HELPDLLFLAG? 4 :0);
 
     /* now read the segment directory */
     TRACE("read segment directory\n");
     TLB_Read((void*)&tlbSegDir, sizeof(tlbSegDir), &cx, lPSegDir);  
-    cx.pTblDir=&tlbSegDir;
+    cx.pTblDir = &tlbSegDir;
+
     /* just check two entries */
-    if (	tlbSegDir.pTypeInfoTab.res0c != 0x0F ||
-		tlbSegDir.pImpInfo.res0c != 0x0F
-    ) {
+    if ( tlbSegDir.pTypeInfoTab.res0c != 0x0F || tlbSegDir.pImpInfo.res0c != 0x0F)
+    {
         ERR("cannot find the table directory, ptr=0x%lx\n",lPSegDir);
-	goto err3;
+	HeapFree(GetProcessHeap(),0,pTypeLibImpl);
+	return NULL;
     }
+
     /* now fill our internal data */
     /* TLIBATTR fields */
-    TLB_ReadGuid(&pLibInfo->LibAttr.guid, tlbHeader.posguid, &cx);
-    pLibInfo->LibAttr.lcid=tlbHeader.lcid;
-    pLibInfo->LibAttr.syskind=tlbHeader.varflags & 0x0f; /* check the mask */
-    pLibInfo->LibAttr.wMajorVerNum=LOWORD(tlbHeader.version);
-    pLibInfo->LibAttr.wMinorVerNum=HIWORD(tlbHeader.version);
-    pLibInfo->LibAttr.wLibFlags=(WORD) tlbHeader.flags & 0xffff;/* check mask */
+    TLB_ReadGuid(&pTypeLibImpl->LibAttr.guid, tlbHeader.posguid, &cx);
+    pTypeLibImpl->LibAttr.lcid = tlbHeader.lcid;
+    pTypeLibImpl->LibAttr.syskind = tlbHeader.varflags & 0x0f; /* check the mask */
+    pTypeLibImpl->LibAttr.wMajorVerNum = LOWORD(tlbHeader.version);
+    pTypeLibImpl->LibAttr.wMinorVerNum = HIWORD(tlbHeader.version);
+    pTypeLibImpl->LibAttr.wLibFlags = (WORD) tlbHeader.flags & 0xffff;/* check mask */
 
     /* name, eventually add to a hash table */
-    pLibInfo->Name=TLB_ReadName(&cx, tlbHeader.NameOffset);
+    pTypeLibImpl->Name = TLB_ReadName(&cx, tlbHeader.NameOffset);
 
     /* help info */
-    pLibInfo->DocString=TLB_ReadString(&cx, tlbHeader.helpstring);
-    pLibInfo->HelpFile=TLB_ReadString(&cx, tlbHeader.helpfile);
-    if( tlbHeader.varflags & HELPDLLFLAG){
+    pTypeLibImpl->DocString = TLB_ReadString(&cx, tlbHeader.helpstring);
+    pTypeLibImpl->HelpFile = TLB_ReadString(&cx, tlbHeader.helpfile);
+
+    if( tlbHeader.varflags & HELPDLLFLAG)
+    {
             int offset;
             TLB_Read(&offset, sizeof(offset), &cx, sizeof(tlbHeader));
-            pLibInfo->HelpStringDll=TLB_ReadString(&cx, offset);
+            pTypeLibImpl->HelpStringDll = TLB_ReadString(&cx, offset);
     }
 
-    pLibInfo->dwHelpContext=tlbHeader.helpstringcontext;
+    pTypeLibImpl->dwHelpContext = tlbHeader.helpstringcontext;
 
     /* custom data */
-    if(tlbHeader.CustomDataOffset >= 0) {
-        pLibInfo->ctCustData=
-            TLB_CustData(&cx, tlbHeader.CustomDataOffset, &pLibInfo->pCustData);
+    if(tlbHeader.CustomDataOffset >= 0)
+    {
+        pTypeLibImpl->ctCustData = TLB_CustData(&cx, tlbHeader.CustomDataOffset, &pTypeLibImpl->pCustData);
     }
 
     /* fill in typedescriptions */
-    if(tlbSegDir.pTypdescTab.length >0){
-        int i, j, cTD=tlbSegDir.pTypdescTab.length / (2*sizeof(INT));
+    if(tlbSegDir.pTypdescTab.length > 0)
+    {
+        int i, j, cTD = tlbSegDir.pTypdescTab.length / (2*sizeof(INT));
         INT16 td[4];
-        pLibInfo->pTypeDesc=
-            TLB_Alloc( cTD * sizeof(TYPEDESC));
+        pTypeLibImpl->pTypeDesc = TLB_Alloc( cTD * sizeof(TYPEDESC));
         TLB_Read(td, sizeof(td), &cx, tlbSegDir.pTypdescTab.offset);
-        for(i=0;i<cTD;){
+        for(i=0; i<cTD; )
+	{
             /* FIXME: add several sanity checks here */
-            pLibInfo->pTypeDesc[i].vt=td[0] & VT_TYPEMASK;
-            if(td[0]==VT_PTR ||td[0]==VT_SAFEARRAY){/* FIXME: check safearray */
-                if(td[3]<0)
-                    V_UNION(&(pLibInfo->pTypeDesc[i]),lptdesc)=
-                        & stndTypeDesc[td[2]];
+            pTypeLibImpl->pTypeDesc[i].vt = td[0] & VT_TYPEMASK;
+            if(td[0] == VT_PTR || td[0] == VT_SAFEARRAY)
+	    {
+	        /* FIXME: check safearray */
+                if(td[3] < 0)
+                    V_UNION(&(pTypeLibImpl->pTypeDesc[i]),lptdesc)= & stndTypeDesc[td[2]];
                 else
-                    V_UNION(&(pLibInfo->pTypeDesc[i]),lptdesc)=
-                        & pLibInfo->pTypeDesc[td[3]/8];
-            }else if(td[0]==VT_CARRAY)
-                V_UNION(&(pLibInfo->pTypeDesc[i]),lpadesc)=
-                    (void *)((int) td[2]);  /* temp store offset in*/
-                                            /* array descr table here */
-            else if(td[0]==VT_USERDEFINED)
-                V_UNION(&(pLibInfo->pTypeDesc[i]),hreftype)=MAKELONG(td[2],td[3]);
-            if(++i<cTD) TLB_Read(td, sizeof(td), &cx, DO_NOT_SEEK);
+                    V_UNION(&(pTypeLibImpl->pTypeDesc[i]),lptdesc)= & pTypeLibImpl->pTypeDesc[td[3]/8];
+            }
+	    else if(td[0] == VT_CARRAY)
+            {
+	        /* array descr table here */
+	        V_UNION(&(pTypeLibImpl->pTypeDesc[i]),lpadesc) = (void *)((int) td[2]);  /* temp store offset in*/
+            }                             
+            else if(td[0] == VT_USERDEFINED)
+	    {
+                V_UNION(&(pTypeLibImpl->pTypeDesc[i]),hreftype) = MAKELONG(td[2],td[3]);
+            }
+	    if(++i<cTD) TLB_Read(td, sizeof(td), &cx, DO_NOT_SEEK);
         }
 
         /* second time around to fill the array subscript info */
-        for(i=0;i<cTD;i++){
-            if(pLibInfo->pTypeDesc[i].vt != VT_CARRAY) continue;
-            if(tlbSegDir.pArrayDescriptions.offset>0){
-                TLB_Read(td, sizeof(td), &cx, tlbSegDir.pArrayDescriptions.offset +
-                    (int) V_UNION(&(pLibInfo->pTypeDesc[i]),lpadesc));
-                V_UNION(&(pLibInfo->pTypeDesc[i]),lpadesc)=
-                    TLB_Alloc(sizeof(ARRAYDESC)+sizeof(SAFEARRAYBOUND)*(td[3]-1));
+        for(i=0;i<cTD;i++)
+	{
+            if(pTypeLibImpl->pTypeDesc[i].vt != VT_CARRAY) continue;
+            if(tlbSegDir.pArrayDescriptions.offset>0)
+	    {
+                TLB_Read(td, sizeof(td), &cx, tlbSegDir.pArrayDescriptions.offset + (int) V_UNION(&(pTypeLibImpl->pTypeDesc[i]),lpadesc));
+                V_UNION(&(pTypeLibImpl->pTypeDesc[i]),lpadesc) = TLB_Alloc(sizeof(ARRAYDESC)+sizeof(SAFEARRAYBOUND)*(td[3]-1));
+
                 if(td[1]<0)
-                    V_UNION(&(pLibInfo->pTypeDesc[i]),lpadesc)->tdescElem.vt=td[0] & VT_TYPEMASK;
+                    V_UNION(&(pTypeLibImpl->pTypeDesc[i]),lpadesc)->tdescElem.vt = td[0] & VT_TYPEMASK;
                 else
-                    V_UNION(&(pLibInfo->pTypeDesc[i]),lpadesc)->tdescElem=stndTypeDesc[td[0]/8];
-                V_UNION(&(pLibInfo->pTypeDesc[i]),lpadesc)->cDims=td[2];
-                for(j=0;j<td[2];j++){
-                    TLB_Read(& V_UNION(&(pLibInfo->pTypeDesc[i]),lpadesc)->rgbounds[j].cElements, 
+                    V_UNION(&(pTypeLibImpl->pTypeDesc[i]),lpadesc)->tdescElem = stndTypeDesc[td[0]/8];
+
+                V_UNION(&(pTypeLibImpl->pTypeDesc[i]),lpadesc)->cDims = td[2];
+
+                for(j = 0; j<td[2]; j++)
+		{
+                    TLB_Read(& V_UNION(&(pTypeLibImpl->pTypeDesc[i]),lpadesc)->rgbounds[j].cElements, 
                         sizeof(INT), &cx, DO_NOT_SEEK);
-                    TLB_Read(& V_UNION(&(pLibInfo->pTypeDesc[i]),lpadesc)
-                        ->rgbounds[j].lLbound, 
+                    TLB_Read(& V_UNION(&(pTypeLibImpl->pTypeDesc[i]),lpadesc)->rgbounds[j].lLbound, 
                         sizeof(INT), &cx, DO_NOT_SEEK);
                 }
-            }else{
-                V_UNION(&(pLibInfo->pTypeDesc[i]),lpadesc)=NULL;
+            }
+	    else
+	    {
+                V_UNION(&(pTypeLibImpl->pTypeDesc[i]),lpadesc) = NULL;
                 ERR("didn't find array description data\n");
             }
         }
     }
 
     /* imported type libs */
-    if(tlbSegDir.pImpFiles.offset>0){
-        TLBImpLib **ppImpLib=&(pLibInfo->pImpLibs);
-        int offset=tlbSegDir.pImpFiles.offset;
-        int oGuid;
+    if(tlbSegDir.pImpFiles.offset>0)
+    {
+        TLBImpLib **ppImpLib = &(pTypeLibImpl->pImpLibs);
+        int oGuid, offset = tlbSegDir.pImpFiles.offset;
         UINT16 size;
-        while(offset < tlbSegDir.pImpFiles.offset +tlbSegDir.pImpFiles.length){
-            *ppImpLib=TLB_Alloc(sizeof(TLBImpLib));
-            (*ppImpLib)->offset=offset - tlbSegDir.pImpFiles.offset;
+
+        while(offset < tlbSegDir.pImpFiles.offset +tlbSegDir.pImpFiles.length)
+	{
+            *ppImpLib = TLB_Alloc(sizeof(TLBImpLib));
+            (*ppImpLib)->offset = offset - tlbSegDir.pImpFiles.offset;
             TLB_Read(&oGuid, sizeof(INT), &cx, offset);
             TLB_ReadGuid(&(*ppImpLib)->guid, oGuid, &cx);
+
             /* we are skipping some unknown info here */
             TLB_Read(& size,sizeof(UINT16), &cx, offset+3*(sizeof(INT)));
-            size >>=2;
-            (*ppImpLib)->name=TLB_Alloc(size+1);
-            TLB_Read((*ppImpLib)->name,size, &cx, DO_NOT_SEEK);
-            offset=(offset+3*(sizeof(INT))+sizeof(UINT16)+size+3) & 0xfffffffc;
+            size >>= 2;
+            (*ppImpLib)->name = TLB_Alloc(size+1);
+            TLB_Read((*ppImpLib)->name, size, &cx, DO_NOT_SEEK);
+            offset = (offset + 3 * (sizeof(INT)) + sizeof(UINT16) + size + 3) & 0xfffffffc;
 
-            ppImpLib=&(*ppImpLib)->next;
+            ppImpLib = &(*ppImpLib)->next;
         }
     }
 
     /* type info's */
-    if(tlbHeader.nrtypeinfos >=0 )
+    if(tlbHeader.nrtypeinfos >= 0 )
     {
-        /*pLibInfo->TypeInfoCount=tlbHeader.nrtypeinfos; */
-        ITypeInfoImpl **ppTI = &(pLibInfo->pTypeInfo);
+        /*pTypeLibImpl->TypeInfoCount=tlbHeader.nrtypeinfos; */
+        ITypeInfoImpl **ppTI = &(pTypeLibImpl->pTypeInfo);
         int i;
-        for(i=0;i<(int)tlbHeader.nrtypeinfos;i++)
+        for(i = 0; i<(int)tlbHeader.nrtypeinfos; i++)
 	{
-            *ppTI = TLB_DoTypeInfo(&cx, i, pLibInfo);
+            *ppTI = TLB_DoTypeInfo(&cx, i, pTypeLibImpl);
             ppTI = &((*ppTI)->next);
-            (pLibInfo->TypeInfoCount)++;
+            (pTypeLibImpl->TypeInfoCount)++;
         }
     }
 
-
-    *ppTypeLib=(LPTYPELIB)pLibInfo;
-    ret = S_OK;
-
-err3:
-    FreeResource( hGlobal );
-err2:
-    FreeLibrary(hinstDLL);
-err1:
-    return ret;
-}
-
-/*================== ITypeLib(2) Methods ===================================*/
-
-static ITypeLib2* ITypeLib2_Constructor()
-{
-    ITypeLibImpl * pTypeLibImpl;
-
-    pTypeLibImpl = HeapAlloc(GetProcessHeap(),HEAP_ZERO_MEMORY,sizeof(ITypeLibImpl));
-    if (pTypeLibImpl)
-    {
-      ICOM_VTBL(pTypeLibImpl) = &tlbvt;
-      pTypeLibImpl->ref = 1;
-    }
     TRACE("(%p)\n", pTypeLibImpl);
     return (ITypeLib2*) pTypeLibImpl;
 }
