@@ -3,98 +3,80 @@
  *
  * Copyright 1994 Martin Ayotte
  * Copyright 1996 Albrecht Kleine
- * Copyright 1998 Bertho Stultiens
+ * Copyright 1998,1999 Bertho Stultiens
  * Copyright 1999 Klaas van Gend
  */
 
-#include <ctype.h>
-#include <stdlib.h>
-#include <string.h>
 #include "winbase.h"
-#include "win.h"
 #include "commdlg.h"
-#include "module.h"
 #include "debug.h"
-#include "winproc.h"
 
 DEFAULT_DEBUG_CHANNEL(commdlg)
 
+#include "cdlg.h"
 
-#define COMDLG32_LAST_ERROR_NOT_ALLOCATED 0xF684F684
-static DWORD		COMDLG32_TlsIndex  = COMDLG32_LAST_ERROR_NOT_ALLOCATED;
+HINSTANCE16	COMMDLG_hInstance = 0;
+HINSTANCE	COMMDLG_hInstance32 = 0;
+static int	COMMDLG_Attach = 0;
 
 /***********************************************************************
- *	COMDLG32_DllEntryPoint			[COMDLG32.entry]
+ *	COMMDLG_DllEntryPoint			[COMMDLG.entry]
  *
- *    Initialisation code for the COMDLG32 DLL
- *    This call should implement the allocation of the TLS.
+ *    Initialization code for the COMMDLG DLL
  *
  * RETURNS:
- *
- * BUGS:
- *    Remains unimplemented until Bertho finishes his ELF-DLL code
  */
-BOOL WINAPI COMDLG32_DllEntryPoint(HINSTANCE hInstance, 
-                                   DWORD Reason, 
-				   LPVOID Reserved
-				   );
-
-
-
-/***********************************************************************
- *	COMDLG32_AllocTlsForCommDlgExtError	[internal]
- *
- * Allocates Thread Local Storage for the ComDlg32 local
- * last extended error
- *
- * RETURNS:
- *    nothing. 
- *
- * BUGS:
- * 1) FIXME: This function is only temporary, as this code *SHOULD*
- *        be executed in the DLL Entrypoint. For now, it is done
- *        this way.
- * 2) This allocated memory is NEVER freed again!
- */
-void COMDLG32_AllocTlsForCommDlgExtError()
+BOOL WINAPI COMMDLG_DllEntryPoint(DWORD Reason, HINSTANCE16 hInst, WORD ds, WORD HeapSize, DWORD res1, WORD res2)
 {
- FIXME(commdlg, "TLS for CommDlgExtendedError allocated on-the-fly\n");
-    if (COMDLG32_TlsIndex == COMDLG32_LAST_ERROR_NOT_ALLOCATED)
-	    COMDLG32_TlsIndex = TlsAlloc();
-    if (COMDLG32_TlsIndex == 0xFFFFFFFF)
-    	ERR(commdlg, "No space for COMDLG32 TLS\n");
-}
+	TRACE(commdlg, "(%08lx, %04x, %04x, %04x, %08lx, %04x)\n", Reason, hInst, ds, HeapSize, res1, res2);
+	switch(Reason)
+	{
+	case DLL_PROCESS_ATTACH:
+		COMMDLG_Attach++;
+		if(COMMDLG_hInstance)
+		{
+			ERR(commdlg, "commdlg.dll instantiated twice!\n");
+			/*
+			 * We should return FALSE here, but that will break
+			 * most apps that use CreateProcess because we do
+			 * not yet support seperate address-spaces.
+			 */
+			return TRUE;
+		}
 
-/***********************************************************************
- *	COMDLG32_SetCommDlgExtendedError	[internal]
- *
- * Used to set the thread's local error value if a comdlg32 function fails.
- */
-void COMDLG32_SetCommDlgExtendedError(DWORD err)
-{
-    /*FIXME: This check and the resulting alloc should be removed
-     *       when the DLL Entry code is finished
-     */
-    if (COMDLG32_TlsIndex==COMDLG32_LAST_ERROR_NOT_ALLOCATED)
-        COMDLG32_AllocTlsForCommDlgExtError();
-    TlsSetValue(COMDLG32_TlsIndex, (void *)err);
+		COMMDLG_hInstance = hInst;
+		if(!COMMDLG_hInstance32)
+		{
+			if(!(COMMDLG_hInstance32 = LoadLibraryA("comdlg32.dll")))
+			{
+				ERR(commdlg, "Could not load sibling comdlg32.dll\n");
+				return FALSE;
+			}
+		}
+		break;
+
+	case DLL_PROCESS_DETACH:
+		if(!--COMMDLG_Attach)
+		{
+			COMMDLG_hInstance = 0;
+			if(COMMDLG_hInstance32)
+				FreeLibrary(COMMDLG_hInstance32);
+		}
+		break;
+	}
+	return TRUE;
 }
 
 
 /***********************************************************************
- *	CommDlgExtendedError			[COMDLG32.5]
- *                                              [COMMDLG.26]
- * Get the thread's local error value if a comdlg32 function fails.
+ *	CommDlgExtendedError16			[COMMDLG.26]
+ *
+ * Get the last error value if a commdlg function fails.
  *	RETURNS
  *		Current error value which might not be valid
  *		if a previous call succeeded.
  */
-DWORD WINAPI CommDlgExtendedError(void)
+DWORD WINAPI CommDlgExtendedError16(void)
 {
-    /*FIXME: This check and the resulting alloc should be removed
-     *       when the DLL Entry code is finished
-     */
-    if (COMDLG32_TlsIndex==COMDLG32_LAST_ERROR_NOT_ALLOCATED)
-        COMDLG32_AllocTlsForCommDlgExtError();
-    return (DWORD)TlsGetValue(COMDLG32_TlsIndex);
+	return CommDlgExtendedError();
 }

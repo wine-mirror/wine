@@ -820,7 +820,7 @@ static BOOL MDI_AugmentFrameMenu( MDICLIENTINFO* ci, WND *frame,
 
     /* create a copy of sysmenu popup and insert it into frame menu bar */
 
-    if (!(hSysPopup = LoadMenuIndirectA(SYSRES_GetResPtr(SYSRES_MENU_SYSMENU))))
+    if (!(hSysPopup = LoadMenuA(GetModuleHandleA("USER32"), "SYSMENU")))
 	return 0;
  
     TRACE(mdi,"\tgot popup %04x in sysmenu %04x\n", 

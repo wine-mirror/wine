@@ -2970,7 +2970,7 @@ static void EDIT_WM_Command(WND *wnd, EDITSTATE *es, INT code, INT id, HWND cont
  */
 static void EDIT_WM_ContextMenu(WND *wnd, EDITSTATE *es, HWND hwnd, INT x, INT y)
 {
-	HMENU menu = LoadMenuIndirectA(SYSRES_GetResPtr(SYSRES_MENU_EDITMENU));
+	HMENU menu = LoadMenuA(GetModuleHandleA("USER32"), "EDITMENU");
 	HMENU popup = GetSubMenu(menu, 0);
 	UINT start = es->selection_start;
 	UINT end = es->selection_end;

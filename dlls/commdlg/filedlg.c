@@ -26,6 +26,8 @@
 
 DEFAULT_DEBUG_CHANNEL(commdlg)
 
+#include "cdlg.h"
+
 static HICON16 hFolder = 0;
 static HICON16 hFolder2 = 0;
 static HICON16 hFloppy = 0;
@@ -124,7 +126,17 @@ BOOL16 WINAPI GetOpenFileName16(
 		    return FALSE;
 		}
 	    } else {
-		template = SYSRES_GetResPtr( SYSRES_DIALOG_OPEN_FILE );
+		if (!(hResInfo = FindResourceA(COMMDLG_hInstance32, "OPEN_FILE", RT_DIALOGA)))
+		{
+		    COMDLG32_SetCommDlgExtendedError(CDERR_FINDRESFAILURE);
+		    return FALSE;
+		}
+		if (!(hDlgTmpl = LoadResource(COMMDLG_hInstance32, hResInfo )) ||
+		    !(template = LockResource( hDlgTmpl )))
+		{
+		    COMDLG32_SetCommDlgExtendedError(CDERR_LOADRESFAILURE);
+		    return FALSE;
+		}
 	    }
 	    win32Format = TRUE;
     } else {
@@ -152,7 +164,17 @@ BOOL16 WINAPI GetOpenFileName16(
 		    return FALSE;
 		}
 	    } else {
-		template = SYSRES_GetResPtr( SYSRES_DIALOG_OPEN_FILE );
+		if (!(hResInfo = FindResourceA(COMMDLG_hInstance32, "OPEN_FILE", RT_DIALOGA)))
+		{
+		    COMDLG32_SetCommDlgExtendedError(CDERR_FINDRESFAILURE);
+		    return FALSE;
+		}
+		if (!(hDlgTmpl = LoadResource(COMMDLG_hInstance32, hResInfo )) ||
+		    !(template = LockResource( hDlgTmpl )))
+		{
+		    COMDLG32_SetCommDlgExtendedError(CDERR_LOADRESFAILURE);
+		    return FALSE;
+		}
 		win32Format = TRUE;
 	    }
     }
@@ -264,7 +286,18 @@ BOOL16 WINAPI GetSaveFileName16(
 		}
 		win32Format= TRUE;
 	    } else {
-		template = SYSRES_GetResPtr( SYSRES_DIALOG_SAVE_FILE );
+		HANDLE hResInfo;
+		if (!(hResInfo = FindResourceA(COMMDLG_hInstance32, "SAVE_FILE", RT_DIALOGA)))
+		{
+		    COMDLG32_SetCommDlgExtendedError(CDERR_FINDRESFAILURE);
+		    return FALSE;
+		}
+		if (!(hDlgTmpl = LoadResource(COMMDLG_hInstance32, hResInfo )) ||
+		    !(template = LockResource( hDlgTmpl )))
+		{
+		    COMDLG32_SetCommDlgExtendedError(CDERR_LOADRESFAILURE);
+		    return FALSE;
+		}
 		win32Format = TRUE;
 	    }
     } else {
@@ -293,7 +326,18 @@ BOOL16 WINAPI GetSaveFileName16(
 		    return FALSE;
 		}
 	} else {
-		template = SYSRES_GetResPtr( SYSRES_DIALOG_SAVE_FILE );
+		HANDLE hResInfo;
+		if (!(hResInfo = FindResourceA(COMMDLG_hInstance32, "SAVE_FILE", RT_DIALOGA)))
+		{
+		    COMDLG32_SetCommDlgExtendedError(CDERR_FINDRESFAILURE);
+		    return FALSE;
+		}
+		if (!(hDlgTmpl = LoadResource(COMMDLG_hInstance32, hResInfo )) ||
+		    !(template = LockResource( hDlgTmpl )))
+		{
+		    COMDLG32_SetCommDlgExtendedError(CDERR_LOADRESFAILURE);
+		    return FALSE;
+		}
 		win32Format = TRUE;
 	}
     }
@@ -1029,77 +1073,6 @@ LRESULT WINAPI FileSaveDlgProc16(HWND16 hWnd, UINT16 wMsg, WPARAM16 wParam,
    */
   return FALSE;
 }
-
-
-
-/***********************************************************************
- *           GetFileTitleA   (COMDLG32.8)
- */
-short WINAPI GetFileTitleA(LPCSTR lpFile, LPSTR lpTitle, UINT cbBuf)
-{
-    int i, len;
-    TRACE(commdlg,"(%p %p %d); \n", lpFile, lpTitle, cbBuf);
-    if (lpFile == NULL || lpTitle == NULL)
-    	return -1;
-    len = strlen(lpFile);
-    if (len == 0)
-    	return -1;
-    if (strpbrk(lpFile, "*[]"))
-    	return -1;
-    len--;
-    if (lpFile[len] == '/' || lpFile[len] == '\\' || lpFile[len] == ':')
-    	return -1;
-    for (i = len; i >= 0; i--)
-    	if (lpFile[i] == '/' ||  lpFile[i] == '\\' ||  lpFile[i] == ':')
-    {
-	i++;
-	break;
-    }
-    if (i == -1)
-      i++;
-    TRACE(commdlg,"---> '%s' \n", &lpFile[i]);
-    
-    len = strlen(lpFile+i)+1;
-    if (cbBuf < len)
-    	return len;
-
-    strncpy(lpTitle, &lpFile[i], len);
-    return 0;
-}
-
-
-/***********************************************************************
- *           GetFileTitleA   (COMDLG32.8)
- *
- * RETURNS
- *
- *
- * BUGS
- *
- *
- */
-short WINAPI GetFileTitleW(LPCWSTR lpFile, LPWSTR lpTitle, UINT cbBuf)
-{
-	LPSTR file = HEAP_strdupWtoA(GetProcessHeap(),0,lpFile);
-	LPSTR title = HeapAlloc(GetProcessHeap(),0,cbBuf);
-	short	ret;
-
-	ret = GetFileTitleA(file,title,cbBuf);
-
-	lstrcpynAtoW(lpTitle,title,cbBuf);
-	HeapFree(GetProcessHeap(),0,file);
-	HeapFree(GetProcessHeap(),0,title);
-	return ret;
-}
-/***********************************************************************
- *           GetFileTitle   (COMMDLG.27)
- */
-short WINAPI GetFileTitle16(LPCSTR lpFile, LPSTR lpTitle, UINT16 cbBuf)
-{
-    return GetFileTitleA(lpFile,lpTitle,cbBuf);
-}
-
-
 
 
 

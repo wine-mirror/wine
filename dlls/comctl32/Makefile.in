@@ -4,6 +4,7 @@ TOPOBJDIR = ../..
 SRCDIR    = @srcdir@
 VPATH     = @srcdir@
 MODULE    = comctl32
+WRCEXTRA  = -s -p$(MODULE)
 
 C_SRCS = \
 	animate.c \
@@ -32,8 +33,13 @@ C_SRCS = \
 	treeview.c \
 	updown.c
 
-all: $(MODULE).o
+RC_SRCS= \
+	rsrc.rc
+
+all: check_wrc $(MODULE).o
 
 @MAKE_RULES@
+
+$(RC_SRCS:.rc=.s): $(WRC)
 
 ### Dependencies:

@@ -38,6 +38,7 @@ DEFAULT_DEBUG_CHANNEL(commctrl)
 HANDLE COMCTL32_hHeap = (HANDLE)NULL;
 DWORD    COMCTL32_dwProcessesAttached = 0;
 LPSTR    COMCTL32_aSubclass = (LPSTR)NULL;
+HMODULE COMCTL32_hModule = 0;
 
 
 /***********************************************************************
@@ -61,6 +62,10 @@ COMCTL32_LibMain (HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
     switch (fdwReason) {
 	case DLL_PROCESS_ATTACH:
 	    if (COMCTL32_dwProcessesAttached == 0) {
+
+		/* This will be wrong for any other process attching in this address-space! */
+	        COMCTL32_hModule = (HMODULE)hinstDLL;
+
 		/* create private heap */
 		COMCTL32_hHeap = HeapCreate (0, 0x10000, 0);
 		TRACE (commctrl, "Heap created: 0x%x\n", COMCTL32_hHeap);

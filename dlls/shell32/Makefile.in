@@ -4,7 +4,7 @@ TOPOBJDIR = ../..
 SRCDIR    = @srcdir@
 VPATH     = @srcdir@
 MODULE    = shell32
-WRCEXTRA  = -g -c
+WRCEXTRA  = -s -p$(MODULE)
 
 C_SRCS = \
 	brsfolder.c \

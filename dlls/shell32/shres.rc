@@ -1,4 +1,21 @@
+/*
+ * Top level resource file for Common Dialogs
+ *
+ */
+
+#include "winuser.h"
+#include "winnls.h"
 #include "shlobj.h"
+
+/*--------------------- FIXME --------------------------
+ *
+ * These must be seperated into the language files
+ * and translated. The language 0,0 is a hack to get it
+ * loaded properly for all languages by pretending that
+ * they are neutral.
+ */
+
+LANGUAGE 0,0
 
 MENU_001 MENU DISCARDABLE
 BEGIN
@@ -40,3 +57,40 @@ FONT 8, "Helv"
 	WS_BORDER | WS_TABSTOP, 
 	4, 4, 120, 120
 }
+
+/*--------------------- END FIXME ------------------------*/
+
+/*
+ * Everything that does not depend on language,
+ * like textless bitmaps etc, go into the
+ * neutral language. This will prevent them from
+ * being duplicated for each language.
+ */
+#include "shell32_xx.rc"
+
+/*
+ * Everything specific to any language goes
+ * in one of the specific files.
+ * Note that you can and may override resources
+ * which also have a neutral version. This is to
+ * get localized bitmaps for example.
+ */
+#include "shell32_Ca.rc"
+#include "shell32_Cs.rc"
+#include "shell32_Da.rc"
+#include "shell32_De.rc"
+#include "shell32_En.rc"
+#include "shell32_Eo.rc"
+#include "shell32_Es.rc"
+#include "shell32_Fi.rc"
+#include "shell32_Fr.rc"
+#include "shell32_Hu.rc"
+#include "shell32_It.rc"
+#include "shell32_Ko.rc"
+#include "shell32_Nl.rc"
+#include "shell32_No.rc"
+#include "shell32_Pl.rc"
+#include "shell32_Pt.rc"
+#include "shell32_Ru.rc"
+#include "shell32_Sv.rc"
+#include "shell32_Wa.rc"

@@ -24,6 +24,8 @@
 
 DEFAULT_DEBUG_CHANNEL(commdlg)
 
+#include "cdlg.h"
+
 /***********************************************************************
  *           ChooseColor   (COMMDLG.5)
  */
@@ -65,7 +67,18 @@ BOOL16 WINAPI ChooseColor16(LPCHOOSECOLOR16 lpChCol)
     }
     else
     {
-        template = SYSRES_GetResPtr( SYSRES_DIALOG_CHOOSE_COLOR );
+	HANDLE hResInfo, hDlgTmpl;
+	if (!(hResInfo = FindResourceA(COMMDLG_hInstance32, "CHOOSE_COLOR", RT_DIALOGA)))
+	{
+	    COMDLG32_SetCommDlgExtendedError(CDERR_FINDRESFAILURE);
+	    return FALSE;
+	}
+	if (!(hDlgTmpl = LoadResource(COMMDLG_hInstance32, hResInfo )) ||
+	    !(template = LockResource( hDlgTmpl )))
+	{
+	    COMDLG32_SetCommDlgExtendedError(CDERR_LOADRESFAILURE);
+	    return FALSE;
+	}
         win32Format = TRUE;
     }
 

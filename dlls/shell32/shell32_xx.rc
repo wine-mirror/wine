@@ -1,0 +1,4 @@
+/* Language neutral resources.
+ * Icons and bitmaps should go in here.
+ */
+LANGUAGE LANG_NEUTRAL, SUBLANG_NEUTRAL

@@ -19,6 +19,7 @@
 
 DECLARE_DEBUG_CHANNEL(relay)
 DECLARE_DEBUG_CHANNEL(win32)
+DECLARE_DEBUG_CHANNEL(module)
 
 typedef struct
 {
@@ -30,10 +31,20 @@ typedef struct
 
 typedef struct
 {
-    const BUILTIN32_DESCRIPTOR *descr;     /* DLL descriptor */
-    BOOL                      used;      /* Used by default */
+	const BYTE			*restab;
+	const DWORD			nresources;
+	const DWORD			restabsize;
+	const IMAGE_RESOURCE_DATA_ENTRY	*entries;
+} BUILTIN32_RESOURCE;
+
+typedef struct
+{
+	const BUILTIN32_DESCRIPTOR	*descr;	/* DLL descriptor */
+	DWORD				flags;
+	const BUILTIN32_RESOURCE	*rsc;	
 } BUILTIN32_DLL;
 
+#define BI32_INSTANTIATED	0x01
 
 extern const BUILTIN32_DESCRIPTOR ADVAPI32_Descriptor;
 extern const BUILTIN32_DESCRIPTOR AVIFIL32_Descriptor;
@@ -74,48 +85,53 @@ extern const BUILTIN32_DESCRIPTOR WNASPI32_Descriptor;
 extern const BUILTIN32_DESCRIPTOR WOW32_Descriptor;
 extern const BUILTIN32_DESCRIPTOR WSOCK32_Descriptor;
 
+extern const BUILTIN32_RESOURCE comctl32_ResourceDescriptor;
+extern const BUILTIN32_RESOURCE comdlg32_ResourceDescriptor;
+extern const BUILTIN32_RESOURCE shell32_ResourceDescriptor;
+extern const BUILTIN32_RESOURCE user32_ResourceDescriptor;
+
 static BUILTIN32_DLL BuiltinDLLs[] =
 {
-    { &ADVAPI32_Descriptor, TRUE  },
-    { &AVIFIL32_Descriptor, FALSE },
-    { &COMCTL32_Descriptor, FALSE },
-    { &COMDLG32_Descriptor, TRUE  },
-    { &CRTDLL_Descriptor,   TRUE  },
-    { &DCIMAN32_Descriptor, FALSE },
-    { &DDRAW_Descriptor,    TRUE  },
-    { &DINPUT_Descriptor,   TRUE  },
-    { &DPLAY_Descriptor,    FALSE },
-    { &DPLAYX_Descriptor,   FALSE },
-    { &DSOUND_Descriptor,   TRUE  },
-    { &GDI32_Descriptor,    TRUE  },
-    { &IMAGEHLP_Descriptor, FALSE },
-    { &IMM32_Descriptor,    FALSE },
-    { &KERNEL32_Descriptor, TRUE  },
-    { &LZ32_Descriptor,     TRUE  },
-    { &MPR_Descriptor,      TRUE  },
-    { &MSACM32_Descriptor,  FALSE },
-    { &MSNET32_Descriptor,  FALSE },
-    { &MSVFW32_Descriptor,  TRUE  },
-    { &NTDLL_Descriptor,    TRUE  },
-    { &OLE32_Descriptor,    FALSE },
-    { &OLEAUT32_Descriptor, FALSE },
-    { &OLECLI32_Descriptor, FALSE },
-    { &OLEDLG_Descriptor,   FALSE },
-    { &OLESVR32_Descriptor, FALSE },
-    { &PSAPI_Descriptor,    FALSE },
-    { &RASAPI32_Descriptor, FALSE },
-    { &SHELL32_Descriptor,  TRUE  },
-    { &TAPI32_Descriptor,   FALSE },
-    { &USER32_Descriptor,   TRUE  },
-    { &VERSION_Descriptor,  TRUE  },
-    { &W32SKRNL_Descriptor, TRUE  },
-    { &WINMM_Descriptor,    TRUE  },
-    { &WINSPOOL_Descriptor, TRUE  },
-    { &WNASPI32_Descriptor, TRUE  },
-    { &WOW32_Descriptor,    TRUE  },
-    { &WSOCK32_Descriptor,  TRUE  },
+    { &ADVAPI32_Descriptor, 0, NULL },
+    { &AVIFIL32_Descriptor, 0, NULL },
+    { &COMCTL32_Descriptor, 0, &comctl32_ResourceDescriptor },
+    { &COMDLG32_Descriptor, 0, &comdlg32_ResourceDescriptor },
+    { &CRTDLL_Descriptor,   0, NULL },
+    { &DCIMAN32_Descriptor, 0, NULL },
+    { &DDRAW_Descriptor,    0, NULL },
+    { &DINPUT_Descriptor,   0, NULL },
+    { &DPLAY_Descriptor,    0, NULL },
+    { &DPLAYX_Descriptor,   0, NULL },
+    { &DSOUND_Descriptor,   0, NULL },
+    { &GDI32_Descriptor,    0, NULL },
+    { &IMAGEHLP_Descriptor, 0, NULL },
+    { &IMM32_Descriptor,    0, NULL },
+    { &KERNEL32_Descriptor, 0, NULL },
+    { &LZ32_Descriptor,     0, NULL },
+    { &MPR_Descriptor,      0, NULL },
+    { &MSACM32_Descriptor,  0, NULL },
+    { &MSNET32_Descriptor,  0, NULL },
+    { &MSVFW32_Descriptor,  0, NULL },
+    { &NTDLL_Descriptor,    0, NULL },
+    { &OLE32_Descriptor,    0, NULL },
+    { &OLEAUT32_Descriptor, 0, NULL },
+    { &OLECLI32_Descriptor, 0, NULL },
+    { &OLEDLG_Descriptor,   0, NULL },
+    { &OLESVR32_Descriptor, 0, NULL },
+    { &PSAPI_Descriptor,    0, NULL },
+    { &RASAPI32_Descriptor, 0, NULL },
+    { &SHELL32_Descriptor,  0, &shell32_ResourceDescriptor },
+    { &TAPI32_Descriptor,   0, NULL },
+    { &USER32_Descriptor,   0, &user32_ResourceDescriptor },
+    { &VERSION_Descriptor,  0, NULL },
+    { &W32SKRNL_Descriptor, 0, NULL },
+    { &WINMM_Descriptor,    0, NULL },
+    { &WINSPOOL_Descriptor, 0, NULL },
+    { &WNASPI32_Descriptor, 0, NULL },
+    { &WOW32_Descriptor,    0, NULL },
+    { &WSOCK32_Descriptor,  0, NULL },
     /* Last entry */
-    { NULL, FALSE }
+    { NULL, 0, NULL }
 };
 
 extern void RELAY_CallFrom32();
@@ -208,6 +224,37 @@ static HMODULE BUILTIN32_DoLoadImage( BUILTIN32_DLL *dll )
                              IMAGE_SCN_MEM_EXECUTE | IMAGE_SCN_MEM_READ |
                              IMAGE_SCN_MEM_WRITE);
 
+    /* Build the resource directory */
+    if(dll->rsc)
+    {
+	int i;
+	void *rtab;
+	IMAGE_RESOURCE_DATA_ENTRY *rdep;
+
+	rtab = HeapAlloc(GetProcessHeap(), 0, dll->rsc->restabsize);
+	if(!rtab)
+	{
+		ERR(module, "Failed to get memory for resource directory\n");
+		VirtualFree(addr, size, MEM_RELEASE);
+		return 0;
+	}
+
+	/*
+	 * The resource directory has to be copied because it contains
+	 * RVAs. These would be invalid if the dll is instantiated twice.
+	 */
+	memcpy(rtab, dll->rsc->restab, dll->rsc->restabsize);
+
+	dir = &nt->OptionalHeader.DataDirectory[IMAGE_FILE_RESOURCE_DIRECTORY];
+	dir->VirtualAddress = (DWORD)rtab - (DWORD)addr;
+	dir->Size = dll->rsc->restabsize;
+	rdep = (IMAGE_RESOURCE_DATA_ENTRY *)((DWORD)rtab + (DWORD)dll->rsc->entries - (DWORD)dll->rsc->restab);
+	for(i = 0; i < dll->rsc->nresources; i++)
+	{
+		rdep[i].OffsetToData += (DWORD)dll->rsc->restab - (DWORD)addr;
+	}
+    }
+
     /* Build the code section */
 
     sec++;
@@ -297,13 +344,13 @@ static HMODULE BUILTIN32_DoLoadImage( BUILTIN32_DLL *dll )
 /***********************************************************************
  *           BUILTIN32_LoadImage
  *
- * Load a built-in module. If the 'force' parameter is FALSE, we only
- * load the module if it has not been disabled via the -dll option.
+ * Load a built-in module.
  */
-HMODULE BUILTIN32_LoadImage( LPCSTR name, OFSTRUCT *ofs, BOOL force )
+HMODULE BUILTIN32_LoadImage( LPCSTR name, OFSTRUCT *ofs)
 {
     BUILTIN32_DLL *table;
     char dllname[16], *p;
+    HMODULE hmod;
 
     /* Fix the name in case we have a full path and extension */
 
@@ -314,14 +361,19 @@ HMODULE BUILTIN32_LoadImage( LPCSTR name, OFSTRUCT *ofs, BOOL force )
     for (table = BuiltinDLLs; table->descr; table++)
         if (!lstrcmpiA( table->descr->name, dllname )) break;
     if (!table->descr) return 0;
-    if (!table->used)
+
+    if(table->flags && BI32_INSTANTIATED)
     {
-        if (!force) return 0;
-        table->used = TRUE;  /* So next time we use it at once */
+	ERR(module, "Attemp to instantiate built-in dll '%s' twice in the same address-space. Expect trouble!\n",
+		table->descr->name);
     }
 
     sprintf( ofs->szPathName, "%s.DLL", table->descr->name );
-    return BUILTIN32_DoLoadImage( table );
+    hmod = BUILTIN32_DoLoadImage( table );
+    if(hmod)
+    	table->flags |= BI32_INSTANTIATED;
+
+    return hmod;
 }
 
 
@@ -350,7 +402,7 @@ WINE_MODREF *BUILTIN32_LoadLibraryExA(LPCSTR path, DWORD flags, DWORD *err)
 	if (!(p = strrchr( dllname, '.')) || strchr( p, '/' ) || strchr( p, '\\'))
 		strcat( dllname, ".DLL" );
 
-	hModule32 = BUILTIN32_LoadImage( path, &ofs, TRUE );
+	hModule32 = BUILTIN32_LoadImage(path, &ofs);
 	if(!hModule32)
 	{
 		*err = ERROR_FILE_NOT_FOUND;
@@ -415,7 +467,7 @@ ENTRYPOINT32 BUILTIN32_GetEntryPoint( char *buffer, void *relay,
     /* First find the module */
 
     for (dll = BuiltinDLLs; dll->descr; dll++)
-        if (dll->used 
+        if ((dll->flags & BI32_INSTANTIATED) 
             && ((hModule = GetModuleHandleA(dll->descr->name)) != 0))
         {
             IMAGE_SECTION_HEADER *sec = PE_SECTIONS(hModule);
@@ -461,7 +513,7 @@ void BUILTIN32_SwitchRelayDebug(BOOL onoff) {
     for (dll = BuiltinDLLs; dll->descr; dll++) {
 	IMAGE_SECTION_HEADER *sec;
 	DEBUG_ENTRY_POINT *debug;
-        if (!dll->used || !(hModule = GetModuleHandleA(dll->descr->name)))
+        if (!(dll->flags & BI32_INSTANTIATED) || !(hModule = GetModuleHandleA(dll->descr->name)))
 	    continue;
 
 	sec = PE_SECTIONS(hModule);

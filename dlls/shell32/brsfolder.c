@@ -266,7 +266,6 @@ BOOL WINAPI BrsFolderDlgProc( HWND hWnd, UINT msg, WPARAM wParam,
 	return 0;
 }
 
-extern LPCVOID _Resource_Dlg_SHBRSFORFOLDER_MSGBOX_0_data ;
 /*************************************************************************
  * SHBrowseForFolderA [SHELL32.209]
  *
@@ -275,7 +274,7 @@ LPITEMIDLIST WINAPI SHBrowseForFolderA (LPBROWSEINFOA lpbi)
 {
 	TRACE(shell, "(%lx,%s) empty stub!\n", (DWORD)lpbi, lpbi->lpszTitle);
 
-	return (LPITEMIDLIST) DialogBoxIndirectParamA( 0, 
-			&_Resource_Dlg_SHBRSFORFOLDER_MSGBOX_0_data, 0, 
+	return (LPITEMIDLIST) DialogBoxParamA( shell32_hInstance,
+			"SHBRSFORFOLDER_MSGBOX", 0,
 			BrsFolderDlgProc, (INT)lpbi );
 }

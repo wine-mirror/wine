@@ -25,6 +25,8 @@
 
 DEFAULT_DEBUG_CHANNEL(commdlg)
 
+#include "cdlg.h"
+
 /***********************************************************************
  *           PrintDlg16   (COMMDLG.20)
  */
@@ -34,6 +36,8 @@ BOOL16 WINAPI PrintDlg16( SEGPTR printdlg )
     BOOL16 bRet = FALSE;
     LPCVOID template;
     HWND hwndDialog;
+    HANDLE hResInfo, hDlgTmpl;
+    LPSTR rscname;
     LPPRINTDLG16 lpPrint = (LPPRINTDLG16)PTR_SEG_TO_LIN(printdlg);
 
     TRACE(commdlg,"(%p) -- Flags=%08lX\n", lpPrint, lpPrint->Flags );
@@ -43,9 +47,21 @@ BOOL16 WINAPI PrintDlg16( SEGPTR printdlg )
         return TRUE;
 
     if (lpPrint->Flags & PD_PRINTSETUP)
-	template = SYSRES_GetResPtr( SYSRES_DIALOG_PRINT_SETUP );
+        rscname = "PRINT_SETUP";
     else
-	template = SYSRES_GetResPtr( SYSRES_DIALOG_PRINT );
+        rscname = "PRINT";
+
+    if (!(hResInfo = FindResourceA(COMMDLG_hInstance32, rscname, RT_DIALOGA)))
+    {
+	COMDLG32_SetCommDlgExtendedError(CDERR_FINDRESFAILURE);
+	return FALSE;
+    }
+    if (!(hDlgTmpl = LoadResource(COMMDLG_hInstance32, hResInfo )) ||
+        !(template = LockResource( hDlgTmpl )))
+    {
+	COMDLG32_SetCommDlgExtendedError(CDERR_LOADRESFAILURE);
+	return FALSE;
+    }
 
     hInst = WIN_GetWindowInstance( lpPrint->hwndOwner );
     hwndDialog = DIALOG_CreateIndirect( hInst, template, TRUE,
@@ -57,7 +73,6 @@ BOOL16 WINAPI PrintDlg16( SEGPTR printdlg )
     if (hwndDialog) bRet = DIALOG_DoDialogBox( hwndDialog, lpPrint->hwndOwner);
     return bRet;
 }
-
 
 
 /***********************************************************************
@@ -96,10 +111,23 @@ BOOL WINAPI PrintDlgA(
 
     HWND      hwndDialog;
     BOOL      bRet = FALSE;
-    LPCVOID   ptr = SYSRES_GetResPtr( SYSRES_DIALOG_PRINT32 );  
-  	HINSTANCE hInst = WIN_GetWindowInstance( lppd->hwndOwner );
+    LPCVOID   ptr;
+    HANDLE    hResInfo, hDlgTmpl;
+    HINSTANCE hInst = WIN_GetWindowInstance( lppd->hwndOwner );
 
     FIXME(commdlg, "KVG (%p): stub\n", lppd);
+
+    if (!(hResInfo = FindResourceA(COMDLG32_hInstance, "PRINT32", RT_DIALOGA)))
+    {
+	COMDLG32_SetCommDlgExtendedError(CDERR_FINDRESFAILURE);
+	return FALSE;
+    }
+    if (!(hDlgTmpl = LoadResource(COMDLG32_hInstance, hResInfo )) ||
+        !(ptr = LockResource( hDlgTmpl )))
+    {
+	COMDLG32_SetCommDlgExtendedError(CDERR_LOADRESFAILURE);
+	return FALSE;
+    }
 
     /*
      * FIXME : Should respond to TEMPLATE and HOOK flags here
@@ -140,8 +168,6 @@ BOOL WINAPI PrintDlgA(
         bRet = DIALOG_DoDialogBox(hwndDialog, lppd->hwndOwner);  
   return bRet;            
 }
-
-
 
 
 

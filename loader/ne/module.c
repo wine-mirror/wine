@@ -840,13 +840,6 @@ static HINSTANCE16 NE_LoadFileModule( HFILE16 hFile, OFSTRUCT *ofs,
 
     pModule->count = 1;
 
-    /* Call initialization routines for all loaded DLLs. Note that
-     * when we load implicitly linked DLLs this will be done by InitTask().
-     */
-
-    if (!implicit && (pModule->flags & NE_FFLAGS_LIBMODULE))
-        NE_InitializeDLLs( hModule );
-
     return hInstance;
 }
 
@@ -922,7 +915,36 @@ HINSTANCE16 MODULE_LoadModule16( LPCSTR libname, BOOL implicit )
 
 		if(hinst >= 32)
 		{
-			TRACE(module, "Loaded module '%s' at 0x%04x, \n", libname, hinst);
+			if(!implicit)
+			{
+				HMODULE16 hModule;
+				NE_MODULE *pModule;
+
+				hModule = GetModuleHandle16(libname);
+				if(!hModule)
+				{
+					ERR(module, "Serious trouble. Just loaded module '%s' (hinst=0x%04x), but can't get module handle\n",
+						libname, hinst);
+					return 6;	/* ERROR_INVALID_HANDLE seems most appropriate */
+				}
+
+				pModule = NE_GetPtr(hModule);
+				if(!pModule)
+				{
+					ERR(module, "Serious trouble. Just loaded module '%s' (hinst=0x%04x), but can't get NE_MODULE pointer\n",
+						libname, hinst);
+					return 6;	/* ERROR_INVALID_HANDLE seems most appropriate */
+				}
+
+				TRACE(module, "Loaded module '%s' at 0x%04x, \n", libname, hinst);
+
+				/*
+				 * Call initialization routines for all loaded DLLs. Note that
+				 * when we load implicitly linked DLLs this will be done by InitTask().
+				 */
+				if(pModule->flags & NE_FFLAGS_LIBMODULE)
+					NE_InitializeDLLs(hModule);
+			}
 			return hinst;
 		}
 

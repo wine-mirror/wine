@@ -94,8 +94,6 @@ typedef struct
    BYTE  bStyle;
 } MYTOOLINFO, *LPMYTOOLINFO;
 
-extern 	LPCVOID _Resource_Men_MENU_001_0_data;
-extern 	LPCVOID _Resource_Men_MENU_002_0_data;
 
 MYTOOLINFO g_Tools[] = 
 { {IDM_VIEW_FILES, 0, IDS_TB_VIEW_FILES, IDS_MI_VIEW_FILES, 0, TBSTATE_ENABLED, TBSTYLE_BUTTON},
@@ -518,7 +516,7 @@ void ShellView_MergeViewMenu(IShellViewImpl * This, HMENU hSubMenu)
 	  mii.fMask = MIIM_SUBMENU | MIIM_TYPE | MIIM_DATA;;
 	  mii.fType = MFT_STRING;
 	  mii.dwTypeData = "View";
-	  mii.hSubMenu = LoadMenuIndirectA(&_Resource_Men_MENU_001_0_data);
+	  mii.hSubMenu = LoadMenuA(shell32_hInstance, "MENU_001");
 	  InsertMenuItemA(hSubMenu, FCIDM_MENU_VIEW_SEP_OPTIONS, FALSE, &mii);
 	}
 }
@@ -962,7 +960,7 @@ void ShellView_DoContextMenu(IShellViewImpl * This, WORD x, WORD y, BOOL fDefaul
 	  }
 	}
 	else	/* background context menu */
-	{ hMenu = LoadMenuIndirectA(&_Resource_Men_MENU_002_0_data);
+	{ hMenu = LoadMenuA(shell32_hInstance, "MENU_002");
 	  uCommand = TrackPopupMenu( GetSubMenu(hMenu,0),TPM_LEFTALIGN | TPM_RETURNCMD,x,y,0,This->hWnd,NULL);
 	  ShellView_OnCommand(This, uCommand, 0,0);
 	  DestroyMenu(hMenu);

@@ -4,17 +4,26 @@ TOPOBJDIR = ../..
 SRCDIR    = @srcdir@
 VPATH     = @srcdir@
 MODULE    = commdlg
+WRCEXTRA  = -s -pcomdlg32
 
 C_SRCS = \
+	cdlg32.c \
 	colordlg.c \
 	filedlg.c \
 	finddlg.c \
+	finddlg32.c \
+	filetitle.c \
 	fontdlg.c \
 	generic.c \
 	printdlg.c
 
-all: $(MODULE).o
+RC_SRCS= \
+	rsrc.rc
+
+all: check_wrc $(MODULE).o
 
 @MAKE_RULES@
+
+$(RC_SRCS:.rc=.s): $(WRC)
 
 ### Dependencies:

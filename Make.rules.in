@@ -49,7 +49,7 @@ BUILD     = $(TOPOBJDIR)/tools/build@PROGEXT@
 MAKEDEP   = $(TOPOBJDIR)/tools/makedep@PROGEXT@
 WINERC    = $(TOPOBJDIR)/rc/winerc@PROGEXT@
 WRC       = $(TOPOBJDIR)/tools/wrc/wrc@PROGEXT@
-WRCFLAGS  = -t -c
+WRCFLAGS  = -c
 WINESTUB  = $(TOPOBJDIR)/library/winestub.o
 SUBMAKE   = $(MAKE) 'CC=$(CC)' 'CFLAGS=$(CFLAGS)' 'OPTIONS=$(OPTIONS)'
 @SET_MAKE@

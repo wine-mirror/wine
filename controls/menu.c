@@ -273,7 +273,7 @@ static void do_debug_print_menuitem(const char *prefix, MENUITEM * mp,
  */
 static HMENU MENU_CopySysPopup(void)
 {
-    HMENU hMenu = LoadMenuIndirectA(SYSRES_GetResPtr(SYSRES_MENU_SYSMENU));
+    HMENU hMenu = LoadMenuA(GetModuleHandleA("USER32"), "SYSMENU");
 
     if( hMenu ) {
         POPUPMENU* menu = (POPUPMENU *) USER_HEAP_LIN_ADDR(hMenu);

@@ -865,14 +865,21 @@ BOOL WINAPI AboutDlgProc( HWND hWnd, UINT msg, WPARAM wParam,
 BOOL WINAPI ShellAboutA( HWND hWnd, LPCSTR szApp, LPCSTR szOtherStuff,
                              HICON hIcon )
 {   ABOUT_INFO info;
+    HRSRC hRes;
+    LPVOID template;
     TRACE(shell,"\n");
+
+    if(!(hRes = FindResourceA(shell32_hInstance, "SHELL_ABOUT_MSGBOX", RT_DIALOGA)))
+        return FALSE;
+    if(!(template = (LPVOID)LoadResource(shell32_hInstance, hRes)))
+        return FALSE;
+
     info.szApp        = szApp;
     info.szOtherStuff = szOtherStuff;
     info.hIcon        = hIcon;
     if (!hIcon) info.hIcon = LoadIcon16( 0, MAKEINTRESOURCE16(OIC_WINEICON) );
     return DialogBoxIndirectParamA( WIN_GetWindowInstance( hWnd ),
-                         SYSRES_GetResPtr( SYSRES_DIALOG_SHELL_ABOUT_MSGBOX ),
-                                      hWnd, AboutDlgProc, (LPARAM)&info );
+                                      template, hWnd, AboutDlgProc, (LPARAM)&info );
 }
 
 
@@ -883,16 +890,22 @@ BOOL WINAPI ShellAboutW( HWND hWnd, LPCWSTR szApp, LPCWSTR szOtherStuff,
                              HICON hIcon )
 {   BOOL ret;
     ABOUT_INFO info;
+    HRSRC hRes;
+    LPVOID template;
 
     TRACE(shell,"\n");
     
+    if(!(hRes = FindResourceA(shell32_hInstance, "SHELL_ABOUT_MSGBOX", RT_DIALOGA)))
+        return FALSE;
+    if(!(template = (LPVOID)LoadResource(shell32_hInstance, hRes)))
+        return FALSE;
+
     info.szApp        = HEAP_strdupWtoA( GetProcessHeap(), 0, szApp );
     info.szOtherStuff = HEAP_strdupWtoA( GetProcessHeap(), 0, szOtherStuff );
     info.hIcon        = hIcon;
     if (!hIcon) info.hIcon = LoadIcon16( 0, MAKEINTRESOURCE16(OIC_WINEICON) );
     ret = DialogBoxIndirectParamA( WIN_GetWindowInstance( hWnd ),
-                         SYSRES_GetResPtr( SYSRES_DIALOG_SHELL_ABOUT_MSGBOX ),
-                                      hWnd, AboutDlgProc, (LPARAM)&info );
+                                   template, hWnd, AboutDlgProc, (LPARAM)&info );
     HeapFree( GetProcessHeap(), 0, (LPSTR)info.szApp );
     HeapFree( GetProcessHeap(), 0, (LPSTR)info.szOtherStuff );
     return ret;

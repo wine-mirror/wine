@@ -26,6 +26,8 @@
 
 DEFAULT_DEBUG_CHANNEL(commdlg)
 
+#include "cdlg.h"
+
 static HBITMAP16 hBitmapTT = 0; 
 
 
@@ -98,7 +100,18 @@ BOOL16 WINAPI ChooseFont16(LPCHOOSEFONT16 lpChFont)
     }
     else
     {
-        template = SYSRES_GetResPtr( SYSRES_DIALOG_CHOOSE_FONT );
+	HANDLE hResInfo;
+	if (!(hResInfo = FindResourceA(COMMDLG_hInstance32, "CHOOSE_FONT", RT_DIALOGA)))
+	{
+	    COMDLG32_SetCommDlgExtendedError(CDERR_FINDRESFAILURE);
+	    return FALSE;
+	}
+	if (!(hDlgTmpl = LoadResource(COMMDLG_hInstance32, hResInfo )) ||
+	    !(template = LockResource( hDlgTmpl )))
+	{
+	    COMDLG32_SetCommDlgExtendedError(CDERR_LOADRESFAILURE);
+	    return FALSE;
+	}
         win32Format = TRUE;
     }
 
@@ -129,7 +142,21 @@ BOOL WINAPI ChooseFontA(LPCHOOSEFONTA lpChFont)
   BOOL bRet=FALSE;
   HWND hwndDialog;
   HINSTANCE hInst=WIN_GetWindowInstance( lpChFont->hwndOwner );
-  LPCVOID template = SYSRES_GetResPtr( SYSRES_DIALOG_CHOOSE_FONT );
+  LPCVOID template;
+  HANDLE hResInfo, hDlgTmpl;
+
+  if (!(hResInfo = FindResourceA(COMMDLG_hInstance32, "CHOOSE_FONT", RT_DIALOGA)))
+  {
+    COMDLG32_SetCommDlgExtendedError(CDERR_FINDRESFAILURE);
+    return FALSE;
+  }
+  if (!(hDlgTmpl = LoadResource(COMMDLG_hInstance32, hResInfo )) ||
+      !(template = LockResource( hDlgTmpl )))
+  {
+    COMDLG32_SetCommDlgExtendedError(CDERR_LOADRESFAILURE);
+    return FALSE;
+  }
+
   if (lpChFont->Flags & (CF_SELECTSCRIPT | CF_NOVERTFONTS | CF_ENABLETEMPLATE |
     CF_ENABLETEMPLATEHANDLE)) FIXME(commdlg, ": unimplemented flag (ignored)\n");
   hwndDialog = DIALOG_CreateIndirect(hInst, template, TRUE, lpChFont->hwndOwner,
@@ -148,7 +175,21 @@ BOOL WINAPI ChooseFontW(LPCHOOSEFONTW lpChFont)
   HINSTANCE hInst=WIN_GetWindowInstance( lpChFont->hwndOwner );
   CHOOSEFONTA cf32a;
   LOGFONTA lf32a;
-  LPCVOID template = SYSRES_GetResPtr( SYSRES_DIALOG_CHOOSE_FONT );
+  LPCVOID template;
+  HANDLE hResInfo, hDlgTmpl;
+
+  if (!(hResInfo = FindResourceA(COMMDLG_hInstance32, "CHOOSE_FONT", RT_DIALOGA)))
+  {
+    COMDLG32_SetCommDlgExtendedError(CDERR_FINDRESFAILURE);
+    return FALSE;
+  }
+  if (!(hDlgTmpl = LoadResource(COMMDLG_hInstance32, hResInfo )) ||
+      !(template = LockResource( hDlgTmpl )))
+  {
+    COMDLG32_SetCommDlgExtendedError(CDERR_LOADRESFAILURE);
+    return FALSE;
+  }
+
   if (lpChFont->Flags & (CF_SELECTSCRIPT | CF_NOVERTFONTS | CF_ENABLETEMPLATE |
     CF_ENABLETEMPLATEHANDLE)) FIXME(commdlg, ": unimplemented flag (ignored)\n");
   memcpy(&cf32a, lpChFont, sizeof(cf32a));

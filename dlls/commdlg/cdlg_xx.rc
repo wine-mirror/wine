@@ -1,0 +1,39 @@
+/*
+ * Language neutral resources for Common Dialogs
+ */
+
+#include "ver.h"
+
+LANGUAGE LANG_NEUTRAL, SUBLANG_NEUTRAL
+
+1 VERSIONINFO
+FILEVERSION	4, 0, 0, 950	/* Maybe 4.1.0.980 for win98?? */
+PRODUCTVERSION	4, 0, 0, 950	/* id. */
+FILEFLAGSMASK	VS_FFI_FILEFLAGSMASK
+FILEOS		VOS_DOS_WINDOWS16
+FILETYPE	VFT_DLL
+{
+	BLOCK "StringFileInfo"
+	{
+		BLOCK "040604B0"
+		{
+			VALUE "CompanyName", "Wine Developer Team\000"
+			VALUE "FileDescription", "Common Dialog Boxes\000"
+			VALUE "FileVersion", "0.01\000"
+			VALUE "InternalName", "COMDLG32\000"
+			VALUE "LegalCopyright", "Copyright \251 B. A. Stultiens 1998,1999\000"
+			VALUE "OriginalFilename", "COMDLG32.DLL\000"
+			VALUE "ProductName", "Wine\000"
+			VALUE "ProductVersion", "1.00\000"
+		}
+	}
+
+	/* Do we need this? It isn't a translation, but we have all languages at once... */
+/*
+	BLOCK "VarFileInfo"
+	{
+		VALUE "Translation", 1030, 1200
+	}
+*/
+}
+

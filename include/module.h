@@ -236,7 +236,7 @@ extern HMODULE16 BUILTIN_LoadModule( LPCSTR name, BOOL force );
 extern LPCSTR BUILTIN_GetEntryPoint16( WORD cs, WORD ip, WORD *pOrd );
 
 /* relay32/builtin.c */
-extern HMODULE BUILTIN32_LoadImage( LPCSTR name, OFSTRUCT *ofs, BOOL force );
+extern HMODULE BUILTIN32_LoadImage(LPCSTR name, OFSTRUCT *ofs);
 extern WINE_MODREF *BUILTIN32_LoadLibraryExA(LPCSTR name, DWORD flags, DWORD *err);
 extern void BUILTIN32_UnloadLibrary(WINE_MODREF *wm);
 

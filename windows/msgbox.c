@@ -217,16 +217,24 @@ INT16 WINAPI MessageBox16( HWND16 hwnd, LPCSTR text, LPCSTR title, UINT16 type)
  */
 INT WINAPI MessageBoxA(HWND hWnd, LPCSTR text, LPCSTR title, UINT type)
 {
+    LPVOID template;
+    HRSRC hRes;
     MSGBOXPARAMSA mbox;
+
     WARN(dialog,"Messagebox\n");
+
+    if(!(hRes = FindResourceA(GetModuleHandleA("USER32"), "MSGBOX", RT_DIALOGA)))
+        return 0;
+    if(!(template = (LPVOID)LoadResource(GetModuleHandleA("USER32"), hRes)))
+        return 0;
+
     if (!text) text="<WINE-NULL>";
     if (!title)
       title="Error";
     mbox.lpszCaption = title;
     mbox.lpszText  = text;
     mbox.dwStyle  = type;
-    return DialogBoxIndirectParamA( WIN_GetWindowInstance(hWnd),
-                                      SYSRES_GetResPtr( SYSRES_DIALOG_MSGBOX ),
+    return DialogBoxIndirectParamA( WIN_GetWindowInstance(hWnd), template,
                                       hWnd, (DLGPROC)MSGBOX_DlgProc, (LPARAM)&mbox );
 }
 
@@ -277,9 +285,17 @@ INT WINAPI MessageBoxExW( HWND hWnd, LPCWSTR text, LPCWSTR title,
  */
 INT16 WINAPI MessageBoxIndirect16( LPMSGBOXPARAMS16 msgbox )
 {
+    LPVOID template;
+    HRSRC hRes;
     MSGBOXPARAMSA msgbox32;
+
     WARN(dialog,"Messagebox\n");    
     
+    if(!(hRes = FindResourceA(GetModuleHandleA("USER32"), "MSGBOX", RT_DIALOGA)))
+        return 0;
+    if(!(template = (LPVOID)LoadResource(GetModuleHandleA("USER32"), hRes)))
+        return 0;
+
     msgbox32.cbSize		= msgbox->cbSize;
     msgbox32.hwndOwner		= msgbox->hwndOwner;
     msgbox32.hInstance		= msgbox->hInstance;
@@ -291,8 +307,7 @@ INT16 WINAPI MessageBoxIndirect16( LPMSGBOXPARAMS16 msgbox )
     msgbox32.lpfnMsgBoxCallback	= msgbox->lpfnMsgBoxCallback;
     msgbox32.dwLanguageId	= msgbox->dwLanguageId;
 
-    return DialogBoxIndirectParamA( msgbox32.hInstance,
-                                      SYSRES_GetResPtr( SYSRES_DIALOG_MSGBOX ),
+    return DialogBoxIndirectParamA( msgbox32.hInstance, template,
                                       msgbox32.hwndOwner, (DLGPROC)MSGBOX_DlgProc,
                                       (LPARAM)&msgbox32 );
 }
@@ -302,9 +317,17 @@ INT16 WINAPI MessageBoxIndirect16( LPMSGBOXPARAMS16 msgbox )
  */
 INT WINAPI MessageBoxIndirectA( LPMSGBOXPARAMSA msgbox )
 {
+    LPVOID template;
+    HRSRC hRes;
+
     WARN(dialog,"Messagebox\n");
-    return DialogBoxIndirectParamA( msgbox->hInstance,
-   				      SYSRES_GetResPtr( SYSRES_DIALOG_MSGBOX ),
+
+    if(!(hRes = FindResourceA(GetModuleHandleA("USER32"), "MSGBOX", RT_DIALOGA)))
+        return 0;
+    if(!(template = (LPVOID)LoadResource(GetModuleHandleA("USER32"), hRes)))
+        return 0;
+
+    return DialogBoxIndirectParamA( msgbox->hInstance, template,
                                       msgbox->hwndOwner, (DLGPROC)MSGBOX_DlgProc,
 				      (LPARAM)msgbox );
 }

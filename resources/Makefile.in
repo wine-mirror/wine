@@ -4,31 +4,10 @@ TOPOBJDIR = ..
 SRCDIR    = @srcdir@
 VPATH     = @srcdir@
 MODULE    = resources
-#RCFLAGS   = -w32
-WRCEXTRA  = -p $*
+WRCEXTRA  = -s -puser32
 
 RC_SRCS = \
-	sysres_Ca.rc \
-	sysres_Cs.rc \
-	sysres_Da.rc \
-	sysres_De.rc \
-	sysres_En.rc \
-	sysres_Eo.rc \
-	sysres_Es.rc \
-	sysres_Fi.rc \
-	sysres_Fr.rc \
-	sysres_Hu.rc \
-	sysres_It.rc \
-	sysres_Ko.rc \
-	sysres_Nl.rc \
-	sysres_No.rc \
-	sysres_Pl.rc \
-	sysres_Pt.rc \
-	sysres_Ru.rc \
-	sysres_Sv.rc \
-	sysres_Wa.rc
-
-C_SRCS = sysres.c
+	user32.rc
 
 all: check_wrc $(MODULE).o
 

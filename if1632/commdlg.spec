@@ -27,3 +27,4 @@ type	win16
 #29  pascal  DWLBSUBCLASS exported, shared data
 #30  pascal  DWUPARROWHACK exported, shared data
 #31  pascal  DWOKSUBCLASS exported, shared data
+32 pascal DllEntryPoint(long word word word long word) COMMDLG_DllEntryPoint

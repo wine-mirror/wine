@@ -684,7 +684,7 @@ static void NE_CallDllEntryPoint( NE_MODULE *pModule, DWORD dwReason )
     THDB *thdb = THREAD_Current();
     LPBYTE stack = (LPBYTE)THREAD_STACK16(thdb);
 
-    if (pModule->expected_version < 0x0400) return;
+    if (!(pModule->flags & NE_FFLAGS_BUILTIN) && pModule->expected_version < 0x0400) return;
     if (!(ordinal = NE_GetOrdinal( pModule->self, "DllEntryPoint" ))) return;
     if (!(entryPoint = NE_GetEntryPoint( pModule->self, ordinal ))) return;
 

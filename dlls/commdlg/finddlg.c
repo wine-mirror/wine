@@ -19,9 +19,11 @@
 #include "module.h"
 #include "debug.h"
 #include "winproc.h"
+#include "cderr.h"
 
 DEFAULT_DEBUG_CHANNEL(commdlg)
 
+#include "cdlg.h"
 
 /***********************************************************************
  *           FindText16   (COMMDLG.11)
@@ -30,6 +32,7 @@ HWND16 WINAPI FindText16( SEGPTR find )
 {
     HANDLE16 hInst;
     LPCVOID ptr;
+    HANDLE hResInfo, hDlgTmpl;
     LPFINDREPLACE16 lpFind = (LPFINDREPLACE16)PTR_SEG_TO_LIN(find);
 
     /*
@@ -38,52 +41,23 @@ HWND16 WINAPI FindText16( SEGPTR find )
      */
     if (lpFind->Flags & (FR_ENABLETEMPLATE | FR_ENABLETEMPLATEHANDLE | 
 	FR_ENABLEHOOK)) FIXME(commdlg, ": unimplemented flag (ignored)\n");     
-    ptr = SYSRES_GetResPtr( SYSRES_DIALOG_FIND_TEXT );
+    if (!(hResInfo = FindResourceA(COMMDLG_hInstance32, MAKEINTRESOURCEA(FINDDLGORD), RT_DIALOGA)))
+    {
+	COMDLG32_SetCommDlgExtendedError(CDERR_FINDRESFAILURE);
+	return FALSE;
+    }
+    if (!(hDlgTmpl = LoadResource(COMMDLG_hInstance32, hResInfo )) ||
+        !(ptr = LockResource( hDlgTmpl )))
+    {
+	COMDLG32_SetCommDlgExtendedError(CDERR_LOADRESFAILURE);
+	return FALSE;
+    }
     hInst = WIN_GetWindowInstance( lpFind->hwndOwner );
     return DIALOG_CreateIndirect( hInst, ptr, TRUE, lpFind->hwndOwner,
                         (DLGPROC16)MODULE_GetWndProcEntry16("FindTextDlgProc"),
                                   find, WIN_PROC_16 );
 }
 
-/***********************************************************************
- *           FindText32A   (COMMDLG.6)
- */
-HWND WINAPI FindTextA( LPFINDREPLACEA lpFind )
-{
-    HANDLE16 hInst;
-    LPCVOID ptr;
-
-    /*
-     * FIXME : Should respond to FR_ENABLETEMPLATE and FR_ENABLEHOOK here
-     * For now, only the standard dialog works.
-     */
-    if (lpFind->Flags & (FR_ENABLETEMPLATE | FR_ENABLETEMPLATEHANDLE | 
-	FR_ENABLEHOOK)) FIXME(commdlg, ": unimplemented flag (ignored)\n");     
-    ptr = SYSRES_GetResPtr( SYSRES_DIALOG_FIND_TEXT );
-    hInst = WIN_GetWindowInstance( lpFind->hwndOwner );
-    return DIALOG_CreateIndirect( hInst, ptr, TRUE, lpFind->hwndOwner,
-                (DLGPROC16)FindTextDlgProcA, (LPARAM)lpFind, WIN_PROC_32A );
-}
-
-/***********************************************************************
- *           FindText32W   (COMMDLG.7)
- */
-HWND WINAPI FindTextW( LPFINDREPLACEW lpFind )
-{
-    HANDLE16 hInst;
-    LPCVOID ptr;
-
-    /*
-     * FIXME : Should respond to FR_ENABLETEMPLATE and FR_ENABLEHOOK here
-     * For now, only the standard dialog works.
-     */
-    if (lpFind->Flags & (FR_ENABLETEMPLATE | FR_ENABLETEMPLATEHANDLE | 
-	FR_ENABLEHOOK)) FIXME(commdlg, ": unimplemented flag (ignored)\n");     
-    ptr = SYSRES_GetResPtr( SYSRES_DIALOG_FIND_TEXT );
-    hInst = WIN_GetWindowInstance( lpFind->hwndOwner );
-    return DIALOG_CreateIndirect( hInst, ptr, TRUE, lpFind->hwndOwner,
-                (DLGPROC16)FindTextDlgProcW, (LPARAM)lpFind, WIN_PROC_32W );
-}
 
 /***********************************************************************
  *           ReplaceText16   (COMMDLG.12)
@@ -92,6 +66,7 @@ HWND16 WINAPI ReplaceText16( SEGPTR find )
 {
     HANDLE16 hInst;
     LPCVOID ptr;
+    HANDLE hResInfo, hDlgTmpl;
     LPFINDREPLACE16 lpFind = (LPFINDREPLACE16)PTR_SEG_TO_LIN(find);
 
     /*
@@ -100,51 +75,21 @@ HWND16 WINAPI ReplaceText16( SEGPTR find )
      */
     if (lpFind->Flags & (FR_ENABLETEMPLATE | FR_ENABLETEMPLATEHANDLE | 
 	FR_ENABLEHOOK)) FIXME(commdlg, ": unimplemented flag (ignored)\n");     
-    ptr = SYSRES_GetResPtr( SYSRES_DIALOG_REPLACE_TEXT );
+    if (!(hResInfo = FindResourceA(COMMDLG_hInstance32, MAKEINTRESOURCEA(REPLACEDLGORD), RT_DIALOGA)))
+    {
+	COMDLG32_SetCommDlgExtendedError(CDERR_FINDRESFAILURE);
+	return FALSE;
+    }
+    if (!(hDlgTmpl = LoadResource(COMMDLG_hInstance32, hResInfo )) ||
+        !(ptr = LockResource( hDlgTmpl )))
+    {
+	COMDLG32_SetCommDlgExtendedError(CDERR_LOADRESFAILURE);
+	return FALSE;
+    }
     hInst = WIN_GetWindowInstance( lpFind->hwndOwner );
     return DIALOG_CreateIndirect( hInst, ptr, TRUE, lpFind->hwndOwner,
                      (DLGPROC16)MODULE_GetWndProcEntry16("ReplaceTextDlgProc"),
                                   find, WIN_PROC_16 );
-}
-
-/***********************************************************************
- *           ReplaceText32A   (COMDLG32.19)
- */
-HWND WINAPI ReplaceTextA( LPFINDREPLACEA lpFind )
-{
-    HANDLE16 hInst;
-    LPCVOID ptr;
-
-    /*
-     * FIXME : Should respond to FR_ENABLETEMPLATE and FR_ENABLEHOOK here
-     * For now, only the standard dialog works.
-     */
-    if (lpFind->Flags & (FR_ENABLETEMPLATE | FR_ENABLETEMPLATEHANDLE |
-	FR_ENABLEHOOK)) FIXME(commdlg, ": unimplemented flag (ignored)\n");     
-    ptr = SYSRES_GetResPtr( SYSRES_DIALOG_REPLACE_TEXT );
-    hInst = WIN_GetWindowInstance( lpFind->hwndOwner );
-    return DIALOG_CreateIndirect( hInst, ptr, TRUE, lpFind->hwndOwner,
-		(DLGPROC16)ReplaceTextDlgProcA, (LPARAM)lpFind, WIN_PROC_32A );
-}
-
-/***********************************************************************
- *           ReplaceText32W   (COMDLG32.20)
- */
-HWND WINAPI ReplaceTextW( LPFINDREPLACEW lpFind )
-{
-    HANDLE16 hInst;
-    LPCVOID ptr;
-
-    /*
-     * FIXME : We should do error checking on the lpFind structure here
-     * and make CommDlgExtendedError() return the error condition.
-     */
-    if (lpFind->Flags & (FR_ENABLETEMPLATE | FR_ENABLETEMPLATEHANDLE | 
-	FR_ENABLEHOOK)) FIXME(commdlg, ": unimplemented flag (ignored)\n");
-    ptr = SYSRES_GetResPtr( SYSRES_DIALOG_REPLACE_TEXT );
-    hInst = WIN_GetWindowInstance( lpFind->hwndOwner );
-    return DIALOG_CreateIndirect( hInst, ptr, TRUE, lpFind->hwndOwner,
-		(DLGPROC16)ReplaceTextDlgProcW, (LPARAM)lpFind, WIN_PROC_32W );
 }
 
 
@@ -255,48 +200,6 @@ LRESULT WINAPI FindTextDlgProc16(HWND16 hWnd, UINT16 wMsg, WPARAM16 wParam,
 	    return FINDDLG_WMCommand(hWnd, wParam, lpfr->hwndOwner,
 		&lpfr->Flags, PTR_SEG_TO_LIN(lpfr->lpstrFindWhat),
 		lpfr->wFindWhatLen, FALSE);
-    }
-    return FALSE;
-}
-
-/***********************************************************************
- *           FindTextDlgProc32A
- */
-LRESULT WINAPI FindTextDlgProcA(HWND hWnd, UINT wMsg, WPARAM wParam,
-                                 LPARAM lParam)
-{
-    LPFINDREPLACEA lpfr;
-    switch (wMsg) {
-	case WM_INITDIALOG:
-	    lpfr=(LPFINDREPLACEA)lParam;
-	    return FINDDLG_WMInitDialog(hWnd, lParam, &(lpfr->Flags),
-	      lpfr->lpstrFindWhat, FALSE);
-	case WM_COMMAND:
-	    lpfr=(LPFINDREPLACEA)GetWindowLongA(hWnd, DWL_USER);
-	    return FINDDLG_WMCommand(hWnd, wParam, lpfr->hwndOwner,
-		&lpfr->Flags, lpfr->lpstrFindWhat, lpfr->wFindWhatLen,
-		FALSE);
-    }
-    return FALSE;
-}
-
-/***********************************************************************
- *           FindTextDlgProc32W
- */
-LRESULT WINAPI FindTextDlgProcW(HWND hWnd, UINT wMsg, WPARAM wParam,
-                                 LPARAM lParam)
-{
-    LPFINDREPLACEW lpfr;
-    switch (wMsg) {
-	case WM_INITDIALOG:
-	    lpfr=(LPFINDREPLACEW)lParam;
-	    return FINDDLG_WMInitDialog(hWnd, lParam, &(lpfr->Flags),
-	      (LPSTR)lpfr->lpstrFindWhat, TRUE);
-	case WM_COMMAND:
-	    lpfr=(LPFINDREPLACEW)GetWindowLongA(hWnd, DWL_USER);
-	    return FINDDLG_WMCommand(hWnd, wParam, lpfr->hwndOwner,
-		&lpfr->Flags, (LPSTR)lpfr->lpstrFindWhat, lpfr->wFindWhatLen,
-		TRUE);
     }
     return FALSE;
 }
@@ -458,48 +361,4 @@ LRESULT WINAPI ReplaceTextDlgProc16(HWND16 hWnd, UINT16 wMsg, WPARAM16 wParam,
     }
     return FALSE;
 }
-
-/***********************************************************************
- *           ReplaceTextDlgProc32A
- */ 
-LRESULT WINAPI ReplaceTextDlgProcA(HWND hWnd, UINT wMsg, WPARAM wParam,
-                                    LPARAM lParam)
-{
-    LPFINDREPLACEA lpfr;
-    switch (wMsg) {
-	case WM_INITDIALOG:
-            lpfr=(LPFINDREPLACEA)lParam;
-	    return REPLACEDLG_WMInitDialog(hWnd, lParam, &lpfr->Flags,
-		    lpfr->lpstrFindWhat, lpfr->lpstrReplaceWith, FALSE);
-	case WM_COMMAND:
-	    lpfr=(LPFINDREPLACEA)GetWindowLongA(hWnd, DWL_USER);
-	    return REPLACEDLG_WMCommand(hWnd, wParam, lpfr->hwndOwner, 
-		    &lpfr->Flags, lpfr->lpstrFindWhat, lpfr->wFindWhatLen,
-		    lpfr->lpstrReplaceWith, lpfr->wReplaceWithLen, FALSE);
-    }
-    return FALSE;
-}
-
-/***********************************************************************
- *           ReplaceTextDlgProc32W
- */ 
-LRESULT WINAPI ReplaceTextDlgProcW(HWND hWnd, UINT wMsg, WPARAM wParam,
-                                    LPARAM lParam)
-{
-    LPFINDREPLACEW lpfr;
-    switch (wMsg) {
-	case WM_INITDIALOG:
-            lpfr=(LPFINDREPLACEW)lParam;
-	    return REPLACEDLG_WMInitDialog(hWnd, lParam, &lpfr->Flags,
-		    (LPSTR)lpfr->lpstrFindWhat, (LPSTR)lpfr->lpstrReplaceWith,
-		    TRUE);
-	case WM_COMMAND:
-	    lpfr=(LPFINDREPLACEW)GetWindowLongA(hWnd, DWL_USER);
-	    return REPLACEDLG_WMCommand(hWnd, wParam, lpfr->hwndOwner, 
-		    &lpfr->Flags, (LPSTR)lpfr->lpstrFindWhat, lpfr->wFindWhatLen,
-		    (LPSTR)lpfr->lpstrReplaceWith, lpfr->wReplaceWithLen, TRUE);
-    }
-    return FALSE;
-}
-
 

@@ -7,7 +7,7 @@ MODULE    = none
 PROGRAMS  = winhelp hlp2sgml
 ALL_LIBS  = $(WINELIB) $(X_LIBS) $(XLIB) $(LIBS)
 RCFLAGS   = -w32 -h
-WRCEXTRA  = -A -p $*
+WRCEXTRA  = -t -A -p $*
 
 LANGUAGES   = En Da De Fr Fi Ko Hu It Va Sw Es
 

@@ -1,0 +1,43 @@
+/*
+ * Top level resource file for Common Dialogs
+ *
+ */
+
+#include "winuser.h"
+#include "winnls.h"
+#include "dlgs.h"
+
+/*
+ * Everything that does not depend on language,
+ * like textless bitmaps etc, go into the
+ * neutral language. This will prevent them from
+ * being duplicated for each language.
+ */
+/*#include "sysres_xx.rc"*/
+
+/*
+ * Everything specific to any language goes
+ * in one of the specific files.
+ * Note that you can and may override resources
+ * which also have a neutral version. This is to
+ * get localized bitmaps for example.
+ */
+#include "sysres_Ca.rc"
+#include "sysres_Cs.rc"
+#include "sysres_Da.rc"
+#include "sysres_De.rc"
+#include "sysres_En.rc"
+#include "sysres_Eo.rc"
+#include "sysres_Es.rc"
+#include "sysres_Fi.rc"
+#include "sysres_Fr.rc"
+#include "sysres_Hu.rc"
+#include "sysres_It.rc"
+#include "sysres_Ko.rc"
+#include "sysres_Nl.rc"
+#include "sysres_No.rc"
+#include "sysres_Pl.rc"
+#include "sysres_Pt.rc"
+#include "sysres_Ru.rc"
+#include "sysres_Sv.rc"
+#include "sysres_Wa.rc"

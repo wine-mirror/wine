@@ -20,6 +20,8 @@
 #include "resource.h"
 #include "debug.h"
 
+/* FIXME: this should be in a local header file */
+extern HMODULE COMCTL32_hModule;
 
 /******************************************************************************
  * Data structures
@@ -283,8 +285,13 @@ BOOL PROPSHEET_CreateDialog(PropSheetInfo* psInfo)
 {
   LRESULT ret;
   LPCVOID template;
+  HRSRC hRes;
 
-  template = SYSRES_GetResPtr(SYSRES_DIALOG_PROPSHEET);
+  if(!(hRes = FindResourceA(COMCTL32_hModule, "PROPSHEET", RT_DIALOGA)))
+    return FALSE;
+
+  if(!(template = (LPVOID)LoadResource(COMCTL32_hModule, hRes)))
+    return FALSE;
 
   if (psInfo->useCallback)
     (*(psInfo->ppshheader->pfnCallback))(0, PSCB_PRECREATE, (LPARAM)template);
