@@ -22,7 +22,13 @@ struct mutex;
 struct debug_ctx;
 struct debug_event;
 
-enum run_state { STARTING, RUNNING, SLEEPING, TERMINATED };
+enum run_state
+{
+    RUNNING,    /* running normally */
+    SLEEPING,   /* sleeping waiting for a request to terminate */
+    TERMINATED  /* terminated */
+};
+
 
 struct thread
 {
@@ -41,6 +47,7 @@ struct thread
     int                 apc_count; /* number of outstanding APCs */
     int                 error;     /* current error code */
     enum run_state      state;     /* running state */
+    int                 attached;  /* is thread attached with ptrace? */
     int                 exit_code; /* thread exit code */
     struct client      *client;    /* client for socket communications */
     int                 unix_pid;  /* Unix pid of client */
@@ -59,6 +66,9 @@ extern struct thread *current;
 extern void create_initial_thread( int fd );
 extern struct thread *get_thread_from_id( void *id );
 extern struct thread *get_thread_from_handle( int handle, unsigned int access );
+extern void wait4_thread( struct thread *thread, int wait );
+extern void stop_thread( struct thread *thread );
+extern void continue_thread( struct thread *thread );
 extern void suspend_all_threads( void );
 extern void resume_all_threads( void );
 extern int add_queue( struct object *obj, struct wait_queue_entry *entry );

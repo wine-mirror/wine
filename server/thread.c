@@ -15,8 +15,10 @@
 #ifdef HAVE_SYS_MMAN_H
 #include <sys/mman.h>
 #endif
+#include <sys/ptrace.h>
 #include <sys/types.h>
 #include <sys/uio.h>
+#include <sys/wait.h>
 #include <unistd.h>
 #include <stdarg.h>
 
@@ -118,7 +120,8 @@ static struct thread *create_thread( int fd, struct process *process, int suspen
     thread->apc         = NULL;
     thread->apc_count   = 0;
     thread->error       = 0;
-    thread->state       = STARTING;
+    thread->state       = RUNNING;
+    thread->attached    = 0;
     thread->exit_code   = 0x103;  /* STILL_ACTIVE */
     thread->next        = NULL;
     thread->prev        = NULL;
@@ -223,16 +226,118 @@ static void set_thread_info( struct thread *thread,
     }
 }
 
+/* find a thread from a Unix pid */
+static struct thread *get_thread_from_pid( int pid )
+{
+    struct thread *t = first_thread;
+    while (t && (t->unix_pid != pid)) t = t->next;
+    return t;
+}
+
+/* wait for a ptraced child to get a certain signal */
+/* if the signal is 0, we simply check if anything is pending and return at once */
+void wait4_thread( struct thread *thread, int signal )
+{
+    int status;
+    int pid;
+
+
+ restart:
+    pid = thread ? thread->unix_pid : -1;
+    if ((pid = wait4( pid, &status, WUNTRACED | (signal ? 0 : WNOHANG), NULL )) == -1)
+    {
+        perror( "wait4" );
+        return;
+    }
+    if (WIFSTOPPED(status))
+    {
+        int sig = WSTOPSIG(status);
+        if (debug_level) fprintf( stderr, "ptrace: pid %d got sig %d\n", pid, sig );
+        switch(sig)
+        {
+        case SIGSTOP:  /* continue at once if not suspended */
+            if (!thread) thread = get_thread_from_pid( pid );
+            if (!(thread->process->suspend + thread->suspend))
+                ptrace( PTRACE_CONT, pid, 0, sig );
+            break;
+        default:  /* ignore other signals for now */
+            ptrace( PTRACE_CONT, pid, 0, sig );
+            break;
+        }
+        if (signal && sig != signal) goto restart;
+    }
+    else if (WIFSIGNALED(status))
+    {
+        int exit_code = WTERMSIG(status);
+        if (debug_level)
+            fprintf( stderr, "ptrace: pid %d killed by sig %d\n", pid, exit_code );
+        if (!thread) thread = get_thread_from_pid( pid );
+        if (thread->client) remove_client( thread->client, exit_code );
+    }
+    else if (WIFEXITED(status))
+    {
+        int exit_code = WEXITSTATUS(status);
+        if (debug_level)
+            fprintf( stderr, "ptrace: pid %d exited with status %d\n", pid, exit_code );
+        if (!thread) thread = get_thread_from_pid( pid );
+        if (thread->client) remove_client( thread->client, exit_code );
+    }
+    else fprintf( stderr, "wait4: pid %d unknown status %x\n", pid, status );
+}
+
+/* attach to a Unix thread */
+static int attach_thread( struct thread *thread )
+{
+    /* this may fail if the client is already being debugged */
+    if (ptrace( PTRACE_ATTACH, thread->unix_pid, 0, 0 ) == -1) return 0;
+    if (debug_level) fprintf( stderr, "ptrace: attached to pid %d\n", thread->unix_pid );
+    thread->attached = 1;
+    wait4_thread( thread, SIGSTOP );
+    return 1;
+}
+
+/* detach from a Unix thread and kill it */
+static void detach_thread( struct thread *thread )
+{
+    if (!thread->unix_pid) return;
+    kill( thread->unix_pid, SIGTERM );
+    if (thread->suspend + thread->process->suspend) continue_thread( thread );
+    if (thread->attached)
+    {
+        wait4_thread( thread, SIGTERM );
+        if (debug_level) fprintf( stderr, "ptrace: detaching from %d\n", thread->unix_pid );
+        ptrace( PTRACE_DETACH, thread->unix_pid, 0, SIGTERM );
+        thread->attached = 0;
+    }
+}
+
+/* stop a thread (at the Unix level) */
+void stop_thread( struct thread *thread )
+{
+    if (!thread->unix_pid) return;
+    /* first try to attach to it */
+    if (!thread->attached)
+        if (attach_thread( thread )) return;  /* this will have stopped it */
+    /* attached already, or attach failed -> send a signal */
+    kill( thread->unix_pid, SIGSTOP );
+    if (thread->attached) wait4_thread( thread, SIGSTOP );
+}
+
+/* make a thread continue (at the Unix level) */
+void continue_thread( struct thread *thread )
+{
+    if (!thread->unix_pid) return;
+    if (!thread->attached) kill( thread->unix_pid, SIGCONT );
+    else ptrace( PTRACE_CONT, thread->unix_pid, 0, SIGSTOP );
+}
+ 
 /* suspend a thread */
 static int suspend_thread( struct thread *thread )
 {
     int old_count = thread->suspend;
     if (thread->suspend < MAXIMUM_SUSPEND_COUNT)
     {
-        if (!(thread->process->suspend + thread->suspend++))
-        {
-            if (thread->unix_pid) kill( thread->unix_pid, SIGSTOP );
-        }
+        if (!(thread->process->suspend + thread->suspend++)) stop_thread( thread );
     }
     return old_count;
 }
@@ -243,10 +348,7 @@ static int resume_thread( struct thread *thread )
     int old_count = thread->suspend;
     if (thread->suspend > 0)
     {
-        if (!(--thread->suspend + thread->process->suspend))
-        {
-            if (thread->unix_pid) kill( thread->unix_pid, SIGCONT );
-        }
+        if (!(--thread->suspend + thread->process->suspend)) continue_thread( thread );
     }
     return old_count;
 }
@@ -493,7 +595,6 @@ static int thread_queue_apc( struct thread *thread, void *func, void *param )
 void kill_thread( struct thread *thread, int exit_code )
 {
     if (thread->state == TERMINATED) return;  /* already killed */
-    if (thread->unix_pid) kill( thread->unix_pid, SIGTERM );
     remove_client( thread->client, exit_code ); /* this will call thread_killed */
 }
 
@@ -502,11 +603,13 @@ void thread_killed( struct thread *thread, int exit_code )
 {
     thread->state = TERMINATED;
     thread->exit_code = exit_code;
+    thread->client = NULL;
     if (thread->wait) end_wait( thread );
     debug_exit_thread( thread, exit_code );
     abandon_mutexes( thread );
     remove_process_thread( thread->process, thread );
     wake_up( &thread->obj, 0 );
+    detach_thread( thread );
     release_object( thread );
 }
 
@@ -544,16 +647,14 @@ DECL_HANDLER(get_thread_buffer)
 /* initialize a new thread */
 DECL_HANDLER(init_thread)
 {
-    if (current->state != STARTING)
+    if (current->unix_pid)
     {
         fatal_protocol_error( current, "init_thread: already running\n" );
         return;
     }
-    current->state    = RUNNING;
     current->unix_pid = req->unix_pid;
     current->teb      = req->teb;
-    if (current->suspend + current->process->suspend > 0)
-        kill( current->unix_pid, SIGSTOP );
+    if (current->suspend + current->process->suspend > 0) stop_thread( current );
     req->pid = current->process;
     req->tid = current;
 }

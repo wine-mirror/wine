@@ -15,6 +15,7 @@
 #include <unistd.h>
 
 #include "object.h"
+#include "thread.h"
 
 struct timeout_user
 {
@@ -165,6 +166,11 @@ static void sighup()
 }
 #endif
 
+/* dummy SIGCHLD handler */
+static void sigchld()
+{
+}
+
 /* server main loop */
 void select_loop(void)
 {
@@ -172,6 +178,7 @@ void select_loop(void)
 
     setsid();
     signal( SIGPIPE, SIG_IGN );
+    signal( SIGCHLD, sigchld );
 #ifdef DEBUG_OBJECTS
     signal( SIGHUP, sighup );
 #endif
@@ -223,9 +230,11 @@ void select_loop(void)
                 if (do_dump_objects) dump_objects();
                 do_dump_objects = 0;
 #endif
+                wait4_thread( NULL, 0 );
                 continue;
             }
             perror("select");
+            continue;
         }
 
         for (i = 0; i <= max_fd; i++)

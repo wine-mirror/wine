@@ -256,8 +256,7 @@ void suspend_process( struct process *process )
         struct thread *thread = process->thread_list;
         for (; thread; thread = thread->proc_next)
         {
-            if (!thread->suspend && thread->unix_pid)
-                kill( thread->unix_pid, SIGSTOP );
+            if (!thread->suspend) stop_thread( thread );
         }
     }
 }
@@ -271,8 +270,7 @@ void resume_process( struct process *process )
         struct thread *thread = process->thread_list;
         for (; thread; thread = thread->proc_next)
         {
-            if (!thread->suspend && thread->unix_pid)
-                kill( thread->unix_pid, SIGCONT );
+            if (!thread->suspend) continue_thread( thread );
         }
     }
 }
@@ -350,7 +348,7 @@ DECL_HANDLER(init_process)
 {
     struct new_process_request *info;
 
-    if (current->state == STARTING)
+    if (!current->unix_pid)
     {
         fatal_protocol_error( current, "init_process: init_thread not called yet\n" );
         return;
