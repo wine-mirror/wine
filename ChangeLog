@@ -1,4 +1,2106 @@
 ----------------------------------------------------------------
+2003-06-18  Alexandre Julliard  <julliard@winehq.com>
+
+	* dlls/advapi32/registry.c, dlls/advapi32/service.c,
+	  dlls/comcat/information.c, dlls/comcat/regsvr.c,
+	  dlls/comctl32/comctl32undoc.c, dlls/comctl32/propsheet.c,
+	  dlls/comctl32/tooltips.c, dlls/ddraw/ddraw/thunks.c,
+	  dlls/kernel/sync.c, dlls/kernel/tests/format_msg.c,
+	  dlls/ntdll/file.c, dlls/ole32/regsvr.c, dlls/ole32/storage32.c,
+	  dlls/oleaut32/parsedt.c, dlls/serialui/confdlg.c,
+	  dlls/setupapi/devinst.c, dlls/shell32/shelllink.c,
+	  dlls/shell32/shellord.c, dlls/user/comm16.c, dlls/user/tests/class.c,
+	  dlls/wininet/internet.c, dlls/winmm/lolvldrv.c,
+	  dlls/winsock/socket.c, dlls/winspool/info.c, files/smb.c,
+	  graphics/x11drv/xfont.c, programs/uninstaller/main.c,
+	  programs/winemenubuilder/winemenubuilder.c, scheduler/client.c,
+	  server/named_pipe.c, server/registry.c, server/request.c:
+	Francois Gouget <fgouget@free.fr>
+	'sizeof type' is best avoided as it won't always compile (e.g. 'int
+	main() {return sizeof int;}'). Use 'sizeof(type)' instead.
+
+	* LICENSE: Gerald Pfeifer <pfeifer@dbai.tuwien.ac.at>
+	Include 2003 in the copyright years.
+
+	* programs/notepad/License_En.c, programs/notepad/license.c:
+	Gerald Pfeifer <pfeifer@dbai.tuwien.ac.at>
+	#include <windows.h> instead of "windows.h".
+
+	* dlls/dsound/primary.c, dlls/dsound/sound3d.c:
+	Robert Reif <reif@earthlink.net>
+	Fixed a reference counting bug I introduced.
+
+	* dlls/cabinet/cabextract.c, dlls/cabinet/fdi.c,
+	  dlls/comctl32/toolbar.c, dlls/comctl32/updown.c,
+	  dlls/commdlg/printdlg.c, dlls/dplayx/dplayx_global.c,
+	  dlls/kernel/tests/path.c, dlls/kernel/tests/thread.c,
+	  winedefault.reg, dlls/ntdll/time.c, dlls/ole32/antimoniker.c,
+	  dlls/ole32/compobj.c, dlls/ole32/compositemoniker.c,
+	  dlls/ole32/itemmoniker.c, dlls/oleaut32/safearray.c,
+	  dlls/oleaut32/variant.c, dlls/shell32/shlexec.c,
+	  dlls/shell32/shlfolder.c, dlls/shell32/shlview.c,
+	  dlls/shlwapi/clist.c, dlls/shlwapi/path.c, dlls/shlwapi/thread.c,
+	  dlls/winmm/wineoss/midi.c, documentation/HOWTO-winelib,
+	  documentation/PACKAGING, documentation/debugger.sgml,
+	  documentation/debugging.sgml, documentation/dlls.sgml,
+	  documentation/patches.sgml, documentation/shell32,
+	  documentation/status/directplay, libs/wpp/ppl.l, objects/font.c,
+	  programs/notepad/main.c, programs/view/view.c,
+	  programs/winecfg/main.c, programs/winecfg/winecfg.rc,
+	  programs/winedbg/registers.c, tools/winedump/README,
+	  tools/wrc/parser.y:
+	Francois Gouget <fgouget@free.fr>
+	Typos/spelling fixes.
+
+	* dlls/kernel/tests/environ.c, dlls/kernel/tests/process.c,
+	  dlls/ntdll/tests/env.c:
+	Eric Pouech <pouech-eric@wanadoo.fr>
+	- kernel32's environment tests: a few more tests now succeed
+	- added some console related tests to process creation
+	- added a few more test cases to the ntdll environment tests
+
+	* dlls/kernel/kernel_main.c, dlls/ntdll/env.c, dlls/ntdll/ntdll_misc.h,
+	  include/winternl.h, memory/environ.c, scheduler/process.c:
+	Eric Pouech <pouech-eric@wanadoo.fr>
+	- fixed a couple of bugs in ntdll environment functions (one in trace,
+	  the other one in environment variable expansion)
+	- the process parameters, when passed thru wineserver, are now fully
+	  handled in ntdll, they are stored in the RTL_USER_PROCESS_PARAMETERS
+	  structure.
+	- later on in kernel32 loading sequence, those parameters are copied
+	  into STARTUPINFO shadow structures
+	- later modification to those paramters are now reflected to the
+	  RTL_USER_PROCESS_PARAMETERS structure (and STARTUPINFO is kept
+	  untouched) (for example, StdHandle setting) (Win 2k behaves like this)
+	- ENVDB has been removed
+	- command line inheritance (from unix command line) is now purely in ntdll
+	- all kernel32 environment functions now rely on their ntdll counterparts
+	- goodies: input/output handle inheritance while asking for a detached
+	  console is better handled; a few more kernel32 environment tests now
+	  pass ; silenced a valgrind warning in process creation
+
+	* programs/winefile/En.rc, programs/winefile/Fr.rc,
+	  programs/winefile/rsrc.rc:
+	Sylvain Petreolle <spetreolle@yahoo.fr>
+	Added French translation, finished English translation.
+
+	* documentation/README.pt: Tom Wickline <twickline@skybest.com>
+	Tranlation of English README to Portuguese.
+
+	* dlls/dmusic/dmusic_loader.c, dlls/dmusic/dmusic_performance.c,
+	  dlls/dmusic/dmusic_segment.c:
+	Raphael Junqueira <fenix@club-internet.fr>
+	- add IDirectMusicContainer support in
+	  IDirectMusicLoader8Impl::LoadObjectFromFile
+	- don't use IDirectMusicSegment*Impl when IDirectMusicSegment*8Impl
+	  can be used instead (avoid code duplication)
+
+	* dlls/d3d8/cubetexture.c, dlls/d3d8/d3d8_private.h,
+	  dlls/d3d8/device.c, dlls/d3d8/drawprim.c, dlls/d3d8/stateblock.c,
+	  dlls/d3d8/surface.c, dlls/d3d8/texture.c, dlls/d3d8/utils.c,
+	  dlls/d3d8/volumetexture.c:
+	Raphael Junqueira <fenix@club-internet.fr>
+	- dsound and d3d works better when x11drv locks/unlocks are correct
+	- more traces
+
+2003-06-17  Alexandre Julliard  <julliard@winehq.com>
+
+	* dlls/msvcrt/cpp.c, dlls/msvcrt/msvcrt.h, dlls/msvcrt/msvcrt.spec,
+	  dlls/msvcrtd/msvcrtd.spec:
+	Added an assembly wrapper to retrieve the this pointer from %ecx for
+	_thiscall functions.
+	Fixed some bugs, and added a few missing functions.
+
+	* dlls/ole32/compobj.c, dlls/ole32/compobj_private.h, dlls/ole32/git.c,
+	  dlls/ole32/oleproxy.c:
+	Mike Hearn <mike@theoretic.com>
+	Implement a class factory for the Global Interface Table.
+
+	* dlls/cabinet/cabextract.c, dlls/cabinet/cabinet.h, dlls/cabinet/fdi.c:
+	Gregory M. Turner <gmturner007@ameritech.net>
+	- move macros and constants into cabinet.h where they can be shared
+	  between cabextract.c and fdi.c
+	- reminders to eliminate global variables (for multithread
+	  compatibility)
+	- remove struct fdi_cab: due to the nature of the FDI API, we cannot
+	  preload all the cabinets; this appears to obviate the need for struct
+	  fdi_cab
+	- "oppress" (that is, do not process) partial files which were
+	  continuations from another cabinet
+	- more than one partial file can exist in a single cabinet (how!?) --
+	  so move the partial file notification (and "oppression" that goes with
+	  it) into the loop that iterates through files
+
+2003-06-16  Alexandre Julliard  <julliard@winehq.com>
+
+	* dlls/dmusic/dmusic_loader.c, dlls/dmusic/dmusic_misc.c,
+	  dlls/dmusic/dmusic_performance.c, dlls/dmusic/dmusic_private.h:
+	Christian Costa <titan.costa@wanadoo.fr>
+	Allocate necessary dsound buffers for standard audio paths and enable
+	retrieval of their interfaces via GetObjectInPath.
+	Fix and clean dsound and dmusics objects allocation when initializing
+	the performance object.
+	Some stubs improvements.
+
+	* dlls/ddraw/d3ddevice/mesa.c: Lionel Ulmer <lionel.ulmer@free.fr>
+	- rewrote the buffer to buffer fast path using Texture engine (much
+	  faster on my NVIDIA hardware)
+	- small optimizations
+
+	* dlls/dinput/device.c, dlls/dinput/device_private.h,
+	  dlls/dinput/dinput.spec, dlls/dinput/dinput_main.c,
+	  dlls/dinput/dinput_private.h, dlls/dinput/joystick/linux.c,
+	  dlls/dinput/joystick/linuxinput.c, dlls/dinput/keyboard/main.c,
+	  dlls/dinput/mouse/main.c, include/dinput.h:
+	Raphael Junqueira <fenix@club-internet.fr>
+	- DInput WideChar classes support. This time all dinput versions have
+	  widechar classes.
+	- fix a stupid bug in callback handling caught by Lionel.
+	- add some forgotten IID on class factory (better if we want to active
+	  the code)
+	- many cleanups on COM Macros (don't need A and W variants as they are
+	  the same)
+
+	* dlls/d3d8/surface.c: Raphael Junqueira <fenix@club-internet.fr>
+	Fix AddDirtyRect uncorrect behavior (crash in some cases). Based on a
+	patch from Roderick Colenbrander.
+
+	* winedefault.reg: Sylvain Petreolle <spetreolle@yahoo.fr>
+	Display icons of executables in the OpenFile dialog boxes.
+
+	* dlls/advapi32/advapi32.spec, dlls/advapi32/security.c,
+	  dlls/ntdll/ntdll.spec, dlls/ntdll/sec.c, include/winnt.h,
+	  include/winternl.h:
+	<ma@technoprint.ch>
+	Added AddAccessAllowdAceEx, AddAccessDeniedAceEx, GetAclInformation.
+
+	* dlls/ddraw/d3ddevice/mesa.c, dlls/ddraw/dsurface/main.c,
+	  dlls/ddraw/gl_api.h, dlls/ddraw/gl_private.h, dlls/ddraw/mesa.c:
+	Lionel Ulmer <lionel.ulmer@free.fr>
+	- fix some regressions
+	- GetDC does not lock in ReadOnly mode as it leads to problems with
+	  some D3D optimizations
+	- added a fast Back => Front / Front => Back Blt fast path
+
+	* dlls/setupapi/Makefile.in, dlls/setupapi/devinst.c,
+	  dlls/setupapi/devinst16.c:
+	Steven Edwards <Steven_Ed4153@yahoo.com>
+	Split Win16/32 setupapi device installer support.
+
+	* dlls/wininet/urlcache.c, dlls/wininet/wininet.spec:
+	Mike Hearn <mike@theoretic.com>
+	Stub out SetUrlCacheEntryInfoA/W.
+
+	* dlls/comctl32/trackbar.c: Mike Hearn <mike@theoretic.com>
+	- Unbreak vertical trackbars
+	- Make it more closely resemble the native control
+	- Add focus rectangle
+	- Misc fixes and cleanups
+
+	* dlls/shell32/control.c, dlls/shell32/shell32.spec:
+	Mike Hearn <mike@theoretic.com>
+	Add stubs for Control_FillCache_RunDLL ansi/unicode variants.
+
+	* dlls/iphlpapi/ipstats.c: Gerald Pfeifer <pfeifer@dbai.tuwien.ac.at>
+	Unbreak getTcpTable() on Linux-based systems and make it work on BSD
+	and Solaris as well.
+
+	* dlls/ntdll/critsection.c: Mike Hearn <mike@theoretic.com>
+	Add the ID of the blocking thread to the error message.
+
+	* dlls/avifil32/avifile_Si.rc, dlls/avifil32/rsrc.rc,
+	  dlls/commdlg/cdlg_Si.rc, dlls/msvideo/msrle32/msrle_Si.rc,
+	  dlls/msvideo/msrle32/rsrc.rc, dlls/user/resources/user32.rc,
+	  dlls/user/resources/user32_Si.rc, dlls/wineps/rsrc.rc,
+	  dlls/wineps/wps_Si.rc, dlls/winmm/winmm_Si.rc, programs/start/Si.rc,
+	  programs/start/rsrc.rc, programs/winhelp/Si.rc:
+	Rok Mandeljc <rok.mandeljc@gimb.org>
+	Updated a bunch of translations for Slovenian language.
+
+	* dlls/ntdll/ntdll.spec, dlls/ntdll/path.c, include/winternl.h:
+	Eric Pouech <pouech-eric@wanadoo.fr>
+	Implemented:
+	- RtlDoesFileExists_U as a stub
+	- RtlDosSearchPath_U
+
+	* dlls/ddraw/d3d_private.h, dlls/ddraw/d3ddevice/mesa.c,
+	  dlls/ddraw/ddraw/main.c, dlls/ddraw/mesa.c,
+	  dlls/ddraw/mesa_private.h:
+	Lionel Ulmer <lionel.ulmer@free.fr>
+	- GL state change optimizations
+	- some more preparations for GL-accelerated Blts
+	- added debug code to compute FPS (nice when adding optimizations)
+
+	* dlls/netapi32/Makefile.in, dlls/netapi32/netapi32.c,
+	  dlls/netapi32/wksta.c, include/nb30.h:
+	Juan Lang <juan_lang@yahoo.com>
+	Use iphlpapi to enumerate LAN adapters.
+	Add names to NetBIOS transports, and eliminates loopback adapters from
+	enumerated LAN adapters.
+
+	* include/strmif.h: Lionel Ulmer <lionel.ulmer@free.fr>
+	Make the header in-line with current ICOM naming conventions.
+
+	* dlls/x11drv/xvidmode.c: <mirq@ziemniak.ustronie.pw.edu.pl>
+	Correct mode nr passed to X11DRV_XF86VM_SetCurrentMode.
+
+	* winedefault.reg: Lionel Ulmer <lionel.ulmer@free.fr>
+	Fix the FilterGraph CLSID declaration.
+
+	* dlls/commdlg/Makefile.in, dlls/commdlg/filedlg.c,
+	  dlls/commdlg/filedlg.h, dlls/commdlg/filedlg16.c:
+	Steven Edwards <Steven_Ed4153@yahoo.com>
+	Split Win16/32 file dialogs.
+
+	* dlls/ntdll/signal_i386.c, include/thread.h:
+	Jukka Heinonen <jhei@iki.fi>
+	Remove SIGALRM handler.
+	Reserve TEB field for DPMI virtual interrupt flag.
+
+	* dlls/winedos/int21.c, msdos/int21.c: Jukka Heinonen <jhei@iki.fi>
+	Migrate create/open file functions to winedos.
+	Some fixes based on patch by Ferenc Wagner.
+
+	* dlls/winedos/dosvm.c: Jukka Heinonen <jhei@iki.fi>
+	Make DOSVM_Wait work in protected mode.
+	Replace SHOULD_PEND macro with a function.
+
+	* include/control.h: Lionel Ulmer <lionel.ulmer@free.fr>
+	Make the header in-line with current ICOM naming conventions.
+
+2003-06-14  Alexandre Julliard  <julliard@winehq.com>
+
+	* programs/wineconsole/curses.c:
+	Fixed WCCURSES_InitBackend prototype in the no curses case.
+
+	* files/file.c, include/wine/server_protocol.h, server/named_pipe.c,
+	  server/protocol.def, server/trace.c:
+	Make it possible to retrieve an inheritable handle in open_named_pipe
+	(spotted by Uwe Bonnes).
+
+2003-06-13  Alexandre Julliard  <julliard@winehq.com>
+
+	* Make.rules.in, dlls/Makedll.rules.in, dlls/Maketest.rules.in,
+	  dlls/x11drv/Makefile.in, libs/Makelib.rules.in,
+	  programs/Makeprog.rules.in, programs/avitools/Makefile.in,
+	  server/Makefile.in:
+	Proper support for CPPFLAGS and LDFLAGS (suggested by Todd Vierling).
+
+	* dlls/ddraw/d3ddevice/mesa.c: Lionel Ulmer <lionel.ulmer@free.fr>
+	- fixes the COLORFILL case for front-buffer
+	- some preparations for GL-accelerated Blts
+	- some small optimizations in the Clear code
+
+	* dlls/winedos/int31.c: Sylvain Petreolle <spetreolle@yahoo.fr>
+	Trace which real mode interrupt is emulated.
+
+	* dlls/msvideo/msrle32/msrle32.c, dlls/msvideo/msrle32/msrle_private.h:
+	Michael Günnewig <MichaelGuennewig@gmx.de>
+	- Fixed end flags while encoding -- only EOI instead of EOL and EOI.
+	- Fixed 4-bit RLE encoding of keyframes.
+	- Fixed signed/unsigned mismatches.
+	- Added some missing const's.
+
+	* dlls/cabinet/fdi.c: Gregory M. Turner <gmturner007@ameritech.net>
+	- most of FDICopy is now implemented, although the actual decompression is not.
+	- "can" -> "do"
+	- a novella about a bug
+	- fix some memory leaks
+
+	* dlls/rasapi32/rasapi32.spec:
+	Removed ordinals that differ between Windows versions.
+
+	* dlls/d3d8/d3d8_private.h, dlls/d3d8/device.c, dlls/d3d8/surface.c,
+	  dlls/d3d8/utils.c:
+	Jason Edmeades <us@the-edmeades.demon.co.uk>
+	Fix the texture operations to resolve glitches shown in UT2003 when
+	get quad damage.
+	checkGLcall must not supply a \n as that is supplied by its
+	expansion.
+	Performance fixes to save applying the same states 6 times and to
+	reduce function calls when accessing front/back buffers.
+	Make traces more readable by more constants -> english descriptions.
+
+	* dlls/dmusic/dmusic_loader.c, dlls/dmusic/dmusic_main.c,
+	  dlls/dmusic/dmusic_misc.c, dlls/dmusic/dmusic_performance.c,
+	  dlls/dmusic/dmusic_private.h:
+	Raphael Junqueira <fenix@club-internet.fr>
+	- always use IDirectMusicPerformance8Impl instead of
+	  IDirectMusicPerformanceImpl (as the first inherits from the second)
+	- implement many Loader, AudioPath and Performance8 stubs - fix the
+	  class factory
+	- more debug traces
+	- for now IDirectMusicLoader8::LoadObjectFromFile always returns not
+	  supported format
+	- fix the IDirectMusicPerformance8::Init (many crashes)
+	- implementation of IDirectMusicPerformance8InitAudio
+
+	* dlls/dinput/device.c, dlls/dinput/dinput_main.c,
+	  dlls/dinput/dinput_private.h, dlls/dinput/joystick/linux.c,
+	  dlls/dinput/joystick/linuxinput.c, dlls/dinput/keyboard/main.c,
+	  dlls/dinput/mouse/main.c, include/dinput.h:
+	Christian Costa <titan.costa@wanadoo.fr>
+	Make dinput8 behaviour more correct for mouse and keyboard.
+	Fix small bug when keyboard buffer overflows.
+	Use DI_OK instead of 0 for returned values.
+
+	* dlls/ddraw/d3dexecutebuffer.c:
+	Christian Costa <titan.costa@wanadoo.fr>
+	Fix matrix multiplication.
+
+	* dlls/cabinet/cabinet.h: Gregory M. Turner <gmturner007@ameritech.net>
+	Fix some uglies.
+
+	* dlls/x11drv/keyboard.c: Sylvain Petreolle <spetreolle@yahoo.fr>
+	Added Euro and antiquote to the French keyboard layout.
+
+	* dlls/d3d8/directx.c: Jason Edmeades <us@the-edmeades.demon.co.uk>
+	When emulating fullscreen it helps to not allocate space for menu bars
+	and borders. Make this window a popup window.
+
+	* dlls/rasapi32/rasapi32.spec, include/ras.h:
+	Francois Gouget <fgouget@free.fr>
+	Add stubs for RasDeleteSubEntry* (new in WinMe/WinXP).
+	Add prototypes for RasDeleteEntry* and RasDeleteSubEntry* in ras.h.
+
+	* dlls/d3d8/Makefile.in, dlls/d3d8/d3d8_private.h,
+	  dlls/d3d8/d3dcore_gl.h, dlls/d3d8/device.c, dlls/d3d8/drawprim.c,
+	  dlls/d3d8/shader.c, dlls/d3d8/surface.c, dlls/d3d8/utils.c,
+	  dlls/d3d8/vshaderdeclaration.c:
+	Jason Edmeades <us@the-edmeades.demon.co.uk>
+	Make the fixed function pipeline support multiple streams for created
+	vertex shaders with no function supplied. Also split down draw
+	primitive along the lines of the d3dcore requirements and put in some
+	diagnostic aids.
+
+	* dlls/commdlg/Makefile.in, dlls/commdlg/colordlg.c,
+	  dlls/commdlg/colordlg.h, dlls/commdlg/colordlg16.c:
+	Steven Edwards <Steven_Ed4153@yahoo.com>
+	Split Win16/32 color dialog support.
+	Supporting compiling out 16 bit find dialog support.
+
+	* include/winsock.h: Yorick Hardy <yh@metroweb.co.za>
+	Include time.h instead of sys/time.h.
+
+	* dlls/quartz/Makefile.in, dlls/quartz/filtergraph.c,
+	  dlls/quartz/main.c, dlls/quartz/quartz_private.h,
+	  include/Makefile.in, include/control.h, include/dshow.h,
+	  include/strmif.h, include/uuids.h, winedefault.reg:
+	Lionel Ulmer <lionel.ulmer@free.fr>
+	Stubbed some interfaces for the FilterGraph CLSID.
+
+	* dlls/winedos/int21.c, msdos/int21.c: Jukka Heinonen <jhei@iki.fi>
+	Move get current directory and set current directory int21
+	subfunctions into winedos. Fix quite a few bugs in the implementation
+	of these functions.
+
+	* dlls/cabinet/cabinet.h, dlls/cabinet/fdi.c:
+	Gregory M. Turner <gmturner007@ameritech.net>
+	- implement FDI{Create,Destroy,IsCabinet}
+	- fix a typo
+	- duplicate a bug
+	- some blathering about code duplication
+	- change fdi.c indentation to be consistent with cabextract.c
+
+	* dlls/oleaut32/safearray.c, dlls/oleaut32/tests/safearray.c:
+	Marcus Meissner <marcus@jet.franken.de>
+	Fixed index handling for multi dimensional arrays.
+
+	* BUGS: Tom Wickline <twickline@skybest.com>
+	- cosmetic fixes
+	- remove obsolete link
+
+	* winedefault.reg: Sylvain Petreolle <spetreolle@yahoo.fr>
+	Show that TCP/IP is installed to windows apps, like winipcfg.
+
+	* dlls/ntdll/cdrom.c, include/file.h, include/ntddscsi.h,
+	  win32/device.c:
+	Eric Pouech <pouech-eric@wanadoo.fr>
+	Added support for overlapped ioctl requests (and a few other
+	cosmetics).
+
+	* programs/wineconsole/curses.c, programs/wineconsole/user.c,
+	  programs/wineconsole/winecon_private.h,
+	  programs/wineconsole/wineconsole.c:
+	Eric Pouech <pouech-eric@wanadoo.fr>
+	If (n)curses wasn't available at compile time:
+	- print sensible information
+	- fall back to user backend
+
+	* dlls/dinput/device.c: Paul Bain <prbain@essex.ac.uk>
+	Put IID_IDirectInputDevice2A back in
+	IDirectInputDevice2AImpl_QueryInterface.
+
+	* dlls/ddraw/dsurface/main.c: Lionel Ulmer <lionel.ulmer@free.fr>
+	Be more stringent in the 'Lock' invalid RECT check.
+
+	* dlls/opengl32/make_opengl, dlls/opengl32/opengl_ext.c:
+	Lionel Ulmer <lionel.ulmer@free.fr>
+	Upgrade OpenGL thunks with latest version of OpenGL extension
+	registry.
+
+	* dlls/comctl32/toolbar.c: Robert Shearman <R.J.Shearman@warwick.ac.uk>
+	- Make button text centre correctly when dropdown arrow is present
+	- Centre dropdown arrow
+
+	* dlls/psapi/psapi.spec, dlls/shdocvw/shdocvw.spec,
+	  dlls/wintrust/wintrust.spec:
+	Francois Gouget <fgouget@free.fr>
+	Add stubs for some new WinXP APIs.
+
+	* dlls/urlmon/urlmon.spec, include/urlmon.h:
+	Francois Gouget <fgouget@free.fr>
+	Add a stub for CompareSecurityIds (new in WinXP).
+
+	* dlls/ddraw/d3ddevice/mesa.c: Lionel Ulmer <lionel.ulmer@free.fr>
+	Fix the BLT COLOR_FILL case.
+
+	* dlls/winedos/Makefile.in, dlls/winedos/dosvm.c, dlls/winedos/timer.c:
+	Jukka Heinonen <jhei@iki.fi>
+	Split timer code into separate source file.
+	Stop using SIGALRM for timers.
+
+	* dlls/cabinet/cabextract.c, dlls/cabinet/cabinet.h:
+	Gregory M. Turner <gmturner007@ameritech.net>
+	- paranoia: eliminate some global variables
+	- better reminder on how to fix memory leaks
+
+2003-06-07  Alexandre Julliard  <julliard@winehq.com>
+
+	* dlls/dmusic/dmusic.c, dlls/dmusic/dmusic_instrument.c,
+	  dlls/dmusic/dmusic_loader.c, dlls/dmusic/dmusic_main.c,
+	  dlls/dmusic/dmusic_misc.c, dlls/dmusic/dmusic_performance.c,
+	  dlls/dmusic/dmusic_plugins.c, dlls/dmusic/dmusic_port.c,
+	  dlls/dmusic/dmusic_private.h, dlls/dmusic/dmusic_segment.c,
+	  dlls/dmusic/dmusic_style.c, dlls/dmusic/dmusic_synth.c:
+	Rok Mandeljc <rok.mandeljc@gimb.org>
+	- added debug
+	- implemented fake midi & performance channels
+	- implemented some IDirectMusic*8* functions where IDirectMusic*
+	  equivalent exists
+	- IDirectMusic*8 interfaces can now be obtained from IDirectMusic
+	  interfaces (QueryInterface...)
+	- channel-related performance functions are kinda implemented now
+
+	* graphics/painting.c: Arjen Nienhuis <arjen@nienhuisbeheer.nl>
+	New implementation of GdiGradientFill using integer math.
+
+	* dlls/dinput/mouse/main.c: Christian Costa <titan.costa@wanadoo.fr>
+	Fix SetDataFormat and implement GetDeviceInfo for mouse device.
+
+	* documentation/samples/config: Mike Hearn <mike@theoretic.com>
+	Add a drive mapping for root to the default configuration file.
+
+	* tools/wineinstall: Mike Hearn <mike@theoretic.com>
+	Check for /lib/tls directory for Red Hat 9.
+
+	* dlls/winsock/socket.c:
+	Kester Maddock <Christopher.Maddock.1@uni.massey.ac.nz>
+	Check for a null pointer in WS_setsockopt.
+
+	* dlls/user/dde/misc.c: Mike Hearn <mike@theoretic.com>
+	Protect WDML_GetConv against null handles.
+
+	* dlls/commdlg/Makefile.in, dlls/commdlg/fontdlg.c,
+	  dlls/commdlg/fontdlg.h, dlls/commdlg/fontdlg16.c:
+	Steven Edwards <Steven_Ed4153@yahoo.com>
+	Separate Win16 and Win32 font dialog support.
+
+	* dlls/ntdll/signal_i386.c: Eric Pouech <pouech-eric@wanadoo.fr>
+	Correctly convert into EXCEPTION_RECORD SIGTRAPs received from
+	DebugBreakProcess.
+
+2003-06-06  Alexandre Julliard  <julliard@winehq.com>
+
+	* dlls/wininet/internet.c, dlls/wininet/wininet.spec:
+	Sylvain Petreolle <spetreolle@yahoo.fr>
+	Implemented wininet.InternetGetConnectedStateEx.
+
+	* dlls/comctl32/listview.c: Dimitrie O. Paun <dpaun@rogers.com>
+	Align the text vertically in single line labels (spotted by BiGgUn).
+
+	* dlls/d3d8/d3d8_private.h, dlls/d3d8/d3dcore_gl.h, dlls/d3d8/device.c,
+	  dlls/d3d8/directx.c, dlls/d3d8/utils.c:
+	Raphael Junqueira <fenix@club-internet.fr>
+	Fixed compilation problems.
+
+	* dlls/msvcrt/locale.c, dlls/msvcrt/msvcrt.spec:
+	Martin Fuchs <martin-fuchs@gmx.net>
+	Stub implementation for _Gettnames.
+
+	* dlls/kernel/sync.c: Mike McCormack <mike@codeweavers.com>
+	Always return FALSE when doing an overlapped ConnectNamedPipe.
+
+	* objects/text.c: Ingmar Thiemann <ingmar@gefas.com>
+	Implemented PolyTextOutA/PolyTextOutW.
+
+	* dlls/shell32/brsfolder.c, include/shlobj.h:
+	Robert Shearman <R.J.Shearman@warwick.ac.uk>
+	- Support a few more flags
+	- Rewrite the enumeration loop
+	- Support non-desktop root
+	- Silence harmless and implemented debug messages
+
+	* dlls/winedos/dosexe.h, dlls/winedos/dosvm.c:
+	Jukka Heinonen <jhei@iki.fi>
+	Pending timer interrupts no longer deadlock DOSVM_Wait.
+	Restored interrupt priorities to correct values.
+
+2003-06-04  Alexandre Julliard  <julliard@winehq.com>
+
+	* dlls/ddraw/d3ddevice/mesa.c, dlls/ddraw/mesa.c,
+	  dlls/ddraw/mesa_private.h:
+	Lionel Ulmer <lionel.ulmer@free.fr>
+	- fix the texture upload code when RECT is actually used
+	- optimize FB Locks / Unlocks when RECTs are used
+
+	* dlls/ddraw/d3ddevice/main.c, dlls/ddraw/d3dviewport.c:
+	Lionel Ulmer <lionel.ulmer@free.fr>
+	- Viewport hack to get some old D3D1 games to work
+	- TRACEing fix
+
+	* dlls/ddraw/d3ddevice/mesa.c, dlls/ddraw/mesa.c:
+	Lionel Ulmer <lionel.ulmer@free.fr>
+	- small TRACEing fix
+	- fix bug in texture upload (I wonder how I missed this :-/ )
+	- improve the D3D1/2 texture mapping modes
+
+	* dlls/ddraw/d3ddevice/mesa.c, dlls/ddraw/d3dlight.c,
+	  dlls/ddraw/d3dtexture.c, dlls/ddraw/mesa.c:
+	Lionel Ulmer <lionel.ulmer@free.fr>
+	- fix (stupid) regressions introduced by last series of patch
+	- 24 bpp handling for lock / unlock code
+	- some better checks for AlphaPixel value
+	- better TRACEing to better catch threading problems
+
+	* dlls/ddraw/d3ddevice/mesa.c, dlls/ddraw/d3dtexture.c,
+	  dlls/ddraw/mesa_private.h:
+	Lionel Ulmer <lionel.ulmer@free.fr>
+	- some GL critical section fixes
+	- only bind textures at start of rendering
+	- optimized the texture parameter code
+	- optimize of the 'dirty checking code' for mipmapping
+	- handles the MAXMIPLEVEL texture parameter
+
+	* dlls/ddraw/d3d_private.h, dlls/ddraw/d3dexecutebuffer.c,
+	  dlls/ddraw/d3dlight.c, dlls/ddraw/d3dmaterial.c,
+	  dlls/ddraw/d3dtexture.c, dlls/ddraw/d3dvertexbuffer.c,
+	  dlls/ddraw/d3dviewport.c, dlls/ddraw/ddraw_private.h,
+	  dlls/ddraw/mesa.c, dlls/ddraw/mesa_private.h,
+	  dlls/ddraw/d3ddevice/main.c, dlls/ddraw/d3ddevice/mesa.c,
+	  dlls/ddraw/ddraw/main.c, dlls/ddraw/direct3d/main.c,
+	  dlls/ddraw/direct3d/main.h, dlls/ddraw/direct3d/mesa.c,
+	  dlls/ddraw/dsurface/fakezbuffer.c, dlls/ddraw/dsurface/main.c:
+	Lionel Ulmer <lionel.ulmer@free.fr>
+	- proper (tested on Win2K) reference counting for Direct3D object
+	- fix one case of reference counting on textures
+	- fix stupid bug in texture upload code
+	- yet another texture enumeration reordering
+
+	* dlls/ddraw/d3dtexture.c: Lionel Ulmer <lionel.ulmer@free.fr>
+	Fixed a bug in the FrameBuffer => Texture blits.
+
+	* dlls/ddraw/d3ddevice/mesa.c, dlls/ddraw/d3dtexture.c,
+	  dlls/ddraw/mesa.c, dlls/ddraw/mesa_private.h:
+	Lionel Ulmer <lionel.ulmer@free.fr>
+	- added RECT support to the texture upload code
+	- use the common code for the FB Unlock code
+
+	* dlls/ddraw/d3ddevice/mesa.c, dlls/ddraw/d3dtexture.c,
+	  dlls/ddraw/mesa.c, dlls/ddraw/mesa_private.h:
+	Lionel Ulmer <lionel.ulmer@free.fr>
+	- some clean-ups (extension code to be added soon)
+	- some interface changes for future reuse for Blt / Lock code
+	- fixed some Pitch problems in texture uploads (mostly for 'small'
+	  mip-mapping levels)
+
+	* dlls/ddraw/d3dtexture.c, dlls/ddraw/mesa.c,
+	  dlls/ddraw/mesa_private.h:
+	Lionel Ulmer <lionel.ulmer@free.fr>
+	Refactoring of the texture upload code.
+
+	* dlls/ddraw/d3ddevice/mesa.c: Lionel Ulmer <lionel.ulmer@free.fr>
+	Fix texture parameters handling on texture change.
+
+	* dlls/ddraw/d3ddevice/mesa.c, dlls/ddraw/mesa.c:
+	Lionel Ulmer <lionel.ulmer@free.fr>
+	- remove some extraneous saving of the read buffer settings
+	- cleaned-up the GL / device critical section handling
+
+	* dlls/ddraw/d3ddevice/mesa.c, dlls/ddraw/d3dexecutebuffer.c:
+	Lionel Ulmer <lionel.ulmer@free.fr>
+	- protect viewport setting with GL lock
+	- no need anymore to flush to FB on execute buffer calling
+
+	* dlls/ddraw/d3ddevice/mesa.c, dlls/ddraw/d3dtexture.c:
+	Lionel Ulmer <lionel.ulmer@free.fr>
+	Some threading fixes (prevents some dead-locks).
+
+	* dlls/ddraw/d3ddevice/mesa.c, dlls/ddraw/d3dtexture.c,
+	  dlls/ddraw/gl_api.h, dlls/ddraw/gl_private.h,
+	  dlls/ddraw/mesa_private.h:
+	Lionel Ulmer <lionel.ulmer@free.fr>
+	- implement FB => Texture blits
+	- fix compilation on non-recent glext.h systems
+
+	* dlls/d3d8/basetexture.c, dlls/d3d8/cubetexture.c,
+	  dlls/d3d8/d3d8_private.h, dlls/d3d8/device.c, dlls/d3d8/directx.c,
+	  dlls/d3d8/surface.c, dlls/d3d8/texture.c, dlls/d3d8/volume.c,
+	  dlls/d3d8/volumetexture.c:
+	Raphael Junqueira <fenix@club-internet.fr>
+	- cleaning of volume.c/volumetexture.c as done previously for
+	  surface.c/*texture.c (with add of lockable, locked and Dirty flags)
+	- add of dirtyRect/dirtyBox for better dirtification management (not
+	  used yet, but huge optimisation can be possible now)
+	- fix some debug traces (well it's better to use debug_d3dpool)
+	- fix some stupid regression on point parameters (forgot to check
+	  extension on fillcaps)
+
+	* dlls/d3d8/d3d8_private.h, dlls/d3d8/d3dcore_gl.h, dlls/d3d8/device.c,
+	  dlls/d3d8/directx.c:
+	Raphael Junqueira <fenix@club-internet.fr>
+	- add a new private header d3dcore_gl.h that declares needed opengl
+	  defines and the caps defines
+	- cleanup of device.c using the caps defines (avoid the #ifdef
+	  nigthmare)
+	- add {Set,Get}GammaRamp support
+
+	* dlls/d3d8/d3d8_private.h, dlls/d3d8/device.c, dlls/d3d8/directx.c,
+	  dlls/d3d8/surface.c, dlls/d3d8/swapchain.c:
+	Raphael Junqueira <fenix@club-internet.fr>
+	- some cleanup and warning fixes
+	- split of CreateDevice gl/gxl detection code into FillGLCaps
+	- implementation of resolution change (using ChangeDisplaySettings)
+	  but desactived as ChangeDisplaySettings don't seem to work well
+	- begin of swap chain support (now need to split/clean
+	  gxlpbuffer/glxpixmap code for swap chain use)
+
+	* dlls/d3d8/surface.c: Jason Edmeades <us@the-edmeades.demon.co.uk>
+	Fix the glRead call when pRect != NULL, resolve the file format of the
+	saved snapshot correctly.
+
+	* dlls/d3d8/surface.c: Raphael Junqueira <fenix@club-internet.fr>
+	- fix another time the stupid locking bug (i had already fixed it in
+	  ActiveRender)
+	- fix stupid rescaling of colors values on SaveSnapshot
+
+	* dlls/d3d8/d3d8.spec, dlls/d3d8/d3d8_main.c, dlls/d3d8/d3d8_private.h,
+	  dlls/d3d8/device.c, dlls/d3d8/directx.c, dlls/d3d8/shader.c:
+	Raphael Junqueira <fenix@club-internet.fr>
+	- pixel shader program dump code
+	- pixel shader code split into a new "COM object" (as done before for
+	  vertex shader)
+	- some fixes on Validate* functions call types
+	- add pixel shader (ie fragment_program) detection on caps code
+
+	* dlls/d3d8/device.c, dlls/d3d8/utils.c:
+	Jason Edmeades <us@the-edmeades.demon.co.uk>
+	Add support for a lot of the remaining texture ops, move code into the
+	utils module, and clean up the main code path.
+
+	* dlls/d3d8/cubetexture.c, dlls/d3d8/d3d8_private.h,
+	  dlls/d3d8/device.c, dlls/d3d8/directx.c, dlls/d3d8/surface.c,
+	  dlls/d3d8/texture.c, dlls/d3d8/utils.c, dlls/d3d8/volumetexture.c:
+	Raphael Junqueira <fenix@club-internet.fr>
+	- some cleanups
+	- more cubetextures fixes (now d3d8 sdk cubemap sample work almost
+	  perfectly)
+	- add a new debug function "debug_d3dpool" and use it
+	- add a new param (the device) for the conversions functions (because
+	  we need to check caps to see how to convert)
+	- some crashes fixed in render to surface code with no stencil-depth
+	  surface
+	- a very simple cliplane fix
+	- a stupid palettes fix (stupid language)
+	- begin of anisotropic filter support
+	- begin of compressed textures support
+	- a very useful debug functions: IDirect3DSurface8Impl_SaveSnapshot to
+	  dump surfaces as png ;)
+	- many useful surfaces debug code (using SaveSnapshot)
+
+	* dlls/d3d8/device.c, dlls/d3d8/directx.c:
+	Jason Edmeades <us@the-edmeades.demon.co.uk>
+	Correct specular enable renderstate.
+
+	* dlls/d3d8/d3d8_private.h, dlls/d3d8/device.c, dlls/d3d8/stateblock.c:
+	Jason Edmeades <us@the-edmeades.demon.co.uk>
+	Avoid the use of glGet when we know the information locally.
+
+	* dlls/d3d8/directx.c, dlls/d3d8/utils.c:
+	Jason Edmeades <us@the-edmeades.demon.co.uk>
+	Opengl 1.4 added stencil wrap support as per directx (also in the
+	GL_EXT_stencil_wrap extension).
+
+	* dlls/d3d8/Makefile.in, dlls/d3d8/basetexture.c,
+	  dlls/d3d8/cubetexture.c, dlls/d3d8/d3d8_private.h,
+	  dlls/d3d8/device.c, dlls/d3d8/directx.c, dlls/d3d8/resource.c,
+	  dlls/d3d8/shader.c, dlls/d3d8/stateblock.c, dlls/d3d8/surface.c,
+	  dlls/d3d8/swapchain.c, dlls/d3d8/texture.c, dlls/d3d8/utils.c,
+	  dlls/d3d8/volumetexture.c:
+	Raphael Junqueira <fenix@club-internet.fr>
+	- implemented render to surfaces (and render to new rendertargets)
+	  using glx pbuffers (with a useful debug code to display rendered
+	  surface into window drawable)
+	- better cubetextures
+	- split utilities functions into utils.c and added more
+	- more readable debug again
+	- a better caps code (not perfect but i'll use glx code later)
+	- use of the new caps code
+	- begin of UpdateTexture
+	- begin of Cursor support
+	- cleaning most of deprecated #if 0/#endif
+	- correct some lockable/unlockable behavior
+	- correct some returns code
+
+	* dlls/ddraw/d3ddevice/mesa.c, dlls/ddraw/d3dtexture.c:
+	Lionel Ulmer <lionel.ulmer@free.fr>
+	- do not search for attached surfaces if the texture doesn't have the
+	  MIPMAP flag set
+	- add GL crit. section support for matrix setting
+	- support the various BLEND texture operations
+
+	* dlls/ddraw/mesa.c: Yorick Hardy <yh@metroweb.co.za>
+	Added the D3DTBLEND_DECAL render state.
+
+	* controls/edit.c, dlls/setupapi/queue.c, documentation/debugging.sgml,
+	  files/profile.c, memory/global.c, programs/rpcss/rpcss_main.c:
+	Francois Gouget <fgouget@free.fr>
+	Fix some typos.
+
+	* dlls/winmm/winealsa/audio.c, dlls/winmm/winearts/audio.c,
+	  dlls/winmm/winenas/audio.c, dlls/winmm/wineoss/audio.c:
+	Robert Reif <reif@earthlink.net>
+	Added a dynamically growing ring buffer for oss, alsa, arts, and nas.
+
+	* documentation/authors.ent: Tom Wickline <twickline@skybest.com>
+	Updated my e-mail address.
+
+	* libs/wpp/ppl.l: Paul Laufer <Paul.E.Laufer@jpl.nasa.gov>
+	Work around for flex brain damage.
+
+	* dlls/msvcrt/locale.c, dlls/msvcrt/msvcrt.spec:
+	Marcus Meissner <marcus@jet.franken.de>
+	Implemented localeconv() with libc function.
+
+	* include/msvcrt/time.h: Antonio Larrosa Jiménez <antlarr@tedial.com>
+	Added CLOCKS_PER_SEC.
+
+	* dlls/winsock/ws2_32.spec:
+	Antonio Larrosa Jiménez <antlarr@tedial.com>
+	Added WSASetEvent forward.
+
+	* documentation/samples/win.ini: Tom Wickline <twickline@skybest.com>
+	Added 10 new mci extensions.
+
+	* controls/listbox.c: Mike Hearn <mike@theoretic.com>
+	Update listbox directory mode to new FindFirstFile error code.
+
+	* dlls/user/text.c: Vitaliy Margolen <wine-patch@kievinfo.com>
+	DrawTextEx: honor clipping for underscores.
+
+	* winedefault.reg: Robert Reif <reif@earthlink.net>
+	Added DirectSound entries.
+
+	* graphics/x11drv/palette.c:
+	Jason Edmeades <us@the-edmeades.demon.co.uk>
+	With >256 colours, there is no need to realize a palette, so skip it
+	and return that no palette entries had to change.
+
+	* dlls/comctl32/listview.c: Dimitrie O. Paun <dpaun@rogers.com>
+	Remove bFirstPain funky optimization, it is causing too much grief.
+
+	* dlls/winedos/int21.c, files/drive.c, include/drive.h, msdos/int21.c:
+	Jukka Heinonen <jhei@iki.fi>
+	Migrate most int21 ioctl routines to winedos.
+	Migrate int21 set drive routine to winedos.
+
+	* dlls/kernel/kernel32.spec, scheduler/process.c:
+	Lionel Ulmer <lionel.ulmer@free.fr>
+	Implemented a semi-stub for GetProcessPriorityBoost.
+
+	* dlls/user/dde/server.c: Dmitry Timoshkov <dmitry@codeweavers.com>
+	Revert some really unwanted changes to the DDE code.
+
+	* dlls/ntdll/cdrom.c: Yorick Hardy <yh@metroweb.co.za>
+	Improve CDROM_GetIdeInterface (becomes CDROM_GetInterfaceInfo), in
+	order to better support SCSI drives.
+
+	* include/winsock.h: Yorick Hardy <yh@metroweb.co.za>
+	Include sys/time.h for struct timeval definition.
+
+	* dlls/ntdll/signal_i386.c: Yorick Hardy <yh@metroweb.co.za>
+	Use SA_RESTART on NetBSD.
+
+	* programs/wineconsole/curses.c: Jukka Heinonen <jhei@iki.fi>
+	Wineconsole curses backend now works even if terminal is smaller than
+	console size. Cursor is no longer left into wrong location after
+	screen updates.
+
+	* dlls/ntdll/sync.c: Jukka Heinonen <jhei@iki.fi>
+	Timer routines must check for NULL timer name.
+
+	* programs/winhelp/Si.rc, programs/winhelp/Sk.rc,
+	  programs/winhelp/hlpfile.c, programs/winhelp/winhelp.c:
+	Eric Pouech <pouech-eric@wanadoo.fr>
+	- added some missing strings to resources
+	- made the decompression code a bit more pedantic to avoid crashes
+	- fixed startup without .HLP filename passed on command line
+	- passed a few more commands from remote applications to the macros
+
+	* dlls/ddraw/Makefile.in, dlls/ddraw/ddraw/hal.c,
+	  dlls/ddraw/ddraw/main.c, dlls/ddraw/ddraw/user.c,
+	  dlls/ddraw/ddraw_private.h, dlls/ddraw/dsurface/main.c,
+	  dlls/ddraw/gl_api.h, dlls/ddraw/gl_private.h, dlls/ddraw/main.c,
+	  dlls/ddraw/mesa_private.h:
+	 Mike McCormack <mike@codeweavers.com>
+	 Lionel Ulmer <lionel.ulmer@free.fr>
+	Make DDraw not linked 'statically' to OpenGL.
+
+	* dlls/dinput/keyboard/main.c: Mark Westcott <mark@houseoffish.org>
+	DInput keyboard handling checks for incoming X11 events.
+
+	* dlls/ole32/compobj.c, dlls/ole32/compobj_private.h,
+	  dlls/ole32/errorinfo.c:
+	Ove Kaaven <ovek@transgaming.com>
+	Preliminary support for COM apartments.
+
+	* dlls/d3d8/device.c, include/d3d8types.h:
+	Jason Edmeades <us@the-edmeades.demon.co.uk>
+	Fill in lots of unimplemented render states.
+
+2003-05-22  Alexandre Julliard  <julliard@winehq.com>
+
+	* dlls/dsound/sound3d.c: Duane Clark <dclark@akamail.com>
+	Fix compile error.
+
+	* dlls/ntdll/heap.c, dlls/ntdll/ntdll_misc.h, include/thread.h,
+	  include/winternl.h, loader/module.c, memory/heap.c,
+	  programs/winedbg/winedbg.c, scheduler/thread.c:
+	Start to make use of the proper PEB structure for process
+	information.
+
+	* miscemu/main.c: Warning fix.
+
+	* dlls/kernel/kernel_main.c, win32/newfns.c:
+	Beep() is still needed in ntdll, move it back to some random file.
+
+	* miscemu/Makefile.in:
+	Added dependency on libntdll to make sure that everything links
+	properly.
+
+	* dlls/dsound/tests/dsound.c: Robert Reif <reif@earthlink.net>
+	Add 3d primary and secondary buffer tests.
+	Check reference count at object release.
+	Remove redundant cooperative level setting.
+
+	* dlls/dsound/buffer.c, dlls/dsound/capture.c,
+	  dlls/dsound/dsound_main.c, dlls/dsound/mixer.c,
+	  dlls/dsound/primary.c, dlls/dsound/propset.c, dlls/dsound/sound3d.c:
+	Robert Reif <reif@earthlink.net>
+	- make parameter checking and error notification consistent
+	- propagate driver and local function errors where needed
+	- fix error returns where pointer is given for returned data
+	- add 3d listener to primary buffer when needed
+	- copy 3d part of buffer when duplicated
+	- fix bug when primary buffer is reopened with smaller buffer
+	- loosen requirements on caps data size check
+	- set caps for emulated mode based on actual driver caps
+
+	* dlls/ddraw/d3ddevice/main.c, dlls/ddraw/d3ddevice/mesa.c,
+	  dlls/ddraw/dsurface/fakezbuffer.c:
+	Lionel Ulmer <lionel.ulmer@free.fr>
+	- remove fogging too when doing the flush of the frame buffer
+	- handle dest rect in the Blt DEPTH_FILL case
+	- fix QueryInterface on the D3D Device
+
+	* dlls/comctl32/listview.c:
+	Maxime Bellengé <maxime.bellenge@laposte.net>
+	Fix listview custom draw notification for CDDS_ITEMPREPAINT and
+	CDDS_SUBITEMPREPAINT messages.
+
+	* dlls/ole32/dcom.h, dlls/ole32/dcom.idl:
+	Ove Kaaven <ovek@transgaming.com>
+	DCOM IDL file based on the DCOM specification.
+
+	* dlls/rpcrt4/ndr_midl.c, dlls/rpcrt4/rpc_message.c,
+	  dlls/rpcrt4/rpc_misc.h, dlls/rpcrt4/rpc_server.c:
+	Ove Kaaven <ovek@transgaming.com>
+	Initial support for RPC call failures, by catching RPC server
+	exceptions and returning simple failure packets, and throwing
+	exceptions on the client side when unmarshalling the failure packet.
+
+	* dlls/d3d8/device.c: Jason Edmeades <us@the-edmeades.demon.co.uk>
+	Avoid setting and resetting the same values when there are many
+	rectangles.
+
+	* dlls/comctl32/header.c: Robert Shearman <R.J.Shearman@warwick.ac.uk>
+	Update ordering on insertion of an item.
+
+2003-05-21  Alexandre Julliard  <julliard@winehq.com>
+
+	* configure, configure.ac, dlls/shell32/Makefile.in,
+	  dlls/shell32/memorystream.c, dlls/shell32/shell32_main.h,
+	  dlls/shell32/shelllink.c, include/wine/obj_shelllink.h,
+	  programs/Makefile.in, programs/winemenubuilder/.cvsignore,
+	  programs/winemenubuilder/Makefile.in,
+	  programs/winemenubuilder/winemenubuilder.c:
+	Mike McCormack <mike@codeweavers.com>
+	Remove code that starts wineshelllink, instead create a windows
+	compatible shortcut (*.lnk) file. After creating that file, start a
+	link processor (winemenubuilder) on it, which reads it back then calls
+	wineshelllink.
+	Rework CreateStreamFromFile to create an IStream object that is
+	writeable.
+
+	* libs/port/spawn.c:
+	Reset SIGCHLD handler to default if we need to wait. Reset SIGPIPE
+	handler before exec.
+
+	* include/module.h, loader/module.c, loader/ne/module.c:
+	Moved a couple of 16-bit module functions from to loader/ne/module.c.
+
+	* dlls/kernel/Makefile.in, dlls/kernel/change.c, dlls/kernel/error16.c,
+	  dlls/kernel/kernel_main.c, dlls/ntdll/Makefile.in, misc/error.c,
+	  misc/main.c:
+	Moved misc/error.c to dlls/kernel/error16.c.
+	Get rid of misc/main.c.
+
+	* dlls/gdi/driver.c, dlls/gdi/enhmfdrv/enhmetafiledrv.h,
+	  dlls/gdi/enhmfdrv/init.c, dlls/gdi/enhmfdrv/objects.c,
+	  dlls/gdi/mfdrv/init.c, include/gdi.h, objects/gdiobj.c:
+	Mike McCormack <mike@codeweavers.com>
+	Implemented GdiComment for enhanced metafiles.
+
+	* dlls/iphlpapi/ifenum.c:
+	Fixed wrong length argument in getInterfacePhysicalByName.
+
+	* dlls/comctl32/listview.c: Dimitrie O. Paun <dpaun@rogers.com>
+	Inserting column zero should not modify the main item (spotted by
+	Robert Shearman).
+
+	* misc/cpu.c: Eric Anholt <eta@lclark.edu>
+	Added CPU detection for FreeBSD.
+
+	* dlls/kernel/tests/pipe.c: Gerald Pfeifer <pfeifer@dbai.tuwien.ac.at>
+	Avoid "might be used uninitialized" warning in exercizeServer().
+
+	* dlls/rpcrt4/rpc_message.c, dlls/rpcrt4/rpc_server.c:
+	Ove Kaaven <ovek@transgaming.com>
+	For RPC servers, don't deallocate the RPC request packet before the
+	RPC reply packet is sent, in case marshalling the reply needs any of
+	the request data.
+
+	* dlls/rpcrt4/ndr_midl.c, dlls/rpcrt4/rpcrt4.spec:
+	Ove Kaaven <ovek@transgaming.com>
+	Added semi-stub for NdrProxyErrorHandler.
+	Fixed a case of potential stack trashing.
+
+2003-05-20  Alexandre Julliard  <julliard@winehq.com>
+
+	* dlls/ntdll/Makefile.in, loader/main.c, loader/task.c,
+	  scheduler/process.c:
+	Moved all process initialisation code to process.c and removed
+	loader/main.c.
+
+	* dlls/ntdll/ntdll.spec, dlls/ntdll/om.c, include/winternl.h:
+	Eric Pouech <pouech-eric@wanadoo.fr>
+	Implemented NtQueryObject and NtSetInformationObject for the
+	ObjectDataInformation class.
+
+	* memory/global.c: Dmitry Timoshkov <dmitry@codeweavers.com>
+	Make the Global* memory API functions thread safe.
+
+	* dlls/x11drv/xvidmode.c: Carlos Lozano <clozano@andago.com>
+	Avoid printing an uninitialized buffer.
+
+	* dlls/ntdll/cdrom.c: Yorick Hardy <yh@metroweb.co.za>
+	Implement CDROM_ScsiPassThrough and CDROM_ScsiPassThroughDirect on
+	NetBSD.
+
+	* dlls/kernel/Makefile.in, dlls/kernel/system.c,
+	  dlls/ntdll/Makefile.in, memory/instr.c, misc/system.c:
+	Moved system.dll implementation to dlls/kernel.
+
+	* dlls/olecli/Makefile.in, dlls/olecli/olecli16.c,
+	  dlls/olecli/olecli_main.c:
+	Steven Edwards <Steven_Ed4153@yahoo.com>
+	Win16/32 separation of olecli32.
+
+	* dlls/ddraw/d3d_private.h, dlls/ddraw/d3dcommon.c,
+	  dlls/ddraw/d3dexecutebuffer.c, dlls/ddraw/d3dlight.c,
+	  dlls/ddraw/d3ddevice/main.c, dlls/ddraw/dsurface/fakezbuffer.c:
+	Christian Costa <titan.costa@wanadoo.fr>
+	Remove all openGL calls in execute buffers and use the Direct3D7 APIs.
+	Enable retrieving the render target surface of a device through its
+	QueryInterface method.
+	Avoid lights updating when a viewport and a device have not been
+	associated to them.
+	Clear the Z buffer only when we're asked to by Checking D3DBTL_FILL
+	flag.
+
+	* dlls/winedos/int21.c: Jukka Heinonen <jhei@iki.fi>
+	Added some long filename functions.
+
+	* configure, configure.ac, include/config.h.in, misc/cpu.c:
+	Yorick Hardy <yh@metroweb.co.za>
+	Implemented GetSystemInfo on NetBSD.
+
+	* dlls/kernel/sync.c, dlls/ntdll/Makefile.in,
+	  include/wine/server_protocol.h, scheduler/pipe.c, server/Makefile.in,
+	  server/pipe.c, server/protocol.def, server/request.h, server/trace.c:
+	Eric Pouech <pouech-eric@wanadoo.fr>
+	Implement anonymous pipes on top of named pipes.
+
+	* dlls/ddraw/d3d_private.h, dlls/ddraw/d3ddevice/mesa.c,
+	  dlls/ddraw/d3dexecutebuffer.c, dlls/ddraw/d3dvertexbuffer.c,
+	  dlls/ddraw/mesa_private.h, dlls/ddraw/dsurface/main.c:
+	Lionel Ulmer <lionel.ulmer@free.fr>
+	- some tracing fixes
+	- flush the right buffer to the screen
+
+	* dlls/ddraw/d3ddevice/mesa.c, dlls/ddraw/d3dexecutebuffer.c,
+	  dlls/ddraw/mesa_private.h:
+	Lionel Ulmer <lionel.ulmer@free.fr>
+	No need to flush the surface back if last lock was a RO lock.
+
+	* dlls/kernel/sync.c, dlls/ntdll/Makefile.in, scheduler/timer.c:
+	Moved timer functions to dlls/kernel.
+
+	* dlls/oleaut32/oleaut.c: Ove Kaaven <ovek@transgaming.com>
+	Handle requests for CLSID_PSDispatch.
+
+	* dlls/rpcrt4/cproxy.c, dlls/rpcrt4/cpsf.c, dlls/rpcrt4/cpsf.h,
+	  dlls/rpcrt4/cstub.c:
+	Ove Kaaven <ovek@transgaming.com>
+	Fixed NdrDllRegisterProxy so it registers the key names that ole32
+	expects. Better debug traces (include name of interface).
+
+	* dlls/ddraw/d3ddevice/main.c, dlls/ddraw/d3ddevice/mesa.c,
+	  dlls/ddraw/d3dtexture.c, dlls/ddraw/mesa_private.h:
+	Lionel Ulmer <lionel.ulmer@free.fr>
+	- fix bug in 'Blt DEPTH_FILL' override
+	- added a lock around the flushing of a surface to the frame buffer
+	- optimize texture loading my minimizing the cases where a conversion
+	  needs to occur and also by reusing the allocated memory
+
+	* dlls/ntdll/nt.c, dlls/ntdll/ntdll.spec, dlls/ntdll/sync.c,
+	  include/wine/server_protocol.h, include/winternl.h,
+	  scheduler/timer.c, server/protocol.def, server/timer.c,
+	  server/trace.c:
+	Eric Pouech <pouech-eric@wanadoo.fr>
+	Implemented timer related functions in ntdll and make the kernel32
+	functions use them.
+
+	* dlls/kernel/tests/pipe.c: Use the trace macro for debugging output.
+
+	* dlls/ddraw/d3ddevice/mesa.c, dlls/ddraw/mesa.c:
+	Lionel Ulmer <lionel.ulmer@free.fr>
+	Have Lights and Clipplanes transformed properly.
+
+	* dlls/ntdll/loader.c, include/module.h, loader/module.c,
+	  loader/ne/module.c, loader/pe_image.c:
+	Only create the 16-bit dummy module when we need really it.
+
+	* dlls/wineps/escape.c, dlls/wineps/init.c:
+	Huw Davies <huw@codeweavers.com>
+	Look up the printer's port in the registry if neither CreateDC or
+	StartDoc specify one.
+	Photoshop 7 has a bug that results in cbInput being 2 less than the
+	length of the string rather than 2 more.  So use the WORD at
+	in_data[0] instead.
+
+	* dlls/wineps/init.c, dlls/wineps/ppd.c, dlls/wineps/psdrv.h:
+	Huw Davies <huw@codeweavers.com>
+	CUPS uses the ppd file to store the default paper size, so we'll read
+	it from here.
+	If the ppd doesn't contain an explicit resolution then default to
+	300dpi.
+
+	* dlls/kernel/nls/*.nls, include/winnls.h:
+	Added value for default Unix codepage to all the locale definitions.
+
+	* dlls/rpcrt4/ndr_marshall.c, dlls/rpcrt4/rpcrt4.spec:
+	Ove Kaaven <ovek@transgaming.com>
+	Implemented "dereference" pointer flag.
+	Added NdrClearOutParameters stub.
+
+	* dlls/rpcrt4/ndr_ole.c: Ove Kaaven <ovek@transgaming.com>
+	Portability fix. Better debug messages (display IID of interface to
+	marshal).
+
+	* documentation/README.it:
+	Francesco Di Punzio <francesco_dipunzio@virgilio.it>
+	Italian translation of the README file.
+
+	* dlls/ddraw/d3d_private.h, dlls/ddraw/d3ddevice/main.c,
+	  dlls/ddraw/d3ddevice/mesa.c, dlls/ddraw/mesa.c:
+	Lionel Ulmer <lionel.ulmer@free.fr>
+	- implement the TFACTOR texture stage state
+	- support Texture matrices
+	- various misc. clean-ups
+
+2003-05-19  Alexandre Julliard  <julliard@winehq.com>
+
+	* dlls/user/dde/client.c, dlls/user/dde/dde_private.h,
+	  dlls/user/dde/misc.c, dlls/user/dde/server.c, dlls/user/message.c,
+	  include/dde.h, include/ddeml.h:
+	Dmitry Timoshkov <dmitry@codeweavers.com>
+	Expect multiple DNS_ flags.
+	Partially implemented DdeEnableCallback.
+	Call a callback with XTYP_CONNECT_CONFIRM after an accepted
+	XTYP_CONNECT.
+	Added traces, clarify data types, other cosmetics.
+
+	* objects/font.c: Fixed return value of GetTextFaceA.
+
+	* objects/dc.c: Huw Davies <huw@codeweavers.com>
+	After we update the mapping mode reselect the current font back into
+	the dc so that its size is recalculated.
+
+	* dlls/wineps/ps.c: Huw Davies <huw@codeweavers.com>
+	Don't add spaces in the PostScript between every pixel - this made
+	debugging easier but results in an awful lot of whitespace being sent
+	to the printer.
+	Don't generate the %%Orientation DSC comment.  The cups pstops filter
+	tries to rotate the image by 90degs when to it sees this comment.
+	Stop a crash if the document title is NULL.
+
+	* dlls/wineps/type1.c: Huw Davies <huw@codeweavers.com>
+	Reset the escapement back to zero before retrieving the outline (we're
+	already in a rotated coordinate system).
+
+	* dlls/wineps/text.c: Huw Davies <huw@codeweavers.com>
+	Fix handling of text align modes for rotated text.
+
+	* dlls/winspool/Makefile.in, dlls/winspool/info.c:
+	Huw Davies <huw@codeweavers.com>
+	Basic implementation of EnumPortsA: dump all the serial and printer
+	port names into a structure.
+
+	* programs/notepad/Da.rc, programs/notepad/De.rc,
+	  programs/notepad/En.rc, programs/notepad/Es.rc,
+	  programs/notepad/Fi.rc, programs/notepad/Fr.rc,
+	  programs/notepad/Pt.rc, programs/notepad/Si.rc,
+	  programs/notepad/Sk.rc, programs/notepad/Sw.rc,
+	  programs/notepad/Wa.rc:
+	Dmitry Timoshkov <dmitry@codeweavers.com>
+	Removed redundant LANGUAGE statements.
+
+	* programs/view/view.c: Mike McCormack <mike@codeweavers.com>
+	Fix an uninitialized buffer.
+
+	* scheduler/process.c: Francois Gouget <fgouget@codeweavers.com>
+	Fix CreateProcess("c:\Program Files\hello.bat").
+
+	* windows/winproc.c: Huw Davies <huw@codeweavers.com>
+	We can't use RtlCreateUnicodeStringFromAsciiz for WM_SETTEXT as the
+	resulting unicode string may be greater than 0xffff bytes.
+
+	* dlls/shell32/shlview.c: Aric Stewart <aric@codeweavers.com>
+	Make sure we find the drag and drop functions before calling them.
+
+	* dlls/user/tests/class.c, windows/class.c:
+	Dmitry Timoshkov <dmitry@codeweavers.com>
+	GetClassInfo returns class atom on success.
+
+	* dlls/shell32/classes.c, dlls/shell32/shell32_main.h,
+	  dlls/shell32/shlexec.c:
+	Ulrich Czekalla <uczekalla@codeweavers.com>
+	Handle SEE_MASK_CLASSKEY case for ShellExecute.
+
+	* dlls/netapi32/netapi32.c, dlls/netapi32/netapi32.spec:
+	Aric Stewart <aric@codeweavers.com>
+	Added stub for NetServerEnum.
+
+	* dlls/ddraw/d3ddevice/main.c, dlls/ddraw/d3ddevice/mesa.c,
+	  dlls/ddraw/d3dviewport.c:
+	Lionel Ulmer <lionel.ulmer@free.fr>
+	Added support for non-full screen viewports and clearing.
+
+	* dlls/gdi/enhmfdrv/dc.c, dlls/gdi/enhmfdrv/enhmetafiledrv.h,
+	  dlls/gdi/enhmfdrv/init.c:
+	Huw Davies <huw@codeweavers.com>
+	Implemented a few more device caps.
+
+	* dlls/kernel/tests/file.c: Ferenc Wagner <wferi@tba.elte.hu>
+	New _lcreat tests for filename ending in a slash and volume label
+	attribute.
+
+	* configure, configure.ac, dlls/ntdll/cdrom.c, include/config.h.in:
+	Yorick Hardy <yh@metroweb.co.za>
+	Added the implementation for CDROM_GetIdeInterface on NetBSD.
+
+	* dlls/oleaut32/safearray.c:
+	Robert Shearman <R.J.Shearman@warwick.ac.uk>
+	Use correct type of pointer in SafeArrayCreateVector to avoid memory
+	corruption. Add traces.
+
+	* dlls/shell32/debughlp.c, dlls/shell32/pidl.c, dlls/shell32/pidl.h:
+	Robert Shearman <R.J.Shearman@warwick.ac.uk>
+	Add a PIDL type For Network Provider.
+
+	* dlls/iphlpapi/iphlpapi_main.c: Pierre d'Herbemont <stegefin@free.fr>
+	Include arpa/nameser.h before resolv.h.
+
+	* controls/edit.c: Rein Klazes <rklazes@xs4all.nl>
+	Revert the WM_GETDLGCODE handling patch completely this time. It
+	breaks too much.
+
+	* dlls/winedos/int21.c, msdos/int21.c: Jukka Heinonen <jhei@iki.fi>
+	Move get current drive int21 function to winedos.
+	Fix spelling mistakes.
+	Add some drive handling helper routines.
+
+	* include/wine/obj_shellfolder.h:
+	Robert Shearman <R.J.Shearman@warwick.ac.uk>
+	Fix value of IID_IShellFolder2.
+
+	* dlls/ddraw/dsurface/dib.c: Lionel Ulmer <lionel.ulmer@free.fr>
+	Better handling of pitch set to 0.
+
+	* dlls/ddraw/d3ddevice/mesa.c: Lionel Ulmer <lionel.ulmer@free.fr>
+	Added RGB 32 surface locking (seems to work fine without resorting to
+	Alpha hacks).
+
+	* dlls/x11drv/winpos.c:
+	Make sure drawable_org is set correctly when using one of the parents
+	as drawable (found by Dmitry Timoshkov).
+
+	* dlls/x11drv/window.c:
+	Avoid the 'Below' stacking mode when changing Z order since many
+	window managers don't get it right.
+	Fix Z order synchronization for child windows (found by Dmitry
+	Timoshkov and Ulrich Czekalla).
+
+	* dlls/x11drv/event.c: Dmitry Timoshkov <dmitry@codeweavers.com>
+	Mask out MWMO_WAITALL if only server queue handle was passed in.
+
+	* dlls/wineps/bitblt.c, dlls/wineps/bitmap.c, dlls/wineps/brush.c,
+	  dlls/wineps/clipping.c, dlls/wineps/graphics.c, dlls/wineps/ps.c,
+	  dlls/wineps/psdrv.h, dlls/wineps/text.c:
+	Huw Davies <huw@codeweavers.com>
+	Rework clipping so that the PS clip path is only set just before any
+	graphics output event. Doing it this way means we don't ever need to
+	call initclip which is a Good Thing.
+
+	* files/dos_fs.c: Mike McCormack <mike@codeweavers.com>
+	Removed unnecessary casts.
+
+	* include/wingdi.h, objects/clipping.c, objects/region.c:
+	Huw Davies <huw@codeweavers.com>
+	GetRandomRgn(...,1) returns the current clipping rgn.
+	Moved GetRandomRgn and the MetaRgn functions to objects/clipping.c.
+
+	* windows/mdi.c: Dmitry Timoshkov <dmitry@codeweavers.com>
+	Restore MDI window in the case of disabled maximize button.
+
+	* windows/cursoricon.c: Dmitry Timoshkov <dmitry@codeweavers.com>
+	Initialize hbmColor only for color icons in GetIconInfo.
+
+	* dlls/user/message.c, include/win.h, windows/win.c, windows/winpos.c:
+	Catch broadcast window handles in functions that are implemented using
+	SendMessage.
+
+	* dlls/user/user32.spec, windows/message.c:
+	Mike McCormack <mike@codeweavers.com>
+	Implemented BroadcastSystemMessageW.
+
+	* dlls/shell32/shlexec.c: Aric Stewart <aric@codeweavers.com>
+	Added support for the %L escape.
+
+	* dlls/shell32/shellord.c, dlls/shell32/undocshell.h:
+	Mike McCormack <mike@codeweavers.com>
+	Implemented ReadCabinetState and WriteCabinetState.
+
+	* dlls/setupapi/Makefile.in, dlls/setupapi/infparse.c,
+	  dlls/setupapi/queue.c:
+	Aric Stewart <aric@codeweavers.com>
+	Respect the version SP_COPY flags when installing files.
+	Make GenInstall16 only copy files if the version is new or same.
+
+	* dlls/ole32/ole32.spec, dlls/ole32/ole32_main.c:
+	Mike McCormack <mike@codeweavers.com>
+	Semi-correct implementation of OleMetafilePictFromIconAndLabel.
+
+	* dlls/gdi/enhmfdrv/bitblt.c, dlls/gdi/enhmfdrv/init.c:
+	Mike McCormack <mike@codeweavers.com>
+	Implemented StretchDIBits in the EMF code.
+
+	* dlls/gdi/enhmfdrv/graphics.c:
+	Dmitry Timoshkov <dmitry@codeweavers.com>
+	Fixed some issues in EMFDRV_ExtTextOut.
+
+	* dlls/gdi/mfdrv/init.c: Huw Davies <huw@codeweavers.com>
+	Record escapes in metafiles.
+
+2003-05-17  Alexandre Julliard  <julliard@winehq.com>
+
+	* dlls/ddraw/d3d_private.h, dlls/ddraw/d3ddevice/mesa.c,
+	  dlls/ddraw/d3dexecutebuffer.c, dlls/ddraw/ddraw_private.h,
+	  dlls/ddraw/mesa_private.h:
+	Lionel Ulmer <lionel.ulmer@free.fr>
+	Support for device surface locking.
+
+	* dlls/d3d8/basetexture.c, dlls/d3d8/cubetexture.c,
+	  dlls/d3d8/d3d8_private.h, dlls/d3d8/device.c, dlls/d3d8/directx.c,
+	  dlls/d3d8/resource.c, dlls/d3d8/shader.c, dlls/d3d8/stateblock.c,
+	  dlls/d3d8/surface.c, dlls/d3d8/texture.c,
+	  dlls/d3d8/vshaderdeclaration.c:
+	Raphael Junqueira <fenix@club-internet.fr>
+	- mor usefull debug functions debug_d3dusage and debug_d3ddevicetype
+	- fix a crash in pixel shader parser (happened with unreal2)
+	- currently desactive pixel shaders caps (with #define) while hw
+	  shaders code isn't merged
+	- when we have a special debug channel for shader, use it ;)
+	- fix again some stubs return value
+	- more more readable traces now (principaly IDirect3D8 capacities
+	  check and surface locking code) using new debug functions
+	- fix/cleaning the surface locking code
+	- now we support D3DTOP_SUBSTRACT so declare it in caps
+	- now support true 32bit (well X 24 bit can be used as 32 bit in caps
+	  code)
+	- first try to get D3DTSS_TCI_CAMERASPACENORMAL and
+	  D3DTSS_TCI_CAMERASPACEREFLECTIONVECTOR look good
+	- native support 32 bit support (now application can choose 16 or 32
+	  bit support) if current resolution is 24 bit (as we can only launch
+	  games in windowed mode)
+	- textures palettes support
+	- fix reflexion placement code (the sdk sample begin to work)
+	- fix a stupid crash when using traces in vshaderdeclaration
+	- more more readable traces (init/caps)
+	- more cubetextures fixes
+
+	* dlls/ddraw/d3ddevice/mesa.c, dlls/ddraw/mesa.c:
+	Lionel Ulmer <lionel.ulmer@free.fr>
+	Silence some TRACEs to better spot real errors.
+
+	* dlls/oleaut32/variant.c:
+	Stefan Leichter <Stefan.Leichter@camLine.com>
+	Partial implementaion of VarBstrFromDec.
+
+2003-05-16  Alexandre Julliard  <julliard@winehq.com>
+
+	* dlls/user/hook16.c, dlls/user/wnd16.c, loader/task.c,
+	  windows/cursoricon.c:
+	Avoid using the MapHModule functions.
+
+	* dlls/kernel/kernel32.spec, dlls/user/user_main.c, loader/ne/module.c:
+	Call the user signal proc for exe modules too, to avoid duplicating
+	the module cleanup code.
+
+	* dlls/kernel/Makefile.in, dlls/kernel/local16.c, memory/heap.c,
+	  memory/local.c:
+	Moved most local heap functions to dlls/kernel.
+
+	* dlls/oleaut32/variant.c, include/wtypes.h, include/wtypes.idl:
+	Stefan Leichter <Stefan.Leichter@camLine.com>
+	Fixed DECIMAL_SETZERO
+	Removed a workaround for the former problem.
+
+	* tools/wineinstall: Mike Hearn <mike@theoretic.com>
+	Silence error on non-redhat systems.
+
+	* tools/c2man.pl: Hans Leidekker <hans@it.vu.nl>
+	Force perl to use byte semantics.
+
+	* dlls/wininet/http.c:
+	Uwe Bonnes <bon@elektron.ikp.physik.tu-darmstadt.de>
+	HTTP_HttpOpenRequestA: Calculate size from the right argument.
+
+	* graphics/bitblt.c: Jaekil Lee <Jaekil.Lee@efi.com>
+	Implement MaskBlt using BitBlt (adapted by Dimitrie O. Paun).
+
+	* dlls/d3d8/device.c: Jason Edmeades <us@the-edmeades.demon.co.uk>
+	Implement texture transform flags the best we can for now.
+
+	* dlls/kernel/Makefile.in, dlls/kernel/atom.c, dlls/ntdll/Makefile.in,
+	  memory/atom.c:
+	Moved atom functions to dlls/kernel.
+
+	* dlls/d3d8/device.c: Jason Edmeades <us@the-edmeades.demon.co.uk>
+	Fixed range checking on the number of lights.
+	Silence the fixmes.
+
+2003-05-15  Alexandre Julliard  <julliard@winehq.com>
+
+	* configure, configure.ac, dlls/comctl32/Makefile.in,
+	  dlls/comctl32/tests/.cvsignore, dlls/comctl32/tests/Makefile.in,
+	  dlls/comctl32/tests/dpa.c:
+	Uwe Bonnes <bon@elektron.ikp.physik.tu-darmstadt.de>
+	New comctl32 test directory and test case for DPA_Search.
+
+	* dlls/comctl32/comctl32undoc.c:
+	Uwe Bonnes <bon@elektron.ikp.physik.tu-darmstadt.de>
+	DPA_Search: Handle DPAS_INSERTBEFORE on empty list.
+
+	* dlls/Makefile.in, dlls/kernel/.cvsignore, dlls/kernel/Makefile.in,
+	  dlls/kernel/wprocs.spec, dlls/ntdll/Makefile.in,
+	  dlls/winedos/.cvsignore, dlls/winedos/Makefile.in,
+	  dlls/winedos/vxd.c, dlls/winedos/wprocs.spec, msdos/vxd.c:
+	Moved vxd support to winedos.
+
+	* dlls/d3d8/device.c: Jason Edmeades <us@the-edmeades.demon.co.uk>
+	Supply the correct box on the screen to be processed during the clear
+	call, using opengl coordinates, not directx coordinates.
+
+	* dlls/user/user.exe.spec, dlls/user/user16.c, include/module.h,
+	  include/user.h, loader/ne/module.c, loader/ne/segment.c,
+	  loader/task.c, scheduler/process.c, scheduler/thread.c,
+	  windows/user.c:
+	Get rid of the 32-bit user signal proc since we always run builtin
+	USER now.  Moved USER module cleanups to the 16-bit signal proc.
+
+	* dlls/oleaut32/oleaut32.spec, dlls/oleaut32/variant.c:
+	Stefan Leichter <Stefan.Leichter@camLine.com>
+	Added stub for VarBstrFromDec.
+
+	* dlls/oleaut32/typelib.c: Marcus Meissner <marcus@jet.franken.de>
+	Handle VT_I2 <-> VT_USERDEFINED/TKIND_ENUM conversions too.
+
+	* files/file.c: Philip Mason <pmason@ricardo.com>
+	Force FILE_GetTempFileName to continue looking for new temp file name
+	if error returned from CreateFileW is ERROR_SHARING_VIOLATION.
+
+	* dlls/d3d8/device.c: Jason Edmeades <us@the-edmeades.demon.co.uk>
+	Solved the transparency problem seen in the ClipMirror SDK sample
+	properly. Also a few tabs->spaces to correct formatting.
+
+	* dlls/ole32/Makefile.in, dlls/ole32/memlockbytes.c,
+	  dlls/ole32/memlockbytes16.c:
+	Steven Edwards <Steven_Ed4153@yahoo.com>
+	Separate Win16 and Win32 implementations in memlockbytes.
+
+	* dlls/iphlpapi/ipstats.c: Gerald Pfeifer <pfeifer@dbai.tuwien.ac.at>
+	In getTcpTable(), guard Linux-specific constants by #ifdef.
+
+	* dlls/winedos/int21.c: Thomas Mertes <thomas.mertes_at_gmx.at>
+	Implement file control block (FCB) functions:
+	  INT21_OpenFileUsingFCB [0x0f],
+	  INT21_CloseFileUsingFCB [0x10],
+	  INT21_SequenialReadFromFCB [0x14],
+	  INT21_SequenialWriteToFCB [0x15],
+	  INT21_ReadRandomRecordFromFCB [0x21],
+	  INT21_WriteRandomRecordToFCB [0x22],
+	  INT21_RandomBlockReadFromFCB [0x27],
+	  INT21_RandomBlockWriteToFCB [0x28].
+
+	* dlls/kernel/tests/pipe.c: Dan Kegel <dank@kegel.com>
+	More named pipes tests.
+
+	* dlls/Makefile.in, dlls/make_dlls:
+	Explicitly clean generated symlinks.
+	Removed no longer needed install dependencies.
+
+	* dlls/kernel/sync.c, dlls/kernel/tests/pipe.c, dlls/ntdll/file.c,
+	  include/wine/server_protocol.h, server/fd.c, server/file.c,
+	  server/file.h, server/handle.c, server/named_pipe.c,
+	  server/protocol.def, server/serial.c, server/trace.c:
+	Mike McCormack <mike@codeweavers.com>
+	- rewrite of the named pipe code
+	- allow NtFileFlushBuffers to wait
+	- allow DisconnectNamedPipe to invalidate client cached fd
+	- fix the pipe test now that one extra test passes
+
+	* dlls/ntdll/ntdll.spec, dlls/ntdll/path.c, dlls/ntdll/rtl.c,
+	  include/winternl.h, scheduler/process.c:
+	Eric Pouech <pouech-eric@wanadoo.fr>
+	Implemented RtlDosPathNameToNtPathName_U, RtlGetCurrentDirectory_U,
+	RtlGetFullPathName_U and RtlSetCurrentDirectory_U (the last one
+	partially as we can't test whether a path exists or not).
+
+	* dlls/imm32/imm.c: Raphael Junqueira <fenix@club-internet.fr>
+	Fix a null pointer crash in ImmGetOpenStatus.
+
+	* dlls/d3d8/cubetexture.c: Raphael Junqueira <fenix@club-internet.fr>
+	Fix compilation error reported by Stefan Leichter when using old
+	openGL headers.
+
+	* dlls/d3d8/directx.c: Jason Edmeades <us@the-edmeades.demon.co.uk>
+	Previous viewport fix only works for full screen applications as we
+	didn't change the back buffer size information until after copying the
+	presentation parameters, so when setting up the viewport the
+	backbufferwidth/height was 0. Moved the copy until after it has been
+	corrected.
+
+	* dlls/oleaut32/oleaut32.spec, dlls/oleaut32/variant.c:
+	Stefan Leichter <Stefan.Leichter@camLine.com>
+	Partial implementation of VarDecFromStr.
+
+	* controls/edit.c: Rein Klazes <rklazes@xs4all.nl>
+	Revert the previous patch for capturing keys in an edit-listbox combo.
+
+2003-05-14  Alexandre Julliard  <julliard@winehq.com>
+
+	* dlls/ntdll/loader.c, include/module.h, loader/pe_image.c,
+	  scheduler/process.c, scheduler/thread.c:
+	Rewrote module TLS support and moved it to ntdll.
+
+	* dlls/ntdll/signal_i386.c, include/miscemu.h, memory/instr.c:
+	Made INSTR_EmulateInstruction return the exception code.
+	Don't allow intXX instructions from 32-bit code (based on a patch by
+	Jukka Heinonen).
+
+	* tools/winebuild/import.c:
+	Only print warning on nm failure because it fails on darwin if there
+	are no symbols (reported by Pierre d'Herbemont).
+
+	* dlls/winmm/winejack/Makefile.in: Marcus Meissner <meissner@suse.de>
+	winejack.drv.so needs -lwine_uuid too.
+
+	* dlls/d3d8/shader.c: Raphael Junqueira <fenix@club-internet.fr>
+	- new debug channel for shaders code 'd3d_shader'
+	- more debugging traces
+
+	* dlls/d3d8/d3d8_private.h, dlls/d3d8/device.c:
+	Raphael Junqueira <fenix@club-internet.fr>
+	- declare a new debug chanel for vertex shaders
+	- some useful debug functions for textures format
+	- correct DrawPrimitive (RHW correctness and vshader RHW)
+	- more copyrects fixes (only two unimplemented behavior remain)
+	- fix GetFrontBuffer to get screenshots samples working
+	- add D3DCOLORTOGLFLOAT4 and use it
+	- first try of D3DRS_FOGTABLEMODE support
+
+	* dlls/d3d8/directx.c: Raphael Junqueira <fenix@club-internet.fr>
+	Declare that we can support cube textures now (currently only creation
+	is done).
+
+	* include/winuser.h: Dimitrie O. Paun <dpaun@rogers.com>
+	Add missing ENDSESSION_LOGOFF define.
+
+	* dlls/commdlg/printdlg.c: Dmitry Timoshkov <dmitry@codeweavers.com>
+	Use SetDlgItemText instead of sending a WM_SETTEXT.
+
+	* dlls/d3d8/device.c: Jason Edmeades <us@the-edmeades.demon.co.uk>
+	Make sure the viewport is from the GL (bottom left) not the DirectX
+	(top left).
+
+2003-05-13  Alexandre Julliard  <julliard@winehq.com>
+
+	* dlls/gdi/enhmfdrv/init.c, dlls/gdi/mfdrv/init.c, dlls/ttydrv/dc.c,
+	  graphics/x11drv/bitblt.c, graphics/x11drv/dib.c,
+	  graphics/x11drv/graphics.c, graphics/x11drv/init.c,
+	  graphics/x11drv/palette.c, include/gdi.h, objects/bitmap.c,
+	  objects/dc.c, objects/gdiobj.c:
+	Use a different magic for memory DCs and get rid of the DC_MEMORY
+	flag.
+
+	* dlls/d3d8/volumetexture.c: Raphael Junqueira <fenix@club-internet.fr>
+	- moved loading code of volume texture to VolumeTexture::Preload as
+	  done in Texture/CubeTexture
+	- fixed some stubs return values
+
+	* dlls/d3d8/cubetexture.c: Raphael Junqueira <fenix@club-internet.fr>
+	- cubetexture loading/preloading
+	- some stubs must return 0 (and non D3D_OK)
+	- fix IDirect3DCubeTexture8Impl::Get* (potentials CD)
+
+	* dlls/d3d8/device.c: Jason Edmeades <us@the-edmeades.demon.co.uk>
+	Properly support texture coordinate indexes.
+
+	* dlls/d3d8/directx.c: Jason Edmeades <us@the-edmeades.demon.co.uk>
+	Make sure we advertize our capabilites correctly.
+
+	* dlls/kernel/tests/path.c: Make the test pass on NT4 too.
+
+	* dlls/d3d8/stateblock.c: Jason Edmeades <us@the-edmeades.demon.co.uk>
+	Initialize the tex coord index correctly.
+
+	* dlls/d3d8/device.c: Jason Edmeades <us@the-edmeades.demon.co.uk>
+	CopyRects needs to lock the area it is copying to (esp. if that area
+	is the back buffer, as locking/unlocking causes glread/draw pixels).
+
+	* dlls/d3d8/directx.c: Christian Costa <titan.costa@wanadoo.fr>
+	Mark some surface formats as not supported.
+
+	* dlls/msvcrt/scanf.h, dlls/msvcrt/tests/scanf.c:
+	Uwe Bonnes <bon@elektron.ikp.physik.tu-darmstadt.de>
+	Fix some sscanf cases and testcase to get wxtide32.exe running.
+
+	* dlls/user/exticon.c: Robert Shearman <R.J.Shearman@warwick.ac.uk>
+	PrivateExtractIcon* should search the path for the icon file.
+
+	* dlls/comctl32/toolbar.c: Vitaliy Margolen <wine-patch@kievinfo.com>
+	Revert change for resizing buttons.
+
+	* dlls/iphlpapi/iphlpapi_main.c, dlls/iphlpapi/ipstats.c:
+	Gerald Pfeifer <pfeifer@dbai.tuwien.ac.at>
+	Add missing #includes for non-Linux systems.
+
+	* tools/wineinstall: Mike Hearn <mike@theoretic.com>
+	Make sure prefix is actually honoured by configure.
+	Temporary hack for redhat users to enable NPTL.
+
+	* dlls/kernel/resource.c: Dmitry Timoshkov <dmitry@codeweavers.com>
+	Fix an obvious typo in get_res_name. Spotted by Mike McCormack.
+
+	* dlls/oleaut32/tests/safearray.c, dlls/oleaut32/tests/vartest.c:
+	Dimitrie O. Paun <dpaun@rogers.com>
+	Make sure winsock.h gets included before stdlib.h.
+
+	* dlls/user/user32.spec, include/winuser.h, windows/queue.c:
+	Mike McCormack <mike@codeweavers.com>
+	Implemented SetMessageExtraInfo.
+
+	* dlls/kernel/tests/path.c: Francois Gouget <fgouget@codeweavers.com>
+	Added a test for GetLongPathNameA("c:").
+	Added a test for GetFullPathNameA("c:").
+	Fix a number of messages that referred to GetLongPathName instead of
+	GetFullPathName.
+
+	* dlls/shdocvw/.cvsignore, dlls/shdocvw/Makefile.in,
+	  dlls/shdocvw/version.rc, dlls/winsock/.cvsignore,
+	  dlls/winsock/Makefile.in, dlls/winsock/version.rc,
+	  dlls/wsock32/.cvsignore, dlls/wsock32/Makefile.in,
+	  dlls/wsock32/version.rc:
+	Francois Gouget <fgouget@codeweavers.com>
+	Added version information.
+
+	* dlls/winspool/info.c, dlls/winspool/winspool.drv.spec:
+	Aric Stewart <aric@codeweavers.com>
+	Stub AddPortA.
+
+	* dlls/user/message.c: Mike McCormack <mike@codeweavers.com>
+	Fixed packing/unpacking of WM_WININICHANGE.
+
+	* dlls/shell32/shell32.spec, dlls/shell32/shellord.c:
+	Ulrich Czekalla <uczekalla@codeweavers.com>
+	Partial implementation/stub of undocumented function shell32.256.
+
+	* dlls/shell32/shell32_main.c: Huw Davies <huw@codeweavers.com>
+	Pass correct pointer to CoCreateInstance in SHLoadInProc.
+
+	* dlls/setupapi/devinst.c, dlls/setupapi/setupx.spec:
+	Huw Davies <huw@codeweavers.com>
+	Implement a load of setupx Di* stubs.
+
+	* dlls/setupapi/install.c: Huw Davies <huw@codeweavers.com>
+	Use strtoulW instead of strtolW for DWORD conversion.
+
+	* dlls/oleaut32/typelib.c: Dmitry Timoshkov <dmitry@codeweavers.com>
+	Remove redundant ITypeLib2_AddRef's. Makes
+	LoadTypeLib/ITypeLib2_Release work.
+
+	* dlls/ole32/compobj.c, dlls/ole32/ole32.spec:
+	Mike McCormack <mike@codeweavers.com>
+	Added stub for OleDoAutoConvert.
+
+	* dlls/imm32/Makefile.in, dlls/imm32/imm.c:
+	Aric Stewart <aric@codeweavers.com>
+	Implemented a number of IMM functions.
+	Create a default HWND to process WM_IME messages.
+
+	* dlls/commdlg/filedlg.c: Huw Davies <huw@codeweavers.com>
+	Better handling of OFN_NOVALIDATE for win31 style file dialogs.
+
+	* dlls/comctl32/pager.c: Ulrich Czekalla <uczekalla@codeweavers.com>
+	Fixed bad non-client calculation.
+
+	* dlls/comctl32/datetime.c: Huw Davies <huw@codeweavers.com>
+	Fix DTM_SETSYSTEMTIME.
+	Make the show/hide button actually do something.
+	Add support for the 'yyyy' format.
+
+	* dlls/iphlpapi/ifenum.c: Fixed some string overflows.
+
+	* dlls/iphlpapi/.cvsignore: Added iphlpapi.spec.def.
+
+	* dlls/kernel/tests/pipe.c: Dimitrie O. Paun <dpaun@rogers.com>
+	Make sure winsock.h gets included before stdlib.h.
+
+	* documentation/winelib-intro.sgml: Dimitrie O. Paun <dpaun@rogers.com>
+	Fix a few style issues.
+
+	* tools/winedump/main.c, tools/winedump/pe.c:
+	Eric Pouech <pouech-eric@wanadoo.fr>
+	Listed recently added sections' types (resource, tls) for dumping to
+	usage strings.
+	Fixed some header size testing.
+
+	* programs/wineconsole/registry.c: Eric Pouech <pouech-eric@wanadoo.fr>
+	Quiet some valgrind reports.
+
+	* dlls/kernel/tests/.cvsignore, dlls/kernel/tests/Makefile.in,
+	  dlls/kernel/tests/console.c:
+	Eric Pouech <pouech-eric@wanadoo.fr>
+	Added a set of tests for the console API.
+
+	* dlls/kernel/console.c: Eric Pouech <pouech-eric@wanadoo.fr>
+	Fixed console output for non wrapped mode.
+
+	* dlls/ntdll/tests/env.c: Eric Pouech <pouech-eric@wanadoo.fr>
+	Enhanced test for queries, added tests for expansion.
+
+	* dlls/ntdll/env.c, dlls/ntdll/ntdll.spec, include/winternl.h:
+	Eric Pouech <pouech-eric@wanadoo.fr>
+	Implemented RtlExpandEnvironmentStrings_U and fixed an incorrect
+	behavior in RtlQueryEnvironmentString.
+
+	* tools/winegcc.c: Dimitrie O. Paun <dpaun@rogers.com>
+	Ignore -mthreads, it's not needed in Unix.
+
+	* dlls/shdocvw/shdocvw.spec, dlls/shdocvw/shdocvw_main.c:
+	Andreas Mohr <andi@rhlx01.fht-esslingen.de>
+	Added some stubs needed for Win98 explorer.exe.
+
+	* dlls/wsock32/Makefile.in, dlls/wsock32/socket.c,
+	  dlls/wsock32/wscontrol.h:
+	Juan Lang <juan_lang@yahoo.com>
+	Changed wsock32 to use the new iphlpapi for interface and route
+	enumeration in WsControl.
+
+	* dlls/winsock/Makefile.in, dlls/winsock/socket.c:
+	Juan Lang <juan_lang@yahoo.com>
+	Use iphlpapi to implement SIO_GET_INTERFACE_LIST in WSAIoctl, and
+	corrects iiFlags entry in the returned interface list.
+
+	* programs/winedbg/gdbproxy.c: Use int instead of socklen_t.
+
+	* controls/edit.c: Vitaliy Margolen <wine-patch@kievinfo.com>
+	Fix problem with capturing [return] keys in multi-line edits.
+
+	* dlls/comctl32/toolbar.c: Vitaliy Margolen <wine-patch@kievinfo.com>
+	Get rid of direct ImageList access hacks.
+
+	* dlls/comctl32/imagelist.c, dlls/comctl32/imagelist.h:
+	Vitaliy Margolen <wine-patch@kievinfo.com>
+	Rearrange members of HIMAGELIST to match Windows.
+	Reuse image and mask DCs.
+
+	* dlls/ntdll/signal_powerpc.c: Pierre d'Herbemont <stegefin@free.fr>
+	- Save more registers (exception, float...) if they are defined.
+	- Add Mac OS X signal support.
+
+	* configure, configure.ac, dlls/Makefile.in, dlls/iphlpapi/.cvsignore,
+	  dlls/iphlpapi/Makefile.in, dlls/iphlpapi/ifenum.c,
+	  dlls/iphlpapi/ifenum.h, dlls/iphlpapi/iphlpapi.spec,
+	  dlls/iphlpapi/iphlpapi_main.c, dlls/iphlpapi/ipstats.c,
+	  dlls/iphlpapi/ipstats.h, include/Makefile.in, include/config.h.in,
+	  include/ipexport.h, include/iphlpapi.h, include/ipifcons.h,
+	  include/iprtrmib.h, include/iptypes.h:
+	Juan Lang <juan_lang@yahoo.com>
+	Added an implementation of iphlpapi.dll; most Get* functions
+	introduced through Win98 are included.
+
+	* dlls/kernel/kernel_main.c, scheduler/sysdeps.c, scheduler/thread.c:
+	Allocate/free the 16-bit thread stack in the kernel dll init routine.
+
+	* dlls/gdi/printdrv.c:
+	Reset signal handlers when starting child process.
+
+	* dlls/avifil32/acmstream.c, dlls/avifil32/api.c,
+	  dlls/avifil32/avifile.c, dlls/ddraw/d3ddevice/mesa.c,
+	  dlls/dplayx/name_server.c, dlls/kernel/tests/path.c,
+	  dlls/msvcrt/except.c, dlls/ntdll/rtlbitmap.c, dlls/ole32/compobj.c,
+	  dlls/ole32/compobj_private.h, dlls/ole32/ftmarshal.c,
+	  dlls/ole32/marshal.c, dlls/ole32/oleproxy.c, dlls/ole32/storage32.c,
+	  dlls/oleaut32/tmarshal.c, dlls/oleaut32/typelib.c,
+	  dlls/oleaut32/usrmarshal.c, dlls/rpcrt4/rpcrt4_main.c,
+	  dlls/rpcrt4/rpcss_np_client.c, dlls/setupapi/setupapi.rc,
+	  dlls/shell32/shres.rc, dlls/shlwapi/path.c,
+	  documentation/documentation.sgml, documentation/porting.sgml,
+	  documentation/winelib-porting.sgml, graphics/painting.c,
+	  msdos/ppdev.c, programs/rpcss/rpcss_main.c, tools/c2man.pl:
+	Francois Gouget <fgouget@free.fr>
+	Fix miscellaneous spelling errors and typos.
+
+	* include/winsock.h, include/winsock2.h:
+	Dimitrie O. Paun <dpaun@rogers.com>
+	Add prototype for __WSAFDIsSet. Fix syntax error.
+
+	* dlls/ole32/ole2stubs.c, include/objidl.h, include/objidl.idl:
+	Robert Shearman <R.J.Shearman@warwick.ac.uk>
+	- Implement a few more cases in PropVariantClear.
+	- Partially implement PropVariantCopy.
+	- Implement FreePropVariantArray.
+
+	* documentation/samples/config: Marcus Meissner <meissner@suse.de>
+	Added 2 more InstallShield temporary exes for Desktop Mode.
+
+	* dlls/kernel/wowthunk.c: Eric Pouech <eric.pouech@wanadoo.fr>
+	Support 14 and 15 arguments in WOW_CallProc32W16.
+
+	* dlls/comctl32/listview.c:
+	Robert Shearman <R.J.Shearman@warwick.ac.uk>
+	Fix use of freed memory.
+
+	* dlls/msvcrt/tests/file.c, dlls/shlwapi/tests/path.c:
+	Francois Gouget <fgouget@free.fr>
+	Change the #include order so the test compiles with the MSVC headers.
+	Fix a few signed/unsigned warnings.
+
+	* tools/winapi/msvcmaker: Francois Gouget <fgouget@free.fr>
+	library/Makefile.in and unicode/Makefile.in don't exist anymore.
+
+	* misc/main.c: Dimitrie O. Paun <dpaun@rogers.com>
+	Small debug channel cleanup.
+
+	* dlls/ntdll/loader.c: Robert Shearman <R.J.Shearman@warwick.ac.uk>
+	Fix NULL pointer error when displaying error message about missing
+	forwarded export.
+
+2003-05-12  Alexandre Julliard  <julliard@winehq.com>
+
+	* dlls/user/user32.spec:
+	Commented out the new win98 exports, they are causing trouble.
+
+	* dlls/ntdll/ntdll.spec: Aric Stewart <aric@codeweavers.com>
+	RtlUnicodeToMultiByteSize argument is not a null terminated string,
+	use 'ptr'.
+
+	* dlls/ntdll/heap.c: Dmitry Timoshkov <dmitry@codeweavers.com>
+	Added missing return in HEAP_ValidateInUseArena.
+
+	* dlls/msvcrt/dir.c, dlls/msvcrt/msvcrt.spec:
+	Mike McCormack <mike@codeweavers.com>
+	Implemented _wfullpath.
+
+	* dlls/mpr/pwcache.c: Aric Stewart <aric@codeweavers.com>
+	Better error return values from stub functions.
+
+	* dlls/mpr/mpr.spec, dlls/mpr/mpr_main.c:
+	Aric Stewart <aric@codeweavers.com>
+	Added stub for DllCanUnloadNow.
+
+	* dlls/kernel/sync.c: Aric Stewart <aric@codeweavers.com>
+	Ignore requested access rights when emulated version is not NT.
+
+	* dlls/gdi/mfdrv/graphics.c: Warren Baird <Warren_Baird@cimmetry.com>
+	Fix the PolyPolygon function so it really generates a polypolygon and
+	not multiple sets of polygons.
+
+	* dlls/gdi/printdrv.c: Huw Davies <huw@codeweavers.com>
+	Allow the cups port to be redirectable.  This gives us the option of
+	piping the PostScript through something before it gets sent to the
+	printer (like we can already do for non-cups systems).
+
+	* dlls/ctl3d/ctl3d32.c, dlls/ctl3d/ctl3d32.spec:
+	Mike McCormack <mike@codeweavers.com>
+	Added ordinals to ctl3d32.dll, MyODBC references it by ordinal.
+
+	* controls/combo.c, controls/edit.c:
+	Aric Stewart <aric@codeweavers.com>
+	Added handling of WM_IME_CHAR.
+
+	* controls/static.c, include/winuser.h:
+	Dmitry Timoshkov <dmitry@codeweavers.com>
+	Added definition of SS_USERITEM.
+
+	* dlls/crypt32/crypt32.spec, dlls/crypt32/main.c, include/wincrypt.h:
+	Mike McCormack <mike@codeweavers.com>
+	Added stubs for CertSaveStore and CertEnumCertificatesInStore.
+
+	* dlls/comctl32/monthcal.c: Huw Davies <huw@codeweavers.com>
+	Fixed a possible memory corruption.
+	Fixed a memory leak.
+
+	* controls/menu.c: Don't track the system menu for managed windows.
+
+	* dlls/d3d8/cubetexture.c, dlls/d3d8/d3d8_private.h,
+	  dlls/d3d8/device.c, dlls/d3d8/surface.c, dlls/d3d8/texture.c,
+	  dlls/d3d8/volume.c, dlls/d3d8/volumetexture.c:
+	Raphael Junqueira <fenix@club-internet.fr>
+	- surface pool init fixes
+	- minor indentation and traces fixes
+	- fix locking/unlocking/dirty behavior (dirtify on lock) +
+	  optimisations (only copy when dirty)
+	- fix IDirect3DDevice8::Clear behavior (problem seen after a
+	  locking/unlocking code error)
+	- begin to fix volume and cube textures management
+
+	* dlls/ddraw/d3ddevice/main.c, dlls/ddraw/d3ddevice/mesa.c,
+	  dlls/ddraw/d3dtexture.c, dlls/ddraw/direct3d/main.c,
+	  dlls/ddraw/direct3d/mesa.c, dlls/ddraw/mesa.c,
+	  dlls/ddraw/mesa_private.h:
+	Lionel Ulmer <lionel.ulmer@free.fr>
+	- separate geometry tracing in a new debug channel (ddraw_geom)
+	- added handling for some new texturing ops
+	- prepare for addition of multi-texturing
+	- another way to fix the device enumeration for the reference device
+	- fix compilation with some glext.h files
+	- fix a bug in one texture conversion function
+	- added new texture format (but still texturing problems in 3DMark2000)
+
+	* dlls/wsock32/wscontrol.h: Pierre d'Herbemont <stegefin@free.fr>
+	Undef if_type, if_mtu and if_lastchange for darwin.
+
+	* server/context_powerpc.c: Pierre d'Herbemont <stegefin@free.fr>
+	Add support for Darwin's ptrace.
+
+2003-05-11  Alexandre Julliard  <julliard@winehq.com>
+
+	* dlls/ddraw/ddraw/main.c: Lionel Ulmer <lionel.ulmer@free.fr>
+	Initialize the dwMipmapCount field even if the application forgets it.
+
+	* dlls/ddraw/d3d_private.h, dlls/ddraw/d3ddevice/main.c,
+	  dlls/ddraw/d3ddevice/mesa.c, dlls/ddraw/d3dtexture.c:
+	Lionel Ulmer <lionel.ulmer@free.fr>
+	- added mipmapping support
+	- added locking for concurrent access to the D3D device
+	- improved tracing
+	- added support for most texture combine stages (inspired by the D3D8
+	  code)
+	- disable current lock / unlock code pending proper solution
+
+	* dlls/comctl32/listview.c: Stephan Beuze <fbiggun@hotmail.com>
+	Implemented Get/SetToolTips functions.
+
+	* dlls/comctl32/comctl32.spec, dlls/comctl32/comctl32undoc.c,
+	  dlls/comctl32/commctrl.c:
+	Ordinals 410-413 are the window subclassing functions.
+
+	* documentation/wine-faq.sgml:
+	Store the HTML into index.html like for the other docs.
+
+	* dlls/d3d8/d3d8_private.h, dlls/d3d8/device.c, dlls/d3d8/directx.c,
+	  dlls/d3d8/indexbuffer.c, dlls/d3d8/resource.c,
+	  dlls/d3d8/stateblock.c, dlls/d3d8/surface.c, dlls/d3d8/swapchain.c,
+	  dlls/d3d8/vertexbuffer.c, dlls/d3d8/volume.c,
+	  dlls/d3d8/volumetexture.c:
+	Raphael Junqueira <fenix@club-internet.fr>
+	- minor COM fixes (fixes some crashes on stupid games)
+	- minor indentation changes
+	- fix SELECTARG2 behavior (with help from Lionel Ulmer)
+	- surface locking/unlocking (only rendering and textures surfaces
+	  supported now)
+	- beginning of Target/Front surface support
+	- try to get D3DTOP_SELECTARG_* working
+	- implemented D3DTOP_SUBTRACT: currently only if OpenGL1.3 is used, we
+	  have to use GL_SUBTRACT_ARB for other versions
+
+	* dlls/gdi/gdi32.spec, objects/dc.c:
+	Added partial stub for GetTransform.
+
+	* dlls/shell32/shlfileop.c: Mike McCormack <mike@codeweavers.com>
+	Clean up SHFileOperationA/W debugging a little.
+
+	* dlls/winmm/wavemap/wavemap.c, dlls/winmm/wineoss/audio.c:
+	Eric Pouech <pouech-eric@wanadoo.fr>
+	Stop wavemap lookup if a device isn't functional (spotted by Lionel
+	Ulmer).
+
+	* dlls/winedos/int21.c: Jukka Heinonen <jhei@iki.fi>
+	Make read from stdin use buffered input code and redirect stderr to
+	console.
+
+	* msdos/ioports.c: Jukka Heinonen <jhei@iki.fi>
+	Make ioport instruction emulation call winedos handlers.
+
+	* windows/queue.c: Dmitry Timoshkov <dmitry@baikal.ru>
+	Poll X events in GetInputState the same way as in GetQueueStatus.
+
+	* dlls/comctl32/listview.c: Dimitrie O. Paun <dpaun@rogers.com>
+	Fix custom draw for item 0.
+
+	* dlls/ddraw/d3dexecutebuffer.c:
+	Christian Costa <titan.costa@wanadoo.fr>
+	Enable branch forward operation in execute buffer.
+
+	* dlls/ddraw/d3ddevice/mesa.c: Christian Costa <titan.costa@wanadoo.fr>
+	Put the device name string on the stack during devices enumeration.
+	Disable reference enumeration.
+
+	* controls/edit.c: Christian Costa <titan.costa@wanadoo.fr>
+	Add missing ReleaseDC in EDIT_BuildLineDefs_ML.
+
+	* objects/metafile.c: Huw Davies <huw@codeweavers.com>
+	Playback escapes in metafiles.
+
+	* dlls/ntdll/ntdll.spec, dlls/oleaut32/oleaut32.spec:
+	Removed unnecessary function link names.
+
+	* Makefile.in: Remove libs/Makelib.rules on distclean.
+
+	* dlls/gdi/gdi32.spec, objects/dc.c: Huw Davies <huw@codeweavers.com>
+	Added stub for SetVirtualResolution.
+
+	* dlls/x11drv/scroll.c, windows/scroll.c:
+	Ulrich Czekalla <uczekalla@codeweavers.com>
+	We should pass the callers client-area rect and clip rect to x11drv
+	otherwise we'll fail to scroll all children.
+
+	* dlls/winmm/winmm.c: Avoid local WINAPI function pointers.
+
+	* dlls/wininet/internet.c, dlls/wininet/wininet.spec:
+	Mike McCormack <mike@codeweavers.com>
+	Implemented InternetSetOptionExA/W.
+
+	* dlls/user/painting.c: Dmitry Timoshkov <dmitry@codeweavers.com>
+	Fix the logic for setting the lps->fErase flag in BeginPaint.
+
+	* dlls/user/message.c, windows/winproc.c:
+	Added A<->W mappings for WM_IME_CHAR.
+
+	* memory/global.c: Dmitry Timoshkov <dmitry@codeweavers.com>
+	Protect GlobalLock from bad pointers.
+
+	* libs/unicode/wctomb.c:
+	Handle overlapping buffers properly in wcstombs_sbcs (spotted by
+	Dmitry Timoshkov).
+
+	* graphics/x11drv/clipping.c:
+	Ulrich Czekalla <uczekalla@codeweavers.com>
+	Don't delete region until after we're done with it.
+
+	* objects/clipping.c: Ulrich Czekalla <uczekalla@codeweavers.com>
+	Return value of ExtSelectClipRgn should consider visible region.
+
+	* graphics/mapping.c, objects/enhmetafile.c:
+	Dmitry Timoshkov <dmitry@codeweavers.com>
+	Make SetMapMode set default window and viewport extents as in
+	Windows.
+
+	* programs/wcmd/wcmdmain.c: Francois Gouget <fgouget@codeweavers.com>
+	Fix handling of wcmd /c "c:\Program Files\hello.bat".
+	Make /c and /k effectively exclusive, like the real cmd does.
+	Fix handling of /q: it's compatible with /c and /k.
+	Added compatibility with /t /x and /y, just ignore them.
+
+	* programs/winepath/winepath.c:
+	Francois Gouget <fgouget@codeweavers.com>
+	Reset the result buffer after each argument.
+
+	* server/fd.c:
+	Ignore locking failures caused by missing NFS locking daemon.
+	Handle EINVAL the same way as EOVERFLOW.
+
+	* windows/msgbox.c: Dmitry Timoshkov <dmitry@codeweavers.com>
+	Ignore high word of wParam when handling WM_COMMAND in the MessageBox
+	proc.
+
+	* windows/input.c: Dusan Lacko <dlacko@codeweavers.com>
+	Fix ALT context bit for WM_KEYDOWN/UP.
+
+	* windows/dialog.c: Dmitry Timoshkov <dmitry@codeweavers.com>
+	Windows treats dialog control class ids 0-5 same way as 0x80-0x85.
+
+	* dlls/user/dialog16.c: Dmitry Timoshkov <dmitry@codeweavers.com>
+	Do not abort dialog creation if DS_NOFAILCREATE allows to continue.
+
+	* dlls/rasapi32/rasapi.c, dlls/rasapi32/rasapi32.spec:
+	Aric Stewart <aric@codeweavers.com>
+	Added RasEnumEntriesW stub.
+
+	* dlls/ole32/ole2stubs.c, dlls/ole32/storage32.c:
+	Mike McCormack <mike@codeweavers.com>
+	Implemented WriteFmtUserTypeStg and ReadFmtUserTypeStg.
+
+	* dlls/commdlg/filedlg95.c: Mike McCormack <mike@codeweavers.com>
+	Fill the filedialog95 controls before sending a CDN_INITDONE
+	notification.
+
+	* dlls/comctl32/progress.c: Huw Davies <huw@codeweavers.com>
+	Invalidate the window when the range is changed.
+
+	* dlls/advapi32/advapi32.spec, dlls/advapi32/security.c:
+	Mike McCormack <mike@codeweavers.com>
+	Stubs for AccessCheckAndAuditAlarmA/W.
+
+2003-05-08  Alexandre Julliard  <julliard@winehq.com>
+
+	* VERSION, configure, ANNOUNCE, ChangeLog: Release 20030508.
+
+----------------------------------------------------------------
 2003-05-08  Alexandre Julliard  <julliard@winehq.com>
 
 	* libs/unicode/utf8.c:
