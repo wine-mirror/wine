@@ -1770,7 +1770,7 @@ static LRESULT
 TREEVIEW_GetFont(TREEVIEW_INFO *infoPtr)
 {
     TRACE("%x\n", infoPtr->hFont);
-    return infoPtr->hFont;
+    return (LRESULT)infoPtr->hFont;
 }
 
 
@@ -2814,7 +2814,7 @@ TREEVIEW_Paint(TREEVIEW_INFO *infoPtr, WPARAM wParam)
             rc.left = 0; rc.top = 0;
             rc.right = bitmap.bmWidth;
             rc.bottom = bitmap.bmHeight;
-            TREEVIEW_EraseBackground(infoPtr, wParam);
+            TREEVIEW_EraseBackground(infoPtr, (HDC)wParam);
         }
     }
     else
@@ -3476,7 +3476,7 @@ TREEVIEW_Command(TREEVIEW_INFO *infoPtr, WPARAM wParam, LPARAM lParam)
 	    len = GetWindowTextA(infoPtr->hwndEdit, buffer, sizeof(buffer));
 
 	    /* Select font to get the right dimension of the string */
-	    hFont = SendMessageA(infoPtr->hwndEdit, WM_GETFONT, 0, 0);
+	    hFont = (HFONT)SendMessageA(infoPtr->hwndEdit, WM_GETFONT, 0, 0);
 	    if (hFont != 0)
 	    {
 		hOldFont = SelectObject(hdc, hFont);
@@ -3526,7 +3526,7 @@ TREEVIEW_EditLabelA(TREEVIEW_INFO *infoPtr, HTREEITEM hItem)
     HWND hwndEdit;
     SIZE sz;
     TREEVIEW_ITEM *editItem = hItem;
-    HINSTANCE hinst = GetWindowLongA(hwnd, GWL_HINSTANCE);
+    HINSTANCE hinst = (HINSTANCE)GetWindowLongA(hwnd, GWL_HINSTANCE);
     HDC hdc;
     HFONT hOldFont=0;
     TEXTMETRICA textMetric;
@@ -3589,8 +3589,8 @@ TREEVIEW_EditLabelA(TREEVIEW_INFO *infoPtr, HTREEITEM hItem)
     SetWindowLongA(hwndEdit, GWL_STYLE,
 		   GetWindowLongA(hwndEdit, GWL_STYLE) | WS_BORDER);
 
-    SendMessageA(hwndEdit, WM_SETFONT, TREEVIEW_FontForItem(infoPtr, editItem),
-		 FALSE);
+    SendMessageA(hwndEdit, WM_SETFONT,
+		 (WPARAM)TREEVIEW_FontForItem(infoPtr, editItem), FALSE);
 
     infoPtr->wpEditOrig = (WNDPROC)SetWindowLongA(hwndEdit, GWL_WNDPROC,
 						  (DWORD)

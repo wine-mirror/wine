@@ -24,14 +24,16 @@
  */
 
 #include <string.h>
+
 #include "winbase.h"
 #include "commctrl.h"
 #include "prsht.h"
 #include "winnls.h"
 #include "comctl32.h"
-#include "wine/debug.h"
 #include "heap.h"
 
+#include "wine/debug.h"
+#include "wine/unicode.h"
 
 /******************************************************************************
  * Data structures

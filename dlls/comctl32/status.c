@@ -899,10 +899,9 @@ STATUSBAR_WMCreate (HWND hwnd, LPCREATESTRUCTA lpCreate)
     if (dwStyle & SBT_TOOLTIPS) {
 	infoPtr->hwndToolTip =
 	    CreateWindowExW (0, TOOLTIPS_CLASSW, NULL, 0,
-			       CW_USEDEFAULT, CW_USEDEFAULT,
-			       CW_USEDEFAULT, CW_USEDEFAULT,
-			     hwnd, 0,
-			     GetWindowLongW (hwnd, GWL_HINSTANCE), NULL);
+			     CW_USEDEFAULT, CW_USEDEFAULT, CW_USEDEFAULT,
+			     CW_USEDEFAULT, hwnd, 0,
+			     (HINSTANCE)GetWindowLongW(hwnd, GWL_HINSTANCE), NULL);
 
 	if (infoPtr->hwndToolTip) {
 	    NMTOOLTIPSCREATED nmttc;
@@ -1188,7 +1187,7 @@ StatusWindowProc (HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 	    return STATUSBAR_WMDestroy (infoPtr);
 
 	case WM_GETFONT:
-	    return infoPtr->hFont? infoPtr->hFont : infoPtr->hDefaultFont;
+	    return (LRESULT)(infoPtr->hFont? infoPtr->hFont : infoPtr->hDefaultFont);
 
 	case WM_GETTEXT:
             return STATUSBAR_WMGetText (infoPtr, (INT)wParam, (LPWSTR)lParam);

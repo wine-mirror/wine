@@ -195,12 +195,13 @@ ImageList_Add (HIMAGELIST himl,	HBITMAP hbmImage, HBITMAP hbmMask)
 
     if(himl->hbmMask)
     {
-        HDC hdcMask, hdcTemp, hOldBitmapMask, hOldBitmapTemp;
+	HDC hdcMask, hdcTemp;
+	HBITMAP hOldBitmapMask, hOldBitmapTemp;
 
         hdcMask   = CreateCompatibleDC (0);
         hdcTemp   = CreateCompatibleDC(0);
-        hOldBitmapMask = (HBITMAP) SelectObject(hdcMask, himl->hbmMask);
-        hOldBitmapTemp = (HBITMAP) SelectObject(hdcTemp, hbmMask);
+        hOldBitmapMask = SelectObject(hdcMask, himl->hbmMask);
+        hOldBitmapTemp = SelectObject(hdcTemp, hbmMask);
 
         BitBlt (hdcMask,
             nStartX, 0, bmp.bmWidth, bmp.bmHeight,

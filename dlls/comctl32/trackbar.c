@@ -1560,7 +1560,7 @@ TRACKBAR_WindowProc (HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
         return TRACKBAR_ClearTics (infoPtr, (BOOL)wParam);
 
     case TBM_GETBUDDY:
-        return wParam ? infoPtr->hwndBuddyLA : infoPtr->hwndBuddyRB;
+        return (LRESULT)(wParam ? infoPtr->hwndBuddyLA : infoPtr->hwndBuddyRB);
 
     case TBM_GETCHANNELRECT:
         return TRACKBAR_GetChannelRect (infoPtr, (LPRECT)lParam);

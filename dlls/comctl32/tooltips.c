@@ -720,10 +720,12 @@ TOOLTIPS_AddToolA (HWND hwnd, WPARAM wParam, LPARAM lParam)
     /* install subclassing hook */
     if (toolPtr->uFlags & TTF_SUBCLASS) {
 	if (toolPtr->uFlags & TTF_IDISHWND) {
-	    SetWindowSubclass(toolPtr->uId, TOOLTIPS_SubclassProc, 1, hwnd);
+	    SetWindowSubclass((HWND)toolPtr->uId, TOOLTIPS_SubclassProc, 1,
+			       (DWORD_PTR)hwnd);
 	}
 	else {
-	    SetWindowSubclass(toolPtr->hwnd, TOOLTIPS_SubclassProc, 1, hwnd);
+	    SetWindowSubclass(toolPtr->hwnd, TOOLTIPS_SubclassProc, 1,
+			      (DWORD_PTR)hwnd);
 	}
 	TRACE("subclassing installed!\n");
     }
@@ -795,10 +797,12 @@ TOOLTIPS_AddToolW (HWND hwnd, WPARAM wParam, LPARAM lParam)
     /* install subclassing hook */
     if (toolPtr->uFlags & TTF_SUBCLASS) {
 	if (toolPtr->uFlags & TTF_IDISHWND) {
-	    SetWindowSubclass(toolPtr->uId, TOOLTIPS_SubclassProc, 1, hwnd);
+	    SetWindowSubclass((HWND)toolPtr->uId, TOOLTIPS_SubclassProc, 1,
+			      (DWORD_PTR)hwnd);
 	}
 	else {
-	    SetWindowSubclass(toolPtr->hwnd, TOOLTIPS_SubclassProc, 1, hwnd);
+	    SetWindowSubclass(toolPtr->hwnd, TOOLTIPS_SubclassProc, 1,
+			      (DWORD_PTR)hwnd);
 	}
 	TRACE("subclassing installed!\n");
     }
@@ -841,7 +845,7 @@ TOOLTIPS_DelToolA (HWND hwnd, WPARAM wParam, LPARAM lParam)
     /* remove subclassing */
     if (toolPtr->uFlags & TTF_SUBCLASS) {
 	if (toolPtr->uFlags & TTF_IDISHWND) {
-	    RemoveWindowSubclass(toolPtr->uId, TOOLTIPS_SubclassProc, 1);
+	    RemoveWindowSubclass((HWND)toolPtr->uId, TOOLTIPS_SubclassProc, 1);
 	}
 	else {
 	    RemoveWindowSubclass(toolPtr->hwnd, TOOLTIPS_SubclassProc, 1);
@@ -916,7 +920,7 @@ TOOLTIPS_DelToolW (HWND hwnd, WPARAM wParam, LPARAM lParam)
     /* remove subclassing */
     if (toolPtr->uFlags & TTF_SUBCLASS) {
 	if (toolPtr->uFlags & TTF_IDISHWND) {
-	    RemoveWindowSubclass(toolPtr->uId, TOOLTIPS_SubclassProc, 1);
+	    RemoveWindowSubclass((HWND)toolPtr->uId, TOOLTIPS_SubclassProc, 1);
 	}
 	else {
 	    RemoveWindowSubclass(toolPtr->hwnd, TOOLTIPS_SubclassProc, 1);
@@ -1966,7 +1970,7 @@ TOOLTIPS_Destroy (HWND hwnd, WPARAM wParam, LPARAM lParam)
 	    /* remove subclassing */
         if (toolPtr->uFlags & TTF_SUBCLASS) {
             if (toolPtr->uFlags & TTF_IDISHWND) {
-                RemoveWindowSubclass(toolPtr->uId, TOOLTIPS_SubclassProc, 1);
+                RemoveWindowSubclass((HWND)toolPtr->uId, TOOLTIPS_SubclassProc, 1);
             }
             else {
                 RemoveWindowSubclass(toolPtr->hwnd, TOOLTIPS_SubclassProc, 1);
@@ -2007,7 +2011,7 @@ TOOLTIPS_GetFont (HWND hwnd, WPARAM wParam, LPARAM lParam)
 {
     TOOLTIPS_INFO *infoPtr = TOOLTIPS_GetInfoPtr (hwnd);
 
-    return infoPtr->hFont;
+    return (LRESULT)infoPtr->hFont;
 }
 
 
@@ -2222,7 +2226,7 @@ TOOLTIPS_SubclassProc (HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam, UINT_
 	msg.message = uMsg;
 	msg.wParam = wParam;
 	msg.lParam = lParam;
-	TOOLTIPS_RelayEvent(dwRef, 0, (LPARAM)&msg);
+	TOOLTIPS_RelayEvent((HWND)dwRef, 0, (LPARAM)&msg);
 	break;
 
     default:

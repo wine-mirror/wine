@@ -385,8 +385,8 @@ static DWORD CALLBACK ANIMATE_AnimationThread(LPVOID ptr_)
             hDC = GetDC(infoPtr->hWnd);
 	    /* sometimes the animation window will be destroyed in between
 	     * by the main program, so a ReleaseDC() error msg is possible */
-            infoPtr->hbrushBG = SendMessageA(GetParent(infoPtr->hWnd),
-					     WM_CTLCOLORSTATIC, hDC,
+            infoPtr->hbrushBG = (HBRUSH)SendMessageA(GetParent(infoPtr->hWnd),
+					     WM_CTLCOLORSTATIC, (WPARAM)hDC,
 					     (LPARAM)infoPtr->hWnd);
             ReleaseDC(infoPtr->hWnd,hDC);
         }
@@ -690,7 +690,7 @@ static LRESULT ANIMATE_OpenA(HWND hWnd, WPARAM wParam, LPARAM lParam)
     }
 
     if (!hInstance)
-       hInstance = GetWindowLongA(hWnd, GWL_HINSTANCE);
+       hInstance = (HINSTANCE)GetWindowLongA(hWnd, GWL_HINSTANCE);
 
     if (HIWORD(lParam)) {
 	TRACE("(\"%s\");\n", (LPSTR)lParam);
@@ -816,8 +816,8 @@ static LRESULT ANIMATE_EraseBackground(HWND hWnd, WPARAM wParam, LPARAM lParam)
 
     if(GetWindowLongA(hWnd, GWL_STYLE) & ACS_TRANSPARENT)
     {
-        hBrush = SendMessageA(GetParent(hWnd),WM_CTLCOLORSTATIC,(HDC)wParam,
-			      (LPARAM)hWnd);
+        hBrush = (HBRUSH)SendMessageA(GetParent(hWnd),WM_CTLCOLORSTATIC,
+				      wParam, (LPARAM)hWnd);
     }
 
     GetClientRect(hWnd, &rect);
@@ -874,8 +874,9 @@ static LRESULT WINAPI ANIMATE_WindowProc(HWND hWnd, UINT uMsg, WPARAM wParam, LP
     	if (GetWindowLongA(hWnd, GWL_STYLE) & ACS_TRANSPARENT)
         {
             ANIMATE_INFO* infoPtr = ANIMATE_GetInfoPtr(hWnd);
-            infoPtr->hbrushBG = SendMessageA(GetParent(hWnd), WM_CTLCOLORSTATIC,
-					     (HDC)wParam, (LPARAM)hWnd);
+            infoPtr->hbrushBG = (HBRUSH)SendMessageA(GetParent(hWnd),
+						     WM_CTLCOLORSTATIC,
+						     wParam, (LPARAM)hWnd);
         }
 	return ANIMATE_DrawFrame(ANIMATE_GetInfoPtr(hWnd));
 
@@ -893,8 +894,9 @@ static LRESULT WINAPI ANIMATE_WindowProc(HWND hWnd, UINT uMsg, WPARAM wParam, LP
 	    	return DefWindowProcA(hWnd, uMsg, wParam, lParam);
 
             if (GetWindowLongA(hWnd, GWL_STYLE) & ACS_TRANSPARENT)
-                infoPtr->hbrushBG = SendMessageA(GetParent(hWnd), WM_CTLCOLORSTATIC,
-					       	 (HDC)wParam, (LPARAM)hWnd);
+                infoPtr->hbrushBG = (HBRUSH)SendMessageA(GetParent(hWnd),
+							 WM_CTLCOLORSTATIC,
+							 wParam, (LPARAM)hWnd);
 
             if (wParam)
             {

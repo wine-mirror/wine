@@ -1159,7 +1159,7 @@ DATETIME_Create (HWND hwnd, WPARAM wParam, LPARAM lParam)
          WS_CHILD | WS_VISIBLE | BS_AUTOCHECKBOX,
          2,2,13,13,
          hwnd,
-         0, GetWindowLongA  (hwnd, GWL_HINSTANCE), 0);
+         0, (HINSTANCE)GetWindowLongA  (hwnd, GWL_HINSTANCE), 0);
          SendMessageA (infoPtr->hwndCheckbut, BM_SETCHECK, 1, 0);
   }
 

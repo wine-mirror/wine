@@ -262,7 +262,7 @@ HOTKEY_EraseBackground (HOTKEY_INFO *infoPtr, WPARAM wParam, LPARAM lParam)
 inline static LRESULT
 HOTKEY_GetFont (HOTKEY_INFO *infoPtr, WPARAM wParam, LPARAM lParam)
 {
-    return infoPtr->hFont;
+    return (LRESULT)infoPtr->hFont;
 }
 
 static LRESULT

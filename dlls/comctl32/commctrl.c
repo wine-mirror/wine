@@ -356,9 +356,9 @@ ShowHideMenuCtl (HWND hwnd, UINT uFlags, LPINT lpInfo)
     while (*lpMenuId != uFlags)
 	lpMenuId += 2;
 
-    if (GetMenuState (lpInfo[1], uFlags, MF_BYCOMMAND) & MFS_CHECKED) {
+    if (GetMenuState ((HMENU)lpInfo[1], uFlags, MF_BYCOMMAND) & MFS_CHECKED) {
 	/* uncheck menu item */
-	CheckMenuItem (lpInfo[0], *lpMenuId, MF_BYCOMMAND | MF_UNCHECKED);
+	CheckMenuItem ((HMENU)lpInfo[0], *lpMenuId, MF_BYCOMMAND | MF_UNCHECKED);
 
 	/* hide control */
 	lpMenuId++;
@@ -367,7 +367,7 @@ ShowHideMenuCtl (HWND hwnd, UINT uFlags, LPINT lpInfo)
     }
     else {
 	/* check menu item */
-	CheckMenuItem (lpInfo[0], *lpMenuId, MF_BYCOMMAND | MF_CHECKED);
+	CheckMenuItem ((HMENU)lpInfo[0], *lpMenuId, MF_BYCOMMAND | MF_CHECKED);
 
 	/* show control */
 	lpMenuId++;
@@ -535,7 +535,7 @@ CreateStatusWindowA (INT style, LPCSTR text, HWND parent, UINT wid)
     return CreateWindowA(STATUSCLASSNAMEA, text, style,
 			   CW_USEDEFAULT, CW_USEDEFAULT,
 			   CW_USEDEFAULT, CW_USEDEFAULT,
-			   parent, wid, 0, 0);
+			   parent, (HMENU)wid, 0, 0);
 }
 
 
@@ -559,7 +559,7 @@ CreateStatusWindowW (INT style, LPCWSTR text, HWND parent, UINT wid)
     return CreateWindowW(STATUSCLASSNAMEW, text, style,
 			   CW_USEDEFAULT, CW_USEDEFAULT,
 			   CW_USEDEFAULT, CW_USEDEFAULT,
-			   parent, wid, 0, 0);
+			   parent, (HMENU)wid, 0, 0);
 }
 
 
@@ -592,7 +592,7 @@ CreateUpDownControl (DWORD style, INT x, INT y, INT cx, INT cy,
 {
     HWND hUD =
 	CreateWindowA (UPDOWN_CLASSA, 0, style, x, y, cx, cy,
-			 parent, id, inst, 0);
+			 parent, (HMENU)id, inst, 0);
     if (hUD) {
 	SendMessageA (hUD, UDM_SETBUDDY, (WPARAM)buddy, 0);
 	SendMessageA (hUD, UDM_SETRANGE, 0, MAKELONG(maxVal, minVal));

@@ -179,7 +179,7 @@ static LRESULT IPADDRESS_Create (HWND hwnd)
 		CreateWindowW (EDIT, NULL, WS_CHILD | WS_VISIBLE | ES_CENTER,
                                edit.left, edit.top, edit.right - edit.left,
 			       edit.bottom - edit.top, hwnd, (HMENU) 1,
-			       GetWindowLongW (hwnd, GWL_HINSTANCE), NULL);
+			       (HINSTANCE)GetWindowLongW(hwnd, GWL_HINSTANCE), NULL);
 	SetPropA(part->EditHwnd, IP_SUBCLASS_PROP, hwnd);
         part->OrigProc = (WNDPROC)
 		SetWindowLongW (part->EditHwnd, GWL_WNDPROC,

@@ -2765,7 +2765,7 @@ TOOLBAR_Customize (HWND hwnd)
     if(!(template = (LPVOID)LoadResource (COMCTL32_hModule, hRes)))
 	return FALSE;
 
-    ret = DialogBoxIndirectParamA (GetWindowLongA (hwnd, GWL_HINSTANCE),
+    ret = DialogBoxIndirectParamA ((HINSTANCE)GetWindowLongA(hwnd, GWL_HINSTANCE),
                                    (LPDLGTEMPLATEA)template,
                                    hwnd,
                                    (DLGPROC)TOOLBAR_CustomizeDialogProc,
@@ -3683,7 +3683,7 @@ TOOLBAR_ReplaceBitmap (HWND hwnd, WPARAM wParam, LPARAM lParam)
           lpReplace->hInstOld, lpReplace->nIDOld, lpReplace->hInstNew, lpReplace->nIDNew,
           lpReplace->nButtons);
 
-    if (lpReplace->hInstOld == -1)
+    if (lpReplace->hInstOld == HINST_COMMCTRL)
     {
         FIXME("changing standard bitmaps not implemented\n");
         return FALSE;
@@ -4703,7 +4703,7 @@ TOOLBAR_GetFont (HWND hwnd, WPARAM wParam, LPARAM lParam)
 {
     TOOLBAR_INFO *infoPtr = TOOLBAR_GetInfoPtr (hwnd);
 
-    return infoPtr->hFont;
+    return (LRESULT)infoPtr->hFont;
 }
 
 

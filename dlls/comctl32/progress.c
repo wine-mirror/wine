@@ -314,7 +314,7 @@ static LRESULT WINAPI ProgressWindowProc(HWND hwnd, UINT message,
         return (LRESULT)infoPtr->Font;
 
     case WM_SETFONT:
-        return PROGRESS_SetFont (infoPtr, (HFONT)wParam, (BOOL)lParam);
+        return (LRESULT)PROGRESS_SetFont(infoPtr, (HFONT)wParam, (BOOL)lParam);
 
     case WM_PAINT:
         return PROGRESS_Paint (infoPtr, (HDC)wParam);

@@ -319,7 +319,7 @@ static void COMBOEX_GetComboFontSize (COMBOEX_INFO *infoPtr, SIZE *size)
     HDC mydc;
 
     mydc = GetDC (0); /* why the entire screen???? */
-    nfont = SendMessageW (infoPtr->hwndCombo, WM_GETFONT, 0, 0);
+    nfont = (HFONT)SendMessageW (infoPtr->hwndCombo, WM_GETFONT, 0, 0);
     ofont = (HFONT) SelectObject (mydc, nfont);
     GetTextExtentPointA (mydc, "A", 1, size);
     SelectObject (mydc, ofont);
@@ -962,7 +962,7 @@ static LRESULT COMBOEX_Create (HWND hwnd, LPCREATESTRUCTA cs)
 			 GetWindowLongW (hwnd, GWL_STYLE),
 			 cs->y, cs->x, cs->cx, cs->cy, hwnd,
 			 (HMENU) GetWindowLongW (hwnd, GWL_ID),
-			 GetWindowLongW (hwnd, GWL_HINSTANCE), NULL);
+			 (HINSTANCE)GetWindowLongW (hwnd, GWL_HINSTANCE), NULL);
 
     /*
      * native does the following at this point according to trace:
@@ -979,7 +979,7 @@ static LRESULT COMBOEX_Create (HWND hwnd, LPCREATESTRUCTA cs)
     SetPropA(infoPtr->hwndCombo, COMBOEX_SUBCLASS_PROP, hwnd);
     infoPtr->prevComboWndProc = (WNDPROC)SetWindowLongW(infoPtr->hwndCombo,
 	                        GWL_WNDPROC, (LONG)COMBOEX_ComboWndProc);
-    infoPtr->font = SendMessageW (infoPtr->hwndCombo, WM_GETFONT, 0, 0);
+    infoPtr->font = (HFONT)SendMessageW (infoPtr->hwndCombo, WM_GETFONT, 0, 0);
 
 
     /*
@@ -992,8 +992,7 @@ static LRESULT COMBOEX_Create (HWND hwnd, LPCREATESTRUCTA cs)
 		    0, 0, 0, 0,  /* will set later */
 		    infoPtr->hwndCombo,
 		    (HMENU) GetWindowLongW (hwnd, GWL_ID),
-		    GetWindowLongW (hwnd, GWL_HINSTANCE),
-		    NULL);
+		    (HINSTANCE)GetWindowLongW (hwnd, GWL_HINSTANCE), NULL);
 
 	/* native does the following at this point according to trace:
 	 *  GetWindowThreadProcessId(hwndEdit,0)
@@ -1009,7 +1008,7 @@ static LRESULT COMBOEX_Create (HWND hwnd, LPCREATESTRUCTA cs)
         SetPropA(infoPtr->hwndEdit, COMBOEX_SUBCLASS_PROP, hwnd);
 	infoPtr->prevEditWndProc = (WNDPROC)SetWindowLongW(infoPtr->hwndEdit,
 				 GWL_WNDPROC, (LONG)COMBOEX_EditWndProc);
-	infoPtr->font = SendMessageW (infoPtr->hwndCombo, WM_GETFONT, 0, 0);
+	infoPtr->font = (HFONT)SendMessageW(infoPtr->hwndCombo, WM_GETFONT, 0, 0);
     }
 
     /*
