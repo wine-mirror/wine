@@ -33,6 +33,18 @@
 # include <sys/ptrace.h>
 #endif
 
+#ifndef PTRACE_PEEKUSER
+# ifdef PT_READ_D
+#  define PTRACE_PEEKUSER PT_READ_D
+# endif
+#endif /* PTRACE_PEEKUSER */
+
+#ifndef PTRACE_POKEUSER
+# ifdef PT_WRITE_D
+#  define PTRACE_POKEUSER PT_WRITE_D
+# endif
+#endif /* PTRACE_POKEUSER */
+
 #include "winbase.h"
 
 #include "file.h"
