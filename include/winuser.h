@@ -1799,6 +1799,16 @@ typedef struct {
 } ICONINFO, *PICONINFO;
 
 
+typedef struct
+{
+    DWORD cbSize;
+    DWORD flags;
+    HCURSOR hCursor;
+    POINT ptScreenPos;
+} CURSORINFO, *PCURSORINFO, *LPCURSORINFO;
+
+#define CURSOR_SHOWING 0x00000001
+
 /* this is the 6 byte accel struct used in Win32 when presented to the user */
 typedef struct
 {
@@ -4019,28 +4029,29 @@ BOOL      WINAPI GetClassInfoExW(HINSTANCE,LPCWSTR,WNDCLASSEXW *);
 LONG        WINAPI GetClassLongA(HWND,INT);
 LONG        WINAPI GetClassLongW(HWND,INT);
 #define     GetClassLong WINELIB_NAME_AW(GetClassLong)
-INT       WINAPI GetClassNameA(HWND,LPSTR,INT);
-INT       WINAPI GetClassNameW(HWND,LPWSTR,INT);
+INT         WINAPI GetClassNameA(HWND,LPSTR,INT);
+INT         WINAPI GetClassNameW(HWND,LPWSTR,INT);
 #define     GetClassName WINELIB_NAME_AW(GetClassName)
 WORD        WINAPI GetClassWord(HWND,INT);
-BOOL      WINAPI GetClientRect(HWND,LPRECT);
-HANDLE    WINAPI GetClipboardData(UINT);
-INT       WINAPI GetClipboardFormatNameA(UINT,LPSTR,INT);
-INT       WINAPI GetClipboardFormatNameW(UINT,LPWSTR,INT);
+BOOL        WINAPI GetClientRect(HWND,LPRECT);
+HANDLE      WINAPI GetClipboardData(UINT);
+INT         WINAPI GetClipboardFormatNameA(UINT,LPSTR,INT);
+INT         WINAPI GetClipboardFormatNameW(UINT,LPWSTR,INT);
 #define     GetClipboardFormatName WINELIB_NAME_AW(GetClipboardFormatName)
-HWND      WINAPI GetClipboardOwner(void);
-HWND      WINAPI GetClipboardViewer(void);
-BOOL      WINAPI GetClipCursor(LPRECT);
-HCURSOR   WINAPI GetCursor(void);
-BOOL      WINAPI GetCursorPos(LPPOINT);
-HDC       WINAPI GetDC(HWND);
-HDC       WINAPI GetDCEx(HWND,HRGN,DWORD);
-HWND      WINAPI GetDesktopWindow(void);
-INT       WINAPI GetDlgCtrlID(HWND);
-HWND      WINAPI GetDlgItem(HWND,INT);
-UINT      WINAPI GetDlgItemInt(HWND,INT,BOOL*,BOOL);
-INT       WINAPI GetDlgItemTextA(HWND,INT,LPSTR,UINT);
-INT       WINAPI GetDlgItemTextW(HWND,INT,LPWSTR,UINT);
+HWND        WINAPI GetClipboardOwner(void);
+HWND        WINAPI GetClipboardViewer(void);
+BOOL        WINAPI GetClipCursor(LPRECT);
+HCURSOR     WINAPI GetCursor(void);
+BOOL        WINAPI GetCursorInfo(PCURSORINFO);
+BOOL        WINAPI GetCursorPos(LPPOINT);
+HDC         WINAPI GetDC(HWND);
+HDC         WINAPI GetDCEx(HWND,HRGN,DWORD);
+HWND        WINAPI GetDesktopWindow(void);
+INT         WINAPI GetDlgCtrlID(HWND);
+HWND        WINAPI GetDlgItem(HWND,INT);
+UINT        WINAPI GetDlgItemInt(HWND,INT,BOOL*,BOOL);
+INT         WINAPI GetDlgItemTextA(HWND,INT,LPSTR,UINT);
+INT         WINAPI GetDlgItemTextW(HWND,INT,LPWSTR,UINT);
 #define     GetDlgItemText WINELIB_NAME_AW(GetDlgItemText)
 UINT      WINAPI GetDoubleClickTime(void);
 HWND      WINAPI GetFocus(void);

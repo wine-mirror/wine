@@ -477,6 +477,17 @@ BOOL WINAPI GetCursorPos( POINT *pt )
 
 
 /***********************************************************************
+ *		GetCursorInfo (USER32.@)
+ */
+BOOL WINAPI GetCursorInfo( PCURSORINFO pci )
+{
+    if (!pci) return 0;
+    GetCursorPos(&pci->ptScreenPos);
+    return 1;
+}
+
+
+/***********************************************************************
  *		SetCursorPos (USER.70)
  */
 void WINAPI SetCursorPos16( INT16 x, INT16 y )

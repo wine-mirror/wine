@@ -30,18 +30,18 @@ typedef struct tagCURSORINFO
 {
     WORD wXMickeys;
     WORD wYMickeys;
-} CURSORINFO, *PCURSORINFO, *LPCURSORINFO;
+} CURSORINFO16, *PCURSORINFO16, *LPCURSORINFO16;
 #include "poppack.h"
 
 /***********************************************************************
  *           Inquire			(DISPLAY.101)
  */
-WORD WINAPI DISPLAY_Inquire(LPCURSORINFO lpCursorInfo)
+WORD WINAPI DISPLAY_Inquire(LPCURSORINFO16 lpCursorInfo)
 {
     lpCursorInfo->wXMickeys = 1;
     lpCursorInfo->wYMickeys = 1;
 
-    return sizeof(CURSORINFO);
+    return sizeof(CURSORINFO16);
 }
 
 /***********************************************************************
@@ -91,4 +91,3 @@ VOID WINAPI UserRepaintDisable16( BOOL16 disable )
 {
     FIXME("stub\n");
 }
-

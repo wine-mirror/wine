@@ -229,7 +229,7 @@ init	UserClientDllInitialize
 @ stdcall GetClipboardOwner() GetClipboardOwner
 @ stdcall GetClipboardViewer() GetClipboardViewer
 @ stdcall GetCursor() GetCursor
-@ stub GetCursorInfo
+@ stdcall GetCursorInfo(ptr) GetCursorInfo
 @ stdcall GetCursorPos(ptr) GetCursorPos
 @ stdcall GetDC(long) GetDC
 @ stdcall GetDCEx(long long long) GetDCEx
