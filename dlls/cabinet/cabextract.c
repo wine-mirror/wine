@@ -29,6 +29,7 @@
 #include "config.h"
 
 #include <stdarg.h>
+#include <stdio.h>
 #include <stdlib.h>
 
 #include "windef.h"
@@ -2553,12 +2554,13 @@ void print_fileinfo(struct cab_file *fi) {
  *   dir     [I] directory to extract to
  *   fix     [I] attempt to process broken cabinets
  *   lower   [I] ? (lower case something or other?)
+ *   dest    [O] 
  *
  * RETURNS
  *   Success: TRUE
  *   Failure: FALSE
  */
-BOOL process_cabinet(LPCSTR cabname, LPCSTR dir, BOOL fix, BOOL lower)
+BOOL process_cabinet(LPCSTR cabname, LPCSTR dir, BOOL fix, BOOL lower, EXTRACTdest *dest)
 {
   struct cabinet *basecab, *cab, *cab1, *cab2;
   struct cab_file *filelist, *fi;
@@ -2618,12 +2620,18 @@ BOOL process_cabinet(LPCSTR cabname, LPCSTR dir, BOOL fix, BOOL lower)
       TRACE("----------+---------------------+-------------\n");
       viewhdr = 1;
     }
-    for (fi = filelist; fi; fi = fi->next)
+    for (fi = filelist; fi; fi = fi->next) {
 	print_fileinfo(fi);
+        dest->filecount++;
+    }
     TRACE("Beginning Extraction...\n");
     for (fi = filelist; fi; fi = fi->next) {
 	TRACE("  extracting: %s\n", debugstr_a(fi->filename));
 	extract_file(fi, lower, fix, dir, decomp_state);
+        sprintf(dest->lastfile, "%s%s%s",
+                strlen(dest->directory) ? dest->directory : "",
+                strlen(dest->directory) ? "\\": "",
+                fi->filename);
     }
   }
 

@@ -73,60 +73,66 @@ HRESULT WINAPI CABINET_DllGetVersion (DLLVERSIONINFO *pdvi)
  * to somewhere...
  *
  * PARAMS
- *   unknown [IO] unknown pointer
+ *   dest         pointer to a buffer of 0x32c bytes containing
+ *           [I]  - number with value 1 at index 0x18
+ *                - the dest path starting at index 0x1c
+ *           [O]  - the number of files inside the CAB file at index 0x14
+ *                - the name of the last file with dest path at idx 0x12
  *   what    [I]  char* describing what to uncompress, I guess.
  *
  * RETURNS
  *     Success: S_OK
  *     Failure: E_OUTOFMEMORY (?)
  */
-HRESULT WINAPI Extract(DWORD unknown, LPCSTR what)
+HRESULT WINAPI Extract(EXTRACTdest *dest, LPCSTR what)
 {
-  LPCSTR whatx;
-  LPSTR dir, dirx, lastoption, x;
-  BOOL updatelastoption;
+#define DUMPC(idx)      idx >= sizeof(EXTRACTdest) ? ' ' : \
+                        ptr[idx] >= 0x20 ? ptr[idx] : '.'
 
-  TRACE("(unknown == %0lx, what == %s)\n", unknown, debugstr_a(what));
+#define DUMPH(idx)      idx >= sizeof(EXTRACTdest) ? 0x55 : ptr[idx]
 
-  dir = LocalAlloc(LPTR, strlen(what)); 
+  LPSTR dir;
+  unsigned char *ptr = (unsigned char*) dest;
+  int i;
+
+  TRACE("(dest == %0lx, what == %s)\n", (long) dest, debugstr_a(what));
+
+  if (!dest) {
+    /* win2k will crash here */
+    FIXME("called without valid parameter dest!\n");
+    return E_OUTOFMEMORY;
+  }
+  for (i=0; i < sizeof(EXTRACTdest); i+=8)
+    TRACE( "dest[%04x]:%02x %02x %02x %02x %02x %02x %02x %02x %c%c%c%c%c%c%c%c\n",
+           i,
+           DUMPH(i+0), DUMPH(i+1), DUMPH(i+2), DUMPH(i+3),
+           DUMPH(i+4), DUMPH(i+5), DUMPH(i+6), DUMPH(i+7),
+           DUMPC(i+0), DUMPC(i+1), DUMPC(i+2), DUMPC(i+3),
+           DUMPC(i+4), DUMPC(i+5), DUMPC(i+6), DUMPC(i+7));
+
+  dir = LocalAlloc(LPTR, strlen(dest->directory)+1); 
   if (!dir) return E_OUTOFMEMORY;
-
-  /* copy the filename up to the last pathsep to construct the dirname */
-  whatx = what;
-  dirx = dir;
-  lastoption = NULL;
-  while (*whatx) {
-    if ((*whatx == '\\') || (*whatx == '/')) {
-      /* unless all chars between *dirx and lastoption are pathsep's, we
-         remember our location in dir as lastoption */
-      if (lastoption) {
-        updatelastoption = FALSE;
-        for (x = lastoption; x < dirx; x++)
-	  if ((*dirx != '\\') && (*dirx != '/')) {
-	    updatelastoption = TRUE;
-	    break;
-	  }
-        if (updatelastoption) lastoption = dirx;
-      } else
-        lastoption = dirx;
-    }
-    *dirx++ = *whatx++;
-  }
-
-  if (!lastoption) {
-    /* FIXME: I guess use the cwd or something? */
-    assert(FALSE);
-  } else {
-    *lastoption = '\0';
-  }
+  lstrcpyA(dir, dest->directory);
+  dest->filecount=0;
 
   TRACE("extracting to dir: %s\n", debugstr_a(dir));
 
   /* FIXME: what to do on failure? */
-  if (!process_cabinet(what, dir, FALSE, FALSE))
+  if (!process_cabinet(what, dir, FALSE, FALSE, dest))
     return E_OUTOFMEMORY;
 
+  /* the magic 13 is returned by all cab files tested so far:
+   * DXDDEX.CAB, DXMINI.CAB, SWFLASH.CAB on win2k
+   * but it crashes the ie5.5 installer :-( . The native dll does not return
+   * the four zeros. The value depends on the combination of the cab file and
+   * the destination path
+   */
+  dest->result2=0x130000;
+
   LocalFree(dir);
+
+  TRACE("filecount %08lx,lastfile %s\n",
+         dest->filecount, debugstr_a(dest->lastfile));
 
   return S_OK;
 }

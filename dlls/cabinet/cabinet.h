@@ -553,8 +553,20 @@ static const cab_UWORD Zipmask[17] = {                                          
  0x01ff, 0x03ff, 0x07ff, 0x0fff, 0x1fff, 0x3fff, 0x7fff, 0xffff                    \
 }
 
+/* the first parameter of the function extract */
+typedef struct {
+        long  result1;          /* 0x000 */
+        long  unknown1[3];      /* 0x004 */
+        long  result2;          /* 0x010 */
+        long  filecount;        /* 0x014 */
+        long  unknown2;         /* 0x018 */
+        char  directory[0x104]; /* 0x01c */
+        char  lastfile[0x20c];  /* 0x120 */
+} EXTRACTdest;
+
+
 /* from cabextract.c */
-BOOL process_cabinet(LPCSTR cabname, LPCSTR dir, BOOL fix, BOOL lower);
+BOOL process_cabinet(LPCSTR cabname, LPCSTR dir, BOOL fix, BOOL lower, EXTRACTdest *dest);
 void QTMupdatemodel(struct QTMmodel *model, int sym);
 int make_decode_table(cab_ULONG nsyms, cab_ULONG nbits, cab_UBYTE *length, cab_UWORD *table);
 cab_ULONG checksum(cab_UBYTE *data, cab_UWORD bytes, cab_ULONG csum);
