@@ -1165,7 +1165,7 @@ static DWORD wodGetPosition(WORD wDevID, LPMMTIME lpTime, DWORD uSize)
 	time -= lpTime->u.smpte.min * 60;
 	lpTime->u.smpte.sec = time;
 	time -= lpTime->u.smpte.sec;
-	lpTime->u.smpte.frame = ceil(time * 30);
+	lpTime->u.smpte.frame = round(time * 30);
 	lpTime->u.smpte.fps = 30;
 	TRACE("TIME_SMPTE=%02u:%02u:%02u:%02u\n",
 	      lpTime->u.smpte.hour, lpTime->u.smpte.min,
