@@ -384,7 +384,7 @@
 @ stdcall GetDefaultCommConfigA(str ptr long) GetDefaultCommConfigA
 @ stdcall GetDefaultCommConfigW(wstr ptr long) GetDefaultCommConfigW
 @ stub GetDefaultSortkeySize
-@ stub GetDevicePowerState
+@ stdcall GetDevicePowerState(long ptr) GetDevicePowerState
 @ stdcall GetDiskFreeSpaceA(str ptr ptr ptr ptr) GetDiskFreeSpaceA
 @ stdcall GetDiskFreeSpaceW(wstr ptr ptr ptr ptr) GetDiskFreeSpaceW
 @ stdcall GetDriveTypeA(str) GetDriveTypeA

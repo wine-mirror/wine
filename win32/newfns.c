@@ -311,3 +311,12 @@ BOOL WINAPI GetQueuedCompletionStatus(
     SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
     return FALSE;
 }
+
+/******************************************************************************
+ *           GetDevicePowerState   (KERNEL32.@)
+ */
+BOOL WINAPI GetDevicePowerState(HANDLE hDevice, BOOL* pfOn)
+{
+    FIXME("(hDevice %p pfOn %p): stub\n", hDevice, pfOn);
+    return TRUE; /* no information */
+}
