@@ -2782,8 +2782,18 @@ static INT MENU_TrackMenu( HMENU hmenu, UINT wFlags, INT x, INT y,
         fRemove = FALSE;
 	if ((msg.message >= WM_MOUSEFIRST) && (msg.message <= WM_MOUSELAST))
 	{
+            /* 
+             * use the mouse coordinates in lParam instead of those in the MSG
+             * struct to properly handle synthetic messages. lParam coords are 
+             * relative to client area, so they must be converted; since they can
+             * be negative, we must use SLOWORD/SHIWORD instead of LOWORD/HIWORD.
+             */
+            mt.pt.x = SLOWORD(msg.lParam);
+            mt.pt.y = SHIWORD(msg.lParam);
+            ClientToScreen(msg.hwnd,&mt.pt);
+
 	    /* Find a menu for this mouse event */
-	    hmenu = MENU_PtMenu( mt.hTopMenu, msg.pt );
+	    hmenu = MENU_PtMenu( mt.hTopMenu, mt.pt );
 
 	    switch(msg.message)
 	    {
