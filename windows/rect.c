@@ -80,19 +80,23 @@ BOOL WINAPI CopyRect( RECT *dest, const RECT *src )
 
 /***********************************************************************
  *           IsRectEmpty16    (USER.75)
+ *
+ * Bug compat: Windows checks for 0 or negative width/height.
  */
 BOOL16 WINAPI IsRectEmpty16( const RECT16 *rect )
 {
-    return ((rect->left == rect->right) || (rect->top == rect->bottom));
+    return ((rect->left >= rect->right) || (rect->top >= rect->bottom));
 }
 
 
 /***********************************************************************
  *           IsRectEmpty32    (USER32.347)
+ *
+ * Bug compat: Windows checks for 0 or negative width/height.
  */
 BOOL WINAPI IsRectEmpty( const RECT *rect )
 {
-    return ((rect->left == rect->right) || (rect->top == rect->bottom));
+    return ((rect->left >= rect->right) || (rect->top >= rect->bottom));
 }
 
 
