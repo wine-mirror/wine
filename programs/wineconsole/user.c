@@ -1353,14 +1353,14 @@ static int WCUSER_MainLoop(struct inner_data* data)
  * Initialisation part II: creation of window.
  *
  */
-BOOL WCUSER_InitBackend(struct inner_data* data)
+enum init_return WCUSER_InitBackend(struct inner_data* data)
 {
     static WCHAR wClassName[] = {'W','i','n','e','C','o','n','s','o','l','e','C','l','a','s','s',0};
 
     WNDCLASS		wndclass;
 
     data->private = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(struct inner_data_user));
-    if (!data->private) return FALSE;
+    if (!data->private) return init_failed;
 
     data->fnMainLoop = WCUSER_MainLoop;
     data->fnPosCursor = WCUSER_PosCursor;
@@ -1389,7 +1389,7 @@ BOOL WCUSER_InitBackend(struct inner_data* data)
     CreateWindow(wndclass.lpszClassName, NULL,
 		 WS_OVERLAPPED|WS_CAPTION|WS_SYSMENU|WS_THICKFRAME|WS_MINIMIZEBOX|WS_HSCROLL|WS_VSCROLL,
 		 CW_USEDEFAULT, CW_USEDEFAULT, 0, 0, 0, 0, wndclass.hInstance, data);
-    if (!PRIVATE(data)->hWnd) return FALSE;
+    if (!PRIVATE(data)->hWnd) return init_failed;
 
-    return TRUE;
+    return init_success;
 }

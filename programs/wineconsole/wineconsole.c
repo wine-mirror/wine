@@ -529,7 +529,7 @@ static void WINECON_Delete(struct inner_data* data)
  * active screen buffer)
  */
 static struct inner_data* WINECON_Init(HINSTANCE hInst, DWORD pid, LPCWSTR appname,
-                                       BOOL (*backend)(struct inner_data*))
+                                       enum init_return (*backend)(struct inner_data*))
 {
     struct inner_data*	data = NULL;
     DWORD		ret;
@@ -605,12 +605,26 @@ static struct inner_data* WINECON_Init(HINSTANCE hInst, DWORD pid, LPCWSTR appna
     WINE_TRACE("using hConOut %p\n", data->hConOut);
 
     /* filling data->curcfg from cfg */
-    if ((*backend)(data))
+ retry:
+    switch ((*backend)(data))
     {
+    case init_success:
         WINECON_SetConfig(data, &cfg, TRUE);
         data->curcfg.registry = cfg.registry;
         WINECON_DumpConfig("fint", &data->curcfg);
         return data;
+    case init_failed:
+        break;
+    case init_not_supported:
+        if (backend == WCCURSES_InitBackend)
+        {
+            WINE_ERR("(n)curses was not found at configuration time.\n"
+                     "If you want (n)curses support, please install relevant packages.\n"
+                     "Now forcing user backend instead of (n)curses.\n");
+            backend = WCUSER_InitBackend;
+            goto retry;
+        }
+        break;
     }
 
  error:
@@ -665,10 +679,10 @@ static BOOL WINECON_Spawn(struct inner_data* data, LPWSTR cmdLine)
 }
 
 struct wc_init {
-    LPCSTR      ptr;
+    LPCSTR              ptr;
     enum {from_event, from_process_name} mode;
-    BOOL        (*backend)(struct inner_data*);
-    HANDLE      event;
+    enum init_return    (*backend)(struct inner_data*);
+    HANDLE              event;
 };
 
 /******************************************************************

@@ -89,5 +89,8 @@ extern void WINECON_RegSave(const struct config_data* cfg);
 extern void WINECON_DumpConfig(const char* pfx, const struct config_data* cfg);
 
 /* backends... */
-extern BOOL WCUSER_InitBackend(struct inner_data* data);
-extern BOOL WCCURSES_InitBackend(struct inner_data* data);
+enum init_return {
+    init_success, init_failed, init_not_supported
+};
+extern enum init_return WCUSER_InitBackend(struct inner_data* data);
+extern enum init_return WCCURSES_InitBackend(struct inner_data* data);

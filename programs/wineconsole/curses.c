@@ -717,10 +717,10 @@ static int WCCURSES_MainLoop(struct inner_data* data)
  * Initialisation part II: creation of window.
  *
  */
-BOOL WCCURSES_InitBackend(struct inner_data* data)
+enum init_return WCCURSES_InitBackend(struct inner_data* data)
 {
     data->private = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(struct inner_data_curse));
-    if (!data->private) return FALSE;
+    if (!data->private) return init_failed;
 
     data->fnMainLoop           = WCCURSES_MainLoop;
     data->fnPosCursor          = WCCURSES_PosCursor;
@@ -737,7 +737,7 @@ BOOL WCCURSES_InitBackend(struct inner_data* data)
                                  (obj_handle_t*)&PRIVATE(data)->hInput))
     {
         WINE_FIXME("Cannot open 0\n");
-        return 0;
+        return init_failed;
     }
 
     /* FIXME: should find a good way to enable buffer scrolling
@@ -782,12 +782,12 @@ BOOL WCCURSES_InitBackend(struct inner_data* data)
         mousemask(0, &PRIVATE(data)->initial_mouse_mask);
     }
 
-    return TRUE;
+    return init_success;
 }
 
 #else
 BOOL WCCURSES_InitBackend(struct inner_data* data)
 {
-    return FALSE;
+    return init_not_supported;
 }
 #endif
