@@ -1451,7 +1451,7 @@ NTSTATUS WINAPI NtQueryVirtualMemory( HANDLE process, LPCVOID addr,
 
     if (info_class != MemoryBasicInformation)
     {
-        FIXME("(%p, %p, %ld, %p, %ld, %p) Unimplemented information class\n", process, addr,
+        FIXME("(%p, %p, %d, %p, %ld, %p) Unimplemented information class\n", process, addr,
               info_class, buffer, len, res_len);
         return STATUS_INVALID_INFO_CLASS;
     }
