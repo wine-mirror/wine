@@ -24,7 +24,7 @@
 #include "commdlg.h"
 #include "prsht.h"
 #include "windef.h"
-#include "oleidl.h"
+#include "ole2.h"
 
 #ifdef __cplusplus
 extern "C" {

@@ -30,8 +30,6 @@
 #include "winuser.h"
 #include "ole2.h"
 #include "olectl.h"
-#include "wine/obj_base.h"
-#include "wine/obj_connection.h"
 #include "connpt.h"
 
 #include "wine/debug.h"

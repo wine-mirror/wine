@@ -27,12 +27,7 @@ extern "C" {
 
 #include "windef.h"
 #include "wine/windef16.h"
-#include "wine/obj_base.h"
-#include "wine/obj_misc.h"
-#include "wine/obj_storage.h"
-#include "wine/obj_moniker.h"
-#include "wine/obj_dataobject.h"
-#include "wine/obj_dragdrop.h"
+#include "objbase.h"
 
 struct tagLOGPALETTE;
 

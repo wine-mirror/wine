@@ -28,8 +28,11 @@
 #ifndef __WINE_OBJIDL_H
 #define __WINE_OBJIDL_H
 
+#if defined(__WINE__) && !defined(INITGUID) && !defined(__WINE_INCLUDE_OBJIDL)
+#error DO NOT INCLUDE DIRECTLY
+#endif
 
-#include "wine/obj_base.h"
+#include "unknwn.h"
 
 /* the following depend only on obj_base.h */
 #include "wine/obj_misc.h"

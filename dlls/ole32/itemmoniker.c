@@ -24,11 +24,7 @@
 #include "winbase.h"
 #include "winnls.h"
 #include "wine/debug.h"
-#include "wine/obj_base.h"
-#include "wine/obj_misc.h"
-#include "wine/obj_storage.h"
-#include "wine/obj_moniker.h"
-#include "wine/obj_inplace.h"
+#include "ole2.h"
 #include "wine/unicode.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(ole);

@@ -29,10 +29,8 @@
 #ifndef __STORAGE32_H__
 #define __STORAGE32_H__
 
-#include "wtypes.h"
 #include "winnt.h"
-#include "wine/obj_base.h"
-#include "wine/obj_storage.h"
+#include "objbase.h"
 
 /*
  * Definitions for the file format offsets.

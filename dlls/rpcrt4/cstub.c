@@ -22,8 +22,7 @@
 #include "winbase.h"
 #include "winerror.h"
 
-#include "wine/obj_base.h"
-#include "wine/obj_channel.h"
+#include "objbase.h"
 
 #include "rpcproxy.h"
 

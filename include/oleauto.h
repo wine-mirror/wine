@@ -20,14 +20,9 @@
 #define __WINE_OLEAUTO_H
 
 #include "winbase.h"
-#include "wtypes.h"
-#include "wine/obj_base.h"
-#include "wine/obj_oleaut.h"
-#include "wine/obj_errorinfo.h"
-
-#ifndef __WINE__
+#define __WINE_INCLUDE_OAIDL
 #include "oaidl.h"
-#endif
+#undef __WINE_INCLUDE_OAIDL
 
 #ifdef __cplusplus
 extern "C" {

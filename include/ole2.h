@@ -24,17 +24,10 @@
 #include "windef.h"
 #include "winerror.h"
 #include "objbase.h"
-#include "wine/obj_base.h"
-#include "wine/obj_misc.h"
-#include "wine/obj_storage.h"
-#include "wine/obj_moniker.h"
-#include "wine/obj_dataobject.h"
-#include "wine/obj_dragdrop.h"
-#include "wine/obj_inplace.h"
-#include "wine/obj_oleobj.h"
-#include "wine/obj_oleview.h"
-#ifndef __WINE__
+#define __WINE_INCLUDE_OLEIDL
 #include "oleidl.h"
+#undef __WINE_INCLUDE_OLEIDL
+#ifndef __WINE__
 #include "oleauto.h"
 #endif
 struct tagMSG;

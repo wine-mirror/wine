@@ -22,6 +22,10 @@
 #ifndef __WINE_WINE_OBJ_BASE_H
 #define __WINE_WINE_OBJ_BASE_H
 
+#ifndef __WINE_INCLUDE_UNKNWN
+#error DO NOT INCLUDE DIRECTLY
+#endif
+
 /*****************************************************************************
  * define ICOM_MSVTABLE_COMPAT
  * to implement the microsoft com vtable compatibility workaround for g++.

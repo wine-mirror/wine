@@ -28,9 +28,7 @@
 #include "winuser.h"
 #include "wine/unicode.h"
 #include "oleauto.h"    /* for SysAllocString(....) */
-#include "wine/obj_base.h"
-#include "wine/obj_olefont.h"
-#include "wine/obj_storage.h"
+#include "objbase.h"
 #include "ole2.h"
 #include "olectl.h"
 #include "wine/debug.h"

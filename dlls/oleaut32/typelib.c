@@ -66,7 +66,7 @@
 #include "winuser.h"
 
 #include "wine/unicode.h"
-#include "wine/obj_base.h"
+#include "objbase.h"
 #include "heap.h"
 #include "ole2disp.h"
 #include "typelib.h"

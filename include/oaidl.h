@@ -28,12 +28,15 @@
 #ifndef __WINE_OAIDL_H
 #define __WINE_OAIDL_H
 
-#include "ole2.h"
+#if defined(__WINE__) && !defined(INITGUID) && !defined(__WINE_INCLUDE_OAIDL)
+#error DO NOT INCLUDE DIRECTLY
+#endif
+
+#define __WINE_INCLUDE_OBJIDL
 #include "objidl.h"
-
-#include "wine/obj_base.h"
-
+#undef __WINE_INCLUDE_OBJIDL
 /* the following depend only on obj_base.h */
 #include "wine/obj_oleaut.h"
+#include "wine/obj_errorinfo.h"
 
 #endif /* _WINE_OAIDL_H */

@@ -22,8 +22,6 @@
 #include "winbase.h"
 #include "winerror.h"
 #include "winnls.h"
-#include "wine/obj_base.h"
-#include "wine/obj_storage.h"
 #define NO_SHLWAPI_REG
 #define NO_SHLWAPI_PATH
 #include "shlwapi.h"

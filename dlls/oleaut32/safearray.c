@@ -27,7 +27,6 @@
 #include "winerror.h"
 #include "winbase.h"
 #include "oleauto.h"
-#include "wine/obj_base.h"
 #include "wine/debug.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(ole);

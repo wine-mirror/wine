@@ -33,9 +33,6 @@
 
 #include "ole2.h"
 #include "wine/unicode.h"
-#include "wine/obj_base.h"
-#include "wine/obj_channel.h"
-#include "wine/obj_storage.h"
 #include "heap.h"
 #include "ole2disp.h"
 #include "typelib.h"

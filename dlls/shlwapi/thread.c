@@ -22,7 +22,6 @@
 
 #include "windef.h"
 #include "winnls.h"
-#include "wine/obj_base.h"
 #include "wine/debug.h"
 #define NO_SHLWAPI_REG
 #define NO_SHLWAPI_PATH

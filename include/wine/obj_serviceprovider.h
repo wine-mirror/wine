@@ -23,7 +23,7 @@
 #ifndef __WINE_WINE_OBJ_SERVICEPROVIDER_H
 #define __WINE_WINE_OBJ_SERVICEPROVIDER_H
 
-#include "wine/obj_base.h"
+#include "objbase.h"
 #include "winbase.h"
 
 #ifdef __cplusplus

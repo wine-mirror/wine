@@ -29,7 +29,7 @@
 #define __WINE_URLMON_H
 
 #include "winbase.h"
-#include "wine/obj_base.h"
+#include "objbase.h"
 
 #ifdef __cplusplus
 extern "C" {

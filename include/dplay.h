@@ -20,7 +20,6 @@
 #define __WINE_DPLAY_H
 
 #include "ole2.h"
-#include "wine/obj_base.h"
 
 #ifdef __cplusplus
 extern "C" {

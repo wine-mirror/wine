@@ -18,7 +18,7 @@
 
 #include <string.h>
 #include "windef.h"
-#include "wine/obj_base.h"
+#include "objbase.h"
 #include "winerror.h"
 #include "wine/debug.h"
 #include "dpinit.h"

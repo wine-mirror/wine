@@ -22,8 +22,7 @@
 #include <string.h>
 
 #include "windef.h"
-#include "wine/obj_base.h"
-#include "wine/obj_extracticon.h"
+#include "objbase.h"
 #include "undocshell.h"
 #include "shlguid.h"
 

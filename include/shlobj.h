@@ -22,6 +22,7 @@
 #include "windef.h"
 #include "winbase.h"	/* WIN32_FIND_* */
 #include "ole2.h"
+#include "oleauto.h"
 #include "commctrl.h"
 #include "prsht.h"
 
@@ -53,10 +54,7 @@ BOOL WINAPI SHGetPathFromIDListW (LPCITEMIDLIST pidl,LPWSTR pszPath);
 #define     SHGetPathFromIDList WINELIB_NAME_AW(SHGetPathFromIDList)
 
 
-#include "wine/obj_base.h"
 #include "wine/obj_enumidlist.h"
-#include "wine/obj_inplace.h"
-#include "wine/obj_oleaut.h"
 #include "wine/obj_shellfolder.h"
 #include "wine/obj_shellview.h"
 #include "wine/obj_shelllink.h"

@@ -36,8 +36,6 @@
 #include "shellapi.h"
 #include "commdlg.h"
 #include "wine/unicode.h"
-#include "wine/obj_base.h"
-#include "wine/obj_inplace.h"
 #include "wine/obj_serviceprovider.h"
 #include "wine/obj_control.h"
 #include "wine/obj_connection.h"

@@ -28,6 +28,8 @@
 #ifndef __WINE_UNKNWN_H
 #define __WINE_UNKNWN_H
 
+#define __WINE_INCLUDE_UNKNWN
 #include "wine/obj_base.h"
+#undef __WINE_INCLUDE_UNKNWN
 
 #endif /* __WINE_UNKNWN_H */

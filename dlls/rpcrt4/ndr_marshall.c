@@ -35,7 +35,7 @@
 #include "rpcndr.h"
 
 #include "wine/rpcfc.h"
-#include "wine/obj_base.h"
+#include "objbase.h"
 
 #include "wine/debug.h"
 

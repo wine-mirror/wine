@@ -26,9 +26,6 @@
 #include "wine/unicode.h"
 #include "wine/debug.h"
 #include "objbase.h"
-#include "wine/obj_storage.h"
-#include "wine/obj_moniker.h"
-#include "wine/obj_base.h"
 
 #include "compobj_private.h"
 

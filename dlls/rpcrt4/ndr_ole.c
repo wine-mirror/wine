@@ -32,10 +32,7 @@
 #include "winerror.h"
 #include "winreg.h"
 
-#include "wine/obj_base.h"
-#include "wine/obj_storage.h"
-#include "wine/obj_marshal.h"
-#include "wine/obj_channel.h"
+#include "objbase.h"
 
 #include "rpcndr.h"
 

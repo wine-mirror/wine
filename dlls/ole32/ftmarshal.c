@@ -27,7 +27,7 @@
 
 #include "winbase.h"
 
-#include "wine/obj_base.h"
+#include "objbase.h"
 #include "wine/obj_storage.h"
 #include "wine/obj_marshal.h"
 

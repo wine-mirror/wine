@@ -24,8 +24,6 @@
 #ifndef __WINE_WINE_OBJ_MISC_H
 #define __WINE_WINE_OBJ_MISC_H
 
-#include "wine/obj_base.h"
-
 #ifdef __cplusplus
 extern "C" {
 #endif /* defined(__cplusplus) */
@@ -192,12 +190,6 @@ ICOM_DEFINE(IMallocSpy,IUnknown)
 #define IMallocSpy_PostDidAlloc(p,a,b,c) ICOM_CALL3(PostDidAlloc,p,a,b,c)
 #define IMallocSpy_PreHeapMinimize(p)    ICOM_CALL (PreHeapMinimize,p)
 #define IMallocSpy_PostHeapMinimize(p)   ICOM_CALL (PostHeapMinimize,p)
-
-/* FIXME: not implemented */
-HRESULT WINAPI CoRegisterMallocSpy(LPMALLOCSPY pMallocSpy);
-
-/* FIXME: not implemented */
-HRESULT WINAPI CoRevokeMallocSpy(void);
 
 HRESULT WINAPI CoFileTimeNow(FILETIME* lpFileTime);
 

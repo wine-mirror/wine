@@ -22,8 +22,7 @@
 #include "windef.h"
 #include "winbase.h"
 #include "winuser.h"
-#include "wine/obj_base.h"
-#include "wine/obj_storage.h"
+#include "objbase.h"
 #include "wine/debug.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(shell);

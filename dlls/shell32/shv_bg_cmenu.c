@@ -24,9 +24,7 @@
 
 #include "pidl.h"
 #include "shlguid.h"
-#include "wine/obj_base.h"
-#include "wine/obj_contextmenu.h"
-#include "wine/obj_shellbrowser.h"
+#include "shlobj.h"
 
 #include "shell32_main.h"
 #include "shellfolder.h"

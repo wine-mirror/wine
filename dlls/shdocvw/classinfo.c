@@ -19,8 +19,10 @@
  */
 
 #include <string.h>
-#include "wine/debug.h"
+
+#include "winbase.h"
 #include "shdocvw.h"
+#include "wine/debug.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(shdocvw);
 

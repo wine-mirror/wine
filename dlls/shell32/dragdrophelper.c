@@ -22,15 +22,13 @@
 #include "config.h"
 #include "wine/port.h"
 
-#include <stdlib.h>
 #include <string.h>
-#include <stdio.h>
 
-#include "winerror.h"
 #include "winbase.h"
 #include "winreg.h"
 
-#include "oleidl.h"
+#include "objbase.h"
+#include "ole2.h"
 #include "shlguid.h"
 
 #include "wine/obj_dragdrophelper.h"

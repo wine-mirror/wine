@@ -21,7 +21,7 @@
 #include "config.h"
 
 #include "windef.h"
-#include "wine/obj_base.h"
+#include "objbase.h"
 #include "ddraw.h"
 #include "d3d.h"
 #include "wine/debug.h"

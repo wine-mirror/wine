@@ -29,7 +29,7 @@
 #define __WINE_SERVPROV_H
 
 
-#include "wine/obj_base.h"
+#include "objbase.h"
 
 
 /*****************************************************************************

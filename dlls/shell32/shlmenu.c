@@ -22,9 +22,6 @@
 
 #include "winreg.h"
 #include "shlobj.h"
-#include "wine/obj_base.h"
-#include "wine/obj_enumidlist.h"
-#include "wine/obj_shellfolder.h"
 #include "undocshell.h"
 #include "shlwapi.h"
 #include "heap.h"

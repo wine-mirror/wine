@@ -31,13 +31,10 @@
 #include "winbase.h"
 #include "winreg.h"
 
-#include "oleidl.h"
+#include "ole2.h"
 #include "shlguid.h"
 
 #include "pidl.h"
-#include "wine/obj_base.h"
-#include "wine/obj_dragdrop.h"
-#include "wine/obj_shellfolder.h"
 #include "undocshell.h"
 #include "shell32_main.h"
 #include "shresdef.h"

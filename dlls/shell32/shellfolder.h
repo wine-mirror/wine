@@ -23,9 +23,7 @@
 
 #include "winbase.h"
 
-#include "wine/obj_base.h"
-#include "wine/obj_shellfolder.h"
-
+#include "shlobj.h"
 
 /*****************************************************************************
  * Predeclare the interfaces

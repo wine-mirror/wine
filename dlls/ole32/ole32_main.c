@@ -22,7 +22,6 @@
 #include "winerror.h"
 #include "ole32_main.h"
 #include "wine/debug.h"
-#include "wine/obj_misc.h" /* FIXME: CoRegisterMallocSpy */
 
 WINE_DEFAULT_DEBUG_CHANNEL(ole);
 

@@ -29,7 +29,6 @@
 #include "winnls.h"
 #include "heap.h"
 
-#include "wine/obj_base.h"
 #include "shellapi.h"
 #include "shlguid.h"
 #include "shlobj.h"

@@ -28,10 +28,14 @@
 #ifndef __WINE_OCIDL_H
 #define __WINE_OCIDL_H
 
-#include "wine/obj_base.h"
+#if defined(__WINE__) && !defined(INITGUID) && !defined(__WINE_INCLUDE_OCIDL)
+#error DO NOT INCLUDE DIRECTLY
+#endif
 
-/* the following depend only on obj_base.h */
-#include "wine/obj_storage.h"
+#define __WINE_INCLUDE_OLEIDL
+#include "oleidl.h"
+#undef __WINE_INCLUDE_OLEIDL
+
 #include "wine/obj_oleaut.h"
 #include "wine/obj_olefont.h"
 #include "wine/obj_picture.h"

@@ -45,8 +45,7 @@
 #include <string.h>
 #include "winerror.h"
 #include "winbase.h"
-#include "wine/obj_base.h"
-#include "wine/obj_storage.h"
+#include "objbase.h"
 #include "commctrl.h"
 #include "imagelist.h"
 #include "wine/debug.h"

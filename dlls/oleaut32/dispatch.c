@@ -34,8 +34,6 @@
 #include "winreg.h"         /* for HKEY_LOCAL_MACHINE */
 #include "winnls.h"         /* for PRIMARYLANGID */
 
-#include "wine/obj_oleaut.h"
-
 #include "wine/debug.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(ole);

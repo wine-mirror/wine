@@ -25,10 +25,6 @@
 #include "winerror.h"
 #include "winbase.h"
 #include "wtypes.h"
-#include "wine/obj_base.h"
-#include "wine/obj_storage.h"
-#include "wine/obj_misc.h"
-#include "wine/obj_moniker.h"
 #include "wine/debug.h"
 #include "ole2.h"
 
