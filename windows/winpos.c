@@ -2212,9 +2212,6 @@ END:
  * visible and update regions are in window coordinates
  * client and window rectangles are in parent client coordinates
  *
- * FIXME: SWP_EX_PAINTSELF in uFlags works only if both old and new
- *	  window rects have the same origin.
- *
  * Returns: uFlags and a dirty region in *pVisRgn.
  */
 static UINT SWP_CopyValidBits( WND* Wnd, HRGN* pVisRgn,
@@ -2289,8 +2286,20 @@ nocopy:
           ((lpOldClientRect->left - lpOldWndRect->left) !=
            (Wnd->rectClient.left - Wnd->rectWindow.left)) )
      {
-	dx = Wnd->rectClient.left - lpOldClientRect->left;
-	dy = Wnd->rectClient.top - lpOldClientRect->top;
+         if(uFlags & SWP_EX_PAINTSELF)
+         {
+             /* movement relative to the window itself */
+             dx = (Wnd->rectClient.left - Wnd->rectWindow.left) -
+                 (lpOldClientRect->left - lpOldWndRect->left) ;
+             dy = (Wnd->rectClient.top - Wnd->rectWindow.top) -
+                 (lpOldClientRect->top - lpOldWndRect->top) ;
+         }
+         else
+         {
+             /* movement relative to the parent's client area */
+             dx = Wnd->rectClient.left - lpOldClientRect->left;
+             dy = Wnd->rectClient.top - lpOldClientRect->top;
+         }
 
 	/* restrict valid bits to the common client rect */
 
@@ -2308,10 +2317,21 @@ nocopy:
      }
      else
      {
-	dx = Wnd->rectWindow.left - lpOldWndRect->left;
-	dy = Wnd->rectWindow.top -  lpOldWndRect->top;
-	if( !(uFlags & SWP_EX_PAINTSELF) )
-	    OffsetRgn( hrgnValid, Wnd->rectWindow.left, Wnd->rectWindow.top );
+         if(uFlags & SWP_EX_PAINTSELF) {
+             /* 
+              * with SWP_EX_PAINTSELF, the window repaints itself. Since a window can't move 
+              * relative to itself, only the client area can change.
+              * if the client rect didn't change, there's nothing to do.
+              */
+             dx = 0;
+             dy = 0;
+         }
+         else
+         {
+             dx = Wnd->rectWindow.left - lpOldWndRect->left;
+             dy = Wnd->rectWindow.top -  lpOldWndRect->top;
+             OffsetRgn( hrgnValid, Wnd->rectWindow.left, Wnd->rectWindow.top );
+         }
 	r = *lpOldWndRect;
      }
 
@@ -2513,9 +2533,14 @@ static UINT SWP_DoNCCalcSize( WND* wndPtr, WINDOWPOS* pWinpos,
 
          /* FIXME: WVR_ALIGNxxx */
 
-         if( pNewClientRect->left != wndPtr->rectClient.left ||
-             pNewClientRect->top != wndPtr->rectClient.top )
+         /* check if client area moved relative to the window */
+         if ( ( (wndPtr->rectClient.left - pNewClientRect->left) != 
+                (wndPtr->rectWindow.left - pNewWindowRect->left) ) ||
+              ( (wndPtr->rectClient.top - pNewClientRect->top) != 
+                (wndPtr->rectWindow.top - pNewWindowRect->top) ) )
+         {   
              pWinpos->flags &= ~SWP_NOCLIENTMOVE;
+         }
 
          if( (pNewClientRect->right - pNewClientRect->left !=
               wndPtr->rectClient.right - wndPtr->rectClient.left) ||
