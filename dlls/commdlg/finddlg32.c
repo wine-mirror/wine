@@ -279,7 +279,7 @@ static BOOL CALLBACK COMDLG32_FindReplaceDlgProc(HWND hDlgWnd, UINT iMsg, WPARAM
  * Check various fault conditions in the supplied parameters that
  * cause an extended error to be reported.
  *	RETURNS
- *		TRUE: Succes
+ *		TRUE: Success
  *		FALSE: Failure
  */
 static BOOL COMDLG32_FR_CheckPartial(
@@ -347,7 +347,7 @@ static BOOL COMDLG32_FR_CheckPartial(
  *	COMDLG32_FR_DoFindReplace		[internal]
  * Actual load and creation of the Find/Replace dialog.
  *	RETURNS
- *		Window handle to created dialog:Succes
+ *		Window handle to created dialog:Success
  *		NULL:Failure
  */
 static HWND COMDLG32_FR_DoFindReplace(
@@ -425,7 +425,7 @@ cleanup:
 /***********************************************************************
  *	FindTextA 				[COMDLG32.6]
  *	RETURNS
- *		Window handle to created dialog: Succes
+ *		Window handle to created dialog: Success
  *		NULL: Failure
  */
 HWND WINAPI FindTextA(
@@ -449,7 +449,7 @@ HWND WINAPI FindTextA(
 /***********************************************************************
  *	ReplaceTextA 				[COMDLG32.19]
  *	RETURNS
- *		Window handle to created dialog: Succes
+ *		Window handle to created dialog: Success
  *		NULL: Failure
  */
 HWND WINAPI ReplaceTextA(
@@ -474,7 +474,7 @@ HWND WINAPI ReplaceTextA(
 /***********************************************************************
  *	FindTextW 				[COMDLG32.7]
  *	RETURNS
- *		Window handle to created dialog: Succes
+ *		Window handle to created dialog: Success
  *		NULL: Failure
  */
 HWND WINAPI FindTextW(
@@ -496,7 +496,7 @@ HWND WINAPI FindTextW(
         pdata->user_fr.frw = pfr;
         pdata->fr = *(LPFINDREPLACEA)pfr;	/* FINDREPLACEx have same size */
 	pdata->fr.Flags |= FR_WINE_UNICODE;
-        pdata->fr.lpstrFindWhat = (LPSTR)(((LPFINDREPLACEA)(pdata+1))+1);	/* Set string pointer */
+        pdata->fr.lpstrFindWhat = (LPSTR)(pdata + 1);  /* Set string pointer */
         WideCharToMultiByte( CP_ACP, 0, pfr->lpstrFindWhat, pfr->wFindWhatLen,
                              pdata->fr.lpstrFindWhat, len, NULL, NULL );
         return COMDLG32_FR_DoFindReplace(pdata);
@@ -505,7 +505,7 @@ HWND WINAPI FindTextW(
 /***********************************************************************
  *	ReplaceTextW 				[COMDLG32.20]
  *	RETURNS
- *		Window handle to created dialog: Succes
+ *		Window handle to created dialog: Success
  *		NULL: Failure
  */
 HWND WINAPI ReplaceTextW(
@@ -530,8 +530,8 @@ HWND WINAPI ReplaceTextW(
         pdata->user_fr.frw = pfr;
         pdata->fr = *(LPFINDREPLACEA)pfr;	/* FINDREPLACEx have same size */
 	pdata->fr.Flags |= FR_WINE_REPLACE | FR_WINE_UNICODE;
-        pdata->fr.lpstrFindWhat = (LPSTR)(((LPFINDREPLACEA)(pdata+1))+1);	/* Set string pointers */
-        pdata->fr.lpstrReplaceWith = (LPSTR)(((LPFINDREPLACEA)(pdata+1))+1) + pfr->wFindWhatLen;
+        pdata->fr.lpstrFindWhat = (LPSTR)(pdata + 1);  /* Set string pointer */
+        pdata->fr.lpstrReplaceWith = pdata->fr.lpstrFindWhat + len1;
 
         WideCharToMultiByte( CP_ACP, 0, pfr->lpstrFindWhat, pfr->wFindWhatLen,
                              pdata->fr.lpstrFindWhat, len1, NULL, NULL );
