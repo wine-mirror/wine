@@ -635,8 +635,7 @@ BOOL32 WINAPI RectInRegion32( HRGN32 hrgn, const RECT32 *rect )
 		    continue;              /* not far enough over yet */
 
 		if (pCurRect->left >= rect->right) {
-		    ret = FALSE;           /* too far over */
-		    break;
+		    continue;
 		}
 
 		ret = TRUE;
