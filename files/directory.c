@@ -129,10 +129,13 @@ int DIR_Init(void)
     /* Set the environment variables */
 
     SetEnvironmentVariableA( "PATH", path );
-    SetEnvironmentVariableA( "COMSPEC", "c:\\command.com" );
     SetEnvironmentVariableA( "TEMP", tmp_dir.short_name );
     SetEnvironmentVariableA( "windir", DIR_Windows.short_name );
     SetEnvironmentVariableA( "winsysdir", DIR_System.short_name );
+
+    /* set COMSPEC only if it doesn't exist already */
+    if (!GetEnvironmentVariableA( "COMSPEC", NULL, 0 ))
+        SetEnvironmentVariableA( "COMSPEC", "c:\\command.com" );
 
     TRACE("WindowsDir = %s (%s)\n",
           DIR_Windows.short_name, DIR_Windows.long_name );
