@@ -501,7 +501,7 @@ int	CDROM_Audio_Seek(WINE_CDAUDIO* wcda, DWORD at)
     * use end of CD ROM instead
     */
    FIXME("Could a BSD expert implement the seek function ?\n");
-   CDAUDIO_Play(wcda, at, wcda->lpdwTrackPos[wcda->nTracks] + wcda->lpdwTrackLen[wcda->nTracks]);
+   CDROM_Audio_Play(wcda, at, wcda->lpdwTrackPos[wcda->nTracks] + wcda->lpdwTrackLen[wcda->nTracks]);
    
 #endif
     return ret;
