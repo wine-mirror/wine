@@ -823,7 +823,7 @@ LRESULT CFn_WMDrawItem(HWND hDlg, WPARAM wParam, LPARAM lParam)
     {
         if (lpdi->CtlType == ODT_COMBOBOX)
         {
-            if (lpdi->itemState ==ODS_SELECTED)
+            if (lpdi->itemState & ODS_SELECTED)
             {
                 hBrush=GetSysColorBrush(COLOR_HIGHLIGHT);
                 oldText=SetTextColor(lpdi->hDC, GetSysColor(COLOR_HIGHLIGHTTEXT));
@@ -898,7 +898,7 @@ LRESULT CFn_WMDrawItem(HWND hDlg, WPARAM wParam, LPARAM lParam)
         default:
             return TRUE;  /* this should never happen */
         }
-        if (lpdi->itemState == ODS_SELECTED)
+        if (lpdi->itemState & ODS_SELECTED)
         {
             SetTextColor(lpdi->hDC, oldText);
             SetBkColor(lpdi->hDC, oldBk);
