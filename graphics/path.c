@@ -8,6 +8,10 @@
 #include <malloc.h>
 #include <math.h>
 #include <string.h>
+#include "config.h"
+#if defined(HAVE_FLOAT_H)
+#include <float.h>
+#endif
 
 #include "winbase.h"
 #include "wingdi.h"

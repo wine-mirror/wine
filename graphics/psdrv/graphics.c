@@ -6,12 +6,16 @@
  */
 #include <string.h>
 #include <math.h>
+#include "config.h"
+#if defined(HAVE_FLOAT_H)
+ #include <float.h>
+#endif
+#if !defined(PI)
+ #define PI M_PI
+#endif
 #include "psdrv.h"
 #include "debug.h"
 #include "winspool.h"
-#ifndef PI
-#define PI M_PI
-#endif
 
 /**********************************************************************
  *	     PSDRV_MoveToEx

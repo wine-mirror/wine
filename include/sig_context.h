@@ -98,8 +98,6 @@ typedef struct ucontext SIGCONTEXT;
 #endif  /* svr4 || SCO_DS */
 
 #ifdef __EMX__
-typedef unsigned long ULONG;
-typedef unsigned short USHORT;
 typedef struct _fpreg		/* Note 1 */
 {
   ULONG	 losig;
