@@ -1297,13 +1297,32 @@ static DWORD wodNotifyClient(WINE_WAVEOUT* wwo, WORD wMsg, DWORD dwParam1, DWORD
 static BOOL wodUpdatePlayedTotal(WINE_WAVEOUT* wwo, audio_buf_info* info)
 {
     audio_buf_info dspspace;
+    DWORD notplayed;
     if (!info) info = &dspspace;
 
     if (ioctl(wwo->ossdev->fd, SNDCTL_DSP_GETOSPACE, info) < 0) {
         ERR("ioctl(%s, SNDCTL_DSP_GETOSPACE) failed (%s)\n", wwo->ossdev->dev_name, strerror(errno));
         return FALSE;
     }
-    wwo->dwPlayedTotal = wwo->dwWrittenTotal - (wwo->dwBufferSize - info->bytes);
+
+    /* GETOSPACE is not always accurate when we're down to the last fragment or two;
+    **   we try to accomodate that here by assuming that the dsp is empty by looking
+    **   at the clock rather than the result of GETOSPACE */
+    notplayed = wwo->dwBufferSize - info->bytes;
+    if (notplayed > 0 && notplayed < (info->fragsize * 2))
+    {
+        if (wwo->dwProjectedFinishTime && GetTickCount() >= wwo->dwProjectedFinishTime)
+        {
+            TRACE("Adjusting for a presumed OSS bug and assuming all data has been played.\n");
+            wwo->dwPlayedTotal = wwo->dwWrittenTotal;
+            return TRUE;
+        }
+        else
+            /* Some OSS drivers will clean up nicely if given a POST, so give 'em the chance... */
+            ioctl(wwo->ossdev->fd, SNDCTL_DSP_POST, 0);
+    }
+
+    wwo->dwPlayedTotal = wwo->dwWrittenTotal - notplayed;
     return TRUE;
 }
 
@@ -1368,6 +1387,16 @@ static LPWAVEHDR wodPlayer_PlayPtrNext(WINE_WAVEOUT* wwo)
     }
 
     return lpWaveHdr;
+}
+
+/**************************************************************************
+ * 			     wodPlayer_TicksTillEmpty		[internal]
+ * Returns the number of ticks until we think the DSP should be empty
+ */
+static DWORD wodPlayer_TicksTillEmpty(const WINE_WAVEOUT *wwo)
+{
+    return ((wwo->dwWrittenTotal - wwo->dwPlayedTotal) * 1000)
+        / wwo->waveFormat.Format.nAvgBytesPerSec;
 }
 
 /**************************************************************************
@@ -1659,17 +1688,6 @@ static DWORD wodPlayer_FeedDSP(WINE_WAVEOUT* wwo)
     TRACE("fragments=%d/%d, fragsize=%d, bytes=%d\n",
 	  dspspace.fragments, dspspace.fragstotal, dspspace.fragsize, dspspace.bytes);
 
-    /* input queue empty and output buffer with less than one fragment to play
-     * actually some cards do not play the fragment before the last if this one is partially feed
-     * so we need to test for full the availability of 2 fragments ; the DSP_POST ioctl
-     * will let the card know to play out the rest of the fragments
-     */
-    if (!wwo->lpPlayPtr && wwo->dwBufferSize < availInQ + 2 * wwo->dwFragmentSize &&
-        !wwo->bNeedPost) {
-	TRACE("Run out of wavehdr's, requesting a POST...\n");
-        wwo->bNeedPost = TRUE;
-    }
-
     /* no more room... no need to try to feed */
     if (dspspace.fragments != 0) {
         /* Feed from partial wavehdr */
@@ -1724,6 +1742,11 @@ static	DWORD	CALLBACK	wodPlayer(LPVOID pmt)
 	wodPlayer_ProcessMessages(wwo);
 	if (wwo->state == WINE_WS_PLAYING) {
 	    dwNextFeedTime = wodPlayer_FeedDSP(wwo);
+            if (dwNextFeedTime != INFINITE)
+                wwo->dwProjectedFinishTime = GetTickCount() + wodPlayer_TicksTillEmpty(wwo);
+            else
+                wwo->dwProjectedFinishTime = 0;
+
 	    dwNextNotifyTime = wodPlayer_NotifyCompletions(wwo, FALSE);
 	    if (dwNextFeedTime == INFINITE) {
 		/* FeedDSP ran out of data, but before flushing, */
