@@ -343,14 +343,4 @@ typedef struct {
 
 
 /*---------------------------END--------------------------------------------*/
-
-typedef struct tagTLBContext {
-    HANDLE   hFile;            /* open typelib file  */
-    long oStart;                /* start of TLB in file */
-    TLBSegDir * pTblDir;
-    TLBLibInfo* pLibInfo;
-} TLBContext;
-
-
 #endif
-

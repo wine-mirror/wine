@@ -41,6 +41,15 @@ typedef struct ITypeInfoVtbl ITypeLib_VTable, *LPTYPEINFO_VTABLE ;
 typedef struct ITypeLibVtbl *LPTYPELIB_VTABLE  ; 
 #include "typelib.h"
 
+typedef struct tagTLBContext {
+	unsigned int oStart;  /* start of TLB in file */
+	unsigned int pos;     /* current pos */
+	unsigned int length;  /* total length */
+	void *mapping;        /* memory mapping */
+	TLBSegDir * pTblDir;
+	TLBLibInfo* pLibInfo;
+} TLBContext;
+
 DEFAULT_DEBUG_CHANNEL(ole);
 DECLARE_DEBUG_CHANNEL(typelib);
 
@@ -558,21 +567,21 @@ static void TLB_Free(void * ptr)
 /* read function */
 DWORD TLB_Read(void *buffer,  DWORD count, TLBContext *pcx, long where )
 {
-	DWORD bytesread=0;
-	
-	if ((   where != DO_NOT_SEEK &&
-		(0xffffffff == SetFilePointer( pcx->hFile, where + pcx->oStart,
-					       0,FILE_BEGIN))
-	    ) ||
-	    !ReadFile(pcx->hFile, buffer, count, &bytesread, NULL)
-	) {
-        /* FIXME */
-		ERR("read error is 0x%lx reading %ld bytes at 0x%lx\n",
-			    GetLastError(), count, where);
-		TLB_abort();
-		exit(1);
-	}
-	return bytesread;
+    if (where != DO_NOT_SEEK)
+    {
+        where += pcx->oStart;
+        if (where > pcx->length)
+        {
+            /* FIXME */
+            ERR("seek beyond end (%ld/%d)\n", where, pcx->length );
+            TLB_abort();
+        }
+        pcx->pos = where;
+    }
+    if (pcx->pos + count > pcx->length) count = pcx->length - pcx->pos;
+    memcpy( buffer, (char *)pcx->mapping + pcx->pos, count );
+    pcx->pos += count;
+    return count;
 }
 
 static void TLB_ReadGuid( GUID *pGuid, int offset,   TLBContext *pcx)
@@ -1070,23 +1079,42 @@ int TLB_ReadTypeLib(PCHAR file, ITypeLib **ppTypeLib)
     TLBLibInfo* pLibInfo=NULL;
     TLB2Header tlbHeader;
     TLBSegDir tlbSegDir;
-    if((cx.hFile=OpenFile(file, &ofStruct, OF_READWRITE))==HFILE_ERROR) {
+
+    HANDLE hFile, hMap;
+    if((hFile=OpenFile(file, &ofStruct, OF_READ))==HFILE_ERROR) {
 	ERR("cannot open %s error 0x%lx\n",file, GetLastError());
 	return E_FAIL;
     }
+    cx.length = SetFilePointer( hFile, 0, NULL, FILE_END );
+    if (!(hMap = CreateFileMappingA( hFile, NULL, PAGE_READONLY, 0, 0, NULL )))
+    {
+        CloseHandle( hFile );
+	ERR("cannot map %s error 0x%lx\n",file, GetLastError());
+	return E_FAIL;
+    }
+    CloseHandle( hFile );
+    cx.mapping = MapViewOfFile( hMap, FILE_MAP_READ, 0, 0, 0 );
+    CloseHandle( hMap );
+    if (!cx.mapping)
+    {
+	ERR("cannot map view of %s error 0x%lx\n",file, GetLastError());
+	return E_FAIL;
+    }
     /* get pointer to beginning of typelib data */
+    cx.pos = 0;
     cx.oStart=0;
     if((oStart=TLB_FindTlb(&cx))<0){
         if(oStart==-1)
             ERR("cannot locate typelib in  %s\n",file);
         else
             ERR("unsupported typelib format in  %s\n",file);
+        UnmapViewOfFile( cx.mapping );
         return E_FAIL;
     }
     cx.oStart=oStart;
     pLibInfo=HeapAlloc(GetProcessHeap(),HEAP_ZERO_MEMORY,sizeof(TLBLibInfo));
     if (!pLibInfo){
-	CloseHandle(cx.hFile);
+        UnmapViewOfFile( cx.mapping );
         return E_OUTOFMEMORY;
     }
     pLibInfo->lpvtbl = &tlbvt;
@@ -1108,7 +1136,7 @@ int TLB_ReadTypeLib(PCHAR file, ITypeLib **ppTypeLib)
 		tlbSegDir.pImpInfo.res0c != 0x0F
     ) {
         ERR("cannot find the table directory, ptr=0x%lx\n",lPSegDir);
-	CloseHandle(cx.hFile);
+        UnmapViewOfFile( cx.mapping );
         return E_FAIL;
     }
     /* now fill our internal data */
@@ -1220,7 +1248,7 @@ int TLB_ReadTypeLib(PCHAR file, ITypeLib **ppTypeLib)
         }
     }
 
-    CloseHandle(cx.hFile);
+    UnmapViewOfFile( cx.mapping );
     *ppTypeLib=(LPTYPELIB)pLibInfo;
     return S_OK;
 }
