@@ -691,6 +691,8 @@ void set_tex_op(LPDIRECT3DDEVICE8 iface, BOOL isAlpha, int Stage, D3DTEXTUREOP o
         TRACE("Alpha?(%d), Stage:%d Op(%d), a1(%ld), a2(%ld), a3(%ld)\n", isAlpha, Stage, op, arg1, arg2, arg3);
         if (op == D3DTOP_DISABLE) return;
 
+	ENTER_GL();
+
         /* Note: Operations usually involve two ars, src0 and src1 and are operations of
            the form (a1 <operation> a2). However, some of the more complex operations
            take 3 parameters. Instead of the (sensible) addition of a3, Microsoft added  
@@ -1005,6 +1007,8 @@ void set_tex_op(LPDIRECT3DDEVICE8 iface, BOOL isAlpha, int Stage, D3DTEXTUREOP o
                default:
                    FIXME("Cant have COMBINE4 and COMBINE in efferct together, thisop=%d, otherop=%ld, isAlpha(%d)\n", 
                               op, op2, isAlpha);
+
+		   LEAVE_GL();
                    return;
                }
            }
@@ -1013,6 +1017,8 @@ void set_tex_op(LPDIRECT3DDEVICE8 iface, BOOL isAlpha, int Stage, D3DTEXTUREOP o
            if (combineOK == TRUE) {
 	       glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, useext(GL_COMBINE));
 	       checkGLcall("GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, useext(GL_COMBINE)");
+
+	       LEAVE_GL();
 	       return;
            }
         }
@@ -1253,9 +1259,13 @@ void set_tex_op(LPDIRECT3DDEVICE8 iface, BOOL isAlpha, int Stage, D3DTEXTUREOP o
         if (Handled) {
 	    glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_COMBINE4_NV);
 	    checkGLcall("GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_COMBINE4_NV");
-            return;
+
+	    LEAVE_GL();
+	    return;
         }
 #endif /* GL_NV_texture_env_combine4 */
+
+	LEAVE_GL();
 
         /* After all the extensions, if still unhandled, report fixme */
         FIXME("Unhandled texture operation %d\n", op);

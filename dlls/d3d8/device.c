@@ -449,7 +449,7 @@ HRESULT  WINAPI  IDirect3DDevice8Impl_CreateTexture(LPDIRECT3DDEVICE8 iface, UIN
         object->surfaces[i]->myDesc.Usage = Usage;
         object->surfaces[i]->myDesc.Pool = Pool;
 	/** 
-	 * As writen in msdn in IDirect3DTexture8::LockRect
+	 * As written in msdn in IDirect3DTexture8::LockRect
 	 *  Textures created in D3DPOOL_DEFAULT are not lockable.
 	 */
 	if (D3DPOOL_DEFAULT == Pool) {
@@ -596,7 +596,7 @@ HRESULT  WINAPI  IDirect3DDevice8Impl_CreateCubeTexture(LPDIRECT3DDEVICE8 iface,
            object->surfaces[j][i]->myDesc.Usage = Usage;
            object->surfaces[j][i]->myDesc.Pool = Pool;
 	   /** 
-	    * As writen in msdn in IDirect3DCubeTexture8::LockRect
+	    * As written in msdn in IDirect3DCubeTexture8::LockRect
 	    *  Textures created in D3DPOOL_DEFAULT are not lockable.
 	    */
 	   if (D3DPOOL_DEFAULT == Pool) {
@@ -1567,6 +1567,8 @@ HRESULT  WINAPI  IDirect3DDevice8Impl_SetViewport(LPDIRECT3DDEVICE8 iface, CONST
         return D3D_OK;
     }
 
+    ENTER_GL();
+
     TRACE("(%p) : x=%ld, y=%ld, wid=%ld, hei=%ld, minz=%f, maxz=%f\n", This,
           pViewport->X, pViewport->Y, pViewport->Width, pViewport->Height, pViewport->MinZ, pViewport->MaxZ);
 
@@ -1577,6 +1579,7 @@ HRESULT  WINAPI  IDirect3DDevice8Impl_SetViewport(LPDIRECT3DDEVICE8 iface, CONST
                pViewport->Width, pViewport->Height);
     checkGLcall("glViewport");
 
+    LEAVE_GL();
 
     return D3D_OK;
 
@@ -1667,6 +1670,8 @@ HRESULT  WINAPI  IDirect3DDevice8Impl_SetLight(LPDIRECT3DDEVICE8 iface, DWORD In
         TRACE("Recording... not performing anything\n");
         return D3D_OK;
     }
+
+    ENTER_GL();
 
     /* Diffuse: */
     colRGBA[0] = pLight->Diffuse.r;
@@ -1780,6 +1785,8 @@ HRESULT  WINAPI  IDirect3DDevice8Impl_SetLight(LPDIRECT3DDEVICE8 iface, DWORD In
     /* Restore the modelview matrix */
     glPopMatrix();
 
+    LEAVE_GL();
+
     return D3D_OK;
 }
 HRESULT  WINAPI  IDirect3DDevice8Impl_GetLight(LPDIRECT3DDEVICE8 iface, DWORD Index,D3DLIGHT8* pLight) {
@@ -1812,7 +1819,8 @@ HRESULT  WINAPI  IDirect3DDevice8Impl_LightEnable(LPDIRECT3DDEVICE8 iface, DWORD
         TRACE("Recording... not performing anything\n");
         return D3D_OK;
     }
-
+    
+    ENTER_GL();
     if (Enable) {
         glEnable(GL_LIGHT0 + Index);
         checkGLcall("glEnable GL_LIGHT0+Index");
@@ -1820,6 +1828,8 @@ HRESULT  WINAPI  IDirect3DDevice8Impl_LightEnable(LPDIRECT3DDEVICE8 iface, DWORD
         glDisable(GL_LIGHT0 + Index);
         checkGLcall("glDisable GL_LIGHT0+Index");
     }
+    LEAVE_GL();
+
     return D3D_OK;
 }
 HRESULT  WINAPI  IDirect3DDevice8Impl_GetLightEnable(LPDIRECT3DDEVICE8 iface, DWORD Index,BOOL* pEnable) {
@@ -1859,6 +1869,8 @@ HRESULT  WINAPI  IDirect3DDevice8Impl_SetClipPlane(LPDIRECT3DDEVICE8 iface, DWOR
 
     /* Apply it */
 
+    ENTER_GL();
+
     /* Clip Plane settings are affected by the model view in OpenGL, the View transform in direct3d */
     glMatrixMode(GL_MODELVIEW);
     glPushMatrix();
@@ -1873,6 +1885,8 @@ HRESULT  WINAPI  IDirect3DDevice8Impl_SetClipPlane(LPDIRECT3DDEVICE8 iface, DWOR
 
     glPopMatrix();
     checkGLcall("glClipPlane");
+
+    LEAVE_GL();
 
     return D3D_OK;
 }
@@ -1906,6 +1920,8 @@ HRESULT  WINAPI  IDirect3DDevice8Impl_SetRenderState(LPDIRECT3DDEVICE8 iface, D3
         TRACE("Recording... not performing anything\n");
         return D3D_OK;
     }
+
+    ENTER_GL();
 
     switch (State) {
     case D3DRS_FILLMODE                  :
@@ -1987,6 +2003,8 @@ HRESULT  WINAPI  IDirect3DDevice8Impl_SetRenderState(LPDIRECT3DDEVICE8 iface, D3
             break;
         case D3DSHADE_PHONG:
             FIXME("D3DSHADE_PHONG isnt supported?\n");
+
+	    LEAVE_GL();
             return D3DERR_INVALIDCALL;
         default:
             FIXME("Unrecognized/Unhandled D3DSHADEMODE value %ld\n", Value);
@@ -2235,7 +2253,7 @@ HRESULT  WINAPI  IDirect3DDevice8Impl_SetRenderState(LPDIRECT3DDEVICE8 iface, D3
             /* Originally this used glLightModeli(GL_LIGHT_MODEL_COLOR_CONTROL,GL_SEPARATE_SPECULAR_COLOR)
                and (GL_LIGHT_MODEL_COLOR_CONTROL,GL_SINGLE_COLOR) to swap between enabled/disabled
                specular color. This is wrong:
-               Seperate specular color means the specular colour is maintained seperately, whereas
+               Separate specular color means the specular colour is maintained separately, whereas
                single color means it is merged in. However in both cases they are being used to
                some extent.
                To disable specular color, set it explicitly to black and turn off GL_COLOR_SUM_EXT
@@ -2668,6 +2686,8 @@ HRESULT  WINAPI  IDirect3DDevice8Impl_SetRenderState(LPDIRECT3DDEVICE8 iface, D3
         FIXME("(%p)->(%d,%ld) unrecognized\n", This, State, Value);
     }
 
+    LEAVE_GL();
+
     return D3D_OK;
 }
 HRESULT  WINAPI  IDirect3DDevice8Impl_GetRenderState(LPDIRECT3DDEVICE8 iface, D3DRENDERSTATETYPE State,DWORD* pValue) {
@@ -2775,6 +2795,8 @@ HRESULT  WINAPI  IDirect3DDevice8Impl_SetTexture(LPDIRECT3DDEVICE8 iface, DWORD 
         return D3D_OK;
     }
 
+    ENTER_GL();
+
     /* Make appropriate texture active */
     if (GL_SUPPORT(ARB_MULTITEXTURE)) {
 #if defined(GL_VERSION_1_3)
@@ -2850,7 +2872,9 @@ HRESULT  WINAPI  IDirect3DDevice8Impl_SetTexture(LPDIRECT3DDEVICE8 iface, DWORD 
     if (reapplyStates) {
        setupTextureStates(iface, Stage);
     }
-       
+
+    LEAVE_GL();   
+
     return D3D_OK;
 }
 
@@ -2883,6 +2907,8 @@ HRESULT  WINAPI  IDirect3DDevice8Impl_SetTextureStageState(LPDIRECT3DDEVICE8 ifa
         TRACE("Recording... not performing anything\n");
         return D3D_OK;
     }
+
+    ENTER_GL();
 
     /* Make appropriate texture active */
     VTRACE(("Activating appropriate texture state %ld\n", Stage));
@@ -3284,6 +3310,9 @@ HRESULT  WINAPI  IDirect3DDevice8Impl_SetTextureStageState(LPDIRECT3DDEVICE8 ifa
         /* Put back later: FIXME("(%p) : stub, Stage=%ld, Type=%d, Value =%ld\n", This, Stage, Type, Value); */
         TRACE("Still a stub, Stage=%ld, Type=%d, Value =%ld\n", Stage, Type, Value);
     }
+
+    LEAVE_GL();
+
     return D3D_OK;
 }
 HRESULT  WINAPI  IDirect3DDevice8Impl_ValidateDevice(LPDIRECT3DDEVICE8 iface, DWORD* pNumPasses) {
@@ -3314,8 +3343,12 @@ HRESULT  WINAPI  IDirect3DDevice8Impl_SetCurrentTexturePalette(LPDIRECT3DDEVICE8
     ICOM_THIS(IDirect3DDevice8Impl,iface);
     FIXME("(%p) : Setting to (%u)\n", This, PaletteNumber);
     This->currentPalette = PaletteNumber;
+
 #if defined(GL_EXT_paletted_texture)
     if (GL_SUPPORT(EXT_PALETTED_TEXTURE)) {
+
+      ENTER_GL();
+
       GL_EXTCALL(glColorTableEXT)(GL_TEXTURE_2D,    /* target */
 				  GL_RGBA,          /* internal format */
 				  256,              /* table size */
@@ -3323,6 +3356,9 @@ HRESULT  WINAPI  IDirect3DDevice8Impl_SetCurrentTexturePalette(LPDIRECT3DDEVICE8
 				  GL_UNSIGNED_BYTE, /* table type */
 				  This->palettes[PaletteNumber]);
       checkGLcall("glColorTableEXT");
+
+      LEAVE_GL();
+
     } else {
       /* Delayed palette handling ... waiting for software emulation into preload code */
     }
@@ -3430,7 +3466,7 @@ HRESULT  WINAPI  IDirect3DDevice8Impl_CreateVertexShader(LPDIRECT3DDEVICE8 iface
     HRESULT res;
     UINT i;
 
-    TRACE_(d3d_shader)("(%p) : VertexShader not fully supported yet : Decl=%p, Func=%p\n", This, pDeclaration, pFunction);    
+    TRACE_(d3d_shader)("(%p) : VertexShader not fully supported yet : Decl=%p, Func=%p, Usage=%lu\n", This, pDeclaration, pFunction, Usage);
     if (NULL == pDeclaration || NULL == pHandle) { /* pFunction can be NULL see MSDN */
       return D3DERR_INVALIDCALL;
     }
@@ -3891,6 +3927,9 @@ ICOM_VTABLE(IDirect3DDevice8) Direct3DDevice8_Vtbl =
 HRESULT WINAPI IDirect3DDevice8Impl_CleanRender(LPDIRECT3DDEVICE8 iface) {
   ICOM_THIS(IDirect3DDevice8Impl,iface);
 #if defined(GL_VERSION_1_3) /* @see comments on ActiveRender */
+
+  ENTER_GL();
+
 #if 0
   if (This->glCtx != This->render_ctx) {
     glXDestroyContext(This->display, This->render_ctx);
@@ -3901,6 +3940,9 @@ HRESULT WINAPI IDirect3DDevice8Impl_CleanRender(LPDIRECT3DDEVICE8 iface) {
     glXDestroyPbuffer(This->display, This->drawable);
     This->drawable = This->win;
   }
+
+  LEAVE_GL();
+
 #endif
   return D3D_OK;
 }
@@ -3909,6 +3951,7 @@ HRESULT WINAPI IDirect3DDevice8Impl_ActiveRender(LPDIRECT3DDEVICE8 iface,
 						IDirect3DSurface8* RenderSurface, 
 						IDirect3DSurface8* StencilSurface) {
 
+  HRESULT ret =  D3DERR_INVALIDCALL; 
   /**
    * Currently only active for GLX >= 1.3
    * for others versions we'll have to use GLXPixmaps
@@ -3918,7 +3961,6 @@ HRESULT WINAPI IDirect3DDevice8Impl_ActiveRender(LPDIRECT3DDEVICE8 iface,
    * so only check OpenGL version
    */
 #if defined(GL_VERSION_1_3) 
-
   GLXFBConfig* cfgs = NULL;
   int nCfgs = 0;
   int attribs[256];
@@ -4022,6 +4064,8 @@ HRESULT WINAPI IDirect3DDevice8Impl_ActiveRender(LPDIRECT3DDEVICE8 iface,
 
   PUSH1(None);
   
+  ENTER_GL();
+
   cfgs = glXChooseFBConfig(This->display, DefaultScreen(This->display), attribs, &nCfgs);
   if (NULL != cfgs) {
 #if 0
@@ -4096,7 +4140,7 @@ HRESULT WINAPI IDirect3DDevice8Impl_ActiveRender(LPDIRECT3DDEVICE8 iface,
     if (NULL != This->stencilBufferTarget) IDirect3DSurface8Impl_AddRef((LPDIRECT3DSURFACE8) This->stencilBufferTarget);
     if (NULL != tmp) IDirect3DSurface8Impl_Release((LPDIRECT3DSURFACE8) tmp);
 
-    return D3D_OK;
+    ret = D3D_OK;
 
   } else {
     ERR("cannot get valides GLXFBConfig for (%u,%s)/(%u,%s)\n", BackBufferFormat, debug_d3dformat(BackBufferFormat), StencilBufferFormat, debug_d3dformat(StencilBufferFormat));
@@ -4105,7 +4149,9 @@ HRESULT WINAPI IDirect3DDevice8Impl_ActiveRender(LPDIRECT3DDEVICE8 iface,
 #undef PUSH1
 #undef PUSH2
 
+  LEAVE_GL();
+
 #endif
 
-  return D3DERR_INVALIDCALL;
+  return ret;
 }

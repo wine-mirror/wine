@@ -114,6 +114,9 @@ void     WINAPI        IDirect3DVolumeTexture8Impl_PreLoad(LPDIRECT3DVOLUMETEXTU
     int i;
     ICOM_THIS(IDirect3DVolumeTexture8Impl,iface);
     TRACE("(%p) : About to load texture\n", This);
+
+    ENTER_GL();
+
     for (i = 0; i < This->levels; i++) {
       if (i == 0 && This->volumes[i]->textureName != 0 && This->Dirty == FALSE) {
 	glBindTexture(GL_TEXTURE_3D, This->volumes[i]->textureName);
@@ -164,6 +167,9 @@ void     WINAPI        IDirect3DVolumeTexture8Impl_PreLoad(LPDIRECT3DVOLUMETEXTU
 	This->Dirty = FALSE;
       }
     }
+
+    LEAVE_GL();
+
     return ;
 }
 D3DRESOURCETYPE WINAPI IDirect3DVolumeTexture8Impl_GetType(LPDIRECT3DVOLUMETEXTURE8 iface) {

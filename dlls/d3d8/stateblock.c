@@ -198,6 +198,8 @@ HRESULT WINAPI IDirect3DDeviceImpl_InitStartupStateBlock(IDirect3DDevice8Impl* T
        texture stage, but disable all stages by default. Hence if a stage is enabled
        then the default texture will kick in until replaced by a SetTexture call     */
 
+    ENTER_GL();
+
     for (i = 0; i < GL_LIMITS(textures); i++) {
         GLubyte white = 255;
 
@@ -234,6 +236,8 @@ HRESULT WINAPI IDirect3DDeviceImpl_InitStartupStateBlock(IDirect3DDevice8Impl* T
         /* Reapply all the texture state information to this texture */
         setupTextureStates(iface, i);
     }
+
+    LEAVE_GL();
 
     /* defaulting palettes */
     for (i = 0; i < MAX_PALETTES; ++i) {

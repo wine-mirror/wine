@@ -136,6 +136,9 @@ void     WINAPI        IDirect3DCubeTexture8Impl_PreLoad(LPDIRECT3DCUBETEXTURE8 
     int j;
     ICOM_THIS(IDirect3DCubeTexture8Impl,iface);
     TRACE("(%p) : About to load texture: dirtified(%d)\n", This, This->Dirty);
+
+    ENTER_GL();
+
     for (i = 0; i < This->levels; i++) {
       if (i == 0 && This->surfaces[0][0]->textureName != 0 && This->Dirty == FALSE) {
 	glEnable(GL_TEXTURE_CUBE_MAP_ARB);
@@ -185,6 +188,9 @@ void     WINAPI        IDirect3DCubeTexture8Impl_PreLoad(LPDIRECT3DCUBETEXTURE8 
 	This->Dirty = FALSE;
       }
     }
+
+    LEAVE_GL();
+
     return ;
 }
 

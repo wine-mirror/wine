@@ -209,7 +209,9 @@ HRESULT WINAPI IDirect3DSurface8Impl_LockRect(LPDIRECT3DSURFACE8 iface, D3DLOCKE
 
 	glReadBuffer(prev_read);
 	vcheckGLcall("glReadBuffer");
+
 	LEAVE_GL();
+
       } else {
 	FIXME("unsupported locking to Rendering surface surf@%p usage(%lu)\n", This, This->myDesc.Usage);
       }
@@ -341,6 +343,7 @@ HRESULT WINAPI IDirect3DSurface8Impl_UnlockRect(LPDIRECT3DSURFACE8 iface) {
 	vcheckGLcall("glDrawBuffer");
 	glRasterPos3iv(&prev_rasterpos[0]);
 	vcheckGLcall("glRasterPos3iv");
+
 	LEAVE_GL();
 
 	/** restore clean dirty state */
@@ -412,6 +415,8 @@ HRESULT WINAPI IDirect3DSurface8Impl_LoadTexture(LPDIRECT3DSURFACE8 iface, GLenu
       else
 	*dst++ = 0xFF; 
     }
+
+    ENTER_GL();
     
     TRACE("Calling glTexImage2D %x i=%d, intfmt=%x, w=%d, h=%d,0=%d, glFmt=%x, glType=%x, Mem=%p\n",
 	  gl_target,
@@ -435,6 +440,8 @@ HRESULT WINAPI IDirect3DSurface8Impl_LoadTexture(LPDIRECT3DSURFACE8 iface, GLenu
     checkGLcall("glTexImage2D");
     HeapFree(GetProcessHeap(), 0, surface);
 
+    LEAVE_GL();
+
     return D3D_OK;    
   }
 
@@ -452,6 +459,9 @@ HRESULT WINAPI IDirect3DSurface8Impl_LoadTexture(LPDIRECT3DSURFACE8 iface, GLenu
 	    0, 
 	    This->myDesc.Size,
 	    This->allocatedMemory);
+      
+      ENTER_GL();
+
       glCompressedTexImage2DARB(gl_target, 
 				gl_level, 
 				D3DFmt2GLIntFmt(This->Device, This->myDesc.Format),
@@ -461,6 +471,8 @@ HRESULT WINAPI IDirect3DSurface8Impl_LoadTexture(LPDIRECT3DSURFACE8 iface, GLenu
 				This->myDesc.Size,
 				This->allocatedMemory);
       checkGLcall("glCommpressedTexTexImage2D");
+
+      LEAVE_GL();
     }
 #endif
   } else {
@@ -474,6 +486,9 @@ HRESULT WINAPI IDirect3DSurface8Impl_LoadTexture(LPDIRECT3DSURFACE8 iface, GLenu
 	  D3DFmt2GLFmt(This->Device, This->myDesc.Format), 
 	  D3DFmt2GLType(This->Device, This->myDesc.Format),
 	  This->allocatedMemory);
+
+    ENTER_GL();
+
     glTexImage2D(gl_target, 
 		 gl_level,
 		 D3DFmt2GLIntFmt(This->Device, This->myDesc.Format),
@@ -484,6 +499,8 @@ HRESULT WINAPI IDirect3DSurface8Impl_LoadTexture(LPDIRECT3DSURFACE8 iface, GLenu
 		 D3DFmt2GLType(This->Device, This->myDesc.Format),
 		 This->allocatedMemory);
     checkGLcall("glTexImage2D");
+
+    LEAVE_GL();
 
 #if 0
     {

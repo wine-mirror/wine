@@ -110,6 +110,9 @@ void     WINAPI        IDirect3DTexture8Impl_PreLoad(LPDIRECT3DTEXTURE8 iface) {
     int i;
     ICOM_THIS(IDirect3DTexture8Impl,iface);
     TRACE("(%p) : About to load texture\n", This);
+
+    ENTER_GL();
+
     for (i = 0; i < This->levels; i++) {
       if (i == 0 && This->surfaces[i]->textureName != 0 && This->Dirty == FALSE) {
 	glBindTexture(GL_TEXTURE_2D, This->surfaces[i]->textureName);
@@ -139,6 +142,9 @@ void     WINAPI        IDirect3DTexture8Impl_PreLoad(LPDIRECT3DTEXTURE8 iface) {
 	This->Dirty = FALSE;
       }
     }
+
+    LEAVE_GL();
+
     return ;
 }
 D3DRESOURCETYPE WINAPI IDirect3DTexture8Impl_GetType(LPDIRECT3DTEXTURE8 iface) {
