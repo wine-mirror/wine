@@ -151,7 +151,7 @@ typedef struct tagNMTOOLTIPSCREATED
 #define CDRF_NOTIFYITEMDRAW     0x00000020
 #define CDRF_NOTIFYSUBITEMDRAW  0x00000020
 #define CDRF_NOTIFYPOSTERASE    0x00000040
-/* #define CDRF_NOTIFYITEMERASE    0x00000080          obsolete ? */
+#define CDRF_NOTIFYITEMERASE    0x00000080      /*  obsolete ??? */
 
 
 /* drawstage flags */
@@ -495,6 +495,25 @@ BOOL     WINAPI ImageList_Write(HIMAGELIST, LPSTREAM);
 #define FLATSB_CLASSA       "flatsb_class32"
 #define FLATSB_CLASSW       L"flatsb_class32"
 #define FLATSB_CLASS          WINELIB_NAME_AW(FLATSB_CLASS)
+
+#define WSB_PROP_CYVSCROLL     0x00000001L
+#define WSB_PROP_CXHSCROLL     0x00000002L
+#define WSB_PROP_CYHSCROLL     0x00000004L
+#define WSB_PROP_CXVSCROLL     0x00000008L
+#define WSB_PROP_CXHTHUMB      0x00000010L
+#define WSB_PROP_CYVTHUMB      0x00000020L
+#define WSB_PROP_VBKGCOLOR     0x00000040L
+#define WSB_PROP_HBKGCOLOR     0x00000080L
+#define WSB_PROP_VSTYLE        0x00000100L
+#define WSB_PROP_HSTYLE        0x00000200L
+#define WSB_PROP_WINSTYLE      0x00000400L
+#define WSB_PROP_PALETTE       0x00000800L
+#define WSB_PROP_MASK          0x00000FFFL
+
+#define FSB_REGULAR_MODE       0
+#define FSB_ENCARTA_MODE       1
+#define FSB_FLAT_MODE          2
+
 
 BOOL  WINAPI FlatSB_EnableScrollBar(HWND, INT, UINT);
 BOOL  WINAPI FlatSB_ShowScrollBar(HWND, INT, BOOL);
@@ -1479,7 +1498,7 @@ typedef struct _RB_HITTESTINFO
 #define TBS_FIXEDLENGTH         0x0040
 #define TBS_NOTHUMB             0x0080
 #define TBS_TOOLTIPS            0x0100
-#define TBS_REVERSED	         0x0200
+#define TBS_REVERSED			0x0200
 
 #define TBTS_TOP                0
 #define TBTS_LEFT               1
@@ -3105,21 +3124,130 @@ typedef struct tagNMDAYSTATE
 #define DATETIMEPICK_CLASS	WINELIB_NAME_AW(DATETIMEPICK_CLASS)
 
 #define DTM_FIRST        0x1000
+#define DTN_FIRST       (0U-760U)     
+#define DTN_LAST        (0U-799U)
+
 
 #define DTM_GETSYSTEMTIME	(DTM_FIRST+1)
 #define DTM_SETSYSTEMTIME	(DTM_FIRST+2)
 #define DTM_GETRANGE		(DTM_FIRST+3)
 #define DTM_SETRANGE		(DTM_FIRST+4)
-#define DTM_SETFORMATA	(DTM_FIRST+5)
-#define DTM_SETFORMATW	(DTM_FIRST + 50)
+#define DTM_SETFORMATA	    (DTM_FIRST+5)
+#define DTM_SETFORMATW	    (DTM_FIRST + 50)
 #define DTM_SETFORMAT		WINELIB_NAME_AW(DTM_SETFORMAT)
 #define DTM_SETMCCOLOR		(DTM_FIRST+6)
 #define DTM_GETMCCOLOR		(DTM_FIRST+7)
-
 #define DTM_GETMONTHCAL		(DTM_FIRST+8)
-
 #define DTM_SETMCFONT		(DTM_FIRST+9)
 #define DTM_GETMCFONT		(DTM_FIRST+10)
+
+
+/* Datetime Notifications */
+
+#define DTN_DATETIMECHANGE  (DTN_FIRST + 1) 
+#define DTN_USERSTRINGA     (DTN_FIRST + 2) 
+#define DTN_WMKEYDOWNA      (DTN_FIRST + 3) 
+#define DTN_FORMATA         (DTN_FIRST + 4) 
+#define DTN_FORMATQUERYA    (DTN_FIRST + 5) 
+#define DTN_DROPDOWN        (DTN_FIRST + 6)
+#define DTN_CLOSEUP         (DTN_FIRST + 7) 
+#define DTN_USERSTRINGW     (DTN_FIRST + 15)
+#define DTN_WMKEYDOWNW      (DTN_FIRST + 16)
+#define DTN_FORMATW         (DTN_FIRST + 17)
+#define DTN_FORMATQUERYW    (DTN_FIRST + 18)
+
+
+#define DTS_SHORTDATEFORMAT 0x0000 
+#define DTS_UPDOWN          0x0001 
+#define DTS_SHOWNONE        0x0002 
+#define DTS_LONGDATEFORMAT  0x0004 
+#define DTS_TIMEFORMAT      0x0009 
+#define DTS_APPCANPARSE     0x0010 
+#define DTS_RIGHTALIGN      0x0020 
+
+typedef struct tagNMDATETIMECHANGE
+{
+    NMHDR       nmhdr;
+    DWORD       dwFlags;    
+    SYSTEMTIME  st;         
+} NMDATETIMECHANGE, *LPNMDATETIMECHANGE;
+
+typedef struct tagNMDATETIMESTRINGA
+{
+    NMHDR      nmhdr;
+    LPCSTR     pszUserString; 
+    SYSTEMTIME st;      
+    DWORD      dwFlags;  
+} NMDATETIMESTRINGA, *LPNMDATETIMESTRINGA;
+
+typedef struct tagNMDATETIMESTRINGW
+{
+    NMHDR      nmhdr;
+    LPCWSTR    pszUserString;
+    SYSTEMTIME st;          
+    DWORD      dwFlags;    
+} NMDATETIMESTRINGW, *LPNMDATETIMESTRINGW;
+
+
+typedef struct tagNMDATETIMEWMKEYDOWNA
+{
+    NMHDR      nmhdr;
+    int        nVirtKey;  
+    LPCSTR     pszFormat; 
+    SYSTEMTIME st;       
+} NMDATETIMEWMKEYDOWNA, *LPNMDATETIMEWMKEYDOWNA;
+
+typedef struct tagNMDATETIMEWMKEYDOWNW
+{
+    NMHDR      nmhdr;
+    int        nVirtKey;  
+    LPCWSTR    pszFormat; 
+    SYSTEMTIME st;       
+} NMDATETIMEWMKEYDOWNW, *LPNMDATETIMEWMKEYDOWNW;
+
+
+
+typedef struct tagNMDATETIMEFORMATA
+{
+    NMHDR nmhdr;
+    LPCSTR  pszFormat;   
+    SYSTEMTIME st;      
+    LPCSTR pszDisplay;  
+    CHAR szDisplay[64]; 
+} NMDATETIMEFORMATA, *LPNMDATETIMEFORMATA;
+
+
+typedef struct tagNMDATETIMEFORMATW
+{
+    NMHDR nmhdr;
+    LPCWSTR pszFormat;  
+    SYSTEMTIME st;     
+    LPCWSTR pszDisplay;
+    WCHAR szDisplay[64];
+} NMDATETIMEFORMATW, *LPNMDATETIMEFORMATW;
+
+
+
+typedef struct tagNMDATETIMEFORMATQUERYA
+{
+    NMHDR nmhdr;
+    LPCSTR pszFormat; 
+    SIZE szMax;       
+} NMDATETIMEFORMATQUERYA, *LPNMDATETIMEFORMATQUERYA;
+
+typedef struct tagNMDATETIMEFORMATQUERYW
+{
+    NMHDR nmhdr;
+    LPCWSTR pszFormat; 
+    SIZE szMax;        
+} NMDATETIMEFORMATQUERYW, *LPNMDATETIMEFORMATQUERYW;
+
+
+#define NMDATETIMESTRING WINELIB_NAME_AW(NMDATETIMESTRING)
+#define NMDATETIMEWMKEYDOWN WINELIB_NAME_AW(NMDATETIMEWMKEYDOWN)
+#define NMDATETIMEFORMAT WINELIB_NAME_AW(NMDATETIMEFORMAT)
+#define NMDATETIMEFORMATQUERY WINELIB_NAME_AW(NMDATETIMEFORMATQUERY)
+
 
 
 
@@ -3130,6 +3258,32 @@ typedef struct tagNMDAYSTATE
 
 #define GDTR_MIN     0x0001
 #define GDTR_MAX     0x0002
+
+
+#define DateTime_GetSystemtime(hdp, pst)   \\
+  (DWORD)SendMessageA (hdp, DTM_GETSYSTEMTIME , 0, (LPARAM)(pst)) 
+#define DateTime_SetSystemtime(hdp, gd, pst)   \\
+  (BOOL)SendMessageA (hdp, DTM_SETSYSTEMTIME, (LPARAM)(gd), (LPARAM)(pst))
+#define DateTime_GetRange(hdp, rgst)  \\
+  (DWORD)SendMessageA (hdp, DTM_GETRANGE, 0, (LPARAM)(rgst)) 
+#define DateTime_SetRange(hdp, gd, rgst) \\
+   (BOOL)SendMessageA (hdp, DTM_SETRANGE, (WPARAM)(gd), (LPARAM)(rgst))
+#define DateTime_SetFormat WINELIB_NAME_AW(DateTime_SetFormat)
+#define DateTime_SetFormatA(hdp, sz)  \\
+  (BOOL)SendMessageA (hdp, DTM_SETFORMAT, 0, (LPARAM)(sz))
+#define DateTime_SetFormatW(hdp, sz)  \\
+  (BOOL)SendMessageW (hdp, DTM_SETFORMAT, 0, (LPARAM)(sz))
+#define DateTime_GetMonthCalColor(hdp, iColor) \\
+  SendMessageA (hdp, DTM_GETMCCOLOR, iColor, 0)
+#define DateTime_GetMonthCal(hdp)  \\
+  (HWND) SendMessageA (hdp, DTM_GETMONTHCAL, 0, 0)
+#define DateTime_SetMonthCalFont(hdp, hfont, fRedraw) \\
+  SendMessageA (hdp, DTM_SETMCFONT, (WPARAM)hfont, (LPARAM)fRedraw)
+#define DateTime_GetMonthCalFont(hdp) \\
+  SendMessageA (hdp, DTM_GETMCFONT, 0, 0)
+
+
+
 
 
 
