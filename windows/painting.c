@@ -688,6 +688,10 @@ BOOL WINAPI RedrawWindow( HWND hwnd, const RECT *rectUpdate,
 
     if (!WIN_IsWindowDrawable( hwnd, !(flags & RDW_FRAME) )) return TRUE;
 
+    /* process pending events and messages before painting */
+    if (flags & RDW_UPDATENOW)
+        MsgWaitForMultipleObjects( 0, NULL, FALSE, 0, QS_ALLINPUT );
+
     if (!(wndPtr = WIN_FindWndPtr( hwnd ))) return FALSE;
     if (TRACE_ON(win))
     {
@@ -708,11 +712,6 @@ BOOL WINAPI RedrawWindow( HWND hwnd, const RECT *rectUpdate,
 			r.top, r.right, r.bottom, hrgnUpdate, flags );
 	}
     }
-
-
-    /* process pending events and messages before painting */
-    if (flags & RDW_UPDATENOW)
-        MsgWaitForMultipleObjects( 0, NULL, FALSE, 0, QS_ALLINPUT );
 
     /* prepare an update region in window coordinates */
 
