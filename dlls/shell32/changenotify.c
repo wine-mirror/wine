@@ -39,7 +39,7 @@ typedef struct _NOTIFICATIONLIST
 	LPNOTIFYREGISTER apidl; /* array of entries to watch*/
 	UINT cidl;		/* number of pidls in array */
 	LONG wEventMask;	/* subscribed events */
-	LONG wSignalledEvent;   /* event that occured */
+	LONG wSignalledEvent;   /* event that occurred */
 	DWORD dwFlags;		/* client flags */
     LPCITEMIDLIST pidlSignaled; /*pidl of the path that caused the signal*/
     

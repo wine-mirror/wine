@@ -969,7 +969,7 @@ static void draw_primitive_handle_GL_state(IDirect3DDeviceImpl *This,
     }
 
     /* TODO: optimize this to not always reset all the fog stuff on all DrawPrimitive call
-             if no fogging state change occured */
+             if no fogging state change occurred */
     if (This->state_block.render_state[D3DRENDERSTATE_FOGENABLE - 1] == TRUE) {
         if (vertex_transformed == TRUE) {
 	    if (glThis->fogging != 0) {

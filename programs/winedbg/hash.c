@@ -364,7 +364,7 @@ BOOL DEBUG_Normalize(struct name_hash * nh )
  * Return values:
  *      gsv_found:   if the symbol is found
  *      gsv_unknown: if the symbol isn't found
- *      gsv_aborted: some error occured (likely, many symbols of same name exist, 
+ *      gsv_aborted: some error occurred (likely, many symbols of same name exist,
  *          and user didn't pick one of them)
  */
 static int    DEBUG_GSV_Helper(const char* name, const int lineno,

@@ -132,7 +132,7 @@ winspool.drv.
 .I --wrap
 Specifies that executable targets should be built as libraries and a small
 executable wrapper generated for them. This technique is sometimes required
-to solve initialization problems occuring on the application startup.
+to solve initialization problems occurring on the application startup.
 .TP
 .I --nowrap
 Specifies that no wrapper should be generated for executable targets. This is

@@ -164,6 +164,6 @@ set DejaConf "Use existing config file:"
 set GiveCustomDefault "Enter (or choose) the configuration file to use"
 set GenereConf "Auto-generate a new configuration file"
 set TkWBuiltConf "Use TkWine built-in configuration file (not recommended)"
-set AutoConfFail " Warning: An error occured while running tools/wineconf.\n\
+set AutoConfFail " Warning: An error occurred while running tools/wineconf.\n\
 You can still edit the generated file (if it does not crashes) but \n\
 some parts are probably missing. Check for a newer release of wine where wineconf could have been imporved"

@@ -58,7 +58,7 @@ set ScrollEdits "Scroll to bottom on input"
 set EditTitle "TkWine Text Viewer"
 
 set errorTitle "\n*************** TkWine Error ****************\n\
-\n An error occured, that I could not resolve. This might be \n\n\
+\n An error occurred, that I could not resolve. This might be \n\n\
 a) An invalid entry \n\
 b) An error in the script\n\
 In any case, this error should be detected by the script, even an invalid\

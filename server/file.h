@@ -32,7 +32,7 @@ struct fd_ops
 {
     /* get the events we want to poll() for on this object */
     int  (*get_poll_events)(struct fd *);
-    /* a poll() event occured */
+    /* a poll() event occurred */
     void (*poll_event)(struct fd *,int event);
     /* flush the object buffers */
     int  (*flush)(struct fd *, struct event **);

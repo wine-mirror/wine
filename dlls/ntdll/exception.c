@@ -415,7 +415,7 @@ DWORD __wine_finally_handler( EXCEPTION_RECORD *record, EXCEPTION_FRAME *frame,
 /*************************************************************
  *            __wine_callto16_handler
  *
- * Handler for exceptions occuring in 16-bit code.
+ * Handler for exceptions occurring in 16-bit code.
  */
 DWORD __wine_callto16_handler( EXCEPTION_RECORD *record, EXCEPTION_FRAME *frame,
                                CONTEXT *context, LPVOID pdispatcher )

@@ -154,7 +154,7 @@ INT X11DRV_ScrollWindowEx( HWND hwnd, INT dx, INT dy,
         DeleteObject( hrgn );
     }
 
-    /* Take into account the fact that some damages may have occured during the scroll */
+    /* Take into account the fact that some damage may have occurred during the scroll */
     hrgnTemp = CreateRectRgn( 0, 0, 0, 0 );
     retVal = GetUpdateRgn( hwnd, hrgnTemp, FALSE );
     if (retVal != NULLREGION)

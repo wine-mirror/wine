@@ -820,7 +820,7 @@ typedef struct _DDPIXELFORMAT {
 
 /* DDCAPS.dwSVCaps */
 /* the first 4 of these are now obsolete */
-#if DIRECTDRAW_VERSION >= 0x700	/* FIXME: I'm not sure when this switch occured */
+#if DIRECTDRAW_VERSION >= 0x700	/* FIXME: I'm not sure when this switch occurred */
 #define DDSVCAPS_RESERVED1		0x00000001
 #define DDSVCAPS_RESERVED2		0x00000002
 #define DDSVCAPS_RESERVED3		0x00000004

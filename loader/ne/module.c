@@ -1040,7 +1040,7 @@ static HINSTANCE16 MODULE_LoadModule16( LPCSTR libname, BOOL implicit, BOOL lib_
 			break;
 		}
 	}
-	return hinst;	/* The last error that occured */
+	return hinst;	/* The last error that occurred */
 }
 
 
