@@ -96,6 +96,7 @@ static void *ft_handle = NULL;
 MAKE_FUNCPTR(FT_Vector_Unit);
 MAKE_FUNCPTR(FT_Done_Face);
 MAKE_FUNCPTR(FT_Get_Char_Index);
+MAKE_FUNCPTR(FT_Get_First_Char);
 MAKE_FUNCPTR(FT_Get_Sfnt_Table);
 MAKE_FUNCPTR(FT_Init_FreeType);
 MAKE_FUNCPTR(FT_Load_Glyph);
@@ -397,6 +398,14 @@ static BOOL AddFontFileToList(const char *file, char *fake_family)
               (*insertface)->fs.fsCsb[0], (*insertface)->fs.fsCsb[1],
               (*insertface)->fs.fsUsb[0], (*insertface)->fs.fsUsb[1],
               (*insertface)->fs.fsUsb[2], (*insertface)->fs.fsUsb[3]);
+
+        if(pOS2->version == 0) {
+            FT_UInt dummy;
+            if(pFT_Get_First_Char( ft_face, &dummy ) < 0x100)
+                (*insertface)->fs.fsCsb[0] |= 1;
+            else
+                (*insertface)->fs.fsCsb[0] |= 1L << 31;
+        }
 
 	if((*insertface)->fs.fsCsb[0] == 0) { /* let's see if we can find any interesting cmaps */
 	    for(i = 0; i < ft_face->num_charmaps; i++) {
@@ -769,6 +778,7 @@ BOOL WineEngInit(void)
     LOAD_FUNCPTR(FT_Vector_Unit)
     LOAD_FUNCPTR(FT_Done_Face)
     LOAD_FUNCPTR(FT_Get_Char_Index)
+    LOAD_FUNCPTR(FT_Get_First_Char)
     LOAD_FUNCPTR(FT_Get_Sfnt_Table)
     LOAD_FUNCPTR(FT_Init_FreeType)
     LOAD_FUNCPTR(FT_Load_Glyph)
