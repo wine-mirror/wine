@@ -42,6 +42,10 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(ddeml);
 
+/* convert between ATOM and HSZ avoiding compiler warnings */
+#define ATOM2HSZ(atom)	((HSZ)	(ULONG_PTR)(atom))
+#define HSZ2ATOM(hsz)	((ATOM)	(ULONG_PTR)(hsz))
+
 static WDML_INSTANCE*	WDML_InstanceList = NULL;
 static DWORD		WDML_MaxInstanceID = 0;  /* OK for present, have to worry about wrap-around later */
 const char		WDML_szEventClass[] = "DdeEventClass";
@@ -836,7 +840,7 @@ ATOM	WDML_MakeAtomFromHsz(HSZ hsz)
 {
     WCHAR nameBuffer[MAX_BUFFER_LEN];
 
-    if (GetAtomNameW((ATOM)hsz, nameBuffer, MAX_BUFFER_LEN))
+    if (GetAtomNameW(HSZ2ATOM(hsz), nameBuffer, MAX_BUFFER_LEN))
 	return GlobalAddAtomW(nameBuffer);
     WARN("HSZ 0x%x not found\n", hsz);
     return 0;
@@ -910,7 +914,7 @@ BOOL WDML_DecHSZ(WDML_INSTANCE* pInstance, HSZ hsz)
 		    pPrev->next = pCurrent->next;
 		}
 		HeapFree(GetProcessHeap(), 0, pCurrent);
-		DeleteAtom((ATOM)hsz);
+		DeleteAtom(HSZ2ATOM(hsz));
 	    }
 	    return TRUE;
 	}
@@ -985,10 +989,10 @@ static int	WDML_QueryString(WDML_INSTANCE* pInstance, HSZ hsz, LPVOID ptr, DWORD
     switch (codepage)
     {
     case CP_WINANSI:
-	ret = GetAtomNameA((ATOM)hsz, ptr, cchMax);
+	ret = GetAtomNameA(HSZ2ATOM(hsz), ptr, cchMax);
 	break;
     case CP_WINUNICODE:
-	ret = GetAtomNameW((ATOM)hsz, ptr, cchMax);
+	ret = GetAtomNameW(HSZ2ATOM(hsz), ptr, cchMax);
     default:
 	ERR("Unknown code page %d\n", codepage);
 	ret = 0;
@@ -1061,11 +1065,11 @@ static	HSZ	WDML_CreateString(WDML_INSTANCE* pInstance, LPCVOID ptr, int codepage
     switch (codepage)
     {
     case CP_WINANSI:
-	hsz = (HSZ)AddAtomA(ptr);
+	hsz = ATOM2HSZ(AddAtomA(ptr));
 	TRACE("added atom %s with HSZ 0x%x, \n", debugstr_a(ptr), hsz);
 	break;
     case CP_WINUNICODE:
-	hsz = (HSZ)AddAtomW(ptr);
+	hsz = ATOM2HSZ(AddAtomW(ptr));
 	TRACE("added atom %s with HSZ 0x%x, \n", debugstr_w(ptr), hsz);
 	break;
     default:
@@ -1203,8 +1207,8 @@ INT WINAPI DdeCmpStringHandles(HSZ hsz1, HSZ hsz2)
     int		ret = 0;
     int		ret1, ret2;
 
-    ret1 = GetAtomNameW((ATOM)hsz1, psz1, MAX_BUFFER_LEN);
-    ret2 = GetAtomNameW((ATOM)hsz2, psz2, MAX_BUFFER_LEN);
+    ret1 = GetAtomNameW(HSZ2ATOM(hsz1), psz1, MAX_BUFFER_LEN);
+    ret2 = GetAtomNameW(HSZ2ATOM(hsz2), psz2, MAX_BUFFER_LEN);
 
     TRACE("(%x<%s> %x<%s>);\n", hsz1, debugstr_w(psz1), hsz2, debugstr_w(psz2));
 
