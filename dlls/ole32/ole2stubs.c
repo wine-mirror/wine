@@ -47,11 +47,11 @@ HRESULT WINAPI  OleCreateLinkToFile(LPCOLESTR lpszFileName, REFIID riid,
 /******************************************************************************
  *              OleDuplicateData        [OLE32.@]
  */
-HRESULT WINAPI OleDuplicateData(HANDLE hSrc, CLIPFORMAT cfFormat,
+HANDLE WINAPI OleDuplicateData(HANDLE hSrc, CLIPFORMAT cfFormat,
 	                          UINT uiFlags)
 {
     FIXME("(%p,%x,%x), stub!\n", hSrc, cfFormat, uiFlags);
-    return E_NOTIMPL;
+    return NULL;
 }
 
 

@@ -565,7 +565,7 @@ HRESULT WINAPI __CLSIDFromStringA(
 /*****************************************************************************/
 
 HRESULT WINAPI CLSIDFromString(
-	LPCOLESTR idstr,	/* [in] string representation of GUID */
+	LPOLESTR idstr,		/* [in] string representation of GUID */
 	CLSID *id )		/* [out] GUID represented by above string */
 {
     char xid[40];

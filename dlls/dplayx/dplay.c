@@ -3743,7 +3743,7 @@ static HRESULT WINAPI DirectPlay3AImpl_EnumConnections
 
       /* FIXME: Check return types to ensure we're interpreting data right */
       MultiByteToWideChar( CP_ACP, 0, returnBuffer, -1, buff, sizeof(buff)/sizeof(WCHAR) );
-      CLSIDFromString( (LPCOLESTR)buff, &serviceProviderGUID );
+      CLSIDFromString( buff, &serviceProviderGUID );
       /* FIXME: Have I got a memory leak on the serviceProviderGUID? */
 
       /* Fill in the DPNAME struct for the service provider */
@@ -3838,7 +3838,7 @@ static HRESULT WINAPI DirectPlay3AImpl_EnumConnections
 
       /* FIXME: Check return types to ensure we're interpreting data right */
       MultiByteToWideChar( CP_ACP, 0, returnBuffer, -1, buff, sizeof(buff)/sizeof(WCHAR) );
-      CLSIDFromString( (LPCOLESTR)buff, &serviceProviderGUID );
+      CLSIDFromString( buff, &serviceProviderGUID );
       /* FIXME: Have I got a memory leak on the serviceProviderGUID? */
 
       /* Fill in the DPNAME struct for the service provider */
@@ -4079,7 +4079,7 @@ static HMODULE DP_LoadSP( LPCGUID lpcGuid, LPSPINITDATA lpSpData, LPBOOL lpbIsDp
 
       /* FIXME: Check return types to ensure we're interpreting data right */
       MultiByteToWideChar( CP_ACP, 0, returnBuffer, -1, buff, sizeof(buff)/sizeof(WCHAR) );
-      CLSIDFromString( (LPCOLESTR)buff, &serviceProviderGUID );
+      CLSIDFromString( buff, &serviceProviderGUID );
       /* FIXME: Have I got a memory leak on the serviceProviderGUID? */
 
       /* Determine if this is the Service Provider that the user asked for */
@@ -5281,7 +5281,7 @@ HRESULT WINAPI DirectPlayEnumerateA( LPDPENUMDPCALLBACKA lpEnumCallback,
 
     /* FIXME: Check return types to ensure we're interpreting data right */
     MultiByteToWideChar( CP_ACP, 0, returnBuffer, -1, buff, sizeof(buff)/sizeof(WCHAR) );
-    CLSIDFromString( (LPCOLESTR)buff, &serviceProviderGUID );
+    CLSIDFromString( buff, &serviceProviderGUID );
 
     /* FIXME: Need to know which of dwReserved1 and dwReserved2 are maj and min */
 

@@ -3268,7 +3268,7 @@ HRESULT WINAPI PathCreateFromUrlW(LPCWSTR lpszUrl, LPWSTR lpszPath,
   if (lpszUrl[1] != ':' && lpszUrl[1] != '|' && isalphaW(*lpszUrl))
     return E_INVALIDARG;
 
-  hr = UrlUnescapeW(lpszUrl, lpszPath, pcchPath, dwFlags);
+  hr = UrlUnescapeW((LPWSTR) lpszUrl, lpszPath, pcchPath, dwFlags);
   if (lpszPath[1] == '|')
     lpszPath[1] = ':';
 
@@ -3745,7 +3745,7 @@ BOOL WINAPI PathIsDirectoryEmptyW(LPCWSTR lpszPath)
  *  The match is made against the end of the suffix string, so for example:
  *  lpszSuffix="fooBAR" matches "BAR", but lpszSuffix="fooBARfoo" does not.
  */
-int WINAPI PathFindSuffixArrayA(LPCSTR lpszSuffix, LPCSTR *lppszArray, int dwCount)
+LPCSTR WINAPI PathFindSuffixArrayA(LPCSTR lpszSuffix, LPCSTR *lppszArray, int dwCount)
 {
   size_t dwLen;
   int dwRet = 0;
@@ -3762,13 +3762,13 @@ int WINAPI PathFindSuffixArrayA(LPCSTR lpszSuffix, LPCSTR *lppszArray, int dwCou
       if (dwCompareLen < dwLen)
       {
         if (!strcmp(lpszSuffix + dwLen - dwCompareLen, *lppszArray))
-          return dwRet; /* Found */
+          return *lppszArray; /* Found */
       }
       dwRet++;
       lppszArray++;
     }
   }
-  return 0;
+  return NULL;
 }
 
 /*************************************************************************
@@ -3776,7 +3776,7 @@ int WINAPI PathFindSuffixArrayA(LPCSTR lpszSuffix, LPCSTR *lppszArray, int dwCou
  *
  * See PathFindSuffixArrayA.
  */
-int WINAPI PathFindSuffixArrayW(LPCWSTR lpszSuffix, LPCWSTR *lppszArray, int dwCount)
+LPCWSTR WINAPI PathFindSuffixArrayW(LPCWSTR lpszSuffix, LPCWSTR *lppszArray, int dwCount)
 {
   size_t dwLen;
   int dwRet = 0;
@@ -3793,13 +3793,13 @@ int WINAPI PathFindSuffixArrayW(LPCWSTR lpszSuffix, LPCWSTR *lppszArray, int dwC
       if (dwCompareLen < dwLen)
       {
         if (!strcmpW(lpszSuffix + dwLen - dwCompareLen, *lppszArray))
-          return dwRet; /* Found */
+          return *lppszArray; /* Found */
       }
       dwRet++;
       lppszArray++;
     }
   }
-  return 0;
+  return NULL;
 }
 
 /*************************************************************************

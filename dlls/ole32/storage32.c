@@ -5803,7 +5803,8 @@ HRESULT WINAPI StgOpenStorageOnILockBytes(
  *
  *
  */
-HRESULT WINAPI StgSetTimes(OLECHAR *str, FILETIME *a, FILETIME *b, FILETIME *c )
+HRESULT WINAPI StgSetTimes(OLECHAR const *str, FILETIME const *a,
+                           FILETIME const *b, FILETIME const *c )
 {
   FIXME("(%s, %p, %p, %p),stub!\n", debugstr_w(str), a, b, c);
   return S_OK;
@@ -7435,8 +7436,8 @@ HRESULT WINAPI OleConvertIStorageToOLESTREAM (
 /***********************************************************************
  *		GetConvertStg (OLE32.@)
  */
-HRESULT WINAPI GetConvertStg(LPGUID guid) {
-    FIXME("(%s), unimplemented stub!\n",debugstr_guid(guid));
+HRESULT WINAPI GetConvertStg(IStorage *stg) {
+    FIXME("unimplemented stub!\n");
     return E_FAIL;
 }
 

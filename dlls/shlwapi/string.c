@@ -1343,14 +1343,14 @@ LPWSTR WINAPI StrCatBuffW(LPWSTR lpszStr, LPCWSTR lpszCat, INT cchMax)
  *           CoTaskMemFree() and its type set to STRRET_CSTRA.
  *  Failure: E_FAIL, if any parameters are invalid.
  */
-HRESULT WINAPI StrRetToBufA (LPSTRRET src, const ITEMIDLIST *pidl, LPSTR dest, DWORD len)
+HRESULT WINAPI StrRetToBufA (LPSTRRET src, const ITEMIDLIST *pidl, LPSTR dest, UINT len)
 {
 	/* NOTE:
 	 *  This routine is identical to that in dlls/shell32/shellstring.c.
 	 *  It was duplicated because not every version of Shlwapi.dll exports
 	 *  StrRetToBufA. If you change one routine, change them both.
 	 */
-	TRACE("dest=%p len=0x%lx strret=%p pidl=%p stub\n",dest,len,src,pidl);
+	TRACE("dest=%p len=0x%x strret=%p pidl=%p stub\n",dest,len,src,pidl);
 
 	if (!src)
 	{
@@ -1392,9 +1392,9 @@ HRESULT WINAPI StrRetToBufA (LPSTRRET src, const ITEMIDLIST *pidl, LPSTR dest, D
  *
  * See StrRetToBufA.
  */
-HRESULT WINAPI StrRetToBufW (LPSTRRET src, const ITEMIDLIST *pidl, LPWSTR dest, DWORD len)
+HRESULT WINAPI StrRetToBufW (LPSTRRET src, const ITEMIDLIST *pidl, LPWSTR dest, UINT len)
 {
-	TRACE("dest=%p len=0x%lx strret=%p pidl=%p stub\n",dest,len,src,pidl);
+	TRACE("dest=%p len=0x%x strret=%p pidl=%p stub\n",dest,len,src,pidl);
 
 	if (!src)
 	{

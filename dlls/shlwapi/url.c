@@ -1130,7 +1130,7 @@ HRESULT WINAPI UrlEscapeW(
  *  the first occurrence of either a '?' or '#' character.
  */
 HRESULT WINAPI UrlUnescapeA(
-	LPCSTR pszUrl,
+	LPSTR pszUrl,
 	LPSTR pszUnescaped,
 	LPDWORD pcchUnescaped,
 	DWORD dwFlags)
@@ -1145,7 +1145,7 @@ HRESULT WINAPI UrlUnescapeA(
 	  pcchUnescaped, dwFlags);
 
     if(dwFlags & URL_UNESCAPE_INPLACE)
-        dst = (char*)pszUrl;
+        dst = pszUrl;
     else
         dst = pszUnescaped;
 
@@ -1194,7 +1194,7 @@ HRESULT WINAPI UrlUnescapeA(
  * See UrlUnescapeA.
  */
 HRESULT WINAPI UrlUnescapeW(
-	LPCWSTR pszUrl,
+	LPWSTR pszUrl,
 	LPWSTR pszUnescaped,
 	LPDWORD pcchUnescaped,
 	DWORD dwFlags)
@@ -1209,7 +1209,7 @@ HRESULT WINAPI UrlUnescapeW(
 	  pcchUnescaped, dwFlags);
 
     if(dwFlags & URL_UNESCAPE_INPLACE)
-        dst = (WCHAR*)pszUrl;
+        dst = pszUrl;
     else
         dst = pszUnescaped;
 
@@ -1396,14 +1396,14 @@ INT WINAPI UrlCompareW(
  *  Success: TRUE. lpDest is filled with the computed hash value.
  *  Failure: FALSE, if any argument is invalid.
  */
-BOOL WINAPI HashData(const unsigned char *lpSrc, INT nSrcLen,
-                     unsigned char *lpDest, INT nDestLen)
+HRESULT WINAPI HashData(const unsigned char *lpSrc, DWORD nSrcLen,
+                     unsigned char *lpDest, DWORD nDestLen)
 {
   INT srcCount = nSrcLen - 1, destCount = nDestLen - 1;
 
   if (IsBadReadPtr(lpSrc, nSrcLen) ||
       IsBadWritePtr(lpDest, nDestLen))
-    return FALSE;
+    return E_INVALIDARG;
 
   while (destCount >= 0)
   {
@@ -1421,7 +1421,7 @@ BOOL WINAPI HashData(const unsigned char *lpSrc, INT nSrcLen,
     }
     srcCount--;
   }
-  return TRUE;
+  return S_OK;
 }
 
 /*************************************************************************
@@ -1438,7 +1438,7 @@ BOOL WINAPI HashData(const unsigned char *lpSrc, INT nSrcLen,
  *  Success: S_OK. lpDest is filled with the computed hash value.
  *  Failure: E_INVALIDARG, if any argument is invalid.
  */
-HRESULT WINAPI UrlHashA(LPCSTR pszUrl, unsigned char *lpDest, INT nDestLen)
+HRESULT WINAPI UrlHashA(LPCSTR pszUrl, unsigned char *lpDest, DWORD nDestLen)
 {
   if (IsBadStringPtrA(pszUrl, -1) || IsBadWritePtr(lpDest, nDestLen))
     return E_INVALIDARG;
@@ -1452,11 +1452,11 @@ HRESULT WINAPI UrlHashA(LPCSTR pszUrl, unsigned char *lpDest, INT nDestLen)
  *
  * See UrlHashA.
  */
-HRESULT WINAPI UrlHashW(LPCWSTR pszUrl, unsigned char *lpDest, INT nDestLen)
+HRESULT WINAPI UrlHashW(LPCWSTR pszUrl, unsigned char *lpDest, DWORD nDestLen)
 {
   char szUrl[MAX_PATH];
 
-  TRACE("(%s,%p,%d)\n",debugstr_w(pszUrl), lpDest, nDestLen);
+  TRACE("(%s,%p,%ld)\n",debugstr_w(pszUrl), lpDest, nDestLen);
 
   if (IsBadStringPtrW(pszUrl, -1) || IsBadWritePtr(lpDest, nDestLen))
     return E_INVALIDARG;
@@ -1900,9 +1900,9 @@ static LONG URL_ParseUrl(LPCWSTR pszUrl, WINE_PARSE_URL *pl)
     memset(pl, 0, sizeof(WINE_PARSE_URL));
     pl->pScheme = pszUrl;
     work = URL_ScanID(pl->pScheme, &pl->szScheme, SCHEME);
-    if (!*work || (*work != L':')) goto ERROR;
+    if (!*work || (*work != L':')) goto ErrorExit;
     work++;
-    if ((*work != L'/') || (*(work+1) != L'/')) goto ERROR;
+    if ((*work != L'/') || (*(work+1) != L'/')) goto ErrorExit;
     pl->pUserName = work + 2;
     work = URL_ScanID(pl->pUserName, &pl->szUserName, USERPASS);
     if (*work == L':' ) {
@@ -1926,7 +1926,7 @@ static LONG URL_ParseUrl(LPCWSTR pszUrl, WINE_PARSE_URL *pl)
 	pl->szUserName = pl->szPassword = 0;
 	work = pl->pUserName - 1;
 	pl->pUserName = pl->pPassword = 0;
-    } else goto ERROR;
+    } else goto ErrorExit;
 
     /* now start parsing hostname or hostnumber */
     work++;
@@ -1951,7 +1951,7 @@ static LONG URL_ParseUrl(LPCWSTR pszUrl, WINE_PARSE_URL *pl)
 	  pl->pPort, pl->szPort,
 	  pl->pQuery, pl->szQuery);
     return S_OK;
-  ERROR:
+  ErrorExit:
     FIXME("failed to parse %s\n", debugstr_w(pszUrl));
     return E_INVALIDARG;
 }

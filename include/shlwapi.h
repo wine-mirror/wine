@@ -500,8 +500,8 @@ BOOL WINAPI PathIsLFNFileSpecA(LPCSTR);
 BOOL WINAPI PathIsLFNFileSpecW(LPCWSTR);
 #define PathIsLFNFileSpec WINELIB_NAME_AW(PathIsLFNFileSpec)
 
-int WINAPI PathFindSuffixArrayA(LPCSTR,LPCSTR *,int);
-int WINAPI PathFindSuffixArrayW(LPCWSTR,LPCWSTR *,int);
+LPCSTR WINAPI PathFindSuffixArrayA(LPCSTR,LPCSTR *,int);
+LPCWSTR WINAPI PathFindSuffixArrayW(LPCWSTR,LPCWSTR *,int);
 #define PathFindSuffixArray WINELIB_NAME_AW(PathFindSuffixArray)
 
 VOID WINAPI PathUndecorateA(LPSTR);
@@ -603,10 +603,10 @@ HRESULT WINAPI UrlGetPartA(LPCSTR,LPSTR,LPDWORD,DWORD,DWORD);
 HRESULT WINAPI UrlGetPartW(LPCWSTR,LPWSTR,LPDWORD,DWORD,DWORD);
 #define UrlGetPart WINELIB_NAME_AW(UrlGetPart)
 
-BOOL    WINAPI HashData(const unsigned char *,INT,unsigned char *lpDest,INT);
+HRESULT WINAPI HashData(const unsigned char *,DWORD,unsigned char *lpDest,DWORD);
 
-HRESULT WINAPI UrlHashA(LPCSTR,unsigned char *,INT);
-HRESULT WINAPI UrlHashW(LPCWSTR,unsigned char *,INT);
+HRESULT WINAPI UrlHashA(LPCSTR,unsigned char *,DWORD);
+HRESULT WINAPI UrlHashW(LPCWSTR,unsigned char *,DWORD);
 #define UrlHash WINELIB_NAME_AW(UrlHash)
 
 BOOL    WINAPI UrlIsA(LPCSTR,URLIS);
@@ -625,8 +625,8 @@ BOOL    WINAPI UrlIsOpaqueW(LPCWSTR);
 #define UrlIsFileUrlW(y) UrlIsW(x, URLIS_FILEURL)
 #define UrlIsFileUrl WINELIB_NAME_AW(UrlIsFileUrl)
 
-HRESULT WINAPI UrlUnescapeA(LPCSTR,LPSTR,LPDWORD,DWORD);
-HRESULT WINAPI UrlUnescapeW(LPCWSTR,LPWSTR,LPDWORD,DWORD);
+HRESULT WINAPI UrlUnescapeA(LPSTR,LPSTR,LPDWORD,DWORD);
+HRESULT WINAPI UrlUnescapeW(LPWSTR,LPWSTR,LPDWORD,DWORD);
 #define UrlUnescape WINELIB_AW_NAME(UrlUnescape)
 
 #define UrlUnescapeInPlaceA(x,y) UrlUnescapeA(x, NULL, NULL, \
@@ -827,8 +827,8 @@ HRESULT WINAPI StrRetToStrA(struct _STRRET*,const struct _ITEMIDLIST*,LPSTR*);
 HRESULT WINAPI StrRetToStrW(struct _STRRET*,const struct _ITEMIDLIST*,LPWSTR*);
 #define StrRetToStr WINELIB_NAME_AW(StrRetToStr)
 
-HRESULT WINAPI StrRetToBufA(struct _STRRET*,const struct _ITEMIDLIST*,LPSTR,DWORD);
-HRESULT WINAPI StrRetToBufW(struct _STRRET*,const struct _ITEMIDLIST*,LPWSTR,DWORD);
+HRESULT WINAPI StrRetToBufA(struct _STRRET*,const struct _ITEMIDLIST*,LPSTR,UINT);
+HRESULT WINAPI StrRetToBufW(struct _STRRET*,const struct _ITEMIDLIST*,LPWSTR,UINT);
 #define StrRetToBuf WINELIB_NAME_AW(StrRetToBuf)
 
 #endif /* NO_SHLWAPI_STRFCNS */
