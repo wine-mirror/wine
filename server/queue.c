@@ -59,8 +59,7 @@ struct message_result
 
 struct message
 {
-    struct message        *next;      /* next message in list */
-    struct message        *prev;      /* prev message in list */
+    struct list            entry;     /* entry in message list */
     enum message_type      type;      /* message type */
     user_handle_t          win;       /* window handle */
     unsigned int           msg;       /* message code */
@@ -75,12 +74,6 @@ struct message
     void                  *data;      /* message data for sent messages */
     unsigned int           data_size; /* size of message data */
     struct message_result *result;    /* result in sender queue */
-};
-
-struct message_list
-{
-    struct message *first;     /* head of list */
-    struct message *last;      /* tail of list */
 };
 
 struct timer
@@ -108,7 +101,7 @@ struct thread_input
     int                    caret_state;   /* caret on/off state */
     struct message        *msg;           /* message currently processed */
     struct thread         *msg_thread;    /* thread processing the message */
-    struct message_list    msg_list;      /* list of hardware messages */
+    struct list            msg_list;      /* list of hardware messages */
     unsigned char          keystate[256]; /* state of each key */
 };
 
@@ -120,7 +113,7 @@ struct msg_queue
     unsigned int           changed_bits;    /* changed wakeup bits */
     unsigned int           changed_mask;    /* changed wakeup mask */
     int                    paint_count;     /* pending paint messages count */
-    struct message_list    msg_list[NB_MSG_KINDS];  /* lists of messages */
+    struct list            msg_list[NB_MSG_KINDS];  /* lists of messages */
     struct list            send_result;     /* stack of sent messages waiting for result */
     struct list            callback_result; /* list of callback messages waiting for result */
     struct message_result *recv_result;     /* stack of received messages waiting for result */
@@ -201,7 +194,7 @@ static struct thread_input *create_thread_input(void)
         input->move_size   = 0;
         input->msg         = NULL;
         input->msg_thread  = NULL;
-        input->msg_list.first = input->msg_list.last = NULL;
+        list_init( &input->msg_list );
         set_caret_window( input, 0 );
         memset( input->keystate, 0, sizeof(input->keystate) );
     }
@@ -248,8 +241,7 @@ static struct msg_queue *create_msg_queue( struct thread *thread, struct thread_
         list_init( &queue->callback_result );
         list_init( &queue->pending_timers );
         list_init( &queue->expired_timers );
-        for (i = 0; i < NB_MSG_KINDS; i++)
-            queue->msg_list[i].first = queue->msg_list[i].last = NULL;
+        for (i = 0; i < NB_MSG_KINDS; i++) list_init( &queue->msg_list[i] );
 
         thread->queue = queue;
         if (!thread->process->queue)
@@ -341,30 +333,14 @@ inline static struct msg_queue *get_current_queue(void)
     return queue;
 }
 
-/* append a message to the end of a list */
-inline static void append_message( struct message_list *list, struct message *msg )
-{
-    msg->next = NULL;
-    if ((msg->prev = list->last)) msg->prev->next = msg;
-    else list->first = msg;
-    list->last = msg;
-}
-
-/* unlink a message from a list it */
-inline static void unlink_message( struct message_list *list, struct message *msg )
-{
-    if (msg->next) msg->next->prev = msg->prev;
-    else list->last = msg->prev;
-    if (msg->prev) msg->prev->next = msg->next;
-    else list->first = msg->next;
-}
-
 /* try to merge a message with the last in the list; return 1 if successful */
 static int merge_message( struct thread_input *input, const struct message *msg )
 {
-    struct message *prev = input->msg_list.last;
+    struct message *prev;
+    struct list *ptr = list_tail( &input->msg_list );
 
-    if (!prev) return 0;
+    if (!ptr) return 0;
+    prev = LIST_ENTRY( ptr, struct message, entry );
     if (input->msg == prev) return 0;
     if (prev->result) return 0;
     if (prev->win != msg->win) return 0;
@@ -417,7 +393,7 @@ static void store_message_result( struct message_result *res, unsigned int resul
         {
             /* queue the callback message in the sender queue */
             res->callback_msg->lparam = result;
-            append_message( &res->sender->msg_list[SEND_MESSAGE], res->callback_msg );
+            list_add_tail( &res->sender->msg_list[SEND_MESSAGE], &res->callback_msg->entry );
             set_queue_bits( res->sender, QS_SENDMESSAGE );
             res->callback_msg = NULL;
             remove_result_from_sender( res );
@@ -453,14 +429,14 @@ static void free_message( struct message *msg )
 static void remove_queue_message( struct msg_queue *queue, struct message *msg,
                                   enum message_kind kind )
 {
-    unlink_message( &queue->msg_list[kind], msg );
+    list_remove( &msg->entry );
     switch(kind)
     {
     case SEND_MESSAGE:
-        if (!queue->msg_list[kind].first) clear_queue_bits( queue, QS_SENDMESSAGE );
+        if (list_empty( &queue->msg_list[kind] )) clear_queue_bits( queue, QS_SENDMESSAGE );
         break;
     case POST_MESSAGE:
-        if (!queue->msg_list[kind].first) clear_queue_bits( queue, QS_POSTMESSAGE );
+        if (list_empty( &queue->msg_list[kind] )) clear_queue_bits( queue, QS_POSTMESSAGE );
         break;
     }
     free_message( msg );
@@ -560,7 +536,7 @@ static void receive_message( struct msg_queue *queue, struct message *msg,
 
     if (msg->data) set_reply_data_ptr( msg->data, msg->data_size );
 
-    unlink_message( &queue->msg_list[SEND_MESSAGE], msg );
+    list_remove( &msg->entry );
     /* put the result on the receiver result stack */
     if (result)
     {
@@ -568,7 +544,7 @@ static void receive_message( struct msg_queue *queue, struct message *msg,
         queue->recv_result = result;
     }
     free( msg );
-    if (!queue->msg_list[SEND_MESSAGE].first) clear_queue_bits( queue, QS_SENDMESSAGE );
+    if (list_empty( &queue->msg_list[SEND_MESSAGE] )) clear_queue_bits( queue, QS_SENDMESSAGE );
 }
 
 /* set the result of the current received message */
@@ -600,21 +576,20 @@ static int get_posted_message( struct msg_queue *queue, user_handle_t win,
                                struct get_message_reply *reply )
 {
     struct message *msg;
-    struct message_list *list = &queue->msg_list[POST_MESSAGE];
 
     /* check against the filters */
-    for (msg = list->first; msg; msg = msg->next)
+    LIST_FOR_EACH_ENTRY( msg, &queue->msg_list[POST_MESSAGE], struct message, entry )
     {
-        if (msg->msg == WM_QUIT) break;  /* WM_QUIT is never filtered */
+        if (msg->msg == WM_QUIT) goto found;  /* WM_QUIT is never filtered */
         if (win && msg->win && msg->win != win && !is_child_window( win, msg->win )) continue;
         if (msg->msg < first) continue;
         if (msg->msg > last) continue;
-        break; /* found one */
+        goto found; /* found one */
     }
-    if (!msg) return 0;
+    return 0;
 
     /* return it to the app */
-
+found:
     reply->total = msg->data_size;
     if (msg->data_size > get_reply_max_size())
     {
@@ -647,14 +622,15 @@ static int get_posted_message( struct msg_queue *queue, user_handle_t win,
 }
 
 /* empty a message list and free all the messages */
-static void empty_msg_list( struct message_list *list )
+static void empty_msg_list( struct list *list )
 {
-    struct message *msg = list->first;
-    while (msg)
+    struct list *ptr;
+
+    while ((ptr = list_head( list )) != NULL)
     {
-        struct message *next = msg->next;
+        struct message *msg = LIST_ENTRY( ptr, struct message, entry );
+        list_remove( &msg->entry );
         free_message( msg );
-        msg = next;
     }
 }
 
@@ -1066,11 +1042,17 @@ static void release_hardware_message( struct thread *thread, int remove )
         int clr_bit;
 
         update_input_key_state( input, input->msg );
-        unlink_message( &input->msg_list, input->msg );
+        list_remove( &input->msg->entry );
         clr_bit = get_hardware_msg_bit( input->msg );
-        for (other = input->msg_list.first; other; other = other->next)
-            if (get_hardware_msg_bit( other ) == clr_bit) break;
-        if (!other) clear_queue_bits( thread->queue, clr_bit );
+        LIST_FOR_EACH_ENTRY( other, &input->msg_list, struct message, entry )
+        {
+            if (get_hardware_msg_bit( other ) == clr_bit)
+            {
+                clr_bit = 0;
+                break;
+            }
+        }
+        if (clr_bit) clear_queue_bits( thread->queue, clr_bit );
         free_message( input->msg );
     }
     release_object( input->msg_thread );
@@ -1123,7 +1105,7 @@ static void queue_hardware_message( struct msg_queue *queue, struct message *msg
     if (msg->msg == WM_MOUSEMOVE && merge_message( input, msg )) free( msg );
     else
     {
-        append_message( &input->msg_list, msg );
+        list_add_tail( &input->msg_list, &msg->entry );
         set_queue_bits( thread->queue, get_hardware_msg_bit(msg) );
     }
     release_object( thread );
@@ -1135,7 +1117,7 @@ static int get_hardware_message( struct thread *thread, struct message *first,
 {
     struct thread_input *input = thread->queue->input;
     struct thread *win_thread;
-    struct message *msg;
+    struct list *ptr;
     user_handle_t win;
     int clear_bits, got_one = 0;
     unsigned int msg_code;
@@ -1145,26 +1127,26 @@ static int get_hardware_message( struct thread *thread, struct message *first,
 
     if (!first)
     {
-        msg = input->msg_list.first;
+        ptr = list_head( &input->msg_list );
         clear_bits = QS_KEY | QS_MOUSEMOVE | QS_MOUSEBUTTON;
     }
     else
     {
-        msg = first->next;
+        ptr = list_next( &input->msg_list, &first->entry );
         clear_bits = 0;  /* don't clear bits if we don't go through the whole list */
     }
 
-    while (msg)
+    while (ptr)
     {
+        struct message *msg = LIST_ENTRY( ptr, struct message, entry );
         win = find_hardware_message_window( input, msg, &msg_code );
         if (!win || !(win_thread = get_window_thread( win )))
         {
             /* no window at all, remove it */
-            struct message *next = msg->next;
+            ptr = list_next( &input->msg_list, ptr );
             update_input_key_state( input, msg );
-            unlink_message( &input->msg_list, msg );
+            list_remove( &msg->entry );
             free_message( msg );
-            msg = next;
             continue;
         }
         if (win_thread != thread)
@@ -1173,7 +1155,7 @@ static int get_hardware_message( struct thread *thread, struct message *first,
             set_queue_bits( win_thread->queue, get_hardware_msg_bit(msg) );
             release_object( win_thread );
             got_one = 1;
-            msg = msg->next;
+            ptr = list_next( &input->msg_list, ptr );
             continue;
         }
         /* if we already got a message for another thread, or if it doesn't
@@ -1186,7 +1168,7 @@ static int get_hardware_message( struct thread *thread, struct message *first,
         {
             clear_bits &= ~get_hardware_msg_bit( msg );
             release_object( win_thread );
-            msg = msg->next;
+            ptr = list_next( &input->msg_list, ptr );
             continue;
         }
         /* now we can return it */
@@ -1234,7 +1216,6 @@ void queue_cleanup_window( struct thread *thread, user_handle_t win )
 {
     struct msg_queue *queue = thread->queue;
     struct list *ptr;
-    struct message *msg;
     int i;
 
     if (!queue) return;
@@ -1261,12 +1242,12 @@ void queue_cleanup_window( struct thread *thread, user_handle_t win )
     /* remove messages */
     for (i = 0; i < NB_MSG_KINDS; i++)
     {
-        msg = queue->msg_list[i].first;
-        while (msg)
+        struct list *ptr, *next;
+
+        LIST_FOR_EACH_SAFE( ptr, next, &queue->msg_list[i] )
         {
-            struct message *next = msg->next;
+            struct message *msg = LIST_ENTRY( ptr, struct message, entry );
             if (msg->win == win) remove_queue_message( queue, msg, i );
-            msg = next;
         }
     }
 
@@ -1297,7 +1278,7 @@ void post_message( user_handle_t win, unsigned int message,
         msg->data      = NULL;
         msg->data_size = 0;
 
-        append_message( &thread->queue->msg_list[POST_MESSAGE], msg );
+        list_add_tail( &thread->queue->msg_list[POST_MESSAGE], &msg->entry );
         set_queue_bits( thread->queue, QS_POSTMESSAGE );
     }
     release_object( thread );
@@ -1335,7 +1316,7 @@ void post_win_event( struct thread *thread, unsigned int event,
             if (debug_level > 1)
                 fprintf( stderr, "post_win_event: tid %04x event %04x win %p object_id %d child_id %d\n",
                          get_thread_id(thread), event, win, object_id, child_id );
-            append_message( &thread->queue->msg_list[SEND_MESSAGE], msg );
+            list_add_tail( &thread->queue->msg_list[SEND_MESSAGE], &msg->entry );
             set_queue_bits( thread->queue, QS_SENDMESSAGE );
         }
         else
@@ -1456,7 +1437,7 @@ DECL_HANDLER(send_message)
             }
             /* fall through */
         case MSG_NOTIFY:
-            append_message( &recv_queue->msg_list[SEND_MESSAGE], msg );
+            list_add_tail( &recv_queue->msg_list[SEND_MESSAGE], &msg->entry );
             set_queue_bits( recv_queue, QS_SENDMESSAGE );
             break;
         case MSG_POSTED:
@@ -1467,7 +1448,7 @@ DECL_HANDLER(send_message)
                 free( msg );
                 break;
             }
-            append_message( &recv_queue->msg_list[POST_MESSAGE], msg );
+            list_add_tail( &recv_queue->msg_list[POST_MESSAGE], &msg->entry );
             set_queue_bits( recv_queue, QS_POSTMESSAGE );
             break;
         case MSG_HARDWARE:
@@ -1488,7 +1469,7 @@ DECL_HANDLER(send_message)
 DECL_HANDLER(get_message)
 {
     struct timer *timer;
-    struct message *msg;
+    struct list *ptr;
     struct message *first_hw_msg = NULL;
     struct msg_queue *queue = get_current_queue();
     user_handle_t get_win = get_user_full_handle( req->get_win );
@@ -1505,8 +1486,9 @@ DECL_HANDLER(get_message)
     }
 
     /* first check for sent messages */
-    if ((msg = queue->msg_list[SEND_MESSAGE].first))
+    if ((ptr = list_head( &queue->msg_list[SEND_MESSAGE] )))
     {
+        struct message *msg = LIST_ENTRY( ptr, struct message, entry );
         receive_message( queue, msg, reply );
         return;
     }
