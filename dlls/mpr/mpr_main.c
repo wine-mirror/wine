@@ -68,3 +68,11 @@ BOOL WINAPI _MPR_25( LPBYTE lpMem, INT len )
     return FALSE;
 }
 
+/*****************************************************************
+ *  DllCanUnloadNow  [MPR.@]
+ */
+DWORD WINAPI DllCanUnloadNow(void)
+{
+    FIXME("Stub\n");
+    return S_OK;
+}
