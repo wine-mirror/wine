@@ -755,28 +755,42 @@ static INT PROFILE_GetSection( PROFILESECTION *section, LPCSTR section_name,
     return 0;
 }
 
-
+/* See GetPrivateProfileSectionNamesA for documentation */
 static INT PROFILE_GetSectionNames( LPSTR buffer, UINT len )
 {
-    LPSTR buf = buffer;
-    WORD l, cursize = 0;
+    LPSTR buf;
+    UINT f,l;
     PROFILESECTION *section;
 
-    if(!buffer) return 0;
+    if (!buffer || !len)
+        return 0;
+    if (len==1) {
+        *buffer='\0';
+        return 0;
+    }
 
-    for (section = CurProfile->section; section; section = section->next)
-	if (section->name[0]) {
-	    l = strlen(section->name);
-	    cursize += l+1;
-	    if (cursize > len+1)
-		return len-2;
-
-	    strcpy(buf, section->name);
-	    buf += l+1;
-	}
-
-    *buf=0;
-    buf++;
+    f=len-1;
+    buf=buffer;
+    section = CurProfile->section;
+    while ((section!=NULL)) {
+        if (section->name[0]) {
+            l = strlen(section->name)+1;
+            if (l > f) {
+                if (f>0) {
+                    strncpy(buf, section->name, f-1);
+                    buf += f-1;
+                    *buf++='\0';
+                }
+                *buf='\0';
+                return len-2;
+            }
+            strcpy(buf, section->name);
+            buf += l;
+            f -= l;
+        }
+        section = section->next;
+    }
+    *buf='\0';
     return buf-buffer;
 }
 
@@ -1588,37 +1602,71 @@ BOOL WINAPI WriteProfileSectionW( LPCWSTR section, LPCWSTR keys_n_values)
 WORD WINAPI GetPrivateProfileSectionNames16( LPSTR buffer, WORD size,
                                              LPCSTR filename )
 {
-    WORD ret = 0;
-
-    EnterCriticalSection( &PROFILE_CritSect );
-
-    if (PROFILE_Open( filename ))
-	ret = PROFILE_GetSectionNames(buffer, size);
-
-    LeaveCriticalSection( &PROFILE_CritSect );
-
-    return ret;
+    return GetPrivateProfileSectionNamesA(buffer,size,filename);
 }
 
 
 /***********************************************************************
  *           GetProfileSectionNames   (KERNEL.142)
  */
-WORD WINAPI GetProfileSectionNames16( LPSTR buffer, WORD size)
+WORD WINAPI GetProfileSectionNames16(LPSTR buffer, WORD size)
 
 {
-    return (GetPrivateProfileSectionNames16 (buffer,size,"win.ini"));
+    return GetPrivateProfileSectionNamesA(buffer,size,"win.ini");
 }
 
 
 /***********************************************************************
  *           GetPrivateProfileSectionNamesA  (KERNEL32.@)
+ *
+ * Returns the section names contained in the specified file.
+ * FIXME: Where do we find this file when the path is relative?
+ * The section names are returned as a list of strings with an extra 
+ * '\0' to mark the end of the list. Except for that the behavior 
+ * depends on the Windows version.
+ *
+ * Win95:
+ * - if the buffer is 0 or 1 character long then it is as if it was of 
+ *   infinite length.
+ * - otherwise, if the buffer is to small only the section names that fit 
+ *   are returned.
+ * - note that this means if the buffer was to small to return even just 
+ *   the first section name then a single '\0' will be returned.
+ * - the return value is the number of characters written in the buffer, 
+ *   except if the buffer was too smal in which case len-2 is returned
+ *
+ * Win2000:
+ * - if the buffer is 0, 1 or 2 characters long then it is filled with 
+ *   '\0' and the return value is 0
+ * - otherwise if the buffer is too small then the first section name that 
+ *   does not fit is truncated so that the string list can be terminated 
+ *   correctly (double '\0')
+ * - the return value is the number of characters written in the buffer 
+ *   except for the trailing '\0'. If the buffer is too small, then the 
+ *   return value is len-2
+ * - Win2000 has a bug that triggers when the section names and the 
+ *   trailing '\0' fit exactly in the buffer. In that case the trailing 
+ *   '\0' is missing.
+ *
+ * Wine implements the observed Win2000 behavior (except for the bug).
+ *
+ * Note that when the buffer is big enough then the return value may be any 
+ * value between 1 and len-1 (or len in Win95), including len-2.
  */
 DWORD WINAPI GetPrivateProfileSectionNamesA( LPSTR buffer, DWORD size,
 					     LPCSTR filename)
 
 {
- return (GetPrivateProfileSectionNames16 (buffer,size,filename));
+    DWORD ret = 0;
+
+    EnterCriticalSection( &PROFILE_CritSect );
+
+    if (PROFILE_Open( filename ))
+        ret = PROFILE_GetSectionNames(buffer, size);
+
+    LeaveCriticalSection( &PROFILE_CritSect );
+
+    return ret;
 }
 
 
@@ -1629,16 +1677,16 @@ DWORD WINAPI GetPrivateProfileSectionNamesW( LPWSTR buffer, DWORD size,
 					     LPCWSTR filename)
 
 {
-   LPSTR filenameA = HEAP_strdupWtoA( GetProcessHeap(), 0, filename );
-   LPSTR bufferA   = HeapAlloc( GetProcessHeap(), 0, size);
+    LPSTR filenameA = HEAP_strdupWtoA( GetProcessHeap(), 0, filename );
+    LPSTR bufferA   = HeapAlloc( GetProcessHeap(), 0, size);
 
-   INT ret = GetPrivateProfileSectionNames16 (bufferA, size, filenameA);
-   if (size > 0 && !MultiByteToWideChar( CP_ACP, 0, bufferA, -1, buffer, size ))
+    INT ret = GetPrivateProfileSectionNamesA(bufferA, size, filenameA);
+    if (size > 0 && !MultiByteToWideChar( CP_ACP, 0, bufferA, -1, buffer, size ))
         buffer[size-1] = 0;
-   HeapFree( GetProcessHeap(), 0, bufferA);
-   HeapFree( GetProcessHeap(), 0, filenameA );
+    HeapFree( GetProcessHeap(), 0, bufferA);
+    HeapFree( GetProcessHeap(), 0, filenameA );
 
-   return ret;
+    return ret;
 }
 
 /***********************************************************************
