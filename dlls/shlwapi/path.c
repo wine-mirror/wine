@@ -2543,8 +2543,8 @@ BOOL WINAPI PathMakePrettyW(LPWSTR lpszPath)
  * Determine the length of the common prefix between two paths.
  *
  * PARAMS
- *  lpszFile1 [I] First path for comparason
- *  lpszFile2 [I] Second path for comparason
+ *  lpszFile1 [I] First path for comparison
+ *  lpszFile2 [I] Second path for comparison
  *  achPath   [O] Destination for common prefix string
  *
  * RETURNS

@@ -126,7 +126,7 @@ static const WCHAR *create_system_dirid( int dirid )
     case DIRID_COLOR:  /* FIXME */
     case DIRID_PRINTPROCESSOR:  /* FIXME */
     default:
-        FIXME( "unknwon dirid %d\n", dirid );
+        FIXME( "unknown dirid %d\n", dirid );
         return get_unknown_dirid();
     }
     len = (strlenW(buffer) + 1) * sizeof(WCHAR);

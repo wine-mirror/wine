@@ -298,8 +298,9 @@ DWORD WINAPI SHGetFileInfoA(LPCSTR path,DWORD dwFileAttributes,
       }
 
 
-	/* translate the path into a pidl only when SHGFI_USEFILEATTRIBUTES in not specified
-	   the pidl functions fail on not existing file names */
+	/* translate the path into a pidl only when SHGFI_USEFILEATTRIBUTES
+    	 * is not specified.
+	   The pidl functions fail on not existing file names */
 
 	if (flags & SHGFI_PIDL) {
 	    pidl = ILClone((LPCITEMIDLIST)path);

@@ -934,7 +934,7 @@ static LONG CC_WMInitDialog( HWND hDlg, WPARAM wParam, LPARAM lParam, BOOL b16 )
    lpp->s = CC_RGBtoHSL('S', r, g, b);
    lpp->l = CC_RGBtoHSL('L', r, g, b);
 
-   /* Doing it the long way becaus CC_EditSetRGB/HSL doesn'nt seem to work */
+   /* Doing it the long way because CC_EditSetRGB/HSL doesn't seem to work */
    SetDlgItemInt(hDlg, 703, lpp->h, TRUE);
    SetDlgItemInt(hDlg, 704, lpp->s, TRUE);
    SetDlgItemInt(hDlg, 705, lpp->l, TRUE);

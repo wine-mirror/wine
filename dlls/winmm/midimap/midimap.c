@@ -1,6 +1,6 @@
 /* -*- tab-width: 8; c-basic-offset: 4 -*- */
 /*
- * Wine Midi mapper driver
+ * Wine MIDI mapper driver
  *
  * Copyright 	1999, 2000, 2001 Eric Pouech
  *

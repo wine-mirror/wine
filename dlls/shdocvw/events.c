@@ -179,7 +179,7 @@ static HRESULT WINAPI WBCP_Advise(LPCONNECTIONPOINT iface,
 static HRESULT WINAPI WBCP_Unadvise(LPCONNECTIONPOINT iface,
                                     DWORD dwCookie)
 {
-    FIXME("stub: cookie to disconnect = %ld\n", dwCookie);
+    FIXME("stub: cookie to disconnect = %lx\n", dwCookie);
     return S_OK;
 }
 

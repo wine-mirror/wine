@@ -19,11 +19,11 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  *
  * FIXME: The whole concept of handling unicode is badly broken.
- *	many hook-messages expecting a pointer to a
+ *	many hook-messages expect a pointer to a
  *	OPENFILENAMEA or W structure. With the current architecture
  *	we would have to convert the beast at every call to a hook.
- *	we have to find a better solution but if would likely cause
- *	a complete rewrite with after we shouldhandle the
+ *	we have to find a better solution but it would likely cause
+ *	a complete rewrite after which we should handle the
  *	OPENFILENAME structure without any converting (jsch).
  *
  * FIXME: any hook gets a OPENFILENAMEA structure
@@ -1264,7 +1264,7 @@ static LRESULT FILEDLG95_InitControls(HWND hwnd)
           TRACE("No initial dir specified, using current dir of %s\n", debugstr_w(fodInfos->initdir));
       }
   }
-  TRACE("After manipilation, file = %s, dir = %s\n", debugstr_w(fodInfos->filename), debugstr_w(fodInfos->initdir));
+  TRACE("After manipulation, file = %s, dir = %s\n", debugstr_w(fodInfos->filename), debugstr_w(fodInfos->initdir));
 
   /* Must the open as read only check box be checked ?*/
   if(fodInfos->ofnInfos->Flags & OFN_READONLY)
@@ -2743,7 +2743,7 @@ void FILEDLG95_FILENAME_FillFromSelection (HWND hwnd)
 
         if (pidl)
 	{
-          /* get the total length of the selected file names*/
+          /* get the total length of the selected file names */
           lpstrTemp[0] = '\0';
           GetName( fodInfos->Shell.FOIShellFolder, pidl, SHGDN_INFOLDER|SHGDN_FORPARSING, lpstrTemp );
 

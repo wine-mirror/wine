@@ -106,7 +106,7 @@ sub ReadFSTAB {
 	    }
 	    elsif ( ($mntpoint eq '/mnt/cdrom' || $mntpoint eq '/cdrom')
 		  && $type eq 'supermount') {
-		push(@::CdromDrives, [ '/dev/cdrom', $mntpoint, 'win95']);
+		push(@::CdromDrives, ['/dev/cdrom', $mntpoint, 'win95']);
 	    }
 	}
     }

@@ -65,7 +65,7 @@ DWORD WINAPI SHLWAPI_23(REFGUID,LPSTR,INT);
  *  Failure: NULL, if any parameters are invalid.
  *
  * NOTES
- *  This function always returns returns NULL if the underlying OS version
+ *  This function always returns NULL if the underlying OS version
  *  Wine is impersonating does not use security descriptors (i.e. anything
  *  before Windows NT).
  */

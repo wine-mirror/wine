@@ -364,9 +364,9 @@ HGLOBAL16 WINAPI GlobalReAlloc16(
     else
     {
         /*
-         * if more then one reader (e.g. some pointer has been 
+         * if more than one reader (e.g. some pointer has been 
          * given out by GetVDMPointer32W16),
-         * only try to realloc in place 
+         * only try to realloc in place
          */
         newptr = HeapReAlloc( GetProcessHeap(),
                               (pArena->pageLockCount > 0) ? 
