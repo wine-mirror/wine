@@ -557,7 +557,7 @@ unsigned char* _mbsrchr(const unsigned char* s, unsigned int x)
  */
 unsigned char* _mbstok(unsigned char *str, const unsigned char *delim)
 {
-    static char *next = NULL;
+    MSVCRT_thread_data *data = msvcrt_get_thread_data();
     char *ret;
 
     if(MSVCRT___mb_cur_max > 1)
@@ -565,7 +565,7 @@ unsigned char* _mbstok(unsigned char *str, const unsigned char *delim)
 	unsigned int c;
 
 	if (!str)
-    	    if (!(str = next)) return NULL;
+    	    if (!(str = data->mbstok_next)) return NULL;
 
 	while ((c = _mbsnextc(str)) && _mbschr(delim, c)) {
 	    str += c > 255 ? 2 : 1;
@@ -579,7 +579,7 @@ unsigned char* _mbstok(unsigned char *str, const unsigned char *delim)
 	    *str++ = 0;
 	    if (c > 255) *str++ = 0;
 	}
-	next = str;
+	data->mbstok_next = str;
 	return ret;
     }
     return strtok(str, delim);	/* ASCII CP */
