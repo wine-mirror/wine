@@ -3195,7 +3195,7 @@ TREEVIEW_Expand(TREEVIEW_INFO *infoPtr, TREEVIEW_ITEM *wineItem,
     TREEVIEW_UpdateScrollBars(infoPtr);
 
     /* Scroll up so that as many children as possible are visible.
-     * This looses when expanding causes an HScroll bar to appear, but we
+     * This fails when expanding causes an HScroll bar to appear, but we
      * don't know that yet, so the last item is obscured. */
     if (wineItem->firstChild != NULL)
     {

@@ -272,7 +272,7 @@ BOOL OSS_MidiInit(void)
         goto wrapup;
     }
 
-    /* FIXME: the two restrictions below could be loosen in some cases */
+    /* FIXME: the two restrictions below could be loosened in some cases */
     if (numsynthdevs + nummididevs > MAX_MIDIOUTDRV) {
 	ERR("MAX_MIDIOUTDRV was not enough for the number of devices. "
 	    "Some MIDI devices will not be available.\n");
