@@ -1110,7 +1110,7 @@ BOOL WINAPI PlayMetaFileRecord( HDC hdc,  HANDLETABLE *ht, METARECORD *mr, UINT 
         break;
 
     case META_ESCAPE:
-        FIXME("META_ESCAPE unimplemented.\n");
+        Escape(hdc, mr->rdParm[0], mr->rdParm[1], (LPCSTR)&mr->rdParm[2], NULL);
         break;
 
     case META_EXTTEXTOUT:
