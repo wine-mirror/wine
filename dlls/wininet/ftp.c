@@ -20,6 +20,8 @@
 #endif
 #include <sys/stat.h>
 #include <unistd.h>
+#include <netinet/in_systm.h>
+#include <netinet/in.h>
 #include <netinet/ip.h>
 
 #include "winbase.h"
