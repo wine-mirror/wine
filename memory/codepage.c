@@ -311,7 +311,7 @@ INT WINAPI MultiByteToWideChar( UINT page, DWORD flags, LPCSTR src, INT srclen,
         return 0;
     }
 
-    if (srclen == -1) srclen = strlen(src) + 1;
+    if (srclen < 0) srclen = strlen(src) + 1;
 
     if (flags & MB_USEGLYPHCHARS) FIXME("MB_USEGLYPHCHARS not supported\n");
 
@@ -386,7 +386,7 @@ INT WINAPI WideCharToMultiByte( UINT page, DWORD flags, LPCWSTR src, INT srclen,
         return 0;
     }
 
-    if (srclen == -1) srclen = strlenW(src) + 1;
+    if (srclen < 0) srclen = strlenW(src) + 1;
 
     switch(page)
     {

@@ -1,6 +1,7 @@
 Makefile
 alloc.ok
 atom.ok
+codepage.ok
 directory.ok
 drive.ok
 environ.ok

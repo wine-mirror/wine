@@ -8,6 +8,7 @@ IMPORTS   = kernel32
 CTESTS = \
 	alloc.c \
 	atom.c \
+	codepage.c \
 	directory.c \
 	drive.c \
 	environ.c \
