@@ -298,6 +298,7 @@ BOOL WINAPI CryptAcquireContextA (HCRYPTPROV *phProv, LPCSTR pszContainer,
 			}
 			if (RegOpenKeyA(HKEY_LOCAL_MACHINE, keyname, &key)) {
 				FIXME("Did not find registry entry of crypto provider for %s.\n", debugstr_a(keyname));
+				CRYPT_Free(keyname);
 				RegCloseKey(key);
 				SetLastError(NTE_PROV_TYPE_NOT_DEF);
 				goto error;
@@ -337,8 +338,9 @@ BOOL WINAPI CryptAcquireContextA (HCRYPTPROV *phProv, LPCSTR pszContainer,
 	}
 
 	keyname = CRYPT_GetProvKeyName(provname);
-	if (RegOpenKeyA(HKEY_LOCAL_MACHINE, keyname, &key)) goto error;
+	r = RegOpenKeyA(HKEY_LOCAL_MACHINE, keyname, &key);
 	CRYPT_Free(keyname);
+	if (r) goto error;
 	len = sizeof(DWORD);
 	r = RegQueryValueExA(key, "Type", NULL, NULL, (BYTE*)&type, &len);
 	if (r != ERROR_SUCCESS || type != dwProvType)
@@ -473,7 +475,6 @@ error:
 	CRYPT_Free(provname);
 	CRYPT_Free(temp);
 	CRYPT_Free(imagepath);
-	CRYPT_Free(keyname);
 	return FALSE;
 }
 
