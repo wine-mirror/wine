@@ -2235,7 +2235,7 @@ BOOL WINAPI IsEqualGUID(
 }
 
 /***********************************************************************
- *           CoInitializeSecurity [OLE32.@]
+ *           CoInitializeSecurity [OLE32.164]
  */
 HRESULT WINAPI CoInitializeSecurity(PSECURITY_DESCRIPTOR pSecDesc, LONG cAuthSvc,
                                     SOLE_AUTHENTICATION_SERVICE* asAuthSvc,
@@ -2248,4 +2248,3 @@ HRESULT WINAPI CoInitializeSecurity(PSECURITY_DESCRIPTOR pSecDesc, LONG cAuthSvc
         dwCapabilities, pReserved3);
   return S_OK;
 }
-

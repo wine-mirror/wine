@@ -1002,7 +1002,9 @@ DWORD WINAPI SHLWAPI_162(LPSTR lpStr, DWORD size)
 }
 
 /*************************************************************************
- *      _IUnknown_QueryStatus	[SHLWAPI.163]
+ *      @	[SHLWAPI.163]
+ *
+ * _IUnknown_QueryStatus
  */
 DWORD WINAPI SHLWAPI_163 (
 	LPVOID v,
@@ -1017,7 +1019,9 @@ DWORD WINAPI SHLWAPI_163 (
 
 
 /*************************************************************************
- *      _IUnknown_Exec		[SHLWAPI.164]
+ *      @		[SHLWAPI.164]
+ *
+ * _IUnknown_Exec
  */
 DWORD WINAPI SHLWAPI_164 (
 	LPVOID u,
@@ -1047,7 +1051,9 @@ LONG WINAPI SHLWAPI_165(HWND hwnd, INT offset, UINT wFlags, UINT wMask)
 }
 
 /*************************************************************************
- *      _SHSetParentHwnd	[SHLWAPI.167]
+ *      @	[SHLWAPI.167]
+ *
+ * _SHSetParentHwnd
  */
 DWORD WINAPI SHLWAPI_167(HWND hWnd, LPVOID y)
 {
@@ -1056,9 +1062,11 @@ DWORD WINAPI SHLWAPI_167(HWND hWnd, LPVOID y)
 }
 
 /*************************************************************************
- *	_IUnknown_AtomicRelease	[SHLWAPI.169]
+ *	@	[SHLWAPI.169]
  *
- *  Do IUnknown::Release on passed object.
+ * _IUnknown_AtomicRelease
+ *
+ * Do IUnknown::Release on passed object.
  */
 DWORD WINAPI SHLWAPI_169 (IUnknown ** lpUnknown)
 {
@@ -1085,7 +1093,9 @@ LPCSTR WINAPI SHLWAPI_170(LPCSTR lpszSrc)
 }
 
 /*************************************************************************
- *      _SHIsSameObject		SHLWAPI.171]
+ *      @		[SHLWAPI.171]
+ *
+ * _SHIsSameObject
  */
 BOOL WINAPI SHLWAPI_171(LPVOID x, LPVOID y)
 {
@@ -1094,7 +1104,10 @@ BOOL WINAPI SHLWAPI_171(LPVOID x, LPVOID y)
 }
 
 /*************************************************************************
- *      _IUnknown_GetWindow	[SHLWAPI.172]
+ *      @	[SHLWAPI.172]
+ *
+ * _IUnknown_GetWindow
+ *
  * Get window handle of OLE object
  */
 DWORD WINAPI SHLWAPI_172 (
@@ -1172,7 +1185,9 @@ HRESULT WINAPI SHLWAPI_175 (LPVOID x, LPVOID y)
 	return E_FAIL;
 }
 /*************************************************************************
- *      _IUnknown_QueryService	[SHLWAPI.176]
+ *      @	[SHLWAPI.176]
+ *
+ * _IUnknown_QueryService
  *
  * Function appears to be interface to IServiceProvider::QueryService
  *
@@ -1229,7 +1244,9 @@ DWORD WINAPI SHLWAPI_183(WNDCLASSA *wndclass)
 }
 
 /*************************************************************************
- *      _IUnknown_OnFocusOCS	[SHLWAPI.189]
+ *      @	[SHLWAPI.189]
+ *
+ * _IUnknown_OnFocusOCS
  */
 DWORD WINAPI SHLWAPI_189(LPVOID x, LPVOID y)
 {
@@ -1719,7 +1736,9 @@ HWND WINAPI SHLWAPI_278 (
 }
 
 /*************************************************************************
- *      _SHPackDispParamsV	[SHLWAPI.281]
+ *      @	[SHLWAPI.281]
+ *
+ * _SHPackDispParamsV
  */
 HRESULT WINAPI SHLWAPI_281(LPVOID w, LPVOID x, LPVOID y, LPVOID z)
 {
@@ -1728,7 +1747,9 @@ HRESULT WINAPI SHLWAPI_281(LPVOID w, LPVOID x, LPVOID y, LPVOID z)
 }
 
 /*************************************************************************
- *      _IConnectionPoint_SimpleInvoke	[SHLWAPI.284]
+ *      @	[SHLWAPI.284]
+ *
+ * _IConnectionPoint_SimpleInvoke
  */
 DWORD WINAPI SHLWAPI_284 (
 	LPVOID x,
@@ -1740,7 +1761,9 @@ DWORD WINAPI SHLWAPI_284 (
 }
 
 /*************************************************************************
- *      _IUnknown_CPContainerOnChanged	[SHLWAPI.287]
+ *      @	[SHLWAPI.287]
+ *
+ * _IUnknown_CPContainerOnChanged
  */
 HRESULT WINAPI SHLWAPI_287(LPVOID x, LPVOID y)
 {
