@@ -43,9 +43,6 @@
 WINE_DEFAULT_DEBUG_CHANNEL(rundll32);
 
 
-extern void WINAPI RunDLL_CallEntry16( FARPROC proc, HWND hwnd, HINSTANCE inst,
-                                       LPCSTR cmdline, INT cmdshow );
-
 /*
  * Control_RunDLL has these parameters
  */
@@ -58,6 +55,11 @@ typedef void (WINAPI *EntryPointA)(HWND hWnd, HINSTANCE hInst, LPSTR lpszCmdLine
  */
 static TCHAR  *szTitle = "rundll32";
 static TCHAR  *szWindowClass = "class_rundll32";
+
+static HINSTANCE16 (WINAPI *pLoadLibrary16)(LPCSTR libname);
+static FARPROC16 (WINAPI *pGetProcAddress16)(HMODULE16 hModule, LPCSTR name);
+static void (WINAPI *pRunDLL_CallEntry16)( FARPROC proc, HWND hwnd, HINSTANCE inst,
+                                           LPCSTR cmdline, INT cmdshow );
 
 static ATOM MyRegisterClass(HINSTANCE hInstance)
 {
@@ -82,22 +84,24 @@ static ATOM MyRegisterClass(HINSTANCE hInstance)
 
 static HINSTANCE16 load_dll16( LPCWSTR dll )
 {
-    HINSTANCE16 ret;
+    HINSTANCE16 ret = 0;
     DWORD len = WideCharToMultiByte( CP_ACP, 0, dll, -1, NULL, 0, NULL, NULL );
     char *dllA = HeapAlloc( GetProcessHeap(), 0, len );
     WideCharToMultiByte( CP_ACP, 0, dll, -1, dllA, len, NULL, NULL );
-    ret = LoadLibrary16( dllA );
+    pLoadLibrary16 = (void *)GetProcAddress( GetModuleHandleA("kernel32.dll"), "LoadLibrary16" );
+    if (pLoadLibrary16) ret = pLoadLibrary16( dllA );
     HeapFree( GetProcessHeap(), 0, dllA );
     return ret;
 }
 
 static FARPROC16 get_entry_point16( HINSTANCE16 inst, LPCWSTR entry )
 {
-    FARPROC16 ret;
+    FARPROC16 ret = 0;
     DWORD len = WideCharToMultiByte( CP_ACP, 0, entry, -1, NULL, 0, NULL, NULL );
     char *entryA = HeapAlloc( GetProcessHeap(), 0, len );
     WideCharToMultiByte( CP_ACP, 0, entry, -1, entryA, len, NULL, NULL );
-    ret = GetProcAddress16( inst, entryA );
+    pGetProcAddress16 = (void *)GetProcAddress( GetModuleHandleA("kernel32.dll"), "GetProcAddress16" );
+    if (pGetProcAddress16) ret = pGetProcAddress16( inst, entryA );
     HeapFree( GetProcessHeap(), 0, entryA );
     return ret;
 }
@@ -295,7 +299,13 @@ int main(int argc, char* argv[])
         WINE_TRACE( "Calling %s (%p,%p,%s,%d)\n", wine_dbgstr_w(szEntryPoint),
                     hWnd, instance, wine_dbgstr_a(cmdline), info.wShowWindow );
 
-        if (win16) RunDLL_CallEntry16( entry_point, hWnd, instance, cmdline, info.wShowWindow );
+        if (win16)
+        {
+            HMODULE shell = LoadLibraryA( "shell32.dll" );
+            if (shell) pRunDLL_CallEntry16 = (void *)GetProcAddress( shell, (LPCSTR)122 );
+            if (pRunDLL_CallEntry16)
+                pRunDLL_CallEntry16( entry_point, hWnd, instance, cmdline, info.wShowWindow );
+        }
         else
         {
             EntryPointA pEntryPointA = entry_point;

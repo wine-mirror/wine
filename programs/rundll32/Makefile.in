@@ -4,7 +4,7 @@ SRCDIR    = @srcdir@
 VPATH     = @srcdir@
 MODULE    = rundll32.exe
 APPMODE   = cui
-IMPORTS   = shell32 user32 kernel32
+IMPORTS   = user32 kernel32
 
 C_SRCS = \
 	rundll32.c
