@@ -669,7 +669,7 @@ static void test_MoveFileA(void)
     ok(ret != 0, "GetTempFileNameA error %ld", GetLastError());
 
     ret = MoveFileA(source, dest);
-    ok(!ret && GetLastError() == ERROR_FILE_EXISTS,
+    ok(!ret && GetLastError() == ERROR_ALREADY_EXISTS,
        "MoveFileA: unexpected error %ld\n", GetLastError());
 
     ret = DeleteFileA(dest);
@@ -745,7 +745,7 @@ static void test_MoveFileW(void)
     ok(ret != 0, "GetTempFileNameW error %ld", GetLastError());
 
     ret = MoveFileW(source, dest);
-    ok(!ret && GetLastError() == ERROR_FILE_EXISTS,
+    ok(!ret && GetLastError() == ERROR_ALREADY_EXISTS,
        "CopyFileW: unexpected error %ld\n", GetLastError());
 
     ret = DeleteFileW(source);

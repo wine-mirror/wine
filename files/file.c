@@ -1817,7 +1817,7 @@ BOOL WINAPI MoveFileExW( LPCWSTR fn1, LPCWSTR fn2, DWORD flag )
                 /* target exists, check if we may overwrite */
                 if (!(flag & MOVEFILE_REPLACE_EXISTING))
                 {
-                    SetLastError( ERROR_FILE_EXISTS );
+                    SetLastError( ERROR_ALREADY_EXISTS );
                     return FALSE;
                 }
             }
