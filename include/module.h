@@ -8,7 +8,6 @@
 #define __WINE_MODULE_H
 
 #include "windef.h"
-#include "dosexe.h"
 #include "pe_image.h"
 
   /* In-memory module structure. See 'Windows Internals' p. 219 */
@@ -50,8 +49,6 @@ typedef struct _NE_MODULE
     HMODULE  module32;      /* 40 PE module handle for Win32 modules */
     HMODULE16  self;          /* 44 Handle for this module */
     WORD    self_loading_sel; /* 46 Selector used for self-loading apps. */
-    LPDOSTASK lpDosTask;
-    LPVOID  dos_image;        /* pointer to DOS memory (for DOS apps) */
     LPVOID  hRsrcMap;         /* HRSRC 16->32 map (for 32-bit modules) */
 } NE_MODULE;
 

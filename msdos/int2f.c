@@ -10,6 +10,7 @@
 #include "config.h"
 
 #include "wine/winbase16.h"
+#include "dosexe.h"
 #include "drive.h"
 #include "miscemu.h"
 #include "module.h"
@@ -18,7 +19,7 @@
 #include "debugtools.h"
 #include "cdrom.h"
 
-DEFAULT_DEBUG_CHANNEL(int)
+DEFAULT_DEBUG_CHANNEL(int);
 
 /* base WPROCS.DLL ordinal number for VxDs */
 #define VXD_BASE 400
