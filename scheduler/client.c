@@ -312,7 +312,7 @@ static int receive_fd( handle_t *handle )
  *           wine_server_recv_fd
  *
  * Receive a file descriptor passed from the server.
- * The file descriptor must be closed after use.
+ * The file descriptor must not be closed.
  * Return -2 if a race condition stole our file descriptor.
  */
 int wine_server_recv_fd( handle_t handle )
@@ -346,8 +346,7 @@ int wine_server_recv_fd( handle_t handle )
     }
     SERVER_END_REQ;
 
-    if (handle != fd_handle) return -2;  /* not the one we expected */
-    if (fd != -1) fd = dup(fd);
+    if (handle != fd_handle) fd = -2;  /* not the one we expected */
     return fd;
 }
 
