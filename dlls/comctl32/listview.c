@@ -30,7 +30,6 @@
  *
  * Advanced functionality:
  *   LISTVIEW_GetNumberOfWorkAreas : not implemented
- *   LISTVIEW_GetNextItem : empty stub
  *   LISTVIEW_GetHotCursor : not implemented
  *   LISTVIEW_GetHotItem : not implemented
  *   LISTVIEW_GetHoverTime : not implemented
@@ -3935,17 +3934,109 @@ static LRESULT LISTVIEW_GetItemTextA(HWND hwnd, INT nItem, LPLVITEMA lpLVItem)
  * 
  * PARAMETER(S):
  * [I] HWND : window handle
- * [I] INT : item index
+ * [I] INT : starting search item index
  * [I] UINT : relationship flag
  * 
  * RETURN:
  *   SUCCESS : item index
  *   FAILURE : -1
  */
-static LRESULT LISTVIEW_GetNextItem(HWND hwnd, INT nItem, UINT uFlags)
+static LRESULT LISTVIEW_GetNextItem(HWND hwnd, INT iStart, UINT uFlags)
 {
-  FIXME (listview, "empty stub!\n");
+  LISTVIEW_INFO *infoPtr = (LISTVIEW_INFO*)GetWindowLongA(hwnd, 0);
+  LONG lStyle = GetWindowLongA(hwnd, GWL_STYLE);
+  LISTVIEW_ITEM *lpItem;
+  UINT style_mask = LVS_TYPEMASK & lStyle;
+  UINT uMask = 0;
+  INT nItems = GETITEMCOUNT(infoPtr);
+  INT iIndex = iStart;
+  INT eIndex = nItems - 1;
+  INT sIndex = 0;
+  INT delta = 1;
+  
+  INT nCountPerColumn = max((infoPtr->rcList.bottom - infoPtr->rcList.top) /
+			    infoPtr->nItemHeight, 1);
+  INT nCountPerRow = max((infoPtr->rcList.right - infoPtr->rcList.left) /
+			 infoPtr->nItemWidth, 1);
 
+  if(uFlags & LVNI_ABOVE) /* moving upwards from iStart */
+  {
+    if(style_mask == LVS_LIST || style_mask == LVS_REPORT)
+      delta = -1;
+    else
+    {
+      if(lStyle & LVS_ALIGNLEFT)
+      {
+        sIndex = iStart - (iStart % nCountPerColumn);
+	delta = -1;
+      }
+      else
+        delta = -nCountPerRow;
+    }
+  }
+  else if(uFlags & LVNI_BELOW) /* moving downwards from iStart */
+  { 
+    if(style_mask == LVS_SMALLICON || style_mask == LVS_ICON)
+    {
+      if (lStyle & LVS_ALIGNLEFT)
+        eIndex = iStart + (nCountPerColumn - (iStart % nCountPerColumn) - 1);
+      else
+	delta = nCountPerRow;
+    }    
+  } 
+  else if(uFlags & LVNI_TOLEFT) /* moving to the left of iStart */
+  {
+    if(style_mask == LVS_LIST)
+      delta = -infoPtr->nCountPerColumn;
+    else if(style_mask == LVS_SMALLICON || style_mask == LVS_ICON)
+    {
+      if(style_mask & LVS_ALIGNLEFT)
+        delta = -nCountPerColumn;
+      else
+      {
+        sIndex = iStart - (iStart % nCountPerRow);
+        delta = -1;
+      }
+    }    
+    else if(style_mask == LVS_REPORT)
+      return -1; 
+  }  
+  else if(uFlags & LVNI_TORIGHT) /* moving to the right of iStart */
+  {
+    if(style_mask == LVS_LIST)
+      delta = infoPtr->nCountPerColumn;
+    else if(style_mask == LVS_ICON || style_mask == LVS_SMALLICON)
+    {
+      if(lStyle & LVS_ALIGNLEFT)
+	delta = nCountPerColumn;
+      else
+	eIndex = iStart + (nCountPerRow - (iStart % nCountPerRow) - 1);
+    }
+    else if(style_mask == LVS_REPORT)
+      return -1;
+  }
+  
+  /* perform come bounds checking before entering the main loop */
+  if(sIndex < 0) sIndex = 0;
+  if(eIndex > (nItems - 1)) eIndex = (nItems - 1);
+
+  /* build uMask, the mask we are searching for */
+  if(uFlags & LVNI_CUT) uMask|=LVIS_CUT;
+  if(uFlags & LVNI_DROPHILITED) uMask|=LVIS_DROPHILITED;
+  if(uFlags & LVNI_FOCUSED) uMask|=LVIS_FOCUSED;
+  if(uFlags & LVNI_SELECTED) uMask|=LVIS_SELECTED;  
+
+  while(TRUE) /* searching loop */
+  {
+    iIndex+=delta;    
+
+    if((iIndex < sIndex) || (iIndex > eIndex))
+      break;
+
+    /* see if flags match */
+    if(!uMask || (LISTVIEW_GetItemState(hwnd, iIndex, uMask) == uMask))
+      return iIndex;
+  }
   return -1;
 }
 
