@@ -216,6 +216,18 @@ interface IMallocSpy : IUnknown
 }
 
 [
+  local,
+  object,
+  uuid(00000021-0000-0000-C000-000000000046)
+]
+interface IInternalUnknown : IUnknown
+{
+  HRESULT QueryInternalInterface(
+    [in] REFIID riid,
+    [out] void **ppv);
+}
+
+[
   object,
   uuid(00000100-0000-0000-C000-000000000046),
   pointer_default(unique)
