@@ -1,4 +1,5 @@
 SUBDIRS = \
+	advapi32 \
 	comctl32 \
 	imagehlp \
 	msacm \

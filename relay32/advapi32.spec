@@ -16,13 +16,13 @@ type	win32
 0012 stdcall AllocateLocallyUniqueId(ptr) AllocateLocallyUniqueId
 0013 stub AreAllAccessesGranted
 0014 stub AreAnyAccessesGranted
-0015 stub BackupEventLogA
-0016 stub BackupEventLogW
+0015 stdcall BackupEventLogA (long str) BackupEventLog32A
+0016 stdcall BackupEventLogW (long wstr) BackupEventLog32W
 0017 stub ChangeServiceConfigA
 0018 stub ChangeServiceConfigW
-0019 stub ClearEventLogA
-0020 stub ClearEventLogW
-0021 stub CloseEventLog
+0019 stdcall ClearEventLogA (long str) ClearEventLog32A
+0020 stdcall ClearEventLogW (long wstr) ClearEventLog32W
+0021 stdcall CloseEventLog (long) CloseEventLog32
 0022 stdcall CloseServiceHandle(long) CloseServiceHandle
 0023 stdcall ControlService(long long ptr) ControlService
 0024 stdcall CopySid(long ptr ptr) CopySid
@@ -33,7 +33,7 @@ type	win32
 0029 stdcall CreateServiceW (long ptr ptr long long long long ptr ptr ptr ptr ptr ptr) CreateService32A
 0030 stub DeleteAce
 0031 stdcall DeleteService(long) DeleteService
-0032 stdcall DeregisterEventSource(long) DeregisterEventSource
+0032 stdcall DeregisterEventSource(long) DeregisterEventSource32
 0033 stub DestroyPrivateObjectSecurity
 0034 stub DuplicateToken
 0035 stub EnumDependentServicesA
@@ -50,8 +50,8 @@ type	win32
 0046 stdcall GetFileSecurityW(wstr long ptr long ptr) GetFileSecurity32W
 0047 stub GetKernelObjectSecurity
 0048 stdcall GetLengthSid(ptr) GetLengthSid
-0049 stub GetNumberOfEventLogRecords
-0050 stub GetOldestEventLogRecord
+0049 stdcall GetNumberOfEventLogRecords (long ptr) GetNumberOfEventLogRecords32
+0050 stdcall GetOldestEventLogRecord (long ptr) GetOldestEventLogRecord32
 0051 stub GetPrivateObjectSecurity
 0052 stub GetSecurityDescriptorControl
 0053 stub GetSecurityDescriptorDacl
@@ -99,17 +99,17 @@ type	win32
 0095 stdcall MakeSelfRelativeSD(ptr ptr ptr) MakeSelfRelativeSD
 0096 stub MapGenericMask
 0097 stdcall NotifyBootConfigStatus(long) NotifyBootConfigStatus
-0098 stub NotifyChangeEventLog
+0098 stdcall NotifyChangeEventLog (long long) NotifyChangeEventLog32
 0099 stub ObjectCloseAuditAlarmA
 0100 stub ObjectCloseAuditAlarmW
 0101 stub ObjectOpenAuditAlarmA
 0102 stub ObjectOpenAuditAlarmW
 0103 stub ObjectPrivilegeAuditAlarmA
 0104 stub ObjectPrivilegeAuditAlarmW
-0105 stub OpenBackupEventLogA
-0106 stub OpenBackupEventLogW
-0107 stdcall OpenEventLogA(str str) OpenEventLog32A
-0108 stub OpenEventLogW
+0105 stdcall OpenBackupEventLogA (str str) OpenBackupEventLog32A
+0106 stdcall OpenBackupEventLogW (wstr wstr) OpenBackupEventLog32W
+0107 stdcall OpenEventLogA (str str) OpenEventLog32A
+0108 stdcall OpenEventLogW (wstr wstr) OpenEventLog32W
 0109 stdcall OpenProcessToken(long long ptr) OpenProcessToken
 0110 stdcall OpenSCManagerA(ptr ptr long) OpenSCManager32A
 0111 stdcall OpenSCManagerW(ptr ptr long) OpenSCManager32W
@@ -125,8 +125,8 @@ type	win32
 0121 stub QueryServiceLockStatusW
 0122 stub QueryServiceObjectSecurity
 0123 stdcall QueryServiceStatus(long ptr) QueryServiceStatus
-0124 stub ReadEventLogA
-0125 stub ReadEventLogW
+0124 stdcall ReadEventLogA (long long long ptr long ptr ptr) ReadEventLog32A
+0125 stdcall ReadEventLogW (long long long ptr long ptr ptr) ReadEventLog32W
 0126 stdcall RegCloseKey(long) RegCloseKey
 0127 stdcall RegConnectRegistryA(str long ptr) RegConnectRegistry32A
 0128 stdcall RegConnectRegistryW(wstr long ptr) RegConnectRegistry32W
@@ -179,8 +179,8 @@ type	win32
 0175 stdcall RegisterEventSourceW(ptr ptr) RegisterEventSource32W
 0176 stdcall RegisterServiceCtrlHandlerA (ptr ptr) RegisterServiceCtrlHandlerA
 0177 stdcall RegisterServiceCtrlHandlerW (ptr ptr) RegisterServiceCtrlHandlerW
-0178 stub ReportEventA
-0179 stub ReportEventW
+0178 stdcall ReportEventA (long long long long ptr long long str ptr) ReportEvent32A
+0179 stdcall ReportEventW (long long long long ptr long long wstr ptr) ReportEvent32W
 0180 stub RevertToSelf
 0181 stub SetAclInformation
 0182 stdcall SetFileSecurityA(str long ptr ) SetFileSecurity32A

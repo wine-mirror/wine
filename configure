@@ -3905,6 +3905,7 @@ console/Makefile
 controls/Makefile
 debugger/Makefile
 dlls/Makefile
+dlls/advapi32/Makefile
 dlls/comctl32/Makefile
 dlls/imagehlp/Makefile
 dlls/msacm/Makefile
@@ -4058,6 +4059,7 @@ console/Makefile
 controls/Makefile
 debugger/Makefile
 dlls/Makefile
+dlls/advapi32/Makefile
 dlls/comctl32/Makefile
 dlls/imagehlp/Makefile
 dlls/msacm/Makefile

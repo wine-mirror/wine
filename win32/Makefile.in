@@ -6,7 +6,6 @@ VPATH     = @srcdir@
 MODULE    = win32
 
 C_SRCS = \
-	advapi.c \
 	code_page.c \
 	console.c \
 	device.c \
@@ -18,7 +17,6 @@ C_SRCS = \
 	newfns.c \
 	ordinals.c \
 	process.c \
-	security.c \
 	struct32.c \
 	thread.c \
 	time.c

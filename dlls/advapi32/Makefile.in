@@ -1,0 +1,21 @@
+DEFS      = @DLLFLAGS@ -D__WINE__
+TOPSRCDIR = @top_srcdir@
+TOPOBJDIR = ../..
+SRCDIR    = @srcdir@
+VPATH     = @srcdir@
+MODULE    = advapi32
+
+C_SRCS = \
+	advapi.c \
+	eventlog.c \
+	security.c \
+	service.c
+
+all: check_wrc $(MODULE).o
+
+@MAKE_RULES@
+
+$(RC_SRCS:.rc=.s): $(WRC)
+
+### Dependencies:
+
