@@ -82,6 +82,8 @@ typedef struct
 } WITHREADERROR, *LPWITHREADERROR;
 
 BOOL WINAPI INTERNET_FindNextFileA(HINTERNET hFind, LPVOID lpvFindData);
+HINTERNET WINAPI INTERNET_InternetOpenUrlA(HINTERNET hInternet, LPCSTR lpszUrl,
+					   LPCSTR lpszHeaders, DWORD dwHeadersLength, DWORD dwFlags, DWORD dwContext);
 VOID INTERNET_ExecuteWork();
 
 DWORD g_dwTlsErrIndex = TLS_OUT_OF_INDEXES;
@@ -1996,6 +1998,87 @@ BOOL WINAPI InternetCheckConnectionW(LPCWSTR lpszUrl, DWORD dwFlags, DWORD dwRes
 
 
 /**********************************************************
+ *	INTERNET_InternetOpenUrlA (internal)
+ *
+ * Opens an URL
+ *
+ * RETURNS
+ *   handle of connection or NULL on failure
+ */
+HINTERNET WINAPI INTERNET_InternetOpenUrlA(HINTERNET hInternet, LPCSTR lpszUrl,
+    LPCSTR lpszHeaders, DWORD dwHeadersLength, DWORD dwFlags, DWORD dwContext)
+{
+    URL_COMPONENTSA urlComponents;
+    char protocol[32], hostName[MAXHOSTNAME], userName[1024];
+    char password[1024], path[2048], extra[1024];
+    HINTERNET client = NULL, client1 = NULL;
+    
+    TRACE("(%p, %s, %s, %08lx, %08lx, %08lx\n", hInternet, debugstr_a(lpszUrl), debugstr_a(lpszHeaders),
+	  dwHeadersLength, dwFlags, dwContext);
+    
+    urlComponents.dwStructSize = sizeof(URL_COMPONENTSA);
+    urlComponents.lpszScheme = protocol;
+    urlComponents.dwSchemeLength = 32;
+    urlComponents.lpszHostName = hostName;
+    urlComponents.dwHostNameLength = MAXHOSTNAME;
+    urlComponents.lpszUserName = userName;
+    urlComponents.dwUserNameLength = 1024;
+    urlComponents.lpszPassword = password;
+    urlComponents.dwPasswordLength = 1024;
+    urlComponents.lpszUrlPath = path;
+    urlComponents.dwUrlPathLength = 2048;
+    urlComponents.lpszExtraInfo = extra;
+    urlComponents.dwExtraInfoLength = 1024;
+    if(!InternetCrackUrlA(lpszUrl, strlen(lpszUrl), 0, &urlComponents))
+	return NULL;
+    switch(urlComponents.nScheme) {
+    case INTERNET_SCHEME_FTP:
+	if(urlComponents.nPort == 0)
+	    urlComponents.nPort = INTERNET_DEFAULT_FTP_PORT;
+	client = InternetConnectA(hInternet, hostName, urlComponents.nPort,
+				  userName, password, INTERNET_SERVICE_FTP, dwFlags, dwContext);
+	client1 = FtpOpenFileA(client, path, GENERIC_READ, dwFlags, dwContext);
+	break;
+	
+    case INTERNET_SCHEME_HTTP:
+    case INTERNET_SCHEME_HTTPS: {
+	LPCSTR accept[2] = { "*/*", NULL };
+	if(urlComponents.nPort == 0) {
+	    if(urlComponents.nScheme == INTERNET_SCHEME_HTTP)
+		urlComponents.nPort = INTERNET_DEFAULT_HTTP_PORT;
+	    else
+		urlComponents.nPort = INTERNET_DEFAULT_HTTPS_PORT;
+	}
+	client = InternetConnectA(hInternet, hostName, urlComponents.nPort, userName,
+				  password, INTERNET_SERVICE_HTTP, dwFlags, dwContext);
+	if(client == NULL)
+	    break;
+	client1 = HttpOpenRequestA(client, NULL, path, NULL, NULL, accept, dwFlags, dwContext);
+	if(client1 == NULL) {
+	    InternetCloseHandle(client);
+	    break;
+	}
+	HttpAddRequestHeadersA(client1, lpszHeaders, dwHeadersLength, HTTP_ADDREQ_FLAG_ADD);
+	if (!HTTP_HttpSendRequestA(client1, NULL, 0, NULL, 0)) {
+	    InternetCloseHandle(client1);
+	    InternetCloseHandle(client);
+	    client1 = NULL;
+	    break;
+	}
+    }
+    case INTERNET_SCHEME_GOPHER:
+	/* gopher doesn't seem to be implemented in wine, but it's supposed
+	 * to be supported by InternetOpenUrlA. */
+    default:
+	break;
+    }
+
+    TRACE(" %p <--\n", client1);
+    
+    return client1;
+}
+
+/**********************************************************
  *	InternetOpenUrlA (WININET.@)
  *
  * Opens an URL
@@ -2006,71 +2089,51 @@ BOOL WINAPI InternetCheckConnectionW(LPCWSTR lpszUrl, DWORD dwFlags, DWORD dwRes
 HINTERNET WINAPI InternetOpenUrlA(HINTERNET hInternet, LPCSTR lpszUrl,
     LPCSTR lpszHeaders, DWORD dwHeadersLength, DWORD dwFlags, DWORD dwContext)
 {
-  URL_COMPONENTSA urlComponents;
-  char protocol[32], hostName[MAXHOSTNAME], userName[1024];
-  char password[1024], path[2048], extra[1024];
-  HINTERNET client = NULL, client1 = NULL;
+    HINTERNET ret = NULL;
+    LPWININETAPPINFOA hIC = NULL;
 
-  TRACE("(%p, %s, %s, %08lx, %08lx, %08lx\n", hInternet, debugstr_a(lpszUrl), debugstr_a(lpszHeaders),
-       dwHeadersLength, dwFlags, dwContext);
-
-  urlComponents.dwStructSize = sizeof(URL_COMPONENTSA);
-  urlComponents.lpszScheme = protocol;
-  urlComponents.dwSchemeLength = 32;
-  urlComponents.lpszHostName = hostName;
-  urlComponents.dwHostNameLength = MAXHOSTNAME;
-  urlComponents.lpszUserName = userName;
-  urlComponents.dwUserNameLength = 1024;
-  urlComponents.lpszPassword = password;
-  urlComponents.dwPasswordLength = 1024;
-  urlComponents.lpszUrlPath = path;
-  urlComponents.dwUrlPathLength = 2048;
-  urlComponents.lpszExtraInfo = extra;
-  urlComponents.dwExtraInfoLength = 1024;
-  if(!InternetCrackUrlA(lpszUrl, strlen(lpszUrl), 0, &urlComponents))
-    return NULL;
-  switch(urlComponents.nScheme) {
-  case INTERNET_SCHEME_FTP:
-    if(urlComponents.nPort == 0)
-      urlComponents.nPort = INTERNET_DEFAULT_FTP_PORT;
-    client = InternetConnectA(hInternet, hostName, urlComponents.nPort,
-        userName, password, INTERNET_SERVICE_FTP, dwFlags, dwContext);
-    return FtpOpenFileA(client, path, GENERIC_READ, dwFlags, dwContext);
-  case INTERNET_SCHEME_HTTP:
-  case INTERNET_SCHEME_HTTPS:
-  {
-    LPCSTR accept[2] = { "*/*", NULL };
-    if(urlComponents.nPort == 0) {
-      if(urlComponents.nScheme == INTERNET_SCHEME_HTTP)
-        urlComponents.nPort = INTERNET_DEFAULT_HTTP_PORT;
-      else
-	urlComponents.nPort = INTERNET_DEFAULT_HTTPS_PORT;
+    TRACE("(%p, %s, %s, %08lx, %08lx, %08lx\n", hInternet, debugstr_a(lpszUrl), debugstr_a(lpszHeaders),
+ 	  dwHeadersLength, dwFlags, dwContext);
+ 
+    hIC = (LPWININETAPPINFOA) WININET_GetObject( hInternet );
+    if (NULL == hIC ||  hIC->hdr.htype != WH_HINIT) {
+	INTERNET_SetLastError(ERROR_INTERNET_INCORRECT_HANDLE_TYPE);
+ 	goto lend;
     }
-    client = InternetConnectA(hInternet, hostName, urlComponents.nPort, userName,
-        password, INTERNET_SERVICE_HTTP, dwFlags, dwContext);
-    if(client == NULL)
-      return NULL;
-    client1 = HttpOpenRequestA(client, NULL, path, NULL, NULL, accept, dwFlags, dwContext);
-    if(client1 == NULL) {
-      InternetCloseHandle(client);
-      return NULL;
+    
+    if (hIC->hdr.dwFlags & INTERNET_FLAG_ASYNC) {
+	WORKREQUEST workRequest;
+	struct WORKREQ_INTERNETOPENURLA *req;
+	
+	workRequest.asyncall = INTERNETOPENURLA;
+	workRequest.handle = hInternet;
+	req = &workRequest.u.InternetOpenUrlA;
+	if (lpszUrl)
+	    req->lpszUrl = WININET_strdup(lpszUrl);
+	else
+	    req->lpszUrl = 0;
+	if (lpszHeaders)
+	    req->lpszHeaders = WININET_strdup(lpszHeaders);
+	else
+	    req->lpszHeaders = 0;
+	req->dwHeadersLength = dwHeadersLength;
+	req->dwFlags = dwFlags;
+	req->dwContext = dwContext;
+	
+	INTERNET_AsyncCall(&workRequest);
+	/*
+	 * This is from windows.
+	 */
+	SetLastError(ERROR_IO_PENDING);
+    } else {
+	ret = INTERNET_InternetOpenUrlA(hInternet, lpszUrl, lpszHeaders, dwHeadersLength, dwFlags, dwContext);
     }
-    HttpAddRequestHeadersA(client1, lpszHeaders, dwHeadersLength, HTTP_ADDREQ_FLAG_ADD);
-    if((!HttpSendRequestA(client1, NULL, 0, NULL, 0)) && (GetLastError() != ERROR_IO_PENDING)) {
-      InternetCloseHandle(client1);
-      InternetCloseHandle(client);
-      return NULL;
-    }
-    return client1;
-  }
-  case INTERNET_SCHEME_GOPHER:
-    /* gopher doesn't seem to be implemented in wine, but it's supposed
-     * to be supported by InternetOpenUrlA. */
-  default:
-    return NULL;
-  }
+    
+  lend:
+    TRACE(" %p <--\n", ret);
+    
+    return ret;
 }
-
 
 /**********************************************************
  *	InternetOpenUrlW (WININET.@)
@@ -2470,6 +2533,17 @@ VOID INTERNET_ExecuteWork()
                 req->dwStatusInfoLength);
         }
         break;
+
+    case INTERNETOPENURLA:
+	{
+	struct WORKREQ_INTERNETOPENURLA *req = &workRequest.u.InternetOpenUrlA;
+	
+	INTERNET_InternetOpenUrlA(workRequest.handle, req->lpszUrl,
+				  req->lpszHeaders, req->dwHeadersLength, req->dwFlags, req->dwContext);
+	HeapFree(GetProcessHeap(), 0, req->lpszUrl);
+	HeapFree(GetProcessHeap(), 0, req->lpszHeaders);
+	}
+	break;
     }
 }
 

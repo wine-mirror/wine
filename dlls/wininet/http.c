@@ -89,13 +89,6 @@ BOOL HTTP_InsertCustomHeader(LPWININETHTTPREQA lpwhr, LPHTTPHEADERA lpHdr);
 INT HTTP_GetCustomHeaderIndex(LPWININETHTTPREQA lpwhr, LPCSTR lpszField);
 BOOL HTTP_DeleteCustomHeader(LPWININETHTTPREQA lpwhr, INT index);
 
-inline static LPSTR HTTP_strdup( LPCSTR str )
-{
-    LPSTR ret = HeapAlloc( GetProcessHeap(), 0, strlen(str) + 1 );
-    if (ret) strcpy( ret, str );
-    return ret;
-}
-
 /***********************************************************************
  *           HttpAddRequestHeadersA (WININET.@)
  *
@@ -131,7 +124,7 @@ BOOL WINAPI HttpAddRequestHeadersA(HINTERNET hHttpRequest,
       return TRUE;
 
     TRACE("copying header: %s\n", lpszHeader);
-    buffer = HTTP_strdup(lpszHeader);
+    buffer = WININET_strdup(lpszHeader);
     lpszStart = buffer;
 
     do
@@ -252,14 +245,14 @@ HINTERNET WINAPI HttpOpenRequestA(HINTERNET hHttpSession,
 	workRequest.asyncall = HTTPOPENREQUESTA;
 	workRequest.handle = hHttpSession;
         req = &workRequest.u.HttpOpenRequestA;
-	req->lpszVerb = HTTP_strdup(lpszVerb);
-	req->lpszObjectName = HTTP_strdup(lpszObjectName);
+	req->lpszVerb = WININET_strdup(lpszVerb);
+	req->lpszObjectName = WININET_strdup(lpszObjectName);
         if (lpszVersion)
-            req->lpszVersion = HTTP_strdup(lpszVersion);
+            req->lpszVersion = WININET_strdup(lpszVersion);
         else
             req->lpszVersion = 0;
         if (lpszReferrer)
-            req->lpszReferrer = HTTP_strdup(lpszReferrer);
+            req->lpszReferrer = WININET_strdup(lpszReferrer);
         else
             req->lpszReferrer = 0;
 	req->lpszAcceptTypes = lpszAcceptTypes;
@@ -535,7 +528,7 @@ static BOOL HTTP_DealWithProxy( LPWININETAPPINFOA hIC,
         HeapFree(GetProcessHeap(), 0, lpwhr->lpszPath);
     lpwhr->lpszPath = url;
     /* FIXME: Do I have to free lpwhs->lpszServerName here ? */
-    lpwhs->lpszServerName = HTTP_strdup(UrlComponents.lpszHostName);
+    lpwhs->lpszServerName = WININET_strdup(UrlComponents.lpszHostName);
     lpwhs->nServerPort = UrlComponents.nPort;
 
     return TRUE;
@@ -622,9 +615,9 @@ HINTERNET WINAPI HTTP_HttpOpenRequestA(HINTERNET hHttpSession,
     }
 
     if (NULL == lpszVerb)
-        lpwhr->lpszVerb = HTTP_strdup("GET");
+        lpwhr->lpszVerb = WININET_strdup("GET");
     else if (strlen(lpszVerb))
-        lpwhr->lpszVerb = HTTP_strdup(lpszVerb);
+        lpwhr->lpszVerb = WININET_strdup(lpszVerb);
 
     if (NULL != lpszReferrer && strlen(lpszReferrer))
     {
@@ -638,9 +631,9 @@ HINTERNET WINAPI HTTP_HttpOpenRequestA(HINTERNET hHttpSession,
 
         InternetCrackUrlA(lpszReferrer, 0, 0, &UrlComponents);
         if (strlen(UrlComponents.lpszHostName))
-            lpwhr->lpszHostName = HTTP_strdup(UrlComponents.lpszHostName);
+            lpwhr->lpszHostName = WININET_strdup(UrlComponents.lpszHostName);
     } else {
-        lpwhr->lpszHostName = HTTP_strdup(lpwhs->lpszServerName);
+        lpwhr->lpszHostName = WININET_strdup(lpwhs->lpszServerName);
     }
     if (NULL != hIC->lpszProxy && hIC->lpszProxy[0] != 0)
         HTTP_DealWithProxy( hIC, lpwhs, lpwhr );
@@ -996,7 +989,7 @@ BOOL WINAPI HttpSendRequestA(HINTERNET hHttpRequest, LPCSTR lpszHeaders,
         workRequest.handle = hHttpRequest;
         req = &workRequest.u.HttpSendRequestA;
         if (lpszHeaders)
-            req->lpszHeader = HTTP_strdup(lpszHeaders);
+            req->lpszHeader = WININET_strdup(lpszHeaders);
         else
             req->lpszHeader = 0;
         req->dwHeaderLength = dwHeaderLength;
@@ -1109,15 +1102,15 @@ static BOOL HTTP_HandleRedirect(LPWININETHTTPREQA lpwhr, LPCSTR lpszUrl, LPCSTR 
         
         if (NULL != lpwhs->lpszServerName)
             HeapFree(GetProcessHeap(), 0, lpwhs->lpszServerName);
-        lpwhs->lpszServerName = HTTP_strdup(hostName);
+        lpwhs->lpszServerName = WININET_strdup(hostName);
         if (NULL != lpwhs->lpszUserName)
             HeapFree(GetProcessHeap(), 0, lpwhs->lpszUserName);
-        lpwhs->lpszUserName = HTTP_strdup(userName);
+        lpwhs->lpszUserName = WININET_strdup(userName);
         lpwhs->nServerPort = urlComponents.nPort;
 
         if (NULL != lpwhr->lpszHostName)
             HeapFree(GetProcessHeap(), 0, lpwhr->lpszHostName);
-        lpwhr->lpszHostName=HTTP_strdup(hostName);
+        lpwhr->lpszHostName=WININET_strdup(hostName);
 
         SendAsyncCallback(hIC, lpwhs, lpwhr->hdr.dwContext,
                       INTERNET_STATUS_RESOLVING_NAME,
@@ -1238,7 +1231,7 @@ BOOL WINAPI HTTP_HttpSendRequestA(HINTERNET hHttpRequest, LPCSTR lpszHeaders,
 
         /* If we don't have a path we set it to root */
         if (NULL == lpwhr->lpszPath)
-            lpwhr->lpszPath = HTTP_strdup("/");
+            lpwhr->lpszPath = WININET_strdup("/");
 
         if(strncmp(lpwhr->lpszPath, "http://", sizeof("http://") -1) != 0
            && lpwhr->lpszPath[0] != '/') /* not an absolute path ?? --> fix it !! */
@@ -1270,7 +1263,7 @@ BOOL WINAPI HTTP_HttpSendRequestA(HINTERNET hHttpRequest, LPCSTR lpszHeaders,
 	     */
 	    if ((len > 2) && (memcmp(lpszHeaders + (len - 2), "\r\n", 2) == 0))
 	    {
-		lpszHeaders_r_n = HTTP_strdup(lpszHeaders);
+		lpszHeaders_r_n = WININET_strdup(lpszHeaders);
 	    }
 	    else
 	    {
@@ -1617,9 +1610,9 @@ HINTERNET HTTP_Connect(HINTERNET hInternet, LPCSTR lpszServerName,
             FIXME("Proxy bypass is ignored.\n");
     }
     if (NULL != lpszServerName)
-        lpwhs->lpszServerName = HTTP_strdup(lpszServerName);
+        lpwhs->lpszServerName = WININET_strdup(lpszServerName);
     if (NULL != lpszUserName)
-        lpwhs->lpszUserName = HTTP_strdup(lpszUserName);
+        lpwhs->lpszUserName = WININET_strdup(lpszUserName);
     lpwhs->nServerPort = nServerPort;
 
     if (hIC->lpfnStatusCB)
@@ -1976,7 +1969,7 @@ BOOL HTTP_ProcessHeader(LPWININETHTTPREQA lpwhr, LPCSTR field, LPCSTR value, DWO
 
         if (!lpwhr->StdHeaders[index].lpszField)
         {
-            lphttpHdr->lpszField = HTTP_strdup(field);
+            lphttpHdr->lpszField = WININET_strdup(field);
 
             if (dwModifier & HTTP_ADDHDR_FLAG_REQ)
                 lphttpHdr->wFlags |= HDR_ISREQUEST;
@@ -2237,8 +2230,8 @@ BOOL HTTP_InsertCustomHeader(LPWININETHTTPREQA lpwhr, LPHTTPHEADERA lpHdr)
     if (NULL != lph)
     {
 	lpwhr->pCustHeaders = lph;
-        lpwhr->pCustHeaders[count-1].lpszField = HTTP_strdup(lpHdr->lpszField);
-        lpwhr->pCustHeaders[count-1].lpszValue = HTTP_strdup(lpHdr->lpszValue);
+        lpwhr->pCustHeaders[count-1].lpszField = WININET_strdup(lpHdr->lpszField);
+        lpwhr->pCustHeaders[count-1].lpszValue = WININET_strdup(lpHdr->lpszValue);
         lpwhr->pCustHeaders[count-1].wFlags = lpHdr->wFlags;
         lpwhr->pCustHeaders[count-1].wCount= lpHdr->wCount;
 	lpwhr->nCustHeaders++;

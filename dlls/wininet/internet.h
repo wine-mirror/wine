@@ -54,6 +54,13 @@ typedef struct
 #endif
 } WININET_NETCONNECTION;
 
+inline static LPSTR WININET_strdup( LPCSTR str )
+{
+    LPSTR ret = HeapAlloc( GetProcessHeap(), 0, strlen(str) + 1 );
+    if (ret) strcpy( ret, str );
+    return ret;
+}
+
 typedef enum
 {
     WH_HINIT = INTERNET_HANDLE_TYPE_INTERNET,
@@ -181,6 +188,7 @@ typedef enum
     HTTPSENDREQUESTA,
     HTTPOPENREQUESTA,
     SENDCALLBACK,
+    INTERNETOPENURLA,
 } ASYNC_FUNC;
 
 struct WORKREQ_FTPPUTFILEA
@@ -282,6 +290,16 @@ struct WORKREQ_SENDCALLBACK
     DWORD     dwStatusInfoLength;
 };
 
+struct WORKREQ_INTERNETOPENURLA
+{
+    HINTERNET hInternet;
+    LPSTR     lpszUrl;
+    LPSTR     lpszHeaders;
+    DWORD     dwHeadersLength;
+    DWORD     dwFlags;
+    DWORD     dwContext;
+};
+
 typedef struct WORKREQ
 {
     ASYNC_FUNC asyncall;
@@ -302,6 +320,7 @@ typedef struct WORKREQ
         struct WORKREQ_HTTPOPENREQUESTA         HttpOpenRequestA;
         struct WORKREQ_HTTPSENDREQUESTA         HttpSendRequestA;
         struct WORKREQ_SENDCALLBACK             SendCallback;
+	struct WORKREQ_INTERNETOPENURLA         InternetOpenUrlA;
     } u;
 
     struct WORKREQ *next;
