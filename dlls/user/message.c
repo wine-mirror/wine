@@ -2028,6 +2028,7 @@ BOOL WINAPI SendNotifyMessageW( HWND hwnd, UINT msg, WPARAM wparam, LPARAM lpara
     info.msg     = msg;
     info.wparam  = wparam;
     info.lparam  = lparam;
+    info.flags   = 0;
 
     if (is_broadcast(hwnd))
     {
@@ -2082,6 +2083,7 @@ BOOL WINAPI SendMessageCallbackW( HWND hwnd, UINT msg, WPARAM wparam, LPARAM lpa
     info.lparam   = lparam;
     info.callback = callback;
     info.data     = data;
+    info.flags    = 0;
 
     if (is_broadcast(hwnd))
     {
@@ -2171,6 +2173,7 @@ BOOL WINAPI PostMessageW( HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam )
     info.msg    = msg;
     info.wparam = wparam;
     info.lparam = lparam;
+    info.flags  = 0;
 
     if (is_broadcast(hwnd))
     {
@@ -2216,6 +2219,7 @@ BOOL WINAPI PostThreadMessageW( DWORD thread, UINT msg, WPARAM wparam, LPARAM lp
     info.msg    = msg;
     info.wparam = wparam;
     info.lparam = lparam;
+    info.flags  = 0;
     return put_message_in_queue( thread, &info, NULL );
 }
 
