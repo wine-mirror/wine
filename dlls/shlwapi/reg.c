@@ -20,12 +20,8 @@
  */
 
 #include <string.h>
-#include "windef.h"
 #include "winbase.h"
-#include "wingdi.h"
 #include "winuser.h"
-#include "winerror.h"
-#include "winnls.h"
 #include "winreg.h"
 #include "wine/debug.h"
 #define NO_SHLWAPI_STREAM
@@ -55,6 +51,9 @@ typedef struct {
     WCHAR    key_string[MAX_PATH];     /* additional path from 'start' */
 } Internal_HUSKEY, *LPInternal_HUSKEY;
 
+DWORD   WINAPI SHLWAPI_24(REFGUID,LPWSTR,INT);
+HRESULT WINAPI SHLWAPI_344(REFGUID,LPCWSTR,BOOL,BOOL,PHKEY);
+
 
 #define REG_HKCU  TRUE
 #define REG_HKLM  FALSE
@@ -64,7 +63,7 @@ typedef struct {
  * Function:  Return the proper registry key from the HUSKEY structure
  *            also allow special predefined values.
  */
-HKEY REG_GetHKEYFromHUSKEY(HUSKEY hUSKey, BOOL which)
+static HKEY WINAPI REG_GetHKEYFromHUSKEY(HUSKEY hUSKey, BOOL which)
 {
         HKEY test = (HKEY) hUSKey;
         LPInternal_HUSKEY mihk = (LPInternal_HUSKEY) hUSKey;
@@ -150,7 +149,7 @@ LONG WINAPI SHRegOpenUSKeyA(
 	return ret2;
     }
 
-    TRACE("HUSKEY=0x%08lx\n", (LONG)ihky);
+    TRACE("HUSKEY=%p\n", ihky);
     if (phNewUSKey)
 	*phNewUSKey = (HUSKEY)ihky;
     return ERROR_SUCCESS;
@@ -417,7 +416,7 @@ LONG WINAPI SHRegGetUSValueW(
 	if (ret == ERROR_SUCCESS) {
 	    ret = SHRegQueryUSValueW(myhuskey, pValue, pwType, pvData,
 				     pcbData, flagIgnoreHKCU, pDefaultData,
-				     wDefaultDataSize);	    
+				     wDefaultDataSize);
 	    SHRegCloseUSKey(myhuskey);
 	}
 	return ret;
@@ -425,14 +424,24 @@ LONG WINAPI SHRegGetUSValueW(
 
 /*************************************************************************
  * SHRegSetUSValueA   [SHLWAPI.@]
+ *
+ * Set a user-specific registry value.
+ *
+ * RETURNS
+ *  Success: ERROR_SUCCESS
+ *  Failure: An error code from SHRegOpenUSKeyA() or SHRegWriteUSValueA(), or
+ *           ERROR_INVALID_FUNCTION if pvData is NULL.
+ *
+ * NOTES
+ *   This function opens pszSubKey, sets the value, and then closes the key.
  */
 LONG WINAPI SHRegSetUSValueA(
-	LPCSTR pszSubKey,
-	LPCSTR pszValue,
-	DWORD   dwType,
-	LPVOID  pvData,
-	DWORD   cbData,
-	DWORD   dwFlags)
+	LPCSTR pszSubKey, /* [I] Name of key to set the value in */
+	LPCSTR pszValue, /* [I] Name of value under pszSubKey to set the value in */
+	DWORD  dwType, /* [I] Type of the value */
+	LPVOID pvData, /* [I] Data to set as the value */
+	DWORD  cbData, /* [I] length of pvData */
+	DWORD  dwFlags) /* [I] SHREGSET_ flags from "shlwapi.h" */
 {
         HUSKEY myhuskey;
 	LONG   ret;
@@ -441,12 +450,12 @@ LONG WINAPI SHRegSetUSValueA(
         if (!pvData) return ERROR_INVALID_FUNCTION;
 	TRACE("key '%s', value '%s', datalen %ld\n",
 	      debugstr_a(pszSubKey), debugstr_a(pszValue), cbData);
-	
+
 	ignoreHKCU = ((dwFlags == SHREGSET_HKLM) || (dwFlags == SHREGSET_FORCE_HKLM));
 
 	ret = SHRegOpenUSKeyA(pszSubKey, 0x1, 0, &myhuskey, ignoreHKCU);
 	if (ret == ERROR_SUCCESS) {
- 	  ret = SHRegWriteUSValueA(myhuskey, pszValue, dwType, pvData, 
+ 	  ret = SHRegWriteUSValueA(myhuskey, pszValue, dwType, pvData,
 				   cbData, dwFlags);
 	    SHRegCloseUSKey(myhuskey);
 	}
@@ -455,6 +464,8 @@ LONG WINAPI SHRegSetUSValueA(
 
 /*************************************************************************
  * SHRegSetUSValueW   [SHLWAPI.@]
+ *
+ * See SHRegSetUSValueA.
  */
 LONG WINAPI SHRegSetUSValueW(
 	LPCWSTR pszSubKey,
@@ -471,12 +482,12 @@ LONG WINAPI SHRegSetUSValueW(
         if (!pvData) return ERROR_INVALID_FUNCTION;
 	TRACE("key '%s', value '%s', datalen %ld\n",
 	      debugstr_w(pszSubKey), debugstr_w(pszValue), cbData);
-	
+
 	ignoreHKCU = ((dwFlags == SHREGSET_HKLM) || (dwFlags == SHREGSET_FORCE_HKLM));
 
 	ret = SHRegOpenUSKeyW(pszSubKey, 0x1, 0, &myhuskey, ignoreHKCU);
 	if (ret == ERROR_SUCCESS) {
- 	  ret = SHRegWriteUSValueW(myhuskey, pszValue, dwType, pvData, 
+ 	  ret = SHRegWriteUSValueW(myhuskey, pszValue, dwType, pvData,
 				   cbData, dwFlags);
 	    SHRegCloseUSKey(myhuskey);
 	}
@@ -632,8 +643,8 @@ LONG WINAPI SHRegQueryInfoUSKeyA(
 	HKEY dokey;
 	LONG ret;
 
-	TRACE("(0x%lx,%p,%p,%p,%p,%d)\n",
-	      (LONG)hUSKey,pcSubKeys,pcchMaxSubKeyLen,pcValues,
+	TRACE("(%p,%p,%p,%p,%p,%d)\n",
+	      hUSKey,pcSubKeys,pcchMaxSubKeyLen,pcValues,
 	      pcchMaxValueNameLen,enumRegFlags);
 
 	/* if user wants HKCU, and it exists, then try it */
@@ -673,8 +684,8 @@ LONG WINAPI SHRegQueryInfoUSKeyW(
 	HKEY dokey;
 	LONG ret;
 
-	TRACE("(0x%lx,%p,%p,%p,%p,%d)\n",
-	      (LONG)hUSKey,pcSubKeys,pcchMaxSubKeyLen,pcValues,
+	TRACE("(%p,%p,%p,%p,%p,%d)\n",
+	      hUSKey,pcSubKeys,pcchMaxSubKeyLen,pcValues,
 	      pcchMaxValueNameLen,enumRegFlags);
 
 	/* if user wants HKCU, and it exists, then try it */
@@ -716,8 +727,8 @@ LONG WINAPI SHRegEnumUSKeyA(
 {
 	HKEY dokey;
 
-	TRACE("(0x%lx,%ld,%p,%p(%ld),%d)\n",
-	      (LONG)hUSKey, dwIndex, pszName, pcchValueNameLen,
+	TRACE("(%p,%ld,%p,%p(%ld),%d)\n",
+	      hUSKey, dwIndex, pszName, pcchValueNameLen,
 	      *pcchValueNameLen, enumRegFlags);
 
 	if (((enumRegFlags == SHREGENUM_HKCU) ||
@@ -751,8 +762,8 @@ LONG WINAPI SHRegEnumUSKeyW(
 {
 	HKEY dokey;
 
-	TRACE("(0x%lx,%ld,%p,%p(%ld),%d)\n",
-	      (LONG)hUSKey, dwIndex, pszName, pcchValueNameLen,
+	TRACE("(%p,%ld,%p,%p(%ld),%d)\n",
+	      hUSKey, dwIndex, pszName, pcchValueNameLen,
 	      *pcchValueNameLen, enumRegFlags);
 
 	if (((enumRegFlags == SHREGENUM_HKCU) ||
@@ -772,18 +783,31 @@ LONG WINAPI SHRegEnumUSKeyW(
 	return ERROR_INVALID_FUNCTION;
 }
 
+
 /*************************************************************************
  *      SHRegWriteUSValueA   	[SHLWAPI.@]
  *
+ * Write a user-specific registry value.
  *
+ * PARAMS
+ *  hUSKey   [I] Key to write the value to
+ *  pszValue [I] Name of value under hUSKey to write the value as
+ *  dwType   [I] Type of the value
+ *  pvData   [I] Data to set as the value
+ *  cbData   [I] length of pvData
+ *  dwFlags  [I] SHREGSET_ flags from "shlwapi.h"
+ *
+ * RETURNS
+ *  Success: ERROR_SUCCESS.
+ *  Failure: An error code from RegSetValueExA().
  */
 LONG  WINAPI SHRegWriteUSValueA(HUSKEY hUSKey, LPCSTR pszValue, DWORD dwType,
 				LPVOID pvData, DWORD cbData, DWORD dwFlags)
 {
     HKEY dokey;
 
-    TRACE("(0x%lx,%s,%ld,%p,%ld,%ld)\n",
-	  (LONG)hUSKey, debugstr_a(pszValue), dwType, pvData, cbData, dwFlags);
+    TRACE("(%p,%s,%ld,%p,%ld,%ld)\n",
+	      hUSKey, debugstr_a(pszValue), dwType, pvData, cbData, dwFlags);
 
     if ((dwFlags & SHREGSET_FORCE_HKCU) &&
 	    (dokey = REG_GetHKEYFromHUSKEY(hUSKey,REG_HKCU))) {
@@ -812,8 +836,8 @@ LONG  WINAPI SHRegWriteUSValueW(HUSKEY hUSKey, LPCWSTR pszValue, DWORD dwType,
 {
     HKEY dokey;
 
-    TRACE("(0x%lx,%s,%ld,%p,%ld,%ld)\n",
-	  (LONG)hUSKey, debugstr_w(pszValue), dwType, pvData, cbData, dwFlags);
+    TRACE("(%p,%s,%ld,%p,%ld,%ld)\n",
+	      hUSKey, debugstr_w(pszValue), dwType, pvData, cbData, dwFlags);
 
     if ((dwFlags & SHREGSET_FORCE_HKCU) &&
 	    (dokey = REG_GetHKEYFromHUSKEY(hUSKey,REG_HKCU))) {
@@ -890,7 +914,7 @@ DWORD WINAPI SHRegGetPathW(HKEY hKey, LPCWSTR lpszSubKey, LPCWSTR lpszValue,
  *
  * RETURNS
  *   Success: ERROR_SUCCESS.
- *   Failure: An error code from SHSetValueA.
+ *   Failure: An error code from SHSetValueA().
  */
 DWORD WINAPI SHRegSetPathA(HKEY hKey, LPCSTR lpszSubKey, LPCSTR lpszValue,
                            LPCSTR lpszPath, DWORD dwFlags)
@@ -1074,6 +1098,9 @@ DWORD WINAPI SHSetValueW(HKEY hKey, LPCWSTR lpszSubKey, LPCWSTR lpszValue,
  * SHQueryInfoKeyA   [SHLWAPI.@]
  *
  * Get information about a registry key. See RegQueryInfoKeyA().
+ *
+ * RETURNS
+ *  The result of calling RegQueryInfoKeyA().
  */
 LONG WINAPI SHQueryInfoKeyA(HKEY hKey, LPDWORD pwSubKeys, LPDWORD pwSubKeyMax,
                             LPDWORD pwValues, LPDWORD pwValueMax)
@@ -1087,7 +1114,7 @@ LONG WINAPI SHQueryInfoKeyA(HKEY hKey, LPDWORD pwSubKeys, LPDWORD pwSubKeyMax,
 /*************************************************************************
  * SHQueryInfoKeyW   [SHLWAPI.@]
  *
- * See SHQueryInfoKeyA
+ * See SHQueryInfoKeyA.
  */
 LONG WINAPI SHQueryInfoKeyW(HKEY hKey, LPDWORD pwSubKeys, LPDWORD pwSubKeyMax,
                             LPDWORD pwValues, LPDWORD pwValueMax)
@@ -1558,7 +1585,7 @@ DWORD WINAPI SHDeleteValueW(HKEY hKey, LPCWSTR lpszSubKey, LPCWSTR lpszValue)
  *   lpszSubKey [O] Pointer updated with the subkey name
  *   pwLen      [O] Pointer updated with the subkey length
  *
- * RETURN
+ * RETURNS
  *   Success: ERROR_SUCCESS. lpszSubKey and pwLen are updated.
  *   Failure: An error code from RegEnumKeyExA().
  */
@@ -1673,8 +1700,7 @@ DWORD WINAPI SHLWAPI_206(HKEY hkey, LPCWSTR pSubKey, LPCWSTR pValue,
  * Set a MIME content type in the registry.
  *
  * PARAMS
- *   hKey       [I] Handle to registry key
- *   lpszSubKey [I] Name of sub key under hKey
+ *   lpszSubKey [I] Name of key under HKEY_CLASSES_ROOT.
  *   lpszValue  [I] Value to set
  *
  * RETURNS
@@ -1768,7 +1794,7 @@ BOOL WINAPI SHLWAPI_328(LPCSTR lpszType, LPSTR lpszBuffer, DWORD dwLen)
 
   if (dwLen > dwLenMimeDbContent && lpszType && lpszBuffer)
   {
-    DWORD dwStrLen = strlen(lpszType);
+    size_t dwStrLen = strlen(lpszType);
 
     if (dwStrLen < dwLen - dwLenMimeDbContent)
     {
@@ -2061,4 +2087,102 @@ DWORD WINAPI SHCopyKeyW(HKEY hKeyDst, LPCWSTR lpszSubKey, HKEY hKeySrc, DWORD dw
   if (lpszSubKey && hKeyDst)
     RegCloseKey(hKeyDst);
   return dwRet;
+}
+
+/*
+ * The following functions are ORDINAL ONLY:
+ */
+
+/*************************************************************************
+ *      SHLWAPI_280     [SHLWAPI.280]
+ *
+ * Read an integer value from the registry, falling back to a default.
+ *
+ * PARAMS
+ *  hKey      [I] Registry key to read from
+ *  lpszValue [I] Value name to read
+ *  iDefault  [I] Default value to return
+ *
+ * RETURNS
+ *  The value contained in the given registry value if present, otherwise
+ *  iDefault.
+ */
+int WINAPI SHLWAPI_280(HKEY hKey, LPCWSTR lpszValue, int iDefault)
+{
+  TRACE("(%p,%s,%d)", hKey, debugstr_w(lpszValue), iDefault);
+
+  if (hKey)
+  {
+    WCHAR szBuff[32];
+    DWORD dwSize = sizeof(szBuff);
+    szBuff[0] = '\0';
+    SHQueryValueExW(hKey, lpszValue, 0, 0, szBuff, &dwSize);
+
+    if(*szBuff >= '0' && *szBuff <= '9')
+      return StrToIntW(szBuff);
+  }
+  return iDefault;
+}
+
+/*************************************************************************
+ *      SHLWAPI_343	[SHLWAPI.343]
+ *
+ * Create or open an explorer ClassId Key.
+ *
+ * PARAMS
+ *  guid      [I] Explorer ClassId key to open
+ *  lpszValue [I] Value name under the ClassId Key
+ *  bUseHKCU  [I] TRUE=Use HKEY_CURRENT_USER, FALSE=Use HKEY_CLASSES_ROOT
+ *  bCreate   [I] TRUE=Create the key if it doesn't exist, FALSE=Don't
+ *  phKey     [O] Destination for the resulting key handle
+ *
+ * RETURNS
+ *  Success: S_OK. phKey contains the resulting registry handle.
+ *  Failure: An HRESULT error code indicating the problem.
+ */
+HRESULT WINAPI SHLWAPI_343(REFGUID guid, LPCSTR lpszValue, BOOL bUseHKCU, BOOL bCreate, PHKEY phKey)
+{
+  WCHAR szValue[MAX_PATH];
+
+  if (lpszValue)
+    MultiByteToWideChar(CP_ACP, 0, lpszValue, -1, szValue, sizeof(szValue)/sizeof(WCHAR));
+
+  return SHLWAPI_344(guid, lpszValue ? szValue : NULL, bUseHKCU, bCreate, phKey);
+}
+
+/*************************************************************************
+ *      SHLWAPI_344	[SHLWAPI.344]
+ *
+ * Unicode version of SHLWAPI_343.
+ */
+HRESULT WINAPI SHLWAPI_344(REFGUID guid, LPCWSTR lpszValue, BOOL bUseHKCU,
+                           BOOL bCreate, PHKEY phKey)
+{
+  static const WCHAR szClassIdKey[] = { 'S','o','f','t','w','a','r','e','\\',
+    'M','i','c','r','o','s','o','f','t','\\','W','i','n','d','o','w','s','\\',
+    'C','u','r','r','e','n','t','V','e','r','s','i','o','n','\\',
+    'E','x','p','l','o','r','e','r','\\','C','L','S','I','D','\\' };
+#define szClassIdKeyLen (sizeof(szClassIdKey)/sizeof(WCHAR))
+  WCHAR szKey[MAX_PATH];
+  DWORD dwRet;
+  HKEY hkey;
+
+  /* Create the key string */
+  memcpy(szKey, szClassIdKey, sizeof(szClassIdKey));
+  SHLWAPI_24(guid, szKey + szClassIdKeyLen, 39); /* Append guid */
+
+  if(lpszValue)
+  {
+    szKey[szClassIdKeyLen + 39] = '\\';
+    strcpyW(szKey + szClassIdKeyLen + 40, lpszValue); /* Append value name */
+  }
+
+  hkey = bUseHKCU ? HKEY_CURRENT_USER : HKEY_CLASSES_ROOT;
+
+  if(bCreate)
+    dwRet = RegCreateKeyW(hkey, szKey, phKey);
+  else
+    dwRet = RegOpenKeyExW(hkey, szKey, 0, KEY_READ, phKey);
+
+  return dwRet ? HRESULT_FROM_WIN32(dwRet) : S_OK;
 }

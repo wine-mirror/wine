@@ -340,8 +340,8 @@
 340 stdcall @(long wstr wstr long) user32.MessageBoxW
 341 stdcall @(long ptr) kernel32.FindNextFileW
 342 stdcall @(ptr long long) SHInterlockedCompareExchange
-343 stub @
-344 stub @
+343 stdcall -noname SHLWAPI_343(ptr str long long ptr)
+344 stdcall -noname SHLWAPI_344(ptr wstr long long ptr)
 345 stub @
 346 stdcall @(wstr ptr long) SHLWAPI_346
 347 stdcall @(long wstr) advapi32.RegDeleteValueW
