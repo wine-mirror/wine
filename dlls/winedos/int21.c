@@ -86,8 +86,8 @@ void WINAPI DOSVM_Int21Handler( CONTEXT86 *context )
 
     case 0x01: /* READ CHARACTER FROM STANDARD INPUT, WITH ECHO */
         TRACE("DIRECT CHARACTER INPUT WITH ECHO\n");
-	AL_reg(context) = CONSOLE_GetCharacter();
-	/* FIXME: no echo */
+        DOSVM_Int16ReadChar(&AL_reg(context), NULL, FALSE);
+        DOSVM_PutChar(AL_reg(context));
 	break;
 
     case 0x02: /* WRITE CHARACTER TO STANDARD OUTPUT */
