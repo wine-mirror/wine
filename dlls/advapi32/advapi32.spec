@@ -26,7 +26,7 @@
 @ stdcall ClearEventLogW (long wstr)
 @ stdcall CloseEventLog (long)
 @ stdcall CloseServiceHandle(long)
-@ stub CommandLineFromMsiDescriptor
+@ stdcall CommandLineFromMsiDescriptor(wstr wstr ptr)
 @ stdcall ControlService(long long ptr)
 @ stub ConvertSidToStringSidA #(ptr str) ConvertSidToStringSidA
 @ stub ConvertSidToStringSidW #(ptr wstr) ConvertSidToStringSidW

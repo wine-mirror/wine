@@ -171,3 +171,10 @@ BOOL WINAPI InitiateSystemShutdownExW( LPWSTR lpMachineName, LPWSTR lpMessage,
             bRebootAfterShutdown, dwReason);
      return TRUE;
 } 
+
+DWORD WINAPI CommandLineFromMsiDescriptor(WCHAR *Descriptor, WCHAR *CommandLine,
+ DWORD *CommandLineLength)
+{
+    FIXME("stub (%s)\n", debugstr_w(Descriptor));
+    return ERROR_CALL_NOT_IMPLEMENTED;
+}
