@@ -1,0 +1,234 @@
+/*  			DirectSound
+ *
+ * Copyright 1998 Marcus Meissner
+ * Copyright 1998 Rob Riggs
+ * Copyright 2000-2001 TransGaming Technologies, Inc.
+ *
+ * This library is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU Lesser General Public
+ * License as published by the Free Software Foundation; either
+ * version 2.1 of the License, or (at your option) any later version.
+ *
+ * This library is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this library; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+ */
+
+/* Linux does not support better timing than 10ms */
+#define DS_TIME_RES 10  /* Resolution of multimedia timer */
+#define DS_TIME_DEL 10  /* Delay of multimedia timer callback, and duration of HEL fragment */
+
+#define DS_HEL_FRAGS 48 /* HEL only: number of waveOut fragments in primary buffer
+			 * (changing this won't help you) */
+
+extern int ds_emuldriver;
+extern int ds_hel_margin;
+extern int ds_hel_queue;
+extern int ds_snd_queue_max;
+extern int ds_snd_queue_min;
+
+/*****************************************************************************
+ * Predeclare the interface implementation structures
+ */
+typedef struct IDirectSoundImpl IDirectSoundImpl;
+typedef struct IDirectSoundBufferImpl IDirectSoundBufferImpl;
+typedef struct IDirectSoundNotifyImpl IDirectSoundNotifyImpl;
+typedef struct IDirectSound3DListenerImpl IDirectSound3DListenerImpl;
+typedef struct IDirectSound3DBufferImpl IDirectSound3DBufferImpl;
+typedef struct IKsPropertySetImpl IKsPropertySetImpl;
+typedef struct PrimaryBufferImpl PrimaryBufferImpl;
+
+/*****************************************************************************
+ * IDirectSound implementation structure
+ */
+struct IDirectSoundImpl
+{
+    /* IUnknown fields */
+    ICOM_VFIELD(IDirectSound8);
+    DWORD                      ref;
+    /* IDirectSoundImpl fields */
+    PIDSDRIVER                  driver;
+    DSDRIVERDESC                drvdesc;
+    DSDRIVERCAPS                drvcaps;
+    DWORD                       priolevel;
+    WAVEFORMATEX                wfx; /* current main waveformat */
+    HWAVEOUT                    hwo;
+    LPWAVEHDR                   pwave[DS_HEL_FRAGS];
+    UINT                        timerID, pwplay, pwwrite, pwqueue, prebuf, precount;
+    DWORD                       fraglen;
+    PIDSDRIVERBUFFER            hwbuf;
+    LPBYTE                      buffer;
+    DWORD                       writelead, buflen, state, playpos, mixpos;
+    BOOL                        need_remix;
+    int                         nrofbuffers;
+    IDirectSoundBufferImpl**    buffers;
+    IDirectSound3DListenerImpl*	listener;
+    RTL_RWLOCK			lock;
+    CRITICAL_SECTION		mixlock;
+    DSVOLUMEPAN			volpan;
+};
+
+/*****************************************************************************
+ * IDirectSoundBuffer implementation structure
+ */
+struct IDirectSoundBufferImpl
+{
+    /* FIXME: document */
+    /* IUnknown fields */
+    ICOM_VFIELD(IDirectSoundBuffer8);
+    DWORD                     ref;
+    /* IDirectSoundBufferImpl fields */
+    IDirectSoundImpl*         dsound;
+    IDirectSoundBufferImpl*   parent;         /* for duplicates */
+    IDirectSound3DBufferImpl* ds3db;
+    IKsPropertySetImpl*       iks;
+    CRITICAL_SECTION          lock;
+    PIDSDRIVERBUFFER          hwbuf;
+    WAVEFORMATEX              wfx;
+    LPBYTE                    buffer;
+    DWORD                     playflags,state,leadin;
+    DWORD                     playpos,startpos,writelead,buflen;
+    DWORD                     nAvgBytesPerSec;
+    DWORD                     freq;
+    DSVOLUMEPAN               volpan, cvolpan;
+    DSBUFFERDESC              dsbd;
+    /* used for frequency conversion (PerfectPitch) */
+    ULONG                     freqAdjust, freqAcc;
+    /* used for intelligent (well, sort of) prebuffering */
+    DWORD                     probably_valid_to, last_playpos;
+    DWORD                     primary_mixpos, buf_mixpos;
+    BOOL                      need_remix;
+    /* IDirectSoundNotifyImpl fields */
+    LPDSBPOSITIONNOTIFY       notifies;
+    int                       nrofnotifies;
+};
+
+HRESULT WINAPI SecondaryBuffer_Create(
+	IDirectSoundImpl *This,
+	IDirectSoundBufferImpl **pdsb,
+	LPDSBUFFERDESC dsbd);
+
+struct PrimaryBufferImpl {
+	ICOM_VFIELD(IDirectSoundBuffer8);
+	DWORD			ref;
+	IDirectSoundImpl*	dsound;
+	DSBUFFERDESC		dsbd;
+};
+
+HRESULT WINAPI PrimaryBuffer_Create(
+	IDirectSoundImpl *This,
+	PrimaryBufferImpl **pdsb,
+	LPDSBUFFERDESC dsbd);
+
+/*****************************************************************************
+ * IDirectSoundNotify implementation structure
+ */
+struct IDirectSoundNotifyImpl
+{
+    /* IUnknown fields */
+    ICOM_VFIELD(IDirectSoundNotify);
+    DWORD                            ref;
+    /* IDirectSoundNotifyImpl fields */
+    IDirectSoundBufferImpl* dsb;
+};
+
+/*****************************************************************************
+ *  IDirectSound3DListener implementation structure
+ */
+struct IDirectSound3DListenerImpl
+{
+    /* IUnknown fields */
+    ICOM_VFIELD(IDirectSound3DListener);
+    DWORD                                ref;
+    /* IDirectSound3DListenerImpl fields */
+    PrimaryBufferImpl*      dsb;
+    DS3DLISTENER            ds3dl;
+    CRITICAL_SECTION        lock;
+    BOOL                    need_recalc;
+};
+
+HRESULT WINAPI IDirectSound3DListenerImpl_Create(
+	PrimaryBufferImpl *This,
+	IDirectSound3DListenerImpl **pdsl);
+
+/*****************************************************************************
+ *  IKsPropertySet implementation structure
+ */
+struct IKsPropertySetImpl
+{
+    /* IUnknown fields */
+    ICOM_VFIELD(IKsPropertySet);
+    DWORD			ref;
+    /* IKsPropertySetImpl fields */
+    IDirectSoundBufferImpl*	dsb;
+};
+
+HRESULT WINAPI IKsPropertySetImpl_Create(
+	IDirectSoundBufferImpl *This,
+	IKsPropertySetImpl **piks);
+
+/*****************************************************************************
+ * IDirectSound3DBuffer implementation structure
+ */
+struct IDirectSound3DBufferImpl
+{
+    /* IUnknown fields */
+    ICOM_VFIELD(IDirectSound3DBuffer);
+    DWORD                              ref;
+    /* IDirectSound3DBufferImpl fields */
+    IDirectSoundBufferImpl* dsb;
+    DS3DBUFFER              ds3db;
+    LONG                    lVolume;
+    CRITICAL_SECTION        lock;
+    BOOL                    need_recalc;
+};
+
+HRESULT WINAPI IDirectSound3DBufferImpl_Create(
+	IDirectSoundBufferImpl *This,
+	IDirectSound3DBufferImpl **pds3db);
+
+void DSOUND_RecalcVolPan(PDSVOLUMEPAN volpan);
+void DSOUND_RecalcFormat(IDirectSoundBufferImpl *dsb);
+
+/* primary.c */
+
+HRESULT DSOUND_PrimaryCreate(IDirectSoundImpl *This);
+HRESULT DSOUND_PrimaryDestroy(IDirectSoundImpl *This);
+HRESULT DSOUND_PrimaryPlay(IDirectSoundImpl *This);
+HRESULT DSOUND_PrimaryStop(IDirectSoundImpl *This);
+HRESULT DSOUND_PrimaryGetPosition(IDirectSoundImpl *This, LPDWORD playpos, LPDWORD writepos);
+
+/* buffer.c */
+
+DWORD DSOUND_CalcPlayPosition(IDirectSoundBufferImpl *This,
+			      DWORD state, DWORD pplay, DWORD pwrite, DWORD pmix, DWORD bmix);
+
+/* mixer.c */
+
+void DSOUND_CheckEvent(IDirectSoundBufferImpl *dsb, int len);
+void DSOUND_ForceRemix(IDirectSoundBufferImpl *dsb);
+void DSOUND_MixCancelAt(IDirectSoundBufferImpl *dsb, DWORD buf_writepos);
+void DSOUND_WaveQueue(IDirectSoundImpl *dsound, DWORD mixq);
+void DSOUND_PerformMix(void);
+void CALLBACK DSOUND_timer(UINT timerID, UINT msg, DWORD dwUser, DWORD dw1, DWORD dw2);
+void CALLBACK DSOUND_callback(HWAVEOUT hwo, UINT msg, DWORD dwUser, DWORD dw1, DWORD dw2);
+
+#define STATE_STOPPED  0
+#define STATE_STARTING 1
+#define STATE_PLAYING  2
+#define STATE_STOPPING 3
+
+#define DSOUND_FREQSHIFT (14)
+
+extern IDirectSoundImpl* dsound;
+
+struct PrimaryBuffer {
+	DWORD ref;
+	PIDSDRIVERBUFFER hwbuf;
+	DWORD state;
+};

@@ -19,7 +19,10 @@
 #ifndef __WINE_DSOUND_H
 #define __WINE_DSOUND_H
 
-#include "winbase.h"     /* for CRITICAL_SECTION */
+#ifndef DIRECTSOUND_VERSION
+#define DIRECTSOUND_VERSION 0x0800
+#endif
+
 #include "mmsystem.h"
 #include "d3dtypes.h"
 
@@ -30,13 +33,23 @@ extern "C" {
 /*****************************************************************************
  * Predeclare the interfaces
  */
-DEFINE_GUID(CLSID_DirectSound,		0x47d4d946, 0x62e8, 0x11cf, 0x93, 0xbc, 0x44, 0x45, 0x53, 0x54, 0x0, 0x0);
+DEFINE_GUID(CLSID_DirectSound,		0x47d4d946, 0x62e8, 0x11cf, 0x93, 0xbc, 0x44, 0x45, 0x53, 0x54, 0x00, 0x00);
+DEFINE_GUID(CLSID_DirectSound8,		0x3901cc3f, 0x84b5, 0x4fa4, 0xba, 0x35, 0xaa, 0x81, 0x72, 0xb8, 0xa0, 0x9b);
+DEFINE_GUID(CLSID_DirectSoundCapture,	0xb0210780, 0x89cd, 0x11d0, 0xaf, 0x08, 0x00, 0xa0, 0xc9, 0x25, 0xcd, 0x16);
+DEFINE_GUID(CLSID_DirectSoundCapture8,	0xe4bcac13, 0x7f99, 0x4908, 0x9a, 0x8e, 0x74, 0xe3, 0xbf, 0x24, 0xb6, 0xe1);
+DEFINE_GUID(CLSID_DirectSoundFullDuplex,0xfea4300c, 0x7959, 0x4147, 0xb2, 0x6a, 0x23, 0x77, 0xb9, 0xe7, 0xa9, 0x1d);
 
 DEFINE_GUID(IID_IDirectSound,		0x279AFA83,0x4981,0x11CE,0xA5,0x21,0x00,0x20,0xAF,0x0B,0xE5,0x60);
 typedef struct IDirectSound IDirectSound,*LPDIRECTSOUND;
 
+DEFINE_GUID(IID_IDirectSound8,		0xC50A7E93,0xF395,0x4834,0x9E,0xF6,0x7F,0xA9,0x9D,0xE5,0x09,0x66);
+typedef struct IDirectSound8 IDirectSound8,*LPDIRECTSOUND8;
+
 DEFINE_GUID(IID_IDirectSoundBuffer,	0x279AFA85,0x4981,0x11CE,0xA5,0x21,0x00,0x20,0xAF,0x0B,0xE5,0x60);
 typedef struct IDirectSoundBuffer IDirectSoundBuffer,*LPDIRECTSOUNDBUFFER,**LPLPDIRECTSOUNDBUFFER;
+
+DEFINE_GUID(IID_IDirectSoundBuffer8,	0x6825A449,0x7524,0x4D82,0x92,0x0F,0x50,0xE3,0x6A,0xB3,0xAB,0x1E);
+typedef struct IDirectSoundBuffer8 IDirectSoundBuffer8,*LPDIRECTSOUNDBUFFER8,**LPLPDIRECTSOUNDBUFFER8;
 
 DEFINE_GUID(IID_IDirectSoundNotify,	0xB0210783,0x89cd,0x11d0,0xAF,0x08,0x00,0xA0,0xC9,0x25,0xCD,0x16);
 typedef struct IDirectSoundNotify IDirectSoundNotify,*LPDIRECTSOUNDNOTIFY;
@@ -57,6 +70,14 @@ DEFINE_GUID(DSDEVID_WinePlayback, 0x40316A1D,0x605B,0xD611,0x87,0xC6,0x00,0x80,0
 
 DEFINE_GUID(IID_IKsPropertySet,		0x31EFAC30,0x515C,0x11D0,0xA9,0xAA,0x00,0xAA,0x00,0x61,0xBE,0x93);
 typedef struct IKsPropertySet IKsPropertySet,*LPKSPROPERTYSET;
+
+DEFINE_GUID(IID_IDirectSoundCaptureBuffer8,0x00990DF4,0x0DBB,0x4872,0x83,0x3E,0x6D,0x30,0x3E,0x80,0xAE,0xB6);
+typedef struct IDirectSoundCaptureBuffer8 IDirectSoundCaptureBuffer8,*LPDIRECTSOUNDCAPTUREBUFFER8;
+
+DEFINE_GUID(DSDEVID_DefaultPlayback,     0xDEF00000,0x9C6D,0x47Ed,0xAA,0xF1,0x4D,0xDA,0x8F,0x2B,0x5C,0x03);
+DEFINE_GUID(DSDEVID_DefaultCapture,      0xDEF00001,0x9C6D,0x47Ed,0xAA,0xF1,0x4D,0xDA,0x8F,0x2B,0x5C,0x03);
+DEFINE_GUID(DSDEVID_DefaultVoicePlayback,0xDEF00002,0x9C6D,0x47Ed,0xAA,0xF1,0x4D,0xDA,0x8F,0x2B,0x5C,0x03);
+DEFINE_GUID(DSDEVID_DefaultVoiceCapture, 0xDEF00003,0x9C6D,0x47ED,0xAA,0xF1,0x4D,0xDA,0x8F,0x2B,0x5C,0x03);
 
 
 #define	_FACDS		0x878
@@ -174,6 +195,30 @@ typedef struct _DSBCAPS
 #define DSSCL_EXCLUSIVE             3
 #define DSSCL_WRITEPRIMARY          4
 
+typedef struct _DSEFFECTDESC
+{
+    DWORD	dwSize;
+    DWORD	dwFlags;
+    GUID	guidDSFXClass;
+    DWORD_PTR	dwReserved1;
+    DWORD_PTR	dwReserved2;
+} DSEFFECTDESC,*LPDSEFFECTDESC;
+typedef const DSEFFECTDESC *LPCDSEFFECTDESC;
+
+#define DSFX_LOCHARDWARE    0x00000001
+#define DSFX_LOCSOFTWARE    0x00000002
+
+enum
+{
+    DSFXR_PRESENT,
+    DSFXR_LOCHARDWARE,
+    DSFXR_LOCSOFTWARE,
+    DSFXR_UNALLOCATED,
+    DSFXR_FAILED,
+    DSFXR_UNKNOWN,
+    DSFXR_SENDLOOP
+};
+
 typedef struct _DSBUFFERDESC
 {
     DWORD		dwSize;
@@ -181,14 +226,17 @@ typedef struct _DSBUFFERDESC
     DWORD		dwBufferBytes;
     DWORD		dwReserved;
     LPWAVEFORMATEX	lpwfxFormat;
+#if DIRECTSOUND_VERSION >= 0x0700
+    GUID		guid3DAlgorithm;
+#endif
 } DSBUFFERDESC,*LPDSBUFFERDESC;
+typedef const DSBUFFERDESC *LPCDSBUFFERDESC;
 
 typedef struct _DSBPOSITIONNOTIFY
 {
-	DWORD		dwOffset;
-	HANDLE	hEventNotify;
+    DWORD	dwOffset;
+    HANDLE	hEventNotify;
 } DSBPOSITIONNOTIFY,*LPDSBPOSITIONNOTIFY;
-
 typedef const DSBPOSITIONNOTIFY *LPCDSBPOSITIONNOTIFY;
 
 #define DSSPEAKER_HEADPHONE     1
@@ -201,6 +249,9 @@ typedef const DSBPOSITIONNOTIFY *LPCDSBPOSITIONNOTIFY;
 #define DSSPEAKER_GEOMETRY_NARROW   0x0000000A  /* 10 degrees */
 #define DSSPEAKER_GEOMETRY_WIDE     0x00000014  /* 20 degrees */
 #define DSSPEAKER_GEOMETRY_MAX      0x000000B4  /* 180 degrees */
+
+#define DS_CERTIFIED                0x00000000
+#define DS_UNCERTIFIED              0x00000001
 
 typedef struct _DSCBUFFERDESC
 {
@@ -237,16 +288,21 @@ typedef const GUID *LPCGUID;
 
 typedef LPVOID* LPLPVOID;
 
-typedef BOOL (CALLBACK *LPDSENUMCALLBACKW)(LPGUID,LPWSTR,LPWSTR,LPVOID);
-typedef BOOL (CALLBACK *LPDSENUMCALLBACKA)(LPGUID,LPSTR,LPSTR,LPVOID);
+typedef BOOL (CALLBACK *LPDSENUMCALLBACKW)(LPGUID,LPCWSTR,LPCWSTR,LPVOID);
+typedef BOOL (CALLBACK *LPDSENUMCALLBACKA)(LPGUID,LPCSTR,LPCSTR,LPVOID);
 
-extern HRESULT WINAPI DirectSoundCreate(LPCGUID lpGUID,LPDIRECTSOUND * ppDS,IUnknown *pUnkOuter );
+extern HRESULT WINAPI DirectSoundCreate(LPCGUID lpGUID,LPDIRECTSOUND *ppDS,LPUNKNOWN pUnkOuter);
 extern HRESULT WINAPI DirectSoundEnumerateA(LPDSENUMCALLBACKA, LPVOID);
 extern HRESULT WINAPI DirectSoundEnumerateW(LPDSENUMCALLBACKW, LPVOID);
 
-extern HRESULT WINAPI DirectSoundCaptureCreate(LPCGUID, LPDIRECTSOUNDCAPTURE *, LPUNKNOWN);
+extern HRESULT WINAPI DirectSoundCaptureCreate(LPCGUID lpGUID, LPDIRECTSOUNDCAPTURE *ppDSC, LPUNKNOWN pUnkOuter);
 extern HRESULT WINAPI DirectSoundCaptureEnumerateA(LPDSENUMCALLBACKA, LPVOID);
 extern HRESULT WINAPI DirectSoundCaptureEnumerateW(LPDSENUMCALLBACKW, LPVOID);
+
+extern HRESULT WINAPI DirectSoundCreate8(LPCGUID lpGUID,LPDIRECTSOUND8 *ppDS8,LPUNKNOWN pUnkOuter);
+extern HRESULT WINAPI DirectSoundCaptureCreate(LPCGUID lpGUID, LPDIRECTSOUNDCAPTURE *ppDSC8, LPUNKNOWN pUnkOuter);
+/* FIXME: DirectSoundFullDuplexCreate */
+extern HRESULT WINAPI GetDeviceID(LPCGUID lpGuidSrc, LPGUID lpGuidDest);
 
 
 /*****************************************************************************
@@ -281,6 +337,43 @@ ICOM_DEFINE(IDirectSound,IUnknown)
 #define IDirectSound_GetSpeakerConfig(p,a)       ICOM_CALL1(GetSpeakerConfig,p,a)
 #define IDirectSound_SetSpeakerConfig(p,a)       ICOM_CALL1(SetSpeakerConfig,p,a)
 #define IDirectSound_Initialize(p,a)             ICOM_CALL1(Initialize,p,a)
+
+
+/*****************************************************************************
+ * IDirectSound8 interface
+ */
+#define ICOM_INTERFACE IDirectSound8
+#define IDirectSound8_METHODS \
+    ICOM_METHOD3(HRESULT,CreateSoundBuffer,    LPDSBUFFERDESC,lpcDSBufferDesc, LPLPDIRECTSOUNDBUFFER8,lplpDirectSoundBuffer, IUnknown*,pUnkOuter) \
+    ICOM_METHOD1(HRESULT,GetCaps,              LPDSCAPS,lpDSCaps) \
+    ICOM_METHOD2(HRESULT,DuplicateSoundBuffer, LPDIRECTSOUNDBUFFER8,lpDsbOriginal, LPLPDIRECTSOUNDBUFFER8,lplpDsbDuplicate) \
+    ICOM_METHOD2(HRESULT,SetCooperativeLevel,  HWND,hwnd, DWORD,dwLevel) \
+    ICOM_METHOD (HRESULT,Compact) \
+    ICOM_METHOD1(HRESULT,GetSpeakerConfig,     LPDWORD,lpdwSpeakerConfig) \
+    ICOM_METHOD1(HRESULT,SetSpeakerConfig,     DWORD,dwSpeakerConfig) \
+    ICOM_METHOD1(HRESULT,Initialize,           LPCGUID,lpcGuid) \
+    ICOM_METHOD1(HRESULT,VerifyCertification,  LPDWORD,pdwCertified)
+#define IDirectSound8_IMETHODS \
+    IUnknown_IMETHODS \
+    IDirectSound8_METHODS
+ICOM_DEFINE(IDirectSound8,IUnknown)
+#undef ICOM_INTERFACE
+
+    /*** IUnknown methods ***/
+#define IDirectSound8_QueryInterface(p,a,b) ICOM_CALL2(QueryInterface,p,a,b)
+#define IDirectSound8_AddRef(p)             ICOM_CALL (AddRef,p)
+#define IDirectSound8_Release(p)            ICOM_CALL (Release,p)
+    /*** IDirectSound methods ***/
+#define IDirectSound8_CreateSoundBuffer(p,a,b,c)  ICOM_CALL3(CreateSoundBuffer,p,a,b,c)
+#define IDirectSound8_GetCaps(p,a)                ICOM_CALL1(GetCaps,p,a)
+#define IDirectSound8_DuplicateSoundBuffer(p,a,b) ICOM_CALL2(DuplicateSoundBuffer,p,a,b)
+#define IDirectSound8_SetCooperativeLevel(p,a,b)  ICOM_CALL2(SetCooperativeLevel,p,a,b)
+#define IDirectSound8_Compact(p)                  ICOM_CALL (Compact,p)
+#define IDirectSound8_GetSpeakerConfig(p,a)       ICOM_CALL1(GetSpeakerConfig,p,a)
+#define IDirectSound8_SetSpeakerConfig(p,a)       ICOM_CALL1(SetSpeakerConfig,p,a)
+#define IDirectSound8_Initialize(p,a)             ICOM_CALL1(Initialize,p,a)
+    /*** IDirectSound8 methods ***/
+#define IDirectSound8_VerifyCertification(p,a)    ICOM_CALL1(VerifyCertification,p,a)
 
 
 /*****************************************************************************
@@ -338,6 +431,67 @@ ICOM_DEFINE(IDirectSoundBuffer,IUnknown)
 
 
 /*****************************************************************************
+ * IDirectSoundBuffer8 interface
+ */
+#define ICOM_INTERFACE IDirectSoundBuffer8
+#define IDirectSoundBuffer8_METHODS \
+    ICOM_METHOD1(HRESULT,GetCaps,              LPDSBCAPS,lpDSBufferCaps) \
+    ICOM_METHOD2(HRESULT,GetCurrentPosition,   LPDWORD,lpdwCurrentPlayCursor, LPDWORD,lpdwCurrentWriteCursor) \
+    ICOM_METHOD3(HRESULT,GetFormat,            LPWAVEFORMATEX,lpwfxFormat, DWORD,dwSizeAllocated, LPDWORD,lpdwSizeWritten) \
+    ICOM_METHOD1(HRESULT,GetVolume,            LPLONG,lplVolume) \
+    ICOM_METHOD1(HRESULT,GetPan,               LPLONG,lplpan) \
+    ICOM_METHOD1(HRESULT,GetFrequency,         LPDWORD,lpdwFrequency) \
+    ICOM_METHOD1(HRESULT,GetStatus,            LPDWORD,lpdwStatus) \
+    ICOM_METHOD2(HRESULT,Initialize,           LPDIRECTSOUND8,lpDirectSound, LPDSBUFFERDESC,lpcDSBufferDesc) \
+    ICOM_METHOD7(HRESULT,Lock,                 DWORD,dwWriteCursor, DWORD,dwWriteBytes, LPVOID,lplpvAudioPtr1, LPDWORD,lpdwAudioBytes1, LPVOID,lplpvAudioPtr2, LPDWORD,lpdwAudioBytes2, DWORD,dwFlags) \
+    ICOM_METHOD3(HRESULT,Play,                 DWORD,dwReserved1, DWORD,dwReserved2, DWORD,dwFlags) \
+    ICOM_METHOD1(HRESULT,SetCurrentPosition,   DWORD,dwNewPosition) \
+    ICOM_METHOD1(HRESULT,SetFormat,            LPWAVEFORMATEX,lpcfxFormat) \
+    ICOM_METHOD1(HRESULT,SetVolume,            LONG,lVolume) \
+    ICOM_METHOD1(HRESULT,SetPan,               LONG,lPan) \
+    ICOM_METHOD1(HRESULT,SetFrequency,         DWORD,dwFrequency) \
+    ICOM_METHOD (HRESULT,Stop) \
+    ICOM_METHOD4(HRESULT,Unlock,               LPVOID,lpvAudioPtr1, DWORD,dwAudioBytes1, LPVOID,lpvAudioPtr2, DWORD,dwAudioPtr2) \
+    ICOM_METHOD (HRESULT,Restore) \
+    ICOM_METHOD3(HRESULT,SetFX,                DWORD,dwEffectsCount, LPDSEFFECTDESC,pDSFXDesc, LPDWORD,pdwResultCodes) \
+    ICOM_METHOD3(HRESULT,AcquireResources,     DWORD,dwFlags, DWORD,dwEffectsCount, LPDWORD,pdwResultCodes) \
+    ICOM_METHOD4(HRESULT,GetObjectInPath,      REFGUID,rguidObject, DWORD,dwIndex, REFGUID,rguidInterface, LPVOID*,ppObject)
+#define IDirectSoundBuffer8_IMETHODS \
+    IUnknown_IMETHODS \
+    IDirectSoundBuffer8_METHODS
+ICOM_DEFINE(IDirectSoundBuffer8,IUnknown)
+#undef ICOM_INTERFACE
+
+    /*** IUnknown methods ***/
+#define IDirectSoundBuffer8_QueryInterface(p,a,b) ICOM_CALL2(QueryInterface,p,a,b)
+#define IDirectSoundBuffer8_AddRef(p)             ICOM_CALL (AddRef,p)
+#define IDirectSoundBuffer8_Release(p)            ICOM_CALL (Release,p)
+    /*** IDirectSoundBuffer methods ***/
+#define IDirectSoundBuffer8_GetCaps(p,a)                ICOM_CALL1(GetCaps,p,a)
+#define IDirectSoundBuffer8_GetCurrentPosition(p,a,b)   ICOM_CALL2(GetCurrentPosition,p,a,b)
+#define IDirectSoundBuffer8_GetFormat(p,a,b,c)          ICOM_CALL3(GetFormat,p,a,b,c)
+#define IDirectSoundBuffer8_GetVolume(p,a)              ICOM_CALL1(GetVolume,p,a)
+#define IDirectSoundBuffer8_GetPan(p,a)                 ICOM_CALL1(GetPan,p,a)
+#define IDirectSoundBuffer8_GetFrequency(p,a)           ICOM_CALL1(GetFrequency,p,a)
+#define IDirectSoundBuffer8_GetStatus(p,a)              ICOM_CALL1(GetStatus,p,a)
+#define IDirectSoundBuffer8_Initialize(p,a,b)           ICOM_CALL2(Initialize,p,a,b)
+#define IDirectSoundBuffer8_Lock(p,a,b,c,d,e,f,g)       ICOM_CALL7(Lock,p,a,b,c,d,e,f,g)
+#define IDirectSoundBuffer8_Play(p,a,b,c)               ICOM_CALL3(Play,p,a,b,c)
+#define IDirectSoundBuffer8_SetCurrentPosition(p,a)     ICOM_CALL1(SetCurrentPosition,p,a)
+#define IDirectSoundBuffer8_SetFormat(p,a)              ICOM_CALL1(SetFormat,p,a)
+#define IDirectSoundBuffer8_SetVolume(p,a)              ICOM_CALL1(SetVolume,p,a)
+#define IDirectSoundBuffer8_SetPan(p,a)                 ICOM_CALL1(SetPan,p,a)
+#define IDirectSoundBuffer8_SetFrequency(p,a)           ICOM_CALL1(SetFrequency,p,a)
+#define IDirectSoundBuffer8_Stop(p)                     ICOM_CALL (Stop,p)
+#define IDirectSoundBuffer8_Unlock(p,a,b,c,d)           ICOM_CALL4(Unlock,p,a,b,c,d)
+#define IDirectSoundBuffer8_Restore(p)                  ICOM_CALL (Restore,p)
+    /*** IDirectSoundBuffer8 methods ***/
+#define IDirectSoundBuffer8_SetFX(p,a,b,c)              ICOM_CALL3(SetFX,p,a,b,c)
+#define IDirectSoundBuffer8_AcquireResources(p,a,b,c)   ICOM_CALL3(AcquireResources,p,a,b,c)
+#define IDirectSoundBuffer8_GetObjectInPath(p,a,b,c)    ICOM_CALL3(GetObjectInPath,p,a,b,c)
+
+
+/*****************************************************************************
  * IDirectSoundCapture interface
  */
 #define ICOM_INTERFACE IDirectSoundCapture
@@ -391,6 +545,34 @@ ICOM_DEFINE(IDirectSoundCaptureBuffer,IUnknown)
 #define IDirectSoundCaptureBuffer_Start(p,a)                ICOM_CALL1(Start,p,a)
 #define IDirectSoundCaptureBuffer_Stop(p)                   ICOM_CALL (Stop,p)
 #define IDirectSoundCaptureBuffer_Unlock(p,a,b,c,d)         ICOM_CALL4(Unlock,p,a,b,c,d)
+
+/*****************************************************************************
+ * IDirectSoundCaptureBuffer8 interface
+ */
+#define ICOM_INTERFACE IDirectSoundCaptureBuffer8
+#define IDirectSoundCaptureBuffer8_METHODS \
+    ICOM_METHOD4(HRESULT,GetObjectInPath, REFGUID,rguidObject, DWORD,dwIndex, REFGUID,rguidInterface, LPVOID*,ppObject) \
+    ICOM_METHOD2(HRESULT,GetFXStatus,     DWORD,dwFXCount, LPDWORD,pdwFXStatus)
+
+#define IDirectSoundCaptureBuffer8_IMETHODS \
+    IDirectSoundCaptureBuffer_IMETHODS \
+    IDirectSoundCaptureBuffer8_METHODS
+ICOM_DEFINE(IDirectSoundCaptureBuffer8,IDirectSoundCaptureBuffer)
+#undef ICOM_INTERFACE
+
+#define IDirectSoundCaptureBuffer8_QueryInterface(p,a,b)      ICOM_CALL2(QueryInterface,p,a,b)
+#define IDirectSoundCaptureBuffer8_AddRef(p)                  ICOM_CALL (AddRef,p)
+#define IDirectSoundCaptureBuffer8_Release(p)                 ICOM_CALL (Release,p)
+#define IDirectSoundCaptureBuffer8_GetCurrentPosition(p,a,b)  ICOM_CALL2(GetCurrentPosition,p,a,b)
+#define IDirectSoundCaptureBuffer8_GetFormat(p,a,b,c)         ICOM_CALL3(GetFormat,p,a,b,c)
+#define IDirectSoundCaptureBuffer8_GetStatus(p,a)             ICOM_CALL1(GetStatus,p,a)
+#define IDirectSoundCaptureBuffer8_Initialize(p,a,b)          ICOM_CALL2(Initialize,p,a,b)
+#define IDirectSoundCaptureBuffer8_Lock(p,a,b,c,d,e,f,g)      ICOM_CALL7(Lock,p,a,b,c,d,e,f,g)
+#define IDirectSoundCaptureBuffer8_Start(p,a)                 ICOM_CALL1(Start,p,a)
+#define IDirectSoundCaptureBuffer8_Stop(p)                    ICOM_CALL (Stop,p)
+#define IDirectSoundCaptureBuffer8_Unlock(p,a,b,c,d)          ICOM_CALL4(Unlock,p,a,b,c,d)
+#define IDirectSoundCaptureBuffer8_GetObjectInPath(p,a,b,c,d) ICOM_CALL4(GetObjectInPath,p,a,b,c,d)
+#define IDirectSoundCaptureBuffer8_GetFXStatus(p,a,b)         ICOM_CALL2(GetFXStatus,p,a,b)
 
 /*****************************************************************************
  * IDirectSoundNotify interface

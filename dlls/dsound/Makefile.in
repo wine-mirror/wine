@@ -10,7 +10,13 @@ LDDLLFLAGS = @LDDLLFLAGS@
 SYMBOLFILE = $(MODULE).tmp.o
 
 C_SRCS = \
-	dsound_main.c
+	buffer.c \
+	capture.c \
+	dsound_main.c \
+	mixer.c \
+	primary.c \
+	propset.c \
+	sound3d.c
 
 @MAKE_DLL_RULES@
 
