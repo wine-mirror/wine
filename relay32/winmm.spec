@@ -33,8 +33,8 @@ type win32
  30 stdcall joyGetPos(long ptr) joyGetPos32
  31 stdcall joyGetPosEx(long ptr) joyGetPosEx
  32 stdcall joyGetThreshold(long ptr) joyGetThreshold32
- 33 stub joyReleaseCapture
- 34 stub joySetCapture
+ 33 stdcall joyReleaseCapture(long) joyReleaseCapture32
+ 34 stdcall joySetCapture(long long long long) joySetCapture32
  35 stdcall joySetThreshold(long long) joySetThreshold32
  36 stdcall mciDriverNotify(long long long) mciDriverNotify32
  37 stdcall mciDriverYield(long) mciDriverYield32
