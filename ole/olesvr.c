@@ -7,7 +7,6 @@
 /*	At the moment, these are only empty stubs.
  */
 
-#include "windows.h"
 #include "ole.h"
 #include "debug.h"
 

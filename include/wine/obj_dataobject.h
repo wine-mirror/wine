@@ -7,6 +7,9 @@
 #ifndef __WINE_WINE_OBJ_DATAOBJECT_H
 #define __WINE_WINE_OBJ_DATAOBJECT_H
 
+#include "wine/obj_base.h"
+#include "wine/obj_storage.h"
+#include "wine/obj_moniker.h"
 
 /*****************************************************************************
  * Predeclare the structures

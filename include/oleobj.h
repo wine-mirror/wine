@@ -1,8 +1,6 @@
 #ifndef _WINE_OLEOBJ_H
 #define _WINE_OLEOBJ_H
 
-#include "ole.h"
-#include "ole2.h"
 #include "wine/obj_base.h"
 #include "wine/obj_storage.h"
 #include "wine/obj_moniker.h"

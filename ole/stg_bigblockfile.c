@@ -23,11 +23,8 @@
 #include <stdio.h>
 #include <string.h>
 
-#include "windows.h"
+#include "winbase.h"
 #include "winerror.h"
-#include "ole.h"
-#include "ole2.h"
-#include "wine/obj_base.h"
 #include "wine/obj_storage.h"
 
 #include "storage32.h"

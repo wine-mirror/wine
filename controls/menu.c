@@ -17,7 +17,6 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include "bitmap.h"
 #include "win.h"
 #include "wine/winbase16.h"
 #include "wine/winuser16.h"
@@ -25,8 +24,6 @@
 #include "task.h"
 #include "heap.h"
 #include "menu.h"
-#include "module.h"
-#include "neexe.h"
 #include "nonclient.h"
 #include "user.h"
 #include "message.h"

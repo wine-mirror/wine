@@ -15,7 +15,7 @@
 #include <unistd.h>
 #include <fcntl.h>
 
-#include "windows.h"
+#include "winuser.h"
 #include "fnt2bdf.h"
 #include "neexe.h"
 #include "module.h"

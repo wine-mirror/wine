@@ -18,7 +18,6 @@
 #include "ole.h"
 #include "wine/obj_base.h"
 #include "wine/obj_storage.h"
-#include "objbase.h"
 #include "heap.h"
 #include "module.h"
 #include "ldt.h"

@@ -9,8 +9,6 @@
 #include <string.h>
 #include <assert.h>
 #include "winerror.h"
-#include "wine/obj_base.h"
-#include "wine/obj_storage.h"
 #include "wine/obj_moniker.h"
 #include "debug.h"
 #include "heap.h"

@@ -15,18 +15,12 @@
 #include <stdio.h>
 #include <string.h>
 
-#include "windows.h"
+#include "winbase.h"
 #include "winerror.h"
-#include "file.h"
-#include "ole.h"
-#include "ole2.h"
-#include "objbase.h"
+#include "wine/obj_storage.h"
+#include "wine/winestring.h"
 #include "crtdll.h"
 #include "tchar.h"
-#include "heap.h"
-
-#include "winnt.h"
-#include "winbase.h"
 #include "debug.h"
 
 #include "storage32.h"

@@ -25,7 +25,6 @@
 #include "heap.h"
 #include "debug.h"
 #include "winerror.h"
-#include "mapidefs.h"
 #include "parsedt.h"
 
 #include <string.h>

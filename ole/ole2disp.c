@@ -5,14 +5,10 @@
  */
 
 #include <string.h>
-#include "windows.h"
 #include "winerror.h"
 #include "ole.h"
-#include "ole2.h"
 #include "oleauto.h"
-#include "wtypes.h"
 #include "wine/obj_base.h"
-#include "objbase.h"
 #include "heap.h"
 #include "ldt.h"
 #include "debug.h"

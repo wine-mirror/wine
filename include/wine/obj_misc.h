@@ -3,13 +3,12 @@
  * These did not really fit into the other categories, whould have 
  * required their own specific category or are too rarely used to be 
  * put in 'obj_base.h'.
- *
- * Depends on 'obj_base.h'.
  */
 
 #ifndef __WINE_WINE_OBJ_MISC_H
 #define __WINE_WINE_OBJ_MISC_H
 
+#include "wine/obj_base.h"
 
 /*****************************************************************************
  * Predeclare the interfaces

@@ -1,14 +1,11 @@
 /*
  * Defines the COM interfaces and APIs related to OLE automation support.
- *
- * Depends on 'obj_base.h'.
  */
 
 #ifndef __WINE_WINE_OBJ_OLEAUT_H
 #define __WINE_WINE_OBJ_OLEAUT_H
 
-#include "windows.h"
-#include "wintypes.h"
+#include "wine/obj_base.h"
 
 /*****************************************************************************
  * Predeclare the interfaces

@@ -7,17 +7,12 @@
 
 #include <assert.h>
 
-#include "windows.h"
+#include "winuser.h"
 #include "winerror.h"
 #include "ole2.h"
 #include "process.h"
-#include "debug.h"
-#include "objbase.h"
-#include "objidl.h"
-#include "wine/obj_base.h"
 #include "wine/obj_clientserver.h"
-#include "wine/obj_storage.h"
-#include "wine/obj_moniker.h"
+#include "debug.h"
 
 /******************************************************************************
  * These are static/global variables and internal data structures that the 

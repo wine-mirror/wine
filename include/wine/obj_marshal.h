@@ -1,13 +1,13 @@
 /*
  * Defines the COM interfaces and APIs that allow an interface to 
  * specify a custom marshaling for its objects.
- *
- * Depends on 'obj_storage.h' and 'obj_base.h'.
  */
 
 #ifndef __WINE_WINE_OBJ_MARSHAL_H
 #define __WINE_WINE_OBJ_MARSHAL_H
 
+#include "wine/obj_base.h"
+#include "wine/obj_storage.h"
 
 /*****************************************************************************
  * Predeclare the interfaces

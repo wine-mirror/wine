@@ -1,15 +1,13 @@
 /*
  * Defines the COM interfaces and APIs related to structured data storage.
- *
- * Depends on 'obj_base.h'.
  */
 
 #ifndef __WINE_WINE_OBJ_STORAGE_H
 #define __WINE_WINE_OBJ_STORAGE_H
 
 
-#include "winbase.h"
-
+#include "winnt.h"
+#include "wine/obj_base.h"
 
 /*****************************************************************************
  * Predeclare the structures

@@ -1,7 +1,5 @@
 /*
  * Defines the COM interfaces and APIs related to OLE Drag and Drop.
- *
- * Depends on 'obj_base.h'.
  */
 
 #ifndef __WINE_WINE_OBJ_DRAGDROP_H
@@ -9,6 +7,8 @@
 
 #include "winnt.h"
 #include "windef.h"
+#include "wine/obj_base.h"
+#include "wine/obj_dataobject.h"
 
 /*****************************************************************************
  * Predeclare the interfaces

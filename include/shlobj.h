@@ -2,8 +2,10 @@
 #define __WINE_SHLOBJ_H
 
 #include "wintypes.h"
+#include "winbase.h"	/* WIN32_FIND_* */
 #include "wine/obj_base.h"
 #include "wine/obj_shelllink.h"
+#include "ole2.h"
 #include "shell.h"
 #include "oleobj.h"
 #include "commctrl.h"

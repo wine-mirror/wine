@@ -7,8 +7,8 @@
 #ifndef __WINE_WINE_OBJ_OLEFONT_H
 #define __WINE_WINE_OBJ_OLEFONT_H
 
-#include "windows.h"
-#include "wintypes.h"
+#include "wine/obj_base.h"
+#include "wingdi.h"	/* TEXTMETRIC*/
 
 /*****************************************************************************
  * Predeclare the interfaces

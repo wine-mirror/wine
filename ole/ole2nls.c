@@ -10,7 +10,6 @@
 #include <stdlib.h>
 #include "winuser.h"
 #include "heap.h"
-#include "ole.h"
 #include "options.h"
 #include "winnls.h"
 #include "winreg.h"

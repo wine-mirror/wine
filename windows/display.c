@@ -7,8 +7,8 @@
 
 #include "config.h"
 
-#include "debug.h"
 #include "display.h"
+#include "debug.h"
 #include "wintypes.h"
 
 #ifndef X_DISPLAY_MISSING

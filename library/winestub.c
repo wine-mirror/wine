@@ -1,7 +1,7 @@
 /* Sample winestub.c file for compiling programs with libwine.so. */
 
 #include <string.h>
-#include "windows.h"
+#include "winuser.h"
 #include "xmalloc.h"
 
 extern int PASCAL WinMain(HINSTANCE,HINSTANCE,LPSTR,int);

@@ -4,6 +4,7 @@
 
 #include <stdlib.h>
 #include "wintypes.h"
+#include "wine/winesound.h"
 #include "debug.h"
 
 INT16 WINAPI OpenSound16(void)

@@ -8,13 +8,12 @@
 #include <string.h>
 #include <assert.h>
 #include "wintypes.h"
+#include "winerror.h"
+#include "winreg.h"
+#include "oleauto.h"
 #include "wine/winbase16.h"
 #include "heap.h"
-#include "winreg.h"
-#include "winerror.h"
-#include "oleauto.h"
 #include "wine/obj_base.h"
-#include "objbase.h"
 #include "debug.h"
 #include "winversion.h"
 

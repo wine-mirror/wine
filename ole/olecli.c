@@ -7,13 +7,11 @@
 /*	At the moment, these are only empty stubs.
  */
 
-#include "windows.h"
 #include "winerror.h"
 #include "ole.h"
 #include "gdi.h"
+#include "wine/obj_dataobject.h"
 #include "debug.h"
-#include "ole2.h"
-#include "objidl.h"
 
 
 extern LONG	OLE_current_handle;

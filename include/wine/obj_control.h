@@ -9,6 +9,9 @@
 
 
 #include "winbase.h"
+#include "winuser.h"
+#include "wine/obj_inplace.h"
+#include "wine/obj_dragdrop.h"
 
 
 /*****************************************************************************

@@ -1,12 +1,11 @@
 /*
  * Defines undocumented Microsoft COM interfaces and APIs seemingly related to some 'channel' notion.
- *
- * Depends on 'obj_base.h'.
  */
 
 #ifndef __WINE_WINE_OBJ_CHANNEL_H
 #define __WINE_WINE_OBJ_CHANNEL_H
 
+#include "wine/obj_base.h"
 
 /*****************************************************************************
  * Predeclare the interfaces

@@ -8,7 +8,6 @@
  */
 #include <assert.h>
 #include <string.h>
-#include "windows.h"
 #include "winerror.h"
 #include "oleauto.h"
 #include "ocidl.h"

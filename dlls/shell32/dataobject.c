@@ -7,15 +7,11 @@
  */
 #include <string.h>
 
-#include "debug.h"
-#include "wintypes.h"
-#include "wine/obj_base.h"
-#include "wine/obj_storage.h"
-#include "wine/obj_moniker.h"
 #include "wine/obj_dataobject.h"
 #include "pidl.h"
 #include "winerror.h"
 #include "shell32_main.h"
+#include "debug.h"
 
 UINT cfShellIDList=0;
 UINT cfFileGroupDesc=0;

@@ -12,13 +12,11 @@
 #include "debug.h"
 #include "winerror.h"
 
-#include "objbase.h"
 #include "wine/obj_base.h"
 #include "wine/obj_dragdrop.h"
 #include "shlguid.h"
 
 #include "pidl.h"
-#include "objbase.h"
 #include "shlobj.h"
 #include "shell32_main.h"
 

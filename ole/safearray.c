@@ -7,15 +7,14 @@
  * Copyright 1999 Sylvain St-Germain
  */
 
-#include <wintypes.h>
-#include <winerror.h>
-#include <winbase.h>
-#include <oleauto.h>
-#include <ole.h>
-#include <strings.h>
 #include <stdio.h>
-#include <debug.h>
+#include <strings.h>
+#include "wintypes.h"
+#include "winerror.h"
+#include "winbase.h"
+#include "oleauto.h"
 #include "wine/obj_base.h"
+#include "debug.h"
 
 /* Localy used methods */
 static INT  

@@ -1,15 +1,13 @@
 /*
  * Defines the COM interfaces and APIs related to the moniker functionality.
- *
- * This file depends on 'obj_storage.h' and 'obj_base.h' and 'obj_misc.h' (IEnumString).
  */
-
-
-
 #ifndef __WINE_WINE_OBJ_MONIKER_H
 #define __WINE_WINE_OBJ_MONIKER_H
 
+#include "wine/obj_base.h"
+#include "wine/obj_storage.h"
 #include "wine/obj_misc.h"
+
 /*****************************************************************************
  * Predeclare the interfaces
  */

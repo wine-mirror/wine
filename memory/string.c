@@ -7,8 +7,9 @@
 
 #include <ctype.h>
 #include <string.h>
-#include "winbase.h"
-#include "winuser.h"
+#include "wine/winbase16.h"
+#include "wine/winuser16.h"
+#include "wine/keyboard16.h"
 #include "winerror.h"
 #include "ldt.h"
 #include "debug.h"

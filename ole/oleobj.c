@@ -6,14 +6,13 @@
 
 
 #include <string.h>
-#include "ole.h"
-#include "ole2.h"
+#include "oleobj.h"
+#include "winbase.h"
 #include "winerror.h"
 #include "wine/obj_base.h"
 #include "wine/obj_storage.h"
 #include "wine/obj_moniker.h"
 #include "wine/obj_dataobject.h"
-#include "oleobj.h"
 #include "debug.h"
 
 

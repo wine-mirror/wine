@@ -1,12 +1,12 @@
 /*
  * Defines the COM interfaces and APIs related to saving properties to file.
- *
- * Depends on 'obj_storage.h' and 'obj_base.h'.
  */
 
 #ifndef __WINE_WINE_OBJ_PROPERTYSTORAGE_H
 #define __WINE_WINE_OBJ_PROPERTYSTORAGE_H
 
+#include "wine/obj_base.h"
+#include "wine/obj_storage.h"
 
 /*****************************************************************************
  * Predeclare the interfaces

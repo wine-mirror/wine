@@ -10,6 +10,7 @@
 
 #include "winbase.h"
 #include "winuser.h"
+#include "wine/obj_moniker.h"
 
 /*****************************************************************************
  * Predeclare the structures
