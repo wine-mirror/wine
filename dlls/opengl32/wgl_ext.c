@@ -85,15 +85,19 @@ inline static void set_drawable( HDC hdc, Drawable drawable )
 static const char *WGL_extensions_base = "WGL_ARB_extensions_string WGL_EXT_extensions_string";
 static char *WGL_extensions = NULL;
 
-/* Extensions-query functions */
-BOOL query_function_multisample(const char *gl_version, const char *gl_extensions, 
+/**
+ * Extensions-query functions 
+ *
+ * @TODO: use a struct to handle parameters 
+ */
+BOOL query_function_multisample(glXGetProcAddressARB_t proc, const char *gl_version, const char *gl_extensions, 
 				const char* glx_version, const char *glx_extensions,
 				const char *server_glx_extensions, const char *client_glx_extensions)
 {
   return NULL != strstr("GLX_ARB_multisample", glx_extensions);
 }
 
-BOOL query_function_pbuffer(const char *gl_version, const char *gl_extensions, 
+BOOL query_function_pbuffer(glXGetProcAddressARB_t proc, const char *gl_version, const char *gl_extensions, 
 			    const char* glx_version, const char *glx_extensions,
 			    const char *server_glx_extensions, const char *client_glx_extensions)
 {
@@ -103,18 +107,30 @@ BOOL query_function_pbuffer(const char *gl_version, const char *gl_extensions,
   return 0 <= strcmp("1.3", glx_version) || NULL != strstr(glx_extensions, "GLX_SGIX_pbuffer");
 }
 
-BOOL query_function_pixel_format(const char *gl_version, const char *gl_extensions, 
+BOOL query_function_pixel_format(glXGetProcAddressARB_t proc, const char *gl_version, const char *gl_extensions, 
 				 const char* glx_version, const char *glx_extensions,
 				 const char *server_glx_extensions, const char *client_glx_extensions)
 {
   return TRUE;
 }
 
-BOOL query_function_render_texture(const char *gl_version, const char *gl_extensions, 
+/** GLX_ARB_render_texture */
+Bool (*p_glXBindTexImageARB)(Display *dpy, GLXPbuffer pbuffer, int buffer);
+Bool (*p_glXReleaseTexImageARB)(Display *dpy, GLXPbuffer pbuffer, int buffer);
+Bool (*p_glXDrawableAttribARB)(Display *dpy, GLXDrawable draw, const int *attribList);
+
+BOOL query_function_render_texture(glXGetProcAddressARB_t proc, const char *gl_version, const char *gl_extensions, 
 				   const char* glx_version, const char *glx_extensions,
 				   const char *server_glx_extensions, const char *client_glx_extensions)
 {
-  return 0 <= strcmp("1.3", glx_version) || NULL != strstr(glx_extensions, "GLX_SGIX_pbuffer");
+  BOOL bTest = (0 <= strcmp("1.3", glx_version) || NULL != strstr(glx_extensions, "GLX_SGIX_pbuffer") || NULL != strstr(glx_extensions, "GLX_ARB_render_texture"));
+  if (bTest) {
+    p_glXBindTexImageARB = proc("glXBindTexImageARB");
+    p_glXReleaseTexImageARB = proc("glXReleaseTexImageARB");
+    p_glXDrawableAttribARB = proc("glXDrawableAttribARB");
+    bTest = (NULL != p_glXBindTexImageARB && NULL != p_glXReleaseTexImageARB && NULL != p_glXDrawableAttribARB);
+  }
+  return bTest;
 }
 
 /***********************************************************************
@@ -385,31 +401,33 @@ GLboolean WINAPI wglQueryPbufferARB(HPBUFFERARB hPbuffer, int iAttribute, int *p
     break;
   }
 
-
   return GL_TRUE;
 }
 
 GLboolean WINAPI wglBindTexImageARB(HPBUFFERARB hPbuffer, int iBuffer)
 {
+  Wine_GLPBuffer* object = (Wine_GLPBuffer*) hPbuffer;
   TRACE("(%p, %d)\n", hPbuffer, iBuffer);
-  return GL_TRUE;
+  return p_glXBindTexImageARB(object->display, object->drawable, iBuffer);
 }
 
 GLboolean WINAPI wglReleaseTexImageARB(HPBUFFERARB hPbuffer, int iBuffer)
 {
+  Wine_GLPBuffer* object = (Wine_GLPBuffer*) hPbuffer;
   TRACE("(%p, %d)\n", hPbuffer, iBuffer);
-  return GL_TRUE;
+  return p_glXReleaseTexImageARB(object->display, object->drawable, iBuffer);
 }
 
 GLboolean WINAPI wglSetPbufferAttribARB(HPBUFFERARB hPbuffer, const int *piAttribList)
 {
-  TRACE("(%p, %p)\n", hPbuffer, piAttribList);
-  return GL_TRUE;
+  Wine_GLPBuffer* object = (Wine_GLPBuffer*) hPbuffer;
+  WARN("(%p, %p): alpha-testing, report any problem\n", hPbuffer, piAttribList);
+  return p_glXDrawableAttribARB(object->display, object->drawable, piAttribList);
 }
 
 static const struct {
     const char *name;
-    BOOL (*query_function)(const char *gl_version, const char *gl_extensions,
+    BOOL (*query_function)(glXGetProcAddressARB_t proc, const char *gl_version, const char *gl_extensions,
 			   const char *glx_version, const char *glx_extensions,
 			   const char *server_glx_extensions, const char *client_glx_extensions);
 } extension_list[] = {
@@ -420,7 +438,7 @@ static const struct {
 };
 
 /* Used to initialize the WGL extension string at DLL loading */
-void wgl_ext_initialize_extensions(Display *display, int screen)
+void wgl_ext_initialize_extensions(Display *display, int screen, glXGetProcAddressARB_t proc)
 {
     int size = strlen(WGL_extensions_base);
     const char *glx_extensions = glXQueryExtensionsString(display, screen);
@@ -438,7 +456,7 @@ void wgl_ext_initialize_extensions(Display *display, int screen)
     TRACE("Client GLX exts : %s.\n", debugstr_a(client_glx_extensions));
 
     for (i = 0; i < (sizeof(extension_list) / sizeof(extension_list[0])); i++) {
-	if (extension_list[i].query_function(gl_version, gl_extensions, 
+	if (extension_list[i].query_function(proc, gl_version, gl_extensions, 
 					     glx_version, glx_extensions,
 					     server_glx_extensions, client_glx_extensions)) {
 	    size += strlen(extension_list[i].name) + 1;
@@ -452,7 +470,7 @@ void wgl_ext_initialize_extensions(Display *display, int screen)
     } else {
 	strcpy(WGL_extensions, WGL_extensions_base);
 	for (i = 0; i < (sizeof(extension_list) / sizeof(extension_list[0])); i++) {
-	    if (extension_list[i].query_function(gl_version, gl_extensions, 
+	    if (extension_list[i].query_function(proc, gl_version, gl_extensions, 
 						 glx_version, glx_extensions,
 						 server_glx_extensions, client_glx_extensions)) {
 		strcat(WGL_extensions, " ");

@@ -22,8 +22,10 @@
 
 #include "opengl_ext.h"
 
+typedef void* (*glXGetProcAddressARB_t)(const GLubyte *);
+
 /* Used to initialize the WGL extension string at DLL loading */
-void wgl_ext_initialize_extensions(Display *display, int screen);
+void wgl_ext_initialize_extensions(Display *display, int screen, glXGetProcAddressARB_t proc);
 void wgl_ext_finalize_extensions(void);
 
 typedef struct {

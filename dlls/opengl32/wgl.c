@@ -54,7 +54,7 @@ static Display *default_display;  /* display to use for default context */
 
 static HMODULE opengl32_handle;
 
-static void *(*p_glXGetProcAddressARB)(const GLubyte *);
+static glXGetProcAddressARB_t p_glXGetProcAddressARB = NULL;
 
 typedef struct wine_glcontext {
   HDC hdc;
@@ -761,7 +761,7 @@ static BOOL process_attach(void)
   }
 
   /* Initialize also the list of supported WGL extensions. */
-  wgl_ext_initialize_extensions(default_display, DefaultScreen(default_display));
+  wgl_ext_initialize_extensions(default_display, DefaultScreen(default_display), p_glXGetProcAddressARB);
   
   if (default_cx == NULL) {
     ERR("Could not create default context.\n");
