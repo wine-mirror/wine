@@ -91,6 +91,8 @@
 
   Status:
       Almost finished.
+      Unicode notifications are not supported (WM_NOTIFYFORMAT).
+      Order array not supported.
 
 
 3.7 Hot Key Control
@@ -154,8 +156,11 @@
 
 3.12 Native font control
 ------------------------
+  Author:
+      Dummy written by Eric Kohl. <ekohl@abo.rhein-zeitung.de>
+
   Status:
-      Dummy written by Eric Kohl.
+      Dummy control. No functionality.
 
   Notes:
       Author needed!! Any volunteers??
@@ -164,10 +169,11 @@
 3.13 Pager Control
 ------------------
   Author:
-      Dummy written by Eric Kohl.
+      Dummy written by Eric Kohl. <ekohl@abo.rhein-zeitung.de>
 
   Status:
-      Dummy control. No functionality.
+      Under construction.
+      Many missing features.
 
   Notes:
       Author needed!! Any volunteers??
@@ -225,7 +231,6 @@
       Almost finished.
 
   Notes:
-      - Unicode support is still missing.
       - Tooltip integration is almost complete.
 
 
@@ -280,7 +285,7 @@
       Alex Priem <alexp@sci.kun.nl>
 
   Status:
-      Under contstruction.
+      Under construction.
 
 
 3.23 Updown Control
