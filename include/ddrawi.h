@@ -1,0 +1,378 @@
+/* DirectDraw driver interface */
+/* (DirectX 7 version) */
+
+#ifndef __WINE_DDRAWI_H
+#define __WINE_DDRAWI_H
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+#include "ddraw.h"
+#include "dciddi.h" /* the DD HAL is layered onto DCI escapes */
+
+#define DDAPI WINAPI
+
+/* the DirectDraw versions */
+#define DD_VERSION		0x0200 /* compatibility version */
+#define DD_RUNTIME_VERSION	0x0700 /* actual version */
+
+/* the HAL version returned from QUERYESCSUPPORT - DCICOMMAND */
+#define DD_HAL_VERSION	0x0100
+
+/* more DCICOMMAND escapes */
+#define DDCREATEDRIVEROBJECT	10
+#define DDGET32BITDRIVERNAME	11
+#define DDNEWCALLBACKFNS	12
+#define DDVERSIONINFO		13
+
+/*****************************************************************************
+ * Initialization stuff
+ */
+typedef struct {
+    char szName[260];
+    char szEntryPoint[64];
+    DWORD dwContext;
+} DD32BITDRIVERDATA,*LPDD32BITDRIVERDATA;
+
+typedef struct {
+    DWORD dwHALVersion;
+    ULONG_PTR dwReserved1;
+    ULONG_PTR dwReserved2;
+} DDVERSIONDATA,*LPDDVERSIONDATA;
+
+typedef DWORD PASCAL (*LPDD32BITDRIVERINIT)(DWORD dwContext);
+
+/* pointer to video memory */
+typedef ULONG_PTR FLATPTR;
+
+/* predeclare some structures */
+typedef struct _DDHALINFO *LPDDHALINFO;
+typedef struct _DDRAWI_DIRECTDRAW_INT *LPDDRAWI_DIRECTDRAW_INT;
+typedef struct _DDRAWI_DIRECTDRAW_LCL *LPDDRAWI_DIRECTDRAW_LCL;
+typedef struct _DDRAWI_DIRECTDRAW_GBL *LPDDRAWI_DIRECTDRAW_GBL;
+
+/*****************************************************************************
+ * driver->ddraw callbacks
+ */
+typedef BOOL	DDAPI (*LPDDHAL_SETINFO)(LPDDHALINFO lpDDHalInfo, BOOL reset);
+typedef FLATPTR	DDAPI (*LPDDHAL_VIDMEMALLOC)(LPDDRAWI_DIRECTDRAW_GBL lpDD, int heap, DWORD dwWidth, DWORD dwHeight);
+typedef void	DDAPI (*LPDDHAL_VIDMEMFREE)(LPDDRAWI_DIRECTDRAW_GBL lpDD, int heap, FLATPTR fpMem);
+
+typedef struct {
+    DWORD		dwSize;
+    LPDDHAL_SETINFO	lpSetInfo;
+    LPDDHAL_VIDMEMALLOC	lpVidMemAlloc;
+    LPDDHAL_VIDMEMFREE	lpVidMemFree;
+} DDHALDDRAWFNS,*LPDDHALDDRAWFNS;
+
+/*****************************************************************************
+ * mode info structure
+ */
+typedef struct _DDHALMODEINFO {
+    DWORD	dwWidth;
+    DWORD	dwHeight;
+    LONG	lPitch;
+    DWORD	dwBPP;
+    WORD	wFlags;
+    WORD	wRefreshRate;
+    DWORD	dwRBitMask;
+    DWORD	dwGBitMask;
+    DWORD	dwBBitMask;
+    DWORD	dwAlphaBitMask;
+} DDHALMODEINFO,*LPDDHALMODEINFO;
+
+#define DDMODEINFO_PALETTIZED	0x0001
+#define DDMODEINFO_MODEX	0x0002
+#define DDMODEINFO_UNSUPPORTED	0x0004
+#define DDMODEINFO_STANDARDVGA	0x0008
+#define DDMODEINFO_MAXREFRESH	0x0010
+#define DDMODEINFO_STEREO	0x0020
+
+/*****************************************************************************
+ * video memory info structure
+ */
+typedef struct _VIDMEM {
+    DWORD	dwFlags;
+    FLATPTR	fpStart;
+    union {
+	FLATPTR	fpEnd;
+	DWORD	dwWidth;
+    } DUMMYUNIONNAME1;
+    DDSCAPS	ddsCaps;
+    DDSCAPS	ddsCapsAlt;
+    union {
+	FLATPTR	lpHeap;
+	DWORD	dwHeight;
+    } DUMMYUNIONNAME2;
+} VIDMEM,*LPVIDMEM;
+
+#define VIDMEM_ISLINEAR		0x00000001
+#define VIDMEM_ISRECTANGULAR	0x00000002
+#define VIDMEM_ISHEAP		0x00000004
+#define VIDMEM_ISNONLOCAL	0x00000008
+#define VIDMEM_ISWC		0x00000010
+#define VIDMEM_ISDISABLED	0x00000020
+
+typedef struct _VIDMEMINFO {
+    FLATPTR		fpPrimary;
+    DWORD		dwFlags;
+    DWORD		dwDisplayWidth;
+    DWORD		dwDisplayHeight;
+    LONG		lDisplayPitch;
+    DDPIXELFORMAT	ddpfDisplay;
+    DWORD		dwOffscreenAlign;
+    DWORD		dwOverlayAlign;
+    DWORD		dwTextureAlign;
+    DWORD		dwZBufferAlign;
+    DWORD		dwAlphaAlign;
+    DWORD		dwNumHeaps;
+    LPVIDMEM		pvmList;
+} VIDMEMINFO,*LPVIDMEMINFO;
+
+/*****************************************************************************
+ * core capabilities structure
+ */
+typedef struct _DDCORECAPS {
+    DWORD	dwSize;
+    DWORD	dwCaps;
+    DWORD	dwCaps2;
+    DWORD	dwCKeyCaps;
+    DWORD	dwFXCaps;
+    DWORD	dwFXAlphaCaps;
+    DWORD	dwPalCaps;
+    DWORD	dwSVCaps;
+    DWORD	dwAlphaBltConstBitDepths;
+    DWORD	dwAlphaBltPixelBitDepths;
+    DWORD	dwAlphaBltSurfaceBitDepths;
+    DWORD	dwAlphaOverlayConstBitDepths;
+    DWORD	dwAlphaOverlayPixelBitDepths;
+    DWORD	dwAlphaOverlaySurfaceBitDepths;
+    DWORD	dwZBufferBitDepths;
+    DWORD	dwVidMemTotal;
+    DWORD	dwVidMemFree;
+    DWORD	dwMaxVisibleOverlays;
+    DWORD	dwCurrVisibleOverlays;
+    DWORD	dwNumFourCCCodes;
+    DWORD	dwAlignBoundarySrc;
+    DWORD	dwAlignSizeSrc;
+    DWORD	dwAlignBoundaryDest;
+    DWORD	dwAlignSizeDest;
+    DWORD	dwAlignStrideAlign;
+    DWORD	dwRops[DD_ROP_SPACE];
+    DDSCAPS	ddsCaps;
+    DWORD	dwMinOverlayStretch;
+    DWORD	dwMaxOverlayStretch;
+    DWORD	dwMinLiveVideoStretch;
+    DWORD	dwMaxLiveVideoStretch;
+    DWORD	dwMinHwCodecStretch;
+    DWORD	dwMaxHwCodecStretch;
+    DWORD	dwReserved1;
+    DWORD	dwReserved2;
+    DWORD	dwReserved3;
+    DWORD	dwSVBCaps;
+    DWORD	dwSVBCKeyCaps;
+    DWORD	dwSVBFXCaps;
+    DWORD	dwSVBRops[DD_ROP_SPACE];
+    DWORD	dwVSBCaps;
+    DWORD	dwVSBCKeyCaps;
+    DWORD	dwVSBFXCaps;
+    DWORD	dwVSBRops[DD_ROP_SPACE];
+    DWORD	dwSSBCaps;
+    DWORD	dwSSBCKeyCaps;
+    DWORD	dwSSBFXCaps;
+    DWORD	dwSSBRops[DD_ROP_SPACE];
+    DWORD       dwMaxVideoPorts;
+    DWORD   	dwCurrVideoPorts;
+    DWORD   	dwSVBCaps2;
+} DDCORECAPS,*LPDDCORECAPS;
+
+/*****************************************************************************
+ * ddraw->driver callbacks
+ */
+#define DDHAL_DRIVER_NOTHANDLED	0
+#define DDHAL_DRIVER_HANDLED	1
+#define DDHAL_DRIVER_NOCKEYHW	2
+
+typedef struct _DDHAL_DESTROYDRIVERDATA		*LPDDHAL_DESTROYDRIVERDATA;
+typedef struct _DDHAL_CREATESURFACEDATA		*LPDDHAL_CREATESURFACEDATA;
+typedef struct _DDHAL_DRVSETCOLORKEYDATA	*LPDDHAL_DRVSETCOLORKEYDATA;
+typedef struct _DDHAL_SETMODEDATA		*LPDDHAL_SETMODEDATA;
+typedef struct _DDHAL_WAITFORVERTICALBLANKDATA	*LPDDHAL_WAITFORVERTICALBLANKDATA;
+typedef struct _DDHAL_CANCREATESURFACEDATA	*LPDDHAL_CANCREATESURFACEDATA;
+typedef struct _DDHAL_CREATEPALETTEDATA		*LPDDHAL_CREATEPALETTEDATA;
+typedef struct _DDHAL_GETSCANLINEDATA		*LPDDHAL_GETSCANLINEDATA;
+typedef struct _DDHAL_SETEXCLUSIVEMODEDATA	*LPDDHAL_SETEXCLUSIVEMODEDATA;
+typedef struct _DDHAL_FLIPTOGDISURFACEDATA	*LPDDHAL_FLIPTOGDISURFACEDATA;
+
+typedef DWORD PASCAL (*LPDDHAL_DESTROYDRIVER)	    (LPDDHAL_DESTROYDRIVERDATA);
+typedef DWORD PASCAL (*LPDDHAL_CREATESURFACE)	    (LPDDHAL_CREATESURFACEDATA);
+typedef DWORD PASCAL (*LPDDHAL_SETCOLORKEY)	    (LPDDHAL_DRVSETCOLORKEYDATA);
+typedef DWORD PASCAL (*LPDDHAL_SETMODE)		    (LPDDHAL_SETMODEDATA);
+typedef DWORD PASCAL (*LPDDHAL_WAITFORVERTICALBLANK)(LPDDHAL_WAITFORVERTICALBLANKDATA);
+typedef DWORD PASCAL (*LPDDHAL_CANCREATESURFACE)    (LPDDHAL_CANCREATESURFACEDATA );
+typedef DWORD PASCAL (*LPDDHAL_CREATEPALETTE)	    (LPDDHAL_CREATEPALETTEDATA);
+typedef DWORD PASCAL (*LPDDHAL_GETSCANLINE)	    (LPDDHAL_GETSCANLINEDATA);
+typedef DWORD PASCAL (*LPDDHAL_SETEXCLUSIVEMODE)    (LPDDHAL_SETEXCLUSIVEMODEDATA);
+typedef DWORD PASCAL (*LPDDHAL_FLIPTOGDISURFACE)    (LPDDHAL_FLIPTOGDISURFACEDATA);
+
+typedef struct _DDHAL_DDCALLBACKS {
+    DWORD				dwSize;
+    DWORD				dwFlags;
+    LPDDHAL_DESTROYDRIVER		DestroyDriver;
+    LPDDHAL_CREATESURFACE		CreateSurface;
+    LPDDHAL_SETCOLORKEY			SetColorKey;
+    LPDDHAL_SETMODE			SetMode;
+    LPDDHAL_WAITFORVERTICALBLANK	WaitForVerticalBlank;
+    LPDDHAL_CANCREATESURFACE		CanCreateSurface;
+    LPDDHAL_CREATEPALETTE		CreatePalette;
+    LPDDHAL_GETSCANLINE			GetScanLine;
+    /* DirectX 2 */
+    LPDDHAL_SETEXCLUSIVEMODE		SetExclusiveMode;
+    LPDDHAL_FLIPTOGDISURFACE		FlipToGDISurface;
+} DDHAL_DDCALLBACKS,*LPDDHAL_DDCALLBACKS;
+
+typedef struct _DDHAL_DESTROYSURFACEDATA	*LPDDHAL_DESTROYSURFACEDATA;
+typedef struct _DDHAL_FLIPDATA			*LPDDHAL_FLIPDATA;
+typedef struct _DDHAL_SETCLIPLISTDATA		*LPDDHAL_SETCLIPLISTDATA;
+typedef struct _DDHAL_LOCKDATA			*LPDDHAL_LOCKDATA;
+typedef struct _DDHAL_UNLOCKDATA		*LPDDHAL_UNLOCKDATA;
+typedef struct _DDHAL_BLTDATA			*LPDDHAL_BLTDATA;
+typedef struct _DDHAL_SETCOLORKEYDATA		*LPDDHAL_SETCOLORKEYDATA;
+typedef struct _DDHAL_ADDATTACHEDSURFACEDATA	*LPDDHAL_ADDATTACHEDSURFACEDATA;
+typedef struct _DDHAL_GETBLTSTATUSDATA		*LPDDHAL_GETBLTSTATUSDATA;
+typedef struct _DDHAL_GETFLIPSTATUSDATA		*LPDDHAL_GETFLIPSTATUSDATA;
+typedef struct _DDHAL_UPDATEOVERLAYDATA		*LPDDHAL_UPDATEOVERLAYDATA;
+typedef struct _DDHAL_SETOVERLAYPOSITIONDATA	*LPDDHAL_SETOVERLAYPOSITIONDATA;
+typedef struct _DDHAL_SETPALETTEDATA		*LPDDHAL_SETPALETTEDATA;
+
+typedef DWORD PASCAL (*LPDDHALSURFCB_DESTROYSURFACE)	(LPDDHAL_DESTROYSURFACEDATA);
+typedef DWORD PASCAL (*LPDDHALSURFCB_FLIP)		(LPDDHAL_FLIPDATA);
+typedef DWORD PASCAL (*LPDDHALSURFCB_SETCLIPLIST)	(LPDDHAL_SETCLIPLISTDATA);
+typedef DWORD PASCAL (*LPDDHALSURFCB_LOCK)		(LPDDHAL_LOCKDATA);
+typedef DWORD PASCAL (*LPDDHALSURFCB_UNLOCK)		(LPDDHAL_UNLOCKDATA);
+typedef DWORD PASCAL (*LPDDHALSURFCB_BLT)		(LPDDHAL_BLTDATA);
+typedef DWORD PASCAL (*LPDDHALSURFCB_SETCOLORKEY)	(LPDDHAL_SETCOLORKEYDATA);
+typedef DWORD PASCAL (*LPDDHALSURFCB_ADDATTACHEDSURFACE)(LPDDHAL_ADDATTACHEDSURFACEDATA);
+typedef DWORD PASCAL (*LPDDHALSURFCB_GETBLTSTATUS)	(LPDDHAL_GETBLTSTATUSDATA);
+typedef DWORD PASCAL (*LPDDHALSURFCB_GETFLIPSTATUS)	(LPDDHAL_GETFLIPSTATUSDATA);
+typedef DWORD PASCAL (*LPDDHALSURFCB_UPDATEOVERLAY)	(LPDDHAL_UPDATEOVERLAYDATA);
+typedef DWORD PASCAL (*LPDDHALSURFCB_SETOVERLAYPOSITION)(LPDDHAL_SETOVERLAYPOSITIONDATA);
+typedef DWORD PASCAL (*LPDDHALSURFCB_SETPALETTE)	(LPDDHAL_SETPALETTEDATA);
+
+typedef struct _DDHAL_DDSURFACECALLBACKS {
+    DWORD				dwSize;
+    DWORD				dwFlags;
+    LPDDHALSURFCB_DESTROYSURFACE	DestroySurface;
+    LPDDHALSURFCB_FLIP			Flip;
+    LPDDHALSURFCB_SETCLIPLIST		SetClipList;
+    LPDDHALSURFCB_LOCK			Lock;
+    LPDDHALSURFCB_UNLOCK		Unlock;
+    LPDDHALSURFCB_BLT			Blt;
+    LPDDHALSURFCB_SETCOLORKEY		SetColorKey;
+    LPDDHALSURFCB_ADDATTACHEDSURFACE	AddAttachedSurface;
+    LPDDHALSURFCB_GETBLTSTATUS		GetBltStatus;
+    LPDDHALSURFCB_GETFLIPSTATUS		GetFlipStatus;
+    LPDDHALSURFCB_UPDATEOVERLAY		UpdateOverlay;
+    LPDDHALSURFCB_SETOVERLAYPOSITION	SetOverlayPosition;
+    LPVOID				reserved4;
+    LPDDHALSURFCB_SETPALETTE		SetPalette;
+} DDHAL_DDSURFACECALLBACKS,*LPDDHAL_DDSURFACECALLBACKS;
+
+typedef struct _DDHAL_DESTROYPALETTEDATA	*LPDDHAL_DESTROYPALETTEDATA;
+typedef struct _DDHAL_SETENTRIESDATA		*LPDDHAL_SETENTRIESDATA;
+
+typedef DWORD PASCAL (*LPDDHALPALCB_DESTROYPALETTE)(LPDDHAL_DESTROYPALETTEDATA);
+typedef DWORD PASCAL (*LPDDHALPALCB_SETENTRIES)    (LPDDHAL_SETENTRIESDATA);
+
+typedef struct _DDHAL_DDPALETTECALLBACKS {
+    DWORD				dwSize;
+    DWORD				dwFlags;
+    LPDDHALPALCB_DESTROYPALETTE		DestroyPalette;
+    LPDDHALPALCB_SETENTRIES		SetEntries;
+} DDHAL_DDPALETTECALLBACKS,*LPDDHAL_DDPALETTECALLBACKS;
+
+typedef DWORD PASCAL (*LPDDHALEXEBUFCB_CANCREATEEXEBUF)(LPDDHAL_CANCREATESURFACEDATA );
+typedef DWORD PASCAL (*LPDDHALEXEBUFCB_CREATEEXEBUF)   (LPDDHAL_CREATESURFACEDATA);
+typedef DWORD PASCAL (*LPDDHALEXEBUFCB_DESTROYEXEBUF)  (LPDDHAL_DESTROYSURFACEDATA);
+typedef DWORD PASCAL (*LPDDHALEXEBUFCB_LOCKEXEBUF)     (LPDDHAL_LOCKDATA);
+typedef DWORD PASCAL (*LPDDHALEXEBUFCB_UNLOCKEXEBUF)   (LPDDHAL_UNLOCKDATA);
+
+typedef struct _DDHAL_DDEXEBUFCALLBACKS {
+    DWORD				dwSize;
+    DWORD				dwFlags;
+    LPDDHALEXEBUFCB_CANCREATEEXEBUF	CanCreateExecuteBuffer;
+    LPDDHALEXEBUFCB_CREATEEXEBUF	CreateExecuteBuffer;
+    LPDDHALEXEBUFCB_DESTROYEXEBUF	DestroyExecuteBuffer;
+    LPDDHALEXEBUFCB_LOCKEXEBUF		LockExecuteBuffer;
+    LPDDHALEXEBUFCB_UNLOCKEXEBUF	UnlockExecuteBuffer;
+} DDHAL_DDEXEBUFCALLBACKS,*LPDDHAL_DDEXEBUFCALLBACKS;
+
+/*****************************************************************************
+ * driver info structure
+ *
+ * The HAL is queried for additional callbacks via the GetDriverInfo callback.
+ */
+typedef struct _DDHAL_GETDRIVERINFODATA *LPDDHAL_GETDRIVERINFODATA;
+typedef DWORD PASCAL (*LPDDHAL_GETDRIVERINFO)(LPDDHAL_GETDRIVERINFODATA);
+
+typedef struct _DDHALINFO {
+    DWORD			dwSize;
+    LPDDHAL_DDCALLBACKS		lpDDCallbacks;
+    LPDDHAL_DDSURFACECALLBACKS	lpDDSurfaceCallbacks;
+    LPDDHAL_DDPALETTECALLBACKS	lpDDPaletteCallbacks;
+    VIDMEMINFO			vmiData;
+    DDCORECAPS			ddCaps;
+    DWORD			dwMonitorFrequency;
+    LPDDHAL_GETDRIVERINFO	GetDriverInfo;
+    DWORD			dwModeIndex;
+    LPDWORD			lpdwFourCC;
+    DWORD			dwNumModes;
+    LPDDHALMODEINFO		lpModeInfo;
+    DWORD			dwFlags;
+    LPVOID			lpPDevice;
+    DWORD			hInstance;
+    /* DirectX 2 */
+    ULONG_PTR			lpD3DGlobalDriverData;
+    ULONG_PTR			lpD3DHALCallbacks;
+    LPDDHAL_DDEXEBUFCALLBACKS	lpDDExeBufCallbacks;
+} DDHALINFO;
+
+#define DDHALINFO_ISPRIMARYDISPLAY	0x00000001
+#define DDHALINFO_MODEXILLEGAL		0x00000002
+#define DDHALINFO_GETDRIVERINFOSET	0x00000004
+
+/*****************************************************************************
+ * parameter structures
+ */
+typedef struct _DDHAL_DESTROYDRIVERDATA {
+    LPDDRAWI_DIRECTDRAW_GBL	lpDD;
+    HRESULT			ddRVal;
+    LPDDHAL_DESTROYDRIVER	DestroyDriver;
+} DDHAL_DESTROYDRIVERDATA;
+
+typedef struct _DDHAL_SETMODEDATA {
+    LPDDRAWI_DIRECTDRAW_GBL	lpDD;
+    DWORD			dwModeIndex;
+    HRESULT			ddRVal;
+    LPDDHAL_SETMODE		SetMode;
+    BOOL			inexcl;
+    BOOL			useRefreshRate;
+} DDHAL_SETMODEDATA;
+
+typedef struct _DDHAL_GETDRIVERINFODATA {
+    DWORD	dwSize;
+    DWORD	dwFlags;
+    GUID	guidInfo;
+    DWORD	dwExpectedSize;
+    LPVOID	lpvData;
+    DWORD	dwActualSize;
+    HRESULT	ddRVal;
+    ULONG_PTR	dwContext;
+} DDHAL_GETDRIVERINFODATA;
+
+#ifdef __cplusplus
+} /* extern "C" */
+#endif
+
+#endif /* __WINE_DDRAWI_H */
