@@ -617,6 +617,8 @@ typedef struct tagCY {
 } CY;
 
 #else
+#ifndef _tagCY_DEFINED
+#define _tagCY_DEFINED
 typedef union tagCY {
     struct {
 #ifdef WORDS_BIGENDIAN
@@ -629,6 +631,7 @@ typedef union tagCY {
     } DUMMYSTRUCTNAME;
     LONGLONG int64;
 } CY;
+#endif
 #endif
 typedef CY *LPCY;
 

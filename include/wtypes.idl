@@ -570,6 +570,8 @@ typedef struct tagCY {
   LONGLONG int64;
 } CY;
 cpp_quote("#else") /* C/C++ defs */
+cpp_quote("#ifndef _tagCY_DEFINED")
+cpp_quote("#define _tagCY_DEFINED")
 cpp_quote("typedef union tagCY {")
 cpp_quote("    struct {")
 cpp_quote("#ifdef WORDS_BIGENDIAN")
@@ -582,6 +584,7 @@ cpp_quote("#endif")
 cpp_quote("    } DUMMYSTRUCTNAME;")
 cpp_quote("    LONGLONG int64;")
 cpp_quote("} CY;")
+cpp_quote("#endif")
 cpp_quote("#endif")
 
 typedef CY *LPCY;
