@@ -122,28 +122,21 @@ extern DWORD 			MCI_SendCommandFrom32(UINT wDevID, UINT16 wMsg, DWORD dwParam1, 
 extern DWORD 			MCI_SendCommandFrom16(UINT wDevID, UINT16 wMsg, DWORD dwParam1, DWORD dwParam2);
 extern DWORD 			MCI_SendCommandAsync(UINT wDevID, UINT wMsg, DWORD dwParam1, DWORD dwParam2, UINT size);
 
-LONG 				MCIWAVE_DriverProc(DWORD dwDevID, HDRVR hDriv, DWORD wMsg, 
-						   DWORD dwParam1, DWORD dwParam2);
-LONG 				MCIMIDI_DriverProc(DWORD dwDevID, HDRVR hDriv, DWORD wMsg, 
-						   DWORD dwParam1, DWORD dwParam2);
-LONG				MCICDAUDIO_DriverProc(DWORD dwDevID, HDRVR hDriv, DWORD wMsg, 
-						      DWORD dwParam1, DWORD dwParam2);
-LONG				MCIANIM_DriverProc(DWORD dwDevID, HDRVR hDriv, DWORD wMsg, 
-						   DWORD dwParam1, DWORD dwParam2);
-LONG				MCIAVI_DriverProc(DWORD dwDevID, HDRVR hDriv, DWORD wMsg, 
-						  DWORD dwParam1, DWORD dwParam2);
+HINSTANCE16		WINAPI	mmTaskCreate16(SEGPTR spProc, HINSTANCE16 *lphMmTask, DWORD dwPmt);
+void    		WINAPI  mmTaskBlock16(HINSTANCE16 hInst);
+LRESULT 		WINAPI 	mmTaskSignal16(HTASK16 ht);
+void    		WINAPI  mmTaskYield16(void);
 
-HINSTANCE16	WINAPI 		mmTaskCreate16(SEGPTR spProc, HINSTANCE16 *lphMmTask, DWORD dwPmt);
-void    	WINAPI  	mmTaskBlock16(HINSTANCE16 hInst);
-LRESULT 	WINAPI 		mmTaskSignal16(HTASK16 ht);
-void    	WINAPI  	mmTaskYield16(void);
+void		CALLBACK	WINE_mmThreadEntryPoint(DWORD _pmt);
+LRESULT 		WINAPI 	mmThreadCreate16(FARPROC16 fpThreadAddr, LPHANDLE lpHndl, DWORD dwPmt, DWORD dwFlags);
+void 			WINAPI 	mmThreadSignal16(HANDLE16 hndl);
+void    		WINAPI	mmThreadBlock16(HANDLE16 hndl);
+HANDLE16 		WINAPI	mmThreadGetTask16(HANDLE16 hndl);
+BOOL16   		WINAPI	mmThreadIsValid16(HANDLE16 hndl);
+BOOL16  		WINAPI	mmThreadIsCurrent16(HANDLE16 hndl);
 
-void    	WINAPI  	WINE_mmThreadEntryPoint(DWORD _pmt);
-LRESULT 	WINAPI 		mmThreadCreate16(FARPROC16 fpThreadAddr, LPHANDLE lpHndl, DWORD dwPmt, DWORD dwFlags);
-void 		WINAPI 		mmThreadSignal16(HANDLE16 hndl);
-void    	WINAPI 		mmThreadBlock16(HANDLE16 hndl);
-HANDLE16 	WINAPI 		mmThreadGetTask16(HANDLE16 hndl);
-BOOL16   	WINAPI 		mmThreadIsValid16(HANDLE16 hndl);
-BOOL16  	WINAPI 		mmThreadIsCurrent16(HANDLE16 hndl);
+BOOL				MULTIMEDIA_MMTimeInit(void);
+BOOL				MULTIMEDIA_MciInit(void);
+BOOL				MULTIMEDIA_MidiInit(void);
 
 #endif /* __WINE_MULTIMEDIA_H */
