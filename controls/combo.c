@@ -574,6 +574,10 @@ static LRESULT COMBO_Create( HWND hwnd, LPHEADCOMBO lphc, HWND hwndParent, LONG 
 	lbeStyle   &= ~WS_BORDER;
 	lbeExStyle |= WS_EX_CLIENTEDGE;
       }
+      else
+      {
+        lbeExStyle |= (WS_EX_TOPMOST | WS_EX_TOOLWINDOW);
+      }
 
       if (unicode)
           lphc->hWndLBox = CreateWindowExW(lbeExStyle, clbName, NULL, lbeStyle,
