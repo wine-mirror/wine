@@ -49,13 +49,13 @@ typedef BSTR           *LPBSTR;
 
 #ifndef _DWORDLONG_
 #define _DWORDLONG_
-typedef __uint64 DWORDLONG, *PDWORDLONG;
+typedef unsigned __int64 DWORDLONG, *PDWORDLONG;
 #endif
 
 #ifndef _ULONGLONG_
 #define _ULONGLONG_
-typedef __int64 LONGLONG, *PLONGLONG;
-typedef __uint64 ULONGLONG, *PULONGLONG;
+typedef signed __int64   LONGLONG, *PLONGLONG;
+typedef unsigned __int64 ULONGLONG, *PULONGLONG;
 #endif
 
 typedef enum tagDVASPECT

@@ -381,8 +381,8 @@ typedef unsigned short  WCHAR,      *PWCHAR;
 /* 'Extended/Wide' numerical types */
 #ifndef _ULONGLONG_
 #define _ULONGLONG_
-typedef __int64         LONGLONG,   *PLONGLONG;
-typedef __uint64        ULONGLONG,  *PULONGLONG;
+typedef signed __int64   LONGLONG,   *PLONGLONG;
+typedef unsigned __int64 ULONGLONG,  *PULONGLONG;
 #endif
 
 #ifndef _DWORDLONG_

@@ -41,7 +41,6 @@ static const char *swap_after[] =
   "wchar_t", "WCHAR", /* Help with Unicode compliles */
   "wctype_t", "WCHAR",
   "wint_t", "WCHAR",
-  "unsigned __int64", "__uint64", /* Wine doesn't cope with unsigned i64's */
   NULL, NULL
 };
 

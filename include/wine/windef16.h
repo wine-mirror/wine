@@ -27,8 +27,6 @@
 
 /* Standard data types */
 
-typedef short           INT16;
-typedef unsigned short  UINT16;
 typedef unsigned short  BOOL16;
 typedef DWORD           SEGPTR;
 

@@ -56,7 +56,6 @@
 #define	ASSERT(x)	/* nothing */
 #endif
 
-typedef __uint64 QWORD;
 #ifdef _MSC_VER
 #define	LONGLONGARG _T("I64")
 #else

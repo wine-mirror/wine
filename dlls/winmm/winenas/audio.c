@@ -55,8 +55,9 @@
 #define FRAG_COUNT 10
 
 /* avoid type conflicts */
-#define INT32 X_INT32
+#define INT8 X_INT8
 #define INT16 X_INT16
+#define INT32 X_INT32
 #define BOOL X_BOOL
 #define BYTE X_BYTE
 #ifdef HAVE_AUDIO_AUDIOLIB_H
@@ -65,8 +66,9 @@
 #ifdef HAVE_AUDIO_SOUNDLIB_H
 #include <audio/soundlib.h>
 #endif
-#undef INT32
+#undef INT8
 #undef INT16
+#undef INT32
 #undef BOOL
 #undef BYTE
 

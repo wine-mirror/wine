@@ -29,7 +29,7 @@
 
 int WCMD_dir_sort (const void *a, const void *b);
 void WCMD_list_directory (char *path, int level);
-char * WCMD_filesize64 (__uint64 free);
+char * WCMD_filesize64 (ULONGLONG free);
 char * WCMD_strrev (char *buff);
 
 
@@ -43,7 +43,7 @@ extern DWORD errorlevel;
 
 int file_total, dir_total, line_count, page_mode, recurse, wide, bare,
     max_width;
-__uint64 byte_total;
+ULONGLONG byte_total;
 
 /*****************************************************************************
  * WCMD_directory
@@ -363,9 +363,9 @@ ULARGE_INTEGER byte_count, file_size;
  * FIXME: There must be a better algorithm!
  */
 
-char * WCMD_filesize64 (__uint64 n) {
+char * WCMD_filesize64 (ULONGLONG n) {
 
-__uint64 q;
+ULONGLONG q;
 uint r, i;
 char *p;
 static char buff[32];
@@ -410,4 +410,3 @@ int WCMD_dir_sort (const void *a, const void *b) {
   return (lstrcmpi(((WIN32_FIND_DATA *)a)->cFileName,
   	((WIN32_FIND_DATA *)b)->cFileName));
 }
-

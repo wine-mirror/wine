@@ -60,6 +60,7 @@
 #ifdef HAVE_LIBJPEG
 /* This is a hack, so jpeglib.h does not redefine INT32 and the like*/
 #define XMD_H
+#define UINT8 JPEG_UINT8
 #define UINT16 JPEG_UINT16
 #ifdef HAVE_JPEGLIB_H
 # include <jpeglib.h>

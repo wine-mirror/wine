@@ -1722,9 +1722,6 @@ static void draw_item(Pane* pane, LPDRAWITEMSTRUCT dis, Entry* entry, int calcWi
 	RECT focusRect = dis->rcItem;
 	HBRUSH hbrush;
 	enum IMAGE img;
-#ifndef _NO_EXTENSIONS
-	QWORD index;
-#endif
 	int img_pos, cx;
 	int col = 0;
 
@@ -1922,10 +1919,9 @@ static void draw_item(Pane* pane, LPDRAWITEMSTRUCT dis, Entry* entry, int calcWi
 		if (!(attrs&FILE_ATTRIBUTE_DIRECTORY))
 #endif
 		{
-			QWORD size;
+			ULONGLONG size;
 
-			*(DWORD*)(&size) = entry->data.nFileSizeLow;	/*TODO: platform spefific */
-			*(((DWORD*)&size)+1) = entry->data.nFileSizeHigh;
+                        size = ((ULONGLONG)entry->data.nFileSizeHigh << 32) | entry->data.nFileSizeLow;
 
 			_stprintf(buffer, _T("%") LONGLONGARG _T("d"), size);
 
@@ -1966,8 +1962,7 @@ static void draw_item(Pane* pane, LPDRAWITEMSTRUCT dis, Entry* entry, int calcWi
 
 #ifndef _NO_EXTENSIONS
 	if (entry->bhfi_valid) {
-	  ((DWORD*)&index)[0] = entry->bhfi.nFileIndexLow;	/*TODO: platform spefific */
-		((DWORD*)&index)[1] = entry->bhfi.nFileIndexHigh;
+            ULONGLONG index = ((ULONGLONG)entry->bhfi.nFileIndexHigh << 32) | entry->bhfi.nFileIndexLow;
 
 		if (visible_cols & COL_INDEX) {
 			_stprintf(buffer, _T("%") LONGLONGARG _T("X"), index);

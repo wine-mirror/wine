@@ -28,8 +28,8 @@
 #define TARGET_IS_NT351_OR_WIN95_OR_LATER 1
 
 typedef unsigned char byte;
-typedef __int64 hyper;
-typedef __uint64 MIDL_uhyper;
+#define hyper __int64
+#define MIDL_uhyper unsigned __int64
 /* 'boolean' tend to conflict, let's call it _wine_boolean */
 typedef unsigned char _wine_boolean;
 /* typedef _wine_boolean boolean; */
