@@ -3131,9 +3131,9 @@ REBAR_InsertBandA (REBAR_INFO *infoPtr, WPARAM wParam, LPARAM lParam)
 	}
 
 	/* post copy */
-	if (uIndex < infoPtr->uNumBands - 1) {
+	if (uIndex < infoPtr->uNumBands) {
 	    memcpy (&infoPtr->bands[uIndex+1], &oldBands[uIndex],
-		    (infoPtr->uNumBands - uIndex - 1) * sizeof(REBAR_BAND));
+		    (infoPtr->uNumBands - uIndex) * sizeof(REBAR_BAND));
 	}
 
 	Free (oldBands);
