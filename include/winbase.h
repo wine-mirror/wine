@@ -1533,6 +1533,7 @@ DWORD       WINAPI SuspendThread(HANDLE);
 void        WINAPI SwitchToFiber(LPVOID);
 BOOL        WINAPI SwitchToThread(void);
 BOOL        WINAPI SystemTimeToFileTime(const SYSTEMTIME*,LPFILETIME);
+BOOL        WINAPI SystemTimeToTzSpecificLocalTime(LPTIME_ZONE_INFORMATION,LPSYSTEMTIME,LPSYSTEMTIME);
 DWORD       WINAPI TlsAlloc(void);
 BOOL        WINAPI TlsFree(DWORD);
 LPVOID      WINAPI TlsGetValue(DWORD);
