@@ -45,14 +45,6 @@ typedef struct _EXCEPTION_REGISTRATION
 } EXCEPTION_REGISTRATION;
 
 /*********************************************************************
- *		_EH_prolog (MSVCRT.@)
- */
-void __cdecl MSVCRT__EH_prolog(void)
-{
-  FIXME("stub\n");
-}
-
-/*********************************************************************
  *		_XcptFilter (MSVCRT.@)
  */
 int __cdecl MSVCRT__XcptFilter(int ex, PEXCEPTION_POINTERS ptr)
@@ -60,6 +52,23 @@ int __cdecl MSVCRT__XcptFilter(int ex, PEXCEPTION_POINTERS ptr)
   FIXME("(%d,%p)semi-stub\n", ex, ptr);
   return UnhandledExceptionFilter(ptr);
 }
+
+/*********************************************************************
+ *		_EH_prolog (MSVCRT.@)
+ */
+#ifdef __i386__
+/* Provided for VC++ binary compatability only */
+__ASM_GLOBAL_FUNC(MSVCRT__EH_prolog,
+                  "pushl $0xff\n\t"
+                  "pushl %eax\n\t"
+                  "pushl %fs:0\n\t"
+                  "movl  %esp, %fs:0\n\t"
+                  "movl  12(%esp), %eax\n\t"
+                  "movl  %ebp, 12(%esp)\n\t"
+                  "leal  12(%esp), %ebp\n\t"
+                  "pushl %eax\n\t"
+                  "ret");
+#endif
 
 /*******************************************************************
  *		_global_unwind2 (MSVCRT.@)

@@ -74,7 +74,7 @@ debug_channels (msvcrt)
 @ cdecl -noimport _CItan() MSVCRT__CItan
 @ cdecl -noimport _CItanh() MSVCRT__CItanh
 @ stub _CxxThrowException
-@ cdecl _EH_prolog() MSVCRT__EH_prolog # FIXME: crashes relay debugging
+@ cdecl -i386 -norelay _EH_prolog() MSVCRT__EH_prolog
 @ cdecl _Getdays() MSVCRT__Getdays
 @ cdecl _Getmonths() MSVCRT__Getmonths
 @ cdecl _Getnames() MSVCRT__Getnames
