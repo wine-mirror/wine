@@ -40,8 +40,8 @@ struct thread
     struct process     *process;
     struct mutex       *mutex;       /* list of currently owned mutexes */
     struct debug_ctx   *debug_ctx;   /* debugger context if this thread is a debugger */
-    struct process     *debug_first; /* head of debugged processes list */
     struct debug_event *debug_event; /* pending debug event for this thread */
+    struct debug_event *exit_event;  /* pending debug exit event for this thread */
     struct thread_wait *wait;      /* current wait condition if sleeping */
     struct thread_apc  *apc;       /* list of async procedure calls */
     int                 apc_count; /* number of outstanding APCs */

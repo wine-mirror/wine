@@ -112,8 +112,8 @@ static struct thread *create_thread( int fd, struct process *process, int suspen
     thread->teb         = NULL;
     thread->mutex       = NULL;
     thread->debug_ctx   = NULL;
-    thread->debug_first = NULL;
     thread->debug_event = NULL;
+    thread->exit_event  = NULL;
     thread->wait        = NULL;
     thread->apc         = NULL;
     thread->apc_count   = 0;

@@ -21,8 +21,6 @@ struct process
     struct process      *next;            /* system-wide process list */
     struct process      *prev;
     struct thread       *thread_list;     /* head of the thread list */
-    struct process      *debug_next;      /* per-debugger process list */
-    struct process      *debug_prev;
     struct thread       *debugger;        /* thread debugging this process */
     struct object       *handles;         /* handle entries */
     int                  exit_code;       /* process exit code */
@@ -59,6 +57,7 @@ extern void remove_process_thread( struct process *process,
 extern void suspend_process( struct process *process );
 extern void resume_process( struct process *process );
 extern void kill_process( struct process *process, int exit_code );
+extern void kill_debugged_processes( struct thread *debugger, int exit_code );
 extern struct process_snapshot *process_snap( int *count );
 
 #endif  /* __WINE_SERVER_PROCESS_H */

@@ -60,8 +60,6 @@ static struct process *create_process( struct process *parent, struct new_proces
     process->next            = NULL;
     process->prev            = NULL;
     process->thread_list     = NULL;
-    process->debug_next      = NULL;
-    process->debug_prev      = NULL;
     process->debugger        = NULL;
     process->handles         = NULL;
     process->exit_code       = 0x103;  /* STILL_ACTIVE */
@@ -290,6 +288,21 @@ void kill_process( struct process *process, int exit_code )
 {
     while (process->thread_list)
         kill_thread( process->thread_list, exit_code );
+}
+
+/* kill all processes being debugged by a given thread */
+void kill_debugged_processes( struct thread *debugger, int exit_code )
+{
+    for (;;)  /* restart from the beginning of the list every time */
+    {
+        struct process *process = first_process;
+        /* find the first process being debugged by 'debugger' and still running */
+        while (process && (process->debugger != debugger || !process->running_threads))
+            process = process->next;
+        if (!process) return;
+        process->debugger = NULL;
+        kill_process( process, exit_code );
+    }
 }
 
 /* get all information about a process */

@@ -232,7 +232,7 @@ static int continue_debug_event( struct process *process, struct thread *thread,
 {
     struct debug_event *event = thread->debug_event;
 
-    if (process->debugger != current || !event || !event->sent)
+    if (process->debugger != current || thread->process != process || !event || !event->sent)
     {
         /* not debugging this process, or no event pending */
         set_error( ERROR_ACCESS_DENIED );  /* FIXME */
@@ -244,9 +244,20 @@ static int continue_debug_event( struct process *process, struct thread *thread,
         /* (we can get a continue on an exit thread/process event) */
         struct send_debug_event_request *req = get_req_ptr( thread );
         req->status = status;
+        /* copy the context into the reply */
+        if (event->code == EXCEPTION_DEBUG_EVENT)
+            memcpy( req + 1, &event->data, event_sizes[event->code] );
         send_reply( thread );
     }
+
     free_event( current, event );
+
+    if (thread->exit_event)
+    {
+        /* we still have a queued exit event, promote it to normal event */
+        thread->debug_event = thread->exit_event;
+        thread->exit_event = NULL;
+    }
     resume_process( process );
     return 1;
 }
@@ -279,14 +290,13 @@ static struct debug_event *queue_debug_event( struct thread *debugger, struct th
 
     if (thread->debug_event)
     {
-        /* only exit events can replace others */
+        /* exit events can happen while another one is still queued */
         assert( code == EXIT_THREAD_DEBUG_EVENT || code == EXIT_PROCESS_DEBUG_EVENT );
-        if (!thread->debug_event->sent) unlink_event( debug_ctx, thread->debug_event );
-        free_event( debugger, thread->debug_event );
+        thread->exit_event = event;
     }
+    else thread->debug_event = event;
 
     link_event( debug_ctx, event );
-    thread->debug_event = event;
     suspend_process( thread->process );
     if (debug_ctx->waiting)
     {
@@ -317,7 +327,6 @@ int debugger_attach( struct process *process, struct thread *debugger )
 
     if (!debugger->debug_ctx)  /* need to allocate a context */
     {
-        assert( !debugger->debug_first );
         if (!(debug_ctx = mem_alloc( sizeof(*debug_ctx) ))) return 0;
         debug_ctx->owner      = current;
         debug_ctx->waiting    = 0;
@@ -326,44 +335,25 @@ int debugger_attach( struct process *process, struct thread *debugger )
         debug_ctx->event_tail = NULL;
         debugger->debug_ctx = debug_ctx;
     }
-    process->debugger   = debugger;
-    process->debug_prev = NULL;
-    process->debug_next = debugger->debug_first;
-    debugger->debug_first = process;
+    process->debugger = debugger;
     return 1;
-}
-
-/* detach a process from its debugger thread */
-static void debugger_detach( struct process *process )
-{
-    struct thread *debugger = process->debugger;
-
-    assert( debugger );
-
-    if (process->debug_next) process->debug_next->debug_prev = process->debug_prev;
-    if (process->debug_prev) process->debug_prev->debug_next = process->debug_next;
-    else debugger->debug_first = process->debug_next;
-    process->debugger = NULL;
 }
 
 /* a thread is exiting */
 void debug_exit_thread( struct thread *thread, int exit_code )
 {
-    struct thread *debugger = current->process->debugger;
+    struct thread *debugger = thread->process->debugger;
     struct debug_ctx *debug_ctx = thread->debug_ctx;
 
     if (debugger)  /* being debugged -> send an event to the debugger */
     {
         struct debug_event_exit event;
         event.exit_code = exit_code;
-        if (!thread->proc_next && !thread->proc_prev)
-        {
-            assert( thread->process->thread_list == thread );
-            /* this is the last thread, send an exit process event and cleanup */
-            queue_debug_event( debugger, current, EXIT_PROCESS_DEBUG_EVENT, &event );
-            debugger_detach( thread->process );
-        }
-        else queue_debug_event( debugger, current, EXIT_THREAD_DEBUG_EVENT, &event );
+        if (thread->process->running_threads == 1)
+            /* this is the last thread, send an exit process event */
+            queue_debug_event( debugger, thread, EXIT_PROCESS_DEBUG_EVENT, &event );
+        else
+            queue_debug_event( debugger, thread, EXIT_THREAD_DEBUG_EVENT, &event );
     }
 
     if (debug_ctx)  /* this thread is a debugger */
@@ -371,7 +361,8 @@ void debug_exit_thread( struct thread *thread, int exit_code )
         struct debug_event *event;
 
         /* kill all debugged processes */
-        while (thread->debug_first) kill_process( thread->debug_first, exit_code );
+        kill_debugged_processes( thread, exit_code );
+
         /* free all pending events */
         while ((event = debug_ctx->event_head) != NULL)
         {
