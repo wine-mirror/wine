@@ -20,6 +20,9 @@
 #include <string.h>
 #include <unistd.h>
 #include <fcntl.h>
+#if defined(__FreeBSD__) || defined(__OpenBSD__)
+#include <sys/errno.h>
+#endif
 #include <sys/ioctl.h>
 #include "wine/winuser16.h"
 #include "ldt.h"
@@ -655,41 +658,6 @@ static DWORD midStop(WORD wDevID)
 #else /* HAVE_OSS */
     return MMSYSERR_NOTENABLED;
 #endif /* HAVE_OSS */
-}
-
-/**************************************************************************
- * 			midMessage				[sample driver]
- */
-DWORD WINAPI midMessage(WORD wDevID, WORD wMsg, DWORD dwUser, 
-			DWORD dwParam1, DWORD dwParam2)
-{
-    TRACE(midi, "(%04X, %04X, %08lX, %08lX, %08lX);\n", 
-	  wDevID, wMsg, dwUser, dwParam1, dwParam2);
-    switch (wMsg) {
-    case MIDM_OPEN:
-	return midOpen(wDevID,(LPMIDIOPENDESC)dwParam1, dwParam2);
-    case MIDM_CLOSE:
-	return midClose(wDevID);
-    case MIDM_ADDBUFFER:
-	return midAddBuffer(wDevID,(LPMIDIHDR)dwParam1, dwParam2);
-    case MIDM_PREPARE:
-	return midPrepare(wDevID,(LPMIDIHDR)dwParam1, dwParam2);
-    case MIDM_UNPREPARE:
-	return midUnprepare(wDevID,(LPMIDIHDR)dwParam1, dwParam2);
-    case MIDM_GETDEVCAPS:
-	return midGetDevCaps(wDevID,(LPMIDIINCAPS16)dwParam1,dwParam2);
-    case MIDM_GETNUMDEVS:
-	return MIDM_NUMDEVS; 
-    case MIDM_RESET:
-	return midReset(wDevID);
-    case MIDM_START:
-	return midStart(wDevID);
-    case MIDM_STOP:
-	return midStop(wDevID);
-    default:
-	TRACE(midi, "Unsupported message\n");
-    }
-    return MMSYSERR_NOTSUPPORTED;
 }
 
 /*-----------------------------------------------------------------------*/
@@ -1486,6 +1454,43 @@ static DWORD modReset(WORD wDevID)
 /*======================================================================*
  *                  	    MIDI entry points 				*
  *======================================================================*/
+
+/**************************************************************************
+ * 			midMessage				[sample driver]
+ */
+DWORD WINAPI midMessage(WORD wDevID, WORD wMsg, DWORD dwUser, 
+			DWORD dwParam1, DWORD dwParam2)
+{
+    TRACE(midi, "(%04X, %04X, %08lX, %08lX, %08lX);\n", 
+	  wDevID, wMsg, dwUser, dwParam1, dwParam2);
+    switch (wMsg) {
+#ifdef SNDCTL_MIDI_INFO
+    case MIDM_OPEN:
+	return midOpen(wDevID,(LPMIDIOPENDESC)dwParam1, dwParam2);
+    case MIDM_CLOSE:
+	return midClose(wDevID);
+    case MIDM_ADDBUFFER:
+	return midAddBuffer(wDevID,(LPMIDIHDR)dwParam1, dwParam2);
+    case MIDM_PREPARE:
+	return midPrepare(wDevID,(LPMIDIHDR)dwParam1, dwParam2);
+    case MIDM_UNPREPARE:
+	return midUnprepare(wDevID,(LPMIDIHDR)dwParam1, dwParam2);
+    case MIDM_GETDEVCAPS:
+	return midGetDevCaps(wDevID,(LPMIDIINCAPS16)dwParam1,dwParam2);
+    case MIDM_GETNUMDEVS:
+	return MIDM_NUMDEVS; 
+    case MIDM_RESET:
+	return midReset(wDevID);
+    case MIDM_START:
+	return midStart(wDevID);
+    case MIDM_STOP:
+	return midStop(wDevID);
+#endif
+    default:
+	TRACE(midi, "Unsupported message\n");
+    }
+    return MMSYSERR_NOTSUPPORTED;
+}
 
 /**************************************************************************
  * 				modMessage		[sample driver]

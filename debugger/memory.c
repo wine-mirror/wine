@@ -19,7 +19,7 @@
  *     write (rwflag == 0)
  ************************************************************/
 
-#if defined(linux) || defined(__FreeBSD__)
+#if defined(linux) || defined(__FreeBSD__) || defined(__OpenBSD__)
 BOOL32 DEBUG_checkmap_bad( const char *addr, size_t size, int rwflag)
 {
   FILE *fp;
