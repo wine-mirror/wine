@@ -2091,7 +2091,7 @@ static LRESULT ComboWndProc_locked( WND* pWnd, UINT message,
 	case CB_RESETCONTENT16: 
 	case CB_RESETCONTENT:
 		SendMessageW(lphc->hWndLBox, LB_RESETCONTENT, 0, 0);
-                if( CB_HASSTRINGS(lphc) )
+                if( (lphc->wState & CBF_EDIT) && CB_HASSTRINGS(lphc) )
 		{
 		    static const WCHAR empty_stringW[] = { 0 };
                     SendMessageW(lphc->hWndEdit, WM_SETTEXT, 0, (LPARAM)empty_stringW);
