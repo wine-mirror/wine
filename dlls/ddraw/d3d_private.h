@@ -175,6 +175,13 @@ struct IDirect3DDeviceImpl
     IDirectDrawSurfaceImpl *current_texture[MAX_TEXTURES];
 
     void (*set_context)(IDirect3DDeviceImpl*);
+    HRESULT (*clear)(IDirect3DDeviceImpl *This,
+		     DWORD dwCount,
+		     LPD3DRECT lpRects,
+		     DWORD dwFlags,
+		     DWORD dwColor,
+		     D3DVALUE dvZ,
+		     DWORD dwStencil);
 };
 
 /*****************************************************************************

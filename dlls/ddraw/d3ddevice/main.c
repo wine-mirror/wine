@@ -191,8 +191,8 @@ Main_IDirect3DDeviceImpl_7_Clear(LPDIRECT3DDEVICE7 iface,
                                  DWORD dwStencil)
 {
     ICOM_THIS_FROM(IDirect3DDeviceImpl, IDirect3DDevice7, iface);
-    FIXME("(%p/%p)->(%08lx,%p,%08lx,%08lx,%f,%08lx): stub!\n", This, iface, dwCount, lpRects, dwFlags, (DWORD) dwColor, dvZ, dwStencil);
-    return DD_OK;
+    TRACE("(%p/%p)->(%08lx,%p,%08lx,%08lx,%f,%08lx)\n", This, iface, dwCount, lpRects, dwFlags, (DWORD) dwColor, dvZ, dwStencil);
+    return This->clear(This, dwCount, lpRects, dwFlags, dwColor, dvZ, dwStencil);
 }
 
 HRESULT WINAPI

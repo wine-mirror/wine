@@ -233,8 +233,12 @@ Main_IDirect3DViewportImpl_3_2_1_Clear(LPDIRECT3DVIEWPORT3 iface,
                                        DWORD dwFlags)
 {
     ICOM_THIS_FROM(IDirect3DViewportImpl, IDirect3DViewport3, iface);
-    FIXME("(%p/%p)->(%08lx,%p,%08lx): stub!\n", This, iface, dwCount, lpRects, dwFlags);
-    return DD_OK;
+    TRACE("(%p/%p)->(%08lx,%p,%08lx)\n", This, iface, dwCount, lpRects, dwFlags);
+    if (This->active_device == NULL) {
+        ERR(" Trying to clear a viewport not attached to a device !\n");
+	return D3DERR_VIEWPORTHASNODEVICE;
+    }
+    return This->active_device->clear(This->active_device, dwCount, lpRects, dwFlags, 0x00000000, 0.0, 0x00000000);
 }
 
 HRESULT WINAPI
@@ -362,106 +366,12 @@ Main_IDirect3DViewportImpl_3_Clear2(LPDIRECT3DVIEWPORT3 iface,
                                     DWORD dwStencil)
 {
     ICOM_THIS_FROM(IDirect3DViewportImpl, IDirect3DViewport3, iface);
-    FIXME("(%p/%p)->(%08lx,%p,%08lx,%08lx,%f,%08lx): stub!\n", This, iface, dwCount, lpRects, dwFlags, dwColor, dvZ, dwStencil);
-    return DD_OK;
-}
-
-HRESULT WINAPI
-GL_IDirect3DViewportImpl_3_2_1_Clear(LPDIRECT3DVIEWPORT3 iface,
-                                       DWORD dwCount,
-                                       LPD3DRECT lpRects,
-                                       DWORD dwFlags)
-{
-    ICOM_THIS_FROM(IDirect3DViewportImpl, IDirect3DViewport3, iface);
-    GLboolean ztest;
-    
-    TRACE("(%p/%p)->(%08lx,%p,%08lx)\n", This, iface, dwCount, lpRects, dwFlags);
-
-    if (dwCount != 1) {
-        WARN("  Warning, this function only for now clears the whole screen...\n");
-    }
-    
-    /* Clears the screen */
-    ENTER_GL();
-    glGetBooleanv(GL_DEPTH_WRITEMASK, &ztest);
-    glDepthMask(GL_TRUE); /* Enables Z writing to be sure to delete also the Z buffer */
-    glClear(((dwFlags & D3DCLEAR_TARGET) ? GL_COLOR_BUFFER_BIT : 0) |
-	    ((dwFlags & D3DCLEAR_ZBUFFER) ? GL_DEPTH_BUFFER_BIT : 0));
-    glDepthMask(ztest);
-    LEAVE_GL();
-    
-    return DD_OK;
-}
-
-HRESULT WINAPI
-GL_IDirect3DViewportImpl_3_Clear2(LPDIRECT3DVIEWPORT3 iface,
-                                    DWORD dwCount,
-                                    LPD3DRECT lpRects,
-                                    DWORD dwFlags,
-                                    DWORD dwColor,
-                                    D3DVALUE dvZ,
-                                    DWORD dwStencil)
-{
-    ICOM_THIS_FROM(IDirect3DViewportImpl, IDirect3DViewport3, iface);
-    GLboolean ztest;
-    GLfloat old_z_clear_value;
-    GLbitfield bitfield = 0;
-    GLint old_stencil_clear_value;
-    GLfloat old_color_clear_value[4];
-    
     TRACE("(%p/%p)->(%08lx,%p,%08lx,%08lx,%f,%08lx)\n", This, iface, dwCount, lpRects, dwFlags, dwColor, dvZ, dwStencil);
-
-    if (dwCount != 1) {
-        WARN("  Warning, this function only for now clears the whole screen...\n");
+    if (This->active_device == NULL) {
+        ERR(" Trying to clear a viewport not attached to a device !\n");
+	return D3DERR_VIEWPORTHASNODEVICE;
     }
-
-    /* Clears the screen */
-    ENTER_GL();
-    if (dwFlags & D3DCLEAR_ZBUFFER) {
-        glGetBooleanv(GL_DEPTH_WRITEMASK, &ztest);
-	glDepthMask(GL_TRUE); /* Enables Z writing to be sure to delete also the Z buffer */
-	glGetFloatv(GL_DEPTH_CLEAR_VALUE, &old_z_clear_value);
-	glClearDepth(dvZ);
-	TRACE(" Depth value : %f\n", dvZ);
-	bitfield |= GL_DEPTH_BUFFER_BIT;
-    }
-    if (dwFlags & D3DCLEAR_STENCIL) {
-        bitfield |= GL_STENCIL_BUFFER_BIT;
-	glGetIntegerv(GL_STENCIL_CLEAR_VALUE, &old_stencil_clear_value);
-	glClearStencil(dwStencil);
-	TRACE(" Stencil value : %ld\n", dwStencil);
-    }    
-    if (dwFlags & D3DCLEAR_TARGET) {
-        bitfield |= GL_COLOR_BUFFER_BIT;
-	glGetFloatv(GL_COLOR_CLEAR_VALUE, old_color_clear_value);
-	glClearColor(((dwColor >> 16) & 0xFF) / 255.0,
-		     ((dwColor >>  8) & 0xFF) / 255.0,
-		     ((dwColor >>  0) & 0xFF) / 255.0,
-		     ((dwColor >> 24) & 0xFF) / 255.0);
-	TRACE("Color value (ARGB) : %08lx\n", dwColor);
-    }
-    
-    glClear(bitfield);
-    
-    if (dwFlags & D3DCLEAR_ZBUFFER) {
-        glDepthMask(ztest);
-	glClearDepth(old_z_clear_value);
-    }
-     if (dwFlags & D3DCLEAR_STENCIL) {
-        bitfield |= GL_STENCIL_BUFFER_BIT;
-	glClearStencil(old_stencil_clear_value);
-    }    
-    if (dwFlags & D3DCLEAR_TARGET) {
-        bitfield |= GL_COLOR_BUFFER_BIT;
-	glClearColor(old_color_clear_value[0],
-		     old_color_clear_value[1],
-		     old_color_clear_value[2],
-		     old_color_clear_value[3]);
-    }
-    
-    LEAVE_GL();
-    
-    return DD_OK;
+    return This->active_device->clear(This->active_device, dwCount, lpRects, dwFlags, dwColor, dvZ, dwStencil);
 }
 
 #if !defined(__STRICT_ANSI__) && defined(__GNUC__)
@@ -485,7 +395,7 @@ ICOM_VTABLE(IDirect3DViewport3) VTABLE_IDirect3DViewport3 =
     XCAST(GetBackground) Main_IDirect3DViewportImpl_3_2_1_GetBackground,
     XCAST(SetBackgroundDepth) Main_IDirect3DViewportImpl_3_2_1_SetBackgroundDepth,
     XCAST(GetBackgroundDepth) Main_IDirect3DViewportImpl_3_2_1_GetBackgroundDepth,
-    XCAST(Clear) GL_IDirect3DViewportImpl_3_2_1_Clear,
+    XCAST(Clear) Main_IDirect3DViewportImpl_3_2_1_Clear,
     XCAST(AddLight) Main_IDirect3DViewportImpl_3_2_1_AddLight,
     XCAST(DeleteLight) Main_IDirect3DViewportImpl_3_2_1_DeleteLight,
     XCAST(NextLight) Main_IDirect3DViewportImpl_3_2_1_NextLight,
@@ -493,7 +403,7 @@ ICOM_VTABLE(IDirect3DViewport3) VTABLE_IDirect3DViewport3 =
     XCAST(SetViewport2) Main_IDirect3DViewportImpl_3_2_SetViewport2,
     XCAST(SetBackgroundDepth2) Main_IDirect3DViewportImpl_3_SetBackgroundDepth2,
     XCAST(GetBackgroundDepth2) Main_IDirect3DViewportImpl_3_GetBackgroundDepth2,
-    XCAST(Clear2) GL_IDirect3DViewportImpl_3_Clear2,
+    XCAST(Clear2) Main_IDirect3DViewportImpl_3_Clear2,
 };
 
 #if !defined(__STRICT_ANSI__) && defined(__GNUC__)

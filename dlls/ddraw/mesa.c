@@ -297,6 +297,11 @@ void set_render_state(D3DRENDERSTATETYPE dwRenderStateType,
 	        /* We do not support this anyway, so why protest :-) */
 	        break;
 
+ 	    case D3DRENDERSTATE_STIPPLEDALPHA: /* 33 */
+	        if (dwRenderState)
+		    ERR(" Stippled Alpha not supported yet.\n");
+		break;
+
 	    case D3DRENDERSTATE_FOGCOLOR: { /* 34 */
 	        GLint color[4];
 		color[0] = (dwRenderState >> 16) & 0xFF;
@@ -329,6 +334,15 @@ void set_render_state(D3DRENDERSTATETYPE dwRenderStateType,
 	        break;
 	      
 	    case D3DRENDERSTATE_FLUSHBATCH:         /* 50 */
+	        break;
+
+	    case D3DRENDERSTATE_LIGHTING:    /* 137 */
+	        /* There will be more to do here once we really support D3D7 Lighting.
+		   Should be enough for now to prevent warnings :-) */
+	        if (dwRenderState)
+		    glEnable(GL_LIGHTING);
+		else
+		    glDisable(GL_LIGHTING);
 	        break;
 
 	    default:

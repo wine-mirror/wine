@@ -1575,6 +1575,83 @@ ICOM_VTABLE(IDirect3DDevice) VTABLE_IDirect3DDevice =
 #undef XCAST
 #endif
 
+static HRESULT d3ddevice_clear(IDirect3DDeviceImpl *This,
+			       DWORD dwCount,
+			       LPD3DRECT lpRects,
+			       DWORD dwFlags,
+			       DWORD dwColor,
+			       D3DVALUE dvZ,
+			       DWORD dwStencil)
+{
+    GLboolean ztest;
+    GLfloat old_z_clear_value;
+    GLbitfield bitfield = 0;
+    GLint old_stencil_clear_value;
+    GLfloat old_color_clear_value[4];
+    
+    TRACE("(%p)->(%08lx,%p,%08lx,%08lx,%f,%08lx)\n", This, dwCount, lpRects, dwFlags, dwColor, dvZ, dwStencil);
+    if (TRACE_ON(ddraw)) {
+        int i;
+	TRACE(" rectangles : \n");
+	for (i = 0; i < dwCount; i++) {
+	    TRACE("  - %ld x %ld     %ld x %ld\n", lpRects[i].u1.x1, lpRects[i].u2.y1, lpRects[i].u3.x2, lpRects[i].u4.y2);
+	}
+    }
+
+    if (dwCount != 1) {
+        WARN("  Warning, this function only for now clears the whole screen...\n");
+    }
+
+    /* Clears the screen */
+    ENTER_GL();
+    if (dwFlags & D3DCLEAR_ZBUFFER) {
+	bitfield |= GL_DEPTH_BUFFER_BIT;
+        glGetBooleanv(GL_DEPTH_WRITEMASK, &ztest);
+	glDepthMask(GL_TRUE); /* Enables Z writing to be sure to delete also the Z buffer */
+	glGetFloatv(GL_DEPTH_CLEAR_VALUE, &old_z_clear_value);
+	glClearDepth(dvZ);
+	TRACE(" depth value : %f\n", dvZ);
+    }
+    if (dwFlags & D3DCLEAR_STENCIL) {
+        bitfield |= GL_STENCIL_BUFFER_BIT;
+	glGetIntegerv(GL_STENCIL_CLEAR_VALUE, &old_stencil_clear_value);
+	glClearStencil(dwStencil);
+	TRACE(" stencil value : %ld\n", dwStencil);
+    }    
+    if (dwFlags & D3DCLEAR_TARGET) {
+        bitfield |= GL_COLOR_BUFFER_BIT;
+	glGetFloatv(GL_COLOR_CLEAR_VALUE, old_color_clear_value);
+	glClearColor(((dwColor >> 16) & 0xFF) / 255.0,
+		     ((dwColor >>  8) & 0xFF) / 255.0,
+		     ((dwColor >>  0) & 0xFF) / 255.0,
+		     ((dwColor >> 24) & 0xFF) / 255.0);
+	TRACE(" color value (ARGB) : %08lx\n", dwColor);
+    }
+    
+    glClear(bitfield);
+    
+    if (dwFlags & D3DCLEAR_ZBUFFER) {
+        glDepthMask(ztest);
+	glClearDepth(old_z_clear_value);
+    }
+     if (dwFlags & D3DCLEAR_STENCIL) {
+        bitfield |= GL_STENCIL_BUFFER_BIT;
+	glClearStencil(old_stencil_clear_value);
+    }    
+    if (dwFlags & D3DCLEAR_TARGET) {
+        bitfield |= GL_COLOR_BUFFER_BIT;
+	glClearColor(old_color_clear_value[0],
+		     old_color_clear_value[1],
+		     old_color_clear_value[2],
+		     old_color_clear_value[3]);
+    }
+    
+    LEAVE_GL();
+    
+    return DD_OK;
+}
+
+
 /* TODO for both these functions :
     - change / restore OpenGL parameters for pictures transfers in case they are ever modified
       by other OpenGL code in D3D
@@ -1689,6 +1766,7 @@ d3ddevice_create(IDirect3DDeviceImpl **obj, IDirect3DImpl *d3d, IDirectDrawSurfa
     object->d3d = d3d;
     object->surface = surface;
     object->set_context = set_context;
+    object->clear = d3ddevice_clear;
 
     TRACE(" creating OpenGL device for surface = %p, d3d = %p\n", surface, d3d);
 
