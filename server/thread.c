@@ -482,11 +482,6 @@ void wake_up( struct object *obj, int max )
 int thread_queue_apc( struct thread *thread, void *func, void *param )
 {
     struct thread_apc *apc;
-    if (!func)
-    {
-        SET_ERROR( ERROR_INVALID_PARAMETER );
-        return 0;
-    }
     if (!thread->apc)
     {
         if (!(thread->apc = mem_alloc( MAX_THREAD_APC * sizeof(*apc) )))

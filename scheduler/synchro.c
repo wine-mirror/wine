@@ -106,7 +106,7 @@ DWORD WINAPI WaitForMultipleObjectsEx( DWORD count, const HANDLE *handles,
         for (i = 0; i < len / sizeof(void*); i += 2)
         {
             PAPCFUNC func = (PAPCFUNC)apc[i];
-            func( (ULONG_PTR)apc[i+1] );
+            if ( func ) func( (ULONG_PTR)apc[i+1] );
         }
     }
     return reply.signaled;
