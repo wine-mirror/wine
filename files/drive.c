@@ -297,6 +297,7 @@ int DRIVE_SetCurrentDrive( int drive )
     TRACE("%c:\n", 'A' + drive );
     DRIVE_CurDrive = drive;
     if (pTask) pTask->curdrive = drive | 0x80;
+    chdir(DRIVE_GetUnixCwd(drive));
     return 1;
 }
 
@@ -689,6 +690,7 @@ int DRIVE_Chdir( int drive, const char *path )
         lstrcpynA( pTask->curdir, full_name.short_name + 2,
                      sizeof(pTask->curdir) );
         DRIVE_LastTask = GetCurrentTask();
+        chdir(unix_cwd); /* Only change if on current drive */
     }
     return 1;
 }
