@@ -700,11 +700,12 @@ LPVOID WINAPI VirtualAlloc(
     	WARN("MEM_TOP_DOWN ignored\n");
     	type &= ~MEM_TOP_DOWN;
     }
-    /* Compute the protection flags */
+    /* Compute the alloc type flags */
 
     if (!(type & (MEM_COMMIT | MEM_RESERVE | MEM_SYSTEM)) ||
         (type & ~(MEM_COMMIT | MEM_RESERVE | MEM_SYSTEM)))
     {
+	ERR("called with wrong alloc type flags (%08lx) !\n", type);
         SetLastError( ERROR_INVALID_PARAMETER );
         return NULL;
     }
@@ -775,6 +776,25 @@ LPVOID WINAPI VirtualAlloc(
 
 
 /***********************************************************************
+ *             VirtualAllocEx   (KERNEL32.548)
+ *
+ * Seems to be just as VirtualAlloc, but with process handle.
+ */
+LPVOID WINAPI VirtualAllocEx(
+              HANDLE hProcess, /* [in] Handle of process to do mem operation */
+              LPVOID addr,  /* [in] Address of region to reserve or commit */
+              DWORD size,   /* [in] Size of region */
+              DWORD type,   /* [in] Type of allocation */
+              DWORD protect /* [in] Type of access protection */
+) {
+    if (MapProcessHandle( hProcess ) == GetCurrentProcessId())
+        return VirtualAlloc( addr, size, type, protect );
+    ERR("Unsupported on other process\n");
+    return NULL;
+}
+
+
+/***********************************************************************
  *             VirtualFree   (KERNEL32.550)
  * Release or decommits a region of pages in virtual address space.
  * 
@@ -809,6 +829,7 @@ BOOL WINAPI VirtualFree(
 
     if ((type != MEM_DECOMMIT) && (type != MEM_RELEASE))
     {
+	ERR("called with wrong free type flags (%08lx) !\n", type);
         SetLastError( ERROR_INVALID_PARAMETER );
         return FALSE;
     }

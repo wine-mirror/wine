@@ -915,7 +915,7 @@ import  ntdll.dll
 896 stub SwitchToFiber
 897 stub SwitchToThread
 898 stdcall TryEnterCriticalSection(ptr) TryEnterCriticalSection
-899 stub VirtualAllocEx
+899 stdcall VirtualAllocEx(long ptr long long long) VirtualAllocEx
 900 stub VirtualFreeEx
 901 stub WriteFileGather
 
