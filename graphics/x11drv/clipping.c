@@ -212,8 +212,8 @@ void X11DRV_EndGraphicsExposures( HDC hdc, HRGN hrgn )
                     ERR( "got unexpected event %d\n", event.type );
                     break;
                 }
-                if (tmp) DeleteObject( tmp );
             }
+            if (tmp) DeleteObject( tmp );
         }
         wine_tsx11_unlock();
         GDI_ReleaseObj( hdc );
