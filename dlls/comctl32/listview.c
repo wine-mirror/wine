@@ -937,7 +937,7 @@ static inline BOOL ranges_delitem(RANGES ranges, INT nItem)
  *   - a special item to deal with
  *   - simple range, or composite range
  *   - empty range.
- * If find bugs, or want to add features, please make sure you
+ * If you find bugs, or want to add features, please make sure you
  * always check/modify *both* iterator_prev, and iterator_next.
  */
 
@@ -1249,7 +1249,7 @@ static inline BOOL LISTVIEW_GetItemW(LISTVIEW_INFO *infoPtr, LPLVITEMW lpLVItem)
     return LISTVIEW_GetItemT(infoPtr, lpLVItem, TRUE);
 }
 
-/* Listview invlaidation functions: use _only_ these function to invalidate */
+/* Listview invalidation functions: use _only_ these functions to invalidate */
 
 static inline BOOL is_redrawing(LISTVIEW_INFO *infoPtr)
 {
@@ -6478,14 +6478,14 @@ static DWORD LISTVIEW_SetHoverTime(LISTVIEW_INFO *infoPtr, DWORD dwHoverTime)
  *
  * PARAMETER(S):
  * [I] infoPtr : valid pointer to the listview structure
- * [I] spacing : MAKELONG(cx, cy)
+ * [I] cx : horizontal spacing (-1 = system spacing, 0 = autosize)
+ * [I] cy : vertical spacing (-1 = system spacing, 0 = autosize)
  *
  * RETURN:
  *   MAKELONG(oldcx, oldcy)
  */
-static DWORD LISTVIEW_SetIconSpacing(LISTVIEW_INFO *infoPtr, DWORD spacing)
+static DWORD LISTVIEW_SetIconSpacing(LISTVIEW_INFO *infoPtr, INT cx, INT cy)
 {
-    INT cy = HIWORD(spacing), cx = LOWORD(spacing);
     DWORD oldspacing = MAKELONG(infoPtr->iconSpacing.cx, infoPtr->iconSpacing.cy);
     UINT uView = infoPtr->dwStyle & LVS_TYPEMASK;
 
@@ -6567,7 +6567,7 @@ static HIMAGELIST LISTVIEW_SetImageList(LISTVIEW_INFO *infoPtr, INT nType, HIMAG
         himlOld = infoPtr->himlNormal;
         infoPtr->himlNormal = himl;
         if (uView == LVS_ICON) set_icon_size(&infoPtr->iconSize, himl, FALSE);
-        LISTVIEW_SetIconSpacing(infoPtr, 0);
+        LISTVIEW_SetIconSpacing(infoPtr, 0, 0);
     break;
 
     case LVSIL_SMALL:
@@ -8298,7 +8298,7 @@ static INT LISTVIEW_StyleChanged(LISTVIEW_INFO *infoPtr, WPARAM wStyleType,
             {
 	  	TRACE("icon old size=(%ld,%ld), new size=(%ld,%ld)\n",
 		      oldIconSize.cx, oldIconSize.cy, infoPtr->iconSize.cx, infoPtr->iconSize.cy);
-	        LISTVIEW_SetIconSpacing(infoPtr, 0);
+	        LISTVIEW_SetIconSpacing(infoPtr, 0, 0);
             }
         }
         else if (uNewView == LVS_REPORT)
@@ -8620,7 +8620,7 @@ LISTVIEW_WindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
     return LISTVIEW_SetHoverTime(infoPtr, (DWORD)wParam);
 
   case LVM_SETICONSPACING:
-    return LISTVIEW_SetIconSpacing(infoPtr, (DWORD)lParam);
+    return LISTVIEW_SetIconSpacing(infoPtr, SLOWORD(lParam), SHIWORD(lParam));
 
   case LVM_SETIMAGELIST:
     return (LRESULT)LISTVIEW_SetImageList(infoPtr, (INT)wParam, (HIMAGELIST)lParam);
