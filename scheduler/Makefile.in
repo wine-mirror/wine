@@ -12,6 +12,7 @@ C_SRCS = \
 	handle.c \
 	k32obj.c \
 	mutex.c \
+	pipe.c \
 	process.c \
 	semaphore.c \
 	synchro.c \
