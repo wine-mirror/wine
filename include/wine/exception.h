@@ -169,7 +169,7 @@ static inline EXCEPTION_FRAME * WINE_UNUSED EXC_pop_frame( EXCEPTION_FRAME *fram
 typedef DWORD (*DEBUGHOOK)( EXCEPTION_RECORD *, CONTEXT *, BOOL );
 extern void EXC_SetDebugEventHook( DEBUGHOOK hook );
 extern DEBUGHOOK EXC_GetDebugEventHook(void);
-extern void EXC_InitHandlers(void);
+extern BOOL SIGNAL_Init(void);
 #endif
 
 #endif  /* __WINE_WINE_EXCEPTION_H */

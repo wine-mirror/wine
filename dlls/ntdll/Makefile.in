@@ -16,6 +16,7 @@ C_SRCS = \
 	rtl.c \
 	rtlstr.c \
 	sec.c \
+	signal_i386.c \
 	sync.c \
 	time.c
 

@@ -28,6 +28,7 @@ static int *ph_errno = &h_errno;
 #include "thread.h"
 #include "server.h"
 #include "winbase.h"
+#include "wine/exception.h"
 #include "debugtools.h"
 
 DEFAULT_DEBUG_CHANNEL(thread)
@@ -130,7 +131,16 @@ static void SYSDEPS_StartThread( TEB *teb )
 {
     SYSDEPS_SetCurThread( teb );
     CLIENT_InitThread();
-    teb->startup();
+    SIGNAL_Init();
+    __TRY
+    {
+        teb->startup();
+    }
+    __EXCEPT(UnhandledExceptionFilter)
+    {
+        TerminateThread( GetCurrentThread(), GetExceptionCode() );
+    }
+    __ENDTRY
     SYSDEPS_ExitThread();  /* should never get here */
 }
 

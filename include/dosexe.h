@@ -10,7 +10,6 @@
 #include <sys/types.h> /* pid_t */
 #include "winbase.h"   /* for LPSTARTUPINFO32A */
 #include "winnt.h"     /* for PCONTEXT */
-#include "sig_context.h"
 
 typedef struct _DOSSYSTEM {
   int id;

@@ -65,9 +65,6 @@ BOOL MAIN_MainInit(void)
     /* Initialize syslevel handling */
     SYSLEVEL_Init();
 
-    /* Initialize signal handling */
-    if (!SIGNAL_Init()) return FALSE;
-
     /* Load the configuration file */
     if (!PROFILE_LoadWineIni()) return FALSE;
 

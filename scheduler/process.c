@@ -362,6 +362,9 @@ BOOL PROCESS_Init(void)
     if (!(SystemHeap = HeapCreate( HEAP_GROWABLE, 0x10000, 0 ))) return FALSE;
     initial_pdb.system_heap = initial_pdb.heap = SystemHeap;
 
+    /* Initialize signal handling */
+    if (!SIGNAL_Init()) return FALSE;
+
     /* Create the environment DB of the first process */
     if (!PROCESS_CreateEnvDB()) return FALSE;
 

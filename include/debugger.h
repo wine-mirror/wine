@@ -9,7 +9,6 @@
 
 #include <sys/types.h> /* u_long ... */
 #include "windef.h"
-#include "sig_context.h"
 #include "miscemu.h"
 
 #define STEP_FLAG 0x100 /* single step flag */

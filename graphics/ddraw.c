@@ -3516,7 +3516,7 @@ static HRESULT WINAPI DGA_IDirectDrawImpl_SetDisplayMode(
 	TSXF86DGASetViewPort(display,DefaultScreen(display),0,0);
 
 #ifdef RESTORE_SIGNALS
-	EXC_InitHandlers();
+	SIGNAL_Init();
 #endif
 	return DD_OK;
 }
@@ -3918,7 +3918,7 @@ static HRESULT WINAPI DGA_IDirectDraw2Impl_RestoreDisplayMode(LPDIRECTDRAW2 ifac
 	Sleep(1000);
 	TSXF86DGADirectVideo(display,DefaultScreen(display),0);
 #ifdef RESTORE_SIGNALS
-	EXC_InitHandlers();
+	SIGNAL_Init();
 #endif
 	return DD_OK;
 }
@@ -3969,7 +3969,7 @@ static ULONG WINAPI DGA_IDirectDraw2Impl_Release(LPDIRECTDRAW2 iface) {
 #endif
 		
 #ifdef RESTORE_SIGNALS
-		EXC_InitHandlers();
+		SIGNAL_Init();
 #endif
 		HeapFree(GetProcessHeap(),0,This);
 		return 0;
@@ -4958,7 +4958,7 @@ static HRESULT WINAPI DGA_DirectDrawCreate( LPDIRECTDRAW *lplpDD, LPUNKNOWN pUnk
 	depth = DefaultDepthOfScreen(X11DRV_GetXScreen());
 	_common_depth_to_pixelformat(depth, &((*ilplpDD)->d.directdraw_pixelformat), &((*ilplpDD)->d.screen_pixelformat), NULL);
 #ifdef RESTORE_SIGNALS
-	EXC_InitHandlers();
+	SIGNAL_Init();
 #endif
 
 	return DD_OK;

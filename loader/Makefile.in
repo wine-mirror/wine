@@ -15,7 +15,6 @@ C_SRCS = \
 	pe_image.c \
 	pe_resource.c \
 	resource.c \
-	signal.c \
 	task.c
 
 GLUE = task.c

@@ -184,10 +184,6 @@ extern int DPMI_CallRMProc(CONTEXT86*,LPWORD,int,int);
 /* msdos/xms.c */
 extern void WINAPI XMS_Handler(CONTEXT86*);
 
-/* loader/signal.c */
-extern BOOL SIGNAL_Init(void);
-extern void SIGNAL_SetHandler( int sig, void (*func)() );
-
 /* misc/aspi.c */
 extern void ASPI_DOS_HandleInt(CONTEXT86 *context);
 
