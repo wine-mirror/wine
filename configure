@@ -25,7 +25,7 @@ ac_help="$ac_help
 ac_help="$ac_help
   --with-ncurses          compile in the ncurses terminal"
 ac_help="$ac_help
-  --without-reentrant-x   Compile for use with non-reentrant X libraries"
+  --without-reentrant-x   compile for use with non-reentrant X libraries"
 ac_help="$ac_help
   --with-x                use the X Window System"
 
@@ -3752,6 +3752,7 @@ tools/wrc/Makefile
 tsx11/Makefile
 win32/Makefile
 windows/Makefile
+windows/ttydrv/Makefile
 windows/x11drv/Makefile  include/config.h" | sed "s/:[^ ]*//g"` conftest*; exit 1' 1 2 15
 EOF
 cat >> $CONFIG_STATUS <<EOF
@@ -3902,6 +3903,7 @@ tools/wrc/Makefile
 tsx11/Makefile
 win32/Makefile
 windows/Makefile
+windows/ttydrv/Makefile
 windows/x11drv/Makefile "}
 EOF
 cat >> $CONFIG_STATUS <<\EOF

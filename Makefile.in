@@ -57,7 +57,8 @@ LIBSUBDIRS = \
 	scheduler \
 	server \
 	win32 \
-	windows
+	windows \
+	windows/ttydrv
 
 X11SUBDIRS = \
 	graphics/x11drv \
@@ -119,7 +120,8 @@ LIBOBJS = \
 	scheduler/scheduler.o \
 	server/server.o \
 	win32/win32.o \
-	windows/windows.o
+	windows/windows.o \
+	windows/ttydrv/ttydrv.o
 
 X11OBJS = \
 	graphics/x11drv/x11drv.o \

@@ -558,6 +558,7 @@ tools/wrc/Makefile
 tsx11/Makefile
 win32/Makefile
 windows/Makefile
+windows/ttydrv/Makefile
 windows/x11drv/Makefile ])
 
 if test "$wine_cv_libc_reentrant" = "no" 

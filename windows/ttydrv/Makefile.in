@@ -1,0 +1,20 @@
+DEFS      = @DLLFLAGS@ -D__WINE__
+TOPSRCDIR = @top_srcdir@
+TOPOBJDIR = ../..
+SRCDIR    = @srcdir@
+VPATH     = @srcdir@
+MODULE    = ttydrv
+
+C_SRCS = \
+	clipboard.c \
+	event.c \
+	init.c \
+	keyboard.c \
+	mouse.c \
+	wnd.c
+
+all: $(MODULE).o
+
+@MAKE_RULES@
+
+### Dependencies:
