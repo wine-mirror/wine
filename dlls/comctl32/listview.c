@@ -73,6 +73,9 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(listview);
 
+/* make sure you set this to 0 for production use! */
+#define DEBUG_RANGES 1
+
 typedef struct tagCOLUMN_INFO
 {
   RECT rcHeader;	/* tracks the header's rectangle */
@@ -2185,14 +2188,6 @@ static INT LISTVIEW_CalculateMaxHeight(LISTVIEW_INFO *infoPtr)
     return nItemHeight;
 }
 
-#if 0
-static void LISTVIEW_PrintSelectionRanges(LISTVIEW_INFO *infoPtr)
-{
-    ERR("Selections are:\n");
-    ranges_dump(infoPtr->selectionRanges);
-}
-#endif
-
 /***
  * DESCRIPTION:
  * A compare function for ranges
@@ -2209,11 +2204,44 @@ static void LISTVIEW_PrintSelectionRanges(LISTVIEW_INFO *infoPtr)
  */
 static INT CALLBACK ranges_cmp(LPVOID range1, LPVOID range2, LPARAM flags)
 {
+    INT cmp;
+    
     if (((RANGE*)range1)->upper <= ((RANGE*)range2)->lower) 
-	return -1;
-    if (((RANGE*)range2)->upper <= ((RANGE*)range1)->lower) 
-	return 1;
-    return 0;
+	cmp = -1;
+    else if (((RANGE*)range2)->upper <= ((RANGE*)range1)->lower) 
+	cmp = 1;
+    else 
+	cmp = 0;
+    
+    TRACE("range1=%s, range2=%s, cmp=%d\n", debugrange((RANGE*)range1), debugrange((RANGE*)range2), cmp);
+
+    return cmp;
+}
+
+#if DEBUG_RANGES
+#define ranges_check ranges_assert
+#else
+#define ranges_check(ranges, desc) do { } while(0)
+#endif
+
+static void ranges_assert(RANGES ranges, LPCSTR desc)
+{
+    INT i;
+    RANGE *prev, *curr;
+    
+    assert (ranges);
+    assert (ranges->hdpa->nItemCount >= 0);
+    if (ranges->hdpa->nItemCount == 0) return;
+    TRACE("Checking %s:\n", desc);
+    ranges_dump(ranges);
+    assert ((prev = (RANGE *)DPA_GetPtr(ranges->hdpa, 0))->lower >= 0);
+    /* assert (((RANGE *)DPA_GetPtr(ranges->hdpa, ranges->hdpa->nItemCount - 1))->upper <= nUpper); */
+    for (i = 1; i < ranges->hdpa->nItemCount; i++)
+    {
+	curr = (RANGE *)DPA_GetPtr(ranges->hdpa, i);
+	assert (prev->upper <= curr->lower);
+	prev = curr;
+    }
 }
 
 static RANGES ranges_create(int count)
@@ -2292,6 +2320,7 @@ static inline BOOL ranges_contain(RANGES ranges, INT nItem)
     TRACE("(nItem=%d)\n", nItem);
     if (!ranges) return FALSE;
     if (TRACE_ON(listview)) ranges_dump(ranges);
+    ranges_check(ranges, "before contain");
     return DPA_Search(ranges->hdpa, &srchrng, 0, ranges_cmp, 0, DPAS_SORTED) != -1;
 }
 
@@ -2335,8 +2364,8 @@ static BOOL ranges_add(RANGES ranges, RANGE range)
     INT index;
 
     TRACE("(%s)\n", debugrange(&range));
-    if (!ranges) return FALSE;
-    if (TRACE_ON(listview)) ranges_dump(ranges);
+    ranges_check(ranges, "before add");
+    if (!ranges) goto fail;
 
     /* try find overlapping regions first */
     srchrgn.lower = range.lower - 1;
@@ -2351,11 +2380,12 @@ static BOOL ranges_add(RANGES ranges, RANGE range)
 
 	/* create the brand new range to insert */	
         newrgn = (RANGE *)COMCTL32_Alloc(sizeof(RANGE));
-	if(!newrgn) return FALSE;
+	if(!newrgn) goto fail;
 	*newrgn = range;
 	
 	/* figure out where to insert it */
-	index = DPA_Search(ranges->hdpa, newrgn, 0, ranges_cmp, 0, DPAS_INSERTAFTER);
+	index = DPA_Search(ranges->hdpa, newrgn, 0, ranges_cmp, 0, DPAS_SORTED | DPAS_INSERTAFTER);
+	TRACE("index=%d\n", index);
 	if (index == -1) index = 0;
 	
 	/* and get it over with */
@@ -2367,7 +2397,7 @@ static BOOL ranges_add(RANGES ranges, RANGE range)
 	INT fromindex, mergeindex;
 
 	chkrgn = DPA_GetPtr(ranges->hdpa, index);
-	if (!chkrgn) return FALSE;
+	if (!chkrgn) goto fail;
 	TRACE("Merge with %s @%d\n", debugrange(chkrgn), index);
 
 	chkrgn->lower = min(range.lower, chkrgn->lower);
@@ -2393,7 +2423,7 @@ static BOOL ranges_add(RANGES ranges, RANGE range)
 	    TRACE("Merge with index %i\n", mergeindex);
 	    
 	    mrgrgn = DPA_GetPtr(ranges->hdpa, mergeindex);
-	    if (!mrgrgn) return FALSE;
+	    if (!mrgrgn) goto fail;
 	    
 	    chkrgn->lower = min(chkrgn->lower, mrgrgn->lower);
 	    chkrgn->upper = max(chkrgn->upper, mrgrgn->upper);
@@ -2403,8 +2433,13 @@ static BOOL ranges_add(RANGES ranges, RANGE range)
 	} while(1);
     }
 
+    ranges_check(ranges, "after add");
     if (TRACE_ON(listview)) ranges_dump(ranges);
     return TRUE;
+    
+fail:
+    ranges_check(ranges, "failed add");
+    return FALSE;
 }
 
 static BOOL ranges_del(RANGES ranges, RANGE range)
@@ -2414,16 +2449,17 @@ static BOOL ranges_del(RANGES ranges, RANGE range)
     INT index;
 
     TRACE("(%s)\n", debugrange(&range));
-    if (!ranges) return FALSE;
+    ranges_check(ranges, "before del");
+    if (!ranges) goto fail;
     
     remrgn = range;
     do 
     {
 	index = DPA_Search(ranges->hdpa, &remrgn, 0, ranges_cmp, 0, 0);
-	if (index == -1) return TRUE;
+	if (index == -1) break;
 
 	chkrgn = DPA_GetPtr(ranges->hdpa, index);
-	if (!chkrgn) return FALSE;
+	if (!chkrgn) goto fail;
 	
         TRACE("Matches range %s @%d\n", debugrange(chkrgn), index); 
 
@@ -2456,7 +2492,7 @@ static BOOL ranges_del(RANGES ranges, RANGE range)
 	else
 	{
 	    RANGE *newrgn = (RANGE *)COMCTL32_Alloc(sizeof(RANGE));
-	    if (!newrgn) return FALSE;
+	    if (!newrgn) goto fail;
 	    tmprgn = *chkrgn;
 	    newrgn->lower = chkrgn->lower;
 	    newrgn->upper = remrgn.lower;
@@ -2467,7 +2503,12 @@ static BOOL ranges_del(RANGES ranges, RANGE range)
     }
     while(!done);
 
+    ranges_check(ranges, "after del");
     return TRUE;
+
+fail:
+    ranges_check(ranges, "failed del");
+    return FALSE;
 }
 
 /***
@@ -2506,9 +2547,9 @@ static BOOL LISTVIEW_DeselectAllSkipItems(LISTVIEW_INFO *infoPtr, RANGES toSkip)
 static inline BOOL LISTVIEW_DeselectAllSkipItem(LISTVIEW_INFO *infoPtr, INT nItem)
 {
     RANGES toSkip = ranges_create(1);
-    
+   
     if (!toSkip) return FALSE;
-    ranges_additem(toSkip, nItem);
+    if (nItem != -1) ranges_additem(toSkip, nItem);
     LISTVIEW_DeselectAllSkipItems(infoPtr, toSkip);
     ranges_destroy(toSkip);
     return TRUE;
@@ -2904,6 +2945,8 @@ static BOOL set_main_item(LISTVIEW_INFO *infoPtr, LPLVITEMW lpLVItem, BOOL isNew
 
     TRACE("()\n");
 
+    assert(lpLVItem->iItem >= 0 && lpLVItem->iItem < infoPtr->nItemCount);
+    
     if (lpLVItem->mask == 0) return TRUE;   
 
     if (infoPtr->dwStyle & LVS_OWNERDATA)
@@ -5835,7 +5878,7 @@ static LRESULT LISTVIEW_InsertItemT(LISTVIEW_INFO *infoPtr, LPLVITEMW lpLVItem, 
     }
 
     /* make sure it's an item, and not a subitem; cannot insert a subitem */
-    if (!lpLVItem || lpLVItem->iSubItem) return -1;
+    if (!lpLVItem || lpLVItem->iItem < 0 || lpLVItem->iSubItem) return -1;
 
     if (!is_assignable_item(lpLVItem, lStyle)) return -1;
 
