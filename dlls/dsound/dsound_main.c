@@ -90,6 +90,7 @@ HRESULT mmErr(UINT err)
 		return DS_OK;
 	case MMSYSERR_ALLOCATED:
 		return DSERR_ALLOCATED;
+	case MMSYSERR_ERROR:
 	case MMSYSERR_INVALHANDLE:
 	case WAVERR_STILLPLAYING:
 		return DSERR_GENERIC; /* FIXME */
@@ -122,12 +123,13 @@ int ds_snd_queue_min = DS_SND_QUEUE_MIN;
 inline static void enumerate_devices(LPDSENUMCALLBACKA lpDSEnumCallback,
                                     LPVOID lpContext)
 {
-    if (lpDSEnumCallback != NULL)
-       if (lpDSEnumCallback(NULL, "Primary DirectSound Driver",
-                            "sound", lpContext))
-           lpDSEnumCallback((LPGUID)&DSDEVID_WinePlayback,
-                            "WINE DirectSound", "sound",
-                            lpContext);
+    if (lpDSEnumCallback != NULL) {
+	TRACE("calling lpDSEnumCallback(%s,\"WINE DirectSound\",\"sound\",%p)\n",
+	    debugstr_guid(&DSDEVID_DefaultPlayback),lpContext);
+
+	lpDSEnumCallback((LPGUID)&DSDEVID_DefaultPlayback,
+                         "WINE DirectSound", "sound", lpContext);
+    }
 }
 
 
@@ -147,7 +149,7 @@ inline static DWORD get_config_key( HKEY defkey, HKEY appkey, const char *name,
  * Setup the dsound options.
  */
 
-inline static void setup_dsound_options(void)
+void setup_dsound_options(void)
 {
     char buffer[MAX_PATH+1];
     HKEY hkey, appkey = 0;

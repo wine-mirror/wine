@@ -39,6 +39,7 @@ typedef struct IDirectSoundImpl IDirectSoundImpl;
 typedef struct IDirectSoundBufferImpl IDirectSoundBufferImpl;
 typedef struct IDirectSoundCaptureImpl IDirectSoundCaptureImpl;
 typedef struct IDirectSoundCaptureBufferImpl IDirectSoundCaptureBufferImpl;
+typedef struct IDirectSoundFullDuplexImpl IDirectSoundFullDuplexImpl;
 typedef struct IDirectSoundNotifyImpl IDirectSoundNotifyImpl;
 typedef struct IDirectSound3DListenerImpl IDirectSound3DListenerImpl;
 typedef struct IDirectSound3DBufferImpl IDirectSound3DBufferImpl;
@@ -137,32 +138,31 @@ struct IDirectSoundCaptureImpl
     DWORD                              ref;
 
     /* IDirectSoundCaptureImpl fields */
-	GUID                               guid;
-	BOOL                               initialized;
+    GUID                               guid;
+    BOOL                               initialized;
 
-	/* DirectSound driver stuff */
-	PIDSCDRIVER                        driver;
-	DSDRIVERDESC                       drvdesc;
-	DSDRIVERCAPS                       drvcaps;
-    PIDSDRIVERBUFFER                   hwbuf;
+    /* DirectSound driver stuff */
+    PIDSCDRIVER                        driver;
+    DSDRIVERDESC                       drvdesc;
+    DSCDRIVERCAPS                      drvcaps;
+    PIDSCDRIVERBUFFER                  hwbuf;
 
-	/* wave driver info */
-	HWAVEIN                            hwi;
+    /* wave driver info */
+    HWAVEIN                            hwi;
 
-	/* more stuff */
+    /* more stuff */
     LPBYTE                             buffer;
     DWORD                              buflen;
-	DWORD                              read_position;
+    DWORD                              read_position;
 
-	/* FIXME: this should be a pointer because it can be bigger */
-	WAVEFORMATEX                       wfx;
+    /* FIXME: this should be a pointer because it can be bigger */
+    WAVEFORMATEX                       wfx;
 
-	DWORD                              formats;
-	DWORD                              channels;
-	IDirectSoundCaptureBufferImpl*     capture_buffer;
-	DWORD                              state;
+    IDirectSoundCaptureBufferImpl*     capture_buffer;
+    DWORD                              state;
     LPWAVEHDR                          pwave;
-	int                                index;
+    int                                nrofpwaves;
+    int                                index;
     CRITICAL_SECTION                   lock;
 };
 
@@ -171,18 +171,30 @@ struct IDirectSoundCaptureImpl
  */
 struct IDirectSoundCaptureBufferImpl
 {
-	/* IUnknown fields */
-	ICOM_VFIELD(IDirectSoundCaptureBuffer8);
-	DWORD                              ref;
+    /* IUnknown fields */
+    ICOM_VFIELD(IDirectSoundCaptureBuffer8);
+    DWORD                              ref;
 
-	/* IDirectSoundCaptureBufferImpl fields */
-	IDirectSoundCaptureImpl*           dsound;
-	CRITICAL_SECTION                   lock;
-	/* FIXME: don't need this */
-	LPDSCBUFFERDESC                    pdscbd;
-	LPDSBPOSITIONNOTIFY                notifies;
-	int                                nrofnotifies;
-	DWORD                              flags;
+    /* IDirectSoundCaptureBufferImpl fields */
+    IDirectSoundCaptureImpl*           dsound;
+    /* FIXME: don't need this */
+    LPDSCBUFFERDESC                    pdscbd;
+    LPDSBPOSITIONNOTIFY                notifies;
+    int                                nrofnotifies;
+    DWORD                              flags;
+};
+
+/*****************************************************************************
+ * IDirectSoundFullDuplex implementation structure
+ */
+struct IDirectSoundFullDuplexImpl
+{
+    /* IUnknown fields */
+    ICOM_VFIELD(IDirectSoundFullDuplex);
+    DWORD                              ref;
+
+    /* IDirectSoundFullDuplexImpl fields */
+    CRITICAL_SECTION                   lock;
 };
 
 /*****************************************************************************
@@ -195,7 +207,7 @@ struct IDirectSoundNotifyImpl
     DWORD                            ref;
     /* IDirectSoundNotifyImpl fields */
     IDirectSoundBufferImpl*          dsb;
-	IDirectSoundCaptureBufferImpl*   dscb;
+    IDirectSoundCaptureBufferImpl*   dscb;
 };
 
 /*****************************************************************************
@@ -288,6 +300,7 @@ void CALLBACK DSOUND_callback(HWAVEOUT hwo, UINT msg, DWORD dwUser, DWORD dw1, D
 #define DSOUND_FREQSHIFT (14)
 
 extern IDirectSoundImpl* dsound;
+extern IDirectSoundCaptureImpl* dsound_capture;
 
 struct PrimaryBuffer {
 	DWORD ref;
@@ -297,3 +310,4 @@ struct PrimaryBuffer {
 
 extern ICOM_VTABLE(IDirectSoundNotify) dsnvt;
 extern HRESULT mmErr(UINT err);
+extern void setup_dsound_options(void);

@@ -476,6 +476,7 @@ typedef struct {
     DWORD buffer_size;
     DWORD read;
     DWORD offset;
+    DWORD size;
 
     DWORD last_pos;
 } capture_state_t;
@@ -486,16 +487,13 @@ static int capture_buffer_service(capture_state_t* state)
     LPVOID ptr1,ptr2;
     DWORD len1,len2;
     DWORD capture_pos,read_pos;
-    LONG size;
 
     rc=IDirectSoundCaptureBuffer_GetCurrentPosition(state->dscbo,&capture_pos,&read_pos);
     ok(rc==DS_OK,"GetCurrentPosition failed: 0x%lx\n",rc);
     if (rc!=DS_OK)
         return 0;
 
-    size = state->wfx->nAvgBytesPerSec/NOTIFICATIONS;
-
-    rc=IDirectSoundCaptureBuffer_Lock(state->dscbo,state->offset,size,&ptr1,&len1,&ptr2,&len2,0);
+    rc=IDirectSoundCaptureBuffer_Lock(state->dscbo,state->offset,state->size,&ptr1,&len1,&ptr2,&len2,0);
     ok(rc==DS_OK,"Lock failed: 0x%lx\n",rc);
     if (rc!=DS_OK)
         return 0;
@@ -505,7 +503,7 @@ static int capture_buffer_service(capture_state_t* state)
     if (rc!=DS_OK)
         return 0;
 
-    state->offset = (state->offset + size) % state->wfx->nAvgBytesPerSec;
+    state->offset = (state->offset + state->size) % state->buffer_size;
 
     return 1;
 }
@@ -569,8 +567,9 @@ static void test_capture_buffer(LPDIRECTSOUNDCAPTURE dsco, LPDIRECTSOUNDCAPTUREB
     ZeroMemory(&state, sizeof(state));
     state.dscbo=dscbo;
     state.wfx=&wfx;
-    state.buffer_size=dscbcaps.dwBufferBytes;
+    state.buffer_size = dscbcaps.dwBufferBytes;
     state.event = CreateEvent( NULL, FALSE, FALSE, NULL );
+    state.size = dscbcaps.dwBufferBytes / NOTIFICATIONS;
 
     rc=IDirectSoundCapture_QueryInterface(dscbo,&IID_IDirectSoundNotify,(void **)&(state.notify));
     ok(rc==DS_OK,"QueryInterface failed: 0x%lx\n",rc);
@@ -578,7 +577,7 @@ static void test_capture_buffer(LPDIRECTSOUNDCAPTURE dsco, LPDIRECTSOUNDCAPTUREB
         return;
 
     for (i = 0; i < NOTIFICATIONS; i++) {
-        state.posnotify[i].dwOffset = (i * (dscbcaps.dwBufferBytes / NOTIFICATIONS)) + (dscbcaps.dwBufferBytes / NOTIFICATIONS) - 1;
+        state.posnotify[i].dwOffset = (i * state.size) + state.size - 1;
         state.posnotify[i].hEventNotify = state.event;
     }
 
@@ -601,12 +600,10 @@ static void test_capture_buffer(LPDIRECTSOUNDCAPTURE dsco, LPDIRECTSOUNDCAPTUREB
 
     /* wait for the notifications */
     for (i = 0; i < (NOTIFICATIONS * 2); i++) {
-        rc=MsgWaitForMultipleObjects( 1, &(state.event), FALSE, 100, QS_ALLEVENTS );
-#if 0
+        rc=MsgWaitForMultipleObjects( 1, &(state.event), FALSE, 1000, QS_ALLEVENTS );
         ok(rc==WAIT_OBJECT_0,"MsgWaitForMultipleObjects failed: 0x%lx\n",rc);
         if (rc!=WAIT_OBJECT_0)
             break;
-#endif
         if (!capture_buffer_service(&state))
             break;
     }
@@ -640,8 +637,8 @@ static BOOL WINAPI dscenum_callback(LPGUID lpGuid, LPCSTR lpcstrDescription,
         IDirectSoundCapture_Release(dsco);
 
     rc=DirectSoundCaptureCreate(lpGuid,&dsco,NULL);
-    ok(rc==DS_OK,"DirectSoundCaptureCreate failed: 0x%lx\n",rc);
-    if (rc!=DS_OK)
+    ok((rc==DS_OK)||(rc==DSERR_NODRIVER),"DirectSoundCaptureCreate failed: 0x%lx\n",rc);
+    if ((rc!=DS_OK)&&(rc!=DSERR_NODRIVER))
         goto EXIT;
 
     /* Private dsound.dll: Error: Invalid caps buffer */

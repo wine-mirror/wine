@@ -296,7 +296,7 @@ static DWORD WINAPI IDirectSoundBufferImpl_AddRef(LPDIRECTSOUNDBUFFER8 iface) {
 	ICOM_THIS(IDirectSoundBufferImpl,iface);
 	DWORD ref;
 
-	TRACE("(%p) ref was %ld, thread is %lx\n",This, This->ref, GetCurrentThreadId());
+	TRACE("(%p) ref was %ld, thread is %04lx\n",This, This->ref, GetCurrentThreadId());
 
 	ref = InterlockedIncrement(&(This->ref));
 	if (!ref) {
@@ -309,7 +309,7 @@ static DWORD WINAPI IDirectSoundBufferImpl_Release(LPDIRECTSOUNDBUFFER8 iface) {
 	int	i;
 	DWORD ref;
 
-	TRACE("(%p) ref was %ld, thread is %lx\n",This, This->ref, GetCurrentThreadId());
+	TRACE("(%p) ref was %ld, thread is %04lx\n",This, This->ref, GetCurrentThreadId());
 
 	ref = InterlockedDecrement(&(This->ref));
 	if (ref) return ref;
@@ -472,7 +472,7 @@ static HRESULT WINAPI IDirectSoundBufferImpl_GetStatus(
 	LPDIRECTSOUNDBUFFER8 iface,LPDWORD status
 ) {
 	ICOM_THIS(IDirectSoundBufferImpl,iface);
-	TRACE("(%p,%p), thread is %lx\n",This,status,GetCurrentThreadId());
+	TRACE("(%p,%p), thread is %04lx\n",This,status,GetCurrentThreadId());
 
 	if (status == NULL)
 		return DSERR_INVALIDPARAM;
@@ -682,7 +682,7 @@ static HRESULT WINAPI IDirectSoundBufferImpl_Unlock(
 	ICOM_THIS(IDirectSoundBufferImpl,iface);
 	DWORD probably_valid_to;
 
-	TRACE("(%p,%p,%ld,%p,%ld):stub\n", This,p1,x1,p2,x2);
+	TRACE("(%p,%p,%ld,%p,%ld)\n", This,p1,x1,p2,x2);
 
 #if 0
 	/* Preprocess 3D buffers... */
@@ -851,6 +851,12 @@ static HRESULT WINAPI IDirectSoundBufferImpl_QueryInterface(
 			return S_OK;
 		}
 		return E_FAIL;
+	}
+
+	if ( IsEqualGUID( &IID_IDirectSoundBuffer8, riid ) ) {
+	    IDirectSoundBuffer8_AddRef(iface);
+	    *ppobj = This;
+	    return NO_ERROR;
 	}
 
 	FIXME( "Unknown IID %s\n", debugstr_guid( riid ) );
