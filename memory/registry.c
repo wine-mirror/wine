@@ -533,21 +533,6 @@ DWORD WINAPI RegEnumValueA( HKEY hkey, DWORD index, LPSTR value, LPDWORD val_cou
 
         if (status) goto done;
 
-        if (value)
-        {
-            DWORD len;
-
-            RtlUnicodeToMultiByteSize( &len, info->Name, info->NameLength );
-            if (len >= *val_count)
-            {
-                status = STATUS_BUFFER_OVERFLOW;
-                goto done;
-            }
-            RtlUnicodeToMultiByteN( value, len, NULL, info->Name, info->NameLength );
-            value[len] = 0;
-            *val_count = len;
-        }
-
         if (is_string(info->Type))
         {
             DWORD len;
@@ -555,16 +540,15 @@ DWORD WINAPI RegEnumValueA( HKEY hkey, DWORD index, LPSTR value, LPDWORD val_cou
                                        total_size - info->DataOffset );
             if (data && len)
             {
-                if (len > *count)
+                if (len > *count) status = STATUS_BUFFER_OVERFLOW;
+                else
                 {
-                    status = STATUS_BUFFER_OVERFLOW;
-                    goto done;
+                    RtlUnicodeToMultiByteN( data, len, NULL, (WCHAR *)(buf_ptr + info->DataOffset),
+                                            total_size - info->DataOffset );
+                    /* if the type is REG_SZ and data is not 0-terminated
+                     * and there is enough space in the buffer NT appends a \0 */
+                    if (len < *count && data[len-1]) data[len] = 0;
                 }
-                RtlUnicodeToMultiByteN( data, len, NULL, (WCHAR *)(buf_ptr + info->DataOffset),
-                                        total_size - info->DataOffset );
-                /* if the type is REG_SZ and data is not 0-terminated
-                 * and there is enough space in the buffer NT appends a \0 */
-                if (len < *count && data[len-1]) data[len] = 0;
             }
             info->DataLength = len;
         }
@@ -572,6 +556,29 @@ DWORD WINAPI RegEnumValueA( HKEY hkey, DWORD index, LPSTR value, LPDWORD val_cou
         {
             if (total_size - info->DataOffset > *count) status = STATUS_BUFFER_OVERFLOW;
             else memcpy( data, buf_ptr + info->DataOffset, total_size - info->DataOffset );
+        }
+
+        if (value && !status)
+        {
+            DWORD len;
+
+            RtlUnicodeToMultiByteSize( &len, info->Name, info->NameLength );
+            if (len >= *val_count)
+            {
+                status = STATUS_BUFFER_OVERFLOW;
+                if (*val_count)
+                {
+                    len = *val_count - 1;
+                    RtlUnicodeToMultiByteN( value, len, NULL, info->Name, info->NameLength );
+                    value[len] = 0;
+                }
+            }
+            else
+            {
+                RtlUnicodeToMultiByteN( value, len, NULL, info->Name, info->NameLength );
+                value[len] = 0;
+                *val_count = len;
+            }
         }
     }
     else status = STATUS_SUCCESS;
