@@ -180,8 +180,12 @@ SafeArrayRedim(struct tagSAFEARRAY *psa, struct tagSAFEARRAYBOUND *psaboundNew);
 #define V_ARRAY(A)		 V_UNION(A, parray)
 #define V_ARRAYREF(A)	 V_UNION(A, pparray)
 #define V_BYREF(A)		 V_UNION(A, byref)
-#define V_DECIMAL(A)	 V_UNION(A, decVal)
 #define V_DECIMALREF(A)  V_UNION(A, pdecVal)
+#if (__STDC__ && !defined(_FORCENAMELESSUNION)) || defined(NONAMELESSUNION)
+#define V_DECIMAL(A)    ((A)->n1.decVal)
+#else
+#define V_DECIMAL(A)    ((A)->decVal)
+#endif
 
 /*
  * VARIANT API
