@@ -81,8 +81,8 @@
 [HKEY_LOCAL_MACHINE\Software\Microsoft\Windows NT\CurrentVersion\AeDebug]
 # command line to start a debugger when an exception occurs
 "Debugger"="debugger/winedbg %ld %ld"
-# to 1 if no message box has to be presented before running the debugger
-"Auto"=dword:00000000
+# to 0 if a message box has to be presented before running the debugger
+"Auto"=dword:00000001
 
 #
 # This identifies the files for available code pages

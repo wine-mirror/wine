@@ -124,7 +124,7 @@ DWORD WINAPI UnhandledExceptionFilter(PEXCEPTION_POINTERS epointers)
 
        count = sizeof(bAuto);
        if (RegQueryValueExA(hDbgConf, "Auto", 0, &type, (char*)&bAuto, &count))
-	  bAuto = FALSE;
+	  bAuto = TRUE;
        
        RegCloseKey(hDbgConf);
     } else {
