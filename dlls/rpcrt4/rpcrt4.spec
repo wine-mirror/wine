@@ -225,7 +225,7 @@
 @ stdcall NdrAllocate(ptr long)
 @ stub NdrAsyncClientCall
 @ stub NdrAsyncServerCall
-@ stub NdrClearOutParameters
+@ stdcall NdrClearOutParameters(ptr ptr ptr)
 @ stub NdrClientCall
 @ varargs NdrClientCall2(ptr ptr)
 @ stub NdrClientInitialize

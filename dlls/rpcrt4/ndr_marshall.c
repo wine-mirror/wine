@@ -561,7 +561,10 @@ void WINAPI PointerMarshall(PMIDL_STUB_MESSAGE pStubMsg,
   pFormat += 2;
   if (attr & RPC_FC_P_SIMPLEPOINTER) desc = pFormat;
   else desc = pFormat + *(SHORT*)pFormat;
-  if (attr & RPC_FC_P_DEREF) FIXME("deref?\n");
+  if (attr & RPC_FC_P_DEREF) {
+    Pointer = *(unsigned char**)Pointer;
+    TRACE("deref => %p\n", Pointer);
+  }
 
   *(LPVOID*)Buffer = 0;
 
@@ -597,7 +600,10 @@ void WINAPI PointerUnmarshall(PMIDL_STUB_MESSAGE pStubMsg,
   pFormat += 2;
   if (attr & RPC_FC_P_SIMPLEPOINTER) desc = pFormat;
   else desc = pFormat + *(SHORT*)pFormat;
-  if (attr & RPC_FC_P_DEREF) FIXME("deref?\n");
+  if (attr & RPC_FC_P_DEREF) {
+    pPointer = *(unsigned char***)pPointer;
+    TRACE("deref => %p\n", pPointer);
+  }
 
   switch (type) {
   case RPC_FC_RP: /* ref pointer (always non-null) */
@@ -630,7 +636,10 @@ void WINAPI PointerBufferSize(PMIDL_STUB_MESSAGE pStubMsg,
   pFormat += 2;
   if (attr & RPC_FC_P_SIMPLEPOINTER) desc = pFormat;
   else desc = pFormat + *(SHORT*)pFormat;
-  if (attr & RPC_FC_P_DEREF) FIXME("deref?\n");
+  if (attr & RPC_FC_P_DEREF) {
+    Pointer = *(unsigned char**)Pointer;
+    TRACE("deref => %p\n", Pointer);
+  }
 
   switch (type) {
   case RPC_FC_RP: /* ref pointer (always non-null) */
@@ -660,7 +669,9 @@ unsigned long WINAPI PointerMemorySize(PMIDL_STUB_MESSAGE pStubMsg,
   pFormat += 2;
   if (attr & RPC_FC_P_SIMPLEPOINTER) desc = pFormat;
   else desc = pFormat + *(SHORT*)pFormat;
-  if (attr & RPC_FC_P_DEREF) FIXME("deref?\n");
+  if (attr & RPC_FC_P_DEREF) {
+    TRACE("deref\n");
+  }
 
   switch (type) {
   case RPC_FC_RP: /* ref pointer (always non-null) */
@@ -693,7 +704,10 @@ void WINAPI PointerFree(PMIDL_STUB_MESSAGE pStubMsg,
   pFormat += 2;
   if (attr & RPC_FC_P_SIMPLEPOINTER) desc = pFormat;
   else desc = pFormat + *(SHORT*)pFormat;
-  if (attr & RPC_FC_P_DEREF) FIXME("deref?\n");
+  if (attr & RPC_FC_P_DEREF) {
+    Pointer = *(unsigned char**)Pointer;
+    TRACE("deref => %p\n", Pointer);
+  }
 
   if (!Pointer) return;
 
@@ -717,6 +731,8 @@ void WINAPI PointerFree(PMIDL_STUB_MESSAGE pStubMsg,
   case RPC_FC_C_WSTRING:
     if (pStubMsg->ReuseBuffer) goto notfree;
     break;
+  case RPC_FC_IP:
+    goto notfree;
   }
 
   if (attr & RPC_FC_P_ONSTACK) {
@@ -2067,6 +2083,16 @@ void WINAPI NdrUserMarshalFree(PMIDL_STUB_MESSAGE pStubMsg,
 
   pStubMsg->StubDesc->aUserMarshalQuadruple[index].pfnFree(
     &uflag, pMemory);
+}
+
+/***********************************************************************
+ *           NdrClearOutParameters [RPCRT4.@]
+ */
+void WINAPI NdrClearOutParameters(PMIDL_STUB_MESSAGE pStubMsg,
+                                  PFORMAT_STRING pFormat,
+                                  void *ArgAddr)
+{
+  FIXME("(%p,%p,%p): stub\n", pStubMsg, pFormat, ArgAddr);
 }
 
 /***********************************************************************
