@@ -32,14 +32,8 @@ struct request_max_size
     int pad[16];
 };
 
-#ifdef WINE_NO_STRICT
-typedef int obj_handle_t;
-typedef unsigned int user_handle_t;
-#else
 typedef void *obj_handle_t;
 typedef void *user_handle_t;
-#endif
-
 typedef unsigned short atom_t;
 typedef unsigned int process_id_t;
 typedef unsigned int thread_id_t;

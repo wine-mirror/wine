@@ -539,36 +539,10 @@ typedef DWORD		EXECUTION_STATE;
 
 /* Handle type */
 
-/* FIXME: Wine does not compile with strict on, therefore strict
- * handles are presently only usable on machines where sizeof(UINT) ==
- * sizeof(void*).  HANDLEs are supposed to be void* but a large amount
- * of WINE code operates on HANDLES as if they are UINTs. So to WINE
- * they exist as UINTs but to the Winelib user who turns on strict,
- * they exist as void*. If there is a size difference between UINT and
- * void* then things get ugly.
- *
- * Here is the plan to convert Wine to STRICT:
- *
- * Types will be converted one at a time by volunteers who will compile
- * Wine with STRICT turned on. Handles that have not been converted yet
- * will be declared with DECLARE_OLD_HANDLE. Converted handles are
- * declared with DECLARE_HANDLE.
- * See the bug report 90 for more details:
- *    http://wine.codeweavers.com/bugzilla/show_bug.cgi?id=90
- */
-/*
- * when compiling Wine we always treat HANDLE as an UINT. Then when
- * we're ready we'll remove the '!defined(__WINE__)' (the equivalent
- * of converting it from DECLARE_OLD_HANDLE to DECLARE_HANDLE).
- */
-#ifdef WINE_NO_STRICT
-typedef UINT HANDLE;
-#else
 typedef void *HANDLE;
-#endif
 typedef HANDLE *PHANDLE, *LPHANDLE;
 
-#if (defined(STRICT) || defined(__WINE__)) && !defined(WINE_NO_STRICT)
+#if (defined(STRICT) || defined(__WINE__))
 #define DECLARE_HANDLE(a) \
     typedef struct a##__ { int unused; } *a; \
     typedef a *P##a
