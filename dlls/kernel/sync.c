@@ -1193,17 +1193,27 @@ BOOL WINAPI WaitNamedPipeA (LPCSTR name, DWORD nTimeOut)
  */
 BOOL WINAPI WaitNamedPipeW (LPCWSTR name, DWORD nTimeOut)
 {
-    DWORD len = name ? strlenW(name) : 0;
     BOOL ret;
     OVERLAPPED ov;
-
-    if (len >= MAX_PATH)
-    {
-        SetLastError( ERROR_FILENAME_EXCED_RANGE );
-        return FALSE;
-    }
+    UNICODE_STRING nt_name;
+    static const WCHAR leadin[] = {'\\','?','?','\\','P','I','P','E','\\'};
 
     TRACE("%s 0x%08lx\n",debugstr_w(name),nTimeOut);
+
+    if (!RtlDosPathNameToNtPathName_U( name, &nt_name, NULL, NULL ))
+        return FALSE;
+
+    if (nt_name.Length >= MAX_PATH * sizeof(WCHAR) )
+    {
+        RtlFreeUnicodeString( &nt_name );
+        return FALSE;
+    }
+    if (nt_name.Length < sizeof(leadin) ||
+        strncmpiW( nt_name.Buffer, leadin, sizeof(leadin)/sizeof(leadin[0])))
+    {
+        RtlFreeUnicodeString( &nt_name );
+        return FALSE;
+    }
 
     memset(&ov,0,sizeof(ov));
     ov.hEvent = CreateEventW( NULL, 0, 0, NULL );
@@ -1215,10 +1225,12 @@ BOOL WINAPI WaitNamedPipeW (LPCWSTR name, DWORD nTimeOut)
         req->timeout = nTimeOut;
         req->overlapped = &ov;
         req->func = SYNC_CompletePipeOverlapped;
-        wine_server_add_data( req, name, len * sizeof(WCHAR) );
+        wine_server_add_data( req, nt_name.Buffer + 4, nt_name.Length - 4*sizeof(WCHAR) );
         ret = !wine_server_call_err( req );
     }
     SERVER_END_REQ;
+
+    RtlFreeUnicodeString( &nt_name );
 
     if(ret)
     {
@@ -1651,7 +1663,7 @@ __ASM_GLOBAL_FUNC(InterlockedCompareExchange,
                   "movl 8(%esp),%ecx\n\t"
                   "movl 4(%esp),%edx\n\t"
                   "lock; cmpxchgl %ecx,(%edx)\n\t"
-                  "ret $12");
+                  "ret $12")
 
 /***********************************************************************
  *		InterlockedExchange (KERNEL32.@)
@@ -1661,7 +1673,7 @@ __ASM_GLOBAL_FUNC(InterlockedExchange,
                   "movl 8(%esp),%eax\n\t"
                   "movl 4(%esp),%edx\n\t"
                   "lock; xchgl %eax,(%edx)\n\t"
-                  "ret $8");
+                  "ret $8")
 
 /***********************************************************************
  *		InterlockedExchangeAdd (KERNEL32.@)
@@ -1671,7 +1683,7 @@ __ASM_GLOBAL_FUNC(InterlockedExchangeAdd,
                   "movl 8(%esp),%eax\n\t"
                   "movl 4(%esp),%edx\n\t"
                   "lock; xaddl %eax,(%edx)\n\t"
-                  "ret $8");
+                  "ret $8")
 
 /***********************************************************************
  *		InterlockedIncrement (KERNEL32.@)
@@ -1682,7 +1694,7 @@ __ASM_GLOBAL_FUNC(InterlockedIncrement,
                   "movl $1,%eax\n\t"
                   "lock; xaddl %eax,(%edx)\n\t"
                   "incl %eax\n\t"
-                  "ret $4");
+                  "ret $4")
 
 /***********************************************************************
  *		InterlockedDecrement (KERNEL32.@)
@@ -1692,7 +1704,7 @@ __ASM_GLOBAL_FUNC(InterlockedDecrement,
                   "movl $-1,%eax\n\t"
                   "lock; xaddl %eax,(%edx)\n\t"
                   "decl %eax\n\t"
-                  "ret $4");
+                  "ret $4")
 
 #else  /* __i386__ */
 
