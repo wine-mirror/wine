@@ -217,7 +217,8 @@ BOOL32 WINAPI SetConsoleCtrlHandler( HANDLER_ROUTINE *func, BOOL32 add )
 	      done++;
 	    }
 	if (!done)
-	   WARN(console, "Attempt to remove non-installed CtrlHandler %p\n");
+	   WARN(console, "Attempt to remove non-installed CtrlHandler %p\n",
+		func);
 	return (done);
       }
     return (done);

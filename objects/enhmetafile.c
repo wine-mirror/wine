@@ -514,7 +514,7 @@ UINT32 WINAPI GetEnhMetaFilePaletteEntries(HENHMETAFILE32 hemf,
 					     LPPALETTEENTRY lppe)
 {
   LPENHMETAHEADER h = GlobalLock32(hemf);
-  UINT32 temp = h->nPalEntries;
+
   if ( h == NULL ){
     GlobalUnlock32(hemf);
     return(0);
@@ -545,7 +545,7 @@ HENHMETAFILE32 WINAPI SetWinMetaFileBits(UINT32 cbBuffer,
 					   ) 
 {
    FIXME(metafile,"Stub\n");
-   return NULL;
+   return 0;
 
 }
 

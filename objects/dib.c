@@ -999,7 +999,7 @@ HBITMAP32 WINAPI CreateDIBSection32 (HDC32 hdc, BITMAPINFO *bmi, UINT32 usage,
     /* Clean up in case of errors */
     if (!res || !bmp || !dib || !bm.bmBits || (bm.bmBitsPixel <= 8 && !colorMap))
     {
-        TRACE(bitmap, "got an error res=%lu, bmp=%p, dib=%p, bm.bmBits=%p\n",
+        TRACE(bitmap, "got an error res=%08x, bmp=%p, dib=%p, bm.bmBits=%p\n",
               res, bmp, dib, bm.bmBits);
 	if (bm.bmBits)
         {
