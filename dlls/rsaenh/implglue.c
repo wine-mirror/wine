@@ -198,6 +198,10 @@ BOOL setup_key_impl(ALG_ID aiAlgid, KEY_CONTEXT *pKeyContext, DWORD dwKeyLen, DW
         case CALG_DES:
             des_setup(abKeyValue, 8, 0, &pKeyContext->des);
             break;
+
+        case CALG_RSA_SIGN:
+        case CALG_RSA_KEYX:
+            break;
         
         default:
             SetLastError(NTE_BAD_ALGID);
@@ -289,7 +293,7 @@ BOOL encrypt_block_impl(ALG_ID aiAlgid, KEY_CONTEXT *pKeyContext, CONST BYTE *in
                     SetLastError(NTE_FAIL);
                     return FALSE;
                 }
-                reverse_bytes((BYTE*)in, inlen);
+                reverse_bytes((BYTE*)out, outlen);
             } else {
                 reverse_bytes((BYTE*)in, inlen);
                 if (rsa_exptmod(in, inlen, out, &outlen, PK_PRIVATE, &pKeyContext->rsa) != CRYPT_OK) {
@@ -302,11 +306,17 @@ BOOL encrypt_block_impl(ALG_ID aiAlgid, KEY_CONTEXT *pKeyContext, CONST BYTE *in
         case CALG_RSA_SIGN:
             outlen = inlen = (mp_count_bits(&pKeyContext->rsa.N)+7)/8;
             if (enc) {
-                rsa_exptmod(in, inlen, out, &outlen, PK_PRIVATE, &pKeyContext->rsa);
-                reverse_bytes((BYTE*)in, inlen);
+                if (rsa_exptmod(in, inlen, out, &outlen, PK_PRIVATE, &pKeyContext->rsa) != CRYPT_OK) {
+                    SetLastError(NTE_FAIL);
+                    return FALSE;
+                }
+                reverse_bytes((BYTE*)out, outlen);
             } else {
                 reverse_bytes((BYTE*)in, inlen);
-                rsa_exptmod(in, inlen, out, &outlen, PK_PUBLIC, &pKeyContext->rsa);
+                if (rsa_exptmod(in, inlen, out, &outlen, PK_PUBLIC, &pKeyContext->rsa) != CRYPT_OK) {
+                    SetLastError(NTE_FAIL);
+                    return FALSE;
+                }
             }
             break;
 
