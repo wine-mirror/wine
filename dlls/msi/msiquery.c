@@ -97,15 +97,17 @@ UINT WINAPI MsiDatabaseOpenViewA(MSIHANDLE hdb,
               LPCSTR szQuery, MSIHANDLE *phView)
 {
     UINT r;
-    LPCWSTR szwQuery;
+    LPWSTR szwQuery;
 
     TRACE("%ld %s %p\n", hdb, debugstr_a(szQuery), phView);
 
     if( szQuery )
     {
-        szwQuery = HEAP_strdupAtoW( GetProcessHeap(), 0, szQuery );
+        UINT len = MultiByteToWideChar( CP_ACP, 0, szQuery, -1, NULL, 0 );
+        szwQuery = HeapAlloc( GetProcessHeap(), 0, len*sizeof(WCHAR) );
         if( !szwQuery )
             return ERROR_FUNCTION_FAILED;
+        MultiByteToWideChar( CP_ACP, 0, szQuery, -1, szwQuery, len );
     }
     else
         szwQuery = NULL;

@@ -173,18 +173,4 @@ extern LPWSTR MSI_makestring( MSIDATABASE *db, UINT stringid);
 
 UINT VIEW_find_column( MSIVIEW *view, LPWSTR name, UINT *n );
 
-/* FIXME! should get rid of that */
-#include "winnls.h"
-inline static LPWSTR HEAP_strdupAtoW( HANDLE heap, DWORD flags, LPCSTR str )
-{
-    LPWSTR ret;
-    INT len;
-
-    if (!str) return NULL;
-    len = MultiByteToWideChar( CP_ACP, 0, str, -1, NULL, 0 );
-    ret = HeapAlloc( heap, flags, len * sizeof(WCHAR) );
-    if (ret) MultiByteToWideChar( CP_ACP, 0, str, -1, ret, len );
-    return ret;
-}
-
 #endif /* __WINE_MSI_PRIVATE__ */

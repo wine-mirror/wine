@@ -1,7 +1,7 @@
 /*
  * Implementation of the Microsoft Installer (msi.dll)
  *
- * Copyright 2002 Mike McCormack for CodeWeavers
+ * Copyright 2002,2003 Mike McCormack for CodeWeavers
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -25,6 +25,7 @@
 #include "windef.h"
 #include "winbase.h"
 #include "winreg.h"
+#include "winnls.h"
 #include "shlwapi.h"
 #include "wine/debug.h"
 #include "msi.h"
@@ -135,21 +136,26 @@ UINT WINAPI MsiOpenDatabaseA(
 {
     HRESULT r = ERROR_FUNCTION_FAILED;
     LPWSTR szwDBPath = NULL, szwPersist = NULL;
+    UINT len;
 
     TRACE("%s %s %p\n", debugstr_a(szDBPath), debugstr_a(szPersist), phDB);
 
     if( szDBPath )
     {
-        szwDBPath = HEAP_strdupAtoW( GetProcessHeap(), 0, szDBPath );
+        len = MultiByteToWideChar( CP_ACP, 0, szDBPath, -1, NULL, 0 );
+        szwDBPath = HeapAlloc( GetProcessHeap(), 0, len * sizeof(WCHAR) );
         if( !szwDBPath )
             goto end;
+        MultiByteToWideChar( CP_ACP, 0, szDBPath, -1, szwDBPath, len );
     }
 
     if( szPersist )
     {
-        szwPersist = HEAP_strdupAtoW( GetProcessHeap(), 0, szPersist );
+        len = MultiByteToWideChar( CP_ACP, 0, szPersist, -1, NULL, 0 );
+        szwPersist = HeapAlloc( GetProcessHeap(), 0, len * sizeof(WCHAR) );
         if( !szwPersist )
             goto end;
+        MultiByteToWideChar( CP_ACP, 0, szPersist, -1, szwPersist, len );
     }
 
     r = MsiOpenDatabaseW( szwDBPath, szwPersist, phDB );
@@ -287,16 +293,20 @@ UINT WINAPI MsiInstallProductA(LPCSTR szPackagePath, LPCSTR szCommandLine)
 
     if( szPackagePath )
     {
-        szwPath = HEAP_strdupAtoW(GetProcessHeap(),0,szPackagePath);
-        if( szwPath == NULL )
-            goto end; 
+        UINT len = MultiByteToWideChar( CP_ACP, 0, szPackagePath, -1, NULL, 0 );
+        szwPath = HeapAlloc( GetProcessHeap(), 0, len * sizeof(WCHAR) );
+        if( !szwPath )
+            goto end;
+        MultiByteToWideChar( CP_ACP, 0, szPackagePath, -1, szwPath, len );
     }
 
     if( szCommandLine )
     {
-        szwCommand = HEAP_strdupAtoW(GetProcessHeap(),0,szCommandLine);
-        if( szwCommand == NULL )
-            goto end; 
+        UINT len = MultiByteToWideChar( CP_ACP, 0, szCommandLine, -1, NULL, 0 );
+        szwCommand = HeapAlloc( GetProcessHeap(), 0, len * sizeof(WCHAR) );
+        if( !szwCommand )
+            goto end;
+        MultiByteToWideChar( CP_ACP, 0, szCommandLine, -1, szwCommand, len );
     }
  
     r = MsiInstallProductW( szwPath, szwCommand );
@@ -478,13 +488,15 @@ UINT WINAPI MsiEnumFeaturesA(LPCSTR szProduct, DWORD index,
 
     if( szProduct )
     {
-        szwProduct = HEAP_strdupAtoW(GetProcessHeap(),0,szProduct);
-        if( !szwProduct )
+        UINT len = MultiByteToWideChar( CP_ACP, 0, szProduct, -1, NULL, 0 );
+        szwProduct = HeapAlloc( GetProcessHeap(), 0, len * sizeof (WCHAR) );
+        if( szwProduct )
+            MultiByteToWideChar( CP_ACP, 0, szProduct, -1, szwProduct, len );
+        else
             return ERROR_FUNCTION_FAILED;
     }
 
-    r = MsiEnumFeaturesW(szProduct?szwProduct:NULL, 
-                         index, szwFeature, szwParent);
+    r = MsiEnumFeaturesW(szwProduct, index, szwFeature, szwParent);
     if( r == ERROR_SUCCESS )
     {
         WideCharToMultiByte(CP_ACP, 0, szwFeature, -1,
@@ -591,8 +603,11 @@ UINT WINAPI MsiEnumClientsA(LPCSTR szComponent, DWORD index, LPSTR szProduct)
 
     if( szComponent )
     {
-        szwComponent = HEAP_strdupAtoW(GetProcessHeap(),0,szComponent);
-        if( !szwComponent )
+        UINT len = MultiByteToWideChar( CP_ACP, 0, szComponent, -1, NULL, 0 );
+        szwComponent = HeapAlloc( GetProcessHeap(), 0, len * sizeof (WCHAR) );
+        if( szwComponent )
+            MultiByteToWideChar( CP_ACP, 0, szComponent, -1, szwComponent, len );
+        else
             return ERROR_FUNCTION_FAILED;
     }
 

@@ -25,6 +25,7 @@
 #include "windef.h"
 #include "winbase.h"
 #include "winreg.h"
+#include "winnls.h"
 #include "shlwapi.h"
 #include "wine/debug.h"
 #include "msi.h"
@@ -54,9 +55,11 @@ UINT WINAPI MsiGetSummaryInformationA(MSIHANDLE hDatabase,
 
     if( szDatabase )
     {
-        szwDatabase = HEAP_strdupAtoW( GetProcessHeap(), 0, szDatabase );
+        UINT len = MultiByteToWideChar( CP_ACP, 0, szDatabase, -1, NULL, 0 );
+        szwDatabase = HeapAlloc( GetProcessHeap(), 0, len*sizeof(WCHAR) );
         if( !szwDatabase )
             return ERROR_FUNCTION_FAILED;
+        MultiByteToWideChar( CP_ACP, 0, szDatabase, -1, szwDatabase, len );
     }
 
     ret = MsiGetSummaryInformationW(hDatabase, szwDatabase, uiUpdateCount, phSummaryInfo);
