@@ -4,6 +4,7 @@
 #include <string.h>
 #include "debugtools.h"
 #include "shellapi.h"
+#include "shlwapi.h"
 
 #include "shlobj.h"
 #include "shresdef.h"
@@ -154,7 +155,52 @@ BOOL WINAPI Win32DeleteFile(LPSTR fName)
  */
 DWORD WINAPI SHFileOperationA (LPSHFILEOPSTRUCTA lpFileOp)   
 {
-	FIXME("(%p):stub.\n", lpFileOp);
+	LPSTR pFrom = (LPSTR)lpFileOp->pFrom;
+	LPSTR pTo = (LPSTR)lpFileOp->pTo;
+	LPSTR pTempTo;
+	
+	switch(lpFileOp->wFunc) {
+	case FO_COPY:
+		TRACE("File Copy:\n");
+		while(1) {
+			if(!pFrom[0]) break;
+			if(!pTo[0]) break;
+			TRACE("   From='%s' To='%s'\n", pFrom, pTo);
+
+                        pTempTo = HeapAlloc(GetProcessHeap(), 0, strlen(pTo)+1);
+                        if (pTempTo)
+                        {
+                            strcpy( pTempTo, pTo );
+                            PathRemoveFileSpecA(pTempTo);
+                            TRACE("   Creating Directory '%s'\n", pTempTo);
+                            SHCreateDirectory(NULL,pTempTo);
+                            HeapFree(GetProcessHeap(), 0, pTempTo);
+                        }
+                        CopyFileA(pFrom, pTo, FALSE);
+
+			pFrom += strlen(pFrom) + 1;
+			pTo += strlen(pTo) + 1;
+		}
+		TRACE("Setting AnyOpsAborted=FALSE\n");
+		lpFileOp->fAnyOperationsAborted=FALSE;
+		return 0;
+
+	case FO_DELETE:
+		TRACE("File Delete:\n");
+		while(1) {
+			if(!pFrom[0]) break;
+			TRACE("   File='%s'\n", pFrom);
+			DeleteFileA(pFrom);
+			pFrom += strlen(pFrom) + 1;
+		}
+		TRACE("Setting AnyOpsAborted=FALSE\n");
+		lpFileOp->fAnyOperationsAborted=FALSE;
+		return 0;
+
+	default:
+		FIXME("Unhandled shell file operation %d\n", lpFileOp->wFunc);
+	}
+
 	return 1;
 }
 
