@@ -373,12 +373,23 @@ static void get_thread_context( struct thread *thread, unsigned int flags, CONTE
 	struct dbreg dbregs;
         if (ptrace( PTRACE_GETDBREGS, pid, (caddr_t) &dbregs, 0 ) == -1)
 		goto error;
+#ifdef DBREG_DRX
+	/* needed for FreeBSD, the structure fields have changed under 5.x */
+	context->Dr0 = DBREG_DRX((&dbregs), 0);
+	context->Dr1 = DBREG_DRX((&dbregs), 1);
+	context->Dr2 = DBREG_DRX((&dbregs), 2);
+	context->Dr3 = DBREG_DRX((&dbregs), 3);
+	context->Dr6 = DBREG_DRX((&dbregs), 6);
+	context->Dr7 = DBREG_DRX((&dbregs), 7);
+#else
 	context->Dr0 = dbregs.dr0;
 	context->Dr1 = dbregs.dr1;
 	context->Dr2 = dbregs.dr2;
 	context->Dr3 = dbregs.dr3;
 	context->Dr6 = dbregs.dr6;
 	context->Dr7 = dbregs.dr7;
+#endif
+
 #endif
     }
     if (flags & CONTEXT_FLOATING_POINT)
@@ -437,6 +448,17 @@ static void set_thread_context( struct thread *thread, unsigned int flags, const
     {
 #ifdef PTRACE_SETDBREGS
 	struct dbreg dbregs;
+#ifdef DBREG_DRX
+	/* needed for FreeBSD, the structure fields have changed under 5.x */
+	DBREG_DRX((&dbregs), 0) = context->Dr0;
+	DBREG_DRX((&dbregs), 1) = context->Dr1;
+	DBREG_DRX((&dbregs), 2) = context->Dr2;
+	DBREG_DRX((&dbregs), 3) = context->Dr3;
+	DBREG_DRX((&dbregs), 4) = 0;
+	DBREG_DRX((&dbregs), 5) = 0;
+	DBREG_DRX((&dbregs), 6) = context->Dr6;
+	DBREG_DRX((&dbregs), 7) = context->Dr7;
+#else
 	dbregs.dr0 = context->Dr0;
 	dbregs.dr1 = context->Dr1;
 	dbregs.dr2 = context->Dr2;
@@ -445,6 +467,7 @@ static void set_thread_context( struct thread *thread, unsigned int flags, const
 	dbregs.dr5 = 0;
 	dbregs.dr6 = context->Dr6;
 	dbregs.dr7 = context->Dr7;
+#endif
         if (ptrace( PTRACE_SETDBREGS, pid, (caddr_t) &dbregs, 0 ) == -1)
 		goto error;
 #endif
