@@ -87,12 +87,12 @@ static inline unsigned int strlenW( const WCHAR *str )
 {
 #if defined(__i386__) && defined(__GNUC__)
     int dummy, res;
-    __asm__( "cld\n\t"
-             "repne\n\t"
-             "scasw\n\t"
-             "notl %0"
-             : "=c" (res), "=&D" (dummy)
-             : "0" (0xffffffff), "1" (str), "a" (0) );
+    __asm__ __volatile__( "cld\n\t"
+                          "repne\n\t"
+                          "scasw\n\t"
+                          "notl %0"
+                          : "=c" (res), "=&D" (dummy)
+                          : "0" (0xffffffff), "1" (str), "a" (0) );
     return res - 1;
 #else
     const WCHAR *s = str;
