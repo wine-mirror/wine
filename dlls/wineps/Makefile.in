@@ -83,4 +83,11 @@ EXTRASUBDIRS = data
 
 @MAKE_DLL_RULES@
 
+install::
+	$(MKINSTALLDIRS) $(datadir)/wine
+	$(INSTALL_DATA) $(SRCDIR)/generic.ppd $(datadir)/wine/generic.ppd
+
+uninstall::
+	$(RM) $(datadir)/wine/generic.ppd
+
 ### Dependencies:
