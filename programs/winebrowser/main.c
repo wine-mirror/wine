@@ -53,7 +53,7 @@ int main (int argc, char *argv[])
 
   if (argc <= 1)
   {
-    fprintf( stderr, "Usage: winebrowser URL\n", argv[0] );
+    fprintf( stderr, "Usage: winebrowser URL\n" );
     return 1;
   }
 
