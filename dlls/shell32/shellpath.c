@@ -1573,7 +1573,8 @@ HRESULT WINAPI SHGetFolderPathW(
     WCHAR      szBuildPath[MAX_PATH], szTemp[MAX_PATH];
     DWORD      folder = nFolder & CSIDL_FOLDER_MASK;
     CSIDL_Type type;
-
+    int        ret;
+    
     TRACE("%p,%p,nFolder=0x%04x\n", hwndOwner,pszPath,nFolder);
 
     /* Windows always NULL-terminates the resulting path regardless of success
@@ -1656,7 +1657,8 @@ HRESULT WINAPI SHGetFolderPathW(
     }
 
     /* create directory/directories */
-    if (SHCreateDirectoryExW(hwndOwner, szBuildPath, NULL))
+    ret = SHCreateDirectoryExW(hwndOwner, szBuildPath, NULL);
+    if (ret && ret != ERROR_ALREADY_EXISTS)
     {
         ERR("Failed to create directory '%s'.\n", debugstr_w(szBuildPath));
         hr = E_FAIL;
