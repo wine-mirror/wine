@@ -1087,6 +1087,47 @@ static void test_SafeArrayGetPutElement_IUnknown(void)
   ok(tunk_xref == 2,"Failed to decrement refcount of iface.\n");
 }
 
+static void test_SafeArrayGetPutElement_VARIANT(void)
+{
+  SAFEARRAYBOUND sab;
+  LONG indices[1];
+  SAFEARRAY *sa;
+  HRESULT hres;
+  VARIANT value, gotvalue;
+
+  sab.lLbound = 1;
+  sab.cElements = 1;
+  sa = SafeArrayCreate(VT_VARIANT, 1, &sab);
+  ok(sa != NULL, "VARIANT test couldn't create array\n");
+  if (!sa)
+    return;
+
+  ok(sa->cbElements == sizeof(VARIANT), "VARIANT size mismatch\n");
+  if (sa->cbElements != sizeof(VARIANT))
+    return;
+
+  indices[0] = sab.lLbound;
+  V_VT(&value) = VT_I4;
+  V_I4(&value) = 0x42424242;
+  hres = SafeArrayPutElement(sa, indices, &value);
+  ok(hres == S_OK, "Failed to put Variant I4 element hres 0x%lx\n", hres);
+
+  V_VT(&gotvalue) = 0xdead;
+  hres = SafeArrayGetElement(sa, indices, &gotvalue);
+  ok(hres == S_OK, "Failed to get variant element at hres 0x%lx\n", hres);
+
+  V_VT(&gotvalue) = VT_EMPTY;
+  hres = SafeArrayGetElement(sa, indices, &gotvalue);
+  ok(hres == S_OK, "Failed to get variant element at hres 0x%lx\n", hres);
+  if (hres == S_OK) {
+    ok(V_VT(&value) == V_VT(&gotvalue), "Got type 0x%x instead of 0x%x\n", V_VT(&value), V_VT(&gotvalue));
+    if (V_VT(&value) == V_VT(&gotvalue))
+        ok(V_I4(&value) == V_I4(&gotvalue), "Got %ld instead of %d\n", V_I4(&value), V_VT(&gotvalue));
+  }
+  SafeArrayDestroy(sa);
+}
+
+
 static void test_SafeArrayCopyData(void)
 {
   SAFEARRAYBOUND sab[4];
@@ -1520,4 +1561,5 @@ START_TEST(safearray)
     test_SafeArrayGetPutElement();
     test_SafeArrayGetPutElement_BSTR();
     test_SafeArrayGetPutElement_IUnknown();
+    test_SafeArrayGetPutElement_VARIANT();
 }

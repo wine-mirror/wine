@@ -342,7 +342,9 @@ static HRESULT SAFEARRAY_DestroyData(SAFEARRAY *psa, ULONG ulStartCell)
 
       while(ulCellCount--)
       {
-        VariantClear(lpVariant);
+        HRESULT hRet = VariantClear(lpVariant);
+
+        if (FAILED(hRet)) FIXME("VariantClear of element failed!\n");
         lpVariant++;
       }
     }
@@ -369,7 +371,10 @@ static HRESULT SAFEARRAY_CopyData(SAFEARRAY *psa, SAFEARRAY *dest)
 
       while(ulCellCount--)
       {
-        VariantCopy(lpDest, lpVariant);
+        HRESULT hRet;
+
+        hRet = VariantCopy(lpDest, lpVariant);
+        if (FAILED(hRet)) FIXME("VariantCopy failed with 0x%lx\n", hRet);
         lpVariant++;
         lpDest++;
       }
@@ -874,8 +879,10 @@ HRESULT WINAPI SafeArrayPutElement(SAFEARRAY *psa, LONG *rgIndices, void *pvData
         VARIANT* lpVariant = (VARIANT*)pvData;
         VARIANT* lpDest = (VARIANT*)lpvDest;
 
-        VariantClear(lpDest);
-        VariantCopy(lpDest, lpVariant);
+        hRet = VariantClear(lpDest);
+        if (FAILED(hRet)) FIXME("VariantClear failed with 0x%lx\n", hRet);
+        hRet = VariantCopy(lpDest, lpVariant);
+        if (FAILED(hRet)) FIXME("VariantCopy failed with 0x%lx\n", hRet);
       }
       else if (psa->fFeatures & FADF_BSTR)
       {
@@ -959,7 +966,10 @@ HRESULT WINAPI SafeArrayGetElement(SAFEARRAY *psa, LONG *rgIndices, void *pvData
         VARIANT* lpVariant = (VARIANT*)lpvSrc;
         VARIANT* lpDest = (VARIANT*)pvData;
 
-        VariantCopy(lpDest, lpVariant);
+        /* The original content of pvData is ignored. */
+        V_VT(lpDest) = VT_EMPTY;
+        hRet = VariantCopy(lpDest, lpVariant);
+	if (FAILED(hRet)) FIXME("VariantCopy failed with 0x%lx\n", hRet);
       }
       else if (psa->fFeatures & FADF_BSTR)
       {
