@@ -77,13 +77,18 @@ static inline HANDLE get_semaphore( RTL_CRITICAL_SECTION *crit )
 /***********************************************************************
  *           RtlInitializeCriticalSection   (NTDLL.@)
  *
- * Initialise a new RTL_CRITICAL_SECTION.
+ * Initialises a new critical section.
  *
  * PARAMS
  *  crit [O] Critical section to initialise
  *
- * RETURN
+ * RETURNS
  *  STATUS_SUCCESS.
+ *
+ * SEE
+ *  RtlInitializeCriticalSectionAndSpinCount(), RtlDeleteCriticalSection(),
+ *  RtlEnterCriticalSection(), RtlLeaveCriticalSection(),
+ *  RtlTryEnterCriticalSection(), RtlSetCriticalSectionSpinCount()
  */
 NTSTATUS WINAPI RtlInitializeCriticalSection( RTL_CRITICAL_SECTION *crit )
 {
@@ -93,7 +98,7 @@ NTSTATUS WINAPI RtlInitializeCriticalSection( RTL_CRITICAL_SECTION *crit )
 /***********************************************************************
  *           RtlInitializeCriticalSectionAndSpinCount   (NTDLL.@)
  *
- * Initialise a new RTL_CRITICAL_SECTION with a given spin count.
+ * Initialises a new critical section with a given spin count.
  *
  * PARAMS
  *   crit      [O] Critical section to initialise
@@ -103,8 +108,12 @@ NTSTATUS WINAPI RtlInitializeCriticalSection( RTL_CRITICAL_SECTION *crit )
  *  STATUS_SUCCESS.
  *
  * NOTES
- * The InitializeCriticalSectionAndSpinCount() (KERNEL32) function is
- * available on NT4SP3 or later, and Win98 or later.
+ *  Available on NT4 SP3 or later.
+ *
+ * SEE
+ *  RtlInitializeCriticalSection(), RtlDeleteCriticalSection(),
+ *  RtlEnterCriticalSection(), RtlLeaveCriticalSection(),
+ *  RtlTryEnterCriticalSection(), RtlSetCriticalSectionSpinCount()
  */
 NTSTATUS WINAPI RtlInitializeCriticalSectionAndSpinCount( RTL_CRITICAL_SECTION *crit, ULONG spincount )
 {
@@ -139,7 +148,7 @@ NTSTATUS WINAPI RtlInitializeCriticalSectionAndSpinCount( RTL_CRITICAL_SECTION *
  * Sets the spin count of a critical section.
  *
  * PARAMS
- *   crit      [O] Critical section
+ *   crit      [I/O] Critical section
  *   spincount [I] Spin count for crit
  *
  * RETURNS
@@ -147,6 +156,11 @@ NTSTATUS WINAPI RtlInitializeCriticalSectionAndSpinCount( RTL_CRITICAL_SECTION *
  *
  * NOTES
  *  If the system is not SMP, spincount is ignored and set to 0.
+ *
+ * SEE
+ *  RtlInitializeCriticalSection(), RtlInitializeCriticalSectionAndSpinCount(),
+ *  RtlDeleteCriticalSection(), RtlEnterCriticalSection(),
+ *  RtlLeaveCriticalSection(), RtlTryEnterCriticalSection()
  */
 ULONG WINAPI RtlSetCriticalSectionSpinCount( RTL_CRITICAL_SECTION *crit, ULONG spincount )
 {
@@ -159,13 +173,18 @@ ULONG WINAPI RtlSetCriticalSectionSpinCount( RTL_CRITICAL_SECTION *crit, ULONG s
 /***********************************************************************
  *           RtlDeleteCriticalSection   (NTDLL.@)
  *
- * Free the resources used by an RTL_CRITICAL_SECTION.
+ * Frees the resources used by a critical section.
  *
  * PARAMS
  *  crit [I/O] Critical section to free
  *
  * RETURNS
  *  STATUS_SUCCESS.
+ *
+ * SEE
+ *  RtlInitializeCriticalSection(), RtlInitializeCriticalSectionAndSpinCount(),
+ *  RtlDeleteCriticalSection(), RtlEnterCriticalSection(),
+ *  RtlLeaveCriticalSection(), RtlTryEnterCriticalSection()
  */
 NTSTATUS WINAPI RtlDeleteCriticalSection( RTL_CRITICAL_SECTION *crit )
 {
@@ -190,13 +209,22 @@ NTSTATUS WINAPI RtlDeleteCriticalSection( RTL_CRITICAL_SECTION *crit )
 /***********************************************************************
  *           RtlpWaitForCriticalSection   (NTDLL.@)
  *
- * Wait for an RTL_CRITICAL_SECTION to become free.
+ * Waits for a busy critical section to become free.
  * 
  * PARAMS
  *  crit [I/O] Critical section to wait for
  *
  * RETURNS
  *  STATUS_SUCCESS.
+ *
+ * NOTES
+ *  Use RtlEnterCriticalSection() instead of this function as it is often much
+ *  faster.
+ *
+ * SEE
+ *  RtlInitializeCriticalSection(), RtlInitializeCriticalSectionAndSpinCount(),
+ *  RtlDeleteCriticalSection(), RtlEnterCriticalSection(),
+ *  RtlLeaveCriticalSection(), RtlTryEnterCriticalSection()
  */
 NTSTATUS WINAPI RtlpWaitForCriticalSection( RTL_CRITICAL_SECTION *crit )
 {
@@ -244,6 +272,25 @@ NTSTATUS WINAPI RtlpWaitForCriticalSection( RTL_CRITICAL_SECTION *crit )
 
 /***********************************************************************
  *           RtlpUnWaitCriticalSection   (NTDLL.@)
+ *
+ * Notifies other threads waiting on the busy critical section that it has
+ * become free.
+ * 
+ * PARAMS
+ *  crit [I/O] Critical section
+ *
+ * RETURNS
+ *  Success: STATUS_SUCCESS.
+ *  Failure: Any error returned by NtReleaseSemaphore()
+ *
+ * NOTES
+ *  Use RtlLeaveCriticalSection() instead of this function as it is often much
+ *  faster.
+ *
+ * SEE
+ *  RtlInitializeCriticalSection(), RtlInitializeCriticalSectionAndSpinCount(),
+ *  RtlDeleteCriticalSection(), RtlEnterCriticalSection(),
+ *  RtlLeaveCriticalSection(), RtlTryEnterCriticalSection()
  */
 NTSTATUS WINAPI RtlpUnWaitCriticalSection( RTL_CRITICAL_SECTION *crit )
 {
@@ -257,7 +304,7 @@ NTSTATUS WINAPI RtlpUnWaitCriticalSection( RTL_CRITICAL_SECTION *crit )
 /***********************************************************************
  *           RtlEnterCriticalSection   (NTDLL.@)
  *
- * Enter an RTL_CRITICAL_SECTION.
+ * Enters a critical section, waiting for it to become available if necessary.
  *
  * PARAMS
  *  crit [I/O] Critical section to enter
@@ -265,8 +312,10 @@ NTSTATUS WINAPI RtlpUnWaitCriticalSection( RTL_CRITICAL_SECTION *crit )
  * RETURNS
  *  STATUS_SUCCESS. The critical section is held by the caller.
  *  
- * NOTES
- *  The caller will wait until the critical section is availale.
+ * SEE
+ *  RtlInitializeCriticalSection(), RtlInitializeCriticalSectionAndSpinCount(),
+ *  RtlDeleteCriticalSection(), RtlSetCriticalSectionSpinCount(),
+ *  RtlLeaveCriticalSection(), RtlTryEnterCriticalSection()
  */
 NTSTATUS WINAPI RtlEnterCriticalSection( RTL_CRITICAL_SECTION *crit )
 {
@@ -307,7 +356,7 @@ done:
 /***********************************************************************
  *           RtlTryEnterCriticalSection   (NTDLL.@)
  *
- * Enter an RTL_CRITICAL_SECTION without waiting.
+ * Tries to enter a critical section without waiting.
  *
  * PARAMS
  *  crit [I/O] Critical section to enter
@@ -315,6 +364,11 @@ done:
  * RETURNS
  *  Success: TRUE. The critical section is held by the caller.
  *  Failure: FALSE. The critical section is currently held by another thread.
+ *
+ * SEE
+ *  RtlInitializeCriticalSection(), RtlInitializeCriticalSectionAndSpinCount(),
+ *  RtlDeleteCriticalSection(), RtlEnterCriticalSection(),
+ *  RtlLeaveCriticalSection(), RtlSetCriticalSectionSpinCount()
  */
 BOOL WINAPI RtlTryEnterCriticalSection( RTL_CRITICAL_SECTION *crit )
 {
@@ -338,13 +392,18 @@ BOOL WINAPI RtlTryEnterCriticalSection( RTL_CRITICAL_SECTION *crit )
 /***********************************************************************
  *           RtlLeaveCriticalSection   (NTDLL.@)
  *
- * Leave an RTL_CRITICAL_SECTION.
+ * Leaves a critical section.
  *
  * PARAMS
- *  crit [I/O] Critical section to enter
+ *  crit [I/O] Critical section to leave.
  *
  * RETURNS
  *  STATUS_SUCCESS.
+ *
+ * SEE
+ *  RtlInitializeCriticalSection(), RtlInitializeCriticalSectionAndSpinCount(),
+ *  RtlDeleteCriticalSection(), RtlEnterCriticalSection(),
+ *  RtlSetCriticalSectionSpinCount(), RtlTryEnterCriticalSection()
  */
 NTSTATUS WINAPI RtlLeaveCriticalSection( RTL_CRITICAL_SECTION *crit )
 {
