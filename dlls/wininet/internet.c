@@ -2733,8 +2733,11 @@ static VOID INTERNET_ExecuteWork(void)
         TRACE("SENDCALLBACK %p\n", workRequest.hdr);
 
         SendSyncCallback(workRequest.hdr,
-                req->dwContext, req->dwInternetStatus, req->lpvStatusInfo,
-                req->dwStatusInfoLength);
+			 req->dwContext, req->dwInternetStatus, req->lpvStatusInfo,
+			 req->dwStatusInfoLength);
+
+        /* And frees the copy of the status info */
+        HeapFree(GetProcessHeap(), 0, req->lpvStatusInfo);
         }
         break;
 

@@ -276,13 +276,20 @@ VOID SendAsyncCallback(LPWININETHANDLEHEADER hdr, DWORD dwContext,
     {
 	WORKREQUEST workRequest;
 	struct WORKREQ_SENDCALLBACK *req;
-	
+	void *lpvStatusInfo_copy = lpvStatusInfo;
+
+	if (lpvStatusInfo)
+	{
+	    lpvStatusInfo_copy = HeapAlloc(GetProcessHeap(), 0, dwStatusInfoLength);
+	    memcpy(lpvStatusInfo_copy, lpvStatusInfo, dwStatusInfoLength);
+	}
+
 	workRequest.asyncall = SENDCALLBACK;
 	workRequest.hdr = WININET_AddRef( hdr );
 	req = &workRequest.u.SendCallback;
 	req->dwContext = dwContext;
 	req->dwInternetStatus = dwInternetStatus;
-	req->lpvStatusInfo = lpvStatusInfo;
+	req->lpvStatusInfo = lpvStatusInfo_copy;
 	req->dwStatusInfoLength = dwStatusInfoLength;
 	
 	INTERNET_AsyncCall(&workRequest);
