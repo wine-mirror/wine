@@ -219,8 +219,8 @@
 219 pascal16 CreateDialogIndirect(word ptr word segptr) CreateDialogIndirect16
 220 pascal16 LoadMenuIndirect(ptr) LoadMenuIndirect16
 221 pascal16 ScrollDC(word s_word s_word ptr ptr word ptr) ScrollDC16
-222 pascal16 GetKeyboardState(ptr) GetKeyboardState
-223 pascal16 SetKeyboardState(ptr) SetKeyboardState
+222 pascal16 GetKeyboardState(ptr) GetKeyboardState16
+223 pascal16 SetKeyboardState(ptr) SetKeyboardState16
 224 pascal16 GetWindowTask(word) GetWindowTask16
 225 pascal16 EnumTaskWindows(word segptr long) EnumTaskWindows16
 226 stub LockInput # not in W2.0

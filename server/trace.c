@@ -2211,6 +2211,26 @@ static void dump_get_thread_input_reply( const struct get_thread_input_reply *re
     dump_rectangle( &req->rect );
 }
 
+static void dump_get_key_state_request( const struct get_key_state_request *req )
+{
+    fprintf( stderr, " tid=%08x,", req->tid );
+    fprintf( stderr, " key=%d", req->key );
+}
+
+static void dump_get_key_state_reply( const struct get_key_state_reply *req )
+{
+    fprintf( stderr, " state=%02x,", req->state );
+    fprintf( stderr, " keystate=" );
+    dump_varargs_bytes( cur_size );
+}
+
+static void dump_set_key_state_request( const struct set_key_state_request *req )
+{
+    fprintf( stderr, " tid=%08x,", req->tid );
+    fprintf( stderr, " keystate=" );
+    dump_varargs_bytes( cur_size );
+}
+
 static void dump_set_foreground_window_request( const struct set_foreground_window_request *req )
 {
     fprintf( stderr, " handle=%p", req->handle );
@@ -2509,6 +2529,8 @@ static const dump_func req_dumpers[REQ_NB_REQUESTS] = {
     (dump_func)dump_get_window_properties_request,
     (dump_func)dump_attach_thread_input_request,
     (dump_func)dump_get_thread_input_request,
+    (dump_func)dump_get_key_state_request,
+    (dump_func)dump_set_key_state_request,
     (dump_func)dump_set_foreground_window_request,
     (dump_func)dump_set_focus_window_request,
     (dump_func)dump_set_active_window_request,
@@ -2682,6 +2704,8 @@ static const dump_func reply_dumpers[REQ_NB_REQUESTS] = {
     (dump_func)dump_get_window_properties_reply,
     (dump_func)0,
     (dump_func)dump_get_thread_input_reply,
+    (dump_func)dump_get_key_state_reply,
+    (dump_func)0,
     (dump_func)dump_set_foreground_window_reply,
     (dump_func)dump_set_focus_window_reply,
     (dump_func)dump_set_active_window_reply,
@@ -2855,6 +2879,8 @@ static const char * const req_names[REQ_NB_REQUESTS] = {
     "get_window_properties",
     "attach_thread_input",
     "get_thread_input",
+    "get_key_state",
+    "set_key_state",
     "set_foreground_window",
     "set_focus_window",
     "set_active_window",

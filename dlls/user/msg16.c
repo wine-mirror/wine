@@ -403,6 +403,33 @@ void WINAPI PostQuitMessage16( INT16 exitCode )
 }
 
 
+/**********************************************************************
+ *		GetKeyState (USER.106)
+ */
+INT16 WINAPI GetKeyState16(INT16 vkey)
+{
+    return GetKeyState(vkey);
+}
+
+
+/**********************************************************************
+ *		GetKeyboardState (USER.222)
+ */
+BOOL WINAPI GetKeyboardState16( LPBYTE state )
+{
+    return GetKeyboardState( state );
+}
+
+
+/**********************************************************************
+ *		SetKeyboardState (USER.223)
+ */
+BOOL WINAPI SetKeyboardState16( LPBYTE state )
+{
+    return SetKeyboardState( state );
+}
+
+
 /***********************************************************************
  *		SetMessageQueue (USER.266)
  */

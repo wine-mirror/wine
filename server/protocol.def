@@ -1941,6 +1941,21 @@ enum message_type
     rectangle_t    rect;          /* caret rectangle */
 @END
 
+/* Retrieve queue keyboard state for a given thread */
+@REQ(get_key_state)
+    thread_id_t    tid;           /* id of thread */
+    int            key;           /* optional key code or -1 */
+@REPLY
+    unsigned char  state;         /* state of specified key */
+    VARARG(keystate,bytes);       /* state array for all the keys */
+@END
+
+/* Set queue keyboard state for a given thread */
+@REQ(set_key_state)
+    thread_id_t    tid;           /* id of thread */
+    VARARG(keystate,bytes);       /* state array for all the keys */
+@END
+
 /* Set the system foreground window */
 @REQ(set_foreground_window)
     user_handle_t  handle;        /* handle to the foreground window */

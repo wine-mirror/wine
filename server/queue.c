@@ -868,6 +868,68 @@ static struct timer *set_timer( struct msg_queue *queue, unsigned int rate )
     return timer;
 }
 
+/* change the input key state for a given key */
+static void set_input_key_state( struct thread_input *input, unsigned char key, int down )
+{
+    if (down)
+    {
+        if (!(input->keystate[key] & 0x80)) input->keystate[key] ^= 0x01;
+        input->keystate[key] |= 0x80;
+    }
+    else input->keystate[key] &= ~0x80;
+}
+
+/* update the input key state for a keyboard message */
+static void update_input_key_state( struct thread_input *input, const struct message *msg )
+{
+    unsigned char key;
+    int down = 0, extended;
+
+    switch (msg->msg)
+    {
+    case WM_LBUTTONDOWN:
+        down = 1;
+        /* fall through */
+    case WM_LBUTTONUP:
+        set_input_key_state( input, VK_LBUTTON, down );
+        break;
+    case WM_MBUTTONDOWN:
+        down = 1;
+        /* fall through */
+    case WM_MBUTTONUP:
+        set_input_key_state( input, VK_MBUTTON, down );
+        break;
+    case WM_RBUTTONDOWN:
+        down = 1;
+        /* fall through */
+    case WM_RBUTTONUP:
+        set_input_key_state( input, VK_RBUTTON, down );
+        break;
+    case WM_KEYDOWN:
+    case WM_SYSKEYDOWN:
+        down = 1;
+        /* fall through */
+    case WM_KEYUP:
+    case WM_SYSKEYUP:
+        key = (unsigned char)msg->wparam;
+        extended = ((msg->lparam >> 16) & KF_EXTENDED) != 0;
+        set_input_key_state( input, key, down );
+        switch(key)
+        {
+        case VK_SHIFT:
+            set_input_key_state( input, extended ? VK_RSHIFT : VK_LSHIFT, down );
+            break;
+        case VK_CONTROL:
+            set_input_key_state( input, extended ? VK_RCONTROL : VK_LCONTROL, down );
+            break;
+        case VK_MENU:
+            set_input_key_state( input, extended ? VK_RMENU : VK_LMENU, down );
+            break;
+        }
+        break;
+    }
+}
+
 /* release the hardware message currently being processed by the given thread */
 static void release_hardware_message( struct thread *thread, int remove )
 {
@@ -879,6 +941,7 @@ static void release_hardware_message( struct thread *thread, int remove )
         struct message *other;
         int clr_bit;
 
+        update_input_key_state( input, input->msg );
         unlink_message( &input->msg_list, input->msg );
         clr_bit = get_hardware_msg_bit( input->msg );
         for (other = input->msg_list.first; other; other = other->next)
@@ -892,13 +955,19 @@ static void release_hardware_message( struct thread *thread, int remove )
 }
 
 /* find the window that should receive a given hardware message */
-static user_handle_t find_hardware_message_window( struct thread_input *input, struct message *msg )
+static user_handle_t find_hardware_message_window( struct thread_input *input, struct message *msg,
+                                                   unsigned int *msg_code )
 {
     user_handle_t win = 0;
 
+    *msg_code = msg->msg;
     if (is_keyboard_msg( msg ))
     {
-        if (input && !(win = input->focus)) win = input->active;
+        if (input && !(win = input->focus))
+        {
+            win = input->active;
+            if (*msg_code < WM_SYSKEYDOWN) *msg_code += WM_SYSKEYDOWN - WM_KEYDOWN;
+        }
     }
     else  /* mouse message */
     {
@@ -916,8 +985,9 @@ static void queue_hardware_message( struct msg_queue *queue, struct message *msg
     user_handle_t win;
     struct thread *thread;
     struct thread_input *input;
+    unsigned int msg_code;
 
-    win = find_hardware_message_window( queue ? queue->input : foreground_input, msg );
+    win = find_hardware_message_window( queue ? queue->input : foreground_input, msg, &msg_code );
     if (!win || !(thread = get_window_thread(win)))
     {
         free( msg );
@@ -943,6 +1013,7 @@ static int get_hardware_message( struct thread *thread, struct message *first,
     struct message *msg;
     user_handle_t win;
     int clear_bits, got_one = 0;
+    unsigned int msg_code;
 
     if (input->msg_thread && input->msg_thread != thread)
         return 0;  /* locked by another thread */
@@ -960,11 +1031,12 @@ static int get_hardware_message( struct thread *thread, struct message *first,
 
     while (msg)
     {
-        win = find_hardware_message_window( input, msg );
+        win = find_hardware_message_window( input, msg, &msg_code );
         if (!win || !(win_thread = get_window_thread( win )))
         {
             /* no window at all, remove it */
             struct message *next = msg->next;
+            update_input_key_state( input, msg );
             unlink_message( &input->msg_list, msg );
             free_message( msg );
             msg = next;
@@ -998,7 +1070,7 @@ static int get_hardware_message( struct thread *thread, struct message *first,
 
         reply->type   = MSG_HARDWARE;
         reply->win    = win;
-        reply->msg    = msg->msg;
+        reply->msg    = msg_code;
         reply->wparam = msg->wparam;
         reply->lparam = msg->lparam;
         reply->x      = msg->x;
@@ -1455,6 +1527,40 @@ DECL_HANDLER(get_thread_input)
     /* foreground window is active window of foreground thread */
     reply->foreground = foreground_input ? foreground_input->active : 0;
     if (thread) release_object( thread );
+}
+
+
+/* retrieve queue keyboard state for a given thread */
+DECL_HANDLER(get_key_state)
+{
+    struct thread *thread;
+    struct thread_input *input;
+
+    if (!(thread = get_thread_from_id( req->tid ))) return;
+    input = thread->queue ? thread->queue->input : NULL;
+    if (input)
+    {
+        if (req->key >= 0) reply->state = input->keystate[req->key & 0xff];
+        set_reply_data( input->keystate, min( get_reply_max_size(), sizeof(input->keystate) ));
+    }
+    release_object( thread );
+}
+
+
+/* set queue keyboard state for a given thread */
+DECL_HANDLER(set_key_state)
+{
+    struct thread *thread = NULL;
+    struct thread_input *input;
+
+    if (!(thread = get_thread_from_id( req->tid ))) return;
+    input = thread->queue ? thread->queue->input : NULL;
+    if (input)
+    {
+        size_t size = min( sizeof(input->keystate), get_req_data_size() );
+        if (size) memcpy( input->keystate, get_req_data(), size );
+    }
+    release_object( thread );
 }
 
 

@@ -2778,6 +2778,32 @@ struct get_thread_input_reply
 };
 
 
+struct get_key_state_request
+{
+    struct request_header __header;
+    thread_id_t    tid;
+    int            key;
+};
+struct get_key_state_reply
+{
+    struct reply_header __header;
+    unsigned char  state;
+    /* VARARG(keystate,bytes); */
+};
+
+
+struct set_key_state_request
+{
+    struct request_header __header;
+    thread_id_t    tid;
+    /* VARARG(keystate,bytes); */
+};
+struct set_key_state_reply
+{
+    struct reply_header __header;
+};
+
+
 struct set_foreground_window_request
 {
     struct request_header __header;
@@ -3112,6 +3138,8 @@ enum request
     REQ_get_window_properties,
     REQ_attach_thread_input,
     REQ_get_thread_input,
+    REQ_get_key_state,
+    REQ_set_key_state,
     REQ_set_foreground_window,
     REQ_set_focus_window,
     REQ_set_active_window,
@@ -3289,6 +3317,8 @@ union generic_request
     struct get_window_properties_request get_window_properties_request;
     struct attach_thread_input_request attach_thread_input_request;
     struct get_thread_input_request get_thread_input_request;
+    struct get_key_state_request get_key_state_request;
+    struct set_key_state_request set_key_state_request;
     struct set_foreground_window_request set_foreground_window_request;
     struct set_focus_window_request set_focus_window_request;
     struct set_active_window_request set_active_window_request;
@@ -3464,6 +3494,8 @@ union generic_reply
     struct get_window_properties_reply get_window_properties_reply;
     struct attach_thread_input_reply attach_thread_input_reply;
     struct get_thread_input_reply get_thread_input_reply;
+    struct get_key_state_reply get_key_state_reply;
+    struct set_key_state_reply set_key_state_reply;
     struct set_foreground_window_reply set_foreground_window_reply;
     struct set_focus_window_reply set_focus_window_reply;
     struct set_active_window_reply set_active_window_reply;
@@ -3477,6 +3509,6 @@ union generic_reply
     struct get_next_hook_reply get_next_hook_reply;
 };
 
-#define SERVER_PROTOCOL_VERSION 93
+#define SERVER_PROTOCOL_VERSION 94
 
 #endif /* __WINE_WINE_SERVER_PROTOCOL_H */

@@ -51,8 +51,6 @@ WINE_DECLARE_DEBUG_CHANNEL(key);
 #define WM_NCMOUSEFIRST         WM_NCMOUSEMOVE
 #define WM_NCMOUSELAST          WM_NCMBUTTONDBLCLK
 
-static BYTE QueueKeyStateTable[256];
-
 
 /***********************************************************************
  *           is_keyboard_message
@@ -128,80 +126,6 @@ static void queue_hardware_message( MSG *msg, ULONG_PTR extra_info )
     SERVER_END_REQ;
 }
 #endif
-
-
-/***********************************************************************
- *           update_queue_key_state
- */
-static void update_queue_key_state( UINT msg, WPARAM wp, LPARAM lp )
-{
-    BOOL down = FALSE, iskey = FALSE;
-    WPARAM dualkey = 0;
-
-    switch (msg)
-    {
-    case WM_LBUTTONDOWN:
-        down = TRUE;
-        /* fall through */
-    case WM_LBUTTONUP:
-        wp = VK_LBUTTON;
-        break;
-    case WM_MBUTTONDOWN:
-        down = TRUE;
-        /* fall through */
-    case WM_MBUTTONUP:
-        wp = VK_MBUTTON;
-        break;
-    case WM_RBUTTONDOWN:
-        down = TRUE;
-        /* fall through */
-    case WM_RBUTTONUP:
-        wp = VK_RBUTTON;
-        break;
-    case WM_KEYDOWN:
-    case WM_SYSKEYDOWN:
-        down = TRUE;
-        /* fall through */
-    case WM_KEYUP:
-    case WM_SYSKEYUP:
-        wp = wp & 0xff;
-	iskey = TRUE;
-        break;
-    }
-    if (iskey)
-    {
-        switch(wp)
-        {
-            case VK_SHIFT:
-		dualkey = (HIWORD(lp) & KF_EXTENDED) ? VK_RSHIFT : VK_LSHIFT;
-                break;
-            case VK_CONTROL:
-		dualkey = (HIWORD(lp) & KF_EXTENDED) ? VK_RCONTROL : VK_LCONTROL;
-                break;
-            case VK_MENU:
-		dualkey = (HIWORD(lp) & KF_EXTENDED) ? VK_RMENU : VK_LMENU;
-                break;
-            
-        }
-    }
-    if (down)
-    {
-        BYTE *p = &QueueKeyStateTable[wp];
-        if (!(*p & 0x80)) *p ^= 0x01;
-        *p |= 0x80;
-    }
-    else QueueKeyStateTable[wp] &= ~0x80;
-    if (dualkey)
-    { /* also update the "dual" keys properly */
-        if (down)
-        {
-            BYTE *p = &QueueKeyStateTable[dualkey];
-            if (!(*p & 0x80)) *p ^= 0x01;
-            *p |= 0x80;
-        }
-        else QueueKeyStateTable[dualkey] &= ~0x80;
-    }
-}
 
 
 /***********************************************************************
@@ -330,17 +254,9 @@ void MSG_JournalPlayBackMsg(void)
  *
  * returns TRUE if the contents of 'msg' should be passed to the application
  */
-static BOOL process_raw_keyboard_message( MSG *msg, ULONG_PTR extra_info )
+static void process_raw_keyboard_message( MSG *msg )
 {
     EVENTMSG event;
-
-    if (!(msg->hwnd = GetFocus()))
-    {
-        /* Send the message to the active window instead,  */
-        /* translating messages to their WM_SYS equivalent */
-        msg->hwnd = GetActiveWindow();
-        if (msg->message < WM_SYSKEYDOWN) msg->message += WM_SYSKEYDOWN - WM_KEYDOWN;
-    }
 
     event.message = msg->message;
     event.hwnd    = msg->hwnd;
@@ -349,11 +265,6 @@ static BOOL process_raw_keyboard_message( MSG *msg, ULONG_PTR extra_info )
     event.paramH  = msg->lParam & 0x7FFF;
     if (HIWORD(msg->lParam) & 0x0100) event.paramH |= 0x8000; /* special_key - bit */
     HOOK_CallHooks( WH_JOURNALRECORD, HC_ACTION, 0, (LPARAM)&event, TRUE );
-
-    /* if we are going to throw away the message, update the queue state now */
-    if (!msg->hwnd) update_queue_key_state( msg->message, msg->wParam, msg->lParam );
-
-    return (msg->hwnd != 0);
 }
 
 
@@ -366,8 +277,6 @@ static BOOL process_cooked_keyboard_message( MSG *msg, BOOL remove )
 {
     if (remove)
     {
-        update_queue_key_state( msg->message, msg->wParam, msg->lParam );
-
         /* Handle F1 key by sending out WM_HELP message */
         if ((msg->message == WM_KEYUP) &&
             (msg->wParam == VK_F1) &&
@@ -398,10 +307,8 @@ static BOOL process_cooked_keyboard_message( MSG *msg, BOOL remove )
 
 /***********************************************************************
  *          process_raw_mouse_message
- *
- * returns TRUE if the contents of 'msg' should be passed to the application
  */
-static BOOL process_raw_mouse_message( MSG *msg, ULONG_PTR extra_info, BOOL remove )
+static void process_raw_mouse_message( MSG *msg, BOOL remove )
 {
     static MSG clk_msg;
 
@@ -478,7 +385,6 @@ static BOOL process_raw_mouse_message( MSG *msg, ULONG_PTR extra_info, BOOL remo
         if (!(info.flags & GUI_INMENUMODE)) ScreenToClient( msg->hwnd, &pt );
     }
     msg->lParam = MAKELONG( pt.x, pt.y );
-    return TRUE;
 }
 
 
@@ -505,8 +411,6 @@ static BOOL process_cooked_mouse_message( MSG *msg, ULONG_PTR extra_info, BOOL r
     {
         raw_message += WM_LBUTTONDOWN - WM_LBUTTONDBLCLK;
     }
-
-    if (remove) update_queue_key_state( raw_message, 0, 0 );
 
     hook.pt           = msg->pt;
     hook.hwnd         = msg->hwnd;
@@ -602,11 +506,11 @@ BOOL MSG_process_raw_hardware_message( MSG *msg, ULONG_PTR extra_info, HWND hwnd
 {
     if (is_keyboard_message( msg->message ))
     {
-        if (!process_raw_keyboard_message( msg, extra_info )) return FALSE;
+        process_raw_keyboard_message( msg );
     }
     else if (is_mouse_message( msg->message ))
     {
-        if (!process_raw_mouse_message( msg, extra_info, remove )) return FALSE;
+        process_raw_mouse_message( msg, remove );
     }
     else
     {
@@ -632,63 +536,6 @@ BOOL MSG_process_cooked_hardware_message( MSG *msg, ULONG_PTR extra_info, BOOL r
 
     ERR( "unknown message type %x\n", msg->message );
     return FALSE;
-}
-
-
-/**********************************************************************
- *		GetKeyState (USER.106)
- */
-INT16 WINAPI GetKeyState16(INT16 vkey)
-{
-    return GetKeyState(vkey);
-}
-
-
-/**********************************************************************
- *		GetKeyState (USER32.@)
- *
- * An application calls the GetKeyState function in response to a
- * keyboard-input message.  This function retrieves the state of the key
- * at the time the input message was generated.  (SDK 3.1 Vol 2. p 390)
- */
-SHORT WINAPI GetKeyState(INT vkey)
-{
-    INT retval;
-
-    if (vkey >= 'a' && vkey <= 'z') vkey += 'A' - 'a';
-    retval = ((WORD)(QueueKeyStateTable[vkey] & 0x80) << 8 ) |
-              (QueueKeyStateTable[vkey] & 0x80) |
-              (QueueKeyStateTable[vkey] & 0x01);
-    TRACE("key (0x%x) -> %x\n", vkey, retval);
-    return retval;
-}
-
-
-/**********************************************************************
- *		GetKeyboardState (USER.222)
- *		GetKeyboardState (USER32.@)
- *
- * An application calls the GetKeyboardState function in response to a
- * keyboard input message.  This function retrieves the state of the keyboard
- * at the time the input message was generated.  (SDK 3.1 Vol 2. p 387)
- */
-BOOL WINAPI GetKeyboardState(LPBYTE lpKeyState)
-{
-    TRACE_(key)("(%p)\n", lpKeyState);
-    if (lpKeyState) memcpy(lpKeyState, QueueKeyStateTable, 256);
-    return TRUE;
-}
-
-
-/**********************************************************************
- *		SetKeyboardState (USER.223)
- *		SetKeyboardState (USER32.@)
- */
-BOOL WINAPI SetKeyboardState(LPBYTE lpKeyState)
-{
-    TRACE_(key)("(%p)\n", lpKeyState);
-    if (lpKeyState) memcpy(QueueKeyStateTable, lpKeyState, 256);
-    return TRUE;
 }
 
 
@@ -974,6 +821,7 @@ BOOL WINAPI TranslateMessage( const MSG *msg )
     UINT message;
     WCHAR wp[2];
     BOOL rc = FALSE;
+    BYTE state[256];
 
     if (msg->message >= WM_KEYFIRST && msg->message <= WM_KEYLAST)
     {
@@ -989,8 +837,9 @@ BOOL WINAPI TranslateMessage( const MSG *msg )
     TRACE_(key)("Translating key %s (%04x), scancode %02x\n",
                  SPY_GetVKeyName(msg->wParam), msg->wParam, LOBYTE(HIWORD(msg->lParam)));
 
+    GetKeyboardState( state );
     /* FIXME : should handle ToUnicode yielding 2 */
-    switch (ToUnicode(msg->wParam, HIWORD(msg->lParam), QueueKeyStateTable, wp, 2, 0))
+    switch (ToUnicode(msg->wParam, HIWORD(msg->lParam), state, wp, 2, 0))
     {
     case 1:
         message = (msg->message == WM_KEYDOWN) ? WM_CHAR : WM_SYSCHAR;

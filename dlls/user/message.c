@@ -2298,3 +2298,69 @@ BOOL WINAPI GetGUIThreadInfo( DWORD id, GUITHREADINFO *info )
     SERVER_END_REQ;
     return ret;
 }
+
+
+/**********************************************************************
+ *		GetKeyState (USER32.@)
+ *
+ * An application calls the GetKeyState function in response to a
+ * keyboard-input message.  This function retrieves the state of the key
+ * at the time the input message was generated.
+ */
+SHORT WINAPI GetKeyState(INT vkey)
+{
+    SHORT retval = 0;
+
+    SERVER_START_REQ( get_key_state )
+    {
+        req->tid = GetCurrentThreadId();
+        req->key = vkey;
+        if (!wine_server_call( req )) retval = (signed char)reply->state;
+    }
+    SERVER_END_REQ;
+    TRACE("key (0x%x) -> %x\n", vkey, retval);
+    return retval;
+}
+
+
+/**********************************************************************
+ *		GetKeyboardState (USER32.@)
+ */
+BOOL WINAPI GetKeyboardState( LPBYTE state )
+{
+    BOOL ret;
+
+    TRACE("(%p)\n", state);
+
+    memset( state, 0, 256 );
+    SERVER_START_REQ( get_key_state )
+    {
+        req->tid = GetCurrentThreadId();
+        req->key = -1;
+        wine_server_set_reply( req, state, 256 );
+        ret = !wine_server_call_err( req );
+    }
+    SERVER_END_REQ;
+    return ret;
+}
+
+
+/**********************************************************************
+ *		SetKeyboardState (USER32.@)
+ */
+BOOL WINAPI SetKeyboardState( LPBYTE state )
+{
+    BOOL ret;
+
+    TRACE("(%p)\n", state);
+
+    memset( state, 0, 256 );
+    SERVER_START_REQ( set_key_state )
+    {
+        req->tid = GetCurrentThreadId();
+        wine_server_add_data( req, state, 256 );
+        ret = !wine_server_call_err( req );
+    }
+    SERVER_END_REQ;
+    return ret;
+}
