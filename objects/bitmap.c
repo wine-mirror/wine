@@ -288,6 +288,13 @@ LONG WINAPI GetBitmapBits32(
     height = count / bmp->bitmap.bmWidthBytes;
     if (height > bmp->bitmap.bmHeight) height = bmp->bitmap.bmHeight;
     count = height * bmp->bitmap.bmWidthBytes;
+    if (count == 0)
+      {
+	WARN(bitmap, "Less then one entire line requested\n");
+	GDI_HEAP_UNLOCK( hbitmap );
+	return 0;
+      }
+
 
     TRACE(bitmap, "(%08x, %ld, %p) %dx%d %d colors fetched height: %ld\n",
 	    hbitmap, count, bits, bmp->bitmap.bmWidth, bmp->bitmap.bmHeight,
