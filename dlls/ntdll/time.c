@@ -28,6 +28,7 @@
 #include <stdarg.h>
 #include <stdlib.h>
 #include <string.h>
+#include <limits.h>
 #include <time.h>
 #ifdef HAVE_SYS_TIME_H
 # include <sys/time.h>
@@ -296,6 +297,8 @@ static const struct tagTZ_INFO TZ_INFO[] =
 /* 1601 to 1980 is 379 years plus 91 leap days */
 #define SECS_1601_TO_1980  ((379 * 365 + 91) * (ULONGLONG)SECSPERDAY)
 #define TICKS_1601_TO_1980 (SECS_1601_TO_1980 * TICKSPERSEC)
+/* max ticks that can be represented as Unix time */
+#define TICKS_1601_TO_UNIX_MAX ((SECS_1601_TO_1970 + INT_MAX) * TICKSPERSEC)
 
 
 static const int MonthLengths[2][MONSPERYEAR] =
@@ -337,20 +340,35 @@ void NTDLL_get_server_timeout( abs_time_t *when, const LARGE_INTEGER *timeout )
     else if (timeout->QuadPart <= 0)  /* relative timeout */
     {
         struct timeval tv;
-        ULONG sec = RtlEnlargedUnsignedDivide( -timeout->QuadPart, TICKSPERSEC, &remainder );
-        gettimeofday( &tv, 0 );
-        when->sec = tv.tv_sec + sec;
-        if ((when->usec = tv.tv_usec + (remainder / 10)) >= 1000000)
+
+        if (-timeout->QuadPart > (LONGLONG)INT_MAX * TICKSPERSEC)
+            when->sec = when->usec = INT_MAX;
+        else
         {
-            when->usec -= 1000000;
-            when->sec++;
+            ULONG sec = RtlEnlargedUnsignedDivide( -timeout->QuadPart, TICKSPERSEC, &remainder );
+            gettimeofday( &tv, 0 );
+            when->sec = tv.tv_sec + sec;
+            if ((when->usec = tv.tv_usec + (remainder / 10)) >= 1000000)
+            {
+                when->usec -= 1000000;
+                when->sec++;
+            }
+            if (when->sec < tv.tv_sec)  /* overflow */
+                when->sec = when->usec = INT_MAX;
         }
     }
     else  /* absolute time */
     {
-        when->sec = RtlEnlargedUnsignedDivide( timeout->QuadPart - TICKS_1601_TO_1970,
-                                                  TICKSPERSEC, &remainder );
-        when->usec = remainder / 10;
+        if (timeout->QuadPart < TICKS_1601_TO_1970)
+            when->sec = when->usec = 0;
+        else if (timeout->QuadPart > TICKS_1601_TO_UNIX_MAX)
+            when->sec = when->usec = INT_MAX;
+        else
+        {
+            when->sec = RtlEnlargedUnsignedDivide( timeout->QuadPart - TICKS_1601_TO_1970,
+                                                   TICKSPERSEC, &remainder );
+            when->usec = remainder / 10;
+        }
     }
 }
 
