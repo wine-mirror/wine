@@ -1124,13 +1124,19 @@ int _wcreat(const MSVCRT_wchar_t *path, int flags)
  */
 int _open_osfhandle(long hand, int flags)
 {
+  int fd;
+
   /* _O_RDONLY (0) always matches, so set the read flag
    * MFC's CStdioFile clears O_RDONLY (0)! if it wants to write to the
-   * file, so set the write flag
+   * file, so set the write flag. It also only sets _O_TEXT if it wants
+   * text - it never sets _O_BINARY.
    */
   /* FIXME: handle more flags */
-  int fd= msvcrt_alloc_fd((HANDLE)hand,flags|MSVCRT__IOREAD|MSVCRT__IOWRT);
-  TRACE(":handle (%ld) fd (%d) flags 0x%08x\n",hand,fd, flags |MSVCRT__IOREAD|MSVCRT__IOWRT);
+  flags |= MSVCRT__IOREAD|MSVCRT__IOWRT;
+  if ( !( flags & _O_TEXT ) ) flags |= _O_BINARY;
+
+  fd = msvcrt_alloc_fd((HANDLE)hand,flags);
+  TRACE(":handle (%ld) fd (%d) flags 0x%08x\n",hand,fd, flags);
   return fd;
 }
 
