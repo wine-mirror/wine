@@ -46,6 +46,7 @@
 #ifdef HAVE_UNISTD_H
 # include <unistd.h>
 #endif
+#include <assert.h>
 
 #include "ntstatus.h"
 #include "windef.h"
@@ -81,10 +82,11 @@ typedef struct
     CHAR   response[MAX_REPLY_LEN];
 } WITHREADERROR, *LPWITHREADERROR;
 
-BOOL WINAPI INTERNET_FindNextFileW(HINTERNET hFind, LPVOID lpvFindData);
-HINTERNET WINAPI INTERNET_InternetOpenUrlW(HINTERNET hInternet, LPCWSTR lpszUrl,
-					   LPCWSTR lpszHeaders, DWORD dwHeadersLength, DWORD dwFlags, DWORD dwContext);
-VOID INTERNET_ExecuteWork();
+static VOID INTERNET_CloseHandle(LPWININETHANDLEHEADER hdr);
+BOOL WINAPI INTERNET_FindNextFileW(LPWININETFINDNEXTW lpwh, LPVOID lpvFindData);
+HINTERNET WINAPI INTERNET_InternetOpenUrlW(LPWININETAPPINFOW hIC, LPCWSTR lpszUrl,
+              LPCWSTR lpszHeaders, DWORD dwHeadersLength, DWORD dwFlags, DWORD dwContext);
+static VOID INTERNET_ExecuteWork();
 
 DWORD g_dwTlsErrIndex = TLS_OUT_OF_INDEXES;
 DWORD dwNumThreads;
@@ -145,7 +147,7 @@ HINTERNET WININET_AllocHandle( LPWININETHANDLEHEADER info )
     handle = WININET_dwNextHandle;
     if( WININET_Handles[handle] )
         ERR("handle isn't free but should be\n");
-    WININET_Handles[handle] = info;
+    WININET_Handles[handle] = WININET_AddRef( info );
 
     while( WININET_Handles[WININET_dwNextHandle] && 
            (WININET_dwNextHandle < WININET_dwMaxHandles ) )
@@ -166,6 +168,7 @@ HINTERNET WININET_FindHandle( LPWININETHANDLEHEADER info )
     {
         if( info == WININET_Handles[i] )
         {
+            WININET_AddRef( info );
             handle = i+1;
             break;
         }
@@ -173,6 +176,13 @@ HINTERNET WININET_FindHandle( LPWININETHANDLEHEADER info )
     LeaveCriticalSection( &WININET_cs );
 
     return (HINTERNET) handle;
+}
+
+LPWININETHANDLEHEADER WININET_AddRef( LPWININETHANDLEHEADER info )
+{
+    info->dwRefCount++;
+    TRACE("%p -> refcount = %ld\n", info, info->dwRefCount );
+    return info;
 }
 
 LPWININETHANDLEHEADER WININET_GetObject( HINTERNET hinternet )
@@ -183,7 +193,7 @@ LPWININETHANDLEHEADER WININET_GetObject( HINTERNET hinternet )
     EnterCriticalSection( &WININET_cs );
 
     if( (handle > 0) && ( handle <= WININET_dwMaxHandles ) )
-        info = WININET_Handles[handle-1];
+        info = WININET_AddRef( WININET_Handles[handle-1] );
 
     LeaveCriticalSection( &WININET_cs );
 
@@ -192,18 +202,33 @@ LPWININETHANDLEHEADER WININET_GetObject( HINTERNET hinternet )
     return info;
 }
 
+BOOL WININET_Release( LPWININETHANDLEHEADER info )
+{
+    info->dwRefCount--;
+    TRACE( "object %p refcount = %ld\n", info, info->dwRefCount );
+    if( !info->dwRefCount )
+    {
+        TRACE( "destroying object %p\n", info);
+        info->destroy( info );
+    }
+    return TRUE;
+}
+
 BOOL WININET_FreeHandle( HINTERNET hinternet )
 {
     BOOL ret = FALSE;
     UINT handle = (UINT) hinternet;
+    LPWININETHANDLEHEADER info = NULL;
 
     EnterCriticalSection( &WININET_cs );
 
-    if( (handle > 1) && ( handle < WININET_dwMaxHandles ) )
+    if( (handle > 0) && ( handle <= WININET_dwMaxHandles ) )
     {
         handle--;
         if( WININET_Handles[handle] )
         {
+            info = WININET_Handles[handle];
+            TRACE( "destroying handle %d for object %p\n", handle+1, info);
             WININET_Handles[handle] = NULL;
             ret = TRUE;
             if( WININET_dwNextHandle > handle )
@@ -212,6 +237,9 @@ BOOL WININET_FreeHandle( HINTERNET hinternet )
     }
 
     LeaveCriticalSection( &WININET_cs );
+
+    if( info )
+        WININET_Release( info );
 
     return ret;
 }
@@ -461,6 +489,8 @@ HINTERNET WINAPI InternetOpenW(LPCWSTR lpszAgent, DWORD dwAccessType,
     lpwai->hdr.htype = WH_HINIT;
     lpwai->hdr.lpwhparent = NULL;
     lpwai->hdr.dwFlags = dwFlags;
+    lpwai->hdr.dwRefCount = 1;
+    lpwai->hdr.destroy = INTERNET_CloseHandle;
     lpwai->dwAccessType = dwAccessType;
     lpwai->lpszProxyUsername = NULL;
     lpwai->lpszProxyPassword = NULL;
@@ -498,8 +528,11 @@ HINTERNET WINAPI InternetOpenW(LPCWSTR lpszAgent, DWORD dwAccessType,
             lstrcpyW( lpwai->lpszProxyBypass, lpszProxyBypass );
     }
 
- lend:
-    TRACE("returning %p\n", (HINTERNET)lpwai);
+lend:
+    if( lpwai )
+        WININET_Release( &lpwai->hdr );
+
+    TRACE("returning %p\n", lpwai);
 
     return handle;
 }
@@ -652,6 +685,7 @@ HINTERNET WINAPI InternetConnectW(HINTERNET hInternet,
     LPCWSTR lpszUserName, LPCWSTR lpszPassword,
     DWORD dwService, DWORD dwFlags, DWORD dwContext)
 {
+    LPWININETAPPINFOW hIC;
     HINTERNET rc = (HINTERNET) NULL;
 
     TRACE("(%p, %s, %i, %s, %s, %li, %li, %li)\n", hInternet, debugstr_w(lpszServerName),
@@ -660,16 +694,19 @@ HINTERNET WINAPI InternetConnectW(HINTERNET hInternet,
 
     /* Clear any error information */
     INTERNET_SetLastError(0);
+    hIC = (LPWININETAPPINFOW) WININET_GetObject( hInternet );
+    if ( (hIC == NULL) || (hIC->hdr.htype != WH_HINIT) )
+        goto lend;
 
     switch (dwService)
     {
         case INTERNET_SERVICE_FTP:
-            rc = FTP_Connect(hInternet, lpszServerName, nServerPort,
+            rc = FTP_Connect(hIC, lpszServerName, nServerPort,
             lpszUserName, lpszPassword, dwFlags, dwContext, 0);
             break;
 
         case INTERNET_SERVICE_HTTP:
-	    rc = HTTP_Connect(hInternet, lpszServerName, nServerPort,
+	    rc = HTTP_Connect(hIC, lpszServerName, nServerPort,
             lpszUserName, lpszPassword, dwFlags, dwContext, 0);
             break;
 
@@ -677,6 +714,9 @@ HINTERNET WINAPI InternetConnectW(HINTERNET hInternet,
         default:
             break;
     }
+lend:
+    if( hIC )
+        WININET_Release( &hIC->hdr );
 
     TRACE("returning %p\n", rc);
     return rc;
@@ -769,15 +809,15 @@ BOOL WINAPI InternetFindNextFileW(HINTERNET hFind, LPVOID lpvFindData)
 {
     LPWININETAPPINFOW hIC = NULL;
     LPWININETFINDNEXTW lpwh;
+    BOOL bSuccess = FALSE;
 
     TRACE("\n");
 
     lpwh = (LPWININETFINDNEXTW) WININET_GetObject( hFind );
-
     if (NULL == lpwh || lpwh->hdr.htype != WH_HFINDNEXT)
     {
         INTERNET_SetLastError(ERROR_INTERNET_INCORRECT_HANDLE_TYPE);
-        return FALSE;
+        goto lend;
     }
 
     hIC = GET_HWININET_FROM_LPWININETFINDNEXT(lpwh);
@@ -787,16 +827,20 @@ BOOL WINAPI InternetFindNextFileW(HINTERNET hFind, LPVOID lpvFindData)
         struct WORKREQ_INTERNETFINDNEXTW *req;
 
         workRequest.asyncall = INTERNETFINDNEXTW;
-	workRequest.handle = hFind;
+	workRequest.hdr = WININET_AddRef( &lpwh->hdr );
         req = &workRequest.u.InternetFindNextW;
 	req->lpFindFileData = lpvFindData;
 
-	return INTERNET_AsyncCall(&workRequest);
+	bSuccess = INTERNET_AsyncCall(&workRequest);
     }
     else
     {
-        return INTERNET_FindNextFileW(hFind, lpvFindData);
+        bSuccess = INTERNET_FindNextFileW(lpwh, lpvFindData);
     }
+lend:
+    if( lpwh )
+        WININET_Release( &lpwh->hdr );
+    return bSuccess;
 }
 
 /***********************************************************************
@@ -809,21 +853,15 @@ BOOL WINAPI InternetFindNextFileW(HINTERNET hFind, LPVOID lpvFindData)
  *    FALSE on failure
  *
  */
-BOOL WINAPI INTERNET_FindNextFileW(HINTERNET hFind, LPVOID lpvFindData)
+BOOL WINAPI INTERNET_FindNextFileW(LPWININETFINDNEXTW lpwh, LPVOID lpvFindData)
 {
     BOOL bSuccess = TRUE;
     LPWININETAPPINFOW hIC = NULL;
     LPWIN32_FIND_DATAW lpFindFileData;
-    LPWININETFINDNEXTW lpwh;
 
     TRACE("\n");
 
-    lpwh = (LPWININETFINDNEXTW) WININET_GetObject( hFind );
-    if (NULL == lpwh || lpwh->hdr.htype != WH_HFINDNEXT)
-    {
-        INTERNET_SetLastError(ERROR_INTERNET_INCORRECT_HANDLE_TYPE);
-        return FALSE;
-    }
+    assert (lpwh->hdr.htype == WH_HFINDNEXT);
 
     /* Clear any error information */
     INTERNET_SetLastError(0);
@@ -863,7 +901,7 @@ lend:
         iar.dwError = iar.dwError = bSuccess ? ERROR_SUCCESS :
                                                INTERNET_GetLastError();
 
-        SendAsyncCallback(hIC, hFind, lpwh->hdr.dwContext,
+        SendAsyncCallback(hIC, &lpwh->hdr, lpwh->hdr.dwContext,
                       INTERNET_STATUS_REQUEST_COMPLETE, &iar,
                        sizeof(INTERNET_ASYNC_RESULT));
     }
@@ -881,13 +919,11 @@ lend:
  *    Void
  *
  */
-VOID INTERNET_CloseHandle(LPWININETAPPINFOW lpwai)
+static VOID INTERNET_CloseHandle(LPWININETHANDLEHEADER hdr)
 {
-    TRACE("%p\n",lpwai);
+    LPWININETAPPINFOW lpwai = (LPWININETAPPINFOW) hdr;
 
-    SendAsyncCallback(lpwai, lpwai, lpwai->hdr.dwContext,
-                      INTERNET_STATUS_HANDLE_CLOSING, lpwai,
-                      sizeof(HINTERNET));
+    TRACE("%p\n",lpwai);
 
     if (lpwai->lpszAgent)
         HeapFree(GetProcessHeap(), 0, lpwai->lpszAgent);
@@ -920,9 +956,9 @@ VOID INTERNET_CloseHandle(LPWININETAPPINFOW lpwai)
  */
 BOOL WINAPI InternetCloseHandle(HINTERNET hInternet)
 {
-    BOOL retval;
-    LPWININETHANDLEHEADER lpwh;
-
+    LPWININETHANDLEHEADER lpwh, parent;
+    LPWININETAPPINFOW hIC;
+    
     TRACE("%p\n",hInternet);
 
     lpwh = WININET_GetObject( hInternet );
@@ -932,46 +968,21 @@ BOOL WINAPI InternetCloseHandle(HINTERNET hInternet)
         return FALSE;
     }
 
-	/* Clear any error information */
-	INTERNET_SetLastError(0);
-        retval = FALSE;
+    parent = lpwh;
+    while( parent && (parent->htype != WH_HINIT ) )
+        parent = parent->lpwhparent;
 
-	switch (lpwh->htype)
-	{
-	    case WH_HINIT:
-		INTERNET_CloseHandle((LPWININETAPPINFOW) lpwh);
-		retval = TRUE;
-		break;
+    hIC = (LPWININETAPPINFOW) parent;
+    SendAsyncCallback(hIC, lpwh, lpwh->dwContext,
+                      INTERNET_STATUS_HANDLE_CLOSING, hInternet,
+                      sizeof(HINTERNET));
 
-	    case WH_HHTTPSESSION:
-		HTTP_CloseHTTPSessionHandle((LPWININETHTTPSESSIONW) lpwh);
-		retval = TRUE;
-		break;
+    if( lpwh->lpwhparent )
+        WININET_Release( lpwh->lpwhparent );
+    WININET_FreeHandle( hInternet );
+    WININET_Release( lpwh );
 
-	    case WH_HHTTPREQ:
-		HTTP_CloseHTTPRequestHandle((LPWININETHTTPREQW) lpwh);
-		retval = TRUE;
-		break;
-
-	    case WH_HFTPSESSION:
-		retval = FTP_CloseSessionHandle((LPWININETFTPSESSIONW) lpwh);
-		break;
-
-	    case WH_HFINDNEXT:
-		retval = FTP_CloseFindNextHandle((LPWININETFINDNEXTW) lpwh);
-		break;
-
-	    case WH_HFILE:
-		retval = FTP_CloseFileTransferHandle((LPWININETFILE) lpwh);
-		break;
-		
-	    default:
-		break;
-	}
-    if( retval )
-        WININET_FreeHandle( hInternet );
-
-    return retval;
+    return TRUE;
 }
 
 
@@ -1480,21 +1491,22 @@ BOOL WINAPI InternetCanonicalizeUrlW(LPCWSTR lpszUrl, LPWSTR lpszBuffer,
 INTERNET_STATUS_CALLBACK WINAPI InternetSetStatusCallbackA(
 	HINTERNET hInternet ,INTERNET_STATUS_CALLBACK lpfnIntCB)
 {
-    INTERNET_STATUS_CALLBACK retVal;
+    INTERNET_STATUS_CALLBACK retVal = INTERNET_INVALID_STATUS_CALLBACK;
     LPWININETAPPINFOW lpwai;
 
     TRACE("0x%08lx\n", (ULONG)hInternet);
     
     lpwai = (LPWININETAPPINFOW)WININET_GetObject(hInternet);
     if (!lpwai)
-        return NULL;
+        return retVal;
 
-    if (lpwai->hdr.htype != WH_HINIT)
-        return INTERNET_INVALID_STATUS_CALLBACK;
-
-    lpwai->hdr.dwInternalFlags &= ~INET_CALLBACKW;
-    retVal = lpwai->lpfnStatusCB;
-    lpwai->lpfnStatusCB = lpfnIntCB;
+    if (lpwai->hdr.htype == WH_HINIT)
+    {
+        lpwai->hdr.dwInternalFlags &= ~INET_CALLBACKW;
+        retVal = lpwai->lpfnStatusCB;
+        lpwai->lpfnStatusCB = lpfnIntCB;
+    }
+    WININET_Release( &lpwai->hdr );
 
     return retVal;
 }
@@ -1513,21 +1525,23 @@ INTERNET_STATUS_CALLBACK WINAPI InternetSetStatusCallbackA(
 INTERNET_STATUS_CALLBACK WINAPI InternetSetStatusCallbackW(
 	HINTERNET hInternet ,INTERNET_STATUS_CALLBACK lpfnIntCB)
 {
-    INTERNET_STATUS_CALLBACK retVal;
+    INTERNET_STATUS_CALLBACK retVal = INTERNET_INVALID_STATUS_CALLBACK;
     LPWININETAPPINFOW lpwai;
 
     TRACE("0x%08lx\n", (ULONG)hInternet);
     
     lpwai = (LPWININETAPPINFOW)WININET_GetObject(hInternet);
     if (!lpwai)
-        return NULL;
+        return retVal;
 
-    if (lpwai->hdr.htype != WH_HINIT)
-        return INTERNET_INVALID_STATUS_CALLBACK;
+    if (lpwai->hdr.htype == WH_HINIT)
+    {
+        lpwai->hdr.dwInternalFlags |= INET_CALLBACKW;
+        retVal = lpwai->lpfnStatusCB;
+        lpwai->lpfnStatusCB = lpfnIntCB;
+    }
 
-    lpwai->hdr.dwInternalFlags |= INET_CALLBACKW;
-    retVal = lpwai->lpfnStatusCB;
-    lpwai->lpfnStatusCB = lpfnIntCB;
+    WININET_Release( &lpwai->hdr );
 
     return retVal;
 }
@@ -1586,6 +1600,7 @@ BOOL WINAPI InternetWriteFile(HINTERNET hFile, LPCVOID lpBuffer ,
         retval = (res >= 0);
         *lpdwNumOfBytesWritten = retval ? res : 0;
     }
+    WININET_Release( lpwh );
 
     return retval;
 }
@@ -1608,7 +1623,7 @@ BOOL WINAPI InternetReadFile(HINTERNET hFile, LPVOID lpBuffer,
     int nSocket = -1;
     LPWININETHANDLEHEADER lpwh;
 
-    TRACE("\n");
+    TRACE("%p %p %ld %p\n", hFile, lpBuffer, dwNumOfBytesToRead, dwNumOfBytesRead);
 
     lpwh = (LPWININETHANDLEHEADER) WININET_GetObject( hFile );
     if (NULL == lpwh)
@@ -1642,6 +1657,7 @@ BOOL WINAPI InternetReadFile(HINTERNET hFile, LPVOID lpBuffer,
         default:
             break;
     }
+    WININET_Release( lpwh );
 
     return retval;
 }
@@ -1778,6 +1794,7 @@ static BOOL INET_QueryOptionHelper(BOOL bIsUnicode, HINTERNET hInternet, DWORD d
          FIXME("Stub! %ld \n",dwOption);
          break;
     }
+    WININET_Release( lpwhh );
 
     return bSuccess;
 }
@@ -1829,6 +1846,7 @@ BOOL WINAPI InternetSetOptionW(HINTERNET hInternet, DWORD dwOption,
                            LPVOID lpBuffer, DWORD dwBufferLength)
 {
     LPWININETHANDLEHEADER lpwhh;
+    BOOL ret = TRUE;
 
     TRACE("0x%08lx\n", dwOption);
 
@@ -1886,8 +1904,10 @@ BOOL WINAPI InternetSetOptionW(HINTERNET hInternet, DWORD dwOption,
     default:
         FIXME("Option %ld STUB\n",dwOption);
         INTERNET_SetLastError(ERROR_INVALID_PARAMETER);
-        return FALSE;
+        ret = FALSE;
+        break;
     }
+    WININET_Release( lpwhh );
 
     return TRUE;
 }
@@ -2097,7 +2117,7 @@ BOOL WINAPI InternetCheckConnectionW(LPCWSTR lpszUrl, DWORD dwFlags, DWORD dwRes
  * RETURNS
  *   handle of connection or NULL on failure
  */
-HINTERNET WINAPI INTERNET_InternetOpenUrlW(HINTERNET hInternet, LPCWSTR lpszUrl,
+HINTERNET WINAPI INTERNET_InternetOpenUrlW(LPWININETAPPINFOW hIC, LPCWSTR lpszUrl,
     LPCWSTR lpszHeaders, DWORD dwHeadersLength, DWORD dwFlags, DWORD dwContext)
 {
     URL_COMPONENTSW urlComponents;
@@ -2105,7 +2125,7 @@ HINTERNET WINAPI INTERNET_InternetOpenUrlW(HINTERNET hInternet, LPCWSTR lpszUrl,
     WCHAR password[1024], path[2048], extra[1024];
     HINTERNET client = NULL, client1 = NULL;
     
-    TRACE("(%p, %s, %s, %08lx, %08lx, %08lx\n", hInternet, debugstr_w(lpszUrl), debugstr_w(lpszHeaders),
+    TRACE("(%p, %s, %s, %08lx, %08lx, %08lx\n", hIC, debugstr_w(lpszUrl), debugstr_w(lpszHeaders),
 	  dwHeadersLength, dwFlags, dwContext);
     
     urlComponents.dwStructSize = sizeof(URL_COMPONENTSW);
@@ -2127,7 +2147,7 @@ HINTERNET WINAPI INTERNET_InternetOpenUrlW(HINTERNET hInternet, LPCWSTR lpszUrl,
     case INTERNET_SCHEME_FTP:
 	if(urlComponents.nPort == 0)
 	    urlComponents.nPort = INTERNET_DEFAULT_FTP_PORT;
-	client = FTP_Connect(hInternet, hostName, urlComponents.nPort,
+	client = FTP_Connect(hIC, hostName, urlComponents.nPort,
 			     userName, password, dwFlags, dwContext, INET_OPENURL);
 	if(client == NULL)
 	    break;
@@ -2148,7 +2168,8 @@ HINTERNET WINAPI INTERNET_InternetOpenUrlW(HINTERNET hInternet, LPCWSTR lpszUrl,
 	    else
 		urlComponents.nPort = INTERNET_DEFAULT_HTTPS_PORT;
 	}
-	client = HTTP_Connect(hInternet, hostName, urlComponents.nPort,
+        /* FIXME: should use pointers, not handles, as handles are not thread-safe */
+	client = HTTP_Connect(hIC, hostName, urlComponents.nPort,
 			      userName, password, dwFlags, dwContext, INET_OPENURL);
 	if(client == NULL)
 	    break;
@@ -2158,7 +2179,7 @@ HINTERNET WINAPI INTERNET_InternetOpenUrlW(HINTERNET hInternet, LPCWSTR lpszUrl,
 	    break;
 	}
 	HttpAddRequestHeadersW(client1, lpszHeaders, dwHeadersLength, HTTP_ADDREQ_FLAG_ADD);
-	if (!HTTP_HttpSendRequestW(client1, NULL, 0, NULL, 0)) {
+	if (!HttpSendRequestW(client1, NULL, 0, NULL, 0)) {
 	    InternetCloseHandle(client1);
 	    client1 = NULL;
 	    break;
@@ -2204,7 +2225,7 @@ HINTERNET WINAPI InternetOpenUrlW(HINTERNET hInternet, LPCWSTR lpszUrl,
 	struct WORKREQ_INTERNETOPENURLW *req;
 	
 	workRequest.asyncall = INTERNETOPENURLW;
-	workRequest.handle = hInternet;
+	workRequest.hdr = WININET_AddRef( &hIC->hdr );
 	req = &workRequest.u.InternetOpenUrlW;
 	if (lpszUrl)
 	    req->lpszUrl = WININET_strdupW(lpszUrl);
@@ -2224,10 +2245,12 @@ HINTERNET WINAPI InternetOpenUrlW(HINTERNET hInternet, LPCWSTR lpszUrl,
 	 */
 	SetLastError(ERROR_IO_PENDING);
     } else {
-	ret = INTERNET_InternetOpenUrlW(hInternet, lpszUrl, lpszHeaders, dwHeadersLength, dwFlags, dwContext);
+	ret = INTERNET_InternetOpenUrlW(hIC, lpszUrl, lpszHeaders, dwHeadersLength, dwFlags, dwContext);
     }
     
   lend:
+    if( hIC )
+        WININET_Release( &hIC->hdr );
     TRACE(" %p <--\n", ret);
     
     return ret;
@@ -2476,7 +2499,7 @@ lerror:
  * RETURNS
  *
  */
-VOID INTERNET_ExecuteWork()
+static VOID INTERNET_ExecuteWork()
 {
     WORKREQUEST workRequest;
 
@@ -2485,45 +2508,16 @@ VOID INTERNET_ExecuteWork()
     if (!INTERNET_GetWorkRequest(&workRequest))
         return;
 
-    if (TRACE_ON(wininet)) {
-	static const wininet_flag_info work_request_types[] = {
-#define FE(x) { x, #x }
-	    FE(FTPPUTFILEW),
-	    FE(FTPSETCURRENTDIRECTORYW),
-	    FE(FTPCREATEDIRECTORYW),
-	    FE(FTPFINDFIRSTFILEW),
-	    FE(FTPGETCURRENTDIRECTORYW),
-	    FE(FTPOPENFILEW),
-	    FE(FTPGETFILEW),
-	    FE(FTPDELETEFILEW),
-	    FE(FTPREMOVEDIRECTORYW),
-	    FE(FTPRENAMEFILEW),
-	    FE(INTERNETFINDNEXTW),
-	    FE(HTTPSENDREQUESTW),
-	    FE(HTTPOPENREQUESTW),
-	    FE(SENDCALLBACK),
-	    FE(INTERNETOPENURLW)
-#undef FE
-	};
-	int i;
-	const char *val = "Unknown";
-
-	for (i = 0; i < (sizeof(work_request_types) / sizeof(work_request_types[0])); i++) {
-	    if (work_request_types[i].val == workRequest.asyncall) {
-		val = work_request_types[i].name;
-		break;
-	    }
-	}
-
-	TRACE("Got work %d (%s)\n", workRequest.asyncall, val);
-    }
     switch (workRequest.asyncall)
     {
     case FTPPUTFILEW:
         {
         struct WORKREQ_FTPPUTFILEW *req = &workRequest.u.FtpPutFileW;
+        LPWININETFTPSESSIONW lpwfs = (LPWININETFTPSESSIONW) workRequest.hdr;
 
-	FTP_FtpPutFileW(workRequest.handle, req->lpszLocalFile,
+        TRACE("FTPPUTFILEW %p\n", lpwfs);
+
+	FTP_FtpPutFileW(lpwfs, req->lpszLocalFile,
                    req->lpszNewRemoteFile, req->dwFlags, req->dwContext);
 
 	HeapFree(GetProcessHeap(), 0, req->lpszLocalFile);
@@ -2534,9 +2528,12 @@ VOID INTERNET_ExecuteWork()
     case FTPSETCURRENTDIRECTORYW:
         {
         struct WORKREQ_FTPSETCURRENTDIRECTORYW *req;
+        LPWININETFTPSESSIONW lpwfs = (LPWININETFTPSESSIONW) workRequest.hdr;
+
+        TRACE("FTPSETCURRENTDIRECTORYW %p\n", lpwfs);
 
         req = &workRequest.u.FtpSetCurrentDirectoryW;
-	FTP_FtpSetCurrentDirectoryW(workRequest.handle, req->lpszDirectory);
+	FTP_FtpSetCurrentDirectoryW(lpwfs, req->lpszDirectory);
 	HeapFree(GetProcessHeap(), 0, req->lpszDirectory);
         }
 	break;
@@ -2544,9 +2541,12 @@ VOID INTERNET_ExecuteWork()
     case FTPCREATEDIRECTORYW:
         {
         struct WORKREQ_FTPCREATEDIRECTORYW *req;
+        LPWININETFTPSESSIONW lpwfs = (LPWININETFTPSESSIONW) workRequest.hdr;
+
+        TRACE("FTPCREATEDIRECTORYW %p\n", lpwfs);
 
         req = &workRequest.u.FtpCreateDirectoryW;
-	FTP_FtpCreateDirectoryW(workRequest.handle, req->lpszDirectory);
+	FTP_FtpCreateDirectoryW(lpwfs, req->lpszDirectory);
 	HeapFree(GetProcessHeap(), 0, req->lpszDirectory);
         }
 	break;
@@ -2554,9 +2554,12 @@ VOID INTERNET_ExecuteWork()
     case FTPFINDFIRSTFILEW:
         {
         struct WORKREQ_FTPFINDFIRSTFILEW *req;
+        LPWININETFTPSESSIONW lpwfs = (LPWININETFTPSESSIONW) workRequest.hdr;
+
+        TRACE("FTPFINDFIRSTFILEW %p\n", lpwfs);
 
         req = &workRequest.u.FtpFindFirstFileW;
-        FTP_FtpFindFirstFileW(workRequest.handle, req->lpszSearchFile,
+        FTP_FtpFindFirstFileW(lpwfs, req->lpszSearchFile,
            req->lpFindFileData, req->dwFlags, req->dwContext);
 	if (req->lpszSearchFile != NULL)
 	    HeapFree(GetProcessHeap(), 0, req->lpszSearchFile);
@@ -2566,9 +2569,12 @@ VOID INTERNET_ExecuteWork()
     case FTPGETCURRENTDIRECTORYW:
         {
         struct WORKREQ_FTPGETCURRENTDIRECTORYW *req;
+        LPWININETFTPSESSIONW lpwfs = (LPWININETFTPSESSIONW) workRequest.hdr;
+
+        TRACE("FTPGETCURRENTDIRECTORYW %p\n", lpwfs);
 
         req = &workRequest.u.FtpGetCurrentDirectoryW;
-        FTP_FtpGetCurrentDirectoryW(workRequest.handle,
+        FTP_FtpGetCurrentDirectoryW(lpwfs,
 		req->lpszDirectory, req->lpdwDirectory);
         }
 	break;
@@ -2576,8 +2582,11 @@ VOID INTERNET_ExecuteWork()
     case FTPOPENFILEW:
         {
         struct WORKREQ_FTPOPENFILEW *req = &workRequest.u.FtpOpenFileW;
+        LPWININETFTPSESSIONW lpwfs = (LPWININETFTPSESSIONW) workRequest.hdr;
 
-        FTP_FtpOpenFileW(workRequest.handle, req->lpszFilename,
+        TRACE("FTPOPENFILEW %p\n", lpwfs);
+
+        FTP_FtpOpenFileW(lpwfs, req->lpszFilename,
             req->dwAccess, req->dwFlags, req->dwContext);
         HeapFree(GetProcessHeap(), 0, req->lpszFilename);
         }
@@ -2586,8 +2595,11 @@ VOID INTERNET_ExecuteWork()
     case FTPGETFILEW:
         {
         struct WORKREQ_FTPGETFILEW *req = &workRequest.u.FtpGetFileW;
+        LPWININETFTPSESSIONW lpwfs = (LPWININETFTPSESSIONW) workRequest.hdr;
 
-        FTP_FtpGetFileW(workRequest.handle, req->lpszRemoteFile,
+        TRACE("FTPGETFILEW %p\n", lpwfs);
+
+        FTP_FtpGetFileW(lpwfs, req->lpszRemoteFile,
                  req->lpszNewFile, req->fFailIfExists,
                  req->dwLocalFlagsAttribute, req->dwFlags, req->dwContext);
 	HeapFree(GetProcessHeap(), 0, req->lpszRemoteFile);
@@ -2598,8 +2610,11 @@ VOID INTERNET_ExecuteWork()
     case FTPDELETEFILEW:
         {
         struct WORKREQ_FTPDELETEFILEW *req = &workRequest.u.FtpDeleteFileW;
+        LPWININETFTPSESSIONW lpwfs = (LPWININETFTPSESSIONW) workRequest.hdr;
 
-        FTP_FtpDeleteFileW(workRequest.handle, req->lpszFilename);
+        TRACE("FTPDELETEFILEW %p\n", lpwfs);
+
+        FTP_FtpDeleteFileW(lpwfs, req->lpszFilename);
 	HeapFree(GetProcessHeap(), 0, req->lpszFilename);
         }
 	break;
@@ -2607,9 +2622,12 @@ VOID INTERNET_ExecuteWork()
     case FTPREMOVEDIRECTORYW:
         {
         struct WORKREQ_FTPREMOVEDIRECTORYW *req;
+        LPWININETFTPSESSIONW lpwfs = (LPWININETFTPSESSIONW) workRequest.hdr;
+
+        TRACE("FTPREMOVEDIRECTORYW %p\n", lpwfs);
 
         req = &workRequest.u.FtpRemoveDirectoryW;
-        FTP_FtpRemoveDirectoryW(workRequest.handle, req->lpszDirectory);
+        FTP_FtpRemoveDirectoryW(lpwfs, req->lpszDirectory);
 	HeapFree(GetProcessHeap(), 0, req->lpszDirectory);
         }
 	break;
@@ -2617,8 +2635,11 @@ VOID INTERNET_ExecuteWork()
     case FTPRENAMEFILEW:
         {
         struct WORKREQ_FTPRENAMEFILEW *req = &workRequest.u.FtpRenameFileW;
+        LPWININETFTPSESSIONW lpwfs = (LPWININETFTPSESSIONW) workRequest.hdr;
 
-        FTP_FtpRenameFileW(workRequest.handle, req->lpszSrcFile, req->lpszDestFile);
+        TRACE("FTPRENAMEFILEW %p\n", lpwfs);
+
+        FTP_FtpRenameFileW(lpwfs, req->lpszSrcFile, req->lpszDestFile);
 	HeapFree(GetProcessHeap(), 0, req->lpszSrcFile);
 	HeapFree(GetProcessHeap(), 0, req->lpszDestFile);
         }
@@ -2627,17 +2648,23 @@ VOID INTERNET_ExecuteWork()
     case INTERNETFINDNEXTW:
         {
         struct WORKREQ_INTERNETFINDNEXTW *req;
+        LPWININETFINDNEXTW lpwh = (LPWININETFINDNEXTW) workRequest.hdr;
+
+        TRACE("INTERNETFINDNEXTW %p\n", lpwh);
 
         req = &workRequest.u.InternetFindNextW;
-	INTERNET_FindNextFileW(workRequest.handle, req->lpFindFileData);
+	INTERNET_FindNextFileW(lpwh, req->lpFindFileData);
         }
 	break;
 
     case HTTPSENDREQUESTW:
         {
         struct WORKREQ_HTTPSENDREQUESTW *req = &workRequest.u.HttpSendRequestW;
+        LPWININETHTTPREQW lpwhr = (LPWININETHTTPREQW) workRequest.hdr;
 
-        HTTP_HttpSendRequestW(workRequest.handle, req->lpszHeader,
+        TRACE("HTTPSENDREQUESTW %p\n", lpwhr);
+
+        HTTP_HttpSendRequestW(lpwhr, req->lpszHeader,
                 req->dwHeaderLength, req->lpOptional, req->dwOptionalLength);
 
         HeapFree(GetProcessHeap(), 0, req->lpszHeader);
@@ -2647,8 +2674,11 @@ VOID INTERNET_ExecuteWork()
     case HTTPOPENREQUESTW:
         {
         struct WORKREQ_HTTPOPENREQUESTW *req = &workRequest.u.HttpOpenRequestW;
+        LPWININETHTTPSESSIONW lpwhs = (LPWININETHTTPSESSIONW) workRequest.hdr;
 
-        HTTP_HttpOpenRequestW(workRequest.handle, req->lpszVerb,
+        TRACE("HTTPOPENREQUESTW %p\n", lpwhs);
+
+        HTTP_HttpOpenRequestW(lpwhs, req->lpszVerb,
             req->lpszObjectName, req->lpszVersion, req->lpszReferrer,
             req->lpszAcceptTypes, req->dwFlags, req->dwContext);
 
@@ -2662,8 +2692,11 @@ VOID INTERNET_ExecuteWork()
     case SENDCALLBACK:
         {
         struct WORKREQ_SENDCALLBACK *req = &workRequest.u.SendCallback;
+        LPWININETAPPINFOW hIC = (LPWININETAPPINFOW) workRequest.hdr;
 
-        SendAsyncCallbackInt(workRequest.handle, req->hHttpSession,
+        TRACE("SENDCALLBACK %p\n", hIC);
+
+        SendAsyncCallbackInt(hIC, req->hdr,
                 req->dwContext, req->dwInternetStatus, req->lpvStatusInfo,
                 req->dwStatusInfoLength);
         }
@@ -2672,14 +2705,18 @@ VOID INTERNET_ExecuteWork()
     case INTERNETOPENURLW:
 	{
 	struct WORKREQ_INTERNETOPENURLW *req = &workRequest.u.InternetOpenUrlW;
+        LPWININETAPPINFOW hIC = (LPWININETAPPINFOW) workRequest.hdr;
 	
-	INTERNET_InternetOpenUrlW(workRequest.handle, req->lpszUrl,
+        TRACE("INTERNETOPENURLW %p\n", hIC);
+
+	INTERNET_InternetOpenUrlW(hIC, req->lpszUrl,
 				  req->lpszHeaders, req->dwHeadersLength, req->dwFlags, req->dwContext);
 	HeapFree(GetProcessHeap(), 0, req->lpszUrl);
 	HeapFree(GetProcessHeap(), 0, req->lpszHeaders);
 	}
 	break;
     }
+    WININET_Release( workRequest.hdr );
 }
 
 
@@ -2772,7 +2809,6 @@ BOOL WINAPI InternetQueryDataAvailable( HINTERNET hFile,
     INT retval = -1;
     char buffer[4048];
 
-
     lpwhr = (LPWININETHTTPREQW) WININET_GetObject( hFile );
     if (NULL == lpwhr)
     {
@@ -2799,6 +2835,7 @@ BOOL WINAPI InternetQueryDataAvailable( HINTERNET hFile,
         FIXME("unsupported file type\n");
         break;
     }
+    WININET_Release( &lpwhr->hdr );
 
     TRACE("<-- %i\n",retval);
     return (retval+1);

@@ -40,6 +40,7 @@
 #include <errno.h>
 #include <string.h>
 #include <time.h>
+#include <assert.h>
 
 #include "windef.h"
 #include "winbase.h"
@@ -81,6 +82,8 @@ static const WCHAR g_szUserAgent[] = {'U','s','e','r','-','A','g','e','n','t',0}
 #define HTTP_ADDHDR_FLAG_REQ				0x02000000
 
 
+static void HTTP_CloseHTTPRequestHandle(LPWININETHANDLEHEADER hdr);
+static void HTTP_CloseHTTPSessionHandle(LPWININETHANDLEHEADER hdr);
 BOOL HTTP_OpenConnection(LPWININETHTTPREQW lpwhr);
 int HTTP_WriteDataToStream(LPWININETHTTPREQW lpwhr,
 	void *Buffer, int BytesToWrite);
@@ -230,9 +233,12 @@ BOOL WINAPI HttpAddRequestHeadersW(HINTERNET hHttpRequest,
     if (NULL == lpwhr ||  lpwhr->hdr.htype != WH_HHTTPREQ)
     {
         INTERNET_SetLastError(ERROR_INTERNET_INCORRECT_HANDLE_TYPE);
-        return bSuccess;
+        goto lend;
     }
     bSuccess = HTTP_HttpAddRequestHeadersW( lpwhr, lpszHeader, dwHeaderLength, dwModifier );
+lend:
+    if( lpwhr )
+        WININET_Release( &lpwhr->hdr );
 
     return bSuccess;
 }
@@ -338,7 +344,7 @@ HINTERNET WINAPI HttpOpenRequestW(HINTERNET hHttpSession,
     if (NULL == lpwhs ||  lpwhs->hdr.htype != WH_HHTTPSESSION)
     {
         INTERNET_SetLastError(ERROR_INTERNET_INCORRECT_HANDLE_TYPE);
-	return NULL;
+	goto lend;
     }
     hIC = (LPWININETAPPINFOW) lpwhs->hdr.lpwhparent;
 
@@ -348,40 +354,13 @@ HINTERNET WINAPI HttpOpenRequestW(HINTERNET hHttpSession,
      * if this call was asynchronous then how would you get the
      * necessary HINTERNET pointer returned by this function.
      *
-     * I am leaving this here just in case I am wrong
-     *
-     * if (hIC->hdr.dwFlags & INTERNET_FLAG_ASYNC)
      */
-    if (0)
-    {
-        WORKREQUEST workRequest;
-        struct WORKREQ_HTTPOPENREQUESTW *req;
-
-	workRequest.asyncall = HTTPOPENREQUESTW;
-	workRequest.handle = hHttpSession;
-        req = &workRequest.u.HttpOpenRequestW;
-	req->lpszVerb = WININET_strdupW(lpszVerb);
-	req->lpszObjectName = WININET_strdupW(lpszObjectName);
-        if (lpszVersion)
-            req->lpszVersion = WININET_strdupW(lpszVersion);
-        else
-            req->lpszVersion = 0;
-        if (lpszReferrer)
-            req->lpszReferrer = WININET_strdupW(lpszReferrer);
-        else
-            req->lpszReferrer = 0;
-	req->lpszAcceptTypes = lpszAcceptTypes;
-	req->dwFlags = dwFlags;
-	req->dwContext = dwContext;
-
-        INTERNET_AsyncCall(&workRequest);
-    }
-    else
-    {
-        handle = HTTP_HttpOpenRequestW(hHttpSession, lpszVerb, lpszObjectName,
-                                              lpszVersion, lpszReferrer, lpszAcceptTypes,
-                                              dwFlags, dwContext);
-    }
+    handle = HTTP_HttpOpenRequestW(lpwhs, lpszVerb, lpszObjectName,
+                                   lpszVersion, lpszReferrer, lpszAcceptTypes,
+                                   dwFlags, dwContext);
+lend:
+    if( lpwhs )
+        WININET_Release( &lpwhs->hdr );
     TRACE("returning %p\n", handle);
     return handle;
 }
@@ -671,50 +650,45 @@ static BOOL HTTP_DealWithProxy( LPWININETAPPINFOW hIC,
  *    NULL 	 on failure
  *
  */
-HINTERNET WINAPI HTTP_HttpOpenRequestW(HINTERNET hHttpSession,
+HINTERNET WINAPI HTTP_HttpOpenRequestW(LPWININETHTTPSESSIONW lpwhs,
 	LPCWSTR lpszVerb, LPCWSTR lpszObjectName, LPCWSTR lpszVersion,
 	LPCWSTR lpszReferrer , LPCWSTR *lpszAcceptTypes,
 	DWORD dwFlags, DWORD dwContext)
 {
-    LPWININETHTTPSESSIONW lpwhs;
     LPWININETAPPINFOW hIC = NULL;
     LPWININETHTTPREQW lpwhr;
     LPWSTR lpszCookies;
     LPWSTR lpszUrl = NULL;
     DWORD nCookieSize;
-    HINTERNET handle;
+    HINTERNET handle = NULL;
     static const WCHAR szUrlForm[] = {'h','t','t','p',':','/','/','%','s',0};
     DWORD len;
 
     TRACE("--> \n");
 
-    lpwhs = (LPWININETHTTPSESSIONW) WININET_GetObject( hHttpSession );
-    if (NULL == lpwhs ||  lpwhs->hdr.htype != WH_HHTTPSESSION)
-    {
-        INTERNET_SetLastError(ERROR_INTERNET_INCORRECT_HANDLE_TYPE);
-	return NULL;
-    }
-
+    assert( lpwhs->hdr.htype == WH_HHTTPSESSION );
     hIC = (LPWININETAPPINFOW) lpwhs->hdr.lpwhparent;
 
     lpwhr = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(WININETHTTPREQW));
     if (NULL == lpwhr)
     {
         INTERNET_SetLastError(ERROR_OUTOFMEMORY);
-        return NULL;
+        goto lend;
     }
+    lpwhr->hdr.htype = WH_HHTTPREQ;
+    lpwhr->hdr.lpwhparent = WININET_AddRef( &lpwhs->hdr );
+    lpwhr->hdr.dwFlags = dwFlags;
+    lpwhr->hdr.dwContext = dwContext;
+    lpwhr->hdr.dwRefCount = 1;
+    lpwhr->hdr.destroy = HTTP_CloseHTTPRequestHandle;
+
     handle = WININET_AllocHandle( &lpwhr->hdr );
     if (NULL == handle)
     {
         INTERNET_SetLastError(ERROR_OUTOFMEMORY);
-        HeapFree( GetProcessHeap(), 0, lpwhr );
-        return NULL;
+        goto lend;
     }
 
-    lpwhr->hdr.htype = WH_HHTTPREQ;
-    lpwhr->hdr.lpwhparent = &lpwhs->hdr;
-    lpwhr->hdr.dwFlags = dwFlags;
-    lpwhr->hdr.dwContext = dwContext;
     NETCON_init(&lpwhr->netConnection, dwFlags & INTERNET_FLAG_SECURE);
 
     if (NULL != lpszObjectName && strlenW(lpszObjectName)) {
@@ -817,7 +791,7 @@ HINTERNET WINAPI HTTP_HttpOpenRequestW(HINTERNET hHttpSession,
         iar.dwResult = (DWORD)handle;
         iar.dwError = ERROR_SUCCESS;
 
-        SendAsyncCallback(hIC, hHttpSession, dwContext,
+        SendAsyncCallback(hIC, &lpwhs->hdr, dwContext,
                       INTERNET_STATUS_HANDLE_CREATED, &iar,
                       sizeof(INTERNET_ASYNC_RESULT));
     }
@@ -829,7 +803,7 @@ HINTERNET WINAPI HTTP_HttpOpenRequestW(HINTERNET hHttpSession,
     /*
      * According to my tests. The name is not resolved until a request is Opened
      */
-    SendAsyncCallback(hIC, hHttpSession, dwContext,
+    SendAsyncCallback(hIC, &lpwhs->hdr, dwContext,
                       INTERNET_STATUS_RESOLVING_NAME,
                       lpwhs->lpszServerName,
                       strlenW(lpwhs->lpszServerName)+1);
@@ -837,15 +811,21 @@ HINTERNET WINAPI HTTP_HttpOpenRequestW(HINTERNET hHttpSession,
                     &lpwhs->phostent, &lpwhs->socketAddress))
     {
         INTERNET_SetLastError(ERROR_INTERNET_NAME_NOT_RESOLVED);
-        return NULL;
+        InternetCloseHandle( handle );
+        handle = NULL;
+        goto lend;
     }
 
-    SendAsyncCallback(hIC, hHttpSession, lpwhr->hdr.dwContext,
+    SendAsyncCallback(hIC, &lpwhs->hdr, lpwhr->hdr.dwContext,
                       INTERNET_STATUS_NAME_RESOLVED,
                       &(lpwhs->socketAddress),
                       sizeof(struct sockaddr_in));
 
-    TRACE("<-- %p\n", handle);
+lend:
+    if( lpwhr )
+        WININET_Release( &lpwhr->hdr );
+
+    TRACE("<-- %p (%p)\n", handle, lpwhr);
     return handle;
 }
 
@@ -1136,11 +1116,15 @@ BOOL WINAPI HttpQueryInfoW(HINTERNET hHttpRequest, DWORD dwInfoLevel,
     if (NULL == lpwhr ||  lpwhr->hdr.htype != WH_HHTTPREQ)
     {
         INTERNET_SetLastError(ERROR_INTERNET_INCORRECT_HANDLE_TYPE);
-	return FALSE;
+	goto lend;
     }
 
     bSuccess = HTTP_HttpQueryInfoW( lpwhr, dwInfoLevel,
 	                            lpBuffer, lpdwBufferLength, lpdwIndex);
+
+lend:
+    if( lpwhr )
+         WININET_Release( &lpwhr->hdr );
 
     TRACE("%d <--\n", bSuccess);
     return bSuccess;
@@ -1217,6 +1201,7 @@ BOOL WINAPI HttpSendRequestW(HINTERNET hHttpRequest, LPCWSTR lpszHeaders,
     LPWININETHTTPREQW lpwhr;
     LPWININETHTTPSESSIONW lpwhs = NULL;
     LPWININETAPPINFOW hIC = NULL;
+    BOOL r;
 
     TRACE("%p, %p (%s), %li, %p, %li)\n", hHttpRequest,
             lpszHeaders, debugstr_w(lpszHeaders), dwHeaderLength, lpOptional, dwOptionalLength);
@@ -1225,21 +1210,24 @@ BOOL WINAPI HttpSendRequestW(HINTERNET hHttpRequest, LPCWSTR lpszHeaders,
     if (NULL == lpwhr || lpwhr->hdr.htype != WH_HHTTPREQ)
     {
         INTERNET_SetLastError(ERROR_INTERNET_INCORRECT_HANDLE_TYPE);
-	return FALSE;
+	r = FALSE;
+        goto lend;
     }
 
     lpwhs = (LPWININETHTTPSESSIONW) lpwhr->hdr.lpwhparent;
     if (NULL == lpwhs ||  lpwhs->hdr.htype != WH_HHTTPSESSION)
     {
         INTERNET_SetLastError(ERROR_INTERNET_INCORRECT_HANDLE_TYPE);
-	return FALSE;
+	r = FALSE;
+        goto lend;
     }
 
     hIC = (LPWININETAPPINFOW) lpwhs->hdr.lpwhparent;
     if (NULL == hIC ||  hIC->hdr.htype != WH_HINIT)
     {
         INTERNET_SetLastError(ERROR_INTERNET_INCORRECT_HANDLE_TYPE);
-	return FALSE;
+	r = FALSE;
+        goto lend;
     }
 
     if (hIC->hdr.dwFlags & INTERNET_FLAG_ASYNC)
@@ -1248,7 +1236,7 @@ BOOL WINAPI HttpSendRequestW(HINTERNET hHttpRequest, LPCWSTR lpszHeaders,
         struct WORKREQ_HTTPSENDREQUESTW *req;
 
         workRequest.asyncall = HTTPSENDREQUESTW;
-        workRequest.handle = hHttpRequest;
+	workRequest.hdr = WININET_AddRef( &lpwhr->hdr );
         req = &workRequest.u.HttpSendRequestW;
         if (lpszHeaders)
             req->lpszHeader = WININET_strdupW(lpszHeaders);
@@ -1263,13 +1251,17 @@ BOOL WINAPI HttpSendRequestW(HINTERNET hHttpRequest, LPCWSTR lpszHeaders,
          * This is from windows.
          */
         SetLastError(ERROR_IO_PENDING);
-        return 0;
+        r = FALSE;
     }
     else
     {
-	return HTTP_HttpSendRequestW(hHttpRequest, lpszHeaders,
+	r = HTTP_HttpSendRequestW(lpwhr, lpszHeaders,
 		dwHeaderLength, lpOptional, dwOptionalLength);
     }
+lend:
+    if( lpwhr )
+        WININET_Release( &lpwhr->hdr );
+    return r;
 }
 
 /***********************************************************************
@@ -1309,7 +1301,6 @@ static BOOL HTTP_HandleRedirect(LPWININETHTTPREQW lpwhr, LPCWSTR lpszUrl, LPCWST
     LPWININETHTTPSESSIONW lpwhs = (LPWININETHTTPSESSIONW) lpwhr->hdr.lpwhparent;
     LPWININETAPPINFOW hIC = (LPWININETAPPINFOW) lpwhs->hdr.lpwhparent;
     WCHAR path[2048];
-    HINTERNET handle;
 
     if(lpszUrl[0]=='/')
     {
@@ -1374,7 +1365,7 @@ static BOOL HTTP_HandleRedirect(LPWININETHTTPREQW lpwhr, LPCWSTR lpszUrl, LPCWST
             HeapFree(GetProcessHeap(), 0, lpwhr->lpszHostName);
         lpwhr->lpszHostName=WININET_strdupW(hostName);
 
-        SendAsyncCallback(hIC, lpwhs, lpwhr->hdr.dwContext,
+        SendAsyncCallback(hIC, &lpwhs->hdr, lpwhr->hdr.dwContext,
                       INTERNET_STATUS_RESOLVING_NAME,
                       lpwhs->lpszServerName,
                       strlenW(lpwhs->lpszServerName)+1);
@@ -1386,7 +1377,7 @@ static BOOL HTTP_HandleRedirect(LPWININETHTTPREQW lpwhr, LPCWSTR lpszUrl, LPCWST
             return FALSE;
         }
 
-        SendAsyncCallback(hIC, lpwhs, lpwhr->hdr.dwContext,
+        SendAsyncCallback(hIC, &lpwhs->hdr, lpwhr->hdr.dwContext,
                       INTERNET_STATUS_NAME_RESOLVED,
                       &(lpwhs->socketAddress),
                       sizeof(struct sockaddr_in));
@@ -1414,8 +1405,7 @@ static BOOL HTTP_HandleRedirect(LPWININETHTTPREQW lpwhr, LPCWSTR lpszUrl, LPCWST
         }
     }
 
-    handle = WININET_FindHandle( &lpwhr->hdr );
-    return HttpSendRequestW(handle, lpszHeaders, dwHeaderLength, lpOptional, dwOptionalLength);
+    return HTTP_HttpSendRequestW(lpwhr, lpszHeaders, dwHeaderLength, lpOptional, dwOptionalLength);
 }
 
 /***********************************************************************
@@ -1451,7 +1441,7 @@ static LPWSTR HTTP_build_req( LPCWSTR *list, int len )
  *    FALSE on failure
  *
  */
-BOOL WINAPI HTTP_HttpSendRequestW(HINTERNET hHttpRequest, LPCWSTR lpszHeaders,
+BOOL WINAPI HTTP_HttpSendRequestW(LPWININETHTTPREQW lpwhr, LPCWSTR lpszHeaders,
 	DWORD dwHeaderLength, LPVOID lpOptional ,DWORD dwOptionalLength)
 {
     INT cnt;
@@ -1459,21 +1449,14 @@ BOOL WINAPI HTTP_HttpSendRequestW(HINTERNET hHttpRequest, LPCWSTR lpszHeaders,
     BOOL bSuccess = FALSE;
     LPWSTR requestString = NULL;
     INT responseLen;
-    LPWININETHTTPREQW lpwhr;
     LPWININETHTTPSESSIONW lpwhs = NULL;
     LPWININETAPPINFOW hIC = NULL;
     BOOL loop_next = FALSE;
     int CustHeaderIndex;
 
-    TRACE("--> 0x%08lx\n", (ULONG)hHttpRequest);
+    TRACE("--> %p\n", lpwhr);
 
-    /* Verify our tree of internet handles */
-    lpwhr = (LPWININETHTTPREQW) WININET_GetObject( hHttpRequest );
-    if (NULL == lpwhr ||  lpwhr->hdr.htype != WH_HHTTPREQ)
-    {
-        INTERNET_SetLastError(ERROR_INTERNET_INCORRECT_HANDLE_TYPE);
-	return FALSE;
-    }
+    assert(lpwhr->hdr.htype == WH_HHTTPREQ);
 
     lpwhs = (LPWININETHTTPSESSIONW) lpwhr->hdr.lpwhparent;
     if (NULL == lpwhs ||  lpwhs->hdr.htype != WH_HHTTPSESSION)
@@ -1613,7 +1596,7 @@ BOOL WINAPI HTTP_HttpSendRequestW(HINTERNET hHttpRequest, LPCWSTR lpszHeaders,
         if (!HTTP_OpenConnection(lpwhr))
             goto lend;
 
-        SendAsyncCallback(hIC, hHttpRequest, lpwhr->hdr.dwContext,
+        SendAsyncCallback(hIC, &lpwhr->hdr, lpwhr->hdr.dwContext,
                           INTERNET_STATUS_SENDING_REQUEST, NULL, 0);
 
         /* send the request as ASCII, tack on the optional data */
@@ -1630,11 +1613,11 @@ BOOL WINAPI HTTP_HttpSendRequestW(HINTERNET hHttpRequest, LPCWSTR lpszHeaders,
         NETCON_send(&lpwhr->netConnection, ascii_req, len, 0, &cnt);
         HeapFree( GetProcessHeap(), 0, ascii_req );
 
-        SendAsyncCallback(hIC, hHttpRequest, lpwhr->hdr.dwContext,
+        SendAsyncCallback(hIC, &lpwhr->hdr, lpwhr->hdr.dwContext,
                           INTERNET_STATUS_REQUEST_SENT,
                           &len,sizeof(DWORD));
 
-        SendAsyncCallback(hIC, hHttpRequest, lpwhr->hdr.dwContext,
+        SendAsyncCallback(hIC, &lpwhr->hdr, lpwhr->hdr.dwContext,
                           INTERNET_STATUS_RECEIVING_RESPONSE, NULL, 0);
 
         if (cnt < 0)
@@ -1644,7 +1627,7 @@ BOOL WINAPI HTTP_HttpSendRequestW(HINTERNET hHttpRequest, LPCWSTR lpszHeaders,
         if (responseLen)
 	    bSuccess = TRUE;
 
-        SendAsyncCallback(hIC, hHttpRequest, lpwhr->hdr.dwContext,
+        SendAsyncCallback(hIC, &lpwhr->hdr, lpwhr->hdr.dwContext,
                           INTERNET_STATUS_RESPONSE_RECEIVED, &responseLen,
                           sizeof(DWORD));
 
@@ -1744,7 +1727,7 @@ lend:
             dwIndex=0;
             if(HTTP_HttpQueryInfoW(lpwhr,HTTP_QUERY_LOCATION,szNewLocation,&dwBufferSize,&dwIndex))
             {
-                SendAsyncCallback(hIC, hHttpRequest, lpwhr->hdr.dwContext,
+                SendAsyncCallback(hIC, &lpwhr->hdr, lpwhr->hdr.dwContext,
                       INTERNET_STATUS_REDIRECT, szNewLocation,
                       dwBufferSize);
                 return HTTP_HandleRedirect(lpwhr, szNewLocation, lpszHeaders,
@@ -1760,7 +1743,7 @@ lend:
         iar.dwResult = (DWORD)bSuccess;
         iar.dwError = bSuccess ? ERROR_SUCCESS : INTERNET_GetLastError();
 
-        SendAsyncCallback(hIC, hHttpRequest, lpwhr->hdr.dwContext,
+        SendAsyncCallback(hIC, &lpwhr->hdr, lpwhr->hdr.dwContext,
                       INTERNET_STATUS_REQUEST_COMPLETE, &iar,
                       sizeof(INTERNET_ASYNC_RESULT));
     }
@@ -1780,35 +1763,24 @@ lend:
  *   NULL on failure
  *
  */
-HINTERNET HTTP_Connect(HINTERNET hInternet, LPCWSTR lpszServerName,
+HINTERNET HTTP_Connect(LPWININETAPPINFOW hIC, LPCWSTR lpszServerName,
 	INTERNET_PORT nServerPort, LPCWSTR lpszUserName,
 	LPCWSTR lpszPassword, DWORD dwFlags, DWORD dwContext,
 	DWORD dwInternalFlags)
 {
     BOOL bSuccess = FALSE;
-    LPWININETAPPINFOW hIC = NULL;
     LPWININETHTTPSESSIONW lpwhs = NULL;
     HINTERNET handle = NULL;
 
     TRACE("-->\n");
 
-    hIC = (LPWININETAPPINFOW) WININET_GetObject( hInternet );
-    if( (hIC == NULL) || (hIC->hdr.htype != WH_HINIT) )
-        goto lerror;
+    assert( hIC->hdr.htype == WH_HINIT );
 
     hIC->hdr.dwContext = dwContext;
     
     lpwhs = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(WININETHTTPSESSIONW));
     if (NULL == lpwhs)
     {
-        INTERNET_SetLastError(ERROR_OUTOFMEMORY);
-	goto lerror;
-    }
-
-    handle = WININET_AllocHandle( &lpwhs->hdr );
-    if (NULL == handle)
-    {
-        ERR("Failed to alloc handle\n");
         INTERNET_SetLastError(ERROR_OUTOFMEMORY);
 	goto lerror;
     }
@@ -1821,10 +1793,21 @@ HINTERNET HTTP_Connect(HINTERNET hInternet, LPCWSTR lpszServerName,
 	nServerPort = INTERNET_DEFAULT_HTTP_PORT;
 
     lpwhs->hdr.htype = WH_HHTTPSESSION;
-    lpwhs->hdr.lpwhparent = &hIC->hdr;
+    lpwhs->hdr.lpwhparent = WININET_AddRef( &hIC->hdr );
     lpwhs->hdr.dwFlags = dwFlags;
     lpwhs->hdr.dwContext = dwContext;
     lpwhs->hdr.dwInternalFlags = dwInternalFlags;
+    lpwhs->hdr.dwRefCount = 1;
+    lpwhs->hdr.destroy = HTTP_CloseHTTPSessionHandle;
+
+    handle = WININET_AllocHandle( &lpwhs->hdr );
+    if (NULL == handle)
+    {
+        ERR("Failed to alloc handle\n");
+        INTERNET_SetLastError(ERROR_OUTOFMEMORY);
+	goto lerror;
+    }
+
     if(hIC->lpszProxy && hIC->dwAccessType == INTERNET_OPEN_TYPE_PROXY) {
         if(strchrW(hIC->lpszProxy, ' '))
             FIXME("Several proxies not implemented.\n");
@@ -1845,7 +1828,7 @@ HINTERNET HTTP_Connect(HINTERNET hInternet, LPCWSTR lpszServerName,
         iar.dwResult = (DWORD)handle;
         iar.dwError = ERROR_SUCCESS;
 
-        SendAsyncCallback(hIC, hInternet, dwContext,
+        SendAsyncCallback(hIC, &hIC->hdr, dwContext,
                       INTERNET_STATUS_HANDLE_CREATED, &iar,
                       sizeof(INTERNET_ASYNC_RESULT));
     }
@@ -1853,19 +1836,15 @@ HINTERNET HTTP_Connect(HINTERNET hInternet, LPCWSTR lpszServerName,
     bSuccess = TRUE;
 
 lerror:
-    if (!bSuccess && lpwhs)
-    {
-        HeapFree(GetProcessHeap(), 0, lpwhs);
-        WININET_FreeHandle( handle );
-	lpwhs = NULL;
-    }
+    if( lpwhs )
+        WININET_Release( &lpwhs->hdr );
 
 /*
  * a INTERNET_STATUS_REQUEST_COMPLETE is NOT sent here as per my tests on
  * windows
  */
 
-    TRACE("%p --> %p\n", hInternet, handle);
+    TRACE("%p --> %p (%p)\n", hIC, handle, lpwhs);
     return handle;
 }
 
@@ -1898,7 +1877,7 @@ BOOL HTTP_OpenConnection(LPWININETHTTPREQW lpwhr)
     lpwhs = (LPWININETHTTPSESSIONW)lpwhr->hdr.lpwhparent;
 
     hIC = (LPWININETAPPINFOW) lpwhs->hdr.lpwhparent;
-    SendAsyncCallback(hIC, lpwhr, lpwhr->hdr.dwContext,
+    SendAsyncCallback(hIC, &lpwhr->hdr, lpwhr->hdr.dwContext,
                       INTERNET_STATUS_CONNECTING_TO_SERVER,
                       &(lpwhs->socketAddress),
                        sizeof(struct sockaddr_in));
@@ -1917,7 +1896,7 @@ BOOL HTTP_OpenConnection(LPWININETHTTPREQW lpwhr)
        goto lend;
     }
 
-    SendAsyncCallback(hIC, lpwhr, lpwhr->hdr.dwContext,
+    SendAsyncCallback(hIC, &lpwhr->hdr, lpwhr->hdr.dwContext,
                       INTERNET_STATUS_CONNECTED_TO_SERVER,
                       &(lpwhs->socketAddress),
                        sizeof(struct sockaddr_in));
@@ -2100,7 +2079,7 @@ lend:
  *   TRUE  on success
  *   FALSE on error
  */
-INT stripSpaces(LPCWSTR lpszSrc, LPWSTR lpszStart, INT *len)
+static INT stripSpaces(LPCWSTR lpszSrc, LPWSTR lpszStart, INT *len)
 {
     LPCWSTR lpsztmp;
     INT srclen;
@@ -2411,19 +2390,15 @@ BOOL HTTP_ProcessHeader(LPWININETHTTPREQW lpwhr, LPCWSTR field, LPCWSTR value, D
  */
 VOID HTTP_CloseConnection(LPWININETHTTPREQW lpwhr)
 {
-
-
     LPWININETHTTPSESSIONW lpwhs = NULL;
     LPWININETAPPINFOW hIC = NULL;
-    HINTERNET handle;
 
     TRACE("%p\n",lpwhr);
 
-    handle = WININET_FindHandle( &lpwhr->hdr );
     lpwhs = (LPWININETHTTPSESSIONW) lpwhr->hdr.lpwhparent;
     hIC = (LPWININETAPPINFOW) lpwhs->hdr.lpwhparent;
 
-    SendAsyncCallback(hIC, lpwhr, lpwhr->hdr.dwContext,
+    SendAsyncCallback(hIC, &lpwhr->hdr, lpwhr->hdr.dwContext,
                       INTERNET_STATUS_CLOSING_CONNECTION, 0, 0);
 
     if (NETCON_connected(&lpwhr->netConnection))
@@ -2431,7 +2406,7 @@ VOID HTTP_CloseConnection(LPWININETHTTPREQW lpwhr)
         NETCON_close(&lpwhr->netConnection);
     }
 
-    SendAsyncCallback(hIC, lpwhr, lpwhr->hdr.dwContext,
+    SendAsyncCallback(hIC, &lpwhr->hdr, lpwhr->hdr.dwContext,
                       INTERNET_STATUS_CONNECTION_CLOSED, 0, 0);
 }
 
@@ -2442,25 +2417,15 @@ VOID HTTP_CloseConnection(LPWININETHTTPREQW lpwhr)
  * Deallocate request handle
  *
  */
-void HTTP_CloseHTTPRequestHandle(LPWININETHTTPREQW lpwhr)
+static void HTTP_CloseHTTPRequestHandle(LPWININETHANDLEHEADER hdr)
 {
     int i;
-    LPWININETHTTPSESSIONW lpwhs = NULL;
-    LPWININETAPPINFOW hIC = NULL;
-    HINTERNET handle;
+    LPWININETHTTPREQW lpwhr = (LPWININETHTTPREQW) hdr;
 
     TRACE("\n");
 
     if (NETCON_connected(&lpwhr->netConnection))
         HTTP_CloseConnection(lpwhr);
-
-    handle = WININET_FindHandle( &lpwhr->hdr );
-    lpwhs = (LPWININETHTTPSESSIONW) lpwhr->hdr.lpwhparent;
-    hIC = (LPWININETAPPINFOW) lpwhs->hdr.lpwhparent;
-
-    SendAsyncCallback(hIC, handle, lpwhr->hdr.dwContext,
-                      INTERNET_STATUS_HANDLE_CLOSING, lpwhr,
-                      sizeof(HINTERNET));
 
     if (lpwhr->lpszPath)
         HeapFree(GetProcessHeap(), 0, lpwhr->lpszPath);
@@ -2489,15 +2454,6 @@ void HTTP_CloseHTTPRequestHandle(LPWININETHTTPREQW lpwhr)
 
     HeapFree(GetProcessHeap(), 0, lpwhr->pCustHeaders);
     HeapFree(GetProcessHeap(), 0, lpwhr);
-    
-    /* If this handle was opened with InternetOpenUrl, we need to close the parent to prevent
-       a memory leek
-     */
-    if(lpwhs->hdr.dwInternalFlags & INET_OPENURL)
-    {
-        handle = WININET_FindHandle( &lpwhs->hdr );
-        InternetCloseHandle(handle);
-    }
 }
 
 
@@ -2507,23 +2463,11 @@ void HTTP_CloseHTTPRequestHandle(LPWININETHTTPREQW lpwhr)
  * Deallocate session handle
  *
  */
-void HTTP_CloseHTTPSessionHandle(LPWININETHTTPSESSIONW lpwhs)
+void HTTP_CloseHTTPSessionHandle(LPWININETHANDLEHEADER hdr)
 {
-    LPWININETAPPINFOW hIC = NULL;
-    HINTERNET handle;
+    LPWININETHTTPSESSIONW lpwhs = (LPWININETHTTPSESSIONW) hdr;
 
     TRACE("%p\n", lpwhs);
-
-    hIC = (LPWININETAPPINFOW) lpwhs->hdr.lpwhparent;
-
-    /* Don't send a handle closing callback if this handle was created with InternetOpenUrl */
-    if(!(lpwhs->hdr.dwInternalFlags & INET_OPENURL))
-    {
-        handle = WININET_FindHandle( &lpwhs->hdr );
-        SendAsyncCallback(hIC, handle, lpwhs->hdr.dwContext,
-                          INTERNET_STATUS_HANDLE_CLOSING, lpwhs,
-                          sizeof(HINTERNET));
-    }
 
     if (lpwhs->lpszServerName)
         HeapFree(GetProcessHeap(), 0, lpwhs->lpszServerName);

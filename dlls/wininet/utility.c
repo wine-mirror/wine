@@ -215,12 +215,14 @@ static const char *get_callback_name(DWORD dwInternetStatus) {
     return "Unknown";
 }
 
-VOID SendAsyncCallbackInt(LPWININETAPPINFOW hIC, HINTERNET hHttpSession,
+VOID SendAsyncCallbackInt(LPWININETAPPINFOW hIC, LPWININETHANDLEHEADER hdr,
                              DWORD dwContext, DWORD dwInternetStatus, LPVOID
                              lpvStatusInfo, DWORD dwStatusInfoLength)
 {
+    HINTERNET hHttpSession;
     LPVOID lpvNewInfo = NULL;
-    if (! (hIC->lpfnStatusCB))
+
+    if( !hIC->lpfnStatusCB )
         return;
 
     /* the IE5 version of wininet does not
@@ -229,6 +231,10 @@ VOID SendAsyncCallbackInt(LPWININETAPPINFOW hIC, HINTERNET hHttpSession,
         return;
 
     TRACE("--> Callback %ld (%s)\n",dwInternetStatus, get_callback_name(dwInternetStatus));
+
+    hHttpSession = WININET_FindHandle( hdr );
+    if( !hHttpSession )
+        return;
 
     lpvNewInfo = lpvStatusInfo;
     if(!(hIC->hdr.dwInternalFlags & INET_CALLBACKW)) {
@@ -245,11 +251,13 @@ VOID SendAsyncCallbackInt(LPWININETAPPINFOW hIC, HINTERNET hHttpSession,
         HeapFree(GetProcessHeap(), 0, lpvNewInfo);
 
     TRACE("<-- Callback %ld (%s)\n",dwInternetStatus, get_callback_name(dwInternetStatus));
+
+    WININET_Release( hdr );
 }
 
 
 
-VOID SendAsyncCallback(LPWININETAPPINFOW hIC, HINTERNET hHttpSession,
+VOID SendAsyncCallback(LPWININETAPPINFOW hIC, LPWININETHANDLEHEADER hdr,
                              DWORD dwContext, DWORD dwInternetStatus, LPVOID
                              lpvStatusInfo,  DWORD dwStatusInfoLength)
 {
@@ -263,9 +271,9 @@ VOID SendAsyncCallback(LPWININETAPPINFOW hIC, HINTERNET hHttpSession,
             struct WORKREQ_SENDCALLBACK *req;
 
             workRequest.asyncall = SENDCALLBACK;
-            workRequest.handle = hIC;
+            workRequest.hdr = WININET_AddRef( &hIC->hdr );
             req = &workRequest.u.SendCallback;
-            req->hHttpSession = hHttpSession;
+            req->hdr = hdr;
             req->dwContext = dwContext;
             req->dwInternetStatus = dwInternetStatus;
             req->lpvStatusInfo = lpvStatusInfo;
@@ -274,6 +282,6 @@ VOID SendAsyncCallback(LPWININETAPPINFOW hIC, HINTERNET hHttpSession,
             INTERNET_AsyncCall(&workRequest);
         }
         else
-            SendAsyncCallbackInt(hIC, hHttpSession, dwContext, dwInternetStatus,
+            SendAsyncCallbackInt(hIC, hdr, dwContext, dwInternetStatus,
                                   lpvStatusInfo, dwStatusInfoLength);
 }

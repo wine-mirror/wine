@@ -120,15 +120,22 @@ typedef enum
 #define INET_OPENURL 0x0001
 #define INET_CALLBACKW 0x0002
 
-typedef struct _WININETHANDLEHEADER
+struct _WININETHANDLEHEADER;
+typedef struct _WININETHANDLEHEADER WININETHANDLEHEADER, *LPWININETHANDLEHEADER;
+
+typedef void (*WININET_object_destructor)( LPWININETHANDLEHEADER );
+
+struct _WININETHANDLEHEADER
 {
     WH_TYPE htype;
     DWORD  dwFlags;
     DWORD  dwContext;
     DWORD  dwError;
     DWORD  dwInternalFlags;
+    DWORD  dwRefCount;
+    WININET_object_destructor destroy;
     struct _WININETHANDLEHEADER *lpwhparent;
-} WININETHANDLEHEADER, *LPWININETHANDLEHEADER;
+};
 
 
 typedef struct
@@ -333,7 +340,7 @@ struct WORKREQ_HTTPSENDREQUESTW
 
 struct WORKREQ_SENDCALLBACK
 {
-    HINTERNET hHttpSession;
+    WININETHANDLEHEADER *hdr;
     DWORD     dwContext;
     DWORD     dwInternetStatus;
     LPVOID    lpvStatusInfo;
@@ -353,7 +360,7 @@ struct WORKREQ_INTERNETOPENURLW
 typedef struct WORKREQ
 {
     ASYNC_FUNC asyncall;
-    HINTERNET handle;
+    WININETHANDLEHEADER *hdr;
 
     union {
         struct WORKREQ_FTPPUTFILEW              FtpPutFileW;
@@ -380,17 +387,19 @@ typedef struct WORKREQ
 
 HINTERNET WININET_AllocHandle( LPWININETHANDLEHEADER info );
 LPWININETHANDLEHEADER WININET_GetObject( HINTERNET hinternet );
+LPWININETHANDLEHEADER WININET_AddRef( LPWININETHANDLEHEADER info );
+BOOL WININET_Release( LPWININETHANDLEHEADER info );
 BOOL WININET_FreeHandle( HINTERNET hinternet );
 HINTERNET WININET_FindHandle( LPWININETHANDLEHEADER info );
 
 time_t ConvertTimeString(LPCWSTR asctime);
 
-HINTERNET FTP_Connect(HINTERNET hInterent, LPCWSTR lpszServerName,
+HINTERNET FTP_Connect(LPWININETAPPINFOW hIC, LPCWSTR lpszServerName,
 	INTERNET_PORT nServerPort, LPCWSTR lpszUserName,
 	LPCWSTR lpszPassword, DWORD dwFlags, DWORD dwContext,
 	DWORD dwInternalFlags);
 
-HINTERNET HTTP_Connect(HINTERNET hInterent, LPCWSTR lpszServerName,
+HINTERNET HTTP_Connect(LPWININETAPPINFOW hIC, LPCWSTR lpszServerName,
 	INTERNET_PORT nServerPort, LPCWSTR lpszUserName,
 	LPCWSTR lpszPassword, DWORD dwFlags, DWORD dwContext,
 	DWORD dwInternalFlags);
@@ -404,41 +413,36 @@ BOOL INTERNET_AsyncCall(LPWORKREQUEST lpWorkRequest);
 LPSTR INTERNET_GetResponseBuffer();
 LPSTR INTERNET_GetNextLine(INT nSocket, LPDWORD dwLen);
 
-BOOL FTP_CloseSessionHandle(LPWININETFTPSESSIONW lpwfs);
-BOOL FTP_CloseFindNextHandle(LPWININETFINDNEXTW lpwfn);
-BOOL FTP_CloseFileTransferHandle(LPWININETFILE lpwfn);
-BOOLAPI FTP_FtpPutFileW(HINTERNET hConnect, LPCWSTR lpszLocalFile,
+BOOLAPI FTP_FtpPutFileW(LPWININETFTPSESSIONW lpwfs, LPCWSTR lpszLocalFile,
     LPCWSTR lpszNewRemoteFile, DWORD dwFlags, DWORD dwContext);
-BOOLAPI FTP_FtpSetCurrentDirectoryW(HINTERNET hConnect, LPCWSTR lpszDirectory);
-BOOLAPI FTP_FtpCreateDirectoryW(HINTERNET hConnect, LPCWSTR lpszDirectory);
-INTERNETAPI HINTERNET WINAPI FTP_FtpFindFirstFileW(HINTERNET hConnect,
+BOOLAPI FTP_FtpSetCurrentDirectoryW(LPWININETFTPSESSIONW lpwfs, LPCWSTR lpszDirectory);
+BOOLAPI FTP_FtpCreateDirectoryW(LPWININETFTPSESSIONW lpwfs, LPCWSTR lpszDirectory);
+INTERNETAPI HINTERNET WINAPI FTP_FtpFindFirstFileW(LPWININETFTPSESSIONW lpwfs,
     LPCWSTR lpszSearchFile, LPWIN32_FIND_DATAW lpFindFileData, DWORD dwFlags, DWORD dwContext);
-BOOLAPI FTP_FtpGetCurrentDirectoryW(HINTERNET hFtpSession, LPWSTR lpszCurrentDirectory,
+BOOLAPI FTP_FtpGetCurrentDirectoryW(LPWININETFTPSESSIONW lpwfs, LPWSTR lpszCurrentDirectory,
 	LPDWORD lpdwCurrentDirectory);
 BOOL FTP_ConvertFileProp(LPFILEPROPERTIESW lpafp, LPWIN32_FIND_DATAW lpFindFileData);
-BOOL FTP_FtpRenameFileW(HINTERNET hFtpSession, LPCWSTR lpszSrc, LPCWSTR lpszDest);
-BOOL FTP_FtpRemoveDirectoryW(HINTERNET hFtpSession, LPCWSTR lpszDirectory);
-BOOL FTP_FtpDeleteFileW(HINTERNET hFtpSession, LPCWSTR lpszFileName);
-HINTERNET FTP_FtpOpenFileW(HINTERNET hFtpSession, LPCWSTR lpszFileName,
+BOOL FTP_FtpRenameFileW(LPWININETFTPSESSIONW lpwfs, LPCWSTR lpszSrc, LPCWSTR lpszDest);
+BOOL FTP_FtpRemoveDirectoryW(LPWININETFTPSESSIONW lpwfs, LPCWSTR lpszDirectory);
+BOOL FTP_FtpDeleteFileW(LPWININETFTPSESSIONW lpwfs, LPCWSTR lpszFileName);
+HINTERNET FTP_FtpOpenFileW(LPWININETFTPSESSIONW lpwfs, LPCWSTR lpszFileName,
 	DWORD fdwAccess, DWORD dwFlags, DWORD dwContext);
-BOOLAPI FTP_FtpGetFileW(HINTERNET hInternet, LPCWSTR lpszRemoteFile, LPCWSTR lpszNewFile,
+BOOLAPI FTP_FtpGetFileW(LPWININETFTPSESSIONW lpwfs, LPCWSTR lpszRemoteFile, LPCWSTR lpszNewFile,
 	BOOL fFailIfExists, DWORD dwLocalFlagsAttribute, DWORD dwInternetFlags,
 	DWORD dwContext);
 
-BOOLAPI HTTP_HttpSendRequestW(HINTERNET hHttpRequest, LPCWSTR lpszHeaders,
+BOOLAPI HTTP_HttpSendRequestW(LPWININETHTTPREQW lpwhr, LPCWSTR lpszHeaders,
 	DWORD dwHeaderLength, LPVOID lpOptional ,DWORD dwOptionalLength);
-INTERNETAPI HINTERNET WINAPI HTTP_HttpOpenRequestW(HINTERNET hHttpSession,
+INTERNETAPI HINTERNET WINAPI HTTP_HttpOpenRequestW(LPWININETHTTPSESSIONW lpwhs,
 	LPCWSTR lpszVerb, LPCWSTR lpszObjectName, LPCWSTR lpszVersion,
 	LPCWSTR lpszReferrer , LPCWSTR *lpszAcceptTypes,
 	DWORD dwFlags, DWORD dwContext);
-void HTTP_CloseHTTPSessionHandle(LPWININETHTTPSESSIONW lpwhs);
-void HTTP_CloseHTTPRequestHandle(LPWININETHTTPREQW lpwhr);
 
-VOID SendAsyncCallback(LPWININETAPPINFOW hIC, HINTERNET hHttpSession,
+VOID SendAsyncCallback(LPWININETAPPINFOW hIC, LPWININETHANDLEHEADER hdr,
                              DWORD dwContext, DWORD dwInternetStatus, LPVOID
                              lpvStatusInfo , DWORD dwStatusInfoLength);
 
-VOID SendAsyncCallbackInt(LPWININETAPPINFOW hIC, HINTERNET hHttpSession,
+VOID SendAsyncCallbackInt(LPWININETAPPINFOW hIC, LPWININETHANDLEHEADER hdr,
                              DWORD dwContext, DWORD dwInternetStatus, LPVOID
                              lpvStatusInfo , DWORD dwStatusInfoLength);
 
