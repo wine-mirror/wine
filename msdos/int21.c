@@ -25,6 +25,8 @@
 #include "task.h"
 #include "options.h"
 #include "miscemu.h"
+#include "dosexe.h" /* for the MZ_SUPPORTED define */
+#include "module.h"
 #include "debug.h"
 #include "console.h"
 #if defined(__svr4__) || defined(_SCO_DS)
@@ -975,8 +977,8 @@ INT21_networkfunc (CONTEXT *context)
 static void INT21_SetCurrentPSP(WORD psp)
 {
 #ifdef MZ_SUPPORTED
-    TDB *pTask = hModule ? NULL : (TDB *)GlobalLock16( GetCurrentTask() );
-    NE_MODULE *pModule = (hModule || pTask) ? NE_GetPtr( hModule ? hModule : pTask->hModule ) : NULL;
+    TDB *pTask = (TDB *)GlobalLock16( GetCurrentTask() );
+    NE_MODULE *pModule = pTask ? NE_GetPtr( pTask->hModule ) : NULL;
     
     GlobalUnlock16( GetCurrentTask() );
     if (pModule->lpDosTask)
@@ -989,8 +991,8 @@ static void INT21_SetCurrentPSP(WORD psp)
 static WORD INT21_GetCurrentPSP()
 {
 #ifdef MZ_SUPPORTED
-    TDB *pTask = hModule ? NULL : (TDB *)GlobalLock16( GetCurrentTask() );
-    NE_MODULE *pModule = (hModule || pTask) ? NE_GetPtr( hModule ? hModule : pTask->hModule ) : NULL;
+    TDB *pTask = (TDB *)GlobalLock16( GetCurrentTask() );
+    NE_MODULE *pModule = pTask ? NE_GetPtr( pTask->hModule ) : NULL;
         
     GlobalUnlock16( GetCurrentTask() );
     if (pModule->lpDosTask)
@@ -1137,7 +1139,12 @@ void WINAPI DOS3Call( CONTEXT *context )
 
     case 0x06: /* DIRECT CONSOLE IN/OUTPUT */
         TRACE(int21, "Direct Console Input/Output\n");
-    	CONSOLE_Write(DL_reg(context), 0, 0, 0);
+        if (DL_reg(context) == 0xff) {
+            FIXME(int21,"Direct Console Input should not block\n");
+            AL_reg(context) = CONSOLE_GetCharacter();
+            FL_reg(context) &= ~0x40; /* clear ZF */
+        } else
+    	    CONSOLE_Write(DL_reg(context), 0, 0, 0);
         break;
 
     case 0x07: /* DIRECT CHARACTER INPUT WITHOUT ECHO */
