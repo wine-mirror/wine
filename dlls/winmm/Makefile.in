@@ -19,12 +19,26 @@ C_SRCS = \
 	time.c
 
 GLUE =  lolvldrv.c \
-	mmsystem.c
+	mmsystem.c \
+	time.c
 
 RC_SRCS= \
 	winmm_res.rc
 
 all: check_wrc $ $(MODULE).o
+
+SUBDIRS = \
+	mcianim \
+	mciavi \
+	mcicda \
+	mciseq \
+	mciwave \
+	midimap \
+	wavemap \
+	wineoss
+
+$(SUBDIRS): dummy
+	@cd $@; $(MAKE)
 
 @MAKE_RULES@
 

@@ -8,8 +8,7 @@
 
 #include <time.h>
 #include <sys/time.h>
-#include "winbase.h"
-#include "callback.h"
+#include "winuser.h"
 #include "winemm.h"
 #include "services.h"
 #include "syslevel.h"
@@ -23,13 +22,17 @@ DEFAULT_DEBUG_CHANNEL(mmtime)
  * as Windows 95 does, according to the docs. Maybe it should
  * depend on the computers resources!
  */
-#define MMSYSTIME_MININTERVAL /* (1) */ (10)
+#define MMSYSTIME_MININTERVAL (1)
 #define MMSYSTIME_MAXINTERVAL (65535)
 
-static	void	TIME_TriggerCallBack(LPWINE_TIMERENTRY lpTimer, DWORD dwCurrent)
+/* ### start build ### */
+extern WORD CALLBACK TIME_CallTo16_word_wwlll(FARPROC16,WORD,WORD,LONG,LONG,LONG);
+/* ### stop build ### */
+
+static	void	TIME_TriggerCallBack(LPWINE_TIMERENTRY lpTimer)
 {
-    TRACE("before CallBack (%lu) => lpFunc=%p wTimerID=%04X dwUser=%08lX !\n",
-	  dwCurrent, lpTimer->lpFunc, lpTimer->wTimerID, lpTimer->dwUser);
+    TRACE("before CallBack => lpFunc=%p wTimerID=%04X dwUser=%08lX !\n",
+	  lpTimer->lpFunc, lpTimer->wTimerID, lpTimer->dwUser);
 	
     /* - TimeProc callback that is called here is something strange, under Windows 3.1x it is called 
      * 		during interrupt time,  is allowed to execute very limited number of API calls (like
@@ -41,9 +44,8 @@ static	void	TIME_TriggerCallBack(LPWINE_TIMERENTRY lpTimer, DWORD dwCurrent)
 	if (lpTimer->wFlags & WINE_TIMER_IS32)
 	    ((LPTIMECALLBACK)lpTimer->lpFunc)(lpTimer->wTimerID, 0, lpTimer->dwUser, 0, 0);
 	else
-	    Callbacks->CallTimeFuncProc(lpTimer->lpFunc,
-					lpTimer->wTimerID, 0,
-					lpTimer->dwUser, 0, 0);
+	    TIME_CallTo16_word_wwlll(lpTimer->lpFunc, lpTimer->wTimerID, 0,
+				     lpTimer->dwUser, 0, 0);
 	break;
     case TIME_CALLBACK_EVENT_SET:
 	SetEvent((HANDLE)lpTimer->lpFunc);
@@ -52,7 +54,8 @@ static	void	TIME_TriggerCallBack(LPWINE_TIMERENTRY lpTimer, DWORD dwCurrent)
 	PulseEvent((HANDLE)lpTimer->lpFunc);
 	break;
     default:
-	FIXME("Unknown callback type 0x%04x for mmtime callback (%p), ignored.\n", lpTimer->wFlags, lpTimer->lpFunc);
+	FIXME("Unknown callback type 0x%04x for mmtime callback (%p), ignored.\n", 
+	      lpTimer->wFlags, lpTimer->lpFunc);
 	break;
     }
     TRACE("after CallBack !\n");
@@ -65,55 +68,61 @@ static void CALLBACK TIME_MMSysTimeCallback(ULONG_PTR ptr_)
 {
     LPWINE_TIMERENTRY 	lpTimer, lpNextTimer;
     LPWINE_MM_IDATA	iData = (LPWINE_MM_IDATA)ptr_;
+    DWORD		delta = GetTickCount() - iData->mmSysTimeMS;
     int			idx;
 
-    iData->mmSysTimeMS += MMSYSTIME_MININTERVAL;
+    TRACE("Time delta: %ld\n", delta);
 
-    /* since timeSetEvent() and timeKillEvent() can be called
-     * from 16 bit code, there are cases where win16 lock is
-     * locked upon entering timeSetEvent(), and then the mm timer 
-     * critical section is locked. This function cannot call the
-     * timer callback with the crit sect locked (because callback
-     * may need to acquire Win16 lock, thus providing a deadlock
-     * situation).
-     * To cope with that, we just copy the WINE_TIMERENTRY struct
-     * that need to trigger the callback, and call it without the
-     * mm timer crit sect locked. The bad side of this 
-     * implementation is that, in some cases, the callback may be
-     * invoked *after* a timer has been destroyed...
-     * EPP 99/07/13
-     */
-    idx = 0;
-
-    EnterCriticalSection(&iData->cs);
-    for (lpTimer = iData->lpTimerList; lpTimer != NULL; ) {
-	lpNextTimer = lpTimer->lpNext;
-	if (lpTimer->uCurTime < MMSYSTIME_MININTERVAL) {
-	    /* since lpTimer->wDelay is >= MININTERVAL, wCurTime value
-	     * shall be correct (>= 0)
-	     */
-	    lpTimer->uCurTime += lpTimer->wDelay - MMSYSTIME_MININTERVAL;
-	    if (lpTimer->lpFunc) {
-		if (idx == iData->nSizeLpTimers) {
-		    iData->lpTimers = (LPWINE_TIMERENTRY)
-			HeapReAlloc(GetProcessHeap(), 0, 
-				    iData->lpTimers, 
-				    ++iData->nSizeLpTimers * sizeof(WINE_TIMERENTRY));
+    while (delta >= MMSYSTIME_MININTERVAL) {
+	delta -= MMSYSTIME_MININTERVAL;
+	iData->mmSysTimeMS += MMSYSTIME_MININTERVAL;
+	
+	/* since timeSetEvent() and timeKillEvent() can be called
+	 * from 16 bit code, there are cases where win16 lock is
+	 * locked upon entering timeSetEvent(), and then the mm timer 
+	 * critical section is locked. This function cannot call the
+	 * timer callback with the crit sect locked (because callback
+	 * may need to acquire Win16 lock, thus providing a deadlock
+	 * situation).
+	 * To cope with that, we just copy the WINE_TIMERENTRY struct
+	 * that need to trigger the callback, and call it without the
+	 * mm timer crit sect locked. The bad side of this 
+	 * implementation is that, in some cases, the callback may be
+	 * invoked *after* a timer has been destroyed...
+	 * EPP 99/07/13
+	 */
+	idx = 0;
+	
+	EnterCriticalSection(&iData->cs);
+	for (lpTimer = iData->lpTimerList; lpTimer != NULL; ) {
+	    lpNextTimer = lpTimer->lpNext;
+	    if (lpTimer->uCurTime < MMSYSTIME_MININTERVAL) {
+		/* since lpTimer->wDelay is >= MININTERVAL, wCurTime value
+		 * shall be correct (>= 0)
+		 */
+		lpTimer->uCurTime += lpTimer->wDelay - MMSYSTIME_MININTERVAL;
+		if (lpTimer->lpFunc) {
+		    if (idx == iData->nSizeLpTimers) {
+			iData->lpTimers = (LPWINE_TIMERENTRY)
+			    HeapReAlloc(GetProcessHeap(), 0, 
+					iData->lpTimers, 
+					++iData->nSizeLpTimers * sizeof(WINE_TIMERENTRY));
+		    }
+		    iData->lpTimers[idx++] = *lpTimer;
 		}
-		iData->lpTimers[idx++] = *lpTimer;
+		/* TIME_ONESHOT is defined as 0 */
+		if (!(lpTimer->wFlags & TIME_PERIODIC))
+		    timeKillEvent(lpTimer->wTimerID);
+	    } else {
+		lpTimer->uCurTime -= MMSYSTIME_MININTERVAL;
 	    }
-	    /* TIME_ONESHOT is defined as 0 */
-	    if (!(lpTimer->wFlags & TIME_PERIODIC))
-		timeKillEvent(lpTimer->wTimerID);
-	} else {
-	    lpTimer->uCurTime -= MMSYSTIME_MININTERVAL;
+	    lpTimer = lpNextTimer;
 	}
-	lpTimer = lpNextTimer;
-    }
-    LeaveCriticalSection(&iData->cs);
-
-    while (idx > 0) {
-	TIME_TriggerCallBack(&iData->lpTimers[--idx], iData->mmSysTimeMS);
+	LeaveCriticalSection(&iData->cs);
+	
+	while (idx > 0) {
+	    TIME_TriggerCallBack(&iData->lpTimers[--idx]);
+	}
     }
 }
 
@@ -138,7 +147,8 @@ static	LPWINE_MM_IDATA	MULTIMEDIA_MMTimeStart(void)
     if (!iData->hMMTimer) {
 	iData->mmSysTimeMS = GetTickCount();
 	iData->lpTimerList = NULL;
-	iData->hMMTimer = SERVICE_AddTimer(MMSYSTIME_MININTERVAL*1000L, TIME_MMSysTimeCallback, (DWORD)iData);
+	/* 10ms seems a reasonable value ?? */
+	iData->hMMTimer = SERVICE_AddTimer(10*1000L, TIME_MMSysTimeCallback, (DWORD)iData);
     }
 
     return iData;
