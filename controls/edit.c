@@ -83,7 +83,7 @@ typedef struct
 	INT undo_insert_count;	/* number of characters inserted in sequence */
 	UINT undo_position;		/* character index of the insertion and deletion */
 	LPWSTR undo_text;		/* deleted text */
-	INT undo_buffer_size;		/* size of the deleted text buffer */
+	UINT undo_buffer_size;		/* size of the deleted text buffer */
 	INT selection_start;		/* == selection_end if no selection */
 	INT selection_end;		/* == current caret position */
 	WCHAR password_char;		/* == 0 if no password char, and for multi line controls */
@@ -182,7 +182,7 @@ static void	EDIT_GetLineRect(WND *wnd, EDITSTATE *es, INT line, INT scol, INT ec
 static void	EDIT_InvalidateText(WND *wnd, EDITSTATE *es, INT start, INT end);
 static void	EDIT_LockBuffer(WND *wnd, EDITSTATE *es);
 static BOOL	EDIT_MakeFit(WND *wnd, EDITSTATE *es, UINT size);
-static BOOL	EDIT_MakeUndoFit(EDITSTATE *es, INT size);
+static BOOL	EDIT_MakeUndoFit(EDITSTATE *es, UINT size);
 static void	EDIT_MoveBackward(WND *wnd, EDITSTATE *es, BOOL extend);
 static void	EDIT_MoveEnd(WND *wnd, EDITSTATE *es, BOOL extend);
 static void	EDIT_MoveForward(WND *wnd, EDITSTATE *es, BOOL extend);
@@ -1672,7 +1672,7 @@ static BOOL EDIT_MakeFit(WND *wnd, EDITSTATE *es, UINT size)
  *	Try to fit size + 1 bytes in the undo buffer.
  *
  */
-static BOOL EDIT_MakeUndoFit(EDITSTATE *es, INT size)
+static BOOL EDIT_MakeUndoFit(EDITSTATE *es, UINT size)
 {
 	UINT alloc_size;
 
