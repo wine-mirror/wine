@@ -104,7 +104,8 @@ typedef struct
 /* Create a new process from the context of the parent */
 struct new_process_request
 {
-    IN  int          inherit;      /* inherit flag */
+    IN  int          pinherit;     /* process handle inherit flag */
+    IN  int          tinherit;     /* thread handle inherit flag */
     IN  int          inherit_all;  /* inherit all handles from parent */
     IN  int          create_flags; /* creation flags */
     IN  int          start_flags;  /* flags from startup info */
@@ -234,7 +235,9 @@ struct set_process_info_request
 struct get_thread_info_request
 {
     IN  int          handle;       /* thread handle */
+    IN  void*        tid_in;       /* thread id (optional) */
     OUT void*        tid;          /* server thread id */
+    OUT void*        teb;          /* thread teb pointer */
     OUT int          exit_code;    /* thread exit code */
     OUT int          priority;     /* thread priority level */
 };
@@ -1205,7 +1208,7 @@ enum request
     REQ_NB_REQUESTS
 };
 
-#define SERVER_PROTOCOL_VERSION 4
+#define SERVER_PROTOCOL_VERSION 5
 
 /* ### make_requests end ### */
 /* Everything above this line is generated automatically by tools/make_requests */

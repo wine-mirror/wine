@@ -158,7 +158,7 @@ extern void ENV_FreeEnvironment( PDB *pdb );
 /* scheduler/process.c */
 extern BOOL PROCESS_Init( BOOL win32 );
 extern PDB *PROCESS_IdToPDB( DWORD id );
-extern void PROCESS_CallUserSignalProc( UINT uCode, DWORD dwThreadId, HMODULE hModule );
+extern void PROCESS_CallUserSignalProc( UINT uCode, HMODULE hModule );
 extern PDB *PROCESS_Create( struct _NE_MODULE *pModule, HFILE hFile,
                             LPCSTR cmd_line, LPCSTR env, 
                             LPSECURITY_ATTRIBUTES psa, LPSECURITY_ATTRIBUTES tsa,

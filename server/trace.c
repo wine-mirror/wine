@@ -204,7 +204,8 @@ typedef void (*dump_func)( const void *req );
 
 static void dump_new_process_request( const struct new_process_request *req )
 {
-    fprintf( stderr, " inherit=%d,", req->inherit );
+    fprintf( stderr, " pinherit=%d,", req->pinherit );
+    fprintf( stderr, " tinherit=%d,", req->tinherit );
     fprintf( stderr, " inherit_all=%d,", req->inherit_all );
     fprintf( stderr, " create_flags=%d,", req->create_flags );
     fprintf( stderr, " start_flags=%d,", req->start_flags );
@@ -339,12 +340,14 @@ static void dump_set_process_info_request( const struct set_process_info_request
 
 static void dump_get_thread_info_request( const struct get_thread_info_request *req )
 {
-    fprintf( stderr, " handle=%d", req->handle );
+    fprintf( stderr, " handle=%d,", req->handle );
+    fprintf( stderr, " tid_in=%p", req->tid_in );
 }
 
 static void dump_get_thread_info_reply( const struct get_thread_info_request *req )
 {
     fprintf( stderr, " tid=%p,", req->tid );
+    fprintf( stderr, " teb=%p,", req->teb );
     fprintf( stderr, " exit_code=%d,", req->exit_code );
     fprintf( stderr, " priority=%d", req->priority );
 }

@@ -31,13 +31,10 @@
 #include "queue.h"
 #include "hook.h"
 
-DEFAULT_DEBUG_CHANNEL(thread)
+DEFAULT_DEBUG_CHANNEL(thread);
 
 /* TEB of the initial thread */
 static TEB initial_teb;
-
-/* Global thread list (FIXME: not thread-safe) */
-TEB *THREAD_First = &initial_teb;
 
 /***********************************************************************
  *           THREAD_IsWin16
@@ -54,14 +51,13 @@ BOOL THREAD_IsWin16( TEB *teb )
  */
 TEB *THREAD_IdToTEB( DWORD id )
 {
-    TEB *teb = THREAD_First;
+    struct get_thread_info_request *req = get_req_buffer();
 
-    if (!id) return NtCurrentTeb();
-    while (teb)
-    {
-        if ((DWORD)teb->tid == id) return teb;
-        teb = teb->next;
-    }
+    if (!id || id == GetCurrentThreadId()) return NtCurrentTeb();
+    req->handle = -1;
+    req->tid_in = (void *)id;
+    if (!server_call_noerr( REQ_GET_THREAD_INFO )) return req->teb;
+
     /* Allow task handles to be used; convert to main thread */
     if ( IsTask16( id ) )
     {
@@ -78,8 +74,7 @@ TEB *THREAD_IdToTEB( DWORD id )
  *
  * Initialization of a newly created TEB.
  */
-static BOOL THREAD_InitTEB( TEB *teb, DWORD stack_size, BOOL alloc_stack16,
-                            LPSECURITY_ATTRIBUTES sa )
+static BOOL THREAD_InitTEB( TEB *teb, DWORD stack_size, BOOL alloc_stack16 )
 {
     DWORD old_prot;
 
@@ -142,25 +137,18 @@ error:
 void CALLBACK THREAD_FreeTEB( ULONG_PTR arg )
 {
     TEB *teb = (TEB *)arg;
-    TEB **pptr = &THREAD_First;
 
     TRACE("(%p) called\n", teb );
     SERVICE_Delete( teb->cleanup );
-
-    PROCESS_CallUserSignalProc( USIG_THREAD_EXIT, (DWORD)teb->tid, 0 );
-    
-    while (*pptr && (*pptr != teb)) pptr = &(*pptr)->next;
-    if (*pptr) *pptr = teb->next;
 
     /* Free the associated memory */
 
     if (teb->stack_sel) SELECTOR_FreeBlock( teb->stack_sel, 1 );
     SELECTOR_FreeBlock( teb->teb_sel, 1 );
-    close( teb->socket );
     if (teb->buffer) munmap( teb->buffer, teb->buffer_size );
     if (teb->debug_info) HeapFree( GetProcessHeap(), 0, teb->debug_info );
     VirtualFree( teb->stack_base, 0, MEM_RELEASE );
-    VirtualFree( teb, 0, MEM_FREE );
+    VirtualFree( teb, 0, MEM_RELEASE );
 }
 
 
@@ -192,7 +180,7 @@ TEB *THREAD_CreateInitialThread( PDB *pdb, int server_fd )
     /* Now proceed with normal initialization */
 
     if (CLIENT_InitThread()) return NULL;
-    if (!THREAD_InitTEB( &initial_teb, 0, TRUE, NULL )) return NULL;
+    if (!THREAD_InitTEB( &initial_teb, 0, TRUE )) return NULL;
     return &initial_teb;
 }
 
@@ -206,12 +194,9 @@ TEB *THREAD_CreateInitialThread( PDB *pdb, int server_fd )
  *	allocate in this area and don't support a granularity of 4kb
  *	yet we leave it to VirtualAlloc to choose an address.
  */
-TEB *THREAD_Create( PDB *pdb, int fd, DWORD flags, DWORD stack_size, BOOL alloc_stack16,
-                    LPSECURITY_ATTRIBUTES sa, int *server_handle )
+TEB *THREAD_Create( PDB *pdb, void *tid, int fd, DWORD flags,
+                    DWORD stack_size, BOOL alloc_stack16 )
 {
-    struct new_thread_request *req = get_req_buffer();
-    HANDLE cleanup_object;
-
     TEB *teb = VirtualAlloc(0, 0x1000, MEM_COMMIT, PAGE_EXECUTE_READWRITE);
     if (!teb) return NULL;
     teb->except      = (void *)-1;
@@ -222,45 +207,24 @@ TEB *THREAD_Create( PDB *pdb, int fd, DWORD flags, DWORD stack_size, BOOL alloc_
     teb->process     = pdb;
     teb->exit_code   = STILL_ACTIVE;
     teb->socket      = fd;
+    teb->tid         = tid;
+    fcntl( fd, F_SETFD, 1 ); /* set close on exec flag */
 
     /* Allocate the TEB selector (%fs register) */
 
-    *server_handle = -1;
     teb->teb_sel = SELECTOR_AllocBlock( teb, 0x1000, SEGMENT_DATA, TRUE, FALSE );
     if (!teb->teb_sel) goto error;
 
-    /* Create the thread on the server side */
-
-    if (teb->socket == -1)
-    {
-        req->suspend = ((flags & CREATE_SUSPENDED) != 0);
-        req->inherit = (sa && (sa->nLength>=sizeof(*sa)) && sa->bInheritHandle);
-        if (server_call_fd( REQ_NEW_THREAD, -1, &teb->socket )) goto error;
-        teb->tid = req->tid;
-        *server_handle = req->handle;
-        fcntl( teb->socket, F_SETFD, 1 ); /* set close on exec flag */
-    }
-
     /* Do the rest of the initialization */
 
-    if (!THREAD_InitTEB( teb, stack_size, alloc_stack16, sa )) goto error;
-    teb->next = THREAD_First;
-    THREAD_First = teb;
-
-    /* Install cleanup handler */
-    if ( !DuplicateHandle( GetCurrentProcess(), *server_handle, 
-			   GetCurrentProcess(), &cleanup_object, 
-			   0, FALSE, DUPLICATE_SAME_ACCESS ) ) goto error;
-    teb->cleanup = SERVICE_AddObject( cleanup_object, THREAD_FreeTEB, (ULONG_PTR)teb );
+    if (!THREAD_InitTEB( teb, stack_size, alloc_stack16 )) goto error;
 
     TRACE("(%p) succeeded\n", teb);
     return teb;
 
 error:
-    if (*server_handle != -1) CloseHandle( *server_handle );
     if (teb->teb_sel) SELECTOR_FreeBlock( teb->teb_sel, 1 );
-    if (teb->socket != -1) close( teb->socket );
-    VirtualFree( teb, 0, MEM_FREE );
+    VirtualFree( teb, 0, MEM_RELEASE );
     return NULL;
 }
 
@@ -272,8 +236,17 @@ error:
  */
 static void THREAD_Start(void)
 {
+    HANDLE cleanup_object;
     LPTHREAD_START_ROUTINE func = (LPTHREAD_START_ROUTINE)NtCurrentTeb()->entry_point;
-    PROCESS_CallUserSignalProc( USIG_THREAD_INIT, (DWORD)NtCurrentTeb()->tid, 0 );
+
+    /* install cleanup handler */
+    if (DuplicateHandle( GetCurrentProcess(), GetCurrentThread(),
+                         GetCurrentProcess(), &cleanup_object, 
+                         0, FALSE, DUPLICATE_SAME_ACCESS ))
+        NtCurrentTeb()->cleanup = SERVICE_AddObject( cleanup_object, THREAD_FreeTEB,
+                                                     (ULONG_PTR)NtCurrentTeb() );
+
+    PROCESS_CallUserSignalProc( USIG_THREAD_INIT, 0 );
     PE_InitTls();
     MODULE_DllThreadAttach( NULL );
     ExitThread( func( NtCurrentTeb()->entry_arg ) );
@@ -287,9 +260,20 @@ HANDLE WINAPI CreateThread( SECURITY_ATTRIBUTES *sa, DWORD stack,
                             LPTHREAD_START_ROUTINE start, LPVOID param,
                             DWORD flags, LPDWORD id )
 {
-    int handle = -1;
-    TEB *teb = THREAD_Create( PROCESS_Current(), -1, flags, stack, TRUE, sa, &handle );
-    if (!teb) return 0;
+    struct new_thread_request *req = get_req_buffer();
+    int socket, handle = -1;
+    TEB *teb;
+
+    req->suspend = ((flags & CREATE_SUSPENDED) != 0);
+    req->inherit = (sa && (sa->nLength>=sizeof(*sa)) && sa->bInheritHandle);
+    if (server_call_fd( REQ_NEW_THREAD, -1, &socket )) return 0;
+    handle = req->handle;
+
+    if (!(teb = THREAD_Create( PROCESS_Current(), req->tid, socket, flags, stack, TRUE )))
+    {
+        close( socket );
+        return 0;
+    }
     teb->tibflags   |= TEBF_WIN32;
     teb->entry_point = start;
     teb->entry_arg   = param;
@@ -351,6 +335,7 @@ void WINAPI ExitThread( DWORD code ) /* [in] Exit code for this thread */
     else
     {
         MODULE_DllThreadDetach( NULL );
+        PROCESS_CallUserSignalProc( USIG_THREAD_EXIT, 0 );
         SYSDEPS_ExitThread( code );
     }
 }
@@ -556,6 +541,7 @@ INT WINAPI GetThreadPriority(
     INT ret = THREAD_PRIORITY_ERROR_RETURN;
     struct get_thread_info_request *req = get_req_buffer();
     req->handle = hthread;
+    req->tid_in = 0;
     if (!server_call( REQ_GET_THREAD_INFO )) ret = req->priority;
     return ret;
 }
@@ -611,6 +597,7 @@ BOOL WINAPI TerminateThread(
     req->exit_code = exitcode;
     if ((ret = !server_call( REQ_TERMINATE_THREAD )) && req->self)
     {
+        PROCESS_CallUserSignalProc( USIG_THREAD_EXIT, 0 );
         if (req->last) exit( exitcode );
         else SYSDEPS_ExitThread( exitcode );
     }
@@ -632,6 +619,7 @@ BOOL WINAPI GetExitCodeThread(
     BOOL ret = FALSE;
     struct get_thread_info_request *req = get_req_buffer();
     req->handle = hthread;
+    req->tid_in = 0;
     if (!server_call( REQ_GET_THREAD_INFO ))
     {
         if (exitcode) *exitcode = req->exit_code;

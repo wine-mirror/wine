@@ -576,6 +576,8 @@ void kill_thread( struct thread *thread, int violent_death )
     wake_up( &thread->obj, 0 );
     detach_thread( thread, violent_death ? SIGTERM : 0 );
     remove_select_user( &thread->obj );
+    munmap( thread->buffer, MAX_REQUEST_LENGTH );
+    thread->buffer = (void *)-1;
     release_object( thread );
 }
 
@@ -663,10 +665,15 @@ DECL_HANDLER(terminate_thread)
 DECL_HANDLER(get_thread_info)
 {
     struct thread *thread;
+    int handle = req->handle;
 
-    if ((thread = get_thread_from_handle( req->handle, THREAD_QUERY_INFORMATION )))
+    if (handle == -1) thread = get_thread_from_id( req->tid_in );
+    else thread = get_thread_from_handle( req->handle, THREAD_QUERY_INFORMATION );
+
+    if (thread)
     {
-        req->tid       = thread;
+        req->tid       = get_thread_id( thread );
+        req->teb       = thread->teb;
         req->exit_code = (thread->state == TERMINATED) ? thread->exit_code : STILL_ACTIVE;
         req->priority  = thread->priority;
         release_object( thread );

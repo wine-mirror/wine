@@ -468,9 +468,9 @@ void TASK_KillTask( HTASK16 hTask )
     /* Perform USER cleanup */
 
     TASK_CallTaskSignalProc( USIG16_TERMINATION, hTask );
-    PROCESS_CallUserSignalProc( USIG_PROCESS_EXIT, 0, 0 );
-    PROCESS_CallUserSignalProc( USIG_THREAD_EXIT, GetCurrentThreadId(), 0 );
-    PROCESS_CallUserSignalProc( USIG_PROCESS_DESTROY, 0, 0 );
+    PROCESS_CallUserSignalProc( USIG_PROCESS_EXIT, 0 );
+    PROCESS_CallUserSignalProc( USIG_THREAD_EXIT, 0 );
+    PROCESS_CallUserSignalProc( USIG_PROCESS_DESTROY, 0 );
 
     if (nTaskCount <= 1)
     {

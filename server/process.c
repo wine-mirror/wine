@@ -68,7 +68,8 @@ static int set_creation_info( struct process *process, struct new_process_reques
     else  /* no request, use defaults */
     {
         req = process->info;
-        req->inherit      = 0;
+        req->pinherit     = 0;
+        req->tinherit     = 0;
         req->inherit_all  = 0;
         req->create_flags = CREATE_NEW_CONSOLE;
         req->start_flags  = STARTF_USESTDHANDLES;
@@ -595,11 +596,11 @@ DECL_HANDLER(new_process)
     if ((thread = create_process( sock[0], current->process, req, req->cmdline, len )))
     {
         int phandle = alloc_handle( current->process, thread->process,
-                                    PROCESS_ALL_ACCESS, req->inherit );
+                                    PROCESS_ALL_ACCESS, req->pinherit );
         if ((req->phandle = phandle) != -1)
         {
             if ((req->thandle = alloc_handle( current->process, thread,
-                                              THREAD_ALL_ACCESS, req->inherit )) != -1)
+                                              THREAD_ALL_ACCESS, req->tinherit )) != -1)
             {
                 /* thread object will be released when the thread gets killed */
                 set_reply_fd( current, sock[1] );

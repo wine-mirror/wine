@@ -157,7 +157,7 @@ PDB *PROCESS_IdToPDB( DWORD pid )
  * USIG_FLAGS_FAULT
  *     The signal is being sent due to a fault.
  */
-void PROCESS_CallUserSignalProc( UINT uCode, DWORD dwThreadId, HMODULE hModule )
+void PROCESS_CallUserSignalProc( UINT uCode, HMODULE hModule )
 {
     DWORD flags = PROCESS_Current()->flags;
     DWORD startup_flags = PROCESS_Current()->env_db->startup_info->dwFlags;
@@ -192,7 +192,7 @@ void PROCESS_CallUserSignalProc( UINT uCode, DWORD dwThreadId, HMODULE hModule )
     if ( Callout.UserSignalProc )
     {
         if ( uCode == USIG_THREAD_INIT || uCode == USIG_THREAD_EXIT )
-            Callout.UserSignalProc( uCode, dwThreadId, dwFlags, hModule );
+            Callout.UserSignalProc( uCode, GetCurrentThreadId(), dwFlags, hModule );
         else
             Callout.UserSignalProc( uCode, GetCurrentProcessId(), dwFlags, hModule );
     }
@@ -434,10 +434,10 @@ void PROCESS_Start(void)
      *       in the case of a 16-bit process. Thus, we send the signal here.
      */
 
-    PROCESS_CallUserSignalProc( USIG_PROCESS_CREATE, 0, 0 );
-    PROCESS_CallUserSignalProc( USIG_THREAD_INIT, GetCurrentThreadId(), 0 );
-    PROCESS_CallUserSignalProc( USIG_PROCESS_INIT, 0, 0 );
-    PROCESS_CallUserSignalProc( USIG_PROCESS_LOADED, 0, 0 );
+    PROCESS_CallUserSignalProc( USIG_PROCESS_CREATE, 0 );
+    PROCESS_CallUserSignalProc( USIG_THREAD_INIT, 0 );
+    PROCESS_CallUserSignalProc( USIG_PROCESS_INIT, 0 );
+    PROCESS_CallUserSignalProc( USIG_PROCESS_LOADED, 0 );
 
     /* Signal the parent process to continue */
     req->module = (void *)pModule->module32;
@@ -461,7 +461,7 @@ void PROCESS_Start(void)
 
     /* Call UserSignalProc ( USIG_PROCESS_RUNNING ... ) only for non-GUI win32 apps */
     if ( type != PROC_WIN16 && (pdb->flags & PDB32_CONSOLE_PROC))
-        PROCESS_CallUserSignalProc( USIG_PROCESS_RUNNING, 0, 0 );
+        PROCESS_CallUserSignalProc( USIG_PROCESS_RUNNING, 0 );
 
     switch ( type )
     {
@@ -503,7 +503,7 @@ PDB *PROCESS_Create( NE_MODULE *pModule, HFILE hFile, LPCSTR cmd_line, LPCSTR en
     HANDLE handles[2], load_done_evt = 0;
     DWORD exitcode, size;
     BOOL alloc_stack16;
-    int server_thandle, fd = -1;
+    int fd = -1;
     struct new_process_request *req = get_req_buffer();
     TEB *teb = NULL;
     PDB *parent = PROCESS_Current();
@@ -515,7 +515,8 @@ PDB *PROCESS_Create( NE_MODULE *pModule, HFILE hFile, LPCSTR cmd_line, LPCSTR en
     
     /* Create the process on the server side */
 
-    req->inherit      = (psa && (psa->nLength >= sizeof(*psa)) && psa->bInheritHandle);
+    req->pinherit     = (psa && (psa->nLength >= sizeof(*psa)) && psa->bInheritHandle);
+    req->tinherit     = (tsa && (tsa->nLength >= sizeof(*tsa)) && tsa->bInheritHandle);
     req->inherit_all  = inherit;
     req->create_flags = flags;
     req->start_flags  = startup->dwFlags;
@@ -537,7 +538,6 @@ PDB *PROCESS_Create( NE_MODULE *pModule, HFILE hFile, LPCSTR cmd_line, LPCSTR en
     req->env_ptr = (void*)env;  /* FIXME: hack */
     lstrcpynA( req->cmdline, cmd_line, server_remaining(req->cmdline) );
     if (server_call_fd( REQ_NEW_PROCESS, -1, &fd )) goto error;
-    fcntl( fd, F_SETFD, 1 ); /* set close on exec flag */
     pdb->server_pid   = req->pid;
     info->hProcess    = req->phandle;
     info->dwProcessId = (DWORD)req->pid;
@@ -567,8 +567,8 @@ PDB *PROCESS_Create( NE_MODULE *pModule, HFILE hFile, LPCSTR cmd_line, LPCSTR en
 
     /* Create the main thread */
 
-    if (!(teb = THREAD_Create( pdb, fd, flags & CREATE_SUSPENDED, size,
-                               alloc_stack16, tsa, &server_thandle ))) goto error;
+    if (!(teb = THREAD_Create( pdb, req->tid, fd, flags & CREATE_SUSPENDED,
+                               size, alloc_stack16 ))) goto error;
     teb->tid = (void *)info->dwThreadId;
     teb->startup = PROCESS_Start;
     fd = -1;  /* don't close it */

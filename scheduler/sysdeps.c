@@ -49,7 +49,12 @@ CRITICAL_SECTION X11DRV_CritSection = { 0, };
 #  define CLONE_SIGHAND 0x00000800
 #  define CLONE_PID     0x00001000
 # endif  /* CLONE_VM */
+# define PER_THREAD_FILE_HANDLES
 #endif  /* linux */
+
+#ifdef HAVE_RFORK
+# define PER_THREAD_FILE_HANDLES
+#endif
 
 static int init_done;
 
@@ -125,7 +130,12 @@ void SYSDEPS_SetCurThread( TEB *teb )
  */
 static void SYSDEPS_StartThread( TEB *teb )
 {
+    int parent_socket = -1;
+#ifdef PER_THREAD_FILE_HANDLES
+    parent_socket = NtCurrentTeb()->socket;
+#endif
     SYSDEPS_SetCurThread( teb );
+    if (parent_socket != -1) close( parent_socket );
     CLIENT_InitThread();
     SIGNAL_Init();
     __TRY
@@ -205,8 +215,11 @@ int SYSDEPS_SpawnThread( TEB *teb )
  */
 void SYSDEPS_ExitThread( int status )
 {
-#ifdef HAVE__LWP_CREATE
+#ifndef PER_THREAD_FILE_HANDLES
+    /* otherwise it will be closed automagically by _exit */
     close( NtCurrentTeb()->socket );
+#endif
+#ifdef HAVE__LWP_CREATE
     _lwp_exit();
 #endif
     _exit( status );

@@ -239,7 +239,7 @@ WORD WINAPI UserSignalProc( UINT uCode, DWORD dwThreadOrProcessID,
         break;
 
     case USIG_PROCESS_CREATE:
-      pdb = PROCESS_IdToPDB( dwThreadOrProcessID );
+      pdb = PROCESS_Current();
 
       /* Create the idle event for the process. We have just one idle_event for all
 	 win16 processes, while each win32 process has its own */
@@ -264,8 +264,7 @@ WORD WINAPI UserSignalProc( UINT uCode, DWORD dwThreadOrProcessID,
     case USIG_PROCESS_LOADED:
       break;
     case USIG_PROCESS_RUNNING:
-        pdb = PROCESS_IdToPDB ( dwThreadOrProcessID );
-	SetEvent ( pdb->idle_event );
+	SetEvent ( PROCESS_Current()->idle_event );
         break;
 
     case USIG_PROCESS_EXIT:
@@ -275,7 +274,7 @@ WORD WINAPI UserSignalProc( UINT uCode, DWORD dwThreadOrProcessID,
       hInst = GetProcessDword( dwThreadOrProcessID, GPD_HINSTANCE16 );
       USER_AppExit( hInst );
 
-      pdb = PROCESS_IdToPDB( dwThreadOrProcessID );
+      pdb = PROCESS_Current();
       if ( ! (pdb->flags & PDB32_WIN16_PROC) ) {
 	TRACE_(win)("destroying win32 idle event: %x\n", pdb->idle_event );
 	CloseHandle ( pdb->idle_event );	
