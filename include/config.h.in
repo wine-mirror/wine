@@ -80,6 +80,9 @@
 /* Define to 1 if you have the <elf.h> header file. */
 #undef HAVE_ELF_H
 
+/* Define to 1 if you have the `epoll_create' function. */
+#undef HAVE_EPOLL_CREATE
+
 /* Define to 1 if you have the `finite' function. */
 #undef HAVE_FINITE
 
@@ -616,6 +619,9 @@
 
 /* Define to 1 if you have the <sys/elf32.h> header file. */
 #undef HAVE_SYS_ELF32_H
+
+/* Define to 1 if you have the <sys/epoll.h> header file. */
+#undef HAVE_SYS_EPOLL_H
 
 /* Define to 1 if you have the <sys/errno.h> header file. */
 #undef HAVE_SYS_ERRNO_H

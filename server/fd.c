@@ -33,6 +33,12 @@
 #ifdef HAVE_SYS_POLL_H
 #include <sys/poll.h>
 #endif
+#ifdef HAVE_STDINT_H
+#include <stdint.h>
+#endif
+#ifdef HAVE_SYS_EPOLL_H
+#include <sys/epoll.h>
+#endif
 #include <sys/stat.h>
 #include <sys/time.h>
 #include <sys/types.h>
@@ -47,6 +53,10 @@
 #include "winbase.h"
 #include "winreg.h"
 #include "winternl.h"
+
+#if defined(HAVE_SYS_EPOLL_H) && defined(HAVE_EPOLL_CREATE)
+# define USE_EPOLL
+#endif
 
 /* Because of the stupid Posix locking semantics, we need to keep
  * track of all file descriptors referencing a given file, and not
@@ -236,6 +246,58 @@ static int active_users;                    /* current number of active users */
 static int allocated_users;                 /* count of allocated entries in the array */
 static struct fd **freelist;                /* list of free entries in the array */
 
+#ifdef USE_EPOLL
+
+static int epoll_fd;
+static struct epoll_event *epoll_events;
+
+/* set the events that epoll waits for on this fd; helper for set_fd_events */
+static inline void set_fd_epoll_events( struct fd *fd, int user, int events )
+{
+    struct epoll_event ev;
+    int ctl;
+
+    if (epoll_fd == -1) return;
+
+    if (events == -1)  /* stop waiting on this fd completely */
+    {
+        if (pollfd[user].fd == -1) return;  /* already removed */
+        ctl = EPOLL_CTL_DEL;
+    }
+    else if (pollfd[user].fd == -1)
+    {
+        if (pollfd[user].events) return;  /* stopped waiting on it, don't restart */
+        ctl = EPOLL_CTL_ADD;
+    }
+    else
+    {
+        if (pollfd[user].events == events) return;  /* nothing to do */
+        ctl = EPOLL_CTL_MOD;
+    }
+
+    ev.events = events;
+    ev.data.u32 = user;
+
+    if (epoll_ctl( epoll_fd, ctl, fd->unix_fd, &ev ) == -1)
+    {
+        if (errno == ENOMEM)  /* not enough memory, give up on epoll */
+        {
+            close( epoll_fd );
+            epoll_fd = -1;
+        }
+        else perror( "epoll_ctl" );  /* should not happen */
+    }
+}
+
+#else /* USE_EPOLL */
+
+static inline void set_fd_epoll_events( struct fd *fd, int user, int events )
+{
+}
+
+#endif /* USE_EPOLL */
+
+
 /* add a user in the poll array and return its index, or -1 on failure */
 static int add_poll_user( struct fd *fd )
 {
@@ -263,6 +325,16 @@ static int add_poll_user( struct fd *fd )
             }
             poll_users = newusers;
             pollfd = newpoll;
+#ifdef USE_EPOLL
+            if (!allocated_users) epoll_fd = epoll_create( new_count );
+            if (epoll_fd != -1)
+            {
+                struct epoll_event *new_events;
+                if (!(new_events = realloc( epoll_events, new_count * sizeof(*epoll_events) )))
+                    return -1;
+                epoll_events = new_events;
+            }
+#endif
             allocated_users = new_count;
         }
         ret = nb_users++;
@@ -280,6 +352,14 @@ static void remove_poll_user( struct fd *fd, int user )
 {
     assert( user >= 0 );
     assert( poll_users[user] == fd );
+
+#ifdef USE_EPOLL
+    if (epoll_fd != -1 && pollfd[user].fd != -1)
+    {
+        struct epoll_event dummy;
+        epoll_ctl( epoll_fd, EPOLL_CTL_DEL, fd->unix_fd, &dummy );
+    }
+#endif
     pollfd[user].fd = -1;
     pollfd[user].events = 0;
     pollfd[user].revents = 0;
@@ -339,6 +419,41 @@ static int get_next_timeout(void)
 void main_loop(void)
 {
     int i, ret, timeout;
+
+#ifdef USE_EPOLL
+    assert( POLLIN == EPOLLIN );
+    assert( POLLOUT == EPOLLOUT );
+    assert( POLLERR == EPOLLERR );
+    assert( POLLHUP == EPOLLHUP );
+
+    if (epoll_fd != -1)
+    {
+        while (active_users)
+        {
+            timeout = get_next_timeout();
+
+            if (!active_users) break;  /* last user removed by a timeout */
+            if (epoll_fd == -1) break;  /* an error occurred with epoll */
+
+            ret = epoll_wait( epoll_fd, epoll_events, allocated_users, timeout );
+
+            /* put the events into the pollfd array first, like poll does */
+            for (i = 0; i < ret; i++)
+            {
+                int user = epoll_events[i].data.u32;
+                pollfd[user].revents = epoll_events[i].events;
+            }
+
+            /* read events from the pollfd array, as set_fd_events may modify them */
+            for (i = 0; i < ret; i++)
+            {
+                int user = epoll_events[i].data.u32;
+                if (pollfd[user].revents) fd_poll_event( poll_users[user], pollfd[user].revents );
+            }
+        }
+    }
+    /* fall through to normal poll loop */
+#endif  /* USE_EPOLL */
 
     while (active_users)
     {
@@ -841,6 +956,9 @@ void set_fd_events( struct fd *fd, int events )
 {
     int user = fd->poll_index;
     assert( poll_users[user] == fd );
+
+    set_fd_epoll_events( fd, user, events );
+
     if (events == -1)  /* stop waiting on this fd completely */
     {
         pollfd[user].fd = -1;

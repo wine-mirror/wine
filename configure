@@ -16277,6 +16277,7 @@ fi
 
 
 
+
 for ac_func in \
 	_lwp_create \
 	_lwp_self \
@@ -16289,6 +16290,7 @@ for ac_func in \
 	_vsnprintf \
 	chsize \
 	clone \
+	epoll_create \
 	finite \
 	fpclass \
 	fstatfs \
@@ -16525,6 +16527,7 @@ done
 
 
 
+
 for ac_header in \
 	arpa/inet.h \
 	arpa/nameser.h \
@@ -16575,6 +16578,7 @@ for ac_header in \
 	sys/cdio.h \
 	sys/elf32.h \
 	sys/errno.h \
+	sys/epoll.h \
 	sys/exec_elf.h \
 	sys/file.h \
 	sys/filio.h \

@@ -1065,6 +1065,7 @@ AC_CHECK_FUNCS(\
 	_vsnprintf \
 	chsize \
 	clone \
+	epoll_create \
 	finite \
 	fpclass \
 	fstatfs \
@@ -1165,6 +1166,7 @@ AC_CHECK_HEADERS(\
 	sys/cdio.h \
 	sys/elf32.h \
 	sys/errno.h \
+	sys/epoll.h \
 	sys/exec_elf.h \
 	sys/file.h \
 	sys/filio.h \
