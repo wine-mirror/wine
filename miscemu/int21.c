@@ -16,7 +16,6 @@
 #include <utime.h>
 #include <ctype.h>
 #include "dos_fs.h"
-#include "regfunc.h"
 #include "windows.h"
 #include "msdos.h"
 #include "registers.h"
@@ -1669,10 +1668,9 @@ int do_int21(struct sigcontext_struct * context)
 /**********************************************************************
  *			DOS3Call
  */
-void DOS3Call(void)
+void DOS3Call( struct sigcontext_struct context )
 {
-    do_int21((struct sigcontext_struct *) _CONTEXT);
-    ReturnFromRegisterFunc();
+    do_int21( &context );
 }
 
 void INT21_Init(void)

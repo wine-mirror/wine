@@ -882,10 +882,14 @@ BOOL PostMessage( HWND hwnd, WORD message, WORD wParam, LONG lParam )
 LONG SendMessage( HWND hwnd, WORD msg, WORD wParam, LONG lParam )
 {
     WND * wndPtr;
+    LONG ret;
 
     wndPtr = WIN_FindWndPtr( hwnd );
     if (!wndPtr) return 0;
-    return CallWindowProc( wndPtr->lpfnWndProc, hwnd, msg, wParam, lParam );
+    ret = CallWindowProc( wndPtr->lpfnWndProc, hwnd, msg, wParam, lParam );
+    dprintf_msg( stddeb,"SendMessage(%4.4x,%x,%x,%lx) -> %lx\n",
+		 hwnd, msg, wParam, lParam, ret );
+	return ret;
 }
 
 

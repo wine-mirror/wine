@@ -19,6 +19,7 @@
 #include "library.h"
 #include "commdlg.h"
 #include "dlgs.h"
+#include "selectors.h"
 
 #define OPENFILEDLG2			11
 #define SAVEFILEDLG2			12
@@ -97,7 +98,8 @@ BOOL GetOpenFileName(LPOPENFILENAME lpofn)
 	printf("GetOpenFileName // apres LoadResource hDlgTmpl=%04X!\n", hDlgTmpl);
     wndPtr = WIN_FindWndPtr(lpofn->hwndOwner);
 	bRet = DialogBoxIndirectParam(wndPtr->hInstance, hDlgTmpl, 
-		lpofn->hwndOwner, (WNDPROC)FileOpenDlgProc, (DWORD)lpofn); 
+		lpofn->hwndOwner, GetWndProcEntry16("FileOpenDlgProc"), 
+	        (DWORD)lpofn); 
 
 /*	strcpy(lpofn->lpstrFile, "SETUP.TXT"); */
 /*	strcpy(lpofn->lpstrFileTitle, "SETUP.TXT");*/
@@ -156,7 +158,8 @@ BOOL GetSaveFileName(LPOPENFILENAME lpofn)
 		}
     wndPtr = WIN_FindWndPtr(lpofn->hwndOwner);
 	bRet = DialogBoxIndirectParam(wndPtr->hInstance, hDlgTmpl, 
-		lpofn->hwndOwner, (WNDPROC)FileSaveDlgProc, (DWORD)lpofn);
+		lpofn->hwndOwner, GetWndProcEntry16("FileSaveDlgProc"), 
+		(DWORD)lpofn);
 	printf("GetSaveFileName // return lpstrFile='%s' !\n", PTR_SEG_TO_LIN(lpofn->lpstrFile));
 	return bRet;
 }
@@ -175,7 +178,8 @@ BOOL ChooseColor(LPCHOOSECOLOR lpChCol)
 	hDlgTmpl = LoadResource(hSysRes, hResInfo);
     wndPtr = WIN_FindWndPtr(lpChCol->hwndOwner);
 	bRet = DialogBoxIndirectParam(wndPtr->hInstance, hDlgTmpl, 
-		lpChCol->hwndOwner, (WNDPROC)ColorDlgProc, (DWORD)lpChCol);
+		lpChCol->hwndOwner, GetWndProcEntry16("ColorDlgProc"), 
+		(DWORD)lpChCol);
 	return bRet;
 }
 
@@ -909,7 +913,8 @@ BOOL FindText(LPFINDREPLACE lpFind)
 		}
     wndPtr = WIN_FindWndPtr(lpFind->hwndOwner);
 	bRet = DialogBoxIndirectParam(wndPtr->hInstance, hDlgTmpl, 
-		lpFind->hwndOwner, (WNDPROC)FindTextDlgProc, (DWORD)lpFind);
+		lpFind->hwndOwner, GetWndProcEntry16("FindTextDlgProc"), 
+	        (DWORD)lpFind);
 	return bRet;
 }
 
@@ -935,7 +940,8 @@ BOOL ReplaceText(LPFINDREPLACE lpFind)
 		}
     wndPtr = WIN_FindWndPtr(lpFind->hwndOwner);
 	bRet = DialogBoxIndirectParam(wndPtr->hInstance, hDlgTmpl, 
-		lpFind->hwndOwner, (WNDPROC)ReplaceTextDlgProc, (DWORD)lpFind);
+		lpFind->hwndOwner, GetWndProcEntry16("ReplaceTextDlgProc"), 
+		(DWORD)lpFind);
 	return bRet;
 }
 
@@ -1018,10 +1024,12 @@ BOOL PrintDlg(LPPRINTDLG lpPrint)
     wndPtr = WIN_FindWndPtr(lpPrint->hwndOwner);
 	if (lpPrint->Flags & PD_PRINTSETUP)
 		bRet = DialogBoxIndirectParam(wndPtr->hInstance, hDlgTmpl, 
-			lpPrint->hwndOwner, (WNDPROC)PrintSetupDlgProc, (DWORD)lpPrint);
+			lpPrint->hwndOwner, GetWndProcEntry16("PrintSetupDlgProc"),
+			(DWORD)lpPrint);
 	else
 		bRet = DialogBoxIndirectParam(wndPtr->hInstance, hDlgTmpl, 
-			lpPrint->hwndOwner, (WNDPROC)PrintDlgProc, (DWORD)lpPrint);
+			lpPrint->hwndOwner, GetWndProcEntry16("PrintDlgProc"),
+		        (DWORD)lpPrint);
 	return bRet;
 }
 

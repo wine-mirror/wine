@@ -623,8 +623,7 @@ int TranslateAccelerator(HWND hWnd, HANDLE hAccel, LPMSG msg)
 int
 LoadString(HANDLE instance, WORD resource_id, LPSTR buffer, int buflen)
 {
-    HANDLE hmem;
-    int rsc_size;
+    HANDLE hmem, hrsrc;
     unsigned char *p;
     int string_num;
     int i;
@@ -632,10 +631,11 @@ LoadString(HANDLE instance, WORD resource_id, LPSTR buffer, int buflen)
     dprintf_resource(stddeb, "LoadString: instance = %04x, id = %d, buffer = %08x, "
 	   "length = %d\n", instance, resource_id, (int) buffer, buflen);
 
-    hmem = RSC_LoadResource(instance, (SEGPTR)((resource_id >> 4) + 1),
-			    (SEGPTR) NE_RSCTYPE_STRING, &rsc_size );
-    if (hmem == 0)
-	return 0;
+    hrsrc = FindResource( instance, (SEGPTR)((resource_id >> 4) + 1),
+                          (SEGPTR) NE_RSCTYPE_STRING );
+    if (!hrsrc) return 0;
+    hmem = LoadResource( instance, hrsrc );
+    if (!hmem) return 0;
     
     p = GlobalLock(hmem);
     string_num = resource_id & 0x000f;
@@ -655,7 +655,7 @@ LoadString(HANDLE instance, WORD resource_id, LPSTR buffer, int buflen)
 		fprintf(stderr,"LoadString // I dont know why , but caller give buflen=%d *p=%d !\n", buflen, *p);
 		fprintf(stderr,"LoadString // and try to obtain string '%s'\n", p + 1);
 		}
-    GlobalFree(hmem);
+    FreeResource( hrsrc );
 
     dprintf_resource(stddeb,"LoadString // '%s' copied !\n", buffer);
     return i;

@@ -8,7 +8,7 @@ static char Copyright[] = "Copyright  Bob Amstadt, 1993";
 
 #include <stdlib.h>
 #include "windows.h"
-#include "if1632.h"
+#include "callback.h"
 
 /**********************************************************************
  *		LineDDA		(GDI.100)
@@ -16,32 +16,41 @@ static char Copyright[] = "Copyright  Bob Amstadt, 1993";
 void LineDDA(short nXStart, short nYStart, short nXEnd, short nYEnd,
 	     FARPROC callback, long lParam)
 {
-    int x, y;
-    int b;
-    int x_diff = nXEnd - nXStart;
-    int y_diff = nYEnd - nYStart;
+    int xadd = 1, yadd = 1;
+    int err,erradd;
+    int cnt;
+    int dx = nXEnd - nXStart;
+    int dy = nYEnd - nYStart;
 
-    if (x_diff == 0 && y_diff == 0)
-	return;
-    
-    if ((abs(x_diff) < abs(y_diff) && x_diff != 0) || y_diff == 0)
-    {
-	b = (nXStart * y_diff) / x_diff - nYStart;
-
-	for (x = nXStart; x <= nXEnd; x++)
-	{
-	    y = (x * y_diff) / x_diff + b;
-	    CallLineDDAProc(callback, x, y, lParam);
-	}
+    if (dx < 0)  {
+      dx = -dx; xadd = -1;
     }
-    else
-    {
-	b = (nYStart * x_diff) / y_diff - nXStart;
-
-	for (y = nYStart; y <= nYEnd; y++)
-	{
-	    x = (y * x_diff) / y_diff + b;
-	    CallLineDDAProc(callback, x, y, lParam);
+    if (dy < 0)  {
+      dy = -dy; yadd = -1;
+    }
+    if (dx > dy) { /* line is "more horizontal" */
+      err = 2*dy - dx; erradd = 2*dy - 2*dx;
+      for(cnt = 0;cnt <= dx; cnt++) {
+	CallLineDDAProc(callback,nXStart,nYStart,lParam);
+	if (err > 0) {
+	  nYStart += yadd;
+	  err += erradd;
+	} else  {
+	  err += 2*dy;
 	}
+	nXStart += xadd;
+      }
+    } else  { /* line is "more vertical" */
+      err = 2*dx - dy; erradd = 2*dx - 2*dy;
+      for(cnt = 0;cnt <= dy; cnt++) {
+	CallLineDDAProc(callback,nXStart,nYStart,lParam);
+	if (err > 0) {
+	  nXStart += xadd;
+	  err += erradd;
+	} else  {
+	  err += 2*dx;
+	}
+	nYStart += yadd;
+      }
     }
 }

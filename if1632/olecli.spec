@@ -1,8 +1,6 @@
 name	olecli
 id	20
-length	43
-## 954 is too large for now
-##length	954
+length	954
 
 #1 WEP
 #2 OLEDELETE

@@ -85,7 +85,9 @@ void InitializeLoadedNewDLLs(HINSTANCE hInst)
         dprintf_exec(stddeb, "Initializing %s, cs:ip %04x:%04x, ds %04x\n",
 		    wpnt->name, cs_reg, ip_reg, ds_reg);
 
-	    rv = CallTo16(cs_reg << 16 | ip_reg, ds_reg);
+            rv = CallTo16_regs_( (FARPROC)(cs_reg << 16 | ip_reg), ds_reg,
+                                 0 /*es*/, 0 /*ax*/, 0 /*bx*/, 0 /*cx*/,
+                                 0 /*dx*/, 0 /*si*/, wpnt->hinstance /*di*/ );
         dprintf_exec(stddeb,"rv = %x\n", rv);
 	}
     }
@@ -123,7 +125,9 @@ void StartNewTask(HINSTANCE hInst)
     sp_reg = wpnt->ne->ne_header->sp;
 
 	dprintf_exec(stddeb,"StartNewTask() before CallToInit16() !\n");
+/*
     rv = CallToInit16(cs_reg << 16 | ip_reg, ss_reg << 16 | sp_reg, ds_reg);
+*/
     dprintf_exec(stddeb,"rv = %x\n", rv);
 
 }

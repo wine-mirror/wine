@@ -16,6 +16,7 @@ static char Copyright[] = "Copyright  Alexandre Julliard, 1993";
 #include "palette.h"
 #include "pen.h"
 #include "region.h"
+#include "callback.h"
 #include "stddebug.h"
 /* #define DEBUG_GDI */
 #include "debug.h"
@@ -486,16 +487,10 @@ int EnumObjects(HDC hDC, int nObjType, FARPROC lpEnumFunc, LPSTR lpData)
 				dprintf_gdi(stddeb,"EnumObjects // StockPen lopnWidth=%d\n", ((LPLOGPEN)lpLog)->lopnWidth.x);
 				dprintf_gdi(stddeb,"EnumObjects // StockPen lopnColor=%08lX\n", ((LPLOGPEN)lpLog)->lopnColor);
 				}
-			nRet = 1;
-/*
-#ifdef WINELIB
-			nRet = (*lpEnumFunc)(lpLog, lpData);
-#else
-			nRet = CallBack16(lpEnumFunc, 4, 2,
-                                      GDI_HEAP_SEG_ADDR(hLog), 2, (int)lpData);
-#endif
-*/
-			dprintf_gdi(stddeb,"EnumObjects // after CallBack16 !\n");
+			nRet = CallEnumObjectsProc( lpEnumFunc,
+                                                    GDI_HEAP_SEG_ADDR(hLog),
+                                                    (int)lpData );
+			dprintf_gdi(stddeb,"EnumObjects // after Callback!\n");
 			if (nRet == 0) {
 				GDI_HEAP_FREE(hLog);
 				dprintf_gdi(stddeb,"EnumObjects // EnumEnd requested by application !\n");
@@ -524,16 +519,10 @@ int EnumObjects(HDC hDC, int nObjType, FARPROC lpEnumFunc, LPSTR lpData)
 				dprintf_gdi(stddeb,"EnumObjects // DC_Pen lopnWidth=%d\n", ((LPLOGPEN)lpLog)->lopnWidth.x);
 				dprintf_gdi(stddeb,"EnumObjects // DC_Pen lopnColor=%08lX\n", ((LPLOGPEN)lpLog)->lopnColor);
 				}
-/*
-#ifdef WINELIB
-			nRet = (*lpEnumFunc)(lpLog, lpData);
-#else
-			nRet = CallBack16(lpEnumFunc, 4, 2,
-                                      GDI_HEAP_SEG_ADDR(hLog), 2, (int)lpData);
-#endif
-*/
-			nRet = 1;
-			dprintf_gdi(stddeb,"EnumObjects // after CallBack16 !\n");
+			nRet = CallEnumObjectsProc( lpEnumFunc,
+                                                    GDI_HEAP_SEG_ADDR(hLog),
+                                                    (int)lpData );
+			dprintf_gdi(stddeb,"EnumObjects // after Callback!\n");
 			if (nRet == 0) {
 				GDI_HEAP_FREE(hLog);
 				dprintf_gdi(stddeb,"EnumObjects // EnumEnd requested by application !\n");

@@ -12,18 +12,19 @@
  */
 struct mz_header_s
 {
-    u_char dont_care1[0x18];	/* MZ Header stuff			*/
-    u_char must_be_0x40;	/* 0x40 for non-MZ program		*/
-    u_char dont_care2[0x23];	/* More MZ header stuff			*/
-    u_short ne_offset;		/* Offset to extended header		*/
+    u_short mz_magic;         /* MZ Header signature */
+    u_char  dont_care[0x3a];  /* MZ Header stuff */
+    u_short ne_offset;        /* Offset to extended header */
 };
+
+#define MZ_SIGNATURE  ('M' | ('Z' << 8))
 
 /*
  * This is the Windows executable (NE) header.
  */
 struct ne_header_s
 {
-    char    header_type[2];	/* Must contain 'N' 'E'			*/
+    u_short ne_magic;           /* NE signature 'NE' */
     u_char  linker_version;	/* Linker version number		*/
     u_char  linker_revision;	/* Linker revision number		*/
     u_short entry_tab_offset;	/* Offset to entry table relative to NE */
@@ -56,6 +57,9 @@ struct ne_header_s
     u_short reserved2;		/* Reserved by Microsoft		*/
     u_short expect_version;	/* Expected Windows version number	*/
 };
+
+#define NE_SIGNATURE  ('N' | ('E' << 8))
+#define PE_SIGNATURE  ('P' | ('E' << 8))
 
 /*
  * NE Header FORMAT FLAGS

@@ -18,6 +18,7 @@
 #include "scroll.h"
 #include "nonclient.h"
 #include "graphics.h"
+#include "selectors.h"
 #include "stddebug.h"
 /* #define DEBUG_NONCLIENT */
 #include "debug.h"
@@ -1321,7 +1322,7 @@ LONG NC_HandleSysCommand( HWND hwnd, WORD wParam, POINT pt )
 	if (wParam == SC_ABOUTWINE)
 	{   extern char sysres_DIALOG_2[];
 	    DialogBoxIndirectPtr( wndPtr->hInstance, sysres_DIALOG_2,
-		       hwnd, (WNDPROC)AboutWine_Proc );
+		       hwnd, GetWndProcEntry16("AboutWine_Proc") );
         }
 	break;
     }

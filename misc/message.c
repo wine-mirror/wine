@@ -19,6 +19,7 @@ static char Copyright[] = "Copyright Martin Ayotte, 1993";
 #include "win.h"
 #include "texts.h"
 #include "user.h"
+#include "selectors.h"
 #include "stddebug.h"
 /* #define DEBUG_MSGBOX */
 #include "debug.h"
@@ -83,7 +84,7 @@ int MessageBox(HWND hWnd, LPSTR str, LPSTR title, WORD type)
 	HINSTANCE	hInst;
 	int			nRet;
 
-	if (title == NULL)
+        if (title == NULL)
 		title = "Error";
 	wndPtr = WIN_FindWndPtr(hWnd);
 	if (wndPtr == NULL) {
@@ -115,7 +116,7 @@ int MessageBox(HWND hWnd, LPSTR str, LPSTR title, WORD type)
 	lpmb->wType = type;
 	lpmb->ActiveFlg = TRUE;
 	wndClass.style           = CS_HREDRAW | CS_VREDRAW ;
-	wndClass.lpfnWndProc     = (WNDPROC)SystemMessageBoxProc;
+	wndClass.lpfnWndProc     = GetWndProcEntry16("SystemMessageBoxProc");
 	wndClass.cbClsExtra      = 0;
 	wndClass.cbWndExtra      = 4;
 	wndClass.hInstance       = hInst;

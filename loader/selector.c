@@ -31,7 +31,7 @@
 #include "windows.h"
 #include "ldt.h"
 #include "wine.h"
-
+#include "global.h"
 #include "dlls.h"
 #include "neexe.h"
 #include "if1632.h"
@@ -51,8 +51,6 @@ WORD PSPSelector = 0;
 int max_selectors = 0;
 
 
-extern void KERNEL_Ordinal_1();    /* FatalExit() */
-extern void KERNEL_Ordinal_102();  /* Dos3Call() */
 extern char WindowsPath[256];
 
 extern char **Argv;
@@ -62,46 +60,6 @@ extern char **environ;
 unsigned int 
 GetEntryPointFromOrdinal(struct w_files * wpnt, int ordinal);
 
-#if 0
-
-
-/**********************************************************************
- *					InitSelectors
- */
-void
-InitSelectors(void) 
-{
-    int i;
-    max_selectors = MAX_SELECTORS;
-    SelectorMap = malloc(max_selectors * sizeof(unsigned short));
-    Segments    = malloc(max_selectors * sizeof(SEGDESC));
-    for (i = 0; i < max_selectors; i++) {
-	if (i < FIRST_SELECTOR) {
-	    SelectorMap[i] = SELECTOR_IS32BIT;
-#ifdef __ELF__
-	    /* quick hack, just reserves 4 meg for wine. */
-	} else if ((i << (16 + __AHSHIFT)) >= 0x8000000 &&
-		   (i << (16 + __AHSHIFT)) <= 0x8400000) {
-	    SelectorMap[i]= SELECTOR_IS32BIT;
-#endif
-	} else {
-	    SelectorMap[i]=0;
-	}
-    }
-#ifdef __ELF__
-    /* create an ldt. */
-    if (set_ldt_entry(1, 0x8000000, 65535, 1,0x1a ,1,0)) {
-	perror ("set_ldt_entry");
-	exit (1);
-    }
-#endif
-    }
-
-
-#endif /* 0 */
-
-
-
 
 /**********************************************************************
  *  Check whether pseudo-functions like __0040H for direct memory
@@ -110,8 +68,8 @@ InitSelectors(void)
  *         (e.g. reading from the Bios data segment (esp. clock!) )
  */
 
-unsigned int GetMemoryReference(char *dll_name, char *function, WORD *sel,
-				 int *addr)
+unsigned int GetMemoryReference( char *dll_name, char *function,
+                                 WORD *sel, WORD *offset )
 {
   static HANDLE memory_handles[ 10 ] = { 0,0,0,0,0,0,0,0,0,0 };
   static char *memory_names[ 10 ] = { "segment 0xA000",
@@ -143,13 +101,11 @@ unsigned int GetMemoryReference(char *dll_name, char *function, WORD *sel,
     else if( !strcasecmp( function, "__C000H" ) ) nr = 8;
     else if( !strcasecmp( function, "__0040H" ) ) nr = 9;
     else if( !strcasecmp( function, "__AHIncr" ) ) {
-      *sel = __AHINCR;   
-      *addr = MAKELONG(__AHINCR,__AHINCR);
+      *sel = *offset = __AHINCR;   
       return 1;      
     }
     else if( !strcasecmp( function, "__AHShift" ) ) {
-      *sel = __AHSHIFT;
-      *addr = MAKELONG(__AHSHIFT,__AHSHIFT);
+      *sel = *offset = __AHSHIFT;
       return 1;
     }
      else
@@ -168,12 +124,10 @@ unsigned int GetMemoryReference(char *dll_name, char *function, WORD *sel,
     case 195: nr = 8; break;
     case 193: nr = 9; break;
     case 114:
-      *sel = __AHINCR;  
-      *addr = MAKELONG(__AHINCR,__AHINCR);
+      *sel = *offset = __AHINCR;  
       return 1;
     case 113:
-      *sel = __AHSHIFT;
-      *addr = MAKELONG(__AHSHIFT,__AHSHIFT);
+      *sel = *offset = __AHSHIFT;
       return 1;
     default: return 0;
     }
@@ -183,8 +137,7 @@ unsigned int GetMemoryReference(char *dll_name, char *function, WORD *sel,
     fprintf( stderr, "Warning: Direct access to %s!\n", memory_names[ nr ] );
     memory_handles[ nr ] = GlobalAlloc( GMEM_FIXED, 65535 );
   }
-  *sel = memory_handles[ nr ];
-  *addr = MAKELONG(*sel,*sel);
+  *sel = *offset = memory_handles[ nr ];
   return 1;
 }
  
@@ -200,32 +153,31 @@ union lookup{
     char  * cpnt;
 };
 
-unsigned int GetEntryDLLName(char * dll_name, char * function, WORD* sel, 
-				int  * addr)
+unsigned int GetEntryDLLName( char * dll_name, char * function,
+                              WORD* sel, WORD *offset )
 {
-	struct dll_table_entry_s *dll_table;
+	struct dll_table_s *dll_table;
 	struct w_files * wpnt;
 	char * cpnt;
 	int ordinal, j, len;
 
-	if( GetMemoryReference( dll_name, function, sel, addr ) )
+	if( GetMemoryReference( dll_name, function, sel, offset ) )
 	  return 0;
 
 	dll_table = FindDLLTable(dll_name);
 
 	if(dll_table) {
-		ordinal = FindOrdinalFromName(dll_table, function);
+		ordinal = FindOrdinalFromName(dll_table->dll_table,function);
 		if(!ordinal){
 			dprintf_module(stddeb,"GetEntryDLLName: %s.%s not found\n",
 				dll_name, function);
-			*sel=0;
-			*addr=0;
+			*sel = *offset = 0;
 			return -1;
 		}
-		*sel = dll_table[ordinal].selector;
-		*addr  = (unsigned int) dll_table[ordinal].address;
+		*sel    = dll_table->dll_table[ordinal].selector;
+		*offset = dll_table->dll_table[ordinal].offset;
 #ifdef WINESTAT
-		dll_table[ordinal].used++;
+		dll_table->dll_table[ordinal].used++;
 #endif
 		return 0;
 	};
@@ -244,31 +196,30 @@ unsigned int GetEntryDLLName(char * dll_name, char * function, WORD* sel,
 		};
 		ordinal =  *((unsigned short *)  (cpnt +  len));
 		j = GetEntryPointFromOrdinal(wpnt, ordinal);		
-		*addr  = j & 0xffff;
-		j = j >> 16;
-		*sel = j;
+		*offset = LOWORD(j);
+		*sel    = HIWORD(j);
 		return 0;
 	};
 	return 1;
 }
 
-unsigned int GetEntryDLLOrdinal(char * dll_name, int ordinal, WORD *sel, 
-				int  * addr)
+unsigned int GetEntryDLLOrdinal( char * dll_name, int ordinal,
+                                 WORD *sel, WORD *offset )
 {
-	struct dll_table_entry_s *dll_table;
+	struct dll_table_s *dll_table;
 	struct w_files * wpnt;
 	int j;
 
-	if( GetMemoryReference( dll_name, (char*)ordinal, sel, addr ) )
+	if( GetMemoryReference( dll_name, (char*)ordinal, sel, offset ) )
 	  return 0;
 
 	dll_table = FindDLLTable(dll_name);
 
 	if(dll_table) {
-	    *sel = dll_table[ordinal].selector;
-	    *addr  = (unsigned int) dll_table[ordinal].address;
+	    *sel    = dll_table->dll_table[ordinal].selector;
+	    *offset = dll_table->dll_table[ordinal].offset;
 #ifdef WINESTAT
-		dll_table[ordinal].used++;
+            dll_table->dll_table[ordinal].used++;
 #endif
 	    return 0;
 	};
@@ -277,9 +228,8 @@ unsigned int GetEntryDLLOrdinal(char * dll_name, int ordinal, WORD *sel,
 	for(wpnt = wine_files; wpnt; wpnt = wpnt->next){
 		if(strcasecmp(wpnt->name, dll_name)) continue;
 		j = GetEntryPointFromOrdinal(wpnt, ordinal);
-		*addr  = j & 0xffff;
-		j = j >> 16;
-		*sel = j;
+		*offset = LOWORD(j);
+		*sel    = HIWORD(j);
 		return 0;
 	};
 	return 1;
@@ -342,6 +292,15 @@ GetEntryPointFromOrdinal(struct w_files * wpnt, int ordinal)
 	    }
 	}
     }
+}
+
+
+WNDPROC GetWndProcEntry16( char *name )
+{
+    WORD sel, offset;
+
+    GetEntryDLLName( "WINPROCS", name, &sel, &offset );
+    return (WNDPROC) MAKELONG( offset, sel );
 }
 
 
@@ -413,9 +372,9 @@ static WORD CreatePSP(void)
 {
     HANDLE handle;
     struct dos_psp_s *psp;
-    unsigned short *usp;
     char *p1, *p2;
     int i;
+    WORD sel, offset;
 
     handle = GlobalAlloc( GMEM_MOVEABLE, sizeof(*psp) );
     if (!handle) return 0;
@@ -426,15 +385,16 @@ static WORD CreatePSP(void)
      */
     psp->pspInt20 = 0x20cd;
     psp->pspDispatcher[0] = 0x9a;
-    usp = (unsigned short *) &psp->pspDispatcher[1];
-    *usp       = (unsigned short) KERNEL_Ordinal_102;
-    *(usp + 1) = WINE_CODE_SELECTOR;
-    psp->pspTerminateVector[0] = (unsigned short) KERNEL_Ordinal_1;
-    psp->pspTerminateVector[1] = WINE_CODE_SELECTOR;
-    psp->pspControlCVector[0] = (unsigned short) KERNEL_Ordinal_1;
-    psp->pspControlCVector[1] = WINE_CODE_SELECTOR;
-    psp->pspCritErrorVector[0] = (unsigned short) KERNEL_Ordinal_1;
-    psp->pspCritErrorVector[1] = WINE_CODE_SELECTOR;
+    GetEntryDLLName( "KERNEL", "DOS3Call", &sel, &offset );
+    *(unsigned short *)&psp->pspDispatcher[1] = offset;
+    *(unsigned short *)&psp->pspDispatcher[3] = sel;
+    GetEntryDLLName( "KERNEL", "FatalAppExit", &sel, &offset );
+    psp->pspTerminateVector[0] = offset;
+    psp->pspTerminateVector[1] = sel;
+    psp->pspControlCVector[0]  = offset;
+    psp->pspControlCVector[1]  = sel;
+    psp->pspCritErrorVector[0] = offset;
+    psp->pspCritErrorVector[1] = sel;
     psp->pspEnvironment = SELECTOROF( GetDOSEnvironment() );
 
     p1 = psp->pspCommandTail;
@@ -473,7 +433,7 @@ unsigned short *CreateSelectors(struct w_files * wpnt)
     int i, length;
     void *base_addr;
     WORD *selectors;
-    ldt_entry entry;
+    HGLOBAL handle;
 
     auto_data_sel=0;
     /*
@@ -523,36 +483,21 @@ unsigned short *CreateSelectors(struct w_files * wpnt)
             dprintf_selectors(stddeb,"Auto data image length %x\n",file_image_length);
  	}
 
-        if (!(selectors[i] = AllocSelector( 0 )))
-        {
-            fprintf( stderr, "CreateSelectors: out of free LDT entries\n" );
-            exit( 1 );
-        }
-        if (!(base_addr = (void *) malloc( length )))
-        {
-            fprintf( stderr, "CreateSelectors: malloc() failed\n" );
-            exit( 1 );
-        }
-        entry.base           = (unsigned long) base_addr;
-        entry.limit          = length - 1;
-        entry.seg_32bit      = 0;
-        entry.limit_in_pages = 0;
-
 	/*
 	 * Is this a DATA or CODE segment?
 	 */
         if (seg_table[i].seg_flags & NE_SEGFLAGS_DATA)
         {
-            entry.type = SEGMENT_DATA;
-            entry.read_only = seg_table[i].seg_flags & NE_SEGFLAGS_READONLY;
-            memset( base_addr, 0, length );
+            handle = GLOBAL_Alloc( GMEM_ZEROINIT, length, 0, FALSE,
+                               seg_table[i].seg_flags & NE_SEGFLAGS_READONLY );
         }
         else
         {
-            entry.type = SEGMENT_CODE;
-            entry.read_only = seg_table[i].seg_flags & NE_SEGFLAGS_EXECUTEONLY;
+            handle = GLOBAL_Alloc( 0, length, 0, TRUE,
+                            seg_table[i].seg_flags & NE_SEGFLAGS_EXECUTEONLY );
         }
-        LDT_SetEntry( SELECTOR_TO_ENTRY(selectors[i]), &entry );
+        base_addr = GlobalLock( handle );
+        selectors[i] = GlobalHandleToSel( handle );
 
 	if (seg_table[i].seg_data_offset != 0)
 	{
@@ -578,14 +523,13 @@ unsigned short *CreateSelectors(struct w_files * wpnt)
 	    saved_old_length = old_length;
 	}
     }
-
     if(!auto_data_sel)dprintf_selectors(stddeb,"Warning: No auto_data_sel\n");
     for (i = 0; i < ne_header->n_segment_tab; i++)
     {
 /*	Segments[s->selector >> __AHSHIFT].owner = auto_data_sel; */
 	if (selectors[i] == auto_data_sel)
             LocalInit( auto_data_sel, saved_old_length,
-			   0x10000 - 2 - saved_old_length 
+			   0x10000 - 2
 			   - ne_header->stack_length );
 #if 0
 	    HEAP_LocalInit(auto_data_sel,
@@ -610,7 +554,6 @@ unsigned short *CreateSelectors(struct w_files * wpnt)
 void
 FixupFunctionPrologs(struct w_files * wpnt)
 {
-    struct ne_header_s *ne_header = wpnt->ne->ne_header;   
     union lookup entry_tab_pointer;
     struct entry_tab_header_s *eth;
     struct entry_tab_movable_s *etm;
@@ -618,9 +561,9 @@ FixupFunctionPrologs(struct w_files * wpnt)
     unsigned char *fixup_ptr;
     int i;
 
-    if (!(ne_header->format_flags & 0x0001))
+/*    if (!(ne_header->format_flags & NE_FFLAGS_SINGLEDATA))
 	return;
-
+*/
     entry_tab_pointer.cpnt = wpnt->ne->lookup_table;
     /*
      * Let's walk through the table and fixup prologs as we go.
@@ -645,26 +588,42 @@ FixupFunctionPrologs(struct w_files * wpnt)
 	    if (eth->seg_number >= 0xfe)
 	    {
 		etm = entry_tab_pointer.etm++;
+	      /* FIXME: Does anyone know the exact meaning of these flags? */
+	      /* 0x0001 seems to mean: Fix up the function prolog          */
+	        dprintf_selector(stddeb,"ETM_Flags: %04x ",etm->flags);
+	        if (!(etm->flags & 0x0001)) continue;
 		fixup_ptr = (char *)GET_SEL_BASE(wpnt->ne->selector_table[etm->seg_number-1]) + etm->offset;
 	    }
 	    else
 	    {
 		etf = entry_tab_pointer.etf++;
+	        dprintf_selector(stddeb,"ETF_Flags: %04x ",etf->flags);
+	        if (!(etf->flags & 0x0001)) continue;
 		fixup_ptr = (char *)GET_SEL_BASE(wpnt->ne->selector_table[eth->seg_number-1])
 			     + (int) etf->offset[0] 
 			     + ((int) etf->offset[1] << 8);
 
 	    }
+	    dprintf_selector(stddeb,"Signature: %02x %02x %02x,ff %x\n",
+			     fixup_ptr[0],fixup_ptr[1],fixup_ptr[2],
+			     wpnt->ne->ne_header->format_flags);
 
 	    /* Verify the signature */
 	    if (((fixup_ptr[0] == 0x1e && fixup_ptr[1] == 0x58)
 		 || (fixup_ptr[0] == 0x8c && fixup_ptr[1] == 0xd8))
 		&& fixup_ptr[2] == 0x90)
 	    {
+	      if (wpnt->ne->ne_header->format_flags & NE_FFLAGS_SINGLEDATA) {
+		
 		fixup_ptr[0] = 0xb8;	/* MOV AX, */
 		fixup_ptr[1] = wpnt->hinstance;
 		fixup_ptr[2] = (wpnt->hinstance >> 8);
-	    }
+	      } else  {
+		fixup_ptr[0] = 0x90; /* non-library: NOPs */	
+		fixup_ptr[1] = 0x90;
+		fixup_ptr[2] = 0x90;
+	      }
+	    } 
 	}
     }
 }

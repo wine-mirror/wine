@@ -18,6 +18,7 @@ static char Copyright[] = "Copyright  Robert J. Amstadt, 1993";
 #include "library.h"
 #include "if1632.h"
 #include "selectors.h"
+#include "callback.h"
 #include "ne_image.h"
 #include "prototypes.h"
 #include "stddebug.h"
@@ -146,7 +147,7 @@ int NE_FixupSegment(struct w_files *wpnt, int segment_num)
 	    ordinal = rep->target2;
 
   	    status = GetEntryDLLOrdinal(dll_name, ordinal, &selector,
-					&address);
+					&offset);
 	    if (status)
 	    {
 		char s[80];
@@ -157,7 +158,7 @@ int NE_FixupSegment(struct w_files *wpnt, int segment_num)
 	    }
 
 	    dprintf_fixup(stddeb,"%d: %s.%d: %04x:%04x\n", i + 1, 
-		   dll_name, ordinal, selector, address);
+		   dll_name, ordinal, selector, offset);
 	    break;
 	    
 	  case NE_RELTYPE_NAME:
@@ -172,7 +173,7 @@ int NE_FixupSegment(struct w_files *wpnt, int segment_num)
 	    }
 
   	    status = GetEntryDLLName(dll_name, func_name, &selector, 
-					   &address);
+					   &offset);
 	    if (status)
 	    {
 		char s[80];
@@ -181,8 +182,8 @@ int NE_FixupSegment(struct w_files *wpnt, int segment_num)
 		myerror(s);
 		return -1;
 	    }
-/*	    dprintf_fixup(stddeb,"%d: %s %s.%d: %04x:%04x\n", i + 1, 
-                   func_name, dll_name, ordinal, selector, address);*/
+            dprintf_fixup(stddeb,"%d: %s %s.%d: %04x:%04x\n", i + 1, 
+                          func_name, dll_name, ordinal, selector, offset);
 	    break;
 	    
 	  case NE_RELTYPE_INTERNAL:
@@ -190,16 +191,16 @@ int NE_FixupSegment(struct w_files *wpnt, int segment_num)
 	    {
 		address  = GetEntryPointFromOrdinal(wpnt, rep->target2);
 		selector = (address >> 16) & 0xffff;
-		address &= 0xffff;
+		offset   = address & 0xffff;
 	    }
 	    else
 	    {
 		selector = selector_table[rep->target1-1];
-		address  = rep->target2;
+		offset   = rep->target2;
 	    }
 	    
 	    dprintf_fixup(stddeb,"%d: %04x:%04x\n", 
-			  i + 1, selector, address);
+			  i + 1, selector, offset);
 	    break;
 
 	  case NE_RELTYPE_OSFIXUP:
@@ -240,7 +241,8 @@ int NE_FixupSegment(struct w_files *wpnt, int segment_num)
                           i+1, rep->address_type, rep->relocation_type,
                           rep->offset, rep->target1, rep->target2);
 
-	offset = rep->offset;
+        address = (unsigned int)offset;
+	offset  = rep->offset;
 
 	switch (rep->address_type)
 	{
@@ -290,8 +292,9 @@ int NE_FixupSegment(struct w_files *wpnt, int segment_num)
                               sel, offset, *sp, additive ? " additive" : "" );
 		offset = *sp;
 		*sp    = (unsigned short) selector;
-		if(additive)
-                    fprintf(stderr,"Additive selector, please report\n");
+		/* Borland creates additive records with offset zero. Strange, but OK */
+		if(additive && offset)
+        	fprintf(stderr,"Additive selector to %4.4x.Please report\n",offset);
 	    } 
 	    while (offset != 0xffff && !additive);
 	    break;
@@ -321,20 +324,39 @@ int NE_unloadImage(struct w_files *wpnt)
 
 int NE_StartProgram(struct w_files *wpnt)
 {
-    int cs_reg, ds_reg, ss_reg, ip_reg, sp_reg;
+    extern WORD PSPSelector;
+
+    int cs_reg, ds_reg, ip_reg;
+
+    /* Registers at initialization must be:
+     * ax   zero
+     * bx   stack size in bytes
+     * cx   heap size in bytes
+     * si   previous app instance
+     * di   current app instance
+     * bp   zero
+     * es   selector to the PSP
+     * ds   dgroup of the application
+     * ss   stack selector
+     * sp   top of the stack
+     */
+
     /*
      * Fixup stack and jump to start. 
      */
     WIN_StackSize = wpnt->ne->ne_header->stack_length;
     WIN_HeapSize = wpnt->ne->ne_header->local_heap_length;
 
-    ds_reg = wpnt->ne->selector_table[wpnt->ne->ne_header->auto_data_seg-1];
     cs_reg = wpnt->ne->selector_table[wpnt->ne->ne_header->cs-1];
     ip_reg = wpnt->ne->ne_header->ip;
-    ss_reg = wpnt->ne->selector_table[wpnt->ne->ne_header->ss-1];
-    sp_reg = wpnt->ne->ne_header->sp;
+    ds_reg = wpnt->ne->selector_table[wpnt->ne->ne_header->auto_data_seg-1];
 
-    return CallToInit16(cs_reg << 16 | ip_reg, ss_reg << 16 | sp_reg, ds_reg);
+    IF1632_Saved16_ss = wpnt->ne->selector_table[wpnt->ne->ne_header->ss-1];
+    IF1632_Saved16_sp = wpnt->ne->ne_header->sp;
+    IF1632_Saved16_bp = 0;
+    return CallTo16_regs_( (FARPROC)(cs_reg << 16 | ip_reg), ds_reg,
+                           PSPSelector /*es*/, 0 /*ax*/, WIN_StackSize /*bx*/,
+                           WIN_HeapSize, 0 /*dx*/, 0 /*si*/, ds_reg /*di*/ );
 }
 
 void NE_InitDLL(struct w_files *wpnt)
@@ -363,7 +385,9 @@ void NE_InitDLL(struct w_files *wpnt)
 		    cx_reg = wpnt->ne->ne_header->local_heap_length;
   	    }
   
-  	    cs_reg = wpnt->ne->selector_table[wpnt->ne->ne_header->cs-1];
+            dprintf_dll(stddeb,"InitDLL: ne_header->cs = %04x\n",wpnt->ne->ne_header->cs);
+            if (!wpnt->ne->ne_header->cs) cs_reg = 0;
+            else cs_reg = wpnt->ne->selector_table[wpnt->ne->ne_header->cs-1];
   	    ip_reg = wpnt->ne->ne_header->ip;
   
             di_reg = wpnt->hinstance;
@@ -372,7 +396,9 @@ void NE_InitDLL(struct w_files *wpnt)
 		dprintf_dll(stddeb,"Initializing %s, cs:ip %04x:%04x, ds %04x, cx %04x\n", 
 		    wpnt->name, cs_reg, ip_reg, ds_reg, cx_reg);
 	    	    
-		rv = CallTo16cx(cs_reg << 16 | ip_reg, ds_reg | (cx_reg<<16));
+                rv = CallTo16_regs_( (FARPROC)(cs_reg << 16 | ip_reg), ds_reg,
+                                     0 /*es*/, 0 /*ax*/, 0 /*bx*/, cx_reg,
+                                     0 /*dx*/, 0 /*si*/, di_reg );
 		dprintf_exec(stddeb,"rv = %x\n", rv);
 	    } else
 		dprintf_exec(stddeb,"%s skipped\n", wpnt->name);

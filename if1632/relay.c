@@ -23,16 +23,16 @@ static char Copyright[] = "Copyright  Robert J. Amstadt, 1993";
 #include "prototypes.h"
 #include "dlls.h"
 #include "options.h"
+#include "selectors.h"
 #include "stackframe.h"
+#include "wine.h"
 #include "stddebug.h"
 /* #define DEBUG_RELAY */
-/* #define DEBUG_STACK */
 #include "debug.h"
 
 #if 0
 /* Make make_debug think these were really used */
 dprintf_relay
-dprintf_stack
 #endif
 
 #ifdef WINELIB
@@ -43,256 +43,210 @@ dprintf_stack
 
 struct dll_name_table_entry_s dll_builtin_table[N_BUILTINS] =
 {
-    { "KERNEL",  WineLibSkip(KERNEL_table), 	410, 1, 1 },
-    { "USER",    WineLibSkip(USER_table), 	540, 2, 1 },
-    { "GDI",     WineLibSkip(GDI_table), 	490, 3, 1 },
-    { "WIN87EM", WineLibSkip(WIN87EM_table),  10, 4, 1 },
-    { "SHELL",   WineLibSkip(SHELL_table),   103, 5, 1 },
-    { "SOUND",   WineLibSkip(SOUND_table),    20, 6, 1 },
-    { "KEYBOARD",WineLibSkip(KEYBOARD_table),137, 7, 1 },
-    { "WINSOCK", WineLibSkip(WINSOCK_table), 155, 8, 1 },
-    { "STRESS",  WineLibSkip(STRESS_table),   15, 9, 1},
-    { "MMSYSTEM",WineLibSkip(MMSYSTEM_table),1226,10, 1},
-    { "SYSTEM",  WineLibSkip(SYSTEM_table),   20 ,11, 1},
-    { "TOOLHELP",WineLibSkip(TOOLHELP_table), 83, 12, 1},
-    { "MOUSE",   WineLibSkip(MOUSE_table),     8, 13, 1},
-    { "COMMDLG", WineLibSkip(COMMDLG_table),  31, 14, 1},
-    { "OLE2",    WineLibSkip(OLE2_table),     31, 15, 1},
-    { "OLE2CONV",WineLibSkip(OLE2CONV_table), 31, 16, 1},
-    { "OLE2DISP",WineLibSkip(OLE2DISP_table), 31, 17, 1},
-    { "OLE2NLS", WineLibSkip(OLE2NLS_table),  31, 18, 1},
-    { "OLE2PROX",WineLibSkip(OLE2PROX_table), 31, 19, 1},
-    { "OLECLI",  WineLibSkip(OLECLI_table),   31, 20, 1},
-    { "OLESVR",  WineLibSkip(OLESVR_table),   31, 21, 1},
-    { "COMPOBJ", WineLibSkip(COMPOBJ_table),  31, 22, 1},
-    { "STORAGE", WineLibSkip(STORAGE_table),  31, 23, 1}
+    { "KERNEL",   WineLibSkip(&KERNEL_table), 1 },
+    { "USER",     WineLibSkip(&USER_table), 1 },
+    { "GDI",      WineLibSkip(&GDI_table), 1 },
+    { "WIN87EM",  WineLibSkip(&WIN87EM_table), 1 },
+    { "SHELL",    WineLibSkip(&SHELL_table), 1 },
+    { "SOUND",    WineLibSkip(&SOUND_table), 1 },
+    { "KEYBOARD", WineLibSkip(&KEYBOARD_table), 1 },
+    { "WINSOCK",  WineLibSkip(&WINSOCK_table), 1 },
+    { "STRESS",   WineLibSkip(&STRESS_table), 1 },
+    { "MMSYSTEM", WineLibSkip(&MMSYSTEM_table), 1 },
+    { "SYSTEM",   WineLibSkip(&SYSTEM_table), 1 },
+    { "TOOLHELP", WineLibSkip(&TOOLHELP_table), 1 },
+    { "MOUSE",    WineLibSkip(&MOUSE_table), 1 },
+    { "COMMDLG",  WineLibSkip(&COMMDLG_table), 1 },
+    { "OLE2",     WineLibSkip(&OLE2_table), 1 },
+    { "OLE2CONV", WineLibSkip(&OLE2CONV_table), 1 },
+    { "OLE2DISP", WineLibSkip(&OLE2DISP_table), 1 },
+    { "OLE2NLS",  WineLibSkip(&OLE2NLS_table), 1 },
+    { "OLE2PROX", WineLibSkip(&OLE2PROX_table), 1 },
+    { "OLECLI",   WineLibSkip(&OLECLI_table), 1 },
+    { "OLESVR",   WineLibSkip(&OLESVR_table), 1 },
+    { "COMPOBJ",  WineLibSkip(&COMPOBJ_table), 1 },
+    { "STORAGE",  WineLibSkip(&STORAGE_table), 1 },
+    { "WINPROCS", WineLibSkip(&WINPROCS_table), 1 },
 };
-/* don't forget to increase N_BUILTINS in dll.h if you add a dll */
+/* don't forget to increase N_BUILTINS in dlls.h if you add a dll */
 
-/* the argument conversion tables for each dll */
-struct dll_conversions {
-	unsigned short *dst_args;   /*  Offsets to arguments on stack */
-	unsigned char *src_types;   /* Argument types              */
-} dll_conversion_table[N_BUILTINS]= {
-  { KERNEL_offsets,   KERNEL_types },   /* KERNEL     */
-  { USER_offsets,     USER_types },     /* USER       */
-  { GDI_offsets,      GDI_types },      /* GDI        */
-  { WIN87EM_offsets,  WIN87EM_types },  /* WIN87EM    */
-  { SHELL_offsets,    SHELL_types },    /* SHELL      */
-  { SOUND_offsets,    SOUND_types },    /* SOUND      */
-  { KEYBOARD_offsets, KEYBOARD_types }, /* KEYBOARD   */
-  { WINSOCK_offsets,  WINSOCK_types },  /* WINSOCK    */
-  { STRESS_offsets,   STRESS_types },   /* STRESS,     */
-  { MMSYSTEM_offsets, MMSYSTEM_types }, /* MMSYSTEM   */
-  { SYSTEM_offsets,   SYSTEM_types },   /* SYSTEM     */
-  { TOOLHELP_offsets, TOOLHELP_types }, /* TOOLHELP   */
-  { MOUSE_offsets,    MOUSE_types },    /* MOUSE      */
-  { COMMDLG_offsets,  COMMDLG_types },  /* EMUCOMMDLG */
-  { OLE2_offsets,     OLE2_types },     /* OLE2       */
-  { OLE2CONV_offsets, OLE2CONV_types }, /* OLE2CONV   */
-  { OLE2DISP_offsets, OLE2DISP_types }, /* OLE2DISP   */
-  { OLE2NLS_offsets,  OLE2NLS_types },  /* OLE2NLS    */
-  { OLE2DISP_offsets, OLE2DISP_types }, /* OLE2PROX   */
-  { OLECLI_offsets,   OLECLI_types },   /* OLE2CLI    */
-  { OLESVR_offsets,   OLESVR_types },   /* OLE2CLI    */
-  { COMPOBJ_offsets,  COMPOBJ_types },  /* COMPOBJ    */
-  { STORAGE_offsets,  STORAGE_types }   /* STORAGE    */
-};
+  /* Saved 16-bit stack */
+WORD IF1632_Saved16_ss = 0;
+WORD IF1632_Saved16_sp = 0;
+WORD IF1632_Saved16_bp = 0;
+
+  /* Saved 32-bit stack */
+DWORD IF1632_Saved32_esp = 0;
+DWORD IF1632_Saved32_ebp = 0;
+
+/***********************************************************************
+ *           RELAY_Init
+ */
+BOOL RELAY_Init(void)
+{
+    WORD codesel, datasel;
+    struct dll_table_s *table;
+    struct dll_table_entry_s *entry;
+    int i, j;
+
+      /* Allocate the code selector for CallTo16 routines */
+
+    extern void CALL16_Start(), CALL16_End();
+    extern void CALL16_Ret_word(), CALL16_Ret_long();
+    extern DWORD CALL16_RetAddr_word, CALL16_RetAddr_long;
+
+    codesel = SELECTOR_AllocBlock( (void *)CALL16_Start,
+                                   (int)CALL16_End - (int)CALL16_Start,
+                                   SEGMENT_CODE, TRUE, FALSE );
+    if (!codesel) return FALSE;
+
+      /* Patch the return addresses for CallTo16 routines */
+
+    CALL16_RetAddr_word = MAKELONG( (int)CALL16_Ret_word - (int)CALL16_Start,
+                                    codesel );
+    CALL16_RetAddr_long = MAKELONG( (int)CALL16_Ret_long - (int)CALL16_Start,
+                                    codesel );
+
+      /* Allocate the selectors for built-in dlls */
+
+    for (i = 0; i < N_BUILTINS; i++)
+    {
+        table = dll_builtin_table[i].table;
+        codesel = SELECTOR_AllocBlock( table->code_start,
+                                   (int)table->code_end-(int)table->code_start,
+                                   SEGMENT_CODE, TRUE, FALSE );
+        if (!codesel) return FALSE;
+        if (table->data_start != table->data_end)
+            datasel = SELECTOR_AllocBlock( table->data_start,
+                                   (int)table->data_end-(int)table->data_start,
+                                   SEGMENT_DATA, TRUE, FALSE );
+        else datasel = 0;
+        entry = table->dll_table;
+        for (j = 0; j < table->dll_table_length; j++, entry++)
+        {
+            if (entry->selector == 1)  /* code selector */
+                entry->selector = codesel;
+            else if (entry->selector == 2)  /* data selector */
+                entry->selector = datasel;
+            else entry->selector = 0;  /* constant selector */
+        }
+    }
+
+    return TRUE;
+}
 
 
 #ifndef WINELIB
 
-extern unsigned short IF1632_Saved16_sp;
-extern unsigned short IF1632_Saved16_bp;
-extern unsigned short IF1632_Saved16_ss;
-
-void RelayDebug( unsigned int func_num )
+void RELAY_DebugCall32( char *args )
 {
-    unsigned int dll_id, ordinal;
-
-    if (debugging_relay)
-    {
-        dll_id  = ((func_num >> 16) & 0xffff) - 1;
-        ordinal = func_num & 0xffff;
-        printf( "Calling %s.%d\n",
-               dll_builtin_table[dll_id].dll_table[ordinal].export_name,
-               ordinal );
-    }
-}
-
-
-/**********************************************************************
- *					DLLRelay
- *
- * We get a stack frame pointer to data that looks like this:
- *
- *   Hex Offset Contents
- *   ---------- -------
- *	+00	previous saved_16ss
- *	+02	previous saved_16ebp
- *	+06	previous saved_16esp
- *	+0A	16-bit es
- *	+0C	16-bit ds
- *	+0E	16-bit ebp
- *	+12	length of 16-bit arguments
- *	+14	16-bit ip
- *	+16	16-bit cs
- *	+18	arguments
- */
-int
-DLLRelay(unsigned int func_num, unsigned int seg_off)
-{
-    struct dll_table_entry_s *dll_p;
-    STACK16FRAME *pStack16Frame;
-    unsigned int offset;
-    unsigned int dll_id;
-    unsigned int ordinal;
-    int arg_table[DLL_MAX_ARGS];
-    void *arg_ptr;
-    int (*func_ptr)();
+    STACK16FRAME *frame;
+    char *args16;
     int i;
-    int ret_val;
-    int conv_ref;
-    unsigned char *type_conv;
-    unsigned short *offset_conv;
-    STACK16FRAME stackFrameCopy;
 
-    /*
-     * Determine address of arguments.
-     */
-    pStack16Frame = (STACK16FRAME *) PTR_SEG_TO_LIN(seg_off);
-    arg_ptr = (void *)pStack16Frame->args;
+    if (!debugging_relay) return;
 
-    /*
-     * Extract the DLL number and ordinal number.
-     */
-    dll_id  = ((func_num >> 16) & 0xffff) - 1;
-    ordinal = func_num & 0xffff;
-    dll_p   = &dll_builtin_table[dll_id].dll_table[ordinal];
-
-    dprintf_relay( stddeb, "Call %s (%s.%d), stack=%04x:%04x ret=%04x:%04x ds=%04x bp=%04x args=%d\n",
-                  dll_p->export_name,
-                  dll_builtin_table[dll_id].dll_name, ordinal,
-                  seg_off >> 16, seg_off & 0xffff,
-                  pStack16Frame->cs, pStack16Frame->ip,
-                  pStack16Frame->ds, pStack16Frame->bp,
-                  pStack16Frame->arg_length );
-
-    if(debugging_stack)
+    frame = CURRENT_STACK16;
+    printf( "Call %s.%d: %s(",
+            dll_builtin_table[frame->dll_id-1].dll_name,
+            frame->ordinal_number,
+            dll_builtin_table[frame->dll_id-1].table->dll_table[frame->ordinal_number].export_name );
+    args16 = (char *)frame->args;
+    for (i = 0; i < strlen(args); i++)
     {
-        unsigned short *stack_p = (unsigned short *) pStack16Frame;
-        /* FIXME: Is there an end-of-stack-pointer somewhere ? */
-        int n = min(24, (0x10000 - (seg_off & 0xffff)) / sizeof(*stack_p));
-        for (i = 0; i < n; i++, stack_p++)
+        switch(args[i])
         {
-            printf("%04x ", *stack_p);
-            if ((i & 7) == 7)
-                printf("\n");
+        case 'w':
+        case 's':
+            args16 += 2;
+            break;
+        case 'l':
+        case 'p':
+            args16 += 4;
+            break;
         }
-        printf("\n");
     }
 
-    /*
-     * Make sure we have a handler defined for this call.
-     */
-    if (dll_p->handler == NULL)
+    while (*args)
     {
-	char buffer[100];
-	
-	sprintf(buffer, "No handler for routine %s.%d", 
-		dll_builtin_table[dll_id].dll_name, ordinal);
-	myerror(buffer);
-    }
-    func_ptr = dll_p->handler;
-
-    /*
-     * OK, special case.  If the handler is define as taking no arguments
-     * then pass the address of the arguments on the 16-bit stack to the
-     * handler.  It will just ignore the pointer if it really takes no
-     * arguments.  This allows us to write slightly faster library routines
-     * if we choose.
-     */
-    if (dll_p->n_args == 0)
-    {
-	ret_val = (*func_ptr)(arg_ptr);
-	dprintf_relay( stddeb, "Returning %08x from %s (%s.%d) ds=%04x\n",
-                       ret_val, dll_p->export_name,
-                       dll_builtin_table[dll_id].dll_name, ordinal,
-                       pStack16Frame->ds );
-	return ret_val;
-    }
-
-    /*
-     * Getting this far means we need to convert the 16-bit argument stack.
-     */
-    conv_ref= dll_p->conv_reference;
-    type_conv= dll_conversion_table[dll_id].src_types + conv_ref;
-    offset_conv= dll_conversion_table[dll_id].dst_args + conv_ref;
-    for (i = 0; i < dll_p->n_args; i++,type_conv++,offset_conv++)
-    {
-	short *sp;
-	int *ip;
-	
-	offset = *offset_conv;
-
-	switch (*type_conv)
-	{
-	  case DLL_ARGTYPE_SIGNEDWORD:
-	    sp = (short *) ((char *) arg_ptr + offset);
-	    arg_table[i] = *sp;
-	    break;
-	    
-	  case DLL_ARGTYPE_WORD:
-	    sp = (short *) ((char *) arg_ptr + offset);
-	    arg_table[i] = (int) *sp & 0xffff;
-	    break;
-	    
-	  case DLL_ARGTYPE_LONG:
-	    ip = (int *) ((char *) arg_ptr + offset);
-	    arg_table[i] = *ip;
-	    break;
-
-	  case DLL_ARGTYPE_FARPTR:
-	    ip = (int *) ((char *) arg_ptr + offset);
-            arg_table[i] = (unsigned int) PTR_SEG_TO_LIN( *ip );
-	    break;
-	}
-    }
-
-    if (debugging_relay)
-        memcpy( &stackFrameCopy, pStack16Frame, sizeof(stackFrameCopy) );
-
-    /*
-     * Call the handler
-     */
-    ret_val = (*func_ptr)(arg_table[0], arg_table[1], arg_table[2], 
-			  arg_table[3], arg_table[4], arg_table[5], 
-			  arg_table[6], arg_table[7], arg_table[8], 
-			  arg_table[9], arg_table[10], arg_table[11],
-			  arg_table[12], arg_table[13], arg_table[14], 
-			  arg_table[15]);
-
-    if (debugging_relay)
-    {
-        if (memcmp( &stackFrameCopy, pStack16Frame, sizeof(stackFrameCopy) ))
+        switch(*args)
         {
-            printf( "**** 16-bit stack corrupted!\n" );
+        case 'w':
+        case 's':
+            args16 -= 2;
+            printf( "0x%04x", *(WORD *)args16 );
+            break;
+        case 'l':
+            args16 -= 4;
+            printf( "0x%08x", *(int *)args16 );
+            break;
+        case 'p':
+            args16 -= 4;
+            printf( "%04x:%04x", *(WORD *)(args16+2), *(WORD *)args16 );
+            break;
         }
-	printf("Returning %08x from %s (%s.%d) ds=%04x\n",
-	       ret_val,
-	       dll_p->export_name,
-	       dll_builtin_table[dll_id].dll_name, ordinal,
-               pStack16Frame->ds );
+        args++;
+        if (*args) printf( "," );
     }
-
-    return ret_val;
+    printf( ") ret=%04x:%04x ds=%04x\n", frame->cs, frame->ip, frame->ds );
 }
-#endif
+
+
+void RELAY_DebugReturn( int short_ret, int ret_val )
+{
+    STACK16FRAME *frame;
+
+    if (!debugging_relay) return;
+
+    frame = CURRENT_STACK16;
+    printf( "Ret  %s.%d: %s() ",
+            dll_builtin_table[frame->dll_id-1].dll_name,
+            frame->ordinal_number,
+            dll_builtin_table[frame->dll_id-1].table->dll_table[frame->ordinal_number].export_name );
+    if (short_ret) printf( "retval=0x%04x\n", ret_val & 0xffff );
+    else printf( "retval=0x%08x\n", ret_val );
+}
+
+
+void RELAY_Unimplemented(void)
+{
+    STACK16FRAME *frame = CURRENT_STACK16;
+
+    fprintf( stderr, "No handler for routine %s.%d\n",
+             dll_builtin_table[frame->dll_id-1].dll_name,
+             frame->ordinal_number );
+    exit(1);
+}
+
+
+/***********************************************************************
+ *           RELAY_DebugCall16
+ *
+ * 'stack' points to the called function address on the 32-bit stack.
+ * Stack layout:
+ *  ...        ...
+ * (stack+12)  arg2
+ * (stack+8)   arg1
+ * (stack+4)   16-bit ds
+ * (stack)     func to call
+ */
+void RELAY_DebugCall16( int* stack, int nbargs )
+{
+    if (!debugging_relay) return;
+
+    printf( "CallTo16(func=%04x:%04x,ds=%04x",
+            HIWORD(stack[0]), LOWORD(stack[0]), LOWORD(stack[1]) );
+    stack += 2;
+    while (nbargs--) printf( ",0x%x", *stack++ );
+    printf( ")\n" );
+}
+
+#endif  /* WINELIB */
 
 /**********************************************************************
  *					FindDLLTable
  */
-struct  dll_table_entry_s *
+struct dll_table_s *
 FindDLLTable(char *dll_name)
 {
     int i;
@@ -300,11 +254,7 @@ FindDLLTable(char *dll_name)
     for (i = 0; i < N_BUILTINS; i++)
 	if (strcasecmp(dll_builtin_table[i].dll_name, dll_name) == 0
 	  && dll_builtin_table[i].dll_is_used)
-#ifdef WINELIB
-	    return dll_builtin_table[i].dll_number;
-#else
-	    return dll_builtin_table[i].dll_table;
-#endif
+	    return dll_builtin_table[i].table;
     return NULL;
 }
 
@@ -317,26 +267,18 @@ FindOrdinalFromName(struct dll_table_entry_s *dll_table, char *func_name)
     int i, limit;
 
     for (i = 0; i < N_BUILTINS; i++)
-	if (dll_table == dll_builtin_table[i].dll_table)
+	if (dll_table == dll_builtin_table[i].table->dll_table)
 	    break;
     
     if (i == N_BUILTINS)
 	return 0;
 
-    limit = dll_builtin_table[i].dll_table_length;
+    limit = dll_builtin_table[i].table->dll_table_length;
     for (i = 0; i < limit; i++)
 	if (strcasecmp(dll_table[i].export_name, func_name) == 0)
 	    return i;
     
     return 0;
-}
-/**********************************************************************
- *					ReturnArg
- */
-int
-ReturnArg(int arg)
-{
-    return arg;
 }
 
 #ifndef WINELIB
@@ -351,13 +293,13 @@ void winestat(){
 	tused = 0;
 	timplemented = 0;
     for (i = 0; i < N_BUILTINS; i++) {
-	    table = dll_builtin_table[i].dll_table;
+	    table = dll_builtin_table[i].table->dll_table;
 	    used = 0;
 	    implemented = 0;
-	    for(j=0; j < dll_builtin_table[i].dll_table_length; j++) {
+	    for(j=0; j < dll_builtin_table[i].table->dll_table_length; j++) {
 		    if(table[j].used){
 			    used++;
-			    if (table[j].handler) implemented++;
+			    if (table[j].export_name[0]) implemented++;
 			    else 
 				    printf("%s.%d not implemented\n",
 					   dll_builtin_table[i].dll_name,

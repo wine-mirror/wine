@@ -1,8 +1,5 @@
 #ifndef  WINE_H
 #define  WINE_H
-#if 0
-#define __ELF__
-#endif
 
 extern char *WineIniFileName(void);
 extern char *WinIniFileName(void);
@@ -36,12 +33,8 @@ struct sigcontext_struct {
 	unsigned long cr2;
 };
 #define WINE_DATA_SELECTOR 0x2b
-#ifdef __ELF__
-#define WINE_CODE_SELECTOR 0x0f
-#else
 #define WINE_CODE_SELECTOR 0x23
-#endif
-#endif
+#endif  /* linux */
 
 #if defined(__NetBSD__) || defined(__FreeBSD__)
 #include <signal.h>

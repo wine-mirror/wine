@@ -285,11 +285,19 @@ HLOCAL LocalInit( WORD selector, WORD start, WORD end )
       /* - large free block    (FREE)       */
       /* - last arena          (FREE)       */
 
-      /* FIXME: What should be done if there's already */
-      /* a local heap in this segment? */
     dprintf_local(stddeb, "LocalInit: %04x %04x-%04x\n", selector, start, end);
     if (!selector) selector = CURRENT_DS;
     ptr = PTR_SEG_OFF_TO_LIN( selector, 0 );
+    pHeapInfo = LOCAL_GetHeap(selector);
+      /* If there's already a local heap in this segment, */
+      /* we simply return TRUE. Helps some programs, but  */
+      /* does not seem to be 100% correct yet (there are  */
+      /* still some "heap corrupted" messages in LocalAlloc */
+    if (pHeapInfo)  {
+      dprintf_local(stddeb,"LocalInit: Heap %04x initialized twice.\n",selector);
+      if (debugging_local) LOCAL_PrintHeap(selector);
+      return TRUE;
+    }
     start = LALIGN( max( start, sizeof(INSTANCEDATA) ) );
     heapInfoArena = LALIGN(start + sizeof(LOCALARENA) );
     freeArena = LALIGN( heapInfoArena + ARENA_HEADER_SIZE
@@ -368,14 +376,20 @@ HLOCAL LOCAL_Alloc( WORD ds, WORD flags, WORD size )
 
       /* Find a suitable free block */
 
-    if (!(pInfo = LOCAL_GetHeap( ds ))) return 0;
+    if (!(pInfo = LOCAL_GetHeap( ds ))) {
+	  LOCAL_PrintHeap(ds);
+      return 0;
+    }
     size += ARENA_HEADER_SIZE;
     size = LALIGN( max( size, sizeof(LOCALARENA) ) );
     arena = pInfo->first;
     pArena = ARENA_PTR( ptr, arena );
     for (;;)
     {
-        if (arena == pArena->free_next) return 0;  /* not found */
+        if (arena == pArena->free_next) {
+	  LOCAL_PrintHeap(ds);
+	   return 0;  /* not found */
+	}
         arena = pArena->free_next;
         pArena = ARENA_PTR( ptr, arena );
         if (pArena->size >= size) break;
@@ -635,6 +649,7 @@ WORD LocalShrink( HLOCAL handle, WORD newsize )
  */
 DWORD GetHeapSpaces( HMODULE module )
 {
+    return MAKELONG( 0x7fff, 0xffff );
 }
 
 

@@ -9,6 +9,7 @@
 
 #include "windows.h"
 #include "ldt.h"
+#include "callback.h"
 
   /* Hook data (pointed to by a HHOOK) */
 typedef struct
@@ -33,9 +34,6 @@ typedef struct
     INTERNAL_CALL_HOOK(SYSTEM_HOOK(id),code,wparam,lparam)
 #define CALL_TASK_HOOK(id,code,wparam,lparam) \
     INTERNAL_CALL_HOOK(TASK_HOOK(id),code,wparam,lparam)
-
-extern DWORD CallHookProc( HOOKPROC func, short code,
-			   WPARAM wParam, LPARAM lParam );  /* callback.c */
 
 extern HHOOK systemHooks[];
 extern HHOOK taskHooks[];

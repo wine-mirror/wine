@@ -28,8 +28,9 @@ static char Copyright[] = "Copyright  Alexandre Julliard, 1994";
 #include "desktop.h"
 #include "prototypes.h"
 #include "texts.h"
-#include "dlls.h"
 #include "library.h"
+#include "dlls.h"
+#include "if1632.h"
 #define DEBUG_DEFINE_VARIABLES
 #include "stddebug.h"
 #include "debug.h"
@@ -573,6 +574,7 @@ int main( int argc, char *argv[] )
     if (Options.desktopGeometry) MAIN_CreateDesktop( argc, argv );
     else rootWindow = DefaultRootWindow( display );
 
+    RELAY_Init();
     MAIN_SaveSetup();
     DOS_InitFS();
     Comm_Init();
@@ -860,17 +862,6 @@ void Copy(LPVOID lpSource, LPVOID lpDest, WORD nBytes)
 BOOL SwapMouseButton(BOOL fSwap)
 {
 	return 0;	/* don't swap */
-}
-
-/***********************************************************************
-*	ISROMMODULE (KERNEL.323)
-*/
-BOOL IsRomModule(HANDLE x)
-{
-	/* I don't know the prototype, I assume that it returns true
-	   if the dll is located in rom */
-	   
-	return FALSE;
 }
 
 /***********************************************************************

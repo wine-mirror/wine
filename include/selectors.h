@@ -20,12 +20,14 @@ extern WORD SELECTOR_ReallocBlock( WORD sel, void *base, DWORD size,
 
 extern WORD *CreateSelectors( struct w_files * wpnt );
 
-extern unsigned int GetEntryDLLName(char *dll_name, char *function, WORD *sel,
-					int *addr);
-extern unsigned int GetEntryDLLOrdinal(char *dll_name, int ordinal, WORD *sel,
-					int *addr);
-extern unsigned int GetEntryPointFromOrdinal(struct w_files * wpnt, 
-					int ordinal);
+extern unsigned int GetEntryDLLName(char *dll_name, char *function,
+                                    WORD *sel, WORD *offset);
+extern unsigned int GetEntryDLLOrdinal(char *dll_name, int ordinal,
+                                       WORD *sel, WORD *offset);
+extern unsigned int GetEntryPointFromOrdinal(struct w_files * wpnt,
+                                             int ordinal);
 extern void InitSelectors(void);
+
+extern WNDPROC GetWndProcEntry16( char *name );
 
 #endif /* __WINE_SELECTORS_H */

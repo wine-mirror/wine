@@ -218,15 +218,8 @@ int EnumProps(HWND hWnd, FARPROC lpEnumFunc)
 	    	printf("EnumProps // lpProp->PropName='%s' !\n", lpProp->PropName);
 			str = lpProp->PropName; 
 			}
-#ifdef WINELIB
-		nRet = (*lpEnumFunc)((HWND)hWnd, (WORD)0, 
-			(LPSTR)str, (HANDLE)lpProp->hData);
-#else
-		nRet = CallBack16(lpEnumFunc, 3,
-		    CALLBACK_SIZE_WORD, (HWND)hWnd,
-		    CALLBACK_SIZE_LONG, (LPSTR)str,
-		    CALLBACK_SIZE_WORD, (HANDLE)lpProp->hData);
-#endif
+                nRet = CallEnumPropProc( lpEnumFunc, hWnd,
+                                         (LONG)str, lpProp->hData);
 		if (nRet == 0) break;
 		if (lpProp->lpNextProp == NULL) break;
 		lpProp = lpProp->lpNextProp;

@@ -4,22 +4,16 @@
  * Copyright 1995 Alexandre Julliard
  */
 
+#include <string.h>
 #include "windows.h"
 #include "ldt.h"
+#include "selectors.h"
 #include "stddebug.h"
 #include "debug.h"
 
 ldt_copy_entry ldt_copy[LDT_SIZE] = { {0,0}, };
 
-#define FIRST_LDT_ENTRY_TO_ALLOC  10
-
-
-/***********************************************************************
- *           SELECTOR_Init
- */
-void SELECTOR_Init()
-{
-}
+#define FIRST_LDT_ENTRY_TO_ALLOC  4
 
 
 /***********************************************************************
@@ -74,7 +68,7 @@ WORD FreeSelector( WORD sel )
     dprintf_selector( stddeb, "FreeSelector(%04x)\n", sel );
     if (IS_SELECTOR_FREE(sel)) return sel;  /* error */
     count = (GET_SEL_LIMIT(sel) >> 16) + 1;
-    entry.base = entry.limit = 0;  /* clear the LDT entries */
+    memset( &entry, 0, sizeof(entry) );  /* clear the LDT entries */
     for (i = 0; i < count; i++)
         LDT_SetEntry( SELECTOR_TO_ENTRY(sel) + i, &entry );
     return 0;
@@ -129,7 +123,7 @@ static WORD SELECTOR_ReallocArray( WORD sel, WORD newcount )
     {
           /* Check if the next selectors are free */
         for (i = oldcount; i < newcount; i++)
-            if (!IS_SELECTOR_FREE(sel)) break;
+            if (!IS_SELECTOR_FREE(sel+i)) break;
         if (i < newcount)
         {
             FreeSelector( sel );
@@ -138,7 +132,7 @@ static WORD SELECTOR_ReallocArray( WORD sel, WORD newcount )
     }
     else if (oldcount > newcount) /* We need to remove selectors */
     {
-        entry.base = entry.limit = 0;  /* clear the LDT entries */
+        memset( &entry, 0, sizeof(entry) );  /* clear the LDT entries */
         for (i = oldcount; i < newcount; i++)
             LDT_SetEntry( SELECTOR_TO_ENTRY(sel) + i, &entry );
     }

@@ -14,37 +14,31 @@ static char Copyright[] = "Copyright  Alexandre Julliard, 1993";
 #include "mdi.h"
 #include "gdi.h"
 #include "user.h"
-
-LONG ListBoxWndProc  ( HWND hwnd, WORD message, WORD wParam, LONG lParam );
-LONG ComboBoxWndProc ( HWND hwnd, WORD message, WORD wParam, LONG lParam );
-LONG EditWndProc( HWND hwnd, WORD message, WORD wParam, LONG lParam );
-LONG PopupMenuWndProc ( HWND hwnd, WORD message, WORD wParam, LONG lParam );
-LONG DesktopWndProc ( HWND hwnd, WORD message, WORD wParam, LONG lParam );
-LONG MDIClientWndProc ( HWND hwnd, WORD message, WORD wParam, LONG lParam );
+#include "selectors.h"
 
 
 static WNDCLASS WIDGETS_BuiltinClasses[] =
 {
-    { CS_GLOBALCLASS | CS_PARENTDC, ButtonWndProc, 0, sizeof(BUTTONINFO), 
-      0, 0, 0, 0, NULL, "BUTTON" },
-    { CS_GLOBALCLASS | CS_PARENTDC, StaticWndProc, 0, sizeof(STATICINFO),
-      0, 0, 0, 0, NULL, "STATIC" },
-    { CS_GLOBALCLASS | CS_PARENTDC, ScrollBarWndProc, 0, sizeof(SCROLLINFO),
-      0, 0, 0, 0, NULL, "SCROLLBAR" },
-    { CS_GLOBALCLASS | CS_PARENTDC | CS_DBLCLKS, ListBoxWndProc, 0, 8,
-      0, 0, 0, 0, NULL, "LISTBOX" },
-    { CS_GLOBALCLASS | CS_PARENTDC | CS_DBLCLKS, ComboBoxWndProc, 0, 8,
-      0, 0, 0, 0, NULL, "COMBOBOX" },
-    { CS_GLOBALCLASS | CS_PARENTDC, EditWndProc, 0, sizeof(WORD), 
-      0, 0, 0, 0, NULL, "EDIT" },
-    { CS_GLOBALCLASS | CS_SAVEBITS, PopupMenuWndProc, 0, 8,
-      0, 0, 0, 0, NULL, POPUPMENU_CLASS_NAME },
-    { CS_GLOBALCLASS, DesktopWndProc, 0, sizeof(DESKTOPINFO),
-      0, 0, 0, 0, NULL, DESKTOP_CLASS_NAME },
-    { CS_GLOBALCLASS | CS_SAVEBITS, DefDlgProc, 0, DLGWINDOWEXTRA,
-      0, 0, 0, 0, NULL, DIALOG_CLASS_NAME },
-    { CS_GLOBALCLASS, MDIClientWndProc, 0, sizeof(MDICLIENTINFO),
-      0, 0, 0, STOCK_LTGRAY_BRUSH, NULL, "MDICLIENT" }
+    { CS_GLOBALCLASS | CS_PARENTDC, (WNDPROC)"ButtonWndProc", 0,
+      sizeof(BUTTONINFO), 0, 0, 0, 0, NULL, "BUTTON" },
+    { CS_GLOBALCLASS | CS_PARENTDC, (WNDPROC)"StaticWndProc", 0,
+      sizeof(STATICINFO), 0, 0, 0, 0, NULL, "STATIC" },
+    { CS_GLOBALCLASS | CS_PARENTDC, (WNDPROC)"ScrollBarWndProc", 0,
+      sizeof(SCROLLINFO), 0, 0, 0, 0, NULL, "SCROLLBAR" },
+    { CS_GLOBALCLASS | CS_PARENTDC | CS_DBLCLKS, (WNDPROC)"ListBoxWndProc", 0,
+      8, 0, 0, 0, 0, NULL, "LISTBOX" },
+    { CS_GLOBALCLASS | CS_PARENTDC | CS_DBLCLKS, (WNDPROC)"ComboBoxWndProc", 0,
+      8, 0, 0, 0, 0, NULL, "COMBOBOX" },
+    { CS_GLOBALCLASS, (WNDPROC)"EditWndProc", 0,
+      sizeof(WORD), 0, 0, 0, 0, NULL, "EDIT" },
+    { CS_GLOBALCLASS | CS_SAVEBITS, (WNDPROC)"PopupMenuWndProc", 0,
+      8, 0, 0, 0, 0, NULL, POPUPMENU_CLASS_NAME },
+    { CS_GLOBALCLASS, (WNDPROC)"DesktopWndProc", 0,
+      sizeof(DESKTOPINFO), 0, 0, 0, 0, NULL, DESKTOP_CLASS_NAME },
+    { CS_GLOBALCLASS | CS_SAVEBITS, (WNDPROC)"DefDlgProc", 0,
+      DLGWINDOWEXTRA, 0, 0, 0, 0, NULL, DIALOG_CLASS_NAME },
+    { CS_GLOBALCLASS, (WNDPROC)"MDIClientWndProc", 0,
+      sizeof(MDICLIENTINFO), 0, 0, 0, STOCK_LTGRAY_BRUSH, NULL, "MDICLIENT" }
 };
 
 #define NB_BUILTIN_CLASSES \
@@ -70,6 +64,7 @@ BOOL WIDGETS_Init(void)
         strcpy( name, class->lpszClassName );
         class->lpszClassName = (LPSTR)USER_HEAP_SEG_ADDR( hName );
 	class->hCursor = LoadCursor( 0, IDC_ARROW );
+        class->lpfnWndProc = GetWndProcEntry16( (char *)class->lpfnWndProc );
 	if (!RegisterClass( class )) return FALSE;
     }
     USER_HEAP_FREE( hName );

@@ -4,8 +4,8 @@
  * Copyright 1995 Alexandre Julliard
  */
 
-#ifndef __WINE_HEAP_H
-#define __WINE_HEAP_H
+#ifndef __WINE_LOCAL_H
+#define __WINE_LOCAL_H
 
 #include "wintypes.h"
 
@@ -21,4 +21,4 @@ extern WORD LOCAL_Size( WORD ds, HLOCAL handle );
 extern WORD LOCAL_Flags( WORD ds, HLOCAL handle );
 extern WORD LOCAL_HeapSize( WORD ds );
 
-#endif  /* __WINE_HEAP_H */
+#endif  /* __WINE_LOCAL_H */

@@ -13,21 +13,6 @@ LONG CallWindowProc (WNDPROC func, HWND hwnd, WORD message,
     return (*func)(hwnd, message, wParam, lParam);
 }
 
-CallLineDDAProc (FARPROC back, int x, int y, long lParam)
-{
-    return (*back)(x, y, lParam);
-}
-
-DWORD CallHookProc (HOOKPROC func, short code, WPARAM wParam, LPARAM lParam)
-{
-    return (*func)(code, wParam, lParam);
-}
-
-BOOL CallGrayStringProc (FARPROC func, HDC hdc, LPARAM lParam, INT cch)
-{
-    return (*func) (hdc, lParam, cch);
-}
-
 /*
  * Header loading routines for WineLib.
  */

@@ -5,6 +5,8 @@
 
 #ifndef PROCEMU
 
+#include "wine.h"
+
 #define EAX context->sc_eax
 #define EBX context->sc_ebx
 #define ECX context->sc_ecx

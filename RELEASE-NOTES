@@ -15,9 +15,6 @@ sure to analyze the problem before you report it to the newsgroup.
 Emulator/Library: You need an emulator when you want to run MS-Win
 binaries. You need a library when you want to compile the source code
 of a Windows program.
-Short filenames: Some file systems are limited to 11 characters per
-file name. Files generated in if1632 will get gracefully translated
-names.
 Language: Wine can present the system menu in multiple languages. Select
 one of English, German, or Norwegian here.
 Malloc debugging: When enabled, the mtrace and mcheck GNU libc functions

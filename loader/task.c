@@ -9,7 +9,7 @@ static char Copyright[] = "Copyright  Martin Ayotte, 1994";
 #include <sys/types.h>
 #include <unistd.h>
 #include "windows.h"
-#include "if1632.h"
+#include "callback.h"
 #include "task.h"
 #include "stddebug.h"
 #include "debug.h"
@@ -102,11 +102,7 @@ BOOL EnumTaskWindows(HANDLE hTask, FARPROC lpEnumFunc, LONG lParam)
 	while ((hWnd = *(wptr++)) != 0) {
 		if (++count >= MAXWIN_PER_TASK) return FALSE;
 		dprintf_task(stddeb,"EnumTaskWindows // hWnd=%04X count=%d !\n", hWnd, count);
-#ifdef WINELIB
-		bRet = (*lpEnumFunc)(hWnd, lParam); 
-#else
-		bRet = CallBack16(lpEnumFunc, 2, 0, (int)hWnd, 2, (int)lParam);
-#endif
+                bRet = CallEnumTaskWndProc( lpEnumFunc, hWnd, lParam );
 		if (bRet == 0) break;
 		}
 	return TRUE;

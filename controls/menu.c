@@ -246,6 +246,27 @@ static void MENU_CalcItemSize( HDC hdc, LPMENUITEM lpitem, HWND hwndOwner,
 
     SetRect( &lpitem->rect, orgX, orgY, orgX, orgY );
     lpitem->xTab = 0;
+    if (lpitem->item_flags & MF_OWNERDRAW)  {
+      static HANDLE mistrh = 0;
+      static SEGPTR mistrsegp = 0;
+      static LPMEASUREITEMSTRUCT mistruct=NULL;
+      if (mistruct == NULL)  {
+	mistrh = GlobalAlloc(0,sizeof(MEASUREITEMSTRUCT));
+	mistrsegp = WIN16_GlobalLock(mistrh);
+	mistruct = PTR_SEG_TO_LIN(mistrsegp);
+      }
+      mistruct->CtlType = ODT_MENU;
+      mistruct->itemID = lpitem->item_id;
+      mistruct->itemData = (long int)lpitem->item_text;
+      mistruct->itemHeight = 16;
+      mistruct->itemWidth = 30;
+      SendMessage(hwndOwner,WM_MEASUREITEM,0,mistrsegp);
+      lpitem->rect.bottom += mistruct->itemHeight;
+      lpitem->rect.right += mistruct->itemWidth;
+      dprintf_menu(stddeb,"DrawMenuItem: MeasureItem %04x %d:%d!\n",
+		   lpitem->item_id,mistruct->itemWidth, mistruct->itemHeight);
+      return;
+    } 
 
     if (lpitem->item_flags & MF_SEPARATOR)
     {
@@ -422,11 +443,35 @@ static void MENU_MenuBarCalcSize( HDC hdc, LPRECT lprect, LPPOPUPMENU lppop,
  *
  * Draw a single menu item.
  */
-static void MENU_DrawMenuItem( HDC hdc, LPMENUITEM lpitem,
+static void MENU_DrawMenuItem( HWND hwnd, HDC hdc, LPMENUITEM lpitem,
 			       WORD height, BOOL menuBar )
 {
     RECT rect;
 
+    if (lpitem->item_flags & MF_OWNERDRAW)  {
+      static HANDLE distrh = 0;
+      static SEGPTR distrsegp = 0;
+      static LPDRAWITEMSTRUCT distruct=NULL;
+      if (distruct == NULL)  {
+	distrh = GlobalAlloc(0,sizeof(DRAWITEMSTRUCT));
+	distrsegp = WIN16_GlobalLock(distrh);
+	distruct = PTR_SEG_TO_LIN(distrsegp);
+      }
+      dprintf_menu(stddeb,"DrawMenuItem: Ownerdraw!\n");
+      distruct->CtlType = ODT_MENU;
+      distruct->itemID = lpitem->item_id;
+      distruct->itemData = (long int)lpitem->item_text;
+      distruct->itemState = 0;
+      if (lpitem->item_flags & MF_CHECKED) distruct->itemState |= ODS_CHECKED;
+      if (lpitem->item_flags & MF_GRAYED) distruct->itemState |= ODS_GRAYED;
+      if (lpitem->item_flags & MF_HILITE) distruct->itemState |= ODS_SELECTED;
+      distruct->itemAction = ODA_DRAWENTIRE | ODA_SELECT | ODA_FOCUS;
+      distruct->hwndItem = hwnd;
+      distruct->hDC = hdc;
+      distruct->rcItem = lpitem->rect;
+      SendMessage(hwnd,WM_DRAWITEM,0,distrsegp);
+      return;
+    }
     if (menuBar && (lpitem->item_flags & MF_SEPARATOR)) return;
     rect = lpitem->rect;
 
@@ -566,7 +611,7 @@ static void MENU_DrawPopupMenu( HWND hwnd, HDC hdc, HMENU hmenu )
     if (!menu || !menu->nItems) return;
     item = (MENUITEM *) USER_HEAP_LIN_ADDR( menu->hItems );
     for (i = menu->nItems; i > 0; i--, item++)
-	MENU_DrawMenuItem( hdc, item, menu->Height, FALSE );
+	MENU_DrawMenuItem( hwnd, hdc, item, menu->Height, FALSE );
 }
 
 
@@ -599,7 +644,7 @@ WORD MENU_DrawMenuBar(HDC hDC, LPRECT lprect, HWND hwnd, BOOL suppress_draw)
     lpitem = (MENUITEM *) USER_HEAP_LIN_ADDR( lppop->hItems );
     for (i = 0; i < lppop->nItems; i++, lpitem++)
     {
-	MENU_DrawMenuItem( hDC, lpitem, lppop->Height, TRUE );
+	MENU_DrawMenuItem( hwnd, hDC, lpitem, lppop->Height, TRUE );
     }
     return lppop->Height;
 } 
@@ -677,7 +722,7 @@ static void MENU_SelectItem( HMENU hmenu, WORD wIndex )
 	else
 	{
 	    items[lppop->FocusedItem].item_flags &=~(MF_HILITE|MF_MOUSESELECT);
-	    MENU_DrawMenuItem( hdc, &items[lppop->FocusedItem], lppop->Height,
+	    MENU_DrawMenuItem( lppop->hWnd, hdc, &items[lppop->FocusedItem], lppop->Height,
 			       !(lppop->wFlags & MF_POPUP) );
 	}
     }
@@ -691,7 +736,7 @@ static void MENU_SelectItem( HMENU hmenu, WORD wIndex )
 	else
 	{
 	    items[lppop->FocusedItem].item_flags |= MF_HILITE;
-	    MENU_DrawMenuItem( hdc, &items[lppop->FocusedItem], lppop->Height,
+	    MENU_DrawMenuItem( lppop->hWnd, hdc, &items[lppop->FocusedItem], lppop->Height,
 			       !(lppop->wFlags & MF_POPUP) );
 	    SendMessage(lppop->hWnd, WM_MENUSELECT,
 			items[lppop->FocusedItem].item_id, 

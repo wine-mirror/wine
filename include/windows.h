@@ -680,6 +680,17 @@ typedef struct tagTEXTMETRIC
 #define ETO_OPAQUE          0x02
 #define ETO_CLIPPED         0x04
 
+  /* Rasterizer status */
+typedef struct
+{
+    WORD nSize;
+    WORD wFlags;
+    WORD nLanguageID;
+} RASTERIZER_STATUS, *LPRASTERIZER_STATUS;
+
+#define TT_AVAILABLE        0x0001
+#define TT_ENABLED          0x0002
+
 typedef struct tagPALETTEENTRY
 {
 	BYTE peRed, peGreen, peBlue, peFlags;
@@ -2469,8 +2480,8 @@ Fa(LPSTR,AnsiLower,LPSTR,a)
 Fa(SEGPTR,AnsiNext,SEGPTR,a)
 Fa(LPSTR,AnsiUpper,LPSTR,a)
 Fa(LPSTR,GlobalLock,HGLOBAL,a)
-Fa(LPSTR,GlobalWire,HGLOBAL,a)
 Fa(LPSTR,LockResource,HANDLE,a)
+Fa(SEGPTR,GlobalWire,HGLOBAL,a)
 Fa(SEGPTR,WIN16_GlobalLock,HGLOBAL,a)
 Fa(UINT,GDIRealizePalette,HDC,a)
 Fa(UINT,RealizePalette,HDC,a)

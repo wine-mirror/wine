@@ -381,6 +381,8 @@ HANDLE LoadLibrary(LPSTR libname)
 {
 	HANDLE h;
 	
+        dprintf_module(stddeb,"LoadLibrary: (%08x) %s\n",(int)libname,libname);
+
 	if ((h = LoadImage(libname, DLL, 0)) < 32)
 		return h;
 
@@ -435,8 +437,8 @@ FARPROC GetProcAddress(HANDLE hModule, char *proc_name)
 #ifdef WINELIB
     WINELIB_UNIMP ("GetProcAddress");
 #else
-    int		addr, ret;
-    WORD        sel;
+    int		ret;
+    WORD        sel, addr;
     register struct w_files *w = wine_files;
     int 	ordinal, len;
     char 	* cpnt;
@@ -541,9 +543,9 @@ FARPROC GetProcAddress(HANDLE hModule, char *proc_name)
 static void 
 FillModStructBuiltIn(MODULEENTRY *lpModule, struct dll_name_table_entry_s *dll)
 {
-	lpModule->dwSize = dll->dll_table_length * 1024;
+	lpModule->dwSize = dll->table->dll_table_length * 1024;
 	strcpy(lpModule->szModule, dll->dll_name);
-	lpModule->hModule = 0xff00 + dll->dll_number;
+	lpModule->hModule = 0xff00 + dll->table->dll_number;
 	lpModule->wcUsage = GetModuleUsage(lpModule->hModule);
 	GetModuleFileName(lpModule->hModule, lpModule->szExePath, MAX_PATH + 1);
 	lpModule->wNext = 0;

@@ -334,38 +334,24 @@ int DOS_ValidDirectory(char *name)
    ".."'s in names like "/usr/bin/../lib/test" */
 void DOS_SimplifyPath(char *name)
 {
-  char *p = name, *q = name, *l = NULL;
+  char *l,*p;
   BOOL changed;
 
- start:
-  p = name;
-  q = name;
-  while( *p ) {
-    *q++ = *p++;
-    if( ( *p == '/' ) && ( *(p-1) == '/' ) )
-      p++;
-  }
-  *q = 0;
-
-  p = name;
-  q = name;
-  changed = FALSE;
-  while( *p ) {
-    if( (!changed) &&( *p == '/' ) && ( *(p+1) == '.' ) && ( *(p+2) == '.' ) ) {
-      if( l ) {
-	q = l;
-	p += 3;
-        changed = TRUE;
-	continue;
-      }
+  dprintf_dosfs(stddeb,"SimplifyPath: Before %s\n",name);
+  do {
+    changed = FALSE;
+    while ((l = strstr(name,"//"))) {
+      strcpy(l,l+1); changed = TRUE;
+    } 
+    while ((l = strstr(name,"/../"))) {
+      *l = 0;
+      p = strrchr(name,'/');
+      if (p == NULL) p = name;
+      strcpy(p,l+3);
+      changed = TRUE;
     }
-    else if( *p == '/' )
-      l = q;
-    *q++ = *p++;
-  }
-  *q = 0;
-  if( changed)
-    goto start;
+  } while (changed);
+  dprintf_dosfs(stddeb,"SimplifyPath: After %s\n",name);
 }
 
 
@@ -887,14 +873,6 @@ struct dosdirent *DOS_opendir(char *dosdirname)
 	char *unixdirname;
 	char temp[256];
 	
-	for (x=0; x != MAX_OPEN_DIRS && DosDirs[x].inuse; x++)
-		;
-
-	if (x == MAX_OPEN_DIRS) {
-		fprintf( stderr, "DOS_opendir(): Too many open directories\n");
-		return NULL;
-	}
-
 	if ((unixdirname = DOS_GetUnixFileName(dosdirname)) == NULL)
 		return NULL;
 
@@ -905,13 +883,23 @@ struct dosdirent *DOS_opendir(char *dosdirname)
 		if (temp[y] == '/') 
 		{
 			temp[y++] = '\0';
-			strcpy(DosDirs[x].filemask, temp +y);
-			ToDos(DosDirs[x].filemask);
+		        unixdirname += y;
 			break;
 		}
 	}
 
-    	dprintf_dosfs(stddeb,"DOS_opendir: %s -> %s\n", unixdirname, temp);
+        for (x=0; x <= MAX_OPEN_DIRS; x++) {
+	  if (x == MAX_OPEN_DIRS) {
+	    fprintf( stderr, "DOS_opendir(): Too many open directories\n");
+	    return NULL;
+	  }
+	  if (!DosDirs[x].inuse) break;
+	  if (strcmp(DosDirs[x].unixpath,temp) == 0) break;
+	}
+        
+        strcpy(DosDirs[x].filemask, unixdirname);
+        ToDos(DosDirs[x].filemask);
+    	dprintf_dosfs(stddeb,"DOS_opendir: %s / %s\n", unixdirname, temp);
 
 	DosDirs[x].inuse = 1;
 	strcpy(DosDirs[x].unixpath, temp);

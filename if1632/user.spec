@@ -392,36 +392,36 @@ length	540
 482 pascal16 EnableScrollBar(word word word) EnableScrollBar
 483 pascal SystemParametersInfo(word word ptr word) SystemParametersInfo
 #484 __GP
-#499 WNETERRORTEXT
-#501 WNETOPENJOB
-#502 WNETCLOSEJOB
-#503 WNETABORTJOB
-#504 WNETHOLDJOB
-#505 WNETRELEASEJOB
-#506 WNETCANCELJOB
-#507 WNETSETJOBCOPIES
-#508 WNETWATCHQUEUE
-#509 WNETUNWATCHQUEUE
-#510 WNETLOCKQUEUEDATA
-#511 WNETUNLOCKQUEUEDATA
+499 pascal WNetErrorText(word ptr word) WNetErrorText
+501 pascal WNetOpenJob(ptr ptr word ptr)  WNetOpenJob
+502 pascal WNetCloseJob(word ptr ptr) WNetCloseJob
+503 pascal WNetAbortJob(ptr word) WNetAbortJob
+504 pascal WNetHoldJob(ptr word) WNetHoldJob
+505 pascal WNetReleaseJob(ptr word) WNetReleaseJob
+506 pascal WNetCancelJob(ptr word) WNetCancelJob
+507 pascal WNetSetJobCopies(ptr word word) WNetSetJobCopies
+508 pascal WNetWatchQueue(word ptr ptr word) WNetWatchQueue
+509 pascal WNetUnwatchQueue(word ptr ptr word) WNetUnwatchQueue
+510 pascal WNetLockQueueData(ptr ptr ptr) WNetLockQueueData
+511 pascal WNetUnlockQueueData(ptr) WNetUnlockQueueData
 512 pascal16 WNetGetConnection(ptr ptr ptr) WNetGetConnection
 513 pascal WNetGetCaps(word) WNetGetCaps
-#514 WNETDEVICEMODE
-#515 WNETBROWSEDIALOG
+514 pascal WNetDeviceMode(word) WNetDeviceMode
+515 pascal WNetBrowseDialog(word word ptr) WNetBrowseDialog
 516 pascal WNetGetUser(ptr ptr ptr) WNetGetUser
 517 pascal16 WNetAddConnection(ptr ptr ptr) WNetAddConnection
 518 pascal16 WNetCancelConnection(ptr word) WNetCancelConnection
-#519 WNETGETERROR
-#520 WNETGETERRORTEXT
+519 pascal WNetGetError(ptr) WNetGetError
+520 pascal WNetGetErrorText(word ptr ptr) WNetGetErrorText
 #521 WNETENABLE
 #522 WNETDISABLE
-#523 WNETRESTORECONNECTION
-#524 WNETWRITEJOB
-#525 WNETCONNECTDIALOG
-#526 WNETDISCONNECTDIALOG
-#527 WNETCONNECTIONDIALOG
-#528 WNETVIEWQUEUEDIALOG
-#529 WNETPROPERTYDIALOG
-#530 WNETGETDIRECTORYTYPE
-#531 WNETDIRECTORYNOTIFY
-#532 WNETGETPROPERTYTEXT
+523 pascal WNetRestoreConnection(word ptr) WNetRestoreConnection
+524 pascal WNetWriteJob(word ptr ptr) WNetWriteJob
+525 pascal WnetConnectDialog(word word) WNetConnectDialog
+526 pascal WNetDisconnectDialog(word word) WNetDisconnectDialog
+527 pascal WNetConnectionDialog(word word) WNetConnectionDialog
+528 pascal WNetViewQueueDialog(word ptr) WNetViewQueueDialog
+529 pascal WNetPropertyDialog(word word ptr word) WNetPropertyDialog
+530 pascal WNetGetDirectoryType(ptr ptr) WNetGetDirectoryType
+531 pascal WNetDirectoryNotify(word ptr word) WNetDirectoryNotify
+532 pascal WNetGetPropertyText(word word word ptr word) WNetGetPropertyText

@@ -736,14 +736,10 @@ int EnumFonts(HDC hDC, LPSTR lpFaceName, FARPROC lpEnumFunc, LPSTR lpData)
 		SelectObject(hDC, hOldFont);
 		DeleteObject(hFont);
 		dprintf_font(stddeb,"EnumFonts // i=%d lpLogFont=%p lptm=%p\n", i, lpLogFont, lptm);
-
-#ifdef WINELIB
-		nRet = (*lpEnumFunc)(lpLogFont, lptm, 0, lpData);
-#else
-		nRet = CallBack16(lpEnumFunc, 4, 2, GDI_HEAP_SEG_ADDR(hLog),
-					2, GDI_HEAP_SEG_ADDR(hMet),
-                                        0, (int)0, 2, (int)lpData);
-#endif
+                nRet = CallEnumFontsProc( lpEnumFunc,
+                                          GDI_HEAP_SEG_ADDR(hLog),
+                                          GDI_HEAP_SEG_ADDR(hMet),
+                                          0, (LONG)lpData );
 		if (nRet == 0) {
 			dprintf_font(stddeb,"EnumFonts // EnumEnd requested by application !\n");
 			break;
@@ -823,13 +819,10 @@ int EnumFontFamilies(HDC hDC, LPSTR lpszFamily, FARPROC lpEnumFunc, LPSTR lpData
 		DeleteObject(hFont);
 		dprintf_font(stddeb, "EnumFontFamilies // i=%d lpLogFont=%p lptm=%p\n", i, lpLogFont, lptm);
 
-#ifdef WINELIB
-		nRet = (*lpEnumFunc)(lpLogFont, lptm, 0, lpData);
-#else
-		nRet = CallBack16(lpEnumFunc, 4, 2, GDI_HEAP_SEG_ADDR(hLog),
-					2, GDI_HEAP_SEG_ADDR(hMet),
-                                        0, (int)0, 2, (int)lpData);
-#endif
+                nRet = CallEnumFontFamProc( lpEnumFunc,
+                                            GDI_HEAP_SEG_ADDR(hLog),
+                                            GDI_HEAP_SEG_ADDR(hMet),
+                                            0, (LONG)lpData );
 		if (nRet == 0) {
 			dprintf_font(stddeb,"EnumFontFamilies // EnumEnd requested by application !\n");
 			break;
@@ -840,5 +833,17 @@ int EnumFontFamilies(HDC hDC, LPSTR lpszFamily, FARPROC lpEnumFunc, LPSTR lpData
 	return 0;
 }
 
+/*************************************************************************
+ *				GetRasterizerCaps	[GDI.313]
+ */
 
-
+BOOL GetRasterizerCaps(LPRASTERIZER_STATUS lprs, WORD cbNumBytes)
+{
+  /* This is not much more than a dummy */
+  RASTERIZER_STATUS rs;
+  
+  rs.nSize = sizeof(rs);
+  rs.wFlags = 0;
+  rs.nLanguageID = 0;
+  return True;
+}

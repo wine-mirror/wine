@@ -25,8 +25,8 @@ void
 PrintFileHeader(struct ne_header_s *ne_header)
 {
     printf("ne_header: %c%c\n",
-	   ne_header->header_type[0], 
-	   ne_header->header_type[1]);
+           ne_header->ne_magic & 0xff,
+           ne_header->ne_magic >> 8 );
     printf("linker version: %d.%d\n", ne_header->linker_version,
 	   ne_header->linker_revision);
     printf("format flags: %04x\n", ne_header->format_flags);

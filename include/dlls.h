@@ -7,6 +7,8 @@
 #ifndef DLLS_H
 #define DLLS_H
 
+#include "wintypes.h"
+
 #define MAX_NAME_LENGTH		64
 
 typedef struct resource_name_table
@@ -54,119 +56,67 @@ extern struct  w_files *wine_files;
 #define DLL	0
 #define EXE	1
 
-#define DLL_ARGTYPE_SIGNEDWORD	0
-#define DLL_ARGTYPE_WORD	1
-#define DLL_ARGTYPE_LONG	2
-#define DLL_ARGTYPE_FARPTR	3
-#define DLL_MAX_ARGS		16
-
-#define DLL_HANDLERTYPE_PASCAL	16
-
 struct dll_table_entry_s
 {
     /*
      * Relocation data
      */
-    unsigned int selector;	/* Selector to access this entry point	  */
-    void *address;		/* Offset in segment of entry point	  */
+    WORD selector;  /* Selector of entry point */
+    WORD offset;    /* Offset in segment of entry point */
 
     /*
      * 16->32 bit interface data
      */
     char *export_name;
-    void *handler;		/* Address of function to process request */
-    char n_args;			/* Number of arguments passed to function */
-    short conv_reference ; /* reference to Argument conversion data  */
 #ifdef WINESTAT
     int used;			/* Number of times this function referenced */
 #endif
-    
+};
+
+struct dll_table_s
+{
+    struct dll_table_entry_s *dll_table;
+    int dll_table_length;
+    int dll_number;
+    void *code_start;  /* 32-bit address of DLL code */
+    void *code_end;
+    void *data_start;  /* 32-bit address of DLL data */
+    void *data_end;
 };
 
 struct dll_name_table_entry_s
 {
     char *dll_name;
-    struct dll_table_entry_s *dll_table;
-    int dll_table_length;
-    int dll_number;
+    struct dll_table_s *table;
     int dll_is_used;   /* use MS provided if set to zero */
 };
 
-extern struct dll_table_entry_s KERNEL_table[];
-extern struct dll_table_entry_s USER_table[];
-extern struct dll_table_entry_s GDI_table[];
-extern struct dll_table_entry_s WIN87EM_table[];
-extern struct dll_table_entry_s MMSYSTEM_table[];
-extern struct dll_table_entry_s SHELL_table[];
-extern struct dll_table_entry_s SOUND_table[];
-extern struct dll_table_entry_s KEYBOARD_table[];
-extern struct dll_table_entry_s WINSOCK_table[];
-extern struct dll_table_entry_s STRESS_table[];
-extern struct dll_table_entry_s SYSTEM_table[];
-extern struct dll_table_entry_s TOOLHELP_table[];
-extern struct dll_table_entry_s MOUSE_table[];
-extern struct dll_table_entry_s COMMDLG_table[];
-extern struct dll_table_entry_s OLE2_table[];
-extern struct dll_table_entry_s OLE2CONV_table[];
-extern struct dll_table_entry_s OLE2DISP_table[];
-extern struct dll_table_entry_s OLE2NLS_table[];
-extern struct dll_table_entry_s OLE2PROX_table[];
-extern struct dll_table_entry_s OLECLI_table[];
-extern struct dll_table_entry_s OLESVR_table[];
-extern struct dll_table_entry_s COMPOBJ_table[];
-extern struct dll_table_entry_s STORAGE_table[];
+extern struct dll_table_s KERNEL_table;
+extern struct dll_table_s USER_table;
+extern struct dll_table_s GDI_table;
+extern struct dll_table_s WIN87EM_table;
+extern struct dll_table_s MMSYSTEM_table;
+extern struct dll_table_s SHELL_table;
+extern struct dll_table_s SOUND_table;
+extern struct dll_table_s KEYBOARD_table;
+extern struct dll_table_s WINSOCK_table;
+extern struct dll_table_s STRESS_table;
+extern struct dll_table_s SYSTEM_table;
+extern struct dll_table_s TOOLHELP_table;
+extern struct dll_table_s MOUSE_table;
+extern struct dll_table_s COMMDLG_table;
+extern struct dll_table_s OLE2_table;
+extern struct dll_table_s OLE2CONV_table;
+extern struct dll_table_s OLE2DISP_table;
+extern struct dll_table_s OLE2NLS_table;
+extern struct dll_table_s OLE2PROX_table;
+extern struct dll_table_s OLECLI_table;
+extern struct dll_table_s OLESVR_table;
+extern struct dll_table_s COMPOBJ_table;
+extern struct dll_table_s STORAGE_table;
+extern struct dll_table_s WINPROCS_table;
 
-
-extern unsigned short KERNEL_offsets[];
-extern unsigned short USER_offsets[];
-extern unsigned short GDI_offsets[];
-extern unsigned short WIN87EM_offsets[];
-extern unsigned short MMSYSTEM_offsets[];
-extern unsigned short SHELL_offsets[];
-extern unsigned short SOUND_offsets[];
-extern unsigned short KEYBOARD_offsets[];
-extern unsigned short WINSOCK_offsets[];
-extern unsigned short STRESS_offsets[];
-extern unsigned short SYSTEM_offsets[];
-extern unsigned short TOOLHELP_offsets[];
-extern unsigned short MOUSE_offsets[];
-extern unsigned short COMMDLG_offsets[];
-extern unsigned short OLE2_offsets[];
-extern unsigned short OLE2CONV_offsets[];
-extern unsigned short OLE2DISP_offsets[];
-extern unsigned short OLE2NLS_offsets[];
-extern unsigned short OLE2PROX_offsets[];
-extern unsigned short OLECLI_offsets[];
-extern unsigned short OLESVR_offsets[];
-extern unsigned short COMPOBJ_offsets[];
-extern unsigned short STORAGE_offsets[];
-
-
-extern unsigned char KERNEL_types[];
-extern unsigned char USER_types[];
-extern unsigned char GDI_types[];
-extern unsigned char WIN87EM_types[];
-extern unsigned char MMSYSTEM_types[];
-extern unsigned char SHELL_types[];
-extern unsigned char SOUND_types[];
-extern unsigned char KEYBOARD_types[];
-extern unsigned char WINSOCK_types[];
-extern unsigned char STRESS_types[];
-extern unsigned char SYSTEM_types[];
-extern unsigned char TOOLHELP_types[];
-extern unsigned char MOUSE_types[];
-extern unsigned char COMMDLG_types[];
-extern unsigned char OLE2_types[];
-extern unsigned char OLE2CONV_types[];
-extern unsigned char OLE2DISP_types[];
-extern unsigned char OLE2NLS_types[];
-extern unsigned char OLE2PROX_types[];
-extern unsigned char OLECLI_types[];
-extern unsigned char OLESVR_types[];
-extern unsigned char COMPOBJ_types[];
-extern unsigned char STORAGE_types[];
-
-#define N_BUILTINS	23
+#define N_BUILTINS	24
 
 #endif /* DLLS_H */
 

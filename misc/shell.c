@@ -9,6 +9,7 @@
 #include "library.h"
 #include "shell.h"
 #include "neexe.h"
+#include "selectors.h"
 #include "../rc/sysres.h"
 #include "stddebug.h"
 /* #define DEBUG_REG */
@@ -81,6 +82,7 @@ LONG RegOpenKey(HKEY hKey, LPCSTR lpSubKey, HKEY FAR *lphKey)
 	  dprintf_reg(stddeb,"RegOpenKey // specific key = %08lX !\n", hKey);
 	  lpKey = (LPKEYSTRUCT)GlobalLock(hKey);
         }
+        if (!*lpSubKey)  { *lphKey = hKey; return ERROR_SUCCESS; }
         while(*lpSubKey) {
           ptr = strchr(lpSubKey,'\\');
           if (!ptr) ptr = lpSubKey + strlen(lpSubKey);
@@ -128,6 +130,7 @@ LONG RegCreateKey(HKEY hKey, LPCSTR lpSubKey, HKEY FAR *lphKey)
 	  dprintf_reg(stddeb,"RegCreateKey // specific key = %08lX !\n", hKey);
 	  lpKey = (LPKEYSTRUCT)GlobalLock(hKey);
         }
+        if (!*lpSubKey)  { *lphKey = hKey; return ERROR_SUCCESS; }
         while (*lpSubKey) {
           dprintf_reg(stddeb, "RegCreateKey: Looking for subkey %s\n", lpSubKey);
           ptr = strchr(lpSubKey,'\\');
@@ -389,7 +392,7 @@ INT ShellAbout(HWND hWnd, LPCSTR szApp, LPCSTR szOtherStuff, HICON hIcon)
 
 	return DialogBoxIndirectPtr( GetWindowWord(hWnd, GWW_HINSTANCE),
                                      sysres_DIALOG_SHELL_ABOUT_MSGBOX,
-                                     hWnd, (WNDPROC)AboutDlgProc);
+                                     hWnd, GetWndProcEntry16("AboutDlgProc"));
 }
 
 

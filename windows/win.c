@@ -21,8 +21,8 @@
 #include "nonclient.h"
 #include "winpos.h"
 #include "color.h"
-#include "stddebug.h"
 #include "callback.h"
+#include "stddebug.h"
 /* #define DEBUG_WIN  */ 
 /* #define DEBUG_MENU */
 #include "debug.h"
@@ -318,9 +318,15 @@ HWND CreateWindowEx( DWORD exStyle, LPSTR className, LPSTR windowName,
     if (parent)
     {
 	  /* Make sure parent is valid */
-        if (!IsWindow( parent )) return 0;
+        if (!IsWindow( parent )) {
+			dprintf_win(stddeb,"CreateWindowEx: Parent %x is not a windows\n", parent);
+			return 0;
+		}
     }
-    else if (style & WS_CHILD) return 0;  /* WS_CHILD needs a parent */
+    else if (style & WS_CHILD) {
+		dprintf_win(stddeb,"CreateWindowEx: no parent\n");
+		return 0;  /* WS_CHILD needs a parent */
+	}
 
     if (!(class = CLASS_FindClassByName( className, instance, &classPtr ))) {
 	fprintf(stderr,"CreateWindow BAD CLASSNAME '%s' !\n", className);
@@ -336,7 +342,10 @@ HWND CreateWindowEx( DWORD exStyle, LPSTR className, LPSTR windowName,
       /* Create the window structure */
 
     hwnd = USER_HEAP_ALLOC( sizeof(WND)+classPtr->wc.cbWndExtra );
-    if (!hwnd) return 0;
+    if (!hwnd) {
+		dprintf_win(stddeb,"CreateWindowEx: Out of memory\n");
+		return 0;
+	}
 
       /* Fill the structure */
 
@@ -480,7 +489,10 @@ HWND CreateWindowEx( DWORD exStyle, LPSTR className, LPSTR windowName,
 
     wmcreate = SendMessage( hwnd, WM_NCCREATE, 0,
                             USER_HEAP_SEG_ADDR(hcreateStruct) );
-    if (!wmcreate) wmcreate = -1;
+    if (!wmcreate) {
+		dprintf_win(stddeb,"CreateWindowEx: WM_NCCREATE return 0\n");
+		wmcreate = -1;
+	}
     else
     {
 	WINPOS_SendNCCalcSize( hwnd, FALSE, &wndPtr->rectWindow,
@@ -496,6 +508,7 @@ HWND CreateWindowEx( DWORD exStyle, LPSTR className, LPSTR windowName,
     if (wmcreate == -1)
     {
 	  /* Abort window creation */
+	  dprintf_win(stddeb,"CreateWindowEx: wmcreate==-1, aborting\n");
         WIN_DestroyWindow( hwnd );
 	return 0;
     }
@@ -991,8 +1004,6 @@ HWND GetLastActivePopup(HWND hwnd)
  *    pointers
  *
  *  o call wndenumprc for every child window the desktop has
- *    (parameters to Callback16 passed backwards so they are
- *    put in in pascal calling order)
  *
  *  o if wndenumprc returns 0 exit
  * 
@@ -1009,13 +1020,7 @@ BOOL EnumWindows(FARPROC wndenumprc, LPARAM lParam)
         if ( !(wndPtr=WIN_FindWndPtr(hwnd)) ) {
               return 0;
       }
-#ifdef WINELIB
-      (*wndenumprc)(hwnd, lParam);
-#else
-      result = CallBack16(wndenumprc, 2,
-		CALLBACK_SIZE_WORD, (int) hwnd,
-		CALLBACK_SIZE_LONG, lParam);
-#endif
+      result = CallEnumWindowsProc( wndenumprc, hwnd, lParam );
       if ( ! result )  {
               return 0;
       }
@@ -1030,7 +1035,7 @@ BOOL EnumWindows(FARPROC wndenumprc, LPARAM lParam)
  *   o hwnd is the first child to use, loop until all next windows
  *     are processed
  * 
- *   o call wdnenumprc with parameters in inverse order (pascal)
+ *   o call wdnenumprc
  *
  *   o call ourselves with the next child window
  * 
@@ -1039,22 +1044,11 @@ static BOOL WIN_EnumChildWin(HWND hwnd, FARPROC wndenumprc, LPARAM lParam)
 {
     WND *wndPtr;
 
-    while (hwnd) {
-      if ( !(wndPtr=WIN_FindWndPtr(hwnd)) ) {
-            return 0;
-        }
-#ifdef WINELIB
-        if (!(*wndenumprc)( 2, lParam, (int) hwnd)) {
-#else
-        if (!CallBack16(wndenumprc, 2,
-		CALLBACK_SIZE_WORD, (int) hwnd,
-		CALLBACK_SIZE_LONG, lParam)) {
-#endif
-                return 0;
-      }
-      if (!WIN_EnumChildWin(wndPtr->hwndChild, wndenumprc, lParam)) {
-          return 0;
-      }
+    while (hwnd)
+    {
+        if (!(wndPtr=WIN_FindWndPtr(hwnd))) return 0;
+        if (!CallEnumWindowsProc( wndenumprc, hwnd, lParam )) return 0;
+        if (!WIN_EnumChildWin(wndPtr->hwndChild, wndenumprc, lParam)) return 0;
         hwnd=wndPtr->hwndNext;
     } 
     return 1;

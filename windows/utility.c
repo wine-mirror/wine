@@ -14,6 +14,7 @@
 #include <stdlib.h>
 #include "windows.h"
 #include "ldt.h"
+#include "stackframe.h"
 #include "stddebug.h"
 /* #define DEBUG_UTILITY */
 #include "debug.h"
@@ -56,7 +57,7 @@ void UTILITY_strip015(char *dest) {
 int
 DebugPrintString(char *str)
 {
-    fprintf(stderr, "%s", str);
+    fprintf(stderr, "%s\n", str);
     return 0;
 }
 
@@ -268,11 +269,13 @@ char *UTILITY_convertArgs(char *format, char *winarg)
 };
 
 #ifndef WINELIB
-INT windows_wsprintf(BYTE *win_stack)
+INT windows_wsprintf(void)
 {
     LPSTR lpOutput, lpFormat, ptr;
     BYTE new_stack[1024], *stack_ptr;
     BOOL fLarge;
+
+    BYTE *win_stack = (BYTE *)CURRENT_STACK16->args;
 
     lpOutput = (LPSTR) PTR_SEG_TO_LIN(*(DWORD*)win_stack);
     win_stack += sizeof(DWORD);

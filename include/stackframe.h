@@ -10,18 +10,28 @@
 #include <windows.h>
 #include "ldt.h"
 
+#ifndef WINELIB
+#pragma pack(1)
+#endif
+
 typedef struct
 {
-    WORD    saved_ss;
+    WORD    saved_ss;                /* saved previous 16-bit stack */
     WORD    saved_bp;
     WORD    saved_sp;
-    WORD    ds;
-    WORD    bp;
-    WORD    arg_length;
-    WORD    ip;
+    WORD    ds;                      /* 16-bit ds */
+    DWORD   entry_point WINE_PACKED; /* entry point to call */
+    WORD    ordinal_number;          /* ordinal number of entry point */
+    WORD    dll_id;                  /* DLL id of entry point */
+    WORD    bp;                      /* 16-bit bp */
+    WORD    ip;                      /* return address */
     WORD    cs;
-    WORD    args[1];
+    WORD    args[1];                 /* arguments to API function */
 } STACK16FRAME;
+
+#ifndef WINELIB
+#pragma pack(4)
+#endif
 
 extern WORD IF1632_Saved16_ss;
 extern WORD IF1632_Saved16_sp;

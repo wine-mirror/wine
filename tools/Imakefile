@@ -6,11 +6,7 @@ OBJS = $(SRCS:.c=.o)
 
 AllTarget(build)
 
-#ifndef NewBuild
 NormalProgramTarget(build,build.o,$(DEPLIBS),,)
-#else
-NormalProgramTarget(newbuild,$(OBJS),$(DEPLIBS),,)
-#endif
 
 DependTarget()
 

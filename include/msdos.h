@@ -30,7 +30,7 @@ struct fcb {
 	BYTE dummy2[9];
 };
 
-#define DOSVERSION 0x0500;      /* Might as well pretend we're DOS 5.0 */
+#define DOSVERSION 0x0005;      /* Major version in low byte: DOS 5.00 */
 #define MAX_DOS_DRIVES	26
 
 extern WORD ExtendedError;

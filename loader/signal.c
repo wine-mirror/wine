@@ -287,38 +287,4 @@ void init_wine_signals(void)
 #endif
 }
 
-static sigjmp_buf segv_jmpbuf;
-
-static void
-segv_handler()
-{
-    siglongjmp(segv_jmpbuf, 1);
-}
-
-int
-test_memory( char *p, int write )
-{
-    int ret = FALSE;
-    struct sigaction new_act;
-    struct sigaction old_act;
-
-    memset(&new_act, 0, sizeof new_act);
-    new_act.sa_handler = segv_handler;
-    if (sigsetjmp( segv_jmpbuf, 1 ) == 0) {
-	char c = 100;
-	if (sigaction(SIGSEGV, &new_act, &old_act) < 0)
-	    perror("sigaction");
-	c = *p;
-	if (write)
-	    *p = c;
-	ret = TRUE;
-    }
-#ifdef linux
-    wine_sigaction(SIGSEGV, &old_act, NULL);
-#else
-    sigaction(SIGSEGV, &old_act, NULL);
-#endif
-    return ret;
-}
-
 #endif /* ifndef WINELIB */

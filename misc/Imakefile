@@ -7,6 +7,7 @@ SRCS = \
 	clipboard.c \
 	comm.c \
 	commdlg.c \
+	compobj.c \
 	dos_fs.c \
 	driver.c \
 	exec.c \

@@ -4,8 +4,7 @@ length	NUMBER_OF_ORDINALS
 
 ORDINAL VARTYPE EXPORTNAME (DATA [DATA [DATA [...]]])
 
-ORDINAL FUNCTYPE EXPORTNAME([ARGTYPE [ARGTYPE [...]]])
-		 HANDLERNAME([ARGNUM [ARGNUM [...]]])
+ORDINAL FUNCTYPE EXPORTNAME([ARGTYPE [ARGTYPE [...]]]) HANDLERNAME
 
 ORDINAL equate EXPORTNAME DATA
 
@@ -36,34 +35,22 @@ ordinal 2 and containing 4 bytes:
 
 Function ordinals:
 
-    This type defines a function entry point.  The prototype defined
-by "EXPORTNAME ([ARGTYPE [ARGTYPE [...]]])" specifies the name available
-for dynamic linking and the format of the 16-bit stack.  By specifying
-"FUNCTYPE", the loader can automatically determine which order the
-parameters were pushed by the calling routine.  The prototype
-specified by "HANDLERNAME([ARGNUM [ARGNUM [...]]])"  specifies to
-the loader how to call the 32-bit library routine which will handle this
-call.  Note that specifying "ARGNUM" as 1 means the leftmost argument
-given to the function call, and not the first argument on the stack.
-For "pascal" functions, "ARGNUM" equal to 1 specifies the last
-argument on the stack.  If you do not specify any arguments to the
-handler function, then address of the 16-bit argument stack is
-passed to the handler function.
-    "ORDINAL" is replaced by the ordinal number corresponding to the
-function.  "FUNCTYPE" should be "c" or "pascal" ("pascal" may be
-shortened to "p").  "EXPORTNAME" will be the name available for
-dynamic linking.  "ARGTYPE" should be "byte", "word", "long", "ptr",
-"s_byte" (signed byte), "s_word" (signed word) or "s_long"
-(signed long).  "HANDLERNAME" is the name of the actual function
-that will process the request in 32-bit mode.  "ARGNUM" is the
-original argument number.  The first argument is numbered "1".
+    This type defines a function entry point.  The prototype defined by
+"EXPORTNAME ([ARGTYPE [ARGTYPE [...]]])" specifies the name available for
+dynamic linking and the format of the 16-bit stack. "ORDINAL" is replaced
+by the ordinal number corresponding to the function.  "FUNCTYPE" should be
+"pascal16" or "pascal" for 16-bit or 32-bit return values.  "ARGTYPE"
+should be "byte", "word", "long", "ptr" (linear pointer), "s_byte" (signed
+byte), "s_word" (signed word), "s_long" (signed long), or "segptr"
+(segmented pointer).  "HANDLERNAME" is the name of the actual function that
+will process the request in 32-bit mode.
 
     This first example defines an entry point for the CreateWindow()
 call (the ordinal 100 is just an example):
 
 	100 pascal CreateWindow(ptr ptr long s_word s_word s_word s_word
 				word word word ptr)
-		   WIN_CreateWindow(1 2 3 4 5 6 7 8 9 10 11)
+		   WIN_CreateWindow
 
    This second example defines an entry point for the GetFocus()
 call (the ordinal 100 is just an example):

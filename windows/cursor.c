@@ -23,6 +23,7 @@ static char Copyright[] = "Copyright  Martin Ayotte, 1993";
 /* #define DEBUG_CURSOR   */
 /* #define DEBUG_RESOURCE */
 #include "debug.h"
+#include "arch.h"
 
 static int ShowCursCount = 0;
 static HCURSOR hActiveCursor;
@@ -52,16 +53,15 @@ static struct { SEGPTR name; HCURSOR cursor; } system_cursor[] =
  */
 HCURSOR LoadCursor(HANDLE instance, SEGPTR cursor_name)
 {
-    XColor	bkcolor;
-    XColor	fgcolor;
     HCURSOR 	hCursor;
     HANDLE 	rsc_mem;
     WORD 	*lp;
+    LONG        *lpl,size;
     CURSORDESCRIP *lpcurdesc;
     CURSORALLOC	  *lpcur;
     HDC 	hdc;
-    int i, j, image_size;
-
+    int i, image_size;
+    unsigned char *cp1,*cp2;
     dprintf_resource(stddeb,"LoadCursor: instance = %04x, name = %08lx\n",
 	   instance, cursor_name);
     if (!instance)
@@ -117,27 +117,29 @@ HCURSOR LoadCursor(HANDLE instance, SEGPTR cursor_name)
 	    }
 	}
 
-#if 1
+#if 0
+    /* this code replaces all bitmap cursors with the default cursor */
     lpcur->xcursor = XCreateFontCursor(display, XC_top_left_arrow);
     GlobalUnlock(hCursor);
     return hCursor;
 #endif
 
-    if (!(hdc = GetDC(GetDesktopWindow()))) return 0;
+    if (!(hdc = GetDC(0))) return 0;
     rsc_mem = RSC_LoadResource(instance, cursor_name, NE_RSCTYPE_GROUP_CURSOR, 
 			       &image_size);
     if (rsc_mem == (HANDLE)NULL) {
     fprintf(stderr,"LoadCursor / Cursor %08lx not Found !\n", cursor_name);
-	ReleaseDC(GetDesktopWindow(), hdc); 
+	ReleaseDC(0, hdc); 
 	return 0;
 	}
     lp = (WORD *)GlobalLock(rsc_mem);
     if (lp == NULL) {
 	GlobalFree(rsc_mem);
-	ReleaseDC(GetDesktopWindow(), hdc); 
+	ReleaseDC(0, hdc); 
 	return 0;
 	}
     lpcurdesc = (CURSORDESCRIP *)(lp + 3);
+#if 0
     dprintf_cursor(stddeb,"LoadCursor / image_size=%d\n", image_size);
     dprintf_cursor(stddeb,"LoadCursor / curReserved=%X\n", *lp);
     dprintf_cursor(stddeb,"LoadCursor / curResourceType=%X\n", *(lp + 1));
@@ -154,6 +156,7 @@ HCURSOR LoadCursor(HANDLE instance, SEGPTR cursor_name)
 		(DWORD)lpcurdesc->curDIBSize);
     dprintf_cursor(stddeb,"LoadCursor / cursor curDIBOffset=%lX\n", 
 		(DWORD)lpcurdesc->curDIBOffset);
+#endif
     lpcur->descriptor = *lpcurdesc;
     GlobalUnlock(rsc_mem);
     GlobalFree(rsc_mem);
@@ -163,63 +166,64 @@ HCURSOR LoadCursor(HANDLE instance, SEGPTR cursor_name)
     if (rsc_mem == (HANDLE)NULL) {
     	fprintf(stderr,
 		"LoadCursor / Cursor %08lx Bitmap not Found !\n", cursor_name);
-	ReleaseDC(GetDesktopWindow(), hdc); 
+	ReleaseDC(0, hdc); 
 	return 0;
 	}
-    lp = (WORD *)GlobalLock(rsc_mem);
+    lpl = (LONG *)GlobalLock(rsc_mem);
     if (lp == NULL) {
 	GlobalFree(rsc_mem);
-	ReleaseDC(GetDesktopWindow(), hdc); 
+	ReleaseDC(0, hdc); 
 	return 0;
- 	}
-	lp++;
-    for (j = 0; j < 16; j++)
-        dprintf_cursor(stddeb,"%04X ", *(lp + j));
-/*
-    if (*lp == sizeof(BITMAPINFOHEADER))
-	lpcur->hBitmap = ConvertInfoBitmap(hdc, (BITMAPINFO *)lp);
-    else
-*/
-        lpcur->hBitmap = 0;
-/*     lp += sizeof(BITMAP); */
-    for (i = 0; i < 81; i++) {
-	char temp = *((char *)lp + 162 + i);
-	*((char *)lp + 162 + i) = *((char *)lp + 324 - i);
-	*((char *)lp + 324 - i) = temp;
-	}
-    lpcur->pixshape = XCreatePixmapFromBitmapData(
-    	display, DefaultRootWindow(display), 
-        ((char *)lp + 211), 32, 32,
-/*
-        lpcurdesc->Width / 2, lpcurdesc->Height / 4, 
-*/
-        WhitePixel(display, DefaultScreen(display)), 
-        BlackPixel(display, DefaultScreen(display)), 1);
-    lpcur->pixmask = XCreatePixmapFromBitmapData(
-    	display, DefaultRootWindow(display), 
-        ((char *)lp + 211), 32, 32,
-        WhitePixel(display, DefaultScreen(display)), 
-        BlackPixel(display, DefaultScreen(display)), 1);
-    memset(&bkcolor, 0, sizeof(XColor));
-    memset(&fgcolor, 0, sizeof(XColor));
-    bkcolor.pixel = WhitePixel(display, DefaultScreen(display)); 
-    fgcolor.pixel = BlackPixel(display, DefaultScreen(display));
-    dprintf_cursor(stddeb,"LoadCursor / before XCreatePixmapCursor !\n");
-    lpcur->xcursor = XCreatePixmapCursor(display,
- 	lpcur->pixshape, lpcur->pixmask, 
- 	&fgcolor, &bkcolor, lpcur->descriptor.curXHotspot, 
- 	lpcur->descriptor.curYHotspot);
+    }
+    lpl++;
+    size = CONV_LONG (*lpl);
+    if (size == sizeof(BITMAPCOREHEADER)){
+	CONV_BITMAPCOREHEADER (lpl);
+        ((BITMAPINFOHEADER *)lpl)->biHeight /= 2;
+	lpcur->hBitmap = ConvertCoreBitmap( hdc, (BITMAPCOREHEADER *) lpl );
+    } else if (size == sizeof(BITMAPINFOHEADER)){
+	CONV_BITMAPINFO (lpl);
+        ((BITMAPINFOHEADER *)lpl)->biHeight /= 2;
+	lpcur->hBitmap = ConvertInfoBitmap( hdc, (BITMAPINFO *) lpl );
+    } else  {
+      fprintf(stderr,"No bitmap for cursor?\n");
+      lpcur->hBitmap = 0;
+    }
+    lpl = (char *)lpl + size + 8;
+  /* This is rather strange! The data is stored *BACKWARDS* and       */
+  /* mirrored! But why?? FIXME: the image must be flipped at the Y    */
+  /* axis, either here or in CreateCusor(); */
+    size = lpcur->descriptor.Height/2 * ((lpcur->descriptor.Width+7)/8);
+#if 0
+    dprintf_cursor(stddeb,"Before:\n");
+    for(i=0;i<2*size;i++)  {
+      dprintf_cursor(stddeb,"%02x ",((unsigned char *)lpl)[i]);
+      if ((i & 7) == 7) dprintf_cursor(stddeb,"\n");
+    }
+#endif
+    cp1 = (char *)lpl;
+    cp2 = cp1+2*size;
+    for(i = 0; i < size; i++)  {
+      char tmp=*--cp2;
+      *cp2 = *cp1;
+      *cp1++ = tmp;
+    }
+#if 0
+    dprintf_cursor(stddeb,"After:\n");
+    for(i=0;i<2*size;i++)  {
+      dprintf_cursor(stddeb,"%02x ",((unsigned char *)lpl)[i]);
+      if ((i & 7) == 7) dprintf_cursor(stddeb,"\n");
+    }
+#endif
+    hCursor = CreateCursor(instance, lpcur->descriptor.curXHotspot, 
+ 	lpcur->descriptor.curYHotspot, lpcur->descriptor.Width,
+	lpcur->descriptor.Height/2,
+	(LPSTR)lpl, ((LPSTR)lpl)+size);
+
     GlobalUnlock(rsc_mem);
     GlobalFree(rsc_mem);
-/*
-    hCursor = CreateCursor(instance, lpcur->descriptor.curXHotspot, 
- 	lpcur->descriptor.curYHotspot, 32, 32,
-	(LPSTR)lp + 211, , (LPSTR)lp + 211);
-*/
-    XFreePixmap(display, lpcur->pixshape);
-    XFreePixmap(display, lpcur->pixmask);
-    ReleaseDC(GetDesktopWindow(), hdc); 
     GlobalUnlock(hCursor);
+    ReleaseDC(0,hdc);
     return hCursor;
 }
 
@@ -231,12 +235,16 @@ HCURSOR LoadCursor(HANDLE instance, SEGPTR cursor_name)
 HCURSOR CreateCursor(HANDLE instance, short nXhotspot, short nYhotspot, 
 	short nWidth, short nHeight, LPSTR lpANDbitPlane, LPSTR lpXORbitPlane)
 {
-    XColor	bkcolor;
-    XColor	fgcolor;
     HCURSOR 	hCursor;
     CURSORALLOC	  *lpcur;
     HDC 	hdc;
-
+    int         bpllen = (nWidth + 7)/8 * nHeight;
+    char        *tmpbpl = malloc(bpllen);
+    int         i;
+  
+    XColor bkcolor,fgcolor;
+    Colormap cmap = XDefaultColormap(display,XDefaultScreen(display));
+    
     dprintf_resource(stddeb,"CreateCursor: inst=%04x nXhotspot=%d  nYhotspot=%d nWidth=%d nHeight=%d\n",  
        instance, nXhotspot, nYhotspot, nWidth, nHeight);
     dprintf_resource(stddeb,"CreateCursor: inst=%04x lpANDbitPlane=%p lpXORbitPlane=%p\n",
@@ -253,24 +261,21 @@ HCURSOR CreateCursor(HANDLE instance, short nXhotspot, short nYhotspot,
     memset(lpcur, 0, sizeof(CURSORALLOC));
     lpcur->descriptor.curXHotspot = nXhotspot;
     lpcur->descriptor.curYHotspot = nYhotspot;
-    lpcur->pixshape = XCreatePixmapFromBitmapData(
-    	display, DefaultRootWindow(display), 
-        lpXORbitPlane, nWidth, nHeight,
-        WhitePixel(display, DefaultScreen(display)), 
-        BlackPixel(display, DefaultScreen(display)), 1);
+    for(i=0; i<bpllen; i++) tmpbpl[i] = ~lpANDbitPlane[i];
     lpcur->pixmask = XCreatePixmapFromBitmapData(
     	display, DefaultRootWindow(display), 
-        lpANDbitPlane, nWidth, nHeight,
-        WhitePixel(display, DefaultScreen(display)), 
-        BlackPixel(display, DefaultScreen(display)), 1);
-    memset(&bkcolor, 0, sizeof(XColor));
-    memset(&fgcolor, 0, sizeof(XColor));
-    bkcolor.pixel = WhitePixel(display, DefaultScreen(display)); 
-    fgcolor.pixel = BlackPixel(display, DefaultScreen(display));
+        tmpbpl, nWidth, nHeight, 1, 0, 1);
+    for(i=0; i<bpllen; i++) tmpbpl[i] ^= lpXORbitPlane[i];
+    lpcur->pixshape = XCreatePixmapFromBitmapData(
+    	display, DefaultRootWindow(display),
+        tmpbpl, nWidth, nHeight, 1, 0, 1);
+    XParseColor(display,cmap,"#000000",&fgcolor);
+    XParseColor(display,cmap,"#ffffff",&bkcolor);
     lpcur->xcursor = XCreatePixmapCursor(display,
  	lpcur->pixshape, lpcur->pixmask, 
  	&fgcolor, &bkcolor, lpcur->descriptor.curXHotspot, 
  	lpcur->descriptor.curYHotspot);
+    free(tmpbpl);
     XFreePixmap(display, lpcur->pixshape);
     XFreePixmap(display, lpcur->pixmask);
     ReleaseDC(GetDesktopWindow(), hdc); 

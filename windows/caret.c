@@ -7,6 +7,7 @@ static char Copyright[] = "Copyright  David Metcalfe, 1993";
 */
 
 #include "windows.h"
+#include "selectors.h"
 #include "stddebug.h"
 /* #define DEBUG_CARET */
 #include "debug.h"
@@ -30,15 +31,13 @@ typedef struct
 static CARET Caret;
 static BOOL LockCaret;
 
-static WORD CARET_Callback(HWND hwnd, WORD msg, WORD timerid, LONG ctime);
 static void CARET_HideCaret();
 
 
 /*****************************************************************
  *               CARET_Callback
  */
-
-static WORD CARET_Callback(HWND hwnd, WORD msg, WORD timerid, LONG ctime)
+WORD CARET_Callback(HWND hwnd, WORD msg, WORD timerid, LONG ctime)
 {
     HDC hdc;
     HBRUSH hBrush;
@@ -134,7 +133,8 @@ void CreateCaret(HWND hwnd, HBITMAP bitmap, short width, short height)
     Caret.timeout = 750;
     LockCaret = FALSE;
 
-    Caret.timerid = SetSystemTimer((HWND)0, 0, Caret.timeout, (FARPROC)CARET_Callback);
+    Caret.timerid = SetSystemTimer( (HWND)0, 0, Caret.timeout,
+                                (FARPROC)GetWndProcEntry16("CARET_Callback"));
 
     dprintf_caret(stddeb,"CreateCaret: hwnd=%d, timerid=%d\n", 
 		  hwnd, Caret.timerid);
@@ -222,7 +222,8 @@ void SetCaretBlinkTime(WORD msecs)
 
     KillSystemTimer( (HWND)0, Caret.timerid);
     Caret.timeout = msecs;
-    Caret.timerid = SetSystemTimer((HWND)0, 0, Caret.timeout, (FARPROC)CARET_Callback);
+    Caret.timerid = SetSystemTimer( (HWND)0, 0, Caret.timeout,
+                                 (FARPROC)GetWndProcEntry16("CARET_Callback"));
 }
 
 

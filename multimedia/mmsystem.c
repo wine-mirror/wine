@@ -1833,14 +1833,9 @@ WORD FAR PASCAL MMSysTimeCallback(HWND hWnd, WORD wMsg, int nID, DWORD dwTime)
 			lpTimer->wCurTime = lpTimer->wDelay;
 			if (lpTimer->lpFunc != NULL) {
 				dprintf_mmtime(stddeb,"MMSysTimeCallback // before CallBack16 !\n");
-#ifdef WINELIB
-				(*lpTimer->lpFunc)(lpTimer->wTimerID, (WORD)0, 
-						lpTimer->dwUser, (DWORD)0, (DWORD)0);
-#else
-				CallBack16(lpTimer->lpFunc, 5, 
-					0, (int)lpTimer->wTimerID, 0, (int)0, 
-					2, lpTimer->dwUser, 2, 0, 2, 0);
-#endif
+                                CallTimeFuncProc( lpTimer->lpFunc,
+                                                  lpTimer->wTimerID, 0,
+                                                  lpTimer->dwUser, 0, 0 );
 				dprintf_mmtime(stddeb, "MMSysTimeCallback // after CallBack16 !\n");
 				fflush(stdout);
 				}

@@ -212,7 +212,7 @@ length	490
 #310 pascal CREATESCALABLEFONTRESOURCE
 #311 pascal GETFONTDATA
 #312 pascal CONVERTOUTLINEFONTFILE
-#313 pascal GETRASTERIZERCAPS
+313 pascal16 GetRasterizerCaps(ptr word) GetRasterizerCaps
 #314 pascal ENGINEEXTTEXTOUT
 330 pascal16 EnumFontFamilies(word ptr segptr long) EnumFontFamilies
 #332 pascal GETKERNINGPAIRS

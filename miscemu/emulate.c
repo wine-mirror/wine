@@ -1,6 +1,6 @@
 #include <stdlib.h>
 #include <stdio.h>
-#include "regfunc.h"
+#include "wine.h"
 #include "stddebug.h"
 /* #define DEBUG_INT */
 #include "debug.h"
@@ -14,20 +14,21 @@ struct Win87EmInfoStruct {
   unsigned short Unused;
 };
 
-int
-WIN87_fpmath()
+void
+WIN87_fpmath( struct sigcontext_struct context )
 {
-  dprintf_int(stddeb, "_fpmath: (%x:%lx %x %x)\n",_CONTEXT->sc_cs, 
-	 _CONTEXT->sc_eip, _CONTEXT->sc_es, (unsigned int)_BX & 0xffff);
+  dprintf_int(stddeb, "_fpmath: (%x:%lx %x %x)\n",context.sc_cs, 
+              context.sc_eip, context.sc_es, (int)context.sc_ebx & 0xffff );
 
-  switch(_BX & 0xffff)
+  switch(context.sc_ebx & 0xffff)
     {
     case 11:
-      return 1;
+        context.sc_eax = 1;
+        break;
     default:
-      return 0;
+        context.sc_eax = 0;
+        break;
     }
-
 }
 
 void

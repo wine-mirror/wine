@@ -31,6 +31,124 @@
 typedef LPSTR 	LPNETRESOURCE;
 
 /**************************************************************************
+ *              WNetErrorText       [USER.499]
+ */
+int WNetErrorText(WORD nError,LPSTR lpszText,WORD cbText)
+{
+	printf("EMPTY STUB !!! WNetErrorText(%x,%p,%x)\n",
+		nError,lpszText,cbText);
+	return FALSE;
+}
+
+/**************************************************************************
+ *              WNetOpenJob       [USER.501]
+ */
+int WNetOpenJob(LPSTR szQueue,LPSTR szJobTitle,WORD nCopies,LPWORD pfh)
+{
+	printf("EMPTY STUB !!! WNetOpenJob('%s','%s',%x,%p)\n",
+		szQueue,szJobTitle,nCopies,pfh);
+	return WN_NET_ERROR;
+}
+
+/**************************************************************************
+ *              WNetCloseJob       [USER.502]
+ */
+int WNetCloseJob(WORD fh,LPWORD pidJob,LPSTR szQueue)
+{
+	printf("EMPTY STUB !!! WNetCloseJob(%x,%p,'%s')\n",
+		fh,pidJob,szQueue);
+	return WN_NET_ERROR;
+}
+
+/**************************************************************************
+ *              WNetAbortJob       [USER.503]
+ */
+int WNetAbortJob(LPSTR szQueue,WORD wJobId)
+{
+	printf("EMPTY STUB !!! WNetAbortJob('%s',%x)\n",
+		szQueue,wJobId);
+	return WN_NET_ERROR;
+}
+
+/**************************************************************************
+ *              WNetHoldJob       [USER.504]
+ */
+int WNetHoldJob(LPSTR szQueue,WORD wJobId)
+{
+	printf("EMPTY STUB !!! WNetHoldJob('%s',%x)\n",
+		szQueue,wJobId);
+	return WN_NET_ERROR;
+}
+
+/**************************************************************************
+ *              WNetReleaseJob       [USER.505]
+ */
+int WNetReleaseJob(LPSTR szQueue,WORD wJobId)
+{
+	printf("EMPTY STUB !!! WNetReleaseJob('%s',%x)\n",
+		szQueue,wJobId);
+	return WN_NET_ERROR;
+}
+
+/**************************************************************************
+ *              WNetCancelJob       [USER.506]
+ */
+int WNetCancelJob(LPSTR szQueue,WORD wJobId)
+{
+	printf("EMPTY STUB !!! WNetCancelJob('%s',%x)\n",
+		szQueue,wJobId);
+	return WN_NET_ERROR;
+}
+
+/**************************************************************************
+ *              WNetSetJobCopies       [USER.507]
+ */
+int WNetSetJobCopies(LPSTR szQueue,WORD wJobId,WORD nCopies)
+{
+	printf("EMPTY STUB !!! WNetSetJobCopies('%s',%x,%x)\n",
+		szQueue,wJobId,nCopies);
+	return WN_NET_ERROR;
+}
+
+/**************************************************************************
+ *              WNetWatchQueue       [USER.508]
+ */
+int WNetWatchQueue(HWND hWnd,LPSTR szLocal,LPSTR szUser,WORD nQueue)
+{
+	printf("EMPTY STUB !!! WNetWatchQueue(%x,'%s','%s',%x)\n",
+		hWnd,szLocal,szUser,nQueue);
+	return WN_NET_ERROR;
+}
+
+/**************************************************************************
+ *              WNetUnwatchQueue       [USER.509]
+ */
+int WNetUnwatchQueue(LPSTR szQueue)
+{
+	printf("EMPTY STUB !!! WNetUnwatchQueue('%s')\n", szQueue);
+	return WN_NET_ERROR;
+}
+
+/**************************************************************************
+ *              WNetLockQueueData       [USER.510]
+ */
+int WNetLockQueueData(LPSTR szQueue,LPSTR szUser,void *lplpQueueStruct)
+{
+	printf("EMPTY STUB !!! WNetLockQueueData('%s','%s',%p)\n",
+		szQueue,szUser,lplpQueueStruct);
+	return WN_NET_ERROR;
+}
+
+/**************************************************************************
+ *              WNetUnlockQueueData       [USER.511]
+ */
+int WNetUnlockQueueData(LPSTR szQueue)
+{
+	printf("EMPTY STUB !!! WNetUnlockQueueData('%s')\n",szQueue);
+	return WN_NET_ERROR;
+}
+
+/**************************************************************************
  *				WNetGetConnection	[USER.512]
  */
 int WNetGetConnection(LPSTR lpLocalName, 
@@ -47,6 +165,25 @@ int WNetGetConnection(LPSTR lpLocalName,
 int WNetGetCaps(WORD capability)
 {
 	return 0;
+}
+
+/**************************************************************************
+ *              WNetDeviceMode       [USER.514]
+ */
+int WNetDeviceMode(HWND hWndOwner)
+{
+	printf("EMPTY STUB !!! WNetDeviceMode(%x)\n",hWndOwner);
+	return WN_NET_ERROR;
+}
+
+/**************************************************************************
+ *              WNetBrowseDialog       [USER.515]
+ */
+int WNetBrowseDialog(HWND hParent,WORD nType,LPSTR szPath)
+{
+	printf("EMPTY STUB !!! WNetBrowseDialog(%x,%x,'%s')\n",
+		hParent,nType,szPath);
+	return WN_NET_ERROR;
 }
 
 /**************************************************************************
@@ -78,6 +215,126 @@ UINT WNetCancelConnection(LPSTR lpName, BOOL bForce)
 	printf("EMPTY STUB !!! WNetCancelConnection('%s', %04X);\n",
 											lpName, bForce);
 	return	WN_NET_ERROR;
+}
+
+/**************************************************************************
+ *              WNetGetError       [USER.519]
+ */
+int WNetGetError(LPWORD nError)
+{
+	printf("EMPTY STUB !!! WNetGetError(%p)\n",nError);
+	return WN_NET_ERROR;
+}
+
+/**************************************************************************
+ *              WNetGetErrorText       [USER.520]
+ */
+int WNetGetErrorText(WORD nError, LPSTR lpBuffer, LPWORD nBufferSize)
+{
+	printf("EMPTY STUB !!! WNetGetErrorText(%x,%p,%p)\n",
+		nError,lpBuffer,nBufferSize);
+	return WN_NET_ERROR;
+}
+
+/**************************************************************************
+ *              WNetRestoreConnection       [USER.523]
+ */
+int WNetRestoreConnection(HWND hwndOwner,LPSTR lpszDevice)
+{
+	printf("EMPTY STUB !!! WNetRestoreConnection(%x,'%s')\n",
+		hwndOwner,lpszDevice);
+	return WN_NET_ERROR;
+}
+
+/**************************************************************************
+ *              WNetWriteJob       [USER.524]
+ */
+int WNetWriteJob(WORD hJob,void *lpData,LPWORD lpcbData)
+{
+	printf("EMPTY STUB !!! WNetWriteJob(%x,%p,%p)\n",
+		hJob,lpData,lpcbData);
+	return WN_NET_ERROR;
+}
+
+/**************************************************************************
+ *              WnetConnectDialog       [USER.525]
+ */
+UINT WNetConnectDialog(HWND hWndParent, WORD iType)
+{
+	printf("EMPTY STUB !!! WNetConnectDialog(%4X, %4X)\n", hWndParent, iType);
+	return WN_SUCCESS;
+}
+
+/**************************************************************************
+ *              WNetDisconnectDialog       [USER.526]
+ */
+int WNetDisconnectDialog(HWND hwndOwner, WORD iType)
+{
+	printf("EMPTY STUB !!! WNetDisconnectDialog(%x,%x)\n",
+		hwndOwner,iType);
+	return WN_NET_ERROR;
+}
+
+/**************************************************************************
+ *              WnetConnectionDialog     [USER.527]
+ */
+UINT WNetConnectionDialog(HWND hWndParent, WORD iType)
+{
+	printf("EMPTY STUB !!! WNetConnectionDialog(%4X, %4X)\n", 
+		hWndParent, iType);
+	return WN_SUCCESS;
+}
+
+/**************************************************************************
+ *              WNetViewQueueDialog       [USER.528]
+ */
+int WNetViewQueueDialog(HWND hwndOwner,LPSTR lpszQueue)
+{
+	printf("EMPTY STUB !!! WNetViewQueueDialog(%x,'%s')\n",
+		hwndOwner,lpszQueue);
+	return WN_NET_ERROR;
+}
+
+/**************************************************************************
+ *              WNetPropertyDialog       [USER.529]
+ */
+int WNetPropertyDialog(HWND hwndParent,WORD iButton,
+	WORD nPropSel,LPSTR lpszName,WORD nType)
+{
+	printf("EMPTY STUB !!! WNetPropertyDialog(%x,%x,%x,'%s',%x)\n",
+		hwndParent,iButton,nPropSel,lpszName,nType);
+	return WN_NET_ERROR;
+}
+
+/**************************************************************************
+ *              WNetGetDirectoryType       [USER.530]
+ */
+int WNetGetDirectoryType(LPSTR lpName,void *lpType)
+{
+	printf("EMPTY STUB !!! WNetGetDirectoryType('%s',%p)\n",
+		lpName,lpType);
+	return WN_NET_ERROR;
+}
+
+/**************************************************************************
+ *              WNetDirectoryNotify       [USER.531]
+ */
+int WNetDirectoryNotify(HWND hwndOwner,void *lpDir,WORD wOper)
+{
+	printf("EMPTY STUB !!! WNetDirectoryNotify(%x,%p,%x)\n",
+		hwndOwner,lpDir,wOper);
+	return WN_NET_ERROR;
+}
+
+/**************************************************************************
+ *              WNetGetPropertyText       [USER.532]
+ */
+int WNetGetPropertyText(HWND hwndParent,WORD iButton,WORD nPropSel,
+	LPSTR lpszName,WORD nType)
+{
+	printf("EMPTY STUB !!! WNetGetPropertyText(%x,%x,%x,'%s',%x)\n",
+		hwndParent,iButton,nPropSel,lpszName,nType);
+	return WN_NET_ERROR;
 }
 
 /**************************************************************************

@@ -8,7 +8,7 @@ typedef struct tagLISTSTRUCT {
 	HANDLE		hMem;
 	HANDLE		hData;
 	char		*itemText;
-	void		*lpNext;
+	struct tagLISTSTRUCT *lpNext;
 } LISTSTRUCT;
 typedef LISTSTRUCT FAR* LPLISTSTRUCT;
 
@@ -21,15 +21,17 @@ typedef struct tagHEADLIST {
 	short	ItemsPerColumn;
 	short	ItemFocused;
 	short	PrevFocused;
-	short	SelCount;
 	short 	StdItemHeight;
 	short	ColumnsWidth;
 	short	DrawCtlType;
-	void	*lpFirst; 
+	void	*lpFirst;
 	DWORD	dwStyle;
 	HWND	hWndLogicParent;
 	HFONT	hFont;
 	BOOL	bRedrawFlag;
+	WORD    iNumStops;
+	LPINT   TabStops;
+	HANDLE  hDrawItemStruct;
 /*	MDESC	*Heap; */
 } HEADLIST;
 typedef HEADLIST FAR* LPHEADLIST;

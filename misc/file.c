@@ -23,11 +23,8 @@
 #include <sys/stat.h>
 #include <string.h>
 #include "dos_fs.h"
-#include "regfunc.h"
 #include "windows.h"
-#include "wine.h"
 #include "msdos.h"
-#include "registers.h"
 #include "options.h"
 #include "stddebug.h"
 #include "debug.h"
@@ -118,11 +115,6 @@ INT OpenFile (LPSTR lpFileName, LPOFSTRUCT ofs, WORD wStyle)
 #ifdef WINELIB
     dprintf_file(stdnimp, "OpenFile: not implemented\n");
 #else
-#ifndef PROCEMU
-    struct sigcontext_struct  ccontext;
-                              /* To make macros like EAX happy */
-    struct sigcontext_struct *context=&ccontext; 
-#endif
     char                      filename[MAX_PATH+1];
     int                       action;
     struct stat               s;

@@ -58,13 +58,9 @@ COMMONOBJS = \
 	rc/rc.o \
 	windows/windows.o
 
-/*
- * WARNING: if1632.o must be the first object file because its code must be
- *          linked at the lowest possible addresses.
- */
 EMUOBJS = \
-	if1632/if1632.o \
 	debugger/debugger.o \
+	if1632/if1632.o \
 	memory/memory.o \
 	miscemu/miscemu.o
 

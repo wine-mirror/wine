@@ -6,9 +6,7 @@
 : ${PAGER:=more}
 
 WINELIB=''
-SHORTNAMES=''
 LANGUAGE=not_matching
-NEWBUILD=''
 ALLDEFINES=''
 
 # Ask question 'str' and set 'var' to reply (defaulting to 'def' on CR)
@@ -28,6 +26,7 @@ prompt ()
 	fi
 }
 
+echo
 echo Read the RELEASE-NOTES for an explanation of the various flags
 echo
 
@@ -37,15 +36,6 @@ if [ "$input" = 'l' -o "$input" = 'L' ]
 then
 	WINELIB='#define WINELIB -DWINELIB'
 	ALLDEFINES="$ALLDEFINES -DWINELIB"
-fi
-
-echo
-echo -n 'Short filenames (Y/N) [N]? '
-read input
-if [ "$input" = 'y' -o "$input" = 'Y' ]
-then
-	SHORTNAMES='#define ShortNames -DSHORTNAMES'
-	ALLDEFINES="$ALLDEFINES -DSHORTNAMES"
 fi
 
 LANGS=`echo En rc/sysres_*.rc | sed -e 's/rc\/sysres_//g' -e 's/\.rc//g' -e 's/ /\//g;'`
@@ -66,18 +56,6 @@ then
        ALLDEFINES="$ALLDEFINES -DMALLOC_DEBUGGING"
 else
        MALLOC_DEBUGGING=''
-fi
-
-if [ "`(domainname)`" = 'amscons.com' ]
-then
-	echo
-	echo -n 'New build program (Y/N) [N]? '
-	read input
-	if [ "$input" = 'y' -o "$input" = 'Y' ]
-	then
-		NEWBUILD='#define NewBuild -DNEWBUILD'
-		ALLDEFINES="$ALLDEFINES -DNEWBUILD"
-	fi
 fi
 
 prompt "Global configfile name" WINE_CONFIGFILE /usr/local/etc/wine.conf
@@ -197,8 +175,6 @@ fi
 cat > autoconf.h << EOF
 /* autoconf.h generated automatically.  Run Configure. */
 $WINELIB
-$SHORTNAMES
-$NEWBUILD
 $MALLOC_DEBUGGING
 #define WINE_INI_GLOBAL "$WINE_CONFIGFILE"
 #define AutoDefines $ALLDEFINES

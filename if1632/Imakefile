@@ -9,40 +9,45 @@ SRCS = \
 
 #ifdef WINELIB
 CALLOBJS =
-DLLOBJS =
+DLLS =
 #else
-CALLOBJS = call.o
-DLLOBJS = \
-	dll_commdlg.o \
-	dll_compobj.o \
-	dll_gdi.o \
-	dll_kernel.o \
-	dll_keyboard.o \
-	dll_mmsystem.o \
-	dll_mouse.o \
-	dll_ole2.o \
-	dll_ole2conv.o \
-	dll_ole2disp.o \
-	dll_ole2nls.o \
-	dll_ole2prox.o \
-	dll_olecli.o \
-	dll_olesvr.o \
-	dll_shell.o \
-	dll_sound.o \
-	dll_storage.o \
-	dll_stress.o \
-	dll_system.o \
-	dll_toolhelp.o \
-	dll_user.o \
-	dll_win87em.o \
-	dll_winsock.o
+CALLOBJS = \
+	call16.o \
+	call32.o
+DLLS = \
+	commdlg \
+	compobj \
+	gdi \
+	kernel \
+	keyboard \
+	mmsystem \
+	mouse \
+	ole2 \
+	ole2conv \
+	ole2disp \
+	ole2nls \
+	ole2prox \
+	olecli \
+	olesvr \
+	shell \
+	sound \
+	storage \
+	stress \
+	system \
+	toolhelp \
+	user \
+	win87em \
+	winprocs \
+	winsock
 #endif
 
-#ifndef NewBuild
-OBJS = $(CALLOBJS) $(DLLOBJS) $(SRCS:.c=.o) $(DLLOBJS:.o=_tab.o)
-#else
-OBJS = $(CALLOBJS) $(DLLOBJS) $(SRCS:.c=.o) $(DLLOBJS:.o=_tab.o) $(DLLOBJS:dll_.rly_)
-#endif
+OBJS = $(DLLS:%=dll_%.o) $(CALLOBJS) $(SRCS:.c=.o) $(DLLS:%=tab_%.o)
+
+BUILD = $(TOP)/tools/build
+
+#define MakeDllFromSpec(name)					@@\
+Concat(dll_,name.S) Concat(tab_,name.c): name.spec $(BUILD)	@@\
+	$(BUILD) -spec name.spec				@@\
 
 /*
  * If you add a new spec file, copy one of these lines
@@ -69,23 +74,25 @@ MakeDllFromSpec(system)
 MakeDllFromSpec(toolhelp)
 MakeDllFromSpec(user)
 MakeDllFromSpec(win87em)
+MakeDllFromSpec(winprocs)
 MakeDllFromSpec(winsock)
 
 WineRelocatableTarget($(MODULE),,$(OBJS))
 DependTarget()
 
 #ifndef WINELIB
-pop.h: $(TOP)/tools/build
-	$(TOP)/tools/build -p
 
-call.o: call.S pop.h
-	$(CC) -I. -c -o call.o call.S
-#endif
+call32.S: $(BUILD) $(DLLS:%=dll_%.S)
+	$(BUILD) -call32 `cat $(DLLS:%=dll_%.S) | grep CallTo32_ | sed 's/.*CallTo32_\(.*\)/\1/' | sort | uniq` > call32.S
+
+call16.S: $(BUILD) $(TOP)/include/callback.h
+	$(BUILD) -call16 `cat $(TOP)/include/callback.h | grep "extern.*CallTo16_" | sed 's/.*CallTo16_\(.*\)(.*/\1/' | sort | uniq` > call16.S
+
+#endif  /* WINELIB */
 
 includes::
-	touch pop.h
 
 install::
 
 clean::
-	$(RM) dll* dtb* pop.h call.s
+	$(RM) dll_* tab_* call32.S call16.S

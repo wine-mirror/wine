@@ -3,11 +3,11 @@ id	12
 length	83
 
 50 pascal16 GlobalHandleToSel(word) GlobalHandleToSel
-# 51   1  0318  GLOBALFIRST exported, shared data
-# 52   1  0399  GLOBALNEXT exported, shared data
-# 53   1  02a2  GLOBALINFO exported, shared data
-# 54   1  0417  GLOBALENTRYHANDLE exported, shared data
-# 55   1  04a9  GLOBALENTRYMODULE exported, shared data
+51 pascal16 GlobalFirst(ptr word) GlobalFirst
+52 pascal16 GlobalNext(ptr word) GlobalNext
+53 pascal16 GlobalInfo(ptr) GlobalInfo
+54 pascal16 GlobalEntryHandle(ptr word) GlobalEntryHandle
+55 pascal16 GlobalEntryModule(ptr word word) GlobalEntryModule
 56 pascal16 LocalInfo(ptr word) LocalInfo
 57 pascal16 LocalFirst(ptr word) LocalFirst
 58 pascal16 LocalNext(ptr) LocalNext
@@ -24,7 +24,7 @@ length	83
 69 pascal16 ClassFirst(ptr) ClassFirst
 70 pascal16 ClassNext(ptr) ClassNext
 71 pascal16 SystemHeapInfo(ptr) SystemHeapInfo
-#72 pascal16 MemManInfo(ptr) MemManInfo
+72 pascal16 MemManInfo(ptr) MemManInfo
 # 73   1  1b72  NOTIFYREGISTER exported, shared data
 # 74   1  1c29  NOTIFYUNREGISTER exported, shared data
 # 75   1  2060  INTERRUPTREGISTER exported, shared data
