@@ -26,7 +26,6 @@
 #include "winnls.h"
 #include "ntddk.h"
 #include "wine/library.h"
-#include "wine/version.h"
 #include "options.h"
 #include "module.h"
 #include "wine/debug.h"
@@ -92,7 +91,7 @@ static void do_help( const char *arg )
 
 static void do_version( const char *arg )
 {
-    MESSAGE( "%s\n", WINE_RELEASE_INFO );
+    MESSAGE( "%s\n", PACKAGE_STRING );
     ExitProcess(0);
 }
 
@@ -313,7 +312,7 @@ static void inherit_options( char *buffer )
 void OPTIONS_Usage(void)
 {
     const struct option_descr *opt;
-    MESSAGE( "%s\n\n", WINE_RELEASE_INFO );
+    MESSAGE( "%s\n\n", PACKAGE_STRING );
     MESSAGE( "Usage: %s [options] [--] program_name [arguments]\n", argv0 );
     MESSAGE("The -- has to be used if you specify arguments (of the program)\n\n");
     MESSAGE( "Options:\n" );

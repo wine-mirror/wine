@@ -18,10 +18,11 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
+#include "config.h"
+
 #include "windef.h"
 #include "wingdi.h"
 #include "wine/winuser16.h"
-#include "wine/version.h"
 #include "win.h"
 #include "user.h"
 #include "dce.h"
@@ -2178,7 +2179,7 @@ LONG NC_HandleSysCommand( HWND hwnd, WPARAM wParam, LPARAM lParam )
             if (hmodule)
             {
                 FARPROC aboutproc = GetProcAddress( hmodule, "ShellAboutA" );
-                if (aboutproc) aboutproc( hwnd, "Wine", WINE_RELEASE_INFO, 0 );
+                if (aboutproc) aboutproc( hwnd, PACKAGE_NAME, PACKAGE_STRING, 0 );
                 FreeLibrary( hmodule );
             }
         }

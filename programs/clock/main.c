@@ -23,11 +23,12 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
+#include "config.h"
+
 #include <stdio.h>
 #include "windows.h"
 #include "main.h"
 #include "license.h"
-#include "wine/version.h"
 #include "language.h"
 #include "winclock.h"
 #include "commdlg.h"
@@ -106,7 +107,7 @@ CHAR szAppRelease[MAX_STRING_LEN];
      case 0x10B: {
          LoadString(Globals.hInstance, 0x10C, szApp, sizeof(szApp));
          lstrcpy(szAppRelease,szApp);
-         lstrcat(szAppRelease,"\n" WINE_RELEASE_INFO);
+         lstrcat(szAppRelease,"\n" PACKAGE_STRING);
          ShellAbout(Globals.hMainWnd, szApp, szAppRelease, 0);
          break;
        }

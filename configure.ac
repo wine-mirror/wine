@@ -4,7 +4,7 @@ dnl See ChangeLog file for detailed change history.
 
 m4_define(WINE_VERSION,regexp(m4_include(VERSION),[version \([-.0-9A-Za-z]+\)],[\1]))
 
-AC_PREREQ(2.50)
+AC_PREREQ(2.53)
 AC_INIT([Wine],WINE_VERSION)
 AC_CONFIG_SRCDIR(server/atom.c)		
 AC_CONFIG_HEADERS(include/config.h)
@@ -160,8 +160,8 @@ then
               AC_DEFINE(HAVE_LIBXXSHM, 1, [Define if you have the X Shm extension]),,
               $X_LIBS -lXext -lX11 $X_EXTRA_LIBS)
             ],
-            AC_MSG_WARN([[XShm extension not found, Wine will be built without it]])
-        )
+            AC_MSG_WARN([[XShm extension not found, Wine will be built without it]]),
+            [#include <X11/Xlib.h>])
 
         dnl *** Check for X shape extension
         AC_CHECK_HEADERS(X11/extensions/shape.h,
@@ -170,8 +170,8 @@ then
 	      AC_DEFINE(HAVE_LIBXSHAPE, 1, [Define if you have the X Shape extension]),,
 	      $X_LIBS -lXext -lX11 $X_EXTRA_LIBS)
 	    ],
-	    AC_MSG_WARN([[XShape extension not found, Wine will be built without it]])
-	)
+	    AC_MSG_WARN([[XShape extension not found, Wine will be built without it]]),
+            [#include <X11/Xlib.h>])
         
         dnl *** Check for XFree86 DGA / DGA 2.0 extension
         AC_CHECK_HEADERS(X11/extensions/xf86dga.h,
@@ -196,8 +196,8 @@ then
                 $X_LIBS -lXext -lX11 $X_EXTRA_LIBS
               )
             ],
-            AC_MSG_WARN([[DGA extension not found, Wine will be built without it]])
-        )
+            AC_MSG_WARN([[DGA extension not found, Wine will be built without it]]),
+            [#include <X11/Xlib.h>])
 
         dnl *** Check for XFree86 VMODE extension
         AC_CHECK_HEADERS(X11/extensions/xf86vmode.h,
@@ -209,8 +209,8 @@ then
                   $X_LIBS -lXext -lX11 $X_EXTRA_LIBS
                 )
             ],
-            AC_MSG_WARN([[XFree86 VMODE extension not found, Wine will be built without it]])
-        )
+            AC_MSG_WARN([[XFree86 VMODE extension not found, Wine will be built without it]]),
+            [#include <X11/Xlib.h>])
 
         dnl *** Check for XVideo extension supporting XvImages
         AC_CHECK_HEADERS(X11/extensions/Xvlib.h,
@@ -222,8 +222,8 @@ then
                   $X_LIBS -lXext -lX11 $X_EXTRA_LIBS
                 )
             ],
-            AC_MSG_WARN([[XVideo extension not found, Wine will be built without it]])
-        )
+            AC_MSG_WARN([[XVideo extension not found, Wine will be built without it]]),
+            [#include <X11/Xlib.h>])
 
         dnl *** Check for XRender extension
         AC_CHECK_HEADERS(X11/extensions/Xrender.h,
@@ -235,8 +235,8 @@ then
                   $X_LIBS -lXext -lX11 $X_EXTRA_LIBS
                 )
             ],
-            AC_MSG_WARN([[XRender extension not found, Wine will be built without it]])
-        )
+            AC_MSG_WARN([[XRender extension not found, Wine will be built without it]]),
+            [#include <X11/Xlib.h>])
 
       ]
     ) dnl *** End of X11/Xlib.h check
@@ -250,9 +250,10 @@ then
 This prevents linking to OpenGL. Delete the file and restart configure.])
         fi
 
-	AC_CHECK_HEADERS(GL/gl.h GL/glx.h GL/glext.h)
+	AC_CHECK_HEADERS(GL/gl.h GL/glx.h)
 	if test "$ac_cv_header_GL_gl_h" = "yes" -a "$ac_cv_header_GL_glx_h" = "yes"
 	then
+            AC_CHECK_HEADERS(GL/glext.h,,,[#include <GL/glx.h>])
 	    dnl Check for some problems due to old Mesa versions
 	    AC_CACHE_CHECK([for up-to-date OpenGL version], wine_cv_opengl_version_OK,
 	      AC_TRY_COMPILE(
@@ -1269,21 +1270,6 @@ WINE_CONFIG_EXTRA_DIR(include/wine)
 WINE_CONFIG_EXTRA_DIR(programs/regapi/tests)
 WINE_CONFIG_EXTRA_DIR(programs/winetest/tests)
 
-AC_CONFIG_COMMANDS([include/wine/version.h],
-[AC_MSG_NOTICE([creating include/wine/version.h])
-cat >$tmp/version.h <<CEOF
-/* Generated automatically by configure; DO NOT EDIT! */
-#define WINE_RELEASE_INFO "Wine version $wine_version"
-CEOF
-if cmp -s $tmp/version.h include/wine/version.h 2>/dev/null; then
-  AC_MSG_NOTICE([include/wine/version.h is unchanged])
-  rm -f $tmp/version.h
-else
-  rm -f include/wine/version.h
-  mv $tmp/version.h include/wine/version.h
-fi],
-[wine_version=$PACKAGE_VERSION])
-
 MAKE_RULES=Make.rules
 AC_SUBST_FILE(MAKE_RULES)
 
@@ -1298,7 +1284,6 @@ Make.rules
 dlls/Makedll.rules
 programs/Makeprog.rules
 Makefile
-console/Makefile
 controls/Makefile
 debugger/Makefile
 dlls/Makefile

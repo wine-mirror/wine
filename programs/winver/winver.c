@@ -18,12 +18,12 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
+#include "config.h"
 #include "windows.h"
-#include "wine/version.h"
 
 int PASCAL WinMain (HINSTANCE inst, HINSTANCE prev, LPSTR cmdline, int show)
 {
-   return ShellAbout((HWND)0, "WINE", WINE_RELEASE_INFO, 0);
+   return ShellAbout((HWND)0, PACKAGE_NAME, PACKAGE_STRING, 0);
 }
 
 /* Local Variables:     */
