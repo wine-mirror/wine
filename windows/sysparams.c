@@ -437,7 +437,13 @@ BOOL WINAPI SystemParametersInfoA( UINT uiAction, UINT uiParam,
     WINE_SPI_FIXME(SPI_GETKEYBOARDPREF);	/*     68  WINVER >= 0x400 */
     WINE_SPI_FIXME(SPI_SETKEYBOARDPREF);	/*     69  WINVER >= 0x400 */
 
-    WINE_SPI_FIXME(SPI_GETSCREENREADER);	/*     70  WINVER >= 0x400 */
+    case SPI_GETSCREENREADER:
+    {
+       LPBOOL	bool = (LPBOOL)pvParam;
+       *bool = FALSE;
+       break;
+    }
+
     WINE_SPI_FIXME(SPI_SETSCREENREADER);	/*     71  WINVER >= 0x400 */
 
     case SPI_GETANIMATION:			/*     72  WINVER >= 0x400 */
