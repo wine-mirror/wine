@@ -252,3 +252,43 @@ FONT 8, "Helv"
  PUSHBUTTON "Cancel", IDCANCEL	 , 174, 55, 50, 14, WS_GROUP | WS_TABSTOP
  PUSHBUTTON "&Help", pshHelp	 , 174, 75, 50, 14, WS_GROUP | WS_TABSTOP
 }
+
+
+
+PRINT32 DIALOG LOADONCALL MOVEABLE DISCARDABLE 36,24, 289,182
+STYLE DS_MODALFRAME | WS_POPUP | WS_CAPTION | WS_SYSMENU
+CAPTION "Print32"
+FONT 8, "Helv"
+{
+    DEFPUSHBUTTON   "OK",         IDOK, 176,161,50,14, WS_GROUP | WS_TABSTOP | BS_DEFPUSHBUTTON 
+    PUSHBUTTON      "Cancel",     IDCANCEL, 232,161,50,14, WS_GROUP | WS_TABSTOP
+
+    GROUPBOX        "Printer",    stc2, 7,2,275,87
+    CHECKBOX        "Print to fi&le",chx1, 224,73,49,10, BS_AUTOCHECKBOX | WS_TABSTOP
+    PUSHBUTTON      "&Properties",psh3, 209,17,58,14
+    LTEXT           "&Name:",     -1,    16,20,22,8
+    COMBOBOX                      cmb1, 49,18,154,15,CBS_DROPDOWN | CBS_SORT | WS_VSCROLL | WS_TABSTOP
+    LTEXT           "Status:",    -1,    16,37,23,8
+    LTEXT           "Dummy State",stc3, 63,37,120,8
+    LTEXT           "Type:",      -1,    16,49,19,8
+    LTEXT           "Dummy Type", stc4, 63,49,120,8
+    LTEXT           "Where:",     -1,    16,61,24,8
+    LTEXT           "Dummy Location",stc5, 63,61,120,8
+    LTEXT           "Comment:",   -1,    16,73,32,8
+    LTEXT           "Dummy Remark",stc6, 63,73,120,8
+
+    GROUPBOX        "Copies",     stc7, 157,92,125,65
+    LTEXT           "Number of &copies:",stc8, 164,106,58,8
+    CHECKBOX        "C&ollate",   chx2, 241,130,37,10, BS_AUTOCHECKBOX | WS_TABSTOP
+    EDITTEXT                      edt1, 240,104,34,13,ES_NUMBER
+
+    GROUPBOX        "Print Range",stc9, 7,92,141,65 
+    CONTROL         "&All",         rad1, "Button",BS_AUTORADIOBUTTON,15,106,23,10
+    CONTROL         "&Pages",       rad2, "Button",BS_AUTORADIOBUTTON,15,124,36,10
+    CONTROL         "&Selection",   rad3, "Button",BS_AUTORADIOBUTTON,15,142,45,10
+    EDITTEXT                      edt2, 73,121,25,14, ES_NUMBER | ES_RIGHT
+    EDITTEXT                      edt3, 113,121,28,14,ES_NUMBER | ES_RIGHT
+    LTEXT           "&to:",       stc10,102,124,9,8
+    LTEXT           "&from:",     stc11,55,124,16,8
+}
+
