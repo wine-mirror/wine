@@ -125,6 +125,9 @@ CUPS_LoadPrinters(void) {
 
     nrofdests = cupsGetPrinters(&printers);
 
+    if (def && !strcmp(def,"none")) /* CUPS has "none" for no default printer */
+    	def = NULL;
+
     for (i=0;i<nrofdests;i++) {
 	const char *ppd = cupsGetPPD(printers[i]);
 	char	*port,*devline;
