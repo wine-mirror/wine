@@ -1875,7 +1875,7 @@ static HRESULT WINAPI IDsDriverBufferImpl_SetVolumePan(PIDSDRIVERBUFFER iface, P
 {
     /* ICOM_THIS(IDsDriverBufferImpl,iface); */
     FIXME("(%p,%p): stub!\n",iface,pVolPan);
-    return DSERR_UNSUPPORTED;
+    return DS_OK;
 }
 
 static HRESULT WINAPI IDsDriverBufferImpl_SetPosition(PIDSDRIVERBUFFER iface, DWORD dwNewPos)
