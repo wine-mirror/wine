@@ -3278,17 +3278,16 @@ HRESULT  WINAPI  IDirect3DDevice8Impl_SetTextureStageState(LPDIRECT3DDEVICE8 ifa
     }
 
     /* Make appropriate texture active */
-    TRACE("Activating appropriate texture state %ld\n", Stage);
+    VTRACE(("Activating appropriate texture state %ld\n", Stage));
     if (This->isMultiTexture) {
 #if defined(GL_VERSION_1_3)
         glActiveTexture(GL_TEXTURE0 + Stage);
-        checkGLcall("glActiveTexture");
+        vcheckGLcall("glActiveTexture");
 #else
         glActiveTextureARB(GL_TEXTURE0_ARB + Stage);
-        checkGLcall("glActiveTextureARB");
+        vcheckGLcall("glActiveTextureARB");
 #endif
-
-    } else if (Stage>0) {
+    } else if (Stage > 0) {
         FIXME("Program using multiple concurrent textures which this opengl implementation doesnt support\n");
     }
 
@@ -3424,15 +3423,15 @@ HRESULT  WINAPI  IDirect3DDevice8Impl_SetTextureStageState(LPDIRECT3DDEVICE8 ifa
             if (isAlphaArg) {
                 TRACE("Source %x = %x, Operand %x = %x\n", SOURCEx_ALPHA_EXT(Type), source, OPERANDx_ALPHA_EXT(Type), operand);
                 glTexEnvi(GL_TEXTURE_ENV, SOURCEx_ALPHA_EXT(Type), source);
-                checkGLcall("glTexEnvi(GL_TEXTURE_ENV, SOURCEx_ALPHA_EXT, source);");
+                vcheckGLcall("glTexEnvi(GL_TEXTURE_ENV, SOURCEx_ALPHA_EXT, source);");
                 glTexEnvi(GL_TEXTURE_ENV, OPERANDx_ALPHA_EXT(Type), operand);
-                checkGLcall("glTexEnvi(GL_TEXTURE_ENV, OPERANDx_ALPHA_EXT, operand);");
+                vcheckGLcall("glTexEnvi(GL_TEXTURE_ENV, OPERANDx_ALPHA_EXT, operand);");
             } else {
                 TRACE("Source %x = %x, Operand %x = %x\n", SOURCEx_RGB_EXT(Type), source, OPERANDx_RGB_EXT(Type), operand);
                 glTexEnvi(GL_TEXTURE_ENV, SOURCEx_RGB_EXT(Type), source);
-                checkGLcall("glTexEnvi(GL_TEXTURE_ENV, SOURCEx_RGB_EXT, source);");
+                vcheckGLcall("glTexEnvi(GL_TEXTURE_ENV, SOURCEx_RGB_EXT, source);");
                 glTexEnvi(GL_TEXTURE_ENV, OPERANDx_RGB_EXT(Type), operand);
-                checkGLcall("glTexEnvi(GL_TEXTURE_ENV, OPERANDx_RGB_EXT, operand);");
+                vcheckGLcall("glTexEnvi(GL_TEXTURE_ENV, OPERANDx_RGB_EXT, operand);");
             }
         }
         break;
@@ -3442,9 +3441,9 @@ HRESULT  WINAPI  IDirect3DDevice8Impl_SetTextureStageState(LPDIRECT3DDEVICE8 ifa
         {
 
             int Scale = 1;
-            int Parm = (Type == D3DTSS_ALPHAOP)? GL_COMBINE_ALPHA_EXT : GL_COMBINE_RGB_EXT;
+            int Parm = (Type == D3DTSS_ALPHAOP) ? GL_COMBINE_ALPHA_EXT : GL_COMBINE_RGB_EXT;
 
-            if (Type==D3DTSS_COLOROP && Value == D3DTOP_DISABLE) {
+            if (Type == D3DTSS_COLOROP && Value == D3DTOP_DISABLE) {
                 /* TODO: Disable by making this and all later levels disabled */
                 glDisable(GL_TEXTURE_1D);
                 checkGLcall("Disable GL_TEXTURE_1D");
@@ -3455,7 +3454,7 @@ HRESULT  WINAPI  IDirect3DDevice8Impl_SetTextureStageState(LPDIRECT3DDEVICE8 ifa
             } else {
 
                 /* Enable only the appropriate texture dimension */
-                if (Type==D3DTSS_COLOROP) {
+                if (Type == D3DTSS_COLOROP) {
                     if (This->StateBlock->textureDimensions[Stage] == GL_TEXTURE_1D) {
                         glEnable(GL_TEXTURE_1D);
                         checkGLcall("Enable GL_TEXTURE_1D");
@@ -3504,10 +3503,10 @@ HRESULT  WINAPI  IDirect3DDevice8Impl_SetTextureStageState(LPDIRECT3DDEVICE8 ifa
                     /* Correct scale */
                     if (Type == D3DTSS_ALPHAOP) {
                         glTexEnvi(GL_TEXTURE_ENV, GL_ALPHA_SCALE, Scale);
-                        checkGLcall("glTexEnvi(GL_TEXTURE_ENV, GL_ALPHA_SCALE, Scale)");
+                        vcheckGLcall("glTexEnvi(GL_TEXTURE_ENV, GL_ALPHA_SCALE, Scale)");
                     } else {
                         glTexEnvi(GL_TEXTURE_ENV, GL_RGB_SCALE_EXT, Scale);
-                        checkGLcall("glTexEnvi(GL_TEXTURE_ENV, GL_RGB_SCALE_EXT, Scale)");
+                        vcheckGLcall("glTexEnvi(GL_TEXTURE_ENV, GL_RGB_SCALE_EXT, Scale)");
                     }
                     glTexEnvi(GL_TEXTURE_ENV, Parm, GL_MODULATE);
                     checkGLcall("glTexEnvi(GL_TEXTURE_ENV, Parm, GL_MODULATE);");
@@ -3515,13 +3514,13 @@ HRESULT  WINAPI  IDirect3DDevice8Impl_SetTextureStageState(LPDIRECT3DDEVICE8 ifa
 
                 case D3DTOP_ADD                       :
                     glTexEnvi(GL_TEXTURE_ENV, Parm, GL_ADD);
-                    checkGLcall("glTexEnvi(GL_TEXTURE_ENV, Parm, GL_ADD)");
+                    vcheckGLcall("glTexEnvi(GL_TEXTURE_ENV, Parm, GL_ADD)");
                     break;
 
                 case D3DTOP_ADDSIGNED2X               : Scale = Scale * 2;  /* Drop through */
                 case D3DTOP_ADDSIGNED                 :
                     glTexEnvi(GL_TEXTURE_ENV, Parm, GL_ADD_SIGNED_EXT);
-                    checkGLcall("glTexEnvi(GL_TEXTURE_ENV, Parm, GL_ADD_SIGNED_EXT)");
+                    vcheckGLcall("glTexEnvi(GL_TEXTURE_ENV, Parm, GL_ADD_SIGNED_EXT)");
                     break;
 
                 case D3DTOP_DOTPRODUCT3               :

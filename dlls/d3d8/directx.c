@@ -335,8 +335,15 @@ HRESULT  WINAPI  IDirect3D8Impl_GetDeviceCaps              (LPDIRECT3D8 iface,
 
     pCaps->LineCaps = D3DLINECAPS_TEXTURE | D3DLINECAPS_ZTEST;
 
-    pCaps->MaxTextureWidth = 16384;
-    pCaps->MaxTextureHeight = 16384;
+    /*pCaps->MaxTextureWidth = 16384;
+    pCaps->MaxTextureHeight = 16384;*/
+    {
+      GLint gl_tex_size;    
+      glGetIntegerv(GL_MAX_TEXTURE_SIZE, &gl_tex_size);
+      pCaps->MaxTextureWidth = gl_tex_size;
+      pCaps->MaxTextureHeight = gl_tex_size;
+    }
+
     pCaps->MaxVolumeExtent = 0;
 
     pCaps->MaxTextureRepeat = 32768;
@@ -372,7 +379,11 @@ HRESULT  WINAPI  IDirect3D8Impl_GetDeviceCaps              (LPDIRECT3D8 iface,
     {
         GLint gl_max;
 
+#if defined(GL_VERSION_1_3)
+        glGetIntegerv(GL_MAX_TEXTURE_UNITS, &gl_max);
+#else
         glGetIntegerv(GL_MAX_TEXTURE_UNITS_ARB, &gl_max);
+#endif
         pCaps->MaxTextureBlendStages = min(8, gl_max);
         pCaps->MaxSimultaneousTextures = min(8, gl_max);
         TRACE("GLCaps: GL_MAX_TEXTURE_UNITS_ARB=%ld\n", pCaps->MaxTextureBlendStages);

@@ -142,6 +142,15 @@ void CreateStateBlock(LPDIRECT3DDEVICE8 iface);
        TRACE("%s call ok %s / %d\n", A, __FILE__, __LINE__); \
     } \
 }
+#define vcheckGLcall(A) \
+{ \
+    GLint err = glGetError();   \
+    if (err != GL_NO_ERROR) { \
+       FIXME(">>>>>>>>>>>>>>>>> %x from %s @ %s / %d\n", err, A, __FILE__, __LINE__); \
+    } else { \
+       VTRACE(("%s call ok %s / %d\n", A, __FILE__, __LINE__)); \
+    } \
+}
 
 #define checkGLSupport(ExtName)  FALSE/*(TRUE == This->direct3d8->glInfo.supported[ExtName])*/
 #define GLExtCall(FuncName)      /*(This->direct3d8->glInfo.FuncName)*/
