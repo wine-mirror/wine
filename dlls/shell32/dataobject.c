@@ -3,7 +3,7 @@
  *
  * selecting and droping objects within the shell and/or common dialogs
  *
- *	Copyright 1998	<juergen.schmied@metronet.de>
+ *	Copyright 1998, 1999	<juergen.schmied@metronet.de>
  */
 #include <string.h>
 
@@ -13,16 +13,14 @@
 #include "shell32_main.h"
 #include "debugtools.h"
 #include "wine/undocshell.h"
+#include "wine/obj_dataobject.h"
 
 DEFAULT_DEBUG_CHANNEL(shell)
-
-UINT cfShellIDList=0;
-UINT cfFileGroupDesc=0;
-UINT cfFileContents=0;
 
 /***********************************************************************
 *   IEnumFORMATETC implementation
 */
+
 typedef struct 
 {
     /* IUnknown fields */
@@ -137,22 +135,26 @@ static HRESULT WINAPI IEnumFORMATETC_fnNext(LPENUMFORMATETC iface, ULONG celt, F
 
 	TRACE("(%p)->()\n", This);
 
-        if (This->posFmt < This->countFmt)
-        { cfetch = This->countFmt - This->posFmt;
+	if (This->posFmt < This->countFmt)
+	{
+	  cfetch = This->countFmt - This->posFmt;
 	  if (cfetch >= celt)
-	  { cfetch = celt;
+	  {
+	    cfetch = celt;
 	    hres = S_OK;
 	  }
 	  memcpy(rgelt, &This->pFmt[This->posFmt], cfetch * sizeof(FORMATETC));
 	  This->posFmt += cfetch;
 	}
 	else
-	{ cfetch = 0;
-        }
+	{
+	  cfetch = 0;
+	}
 
-        if (pceltFethed)
-        { *pceltFethed = cfetch;
-        }
+	if (pceltFethed)
+	{
+	  *pceltFethed = cfetch;
+	}
 
         return hres;
 }
@@ -163,7 +165,8 @@ static HRESULT WINAPI IEnumFORMATETC_fnSkip(LPENUMFORMATETC iface, ULONG celt)
 
 	This->posFmt += celt;
 	if (This->posFmt > This->countFmt)
-        { This->posFmt = This->countFmt;
+	{
+	  This->posFmt = This->countFmt;
 	  return S_FALSE;
 	}
 	return S_OK;
@@ -347,46 +350,27 @@ static void WINAPI IDLList_CleanList(LPIDLLIST this)
 /***********************************************************************
 *   IDataObject implementation
 */
+/* number of supported formats */
+#define MAX_FORMATS 1
 
 typedef struct
 {
-    /* IUnknown fields */
-    ICOM_VTABLE(IDataObject)* lpvtbl;
-    DWORD                     ref;
-    /* IDataObject fields */
-    LPIDLLIST     lpill;       /* the data of the dataobject */
-    LPITEMIDLIST  pidl;     
+	/* IUnknown fields */
+	ICOM_VTABLE(IDataObject)* lpvtbl;
+	DWORD		ref;
+
+	/* IDataObject fields */
+	LPIDLLIST	lpill;       /* the data of the dataobject */
+	LPITEMIDLIST	pidl;
+
+	FORMATETC	pFormatEtc[MAX_FORMATS];
+	UINT		cfShellIDList;
+	UINT		cfFileGroupDesc;
+	UINT		cfFileContents;
+
 } IDataObjectImpl;
 
-static HRESULT WINAPI IDataObject_fnQueryInterface(LPDATAOBJECT iface, REFIID riid, LPVOID* ppvObj);
-static ULONG WINAPI IDataObject_fnAddRef(LPDATAOBJECT iface);
-static ULONG WINAPI IDataObject_fnRelease(LPDATAOBJECT iface);
-static HRESULT WINAPI IDataObject_fnGetData(LPDATAOBJECT iface, LPFORMATETC pformatetcIn, STGMEDIUM* pmedium);
-static HRESULT WINAPI IDataObject_fnGetDataHere(LPDATAOBJECT iface, LPFORMATETC pformatetc, STGMEDIUM* pmedium);
-static HRESULT WINAPI IDataObject_fnQueryGetData(LPDATAOBJECT iface, LPFORMATETC pformatetc);
-static HRESULT WINAPI IDataObject_fnGetCanonicalFormatEtc(LPDATAOBJECT iface, LPFORMATETC pformatectIn, LPFORMATETC pformatetcOut);
-static HRESULT WINAPI IDataObject_fnSetData(LPDATAOBJECT iface, LPFORMATETC pformatetc, STGMEDIUM* pmedium, BOOL fRelease);
-static HRESULT WINAPI IDataObject_fnEnumFormatEtc(LPDATAOBJECT iface, DWORD dwDirection, IEnumFORMATETC** ppenumFormatEtc);
-static HRESULT WINAPI IDataObject_fnDAdvise(LPDATAOBJECT iface, FORMATETC* pformatetc, DWORD advf, IAdviseSink* pAdvSink, DWORD* pdwConnection);
-static HRESULT WINAPI IDataObject_fnDUnadvise(LPDATAOBJECT iface, DWORD dwConnection);
-static HRESULT WINAPI IDataObject_fnEnumDAdvise(LPDATAOBJECT iface, IEnumSTATDATA **ppenumAdvise);
-
-static struct ICOM_VTABLE(IDataObject) dtovt = 
-{
-    ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE
-        IDataObject_fnQueryInterface,
-        IDataObject_fnAddRef,
-    IDataObject_fnRelease,
-    IDataObject_fnGetData,
-    IDataObject_fnGetDataHere,
-    IDataObject_fnQueryGetData,
-    IDataObject_fnGetCanonicalFormatEtc,
-    IDataObject_fnSetData,
-    IDataObject_fnEnumFormatEtc,
-    IDataObject_fnDAdvise,
-    IDataObject_fnDUnadvise,
-    IDataObject_fnEnumDAdvise
-};
+static struct ICOM_VTABLE(IDataObject) dtovt;
 
 /**************************************************************************
 *  IDataObject_Constructor
@@ -409,6 +393,13 @@ LPDATAOBJECT IDataObject_Constructor(HWND hwndOwner, LPITEMIDLIST pMyPidl, LPITE
 	    return NULL;
 	  
 	  dto->lpill->lpvtbl->fnAddItems(dto->lpill, apidl, cidl); 
+
+	  /* */
+	  dto->cfShellIDList = RegisterClipboardFormatA(CFSTR_SHELLIDLIST);
+/*	  dto->cfFileGroupDesc = RegisterClipboardFormatA(CFSTR_FILEDESCRIPTORA);
+	  dto->cfFileContents = RegisterClipboardFormatA(CFSTR_FILECONTENTS);
+*/
+	  InitFormatEtc(dto->pFormatEtc[0], dto->cfShellIDList, TYMED_HGLOBAL);
 
 	  shell32_ObjCount++;
 	}
@@ -473,53 +464,6 @@ static ULONG WINAPI IDataObject_fnRelease(LPDATAOBJECT iface)
 	}
 	return This->ref;
 }
-/**************************************************************************
-* DATAOBJECT_InitShellIDList (internal)
-*
-* NOTES
-*  get or register the "Shell IDList Array" clipformat
-*/
-static BOOL DATAOBJECT_InitShellIDList(void)
-{	if (cfShellIDList)
-	{ return(TRUE);
-	}
-
-	cfShellIDList = RegisterClipboardFormatA(CFSTR_SHELLIDLIST);
-	return(cfShellIDList != 0);
-}
-
-/**************************************************************************
-* DATAOBJECT_InitFileGroupDesc (internal)
-*
-* NOTES
-*  get or register the "FileGroupDescriptor" clipformat
-*/
-/* FIXME: DATAOBJECT_InitFileGroupDesc is not used (19981226)
-static BOOL32 DATAOBJECT_InitFileGroupDesc(void)
-{	if (cfFileGroupDesc)
-	{ return(TRUE);
-	}
-
-	cfFileGroupDesc = RegisterClipboardFormatA(CFSTR_FILEDESCRIPTORA);
-	return(cfFileGroupDesc != 0);
-}
-*/
-/**************************************************************************
-* DATAOBJECT_InitFileContents (internal)
-* 
-* NOTES
- * get or register the "FileContents" clipformat
-*/
-/* FIXME: DATAOBJECT_InitFileContents is not used (19981226)
-static BOOL32 DATAOBJECT_InitFileContents(void)
-{	if (cfFileContents)
-	{ return(TRUE);
-	}
-
-	cfFileContents = RegisterClipboardFormatA(CFSTR_FILECONTENTS);
-	return(cfFileContents != 0);
-}
-*/
 
 /**************************************************************************
 * IDataObject_fnGetData
@@ -539,11 +483,8 @@ static HRESULT WINAPI IDataObject_fnGetData(LPDATAOBJECT iface, LPFORMATETC pfor
 	GetClipboardFormatNameA (pformatetcIn->cfFormat, szTemp, 256);
 	TRACE("(%p)->(%p %p format=%s)\n", This, pformatetcIn, pmedium, szTemp);
 
-	/* is the clipformat registred? */
-	if (!DATAOBJECT_InitShellIDList()) return(E_UNEXPECTED);
-	
 	/* test expected format */
-	if (!(pformatetcIn->cfFormat == cfShellIDList))
+	if (!(pformatetcIn->cfFormat == This->cfShellIDList))
 	{
 	  FIXME("-- clipformat not implemented\n");
 	  return (E_INVALIDARG);
@@ -612,8 +553,24 @@ static HRESULT WINAPI IDataObject_fnGetDataHere(LPDATAOBJECT iface, LPFORMATETC 
 static HRESULT WINAPI IDataObject_fnQueryGetData(LPDATAOBJECT iface, LPFORMATETC pformatetc)
 {
 	ICOM_THIS(IDataObjectImpl,iface);
-	FIXME("(%p)->()\n", This);
-	return E_NOTIMPL;
+	UINT i;
+	
+	TRACE("(%p)->(fmt=0x%08x tym=0x%08lx)\n", This, pformatetc->cfFormat, pformatetc->tymed);
+	
+	if(!(DVASPECT_CONTENT & pformatetc->dwAspect))
+	  return DV_E_DVASPECT;
+
+	/* check our formats table what we have */
+	for (i=0; i<MAX_FORMATS; i++)
+	{
+	  if ((This->pFormatEtc[i].cfFormat == pformatetc->cfFormat)
+	   && (This->pFormatEtc[i].tymed == pformatetc->tymed))
+	  {
+	    return S_OK;
+	  }
+	}
+
+	return DV_E_TYMED;
 }
 static HRESULT WINAPI IDataObject_fnGetCanonicalFormatEtc(LPDATAOBJECT iface, LPFORMATETC pformatectIn, LPFORMATETC pformatetcOut)
 {
@@ -630,7 +587,17 @@ static HRESULT WINAPI IDataObject_fnSetData(LPDATAOBJECT iface, LPFORMATETC pfor
 static HRESULT WINAPI IDataObject_fnEnumFormatEtc(LPDATAOBJECT iface, DWORD dwDirection, IEnumFORMATETC **ppenumFormatEtc)
 {
 	ICOM_THIS(IDataObjectImpl,iface);
-	FIXME("(%p)->()\n", This);
+
+	TRACE("(%p)->()\n", This);
+	*ppenumFormatEtc=NULL;
+
+	/* only get data */
+	if (DATADIR_GET == dwDirection)
+	{
+	  *ppenumFormatEtc = IEnumFORMATETC_Constructor(MAX_FORMATS, This->pFormatEtc);
+	  return (*ppenumFormatEtc) ? S_OK : E_FAIL;
+	}
+	
 	return E_NOTIMPL;
 }
 static HRESULT WINAPI IDataObject_fnDAdvise(LPDATAOBJECT iface, FORMATETC *pformatetc, DWORD advf, IAdviseSink *pAdvSink, DWORD *pdwConnection)
@@ -651,3 +618,21 @@ static HRESULT WINAPI IDataObject_fnEnumDAdvise(LPDATAOBJECT iface, IEnumSTATDAT
 	FIXME("(%p)->()\n", This);
 	return E_NOTIMPL;
 }
+
+static struct ICOM_VTABLE(IDataObject) dtovt = 
+{
+	ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE
+	IDataObject_fnQueryInterface,
+	IDataObject_fnAddRef,
+	IDataObject_fnRelease,
+	IDataObject_fnGetData,
+	IDataObject_fnGetDataHere,
+	IDataObject_fnQueryGetData,
+	IDataObject_fnGetCanonicalFormatEtc,
+	IDataObject_fnSetData,
+	IDataObject_fnEnumFormatEtc,
+	IDataObject_fnDAdvise,
+	IDataObject_fnDUnadvise,
+	IDataObject_fnEnumDAdvise
+};
+
