@@ -34,6 +34,7 @@
 #include "excpt.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(snoop);
+WINE_DECLARE_DEBUG_CHANNEL(seh);
 
 static WINE_EXCEPTION_FILTER(page_fault)
 {
@@ -216,7 +217,7 @@ static void SNOOP_PrintArg(DWORD x)
     int i,nostring;
 
     DPRINTF("%08lx",x);
-    if ( !HIWORD(x) ) return; /* trivial reject to avoid faults */
+    if (!HIWORD(x) || TRACE_ON(seh)) return; /* trivial reject to avoid faults */
     __TRY
     {
         LPBYTE s=(LPBYTE)x;
