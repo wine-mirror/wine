@@ -977,18 +977,25 @@ static int ctl2_encode_typedesc(
 	break;
 
     case VT_CARRAY:
+      {
 	/* FIXME: Make with the error checking. */
-	FIXME("Array vartype, hacking badly.\n");
+        int num_dims = tdesc->u.lpadesc->cDims, elements = 1, dim;
 
 	ctl2_encode_typedesc(This, &tdesc->u.lpadesc->tdescElem, &target_type, width, alignment, NULL);
-	arrayoffset = ctl2_alloc_segment(This, MSFT_SEG_ARRAYDESC, 16, 0);
+	arrayoffset = ctl2_alloc_segment(This, MSFT_SEG_ARRAYDESC, (2 + 2 * num_dims) * sizeof(int), 0);
 	arraydata = (void *)&This->typelib_segment_data[MSFT_SEG_ARRAYDESC][arrayoffset];
 
 	arraydata[0] = target_type;
-	arraydata[1] = 0x00080001;
-	arraydata[2] = 0x8;
-	arraydata[3] = 0;
+	arraydata[1] = num_dims;
+        arraydata[1] |= ((num_dims * 2 * sizeof(int)) << 16);
+        arraydata += 2;
 
+        for(dim = 0; dim < num_dims; dim++) {
+            arraydata[0] = tdesc->u.lpadesc->rgbounds[dim].cElements;
+            arraydata[1] = tdesc->u.lpadesc->rgbounds[dim].lLbound;
+            elements *= tdesc->u.lpadesc->rgbounds[dim].cElements;
+            arraydata += 2;
+        }
 	typeoffset = ctl2_alloc_segment(This, MSFT_SEG_TYPEDESC, 8, 0);
 	typedata = (void *)&This->typelib_segment_data[MSFT_SEG_TYPEDESC][typeoffset];
 
@@ -996,12 +1003,11 @@ static int ctl2_encode_typedesc(
 	typedata[1] = arrayoffset;
 
 	*encoded_tdesc = typeoffset;
-	*width = 8;
-	*alignment = 1;
-	*decoded_size = sizeof(ARRAYDESC);
+	*width = *width * elements;
+	*decoded_size = sizeof(ARRAYDESC) + (num_dims - 1) * sizeof(SAFEARRAYBOUND);
 
 	break;
-
+      }
     case VT_USERDEFINED:
 	TRACE("USERDEFINED.\n");
 	for (typeoffset = 0; typeoffset < This->typelib_segdir[MSFT_SEG_TYPEDESC].length; typeoffset += 8) {
