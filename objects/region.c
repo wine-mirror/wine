@@ -339,7 +339,7 @@ BOOL WINAPI SetRectRgn( HRGN hrgn, INT left, INT top,
     RGNOBJ * obj;
 
     TRACE(" %04x %d,%d-%d,%d\n", 
-		   hrgn, left, top, right, bottom );
+	  hrgn, left, top, right, bottom );
     
     if (!(obj = (RGNOBJ *) GDI_GetObjPtr( hrgn, REGION_MAGIC ))) return FALSE;
 
@@ -413,7 +413,7 @@ HRGN WINAPI CreateRoundRectRgn( INT left, INT top,
     if (!(hrgn = REGION_CreateRegion(d))) return 0;
     obj = (RGNOBJ *) GDI_HEAP_LOCK( hrgn );
     TRACE("(%d,%d-%d,%d %dx%d): ret=%04x\n",
-	       left, top, right, bottom, ellipse_width, ellipse_height, hrgn );
+	  left, top, right, bottom, ellipse_width, ellipse_height, hrgn );
 
       /* Check parameters */
 
@@ -774,7 +774,7 @@ static void REGION_UnionRectWithRegion(const RECT *rect, WINEREGION *rgn)
  */
 BOOL REGION_UnionRectWithRgn( HRGN hrgn, const RECT *lpRect )
 {
-    RGNOBJ *obj = (RGNOBJ *) GDI_HEAP_LOCK( hrgn );
+    RGNOBJ *obj = (RGNOBJ *) GDI_GetObjPtr( hrgn, REGION_MAGIC );
 
     if(!obj) return FALSE;
     REGION_UnionRectWithRegion( lpRect, obj->rgn );
@@ -833,7 +833,7 @@ BOOL REGION_LPTODP( HDC hdc, HRGN hDest, HRGN hSrc )
     RECT tmpRect;
 
     TRACE(" hdc=%04x dest=%04x src=%04x\n",
-		    hdc, hDest, hSrc) ;
+	  hdc, hDest, hSrc) ;
     
     if (dc->w.MapMode == MM_TEXT) /* Requires only a translation */
     {
@@ -888,7 +888,7 @@ INT WINAPI CombineRgn(HRGN hDest, HRGN hSrc1, HRGN hSrc2, INT mode)
     INT result = ERROR;
 
     TRACE(" %04x,%04x -> %04x mode=%x\n", 
-		 hSrc1, hSrc2, hDest, mode );
+	  hSrc1, hSrc2, hDest, mode );
     if (destObj)
     {
 	RGNOBJ *src1Obj = (RGNOBJ *) GDI_GetObjPtr( hSrc1, REGION_MAGIC);
@@ -911,7 +911,7 @@ INT WINAPI CombineRgn(HRGN hDest, HRGN hSrc1, HRGN hSrc2, INT mode)
 		{
 		    TRACE("dump:\n");
 		    if(TRACE_ON(region)) 
-		      REGION_DumpRegion(src2Obj->rgn);
+		        REGION_DumpRegion(src2Obj->rgn);
 		    switch (mode)
 		    {
 		    case RGN_AND:
@@ -938,6 +938,8 @@ INT WINAPI CombineRgn(HRGN hDest, HRGN hSrc1, HRGN hSrc2, INT mode)
 	  REGION_DumpRegion(destObj->rgn);
 
 	GDI_HEAP_UNLOCK( hDest );
+    } else {
+       ERR("Invalid rgn=%04x\n", hDest);
     }
     return result;
 }
@@ -2745,7 +2747,7 @@ empty:
  * lpPt:	Points to offset the cropped region. Can be NULL (no offset).
  *
  * hDst: Region to hold the result (a new region is created if it's 0).
- *       Allowed to be the same region as hSrc in which case everyhting
+ *       Allowed to be the same region as hSrc in which case everything
  *	 will be done in place, with no memory reallocations.
  *
  * Returns: hDst if success, 0 otherwise.
@@ -2773,7 +2775,7 @@ HRGN REGION_CropRgn( HRGN hDst, HRGN hSrc, const RECT *lpRect, const POINT *lpPt
 
 */
 
-    RGNOBJ *objSrc = (RGNOBJ *) GDI_HEAP_LOCK( hSrc );
+    RGNOBJ *objSrc = (RGNOBJ *) GDI_GetObjPtr( hSrc, REGION_MAGIC );
 
     if(objSrc)
     {
@@ -2782,13 +2784,16 @@ HRGN REGION_CropRgn( HRGN hDst, HRGN hSrc, const RECT *lpRect, const POINT *lpPt
 
 	if( hDst )
 	{
-	    objDst = (RGNOBJ *) GDI_HEAP_LOCK( hDst );
+	    if (!(objDst = (RGNOBJ *) GDI_GetObjPtr( hDst, REGION_MAGIC )))
+	    {
+	       hDst = 0;
+	       goto done;
+	    }
 	    rgnDst = objDst->rgn;
 	}
 	else
 	{
-	    rgnDst = HeapAlloc(SystemHeap, 0, sizeof( WINEREGION ));
-	    if( rgnDst ) 
+	    if ((rgnDst = HeapAlloc(SystemHeap, 0, sizeof( WINEREGION ))))
 	    {
 	        rgnDst->size = rgnDst->numRects = 0;
 	        rgnDst->rects = NULL;	/* back end will allocate exact number */
@@ -2803,7 +2808,7 @@ HRGN REGION_CropRgn( HRGN hDst, HRGN hSrc, const RECT *lpRect, const POINT *lpPt
 
 	    if( lpRect )
 	        TRACE("src %p -> dst %p (%i,%i)-(%i,%i) by (%li,%li)\n", objSrc->rgn, rgnDst,
-			   lpRect->left, lpRect->top, lpRect->right, lpRect->bottom, lpPt->x, lpPt->y );
+		      lpRect->left, lpRect->top, lpRect->right, lpRect->bottom, lpPt->x, lpPt->y );
 	    else
 		TRACE("src %p -> dst %p by (%li,%li)\n", objSrc->rgn, rgnDst, lpPt->x, lpPt->y ); 
 
