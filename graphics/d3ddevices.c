@@ -59,7 +59,7 @@ static void set_context(IDirect3DDevice2Impl* This) {
   if (glXMakeCurrent(display,
 		     odev->common.surface->s.ddraw->d.drawable,
 		     odev->ctx) == False) {
-    ERR(ddraw, "Error in setting current context (context %p drawable %d)!\n",
+    ERR(ddraw, "Error in setting current context (context %p drawable %ld)!\n",
 	odev->ctx, odev->common.surface->s.ddraw->d.drawable);
 }
 #endif
