@@ -440,7 +440,7 @@ static LPCSTR DIALOG_ParseTemplate16( LPCSTR p, DLG_TEMPLATE * result )
 {
     result->style   = GET_DWORD(p); p += sizeof(DWORD);
     result->exStyle = 0;
-    result->nbItems = *p++;
+    result->nbItems = (unsigned char) *p++;
     result->x       = GET_WORD(p);  p += sizeof(WORD);
     result->y       = GET_WORD(p);  p += sizeof(WORD);
     result->cx      = GET_WORD(p);  p += sizeof(WORD);
