@@ -629,7 +629,7 @@ static DWORD CDROM_ReadQChannel(int dev, const CDROM_SUB_Q_DATA_FORMAT* fmt,
         break;
     case IOCTL_CDROM_TRACK_ISRC:
         size = sizeof(SUB_Q_CURRENT_POSITION);
-        FIXME("TrackIsrc: NIY on linux");
+        FIXME("TrackIsrc: NIY on linux\n");
         data->TrackIsrc.FormatCode = IOCTL_CDROM_TRACK_ISRC;
         data->TrackIsrc.Tcval = 0;
         io = 0;

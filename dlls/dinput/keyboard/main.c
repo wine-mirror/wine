@@ -304,7 +304,7 @@ static HRESULT WINAPI SysKeyboardAImpl_Acquire(LPDIRECTINPUTDEVICE2A iface)
 
         if (current != NULL) 
           {
-            FIXME("Not more than one keyboard can be acquired at the same time.");
+            FIXME("Not more than one keyboard can be acquired at the same time.\n");
             SysKeyboardAImpl_Unacquire(iface);
           }
 
@@ -336,7 +336,7 @@ static HRESULT WINAPI SysKeyboardAImpl_Unacquire(LPDIRECTINPUTDEVICE2A iface)
         if (current == This)
           current = NULL;
         else
-          ERR("this != current");
+          ERR("this != current\n");
 
         This->acquired = 0;
 

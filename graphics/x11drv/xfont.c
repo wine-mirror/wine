@@ -644,7 +644,7 @@ static int LFD_InitFontInfo( fontInfo* fi, const LFD* lfd, LPCSTR fullname )
    j = strlen(lfd->pixel_size);
    if( j == 0 || j > 3 )
    {
-       WARN(ridiculous, fullname, "pixel_size");
+       WARN(ridiculous, fullname, "pixel_size\n");
        return FALSE;
    }
    if( !(fi->lfd_height = atoi(lfd->pixel_size)) )
@@ -653,7 +653,7 @@ static int LFD_InitFontInfo( fontInfo* fi, const LFD* lfd, LPCSTR fullname )
    j = strlen(lfd->point_size);
    if( j == 0 || j > 3 )
    {
-       WARN(ridiculous, fullname, "point_size");
+       WARN(ridiculous, fullname, "point_size\n");
        return FALSE;
    }
    if( !(atoi(lfd->point_size)) )
@@ -662,7 +662,7 @@ static int LFD_InitFontInfo( fontInfo* fi, const LFD* lfd, LPCSTR fullname )
    j = strlen(lfd->resolution_x);
    if( j == 0 || j > 3 )
    {
-       WARN(ridiculous, fullname, "resolution_x");
+       WARN(ridiculous, fullname, "resolution_x\n");
        return FALSE;
    }
    if( !(fi->lfd_resolution = atoi(lfd->resolution_x)) )
@@ -671,7 +671,7 @@ static int LFD_InitFontInfo( fontInfo* fi, const LFD* lfd, LPCSTR fullname )
    j = strlen(lfd->resolution_y);
    if( j == 0 || j > 3 )
    {
-       WARN(ridiculous, fullname, "resolution_y");
+       WARN(ridiculous, fullname, "resolution_y\n");
        return FALSE;
    }
    if( !(atoi(lfd->resolution_y)) )

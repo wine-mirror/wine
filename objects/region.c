@@ -920,14 +920,14 @@ HRGN WINAPI ExtCreateRegion( const XFORM* lpXform, DWORD dwCount, const RGNDATA*
     TRACE(" %p %ld %p = ", lpXform, dwCount, rgndata );
 
     if( lpXform )
-        WARN("(Xform not implemented - ignored) ");
+        WARN("(Xform not implemented - ignored)\n");
     
     if( rgndata->rdh.iType != RDH_RECTANGLES )
     {
 	/* FIXME: We can use CreatePolyPolygonRgn() here
 	 *        for trapezoidal data */
 
-        WARN("(Unsupported region data) ");
+        WARN("(Unsupported region data)\n");
 	goto fail;
     }
 
@@ -945,7 +945,7 @@ HRGN WINAPI ExtCreateRegion( const XFORM* lpXform, DWORD dwCount, const RGNDATA*
             TRACE("%04x\n", hrgn );
             return hrgn;
         }
-	else ERR("Could not get pointer to newborn Region!");
+	else ERR("Could not get pointer to newborn Region!\n");
     }
 fail:
     WARN("Failed\n");

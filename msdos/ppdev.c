@@ -126,7 +126,7 @@ char IO_pp_init(void)
 		  {
 		    WARN("Configuration: %s uses the same virtual ports as %s\n",
 			 buffer,PPDeviceList[0].devicename);
-		    WARN("Configuration: Rejecting configuration item");
+		    WARN("Configuration: Rejecting configuration item\n");
 		    userbase = 0;
 		    break;
 		  }

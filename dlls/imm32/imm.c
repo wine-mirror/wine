@@ -246,7 +246,7 @@ LONG WINAPI ImmGetCompositionStringA(
   case VER_PLATFORM_WIN32_WINDOWS: return -1;
   case VER_PLATFORM_WIN32_NT: return 0;
   default:
-      FIXME("%ld not supported",version.dwPlatformId);
+      FIXME("%ld not supported\n",version.dwPlatformId);
       return -1;
   }
 }
@@ -269,7 +269,7 @@ LONG WINAPI ImmGetCompositionStringW(
   case VER_PLATFORM_WIN32_WINDOWS: return -1;
   case VER_PLATFORM_WIN32_NT: return 0;
   default:
-      FIXME("%ld not supported",version.dwPlatformId);
+      FIXME("%ld not supported\n",version.dwPlatformId);
       return -1;
   }
 }
@@ -491,7 +491,7 @@ UINT WINAPI ImmGetVirtualKey(HWND hWnd)
   case VER_PLATFORM_WIN32_NT:
       return 0;
   default:
-      FIXME("%ld not supported",version.dwPlatformId);
+      FIXME("%ld not supported\n",version.dwPlatformId);
       return VK_PROCESSKEY;
   }
 }

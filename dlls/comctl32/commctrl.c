@@ -438,7 +438,7 @@ void WINAPI DrawStatusTextW (HDC hdc, LPRECT lprc, LPCWSTR text, UINT style)
         }
         r.left += 3;
         if (style & SBT_RTLREADING)
-	    FIXME("Usupported RTL style!");
+	    FIXME("Unsupported RTL style!\n");
         DrawTextW (hdc, text, -1, &r, align|DT_VCENTER|DT_SINGLELINE);
 	SetBkMode(hdc, oldbkmode);
     }

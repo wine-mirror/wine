@@ -1051,7 +1051,7 @@ BOOL WINAPI CryptSignHashA (HCRYPTHASH hHash, DWORD dwKeySpec, LPCSTR sDescripti
 
 	TRACE("(0x%lx, %ld, %08ld, %p, %p)\n", hHash, dwKeySpec, dwFlags, pbSignature, pdwSigLen);
 	if (sDescription)
-		WARN("The sDescription parameter is not supported (and no longer used).  Ignoring.");
+		WARN("The sDescription parameter is not supported (and no longer used).  Ignoring.\n");
 
 	if (!hash)
 		CRYPT_ReturnLastError(ERROR_INVALID_HANDLE);
@@ -1233,7 +1233,7 @@ BOOL WINAPI CryptVerifySignatureA (HCRYPTHASH hHash, BYTE *pbSignature, DWORD dw
 	TRACE("(0x%lx, %p, %ld, 0x%lx, %08ld)\n", hHash, pbSignature,
 			dwSigLen, hPubKey, dwFlags);
 	if (sDescription)
-		WARN("The sDescription parameter is not supported (and no longer used).  Ignoring.");
+		WARN("The sDescription parameter is not supported (and no longer used).  Ignoring.\n");
 
 	if (!hash || !key)
 		CRYPT_ReturnLastError(ERROR_INVALID_HANDLE);

@@ -1596,7 +1596,7 @@ BOOL WINAPI SHLWAPI_320(LPCSTR lpszSubKey, LPCSTR lpszValue)
 
   if (!lpszValue)
   {
-    WARN("Invalid lpszValue would crash under Win32!");
+    WARN("Invalid lpszValue would crash under Win32!\n");
     return FALSE;
   }
 
@@ -1616,7 +1616,7 @@ BOOL WINAPI SHLWAPI_321(LPCWSTR lpszSubKey, LPCWSTR lpszValue)
 
   if (!lpszValue)
   {
-    WARN("Invalid lpszValue would crash under Win32!");
+    WARN("Invalid lpszValue would crash under Win32!\n");
     return FALSE;
   }
 

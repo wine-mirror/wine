@@ -226,7 +226,7 @@ void WINAPI DOSVM_QueueEvent( INT irq, INT priority, DOSRELAY relay, LPVOID data
       memset(&context,0,sizeof(context));
       (*relay)(&context,data);
     } else {
-      ERR("IRQ without DOS task: should not happen");
+      ERR("IRQ without DOS task: should not happen\n");
     }
   }
 }
@@ -613,7 +613,7 @@ void WINAPI DOSVM_QueueEvent( INT irq, INT priority, DOSRELAY relay, LPVOID data
     memset(&context,0,sizeof(context));
     (*relay)(&context,data);
   } else {
-    ERR("IRQ without DOS task: should not happen");
+    ERR("IRQ without DOS task: should not happen\n");
   }
 }
 

@@ -710,7 +710,7 @@ static LONG load_VDMX(GdiFont font, LONG height)
     }
 
     if(offset < 0) {
-	FIXME("No suitable ratio found");
+	FIXME("No suitable ratio found\n");
 	return ppem;
     }
 
