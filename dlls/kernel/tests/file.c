@@ -609,6 +609,7 @@ void test_offset_in_overlapped_structure(void)
     HANDLE hFile;
     OVERLAPPED ov;
     DWORD done;
+    BOOL rc;
     BYTE buf[256], pattern[] = "TeSt";
     UINT i;
     char temp_path[MAX_PATH], temp_fname[MAX_PATH];
@@ -628,19 +629,23 @@ void test_offset_in_overlapped_structure(void)
     memset(&ov, 0, sizeof(ov));
     ov.Offset = PATTERN_OFFSET;
     ov.OffsetHigh = 0;
-    ok(WriteFile(hFile, pattern, sizeof(pattern), &done, &ov), "WriteFile error %ld", GetLastError());
-    ok(done == sizeof(pattern), "expected number of bytes written %lu", done);
-    trace("Current offset = %04lx\n", SetFilePointer(hFile, 0, NULL, FILE_CURRENT));
-    ok(SetFilePointer(hFile, 0, NULL, FILE_CURRENT) == (PATTERN_OFFSET + sizeof(pattern)),
-       "expected file offset %d", PATTERN_OFFSET + sizeof(pattern));
+    rc=WriteFile(hFile, pattern, sizeof(pattern), &done, &ov);
+    /* Win 9x does not support the overlapped I/O on files */
+    if (rc || GetLastError()!=ERROR_INVALID_PARAMETER) {
+        ok(rc, "WriteFile error %ld", GetLastError());
+        ok(done == sizeof(pattern), "expected number of bytes written %lu", done);
+        trace("Current offset = %04lx\n", SetFilePointer(hFile, 0, NULL, FILE_CURRENT));
+        ok(SetFilePointer(hFile, 0, NULL, FILE_CURRENT) == (PATTERN_OFFSET + sizeof(pattern)),
+           "expected file offset %d", PATTERN_OFFSET + sizeof(pattern));
 
-    ov.Offset = sizeof(buf) * 2;
-    ov.OffsetHigh = 0;
-    ok(WriteFile(hFile, pattern, sizeof(pattern), &done, &ov), "WriteFile error %ld", GetLastError());
-    ok(done == sizeof(pattern), "expected number of bytes written %lu", done);
-    /*trace("Current offset = %04lx\n", SetFilePointer(hFile, 0, NULL, FILE_CURRENT));*/
-    ok(SetFilePointer(hFile, 0, NULL, FILE_CURRENT) == (sizeof(buf) * 2 + sizeof(pattern)),
-       "expected file offset %d", sizeof(buf) * 2 + sizeof(pattern));
+        ov.Offset = sizeof(buf) * 2;
+        ov.OffsetHigh = 0;
+        ok(WriteFile(hFile, pattern, sizeof(pattern), &done, &ov), "WriteFile error %ld", GetLastError());
+        ok(done == sizeof(pattern), "expected number of bytes written %lu", done);
+        /*trace("Current offset = %04lx\n", SetFilePointer(hFile, 0, NULL, FILE_CURRENT));*/
+        ok(SetFilePointer(hFile, 0, NULL, FILE_CURRENT) == (sizeof(buf) * 2 + sizeof(pattern)),
+           "expected file offset %d", sizeof(buf) * 2 + sizeof(pattern));
+    }
 
     CloseHandle(hFile);
 
@@ -653,12 +658,16 @@ void test_offset_in_overlapped_structure(void)
     memset(&ov, 0, sizeof(ov));
     ov.Offset = PATTERN_OFFSET;
     ov.OffsetHigh = 0;
-    ok(ReadFile(hFile, buf, sizeof(pattern), &done, &ov), "ReadFile error %ld", GetLastError());
-    ok(done == sizeof(pattern), "expected number of bytes read %lu", done);
-    trace("Current offset = %04lx\n", SetFilePointer(hFile, 0, NULL, FILE_CURRENT));
-    ok(SetFilePointer(hFile, 0, NULL, FILE_CURRENT) == (PATTERN_OFFSET + sizeof(pattern)),
-       "expected file offset %d", PATTERN_OFFSET + sizeof(pattern));
-    ok(!memcmp(buf, pattern, sizeof(pattern)), "pattern match failed");
+    rc=ReadFile(hFile, buf, sizeof(pattern), &done, &ov);
+    /* Win 9x does not support the overlapped I/O on files */
+    if (rc || GetLastError()!=ERROR_INVALID_PARAMETER) {
+        ok(rc, "ReadFile error %ld", GetLastError());
+        ok(done == sizeof(pattern), "expected number of bytes read %lu", done);
+        trace("Current offset = %04lx\n", SetFilePointer(hFile, 0, NULL, FILE_CURRENT));
+        ok(SetFilePointer(hFile, 0, NULL, FILE_CURRENT) == (PATTERN_OFFSET + sizeof(pattern)),
+           "expected file offset %d", PATTERN_OFFSET + sizeof(pattern));
+        ok(!memcmp(buf, pattern, sizeof(pattern)), "pattern match failed");
+    }
 
     CloseHandle(hFile);
 
