@@ -217,6 +217,7 @@ DECL_HANDLER(create_async)
 
     req->ov_handle = alloc_handle( current->process, ov, GENERIC_READ|GENERIC_WRITE, 0 );
 
+    release_object(ov);
     release_object(obj);
 }
 
