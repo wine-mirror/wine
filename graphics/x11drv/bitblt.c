@@ -15,6 +15,7 @@
 #include <stdlib.h>
 #include "winbase.h"
 #include "wingdi.h"
+#include "winreg.h"
 #include "winuser.h"
 #include "bitmap.h"
 #include "color.h"
@@ -522,6 +523,12 @@ main()
 
 #endif  /* BITBLT_TEST */
 
+static inline BOOL get_bool(const char *buffer, BOOL def_value)
+{
+    if(IS_OPTION_TRUE(buffer[0])) return TRUE;
+    if(IS_OPTION_FALSE(buffer[0])) return FALSE;
+    return def_value;
+}
 
 /***********************************************************************
  *           perfect_graphics
@@ -531,7 +538,20 @@ main()
 static inline int perfect_graphics(void)
 {
     static int perfect = -1;
-    if (perfect == -1) perfect = PROFILE_GetWineIniBool( "x11drv", "PerfectGraphics", 0 );
+    if (perfect == -1)
+    {
+	HKEY hkey;
+	char buffer[20];
+	/* default value */
+	perfect = 0;
+	if(!RegOpenKeyA(HKEY_LOCAL_MACHINE, "Software\\Wine\\Wine\\Config\\x11drv", &hkey))
+	{
+	    DWORD type, count = sizeof(buffer);
+	    if(!RegQueryValueExA(hkey, "PerfectGraphics", 0, &type, buffer, &count))
+		perfect = get_bool(buffer, 0);
+	    RegCloseKey(hkey);
+	}
+    }
     return perfect;
 }
 

@@ -18,6 +18,7 @@
 #include "options.h"
 #include "palette.h"
 #include "windef.h"
+#include "winreg.h"
 #include "x11drv.h"
 
 DEFAULT_DEBUG_CHANNEL(palette);
@@ -88,6 +89,13 @@ static void X11DRV_PALETTE_FormatSystemPalette(void);
 static BOOL X11DRV_PALETTE_CheckSysColor(COLORREF c);
 static int X11DRV_PALETTE_LookupSystemXPixel(COLORREF col);
 
+static inline BOOL get_bool(const char *buffer, BOOL def_value)
+{
+    if(IS_OPTION_TRUE(buffer[0])) return TRUE;
+    if(IS_OPTION_FALSE(buffer[0])) return FALSE;
+    return def_value;
+}
+
 /***********************************************************************
  *           COLOR_Init
  *
@@ -114,7 +122,19 @@ BOOL X11DRV_PALETTE_Init(void)
 	X11DRV_PALETTE_PaletteFlags |= X11DRV_PALETTE_VIRTUAL;
     case GrayScale:
     case PseudoColor:
-	if (PROFILE_GetWineIniBool( "x11drv", "PrivateColorMap", 0 ))
+    {
+	HKEY hkey;
+	BOOL private_color_map = FALSE;
+	if(!RegOpenKeyA(HKEY_LOCAL_MACHINE, "Software\\Wine\\Wine\\Config\\x11drv", &hkey))
+	{
+	    char buffer[20];
+	    DWORD type, count = sizeof(buffer);
+	    if(!RegQueryValueExA(hkey, "PrivateColorMap", 0, &type, buffer, &count))
+		private_color_map = get_bool(buffer, 0);
+	    RegCloseKey(hkey);
+	}
+
+	if (private_color_map)
 	{
 	    XSetWindowAttributes win_attr;
 
@@ -139,6 +159,7 @@ BOOL X11DRV_PALETTE_Init(void)
         X11DRV_PALETTE_PaletteXColormap = TSXCreateColormap(gdi_display, root_window,
                                                             visual, AllocNone);
         break;
+    }
 
     case StaticGray:
         X11DRV_PALETTE_PaletteXColormap = TSXCreateColormap(gdi_display, root_window,
@@ -316,21 +337,38 @@ static BOOL X11DRV_PALETTE_BuildSharedMap(void)
    int			defaultCM_max_copy;
    Colormap		defaultCM;
    XColor		defaultColors[256];
+   HKEY hkey;
+
+   defaultCM_max_copy = 128;
+   COLOR_max = 256;
+
+   if(!RegOpenKeyA(HKEY_LOCAL_MACHINE, "Software\\Wine\\Wine\\Config\\x11drv", &hkey))
+   {
+	char buffer[20];
+	DWORD type, count;
+
+	count = sizeof(buffer);
+	if(!RegQueryValueExA(hkey, "CopyDefaultColors", 0, &type, buffer, &count))
+	    defaultCM_max_copy = atoi(buffer);
+
+	count = sizeof(buffer);
+	if(!RegQueryValueExA(hkey, "AllocSystemColors", 0, &type, buffer, &count))
+	    COLOR_max = atoi(buffer);
+		
+	RegCloseKey(hkey);
+   }
 
    /* Copy the first bunch of colors out of the default colormap to prevent 
     * colormap flashing as much as possible.  We're likely to get the most
     * important Window Manager colors, etc in the first 128 colors */
    defaultCM = DefaultColormap( gdi_display, DefaultScreen(gdi_display) );
-   defaultCM_max_copy = PROFILE_GetWineIniInt( "x11drv", "CopyDefaultColors", 128);
+
    for (i = 0; i < defaultCM_max_copy; i++)
        defaultColors[i].pixel = (long) i;
    TSXQueryColors(gdi_display, defaultCM, &defaultColors[0], defaultCM_max_copy);
    for (i = 0; i < defaultCM_max_copy; i++)
        TSXAllocColor( gdi_display, X11DRV_PALETTE_PaletteXColormap, &defaultColors[i] );
               
-   /* read "AllocSystemColors" from wine.conf */
-
-   COLOR_max = PROFILE_GetWineIniInt( "x11drv", "AllocSystemColors", 256);
    if (COLOR_max > 256) COLOR_max = 256;
    else if (COLOR_max < 20) COLOR_max = 20;
    TRACE("%d colors configured.\n", COLOR_max);

@@ -53,10 +53,10 @@
 #include <unistd.h>
 #include <fcntl.h>
 
+#include "winreg.h"
 #include "clipboard.h"
 #include "win.h"
 #include "x11drv.h"
-#include "options.h"
 #include "debugtools.h"
 
 DEFAULT_DEBUG_CHANNEL(clipboard);
@@ -217,16 +217,27 @@ BOOL X11DRV_CLIPBOARD_IsNativeProperty(Atom prop)
 BOOL X11DRV_CLIPBOARD_LaunchServer()
 {
     int iWndsLocks;
-    char clearSelection[8];
+    char clearSelection[8] = "0";
+    int persistent_selection = 1;
+    HKEY hkey;
 
     /* If persistant selection has been disabled in the .winerc Clipboard section,
      * don't launch the server
      */
-    if ( !PROFILE_GetWineIniInt("Clipboard", "PersistentSelection", 1) )
-        return FALSE;
+    if(!RegOpenKeyA(HKEY_LOCAL_MACHINE, "Software\\Wine\\Wine\\Config\\Clipboard", &hkey))
+    {
+	char buffer[20];
+	DWORD type, count = sizeof(buffer);
+	if(!RegQueryValueExA(hkey, "PersistentSelection", 0, &type, buffer, &count))
+	    persistent_selection = atoi(buffer);
 
-    /* Get the clear selection preference */
-    sprintf(clearSelection, "%d", PROFILE_GetWineIniInt("Clipboard", "ClearAllSelections", 0));
+	/* Get the clear selection preference */
+	count = sizeof(clearSelection);
+	RegQueryValueExA(hkey, "ClearAllSelections", 0, &type, clearSelection, &count);
+	RegCloseKey(hkey);
+    }
+    if ( !persistent_selection )
+        return FALSE;
 
     /*  Start up persistant WINE X clipboard server process which will
      *  take ownership of the X selection and continue to service selection
@@ -547,7 +558,19 @@ static BOOL X11DRV_CLIPBOARD_ReadSelection(UINT wFormat, Window w, Atom prop, At
           }
 
 	  if(text_cp == (UINT)-1)
-	      text_cp = PROFILE_GetWineIniInt("x11drv", "TextCP", CP_ACP);
+	  {
+	      HKEY hkey;
+	      /* default value */
+	      text_cp = CP_ACP;
+	      if(!RegOpenKeyA(HKEY_LOCAL_MACHINE, "Software\\Wine\\Wine\\Config\\x11drv", &hkey))
+	      {
+	          char buf[20];
+		  DWORD type, count = sizeof(buf);
+		  if(!RegQueryValueExA(hkey, "TextCP", 0, &type, buf, &count))
+		      text_cp = atoi(buf);
+		  RegCloseKey(hkey);
+	      }
+	  }
 
 	  count = MultiByteToWideChar(text_cp, 0, lpstr, -1, NULL, 0);
 	  hUnicodeText = GlobalAlloc(GMEM_MOVEABLE | GMEM_DDESHARE, count * sizeof(WCHAR));
@@ -677,7 +700,17 @@ void X11DRV_CLIPBOARD_ReleaseSelection(Atom selType, Window w, HWND hwnd)
 {
     Display *display = thread_display();
     Atom xaClipboard = TSXInternAtom(display, "CLIPBOARD", False);
-    int clearAllSelections = PROFILE_GetWineIniInt("Clipboard", "ClearAllSelections", 0);
+    int clearAllSelections = 0;
+    HKEY hkey;
+
+    if(!RegOpenKeyA(HKEY_LOCAL_MACHINE, "Software\\Wine\\Wine\\Config\\Clipboard", &hkey))
+    {
+	char buffer[20];
+	DWORD type, count = sizeof(buffer);
+	if(!RegQueryValueExA(hkey, "ClearAllSelections", 0, &type, buffer, &count))
+	    clearAllSelections = atoi(buffer);
+        RegCloseKey(hkey);
+    }
     
     /* w is the window that lost the selection
      * selectionPrevWindow is nonzero if CheckSelection() was called. 

@@ -8,11 +8,14 @@
 
 #include "config.h"
 
+#include <stdlib.h>
+
 #include "ts_xlib.h"
 #include "ts_xutil.h"
 
 #include "winbase.h"
 #include "wingdi.h"
+#include "winreg.h"
 #include "winuser.h"
 
 #include "debugtools.h"
@@ -740,7 +743,17 @@ BOOL X11DRV_SetWindowText( HWND hwnd, LPCWSTR text )
     {
         if (text_cp == (UINT)-1)
         {
-            text_cp = PROFILE_GetWineIniInt("x11drv", "TextCP", CP_ACP);
+	    HKEY hkey;
+	    /* default value */
+	    text_cp = CP_ACP;
+	    if(!RegOpenKeyA(HKEY_LOCAL_MACHINE, "Software\\Wine\\Wine\\Config\\x11drv", &hkey))
+	    {
+		char buffer[20];
+		DWORD type, count = sizeof(buffer);
+		if(!RegQueryValueExA(hkey, "TextCP", 0, &type, buffer, &count))
+		    text_cp = atoi(buffer);
+		RegCloseKey(hkey);
+	    }
             TRACE("text_cp = %u\n", text_cp);
         }
 

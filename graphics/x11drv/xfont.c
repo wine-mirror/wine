@@ -25,8 +25,8 @@
 #include "windef.h"
 #include "wingdi.h"
 #include "winnls.h"
+#include "winreg.h"
 #include "heap.h"
-#include "options.h"
 #include "font.h"
 #include "debugtools.h"
 #include "user.h" /* for TWEAK_WineLook (FIXME) */
@@ -71,7 +71,7 @@ TC_CP_STROKE | TC_CR_ANY |
 			/* X11R6 adds TC_SF_X_YINDEP, maybe more... */
 
 static const char*	INIFontMetrics = "/cachedmetrics.";
-static const char*	INIFontSection = "fonts";
+static const char*	INIFontSection = "Software\\Wine\\Wine\\Config\\fonts";
 static const char*	INIAliasSection = "Alias";
 static const char*	INIIgnoreSection = "Ignore";
 static const char*	INIDefault = "Default";
@@ -1393,9 +1393,15 @@ static void XFONT_LoadDefaultLFD(LFD* lfd, LPCSTR fonttype)
 static void XFONT_LoadDefault(LPCSTR ini, LPCSTR fonttype)
 {
     char buffer[MAX_LFD_LENGTH];
+    HKEY hkey;
 
-    if( PROFILE_GetWineIniString( INIFontSection, ini, "", buffer, sizeof buffer ) )
+    buffer[0] = 0;
+    if(!RegOpenKeyA(HKEY_LOCAL_MACHINE, INIFontSection, &hkey))
     {
+	DWORD type, count = sizeof(buffer);
+	RegQueryValueExA(hkey, ini, 0, &type, buffer, &count);
+	RegCloseKey(hkey);
+
 	if (*buffer)
 	{
 	    LFD* lfd;
@@ -1410,7 +1416,7 @@ static void XFONT_LoadDefault(LPCSTR ini, LPCSTR fonttype)
 		WARN("Ini section [%s]%s is malformed\n", INIFontSection, ini);
 	    HeapFree(GetProcessHeap(), 0, lfd);
 	}
-    }   
+    }
 }
 
 /***********************************************************************
@@ -1533,6 +1539,33 @@ static void XFONT_LoadAlias(const LFD* lfd, LPCSTR lpAlias, BOOL bSubst)
 } 
 
 /***********************************************************************
+ *  Just a copy of PROFILE_GetStringItem
+ *
+ *  Convenience function that turns a string 'xxx, yyy, zzz' into 
+ *  the 'xxx\0 yyy, zzz' and returns a pointer to the 'yyy, zzz'.
+ */
+static char *XFONT_GetStringItem( char *start )
+{
+#define XFONT_isspace(c) (isspace(c) || (c == '\r') || (c == 0x1a))
+    char *lpchX, *lpch;
+
+    for (lpchX = start, lpch = NULL; *lpchX != '\0'; lpchX++ )
+    {
+        if( *lpchX == ',' )
+        {
+            if( lpch ) *lpch = '\0'; else *lpchX = '\0';
+            while( *(++lpchX) )
+                if( !XFONT_isspace(*lpchX) ) return lpchX;
+        }
+	else if( XFONT_isspace( *lpchX ) && !lpch ) lpch = lpchX;
+	     else lpch = NULL;
+    }
+    if( lpch ) *lpch = '\0';
+    return NULL;
+#undef XFONT_isspace
+}
+
+/***********************************************************************
  *           XFONT_LoadAliases
  *
  * INIT ONLY 
@@ -1564,10 +1597,16 @@ static void XFONT_LoadAliases(void)
     char buffer[MAX_LFD_LENGTH];
     int i = 0;
     LFD* lfd;
+    HKEY hkey;
 
     /* built-ins first */
-    PROFILE_GetWineIniString( INIFontSection, INIDefaultSerif,
-				"-bitstream-charter-", buffer, sizeof buffer );
+    strcpy(buffer, "-bitstream-charter-");
+    if(!RegOpenKeyA(HKEY_LOCAL_MACHINE, INIFontSection, &hkey))
+    {
+	DWORD type, count = sizeof(buffer);
+	RegQueryValueExA(hkey, INIDefaultSerif, 0, &type, buffer, &count);
+	RegCloseKey(hkey);
+    }
     TRACE("Using '%s' as default serif font\n", buffer);
     lfd = LFD_Parse(buffer);
     /* NB XFONT_InitialCapitals should not change these standard aliases */
@@ -1581,8 +1620,13 @@ static void XFONT_LoadAliases(void)
 	HeapFree(GetProcessHeap(), 0, lfd);
     }
 	
-    PROFILE_GetWineIniString( INIFontSection, INIDefaultSansSerif,
-				"-adobe-helvetica-", buffer, sizeof buffer);
+    strcpy(buffer, "-adobe-helvetica-");
+    if(!RegOpenKeyA(HKEY_LOCAL_MACHINE, INIFontSection, &hkey))
+    {
+	DWORD type, count = sizeof(buffer);
+	RegQueryValueExA(hkey, INIDefaultSansSerif, 0, &type, buffer, &count);
+	RegCloseKey(hkey);
+    }
     TRACE("Using '%s' as default sans serif font\n", buffer);
     lfd = LFD_Parse(buffer);
     if (lfd)
@@ -1599,18 +1643,24 @@ static void XFONT_LoadAliases(void)
     /* then user specified aliases */
     do
     {
-        BOOL bHaveAlias, bSubst;
+        BOOL bSubst;
 	char subsection[32];
         snprintf( subsection, sizeof subsection, "%s%i", INIAliasSection, i++ );
 
-	bHaveAlias = PROFILE_GetWineIniString( INIFontSection, 
-						subsection, "", buffer, sizeof buffer);
-	if (!bHaveAlias)
+	buffer[0] = 0;
+	if(!RegOpenKeyA(HKEY_LOCAL_MACHINE, INIFontSection, &hkey))
+	{
+	    DWORD type, count = sizeof(buffer);
+	    RegQueryValueExA(hkey, subsection, 0, &type, buffer, &count);
+	    RegCloseKey(hkey);
+	}
+
+	if (!buffer[0])
 	    break;
 
 	XFONT_InitialCapitals(buffer);
-	lpResource = PROFILE_GetStringItem( buffer );
-	bSubst = (PROFILE_GetStringItem( lpResource )) ? TRUE : FALSE;
+	lpResource = XFONT_GetStringItem( buffer );
+	bSubst = (XFONT_GetStringItem( lpResource )) ? TRUE : FALSE;
 	if( lpResource && *lpResource )
 	{
 	    lfd = LFD_Parse(lpResource);
@@ -1731,10 +1781,18 @@ static void XFONT_LoadIgnores(void)
     /* Others from INI file */
     do
     {
+	HKEY hkey;
 	sprintf( subsection, "%s%i", INIIgnoreSection, i++ );
 
-	if( PROFILE_GetWineIniString( INIFontSection,
-				      subsection, "", buffer, sizeof buffer) )
+	buffer[0] = 0;
+	if(!RegOpenKeyA(HKEY_LOCAL_MACHINE, INIFontSection, &hkey))
+	{
+	    DWORD type, count = sizeof(buffer);
+	    RegQueryValueExA(hkey, subsection, 0, &type, buffer, &count);
+	    RegCloseKey(hkey);
+	}
+
+	if( buffer[0] )
 	{
 	    char* pch = buffer;
 	    while( *pch && isspace(*pch) ) pch++;
@@ -2240,8 +2298,19 @@ static int XFONT_GetPointResolution( DeviceCaps* pDevCaps )
     int i, j, point_resolution, num = 3; 
     int allowed_xfont_resolutions[3] = { 72, 75, 100 };
     int best = 0, best_diff = 65536;
+    HKEY hkey;
 
-    point_resolution = PROFILE_GetWineIniInt( INIFontSection, INIResolution, 0 );
+    point_resolution = 0;
+
+    if(!RegOpenKeyA(HKEY_LOCAL_MACHINE, INIFontSection, &hkey))
+    {
+	char buffer[20];
+	DWORD type, count = sizeof(buffer);
+	if(!RegQueryValueExA(hkey, INIResolution, 0, &type, buffer, &count))
+	    point_resolution = atoi(buffer);
+	RegCloseKey(hkey);
+    }
+
     if( !point_resolution )
 	point_resolution = pDevCaps->logPixelsY;
     else
@@ -2714,6 +2783,7 @@ BOOL X11DRV_FONT_Init( DeviceCaps* pDevCaps )
   unsigned  x_checksum;
   int       i,res, x_count, fd, buf_size;
   char      *buffer;
+  HKEY hkey;
 
   res = XFONT_GetPointResolution( pDevCaps );
       
@@ -2740,7 +2810,15 @@ BOOL X11DRV_FONT_Init( DeviceCaps* pDevCaps )
 
   /* deal with systemwide font metrics cache */
 
-  if( PROFILE_GetWineIniString( INIFontSection, INIGlobalMetrics, "", buffer, buf_size ) )
+  buffer[0] = 0;
+  if(!RegOpenKeyA(HKEY_LOCAL_MACHINE, INIFontSection, &hkey))
+  {
+	DWORD type, count = buf_size;
+	RegQueryValueExA(hkey, INIGlobalMetrics, 0, &type, buffer, &count);
+	RegCloseKey(hkey);
+  }
+
+  if( buffer[0] )
   {
       fd = open( buffer, O_RDONLY );
       XFONT_ReadCachedMetrics(fd, DefResolution, x_checksum, x_count);
