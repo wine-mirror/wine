@@ -1388,6 +1388,8 @@ WORD WINAPI GetExpWinVer16( HMODULE16 hModule )
 
 /**********************************************************************
  *	    GetModuleFileName16    (KERNEL.49)
+ *
+ * Comment: see GetModuleFileNameA
  */
 INT16 WINAPI GetModuleFileName16( HINSTANCE16 hModule, LPSTR lpFileName,
                                   INT16 nSize )
@@ -1396,7 +1398,10 @@ INT16 WINAPI GetModuleFileName16( HINSTANCE16 hModule, LPSTR lpFileName,
 
     if (!hModule) hModule = GetCurrentTask();
     if (!(pModule = NE_GetPtr( hModule ))) return 0;
-    lstrcpynA( lpFileName, NE_MODULE_NAME(pModule), nSize );
+    if (pModule->expected_version >= 0x400)
+	GetLongPathNameA(NE_MODULE_NAME(pModule), lpFileName, nSize);
+    else
+        lstrcpynA( lpFileName, NE_MODULE_NAME(pModule), nSize );
     TRACE("%s\n", lpFileName );
     return strlen(lpFileName);
 }

@@ -1296,6 +1296,11 @@ HMODULE WINAPI GetModuleHandleW(LPCWSTR module)
 
 /***********************************************************************
  *              GetModuleFileNameA      (KERNEL32.235)
+ *
+ * GetModuleFileNameA seems to *always* return the long path;
+ * it's only GetModuleFileName16 that decides between short/long path
+ * by checking if exe version >= 4.0.
+ * (SDK docu doesn't mention this)
  */
 DWORD WINAPI GetModuleFileNameA( 
 	HMODULE hModule,	/* [in] module handle (32bit) */
@@ -1307,10 +1312,7 @@ DWORD WINAPI GetModuleFileNameA(
     if (!wm) /* can happen on start up or the like */
     	return 0;
 
-    if (PE_HEADER(wm->module)->OptionalHeader.MajorOperatingSystemVersion >= 4.0)
-      lstrcpynA( lpFileName, wm->filename, size );
-    else
-      lstrcpynA( lpFileName, wm->short_filename, size );
+    lstrcpynA( lpFileName, wm->filename, size );
        
     TRACE("%s\n", lpFileName );
     return strlen(lpFileName);
