@@ -284,7 +284,10 @@ ImageList_AddMasked (HIMAGELIST himl, HBITMAP hBitmap, COLORREF clrMask)
     if (!GetObjectA (hBitmap, sizeof(BITMAP), &bmp))
         return -1;
 
-    nImageCount = bmp.bmWidth / himl->cx;
+    if (himl->cx > 0)
+	nImageCount = bmp.bmWidth / himl->cx;
+    else
+	nImageCount = 0;
 
     IMAGELIST_InternalExpandBitmaps (himl, nImageCount, bmp.bmWidth, bmp.bmHeight);
 
