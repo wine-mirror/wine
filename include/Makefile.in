@@ -88,6 +88,7 @@ WINDOWS_INCLUDES = \
 	dsdriver.h \
 	dshow.h \
 	dsound.h \
+	dxdiag.h \
 	dxerr8.h \
 	dxerr9.h \
 	evcode.h \

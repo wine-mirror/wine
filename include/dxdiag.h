@@ -1,0 +1,121 @@
+/*
+ * Copyright (C) 2004 Raphael Junqueira
+ *
+ * This library is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU Lesser General Public
+ * License as published by the Free Software Foundation; either
+ * version 2.1 of the License, or (at your option) any later version.
+ *
+ * This library is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this library; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+ */
+
+#ifndef __WINE_DXDIAG_H
+#define __WINE_DXDIAG_H
+
+#include <objbase.h>
+
+#ifdef __cplusplus
+extern "C" {
+#endif /* defined(__cplusplus) */
+
+/*****************************************************************************
+ * #defines and error codes
+ */
+#define DXDIAG_DX9_SDK_VERSION 111
+
+#define _FACDXDIAG  0x007
+#define MAKE_DXDIAGHRESULT( code )  MAKE_HRESULT( 1, _FACDDXDIAG, code )
+
+/*
+ * DXDiag Errors
+ */
+#define DXDIAG_E_INSUFFICIENT_BUFFER       MAKE_DXDIAGHRESULT(007A)
+
+
+/*****************************************************************************
+ * DXDiag structures Typedefs
+ */
+typedef struct _DXDIAG_INIT_PARAMS {
+  DWORD  dwSize;
+  DWORD  dwDxDiagHeaderVersion;
+  BOOL   bAllowWHQLChecks;
+  VOID*  pReserved;
+} DXDIAG_INIT_PARAMS;
+
+
+/*****************************************************************************
+ * Predeclare the interfaces
+ */
+/* CLSIDs */
+DEFINE_GUID(CLSID_DxDiagProvider,   0xA65B8071, 0x3BFE, 0x4213, 0x9A, 0x5B, 0x49, 0x1D, 0xA4, 0x46, 0x1C, 0xA7);
+
+/* IIDs */
+DEFINE_GUID(IID_IDxDiagProvider,    0x9C6B4CB0, 0x23F8, 0x49CC, 0xA3, 0xED, 0x45, 0xA5, 0x50, 0x00, 0xA6, 0xD2);
+DEFINE_GUID(IID_IDxDiagContainer,   0x7D0F462F, 0x4064, 0x4862, 0xBC, 0x7F, 0x93, 0x3E, 0x50, 0x58, 0xC1, 0x0F);
+
+/* typedef definitions */
+typedef struct IDxDiagProvider      IDxDiagProvider,   *LPDXDIAGPROVIDER,   *PDXDIAGPROVIDER;
+typedef struct IDxDiagContainer     IDxDiagContainer,  *LPDXDIAGCONTAINER,  *PDXDIAGCONTAINER;
+
+/*****************************************************************************
+ * IDxDiagProvider interface
+ */
+#define ICOM_INTERFACE IDxDiagProvider
+#define IDxDiagProvider_METHODS \
+    IUnknown_METHODS \
+    STDMETHOD(Initialize)(THIS_ DXDIAG_INIT_PARAMS* pParams) \
+    STDMETHOD(GetRootContainer)(THIS_ IDxDiagContainer** ppInstance)
+ICOM_DEFINE(IDxDiagProvider,IUnknown)
+#undef ICOM_INTERFACE
+
+#ifdef COBJMACROS
+/*** IUnknown methods ***/
+#define	IDxDiagProvider_QueryInterface(p,a,b)                (p)->lpVtbl->QueryInterface(p,a,b)
+#define	IDxDiagProvider_AddRef(p)                            (p)->lpVtbl->AddRef(p)
+#define	IDxDiagProvider_Release(p)                           (p)->lpVtbl->Release(p)
+/*** IDxDiagProvider methods ***/
+#define IDxDiagProvider_Initialize(p,a,b)                       (p)->lpVtbl->Initialize(p,a,b)
+#define IDxDiagProvider_GetRootContainer(p,a)                   (p)->lpVtbl->GetRootContainer(p,a)
+#endif
+
+/*****************************************************************************
+ * IDxDiagContainer interface
+ */
+#define ICOM_INTERFACE IDxDiagContainer
+#define IDxDiagContainer_METHODS \
+    IUnknown_METHODS \
+    STDMETHOD(GetNumberOfChildContainers)(THIS_  DWORD* pdwCount) \
+    STDMETHOD(EnumChildContainerNames)(THIS_ DWORD dwIndex, LPWSTR pwszContainer, DWORD cchContainer) \
+    STDMETHOD(GetChildContainer)(THIS_ LPCWSTR pwszContainer, IDxDiagContainer** ppInstance) \
+    STDMETHOD(GetNumberOfProps)(THIS_ DWORD* pdwCount) \
+    STDMETHOD(EnumPropNames)(THIS_ DWORD dwIndex, LPWSTR pwszPropName, DWORD cchPropName) \
+    STDMETHOD(GetProp)(THIS_ LPCWSTR pwszPropName, VARIANT* pvarProp)
+ICOM_DEFINE(IDxDiagContainer,IUnknown)
+#undef ICOM_INTERFACE
+
+#ifdef COBJMACROS
+/*** IUnknown methods ***/
+#define	IDxDiagContainer_QueryInterface(p,a,b)                (p)->lpVtbl->QueryInterface(p,a,b)
+#define	IDxDiagContainer_AddRef(p)                            (p)->lpVtbl->AddRef(p)
+#define	IDxDiagContainer_Release(p)                           (p)->lpVtbl->Release(p)
+/*** IDxDiagContainer methods ***/
+#define IDxDiagContainer_GetNumberOfChildContainers(p,a)      (p)->lpVtbl->GetNumberOfChildContainers(p,a)
+#define IDxDiagContainer_EnumChildContainerNames(p,a,b,c)     (p)->lpVtbl->EnumChildContainerNames(p,a,b,c)
+#define IDxDiagContainer_GetChildContainer(p,a,b)             (p)->lpVtbl->GetChildContainer(p,a,b)
+#define IDxDiagContainer_GetNumberOfProps(p,a)                (p)->lpVtbl->GetNumberOfProps(p,a)
+#define IDxDiagContainer_EnumProps(p,a,b)                     (p)->lpVtbl->EnumProps(p,a,b,c)
+#define IDxDiagContainer_GetProp(p,a,b)                       (p)->lpVtbl->GetProp(p,a,b)
+#endif
+
+#ifdef __cplusplus
+}
+#endif
+
+#endif
