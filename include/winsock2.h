@@ -186,6 +186,33 @@ typedef struct _WSAPROTOCOL_INFOA
     CHAR   szProtocol[WSAPROTOCOL_LEN+1];
 } WSAPROTOCOL_INFOA, * LPWSAPROTOCOL_INFOA;
 
+typedef struct _WSAPROTOCOL_INFOW
+{
+    DWORD dwServiceFlags1;
+    DWORD dwServiceFlags2;
+    DWORD dwServiceFlags3;
+    DWORD dwServiceFlags4;
+    DWORD dwProviderFlags;
+    GUID ProviderId;
+    DWORD dwCatalogEntryId;
+    WSAPROTOCOLCHAIN ProtocolChain;
+    int iVersion;
+    int iAddressFamily;
+    int iMaxSockAddr;
+    int iMinSockAddr;
+    int iSocketType;
+    int iProtocol;
+    int iProtocolMaxOffset;
+    int iNetworkByteOrder;
+    int iSecurityScheme;
+    DWORD dwMessageSize;
+    DWORD dwProviderReserved;
+    WCHAR  szProtocol[WSAPROTOCOL_LEN+1];
+} WSAPROTOCOL_INFOW, * LPWSAPROTOCOL_INFOW;
+
+DECL_WINELIB_TYPE_AW(WSAPROTOCOL_INFO)
+DECL_WINELIB_TYPE_AW(LPWSAPROTOCOL_INFO)
+
 typedef struct _WSANETWORKEVENTS 
 {
   long lNetworkEvents;

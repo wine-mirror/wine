@@ -95,12 +95,12 @@ debug_channels (winsock)
 80  stub     WSAStringToAddressA
 81  stub     WSAStringToAddressW
 82  forward  WSAWaitForMultipleEvents KERNEL32.WaitForMultipleObjectsEx
-83  stub     WSCDeinstallProvider
+83  stdcall  WSCDeinstallProvider(ptr ptr) WSCDeinstallProvider
 84  stub     WSCEnableNSProvider
 85  stub     WSCEnumProtocols
 86  stub     WSCGetProviderPath
 87  stub     WSCInstallNameSpace
-88  stub     WSCInstallProvider
+88  stdcall  WSCInstallProvider(ptr wstr ptr long ptr) WSCInstallProvider
 89  stub     WSCUnInstallNameSpace
 90  stub     WSCWriteNameSpaceOrder
 91  stub     WSCWriteProviderOrder

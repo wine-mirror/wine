@@ -3270,3 +3270,31 @@ INT WINAPI WSARecvFrom( SOCKET s, LPWSABUF lpBuffers, DWORD dwBufferCount,
 
   return rc;
 }
+
+
+/***********************************************************************
+ *              WSCInstallProvider             (WS2_32.88)
+ */
+INT WINAPI WSCInstallProvider( const LPGUID lpProviderId,
+                               LPCWSTR lpszProviderDllPath,
+                               const LPWSAPROTOCOL_INFOW lpProtocolInfoList,
+                               DWORD dwNumberOfEntries,
+                               LPINT lpErrno )
+{
+    FIXME("(%s, %s, %p, %ld, %p): stub !\n", debugstr_guid(lpProviderId),
+          debugstr_w(lpszProviderDllPath), lpProtocolInfoList,
+          dwNumberOfEntries, lpErrno);
+    *lpErrno = 0;
+    return 0;
+}
+
+
+/***********************************************************************
+ *              WSCDeinstallProvider             (WS2_32.83)
+ */
+INT WINAPI WSCDeinstallProvider(LPGUID lpProviderId, LPINT lpErrno)
+{
+    FIXME("(%s, %p): stub !\n", debugstr_guid(lpProviderId), lpErrno);
+    *lpErrno = 0;
+    return 0;
+}
