@@ -1223,6 +1223,7 @@ END
 #include "shell32_Si.rc"
 #include "shell32_Sk.rc"
 #include "shell32_Sv.rc"
+#include "shell32_Uk.rc"
 #include "shell32_Wa.rc"
 #include "shell32_Ja.rc"
 #include "shell32_Zh.rc"

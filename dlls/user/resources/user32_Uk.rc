@@ -1,0 +1,71 @@
+/*
+ * Copyright 2004 Ilya Korniyko
+ *
+ * This library is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU Lesser General Public
+ * License as published by the Free Software Foundation; either
+ * version 2.1 of the License, or (at your option) any later version.
+ *
+ * This library is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this library; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+ */
+
+LANGUAGE LANG_UKRAINIAN, SUBLANG_DEFAULT
+
+SYSMENU MENU LOADONCALL MOVEABLE DISCARDABLE
+{
+ MENUITEM "По&вернути", 61728
+ MENUITEM "&Пересунути", 61456
+ MENUITEM "Роз&м&#1110;р", 61440
+ MENUITEM "&Згорнути", 61472
+ MENUITEM "&Розгорнути", 61488
+ MENUITEM SEPARATOR
+ MENUITEM "&Закрити\tAlt-F4", 61536
+ MENUITEM SEPARATOR
+ MENUITEM "П&еремикнутися на ...\tCtrl-Esc", 61744
+ MENUITEM SEPARATOR
+ MENUITEM "Пр&о проект WINE ...", 61761
+ MENUITEM SEPARATOR
+ MENUITEM "Пом&#1110;стити позначку до файлу в&#1110;д&ладження", 61762
+}
+
+EDITMENU MENU LOADONCALL MOVEABLE DISCARDABLE
+{
+	POPUP ""
+	BEGIN
+		MENUITEM "Ве&рнути", EM_UNDO
+		MENUITEM SEPARATOR
+		MENUITEM "&Вир&#1110;зати", WM_CUT
+		MENUITEM "&Коп&#1110;ювати", WM_COPY
+		MENUITEM "Вст&авити", WM_PASTE
+		MENUITEM "&Очистити", WM_CLEAR
+		MENUITEM SEPARATOR
+		MENUITEM "Вид&#1110;лити в&се", EM_SETSEL
+	END
+}
+
+MSGBOX DIALOG 100, 80, 216, 168
+STYLE DS_SYSMODAL | DS_MODALFRAME | WS_POPUP | WS_VISIBLE | WS_CAPTION | WS_SYSMENU
+BEGIN
+        ICON "", 1088, 8, 20, 16, 16, WS_CHILD | WS_VISIBLE
+        LTEXT "", 100, 32, 4, 176, 48, WS_CHILD | WS_VISIBLE | WS_GROUP
+        PUSHBUTTON "&OK", 1, 16, 56, 40, 14, WS_CHILD | WS_VISIBLE | WS_TABSTOP
+        PUSHBUTTON "В&&#1110;дм&#1110;на", 2, 64, 56, 40, 14, WS_CHILD | WS_VISIBLE | WS_TABSTOP
+        PUSHBUTTON "&В&#1110;дм&#1110;нити", 3, 112, 56, 40, 14, WS_CHILD | WS_VISIBLE | WS_TABSTOP
+        PUSHBUTTON "По&втор", 4, 160, 56, 40, 14, WS_CHILD | WS_VISIBLE | WS_TABSTOP
+        PUSHBUTTON "&Пропустити", 5, 208, 56, 40, 14, WS_CHILD | WS_VISIBLE | WS_TABSTOP
+        PUSHBUTTON "&Так", 6, 256, 56, 40, 14, WS_CHILD | WS_VISIBLE | WS_TABSTOP
+        PUSHBUTTON "&Н&#1110;", 7, 304, 56, 40, 14, WS_CHILD | WS_VISIBLE | WS_TABSTOP
+END
+
+STRINGTABLE DISCARDABLE
+{
+    IDS_ERROR "ПОМИЛКА"
+    IDS_MDI_MOREWINDOWS "&Ще в&#1110;кна..."
+}

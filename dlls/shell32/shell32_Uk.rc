@@ -1,0 +1,177 @@
+/*
+ * Copyright 2004 Ilya Korniyko
+ *
+ * This library is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU Lesser General Public
+ * License as published by the Free Software Foundation; either
+ * version 2.1 of the License, or (at your option) any later version.
+ *
+ * This library is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this library; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+ */
+
+LANGUAGE LANG_UKRAINIAN, SUBLANG_DEFAULT
+
+MENU_001 MENU DISCARDABLE
+BEGIN
+	MENUITEM "&Велик&#1110; &#1030;конки",	FCIDM_SHVIEW_BIGICON
+	MENUITEM "&Мал&#1110; &#1030;конки",	FCIDM_SHVIEW_SMALLICON
+	MENUITEM "&Список",		FCIDM_SHVIEW_LISTVIEW
+	MENUITEM "&Подробиц&#1110;",		FCIDM_SHVIEW_REPORTVIEW
+END
+
+/*
+ shellview background menu
+*/
+MENU_002 MENU DISCARDABLE
+BEGIN
+	POPUP""
+	BEGIN
+	  POPUP "&Вигляд"
+	  BEGIN
+	    MENUITEM "&Велик&#1110; &#1030;конки",	FCIDM_SHVIEW_BIGICON
+	    MENUITEM "&Мал&#1110; &#1030;конки",	FCIDM_SHVIEW_SMALLICON
+	    MENUITEM "&Список",		FCIDM_SHVIEW_LISTVIEW
+	    MENUITEM "&Подробиц&#1110;",	FCIDM_SHVIEW_REPORTVIEW
+	  END
+	  MENUITEM SEPARATOR
+	  POPUP "Впорядкувати &&#1030;конки"
+	  BEGIN
+	    MENUITEM "За &Назвою",	0x30	/* column 0 */
+	    MENUITEM "За &Типом",	0x32	/* column 2 */
+	    MENUITEM "За &Розм&#1110;ром",	0x31	/* ... */
+	    MENUITEM "За &Датою",	0x33
+	    MENUITEM SEPARATOR
+	    MENUITEM "&Автоматично",	FCIDM_SHVIEW_AUTOARRANGE
+	  END
+	  MENUITEM "Вир&#1110;вняти &#1030;конки",	FCIDM_SHVIEW_SNAPTOGRID
+	  MENUITEM SEPARATOR
+	  MENUITEM "Оновити",		FCIDM_SHVIEW_REFRESH
+	  MENUITEM SEPARATOR
+	  MENUITEM "Вставити",		FCIDM_SHVIEW_INSERT
+	  MENUITEM "Вставити Посилання",	FCIDM_SHVIEW_INSERTLINK
+	  MENUITEM SEPARATOR
+	  POPUP "Створити"
+	  BEGIN
+	    MENUITEM "Нова &Тека",	FCIDM_SHVIEW_NEWFOLDER
+	    MENUITEM "Нове &Посилання",	FCIDM_SHVIEW_NEWLINK
+	    MENUITEM SEPARATOR
+	  END
+	  MENUITEM SEPARATOR
+	  MENUITEM "Властивост&#1110;",	FCIDM_SHVIEW_PROPERTIES
+	END
+END
+
+/*
+ shellview item menu
+*/
+MENU_SHV_FILE MENU DISCARDABLE
+BEGIN
+	POPUP""
+	BEGIN
+	  MENUITEM "&Пров&#1110;дник",		FCIDM_SHVIEW_CUT
+	  MENUITEM "&В&#1110;дкрити",		FCIDM_SHVIEW_COPY
+	  MENUITEM SEPARATOR
+	  MENUITEM "Ви&р&#1110;зати",		FCIDM_SHVIEW_CUT
+	  MENUITEM "&Коп&#1110;я",		FCIDM_SHVIEW_COPY
+	  MENUITEM SEPARATOR
+	  MENUITEM "&Створити Посилання",	FCIDM_SHVIEW_CREATELINK
+	  MENUITEM "Ви&далити",		FCIDM_SHVIEW_DELETE
+	  MENUITEM "Пере&йменувати",		FCIDM_SHVIEW_RENAME
+	  MENUITEM SEPARATOR
+	  MENUITEM "&Властивост&#1110;",	FCIDM_SHVIEW_PROPERTIES
+	END
+END
+
+SHBRSFORFOLDER_MSGBOX DIALOG LOADONCALL MOVEABLE DISCARDABLE 15, 40, 188, 192
+STYLE DS_MODALFRAME | WS_CAPTION | WS_SYSMENU | DS_MODALFRAME | DS_SETFONT | DS_3DLOOK
+CAPTION "Огляд до теки"
+FONT 8, "Helv"
+{
+ DEFPUSHBUTTON "OK", 1, 80, 176, 50, 12, BS_DEFPUSHBUTTON | WS_GROUP | WS_TABSTOP
+ PUSHBUTTON "В&#1110;дм&#1110;на", 2, 134, 176, 50, 12, WS_GROUP | WS_TABSTOP
+ LTEXT "", IDD_TITLE, 4, 4, 180, 12
+ LTEXT "", IDD_STATUS, 4, 25, 180, 12
+ CONTROL "", IDD_TREEVIEW, "SysTreeView32",
+ 	TVS_HASBUTTONS | TVS_HASLINES | TVS_LINESATROOT |
+	WS_BORDER | WS_TABSTOP,
+	4, 40, 180, 120
+}
+
+SHELL_ABOUT_MSGBOX DIALOG LOADONCALL MOVEABLE DISCARDABLE 15, 40, 210, 152
+STYLE DS_MODALFRAME | WS_POPUP | WS_VISIBLE | WS_CAPTION | WS_SYSMENU
+CAPTION "О %s"
+FONT 10, "Helv"
+{
+ DEFPUSHBUTTON "OK", IDOK, 153, 130, 50, 12, WS_TABSTOP
+ LISTBOX 99, 8, 65, 137, 82, LBS_NOTIFY | WS_VSCROLL | WS_BORDER
+ ICON "", 1088, 189, 10, 14, 16
+ LTEXT "", 100, 8, 10, 137, 33
+ LTEXT "Розробники Wine:", 98, 8, 55, 137, 10
+}
+
+SHELL_RUN_DLG DIALOG LOADONCALL MOVEABLE DISCARDABLE 0, 0, 227, 95
+STYLE DS_MODALFRAME | WS_POPUP | WS_VISIBLE | WS_CAPTION | WS_SYSMENU
+CAPTION ""
+FONT 8, "Helv"
+{
+ ICON "", 12297, 7, 11, 18, 20, WS_VISIBLE
+ LTEXT "Введ&#1110;ть &#1110;м'я програми, теки, документу чи ресурс &#1030;нтернету, &#1110; Wine в&#1110;дкри&#1108; &#1111;х.", 12289, 36, 11, 182, 18
+ LTEXT "&В&#1110;дкрити:", 12305, 7, 39, 24, 10
+ CONTROL "", 12298, "COMBOBOX", WS_GROUP | WS_VSCROLL | WS_VISIBLE | CBS_DISABLENOSCROLL | CBS_AUTOHSCROLL | CBS_DROPDOWN, 36, 37, 183, 100
+ DEFPUSHBUTTON "OK", IDOK, 62, 63, 50, 14, WS_TABSTOP
+ PUSHBUTTON "В&#1110;дм&#1110;на", IDCANCEL, 116, 63, 50, 14, WS_TABSTOP
+ PUSHBUTTON "&Огляд...", 12288, 170, 63, 50, 14, WS_TABSTOP
+}
+
+/*
+	special folders
+*/
+STRINGTABLE DISCARDABLE
+{
+	IDS_DESKTOP		"Ст&#1110;льниця"
+	IDS_MYCOMPUTER		"М&#1110;й Комп'ютер"
+}
+
+/*
+	context menus
+*/
+STRINGTABLE DISCARDABLE
+{
+	IDS_VIEW_LARGE		"&Велик&#1110; &#1030;конки"
+	IDS_VIEW_SMALL		"&Мал&#1110; &#1030;конки"
+	IDS_VIEW_LIST		"&Список"
+	IDS_VIEW_DETAILS	"&Подробиц&#1110;"
+	IDS_SELECT		"Ви&брати"
+	IDS_OPEN		"В&#1110;&дкрити"
+}
+
+STRINGTABLE DISCARDABLE
+{
+	IDS_CREATEFOLDER_DENIED "Не вдалося створити нову теку: В&#1110;дмова у доступ&#1110;."
+	IDS_CREATEFOLDER_CAPTION "Помилка при створенн&#1110; ново&#1111; теки"
+	IDS_DELETEITEM_CAPTION "П&#1110;дтвердження вилучення файлу"
+	IDS_DELETEFOLDER_CAPTION "П&#1110;дтвердження вилучення теки"
+	IDS_DELETEITEM_TEXT "Ви впевнен&#1110;, що хочете вилучити '%1'?"
+	IDS_DELETEMULTIPLE_TEXT "Ви впевнен&#1110;, що хочете вилучити ц&#1110; %1 елементи(&#1110;в)?"
+	IDS_OVERWRITEFILE_TEXT "Переписати Файл %1?"
+	IDS_OVERWRITEFILE_CAPTION "П&#1110;дтвердження Перезапису Файлу"
+}
+
+/*	columns in the shellview	*/
+STRINGTABLE
+BEGIN
+	IDS_SHV_COLUMN1		"Файл"
+	IDS_SHV_COLUMN2		"Розм&#1110;р"
+	IDS_SHV_COLUMN3		"Тип"
+	IDS_SHV_COLUMN4		"Зм&#1110;нено"
+	IDS_SHV_COLUMN5		"Атрибути"
+	IDS_SHV_COLUMN6		"Розм&#1110;р"
+	IDS_SHV_COLUMN7		"В&#1110;льний Розм&#1110;р"
+END
