@@ -401,21 +401,25 @@ _FUNCTION_ {
 		    else goto widecharacter;
 #endif /* WIDE_SCANF */
 	  character: { /* read single character into char */
-		    if (!suppress) {
-			char*c = va_arg(ap, char*);
-			*c = _CHAR2SUPPORTED_(nch);
-		    }
-		    st = 1;
- 		    nch = _GETC_(file);
-	        }
+                    if (nch!=_EOF_) {
+                        if (!suppress) {
+                            char*c = va_arg(ap, char*);
+                            *c = _CHAR2SUPPORTED_(nch);
+                        }
+                        st = 1;
+                        nch = _GETC_(file);
+                    }
+                }
 		break;
-	  widecharacter: {
-		    if (!suppress) { /* read single character into a wchar_t */
-			MSVCRT_wchar_t*c = va_arg(ap, MSVCRT_wchar_t*);
-			*c = _WIDE2SUPPORTED_(nch);
-		    }
-		    nch = _GETC_(file);
-		    st = 1;
+	  widecharacter: { /* read single character into a wchar_t */
+                    if (nch!=_EOF_) {
+                        if (!suppress) {
+                            MSVCRT_wchar_t*c = va_arg(ap, MSVCRT_wchar_t*);
+                            *c = _WIDE2SUPPORTED_(nch);
+                        }
+                        nch = _GETC_(file);
+                        st = 1;
+                    }
 	        }
 		break;
 	    case 'n': {
