@@ -158,7 +158,7 @@ static BYTE *GetCurrentDTA( CONTEXT86 *context )
 }
 
 
-void CreateBPB(int drive, BYTE *data, BOOL16 limited)
+static void CreateBPB(int drive, BYTE *data, BOOL16 limited)
 /* limited == TRUE is used with INT 0x21/0x440d */
 {
 	if (drive > 1) {
@@ -400,18 +400,10 @@ static void INT21_ParseFileNameIntoFCB( CONTEXT86 *context )
 /* Many calls translate a drive argument like this:
    drive number (00h = default, 01h = A:, etc)
    */
-static char drivestring[]="default";
-
-char *INT21_DriveName(int drive)
+static const char *INT21_DriveName(int drive)
 {
-
-    if(drive >0)
-      {
-	drivestring[0]= (unsigned char)drive + '@';
-	drivestring[1]=':';
-	drivestring[2]=0;
-      }
-    return drivestring;
+    if (drive > 0) return wine_dbg_sprintf( "%c:", 'A' + drive - 1 );
+    return "default";
 }
 
 static HFILE16 _lcreat16_uniq( LPCSTR path, INT attr )
