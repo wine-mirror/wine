@@ -8,6 +8,7 @@
 #include "imagelist.h"
 #include "commctrl.h"
 #include "shell.h"
+#include "docobj.h"
 
 #include "wine/obj_shellfolder.h"
 #include "wine/obj_dataobject.h"
@@ -31,6 +32,7 @@ extern void	(WINAPI* pDLLInitComctl)(LPVOID);
 extern INT	(WINAPI* pImageList_AddIcon) (HIMAGELIST himl, HICON hIcon);
 extern INT	(WINAPI* pImageList_ReplaceIcon) (HIMAGELIST, INT, HICON);
 extern HIMAGELIST (WINAPI* pImageList_Create) (INT,INT,UINT,INT,INT);
+extern BOOL	(WINAPI* pImageList_Draw) (HIMAGELIST himl, int i, HDC hdcDest, int x, int y, UINT fStyle);
 extern HICON	(WINAPI* pImageList_GetIcon) (HIMAGELIST, INT, UINT);
 extern INT	(WINAPI* pImageList_GetImageCount)(HIMAGELIST);
 
@@ -43,6 +45,8 @@ extern BOOL	(WINAPI* pDPA_Sort) (const HDPA, PFNDPACOMPARE, LPARAM);
 extern LPVOID	(WINAPI* pDPA_GetPtr) (const HDPA, INT);   
 extern BOOL	(WINAPI* pDPA_Destroy) (const HDPA); 
 extern INT	(WINAPI* pDPA_Search) (const HDPA, LPVOID, INT, PFNDPACOMPARE, LPARAM, UINT);
+extern LPVOID	(WINAPI* pDPA_DeletePtr) (const HDPA hdpa, INT i);
+#define pDPA_GetPtrCount(hdpa)  (*(INT*)(hdpa))   
 
 extern HICON (WINAPI *pLookupIconIdFromDirectoryEx)(LPBYTE dir, BOOL bIcon, INT width, INT height, UINT cFlag);
 extern HICON (WINAPI *pCreateIconFromResourceEx)(LPBYTE bits,UINT cbSize, BOOL bIcon, DWORD dwVersion, INT width, INT height,UINT cFlag);
@@ -63,7 +67,7 @@ LPITEMIDLIST WINAPI ILCreateFromPathA(LPSTR path);
 LPITEMIDLIST WINAPI ILCreateFromPathW(LPWSTR path);
 LPITEMIDLIST WINAPI ILCreateFromPathAW(LPVOID path);
 
-DWORD WINAPI Shell_GetImageList(HIMAGELIST * lpBigList, HIMAGELIST * lpSmallList);
+BOOL WINAPI Shell_GetImageList(HIMAGELIST * lpBigList, HIMAGELIST * lpSmallList);
 HRESULT WINAPI StrRetToStrN (LPVOID dest, DWORD len, LPSTRRET src, LPITEMIDLIST pidl);
 
 /* Iconcache */

@@ -219,10 +219,14 @@ DWORD WINAPI SHGetFileInfoA(LPCSTR path,DWORD dwFileAttributes,
 	}
 
 	if (flags & SHGFI_SYSICONINDEX)
-	{ if (!pPidlTemp)
+	{ IShellFolder * sf;
+	  if (!pPidlTemp)
 	  { pPidlTemp = ILCreateFromPathA (szTemp);
 	  }
-	  psfi->iIcon = SHMapPIDLToSystemImageListIndex (NULL, pPidlTemp, 0);
+	  if (SUCCEEDED (SHGetDesktopFolder (&sf)))
+	  { psfi->iIcon = SHMapPIDLToSystemImageListIndex (sf, pPidlTemp, 0);
+	    IShellFolder_Release(sf);
+	  }
 	  TRACE(shell,"-- SYSICONINDEX %i\n", psfi->iIcon);
 
 	  if (flags & SHGFI_SMALLICON)
@@ -401,30 +405,30 @@ UINT WINAPI SHAppBarMessage(DWORD msg, PAPPBARDATA data)
 LPSHELLFOLDER pdesktopfolder=NULL;
 
 DWORD WINAPI SHGetDesktopFolder(LPSHELLFOLDER *shellfolder)
-{ HRESULT	hres = E_OUTOFMEMORY;
-  LPCLASSFACTORY lpclf;
+{	HRESULT	hres = E_OUTOFMEMORY;
+	LPCLASSFACTORY lpclf;
 	TRACE(shell,"%p->(%p)\n",shellfolder,*shellfolder);
 
-  if (pdesktopfolder) {
-    hres = NOERROR;
-  } else {
-    lpclf = IClassFactory_Constructor();
-    /* fixme: the buildin IClassFactory_Constructor is at the moment only 
- 		for rclsid=CLSID_ShellDesktop, so we get the right Interface (jsch)*/
-    if(lpclf) {
-      hres = IClassFactory_CreateInstance(lpclf,NULL,(REFIID)&IID_IShellFolder, (void*)&pdesktopfolder);
-      IClassFactory_Release(lpclf);
+	if (pdesktopfolder) 
+	{ hres = NOERROR;
+	}
+	else 
+	{ lpclf = IClassFactory_Constructor();
+	  if(lpclf) 
+	  { hres = IClassFactory_CreateInstance(lpclf,NULL,(REFIID)&IID_IShellFolder, (void*)&pdesktopfolder);
+	    IClassFactory_Release(lpclf);
 	  }  
-  }
+	}
 	
-  if (pdesktopfolder) {
-    *shellfolder = pdesktopfolder;
-    pdesktopfolder->lpvtbl->fnAddRef(pdesktopfolder);
-  } else {
-    *shellfolder=NULL;
+	if (pdesktopfolder) 
+	{ *shellfolder = pdesktopfolder;
+	  IShellFolder_AddRef(pdesktopfolder);
+	} 
+	else 
+	{ *shellfolder=NULL;
 	}
 
-  TRACE(shell,"-- %p->(%p)\n",shellfolder, *shellfolder);
+	TRACE(shell,"-- %p->(%p)\n",shellfolder, *shellfolder);
 	return hres;
 }
 
@@ -1044,6 +1048,7 @@ void	(WINAPI* pDLLInitComctl)(LPVOID);
 INT	(WINAPI* pImageList_AddIcon) (HIMAGELIST himl, HICON hIcon);
 INT	(WINAPI* pImageList_ReplaceIcon) (HIMAGELIST, INT, HICON);
 HIMAGELIST (WINAPI * pImageList_Create) (INT,INT,UINT,INT,INT);
+BOOL	(WINAPI* pImageList_Draw) (HIMAGELIST himl, int i, HDC hdcDest, int x, int y, UINT fStyle);
 HICON	(WINAPI * pImageList_GetIcon) (HIMAGELIST, INT, UINT);
 INT	(WINAPI* pImageList_GetImageCount)(HIMAGELIST);
 
@@ -1056,6 +1061,7 @@ BOOL	(WINAPI* pDPA_Sort) (const HDPA, PFNDPACOMPARE, LPARAM);
 LPVOID	(WINAPI* pDPA_GetPtr) (const HDPA, INT);   
 BOOL	(WINAPI* pDPA_Destroy) (const HDPA); 
 INT	(WINAPI *pDPA_Search) (const HDPA, LPVOID, INT, PFNDPACOMPARE, LPARAM, UINT);
+LPVOID	(WINAPI *pDPA_DeletePtr) (const HDPA hdpa, INT i);
 
 /* user32 */
 HICON (WINAPI *pLookupIconIdFromDirectoryEx)(LPBYTE dir, BOOL bIcon, INT width, INT height, UINT cFlag);
@@ -1078,7 +1084,7 @@ BOOL WINAPI Shell32LibMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID fImpLoad)
 	TRACE(shell,"0x%x 0x%lx %p\n", hinstDLL, fdwReason, fImpLoad);
 
 	shell32_hInstance = hinstDLL;
-  
+
 	switch (fdwReason)
 	{ case DLL_PROCESS_ATTACH:
 	    if (!bShell32IsInitialized)
@@ -1094,6 +1100,7 @@ BOOL WINAPI Shell32LibMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID fImpLoad)
 	        pImageList_ReplaceIcon=(void*)GetProcAddress(hComctl32,"ImageList_ReplaceIcon");
 	        pImageList_GetIcon=(void*)GetProcAddress(hComctl32,"ImageList_GetIcon");
 	        pImageList_GetImageCount=(void*)GetProcAddress(hComctl32,"ImageList_GetImageCount");
+	        pImageList_Draw=(void*)GetProcAddress(hComctl32,"ImageList_Draw");
 
 	        /* imports by ordinal, pray that it works*/
 	        pCOMCTL32_Alloc=(void*)GetProcAddress(hComctl32, (LPCSTR)71L);
@@ -1102,6 +1109,7 @@ BOOL WINAPI Shell32LibMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID fImpLoad)
 	        pDPA_Destroy=(void*)GetProcAddress(hComctl32, (LPCSTR)329L);
 	        pDPA_GetPtr=(void*)GetProcAddress(hComctl32, (LPCSTR)332L);
 	        pDPA_InsertPtr=(void*)GetProcAddress(hComctl32, (LPCSTR)334L);
+	        pDPA_DeletePtr=(void*)GetProcAddress(hComctl32, (LPCSTR)336L);
 	        pDPA_Sort=(void*)GetProcAddress(hComctl32, (LPCSTR)338L);
 	        pDPA_Search=(void*)GetProcAddress(hComctl32, (LPCSTR)339L);
 	        /* user32 */

@@ -113,7 +113,7 @@ extern void IDLList_Destructor(LPIDLLIST me);
 typedef GUID SHELLVIEWID;
 #define SV_CLASS_NAME   ("SHELLDLL_DefView")
 
-DWORD WINAPI SHMapPIDLToSystemImageListIndex(LPSHELLFOLDER sh,LPITEMIDLIST pidl,DWORD z);
+UINT WINAPI SHMapPIDLToSystemImageListIndex(LPSHELLFOLDER sh, LPITEMIDLIST pidl, UINT * pIndex);
 
 /****************************************************************************
  * IShellIcon interface
