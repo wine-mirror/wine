@@ -130,6 +130,7 @@ static AFM *PSDRV_AFMParse(char const *file)
     char *value;
     AFM *afm;
     char *cp;
+    int afmfile = 0; 
 
     TRACE("parsing '%s'\n", file);
 
@@ -144,12 +145,32 @@ static AFM *PSDRV_AFMParse(char const *file)
         return NULL;
     }
 
-    while(fgets(buf, sizeof(buf), fp)) {
-	cp = buf + strlen(buf);
-	do {
-	    *cp = '\0';
+    cp = buf; 
+    while ( ( *cp = fgetc ( fp ) ) != EOF ) {
+      if ( *cp == '\r' || *cp == '\n' || cp - buf == sizeof(buf)-1 ) {
+	if ( cp == buf ) 
+	  continue;
+	*(cp+1)='\0';
+      }
+      else {
+	cp ++; 
+	continue;
+      }
+      
+      cp = buf + strlen(buf);
+      do {
+	  *cp = '\0';
 	    cp--;
 	} while(cp > buf && isspace(*cp));
+	cp = buf; 
+
+	if ( afmfile == 0 && strncmp ( buf, "StartFontMetrics", 16 ) ) {
+	  HeapFree ( PSDRV_Heap, 0, afm ); 
+	  return NULL;
+	}
+	else {
+	  afmfile = 1; 
+	}
 
         value = strchr(buf, ' ');
 	if(value)
