@@ -900,7 +900,7 @@ void _searchenv(const char* file, const char* env, char *buf)
   *buf = '\0';
 
   /* Try CWD first */
-  if (GetFileAttributesA( file ) != 0xFFFFFFFF)
+  if (GetFileAttributesA( file ) != INVALID_FILE_ATTRIBUTES)
   {
     GetFullPathNameA( file, MAX_PATH, buf, NULL );
     /* Sigh. This error is *always* set, regardless of success */
@@ -940,7 +940,7 @@ void _searchenv(const char* file, const char* env, char *buf)
 
     strcat(curPath, file);
     TRACE("Checking for file %s\n", curPath);
-    if (GetFileAttributesA( curPath ) != 0xFFFFFFFF)
+    if (GetFileAttributesA( curPath ) != INVALID_FILE_ATTRIBUTES)
     {
       strcpy(buf, curPath);
       MSVCRT__set_errno(ERROR_FILE_NOT_FOUND);

@@ -183,11 +183,11 @@ DEBUG_DisplaySource(char * sourcefile, int start, int end)
          * Crapola.  We need to try and open the file.
          */
         status = GetFileAttributes(sourcefile);
-        if ( status != -1 )
+        if ( status != INVALID_FILE_ATTRIBUTES )
         {
             strcpy(tmppath, sourcefile);
         }
-        else if ( (status = GetFileAttributes(basename)) != -1 )
+        else if ( (status = GetFileAttributes(basename)) != INVALID_FILE_ATTRIBUTES )
         {
             strcpy(tmppath, basename);
         }
@@ -206,7 +206,7 @@ DEBUG_DisplaySource(char * sourcefile, int start, int end)
                 strcat(tmppath, basename);
 
                 status = GetFileAttributes(tmppath);
-                if ( status != -1 ) break;
+                if ( status != INVALID_FILE_ATTRIBUTES ) break;
             }
 
             if ( sl == NULL )
@@ -233,11 +233,11 @@ DEBUG_DisplaySource(char * sourcefile, int start, int end)
                 }
                 else
                 {
-                    status = -1;
+                    status = INVALID_FILE_ATTRIBUTES;
                     strcpy(tmppath, sourcefile);
                 }
 
-                if ( status == -1 )
+                if ( status == INVALID_FILE_ATTRIBUTES )
                 {
                     /*
                      * OK, I guess the user doesn't really want to see it

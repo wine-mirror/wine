@@ -612,7 +612,7 @@ HMMIO MMIO_Open(LPSTR szFileName, MMIOINFO* refmminfo, DWORD dwOpenFlags,
 
 	if (GetFullPathNameA(szFileName, sizeof(buffer), buffer, NULL) >= sizeof(buffer))
 	    return (HMMIO16)FALSE;
-	if ((dwOpenFlags & MMIO_EXIST) && (GetFileAttributesA(buffer) == -1))
+	if ((dwOpenFlags & MMIO_EXIST) && (GetFileAttributesA(buffer) == INVALID_FILE_ATTRIBUTES))
 	    return (HMMIO)FALSE;
 	strcpy(szFileName, buffer);
 	return (HMMIO)TRUE;

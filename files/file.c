@@ -855,11 +855,12 @@ DWORD WINAPI GetFileAttributesW( LPCWSTR name )
     if (name == NULL)
     {
         SetLastError( ERROR_INVALID_PARAMETER );
-        return -1;
+        return INVALID_FILE_ATTRIBUTES;
     }
     if (!DOSFS_GetFullName( name, TRUE, &full_name) )
-        return -1;
-    if (!FILE_Stat( full_name.long_name, &info, NULL )) return -1;
+        return INVALID_FILE_ATTRIBUTES;
+    if (!FILE_Stat( full_name.long_name, &info, NULL ))
+        return INVALID_FILE_ATTRIBUTES;
     return info.dwFileAttributes;
 }
 
@@ -870,12 +871,12 @@ DWORD WINAPI GetFileAttributesW( LPCWSTR name )
 DWORD WINAPI GetFileAttributesA( LPCSTR name )
 {
     UNICODE_STRING nameW;
-    DWORD ret = (DWORD)-1;
+    DWORD ret = INVALID_FILE_ATTRIBUTES;
 
     if (!name)
     {
         SetLastError( ERROR_INVALID_PARAMETER );
-        return (DWORD)-1;
+        return INVALID_FILE_ATTRIBUTES;
     }
 
     if (RtlCreateUnicodeStringFromAsciiz(&nameW, name))

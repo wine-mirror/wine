@@ -1182,14 +1182,14 @@ static int _get_reg_type(const WCHAR* windir)
     /* test %windir%/system32/config/system --> winnt */
     strcpyW(tmp, windir);
     strcatW(tmp, nt_reg_pathW);
-    if(GetFileAttributesW(tmp) != (DWORD)-1)
+    if(GetFileAttributesW(tmp) != INVALID_FILE_ATTRIBUTES)
       ret = REG_WINNT;
     else
     {
        /* test %windir%/system.dat --> win95 */
       strcpyW(tmp, windir);
       strcatW(tmp, win9x_reg_pathW);
-      if(GetFileAttributesW(tmp) != (DWORD)-1)
+      if(GetFileAttributesW(tmp) != INVALID_FILE_ATTRIBUTES)
         ret = REG_WIN95;
     }
 

@@ -1606,7 +1606,7 @@ static BOOL INT21_FileAttributes( CONTEXT86 *context,
         MultiByteToWideChar(CP_OEMCP, 0, fileA, -1, fileW, MAX_PATH);
 
         result = GetFileAttributesW( fileW );
-        if (result == -1)
+        if (result == INVALID_FILE_ATTRIBUTES)
             return FALSE;
         else
         {

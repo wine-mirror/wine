@@ -446,7 +446,7 @@ BOOL WINAPI IsLFNDriveW(LPCWSTR lpszPath)
 
     if (!GetVolumeInformationW(lpszPath, NULL, 0, NULL, &fnlen, NULL, NULL, 0))
 	return FALSE;
-    return fnlen>12;
+    return fnlen > 12;
 }
 
 /*************************************************************************

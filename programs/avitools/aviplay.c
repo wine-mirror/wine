@@ -103,7 +103,7 @@ HRESULT (WINAPI *fnAVIStreamGetFrameClose)(PGETFRAME pg);
 
 
     fnAVIFileInit();
-    if (-1==GetFileAttributes(cmdline)) {
+    if (GetFileAttributes(cmdline) == INVALID_FILE_ATTRIBUTES) {
     	fprintf(stderr,"Usage: aviplay <avifilename>\n");
 	exit(1);
     }

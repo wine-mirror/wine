@@ -279,7 +279,7 @@ int _access(const char *filename, int mode)
 
   TRACE("(%s,%d) %ld\n",filename,mode,attr);
 
-  if (!filename || attr == 0xffffffff)
+  if (!filename || attr == INVALID_FILE_ATTRIBUTES)
   {
     MSVCRT__set_errno(GetLastError());
     return -1;
@@ -301,7 +301,7 @@ int _waccess(const MSVCRT_wchar_t *filename, int mode)
 
   TRACE("(%s,%d) %ld\n",debugstr_w(filename),mode,attr);
 
-  if (!filename || attr == 0xffffffff)
+  if (!filename || attr == INVALID_FILE_ATTRIBUTES)
   {
     MSVCRT__set_errno(GetLastError());
     return -1;
@@ -321,7 +321,7 @@ int _chmod(const char *path, int flags)
 {
   DWORD oldFlags = GetFileAttributesA(path);
 
-  if (oldFlags != 0x0FFFFFFFF)
+  if (oldFlags != INVALID_FILE_ATTRIBUTES)
   {
     DWORD newFlags = (flags & _S_IWRITE)? oldFlags & ~FILE_ATTRIBUTE_READONLY:
       oldFlags | FILE_ATTRIBUTE_READONLY;
@@ -340,7 +340,7 @@ int _wchmod(const MSVCRT_wchar_t *path, int flags)
 {
   DWORD oldFlags = GetFileAttributesW(path);
 
-  if (oldFlags != 0x0FFFFFFFF)
+  if (oldFlags != INVALID_FILE_ATTRIBUTES)
   {
     DWORD newFlags = (flags & _S_IWRITE)? oldFlags & ~FILE_ATTRIBUTE_READONLY:
       oldFlags | FILE_ATTRIBUTE_READONLY;
@@ -873,7 +873,7 @@ char *_mktemp(char *pattern)
   pattern++;
   do
   {
-    if (GetFileAttributesA(retVal) == 0xFFFFFFFF &&
+    if (GetFileAttributesA(retVal) == INVALID_FILE_ATTRIBUTES &&
         GetLastError() == ERROR_FILE_NOT_FOUND)
       return retVal;
     *pattern = letter++;
@@ -907,7 +907,7 @@ MSVCRT_wchar_t *_wmktemp(MSVCRT_wchar_t *pattern)
   pattern++;
   do
   {
-    if (GetFileAttributesW(retVal) == 0xFFFFFFFF &&
+    if (GetFileAttributesW(retVal) == INVALID_FILE_ATTRIBUTES &&
         GetLastError() == ERROR_FILE_NOT_FOUND)
       return retVal;
     *pattern = letter++;

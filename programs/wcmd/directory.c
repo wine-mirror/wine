@@ -156,7 +156,7 @@ ULARGE_INTEGER byte_count, file_size;
 
   if ((strchr(search_path, '*') == NULL) && (strchr(search_path, '%') == NULL)) {
     status = GetFileAttributes (search_path);
-    if ((status != -1) && (status & FILE_ATTRIBUTE_DIRECTORY)) {
+    if ((status != INVALID_FILE_ATTRIBUTES) && (status & FILE_ATTRIBUTE_DIRECTORY)) {
       if (search_path[strlen(search_path)-1] == '\\') {
         strcat (search_path, "*");
       }

@@ -806,7 +806,7 @@ DWORD WINAPI SHAddToRecentDocs (UINT uFlags,LPCVOID pv)
 		    lstrcpyA(old_lnk_name, link_dir);
 		    PathAppendA(old_lnk_name, ptr);
 		    if (!DeleteFileA(old_lnk_name)) {
-			if ((attr = GetFileAttributesA(old_lnk_name)) == -1) {
+			if ((attr = GetFileAttributesA(old_lnk_name)) == INVALID_FILE_ATTRIBUTES) {
 			    if ((err = GetLastError()) != ERROR_FILE_NOT_FOUND) {
 				ERR("Delete for %s failed, err=%d, attr=%08lx\n",
 				    old_lnk_name, err, attr);
@@ -835,7 +835,7 @@ DWORD WINAPI SHAddToRecentDocs (UINT uFlags,LPCVOID pv)
 	PathAppendA(new_lnk_filepath, new_lnk_name);
 	i = 1;
 	olderrormode = SetErrorMode(SEM_FAILCRITICALERRORS);
-	while (GetFileAttributesA(new_lnk_filepath) != -1) {
+	while (GetFileAttributesA(new_lnk_filepath) != INVALID_FILE_ATTRIBUTES) {
 	    i++;
 	    wsprintfA(new_lnk_name, "%s (%u).lnk", doc_name, i);
 	    lstrcpyA(new_lnk_filepath, link_dir);

@@ -382,14 +382,14 @@ DWORD WINAPI VerInstallFileA(
     sprintf(tmpfn,"%s\\%s",pdest,destfilename);
     tmplast=strlen(pdest)+1;
     attr = GetFileAttributesA(tmpfn);
-    if (attr!=-1) {
+    if (attr != INVALID_FILE_ATTRIBUTES) {
 	if (attr & FILE_ATTRIBUTE_READONLY) {
 	    LZClose(hfsrc);
 	    return VIF_WRITEPROT;
 	}
 	/* FIXME: check if file currently in use and return VIF_FILEINUSE */
     }
-    attr = -1;
+    attr = INVALID_FILE_ATTRIBUTES;
     if (flags & VIFF_FORCEINSTALL) {
     	if (tmpfile[0]) {
 	    sprintf(tmpfn,"%s\\%s",pdest,tmpfile);
@@ -400,7 +400,7 @@ DWORD WINAPI VerInstallFileA(
 	     */
 	}
     }
-    if (attr == -1) {
+    if (attr == INVALID_FILE_ATTRIBUTES) {
     	char	*s;
 
 	GetTempFileNameA(pdest,"ver",0,tmpfn); /* should not fail ... */
@@ -505,7 +505,7 @@ DWORD WINAPI VerInstallFileA(
 	    char curfn[260];
 
 	    sprintf(curfn,"%s\\%s",curdir,destfilename);
-	    if (-1!=GetFileAttributesA(curfn)) {
+	    if (INVALID_FILE_ATTRIBUTES != GetFileAttributesA(curfn)) {
 		/* FIXME: check if in use ... if it is, VIF_CANNOTDELETECUR */
 		if (!DeleteFileA(curfn))
 	    	    xret|=_error2vif(GetLastError())|VIF_CANNOTDELETECUR;

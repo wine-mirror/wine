@@ -48,7 +48,7 @@ void createTestFile(CHAR *name)
 
 BOOL file_exists(CHAR *name)
 {
-    return GetFileAttributesA(name) != 0xFFFFFFFF;
+    return GetFileAttributesA(name) != INVALID_FILE_ATTRIBUTES;
 }
 
 /* initializes the tests */

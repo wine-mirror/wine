@@ -506,7 +506,7 @@ void MACRO_ExtInsertMenu(LPCSTR str1, LPCSTR str2, LPCSTR str3, LONG u1, LONG u2
 BOOL MACRO_FileExist(LPCSTR str)
 {
     WINE_TRACE("(\"%s\")\n", str);
-    return GetFileAttributes(str) != 0xFFFFFFFF;
+    return GetFileAttributes(str) != INVALID_FILE_ATTRIBUTES;
 }
 
 void MACRO_FileOpen(void)

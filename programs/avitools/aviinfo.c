@@ -64,7 +64,7 @@ HRESULT (WINAPI *fnAVIStreamInfo)(PAVISTREAM iface,AVISTREAMINFO *afi,LONG size)
 #undef XXT
 
     fnAVIFileInit();
-    if (-1==GetFileAttributes(cmdline)) {
+    if (GetFileAttributes(cmdline) == INVALID_FILE_ATTRIBUTES) {
     	fprintf(stderr,"Usage: aviinfo <avifilename>\n");
 	exit(1);
     }
