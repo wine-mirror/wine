@@ -1,11 +1,11 @@
-DEFS      = -DWINELIB
+DEFS      = -DWINELIB -DSTRICT
 TOPSRCDIR = @top_srcdir@
 TOPOBJDIR = ../..
 SRCDIR    = @srcdir@
 VPATH     = @srcdir@
 MODULE    = none
 PROGRAMS  = winver
-IMPORTS   = shell32 ole32
+IMPORTS   = shell32 ole32 rpcrt4
 
 C_SRCS = winver.c
 

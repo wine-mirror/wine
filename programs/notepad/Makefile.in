@@ -1,11 +1,11 @@
-DEFS      = -DWINELIB
+DEFS      = -DWINELIB -DSTRICT
 TOPSRCDIR = @top_srcdir@
 TOPOBJDIR = ../..
 SRCDIR    = @srcdir@
 VPATH     = @srcdir@
 MODULE    = none
 PROGRAMS  = notepad
-IMPORTS   = shell32 ole32 comdlg32 winspool.drv
+IMPORTS   = shell32 ole32 rpcrt4 comdlg32 winspool.drv
 WRCEXTRA  = -s -p notepad
 
 LICENSELANG = En

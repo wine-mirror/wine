@@ -1,3 +1,4 @@
+DEFS      = -DWINELIB -DSTRICT
 TOPSRCDIR = @top_srcdir@
 TOPOBJDIR = ..
 SRCDIR    = @srcdir@
@@ -49,7 +50,7 @@ rolex: rolex.o rolex.spec.o
 	$(CC) -o rolex $+ $(DLL_LINK) $(LIBS)
 
 vartest: vartest.o vartest.spec.o
-	$(CC) -o vartest $+ -L$(DLLDIR) -loleaut32 -lole32 $(DLL_LINK) $(LIBS)
+	$(CC) -o vartest $+ -L$(DLLDIR) -loleaut32 -lcomctl32 -lole32 -lrpcrt4 $(DLL_LINK) $(LIBS)
 
 volinfo: volinfo.o volinfo.spec.o
 	$(CC) -o volinfo $+ $(DLL_LINK) $(LIBS)
