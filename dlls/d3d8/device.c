@@ -3511,7 +3511,12 @@ HRESULT  WINAPI  IDirect3DDevice8Impl_SetTextureStageState(LPDIRECT3DDEVICE8 ifa
                         glDisable(GL_TEXTURE_3D);
                         checkGLcall("Disable GL_TEXTURE_3D");
                     }
-		}
+                }
+
+                /* Re-Enable GL_TEXTURE_ENV_MODE, GL_COMBINE_EXT */
+                if (Value != D3DTOP_DISABLE) {
+                    glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_COMBINE_EXT);
+                }
 
                 /* Now set up the operand correctly */
                 switch (Value) {
