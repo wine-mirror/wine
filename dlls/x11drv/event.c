@@ -873,7 +873,7 @@ static void EVENT_SelectionRequest( HWND hWnd, XSelectionRequestEvent *event, BO
               if (hClipData && (lpClipData = GlobalLock(hClipData)))
               {
                   TRACE_(clipboard)("\tUpdating property %s, %ld bytes\n",
-                      lpFormat->Name, cBytes);
+                                    debugstr_w(lpFormat->Name), cBytes);
 
                   wine_tsx11_lock();
                   XChangeProperty(display, request, rprop, event->target,
