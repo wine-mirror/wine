@@ -650,7 +650,7 @@ static int ctl2_alloc_importfile(
 
 
 /****************************************************************************
- *	ctl2_encode_type
+ *	encode_type
  *
  *  Encodes a type, storing information in the TYPEDESC and ARRAYDESC
  *  segments as needed.
@@ -660,11 +660,10 @@ static int ctl2_alloc_importfile(
  *  Success: 0.
  *  Failure: -1.
  */
-static int ctl2_encode_type(
+static int encode_type(
 	msft_typelib_t *typelib,   /* [I] The type library in which to encode the TYPEDESC. */
-	type_t *type,              /* [I] The type description to encode. */
-        int ptr_level,             /* [I] ptr level */
-        expr_t *array,             /* [I] arrary description */
+        int vt,                    /* [I] vt to encode */
+	type_t *type,              /* [I] type */
 	int *encoded_type,         /* [O] The encoded type description. */
 	int *width,                /* [O] The width of the type, or NULL. */
 	int *alignment,            /* [O] The alignment of the type, or NULL. */
@@ -673,93 +672,17 @@ static int ctl2_encode_type(
     int default_type;
     int scratch;
     int typeoffset;
-    int arrayoffset;
     int *typedata;
-    int *arraydata;
     int target_type;
     int child_size;
-    unsigned short vt = get_type_vt(type);
 
-    chat("encode_type vt %d ptr_level %d\n", vt, ptr_level);
+    chat("encode_type vt %d type %p\n", vt, type);
 
     default_type = 0x80000000 | (vt << 16) | vt;
     if (!width) width = &scratch;
     if (!alignment) alignment = &scratch;
     if (!decoded_size) decoded_size = &scratch;
 
-    *decoded_size = 0;
-
-    if(ptr_level--) {
-
-	ctl2_encode_type(typelib, type, ptr_level, array, &target_type, NULL, NULL, &child_size);
-
-	for (typeoffset = 0; typeoffset < typelib->typelib_segdir[MSFT_SEG_TYPEDESC].length; typeoffset += 8) {
-	    typedata = (void *)&typelib->typelib_segment_data[MSFT_SEG_TYPEDESC][typeoffset];
-	    if (((typedata[0] & 0xffff) == VT_PTR) && (typedata[1] == target_type)) break;
-	}
-
-	if (typeoffset == typelib->typelib_segdir[MSFT_SEG_TYPEDESC].length) {
-	    int mix_field;
-	    
-	    if (target_type & 0x80000000) {
-		mix_field = ((target_type >> 16) & 0x3fff) | VT_BYREF;
-	    } else {
-		typedata = (void *)&typelib->typelib_segment_data[MSFT_SEG_TYPEDESC][target_type];
-		mix_field = ((typedata[0] >> 16) == 0x7fff)? 0x7fff: 0x7ffe;
-	    }
-
-	    typeoffset = ctl2_alloc_segment(typelib, MSFT_SEG_TYPEDESC, 8, 0);
-	    typedata = (void *)&typelib->typelib_segment_data[MSFT_SEG_TYPEDESC][typeoffset];
-
-	    typedata[0] = (mix_field << 16) | VT_PTR;
-	    typedata[1] = target_type;
-	}
-
-	*encoded_type = typeoffset;
-
-	*width = 4;
-	*alignment = 4;
-	*decoded_size = 8 /*sizeof(TYPEDESC)*/ + child_size;
-        return 0;
-    }
-
-    if(array) {
-        expr_t *dim = array;
-        int num_dims = 1, elements = 1;
-
-        while(NEXT_LINK(dim)) {
-            dim = NEXT_LINK(dim);
-            num_dims++;
-        }
-        chat("array with %d dimensions\n", num_dims);
-	ctl2_encode_type(typelib, type, 0, NULL, &target_type, width, alignment, NULL);
-	arrayoffset = ctl2_alloc_segment(typelib, MSFT_SEG_ARRAYDESC, (2 + 2 * num_dims) * sizeof(long), 0);
-	arraydata = (void *)&typelib->typelib_segment_data[MSFT_SEG_ARRAYDESC][arrayoffset];
-
-	arraydata[0] = target_type;
-        arraydata[1] = num_dims;
-        arraydata[1] |= ((num_dims * 2 * sizeof(long)) << 16);
-
-        arraydata += 2;
-        while(dim) {
-            arraydata[0] = dim->cval;
-            arraydata[1] = 0;
-            arraydata += 2;
-            elements *= dim->cval;
-            dim = PREV_LINK(dim);
-        }
-
-	typeoffset = ctl2_alloc_segment(typelib, MSFT_SEG_TYPEDESC, 8, 0);
-	typedata = (void *)&typelib->typelib_segment_data[MSFT_SEG_TYPEDESC][typeoffset];
-
-	typedata[0] = (0x7ffe << 16) | VT_CARRAY;
-	typedata[1] = arrayoffset;
-
-	*encoded_type = typeoffset;
-	*width = *width * elements;
-	*decoded_size = 20 /*sizeof(ARRAYDESC)*/ + (num_dims - 1) * 8 /*sizeof(SAFEARRAYBOUND)*/;
-        return 0;
-    }
 
     switch (vt) {
     case VT_I1:
@@ -822,6 +745,45 @@ static int ctl2_encode_type(
 	*alignment = 1;
 	break;
 
+    case VT_PTR:
+      {
+        int next_vt;
+        while((next_vt = get_type_vt(type->ref)) == 0) {
+            type = type->ref;
+            if(!type) error("encode_type: type->ref is null\n");
+        }
+
+	encode_type(typelib, next_vt, type->ref, &target_type, NULL, NULL, &child_size);
+
+	for (typeoffset = 0; typeoffset < typelib->typelib_segdir[MSFT_SEG_TYPEDESC].length; typeoffset += 8) {
+	    typedata = (void *)&typelib->typelib_segment_data[MSFT_SEG_TYPEDESC][typeoffset];
+	    if (((typedata[0] & 0xffff) == VT_PTR) && (typedata[1] == target_type)) break;
+	}
+
+	if (typeoffset == typelib->typelib_segdir[MSFT_SEG_TYPEDESC].length) {
+	    int mix_field;
+	    
+	    if (target_type & 0x80000000) {
+		mix_field = ((target_type >> 16) & 0x3fff) | VT_BYREF;
+	    } else {
+		typedata = (void *)&typelib->typelib_segment_data[MSFT_SEG_TYPEDESC][target_type];
+		mix_field = ((typedata[0] >> 16) == 0x7fff)? 0x7fff: 0x7ffe;
+	    }
+
+	    typeoffset = ctl2_alloc_segment(typelib, MSFT_SEG_TYPEDESC, 8, 0);
+	    typedata = (void *)&typelib->typelib_segment_data[MSFT_SEG_TYPEDESC][typeoffset];
+
+	    typedata[0] = (mix_field << 16) | VT_PTR;
+	    typedata[1] = target_type;
+	}
+
+	*encoded_type = typeoffset;
+
+	*width = 4;
+	*alignment = 4;
+	*decoded_size = 8 /*sizeof(TYPEDESC)*/ + child_size;
+        break;
+    }
 #if 0
 
 
@@ -903,6 +865,123 @@ static int ctl2_encode_type(
     return 0;
 }
 
+static void dump_type(type_t *t)
+{
+    chat("dump_type: %p name %s type %d ref %p rname %s\n", t, t->name, t->type, t->ref, t->rname);
+    if(t->ref) dump_type(t->ref);
+}
+
+static int encode_var(
+	msft_typelib_t *typelib,   /* [I] The type library in which to encode the TYPEDESC. */
+	var_t *var,                /* [I] The type description to encode. */
+	int *encoded_type,         /* [O] The encoded type description. */
+	int *width,                /* [O] The width of the type, or NULL. */
+	int *alignment,            /* [O] The alignment of the type, or NULL. */
+	int *decoded_size)         /* [O] The total size of the unencoded TYPEDESCs, including nested descs. */
+{
+    int typeoffset;
+    int *typedata;
+    int target_type;
+    int child_size;
+    int vt;
+    int scratch;
+    type_t *type;
+
+    if (!width) width = &scratch;
+    if (!alignment) alignment = &scratch;
+    if (!decoded_size) decoded_size = &scratch;
+    *decoded_size = 0;
+
+    chat("encode_var: var %p var->tname %s var->type %p var->ptr_level %d var->type->ref %p\n", var, var->tname, var->type, var->ptr_level, var->type->ref);
+    if(var->ptr_level--) {
+	encode_var(typelib, var, &target_type, NULL, NULL, &child_size);
+        var->ptr_level++;
+
+	for (typeoffset = 0; typeoffset < typelib->typelib_segdir[MSFT_SEG_TYPEDESC].length; typeoffset += 8) {
+	    typedata = (void *)&typelib->typelib_segment_data[MSFT_SEG_TYPEDESC][typeoffset];
+	    if (((typedata[0] & 0xffff) == VT_PTR) && (typedata[1] == target_type)) break;
+	}
+
+	if (typeoffset == typelib->typelib_segdir[MSFT_SEG_TYPEDESC].length) {
+	    int mix_field;
+	    
+	    if (target_type & 0x80000000) {
+		mix_field = ((target_type >> 16) & 0x3fff) | VT_BYREF;
+	    } else {
+		typedata = (void *)&typelib->typelib_segment_data[MSFT_SEG_TYPEDESC][target_type];
+		mix_field = ((typedata[0] >> 16) == 0x7fff)? 0x7fff: 0x7ffe;
+	    }
+
+	    typeoffset = ctl2_alloc_segment(typelib, MSFT_SEG_TYPEDESC, 8, 0);
+	    typedata = (void *)&typelib->typelib_segment_data[MSFT_SEG_TYPEDESC][typeoffset];
+
+	    typedata[0] = (mix_field << 16) | VT_PTR;
+	    typedata[1] = target_type;
+	}
+
+	*encoded_type = typeoffset;
+
+	*width = 4;
+	*alignment = 4;
+	*decoded_size = 8 /*sizeof(TYPEDESC)*/ + child_size;
+        return 0;
+    }
+
+    if(var->array) {
+        expr_t *dim = var->array;
+        expr_t *array_save;
+        int num_dims = 1, elements = 1, arrayoffset;
+        int *arraydata;
+
+        while(NEXT_LINK(dim)) {
+            dim = NEXT_LINK(dim);
+            num_dims++;
+        }
+        chat("array with %d dimensions\n", num_dims);
+        array_save = var->array;
+        var->array = NULL;
+	encode_var(typelib, var, &target_type, width, alignment, NULL);
+        var->array = array_save;
+	arrayoffset = ctl2_alloc_segment(typelib, MSFT_SEG_ARRAYDESC, (2 + 2 * num_dims) * sizeof(long), 0);
+	arraydata = (void *)&typelib->typelib_segment_data[MSFT_SEG_ARRAYDESC][arrayoffset];
+
+	arraydata[0] = target_type;
+        arraydata[1] = num_dims;
+        arraydata[1] |= ((num_dims * 2 * sizeof(long)) << 16);
+
+        arraydata += 2;
+        while(dim) {
+            arraydata[0] = dim->cval;
+            arraydata[1] = 0;
+            arraydata += 2;
+            elements *= dim->cval;
+            dim = PREV_LINK(dim);
+        }
+
+	typeoffset = ctl2_alloc_segment(typelib, MSFT_SEG_TYPEDESC, 8, 0);
+	typedata = (void *)&typelib->typelib_segment_data[MSFT_SEG_TYPEDESC][typeoffset];
+
+	typedata[0] = (0x7ffe << 16) | VT_CARRAY;
+	typedata[1] = arrayoffset;
+
+	*encoded_type = typeoffset;
+	*width = *width * elements;
+	*decoded_size = 20 /*sizeof(ARRAYDESC)*/ + (num_dims - 1) * 8 /*sizeof(SAFEARRAYBOUND)*/;
+        return 0;
+    }
+    dump_type(var->type);
+
+    vt = get_var_vt(var);
+    type = var->type;
+    while(!vt) {
+        type = type->ref;
+        if(!type) error("encode_var: type->ref is null\n");
+        vt = get_type_vt(type);
+    }
+    return encode_type(typelib, vt, type, encoded_type, width, alignment, decoded_size);
+}
+
+    
 /****************************************************************************
  *	ctl2_find_nth_reference
  *
@@ -1037,7 +1116,7 @@ static HRESULT add_func_desc(msft_typeinfo_t* typeinfo, func_t *func)
 
     /* fill out the basic type information */
     typedata[0] = (0x18 + extra_attr * sizeof(int) + (num_params * (num_defaults ? 16 : 12))) | (index << 16);
-    ctl2_encode_type(typeinfo->typelib, func->def->type, func->def->ptr_level, func->def->array, &typedata[1], NULL, NULL, &decoded_size);
+    encode_var(typeinfo->typelib, func->def, &typedata[1], NULL, NULL, &decoded_size);
     typedata[2] = funcflags;
     typedata[3] = ((52 /*sizeof(FUNCDESC)*/ + decoded_size) << 16) | typeinfo->typeinfo->cbSizeVft;
     typedata[4] = (index << 16) | (callconv << 8) | 9;
@@ -1070,7 +1149,7 @@ static HRESULT add_func_desc(msft_typeinfo_t* typeinfo, func_t *func)
 
         if(defaultdata) *defaultdata = -1;
 
-	ctl2_encode_type(typeinfo->typelib, arg->type, arg->ptr_level, arg->array, paramdata, NULL, NULL, &decoded_size);
+	encode_var(typeinfo->typelib, arg, paramdata, NULL, NULL, &decoded_size);
         for(attr = arg->attrs; attr; attr = NEXT_LINK(attr)) {
             switch(attr->type) {
             case ATTR_DEFAULTVALUE_EXPR:
@@ -1240,9 +1319,8 @@ static HRESULT add_var_desc(msft_typeinfo_t *typeinfo, UINT index, var_t* var)
     typeinfo->offsets[index] = offset;
 
     /* figure out type widths and whatnot */
-    ctl2_encode_type(typeinfo->typelib, var->type, var->ptr_level, var->array,
-                     &typedata[1], &var_datawidth, &var_alignment,
-                     &var_type_size);
+    encode_var(typeinfo->typelib, var, &typedata[1], &var_datawidth,
+               &var_alignment, &var_type_size);
 
     /* pad out starting position to data width */
     typeinfo->datawidth += var_alignment - 1;

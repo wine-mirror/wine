@@ -95,6 +95,7 @@ unsigned short get_type_vt(type_t *t)
 {
   unsigned short vt;
 
+  chat("get_type_vt: %p type->name %s\n", t, t->name);
   if (t->name) {
     vt = builtin_vt(t->name);
     if (vt) return vt;
@@ -139,13 +140,15 @@ unsigned short get_type_vt(type_t *t)
       if (match(t->ref->name, "IUnknown"))
         return VT_UNKNOWN;
     }
-    /* FIXME: should we recurse and add a VT_BYREF? */
-    /* Or just return VT_PTR? */
-    if(t->ref) return get_type_vt(t->ref);
+    if(t->ref)
+      return VT_PTR;
+
     error("get_type_vt: unknown-deref-type: %d\n", t->ref->type);
     break;
   case RPC_FC_STRUCT:
     return VT_USERDEFINED;
+  case 0:
+    return 0;
   default:
     error("get_type_vt: unknown-type: %d\n", t->type);
   }
@@ -156,6 +159,7 @@ unsigned short get_var_vt(var_t *v)
 {
   unsigned short vt;
 
+  chat("get_var_vt: %p tname %s\n", v, v->tname);
   if (v->tname) {
     vt = builtin_vt(v->tname);
     if (vt) return vt;
