@@ -142,8 +142,13 @@ void MSVCRT_init_args(void)
   int xargc,end,last_arg,afterlastspace;
   DWORD version;
 
-  MSVCRT__acmdln = cmdline = MSVCRT__strdup( GetCommandLineA() );
-  MSVCRT__wcmdln = wcmdline = wstrdupa(cmdline);
+  MSVCRT__acmdln = MSVCRT__strdup( GetCommandLineA() );
+  MSVCRT__wcmdln = wcmdline = wstrdupa(MSVCRT__acmdln);
+
+  /* Make a copy of MSVCRT__acmdln to be able modify it.
+     We will free it at the end of processing. */
+  cmdline = MSVCRT__strdup(MSVCRT__acmdln);
+
   TRACE("got '%s', wide = '%s'\n", cmdline, debugstr_w(wcmdline));
 
   version = GetVersion();
@@ -207,6 +212,9 @@ void MSVCRT_init_args(void)
   MSVCRT___argv = xargv;
   MSVCRT___wargv = wxargv;
 
+  /* Free a no more needed copy of the command line */
+  MSVCRT_free( cmdline );
+
   TRACE("found %d arguments\n",MSVCRT___argc);
   MSVCRT__environ = GetEnvironmentStringsA();
   MSVCRT___initenv = &MSVCRT__environ;
@@ -224,25 +232,25 @@ void MSVCRT_free_args(void)
 /*********************************************************************
  *		__getmainargs (MSVCRT.@)
  */
-char** __cdecl MSVCRT___getmainargs(DWORD *argc,char ***argv,char **environ,DWORD flag)
+void __cdecl MSVCRT___getmainargs(int *argc, char ***argv, char **environ,
+				  int expand_wildcards, void *_startupinfo)
 {
-  TRACE("(%p,%p,%p,%ld).\n",argc,argv,environ,flag);
+  TRACE("(%p,%p,%p,%d,%p).\n", argc, argv, environ, expand_wildcards, _startupinfo);
   *argc = MSVCRT___argc;
   *argv = MSVCRT___argv;
   *environ = MSVCRT__environ;
-  return environ;
 }
 
 /*********************************************************************
  *		__wgetmainargs (MSVCRT.@)
  */
-WCHAR** __cdecl MSVCRT___wgetmainargs(DWORD *argc,WCHAR ***wargv,WCHAR **wenviron,DWORD flag)
+void __cdecl MSVCRT___wgetmainargs(int *argc, WCHAR ***wargv, WCHAR **wenviron,
+				   int expand_wildcards, void *_startupinfo)
 {
-  TRACE("(%p,%p,%p,%ld).\n",argc,wargv,wenviron,flag);
+  TRACE("(%p,%p,%p,%d,%p).\n", argc, wargv, wenviron, expand_wildcards, _startupinfo);
   *argc = MSVCRT___argc;
   *wargv = MSVCRT___wargv;
   *wenviron = MSVCRT__wenviron;
-  return wenviron;
 }
 
 /*********************************************************************

@@ -96,7 +96,7 @@ debug_channels (msvcrt)
 @ cdecl __dllonexit(ptr ptr ptr) MSVCRT___dllonexit
 @ cdecl __doserrno() MSVCRT___doserrno
 @ stub __fpecode #()
-@ cdecl __getmainargs(ptr ptr ptr long) MSVCRT___getmainargs
+@ cdecl __getmainargs(ptr ptr ptr long ptr) MSVCRT___getmainargs
 @ extern __initenv MSVCRT___initenv
 @ cdecl __isascii(long) MSVCRT___isascii
 @ cdecl __iscsym(long) MSVCRT___iscsym
@@ -147,7 +147,7 @@ debug_channels (msvcrt)
 @ cdecl __unDNameEx() MSVCRT___unDNameEx #FIXME
 @ extern __unguarded_readlc_active MSVCRT___unguarded_readlc_active
 @ extern __wargv MSVCRT___wargv
-@ cdecl __wgetmainargs(ptr ptr ptr long) MSVCRT___wgetmainargs
+@ cdecl __wgetmainargs(ptr ptr ptr long ptr) MSVCRT___wgetmainargs
 @ extern __winitenv MSVCRT___winitenv
 @ cdecl _abnormal_termination() MSVCRT__abnormal_termination
 @ cdecl _access(str long) MSVCRT__access
