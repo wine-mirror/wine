@@ -2481,56 +2481,6 @@ BOOL WINAPI FileTimeToDosDateTime( const FILETIME *ft, LPWORD fatdate,
     return TRUE;
 }
 
-
-/***********************************************************************
- *           LocalFileTimeToFileTime   (KERNEL32.@)
- */
-BOOL WINAPI LocalFileTimeToFileTime( const FILETIME *localft,
-                                       LPFILETIME utcft )
-{
-    struct tm *xtm;
-    DWORD remainder;
-    time_t utctime;
-
-    /* Converts from local to UTC. */
-    time_t localtime = DOSFS_FileTimeToUnixTime( localft, &remainder );
-    xtm = gmtime( &localtime );
-    utctime = mktime(xtm);
-    if(xtm->tm_isdst > 0) utctime-=3600;
-    DOSFS_UnixTimeToFileTime( utctime, utcft, remainder );
-    return TRUE;
-}
-
-
-/***********************************************************************
- *           FileTimeToLocalFileTime   (KERNEL32.@)
- */
-BOOL WINAPI FileTimeToLocalFileTime( const FILETIME *utcft,
-                                       LPFILETIME localft )
-{
-    DWORD remainder;
-    /* Converts from UTC to local. */
-    time_t unixtime = DOSFS_FileTimeToUnixTime( utcft, &remainder );
-#ifdef HAVE_TIMEGM
-    struct tm *xtm = localtime( &unixtime );
-    time_t localtime;
-
-    localtime = timegm(xtm);
-    DOSFS_UnixTimeToFileTime( localtime, localft, remainder );
-
-#else
-    struct tm *xtm;
-    time_t time;
-
-    xtm = gmtime( &unixtime );
-    time = mktime(xtm);
-    if(xtm->tm_isdst > 0) time-=3600;
-    DOSFS_UnixTimeToFileTime( 2*unixtime-time, localft, remainder );
-#endif
-    return TRUE;
-}
-
-
 /***********************************************************************
  *           FileTimeToSystemTime   (KERNEL32.@)
  */

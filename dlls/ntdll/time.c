@@ -414,6 +414,29 @@ BOOLEAN WINAPI RtlTimeFieldsToTime(
 }
 /************ end of code by Rex Jolliff (rex@lvcablemodem.com) ***************/
 
+/******************************************************************************
+ *        RtlLocalTimeToSystemTime [NTDLL.@]
+ *
+ * Converts local time to system time.
+ *
+ * PARAMS:
+ *   LocalTime [I]: Localtime to convert.
+ *   SystemTime [O]: SystemTime of the supplied localtime.
+ *
+ * RETURNS:
+ *   Status.
+ */
+NTSTATUS WINAPI RtlLocalTimeToSystemTime( const LARGE_INTEGER *LocalTime,
+                                          PLARGE_INTEGER SystemTime)
+{
+    TIME_ZONE_INFORMATION tzinfo;
+
+    TRACE("(%p, %p)\n", LocalTime, SystemTime);
+
+    RtlQueryTimeZoneInformation(&tzinfo);
+    SystemTime->QuadPart = LocalTime->QuadPart + tzinfo.Bias * 60 * (LONGLONG)10000000;
+    return STATUS_SUCCESS;
+}
 
 /******************************************************************************
  *       RtlSystemTimeToLocalTime [NTDLL.@]
@@ -427,13 +450,16 @@ BOOLEAN WINAPI RtlTimeFieldsToTime(
  * RETURNS:
  *   Nothing.
  */
-VOID WINAPI RtlSystemTimeToLocalTime(
-	IN  PLARGE_INTEGER SystemTime,
-	OUT PLARGE_INTEGER LocalTime)
+NTSTATUS WINAPI RtlSystemTimeToLocalTime( const LARGE_INTEGER *SystemTime,
+                                          PLARGE_INTEGER LocalTime )
 {
-	FIXME("(%p, %p),stub!\n",SystemTime,LocalTime);
+    TIME_ZONE_INFORMATION tzinfo;
 
-	memcpy (LocalTime, SystemTime, sizeof (PLARGE_INTEGER));
+    TRACE("(%p, %p)\n", SystemTime, LocalTime);
+
+    RtlQueryTimeZoneInformation(&tzinfo);
+    LocalTime->QuadPart = SystemTime->QuadPart - tzinfo.Bias * 60 * (LONGLONG)10000000;
+    return STATUS_SUCCESS;
 }
 
 /******************************************************************************

@@ -470,3 +470,29 @@ int WINAPI	SetCalendarInfoW(LCID Locale, CALID Calendar, CALTYPE CalType, LPCWST
 	  Locale, Calendar, CalType, debugstr_w(lpCalData));
     return 0;
 }
+
+/*********************************************************************
+ *      LocalFileTimeToFileTime                         (KERNEL32.@)
+ */
+BOOL WINAPI LocalFileTimeToFileTime( const FILETIME *localft,
+                                       LPFILETIME utcft )
+{
+    NTSTATUS status;
+    if ((status = RtlLocalTimeToSystemTime((PLARGE_INTEGER)localft,
+                                           (PLARGE_INTEGER)utcft)))
+        SetLastError( RtlNtStatusToDosError(status) );
+    return !status;
+}
+
+/*********************************************************************
+ *      FileTimeToLocalFileTime                         (KERNEL32.@)
+ */
+BOOL WINAPI FileTimeToLocalFileTime( const FILETIME *utcft,
+                                       LPFILETIME localft )
+{
+    NTSTATUS status;
+    if ((status = RtlSystemTimeToLocalTime((PLARGE_INTEGER)utcft,
+                                           (PLARGE_INTEGER)localft)))
+        SetLastError( RtlNtStatusToDosError(status) );
+    return !status;
+}

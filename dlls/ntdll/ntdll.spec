@@ -450,7 +450,7 @@
 @ stdcall RtlLengthRequiredSid(long) RtlLengthRequiredSid
 @ stdcall RtlLengthSecurityDescriptor(ptr) RtlLengthSecurityDescriptor
 @ stdcall RtlLengthSid(ptr) RtlLengthSid
-@ stub RtlLocalTimeToSystemTime
+@ stdcall RtlLocalTimeToSystemTime(ptr ptr) RtlLocalTimeToSystemTime
 @ stdcall RtlLockHeap(long) RtlLockHeap
 @ stub RtlLookupElementGenericTable
 @ stdcall RtlMakeSelfRelativeSD(ptr ptr ptr) RtlMakeSelfRelativeSD
@@ -521,7 +521,7 @@
 @ stdcall RtlSubAuthoritySid(ptr long) RtlSubAuthoritySid
 @ stub RtlSubtreePredecessor
 @ stub RtlSubtreeSuccessor
-@ stdcall RtlSystemTimeToLocalTime (long long) RtlSystemTimeToLocalTime
+@ stdcall RtlSystemTimeToLocalTime(ptr ptr) RtlSystemTimeToLocalTime
 @ stdcall RtlTimeFieldsToTime(ptr ptr) RtlTimeFieldsToTime
 @ stdcall RtlTimeToElapsedTimeFields(long long) RtlTimeToElapsedTimeFields
 @ stdcall RtlTimeToSecondsSince1970(ptr ptr) RtlTimeToSecondsSince1970
