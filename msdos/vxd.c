@@ -308,11 +308,11 @@ void VXD_Timer( CONTEXT *context )
 /***********************************************************************
  *           VXD_TimerAPI
  */
+static DWORD System_Time = 0;
+static WORD  System_Time_Selector = 0;
+static void  System_Time_Tick( WORD timer ) { System_Time += 55; }
 void VXD_TimerAPI ( CONTEXT *context )
 {
-    static DWORD clockTicks = 0;
-    static WORD clockTickSelector = 0;
-
     unsigned service = AX_reg(context);
 
     TRACE(vxd,"[%04x] TimerAPI  \n", (UINT16)service);
@@ -325,12 +325,14 @@ void VXD_TimerAPI ( CONTEXT *context )
         break;
 
     case 0x0009: /* get system time selector */
-        FIXME(vxd, "Get_System_Time_Selector: this clock doesn't tick!\n");
+        if ( !System_Time_Selector )
+        {
+            System_Time_Selector = SELECTOR_AllocBlock( &System_Time, sizeof(DWORD), 
+                                                        SEGMENT_DATA, FALSE, TRUE );
+            CreateSystemTimer( 55, System_Time_Tick );
+        }
 
-        if ( !clockTickSelector )
-            clockTickSelector = SELECTOR_AllocBlock( &clockTicks, sizeof(DWORD), 
-                                                     SEGMENT_DATA, FALSE, TRUE );
-        AX_reg(context) = clockTickSelector;
+        AX_reg(context) = System_Time_Selector;
         RESET_CFLAG(context);
         break;
 
