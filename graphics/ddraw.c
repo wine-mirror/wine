@@ -988,6 +988,8 @@ static HRESULT WINAPI IDirectDrawSurface3_AddAttachedSurface(
 ) {
 	FIXME(ddraw,"(%p)->(%p),stub!\n",this,surf);
 
+	this->lpvtbl->fnAddRef(this);
+	
 	/* This hack will be enough for the moment */
 	if (this->s.backbuffer == NULL)
 	this->s.backbuffer = surf;
@@ -1001,8 +1003,22 @@ static HRESULT WINAPI IDirectDrawSurface3_GetDC(LPDIRECTDRAWSURFACE3 this,HDC32*
 }
 
 static HRESULT WINAPI IDirectDrawSurface3_ReleaseDC(LPDIRECTDRAWSURFACE3 this,HDC32 hdc) {
+  	DDSURFACEDESC	desc;
+	DWORD x, y;
+	
 	FIXME(ddraw,"(%p)->(0x%08lx),stub!\n",this,(long)hdc);
 	EndPaint32(this->s.ddraw->d.window,&this->s.ddraw->d.ps);
+
+	/* Well, as what the application did paint in this DC is NOT saved in the surface,
+	   I fill it with 'dummy' values to have something on the screen */
+	this->lpvtbl->fnLock(this,NULL,&desc,0,0);
+	for (y = 0; y < desc.dwHeight; y++) {
+	  for (x = 0; x < desc.dwWidth; x++) {
+	    ((unsigned char *) desc.y.lpSurface)[x + y * desc.dwWidth] = (unsigned int) this + x + y;
+	  }
+	}
+	this->lpvtbl->fnUnlock(this,NULL);
+	
 	return DD_OK;
 }
 
@@ -1933,7 +1949,8 @@ static HRESULT common_off_screen_CreateSurface(LPDIRECTDRAW2 this,
 
   if (lpddsd->dwFlags & DDSD_ZBUFFERBITDEPTH) {
     /* This is a Z Buffer */
-    bpp = lpddsd->x.dwZBufferBitDepth;
+    TRACE(ddraw, "Creating Z-Buffer of %ld bit depth\n", lpddsd->x.dwZBufferBitDepth);
+    bpp = lpddsd->x.dwZBufferBitDepth / 8;
   } else {
     /* This is a standard image */
   if (!(lpddsd->dwFlags & DDSD_PIXELFORMAT)) {
@@ -1946,12 +1963,12 @@ static HRESULT common_off_screen_CreateSurface(LPDIRECTDRAW2 this,
       _dump_pixelformat(&(lpddsd->ddpfPixelFormat));
     }
   }
-  }
 
   if (lpddsd->ddpfPixelFormat.dwFlags & DDPF_PALETTEINDEXED8) {
     bpp = 1;
   } else {
   bpp = lpddsd->ddpfPixelFormat.x.dwRGBBitCount / 8;
+  }
   }
 
   /* Copy the surface description */
@@ -2018,7 +2035,8 @@ static HRESULT WINAPI DGA_IDirectDraw2_CreateSurface(
 	  (*lpdsf)->s.surface_desc.dwFlags |= DDSD_WIDTH|DDSD_HEIGHT|DDSD_PITCH|DDSD_LPSURFACE;
 	  (*lpdsf)->s.surface_desc.dwWidth = this->d.width;
 	  (*lpdsf)->s.surface_desc.dwHeight = this->d.height;
-	  (*lpdsf)->s.surface_desc.ddsCaps.dwCaps |= DDSCAPS_VISIBLE;
+	  /* We put our surface always in video memory */
+	  (*lpdsf)->s.surface_desc.ddsCaps.dwCaps |= DDSCAPS_VISIBLE|DDSCAPS_VIDEOMEMORY;
 	  _getpixelformat(this,&((*lpdsf)->s.surface_desc.ddpfPixelFormat));
 	(*lpdsf)->s.backbuffer = NULL;
 	  
@@ -2055,6 +2073,7 @@ static HRESULT WINAPI DGA_IDirectDraw2_CreateSurface(
 	    back->s.surface_desc.ddsCaps.dwCaps |= DDSCAPS_BACKBUFFER;
 	    back->s.surface_desc.dwFlags &= ~DDSD_BACKBUFFERCOUNT;
 	    back->s.surface_desc.ddsCaps.dwCaps &= ~DDSCAPS_VISIBLE;
+	    back->s.surface_desc.ddsCaps.dwCaps |= DDSCAPS_VIDEOMEMORY;
 	  }
 	} else {
 	  /* There is no DGA-specific code here...
@@ -2184,7 +2203,7 @@ static HRESULT WINAPI Xlib_IDirectDraw2_CreateSurface(
 	  (*lpdsf)->s.surface_desc.dwFlags |= DDSD_WIDTH|DDSD_HEIGHT|DDSD_PITCH|DDSD_LPSURFACE;
 	  (*lpdsf)->s.surface_desc.dwWidth = this->d.width;
 	  (*lpdsf)->s.surface_desc.dwHeight = this->d.height;
-	  (*lpdsf)->s.surface_desc.ddsCaps.dwCaps |= DDSCAPS_VISIBLE;
+	  (*lpdsf)->s.surface_desc.ddsCaps.dwCaps |= DDSCAPS_VISIBLE|DDSCAPS_VIDEOMEMORY;
 	  _getpixelformat(this,&((*lpdsf)->s.surface_desc.ddpfPixelFormat));
 	  (*lpdsf)->s.backbuffer = NULL;
     
@@ -2223,6 +2242,7 @@ static HRESULT WINAPI Xlib_IDirectDraw2_CreateSurface(
 	    back->s.surface_desc.ddsCaps.dwCaps |= DDSCAPS_BACKBUFFER;
 	    back->s.surface_desc.dwFlags &= ~DDSD_BACKBUFFERCOUNT;
 	    back->s.surface_desc.ddsCaps.dwCaps &= ~DDSCAPS_VISIBLE;
+	    back->s.surface_desc.ddsCaps.dwCaps |= DDSCAPS_VIDEOMEMORY;
 	}
 	} else {
 	  /* There is no Xlib-specific code here...
@@ -2360,7 +2380,7 @@ static HRESULT WINAPI DGA_IDirectDraw_SetDisplayMode(
         {
             XF86VidModeModeInfo **all_modes, *vidmode = NULL;
 	    XF86VidModeModeLine mod_tmp;
-	    int dotclock_tmp;
+	    /* int dotclock_tmp; */
 
             /* save original video mode and set fullscreen if available*/
 	    orig_mode = (XF86VidModeModeInfo *) malloc (sizeof(XF86VidModeModeInfo));  
