@@ -460,18 +460,14 @@ ATOM WINAPI RegisterClass16( const WNDCLASS16 *wc )
  *	>0: Unique identifier
  *	0: Failure
  */
-ATOM WINAPI RegisterClassA(
-	    const WNDCLASSA* wc /* Address of structure with class data */
-) {
+ATOM WINAPI RegisterClassA( const WNDCLASSA* wc ) /* Address of structure with class data */
+{
     ATOM atom;
     int iSmIconWidth, iSmIconHeight;
     CLASS *classPtr;
 
-    if (!(atom = GlobalAddAtomA( wc->lpszClassName ))) 
-    {
-        SetLastError(ERROR_CLASS_ALREADY_EXISTS);
-        return FALSE;
-    }
+    if (!(atom = GlobalAddAtomA( wc->lpszClassName ))) return 0;
+
     if (!(classPtr = CLASS_RegisterClass( atom, wc->hInstance, wc->style,
                                           wc->cbClsExtra, wc->cbWndExtra,
                                           (WNDPROC16)wc->lpfnWndProc,
@@ -512,11 +508,8 @@ ATOM WINAPI RegisterClassW( const WNDCLASSW* wc )
     int iSmIconWidth, iSmIconHeight;
     CLASS *classPtr;
 
-    if (!(atom = GlobalAddAtomW( wc->lpszClassName )))
-    {
-        SetLastError(ERROR_CLASS_ALREADY_EXISTS);
-        return FALSE;
-    }
+    if (!(atom = GlobalAddAtomW( wc->lpszClassName ))) return 0;
+
     if (!(classPtr = CLASS_RegisterClass( atom, wc->hInstance, wc->style,
                                           wc->cbClsExtra, wc->cbWndExtra,
                                           (WNDPROC16)wc->lpfnWndProc,
@@ -592,11 +585,8 @@ ATOM WINAPI RegisterClassExA( const WNDCLASSEXA* wc )
     ATOM atom;
     CLASS *classPtr;
 
-    if (!(atom = GlobalAddAtomA( wc->lpszClassName )))
-    {
-        SetLastError(ERROR_CLASS_ALREADY_EXISTS);
-        return FALSE;
-    }
+    if (!(atom = GlobalAddAtomA( wc->lpszClassName ))) return 0;
+
     if (!(classPtr = CLASS_RegisterClass( atom, wc->hInstance, wc->style,
                                           wc->cbClsExtra, wc->cbWndExtra,
                                           (WNDPROC16)wc->lpfnWndProc,
@@ -630,11 +620,8 @@ ATOM WINAPI RegisterClassExW( const WNDCLASSEXW* wc )
     ATOM atom;
     CLASS *classPtr;
 
-    if (!(atom = GlobalAddAtomW( wc->lpszClassName )))
-    {
-        SetLastError(ERROR_CLASS_ALREADY_EXISTS);
-        return 0;
-    }
+    if (!(atom = GlobalAddAtomW( wc->lpszClassName ))) return 0;
+
     if (!(classPtr = CLASS_RegisterClass( atom, wc->hInstance, wc->style,
                                           wc->cbClsExtra, wc->cbWndExtra,
                                           (WNDPROC16)wc->lpfnWndProc,
