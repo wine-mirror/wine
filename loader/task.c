@@ -929,6 +929,12 @@ FARPROC16 WINAPI MakeProcInstance16( FARPROC16 func, HANDLE16 hInstance )
       ERR_(task)("Ouch ! MakeProcInstance called with func == NULL !\n");
       return (FARPROC16)0; /* Windows seems to do the same */
     }
+    if ( GetTaskDS16() !=hInstance )
+    {
+        ERR_(task)("Problem with hInstance? Got %04x, using %04x instead\n",
+                   hInstance,GetTaskDS16());
+        hInstance = GetTaskDS16();
+    }
     if (!hInstance) hInstance = CURRENT_DS;
     thunkaddr = TASK_AllocThunk( GetCurrentTask() );
     if (!thunkaddr) return (FARPROC16)0;
