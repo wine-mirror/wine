@@ -1998,7 +1998,7 @@ extern inline LONG WINAPI InterlockedCompareExchange( PLONG dest, LONG xchg, LON
 {
     LONG ret = 0;
     LONG scratch;
-    __asm__ (
+    __asm__ __volatile__(
         "0:    lwarx %0,0,%2\n"
         "      xor. %1,%4,%0\n"
         "      bne 1f\n"
@@ -2016,7 +2016,7 @@ extern inline LONG WINAPI InterlockedExchange( PLONG dest, LONG val );
 extern inline LONG WINAPI InterlockedExchange( PLONG dest, LONG val )
 {
     LONG ret = 0;
-    __asm__(
+    __asm__ __volatile__(
         "0:    lwarx %0,0,%1\n"
         "      stwcx. %2,0,%1\n"
         "      bne- 0b\n"
@@ -2032,7 +2032,7 @@ extern inline LONG WINAPI InterlockedExchangeAdd( PLONG dest, LONG incr )
 {
     LONG ret = 0;
     LONG zero = 0;
-    __asm__(
+    __asm__ __volatile__(
         "0:    lwarx %0, %3, %1\n"
         "      add %0, %2, %0\n"
         "      stwcx. %0, %3, %1\n"
