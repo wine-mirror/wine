@@ -54,8 +54,8 @@ strarray* strarray_fromstring(const char* str, const char* delim);
 char* strarray_tostring(const strarray* arr, const char* sep);
 
 typedef enum { 
-    file_na, file_other, file_obj, file_res,
-    file_rc, file_arh, file_dll, file_so 
+    file_na, file_other, file_obj, file_res, file_rc, 
+    file_arh, file_dll, file_so, file_def, file_spec
 } file_type;
 
 char* get_basename(const char* file);

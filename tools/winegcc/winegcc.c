@@ -153,6 +153,7 @@ static strarray* tmp_files;
 struct options 
 {
     enum { proc_cc = 0, proc_cxx = 1, proc_cpp = 2} processor;
+    int shared;
     int use_msvcrt;
     int nostdinc;
     int nostdlib;
@@ -345,9 +346,9 @@ static void build(struct options* opts)
     static const char *stdlibpath[] = { DLLDIR, LIBDIR, "/usr/lib", "/usr/local/lib", "/lib" };
     strarray *lib_dirs, *files;
     strarray *spec_args, *comp_args, *link_args;
-    char *base_file, *base_name;
+    char *output_file;
     const char *spec_c_name, *spec_o_name;
-    const char* output_name;
+    const char *output_name, *spec_file, *def_ext;
     const char* winebuild = getenv("WINEBUILD");
     int generate_app_loader = 1;
     int j;
@@ -363,35 +364,40 @@ static void build(struct options* opts)
 
     if (!winebuild) winebuild = "winebuild";
 
-    output_name = opts->output_name ? opts->output_name : "a.out";
-
-    /* get base filename by removing the .exe extension, if present */
-    base_file = strdup(output_name);
-    if (strendswith(base_file, ".exe.so"))
-    {
-        base_file[strlen(base_file) - 7] = 0;
-        generate_app_loader = 0;
-    }
-    else if (strendswith(base_file, ".exe")) base_file[strlen(base_file) - 4] = 0;
-    if ((base_name = strrchr(base_file, '/'))) base_name++;
-    else base_name = base_file;
+    output_file = strdup( opts->output_name ? opts->output_name : "a.out" );
 
     /* 'winegcc -o app xxx.exe.so' only creates the load script */
     if (opts->files->size == 1 && strendswith(opts->files->base[0], ".exe.so"))
     {
-	create_file(base_file, 0755, app_loader_template, opts->files->base[0]);
+	create_file(output_file, 0755, app_loader_template, opts->files->base[0]);
 	return;
     }
+
+    /* generate app loader only for .exe */
+    if (opts->shared || strendswith(output_file, ".exe.so"))
+	generate_app_loader = 0;
+
+    /* normalize the filename a bit: strip .so, ensure it has proper ext */
+    def_ext = opts->shared ? ".dll" : ".exe";
+    if (strendswith(output_file, ".so")) 
+	output_file[strlen(output_file) - 3] = 0;
+    if(!strendswith(output_file, def_ext))
+	output_file = strmake("%s%s", output_file, def_ext);
+
+    /* get the filename by the path, if present */
+    if ((output_name = strrchr(output_file, '/'))) output_name++;
+    else output_name = output_file;
 
     /* prepare the linking path */
     lib_dirs = strarray_dup(opts->lib_dirs);
     if (!opts->wine_mode)
     {
-	for ( j = 0; j < sizeof(stdlibpath)/sizeof(stdlibpath[0]);j++ )
+	for ( j = 0; j < sizeof(stdlibpath)/sizeof(stdlibpath[0]); j++ )
 	    strarray_add(lib_dirs, stdlibpath[j]);
     }
 
     /* mark the files with their appropriate type */
+    spec_file = 0;
     files = strarray_alloc();
     for ( j = 0; j < opts->files->size; j++ )
     {
@@ -400,6 +406,14 @@ static void build(struct options* opts)
 	{
 	    switch(get_file_type(file))
 	    {
+		case file_def:
+		case file_spec:
+		    if (!opts->shared) 
+		        error("Spec file %s not supported in non-shared mode", file);
+		    if (spec_file)
+			error("Only one spec file can be specified in shared mode");
+		    spec_file = file;
+		    break;
 		case file_rc:
 		    /* FIXME: invoke wrc to build it */
 		    error("Can't compile .rc file at the moment: %s", file);
@@ -441,6 +455,8 @@ static void build(struct options* opts)
 	    free(fullname);
 	}
     }
+    if (opts->shared && !spec_file)
+	error("A spec file is currently needed in shared mode");
 
     /* add the default libraries, if needed */
     if (!opts->nostdlib) 
@@ -463,13 +479,21 @@ static void build(struct options* opts)
 
     /* run winebuild to generate the .spec.c file */
     spec_args = strarray_alloc();
-    spec_c_name = get_temp_file(base_name, ".spec.c");
+    spec_c_name = get_temp_file(output_name, ".spec.c");
     strarray_add(spec_args, winebuild);
     strarray_add(spec_args, "-o");
     strarray_add(spec_args, spec_c_name);
-    strarray_add(spec_args, "--exe");
-    strarray_add(spec_args, strmake("%s.exe", base_name));
-    strarray_add(spec_args, opts->gui_app ? "-mgui" : "-mcui");
+    if (opts->shared)
+    {
+        strarray_add(spec_args, "--dll");
+        strarray_add(spec_args, spec_file);
+    }
+    else
+    {
+        strarray_add(spec_args, "--exe");
+        strarray_add(spec_args, output_name);
+        strarray_add(spec_args, opts->gui_app ? "-mgui" : "-mcui");
+    }
 
     for ( j = 0; j < lib_dirs->size; j++ )
 	strarray_add(spec_args, strmake("-L%s", lib_dirs->base[j]));
@@ -507,7 +531,7 @@ static void build(struct options* opts)
     strarray_addall(link_args, strarray_fromstring(LDDLLFLAGS, " "));
 
     strarray_add(link_args, "-o");
-    strarray_add(link_args, strmake("%s.exe.so", base_file));
+    strarray_add(link_args, strmake("%s.so", output_file));
 
     for ( j = 0 ; j < opts->linker_args->size ; j++ ) 
         strarray_add(link_args, opts->linker_args->base[j]);
@@ -544,7 +568,10 @@ static void build(struct options* opts)
 
     /* create the loader script */
     if (generate_app_loader)
-        create_file(base_file, 0755, app_loader_template, strmake("%s.exe.so", base_name));
+    {
+        if (strendswith(output_file, ".exe")) output_file[strlen(output_file) - 4] = 0;
+        create_file(output_file, 0755, app_loader_template, strmake("%s.so", output_name));
+    }
 }
 
 
@@ -775,6 +802,11 @@ int main(int argc, char **argv)
 			linking = -1;
 		    else if(strcmp("-save-temps", argv[i]) == 0)
 			keep_generated = 1;
+		    else if(strcmp("-shared", argv[i]) == 0)
+		    {
+			opts.shared = 1;
+                        raw_compiler_arg = raw_linker_arg = 0;
+		    }
                     break;
                 case 'v':
                     if (argv[i][2] == 0) verbose++;

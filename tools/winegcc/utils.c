@@ -221,7 +221,8 @@ file_type get_file_type(const char* filename)
     if (strendswith(filename, ".res")) return file_res;
     if (strendswith(filename, ".so")) return file_so;
     if (strendswith(filename, ".dylib")) return file_so;
-    if (strendswith(filename, ".def")) return file_dll;
+    if (strendswith(filename, ".def")) return file_def;
+    if (strendswith(filename, ".spec")) return file_spec;
     if (strendswith(filename, ".rc")) return file_rc;
 
     return file_other;
@@ -254,9 +255,9 @@ static file_type guess_lib_type(const char* dir, const char* library, char** fil
 	return file_so;
 
     /* Windows DLL */
-    if ((*file = try_lib_path(dir, "lib", library, ".def", file_dll)))
+    if ((*file = try_lib_path(dir, "lib", library, ".def", file_def)))
 	return file_dll;
-    if ((*file = try_lib_path(dir, "", library, ".def", file_dll)))
+    if ((*file = try_lib_path(dir, "", library, ".def", file_def)))
 	return file_dll;
 
     /* Unix static archives */
