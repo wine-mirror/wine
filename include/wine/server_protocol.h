@@ -2507,6 +2507,7 @@ struct get_window_info_reply
 {
     struct reply_header __header;
     user_handle_t  full_handle;
+    user_handle_t  last_active;
     process_id_t   pid;
     thread_id_t    tid;
     atom_t         atom;
@@ -2763,6 +2764,44 @@ struct get_thread_input_reply
 };
 
 
+struct set_foreground_window_request
+{
+    struct request_header __header;
+    user_handle_t  handle;
+};
+struct set_foreground_window_reply
+{
+    struct reply_header __header;
+    user_handle_t  previous;
+    int            send_msg_old;
+    int            send_msg_new;
+};
+
+
+struct set_focus_window_request
+{
+    struct request_header __header;
+    user_handle_t  handle;
+};
+struct set_focus_window_reply
+{
+    struct reply_header __header;
+    user_handle_t  previous;
+};
+
+
+struct set_active_window_request
+{
+    struct request_header __header;
+    user_handle_t  handle;
+};
+struct set_active_window_reply
+{
+    struct reply_header __header;
+    user_handle_t  previous;
+};
+
+
 enum request
 {
     REQ_new_process,
@@ -2923,6 +2962,9 @@ enum request
     REQ_get_window_properties,
     REQ_attach_thread_input,
     REQ_get_thread_input,
+    REQ_set_foreground_window,
+    REQ_set_focus_window,
+    REQ_set_active_window,
     REQ_NB_REQUESTS
 };
 
@@ -3088,6 +3130,9 @@ union generic_request
     struct get_window_properties_request get_window_properties_request;
     struct attach_thread_input_request attach_thread_input_request;
     struct get_thread_input_request get_thread_input_request;
+    struct set_foreground_window_request set_foreground_window_request;
+    struct set_focus_window_request set_focus_window_request;
+    struct set_active_window_request set_active_window_request;
 };
 union generic_reply
 {
@@ -3251,8 +3296,11 @@ union generic_reply
     struct get_window_properties_reply get_window_properties_reply;
     struct attach_thread_input_reply attach_thread_input_reply;
     struct get_thread_input_reply get_thread_input_reply;
+    struct set_foreground_window_reply set_foreground_window_reply;
+    struct set_focus_window_reply set_focus_window_reply;
+    struct set_active_window_reply set_active_window_reply;
 };
 
-#define SERVER_PROTOCOL_VERSION 85
+#define SERVER_PROTOCOL_VERSION 86
 
 #endif /* __WINE_WINE_SERVER_PROTOCOL_H */

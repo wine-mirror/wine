@@ -62,6 +62,7 @@ struct window
     user_handle_t    handle;          /* full handle for this window */
     struct thread   *thread;          /* thread owning the window */
     atom_t           atom;            /* class atom */
+    user_handle_t    last_active;     /* last active popup */
     rectangle_t      window_rect;     /* window rectangle */
     rectangle_t      client_rect;     /* client rectangle */
     unsigned int     style;           /* window style */
@@ -268,6 +269,7 @@ static struct window *create_window( struct window *parent, struct window *owner
     win->first_unlinked = NULL;
     win->thread         = current;
     win->atom           = atom;
+    win->last_active    = win->handle;
     win->style          = 0;
     win->ex_style       = 0;
     win->id             = 0;
@@ -320,6 +322,27 @@ int is_child_window( user_handle_t parent, user_handle_t child )
     }
     return 0;
 }
+
+/* check whether window is a top-level window */
+int is_top_level_window( user_handle_t window )
+{
+    struct window *win = get_user_object( window, USER_WINDOW );
+    return (win && win->parent == top_window);
+}
+
+/* make a window active if possible */
+int make_window_active( user_handle_t window )
+{
+    struct window *owner, *win = get_window( window );
+
+    if (!win) return 0;
+
+    /* set last active for window and its owner */
+    win->last_active = win->handle;
+    if ((owner = get_user_object( win->owner, USER_WINDOW ))) owner->last_active = win->handle;
+    return 1;
+}
+
 
 /* return the thread owning a window */
 struct thread *get_window_thread( user_handle_t handle )
@@ -478,6 +501,8 @@ DECL_HANDLER(get_window_info)
     if (win)
     {
         reply->full_handle = win->handle;
+        reply->last_active = win->handle;
+        if (get_user_object( win->last_active, USER_WINDOW )) reply->last_active = win->last_active;
         if (win->thread)
         {
             reply->tid  = get_thread_id( win->thread );

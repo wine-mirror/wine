@@ -512,8 +512,6 @@ static BOOL process_cooked_mouse_message( MSG *msg, ULONG_PTR extra_info, BOOL r
         (raw_message == WM_RBUTTONDOWN) ||
         (raw_message == WM_MBUTTONDOWN))
     {
-        HWND hwndTop = GetAncestor( msg->hwnd, GA_ROOT );
-
         /* Send the WM_PARENTNOTIFY,
          * note that even for double/nonclient clicks
          * notification message is still WM_L/M/RBUTTONDOWN.
@@ -522,32 +520,37 @@ static BOOL process_cooked_mouse_message( MSG *msg, ULONG_PTR extra_info, BOOL r
 
         /* Activate the window if needed */
 
-        if (msg->hwnd != GetActiveWindow() && hwndTop != GetDesktopWindow())
+        if (msg->hwnd != GetActiveWindow())
         {
-            LONG ret = SendMessageA( msg->hwnd, WM_MOUSEACTIVATE, (WPARAM)hwndTop,
-                                     MAKELONG( hittest, raw_message ) );
-
-            switch(ret)
+            HWND hwndTop = msg->hwnd;
+            while (hwndTop)
             {
-            case MA_NOACTIVATEANDEAT:
-                eatMsg = TRUE;
-                /* fall through */
-            case MA_NOACTIVATE:
-                break;
-            case MA_ACTIVATEANDEAT:
-                eatMsg = TRUE;
-                /* fall through */
-            case MA_ACTIVATE:
-            case 0:
-                if (hwndTop != GetForegroundWindow() )
+                if ((GetWindowLongW( hwndTop, GWL_STYLE ) & (WS_POPUP|WS_CHILD)) != WS_CHILD) break;
+                hwndTop = GetParent( hwndTop );
+            }
+
+            if (hwndTop && hwndTop != GetDesktopWindow())
+            {
+                LONG ret = SendMessageA( msg->hwnd, WM_MOUSEACTIVATE, (WPARAM)hwndTop,
+                                         MAKELONG( hittest, raw_message ) );
+                switch(ret)
                 {
-                    if (!WINPOS_SetActiveWindow( hwndTop, TRUE , TRUE ))
-                        eatMsg = TRUE;
+                case MA_NOACTIVATEANDEAT:
+                    eatMsg = TRUE;
+                    /* fall through */
+                case MA_NOACTIVATE:
+                    break;
+                case MA_ACTIVATEANDEAT:
+                    eatMsg = TRUE;
+                    /* fall through */
+                case MA_ACTIVATE:
+                case 0:
+                    if (!FOCUS_MouseActivate( hwndTop )) eatMsg = TRUE;
+                    break;
+                default:
+                    WARN( "unknown WM_MOUSEACTIVATE code %ld\n", ret );
+                    break;
                 }
-                break;
-            default:
-                WARN( "unknown WM_MOUSEACTIVATE code %ld\n", ret );
-                break;
             }
         }
     }

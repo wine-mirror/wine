@@ -2005,6 +2005,7 @@ static void dump_get_window_info_request( const struct get_window_info_request *
 static void dump_get_window_info_reply( const struct get_window_info_reply *req )
 {
     fprintf( stderr, " full_handle=%08x,", req->full_handle );
+    fprintf( stderr, " last_active=%08x,", req->last_active );
     fprintf( stderr, " pid=%08x,", req->pid );
     fprintf( stderr, " tid=%08x,", req->tid );
     fprintf( stderr, " atom=%04x", req->atom );
@@ -2200,6 +2201,38 @@ static void dump_get_thread_input_reply( const struct get_thread_input_reply *re
     dump_rectangle( &req->rect );
 }
 
+static void dump_set_foreground_window_request( const struct set_foreground_window_request *req )
+{
+    fprintf( stderr, " handle=%08x", req->handle );
+}
+
+static void dump_set_foreground_window_reply( const struct set_foreground_window_reply *req )
+{
+    fprintf( stderr, " previous=%08x,", req->previous );
+    fprintf( stderr, " send_msg_old=%d,", req->send_msg_old );
+    fprintf( stderr, " send_msg_new=%d", req->send_msg_new );
+}
+
+static void dump_set_focus_window_request( const struct set_focus_window_request *req )
+{
+    fprintf( stderr, " handle=%08x", req->handle );
+}
+
+static void dump_set_focus_window_reply( const struct set_focus_window_reply *req )
+{
+    fprintf( stderr, " previous=%08x", req->previous );
+}
+
+static void dump_set_active_window_request( const struct set_active_window_request *req )
+{
+    fprintf( stderr, " handle=%08x", req->handle );
+}
+
+static void dump_set_active_window_reply( const struct set_active_window_reply *req )
+{
+    fprintf( stderr, " previous=%08x", req->previous );
+}
+
 static const dump_func req_dumpers[REQ_NB_REQUESTS] = {
     (dump_func)dump_new_process_request,
     (dump_func)dump_get_new_process_info_request,
@@ -2359,6 +2392,9 @@ static const dump_func req_dumpers[REQ_NB_REQUESTS] = {
     (dump_func)dump_get_window_properties_request,
     (dump_func)dump_attach_thread_input_request,
     (dump_func)dump_get_thread_input_request,
+    (dump_func)dump_set_foreground_window_request,
+    (dump_func)dump_set_focus_window_request,
+    (dump_func)dump_set_active_window_request,
 };
 
 static const dump_func reply_dumpers[REQ_NB_REQUESTS] = {
@@ -2520,6 +2556,9 @@ static const dump_func reply_dumpers[REQ_NB_REQUESTS] = {
     (dump_func)dump_get_window_properties_reply,
     (dump_func)0,
     (dump_func)dump_get_thread_input_reply,
+    (dump_func)dump_set_foreground_window_reply,
+    (dump_func)dump_set_focus_window_reply,
+    (dump_func)dump_set_active_window_reply,
 };
 
 static const char * const req_names[REQ_NB_REQUESTS] = {
@@ -2681,6 +2720,9 @@ static const char * const req_names[REQ_NB_REQUESTS] = {
     "get_window_properties",
     "attach_thread_input",
     "get_thread_input",
+    "set_foreground_window",
+    "set_focus_window",
+    "set_active_window",
 };
 
 /* ### make_requests end ### */

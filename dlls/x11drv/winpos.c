@@ -1025,7 +1025,7 @@ BOOL X11DRV_SetWindowPos( WINDOWPOS *winpos )
         if ((GetWindowLongW( winpos->hwnd, GWL_STYLE ) & (WS_CHILD | WS_POPUP)) == WS_CHILD)
             SendMessageA( winpos->hwnd, WM_CHILDACTIVATE, 0, 0 );
         else
-            SetActiveWindow( winpos->hwnd );
+            SetForegroundWindow( winpos->hwnd );
     }
 
       /* And last, send the WM_WINDOWPOSCHANGED message */

@@ -143,6 +143,8 @@ extern void CARET_GetRect(LPRECT lprc);  /* windows/caret.c */
 
 extern HBRUSH DEFWND_ControlColor( HDC hDC, UINT ctlType );  /* windows/defwnd.c */
 
+extern BOOL FOCUS_MouseActivate( HWND hwnd );
+
 /* Classes functions */
 struct tagCLASS;  /* opaque structure */
 struct builtin_class_descr;
@@ -152,8 +154,5 @@ extern struct tagCLASS *CLASS_AddWindow( ATOM atom, HINSTANCE inst, WINDOWPROCTY
                                          DWORD *style, struct tagDCE **dce );
 extern void CLASS_RemoveWindow( struct tagCLASS *cls );
 extern void CLASS_FreeModuleClasses( HMODULE16 hModule );
-
-/* windows/focus.c */
-extern void FOCUS_SwitchFocus( struct tagMESSAGEQUEUE *pMsgQ, HWND , HWND );
 
 #endif  /* __WINE_WIN_H */

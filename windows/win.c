@@ -1479,7 +1479,10 @@ BOOL WINAPI DestroyWindow( HWND hwnd )
 
       /* Hide the window */
 
-    ShowWindow( hwnd, SW_HIDE );
+    if (!ShowWindow( hwnd, SW_HIDE ))
+    {
+        if (hwnd == GetActiveWindow()) WINPOS_ActivateOtherWindow( hwnd );
+    }
     if (!IsWindow(hwnd)) return TRUE;
 
       /* Recursively destroy owned windows */
@@ -1509,8 +1512,6 @@ BOOL WINAPI DestroyWindow( HWND hwnd )
             }
             if (!got_one) break;
         }
-
-        WINPOS_ActivateOtherWindow( hwnd );
 
         if ((owner = GetWindow( hwnd, GW_OWNER )))
         {
@@ -3109,7 +3110,7 @@ BOOL WINAPI FlashWindow( HWND hWnd, BOOL bInvert )
     {
         WPARAM16 wparam;
         if (bInvert) wparam = !(wndPtr->flags & WIN_NCACTIVATED);
-        else wparam = (hWnd == GetActiveWindow());
+        else wparam = (hWnd == GetForegroundWindow());
 
         WIN_ReleaseWndPtr(wndPtr);
         SendMessageW( hWnd, WM_NCACTIVATE, wparam, (LPARAM)0 );

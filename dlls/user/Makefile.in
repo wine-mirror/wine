@@ -31,7 +31,6 @@ C_SRCS = \
 	$(TOPOBJDIR)/windows/defwnd.c \
 	$(TOPOBJDIR)/windows/dialog.c \
 	$(TOPOBJDIR)/windows/driver.c \
-	$(TOPOBJDIR)/windows/focus.c \
 	$(TOPOBJDIR)/windows/hook.c \
 	$(TOPOBJDIR)/windows/input.c \
 	$(TOPOBJDIR)/windows/keyboard.c \
@@ -63,6 +62,7 @@ C_SRCS = \
 	dde/server.c \
 	display.c \
 	exticon.c \
+	focus.c \
 	lstr.c \
 	message.c \
 	misc.c \

@@ -1762,6 +1762,7 @@ enum message_type
     user_handle_t  handle;      /* handle to the window */
 @REPLY
     user_handle_t  full_handle; /* full 32-bit handle */
+    user_handle_t  last_active; /* last active popup */
     process_id_t   pid;         /* process owning the window */
     thread_id_t    tid;         /* thread owning the window */
     atom_t         atom;        /* class atom */
@@ -1930,4 +1931,27 @@ enum message_type
     user_handle_t  move_size;     /* handle to the moving/resizing window */
     user_handle_t  caret;         /* handle to the caret window */
     rectangle_t    rect;          /* caret rectangle */
+@END
+
+/* Set the system foreground window */
+@REQ(set_foreground_window)
+    user_handle_t  handle;        /* handle to the foreground window */
+@REPLY
+    user_handle_t  previous;      /* handle to the previous foreground window */
+    int            send_msg_old;  /* whether we have to send a msg to the old window */
+    int            send_msg_new;  /* whether we have to send a msg to the new window */
+@END
+
+/* Set the current thread focus window */
+@REQ(set_focus_window)
+    user_handle_t  handle;        /* handle to the focus window */
+@REPLY
+    user_handle_t  previous;      /* handle to the previous focus window */
+@END
+
+/* Set the current thread active window */
+@REQ(set_active_window)
+    user_handle_t  handle;        /* handle to the active window */
+@REPLY
+    user_handle_t  previous;      /* handle to the previous active window */
 @END

@@ -1999,7 +1999,7 @@ LONG NC_HandleNCLButtonDown( HWND hwnd, WPARAM wParam, LPARAM lParam )
         {
             HWND top = GetAncestor( hwnd, GA_ROOT );
 
-            if( WINPOS_SetActiveWindow(top, TRUE, TRUE) || (GetActiveWindow() == top) )
+            if (FOCUS_MouseActivate( top ) || (GetActiveWindow() == top))
                 SendMessageW( hwnd, WM_SYSCOMMAND, SC_MOVE + HTCAPTION, lParam );
             break;
         }

@@ -364,6 +364,20 @@ static void EVENT_ProcessEvent( XEvent *event )
 }
 
 
+/*******************************************************************
+ *         can_activate_window
+ *
+ * Check if we can activate the specified window.
+ */
+inline static BOOL can_activate_window( HWND hwnd )
+{
+    LONG style = GetWindowLongW( hwnd, GWL_STYLE );
+    if (!(style & WS_VISIBLE)) return FALSE;
+    if ((style & (WS_POPUP|WS_CHILD)) == WS_CHILD) return FALSE;
+    return !(style & WS_DISABLED);
+}
+
+
 /**********************************************************************
  *              set_focus_error_handler
  *
@@ -380,16 +394,12 @@ static int set_focus_error_handler( Display *display, XErrorEvent *event, void *
  */
 static void set_focus( HWND hwnd, Time time )
 {
-    HWND focus = GetFocus();
+    HWND focus;
     Window win;
 
-    if (hwnd != focus && !IsChild( hwnd, focus ))
-    {
-        TRACE( "changing window focus to %x\n", hwnd );
-        SetFocus( hwnd );
-    }
+    TRACE( "setting foreground window to %x\n", hwnd );
+    SetForegroundWindow( hwnd );
 
-    /* focus window might be changed by the above SetFocus() call */
     focus = GetFocus();
     win = X11DRV_get_whole_window(focus);
 
@@ -430,7 +440,7 @@ static void handle_wm_protocols_message( HWND hwnd, XClientMessageEvent *event )
                hwnd, IsWindowEnabled(hwnd), GetFocus(), GetActiveWindow(),
                GetForegroundWindow(), last_focus );
 
-        if (IsWindowEnabled(hwnd))
+        if (can_activate_window(hwnd))
         {
             /* simulate a mouse click on the caption to find out
              * whether the window wants to be activated */
@@ -445,7 +455,7 @@ static void handle_wm_protocols_message( HWND hwnd, XClientMessageEvent *event )
             hwnd = GetFocus();
             if (!hwnd) hwnd = GetActiveWindow();
             if (!hwnd) hwnd = last_focus;
-            if (hwnd && IsWindowEnabled(hwnd)) set_focus( hwnd, event_time );
+            if (hwnd && can_activate_window(hwnd)) set_focus( hwnd, event_time );
         }
     }
 }
@@ -475,17 +485,14 @@ static void EVENT_FocusIn( HWND hwnd, XFocusChangeEvent *event )
     if (wmTakeFocus) return;  /* ignore FocusIn if we are using take focus */
     if (event->detail == NotifyPointer) return;
 
-    if (!IsWindowEnabled(hwnd))
+    if (!can_activate_window(hwnd))
     {
         HWND hwnd = GetFocus();
         if (!hwnd) hwnd = GetActiveWindow();
         if (!hwnd) hwnd = x11drv_thread_data()->last_focus;
-        if (hwnd && IsWindowEnabled(hwnd)) set_focus( hwnd, CurrentTime );
+        if (hwnd && can_activate_window(hwnd)) set_focus( hwnd, CurrentTime );
     }
-    else if (hwnd != GetForegroundWindow())
-    {
-        SetForegroundWindow( hwnd );
-    }
+    else SetForegroundWindow( hwnd );
 }
 
 
@@ -503,6 +510,7 @@ static void EVENT_FocusOut( HWND hwnd, XFocusChangeEvent *event )
     TRACE( "win %x xwin %lx detail=%s\n", hwnd, event->window, focus_details[event->detail] );
 
     if (event->detail == NotifyPointer) return;
+    x11drv_thread_data()->last_focus = hwnd;
     if (hwnd != GetForegroundWindow()) return;
     SendMessageA( hwnd, WM_CANCELMODE, 0, 0 );
 
@@ -527,7 +535,6 @@ static void EVENT_FocusOut( HWND hwnd, XFocusChangeEvent *event )
         if (hwnd == GetForegroundWindow())
         {
             TRACE( "lost focus, setting fg to 0\n" );
-            x11drv_thread_data()->last_focus = hwnd;
             SetForegroundWindow( 0 );
         }
     }

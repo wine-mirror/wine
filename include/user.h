@@ -57,7 +57,8 @@ enum wine_internal_message
     WM_WINE_SHOWWINDOW,
     WM_WINE_SETPARENT,
     WM_WINE_SETWINDOWLONG,
-    WM_WINE_ENABLEWINDOW
+    WM_WINE_ENABLEWINDOW,
+    WM_WINE_SETACTIVEWINDOW
 };
 
 /* internal SendInput codes (FIXME) */

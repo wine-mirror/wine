@@ -1060,6 +1060,8 @@ static LRESULT handle_internal_message( HWND hwnd, UINT msg, WPARAM wparam, LPAR
         return (LRESULT)SetWindowLongW( hwnd, wparam, lparam );
     case WM_WINE_ENABLEWINDOW:
         return EnableWindow( hwnd, wparam );
+    case WM_WINE_SETACTIVEWINDOW:
+        return SetActiveWindow( (HWND)wparam );
     default:
         FIXME( "unknown internal message %x\n", msg );
         return 0;

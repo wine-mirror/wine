@@ -621,6 +621,25 @@ inline static void thread_input_cleanup_window( struct msg_queue *queue, user_ha
     if (window == input->caret) input->caret = 0;
 }
 
+/* check if the specified window can be set in the input data of a given queue */
+static int check_queue_input_window( struct msg_queue *queue, user_handle_t window )
+{
+    struct thread *thread;
+    int ret = 0;
+
+    if (!window) return 1;  /* we can always clear the data */
+
+    if ((thread = get_window_thread( window )))
+    {
+        ret = (queue->input == thread->queue->input);
+        if (!ret) set_error( STATUS_ACCESS_DENIED );
+        release_object( thread );
+    }
+    else set_error( STATUS_INVALID_HANDLE );
+
+    return ret;
+}
+
 /* attach two thread input data structures */
 int attach_thread_input( struct thread *thread_from, struct thread *thread_to )
 {
@@ -1291,4 +1310,62 @@ DECL_HANDLER(get_thread_input)
     /* foreground window is active window of foreground thread */
     reply->foreground = foreground_input ? foreground_input->active : 0;
     if (thread) release_object( thread );
+}
+
+
+/* set the system foreground window */
+DECL_HANDLER(set_foreground_window)
+{
+    struct msg_queue *queue = get_current_queue();
+
+    reply->previous = foreground_input ? foreground_input->active : 0;
+    reply->send_msg_old = (reply->previous && foreground_input != queue->input);
+    reply->send_msg_new = FALSE;
+
+    if (req->handle)
+    {
+        struct thread *thread;
+
+        if (is_top_level_window( req->handle ) &&
+            ((thread = get_window_thread( req->handle ))))
+        {
+            foreground_input = thread->queue->input;
+            reply->send_msg_new = (foreground_input != queue->input);
+            release_object( thread );
+        }
+        else set_error( STATUS_INVALID_HANDLE );
+    }
+    else foreground_input = NULL;
+}
+
+
+/* set the current thread focus window */
+DECL_HANDLER(set_focus_window)
+{
+    struct msg_queue *queue = get_current_queue();
+
+    reply->previous = 0;
+    if (queue && check_queue_input_window( queue, req->handle ))
+    {
+        reply->previous = queue->input->focus;
+        queue->input->focus = get_user_full_handle( req->handle );
+    }
+}
+
+
+/* set the current thread active window */
+DECL_HANDLER(set_active_window)
+{
+    struct msg_queue *queue = get_current_queue();
+
+    reply->previous = 0;
+    if (queue && check_queue_input_window( queue, req->handle ))
+    {
+        if (!req->handle || make_window_active( req->handle ))
+        {
+            reply->previous = queue->input->active;
+            queue->input->active = get_user_full_handle( req->handle );
+        }
+        else set_error( STATUS_INVALID_HANDLE );
+    }
 }

@@ -69,14 +69,12 @@ typedef struct
 
 /* ----- internal variables ----- */
 
-static HWND hwndPrevActive  = 0;  /* Previously active window */
 static HWND hGlobalShellWindow=0; /*the shell*/
 static HWND hGlobalTaskmanWindow=0;
 static HWND hGlobalProgmanWindow=0;
 
 static LPCSTR atomInternalPos;
 
-extern HQUEUE16 hActiveQueue;
 
 /***********************************************************************
  *           WINPOS_CreateInternalPosAtom
@@ -95,30 +93,7 @@ BOOL WINPOS_CreateInternalPosAtom()
  */
 void WINPOS_CheckInternalPos( HWND hwnd )
 {
-    LPINTERNALPOS lpPos;
-    MESSAGEQUEUE *pMsgQ = 0;
-    WND *wndPtr = WIN_GetPtr( hwnd );
-
-    if (!wndPtr || wndPtr == WND_OTHER_PROCESS) return;
-
-    lpPos = (LPINTERNALPOS) GetPropA( hwnd, atomInternalPos );
-
-    /* Retrieve the message queue associated with this window */
-    pMsgQ = (MESSAGEQUEUE *)QUEUE_Lock( wndPtr->hmemTaskQ );
-    if ( !pMsgQ )
-    {
-        WARN("\tMessage queue not found. Exiting!\n" );
-        WIN_ReleasePtr( wndPtr );
-        return;
-    }
-
-    if( hwnd == hwndPrevActive ) hwndPrevActive = 0;
-
-    if( hwnd == PERQDATA_GetActiveWnd( pMsgQ->pQData ) )
-    {
-        PERQDATA_SetActiveWnd( pMsgQ->pQData, 0 );
-	WARN("\tattempt to activate destroyed window!\n");
-    }
+    LPINTERNALPOS lpPos = (LPINTERNALPOS) GetPropA( hwnd, atomInternalPos );
 
     if( lpPos )
     {
@@ -126,9 +101,6 @@ void WINPOS_CheckInternalPos( HWND hwnd )
 	    DestroyWindow( lpPos->hwndIconTitle );
 	HeapFree( GetProcessHeap(), 0, lpPos );
     }
-
-    QUEUE_Unlock( pMsgQ );
-    WIN_ReleasePtr( wndPtr );
 }
 
 /***********************************************************************
@@ -641,132 +613,6 @@ BOOL WINAPI IsZoomed(HWND hWnd)
 
 
 /*******************************************************************
- *		GetActiveWindow (USER32.@)
- */
-HWND WINAPI GetActiveWindow(void)
-{
-    MESSAGEQUEUE *pCurMsgQ = 0;
-
-    /* Get the messageQ for the current thread */
-    if (!(pCurMsgQ = QUEUE_Current()))
-{
-        WARN("\tCurrent message queue not found. Exiting!\n" );
-        return 0;
-    }
-
-    /* Return the current active window from the perQ data of the current message Q */
-    return PERQDATA_GetActiveWnd( pCurMsgQ->pQData );
-}
-
-
-/*******************************************************************
- *         WINPOS_CanActivate
- */
-static BOOL WINPOS_CanActivate(HWND hwnd)
-{
-    if (!hwnd) return FALSE;
-    return ((GetWindowLongW( hwnd, GWL_STYLE ) & (WS_DISABLED|WS_CHILD)) == 0);
-}
-
-/*******************************************************************
- *         WINPOS_IsVisible
- */
-static BOOL WINPOS_IsVisible(HWND hwnd)
-{
-    if (!hwnd) return FALSE;
-    return ((GetWindowLongW( hwnd, GWL_STYLE ) & WS_VISIBLE) == WS_VISIBLE);
-}
-
-
-/*******************************************************************
- *		SetActiveWindow (USER32.@)
- */
-HWND WINAPI SetActiveWindow( HWND hwnd )
-{
-    HWND prev = 0;
-    WND *wndPtr = WIN_FindWndPtr( hwnd );
-    MESSAGEQUEUE *pMsgQ = 0, *pCurMsgQ = 0;
-
-    if (!wndPtr) return 0;
-
-    if (wndPtr->dwStyle & (WS_DISABLED | WS_CHILD)) goto error;
-
-    /* Get the messageQ for the current thread */
-    if (!(pCurMsgQ = QUEUE_Current()))
-    {
-        WARN("\tCurrent message queue not found. Exiting!\n" );
-        goto error;
-    }
-
-    /* Retrieve the message queue associated with this window */
-    pMsgQ = (MESSAGEQUEUE *)QUEUE_Lock( wndPtr->hmemTaskQ );
-    if ( !pMsgQ )
-    {
-        WARN("\tWindow message queue not found. Exiting!\n" );
-        goto error;
-    }
-
-    /* Make sure that the window is associated with the calling threads
-     * message queue. It must share the same perQ data.
-     */
-    if ( pCurMsgQ->pQData != pMsgQ->pQData )
-    {
-        QUEUE_Unlock( pMsgQ );
-        goto error;
-    }
-
-    /* Save current active window */
-    prev = PERQDATA_GetActiveWnd( pMsgQ->pQData );
-    QUEUE_Unlock( pMsgQ );
-    WIN_ReleaseWndPtr(wndPtr);
-    WINPOS_SetActiveWindow( hwnd, FALSE, TRUE );
-    return prev;
-
- error:
-    WIN_ReleaseWndPtr(wndPtr);
-    return 0;
-}
-
-
-/*******************************************************************
- *		GetForegroundWindow (USER32.@)
- */
-HWND WINAPI GetForegroundWindow(void)
-{
-    HWND hwndActive = 0;
-
-    /* Get the foreground window (active window of hActiveQueue) */
-    if ( hActiveQueue )
-    {
-        MESSAGEQUEUE *pActiveQueue = QUEUE_Lock( hActiveQueue );
-        if ( pActiveQueue )
-            hwndActive = PERQDATA_GetActiveWnd( pActiveQueue->pQData );
-
-        QUEUE_Unlock( pActiveQueue );
-    }
-
-    return hwndActive;
-}
-
-/*******************************************************************
- *		SetForegroundWindow (USER32.@)
- */
-BOOL WINAPI SetForegroundWindow( HWND hwnd )
-{
-    if (!hwnd) return WINPOS_SetActiveWindow( 0, FALSE, TRUE );
-
-    /* child windows get WM_CHILDACTIVATE message */
-    if ((GetWindowLongW( hwnd, GWL_STYLE ) & (WS_CHILD | WS_POPUP)) == WS_CHILD)
-        return SendMessageA( hwnd, WM_CHILDACTIVATE, 0, 0 );
-
-    hwnd = WIN_GetFullHandle( hwnd );
-    if( hwnd == GetForegroundWindow() ) return FALSE;
-
-    return WINPOS_SetActiveWindow( hwnd, FALSE, TRUE );
-}
-
-
-/*******************************************************************
  *		AllowSetForegroundWindow (USER32.@)
  */
 BOOL WINAPI AllowSetForegroundWindow( DWORD procid )
@@ -1191,220 +1037,23 @@ void WINAPI SetInternalWindowPos( HWND hwnd, UINT showCmd,
     }
 }
 
+
 /*******************************************************************
- *	   WINPOS_SetActiveWindow
+ *         can_activate_window
  *
- * SetActiveWindow() back-end. This is the only function that
- * can assign active status to a window. It must be called only
- * for the top level windows.
+ * Check if we can activate the specified window.
  */
-BOOL WINPOS_SetActiveWindow( HWND hWnd, BOOL fMouse, BOOL fChangeFocus)
+static BOOL can_activate_window( HWND hwnd )
 {
-    WND*     wndPtr=0, *wndTemp;
-    HQUEUE16 hOldActiveQueue, hNewActiveQueue;
-    MESSAGEQUEUE *pOldActiveQueue = 0, *pNewActiveQueue = 0;
-    WORD     wIconized = 0;
-    HWND     hwndActive = 0;
-    BOOL     bRet = 0;
+    LONG style;
 
-    TRACE("(%04x, %d, %d)\n", hWnd, fMouse, fChangeFocus );
-
-    /* Get current active window from the active queue */
-    if ( hActiveQueue )
-    {
-        pOldActiveQueue = QUEUE_Lock( hActiveQueue );
-        if ( pOldActiveQueue )
-            hwndActive = PERQDATA_GetActiveWnd( pOldActiveQueue->pQData );
-    }
-
-    if ((wndPtr = WIN_FindWndPtr(hWnd)))
-        hWnd = wndPtr->hwndSelf;  /* make it a full handle */
-
-    /* paranoid checks */
-    if( hWnd == GetDesktopWindow() || (bRet = (hWnd == hwndActive)) )
-	goto CLEANUP_END;
-
-/*  if (wndPtr && (GetFastQueue16() != wndPtr->hmemTaskQ))
- *	return 0;
- */
-    hOldActiveQueue = hActiveQueue;
-
-    if( (wndTemp = WIN_FindWndPtr(hwndActive)) )
-    {
-	wIconized = HIWORD(wndTemp->dwStyle & WS_MINIMIZE);
-        WIN_ReleaseWndPtr(wndTemp);
-    }
-    else
-	TRACE("no current active window.\n");
-
-    /* call CBT hook chain */
-    if (HOOK_IsHooked( WH_CBT ))
-    {
-        CBTACTIVATESTRUCT cbt;
-        cbt.fMouse     = fMouse;
-        cbt.hWndActive = hwndActive;
-        if (HOOK_CallHooksA( WH_CBT, HCBT_ACTIVATE, (WPARAM)hWnd, (LPARAM)&cbt )) goto CLEANUP_END;
-    }
-
-    /* set prev active wnd to current active wnd and send notification */
-    if ((hwndPrevActive = hwndActive) && IsWindow(hwndPrevActive))
-    {
-        MESSAGEQUEUE *pTempActiveQueue = 0;
-
-        SendNotifyMessageA( hwndPrevActive, WM_NCACTIVATE, FALSE, 0 );
-        SendNotifyMessageA( hwndPrevActive, WM_ACTIVATE,
-                        MAKEWPARAM( WA_INACTIVE, wIconized ),
-                        (LPARAM)hWnd );
-
-        /* check if something happened during message processing
-         * (global active queue may have changed)
-         */
-        pTempActiveQueue = QUEUE_Lock( hActiveQueue );
-	if(!pTempActiveQueue)
-	    goto CLEANUP_END;
-
-        hwndActive = PERQDATA_GetActiveWnd( pTempActiveQueue->pQData );
-        QUEUE_Unlock( pTempActiveQueue );
-        if( hwndPrevActive != hwndActive )
-            goto CLEANUP_END;
-    }
-
-    /* Set new active window in the message queue */
-    hwndActive = hWnd;
-    if ( wndPtr )
-    {
-        pNewActiveQueue = QUEUE_Lock( wndPtr->hmemTaskQ );
-        if ( pNewActiveQueue )
-            PERQDATA_SetActiveWnd( pNewActiveQueue->pQData, hwndActive );
-    }
-    else /* have to do this or MDI frame activation goes to hell */
-	if( pOldActiveQueue )
-	    PERQDATA_SetActiveWnd( pOldActiveQueue->pQData, 0 );
-
-    /* send palette messages */
-    if (hWnd && SendMessageW( hWnd, WM_QUERYNEWPALETTE, 0, 0L))
-        SendMessageW( HWND_BROADCAST, WM_PALETTEISCHANGING, (WPARAM)hWnd, 0 );
-
-    /* if prev wnd is minimized redraw icon title */
-    if( IsIconic( hwndPrevActive ) ) WINPOS_RedrawIconTitle(hwndPrevActive);
-
-    /* managed windows will get ConfigureNotify event */
-    if (wndPtr && !(wndPtr->dwStyle & WS_CHILD) && !(wndPtr->dwExStyle & WS_EX_MANAGED))
-    {
-	/* check Z-order and bring hWnd to the top */
-        HWND tmp = GetTopWindow(0);
-        while (tmp && !(GetWindowLongA( tmp, GWL_STYLE ) & WS_VISIBLE))
-            tmp = GetWindow( tmp, GW_HWNDNEXT );
-
-        if( tmp != hWnd )
-	    SetWindowPos(hWnd, HWND_TOP, 0,0,0,0,
-			   SWP_NOSIZE | SWP_NOMOVE | SWP_NOACTIVATE );
-        if (!IsWindow(hWnd))
-	    goto CLEANUP;
-    }
-
-    /* Get a handle to the new active queue */
-    hNewActiveQueue = wndPtr ? wndPtr->hmemTaskQ : 0;
-
-    /* send WM_ACTIVATEAPP if necessary */
-    if (hOldActiveQueue != hNewActiveQueue)
-    {
-        HWND *list, *phwnd;
-        DWORD old_thread = GetWindowThreadProcessId( hwndPrevActive, NULL );
-        DWORD new_thread = GetWindowThreadProcessId( hwndActive, NULL );
-
-        if ((list = WIN_ListChildren( GetDesktopWindow() )))
-        {
-            for (phwnd = list; *phwnd; phwnd++)
-            {
-                if (!IsWindow( *phwnd )) continue;
-                if (GetWindowThreadProcessId( *phwnd, NULL ) == old_thread)
-                    SendNotifyMessageW( *phwnd, WM_ACTIVATEAPP, 0, new_thread );
-            }
-            HeapFree( GetProcessHeap(), 0, list );
-        }
-
-	hActiveQueue = hNewActiveQueue;
-
-        if ((list = WIN_ListChildren( GetDesktopWindow() )))
-        {
-            for (phwnd = list; *phwnd; phwnd++)
-            {
-                if (!IsWindow( *phwnd )) continue;
-                if (GetWindowThreadProcessId( *phwnd, NULL ) == new_thread)
-                    SendMessageW( *phwnd, WM_ACTIVATEAPP, 1, old_thread );
-            }
-            HeapFree( GetProcessHeap(), 0, list );
-        }
-
-	if (hWnd && !IsWindow(hWnd)) goto CLEANUP;
-    }
-
-    if (hWnd)
-    {
-        /* walk up to the first unowned window */
-        HWND tmp = GetAncestor( hWnd, GA_ROOTOWNER );
-        if ((wndTemp = WIN_FindWndPtr( tmp )))
-        {
-            /* and set last active owned popup */
-            wndTemp->hwndLastActive = hWnd;
-
-            wIconized = HIWORD(wndTemp->dwStyle & WS_MINIMIZE);
-            WIN_ReleaseWndPtr(wndTemp);
-        }
-        SendMessageA( hWnd, WM_NCACTIVATE, TRUE, 0 );
-        SendMessageA( hWnd, WM_ACTIVATE,
-		 MAKEWPARAM( (fMouse) ? WA_CLICKACTIVE : WA_ACTIVE, wIconized),
-		 (LPARAM)hwndPrevActive );
-        if( !IsWindow(hWnd) ) goto CLEANUP;
-    }
-
-    /* change focus if possible */
-    if ( fChangeFocus )
-    {
-        if ( pNewActiveQueue )
-        {
-            HWND hOldFocus = PERQDATA_GetFocusWnd( pNewActiveQueue->pQData );
-
-            if ( !hOldFocus || GetAncestor( hOldFocus, GA_ROOT ) != hwndActive )
-                FOCUS_SwitchFocus( pNewActiveQueue, hOldFocus,
-                                   (wndPtr && (wndPtr->dwStyle & WS_MINIMIZE))?
-                                   0 : hwndActive );
-        }
-
-        if ( pOldActiveQueue &&
-             ( !pNewActiveQueue ||
-                pNewActiveQueue->pQData != pOldActiveQueue->pQData ) )
-        {
-            HWND hOldFocus = PERQDATA_GetFocusWnd( pOldActiveQueue->pQData );
-            if ( hOldFocus )
-                FOCUS_SwitchFocus( pOldActiveQueue, hOldFocus, 0 );
-        }
-    }
-
-    if( !hwndPrevActive && wndPtr )
-    {
-        if (USER_Driver.pForceWindowRaise) USER_Driver.pForceWindowRaise( wndPtr->hwndSelf );
-    }
-
-    /* if active wnd is minimized redraw icon title */
-    if( IsIconic(hwndActive) ) WINPOS_RedrawIconTitle(hwndActive);
-
-    bRet = (hWnd == hwndActive);  /* Success? */
-
-CLEANUP: /* Unlock the message queues before returning */
-
-    if ( pNewActiveQueue )
-        QUEUE_Unlock( pNewActiveQueue );
-
-CLEANUP_END:
-
-    if ( pOldActiveQueue )
-        QUEUE_Unlock( pOldActiveQueue );
-
-    WIN_ReleaseWndPtr(wndPtr);
-    return bRet;
+    if (!hwnd) return FALSE;
+    style = GetWindowLongW( hwnd, GWL_STYLE );
+    if (!(style & WS_VISIBLE)) return FALSE;
+    if ((style & (WS_POPUP|WS_CHILD)) == WS_CHILD) return FALSE;
+    return !(style & WS_DISABLED);
 }
+
 
 /*******************************************************************
  *         WINPOS_ActivateOtherWindow
@@ -1413,54 +1062,29 @@ CLEANUP_END:
  */
 void WINPOS_ActivateOtherWindow(HWND hwnd)
 {
-    HWND hwndActive = 0;
-    HWND hwndTo = 0;
-    HWND hwndDefaultTo = 0;
-    HWND owner;
+    HWND hwndTo, fg;
 
-    /* Get current active window from the active queue */
-    if ( hActiveQueue )
+    if ((GetWindowLongW( hwnd, GWL_STYLE ) & WS_POPUP) && (hwndTo = GetWindow( hwnd, GW_OWNER )))
     {
-        MESSAGEQUEUE *pActiveQueue = QUEUE_Lock( hActiveQueue );
-        if ( pActiveQueue )
-        {
-            hwndActive = PERQDATA_GetActiveWnd( pActiveQueue->pQData );
-            QUEUE_Unlock( pActiveQueue );
-        }
+        hwndTo = GetAncestor( hwndTo, GA_ROOT );
+        if (can_activate_window( hwndTo )) goto done;
     }
 
-    if (!(hwnd = WIN_IsCurrentThread( hwnd ))) return;
-
-    if( hwnd == hwndPrevActive )
-        hwndPrevActive = 0;
-
-    if( hwndActive != hwnd && (hwndActive || USER_IsExitingThread( GetCurrentThreadId() )))
-        return;
-
-    if (!(GetWindowLongW( hwnd, GWL_STYLE ) & WS_POPUP) ||
-        !(owner = GetWindow( hwnd, GW_OWNER )) ||
-        !WINPOS_CanActivate((hwndTo = GetAncestor( owner, GA_ROOT ))) ||
-        !WINPOS_IsVisible(hwndTo))
+    hwndTo = hwnd;
+    for (;;)
     {
-        HWND tmp = GetAncestor( hwnd, GA_ROOT );
-        hwndTo = hwndPrevActive;
-
-        while( !WINPOS_CanActivate(hwndTo) || !WINPOS_IsVisible(hwndTo))
-        {
-            /* by now owned windows should've been taken care of */
-            if(!hwndDefaultTo && WINPOS_CanActivate(hwndTo))
-            	hwndDefaultTo = hwndTo;
-            tmp = hwndTo = GetWindow( tmp, GW_HWNDNEXT );
-            if( !hwndTo )
-            {
-            	hwndTo = hwndDefaultTo;
-            	break;
-            }
-        }
+        if (!(hwndTo = GetWindow( hwndTo, GW_HWNDNEXT ))) break;
+        if (can_activate_window( hwndTo )) break;
     }
 
-    SetActiveWindow( hwndTo );
-    hwndPrevActive = 0;
+ done:
+    fg = GetForegroundWindow();
+    TRACE("win = %x fg = %x\n", hwndTo, fg);
+    if (!fg || (hwnd == fg))
+    {
+        if (SetForegroundWindow( hwndTo )) return;
+    }
+    if (!SetActiveWindow( hwndTo )) SetActiveWindow(0);
 }
 
 
