@@ -30,14 +30,6 @@
 # include <unistd.h>
 #endif
 
-#ifndef GCC_BIN
-#define GCC_BIN "gcc"
-#endif
-
-#ifndef INCLUDEDIR
-#define INCLUDEDIR "/usr/local/include/wine"
-#endif
-
 void error(const char *s, ...)
 {
     va_list ap;
@@ -54,7 +46,7 @@ int main(int argc, char **argv)
 {
     char **gcc_argv;
     int i, j;
-    int linking = 1, verbose = 0, use_static_linking = 0;
+    int linking = 1, verbose = 0, cpp = 0, use_static_linking = 0;
     int use_stdinc = 1, use_stdlib = 1, use_msvcrt = 0, gui_app = 0;
 
     for ( i = 1 ; i < argc ; i++ ) 
@@ -69,13 +61,6 @@ int main(int argc, char **argv)
                 case 'M':        /* map file generation */
                     if (argv[i][2] == 0) linking = 0;
                     break;
-                case 'v':        /* verbose */
-                    if (argv[i][2] == 0) verbose = 1;
-                    break;
-		case 'V':
-		    printf("winegcc v0.3\n");
-		    exit(0);
-		    break;
 		case 'm':
 		    if (strcmp("-mno-cygwin", argv[i]) == 0)
 			use_msvcrt = 1;
@@ -93,6 +78,13 @@ int main(int argc, char **argv)
                 case 's':
                     if (strcmp("-static", argv[i]) == 0) use_static_linking = 1;
                     break;
+                case 'v':        /* verbose */
+                    if (argv[i][2] == 0) verbose = 1;
+                    break;
+		case 'V':
+		    printf("winegcc v0.3\n");
+		    exit(0);
+		    break;
                 case 'W':
                     if (strncmp("-Wl,", argv[i], 4) == 0)
 		    {
@@ -100,6 +92,9 @@ int main(int argc, char **argv)
                             use_static_linking = 1;
                     }
                     break;
+		case 'x':
+		    if (strcmp("-xc++", argv[i]) == 0) cpp = 1;
+		    break;
                 case '-':
                     if (strcmp("-static", argv[i]+1) == 0)
                         use_static_linking = 1;
@@ -117,10 +112,11 @@ int main(int argc, char **argv)
     {
 	gcc_argv[i++] = BINDIR "/winewrap";
 	if (gui_app) gcc_argv[i++] = "-mgui";
+	if (cpp) gcc_argv[i++] = "-C";
     }
     else
     {
-	gcc_argv[i++] = GCC_BIN;
+	gcc_argv[i++] = cpp ? "g++" : "gcc";
 
 	gcc_argv[i++] = "-fshort-wchar";
 	gcc_argv[i++] = "-fPIC";
