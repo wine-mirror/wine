@@ -185,7 +185,7 @@ STATUSBAR_Refresh (HWND hwnd, HDC hdc)
     hOldFont = SelectObject (hdc, infoPtr->hFont ? infoPtr->hFont : infoPtr->hDefaultFont);
 
     if (infoPtr->simple) {
-	STATUSBAR_DrawPart (hdc, &infoPtr->part0);
+	STATUSBAR_RefreshPart (hwnd, &infoPtr->part0,hdc,0);
     }
     else {
 	for (i = 0; i < infoPtr->numParts; i++) {
@@ -202,7 +202,7 @@ STATUSBAR_Refresh (HWND hwnd, HDC hdc)
 			(WPARAM)dis.CtlID, (LPARAM)&dis);
 	    }
 	    else
-		STATUSBAR_DrawPart (hdc, &infoPtr->parts[i]);
+		STATUSBAR_RefreshPart (hwnd, &infoPtr->parts[i], hdc,i);
 	}
     }
 
@@ -486,13 +486,10 @@ STATUSBAR_SetBkColor (HWND hwnd, WPARAM wParam, LPARAM lParam)
 {
     STATUSWINDOWINFO *self = STATUSBAR_GetInfoPtr (hwnd);
     COLORREF oldBkColor;
-    HDC    hdc;
 
     oldBkColor = self->clrBk;
     self->clrBk = (COLORREF)lParam;
-    hdc = GetDC (hwnd);
-    STATUSBAR_Refresh (hwnd, hdc);
-    ReleaseDC (hwnd, hdc);
+    RedrawWindow(hwnd,(RECT*)NULL,(HRGN)NULL,RDW_INVALIDATE|RDW_UPDATENOW);
 
     return oldBkColor;
 }
@@ -512,12 +509,14 @@ STATUSBAR_SetIcon (HWND hwnd, WPARAM wParam, LPARAM lParam)
     if (nPart == -1) {
 	self->part0.hIcon = (HICON)lParam;
 	if (self->simple)
-	    STATUSBAR_RefreshPart (hwnd, &self->part0, hdc, 0);
+            RedrawWindow(hwnd, &self->part0.bound,(HRGN)NULL,
+                         RDW_INVALIDATE|RDW_UPDATENOW);
     }
     else {
 	self->parts[nPart].hIcon = (HICON)lParam;
 	if (!(self->simple))
-	    STATUSBAR_RefreshPart (hwnd, &self->parts[nPart], hdc, nPart);
+            RedrawWindow(hwnd,&self->parts[nPart].bound,(HRGN)NULL,
+                         RDW_INVALIDATE|RDW_UPDATENOW);
     }
     ReleaseDC (hwnd, hdc);
 
@@ -555,7 +554,6 @@ STATUSBAR_SetParts (HWND hwnd, WPARAM wParam, LPARAM lParam)
 {
     STATUSWINDOWINFO *self = STATUSBAR_GetInfoPtr (hwnd);
     STATUSWINDOWPART *tmp;
-    HDC	hdc;
     LPINT parts;
     int	i;
     int	oldNumParts;
@@ -619,9 +617,7 @@ STATUSBAR_SetParts (HWND hwnd, WPARAM wParam, LPARAM lParam)
 
     STATUSBAR_SetPartBounds (hwnd);
 
-    hdc = GetDC (hwnd);
-    STATUSBAR_Refresh (hwnd, hdc);
-    ReleaseDC (hwnd, hdc);
+    RedrawWindow(hwnd,(RECT*)NULL,(HRGN)NULL,RDW_INVALIDATE|RDW_UPDATENOW);
 
     return TRUE;
 }
@@ -631,20 +627,19 @@ static LRESULT
 STATUSBAR_SetTextA (HWND hwnd, WPARAM wParam, LPARAM lParam)
 {
     STATUSWINDOWINFO *self = STATUSBAR_GetInfoPtr (hwnd);
-    STATUSWINDOWPART *part;
+    STATUSWINDOWPART *part=NULL;
     int	part_num;
     int	style;
     LPSTR text;
     int	len;
-    HDC hdc;
 
     text = (LPSTR) lParam;
     part_num = ((INT) wParam) & 0x00ff;
     style = ((INT) wParam) & 0xff00;
 
-    if ((self->simple) || (self->parts==NULL) || (part_num==255))
+    if (part_num==255)
 	part = &self->part0;
-    else
+    else if (!self->simple && self->parts!=NULL)
 	part = &self->parts[part_num];
     if (!part) return FALSE;
 
@@ -664,9 +659,7 @@ STATUSBAR_SetTextA (HWND hwnd, WPARAM wParam, LPARAM lParam)
     }
     part->style = style;
 
-    hdc = GetDC (hwnd);
-    STATUSBAR_RefreshPart (hwnd, part, hdc, part_num);
-    ReleaseDC (hwnd, hdc);
+    RedrawWindow(hwnd,&part->bound,(HRGN)NULL,RDW_INVALIDATE|RDW_UPDATENOW);
 
     return TRUE;
 }
@@ -679,7 +672,6 @@ STATUSBAR_SetTextW (HWND hwnd, WPARAM wParam, LPARAM lParam)
     STATUSWINDOWPART *part;
     INT  part_num, style, len;
     LPWSTR text;
-    HDC  hdc;
 
     text = (LPWSTR) lParam;
     part_num = ((INT) wParam) & 0x00ff;
@@ -707,9 +699,7 @@ STATUSBAR_SetTextW (HWND hwnd, WPARAM wParam, LPARAM lParam)
     }
     part->style = style;
 
-    hdc = GetDC (hwnd);
-    STATUSBAR_RefreshPart (hwnd, part, hdc, part_num);
-    ReleaseDC (hwnd, hdc);
+    RedrawWindow(hwnd,&part->bound,(HRGN)NULL,RDW_INVALIDATE|RDW_UPDATENOW);
 
     return TRUE;
 }
@@ -774,7 +764,6 @@ static LRESULT
 STATUSBAR_Simple (HWND hwnd, WPARAM wParam, LPARAM lParam)
 {
     STATUSWINDOWINFO *infoPtr = STATUSBAR_GetInfoPtr (hwnd);
-    HDC  hdc;
     NMHDR  nmhdr;
 
     infoPtr->simple = (BOOL)wParam;
@@ -785,9 +774,7 @@ STATUSBAR_Simple (HWND hwnd, WPARAM wParam, LPARAM lParam)
     nmhdr.code = SBN_SIMPLEMODECHANGE;
     SendMessageA (GetParent (hwnd), WM_NOTIFY, 0, (LPARAM)&nmhdr);
 
-    hdc = GetDC (hwnd);
-    STATUSBAR_Refresh (hwnd, hdc);
-    ReleaseDC (hwnd, hdc);
+    RedrawWindow(hwnd,(RECT*)NULL,(HRGN)NULL,RDW_INVALIDATE|RDW_UPDATENOW);
 
     return TRUE;
 }
@@ -1021,11 +1008,9 @@ STATUSBAR_WMSetFont (HWND hwnd, WPARAM wParam, LPARAM lParam)
     STATUSWINDOWINFO *infoPtr = STATUSBAR_GetInfoPtr (hwnd);
 
     infoPtr->hFont = (HFONT)wParam;
-    if (LOWORD(lParam) == TRUE) {
-	HDC hdc = GetDC (hwnd);
-        STATUSBAR_Refresh (hwnd, hdc);
-        ReleaseDC (hwnd, hdc);
-    }
+    if (LOWORD(lParam) == TRUE)
+        RedrawWindow(hwnd,(RECT*)NULL,(HRGN)NULL,
+                     RDW_INVALIDATE|RDW_UPDATENOW);
 
     return 0;
 }
@@ -1037,7 +1022,6 @@ STATUSBAR_WMSetText (HWND hwnd, WPARAM wParam, LPARAM lParam)
     STATUSWINDOWINFO *infoPtr = STATUSBAR_GetInfoPtr (hwnd);
     STATUSWINDOWPART *part;
     int len;
-    HDC hdc;
 
     if (infoPtr->numParts == 0)
 	return FALSE;
@@ -1060,9 +1044,7 @@ STATUSBAR_WMSetText (HWND hwnd, WPARAM wParam, LPARAM lParam)
 	}
     }
 
-    hdc = GetDC (hwnd);
-    STATUSBAR_RefreshPart (hwnd, part, hdc, 0);
-    ReleaseDC (hwnd, hdc);
+    RedrawWindow(hwnd,&part->bound,(HRGN)NULL,RDW_INVALIDATE|RDW_UPDATENOW);
 
     return TRUE;
 }
