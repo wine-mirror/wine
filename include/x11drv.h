@@ -262,6 +262,7 @@ extern BOOL32 X11DRV_EVENT_QueryPointer(DWORD *posX, DWORD *posY, DWORD *state);
 extern void X11DRV_EVENT_DummyMotionNotify(void);
 extern BOOL32 X11DRV_EVENT_Pending(void);
 extern BOOL16 X11DRV_EVENT_IsUserIdle(void);
+extern void X11DRV_EVENT_WakeUp(void);
 
 /* X11 keyboard driver */
 

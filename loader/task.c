@@ -500,7 +500,8 @@ void TASK_StartTask( HTASK16 hTask )
     if ( THREAD_IsWin16( THREAD_Current() ) )
         OldYield();
     else
-        FIXME(task, "Don't know how to start 16-bit task from 32-bit thread. Move the mouse!\n");
+        /* wake-up the scheduler waiting in EVENT_WaitNetEvent */
+        EVENT_WakeUp();
 }
 
 
@@ -944,13 +945,13 @@ void WINAPI PostEvent( HTASK16 hTask )
     if (!hTask) hTask = GetCurrentTask();
     if (!(pTask = (TDB *)GlobalLock16( hTask ))) return;
 
+    pTask->nEvents++;
+    
     if ( !THREAD_IsWin16( THREAD_Current() ) )
     {
-        WARN(task, "called for Win32 thread (%04x)!\n", THREAD_Current()->teb_sel);
-        /* return; */
+        /* wake-up the scheduler waiting in EVENT_WaitNetEvent */
+        EVENT_WakeUp();
     }
-
-    pTask->nEvents++;
 }
 
 

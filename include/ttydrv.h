@@ -5,7 +5,7 @@
 #ifndef __WINE_TTYDRV_H
 #define __WINE_TTYDRV_H
 
-#include "windows.h"
+#include "wintypes.h"
 #include "wine/winuser16.h"
 
 struct tagCLASS;
@@ -57,6 +57,7 @@ extern BOOL32 TTYDRV_EVENT_QueryPointer(DWORD *posX, DWORD *posY, DWORD *state);
 extern void TTYDRV_EVENT_DummyMotionNotify(void);
 extern BOOL32 TTYDRV_EVENT_Pending(void);
 extern BOOL16 TTYDRV_EVENT_IsUserIdle(void);
+extern void TTYDRV_EVENT_WakeUp(void);
 
 /* TTY keyboard driver */
 

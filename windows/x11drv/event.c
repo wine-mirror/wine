@@ -16,6 +16,7 @@
 
 #include <assert.h>
 #include <string.h>
+#include <unistd.h>
 #include "callback.h"
 #include "class.h"
 #include "clipboard.h"
@@ -67,6 +68,7 @@ extern void X11DRV_KEYBOARD_HandleEvent(WND *pWnd, XKeyEvent *event);
 static fd_set __event_io_set[3];
 static int    __event_max_fd = 0;
 static int    __event_x_connection = 0;
+static int    __wakeup_pipe[2];
 
 static const char * const event_names[] =
 {
@@ -119,6 +121,20 @@ BOOL32 X11DRV_EVENT_Init(void)
   
   __event_max_fd = __event_x_connection = ConnectionNumber(display);
   FD_SET( __event_x_connection, &__event_io_set[EVENT_IO_READ] );
+
+  /* this pipe is used to be able to wake-up the scheduler(WaitNetEvent) by
+   a 32 bit thread, this will become obsolete when the input thread will be
+   implemented */
+  pipe(__wakeup_pipe);
+
+  /* make the pipe non-blocking */
+  fcntl(__wakeup_pipe[0], F_SETFL, O_NONBLOCK);
+  fcntl(__wakeup_pipe[1], F_SETFL, O_NONBLOCK);
+  
+  FD_SET( __wakeup_pipe[0], &__event_io_set[EVENT_IO_READ] );
+  if (__wakeup_pipe[0] > __event_max_fd)
+      __event_max_fd = __wakeup_pipe[0];
+      
   __event_max_fd++;
   return TRUE;
 }
@@ -153,6 +169,26 @@ BOOL16 X11DRV_EVENT_IsUserIdle(void)
   if( select(__event_x_connection + 1, &check_set, NULL, NULL, &timeout) > 0 )
     return TRUE;
   return FALSE;
+}
+
+
+/***********************************************************************
+ *           EVENT_ReadWakeUpPipe
+ *
+ * Empty the wake up pipe
+ */
+void EVENT_ReadWakeUpPipe(void)
+{
+    char tmpBuf[10];
+    ssize_t ret;
+          
+    EnterCriticalSection(&X11DRV_CritSection);
+    
+    /* Flush the wake-up pipe, it's just dummy data for waking-up this
+     thread. This will be obsolete when the input thread will be done */
+    while ( (ret = read(__wakeup_pipe[0], &tmpBuf, 10)) == 10 );
+
+    LeaveCriticalSection(&X11DRV_CritSection);
 }
 
 /***********************************************************************
@@ -209,6 +245,7 @@ BOOL32 X11DRV_EVENT_WaitNetEvent( BOOL32 sleep, BOOL32 peek )
       num_pending = select( __event_max_fd, &io_set[EVENT_IO_READ],
 			    &io_set[EVENT_IO_WRITE],
 			    &io_set[EVENT_IO_EXCEPT], &timeout );
+      
       if ( num_pending == 0)
         {
 	  /* Timeout or error */
@@ -217,6 +254,14 @@ BOOL32 X11DRV_EVENT_WaitNetEvent( BOOL32 sleep, BOOL32 peek )
         }
 #endif  /* CONFIG_IPC */
       
+      /* Flush the wake-up pipe, it's just dummy data for waking-up this
+       thread. This will be obsolete when the input thread will be done */
+      if ( FD_ISSET( __wakeup_pipe[0], &io_set[EVENT_IO_READ] ) )
+      {
+          num_pending--;
+          EVENT_ReadWakeUpPipe();
+      }
+       
       /*  Winsock asynchronous services */
       
       if( FD_ISSET( __event_x_connection, &io_set[EVENT_IO_READ]) ) 
@@ -234,10 +279,24 @@ BOOL32 X11DRV_EVENT_WaitNetEvent( BOOL32 sleep, BOOL32 peek )
   else if(!pending)
     {				/* Wait for X11 input. */
       fd_set set;
+      int max_fd;
       
       FD_ZERO(&set);
       FD_SET(__event_x_connection, &set);
-      select(__event_x_connection + 1, &set, 0, 0, 0 );
+
+      /* wait on wake-up pipe also */
+      FD_SET(__wakeup_pipe[0], &set);
+      if (__event_x_connection > __wakeup_pipe[0])
+          max_fd = __event_x_connection + 1;
+      else
+          max_fd = __wakeup_pipe[0] + 1;
+          
+      select(max_fd, &set, 0, 0, 0 );
+
+      /* Flush the wake-up pipe, it's just dummy data for waking-up this
+       thread. This will be obsolete when the input thread will be done */
+      if ( FD_ISSET( __wakeup_pipe[0], &set ) )
+          EVENT_ReadWakeUpPipe();
     }
   
   /* Process current X event (and possibly others that occurred in the meantime) */
@@ -1057,7 +1116,8 @@ static void EVENT_DropFromOffiX( WND *pWnd, XClientMessageEvent *event )
   if( !lpDragInfo || !spDragInfo ) return;
   
   TSXQueryPointer( display, X11DRV_WND_GetXWindow(pWnd), &w_aux_root, &w_aux_child, 
-		   &x, &y, &u.pt_aux.x, &u.pt_aux.y, (unsigned int*)&aux_long);
+                   &x, &y, (int *) &u.pt_aux.x, (int *) &u.pt_aux.y,
+                   (unsigned int*)&aux_long);
   
   lpDragInfo->hScope = pWnd->hwndSelf;
   lpDragInfo->pt.x = (INT16)x; lpDragInfo->pt.y = (INT16)y;
@@ -1079,7 +1139,7 @@ static void EVENT_DropFromOffiX( WND *pWnd, XClientMessageEvent *event )
     {
       TSXGetWindowProperty( display, DefaultRootWindow(display),
 			    dndSelection, 0, 65535, FALSE,
-			    AnyPropertyType, &u.atom_aux, &u.pt_aux.y,
+			    AnyPropertyType, &u.atom_aux, (int *) &u.pt_aux.y,
 			    &data_length, &aux_long, &p_data);
       
       if( !aux_long && p_data)	/* don't bother if > 64K */
@@ -1363,5 +1423,17 @@ BOOL32 X11DRV_EVENT_Pending()
 {
   return TSXPending(display);
 }
+
+/**********************************************************************
+ *		X11DRV_EVENT_WakeUp
+ */
+void X11DRV_EVENT_WakeUp(void)
+{
+    /* wake-up EVENT_WaitNetEvent function, a 32 bit thread post an event
+     for a 16 bit task */
+    if (write (__wakeup_pipe[1], "A", 1) != 1)
+        ERR(event, "unable to write in wakeup_pipe\n");
+}
+
 
 #endif /* !defined(X_DISPLAY_MISSING) */

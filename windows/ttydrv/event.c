@@ -91,3 +91,9 @@ BOOL16 TTYDRV_EVENT_IsUserIdle(void)
   return TRUE;
 }
 
+/**********************************************************************
+ *		TTYDRV_EVENT_WakeUp
+ */
+void TTYDRV_EVENT_WakeUp(void)
+{
+}

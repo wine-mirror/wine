@@ -43,6 +43,7 @@ typedef struct _EVENT_DRIVER {
   void   (*pDummyMotionNotify)(void);
   BOOL32 (*pPending)(void);
   BOOL16 (*pIsUserIdle)(void);
+  void   (*pWakeUp)(void);
 } EVENT_DRIVER;
 
 extern void EVENT_AddIO( int fd, unsigned flag );
@@ -54,6 +55,7 @@ extern BOOL32 EVENT_CheckFocus( void );
 extern BOOL32 EVENT_QueryPointer(DWORD *posX, DWORD *posY, DWORD *state);
 extern void EVENT_DummyMotionNotify(void);
 extern BOOL32 EVENT_Pending(void);
+extern void EVENT_WakeUp(void);
 
 /* input.c */
 

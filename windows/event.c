@@ -119,3 +119,15 @@ BOOL16 WINAPI IsUserIdle(void)
 {
   return EVENT_GetDriver()->pIsUserIdle();
 }
+
+/***********************************************************************
+ *		EVENT_WakeUp
+ *
+ * Wake up the scheduler (EVENT_WaitNetEvent). Use by 32 bit thread
+ * when thew want signaled an event to a 16 bit task. This function
+ * will become obsolete when an Asynchronous thread will be implemented
+ */
+void EVENT_WakeUp(void)
+{
+  EVENT_GetDriver()->pWakeUp();
+}
