@@ -174,6 +174,12 @@ struct JoystickAImpl
 };
 #endif
 
+typedef enum {
+  WARP_NEEDED,  /* Warping is needed */
+  WARP_STARTED, /* Warping has been done, waiting for the warp event */
+  WARP_DONE     /* Warping has been done */
+} WARP_STATUS;
+
 struct SysMouseAImpl
 {
         /* IDirectInputDevice2AImpl */
@@ -196,7 +202,7 @@ struct SysMouseAImpl
         DWORD				win_centerX, win_centerY;
         LPDIDEVICEOBJECTDATA 		data_queue;
         int				queue_pos, queue_len;
-        int				need_warp;
+        WARP_STATUS		        need_warp;
         int				acquired;
         HANDLE				hEvent;
 	CRITICAL_SECTION		crit;
@@ -1190,15 +1196,22 @@ static HRESULT WINAPI SysMouseAImpl_SetDataFormat(
   return 0;
 }
 
-#define GEN_EVENT(offset,data,xtime,seq)						\
-{											\
-  if ((offset >= 0) && (This->queue_pos < This->queue_len)) {				\
-    This->data_queue[This->queue_pos].dwOfs = offset;					\
-    This->data_queue[This->queue_pos].dwData = data;					\
-    This->data_queue[This->queue_pos].dwTimeStamp = xtime;				\
-    This->data_queue[This->queue_pos].dwSequence = seq;					\
-    This->queue_pos++;									\
-  }											\
+#define GEN_EVENT(offset,data,xtime,seq)					\
+{										\
+  /* If queue_len > 0, queuing is requested -> TRACE the event queued */	\
+  if (This->queue_len > 0) {							\
+    TRACE(" queueing %d at offset %d (queue pos %d / size %d)\n", 		\
+	  (int) (data), (int) (offset),                           		\
+	  (int) (This->queue_pos), (int) (This->queue_len));			\
+										\
+    if ((offset >= 0) && (This->queue_pos < This->queue_len)) {			\
+      This->data_queue[This->queue_pos].dwOfs = offset;				\
+      This->data_queue[This->queue_pos].dwData = data;				\
+      This->data_queue[This->queue_pos].dwTimeStamp = xtime;			\
+      This->data_queue[This->queue_pos].dwSequence = seq;			\
+      This->queue_pos++;							\
+    }										\
+  }										\
 }
 
   
@@ -1206,7 +1219,8 @@ static HRESULT WINAPI SysMouseAImpl_SetDataFormat(
 static void WINAPI dinput_mouse_event( DWORD dwFlags, DWORD dx, DWORD dy,
 				      DWORD cButtons, DWORD dwExtraInfo )
 {
-  DWORD posX, posY, keyState, xtime, extra;
+  long posX = -1, posY = -1;
+  DWORD keyState, xtime, extra;
   SysMouseAImpl* This = (SysMouseAImpl*) current_lock;
   
   EnterCriticalSection(&(This->crit));
@@ -1221,13 +1235,94 @@ static void WINAPI dinput_mouse_event( DWORD dwFlags, DWORD dx, DWORD dy,
     xtime = wme->time;
     extra = (DWORD)wme->hWnd;
     
-    if ((dwFlags & MOUSEEVENTF_MOVE) &&
-	(dwFlags & MOUSEEVENTF_ABSOLUTE)) {
-      posX = (dx * GetSystemMetrics(SM_CXSCREEN)) >> 16;
-      posY = (dy * GetSystemMetrics(SM_CYSCREEN)) >> 16;
-    } else {
-      posX = This->prevX;
-      posY = This->prevY;
+    if (dwFlags & MOUSEEVENTF_MOVE) {
+      if (dwFlags & MOUSEEVENTF_ABSOLUTE) {
+	posX = (dx * GetSystemMetrics(SM_CXSCREEN)) >> 16;
+	posY = (dy * GetSystemMetrics(SM_CYSCREEN)) >> 16;
+
+	if (This->absolute) {
+	  if (posX != This->prevX)
+	    GEN_EVENT(This->offset_array[WINE_MOUSE_X_POSITION], posX, xtime, 0);
+	  if (posY != This->prevY)
+	    GEN_EVENT(This->offset_array[WINE_MOUSE_Y_POSITION], posY, xtime, 0);
+	} else {
+	  /* Now, warp handling */
+	  if ((This->need_warp == WARP_STARTED) &&
+	      (posX == This->win_centerX) && (posX == This->win_centerX)) {
+	    /* Warp has been done... */
+	    This->need_warp = WARP_DONE;
+	    return;
+	  }
+	      	  
+	  /* Relative mouse input with absolute mouse event : the real fun starts here... */
+	  if ((This->need_warp == WARP_NEEDED) ||
+	      (This->need_warp == WARP_STARTED)) {
+	    if (posX != This->prevX)
+	      GEN_EVENT(This->offset_array[WINE_MOUSE_X_POSITION], posX - This->prevX, xtime, evsequence++);
+	    if (posY != This->prevY)
+	      GEN_EVENT(This->offset_array[WINE_MOUSE_Y_POSITION], posY - This->prevY, xtime, evsequence++);
+	  } else {
+	    /* This is the first time the event handler has been called after a
+	       GetData of GetState. */
+	    if (posX != This->win_centerX) {
+	      GEN_EVENT(This->offset_array[WINE_MOUSE_X_POSITION], posX - This->win_centerX, xtime, evsequence++);
+	      This->need_warp = WARP_NEEDED;
+	    }
+	    
+	    if (posY != This->win_centerY) {
+	      GEN_EVENT(This->offset_array[WINE_MOUSE_Y_POSITION], posY - This->win_centerY, xtime, evsequence++);
+	      This->need_warp = WARP_NEEDED;
+	    }
+	  }
+	}
+
+	This->prevX = posX;
+	This->prevY = posY;
+	
+	if (This->absolute) {
+	  This->m_state.lX = posX;
+	  This->m_state.lY = posY;
+	} else {
+	  This->m_state.lX = posX - This->win_centerX;
+	  This->m_state.lY = posY - This->win_centerY;
+	}
+      } else {
+	/* Mouse reporting is in relative mode */
+	posX = (long) dx;
+	posY = (long) dy;
+
+	if (This->absolute) {
+	  long aposX, aposY;
+	  
+	  aposX = This->m_state.lX + posX;
+	  if (aposX < 0)
+	    aposX = 0;
+	  if (aposX >= GetSystemMetrics(SM_CXSCREEN))
+	    aposX = GetSystemMetrics(SM_CXSCREEN);
+	  
+	  aposY = This->m_state.lY + posY;
+	  if (aposY < 0)
+	    aposY = 0;
+	  if (aposY >= GetSystemMetrics(SM_CYSCREEN))
+	    aposY = GetSystemMetrics(SM_CYSCREEN);
+	  
+	  if (posX != 0)
+	    GEN_EVENT(This->offset_array[WINE_MOUSE_X_POSITION], aposX, xtime, evsequence++);
+	  if (posY != 0)
+	    GEN_EVENT(This->offset_array[WINE_MOUSE_Y_POSITION], aposY, xtime, evsequence++);
+
+	  This->m_state.lX = aposX;
+	  This->m_state.lY = aposY;
+	} else {
+	  if (posX != 0)
+	    GEN_EVENT(This->offset_array[WINE_MOUSE_X_POSITION], posX, xtime, evsequence++);
+	  if (posY != 0)
+	    GEN_EVENT(This->offset_array[WINE_MOUSE_Y_POSITION], posY, xtime, evsequence++);
+
+	  This->m_state.lX = posX;
+	  This->m_state.lY = posY;
+	}
+      }
     }
   } else {
     ERR("Mouse event not supported...\n");
@@ -1235,94 +1330,56 @@ static void WINAPI dinput_mouse_event( DWORD dwFlags, DWORD dx, DWORD dy,
     return ;
   }
 
-  TRACE(" %ld %ld ", posX, posY);
+  if (TRACE_ON(dinput)) {
+    if (dwFlags & MOUSEEVENTF_MOVE)
+      TRACE(" %ld %ld (%s)", posX, posY,
+	    (dwFlags & MOUSEEVENTF_ABSOLUTE ? "abs" : "rel"));
+    
+    if ( dwFlags & MOUSEEVENTF_LEFTDOWN ) DPRINTF(" LD ");
+    if ( dwFlags & MOUSEEVENTF_LEFTUP )   DPRINTF(" LU ");
 
-  if ( dwFlags & MOUSEEVENTF_MOVE ) {
-    if (This->absolute) {
-      if (posX != This->prevX)
-	GEN_EVENT(This->offset_array[WINE_MOUSE_X_POSITION], posX, xtime, 0);
-      if (posY != This->prevY)
-	GEN_EVENT(This->offset_array[WINE_MOUSE_Y_POSITION], posY, xtime, 0);
-    } else {
-      /* Relative mouse input : the real fun starts here... */
-      if (This->need_warp) {
-	if (posX != This->prevX)
-	  GEN_EVENT(This->offset_array[WINE_MOUSE_X_POSITION], posX - This->prevX, xtime, evsequence++);
-	if (posY != This->prevY)
-	  GEN_EVENT(This->offset_array[WINE_MOUSE_Y_POSITION], posY - This->prevY, xtime, evsequence++);
-      } else {
-	/* This is the first time the event handler has been called after a
-	   GetData of GetState. */
-	if (posX != This->win_centerX) {
-	  GEN_EVENT(This->offset_array[WINE_MOUSE_X_POSITION], posX - This->win_centerX, xtime, evsequence++);
-	  This->need_warp = 1;
-	}
-	  
-	if (posY != This->win_centerY) {
-	  GEN_EVENT(This->offset_array[WINE_MOUSE_Y_POSITION], posY - This->win_centerY, xtime, evsequence++);
-	  This->need_warp = 1;
-	}
-      }
-    }
+    if ( dwFlags & MOUSEEVENTF_RIGHTDOWN ) DPRINTF(" RD ");
+    if ( dwFlags & MOUSEEVENTF_RIGHTUP )   DPRINTF(" RU ");
+
+    if ( dwFlags & MOUSEEVENTF_MIDDLEDOWN ) DPRINTF(" MD ");
+    if ( dwFlags & MOUSEEVENTF_MIDDLEUP )   DPRINTF(" MU ");
+
+    if (!(This->absolute)) DPRINTF(" W=%d ", This->need_warp);
+    
+    DPRINTF("\n");
   }
-  if ( dwFlags & MOUSEEVENTF_LEFTDOWN ) {
-    if (TRACE_ON(dinput))
-      DPRINTF(" LD ");
 
+  
+  if ( dwFlags & MOUSEEVENTF_LEFTDOWN ) {
     GEN_EVENT(This->offset_array[WINE_MOUSE_L_POSITION], 0xFF, xtime, evsequence++);
     This->m_state.rgbButtons[0] = 0xFF;
   }
   if ( dwFlags & MOUSEEVENTF_LEFTUP ) {
-    if (TRACE_ON(dinput))
-      DPRINTF(" LU ");
-
     GEN_EVENT(This->offset_array[WINE_MOUSE_L_POSITION], 0x00, xtime, evsequence++);
     This->m_state.rgbButtons[0] = 0x00;
   }
   if ( dwFlags & MOUSEEVENTF_RIGHTDOWN ) {
-    if (TRACE_ON(dinput))
-      DPRINTF(" RD ");
-
     GEN_EVENT(This->offset_array[WINE_MOUSE_R_POSITION], 0xFF, xtime, evsequence++);
     This->m_state.rgbButtons[1] = 0xFF;
   }
   if ( dwFlags & MOUSEEVENTF_RIGHTUP ) {
-    if (TRACE_ON(dinput))
-      DPRINTF(" RU ");
-
     GEN_EVENT(This->offset_array[WINE_MOUSE_R_POSITION], 0x00, xtime, evsequence++);
     This->m_state.rgbButtons[1] = 0x00;
   }
   if ( dwFlags & MOUSEEVENTF_MIDDLEDOWN ) {
-    if (TRACE_ON(dinput))
-      DPRINTF(" MD ");
-
     GEN_EVENT(This->offset_array[WINE_MOUSE_M_POSITION], 0xFF, xtime, evsequence++);
     This->m_state.rgbButtons[2] = 0xFF;
   }
   if ( dwFlags & MOUSEEVENTF_MIDDLEUP ) {
-    if (TRACE_ON(dinput))
-      DPRINTF(" MU ");
-
     GEN_EVENT(This->offset_array[WINE_MOUSE_M_POSITION], 0x00, xtime, evsequence++);
     This->m_state.rgbButtons[2] = 0x00;
   }
-  if (TRACE_ON(dinput))
-    DPRINTF("\n");
-  
-  This->prevX = posX;
-  This->prevY = posY;
 
-  if (This->absolute) {
-    This->m_state.lX = posX;
-    This->m_state.lY = posY;
-  } else {
-    This->m_state.lX = posX - This->win_centerX;
-    This->m_state.lY = posY - This->win_centerY;
-  }
+  TRACE("(X: %ld - Y: %ld   L: %02x M: %02x R: %02x)\n",
+	This->m_state.lX, This->m_state.lY,
+	This->m_state.rgbButtons[0], This->m_state.rgbButtons[2], This->m_state.rgbButtons[1]);
   
   LeaveCriticalSection(&(This->crit));
-
 }
 
 
@@ -1346,8 +1403,16 @@ static HRESULT WINAPI SysMouseAImpl_Acquire(LPDIRECTINPUTDEVICE2A iface)
     current_lock = (IDirectInputDevice2A*)This;
 
     /* Init the mouse state */
-    This->m_state.lX = PosX;
-    This->m_state.lY = PosY;
+    if (This->absolute) {
+      This->m_state.lX = PosX;
+      This->m_state.lY = PosY;
+
+      This->prevX = PosX;
+      This->prevY = PosY;
+    } else {
+      This->m_state.lX = 0;
+      This->m_state.lY = 0;
+    }
     This->m_state.rgbButtons[0] = (MouseButtonsStates[0] ? 0xFF : 0x00);
     This->m_state.rgbButtons[1] = (MouseButtonsStates[1] ? 0xFF : 0x00);
     This->m_state.rgbButtons[2] = (MouseButtonsStates[2] ? 0xFF : 0x00);
@@ -1361,11 +1426,14 @@ static HRESULT WINAPI SysMouseAImpl_Acquire(LPDIRECTINPUTDEVICE2A iface)
     This->win_centerY = (rect.bottom - rect.top ) / 2;
 
     /* Warp the mouse to the center of the window */
-    TRACE("Warping mouse to %ld - %ld\n", This->win_centerX, This->win_centerY);
-    point.x = This->win_centerX;
-    point.y = This->win_centerY;
-    MapWindowPoints(This->win, HWND_DESKTOP, &point, 1);
-    DISPLAY_MoveCursor(point.x, point.y);
+    if (This->absolute == 0) {
+      TRACE("Warping mouse to %ld - %ld\n", This->win_centerX, This->win_centerY);
+      point.x = This->win_centerX;
+      point.y = This->win_centerY;
+      MapWindowPoints(This->win, HWND_DESKTOP, &point, 1);
+      DISPLAY_MoveCursor(point.x, point.y);
+      This->need_warp = WARP_STARTED;
+    }
 
     This->acquired = 1;
   }
@@ -1411,8 +1479,14 @@ static HRESULT WINAPI SysMouseAImpl_GetDeviceState(
   /* Copy the current mouse state */
   fill_DataFormat(ptr, &(This->m_state), This->wine_df);
   
+  /* Initialize the buffer when in relative mode */
+  if (This->absolute == 0) {
+    This->m_state.lX = 0;
+    This->m_state.lY = 0;
+  }
+  
   /* Check if we need to do a mouse warping */
-  if (This->need_warp) {
+  if (This->need_warp == WARP_NEEDED) {
     POINT point;
 
     TRACE("Warping mouse to %ld - %ld\n", This->win_centerX, This->win_centerY);
@@ -1421,7 +1495,7 @@ static HRESULT WINAPI SysMouseAImpl_GetDeviceState(
     MapWindowPoints(This->win, HWND_DESKTOP, &point, 1);
     DISPLAY_MoveCursor(point.x, point.y);
 
-    This->need_warp = 0;
+    This->need_warp = WARP_STARTED;
   }
 
   LeaveCriticalSection(&(This->crit));
@@ -1477,9 +1551,8 @@ static HRESULT WINAPI SysMouseAImpl_GetDeviceData(LPDIRECTINPUTDEVICE2A iface,
   }
   LeaveCriticalSection(&(This->crit));
   
-#if 0 /* FIXME: seems to create motion events, which fire back at us. */
   /* Check if we need to do a mouse warping */
-  if (This->need_warp) {
+  if (This->need_warp == WARP_NEEDED) {
     POINT point;
 
     TRACE("Warping mouse to %ld - %ld\n", This->win_centerX, This->win_centerY);
@@ -1489,9 +1562,8 @@ static HRESULT WINAPI SysMouseAImpl_GetDeviceData(LPDIRECTINPUTDEVICE2A iface,
 
     DISPLAY_MoveCursor(point.x, point.y);
 
-    This->need_warp = 0;
+    This->need_warp = WARP_STARTED;
   }
-#endif
   return 0;
 }
 
