@@ -200,6 +200,7 @@ WINDOWS_INCLUDES = \
 	schemadef.h \
 	sddl.h \
 	secext.h \
+	sensapi.h \
 	setupapi.h \
 	shellapi.h \
 	shlguid.h \
