@@ -215,11 +215,15 @@ static void DPMI_CallRMCBProc( CONTEXT86 *context, RMCB *rmcb, WORD flag )
         if (flag & 1) {
 	    int _clobber;
             /* 32-bit DPMI client */
+#if HAVE_FIXED_BROKEN_ASSEMBLER_BELOW
             __asm__ __volatile__(
                  "pushl %%es\n"
                  "pushl %%ds\n"
                  "pushfl\n"
-                 "movl %5,%%es\n"
+                 "movl %5,%%es\n"	/* BAD: we are pushing potential stack
+					 * parameters on an already modified
+					 * stack
+					 */
                  "movl %4,%%ds\n"
                  "lcall %3\n"
                  "popl %%ds\n"
@@ -230,6 +234,12 @@ static void DPMI_CallRMCBProc( CONTEXT86 *context, RMCB *rmcb, WORD flag )
                "g" (ss), "g" (rmcb->regs_sel),
                "S" (ESP_reg(context)), "1" (rmcb->regs_ofs)
              : "ecx", "edx", "ebp" );
+	    /* BAD: uses too much registers which is starving the register
+	     * alloc stage of gcc, especially in -fPIC.
+	     */
+#else
+	    FIXME("32 bit DPMI client unsupported.\n");
+#endif
         } else {
             /* 16-bit DPMI client */
             CONTEXT86 ctx = *context;
