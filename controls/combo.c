@@ -1054,10 +1054,10 @@ static LRESULT COMBO_Paint(LPHEADCOMBO lphc, HDC hParamDC)
  */
 static INT CBUpdateLBox( LPHEADCOMBO lphc )
 {
-   INT	length, idx, ret;
+   INT	length, idx;
    LPSTR	pText = NULL;
    
-   idx = ret = LB_ERR;
+   idx = LB_ERR;
    length = CB_GETEDITTEXTLENGTH( lphc );
  
    if( length > 0 ) 
@@ -1071,22 +1071,16 @@ static INT CBUpdateLBox( LPHEADCOMBO lphc )
        else pText[0] = '\0';
        idx = SendMessageA( lphc->hWndLBox, LB_FINDSTRING, 
 			     (WPARAM)(-1), (LPARAM)pText );
-       if( idx == LB_ERR ) idx = 0;	/* select first item */
-       else ret = idx;
        HeapFree( GetProcessHeap(), 0, pText );
    }
 
-   /* select entry */
-
-   SendMessageA( lphc->hWndLBox, LB_SETCURSEL, (WPARAM)idx, 0 );
-   
    if( idx >= 0 )
    {
        SendMessageA( lphc->hWndLBox, LB_SETTOPINDEX, (WPARAM)idx, 0 );
        /* probably superfluous but Windows sends this too */
        SendMessageA( lphc->hWndLBox, LB_SETCARETINDEX, (WPARAM)idx, 0 );
    }
-   return ret;
+   return idx;
 }
 
 /***********************************************************************
@@ -1101,21 +1095,6 @@ static void CBUpdateEdit( LPHEADCOMBO lphc , INT index )
 
    TRACE("\t %i\n", index );
 
-   if( index == -1 )
-   {
-       length = CB_GETEDITTEXTLENGTH( lphc );
-       if( length )
-       {
-           if( (pText = (LPSTR) HeapAlloc( GetProcessHeap(), 0, length + 1)) )
-           {
- 	   	GetWindowTextA( lphc->hWndEdit, pText, length + 1 );
-	   	index = SendMessageA( lphc->hWndLBox, LB_FINDSTRING,
-				        (WPARAM)(-1), (LPARAM)pText );
-	   	HeapFree( GetProcessHeap(), 0, pText );
-           }
-       }
-   }
-
    if( index >= 0 ) /* got an entry */
    {
        length = SendMessageA( lphc->hWndLBox, LB_GETTEXTLEN, (WPARAM)index, 0);
@@ -1125,15 +1104,16 @@ static void CBUpdateEdit( LPHEADCOMBO lphc , INT index )
 	   {
 		SendMessageA( lphc->hWndLBox, LB_GETTEXT, 
 				(WPARAM)index, (LPARAM)pText );
-
-		lphc->wState |= CBF_NOEDITNOTIFY;
-
-		SendMessageA( lphc->hWndEdit, WM_SETTEXT, 0, (LPARAM)pText );
-		SendMessageA( lphc->hWndEdit, EM_SETSEL, 0, (LPARAM)(-1) );
-		HeapFree( GetProcessHeap(), 0, pText );
 	   }
        }
    }
+
+   lphc->wState |= CBF_NOEDITNOTIFY;
+
+   SendMessageA( lphc->hWndEdit, WM_SETTEXT, 0, pText ? (LPARAM)pText : (LPARAM)"" );
+
+   if( pText )
+       HeapFree( GetProcessHeap(), 0, pText );
 }
 
 /***********************************************************************
@@ -1238,19 +1218,12 @@ static void CBRollUp( LPHEADCOMBO lphc, BOOL ok, BOOL bButton )
        {
 	   RECT	rect;
 
-	   /* 
-	    * It seems useful to send the WM_LBUTTONUP with (-1,-1) when cancelling 
-	    * and with (0,0) (anywhere in the listbox) when Oking.
-	    */
-	   SendMessageA( lphc->hWndLBox, WM_LBUTTONUP, 0, ok ? (LPARAM)0 : (LPARAM)(-1) );
-
 	   lphc->wState &= ~CBF_DROPPED;
 	   ShowWindow( lphc->hWndLBox, SW_HIDE );
            if(GetCapture() == lphc->hWndLBox)
            {
                ReleaseCapture();
            }
-
 
 	   if( CB_GETTYPE(lphc) == CBS_DROPDOWN )
 	   {
@@ -1464,6 +1437,8 @@ static LRESULT COMBO_Command( LPHEADCOMBO lphc, WPARAM wParam, HWND hWnd )
 		{
 		    INT index = SendMessageA(lphc->hWndLBox, LB_GETCURSEL, 0, 0);
 		    CBUpdateEdit( lphc, index );
+		    /* select text in edit, as Windows does */
+		    SendMessageA( lphc->hWndEdit, EM_SETSEL, 0, (LPARAM)(-1) );
 		}
 		else
 		    InvalidateRect(CB_HWND(lphc), &lphc->textRect, TRUE);
