@@ -1579,11 +1579,14 @@ typedef struct
     CHAR       wnd_name[16];     /* window name for message            */
 } SPY_INSTANCE;
 
+/* This is defined so that the external entry point can return the addr */
+static SPY_INSTANCE ext_sp_e;
+
 
 /***********************************************************************
  *           SPY_GetMsgInternal
  */
-static const char *SPY_GetMsgInternal( UINT msg, BOOL support_common_clts )
+static const char *SPY_GetMsgInternal( UINT msg )
 {
     static char msg_buffer[20];
 
@@ -1673,7 +1676,7 @@ static void SPY_GetMsgStuff( SPY_INSTANCE *sp_e )
     const USER_MSG *p;
 
     sp_e->msg_name[sizeof(sp_e->msg_name)-1] = 0;
-    strncpy (sp_e->msg_name, SPY_GetMsgInternal( sp_e->msgnum, TRUE ),
+    strncpy (sp_e->msg_name, SPY_GetMsgInternal( sp_e->msgnum ),
 	     sizeof(sp_e->msg_name)-1);
 
     sp_e->data_len = 0;
@@ -1696,18 +1699,6 @@ static void SPY_GetMsgStuff( SPY_INSTANCE *sp_e )
 	    sp_e->data_len = p->len;
 	}
     }
-}
-
-/***********************************************************************
- *           SPY_GetMsgName
- *
- *  ****  External function  **** 
- *
- *  Get message name
- */
-const char *SPY_GetMsgName( UINT msg )
-{
-    return SPY_GetMsgInternal( msg, FALSE );
 }
 
 /***********************************************************************
@@ -1763,6 +1754,24 @@ void SPY_GetWndName( SPY_INSTANCE *sp_e )
     }
     else {strcpy( sp_e->wnd_name, "\"NULL\"" ); sp_e->wnd_class[0] = 0;}
     return;
+}
+
+/***********************************************************************
+ *           SPY_GetMsgName
+ *
+ *  ****  External function  **** 
+ *
+ *  Get message name
+ */
+const char *SPY_GetMsgName( UINT msg, HWND hWnd )
+{
+    ext_sp_e.msgnum = msg;
+    ext_sp_e.msg_hwnd   = hWnd;
+    ext_sp_e.lParam = 0;
+    ext_sp_e.wParam = 0;
+    SPY_GetWndName(&ext_sp_e);
+    SPY_GetMsgStuff(&ext_sp_e);
+    return ext_sp_e.msg_name;
 }
 
 /***********************************************************************

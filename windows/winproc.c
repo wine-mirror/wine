@@ -165,7 +165,7 @@ static LRESULT WINPROC_CallWndProc( WNDPROC proc, HWND hwnd, UINT msg,
     hwnd = WIN_GetFullHandle( hwnd );
     if (TRACE_ON(relay))
         DPRINTF( "%08lx:Call window proc %p (hwnd=%08x,msg=%s,wp=%08x,lp=%08lx)\n",
-                 GetCurrentThreadId(), proc, hwnd, SPY_GetMsgName(msg), wParam, lParam );
+                 GetCurrentThreadId(), proc, hwnd, SPY_GetMsgName(msg, hwnd), wParam, lParam );
     /* To avoid any deadlocks, all the locks on the windows structures
        must be suspended before the control is passed to the application */
     iWndsLocks = WIN_SuspendWndsLock();
@@ -174,7 +174,7 @@ static LRESULT WINPROC_CallWndProc( WNDPROC proc, HWND hwnd, UINT msg,
 
     if (TRACE_ON(relay))
         DPRINTF( "%08lx:Ret  window proc %p (hwnd=%08x,msg=%s,wp=%08x,lp=%08lx) retval=%08lx\n",
-                 GetCurrentThreadId(), proc, hwnd, SPY_GetMsgName(msg), wParam, lParam, retvalue );
+                 GetCurrentThreadId(), proc, hwnd, SPY_GetMsgName(msg, hwnd), wParam, lParam, retvalue );
     return retvalue;
 }
 
@@ -680,7 +680,7 @@ INT WINPROC_MapMsg32ATo32W( HWND hwnd, UINT msg, WPARAM *pwparam, LPARAM *plpara
 
     case WM_PAINTCLIPBOARD:
     case WM_SIZECLIPBOARD:
-        FIXME_(msg)("message %s (0x%x) needs translation, please report\n", SPY_GetMsgName(msg), msg );
+        FIXME_(msg)("message %s (0x%x) needs translation, please report\n", SPY_GetMsgName(msg, hwnd), msg );
         return -1;
     default:  /* No translation needed */
         return 0;
@@ -936,7 +936,7 @@ INT WINPROC_MapMsg32WTo32A( HWND hwnd, UINT msg, WPARAM *pwparam, LPARAM *plpara
 
     case WM_PAINTCLIPBOARD:
     case WM_SIZECLIPBOARD:
-        FIXME_(msg)("message %s (%04x) needs translation, please report\n",SPY_GetMsgName(msg),msg );
+        FIXME_(msg)("message %s (%04x) needs translation, please report\n",SPY_GetMsgName(msg, hwnd),msg );
         return -1;
     default:  /* No translation needed */
         return 0;
@@ -2405,7 +2405,7 @@ static LRESULT WINPROC_CallProc32ATo32W( WNDPROC func, HWND hwnd,
 
     if( (unmap = WINPROC_MapMsg32ATo32W( hwnd, msg, &wParam, &lParam )) == -1) {
         ERR_(msg)("Message translation failed. (msg=%s,wp=%08x,lp=%08lx)\n",
-                       SPY_GetMsgName(msg), wParam, lParam );
+                       SPY_GetMsgName(msg, hwnd), wParam, lParam );
         return 0;
     }
     result = WINPROC_CallWndProc( func, hwnd, msg, wParam, lParam );
@@ -2428,7 +2428,7 @@ static LRESULT WINPROC_CallProc32WTo32A( WNDPROC func, HWND hwnd,
 
     if ((unmap = WINPROC_MapMsg32WTo32A( hwnd, msg, &wParam, &lParam )) == -1) {
         ERR_(msg)("Message translation failed. (msg=%s,wp=%08x,lp=%08lx)\n",
-                       SPY_GetMsgName(msg), wParam, lParam );
+                       SPY_GetMsgName(msg, hwnd), wParam, lParam );
         return 0;
     }
     result = WINPROC_CallWndProc( func, hwnd, msg, wParam, lParam );

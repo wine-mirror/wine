@@ -1859,7 +1859,7 @@ static LRESULT ComboWndProc_common( HWND hwnd, UINT message,
       LPHEADCOMBO lphc = (LPHEADCOMBO)GetWindowLongA( hwnd, 0 );
 
       TRACE("[%04x]: msg %s wp %08x lp %08lx\n",
-            hwnd, SPY_GetMsgName(message), wParam, lParam );
+            hwnd, SPY_GetMsgName(message, hwnd), wParam, lParam );
 
       if( lphc || message == WM_NCCREATE )
       switch(message) 

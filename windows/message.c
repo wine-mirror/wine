@@ -830,7 +830,7 @@ BOOL WINAPI TranslateMessage( const MSG *msg )
 
     if (msg->message >= WM_KEYFIRST && msg->message <= WM_KEYLAST)
         TRACE_(key)("(%s, %04X, %08lX)\n",
-                    SPY_GetMsgName(msg->message), msg->wParam, msg->lParam );
+                    SPY_GetMsgName(msg->message, msg->hwnd), msg->wParam, msg->lParam );
 
     if ((msg->message != WM_KEYDOWN) && (msg->message != WM_SYSKEYDOWN)) return FALSE;
 
@@ -864,14 +864,14 @@ BOOL WINAPI TranslateMessage( const MSG *msg )
                 }
             dead_char = 0;
         }
-        TRACE_(key)("1 -> PostMessage(%s)\n", SPY_GetMsgName(message));
+        TRACE_(key)("1 -> PostMessage(%s)\n", SPY_GetMsgName(message, msg->hwnd));
         PostMessageW( msg->hwnd, message, wp[0], msg->lParam );
         return TRUE;
 
     case -1:
         message = (msg->message == WM_KEYDOWN) ? WM_DEADCHAR : WM_SYSDEADCHAR;
         dead_char = wp[0];
-        TRACE_(key)("-1 -> PostMessage(%s)\n", SPY_GetMsgName(message));
+        TRACE_(key)("-1 -> PostMessage(%s)\n", SPY_GetMsgName(message, msg->hwnd));
         PostMessageW( msg->hwnd, message, wp[0], msg->lParam );
         return TRUE;
     }

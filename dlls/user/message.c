@@ -567,7 +567,7 @@ static size_t pack_message( HWND hwnd, UINT message, WPARAM wparam, LPARAM lpara
     case WM_DRAGSELECT:
     case WM_DRAGMOVE:
     case WM_DEVICECHANGE:
-        FIXME( "msg %x (%s) not supported yet\n", message, SPY_GetMsgName(message) );
+        FIXME( "msg %x (%s) not supported yet\n", message, SPY_GetMsgName(message, hwnd) );
         data->count = -1;
         return 0;
     }
@@ -813,7 +813,7 @@ static BOOL unpack_message( HWND hwnd, UINT message, WPARAM *wparam, LPARAM *lpa
     case WM_DRAGSELECT:
     case WM_DRAGMOVE:
     case WM_DEVICECHANGE:
-        FIXME( "msg %x (%s) not supported yet\n", message, SPY_GetMsgName(message) );
+        FIXME( "msg %x (%s) not supported yet\n", message, SPY_GetMsgName(message, hwnd) );
         return FALSE;
 
     default:
@@ -1203,7 +1203,7 @@ BOOL MSG_peek_message( MSG *msg, HWND hwnd, UINT first, UINT last, int flags )
                                  &info.msg.lParam, &buffer, size ))
             {
                 ERR( "invalid packed message %x (%s) hwnd %x wp %x lp %lx size %d\n",
-                     info.msg.message, SPY_GetMsgName(info.msg.message), info.msg.hwnd,
+                     info.msg.message, SPY_GetMsgName(info.msg.message, info.msg.hwnd), info.msg.hwnd,
                      info.msg.wParam, info.msg.lParam, size );
                 /* ignore it */
                 reply_message( &info, 0, TRUE );
@@ -1424,7 +1424,7 @@ static LRESULT retrieve_reply( const struct send_message_info *info,
     }
 
     TRACE( "hwnd %x msg %x (%s) wp %x lp %lx got reply %lx (err=%ld)\n",
-           info->hwnd, info->msg, SPY_GetMsgName(info->msg), info->wparam,
+           info->hwnd, info->msg, SPY_GetMsgName(info->msg, info->hwnd), info->wparam,
            info->lparam, *result, status );
 
     if (!status) return 1;
@@ -1445,7 +1445,7 @@ static LRESULT send_inter_thread_message( DWORD dest_tid, const struct send_mess
     size_t reply_size = 0;
 
     TRACE( "hwnd %x msg %x (%s) wp %x lp %lx\n",
-           info->hwnd, info->msg, SPY_GetMsgName(info->msg), info->wparam, info->lparam );
+           info->hwnd, info->msg, SPY_GetMsgName(info->msg, info->hwnd), info->wparam, info->lparam );
 
     if (!put_message_in_queue( dest_tid, info, &reply_size )) return 0;
 

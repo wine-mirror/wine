@@ -2478,7 +2478,7 @@ static LRESULT WINAPI ListBoxWndProc_common( HWND hwnd, UINT msg,
     }
 
     TRACE("[%04x]: msg %s wp %08x lp %08lx\n",
-          hwnd, SPY_GetMsgName(msg), wParam, lParam );
+          hwnd, SPY_GetMsgName(msg, hwnd), wParam, lParam );
     switch(msg)
     {
     case LB_RESETCONTENT16:
@@ -3041,7 +3041,7 @@ static LRESULT WINAPI ComboLBWndProc_common( HWND hwnd, UINT msg,
     LB_DESCR *descr = (LB_DESCR *)GetWindowLongA( hwnd, 0 );
 
     TRACE_(combo)("[%04x]: msg %s wp %08x lp %08lx\n",
-                  hwnd, SPY_GetMsgName(msg), wParam, lParam );
+                  hwnd, SPY_GetMsgName(msg, hwnd), wParam, lParam );
 
     if( descr || msg == WM_CREATE )
     {
