@@ -123,6 +123,8 @@ static GUID DInput_Wine_Joystick_GUID = { /* 9e573eda-7734-11d2-8d4a-23903fb6bdf
   {0x8d, 0x4a, 0x23, 0x90, 0x3f, 0xb6, 0xbd, 0xf7}
 };
 
+static void fake_current_js_state(JoystickImpl *ji);
+
 #define test_bit(arr,bit) (((BYTE*)arr)[bit>>3]&(1<<(bit&7)))
 
 static int joydev_have(void)
@@ -246,6 +248,7 @@ static JoystickImpl *alloc_device(REFGUID rguid, LPVOID jvt, IDirectInputImpl *d
      */
     newDevice->deadz[i]   =  0;
   }
+  fake_current_js_state(newDevice);
   return newDevice;
 }
 
@@ -423,6 +426,8 @@ static HRESULT WINAPI JoystickAImpl_Acquire(LPDIRECTINPUTDEVICE8A iface)
     }
     MESSAGE("\n");
 
+	fake_current_js_state(This);
+
     return 0;
 }
 
@@ -450,7 +455,6 @@ static HRESULT WINAPI JoystickAImpl_Unacquire(LPDIRECTINPUTDEVICE8A iface)
  */
 static int
 map_axis(JoystickImpl* This, int axis, int val) {
-    int	xmid = This->axes[axis][AXE_ABS];
     int	xmin = This->axes[axis][AXE_ABSMIN];
     int	xmax = This->axes[axis][AXE_ABSMAX];
     int hmax = This->havemax[axis];
@@ -463,7 +467,6 @@ map_axis(JoystickImpl* This, int axis, int val) {
     if (val < hmin) This->havemin[axis] = hmin = val;
 
     if (xmin == xmax) return val;
-    if ((hmin == hmax) || (hmax==xmid) || (hmin==xmid)) return val;
 
     /* map the value from the hmin-hmax range into the wmin-wmax range */
     ret = (val * (wmax-wmin)) / (hmax-hmin) + wmin;
@@ -476,6 +479,20 @@ map_axis(JoystickImpl* This, int axis, int val) {
     }
 #endif
     return ret;
+}
+
+/* 
+ * set the current state of the js device as it would be with the middle
+ * values on the axes
+ */
+static void fake_current_js_state(JoystickImpl *ji)
+{
+	ji->js.lX  = map_axis(ji, ABS_X,  ji->axes[ABS_X ][AXE_ABS]);
+	ji->js.lY  = map_axis(ji, ABS_Y,  ji->axes[ABS_Y ][AXE_ABS]);
+	ji->js.lZ  = map_axis(ji, ABS_Z,  ji->axes[ABS_Z ][AXE_ABS]);
+	ji->js.lRx = map_axis(ji, ABS_RX, ji->axes[ABS_RX][AXE_ABS]);
+	ji->js.lRy = map_axis(ji, ABS_RY, ji->axes[ABS_RY][AXE_ABS]);
+	ji->js.lRz = map_axis(ji, ABS_RZ, ji->axes[ABS_RZ][AXE_ABS]);
 }
 
 static void joy_polldev(JoystickImpl *This) {
@@ -505,66 +522,66 @@ static void joy_polldev(JoystickImpl *This) {
 	    case BTN_TRIGGER:	/* normal flight stick */
 	    case BTN_A:		/* gamepad */
 	    case BTN_1:		/* generic */
-		GEN_EVENT(DIJOFS_BUTTON(0),ie.value?0x80:0x0,ie.time.tv_usec,(This->dinput->evsequence)++);
 		This->js.rgbButtons[0] = ie.value?0x80:0x00;
+		GEN_EVENT(DIJOFS_BUTTON(0),ie.value?0x80:0x0,ie.time.tv_usec,(This->dinput->evsequence)++);
 		break;
 	    case BTN_THUMB:
 	    case BTN_B:
 	    case BTN_2:
-		GEN_EVENT(DIJOFS_BUTTON(1),ie.value?0x80:0x0,ie.time.tv_usec,(This->dinput->evsequence)++);
 		This->js.rgbButtons[1] = ie.value?0x80:0x00;
+		GEN_EVENT(DIJOFS_BUTTON(1),ie.value?0x80:0x0,ie.time.tv_usec,(This->dinput->evsequence)++);
 		break;
 	    case BTN_THUMB2:
 	    case BTN_C:
 	    case BTN_3:
-		GEN_EVENT(DIJOFS_BUTTON(2),ie.value?0x80:0x0,ie.time.tv_usec,(This->dinput->evsequence)++);
 		This->js.rgbButtons[2] = ie.value?0x80:0x00;
+		GEN_EVENT(DIJOFS_BUTTON(2),ie.value?0x80:0x0,ie.time.tv_usec,(This->dinput->evsequence)++);
 		break;
 	    case BTN_TOP:
 	    case BTN_X:
 	    case BTN_4:
-		GEN_EVENT(DIJOFS_BUTTON(3),ie.value?0x80:0x0,ie.time.tv_usec,(This->dinput->evsequence)++);
 		This->js.rgbButtons[3] = ie.value?0x80:0x00;
+		GEN_EVENT(DIJOFS_BUTTON(3),ie.value?0x80:0x0,ie.time.tv_usec,(This->dinput->evsequence)++);
 		break;
 	    case BTN_TOP2:
 	    case BTN_Y:
 	    case BTN_5:
-		GEN_EVENT(DIJOFS_BUTTON(4),ie.value?0x80:0x0,ie.time.tv_usec,(This->dinput->evsequence)++);
 		This->js.rgbButtons[4] = ie.value?0x80:0x00;
+		GEN_EVENT(DIJOFS_BUTTON(4),ie.value?0x80:0x0,ie.time.tv_usec,(This->dinput->evsequence)++);
 		break;
 	    case BTN_PINKIE:
 	    case BTN_Z:
 	    case BTN_6:
-		GEN_EVENT(DIJOFS_BUTTON(5),ie.value?0x80:0x0,ie.time.tv_usec,(This->dinput->evsequence)++);
 		This->js.rgbButtons[5] = ie.value?0x80:0x00;
+		GEN_EVENT(DIJOFS_BUTTON(5),ie.value?0x80:0x0,ie.time.tv_usec,(This->dinput->evsequence)++);
 		break;
 	    case BTN_BASE:
 	    case BTN_TL:
 	    case BTN_7:
-		GEN_EVENT(DIJOFS_BUTTON(6),ie.value?0x80:0x0,ie.time.tv_usec,(This->dinput->evsequence)++);
 		This->js.rgbButtons[6] = ie.value?0x80:0x00;
+		GEN_EVENT(DIJOFS_BUTTON(6),ie.value?0x80:0x0,ie.time.tv_usec,(This->dinput->evsequence)++);
 		break;
 	    case BTN_BASE2:
 	    case BTN_TR:
 	    case BTN_8:
-		GEN_EVENT(DIJOFS_BUTTON(7),ie.value?0x80:0x0,ie.time.tv_usec,(This->dinput->evsequence)++);
 		This->js.rgbButtons[7] = ie.value?0x80:0x00;
+		GEN_EVENT(DIJOFS_BUTTON(7),ie.value?0x80:0x0,ie.time.tv_usec,(This->dinput->evsequence)++);
 		break;
 	    case BTN_BASE3:
 	    case BTN_TL2:
 	    case BTN_9:
-		GEN_EVENT(DIJOFS_BUTTON(8),ie.value?0x80:0x0,ie.time.tv_usec,(This->dinput->evsequence)++);
 		This->js.rgbButtons[8] = ie.value?0x80:0x00;
+		GEN_EVENT(DIJOFS_BUTTON(8),ie.value?0x80:0x0,ie.time.tv_usec,(This->dinput->evsequence)++);
 		break;
 	    case BTN_BASE4:
 	    case BTN_TR2:
-		GEN_EVENT(DIJOFS_BUTTON(9),ie.value?0x80:0x0,ie.time.tv_usec,(This->dinput->evsequence)++);
 		This->js.rgbButtons[9] = ie.value?0x80:0x00;
+		GEN_EVENT(DIJOFS_BUTTON(9),ie.value?0x80:0x0,ie.time.tv_usec,(This->dinput->evsequence)++);
 		break;
 	    case BTN_BASE5:
 	    case BTN_SELECT:
-		GEN_EVENT(DIJOFS_BUTTON(10),ie.value?0x80:0x0,ie.time.tv_usec,(This->dinput->evsequence)++);
 		This->js.rgbButtons[10] = ie.value?0x80:0x00;
+		GEN_EVENT(DIJOFS_BUTTON(10),ie.value?0x80:0x0,ie.time.tv_usec,(This->dinput->evsequence)++);
 		break;
 	    default:
 		FIXME("unhandled joystick button %x, value %d\n",ie.code,ie.value);
@@ -574,28 +591,28 @@ static void joy_polldev(JoystickImpl *This) {
 	case EV_ABS:
 	    switch (ie.code) {
 	    case ABS_X:
-		GEN_EVENT(DIJOFS_X,ie.value,ie.time.tv_usec,(This->dinput->evsequence)++);
-		This->js.lX = map_axis(This,0,ie.value);
+		This->js.lX = map_axis(This,ABS_X,ie.value);
+		GEN_EVENT(DIJOFS_X,This->js.lX,ie.time.tv_usec,(This->dinput->evsequence)++);
 		break;
 	    case ABS_Y:
-		GEN_EVENT(DIJOFS_Y,ie.value,ie.time.tv_usec,(This->dinput->evsequence)++);
-		This->js.lY = map_axis(This,1,ie.value);
+		This->js.lY = map_axis(This,ABS_Y,ie.value);
+		GEN_EVENT(DIJOFS_Y,This->js.lY,ie.time.tv_usec,(This->dinput->evsequence)++);
 		break;
 	    case ABS_Z:
-		GEN_EVENT(DIJOFS_Z,ie.value,ie.time.tv_usec,(This->dinput->evsequence)++);
-		This->js.lZ = map_axis(This,2,ie.value);
+		This->js.lZ = map_axis(This,ABS_Z,ie.value);
+		GEN_EVENT(DIJOFS_Z,This->js.lZ,ie.time.tv_usec,(This->dinput->evsequence)++);
 		break;
 	    case ABS_RX:
-		GEN_EVENT(DIJOFS_RX,ie.value,ie.time.tv_usec,(This->dinput->evsequence)++);
-		This->js.lRx = map_axis(This,3,ie.value);
+		This->js.lRx = map_axis(This,ABS_RX,ie.value);
+		GEN_EVENT(DIJOFS_RX,This->js.lRx,ie.time.tv_usec,(This->dinput->evsequence)++);
 		break;
 	    case ABS_RY:
-		GEN_EVENT(DIJOFS_RY,ie.value,ie.time.tv_usec,(This->dinput->evsequence)++);
-		This->js.lRy = map_axis(This,4,ie.value);
+		This->js.lRy = map_axis(This,ABS_RY,ie.value);
+		GEN_EVENT(DIJOFS_RY,This->js.lRy,ie.time.tv_usec,(This->dinput->evsequence)++);
 		break;
 	    case ABS_RZ:
-		GEN_EVENT(DIJOFS_RZ,ie.value,ie.time.tv_usec,(This->dinput->evsequence)++);
-		This->js.lRz = map_axis(This,5,ie.value);
+		This->js.lRz = map_axis(This,ABS_RZ,ie.value);
+		GEN_EVENT(DIJOFS_RZ,This->js.lRz,ie.time.tv_usec,(This->dinput->evsequence)++);
 		break;
 	    default:
 		FIXME("unhandled joystick axe event (code %d, value %d)\n",ie.code,ie.value);
@@ -705,6 +722,7 @@ static HRESULT WINAPI JoystickAImpl_SetProperty(LPDIRECTINPUTDEVICE8A iface,
       break;
     }
   }
+  fake_current_js_state(This);
   return 0;
 }
 
