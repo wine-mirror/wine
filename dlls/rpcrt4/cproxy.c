@@ -129,7 +129,8 @@ HRESULT WINAPI StdProxy_Construct(REFIID riid,
 
   /* I can't find any other way to detect stubless proxies than this hack */
   if (!IsEqualGUID(vtbl->header.piid, riid)) {
-    stubless = *((const void **)vtbl)++;
+    stubless = *(const void **)vtbl;
+    vtbl = (CInterfaceProxyVtbl *)((const void **)vtbl + 1);
     TRACE("stubless=%p\n", stubless);
   }
 
