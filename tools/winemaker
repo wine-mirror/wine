@@ -811,6 +811,7 @@ sub source_scan_directory
         print "Please re-enter the options:\n";
       }
     }
+    push @{@$target[$T_DLL_PATH]},"-L\$(WINE_DLL_ROOT)";
     if (@$target[$T_FLAGS] & $TF_MFC) {
       @$project_settings[$T_FLAGS]|=$TF_MFC;
       push @{@$target[$T_DLL_PATH]},"\$(MFC_LIBRARY_PATH)";
@@ -1610,52 +1611,10 @@ sub generate_spec_file
     return;
   }
 
-  my $module=$basename;
-  $module =~ s+^lib++;
-  $module=canonize($module);
-  print FILEO "name    $module\n";
-  print FILEO "type    win32\n";
-  if (@$target[$T_TYPE] == $TT_GUIEXE) {
-    print FILEO "mode    guiexe\n";
-  } elsif (@$target[$T_TYPE] == $TT_CUIEXE) {
-    print FILEO "mode    cuiexe\n";
-  } else {
-    print FILEO "mode    dll\n";
-  }
   if (defined @$target[$T_INIT] and ((@$target[$T_FLAGS] & $TF_WRAP) == 0)) {
     print FILEO "init    @$target[$T_INIT]\n";
   }
-  if (@{@$target[$T_SOURCES_RC]} > 0) {
-    if (@{@$target[$T_SOURCES_RC]} > 1) {
-      print STDERR "warning: the target $basename has more than one RC file. Modify the Makefile.in to remove redundant RC files, and fix the spec file\n";
-    }
-    my $rcname=@{@$target[$T_SOURCES_RC]}[0];
-    $rcname =~ s+\.rc$++i;
-    $rcname =~ s+([^/\w])+\\$1+g;
-    print FILEO "rsrc    $rcname.res\n";
-  }
   print FILEO "\n";
-  my %dlls;
-  foreach $dll (@{$global_settings[$T_DLLS]}) {
-    if (!defined $dlls{$dll}) {
-      print FILEO "import $dll\n";
-      $dlls{$dll}=1;
-    }
-  }
-  if (defined $project_settings) {
-    foreach $dll (@{@$project_settings[$T_DLLS]}) {
-      if (!defined $dlls{$dll}) {
-        print FILEO "import $dll\n";
-        $dlls{$dll}=1;
-      }
-    }
-  }
-  foreach $dll (@{@$target[$T_DLLS]}) {
-    if (!defined $dlls{$dll}) {
-      print FILEO "import $dll\n";
-      $dlls{$dll}=1;
-    }
-  }
 
   # Don't forget to export the 'Main' function for wrapped executables,
   # except for MFC ones!
@@ -1864,6 +1823,7 @@ sub generate_project_files
       }
       generate_list("${canon}_SPEC_SRCS",1,[ "$basename.spec" ]);
       generate_list("${canon}_DLL_PATH",1,@$target[$T_DLL_PATH]);
+      generate_list("${canon}_DLLS",1,@$target[$T_DLLS]);
       generate_list("${canon}_LIBRARY_PATH",1,@$target[$T_LIBRARY_PATH]);
       generate_list("${canon}_LIBRARIES",1,@$target[$T_LIBRARIES]);
       generate_list("${canon}_DEPENDS",1,@$target[$T_DEPENDS]);
@@ -1952,7 +1912,7 @@ sub generate_project_files
       print FILEO "\t-\$(STRIP) \$(STRIPFLAGS) \$\@\n";
       print FILEO "\n";
       print FILEO "\$(${canon}_SPEC_SRCS:.spec=.spec.c): \$(${canon}_SPEC_SRCS) \$(${canon}_SPEC_SRCS:.spec=.tmp.o) \$(${canon}_RC_SRCS:.rc=.res)\n";
-      print FILEO "\t\$(LD_PATH) \$(WINEBUILD) -fPIC \$(${canon}_DLL_PATH) \$(WINE_DLL_PATH) -sym \$(${canon}_SPEC_SRCS:.spec=.tmp.o) -o \$\@ -spec \$(SRCDIR)/\$(${canon}_SPEC_SRCS)\n";
+      print FILEO "\t\$(LD_PATH) \$(WINEBUILD) -fPIC \$(${canon}_DLL_PATH) \$(${canon}_DLLS:%=-l%) \$(WINE_DLL_PATH) \$(${canon}_RC_SRCS:%.rc=-res %.res) -sym \$(${canon}_SPEC_SRCS:.spec=.tmp.o) -o \$\@ -spec \$(SRCDIR)/\$(${canon}_SPEC_SRCS)\n";
       print FILEO "\n";
       my $t_name=@$target[$T_NAME];
       if (@$target[$T_TYPE]!=$TT_DLL) {
@@ -2446,6 +2406,32 @@ then
     CFLAGS="$CFLAGS -D__i386__"
 fi
 
+dnl *** check for the need to define __sparc__
+
+AC_CACHE_CHECK("whether we need to define __sparc__",ac_cv_cpp_def_sparc,
+ AC_EGREP_CPP(yes,[#if (defined(sparc) || defined(__sparc)) && !defined(__sparc__)
+yes
+#endif],
+ ac_cv_cpp_def_sparc="yes", ac_cv_cpp_def_sparc="no"))
+if test "$ac_cv_cpp_def_sparc" = "yes"
+then
+    CFLAGS="$CFLAGS -D__sparc__"
+    CXXFLAGS="$CXXFLAGS -D__sparc__"
+fi
+
+dnl *** check for the need to define __sun__
+
+AC_CACHE_CHECK("whether we need to define __sun__",ac_cv_cpp_def_sun,
+ AC_EGREP_CPP(yes,[#if (defined(sun) || defined(__sun)) && !defined(__sun__)
+yes
+#endif],
+ ac_cv_cpp_def_sun="yes", ac_cv_cpp_def_sun="no"))
+if test "$ac_cv_cpp_def_sun" = "yes"
+then
+    CFLAGS="$CFLAGS -D__sun__"
+    CXXFLAGS="$CXXFLAGS -D__sun__"
+fi
+
 dnl $GCC is set by autoconf
 GCC_NO_BUILTIN=""
 if test "$GCC" = "yes"
@@ -2634,8 +2620,9 @@ fi])
 if test -n "$WINE_ROOT"
 then
   WINE_INCLUDE_ROOT="$WINE_ROOT/include:$WINE_ROOT/include/wine"
-  WINE_LIBRARY_ROOT="$WINE_ROOT:$WINE_ROOT/lib"
+  WINE_LIBRARY_ROOT="$WINE_ROOT:$WINE_ROOT/lib:$WINE_ROOT/library"
   WINE_TOOL_PATH="$WINE_ROOT:$WINE_ROOT/bin:$WINE_ROOT/tools/wrc:$WINE_ROOT/tools/winebuild"
+  WINE_DLL_ROOT="$WINE_ROOT/dlls"
 fi
 
 AC_ARG_WITH(wine-includes,
@@ -2841,8 +2828,8 @@ then
 
   OLDCPPFLAGS="$CPPFLAGS"
   dnl FIXME: We should not have defines in any of the include paths
-  CPPFLAGS="$WINE_INCLUDE_PATH -I$WINE_INCLUDE_ROOT/mixedcrt -D_DLL -D_MT $CPPFLAGS"
-  ATL_INCLUDE_PATH="-I\$(WINE_INCLUDE_ROOT)/mixedcrt -D_DLL -D_MT"
+  CPPFLAGS="$WINE_INCLUDE_PATH -I$WINE_INCLUDE_ROOT/msvcrt -D_DLL -D_MT $CPPFLAGS"
+  ATL_INCLUDE_PATH="-I\$(WINE_INCLUDE_ROOT)/msvcrt -D_DLL -D_MT"
   if test -z "$ATL_INCLUDE_ROOT"
   then
     ATL_INCLUDE_ROOT=":$WINE_INCLUDE_ROOT/atl:/usr/include/atl:/usr/local/include/atl:/opt/mfc/include/atl:/opt/atl/include"
