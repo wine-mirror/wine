@@ -85,6 +85,9 @@ BOOL32 MAIN_MainInit(void)
     /* registry initialisation */
     SHELL_LoadRegistry();
     
+    /* Set up text-mode stuff */
+    CONSOLE_ResizeScreen(80, 25);
+
     return TRUE;
 }
 
