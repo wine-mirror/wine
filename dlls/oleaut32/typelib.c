@@ -162,11 +162,31 @@ HRESULT WINAPI LoadTypeLib(
     OLECHAR *szFile,   /* [in] Name of file to load from */
     ITypeLib * *pptLib) /* [out] Pointer to pointer to loaded type library */
 {
+    return LoadTypeLibEx(szFile, REGKIND_DEFAULT, pptLib);
+}
+
+/******************************************************************************
+ *		LoadTypeLibEx	[OLEAUT32.183]
+ * Loads and optionally registers a type library
+ *
+ * RETURNS
+ *    Success: S_OK
+ *    Failure: Status
+ */
+HRESULT WINAPI LoadTypeLibEx(
+    LPOLESTR szFile,   /* [in] Name of file to load from */
+    REGKIND  regkind,  /* specify kind of registration */
+    ITypeLib **pptLib) /* [out] Pointer to pointer to loaded type library */
+{
     LPSTR p;
     HRESULT res;
-    TRACE_(typelib)("('%s',%p)\n",debugstr_w(szFile),pptLib);
+    TRACE_(typelib)("('%s',%d,%p)\n",debugstr_w(szFile), regkind, pptLib);
     
     p=HEAP_strdupWtoA(GetProcessHeap(),0,szFile);
+    
+    if(regkind != REGKIND_NONE)
+        FIXME_(typelib) ("registration of typelibs not supported yet!\n");
+
     res= TLB_ReadTypeLib(p, pptLib);
     /* XXX need to free p ?? */
 

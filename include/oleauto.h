@@ -495,4 +495,16 @@ typedef struct tagINTERFACEDATA {
     UINT16 cMembers;      /* count of members */
 } INTERFACEDATA, * LPINTERFACEDATA;
 
+typedef enum tagREGKIND
+{
+    REGKIND_DEFAULT,
+    REGKIND_REGISTER,
+    REGKIND_NONE
+} REGKIND;
+
+
+HRESULT WINAPI LoadTypeLib(OLECHAR *szFile, ITypeLib **pptLib);
+HRESULT WINAPI LoadTypeLibEx(LPOLESTR szFile, REGKIND regKind, ITypeLib **pptLib);
+
+
 #endif /*__WINE_OLEAUTO_H*/

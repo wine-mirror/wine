@@ -140,7 +140,7 @@ type win32
 170 stdcall OaBuildVersion() OaBuildVersion
 171 stub ClearCustData
 180 stub CreateTypeLib2
-183 stub LoadTypeLibEx
+183 stdcall LoadTypeLibEx (ptr long ptr) LoadTypeLibEx
 184 stub SystemTimeToVariantTime
 185 stub VariantTimeToSystemTime
 186 stdcall UnRegisterTypeLib (ptr long long long long) UnRegisterTypeLib
