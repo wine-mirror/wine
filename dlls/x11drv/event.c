@@ -913,7 +913,7 @@ END:
 static void EVENT_SelectionClear( HWND hWnd, XSelectionClearEvent *event )
 {
   if (event->selection == XA_PRIMARY || event->selection == x11drv_atom(CLIPBOARD))
-      X11DRV_CLIPBOARD_ReleaseSelection( event->selection, event->window, hWnd );
+      X11DRV_CLIPBOARD_ReleaseSelection( event->selection, event->window, hWnd, event->time );
 }
 
 /***********************************************************************

@@ -110,11 +110,8 @@ typedef struct
 
 static int selectionAcquired = 0;              /* Contains the current selection masks */
 static Window selectionWindow = None;          /* The top level X window which owns the selection */
-static BOOL clearAllSelections = FALSE;        /* Always lose all selections */
 static BOOL usePrimary = FALSE;                /* Use primary selection in additon to the clipboard selection */
 static Atom selectionCacheSrc = XA_PRIMARY;    /* The selection source from which the clipboard cache was filled */
-static Window PrimarySelectionOwner = None;    /* The window which owns the primary selection */
-static Window ClipboardSelectionOwner = None;  /* The window which owns the clipboard selection */
 
 INT X11DRV_RegisterClipboardFormat(LPCSTR FormatName);
 void X11DRV_EmptyClipboard(BOOL keepunowned);
@@ -282,9 +279,6 @@ void X11DRV_InitClipboard(void)
     {
 	char buffer[20];
 	DWORD type, count = sizeof(buffer);
-	if(!RegQueryValueExA(hkey, "ClearAllSelections", 0, &type, buffer, &count))
-            clearAllSelections = IS_OPTION_TRUE( buffer[0] );
-        count = sizeof(buffer);
         if(!RegQueryValueExA(hkey, "UsePrimary", 0, &type, buffer, &count))
             usePrimary = IS_OPTION_TRUE( buffer[0] );
         RegCloseKey(hkey);
@@ -1923,12 +1917,9 @@ static HANDLE X11DRV_CLIPBOARD_SerializeMetafile(INT wformat, HANDLE hdata, LPDW
 /**************************************************************************
  *		X11DRV_CLIPBOARD_ReleaseSelection
  *
- * Release an XA_PRIMARY or XA_CLIPBOARD selection that we own, in response
- * to a SelectionClear event.
- * This can occur in response to another client grabbing the X selection.
- * If the XA_CLIPBOARD selection is lost, we relinquish XA_PRIMARY as well.
+ * Release XA_CLIPBOARD and XA_PRIMARY in response to a SelectionClear event.
  */
-void X11DRV_CLIPBOARD_ReleaseSelection(Atom selType, Window w, HWND hwnd)
+void X11DRV_CLIPBOARD_ReleaseSelection(Atom selType, Window w, HWND hwnd, Time time)
 {
     Display *display = thread_display();
 
@@ -1937,98 +1928,65 @@ void X11DRV_CLIPBOARD_ReleaseSelection(Atom selType, Window w, HWND hwnd)
     TRACE("event->window = %08x (selectionWindow = %08x) selectionAcquired=0x%08x\n",
 	  (unsigned)w, (unsigned)selectionWindow, (unsigned)selectionAcquired);
 
-    if (selectionAcquired)
+    if (selectionAcquired && (w == selectionWindow))
     {
-	if (w == selectionWindow)
+        CLIPBOARDINFO cbinfo;
+
+        /* completely give up the selection */
+        TRACE("Lost CLIPBOARD (+PRIMARY) selection\n");
+
+        X11DRV_CLIPBOARD_GetClipboardInfo(&cbinfo);
+
+        if (cbinfo.flags & CB_OWNER)
         {
-            /* If we're losing the CLIPBOARD selection, or if the preferences in .winerc
-             * dictate that *all* selections should be cleared on loss of a selection,
-             * we must give up all the selections we own.
-             */
-            if (clearAllSelections || (selType == x11drv_atom(CLIPBOARD)))
+            /* Since we're still the owner, this wasn't initiated by 
+               another Wine process */
+            if (OpenClipboard(hwnd))
             {
-                CLIPBOARDINFO cbinfo;
+                /* Destroy private objects */
+                SendMessageW(cbinfo.hWndOwner, WM_DESTROYCLIPBOARD, 0, 0);
 
-                /* completely give up the selection */
-                TRACE("Lost CLIPBOARD (+PRIMARY) selection\n");
-
-              /* We are completely giving up the selection. There is a
-               * potential race condition where the apps that now owns
-	       * the selection has already grabbed both selections. In
-	       * this case, if we clear any selection we may clear the
-	       * new owners selection. To prevent this common case we
-	       * try to open the clipboard. If we can't, we assume it
-	       * was a wine apps that took it and has taken both selections.
-	       * In this case, don't bother releasing the other selection.
-	       * Otherwise only release the selection if we still own it.
-               */
-                X11DRV_CLIPBOARD_GetClipboardInfo(&cbinfo);
-
-                if (cbinfo.flags & CB_OWNER)
-                {
-                    /* Since we're still the owner, this wasn't initiated by 
-		       another Wine process */
-                    if (OpenClipboard(hwnd))
-                    {
-                      /* We really lost CLIPBOARD but want to voluntarily lose PRIMARY */
-                      if ((selType == x11drv_atom(CLIPBOARD)) && (selectionAcquired & S_PRIMARY))
-                      {
-		          TRACE("Lost clipboard. Check if we need to release PRIMARY\n");
-                          wine_tsx11_lock();
-                          if (selectionWindow == XGetSelectionOwner(display,XA_PRIMARY))
-                          {
-		             TRACE("We still own PRIMARY. Releasing PRIMARY.\n");
-                             XSetSelectionOwner(display, XA_PRIMARY, None, CurrentTime);
-                          }
-		          else
-		             TRACE("We no longer own PRIMARY\n");
-                          wine_tsx11_unlock();
-                      }
-
-                      /* We really lost PRIMARY but want to voluntarily lose CLIPBOARD  */
-                      if ((selType == XA_PRIMARY) && (selectionAcquired & S_CLIPBOARD))
-                      {
-		          TRACE("Lost PRIMARY. Check if we need to release CLIPBOARD\n");
-                          wine_tsx11_lock();
-                          if (selectionWindow == XGetSelectionOwner(display,x11drv_atom(CLIPBOARD)))
-                          {
-		              TRACE("We still own CLIPBOARD. Releasing CLIPBOARD.\n");
-                              XSetSelectionOwner(display, x11drv_atom(CLIPBOARD), None, CurrentTime);
-                          }
-		          else
-		              TRACE("We no longer own CLIPBOARD\n");
-                          wine_tsx11_unlock();
-                      }
-
-                      /* Destroy private objects */
-                      SendMessageW(cbinfo.hWndOwner, WM_DESTROYCLIPBOARD, 0, 0);
-   
-                      /* Give up ownership of the windows clipboard */
-                      X11DRV_CLIPBOARD_ReleaseOwnership();
-
-                      CloseClipboard();
-                    }
-                }
-	        else
-                {
-                    TRACE("Lost selection to other Wine process.\n");
-                }
-
-                selectionWindow = None;
-                PrimarySelectionOwner = ClipboardSelectionOwner = 0;
-
-                X11DRV_EmptyClipboard(FALSE);
-
-                /* Reset the selection flags now that we are done */
-                selectionAcquired = S_NOSELECTION;
+                /* Give up ownership of the windows clipboard */
+                X11DRV_CLIPBOARD_ReleaseOwnership();
+                CloseClipboard();
             }
-            else if ( selType == XA_PRIMARY ) /* Give up only PRIMARY selection */
+        }
+
+        if ((selType == x11drv_atom(CLIPBOARD)) && (selectionAcquired & S_PRIMARY))
+        {
+            TRACE("Lost clipboard. Check if we need to release PRIMARY\n");
+
+            wine_tsx11_lock();
+            if (selectionWindow == XGetSelectionOwner(display, XA_PRIMARY))
             {
-                TRACE("Lost PRIMARY selection\n");
-                PrimarySelectionOwner = 0;
-                selectionAcquired &= ~S_PRIMARY;  /* clear S_PRIMARY mask */
+                TRACE("We still own PRIMARY. Releasing PRIMARY.\n");
+                XSetSelectionOwner(display, XA_PRIMARY, None, time);
             }
-	}
+            else
+                TRACE("We no longer own PRIMARY\n");
+            wine_tsx11_unlock();
+        }
+        else if ((selType == XA_PRIMARY) && (selectionAcquired & S_CLIPBOARD))
+        {
+            TRACE("Lost PRIMARY. Check if we need to release CLIPBOARD\n");
+
+            wine_tsx11_lock();
+            if (selectionWindow == XGetSelectionOwner(display,x11drv_atom(CLIPBOARD)))
+            {
+                TRACE("We still own CLIPBOARD. Releasing CLIPBOARD.\n");
+                XSetSelectionOwner(display, x11drv_atom(CLIPBOARD), None, time);
+            }
+            else
+                TRACE("We no longer own CLIPBOARD\n");
+            wine_tsx11_unlock();
+        }
+
+        selectionWindow = None;
+
+        X11DRV_EmptyClipboard(FALSE);
+
+        /* Reset the selection flags now that we are done */
+        selectionAcquired = S_NOSELECTION;
     }
 }
 
@@ -2485,14 +2443,6 @@ void X11DRV_ResetSelectionOwner(HWND hwnd, BOOL bFooBar)
         {
             bLostSelection = TRUE;
         }
-        else
-        {
-            /* Update selection state */
-            if (saveSelectionState & S_PRIMARY)
-               PrimarySelectionOwner = selectionWindow;
-
-            ClipboardSelectionOwner = selectionWindow;
-        }
         wine_tsx11_unlock();
     }
     else
@@ -2506,7 +2456,6 @@ void X11DRV_ResetSelectionOwner(HWND hwnd, BOOL bFooBar)
 
         X11DRV_CLIPBOARD_ReleaseOwnership();
         selectionAcquired = S_NOSELECTION;
-        ClipboardSelectionOwner = PrimarySelectionOwner = 0;
         selectionWindow = 0;
     }
 }

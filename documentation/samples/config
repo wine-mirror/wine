@@ -154,7 +154,6 @@ WINE REGISTRY Version 2
 "SaveOnlyUpdatedKeys" = "Y"
 
 [Clipboard]
-"ClearAllSelections" = "0"
 "UsePrimary" = "0"
 
 ; List of all directories directly contain .AFM files
