@@ -302,6 +302,7 @@ PipeBuf_Release(LPRPCCHANNELBUFFER iface) {
     wine_rpc_disconnect_header header;
     HANDLE pipe;
     DWORD reqtype = REQTYPE_DISCONNECT;
+    DWORD magic;
 
     ref = InterlockedDecrement(&This->ref);
     if (ref)
@@ -315,6 +316,12 @@ PipeBuf_Release(LPRPCCHANNELBUFFER iface) {
     write_pipe(pipe, &header, sizeof(wine_rpc_disconnect_header));
 
     TRACE("written disconnect packet\n");
+
+    /* prevent a disconnect race with the other side: this isn't
+     * necessary for real dcom but the test suite needs it */
+    
+    read_pipe(pipe, &magic, sizeof(magic));
+    if (magic != 0xcafebabe) ERR("bad disconnection magic: expecting 0xcafebabe but got 0x%lx", magic);
 
     HeapFree(GetProcessHeap(),0,This);
     return 0;
@@ -776,6 +783,7 @@ COM_RpcReceive(wine_pipe *xpipe) {
     if (reqtype == REQTYPE_DISCONNECT) { /* only received by servers */
         wine_rpc_disconnect_header header;
         struct stub_manager *stubmgr;
+        DWORD magic = 0xcafebabe;
 
         hres = read_pipe(xhPipe, &header, sizeof(header));
         if (hres) {
@@ -795,6 +803,8 @@ COM_RpcReceive(wine_pipe *xpipe) {
 
         stub_manager_int_release(stubmgr);
 
+        write_pipe(xhPipe, &magic, sizeof(magic));
+        
         goto end;
     } else if (reqtype == REQTYPE_REQUEST) {
 	wine_rpc_request	*xreq;
