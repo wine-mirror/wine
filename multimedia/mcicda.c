@@ -757,6 +757,12 @@ static DWORD CDAUDIO_mciPlay(UINT16 wDevID, DWORD dwFlags, LPMCI_PLAY_PARMS lpPa
     } else if (wcda == NULL) {
 	ret = MCIERR_INVALID_DEVICE_ID;
     } else {
+	if (wcda->nTracks == 0) {
+	    if (!CDAUDIO_GetTracksInfo(wcda)) {
+		WARN(cdaudio, "error reading TracksInfo !\n");
+		return MCIERR_DRIVER_INTERNAL;
+	    }
+	}
 	end = wcda->dwTotalLen;
 	wcda->nCurTrack = 1;
     if (dwFlags & MCI_FROM) {
