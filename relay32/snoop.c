@@ -197,6 +197,8 @@ SNOOP_GetProcAddress32(HMODULE32 hmod,LPCSTR name,DWORD ordinal,FARPROC32 origfu
 	}
 	if (!dll)	/* probably internal */
 		return origfun;
+	if (!SNOOP_ShowDebugmsgSnoop(dll->name,ordinal,name))
+		return origfun;
 	assert(ordinal<dll->nrofordinals);
 	fun = dll->funs+ordinal;
 	if (!fun->name) fun->name = HEAP_strdupA(SystemHeap,0,name);
@@ -284,11 +286,6 @@ REGS_ENTRYPOINT(SNOOP_Entry) {
 	if (!dll) {
 		FIXME(snoop,"entrypoint 0x%08lx not found\n",entry);
 		return; /* oops */
-	}
-	if (!SNOOP_ShowDebugmsgSnoop(dll->name, ordinal, fun->name)) {
-		/* we don't display, so we don't need returndisplay either */
-		EIP_reg(context)= (DWORD)fun->origfun;
-		return;
 	}
 	/* guess cdecl ... */
 	if (fun->nrofargs<0) {

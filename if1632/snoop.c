@@ -60,7 +60,6 @@ typedef struct tagSNOOP16_RETURNENTRY {
 	DWORD		ordinal;
 	WORD		origSP;
 	WORD		*args;		/* saved args across a stdcall */
-	BYTE		show;
 } SNOOP16_RETURNENTRY;
 
 typedef struct tagSNOOP16_RETURNENTRIES {
@@ -187,6 +186,9 @@ SNOOP16_GetProcAddress16(HMODULE16 hmod,DWORD ordinal,FARPROC16 origfun) {
 		fun->name = HEAP_strdupA(SystemHeap,0,name);
 	else
 		fun->name = HEAP_strdupA(SystemHeap,0,"");
+	if (!SNOOP_ShowDebugmsgSnoop(dll->name, ordinal, fun->name))
+		return origfun;
+
 	/* more magic. do not try to snoop thunk data entries (MMSYSTEM) */
 	if (strchr(fun->name,'_')) {
 		char *s=strchr(fun->name,'_');
@@ -214,8 +216,6 @@ void WINAPI SNOOP16_Entry(CONTEXT *context) {
 	SNOOP16_RETURNENTRIES	**rets = &firstrets;
 	SNOOP16_RETURNENTRY	*ret;
 	int		i,max;
-	/* from relay32/snoop.c */
-	extern int SNOOP_ShowDebugmsgSnoop(const char *dll,int ord,const char *fname);
 
 	while (dll) {
 		if (xcs == dll->funhandle) {
@@ -257,8 +257,7 @@ void WINAPI SNOOP16_Entry(CONTEXT *context) {
 	IP_reg(context)= LOWORD(fun->origfun);
 	CS_reg(context)= HIWORD(fun->origfun);
 
-	ret->show = SNOOP_ShowDebugmsgSnoop(dll->name, ordinal, fun->name);
-	if(!ret->show) return;
+
 	DPRINTF("Call %s.%ld: %s(",dll->name,ordinal,fun->name);
 	if (fun->nrofargs>0) {
 		max = fun->nrofargs;
@@ -288,9 +287,7 @@ void WINAPI SNOOP16_Return(CONTEXT *context) {
 	}
 	IP_reg(context) = LOWORD(ret->origreturn);
 	CS_reg(context) = HIWORD(ret->origreturn);
-	if(!ret->show) {
-		;
-	} else if (ret->args) {
+	if (ret->args) {
 		int	i,max;
 
 		DPRINTF("Ret  %s.%ld: %s(",ret->dll->name,ret->ordinal,ret->dll->funs[ret->ordinal].name);

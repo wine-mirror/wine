@@ -236,10 +236,23 @@ static HMODULE32 BUILTIN32_DoLoadModule( BUILTIN32_DLL *dll, PDB32 *pdb )
     for (i = 0; i < dll->descr->nb_funcs; i++, funcs++, debug++)
     {
         BYTE args = dll->descr->args[i];
+	int j;
+
         if (!dll->descr->functions[i]) continue;
         *funcs = (LPVOID)((BYTE *)dll->descr->functions[i] - addr);
 #ifdef __i386__
         if (!TRACE_ON(relay)) continue;
+	for (j=0;j<dll->descr->nb_names;j++)
+	    if (dll->descr->ordinals[j] == i)
+		break;
+	if (j<dll->descr->nb_names) {
+	    if (dll->descr->names[j]) {
+	    	char buffer[200];
+		sprintf(buffer,"%s.%d: %s",dll->descr->name,i,dll->descr->names[j]);
+		if (!RELAY_ShowDebugmsgRelay(buffer))
+		    continue;
+	    }
+	}
         switch(args)
         {
         case 0xfe:  /* register func */
