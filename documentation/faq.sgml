@@ -633,40 +633,6 @@
       </qandaentry>
 
       <qandaentry>
-      <question id="What-other-software-do-I-need-to-compile">
-        <para>
-          What other software do I need to install, compile and run
-          Wine?
-        </para>
-      </question>
-      <answer>
-        <para>
-          Many development tools are needed in order to compile Wine.
-          A list of required packages for several distributions is included in
-          the README (<ulink url="http://source.winehq.org/source/README">
-          http://source.winehq.org/source/README</ulink>).
-        </para>
-        <para>
-          To run Wine, you will need the following:
-        </para>
-
-        <itemizedlist spacing="compact">
-          <listitem> 
-            <para>The compiled Wine binary</para>
-          </listitem>
-          <listitem>
-            <para>A properly configured wine.conf file (or ~/.winerc file)</para>
-          </listitem>
-          <listitem>
-            <para>An installed and working X Window system</para>
-          </listitem>
-          <listitem>
-            <para>Some Windows programs to test</para>
-          </listitem>
-        </itemizedlist>
-      </answer>
-      </qandaentry>
-       <qandaentry>
       <question id="How-much-RAM-do-I-need">
         <para>
           How much RAM do I need to have on my UNIX system to be able to run 
@@ -734,75 +700,6 @@
           You do not need a licensed and installed copy of DOS or MS Windows to
           install, configure and run Wine. However, Wine has to be able to 
           'see' an MS Windows binary (i.e. application) if it is to run it.
-        </para>
-      </answer>
-      </qandaentry>
-
-      <qandaentry>
-      <question id="Does-MS-Windows-need-to-be-installed">
-        <para>
-          Does MS Windows need to be loaded into that partition in order to
-          run MS Windows programs under Wine?
-        </para>
-      </question>
-      <answer>
-        <para>
-          Many folks have successfully installed and run programs
-          in their UNIX file system without having a DOS partition or MS 
-          Windows. However, in many cases you need a directory and file 
-          infrastructure that is similar to an existing Windows installation.
-          Some applications' installation programs want to distribute some of
-          the package's files into the /windows and /windows/system 
-          directories in order to run, and unless these exist on your UNIX 
-          file system, those programs will not install correctly and probably
-          will not run well, if at all. Most packages will set that up for you
-	  as part of the install process.
-        </para>
-        <para>
-          If you have a DOS partition with MS Windows installed in it, make
-          sure that your UNIX system can 'see' this partition (check your 
-          /etc/fstab file or mount the partition manually) so that Wine can
-          run the MS Windows binaries located in the DOS partition. To run
-          without a DOS partition, you need to set a UNIX path to be your 
-          drive C, and make sure that the /windows and /windows/system 
-          directories point to some place that actually exist.
-        </para>
-        <para>
-          Here's an example, copied from a machine which has no DOS partition
-          but successfully runs Wine:
-        </para>
-        <screen>
-    [Drive C]      
-          Path=/var/lib/wine
-          Type=hd
-    [wine]
-          Windows=c:\windows
-          System=c:\windows\system
-          Temp=e:\
-        </screen>
-        <para>
-         In <filename>/var/lib/wine/windows</filename>, you will need to
-         install a <filename>win.ini</filename> config file that you might
-         find on a typical MS Windows 3.1 machine. The directory
-         <filename>/var/lib/wine/windows/system</filename> should exist, but
-         doesn't need to contain anything. However, to use MS DLLs, you can
-         copy them into that directory. Note that this is a contravention of
-         the Windows licence unless Windows is properly installed on the
-         machine. If you have DOS/MS Windows installed on your system, you can
-         mount that partition at bootup by modifying the file 
-         <filename>/etc/fstab</filename> in your UNIX partition (assuming that
-         the UNIX kernel supports the DOS/MS Windows file system type).
-        </para>
-        <para>
-          If you edit this file by hand, it should contain something similar
-          to the following:
-        </para>
-        <screen>
-/dev/hda1 /dosc msdos uid=0,gid=100,umask=007 0 0
-        </screen>
-        <para>
-          This will allow you to read and write to the DOS partition without
-          being root.
         </para>
       </answer>
       </qandaentry>
@@ -876,7 +773,7 @@
         <para>
           Most of Wine's development effort is geared towards MS Windows' GUI,
           but some limited support for character mode has appeared, by setting
-          <parameter>GraphicsDriver=ttydrv</parameter> in wine.conf's
+          <parameter>GraphicsDriver=ttydrv</parameter> in ~/.wine/config's
           <parameter>[wine]</parameter> section.
         </para>
         <para>
