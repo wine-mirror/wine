@@ -636,7 +636,11 @@ NC_GetInsideRect95 (HWND hwnd, RECT *rect)
         InflateRect( rect, -GetSystemMetrics(SM_CXBORDER), -GetSystemMetrics(SM_CYBORDER) );
     }
 
-    if (wndPtr->dwStyle & WS_CHILD) {
+    /* We have additional border information if the window
+     * is a child (but not an MDI child) */
+    if ( (wndPtr->dwStyle & WS_CHILD)  &&
+	 ( (wndPtr->dwExStyle & WS_EX_MDICHILD) == 0 ) )
+    { 
 	if (wndPtr->dwExStyle & WS_EX_CLIENTEDGE)
 	    InflateRect (rect, -GetSystemMetrics(SM_CXEDGE), -GetSystemMetrics(SM_CYEDGE));
 

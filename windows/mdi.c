@@ -372,6 +372,9 @@ static HWND MDICreateChild( WND *w, MDICLIENTINFO *ci, HWND parent,
     {
 	WND* wnd = WIN_FindWndPtr( hwnd );
 
+	/* All MDI child windows have the WS_EX_MDICHILD style */
+	wnd->dwExStyle |= WS_EX_MDICHILD;
+
 	MDI_MenuModifyItem(w ,hwnd); 
 	if( wnd->dwStyle & WS_MINIMIZE && ci->hwndActiveChild )
 	    ShowWindow( hwnd, SW_SHOWMINNOACTIVE );
