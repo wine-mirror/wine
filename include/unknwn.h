@@ -36,6 +36,8 @@ struct __attribute__((com_interface)) IUnknown
 struct IUnknown
 #endif
 {
+    BEGIN_INTERFACE
+
     virtual HRESULT STDMETHODCALLTYPE QueryInterface(
         REFIID riid,
         void** ppvObject) = 0;
@@ -46,6 +48,7 @@ struct IUnknown
     virtual ULONG STDMETHODCALLTYPE Release(
         ) = 0;
 
+    END_INTERFACE
 };
 #else
 typedef struct IUnknownVtbl IUnknownVtbl;

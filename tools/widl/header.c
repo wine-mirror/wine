@@ -745,7 +745,14 @@ void write_com_interface(type_t *iface)
   /* C++ interface */
   fprintf(header, "#if defined(__cplusplus) && !defined(CINTERFACE)\n");
   if (iface->ref)
+  {
       fprintf(header, "struct %s : public %s\n", iface->name, iface->ref->name);
+      fprintf(header, "{\n");
+      indentation++;
+      write_cpp_method_def(iface);
+      indentation--;
+      fprintf(header, "};\n");
+  }
   else
   {
       fprintf(header, "#ifdef ICOM_USE_COM_INTERFACE_ATTRIBUTE\n");
@@ -753,12 +760,15 @@ void write_com_interface(type_t *iface)
       fprintf(header, "#else\n");
       fprintf(header, "struct %s\n", iface->name);
       fprintf(header, "#endif\n");
+      fprintf(header, "{\n");
+      fprintf(header, "    BEGIN_INTERFACE\n");
+      fprintf(header, "\n");
+      indentation++;
+      write_cpp_method_def(iface);
+      indentation--;
+      fprintf(header, "    END_INTERFACE\n");
+      fprintf(header, "};\n");
   }
-  fprintf(header, "{\n");
-  indentation++;
-  write_cpp_method_def(iface);
-  indentation--;
-  fprintf(header, "};\n");
   fprintf(header, "#else\n");
   /* C interface */
   fprintf(header, "typedef struct %sVtbl %sVtbl;\n", iface->name, iface->name);
