@@ -21,8 +21,6 @@
 #endif
 
 #define CONSOLE_DEFAULT_DRIVER "tty"
-/* If you have problems, try setting the next line to xterm */
-#define CONSOLE_XTERM_PROG "xterm" /* We should check for this first... */
 
 typedef struct CONSOLE_DRIVER
 {
@@ -37,6 +35,7 @@ typedef struct CONSOLE_DRIVER
    /* Color-control functions */
    int  (*allocColor)(int color);
    void (*setBackgroundColor)(int fg, int bg);
+   void (*getBackgroundColor)(int *fg, int *bg);
 
    /* Keyboard Functions */
    int  (*checkForKeystroke)(char *, char *);
@@ -91,6 +90,7 @@ void CONSOLE_NotifyResizeScreen(int, int);
 void CONSOLE_WriteRawString(char *);
 int  CONSOLE_AllocColor(int);
 void CONSOLE_SetBackgroundColor(int fg, int bg);
+void CONSOLE_GetBackgroundColor(int *fg, int *bg);
 
 /* Generic Defines */
 void GENERIC_Start(void);
@@ -121,6 +121,7 @@ void NCURSES_ClearScreen(void);
 void NCURSES_NotifyResizeScreen(int x, int y);
 int  NCURSES_AllocColor(int);
 void NCURSES_SetBackgroundColor(int fg, int bg);
+void NCURSES_GetBackgroundColor(int *fg, int *bg);
 
 #endif /* WINE_NCURSES */
 

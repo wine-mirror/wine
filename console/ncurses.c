@@ -210,7 +210,22 @@ void NCURSES_SetBackgroundColor(int fg, int bg)
 
    pair = get_color_pair(fg, bg);
 
-   bkgdset(COLOR_PAIR(pair));
+   wbkgd(stdscr, COLOR_PAIR(pair));
+}
+
+void NCURSES_GetBackgroundColor(int *fg, int *bg)
+{
+   chtype background;
+   short pair, sfg, sbg;
+     
+   background = getbkgd(stdscr);
+
+   pair = (!A_CHARTEXT & background);
+   
+   pair_content(pair, &sfg, &sbg);
+
+   *fg = sfg;
+   *bg = sbg;
 }
 
 #ifdef HAVE_RESIZETERM

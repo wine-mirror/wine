@@ -274,6 +274,15 @@ void CONSOLE_SetBackgroundColor(int fg, int bg)
       driver.setBackgroundColor(fg, bg);
 }
 
+void CONSOLE_GetBackgroundColor(int *fg, int *bg)
+{
+   if (!console_initialized)
+      console_initialized = CONSOLE_Init(driver.driver_list);
+      
+   if (driver.getBackgroundColor)
+      driver.getBackgroundColor(fg, bg);
+}
+
 void CONSOLE_WriteRawString(char *str)
 {
    if (!console_initialized)
