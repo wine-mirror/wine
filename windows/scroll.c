@@ -104,10 +104,17 @@ INT WINAPI ScrollWindowEx( HWND hwnd, INT dx, INT dy,
     else if( bUpdate ) hrgnUpdate = CreateRectRgn( 0, 0, 0, 0 );
 
     if( !IsRectEmpty(&cliprc) && (dx || dy)) {
+        DWORD dcxflags = DCX_CACHE;
+        DWORD style = GetWindowLongW( hwnd, GWL_STYLE );
         caretrc = rc;
         hwndCaret = fix_caret(hwnd, &caretrc, flags);
 
-        hDC = GetDCEx( hwnd, 0, DCX_CACHE | DCX_USESTYLE );
+        if( style & WS_CLIPSIBLINGS) dcxflags |= DCX_CLIPSIBLINGS;
+        if( GetClassLongW( hwnd, GCL_STYLE ) & CS_PARENTDC)
+            dcxflags |= DCX_PARENTCLIP;
+        if( !(flags & SW_SCROLLCHILDREN) && (style & WS_CLIPCHILDREN))
+            dcxflags |= DCX_CLIPCHILDREN;
+        hDC = GetDCEx( hwnd, 0, dcxflags);
         if (hDC)
         {
             ScrollDC( hDC, dx, dy, &rc, &cliprc, hrgnUpdate, rcUpdate );

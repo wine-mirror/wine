@@ -2603,12 +2603,14 @@ void test_scrollvalidate( HWND parent)
     /* create two overlapping child windows. The visual region
      * of hwnd1 is clipped by the overlapping part of
      * hwnd2 because of the WS_CLIPSIBLING style */
-    HWND hwnd2 = CreateWindowExA(0, "static", NULL, 
-            WS_CHILD| WS_VISIBLE | WS_CLIPSIBLINGS | WS_BORDER , 
-            75, 30, 100, 100, parent, 0, 0, NULL); 
-    HWND hwnd1 = CreateWindowExA(0, "static", NULL, 
-            WS_CHILD| WS_VISIBLE | WS_CLIPSIBLINGS | WS_BORDER , 
-            25, 50, 100, 100, parent, 0, 0, NULL); 
+    HWND hwnd1, hwnd2;
+
+    hwnd2 = CreateWindowExA(0, "static", NULL,
+            WS_CHILD| WS_VISIBLE | WS_CLIPSIBLINGS | WS_BORDER ,
+            75, 30, 100, 100, parent, 0, 0, NULL);
+    hwnd1 = CreateWindowExA(0, "static", NULL,
+            WS_CHILD| WS_VISIBLE | WS_CLIPSIBLINGS | WS_BORDER ,
+            25, 50, 100, 100, parent, 0, 0, NULL);
     ShowWindow( parent, SW_SHOW);
     UpdateWindow( parent);
     GetClientRect( hwnd1, &rc);
@@ -2642,6 +2644,63 @@ void test_scrollvalidate( HWND parent)
     trace("update rect is %ld,%ld - %ld,%ld\n",
             rcu.left,rcu.top,rcu.right,rcu.bottom);
     ReleaseDC( hwnd1, hdc);
+
+    /* now test ScrollWindowEx with a combination of
+     * WS_CLIPCHILDREN style and SW_SCROLLCHILDREN flag */
+    /* make hwnd2 the child of hwnd1 */
+    DestroyWindow( hwnd2);
+    hwnd2 = CreateWindowExA(0, "static", NULL,
+            WS_CHILD| WS_VISIBLE | WS_BORDER ,
+            50, 50, 100, 100, hwnd1, 0, 0, NULL);
+    SetWindowLong( hwnd1, GWL_STYLE, GetWindowLong( hwnd1, GWL_STYLE) & ~WS_CLIPSIBLINGS);
+    GetClientRect( hwnd1, &rc);
+    cliprc=rc;
+
+    /* WS_CLIPCHILDREN and SW_SCROLLCHILDREN */
+    SetWindowLong( hwnd1, GWL_STYLE, GetWindowLong( hwnd1, GWL_STYLE) | WS_CLIPCHILDREN );
+    ValidateRect( hwnd1, NULL);
+    ValidateRect( hwnd2, NULL);
+    ScrollWindowEx( hwnd1, -10, -10, &rc, &cliprc, hrgn, &rcu,
+      SW_SCROLLCHILDREN | SW_INVALIDATE);
+    if (winetest_debug > 0) dump_region(hrgn);
+    exprgn = CreateRectRgn( 88,0,98,88);
+    tmprgn = CreateRectRgn( 0,88,98,98);
+    CombineRgn( exprgn, exprgn, tmprgn, RGN_OR);
+    ok( EqualRgn( exprgn, hrgn), "wrong update region\n");
+
+    /* SW_SCROLLCHILDREN */
+    SetWindowLong( hwnd1, GWL_STYLE, GetWindowLong( hwnd1, GWL_STYLE) & ~WS_CLIPCHILDREN );
+    ValidateRect( hwnd1, NULL);
+    ValidateRect( hwnd2, NULL);
+    ScrollWindowEx( hwnd1, -10, -10, &rc, &cliprc, hrgn, &rcu, SW_SCROLLCHILDREN | SW_INVALIDATE);
+    if (winetest_debug > 0) dump_region(hrgn);
+    /* expected region is the same as in previous test */
+    ok( EqualRgn( exprgn, hrgn), "wrong update region\n");
+
+    /* no SW_SCROLLCHILDREN */
+    SetWindowLong( hwnd1, GWL_STYLE, GetWindowLong( hwnd1, GWL_STYLE) & ~WS_CLIPCHILDREN );
+    ValidateRect( hwnd1, NULL);
+    ValidateRect( hwnd2, NULL);
+    ScrollWindowEx( hwnd1, -10, -10, &rc, &cliprc, hrgn, &rcu, SW_INVALIDATE);
+    if (winetest_debug > 0) dump_region(hrgn);
+    /* expected region is the same as in previous test */
+    ok( EqualRgn( exprgn, hrgn), "wrong update region\n");
+
+    /* WS_CLIPCHILDREN and no SW_SCROLLCHILDREN */
+    SetWindowLong( hwnd1, GWL_STYLE, GetWindowLong( hwnd1, GWL_STYLE) | WS_CLIPCHILDREN );
+    ValidateRect( hwnd1, NULL);
+    ValidateRect( hwnd2, NULL);
+    ScrollWindowEx( hwnd1, -10, -10, &rc, &cliprc, hrgn, &rcu, SW_INVALIDATE);
+    if (winetest_debug > 0) dump_region(hrgn);
+    exprgn = CreateRectRgn( 88,0,98,20);
+    tmprgn = CreateRectRgn( 20,20,98,30);
+    CombineRgn( exprgn, exprgn, tmprgn, RGN_OR);
+    tmprgn = CreateRectRgn( 20,30,30,88);
+    CombineRgn( exprgn, exprgn, tmprgn, RGN_OR);
+    tmprgn = CreateRectRgn( 0,88,30,98);
+    CombineRgn( exprgn, exprgn, tmprgn, RGN_OR);
+    ok( EqualRgn( exprgn, hrgn), "wrong update region\n");
+
     /* clean up */
     DeleteObject( hrgn);
     DeleteObject( exprgn);
@@ -2749,6 +2808,6 @@ START_TEST(win)
     test_scroll();
 
     UnhookWindowsHookEx(hhook);
-    
+
     test_window_styles();
 }
