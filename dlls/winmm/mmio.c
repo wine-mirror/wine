@@ -312,9 +312,10 @@ static LPMMIOPROC MMIO_InstallIOProc(FOURCC fccIOProc, LPMMIOPROC pIOProc,
 		WARN("Tried to remove built-in mmio proc. Skipping\n");
 	    } else {
 		/* Okay, nuke it */
+		struct IOProcList*  ptmpNode = *ppListNode;
 		lpProc = (*ppListNode)->pIOProc;
-		HeapFree(GetProcessHeap(), 0, *ppListNode);
 		*ppListNode = (*ppListNode)->pNext;
+		HeapFree(GetProcessHeap(), 0, ptmpNode);
 	    }
 	}
 	break;
@@ -598,7 +599,7 @@ static	BOOL		MMIO_Destroy(LPWINE_MMIO wm)
     for (m = &(iData->lpMMIO); *m && *m != wm; m = &(*m)->lpNext);
     if (*m) {
 	*m = (*m)->lpNext;
-	HeapFree(GetProcessHeap(), 0, *m);
+	HeapFree(GetProcessHeap(), 0, wm);
 	wm = NULL;
     }
     LeaveCriticalSection(&iData->cs);
