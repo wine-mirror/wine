@@ -80,11 +80,9 @@ USER_InitApp(int hInstance)
       /* Create desktop window */
     if (!WIN_CreateDesktopWindow()) return 0;
 
-#if 1
 #ifndef WINELIB
     /* Initialize DLLs */
-    InitializeLoadedDLLs();
-#endif
+    InitializeLoadedDLLs(NULL);
 #endif
         
     return 1;

@@ -301,10 +301,10 @@ INT windows_wsprintf(BYTE *win_stack)
 
 		/* skip width/precision */
 		while (*ptr == '-' || *ptr == '+' || *ptr == '.' ||
-		       *ptr == ' ' || isdigit(*ptr))
+		       *ptr == ' ' || isdigit(*ptr) || *ptr == '#')
 			ptr++;
 			
-		switch (*ptr++) {
+		switch (*ptr) {
 			case 's':
 				*(DWORD*)stack_ptr = *(DWORD*)win_stack;
 				stack_ptr += 4;

@@ -11,6 +11,7 @@ SRCS = \
 	dos_fs.c \
 	driver.c \
 	exec.c \
+	escape.c \
 	file.c \
 	keyboard.c \
 	lstr.c \

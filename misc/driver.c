@@ -6,10 +6,11 @@
 
 static char Copyright[] = "Copyright  Martin Ayotte, 1994";
 
-#include "stdio.h"
+#include <stdio.h>
 #include "windows.h"
 #include "win.h"
 #include "user.h"
+#include "dlls.h"
 #include "driver.h"
 
 LPDRIVERITEM lpDrvItemList = NULL;
@@ -47,7 +48,7 @@ HDRVR OpenDriver(LPSTR lpDriverName, LPSTR lpSectionName, LPARAM lParam)
 	lpnewdrv = (LPDRIVERITEM) GlobalLock(hDrvr);
 	if (lpnewdrv == NULL) return 0;
 	lpnewdrv->dis.length = sizeof(DRIVERINFOSTRUCT);
-	lpnewdrv->dis.hModule = LoadImage("DrvName", DLL);
+	lpnewdrv->dis.hModule = LoadImage("DrvName", DLL, 0);
 	if (lpnewdrv->dis.hModule == 0) {
 		GlobalUnlock(hDrvr);
 		GlobalFree(hDrvr);

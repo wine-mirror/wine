@@ -462,8 +462,9 @@ LONG ListBoxWndProc( HWND hwnd, WORD message, WORD wParam, LONG lParam )
 		printf("ListBox LB_SETTOPINDEX wParam=%x !\n", wParam);
 		lphl = ListBoxGetStorageHeader(hwnd);
 		lphl->FirstVisible = wParam;
+		wndPtr = WIN_FindWndPtr(hwnd);
 		if (wndPtr->dwStyle & WS_VSCROLL)
-		SetScrollPos(hwnd, SB_VERT, lphl->FirstVisible, TRUE);
+		    SetScrollPos(hwnd, SB_VERT, lphl->FirstVisible, TRUE);
 		InvalidateRect(hwnd, NULL, TRUE);
 		UpdateWindow(hwnd);
 		break;

@@ -46,7 +46,7 @@ void outportb(struct sigcontext_struct *context)
 	switch (EDX & 0xffff)
 	{
 		case 0x70:
-			cmosaddress = EAX & 0xff;
+			cmosaddress = EAX & 0x7f;
 			break;
 		case 0x71:
 			cmosimage[cmosaddress & 0x3f] = EAX & 0xff;

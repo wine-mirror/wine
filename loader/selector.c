@@ -22,14 +22,14 @@ static char Copyright[] = "Copyright  Robert J. Amstadt, 1993";
 #include <sys/mman.h>
 #include <machine/segments.h>
 #endif
-
+#include "dlls.h"
 #include "neexe.h"
 #include "segmem.h"
 #include "wine.h"
 #include "windows.h"
 #include "prototypes.h"
 
-/* #define DEBUG_SELECTORS */
+/* #define DEBUG_SELECTORS /* */
 
 #ifdef linux
 #define DEV_ZERO
@@ -579,7 +579,7 @@ unsigned int GetEntryDLLName(char * dll_name, char * function, int * sel,
 	/* We need a means  of determining the ordinal for the function. */
 	/* Not a builtin symbol, look to see what the file has for us */
 	for(wpnt = wine_files; wpnt; wpnt = wpnt->next){
-		if(strcmp(wpnt->name, dll_name)) continue;
+		if(strcasecmp(wpnt->name, dll_name)) continue;
 		cpnt  = wpnt->nrname_table;
 		while(1==1){
 			if( ((int) cpnt)  - ((int)wpnt->nrname_table) >  
@@ -618,7 +618,7 @@ unsigned int GetEntryDLLOrdinal(char * dll_name, int ordinal, int * sel,
 
 	/* Not a builtin symbol, look to see what the file has for us */
 	for(wpnt = wine_files; wpnt; wpnt = wpnt->next){
-		if(strcmp(wpnt->name, dll_name)) continue;
+		if(strcasecmp(wpnt->name, dll_name)) continue;
 		j = GetEntryPointFromOrdinal(wpnt, ordinal);
 		*addr  = j & 0xffff;
 		j = j >> 16;
@@ -697,6 +697,73 @@ GetEntryPointFromOrdinal(struct w_files * wpnt, int ordinal)
 	}
     }
 }
+
+/**********************************************************************
+ */
+void
+FixupFunctionPrologs(struct w_files * wpnt)
+{
+    struct mz_header_s *mz_header = wpnt->mz_header;   
+    struct ne_header_s *ne_header = wpnt->ne_header;   
+    union lookup entry_tab_pointer;
+    struct entry_tab_header_s *eth;
+    struct entry_tab_movable_s *etm;
+    struct entry_tab_fixed_s *etf;
+    unsigned char *fixup_ptr;
+    int i;
+
+    if (!(ne_header->format_flags & 0x0001))
+	return;
+
+    entry_tab_pointer.cpnt = wpnt->lookup_table;
+    /*
+     * Let's walk through the table and fixup prologs as we go.
+     */
+    while (1)
+    {
+	/* Get bundle header */
+	eth = entry_tab_pointer.eth++;
+
+	/* Check for end of table */
+	if (eth->n_entries == 0)
+	    return;
+
+	/* Check for empty bundle */
+	if (eth->seg_number == 0)
+	    continue;
+
+	/* Examine each bundle */
+	for (i = 0; i < eth->n_entries; i++)
+	{
+	    /* Moveable segment */
+	    if (eth->seg_number >= 0xfe)
+	    {
+		etm = entry_tab_pointer.etm++;
+		fixup_ptr = (wpnt->selector_table[etm->seg_number-1].base_addr
+			     + etm->offset);
+	    }
+	    else
+	    {
+		etf = entry_tab_pointer.etf++;
+		fixup_ptr = (wpnt->selector_table[eth->seg_number-1].base_addr
+			     + (int) etf->offset[0] 
+			     + ((int) etf->offset[1] << 8));
+
+	    }
+
+	    /* Verify the signature */
+	    if (((fixup_ptr[0] == 0x1e && fixup_ptr[1] == 0x58)
+		 || (fixup_ptr[0] == 0x8c && fixup_ptr[1] == 0xd8))
+		&& fixup_ptr[2] == 0x90)
+	    {
+		fixup_ptr[0] = 0xb8;	/* MOV AX, */
+		fixup_ptr[1] = wpnt->hinstance;
+		fixup_ptr[2] = (wpnt->hinstance >> 8);
+	    }
+	}
+    }
+}
+
 
 /**********************************************************************
  *					GetDOSEnvironment
@@ -897,10 +964,21 @@ CreateSelectors(struct  w_files * wpnt)
 		read_only = 1;
 	}
 
+#if 0
 	stmp = CreateNewSegments(!(s->flags & NE_SEGFLAGS_DATA), read_only,
 				s->length, 1);
 	s->base_addr = stmp->base_addr;
 	s->selector = stmp->selector;
+#endif
+	s->selector = GlobalAlloc(GMEM_FIXED, s->length);
+	if (s->selector == 0)
+	    myerror("CreateSelectors: GlobalAlloc() failed");
+
+	s->base_addr = (void *) ((LONG) s->selector << 16);
+	if (!(s->flags & NE_SEGFLAGS_DATA))
+	    PrestoChangoSelector(s->selector, s->selector);
+	else
+	    memset(s->base_addr, 0, s->length);
 	
 	if (seg_table[i].seg_data_offset != 0)
 	{
@@ -942,4 +1020,41 @@ CreateSelectors(struct  w_files * wpnt)
 
     return selectors;
 }
+
+/***********************************************************************
+ *	GetSelectorBase (KERNEL.186)
+ */
+DWORD GetSelectorBase(WORD wSelector)
+{
+	fprintf(stderr, "GetSelectorBase(selector %4X) stub!\n", wSelector);
+}
+
+/***********************************************************************
+ *	SetSelectorBase (KERNEL.187)
+ */
+void SetSelectorBase(WORD wSelector, DWORD dwBase)
+{
+	fprintf(stderr, "SetSelectorBase(selector %4X, base %8X) stub!\n",
+			wSelector, dwBase);
+}
+
+/***********************************************************************
+ *	GetSelectorLimit (KERNEL.188)
+ */
+DWORD GetSelectorLimit(WORD wSelector)
+{
+	fprintf(stderr, "GetSelectorLimit(selector %4X) stub!\n", wSelector);
+
+	return 0xffff;
+}
+
+/***********************************************************************
+ *	SetSelectorLimit (KERNEL.189)
+ */
+void SetSelectorLimit(WORD wSelector, DWORD dwLimit)
+{
+	fprintf(stderr, "SetSelectorLimit(selector %4X, base %8X) stub!\n", 
+			wSelector, dwLimit);
+}
+
 #endif /* ifndef WINELIB */

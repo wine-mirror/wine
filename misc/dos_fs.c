@@ -128,17 +128,13 @@ void DOS_InitFS(void)
 			continue;
 		}
 		ExpandTildeString(temp);
-		if ((ptr = (char *) malloc(strlen(temp)+1)) == NULL) {
-			fprintf(stderr,"DOSFS: can't malloc for drive info!");
-			continue;
-		}
-			ChopOffSlash(temp);
-			DosDrives[x].rootdir = ptr;
-			strcpy(DosDrives[x].rootdir, temp);
-			strcpy(DosDrives[x].cwd, "/windows/");
-			strcpy(DosDrives[x].label, "DRIVE-");
-			strcat(DosDrives[x].label, drive);
-			DosDrives[x].disabled = 0;
+		ChopOffSlash(temp);
+		DosDrives[x].rootdir = strdup(temp);
+		strcpy(DosDrives[x].rootdir, temp);
+		strcpy(DosDrives[x].cwd, "/windows/");
+		strcpy(DosDrives[x].label, "DRIVE-");
+		strcat(DosDrives[x].label, drive);
+		DosDrives[x].disabled = 0;
 	}
 	DOS_SetDefaultDrive(2);
 
@@ -393,19 +389,22 @@ char *GetUnixFileName(char *dosfilename)
 char *GetDosFileName(char *unixfilename)
 { 
 	int i;
-	static char temp[256];
+	static char temp[256], rootdir[256];
 	/*   /dos/windows/system.ini => c:\windows\system.ini */
 	
 	for (i = 0 ; i != MAX_DOS_DRIVES; i++) {
 		if (DosDrives[i].rootdir != NULL) {
-		   if (strncmp(DosDrives[i].rootdir, unixfilename, strlen(DosDrives[i].rootdir)) == 0) {
-			sprintf(temp, "%c:\\%s", 'A' + i, unixfilename + strlen(DosDrives[i].rootdir) + 1);
-			ToDos(temp);
-			return temp;
-		   }	
+ 			strcpy(rootdir, DosDrives[i].rootdir);
+ 			strcat(rootdir, "/");
+                	ToUnix(rootdir);
+ 			if (strncmp(rootdir, unixfilename, strlen(rootdir)) == 0) {
+ 				sprintf(temp, "%c:\\%s", 'A' + i, unixfilename + strlen(rootdir));
+				ToDos(temp);
+				return temp;
+			}	
 		}
 	}
-	strcpy(temp, unixfilename);
+	sprintf(temp, "UNIX:%s", unixfilename);
 	ToDos(temp);
 	return(temp);
 }
@@ -534,7 +533,11 @@ char *FindFile(char *buffer, int buflen, char *filename, char **extensions,
     {
 	strncpy(buffer, GetUnixFileName(filename), buflen);
 	ToUnix(buffer);
-	return buffer;
+	stat( buffer, &filestat);
+	if (S_ISREG(filestat.st_mode))
+	    return buffer;
+	else
+	    return NULL;
     }
 
     if (strchr(filename, '/') != NULL)

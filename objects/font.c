@@ -586,6 +586,7 @@ int EnumFonts(HDC hDC, LPSTR lpFaceName, FARPROC lpEnumFunc, LPSTR lpData)
 				if (lpFaceList[j] == NULL) break;
 				if (strcmp(lpFaceList[j], lpLogFontList[i]->lfFaceName) == 0) {
 					i++; j = 0;
+					if (lpLogFontList[i] == NULL) break;
 					}
 				}
 			if (lpLogFontList[i] == NULL) break;

@@ -290,6 +290,7 @@ HWND CreateWindowEx( DWORD exStyle, LPSTR className, LPSTR windowName,
     wndPtr = (WND *) USER_HEAP_ADDR( hwnd );
     wndPtr->hwndNext   = 0;
     wndPtr->hwndChild  = 0;
+	wndPtr->window 	   = 0;
     wndPtr->dwMagic    = WND_MAGIC;
     wndPtr->hwndParent = (style & WS_CHILD) ? parent : hwndDesktop;
     wndPtr->hwndOwner  = (style & WS_CHILD) ? 0 : parent;
@@ -312,22 +313,7 @@ HWND CreateWindowEx( DWORD exStyle, LPSTR className, LPSTR windowName,
     wndPtr->lpfnWndProc       = classPtr->wc.lpfnWndProc;
     wndPtr->dwStyle           = style;
     wndPtr->dwExStyle         = exStyle;
-#ifdef DEBUG_MENU
-    printf("CreateWindowEx // menu=%04X instance=%04X classmenu=%08X !\n", 
-    	menu, instance, classPtr->wc.lpszMenuName); 
-#endif
-	if ((style & WS_CAPTION) && (style & WS_CHILD) == 0) {
-		if (menu != 0)
-			SetMenu(hwnd, menu);
-		else {
-			if (classPtr->wc.lpszMenuName != NULL)
-				SetMenu(hwnd, LoadMenu(instance, classPtr->wc.lpszMenuName));
-			else
-				wndPtr->wIDmenu   = 0;
-			}
-		}
-	else
-		wndPtr->wIDmenu   = menu;
+	wndPtr->wIDmenu   		  = 0;
     wndPtr->hText             = 0;
     wndPtr->flags             = 0;
     wndPtr->VScroll           = NULL;
@@ -389,6 +375,21 @@ HWND CreateWindowEx( DWORD exStyle, LPSTR className, LPSTR windowName,
 		   CWEventMask | CWOverrideRedirect | CWColormap |
 		   CWSaveUnder | CWBackingStore, &win_attr );
     XStoreName( display, wndPtr->window, windowName );
+
+#ifdef DEBUG_MENU
+    printf("CreateWindowEx // menu=%04X instance=%04X classmenu=%08X !\n", 
+    	menu, instance, classPtr->wc.lpszMenuName); 
+#endif
+	if ((style & WS_CAPTION) && (style & WS_CHILD) == 0) {
+		if (menu != 0)
+			SetMenu(hwnd, menu);
+		else {
+			if (classPtr->wc.lpszMenuName != NULL)
+				SetMenu(hwnd, LoadMenu(instance, classPtr->wc.lpszMenuName));
+			}
+		}
+	else
+		wndPtr->wIDmenu   = menu;
 
       /* Send the WM_CREATE message */
 

@@ -42,6 +42,39 @@ wine_sigaction(int sig,struct sigaction * new, struct sigaction * old)
 	return -1;
 }
 
+int do_int(int intnum, struct sigcontext_struct *scp)
+{
+	switch(intnum)
+	{
+	      case 0x10: return do_int10(scp);
+
+	      case 0x11:  
+		scp->sc_eax = (scp->sc_eax & 0xffff0000L) | DOS_GetEquipment();
+		return 1;
+
+	      case 0x12:               
+		scp->sc_eax = (scp->sc_eax & 0xffff0000L) | 640L; 
+		return 1;	/* get base mem size */                
+
+	      case 0x15: return do_int15(scp);
+	      case 0x1A: return do_int1A(scp);
+	      case 0x21: return do_int21(scp);
+
+	      case 0x22:
+		scp->sc_eax = 0x1234;
+		scp->sc_ebx = 0x5678;
+		scp->sc_ecx = 0x9abc;
+		scp->sc_edx = 0xdef0;
+		return 1;
+
+	      case 0x25: return do_int25(scp);
+	      case 0x26: return do_int26(scp);
+	      case 0x2f: return do_int2f(scp);
+	      case 0x31: return do_int31(scp);
+	}
+	return 0;
+}
+
 #ifdef linux
 static void win_fault(int signal, struct sigcontext_struct context)
 {
@@ -90,54 +123,7 @@ static void win_fault(int signal, int code, struct sigcontext *scp)
     {
       case 0xcd: /* int <XX> */
             instr++;
-	    switch(*instr)
-	    {
-	      case 0x10:
-		if(!do_int10(scp)) 
-		    goto oops;
-		break;
-
-	      case 0x11:  
-		scp->sc_eax = (scp->sc_eax & 0xffff0000L) | DOS_GetEquipment();
-		break;
-
-	      case 0x12:               
-		scp->sc_eax = (scp->sc_eax & 0xffff0000L) | 640L; 
-		break;				/* get base mem size */                
-
-	      case 0x1A:
-		if(!do_int1A(scp)) 
-		    goto oops;
-		break;
-
-	      case 0x21:
-		if (!do_int21(scp)) 
-		    goto oops;
-		break;
-
-	      case 0x22:
-		scp->sc_eax = 0x1234;
-		scp->sc_ebx = 0x5678;
-		scp->sc_ecx = 0x9abc;
-		scp->sc_edx = 0xdef0;
-		break;
-
-	      case 0x25:
-		if (!do_int25(scp)) 
-		    goto oops;
-		break;
-
-	      case 0x26:
-		if (!do_int26(scp)) 
-		    goto oops;
-		break;
-
-	      case 0x2f:
-		if (!do_int2f(scp)) 
-		    goto oops;
-		break;
-		
-	      default:
+	    if (!do_int(*instr, scp)) {
 		fprintf(stderr,"Unexpected Windows interrupt %x\n", *instr);
 		goto oops;
 	    }

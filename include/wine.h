@@ -1,37 +1,6 @@
 #ifndef  WINE_H
 #define  WINE_H
 
-#include "dlls.h"
-
-#define MAX_NAME_LENGTH		64
-
-typedef struct resource_name_table
-{
-    struct resource_name_table *next;
-    unsigned short type_ord;
-    unsigned short id_ord;
-    char id[MAX_NAME_LENGTH];
-} RESNAMTAB;
-
-struct w_files
-{
-    struct w_files  * next;
-    char * name;   /* Name, as it appears in the windows binaries */
-    char * filename;  /* Actual name of the unix file that satisfies this */
-    int fd;
-    struct mz_header_s *mz_header;
-    struct ne_header_s *ne_header;
-    struct ne_segment_table_entry_s *seg_table;
-    struct segment_descriptor_s *selector_table;
-    char * lookup_table;
-    char * nrname_table;
-    char * rname_table;
-    unsigned short hinstance;
-    RESNAMTAB *resnamtab;
-};
-
-extern struct  w_files * wine_files;
-
 extern char *WineIniFileName(void);
 extern char *WinIniFileName(void);
 

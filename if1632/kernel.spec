@@ -143,7 +143,8 @@ length	415
 135 pascal GetSystemDirectory(ptr word) GetSystemDirectory(1 2)
 136 pascal GetDriveType(byte) GetDriveType(1)
 137 pascal FatalAppExit(word ptr) FatalAppExit(1 2)
-#138 GETHEAPSPACES
+#138 GETHEAPSPACES - This is not correct but may fake out most apps
+138 return GetHeapSpaces 2 0x80004000
 #139 DOSIGNAL
 #140 SETSIGHANDLER
 #141 INITTASK1
@@ -182,10 +183,10 @@ length	415
 #183 __0000H
 184 return GlobalDOSAlloc 4 0
 185 return GlobalDOSFree 2 0
-#186 GETSELECTORBASE
-#187 SETSELECTORBASE
-#188 GETSELECTORLIMIT
-#189 SETSELECTORLIMIT
+186 pascal GetSelectorBase(word) GetSelectorBase(1)
+187 pascal SetSelectorBase(word long) SetSelectorBase(1 2)
+188 pascal GetSelectorLimit(word) GetSelectorLimit(1)
+189 pascal SetSelectorLimit(word long) SetSelectorLimit(1 2)
 #190 __E000H
 191 pascal GlobalPageLock(word) GlobalLock(1)
 192 pascal GlobalPageUnlock(word) GlobalUnlock(1)
@@ -204,7 +205,7 @@ length	415
 #205 CVWBREAK
 #206 ALLOCSELECTORARRAY
 207 return IsDBCSLeadByte 2 0
-#310 LOCALHANDLEDELTA
+310 pascal LocalHandleDelta(word) WIN16_LocalHandleDelta(1)
 #311 GETSETKERNELDOSPROC
 #314 DEBUGDEFINESEGMENT
 315 pascal WriteOutProfiles() sync_profiles()
@@ -212,7 +213,7 @@ length	415
 #318 FATALEXITHOOK
 #319 FLUSHCACHEDFILEHANDLE
 #320 ISTASK
-#323 ISROMMODULE
+323 pascal IsRomModule() IsRomModule()
 #324 LOGERROR
 #325 LOGPARAMERROR
 #326 ISROMFILE

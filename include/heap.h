@@ -27,6 +27,7 @@ typedef struct heap_local_heap_s
     MDESC *free_list;
     ATOMTABLE *local_table;
     unsigned short selector;
+    unsigned short delta;		/* Number saved for Windows compat. */
 } LHEAP;
 
 extern void HEAP_Init(MDESC **free_list, void *start, int length);

@@ -14,7 +14,6 @@
 
 LPKEYSTRUCT	lphRootKey = NULL;
 
-typedef FAR LONG *LPWORD;
 DECLARE_HANDLE(HDROP);
 
 extern HINSTANCE hSysRes;

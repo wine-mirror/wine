@@ -342,6 +342,7 @@ int main( int argc, char *argv[] )
     MAIN_SaveSetup();
     DOS_InitFS();
     Comm_Init();
+    INT21_Init();
     
 #ifndef sunos
     atexit(called_at_exit);
@@ -557,3 +558,13 @@ BOOL SwapMouseButton(BOOL fSwap)
 	return 0;	/* don't swap */
 }
 
+/***********************************************************************
+*	ISROMMODULE (KERNEL.323)
+*/
+BOOL IsRomModule(HANDLE x)
+{
+	/* I don't know the prototype, I assume that it returns true
+	   if the dll is located in rom */
+	   
+	return FALSE;
+}

@@ -3,12 +3,12 @@
 #include "msdos.h"
 #include "wine.h"
 
-static void Barf(struct sigcontext_struct *context)
+void IntBarf(int i, struct sigcontext_struct *context)
 {
-	fprintf(stderr, "int10: unknown/not implemented parameters:\n");
-	fprintf(stderr, "int10: AX %04x, BX %04x, CX %04x, DX %04x, "
+	fprintf(stderr, "int%x: unknown/not implemented parameters:\n", i);
+	fprintf(stderr, "int%x: AX %04x, BX %04x, CX %04x, DX %04x, "
 	       "SI %04x, DI %04x, DS %04x, ES %04x\n",
-	       AX, BX, CX, DX, SI, DI, DS, ES);
+	       i, AX, BX, CX, DX, SI, DI, DS, ES);
 }
 
 int do_int10(struct sigcontext_struct *context)
@@ -31,7 +31,7 @@ int do_int10(struct sigcontext_struct *context)
 		break;
 		
 	default:
-		Barf(context);
+		IntBarf(0x10, context);
 	};
 	return 1;
 }

@@ -13,6 +13,7 @@
 #include <segmem.h>
 #include <prototypes.h>
 #include <wine.h>
+#include <dlls.h>
 
 struct  name_hash{
 	struct name_hash * next;

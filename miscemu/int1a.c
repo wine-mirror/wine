@@ -53,7 +53,7 @@ int do_int1A(struct sigcontext_struct * context){
 		break;
 
 	default:
-		fprintf(stderr,"Unable to handle int 0x1A AX %04x\n", context->sc_eax & 0xffffL);
+		IntBarf(0x1a, context);
 		return 1;
 	};
 	return 1;

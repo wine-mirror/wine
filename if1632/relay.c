@@ -36,7 +36,7 @@ struct dll_name_table_entry_s dll_builtin_table[N_BUILTINS] =
     { "KEYBOARD",KEYBOARD_table,137, 8 },
     { "WINSOCK", WINSOCK_table, 155, 9 },
     { "STRESS",  STRESS_table,   15, 10},
-    { "MMSYSTEM",MMSYSTEM_table,1023,11},
+    { "MMSYSTEM",MMSYSTEM_table,1226,11},
     { "SYSTEM",  SYSTEM_table,   20 ,12},
     { "TOOLHELP",TOOLHELP_table, 83, 13},
 };

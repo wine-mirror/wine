@@ -604,8 +604,8 @@ BOOL SetWindowPos( HWND hwnd, HWND hwndInsertAfter, short x, short y,
 	wndPtr->dwStyle |= WS_VISIBLE;
 	XMapWindow( display, wndPtr->window );
 	MSG_Synchronize();
-	if (winPos->flags & SWP_NOREDRAW)
-	    RedrawWindow( hwnd, NULL, 0, RDW_VALIDATE );
+/*	if (winPos->flags & SWP_NOREDRAW)
+	    RedrawWindow( hwnd, NULL, 0, RDW_VALIDATE ); */
     }
     else if (winPos->flags & SWP_HIDEWINDOW)
     {
@@ -639,6 +639,10 @@ BOOL SetWindowPos( HWND hwnd, HWND hwndInsertAfter, short x, short y,
 	(!(winPos->flags & SWP_NOACTIVATE)) ||
 	(!(winPos->flags & SWP_NOZORDER)))
 	    SendMessage( hwnd, WM_NCPAINT, 1, 0L );
+    if ((winPos->flags & (SWP_FRAMECHANGED | SWP_SHOWWINDOW)) &&
+		(!(winPos->flags & SWP_NOREDRAW)) && 
+		(wndPtr->dwStyle & WS_VISIBLE) && IsWindowVisible(hwnd))
+		InvalidateRect(hwnd, NULL, TRUE);
 
       /* Finally send the WM_WINDOWPOSCHANGED message */
     wndPtr->rectWindow = newWindowRect;

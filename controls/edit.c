@@ -2084,6 +2084,7 @@ void EDIT_GetLineCol(HWND hwnd, int off, int *line, int *col)
     unsigned int *textPtrs = (unsigned int *)EDIT_HEAP_ADDR(es->hTextPtrs);
 
     if (off > strlen(text)) off = strlen(text);
+    cp1 = text;
     for (lineno = 0; lineno < es->wlines; lineno++)
     {
 	cp = text + *(textPtrs + lineno);

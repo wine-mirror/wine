@@ -15,9 +15,9 @@ static char Copyright[] = "Copyright  Martin Ayotte, 1994";
 
 
 /**************************************************************************
-* 				DriverProc			[sample driver]
+* 				AUDIO_DriverProc		[sample driver]
 */
-LRESULT DriverProc(DWORD dwDevID, HDRVR hDriv, WORD wMsg, 
+LRESULT AUDIO_DriverProc(DWORD dwDevID, HDRVR hDriv, WORD wMsg, 
 						DWORD dwParam1, DWORD dwParam2)
 {
 	switch(wMsg) {

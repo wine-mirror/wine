@@ -1,3 +1,7 @@
+/*
+ * (c) 1993, 1994 Erik Bos
+ */
+
 #include <time.h>
 #include <fcntl.h>
 #include <errno.h>
@@ -7,7 +11,6 @@
 #include <sys/stat.h>
 #include <unistd.h>
 #include <utime.h>
-
 #include "prototypes.h"
 #include "regfunc.h"
 #include "windows.h"
@@ -15,13 +18,16 @@
 #include "msdos.h"
 #include "options.h"
 
-/* #define DEBUG_FIND /* */
-
-static char Copyright[] = "copyright Erik Bos, 1993";
-
 WORD ExtendedError, CodePage = 437;
 BYTE ErrorClass, Action, ErrorLocus;
 BYTE *dta;
+
+struct DosHeap {
+	BYTE dta[256];
+	BYTE InDosFlag;
+	BYTE biosdate[8];
+};
+static struct DosHeap *heap;
 
 extern char TempDirectory[];
 
@@ -33,6 +39,46 @@ static int Error(int e, int class, int el)
 	ExtendedError = e;
 
 	return e;
+}
+
+static void errno_to_doserr(void)
+{
+	switch (errno) {
+		case EAGAIN:
+			Error (ShareViolation, EC_Temporary, EL_Unknown);
+			break;
+		case EBADF:
+			Error (InvalidHandle, EC_AppError, EL_Unknown);
+			break;
+		case ENOSPC:
+			Error (DiskFull, EC_MediaError, EL_Disk);
+			break;				
+		case EACCES:
+		case EPERM:
+		case EROFS:
+			Error (WriteProtected, EC_AccessDenied, EL_Unknown);
+			break;
+		case EBUSY:
+			Error (LockViolation, EC_AccessDenied, EL_Unknown);
+			break;		
+		case ENOENT:
+			Error (FileNotFound, EC_NotFound, EL_Unknown);
+			break;				
+		case EISDIR:
+			Error (CanNotMakeDir, EC_AccessDenied, EL_Unknown);
+			break;
+		case ENFILE:
+		case EMFILE:
+			Error (NoMoreFiles, EC_MediaError, EL_Unknown);
+			break;
+		case EEXIST:
+			Error (FileExists, EC_Exists, EL_Disk);
+			break;				
+		default:
+			fprintf(stderr, "int21: unknown errno %d!\n", errno);
+			Error (GeneralFailure, EC_SystemFailure, EL_Unknown);
+			break;
+	}
 }
 
 static void Barf(struct sigcontext_struct *context)
@@ -92,10 +138,10 @@ static void GetFreeDiskSpace(struct sigcontext_struct *context)
 	int drive;
 	long size,available;
 
-	if (!(EDX & 0xffL))
+	if (!(EDX & 0xff))
 		drive = DOS_GetDefaultDrive();
 	else
-		drive = (EDX & 0xffL) - 1;
+		drive = (EDX & 0xff) - 1;
 	
 	if (!DOS_ValidDrive(drive)) {
 		Error(InvalidDrive, EC_MediaError , EL_Disk);
@@ -109,33 +155,11 @@ static void GetFreeDiskSpace(struct sigcontext_struct *context)
 		return;
 	}
 
-	EAX = (EAX & 0xffff0000L) | 4;	
-	ECX = (ECX & 0xffff0000L) | 512;
+	EAX = (EAX & 0xffff0000) | 4;	
+	ECX = (ECX & 0xffff0000) | 512;
 
-	EBX = (EBX & 0xffff0000L) | (available / (CX * AX));
-	EDX = (EDX & 0xffff0000L) | (size / (CX * AX));
-	Error (0,0,0);
-}
-
-static void SetDefaultDrive(struct sigcontext_struct *context)
-{
-	int drive;
-
-	drive = EDX & 0xffL;
-
-	if (!DOS_ValidDrive(drive)) {
-		Error (InvalidDrive, EC_MediaError, EL_Disk);
-		return;
-	} else {
-		DOS_SetDefaultDrive(drive);
-		EAX = (EAX &0xffffff00L) | MAX_DOS_DRIVES; 
-		Error (0,0,0);
-	}
-}
-
-static void GetDefaultDrive(struct sigcontext_struct *context)
-{
-	EAX = (EAX & 0xffffff00L) | DOS_GetDefaultDrive();
+	EBX = (EBX & 0xffff0000) | (available / (CX * AX));
+	EDX = (EDX & 0xffff0000) | (size / (CX * AX));
 	Error (0,0,0);
 }
 
@@ -148,9 +172,9 @@ static void GetDriveAllocInfo(struct sigcontext_struct *context)
 	drive = EDX & 0xffL;
 	
 	if (!DOS_ValidDrive(drive)) {
-		EAX = (EAX & 0xffff0000L) | 4;
-		ECX = (ECX & 0xffff0000L) | 512;
-		EDX = (EDX & 0xffff0000L);
+		EAX = (EAX & 0xffff0000) | 4;
+		ECX = (ECX & 0xffff0000) | 512;
+		EDX = (EDX & 0xffff0000);
 		Error (InvalidDrive, EC_MediaError, EL_Disk);
 		return;
 	}
@@ -161,9 +185,9 @@ static void GetDriveAllocInfo(struct sigcontext_struct *context)
 		return;
 	}
 	
-	EAX = (EAX & 0xffff0000L) | 4;	
-	ECX = (ECX & 0xffff0000L) | 512;
-	EDX = (EDX & 0xffff0000L) | (size / (CX * AX));
+	EAX = (EAX & 0xffff0000) | 4;	
+	ECX = (ECX & 0xffff0000) | 512;
+	EDX = (EDX & 0xffff0000) | (size / (CX * AX));
 
 	mediaID = 0xf0;
 
@@ -181,7 +205,7 @@ static void GetDefDriveAllocInfo(struct sigcontext_struct *context)
 static void GetDrivePB(struct sigcontext_struct *context)
 {
 	Error (InvalidDrive, EC_MediaError, EL_Disk);
-	EAX = (EAX & 0xffff0000L) | 0xffL; 
+	EAX = (EAX & 0xffff0000) | 0xffL; 
 		/* I'm sorry but I only got networked drives :-) */
 }
 
@@ -191,48 +215,30 @@ static void ReadFile(struct sigcontext_struct *context)
 	int size;
 
 	/* can't read from stdout / stderr */
-
 	if ((BX == 1) || (BX == 2)) {
 		Error (InvalidHandle, EL_Unknown, EC_Unknown);
-		EAX = (EAX & 0xffff0000L) | InvalidHandle;
+		EAX = (EAX & 0xffff0000) | InvalidHandle;
 		SetCflag;
 		return;
 	}
 
 	ptr = pointer (DS,DX);
-
 	if (BX == 0) {
 		*ptr = EOF;
 		Error (0,0,0);
-		EAX = (EAX & 0xffff0000L) | 1;
+		EAX = (EAX & 0xffff0000) | 1;
 		ResetCflag;
 		return;
 	} else {
 		size = read(BX, ptr, CX);
-		if (size == 0) {
-			Error (ReadFault, EC_Unknown, EL_Unknown);
-			EAX = (EAX & 0xffffff00L) | ExtendedError;
-			return;
-		}
-
 		if (size == -1) {
-			switch (errno) {
-				case EAGAIN:
-					Error (ShareViolation, EC_Temporary, EL_Unknown);
-					break;
-				case EBADF:
-					Error (InvalidHandle, EC_AppError, EL_Unknown);
-					break;
-				default:
-					Error (GeneralFailure, EC_SystemFailure, EL_Unknown);
-					break;
-			}
-			EAX = (EAX & 0xffffff00L) | ExtendedError;
+			errno_to_doserr();
+			EAX = (EAX & 0xffffff00) | ExtendedError;
 			SetCflag;
 			return;
 		}		
 		Error (0,0,0);
-		EAX = (EAX & 0xffff0000L) | size;
+		EAX = (EAX & 0xffff0000) | size;
 		ResetCflag;
 	}
 }
@@ -258,75 +264,33 @@ static void WriteFile(struct sigcontext_struct *context)
 		fflush(stderr);
 
 		Error (0,0,0);
-		EAX = (EAX & 0xffffff00L) | CX;
+		EAX = (EAX & 0xffffff00) | CX;
 		ResetCflag;
 	} else {
 		size = write(BX, ptr , CX);
 		if (size == 0) {
 			Error (WriteFault, EC_Unknown, EL_Unknown);
-			EAX = (EAX & 0xffffff00L) | ExtendedError;
+			EAX = (EAX & 0xffffff00) | ExtendedError;
 			return;
 		}
 
 		if (size == -1) {
-			switch (errno) {
-				case EAGAIN:
-					Error (ShareViolation, EC_Temporary, EL_Unknown);
-					break;
-				case EBADF:
-					Error (InvalidHandle, EC_AppError, EL_Unknown);
-					break;
-				case ENOSPC:
-					Error (DiskFull, EC_MediaError, EL_Disk);
-					break;				
-				default:
-					Error (GeneralFailure, EC_SystemFailure, EL_Unknown);
-					break;
-			}
-			EAX = (EAX & 0xffffff00L) | ExtendedError;
+			errno_to_doserr();
+			EAX = (EAX & 0xffffff00) | ExtendedError;
 			SetCflag;
 			return;
 		}		
 		Error (0,0,0);
-		EAX = (EAX & 0xffff0000L) | size;
+		EAX = (EAX & 0xffff0000) | size;
 		ResetCflag;
 	}
 }
 
-static void UnlinkFile(struct sigcontext_struct *context)
-{
-	if (unlink( GetUnixFileName( pointer(DS,DX)) ) == -1) {
-		switch (errno) {
-			case EACCES:
-			case EPERM:
-			case EROFS:
-				Error (WriteProtected, EC_AccessDenied, EL_Unknown);
-				break;
-			case EBUSY:
-				Error (LockViolation, EC_AccessDenied, EL_Unknown);
-				break;		
-			case EAGAIN:
-				Error (ShareViolation, EC_Temporary, EL_Unknown);
-				break;
-			case ENOENT:
-				Error (FileNotFound, EC_NotFound, EL_Unknown);
-				break;				
-			default:
-				Error (GeneralFailure, EC_SystemFailure, EL_Unknown);
-				break;
-		}
-		EAX = (EAX & 0xffffff00L) | ExtendedError;			SetCflag;
-		return;
-	}		
-	Error (0,0,0);
-	ResetCflag;
-}
-
 static void SeekFile(struct sigcontext_struct *context)
 {
-	int status, fileoffset;
+	off_t status, fileoffset;
 	
-	switch (EAX & 0xffL) {
+	switch (EAX & 0xff) {
 		case 1: fileoffset = SEEK_CUR;
 			break;
 		case 2: fileoffset = SEEK_END;
@@ -337,65 +301,45 @@ static void SeekFile(struct sigcontext_struct *context)
 		}
 	status = lseek(BX, (CX * 0x100) + DX, fileoffset);
 	if (status == -1) {
-		switch (errno) {
-			case EBADF:
-				Error (InvalidHandle, EC_AppError, EL_Unknown);
-				break;
-			case EINVAL:
-				Error (DataInvalid, EC_AppError, EL_Unknown);
-				break;
-			default:
-				Error (GeneralFailure, EC_SystemFailure, EL_Unknown);
-				break;
-		}
-		EAX = (EAX & 0xffffff00L) | ExtendedError;			SetCflag;
+		errno_to_doserr();
+		EAX = (EAX & 0xffffff00) | ExtendedError;			SetCflag;
 		return;
 	}		
 	Error (0,0,0);
-	ResetCflag;
-}
-
-static void GetFileAttributes(struct sigcontext_struct *context)
-{
-	EAX &= 0xfffff00L;
-	ResetCflag;
-}
-
-static void SetFileAttributes(struct sigcontext_struct *context)
-{
+	EAX = (EAX & 0xffff0000L) | (status & 0xffff);
+	EDX = (EDX & 0xffff0000L) | ((status >> 16) & 0xffff);
+	
 	ResetCflag;
 }
 
 static void ioctlGetDeviceInfo(struct sigcontext_struct *context)
 {
-    WORD handle = EBX & 0xffff;
-    
-    switch (handle) 
-    {
-      case 0:
-      case 1:
-      case 2:
-	EDX = (EDX & 0xffff0000) | 0x80d3;
-	break;
-	
-      default:
-	{
-	    struct stat sbuf;
+	WORD handle = EBX & 0xffff;
+
+	switch (handle) {
+		case 0:
+		case 1:
+		case 2:
+			EDX = (EDX & 0xffff0000) | 0x80d3;
+			break;
+
+		default:
+		{
+		    struct stat sbuf;
 	    
-	    if (fstat(handle, &sbuf) < 0)
-	    {
-		Barf(context);
-		EDX = (EDX & 0xffff0000) | 0x50;
-		SetCflag;
-		return;
-	    }
+		    if (fstat(handle, &sbuf) < 0)
+		    {
+			IntBarf(0x21, context);
+			EDX = (EDX & 0xffff0000) | 0x50;
+			SetCflag;
+			return;
+		    }
 	    
-	    /* This isn't the right answer, but should be close enough. */
-	    EDX = (EDX & 0xffff0000) | 0x0943;
+		    /* This isn't the right answer, but should be close enough. */
+		    EDX = (EDX & 0xffff0000) | 0x0943;
+		}
 	}
-    }
-    
-    ResetCflag;
+	ResetCflag;
 }
 
 static void ioctlGenericBlkDevReq(struct sigcontext_struct *context)
@@ -403,16 +347,16 @@ static void ioctlGenericBlkDevReq(struct sigcontext_struct *context)
 	BYTE *dataptr = pointer(DS, DX);
 	int drive;
 
-	if (!(EBX & 0xffL))
+	if (!(EBX & 0xff))
 		drive = DOS_GetDefaultDrive();
 	else
-		drive = (EBX & 0xffL) - 1;
+		drive = (EBX & 0xff) - 1;
 
-	if ((ECX & 0xff00L) != 0x0800) {
-		Barf(context);
+	if ((ECX & 0xff00) != 0x0800) {
+		IntBarf(0x21, context);
 		return;
 	}
-	switch (ECX & 0xffL) {
+	switch (ECX & 0xff) {
 		case 0x60: /* get device parameters */
 			   /* used by w4wgrp's winfile */
 			dataptr[0] = 0x04;
@@ -430,18 +374,12 @@ static void ioctlGenericBlkDevReq(struct sigcontext_struct *context)
 				setword(&dataptr[4], 80); /* # of cylinders */
 			}
 			CreateBPB(drive, &dataptr[7]);			
-			EAX = (EAX & 0xfffff00L);
+			EAX = (EAX & 0xfffff00);
 			ResetCflag;
 			return;
 		default:
-			Barf(context);
+			IntBarf(0x21, context);
 	}
-}
-
-static void DupeFileHandle(struct sigcontext_struct *context)
-{
-	EAX = (EAX & 0xffff0000L) | dup(BX);
-	ResetCflag;
 }
 
 static void GetSystemDate(struct sigcontext_struct *context)
@@ -452,9 +390,9 @@ static void GetSystemDate(struct sigcontext_struct *context)
 	ltime = time(NULL);
 	now = localtime(&ltime);
 
-	ECX = (ECX & 0xffff0000L) | (now->tm_year + 1900);
-	EDX = (EDX & 0xffff0000L) | ((now->tm_mon + 1) << 8) | now->tm_mday;
-	EAX = (EAX & 0xffff0000L) | now->tm_wday;
+	ECX = (ECX & 0xffff0000) | (now->tm_year + 1900);
+	EDX = (EDX & 0xffff0000) | ((now->tm_mon + 1) << 8) | now->tm_mday;
+	EAX = (EAX & 0xffff0000) | now->tm_wday;
 }
 
 static void GetSystemTime(struct sigcontext_struct *context)
@@ -465,23 +403,15 @@ static void GetSystemTime(struct sigcontext_struct *context)
 	ltime = time(NULL);
 	now = localtime(&ltime);
 	 
-	ECX = (ECX & 0xffffff00L) | (now->tm_hour << 8) | now->tm_min;
-	EDX = (EDX & 0xffffff00L) | now->tm_sec << 8;
+	ECX = (ECX & 0xffffff00) | (now->tm_hour << 8) | now->tm_min;
+	EDX = (EDX & 0xffffff00) | now->tm_sec << 8;
 }
 
 static void GetExtendedErrorInfo(struct sigcontext_struct *context)
 {
-	EAX = (EAX & 0xffffff00L) | ExtendedError;
-	EBX = (EBX & 0xffff0000L) | (0x100 * ErrorClass) | Action;
-	ECX = (ECX & 0xffff00ffL) | (0x100 * ErrorLocus);
-}
-
-static void GetInDosFlag(struct sigcontext_struct *context)
-{
-	const BYTE InDosFlag = 0;
-	
-	ES  = (ES & 0xffff0000L) | segment(InDosFlag);
-	EBX = (EBX & 0xffff0000L) | offset(InDosFlag);
+	EAX = (EAX & 0xffffff00) | ExtendedError;
+	EBX = (EBX & 0xffff0000) | (ErrorClass << 8) | Action;
+	ECX = (ECX & 0xffff00ff) | (ErrorLocus << 8);
 }
 
 static void CreateFile(struct sigcontext_struct *context)
@@ -489,96 +419,60 @@ static void CreateFile(struct sigcontext_struct *context)
 	int handle;
 
 	if ((handle = open(GetUnixFileName( pointer(DS,DX)), O_CREAT | O_TRUNC)) == -1) {
-		switch (errno) {
-			case EACCES:
-			case EPERM:
-			case EROFS:
-				Error (WriteProtected, EC_AccessDenied, EL_Unknown);
-				break;
-			case EISDIR:
-				Error (CanNotMakeDir, EC_AccessDenied, EL_Unknown);
-				break;
-			case ENFILE:
-			case EMFILE:
-				Error (NoMoreFiles, EC_MediaError, EL_Unknown);
-			case EEXIST:
-				Error (FileExists, EC_Exists, EL_Disk);
-				break;				
-			case ENOSPC:
-				Error (DiskFull, EC_MediaError, EL_Disk);
-				break;				
-			default:
-				Error (GeneralFailure, EC_SystemFailure, EL_Unknown);
-				break;
-			}			
-		EAX = (EAX & 0xffffff00L) | ExtendedError;
+		errno_to_doserr();
+		EAX = (EAX & 0xffffff00) | ExtendedError;
 		SetCflag;
 		return;
 		}			
 	Error (0,0,0);
-	EBX = (EBX & 0xffff0000L) | handle;
-	EAX = (EAX & 0xffffff00L) | NoError;
+	EBX = (EBX & 0xffff0000) | handle;
+	EAX = (EAX & 0xffffff00) | NoError;
 	ResetCflag;
 }
 
 static void OpenExistingFile(struct sigcontext_struct *context)
 {
 	int handle;
+	int mode;
+	
+	switch (AX & 0x0007)
+	{
+	  case 0:
+	    mode = O_RDONLY;
+	    break;
+	    
+	  case 1:
+	    mode = O_WRONLY;
+	    break;
+	    
+	  default:
+	    mode = O_RDWR;
+	    break;
+	}
 
 	fprintf(stderr,"OpenExistingFile (%s)\n", pointer(DS,DX));
 	
-	if ((handle = open(GetUnixFileName(pointer(DS,DX)), O_RDWR)) == -1) {
-		switch (errno) {
-			case EACCES:
-			case EPERM:
-			case EROFS:
-				Error (WriteProtected, EC_AccessDenied, EL_Unknown);
-				break;
-			case EISDIR:
-				Error (CanNotMakeDir, EC_AccessDenied, EL_Unknown);
-				break;
-			case ENFILE:
-			case EMFILE:
-				Error (NoMoreFiles, EC_MediaError, EL_Unknown);
-			case EEXIST:
-				Error (FileExists, EC_Exists, EL_Disk);
-				break;				
-			case ENOSPC:
-				Error (DiskFull, EC_MediaError, EL_Disk);
-				break;				
-			case ENOENT:
-				Error (FileNotFound, EC_MediaError, EL_Disk);
-				break;
-			default:
-				Error (GeneralFailure, EC_SystemFailure, EL_Unknown);
-				break;
-		}
-		EAX = (EAX & 0xffffff00L) | ExtendedError;
+	if ((handle = open(GetUnixFileName(pointer(DS,DX)), mode)) == -1) {
+		errno_to_doserr();
+		EAX = (EAX & 0xffffff00) | ExtendedError;
 		SetCflag;
 		return;
 	}		
 	Error (0,0,0);
-	EAX = (EAX & 0xffff0000L) | handle;
+	EAX = (EBX & 0xffff0000) | handle;
 	ResetCflag;
 }
 
 static void CloseFile(struct sigcontext_struct *context)
 {
 	if (close(BX) == -1) {
-		switch (errno) {
-			case EBADF:
-				Error (InvalidHandle, EC_AppError, EL_Unknown);
-				break;
-			default:
-				Error (GeneralFailure, EC_SystemFailure, EL_Unknown);
-				break;
-		}
-		EAX = (EAX & 0xffffff00L) | ExtendedError;
+		errno_to_doserr();
+		EAX = (EAX & 0xffffff00) | ExtendedError;
 		SetCflag;
 		return;
-	}		
+	}
 	Error (0,0,0);
-	EAX = (EAX & 0xffffff00L) | NoError;
+	EAX = (EAX & 0xffffff00) | NoError;
 	ResetCflag;
 }
 
@@ -596,13 +490,6 @@ static void RenameFile(struct sigcontext_struct *context)
 	ResetCflag;
 }
 
-static void GetTrueFileName(struct sigcontext_struct *context)
-{
-	fprintf(stderr,"int21: GetTrueFileName of %s\n", pointer(DS,SI) );
-	
-	strncpy(pointer(ES,DI), pointer(DS,SI), strlen(pointer(DS,SI)) & 0x7f);
-	ResetCflag;
-}
 
 static void MakeDir(struct sigcontext_struct *context)
 {
@@ -611,13 +498,13 @@ static void MakeDir(struct sigcontext_struct *context)
 	fprintf(stderr,"int21: makedir %s\n", pointer(DS,DX) );
 	
 	if ((dirname = GetUnixFileName( pointer(DS,DX) ))== NULL) {
-		EAX = (EAX & 0xffffff00L) | CanNotMakeDir;
+		EAX = (EAX & 0xffffff00) | CanNotMakeDir;
 		SetCflag;
 		return;
 	}
 
 	if (mkdir(dirname,0) == -1) {
-		EAX = (EAX & 0xffffff00L) | CanNotMakeDir;
+		EAX = (EAX & 0xffffff00) | CanNotMakeDir;
 		SetCflag;
 		return;
 	}
@@ -644,66 +531,22 @@ static void RemoveDir(struct sigcontext_struct *context)
 	fprintf(stderr,"int21: removedir %s\n", pointer(DS,DX) );
 
 	if ((dirname = GetUnixFileName( pointer(DS,DX) ))== NULL) {
-		EAX = (EAX & 0xffffff00L) | CanNotMakeDir;
+		EAX = (EAX & 0xffffff00) | CanNotMakeDir;
 		SetCflag;
 		return;
 	}
 
 /*
 	if (strcmp(unixname,DosDrives[drive].CurrentDirectory)) {
-		EAX = (EAX & 0xffffff00L) | CanNotRemoveCwd;
+		EAX = (EAX & 0xffffff00) | CanNotRemoveCwd;
 		SetCflag;
 	}
 */	
 	if (rmdir(dirname) == -1) {
-		EAX = (EAX & 0xffffff00L) | CanNotMakeDir; 
+		EAX = (EAX & 0xffffff00) | CanNotMakeDir; 
 		SetCflag;
 	} 
 	ResetCflag;
-}
-
-static void AllocateMemory(struct sigcontext_struct *context)
-{
-	char *ptr;
-	
-	fprintf(stderr,"int21: malloc %d bytes\n", BX * 0x10 );
-	
-/*	if ((ptr = (void *) memalign((size_t) (BX * 0x10), 0x10)) == NULL) {
-		EAX = (EAX & 0xffffff00L) | OutOfMemory;
-		EBX = (EBX & 0xffffff00L);
-		SetCflag;
-	}
-	fprintf(stderr,"int21: malloc (ptr = %d)\n", ptr );
-
-	EAX = (EAX & 0xffff0000L) | segment(ptr);
-*/
-	Barf(context);
-	SetCflag;
-}
-
-static void FreeMemory(struct sigcontext_struct *context)
-{
-	fprintf(stderr,"int21: freemem (ptr = %d)\n", ES * 0x10 );
-/*
-	free((void *)(ES * 0x10));
-*/	Barf(context);
-	ResetCflag;
-}
-
-static void ResizeMemoryBlock(struct sigcontext_struct *context)
-{
-	char *ptr;
-
-	fprintf(stderr,"int21: realloc (ptr = %d)\n", ES * 0x10 );
-	
-/*	if ((ptr = (void *) realloc((void *)(ES * 0x10), (size_t) BX * 0x10)) == NULL) {
-		EAX = (EAX & 0xffffff00L) | OutOfMemory;
-		EBX = (EBX & 0xffffff00L);
-		SetCflag;
-	}
-	EBX = (EBX & 0xffff0000L) | segment(ptr);
-*/	Barf(context);
-	SetCflag;
 }
 
 static void ExecProgram(struct sigcontext_struct *context)
@@ -711,29 +554,17 @@ static void ExecProgram(struct sigcontext_struct *context)
 	execl("wine", GetUnixFileName( pointer(DS,DX)) );
 }
 
-static void GetReturnCode(struct sigcontext_struct *context)
-{
-	EAX = (EAX & 0xffffff00L) | NoError; /* normal exit */
-}
-
 static void FindNext(struct sigcontext_struct *context)
 {
 	struct dosdirent *dp;
 	
-#ifdef DEBUG_FIND
-	fprintf(stderr, "FindNext: ");
-#endif
-	
-	dp = *(struct dosdirent **)(dta + 0x0d);
+	dp = (struct dosdirent *)(dta + 0x0d);
 
 	do {
 		if ((dp = DOS_readdir(dp)) == NULL) {
 			Error(NoMoreFiles, EC_MediaError , EL_Disk);
-			EAX = (EAX & 0xffffff00L) | NoMoreFiles;
+			EAX = (EAX & 0xffffff00) | NoMoreFiles;
 			SetCflag;
-#ifdef DEBUG_FIND
-			fprintf(stderr, "\n");
-#endif
 			return;
 		}
 	} while (*(dta + 0x0c) != dp->attribute);
@@ -743,14 +574,8 @@ static void FindNext(struct sigcontext_struct *context)
 	setdword(&dta[0x1a], dp->filesize);
 	strncpy(dta + 0x1e, dp->filename, 13);
 
-	EAX = (EAX & 0xffffff00L);
+	EAX = (EAX & 0xffffff00);
 	ResetCflag;
-
-#ifdef DEBUG_FIND
-	fprintf(stderr, 
-		"DTA: drive %c, template %11.11s, size %d, name %-13.13s\n",
-		dta[0] + 'A', &dta[1], *(LONG *)(&dta[0x1a]), &dta[0x1e]);
-#endif
 	return;
 }
 
@@ -797,16 +622,6 @@ static void FindFirst(struct sigcontext_struct *context)
 	FindNext(context);
 }
 
-static void GetSysVars(struct sigcontext_struct *context)
-{
-	/* return a null pointer, to encourage anyone who tries to
-	   use the pointer */
-
-	ES = 0x0;
-	EBX = (EBX & 0xffff0000L);
-	Barf(context);
-}
-
 static void GetFileDateTime(struct sigcontext_struct *context)
 {
 	char *filename;
@@ -814,7 +629,7 @@ static void GetFileDateTime(struct sigcontext_struct *context)
 	struct tm *now;
 
 	if ((filename = GetUnixFileName( pointer(DS,DX) ))== NULL) {
-		EAX = (EAX & 0xffffff00L) | FileNotFound;
+		EAX = (EAX & 0xffffff00) | FileNotFound;
 		SetCflag;
 		return;
 	}
@@ -822,8 +637,8 @@ static void GetFileDateTime(struct sigcontext_struct *context)
 	 	
 	now = localtime (&filestat.st_mtime);
 	
-	ECX = (ECX & 0xffff0000L) | ((now->tm_hour * 0x2000) + (now->tm_min * 0x20) + now->tm_sec/2);
-	EDX = (EDX & 0xffff0000L) | ((now->tm_year * 0x200) + (now->tm_mon * 0x20) + now->tm_mday);
+	ECX = (ECX & 0xffff0000) | ((now->tm_hour * 0x2000) + (now->tm_min * 0x20) + now->tm_sec/2);
+	EDX = (EDX & 0xffff0000) | ((now->tm_year * 0x200) + (now->tm_mon * 0x20) + now->tm_mday);
 
 	ResetCflag;
 }
@@ -854,14 +669,14 @@ static void CreateTempFile(struct sigcontext_struct *context)
 	handle = open(GetUnixFileName(temp), O_CREAT | O_TRUNC | O_RDWR);
 
 	if (handle == -1) {
-		EAX = (EAX & 0xffffff00L) | WriteProtected;
+		EAX = (EAX & 0xffffff00) | WriteProtected;
 		SetCflag;
 		return;
 	}
 
 	strcpy(pointer(DS,DX), temp);
 	
-	EAX = (EAX & 0xffff0000L) | handle;
+	EAX = (EAX & 0xffff0000) | handle;
 	ResetCflag;
 }
 
@@ -870,22 +685,12 @@ static void CreateNewFile(struct sigcontext_struct *context)
 	int handle;
 	
 	if ((handle = open(GetUnixFileName( pointer(DS,DX) ), O_CREAT | O_TRUNC | O_RDWR)) == -1) {
-		EAX = (EAX & 0xffffff00L) | WriteProtected;
+		EAX = (EAX & 0xffffff00) | WriteProtected;
 		SetCflag;
 		return;
 	}
 
-	EAX = (EAX & 0xffff0000L) | handle;
-	ResetCflag;
-}
-
-static void FileLock(struct sigcontext_struct *context)
-{
-	fprintf(stderr, "int21: flock()\n");
-}
-
-static void GetExtendedCountryInfo(struct sigcontext_struct *context)
-{
+	EAX = (EAX & 0xffff0000) | handle;
 	ResetCflag;
 }
 
@@ -893,13 +698,13 @@ static void GetCurrentDirectory(struct sigcontext_struct *context)
 {
 	int drive;
 
-	if ((EDX & 0xffL) == 0)
+	if ((EDX & 0xff) == 0)
 		drive = DOS_GetDefaultDrive();
 	else
-		drive = (EDX & 0xffL)-1;
+		drive = (EDX & 0xff)-1;
 
 	if (!DOS_ValidDrive(drive)) {
-		EAX = (EAX & 0xffffff00L) | InvalidDrive;
+		EAX = (EAX & 0xffffff00) | InvalidDrive;
 		SetCflag;
 		return;
 	}
@@ -908,24 +713,19 @@ static void GetCurrentDirectory(struct sigcontext_struct *context)
 	ResetCflag;
 }
 
-static void GetCurrentPSP(struct sigcontext_struct *context)
-{
-	Barf(context);
-}
-
 static void GetDiskSerialNumber(struct sigcontext_struct *context)
 {
 	int drive;
 	BYTE *dataptr = pointer(DS, DX);
 	DWORD serialnumber;
 	
-	if ((EBX & 0xffL) == 0)
+	if ((EBX & 0xff) == 0)
 		drive = DOS_GetDefaultDrive();
 	else
-		drive = (EBX & 0xffL) - 1;
+		drive = (EBX & 0xff) - 1;
 
 	if (!DOS_ValidDrive(drive)) {
-		EAX = (EAX & 0xffffff00L) |InvalidDrive;
+		EAX = (EAX & 0xffffff00) |InvalidDrive;
 		SetCflag;
 		return;
 	}
@@ -937,7 +737,7 @@ static void GetDiskSerialNumber(struct sigcontext_struct *context)
 	strncpy(dataptr + 6, DOS_GetVolumeLabel(drive), 8);
 	strncpy(dataptr + 0x11, "FAT16   ", 8);
 	
-	EAX = (EAX & 0xffffff00L);
+	EAX = (EAX & 0xffffff00);
 	ResetCflag;
 }
 
@@ -947,13 +747,13 @@ static void SetDiskSerialNumber(struct sigcontext_struct *context)
 	BYTE *dataptr = pointer(DS, DX);
 	DWORD serialnumber;
 
-	if ((EBX & 0xffL) == 0)
+	if ((EBX & 0xff) == 0)
 		drive = DOS_GetDefaultDrive();
 	else
-		drive = (EBX & 0xffL) - 1;
+		drive = (EBX & 0xff) - 1;
 
 	if (!DOS_ValidDrive(drive)) {
-		EAX = (EAX & 0xffffff00L) | InvalidDrive;
+		EAX = (EAX & 0xffffff00) | InvalidDrive;
 		SetCflag;
 		return;
 	}
@@ -962,7 +762,7 @@ static void SetDiskSerialNumber(struct sigcontext_struct *context)
 			(dataptr[4] << 24);
 
 	DOS_SetSerialNumber(drive, serialnumber);
-	EAX = (EAX & 0xffffff00L) | 1L;
+	EAX = (EAX & 0xffffff00) | 1L;
 	ResetCflag;
 }
 
@@ -1003,11 +803,11 @@ static void FindFirstFCB(struct sigcontext_struct *context)
 				strncpy(dta, DOS_GetVolumeLabel(drive), 8);
 			*(dta + 0x0b) = FA_DIREC;
 
-			EAX = (EAX & 0xffffff00L);
+			EAX = (EAX & 0xffffff00);
 			return;
 		}
 	}
-	Barf(context);
+	IntBarf(0x21, context);
 }
 
 static void DeleteFileFCB(struct sigcontext_struct *context)
@@ -1033,7 +833,7 @@ static void DeleteFileFCB(struct sigcontext_struct *context)
 
 	if ((dp = DOS_opendir(temp)) == NULL) {
 		Error(InvalidDrive, EC_MediaError , EL_Disk);
-		EAX = (EAX & 0xffffff00L) | 0xffL;
+		EAX = (EAX & 0xffffff00) | 0xffL;
 		return;
 	}
 
@@ -1049,7 +849,7 @@ static void DeleteFileFCB(struct sigcontext_struct *context)
 		/* unlink(GetUnixFileName(temp)); */
 	}
 	DOS_closedir(dp);
-	EAX = (EAX & 0xffffff00L);
+	EAX = (EAX & 0xffffff00);
 }
 
 static void RenameFileFCB(struct sigcontext_struct *context)
@@ -1075,7 +875,7 @@ static void RenameFileFCB(struct sigcontext_struct *context)
 
 	if ((dp = DOS_opendir(temp)) == NULL) {
 		Error(InvalidDrive, EC_MediaError , EL_Disk);
-		EAX = (EAX & 0xffffff00L) | 0xffL;
+		EAX = (EAX & 0xffffff00) | 0xffL;
 		return;
 	}
 
@@ -1094,7 +894,7 @@ static void RenameFileFCB(struct sigcontext_struct *context)
 		fprintf(stderr, "int21: renamefile %s -> %s\n", oldname, newname);
 	}
 	DOS_closedir(dp);
-	EAX = (EAX & 0xffffff00L);
+	EAX = (EAX & 0xffffff00);
 }
 
 /************************************************************************/
@@ -1152,7 +952,7 @@ int do_int21(struct sigcontext_struct * context)
 	  case 0x28: /* RANDOM BLOCK WRITE TO FCB FILE */
 	  case 0x29: /* PARSE FILENAME INTO FCB */
 	  case 0x2e: /* SET VERIFY FLAG */
-	    Barf(context);
+	    IntBarf(0x21, context);
 	    break;
 
 	  case 0x18: /* NULL FUNCTIONS FOR CP/M COMPATIBILITY */
@@ -1165,9 +965,8 @@ int do_int21(struct sigcontext_struct * context)
 			"SWITCHAR" - SET SWITCH CHARACTER
 			"AVAILDEV" - SPECIFY \DEV\ PREFIX USE */
 	  case 0x54: /* GET VERIFY FLAG */
-	  case 0x61: /* UNUSED */
 	  case 0x6b: /* NULL FUNCTION */
-            Barf(context);
+            IntBarf(0x21, context);
 	    EAX &= 0xff00;
 	    break;
 	
@@ -1176,8 +975,15 @@ int do_int21(struct sigcontext_struct * context)
             break;
 
 	  case 0x0e: /* SELECT DEFAULT DRIVE */
-	    SetDefaultDrive(context);
-	    break;
+		if (!DOS_ValidDrive(EDX & 0xff)) {
+			Error (InvalidDrive, EC_MediaError, EL_Disk);
+			return;
+		} else {
+			DOS_SetDefaultDrive(EDX & 0xff);
+			EAX = (EAX &0xffffff00) | MAX_DOS_DRIVES; 
+			Error(0,0,0);
+		}
+		break;
 
 	  case 0x11: /* FIND FIRST MATCHING FILE USING FCB */
             FindFirstFCB(context);
@@ -1192,7 +998,8 @@ int do_int21(struct sigcontext_struct * context)
             break;
 
 	  case 0x19: /* GET CURRENT DEFAULT DRIVE */
-	    GetDefaultDrive(context);
+		EAX = (EAX & 0xffffff00) | DOS_GetDefaultDrive();
+		Error (0,0,0);
 	    break;
 	    
 	  case 0x1a: /* SET DISK TRANSFER AREA ADDRESS */
@@ -1226,17 +1033,17 @@ int do_int21(struct sigcontext_struct * context)
 
 	  case 0x2f: /* GET DISK TRANSFER AREA ADDRESS */
             ES = segment(dta);
-            EBX = (EBX & 0xffff0000L) | offset(dta);
+            EBX = (EBX & 0xffff0000) | offset(dta);
             break;
             
 	  case 0x30: /* GET DOS VERSION */
-	    EAX = (EAX & 0xffff0000L) | DOSVERSION;
-	    EBX = (EBX & 0xffff0000L) | 0x0012;     /* 0x123456 is Wine's serial # */
-	    ECX = (ECX & 0xffff0000L) | 0x3456;
+	    EAX = (EAX & 0xffff0000) | DOSVERSION;
+	    EBX = (EBX & 0xffff0000) | 0x0012;     /* 0x123456 is Wine's serial # */
+	    ECX = (ECX & 0xffff0000) | 0x3456;
 	    break;
 
 	  case 0x31: /* TERMINATE AND STAY RESIDENT */
-            Barf(context);
+            IntBarf(0x21, context);
 	    break;
 
 	  case 0x32: /* GET DOS DRIVE PARAMETER BLOCK FOR SPECIFIC DRIVE */
@@ -1246,7 +1053,7 @@ int do_int21(struct sigcontext_struct * context)
 	  case 0x33: /* MULTIPLEXED */
 	    switch (EAX & 0xff) {
 	      case 0x00: /* GET CURRENT EXTENDED BREAK STATE */
-		if (!(EAX & 0xffL)) 
+		if (!(EAX & 0xff)) 
 		    EDX &= 0xff00L;
 		break;
 
@@ -1258,7 +1065,7 @@ int do_int21(struct sigcontext_struct * context)
 		break;
 
 	      case 0x05: /* GET BOOT DRIVE */
-		EDX = (EDX & 0xff00L) | 2;
+		EDX = (EDX & 0xff00) | 2;
 		/* c: is Wine's bootdrive */
 		break;
 				
@@ -1268,13 +1075,14 @@ int do_int21(struct sigcontext_struct * context)
 		break;
 
 	      default:
-		Barf(context);
+		IntBarf(0x21, context);
 		break;			
 	    }
 	    break;	
 	    
 	  case 0x34: /* GET ADDRESS OF INDOS FLAG */
-	    GetInDosFlag(context);
+		ES  = (ES & 0xffff0000) | segment(heap->InDosFlag);
+		EBX = (EBX & 0xffff0000) | offset(heap->InDosFlag);
 	    break;
 
 	  case 0x35: /* GET INTERRUPT VECTOR */
@@ -1328,21 +1136,29 @@ int do_int21(struct sigcontext_struct * context)
 	    break;
 	
 	  case 0x41: /* "UNLINK" - DELETE FILE */
-	    UnlinkFile(context);
-	    break;
+		if (unlink( GetUnixFileName( pointer(DS,DX)) ) == -1) {
+			errno_to_doserr();
+			EAX = (EAX & 0xffffff00) | ExtendedError;
+			SetCflag;
+			return;
+		}		
+		Error(0,0,0);
+		ResetCflag;
+		break;
 	
 	  case 0x42: /* "LSEEK" - SET CURRENT FILE POSITION */
 	    SeekFile(context);
 	    break;
 	    
 	  case 0x43: /* FILE ATTRIBUTES */
-	    switch (EAX & 0xffL) 
+	    switch (EAX & 0xff) 
 	    {
 	      case 0x00:
-		GetFileAttributes(context);
+			EAX &= 0xfffff00L;
+			ResetCflag;
 		break;
 	      case 0x01:
-		SetFileAttributes(context);
+			ResetCflag;
 		break;
 	    }
 	    break;
@@ -1359,33 +1175,27 @@ int do_int21(struct sigcontext_struct * context)
                 break;
                 
 	      default:
-                Barf(context);
+                IntBarf(0x21, context);
 		break;
 	    }
 	    break;
 
-
 	  case 0x45: /* "DUP" - DUPLICATE FILE HANDLE */
 	  case 0x46: /* "DUP2", "FORCEDUP" - FORCE DUPLICATE FILE HANDLE */
-	    DupeFileHandle(context);
+		EAX = (EAX & 0xffff0000) | dup(BX);
+		ResetCflag;
 	    break;
 
 	  case 0x47: /* "CWD" - GET CURRENT DIRECTORY */	
 	    GetCurrentDirectory(context);
-	    EAX = (EAX & 0xffff0000L) | 0x0100; 
+	    EAX = (EAX & 0xffff0000) | 0x0100; 
 	    /* intlist: many Microsoft products for Windows rely on this */
 	    break;
 	
 	  case 0x48: /* ALLOCATE MEMORY */
-	    AllocateMemory(context);
-	    break;
-	
 	  case 0x49: /* FREE MEMORY */
-	    FreeMemory(context);
-	    break;
-	
 	  case 0x4a: /* RESIZE MEMORY BLOCK */
-	    ResizeMemoryBlock(context);
+	    IntBarf(0x21, context);
 	    break;
 	
 	  case 0x4b: /* "EXEC" - LOAD AND/OR EXECUTE PROGRAM */
@@ -1393,11 +1203,11 @@ int do_int21(struct sigcontext_struct * context)
 	    break;		
 	
 	  case 0x4c: /* "EXIT" - TERMINATE WITH RETURN CODE */
-	    exit(EAX & 0xffL);
+	    exit(EAX & 0xff);
 	    break;
 		
 	  case 0x4d: /* GET RETURN CODE */
-	    GetReturnCode(context);
+	    EAX = (EAX & 0xffffff00) | NoError; /* normal exit */
 	    break;
 
 	  case 0x4e: /* "FINDFIRST" - FIND FIRST MATCHING FILE */
@@ -1409,7 +1219,9 @@ int do_int21(struct sigcontext_struct * context)
 	    break;
 			
 	  case 0x52: /* "SYSVARS" - GET LIST OF LISTS */
-	    GetSysVars(context);
+		ES = 0x0;
+		EBX = (EBX & 0xffff0000);
+		IntBarf(0x21, context);
 	    break;
 		
 	  case 0x56: /* "RENAME" - RENAME FILE */
@@ -1417,7 +1229,7 @@ int do_int21(struct sigcontext_struct * context)
 	    break;
 	
 	  case 0x57: /* FILE DATE AND TIME */
-	    switch (EAX & 0xffL) 
+	    switch (EAX & 0xff) 
 	    {
 	      case 0x00:
 		GetFileDateTime(context);
@@ -1429,10 +1241,10 @@ int do_int21(struct sigcontext_struct * context)
 	    break;
 
 	  case 0x58: /* GET OR SET MEMORY/UMB ALLOCATION STRATEGY */
-	    switch (EAX & 0xffL) 
+	    switch (EAX & 0xff) 
 	    {
 	      case 0x00:
-		EAX = (EAX & 0xffffff00L) | 0x01L;
+		EAX = (EAX & 0xffffff00) | 0x01L;
 		break;
 	      case 0x02:
 		EAX &= 0xff00L;
@@ -1453,24 +1265,24 @@ int do_int21(struct sigcontext_struct * context)
 	    break;
 	
 	  case 0x5c: /* "FLOCK" - RECORD LOCKING */
-	    FileLock(context);
+		IntBarf(0x21, context);
 	    break;	
 
 	  case 0x5d: /* NETWORK */
 	  case 0x5e:
 	    /* network software not installed */
-	    EAX = (EAX & 0xfffff00L) | NoNetwork;
+	    EAX = (EAX & 0xfffff00) | NoNetwork;
 	    SetCflag;
 	    break;
 	
 	  case 0x5f: /* NETWORK */
-	    switch (EAX & 0xffL) 
+	    switch (EAX & 0xff) 
 	    {
 	      case 0x07: /* ENABLE DRIVE */
-		if (!DOS_EnableDrive(EDX & 0xffL)) 
+		if (!DOS_EnableDrive(EDX & 0xff)) 
 		{
 		    Error(InvalidDrive, EC_MediaError , EL_Disk);
-		    EAX = (EAX & 0xfffff00L) | InvalidDrive;
+		    EAX = (EAX & 0xfffff00) | InvalidDrive;
 		    SetCflag;
 		    break;
 		} 
@@ -1480,10 +1292,10 @@ int do_int21(struct sigcontext_struct * context)
 		    break;
 		}
 	      case 0x08: /* DISABLE DRIVE */
-		if (!DOS_DisableDrive(EDX & 0xffL)) 
+		if (!DOS_DisableDrive(EDX & 0xff)) 
 		{
 		    Error(InvalidDrive, EC_MediaError , EL_Disk);
-		    EAX = (EAX & 0xfffff00L) | InvalidDrive;
+		    EAX = (EAX & 0xfffff00) | InvalidDrive;
 		    SetCflag;
 		    break;
 		} 
@@ -1494,26 +1306,27 @@ int do_int21(struct sigcontext_struct * context)
 		}
 	      default:
 		/* network software not installed */
-		EAX = (EAX & 0xfffff00L) | NoNetwork; 
+		EAX = (EAX & 0xfffff00) | NoNetwork; 
 		SetCflag;
 		break;
 	    }
 	    break;
 
 	  case 0x60: /* "TRUENAME" - CANONICALIZE FILENAME OR PATH */
-	    GetTrueFileName(context);
+		strncpy(pointer(ES,DI), pointer(DS,SI), strlen(pointer(DS,SI)) & 0x7f);
+		ResetCflag;
 	    break;
 
+	  case 0x61: /* UNUSED */
 	  case 0x62: /* GET CURRENT PSP ADDRESS */
-	    GetCurrentPSP(context);
-	    break;
-	
+	  case 0x63: /* UNUSED */
+	  case 0x64: /* OS/2 DOS BOX */
 	  case 0x65: /* GET EXTENDED COUNTRY INFORMATION */
-	    GetExtendedCountryInfo(context);
+		IntBarf(0x21, context);
 	    break;
 	
 	  case 0x66: /* GLOBAL CODE PAGE TABLE */
-	    switch (EAX & 0xffL) 
+	    switch (EAX & 0xff) 
 	    {
 	      case 0x01:
 		EBX = CodePage;
@@ -1536,7 +1349,7 @@ int do_int21(struct sigcontext_struct * context)
 	    break;		
 	
 	  case 0x69: /* DISK SERIAL NUMBER */
-	    switch (EAX & 0xffL) 
+	    switch (EAX & 0xff) 
 	    {
 	      case 0x00:
 		GetDiskSerialNumber(context);
@@ -1551,9 +1364,8 @@ int do_int21(struct sigcontext_struct * context)
 	    ResetCflag;
 	    break;		
 
-
 	  default:
-            Barf(context);
+            IntBarf(0x21, context);
 	    return 1;
 	}
     }
@@ -1567,4 +1379,20 @@ void DOS3Call()
 {
     do_int21((struct sigcontext_struct *) _CONTEXT);
     ReturnFromRegisterFunc();
+}
+
+void INT21_Init(void)
+{
+	int handle;
+	MDESC *DosHeapDesc;
+
+	if ((handle = GlobalAlloc(GMEM_FIXED,sizeof(struct DosHeap))) == 0)
+		myerror("out of memory");
+
+	heap = (struct DosHeap *) GlobalLock(handle);
+	HEAP_Init(&DosHeapDesc, heap, sizeof(struct DosHeap));
+
+	dta = heap->dta;
+	heap->InDosFlag = 0;
+	strcpy(heap->biosdate, "01/01/80");
 }

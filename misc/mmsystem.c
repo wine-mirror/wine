@@ -8,6 +8,7 @@ static char Copyright[] = "Copyright  Martin Ayotte, 1993";
 
 #include "stdio.h"
 #include "win.h"
+#include "driver.h"
 #include "mmsystem.h"
 
 static WORD		mciActiveDev = 0;
@@ -17,7 +18,10 @@ UINT WINAPI midiGetErrorText(UINT uError, LPSTR lpText, UINT uSize);
 UINT WINAPI waveGetErrorText(UINT uError, LPSTR lpText, UINT uSize);
 
 
-int MCI_LibMain(HANDLE hInstance, WORD wDataSeg,
+/**************************************************************************
+* 				MMSYSTEM_WEP		[MMSYSTEM.1]
+*/
+int MMSYSTEM_WEP(HANDLE hInstance, WORD wDataSeg,
 		 WORD cbHeapSize, LPSTR lpCmdLine)
 {
 	printf("MMSYSTEM DLL INIT ... hInst=%04X \n", hInstance);
@@ -29,7 +33,7 @@ int MCI_LibMain(HANDLE hInstance, WORD wDataSeg,
 */
 BOOL WINAPI sndPlaySound(LPCSTR lpszSoundName, UINT uFlags)
 {
-	printf("sndPlaySound // lpszSoundName='%s' uFlags=%04X !\n", 
+	printf("EMPTY STUB !!! sndPlaySound // SoundName='%s' uFlags=%04X !\n", 
 										lpszSoundName, uFlags);
 	return 0;
 }
@@ -44,12 +48,105 @@ WORD WINAPI mmsystemGetVersion()
 }
 
 /**************************************************************************
+* 				DriverProc	[MMSYSTEM.6]
+*/
+LRESULT DriverProc(DWORD dwDevID, HDRVR hDriv, WORD wMsg, 
+						DWORD dwParam1, DWORD dwParam2)
+{
+	return DrvDefDriverProc(dwDevID, hDriv, wMsg, dwParam1, dwParam2);
+}
+
+/**************************************************************************
 * 				OutputDebugStr		[MMSYSTEM.30]
 */
 void WINAPI OutputDebugStr(LPCSTR str)
 {
-	printf("OutputDebugStr('%s');\n", str);
+	printf("EMPTY STUB !!! OutputDebugStr('%s');\n", str);
 }
+
+/**************************************************************************
+* 				DriverCallback	[MMSYSTEM.31]
+*/
+BOOL DriverCallback(DWORD dwCallBack, UINT uFlags, HANDLE hDev, 
+		WORD wMsg, DWORD dwUser, DWORD dwParam1, DWORD dwParam2)
+{
+	printf("EMPTY STUB !!! DriverCallback() !\n");
+}
+
+/**************************************************************************
+* 				JoyGetNumDevs		[MMSYSTEM.101]
+*/
+WORD JoyGetNumDevs()
+{
+	printf("EMPTY STUB !!! JoyGetNumDevs();\n");
+	return 0;
+}
+
+/**************************************************************************
+* 				JoyGetDevCaps		[MMSYSTEM.102]
+*/
+WORD JoyGetDevCaps(WORD wID, LPJOYCAPS lpCaps, WORD wSize)
+{
+	printf("EMPTY STUB !!! JoyGetDevCaps(%04X, %08X, %d);\n", 
+										wID, lpCaps, wSize);
+	return MMSYSERR_NODRIVER;
+}
+
+/**************************************************************************
+* 				JoyGetPos			[MMSYSTEM.103]
+*/
+WORD JoyGetPos(WORD wID, LPJOYINFO lpInfo)
+{
+	printf("EMPTY STUB !!! JoyGetPos(%04X, %08X);\n", wID, lpInfo);
+	return MMSYSERR_NODRIVER;
+}
+
+/**************************************************************************
+* 				JoyGetThreshold		[MMSYSTEM.104]
+*/
+WORD JoyGetThreshold(WORD wID, LPWORD lpThreshold)
+{
+	printf("EMPTY STUB !!! JoyGetThreshold(%04X, %08X);\n", wID, lpThreshold);
+	return MMSYSERR_NODRIVER;
+}
+
+/**************************************************************************
+* 				JoyReleaseCapture	[MMSYSTEM.105]
+*/
+WORD JoyReleaseCapture(WORD wID)
+{
+	printf("EMPTY STUB !!! JoyReleaseCapture(%04X);\n", wID);
+	return MMSYSERR_NODRIVER;
+}
+
+/**************************************************************************
+* 				JoySetCapture		[MMSYSTEM.106]
+*/
+WORD JoySetCapture(HWND hWnd, WORD wID, WORD wPeriod, BOOL bChanged)
+{
+	printf("EMPTY STUB !!! JoySetCapture(%04X, %04X, %d, %d);\n", 
+							hWnd, wID, wPeriod, bChanged);
+	return MMSYSERR_NODRIVER;
+}
+
+/**************************************************************************
+* 				JoySetThreshold		[MMSYSTEM.107]
+*/
+WORD JoySetThreshold(WORD wID, WORD wThreshold)
+{
+	printf("EMPTY STUB !!! JoySetThreshold(%04X, %d);\n", wID, wThreshold);
+	return MMSYSERR_NODRIVER;
+}
+
+/**************************************************************************
+* 				JoySetCalibration	[MMSYSTEM.109]
+*/
+WORD JoySetCalibration(WORD wID)
+{
+	printf("EMPTY STUB !!! JoySetCalibration(%04X);\n", wID);
+	return MMSYSERR_NODRIVER;
+}
+
 
 /**************************************************************************
 * 				auxGetNumDevs		[MMSYSTEM.350]
@@ -1509,6 +1606,17 @@ UINT WINAPI mmioCreateChunk(HMMIO hmmio, MMCKINFO FAR* lpck, UINT uFlags)
 	return 0;
 }
 
+
+/**************************************************************************
+* 				mmioRename			[MMSYSTEM.1226]
+*/
+UINT WINAPI mmioRename(LPCSTR szFileName, LPCSTR szNewFileName,
+     MMIOINFO FAR* lpmmioinfo, DWORD dwRenameFlags)
+{
+	printf("mmioRename('%s', '%s', %08X, %08X);\n",
+			szFileName, szNewFileName, lpmmioinfo, dwRenameFlags);
+	return 0;
+}
 
 /**************************************************************************
 * 				DrvOpen				[MMSYSTEM.1100]

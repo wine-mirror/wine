@@ -69,7 +69,6 @@ static void NC_AdjustRect( LPRECT rect, DWORD style, BOOL menu, DWORD exStyle )
 
     if ((style & WS_CAPTION) == WS_CAPTION)
 	rect->top -= SYSMETRICS_CYCAPTION - 1;
-
     if (menu) rect->top -= SYSMETRICS_CYMENU + 1;
 
     if (style & WS_VSCROLL) rect->right  += SYSMETRICS_CXVSCROLL;
@@ -592,15 +591,24 @@ void NC_DoNCPaint( HWND hwnd, HRGN hrgn, BOOL active, BOOL suppress_menupaint )
 
     if (wndPtr->wIDmenu != 0 &&
 	(wndPtr->dwStyle & WS_CHILD) != WS_CHILD) {
-	int oldbottom;
-	CopyRect(&rect2, &rect);
-	/* Default MenuBar height */
-	oldbottom = rect2.bottom = rect2.top + SYSMETRICS_CYMENU; 
-	StdDrawMenuBar(hdc, &rect2, (LPPOPUPMENU)GlobalLock(wndPtr->wIDmenu),
-		       suppress_menupaint);
-	GlobalUnlock(wndPtr->wIDmenu);
-	/* Reduce ClientRect according to MenuBar height */
-	rect.top += rect2.bottom - oldbottom;
+	LPPOPUPMENU	lpMenu = (LPPOPUPMENU) GlobalLock(wndPtr->wIDmenu);
+	if (lpMenu != NULL) {
+		int oldHeight;
+		CopyRect(&rect2, &rect);
+		/* Default MenuBar height */
+		if (lpMenu->Height == 0) lpMenu->Height = SYSMETRICS_CYMENU + 1;
+		oldHeight = lpMenu->Height;
+		rect2.bottom = rect2.top + oldHeight; 
+/*		printf("NC_DoNCPaint // menubar old Height=%d\n", oldHeight); */
+		StdDrawMenuBar(hdc, &rect2, lpMenu, suppress_menupaint);
+		GlobalUnlock(wndPtr->wIDmenu);
+/*		printf("NC_DoNCPaint // menubar new Height=%d\n", lpMenu->Height); */
+		if (oldHeight != lpMenu->Height) {
+			/* Reduce ClientRect according to MenuBar height */
+			wndPtr->rectClient.top -= oldHeight;
+			wndPtr->rectClient.top += lpMenu->Height;
+			}
+		}
 	}
 
     if (wndPtr->dwStyle & (WS_VSCROLL | WS_HSCROLL)) {
@@ -611,7 +619,7 @@ void NC_DoNCPaint( HWND hwnd, HRGN hrgn, BOOL active, BOOL suppress_menupaint )
 	    	rect.top, rect.right, bottom); 
 	    if (wndPtr->dwStyle & WS_CAPTION) rect.top += SYSMETRICS_CYSIZE;
 	    if (wndPtr->wIDmenu != 0 && (wndPtr->dwStyle & WS_CHILD) != WS_CHILD) 
-	    	rect2.top += SYSMETRICS_CYMENU;
+	    	rect2.top += SYSMETRICS_CYMENU + 1;
  	    StdDrawScrollBar(hwnd, hdc, SB_VERT, &rect2, (LPHEADSCROLL)wndPtr->VScroll);
  	    }
 	if (wndPtr->dwStyle & WS_HSCROLL) {

@@ -62,7 +62,7 @@ HANDLE RemoveProp(HWND hWnd, LPSTR lpStr)
 				((LPPROPENTRY)lpProp->lpNextProp)->lpPrevProp = 
 											lpProp->lpPrevProp;
 			if (lpProp->PropName != NULL) free(lpProp->PropName);
-			free(lpProp);
+			GlobalFree(lpProp);
 			GlobalUnlock(wndPtr->hProp);
 			return hOldData;
 			}

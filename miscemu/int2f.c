@@ -3,14 +3,6 @@
 #include "msdos.h"
 #include "wine.h"
 
-static void Barf(struct sigcontext_struct *context)
-{
-	fprintf(stderr, "int2f: unknown/not implemented parameters:\n");
-	fprintf(stderr, "int2f: AX %04x, BX %04x, CX %04x, DX %04x, "
-	       "SI %04x, DI %04x, DS %04x, ES %04x\n",
-	       AX, BX, CX, DX, SI, DI, DS, ES);
-}
-
 int do_int2f(struct sigcontext_struct *context)
 {
 	switch(context->sc_eax & 0xffff)
@@ -20,7 +12,7 @@ int do_int2f(struct sigcontext_struct *context)
 		break;
 
 	default:
-		Barf(context);
+		IntBarf(0x2f, context);
 	};
 	return 1;
 }

@@ -8,7 +8,7 @@ static char Copyright[] = "Copyright  Robert J. Amstadt, 1993";
 #include "wine.h"
 #include "segmem.h"
 #include <setjmp.h>
-
+#include "dlls.h"
 extern SEGDESC Segments[];
 extern unsigned short IF1632_Saved16_ss;
 extern unsigned long  IF1632_Saved16_ebp;

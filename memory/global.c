@@ -187,7 +187,7 @@ GlobalAlloc(unsigned int flags, unsigned long size)
      */
     if (size > 0x8000 || !(flags & GLOBAL_FLAGS_MOVEABLE))
     {
-	int segments = (size >> 16) + 1;
+	int segments = ((size - 1) >> 16) + 1;
 
 	g = GlobalGetFreeSegments(flags, segments);
 	if (g == NULL)
@@ -666,14 +666,25 @@ GlobalReAlloc(unsigned int block, unsigned int new_size, unsigned int flags)
 	else if (n_segments < g->length)
 	{
 	    GDESC *g_free;
+	    int old_length = g->length;
 	    
 	    g_free = g;
 	    for (i = 0; i < n_segments; i++)
 	    {
 		if (g_free->sequence != i + 1)
 		    return 0;
+		g_free->length = n_segments;
 		g_free = g_free->next;
 	    }
+
+	    for ( ; i < old_length; i++)
+	    {
+		g_free->length = 0x10000;
+		g_free->sequence = -1;
+		g_free = g_free->next;
+	    }
+
+	    return g->handle;
 	}
 	
 	/*

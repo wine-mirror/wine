@@ -1,3 +1,124 @@
+Tue Jun  7 08:41:27 1994  Bob Amstadt  (bob@pooh)
+
+	* loader/selector.c (FixupFunctionPrologs): 
+	New function to fixup loaded DLL function prologs.  It replaces the
+	do nothing code with code that loads DS with the appropriate data
+	segment for the DLL.
+
+	* misc/cursor.c (LoadCursor): 
+	Disabled cursor loading from .EXE or .DLL.  The code needs to handle
+	the possibility of multiple cursors in a single directory.  Also,
+	it should check to see if the cursor is the right size.
+
+	* objects/font.c (EnumFonts): 
+	Checked for lpLogFontList[i] == NULL
+
+	* objects/gdiobj.c (SetObjectOwner): 
+	Removed stub.  Replaced with simple return in gdi.spec.  This
+	function is not defined for the retail version of Windows.
+
+	* memory/heap.c (WIN16_LocalHandleDelta): 
+	New function.  This is really a dummy that imitates the proper
+	return values.
+
+	* loader/library.c (GetProcAddress): 
+	Fixed definition of IS_BUILTIN_DLL() macro.
+
+Mon Jun  6 18:15:40 1994  Bob Amstadt  (bob@pooh)
+
+	* miscemu/int21.c (SeekFile): 
+	Needed to return current position in DX:AX.
+
+	* windows/utility.c (windows_wsprintf): 
+	Added support for '#' in format, and fixed bug with "ptr" being
+	incremented too many times.
+
+	* miscemu/int21.c (OpenExistingFile): 
+	Add code to handle opening files read-only and write-only.
+
+	* loader/wine.c:
+	Segment fixups now done in LoadImage instead of _WinMain.  This
+	is necessary to support LoadLibrary().
+
+Sun Jun  5 17:34:24 1994  Erik Bos (erik@hacktic.nl)
+
+	* [loader/*]
+		- fixed: GetModuleHandle() sometimes returned
+		  a wrong handle.
+		- don't init dlls when cs == 0 (lzexpand, doesn't
+		  seem to have a init function)
+		- LoadLibrary & LoadImage now return error instead
+		  of stopping wine.
+		- moved most of NE-functions into one file.
+		- LoadLibrary() uses w_files list instead of its
+		  own list.
+		- NE exectables are now fixed-up and initialised when
+		  loaded instead of only once before calling InitTask.
+
+	* [miscemu/int15.c] [miscemu/int31.c]
+	Added.	
+
+	* [loader/selector.c]
+	Stubs added for {Get|Set}SelectorLimit(), {Get|Set}SelectorBase().
+
+	* [misc/main.c]
+	Stub added for IsRomModule().
+
+	* [miscemu/int21.c]
+	Some cleanup, added heap for returning data.
+
+Jun 6, 94 martin2@trgcorp.solucorp.qc.ca (Martin Ayotte)
+
+	* [tools/.c]
+	Change MAX_ORDINALS	define to higher value, 1299 entries.
+	(MMSYSTEM doesn't have succesive numbers, some are around 1200).
+
+	* [windows/utility.c]
+	Bug fix in windows_wsprintf(), (twice increments ...).
+
+	* [windows/winpos.c]
+	Bug fix in SetWindowPos(), redraw was done if flag
+		was set to SWP_NOREDRAW while SWP_SHOWWINDOW).
+
+	* [misc/message.c] [controls/combo.c]
+	Add an InvalidateRect() in WM_SHOWWINDOW to statisfy the new 'saveunder'.
+
+	* [windows/winpos.c]
+	Bug fix in SetWindowPos(), (redraw was done if SWP_NOREDRAW set).
+
+	* [windows/win.c]
+	In CreateWindowEx(), do SetMenu() calls after window creation,
+		just before sending to WM_NCCALCSIZE.
+
+	* [controls/menu.c]
+	In function SetMenu(), now use SetWindowPos() with 
+		flags SWP_FRAMECHANGED to readjust menu area.
+	Function MenuBarCalcSize() redone.
+
+Sun May 29 11:08:24 1994  David B. Thomas  (dt@yenta.abq.nm.us)
+
+        * [objects/text.c]
+        Fixed problems associated with DT_WORDBREAK flag.  String length
+        was not being properly decremented when lines were folded, and
+        wrapping was not performed when DT_NOCLIP and DT_NOPREFIX were
+        both on in addition to DT_WORDBREAK.  Windows does wrapping in
+        this case, and now so does wine.
+
+Sun Jun  5 19:17:49 1994  Olaf Flebbe  (olaf@dragon)
+
+        * [edit.c]
+        cp1 was uninitialized iff lineno == 0
+
+        *  FindFile tests for existance of file even if a full
+           filename was supplied. What about unix file names?
+
+        * [controls/listbox ]
+        wndPtr was uninitialized for LB_SETTOPINDEX
+
+        * [misc/property.c]     
+        Do not free lpProp. Is it really allocated by malloc?
+	{edited by Bob Amstadt: changed free() to GlobalFree()}
+
 ----------------------------------------------------------------------
 Sat May 28 12:03:23 1994  Bob Amstadt  (bob@pooh)
 

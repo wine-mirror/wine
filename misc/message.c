@@ -270,14 +270,21 @@ LONG SystemMessageBoxProc(HWND hWnd, WORD message, WORD wParam, LONG lParam)
 			lpmb->rectStr.left += 64;
 			}
 	    break;
+	case WM_SHOWWINDOW:
+		if (!(wParam == 0 && lParam == 0L)) {
+			InvalidateRect(hWnd, NULL, TRUE);
+			}
+	    break;
 	case WM_PAINT:
 #ifdef DEBUG_MSGBOX
-		printf("MessageBox WM_PAINT !\n");
+		printf("MessageBox WM_PAINT hWnd=%04X !\n", hWnd);
 #endif
 		lpmb = MsgBoxGetStorageHeader(hWnd);
 		if (lpmb == NULL) break;
-		CopyRect(&rect, &lpmb->rectStr);
 		hDC = BeginPaint(hWnd, &ps);
+		GetClientRect(hWnd, &rect);
+		FillRect(hDC, &rect, GetStockObject(WHITE_BRUSH));
+		CopyRect(&rect, &lpmb->rectStr);
 		OldTextColor = SetTextColor(hDC, 0x00000000);
 		if (lpmb->hIcon) 
 			DrawIcon(hDC, lpmb->rectIcon.left,

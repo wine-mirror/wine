@@ -21,23 +21,30 @@ static char Copyright[] = "Copyright  Martin Ayotte, 1994";
 #include "dlls.h"
 #include "task.h"
 
-typedef struct {
-	LPSTR		ModuleName;
-	LPSTR		FileName;
-	WORD		Count;
-	HANDLE		hModule;
-	HINSTANCE	hInst;
-	void		*lpPrevModule;
-	void		*lpNextModule;
-} MODULEENTRY;
-typedef MODULEENTRY *LPMODULEENTRY;
-
-static LPMODULEENTRY lpModList = NULL;
-
-extern struct  w_files * wine_files;
+extern struct  w_files *wine_files;
 extern struct dll_name_table_entry_s dll_builtin_table[];
 
-#define IS_BUILTIN_DLL(handle) ((handle >> 16) == 0xff) 
+#define IS_BUILTIN_DLL(handle) ((handle >> 8) == 0xff) 
+
+/**********************************************************************/
+
+void ExtractDLLName(char *libname, char *temp)
+{
+    int i;
+    
+    strcpy(temp, libname);
+    if (strchr(temp, '\\') || strchr(temp, '/'))
+	for (i = strlen(temp) - 1; i ; i--) 
+		if (temp[i] == '\\' || temp[i] == '/') {
+			strcpy(temp, temp + i + 1);
+			break;
+		}
+    for (i = strlen(temp) - 1; i ; i--) 
+	if (temp[i] == '.') {
+		temp[i] = 0;
+		break;
+	}
+}
 
 /**********************************************************************
  *				GetModuleHandle	[KERNEL.47]
@@ -46,7 +53,28 @@ HANDLE GetModuleHandle(LPSTR lpModuleName)
 {
 	register struct w_files *w = wine_files;
 	int 	i;
- 	printf("GetModuleHandle('%x');\n", lpModuleName);
+	if ((int) lpModuleName & 0xffff0000)
+	 	printf("GetModuleHandle('%s');\n", lpModuleName);
+	else
+	 	printf("GetModuleHandle('%x');\n", lpModuleName);
+
+ 	printf("GetModuleHandle // searching in builtin libraries\n");
+	for (i = 0; i < N_BUILTINS; i++) {
+		if (dll_builtin_table[i].dll_name == NULL) break;
+		if (((int) lpModuleName & 0xffff0000) == 0) {
+			if (0xFF00 + i == (int) lpModuleName) {
+				printf("GetModuleHandle('%s') return %04X \n",
+				       lpModuleName, 0xff00 + i);
+				return 0xFF00 + i;
+				}
+			}
+		else if (strcasecmp(dll_builtin_table[i].dll_name, lpModuleName) == 0) {
+			printf("GetModuleHandle('%x') return %04X \n", 
+							lpModuleName, 0xFF00 + i);
+			return (0xFF00 + i);
+			}
+		}
+
  	printf("GetModuleHandle // searching in loaded modules\n");
 	while (w) {
 /*		printf("GetModuleHandle // '%x' \n", w->name);  */
@@ -64,22 +92,6 @@ HANDLE GetModuleHandle(LPSTR lpModuleName)
 			}
 		w = w->next;
 		}
- 	printf("GetModuleHandle // searching in builtin libraries\n");
-    for (i = 0; i < N_BUILTINS; i++) {
-		if (dll_builtin_table[i].dll_name == NULL) break;
-		if (((int) lpModuleName & 0xffff0000) == 0) {
-			if (0xFF00 + i == (int) lpModuleName) {
-				printf("GetModuleHandle('%s') return %04X \n",
-				       lpModuleName, w->hinstance);
-				return 0xFF + i;
-				}
-			}
-		else if (strcasecmp(dll_builtin_table[i].dll_name, lpModuleName) == 0) {
-			printf("GetModuleHandle('%x') return %04X \n", 
-							lpModuleName, 0xFF00 + i);
-			return (0xFF00 + i);
-			}
-		}
 	printf("GetModuleHandle('%x') not found !\n", lpModuleName);
 	return 0;
 }
@@ -91,7 +103,13 @@ HANDLE GetModuleHandle(LPSTR lpModuleName)
 int GetModuleUsage(HANDLE hModule)
 {
 	struct w_files *w;
+
 	printf("GetModuleUsage(%04X);\n", hModule);
+
+	/* built-in dll ? */
+	if (IS_BUILTIN_DLL(hModule)) 
+		return 2;
+		
 	w = GetFileInfo(hModule);
 /*	return w->Usage; */
 	return 1;
@@ -138,79 +156,15 @@ int GetModuleFileName(HANDLE hModule, LPSTR lpFileName, short nSize)
  */
 HANDLE LoadLibrary(LPSTR libname)
 {
-    HANDLE hModule;
-    LPMODULEENTRY lpMod = lpModList;
-    LPMODULEENTRY lpNewMod;
-    int i;
-    char temp[64];
+	HANDLE h;
+	
+	if ((h = LoadImage(libname, DLL, 0)) < 32)
+		return h;
 
-    printf("LoadLibrary '%s'\n", libname);
-
-    /* extract dllname */
-    strcpy(temp, libname);
-    if (strchr(temp, '\\') || strchr(temp, '/'))
-	for (i = strlen(temp) - 1; i ; i--) 
-		if (temp[i] == '\\' || temp[i] == '/') {
-			strcpy(temp, temp + i + 1);
-			break;
-		}
-    for (i = strlen(temp) - 1; i ; i--) 
-	if (temp[i] == '.') {
-		temp[i] = 0;
-		break;
-	}
-    
-    if (FindDLLTable(temp))
-	{
-	printf("Library was a builtin - \n");
-	return GetModuleHandle(temp);
-	}
-
-    if (lpMod != NULL) 
-    {
-	while (TRUE) 
-	{
-	    if (strcmp(libname, lpMod->FileName) == 0) 
-	    {
-		lpMod->Count++;
-		printf("LoadLibrary // already loaded hInst=%04X\n", 
-		       lpMod->hInst);
-		return lpMod->hInst;
-	    }
-	    if (lpMod->lpNextModule == NULL) break;
-	    lpMod = lpMod->lpNextModule;
-	}
-    }
-
-    hModule = GlobalAlloc(GMEM_MOVEABLE, sizeof(MODULEENTRY));
-    lpNewMod = (LPMODULEENTRY) GlobalLock(hModule);	
-#ifdef DEBUG_LIBRARY
-    printf("LoadLibrary // creating new module entry %08X\n", lpNewMod);
-#endif
-    if (lpNewMod == NULL) 
-	return 0;
-    if (lpModList == NULL) 
-    {
-	lpModList = lpNewMod;
-	lpNewMod->lpPrevModule = NULL;
-    }
-    else 
-    {
-	lpMod->lpNextModule = lpNewMod;
-	lpNewMod->lpPrevModule = lpMod;
-    }
-
-    lpNewMod->lpNextModule = NULL;
-    lpNewMod->hModule = hModule;
-    lpNewMod->ModuleName = NULL;
-    lpNewMod->FileName = (LPSTR) malloc(strlen(libname));
-    if (lpNewMod->FileName != NULL)	
-	strcpy(lpNewMod->FileName, libname);
-    lpNewMod->hInst = LoadImage(libname, DLL, 0);
-    lpNewMod->Count = 1;
-    printf("LoadLibrary returned Library hInst=%04X\n", lpNewMod->hInst);
-    GlobalUnlock(hModule);	
-    return lpNewMod->hInst;
+	if (!IS_BUILTIN_DLL(h))
+		InitDLL(GetFileInfo(h));
+	
+	return h;
 }
 
 
@@ -219,14 +173,13 @@ HANDLE LoadLibrary(LPSTR libname)
  */
 void FreeLibrary(HANDLE hLib)
 {
-	LPMODULEENTRY lpMod = lpModList;
-
     printf("FreeLibrary(%04X);\n", hLib);
 
 	/* built-in dll ? */
 	if (IS_BUILTIN_DLL(hLib)) 
 	    	return;
 
+/*
 	while (lpMod != NULL) {
 		if (lpMod->hInst == hLib) {
 			if (lpMod->Count == 1) {
@@ -243,6 +196,7 @@ void FreeLibrary(HANDLE hLib)
 			}
 		lpMod = lpMod->lpNextModule;
 		}
+*/
 }
 
 

@@ -553,13 +553,3 @@ int EnumObjects(HDC hDC, int nObjType, FARPROC lpEnumFunc, LPSTR lpData)
 	printf("EnumObjects // End of enumeration !\n");
 	return 0;
 }
-
-/***********************************************************************
- *           SetObjectOwner    (GDI.461)
- */
-int SetObjectOwner(HANDLE hObj)
-{
-	printf("EMPTY STUB !!! SetObjectOwner() (I don't know its prototype !\n");
-	return 0;
-}
-

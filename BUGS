@@ -3,3 +3,4 @@
 - RegisterClass() with hbrBackground = COLOR_APPWORKSPACE+1 does not work.
 - MDI does not send WM_GETMINMAX message.
 - InitializeLoadedDLLs() can't init LZEXPAND.DLL. (cs:ip => 0:0)
+- LoadCursor does not correctly handle bitmap cursors

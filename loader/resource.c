@@ -16,6 +16,7 @@ static char Copyright[] = "Copyright  Robert J. Amstadt, 1993";
 #include "wine.h"
 #include "icon.h"
 #include "accel.h"
+#include "dlls.h"
 
 /* #define DEBUG_RESOURCE  */
 
@@ -922,14 +923,14 @@ RSC_LoadResource(int instance, char *rsc_name, int type, int *image_size_ret)
     if (image_size_ret != NULL)
 	*image_size_ret = image_size;
     hmem = GlobalAlloc(GMEM_MOVEABLE, image_size);
-    image = GlobalLock(hmem);
+    image = GlobalLinearLock(hmem);
     if (image == NULL || read(ResourceFd, image, image_size) != image_size)
     {
 	GlobalFree(hmem);
 	return 0;
     }
 
-    GlobalUnlock(hmem);
+    GlobalLinearUnlock(hmem);
     return hmem;
 }
 
@@ -1021,7 +1022,7 @@ LoadBitmap(HANDLE instance, LPSTR bmp_name)
 	printf("LoadBitmap / BitMap %04X not Found !\n", bmp_name);
 	return 0;
 	}
-    lp = (long *) GlobalLock(rsc_mem);
+    lp = (long *) GlobalLinearLock(rsc_mem);
     if (lp == NULL)
     {
 	GlobalFree(rsc_mem);

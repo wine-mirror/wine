@@ -50,7 +50,7 @@ length	490
            StretchBlt(1 2 3 4 5 6 7 8 9 10 11)
 36  pascal Polygon (word ptr word) Polygon (1 2 3)
 37  pascal Polyline (word ptr word) Polyline (1 2 3)
-#38  pascal Escape
+38  pascal Escape(word word word ptr ptr) Escape(1 2 3 4 5)
 39  pascal RestoreDC(word s_word) RestoreDC(1 2)
 40  pascal FillRgn(word word word) FillRgn(1 2 3)
 #41  pascal FrameRgn
@@ -278,7 +278,7 @@ length	490
 	   CreatePolyPolygonRgn(1 2 3 4)
 #452 pascal GDISEEGDIDO
 #460 pascal GDITASKTERMINATION
-461 pascal SetObjectOwner(word) SetObjectOwner(1)
+461 return SetObjectOwner 4 0
 #462 pascal ISGDIOBJECT
 #463 pascal MAKEOBJECTPRIVATE
 #464 pascal FIXUPBOGUSPUBLISHERMETAFILE

@@ -6,12 +6,13 @@ SRCS = \
 	dump.c \
 	ldt.c \
 	ldtlib.c \
+	main.c \
+	ne_image.c \
 	selector.c \
 	signal.c \
 	library.c \
 	resource.c \
-	task.c \
-	wine.c
+	task.c 
 
 OBJS = $(SRCS:.c=.o)
 

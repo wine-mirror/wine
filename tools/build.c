@@ -27,7 +27,8 @@ static char Copyright[] = "Copyright  Robert J. Amstadt, 1993";
 #define EQUATETYPE_ABS	18
 #define TYPE_RETURN	20
 
-#define MAX_ORDINALS	1024
+/*#define MAX_ORDINALS	1024*/
+#define MAX_ORDINALS	1299
 
 #define PUSH_0		"\tpushl\t$0\n"
 #define PUSH_SS		"\tpushw\t$0\n\tpushw\t%%ss\n"

@@ -62,14 +62,15 @@ static char *TEXT_NextLine(HDC hdc, char *str, int *count, char *dest,
 		return (&str[i]);
 	    }
 	    dest[j++] = str[i++];
-	    if (!(format & DT_NOCLIP) || !(format & DT_NOPREFIX))
+	    if (!(format & DT_NOCLIP) || !(format & DT_NOPREFIX) ||
+		(format & DT_WORDBREAK))
 	    {
 		if (!GetTextExtentPoint(hdc, &dest[j-1], 1, &size))
 		    return NULL;
 		plen += size.cx;
 	    }
 	    break;
-
+	    
 	case PREFIX:
 	    if (!(format & DT_NOPREFIX))
 	    {
@@ -79,7 +80,7 @@ static char *TEXT_NextLine(HDC hdc, char *str, int *count, char *dest,
 	    else
 	    {
 		dest[j++] = str[i++];
-		if (!(format & DT_NOCLIP))
+		if (!(format & DT_NOCLIP) || (format & DT_WORDBREAK))
 		{
 		    if (!GetTextExtentPoint(hdc, &dest[j-1], 1, &size))
 			return NULL;
@@ -87,7 +88,7 @@ static char *TEXT_NextLine(HDC hdc, char *str, int *count, char *dest,
 		}
 	    }
 	    break;
-
+	    
 	case TAB:
 	    if (format & DT_EXPANDTABS)
 	    {
@@ -108,7 +109,8 @@ static char *TEXT_NextLine(HDC hdc, char *str, int *count, char *dest,
 	    else
 	    {
 		dest[j++] = str[i++];
-		if (!(format & DT_NOCLIP) || !(format & DT_NOPREFIX))
+		if (!(format & DT_NOCLIP) || !(format & DT_NOPREFIX) ||
+		    (format & DT_WORDBREAK))
 		{
 		    if (!GetTextExtentPoint(hdc, &dest[j-1], 1, &size))
 			return NULL;
@@ -119,7 +121,8 @@ static char *TEXT_NextLine(HDC hdc, char *str, int *count, char *dest,
 
 	case SPACE:
 	    dest[j++] = str[i++];
-	    if (!(format & DT_NOCLIP) || !(format & DT_NOPREFIX))
+	    if (!(format & DT_NOCLIP) || !(format & DT_NOPREFIX) ||
+		(format & DT_WORDBREAK))
 	    {
 		wb_i = i;
 		wb_j = j - 1;
@@ -132,7 +135,8 @@ static char *TEXT_NextLine(HDC hdc, char *str, int *count, char *dest,
 
 	default:
 	    dest[j++] = str[i++];
-	    if (!(format & DT_NOCLIP) || !(format & DT_NOPREFIX))
+	    if (!(format & DT_NOCLIP) || !(format & DT_NOPREFIX) ||
+		(format & DT_WORDBREAK))
 	    {
 		if (!GetTextExtentPoint(hdc, &dest[j-1], 1, &size))
 		    return NULL;
@@ -148,7 +152,7 @@ static char *TEXT_NextLine(HDC hdc, char *str, int *count, char *dest,
 		if (format & DT_WORDBREAK)
 		{
 		    *len = wb_j;
-		    *count = wb_count;
+		    *count = wb_count - 1;
 		    return (&str[wb_i]);
 		}
 		else
@@ -177,6 +181,11 @@ int DrawText( HDC hdc, LPSTR str, int count, LPRECT rect, WORD flags )
     TEXTMETRIC tm;
     int x = rect->left, y = rect->top;
     int width = rect->right - rect->left;
+
+#ifdef DEBUG_TEXT
+    printf( "DrawText: '%s', %d , [(%d,%d),(%d,%d)]\n", str, count,
+	   rect->left, rect->top, rect->right, rect->bottom);
+#endif
 
     if (count == -1) count = strlen(str);
     strPtr = str;
@@ -422,6 +431,4 @@ BOOL ExtTextOut(HDC hDC, short x, short y, WORD wOptions, LPRECT lprect,
 	TextOut(hDC, x, y, str, count);
 	return FALSE;
 }
-
-
 
