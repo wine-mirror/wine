@@ -978,8 +978,12 @@ HICON WINAPI ExtractAssociatedIconA(HINSTANCE hInst, LPSTR lpIconPath, LPWORD lp
  */
 HICON16 WINAPI ExtractAssociatedIcon16(HINSTANCE16 hInst, LPSTR lpIconPath, LPWORD lpiIcon)
 {	HICON16 hIcon;
+	DWORD dwDummyIcon = 0;
 
 	TRACE("\n");
+
+	if(lpiIcon == NULL)
+	    lpiIcon = &dwDummyIcon;
 
 	hIcon = ExtractIcon16(hInst, lpIconPath, *lpiIcon);
 
