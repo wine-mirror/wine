@@ -309,7 +309,7 @@ HINSTANCE MAIN_WinelibInit( int *argc, char *argv[] )
     pModule->flags = NE_FFLAGS_WIN32;
     pModule->module32 = wm->module;
 
-    if (!TASK_Create( pModule, 0, 0, FALSE )) return 0;
+    if (!TASK_Create( pModule, FALSE )) return 0;
 
     /* Initialize GDI and USER */
     if (!LoadLibraryA( "GDI32.DLL" )) return 0;

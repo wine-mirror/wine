@@ -95,8 +95,6 @@ typedef struct _PDB
     HANDLE          *dos_handles;      /*    Handles mapping DOS -> Win32 */
     struct _PDB     *next;             /*    List reference - list of PDB's */
     WORD            winver;            /*    Windows version figured out by VERSION_GetVersion */
-    WORD            hInstance;         /*    hInstance on startup */
-    WORD            hPrevInstance;     /*    hPrevInstance on startup */
     struct _SERVICETABLE *service_table; /*  Service table for service thread */
 } PDB;
 
@@ -161,7 +159,6 @@ extern PDB *PROCESS_IdToPDB( DWORD id );
 extern void PROCESS_CallUserSignalProc( UINT uCode, HMODULE hModule );
 extern PDB *PROCESS_Create( struct _NE_MODULE *pModule, 
                             LPCSTR cmd_line, LPCSTR env, 
-                            HINSTANCE16 hInstance, HINSTANCE16 hPrevInstance, 
                             LPSECURITY_ATTRIBUTES psa, LPSECURITY_ATTRIBUTES tsa,
                             BOOL inherit, DWORD flags,
                             STARTUPINFOA *startup, PROCESS_INFORMATION *info );

@@ -411,8 +411,13 @@ void PROCESS_Start(void)
     /* Create a task for this process */
     if (pdb->env_db->startup_info->dwFlags & STARTF_USESHOWWINDOW)
         cmdShow = pdb->env_db->startup_info->wShowWindow;
-    if (!TASK_Create( pModule, pdb->hInstance, pdb->hPrevInstance, cmdShow ))
+    if (!TASK_Create( pModule, cmdShow ))
         goto error;
+
+    /* Perform Win16 specific process initialization */
+    if ( type == PROC_WIN16 )
+        if ( !NE_InitProcess( pModule ) )
+            goto error;
 
     /* Note: The USIG_PROCESS_CREATE signal is supposed to be sent in the
      *       context of the parent process.  Actually, the USER signal proc
@@ -502,13 +507,13 @@ void PROCESS_Start(void)
  * Create a new process database and associated info.
  */
 PDB *PROCESS_Create( NE_MODULE *pModule, LPCSTR cmd_line, LPCSTR env,
-                     HINSTANCE16 hInstance, HINSTANCE16 hPrevInstance,
                      LPSECURITY_ATTRIBUTES psa, LPSECURITY_ATTRIBUTES tsa,
                      BOOL inherit, DWORD flags, STARTUPINFOA *startup,
                      PROCESS_INFORMATION *info )
 {
     HANDLE handles[2], load_done_evt = INVALID_HANDLE_VALUE;
     DWORD exitcode, size;
+    BOOL alloc_stack16;
     int server_thandle;
     struct new_process_request *req = get_req_buffer();
     TEB *teb = NULL;
@@ -554,21 +559,24 @@ PDB *PROCESS_Create( NE_MODULE *pModule, LPCSTR cmd_line, LPCSTR env,
         size = header->SizeOfStackReserve;
         if (header->Subsystem == IMAGE_SUBSYSTEM_WINDOWS_CUI) 
             pdb->flags |= PDB32_CONSOLE_PROC;
+        alloc_stack16 = TRUE;
     }
     else if (!pModule->dos_image) /* Win16 process */
     {
+        alloc_stack16 = FALSE;
         size = 0;
         pdb->flags |= PDB32_WIN16_PROC;
     }
     else  /* DOS process */
     {
+        alloc_stack16 = FALSE;
         size = 0;
         pdb->flags |= PDB32_DOS_PROC;
     }
 
     /* Create the main thread */
 
-    if (!(teb = THREAD_Create( pdb, 0L, size, hInstance == 0, tsa, &server_thandle ))) 
+    if (!(teb = THREAD_Create( pdb, 0L, size, alloc_stack16, tsa, &server_thandle ))) 
         goto error;
     info->hThread     = server_thandle;
     info->dwThreadId  = (DWORD)teb->tid;
@@ -579,10 +587,8 @@ PDB *PROCESS_Create( NE_MODULE *pModule, LPCSTR cmd_line, LPCSTR env,
     DuplicateHandle( GetCurrentProcess(), load_done_evt,
                      info->hProcess, &pdb->load_done_evt, 0, TRUE, DUPLICATE_SAME_ACCESS );
 
-    /* Pass module/instance to new process (FIXME: hack) */
+    /* Pass module to new process (FIXME: hack) */
     pdb->module = pModule->self;
-    pdb->hInstance = hInstance;
-    pdb->hPrevInstance = hPrevInstance;
     SYSDEPS_SpawnThread( teb );
 
     /* Wait until process is initialized (or initialization failed) */

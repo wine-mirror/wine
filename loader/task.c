@@ -275,16 +275,13 @@ void TASK_CallToStart(void)
  *       by entering the Win16Lock while linking the task into the
  *       global task list.
  */
-BOOL TASK_Create( NE_MODULE *pModule, HINSTANCE16 hInstance,
-                  HINSTANCE16 hPrevInstance, UINT16 cmdShow)
+BOOL TASK_Create( NE_MODULE *pModule, UINT16 cmdShow)
 {
     HTASK16 hTask;
     TDB *pTask;
     LPSTR cmd_line;
-    WORD sp;
     char name[10];
     PDB *pdb32 = PROCESS_Current();
-    SEGTABLEENTRY *pSegTable = NE_SEG_TABLE( pModule );
 
       /* Allocate the task structure */
 
@@ -304,9 +301,12 @@ BOOL TASK_Create( NE_MODULE *pModule, HINSTANCE16 hInstance,
     if (pModule->lpDosTask)
     	pTask->flags 	|= TDBF_WINOLDAP;
 
+    pTask->hInstance     = pModule->self;
+    pTask->hPrevInstance = 0;
+    /* NOTE: for 16-bit tasks, the instance handles are updated later on
+             in NE_InitProcess */
+
     pTask->version       = pModule->expected_version;
-    pTask->hInstance     = hInstance? hInstance : pModule->self;
-    pTask->hPrevInstance = hPrevInstance;
     pTask->hModule       = pModule->self;
     pTask->hParent       = GetCurrentTask();
     pTask->magic         = TDB_MAGIC;
@@ -387,16 +387,6 @@ BOOL TASK_Create( NE_MODULE *pModule, HINSTANCE16 hInstance,
  
     pTask->teb->htask16 = pTask->teb->process->task = hTask;
     TRACE_(task)("module='%s' cmdline='%s' task=%04x\n", name, cmd_line, hTask );
-
-    /* If we have a DGROUP/hInstance, use it for 16-bit stack */
- 
-    if ( hInstance )
-    {
-        if (!(sp = pModule->sp))
-            sp = pSegTable[pModule->ss-1].minsize + pModule->stack_size;
-        sp &= ~1;  sp -= sizeof(STACK16FRAME);
-        pTask->teb->cur_stack = PTR_SEG_OFF_TO_SEGPTR( hInstance, sp );
-    }
 
     /* If requested, add entry point breakpoint */
 

@@ -45,6 +45,8 @@ static HMODULE16 NE_LoadBuiltin(LPCSTR name,BOOL force) { return 0; }
 HMODULE16 (*fnBUILTIN_LoadModule)(LPCSTR name,BOOL force) = NE_LoadBuiltin;
 static BOOL16 NE_FreeModule( HMODULE16 hModule, BOOL call_wep );
 
+static HINSTANCE16 MODULE_LoadModule16( LPCSTR libname, BOOL implicit, BOOL lib_only );
+
 /***********************************************************************
  *           NE_GetPtr
  */
@@ -758,7 +760,7 @@ static BOOL NE_LoadDLLs( NE_MODULE *pModule )
             /* its handle in the list of DLLs to initialize.   */
             HMODULE16 hDLL;
 
-            if ((hDLL = MODULE_LoadModule16( buffer, TRUE )) < 32)
+            if ((hDLL = MODULE_LoadModule16( buffer, TRUE, TRUE )) < 32)
             {
                 /* FIXME: cleanup what was done */
 
@@ -783,41 +785,34 @@ static BOOL NE_LoadDLLs( NE_MODULE *pModule )
 
 
 /**********************************************************************
- *	    NE_LoadFileModule
+ *	    NE_DoLoadModule
  *
  * Load first instance of NE module from file.
- * (Note: caller is responsible for ensuring the module isn't
- *        already loaded!)
+ *
+ * pModule must point to a module structure prepared by NE_LoadExeHeader.
+ * This routine must never be called twice on a module.
+ *
  */
-static HINSTANCE16 NE_LoadFileModule( HFILE16 hFile, OFSTRUCT *ofs, 
-                                      BOOL implicit )
+static HINSTANCE16 NE_DoLoadModule( NE_MODULE *pModule )
 {
     HINSTANCE16 hInstance;
-    HMODULE16 hModule;
-    NE_MODULE *pModule;
-
-    /* Create the module structure */
-
-    hModule = NE_LoadExeHeader( hFile, ofs );
-    if (hModule < 32) return hModule;
-    pModule = NE_GetPtr( hModule );
 
     /* Allocate the segments for this module */
 
     if (!NE_CreateSegments( pModule ) ||
         !(hInstance = NE_CreateInstance( pModule, NULL, FALSE )))
     {
-        GlobalFreeAll16( hModule );
+        GlobalFreeAll16( pModule->self );
         return 8;  /* Insufficient memory */
     }
 
     /* Load the referenced DLLs */
 
     if (!NE_LoadDLLs( pModule ))
-      {
-       NE_FreeModule(hModule,0);
+    {
+        NE_FreeModule( pModule->self, 0 );
         return 2;
-      }
+    }
 
     /* Load the segments */
 
@@ -838,14 +833,22 @@ static HINSTANCE16 NE_LoadFileModule( HFILE16 hFile, OFSTRUCT *ofs,
 /**********************************************************************
  *	    NE_LoadModule
  *
- * Load first instance of NE module, deciding whether to use
- * built-in module or load module from file.
- * (Note: caller is responsible for ensuring the module isn't
- *        already loaded!)
+ * Load first instance of NE module. (Note: caller is responsible for 
+ * ensuring the module isn't already loaded!)
+ *
+ * If the module turns out to be an executable module, only a 
+ * handle to a module stub is returned; this needs to be initialized
+ * by calling NE_DoLoadModule later, in the context of the newly
+ * created process.
+ *
+ * If lib_only is TRUE, however, the module is perforce treated
+ * like a DLL module, even if it is an executable module.
+ * 
  */
-HINSTANCE16 NE_LoadModule( LPCSTR name, BOOL implicit )
+HINSTANCE16 NE_LoadModule( LPCSTR name, BOOL implicit, BOOL lib_only )
 {
-    HINSTANCE16 hInstance;
+    NE_MODULE *pModule;
+    HMODULE16 hModule;
     HFILE16 hFile;
     OFSTRUCT ofs;
 
@@ -863,10 +866,17 @@ HINSTANCE16 NE_LoadModule( LPCSTR name, BOOL implicit )
 	}
     }
 
-    hInstance = NE_LoadFileModule( hFile, &ofs, implicit );
+    hModule = NE_LoadExeHeader( hFile, &ofs );
     _lclose16( hFile );
 
-    return hInstance;
+    if (hModule < 32) return hModule;
+    pModule = NE_GetPtr( hModule );
+    if ( !pModule ) return hModule;
+
+    if ( !lib_only && !( pModule->flags & NE_FFLAGS_LIBMODULE ) )
+        return hModule;
+
+    return NE_DoLoadModule( pModule );
 }
 
 
@@ -877,7 +887,7 @@ HINSTANCE16 NE_LoadModule( LPCSTR name, BOOL implicit )
  * The caller is responsible that the module is not loaded already.
  *
  */
-HINSTANCE16 MODULE_LoadModule16( LPCSTR libname, BOOL implicit )
+static HINSTANCE16 MODULE_LoadModule16( LPCSTR libname, BOOL implicit, BOOL lib_only )
 {
 	HINSTANCE16 hinst;
 	int i;
@@ -891,7 +901,7 @@ HINSTANCE16 MODULE_LoadModule16( LPCSTR libname, BOOL implicit )
 		{
 		case MODULE_LOADORDER_DLL:
 			TRACE("Trying native dll '%s'\n", libname);
-			hinst = NE_LoadModule(libname, implicit);
+			hinst = NE_LoadModule(libname, implicit, lib_only);
 			break;
 
 		case MODULE_LOADORDER_ELFDLL:
@@ -970,7 +980,6 @@ HINSTANCE16 WINAPI LoadModule16( LPCSTR name, LPVOID paramBlock )
     LPCVOID env = NULL;
     STARTUPINFOA startup;
     PROCESS_INFORMATION info;
-    HINSTANCE16 hInstance, hPrevInstance = 0;
     HMODULE16 hModule;
     NE_MODULE *pModule;
     PDB *pdb;
@@ -984,31 +993,46 @@ HINSTANCE16 WINAPI LoadModule16( LPCSTR name, LPVOID paramBlock )
         if ( !( pModule = NE_GetPtr( hModule ) ) ) return (HINSTANCE16)11;
         if ( pModule->module32 ) return (HINSTANCE16)21;
 
-        hInstance = NE_CreateInstance( pModule, &hPrevInstance, lib_only );
-        if ( hInstance != hPrevInstance )  /* not a library */
-            NE_LoadSegment( pModule, pModule->dgroup );
+        /* Increment refcount */
 
         pModule->count++;
+
+        /* If library module, we just retrieve the instance handle */
+
+        if ( ( pModule->flags & NE_FFLAGS_LIBMODULE ) || lib_only )
+            return NE_CreateInstance( pModule, NULL, TRUE );
     }
     else
     {
         /* Main case: load first instance of NE module */
 
-        if ( (hInstance = MODULE_LoadModule16( name, FALSE )) < 32 )
-            return hInstance;
+        if ( (hModule = MODULE_LoadModule16( name, FALSE, lib_only )) < 32 )
+            return hModule;
 
-        if ( !(pModule = NE_GetPtr( hInstance )) )
+        if ( !(pModule = NE_GetPtr( hModule )) )
             return (HINSTANCE16)11;
+
+        /* If library module, we're finished */
+
+        if ( ( pModule->flags & NE_FFLAGS_LIBMODULE ) || lib_only )
+            return hModule;
     }
 
-    /* If library module, we're finished */
 
-    if ( ( pModule->flags & NE_FFLAGS_LIBMODULE ) || lib_only )
-        return hInstance;
+    /*
+     *  At this point, we need to create a new process.
+     *
+     *  pModule points either to an already loaded module, whose refcount
+     *  has already been incremented (to avoid having the module vanish 
+     *  in the meantime), or else to a stub module which contains only header 
+     *  information.
+     *
+     *  All remaining initialization (really loading the module in the second
+     *  case, and creating the new instance in both cases) are to be done in
+     *  the context of the new process. This happens in the NE_InitProcess
+     *  routine, which will be called from the 32-bit process initialization.
+     */
 
-    /* Create a task for this instance */
-
-    pModule->flags |= NE_FFLAGS_GUI;  /* FIXME: is this necessary? */
 
     params = (LOADPARAMS16 *)paramBlock;
     cmd_line = (LPSTR)PTR_SEG_TO_LIN( params->cmdLine );
@@ -1035,7 +1059,6 @@ HINSTANCE16 WINAPI LoadModule16( LPCSTR name, LPVOID paramBlock )
 
     SYSLEVEL_ReleaseWin16Lock();
     pdb = PROCESS_Create( pModule, new_cmd_line, env,
-                          hInstance, hPrevInstance, 
                           NULL, NULL, TRUE, 0, &startup, &info );
     SYSLEVEL_RestoreWin16Lock();
 
@@ -1044,21 +1067,23 @@ HINSTANCE16 WINAPI LoadModule16( LPCSTR name, LPVOID paramBlock )
 
     if (params->hEnvironment) GlobalUnlock16( params->hEnvironment );
     HeapFree( GetProcessHeap(), 0, new_cmd_line );
-    return hInstance;
+
+    return GetProcessDword( info.dwProcessId, GPD_HINSTANCE16 );
 }
 
 /**********************************************************************
  *          NE_CreateProcess
  */
-BOOL NE_CreateProcess( HFILE hFile, OFSTRUCT *ofs, LPCSTR cmd_line, LPCSTR env, 
+BOOL NE_CreateProcess( HFILE hFile, OFSTRUCT *ofs, LPCSTR cmd_line, LPCSTR env,
                        LPSECURITY_ATTRIBUTES psa, LPSECURITY_ATTRIBUTES tsa,
                        BOOL inherit, DWORD flags, LPSTARTUPINFOA startup,
                        LPPROCESS_INFORMATION info )
 {
-    HINSTANCE16 hInstance, hPrevInstance = 0;
     HMODULE16 hModule;
     NE_MODULE *pModule;
     HFILE16 hFile16;
+
+    SYSLEVEL_EnterWin16Lock();
 
     /* Special case: second instance of an already loaded NE module */
 
@@ -1069,12 +1094,8 @@ BOOL NE_CreateProcess( HFILE hFile, OFSTRUCT *ofs, LPCSTR cmd_line, LPCSTR env,
             ||  pModule->module32 )
         {
             SetLastError( ERROR_BAD_FORMAT );
-            return FALSE;
+            goto error;
         }
-
-        hInstance = NE_CreateInstance( pModule, &hPrevInstance, FALSE );
-        if ( hInstance != hPrevInstance )  /* not a library */
-            NE_LoadSegment( pModule, pModule->dgroup );
 
         pModule->count++;
     }
@@ -1085,7 +1106,7 @@ BOOL NE_CreateProcess( HFILE hFile, OFSTRUCT *ofs, LPCSTR cmd_line, LPCSTR env,
         /* If we didn't get a file handle, return */
 
         if ( hFile == HFILE_ERROR )
-            return FALSE;
+            goto error;
 
         /* Allocate temporary HFILE16 for NE_LoadFileModule */
 
@@ -1094,40 +1115,98 @@ BOOL NE_CreateProcess( HFILE hFile, OFSTRUCT *ofs, LPCSTR cmd_line, LPCSTR env,
                               0, FALSE, DUPLICATE_SAME_ACCESS ))
         {
             SetLastError( ERROR_INVALID_HANDLE );
-            return FALSE;
+            goto error;
         }
         hFile16 = FILE_AllocDosHandle( hFile );
 
         /* Load module */
 
-        hInstance = NE_LoadFileModule( hFile16, ofs, TRUE );
+        hModule = NE_LoadExeHeader( hFile16, ofs );
         _lclose16( hFile16 );
 
-        if ( hInstance < 32 )
+        if ( hModule < 32 )
         {
-            SetLastError( hInstance );
-            return FALSE;
+            SetLastError( hModule );
+            goto error;
         }
 
-        if (   !( pModule = NE_GetPtr( hInstance ) )
+        if (   !( pModule = NE_GetPtr( hModule ) )
             ||  ( pModule->flags & NE_FFLAGS_LIBMODULE) )
         {
-            /* FIXME: cleanup */
+            GlobalFreeAll16( hModule );
             SetLastError( ERROR_BAD_FORMAT );
-            return FALSE;
+            goto error;
         }
     }
 
-    /* Create a task for this instance */
-
-    pModule->flags |= NE_FFLAGS_GUI;  /* FIXME: is this necessary? */
+    SYSLEVEL_LeaveWin16Lock();
 
     if ( !PROCESS_Create( pModule, cmd_line, env,
-                          hInstance, hPrevInstance, 
                           psa, tsa, inherit, flags, startup, info ) )
         return FALSE;
 
     return TRUE;
+
+ error:
+    SYSLEVEL_LeaveWin16Lock();
+    return FALSE;
+}
+
+/**********************************************************************
+ *          NE_InitProcess
+ */
+BOOL NE_InitProcess( NE_MODULE *pModule  )
+{
+    HINSTANCE16 hInstance, hPrevInstance;
+    BOOL retv = TRUE;
+
+    SEGTABLEENTRY *pSegTable = NE_SEG_TABLE( pModule );
+    WORD sp;
+    TDB *pTask;
+
+    SYSLEVEL_EnterWin16Lock();
+
+    if ( pModule->count > 0 )
+    {
+        /* Second instance of an already loaded NE module */
+        /* Note that the refcount was already incremented by the parent */
+
+        hInstance = NE_CreateInstance( pModule, &hPrevInstance, FALSE );
+        if ( hInstance != hPrevInstance )  /* not a library */
+            NE_LoadSegment( pModule, pModule->dgroup );
+    }
+    else
+    {
+        /* Load first instance of NE module */
+
+        pModule->flags |= NE_FFLAGS_GUI;  /* FIXME: is this necessary? */
+
+        hInstance = NE_DoLoadModule( pModule );
+        hPrevInstance = 0;
+
+        if ( hInstance < 32 )
+        {
+            SetLastError( hInstance );
+            retv = FALSE;
+        }
+    }
+
+    /* Enter instance handles into task struct */
+
+    pTask = (TDB *)GlobalLock16( GetCurrentTask() );
+    pTask->hInstance = hInstance;
+    pTask->hPrevInstance = hPrevInstance;
+
+    /* Use DGROUP for 16-bit stack */
+ 
+    if (!(sp = pModule->sp))
+        sp = pSegTable[pModule->ss-1].minsize + pModule->stack_size;
+    sp &= ~1;  sp -= sizeof(STACK16FRAME);
+    pTask->teb->cur_stack = PTR_SEG_OFF_TO_SEGPTR( hInstance, sp );
+ 
+    SYSLEVEL_LeaveWin16Lock();
+
+    return retv;
 }
 
 /***********************************************************************

@@ -168,7 +168,7 @@ int main( int argc, char *argv[] )
 
     /* Create initial task */
     if ( !(pModule = NE_GetPtr( GetModuleHandle16( "KERNEL" ) )) ) return 1;
-    if ( !TASK_Create( pModule, 0, 0, FALSE ) ) return 1;
+    if ( !TASK_Create( pModule, FALSE ) ) return 1;
 
     /* Switch to initial task */
     PostEvent16( PROCESS_Current()->task );

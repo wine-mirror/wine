@@ -984,7 +984,7 @@ BOOL PE_CreateProcess( HFILE hFile, OFSTRUCT *ofs, LPCSTR cmd_line, LPCSTR env,
 
     /* Create new process */
     if ( !PROCESS_Create( pModule, cmd_line, env,
-                          0, 0, psa, tsa, inherit, flags, startup, info ) )
+                          psa, tsa, inherit, flags, startup, info ) )
         return FALSE;
 
     /* Note: PE_CreateModule and the remaining process initialization will

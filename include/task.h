@@ -146,9 +146,7 @@ typedef struct _THHOOK
 extern THHOOK *pThhook;
 extern void (*TASK_AddTaskEntryBreakpoint)( HTASK16 hTask );
 
-extern BOOL TASK_Create( struct _NE_MODULE *pModule,
-                         HINSTANCE16 hInstance, HINSTANCE16 hPrevInstance,
-                         UINT16 cmdShow );
+extern BOOL TASK_Create( struct _NE_MODULE *pModule, UINT16 cmdShow );
 extern void TASK_KillTask( HTASK16 hTask );
 extern HTASK16 TASK_GetNextTask( HTASK16 hTask );
 extern void TASK_Reschedule(void);
