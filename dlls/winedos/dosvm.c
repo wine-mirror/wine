@@ -92,53 +92,6 @@ static int sig_sent;
 static HANDLE event_notifier;
 static CONTEXT86 *current_context;
 
-static int DOSVM_SimulateInt( int vect, CONTEXT86 *context, BOOL inwine )
-{
-  FARPROC16 handler=DOSVM_GetRMHandler(vect);
-
-  /* check for our real-mode hooks */
-  if (vect==0x31) {
-    if (context->SegCs==DOSVM_dpmi_segments->wrap_seg) {
-      /* exit from real-mode wrapper */
-      return -1;
-    }
-    /* we could probably move some other dodgy stuff here too from dpmi.c */
-  }
-  /* check if the call is from our fake BIOS interrupt stubs */
-  if ((context->SegCs==0xf000) && !inwine) {
-    if (vect != (context->Eip/4)) {
-      TRACE("something fishy going on here (interrupt stub is %02lx)\n", context->Eip/4);
-    }
-    TRACE("builtin interrupt %02x has been branched to\n", vect);
-    DOSVM_RealModeInterrupt(vect, context);
-  }
-  /* check if the call goes to an unhooked interrupt */
-  else if (SELECTOROF(handler)==0xf000) {
-    /* if so, call it directly */
-    TRACE("builtin interrupt %02x has been invoked (through vector %02x)\n", OFFSETOF(handler)/4, vect);
-    DOSVM_RealModeInterrupt(OFFSETOF(handler)/4, context);
-  }
-  /* the interrupt is hooked, simulate interrupt in DOS space */
-  else {
-    WORD*stack= PTR_REAL_TO_LIN( context->SegSs, context->Esp );
-    WORD flag=LOWORD(context->EFlags);
-
-    TRACE_(int)("invoking hooked interrupt %02x at %04x:%04x\n", vect,
-		SELECTOROF(handler), OFFSETOF(handler));
-    if (IF_ENABLED(context)) flag|=IF_MASK;
-    else flag&=~IF_MASK;
-
-    *(--stack)=flag;
-    *(--stack)=context->SegCs;
-    *(--stack)=LOWORD(context->Eip);
-    context->Esp-=6;
-    context->SegCs=SELECTOROF(handler);
-    context->Eip=OFFSETOF(handler);
-    IF_CLR(context);
-  }
-  return 0;
-}
-
 #define SHOULD_PEND(x) \
   (x && ((!current_event) || (x->priority < current_event->priority)))
 
@@ -157,7 +110,8 @@ static void DOSVM_SendQueuedEvent(CONTEXT86 *context)
       TRACE("dispatching IRQ %d\n",event->irq);
       /* note that if DOSVM_SimulateInt calls an internal interrupt directly,
        * current_event might be cleared (and event freed) in this very call! */
-      DOSVM_SimulateInt((event->irq<8)?(event->irq+8):(event->irq-8+0x70),context,TRUE);
+      DOSVM_HardwareInterruptRM( context, (event->irq < 8) ? 
+                                 (event->irq + 8) : (event->irq - 8 + 0x70) );
     } else {
       /* callback event */
       TRACE("dispatching callback event\n");
@@ -440,7 +394,8 @@ static WINE_EXCEPTION_FILTER(exception_handler)
 {
   EXCEPTION_RECORD *rec = GetExceptionInformation()->ExceptionRecord;
   CONTEXT *context = GetExceptionInformation()->ContextRecord;
-  int ret, arg = rec->ExceptionInformation[0];
+  int arg = rec->ExceptionInformation[0];
+  BOOL ret;
 
   switch(rec->ExceptionCode) {
   case EXCEPTION_VM86_INTx:
@@ -454,7 +409,7 @@ static WINE_EXCEPTION_FILTER(exception_handler)
 	      context->Ebp, context->Esp, context->SegDs, context->SegEs,
 	      context->SegFs, context->SegGs, context->EFlags );
       }
-    ret = DOSVM_SimulateInt(arg, context, FALSE);
+    ret = DOSVM_EmulateInterruptRM( context, arg );
     if (TRACE_ON(relay)) {
       DPRINTF("Ret  DOS int 0x%02x ret=%04lx:%04lx\n",
 	      arg, context->SegCs, context->Eip );
@@ -465,7 +420,7 @@ static WINE_EXCEPTION_FILTER(exception_handler)
 	      context->Ebp, context->Esp, context->SegDs, context->SegEs,
 	      context->SegFs, context->SegGs, context->EFlags );
     }
-    return ret ? EXCEPTION_EXECUTE_HANDLER : EXCEPTION_CONTINUE_EXECUTION;
+    return ret ? EXCEPTION_CONTINUE_EXECUTION : EXCEPTION_EXECUTE_HANDLER;
 
   case EXCEPTION_VM86_STI:
   /* case EXCEPTION_VM86_PICRETURN: */
@@ -626,17 +581,6 @@ void WINAPI DOSVM_QueueEvent( INT irq, INT priority, DOSRELAY relay, LPVOID data
 }
 
 #endif
-
-/**********************************************************************
- *	    DOSVM_RealModeInterrupt
- *
- * Handle real mode interrupts
- */
-void DOSVM_RealModeInterrupt( BYTE intnum, CONTEXT86 *context )
-{
-    INTPROC proc = DOSVM_GetBuiltinHandler( intnum );
-    proc(context);
-}
 
 
 /**********************************************************************

@@ -387,7 +387,7 @@ callrmproc_again:
 /* shortcut for chaining to internal interrupt handlers */
     if ((context->SegCs == 0xF000) && iret)
     {
-        DOSVM_RealModeInterrupt( LOWORD(context->Eip)/4, context);
+        DOSVM_CallBuiltinHandler( context, LOWORD(context->Eip)/4 );
         return 0;
     }
 
@@ -475,7 +475,7 @@ void WINAPI DOSVM_CallRMInt( CONTEXT86 *context )
         RESET_CFLAG(context);
         /* use the IP we have instead of BL_reg, in case some apps
            decide to move interrupts around for whatever reason... */
-        DOSVM_RealModeInterrupt( LOWORD(rm_int)/4, &realmode_ctx );
+        DOSVM_CallBuiltinHandler( &realmode_ctx, LOWORD(rm_int)/4 );
     }
     INT_SetRealModeContext( call, &realmode_ctx );
 }
@@ -744,14 +744,9 @@ void WINAPI DOSVM_RawModeSwitchHandler( CONTEXT86 *context )
  *         DOSVM_CheckWrappers
  *
  * Check if this was really a wrapper call instead of an interrupt.
- * FIXME: Protected mode stuff does not work in 32-bit DPMI.
- * FIXME: If int31 is called asynchronously (unlikely) 
- *        wrapper checks are wrong (CS/IP must not be used).
  */
-static BOOL DOSVM_CheckWrappers( CONTEXT86 *context )
+BOOL DOSVM_CheckWrappers( CONTEXT86 *context )
 {
-    /* check if it's our wrapper */
-    TRACE("called from real mode\n");
     if (context->SegCs==DOSVM_dpmi_segments->dpmi_seg) {
         /* This is the protected mode switch */
         StartPM(context);
@@ -788,9 +783,6 @@ static BOOL DOSVM_CheckWrappers( CONTEXT86 *context )
  */
 void WINAPI DOSVM_Int31Handler( CONTEXT86 *context )
 {
-    if (ISV86(context) && DOSVM_CheckWrappers(context))
-        return;
-
     RESET_CFLAG(context);
     switch(AX_reg(context))
     {

@@ -22,6 +22,19 @@
 #include "wine/debug.h"
 #include "wine/winbase16.h"
 
+#ifdef HAVE_SYS_VM86_H
+# include <sys/vm86.h>
+#endif
+
+#ifndef IF_MASK
+#define IF_MASK 0x00000200
+#endif
+
+#ifndef VIF_MASK
+#define VIF_MASK 0x00080000
+#endif
+
+
 WINE_DEFAULT_DEBUG_CHANNEL(int);
 
 static FARPROC16     DOSVM_Vectors16[256];
@@ -65,6 +78,24 @@ static const INTPROC DOSVM_VectorsBuiltin[] =
  */
 void WINAPI DOSVM_DefaultHandler( CONTEXT86 *context )
 {
+}
+
+
+/**********************************************************************
+ *         DOSVM_GetBuiltinHandler
+ *
+ * Return Wine interrupt handler procedure for a given interrupt.
+ */
+static INTPROC DOSVM_GetBuiltinHandler( BYTE intnum )
+{
+    if (intnum < sizeof(DOSVM_VectorsBuiltin)/sizeof(INTPROC)) {
+        INTPROC proc = DOSVM_VectorsBuiltin[intnum];
+        if (proc)
+            return proc;
+    }
+
+    WARN("int%x not implemented, returning dummy handler\n", intnum );
+    return DOSVM_DefaultHandler;
 }
 
 
@@ -173,7 +204,24 @@ void WINAPI DOSVM_EmulateInterruptPM( CONTEXT86 *context, BYTE intnum )
                               DOSVM_IntProcRelay, 
                               DOSVM_GetBuiltinHandler(intnum) );
     }
-    else if(DOSVM_IsDos32())
+    else
+    {
+        DOSVM_HardwareInterruptPM( context, intnum );
+    }
+}
+
+
+/**********************************************************************
+ *         DOSVM_HardwareInterruptPM
+ *
+ * Emulate call to interrupt handler in 16-bit or 32-bit protected mode.
+ *
+ * Pushes interrupt frame to stack and changes instruction 
+ * pointer to interrupt handler.
+ */
+void DOSVM_HardwareInterruptPM( CONTEXT86 *context, BYTE intnum ) 
+{
+    if(DOSVM_IsDos32())
     {
         FARPROC48 addr = DOSVM_GetPMHandler48( intnum );
         
@@ -234,6 +282,100 @@ void WINAPI DOSVM_EmulateInterruptPM( CONTEXT86 *context, BYTE intnum )
         }
     }
 }
+
+
+/**********************************************************************
+ *         DOSVM_EmulateInterruptRM
+ *
+ * Emulate software interrupt in real mode.
+ * Called from VM86 emulation when intXX opcode is executed. 
+ *
+ * Either calls directly builtin handler or pushes interrupt frame to 
+ * stack and changes instruction pointer to interrupt handler.
+ *
+ * Returns FALSE if this interrupt was caused by return 
+ * from real mode wrapper.
+ */
+BOOL WINAPI DOSVM_EmulateInterruptRM( CONTEXT86 *context, BYTE intnum ) 
+{
+    /* check for our real-mode hooks */
+    if (intnum == 0x31)
+    {
+        /* is this exit from real-mode wrapper */
+        if (context->SegCs == DOSVM_dpmi_segments->wrap_seg)
+            return FALSE;
+
+        if (DOSVM_CheckWrappers( context ))
+            return TRUE;
+    }
+
+    /* check if the call is from our fake BIOS interrupt stubs */
+    if (context->SegCs==0xf000)
+    {
+        if (intnum != (context->Eip/4))
+            TRACE( "something fishy going on here (interrupt stub is %02lx)\n", 
+                   context->Eip/4 );
+
+        TRACE( "builtin interrupt %02x has been branched to\n", intnum );
+        
+        DOSVM_CallBuiltinHandler( context, intnum );
+    }
+    else
+    {
+        DOSVM_HardwareInterruptRM( context, intnum );
+    }
+
+    return TRUE;
+}
+
+
+/**********************************************************************
+ *         DOSVM_HardwareInterruptRM
+ *
+ * Emulate call to interrupt handler in real mode.
+ *
+ * Either calls directly builtin handler or pushes interrupt frame to 
+ * stack and changes instruction pointer to interrupt handler.
+ */
+void DOSVM_HardwareInterruptRM( CONTEXT86 *context, BYTE intnum ) 
+{
+     FARPROC16 handler = DOSVM_GetRMHandler( intnum );
+
+     /* check if the call goes to an unhooked interrupt */
+     if (SELECTOROF(handler) == 0xf000) 
+     {
+         /* if so, call it directly */
+         TRACE( "builtin interrupt %02x has been invoked (through vector %02x)\n", 
+                OFFSETOF(handler)/4, intnum );
+         DOSVM_CallBuiltinHandler( context, OFFSETOF(handler)/4 );
+     }
+     else 
+     {
+         /* the interrupt is hooked, simulate interrupt in DOS space */ 
+         WORD* stack = PTR_REAL_TO_LIN( context->SegSs, context->Esp );
+         WORD  flag  = LOWORD( context->EFlags );
+
+         TRACE_(int)( "invoking hooked interrupt %02x at %04x:%04x\n", 
+                      intnum, SELECTOROF(handler), OFFSETOF(handler) );
+
+         /* Copy virtual interrupt flag to pushed interrupt flag. */
+         if (context->EFlags & VIF_MASK)
+             flag |= IF_MASK;
+         else 
+             flag &= ~IF_MASK;
+
+         *(--stack) = flag;
+         *(--stack) = context->SegCs;
+         *(--stack) = LOWORD( context->Eip );
+         context->Esp -= 6;
+         context->SegCs = SELECTOROF( handler );
+         context->Eip   = OFFSETOF( handler );
+
+         /* Clear virtual interrupt flag. */
+         context->EFlags &= ~VIF_MASK;
+     }
+}
+
 
 /**********************************************************************
  *          DOSVM_GetRMHandler
@@ -316,22 +458,6 @@ void DOSVM_SetPMHandler48( BYTE intnum, FARPROC48 handler )
   DOSVM_Vectors48[intnum] = handler;
 }
 
-/**********************************************************************
- *         DOSVM_GetBuiltinHandler
- *
- * Return Wine interrupt handler procedure for a given interrupt.
- */
-INTPROC DOSVM_GetBuiltinHandler( BYTE intnum )
-{
-  if (intnum < sizeof(DOSVM_VectorsBuiltin)/sizeof(INTPROC)) {
-    INTPROC proc = DOSVM_VectorsBuiltin[intnum];
-    if(proc)
-      return proc;
-  }
-
-  WARN("int%x not implemented, returning dummy handler\n", intnum );
-  return DOSVM_DefaultHandler;
-}
 
 /**********************************************************************
  *         DOSVM_CallBuiltinHandler
