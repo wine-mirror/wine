@@ -321,6 +321,12 @@ INT WINAPI StringFromGUID2(REFGUID id, LPOLESTR str, INT cmax);
 #define ICOM_CINTERFACE 1
 #endif
 
+#ifdef ICOM_USE_COM_INTERFACE_ATTRIBUTE
+#define ICOM_COM_INTERFACE_ATTRIBUTE __attribute__((com_interface))
+#else
+#define ICOM_COM_INTERFACE_ATTRIBUTE
+#endif
+
 #ifndef ICOM_CINTERFACE
 /* C++ interface */
 
@@ -436,21 +442,14 @@ INT WINAPI StringFromGUID2(REFGUID id, LPOLESTR str, INT cmax);
     public: virtual void CALLBACK (xfn)(ta a,tb b,tc c,td d,te e,tf f,tg g,th h,ti i,tj j,tk k,tl l,tm m,tn n,to o,tp p,tq q,tr r,ts s,tt t,tu u,tv v,tw w,tx x,ty y,tz z) = 0;
 
 
-#ifdef ICOM_USE_COM_INTERFACE_ATTRIBUTE
-
 #define ICOM_DEFINE(iface,ibase) \
     struct iface: public ibase { \
         iface##_METHODS \
-            } __attribute__ ((com_interface));
-
-#else
-
-#define ICOM_DEFINE(iface,ibase) \
-    struct iface: public ibase { \
+    } ICOM_COM_INTERFACE_ATTRIBUTE;
+#define ICOM_DEFINE1(iface) \
+    struct iface { \
         iface##_METHODS \
-    };
-
-#endif /* ICOM_USE_COM_INTERFACE_ATTRIBUTE */
+    } ICOM_COM_INTERFACE_ATTRIBUTE;
 
 #define ICOM_VTBL(iface)         (iface)
 
@@ -573,32 +572,34 @@ INT WINAPI StringFromGUID2(REFGUID id, LPOLESTR str, INT cmax);
 #define ICOM_VTBL(iface)         (iface)->lpVtbl
 
 #ifdef ICOM_MSVTABLE_COMPAT
-#define ICOM_DEFINE(iface,ibase) \
-    typedef struct ICOM_VTABLE(iface) ICOM_VTABLE(iface); \
-    struct iface { \
-        const ICOM_VFIELD(iface); \
-    }; \
-    struct ICOM_VTABLE(iface) { \
+#define ICOM_MSVTABLE_COMPAT_FIELDS \
         long dummyRTTI1; \
-        long dummyRTTI2; \
-        ibase##_IMETHODS \
-        iface##_METHODS \
-    };
+        long dummyRTTI2;
 #define ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE 0,0,
-
 #else
-#define ICOM_DEFINE(iface,ibase) \
-    typedef struct ICOM_VTABLE(iface) ICOM_VTABLE(iface); \
-    struct iface { \
-        const ICOM_VFIELD(iface); \
-    }; \
-    struct ICOM_VTABLE(iface) { \
-        ibase##_IMETHODS \
-        iface##_METHODS \
-    };
+#define ICOM_MSVTABLE_COMPAT_FIELDS
 #define ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE
 #endif /* ICOM_MSVTABLE_COMPAT */
 
+#define ICOM_DEFINE(iface,ibase) \
+    typedef struct ICOM_VTABLE(iface) ICOM_VTABLE(iface); \
+    struct iface { \
+        const ICOM_VFIELD(iface); \
+    }; \
+    struct ICOM_VTABLE(iface) { \
+        ICOM_MSVTABLE_COMPAT_FIELDS \
+        ibase##_IMETHODS \
+        iface##_METHODS \
+    };
+#define ICOM_DEFINE1(iface) \
+    typedef struct ICOM_VTABLE(iface) ICOM_VTABLE(iface); \
+    struct iface { \
+        const ICOM_VFIELD(iface); \
+    }; \
+    struct ICOM_VTABLE(iface) { \
+        ICOM_MSVTABLE_COMPAT_FIELDS \
+        iface##_METHODS \
+    };
 
 #define ICOM_THIS(impl,iface)          impl* const This=(impl*)(iface)
 #define ICOM_CTHIS(impl,iface)         const impl* const This=(const impl*)(iface)
@@ -654,42 +655,13 @@ typedef struct IUnknown IUnknown, *LPUNKNOWN;
  * IUnknown interface
  */
 #define ICOM_INTERFACE IUnknown
-#define IUnknown_IMETHODS \
+#define IUnknown_METHODS \
     ICOM_METHOD2(HRESULT,QueryInterface,REFIID,riid, LPVOID*,ppvObj) \
     ICOM_METHOD (ULONG,AddRef) \
     ICOM_METHOD (ULONG,Release)
-#ifdef ICOM_CINTERFACE
-typedef struct ICOM_VTABLE(IUnknown) ICOM_VTABLE(IUnknown);
-struct IUnknown {
-    ICOM_VFIELD(IUnknown);
-}
-#if defined(ICOM_USE_COM_INTERFACE_ATTRIBUTE)
-__attribute__ ((com_interface));
-#else
-;
-#endif /* ICOM_US_COM_INTERFACE_ATTRIBUTE */
-
-struct ICOM_VTABLE(IUnknown) {
-#ifdef ICOM_MSVTABLE_COMPAT
-    long dummyRTTI1;
-    long dummyRTTI2;
-#endif /* ICOM_MSVTABLE_COMPAT */
-
-#else /* ICOM_CINTERFACE */
-struct IUnknown {
-
-#endif /* ICOM_CINTERFACE */
-
-    ICOM_METHOD2(HRESULT,QueryInterface,REFIID,riid, LPVOID*,ppvObj)
-    ICOM_METHOD (ULONG,AddRef)
-    ICOM_METHOD (ULONG,Release)
-}
-#if defined(ICOM_USE_COM_INTERFACE_ATTRIBUTE)
-__attribute__ ((com_interface));
-#else
-;
-#endif /* ICOM_US_COM_INTERFACE_ATTRIBUTE */
-
+#define IUnknown_IMETHODS \
+    IUnknown_METHODS
+ICOM_DEFINE1(IUnknown)
 #undef ICOM_INTERFACE
 
 /*** IUnknown methods ***/
