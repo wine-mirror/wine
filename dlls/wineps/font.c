@@ -13,6 +13,118 @@
 
 DEFAULT_DEBUG_CHANNEL(psdrv);
 
+/*******************************************************************************
+ *  ScaleFont
+ *
+ *  Scale font to requested lfHeight
+ *
+ */
+inline static float round(float f)
+{
+    return (f > 0) ? (f + 0.5) : (f - 0.5);
+}
+ 
+static void ScaleFont(DC *dc, LOGFONTW *lf, PSDRV_PDEVICE *physDev)
+{
+    PSFONT  	    *font = &(physDev->font);
+    WINMETRICS	    *wm = &(font->afm->WinMetrics);
+    TEXTMETRICW     *tm = &(font->tm);
+    LONG    	    lfHeight_ds;
+    USHORT  	    usUnitsPerEm, usWinAscent, usWinDescent;
+    SHORT   	    sAscender, sDescender, sLineGap, sTypoAscender;
+    SHORT    	    sTypoDescender, sTypoLineGap, sAvgCharWidth;
+    
+    TRACE("'%s' %li\n", font->afm->FontName, lf->lfHeight);
+		
+    lfHeight_ds = INTERNAL_YWSTODS(dc, lf->lfHeight);	/* world->viewport */
+
+    if (lfHeight_ds < 0)   	    	    	    	/* match em height */
+    {
+        font->scale = - ((float)lfHeight_ds / (float)(wm->usUnitsPerEm));
+    }
+    else    	    	    	    	    	    	/* match cell height */
+    {
+    	font->scale = (float)lfHeight_ds /
+	    	(float)(wm->usWinAscent + wm->usWinDescent);
+    }
+    
+    physDev->font.size = (INT)round(font->scale * (float)wm->usUnitsPerEm);
+    physDev->font.escapement = lf->lfEscapement;
+    physDev->font.set = FALSE;
+    
+    usUnitsPerEm = (USHORT)round((float)(wm->usUnitsPerEm) * font->scale);
+    sAscender = (SHORT)round((float)(wm->sAscender) * font->scale);
+    sDescender = (SHORT)round((float)(wm->sDescender) * font->scale);
+    sLineGap = (SHORT)round((float)(wm->sLineGap) * font->scale);
+    sTypoAscender = (SHORT)round((float)(wm->sTypoAscender) * font->scale);
+    sTypoDescender = (SHORT)round((float)(wm->sTypoDescender) * font->scale);
+    sTypoLineGap = (SHORT)round((float)(wm->sTypoLineGap) * font->scale);
+    usWinAscent = (USHORT)round((float)(wm->usWinAscent) * font->scale);
+    usWinDescent = (USHORT)round((float)(wm->usWinDescent) * font->scale);
+    sAvgCharWidth = (SHORT)round((float)(wm->sAvgCharWidth) * font->scale);
+    
+    tm->tmAscent = (LONG)usWinAscent;
+    tm->tmDescent = (LONG)usWinDescent;
+    tm->tmHeight = tm->tmAscent + tm->tmDescent;
+    
+    tm->tmInternalLeading = tm->tmHeight - (LONG)usUnitsPerEm;
+    if (tm->tmInternalLeading < 0)
+        tm->tmInternalLeading = 0;
+	
+    tm->tmExternalLeading =
+    	    (LONG)(sAscender - sDescender + sLineGap) - tm->tmHeight;
+    if (tm->tmExternalLeading < 0)
+    	tm->tmExternalLeading = 0;
+	
+    /*
+     *	Character widths are stored as PostScript metrics, which assume an
+     *	em square size of 1000.
+     */
+     
+    tm->tmAveCharWidth = (LONG)sAvgCharWidth;
+         
+    tm->tmMaxCharWidth = (LONG)round(
+    	    (font->afm->FontBBox.urx - font->afm->FontBBox.llx) *
+	    font->scale * (float)(wm->usUnitsPerEm) / 1000.0);
+
+    tm->tmWeight = font->afm->Weight;
+    tm->tmItalic = (font->afm->ItalicAngle != 0.0);
+    tm->tmUnderlined = 0;
+    tm->tmStruckOut = 0;
+    tm->tmFirstChar = (WCHAR)(font->afm->Metrics[0].UV);
+    tm->tmLastChar =
+    	    (WCHAR)(font->afm->Metrics[font->afm->NumofMetrics - 1].UV);
+    tm->tmDefaultChar = 0x001f;     	/* Win2K does this - FIXME? */
+    tm->tmBreakChar = tm->tmFirstChar;	    	/* should be 'space' */
+    
+    /* Assume that a font with an em square size of 1000 is a PostScript font */
+    
+    tm->tmPitchAndFamily = (font->afm->IsFixedPitch ? 0 : TMPF_FIXED_PITCH) |
+    	    ((wm->usUnitsPerEm == 1000) ? TMPF_DEVICE : TMPF_TRUETYPE) |
+	    TMPF_VECTOR;    	/* TMPF_VECTOR always set per Win32 API doc */
+	    
+    tm->tmCharSet = ANSI_CHARSET;   	/* FIXME */
+    tm->tmOverhang = 0;
+    tm->tmDigitizedAspectX = dc->devCaps->logPixelsY;
+    tm->tmDigitizedAspectY = dc->devCaps->logPixelsX;
+    
+    /*
+     *	This is kludgy.  font->scale is used in several places in the driver
+     *	to adjust PostScript-style metrics.  Since these metrics have been
+     *	"normalized" to an em-square size of 1000, font->scale needs to be
+     *	similarly adjusted..
+     */
+     
+    font->scale *= (float)wm->usUnitsPerEm / 1000.0;
+    
+    TRACE("Selected PS font '%s' size %d weight %ld.\n", 
+	  physDev->font.afm->FontName, physDev->font.size,
+	  physDev->font.tm.tmWeight );
+    TRACE("H = %ld As = %ld Des = %ld IL = %ld EL = %ld\n",
+	  physDev->font.tm.tmHeight, physDev->font.tm.tmAscent,
+	  physDev->font.tm.tmDescent, physDev->font.tm.tmInternalLeading,
+	  physDev->font.tm.tmExternalLeading);
+}
 
 /***********************************************************************
  *           PSDRV_FONT_SelectObject
@@ -24,7 +136,6 @@ HFONT PSDRV_FONT_SelectObject( DC * dc, HFONT hfont )
     PSDRV_PDEVICE *physDev = (PSDRV_PDEVICE *)dc->physDev;
     BOOL bd = FALSE, it = FALSE;
     AFMLISTENTRY *afmle;
-    AFM *afm;
     FONTFAMILY *family;
     char FaceName[LF_FACESIZE];
 
@@ -133,56 +244,12 @@ HFONT PSDRV_FONT_SelectObject( DC * dc, HFONT hfont )
     }
     if(!afmle)
         afmle = family->afmlist; /* not ideal */
+	
+    TRACE("Got font '%s'\n", afmle->afm->FontName);
     
-    afm = afmle->afm;
-
-    physDev->font.afm = afm;
-    physDev->font.tm.tmHeight = INTERNAL_YWSTODS(dc, lf.lfHeight);
-    if(physDev->font.tm.tmHeight < 0) {
-        physDev->font.tm.tmHeight *= - (afm->FullAscender - afm->Descender) /
-				       (afm->Ascender - afm->Descender);
-	TRACE("Fixed -ve height to %ld\n", physDev->font.tm.tmHeight);
-    }
-    physDev->font.size = physDev->font.tm.tmHeight * 1000.0 /
-				(afm->FullAscender - afm->Descender);
-    physDev->font.scale = physDev->font.size / 1000.0;
-    physDev->font.escapement = lf.lfEscapement;
-    physDev->font.tm.tmAscent = afm->FullAscender * physDev->font.scale;
-    physDev->font.tm.tmDescent = -afm->Descender * physDev->font.scale;
-    physDev->font.tm.tmInternalLeading = (afm->FullAscender - afm->Ascender)
-						* physDev->font.scale;
-    physDev->font.tm.tmExternalLeading = (1000.0 - afm->FullAscender)
-						* physDev->font.scale; /* ?? */
-    physDev->font.tm.tmAveCharWidth = afm->CharWidths[120] * /* x */
-                                                   physDev->font.scale;
-    physDev->font.tm.tmMaxCharWidth = afm->CharWidths[77] * /* M */
-                                           physDev->font.scale;
-    physDev->font.tm.tmWeight = afm->Weight;
-    physDev->font.tm.tmItalic = afm->ItalicAngle != 0.0;
-    physDev->font.tm.tmUnderlined = lf.lfUnderline;
-    physDev->font.tm.tmStruckOut = lf.lfStrikeOut;
-    physDev->font.tm.tmFirstChar = 32;
-    physDev->font.tm.tmLastChar = 251;
-    physDev->font.tm.tmDefaultChar = 128;
-    physDev->font.tm.tmBreakChar = 32;
-    physDev->font.tm.tmPitchAndFamily = afm->IsFixedPitch ? 0 :
-                                          TMPF_FIXED_PITCH;
-    physDev->font.tm.tmPitchAndFamily |= TMPF_DEVICE;
-    physDev->font.tm.tmCharSet = ANSI_CHARSET;
-    physDev->font.tm.tmOverhang = 0;
-    physDev->font.tm.tmDigitizedAspectX = dc->devCaps->logPixelsY;
-    physDev->font.tm.tmDigitizedAspectY = dc->devCaps->logPixelsX;
-
-    physDev->font.set = FALSE;
-
-    TRACE("Selected PS font '%s' size %d weight %ld.\n", 
-	  physDev->font.afm->FontName, physDev->font.size,
-	  physDev->font.tm.tmWeight );
-    TRACE("H = %ld As = %ld Des = %ld IL = %ld EL = %ld\n",
-	  physDev->font.tm.tmHeight, physDev->font.tm.tmAscent,
-	  physDev->font.tm.tmDescent, physDev->font.tm.tmInternalLeading,
-	  physDev->font.tm.tmExternalLeading);
-
+    physDev->font.afm = afmle->afm;
+    ScaleFont(dc, &lf, physDev);
+    
     return prevfont;
 }
 
