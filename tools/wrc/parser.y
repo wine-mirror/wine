@@ -188,6 +188,7 @@ static toolbar_item_t *get_tlbr_buttons_head(toolbar_item_t *p, int *nitems);
 static string_t *make_filename(string_t *s);
 static resource_t *build_fontdirs(resource_t *tail);
 static resource_t *build_fontdir(resource_t **fnt, int nfnt);
+static int rsrcid_to_token(int lookahead);
 
 %}
 %union{
@@ -411,7 +412,7 @@ resources
  */
 preprocessor
 	: '#' { want_nl = 1; } tNUMBER tSTRING any_nums tNL	{
-		line_number = $3 - 1;
+		line_number = $3;
 		input_name = $4->str.cstr;
 		/* fprintf(stderr, "Now at %s:%d\n", input_name, line_number); */
 		}
@@ -437,18 +438,18 @@ cjunk	: tTYPEDEF			{ strip_til_semicolon(); }
 
 /* Parse top level resource definitions etc. */
 resource
-	: nameid resource_definition {
-		$$ = $2;
+	: nameid usrcvt resource_definition {
+		$$ = $3;
 		if($$)
 		{
 			$$->name = $1;
 			if($1->type == name_ord)
 			{
-				chat("Got %s (%d)",get_typename($2),$1->name.i_name);
+				chat("Got %s (%d)",get_typename($3),$1->name.i_name);
 			}
 			else if($1->type == name_str)
 			{
-				chat("Got %s (%s)",get_typename($2),$1->name.s_name->str.cstr);
+				chat("Got %s (%s)",get_typename($3),$1->name.s_name->str.cstr);
 			}
 		}
 		}
@@ -472,6 +473,13 @@ resource
 		currentlanguage = new_language($3, $5);
 		$$ = NULL;
 		}
+	;
+
+/*
+ * Remapping of numerical resource types
+ * (see also comment of called function below)
+ */
+usrcvt	: /* Empty */	{ yychar = rsrcid_to_token(yychar); }
 	;
 
 /*
@@ -662,48 +670,6 @@ dlginit	: tDLGINIT loadmemopts file_raw	{ $$ = new_dlginit($3, $2); }
 
 /* ------------------------------ UserType ------------------------------ */
 userres	: usertype loadmemopts file_raw		{
-		if($1->type == name_ord)
-		{
-			switch($1->name.i_name)
-			{
-			case WRC_RT_CURSOR:	/* Bad idea; cursors should generate directories */
-			case WRC_RT_ANICURSOR:
-			case WRC_RT_ICON:
-			case WRC_RT_ANIICON:	/* Bad idea; icons should generate directories */
-			case WRC_RT_BITMAP:
-			case WRC_RT_FONT:	/* Bad idea; fonts should generate directories */
-			case WRC_RT_FONTDIR:
-			case WRC_RT_RCDATA:	/* This cannot be interpreted anyway */
-			case WRC_RT_MESSAGETABLE:	/* This case is involked by mc.exe */
-			case WRC_RT_DLGINIT:	/* No real layout available */
-
-			/* These should never be invoked because they have their own layout */
-			case WRC_RT_ACCELERATOR:
-			case WRC_RT_MENU:
-			case WRC_RT_DIALOG:
-			case WRC_RT_STRING:
-			case WRC_RT_TOOLBAR:
-			case WRC_RT_VERSION:
-				yywarning("Usertype uses special type-ID %d (wrc cannot yet re-interpret the data)", $1->name.i_name);
-				goto douser;
-
-			case WRC_RT_GROUP_CURSOR:
-			case WRC_RT_GROUP_ICON:
-				yywarning("Usertype uses reserved type-ID %d, which is auto-generated", $1->name.i_name);
-				goto douser;
-
-			case WRC_RT_DLGINCLUDE:
-			case WRC_RT_PLUGPLAY:
-			case WRC_RT_VXD:
-			case WRC_RT_HTML:
-				yywarning("Usertype uses reserved type-ID %d, which is not supported by wrc", $1->name.i_name);
-			default:
-				goto douser;
-			}
-		}
-		else
-		{
-	douser:
 		#ifdef WORDS_BIGENDIAN
 			if(pedantic && byteorder != WRC_BO_LITTLE)
 		#else
@@ -711,7 +677,6 @@ userres	: usertype loadmemopts file_raw		{
 		#endif
 				yywarning("Byteordering is not little-endian and type cannot be interpreted");
 			$$ = new_user($1, $3, $2);
-		}
 		}
 	;
 
@@ -2041,7 +2006,7 @@ byebye:
 
 static name_id_t *convert_ctlclass(name_id_t *cls)
 {
-	char *cc;
+	char *cc = NULL;
 	int iclass;
 
 	if(cls->type == name_ord)
@@ -2213,7 +2178,7 @@ static event_t *add_string_event(string_t *key, int id, int flags, event_t *prev
 	if(key->type != str_char)
 		yyerror("Key code must be an ascii string");
 
-	if((flags & WRC_AF_VIRTKEY) && (!isupper(key->str.cstr[0]) && !isdigit(key->str.cstr[0])))
+	if((flags & WRC_AF_VIRTKEY) && (!isupper(key->str.cstr[0] & 0xff) && !isdigit(key->str.cstr[0] & 0xff)))
 		yyerror("VIRTKEY code is not equal to ascii value");
 
 	if(key->str.cstr[0] == '^' && (flags & WRC_AF_CONTROL) != 0)
@@ -2819,5 +2784,133 @@ clean:
 	if(fnd)
 		free(fnd);
 	return lst;
+}
+
+/*
+ * This gets invoked to determine whether the next resource
+ * is to be of a standard-type (e.g. bitmaps etc.), or should
+ * be a user-type resource. This function is required because
+ * there is the _possibility_ of a lookahead token in the
+ * parser, which is generated from the "expr" state in the
+ * "nameid" parsing.
+ *
+ * The general resource format is:
+ * <identifier> <type> <flags> <resourcebody>
+ *
+ * The <identifier> can either be tIDENT or "expr". The latter
+ * will always generate a lookahead, which is the <type> of the
+ * resource to parse. Otherwise, we need to get a new token from
+ * the scanner to determine the next step.
+ *
+ * The problem arrises when <type> is numerical. This case should
+ * map onto default resource-types and be parsed as such instead
+ * of being mapped onto user-type resources.
+ *
+ * The trick lies in the fact that yacc (bison) doesn't care about
+ * intermediate changes of the lookahead while reducing a rule. We
+ * simply replace the lookahead with a token that will result in
+ * a shift to the appropriate rule for the specific resource-type.
+ */
+static int rsrcid_to_token(int lookahead)
+{
+	int token;
+	char *type = "?";
+
+	/* Get a token if we don't have one yet */
+	if(lookahead == YYEMPTY)
+		lookahead = YYLEX;
+
+	/* Only numbers are possibly interesting */
+	switch(lookahead)
+	{
+	case tNUMBER:
+	case tLNUMBER:
+		break;
+	default:
+		return lookahead;
+	}
+
+	token = lookahead;
+
+	switch(yylval.num)
+	{
+	case WRC_RT_CURSOR:
+		type = "CURSOR";
+		token = tCURSOR;
+		break;
+	case WRC_RT_ICON:
+		type = "ICON";
+		token = tICON;
+		break;
+	case WRC_RT_BITMAP:
+		type = "BITMAP";
+		token = tBITMAP;
+		break;
+	case WRC_RT_FONT:
+		type = "FONT";
+		token = tFONT;
+		break;
+	case WRC_RT_FONTDIR:
+		type = "FONTDIR";
+		token = tFONTDIR;
+		break;
+	case WRC_RT_RCDATA:
+		type = "RCDATA";
+		token = tRCDATA;
+		break;
+	case WRC_RT_MESSAGETABLE:
+		type = "MESSAGETABLE";
+		token = tMESSAGETABLE;
+		break;
+	case WRC_RT_DLGINIT:
+		type = "DLGINIT";
+		token = tDLGINIT;
+		break;
+	case WRC_RT_ACCELERATOR:
+		type = "ACCELERATOR";
+		token = tACCELERATORS;
+		break;
+	case WRC_RT_MENU:
+		type = "MENU";
+		token = tMENU;
+		break;
+	case WRC_RT_DIALOG:
+		type = "DIALOG";
+		token = tDIALOG;
+		break;
+	case WRC_RT_VERSION:
+		type = "VERSION";
+		token = tVERSIONINFO;
+		break;
+	case WRC_RT_TOOLBAR:
+		type = "TOOLBAR";
+		token = tTOOLBAR;
+		break;
+
+	case WRC_RT_STRING:
+		type = "STRINGTABLE";
+		break;
+
+	case WRC_RT_ANICURSOR:
+	case WRC_RT_ANIICON:
+	case WRC_RT_GROUP_CURSOR:
+	case WRC_RT_GROUP_ICON:
+		yywarning("Usertype uses reserved type-ID %d, which is auto-generated", yylval.num);
+		return lookahead;
+
+	case WRC_RT_DLGINCLUDE:
+	case WRC_RT_PLUGPLAY:
+	case WRC_RT_VXD:
+	case WRC_RT_HTML:
+		yywarning("Usertype uses reserved type-ID %d, which is not supported by wrc", yylval.num);
+	default:
+		return lookahead;
+	}
+
+	if(remap)
+		return token;
+	else
+		yywarning("Usertype uses reserved type-ID %d, which is used by %s", yylval.num, type);
+	return lookahead;
 }
 

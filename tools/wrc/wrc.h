@@ -16,8 +16,8 @@
 
 #define WRC_MAJOR_VERSION	1
 #define WRC_MINOR_VERSION	1
-#define WRC_MICRO_VERSION	4
-#define WRC_RELEASEDATE		"(07-Jun-2000)"
+#define WRC_MICRO_VERSION	5
+#define WRC_RELEASEDATE		"(09-Jun-2000)"
 
 #define WRC_STRINGIZE(a)	#a
 #define WRC_VERSIONIZE(a,b,c)	WRC_STRINGIZE(a) "." WRC_STRINGIZE(b) "." WRC_STRINGIZE(c)  
@@ -55,6 +55,7 @@ extern int leave_case;
 extern int byteorder;
 extern int preprocess_only;
 extern int no_preprocess;
+extern int remap;
 
 extern char *prefix;
 extern char *output_name;

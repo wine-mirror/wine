@@ -1,4 +1,19 @@
 ---------------------------------------------------------------------------
+Version 1.1.5 (12-Jun-2000)
+
+Bertho Stultiens <bertho@akhphd.au.dk>
+- Bugfix: Corrected "off by one" error in the linenumber while parsing
+  resource.
+- Bugfix: A segfault would occur if messagetables were parsed without
+  memory options attached. Also added buffer-overflow safeguard while
+  converting between byteorders.
+- Finished remapping usertype resources onto standars types by tricking
+  the parser into accepting a different token. The remapping can be
+  disabled with a new commandline option '-m'.
+- Resolved some warning about chars used as index on SGI O2 machine
+  (the ctype isXXX() routines are macros there).
+
+---------------------------------------------------------------------------
 Version 1.1.4 (07-Jun-2000)
 
 Bertho Stultiens <bertho@akhphd.au.dk>

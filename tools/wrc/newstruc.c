@@ -903,6 +903,7 @@ ver_words_t *add_ver_words(ver_words_t *w, int i)
 	return w;
 }
 
+#define MSGTAB_BAD_PTR(p, b, l, r)	(((l) - ((char *)(p) - (char *)(b))) > (r))
 messagetable_t *new_messagetable(raw_data_t *rd, int *memopt)
 {
 	messagetable_t *msg = (messagetable_t *)xmalloc(sizeof(messagetable_t));
@@ -912,8 +913,17 @@ messagetable_t *new_messagetable(raw_data_t *rd, int *memopt)
 	WORD hi;
 
 	msg->data = rd;
-	msg->memopt = *memopt;
-	free(memopt);
+	if(memopt)
+	{
+		msg->memopt = *memopt;
+		free(memopt);
+	}
+	else
+		msg->memopt = WRC_MO_MOVEABLE | WRC_MO_PURE;
+
+	if(rd->size < sizeof(DWORD))
+		yyerror("Invalid messagetable, size too small");
+
 	nblk = *(DWORD *)rd->data;
 	lo = WRC_LOWORD(nblk);
 	hi = WRC_HIWORD(nblk);
@@ -939,6 +949,8 @@ messagetable_t *new_messagetable(raw_data_t *rd, int *memopt)
 	{
 		msgtab_block_t *mbp = (msgtab_block_t *)&(((DWORD *)rd->data)[1]);
 		nblk = BYTESWAP_DWORD(nblk);
+		if(MSGTAB_BAD_PTR(mbp, rd->data, rd->size, nblk * sizeof(*mbp)))
+			yyerror("Messagetable's blocks are outside of defined data");
 		for(i = 0; i < nblk; i++)
 		{
 			msgtab_entry_t *mep;
@@ -952,7 +964,9 @@ messagetable_t *new_messagetable(raw_data_t *rd, int *memopt)
 			{
 				mep->length = BYTESWAP_WORD(mep->length);
 				mep->flags  = BYTESWAP_WORD(mep->flags);
-				if(mep->flags & 1)
+				if(MSGTAB_BAD_PTR(mep, rd->data, rd->size, mep->length))
+					yyerror("Messagetable's data for block %d, ID 0x%08lx is outside of defined data", (int)i, id);
+				if(mep->flags == 1)	/* Docu says 'flags == 0x0001' for unicode */
 				{
 					WORD *wp = (WORD *)&mep[1];
 					int l = mep->length/2 - 2; /* Length included header */
@@ -971,6 +985,7 @@ messagetable_t *new_messagetable(raw_data_t *rd, int *memopt)
 
 	return msg;
 }
+#undef MSGTAB_BAD_PTR
 
 void copy_raw_data(raw_data_t *dst, raw_data_t *src, int offs, int len)
 {

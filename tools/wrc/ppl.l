@@ -656,7 +656,7 @@ includelogicentry_t *includelogiclist = NULL;
 	 * This is a 'catch-all' rule to discover errors in the scanner
 	 * in an orderly manner.
 	 */
-<*>.		seen_junk++; ppwarning("Unmatched text '%c' (0x%02x); please report\n", isprint(*pptext) ? *pptext : ' ', *pptext);
+<*>.		seen_junk++; ppwarning("Unmatched text '%c' (0x%02x); please report\n", isprint(*pptext & 0xff) ? *pptext : ' ', *pptext);
 
 <<EOF>>	{
 		YY_BUFFER_STATE b = YY_CURRENT_BUFFER;
@@ -954,7 +954,7 @@ static mtext_t *add_expand_text(mtext_t *mtp, macexpstackentry_t *mep, int *nnl)
 		/* Remove trailing whitespace from current expansion text */
 		while(curdef_idx)
 		{
-			if(isspace(curdef_text[curdef_idx-1]))
+			if(isspace(curdef_text[curdef_idx-1] & 0xff))
 				curdef_idx--;
 			else
 				break;
@@ -968,7 +968,7 @@ static mtext_t *add_expand_text(mtext_t *mtp, macexpstackentry_t *mep, int *nnl)
 		n = curdef_idx - tag;
 		while(n)
 		{
-			if(isspace(*cptr))
+			if(isspace(*cptr & 0xff))
 			{
 				cptr++;
 				n--;
@@ -1054,7 +1054,7 @@ static void expand_macro(macexpstackentry_t *mep)
 	/* Strip trailing whitespace from expansion */
 	for(k = curdef_idx, cptr = &curdef_text[curdef_idx-1]; k > 0; k--, cptr--)
 	{
-		if(!isspace(*cptr))
+		if(!isspace(*cptr & 0xff))
 			break;
 	}
 
@@ -1069,7 +1069,7 @@ static void expand_macro(macexpstackentry_t *mep)
 	/* Strip leading whitespace from expansion */
 	for(n = 0, cptr = curdef_text; n < k; n++, cptr++)
 	{
-		if(!isspace(*cptr))
+		if(!isspace(*cptr & 0xff))
 			break;
 	}
 

@@ -569,7 +569,7 @@ static mtext_t *combine_mtext(mtext_t *tail, mtext_t *mtp)
 		while(len)
 		{
 /* FIXME: should delete space from head of string */
-			if(isspace(mtp->subst.text[len-1]))
+			if(isspace(mtp->subst.text[len-1] & 0xff))
 				mtp->subst.text[--len] = '\0';
 			else
 				break;
@@ -588,7 +588,7 @@ static mtext_t *combine_mtext(mtext_t *tail, mtext_t *mtp)
 		int len = strlen(tail->subst.text);
 		while(len)
 		{
-			if(isspace(tail->subst.text[len-1]))
+			if(isspace(tail->subst.text[len-1] & 0xff))
 				tail->subst.text[--len] = '\0';
 			else
 				break;

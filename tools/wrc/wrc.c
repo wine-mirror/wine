@@ -78,6 +78,7 @@ static char usage[] =
 	"   -I path     Set include search dir to path (multiple -I allowed)\n"
 	"   -l lan      Set default language to lan (default is neutral {0, 0})\n"
 	"   -L          Leave case of embedded filenames as is\n"
+	"   -m          Do not remap numerical resource IDs\n"
 	"   -n          Do not generate .s file\n"
 	"   -N          Do not preprocess input\n"
 	"   -o file     Output to file (default is infile.[res|s|h]\n"
@@ -233,6 +234,11 @@ int preprocess_only = 0;
  */
 int no_preprocess = 0;
 
+/*
+ * Cleared when _not_ to remap resource types (-m option)
+ */
+int remap = 1;
+
 char *output_name;		/* The name given by the -o option */
 char *input_name;		/* The name given on the command-line */
 char *header_name;		/* The name given by the -H option */
@@ -279,7 +285,7 @@ int main(int argc,char *argv[])
 			strcat(cmdline, " ");
 	}
 
-	while((optc = getopt(argc, argv, "a:AbB:cC:d:D:eEghH:I:l:LnNo:p:rstTVw:W")) != EOF)
+	while((optc = getopt(argc, argv, "a:AbB:cC:d:D:eEghH:I:l:LmnNo:p:rstTVw:W")) != EOF)
 	{
 		switch(optc)
 		{
@@ -351,6 +357,9 @@ int main(int argc,char *argv[])
 			break;
 		case 'L':
 			leave_case = 1;
+			break;
+		case 'm':
+			remap = 0;
 			break;
 		case 'n':
 			create_s = 0;

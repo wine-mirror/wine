@@ -1,4 +1,4 @@
-.TH WRC 1 "June 07, 2000" "Version 1.1.4" "Wine Resource Compiler"
+.TH WRC 1 "June 12, 2000" "Version 1.1.5" "Wine Resource Compiler"
 .SH NAME
 wrc \- Wine Resource Compiler
 .SH SYNOPSIS
@@ -105,6 +105,17 @@ Set default language to \fIlan\fR. Default is the neutral language 0
 Leave case of embedded filenames as is. All filenames are converted to
 lower case before they are attemped to be opened without this option.
 .TP
+.I \-m
+Do not remap numerical resource type-IDs onto standard resources. This will
+cause all numerical resource type\-IDs to be treated as user\-type resources
+and will not be checked nor byte\-reversed. Without this option, resources
+with, for example, type\-ID 2 are parsed as bitmaps and other type\-IDs will
+map onto their respective standard type.
+Use this option with caution because it can create problems when compiling for,
+for example, big\-endian platforms. The \fI\-m\fR option is usefull for
+source\-files that contain overlapping type\-IDs, or when the format of the
+resource is not 100% compliant.
+.TP
 .I \-n
 Do not generate an assembly outputfile (suppress generation of \fB.s\fR
 file). Usefull if you are interested in a header file only.
@@ -194,11 +205,6 @@ There is no support for:
 Fonts are parsed and generated, but there is no support for the
 generation of the FONTDIR yet. The user must supply the FONTDIR
 resource in the source to match the FONT resources.
-.PP
-Usertype resources that have a type-clash with other resources are not
-handled correctly. These should map onto the builtin resources as much
-as possible (especially icons, cursors and fonts because of directory
-generation and everything else that would require byte-order swapping).
 .PP
 See the CHANGES and README.wrc files in the distribution for more
 comments on bugs and fixes across the versions.

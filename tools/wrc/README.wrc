@@ -1,4 +1,4 @@
-Release 1.1.4 of wrc (07-Jun-2000), the wine resource compiler.
+Release 1.1.5 of wrc (12-Jun-2000), the wine resource compiler.
 
 See the file CHANGES for differences between the version and what has been
 corrected in the current version.
@@ -42,6 +42,7 @@ Usage: wrc [options...] [infile[.rc|.res]]
    -I path     Set include search dir to path (multiple -I allowed)
    -l lan      Set default language to lan (default is neutral {0, 0})
    -L          Leave case of embedded filenames as is
+   -m          Do not remap numerical resource IDs
    -n          Do not generate .s file
    -N          Do not preprocess input
    -o file     Output to file (default is infile.[res|s|h]
@@ -283,8 +284,6 @@ though):
   different action for win32 and win16
 - PUSHBOX control is unsupported. The MS docs use it plenty, but neither
   MS' nor Borland's compiler supports it.
-- Usertype resources with a type-clash are not handled correctly. These
-  should map onto other resources.
 
 Reporting bugs and patches
 --------------------------

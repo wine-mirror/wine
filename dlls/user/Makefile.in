@@ -4,7 +4,7 @@ SRCDIR    = @srcdir@
 VPATH     = @srcdir@
 MODULE    = user32
 SOVERSION = 1.0
-WRCEXTRA  = -w16
+WRCEXTRA  = -w16 -m
 ALTNAMES  = user keyboard ddeml display mouse
 
 SPEC_SRCS = \

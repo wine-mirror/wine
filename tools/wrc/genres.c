@@ -1746,7 +1746,7 @@ char *prep_nid_for_label(name_id_t *nid)
 		buf[0] = '\0';
 		for(i = 0; *sptr && i < MAXNAMELEN; i++)
 		{
-			if((unsigned)*sptr < 0x80 && isprint((char)*sptr))
+			if((unsigned)*sptr < 0x80 && isprint(*sptr & 0xff))
 				buf[i] = *sptr++;
 			else
 				warning("Resourcename (str_unicode) contain unprintable characters or invalid translation, ignored");
@@ -1761,7 +1761,7 @@ char *prep_nid_for_label(name_id_t *nid)
 		buf[0] = '\0';
 		for(i = 0; *cptr && i < MAXNAMELEN; i++)
 		{
-			if((unsigned)*cptr < 0x80 && isprint(*cptr))
+			if((unsigned)*cptr < 0x80 && isprint(*cptr & 0xff))
 				buf[i] = *cptr++;
 			else
 				warning("Resourcename (str_char) contain unprintable characters, ignored");

@@ -518,7 +518,7 @@ L\"			{
 					char_number = 1;
 				}
 				yywarning("Unmatched text '%c' (0x%02x) YY_START=%d stripslevel=%d",
-					isprint(*yytext) ? *yytext : '.', *yytext, YY_START,stripslevel);
+					isprint(*yytext & 0xff) ? *yytext : '.', *yytext, YY_START,stripslevel);
 			}
 
 %%

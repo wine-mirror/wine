@@ -237,7 +237,7 @@ static void dump_raw_data(raw_data_t *d)
 			{
 				printf("- ");
 				for(i = 0; i < 16; i++)
-					printf("%c", isprint(d->data[n-16+i]) ? d->data[n-16+i] : '.');
+					printf("%c", isprint(d->data[n-16+i] & 0xff) ? d->data[n-16+i] : '.');
 				printf("\n%08x: ", n);
 			}
 			else
@@ -250,7 +250,7 @@ static void dump_raw_data(raw_data_t *d)
 	if(!j)
 		j = 16;
 	for(i = 0; i < j; i++)
-		printf("%c", isprint(d->data[n-j+i]) ? d->data[n-j+i] : '.');
+		printf("%c", isprint(d->data[n-j+i] & 0xff) ? d->data[n-j+i] : '.');
 	printf("\n");
 }
 
