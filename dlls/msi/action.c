@@ -1300,6 +1300,10 @@ static UINT ACTION_CustomAction(MSIPACKAGE *package,const WCHAR *action)
             rc = HANDLE_CustomType34(package,source,target,type);
             break;
         case 35: /* Directory set with formatted text. */
+            deformat_string(package,target,&deformated);
+            MSI_SetTargetPathW(package, source, deformated);
+            HeapFree(GetProcessHeap(),0,deformated);
+            break;
         case 51: /* Property set with formatted text. */
             deformat_string(package,target,&deformated);
             rc = MSI_SetPropertyW(package,source,deformated);
@@ -2322,7 +2326,14 @@ static LPWSTR resolve_folder(MSIPACKAGE *package, LPCWSTR name,
                     MSI_SetPropertyW(package,cszTargetDir,path);
             }
             if (folder)
-                *folder = &(package->folders[0]);
+            {
+                for (i = 0; i < package->loaded_folders; i++)
+                {
+                    if (strcmpW(package->folders[i].Directory,name)==0)
+                        break;
+                }
+                *folder = &(package->folders[i]);
+            }
             return path;
         }
         else
@@ -2339,7 +2350,14 @@ static LPWSTR resolve_folder(MSIPACKAGE *package, LPCWSTR name,
                 }
             }
             if (folder)
-                *folder = &(package->folders[0]);
+            {
+                for (i = 0; i < package->loaded_folders; i++)
+                {
+                    if (strcmpW(package->folders[i].Directory,name)==0)
+                        break;
+                }
+                *folder = &(package->folders[i]);
+            }
             return path;
         }
     }
@@ -5076,6 +5094,7 @@ UINT MSI_SetTargetPathW(MSIPACKAGE *package, LPCWSTR szFolder,
 {
     DWORD i;
     LPWSTR path = NULL;
+    LPWSTR path2 = NULL;
     INT len;
     MSIFOLDER *folder;
 
@@ -5091,9 +5110,12 @@ UINT MSI_SetTargetPathW(MSIPACKAGE *package, LPCWSTR szFolder,
         return ERROR_FUNCTION_FAILED;
 
     path = resolve_folder(package,szFolder,FALSE,FALSE,&folder);
+
     if (!path)
         return ERROR_INVALID_PARAMETER;
-    HeapFree(GetProcessHeap(),0,path);
+
+    if (folder->Property)
+        HeapFree(GetProcessHeap(),0,folder->Property);
 
     len = strlenW(szFolderPath);
 
@@ -5107,15 +5129,34 @@ UINT MSI_SetTargetPathW(MSIPACKAGE *package, LPCWSTR szFolder,
     else
         folder->Property = dupstrW(szFolderPath);
 
-    for (i = 0; i < package->loaded_folders; i++)
-        package->folders[i].ResolvedTarget=NULL;
-
-    for (i = 0; i < package->loaded_folders; i++)
+    if (strcmpiW(path, szFolderPath) == 0)
     {
-        path = resolve_folder(package, package->folders[i].Directory, FALSE,
-                       TRUE, NULL);
-        HeapFree(GetProcessHeap(),0,path);
+        /*
+         *  Resolved Target has not really changed, so just 
+         *  set this folder and do not recalculate everything.
+         */
+        HeapFree(GetProcessHeap(),0,folder->ResolvedTarget);
+        folder->ResolvedTarget = NULL;
+        path2 = resolve_folder(package,szFolder,FALSE,TRUE,NULL);
+        HeapFree(GetProcessHeap(),0,path2);
     }
+    else
+    {
+        for (i = 0; i < package->loaded_folders; i++)
+        {
+            if (package->folders[i].ResolvedTarget)
+                HeapFree(GetProcessHeap(),0,package->folders[i].ResolvedTarget);
+            package->folders[i].ResolvedTarget=NULL;
+        }
+
+        for (i = 0; i < package->loaded_folders; i++)
+        {
+            path2=resolve_folder(package, package->folders[i].Directory, FALSE,
+                       TRUE, NULL);
+            HeapFree(GetProcessHeap(),0,path2);
+        }
+    }
+    HeapFree(GetProcessHeap(),0,path);
 
     return ERROR_SUCCESS;
 }
