@@ -143,7 +143,7 @@ static inline void WCEL_GetRect(WCEL_Context* ctx, LPSMALL_RECT sr, int beg, int
 
 static BOOL WCEL_Grow(WCEL_Context* ctx, size_t len)
 {
-    if (ctx->csbi.dwCursorPosition.X + ctx->ofs + len >= ctx->csbi.dwSize.X)
+    if (ctx->csbi.dwCursorPosition.X + ctx->len + len >= ctx->csbi.dwSize.X)
     {
 	FIXME("Current implementation doesn't allow edition to spray across several lines\n");
 	return FALSE;
@@ -201,10 +201,8 @@ static void WCEL_InsertChar(WCEL_Context* ctx, WCHAR c)
     WCHAR	buffer[2];
 
     /* do not insert 0..31 control characters */
-    if (c < ' ')
-    {
-	if (c != '\t') return;
-    }
+    if (c < ' ' && c != '\t') return;
+
     buffer[0] = c;
     buffer[1] = 0;
     WCEL_InsertString(ctx, buffer);
@@ -637,11 +635,12 @@ static KeyEntry EmacsKeyMapExtended[] =
 {
     {/*RETURN*/  0x0d,	WCEL_Done },
     {/*VK_PRIOR*/0x21, 	WCEL_MoveToPrevHist	},
-    {/*VK_NEXT*/0x22,	WCEL_MoveToNextHist 	},
+    {/*VK_NEXT*/ 0x22,	WCEL_MoveToNextHist 	},
     {/*VK_END*/  0x23,	WCEL_MoveToEnd		},
     {/*VK_HOME*/ 0x24,	WCEL_MoveToBeg		},
     {/*VK_RIGHT*/0x27,	WCEL_MoveRight 		},
-    {/*VK_LEFT*/0x25,	WCEL_MoveLeft 		},
+    {/*VK_LEFT*/ 0x25,	WCEL_MoveLeft 		},
+    {/*VK_DEL*/  0x2e,  WCEL_DeleteCurrChar     },
     {	0,		NULL 			}
 };
 
