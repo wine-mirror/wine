@@ -664,6 +664,17 @@ typedef HANDLE *PHANDLE;
 #define ISV86(context)       (EFL_reg(context) & 0x00020000)
 #define V86BASE(context)     ((context)->Dr7) /* ugly */
 
+#ifdef __i386__
+# define GET_IP(context) ((LPVOID)(context)->Eip)
+#endif
+#ifdef __sparc__
+# define GET_IP(context) ((LPVOID)(context)->pc)
+#endif
+ 
+#if !defined(GET_IP) && !defined(RC_INVOKED)
+# error You must define GET_IP for this CPU
+#endif
+
 #endif  /* __WINE__ */
 
 /*
