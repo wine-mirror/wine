@@ -42,7 +42,7 @@ $(MODULE).glue.c: $(C_SRCS) $(C_SRCS16) $(WINEBUILD)
 # Rules for .dll files
 
 $(MODULE): $(RCOBJS) $(OBJS) $(MODULE).dbg.o $(SPEC_DEF) $(IMPORTLIBS) Makefile.in
-	$(DLLWRAP) -k --def $(SPEC_DEF) -o $@ $(RCOBJS) $(OBJS) $(MODULE).dbg.o $(DLLMAIN:%=--entry %) -L$(DLLDIR) $(DELAYIMPORTS:%=-l%) $(IMPORTS:%=-l%) $(ALL_LIBS)
+	$(DLLWRAP) -k --def $(SPEC_DEF) -o $@ $(RCOBJS) $(OBJS) $(MODULE).dbg.o $(DLLMAIN:%=--entry _%) -L$(DLLDIR) $(DELAYIMPORTS:%=-l%) $(IMPORTS:%=-l%) $(ALL_LIBS)
 
 $(SPEC_DEF): $(WINEBUILD)
 

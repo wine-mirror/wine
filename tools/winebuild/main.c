@@ -212,7 +212,7 @@ static void set_exec_mode( enum exec_mode_values mode )
 /* parse options from the argv array and remove all the recognized ones */
 static char **parse_options( int argc, char **argv )
 {
-    const char *p;
+    char *p;
     int optc;
 
     while ((optc = getopt_long( argc, argv, short_options, long_options, NULL )) != -1)
@@ -257,6 +257,7 @@ static char **parse_options( int argc, char **argv )
             break;
         case 'e':
             init_func = xstrdup( optarg );
+            if ((p = strchr( init_func, '@' ))) *p = 0;  /* kill stdcall decoration */
             break;
         case 'f':
             if (!strcmp( optarg, "PIC") || !strcmp( optarg, "pic")) UsePIC = 1;
