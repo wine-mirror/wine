@@ -127,52 +127,6 @@ extern int screen_cols;
 extern WINDOW *root_window;
 static inline WINDOW *TTYDRV_GetRootWindow(void) { return root_window; }
 
-extern BOOL TTYDRV_GetScreenSaveActive(void);
-extern void TTYDRV_SetScreenSaveActive(BOOL bActivate);
-extern int TTYDRV_GetScreenSaveTimeout(void);
-extern void TTYDRV_SetScreenSaveTimeout(int nTimeout);
-extern BOOL TTYDRV_IsSingleWindow(void);
-
-/* TTY clipboard driver */
-
-extern struct tagCLIPBOARD_DRIVER TTYDRV_CLIPBOARD_Driver;
-
-extern void TTYDRV_CLIPBOARD_Acquire(void);
-extern void TTYDRV_CLIPBOARD_Release(void);
-extern void TTYDRV_CLIPBOARD_SetData(UINT wFormat);
-extern BOOL TTYDRV_CLIPBOARD_GetData(UINT wFormat);
-extern BOOL TTYDRV_CLIPBOARD_IsFormatAvailable(UINT wFormat);
-extern BOOL TTYDRV_CLIPBOARD_RegisterFormat( LPCSTR FormatName );
-extern BOOL TTYDRV_CLIPBOARD_IsSelectionowner();
-extern void TTYDRV_CLIPBOARD_ResetOwner(struct tagWND *pWnd, BOOL bFooBar);
-
-/* TTY event driver */
-
-extern void TTYDRV_EVENT_Synchronize(void);
-extern BOOL TTYDRV_EVENT_CheckFocus(void);
-extern void TTYDRV_EVENT_UserRepaintDisable(BOOL bDisable);
-
-/* TTY keyboard driver */
-
-extern void TTYDRV_KEYBOARD_Init(void);
-extern WORD TTYDRV_KEYBOARD_VkKeyScan(CHAR cChar);
-extern UINT16 TTYDRV_KEYBOARD_MapVirtualKey(UINT16 wCode, UINT16 wMapType);
-extern INT16 TTYDRV_KEYBOARD_GetKeyNameText(LONG lParam, LPSTR lpBuffer, INT16 nSize);
-extern INT16 TTYDRV_KEYBOARD_ToAscii(UINT16 virtKey, UINT16 scanCode, LPBYTE lpKeyState, LPVOID lpChar, UINT16 flags);
-extern BOOL TTYDRV_KEYBOARD_GetBeepActive(void);
-extern void TTYDRV_KEYBOARD_SetBeepActive(BOOL bActivate);
-extern void TTYDRV_KEYBOARD_Beep(void);
-extern BOOL TTYDRV_KEYBOARD_GetDIState(DWORD len, LPVOID ptr);
-extern BOOL TTYDRV_KEYBOARD_GetDIData(BYTE *keystate, DWORD dodsize, struct DIDEVICEOBJECTDATA *dod, LPDWORD entries, DWORD flags);
-extern void TTYDRV_KEYBOARD_GetKeyboardConfig(struct tagKEYBOARD_CONFIG *cfg);
-extern void TTYDRV_KEYBOARD_SetKeyboardConfig(struct tagKEYBOARD_CONFIG *cfg, DWORD mask);
-
-/* TTY mouse driver */
-
-extern void TTYDRV_MOUSE_Init(LPMOUSE_EVENT_PROC);
-extern void TTYDRV_MOUSE_SetCursor(struct tagCURSORICONINFO *lpCursor);
-extern void TTYDRV_MOUSE_MoveCursor(WORD wAbsX, WORD wAbsY);
-
 /* TTY windows driver */
 
 extern struct tagWND_DRIVER TTYDRV_WND_Driver;

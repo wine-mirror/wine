@@ -46,6 +46,28 @@ extern Pixmap X11DRV_BITMAP_Pixmap( HBITMAP );
 
 /**********************************************************************/
 
+WND_DRIVER X11DRV_WND_Driver =
+{
+  X11DRV_WND_Initialize,
+  X11DRV_WND_Finalize,
+  X11DRV_WND_CreateDesktopWindow,
+  X11DRV_WND_CreateWindow,
+  X11DRV_WND_DestroyWindow,
+  X11DRV_WND_SetParent,
+  X11DRV_WND_ForceWindowRaise,
+  X11DRV_WND_SetWindowPos,
+  X11DRV_WND_SetText,
+  X11DRV_WND_SetFocus,
+  X11DRV_WND_PreSizeMove,
+  X11DRV_WND_PostSizeMove,
+  X11DRV_WND_SurfaceCopy,
+  X11DRV_WND_SetDrawable,
+  X11DRV_WND_SetHostAttr,
+  X11DRV_WND_IsSelfClipping,
+  X11DRV_WND_SetWindowRgn
+};
+
+
 /* X context to associate a hwnd to an X window */
 XContext winContext = 0;
 

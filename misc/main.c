@@ -25,17 +25,11 @@
 #include "debugdefs.h"
 #include "module.h"
 #include "winnls.h"
-#include "user.h"
 #include "windef.h"
 #include "wingdi.h"
 #include "wine/winuser16.h"
 #include "tweak.h"
 #include "winerror.h"
-
-/**********************************************************************/
-
-USER_DRIVER *USER_Driver = NULL;
-
 
 
 /***********************************************************************

@@ -126,7 +126,7 @@ UINT X11DRV_CLIPBOARD_MapPropertyToFormat(char *itemFmtName)
          * and if CF_DIB exists in the cache.
          * If wine dowsn't own the selection we always return CF_DIB
          */
-        if ( !X11DRV_CLIPBOARD_IsSelectionowner() )
+        if ( !X11DRV_IsSelectionOwner() )
             return CF_DIB;
         else if ( CLIPBOARD_IsPresent(CF_DIB) )
             return CF_DIB;
@@ -161,7 +161,7 @@ Atom X11DRV_CLIPBOARD_MapFormatToProperty(UINT wFormat)
              * Request a PIXMAP, only if WINE is NOT the selection owner,
              * AND the requested format is not in the cache.
              */
-            if ( !X11DRV_CLIPBOARD_IsSelectionowner() && !CLIPBOARD_IsPresent(wFormat) )
+            if ( !X11DRV_IsSelectionOwner() && !CLIPBOARD_IsPresent(wFormat) )
             {
               prop = XA_PIXMAP;
               break;
@@ -793,10 +793,10 @@ void X11DRV_CLIPBOARD_ReleaseSelection(Atom selType, Window w, HWND hwnd)
 }
 
 /**************************************************************************
- *		X11DRV_CLIPBOARD_Empty
+ *		X11DRV_ReleaseClipboard
  *  Voluntarily release all currently owned X selections
  */
-void X11DRV_CLIPBOARD_Release()
+void X11DRV_ReleaseClipboard(void)
 {
     if( selectionAcquired )
     {
@@ -845,9 +845,9 @@ void X11DRV_CLIPBOARD_Release()
 }
 
 /**************************************************************************
- *		X11DRV_CLIPBOARD_Acquire()
+ *		X11DRV_AcquireClipboard
  */
-void X11DRV_CLIPBOARD_Acquire()
+void X11DRV_AcquireClipboard(void)
 {
     Window       owner;
     HWND         hWndClipWindow = GetOpenClipboardWindow();
@@ -895,12 +895,12 @@ void X11DRV_CLIPBOARD_Acquire()
 }
 
 /**************************************************************************
- *		X11DRV_CLIPBOARD_IsFormatAvailable
+ *		X11DRV_IsClipboardFormatAvailable
  *
  * Checks if the specified format is available in the current selection
  * Only invoked when WINE is not the selection owner
  */
-BOOL X11DRV_CLIPBOARD_IsFormatAvailable(UINT wFormat)
+BOOL X11DRV_IsClipboardFormatAvailable(UINT wFormat)
 {
     Atom xaClipboard = TSXInternAtom(display, _CLIPBOARD, False);
     Window ownerPrimary = TSXGetSelectionOwner(display,XA_PRIMARY);
@@ -943,18 +943,18 @@ BOOL X11DRV_CLIPBOARD_IsFormatAvailable(UINT wFormat)
      * try to convert the selection to the requested type.
      */
     if ( !cSelectionTargets )
-        return X11DRV_CLIPBOARD_GetData( wFormat );
+        return X11DRV_GetClipboardData( wFormat );
         
     return FALSE;
 }
 
 /**************************************************************************
- *		X11DRV_CLIPBOARD_RegisterFormat
+ *		X11DRV_RegisterClipboardFormat
  *
  * Registers a custom X clipboard format
  * Returns: TRUE - success,  FALSE - failure
  */
-BOOL X11DRV_CLIPBOARD_RegisterFormat( LPCSTR FormatName )
+BOOL X11DRV_RegisterClipboardFormat( LPCSTR FormatName )
 {
     Atom prop = None;
     char str[256];
@@ -975,30 +975,30 @@ BOOL X11DRV_CLIPBOARD_RegisterFormat( LPCSTR FormatName )
 }
 
 /**************************************************************************
- *		X11DRV_CLIPBOARD_IsSelectionowner
+ *		X11DRV_IsSelectionOwner
  *
  * Returns: TRUE - We(WINE) own the selection, FALSE - Selection not owned by us
  */
-BOOL X11DRV_CLIPBOARD_IsSelectionowner()
+BOOL X11DRV_IsSelectionOwner(void)
 {
     return selectionAcquired;
 }
 
 /**************************************************************************
- *		X11DRV_CLIPBOARD_SetData
+ *		X11DRV_SetClipboardData
  *
  * We don't need to do anything special here since the clipboard code
  * maintains the cache. 
  *
  */
-void X11DRV_CLIPBOARD_SetData(UINT wFormat)
+void X11DRV_SetClipboardData(UINT wFormat)
 {
     /* Make sure we have acquired the X selection */
-    X11DRV_CLIPBOARD_Acquire();
+    X11DRV_AcquireClipboard();
 }
 
 /**************************************************************************
- *		X11DRV_CLIPBOARD_GetData
+ *		X11DRV_GetClipboardData
  *
  * This method is invoked only when we DO NOT own the X selection
  *
@@ -1007,7 +1007,7 @@ void X11DRV_CLIPBOARD_SetData(UINT wFormat)
  * We always get the data from the selection client each time,
  * since we have no way of determining if the data in our cache is stale.
  */
-BOOL X11DRV_CLIPBOARD_GetData(UINT wFormat)
+BOOL X11DRV_GetClipboardData(UINT wFormat)
 {
     BOOL bRet = selectionAcquired;
     HWND hWndClipWindow = GetOpenClipboardWindow();
@@ -1074,7 +1074,7 @@ BOOL X11DRV_CLIPBOARD_GetData(UINT wFormat)
 }
 
 /**************************************************************************
- *		X11DRV_CLIPBOARD_ResetOwner
+ *		X11DRV_ResetSelectionOwner
  *
  * Called from DestroyWindow() to prevent X selection from being lost when
  * a top level window is destroyed, by switching ownership to another top
@@ -1082,7 +1082,7 @@ BOOL X11DRV_CLIPBOARD_GetData(UINT wFormat)
  * Any top level window can own the selection. See X11DRV_CLIPBOARD_Acquire
  * for a more detailed description of this.
  */
-void X11DRV_CLIPBOARD_ResetOwner(WND *pWnd, BOOL bFooBar)
+void X11DRV_ResetSelectionOwner(WND *pWnd, BOOL bFooBar)
 {
     HWND hWndClipOwner = 0;
     Window XWnd = X11DRV_WND_GetXWindow(pWnd);

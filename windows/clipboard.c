@@ -32,18 +32,17 @@
 #include "message.h"
 #include "task.h"
 #include "queue.h"
+#include "user.h"
 #include "clipboard.h"
 #include "debugtools.h"
 
-DEFAULT_DEBUG_CHANNEL(clipboard)
+DEFAULT_DEBUG_CHANNEL(clipboard);
 
 #define  CF_REGFORMATBASE 	0xC000
 
 /**************************************************************************
  *	  Clipboard context global variables
  */
-
-CLIPBOARD_DRIVER *CLIPBOARD_Driver = NULL;
 
 static HANDLE hClipLock   = 0;
 static BOOL bCBHasChanged  = FALSE;
@@ -60,24 +59,24 @@ static WORD LastRegFormat = CF_REGFORMATBASE;
  * declared in clipboard.h
  */
 WINE_CLIPFORMAT ClipFormats[17]  = {
-    { CF_TEXT, 1, 0, "Text",  (HANDLE16)NULL, (HANDLE)NULL, (HANDLE)NULL, 0, NULL, &ClipFormats[1]},
-    { CF_BITMAP, 1, 0, "Bitmap", (HANDLE16)NULL, (HANDLE)NULL, (HANDLE)NULL, 0, &ClipFormats[0], &ClipFormats[2]},
-    { CF_METAFILEPICT, 1, 0, "MetaFile Picture", (HANDLE16)NULL, (HANDLE)NULL, (HANDLE)NULL, 0, &ClipFormats[1], &ClipFormats[3]},
-    { CF_SYLK, 1, 0, "Sylk", (HANDLE16)NULL, (HANDLE)NULL, (HANDLE)NULL, 0, &ClipFormats[2], &ClipFormats[4]},
-    { CF_DIF, 1, 0, "DIF", (HANDLE16)NULL, (HANDLE)NULL, (HANDLE)NULL, 0, &ClipFormats[3], &ClipFormats[5]},
-    { CF_TIFF, 1, 0, "TIFF", (HANDLE16)NULL, (HANDLE)NULL, (HANDLE)NULL, 0, &ClipFormats[4], &ClipFormats[6]},
-    { CF_OEMTEXT, 1, 0, "OEM Text", (HANDLE16)NULL, (HANDLE)NULL, (HANDLE)NULL, 0, &ClipFormats[5], &ClipFormats[7]},
-    { CF_DIB, 1, 0, "DIB", (HANDLE16)NULL, (HANDLE)NULL, (HANDLE)NULL, 0, &ClipFormats[6], &ClipFormats[8]},
-    { CF_PALETTE, 1, 0, "Palette", (HANDLE16)NULL, (HANDLE)NULL, (HANDLE)NULL, 0, &ClipFormats[7], &ClipFormats[9]},
-    { CF_PENDATA, 1, 0, "PenData", (HANDLE16)NULL, (HANDLE)NULL, (HANDLE)NULL, 0, &ClipFormats[8], &ClipFormats[10]},
-    { CF_RIFF, 1, 0, "RIFF", (HANDLE16)NULL, (HANDLE)NULL, (HANDLE)NULL, 0, &ClipFormats[9], &ClipFormats[11]},
-    { CF_WAVE, 1, 0, "Wave", (HANDLE16)NULL, (HANDLE)NULL, (HANDLE)NULL, 0, &ClipFormats[10], &ClipFormats[12]},
-    { CF_OWNERDISPLAY, 1, 0, "Owner Display", (HANDLE16)NULL, (HANDLE)NULL, (HANDLE)NULL, 0, &ClipFormats[11], &ClipFormats[13]},
-    { CF_DSPTEXT, 1, 0, "DSPText", (HANDLE16)NULL, (HANDLE)NULL, (HANDLE)NULL, 0, &ClipFormats[12], &ClipFormats[14]},
-    { CF_DSPMETAFILEPICT, 1, 0, "DSPMetaFile Picture", (HANDLE16)NULL, (HANDLE)NULL, (HANDLE)NULL, 0, &ClipFormats[13], &ClipFormats[15]},
-    { CF_DSPBITMAP, 1, 0, "DSPBitmap", (HANDLE16)NULL, (HANDLE)NULL, (HANDLE)NULL, 0, &ClipFormats[14], &ClipFormats[16]},
-    { CF_HDROP, 1, 0, "HDROP", (HANDLE16)NULL, (HANDLE)NULL, (HANDLE)NULL, 0, &ClipFormats[15], NULL}
-    };
+    { CF_TEXT, 1, 0, "Text",  0, 0, 0, 0, NULL, &ClipFormats[1]},
+    { CF_BITMAP, 1, 0, "Bitmap", 0, 0, 0, 0, &ClipFormats[0], &ClipFormats[2]},
+    { CF_METAFILEPICT, 1, 0, "MetaFile Picture", 0, 0, 0, 0, &ClipFormats[1], &ClipFormats[3]},
+    { CF_SYLK, 1, 0, "Sylk", 0, 0, 0, 0, &ClipFormats[2], &ClipFormats[4]},
+    { CF_DIF, 1, 0, "DIF", 0, 0, 0, 0, &ClipFormats[3], &ClipFormats[5]},
+    { CF_TIFF, 1, 0, "TIFF", 0, 0, 0, 0, &ClipFormats[4], &ClipFormats[6]},
+    { CF_OEMTEXT, 1, 0, "OEM Text", 0, 0, 0, 0, &ClipFormats[5], &ClipFormats[7]},
+    { CF_DIB, 1, 0, "DIB", 0, 0, 0, 0, &ClipFormats[6], &ClipFormats[8]},
+    { CF_PALETTE, 1, 0, "Palette", 0, 0, 0, 0, &ClipFormats[7], &ClipFormats[9]},
+    { CF_PENDATA, 1, 0, "PenData", 0, 0, 0, 0, &ClipFormats[8], &ClipFormats[10]},
+    { CF_RIFF, 1, 0, "RIFF", 0, 0, 0, 0, &ClipFormats[9], &ClipFormats[11]},
+    { CF_WAVE, 1, 0, "Wave", 0, 0, 0, 0, &ClipFormats[10], &ClipFormats[12]},
+    { CF_OWNERDISPLAY, 1, 0, "Owner Display", 0, 0, 0, 0, &ClipFormats[11], &ClipFormats[13]},
+    { CF_DSPTEXT, 1, 0, "DSPText", 0, 0, 0, 0, &ClipFormats[12], &ClipFormats[14]},
+    { CF_DSPMETAFILEPICT, 1, 0, "DSPMetaFile Picture", 0, 0, 0, 0, &ClipFormats[13], &ClipFormats[15]},
+    { CF_DSPBITMAP, 1, 0, "DSPBitmap", 0, 0, 0, 0, &ClipFormats[14], &ClipFormats[16]},
+    { CF_HDROP, 1, 0, "HDROP", 0, 0, 0, 0, &ClipFormats[15], NULL}
+};
 
 
 /**************************************************************************
@@ -389,10 +388,10 @@ static BOOL CLIPBOARD_RenderFormat(LPWINE_CLIPFORMAT lpFormat)
    * If WINE is not the selection owner, and the format is available
    * we must ask the the driver to render the data to the clipboard cache.
    */
-  if ( !CLIPBOARD_Driver->pIsSelectionOwner() 
-       && CLIPBOARD_Driver->pIsFormatAvailable( lpFormat->wFormatID ) )
+  if ( !USER_Driver.pIsSelectionOwner() 
+       && USER_Driver.pIsClipboardFormatAvailable( lpFormat->wFormatID ) )
   {
-    if ( !CLIPBOARD_Driver->pGetData( lpFormat->wFormatID ) )
+    if ( !USER_Driver.pGetClipboardData( lpFormat->wFormatID ) )
       return FALSE;
   }
   /*
@@ -621,7 +620,7 @@ BOOL WINAPI EmptyClipboard(void)
     hTaskClipOwner = GetCurrentTask();
     
     /* Tell the driver to acquire the selection */
-    CLIPBOARD_Driver->pAcquire();
+    USER_Driver.pAcquireClipboard();
 
     return TRUE;
 }
@@ -673,7 +672,7 @@ HANDLE16 WINAPI SetClipboardData16( UINT16 wFormat, HANDLE16 hData )
     }
 
     /* Pass on the request to the driver */
-    CLIPBOARD_Driver->pSetData(wFormat);
+    USER_Driver.pSetClipboardData(wFormat);
 
     if ( lpFormat->wDataPresent || lpFormat->hData16 || lpFormat->hData32 ) 
     {
@@ -726,7 +725,7 @@ HANDLE WINAPI SetClipboardData( UINT wFormat, HANDLE hData )
     }
 
     /* Tell the driver to acquire the selection */
-    CLIPBOARD_Driver->pAcquire();
+    USER_Driver.pAcquireClipboard();
 
     if ( lpFormat->wDataPresent &&
          (lpFormat->hData16 || lpFormat->hData32) )
@@ -927,8 +926,8 @@ INT WINAPI CountClipboardFormats(void)
            *    available to the clipboard driver.
            */
           if ( lpFormat->wDataPresent ||
-               ( !CLIPBOARD_Driver->pIsSelectionOwner()
-                 && CLIPBOARD_Driver->pIsFormatAvailable( lpFormat->wFormatID ) ) )
+               ( !USER_Driver.pIsSelectionOwner()
+                 && USER_Driver.pIsClipboardFormatAvailable( lpFormat->wFormatID ) ) )
           {
               TRACE("\tdata found for format 0x%04x(%s)\n",
                     lpFormat->wFormatID, CLIPBOARD_GetFormatName(lpFormat->wFormatID));
@@ -995,10 +994,10 @@ UINT WINAPI EnumClipboardFormats( UINT wFormat )
 	   (lpFormat->wFormatID == CF_TEXT && ClipFormats[CF_OEMTEXT-1].wDataPresent) );
 
         /* Query the driver if not yet in the cache */
-        if (!bFormatPresent && !CLIPBOARD_Driver->pIsSelectionOwner())
+        if (!bFormatPresent && !USER_Driver.pIsSelectionOwner())
         {
             bFormatPresent =
-               CLIPBOARD_Driver->pIsFormatAvailable( (lpFormat->wFormatID == CF_TEXT) ?
+               USER_Driver.pIsClipboardFormatAvailable( (lpFormat->wFormatID == CF_TEXT) ?
                                                       CF_OEMTEXT : lpFormat->wFormatID );
         }
 
@@ -1066,7 +1065,7 @@ UINT16 WINAPI RegisterClipboardFormat16( LPCSTR FormatName )
     lpNewFormat->NextFormat = NULL;
 
     /* Pass on the registration request to the driver */
-    CLIPBOARD_Driver->pRegisterFormat( FormatName );
+    USER_Driver.pRegisterClipboardFormat( FormatName );
     
     return LastRegFormat++;
 }
@@ -1231,8 +1230,8 @@ BOOL WINAPI IsClipboardFormatAvailable( UINT wFormat )
         bRet = FALSE;
 
     /* If WINE is not the clipboard selection owner ask the clipboard driver */
-    else if ( !CLIPBOARD_Driver->pIsSelectionOwner() )
-        bRet = CLIPBOARD_Driver->pIsFormatAvailable( (wFormat == CF_TEXT) ?
+    else if ( !USER_Driver.pIsSelectionOwner() )
+        bRet = USER_Driver.pIsClipboardFormatAvailable( (wFormat == CF_TEXT) ?
                                                      CF_OEMTEXT : wFormat );
     /* Check if the format is in the local cache */
     else 

@@ -20,7 +20,6 @@
 #include "winreg.h"
 
 #include "callback.h"
-#include "clipboard.h"
 #include "debugtools.h"
 #include "gdi.h"
 #include "options.h"
@@ -30,40 +29,6 @@
 #include "x11drv.h"
 
 DEFAULT_DEBUG_CHANNEL(x11drv);
-
-static USER_DRIVER user_driver =
-{
-    /* event functions */
-    X11DRV_EVENT_Synchronize,
-    X11DRV_EVENT_CheckFocus,
-    X11DRV_EVENT_UserRepaintDisable,
-    /* keyboard functions */
-    X11DRV_KEYBOARD_Init,
-    X11DRV_KEYBOARD_VkKeyScan,
-    X11DRV_KEYBOARD_MapVirtualKey,
-    X11DRV_KEYBOARD_GetKeyNameText,
-    X11DRV_KEYBOARD_ToAscii,
-    X11DRV_KEYBOARD_GetBeepActive,
-    X11DRV_KEYBOARD_SetBeepActive,
-    X11DRV_KEYBOARD_Beep,
-    X11DRV_KEYBOARD_GetDIState,
-    X11DRV_KEYBOARD_GetDIData,
-    X11DRV_KEYBOARD_GetKeyboardConfig,
-    X11DRV_KEYBOARD_SetKeyboardConfig,
-    /* mouse functions */
-    X11DRV_MOUSE_Init,
-    X11DRV_MOUSE_SetCursor,
-    X11DRV_MOUSE_MoveCursor,
-    /* screen saver functions */
-    X11DRV_GetScreenSaveActive,
-    X11DRV_SetScreenSaveActive,
-    X11DRV_GetScreenSaveTimeout,
-    X11DRV_SetScreenSaveTimeout,
-    /* resource functions */
-    X11DRV_LoadOEMResource,
-    /* windowing functions */
-    X11DRV_IsSingleWindow
-};
 
 static XKeyboardState keyboard_state;
 
@@ -249,8 +214,6 @@ static void XOpenIM_large_stack(void)
  */
 static void process_attach(void)
 {
-    USER_Driver      = &user_driver;
-    CLIPBOARD_Driver = &X11DRV_CLIPBOARD_Driver;
     WND_Driver       = &X11DRV_WND_Driver;
 
     setup_options();
@@ -344,8 +307,6 @@ static void process_detach(void)
     XCloseDisplay( display );
     display = NULL;
 
-    USER_Driver      = NULL;
-    CLIPBOARD_Driver = NULL;
     WND_Driver       = NULL;
 #endif
 }

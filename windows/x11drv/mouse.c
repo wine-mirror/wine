@@ -161,9 +161,9 @@ static BOOL X11DRV_MOUSE_DoSetCursor( CURSORICONINFO *ptr )
 }
 
 /***********************************************************************
- *		X11DRV_MOUSE_SetCursor
+ *		X11DRV_SetCursor
  */
-void X11DRV_MOUSE_SetCursor( CURSORICONINFO *lpCursor )
+void X11DRV_SetCursor( CURSORICONINFO *lpCursor )
 {
     BOOL success;
 
@@ -199,9 +199,9 @@ void X11DRV_MOUSE_SetCursor( CURSORICONINFO *lpCursor )
 }
 
 /***********************************************************************
- *		X11DRV_MOUSE_MoveCursor
+ *		X11DRV_MoveCursor
  */
-void X11DRV_MOUSE_MoveCursor(WORD wAbsX, WORD wAbsY)
+void X11DRV_MoveCursor(WORD wAbsX, WORD wAbsY)
 {
   /* 
    * We do not want the to create MotionNotify events here, 
@@ -241,9 +241,9 @@ void X11DRV_MOUSE_MoveCursor(WORD wAbsX, WORD wAbsY)
 }
 
 /***********************************************************************
- *           X11DRV_MOUSE_Init
+ *           X11DRV_InitMouse
  */
-void X11DRV_MOUSE_Init( LPMOUSE_EVENT_PROC proc )
+void X11DRV_InitMouse( LPMOUSE_EVENT_PROC proc )
 {
     static int init_done;
 
@@ -260,7 +260,7 @@ void X11DRV_MOUSE_Init( LPMOUSE_EVENT_PROC proc )
            movement to initialize the mouse global variables */
         TSXQueryPointer( display, X11DRV_GetXRootWindow(), &root, &child,
                          &root_x, &root_y, &child_x, &child_y, &KeyState);
-        X11DRV_MOUSE_SendEvent(MOUSEEVENTF_MOVE | MOUSEEVENTF_ABSOLUTE,
+        X11DRV_SendEvent(MOUSEEVENTF_MOVE | MOUSEEVENTF_ABSOLUTE,
                                root_x, root_y, X11DRV_EVENT_XStateToKeyState(KeyState),
                                GetTickCount(), 0 );
     }
@@ -268,9 +268,9 @@ void X11DRV_MOUSE_Init( LPMOUSE_EVENT_PROC proc )
 
 
 /***********************************************************************
- *           X11DRV_MOUSE_SendEvent
+ *           X11DRV_SendEvent
  */
-void X11DRV_MOUSE_SendEvent( DWORD mouseStatus, DWORD posX, DWORD posY, 
+void X11DRV_SendEvent( DWORD mouseStatus, DWORD posX, DWORD posY, 
                              DWORD keyState, DWORD time, HWND hWnd )
 {
     int width  = GetSystemMetrics( SM_CXSCREEN );

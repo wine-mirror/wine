@@ -8,7 +8,6 @@ MODULE    = x11drv
 C_SRCS = \
 	clipboard.c \
 	event.c \
-	init.c \
 	keyboard.c \
 	mouse.c \
 	wnd.c

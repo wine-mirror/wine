@@ -159,7 +159,7 @@ static inline LRESULT WINAPI DesktopWndProc_locked( WND *wndPtr, UINT message,
         return  1;
 	
     case WM_ERASEBKGND:
-	if(!USER_Driver->pIsSingleWindow())
+	if(!USER_Driver.pIsSingleWindow())
             return  1;
         return  DESKTOP_DoEraseBkgnd( hwnd, (HDC)wParam, desktopPtr );
 

@@ -838,7 +838,7 @@ HDC WINAPI GetDCEx( HWND hwnd, HRGN hrgnClip, DWORD flags )
             WIN_ReleaseWndPtr(parentPtr);
         }
         else
-	    if ((hwnd == GetDesktopWindow()) && !USER_Driver->pIsSingleWindow())
+	    if ((hwnd == GetDesktopWindow()) && !USER_Driver.pIsSingleWindow())
                  hrgnVisible = CreateRectRgn( 0, 0, GetSystemMetrics(SM_CXSCREEN), GetSystemMetrics(SM_CYSCREEN) );
 	    else 
             {

@@ -22,6 +22,15 @@
 #include "win.h"
 #include "debugtools.h"
 
+DEFAULT_DEBUG_CHANNEL(graphics);
+
+USER_DRIVER USER_Driver;
+
+static HMODULE graphics_driver;
+
+#define GET_USER_FUNC(name) \
+   if (!(USER_Driver.p##name = (void*)GetProcAddress( graphics_driver, #name ))) \
+      FIXME("%s not found in graphics driver\n", #name)
 
 /* load the graphics driver */
 static BOOL load_driver(void)
@@ -41,11 +50,45 @@ static BOOL load_driver(void)
         strcpy( buffer, "x11drv" );  /* default value */
     RegCloseKey( hkey );
 
-    if (!LoadLibraryA( buffer ))
+    if (!(graphics_driver = LoadLibraryA( buffer )))
     {
         MESSAGE( "Could not load graphics driver '%s'\n", buffer );
         return FALSE;
     }
+
+    GET_USER_FUNC(Synchronize);
+    GET_USER_FUNC(CheckFocus);
+    GET_USER_FUNC(UserRepaintDisable);
+    GET_USER_FUNC(InitKeyboard);
+    GET_USER_FUNC(VkKeyScan);
+    GET_USER_FUNC(MapVirtualKey);
+    GET_USER_FUNC(GetKeyNameText);
+    GET_USER_FUNC(ToAscii);
+    GET_USER_FUNC(GetBeepActive);
+    GET_USER_FUNC(SetBeepActive);
+    GET_USER_FUNC(Beep);
+    GET_USER_FUNC(GetDIState);
+    GET_USER_FUNC(GetDIData);
+    GET_USER_FUNC(GetKeyboardConfig);
+    GET_USER_FUNC(SetKeyboardConfig);
+    GET_USER_FUNC(InitMouse);
+    GET_USER_FUNC(SetCursor);
+    GET_USER_FUNC(MoveCursor);
+    GET_USER_FUNC(GetScreenSaveActive);
+    GET_USER_FUNC(SetScreenSaveActive);
+    GET_USER_FUNC(GetScreenSaveTimeout);
+    GET_USER_FUNC(SetScreenSaveTimeout);
+    GET_USER_FUNC(LoadOEMResource);
+    GET_USER_FUNC(IsSingleWindow);
+    GET_USER_FUNC(AcquireClipboard);
+    GET_USER_FUNC(ReleaseClipboard);
+    GET_USER_FUNC(SetClipboardData);
+    GET_USER_FUNC(GetClipboardData);
+    GET_USER_FUNC(IsClipboardFormatAvailable);
+    GET_USER_FUNC(RegisterClipboardFormat);
+    GET_USER_FUNC(IsSelectionOwner);
+    GET_USER_FUNC(ResetSelectionOwner);
+
     return TRUE;
 }
 
@@ -115,7 +158,7 @@ BOOL WINAPI USER_Init(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
     MOUSE_Enable( mouse_event );
 
     /* Start processing X events */
-    USER_Driver->pUserRepaintDisable( FALSE );
+    USER_Driver.pUserRepaintDisable( FALSE );
 
     return TRUE;
 }

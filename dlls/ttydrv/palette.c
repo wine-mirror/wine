@@ -12,7 +12,7 @@
 #include "winbase.h"
 #include "ttydrv.h"
 
-DEFAULT_DEBUG_CHANNEL(ttydrv)
+DEFAULT_DEBUG_CHANNEL(ttydrv);
 
 /**********************************************************************/
 
@@ -34,8 +34,6 @@ BOOL TTYDRV_PALETTE_Initialize(void)
   int i;
 
   TRACE("(void)\n");
-
-  TTYDRV_DC_DevCaps.sizePalette = 256;
 
   COLOR_sysPal = (PALETTEENTRY *) HeapAlloc(GetProcessHeap(), 0, sizeof(PALETTEENTRY) * TTYDRV_DC_DevCaps.sizePalette);
   if(COLOR_sysPal == NULL) {

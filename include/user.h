@@ -39,6 +39,8 @@ typedef struct tagKEYBOARD_CONFIG {
 
 typedef VOID CALLBACK (*LPMOUSE_EVENT_PROC)(DWORD,DWORD,DWORD,DWORD,DWORD);
 
+struct tagWND;
+
 typedef struct tagUSER_DRIVER {
     /* event functions */
     void   (*pSynchronize)(void);
@@ -67,12 +69,21 @@ typedef struct tagUSER_DRIVER {
     int    (*pGetScreenSaveTimeout)(void);
     void   (*pSetScreenSaveTimeout)(int);
     /* resource functions */
-    HANDLE   (*pLoadOEMResource)(WORD,WORD);
+    HANDLE (*pLoadOEMResource)(WORD,WORD);
     /* windowing functions */
     BOOL   (*pIsSingleWindow)(void);
+    /* clipboard functions */
+    void   (*pAcquireClipboard)(void);            /* Acquire selection */
+    void   (*pReleaseClipboard)(void);            /* Release selection */
+    void   (*pSetClipboardData)(UINT);            /* Set specified selection data */
+    BOOL   (*pGetClipboardData)(UINT);            /* Get specified selection data */
+    BOOL   (*pIsClipboardFormatAvailable)(UINT);  /* Check if specified format is available */
+    BOOL   (*pRegisterClipboardFormat)(LPCSTR);   /* Register a clipboard format */
+    BOOL   (*pIsSelectionOwner)(void);            /* Check if we own the selection */
+    void   (*pResetSelectionOwner)(struct tagWND *, BOOL);
 } USER_DRIVER;
 
-extern USER_DRIVER *USER_Driver;
+extern USER_DRIVER USER_Driver;
 
 WORD WINAPI UserSignalProc( UINT uCode, DWORD dwThreadOrProcessID,
                             DWORD dwFlags, HMODULE16 hModule );

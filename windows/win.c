@@ -1233,7 +1233,7 @@ static void WIN_SendDestroyMsg( WND* pWnd )
     WIN_CheckFocus(pWnd);
 
     if( CARET_GetHwnd() == pWnd->hwndSelf ) DestroyCaret();
-    CLIPBOARD_Driver->pResetOwner( pWnd, TRUE ); 
+    USER_Driver.pResetSelectionOwner( pWnd, TRUE ); 
 
     /*
      * Send the WM_DESTROY to the window.
@@ -1374,7 +1374,7 @@ BOOL WINAPI DestroyWindow( HWND hwnd )
             }
 	}
 
-    CLIPBOARD_Driver->pResetOwner( wndPtr, FALSE ); /* before the window is unmapped */
+    USER_Driver.pResetSelectionOwner( wndPtr, FALSE ); /* before the window is unmapped */
 
       /* Hide the window */
 

@@ -91,7 +91,7 @@ BOOL WINAPI SystemParametersInfoA( UINT uAction, UINT uParam,
 		break;
 
 	case SPI_GETSCREENSAVEACTIVE:	        
-	       if(USER_Driver->pGetScreenSaveActive() || 
+	       if(USER_Driver.pGetScreenSaveActive() || 
 		  GetProfileIntA( "windows", "ScreenSaveActive", 1 ) == 1)
 	        	*(BOOL*)lpvParam = TRUE;
 		else
@@ -99,7 +99,7 @@ BOOL WINAPI SystemParametersInfoA( UINT uAction, UINT uParam,
 		break;
 
 	case SPI_GETSCREENSAVETIMEOUT:
-	        timeout = USER_Driver->pGetScreenSaveTimeout();
+	        timeout = USER_Driver.pGetScreenSaveTimeout();
 		if(!timeout)
 			timeout = GetProfileIntA( "windows", "ScreenSaveTimeout", 300 );
 		*(INT *) lpvParam = timeout * 1000;
@@ -328,7 +328,7 @@ BOOL16 WINAPI SystemParametersInfo16( UINT16 uAction, UINT16 uParam,
 			break;
 
 		case SPI_GETSCREENSAVEACTIVE:
-		  if(USER_Driver->pGetScreenSaveActive() ||
+		  if(USER_Driver.pGetScreenSaveActive() ||
 		     GetProfileIntA( "windows", "ScreenSaveActive", 1 ) == 1)
    		        *(BOOL16 *) lpvParam = TRUE;
                     else
@@ -336,7 +336,7 @@ BOOL16 WINAPI SystemParametersInfo16( UINT16 uAction, UINT16 uParam,
                     break;
 
 		case SPI_GETSCREENSAVETIMEOUT:
-			timeout = USER_Driver->pGetScreenSaveTimeout();
+			timeout = USER_Driver.pGetScreenSaveTimeout();
 			if(!timeout)
 			    timeout = GetProfileIntA( "windows", "ScreenSaveTimeout", 300 );
 			*(INT16 *) lpvParam = timeout;
@@ -363,11 +363,11 @@ BOOL16 WINAPI SystemParametersInfo16( UINT16 uAction, UINT16 uParam,
 			break;
 
 		case SPI_SETSCREENSAVEACTIVE:
-			USER_Driver->pSetScreenSaveActive(uParam);
+			USER_Driver.pSetScreenSaveActive(uParam);
 			break;
 
 		case SPI_SETSCREENSAVETIMEOUT:
-			USER_Driver->pSetScreenSaveTimeout(uParam);
+			USER_Driver.pSetScreenSaveTimeout(uParam);
 			break;
 
 		case SPI_SETDESKWALLPAPER:

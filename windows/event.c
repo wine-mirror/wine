@@ -20,7 +20,7 @@ DECLARE_DEBUG_CHANNEL(event);
 void EVENT_Synchronize( void )
 {
     int iWndsLocks = WIN_SuspendWndsLock();
-    USER_Driver->pSynchronize();
+    USER_Driver.pSynchronize();
     WIN_RestoreWndsLock(iWndsLocks);
 }
 
@@ -29,7 +29,7 @@ void EVENT_Synchronize( void )
  */
 BOOL EVENT_CheckFocus(void)
 {
-  return USER_Driver->pCheckFocus();
+  return USER_Driver.pCheckFocus();
 }
 
 

@@ -331,41 +331,23 @@ static inline Visual *X11DRV_GetVisual(void)     { return visual; }
 static inline Window X11DRV_GetXRootWindow(void) { return root_window; }
 static inline unsigned int X11DRV_GetDepth(void) { return screen_depth; }
 
-extern BOOL X11DRV_GetScreenSaveActive(void);
-extern void X11DRV_SetScreenSaveActive(BOOL bActivate);
-extern int X11DRV_GetScreenSaveTimeout(void);
-extern void X11DRV_SetScreenSaveTimeout(int nTimeout);
-extern HANDLE X11DRV_LoadOEMResource( WORD id, WORD type );
-extern BOOL X11DRV_IsSingleWindow(void);
-
 /* X11 clipboard driver */
-
-extern struct tagCLIPBOARD_DRIVER X11DRV_CLIPBOARD_Driver;
 
 extern void X11DRV_CLIPBOARD_FreeResources( Atom property );
 extern BOOL X11DRV_CLIPBOARD_RegisterPixmapResource( Atom property, Pixmap pixmap );
-    
-extern void X11DRV_CLIPBOARD_Acquire(void);
-extern void X11DRV_CLIPBOARD_Release(void);
-extern void X11DRV_CLIPBOARD_SetData(UINT wFormat);
-extern BOOL X11DRV_CLIPBOARD_GetData(UINT wFormat);
-extern BOOL X11DRV_CLIPBOARD_IsFormatAvailable(UINT wFormat);
 extern BOOL X11DRV_CLIPBOARD_IsNativeProperty(Atom prop);
-extern BOOL X11DRV_CLIPBOARD_RegisterFormat( LPCSTR FormatName );
-extern BOOL X11DRV_CLIPBOARD_IsSelectionowner();
 extern UINT X11DRV_CLIPBOARD_MapPropertyToFormat(char *itemFmtName);
 extern Atom X11DRV_CLIPBOARD_MapFormatToProperty(UINT id);
-extern void X11DRV_CLIPBOARD_ResetOwner(struct tagWND *pWnd, BOOL bFooBar);
 extern void X11DRV_CLIPBOARD_ReleaseSelection(Atom selType, Window w, HWND hwnd);
+extern BOOL X11DRV_IsSelectionOwner(void);
+extern BOOL X11DRV_GetClipboardData(UINT wFormat);
 
 /* X11 event driver */
 
 extern WORD X11DRV_EVENT_XStateToKeyState( int state ) ;
 
 extern BOOL X11DRV_EVENT_Init(void);
-extern void X11DRV_EVENT_Synchronize( void );
-extern BOOL X11DRV_EVENT_CheckFocus( void );
-extern void X11DRV_EVENT_UserRepaintDisable( BOOL bDisable );
+extern void X11DRV_Synchronize( void );
 
 typedef enum {
   X11DRV_INPUT_RELATIVE,
@@ -380,27 +362,24 @@ void X11DRV_EVENT_SetDGAStatus(HWND hwnd, int event_base) ;
 
 /* X11 keyboard driver */
 
-extern void X11DRV_KEYBOARD_Init(void);
-extern WORD X11DRV_KEYBOARD_VkKeyScan(CHAR cChar);
-extern UINT16 X11DRV_KEYBOARD_MapVirtualKey(UINT16 wCode, UINT16 wMapType);
-extern INT16 X11DRV_KEYBOARD_GetKeyNameText(LONG lParam, LPSTR lpBuffer, INT16 nSize);
-extern INT16 X11DRV_KEYBOARD_ToAscii(UINT16 virtKey, UINT16 scanCode, LPBYTE lpKeyState, LPVOID lpChar, UINT16 flags);
-extern BOOL X11DRV_KEYBOARD_GetBeepActive(void);
-extern void X11DRV_KEYBOARD_SetBeepActive(BOOL bActivate);
-extern void X11DRV_KEYBOARD_Beep(void);
-extern BOOL X11DRV_KEYBOARD_GetDIState(DWORD len, LPVOID ptr);
-extern BOOL X11DRV_KEYBOARD_GetDIData(BYTE *keystate, DWORD dodsize, struct DIDEVICEOBJECTDATA *dod, LPDWORD entries, DWORD flags);
-extern void X11DRV_KEYBOARD_GetKeyboardConfig(struct tagKEYBOARD_CONFIG *cfg);
-extern void X11DRV_KEYBOARD_SetKeyboardConfig(struct tagKEYBOARD_CONFIG *cfg, DWORD mask);
+extern void X11DRV_InitKeyboard(void);
+extern WORD X11DRV_VkKeyScan(CHAR cChar);
+extern UINT16 X11DRV_MapVirtualKey(UINT16 wCode, UINT16 wMapType);
+extern INT16 X11DRV_GetKeyNameText(LONG lParam, LPSTR lpBuffer, INT16 nSize);
+extern INT16 X11DRV_ToAscii(UINT16 virtKey, UINT16 scanCode, LPBYTE lpKeyState, LPVOID lpChar, UINT16 flags);
+extern BOOL X11DRV_GetDIState(DWORD len, LPVOID ptr);
+extern BOOL X11DRV_GetDIData(BYTE *keystate, DWORD dodsize, struct DIDEVICEOBJECTDATA *dod, LPDWORD entries, DWORD flags);
+extern void X11DRV_GetKeyboardConfig(struct tagKEYBOARD_CONFIG *cfg);
+extern void X11DRV_SetKeyboardConfig(struct tagKEYBOARD_CONFIG *cfg, DWORD mask);
 
-extern void X11DRV_KEYBOARD_HandleEvent(struct tagWND *pWnd, XKeyEvent *event);
+extern void X11DRV_HandleEvent(struct tagWND *pWnd, XKeyEvent *event);
 
 /* X11 mouse driver */
 
-extern void X11DRV_MOUSE_Init(LPMOUSE_EVENT_PROC);
-extern void X11DRV_MOUSE_SetCursor(struct tagCURSORICONINFO *lpCursor);
-extern void X11DRV_MOUSE_MoveCursor(WORD wAbsX, WORD wAbsY);
-extern void X11DRV_MOUSE_SendEvent( DWORD mouseStatus, DWORD posX, DWORD posY,
+extern void X11DRV_InitMouse(LPMOUSE_EVENT_PROC);
+extern void X11DRV_SetCursor(struct tagCURSORICONINFO *lpCursor);
+extern void X11DRV_MoveCursor(WORD wAbsX, WORD wAbsY);
+extern void X11DRV_SendEvent( DWORD mouseStatus, DWORD posX, DWORD posY,
                                     DWORD keyState, DWORD time, HWND hWnd );
 
 /* X11 windows driver */

@@ -707,7 +707,7 @@ HGLOBAL CURSORICON_Load( HINSTANCE hInstance, LPCWSTR name,
             }
         }
         else resid = LOWORD(name);
-        h = USER_Driver->pLoadOEMResource( resid, fCursor ? OEM_CURSOR : OEM_ICON );
+        h = USER_Driver.pLoadOEMResource( resid, fCursor ? OEM_CURSOR : OEM_ICON );
     }
 
     else  /* Load from resource */
@@ -1392,7 +1392,7 @@ HCURSOR WINAPI SetCursor(
     /* Change the cursor shape only if it is visible */
     if (CURSOR_ShowCount >= 0)
     {
-        USER_Driver->pSetCursor( (CURSORICONINFO*)GlobalLock16( hActiveCursor ) );
+        USER_Driver.pSetCursor( (CURSORICONINFO*)GlobalLock16( hActiveCursor ) );
         GlobalUnlock16( hActiveCursor );
     }
     return hOldCursor;
@@ -1413,7 +1413,7 @@ void WINAPI SetCursorPos16( INT16 x, INT16 y )
  */
 BOOL WINAPI SetCursorPos( INT x, INT y )
 {
-    USER_Driver->pMoveCursor( x, y );
+    USER_Driver.pMoveCursor( x, y );
     return TRUE;
 }
 
@@ -1439,14 +1439,14 @@ INT WINAPI ShowCursor( BOOL bShow )
     {
         if (++CURSOR_ShowCount == 0)  /* Show it */
         {
-            USER_Driver->pSetCursor( (CURSORICONINFO*)GlobalLock16( hActiveCursor ) );
+            USER_Driver.pSetCursor( (CURSORICONINFO*)GlobalLock16( hActiveCursor ) );
             GlobalUnlock16( hActiveCursor );
         }
     }
     else
     {
         if (--CURSOR_ShowCount == -1)  /* Hide it */
-            USER_Driver->pSetCursor( NULL );
+            USER_Driver.pSetCursor( NULL );
     }
     return CURSOR_ShowCount;
 }
@@ -2096,7 +2096,7 @@ static HBITMAP BITMAP_Load( HINSTANCE instance,LPCWSTR name, UINT loadflags )
       if (!instance)  /* OEM bitmap */
       {
 	  if (HIWORD((int)name)) return 0;
-          return USER_Driver->pLoadOEMResource( LOWORD((int)name), OEM_BITMAP );
+          return USER_Driver.pLoadOEMResource( LOWORD((int)name), OEM_BITMAP );
       }
 
       if (!(hRsrc = FindResourceW( instance, name, RT_BITMAPW ))) return 0;

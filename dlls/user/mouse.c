@@ -63,7 +63,7 @@ VOID WINAPI MOUSE_Enable(LPMOUSE_EVENT_PROC lpMouseEventProc)
 {
     THUNK_Free( (FARPROC)DefMouseEventProc );
     DefMouseEventProc = lpMouseEventProc;
-    USER_Driver->pInitMouse( lpMouseEventProc );
+    USER_Driver.pInitMouse( lpMouseEventProc );
 }
 
 static VOID WINAPI MOUSE_CallMouseEventProc( FARPROC16 proc,
@@ -100,5 +100,5 @@ VOID WINAPI MOUSE_Disable(VOID)
 {
     THUNK_Free( (FARPROC)DefMouseEventProc );
     DefMouseEventProc = 0;
-    USER_Driver->pInitMouse( 0 );
+    USER_Driver.pInitMouse( 0 );
 }

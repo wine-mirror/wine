@@ -202,20 +202,20 @@ static void CALLBACK EVENT_ProcessAllEvents( ULONG_PTR arg )
 }
 
 /***********************************************************************
- *           EVENT_Synchronize
+ *           X11DRV_Synchronize
  *
  * Synchronize with the X server. Should not be used too often.
  */
-void X11DRV_EVENT_Synchronize( void )
+void X11DRV_Synchronize( void )
 {
     TSXSync( display, False );
     EVENT_ProcessAllEvents( 0 );
 }
 
 /***********************************************************************
- *           EVENT_UserRepaintDisable
+ *           X11DRV_UserRepaintDisable
  */
-void X11DRV_EVENT_UserRepaintDisable( BOOL bDisabled )
+void X11DRV_UserRepaintDisable( BOOL bDisabled )
 {
     bUserRepaintDisabled = bDisabled;
 }
@@ -715,12 +715,12 @@ static void EVENT_MotionNotify( HWND hWnd, XMotionEvent *event )
     int yOffset = pWnd? pWnd->rectWindow.top  : 0;
     WIN_ReleaseWndPtr(pWnd);
     
-    X11DRV_MOUSE_SendEvent( MOUSEEVENTF_MOVE | MOUSEEVENTF_ABSOLUTE, 
+    X11DRV_SendEvent( MOUSEEVENTF_MOVE | MOUSEEVENTF_ABSOLUTE, 
                             xOffset + event->x, yOffset + event->y,
                             X11DRV_EVENT_XStateToKeyState( event->state ), 
                             event->time, hWnd);
   } else {
-    X11DRV_MOUSE_SendEvent( MOUSEEVENTF_MOVE,
+    X11DRV_SendEvent( MOUSEEVENTF_MOVE,
                             event->x_root, event->y_root,
                             X11DRV_EVENT_XStateToKeyState( event->state ), 
                             event->time, hWnd);
@@ -774,7 +774,7 @@ static void EVENT_ButtonPress( HWND hWnd, XButtonEvent *event )
         break;
   }
   
-  X11DRV_MOUSE_SendEvent( statusCodes[buttonNum], 
+  X11DRV_SendEvent( statusCodes[buttonNum], 
                           xOffset + event->x, yOffset + event->y,
                           MAKEWPARAM(keystate,wData),
                           event->time, hWnd);
@@ -822,7 +822,7 @@ static void EVENT_ButtonRelease( HWND hWnd, XButtonEvent *event )
       return;
   }
 
-  X11DRV_MOUSE_SendEvent( statusCodes[buttonNum], 
+  X11DRV_SendEvent( statusCodes[buttonNum], 
                           xOffset + event->x, yOffset + event->y,
                           keystate, event->time, hWnd);
 }
@@ -865,9 +865,9 @@ static void EVENT_FocusOut( HWND hWnd, XFocusChangeEvent *event )
 }
 
 /**********************************************************************
- *              X11DRV_EVENT_CheckFocus
+ *              X11DRV_CheckFocus
  */
-BOOL X11DRV_EVENT_CheckFocus(void)
+BOOL X11DRV_CheckFocus(void)
 {
   HWND   hWnd;
   Window xW;
@@ -1489,7 +1489,7 @@ static void EVENT_PropertyNotify( XPropertyEvent *event )
       TRACE("\tPropertyDelete for atom %s on window %ld\n",
             TSXGetAtomName(event->display, event->atom), (long)event->window);
       
-      if (X11DRV_CLIPBOARD_IsSelectionowner())
+      if (X11DRV_IsSelectionOwner())
           X11DRV_CLIPBOARD_FreeResources( event->atom );
       break;
     }
@@ -1899,7 +1899,7 @@ static void EVENT_MappingNotify( XMappingEvent *event )
     TSXRefreshKeyboardMapping(event);
 
     /* reinitialize Wine-X11 driver keyboard table */
-    X11DRV_KEYBOARD_Init();
+    X11DRV_InitKeyboard();
 }
 
 
@@ -1940,7 +1940,7 @@ void X11DRV_EVENT_SetDGAStatus(HWND hwnd, int event_base)
 /* DGA2 event handlers */
 static void EVENT_DGAMotionEvent( XDGAMotionEvent *event )
 {
-  X11DRV_MOUSE_SendEvent( MOUSEEVENTF_MOVE, 
+  X11DRV_SendEvent( MOUSEEVENTF_MOVE, 
 		   event->dx, event->dy,
 		   X11DRV_EVENT_XStateToKeyState( event->state ), 
 		   event->time, DGAhwnd );
@@ -1971,7 +1971,7 @@ static void EVENT_DGAButtonPressEvent( XDGAButtonEvent *event )
       break;
   }
   
-  X11DRV_MOUSE_SendEvent( statusCodes[buttonNum], 0, 0, keystate, event->time, DGAhwnd );
+  X11DRV_SendEvent( statusCodes[buttonNum], 0, 0, keystate, event->time, DGAhwnd );
 }
 
 static void EVENT_DGAButtonReleaseEvent( XDGAButtonEvent *event )
@@ -1999,7 +1999,7 @@ static void EVENT_DGAButtonReleaseEvent( XDGAButtonEvent *event )
       break;
   }
   
-  X11DRV_MOUSE_SendEvent( statusCodes[buttonNum], 0, 0, keystate, event->time, DGAhwnd );
+  X11DRV_SendEvent( statusCodes[buttonNum], 0, 0, keystate, event->time, DGAhwnd );
 }
 
 #endif

@@ -1074,7 +1074,6 @@ files/Makefile
 graphics/Makefile
 graphics/enhmetafiledrv/Makefile
 graphics/metafiledrv/Makefile
-graphics/ttydrv/Makefile
 graphics/win16drv/Makefile
 graphics/x11drv/Makefile
 if1632/Makefile
@@ -1119,7 +1118,6 @@ tsx11/Makefile
 unicode/Makefile
 win32/Makefile
 windows/Makefile
-windows/ttydrv/Makefile
 windows/x11drv/Makefile ])
 
 if test "$have_x" = "no"

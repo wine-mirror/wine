@@ -7,10 +7,11 @@
 #include "config.h"
 
 #include "dc.h"
+#include "heap.h"
 #include "debugtools.h"
 #include "ttydrv.h"
 
-DEFAULT_DEBUG_CHANNEL(ttydrv)
+DEFAULT_DEBUG_CHANNEL(ttydrv);
 
 /***********************************************************************
  *		TTYDRV_DC_Arc
@@ -306,3 +307,164 @@ COLORREF TTYDRV_DC_SetTextColor(DC *dc, COLORREF color)
   return oldColor;
 }
 
+
+/***********************************************************************
+ *		TTYDRV_DC_BitBlt
+ */
+BOOL TTYDRV_DC_BitBlt(DC *dcDst, INT xDst, INT yDst,
+		      INT width, INT height, DC *dcSrc,
+		      INT xSrc, INT ySrc, DWORD rop)
+{
+  FIXME("(%p, %d, %d, %d, %d, %p, %d, %d, %lu): stub\n",
+	dcDst, xDst, yDst, width, height, 
+        dcSrc, xSrc, ySrc, rop
+  );
+
+  return TRUE;
+}
+
+/***********************************************************************
+ *		TTYDRV_DC_PatBlt
+ */
+BOOL TTYDRV_DC_PatBlt(DC *dc, INT left, INT top,
+		      INT width, INT height, DWORD rop)
+{
+  FIXME("(%p, %d, %d, %d, %d, %lu): stub\n",
+	dc, left, top, width, height, rop
+  );
+
+
+  return TRUE;
+}
+
+/***********************************************************************
+ *		TTYDRV_DC_StretchBlt
+ */
+BOOL TTYDRV_DC_StretchBlt(DC *dcDst, INT xDst, INT yDst,
+			  INT widthDst, INT heightDst,
+			  DC *dcSrc, INT xSrc, INT ySrc,
+			  INT widthSrc, INT heightSrc, DWORD rop)
+{
+  FIXME("(%p, %d, %d, %d, %d, %p, %d, %d, %d, %d, %lu): stub\n",
+	dcDst, xDst, yDst, widthDst, heightDst,
+	dcSrc, xSrc, ySrc, widthSrc, heightSrc, rop
+  );
+
+  return TRUE;
+}
+
+/***********************************************************************
+ *		TTYDRV_DC_ExtTextOut
+ */
+BOOL TTYDRV_DC_ExtTextOut(DC *dc, INT x, INT y, UINT flags,
+			  const RECT *lpRect, LPCWSTR str, UINT count,
+			  const INT *lpDx)
+{
+#ifdef WINE_CURSES
+  TTYDRV_PDEVICE *physDev = (TTYDRV_PDEVICE *) dc->physDev;
+  INT row, col;
+  LPSTR ascii;
+
+  TRACE("(%p, %d, %d, 0x%08x, %p, %s, %d, %p)\n",
+	dc, x, y, flags, lpRect, debugstr_wn(str, count), count, lpDx);
+
+  if(!physDev->window)
+    return FALSE;
+
+  /* FIXME: Is this really correct? */
+  if(dc->w.textAlign & TA_UPDATECP) {
+    x = dc->w.CursPosX;
+    y = dc->w.CursPosY;
+  }
+
+  x = XLPTODP(dc, x);
+  y = YLPTODP(dc, y);
+  
+  row = (dc->w.DCOrgY + y) / physDev->cellHeight;
+  col = (dc->w.DCOrgX + x) / physDev->cellWidth;
+  ascii = HeapAlloc( GetProcessHeap(), 0, count+1 );
+  lstrcpynWtoA(ascii, str, count+1);
+  mvwaddnstr(physDev->window, row, col, ascii, count);
+  HeapFree( GetProcessHeap(), 0, ascii );
+  wrefresh(physDev->window);
+
+  if(dc->w.textAlign & TA_UPDATECP) {
+    dc->w.CursPosX += count * physDev->cellWidth;
+    dc->w.CursPosY += physDev->cellHeight;
+  }
+
+  return TRUE;
+#else /* defined(WINE_CURSES) */
+  FIXME("(%p, %d, %d, 0x%08x, %p, %s, %d, %p): stub\n",
+	dc, x, y, flags, lpRect, debugstr_wn(str,count), count, lpDx);
+
+  return TRUE;
+#endif /* defined(WINE_CURSES) */
+}
+
+/***********************************************************************
+ *		TTYDRV_DC_GetCharWidth
+ */
+BOOL TTYDRV_DC_GetCharWidth(DC *dc, UINT firstChar, UINT lastChar,
+			    LPINT buffer)
+{
+  UINT c;
+  TTYDRV_PDEVICE *physDev = (TTYDRV_PDEVICE *) dc->physDev;
+
+  FIXME("(%p, %u, %u, %p): semistub\n", dc, firstChar, lastChar, buffer);
+
+  for(c=firstChar; c<=lastChar; c++) {
+    buffer[c-firstChar] = physDev->cellWidth;
+  }
+
+  return TRUE;
+}
+
+/***********************************************************************
+ *		TTYDRV_DC_GetTextExtentPoint
+ */
+BOOL TTYDRV_DC_GetTextExtentPoint(DC *dc, LPCWSTR str, INT count,
+				  LPSIZE size)
+{
+  TTYDRV_PDEVICE *physDev = (TTYDRV_PDEVICE *) dc->physDev;
+
+  TRACE("(%p, %s, %d, %p)\n", dc, debugstr_wn(str, count), count, size);
+
+  size->cx = count * physDev->cellWidth;
+  size->cy = physDev->cellHeight;
+
+  return TRUE;
+}
+
+/***********************************************************************
+ *		TTYDRV_DC_GetTextMetrics
+ */
+BOOL TTYDRV_DC_GetTextMetrics(DC *dc, LPTEXTMETRICA lptm)
+{
+  TTYDRV_PDEVICE *physDev = (TTYDRV_PDEVICE *) dc->physDev;
+
+  TRACE("(%p, %p)\n", dc, lptm);
+
+  lptm->tmHeight = physDev->cellHeight;
+  lptm->tmAscent = 0;
+  lptm->tmDescent = 0;
+  lptm->tmInternalLeading = 0;
+  lptm->tmExternalLeading = 0;
+  lptm->tmAveCharWidth = physDev->cellWidth; 
+  lptm->tmMaxCharWidth = physDev->cellWidth;
+  lptm->tmWeight = FW_MEDIUM;
+  lptm->tmOverhang = 0;
+  lptm->tmDigitizedAspectX = physDev->cellWidth;
+  lptm->tmDigitizedAspectY = physDev->cellHeight;
+  lptm->tmFirstChar = 32;
+  lptm->tmLastChar = 255;
+  lptm->tmDefaultChar = 0;
+  lptm->tmBreakChar = 32;
+  lptm->tmItalic = FALSE;
+  lptm->tmUnderlined = FALSE;
+  lptm->tmStruckOut = FALSE;
+  lptm->tmPitchAndFamily = TMPF_FIXED_PITCH|TMPF_DEVICE;
+  lptm->tmCharSet = ANSI_CHARSET;
+
+  return TRUE;
+}

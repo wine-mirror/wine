@@ -787,7 +787,7 @@ static HRESULT WINAPI SysKeyboardAImpl_GetDeviceState(
 	LPDIRECTINPUTDEVICE2A iface,DWORD len,LPVOID ptr
 )
 {
-	return USER_Driver->pGetDIState(len, ptr)?DI_OK:E_FAIL;
+	return USER_Driver.pGetDIState(len, ptr)?DI_OK:E_FAIL;
 }
 
 static HRESULT WINAPI SysKeyboardAImpl_GetDeviceData(
@@ -802,7 +802,7 @@ static HRESULT WINAPI SysKeyboardAImpl_GetDeviceData(
 	TRACE("(this=%p,%ld,%p,%p(%ld)),0x%08lx)\n",
 	      This,dodsize,dod,entries,entries?*entries:0,flags);
 
-	ret=USER_Driver->pGetDIData(
+	ret=USER_Driver.pGetDIData(
 		This->keystate, dodsize, dod, entries, flags)?DI_OK:E_FAIL;
 	for (i=0;i<*entries;i++) {
 		dod[i].dwTimeStamp = GetTickCount();
@@ -821,11 +821,11 @@ static HRESULT WINAPI SysKeyboardAImpl_Acquire(LPDIRECTINPUTDEVICE2A iface)
 	  KEYBOARD_CONFIG no_auto;
 	  
 	  /* Save the original config */
-	  USER_Driver->pGetKeyboardConfig(&(This->initial_config));
+	  USER_Driver.pGetKeyboardConfig(&(This->initial_config));
 	  
 	  /* Now, remove auto-repeat */
 	  no_auto.auto_repeat = FALSE;
-	  USER_Driver->pSetKeyboardConfig(&no_auto, WINE_KEYBOARD_CONFIG_AUTO_REPEAT);
+	  USER_Driver.pSetKeyboardConfig(&no_auto, WINE_KEYBOARD_CONFIG_AUTO_REPEAT);
 
 	  This->acquired = 1;
 	}
@@ -840,7 +840,7 @@ static HRESULT WINAPI SysKeyboardAImpl_Unacquire(LPDIRECTINPUTDEVICE2A iface)
 
 	if (This->acquired == 1) {
 	  /* Restore the original configuration */
-	  USER_Driver->pSetKeyboardConfig(&(This->initial_config), 0xFFFFFFFF);
+	  USER_Driver.pSetKeyboardConfig(&(This->initial_config), 0xFFFFFFFF);
 	  This->acquired = 0;
 	} else {
 	  ERR("Unacquiring a not-acquired device !!!\n");
@@ -1431,7 +1431,7 @@ static HRESULT WINAPI SysMouseAImpl_Acquire(LPDIRECTINPUTDEVICE2A iface)
       point.x = This->win_centerX;
       point.y = This->win_centerY;
       MapWindowPoints(This->win, HWND_DESKTOP, &point, 1);
-      USER_Driver->pMoveCursor( point.x, point.y );
+      USER_Driver.pMoveCursor( point.x, point.y );
       This->need_warp = WARP_STARTED;
     }
 
@@ -1493,7 +1493,7 @@ static HRESULT WINAPI SysMouseAImpl_GetDeviceState(
     point.x = This->win_centerX;
     point.y = This->win_centerY;
     MapWindowPoints(This->win, HWND_DESKTOP, &point, 1);
-    USER_Driver->pMoveCursor( point.x, point.y );
+    USER_Driver.pMoveCursor( point.x, point.y );
 
     This->need_warp = WARP_STARTED;
   }
@@ -1560,7 +1560,7 @@ static HRESULT WINAPI SysMouseAImpl_GetDeviceData(LPDIRECTINPUTDEVICE2A iface,
     point.y = This->win_centerY;
     MapWindowPoints(This->win, HWND_DESKTOP, &point, 1);
 
-    USER_Driver->pMoveCursor( point.x, point.y );
+    USER_Driver.pMoveCursor( point.x, point.y );
 
     This->need_warp = WARP_STARTED;
   }

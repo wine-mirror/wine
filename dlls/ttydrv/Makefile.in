@@ -8,20 +8,16 @@ EXTRALIBS = $(LIBS)
 IMPORTS   = user32 gdi32 kernel32
 
 C_SRCS = \
-	ttydrv_main.c
-
-EXTRA_OBJS = \
-	$(TOPOBJDIR)/graphics/ttydrv/ttydrv.o \
-	$(TOPOBJDIR)/windows/ttydrv/ttydrv.o
-
-SUBDIRS = \
-	$(TOPOBJDIR)/graphics/ttydrv \
-	$(TOPOBJDIR)/windows/ttydrv
+	bitmap.c \
+	dc.c \
+	graphics.c \
+	objects.c \
+	palette.c \
+	ttydrv_main.c \
+	user.c \
+	wnd.c
 
 @MAKE_DLL_RULES@
-
-$(EXTRA_OBJS): $(TOOLSUBDIRS) dummy
-	@cd `dirname $@` && $(MAKE) `basename $@`
 
 ### Dependencies:
 

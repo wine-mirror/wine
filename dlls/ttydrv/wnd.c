@@ -13,7 +13,29 @@
 #include "win.h"
 #include "debugtools.h"
 
-DEFAULT_DEBUG_CHANNEL(ttydrv)
+DEFAULT_DEBUG_CHANNEL(ttydrv);
+
+WND_DRIVER TTYDRV_WND_Driver =
+{
+  TTYDRV_WND_Initialize,
+  TTYDRV_WND_Finalize,
+  TTYDRV_WND_CreateDesktopWindow,
+  TTYDRV_WND_CreateWindow,
+  TTYDRV_WND_DestroyWindow,
+  TTYDRV_WND_SetParent,
+  TTYDRV_WND_ForceWindowRaise,
+  TTYDRV_WND_SetWindowPos,
+  TTYDRV_WND_SetText,
+  TTYDRV_WND_SetFocus,
+  TTYDRV_WND_PreSizeMove,
+  TTYDRV_WND_PostSizeMove,
+  TTYDRV_WND_ScrollWindow,
+  TTYDRV_WND_SetDrawable,
+  TTYDRV_WND_SetHostAttr,
+  TTYDRV_WND_IsSelfClipping,
+  TTYDRV_WND_SetWindowRgn
+};
+
 
 /***********************************************************************
  *		TTYDRV_WND_GetCursesWindow

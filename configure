@@ -6405,7 +6405,6 @@ files/Makefile
 graphics/Makefile
 graphics/enhmetafiledrv/Makefile
 graphics/metafiledrv/Makefile
-graphics/ttydrv/Makefile
 graphics/win16drv/Makefile
 graphics/x11drv/Makefile
 if1632/Makefile
@@ -6450,7 +6449,6 @@ tsx11/Makefile
 unicode/Makefile
 win32/Makefile
 windows/Makefile
-windows/ttydrv/Makefile
 windows/x11drv/Makefile  include/config.h" | sed "s/:[^ ]*//g"` conftest*; exit 1' 1 2 15
 EOF
 cat >> $CONFIG_STATUS <<EOF
@@ -6641,7 +6639,6 @@ files/Makefile
 graphics/Makefile
 graphics/enhmetafiledrv/Makefile
 graphics/metafiledrv/Makefile
-graphics/ttydrv/Makefile
 graphics/win16drv/Makefile
 graphics/x11drv/Makefile
 if1632/Makefile
@@ -6686,7 +6683,6 @@ tsx11/Makefile
 unicode/Makefile
 win32/Makefile
 windows/Makefile
-windows/ttydrv/Makefile
 windows/x11drv/Makefile "}
 EOF
 cat >> $CONFIG_STATUS <<\EOF

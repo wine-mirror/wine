@@ -718,7 +718,7 @@ void X11DRV_KEYBOARD_HandleEvent( WND *pWnd, XKeyEvent *event )
 /**********************************************************************
  *		X11DRV_KEYBOARD_DetectLayout
  *
- * Called from X11DRV_KEYBOARD_Init
+ * Called from X11DRV_InitKeyboard
  *  This routine walks through the defined keyboard layouts and selects
  *  whichever matches most closely.
  */
@@ -816,9 +816,9 @@ X11DRV_KEYBOARD_DetectLayout (void)
 }
 
 /**********************************************************************
- *		X11DRV_KEYBOARD_Init
+ *		X11DRV_InitKeyboard
  */
-void X11DRV_KEYBOARD_Init(void)
+void X11DRV_InitKeyboard(void)
 {
     KeySym *ksp;
     XModifierKeymap *mmp;
@@ -1029,9 +1029,9 @@ void X11DRV_KEYBOARD_Init(void)
 }
 
 /***********************************************************************
- *		X11DRV_KEYBOARD_VkKeyScan
+ *		X11DRV_VkKeyScan
  */
-WORD X11DRV_KEYBOARD_VkKeyScan(CHAR cChar)
+WORD X11DRV_VkKeyScan(CHAR cChar)
 {
 	KeyCode keycode;
 	KeySym keysym;    	
@@ -1077,9 +1077,9 @@ WORD X11DRV_KEYBOARD_VkKeyScan(CHAR cChar)
 }
 
 /***********************************************************************
- *		X11DRV_KEYBOARD_MapVirtualKey
+ *		X11DRV_MapVirtualKey
  */
-UINT16 X11DRV_KEYBOARD_MapVirtualKey(UINT16 wCode, UINT16 wMapType)
+UINT16 X11DRV_MapVirtualKey(UINT16 wCode, UINT16 wMapType)
 {
 #define returnMVK(value) { TRACE("returning 0x%x.\n",value); return value; }
 
@@ -1161,9 +1161,9 @@ UINT16 X11DRV_KEYBOARD_MapVirtualKey(UINT16 wCode, UINT16 wMapType)
 }
 
 /***********************************************************************
- *		X11DRV_KEYBOARD_GetKeyNameText
+ *		X11DRV_GetKeyNameText
  */
-INT16 X11DRV_KEYBOARD_GetKeyNameText(LONG lParam, LPSTR lpBuffer, INT16 nSize)
+INT16 X11DRV_GetKeyNameText(LONG lParam, LPSTR lpBuffer, INT16 nSize)
 {
   int vkey, ansi, scanCode;
   KeyCode keyc;
@@ -1174,7 +1174,7 @@ INT16 X11DRV_KEYBOARD_GetKeyNameText(LONG lParam, LPSTR lpBuffer, INT16 nSize)
   scanCode &= 0x1ff;  /* keep "extended-key" flag with code */
 
   /* FIXME: should use MVK type 3 (NT version that distinguishes right and left */
-  vkey = X11DRV_KEYBOARD_MapVirtualKey(scanCode, 1);
+  vkey = X11DRV_MapVirtualKey(scanCode, 1);
 
   /*  handle "don't care" bit (0x02000000) */
   if (!(lParam & 0x02000000)) {
@@ -1196,7 +1196,7 @@ INT16 X11DRV_KEYBOARD_GetKeyNameText(LONG lParam, LPSTR lpBuffer, INT16 nSize)
     }
   }
 
-  ansi = X11DRV_KEYBOARD_MapVirtualKey(vkey, 2);
+  ansi = X11DRV_MapVirtualKey(vkey, 2);
   TRACE("scan 0x%04x, vkey 0x%04x, ANSI 0x%04x\n", scanCode, vkey, ansi);
 
   /* first get the name of the "regular" keys which is the Upper case
@@ -1333,7 +1333,7 @@ static char KEYBOARD_MapDeadKeysym(KeySym keysym)
 }
 
 /***********************************************************************
- *		X11DRV_KEYBOARD_ToAscii
+ *		X11DRV_ToAscii
  *
  * The ToAscii function translates the specified virtual-key code and keyboard
  * state to the corresponding Windows character or characters.
@@ -1350,7 +1350,7 @@ static char KEYBOARD_MapDeadKeysym(KeySym keysym)
  * FIXME : should do the above (return 2 for non matching deadchar+char combinations)
  *
  */
-INT16 X11DRV_KEYBOARD_ToAscii(
+INT16 X11DRV_ToAscii(
     UINT16 virtKey,UINT16 scanCode, LPBYTE lpKeyState, 
     LPVOID lpChar, UINT16 flags)
 {
@@ -1469,9 +1469,9 @@ INT16 X11DRV_KEYBOARD_ToAscii(
 }
 
 /***********************************************************************
- *		X11DRV_KEYBOARD_GetBeepActive
+ *		X11DRV_GetBeepActive
  */
-BOOL X11DRV_KEYBOARD_GetBeepActive()
+BOOL X11DRV_GetBeepActive()
 {
   XKeyboardState  keyboard_state;
 
@@ -1481,9 +1481,9 @@ BOOL X11DRV_KEYBOARD_GetBeepActive()
 }
 
 /***********************************************************************
- *		X11DRV_KEYBOARD_SetBeepActive
+ *		X11DRV_SetBeepActive
  */
-void X11DRV_KEYBOARD_SetBeepActive(BOOL bActivate)
+void X11DRV_SetBeepActive(BOOL bActivate)
 {
   XKeyboardControl keyboard_value;
   
@@ -1496,17 +1496,17 @@ void X11DRV_KEYBOARD_SetBeepActive(BOOL bActivate)
 }
 
 /***********************************************************************
- *		X11DRV_KEYBOARD_Beep
+ *		X11DRV_Beep
  */
-void X11DRV_KEYBOARD_Beep()
+void X11DRV_Beep()
 {
   TSXBell(display, 0);
 }
 
 /***********************************************************************
- *		X11DRV_KEYBOARD_GetDIState
+ *		X11DRV_GetDIState
  */
-BOOL X11DRV_KEYBOARD_GetDIState(DWORD len, LPVOID ptr)
+BOOL X11DRV_GetDIState(DWORD len, LPVOID ptr)
 {
   if (len==256) {
     int keyc,vkey;
@@ -1524,14 +1524,14 @@ BOOL X11DRV_KEYBOARD_GetDIState(DWORD len, LPVOID ptr)
       }
     return TRUE;
   }
-  WARN("whoops, X11DRV_KEYBOARD_GetState got len %ld?\n", len);
+  WARN("whoops, got len %ld?\n", len);
   return TRUE;
 }
 
 /***********************************************************************
- *		X11DRV_KEYBOARD_GetDIData
+ *		X11DRV_GetDIData
  */
-BOOL X11DRV_KEYBOARD_GetDIData(
+BOOL X11DRV_GetDIData(
   BYTE *keystate,
   DWORD dodsize, LPDIDEVICEOBJECTDATA dod,
   LPDWORD entries, DWORD flags)
@@ -1573,9 +1573,9 @@ BOOL X11DRV_KEYBOARD_GetDIData(
 }
 
 /***********************************************************************
- *		X11DRV_KEYBOARD_GetKeyboardConfig
+ *		X11DRV_GetKeyboardConfig
  */
-void X11DRV_KEYBOARD_GetKeyboardConfig(KEYBOARD_CONFIG *cfg) {
+void X11DRV_GetKeyboardConfig(KEYBOARD_CONFIG *cfg) {
   XKeyboardState   xks;
 
   /* For the moment, only get the auto-repeat mode */
@@ -1584,9 +1584,9 @@ void X11DRV_KEYBOARD_GetKeyboardConfig(KEYBOARD_CONFIG *cfg) {
 }
 
 /***********************************************************************
- *		X11DRV_KEYBOARD_SetKeyboardConfig
+ *		X11DRV_SetKeyboardConfig
  */
-extern void X11DRV_KEYBOARD_SetKeyboardConfig(KEYBOARD_CONFIG *cfg, DWORD mask) {
+extern void X11DRV_SetKeyboardConfig(KEYBOARD_CONFIG *cfg, DWORD mask) {
   XKeyboardControl xkc;
   unsigned long X_mask = 0;
   

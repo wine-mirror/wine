@@ -36,7 +36,7 @@ WORD WINAPI DISPLAY_Inquire(LPCURSORINFO lpCursorInfo)
  */
 VOID WINAPI DISPLAY_SetCursor( struct tagCURSORICONINFO *lpCursor )
 {
-    USER_Driver->pSetCursor(lpCursor);
+    USER_Driver.pSetCursor(lpCursor);
 }
 
 /***********************************************************************
@@ -44,7 +44,7 @@ VOID WINAPI DISPLAY_SetCursor( struct tagCURSORICONINFO *lpCursor )
  */
 VOID WINAPI DISPLAY_MoveCursor( WORD wAbsX, WORD wAbsY )
 {
-    USER_Driver->pMoveCursor(wAbsX, wAbsY);
+    USER_Driver.pMoveCursor(wAbsX, wAbsY);
 }
 
 /***********************************************************************
@@ -76,6 +76,6 @@ DWORD WINAPI DISPLAY_GetDriverResourceID( WORD wQueriedResID, LPSTR lpsResName )
  */
 VOID WINAPI UserRepaintDisable16( BOOL16 disable )
 {
-    USER_Driver->pUserRepaintDisable( disable );
+    USER_Driver.pUserRepaintDisable( disable );
 }
 
