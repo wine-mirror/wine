@@ -25,6 +25,7 @@
 #include <string.h>
 #include <stdarg.h>
 #include <stdlib.h>
+#include <errno.h>
 #include <sys/wait.h>
 #include <sys/stat.h>
 #ifdef HAVE_UNISTD_H
@@ -75,7 +76,7 @@ static const char *app_loader_script =
 static char *output_name;
 static char **lib_files, **obj_files;
 static int nb_lib_files, nb_obj_files;
-static int debug = 1;
+static int verbose = 0;
 
 void error(const char *s, ...)
 {
@@ -111,22 +112,25 @@ char *strmake(const char *fmt, ...)
 
 void spawn(char *const argv[])
 {
-    int pid, status, i;
+    int pid, status, wret, i;
 
-    if (debug)
+    if (verbose)
     {	
 	for(i = 0; argv[i]; i++) printf("%s ", argv[i]);
 	printf("\n");
     }
     
     if ((pid = fork()) == 0) execvp(argv[0], argv);
-    else if (waitpid(pid, &status, 0) > 0)
+    else if (pid > 0)
     {
-        if (WIFEXITED(status) && WEXITSTATUS(status) == 0) return;
+	while (pid != (wret = waitpid(pid, &status, 0)))
+	    if (wret == -1 && errno != EINTR) break;
+	
+        if (pid == wret && WIFEXITED(status) && WEXITSTATUS(status) == 0) return;
         error("%s failed.", argv[0]);
     }
     perror("Error:");
-    exit(1);
+    exit(3);
 }
 
 int is_resource(const char* file)
@@ -173,7 +177,12 @@ int main(int argc, char **argv)
 		break;
 	    case 'm':
 		if (strcmp("-mwindows", argv[i]) == 0) gui_mode = 1;
+		else if (strcmp("-mgui", argv[i]) == 0) gui_mode = 1;
 		else error("Unknown option %s\n", argv[i]);
+		break;
+            case 'v':        /* verbose */
+                if (argv[i][2] == 0) verbose = 1;
+                break;
 	    case '-':
 		if (argv[i][2]) error("No long option supported.");
 		no_opt = 1;
@@ -202,14 +211,12 @@ int main(int argc, char **argv)
     spec_args[j++] = strmake("%s.c", spec_name);
     spec_args[j++] = "--exe";
     spec_args[j++] = output_name;
-    spec_args[j++] = "-m";
-    spec_args[j++] = gui_mode ? "gui" : "cui";
+    spec_args[j++] = gui_mode ? "-mgui" : "-mcui";
     for (i = 0; i < nb_obj_files; i++)
 	spec_args[j++] = obj_files[i];
     spec_args[j++] = "-L" WINEDLLS;
     for (i = 0; i < nb_lib_files; i++)
 	spec_args[j++] = strmake("-l%s", lib_files[i]);
-    spec_args[j++] = "-lmsvcrt";
     spec_args[j] = 0;
 
     /* build gcc's argument list */
@@ -227,7 +234,7 @@ int main(int argc, char **argv)
     j = 0;
     link_args[j++] = "gcc";
     link_args[j++] = "-shared";
-    link_args[j++] = "-Wl,-Bsymbolic";
+    link_args[j++] = "-Wl,-Bsymbolic,-z,defs";
     link_args[j++] = "-lwine";
     link_args[j++] = "-lm";
     link_args[j++] = "-o";
