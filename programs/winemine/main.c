@@ -384,47 +384,38 @@ void SaveBoard( BOARD *p_board )
                 REG_OPTION_NON_VOLATILE, KEY_WRITE, &sa, 
                 &hkey, &disp ) != ERROR_SUCCESS)
         return;    
-    
-    wsprintf( data, "%d", p_board->pos.x );
-    RegSetValueEx( hkey, "Xpos", 0, REG_SZ, (LPBYTE) data, 
-            sizeof( data ));
 
     wsprintf( data, "%d", p_board->pos.x );
-    RegSetValueEx( hkey, "Ypos", 0, REG_SZ, (LPBYTE) data, 
-            sizeof( data ));
+    RegSetValueEx( hkey, "Xpos", 0, REG_SZ, (LPBYTE) data, strlen(data)+1 );
+
+    wsprintf( data, "%d", p_board->pos.x );
+    RegSetValueEx( hkey, "Ypos", 0, REG_SZ, (LPBYTE) data, strlen(data)+1 );
 
     wsprintf( data, "%d", (int) p_board->difficulty );
-    RegSetValueEx( hkey, "Difficulty", 0, REG_SZ, (LPBYTE) data, 
-            sizeof( data ));
+    RegSetValueEx( hkey, "Difficulty", 0, REG_SZ, (LPBYTE) data, strlen(data)+1 );
 
     wsprintf( data, "%d", p_board->rows );
-    RegSetValueEx( hkey, "Rows", 0, REG_SZ, (LPBYTE) data, 
-            sizeof( data ));
+    RegSetValueEx( hkey, "Rows", 0, REG_SZ, (LPBYTE) data, strlen(data)+1 );
 
     wsprintf( data, "%d", p_board->cols );
-    RegSetValueEx( hkey, "Cols", 0, REG_SZ, (LPBYTE) data, 
-            sizeof( data ));
+    RegSetValueEx( hkey, "Cols", 0, REG_SZ, (LPBYTE) data, strlen(data)+1 );
 
     wsprintf( data, "%d", p_board->mines );
-    RegSetValueEx( hkey, "Mines", 0, REG_SZ, (LPBYTE) data, 
-            sizeof( data ));
-    
+    RegSetValueEx( hkey, "Mines", 0, REG_SZ, (LPBYTE) data, strlen(data)+1 );
+
     wsprintf( data, "%d", (int) p_board->IsMarkQ );
-    RegSetValueEx( hkey, "MarkQ", 0, REG_SZ, (LPBYTE) data, 
-            sizeof( data ));
+    RegSetValueEx( hkey, "MarkQ", 0, REG_SZ, (LPBYTE) data, strlen(data)+1 );
 
     for( i = 0; i < 3; i++ ) {
         wsprintf( key_name, "Name%u", i );
         strncpy( data, p_board->best_name[i], sizeof( data ) );
-        RegSetValueEx( hkey, key_name, 0, REG_SZ, (LPBYTE) data, 
-                sizeof( data ));
+        RegSetValueEx( hkey, key_name, 0, REG_SZ, (LPBYTE) data, strlen(data)+1 );
     }
 
     for( i = 0; i < 3; i++ ) {
         wsprintf( key_name, "Time%u", i );
         wsprintf( data, "%d", p_board->best_time[i] );
-        RegSetValueEx( hkey, key_name, 0, REG_SZ, (LPBYTE) data, 
-                sizeof( data ));
+        RegSetValueEx( hkey, key_name, 0, REG_SZ, (LPBYTE) data, strlen(data)+1 );
     }
     RegCloseKey( hkey );
 }
