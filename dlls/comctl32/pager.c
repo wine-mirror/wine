@@ -21,11 +21,21 @@
  *    Tested primarily with the controlspy Pager application.
  *       Susan Farley (susan@codeweavers.com)
  *
+ * This code was audited for completeness against the documented features
+ * of Comctl32.dll version 6.0 on Sep. 18, 2004, by Robert Shearman.
+ * 
+ * Unless otherwise noted, we believe this code to be complete, as per
+ * the specification mentioned above.
+ * If you discover missing features or bugs please note them below.
+ *
  * TODO:
  *    Implement repetitive button press.
  *    Adjust arrow size relative to size of button.
  *    Allow border size changes.
- *    Implement drag and drop style.
+ *    Styles:
+ *      PGS_DRAGNDROP
+ *    Notifications:
+ *      PGN_HOTITEMCHANGE
  */
 
 #include <stdarg.h>
