@@ -760,11 +760,16 @@ static HRESULT test_block_align(LPGUID lpGuid)
        DXGetErrorString8(rc));
 
     if (rc==DS_OK && secondary!=NULL) {
+        ZeroMemory(&dsbcaps, sizeof(dsbcaps));
+        dsbcaps.dwSize = sizeof(dsbcaps);
         rc=IDirectSoundBuffer_GetCaps(secondary,&dsbcaps);
         ok(rc==DS_OK,"IDirectSoundBuffer_GetCaps() should have returned DS_OK, "
            "returned: %s\n", DXGetErrorString8(rc));
-        ok(dsbcaps.dwBufferBytes==(wfx.nAvgBytesPerSec + 4),
-           "Buffer size not a multiple of nBlockAlign\n");
+        if (rc==DS_OK)
+            ok(dsbcaps.dwBufferBytes==(wfx.nAvgBytesPerSec + wfx.nBlockAlign),
+               "Buffer size not a multiple of nBlockAlign: requested %ld, "
+               "got %ld, should be %ld\n", bufdesc.dwBufferBytes,
+               dsbcaps.dwBufferBytes, wfx.nAvgBytesPerSec + wfx.nBlockAlign);
         ref=IDirectSoundBuffer_Release(secondary);
         ok(ref==0,"IDirectSoundBuffer_Release() secondary has %d references, "
            "should have 0\n",ref);
