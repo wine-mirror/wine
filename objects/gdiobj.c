@@ -34,246 +34,115 @@ DEFAULT_DEBUG_CHANNEL(gdi);
  *          GDI stock objects 
  */
 
-static BRUSHOBJ WhiteBrush =
-{
-    { 0, BRUSH_MAGIC, 1 },             /* header */
-    { BS_SOLID, RGB(255,255,255), 0 }  /* logbrush */
-};
+static const LOGBRUSH WhiteBrush = { BS_SOLID, RGB(255,255,255), 0 };
+static const LOGBRUSH BlackBrush = { BS_SOLID, RGB(0,0,0), 0 };
+static const LOGBRUSH NullBrush  = { BS_NULL, 0, 0 };
 
-static BRUSHOBJ LtGrayBrush =
-{
-    { 0, BRUSH_MAGIC, 1 },             /* header */
-/* FIXME : this should perhaps be BS_HATCHED, at least for 1 bitperpixel */
-    { BS_SOLID, RGB(192,192,192), 0 }  /* logbrush */
-};
+/* FIXME: these should perhaps be BS_HATCHED, at least for 1 bitperpixel */
+static const LOGBRUSH LtGrayBrush = { BS_SOLID, RGB(192,192,192), 0 };
+static const LOGBRUSH GrayBrush   = { BS_SOLID, RGB(128,128,128), 0 };
 
-static BRUSHOBJ GrayBrush =
-{
-    { 0, BRUSH_MAGIC, 1 },             /* header */
-/* FIXME : this should perhaps be BS_HATCHED, at least for 1 bitperpixel */
-    { BS_SOLID, RGB(128,128,128), 0 }  /* logbrush */
-};
-
-static BRUSHOBJ DkGrayBrush =
-{
-    { 0, BRUSH_MAGIC, 1 },          /* header */
 /* This is BS_HATCHED, for 1 bitperpixel. This makes the spray work in pbrush */
 /* NB_HATCH_STYLES is an index into HatchBrushes */
-    { BS_HATCHED, RGB(0,0,0), NB_HATCH_STYLES }  /* logbrush */
-};
+static const LOGBRUSH DkGrayBrush = { BS_HATCHED, RGB(0,0,0), NB_HATCH_STYLES };
 
-static BRUSHOBJ BlackBrush =
-{
-    { 0, BRUSH_MAGIC, 1 },       /* header */
-    { BS_SOLID, RGB(0,0,0), 0 }  /* logbrush */
-};
+static const LOGPEN WhitePen = { PS_SOLID, { 0, 0 }, RGB(255,255,255) };
+static const LOGPEN BlackPen = { PS_SOLID, { 0, 0 }, RGB(0,0,0) };
+static const LOGPEN NullPen  = { PS_NULL,  { 0, 0 }, 0 };
 
-static BRUSHOBJ NullBrush =
-{
-    { 0, BRUSH_MAGIC, 1 },  /* header */
-    { BS_NULL, 0, 0 }       /* logbrush */
-};
+static const LOGFONTW OEMFixedFont =
+{ 12, 0, 0, 0, FW_NORMAL, FALSE, FALSE, FALSE, OEM_CHARSET,
+  0, 0, DEFAULT_QUALITY, FIXED_PITCH | FF_MODERN, {'\0'} };
 
-static PENOBJ WhitePen =
-{
-    { 0, PEN_MAGIC, 1 },                     /* header */
-    { PS_SOLID, { 0, 0 }, RGB(255,255,255) } /* logpen */
-};
+static const LOGFONTW AnsiFixedFont =
+{ 12, 0, 0, 0, FW_NORMAL, FALSE, FALSE, FALSE, ANSI_CHARSET,
+  0, 0, DEFAULT_QUALITY, FIXED_PITCH | FF_MODERN, {'\0'} };
 
-static PENOBJ BlackPen =
-{
-    { 0, PEN_MAGIC, 1 },               /* header */
-    { PS_SOLID, { 0, 0 }, RGB(0,0,0) } /* logpen */
-};
+static const LOGFONTW AnsiVarFont =
+{ 12, 0, 0, 0, FW_NORMAL, FALSE, FALSE, FALSE, ANSI_CHARSET,
+  0, 0, DEFAULT_QUALITY, VARIABLE_PITCH | FF_SWISS,
+  {'M','S',' ','S','a','n','s',' ','S','e','r','i','f','\0'} };
 
-static PENOBJ NullPen =
-{
-    { 0, PEN_MAGIC, 1 },      /* header */
-    { PS_NULL, { 0, 0 }, 0 }  /* logpen */
-};
+static const LOGFONTW SystemFont =
+{ 16, 0, 0, 0, FW_NORMAL, FALSE, FALSE, FALSE, ANSI_CHARSET,
+  0, 0, DEFAULT_QUALITY, VARIABLE_PITCH | FF_SWISS,
+  {'S','y','s','t','e','m','\0'} };
 
-static FONTOBJ OEMFixedFont =
-{
-    { 0, FONT_MAGIC, 1 },   /* header */
-    { 0, 0, 0, 0, FW_NORMAL, FALSE, FALSE, FALSE, OEM_CHARSET,
-      0, 0, DEFAULT_QUALITY, FIXED_PITCH | FF_MODERN, {'\0'} }
-};
+static const LOGFONTW DeviceDefaultFont =
+{ 16, 0, 0, 0, FW_NORMAL, FALSE, FALSE, FALSE, ANSI_CHARSET,
+  0, 0, DEFAULT_QUALITY, VARIABLE_PITCH | FF_SWISS, {'\0'} };
 
-static FONTOBJ AnsiFixedFont =
-{
-    { 0, FONT_MAGIC, 1 },   /* header */
-    { 0, 0, 0, 0, FW_NORMAL, FALSE, FALSE, FALSE, ANSI_CHARSET,
-      0, 0, DEFAULT_QUALITY, FIXED_PITCH | FF_MODERN, {'\0'} }
-};
-
-static FONTOBJ AnsiVarFont =
-{
-    { 0, FONT_MAGIC, 1 },   /* header */
-    { 0, 0, 0, 0, FW_NORMAL, FALSE, FALSE, FALSE, ANSI_CHARSET,
-      0, 0, DEFAULT_QUALITY, VARIABLE_PITCH | FF_SWISS,
-      {'M','S',' ','S','a','n','s',' ','S','e','r','i','f','\0'} }
-};
-
-static FONTOBJ SystemFont =
-{
-    { 0, FONT_MAGIC, 1 },
-    { 0, 0, 0, 0, FW_NORMAL, FALSE, FALSE, FALSE, ANSI_CHARSET,
-      0, 0, DEFAULT_QUALITY, VARIABLE_PITCH | FF_SWISS,
-      {'S','y','s','t','e','m','\0'} }
-};
-
-static FONTOBJ DeviceDefaultFont =
-{
-    { 0, FONT_MAGIC, 1 },   /* header */
-    { 0, 0, 0, 0, FW_NORMAL, FALSE, FALSE, FALSE, ANSI_CHARSET,
-      0, 0, DEFAULT_QUALITY, VARIABLE_PITCH | FF_SWISS, {'\0'} }
-};
-
-static FONTOBJ SystemFixedFont =
-{
-    { 0, FONT_MAGIC, 1 },   /* header */
-    { 0, 0, 0, 0, FW_NORMAL, FALSE, FALSE, FALSE, ANSI_CHARSET,
-      0, 0, DEFAULT_QUALITY, FIXED_PITCH | FF_MODERN, {'\0'} }
-};
+static const LOGFONTW SystemFixedFont =
+{ 16, 0, 0, 0, FW_NORMAL, FALSE, FALSE, FALSE, ANSI_CHARSET,
+  0, 0, DEFAULT_QUALITY, FIXED_PITCH | FF_MODERN, {'\0'} };
 
 /* FIXME: Is this correct? */
-static FONTOBJ DefaultGuiFont =
-{
-    { 0, FONT_MAGIC, 1 },   /* header */
-    { 0, 0, 0, 0, FW_NORMAL, FALSE, FALSE, FALSE, ANSI_CHARSET,
-      0, 0, DEFAULT_QUALITY, VARIABLE_PITCH | FF_SWISS,
-      {'M','S',' ','S','a','n','s',' ','S','e','r','i','f','\0'} }
-};
+static const LOGFONTW DefaultGuiFont =
+{ -11, 0, 0, 0, FW_NORMAL, FALSE, FALSE, FALSE, ANSI_CHARSET,
+  0, 0, DEFAULT_QUALITY, VARIABLE_PITCH | FF_SWISS,
+  {'M','S',' ','S','a','n','s',' ','S','e','r','i','f','\0'} };
 
+/* reserve one extra entry for the stock default bitmap */
+/* this is what Windows does too */
+#define NB_STOCK_OBJECTS (STOCK_LAST+2)
 
-static GDIOBJHDR * StockObjects[NB_STOCK_OBJECTS] =
-{
-    (GDIOBJHDR *) &WhiteBrush,
-    (GDIOBJHDR *) &LtGrayBrush,
-    (GDIOBJHDR *) &GrayBrush,
-    (GDIOBJHDR *) &DkGrayBrush,
-    (GDIOBJHDR *) &BlackBrush,
-    (GDIOBJHDR *) &NullBrush,
-    (GDIOBJHDR *) &WhitePen,
-    (GDIOBJHDR *) &BlackPen,
-    (GDIOBJHDR *) &NullPen,
-    NULL,
-    (GDIOBJHDR *) &OEMFixedFont,
-    (GDIOBJHDR *) &AnsiFixedFont,
-    (GDIOBJHDR *) &AnsiVarFont,
-    (GDIOBJHDR *) &SystemFont,
-    (GDIOBJHDR *) &DeviceDefaultFont,
-    NULL,            /* DEFAULT_PALETTE created by PALETTE_Init */
-    (GDIOBJHDR *) &SystemFixedFont,
-    (GDIOBJHDR *) &DefaultGuiFont
-};
-
-HBITMAP hPseudoStockBitmap; /* 1x1 bitmap for memory DCs */
+static HGDIOBJ stock_objects[NB_STOCK_OBJECTS];
 
 static SYSLEVEL GDI_level = { CRITICAL_SECTION_INIT("GDI_level"), 3 };
 static WORD GDI_HeapSel;
 
-static BOOL get_bool(char *buffer, BOOL def_value)
+inline static BOOL get_bool(char *buffer)
 {
-    switch(buffer[0])
-    {
-	case 'n':
-	case 'N':
-	case 'f':
-	case 'F':
-	case '0':
-	    return FALSE;
-
-	case 'y':
-	case 'Y':
-	case 't':
-	case 'T':
-	case '1':
-	    return TRUE;
-
-	default:
-	    return def_value;
-    }
+    return (buffer[0] == 'y' || buffer[0] == 'Y' ||
+            buffer[0] == 't' || buffer[0] == 'T' ||
+            buffer[0] == '1');
 }
 
-/******************************************************************************
- *
- *   void  ReadFontInformation(
- *      char const  *fontName,
- *      FONTOBJ  *font,
- *      int  defHeight,
- *      int  defBold,
- *      int  defItalic,
- *      int  defUnderline,
- *      int  defStrikeOut )
- *
- *   ReadFontInformation() checks the Wine configuration file's Tweak.Fonts
- *   section for entries containing fontName.Height, fontName.Bold, etc.,
- *   where fontName is the name specified in the call (e.g., "System").  It
- *   attempts to be user friendly by accepting 'n', 'N', 'f', 'F', or '0' as
- *   the first character in the boolean attributes (bold, italic, and
- *   underline).
- *****************************************************************************/
 
-static void  ReadFontInformation(
-    char const *fontName,
-    FONTOBJ *font,
-    int  defHeight,
-    int  defBold,
-    int  defItalic,
-    int  defUnderline,
-    int  defStrikeOut )
+/******************************************************************************
+ *           create_stock_font
+ */
+static HFONT create_stock_font( char const *fontName, const LOGFONTW *font, HKEY hkey )
 {
+    LOGFONTW lf;
     char  key[256];
     char buffer[MAX_PATH];
-    HKEY hkey;
     DWORD type, count;
 
-    /* In order for the stock fonts to be independent of 
-     * mapping mode, the height (& width) must be 0
-     */
+    if (!hkey) return CreateFontIndirectW( font );
 
-    /* assign defaults */
-    font->logfont.lfHeight = defHeight;
-    font->logfont.lfWeight = defBold;
-    font->logfont.lfItalic = defItalic;
-    font->logfont.lfUnderline = defUnderline;
-    font->logfont.lfStrikeOut = defStrikeOut;
-
-    if(RegOpenKeyA(HKEY_LOCAL_MACHINE, "Software\\Wine\\Wine\\Config\\Tweak.Fonts", &hkey))
-	return;
-
+    lf = *font;
     sprintf(key, "%s.Height", fontName);
     count = sizeof(buffer);
     if(!RegQueryValueExA(hkey, key, 0, &type, buffer, &count))
-	font->logfont.lfHeight = atoi(buffer);
+        lf.lfHeight = atoi(buffer);
 
     sprintf(key, "%s.Bold", fontName);
     count = sizeof(buffer);
     if(!RegQueryValueExA(hkey, key, 0, &type, buffer, &count))
-	font->logfont.lfWeight = get_bool(buffer, defBold) ? FW_BOLD : FW_NORMAL;
+        lf.lfWeight = get_bool(buffer) ? FW_BOLD : FW_NORMAL;
 
     sprintf(key, "%s.Italic", fontName);
     count = sizeof(buffer);
     if(!RegQueryValueExA(hkey, key, 0, &type, buffer, &count))
-	font->logfont.lfItalic = get_bool(buffer, defItalic);
+        lf.lfItalic = get_bool(buffer);
 
     sprintf(key, "%s.Underline", fontName);
     count = sizeof(buffer);
     if(!RegQueryValueExA(hkey, key, 0, &type, buffer, &count))
-	font->logfont.lfUnderline = get_bool(buffer, defUnderline);
+        lf.lfUnderline = get_bool(buffer);
 
     sprintf(key, "%s.StrikeOut", fontName);
     count = sizeof(buffer);
     if(!RegQueryValueExA(hkey, key, 0, &type, buffer, &count))
-	font->logfont.lfStrikeOut = get_bool(buffer, defStrikeOut);
-
-    RegCloseKey(hkey);
+        lf.lfStrikeOut = get_bool(buffer);
+    return CreateFontIndirectW( &lf );
 }
 
 
 #define TRACE_SEC(handle,text) \
    TRACE("(%04x): " text " %ld\n", (handle), GDI_level.crst.RecursionCount)
+
 
 /***********************************************************************
  *           GDI_Init
@@ -282,30 +151,57 @@ static void  ReadFontInformation(
  */
 BOOL GDI_Init(void)
 {
-    HPALETTE16 hpalette;
     HINSTANCE16 instance;
+    HKEY hkey;
+    GDIOBJHDR *ptr;
+    int i;
+
+    if (RegOpenKeyA(HKEY_LOCAL_MACHINE, "Software\\Wine\\Wine\\Config\\Tweak.Fonts", &hkey))
+        hkey = 0;
 
     /* create GDI heap */
     if ((instance = LoadLibrary16( "GDI.EXE" )) < 32) return FALSE;
     GDI_HeapSel = instance | 7;
 
-    /* TWEAK: Initialize font hints */
-    ReadFontInformation("OEMFixed", &OEMFixedFont, 12, 0, 0, 0, 0);
-    ReadFontInformation("AnsiFixed", &AnsiFixedFont, 12, 0, 0, 0, 0);
-    ReadFontInformation("AnsiVar", &AnsiVarFont, 12, 0, 0, 0, 0);
-    ReadFontInformation("System", &SystemFont, 16, 0, 0, 0, 0);
-    ReadFontInformation("DeviceDefault", &DeviceDefaultFont, 16, 0, 0, 0, 0);
-    ReadFontInformation("SystemFixed", &SystemFixedFont, 16, 0, 0, 0, 0);
-    ReadFontInformation("DefaultGui", &DefaultGuiFont, -11, 0, 0, 0, 0);
+    /* create stock objects */
+    stock_objects[WHITE_BRUSH]  = CreateBrushIndirect( &WhiteBrush );
+    stock_objects[LTGRAY_BRUSH] = CreateBrushIndirect( &LtGrayBrush );
+    stock_objects[GRAY_BRUSH]   = CreateBrushIndirect( &GrayBrush );
+    stock_objects[DKGRAY_BRUSH] = CreateBrushIndirect( &DkGrayBrush );
+    stock_objects[BLACK_BRUSH]  = CreateBrushIndirect( &BlackBrush );
+    stock_objects[NULL_BRUSH]   = CreateBrushIndirect( &NullBrush );
 
-    /* Create default palette */
+    stock_objects[WHITE_PEN]    = CreatePenIndirect( &WhitePen );
+    stock_objects[BLACK_PEN]    = CreatePenIndirect( &BlackPen );
+    stock_objects[NULL_PEN]     = CreatePenIndirect( &NullPen );
 
-    /* DR well *this* palette can't be moveable (?) */
-    hpalette = PALETTE_Init();
-    if( !hpalette ) return FALSE;
-    StockObjects[DEFAULT_PALETTE] = (GDIOBJHDR *)LOCAL_Lock( GDI_HeapSel, hpalette );
+    stock_objects[DEFAULT_PALETTE] = PALETTE_Init();
+    stock_objects[DEFAULT_BITMAP]  = CreateBitmap( 1, 1, 1, 1, NULL );
 
-    hPseudoStockBitmap = CreateBitmap( 1, 1, 1, 1, NULL ); 
+    stock_objects[OEM_FIXED_FONT]      = create_stock_font( "OEMFixed", &OEMFixedFont, hkey );
+    stock_objects[ANSI_FIXED_FONT]     = create_stock_font( "AnsiFixed", &AnsiFixedFont, hkey );
+    stock_objects[ANSI_VAR_FONT]       = create_stock_font( "AnsiVar", &AnsiVarFont, hkey );
+    stock_objects[SYSTEM_FONT]         = create_stock_font( "System", &SystemFont, hkey );
+    stock_objects[DEVICE_DEFAULT_FONT] = create_stock_font( "DeviceDefault", &DeviceDefaultFont, hkey );
+    stock_objects[SYSTEM_FIXED_FONT]   = create_stock_font( "SystemFixed", &SystemFixedFont, hkey );
+    stock_objects[DEFAULT_GUI_FONT]    = create_stock_font( "DefaultGui", &DefaultGuiFont, hkey );
+
+
+    /* clear the NOSYSTEM bit on all stock objects*/
+    for (i = 0; i < NB_STOCK_OBJECTS; i++)
+    {
+        if (!stock_objects[i])
+        {
+            if (i == 9) continue;  /* there's no stock object 9 */
+            ERR( "could not create stock object %d\n", i );
+            return FALSE;
+        }
+        ptr = GDI_GetObjPtr( stock_objects[i], MAGIC_DONTCARE );
+        ptr->wMagic &= ~OBJECT_NOSYSTEM;
+        GDI_ReleaseObj( stock_objects[i] );
+    }
+
+    if (hkey) RegCloseKey( hkey );
     return TRUE;
 }
 
@@ -415,23 +311,19 @@ BOOL GDI_FreeObject( HGDIOBJ handle, void *ptr )
 {
     GDIOBJHDR *object = ptr;
 
-    /* can't free stock objects */
-    if (handle < FIRST_STOCK_HANDLE)
+    object->wMagic = 0;  /* Mark it as invalid */
+    if (handle & 2)  /* GDI heap handle */
     {
-        object->wMagic = 0;  /* Mark it as invalid */
-        if (handle & 2)  /* GDI heap handle */
+        LOCAL_Unlock( GDI_HeapSel, handle );
+        LOCAL_Free( GDI_HeapSel, handle );
+    }
+    else  /* large heap handle */
+    {
+        int i = (handle >> 2) - FIRST_LARGE_HANDLE;
+        if (i >= 0 && large_handles[i])
         {
-            LOCAL_Unlock( GDI_HeapSel, handle );
-            LOCAL_Free( GDI_HeapSel, handle );
-        }
-        else  /* large heap handle */
-        {
-            int i = (handle >> 2) - FIRST_LARGE_HANDLE;
-            if (i >= 0 && large_handles[i])
-            {
-                HeapFree( GetProcessHeap(), 0, large_handles[i] );
-                large_handles[i] = NULL;
-            }
+            HeapFree( GetProcessHeap(), 0, large_handles[i] );
+            large_handles[i] = NULL;
         }
     }
     TRACE_SEC( handle, "leave" );
@@ -453,17 +345,10 @@ void *GDI_GetObjPtr( HGDIOBJ handle, WORD magic )
 
     _EnterSysLevel( &GDI_level );
 
-    if (handle >= FIRST_STOCK_HANDLE)
-    {
-        if (handle <= LAST_STOCK_HANDLE) ptr = StockObjects[handle - FIRST_STOCK_HANDLE];
-        if (ptr && (magic != MAGIC_DONTCARE)
-	&& (GDIMAGIC(ptr->wMagic) != magic)) ptr = NULL;
-    }
-    else if (handle & 2)  /* GDI heap handle */
+    if (handle & 2)  /* GDI heap handle */
     {
         ptr = (GDIOBJHDR *)LOCAL_Lock( GDI_HeapSel, handle );
-        if (ptr &&
-	(magic != MAGIC_DONTCARE) && (GDIMAGIC(ptr->wMagic) != magic))
+        if (ptr && (magic != MAGIC_DONTCARE) && (GDIMAGIC(ptr->wMagic) != magic))
         {
             LOCAL_Unlock( GDI_HeapSel, handle );
             ptr = NULL;
@@ -496,7 +381,7 @@ void *GDI_GetObjPtr( HGDIOBJ handle, WORD magic )
  */
 void GDI_ReleaseObj( HGDIOBJ handle )
 {
-    if (handle < FIRST_STOCK_HANDLE && (handle & 2)) LOCAL_Unlock( GDI_HeapSel, handle );
+    if (handle & 2) LOCAL_Unlock( GDI_HeapSel, handle );
     TRACE_SEC( handle, "leave" );
     _LeaveSysLevel( &GDI_level );
 }
@@ -530,12 +415,7 @@ BOOL WINAPI DeleteObject( HGDIOBJ obj )
 
     GDIOBJHDR * header;
     if (HIWORD(obj)) return FALSE;
-    if ((obj >= FIRST_STOCK_HANDLE) && (obj <= LAST_STOCK_HANDLE)) {
-	TRACE("Preserving Stock object %04x\n", obj );
-	/* NOTE: No GDI_Release is necessary */
-        return TRUE;
-    }
-    if (obj == hPseudoStockBitmap) return TRUE;
+
     if (!(header = GDI_GetObjPtr( obj, MAGIC_DONTCARE ))) return FALSE;
 
     if (!(header->wMagic & OBJECT_NOSYSTEM)
@@ -587,8 +467,7 @@ HGDIOBJ WINAPI GetStockObject( INT obj )
 {
     HGDIOBJ ret;
     if ((obj < 0) || (obj >= NB_STOCK_OBJECTS)) return 0;
-    if (!StockObjects[obj]) return 0;
-    ret = (HGDIOBJ16)(FIRST_STOCK_HANDLE + obj);
+    ret = stock_objects[obj];
     TRACE("returning %4x\n", ret );
     return ret;
 }

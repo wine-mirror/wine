@@ -681,7 +681,7 @@ HDC WINAPI CreateCompatibleDC( HDC hdc )
 
     dc->flags        = DC_MEMORY;
     dc->bitsPerPixel = 1;
-    dc->hBitmap      = hPseudoStockBitmap;
+    dc->hBitmap      = GetStockObject( DEFAULT_BITMAP );
 
     /* Copy the driver-specific physical device info into
      * the new DC. The driver may use this read-only info

@@ -350,7 +350,12 @@ static Atom RAW_DESCENT;
  */
 inline static BOOL is_stock_font( HFONT font )
 {
-    return (font >= FIRST_STOCK_FONT && font <= LAST_STOCK_FONT);
+    int i;
+    for (i = OEM_FIXED_FONT; i <= DEFAULT_GUI_FONT; i++)
+    {
+        if (i != DEFAULT_PALETTE && font == GetStockObject(i)) return TRUE;
+    }
+    return FALSE;
 }
 
 

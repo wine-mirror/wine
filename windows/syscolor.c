@@ -98,9 +98,6 @@ static COLORREF SysColors[NUM_SYS_COLORS];
 static HBRUSH SysColorBrushes[NUM_SYS_COLORS];
 static HPEN   SysColorPens[NUM_SYS_COLORS];
 
-#define MAKE_SOLID(color) \
-       (PALETTEINDEX(GetNearestPaletteIndex(STOCK_DEFAULT_PALETTE,(color))))
-
 
 /*************************************************************************
  * SYSCOLOR_MakeObjectSystem

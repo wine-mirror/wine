@@ -101,25 +101,24 @@ static HBRUSH EMFDRV_BRUSH_SelectObject(DC *dc, HBRUSH hBrush )
     EMRSELECTOBJECT emr;
     DWORD index;
     HBRUSH hOldBrush;
-    
+    int i;
+
     /* If the object is a stock brush object, do not need to create it.
      * See definitions in  wingdi.h for range of stock brushes.
      * We do however have to handle setting the higher order bit to
      * designate that this is a stock object.
      */
-    if (hBrush >= FIRST_STOCK_HANDLE &&
-        hBrush <= FIRST_STOCK_HANDLE+HOLLOW_BRUSH )
+    for (i = WHITE_BRUSH; i <= NULL_BRUSH; i++)
     {
-        DWORD brush_index = hBrush - FIRST_STOCK_HANDLE;
-        index = brush_index | 0x80000000;
+        if (hBrush == GetStockObject(i))
+        {
+            index = i | 0x80000000;
+            goto found;
+        }
     }
-    else
-    {
-        index = EMFDRV_CreateBrushIndirect(dc, hBrush );
-    }
-    
-    if(!index) return FALSE;
+    if (!(index = EMFDRV_CreateBrushIndirect(dc, hBrush ))) return 0;
 
+ found:
     emr.emr.iType = EMR_SELECTOBJECT;
     emr.emr.nSize = sizeof(emr);
     emr.ihObject = index;
@@ -180,6 +179,7 @@ static HFONT EMFDRV_FONT_SelectObject( DC * dc, HFONT hFont )
     EMRSELECTOBJECT emr;
     DWORD index;
     HFONT hOldFont;
+    int i;
 
     /* If the object is a stock font object, do not need to create it.
      * See definitions in  wingdi.h for range of stock fonts.
@@ -187,20 +187,16 @@ static HFONT EMFDRV_FONT_SelectObject( DC * dc, HFONT hFont )
      * designate that this is a stock object.
      */
 
-    if (hFont >= STOCK_OEM_FIXED_FONT &&
-        hFont <= STOCK_DEFAULT_GUI_FONT &&
-        hFont != STOCK_DEFAULT_PALETTE)
+    for (i = OEM_FIXED_FONT; i <= DEFAULT_GUI_FONT; i++)
     {
-        DWORD font_index = hFont - FIRST_STOCK_HANDLE;
-        index = font_index | 0x80000000;
+        if (i != DEFAULT_PALETTE && hFont == GetStockObject(i))
+        {
+            index = i | 0x80000000;
+            goto found;
+        }
     }
-    else
-    {
-        index = EMFDRV_CreateFontIndirect(dc, hFont );
-    }
-
-    if(!index) return FALSE;
-
+    if (!(index = EMFDRV_CreateFontIndirect(dc, hFont ))) return 0;
+ found:
     emr.emr.iType = EMR_SELECTOBJECT;
     emr.emr.nSize = sizeof(emr);
     emr.ihObject = index;
@@ -241,6 +237,7 @@ static HPEN EMFDRV_PEN_SelectObject(DC *dc, HPEN hPen )
     EMRSELECTOBJECT emr;
     DWORD index;
     HPEN hOldPen;
+    int i;
 
     /* If the object is a stock pen object, do not need to create it.
      * See definitions in  wingdi.h for range of stock pens.
@@ -248,19 +245,16 @@ static HPEN EMFDRV_PEN_SelectObject(DC *dc, HPEN hPen )
      * designate that this is a stock object.
      */
 
-    if (hPen >= STOCK_WHITE_PEN &&
-        hPen <= STOCK_NULL_PEN )
+    for (i = WHITE_PEN; i <= NULL_PEN; i++)
     {
-        DWORD pen_index = hPen - FIRST_STOCK_HANDLE; 
-        index = pen_index | 0x80000000;
+        if (hPen == GetStockObject(i))
+        {
+            index = i | 0x80000000;
+            goto found;
+        }
     }
-    else
-    {
-        index = EMFDRV_CreatePenIndirect(dc, hPen );
-    }
- 
-    if(!index) return FALSE;
-    
+    if (!(index = EMFDRV_CreatePenIndirect(dc, hPen ))) return 0;
+ found:
     emr.emr.iType = EMR_SELECTOBJECT;
     emr.emr.nSize = sizeof(emr);
     emr.ihObject = index;
