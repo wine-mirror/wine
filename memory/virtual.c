@@ -1080,6 +1080,7 @@ HANDLE WINAPI CreateFileMappingA(
     CLIENT_SendRequest( REQ_CREATE_MAPPING, -1, 2,
                         &req, sizeof(req),
                         name, name ? strlen(name) + 1 : 0 );
+    SetLastError(0);
     CLIENT_WaitSimpleReply( &reply, sizeof(reply), NULL );
     if (reply.handle == -1) return 0;
     return reply.handle;
