@@ -2529,7 +2529,7 @@ MMRESULT16 WINAPI timeGetSystemTime16(LPMMTIME16 lpTime, UINT16 wSize)
     if (wSize >= sizeof(*lpTime)) {
 	lpTime->wType = TIME_MS;
 	TIME_MMTimeStart();
-	lpTime->u.ms = WINMM_IData->mmSysTimeMS;
+	lpTime->u.ms = WINMM_SysTimeMS;
 
 	TRACE("=> %lu\n", lpTime->u.ms);
     }
