@@ -414,13 +414,9 @@ static HWND TAB_InternalHitTest (
   RECT rect;
   int iCount; 
   
-  for (iCount = 0; iCount < infoPtr->uNumItem; iCount++) 
+  for (iCount = 0; iCount < infoPtr->uNumItem; iCount++)
   {
-    TAB_InternalGetItemRect(hwnd,
-			    infoPtr, 
-			    iCount,
-			    &rect,
-			    NULL);
+    TAB_InternalGetItemRect(hwnd, infoPtr, iCount, &rect, NULL);
 
     if (PtInRect (&rect, pt))
     {
@@ -442,6 +438,34 @@ TAB_HitTest (HWND hwnd, WPARAM wParam, LPARAM lParam)
   return TAB_InternalHitTest (hwnd, infoPtr,lptest->pt,&lptest->flags);
 }
 
+/******************************************************************************
+ * TAB_NCHitTest
+ *
+ * Napster v2b5 has a tab control for its main navigation which has a client
+ * area that covers the whole area of the dialog pages.
+ * That's why it receives all msgs for that area and the underlying dialog ctrls
+ * are dead.
+ * So I decided that we should handle WM_NCHITTEST here and return
+ * HTTRANSPARENT if we don't hit the tab control buttons.
+ * FIXME: WM_NCHITTEST handling correct ? Fix it if you know that Windows
+ * doesn't do it that way. Maybe depends on tab control styles ?
+ */
+static LRESULT
+TAB_NCHitTest (HWND hwnd, LPARAM lParam)
+{
+  TAB_INFO *infoPtr = TAB_GetInfoPtr(hwnd);
+  POINT pt;
+  UINT dummyflag;
+
+  pt.x = LOWORD(lParam);
+  pt.y = HIWORD(lParam);
+  ScreenToClient(hwnd, &pt);
+
+  if (TAB_InternalHitTest(hwnd, infoPtr, pt, &dummyflag) == -1)
+    return HTTRANSPARENT;
+  else
+    return HTCLIENT;
+}
 
 static LRESULT
 TAB_LButtonDown (HWND hwnd, WPARAM wParam, LPARAM lParam)
@@ -2460,6 +2484,8 @@ TAB_WindowProc (HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 
     case WM_KEYUP:
       return TAB_KeyUp(hwnd, wParam);
+    case WM_NCHITTEST:
+      return TAB_NCHitTest(hwnd, lParam);
 
     default:
       if (uMsg >= WM_USER)
