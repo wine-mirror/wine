@@ -43,6 +43,9 @@
 /* Define if you have the <curses.h> header file. */
 #undef HAVE_CURSES_H
 
+/* Define if you have the <direct.h> header file. */
+#undef HAVE_DIRECT_H
+
 /* Define if you have the <dlfcn.h> header file. */
 #undef HAVE_DLFCN_H
 
@@ -150,6 +153,9 @@
 
 /* Define if you have the <inttypes.h> header file. */
 #undef HAVE_INTTYPES_H
+
+/* Define if you have the <io.h> header file. */
+#undef HAVE_IO_H
 
 /* Define if IPX should use netipx/ipx.h from libc */
 #undef HAVE_IPX_GNU
@@ -298,6 +304,12 @@
 /* Define if you have the Open Sound system (MIDI interface) */
 #undef HAVE_OSS_MIDI
 
+/* Define if you have the `pclose' function. */
+#undef HAVE_PCLOSE
+
+/* Define if you have the `popen' function. */
+#undef HAVE_POPEN
+
 /* Define if we can use ppdev.h for parallel port access */
 #undef HAVE_PPDEV
 
@@ -442,6 +454,9 @@
 /* Define if you have the <sys/syscall.h> header file. */
 #undef HAVE_SYS_SYSCALL_H
 
+/* Define if you have the <sys/time.h> header file. */
+#undef HAVE_SYS_TIME_H
+
 /* Define if you have the <sys/types.h> header file. */
 #undef HAVE_SYS_TYPES_H
 
@@ -519,6 +534,18 @@
 
 /* Define if you have the `_lwp_create' function. */
 #undef HAVE__LWP_CREATE
+
+/* Define if you have the `_pclose' function. */
+#undef HAVE__PCLOSE
+
+/* Define if you have the `_popen' function. */
+#undef HAVE__POPEN
+
+/* Define if you have the `_stricmp' function. */
+#undef HAVE__STRICMP
+
+/* Define if you have the `_strnicmp' function. */
+#undef HAVE__STRNICMP
 
 /* Define if you have the `__libc_fork' function. */
 #undef HAVE___LIBC_FORK

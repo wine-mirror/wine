@@ -834,6 +834,10 @@ AC_FUNC_ALLOCA()
 AC_CHECK_FUNCS(\
 	__libc_fork \
 	_lwp_create \
+	_pclose \
+	_popen \
+	_stricmp \
+	_strnicmp \
 	clone \
 	ecvt \
 	finite \
@@ -852,7 +856,9 @@ AC_CHECK_FUNCS(\
 	lstat \
 	memmove \
 	mmap \
+	pclose \
 	pread \
+	popen \
 	pwrite \
 	rfork \
 	select \
@@ -876,9 +882,11 @@ dnl **** Check for header files ****
 AC_CHECK_HEADERS(\
 	arpa/inet.h \
 	arpa/nameser.h \
+	direct.h \
 	elf.h \
 	float.h \
 	ieeefp.h \
+	io.h \
 	libio.h \
 	libutil.h \
 	link.h \
@@ -920,6 +928,7 @@ AC_CHECK_HEADERS(\
 	sys/statfs.h \
 	sys/strtio.h \
 	sys/syscall.h \
+	sys/time.h \
 	sys/user.h \
 	sys/wait.h \
 	sys/v86.h \
@@ -928,6 +937,7 @@ AC_CHECK_HEADERS(\
 	sys/vm86.h \
 	syscall.h \
 	ucontext.h \
+	unistd.h \
 )
 AC_HEADER_STAT()
 
