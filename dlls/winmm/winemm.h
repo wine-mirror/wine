@@ -221,8 +221,22 @@ void		CALLBACK	WINE_mmThreadEntryPoint(DWORD _pmt);
 void 				MMSYSTEM_MMTIME16to32(LPMMTIME mmt32, const MMTIME16* mmt16);
 void 				MMSYSTEM_MMTIME32to16(LPMMTIME16 mmt16, const MMTIME* mmt32);
 
+UINT                            MMSYSTEM_mixerOpen(LPHMIXER lphMix, UINT uDeviceID, DWORD dwCallback,
+                                                   DWORD dwInstance, DWORD fdwOpen, BOOL bFrom32);
+UINT                            MMSYSTEM_midiOutOpen(HMIDIOUT* lphMidiOut, UINT uDeviceID, DWORD dwCallback,
+                                                     DWORD dwInstance, DWORD dwFlags, BOOL bFrom32);
+UINT                            MMSYSTEM_midiInOpen(HMIDIIN* lphMidiIn, UINT uDeviceID, DWORD dwCallback,
+                                                    DWORD dwInstance, DWORD dwFlags, BOOL bFrom32);
+MMRESULT                        MMSYSTEM_MidiStream_Open(HMIDISTRM* lphMidiStrm, LPUINT lpuDeviceID,
+                                                         DWORD cMidi, DWORD dwCallback,
+                                                         DWORD dwInstance, DWORD fdwOpen, BOOL bFrom32);
+UINT                            MMSYSTEM_waveOpen(HANDLE* lphndl, UINT uDeviceID, UINT uType,
+                                                  const LPWAVEFORMATEX lpFormat, DWORD dwCallback, 
+                                                  DWORD dwInstance, DWORD dwFlags, BOOL bFrom32);
+
 BOOL				MULTIMEDIA_MciInit(void);
 LPWINE_MM_IDATA			MULTIMEDIA_GetIData(void);
+BOOL                            MULTIMEDIA_PlaySound(const void* pszSound, HMODULE hmod, DWORD fdwSound, BOOL bUnicode);
 
 LPWINE_MM_IDATA			TIME_MMTimeStart(void);
 void				TIME_MMTimeStop(void);

@@ -16,10 +16,12 @@ C_SRCS = \
 	lolvldrv.c \
 	mci.c \
 	mmio.c \
-	mmsystem.c \
-	time.c
+	playsound.c \
+	time.c \
+	winmm.c
 
 C_SRCS16 = \
+	mmsystem.c \
 	sound16.c
 
 RC_SRCS = winmm_res.rc

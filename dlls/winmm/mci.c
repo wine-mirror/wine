@@ -2318,14 +2318,14 @@ static	DWORD MCI_Open(DWORD dwParam, LPMCI_OPEN_PARMSA lpParms)
     TRACE("wDevID=%04X wDeviceID=%d dwRet=%ld\n", wmd->wDeviceID, lpParms->wDeviceID, dwRet);
 
     if (dwParam & MCI_NOTIFY)
-	mciDriverNotify16(lpParms->dwCallback, wmd->wDeviceID, MCI_NOTIFY_SUCCESSFUL);
+	mciDriverNotify(lpParms->dwCallback, wmd->wDeviceID, MCI_NOTIFY_SUCCESSFUL);
 
     return 0;
 errCleanUp:
     if (wmd) MCI_UnLoadMciDriver(iData, wmd);
 
     if (dwParam & MCI_NOTIFY)
-	mciDriverNotify16(lpParms->dwCallback, 0, MCI_NOTIFY_FAILURE);
+	mciDriverNotify(lpParms->dwCallback, 0, MCI_NOTIFY_FAILURE);
     return dwRet;
 }
 
@@ -2366,8 +2366,8 @@ static	DWORD MCI_Close(UINT16 wDevID, DWORD dwParam, LPMCI_GENERIC_PARMS lpParms
     MCI_UnLoadMciDriver(iData, wmd);
 
     if (dwParam & MCI_NOTIFY)
-	mciDriverNotify16(lpParms->dwCallback, wDevID,
-			  (dwRet == 0) ? MCI_NOTIFY_SUCCESSFUL : MCI_NOTIFY_FAILURE);
+	mciDriverNotify(lpParms->dwCallback, wDevID,
+                        (dwRet == 0) ? MCI_NOTIFY_SUCCESSFUL : MCI_NOTIFY_FAILURE);
 
     return dwRet;
 }
@@ -2490,8 +2490,8 @@ static	DWORD MCI_Break(UINT wDevID, DWORD dwFlags, LPMCI_BREAK_PARMS lpParms)
     if (lpParms == NULL)	return MCIERR_NULL_PARAMETER_BLOCK;
 
     if (dwFlags & MCI_NOTIFY)
-	mciDriverNotify16(lpParms->dwCallback, wDevID,
-			  (dwRet == 0) ? MCI_NOTIFY_SUCCESSFUL : MCI_NOTIFY_FAILURE);
+	mciDriverNotify(lpParms->dwCallback, wDevID,
+                        (dwRet == 0) ? MCI_NOTIFY_SUCCESSFUL : MCI_NOTIFY_FAILURE);
 
     return dwRet;
 }
