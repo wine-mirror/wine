@@ -684,6 +684,10 @@ ICOM_DEFINE(IMalloc,IUnknown)
 #define IMalloc_HeapMinimize(p) ICOM_CALL (HeapMinimize,p)
 
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 HRESULT WINAPI CoCreateStandardMalloc16(DWORD dwMemContext, LPMALLOC16* lpMalloc);
 
 HRESULT WINAPI CoGetMalloc16(DWORD dwMemContext,LPMALLOC16* lpMalloc);
@@ -757,5 +761,9 @@ void WINAPI CoUninitialize(void);
  */
 HRESULT WINAPI DllGetClassObject(REFCLSID rclsid, REFIID riid, LPVOID * ppv);
 HRESULT WINAPI DllCanUnloadNow(void);
+
+#ifdef __cplusplus
+} /* extern "C" */
+#endif
 
 #endif /* __WINE_WINE_OBJ_BASE_H */
