@@ -440,11 +440,19 @@ DWORD WINAPI GetFileVersionInfoSizeA( LPCSTR filename, LPDWORD handle )
 
     len = VERSION_GetFileVersionInfo_PE(filename, handle, 0, NULL);
     /* 0xFFFFFFFF means: file exists, but VERSION_INFO not found */
-    if(len == 0xFFFFFFFF) return 0;
+    if(len == 0xFFFFFFFF)
+    {
+        SetLastError(ERROR_RESOURCE_DATA_NOT_FOUND);
+        return 0;
+    }
     if(len) return len;
     len = VERSION_GetFileVersionInfo_16(filename, handle, 0, NULL);
     /* 0xFFFFFFFF means: file exists, but VERSION_INFO not found */
-    if(len == 0xFFFFFFFF) return 0;
+    if(len == 0xFFFFFFFF)
+    {
+        SetLastError(ERROR_RESOURCE_DATA_NOT_FOUND);
+        return 0;
+    }
     if(len) return len;
 
     len = GetFileResourceSize16( filename,
