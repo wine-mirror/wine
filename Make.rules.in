@@ -9,6 +9,7 @@
 # Each individual makefile may define the following additional variables:
 # C_SRCS       : C sources for the module
 # ASM_SRCS     : assembly sources
+# GEN_C_SRCS   : generated C files
 # GEN_ASM_SRCS : generated assembly sources
 # RC_SRCS      : resource source files
 # SPEC_SRCS    : interface definition files
@@ -74,10 +75,10 @@ mandir          = @mandir@
 prog_manext     = 1
 conf_manext     = 5
 includedir      = @includedir@/wine
-CLEAN_FILES     = *.o *.a *.so *.ln \\\#*\\\# *~ *% .\\\#* *.bak *.orig *.rej *.flc \
-                  *.spec.c *.glue.c y.tab.c y.tab.h lex.yy.c core
+CLEAN_FILES     = *.o *.a *.so *.ln \\\#*\\\# *~ *% .\\\#* *.bak *.orig *.rej \
+                  *.flc *.spec.c *.glue.c y.tab.c y.tab.h lex.yy.c core
 
-OBJS = $(SPEC_SRCS:.spec=.spec.o) $(C_SRCS:.c=.o) $(GEN_ASM_SRCS:.s=.o) \
+OBJS = $(SPEC_SRCS:.spec=.spec.o) $(C_SRCS:.c=.o) $(GEN_C_SRCS:.c=.o) $(GEN_ASM_SRCS:.s=.o) \
        $(ASM_SRCS:.S=.o) $(RC_SRCS:.rc=.o) $(GLUE:.c=.glue.o) $(EXTRA_OBJS)
 
 LINTS = $(C_SRCS:.c=.ln)
@@ -250,8 +251,8 @@ winapi_check::
 $(SUBDIRS:%=%/__depend__): $(MAKEDEP) dummy
 	cd `dirname $@` && $(MAKE) depend
 
-depend: $(MAKEDEP) $(C_SRCS) $(RC_SRCS) $(EXTRA_SRCS) $(SUBDIRS:%=%/__depend__)
-	$(MAKEDEP) $(DIVINCL) -C$(SRCDIR) $(C_SRCS) $(RC_SRCS) $(EXTRA_SRCS)
+depend: $(MAKEDEP) $(C_SRCS) $(RC_SRCS) $(EXTRA_SRCS) $(GEN_C_SRCS) $(SUBDIRS:%=%/__depend__)
+	$(MAKEDEP) $(DIVINCL) -C$(SRCDIR) $(C_SRCS) $(RC_SRCS) $(EXTRA_SRCS) -C. $(GEN_C_SRCS)
 
 # Rules for cleaning
 
@@ -262,7 +263,7 @@ $(EXTRASUBDIRS:%=%/__clean__): dummy
 	-cd `dirname $@` && $(RM) $(CLEAN_FILES)
 
 clean:: $(SUBDIRS:%=%/__clean__) $(EXTRASUBDIRS:%=%/__clean__)
-	$(RM) $(CLEAN_FILES) $(GEN_ASM_SRCS) $(RC_SRCS:.rc=.s) $(RC_SRCS:.rc=.h) $(PROGRAMS)
+	$(RM) $(CLEAN_FILES) $(GEN_C_SRCS) $(GEN_ASM_SRCS) $(RC_SRCS:.rc=.s) $(RC_SRCS:.rc=.h) $(PROGRAMS)
 
 # Misc. rules
 

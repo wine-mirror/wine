@@ -19,12 +19,13 @@ C_SRCS = \
 	wrc.c \
 	writeres.c
 
-EXTRA_SRCS = parser.y parser.l ppl.l ppy.y  ppy.tab.c lex.ppl.c
-EXTRA_OBJS = y.tab.o lex.yy.o ppy.tab.o lex.ppl.o
+GEN_C_SRCS = ppy.tab.c lex.ppl.c
+EXTRA_SRCS = parser.y parser.l
+EXTRA_OBJS = y.tab.o lex.yy.o
 
 all: $(PROGRAMS)
 
-depend: y.tab.h ppy.tab.h ppy.tab.c lex.ppl.c
+depend: y.tab.h ppy.tab.h
 
 @MAKE_RULES@
 
@@ -44,7 +45,7 @@ lex.ppl.c: ppl.l
 	$(LEX) $(LEXOPT) -d -Ppp -8 -olex.ppl.c $(SRCDIR)/ppl.l
 
 clean::
-	$(RM) y.tab.c y.tab.h lex.yy.c ppy.tab.c ppy.tab.h lex.ppl.c ppy.output lex.backup y.output
+	$(RM) ppy.tab.h ppy.output lex.backup y.output
 
 install:: $(PROGRAMS)
 	[ -d $(bindir) ] || $(MKDIR) $(bindir)
