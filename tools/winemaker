@@ -1795,7 +1795,12 @@ sub generate_project_files
         $t_name.=".so";
       }
       print FILEO "$t_name: \$(${canon}_SPEC_SRCS:.spec=.spec.o) \$(${canon}_OBJS) \$(${canon}_DEPENDS) \n";
-      print FILEO "\t\$(LDSHARED) \$(LDDLLFLAGS) -o \$\@ \$(${canon}_OBJS) \$(${canon}_SPEC_SRCS:.spec=.spec.o) \$(${canon}_LIBRARY_PATH) \$(${canon}_LIBRARIES:%=-l%) \$(DLL_LINK) \$(LIBS)\n";
+      if (@{@$target[$T_SOURCES_CXX]} > 0 or @{@$project_settings[$T_SOURCES_CXX]} > 0) {
+        print FILEO "\t\$(LDXXSHARED)";
+      } else {
+        print FILEO "\t\$(LDSHARED)";
+      }
+      print FILEO " \$(LDDLLFLAGS) -o \$\@ \$(${canon}_OBJS) \$(${canon}_SPEC_SRCS:.spec=.spec.o) \$(${canon}_LIBRARY_PATH) \$(${canon}_LIBRARIES:%=-l%) \$(DLL_LINK) \$(LIBS)\n";
       if (@$target[$T_TYPE] ne $TT_DLL) {
         print FILEO "\ttest -e @$target[$T_NAME] || \$(LN_S) \$(WINE) @$target[$T_NAME]\n";
       }
@@ -2254,6 +2259,7 @@ fi
 dnl **** Check for working dll ****
 
 LDSHARED=""
+LDXXSHARED=""
 LDDLLFLAGS=""
 AC_CACHE_CHECK("whether we can build a Linux dll",
                ac_cv_c_dll_linux,
@@ -2265,6 +2271,7 @@ CFLAGS=$saved_cflags
 if test "$ac_cv_c_dll_linux" = "yes"
 then
   LDSHARED="\$(CC) -shared -Wl,-rpath,\$(libdir)"
+  LDXXSHARED="\$(CXX) -shared -Wl,-rpath,\$(libdir)"
   LDDLLFLAGS="-Wl,-Bsymbolic"
 else
   AC_CACHE_CHECK(whether we can build a UnixWare (Solaris) dll,
@@ -2276,7 +2283,8 @@ else
   ])
   if test "$ac_cv_c_dll_unixware" = "yes"
   then
-    LDSHARED="\$(CC) -Wl,-G \$(SONAME:%=-Wl,h,\$(libdir)/%)"#FIXME: why SONAME here?
+    LDSHARED="\$(CC) -Wl,-G"
+    LDXXSHARED="\$(CXX) -Wl,-G"
     LDDLLFLAGS="-Wl,-B,symbolic"
   else
     AC_CACHE_CHECK("whether we can build a NetBSD dll",
@@ -2289,6 +2297,7 @@ else
     if test "$ac_cv_c_dll_netbsd" = "yes"
     then
       LDSHARED="\$(CC) -Wl,-Bshareable,-Bforcearchive"
+      LDXXSHARED="\$(CXX) -Wl,-Bshareable,-Bforcearchive"
       LDDLLFLAGS="" #FIXME
     fi
   fi
@@ -2303,6 +2312,7 @@ DLL_LINK="\$(WINE_LIBRARY_PATH) \$(LIBRARY_PATH) \$(LIBRARIES:%=-l%) -lwine -lwi
 
 AC_SUBST(DLL_LINK)
 AC_SUBST(LDSHARED)
+AC_SUBST(LDXXSHARED)
 AC_SUBST(LDDLLFLAGS)
 
 dnl *** check for the need to define __i386__
@@ -2778,6 +2788,7 @@ ALLCXXFLAGS=$(CXXFLAGS) $(CXXEXTRA) $(OPTIONS) $(X_CFLAGS) $(ALLFLAGS)
 ALLWRCFLAGS=$(WRCFLAGS) $(WRCEXTRA) $(OPTIONS) $(ALLFLAGS)
 LDCOMBINE = ld -r
 LDSHARED  = @LDSHARED@
+LDXXSHARED  = @LDXXSHARED@
 LDDLLFLAGS= @LDDLLFLAGS@
 STRIP     = strip
 STRIPFLAGS= --strip-unneeded
