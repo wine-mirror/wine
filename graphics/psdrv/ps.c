@@ -319,7 +319,7 @@ INT PSDRV_WriteHeader( DC *dc, char *title, int len )
 
     /* FIXME should do something better with BBox */
 
-    sprintf(buf, psheader, title, 0, 0, urx, ury, orient);		
+    sprintf(buf, psheader, titlebuf, 0, 0, urx, ury, orient);		
 
     if( WriteSpool16( physDev->job.hJob, buf, strlen(buf) ) != 
 	                                             strlen(buf) ) {

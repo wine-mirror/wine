@@ -13,6 +13,7 @@
 #include "winreg.h"
 #include "winspool.h"
 #include "winerror.h"
+#include "options.h"
 
 DEFAULT_DEBUG_CHANNEL(psdrv)
 
@@ -297,8 +298,9 @@ static BOOL PSDRV_CreateDC( DC *dc, LPCSTR driver, LPCSTR device,
     			    dc->w.devCaps->vertRes);
     
     dc->w.hFont = PSDRV_DefaultFont;
-    physDev->job.output = output ? HEAP_strdupA( PSDRV_Heap, 0, output ) :
-      NULL;
+    physDev->job.output = output ?
+      HEAP_strdupA( PSDRV_Heap, 0, output ) :
+      HEAP_strdupA( PSDRV_Heap, 0, "LPT1:" );  /* HACK */
     physDev->job.hJob = 0;
     return TRUE;
 }
