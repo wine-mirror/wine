@@ -1053,7 +1053,7 @@ BOOL WINAPI SystemParametersInfoA( UINT uiAction, UINT uiParam,
 	GetProfileStringA( "Desktop", "IconTitleFaceName",
 			   lfDefault.lfFaceName,
 			   lpLogFont->lfFaceName, LF_FACESIZE );
-	lpLogFont->lfHeight = -GetProfileIntA( "Desktop", "IconTitleSize", 13 );
+	lpLogFont->lfHeight = -GetProfileIntA( "Desktop", "IconTitleSize", 11 );
 	lpLogFont->lfWidth = 0;
 	lpLogFont->lfEscapement = lpLogFont->lfOrientation = 0;
 	lpLogFont->lfWeight = FW_NORMAL;
@@ -1063,7 +1063,7 @@ BOOL WINAPI SystemParametersInfoA( UINT uiAction, UINT uiParam,
 	lpLogFont->lfCharSet = lfDefault.lfCharSet; /* at least 'charset' should not be hard-coded */
 	lpLogFont->lfOutPrecision = OUT_DEFAULT_PRECIS;
 	lpLogFont->lfClipPrecision = CLIP_DEFAULT_PRECIS;
-	lpLogFont->lfPitchAndFamily = DEFAULT_PITCH | FF_SWISS;
+	lpLogFont->lfPitchAndFamily = DEFAULT_PITCH;
 	break;
     }
 
@@ -1156,8 +1156,6 @@ BOOL WINAPI SystemParametersInfoA( UINT uiAction, UINT uiParam,
 
 	if (lpnm->cbSize == sizeof(NONCLIENTMETRICSA))
 	{
-	    LPLOGFONTA lpLogFont = &(lpnm->lfMenuFont);
-
 	    /* clear the struct, so we have 'sane' members */
 	    memset(
 		(char *)pvParam + sizeof(lpnm->cbSize),
@@ -1166,44 +1164,43 @@ BOOL WINAPI SystemParametersInfoA( UINT uiAction, UINT uiParam,
 		);
 
 	    /* initialize geometry entries */
-	    lpnm->iBorderWidth = -1;      /* FIXME */
+	    lpnm->iBorderWidth = 1;
 	    lpnm->iScrollWidth = GetSystemMetrics(SM_CXVSCROLL);
 	    lpnm->iScrollHeight = GetSystemMetrics(SM_CYHSCROLL);
-	    /* caption */
+
+	    /* size of the normal caption buttons */
 	    lpnm->iCaptionWidth = GetSystemMetrics(SM_CXSIZE);
-	    lpnm->iCaptionHeight = lpnm->iCaptionWidth;
+	    lpnm->iCaptionHeight = GetSystemMetrics(SM_CYSIZE);
+
+	    /* caption font metrics */
 	    SystemParametersInfoA( SPI_GETICONTITLELOGFONT, 0, (LPVOID)&(lpnm->lfCaptionFont), 0 );
 	    lpnm->lfCaptionFont.lfWeight = FW_BOLD;
 
-	    /* small caption */
+	    /* size of the small caption buttons */
 	    lpnm->iSmCaptionWidth = GetSystemMetrics(SM_CXSMSIZE);
-	    lpnm->iSmCaptionHeight = lpnm->iSmCaptionWidth;
+	    lpnm->iSmCaptionHeight = GetSystemMetrics(SM_CYSMSIZE);
+
+	    /* small caption font metrics */
 	    SystemParametersInfoA( SPI_GETICONTITLELOGFONT, 0, (LPVOID)&(lpnm->lfSmCaptionFont), 0 );
 
 	    /* menus, FIXME: names of wine.conf entries are bogus */
 
-	    lpnm->iMenuWidth = GetProfileIntA( "Desktop", "MenuWidth", 13 );	/* size of the menu buttons*/
-	    lpnm->iMenuHeight = GetProfileIntA( "Desktop", "MenuHeight",
-						(TWEAK_WineLook > WIN31_LOOK) ? 13 : 27 );
+	    /* size of the menu (MDI) buttons */
+	    lpnm->iMenuWidth = GetSystemMetrics(SM_CXMENUSIZE);
+	    lpnm->iMenuHeight = GetSystemMetrics(SM_CYMENUSIZE);
 
+	    /* menu font metrics */
+	    SystemParametersInfoA( SPI_GETICONTITLELOGFONT, 0, (LPVOID)&(lpnm->lfMenuFont), 0 );
 	    GetProfileStringA( "Desktop", "MenuFont",
 			       (TWEAK_WineLook > WIN31_LOOK) ? lpnm->lfCaptionFont.lfFaceName : "System",
-			       lpLogFont->lfFaceName, LF_FACESIZE );
+			       lpnm->lfMenuFont.lfFaceName, LF_FACESIZE );
+	    lpnm->lfMenuFont.lfHeight = -GetProfileIntA( "Desktop", "MenuFontSize", 11 );
+	    lpnm->lfMenuFont.lfWeight = (TWEAK_WineLook > WIN31_LOOK) ? FW_NORMAL : FW_BOLD;
 
-	    lpLogFont->lfHeight = -GetProfileIntA( "Desktop", "MenuFontSize", 13 );
-	    lpLogFont->lfWidth = 0;
-	    lpLogFont->lfEscapement = lpLogFont->lfOrientation = 0;
-	    lpLogFont->lfWeight = (TWEAK_WineLook > WIN31_LOOK) ? FW_NORMAL : FW_BOLD;
-	    lpLogFont->lfItalic = FALSE;
-	    lpLogFont->lfStrikeOut = FALSE;
-	    lpLogFont->lfUnderline = FALSE;
-	    lpLogFont->lfCharSet = lpnm->lfCaptionFont.lfCharSet;
-	    lpLogFont->lfOutPrecision = OUT_DEFAULT_PRECIS;
-	    lpLogFont->lfClipPrecision = CLIP_DEFAULT_PRECIS;
-	    lpLogFont->lfPitchAndFamily = DEFAULT_PITCH | FF_SWISS;
-
+	    /* status bar font metrics */
 	    SystemParametersInfoA( SPI_GETICONTITLELOGFONT, 0,
 				   (LPVOID)&(lpnm->lfStatusFont), 0 );
+	    /* message font metrics */
 	    SystemParametersInfoA( SPI_GETICONTITLELOGFONT, 0,
 				   (LPVOID)&(lpnm->lfMessageFont), 0 );
 	}
@@ -1587,7 +1584,10 @@ BOOL WINAPI SystemParametersInfoA( UINT uiAction, UINT uiParam,
     WINE_SPI_FIXME(SPI_SETCURSORS);		/*     87  WINVER >= 0x400 */
     WINE_SPI_FIXME(SPI_SETICONS);		/*     88  WINVER >= 0x400 */
 
-    WINE_SPI_FIXME(SPI_GETDEFAULTINPUTLANG);	/*     89  WINVER >= 0x400 */
+    case SPI_GETDEFAULTINPUTLANG: 	/*     89  WINVER >= 0x400 */
+        ret = GetKeyboardLayout(0);
+        break;
+
     WINE_SPI_FIXME(SPI_SETDEFAULTINPUTLANG);	/*     90  WINVER >= 0x400 */
 
     WINE_SPI_FIXME(SPI_SETLANGTOGGLE);		/*     91  WINVER >= 0x400 */

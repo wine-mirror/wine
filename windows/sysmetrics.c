@@ -188,7 +188,7 @@ void SYSMETRICS_Init(void)
     sysMetrics[SM_CXMIN] = (TWEAK_WineLook > WIN31_LOOK) ? 112 : 100;
     sysMetrics[SM_CYMIN] = (TWEAK_WineLook > WIN31_LOOK) ? 27 : 28;
 
-    sysMetrics[SM_CXSIZE] = sysMetrics[SM_CYCAPTION] - 2;
+    sysMetrics[SM_CXSIZE] = sysMetrics[SM_CYCAPTION] - 1;
     sysMetrics[SM_CYSIZE] = sysMetrics[SM_CXSIZE];
     sysMetrics[SM_CXMINTRACK] = sysMetrics[SM_CXMIN];
     sysMetrics[SM_CYMINTRACK] = sysMetrics[SM_CYMIN];
@@ -222,7 +222,7 @@ void SYSMETRICS_Init(void)
     sysMetrics[SM_CYSMCAPTION] = 16;
     sysMetrics[SM_CXSMSIZE] = 15;
     sysMetrics[SM_CYSMSIZE] = sysMetrics[SM_CXSMSIZE];
-    sysMetrics[SM_CXMENUSIZE] = sysMetrics[SM_CYMENU];
+    sysMetrics[SM_CXMENUSIZE] = sysMetrics[SM_CYMENU] - 1;
     sysMetrics[SM_CYMENUSIZE] = sysMetrics[SM_CXMENUSIZE];
 
     /* FIXME: What do these mean? */
