@@ -142,7 +142,7 @@ extern void warning( const char *msg, ... );
 extern void dump_bytes( FILE *outfile, const unsigned char *data, int len,
                         const char *label, int constant );
 extern void add_import_dll( const char *name );
-extern void resolve_imports( FILE *outfile );
+extern int resolve_imports( FILE *outfile );
 extern int output_imports( FILE *outfile );
 extern void load_res32_file( const char *name );
 extern int output_resources( FILE *outfile );
@@ -153,7 +153,7 @@ extern int output_res16_directory( unsigned char *buffer );
 extern void BuildGlue( FILE *outfile, FILE *infile );
 extern void BuildRelays( FILE *outfile );
 extern void BuildSpec16File( FILE *outfile );
-extern void BuildSpec32File( FILE *outfile );
+extern void BuildSpec32File( FILE *outfile, int output_main );
 extern SPEC_TYPE ParseTopLevel( FILE *file );
 
 /* global variables */
@@ -167,6 +167,7 @@ extern int DLLHeapSize;
 extern int UsePIC;
 extern int debugging;
 extern int nb_debug_channels;
+extern int nb_lib_paths;
 
 extern char DLLName[80];
 extern char DLLFileName[80];
@@ -175,6 +176,7 @@ extern char owner_name[80];
 extern const char *input_file_name;
 extern const char *output_file_name;
 extern char **debug_channels;
+extern char **lib_path;
 
 extern ORDDEF EntryPoints[MAX_ORDINALS];
 extern ORDDEF *Ordinals[MAX_ORDINALS];

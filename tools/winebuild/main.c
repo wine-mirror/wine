@@ -30,12 +30,14 @@ int nb_entry_points = 0;
 int nb_names = 0;
 int debugging = 1;
 int nb_debug_channels = 0;
+int nb_lib_paths = 0;
 
 char DLLName[80];
 char DLLFileName[80];
 char DLLInitFunc[80];
 char owner_name[80];
-char **debug_channels;
+char **debug_channels = NULL;
+char **lib_path = NULL;
 
 const char *input_file_name;
 const char *output_file_name;
@@ -82,12 +84,16 @@ static void do_usage(void);
 static void do_spec( const char *arg );
 static void do_glue( const char *arg );
 static void do_relay(void);
+static void do_sym( const char *arg );
+static void do_lib( const char *arg );
 
 static const struct option option_table[] =
 {
     { "-fPIC",  0, do_pic,    "-fPIC            Generate PIC code" },
     { "-h",     0, do_usage,  "-h               Display this help message" },
+    { "-L",     1, do_lib,    "-L directory     Look for imports libraries in 'directory'" },
     { "-o",     1, do_output, "-o name          Set the output file name (default: stdout)" },
+    { "-sym",   1, do_sym,    "-sym file.o      Read the list of undefined symbols from 'file.o'" },
     { "-spec",  1, do_spec,   "-spec file.spec  Build a .c file from a spec file" },
     { "-glue",  1, do_glue,   "-glue file.c     Build the 16-bit glue for a .c file" },
     { "-relay", 0, do_relay,  "-relay           Build the relay assembly routines" },
@@ -145,6 +151,17 @@ static void do_relay(void)
     exec_mode = MODE_RELAY;
 }
 
+static void do_sym( const char *arg )
+{
+    extern void read_undef_symbols( const char *name );
+    read_undef_symbols( arg );
+}
+
+static void do_lib( const char *arg )
+{
+    lib_path = xrealloc( lib_path, (nb_lib_paths+1) * sizeof(*lib_path) );
+    lib_path[nb_lib_paths++] = xstrdup( arg );
+}
 
 /* parse options from the argv array and remove all the recognized ones */
 static void parse_options( char *argv[] )
@@ -186,7 +203,7 @@ int main(int argc, char **argv)
                 BuildSpec16File( output_file );
                 break;
             case SPEC_WIN32:
-                BuildSpec32File( output_file );
+                BuildSpec32File( output_file, !resolve_imports( output_file ) );
                 break;
             default: assert(0);
         }

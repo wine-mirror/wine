@@ -157,13 +157,10 @@ DLLS = \
 
 # Implicit rules
 
-.SUFFIXES: .mc .rc .mc.rc .res .spec .spec.c .spec.o .glue.c
+.SUFFIXES: .mc .rc .mc.rc .res .spec .spec.c .glue.c
 
 .c.o:
 	$(CC) -c $(ALLCFLAGS) -o $*.o $<
-
-.spec.c.spec.o:
-	$(CC) -c $(ALLCFLAGS) @GCC_NO_BUILTIN@ -o $*.spec.o $<
 
 .s.o:
 	$(AS) -o $*.o $<  
@@ -178,7 +175,7 @@ DLLS = \
 	$(LDPATH) $(WRC) $(WRCFLAGS) $(DIVINCL) -o $@ -r $<
 
 .spec.spec.c:
-	$(LDPATH) $(WINEBUILD) @DLLFLAGS@ -o $@ -spec $<
+	$(LDPATH) $(WINEBUILD) @DLLFLAGS@ -L $(DLLDIR) -o $@ -spec $<
 
 .c.glue.c:
 	$(LDPATH) $(WINEBUILD) @DLLFLAGS@ -o $@ -glue $<
@@ -191,6 +188,16 @@ DLLS = \
 # 'all' target first in case the enclosing Makefile didn't define any target
 
 all: Makefile
+
+# Rule for main module intermediate object
+
+$(MODULE).tmp.o: $(OBJS) Makefile.in
+	$(LDCOMBINE) $(OBJS) -o $@
+
+# Rule for main module spec file
+
+$(MODULE).spec.c: $(MODULE).spec $(RC_SRCS:.rc=.res) $(SYMBOLFILE) $(WINEBUILD)
+	$(LDPATH) $(WINEBUILD) @DLLFLAGS@ -L $(DLLDIR) $(SYMBOLFILE:%=-sym %) -o $@ -spec $(MODULE).spec
 
 # Rule to rebuild the resource compiler
 
@@ -211,10 +218,6 @@ $(MAKEDEP):
 
 $(WINEBUILD):
 	cd $(TOPOBJDIR)/tools/winebuild && $(MAKE) winebuild
-
-# Rule for main module spec file
-
-$(MODULE).spec.c: $(RC_SRCS:.rc=.res)
 
 # Rules for makefile
 

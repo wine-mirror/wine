@@ -9,6 +9,7 @@
  */
 
 #include <assert.h>
+#include <ctype.h>
 #include <unistd.h>
 
 #include "winbase.h"
@@ -300,6 +301,19 @@ static void output_exports( FILE *outfile, int nr_exports, int nr_names, int fwd
 #endif  /* __i386__ */
 
     fprintf( outfile, "  }\n};\n\n" );
+
+    /* output __wine_dllexport symbols */
+
+    for (i = 0; i < nb_names; i++)
+    {
+        char *p;
+        /* 'extern' definitions are not available for implicit import */
+        if (Names[i]->type == TYPE_EXTERN) continue;
+        /* check for invalid characters in the name */
+        for (p = Names[i]->name; *p; p++) if (!isalnum(*p) && *p != '_') break;
+        if (!*p) fprintf( outfile, "const char __wine_dllexport_%s_%s = 0;\n",
+                          DLLName, Names[i]->name );
+    }
 }
 
 
@@ -308,7 +322,7 @@ static void output_exports( FILE *outfile, int nr_exports, int nr_names, int fwd
  *
  * Build a Win32 C file from a spec file.
  */
-void BuildSpec32File( FILE *outfile )
+void BuildSpec32File( FILE *outfile, int output_main )
 {
     ORDDEF *odp;
     int i, fwd_size = 0, have_regs = FALSE;
@@ -468,46 +482,54 @@ void BuildSpec32File( FILE *outfile )
         if (!init_func) init_func = "WinMain";
         fprintf( outfile,
                  "\n#include <winbase.h>\n"
-                 "static void exe_main(void)\n"
+                 "int _ARGC;\n"
+                 "char **_ARGV;\n"
+                 "static void __wine_exe_main(void)\n"
                  "{\n"
                  "    extern int PASCAL %s(HINSTANCE,HINSTANCE,LPSTR,INT);\n"
+                 "    extern int __wine_get_main_args( char ***argv );\n"
                  "    STARTUPINFOA info;\n"
                  "    LPSTR cmdline = GetCommandLineA();\n"
                  "    while (*cmdline && *cmdline != ' ') cmdline++;\n"
                  "    if (*cmdline) cmdline++;\n"
                  "    GetStartupInfoA( &info );\n"
                  "    if (!(info.dwFlags & STARTF_USESHOWWINDOW)) info.wShowWindow = 1;\n"
+                 "    _ARGC = __wine_get_main_args( &_ARGV );\n"
                  "    ExitProcess( %s( GetModuleHandleA(0), 0, cmdline, info.wShowWindow ) );\n"
                  "}\n\n", init_func, init_func );
-        fprintf( outfile,
-                 "int main( int argc, char *argv[] )\n"
-                 "{\n"
-                 "    extern void PROCESS_InitWinelib( int, char ** );\n"
-                 "    PROCESS_InitWinelib( argc, argv );\n"
-                 "    return 1;\n"
-                 "}\n\n" );
-        init_func = "exe_main";
+        if (output_main)
+            fprintf( outfile,
+                     "int main( int argc, char *argv[] )\n"
+                     "{\n"
+                     "    extern void PROCESS_InitWinelib( int, char ** );\n"
+                     "    PROCESS_InitWinelib( argc, argv );\n"
+                     "    return 1;\n"
+                     "}\n\n" );
+        init_func = "__wine_exe_main";
         subsystem = IMAGE_SUBSYSTEM_WINDOWS_GUI;
         break;
     case SPEC_MODE_CUIEXE:
-        if (!init_func) init_func = "wine_main";
+        if (!init_func) init_func = output_main ? "wine_main" : "main";
         fprintf( outfile,
                  "\n#include <winbase.h>\n"
-                 "static void exe_main(void)\n"
+                 "int _ARGC;\n"
+                 "char **_ARGV;\n"
+                 "static void __wine_exe_main(void)\n"
                  "{\n"
                  "    extern int %s( int argc, char *argv[] );\n"
-                 "    extern int _ARGC;\n"
-                 "    extern char **_ARGV;\n"
+                 "    extern int __wine_get_main_args( char ***argv );\n"
+                 "    _ARGC = __wine_get_main_args( &_ARGV );\n"
                  "    ExitProcess( %s( _ARGC, _ARGV ) );\n"
                  "}\n\n", init_func, init_func );
-        fprintf( outfile,
-                 "int main( int argc, char *argv[] )\n"
-                 "{\n"
-                 "    extern void PROCESS_InitWinelib( int, char ** );\n"
-                 "    PROCESS_InitWinelib( argc, argv );\n"
-                 "    return 1;\n"
-                 "}\n\n" );
-        init_func = "exe_main";
+        if (output_main)
+            fprintf( outfile,
+                     "int main( int argc, char *argv[] )\n"
+                     "{\n"
+                     "    extern void PROCESS_InitWinelib( int, char ** );\n"
+                     "    PROCESS_InitWinelib( argc, argv );\n"
+                     "    return 1;\n"
+                     "}\n\n" );
+        init_func = "__wine_exe_main";
         subsystem = IMAGE_SUBSYSTEM_WINDOWS_CUI;
         break;
     case SPEC_MODE_GUIEXE_NO_MAIN:

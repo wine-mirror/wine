@@ -99,7 +99,9 @@ libwine_unicode.$(LIBEXT): unicode/libwine_unicode.$(LIBEXT)
 
 # Dependencies between directories
 
-$(EMUOBJS) $(DLLOBJS) $(PROGRAMS): tools
+$(DLLOBJS) $(PROGRAMS): tools
+
+$(EMUOBJS): tools dlls
 
 $(LIBPROGRAMS): tools dlls libwine.$(LIBEXT) libwine_unicode.$(LIBEXT)
 
