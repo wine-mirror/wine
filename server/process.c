@@ -673,7 +673,11 @@ void resume_process( struct process *process )
         while (thread)
         {
             struct thread *next = thread->proc_next;
-            if (!thread->suspend) continue_thread( thread );
+            if (!thread->suspend)
+            {
+                continue_thread( thread );
+                wake_thread( thread );
+            }
             thread = next;
         }
     }
@@ -818,7 +822,7 @@ static void write_process_memory( struct process *process, int *addr, size_t len
         if (!check_process_write_access( thread, addr, len ))
         {
             set_error( STATUS_ACCESS_DENIED );
-            return;
+            goto done;
         }
         /* first word is special */
         if (len > 1)

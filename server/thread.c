@@ -319,7 +319,11 @@ int resume_thread( struct thread *thread )
     int old_count = thread->suspend;
     if (thread->suspend > 0)
     {
-        if (!(--thread->suspend + thread->process->suspend)) continue_thread( thread );
+        if (!(--thread->suspend + thread->process->suspend))
+        {
+            continue_thread( thread );
+            wake_thread( thread );
+        }
     }
     return old_count;
 }
@@ -403,6 +407,9 @@ static int check_wait( struct thread *thread )
     struct thread_wait *wait = thread->wait;
     struct wait_queue_entry *entry = wait->queues;
 
+    /* Suspended threads may not acquire locks */
+    if( thread->process->suspend + thread->suspend > 0 ) return -1;
+
     assert( wait );
     if (wait->flags & SELECT_ALL)
     {
@@ -465,7 +472,7 @@ static int send_thread_wakeup( struct thread *thread, void *cookie, int signaled
 
 /* attempt to wake up a thread */
 /* return >0 if OK, 0 if the wait condition is still not satisfied */
-static int wake_thread( struct thread *thread )
+int wake_thread( struct thread *thread )
 {
     int signaled, count;
     void *cookie;
