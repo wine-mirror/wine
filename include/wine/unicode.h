@@ -88,7 +88,7 @@ static inline unsigned int strlenW( const WCHAR *str )
 #if defined(__i386__) && defined(__GNUC__)
     int dummy, res;
     __asm__ __volatile__( "cld\n\t"
-                          "repne\n\t"
+                          "repnz\n\t"
                           "scasw\n\t"
                           "notl %0"
                           : "=c" (res), "=&D" (dummy)
