@@ -4,7 +4,6 @@ TOPOBJDIR = ../..
 SRCDIR    = @srcdir@
 VPATH     = @srcdir@
 MODULE    = shlwapi.dll
-# fixme: avoid ole32.dll import
 IMPORTS   = ole32 user32 gdi32 advapi32 kernel32
 EXTRALIBS = $(LIBUUID) $(LIBUNICODE)
 
@@ -12,6 +11,7 @@ LDDLLFLAGS = @LDDLLFLAGS@
 SYMBOLFILE = $(MODULE).tmp.o
 
 C_SRCS = \
+	assoc.c \
 	clist.c \
 	istream.c \
 	ordinal.c \

@@ -252,9 +252,9 @@ init SHLWAPI_LibMain
 250 stub @
 251 stub @
 252 stub @
-253 stub AssocCreate
-254 stub AssocQueryKeyA
-255 stub AssocQueryKeyW
+253 stdcall AssocCreate(long ptr ptr) AssocCreate
+254 stdcall AssocQueryKeyA(long long str ptr ptr) AssocQueryKeyA
+255 stdcall AssocQueryKeyW(long long wstr ptr ptr) AssocQueryKeyW
 256 stub @
 257 stub @
 258 stub @
@@ -380,10 +380,10 @@ init SHLWAPI_LibMain
 378 stdcall @(wstr long long) SHLWAPI_378
 379 stub @
 380 stub @
-381 stub AssocQueryStringA
-382 stub AssocQueryStringByKeyA
-383 stub AssocQueryStringByKeyW
-384 stub AssocQueryStringW
+381 stdcall AssocQueryStringA(long long ptr ptr str ptr) AssocQueryStringA
+382 stdcall AssocQueryStringByKeyA(long long ptr ptr str ptr) AssocQueryStringByKeyA
+383 stdcall AssocQueryStringByKeyW(long long ptr ptr wstr ptr) AssocQueryStringByKeyW
+384 stdcall AssocQueryStringW(long long ptr ptr wstr ptr) AssocQueryStringW
 385 stdcall ChrCmpIA(long long) ChrCmpIA
 386 stdcall ChrCmpIW(long long) ChrCmpIW
 387 stub ColorAdjustLuma
