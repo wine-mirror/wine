@@ -481,8 +481,9 @@ static void sort_names(void)
         if (!strcmp( Names[i]->name, Names[i+1]->name ))
         {
             current_line = max( Names[i]->lineno, Names[i+1]->lineno );
-            fatal_error( "'%s' redefined (previous definition at line %d)\n",
-                         Names[i]->name, min( Names[i]->lineno, Names[i+1]->lineno ) );
+            fatal_error( "'%s' redefined\n%s:%d: First defined here\n",
+                         Names[i]->name, input_file_name,
+                         min( Names[i]->lineno, Names[i+1]->lineno ) );
         }
     }
 }
@@ -498,7 +499,7 @@ SPEC_TYPE ParseTopLevel( FILE *file, int def_only )
     const char *token;
 
     input_file = file;
-    current_line = 1;
+    current_line = 0;
     if (owner_name[0]) SpecType = SPEC_WIN16;
 
     while ((token = GetToken(1)) != NULL)
