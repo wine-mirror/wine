@@ -295,10 +295,10 @@ LPWINE_MLD	MMDRV_Alloc(UINT size, UINT type, LPHANDLE hndl, DWORD* dwFlags,
     if (!mld)	return NULL;
 
     /* find an empty slot in MM_MLDrvs table */
-    for (*hndl = 0; *hndl < MAX_MM_MLDRVS; (*hndl)++) {
+    for (*hndl = 0; (DWORD)*hndl < MAX_MM_MLDRVS; (*hndl)++) {
 	if (!MM_MLDrvs[(UINT)*hndl]) break;
     }
-    if (*hndl == MAX_MM_MLDRVS) {
+    if ((DWORD)*hndl == MAX_MM_MLDRVS) {
 	/* the MM_MLDrvs table could be made growable in the future if needed */
 	ERR("Too many open drivers\n");
 	return NULL;
@@ -343,7 +343,7 @@ void	MMDRV_Free(HANDLE hndl, LPWINE_MLD mld)
 	    return;
 	}
     }
-    ERR("Bad Handle %08x at %p (not freed)\n", hndl, mld);
+    ERR("Bad Handle %p at %p (not freed)\n", hndl, mld);
 }
 
 /**************************************************************************
@@ -413,26 +413,27 @@ LPWINE_MLD	MMDRV_GetByID(UINT uDevID, UINT type)
 /**************************************************************************
  * 				MMDRV_Get			[internal]
  */
-LPWINE_MLD	MMDRV_Get(HANDLE hndl, UINT type, BOOL bCanBeID)
+LPWINE_MLD	MMDRV_Get(HANDLE _hndl, UINT type, BOOL bCanBeID)
 {
     LPWINE_MLD	mld = NULL;
+    UINT        hndl = (UINT)_hndl;
 
     assert(type < MMDRV_MAX);
 
-    if ((UINT)hndl >= llTypes[type].wMaxId &&
+    if (hndl >= llTypes[type].wMaxId &&
 	hndl != (UINT16)-1 && hndl != (UINT)-1) {
-	if ((UINT)hndl & 0x8000) {
-	    hndl = (HANDLE)((UINT)hndl & ~0x8000);
+	if (hndl & 0x8000) {
+	    hndl = hndl & ~0x8000;
 	    if (hndl < sizeof(MM_MLDrvs) / sizeof(MM_MLDrvs[0])) {
-		mld = MM_MLDrvs[(UINT)hndl];
+		mld = MM_MLDrvs[hndl];
 		if (!mld || !HeapValidate(GetProcessHeap(), 0, mld) || mld->type != type)
 		    mld = NULL;
 	    }
-	    hndl = (HANDLE)((UINT)hndl | 0x8000);
+	    hndl = hndl | 0x8000;
 	}
     }
     if (mld == NULL && bCanBeID) {
-	mld = MMDRV_GetByID((UINT)hndl, type);
+	mld = MMDRV_GetByID(hndl, type);
     }
     return mld;
 }

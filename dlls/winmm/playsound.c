@@ -409,7 +409,7 @@ BOOL MULTIMEDIA_PlaySound(const void* pszSound, HMODULE hmod, DWORD fdwSound, BO
 {
     WINE_PLAYSOUND*     wps = NULL;
 
-    TRACE("pszSound='%p' hmod=%04X fdwSound=%08lX\n",
+    TRACE("pszSound='%p' hmod=%p fdwSound=%08lX\n",
 	  pszSound, hmod, fdwSound);
 
     /* FIXME? I see no difference between SND_NOWAIT and SND_NOSTOP !

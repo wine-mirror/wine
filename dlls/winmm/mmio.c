@@ -671,7 +671,7 @@ HMMIO MMIO_Open(LPSTR szFileName, MMIOINFO* refmminfo, DWORD dwOpenFlags,
                                         (LPARAM)szFileName, 0, MMIO_PROC_32A);
 
     /* grab file size, when possible */
-    wm->dwFileSize = GetFileSize(wm->info.adwInfo[0], NULL);
+    wm->dwFileSize = GetFileSize((HANDLE)wm->info.adwInfo[0], NULL);
 
     if (refmminfo->wErrorRet == 0)
 	return wm->info.hmmio;
@@ -714,7 +714,7 @@ MMRESULT WINAPI mmioClose(HMMIO hmmio, UINT uFlags)
     LPWINE_MMIO	wm;
     MMRESULT 	result;
 
-    TRACE("(%04X, %04X);\n", hmmio, uFlags);
+    TRACE("(%p, %04X);\n", hmmio, uFlags);
 
     if ((wm = MMIO_Get(hmmio)) == NULL)
 	return MMSYSERR_INVALHANDLE;
@@ -746,7 +746,7 @@ LONG WINAPI mmioRead(HMMIO hmmio, HPSTR pch, LONG cch)
     LPWINE_MMIO	wm;
     LONG 	count;
 
-    TRACE("(%04X, %p, %ld);\n", hmmio, pch, cch);
+    TRACE("(%p, %p, %ld);\n", hmmio, pch, cch);
 
     if ((wm = MMIO_Get(hmmio)) == NULL)
 	return -1;
@@ -796,7 +796,7 @@ LONG WINAPI mmioWrite(HMMIO hmmio, HPCSTR pch, LONG cch)
     LPWINE_MMIO	wm;
     LONG	count;
 
-    TRACE("(%04X, %p, %ld);\n", hmmio, pch, cch);
+    TRACE("(%p, %p, %ld);\n", hmmio, pch, cch);
 
     if ((wm = MMIO_Get(hmmio)) == NULL)
 	return -1;
@@ -851,7 +851,7 @@ LONG WINAPI mmioSeek(HMMIO hmmio, LONG lOffset, INT iOrigin)
     LPWINE_MMIO	wm;
     LONG 	offset;
 
-    TRACE("(%04X, %08lX, %d);\n", hmmio, lOffset, iOrigin);
+    TRACE("(%p, %08lX, %d);\n", hmmio, lOffset, iOrigin);
 
     if ((wm = MMIO_Get(hmmio)) == NULL)
 	return MMSYSERR_INVALHANDLE;
@@ -916,7 +916,7 @@ MMRESULT WINAPI mmioGetInfo(HMMIO hmmio, MMIOINFO* lpmmioinfo, UINT uFlags)
 {
     LPWINE_MMIO		wm;
 
-    TRACE("(0x%04x,%p,0x%08x)\n",hmmio,lpmmioinfo,uFlags);
+    TRACE("(%p,%p,0x%08x)\n",hmmio,lpmmioinfo,uFlags);
 
     if ((wm = MMIO_Get(hmmio)) == NULL)
 	return MMSYSERR_INVALHANDLE;
@@ -936,7 +936,7 @@ MMRESULT WINAPI mmioSetInfo(HMMIO hmmio, const MMIOINFO* lpmmioinfo, UINT uFlags
 {
     LPWINE_MMIO		wm;
 
-    TRACE("(0x%04x,%p,0x%08x)\n",hmmio,lpmmioinfo,uFlags);
+    TRACE("(%p,%p,0x%08x)\n",hmmio,lpmmioinfo,uFlags);
 
     if ((wm = MMIO_Get(hmmio)) == NULL)
 	return MMSYSERR_INVALHANDLE;
@@ -963,7 +963,7 @@ MMRESULT WINAPI mmioSetBuffer(HMMIO hmmio, LPSTR pchBuffer, LONG cchBuffer, UINT
 {
     LPWINE_MMIO		wm;
 
-    TRACE("(hmmio=%04x, pchBuf=%p, cchBuf=%ld, uFlags=%#08x)\n",
+    TRACE("(hmmio=%p, pchBuf=%p, cchBuf=%ld, uFlags=%#08x)\n",
 	  hmmio, pchBuffer, cchBuffer, uFlags);
 
     if ((wm = MMIO_Get(hmmio)) == NULL)
@@ -979,7 +979,7 @@ MMRESULT WINAPI mmioFlush(HMMIO hmmio, UINT uFlags)
 {
     LPWINE_MMIO		wm;
 
-    TRACE("(%04X, %04X)\n", hmmio, uFlags);
+    TRACE("(%p, %04X)\n", hmmio, uFlags);
 
     if ((wm = MMIO_Get(hmmio)) == NULL)
 	return MMSYSERR_INVALHANDLE;
@@ -994,7 +994,7 @@ MMRESULT WINAPI mmioAdvance(HMMIO hmmio, MMIOINFO* lpmmioinfo, UINT uFlags)
 {
     LPWINE_MMIO		wm;
 
-    TRACE("hmmio=%04X, lpmmioinfo=%p, uFlags=%04X\n", hmmio, lpmmioinfo, uFlags);
+    TRACE("hmmio=%p, lpmmioinfo=%p, uFlags=%04X\n", hmmio, lpmmioinfo, uFlags);
 
     /* NOTE: mmioAdvance16 heavily relies on parameters from lpmmioinfo we're using
      * here. be sure if you change something here to check mmioAdvance16 as well
@@ -1101,7 +1101,7 @@ LRESULT         MMIO_SendMessage(HMMIO hmmio, UINT uMessage, LPARAM lParam1,
 {
     LPWINE_MMIO		wm;
 
-    TRACE("(%04X, %u, %ld, %ld, %d)\n", hmmio, uMessage, lParam1, lParam2, type);
+    TRACE("(%p, %u, %ld, %ld, %d)\n", hmmio, uMessage, lParam1, lParam2, type);
 
     if (uMessage < MMIOM_USER)
 	return MMSYSERR_INVALPARAM;
@@ -1132,7 +1132,7 @@ MMRESULT WINAPI mmioDescend(HMMIO hmmio, LPMMCKINFO lpck,
     FOURCC		srchType;
 
 
-    TRACE("(%04X, %p, %p, %04X);\n", hmmio, lpck, lpckParent, uFlags);
+    TRACE("(%p, %p, %p, %04X);\n", hmmio, lpck, lpckParent, uFlags);
 
     if (lpck == NULL)
 	return MMSYSERR_INVALPARAM;
@@ -1230,7 +1230,7 @@ MMRESULT WINAPI mmioDescend(HMMIO hmmio, LPMMCKINFO lpck,
  */
 MMRESULT WINAPI mmioAscend(HMMIO hmmio, LPMMCKINFO lpck, UINT uFlags)
 {
-    TRACE("(%04X, %p, %04X);\n", hmmio, lpck, uFlags);
+    TRACE("(%p, %p, %04X);\n", hmmio, lpck, uFlags);
 
     if (lpck->dwFlags & MMIO_DIRTY) {
 	DWORD	dwOldPos, dwNewSize;
@@ -1268,7 +1268,7 @@ MMRESULT WINAPI mmioCreateChunk(HMMIO hmmio, MMCKINFO* lpck, UINT uFlags)
     LONG 	size;
     LONG 	ix;
 
-    TRACE("(%04X, %p, %04X);\n", hmmio, lpck, uFlags);
+    TRACE("(%p, %p, %04X);\n", hmmio, lpck, uFlags);
 
     dwOldPos = mmioSeek(hmmio, 0, SEEK_CUR);
     TRACE("dwOldPos=%ld\n", dwOldPos);

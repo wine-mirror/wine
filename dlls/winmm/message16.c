@@ -41,7 +41,7 @@ extern WORD CALLBACK MMDRV_CallTo16_word_wwlll(FARPROC16,WORD,WORD,LONG,LONG,LON
  */
 static  void	MMDRV_Callback(LPWINE_MLD mld, HDRVR hDev, UINT uMsg, DWORD dwParam1, DWORD dwParam2)
 {
-    TRACE("CB (*%08lx)(%08x %08x %08lx %08lx %08lx\n",
+    TRACE("CB (*%08lx)(%p %08x %08lx %08lx %08lx\n",
 	  mld->dwCallback, hDev, uMsg, mld->dwClientInstance, dwParam1, dwParam2);
 
     if (!mld->bFrom32 && (mld->dwFlags & DCB_TYPEMASK) == DCB_FUNCTION) {
@@ -1764,7 +1764,7 @@ static  BOOL	MMDRV_GetDescription16(const char* fname, char* buf, int buflen)
     ret = TRUE;
     TRACE("Got '%s' [%d]\n", buf, buflen);
 theEnd:
-    CloseHandle(hFile);
+    _lclose(hFile);
     return ret;
 }
 

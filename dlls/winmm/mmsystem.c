@@ -55,6 +55,9 @@ static LRESULT          DRIVER_CloseDriver16(HDRVR16, LPARAM, LPARAM);
 static LRESULT          DRIVER_SendMessage16(HDRVR16, UINT, LPARAM, LPARAM);
 static LRESULT          MMIO_Callback16(SEGPTR, LPMMIOINFO, UINT, LPARAM, LPARAM);
 
+#define HMODULE_32(h16) ((HMODULE)(ULONG_PTR)(h16))
+#define HINSTANCE_32(h16) ((HMODULE)(ULONG_PTR)(h16))
+
 /* ###################################################
  * #                  LIBRARY                        #
  * ###################################################
@@ -69,7 +72,7 @@ static LRESULT          MMIO_Callback16(SEGPTR, LPMMIOINFO, UINT, LPARAM, LPARAM
 BOOL WINAPI MMSYSTEM_LibMain(DWORD fdwReason, HINSTANCE hinstDLL, WORD ds,
 			     WORD wHeapSize, DWORD dwReserved1, WORD wReserved2)
 {
-    TRACE("0x%x 0x%lx\n", hinstDLL, fdwReason);
+    TRACE("%p 0x%lx\n", hinstDLL, fdwReason);
 
     switch (fdwReason) {
     case DLL_PROCESS_ATTACH:
@@ -130,7 +133,7 @@ BOOL16 WINAPI PlaySound16(LPCSTR pszSound, HMODULE16 hmod, DWORD fdwSound)
     DWORD	lc;
 
     ReleaseThunkLock(&lc);
-    retv = PlaySoundA(pszSound, hmod, fdwSound);
+    retv = PlaySoundA(pszSound, HMODULE_32(hmod), fdwSound);
     RestoreThunkLock(lc);
 
     return retv;
@@ -444,7 +447,7 @@ UINT16 WINAPI auxGetDevCaps16(UINT16 uDeviceID, LPAUXCAPS16 lpCaps, UINT16 uSize
 
     TRACE("(%04X, %p, %d) !\n", uDeviceID, lpCaps, uSize);
 
-    if ((wmld = MMDRV_Get(uDeviceID, MMDRV_AUX, TRUE)) == NULL)
+    if ((wmld = MMDRV_Get((HANDLE)(ULONG_PTR)uDeviceID, MMDRV_AUX, TRUE)) == NULL)
 	return MMSYSERR_INVALHANDLE;
     return MMDRV_Message(wmld, AUXDM_GETDEVCAPS, (DWORD)lpCaps, uSize, TRUE);
 }
@@ -458,7 +461,7 @@ UINT16 WINAPI auxGetVolume16(UINT16 uDeviceID, LPDWORD lpdwVolume)
 
     TRACE("(%04X, %p) !\n", uDeviceID, lpdwVolume);
 
-    if ((wmld = MMDRV_Get(uDeviceID, MMDRV_AUX, TRUE)) == NULL)
+    if ((wmld = MMDRV_Get((HANDLE)(ULONG_PTR)uDeviceID, MMDRV_AUX, TRUE)) == NULL)
 	return MMSYSERR_INVALHANDLE;
     return MMDRV_Message(wmld, AUXDM_GETVOLUME, (DWORD)lpdwVolume, 0L, TRUE);
 }
@@ -472,7 +475,7 @@ UINT16 WINAPI auxSetVolume16(UINT16 uDeviceID, DWORD dwVolume)
 
     TRACE("(%04X, %lu) !\n", uDeviceID, dwVolume);
 
-    if ((wmld = MMDRV_Get(uDeviceID, MMDRV_AUX, TRUE)) == NULL)
+    if ((wmld = MMDRV_Get((HANDLE)(ULONG_PTR)uDeviceID, MMDRV_AUX, TRUE)) == NULL)
 	return MMSYSERR_INVALHANDLE;
     return MMDRV_Message(wmld, AUXDM_SETVOLUME, dwVolume, 0L, TRUE);
 }
@@ -500,7 +503,7 @@ DWORD WINAPI auxOutMessage16(UINT16 uDeviceID, UINT16 uMessage, DWORD dw1, DWORD
 	      uDeviceID, uMessage, dw1, dw2);
 	break;
     }
-    if ((wmld = MMDRV_Get(uDeviceID, MMDRV_AUX, TRUE)) == NULL)
+    if ((wmld = MMDRV_Get((HANDLE)(ULONG_PTR)uDeviceID, MMDRV_AUX, TRUE)) == NULL)
 	return MMSYSERR_INVALHANDLE;
 
     return MMDRV_Message(wmld, uMessage, dw1, dw2, TRUE);
@@ -633,7 +636,8 @@ HTASK16 WINAPI mciGetCreatorTask16(UINT16 uDeviceID)
     LPWINE_MCIDRIVER wmd;
     HTASK16 ret = 0;
 
-    if ((wmd = MCI_GetDriver(uDeviceID))) ret = K32WOWHandle16(wmd->CreatorThread, WOW_TYPE_HTASK);
+    if ((wmd = MCI_GetDriver(uDeviceID))) 
+        ret = HTASK_16(wmd->CreatorThread);
 
     TRACE("(%u) => %04x\n", uDeviceID, ret);
     return ret;
@@ -1214,7 +1218,7 @@ UINT16 WINAPI waveOutOpen16(HWAVEOUT16* lphWaveOut, UINT16 uDeviceID,
                             const LPWAVEFORMATEX lpFormat, DWORD dwCallback,
 			    DWORD dwInstance, DWORD dwFlags)
 {
-    HWAVEOUT		hWaveOut;
+    HANDLE		hWaveOut;
     UINT		ret;
 
     /* since layout of WAVEFORMATEX is the same for 16/32 bits, we directly
@@ -1508,7 +1512,7 @@ UINT16 WINAPI waveInOpen16(HWAVEIN16* lphWaveIn, UINT16 uDeviceID,
                            const LPWAVEFORMATEX lpFormat, DWORD dwCallback,
                            DWORD dwInstance, DWORD dwFlags)
 {
-    HWAVEIN		hWaveIn;
+    HANDLE		hWaveIn;
     UINT		ret;
 
     /* since layout of WAVEFORMATEX is the same for 16/32 bits, we directly
@@ -1856,7 +1860,7 @@ void WINAPI WINE_mmThreadEntryPoint(DWORD);
  * 	bit.0 set means create a 16 bit task instead of thread calling a 16 bit proc
  *	bit.1 set means to open a VxD for this thread (unsupported)
  */
-LRESULT	WINAPI mmThreadCreate16(FARPROC16 fpThreadAddr, LPHANDLE lpHndl, DWORD dwPmt, DWORD dwFlags)
+LRESULT	WINAPI mmThreadCreate16(FARPROC16 fpThreadAddr, LPHANDLE16 lpHndl, DWORD dwPmt, DWORD dwFlags)
 {
     HANDLE16		hndl;
     LRESULT		ret;
@@ -1912,7 +1916,7 @@ LRESULT	WINAPI mmThreadCreate16(FARPROC16 fpThreadAddr, LPHANDLE lpHndl, DWORD d
 		    CloseHandle(lpMMThd->hEvent);
 		ret = 2;
 	    } else {
-		TRACE("Got a nice thread hndl=0x%04x id=0x%08lx\n", lpMMThd->hThread, lpMMThd->dwThreadID);
+		TRACE("Got a nice thread hndl=%p id=0x%08lx\n", lpMMThd->hThread, lpMMThd->dwThreadID);
 		ret = 0;
 	    }
 	} else {
@@ -2103,21 +2107,21 @@ void WINAPI WINE_mmThreadEntryPoint(DWORD _pmt)
     TRACE("(%04x %p)\n", hndl, lpMMThd);
 
     lpMMThd->hTask = LOWORD(GetCurrentTask());
-    TRACE("[10-%08x] setting hTask to 0x%08x\n", lpMMThd->hThread, lpMMThd->hTask);
+    TRACE("[10-%p] setting hTask to 0x%08x\n", lpMMThd->hThread, lpMMThd->hTask);
     lpMMThd->dwStatus = 0x10;
     MMSYSTEM_ThreadBlock(lpMMThd);
-    TRACE("[20-%08x]\n", lpMMThd->hThread);
+    TRACE("[20-%p]\n", lpMMThd->hThread);
     lpMMThd->dwStatus = 0x20;
     if (lpMMThd->fpThread) {
 	MMSYSTEM_CallTo16_long_l(lpMMThd->fpThread, lpMMThd->dwThreadPmt);
     }
     lpMMThd->dwStatus = 0x30;
-    TRACE("[30-%08x]\n", lpMMThd->hThread);
+    TRACE("[30-%p]\n", lpMMThd->hThread);
     while (lpMMThd->dwCounter) {
 	Sleep(1);
 	/* K32WOWYield16();*/
     }
-    TRACE("[XX-%08x]\n", lpMMThd->hThread);
+    TRACE("[XX-%p]\n", lpMMThd->hThread);
     /* paranoia */
     lpMMThd->dwSignature = WINE_MMTHREAD_DELETED;
     /* close lpMMThread->hVxD directIO */
@@ -2138,7 +2142,7 @@ BOOL16	WINAPI	mmShowMMCPLPropertySheet16(HWND hWnd, LPCSTR lpStrDevice,
     HANDLE	hndl;
     BOOL16	ret = FALSE;
 
-    TRACE("(%04x \"%s\" \"%s\" \"%s\")\n", hWnd, lpStrDevice, lpStrTab, lpStrTitle);
+    TRACE("(%p \"%s\" \"%s\" \"%s\")\n", hWnd, lpStrDevice, lpStrTab, lpStrTitle);
 
     hndl = LoadLibraryA("MMSYS.CPL");
     if (hndl != 0) {
@@ -2546,10 +2550,10 @@ DWORD WINAPI mciSendString16(LPCSTR lpstrCommand, LPSTR lpstrRet,
 /**************************************************************************
  *                    	mciLoadCommandResource			[MMSYSTEM.705]
  */
-UINT16 WINAPI mciLoadCommandResource16(HANDLE16 hInst, LPCSTR resname, UINT16 type)
+UINT16 WINAPI mciLoadCommandResource16(HINSTANCE16 hInst, LPCSTR resname, UINT16 type)
 {
     LPCWSTR     ptr = HEAP_strdupAtoW(GetProcessHeap(), 0, resname);
-    UINT        ret = mciLoadCommandResource(hInst, ptr, type);
+    UINT        ret = mciLoadCommandResource(HINSTANCE_32(hInst), ptr, type);
     HeapFree(GetProcessHeap(), 0, (LPWSTR)ptr);
     return ret;
 }
@@ -2697,7 +2701,7 @@ HMMIO16 WINAPI mmioOpen16(LPSTR szFileName, MMIOINFO16* lpmmioinfo16,
         mmioinfo.adwInfo[0]  = lpmmioinfo16->adwInfo[0];
         /* if we don't have a file name, it's likely a passed open file descriptor */
         if (!szFileName) 
-            mmioinfo.adwInfo[0] = DosFileHandleToWin32Handle(mmioinfo.adwInfo[0]);
+            mmioinfo.adwInfo[0] = (DWORD)DosFileHandleToWin32Handle(mmioinfo.adwInfo[0]);
 	mmioinfo.adwInfo[1]  = lpmmioinfo16->adwInfo[1];
 	mmioinfo.adwInfo[2]  = lpmmioinfo16->adwInfo[2];
 	mmioinfo.adwInfo[3]  = lpmmioinfo16->adwInfo[3];
@@ -2756,7 +2760,7 @@ MMRESULT16 WINAPI mmioGetInfo16(HMMIO16 hmmio, MMIOINFO16* lpmmioinfo, UINT16 uF
 
     TRACE("(0x%04x,%p,0x%08x)\n", hmmio, lpmmioinfo, uFlags);
 
-    if ((wm = MMIO_Get(hmmio)) == NULL)
+    if ((wm = MMIO_Get(HMMIO_32(hmmio))) == NULL)
 	return MMSYSERR_INVALHANDLE;
 
     ret = mmioGetInfo(HMMIO_32(hmmio), &mmioinfo, uFlags);
@@ -2767,7 +2771,7 @@ MMRESULT16 WINAPI mmioGetInfo16(HMMIO16 hmmio, MMIOINFO16* lpmmioinfo, UINT16 uF
     lpmmioinfo->pIOProc     = (wm->ioProc->type == MMIO_PROC_16) ?
         (LPMMIOPROC16)wm->ioProc->pIOProc : NULL;
     lpmmioinfo->wErrorRet   = mmioinfo.wErrorRet;
-    lpmmioinfo->hTask       = mmioinfo.hTask;
+    lpmmioinfo->hTask       = HTASK_16(mmioinfo.hTask);
     lpmmioinfo->cchBuffer   = mmioinfo.cchBuffer;
     lpmmioinfo->pchBuffer   = (void*)wm->segBuffer16;
     lpmmioinfo->pchNext     = (void*)(wm->segBuffer16 + (mmioinfo.pchNext - mmioinfo.pchBuffer));

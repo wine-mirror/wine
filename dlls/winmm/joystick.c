@@ -269,7 +269,7 @@ MMRESULT WINAPI joyReleaseCapture(UINT wID)
  */
 MMRESULT WINAPI joySetCapture(HWND hWnd, UINT wID, UINT wPeriod, BOOL bChanged)
 {
-    TRACE("(%04X, %04X, %d, %d);\n",  hWnd, wID, wPeriod, bChanged);
+    TRACE("(%p, %04X, %d, %d);\n",  hWnd, wID, wPeriod, bChanged);
 
     if (wID >= MAXJOYSTICK || hWnd == 0) return JOYERR_PARMS;
     if (wPeriod<JOY_PERIOD_MIN || wPeriod>JOY_PERIOD_MAX) return JOYERR_PARMS;

@@ -200,7 +200,6 @@ typedef struct tagWINE_MM_IDATA {
     /* winmm part */
     HANDLE			hWinMM32Instance;
     HANDLE			hWinMM16Instance;
-    HANDLE			h16Module32;
     CRITICAL_SECTION		cs;
     /* mm timer part */
     HANDLE			hMMTimer;

@@ -91,10 +91,10 @@ static LRESULT inline DRIVER_SendMessage(LPWINE_DRIVER lpDrv, UINT msg,
         if (pFnSendMessage16)
             ret = pFnSendMessage16(lpDrv->d.d16.hDriver16, msg, lParam1, lParam2);
     } else {
-        TRACE("Before call32 proc=%p drvrID=%08lx hDrv=%08x wMsg=%04x p1=%08lx p2=%08lx\n", 
+        TRACE("Before call32 proc=%p drvrID=%08lx hDrv=%p wMsg=%04x p1=%08lx p2=%08lx\n", 
               lpDrv->d.d32.lpDrvProc, lpDrv->d.d32.dwDriverID, (HDRVR)lpDrv, msg, lParam1, lParam2);
         ret = lpDrv->d.d32.lpDrvProc(lpDrv->d.d32.dwDriverID, (HDRVR)lpDrv, msg, lParam1, lParam2);
-        TRACE("After  call32 proc=%p drvrID=%08lx hDrv=%08x wMsg=%04x p1=%08lx p2=%08lx => %08lx\n", 
+        TRACE("After  call32 proc=%p drvrID=%08lx hDrv=%p wMsg=%04x p1=%08lx p2=%08lx => %08lx\n", 
               lpDrv->d.d32.lpDrvProc, lpDrv->d.d32.dwDriverID, (HDRVR)lpDrv, msg, lParam1, lParam2, ret);
     }
     return ret;
@@ -110,12 +110,12 @@ LRESULT WINAPI SendDriverMessage(HDRVR hDriver, UINT msg, LPARAM lParam1,
     LPWINE_DRIVER	lpDrv;
     LRESULT 		retval = 0;
 
-    TRACE("(%04x, %04X, %08lX, %08lX)\n", hDriver, msg, lParam1, lParam2);
+    TRACE("(%p, %04X, %08lX, %08lX)\n", hDriver, msg, lParam1, lParam2);
 
     if ((lpDrv = DRIVER_FindFromHDrvr(hDriver)) != NULL) {
 	retval = DRIVER_SendMessage(lpDrv, msg, lParam1, lParam2);
     } else {
-	WARN("Bad driver handle %u\n", hDriver);
+	WARN("Bad driver handle %p\n", hDriver);
     }
     TRACE("retval = %ld\n", retval);
 
@@ -343,7 +343,7 @@ LRESULT WINAPI CloseDriver(HDRVR hDrvr, LPARAM lParam1, LPARAM lParam2)
 {
     LPWINE_DRIVER	lpDrv;
 
-    TRACE("(%04x, %08lX, %08lX);\n", hDrvr, lParam1, lParam2);
+    TRACE("(%p, %08lX, %08lX);\n", hDrvr, lParam1, lParam2);
 
     if ((lpDrv = DRIVER_FindFromHDrvr(hDrvr)) != NULL)
     {
@@ -399,7 +399,7 @@ DWORD	WINAPI GetDriverFlags(HDRVR hDrvr)
     LPWINE_DRIVER 	lpDrv;
     DWORD		ret = 0;
 
-    TRACE("(%04x)\n", hDrvr);
+    TRACE("(%p)\n", hDrvr);
 
     if ((lpDrv = DRIVER_FindFromHDrvr(hDrvr)) != NULL) {
 	ret = WINE_GDF_EXIST | lpDrv->dwFlags;
@@ -416,13 +416,13 @@ HMODULE WINAPI GetDriverModuleHandle(HDRVR hDrvr)
     LPWINE_DRIVER 	lpDrv;
     HMODULE		hModule = 0;
 
-    TRACE("(%04x);\n", hDrvr);
+    TRACE("(%p);\n", hDrvr);
 
     if ((lpDrv = DRIVER_FindFromHDrvr(hDrvr)) != NULL) {
 	if (!(lpDrv->dwFlags & WINE_GDF_16BIT))
 	    hModule = lpDrv->d.d32.hModule;
     }
-    TRACE("=> %04x\n", hModule);
+    TRACE("=> %p\n", hModule);
     return hModule;
 }
 
@@ -454,7 +454,7 @@ BOOL WINAPI DriverCallback(DWORD dwCallBack, UINT uFlags, HDRVR hDev,
 			   UINT wMsg, DWORD dwUser, DWORD dwParam1,
 			   DWORD dwParam2)
 {
-    TRACE("(%08lX, %04X, %04X, %04X, %08lX, %08lX, %08lX); !\n",
+    TRACE("(%08lX, %04X, %p, %04X, %08lX, %08lX, %08lX); !\n",
 	  dwCallBack, uFlags, hDev, wMsg, dwUser, dwParam1, dwParam2);
 
     switch (uFlags & DCB_TYPEMASK) {
@@ -464,7 +464,7 @@ BOOL WINAPI DriverCallback(DWORD dwCallBack, UINT uFlags, HDRVR hDev,
 	    WARN("uFlags=%04X has null DCB value, but dwCallBack=%08lX is not null !\n", uFlags, dwCallBack);
 	break;
     case DCB_WINDOW:
-	TRACE("Window(%04lX) handle=%04X!\n", dwCallBack, hDev);
+	TRACE("Window(%04lX) handle=%p!\n", dwCallBack, hDev);
 	PostMessageA((HWND)dwCallBack, wMsg, (WPARAM)hDev, dwParam1);
 	break;
     case DCB_TASK: /* aka DCB_THREAD */

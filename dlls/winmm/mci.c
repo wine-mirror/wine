@@ -217,7 +217,7 @@ static	BOOL		MCI_IsCommandTableValid(UINT uTbl)
     int		idx = 0;
     BOOL	inCst = FALSE;
 
-    TRACE("Dumping cmdTbl=%d [hMem=%08x devType=%d]\n",
+    TRACE("Dumping cmdTbl=%d [hMem=%p devType=%d]\n",
 	  uTbl, S_MciCmdTable[uTbl].hMem, S_MciCmdTable[uTbl].uDevType);
 
     if (uTbl >= MAX_MCICMDTABLE || !S_MciCmdTable[uTbl].hMem || !S_MciCmdTable[uTbl].lpTable)
@@ -315,7 +315,7 @@ static	UINT		MCI_GetCommandTable(UINT uDevType)
 	if (hMem) {
 	    uTbl = MCI_SetCommandTable(hMem, uDevType);
 	} else {
-	    WARN("No command table found in resource %04x[%s]\n",
+	    WARN("No command table found in resource %p[%s]\n",
 		 WINMM_IData->hWinMM32Instance, str);
 	}
     }
@@ -538,7 +538,7 @@ static	DWORD	MCI_LoadMciDriver(LPCSTR _strDevTyp, LPWINE_MCIDRIVER* lpwmd)
     wmd->uSpecificCmdTable = LOWORD(modp.wCustomCommandTable);
     wmd->uTypeCmdTable = MCI_COMMAND_TABLE_NOT_LOADED;
 
-    TRACE("Loaded driver %x (%s), type is %d, cmdTable=%08x\n",
+    TRACE("Loaded driver %p (%s), type is %d, cmdTable=%08x\n",
 	  wmd->hDriver, strDevTyp, modp.wType, modp.wCustomCommandTable);
 
     wmd->lpstrDeviceType = strDevTyp;
@@ -878,7 +878,7 @@ DWORD WINAPI mciSendStringA(LPCSTR lpstrCommand, LPSTR lpstrRet,
     LPSTR		devAlias = NULL;
     BOOL		bAutoOpen = FALSE;
 
-    TRACE("('%s', %p, %d, %X)\n", lpstrCommand, lpstrRet, uRetLen, hwndCallback);
+    TRACE("('%s', %p, %d, %p)\n", lpstrCommand, lpstrRet, uRetLen, hwndCallback);
 
     /* format is <command> <device> <optargs> */
     if (!(verb = HeapAlloc(GetProcessHeap(), 0, strlen(lpstrCommand)+1)))
@@ -1103,7 +1103,7 @@ UINT WINAPI mciLoadCommandResource(HINSTANCE hInst, LPCWSTR resNameW, UINT type)
     HGLOBAL      	hMem;
     UINT16		ret = MCI_NO_COMMAND_TABLE;
 
-    TRACE("(%04x, %s, %d)!\n", hInst, debugstr_w(resNameW), type);
+    TRACE("(%p, %s, %d)!\n", hInst, debugstr_w(resNameW), type);
 
     /* if a file named "resname.mci" exits, then load resource "resname" from it
      * otherwise directly from driver
@@ -1333,14 +1333,14 @@ static	DWORD MCI_Open(DWORD dwParam, LPMCI_OPEN_PARMSA lpParms)
     TRACE("wDevID=%04X wDeviceID=%d dwRet=%ld\n", wmd->wDeviceID, lpParms->wDeviceID, dwRet);
 
     if (dwParam & MCI_NOTIFY)
-	mciDriverNotify(lpParms->dwCallback, wmd->wDeviceID, MCI_NOTIFY_SUCCESSFUL);
+	mciDriverNotify((HWND)lpParms->dwCallback, wmd->wDeviceID, MCI_NOTIFY_SUCCESSFUL);
 
     return 0;
 errCleanUp:
     if (wmd) MCI_UnLoadMciDriver(wmd);
 
     if (dwParam & MCI_NOTIFY)
-	mciDriverNotify(lpParms->dwCallback, 0, MCI_NOTIFY_FAILURE);
+	mciDriverNotify((HWND)lpParms->dwCallback, 0, MCI_NOTIFY_FAILURE);
     return dwRet;
 }
 
@@ -1380,7 +1380,7 @@ static	DWORD MCI_Close(UINT16 wDevID, DWORD dwParam, LPMCI_GENERIC_PARMS lpParms
     MCI_UnLoadMciDriver(wmd);
 
     if (dwParam & MCI_NOTIFY)
-	mciDriverNotify(lpParms->dwCallback, wDevID,
+	mciDriverNotify((HWND)lpParms->dwCallback, wDevID,
                         (dwRet == 0) ? MCI_NOTIFY_SUCCESSFUL : MCI_NOTIFY_FAILURE);
 
     return dwRet;
@@ -1503,7 +1503,7 @@ static	DWORD MCI_Break(UINT wDevID, DWORD dwFlags, LPMCI_BREAK_PARMS lpParms)
     if (lpParms == NULL)	return MCIERR_NULL_PARAMETER_BLOCK;
 
     if (dwFlags & MCI_NOTIFY)
-	mciDriverNotify(lpParms->dwCallback, wDevID,
+	mciDriverNotify((HWND)lpParms->dwCallback, wDevID,
                         (dwRet == 0) ? MCI_NOTIFY_SUCCESSFUL : MCI_NOTIFY_FAILURE);
 
     return dwRet;
