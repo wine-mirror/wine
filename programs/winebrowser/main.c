@@ -47,11 +47,6 @@ int main (int argc, char *argv[])
   HKEY hkey;
   LONG r;
 
-  /* ensure that mozilla or other browsers don't think the */
-  /* temp directory is "E:\\" */
-  unsetenv("TEMP");
-  unsetenv("TMP");
-
   maxLength = sizeof(szBrowsers);
 
   if(RegCreateKeyEx( HKEY_CURRENT_USER,
