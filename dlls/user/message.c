@@ -2356,7 +2356,6 @@ BOOL WINAPI SetKeyboardState( LPBYTE state )
 
     TRACE("(%p)\n", state);
 
-    memset( state, 0, 256 );
     SERVER_START_REQ( set_key_state )
     {
         req->tid = GetCurrentThreadId();
