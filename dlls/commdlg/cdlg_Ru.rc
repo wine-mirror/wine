@@ -193,3 +193,194 @@ FONT 8, "Ms Sans Serif"
  PUSHBUTTON "Отмена", IDCANCEL	 , 174, 55, 50, 14, WS_GROUP | WS_TABSTOP
  PUSHBUTTON "&Справка", pshHelp	 , 174, 75, 50, 14, WS_GROUP | WS_TABSTOP
 }
+
+PRINT32 DIALOG LOADONCALL MOVEABLE DISCARDABLE  32, 32, 288, 186
+STYLE DS_MODALFRAME | WS_POPUP | WS_VISIBLE | WS_CAPTION | WS_SYSMENU |
+      DS_CONTEXTHELP | DS_3DLOOK
+CAPTION "Печать"
+FONT 8, "Ms Sans Serif"
+{
+    DEFPUSHBUTTON   "OK",     IDOK,     180,164, 48,14, WS_GROUP | BS_DEFPUSHBUTTON
+    PUSHBUTTON      "Отмена", IDCANCEL, 232,164, 48,14, WS_GROUP
+    PUSHBUTTON      "&Справка",  pshHelp,  50, 161, 48,14, WS_GROUP
+
+    GROUPBOX        "Принтер",        grp4,   8,  4, 272,84, WS_GROUP
+    CONTROL         "Печать в фай&л", chx1, "Button",BS_AUTOCHECKBOX | WS_GROUP | WS_TABSTOP,212,70,64,12
+    PUSHBUTTON      "&Свойства",    psh2, 212, 17,  60,14, WS_GROUP
+    LTEXT           "&Имя:",         stc6,  16, 20,  36,8
+    COMBOBOX                          cmb4,  52, 18, 152,152,CBS_DROPDOWNLIST | CBS_SORT | WS_VSCROLL | WS_GROUP | WS_TABSTOP
+    LTEXT           "Статус:",        stc8,  16, 36,  36,10, SS_NOPREFIX
+    LTEXT           "Эмулирован",    stc12, 60, 36, 224,10, SS_NOPREFIX | SS_LEFTNOWORDWRAP
+    LTEXT           "Тип:",          stc7,  16, 48,  36,10, SS_NOPREFIX
+    LTEXT           "Эмулирован",     stc11, 60, 48, 224,10, SS_NOPREFIX | SS_LEFTNOWORDWRAP
+    LTEXT           "Место:",         stc10, 16, 60,  36,10, SS_NOPREFIX
+    LTEXT           "Эмулировано", stc14, 60, 60, 224,10, SS_NOPREFIX | SS_LEFTNOWORDWRAP
+    LTEXT           "Примечание:",       stc13,  16, 72,  36,10, SS_NOPREFIX
+    LTEXT           "Эмулировано",   stc13, 60, 72, 152,10, SS_NOPREFIX | SS_LEFTNOWORDWRAP
+
+    GROUPBOX        "Копии",         grp2, 160, 92, 120,64, WS_GROUP
+    LTEXT           "Число &копий:",stc5,168,108,68,8
+    ICON            "",               ico3, 162,124,  76,24, WS_GROUP | SS_CENTERIMAGE
+    CONTROL         "&Разбить",       chx2,"Button",BS_AUTOCHECKBOX | WS_GROUP | WS_TABSTOP,230,130,40,12
+    EDITTEXT                          edt3, 240,106,  32,12, WS_GROUP | ES_NUMBER
+
+    GROUPBOX        "Печатать",    grp1,   8,92,  144,64, WS_GROUP
+    CONTROL         "&Все",           rad1,"Button",BS_AUTORADIOBUTTON | WS_GROUP | WS_TABSTOP,16,106,64,12
+    CONTROL         "&Страницы",         rad3,"Button",BS_AUTORADIOBUTTON,16,122,50,12
+    CONTROL         "&Выделение",     rad2,"Button",BS_AUTORADIOBUTTON,16,138,64,12
+    EDITTEXT                          edt1,  85,122,  20,12, WS_GROUP | ES_NUMBER
+    EDITTEXT                          edt2, 120,122,  20,12, WS_GROUP | ES_NUMBER
+    RTEXT           "&от:",         stc2,  70,124,  10,8
+    RTEXT           "&до:",           stc3, 106,124,  10,8
+}
+
+PRINT32_SETUP DIALOG LOADONCALL MOVEABLE DISCARDABLE  32, 32, 288, 178
+STYLE DS_MODALFRAME | WS_POPUP | WS_VISIBLE | WS_CAPTION | WS_SYSMENU |
+      DS_CONTEXTHELP | DS_3DLOOK
+CAPTION "Установки принтера"
+FONT 8, "Ms Sans Serif"
+BEGIN
+    DEFPUSHBUTTON   "OK",IDOK,180,156,48,14,WS_GROUP
+    PUSHBUTTON      "Отмена",IDCANCEL,232,156,48,14
+/*    PUSHBUTTON      "Сеть...", psh5, 284,156,48,14 */
+
+    GROUPBOX        "Принтер",        grp4,   8,  4, 272,84, WS_GROUP
+    PUSHBUTTON      "&Свойства",    psh2, 212, 17,  60,14, WS_GROUP
+    LTEXT           "&Имя:",         stc6,  16, 20,  36,8
+    COMBOBOX                          cmb1,  52, 18, 152,152,CBS_DROPDOWNLIST | CBS_SORT | WS_VSCROLL | WS_GROUP | WS_TABSTOP
+    LTEXT           "Статус:",        stc8,  16, 36,  36,10, SS_NOPREFIX
+    LTEXT           "Эмулирован",    stc12, 52, 36, 224,10, SS_NOPREFIX | SS_LEFTNOWORDWRAP
+    LTEXT           "Тип:",          stc7,  16, 48,  36,10, SS_NOPREFIX
+    LTEXT           "Эмулирован",     stc11, 52, 48, 224,10, SS_NOPREFIX | SS_LEFTNOWORDWRAP
+    LTEXT           "Место:",         stc10, 16, 60,  36,10, SS_NOPREFIX
+    LTEXT           "Эмулировано", stc14, 52, 60, 224,10, SS_NOPREFIX | SS_LEFTNOWORDWRAP
+    LTEXT           "Заметки:",       stc9,  16, 72,  36,10, SS_NOPREFIX
+    LTEXT           "Эмулированы",   stc13, 52, 72, 224,10, SS_NOPREFIX | SS_LEFTNOWORDWRAP
+
+    GROUPBOX        "Бумага",          grp2,   8, 92, 164,56, WS_GROUP
+    LTEXT           "Раз&мер:",         stc2,  16,108,  36, 8
+    COMBOBOX                          cmb2,  52,106, 112,112,CBS_DROPDOWNLIST | CBS_SORT | WS_VSCROLL | WS_GROUP | WS_TABSTOP
+    LTEXT           "&Источник:",       stc3,  16,128,  36, 8
+    COMBOBOX                          cmb3,  52,126, 112,112,CBS_DROPDOWNLIST | CBS_SORT | WS_VSCROLL | WS_GROUP | WS_TABSTOP
+    
+    GROUPBOX        "Ориентация",    grp1, 180, 92, 100,56, WS_GROUP
+    ICON            "",               ico1, 195,112,  18,20, WS_GROUP
+    CONTROL         "&Портрет",      rad1,"Button",BS_AUTORADIOBUTTON | WS_GROUP |WS_TABSTOP,224,106,52,12
+    CONTROL         "Л&андшафт",     rad2,"Button",BS_AUTORADIOBUTTON,224,126,52,12
+END
+
+
+NEWFILEOPENORD DIALOG LOADONCALL MOVEABLE DISCARDABLE 0, 0, 287, 165
+STYLE DS_MODALFRAME | DS_CONTEXTHELP | WS_POPUP | WS_CAPTION | WS_SYSMENU
+CAPTION "Открыть"
+FONT 8, "Ms Sans Serif"
+{
+    LTEXT	"Искать &в",IDC_LOOKINSTATIC,4,6,43,8, SS_NOTIFY
+    COMBOBOX	IDC_LOOKIN,49,3,132,100,CBS_DROPDOWNLIST | CBS_OWNERDRAWFIXED | CBS_HASSTRINGS | WS_VSCROLL | WS_TABSTOP
+
+    LTEXT	"" , IDC_TOOLBARSTATIC, 181, 2, 102, 17, NOT WS_GROUP | NOT WS_VISIBLE
+    LISTBOX	IDC_SHELLSTATIC,4,20,272,85, LBS_SORT | LBS_NOINTEGRALHEIGHT | LBS_MULTICOLUMN | WS_HSCROLL | NOT WS_VISIBLE
+    
+    LTEXT	"Имя &файла:",IDC_FILENAMESTATIC,5,112,46,8, SS_NOTIFY
+    EDITTEXT	IDC_FILENAME,54,110,155,12,ES_AUTOHSCROLL
+    
+    LTEXT	"Файлы &типа",IDC_FILETYPESTATIC,5,128,42,8, SS_NOTIFY
+    COMBOBOX	IDC_FILETYPE,54,126,155,53,CBS_DROPDOWN | WS_VSCROLL | WS_TABSTOP
+
+    CONTROL	"Только для &чтения",IDC_OPENREADONLY,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,54,145,100,10
+
+    DEFPUSHBUTTON	"&Открыть",		 IDOK,222,110,50,14
+    PUSHBUTTON		"Отмена",		 IDCANCEL,222,128,50,14
+    PUSHBUTTON		"&Справка",		 pshHelp,222,145,50,14
+}
+
+STRINGTABLE DISCARDABLE 
+{
+    IDS_ABOUTBOX            "&О тесте ВыборПапки"
+    IDS_DOCUMENTFOLDERS     "Папки документов"
+    IDS_PERSONAL            "Мои документы"
+    IDS_FAVORITES           "Избранное"
+    IDS_PATH                "Системный путь"
+    IDS_DESKTOP             "Рабочий стол"
+    IDS_FONTS               "Fonts"
+    IDS_MYCOMPUTER          "Мой компьютер"
+}
+
+STRINGTABLE DISCARDABLE 
+{
+    IDS_SYSTEMFOLDERS       "Системные папки"
+    IDS_LOCALHARDRIVES      "Локальные жесткие диски"
+    IDS_FILENOTFOUND        "Файл не найден"
+    IDS_VERIFYFILE          "Проверьте, правильно ли указано имя файла"
+    IDS_CREATEFILE          "Файла не существует\nХотите ли Вы его создать?"
+    IDL_OVERWRITEFILE       "Файл уже существует.\nЗаменить его?"
+    IDS_INVALID_FILENAME_TITLE "Некорректный символ в записи пути"
+    IDS_INVALID_FILENAME    "Имя файла не может содержать следующие символы: \n                          / : < > |"
+    IDS_PATHNOTEXISTING     "Путь не существует"
+    IDS_FILENOTEXISTING     "Файл не существует"
+}
+
+STRINGTABLE DISCARDABLE
+{
+    IDS_UPFOLDER         "Вверх на один уровень"
+    IDS_NEWFOLDER        "Создать новую папку"
+    IDS_LISTVIEW         "Список"
+    IDS_REPORTVIEW       "Подробности"
+    IDS_TODESKTOP        "Переход на рабочий стол"
+} 
+
+STRINGTABLE DISCARDABLE
+{
+    PD32_PRINT_TITLE       "Печать"
+
+    PD32_VALUE_UREADABLE                  "Нечитаемый элемент"
+    PD32_INVALID_PAGE_RANGE "Это значение не лежит внутри диапазона страниц\n\
+Введите значение между %d и %d"
+    PD32_FROM_NOT_ABOVE_TO                "Значение ОТ не должно превышать ДО:"
+    PD32_MARGINS_OVERLAP                  "Границы перекрывают или превышают \
+размеры бумаги.\nВведите их заново"
+    PD32_NR_OF_COPIES_EMPTY               "Значение Числа Копий не может быть \
+пустым"
+    PD32_TOO_LARGE_COPIES                 "Такое большое количество копий не \
+может быть напечатано Вашим принтером.\nВведите значение между 1 и %d"
+    PD32_PRINT_ERROR                      "Произошла ошибка принтера"
+    PD32_NO_DEFAULT_PRINTER               "Нет принтера, устаовленного по умолчанию"
+    PD32_CANT_FIND_PRINTER                "Не удалось найти принтер"
+    PD32_OUT_OF_MEMORY                    "Мало памяти"
+    PD32_GENERIC_ERROR                    "Произошла(и) ошибка(и)"
+    PD32_DRIVER_UNKNOWN                   "Неизвестный драйвер принтера"
+
+    PD32_DEFAULT_PRINTER                  "Принтер по умолчанию; "
+    PD32_NR_OF_DOCUMENTS_IN_QUEUE         "%d документов в очереди"
+    PD32_PRINT_ALL_X_PAGES                "&Все %d страниц"
+    PD32_MARGINS_IN_INCHES                "Границы [дюймы)"
+    PD32_MARGINS_IN_MILIMETERS            "Границы [мм]"
+    PD32_MILIMETERS                       "мм"
+
+    PD32_PRINTER_STATUS_READY             "Готово"
+    PD32_PRINTER_STATUS_PAUSED            "Приостановлено; "
+    PD32_PRINTER_STATUS_ERROR             "Ошибка; "
+    PD32_PRINTER_STATUS_PENDING_DELETION  "Pending deletion; "
+    PD32_PRINTER_STATUS_PAPER_JAM         "Paper jam; "
+    PD32_PRINTER_STATUS_PAPER_OUT         "Не хватает бумаги; "
+    PD32_PRINTER_STATUS_MANUAL_FEED       "Вставьте бумагу вручную; "
+    PD32_PRINTER_STATUS_PAPER_PROBLEM     "Проблема с бумагой; "
+    PD32_PRINTER_STATUS_OFFLINE           "Принтер в режиме offline; "
+    PD32_PRINTER_STATUS_IO_ACTIVE         "I/O Active; "
+    PD32_PRINTER_STATUS_BUSY              "Занят; "
+    PD32_PRINTER_STATUS_PRINTING          "Идет печать; "
+    PD32_PRINTER_STATUS_OUTPUT_BIN_FULL   "Лоток переполнен бумагой; "
+    PD32_PRINTER_STATUS_NOT_AVAILABLE     "Не доступен; "
+    PD32_PRINTER_STATUS_WAITING           "Ожидание; "
+    PD32_PRINTER_STATUS_PROCESSING        "Обработка; "
+    PD32_PRINTER_STATUS_INITIALIZING      "IПодготовка; "
+    PD32_PRINTER_STATUS_WARMING_UP        "Прогрев; "
+    PD32_PRINTER_STATUS_TONER_LOW         "Toner low; "
+    PD32_PRINTER_STATUS_NO_TONER          "Нет тонера; "
+    PD32_PRINTER_STATUS_PAGE_PUNT         "Page punt; "
+    PD32_PRINTER_STATUS_USER_INTERVENTION "Прервано пользователем; "
+    PD32_PRINTER_STATUS_OUT_OF_MEMORY     "Мало памяти; "
+    PD32_PRINTER_STATUS_DOOR_OPEN         "Крышка принтера открыта; "
+    PD32_PRINTER_STATUS_SERVER_UNKNOWN    "Неизвестный сервер принтера; "
+    PD32_PRINTER_STATUS_POWER_SAVE        "Питание в безопасном режиме; "
+}
