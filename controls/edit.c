@@ -43,7 +43,7 @@ DECLARE_DEBUG_CHANNEL(relay);
  */
 #define EF_MODIFIED		0x0001	/* text has been modified */
 #define EF_FOCUSED		0x0002	/* we have input focus */
-#define EF_UPDATE		0x0004	/* notify parent of changed state on next WM_PAINT */
+#define EF_UPDATE		0x0004	/* notify parent of changed state */
 #define EF_VSCROLL_TRACK	0x0008	/* don't SetScrollPos() since we are tracking the thumb */
 #define EF_HSCROLL_TRACK	0x0010	/* don't SetScrollPos() since we are tracking the thumb */
 #define EF_AFTER_WRAP		0x0080	/* the caret is displayed after the last character of a
@@ -99,6 +99,9 @@ typedef struct
 	INT y_offset;			/* scroll offset in number of lines */
 	BOOL bCaptureState; /* flag indicating whether mouse was captured */
 	BOOL bEnableState;             /* flag keeping the enable state */
+	HWND hwndParent;               /* Handle of parent for sending EN_* messages.
+				          Even if parent will change, EN_* messages
+					  should be sent to the first parent. */
 	HWND hwndListBox;              /* handle of ComboBox's listbox or NULL */
 	/*
 	 *	only for multi line controls
@@ -132,16 +135,13 @@ typedef struct
 #define EDIT_SEND_CTLCOLOR(wnd,hdc) \
 	(SendMessageW((wnd)->parent->hwndSelf, WM_CTLCOLOREDIT, \
 			(WPARAM)(hdc), (LPARAM)(wnd)->hwndSelf))
-#define EDIT_NOTIFY_PARENT(wnd, wNotifyCode, str) \
+#define EDIT_NOTIFY_PARENT(es, wNotifyCode, str) \
 	do \
-	{ /* Notify parent only if it is non-child or combobox */ \
-	    if(!((wnd)->parent->dwStyle & WS_CHILD) || es->hwndListBox) \
-	    { \
-		DPRINTF_EDIT_NOTIFY((wnd)->parent->hwndSelf, str); \
-		SendMessageW((wnd)->parent->hwndSelf, WM_COMMAND, \
+	{ /* Notify parent which has created this edit control */ \
+	    DPRINTF_EDIT_NOTIFY((es)->hwndParent, str); \
+	    SendMessageW((es)->hwndParent, WM_COMMAND, \
 		     MAKEWPARAM((wnd)->wIDmenu, wNotifyCode), \
 		     (LPARAM)(wnd)->hwndSelf); \
-	    } \
 	} while(0)
 #define DPRINTF_EDIT_MSG16(str) \
 	TRACE(\
@@ -319,11 +319,6 @@ static inline void EDIT_WM_Clear(WND *wnd, EDITSTATE *es)
 	    return;
 
 	EDIT_EM_ReplaceSel(wnd, es, TRUE, empty_stringW, TRUE);
-
-	if (es->flags & EF_UPDATE) {
-		es->flags &= ~EF_UPDATE;
-		EDIT_NOTIFY_PARENT(wnd, EN_CHANGE, "EN_CHANGE");
-	}
 }
 
 
@@ -638,10 +633,6 @@ static LRESULT WINAPI EditWndProc_locked( WND *wnd, UINT msg,
 		}
 
 		EDIT_EM_ReplaceSel(wnd, es, (BOOL)wParam, textW, TRUE);
-		if (es->flags & EF_UPDATE) {
-			es->flags &= ~EF_UPDATE;
-			EDIT_NOTIFY_PARENT(wnd, EN_CHANGE, "EN_CHANGE");
-		}
 		result = 1;
 
 		if(!unicode)
@@ -1679,7 +1670,7 @@ static BOOL EDIT_MakeFit(WND *wnd, EDITSTATE *es, UINT size)
 	if (size <= es->buffer_size)
 		return TRUE;
 	if (size > es->buffer_limit) {
-		EDIT_NOTIFY_PARENT(wnd, EN_MAXTEXT, "EN_MAXTEXT");
+		EDIT_NOTIFY_PARENT(es, EN_MAXTEXT, "EN_MAXTEXT");
 		return FALSE;
 	}
 	if (size > es->buffer_limit)
@@ -1703,7 +1694,7 @@ static BOOL EDIT_MakeFit(WND *wnd, EDITSTATE *es, UINT size)
 
 	if (es->buffer_size < size) {
 		WARN("FAILED !  We now have %d+1\n", es->buffer_size);
-		EDIT_NOTIFY_PARENT(wnd, EN_ERRSPACE, "EN_ERRSPACE");
+		EDIT_NOTIFY_PARENT(es, EN_ERRSPACE, "EN_ERRSPACE");
 		return FALSE;
 	} else {
 		TRACE("We now have %d+1\n", es->buffer_size);
@@ -2759,9 +2750,9 @@ static BOOL EDIT_EM_LineScroll_internal(WND *wnd, EDITSTATE *es, INT dx, INT dy)
 		EDIT_UpdateScrollInfo(wnd, es);
 	}
 	if (dx && !(es->flags & EF_HSCROLL_TRACK))
-		EDIT_NOTIFY_PARENT(wnd, EN_HSCROLL, "EN_HSCROLL");
+		EDIT_NOTIFY_PARENT(es, EN_HSCROLL, "EN_HSCROLL");
 	if (dy && !(es->flags & EF_VSCROLL_TRACK))
-		EDIT_NOTIFY_PARENT(wnd, EN_VSCROLL, "EN_VSCROLL");
+		EDIT_NOTIFY_PARENT(es, EN_VSCROLL, "EN_VSCROLL");
 	return TRUE;
 }
 
@@ -2941,6 +2932,12 @@ static void EDIT_EM_ReplaceSel(WND *wnd, EDITSTATE *es, BOOL can_undo, LPCWSTR l
 
 	/* FIXME: really inefficient */
 	EDIT_UpdateText(wnd, NULL, TRUE);
+
+	if(es->flags & EF_UPDATE)
+	{
+	    es->flags &= ~EF_UPDATE;
+	    EDIT_NOTIFY_PARENT(es, EN_CHANGE, "EN_CHANGE");
+	}
 }
 
 
@@ -3462,12 +3459,6 @@ static BOOL EDIT_EM_Undo(WND *wnd, EDITSTATE *es)
 
 	TRACE("after UNDO:insertion length = %d, deletion buffer = %s\n",
 			es->undo_insert_count, debugstr_w(es->undo_text));
-
-	if (es->flags & EF_UPDATE) {
-		es->flags &= ~EF_UPDATE;
-		EDIT_NOTIFY_PARENT(wnd, EN_CHANGE, "EN_CHANGE");
-	}
-
 	return TRUE;
 }
 
@@ -3500,10 +3491,6 @@ static void EDIT_WM_Char(WND *wnd, EDITSTATE *es, WCHAR c)
 			} else {
 				static const WCHAR cr_lfW[] = {'\r','\n',0};
 				EDIT_EM_ReplaceSel(wnd, es, TRUE, cr_lfW, TRUE);
-				if (es->flags & EF_UPDATE) {
-					es->flags &= ~EF_UPDATE;
-					EDIT_NOTIFY_PARENT(wnd, EN_CHANGE, "EN_CHANGE");
-				}
 			}
 		}
 		break;
@@ -3512,10 +3499,6 @@ static void EDIT_WM_Char(WND *wnd, EDITSTATE *es, WCHAR c)
 		{
 			static const WCHAR tabW[] = {'\t',0};
 			EDIT_EM_ReplaceSel(wnd, es, TRUE, tabW, TRUE);
-			if (es->flags & EF_UPDATE) {
-				es->flags &= ~EF_UPDATE;
-				EDIT_NOTIFY_PARENT(wnd, EN_CHANGE, "EN_CHANGE");
-			}
 		}
 		break;
 	case VK_BACK:
@@ -3546,10 +3529,6 @@ static void EDIT_WM_Char(WND *wnd, EDITSTATE *es, WCHAR c)
  			str[0] = c;
  			str[1] = '\0';
  			EDIT_EM_ReplaceSel(wnd, es, TRUE, str, TRUE);
-			if (es->flags & EF_UPDATE) {
-				es->flags &= ~EF_UPDATE;
-				EDIT_NOTIFY_PARENT(wnd, EN_CHANGE, "EN_CHANGE");
-			}
  		}
 		break;
 	}
@@ -3690,10 +3669,6 @@ static LRESULT EDIT_WM_Create(WND *wnd, EDITSTATE *es, LPCWSTR name)
             */
 	   es->selection_start = es->selection_end = 0;
 	   EDIT_EM_ScrollCaret(wnd, es);
-	   if (es->flags & EF_UPDATE) {
-		es->flags &= ~EF_UPDATE;
-		EDIT_NOTIFY_PARENT(wnd, EN_CHANGE, "EN_CHANGE");
-	   }
        }
        /* force scroll info update */
        EDIT_UpdateScrollInfo(wnd, es);
@@ -3866,7 +3841,7 @@ static LRESULT EDIT_WM_HScroll(WND *wnd, EDITSTATE *es, INT action, INT pos)
 		if (!dx) {
 			/* force scroll info update */
 			EDIT_UpdateScrollInfo(wnd, es);
-			EDIT_NOTIFY_PARENT(wnd, EN_HSCROLL, "EN_HSCROLL");
+			EDIT_NOTIFY_PARENT(es, EN_HSCROLL, "EN_HSCROLL");
 		}
 		break;
 	case SB_ENDSCROLL:
@@ -4105,7 +4080,7 @@ static LRESULT EDIT_WM_KillFocus(WND *wnd, EDITSTATE *es)
 	DestroyCaret();
 	if(!(es->style & ES_NOHIDESEL))
 		EDIT_InvalidateText(wnd, es, es->selection_start, es->selection_end);
-	EDIT_NOTIFY_PARENT(wnd, EN_KILLFOCUS, "EN_KILLFOCUS");
+	EDIT_NOTIFY_PARENT(es, EN_KILLFOCUS, "EN_KILLFOCUS");
 	return 0;
 }
 
@@ -4268,6 +4243,9 @@ static LRESULT EDIT_WM_NCCreate(WND *wnd, DWORD style, HWND hwndParent, BOOL uni
 	    wnd->dwStyle &= ~WS_BORDER;
 	}
 
+	/* Save parent, which will be notified by EN_* messages */
+	es->hwndParent = hwndParent;
+
 	if (es->style & ES_COMBO)
 	   es->hwndListBox = GetDlgItem(hwndParent, ID_CB_LISTBOX);
 
@@ -4411,11 +4389,6 @@ static void EDIT_WM_Paste(WND *wnd, EDITSTATE *es)
 		src = (LPWSTR)GlobalLock(hsrc);
 		EDIT_EM_ReplaceSel(wnd, es, TRUE, src, TRUE);
 		GlobalUnlock(hsrc);
-
-		if (es->flags & EF_UPDATE) {
-			es->flags &= ~EF_UPDATE;
-			EDIT_NOTIFY_PARENT(wnd, EN_CHANGE, "EN_CHANGE");
-		}
 	}
 	CloseClipboard();
 }
@@ -4435,7 +4408,7 @@ static void EDIT_WM_SetFocus(WND *wnd, EDITSTATE *es)
 	if(!(es->style & ES_NOHIDESEL))
 		EDIT_InvalidateText(wnd, es, es->selection_start, es->selection_end);
 	ShowCaret(wnd->hwndSelf);
-	EDIT_NOTIFY_PARENT(wnd, EN_SETFOCUS, "EN_SETFOCUS");
+	EDIT_NOTIFY_PARENT(es, EN_SETFOCUS, "EN_SETFOCUS");
 }
 
 
@@ -4537,11 +4510,6 @@ static void EDIT_WM_SetText(WND *wnd, EDITSTATE *es, LPARAM lParam, BOOL unicode
 	es->flags &= ~EF_MODIFIED;
 	EDIT_EM_SetSel(wnd, es, 0, 0, FALSE);
 	EDIT_EM_ScrollCaret(wnd, es);
-
-	if (es->flags & EF_UPDATE) {
-		es->flags &= ~EF_UPDATE;
-		EDIT_NOTIFY_PARENT(wnd, EN_CHANGE, "EN_CHANGE");
-	}
 }
 
 
@@ -4670,7 +4638,7 @@ static LRESULT EDIT_WM_VScroll(WND *wnd, EDITSTATE *es, INT action, INT pos)
 		{
 			/* force scroll info update */
 			EDIT_UpdateScrollInfo(wnd, es);
-			EDIT_NOTIFY_PARENT(wnd, EN_VSCROLL, "EN_VSCROLL");
+			EDIT_NOTIFY_PARENT(es, EN_VSCROLL, "EN_VSCROLL");
 		}
 		break;
 	case SB_ENDSCROLL:
@@ -4722,9 +4690,8 @@ static void EDIT_UpdateText(WND *wnd, LPRECT rc, BOOL bErase)
 {
     EDITSTATE *es = *(EDITSTATE **)((wnd)->wExtra);
 
-    /* EF_UPDATE will be turned off in paint */
     if (es->flags & EF_UPDATE)
-	EDIT_NOTIFY_PARENT(wnd, EN_UPDATE, "EN_UPDATE");
+	EDIT_NOTIFY_PARENT(es, EN_UPDATE, "EN_UPDATE");
 
     InvalidateRect(wnd->hwndSelf, rc, bErase);
 }
