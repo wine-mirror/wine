@@ -163,12 +163,14 @@ DWORD WINAPI FormatMessageA(
 
         if (dwFlags & FORMAT_MESSAGE_FROM_HMODULE)
         {
-           bufsize=load_messageA(hmodule,dwMessageId,dwLanguageId,NULL,100);
+            if (!hmodule)
+                hmodule = GetModuleHandleW(NULL);
+            bufsize=load_messageA(hmodule,dwMessageId,dwLanguageId,NULL,100);
         }
         if ((dwFlags & FORMAT_MESSAGE_FROM_SYSTEM) && (!bufsize))
         {
-           hmodule = GetModuleHandleA("kernel32");
-           bufsize=load_messageA(hmodule,dwMessageId,dwLanguageId,NULL,100);
+            hmodule = GetModuleHandleA("kernel32");
+            bufsize=load_messageA(hmodule,dwMessageId,dwLanguageId,NULL,100);
         }
 
         if (!bufsize) {
@@ -388,12 +390,14 @@ DWORD WINAPI FormatMessageW(
 
         if (dwFlags & FORMAT_MESSAGE_FROM_HMODULE)
         {
-           bufsize=load_messageA(hmodule,dwMessageId,dwLanguageId,NULL,100);
+            if (!hmodule)
+                hmodule = GetModuleHandleW(NULL);
+            bufsize=load_messageA(hmodule,dwMessageId,dwLanguageId,NULL,100);
         }
         if ((dwFlags & FORMAT_MESSAGE_FROM_SYSTEM) && (!bufsize))
         {
-           hmodule = GetModuleHandleA("kernel32");
-           bufsize=load_messageA(hmodule,dwMessageId,dwLanguageId,NULL,100);
+            hmodule = GetModuleHandleA("kernel32");
+            bufsize=load_messageA(hmodule,dwMessageId,dwLanguageId,NULL,100);
         }
 
         if (!bufsize) {
