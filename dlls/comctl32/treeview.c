@@ -2345,7 +2345,7 @@ TREEVIEW_DrawItemLines(TREEVIEW_INFO *infoPtr, HDC hdc, TREEVIEW_ITEM *item)
 	    SelectObject(hdc, hOldPen);
 	    DeleteObject(hNewPen);
 
-	    if (height < 16 || width < 16)
+	    if (height < 18 || width < 18)
 	    {
 	        MoveToEx(hdc, centerx - plussize + 1, centery, NULL);
 	        LineTo(hdc, centerx + plussize, centery);
