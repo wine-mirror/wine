@@ -179,19 +179,16 @@ static void test_enum_providers(void)
 	
 	/* alloc provider to half the size required
 	 * cbName holds the size required */
-	todo_wine
-	{
-		providerLen = cbName / 2;
-		if (!(provider = ((LPSTR)LocalAlloc(LMEM_ZEROINIT, providerLen))))
-			return;
-		
-		result = CryptEnumProviders(dwIndex, NULL, 0, &type, provider, &providerLen);
-		ok(!result && GetLastError()==ERROR_MORE_DATA, "expected %08x, got %08x\n",
-			ERROR_MORE_DATA, (unsigned int)GetLastError());
-		
-		LocalFree(provider);
-	}
-	
+	providerLen = cbName / 2;
+	if (!(provider = ((LPSTR)LocalAlloc(LMEM_ZEROINIT, providerLen))))
+		return;
+
+	result = CryptEnumProviders(dwIndex, NULL, 0, &type, provider, &providerLen);
+	ok(!result && GetLastError()==ERROR_MORE_DATA, "expected %08x, got %08x\n",
+		ERROR_MORE_DATA, (unsigned int)GetLastError());
+
+	LocalFree(provider);
+
 	/* loop through the providers to get the number of providers 
 	 * after loop ends, count should be provCount + 1 so subtract 1
 	 * to get actual number of providers */

@@ -941,7 +941,7 @@ BOOL WINAPI CryptEncrypt (HCRYPTKEY hKey, HCRYPTHASH hHash, BOOL Final,
 /******************************************************************************
  * CryptEnumProvidersW (ADVAPI32.@)
  *
- * Returns the next availabe CPS.
+ * Returns the next availabe CSP.
  *
  * PARAMS
  *  dwIndex     [I] Index of the next provider to be enumerated.
@@ -950,14 +950,14 @@ BOOL WINAPI CryptEncrypt (HCRYPTKEY hKey, HCRYPTHASH hHash, BOOL Final,
  *  pdwProvType [O] DWORD designating the type of the provider.
  *  pszProvName [O] Buffer that receives data from the provider.
  *  pcbProvName [I/O] Specifies the size of pszProvName. Contains the number
- *                    of bytes stored in the buffer no return.
+ *                    of bytes stored in the buffer on return.
  *
  *  RETURNS
  *   Success: TRUE
  *   Failure: FALSE
  *
  *  NOTES
- *   If pszProvName is NULL, CryptEnumProvidersA sets the size of the name
+ *   If pszProvName is NULL, CryptEnumProvidersW sets the size of the name
  *   for memory allocation purposes.
  */
 BOOL WINAPI CryptEnumProvidersW (DWORD dwIndex, DWORD *pdwReserved,
@@ -1005,9 +1005,12 @@ BOOL WINAPI CryptEnumProvidersW (DWORD dwIndex, DWORD *pdwReserved,
 			CRYPT_ReturnLastError(ERROR_NO_MORE_ITEMS);
 	} else {
 		DWORD size = sizeof(DWORD);
+		DWORD result;
 		HKEY subkey;
-		if (RegEnumKeyW(hKey, dwIndex, pszProvName, *pcbProvName / sizeof(WCHAR)))
-			return FALSE;
+		
+		result = RegEnumKeyW(hKey, dwIndex, pszProvName, *pcbProvName / sizeof(WCHAR));
+		if (result)
+			CRYPT_ReturnLastError(result);
 		if (RegOpenKeyW(hKey, pszProvName, &subkey))
 			return FALSE;
 		if (RegQueryValueExW(subkey, typeW, NULL, NULL, (BYTE*)pdwProvType, &size))
@@ -1058,7 +1061,7 @@ BOOL WINAPI CryptEnumProvidersA (DWORD dwIndex, DWORD *pdwReserved,
  *  pdwProvType [O] DWORD designating the type of the provider.
  *  pszTypeName [O] Buffer that receives data from the provider type.
  *  pcbTypeName [I/O] Specifies the size of pszTypeName. Contains the number
- *                    of bytes stored in the buffer no return.
+ *                    of bytes stored in the buffer on return.
  *
  *  RETURNS
  *   Success: TRUE
