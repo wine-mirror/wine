@@ -27,6 +27,7 @@ C_SRCS = \
 	sock.c \
 	socket.c \
 	thread.c \
+	timer.c \
 	trace.c \
 	unicode.c
 

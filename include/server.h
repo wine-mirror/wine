@@ -967,6 +967,43 @@ struct set_registry_levels_request
 };
 
 
+/* Create a waitable timer */
+struct create_timer_request
+{
+    IN  int          inherit;       /* inherit flag */
+    IN  int          manual;        /* manual reset */
+    OUT int          handle;        /* handle to the timer */
+    IN  WCHAR        name[1];       /* timer name */
+};
+
+
+/* Open a waitable timer */
+struct open_timer_request
+{
+    IN  unsigned int access;        /* wanted access rights */
+    IN  int          inherit;       /* inherit flag */
+    OUT int          handle;        /* handle to the timer */
+    IN  WCHAR        name[1];       /* timer name */
+};
+
+/* Set a waitable timer */
+struct set_timer_request
+{
+    IN  int          handle;        /* handle to the timer */
+    IN  int          sec;           /* next expiration absolute time */
+    IN  int          usec;          /* next expiration absolute time */
+    IN  int          period;        /* timer period in ms */
+    IN  void*        callback;      /* callback function */
+    IN  void*        arg;           /* callback argument */
+};
+
+/* Cancel a waitable timer */
+struct cancel_timer_request
+{
+    IN  int          handle;        /* handle to the timer */
+};
+
+
 /* Everything below this line is generated automatically by tools/make_requests */
 /* ### make_requests begin ### */
 
@@ -1058,6 +1095,10 @@ enum request
     REQ_LOAD_REGISTRY,
     REQ_SAVE_REGISTRY,
     REQ_SET_REGISTRY_LEVELS,
+    REQ_CREATE_TIMER,
+    REQ_OPEN_TIMER,
+    REQ_SET_TIMER,
+    REQ_CANCEL_TIMER,
     REQ_NB_REQUESTS
 };
 

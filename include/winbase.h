@@ -1086,7 +1086,8 @@ typedef struct tagCOMMTIMEOUTS {
   
 #include "poppack.h"
 
-typedef VOID (CALLBACK *PAPCFUNC)(ULONG_PTR);
+typedef void (CALLBACK *PAPCFUNC)(ULONG_PTR);
+typedef void (CALLBACK *PTIMERAPCROUTINE)(LPVOID,DWORD,DWORD);
 
 BOOL      WINAPI ClearCommError(INT,LPDWORD,LPCOMSTAT);
 BOOL      WINAPI BuildCommDCBA(LPCSTR,LPDCB);
@@ -1154,7 +1155,8 @@ BOOL      WINAPI AreFileApisANSI(void);
 BOOL        WINAPI BackupEventLogA(HANDLE,LPCSTR);
 BOOL        WINAPI BackupEventLogW(HANDLE,LPCWSTR);
 #define     BackupEventLog WINELIB_NAME_AW(BackupEventLog)
-BOOL      WINAPI Beep(DWORD,DWORD);
+BOOL        WINAPI Beep(DWORD,DWORD);
+BOOL        WINAPI CancelWaitableTimer(HANDLE);
 BOOL        WINAPI ClearEventLogA(HANDLE,LPCSTR);
 BOOL        WINAPI ClearEventLogW(HANDLE,LPCWSTR);
 #define     ClearEventLog WINELIB_NAME_AW(ClearEventLog)
@@ -1198,6 +1200,9 @@ HANDLE    WINAPI CreateSemaphoreA(LPSECURITY_ATTRIBUTES,LONG,LONG,LPCSTR);
 HANDLE    WINAPI CreateSemaphoreW(LPSECURITY_ATTRIBUTES,LONG,LONG,LPCWSTR);
 #define     CreateSemaphore WINELIB_NAME_AW(CreateSemaphore)
 HANDLE      WINAPI CreateThread(LPSECURITY_ATTRIBUTES,DWORD,LPTHREAD_START_ROUTINE,LPVOID,DWORD,LPDWORD);
+HANDLE      WINAPI CreateWaitableTimerA(LPSECURITY_ATTRIBUTES,BOOL,LPCSTR);
+HANDLE      WINAPI CreateWaitableTimerW(LPSECURITY_ATTRIBUTES,BOOL,LPCWSTR);
+#define     CreateWaitableTimer WINELIB_NAME_AW(CreateWaitableTimer)
 BOOL        WINAPI DebugActiveProcess(DWORD);
 void        WINAPI DebugBreak(void);
 BOOL        WINAPI DeregisterEventSource(HANDLE);
@@ -1335,10 +1340,11 @@ BOOL      WINAPI GetStringTypeExA(LCID,DWORD,LPCSTR,INT,LPWORD);
 BOOL      WINAPI GetStringTypeExW(LCID,DWORD,LPCWSTR,INT,LPWORD);
 #define     GetStringTypeEx WINELIB_NAME_AW(GetStringTypeEx)
 VOID        WINAPI GetSystemInfo(LPSYSTEM_INFO);
-BOOL      WINAPI GetSystemPowerStatus(LPSYSTEM_POWER_STATUS);
+BOOL        WINAPI GetSystemPowerStatus(LPSYSTEM_POWER_STATUS);
 VOID        WINAPI GetSystemTime(LPSYSTEMTIME);
-INT       WINAPI GetTimeFormatA(LCID,DWORD,LPSYSTEMTIME,LPCSTR,LPSTR,INT);
-INT       WINAPI GetTimeFormatW(LCID,DWORD,LPSYSTEMTIME,LPCWSTR,LPWSTR,INT);
+VOID        WINAPI GetSystemTimeAsFileTime(LPFILETIME);
+INT         WINAPI GetTimeFormatA(LCID,DWORD,LPSYSTEMTIME,LPCSTR,LPSTR,INT);
+INT         WINAPI GetTimeFormatW(LCID,DWORD,LPSYSTEMTIME,LPCWSTR,LPWSTR,INT);
 #define     GetTimeFormat WINELIB_NAME_AW(GetTimeFormat)
 BOOL        WINAPI GetThreadContext(HANDLE,CONTEXT *);
 LCID        WINAPI GetThreadLocale(void);
@@ -1413,8 +1419,11 @@ HANDLE    WINAPI OpenSemaphoreA(DWORD,BOOL,LPCSTR);
 HANDLE    WINAPI OpenSemaphoreW(DWORD,BOOL,LPCWSTR);
 #define     OpenSemaphore WINELIB_NAME_AW(OpenSemaphore)
 BOOL        WINAPI OpenThreadToken(HANDLE,DWORD,BOOL,PHANDLE);
-BOOL      WINAPI PulseEvent(HANDLE);
-BOOL      WINAPI PurgeComm(HANDLE,DWORD);
+HANDLE      WINAPI OpenWaitableTimerA(DWORD,BOOL,LPCSTR);
+HANDLE      WINAPI OpenWaitableTimerW(DWORD,BOOL,LPCWSTR);
+#define     OpenWaitableTimer WINELIB_NAME_AW(OpenWaitableTimer)
+BOOL        WINAPI PulseEvent(HANDLE);
+BOOL        WINAPI PurgeComm(HANDLE,DWORD);
 DWORD       WINAPI QueryDosDeviceA(LPCSTR,LPSTR,DWORD);
 DWORD       WINAPI QueryDosDeviceW(LPCWSTR,LPWSTR,DWORD);
 #define     QueryDosDevice WINELIB_NAME_AW(QueryDosDevice)
@@ -1484,9 +1493,10 @@ BOOL      WINAPI SetSystemPowerState(BOOL,BOOL);
 BOOL      WINAPI SetSystemTime(const SYSTEMTIME*);
 DWORD       WINAPI SetThreadAffinityMask(HANDLE,DWORD);
 BOOL        WINAPI SetThreadContext(HANDLE,const CONTEXT *);
-BOOL      WINAPI SetThreadLocale(LCID);
-BOOL      WINAPI SetThreadPriority(HANDLE,INT);
-BOOL      WINAPI SetTimeZoneInformation(const LPTIME_ZONE_INFORMATION);
+BOOL        WINAPI SetThreadLocale(LCID);
+BOOL        WINAPI SetThreadPriority(HANDLE,INT);
+BOOL        WINAPI SetTimeZoneInformation(const LPTIME_ZONE_INFORMATION);
+BOOL        WINAPI SetWaitableTimer(HANDLE,const LARGE_INTEGER*,LONG,PTIMERAPCROUTINE,LPVOID,BOOL);
 VOID        WINAPI Sleep(DWORD);
 DWORD       WINAPI SleepEx(DWORD,BOOL);
 DWORD       WINAPI SuspendThread(HANDLE);

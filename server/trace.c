@@ -999,6 +999,47 @@ static void dump_set_registry_levels_request( struct set_registry_levels_request
     fprintf( stderr, " version=%d", req->version );
 }
 
+static void dump_create_timer_request( struct create_timer_request *req )
+{
+    fprintf( stderr, " inherit=%d,", req->inherit );
+    fprintf( stderr, " manual=%d,", req->manual );
+    fprintf( stderr, " name=" );
+    dump_unicode_string( req->name );
+}
+
+static void dump_create_timer_reply( struct create_timer_request *req )
+{
+    fprintf( stderr, " handle=%d", req->handle );
+}
+
+static void dump_open_timer_request( struct open_timer_request *req )
+{
+    fprintf( stderr, " access=%08x,", req->access );
+    fprintf( stderr, " inherit=%d,", req->inherit );
+    fprintf( stderr, " name=" );
+    dump_unicode_string( req->name );
+}
+
+static void dump_open_timer_reply( struct open_timer_request *req )
+{
+    fprintf( stderr, " handle=%d", req->handle );
+}
+
+static void dump_set_timer_request( struct set_timer_request *req )
+{
+    fprintf( stderr, " handle=%d,", req->handle );
+    fprintf( stderr, " sec=%d,", req->sec );
+    fprintf( stderr, " usec=%d,", req->usec );
+    fprintf( stderr, " period=%d,", req->period );
+    fprintf( stderr, " callback=%p,", req->callback );
+    fprintf( stderr, " arg=%p", req->arg );
+}
+
+static void dump_cancel_timer_request( struct cancel_timer_request *req )
+{
+    fprintf( stderr, " handle=%d", req->handle );
+}
+
 static const dump_func req_dumpers[REQ_NB_REQUESTS] = {
     (dump_func)dump_new_process_request,
     (dump_func)dump_new_thread_request,
@@ -1086,6 +1127,10 @@ static const dump_func req_dumpers[REQ_NB_REQUESTS] = {
     (dump_func)dump_load_registry_request,
     (dump_func)dump_save_registry_request,
     (dump_func)dump_set_registry_levels_request,
+    (dump_func)dump_create_timer_request,
+    (dump_func)dump_open_timer_request,
+    (dump_func)dump_set_timer_request,
+    (dump_func)dump_cancel_timer_request,
 };
 
 static const dump_func reply_dumpers[REQ_NB_REQUESTS] = {
@@ -1173,6 +1218,10 @@ static const dump_func reply_dumpers[REQ_NB_REQUESTS] = {
     (dump_func)dump_enum_key_value_reply,
     (dump_func)0,
     (dump_func)0,
+    (dump_func)0,
+    (dump_func)0,
+    (dump_func)dump_create_timer_reply,
+    (dump_func)dump_open_timer_reply,
     (dump_func)0,
     (dump_func)0,
 };
@@ -1264,6 +1313,10 @@ static const char * const req_names[REQ_NB_REQUESTS] = {
     "load_registry",
     "save_registry",
     "set_registry_levels",
+    "create_timer",
+    "open_timer",
+    "set_timer",
+    "cancel_timer",
 };
 
 /* ### make_requests end ### */

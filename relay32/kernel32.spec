@@ -873,12 +873,12 @@ import  ntdll.dll
 
 # NT 4.0 additions
 856 stub CancelIo
-857 stub CancelWaitableTimer
+857 stdcall CancelWaitableTimer(long) CancelWaitableTimer
 858 stdcall CopyFileExA (str str ptr ptr ptr long) CopyFileExA
 859 stdcall CopyFileExW (wstr wstr ptr ptr ptr long) CopyFileExW
 860 stub CreateFiber
-861 stub CreateWaitableTimerA
-862 stub CreateWaitableTimerW
+861 stdcall CreateWaitableTimerA(ptr long str) CreateWaitableTimerA
+862 stdcall CreateWaitableTimerW(ptr long wstr) CreateWaitableTimerW
 863 stub DeleteFiber
 864 stub DuplicateConsoleHandle
 865 stub FindFirstFileExA
@@ -896,8 +896,8 @@ import  ntdll.dll
 878 stdcall InterlockedCompareExchange (ptr long long) InterlockedCompareExchange
 879 stdcall InterlockedExchangeAdd (ptr long ) InterlockedExchangeAdd
 880 stdcall IsProcessorFeaturePresent(long) IsProcessorFeaturePresent
-881 stub OpenWaitableTimerA
-882 stub OpenWaitableTimerW
+881 stdcall OpenWaitableTimerA(long long str) OpenWaitableTimerA
+882 stdcall OpenWaitableTimerW(long long wstr) OpenWaitableTimerW
 883 stub ReadConsoleInputExA
 884 stub ReadConsoleInputExW
 885 stub ReadDirectoryChangesW
@@ -909,7 +909,7 @@ import  ntdll.dll
 891 stdcall SetProcessPriorityBoost(long long) SetProcessPriorityBoost
 892 stub SetThreadIdealProcessor
 893 stub SetThreadPriorityBoost
-894 stub SetWaitableTimer
+894 stdcall SetWaitableTimer(long ptr long ptr ptr long) SetWaitableTimer
 895 stub SignalObjectAndWait
 896 stub SwitchToFiber
 897 stub SwitchToThread

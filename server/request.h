@@ -155,6 +155,10 @@ DECL_HANDLER(delete_key_value);
 DECL_HANDLER(load_registry);
 DECL_HANDLER(save_registry);
 DECL_HANDLER(set_registry_levels);
+DECL_HANDLER(create_timer);
+DECL_HANDLER(open_timer);
+DECL_HANDLER(set_timer);
+DECL_HANDLER(cancel_timer);
 
 #ifdef WANT_REQUEST_HANDLERS
 
@@ -248,6 +252,10 @@ static const struct handler {
     { (void(*)())req_load_registry, sizeof(struct load_registry_request) },
     { (void(*)())req_save_registry, sizeof(struct save_registry_request) },
     { (void(*)())req_set_registry_levels, sizeof(struct set_registry_levels_request) },
+    { (void(*)())req_create_timer, sizeof(struct create_timer_request) },
+    { (void(*)())req_open_timer, sizeof(struct open_timer_request) },
+    { (void(*)())req_set_timer, sizeof(struct set_timer_request) },
+    { (void(*)())req_cancel_timer, sizeof(struct cancel_timer_request) },
 };
 #endif  /* WANT_REQUEST_HANDLERS */
 

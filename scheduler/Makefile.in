@@ -19,7 +19,8 @@ C_SRCS = \
 	synchro.c \
 	sysdeps.c \
 	syslevel.c \
-	thread.c
+	thread.c \
+	timer.c
 
 all: $(MODULE).o
 
