@@ -82,8 +82,23 @@ UINT     WINAPI  IDirect3D9Impl_GetAdapterCount(LPDIRECT3D9 iface) {
 
 HRESULT WINAPI IDirect3D9Impl_GetAdapterIdentifier(LPDIRECT3D9 iface, UINT Adapter, DWORD Flags, D3DADAPTER_IDENTIFIER9* pIdentifier) {
     IDirect3D9Impl *This = (IDirect3D9Impl *)iface;
-    FIXME("(%p): stub\n", This);
-    return D3D_OK;
+    WINED3DADAPTER_IDENTIFIER adapter_id;
+
+    /* dx8 and dx9 have different structures to be filled in, with incompatible 
+       layouts so pass in pointers to the places to be filled via an internal 
+       structure                                                                */
+    adapter_id.Driver           = pIdentifier->Driver;          
+    adapter_id.Description      = pIdentifier->Description;     
+    adapter_id.DeviceName       = pIdentifier->DeviceName;      
+    adapter_id.DriverVersion    = &pIdentifier->DriverVersion;   
+    adapter_id.VendorId         = &pIdentifier->VendorId;        
+    adapter_id.DeviceId         = &pIdentifier->DeviceId;        
+    adapter_id.SubSysId         = &pIdentifier->SubSysId;        
+    adapter_id.Revision         = &pIdentifier->Revision;        
+    adapter_id.DeviceIdentifier = &pIdentifier->DeviceIdentifier;
+    adapter_id.WHQLLevel        = &pIdentifier->WHQLLevel;       
+
+    return IWineD3D_GetAdapterIdentifier(This->WineD3D, Adapter, Flags, &adapter_id);
 }
 
 UINT WINAPI IDirect3D9Impl_GetAdapterModeCount(LPDIRECT3D9 iface, UINT Adapter, D3DFORMAT Format) {

@@ -37,6 +37,25 @@
 
 
 /*****************************************************************************
+ * WineD3D Structures 
+ */
+
+typedef struct _WINED3DADAPTER_IDENTIFIER {
+    char           *Driver;
+    char           *Description;
+    char           *DeviceName;
+    LARGE_INTEGER  *DriverVersion; 
+    DWORD          *VendorId;
+    DWORD          *DeviceId;
+    DWORD          *SubSysId;
+    DWORD          *Revision;
+    GUID           *DeviceIdentifier;
+    DWORD          *WHQLLevel;
+} WINED3DADAPTER_IDENTIFIER;
+
+
+
+/*****************************************************************************
  * WineD3D interface 
  */
 typedef struct IWineD3D IWineD3D;
@@ -50,7 +69,7 @@ typedef struct IWineD3D IWineD3D;
     STDMETHOD_(UINT,GetAdapterModeCount)(THIS_ UINT Adapter, D3DFORMAT Format) PURE; \
     STDMETHOD(EnumAdapterModes)(THIS_ UINT  Adapter, UINT  Mode, D3DFORMAT Format, D3DDISPLAYMODE * pMode) PURE; \
     STDMETHOD(GetAdapterDisplayMode)(THIS_ UINT  Adapter, D3DDISPLAYMODE * pMode) PURE; \
-    
+    STDMETHOD(GetAdapterIdentifier)(THIS_ UINT Adapter, DWORD Flags, WINED3DADAPTER_IDENTIFIER* pIdentifier) PURE; \
 
 DECLARE_INTERFACE_(IWineD3D,IUnknown) { IWineD3D_METHODS };
 #undef INTERFACE
@@ -67,7 +86,7 @@ DECLARE_INTERFACE_(IWineD3D,IUnknown) { IWineD3D_METHODS };
 #define IWineD3D_GetAdapterModeCount(p,a,b)               (p)->lpVtbl->GetAdapterModeCount(p,a,b)
 #define IWineD3D_EnumAdapterModes(p,a,b,c,d)              (p)->lpVtbl->EnumAdapterModes(p,a,b,c,d)
 #define IWineD3D_GetAdapterDisplayMode(p,a,b)             (p)->lpVtbl->GetAdapterDisplayMode(p,a,b)
-
+#define IWineD3D_GetAdapterIdentifier(p,a,b,c)            (p)->lpVtbl->GetAdapterIdentifier(p,a,b,c)
 #endif
 
 /* Define the main WineD3D entrypoint */

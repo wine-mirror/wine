@@ -36,6 +36,7 @@
 #include "d3d9.h"
 #include "d3d9types.h"
 #include "wine/wined3d_interface.h"
+#include "wine/wined3d_gl.h"
 
 extern int vs_mode;
 #define VS_NONE 0
@@ -45,6 +46,26 @@ extern int vs_mode;
 extern int ps_mode;
 #define PS_NONE 0
 #define PS_HW   1
+
+/* X11 locking */
+
+extern void (*wine_tsx11_lock_ptr)(void);
+extern void (*wine_tsx11_unlock_ptr)(void);
+
+/* As GLX relies on X, this is needed */
+extern int num_lock;
+
+#if 0
+#define ENTER_GL() ++num_lock; if (num_lock > 1) FIXME("Recursive use of GL lock to: %d\n", num_lock); wine_tsx11_lock_ptr()
+#define LEAVE_GL() if (num_lock != 1) FIXME("Recursive use of GL lock: %d\n", num_lock); --num_lock; wine_tsx11_unlock_ptr()
+#else
+#define ENTER_GL() wine_tsx11_lock_ptr()
+#define LEAVE_GL() wine_tsx11_unlock_ptr()
+#endif
+
+/*****************************************************************************
+ * Defines
+ */
 
 /*****************************************************************************
  * IWineD3D implementation structure
@@ -57,6 +78,10 @@ typedef struct IWineD3DImpl
 
     /* WineD3D Information */
     UINT                    dxVersion;
+
+    /* GL Information */
+    BOOL                    isGLInfoValid;
+    WineD3D_GL_Info         gl_info;
 } IWineD3DImpl;
 
 extern IWineD3DVtbl IWineD3D_Vtbl;

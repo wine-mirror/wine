@@ -215,52 +215,23 @@ UINT WINAPI IDirect3D8Impl_GetAdapterCount (LPDIRECT3D8 iface) {
 HRESULT  WINAPI  IDirect3D8Impl_GetAdapterIdentifier       (LPDIRECT3D8 iface,
                                                             UINT Adapter, DWORD Flags, D3DADAPTER_IDENTIFIER8* pIdentifier) {
     IDirect3D8Impl *This = (IDirect3D8Impl *)iface;
+    WINED3DADAPTER_IDENTIFIER adapter_id;
 
-    TRACE_(d3d_caps)("(%p}->(Adapter: %d, Flags: %lx, pId=%p)\n", This, Adapter, Flags, pIdentifier);
+    /* dx8 and dx9 have different structures to be filled in, with incompatible 
+       layouts so pass in pointers to the places to be filled via an internal 
+       structure                                                                */
+    adapter_id.Driver           = pIdentifier->Driver;          
+    adapter_id.Description      = pIdentifier->Description;     
+    adapter_id.DeviceName       = NULL;      
+    adapter_id.DriverVersion    = &pIdentifier->DriverVersion;   
+    adapter_id.VendorId         = &pIdentifier->VendorId;        
+    adapter_id.DeviceId         = &pIdentifier->DeviceId;        
+    adapter_id.SubSysId         = &pIdentifier->SubSysId;        
+    adapter_id.Revision         = &pIdentifier->Revision;        
+    adapter_id.DeviceIdentifier = &pIdentifier->DeviceIdentifier;
+    adapter_id.WHQLLevel        = &pIdentifier->WHQLLevel;       
 
-    if (Adapter >= IDirect3D8Impl_GetAdapterCount(iface)) {
-        return D3DERR_INVALIDCALL;
-    }
-
-    if (Adapter == 0) { /* Display */   
-        /* If we don't know the device settings, go query them now */
-        if (This->isGLInfoValid == FALSE) {
-	  WineD3D_Context* ctx = WineD3DCreateFakeGLContext();
-	  if (NULL != ctx) IDirect3D8Impl_FillGLCaps(iface, ctx->display);
-	  WineD3DReleaseFakeGLContext(ctx);
-	}
-        if (This->isGLInfoValid == TRUE) {
-	  TRACE_(d3d_caps)("device/Vendor Name and Version detection using FillGLCaps\n");
-	  strcpy(pIdentifier->Driver, "Display");
-	  strcpy(pIdentifier->Description, "Direct3D HAL");
-	  pIdentifier->DriverVersion.u.HighPart = 0xa;
-	  pIdentifier->DriverVersion.u.LowPart = This->gl_info.gl_driver_version;
-	  pIdentifier->VendorId = This->gl_info.gl_vendor;
-	  pIdentifier->DeviceId = This->gl_info.gl_card;
-	  pIdentifier->SubSysId = 0;
-	  pIdentifier->Revision = 0;
-	} else {
-	  WARN_(d3d_caps)("Cannot get GLCaps for device/Vendor Name and Version detection using FillGLCaps, currently using NVIDIA identifiers\n");
-	  strcpy(pIdentifier->Driver, "Display");
-	  strcpy(pIdentifier->Description, "Direct3D HAL");
-	  pIdentifier->DriverVersion.u.HighPart = 0xa;
-	  pIdentifier->DriverVersion.u.LowPart = MAKEDWORD_VERSION(53, 96); /* last Linux Nvidia drivers */
-	  pIdentifier->VendorId = VENDOR_NVIDIA;
-	  pIdentifier->DeviceId = CARD_NVIDIA_GEFORCE4_TI4600;
-	  pIdentifier->SubSysId = 0;
-	  pIdentifier->Revision = 0;
-	}
-        /*FIXME: memcpy(&pIdentifier->DeviceIdentifier, ??, sizeof(??GUID)); */
-        if (Flags & D3DENUM_NO_WHQL_LEVEL) {
-            pIdentifier->WHQLLevel = 0;
-        } else {
-            pIdentifier->WHQLLevel = 1;
-        }
-    } else {
-        FIXME_(d3d_caps)("Adapter not primary display\n");
-    }
-
-    return D3D_OK;
+    return IWineD3D_GetAdapterIdentifier(This->WineD3D, Adapter, Flags, &adapter_id);
 }
 
 UINT WINAPI IDirect3D8Impl_GetAdapterModeCount (LPDIRECT3D8 iface,UINT Adapter) {
