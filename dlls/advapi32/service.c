@@ -533,6 +533,7 @@ SC_HANDLE WINAPI OpenServiceW( SC_HANDLE hSCManager, LPCWSTR lpServiceName,
     if (r!=ERROR_SUCCESS)
     {
         free_sc_handle( retval );
+        SetLastError( ERROR_SERVICE_DOES_NOT_EXIST );
         return NULL;
     }
     
