@@ -1144,6 +1144,9 @@ BOOL WINAPI WriteFile( HANDLE hFile, LPCVOID buffer, DWORD bytesToWrite,
     {
         if ((errno == EAGAIN) || (errno == EINTR)) continue;
         if ((errno == EFAULT) && VIRTUAL_HandleFault( buffer )) continue;
+        if (errno == ENOSPC)
+            SetLastError( ERROR_DISK_FULL );
+        else
         FILE_SetDosError();
         break;
     }
