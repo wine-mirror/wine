@@ -76,7 +76,7 @@ VOID WINAPI _KERNEL32_86(CRITICAL_SECTION *lock)
 /************************************************************************
  *           SYSLEVEL_EnterWin16Lock
  */
-VOID SYSLEVEL_EnterWin16Lock(VOID)
+VOID WINAPI SYSLEVEL_EnterWin16Lock(VOID)
 {
     TRACE(win32, "thread %04x (pid %d) about to enter\n", 
           THREAD_Current()->teb_sel, getpid());
@@ -90,7 +90,7 @@ VOID SYSLEVEL_EnterWin16Lock(VOID)
 /************************************************************************
  *           SYSLEVEL_LeaveWin16Lock
  */
-VOID SYSLEVEL_LeaveWin16Lock(VOID)
+VOID WINAPI SYSLEVEL_LeaveWin16Lock(VOID)
 {
     TRACE(win32, "thread %04x (pid %d) about to leave, count is %ld\n", 
           THREAD_Current()->teb_sel, getpid(), Win16Mutex.RecursionCount);

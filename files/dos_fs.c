@@ -1225,6 +1225,7 @@ HANDLE16 WINAPI FindFirstFile16( LPCSTR path, WIN32_FIND_DATA32A *data )
     HGLOBAL16 handle;
     FIND_FIRST_INFO *info;
 
+    data->dwReserved0 = data->dwReserved1 = 0x0;
     if (!path) return 0;
     if (!DOSFS_GetFullName( path, FALSE, &full_name ))
         return INVALID_HANDLE_VALUE16;
