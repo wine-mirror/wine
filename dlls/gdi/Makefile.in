@@ -24,7 +24,6 @@ C_SRCS = \
 	$(TOPOBJDIR)/objects/enhmetafile.c \
 	$(TOPOBJDIR)/objects/font.c \
 	$(TOPOBJDIR)/objects/gdiobj.c \
-	$(TOPOBJDIR)/objects/linedda.c \
 	$(TOPOBJDIR)/objects/metafile.c \
 	$(TOPOBJDIR)/objects/palette.c \
 	$(TOPOBJDIR)/objects/pen.c \
