@@ -143,6 +143,8 @@ static inline LRESULT WINAPI ButtonWndProc_locked(WND* wndPtr, UINT uMsg,
         break;
 
     case WM_LBUTTONUP:
+	/* FIXME: real windows uses extra flags in the status for this */
+        if (GetCapture() != hWnd) break;
         ReleaseCapture();
         if (!(infoPtr->state & BUTTON_HIGHLIGHTED)) break;
         SendMessageA( hWnd, BM_SETSTATE, FALSE, 0 );
