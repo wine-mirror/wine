@@ -421,9 +421,8 @@ int DOSCONF_ReadConfig(void)
     int ret = 1;
 
     PROFILE_GetWineIniString( "wine", "config.sys", "", buffer, sizeof(buffer) );
-    filename = strtok(buffer, ",");
+    if (!(filename = strtok(buffer, ","))) return ret;
     menuname = strtok(NULL,   ",");
-    if (!filename) return ret;
 
     DOSFS_GetFullName(filename, FALSE, &fullname);
     if (menuname) menu_default = strdup(menuname);
