@@ -398,7 +398,7 @@ DWORD WINAPI FormatMessageW(
         FIXME("line wrapping not supported.\n");
     from = NULL;
     if (dwFlags & FORMAT_MESSAGE_FROM_STRING) {
-        from = HeapAlloc( GetProcessHeap(), 0, (strlenW((LPWSTR)lpSource) + 1) +
+        from = HeapAlloc( GetProcessHeap(), 0, (strlenW((LPWSTR)lpSource) + 1) *
             sizeof(WCHAR) );
         strcpyW( from, (LPWSTR)lpSource );
     }
