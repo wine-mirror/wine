@@ -734,8 +734,6 @@ BOOL SIGNAL_Init(void)
     }
 #endif  /* HAVE_SIGALTSTACK */
     
-    /* ignore SIGPIPE so that WINSOCK can get a EPIPE error instead  */
-    signal( SIGPIPE, SIG_IGN );
     /* automatic child reaping to avoid zombies */
     signal( SIGCHLD, SIG_IGN );
 

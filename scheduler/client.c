@@ -11,6 +11,7 @@
 #include <errno.h>
 #include <fcntl.h>
 #include <pwd.h>
+#include <signal.h>
 #include <stdio.h>
 #include <string.h>
 #include <sys/types.h>
@@ -411,16 +412,19 @@ static int server_connect( const char *oldcwd, const char *serverdir )
         fatal_error( "'%s/%s' is not owned by you\n", serverdir, SOCKETNAME );
 
     /* try to connect to it */
-    if ((s = socket( AF_UNIX, SOCK_STREAM, 0 )) == -1) fatal_perror( "socket" );
     addr.sun_family = AF_UNIX;
     strcpy( addr.sun_path, SOCKETNAME );
     slen = sizeof(addr) - sizeof(addr.sun_path) + strlen(addr.sun_path) + 1;
 #ifdef HAVE_SOCKADDR_SUN_LEN
     addr.sun_len = slen;
 #endif
+    if ((s = socket( AF_UNIX, SOCK_STREAM, 0 )) == -1) fatal_perror( "socket" );
     if (connect( s, (struct sockaddr *)&addr, slen ) == -1)
     {
-        usleep( 50000 );  /* in case the server was starting right now */
+        close( s );
+        /* wait a bit and retry with a new socket */
+        usleep( 50000 );
+        if ((s = socket( AF_UNIX, SOCK_STREAM, 0 )) == -1) fatal_perror( "socket" );
         if (connect( s, (struct sockaddr *)&addr, slen ) == -1)
             fatal_error( "'%s/%s' exists,\n"
                          "   but I cannot connect to it; maybe the server has crashed?\n"
@@ -440,17 +444,9 @@ static int server_connect( const char *oldcwd, const char *serverdir )
 int CLIENT_InitServer(void)
 {
     int fd, size;
-    const char *env_fd;
     char hostname[64];
     char *oldcwd, *serverdir;
     const char *configdir;
-
-    /* first check if we inherited the socket fd */
-    if ((env_fd = getenv( "__WINE_FD" )) && isdigit(env_fd[0]))
-    {
-        fd = atoi( env_fd );
-        if (fcntl( fd, F_SETFD, 1 ) != -1) return fd; /* set close on exec flag */
-    }
 
     /* retrieve the current directory */
     for (size = 512; ; size *= 2)
@@ -496,6 +492,9 @@ int CLIENT_InitThread(void)
     struct init_thread_request *req;
     TEB *teb = NtCurrentTeb();
     int fd;
+
+    /* ignore SIGPIPE so that we get a EPIPE error instead  */
+    signal( SIGPIPE, SIG_IGN );
 
     if (wait_reply_fd( &fd ) || (fd == -1))
         server_protocol_error( "no fd passed on first request\n" );

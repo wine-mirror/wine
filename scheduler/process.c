@@ -207,9 +207,6 @@ BOOL PROCESS_Init(void)
     initial_envdb.hStdout  = initial_startup.hStdOutput = req->hstdout;
     initial_envdb.hStderr  = initial_startup.hStdError  = req->hstderr;
 
-    /* Initialize signal handling */
-    if (!SIGNAL_Init()) return FALSE;
-
     /* Remember TEB selector of initial process for emergency use */
     SYSLEVEL_EmergencyTeb = NtCurrentTeb()->teb_sel;
 
@@ -318,74 +315,70 @@ static inline char *build_command_line( char **argv )
  */
 static void start_process(void)
 {
-    __TRY
-    {
-        struct init_process_done_request *req = get_req_buffer();
-        int debugged, console_app;
-        HMODULE16 hModule16;
-        UINT cmdShow = SW_SHOWNORMAL;
-        LPTHREAD_START_ROUTINE entry;
-        PDB *pdb = PROCESS_Current();
-        HMODULE module = pdb->exe_modref->module;
+    struct init_process_done_request *req = get_req_buffer();
+    int debugged, console_app;
+    HMODULE16 hModule16;
+    UINT cmdShow = SW_SHOWNORMAL;
+    LPTHREAD_START_ROUTINE entry;
+    PDB *pdb = PROCESS_Current();
+    HMODULE module = pdb->exe_modref->module;
 
-        /* Increment EXE refcount */
-        pdb->exe_modref->refCount++;
+    /* Increment EXE refcount */
+    pdb->exe_modref->refCount++;
 
-        /* build command line */
-        if (!(pdb->env_db->cmd_line = build_command_line( main_exe_argv ))) goto error;
+    /* build command line */
+    if (!(pdb->env_db->cmd_line = build_command_line( main_exe_argv ))) goto error;
 
-        /* Retrieve entry point address */
-        entry = (LPTHREAD_START_ROUTINE)RVA_PTR( module, OptionalHeader.AddressOfEntryPoint );
-        console_app = (PE_HEADER(module)->OptionalHeader.Subsystem == IMAGE_SUBSYSTEM_WINDOWS_CUI);
+    /* Retrieve entry point address */
+    entry = (LPTHREAD_START_ROUTINE)RVA_PTR( module, OptionalHeader.AddressOfEntryPoint );
+    console_app = (PE_HEADER(module)->OptionalHeader.Subsystem == IMAGE_SUBSYSTEM_WINDOWS_CUI);
 
-        if (console_app) pdb->flags |= PDB32_CONSOLE_PROC;
+    if (console_app) pdb->flags |= PDB32_CONSOLE_PROC;
 
-        /* Signal the parent process to continue */
-        req->module = (void *)module;
-        req->entry  = entry;
-        req->gui    = !console_app;
-        server_call( REQ_INIT_PROCESS_DONE );
-        debugged = req->debugged;
+    /* Signal the parent process to continue */
+    req->module = (void *)module;
+    req->entry  = entry;
+    req->gui    = !console_app;
+    server_call( REQ_INIT_PROCESS_DONE );
+    debugged = req->debugged;
 
-        /* Load KERNEL (necessary for TASK_Create) */
-        if (!LoadLibraryA( "KERNEL32" )) goto error;
+    /* Install signal handlers; this cannot be done before, since we cannot
+     * send exceptions to the debugger before the create process event that
+     * is sent by REQ_INIT_PROCESS_DONE */
+    if (!SIGNAL_Init()) goto error;
 
-        /* Create 16-bit dummy module */
-        if ((hModule16 = MODULE_CreateDummyModule( pdb->exe_modref->filename, module )) < 32)
-            ExitProcess( hModule16 );
+    /* Load KERNEL (necessary for TASK_Create) */
+    if (!LoadLibraryA( "KERNEL32" )) goto error;
 
-        if (pdb->env_db->startup_info->dwFlags & STARTF_USESHOWWINDOW)
-            cmdShow = pdb->env_db->startup_info->wShowWindow;
-        if (!TASK_Create( (NE_MODULE *)GlobalLock16( hModule16 ), cmdShow,
-                          NtCurrentTeb(), NULL, 0 ))
-            goto error;
+    /* Create 16-bit dummy module */
+    if ((hModule16 = MODULE_CreateDummyModule( pdb->exe_modref->filename, module )) < 32)
+        ExitProcess( hModule16 );
 
-        /* Load the system dlls */
-        if (!load_system_dlls()) goto error;
+    if (pdb->env_db->startup_info->dwFlags & STARTF_USESHOWWINDOW)
+        cmdShow = pdb->env_db->startup_info->wShowWindow;
+    if (!TASK_Create( (NE_MODULE *)GlobalLock16( hModule16 ), cmdShow,
+                      NtCurrentTeb(), NULL, 0 ))
+        goto error;
 
-        EnterCriticalSection( &pdb->crit_section );
-        PE_InitTls();
-        MODULE_DllProcessAttach( pdb->exe_modref, (LPVOID)1 );
-        LeaveCriticalSection( &pdb->crit_section );
+    /* Load the system dlls */
+    if (!load_system_dlls()) goto error;
 
-        /* Call UserSignalProc ( USIG_PROCESS_RUNNING ... ) only for non-GUI win32 apps */
-        if (console_app) PROCESS_CallUserSignalProc( USIG_PROCESS_RUNNING, 0 );
+    EnterCriticalSection( &pdb->crit_section );
+    PE_InitTls();
+    MODULE_DllProcessAttach( pdb->exe_modref, (LPVOID)1 );
+    LeaveCriticalSection( &pdb->crit_section );
 
-        TRACE_(relay)( "Starting Win32 process (entryproc=%p)\n", entry );
-        if (debugged) DbgBreakPoint();
-        /* FIXME: should use _PEB as parameter for NT 3.5 programs !
-         * Dunno about other OSs */
-        ExitThread( entry(NULL) );
+    /* Call UserSignalProc ( USIG_PROCESS_RUNNING ... ) only for non-GUI win32 apps */
+    if (console_app) PROCESS_CallUserSignalProc( USIG_PROCESS_RUNNING, 0 );
 
-    error:
-        ExitProcess( GetLastError() );
+    TRACE_(relay)( "Starting Win32 process (entryproc=%p)\n", entry );
+    if (debugged) DbgBreakPoint();
+    /* FIXME: should use _PEB as parameter for NT 3.5 programs !
+     * Dunno about other OSs */
+    ExitThread( entry(NULL) );
 
-    }
-    __EXCEPT(UnhandledExceptionFilter)
-    {
-        TerminateThread( GetCurrentThread(), GetExceptionCode() );
-    }
-    __ENDTRY
+ error:
+    ExitProcess( GetLastError() );
 }
 
 
@@ -409,8 +402,6 @@ static void PROCESS_Start( HMODULE main_module, LPCSTR filename )
     if (!THREAD_InitStack( NtCurrentTeb(),
                            PE_HEADER(main_module)->OptionalHeader.SizeOfStackReserve, TRUE ))
         ExitProcess( GetLastError() );
-
-    SIGNAL_Init();  /* reinitialize signal stack */
 
     /* switch to the new stack */
     SYSDEPS_SwitchToThreadStack( start_process );
