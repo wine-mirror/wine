@@ -332,14 +332,12 @@ static void VERSION_ParseVersion( HKEY hkey, BOOL *got_win_ver, BOOL *got_dos_ve
 /**********************************************************************
  *         VERSION_Init
  */
-static void VERSION_Init(void)
+void VERSION_Init( const char *appname )
 {
     OBJECT_ATTRIBUTES attr;
     UNICODE_STRING nameW;
     HKEY hkey, config_key;
     BOOL got_win_ver = FALSE, got_dos_ver = FALSE;
-    WCHAR buffer[MAX_PATH], appversion[MAX_PATH+20], *appname, *p;
-    static BOOL init_done;
     static const WCHAR configW[] = {'M','a','c','h','i','n','e','\\',
                                     'S','o','f','t','w','a','r','e','\\',
                                     'W','i','n','e','\\',
@@ -347,17 +345,6 @@ static void VERSION_Init(void)
                                     'C','o','n','f','i','g',0};
     static const WCHAR appdefaultsW[] = {'A','p','p','D','e','f','a','u','l','t','s','\\',0};
     static const WCHAR versionW[] = {'\\','V','e','r','s','i','o','n',0};
-
-    if (init_done) return;
-    if (!GetModuleFileNameW( 0, buffer, MAX_PATH ))
-    {
-        WARN( "could not get module file name\n" );
-        return;
-    }
-    init_done = TRUE;
-    appname = buffer;
-    if ((p = strrchrW( appname, '/' ))) appname = p + 1;
-    if ((p = strrchrW( appname, '\\' ))) appname = p + 1;
 
     attr.Length = sizeof(attr);
     attr.RootDirectory = 0;
@@ -371,20 +358,32 @@ static void VERSION_Init(void)
     attr.RootDirectory = config_key;
 
     /* open AppDefaults\\appname\\Version key */
-
-    strcpyW( appversion, appdefaultsW );
-    strcatW( appversion, appname );
-    strcatW( appversion, versionW );
-    RtlInitUnicodeString( &nameW, appversion );
-
-    if (!NtOpenKey( &hkey, KEY_ALL_ACCESS, &attr ))
+    if (appname && *appname)
     {
-        VERSION_ParseVersion( hkey, &got_win_ver, &got_dos_ver );
-        NtClose( hkey );
+        const char *p;
+        DWORD len;
+        WCHAR appversion[MAX_PATH+20];
+
+        if ((p = strrchr( appname, '/' ))) appname = p + 1;
+        if ((p = strrchr( appname, '\\' ))) appname = p + 1;
+
+        strcpyW( appversion, appdefaultsW );
+        len = strlenW(appversion);
+        RtlMultiByteToUnicodeN( appversion + len, sizeof(appversion) - len*sizeof(WCHAR),
+                                &len, appname, strlen(appname)+1 );
+        strcatW( appversion, versionW );
+        TRACE( "getting version from %s\n", debugstr_w(appversion) );
+        RtlInitUnicodeString( &nameW, appversion );
+
+        if (!NtOpenKey( &hkey, KEY_ALL_ACCESS, &attr ))
+        {
+            VERSION_ParseVersion( hkey, &got_win_ver, &got_dos_ver );
+            NtClose( hkey );
+        }
+        if (got_win_ver && got_dos_ver) goto done;
     }
 
-    if (got_win_ver && got_dos_ver) goto done;
-
+    TRACE( "getting default version\n" );
     RtlInitUnicodeString( &nameW, versionW + 1 );
     if (!NtOpenKey( &hkey, KEY_ALL_ACCESS, &attr ))
     {
@@ -569,24 +568,16 @@ static WINDOWS_VERSION VERSION_GetVersion(void)
 {
     static WORD winver = 0xffff;
 
+    if (versionForced) return forcedWinVersion;  /* user has overridden any sensible checks */
+
     if (winver == 0xffff) /* to be determined */
     {
-        WINDOWS_VERSION retver;
+        WINDOWS_VERSION retver = VERSION_GetLinkedDllVersion();
 
-        VERSION_Init();
-        if (versionForced) /* user has overridden any sensible checks */
-	    winver = forcedWinVersion;
-	else
-	{
-	    retver = VERSION_GetLinkedDllVersion();
-
-	    /* cache determined value, but do not store in case of WIN31 */
-	    if (retver != WIN31) winver = retver;
-
-	    return retver;
-	}
+        /* cache determined value, but do not store in case of WIN31 */
+        if (retver != WIN31) winver = retver;
+        return retver;
     }
-
     return winver;
 }
 

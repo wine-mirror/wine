@@ -132,6 +132,7 @@ extern void PTHREAD_init_done(void);
 
 extern void RELAY_InitDebugLists(void);
 extern BOOL MAIN_MainInit(void);
+extern void VERSION_Init( const char *appname );
 
 typedef WORD (WINAPI *pUserSignalProc)( UINT, DWORD, DWORD, HMODULE16 );
 
@@ -612,6 +613,7 @@ void PROCESS_InitWine( int argc, char *argv[], LPSTR win16_exe_name, HANDLE *win
         MESSAGE( "%s: cannot open builtin library for '%s': %s\n", argv0, main_exe_name, error );
         ExitProcess(1);
     }
+    VERSION_Init( main_exe_name );
 
     switch( MODULE_GetBinaryType( main_exe_file ))
     {
