@@ -783,10 +783,13 @@ static BOOL validArg(
   if (psa == NULL)
     return FALSE;
 
-  /* Check whether the size of the chunk make sens... That's the only thing
+  /* Check whether the size of the chunk makes sense... That's the only thing
      I can think of now... */
 
-  psaSize   = HeapSize(GetProcessHeap(), 0, psa);
+  psaSize = HeapSize(GetProcessHeap(), 0, psa);
+  if (psaSize == -1)
+    /* uh, foreign heap. Better don't mess with it ! */
+    return TRUE;
 
   /* size of the descriptor when the SA is not created with CreateVector */
   descSize = sizeof(*psa) + (sizeof(*sab) * (psa->cDims-1));
