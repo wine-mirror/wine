@@ -197,8 +197,8 @@
 197 stdcall MsiLoadStringW(long long long long long)
 198 stdcall MsiMessageBoxA(long long long long long long)
 199 stdcall MsiMessageBoxW(long long long long long long)
-200 stub MsiDecomposeDescriptorA
-201 stub MsiDecomposeDescriptorW
+200 stdcall MsiDecomposeDescriptorA(str str ptr ptr ptr)
+201 stdcall MsiDecomposeDescriptorW(wstr wstr ptr ptr ptr)
 202 stub MsiProvideQualifiedComponentExA
 203 stdcall MsiProvideQualifiedComponentExW(wstr wstr long wstr long long ptr ptr)
 204 stdcall MsiEnumRelatedProductsA(str long long ptr)

@@ -120,8 +120,60 @@ void test_msiinsert(void)
     ok(r == TRUE, "file didn't exist after commit\n");
 }
 
+typedef UINT (WINAPI *fnMsiDecomposeDescriptorA)(LPCSTR, LPCSTR, LPSTR, LPSTR, DWORD *);
+fnMsiDecomposeDescriptorA MsiDecomposeDescriptorA;
+
+void test_msidecomposedesc(void)
+{
+    char prod[MAX_FEATURE_CHARS+1], comp[MAX_FEATURE_CHARS+1], feature[MAX_FEATURE_CHARS+1];
+    char *desc;
+    UINT r;
+    DWORD len;
+    HMODULE hmod;
+
+    hmod = GetModuleHandle("msi.dll");
+    if (!hmod)
+        return;
+    MsiDecomposeDescriptorA = (fnMsiDecomposeDescriptorA) 
+        GetProcAddress(hmod, "MsiDecomposeDescriptorA");
+    if (!MsiDecomposeDescriptorA)
+        return;
+
+    /* test a valid feature descriptor */
+    desc = "']gAVn-}f(ZXfeAR6.jiFollowTheWhiteRabbit>3w2x^IGfe?CxI5heAvk.";
+    len = 0;
+    r = MsiDecomposeDescriptorA(desc, prod, feature, comp, &len);
+    ok(r == ERROR_SUCCESS, "returned an error\n");
+    ok(len == strlen(desc), "length was wrong\n");
+    ok(strcmp(prod,"{90110409-6000-11D3-8CFE-0150048383C9}")==0, "product wrong\n");
+    ok(strcmp(feature,"FollowTheWhiteRabbit")==0, "feature wrong\n");
+    ok(strcmp(comp,"{A7CD68DB-EF74-49C8-FBB2-A7C463B2AC24}")==0,"component wrong\n");
+
+    /* test an invalid feature descriptor with too many characters */
+    desc = "']gAVn-}f(ZXfeAR6.ji"
+           "ThisWillFailIfTheresMoreThanAGuidsChars>"
+           "3w2x^IGfe?CxI5heAvk.";
+    len = 0;
+    r = MsiDecomposeDescriptorA(desc, prod, feature, comp, &len);
+    ok(r == ERROR_INVALID_PARAMETER, "returned wrong error\n");
+
+    /*
+     * Test a valid feature descriptor with the
+     * maximum number of characters and some trailing characters.
+     */
+    desc = "']gAVn-}f(ZXfeAR6.ji"
+           "ThisWillWorkIfTheresLTEThanAGuidsChars>"
+           "3w2x^IGfe?CxI5heAvk."
+           "extra";
+    len = 0;
+    r = MsiDecomposeDescriptorA(desc, prod, feature, comp, &len);
+    ok(r == ERROR_SUCCESS, "returned wrong error\n");
+    ok(len == (strlen(desc) - strlen("extra")), "length wrong\n");
+}
+
 START_TEST(db)
 {
     test_msidatabase();
     test_msiinsert();
+    test_msidecomposedesc();
 }

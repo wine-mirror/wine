@@ -388,3 +388,99 @@ UINT MSIREG_OpenProductsKey(LPCWSTR szProduct, HKEY* key, BOOL create)
 
     return rc;
 }
+
+/*************************************************************************
+ *  MsiDecomposeDescriptorW   [MSI.@]
+ *
+ * Decomposes an MSI descriptor into product, feature and component parts.
+ * An MSI descriptor is a string of the form:
+ *   [base 85 guid] [feature code] '>' [base 85 guid]
+ *
+ * PARAMS
+ *   szDescriptor  [I]  the descriptor to decompose
+ *   szProduct     [O]  buffer of MAX_FEATURE_CHARS for the product guid
+ *   szFeature     [O]  buffer of MAX_FEATURE_CHARS for the feature code
+ *   szComponent   [O]  buffer of MAX_FEATURE_CHARS for the component guid
+ *   pUsed         [O]  the length of the descriptor
+ *
+ * RETURNS
+ *   ERROR_SUCCESS             if everything worked correctly
+ *   ERROR_INVALID_PARAMETER   if the descriptor was invalid
+ *
+ */
+UINT WINAPI MsiDecomposeDescriptorW( LPCWSTR szDescriptor, LPWSTR szProduct,
+                LPWSTR szFeature, LPWSTR szComponent, DWORD *pUsed )
+{
+    UINT r, len;
+    LPWSTR p;
+    GUID product, component;
+
+    TRACE("%s %p %p %p %p\n", debugstr_w(szDescriptor), szProduct,
+          szFeature, szComponent, pUsed);
+
+    r = decode_base85_guid( szDescriptor, &product );
+    if( !r )
+        return ERROR_INVALID_PARAMETER;
+
+    TRACE("product %s\n", debugstr_guid( &product ));
+
+    p = strchrW(&szDescriptor[20],'>');
+    if( !p )
+        return ERROR_INVALID_PARAMETER;
+
+    len = (p - &szDescriptor[20]);
+    if( len > MAX_FEATURE_CHARS )
+        return ERROR_INVALID_PARAMETER;
+    memcpy( szFeature, &szDescriptor[20], len*sizeof(WCHAR) );
+    szFeature[len] = 0;
+
+    TRACE("feature %s\n", debugstr_w( szFeature ));
+
+    r = decode_base85_guid( p+1, &component );
+    if( !r )
+        return ERROR_INVALID_PARAMETER;
+
+    TRACE("component %s\n", debugstr_guid( &component ));
+
+    StringFromGUID2( &product, szProduct, MAX_FEATURE_CHARS+1 );
+    StringFromGUID2( &component, szComponent, MAX_FEATURE_CHARS+1 );
+    len = ( &p[21] - szDescriptor );
+
+    TRACE("length = %d\n", len);
+    *pUsed = len;
+
+    return ERROR_SUCCESS;
+}
+
+UINT WINAPI MsiDecomposeDescriptorA( LPCSTR szDescriptor, LPSTR szProduct,
+                LPSTR szFeature, LPSTR szComponent, DWORD *pUsed )
+{
+    WCHAR product[MAX_FEATURE_CHARS+1];
+    WCHAR feature[MAX_FEATURE_CHARS+1];
+    WCHAR component[MAX_FEATURE_CHARS+1];
+    LPWSTR str = NULL;
+    UINT r, len;
+
+    TRACE("%s %p %p %p %p\n", debugstr_a(szDescriptor), szProduct,
+          szFeature, szComponent, pUsed);
+
+    if( szDescriptor )
+    {
+        len = MultiByteToWideChar( CP_ACP, 0, szDescriptor, -1, NULL, 0 );
+        str = HeapAlloc( GetProcessHeap(), 0, len*sizeof(WCHAR) );
+        MultiByteToWideChar( CP_ACP, 0, szDescriptor, -1, str, len );
+    }
+
+    r = MsiDecomposeDescriptorW( str, product, feature, component, pUsed );
+
+    WideCharToMultiByte( CP_ACP, 0, product, MAX_FEATURE_CHARS+1,
+                         szProduct, MAX_FEATURE_CHARS+1, NULL, NULL );
+    WideCharToMultiByte( CP_ACP, 0, feature, MAX_FEATURE_CHARS+1,
+                         szFeature, MAX_FEATURE_CHARS+1, NULL, NULL );
+    WideCharToMultiByte( CP_ACP, 0, component, MAX_FEATURE_CHARS+1,
+                         szComponent, MAX_FEATURE_CHARS+1, NULL, NULL );
+
+    HeapFree( GetProcessHeap(), 0, str );
+
+    return r;
+}
