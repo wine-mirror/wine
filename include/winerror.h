@@ -299,6 +299,7 @@ extern int WIN32_LastError;
 #define E_POINTER			0x80004003
 #define E_ABORT				0x80004004
 #define E_FAIL				0x80004005
+#define E_UNSPEC E_FAIL // must to be defined (used by FileMoniker, IOleLink and DoDragDrop as a return value)
 
 /*#define CO_E_INIT_TLS			0x80004006
 #define CO_E_INIT_SHARED_ALLOCATOR	0x80004007
@@ -313,9 +314,11 @@ extern int WIN32_LastError;
 #define CO_E_INIT_SCM_MAP_VIEW_OF_FILE	0x80004010
 #define CO_E_INIT_SCM_EXEC_FAILURE	0x80004011
 #define CO_E_INIT_ONLY_SINGLE_THREADED	0x80004012 */
-#define CO_E_ERRORINDLL                 0x800401F9L
 
+#define CO_E_NOTINITIALIZED             0x800401F0
+#define CO_E_ERRORINDLL                 0x800401F9
 #define CO_E_OBJISREG                   0x800401FB
+
 #define	OLE_E_ENUM_NOMORE		      0x80040002
 #define	OLE_E_ADVISENOTSUPPORTED  0x80040003
 #define	OLE_E_NOCONNECTION        0x80040004
@@ -326,17 +329,45 @@ extern int WIN32_LastError;
 #define	OLE_E_STATIC              0x8004000B
 #define	OLE_E_PROMPTSAVECANCELLED 0x8004000C
 #define OLE_S_USEREG                            0x00040000
+
 #define DV_E_FORMATETC            0x80040064
 #define DV_E_DVASPECT             0x8004006B
+
+#define CLASS_E_NOAGGREGATION     0x80040110
+#define	CLASS_E_CLASSNOTAVAILABLE 0x80040111
+
 #define DATA_S_SAMEFORMATETC      0x80040130
+
 #define E_ACCESSDENIED			      0x80070005
 #define E_HANDLE            			0x80070006
 #define	E_OUTOFMEMORY			        0x8007000E
 #define	E_INVALIDARG			        0x80070057
+
 /*#define OLE_E_FIRST 0x80040000L */
 /*#define OLE_E_LAST  0x800400FFL */
 /*#define OLE_S_FIRST 0x00040000L */
 /*#define OLE_S_LAST  0x000400FFL */
+
+#define MK_S_REDUCED_TO_SELF            0x000401E2
+#define MK_S_ME                         0x000401E4
+#define MK_S_HIM                        0x000401E5
+#define MK_S_US                         0x000401E6
+#define MK_S_MONIKERALREADYREGISTERED   0x000401E7
+
+#define MK_E_EXCEEDEDDEADLINE                     0x800401E1
+#define MK_E_NEEDGENERIC                          0x800401E2
+#define MK_E_UNAVAILABLE                          0x800401E3
+#define MK_E_SYNTAX                               0x800401E4
+#define MK_E_NOOBJECT                             0x800401E5
+#define MK_E_INVALIDEXTENSION                     0x800401E6
+#define MK_E_INTERMEDIATEINTERFACENOTSUPPORTED    0x800401E7
+#define MK_E_NOTBINDABLE                          0x800401E8
+#define MK_E_NOTBOUND                             0x800401E9
+#define MK_E_CANTOPENFILE                         0x800401EA
+#define MK_E_MIUSTBOTHERUSER                      0x800401EB
+#define MK_E_NOINVERSE                            0x800401EC
+#define MK_E_NOSTORAGE                            0x800401ED
+#define MK_E_NOPREFIX                             0x800401EE
 
 #define STG_E_INVALIDFUNCTION		0x80030001
 #define STG_E_FILENOTFOUND		0x80030002
@@ -405,11 +436,6 @@ extern int WIN32_LastError;
 #define CLASS_E_NOAGGREGATION           0x80040110
 #define	CLASS_E_CLASSNOTAVAILABLE	      0x80040111
 
-#define MK_E_EXCEEDEDDEADLINE           0x800401E1L
-#define MK_E_SYNTAX                     0x800401E4L
-#define MK_E_NOOBJECT                   0x800401E5L
-#define MK_E_INVALIDEXTENSION           0x800401E6L
-#define MK_E_NOSTORAGE                  0x800401EDL
 
 #define OLEOBJ_E_NOVERBS                0x00040180L
 #define OLEOBJ_S_INVALIDVERB            0x00040180L

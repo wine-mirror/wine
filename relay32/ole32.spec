@@ -51,12 +51,12 @@ type	win32
  48 stub CoUnloadingWOW
  49 stub CoUnmarshalHresult         # stdcall (ptr ptr) return 0,ERR_NOTIMPLEMENTED
  50 stub CoUnmarshalInterface       # stdcall (ptr ptr ptr) return 0,ERR_NOTIMPLEMENTED
- 51 stub CreateAntiMoniker          # stdcall (ptr) return 0,ERR_NOTIMPLEMENTED
+ 51 stdcall CreateAntiMoniker(ptr)  CreateAntiMoniker
  52 stdcall CreateBindCtx(long ptr) CreateBindCtx
  53 stub CreateDataAdviseHolder     # stdcall (ptr) return 0,ERR_NOTIMPLEMENTED
  54 stub CreateDataCache            # stdcall (ptr ptr ptr ptr) return 0,ERR_NOTIMPLEMENTED
  55 stdcall CreateFileMoniker(wstr ptr) CreateFileMoniker
- 56 stub CreateGenericComposite     # stdcall (ptr ptr ptr) return 0,ERR_NOTIMPLEMENTED
+ 56 stdcall CreateGenericComposite(ptr ptr ptr) CreateGenericComposite
  57 stub CreateILockBytesOnHGlobal  # stdcall (ptr long ptr) return 0,ERR_NOTIMPLEMENTED
  58 stdcall CreateItemMoniker(wstr wstr ptr) CreateItemMoniker
  59 stdcall CreateOleAdviseHolder(ptr) CreateOleAdviseHolder
@@ -67,7 +67,7 @@ type	win32
  64 stub DllGetClassObjectWOW
  65 stdcall DoDragDrop(ptr ptr long ptr) DoDragDrop
  66 stub EnableHookObject
- 67 stub GetClassFile
+ 67 stdcall GetClassFile(ptr ptr) GetClassFile
  68 stub GetConvertStg
  69 stub GetDocumentBitStg
  70 stub GetHGlobalFromILockBytes
@@ -134,8 +134,8 @@ type	win32
 131 stdcall OleUninitialize() OleUninitialize
 132 stub OpenOrCreateStream
 133 stub ProgIDFromCLSID
-134 stub ReadClassStg
-135 stub ReadClassStm
+134 stdcall ReadClassStg(ptr ptr) ReadClassStg 
+135 stdcall ReadClassStm(ptr ptr) ReadClassStm 
 136 stub ReadFmtUserTypeStg
 137 stub ReadOleStg
 138 stub ReadStringStream
@@ -159,7 +159,7 @@ type	win32
 156 stub UtGetDvtd16Info
 157 stub UtGetDvtd32Info
 158 stdcall WriteClassStg(ptr ptr) WriteClassStg
-159 stub WriteClassStm
+159 stdcall WriteClassStm(ptr ptr) WriteClassStm
 160 stub WriteFmtUserTypeStg
 161 stub WriteOleStg
 162 stub WriteStringStream

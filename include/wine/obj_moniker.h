@@ -33,7 +33,13 @@ typedef struct IRunnableObject IRunnableObject,*LPRUNNABLEOBJECT;
 DEFINE_OLEGUID(IID_IRunningObjectTable,	0x00000010L, 0, 0);
 typedef struct IRunningObjectTable IRunningObjectTable,*LPRUNNINGOBJECTTABLE;
 
+DEFINE_GUID( CLSID_FileMoniker,0x00000303,0,0,0xc0,0,0,0,0,0,0,0x46);
 
+DEFINE_GUID( CLSID_ItemMoniker,0x00000304,0,0,0xc0,0,0,0,0,0,0,0x46);
+
+DEFINE_GUID( CLSID_AntiMoniker,0x00000305,0,0,0xc0,0,0,0,0,0,0,0x46);
+
+DEFINE_GUID( CLSID_CompositeMoniker,0x00000309,0,0,0xc0,0,0,0,0,0,0,0x46);
 
 /*********************************************************************************
  *	BIND_OPTS and BIND_OPTS2 structures definition
@@ -66,12 +72,12 @@ typedef struct tagBIND_OPTS2
 #define IBindCtx_METHODS \
     ICOM_METHOD1 (HRESULT, RegisterObjectBound,  IUnknown*,punk) \
     ICOM_METHOD1 (HRESULT, RevokeObjectBound,    IUnknown*,punk) \
-    ICOM_METHOD  (HRESULT, ReleaseObjects) \
+    ICOM_METHOD  (HRESULT, ReleaseBoundObjects) \
     ICOM_METHOD1 (HRESULT, SetBindOptions,       LPBIND_OPTS2,pbindopts) \
     ICOM_METHOD1 (HRESULT, GetBindOptions,       LPBIND_OPTS2,pbindopts) \
     ICOM_METHOD1 (HRESULT, GetRunningObjectTable,IRunningObjectTable**,pprot) \
     ICOM_METHOD2 (HRESULT, RegisterObjectParam,  LPOLESTR,pszkey, IUnknown*,punk) \
-    ICOM_METHOD2 (HRESULT, GetObjectParam,       LPOLESTR,pszkey, IUnknown*,punk) \
+    ICOM_METHOD2 (HRESULT, GetObjectParam,       LPOLESTR,pszkey, IUnknown**,punk) \
     ICOM_METHOD1 (HRESULT, EnumObjectParam,      IEnumString**,ppenum) \
     ICOM_METHOD1 (HRESULT, RevokeObjectParam,    LPOLESTR,pszkey)
 #define IBindCtx_IMETHODS \
@@ -88,7 +94,7 @@ ICOM_DEFINE(IBindCtx,IUnknown)
 /* IBindCtx methods*/
 #define IBindCtx_RegisterObjectBound(p,a)   ICOM_CALL1(RegisterObjectBound,p,a)
 #define IBindCtx_RevokeObjectBound(p,a)     ICOM_CALL1(RevokeObjectBound,p,a)
-#define IBindCtx_ReleaseObjects(p)          ICOM_CALL (ReleaseObjects,p)
+#define IBindCtx_ReleaseBoundObjects(p)     ICOM_CALL (ReleaseBoundObjects,p)
 #define IBindCtx_SetBindOptions(p,a)        ICOM_CALL1(SetBindOptions,p,a)
 #define IBindCtx_GetBindOptions(p,a)        ICOM_CALL1(GetBindOptions,p,a)
 #define IBindCtx_GetRunningObjectTable(p,a) ICOM_CALL1(GetRunningObjectTable,p,a)
@@ -100,7 +106,6 @@ ICOM_DEFINE(IBindCtx,IUnknown)
 
 HRESULT WINAPI CreateBindCtx16(DWORD reserved, LPBC* ppbc);
 HRESULT WINAPI CreateBindCtx(DWORD reserved, LPBC* ppbc);
-
 
 /*****************************************************************************
  * IClassActivator interface
@@ -150,7 +155,6 @@ ICOM_DEFINE(IEnumMoniker,IUnknown)
 #define IEnumMoniker_Reset(p)      ICOM_CALL (Reset,p)
 #define IEnumMoniker_Clone(p,a)    ICOM_CALL1(Clone,p,a)
 #endif
-
 
 /*****************************************************************************
  * IMoniker interface
@@ -203,6 +207,7 @@ ICOM_DEFINE(IMoniker,IPersistStream)
 #define IMoniker_QueryInterface(p,a,b) ICOM_CALL2(QueryInterface,p,a,b)
 #define IMoniker_AddRef(p)             ICOM_CALL (AddRef,p)
 #define IMoniker_Release(p)            ICOM_CALL (Release,p)
+
 /*** IPersist methods ***/
 #define IMoniker_GetClassID(p,a) ICOM_CALL1(GetClassID,p,a)
 /*** IPersistStream methods ***/
@@ -211,31 +216,22 @@ ICOM_DEFINE(IMoniker,IPersistStream)
 #define IMoniker_Save(p,a,b)     ICOM_CALL2(Save,p,a,b)
 #define IMoniker_GetSizeMax(p,a) ICOM_CALL1(GetSizeMax,p,a)
 /*** IMoniker methods ***/
-#define IMoniker_BindToObject(p,a,b,c,d)       ICOM_CALL(BindToObject,p,a,b,c,d)
-#define IMoniker_BindToStorage(p,a,b,c,d)      ICOM_CALL(BindToStorage,p,a,b,c,d)
-#define IMoniker_Reduce(p,a,b,c,d)             ICOM_CALL(Reduce,p,a,b,c,d)
-#define IMoniker_ComposeWith(p,a,b,c)          ICOM_CALL(ComposeWith,p,a,b,c)
-#define IMoniker_Enum(p,a,b)                   ICOM_CALL(Enum,p,a,b)
-#define IMoniker_IsEqual(p,a)                  ICOM_CALL(IsEqual,p,a)
-#define IMoniker_Hash(p,a)                     ICOM_CALL(Hash,p,a)
-#define IMoniker_IsRunning(p,a,b,c)            ICOM_CALL(IsRunning,p,a,b,c)
-#define IMoniker_GetTimeOfLastChange(p,a,b,c)  ICOM_CALL(GetTimeOfLastChange,p,a,b,c)
-#define IMoniker_Inverse(p,a)                  ICOM_CALL(Inverse,p,a)
-#define IMoniker_CommonPrefixWith(p,a,b)       ICOM_CALL(CommonPrefixWith,p,a,b)
-#define IMoniker_RelativePathTo(p,a,b)         ICOM_CALL(RelativePathTo,p,a,b)
-#define IMoniker_GetDisplayName(p,a,b,c)       ICOM_CALL(GetDisplayName,p,a,b,c)
-#define IMoniker_ParseDisplayName(p,a,b,c,d,e) ICOM_CALL(ParseDisplayName,p,a,b,c,d,e)
-#define IMoniker_IsSystemMoniker(p,a)          ICOM_CALL(IsSystemMoniker,p,a)
+#define IMoniker_BindToObject(p,a,b,c,d)            ICOM_CALL4(BindToObject,p,a,b,c,d)
+#define IMoniker_BindToStorage(p,a,b,c,d)           ICOM_CALL4(BindToStorage,p,a,b,c,d)
+#define IMoniker_Reduce(p,a,b,c,d)                  ICOM_CALL4(Reduce,p,a,b,c,d)
+#define IMoniker_ComposeWith(p,a,b,c)               ICOM_CALL3(ComposeWith,p,a,b,c)
+#define IMoniker_Enum(p,a,b)                        ICOM_CALL2(Enum,p,a,b)
+#define IMoniker_IsEqual(p,a)                       ICOM_CALL1(IsEqual,p,a)
+#define IMoniker_Hash(p,a)                          ICOM_CALL1(Hash,p,a)
+#define IMoniker_IsRunning(p,a,b,c)                 ICOM_CALL3(IsRunning,p,a,b,c)
+#define IMoniker_GetTimeOfLastChange(p,a,b,c)       ICOM_CALL3(GetTimeOfLastChange,p,a,b,c)
+#define IMoniker_Inverse(p,a)                       ICOM_CALL1(Inverse,p,a)
+#define IMoniker_CommonPrefixWith(p,a,b)            ICOM_CALL2(CommonPrefixWith,p,a,b)
+#define IMoniker_RelativePathTo(p,a,b)              ICOM_CALL2(RelativePathTo,p,a,b)
+#define IMoniker_GetDisplayName(p,a,b,c)            ICOM_CALL3(GetDisplayName,p,a,b,c)
+#define IMoniker_ParseDisplayName(p,a,b,c,d,e)      ICOM_CALL5(ParseDisplayName,p,a,b,c,d,e)
+#define IMoniker_IsSystemMoniker(p,a)               ICOM_CALL1(IsSystemMoniker,p,a)
 #endif
-
-/* FIXME: not implemented */
-HRESULT WINAPI  BindMoniker(LPMONIKER pmk, DWORD grfOpt, REFIID iidResult, LPVOID* ppvResult);
-
-/* FIXME: not implemented */
-HRESULT WINAPI CreateAntiMoniker(LPMONIKER* ppmk);
-
-/* FIXME: not implemented */
-HRESULT WINAPI CreateClassMoniker(REFCLSID rclsid, LPMONIKER* ppmk);
 
 HRESULT WINAPI CreateFileMoniker16(LPCOLESTR16 lpszPathName, LPMONIKER* ppmk);
 HRESULT WINAPI CreateFileMoniker(LPCOLESTR lpszPathName, LPMONIKER* ppmk);
@@ -243,13 +239,21 @@ HRESULT WINAPI CreateFileMoniker(LPCOLESTR lpszPathName, LPMONIKER* ppmk);
 HRESULT WINAPI CreateItemMoniker16(LPCOLESTR16 lpszDelim, LPCOLESTR  lpszItem, LPMONIKER* ppmk);
 HRESULT WINAPI CreateItemMoniker(LPCOLESTR lpszDelim, LPCOLESTR  lpszItem, LPMONIKER* ppmk);
 
-/* FIXME: not implemented */
+HRESULT WINAPI CreateAntiMoniker(LPMONIKER * ppmk);
+
 HRESULT WINAPI CreateGenericComposite(LPMONIKER pmkFirst, LPMONIKER pmkRest, LPMONIKER* ppmkComposite);
+
+/* FIXME: not implemented */
+HRESULT WINAPI  BindMoniker(LPMONIKER pmk, DWORD grfOpt, REFIID iidResult, LPVOID* ppvResult);
+
+/* FIXME: not implemented */
+HRESULT WINAPI CreateClassMoniker(REFCLSID rclsid, LPMONIKER* ppmk);
 
 /* FIXME: not implemented */
 HRESULT WINAPI CreatePointerMoniker(LPUNKNOWN punk, LPMONIKER* ppmk);
 
-
+/* FIXME: not implemented */
+HRESULT WINAPI MonikerCommonPrefixWith(IMoniker* pmkThis,IMoniker* pmkOther,IMoniker** ppmkCommon);
 /*****************************************************************************
  * IROTData interface
  */
@@ -271,6 +275,7 @@ ICOM_DEFINE(IROTData,IUnknown)
 #define IROTData_GetComparisonData(p,a,b,c) ICOM_CALL3(GetComparisonData,p,a,b,c)
 #endif
 
+#define ICOM_THIS_From_IROTData(class, name) class* This = (class*)(((void*)name)-sizeof(void*))
 
 /*****************************************************************************
  * IRunnableObject interface
@@ -335,6 +340,8 @@ ICOM_DEFINE(IRunningObjectTable,IUnknown)
 #define IRunningObjectTable_EnumRunning(p,a)           ICOM_CALL1(EnumRunning,p,a)
 #endif
 
+HRESULT WINAPI GetRunningObjectTable(DWORD reserved, LPVOID *pprot);
+HRESULT WINAPI GetRunningObjectTable16(DWORD reserved, LPVOID *pprot);
 
 /*****************************************************************************
  * Additional API

@@ -20,6 +20,8 @@
 
 #include "wine/obj_dragdrop.h"
 
+HRESULT WINAPI GetClassFile(LPOLESTR filePathName,CLSID *pclsid);
+
 #ifdef __cplusplus
 extern "C" {
 #endif

@@ -50,7 +50,7 @@
 #include "wine/obj_clientserver.h"
 
 #include "ifs.h"
-
+#include "compobj.h"
 /****************************************************************************
  *  COM External Lock structures and methods declaration
  *
@@ -270,6 +270,8 @@ HRESULT WINAPI CoInitializeEx(
      */
     TRACE(ole, "() - Initializing the COM libraries\n");
 
+    RunningObjectTableImpl_Initialize();
+
     hr = S_OK;
   }
   else
@@ -322,6 +324,7 @@ void WINAPI CoUninitialize(void)
      */
     TRACE(ole, "() - Releasing the COM libraries\n");
 
+    RunningObjectTableImpl_UnInitialize();
     /*
      * Release the references to the registered class objects.
      */
@@ -738,7 +741,7 @@ HRESULT WINE_StringFromCLSID(
 	  return E_FAIL;
 	}
 	
-  sprintf(idstr, "{%08lX-%04X-%04X-%02x%02X-",
+  sprintf(idstr, "{%08lX-%04X-%04X-%02X%02X-",
 	  id->Data1, id->Data2, id->Data3,
 	  id->Data4[0], id->Data4[1]);
   s = &idstr[25];
@@ -892,6 +895,47 @@ HRESULT WINAPI CLSIDFromProgID(
 
 	HeapFree(GetProcessHeap(),0,pid);
 	return ret;
+}
+
+/************************************************************************************************
+ *    OleSaveToStream
+ *
+ * This function write a CLSID on stream
+ */
+HRESULT WINAPI WriteClassStm(IStream *pStm,REFCLSID rclsid)
+{
+    TRACE(ole,"(%p,%p)\n",pStm,rclsid);
+
+    if (rclsid==NULL)
+        return E_INVALIDARG;
+
+    return IStream_Write(pStm,rclsid,sizeof(CLSID),NULL);
+}
+
+/************************************************************************************************
+ *    OleSaveToStream
+ *
+ * This function read a CLSID from a stream
+ */
+HRESULT WINAPI ReadClassStm(IStream *pStm,REFCLSID rclsid)
+{
+    ULONG nbByte;
+    HRESULT res;
+    
+    TRACE(ole,"(%p,%p)\n",pStm,rclsid);
+
+    if (rclsid==NULL)
+        return E_INVALIDARG;
+    
+    res = IStream_Read(pStm,(void*)rclsid,sizeof(CLSID),&nbByte);
+
+    if (FAILED(res))
+        return res;
+    
+    if (nbByte != sizeof(CLSID))
+        return S_FALSE;
+    else
+        return S_OK;
 }
 
 /* FIXME: this function is not declared in the WINELIB headers. But where should it go ? */
@@ -1248,6 +1292,97 @@ HRESULT WINAPI CoGetClassObject(REFCLSID rclsid, DWORD dwClsContext,
     return hres;
 }
 
+/****************************************************************************************
+ *        GetClassFile
+ *
+ * This function supplies the CLSID associated with the given filename.
+ */
+HRESULT WINAPI GetClassFile(LPOLESTR filePathName,CLSID *pclsid)
+{
+    IStorage *pstg=0;
+    HRESULT res;
+    int nbElm=0,length=0,i=0;
+    LONG sizeProgId=20;
+    LPOLESTR *pathDec=0,absFile=0,progId=0;
+    WCHAR extention[100]={0};
+
+    TRACE(ole,"()\n");
+
+    /* if the file contain a storage object the return the CLSID writen by IStorage_SetClass method*/
+    if((StgIsStorageFile(filePathName))==S_OK){
+
+        res=StgOpenStorage(filePathName,NULL,STGM_READ | STGM_SHARE_DENY_WRITE,NULL,0,&pstg);
+
+        if (SUCCEEDED(res))
+            res=ReadClassStg(pstg,pclsid);
+
+        IStorage_Release(pstg);
+
+        return res;
+    }
+    /* if the file is not a storage object then attemps to match various bits in the file against a
+       pattern in the registry. this case is not frequently used ! so I present only the psodocode for
+       this case
+       
+     for(i=0;i<nFileTypes;i++)
+
+        for(i=0;j<nPatternsForType;j++){
+
+            PATTERN pat;
+            HANDLE  hFile;
+
+            pat=ReadPatternFromRegistry(i,j);
+            hFile=CreateFileW(filePathName,,,,,,hFile);
+            SetFilePosition(hFile,pat.offset);
+            ReadFile(hFile,buf,pat.size,NULL,NULL);
+            if (memcmp(buf&pat.mask,pat.pattern.pat.size)==0){
+
+                *pclsid=ReadCLSIDFromRegistry(i);
+                return S_OK;
+            }
+        }
+     */
+
+    /* if the obove strategies fail then search for the extension key in the registry */
+
+    /* get the last element (absolute file) in the path name */
+    nbElm=FileMonikerImpl_DecomposePath(filePathName,&pathDec);
+    absFile=pathDec[nbElm-1];
+
+    /* failed if the path represente a directory and not an absolute file name*/
+    if (lstrcmpW(absFile,(LPOLESTR)"\\"))
+        return MK_E_INVALIDEXTENSION;
+
+    /* get the extension of the file */
+    length=lstrlenW(absFile);
+    for(i=length-1; ( (i>=0) && (extention[i]=absFile[i]) );i--);
+        
+    /* get the progId associated to the extension */
+    progId=CoTaskMemAlloc(sizeProgId);
+
+    res=RegQueryValueW(HKEY_CLASSES_ROOT,extention,progId,&sizeProgId);
+
+    if (res==ERROR_MORE_DATA){
+
+        CoTaskMemRealloc(progId,sizeProgId);
+
+        res=RegQueryValueW(HKEY_CLASSES_ROOT,extention,progId,&sizeProgId);
+    }
+    if (res==ERROR_SUCCESS)
+        /* return the clsid associated to the progId */
+        res= CLSIDFromProgID(progId,pclsid);
+
+    for(i=0; pathDec[i]!=NULL;i++)
+        CoTaskMemFree(pathDec[i]);
+    CoTaskMemFree(pathDec);
+
+    CoTaskMemFree(progId);
+
+    if (res==ERROR_SUCCESS)
+        return res;
+
+    return MK_E_INVALIDEXTENSION;
+}
 /******************************************************************************
  *		CoRegisterMessageFilter16	[COMPOBJ.27]
  */
@@ -1413,7 +1548,6 @@ LPVOID WINAPI CoTaskMemAlloc(
 
     return IMalloc_Alloc(lpmalloc,size);
 }
-
 /***********************************************************************
  *           CoTaskMemFree (OLE32.44)
  */

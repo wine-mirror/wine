@@ -384,7 +384,7 @@ ICOM_DEFINE(IParseDisplayName,IUnknown)
 #define IParseDisplayName_AddRef(p)                  ICOM_CALL (AddRef,p)
 #define IParseDisplayName_Release(p)                 ICOM_CALL (Release,p)
 /*** IParseDisplayName methods ***/
-#define IParseDisplayName_ParseDisplayName(p,a,b,c,d) ICOM_CALL4(ParseDisplayName,a,b,c,d)
+#define IParseDisplayName_ParseDisplayName(p,a,b,c,d) ICOM_CALL4(ParseDisplayName,p,a,b,c,d)
 #endif
 				 
 				

@@ -6,8 +6,10 @@ VPATH     = @srcdir@
 MODULE    = ole
 
 C_SRCS = \
+	antimoniker.c \
 	bindctx.c \
 	compobj.c \
+	compositemoniker.c \
 	filemoniker.c \
 	guid.c \
 	ifs.c \
@@ -23,10 +25,10 @@ C_SRCS = \
 	olesvr.c \
 	parsedt.c \
 	safearray.c \
-	storage.c \
-	storage32.c \
 	stg_bigblockfile.c \
 	stg_stream.c \
+	storage.c \
+	storage32.c \
 	typelib.c \
 	variant.c
 

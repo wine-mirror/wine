@@ -25,6 +25,7 @@
 #include "windef.h"
 
 #include "storage32.h"
+#include "ole2.h"
 
 #define FILE_BEGIN 0
 
@@ -5159,6 +5160,83 @@ HRESULT WINAPI WriteClassStg(IStorage* pStg, REFCLSID rclsid)
   return hRes;
 }
 
+/*******************************************************************************************
+ *    ReadClassStg
+ *
+ * This method reads the CLSID previously written to a storage object with the WriteClassStg.
+ */
+HRESULT WINAPI ReadClassStg(IStorage *pstg,CLSID *pclsid){
+
+    STATSTG pstatstg;
+    HRESULT hRes;
+    
+    TRACE(ole,"()\n");
+
+    if(pclsid==NULL)
+        return E_POINTER;
+   /*
+    * read a STATSTG structure (contains the clsid) from the storage
+    */
+    hRes=IStorage_Stat(pstg,&pstatstg,STATFLAG_DEFAULT);
+
+    if(SUCCEEDED(hRes))
+        *pclsid=pstatstg.clsid;
+
+    return hRes;
+}
+
+/*************************************************************************************
+ *    OleLoadFromStream
+ *
+ * This function loads an object from stream
+ */
+HRESULT  WINAPI OleLoadFromStream(IStream *pStm,REFIID iidInterface,void** ppvObj)
+{
+    CLSID clsid;
+    HRESULT res;
+
+    FIXME(ole,"(),stub!\n");
+
+    res=ReadClassStm(pStm,&clsid);
+
+    if (SUCCEEDED(res)){
+        
+        res=CoCreateInstance(&clsid,NULL,CLSCTX_INPROC_SERVER,iidInterface,ppvObj);
+
+        if (SUCCEEDED(res))
+
+            res=IPersistStream_Load((IPersistStream*)ppvObj,pStm);
+    }
+
+    return res;
+}
+
+/************************************************************************************************
+ *    OleSaveToStream
+ *
+ * This function saves an object with the IPersistStream interface on it to the specified stream
+ */
+HRESULT  WINAPI OleSaveToStream(IPersistStream *pPStm,IStream *pStm)
+{
+
+    CLSID clsid;
+    HRESULT res;
+    
+    TRACE(ole,"(%p,%p)\n",pPStm,pStm);
+
+    res=IPersistStream_GetClassID(pPStm,&clsid);
+
+    if (SUCCEEDED(res)){
+        
+        res=WriteClassStm(pStm,&clsid);
+
+        if (SUCCEEDED(res))
+
+            res=IPersistStream_Save(pPStm,pStm,FALSE);
+    }
+
+    return res;
+}
 
 /****************************************************************************
  * This method validate a STGM parameter that can contain the values below
@@ -5306,7 +5384,7 @@ static DWORD GetShareModeFromSTGM(DWORD stgm)
  */
 static DWORD GetAccessModeFromSTGM(DWORD stgm)
 {
-  DWORD dwDesiredAccess = 0;
+  DWORD dwDesiredAccess = GENERIC_READ;
   BOOL bSTGM_WRITE     = ((stgm & STGM_WRITE) == STGM_WRITE);
   BOOL bSTGM_READWRITE = ((stgm & STGM_READWRITE) == STGM_READWRITE);
   BOOL bSTGM_READ      = ! (bSTGM_WRITE || bSTGM_READWRITE);

@@ -817,6 +817,10 @@ HRESULT WINAPI CoGetClassObject(REFCLSID rclsid, DWORD dwClsContext, LPVOID pvRe
 
 HRESULT WINAPI CoInitialize16(LPVOID lpReserved);
 HRESULT WINAPI CoInitialize(LPVOID lpReserved);
+HRESULT WINAPI CoInitializeEx(LPVOID lpReserved, DWORD dwCoInit);
+
+void WINAPI CoUninitialize16(void);
+void WINAPI CoUninitialize(void);
 
 typedef enum tagCOINIT
 {
@@ -826,7 +830,6 @@ typedef enum tagCOINIT
     COINIT_SPEED_OVER_MEMORY  = 0x8  /* Trade memory for speed */
 } COINIT;
 
-HRESULT WINAPI CoInitializeEx(LPVOID lpReserved, DWORD dwCoInit);
 
 /* FIXME: not implemented */
 BOOL WINAPI CoIsOle1Class(REFCLSID rclsid);
@@ -849,10 +852,6 @@ HRESULT WINAPI CoRegisterClassObject16(REFCLSID rclsid, LPUNKNOWN pUnk, DWORD dw
 HRESULT WINAPI CoRegisterClassObject(REFCLSID rclsid,LPUNKNOWN pUnk,DWORD dwClsContext,DWORD flags,LPDWORD lpdwRegister);
 
 HRESULT WINAPI CoRevokeClassObject(DWORD dwRegister);
-
-void WINAPI CoUninitialize16(void);
-void WINAPI CoUninitialize(void);
-
 
 /*****************************************************************************
  * Internal WINE API

@@ -28,15 +28,15 @@ HRESULT     WINAPI RevokeDragDrop16(HWND16);
 HRESULT     WINAPI RevokeDragDrop(HWND);
 HRESULT     WINAPI DoDragDrop16(LPDATAOBJECT,LPDROPSOURCE,DWORD,DWORD*);
 HRESULT     WINAPI DoDragDrop(LPDATAOBJECT,LPDROPSOURCE,DWORD,DWORD*);
-
-HOLEMENU  WINAPI OleCreateMenuDescriptor(HMENU              hmenuCombined,
-					   LPOLEMENUGROUPWIDTHS lpMenuWidths);
+HRESULT  WINAPI OleLoadFromStream(IStream *pStm,REFIID iidInterface,void** ppvObj);
+HRESULT  WINAPI OleSaveToStream(IPersistStream *pPStm,IStream *pStm);
+HOLEMENU WINAPI OleCreateMenuDescriptor(HMENU hmenuCombined,LPOLEMENUGROUPWIDTHS lpMenuWidths);
 HRESULT   WINAPI OleDestroyMenuDescriptor(HOLEMENU hmenuDescriptor);
-HRESULT     WINAPI OleSetMenuDescriptor(HOLEMENU               hmenuDescriptor,
-					HWND                   hwndFrame,
-					HWND                   hwndActiveObject,
-					LPOLEINPLACEFRAME        lpFrame,
-					LPOLEINPLACEACTIVEOBJECT lpActiveObject);
+HRESULT  WINAPI OleSetMenuDescriptor(HOLEMENU hmenuDescriptor,HWND hwndFrame,HWND hwndActiveObject,LPOLEINPLACEFRAME lpFrame,LPOLEINPLACEACTIVEOBJECT lpActiveObject);
+
+HRESULT WINAPI ReadClassStg(IStorage *pstg,CLSID *pclsid);
+HRESULT WINAPI WriteClassStm(IStream *pStm,REFCLSID rclsid);
+HRESULT WINAPI ReadClassStm(IStream *pStm,REFCLSID pclsid);
 
 #endif  /* __WINE_OLE2_H */
 
