@@ -618,6 +618,7 @@ static BOOL fixup_flags( WINDOWPOS *winpos )
     BOOL ret = TRUE;
 
     if (!wndPtr) return FALSE;
+    winpos->hwnd = wndPtr->hwndSelf;  /* make it a full handle */
 
     if (wndPtr->dwStyle & WS_VISIBLE) winpos->flags &= ~SWP_SHOWWINDOW;
     else
@@ -660,6 +661,7 @@ static BOOL fixup_flags( WINDOWPOS *winpos )
         WND* wnd = WIN_FindWndPtr(winpos->hwndInsertAfter);
         if (wnd)
         {
+            winpos->hwndInsertAfter = wnd->hwndSelf;  /* make it a full handle */
             if (wnd->parent != wndPtr->parent) ret = FALSE;
             else
             {
@@ -696,11 +698,11 @@ BOOL X11DRV_SetWindowPos( WINDOWPOS *winpos )
     bChangePos = !(winpos->flags & SWP_WINE_NOHOSTMOVE);
     winpos->flags &= ~SWP_WINE_NOHOSTMOVE;
 
-    /* Check window handle */
-    if (winpos->hwnd == GetDesktopWindow()) return FALSE;
-
     /* Fix redundant flags */
     if (!fixup_flags( winpos )) return FALSE;
+
+    /* Check window handle */
+    if (winpos->hwnd == GetDesktopWindow()) return FALSE;
 
     SWP_DoWinPosChanging( winpos, &newWindowRect, &newClientRect );
 
@@ -1023,6 +1025,7 @@ BOOL X11DRV_ShowWindow( HWND hwnd, INT cmd )
     UINT 	swp = 0;
 
     if (!wndPtr) return FALSE;
+    hwnd = wndPtr->hwndSelf;  /* make it a full handle */
 
     TRACE("hwnd=%04x, cmd=%d\n", hwnd, cmd);
 

@@ -636,7 +636,7 @@ void WINAPI MapWindowPoints16( HWND16 hwndFrom, HWND16 hwndTo,
 {
     POINT offset;
 
-    WINPOS_GetWinOffset( hwndFrom, hwndTo, &offset );
+    WINPOS_GetWinOffset( WIN_Handle32(hwndFrom), WIN_Handle32(hwndTo), &offset );
     while (count--)
     {
 	lppt->x += offset.x;
@@ -654,7 +654,7 @@ INT WINAPI MapWindowPoints( HWND hwndFrom, HWND hwndTo,
 {
     POINT offset;
 
-    WINPOS_GetWinOffset( hwndFrom, hwndTo, &offset );
+    WINPOS_GetWinOffset( WIN_GetFullHandle(hwndFrom), WIN_GetFullHandle(hwndTo), &offset );
     while (count--)
     {
 	lppt->x += offset.x;
@@ -1641,10 +1641,12 @@ BOOL WINPOS_ActivateOtherWindow(HWND hwnd)
         }
     }
 
+    pWnd = WIN_FindWndPtr( hwnd );
+    hwnd = pWnd->hwndSelf;
+
     if( hwnd == hwndPrevActive )
         hwndPrevActive = 0;
 
-    pWnd = WIN_FindWndPtr( hwnd );
     if( hwndActive != hwnd &&
         ( hwndActive || QUEUE_IsExitingQueue(pWnd->hmemTaskQ)) )
     {
@@ -1698,14 +1700,14 @@ BOOL WINPOS_ChangeActiveWindow( HWND hWnd, BOOL mouseMsg )
     if (!hWnd)
         return WINPOS_SetActiveWindow( 0, mouseMsg, TRUE );
 
-    wndPtr = WIN_FindWndPtr(hWnd);
-    if( !wndPtr ) return FALSE;
+    if (!(wndPtr = WIN_FindWndPtr(hWnd))) return FALSE;
+    hWnd = wndPtr->hwndSelf;
 
     /* child windows get WM_CHILDACTIVATE message */
     if( (wndPtr->dwStyle & (WS_CHILD | WS_POPUP)) == WS_CHILD )
     {
-        retvalue = SendMessageA(hWnd, WM_CHILDACTIVATE, 0, 0L);
-        goto end;
+        WIN_ReleaseWndPtr(wndPtr);
+        return SendMessageA(hWnd, WM_CHILDACTIVATE, 0, 0L);
     }
 
     if( hWnd == hwndActive )
@@ -1907,15 +1909,13 @@ HDWP WINAPI DeferWindowPos( HDWP hdwp, HWND hwnd, HWND hwndAfter,
     /* HWND parent; */
     WND *pWnd;
 
-    pDWP = (DWP *) USER_HEAP_LIN_ADDR( hdwp );
-    if (!pDWP) return 0;
+    hwnd = WIN_GetFullHandle( hwnd );
     if (hwnd == GetDesktopWindow()) return 0;
 
-    if (!(pWnd=WIN_FindWndPtr( hwnd ))) {
-        USER_HEAP_FREE( hdwp );
-        return 0;
-    }
-    	
+    if (!(pDWP = USER_HEAP_LIN_ADDR( hdwp ))) return 0;
+
+    if (!(pWnd = WIN_FindWndPtr( hwnd ))) return 0;
+
 /* Numega Bounds Checker Demo dislikes the following code.
    In fact, I've not been able to find any "same parent" requirement in any docu
    [AM 980509]

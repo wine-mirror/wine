@@ -1815,6 +1815,7 @@ BOOL WINAPI PeekMessageW( MSG *msg_out, HWND hwnd, UINT first, UINT last, UINT f
     if (USER_Driver.pMsgWaitForMultipleObjectsEx)
         USER_Driver.pMsgWaitForMultipleObjectsEx( 0, NULL, 0, 0, 0 );
 
+    hwnd = WIN_GetFullHandle( hwnd );
     locks = WIN_SuspendWndsLock();
 
     if (!MSG_peek_message( &msg, hwnd, first, last,

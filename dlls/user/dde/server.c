@@ -18,6 +18,7 @@
 #include "winerror.h"
 #include "dde.h"
 #include "ddeml.h"
+#include "win.h"
 #include "debugtools.h"
 #include "dde/dde_private.h"
 
@@ -983,7 +984,7 @@ static LRESULT CALLBACK WDML_ServerConvProc(HWND hwndServer, UINT iMsg, WPARAM w
 	ERR("Got a message (%u) on a not known conversation, dropping request\n", iMsg);
 	goto theError;
     }
-    if (pConv->hwndClient != (HWND)wParam || pConv->hwndServer != hwndServer)
+    if (pConv->hwndClient != WIN_GetFullHandle( (HWND)wParam ) || pConv->hwndServer != hwndServer)
     {
 	ERR("mismatch between C/S windows and converstation\n");
 	goto theError;

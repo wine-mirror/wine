@@ -149,6 +149,7 @@ INT X11DRV_ScrollWindowEx( HWND hwnd, INT dx, INT dy,
         retVal = ERROR;
         goto END;
     }
+    hwnd = wnd->hwndSelf;  /* make it a full handle */
 
     GetClientRect(hwnd, &rc);
     if (rect) IntersectRect(&rc, &rc, rect);

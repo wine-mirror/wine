@@ -19,6 +19,7 @@
 #include "winnls.h"
 #include "dde.h"
 #include "ddeml.h"
+#include "win.h"
 #include "debugtools.h"
 #include "dde/dde_private.h"
 
@@ -343,7 +344,7 @@ static WDML_QUEUE_STATE WDML_HandleAdviseReply(WDML_CONV* pConv, MSG* msg, WDML_
     UINT		uiLo, uiHi;
     HSZ			hsz;
 
-    if (msg->message != WM_DDE_ACK || msg->wParam != pConv->hwndServer)
+    if (msg->message != WM_DDE_ACK || WIN_GetFullHandle(msg->wParam) != pConv->hwndServer)
     {
 	return WDML_QS_PASS;
     }
@@ -427,7 +428,7 @@ static WDML_QUEUE_STATE WDML_HandleUnadviseReply(WDML_CONV* pConv, MSG* msg, WDM
     UINT	uiLo, uiHi;
     HSZ		hsz;
 
-    if (msg->message != WM_DDE_ACK || msg->wParam != pConv->hwndServer)
+    if (msg->message != WM_DDE_ACK || WIN_GetFullHandle(msg->wParam) != pConv->hwndServer)
     {
 	return WDML_QS_PASS;
     }
@@ -498,7 +499,7 @@ static WDML_QUEUE_STATE WDML_HandleRequestReply(WDML_CONV* pConv, MSG* msg, WDML
     UINT		uiLo, uiHi;
     HSZ			hsz;
 
-    if (msg->wParam != pConv->hwndServer)
+    if (WIN_GetFullHandle(msg->wParam) != pConv->hwndServer)
 	return WDML_QS_PASS;
     UnpackDDElParam(WM_DDE_ACK, msg->lParam, &uiLo, &uiHi);
 
@@ -658,7 +659,7 @@ static WDML_QUEUE_STATE WDML_HandleExecuteReply(WDML_CONV* pConv, MSG* msg, WDML
     DDEACK	ddeAck;
     UINT	uiLo, uiHi;
 
-    if (msg->message != WM_DDE_ACK || msg->wParam != pConv->hwndServer)
+    if (msg->message != WM_DDE_ACK || WIN_GetFullHandle(msg->wParam) != pConv->hwndServer)
     {
 	return WDML_QS_PASS;
     }
@@ -738,7 +739,7 @@ static WDML_QUEUE_STATE WDML_HandlePokeReply(WDML_CONV* pConv, MSG* msg, WDML_XA
     UINT	uiLo, uiHi;
     HSZ		hsz;
 
-    if (msg->message != WM_DDE_ACK && msg->wParam != pConv->hwndServer)
+    if (msg->message != WM_DDE_ACK && WIN_GetFullHandle(msg->wParam) != pConv->hwndServer)
     {
 	return WDML_QS_PASS;
     }
@@ -791,7 +792,7 @@ static WDML_QUEUE_STATE WDML_HandleTerminateReply(WDML_CONV* pConv, MSG* msg, WD
 	return WDML_QS_SWALLOWED;
     }
 
-    if (msg->wParam != pConv->hwndServer)
+    if (WIN_GetFullHandle(msg->wParam) != pConv->hwndServer)
     {
 	FIXME("hmmm shouldn't happen\n");
 	return WDML_QS_PASS;
@@ -875,7 +876,7 @@ static WDML_QUEUE_STATE WDML_HandleIncomingData(WDML_CONV* pConv, MSG* msg, HDDE
  */
 static WDML_QUEUE_STATE WDML_HandleIncomingTerminate(WDML_CONV* pConv, MSG* msg, HDDEDATA* hdd)
 {
-    if (pConv->hwndServer != (HWND)msg->wParam)
+    if (pConv->hwndServer != WIN_GetFullHandle(msg->wParam))
 	return WDML_QS_PASS;
     
     pConv->wStatus |= ST_TERMINATED;
@@ -1243,7 +1244,7 @@ static LRESULT CALLBACK WDML_ClientProc(HWND hwnd, UINT iMsg, WPARAM wParam, LPA
 	    pConv->wStatus |= ST_ISLOCAL;
 	}
 
-	WDML_BroadcastDDEWindows(WDML_szEventClass, WM_WDML_CONNECT_CONFIRM, hwnd, (HWND)wParam);
+	WDML_BroadcastDDEWindows(WDML_szEventClass, WM_WDML_CONNECT_CONFIRM, (WPARAM)hwnd, wParam);
 
 	GlobalDeleteAtom(uiLo);
 	GlobalDeleteAtom(uiHi);

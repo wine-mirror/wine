@@ -12,6 +12,7 @@
 
 #include "winproc.h"
 #include "message.h"
+#include "win.h"
 #include "wine/server.h"
 #include "debugtools.h"
 
@@ -229,7 +230,7 @@ UINT16 WINAPI SetTimer16( HWND16 hwnd, UINT16 id, UINT16 timeout,
 {
     TRACE("%04x %d %d %08lx\n",
                    hwnd, id, timeout, (LONG)proc );
-    return TIMER_SetTimer( hwnd, id, timeout, (WNDPROC16)proc,
+    return TIMER_SetTimer( WIN_Handle32(hwnd), id, timeout, (WNDPROC16)proc,
                            WIN_PROC_16, FALSE );
 }
 
@@ -242,7 +243,7 @@ UINT WINAPI SetTimer( HWND hwnd, UINT id, UINT timeout,
 {
     TRACE("%04x %d %d %08lx\n",
                    hwnd, id, timeout, (LONG)proc );
-    return TIMER_SetTimer( hwnd, id, timeout, (WNDPROC16)proc,
+    return TIMER_SetTimer( WIN_GetFullHandle(hwnd), id, timeout, (WNDPROC16)proc,
                            WIN_PROC_32A, FALSE );
 }
 
@@ -256,8 +257,9 @@ BOOL TIMER_IsTimerValid( HWND hwnd, UINT id, HWINDOWPROC hProc )
     TIMER *pTimer;
     BOOL ret = FALSE;
 
+    hwnd = WIN_GetFullHandle( hwnd );
     EnterCriticalSection( &csTimer );
-    
+
     for (i = 0, pTimer = TimersArray; i < NB_TIMERS; i++, pTimer++)
         if ((pTimer->hwnd == hwnd) && (pTimer->id == id) &&
             (pTimer->proc == hProc))
@@ -279,7 +281,7 @@ UINT16 WINAPI SetSystemTimer16( HWND16 hwnd, UINT16 id, UINT16 timeout,
 {
     TRACE("%04x %d %d %08lx\n", 
                    hwnd, id, timeout, (LONG)proc );
-    return TIMER_SetTimer( hwnd, id, timeout, (WNDPROC16)proc,
+    return TIMER_SetTimer( WIN_Handle32(hwnd), id, timeout, (WNDPROC16)proc,
                            WIN_PROC_16, TRUE );
 }
 
@@ -292,7 +294,7 @@ UINT WINAPI SetSystemTimer( HWND hwnd, UINT id, UINT timeout,
 {
     TRACE("%04x %d %d %08lx\n", 
                    hwnd, id, timeout, (LONG)proc );
-    return TIMER_SetTimer( hwnd, id, timeout, (WNDPROC16)proc,
+    return TIMER_SetTimer( WIN_GetFullHandle(hwnd), id, timeout, (WNDPROC16)proc,
                            WIN_PROC_32A, TRUE );
 }
 

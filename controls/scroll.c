@@ -791,6 +791,7 @@ void SCROLL_DrawScrollBar( HWND hwnd, HDC hdc, INT nBar,
         ((nBar == SB_VERT) && !(wndPtr->dwStyle & WS_VSCROLL)) ||
         ((nBar == SB_HORZ) && !(wndPtr->dwStyle & WS_HSCROLL))) goto END;
     if (!WIN_IsWindowDrawable( wndPtr, FALSE )) goto END;
+    hwnd = wndPtr->hwndSelf;  /* make it a full handle */
 
     vertical = SCROLL_GetScrollBarRect( hwnd, nBar, &rect,
                                         &arrowSize, &thumbSize, &thumbPos );
@@ -1516,7 +1517,7 @@ BOOL WINAPI GetScrollInfo(
     if (info->fMask & SIF_PAGE) info->nPage = infoPtr->Page;
     if (info->fMask & SIF_POS) info->nPos = infoPtr->CurVal;
     if ((info->fMask & SIF_TRACKPOS) && (info->cbSize == sizeof(*info)))
-        info->nTrackPos = (SCROLL_TrackingWin==hwnd) ? SCROLL_TrackingVal : infoPtr->CurVal;
+        info->nTrackPos = (SCROLL_TrackingWin == WIN_GetFullHandle(hwnd)) ? SCROLL_TrackingVal : infoPtr->CurVal;
     if (info->fMask & SIF_RANGE)
     {
 	info->nMin = infoPtr->MinVal;

@@ -19,6 +19,7 @@
 #include "winerror.h"
 #include "dde.h"
 #include "ddeml.h"
+#include "win.h"
 #include "debugtools.h"
 #include "dde/dde_private.h"
 
@@ -302,9 +303,11 @@ static LRESULT CALLBACK WDML_EventProc(HWND hwndEvent, UINT uMsg, WPARAM wParam,
 	    /* confirm connection...
 	     * lookup for this conv handle
 	     */
+            HWND client = WIN_GetFullHandle( (HWND)wParam );
+            HWND server = WIN_GetFullHandle( (HWND)lParam );
 	    for (pConv = pInstance->convs[WDML_SERVER_SIDE]; pConv != NULL; pConv = pConv->next)
 	    {
-		if (pConv->hwndClient == (HWND)wParam && pConv->hwndServer == (HWND)lParam)
+		if (pConv->hwndClient == client && pConv->hwndServer == server)
 		    break;
 	    }
 	    if (pConv)
@@ -1873,7 +1876,7 @@ static	BOOL	WDML_GetLocalConvInfo(WDML_CONV* pConv, CONVINFO* ci, DWORD id)
 
     for (pLink = pConv->instance->links[side]; pLink != NULL; pLink = pLink->next)
     {
-	if (pLink->hConv == (HWND)pConv)
+	if (pLink->hConv == (HCONV)pConv)
 	{
 	    ci->wStatus |= ST_ADVISE;
 	    break;

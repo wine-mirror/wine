@@ -1292,10 +1292,10 @@ static LRESULT MDIClientWndProc_common( HWND hwnd, UINT message,
         else return 0;
 
       case WM_MDIDESTROY:
-          return MDIDestroyChild( hwnd, ci, (HWND)wParam, TRUE );
+          return MDIDestroyChild( hwnd, ci, WIN_GetFullHandle( (HWND)wParam ), TRUE );
 
       case WM_MDIGETACTIVE:
-          if (lParam) *(BOOL *)lParam = (ci->hwndChildMaximized > 0);
+          if (lParam) *(BOOL *)lParam = (ci->hwndChildMaximized != 0);
           return ci->hwndActiveChild;
 
       case WM_MDIICONARRANGE:
@@ -1310,7 +1310,7 @@ static LRESULT MDIClientWndProc_common( HWND hwnd, UINT message,
         return 0;
 
       case WM_MDINEXT: /* lParam != 0 means previous window */
-	MDI_SwitchActiveChild( hwnd, (HWND)wParam, !lParam );
+	MDI_SwitchActiveChild( hwnd, WIN_GetFullHandle( (HWND)wParam ), !lParam );
 	break;
 	
       case WM_MDIRESTORE:
@@ -1577,7 +1577,7 @@ LRESULT WINAPI DefMDIChildProc16( HWND16 hwnd, UINT16 message,
     switch (message)
     {
     case WM_SETTEXT:
-        return DefMDIChildProcA( hwnd, message, wParam, (LPARAM)MapSL(lParam) );
+        return DefMDIChildProcA( WIN_Handle32(hwnd), message, wParam, (LPARAM)MapSL(lParam) );
     case WM_MENUCHAR:
     case WM_CLOSE:
     case WM_SETFOCUS:
@@ -1586,20 +1586,20 @@ LRESULT WINAPI DefMDIChildProc16( HWND16 hwnd, UINT16 message,
     case WM_SETVISIBLE:
     case WM_SIZE:
     case WM_SYSCHAR:
-        return DefMDIChildProcW( hwnd, message, wParam, lParam );
+        return DefMDIChildProcW( WIN_Handle32(hwnd), message, wParam, lParam );
     case WM_GETMINMAXINFO:
         {
             MINMAXINFO16 *mmi16 = (MINMAXINFO16 *)MapSL(lParam);
             MINMAXINFO mmi;
             STRUCT32_MINMAXINFO16to32( mmi16, &mmi );
-            DefMDIChildProcW( hwnd, message, wParam, (LPARAM)&mmi );
+            DefMDIChildProcW( WIN_Handle32(hwnd), message, wParam, (LPARAM)&mmi );
             STRUCT32_MINMAXINFO32to16( &mmi, mmi16 );
             return 0;
         }
     case WM_NEXTMENU:
         {
             MDINEXTMENU next_menu;
-            DefMDIChildProcW( hwnd, message, wParam, (LPARAM)&next_menu );
+            DefMDIChildProcW( WIN_Handle32(hwnd), message, wParam, (LPARAM)&next_menu );
             return MAKELONG( next_menu.hmenuNext, next_menu.hwndNext );
         }
     default:
@@ -1617,6 +1617,7 @@ LRESULT WINAPI DefMDIChildProcA( HWND hwnd, UINT message,
     HWND client = GetParent(hwnd);
     MDICLIENTINFO *ci = get_client_info( client );
 
+    hwnd = WIN_GetFullHandle( hwnd );
     if (!ci) return DefWindowProcA( hwnd, message, wParam, lParam );
 
     switch (message)
@@ -1653,6 +1654,7 @@ LRESULT WINAPI DefMDIChildProcW( HWND hwnd, UINT message,
     HWND client = GetParent(hwnd);
     MDICLIENTINFO *ci = get_client_info( client );
 
+    hwnd = WIN_GetFullHandle( hwnd );
     if (!ci) return DefWindowProcW( hwnd, message, wParam, lParam );
 
     switch (message)

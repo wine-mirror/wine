@@ -353,7 +353,7 @@ HMENU MENU_GetSysMenu( HWND hWnd, HMENU hPopupMenu )
     {
 	POPUPMENU *menu = MENU_GetMenu(hMenu);
 	menu->wFlags = MF_SYSMENU;
-	menu->hWnd = hWnd;
+	menu->hWnd = WIN_GetFullHandle( hWnd );
 
 	if (hPopupMenu == (HMENU)(-1))
 	    hPopupMenu = MENU_CopySysPopup();
@@ -2362,7 +2362,7 @@ static LRESULT MENU_DoNextMenu( MTRACKER* pmt, UINT vk )
 	else    /* application returned a new menu to switch to */
 	{
             hNewMenu = next_menu.hmenuNext;
-            hNewWnd = next_menu.hwndNext;
+            hNewWnd = WIN_GetFullHandle( next_menu.hwndNext );
 
 	    if( IsMenu(hNewMenu) && IsWindow(hNewWnd) )
 	    {
@@ -2609,7 +2609,7 @@ static INT MENU_TrackMenu( HMENU hmenu, UINT wFlags, INT x, INT y,
     mt.trackFlags = 0;
     mt.hCurrentMenu = hmenu;
     mt.hTopMenu = hmenu;
-    mt.hOwnerWnd = hwnd;
+    mt.hOwnerWnd = WIN_GetFullHandle( hwnd );
     mt.pt.x = x;
     mt.pt.y = y;
 
@@ -3968,6 +3968,7 @@ BOOL WINAPI SetMenu( HWND hWnd, HMENU hMenu )
     }
     if (GetWindowLongA( hWnd, GWL_STYLE ) & WS_CHILD) return FALSE;
 
+    hWnd = WIN_GetFullHandle( hWnd );
     if (GetCapture() == hWnd) ReleaseCapture();
 
     if (hMenu != 0)

@@ -50,6 +50,7 @@
 #include "wine/winuser16.h"
 #include "wine/port.h"
 #include "heap.h"
+#include "win.h"
 #include "winerror.h"
 
 #include "debugtools.h"
@@ -82,7 +83,8 @@ struct DosDeviceStruct {
     unsigned ibuf_size,ibuf_head,ibuf_tail;
     unsigned obuf_size,obuf_head,obuf_tail;
     /* notifications */
-    int wnd, n_read, n_write;
+    HWND wnd;
+    int n_read, n_write;
     OVERLAPPED read_ov, write_ov;
     /* save terminal states */
     DCB16 dcb;
@@ -1123,7 +1125,7 @@ BOOL16 WINAPI EnableCommNotification16( INT16 cid, HWND16 hwnd,
 		FIXME("no handle for cid = %0x!\n",cid);
 		return -1;
 	}
-	ptr->wnd = hwnd;
+	ptr->wnd = WIN_Handle32( hwnd );
 	ptr->n_read = cbWriteNotify;
 	ptr->n_write = cbOutQueue;
 	return TRUE;

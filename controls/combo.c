@@ -16,6 +16,7 @@
 #include "wine/unicode.h"
 #include "spy.h"
 #include "user.h"
+#include "win.h"
 #include "controls.h"
 #include "debugtools.h"
 
@@ -1941,14 +1942,15 @@ static LRESULT ComboWndProc_common( HWND hwnd, UINT message,
 		    COMBO_SetFocus( lphc );
 		return  TRUE;
 	case WM_KILLFOCUS:
-#define hwndFocus ((HWND16)wParam)
+            {
+                HWND hwndFocus = WIN_GetFullHandle( (HWND)wParam );
 		if( !hwndFocus ||
 		    (hwndFocus != lphc->hWndEdit && hwndFocus != lphc->hWndLBox ))
 		    COMBO_KillFocus( lphc );
-#undef hwndFocus
 		return  TRUE;
+            }
 	case WM_COMMAND:
-		return  COMBO_Command( lphc, wParam, (HWND)lParam );
+		return  COMBO_Command( lphc, wParam, WIN_GetFullHandle( (HWND)lParam ) );
 	case WM_GETTEXT:
 		return COMBO_GetText( lphc, (INT)wParam, lParam, unicode );
 	case WM_SETTEXT:

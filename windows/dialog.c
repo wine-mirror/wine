@@ -1480,7 +1480,7 @@ static BOOL DIALOG_IsDialogMessage( HWND hwnd, HWND hwndDlg,
         /* drop through */
 
     case WM_SYSCHAR:
-        if (DIALOG_IsAccelerator( hwnd, hwndDlg, wParam ))
+        if (DIALOG_IsAccelerator( WIN_GetFullHandle(hwnd), hwndDlg, wParam ))
         {
             /* don't translate or dispatch */
             return TRUE;
@@ -1516,8 +1516,8 @@ BOOL16 WINAPI IsDialogMessage16( HWND16 hwndDlg, SEGPTR msg16 )
     {
        dlgCode = SendMessage16( msg->hwnd, WM_GETDLGCODE, 0, (LPARAM)msg16);
     }
-    ret = DIALOG_IsDialogMessage( msg->hwnd, hwndDlg, msg->message,
-                                  msg->wParam, msg->lParam,
+    ret = DIALOG_IsDialogMessage( WIN_Handle32(msg->hwnd), WIN_Handle32(hwndDlg),
+                                  msg->message, msg->wParam, msg->lParam,
                                   &translate, &dispatch, dlgCode );
     if (translate) TranslateMessage16( msg );
     if (dispatch) DispatchMessage16( msg );
@@ -1534,6 +1534,7 @@ BOOL WINAPI IsDialogMessageA( HWND hwndDlg, LPMSG msg )
     BOOL ret, translate, dispatch;
     INT dlgCode = 0;
 
+    hwndDlg = WIN_GetFullHandle( hwndDlg );
     if ((hwndDlg != msg->hwnd) && !IsChild( hwndDlg, msg->hwnd ))
         return FALSE;
 
@@ -1559,6 +1560,7 @@ BOOL WINAPI IsDialogMessageW( HWND hwndDlg, LPMSG msg )
     BOOL ret, translate, dispatch;
     INT dlgCode = 0;
 
+    hwndDlg = WIN_GetFullHandle( hwndDlg );
     if ((hwndDlg != msg->hwnd) && !IsChild( hwndDlg, msg->hwnd ))
         return FALSE;
 
@@ -2033,36 +2035,23 @@ static HWND DIALOG_GetNextTabItem( HWND hwndMain, HWND hwndDlg, HWND hwndCtrl, B
         hChildFirst = GetWindow(hwndDlg,GW_CHILD);
         if(fPrevious) hChildFirst = GetWindow(hChildFirst,GW_HWNDLAST);
     }
-    else
+    else if (IsChild( hwndMain, hwndCtrl ))
     {
-        HWND hParent = GetParent(hwndCtrl);
-        BOOL bValid = FALSE;
-        while( hParent)
+        hChildFirst = GetWindow(hwndCtrl,wndSearch);
+        if(!hChildFirst)
         {
-            if(hParent == hwndMain)
+            if(GetParent(hwndCtrl) != hwndMain)
+                hChildFirst = GetWindow(GetParent(hwndCtrl),wndSearch);
+            else
             {
-                bValid = TRUE;
-                break;
-            }
-            hParent = GetParent(hParent);
-        }
-        if(bValid)
-        {
-            hChildFirst = GetWindow(hwndCtrl,wndSearch);
-            if(!hChildFirst)
-            {
-                if(GetParent(hwndCtrl) != hwndMain)
-                    hChildFirst = GetWindow(GetParent(hwndCtrl),wndSearch);
+                if(fPrevious)
+                    hChildFirst = GetWindow(hwndCtrl,GW_HWNDLAST);
                 else
-                {
-                    if(fPrevious)
-                        hChildFirst = GetWindow(hwndCtrl,GW_HWNDLAST);
-                    else
-                        hChildFirst = GetWindow(hwndCtrl,GW_HWNDFIRST);
-                }
+                    hChildFirst = GetWindow(hwndCtrl,GW_HWNDFIRST);
             }
-        }	
+        }
     }
+
     while(hChildFirst)
     {
         BOOL bCtrl = FALSE;

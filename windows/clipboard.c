@@ -1366,7 +1366,7 @@ BOOL WINAPI ChangeClipboardChain(HWND hWnd, HWND hWndNext)
     else
 	WARN("hWndViewer is lost\n");
 
-    if( hWnd == hWndViewer ) hWndViewer = WIN_GetFullHandle( hWndNext );
+    if( WIN_GetFullHandle(hWnd) == hWndViewer ) hWndViewer = WIN_GetFullHandle( hWndNext );
 
     return bRet;
 }

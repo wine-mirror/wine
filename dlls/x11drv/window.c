@@ -489,6 +489,8 @@ int X11DRV_sync_whole_window_position( Display *display, WND *win, int zorder )
     {
         /* find window that this one must be after */
         HWND prev = GetWindow( win->hwndSelf, GW_HWNDPREV );
+        while (prev && !(GetWindowLongW( prev, GWL_STYLE ) & WS_VISIBLE))
+            prev = GetWindow( prev, GW_HWNDPREV );
         if (!prev)  /* top child */
         {
             changes.stack_mode = Above;
@@ -972,7 +974,6 @@ HWND X11DRV_SetParent( HWND hwnd, HWND parent )
 {
     Display *display = thread_display();
     WND *wndPtr;
-    WND *pWndParent;
     DWORD dwStyle;
     HWND retvalue;
 
@@ -982,18 +983,12 @@ HWND X11DRV_SetParent( HWND hwnd, HWND parent )
 
     if (!parent) parent = GetDesktopWindow();
 
-    if (!(pWndParent = WIN_FindWndPtr(parent)))
-    {
-        WIN_ReleaseWndPtr( wndPtr );
-        return 0;
-    }
-
     /* Windows hides the window first, then shows it again
      * including the WM_SHOWWINDOW messages and all */
     if (dwStyle & WS_VISIBLE) ShowWindow( hwnd, SW_HIDE );
 
     retvalue = wndPtr->parent->hwndSelf;  /* old parent */
-    if (pWndParent != wndPtr->parent)
+    if (parent != retvalue)
     {
         struct x11drv_win_data *data = wndPtr->pDriverData;
 
@@ -1001,21 +996,20 @@ HWND X11DRV_SetParent( HWND hwnd, HWND parent )
 
         if (parent != GetDesktopWindow()) /* a child window */
         {
-            if (!(wndPtr->dwStyle & WS_CHILD) && wndPtr->wIDmenu)
+            if (!(dwStyle & WS_CHILD))
             {
-                DestroyMenu( (HMENU)wndPtr->wIDmenu );
-                wndPtr->wIDmenu = 0;
+                HMENU menu = (HMENU)SetWindowLongW( hwnd, GWL_ID, 0 );
+                if (menu) DestroyMenu( menu );
             }
         }
 
         if (is_window_top_level( wndPtr )) set_wm_hints( display, wndPtr );
         wine_tsx11_lock();
         sync_window_style( display, wndPtr );
-        XReparentWindow( display, data->whole_window, get_client_window(pWndParent),
+        XReparentWindow( display, data->whole_window, X11DRV_get_client_window(parent),
                          data->whole_rect.left, data->whole_rect.top );
         wine_tsx11_unlock();
     }
-    WIN_ReleaseWndPtr( pWndParent );
     WIN_ReleaseWndPtr( wndPtr );
 
     /* SetParent additionally needs to make hwnd the topmost window
@@ -1043,6 +1037,7 @@ BOOL X11DRV_EnableWindow( HWND hwnd, BOOL enable )
     BOOL retvalue;
 
     if (!(wndPtr = WIN_FindWndPtr( hwnd ))) return FALSE;
+    hwnd = wndPtr->hwndSelf;  /* make it a full handle */
 
     retvalue = ((wndPtr->dwStyle & WS_DISABLED) != 0);
 

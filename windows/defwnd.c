@@ -716,6 +716,7 @@ LRESULT WINAPI DefWindowProcA( HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam
     LRESULT result = 0;
 
     if (!IsWindow( hwnd )) return 0;
+    hwnd = WIN_GetFullHandle( hwnd );
     SPY_EnterMessage( SPY_DEFWNDPROC, hwnd, msg, wParam, lParam );
 
     switch(msg)
@@ -845,6 +846,7 @@ LRESULT WINAPI DefWindowProcW(
     LRESULT result = 0;
 
     if (!IsWindow( hwnd )) return 0;
+    hwnd = WIN_GetFullHandle( hwnd );
     SPY_EnterMessage( SPY_DEFWNDPROC, hwnd, msg, wParam, lParam );
 
     switch(msg)

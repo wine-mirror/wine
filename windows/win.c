@@ -683,7 +683,7 @@ static HWND WIN_CreateWindowEx( CREATESTRUCTA *cs, ATOM classAtom,
     DCE *dce;
     BOOL unicode = (type == WIN_PROC_32W);
 
-    TRACE("%s %s %08lx %08lx %d,%d %dx%d %04x %04x %08x %p\n",
+    TRACE("%s %s ex=%08lx style=%08lx %d,%d %dx%d parent=%04x menu=%04x inst=%08x params=%p\n",
           (type == WIN_PROC_32W) ? debugres_w((LPWSTR)cs->lpszName) : debugres_a(cs->lpszName),
           (type == WIN_PROC_32W) ? debugres_w((LPWSTR)cs->lpszClass) : debugres_a(cs->lpszClass),
           cs->dwExStyle, cs->style, cs->x, cs->y, cs->cx, cs->cy,
@@ -1170,6 +1170,7 @@ BOOL WINAPI DestroyWindow( HWND hwnd )
     BOOL retvalue;
     HWND h;
 
+    hwnd = WIN_GetFullHandle( hwnd );
     TRACE("(%04x)\n", hwnd);
 
     /* Initialization */
@@ -1369,6 +1370,7 @@ static HWND WIN_FindWindow( HWND parent, HWND child, ATOM className, LPCWSTR tit
 
     if (child)
     {
+        child = WIN_GetFullHandle( child );
         while (list[i] && list[i] != child) i++;
         if (!list[i]) return 0;
         i++;  /* start from next window */
@@ -1540,6 +1542,7 @@ BOOL WINAPI EnableWindow( HWND hwnd, BOOL enable )
         return USER_Driver.pEnableWindow( hwnd, enable );
 
     if (!(wndPtr = WIN_FindWndPtr( hwnd ))) return FALSE;
+    hwnd = wndPtr->hwndSelf;  /* make it a full handle */
 
     retvalue = ((wndPtr->dwStyle & WS_DISABLED) != 0);
 
@@ -1550,7 +1553,7 @@ BOOL WINAPI EnableWindow( HWND hwnd, BOOL enable )
     }
     else if (!enable && !(wndPtr->dwStyle & WS_DISABLED))
     {
-        SendMessageA( wndPtr->hwndSelf, WM_CANCELMODE, 0, 0);
+        SendMessageA( hwnd, WM_CANCELMODE, 0, 0);
 
         wndPtr->dwStyle |= WS_DISABLED; /* Disable window */
 
@@ -2197,11 +2200,11 @@ HWND WINAPI GetParent( HWND hwnd )
  */
 HWND WINAPI GetAncestor( HWND hwnd, UINT type )
 {
-    HWND ret;
+    HWND ret = 0;
     WND *wndPtr;
 
-    if (hwnd == GetDesktopWindow()) return 0;
     if (!(wndPtr = WIN_FindWndPtr(hwnd))) return 0;
+    if (wndPtr->hwndSelf == GetDesktopWindow()) goto done;
 
     switch(type)
     {
@@ -2224,6 +2227,7 @@ HWND WINAPI GetAncestor( HWND hwnd, UINT type )
         break;
     }
     ret = wndPtr ? wndPtr->hwndSelf : 0;
+ done:
     WIN_ReleaseWndPtr( wndPtr );
     return ret;
 }
@@ -2248,9 +2252,10 @@ HWND WINAPI SetParent( HWND hwnd, HWND parent )
     HWND retvalue;
 
     if (!parent) parent = GetDesktopWindow();
+    else parent = WIN_GetFullHandle( parent );
 
     /* sanity checks */
-    if (hwnd == GetDesktopWindow() || !IsWindow( parent ))
+    if (WIN_GetFullHandle(hwnd) == GetDesktopWindow() || !IsWindow( parent ))
     {
         SetLastError( ERROR_INVALID_WINDOW_HANDLE );
         return 0;
@@ -2315,6 +2320,7 @@ BOOL WINAPI IsChild( HWND parent, HWND child )
     BOOL ret;
 
     if (!list) return FALSE;
+    parent = WIN_GetFullHandle( parent );
     for (i = 0; list[i]; i++) if (list[i] == parent) break;
     ret = (list[i] != 0);
     HeapFree( GetProcessHeap(), 0, list );
@@ -2414,6 +2420,8 @@ HWND WINAPI GetWindow( HWND hwnd, WORD rel )
 
     WND * wndPtr = WIN_FindWndPtr( hwnd );
     if (!wndPtr) return 0;
+    hwnd = wndPtr->hwndSelf;  /* make it a full handle */
+
     switch(rel)
     {
     case GW_HWNDFIRST:
@@ -2883,6 +2891,7 @@ BOOL WINAPI FlashWindow( HWND hWnd, BOOL bInvert )
     TRACE("%04x\n", hWnd);
 
     if (!wndPtr) return FALSE;
+    hWnd = wndPtr->hwndSelf;  /* make it a full handle */
 
     if (wndPtr->dwStyle & WS_MINIMIZE)
     {
@@ -2910,8 +2919,8 @@ BOOL WINAPI FlashWindow( HWND hWnd, BOOL bInvert )
         if (bInvert) wparam = !(wndPtr->flags & WIN_NCACTIVATED);
         else wparam = (hWnd == GetActiveWindow());
 
-        SendMessageW( hWnd, WM_NCACTIVATE, wparam, (LPARAM)0 );
         WIN_ReleaseWndPtr(wndPtr);
+        SendMessageW( hWnd, WM_NCACTIVATE, wparam, (LPARAM)0 );
         return wparam;
     }
 }

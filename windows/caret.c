@@ -25,7 +25,7 @@ typedef struct
     INT      y;
     INT      width;
     INT      height;
-    HBRUSH16   hBrush;
+    HBRUSH   hBrush;
     UINT     timeout;
     UINT     timerid;
 } CARET;
@@ -62,7 +62,7 @@ void CARET_GetRect(LPRECT lprc)
 static void CARET_DisplayCaret( DISPLAY_CARET status )
 {
     HDC hdc;
-    HBRUSH16 hPrevBrush;
+    HBRUSH hPrevBrush;
 
     if (Caret.on && (status == CARET_ON)) return;
     if (!Caret.on && (status == CARET_OFF)) return;
@@ -168,7 +168,7 @@ BOOL WINAPI CreateCaret( HWND hwnd, HBITMAP bitmap,
                                           GetSysColor(COLOR_WINDOW) );
     }
 
-    Caret.hwnd = hwnd;
+    Caret.hwnd = WIN_GetFullHandle( hwnd );
     Caret.hidden = 1;
     Caret.on = FALSE;
     Caret.x = 0;
@@ -253,7 +253,7 @@ void WINAPI HideCaret16( HWND16 hwnd )
 BOOL WINAPI HideCaret( HWND hwnd )
 {
     if (!Caret.hwnd) return FALSE;
-    if (hwnd && (Caret.hwnd != hwnd)) return FALSE;
+    if (hwnd && (Caret.hwnd != WIN_GetFullHandle(hwnd))) return FALSE;
 
     TRACE("hwnd=%04x, hidden=%d\n",
                   hwnd, Caret.hidden);
@@ -280,7 +280,7 @@ void WINAPI ShowCaret16( HWND16 hwnd )
 BOOL WINAPI ShowCaret( HWND hwnd )
 {
     if (!Caret.hwnd) return FALSE;
-    if (hwnd && (Caret.hwnd != hwnd)) return FALSE;
+    if (hwnd && (Caret.hwnd != WIN_GetFullHandle(hwnd))) return FALSE;
 
     TRACE("hwnd=%04x, hidden=%d\n",
 		hwnd, Caret.hidden);
