@@ -78,6 +78,7 @@ typedef void (APIENTRY * PGLFNGLCOLORTABLEEXTPROC) (GLenum target, GLenum intern
 #endif
 typedef void (APIENTRY * PGLFNGLPOINTPARAMETERFEXTPROC) (GLenum pname, GLfloat param);
 typedef void (APIENTRY * PGLFNGLPOINTPARAMETERFVEXTPROC) (GLenum pname, const GLfloat *params);
+/* GL_EXT_texture_env_combine */
 #ifndef GL_EXT_texture_env_combine
 #define GL_EXT_texture_env_combine 1
 #define GL_COMBINE_EXT                    0x8570
@@ -131,9 +132,33 @@ typedef void (APIENTRY * PGLFNGLPOINTPARAMETERFVEXTPROC) (GLenum pname, const GL
 #endif
 /* GL_EXT_texture_lod_bias */
 #ifndef GL_EXT_texture_lod_bias
+#define GL_EXT_texture_lod_bias 1
 #define GL_MAX_TEXTURE_LOD_BIAS_EXT       0x84FD
 #define GL_TEXTURE_FILTER_CONTROL_EXT     0x8500
 #define GL_TEXTURE_LOD_BIAS_EXT           0x8501
+#endif
+/* GL_ARB_texture_border_clamp */
+#ifndef GL_ARB_texture_border_clamp
+#define GL_ARB_texture_border_clamp 1
+#define GL_CLAMP_TO_BORDER_ARB            0x812D
+#endif
+/* GL_ATI_texture_mirror_once */
+#ifndef GL_ATI_texture_mirror_once
+#define GL_ATI_texture_mirror_once 1
+#define GL_MIRROR_CLAMP_ATI               0x8742
+#define GL_MIRROR_CLAMP_TO_EDGE_ATI       0x8743
+#endif
+/* GL_ARB_texture_env_dot3 */
+#ifndef GL_ARB_texture_env_dot3
+#define GL_ARB_texture_env_dot3 1
+#define GL_DOT3_RGB_ARB                   0x86AE
+#define GL_DOT3_RGBA_ARB                  0x86AF
+#endif
+/* GL_EXT_texture_env_dot3 */
+#ifndef GL_EXT_texture_env_dot3
+#define GL_EXT_texture_env_dot3 1
+#define GL_DOT3_RGB_EXT                   0x8740
+#define GL_DOT3_RGBA_EXT                  0x8741
 #endif
 
 /*******
@@ -195,8 +220,10 @@ typedef enum _GL_SupportedExt {
   ARB_POINT_PARAMETERS,
   ARB_TEXTURE_COMPRESSION,
   ARB_TEXTURE_CUBE_MAP,
+  ARB_TEXTURE_ENV_ADD,
   ARB_TEXTURE_ENV_COMBINE,
   ARB_TEXTURE_ENV_DOT3,
+  ARB_TEXTURE_BORDER_CLAMP,
   ARB_VERTEX_PROGRAM,
   ARB_VERTEX_BLEND,
   /* EXT */
@@ -208,11 +235,17 @@ typedef enum _GL_SupportedExt {
   EXT_TEXTURE_FILTER_ANISOTROPIC,
   EXT_TEXTURE_LOD,
   EXT_TEXTURE_LOD_BIAS,
+  EXT_TEXTURE_ENV_ADD,
+  EXT_TEXTURE_ENV_COMBINE,
+  EXT_TEXTURE_ENV_DOT3,
   EXT_VERTEX_WEIGHTING,
   /* NVIDIA */
+  NV_TEXTURE_ENV_COMBINE4,
   NV_FRAGMENT_PROGRAM,
   NV_VERTEX_PROGRAM,
   /* ATI */
+  ATI_TEXTURE_ENV_COMBINE3,
+  ATI_TEXTURE_MIRROR_ONCE,
   EXT_VERTEX_SHADER,
 
   OPENGL_SUPPORTED_EXT_END
@@ -330,7 +363,7 @@ typedef struct _GL_Info {
   GL_VSVersion vs_nv_version;
   GL_VSVersion vs_ati_version;
   
-  BOOL supported[30];
+  BOOL supported[40];
 
   /** OpenGL EXT and ARB functions ptr */
   GL_EXT_FUNCS_GEN;

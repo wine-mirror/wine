@@ -3361,7 +3361,6 @@ HRESULT  WINAPI  IDirect3DDevice8Impl_SetTextureStageState(LPDIRECT3DDEVICE8 ifa
       }
       break;
 
-
     case D3DTSS_ALPHAOP               :
     case D3DTSS_COLOROP               :
         {
@@ -3438,18 +3437,45 @@ HRESULT  WINAPI  IDirect3DDevice8Impl_SetTextureStageState(LPDIRECT3DDEVICE8 ifa
     case D3DTSS_ADDRESSW              :
         {
             GLint wrapParm = GL_REPEAT;
+
             switch (Value) {
             case D3DTADDRESS_WRAP:   wrapParm = GL_REPEAT; break;
             case D3DTADDRESS_CLAMP:  wrapParm = GL_CLAMP_TO_EDGE; break;      
-            case D3DTADDRESS_BORDER: wrapParm = GL_REPEAT; break;      /* FIXME: Not right, but better */
+            case D3DTADDRESS_BORDER: 
+	      {
+		if (GL_SUPPORT(ARB_TEXTURE_BORDER_CLAMP)) {
+		  wrapParm = GL_CLAMP_TO_BORDER_ARB; 
+		} else {
+		  /* FIXME: Not right, but better */
+		  FIXME("Unrecognized or unsupported D3DTADDRESS_* value %ld, state %d\n", Value, Type);
+		  wrapParm = GL_REPEAT; 
+		}
+	      }
+	      break;
+            case D3DTADDRESS_MIRROR: 
+	      {
 #if defined(GL_VERSION_1_4)
-            case D3DTADDRESS_MIRROR: wrapParm = GL_MIRRORED_REPEAT; break;
+		wrapParm = GL_MIRRORED_REPEAT; 
 #elif defined(GL_ARB_texture_mirrored_repeat)
-            case D3DTADDRESS_MIRROR: wrapParm = GL_MIRRORED_REPEAT_ARB; break;
+		wrapParm = GL_MIRRORED_REPEAT_ARB;
 #else
-            case D3DTADDRESS_MIRROR:      /* Unsupported in OpenGL pre-1.4 */
+		/* Unsupported in OpenGL pre-1.4 */
+                FIXME("Unrecognized or unsupported D3DTADDRESS_* value %ld, state %d\n", Value, Type);
+		wrapParm = GL_REPEAT;
 #endif
-            case D3DTADDRESS_MIRRORONCE:  /* Unsupported in OpenGL         */
+	      }
+	      break;
+            case D3DTADDRESS_MIRRORONCE: 
+	      {
+		if (GL_SUPPORT(ATI_TEXTURE_MIRROR_ONCE)) {
+		  wrapParm = GL_MIRROR_CLAMP_TO_EDGE_ATI;
+		} else {
+		  FIXME("Unrecognized or unsupported D3DTADDRESS_* value %ld, state %d\n", Value, Type);
+		  wrapParm = GL_REPEAT; 
+		}
+	      }
+	      break;
+
             default:
                 FIXME("Unrecognized or unsupported D3DTADDRESS_* value %ld, state %d\n", Value, Type);
                 wrapParm = GL_REPEAT; 

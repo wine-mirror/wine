@@ -769,14 +769,18 @@ static void IDirect3D8Impl_FillGLCaps(LPDIRECT3D8 iface, Display* display) {
         } else if (strcmp(ThisExtn, "GL_ARB_texture_compression") == 0) {
 	  FIXME(" FOUND: ARB Texture Compression support\n");
 	  This->gl_info.supported[ARB_TEXTURE_COMPRESSION] = TRUE;
+        } else if (strcmp(ThisExtn, "GL_ARB_texture_env_add") == 0) {
+	  FIXME(" FOUND: ARB Texture Env Add support\n");
+	  This->gl_info.supported[ARB_TEXTURE_ENV_ADD] = TRUE;
         } else if (strcmp(ThisExtn, "GL_ARB_texture_env_combine") == 0) {
-	  FIXME(" FOUND: EXT Texture Env combine support\n");
+	  FIXME(" FOUND: ARB Texture Env combine support\n");
 	  This->gl_info.supported[ARB_TEXTURE_ENV_COMBINE] = TRUE;
         } else if (strcmp(ThisExtn, "GL_ARB_texture_env_dot3") == 0) {
-	  if (FALSE == This->gl_info.supported[ARB_TEXTURE_ENV_DOT3]) {
-	    FIXME(" FOUND: EXT Dot3 support\n");
-	    This->gl_info.supported[ARB_TEXTURE_ENV_DOT3] = TRUE;
-	  }
+	  FIXME(" FOUND: ARB Dot3 support\n");
+	  This->gl_info.supported[ARB_TEXTURE_ENV_DOT3] = TRUE;
+	} else if (strcmp(ThisExtn, "GL_ARB_texture_border_clamp") == 0) {
+	  FIXME(" FOUND: ARB Texture border clamp support\n");
+	  This->gl_info.supported[ARB_TEXTURE_BORDER_CLAMP] = TRUE;
 	} else if (strstr(ThisExtn, "GL_ARB_vertex_program")) {
 	  This->gl_info.vs_arb_version = VS_VERSION_11;
 	  FIXME(" FOUND: ARB Vertex Shader support - version=%02x\n", This->gl_info.vs_arb_version);
@@ -802,11 +806,15 @@ static void IDirect3D8Impl_FillGLCaps(LPDIRECT3D8 iface, Display* display) {
 	  FIXME(" FOUND: EXT Texture S3TC compression support\n");
 	  This->gl_info.supported[EXT_TEXTURE_COMPRESSION_S3TC] = TRUE;
 #endif
+        } else if (strcmp(ThisExtn, "GL_EXT_texture_env_add") == 0) {
+	  FIXME(" FOUND: EXT Texture Env Add support\n");
+	  This->gl_info.supported[EXT_TEXTURE_ENV_ADD] = TRUE;
+        } else if (strcmp(ThisExtn, "GL_EXT_texture_env_combine") == 0) {
+	  FIXME(" FOUND: EXT Texture Env combine support\n");
+	  This->gl_info.supported[EXT_TEXTURE_ENV_COMBINE] = TRUE;
         } else if (strcmp(ThisExtn, "GL_EXT_texture_env_dot3") == 0) {
-	  if (FALSE == This->gl_info.supported[ARB_TEXTURE_ENV_DOT3]) {
-	    FIXME(" FOUND: EXT Dot3 support\n");
-	    This->gl_info.supported[ARB_TEXTURE_ENV_DOT3] = TRUE;
-	  }
+	  FIXME(" FOUND: EXT Dot3 support\n");
+	  This->gl_info.supported[EXT_TEXTURE_ENV_DOT3] = TRUE;
 	} else if (strcmp(ThisExtn, "GL_EXT_texture_filter_anisotropic") == 0) {
 	  FIXME(" FOUND: EXT Texture Anisotropic filter support\n");
 	  This->gl_info.supported[EXT_TEXTURE_FILTER_ANISOTROPIC] = TRUE;
@@ -823,6 +831,9 @@ static void IDirect3D8Impl_FillGLCaps(LPDIRECT3D8 iface, Display* display) {
 	/**
 	 * NVIDIA 
 	 */
+        } else if (strcmp(ThisExtn, "GL_NV_texture_env_combine4") == 0) {
+	  FIXME(" FOUND: NVIDIA (NV) Texture Env combine (4) support\n");
+	  This->gl_info.supported[NV_TEXTURE_ENV_COMBINE4] = TRUE;
 	} else if (strstr(ThisExtn, "GL_NV_fragment_program")) {
 	  This->gl_info.ps_nv_version = PS_VERSION_11;
 	  FIXME(" FOUND: NVIDIA (NV) Pixel Shader support - version=%02x\n", This->gl_info.ps_nv_version);
@@ -837,6 +848,12 @@ static void IDirect3D8Impl_FillGLCaps(LPDIRECT3D8 iface, Display* display) {
 	 * ATI
 	 */
 	/** TODO */
+        } else if (strcmp(ThisExtn, "GL_ATI_texture_env_combine3") == 0) {
+	  FIXME(" FOUND: ATI Texture Env combine (3) support\n");
+	  This->gl_info.supported[ATI_TEXTURE_ENV_COMBINE3] = TRUE;
+        } else if (strcmp(ThisExtn, "GL_ATI_texture_mirror_once") == 0) {
+	  FIXME(" FOUND: ATI Texture Mirror Once support\n");
+	  This->gl_info.supported[ATI_TEXTURE_MIRROR_ONCE] = TRUE;
 	} else if (strcmp(ThisExtn, "GL_EXT_vertex_shader") == 0) {
 	  This->gl_info.vs_ati_version = VS_VERSION_11;
 	  FIXME(" FOUND: ATI (EXT) Vertex Shader support - version=%02x\n", This->gl_info.vs_ati_version);
