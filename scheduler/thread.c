@@ -96,7 +96,6 @@ static BOOL THREAD_InitTEB( TEB *teb )
     teb->except    = (void *)~0UL;
     teb->self      = teb;
     teb->tibflags  = TEBF_WIN32;
-    teb->tls_ptr   = teb->tls_array;
     teb->exit_code = STILL_ACTIVE;
     teb->request_fd = -1;
     teb->reply_fd   = -1;

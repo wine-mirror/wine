@@ -181,8 +181,8 @@ enum binary_type
 };
 
 /* module.c */
-extern BOOL MODULE_DllProcessAttach( WINE_MODREF *wm, LPVOID lpReserved );
-extern void MODULE_DllThreadAttach( LPVOID lpReserved );
+extern NTSTATUS MODULE_DllProcessAttach( WINE_MODREF *wm, LPVOID lpReserved );
+extern NTSTATUS MODULE_DllThreadAttach( LPVOID lpReserved );
 extern WINE_MODREF *MODULE_FindModule( LPCSTR path );
 extern HMODULE16 MODULE_CreateDummyModule( LPCSTR filename, HMODULE module32 );
 extern enum binary_type MODULE_GetBinaryType( HANDLE hfile );
@@ -224,7 +224,6 @@ extern NTSTATUS PE_LoadLibraryExA(LPCSTR, DWORD, WINE_MODREF**);
 extern HMODULE PE_LoadImage( HANDLE hFile, LPCSTR filename, DWORD flags );
 extern WINE_MODREF *PE_CreateModule( HMODULE hModule, LPCSTR filename,
                                      DWORD flags, HANDLE hFile, BOOL builtin );
-extern void PE_InitTls(void);
 extern DWORD PE_fixup_imports(WINE_MODREF *wm);
 
 /* loader/loadorder.c */

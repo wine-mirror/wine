@@ -63,6 +63,10 @@ static const char * const reason_names[] =
     "THREAD_DETACH"
 };
 
+static UINT tls_module_count;      /* number of modules with TLS directory */
+static UINT tls_total_size;        /* total size of TLS storage */
+static const IMAGE_TLS_DIRECTORY **tls_dirs;  /* array of TLS directories */
+
 static CRITICAL_SECTION loader_section = CRITICAL_SECTION_INIT( "loader_section" );
 static WINE_MODREF *cached_modref;
 static WINE_MODREF *current_modref;
@@ -399,6 +403,92 @@ WINE_MODREF *MODULE_AllocModRef( HMODULE hModule, LPCSTR filename )
 
 
 /*************************************************************************
+ *              alloc_process_tls
+ *
+ * Allocate the process-wide structure for module TLS storage.
+ */
+static NTSTATUS alloc_process_tls(void)
+{
+    WINE_MODREF *wm;
+    IMAGE_TLS_DIRECTORY *dir;
+    ULONG size, i;
+
+    for (wm = MODULE_modref_list; wm; wm = wm->next)
+    {
+        if (!(dir = RtlImageDirectoryEntryToData( wm->ldr.BaseAddress, TRUE,
+                                                  IMAGE_DIRECTORY_ENTRY_TLS, &size )))
+            continue;
+        size = (dir->EndAddressOfRawData - dir->StartAddressOfRawData) + dir->SizeOfZeroFill;
+        if (!size) continue;
+        tls_total_size += size;
+        tls_module_count++;
+    }
+    if (!tls_module_count) return STATUS_SUCCESS;
+
+    TRACE( "count %u size %u\n", tls_module_count, tls_total_size );
+
+    tls_dirs = RtlAllocateHeap( ntdll_get_process_heap(), 0, tls_module_count * sizeof(*tls_dirs) );
+    if (!tls_dirs) return STATUS_NO_MEMORY;
+
+    for (i = 0, wm = MODULE_modref_list; wm; wm = wm->next)
+    {
+        if (!(dir = RtlImageDirectoryEntryToData( wm->ldr.BaseAddress, TRUE,
+                                                  IMAGE_DIRECTORY_ENTRY_TLS, &size )))
+            continue;
+        tls_dirs[i] = dir;
+        *dir->AddressOfIndex = i;
+        wm->ldr.TlsIndex = i;
+        wm->ldr.LoadCount = -1;  /* can't unload it */
+        i++;
+    }
+    return STATUS_SUCCESS;
+}
+
+
+/*************************************************************************
+ *              alloc_thread_tls
+ *
+ * Allocate the per-thread structure for module TLS storage.
+ */
+static NTSTATUS alloc_thread_tls(void)
+{
+    void **pointers;
+    char *data;
+    UINT i;
+
+    if (!tls_module_count) return STATUS_SUCCESS;
+
+    if (!(pointers = RtlAllocateHeap( ntdll_get_process_heap(), 0,
+                                      tls_module_count * sizeof(*pointers) )))
+        return STATUS_NO_MEMORY;
+
+    if (!(data = RtlAllocateHeap( ntdll_get_process_heap(), 0, tls_total_size )))
+    {
+        RtlFreeHeap( ntdll_get_process_heap(), 0, pointers );
+        return STATUS_NO_MEMORY;
+    }
+
+    for (i = 0; i < tls_module_count; i++)
+    {
+        const IMAGE_TLS_DIRECTORY *dir = tls_dirs[i];
+        ULONG size = dir->EndAddressOfRawData - dir->StartAddressOfRawData;
+
+        TRACE( "thread %04lx idx %d: %ld/%ld bytes from %p to %p\n",
+               GetCurrentThreadId(), i, size, dir->SizeOfZeroFill,
+               (void *)dir->StartAddressOfRawData, data );
+
+        pointers[i] = data;
+        memcpy( data, (void *)dir->StartAddressOfRawData, size );
+        data += size;
+        memset( data, 0, dir->SizeOfZeroFill );
+        data += dir->SizeOfZeroFill;
+    }
+    NtCurrentTeb()->tls_ptr = pointers;
+    return STATUS_SUCCESS;
+}
+
+
+/*************************************************************************
  *              call_tls_callbacks
  */
 static void call_tls_callbacks( HMODULE module, UINT reason )
@@ -492,9 +582,9 @@ static BOOL MODULE_InitDLL( WINE_MODREF *wm, UINT reason, LPVOID lpReserved )
  * detach notifications are called in the reverse of the sequence the attach
  * notifications *returned*.
  */
-BOOL MODULE_DllProcessAttach( WINE_MODREF *wm, LPVOID lpReserved )
+NTSTATUS MODULE_DllProcessAttach( WINE_MODREF *wm, LPVOID lpReserved )
 {
-    BOOL retv = TRUE;
+    NTSTATUS status = STATUS_SUCCESS;
     int i;
 
     RtlEnterCriticalSection( &loader_section );
@@ -502,7 +592,9 @@ BOOL MODULE_DllProcessAttach( WINE_MODREF *wm, LPVOID lpReserved )
     if (!wm)
     {
         wm = exe_modref;
-        PE_InitTls();
+        wm->ldr.LoadCount = -1;  /* can't unload main exe */
+        if ((status = alloc_process_tls()) != STATUS_SUCCESS) goto done;
+        if ((status = alloc_thread_tls()) != STATUS_SUCCESS) goto done;
     }
     assert( wm );
 
@@ -517,22 +609,26 @@ BOOL MODULE_DllProcessAttach( WINE_MODREF *wm, LPVOID lpReserved )
     wm->ldr.Flags |= LDR_LOAD_IN_PROGRESS;
 
     /* Recursively attach all DLLs this one depends on */
-    for ( i = 0; retv && i < wm->nDeps; i++ )
-        if ( wm->deps[i] )
-            retv = MODULE_DllProcessAttach( wm->deps[i], lpReserved );
+    for ( i = 0; i < wm->nDeps; i++ )
+    {
+        if (!wm->deps[i]) continue;
+        if ((status = MODULE_DllProcessAttach( wm->deps[i], lpReserved )) != STATUS_SUCCESS) break;
+    }
 
     /* Call DLL entry point */
-    if ( retv )
+    if (status == STATUS_SUCCESS)
     {
         WINE_MODREF *prev = current_modref;
         current_modref = wm;
-        retv = MODULE_InitDLL( wm, DLL_PROCESS_ATTACH, lpReserved );
-        if (retv) wm->ldr.Flags |= LDR_PROCESS_ATTACHED;
+        if (MODULE_InitDLL( wm, DLL_PROCESS_ATTACH, lpReserved ))
+            wm->ldr.Flags |= LDR_PROCESS_ATTACHED;
+        else
+            status = STATUS_DLL_INIT_FAILED;
         current_modref = prev;
     }
 
     /* Re-insert MODREF at head of list */
-    if ( retv && wm->prev )
+    if (status == STATUS_SUCCESS && wm->prev )
     {
         wm->prev->next = wm->next;
         if ( wm->next ) wm->next->prev = wm->prev;
@@ -547,10 +643,9 @@ BOOL MODULE_DllProcessAttach( WINE_MODREF *wm, LPVOID lpReserved )
 
     TRACE("(%s,%p) - END\n", wm->modname, lpReserved );
 
-
  done:
     RtlLeaveCriticalSection( &loader_section );
-    return retv;
+    return status;
 }
 
 /*************************************************************************
@@ -573,7 +668,7 @@ static void MODULE_DllProcessDetach( BOOL bForceDetach, LPVOID lpReserved )
             /* Check whether to detach this DLL */
             if ( !(wm->ldr.Flags & LDR_PROCESS_ATTACHED) )
                 continue;
-            if ( wm->ldr.LoadCount > 0 && !bForceDetach )
+            if ( wm->ldr.LoadCount && !bForceDetach )
                 continue;
 
             /* Call detach notification */
@@ -596,17 +691,18 @@ static void MODULE_DllProcessDetach( BOOL bForceDetach, LPVOID lpReserved )
  * reverse sequence of process detach notification.
  *
  */
-void MODULE_DllThreadAttach( LPVOID lpReserved )
+NTSTATUS MODULE_DllThreadAttach( LPVOID lpReserved )
 {
     WINE_MODREF *wm;
+    NTSTATUS status;
 
     /* don't do any attach calls if process is exiting */
-    if (process_detaching) return;
+    if (process_detaching) return STATUS_SUCCESS;
     /* FIXME: there is still a race here */
 
     RtlEnterCriticalSection( &loader_section );
 
-    PE_InitTls();
+    if ((status = alloc_thread_tls()) != STATUS_SUCCESS) goto done;
 
     for ( wm = MODULE_modref_list; wm; wm = wm->next )
         if ( !wm->next )
@@ -622,7 +718,9 @@ void MODULE_DllThreadAttach( LPVOID lpReserved )
         MODULE_InitDLL( wm, DLL_THREAD_ATTACH, lpReserved );
     }
 
+done:
     RtlLeaveCriticalSection( &loader_section );
+    return status;
 }
 
 /******************************************************************
@@ -922,8 +1020,8 @@ static NTSTATUS load_dll( LPCSTR libname, DWORD flags, WINE_MODREF** pwm )
     }
     if (*pwm)
     {
-        (*pwm)->ldr.LoadCount++;
-        
+        if ((*pwm)->ldr.LoadCount != -1) (*pwm)->ldr.LoadCount++;
+
         if (((*pwm)->ldr.Flags & LDR_DONT_RESOLVE_REFS) &&
             !(flags & DONT_RESOLVE_DLL_REFERENCES))
         {
@@ -1022,11 +1120,11 @@ NTSTATUS WINAPI LdrLoadDll(LPCWSTR path_name, DWORD flags, PUNICODE_STRING libna
     switch (nts = load_dll( str.Buffer, flags, &wm ))
     {
     case STATUS_SUCCESS:
-        if ( !MODULE_DllProcessAttach( wm, NULL ) )
+        nts = MODULE_DllProcessAttach( wm, NULL );
+        if (nts != STATUS_SUCCESS)
         {
             WARN("Attach failed for module '%s'.\n", str.Buffer);
             LdrUnloadDll(wm->ldr.BaseAddress);
-            nts = STATUS_DLL_INIT_FAILED;
             wm = NULL;
         }
         break;

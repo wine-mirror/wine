@@ -539,7 +539,6 @@ static void start_process(void)
     /* create the main modref and load dependencies */
     if (!(wm = PE_CreateModule( current_process.module, main_exe_name, 0, 0, FALSE )))
         goto error;
-    wm->ldr.LoadCount++;
 
     if (main_exe_file) CloseHandle( main_exe_file ); /* we no longer need it */
 
