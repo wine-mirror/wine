@@ -45,7 +45,8 @@
 WINE_DEFAULT_DEBUG_CHANNEL(win);
 WINE_DECLARE_DEBUG_CHANNEL(msg);
 
-#define NB_USER_HANDLES  (LAST_USER_HANDLE - FIRST_USER_HANDLE + 1)
+#define NB_USER_HANDLES  ((LAST_USER_HANDLE - FIRST_USER_HANDLE + 1) >> 1)
+#define USER_HANDLE_TO_INDEX(hwnd) ((LOWORD(hwnd) - FIRST_USER_HANDLE) >> 1)
 
 /**********************************************************************/
 
@@ -110,7 +111,7 @@ static WND *create_window_handle( HWND parent, HWND owner, ATOM atom,
 
     USER_Lock();
 
-    index = LOWORD(handle) - FIRST_USER_HANDLE;
+    index = USER_HANDLE_TO_INDEX(handle);
     assert( index < NB_USER_HANDLES );
     user_handles[index] = win;
     win->hwndSelf   = handle;
@@ -131,7 +132,7 @@ static WND *create_window_handle( HWND parent, HWND owner, ATOM atom,
 static WND *free_window_handle( HWND hwnd )
 {
     WND *ptr;
-    WORD index = LOWORD(hwnd) - FIRST_USER_HANDLE;
+    WORD index = USER_HANDLE_TO_INDEX(hwnd);
 
     if (index >= NB_USER_HANDLES) return NULL;
     USER_Lock();
@@ -234,7 +235,7 @@ static void get_server_window_text( HWND hwnd, LPWSTR text, INT count )
 WND *WIN_GetPtr( HWND hwnd )
 {
     WND * ptr;
-    WORD index = LOWORD(hwnd) - FIRST_USER_HANDLE;
+    WORD index = USER_HANDLE_TO_INDEX(hwnd);
 
     if (index >= NB_USER_HANDLES) return NULL;
 

@@ -35,7 +35,7 @@ static int allocated_handles;
 
 static struct user_handle *handle_to_entry( user_handle_t handle )
 {
-    int index = ((unsigned int)handle & 0xffff) - FIRST_USER_HANDLE;
+    int index = (((unsigned int)handle & 0xffff) - FIRST_USER_HANDLE) >> 1;
     if (index < 0 || index >= nb_handles) return NULL;
     if (!handles[index].type) return NULL;
     if (((unsigned int)handle >> 16) && ((unsigned int)handle >> 16 != handles[index].generation))
@@ -46,7 +46,7 @@ static struct user_handle *handle_to_entry( user_handle_t handle )
 inline static user_handle_t entry_to_handle( struct user_handle *ptr )
 {
     int index = ptr - handles;
-    return (user_handle_t)((index + FIRST_USER_HANDLE) + (ptr->generation << 16));
+    return (user_handle_t)(((index << 1) + FIRST_USER_HANDLE) + (ptr->generation << 16));
 }
 
 inline static struct user_handle *alloc_user_entry(void)
@@ -64,7 +64,7 @@ inline static struct user_handle *alloc_user_entry(void)
         struct user_handle *new_handles;
         /* grow array by 50% (but at minimum 32 entries) */
         int growth = max( 32, allocated_handles / 2 );
-        int new_size = min( allocated_handles + growth, LAST_USER_HANDLE-FIRST_USER_HANDLE+1 );
+        int new_size = min( allocated_handles + growth, (LAST_USER_HANDLE-FIRST_USER_HANDLE+1) >> 1 );
         if (new_size <= allocated_handles) return NULL;
         if (!(new_handles = realloc( handles, new_size * sizeof(*handles) )))
             return NULL;
@@ -147,7 +147,7 @@ void *next_user_handle( user_handle_t *handle, enum user_object type )
     if (!*handle) entry = handles;
     else
     {
-        int index = ((unsigned int)*handle & 0xffff) - FIRST_USER_HANDLE;
+        int index = (((unsigned int)*handle & 0xffff) - FIRST_USER_HANDLE) >> 1;
         if (index < 0 || index >= nb_handles) return NULL;
         entry = handles + index + 1;  /* start from the next one */
     }
