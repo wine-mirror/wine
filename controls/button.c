@@ -861,6 +861,10 @@ static void CB_Paint( HWND hwnd, HDC hDC, UINT action )
         rtext.left += checkBoxWidth + 4;
         rbox.right = checkBoxWidth;
     }
+ 
+    /* Since WM_ERASEBKGND does nothing, first prepare background */
+    if (action == ODA_SELECT) FillRect( hDC, &rbox, hBrush );
+    if (action == ODA_DRAWENTIRE) FillRect( hDC, &client, hBrush );
 
     /* Draw label */
     client = rtext;
@@ -871,10 +875,6 @@ static void CB_Paint( HWND hwnd, HDC hDC, UINT action )
     /* Draw the check-box bitmap */
     if (action == ODA_DRAWENTIRE || action == ODA_SELECT)
     {
-	/* Since WM_ERASEBKGND does nothing, first prepare background */
-	if (action == ODA_SELECT) FillRect( hDC, &rbox, hBrush );
-	else FillRect( hDC, &client, hBrush );
-
         if( TWEAK_WineLook == WIN31_LOOK )
         {
 	    HDC hMemDC = CreateCompatibleDC( hDC );
