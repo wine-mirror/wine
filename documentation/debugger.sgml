@@ -4,14 +4,6 @@
     <sect1 id="dbg-intro">
       <title>Introduction</title>
 
-      <para>
-        Written by &name-eric-pouech; <email>&email-eric-pouech;</email>
-	(Last updated: 9/15/2002)
-      </para>
-      <para>
-        (Extracted from <filename>wine/documentation/winedbg</filename>)
-      </para>
-
       <sect2>
         <title>Processes and threads: in underlying OS and in Windows</title>
 
@@ -155,16 +147,9 @@ winedbg "hl.exe -windowed"
             process</command> command, and then, with the
           <command>attach</command> command, pick up the
           <varname>wpid</varname> of the <varname>W-process</varname>
-          you want to debug. This is (for now) a neat feature for the
-          following reasons:
-        </para>
-        <itemizedlist>
-          <listitem>
-            <para>
-              you can debug an already started application
-            </para>
-          </listitem>
-        </itemizedlist>
+          you want to debug. This is a neat feature as it allows you
+	  to debug an already started application.
+	 </para>
       </sect2>
 
       <sect2 id="dbg-on-exception">
@@ -173,7 +158,7 @@ winedbg "hl.exe -windowed"
         <para>
           When something goes wrong, Windows tracks this as an
           exception. Exceptions exist for segmentation violation,
-          stack overflow, division by zero...
+          stack overflow, division by zero, etc.
         </para>
         <para>
           When an exception occurs, Wine checks if the <varname>W-process</varname> is
@@ -253,7 +238,7 @@ winedbg "hl.exe -windowed"
 	<para>
 	  You can stop the debugger while it's running by hitting
 	  Ctrl-C in its window. This will stop the debugged process,
-	  and let you manipulate the current context
+	  and let you manipulate the current context.
 	</para>
       </sect2>
 
@@ -276,15 +261,7 @@ winedbg "hl.exe -windowed"
       <title>Using the Wine Debugger</title>
 
       <para>
-        Written by &name-marcus-meissner; <email>&email-marcus-meissner;</email>,
-        additions welcome.
-      </para>
-      <para>
-        (Extracted from <filename>wine/documentation/debugging</filename>)
-      </para>
-
-      <para>
-        This file describes where to start debugging Wine. If at any
+        This section describes where to start debugging Wine. If at any
         point you get stuck and want to ask for help, please read the
         <emphasis>How to Report A Bug</emphasis> section of the 
         <emphasis>Wine Users Guide</emphasis> for information on how to write
@@ -660,7 +637,7 @@ Wine-dbg>
         <title>Debugging Tips</title>
 
         <para>
-          Here are some useful debugging tips, added by Andreas Mohr:
+          Here are some additional debugging tips:
         </para>
 
         <itemizedlist>
@@ -885,9 +862,6 @@ wine -debug myprog.exe
 
     <sect1 id="memory-addresses">
       <title>Useful memory addresses</title>
-      <para>
-        Written by &name-andreas-mohr; <email>&email-andreas-mohr;</email>
-      </para>
       <para>
         Wine uses several different kinds of memory addresses.
       </para>
@@ -1705,10 +1679,6 @@ parameters
           </para>
         </note>
 
-        <!-- *** Extra content spliced in from article by Andreas Mohr *** -->
-        <para>
-          Following text written by &name-andreas-mohr; <email>&email-andreas-mohr;</email>
-        </para>
         <para>
           Here's how to get info about the current execution status of a
           certain Wine process:
