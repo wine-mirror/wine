@@ -58,7 +58,6 @@ struct file
     struct fd          *fd;         /* file descriptor for this file */
     unsigned int        access;     /* file access (GENERIC_READ/WRITE) */
     unsigned int        options;    /* file options (FILE_DELETE_ON_CLOSE, FILE_SYNCHRONOUS...) */
-    int                 removable;  /* is file on removable media? */
     struct async_queue  read_q;
     struct async_queue  write_q;
 };
@@ -109,7 +108,6 @@ static struct file *create_file_for_fd( int fd, unsigned int access, unsigned in
     {
         file->access     = access;
         file->options    = FILE_SYNCHRONOUS_IO_NONALERT;
-        file->removable  = 0;
         if (!(file->fd = create_anonymous_fd( &file_fd_ops, fd, &file->obj )))
         {
             release_object( file );
@@ -122,7 +120,7 @@ static struct file *create_file_for_fd( int fd, unsigned int access, unsigned in
 
 static struct object *create_file( const char *nameptr, size_t len, unsigned int access,
                                    unsigned int sharing, int create, unsigned int options,
-                                   unsigned int attrs, int removable )
+                                   unsigned int attrs )
 {
     struct file *file;
     int flags;
@@ -160,7 +158,6 @@ static struct object *create_file( const char *nameptr, size_t len, unsigned int
 
     file->access     = access;
     file->options    = options;
-    file->removable  = removable;
     if (is_overlapped( file ))
     {
         init_async_queue (&file->read_q);
@@ -205,12 +202,6 @@ static struct object *create_file( const char *nameptr, size_t len, unsigned int
 int is_same_file( struct file *file1, struct file *file2 )
 {
     return is_same_file_fd( file1->fd, file2->fd );
-}
-
-/* check if the file is on removable media */
-int is_file_removable( struct file *file )
-{
-    return file->removable;
 }
 
 /* create a temp file for anonymous mappings */
@@ -525,7 +516,7 @@ DECL_HANDLER(create_file)
 
     reply->handle = 0;
     if ((file = create_file( get_req_data(), get_req_data_size(), req->access,
-                             req->sharing, req->create, req->options, req->attrs, req->removable )))
+                             req->sharing, req->create, req->options, req->attrs )))
     {
         reply->handle = alloc_handle( current->process, file, req->access, req->inherit );
         release_object( file );

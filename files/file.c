@@ -183,7 +183,7 @@ void FILE_SetDosError(void)
  */
 HANDLE FILE_CreateFile( LPCSTR filename, DWORD access, DWORD sharing,
                         LPSECURITY_ATTRIBUTES sa, DWORD creation,
-                        DWORD attributes, HANDLE template, UINT drive_type )
+                        DWORD attributes, HANDLE template )
 {
     unsigned int err;
     UINT disp, options;
@@ -220,7 +220,6 @@ HANDLE FILE_CreateFile( LPCSTR filename, DWORD access, DWORD sharing,
         req->create     = disp;
         req->options    = options;
         req->attrs      = attributes;
-        req->removable  = (drive_type == DRIVE_REMOVABLE || drive_type == DRIVE_CDROM);
         wine_server_add_data( req, filename, strlen(filename) );
         SetLastError(0);
         err = wine_server_call( req );
@@ -365,7 +364,7 @@ HANDLE WINAPI CreateFileW( LPCWSTR filename, DWORD access, DWORD sharing,
             if (device)
             {
                 ret = FILE_CreateFile( device, access, sharing, sa, creation,
-                                       attributes, template, DRIVE_FIXED );
+                                       attributes, template );
             }
             else
             {
@@ -442,8 +441,7 @@ HANDLE WINAPI CreateFileW( LPCWSTR filename, DWORD access, DWORD sharing,
     }
 
     ret = FILE_CreateFile( full_name.long_name, access, sharing,
-                           sa, creation, attributes, template,
-                           GetDriveTypeW( full_name.short_name ) );
+                           sa, creation, attributes, template );
  done:
     if (!ret) ret = INVALID_HANDLE_VALUE;
     TRACE("returning %p\n", ret);
@@ -1439,8 +1437,7 @@ BOOL WINAPI MoveFileExW( LPCWSTR fn1, LPCWSTR fn2, DWORD flag )
 
         /* check if we are allowed to rename the source */
         hFile = FILE_CreateFile( full_name1.long_name, 0, 0,
-                                 NULL, OPEN_EXISTING, 0, 0,
-                                 GetDriveTypeW( full_name1.short_name ) );
+                                 NULL, OPEN_EXISTING, 0, 0 );
         if (!hFile)
         {
             if (GetLastError() != ERROR_ACCESS_DENIED) return FALSE;
@@ -1452,8 +1449,7 @@ BOOL WINAPI MoveFileExW( LPCWSTR fn1, LPCWSTR fn2, DWORD flag )
         /* check, if we are allowed to delete the destination,
         **     (but the file not being there is fine) */
         hFile = FILE_CreateFile( full_name2.long_name, GENERIC_READ|GENERIC_WRITE, 0,
-                                 NULL, OPEN_EXISTING, 0, 0,
-                                 GetDriveTypeW( full_name2.short_name ) );
+                                 NULL, OPEN_EXISTING, 0, 0 );
         if(!hFile && GetLastError() != ERROR_FILE_NOT_FOUND) return FALSE;
         CloseHandle(hFile);
 

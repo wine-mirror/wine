@@ -837,7 +837,6 @@ static void dump_create_file_request( const struct create_file_request *req )
     fprintf( stderr, " create=%d,", req->create );
     fprintf( stderr, " options=%08x,", req->options );
     fprintf( stderr, " attrs=%08x,", req->attrs );
-    fprintf( stderr, " removable=%d,", req->removable );
     fprintf( stderr, " filename=" );
     dump_varargs_string( cur_size );
 }
@@ -1336,8 +1335,7 @@ static void dump_get_mapping_info_reply( const struct get_mapping_info_reply *re
     fprintf( stderr, " header_size=%d,", req->header_size );
     fprintf( stderr, " base=%p,", req->base );
     fprintf( stderr, " shared_file=%p,", req->shared_file );
-    fprintf( stderr, " shared_size=%d,", req->shared_size );
-    fprintf( stderr, " removable=%d", req->removable );
+    fprintf( stderr, " shared_size=%d", req->shared_size );
 }
 
 static void dump_create_snapshot_request( const struct create_snapshot_request *req )

@@ -753,7 +753,6 @@ struct create_file_request
     int          create;
     unsigned int options;
     unsigned int attrs;
-    int          removable;
     /* VARARG(filename,string); */
 };
 struct create_file_reply
@@ -1487,7 +1486,6 @@ struct get_mapping_info_reply
     void*        base;
     obj_handle_t shared_file;
     int          shared_size;
-    int          removable;
 };
 
 
@@ -3693,6 +3691,6 @@ union generic_reply
     struct set_global_windows_reply set_global_windows_reply;
 };
 
-#define SERVER_PROTOCOL_VERSION 136
+#define SERVER_PROTOCOL_VERSION 137
 
 #endif /* __WINE_WINE_SERVER_PROTOCOL_H */

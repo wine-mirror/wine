@@ -106,7 +106,7 @@ static HANDLE open_vxd_handle( LPCWSTR name )
     unix_name[len1] = '/';
     WideCharToMultiByte( CP_UNIXCP, 0, name, -1, unix_name + len1 + 1, len2, NULL, NULL);
     ret = FILE_CreateFile( unix_name, 0, FILE_SHARE_READ|FILE_SHARE_WRITE, NULL,
-                           OPEN_ALWAYS, 0, 0, DRIVE_FIXED );
+                           OPEN_ALWAYS, 0, 0 );
     HeapFree( GetProcessHeap(), 0, unix_name );
     return ret;
 }
