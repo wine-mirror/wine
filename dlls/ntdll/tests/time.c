@@ -27,6 +27,7 @@
 #define SECSPERDAY         86400
 
 static VOID (WINAPI *pRtlTimeToTimeFields)( const LARGE_INTEGER *liTime, PTIME_FIELDS TimeFields) ;
+static VOID (WINAPI *pRtlTimeFieldsToTime)(  PTIME_FIELDS TimeFields,  PLARGE_INTEGER Time) ;
 
 static const int MonthLengths[2][12] =
 {
@@ -44,7 +45,7 @@ TIME_FIELDS tftest = {1889,12,31,23,59,59,0,0};
 
 static void test_pRtlTimeToTimeFields()
 {
-    LARGE_INTEGER litime ;
+    LARGE_INTEGER litime , liresult;
     TIME_FIELDS tfresult;
     int i=0;
     litime.QuadPart = ((ULONGLONG)0x0144017a << 32) | 0xf0b0a980;
@@ -59,6 +60,12 @@ static void test_pRtlTimeToTimeFields()
             tftest.Hour, tftest.Minute,tftest.Second,
             tfresult.Year, tfresult.Month, tfresult.Day,
             tfresult.Hour, tfresult.Minute, tfresult.Second);
+        /* test the inverse */
+        pRtlTimeFieldsToTime( &tfresult, &liresult);
+        ok( liresult.QuadPart == litime.QuadPart," TimeFieldsToTime failed on %d-%d-%d %d:%d:%d. Error is %d ticks\n",
+            tfresult.Year, tfresult.Month, tfresult.Day,
+            tfresult.Hour, tfresult.Minute, tfresult.Second,
+            (int) (liresult.QuadPart - litime.QuadPart) );
         /*  one second later is beginning of next month */
         litime.QuadPart +=  TICKSPERSEC ;
         pRtlTimeToTimeFields( &litime, &tfresult);
@@ -71,6 +78,12 @@ static void test_pRtlTimeToTimeFields()
             tftest.Month % 12 + 1, 1, 0, 0, 0,
             tfresult.Year, tfresult.Month, tfresult.Day,
             tfresult.Hour, tfresult.Minute, tfresult.Second);
+        /* test the inverse */
+        pRtlTimeFieldsToTime( &tfresult, &liresult);
+        ok( liresult.QuadPart == litime.QuadPart," TimeFieldsToTime failed on %d-%d-%d %d:%d:%d. Error is %d ticks\n",
+            tfresult.Year, tfresult.Month, tfresult.Day,
+            tfresult.Hour, tfresult.Minute, tfresult.Second,
+            (int) (liresult.QuadPart - litime.QuadPart) );
         /* advance to the end of the month */
         litime.QuadPart -=  TICKSPERSEC ;
         if( tftest.Month == 12) {
@@ -89,7 +102,8 @@ START_TEST(time)
 #ifdef __WINE_WINTERNL_H
     HMODULE mod = GetModuleHandleA("ntdll.dll");
     pRtlTimeToTimeFields = (void *)GetProcAddress(mod,"RtlTimeToTimeFields");
-    if (pRtlTimeToTimeFields)
+    pRtlTimeFieldsToTime = (void *)GetProcAddress(mod,"RtlTimeFieldsToTime");
+    if (pRtlTimeToTimeFields && pRtlTimeFieldsToTime)
         test_pRtlTimeToTimeFields();
 #endif
 }

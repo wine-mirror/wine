@@ -277,7 +277,8 @@ BOOL WINAPI SetLocalTime(
     LARGE_INTEGER st, st2;
     NTSTATUS status;
 
-    SystemTimeToFileTime( systime, &ft );
+    if( !SystemTimeToFileTime( systime, &ft ))
+        return FALSE;
     st.u.LowPart = ft.dwLowDateTime;
     st.u.HighPart = ft.dwHighDateTime;
     RtlLocalTimeToSystemTime( &st, &st2 );
@@ -329,7 +330,8 @@ BOOL WINAPI SetSystemTime(
     LARGE_INTEGER t;
     NTSTATUS status;
 
-    SystemTimeToFileTime( systime, &ft );
+    if( !SystemTimeToFileTime( systime, &ft ))
+        return FALSE;
     t.u.LowPart = ft.dwLowDateTime;
     t.u.HighPart = ft.dwHighDateTime;
     if ((status = NtSetSystemTime(&t, NULL)))
@@ -820,7 +822,10 @@ BOOL WINAPI SystemTimeToFileTime( const SYSTEMTIME *syst, LPFILETIME ft )
     tf.Second = syst->wSecond;
     tf.Milliseconds = syst->wMilliseconds;
 
-    RtlTimeFieldsToTime(&tf, &t);
+    if( !RtlTimeFieldsToTime(&tf, &t)) {
+        SetLastError( ERROR_INVALID_PARAMETER);
+        return FALSE;
+    }
     ft->dwLowDateTime = t.u.LowPart;
     ft->dwHighDateTime = t.u.HighPart;
     return TRUE;

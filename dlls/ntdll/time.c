@@ -338,21 +338,9 @@ static const int MonthLengths[2][MONSPERYEAR] =
 	{ 31, 29, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31 }
 };
 
-static const int YearDays[2][MONSPERYEAR+1] =
-{
-	{ 0, 31, 59, 90, 120, 151, 181, 212, 243, 273, 304, 334, 365 },
-	{ 0, 31, 60, 91, 121, 152, 182, 213, 244, 274, 305, 335, 366 }
-};
-
 static inline int IsLeapYear(int Year)
 {
 	return Year % 4 == 0 && (Year % 100 != 0 || Year % 400 == 0) ? 1 : 0;
-}
-
-static inline void NormalizeTimeFields(CSHORT *FieldToNormalize, CSHORT *CarryField,int Modulus)
-{
-	*FieldToNormalize = (CSHORT) (*FieldToNormalize - Modulus);
-	*CarryField = (CSHORT) (*CarryField + 1);
 }
 
 /***********************************************************************
@@ -420,14 +408,15 @@ VOID WINAPI RtlTimeToTimeFields(
 	const LARGE_INTEGER *liTime,
 	PTIME_FIELDS TimeFields)
 {
-	int SecondsInDay, DeltaYear;
-	int LeapYear, CurMonth;
+	int SecondsInDay;
+        long int cleaps, years, yearday, months;
 	long int Days;
-	LONGLONG Time = liTime->QuadPart;
+	LONGLONG Time;
 
 	/* Extract millisecond from time and convert time into seconds */
-	TimeFields->Milliseconds = (CSHORT) ((Time % TICKSPERSEC) / TICKSPERMSEC);
-	Time = Time / TICKSPERSEC;
+	TimeFields->Milliseconds =
+            (CSHORT) (( liTime->QuadPart % TICKSPERSEC) / TICKSPERMSEC);
+	Time = liTime->QuadPart / TICKSPERSEC;
 
 	/* The native version of RtlTimeToTimeFields does not take leap seconds
 	 * into account */
@@ -445,32 +434,27 @@ VOID WINAPI RtlTimeToTimeFields(
 	/* compute day of week */
 	TimeFields->Weekday = (CSHORT) ((EPOCHWEEKDAY + Days) % DAYSPERWEEK);
 
-	/* compute year */
-	/* FIXME: handle calendar modifications */
-        TimeFields->Year = EPOCHYEAR;
-        DeltaYear = Days / DAYSPERQUADRICENTENNIUM;
-        TimeFields->Year += DeltaYear * 400;
-        Days -= DeltaYear * DAYSPERQUADRICENTENNIUM;
-        DeltaYear = Days / DAYSPERNORMALCENTURY;
-        if( DeltaYear > 3) DeltaYear = 3;  /* fix 31 Dec of 2000 and every 
-                                              400 years after that */
-        TimeFields->Year += DeltaYear * 100;
-        Days -= DeltaYear * DAYSPERNORMALCENTURY;
-        DeltaYear = Days / DAYSPERNORMALQUADRENNIUM;
-        TimeFields->Year += DeltaYear * 4;
-        Days -= DeltaYear * DAYSPERNORMALQUADRENNIUM;
-        DeltaYear = Days / DAYSPERNORMALYEAR;
-        if( DeltaYear > 3) DeltaYear = 3;  /* fix 31 Dec of every leap year */
-        TimeFields->Year += DeltaYear;
-        Days -= DeltaYear * DAYSPERNORMALYEAR;
-
-        LeapYear = IsLeapYear(TimeFields->Year);
-
-	/* Compute month of year */
-        CurMonth = 1;
-        while (Days >= YearDays[LeapYear][CurMonth]) CurMonth++;
-        TimeFields->Day = Days - YearDays[LeapYear][CurMonth-1] + 1;
-        TimeFields->Month = CurMonth;
+        /* compute year, month and day of month. */
+        cleaps=( 3 * ((4 * Days + 1227) / DAYSPERQUADRICENTENNIUM) + 3 ) / 4;
+        Days += 28188 + cleaps;
+        years = (20 * Days - 2442) / (5 * DAYSPERNORMALQUADRENNIUM);
+        yearday = Days - (years * DAYSPERNORMALQUADRENNIUM)/4;
+        months = (64 * yearday) / 1959;
+        /* the result is based on a year starting on March.
+         * To convert take 12 from Januari and Februari and
+         * increase the year by one. */
+        if( months < 14 ) {
+            TimeFields->Month = months - 1;
+            TimeFields->Year = years + 1524;
+        } else {
+            TimeFields->Month = months - 13;
+            TimeFields->Year = years + 1525;
+        }
+        /* calculation of day of month is based on the wonderful
+         * sequence of INT( n * 30.6): it reproduces the 
+         * 31-30-31-30-31-31 month lengths exactly for small n's */
+        TimeFields->Day = yearday - (1959 * months) / 64 ;
+        return;
 }
 
 /******************************************************************************
@@ -490,51 +474,49 @@ BOOLEAN WINAPI RtlTimeFieldsToTime(
 	PTIME_FIELDS tfTimeFields,
 	PLARGE_INTEGER Time)
 {
-	int CurYear, DeltaYear;
-	LONGLONG rcTime;
-	TIME_FIELDS TimeFields = *tfTimeFields;
-
-	rcTime = 0;
+        int month, year, cleaps, day;
 
 	/* FIXME: normalize the TIME_FIELDS structure here */
-	while (TimeFields.Second >= SECSPERMIN)
-	{ NormalizeTimeFields(&TimeFields.Second, &TimeFields.Minute, SECSPERMIN);
-	}
-	while (TimeFields.Minute >= MINSPERHOUR)
-	{ NormalizeTimeFields(&TimeFields.Minute, &TimeFields.Hour, MINSPERHOUR);
-	}
-	while (TimeFields.Hour >= HOURSPERDAY)
-	{ NormalizeTimeFields(&TimeFields.Hour, &TimeFields.Day, HOURSPERDAY);
-	}
-	while (TimeFields.Day > MonthLengths[IsLeapYear(TimeFields.Year)][TimeFields.Month - 1])
-	{ NormalizeTimeFields(&TimeFields.Day, &TimeFields.Month,
-                              MonthLengths[IsLeapYear(TimeFields.Year)][TimeFields.Month - 1]);
-	}
-	while (TimeFields.Month > MONSPERYEAR)
-	{ NormalizeTimeFields(&TimeFields.Month, &TimeFields.Year, MONSPERYEAR);
-	}
+        /* No, native just returns 0 (error) if the fields are not */
+        if( tfTimeFields->Milliseconds< 0 || tfTimeFields->Milliseconds > 999 ||
+                tfTimeFields->Second < 0 || tfTimeFields->Second > 59 ||
+                tfTimeFields->Minute < 0 || tfTimeFields->Minute > 59 ||
+                tfTimeFields->Hour < 0 || tfTimeFields->Hour > 23 ||
+                tfTimeFields->Month < 1 || tfTimeFields->Month > 12 ||
+                tfTimeFields->Day < 1 ||
+                tfTimeFields->Day > MonthLengths
+                    [ tfTimeFields->Month ==2 || IsLeapYear(tfTimeFields->Year)]
+                    [ tfTimeFields->Month - 1] ||
+                tfTimeFields->Year < 1601 )
+            return FALSE;
 
-	/* FIXME: handle calendar corrections here */
-        CurYear = TimeFields.Year - EPOCHYEAR;
-        DeltaYear = CurYear / 400;
-        CurYear -= DeltaYear * 400;
-        rcTime += DeltaYear * DAYSPERQUADRICENTENNIUM;
-        DeltaYear = CurYear / 100;
-        CurYear -= DeltaYear * 100;
-        rcTime += DeltaYear * DAYSPERNORMALCENTURY;
-        DeltaYear = CurYear / 4;
-        CurYear -= DeltaYear * 4;
-        rcTime += DeltaYear * DAYSPERNORMALQUADRENNIUM;
-        rcTime += CurYear * DAYSPERNORMALYEAR;
-        rcTime += YearDays[IsLeapYear(TimeFields.Year)][TimeFields.Month - 1];
-	rcTime += TimeFields.Day - 1;
-	rcTime *= SECSPERDAY;
-	rcTime += TimeFields.Hour * SECSPERHOUR + TimeFields.Minute * SECSPERMIN + TimeFields.Second;
-	rcTime *= TICKSPERSEC;
-	rcTime += TimeFields.Milliseconds * TICKSPERMSEC;
-	Time->QuadPart = rcTime;
+        /* now calculate a day count from the date
+         * First start counting years from March. This way the leap days
+         * are added at the end of the year, not somewhere in the middle.
+         * Formula's become so much less complicate that way.
+         * To convert: add 12 to the month numbers of Jan and Feb, and 
+         * take 1 from the year */
+        if(tfTimeFields->Month < 3) {
+            month = tfTimeFields->Month + 13;
+            year = tfTimeFields->Year - 1;
+        } else {
+            month = tfTimeFields->Month + 1;
+            year = tfTimeFields->Year;
+        }
+        cleaps = (3 * (year / 100) + 3) / 4;   /* nr of "century leap years"*/
+        day =  (36525 * year) / 100 - cleaps + /* year * dayperyr, corrected */
+                 (1959 * month) / 64 +         /* months * daypermonth */
+                 tfTimeFields->Day -          /* day of the month */
+                 584817 ;                      /* zero that on 1601-01-01 */
+        /* done */
+        
+        Time->QuadPart = (((((LONGLONG) day * HOURSPERDAY +
+            tfTimeFields->Hour) * MINSPERHOUR +
+            tfTimeFields->Minute) * SECSPERMIN +
+            tfTimeFields->Second ) * 1000 +
+            tfTimeFields->Milliseconds ) * TICKSPERMSEC;
 
-	return TRUE;
+        return TRUE;
 }
 
 /***********************************************************************

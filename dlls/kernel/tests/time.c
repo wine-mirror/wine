@@ -136,7 +136,6 @@ static void test_invalid_arg()
     ok( (ft.dwHighDateTime==NEWYEAR_1980_HI) && (ft.dwLowDateTime==NEWYEAR_1980_LO),
         "filetime for 1/1/80 00:00:00 was %08lx %08lx\n", ft.dwHighDateTime, ft.dwLowDateTime);
 
-    todo_wine {
     /* now check SystemTimeToFileTime */
     memset(&ft,0,sizeof ft);
 
@@ -155,16 +154,15 @@ static void test_invalid_arg()
 
     /* with a bad hour */
     SETUP_1980(st)
-    st.wHour = 25;
+    st.wHour = 24;
 
     ok( !SystemTimeToFileTime(&st, &ft), "bad hour\n");
 
     /* with a bad minute */
     SETUP_1980(st)
-    st.wMinute = 61;
+    st.wMinute = 60;
 
     ok( !SystemTimeToFileTime(&st, &ft), "bad minute\n");
-    }
 }
  
 void test_GetTimeZoneInformation()

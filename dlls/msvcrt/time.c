@@ -28,6 +28,7 @@
 #ifdef HAVE_SYS_TIMES_H
 # include <sys/times.h>
 #endif
+#include <limits.h>
 
 #include "msvcrt.h"
 #include "winbase.h"
@@ -61,29 +62,72 @@ static struct MSVCRT_tm tm;
  */
 MSVCRT_time_t MSVCRT_mktime(struct MSVCRT_tm *t)
 {
-  MSVCRT_time_t secs;
-  SYSTEMTIME st;
-  FILETIME lft, uft;
-  ULONGLONG time;
+    MSVCRT_time_t secs;
+    FILETIME lft, uft;
+    ULONGLONG time;
+    struct MSVCRT_tm ts;
+    int cleaps, day;
 
-  st.wMilliseconds = 0;
-  st.wSecond = t->tm_sec;
-  st.wMinute = t->tm_min;
-  st.wHour   = t->tm_hour;
-  st.wDay    = t->tm_mday;
-  st.wMonth  = t->tm_mon + 1;
-  st.wYear   = t->tm_year + 1900;
+    ts=*t;
+    /* to prevent arithmetic overflows put constraints on some fields */
+    /* whether the effective date falls in the 1970-2038 time period */
+    /* will be tested later */
+    /* BTW, I have no idea what limits native msvcrt has. */
+    if ( ts.tm_year < 0 || ts.tm_year > 140  ||
+            ts.tm_mon < -840 || ts.tm_mon > 840 ||
+            ts.tm_mday < -20160 || ts.tm_mday > 20160 ||
+            ts.tm_hour < -484000 || ts.tm_hour > 484000 ||
+            ts.tm_min < -29000000 || ts.tm_min > 29000000 )
+        return -1;
+           
+    /* normalize the tm month fields */
+    if( ts.tm_mon > 11) { ts.tm_year += ts.tm_mon / 12; ts.tm_mon %= 12; }
+    if( ts.tm_mon < 0) {
+        int dy = (11 - ts.tm_mon) / 12;
+        ts.tm_year -= dy;
+        ts.tm_mon += dy * 12;
+    }
+    /* now calculate a day count from the date
+     * First start counting years from March. This way the leap days
+     * are added at the end of the year, not somewhere in the middle.
+     * Formula's become so much less complicate that way.
+     * To convert: add 12 to the month numbers of Jan and Feb, and 
+     * take 1 from the year */
+    if(ts.tm_mon < 2) {
+        ts.tm_mon += 14;
+        ts.tm_year += 1899;
+    } else {
+        ts.tm_mon += 2;
+        ts.tm_year += 1900;
+    }
+    cleaps = (3 * (ts.tm_year / 100) + 3) / 4;   /* nr of "century leap years"*/
+    day =  (36525 * ts.tm_year) / 100 - cleaps + /* year * dayperyr, corrected*/
+             (1959 * ts.tm_mon) / 64 +    /* months * daypermonth */
+             ts.tm_mday -                 /* day of the month */
+             584817 ;                     /* zero that on 1601-01-01 */
+    /* done */
 
-  SystemTimeToFileTime(&st, &lft);
-  LocalFileTimeToFileTime(&lft, &uft);
+    /* convert to 100 ns ticks */
+    time = ((((ULONGLONG) day * 24 +
+            ts.tm_hour) * 60 +
+            ts.tm_min) * 60 +
+            ts.tm_sec ) * TICKSPERSEC;
+    
+    lft.dwHighDateTime = (DWORD) (time >> 32);
+    lft.dwLowDateTime = (DWORD) time;
 
-  time = ((ULONGLONG)uft.dwHighDateTime << 32) | uft.dwLowDateTime;
-  secs = time / TICKSPERSEC - SECS_1601_TO_1970;
-  /* compute tm_wday, tm_yday and renormalize the other fields of the
-   * tm structure */
-  if( MSVCRT_localtime( &secs)) *t = tm;
+    LocalFileTimeToFileTime(&lft, &uft);
 
-  return secs; 
+    time = ((ULONGLONG)uft.dwHighDateTime << 32) | uft.dwLowDateTime;
+    time /= TICKSPERSEC;
+    if( time < SECS_1601_TO_1970 || time > (SECS_1601_TO_1970 + INT_MAX))
+        return -1;
+    secs = time - SECS_1601_TO_1970;
+    /* compute tm_wday, tm_yday and renormalize the other fields of the
+     * tm structure */
+    if( MSVCRT_localtime( &secs)) *t = tm;
+
+    return secs; 
 }
 
 /*********************************************************************
