@@ -5043,12 +5043,17 @@ INT X11DRV_GetDIBits( X11DRV_PDEVICE *physDev, HBITMAP hbitmap, UINT startscan, 
 					 info->bmiHeader.biHeight,
 					 info->bmiHeader.biBitCount );
 
-  info->bmiHeader.biCompression = 0;
   if (descr.compression == BI_BITFIELDS)
   {
     *(DWORD *)info->bmiColors = descr.rMask;
     *((DWORD *)info->bmiColors+1) = descr.gMask;
     *((DWORD *)info->bmiColors+2) = descr.bMask;
+  }
+  else
+  {
+    /* if RLE or JPEG compression were supported,
+     * this line would be invalid. */
+    info->bmiHeader.biCompression = 0;
   }
 
 done:
