@@ -1490,6 +1490,10 @@ static void _load_windows_registry( HKEY hkey_users_default )
             strcat(path,"\\system.dat");
             _convert_and_load_native_registry(path,HKEY_LOCAL_MACHINE,REG_WIN95,0);
 
+            strcpy(path,windir);
+            strcat(path,"\\classes.dat");
+            _convert_and_load_native_registry(path,HKEY_CLASSES_ROOT,REG_WIN95,0);
+
             if (PROFILE_GetWineIniString("Wine","Profile","",path,MAX_PATHNAME_LEN)) {
 	        /* user specific user.dat */
 	        strncat(path, "\\user.dat", MAX_PATHNAME_LEN - strlen(path) - 1);
