@@ -20,10 +20,47 @@
 #include "x11font.h"
 #include "debugtools.h"
 
-DEFAULT_DEBUG_CHANNEL(text)
+DEFAULT_DEBUG_CHANNEL(text);
 
 #define SWAP_INT(a,b)  { int t = a; a = b; b = t; }
 #define IROUND(x) (int)((x)>0? (x)+0.5 : (x) - 0.5)
+
+
+/***********************************************************************
+ *        unicode_to_char2b
+ *
+ * dup a Unicode string into a XChar2b array; must be HeapFree'd by the caller
+ */
+static XChar2b *unicode_to_char2b( LPCWSTR wstr, UINT count, UINT codepage )
+{
+    XChar2b *str2b;
+    UINT i, total_size = count * (sizeof(XChar2b) + (codepage ? sizeof(WCHAR) : 0));
+    
+    if (!(str2b = HeapAlloc( GetProcessHeap(), 0, total_size ))) return NULL;
+
+    if (codepage != 0)  /* a one byte font */
+    {
+	BYTE *str = (BYTE *)(str2b + count);
+
+	/* we have to convert from unicode to codepage first */
+        WideCharToMultiByte( codepage, 0, wstr, count, str, count, NULL, NULL );
+        for (i = 0; i < count; i++)
+        {
+            str2b[i].byte1 = 0;
+            str2b[i].byte2 = str[i];
+        }
+    }
+    else  /* codepage 0 -> two byte font */
+    {
+	for (i = 0; i < count; i++)
+        {
+	    str2b[i].byte1 = wstr[i] >> 8;
+	    str2b[i].byte2 = wstr[i] & 0xff;
+	}
+    }
+    return str2b;
+}
+
 
 /***********************************************************************
  *           X11DRV_ExtTextOut
@@ -224,12 +261,7 @@ X11DRV_ExtTextOut( DC *dc, INT x, INT y, UINT flags,
     }
     
     /* Draw the text (count > 0 verified) */
-    str2b = HeapAlloc( GetProcessHeap(), 0, count * sizeof(XChar2b) );
-    if( str2b == NULL) goto FAIL;
-    for(i = 0; i < count; i++) {
-      str2b[i].byte1 = wstr[i] >> 8;
-      str2b[i].byte2 = wstr[i] & 0xff;
-    }
+    if (!(str2b = unicode_to_char2b( wstr, count, pfo->fi->codepage ))) goto FAIL;
 
     TSXSetForeground( display, physDev->gc, physDev->textPixel );
     if(!rotated)
@@ -380,3 +412,48 @@ END:
     return result;
 }
 
+
+/***********************************************************************
+ *           X11DRV_GetTextExtentPoint
+ */
+BOOL X11DRV_GetTextExtentPoint( DC *dc, LPCWSTR str, INT count,
+                                  LPSIZE size )
+{
+    X11DRV_PDEVICE *physDev = (X11DRV_PDEVICE *)dc->physDev;
+    fontObject* pfo = XFONT_GetFontObject( physDev->font );
+
+    TRACE("%s %d\n", debugstr_wn(str,count), count);
+    if( pfo ) {
+        if( !pfo->lpX11Trans ) {
+	    int dir, ascent, descent;
+	    XCharStruct info;
+	    XChar2b *p = unicode_to_char2b( str, count, pfo->fi->codepage );
+            if (!p) return FALSE;
+	    TSXTextExtents16( pfo->fs, p, count, &dir, &ascent, &descent, &info );
+	    size->cx = abs((info.width + dc->w.breakRem + count * 
+			    dc->w.charExtra) * dc->wndExtX / dc->vportExtX);
+	    size->cy = abs((pfo->fs->ascent + pfo->fs->descent) * 
+			   dc->wndExtY / dc->vportExtY);
+	    HeapFree( GetProcessHeap(), 0, p );
+	} else {
+	    INT i;
+	    float x = 0.0, y = 0.0;
+	    for(i = 0; i < count; i++) {
+	        x += pfo->fs->per_char ? 
+	   pfo->fs->per_char[str[i] - pfo->fs->min_char_or_byte2].attributes : 
+	   pfo->fs->min_bounds.attributes;
+	    }
+	    y = pfo->lpX11Trans->RAW_ASCENT + pfo->lpX11Trans->RAW_DESCENT;
+	    TRACE("x = %f y = %f\n", x, y);
+	    x *= pfo->lpX11Trans->pixelsize / 1000.0;
+	    y *= pfo->lpX11Trans->pixelsize / 1000.0; 
+	    size->cx = fabs((x + dc->w.breakRem + count * dc->w.charExtra) *
+			     dc->wndExtX / dc->vportExtX);
+	    size->cy = fabs(y * dc->wndExtY / dc->vportExtY);
+	}
+	size->cx *= pfo->rescale;
+	size->cy *= pfo->rescale;
+	return TRUE;
+    }
+    return FALSE;
+}

@@ -27,6 +27,7 @@
 #include "windef.h"
 #include "wingdi.h"
 #include "winuser.h"
+#include "winnls.h"
 #include "heap.h"
 #include "options.h"
 #include "font.h"
@@ -104,78 +105,80 @@ typedef struct __sufch
 {
   LPSTR		psuffix;
   BYTE		charset;
+  UINT16	codepage;
 } SuffixCharset;
 
 static SuffixCharset sufch_ansi[] = {
-    {  "0", ANSI_CHARSET },
-    { NULL, ANSI_CHARSET }};
+    {  "0", ANSI_CHARSET, 1252 },
+    { NULL, ANSI_CHARSET, 1252 }};
 
 static SuffixCharset sufch_iso646[] = {
-    { "irv", ANSI_CHARSET },
-    { NULL, SYMBOL_CHARSET }};
+    { "irv", ANSI_CHARSET, 1252 },
+    { NULL, ANSI_CHARSET, 1252 }};
 
 static SuffixCharset sufch_iso8859[] = {
-    {  "1", ANSI_CHARSET },
-    {  "2", EE_CHARSET },
-    {  "3", ISO3_CHARSET }, 
-    {  "4", ISO4_CHARSET }, 
-    {  "5", RUSSIAN_CHARSET },
-    {  "6", ARABIC_CHARSET },
-    {  "7", GREEK_CHARSET },
-    {  "8", HEBREW_CHARSET }, 
-    {  "9", TURKISH_CHARSET },
-    { "10", BALTIC_CHARSET },
-    { "11", THAI_CHARSET },
-    { "12", SYMBOL_CHARSET },
-    { "13", SYMBOL_CHARSET },
-    { "14", SYMBOL_CHARSET },
-    { "15", ANSI_CHARSET },
-    { NULL, SYMBOL_CHARSET }};
+    {  "1", ANSI_CHARSET, 28591 },
+    {  "2", EE_CHARSET, 28592 },
+    {  "3", ISO3_CHARSET, 28593 }, 
+    {  "4", ISO4_CHARSET, 28594 }, 
+    {  "5", RUSSIAN_CHARSET, 28595 },
+    {  "6", ARABIC_CHARSET, 28596 },
+    {  "7", GREEK_CHARSET, 28597 },
+    {  "8", HEBREW_CHARSET, 28598 }, 
+    {  "9", TURKISH_CHARSET, 28599 },
+    { "10", BALTIC_CHARSET, 1257 }, /* FIXME */
+    { "11", THAI_CHARSET, 874 }, /* FIXME */
+    { "12", SYMBOL_CHARSET, CP_SYMBOL },
+    { "13", SYMBOL_CHARSET, CP_SYMBOL },
+    { "14", SYMBOL_CHARSET, CP_SYMBOL },
+    { "15", ANSI_CHARSET, 1252 },
+    { NULL, ANSI_CHARSET, 1252 }};
 
 static SuffixCharset sufch_microsoft[] = {
-    { "cp1250", EE_CHARSET },
-    { "cp1251", RUSSIAN_CHARSET },
-    { "cp1252", ANSI_CHARSET },
-    { "cp1253", GREEK_CHARSET },
-    { "cp1254", TURKISH_CHARSET },
-    { "cp1255", HEBREW_CHARSET },
-    { "cp1256", ARABIC_CHARSET },
-    { "cp1257", BALTIC_CHARSET },
-    { "fontspecific", SYMBOL_CHARSET },
-    { "symbol", SYMBOL_CHARSET },
-    {   NULL,   SYMBOL_CHARSET }};
+    { "cp1250", EE_CHARSET, 1250 },
+    { "cp1251", RUSSIAN_CHARSET, 1251 },
+    { "cp1252", ANSI_CHARSET, 1252 },
+    { "cp1253", GREEK_CHARSET, 1253 },
+    { "cp1254", TURKISH_CHARSET, 1254 },
+    { "cp1255", HEBREW_CHARSET, 1255 },
+    { "cp1256", ARABIC_CHARSET, 1256 },
+    { "cp1257", BALTIC_CHARSET, 1257 },
+    { "fontspecific", SYMBOL_CHARSET, CP_SYMBOL },
+    { "symbol", SYMBOL_CHARSET, CP_SYMBOL },
+    {   NULL,   ANSI_CHARSET, 1252 }};
 
 static SuffixCharset sufch_tcvn[] = {
-    {  "0", TCVN_CHARSET },
-    { NULL, TCVN_CHARSET }};
+    {  "0", TCVN_CHARSET, 1252 }, /* FIXME */
+    { NULL, TCVN_CHARSET, 1252 }};
 
 static SuffixCharset sufch_tis620[] = {
-    {  "0", THAI_CHARSET },
-    { NULL, THAI_CHARSET }};
+    {  "0", THAI_CHARSET, 874 }, /* FIXME */
+    { NULL, THAI_CHARSET, 874 }};
 
 static SuffixCharset sufch_viscii[] = {
-    {  "1", VISCII_CHARSET },
-    { NULL, VISCII_CHARSET }};
+    {  "1", VISCII_CHARSET, 1252 }, /* FIXME */
+    { NULL, VISCII_CHARSET, 1252 }};
 
 static SuffixCharset sufch_windows[] = {
-    { "1250", EE_CHARSET },
-    { "1251", RUSSIAN_CHARSET },
-    { "1252", ANSI_CHARSET },
-    { "1253", GREEK_CHARSET },
-    { "1254", TURKISH_CHARSET }, 
-    { "1255", HEBREW_CHARSET }, 
-    { "1256", ARABIC_CHARSET },
-    { "1257", BALTIC_CHARSET },
-    {  NULL,  BALTIC_CHARSET }}; /* CHECK/FIXME is BALTIC really the default ? */
+    { "1250", EE_CHARSET, 1250 },
+    { "1251", RUSSIAN_CHARSET, 1251 },
+    { "1252", ANSI_CHARSET, 1252 },
+    { "1253", GREEK_CHARSET, 1253 },
+    { "1254", TURKISH_CHARSET, 1254 }, 
+    { "1255", HEBREW_CHARSET, 1255 }, 
+    { "1256", ARABIC_CHARSET, 1256 },
+    { "1257", BALTIC_CHARSET, 1257 },
+    {  NULL,  ANSI_CHARSET, 1252 }};
 
 static SuffixCharset sufch_koi8[] = {
-    { "r", RUSSIAN_CHARSET },
-    { NULL, RUSSIAN_CHARSET }};
+    { "r", RUSSIAN_CHARSET, 20866 },
+    { "u", RUSSIAN_CHARSET, 20866 },
+    { NULL, RUSSIAN_CHARSET, 20866 }};
 
 /* Each of these must be matched explicitly */
 static SuffixCharset sufch_any[] = {
-    { "fontspecific", SYMBOL_CHARSET },
-    { NULL, 0 }};
+    { "fontspecific", SYMBOL_CHARSET, CP_SYMBOL },
+    { NULL, 0, 0 }};
 
 
 typedef struct __fet
@@ -626,6 +629,7 @@ static int LFD_InitFontInfo( fontInfo* fi, const LFD* lfd, LPCSTR fullname )
 		   if( !strcasecmp(lfd->charset_encoding, boba->sufch[j].psuffix ))
 		   {
 		       fi->df.dfCharSet = boba->sufch[j].charset;
+		       fi->codepage = boba->sufch[j].codepage;
 		       goto done;
 		   }
 	       }
@@ -634,6 +638,7 @@ static int LFD_InitFontInfo( fontInfo* fi, const LFD* lfd, LPCSTR fullname )
 		   WARN("font '%s' has unknown character encoding '%s'\n",
 			fullname, lfd->charset_encoding);
 		   fi->df.dfCharSet = boba->sufch[j].charset;
+		   fi->codepage = boba->sufch[j].codepage;
 		   j = 254;
 		   goto done;
 	       }
@@ -643,6 +648,7 @@ static int LFD_InitFontInfo( fontInfo* fi, const LFD* lfd, LPCSTR fullname )
 	       for( j = 0; boba->sufch[j].psuffix; j++ )
 		   ;
 	       fi->df.dfCharSet = boba->sufch[j].charset;
+	       fi->codepage = boba->sufch[j].codepage;
 	       j = 255;
 	       goto done;
 	   }
@@ -2948,56 +2954,6 @@ BOOL	X11DRV_EnumDeviceFonts( DC* dc, LPLOGFONT16 plf,
             }
 	}
     return bRet;
-}
-
-
-/***********************************************************************
- *           X11DRV_GetTextExtentPoint
- */
-BOOL X11DRV_GetTextExtentPoint( DC *dc, LPCWSTR str, INT count,
-                                  LPSIZE size )
-{
-    X11DRV_PDEVICE *physDev = (X11DRV_PDEVICE *)dc->physDev;
-    fontObject* pfo = XFONT_GetFontObject( physDev->font );
-
-    TRACE("%s %d\n", debugstr_wn(str,count), count);
-    if( pfo ) {
-        if( !pfo->lpX11Trans ) {
-	    int dir, ascent, descent, i;
-	    XCharStruct info;
-	    XChar2b *p = HeapAlloc( GetProcessHeap(), 0,
-				    count * sizeof(XChar2b) );
-	    for(i = 0; i < count; i++) {
-	        p[i].byte1 = str[i] >> 8;
-		p[i].byte2 = str[i] & 0xff;
-	    }
-	    TSXTextExtents16( pfo->fs, p, count, &dir, &ascent, &descent, &info );
-	    size->cx = abs((info.width + dc->w.breakRem + count * 
-			    dc->w.charExtra) * dc->wndExtX / dc->vportExtX);
-	    size->cy = abs((pfo->fs->ascent + pfo->fs->descent) * 
-			   dc->wndExtY / dc->vportExtY);
-	    HeapFree( GetProcessHeap(), 0, p );
-	} else {
-	    INT i;
-	    float x = 0.0, y = 0.0;
-	    for(i = 0; i < count; i++) {
-	        x += pfo->fs->per_char ? 
-	   pfo->fs->per_char[str[i] - pfo->fs->min_char_or_byte2].attributes : 
-	   pfo->fs->min_bounds.attributes;
-	    }
-	    y = pfo->lpX11Trans->RAW_ASCENT + pfo->lpX11Trans->RAW_DESCENT;
-	    TRACE("x = %f y = %f\n", x, y);
-	    x *= pfo->lpX11Trans->pixelsize / 1000.0;
-	    y *= pfo->lpX11Trans->pixelsize / 1000.0; 
-	    size->cx = fabs((x + dc->w.breakRem + count * dc->w.charExtra) *
-			     dc->wndExtX / dc->vportExtX);
-	    size->cy = fabs(y * dc->wndExtY / dc->vportExtY);
-	}
-	size->cx *= pfo->rescale;
-	size->cy *= pfo->rescale;
-	return TRUE;
-    }
-    return FALSE;
 }
 
 

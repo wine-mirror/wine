@@ -77,6 +77,7 @@ typedef struct tagFontInfo
     struct tagFontInfo*		next;
     UINT16			fi_flags;
     UINT16			fi_encoding;
+    UINT16			codepage;
 
  /* LFD parameters can be quite different from the actual metrics */
 
