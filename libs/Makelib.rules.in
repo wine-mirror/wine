@@ -32,7 +32,7 @@ $(LIBNAME).dll: $(OBJS) $(DEFNAME) Makefile.in
 	$(DLLWRAP) --def $(SRCDIR)/$(DEFNAME) -o $@ $(OBJS) $(EXTRALIBS)
 
 $(LIBNAME).$(SOVERSION).dylib: $(OBJS) Makefile.in
-	$(LDSHARED) $(OBJS) $(EXTRALIBS) $(LDFLAGS) $(LIBS) -o $@
+	$(LDSHARED) -install_name $(libdir)/$(LIBNAME).$(SOVERSION).dylib $(OBJS) $(EXTRALIBS) $(LDFLAGS) $(LIBS) -o $@
 
 $(LIBNAME).dylib: $(LIBNAME).$(SOVERSION).dylib
 	$(RM) $@ && $(LN_S) $(LIBNAME).$(SOVERSION).dylib $@
