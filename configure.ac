@@ -1650,6 +1650,7 @@ dlls/shfolder/Makefile
 dlls/shlwapi/Makefile
 dlls/shlwapi/tests/Makefile
 dlls/snmpapi/Makefile
+dlls/stdole32.tlb/Makefile
 dlls/sti/Makefile
 dlls/strmiids/Makefile
 dlls/tapi32/Makefile

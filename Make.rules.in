@@ -103,7 +103,7 @@ dlldir          = @libdir@/wine
 prog_manext     = 1
 api_manext      = 3w
 conf_manext     = 5
-CLEAN_FILES     = *.o *.a *.so *.ln *.$(LIBEXT) \\\#*\\\# *~ *% .\\\#* *.bak *.orig *.rej \
+CLEAN_FILES     = *.o *.a *.so *.tlb *.ln *.$(LIBEXT) \\\#*\\\# *~ *% .\\\#* *.bak *.orig *.rej \
                   *.flc *.spec.c *.spec.def *.dbg.c *.tab.c *.tab.h @LEX_OUTPUT_ROOT@.c core
 
 OBJS = $(C_SRCS:.c=.o) $(EXTRA_OBJS)
@@ -113,7 +113,7 @@ LINTS  = $(C_SRCS:.c=.ln)
 
 # Implicit rules
 
-.SUFFIXES: .mc .rc .mc.rc .res .res.o .spec .spec.c .spec.def .idl .h .ok .sfd .ttf
+.SUFFIXES: .mc .rc .mc.rc .res .res.o .spec .spec.c .spec.def .idl .tlb .h .ok .sfd .ttf
 
 .c.o:
 	$(CC) -c $(ALLCFLAGS) -o $@ $<
@@ -139,6 +139,9 @@ LINTS  = $(C_SRCS:.c=.ln)
 .idl.h:
 	$(WIDL) $(IDLFLAGS) -h -H $@ $<
 
+.idl.tlb:
+	$(WIDL) $(IDLFLAGS) -t -T $@ $<
+
 .c.ln:
 	$(LINT) -c $(ALLLINTFLAGS) $< || ( $(RM) $@ && exit 1 )
 
@@ -162,7 +165,7 @@ filter:
 $(RC_BINARIES): $(BIN2RES) $(RC_BINSRC)
 	$(BIN2RES) -f -o $@ $(SRCDIR)/$(RC_BINSRC)
 
-$(RC_SRCS:.rc=.res) $(RC_SRCS16:.rc=.res): $(WRC) $(RC_BINARIES)
+$(RC_SRCS:.rc=.res) $(RC_SRCS16:.rc=.res): $(WRC) $(RC_BINARIES) $(RC_TLB)
 
 # Rule for main module debug channels
 
