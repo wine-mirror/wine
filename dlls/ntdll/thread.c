@@ -110,7 +110,7 @@ void thread_init(void)
     peb.ProcessParameters  = &params;
     peb.TlsBitmap          = &tls_bitmap;
     peb.LdrData            = &ldr;
-    RtlInitializeBitMap( &tls_bitmap, (BYTE *)peb.TlsBitmapBits, sizeof(peb.TlsBitmapBits) * 8 );
+    RtlInitializeBitMap( &tls_bitmap, peb.TlsBitmapBits, sizeof(peb.TlsBitmapBits) * 8 );
     InitializeListHead( &ldr.InLoadOrderModuleList );
     InitializeListHead( &ldr.InMemoryOrderModuleList );
     InitializeListHead( &ldr.InInitializationOrderModuleList );

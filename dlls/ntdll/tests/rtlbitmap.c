@@ -75,7 +75,7 @@ static void InitFunctionPtrs()
 static void test_RtlInitializeBitMap(void)
 {
   bm.SizeOfBitMap = 0;
-  bm.BitMapBuffer = 0;
+  bm.Buffer = 0;
 
   memset(buff, 0, sizeof(buff));
   buff[0] = 77; /* Check buffer is not written to during init */
@@ -83,13 +83,7 @@ static void test_RtlInitializeBitMap(void)
 
   pRtlInitializeBitMap(&bm, buff, 800);
   ok(bm.SizeOfBitMap == 800, "size uninitialised\n");
-  ok(bm.BitMapBuffer == buff,"buffer uninitialised\n");
-  ok(buff[0] == 77 && buff[79] == 77, "wrote to buffer\n");
-
-  /* Test inlined version */
-  RtlInitializeBitMap(&bm, buff, 800);
-  ok(bm.SizeOfBitMap == 800, "size uninitialised\n");
-  ok(bm.BitMapBuffer == buff,"buffer uninitialised\n");
+  ok(bm.Buffer == (PULONG)buff,"buffer uninitialised\n");
   ok(buff[0] == 77 && buff[79] == 77, "wrote to buffer\n");
 }
 
@@ -105,13 +99,6 @@ static void test_RtlSetAllBits(void)
   ok(buff[0] == 0xff && buff[1] == 0xff && buff[2] == 0xff &&
      buff[3] == 0xff, "didn't round up size\n");
   ok(buff[4] == 0, "set more than rounded size\n");
-
-  /* Test inlined version */
-  memset(buff, 0 , sizeof(buff));
-  RtlSetAllBits(&bm);
-  ok(buff[0] == 0xff && buff[1] == 0xff && buff[2] == 0xff &&
-     buff[3] == 0xff, "didn't round up size\n");
-  ok(buff[4] == 0, "set more than rounded size\n");
 }
 
 static void test_RtlClearAllBits()
@@ -124,12 +111,6 @@ static void test_RtlClearAllBits()
 
   pRtlClearAllBits(&bm);
   ok(!buff[0] && !buff[1] && !buff[2] && !buff[3], "didn't round up size\n");
-  ok(buff[4] == 0xff, "cleared more than rounded size\n");
-
-  /* Test inlined version */
-  memset(buff, 0xff , sizeof(buff));
-  RtlClearAllBits(&bm);
-  ok(!buff[0] && !buff[1] && !buff[2] && !buff[3] , "didn't round up size\n");
   ok(buff[4] == 0xff, "cleared more than rounded size\n");
 }
 
@@ -498,8 +479,8 @@ static void test_RtlFindSetRuns()
   memset(buff, 0xff, sizeof(buff));
   ulCount = pRtlFindSetRuns(&bm, runs, 16, TRUE);
   ok (ulCount == 1, "didn't find set bits\n");
-  ok (runs[0].StartOfRun == 0,"bad start\n");
-  ok (runs[0].SizeOfRun == sizeof(buff)*8,"bad size\n");
+  ok (runs[0].StartingIndex == 0,"bad start\n");
+  ok (runs[0].NumberOfBits == sizeof(buff)*8,"bad size\n");
 
   /* Set up 3 runs */
   memset(runs, 0, sizeof(runs));
@@ -510,35 +491,35 @@ static void test_RtlFindSetRuns()
 
   /* Get first 2 */
   ulCount = pRtlFindSetRuns(&bm, runs, 2, FALSE);
-  ok (runs[0].StartOfRun == 7 || runs[0].StartOfRun == 101,"bad find\n");
-  ok (runs[1].StartOfRun == 7 || runs[1].StartOfRun == 101,"bad find\n");
-  ok (runs[0].SizeOfRun + runs[1].SizeOfRun == 19 + 3,"bad size\n");
-  ok (runs[0].StartOfRun != runs[1].StartOfRun,"found run twice\n");
-  ok (runs[2].StartOfRun == 0,"found extra run\n");
+  ok (runs[0].StartingIndex == 7 || runs[0].StartingIndex == 101,"bad find\n");
+  ok (runs[1].StartingIndex == 7 || runs[1].StartingIndex == 101,"bad find\n");
+  ok (runs[0].NumberOfBits + runs[1].NumberOfBits == 19 + 3,"bad size\n");
+  ok (runs[0].StartingIndex != runs[1].StartingIndex,"found run twice\n");
+  ok (runs[2].StartingIndex == 0,"found extra run\n");
 
   /* Get longest 3 */
   memset(runs, 0, sizeof(runs));
   ulCount = pRtlFindSetRuns(&bm, runs, 2, TRUE);
-  ok (runs[0].StartOfRun == 7 || runs[0].StartOfRun == 1877,"bad find\n");
-  ok (runs[1].StartOfRun == 7 || runs[1].StartOfRun == 1877,"bad find\n");
-  ok (runs[0].SizeOfRun + runs[1].SizeOfRun == 33 + 19,"bad size\n");
-  ok (runs[0].StartOfRun != runs[1].StartOfRun,"found run twice\n");
-  ok (runs[2].StartOfRun == 0,"found extra run\n");
+  ok (runs[0].StartingIndex == 7 || runs[0].StartingIndex == 1877,"bad find\n");
+  ok (runs[1].StartingIndex == 7 || runs[1].StartingIndex == 1877,"bad find\n");
+  ok (runs[0].NumberOfBits + runs[1].NumberOfBits == 33 + 19,"bad size\n");
+  ok (runs[0].StartingIndex != runs[1].StartingIndex,"found run twice\n");
+  ok (runs[2].StartingIndex == 0,"found extra run\n");
 
   /* Get all 3 */
   memset(runs, 0, sizeof(runs));
   ulCount = pRtlFindSetRuns(&bm, runs, 3, TRUE);
-  ok (runs[0].StartOfRun == 7 || runs[0].StartOfRun == 101 ||
-      runs[0].StartOfRun == 1877,"bad find\n");
-  ok (runs[1].StartOfRun == 7 || runs[1].StartOfRun == 101 ||
-      runs[1].StartOfRun == 1877,"bad find\n");
-  ok (runs[2].StartOfRun == 7 || runs[2].StartOfRun == 101 ||
-      runs[2].StartOfRun == 1877,"bad find\n");
-  ok (runs[0].SizeOfRun + runs[1].SizeOfRun
-      + runs[2].SizeOfRun == 19 + 3 + 33,"bad size\n");
-  ok (runs[0].StartOfRun != runs[1].StartOfRun,"found run twice\n");
-  ok (runs[1].StartOfRun != runs[2].StartOfRun,"found run twice\n");
-  ok (runs[3].StartOfRun == 0,"found extra run\n");
+  ok (runs[0].StartingIndex == 7 || runs[0].StartingIndex == 101 ||
+      runs[0].StartingIndex == 1877,"bad find\n");
+  ok (runs[1].StartingIndex == 7 || runs[1].StartingIndex == 101 ||
+      runs[1].StartingIndex == 1877,"bad find\n");
+  ok (runs[2].StartingIndex == 7 || runs[2].StartingIndex == 101 ||
+      runs[2].StartingIndex == 1877,"bad find\n");
+  ok (runs[0].NumberOfBits + runs[1].NumberOfBits
+      + runs[2].NumberOfBits == 19 + 3 + 33,"bad size\n");
+  ok (runs[0].StartingIndex != runs[1].StartingIndex,"found run twice\n");
+  ok (runs[1].StartingIndex != runs[2].StartingIndex,"found run twice\n");
+  ok (runs[3].StartingIndex == 0,"found extra run\n");
 
   if (pRtlFindLongestRunSet)
   {
@@ -572,8 +553,8 @@ static void test_RtlFindClearRuns()
   memset(buff, 0, sizeof(buff));
   ulCount = pRtlFindClearRuns(&bm, runs, 16, TRUE);
   ok (ulCount == 1, "didn't find clear bits\n");
-  ok (runs[0].StartOfRun == 0,"bad start\n");
-  ok (runs[0].SizeOfRun == sizeof(buff)*8,"bad size\n");
+  ok (runs[0].StartingIndex == 0,"bad start\n");
+  ok (runs[0].NumberOfBits == sizeof(buff)*8,"bad size\n");
 
   /* Set up 3 runs */
   memset(runs, 0, sizeof(runs));
@@ -584,35 +565,35 @@ static void test_RtlFindClearRuns()
 
   /* Get first 2 */
   ulCount = pRtlFindClearRuns(&bm, runs, 2, FALSE);
-  ok (runs[0].StartOfRun == 7 || runs[0].StartOfRun == 101,"bad find\n");
-  ok (runs[1].StartOfRun == 7 || runs[1].StartOfRun == 101,"bad find\n");
-  ok (runs[0].SizeOfRun + runs[1].SizeOfRun == 19 + 3,"bad size\n");
-  ok (runs[0].StartOfRun != runs[1].StartOfRun,"found run twice\n");
-  ok (runs[2].StartOfRun == 0,"found extra run\n");
+  ok (runs[0].StartingIndex == 7 || runs[0].StartingIndex == 101,"bad find\n");
+  ok (runs[1].StartingIndex == 7 || runs[1].StartingIndex == 101,"bad find\n");
+  ok (runs[0].NumberOfBits + runs[1].NumberOfBits == 19 + 3,"bad size\n");
+  ok (runs[0].StartingIndex != runs[1].StartingIndex,"found run twice\n");
+  ok (runs[2].StartingIndex == 0,"found extra run\n");
 
   /* Get longest 3 */
   memset(runs, 0, sizeof(runs));
   ulCount = pRtlFindClearRuns(&bm, runs, 2, TRUE);
-  ok (runs[0].StartOfRun == 7 || runs[0].StartOfRun == 1877,"bad find\n");
-  ok (runs[1].StartOfRun == 7 || runs[1].StartOfRun == 1877,"bad find\n");
-  ok (runs[0].SizeOfRun + runs[1].SizeOfRun == 33 + 19,"bad size\n");
-  ok (runs[0].StartOfRun != runs[1].StartOfRun,"found run twice\n");
-  ok (runs[2].StartOfRun == 0,"found extra run\n");
+  ok (runs[0].StartingIndex == 7 || runs[0].StartingIndex == 1877,"bad find\n");
+  ok (runs[1].StartingIndex == 7 || runs[1].StartingIndex == 1877,"bad find\n");
+  ok (runs[0].NumberOfBits + runs[1].NumberOfBits == 33 + 19,"bad size\n");
+  ok (runs[0].StartingIndex != runs[1].StartingIndex,"found run twice\n");
+  ok (runs[2].StartingIndex == 0,"found extra run\n");
 
   /* Get all 3 */
   memset(runs, 0, sizeof(runs));
   ulCount = pRtlFindClearRuns(&bm, runs, 3, TRUE);
-  ok (runs[0].StartOfRun == 7 || runs[0].StartOfRun == 101 ||
-      runs[0].StartOfRun == 1877,"bad find\n");
-  ok (runs[1].StartOfRun == 7 || runs[1].StartOfRun == 101 ||
-      runs[1].StartOfRun == 1877,"bad find\n");
-  ok (runs[2].StartOfRun == 7 || runs[2].StartOfRun == 101 ||
-      runs[2].StartOfRun == 1877,"bad find\n");
-  ok (runs[0].SizeOfRun + runs[1].SizeOfRun
-      + runs[2].SizeOfRun == 19 + 3 + 33,"bad size\n");
-  ok (runs[0].StartOfRun != runs[1].StartOfRun,"found run twice\n");
-  ok (runs[1].StartOfRun != runs[2].StartOfRun,"found run twice\n");
-  ok (runs[3].StartOfRun == 0,"found extra run\n");
+  ok (runs[0].StartingIndex == 7 || runs[0].StartingIndex == 101 ||
+      runs[0].StartingIndex == 1877,"bad find\n");
+  ok (runs[1].StartingIndex == 7 || runs[1].StartingIndex == 101 ||
+      runs[1].StartingIndex == 1877,"bad find\n");
+  ok (runs[2].StartingIndex == 7 || runs[2].StartingIndex == 101 ||
+      runs[2].StartingIndex == 1877,"bad find\n");
+  ok (runs[0].NumberOfBits + runs[1].NumberOfBits
+      + runs[2].NumberOfBits == 19 + 3 + 33,"bad size\n");
+  ok (runs[0].StartingIndex != runs[1].StartingIndex,"found run twice\n");
+  ok (runs[1].StartingIndex != runs[2].StartingIndex,"found run twice\n");
+  ok (runs[3].StartingIndex == 0,"found extra run\n");
 
   if (pRtlFindLongestRunClear)
   {

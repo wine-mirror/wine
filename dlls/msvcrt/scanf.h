@@ -429,7 +429,7 @@ _FUNCTION_ {
                     _CHAR_ *str = suppress ? NULL : va_arg(ap, _CHAR_*);
                     _CHAR_ *sptr = str;
 		    RTL_BITMAP bitMask;
-                    LPBYTE Mask;
+                    ULONG *Mask;
 		    int invert = 0; /* Set if we are NOT to find the chars */
 
 		    /* Init our bitmap */

@@ -83,14 +83,14 @@ typedef struct RTL_DRIVE_LETTER_CURDIR
 
 typedef struct tagRTL_BITMAP {
     ULONG  SizeOfBitMap; /* Number of bits in the bitmap */
-    LPBYTE BitMapBuffer; /* Bitmap data, assumed sized to a DWORD boundary */
+    PULONG Buffer; /* Bitmap data, assumed sized to a DWORD boundary */
 } RTL_BITMAP, *PRTL_BITMAP;
 
 typedef const RTL_BITMAP *PCRTL_BITMAP;
 
 typedef struct tagRTL_BITMAP_RUN {
-    ULONG StartOfRun; /* Bit position at which run starts - FIXME: Name? */
-    ULONG SizeOfRun;  /* Size of the run in bits - FIXME: Name? */
+    ULONG StartingIndex; /* Bit position at which run starts */
+    ULONG NumberOfBits;  /* Size of the run in bits */
 } RTL_BITMAP_RUN, *PRTL_BITMAP_RUN;
 
 typedef const RTL_BITMAP_RUN *PCRTL_BITMAP_RUN;
@@ -1462,7 +1462,7 @@ void      WINAPI RtlInitUnicodeString(PUNICODE_STRING,PCWSTR);
 NTSTATUS  WINAPI RtlInitUnicodeStringEx(PUNICODE_STRING,PCWSTR);
 NTSTATUS  WINAPI RtlInitializeCriticalSection(RTL_CRITICAL_SECTION *);
 NTSTATUS  WINAPI RtlInitializeCriticalSectionAndSpinCount(RTL_CRITICAL_SECTION *,DWORD);
-void      WINAPI RtlInitializeBitMap(PRTL_BITMAP,LPBYTE,ULONG);
+void      WINAPI RtlInitializeBitMap(PRTL_BITMAP,PULONG,ULONG);
 void      WINAPI RtlInitializeResource(LPRTL_RWLOCK);
 BOOL      WINAPI RtlInitializeSid(PSID,PSID_IDENTIFIER_AUTHORITY,BYTE);
 
@@ -1618,29 +1618,10 @@ extern NTSTATUS wine_nt_to_unix_file_name( const UNICODE_STRING *nameW, ANSI_STR
 inline static BOOLEAN RtlCheckBit(PCRTL_BITMAP lpBits, ULONG ulBit)
 {
     if (lpBits && ulBit < lpBits->SizeOfBitMap &&
-        lpBits->BitMapBuffer[ulBit >> 3] & (1 << (ulBit & 7)))
+        lpBits->Buffer[ulBit >> 5] & (1 << (ulBit & 31)))
         return TRUE;
     return FALSE;
 }
-
-#define RtlClearAllBits(p) \
-    do { \
-        PRTL_BITMAP _p = (p); \
-        memset(_p->BitMapBuffer,0,((_p->SizeOfBitMap + 31) & 0xffffffe0) >> 3); \
-    } while (0)
-
-#define RtlInitializeBitMap(p,b,s) \
-    do { \
-        PRTL_BITMAP _p = (p); \
-        _p->SizeOfBitMap = (s); \
-        _p->BitMapBuffer = (b); \
-    } while (0)
-
-#define RtlSetAllBits(p) \
-    do { \
-        PRTL_BITMAP _p = (p); \
-        memset(_p->BitMapBuffer,0xff,((_p->SizeOfBitMap + 31) & 0xffffffe0) >> 3); \
-    } while (0)
 
 /* These are implemented as __fastcall, so we can't let Winelib apps link with them */
 inline static USHORT RtlUshortByteSwap(USHORT s)

@@ -75,12 +75,11 @@ static const signed char NTDLL_mostSignificant[16] = {
  *  lpBuff must be aligned on a ULONG suitable boundary, to a multiple of 32 bytes
  *  in size (irrespective of ulSize given).
  */
-#undef RtlInitializeBitMap
-VOID WINAPI RtlInitializeBitMap(PRTL_BITMAP lpBits, LPBYTE lpBuff, ULONG ulSize)
+VOID WINAPI RtlInitializeBitMap(PRTL_BITMAP lpBits, PULONG lpBuff, ULONG ulSize)
 {
   TRACE("(%p,%p,%ld)\n", lpBits,lpBuff,ulSize);
   lpBits->SizeOfBitMap = ulSize;
-  lpBits->BitMapBuffer = lpBuff;
+  lpBits->Buffer = lpBuff;
 }
 
 /*************************************************************************
@@ -94,11 +93,10 @@ VOID WINAPI RtlInitializeBitMap(PRTL_BITMAP lpBits, LPBYTE lpBuff, ULONG ulSize)
  * RETURNS
  *  Nothing.
  */
-#undef RtlSetAllBits
 VOID WINAPI RtlSetAllBits(PRTL_BITMAP lpBits)
 {
   TRACE("(%p)\n", lpBits);
-  memset(lpBits->BitMapBuffer, 0xff, ((lpBits->SizeOfBitMap + 31) & ~31) >> 3);
+  memset(lpBits->Buffer, 0xff, ((lpBits->SizeOfBitMap + 31) & ~31) >> 3);
 }
 
 /*************************************************************************
@@ -112,11 +110,10 @@ VOID WINAPI RtlSetAllBits(PRTL_BITMAP lpBits)
  * RETURNS
  *  Nothing.
  */
-#undef RtlClearAllBits
 VOID WINAPI RtlClearAllBits(PRTL_BITMAP lpBits)
 {
   TRACE("(%p)\n", lpBits);
-  memset(lpBits->BitMapBuffer, 0, ((lpBits->SizeOfBitMap + 31) & ~31) >> 3);
+  memset(lpBits->Buffer, 0, ((lpBits->SizeOfBitMap + 31) & ~31) >> 3);
 }
 
 /*************************************************************************
@@ -143,7 +140,10 @@ VOID WINAPI RtlSetBits(PRTL_BITMAP lpBits, ULONG ulStart, ULONG ulCount)
       ulCount > lpBits->SizeOfBitMap - ulStart)
     return;
 
-  lpOut = lpBits->BitMapBuffer + (ulStart >> 3u);
+  /* FIXME: It might be more efficient/cleaner to manipulate four bytes
+   * at a time. But beware of the pointer arithmetics...
+   */
+  lpOut = ((BYTE*)lpBits->Buffer) + (ulStart >> 3u);
 
   /* Set bits in first byte, if ulStart isn't a byte boundary */
   if (ulStart & 7)
@@ -200,7 +200,10 @@ VOID WINAPI RtlClearBits(PRTL_BITMAP lpBits, ULONG ulStart, ULONG ulCount)
       ulCount > lpBits->SizeOfBitMap - ulStart)
     return;
 
-  lpOut = lpBits->BitMapBuffer + (ulStart >> 3u);
+  /* FIXME: It might be more efficient/cleaner to manipulate four bytes
+   * at a time. But beware of the pointer arithmetics...
+   */
+  lpOut = ((BYTE*)lpBits->Buffer) + (ulStart >> 3u);
 
   /* Clear bits in first byte, if ulStart isn't a byte boundary */
   if (ulStart & 7)
@@ -260,7 +263,10 @@ BOOLEAN WINAPI RtlAreBitsSet(PCRTL_BITMAP lpBits, ULONG ulStart, ULONG ulCount)
       ulCount > lpBits->SizeOfBitMap - ulStart)
     return FALSE;
 
-  lpOut = lpBits->BitMapBuffer + (ulStart >> 3u);
+  /* FIXME: It might be more efficient/cleaner to manipulate four bytes
+   * at a time. But beware of the pointer arithmetics...
+   */
+  lpOut = ((BYTE*)lpBits->Buffer) + (ulStart >> 3u);
 
   /* Check bits in first byte, if ulStart isn't a byte boundary */
   if (ulStart & 7)
@@ -330,7 +336,10 @@ BOOLEAN WINAPI RtlAreBitsClear(PCRTL_BITMAP lpBits, ULONG ulStart, ULONG ulCount
       ulCount > lpBits->SizeOfBitMap - ulStart)
     return FALSE;
 
-  lpOut = lpBits->BitMapBuffer + (ulStart >> 3u);
+  /* FIXME: It might be more efficient/cleaner to manipulate four bytes
+   * at a time. But beware of the pointer arithmetics...
+   */
+  lpOut = ((BYTE*)lpBits->Buffer) + (ulStart >> 3u);
 
   /* Check bits in first byte, if ulStart isn't a byte boundary */
   if (ulStart & 7)
@@ -534,7 +543,7 @@ ULONG WINAPI RtlNumberOfSetBits(PCRTL_BITMAP lpBits)
 
   if (lpBits)
   {
-    LPBYTE lpOut = lpBits->BitMapBuffer;
+    LPBYTE lpOut = (BYTE *)lpBits->Buffer;
     ULONG ulCount, ulRemainder;
     BYTE bMasked;
 
@@ -654,7 +663,7 @@ CCHAR WINAPI RtlFindLeastSignificantBit(ULONGLONG ulLong)
  */
 static int NTDLL_RunSortFn(const void *lhs, const void *rhs)
 {
-  if (((const RTL_BITMAP_RUN*)lhs)->SizeOfRun > ((const RTL_BITMAP_RUN*)rhs)->SizeOfRun)
+  if (((const RTL_BITMAP_RUN*)lhs)->NumberOfBits > ((const RTL_BITMAP_RUN*)rhs)->NumberOfBits)
     return -1;
   return 1;
 }
@@ -669,7 +678,10 @@ static ULONG NTDLL_FindSetRun(PCRTL_BITMAP lpBits, ULONG ulStart, PULONG lpSize)
   LPBYTE lpOut;
   ULONG ulFoundAt = 0, ulCount = 0;
 
-  lpOut = lpBits->BitMapBuffer + (ulStart >> 3u);
+  /* FIXME: It might be more efficient/cleaner to manipulate four bytes
+   * at a time. But beware of the pointer arithmetics...
+   */
+  lpOut = ((BYTE*)lpBits->Buffer) + (ulStart >> 3u);
 
   while (1)
   {
@@ -757,7 +769,10 @@ static ULONG NTDLL_FindClearRun(PCRTL_BITMAP lpBits, ULONG ulStart, PULONG lpSiz
   LPBYTE lpOut;
   ULONG ulFoundAt = 0, ulCount = 0;
 
-  lpOut = lpBits->BitMapBuffer + (ulStart >> 3u);
+  /* FIXME: It might be more efficient/cleaner to manipulate four bytes
+   * at a time. But beware of the pointer arithmetics...
+   */
+  lpOut = ((BYTE*)lpBits->Buffer) + (ulStart >> 3u);
 
   while (1)
   {
@@ -963,21 +978,21 @@ static ULONG WINAPI NTDLL_FindRuns(PCRTL_BITMAP lpBits, PRTL_BITMAP_RUN lpSeries
         qsort(lpSeries, ulRuns, sizeof(RTL_BITMAP_RUN), NTDLL_RunSortFn);
 
       /* Replace last run if this one is bigger */
-      if (ulSize > lpSeries[ulRuns - 1].SizeOfRun)
+      if (ulSize > lpSeries[ulRuns - 1].NumberOfBits)
       {
-        lpSeries[ulRuns - 1].StartOfRun = ulNextPos;
-        lpSeries[ulRuns - 1].SizeOfRun = ulSize;
+        lpSeries[ulRuns - 1].StartingIndex = ulNextPos;
+        lpSeries[ulRuns - 1].NumberOfBits = ulSize;
 
         /* We need to re-sort the array, _if_ we didn't leave it sorted */
-        if (ulRuns > 1 && ulSize > lpSeries[ulRuns - 2].SizeOfRun)
+        if (ulRuns > 1 && ulSize > lpSeries[ulRuns - 2].NumberOfBits)
           bNeedSort = TRUE;
       }
     }
     else
     {
       /* Append to found runs */
-      lpSeries[ulRuns].StartOfRun = ulNextPos;
-      lpSeries[ulRuns].SizeOfRun = ulSize;
+      lpSeries[ulRuns].StartingIndex = ulNextPos;
+      lpSeries[ulRuns].NumberOfBits = ulSize;
       ulRuns++;
 
       if (!bLongest && ulRuns == ulCount)
@@ -1053,8 +1068,8 @@ ULONG WINAPI RtlFindLongestRunSet(PCRTL_BITMAP lpBits, PULONG pulStart)
   if (RtlFindSetRuns(lpBits, &br, 1, TRUE) == 1)
   {
     if (pulStart)
-      *pulStart = br.StartOfRun;
-    return br.SizeOfRun;
+      *pulStart = br.StartingIndex;
+    return br.NumberOfBits;
   }
   return 0;
 }
@@ -1080,8 +1095,8 @@ ULONG WINAPI RtlFindLongestRunClear(PCRTL_BITMAP lpBits, PULONG pulStart)
   if (RtlFindClearRuns(lpBits, &br, 1, TRUE) == 1)
   {
     if (pulStart)
-      *pulStart = br.StartOfRun;
-    return br.SizeOfRun;
+      *pulStart = br.StartingIndex;
+    return br.NumberOfBits;
   }
   return 0;
 }
