@@ -371,15 +371,24 @@ HRESULT WINAPI BindCtxImpl_GetRunningObjectTable(IBindCtx* iface,IRunningObjectT
  ******************************************************************************/
 HRESULT WINAPI BindCtxImpl_RegisterObjectParam(IBindCtx* iface,LPOLESTR pszkey, IUnknown* punk)
 {
+    DWORD index=0;
     ICOM_THIS(BindCtxImpl,iface);
 
-    TRACE("(%p,%p,%p)\n",This,pszkey,punk);
+    TRACE("(%p,%s,%p)\n",This,debugstr_w(pszkey),punk);
 
     if (punk==NULL)
         return E_INVALIDARG;
 
     IUnknown_AddRef(punk);
 
+    if (pszkey!=NULL && BindCtxImpl_GetObjectIndex(This,NULL,pszkey,&index)==S_OK)
+    {
+	TRACE("Overwriting existing key\n");
+	if(This->bindCtxTable[index].pObj!=NULL)
+	    IUnknown_Release(This->bindCtxTable[index].pObj);
+	This->bindCtxTable[index].pObj=punk;
+	return S_OK;
+    }
     This->bindCtxTable[This->bindCtxTableLastIndex].pObj = punk;
     This->bindCtxTable[This->bindCtxTableLastIndex].regType = 1;
 
@@ -422,7 +431,7 @@ HRESULT WINAPI BindCtxImpl_GetObjectParam(IBindCtx* iface,LPOLESTR pszkey, IUnkn
     DWORD index;
     ICOM_THIS(BindCtxImpl,iface);
 
-    TRACE("(%p,%p,%p)\n",This,pszkey,punk);
+    TRACE("(%p,%s,%p)\n",This,debugstr_w(pszkey),punk);
 
     if (punk==NULL)
         return E_POINTER;
@@ -448,7 +457,7 @@ HRESULT WINAPI BindCtxImpl_RevokeObjectParam(IBindCtx* iface,LPOLESTR ppenum)
 
     ICOM_THIS(BindCtxImpl,iface);
 
-    TRACE("(%p,%p)\n",This,ppenum);
+    TRACE("(%p,%s)\n",This,debugstr_w(ppenum));
 
     if (BindCtxImpl_GetObjectIndex(This,NULL,ppenum,&index)==S_FALSE)
         return E_FAIL;
@@ -515,8 +524,8 @@ HRESULT WINAPI BindCtxImpl_GetObjectIndex(BindCtxImpl* This,
 
     if (found)
         return S_OK;
-    else
-        return S_FALSE;
+    TRACE("key not found\n");
+    return S_FALSE;
 }
 
 /******************************************************************************
