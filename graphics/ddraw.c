@@ -92,6 +92,10 @@ static struct IDirectDrawPalette_VTable dga_ddpalvt, xlib_ddpalvt;
 static struct IDirect3D_VTable			d3dvt;
 static struct IDirect3D2_VTable			d3d2vt;
 
+#ifdef HAVE_LIBXXF86VM
+static XF86VidModeModeInfo *orig_mode = NULL;
+#endif
+
 BOOL32
 DDRAW_DGA_Available()
 {
@@ -1996,9 +2000,23 @@ static HRESULT WINAPI DGA_IDirectDraw_SetDisplayMode(
 #ifdef HAVE_LIBXXF86VM
         {
             XF86VidModeModeInfo **all_modes, *vidmode = NULL;
-            /* set fullscreen mode */
-            /* do we need to save the old video mode and restore it when we exit? */
- 
+	    XF86VidModeModeLine mod_tmp;
+	    int dotclock_tmp;
+
+            /* save original video mode and set fullscreen if available*/
+	    orig_mode = (XF86VidModeModeInfo *) malloc (sizeof(XF86VidModeModeInfo));  
+	    TSXF86VidModeGetModeLine(display, DefaultScreen(display), &orig_mode->dotclock, &mod_tmp);
+	    orig_mode->hdisplay = mod_tmp.hdisplay; 
+	    orig_mode->hsyncstart = mod_tmp.hsyncstart;
+	    orig_mode->hsyncend = mod_tmp.hsyncend; 
+	    orig_mode->htotal = mod_tmp.htotal;
+	    orig_mode->vdisplay = mod_tmp.vdisplay; 
+	    orig_mode->vsyncstart = mod_tmp.vsyncstart;
+	    orig_mode->vsyncend = mod_tmp.vsyncend; 
+	    orig_mode->vtotal = mod_tmp.vtotal;
+	    orig_mode->flags = mod_tmp.flags; 
+	    orig_mode->private = mod_tmp.private;
+	    
             TSXF86VidModeGetAllModeLines(display,DefaultScreen(display),&mode_count,&all_modes);
             for (i=0;i<mode_count;i++)
             {
@@ -2016,7 +2034,10 @@ static HRESULT WINAPI DGA_IDirectDraw_SetDisplayMode(
                 WARN(ddraw, "Fullscreen mode not available!\n");
 
             if (vidmode)
+	      {
                 TSXF86VidModeSwitchToMode(display, DefaultScreen(display), vidmode);
+		TSXF86VidModeSetViewPort(display, DefaultScreen(display), 0, 0);
+	      }
         }
 #endif
 
@@ -2205,6 +2226,16 @@ static ULONG WINAPI DGA_IDirectDraw2_Release(LPDIRECTDRAW2 this) {
 #ifdef HAVE_LIBXXF86DGA
 	if (!--(this->ref)) {
 		TSXF86DGADirectVideo(display,DefaultScreen(display),0);
+
+#ifdef HAVE_LIBXXF86VM
+		if (orig_mode)
+		  TSXF86VidModeSwitchToMode(display, DefaultScreen(display), orig_mode);
+		if (orig_mode->privsize)
+		  TSXFree(orig_mode->private);		
+		free(orig_mode);
+		orig_mode = NULL;
+#endif
+		
 #ifdef RESTORE_SIGNALS
 		SIGNAL_InitEmulator();
 #endif
