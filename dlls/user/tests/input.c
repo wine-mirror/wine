@@ -234,14 +234,14 @@ void do_test( HWND hwnd, int seqnr, KEV td[] )
                     msg.wParam == expmsg[i].wParam &&
                     msg.lParam == expmsg[i].lParam,
                     "wrong message! expected:\n"
-                    "message[%d] %-15s wParam %04x lParam %08lx",i,
+                    "message[%d] %-15s wParam %04x lParam %08lx\n",i,
                     MSGNAME[(expmsg[i]).message - WM_KEYFIRST],
                     expmsg[i].wParam, expmsg[i].lParam );
         }
         i++;
     }
     trace("%d messages retrieved\n", i);
-    ok( i == kmctr, "message count is wrong: got %d expected: %d", i, kmctr);
+    ok( i == kmctr, "message count is wrong: got %d expected: %d\n", i, kmctr);
 }
 
 /* test all combinations of the specified key events */
