@@ -33,7 +33,6 @@
 #include <stdio.h>
 #include <string.h>
 #include <unistd.h>
-#include <assert.h>
 
 #include "winbase.h"
 #include "winnls.h"
@@ -234,7 +233,7 @@ BOOL WINAPI ReadConsoleA(HANDLE hConsoleInput, LPVOID lpBuffer, DWORD nNumberOfC
     DWORD	ncr = 0;
     BOOL	ret;
 
-    if ((ret = ReadConsoleW(hConsoleInput, ptr, nNumberOfCharsToRead, &ncr, 0)))
+    if ((ret = ReadConsoleW(hConsoleInput, ptr, nNumberOfCharsToRead, &ncr, NULL)))
 	ncr = WideCharToMultiByte(CP_ACP, 0, ptr, ncr, lpBuffer, nNumberOfCharsToRead, NULL, NULL);
 
     if (lpNumberOfCharsRead) *lpNumberOfCharsRead = ncr;
@@ -1238,12 +1237,12 @@ BOOL WINAPI ScrollConsoleScreenBufferA(HANDLE hConsoleOutput, LPSMALL_RECT lpScr
 }
 
 /******************************************************************
- *		fill_line_uniform
+ *		CONSOLE_FillLineUniform
  *
  * Helper function for ScrollConsoleScreenBufferW
  * Fills a part of a line with a constant character info
  */
-static void fill_line_uniform(HANDLE hConsoleOutput, int i, int j, int len, LPCHAR_INFO lpFill)
+void CONSOLE_FillLineUniform(HANDLE hConsoleOutput, int i, int j, int len, LPCHAR_INFO lpFill)
 {
     SERVER_START_REQ( fill_console_output )
     {
@@ -1340,7 +1339,7 @@ BOOL WINAPI ScrollConsoleScreenBufferW(HANDLE hConsoleOutput, LPSMALL_RECT lpScr
 
     /* step 4: clean out the exposed part */
 
-    /* have to write celll [i,j] if it is not in dst rect (because it has already
+    /* have to write cell [i,j] if it is not in dst rect (because it has already
      * been written to by the scroll) and is in clip (we shall not write
      * outside of clip)
      */
@@ -1354,7 +1353,7 @@ BOOL WINAPI ScrollConsoleScreenBufferW(HANDLE hConsoleOutput, LPSMALL_RECT lpScr
 	    {
 		if (start != -1)
 		{
-		    fill_line_uniform(hConsoleOutput, start, j, i - start, lpFill);
+		    CONSOLE_FillLineUniform(hConsoleOutput, start, j, i - start, lpFill);
 		    start = -1;
 		}
 	    }
@@ -1364,7 +1363,7 @@ BOOL WINAPI ScrollConsoleScreenBufferW(HANDLE hConsoleOutput, LPSMALL_RECT lpScr
 	    }
 	}
 	if (start != -1)
-	    fill_line_uniform(hConsoleOutput, start, j, i - start, lpFill);
+	    CONSOLE_FillLineUniform(hConsoleOutput, start, j, i - start, lpFill);
     }
 
     return TRUE;
