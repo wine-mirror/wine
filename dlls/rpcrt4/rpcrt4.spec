@@ -105,7 +105,7 @@ init	RPCRT4_LibMain
 @ stub RpcRegisterAsyncInfo
 @ stub RpcRevertToSelf
 @ stub RpcRevertToSelfEx
-@ stub RpcServerInqBindings
+@ stdcall RpcServerInqBindings(ptr) RpcServerInqBindings
 @ stub RpcServerInqDefaultPrincNameA
 @ stub RpcServerInqDefaultPrincNameW
 @ stub RpcServerInqIf
@@ -467,8 +467,8 @@ init	RPCRT4_LibMain
 @ stub I_RpcServerInqTransportType
 @ stub I_RpcServerRegisterForwardFunction
 @ stub I_RpcServerSetAddressChangeFn
-@ stub I_RpcServerStartListening # win9x
-@ stub I_RpcServerStopListening # win9x
+@ stdcall I_RpcServerStartListening(ptr) I_RpcServerStartListening # win9x
+@ stdcall I_RpcServerStopListening() I_RpcServerStopListening # win9x
 @ stub I_RpcServerUnregisterEndpointA # win9x
 @ stub I_RpcServerUnregisterEndpointW # win9x
 @ stub I_RpcServerUseProtseq2A
@@ -505,7 +505,7 @@ init	RPCRT4_LibMain
 @ stub I_RpcTransServerReallocBuffer # win9x
 @ stub I_RpcTransServerReceiveDirectReady # win9x
 @ stub I_RpcTransServerUnprotectThread # win9x
-@ stub I_RpcWindowProc # win9x
+@ stdcall I_RpcWindowProc(ptr long long long) I_RpcWindowProc # win9x
 @ stub I_RpcltDebugSetPDUFilter
 @ stub I_UuidCreate
 
