@@ -280,10 +280,12 @@ install_lib: dummy
 	    if [ $(LIB_TARGET) = libwine.so.1.0 ]; then $(LDCONFIG); fi \
 	fi
 	[ -d $(bindir) ] || $(MKDIR) $(bindir)
+	$(INSTALL_PROGRAM) server/wineserver $(bindir)/wineserver
 	$(INSTALL_PROGRAM) windows/x11drv/wineclipsrv $(bindir)/wineclipsrv
 
 uninstall_lib: dummy
-	cd $(libdir); $(RM) $(LIB_TARGET) libwine.a libwine.so wine.sym
+	cd $(libdir) && $(RM) $(LIB_TARGET) libwine.a libwine.so wine.sym
+	$(RM) $(bindir)/wineserver $(bindir)/wineclipsrv
 
 $(X11OBJS) $(EMUOBJS) $(LIBOBJS): $(TOOLSUBDIRS) dummy
 	@cd `dirname $@`; $(SUBMAKE)

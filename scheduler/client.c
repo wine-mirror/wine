@@ -289,12 +289,9 @@ int CLIENT_InitServer(void)
     default:  /* parent */
         close( fd[0] );
         sprintf( buffer, "%d", fd[1] );
-/*#define EXEC_SERVER*/
-#ifdef EXEC_SERVER
+        execl( BINDIR "/wineserver", "wineserver", buffer, NULL );
         execlp( "wineserver", "wineserver", buffer, NULL );
-        execl( "/usr/local/bin/wineserver", "wineserver", buffer, NULL );
         execl( "./server/wineserver", "wineserver", buffer, NULL );
-#endif
         create_initial_thread( fd[1] );
         exit(0);
     }

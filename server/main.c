@@ -23,7 +23,7 @@ int main( int argc, char *argv[] )
     /* make sure the fd is valid */
     if (fcntl( fd, F_GETFL, 0 ) == -1) goto error;
 
-    debug_level = 1;
+/*    debug_level = 1; */
 
     if (debug_level) fprintf( stderr, "Server: starting (pid=%ld)\n", (long) getpid() );
     create_initial_thread( fd );
