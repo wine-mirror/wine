@@ -2042,9 +2042,10 @@ INT32 WINAPI LCMapString32A(
 
     if (dstlen==0)
       return srclen;  /* dstlen=0 means "do nothing but return required length" */
-    if (dstlen<srclen)
-      srclen=dstlen;  /* No, this case is not an error under Windows 95.
-		         And no '\0' gets written. */
+    if (dstlen<srclen) {
+      SetLastError(ERROR_INSUFFICIENT_BUFFER);
+      return 0;
+    }
     if (mapflags & LCMAP_UPPERCASE)
       f = toupper;
     else if (mapflags & LCMAP_LOWERCASE)
@@ -2227,8 +2228,10 @@ INT32 WINAPI LCMapString32W(
 
     if (dstlen==0)
       return srclen;  
-    if (dstlen<srclen)
-      return 0;       
+    if (dstlen<srclen) {
+      SetLastError(ERROR_INSUFFICIENT_BUFFER);
+      return 0;
+    }
     if (mapflags & LCMAP_UPPERCASE)
       f = toupper;
     else if (mapflags & LCMAP_LOWERCASE)
