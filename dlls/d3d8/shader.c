@@ -34,12 +34,12 @@ WINE_DEFAULT_DEBUG_CHANNEL(d3d_shader);
 
 /* Shader debugging - Change the following line to enable debugging of software
       vertex shaders                                                             */
-#if 0
+#if 0 /* Must not be 1 in cvs version */
 # define VSTRACE(A) TRACE A
-# define TRACE_VECTOR(name) TRACE( #name "=(%f, %f, %f, %f)\n", name.x, name.y, name.z, name.w)
+# define TRACE_VSVECTOR(name) TRACE( #name "=(%f, %f, %f, %f)\n", name.x, name.y, name.z, name.w)
 #else 
 # define VSTRACE(A) 
-# define TRACE_VECTOR(name)
+# define TRACE_VSVECTOR(name)
 #endif
 
 
@@ -584,30 +584,30 @@ HRESULT WINAPI IDirect3DVertexShaderImpl_ExecuteSW(IDirect3DVertexShaderImpl* vs
   memset(R, 0, 12 * sizeof(D3DSHADERVECTOR));
 
   /* vshader_program_parse(vshader); */
-#if 0
+#if 0 /* Must not be 1 in cvs */
   TRACE("Input:\n");
-  TRACE_VECTOR(vshader->data->C[0]);
-  TRACE_VECTOR(vshader->data->C[1]);
-  TRACE_VECTOR(vshader->data->C[2]);
-  TRACE_VECTOR(vshader->data->C[3]);
-  TRACE_VECTOR(vshader->data->C[4]);
-  TRACE_VECTOR(vshader->data->C[5]);
-  TRACE_VECTOR(vshader->data->C[6]);
-  TRACE_VECTOR(vshader->data->C[7]);
-  TRACE_VECTOR(vshader->data->C[8]);
-  TRACE_VECTOR(vshader->data->C[64]);
-  TRACE_VECTOR(input->V[D3DVSDE_POSITION]);
-  TRACE_VECTOR(input->V[D3DVSDE_BLENDWEIGHT]);
-  TRACE_VECTOR(input->V[D3DVSDE_BLENDINDICES]);
-  TRACE_VECTOR(input->V[D3DVSDE_NORMAL]);
-  TRACE_VECTOR(input->V[D3DVSDE_PSIZE]);
-  TRACE_VECTOR(input->V[D3DVSDE_DIFFUSE]);
-  TRACE_VECTOR(input->V[D3DVSDE_SPECULAR]);
-  TRACE_VECTOR(input->V[D3DVSDE_TEXCOORD0]);
-  TRACE_VECTOR(input->V[D3DVSDE_TEXCOORD1]);
+  TRACE_VSVECTOR(vshader->data->C[0]);
+  TRACE_VSVECTOR(vshader->data->C[1]);
+  TRACE_VSVECTOR(vshader->data->C[2]);
+  TRACE_VSVECTOR(vshader->data->C[3]);
+  TRACE_VSVECTOR(vshader->data->C[4]);
+  TRACE_VSVECTOR(vshader->data->C[5]);
+  TRACE_VSVECTOR(vshader->data->C[6]);
+  TRACE_VSVECTOR(vshader->data->C[7]);
+  TRACE_VSVECTOR(vshader->data->C[8]);
+  TRACE_VSVECTOR(vshader->data->C[64]);
+  TRACE_VSVECTOR(input->V[D3DVSDE_POSITION]);
+  TRACE_VSVECTOR(input->V[D3DVSDE_BLENDWEIGHT]);
+  TRACE_VSVECTOR(input->V[D3DVSDE_BLENDINDICES]);
+  TRACE_VSVECTOR(input->V[D3DVSDE_NORMAL]);
+  TRACE_VSVECTOR(input->V[D3DVSDE_PSIZE]);
+  TRACE_VSVECTOR(input->V[D3DVSDE_DIFFUSE]);
+  TRACE_VSVECTOR(input->V[D3DVSDE_SPECULAR]);
+  TRACE_VSVECTOR(input->V[D3DVSDE_TEXCOORD0]);
+  TRACE_VSVECTOR(input->V[D3DVSDE_TEXCOORD1]);
 #endif
 
-  TRACE_VECTOR(vshader->data->C[64]);
+  TRACE_VSVECTOR(vshader->data->C[64]);
 
   /* the first dword is the version tag */
   /* TODO: parse it */
@@ -756,17 +756,17 @@ HRESULT WINAPI IDirect3DVertexShaderImpl_ExecuteSW(IDirect3DVertexShaderImpl* vs
       }
       
 #if 0
-      TRACE_VECTOR(output->oPos);
-      TRACE_VECTOR(output->oD[0]);
-      TRACE_VECTOR(output->oD[1]);
-      TRACE_VECTOR(output->oT[0]);
-      TRACE_VECTOR(output->oT[1]);
-      TRACE_VECTOR(R[0]);
-      TRACE_VECTOR(R[1]);
-      TRACE_VECTOR(R[2]);
-      TRACE_VECTOR(R[3]);
-      TRACE_VECTOR(R[4]);
-      TRACE_VECTOR(R[5]);
+      TRACE_VSVECTOR(output->oPos);
+      TRACE_VSVECTOR(output->oD[0]);
+      TRACE_VSVECTOR(output->oD[1]);
+      TRACE_VSVECTOR(output->oT[0]);
+      TRACE_VSVECTOR(output->oT[1]);
+      TRACE_VSVECTOR(R[0]);
+      TRACE_VSVECTOR(R[1]);
+      TRACE_VSVECTOR(R[2]);
+      TRACE_VSVECTOR(R[3]);
+      TRACE_VSVECTOR(R[4]);
+      TRACE_VSVECTOR(R[5]);
 #endif
 
       /* to next opcode token */
@@ -774,26 +774,26 @@ HRESULT WINAPI IDirect3DVertexShaderImpl_ExecuteSW(IDirect3DVertexShaderImpl* vs
     }
 #if 0
     TRACE("End of current instruction:\n");
-    TRACE_VECTOR(output->oPos);
-    TRACE_VECTOR(output->oD[0]);
-    TRACE_VECTOR(output->oD[1]);
-    TRACE_VECTOR(output->oT[0]);
-    TRACE_VECTOR(output->oT[1]);
-    TRACE_VECTOR(R[0]);
-    TRACE_VECTOR(R[1]);
-    TRACE_VECTOR(R[2]);
-    TRACE_VECTOR(R[3]);
-    TRACE_VECTOR(R[4]);
-    TRACE_VECTOR(R[5]);
+    TRACE_VSVECTOR(output->oPos);
+    TRACE_VSVECTOR(output->oD[0]);
+    TRACE_VSVECTOR(output->oD[1]);
+    TRACE_VSVECTOR(output->oT[0]);
+    TRACE_VSVECTOR(output->oT[1]);
+    TRACE_VSVECTOR(R[0]);
+    TRACE_VSVECTOR(R[1]);
+    TRACE_VSVECTOR(R[2]);
+    TRACE_VSVECTOR(R[3]);
+    TRACE_VSVECTOR(R[4]);
+    TRACE_VSVECTOR(R[5]);
 #endif
   }
-#if 0
+#if 0 /* Must not be 1 in cvs */
     TRACE("Output:\n");
-    TRACE_VECTOR(output->oPos);
-    TRACE_VECTOR(output->oD[0]);
-    TRACE_VECTOR(output->oD[1]);
-    TRACE_VECTOR(output->oT[0]);
-    TRACE_VECTOR(output->oT[1]);
+    TRACE_VSVECTOR(output->oPos);
+    TRACE_VSVECTOR(output->oD[0]);
+    TRACE_VSVECTOR(output->oD[1]);
+    TRACE_VSVECTOR(output->oT[0]);
+    TRACE_VSVECTOR(output->oT[1]);
 #endif
   return D3D_OK;
 }

@@ -268,4 +268,44 @@ typedef enum _GL_PSVersion {
 #define WINAPI      __stdcall
 #define APIENTRY    WINAPI
 
+/* Routine common to the draw primitive and draw indexed primitive routines */
+void drawPrimitive(LPDIRECT3DDEVICE8 iface,
+                    int PrimitiveType,
+                    long NumPrimitives,
+
+                    /* for Indexed: */
+                    long  StartVertexIndex,
+                    long  StartIdx,
+                    short idxBytes,
+                    const void *idxData,
+                    int   minIndex);
+
+/* Structures required to draw primitives */
+
+
+
+
+
+typedef struct Direct3DStridedData {
+    BYTE     *lpData;        /* Pointer to start of data               */
+    DWORD     dwStride;      /* Stride between occurances of this data */
+    DWORD     dwType;        /* Type (as in D3DVSDT_TYPE)              */
+} Direct3DStridedData;
+
+typedef struct Direct3DVertexStridedData {
+    union {
+        struct {
+             Direct3DStridedData  position;
+             Direct3DStridedData  blendWeights;
+             Direct3DStridedData  blendMatrixIndices;
+             Direct3DStridedData  normal;
+             Direct3DStridedData  pSize;
+             Direct3DStridedData  diffuse;
+             Direct3DStridedData  specular;
+             Direct3DStridedData  texCoords[8];
+        } DUMMYSTRUCTNAME;
+        Direct3DStridedData input[16];  /* Indexed by constants in D3DVSDE_REGISTER */
+    } DUMMYUNIONNAME;
+} Direct3DVertexStridedData;
+
 #endif  /* __WINE_D3DCORE_GL_H */

@@ -67,6 +67,15 @@ extern void (*wine_tsx11_unlock_ptr)(void);
 #define HIGHEST_TRANSFORMSTATE 512
 #define D3DSBT_RECORDED 0xfffffffe
 
+/* CreateVertexShader can return > 0xFFFF */
+#define VS_HIGHESTFIXEDFXF 0xF0000000
+#define VERTEX_SHADER(Handle) \
+  ((Handle <= VS_HIGHESTFIXEDFXF) ? ((Handle >= sizeof(VertexShaders) / sizeof(IDirect3DVertexShaderImpl*)) ? NULL : VertexShaders[Handle]) : VertexShaders[Handle - VS_HIGHESTFIXEDFXF])
+#define VERTEX_SHADER_DECL(Handle) \
+  ((Handle <= VS_HIGHESTFIXEDFXF) ? ((Handle >= sizeof(VertexShaderDeclarations) / sizeof(IDirect3DVertexShaderDeclarationImpl*)) ? NULL : VertexShaderDeclarations[Handle]) : VertexShaderDeclarations[Handle - VS_HIGHESTFIXEDFXF])
+#define PIXEL_SHADER(Handle) \
+  ((Handle <= VS_HIGHESTFIXEDFXF) ? ((Handle >= sizeof(PixelShaders) / sizeof(IDirect3DPixelShaderImpl*)) ? NULL : PixelShaders[Handle]) : PixelShaders[Handle - VS_HIGHESTFIXEDFXF])
+
 /* Direct3D8 Interfaces: */
 typedef struct IDirect3DBaseTexture8Impl IDirect3DBaseTexture8Impl;
 typedef struct IDirect3DVolumeTexture8Impl IDirect3DVolumeTexture8Impl;
@@ -112,14 +121,14 @@ typedef struct VSHADERDATA8 {
 
 /** temporary here waiting for buffer code */
 typedef struct VSHADERINPUTDATA8 {
-  D3DSHADERVECTOR V[16];
+  D3DSHADERVECTOR V[17];
 } VSHADERINPUTDATA8;
 
 /** temporary here waiting for buffer code */
 typedef struct VSHADEROUTPUTDATA8 {
   D3DSHADERVECTOR oPos;
   D3DSHADERVECTOR oD[2];
-  D3DSHADERVECTOR oT[4];
+  D3DSHADERVECTOR oT[8];
   D3DSHADERVECTOR oFog;
   D3DSHADERVECTOR oPts;
 } VSHADEROUTPUTDATA8;
@@ -1064,7 +1073,8 @@ struct  IDirect3DStateBlockImpl {
   /* Stream Source */
   UINT                      stream_stride[MAX_STREAMS];
   IDirect3DVertexBuffer8   *stream_source[MAX_STREAMS];
-  
+  BOOL                      streamIsUP;
+
   /* Indices */
   IDirect3DIndexBuffer8*    pIndexData;
   UINT                      baseVertexIndex;
@@ -1141,7 +1151,9 @@ struct IDirect3DVertexShaderDeclarationImpl {
   IDirect3DDevice8Impl* device;
 
   /** precomputed fvf if simple declaration */
-  DWORD   fvf;
+  DWORD   fvf[MAX_STREAMS];
+  DWORD   allFVF;
+
   /** dx8 compatible Declaration fields */
   DWORD*  pDeclaration8;
   DWORD   declaration8Length;
@@ -1197,7 +1209,7 @@ extern DWORD WINAPI IDirect3DVertexShaderImpl_GetVersion(IDirect3DVertexShaderIm
 extern HRESULT WINAPI IDirect3DVertexShaderImpl_ExecuteSW(IDirect3DVertexShaderImpl* This, VSHADERINPUTDATA8* input, VSHADEROUTPUTDATA8* output);
 /* temporary internal Interfaces */
 extern HRESULT WINAPI IDirect3DDeviceImpl_CreateVertexShader(IDirect3DDevice8Impl* This, CONST DWORD* pFunction, DWORD Usage, IDirect3DVertexShaderImpl** ppVertexShader);
-extern HRESULT WINAPI IDirect3DDeviceImpl_FillVertexShaderInput(IDirect3DDevice8Impl* This, IDirect3DVertexShaderImpl* vshader, const void* vertexFirstStream, DWORD StartVertexIndex, DWORD idxDecal);
+extern HRESULT WINAPI IDirect3DDeviceImpl_FillVertexShaderInput(IDirect3DDevice8Impl* This, IDirect3DVertexShaderImpl* vshader,  DWORD SkipnStrides);
 
 /* ------------------------ */
 /* IDirect3DPixelShaderImpl */
@@ -1271,5 +1283,38 @@ const char* debug_d3dformat(D3DFORMAT fmt);
 const char* debug_d3dressourcetype(D3DRESOURCETYPE res);
 const char* debug_d3dprimitivetype(D3DPRIMITIVETYPE PrimitiveType);
 const char* debug_d3dpool(D3DPOOL Pool);
+
+/* Some #defines for additional diagnostics */
+#if 0 /* NOTE: Must be 0 in cvs */
+  /* To avoid having to get gigabytes of trace, the following can be compiled in, and at the start
+     of each frame, a check is made for the existance of C:\D3DTRACE, and if if exists d3d trace   
+     is enabled, and if it doesnt exists it is disabled.                                           */
+# define FRAME_DEBUGGING
+  /*  Adding in the SINGLE_FRAME_DEBUGGING gives a trace of just what makes up a single frame, before
+      the file is deleted                                                                            */
+# if 1
+#  define SINGLE_FRAME_DEBUGGING
+# endif  
+  /* The following, when enabled, lets you see the makeup of the frame, by drawprimitive calls.
+     A check is made for the existence of C:\D3DSHOWFRAME, and if it exists will write the
+     contents of the back buffer into /tmp/backbuffer_* after each primitive array is drawn
+     for a single frame. At the end of the frame, the file is deleted.                         */
+# if 1
+#  define SHOW_FRAME_MAKEUP 1
+# endif  
+extern BOOL isOn;
+extern BOOL isDumpingFrames;
+extern LONG primCounter;
+#endif
+
+/* Per-vertex trace: */
+#if 0 /* NOTE: Must be 0 in cvs */
+# define VTRACE(A) TRACE A
+#else 
+# define VTRACE(A) 
+#endif
+
+#define TRACE_VECTOR(name) TRACE( #name "=(%f, %f, %f, %f)\n", name.x, name.y, name.z, name.w);
+#define TRACE_STRIDED(sd,name) TRACE( #name "=(data:%p, stride:%ld, type:%ld)\n", sd->u.s.name.lpData, sd->u.s.name.dwStride, sd->u.s.name.dwType);
 
 #endif /* __WINE_D3DX8_PRIVATE_H */

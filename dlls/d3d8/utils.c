@@ -35,13 +35,6 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(d3d);
 
-
-#if 0
-# define VTRACE(A) TRACE A
-#else 
-# define VTRACE(A) 
-#endif
-
 const char* debug_d3ddevicetype(D3DDEVTYPE devtype) {
   switch (devtype) {
 #define DEVTYPE_TO_STR(dev) case dev: return #dev

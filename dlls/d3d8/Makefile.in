@@ -16,6 +16,7 @@ C_SRCS = \
 	d3d8_main.c \
 	device.c \
 	directx.c \
+	drawprim.c \
 	indexbuffer.c \
 	resource.c \
 	shader.c \

@@ -203,6 +203,7 @@ HRESULT WINAPI IDirect3DDeviceImpl_CreateVertexShaderDeclaration8(IDirect3DDevic
   /*object->lpVtbl = &Direct3DVextexShaderDeclaration8_Vtbl;*/
   object->device = This; /* FIXME: AddRef(This) */
   object->ref = 1;
+  object->allFVF = 0;
 
   while (D3DVSD_END() != *pToken) {
     token = *pToken;
@@ -215,16 +216,27 @@ HRESULT WINAPI IDirect3DDeviceImpl_CreateVertexShaderDeclaration8(IDirect3DDevic
        * how really works streams, 
        *  in DolphinVS dx8 dsk sample they seems to decal reg numbers !!!
        */
+      DWORD oldStream = stream;
       stream = ((token & D3DVSD_STREAMNUMBERMASK) >> D3DVSD_STREAMNUMBERSHIFT);
 
-      if (stream > 0) {
-	/** fvf cannot map mutliple streams, so invalid fvf computing */
-	invalid_fvf = TRUE;
+      /* copy fvf if valid */
+      if (FALSE == invalid_fvf) {
+          fvf |= tex << D3DFVF_TEXCOUNT_SHIFT;
+          tex = 0;
+          object->fvf[oldStream] = fvf;
+          object->allFVF |= fvf;
+      } else {
+          object->fvf[oldStream] = 0;
+          tex = 0;
       }
+
+      /* reset valid/invalid fvf */
+      fvf = 0;
+      invalid_fvf = FALSE;
 
     } else if (D3DVSD_TOKEN_STREAMDATA == tokentype && 0 == (0x10000000 & tokentype)) {
       DWORD type = ((token & D3DVSD_DATATYPEMASK)  >> D3DVSD_DATATYPESHIFT);
-      DWORD reg  = ((token & D3DVSD_VERTEXREGMASK) >> D3DVSD_VERTEXREGSHIFT) - stream;
+      DWORD reg  = ((token & D3DVSD_VERTEXREGMASK) >> D3DVSD_VERTEXREGSHIFT);
 
       switch (reg) {
       case D3DVSDE_POSITION:     
@@ -241,7 +253,7 @@ HRESULT WINAPI IDirect3DDeviceImpl_CreateVertexShaderDeclaration8(IDirect3DDevic
 	  }
 	}
 	break;
-
+      
       case D3DVSDE_BLENDWEIGHT:
 	switch (type) {
 	case D3DVSDT_FLOAT1:     fvf |= D3DFVF_XYZB1;           break;
@@ -305,40 +317,54 @@ HRESULT WINAPI IDirect3DDeviceImpl_CreateVertexShaderDeclaration8(IDirect3DDevic
 	}
 	break;
 
-	/**
-	 * TODO: for TEX* only FLOAT2 supported
-	 *  by default using texture type info
-	 */
-      case D3DVSDE_TEXCOORD0:    tex = max(tex, D3DFVF_TEX1);   break; 
-      case D3DVSDE_TEXCOORD1:    tex = max(tex, D3DFVF_TEX2);   break;
-      case D3DVSDE_TEXCOORD2:    tex = max(tex, D3DFVF_TEX3);   break;
-      case D3DVSDE_TEXCOORD3:    tex = max(tex, D3DFVF_TEX4);   break;
-      case D3DVSDE_TEXCOORD4:    tex = max(tex, D3DFVF_TEX5);   break;
-      case D3DVSDE_TEXCOORD5:    tex = max(tex, D3DFVF_TEX6);   break;
-      case D3DVSDE_TEXCOORD6:    tex = max(tex, D3DFVF_TEX7);   break;
-      case D3DVSDE_TEXCOORD7:    tex = max(tex, D3DFVF_TEX8);   break;
+      case D3DVSDE_TEXCOORD0:
+      case D3DVSDE_TEXCOORD1:
+      case D3DVSDE_TEXCOORD2:
+      case D3DVSDE_TEXCOORD3:
+      case D3DVSDE_TEXCOORD4:
+      case D3DVSDE_TEXCOORD5:
+      case D3DVSDE_TEXCOORD6:
+      case D3DVSDE_TEXCOORD7:
+         /* Fixme? - assume all tex coords in same stream */
+         {
+             int texNo = 1 + (reg - D3DVSDE_TEXCOORD0);
+             tex = max(tex, texNo);
+             switch (type) {
+             case D3DVSDT_FLOAT1: fvf |= D3DFVF_TEXCOORDSIZE1(texNo); break;
+             case D3DVSDT_FLOAT2: fvf |= D3DFVF_TEXCOORDSIZE2(texNo); break;
+             case D3DVSDT_FLOAT3: fvf |= D3DFVF_TEXCOORDSIZE3(texNo); break;
+             case D3DVSDT_FLOAT4: fvf |= D3DFVF_TEXCOORDSIZE4(texNo); break;
+             default: 
+               /** errooooorr mismatched use of a register, invalid fvf computing */
+               invalid_fvf = TRUE;
+               TRACE("Mismatched use in VertexShader declaration of D3DVSDE_TEXCOORD? register: unsupported type %s\n", VertexShaderDeclDataTypes[type]);
+             }
+         }
+         break;
 
       case D3DVSDE_POSITION2:   /* maybe D3DFVF_XYZRHW instead D3DFVF_XYZ (of D3DVDE_POSITION) ... to see */
       case D3DVSDE_NORMAL2:     /* FIXME i don't know what to do here ;( */
-	FIXME("[%lu] registers in VertexShader declaration not supported yet (token:0x%08lx)\n", reg, token);
+	TRACE("[%lu] registers in VertexShader declaration not supported yet (token:0x%08lx)\n", reg, token);
 	break;
       }
-      /*TRACE("VertexShader declaration define %x as current FVF\n", fvf);*/
+      TRACE("VertexShader declaration define %lx as current FVF\n", fvf);
     }
     len += tokenlen;
     pToken += tokenlen;
   }
-  if (tex > 0) {
-    /*TRACE("VertexShader declaration define %x as texture level\n", tex);*/
-    fvf |= tex;
-  }   
   /* here D3DVSD_END() */
   len +=  Direct3DVextexShaderDeclarationImpl_ParseToken(pToken);
+
   /* copy fvf if valid */
-  if (FALSE == invalid_fvf)
-    object->fvf = fvf;
-  else
-    object->fvf = 0;
+  if (FALSE == invalid_fvf) {
+      fvf |= tex << D3DFVF_TEXCOUNT_SHIFT;
+      object->fvf[stream] = fvf;
+      object->allFVF |= fvf;
+  } else {
+      object->fvf[stream] = 0;
+  }
+  TRACE("Completed, allFVF = %lx\n", object->allFVF);
+
   /* compute size */
   object->declaration8Length = len * sizeof(DWORD);
   /* copy the declaration */
@@ -352,9 +378,7 @@ HRESULT WINAPI IDirect3DDeviceImpl_CreateVertexShaderDeclaration8(IDirect3DDevic
 
 HRESULT WINAPI IDirect3DDeviceImpl_FillVertexShaderInput(IDirect3DDevice8Impl* This,
 							 IDirect3DVertexShaderImpl* vshader,	 
-							 const void* vertexFirstStream,
-							 DWORD StartVertexIndex, 
-							 DWORD idxDecal) {
+							 DWORD SkipnStrides) {
   /** parser data */
   const DWORD* pToken = This->UpdateStateBlock->vertexShaderDecl->pDeclaration8;
   DWORD stream = 0;
@@ -367,7 +391,7 @@ HRESULT WINAPI IDirect3DDeviceImpl_FillVertexShaderInput(IDirect3DDevice8Impl* T
   SHORT u, v, r, t;
   DWORD dw;
 
-  TRACE("(%p) - This:%p - stream:%p, startIdx=%lu, idxDecal=%lu\n", vshader, This, vertexFirstStream, StartVertexIndex, idxDecal);
+  TRACE("(%p) - This:%p, skipstrides=%lu\n", vshader, This, SkipnStrides);
 
   while (D3DVSD_END() != *pToken) {
     token = *pToken;
@@ -376,7 +400,6 @@ HRESULT WINAPI IDirect3DDeviceImpl_FillVertexShaderInput(IDirect3DDevice8Impl* T
     /** FVF generation block */
     if (D3DVSD_TOKEN_STREAM == tokentype && 0 == (D3DVSD_STREAMTESSMASK & token)) {
       IDirect3DVertexBuffer8* pVB;
-      const char* startVtx = NULL;
       int skip = 0;
 
       ++pToken;
@@ -385,25 +408,21 @@ HRESULT WINAPI IDirect3DDeviceImpl_FillVertexShaderInput(IDirect3DDevice8Impl* T
        *  in DolphinVS dx8 dsk sample use it !!!
        */
       stream = ((token & D3DVSD_STREAMNUMBERMASK) >> D3DVSD_STREAMNUMBERSHIFT);
-
-      if (0 == stream) {
-	skip = This->StateBlock->stream_stride[0];
-	startVtx = (const char*) vertexFirstStream + (StartVertexIndex * skip);
-	curPos = startVtx + idxDecal;
-	/*TRACE(" using stream[%lu] with %lu decal => curPos %p\n", stream, idxDecal, curPos);*/
-      } else {
-	skip = This->StateBlock->stream_stride[stream];
-	pVB  = This->StateBlock->stream_source[stream];
-
-	if (NULL == pVB) {
+      skip = This->StateBlock->stream_stride[stream];
+      pVB  = This->StateBlock->stream_source[stream];
+      
+      if (NULL == pVB) {
 	  ERR("using unitialised stream[%lu]\n", stream);
 	  return D3DERR_INVALIDCALL;
-	} else {
-	  startVtx = ((IDirect3DVertexBuffer8Impl*) pVB)->allocatedMemory + (StartVertexIndex * skip);
-	  /** do we need to decal if we use idxBuffer */
-	  curPos = startVtx + idxDecal;
-	  /*TRACE(" using stream[%lu] with %lu decal\n", stream, idxDecal);*/
-	}
+      } else {
+          if (This->StateBlock->streamIsUP == TRUE) {
+              curPos = ((char *) pVB) + (SkipnStrides * skip);   /* Not really a VB */
+          } else {
+              curPos = ((IDirect3DVertexBuffer8Impl*) pVB)->allocatedMemory + (SkipnStrides * skip);
+          }
+	  
+	  TRACE(" using stream[%lu] with %p (%p + (Stride %d * skip %ld))\n", stream, curPos, 
+                 ((IDirect3DVertexBuffer8Impl*) pVB)->allocatedMemory, skip, SkipnStrides);
       }
     } else if (D3DVSD_TOKEN_CONSTMEM == tokentype) {
       /** Const decl */

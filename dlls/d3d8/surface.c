@@ -31,14 +31,6 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(d3d_surface);
 
-/* trace: */
-#if 0
-# define VTRACE(A) TRACE A
-#else 
-# define VTRACE(A) 
-#endif
-
-
 /* IDirect3DVolume IUnknown parts follow: */
 HRESULT WINAPI IDirect3DSurface8Impl_QueryInterface(LPDIRECT3DSURFACE8 iface,REFIID riid,LPVOID *ppobj)
 {
