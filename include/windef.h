@@ -150,6 +150,10 @@ typedef INT     (CALLBACK *PROC)();
 #endif
 #endif  /* NOMINMAX */
 
+#ifdef MAX_PATH /* Work-around for Mingw */ 
+#undef MAX_PATH
+#endif /* MAX_PATH */
+
 #define MAX_PATH        260
 #define HFILE_ERROR     ((HFILE)-1)
 
