@@ -1,5 +1,5 @@
 /*
- *	Shell Folder stuff (...and all the OLE-Objects of SHELL32.DLL)
+ *	handling of SHELL32.DLL OLE-Objects
  *
  *	Copyright 1997	Marcus Meissner
  *	Copyright 1998	Juergen Schmied  <juergen.schmied@metronet.de>
@@ -19,6 +19,7 @@
 #include "winerror.h"
 #include "winnls.h"
 #include "winproc.h"
+#include "winversion.h"
 #include "commctrl.h"
 
 #include "shell32_main.h"
@@ -173,10 +174,16 @@ DWORD WINAPI SHELL32_DllGetClassObject(REFCLSID rclsid,REFIID iid,LPVOID *ppv)
 	{ if(IsEqualCLSID(rclsid, &CLSID_ShellDesktop))      /*debug*/
 	  { TRACE(shell,"-- requested CLSID_ShellDesktop\n");
 	  }
-	  if(IsEqualCLSID(rclsid, &CLSID_ShellLink))         /*debug*/
-	  { TRACE(shell,"-- requested CLSID_ShellLink\n");
+
+	  if (IsEqualCLSID(rclsid, &CLSID_ShellLink))
+	  { if (VERSION_OsIsUnicode ())
+	      lpclf = IShellLinkW_CF_Constructor();
+	    lpclf = IShellLink_CF_Constructor();
 	  }
-	  lpclf = IClassFactory_Constructor();
+	  else
+	  { lpclf = IClassFactory_Constructor();
+	  }
+
 	  if(lpclf)
 	  { hres = lpclf->lpvtbl->fnQueryInterface(lpclf,iid, ppv);
 		lpclf->lpvtbl->fnRelease(lpclf);
@@ -186,7 +193,7 @@ DWORD WINAPI SHELL32_DllGetClassObject(REFCLSID rclsid,REFIID iid,LPVOID *ppv)
 	{ WARN(shell, "-- CLSID not found\n");
 	  hres = CLASS_E_CLASSNOTAVAILABLE;
 	}
-	TRACE(shell,"-- return pointer to interface: %p\n",*ppv);
+	TRACE(shell,"-- pointer to class factory: %p\n",*ppv);
 	return hres;
 }
 
@@ -306,12 +313,6 @@ static HRESULT WINAPI IClassFactory_CreateInstance(
 	else if (IsEqualIID(riid, &IID_IShellView))
 	{ pObj = (IUnknown *)IShellView_Constructor(NULL,NULL);
  	} 
-	else if (IsEqualIID(riid, &IID_IShellLink))
-	{ pObj = (IUnknown *)IShellLink_Constructor();
-	} 
-	else if (IsEqualIID(riid, &IID_IShellLinkW))
-	{ pObj = (IUnknown *)IShellLinkW_Constructor();
-	} 
 	else if (IsEqualIID(riid, &IID_IExtractIcon))
 	{ pObj = (IUnknown *)IExtractIcon_Constructor(NULL);
 	} 

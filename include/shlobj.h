@@ -16,10 +16,6 @@
 #define FAR
 #define THIS_ THIS,
 
-#define __T(x)      x
-#define _T(x)       __T(x)
-#define TEXT        _T
-
 /****************************************************************************
 *  DllGetClassObject
 */
@@ -29,6 +25,7 @@ DWORD WINAPI SHELL32_DllGetClassObject(LPCLSID,REFIID,LPVOID*);
 typedef LPVOID	LPBC; /* *IBindCtx really */
 
 /* foreward declaration of the objects*/
+typedef struct tagPERSISTFILE	*LPPERSISTFILE,	IPersistFile;
 typedef struct tagCONTEXTMENU	*LPCONTEXTMENU,	IContextMenu;
 typedef struct tagSHELLEXTINIT	*LPSHELLEXTINIT,IShellExtInit;
 typedef struct tagENUMIDLIST	*LPENUMIDLIST,	IEnumIDList;
@@ -45,6 +42,9 @@ typedef struct tagENUMFORMATETC	*LPENUMFORMATETC,	IEnumFORMATETC;
 /****************************************************************************
 *  SHELL ID
 */
+/* desktop elements */
+DEFINE_GUID (IID_MyComputer,		0x20D04FE0L, 0x3AEA, 0x1069, 0xA2, 0xD8, 0x08, 0x00, 0x2B, 0x30, 0x30, 0x9D);
+
 /* strange Objects */
 DEFINE_SHLGUID(IID_IEnumUnknown,	0x00000100L, 0, 0);
 DEFINE_SHLGUID(IID_IEnumString,		0x00000101L, 0, 0);
@@ -70,6 +70,7 @@ DEFINE_GUID (IID_IDockingWindowFrame,	0x47D2657AL, 0x7B27, 0x11D0, 0x8C, 0xA9, 0
 
 DEFINE_SHLGUID(CLSID_ShellDesktop,      0x00021400L, 0, 0);
 DEFINE_SHLGUID(CLSID_ShellLink,         0x00021401L, 0, 0);
+
 /* shell32 formatids */
 DEFINE_SHLGUID(FMTID_Intshcut,          0x000214A0L, 0, 0);
 DEFINE_SHLGUID(FMTID_InternetSite,      0x000214A1L, 0, 0);
@@ -125,7 +126,31 @@ typedef struct _STRRET
     WCHAR	cStrW[MAX_PATH];
   }u;
 } STRRET,*LPSTRRET;
+/*****************************************************************************
+ * IPersistFile interface
+ */
+#define THIS LPPERSISTFILE this
+typedef struct IPersistFile_VTable
+{   // *** IUnknown methods ***
+    STDMETHOD(QueryInterface) (THIS_ REFIID riid, LPVOID * ppvObj) PURE;
+    STDMETHOD_(ULONG,AddRef) (THIS)  PURE;
+    STDMETHOD_(ULONG,Release) (THIS) PURE;
 
+    STDMETHOD(GetClassID )(THIS_ CLSID *pClassID) PURE;
+    STDMETHOD(IsDirty )(THIS) PURE;
+    STDMETHOD(Load )(THIS_ LPCOLESTR32 pszFileName, DWORD dwMode) PURE;
+    STDMETHOD(Save )(THIS_ LPCOLESTR32 pszFileName, BOOL32 fRemember) PURE;
+    STDMETHOD(SaveCompleted )(THIS_ LPCOLESTR32 pszFileName) PURE;
+    STDMETHOD(GetCurFile )(THIS_ LPOLESTR32 *ppszFileName) PURE;
+
+} IPersistFile_VTable,*LPPERSISTFILE_VTABLE;
+
+struct tagPERSISTFILE
+{ LPPERSISTFILE_VTABLE	lpvtbl;
+  DWORD			ref;
+};
+
+#undef THIS
 /*****************************************************************************
  * IContextMenu interface
  */
@@ -936,6 +961,8 @@ typedef struct IShellLink_VTable
 struct IShellLink {
 	LPSHELLLINK_VTABLE	lpvtbl;
 	DWORD			ref;
+	/* IPersistfile interface */
+	LPPERSISTFILE		lppf;
 };
 
 #undef THIS
@@ -983,6 +1010,8 @@ typedef struct IShellLinkW_VTable
 struct IShellLinkW {
 	LPSHELLLINKW_VTABLE	lpvtbl;
 	DWORD			ref;
+	/* IPersistfile interface */
+	LPPERSISTFILE		lppf;
 };
 
 #undef THIS
@@ -1098,22 +1127,6 @@ struct tagSERVICEPROVIDER
 {	LPSERVICEPROVIDER_VTABLE lpvtbl;
 	DWORD ref;
 };           
-/****************************************************************************
- * Class constructors
- */
-#ifdef __WINE__
-extern LPDATAOBJECT	IDataObject_Constructor(HWND32 hwndOwner, LPSHELLFOLDER psf, LPITEMIDLIST * apidl, UINT32 cidl);
-extern LPENUMFORMATETC	IEnumFORMATETC_Constructor(UINT32, const FORMATETC32 []);
-
-extern LPCLASSFACTORY	IClassFactory_Constructor(void);
-extern LPCONTEXTMENU	IContextMenu_Constructor(LPSHELLFOLDER, LPCITEMIDLIST *, UINT32);
-extern LPSHELLFOLDER	IShellFolder_Constructor(LPSHELLFOLDER,LPITEMIDLIST);
-extern LPSHELLVIEW	IShellView_Constructor(LPSHELLFOLDER, LPCITEMIDLIST);
-extern LPSHELLLINK	IShellLink_Constructor(void);
-extern LPSHELLLINKW	IShellLinkW_Constructor(void);
-extern LPENUMIDLIST	IEnumIDList_Constructor(LPCSTR,DWORD);
-extern LPEXTRACTICON	IExtractIcon_Constructor(LPITEMIDLIST);
-#endif
 /****************************************************************************
  * Shell Execute API
  */
