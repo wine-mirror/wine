@@ -38,10 +38,26 @@
 #include "wingdi.h"
 #include "winuser.h"
 #include "shlobj.h"
+#include "ddeml.h"
 #include "wine/unicode.h"
 #include "wine/debug.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(shell);
+
+/* Get a function pointer from a DLL handle */
+#define GET_FUNC(func, module, name, fail) \
+  do { \
+    if (!func) { \
+      if (!SHLWAPI_h##module && !(SHLWAPI_h##module = LoadLibraryA(#module ".dll"))) return fail; \
+      func = (fn##func)GetProcAddress(SHLWAPI_h##module, name); \
+      if (!func) return fail; \
+    } \
+  } while (0)
+
+extern HMODULE SHLWAPI_hmlang;
+
+typedef HRESULT (WINAPI *fnpConvertINetUnicodeToMultiByte)(LPDWORD,DWORD,LPCWSTR,LPINT,LPSTR,LPINT);
+static  fnpConvertINetUnicodeToMultiByte pConvertINetUnicodeToMultiByte;
 
 static HRESULT WINAPI _SHStrDupAA(LPCSTR,LPSTR*);
 static HRESULT WINAPI _SHStrDupAW(LPCWSTR,LPSTR*);
@@ -2390,6 +2406,38 @@ LPSTR WINAPI StrFormatByteSizeA(DWORD dwBytes, LPSTR lpszDest, UINT cchMax)
 }
 
 /*************************************************************************
+ *      @	[SHLWAPI.162]
+ *
+ * Remove a hanging lead byte from the end of a string, if present.
+ *
+ * PARAMS
+ *  lpStr [I] String to check for a hanging lead byte
+ *  size  [I] Length of lpStr
+ *
+ * RETURNS
+ *  Success: The new length of the string. Any hanging lead bytes are removed.
+ *  Failure: 0, if any parameters are invalid.
+ */
+DWORD WINAPI SHTruncateString(LPSTR lpStr, DWORD size)
+{
+  if (lpStr && size)
+  {
+    LPSTR lastByte = lpStr + size - 1;
+
+    while(lpStr < lastByte)
+      lpStr += IsDBCSLeadByte(*lpStr) ? 2 : 1;
+
+    if(lpStr == lastByte && IsDBCSLeadByte(*lpStr))
+    {
+      *lpStr = '\0';
+      size--;
+    }
+    return size;
+  }
+  return 0;
+}
+
+/*************************************************************************
  *      @	[SHLWAPI.203]
  *
  * Remove a single non-trailing ampersand ('&') from a string.
@@ -2428,4 +2476,190 @@ char WINAPI SHStripMneumonicA(LPCSTR lpszStr)
   }
 
   return ch;
+}
+
+/*************************************************************************
+ *      @	[SHLWAPI.215]
+ *
+ * Convert an Ascii string to Unicode.
+ *
+ * PARAMS
+ * lpSrcStr [I] Source Ascii string to convert
+ * lpDstStr [O] Destination for converted Unicode string
+ * iLen     [I] Length of lpDstStr
+ *
+ * RETURNS
+ *  The return value of the MultiByteToWideChar() function called on lpSrcStr.
+ */
+DWORD WINAPI SHAnsiToUnicode(LPCSTR lpSrcStr, LPWSTR lpDstStr, int iLen)
+{
+  DWORD dwRet;
+
+  dwRet = MultiByteToWideChar(CP_ACP, 0, lpSrcStr, -1, lpDstStr, iLen);
+  TRACE("%s->%s,ret=%ld\n", debugstr_a(lpSrcStr), debugstr_w(lpDstStr), dwRet);
+  return dwRet;
+}
+
+/*************************************************************************
+ *      @	[SHLWAPI.218]
+ *
+ * Convert a Unicode string to Ascii.
+ *
+ * PARAMS
+ *  CodePage [I] Code page to use for the conversion
+ *  lpSrcStr [I] Source Unicode string to convert
+ *  lpDstStr [O] Destination for converted Ascii string
+ *  lpiLen   [I/O] Input length of lpDstStr/destination for length of lpDstStr
+ *
+ * RETURNS
+ *  Success: The number of characters that result from the conversion.
+ *  Failure: 0.
+ */
+INT WINAPI SHUnicodeToAnsiCP(UINT CodePage, LPCWSTR lpSrcStr, LPSTR lpDstStr,
+                             LPINT lpiLen)
+{
+  WCHAR emptyW[] = { '\0' };
+  int len , reqLen;
+  LPSTR mem;
+
+  if (!lpDstStr || !lpiLen)
+    return 0;
+
+  if (!lpSrcStr)
+    lpSrcStr = emptyW;
+
+  *lpDstStr = '\0';
+
+  len = strlenW(lpSrcStr) + 1;
+
+  switch (CodePage)
+  {
+  case CP_WINUNICODE:
+    CodePage = CP_UTF8; /* Fall through... */
+  case 0x0000C350: /* FIXME: CP_ #define */
+  case CP_UTF7:
+  case CP_UTF8:
+    {
+      DWORD dwMode = 0;
+      INT nWideCharCount = len - 1;
+
+      GET_FUNC(pConvertINetUnicodeToMultiByte, mlang, "ConvertINetUnicodeToMultiByte", 0);
+      if (!pConvertINetUnicodeToMultiByte(&dwMode, CodePage, lpSrcStr, &nWideCharCount, lpDstStr,
+                                          lpiLen))
+        return 0;
+
+      if (nWideCharCount < len - 1)
+      {
+        mem = (LPSTR)HeapAlloc(GetProcessHeap(), 0, *lpiLen);
+        if (!mem)
+          return 0;
+
+        *lpiLen = 0;
+
+        if (pConvertINetUnicodeToMultiByte(&dwMode, CodePage, lpSrcStr, &len, mem, lpiLen))
+        {
+          SHTruncateString(mem, *lpiLen);
+          lstrcpynA(lpDstStr, mem, *lpiLen + 1);
+          return *lpiLen + 1;
+        }
+        HeapFree(GetProcessHeap(), 0, mem);
+        return *lpiLen;
+      }
+      lpDstStr[*lpiLen] = '\0';
+      return *lpiLen;
+    }
+    break;
+  default:
+    break;
+  }
+
+  reqLen = WideCharToMultiByte(CodePage, 0, lpSrcStr, len, lpDstStr,
+                               *lpiLen, NULL, NULL);
+
+  if (!reqLen && GetLastError() == ERROR_INSUFFICIENT_BUFFER)
+  {
+    reqLen = WideCharToMultiByte(CodePage, 0, lpSrcStr, len, NULL, 0, NULL, NULL);
+    if (reqLen)
+    {
+      mem = (LPSTR)HeapAlloc(GetProcessHeap(), 0, reqLen);
+      if (mem)
+      {
+        reqLen = WideCharToMultiByte(CodePage, 0, lpSrcStr, len, mem,
+                                     reqLen, NULL, NULL);
+
+        reqLen = SHTruncateString(mem, *lpiLen);
+        reqLen++;
+
+        lstrcpynA(lpDstStr, mem, *lpiLen);
+
+        HeapFree(GetProcessHeap(), 0, mem);
+      }
+    }
+  }
+  return reqLen;
+}
+
+/*************************************************************************
+ *      @	[SHLWAPI.217]
+ *
+ * Convert a Unicode string to Ascii.
+ *
+ * PARAMS
+ *  lpSrcStr [I] Source Unicode string to convert
+ *  lpDstStr [O] Destination for converted Ascii string
+ *  iLen     [O] Length of lpDstStr in characters
+ *
+ * RETURNS
+ *  See SHUnicodeToAnsiCP
+
+ * NOTES
+ *  This function simply calls SHUnicodeToAnsiCP() with CodePage = CP_ACP.
+ */
+INT WINAPI SHUnicodeToAnsi(LPCWSTR lpSrcStr, LPSTR lpDstStr, INT iLen)
+{
+    INT myint = iLen;
+
+    return SHUnicodeToAnsiCP(CP_ACP, lpSrcStr, lpDstStr, &myint);
+}
+
+/*************************************************************************
+ *      @	[SHLWAPI.364]
+ *
+ * Determine if an Ascii string converts to Unicode and back identically.
+ *
+ * PARAMS
+ *  lpSrcStr [I] Source Unicode string to convert
+ *  lpDst    [O] Destination for resulting Ascii string
+ *  iLen     [I] Length of lpDst in characters
+ *
+ * RETURNS
+ *  TRUE, since Ascii strings always convert identically.
+ */
+BOOL WINAPI DoesStringRoundTripA(LPCSTR lpSrcStr, LPSTR lpDst, INT iLen)
+{
+  lstrcpynA(lpDst, lpSrcStr, iLen);
+  return TRUE;
+}
+
+/*************************************************************************
+ *      @	[SHLWAPI.365]
+ *
+ * Determine if a Unicode string converts to Ascii and back identically.
+ *
+ * PARAMS
+ *  lpSrcStr [I] Source Unicode string to convert
+ *  lpDst    [O] Destination for resulting Ascii string
+ *  iLen     [I] Length of lpDst in characters
+ *
+ * RETURNS
+ *  TRUE, if lpSrcStr converts to Ascii and back identically,
+ *  FALSE otherwise.
+ */
+BOOL WINAPI DoesStringRoundTripW(LPCWSTR lpSrcStr, LPSTR lpDst, INT iLen)
+{
+    WCHAR szBuff[MAX_PATH];
+
+    SHUnicodeToAnsi(lpSrcStr, lpDst, iLen);
+    SHAnsiToUnicode(lpDst, szBuff, MAX_PATH);
+    return !strcmpW(lpSrcStr, szBuff);
 }

@@ -239,17 +239,17 @@
 239 stdcall -noname SHUnregisterClassesW(ptr ptr long)
 240 stdcall -noname SHDefWindowProc(long long long long)
 241 stdcall -noname StopWatchMode()
-242 stub -noname StopWatchFlush
-243 stub -noname StopWatchA
-244 stub -noname StopWatchW
-245 stub -noname StopWatch_TimerHandler
+242 stdcall -noname StopWatchFlush()
+243 stdcall -noname StopWatchA(long str long long long)
+244 stdcall -noname StopWatchW(long wstr long long long)
+245 stdcall -noname StopWatch_TimerHandler(ptr ptr long ptr)
 246 stub -noname StopWatch_CheckMsg
-247 stub -noname StopWatch_MarkFrameStart
-248 stub -noname StopWatch_MarkSameFramStart
-249 stub -noname StopWatch_MarkJavaStop
-250 stub -noname GetPerfTime
+247 stdcall -noname StopWatch_MarkFrameStart(str)
+248 stub -noname StopWatch_MarkSameFrameStart
+249 stdcall -noname StopWatch_MarkJavaStop(wstr ptr long)
+250 stdcall -noname GetPerfTime()
 251 stub -noname StopWatch_DispatchTime
-252 stub -noname StopWatch_SetMsgLastLocation
+252 stdcall -noname StopWatch_SetMsgLastLocation(long)
 253 stub -noname StopWatchExA
 254 stub -noname StopWatchExW
 255 stub -noname EventTraceHandler
@@ -361,16 +361,16 @@
 361 stdcall @(wstr ptr long) kernel32.GetShortPathNameW
 362 stdcall @(ptr ptr) advapi32.GetUserNameW
 363 stdcall -noname SHInvokeCommand(ptr ptr ptr long)
-364 stdcall -noname DoesStringRoundTripA(str str long)
-365 stub -noname DoesStringRoundTripW
+364 stdcall -noname DoesStringRoundTripA(str ptr long)
+365 stdcall -noname DoesStringRoundTripW(wstr ptr long)
 366 stdcall @(long long ptr ptr ptr ptr ptr ptr) advapi32.RegEnumValueW
 367 stdcall @(wstr wstr ptr long wstr) kernel32.WritePrivateProfileStructW
 368 stdcall @(wstr wstr ptr long wstr) kernel32.GetPrivateProfileStructW
 369 stdcall @(wstr wstr ptr ptr long long ptr wstr ptr ptr) kernel32.CreateProcessW
 370 stdcall -noname ExtractIconWrapW(long wstr long)
-371 stub -noname DdeInitializeWrapW
-372 stub -noname DdeCreateStringHandleWrapW
-373 stub -noname DdeQueryStringWrapW
+371 stdcall -noname DdeInitializeWrapW(ptr ptr long long) user32.DdeInitializeW
+372 stdcall -noname DdeCreateStringHandleWrapW(long ptr long) user32.DdeCreateStringHandleW
+373 stdcall -noname DdeQueryStringWrapW(long ptr wstr long long) user32.DdeQueryStringW
 374 stub -noname SHCheckDiskForMediaA
 375 stub -noname SHCheckDiskForMediaW
 376 stdcall -noname MLGetUILanguage()  # kernel32.GetUserDefaultUILanguage
@@ -389,7 +389,7 @@
 389 stdcall -noname GetSaveFileNameWrapW(ptr)
 390 stdcall -noname WNetRestoreConnectionWrapW(long wstr)
 391 stdcall -noname WNetGetLastErrorWrapW(ptr ptr long ptr long)
-392 stub -noname EndDialogWrap
+392 stdcall -noname EndDialogWrap(ptr ptr) user32.EndDialog
 393 stdcall @(long ptr long ptr long) user32.CreateDialogIndirectParamW
 394 stdcall @(long ptr long ptr long) user32.CreateDialogIndirectParamA
 395 stub -noname MLWinHelpA
