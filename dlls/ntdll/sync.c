@@ -51,7 +51,6 @@
 #include "winbase.h"
 #include "winreg.h"
 #include "winternl.h"
-#include "async.h"
 #include "thread.h"
 #include "wine/server.h"
 #include "wine/debug.h"
@@ -605,35 +604,6 @@ NTSTATUS WINAPI NtSetTimerResolution(IN ULONG resolution,
 
 
 /***********************************************************************
- *           check_async_list
- *
- * Process a status event from the server.
- */
-static void WINAPI check_async_list(async_private *asp, DWORD status)
-{
-    async_private *ovp;
-    DWORD ovp_status;
-
-    for( ovp = NtCurrentTeb()->pending_list; ovp && ovp != asp; ovp = ovp->next );
-
-    if(!ovp)
-            return;
-
-    if( status != STATUS_ALERTED )
-    {
-        ovp_status = status;
-        ovp->iosb->u.Status = status;
-    }
-    else ovp_status = ovp->iosb->u.Status;
-
-    if( ovp_status == STATUS_PENDING ) ovp->func( ovp );
-
-    /* This will destroy all but PENDING requests */
-    register_old_async( ovp );
-}
-
-
-/***********************************************************************
  *              wait_reply
  *
  * Wait for a reply on the waiting pipe of the current thread.
@@ -697,7 +667,7 @@ static void call_apcs( BOOL alertable )
         }
         SERVER_END_REQ;
 
-        switch(type)
+        switch (type)
         {
         case APC_NONE:
             return;  /* no more APCs */
@@ -714,7 +684,8 @@ static void call_apcs( BOOL alertable )
             proc( arg3, time.u.LowPart, time.u.HighPart );
             break;
         case APC_ASYNC_IO:
-            check_async_list( arg1, (DWORD) arg2 );
+            NtCurrentTeb()->num_async_io--;
+            proc( arg1, (IO_STATUS_BLOCK*)arg2, (ULONG)arg3 );
             break;
         default:
             server_protocol_error( "get_apc_request: bad type %d\n", type );
@@ -810,7 +781,7 @@ NTSTATUS WINAPI NtYieldExecution(void)
 NTSTATUS WINAPI NtDelayExecution( BOOLEAN alertable, const LARGE_INTEGER *timeout )
 {
     /* if alertable or async I/O in progress, we need to query the server */
-    if (alertable || NtCurrentTeb()->pending_list)
+    if (alertable || NtCurrentTeb()->num_async_io)
     {
         UINT flags = SELECT_INTERRUPTIBLE;
         if (alertable) flags |= SELECT_ALERTABLE;

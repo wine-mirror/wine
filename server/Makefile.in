@@ -6,7 +6,6 @@ VPATH     = @srcdir@
 MODULE    = none
 
 C_SRCS = \
-	async.c \
 	atom.c \
 	change.c \
 	class.c \

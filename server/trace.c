@@ -1948,9 +1948,15 @@ static void dump_register_async_request( const struct register_async_request *re
 {
     fprintf( stderr, " handle=%p,", req->handle );
     fprintf( stderr, " type=%d,", req->type );
-    fprintf( stderr, " overlapped=%p,", req->overlapped );
-    fprintf( stderr, " count=%d,", req->count );
-    fprintf( stderr, " status=%08x", req->status );
+    fprintf( stderr, " io_apc=%p,", req->io_apc );
+    fprintf( stderr, " io_sb=%p,", req->io_sb );
+    fprintf( stderr, " io_user=%p,", req->io_user );
+    fprintf( stderr, " count=%d", req->count );
+}
+
+static void dump_cancel_async_request( const struct cancel_async_request *req )
+{
+    fprintf( stderr, " handle=%p", req->handle );
 }
 
 static void dump_create_named_pipe_request( const struct create_named_pipe_request *req )
@@ -2730,6 +2736,7 @@ static const dump_func req_dumpers[REQ_NB_REQUESTS] = {
     (dump_func)dump_get_serial_info_request,
     (dump_func)dump_set_serial_info_request,
     (dump_func)dump_register_async_request,
+    (dump_func)dump_cancel_async_request,
     (dump_func)dump_create_named_pipe_request,
     (dump_func)dump_open_named_pipe_request,
     (dump_func)dump_connect_named_pipe_request,
@@ -2910,6 +2917,7 @@ static const dump_func reply_dumpers[REQ_NB_REQUESTS] = {
     (dump_func)dump_set_win_timer_reply,
     (dump_func)0,
     (dump_func)dump_get_serial_info_reply,
+    (dump_func)0,
     (dump_func)0,
     (dump_func)0,
     (dump_func)dump_create_named_pipe_reply,
@@ -3094,6 +3102,7 @@ static const char * const req_names[REQ_NB_REQUESTS] = {
     "get_serial_info",
     "set_serial_info",
     "register_async",
+    "cancel_async",
     "create_named_pipe",
     "open_named_pipe",
     "connect_named_pipe",

@@ -112,7 +112,7 @@ typedef struct _TEB
     int          wait_fd[2];     /* --3 214 fd for sleeping server requests */
     struct debug_info *debug_info;        /* --3 21c Info for debugstr functions */
     void        *pthread_data;   /* --3 220 Data for pthread emulation */
-    struct async_private *pending_list;   /* --3 224 list of pending async operations */
+    DWORD        num_async_io;   /* --3 224 number of pending async I/O in the server */
     void        *driver_data;    /* --3 228 Graphics driver private data */
     DWORD        dpmi_vif;       /* --3 22c Protected mode virtual interrupt flag */
     DWORD        vm86_pending;   /* --3 230 Data for vm86 mode */

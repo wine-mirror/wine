@@ -151,7 +151,8 @@ static const struct fd_ops pipe_server_fd_ops =
     default_poll_event,           /* poll_event */
     pipe_server_flush,            /* flush */
     pipe_end_get_info,            /* get_file_info */
-    no_queue_async                /* queue_async */
+    no_queue_async,               /* queue_async */
+    no_cancel_async,              /* cancel_async */
 };
 
 /* client end functions */
@@ -178,7 +179,8 @@ static const struct fd_ops pipe_client_fd_ops =
     default_poll_event,           /* poll_event */
     pipe_client_flush,            /* flush */
     pipe_end_get_info,            /* get_file_info */
-    no_queue_async                /* queue_async */
+    no_queue_async,               /* queue_async */
+    no_cancel_async               /* cancel_async */
 };
 
 static void named_pipe_dump( struct object *obj, int verbose )

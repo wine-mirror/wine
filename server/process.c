@@ -76,7 +76,8 @@ static const struct fd_ops process_fd_ops =
     process_poll_event,          /* poll_event */
     no_flush,                    /* flush */
     no_get_file_info,            /* get_file_info */
-    no_queue_async               /* queue_async */
+    no_queue_async,              /* queue_async */
+    no_cancel_async              /* cancel async */
 };
 
 /* process startup info */

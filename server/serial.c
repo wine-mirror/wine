@@ -53,7 +53,6 @@
 #include "handle.h"
 #include "thread.h"
 #include "request.h"
-#include "async.h"
 
 static void serial_dump( struct object *obj, int verbose );
 static struct fd *serial_get_fd( struct object *obj );
@@ -63,7 +62,8 @@ static int serial_get_poll_events( struct fd *fd );
 static void serial_poll_event( struct fd *fd, int event );
 static int serial_get_info( struct fd *fd );
 static int serial_flush( struct fd *fd, struct event **event );
-static void serial_queue_async(struct fd *fd, void *ptr, unsigned int status, int type, int count);
+static void serial_queue_async( struct fd *fd, void *apc, void *user, void *iosb, int type, int count );
+static void serial_cancel_async( struct fd *fd );
 
 struct serial
 {
@@ -83,9 +83,9 @@ struct serial
 
     struct termios      original;
 
-    struct async_queue  read_q;
-    struct async_queue  write_q;
-    struct async_queue  wait_q;
+    struct async       *read_q;
+    struct async       *write_q;
+    struct async       *wait_q;
 
     /* FIXME: add dcb, comm status, handler module, sharing */
 };
@@ -108,7 +108,8 @@ static const struct fd_ops serial_fd_ops =
     serial_poll_event,            /* poll_event */
     serial_flush,                 /* flush */
     serial_get_info,              /* get_file_info */
-    serial_queue_async            /* queue_async */
+    serial_queue_async,           /* queue_async */
+    serial_cancel_async           /* cancel_async */
 };
 
 /* check if the given fd is a serial port */
@@ -144,9 +145,7 @@ struct object *create_serial( struct fd *fd, unsigned int options )
     serial->writeconst   = 0;
     serial->eventmask    = 0;
     serial->commerror    = 0;
-    init_async_queue(&serial->read_q);
-    init_async_queue(&serial->write_q);
-    init_async_queue(&serial->wait_q);
+    serial->read_q = serial->write_q = serial->wait_q = NULL;
     if (!(serial->fd = create_anonymous_fd( &serial_fd_ops, unix_fd, &serial->obj )))
     {
         release_object( serial );
@@ -165,9 +164,9 @@ static void serial_destroy( struct object *obj)
 {
     struct serial *serial = (struct serial *)obj;
 
-    destroy_async_queue(&serial->read_q);
-    destroy_async_queue(&serial->write_q);
-    destroy_async_queue(&serial->wait_q);
+    async_terminate_queue( &serial->read_q, STATUS_CANCELLED );
+    async_terminate_queue( &serial->write_q, STATUS_CANCELLED );
+    async_terminate_queue( &serial->wait_q, STATUS_CANCELLED );
     if (serial->fd) release_object( serial->fd );
 }
 
@@ -189,12 +188,9 @@ static int serial_get_poll_events( struct fd *fd )
     int events = 0;
     assert( serial->obj.ops == &serial_ops );
 
-    if(IS_READY(serial->read_q))
-        events |= POLLIN;
-    if(IS_READY(serial->write_q))
-        events |= POLLOUT;
-    if(IS_READY(serial->wait_q))
-        events |= POLLIN;
+    if (serial->read_q)  events |= POLLIN;
+    if (serial->write_q) events |= POLLOUT;
+    if (serial->wait_q)  events |= POLLIN;
 
     /* fprintf(stderr,"poll events are %04x\n",events); */
 
@@ -225,39 +221,40 @@ static void serial_poll_event(struct fd *fd, int event)
 
     /* fprintf(stderr,"Poll event %02x\n",event); */
 
-    if(IS_READY(serial->read_q) && (POLLIN & event) )
-        async_notify(serial->read_q.head,STATUS_ALERTED);
+    if (serial->read_q && (POLLIN & event) )
+        async_terminate( serial->read_q, STATUS_ALERTED );
 
-    if(IS_READY(serial->write_q) && (POLLOUT & event) )
-        async_notify(serial->write_q.head,STATUS_ALERTED);
+    if (serial->write_q && (POLLOUT & event) )
+        async_terminate( serial->write_q, STATUS_ALERTED );
 
-    if(IS_READY(serial->wait_q) && (POLLIN & event) )
-        async_notify(serial->wait_q.head,STATUS_ALERTED);
+    if (serial->wait_q && (POLLIN & event) )
+        async_terminate( serial->wait_q, STATUS_ALERTED );
 
     set_fd_events( fd, serial_get_poll_events(fd) );
 }
 
-static void serial_queue_async(struct fd *fd, void *ptr, unsigned int status, int type, int count)
+static void serial_queue_async( struct fd *fd, void *apc, void *user, void *iosb,
+                                int type, int count )
 {
     struct serial *serial = get_fd_user( fd );
-    struct async_queue *q;
-    struct async *async;
+    struct async **head;
     int timeout;
+    int events;
 
     assert(serial->obj.ops == &serial_ops);
 
-    switch(type)
+    switch (type)
     {
     case ASYNC_TYPE_READ:
-        q = &serial->read_q;
+        head = &serial->read_q;
         timeout = serial->readconst + serial->readmult*count;
         break;
     case ASYNC_TYPE_WAIT:
-        q = &serial->wait_q;
+        head = &serial->wait_q;
         timeout = 0;
         break;
     case ASYNC_TYPE_WRITE:
-        q = &serial->write_q;
+        head = &serial->write_q;
         timeout = serial->writeconst + serial->writemult*count;
         break;
     default:
@@ -265,37 +262,29 @@ static void serial_queue_async(struct fd *fd, void *ptr, unsigned int status, in
         return;
     }
 
-    async = find_async ( q, current, ptr );
+    if (!create_async( fd, current, timeout, head, apc, user, iosb ))
+        return;
 
-    if ( status == STATUS_PENDING )
+    /* Check if the new pending request can be served immediately */
+    events = check_fd_events( fd, serial_get_poll_events( fd ) );
+    if (events)
     {
-        int events;
-
-        if ( !async )
-            async = create_async ( &serial->obj, current, ptr );
-        if ( !async )
-            return;
-
-        async->status = STATUS_PENDING;
-        if(!async->q)
-        {
-            async_add_timeout(async,timeout);
-            async_insert(q, async);
-        }
-
-        /* Check if the new pending request can be served immediately */
-        events = check_fd_events( fd, serial_get_poll_events( fd ) );
-        if (events)
-        {
-            /* serial_poll_event() calls set_select_events() */
-            serial_poll_event( fd, events );
-            return;
-        }
+        /* serial_poll_event() calls set_select_events() */
+        serial_poll_event( fd, events );
+        return;
     }
-    else if ( async ) destroy_async ( async );
-    else set_error ( STATUS_INVALID_PARAMETER );
 
-    set_fd_events ( fd, serial_get_poll_events( fd ) );
+    set_fd_events( fd, serial_get_poll_events( fd ) );
+}
+
+static void serial_cancel_async( struct fd *fd )
+{
+    struct serial *serial = get_fd_user( fd );
+    assert(serial->obj.ops == &serial_ops);
+
+    async_terminate_queue( &serial->read_q, STATUS_CANCELLED );
+    async_terminate_queue( &serial->write_q, STATUS_CANCELLED );
+    async_terminate_queue( &serial->wait_q, STATUS_CANCELLED );
 }
 
 static int serial_flush( struct fd *fd, struct event **event )
@@ -338,7 +327,7 @@ DECL_HANDLER(set_serial_info)
     if ((serial = get_serial_obj( current->process, req->handle, 0 )))
     {
         /* timeouts */
-        if(req->flags & SERIALINFO_SET_TIMEOUTS)
+        if (req->flags & SERIALINFO_SET_TIMEOUTS)
         {
             serial->readinterval = req->readinterval;
             serial->readconst    = req->readconst;
@@ -348,21 +337,17 @@ DECL_HANDLER(set_serial_info)
         }
 
         /* event mask */
-        if(req->flags & SERIALINFO_SET_MASK)
+        if (req->flags & SERIALINFO_SET_MASK)
         {
             serial->eventmask = req->eventmask;
-            if(!serial->eventmask)
+            if (!serial->eventmask)
             {
-                while(serial->wait_q.head)
-                {
-                    async_notify(serial->wait_q.head, STATUS_SUCCESS);
-                    destroy_async(serial->wait_q.head);
-                }
+                async_terminate_queue( &serial->wait_q, STATUS_SUCCESS );
             }
         }
 
         /* comm port error status */
-        if(req->flags & SERIALINFO_SET_ERROR)
+        if (req->flags & SERIALINFO_SET_ERROR)
         {
             serial->commerror = req->commerror;
         }

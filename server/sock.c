@@ -56,7 +56,6 @@
 #include "thread.h"
 #include "request.h"
 #include "user.h"
-#include "async.h"
 
 /* To avoid conflicts with the Unix socket headers. Plus we only need a few
  * macros anyway.
@@ -81,9 +80,9 @@ struct sock
     unsigned int        message;     /* message to send */
     obj_handle_t        wparam;      /* message wparam (socket handle) */
     int                 errors[FD_MAX_EVENTS]; /* event errors */
-    struct sock*        deferred;    /* socket that waits for a deferred accept */
-    struct async_queue  read_q;      /* Queue for asynchronous reads */
-    struct async_queue  write_q;     /* Queue for asynchronous writes */
+    struct sock        *deferred;    /* socket that waits for a deferred accept */
+    struct async       *read_q;      /* Queue for asynchronous reads */
+    struct async       *write_q;     /* Queue for asynchronous writes */
 };
 
 static void sock_dump( struct object *obj, int verbose );
@@ -94,7 +93,8 @@ static void sock_destroy( struct object *obj );
 static int sock_get_poll_events( struct fd *fd );
 static void sock_poll_event( struct fd *fd, int event );
 static int sock_get_info( struct fd *fd );
-static void sock_queue_async( struct fd *fd, void *ptr, unsigned int status, int type, int count );
+static void sock_queue_async( struct fd *fd, void *apc, void *user, void *iosb, int type, int count );
+static void sock_cancel_async( struct fd *fd );
 
 static int sock_get_error( int err );
 static void sock_set_error(void);
@@ -117,7 +117,8 @@ static const struct fd_ops sock_fd_ops =
     sock_poll_event,              /* poll_event */
     no_flush,                     /* flush */
     sock_get_info,                /* get_file_info */
-    sock_queue_async              /* queue_async */
+    sock_queue_async,             /* queue_async */
+    sock_cancel_async             /* cancel_async */
 };
 
 
@@ -150,48 +151,48 @@ typedef enum {
 
 static sock_shutdown_t sock_shutdown_type = SOCK_SHUTDOWN_ERROR;
 
-static sock_shutdown_t sock_check_pollhup (void)
+static sock_shutdown_t sock_check_pollhup(void)
 {
     sock_shutdown_t ret = SOCK_SHUTDOWN_ERROR;
     int fd[2], n;
     struct pollfd pfd;
     char dummy;
 
-    if ( socketpair ( AF_UNIX, SOCK_STREAM, 0, fd ) ) goto out;
-    if ( shutdown ( fd[0], 1 ) ) goto out;
+    if ( socketpair( AF_UNIX, SOCK_STREAM, 0, fd ) ) goto out;
+    if ( shutdown( fd[0], 1 ) ) goto out;
 
     pfd.fd = fd[1];
     pfd.events = POLLIN;
     pfd.revents = 0;
 
-    n = poll ( &pfd, 1, 0 );
+    n = poll( &pfd, 1, 0 );
     if ( n != 1 ) goto out; /* error or timeout */
     if ( pfd.revents & POLLHUP )
         ret = SOCK_SHUTDOWN_POLLHUP;
     else if ( pfd.revents & POLLIN &&
-              read ( fd[1], &dummy, 1 ) == 0 )
+              read( fd[1], &dummy, 1 ) == 0 )
         ret = SOCK_SHUTDOWN_EOF;
 
 out:
-    close ( fd[0] );
-    close ( fd[1] );
+    close( fd[0] );
+    close( fd[1] );
     return ret;
 }
 
 void sock_init(void)
 {
-    sock_shutdown_type = sock_check_pollhup ();
+    sock_shutdown_type = sock_check_pollhup();
 
     switch ( sock_shutdown_type )
     {
     case SOCK_SHUTDOWN_EOF:
-        if (debug_level) fprintf ( stderr, "sock_init: shutdown() causes EOF\n" );
+        if (debug_level) fprintf( stderr, "sock_init: shutdown() causes EOF\n" );
         break;
     case SOCK_SHUTDOWN_POLLHUP:
-        if (debug_level) fprintf ( stderr, "sock_init: shutdown() causes POLLHUP\n" );
+        if (debug_level) fprintf( stderr, "sock_init: shutdown() causes POLLHUP\n" );
         break;
     default:
-        fprintf ( stderr, "sock_init: ERROR in sock_check_pollhup()\n" );
+        fprintf( stderr, "sock_init: ERROR in sock_check_pollhup()\n" );
         sock_shutdown_type = SOCK_SHUTDOWN_EOF;
     }
 }
@@ -217,13 +218,13 @@ static int sock_reselect( struct sock *sock )
 
 /* After POLLHUP is received, the socket will no longer be in the main select loop.
    This function is used to signal pending events nevertheless */
-static void sock_try_event ( struct sock *sock, int event )
+static void sock_try_event( struct sock *sock, int event )
 {
     event = check_fd_events( sock->fd, event );
     if (event)
     {
-        if ( debug_level ) fprintf ( stderr, "sock_try_event: %x\n", event );
-        sock_poll_event ( sock->fd, event );
+        if ( debug_level ) fprintf( stderr, "sock_try_event: %x\n", event );
+        sock_poll_event( sock->fd, event );
     }
 }
 
@@ -236,16 +237,16 @@ static void sock_wake_up( struct sock *sock, int pollev )
 
     if ( sock->flags & WSA_FLAG_OVERLAPPED )
     {
-        if( pollev & (POLLIN|POLLPRI) && IS_READY( sock->read_q ) )
+        if ( pollev & (POLLIN|POLLPRI) && sock->read_q )
         {
-            if (debug_level) fprintf ( stderr, "activating read queue for socket %p\n", sock );
-            async_notify( sock->read_q.head, STATUS_ALERTED );
+            if (debug_level) fprintf( stderr, "activating read queue for socket %p\n", sock );
+            async_terminate( sock->read_q, STATUS_ALERTED );
             async_active = 1;
         }
-        if( pollev & POLLOUT && IS_READY( sock->write_q ) )
+        if ( pollev & POLLOUT && sock->write_q )
         {
-            if (debug_level) fprintf ( stderr, "activating write queue for socket %p\n", sock );
-            async_notify( sock->write_q.head, STATUS_ALERTED );
+            if (debug_level) fprintf( stderr, "activating write queue for socket %p\n", sock );
+            async_terminate( sock->write_q, STATUS_ALERTED );
             async_active = 1;
         }
     }
@@ -315,8 +316,8 @@ static void sock_poll_event( struct fd *fd, int event )
             if (debug_level)
                 fprintf(stderr, "socket %p connection failure\n", sock);
         }
-    } else
-    if (sock->state & FD_WINE_LISTENING)
+    }
+    else if (sock->state & FD_WINE_LISTENING)
     {
         /* listening */
         if (event & POLLIN)
@@ -333,7 +334,8 @@ static void sock_poll_event( struct fd *fd, int event )
             sock->errors[FD_ACCEPT_BIT] = sock_error( fd );
             sock->hmask |= FD_ACCEPT;
         }
-    } else
+    }
+    else
     {
         /* normal data flow */
         if ( sock->type == SOCK_STREAM && ( event & POLLIN ) )
@@ -364,7 +366,7 @@ static void sock_poll_event( struct fd *fd, int event )
                 else
                 {
                     if ( debug_level )
-                        fprintf ( stderr, "recv error on socket %p: %d\n", sock, errno );
+                        fprintf( stderr, "recv error on socket %p: %d\n", sock, errno );
                     event = POLLERR;
                 }
             }
@@ -418,7 +420,7 @@ static void sock_poll_event( struct fd *fd, int event )
     if ( sock->pmask & FD_CLOSE || event & (POLLERR|POLLHUP) )
     {
         if ( debug_level )
-            fprintf ( stderr, "removing socket %p from select loop\n", sock );
+            fprintf( stderr, "removing socket %p from select loop\n", sock );
         set_fd_events( sock->fd, -1 );
     }
     else
@@ -464,9 +466,9 @@ static int sock_get_poll_events( struct fd *fd )
         /* listening, wait for readable */
         return (sock->hmask & FD_ACCEPT) ? 0 : POLLIN;
 
-    if (mask & (FD_READ) || (sock->flags & WSA_FLAG_OVERLAPPED && IS_READY (sock->read_q)))
+    if (mask & (FD_READ) || (sock->flags & WSA_FLAG_OVERLAPPED && sock->read_q))
         ev |= POLLIN | POLLPRI;
-    if (mask & FD_WRITE || (sock->flags & WSA_FLAG_OVERLAPPED && IS_READY (sock->write_q)))
+    if (mask & FD_WRITE || (sock->flags & WSA_FLAG_OVERLAPPED && sock->write_q))
         ev |= POLLOUT;
     /* We use POLLIN with 0 bytes recv() as FD_CLOSE indication for stream sockets. */
     if ( sock->type == SOCK_STREAM && ( sock->mask & ~sock->hmask & FD_CLOSE) )
@@ -479,7 +481,7 @@ static int sock_get_info( struct fd *fd )
 {
     int flags = FD_FLAG_AVAILABLE;
     struct sock *sock = get_fd_user( fd );
-    assert ( sock->obj.ops == &sock_ops );
+    assert( sock->obj.ops == &sock_ops );
 
     if (sock->flags & WSA_FLAG_OVERLAPPED) flags |= FD_FLAG_OVERLAPPED;
     if ( sock->type != SOCK_STREAM || sock->state & FD_WINE_CONNECTED )
@@ -490,62 +492,57 @@ static int sock_get_info( struct fd *fd )
     return flags;
 }
 
-static void sock_queue_async(struct fd *fd, void *ptr, unsigned int status, int type, int count)
+static void sock_queue_async( struct fd *fd, void *apc, void *user, void *iosb,
+                              int type, int count )
 {
     struct sock *sock = get_fd_user( fd );
-    struct async_queue *q;
-    struct async *async;
+    struct async **head;
     int pollev;
-
+    
     assert( sock->obj.ops == &sock_ops );
 
     if ( !(sock->flags & WSA_FLAG_OVERLAPPED) )
     {
-        set_error ( STATUS_INVALID_HANDLE );
+        set_error( STATUS_INVALID_HANDLE );
         return;
     }
 
-    switch( type )
+    switch (type)
     {
     case ASYNC_TYPE_READ:
-        q = &sock->read_q;
+        head = &sock->read_q;
         sock->hmask &= ~FD_CLOSE;
         break;
     case ASYNC_TYPE_WRITE:
-        q = &sock->write_q;
+        head = &sock->write_q;
         break;
     default:
         set_error( STATUS_INVALID_PARAMETER );
         return;
     }
 
-    async = find_async ( q, current, ptr );
-
-    if ( status == STATUS_PENDING )
+    if ( ( !( sock->state & FD_READ ) && type == ASYNC_TYPE_READ  ) ||
+         ( !( sock->state & FD_WRITE ) && type == ASYNC_TYPE_WRITE ) )
     {
-        if ( ( !( sock->state & FD_READ ) && type == ASYNC_TYPE_READ  ) ||
-             ( !( sock->state & FD_WRITE ) && type == ASYNC_TYPE_WRITE ) )
-        {
-            set_error ( STATUS_PIPE_DISCONNECTED );
-            if ( async ) destroy_async ( async );
-        }
-        else
-        {
-            if ( !async )
-                async = create_async ( &sock->obj, current, ptr );
-            if ( !async )
-                return;
-
-            async->status = STATUS_PENDING;
-            if ( !async->q )
-                async_insert ( q, async );
-        }
+        set_error( STATUS_PIPE_DISCONNECTED );
     }
-    else if ( async ) destroy_async ( async );
-    else set_error ( STATUS_INVALID_PARAMETER );
+    else
+    {
+        if (!create_async( fd, current, 0, head, apc, user, iosb ))
+            return;
+    }
 
-    pollev = sock_reselect ( sock );
-    if ( pollev ) sock_try_event ( sock, pollev );
+    pollev = sock_reselect( sock );
+    if ( pollev ) sock_try_event( sock, pollev );
+}
+
+static void sock_cancel_async( struct fd *fd )
+{
+    struct sock *sock = get_fd_user( fd );
+    assert( sock->obj.ops == &sock_ops );
+
+    async_terminate_queue( &sock->read_q, STATUS_CANCELLED );
+    async_terminate_queue( &sock->write_q, STATUS_CANCELLED );
 }
 
 static struct fd *sock_get_fd( struct object *obj )
@@ -562,12 +559,12 @@ static void sock_destroy( struct object *obj )
     /* FIXME: special socket shutdown stuff? */
 
     if ( sock->deferred )
-        release_object ( sock->deferred );
+        release_object( sock->deferred );
 
     if ( sock->flags & WSA_FLAG_OVERLAPPED )
     {
-        destroy_async_queue ( &sock->read_q );
-        destroy_async_queue ( &sock->write_q );
+        async_terminate_queue( &sock->read_q, STATUS_CANCELLED );
+        async_terminate_queue( &sock->write_q, STATUS_CANCELLED );
     }
     if (sock->event) release_object( sock->event );
     if (sock->fd) release_object( sock->fd );
@@ -582,7 +579,8 @@ static struct object *create_socket( int family, int type, int protocol, unsigne
     sockfd = socket( family, type, protocol );
     if (debug_level)
         fprintf(stderr,"socket(%d,%d,%d)=%d\n",family,type,protocol,sockfd);
-    if (sockfd == -1) {
+    if (sockfd == -1)
+    {
         sock_set_error();
         return NULL;
     }
@@ -612,8 +610,7 @@ static struct object *create_socket( int family, int type, int protocol, unsigne
     }
     if (sock->flags & WSA_FLAG_OVERLAPPED)
     {
-        init_async_queue (&sock->read_q);
-        init_async_queue (&sock->write_q);
+        sock->read_q = sock->write_q = NULL;
     }
     sock_reselect( sock );
     clear_error();
@@ -634,10 +631,13 @@ static struct sock *accept_socket( obj_handle_t handle )
     if (!sock)
     	return NULL;
 
-    if ( sock->deferred ) {
+    if ( sock->deferred )
+    {
         acceptsock = sock->deferred;
         sock->deferred = NULL;
-    } else {
+    }
+    else
+    {
 
         /* Try to accept(2). We can't be safe that this an already connected socket
          * or that accept() is allowed on it. In those cases we will get -1/errno
@@ -645,7 +645,8 @@ static struct sock *accept_socket( obj_handle_t handle )
          */
         slen = sizeof(saddr);
         acceptfd = accept( get_unix_fd(sock->fd), &saddr, &slen);
-        if (acceptfd==-1) {
+        if (acceptfd==-1)
+        {
             sock_set_error();
             release_object( sock );
             return NULL;
@@ -683,8 +684,7 @@ static struct sock *accept_socket( obj_handle_t handle )
         }
         if ( acceptsock->flags & WSA_FLAG_OVERLAPPED )
         {
-            init_async_queue ( &acceptsock->read_q );
-            init_async_queue ( &acceptsock->write_q );
+            acceptsock->read_q = acceptsock->write_q = NULL;
         }
     }
     clear_error();
@@ -700,62 +700,62 @@ static int sock_get_error( int err )
 {
     switch (err)
     {
-        case EINTR:             return WSAEINTR; break;
-        case EBADF:             return WSAEBADF; break;
+        case EINTR:             return WSAEINTR;
+        case EBADF:             return WSAEBADF;
         case EPERM:
-        case EACCES:            return WSAEACCES; break;
-        case EFAULT:            return WSAEFAULT; break;
-        case EINVAL:            return WSAEINVAL; break;
-        case EMFILE:            return WSAEMFILE; break;
-        case EWOULDBLOCK:       return WSAEWOULDBLOCK; break;
-        case EINPROGRESS:       return WSAEINPROGRESS; break;
-        case EALREADY:          return WSAEALREADY; break;
-        case ENOTSOCK:          return WSAENOTSOCK; break;
-        case EDESTADDRREQ:      return WSAEDESTADDRREQ; break;
-        case EMSGSIZE:          return WSAEMSGSIZE; break;
-        case EPROTOTYPE:        return WSAEPROTOTYPE; break;
-        case ENOPROTOOPT:       return WSAENOPROTOOPT; break;
-        case EPROTONOSUPPORT:   return WSAEPROTONOSUPPORT; break;
-        case ESOCKTNOSUPPORT:   return WSAESOCKTNOSUPPORT; break;
-        case EOPNOTSUPP:        return WSAEOPNOTSUPP; break;
-        case EPFNOSUPPORT:      return WSAEPFNOSUPPORT; break;
-        case EAFNOSUPPORT:      return WSAEAFNOSUPPORT; break;
-        case EADDRINUSE:        return WSAEADDRINUSE; break;
-        case EADDRNOTAVAIL:     return WSAEADDRNOTAVAIL; break;
-        case ENETDOWN:          return WSAENETDOWN; break;
-        case ENETUNREACH:       return WSAENETUNREACH; break;
-        case ENETRESET:         return WSAENETRESET; break;
-        case ECONNABORTED:      return WSAECONNABORTED; break;
+        case EACCES:            return WSAEACCES;
+        case EFAULT:            return WSAEFAULT;
+        case EINVAL:            return WSAEINVAL;
+        case EMFILE:            return WSAEMFILE;
+        case EWOULDBLOCK:       return WSAEWOULDBLOCK;
+        case EINPROGRESS:       return WSAEINPROGRESS;
+        case EALREADY:          return WSAEALREADY;
+        case ENOTSOCK:          return WSAENOTSOCK;
+        case EDESTADDRREQ:      return WSAEDESTADDRREQ;
+        case EMSGSIZE:          return WSAEMSGSIZE;
+        case EPROTOTYPE:        return WSAEPROTOTYPE;
+        case ENOPROTOOPT:       return WSAENOPROTOOPT;
+        case EPROTONOSUPPORT:   return WSAEPROTONOSUPPORT;
+        case ESOCKTNOSUPPORT:   return WSAESOCKTNOSUPPORT;
+        case EOPNOTSUPP:        return WSAEOPNOTSUPP;
+        case EPFNOSUPPORT:      return WSAEPFNOSUPPORT;
+        case EAFNOSUPPORT:      return WSAEAFNOSUPPORT;
+        case EADDRINUSE:        return WSAEADDRINUSE;
+        case EADDRNOTAVAIL:     return WSAEADDRNOTAVAIL;
+        case ENETDOWN:          return WSAENETDOWN;
+        case ENETUNREACH:       return WSAENETUNREACH;
+        case ENETRESET:         return WSAENETRESET;
+        case ECONNABORTED:      return WSAECONNABORTED;
         case EPIPE:
-        case ECONNRESET:        return WSAECONNRESET; break;
-        case ENOBUFS:           return WSAENOBUFS; break;
-        case EISCONN:           return WSAEISCONN; break;
-        case ENOTCONN:          return WSAENOTCONN; break;
-        case ESHUTDOWN:         return WSAESHUTDOWN; break;
-        case ETOOMANYREFS:      return WSAETOOMANYREFS; break;
-        case ETIMEDOUT:         return WSAETIMEDOUT; break;
-        case ECONNREFUSED:      return WSAECONNREFUSED; break;
-        case ELOOP:             return WSAELOOP; break;
-        case ENAMETOOLONG:      return WSAENAMETOOLONG; break;
-        case EHOSTDOWN:         return WSAEHOSTDOWN; break;
-        case EHOSTUNREACH:      return WSAEHOSTUNREACH; break;
-        case ENOTEMPTY:         return WSAENOTEMPTY; break;
+        case ECONNRESET:        return WSAECONNRESET;
+        case ENOBUFS:           return WSAENOBUFS;
+        case EISCONN:           return WSAEISCONN;
+        case ENOTCONN:          return WSAENOTCONN;
+        case ESHUTDOWN:         return WSAESHUTDOWN;
+        case ETOOMANYREFS:      return WSAETOOMANYREFS;
+        case ETIMEDOUT:         return WSAETIMEDOUT;
+        case ECONNREFUSED:      return WSAECONNREFUSED;
+        case ELOOP:             return WSAELOOP;
+        case ENAMETOOLONG:      return WSAENAMETOOLONG;
+        case EHOSTDOWN:         return WSAEHOSTDOWN;
+        case EHOSTUNREACH:      return WSAEHOSTUNREACH;
+        case ENOTEMPTY:         return WSAENOTEMPTY;
 #ifdef EPROCLIM
-        case EPROCLIM:          return WSAEPROCLIM; break;
+        case EPROCLIM:          return WSAEPROCLIM;
 #endif
 #ifdef EUSERS
-        case EUSERS:            return WSAEUSERS; break;
+        case EUSERS:            return WSAEUSERS;
 #endif
 #ifdef EDQUOT
-        case EDQUOT:            return WSAEDQUOT; break;
+        case EDQUOT:            return WSAEDQUOT;
 #endif
 #ifdef ESTALE
-        case ESTALE:            return WSAESTALE; break;
+        case ESTALE:            return WSAESTALE;
 #endif
 #ifdef EREMOTE
-        case EREMOTE:           return WSAEREMOTE; break;
+        case EREMOTE:           return WSAEREMOTE;
 #endif
-    default: errno=err; perror("sock_set_error"); return WSAEFAULT; break;
+    default: errno=err; perror("sock_set_error"); return WSAEFAULT;
     }
 }
 
@@ -814,7 +814,7 @@ DECL_HANDLER(set_socket_event)
     if (debug_level && sock->event) fprintf(stderr, "event ptr: %p\n", sock->event);
 
     pollev = sock_reselect( sock );
-    if ( pollev ) sock_try_event ( sock, pollev );
+    if ( pollev ) sock_try_event( sock, pollev );
 
     if (sock->mask)
         sock->state |= FD_WINE_NONBLOCKING;
@@ -885,7 +885,7 @@ DECL_HANDLER(enable_socket_event)
     if ( sock->type != SOCK_STREAM ) sock->state &= ~STREAM_FLAG_MASK;
 
     pollev = sock_reselect( sock );
-    if ( pollev ) sock_try_event ( sock, pollev );
+    if ( pollev ) sock_try_event( sock, pollev );
 
     release_object( &sock->obj );
 }
@@ -898,17 +898,17 @@ DECL_HANDLER(set_socket_deferred)
                                        GENERIC_READ|GENERIC_WRITE|SYNCHRONIZE,&sock_ops );
     if ( !sock )
     {
-        set_error ( WSAENOTSOCK );
+        set_error( WSAENOTSOCK );
         return;
     }
     acceptsock = (struct sock*)get_handle_obj( current->process,req->deferred,
                                                GENERIC_READ|GENERIC_WRITE|SYNCHRONIZE,&sock_ops );
     if ( !acceptsock )
     {
-        release_object ( sock );
-        set_error ( WSAENOTSOCK );
+        release_object( sock );
+        set_error( WSAENOTSOCK );
         return;
     }
     sock->deferred = acceptsock;
-    release_object ( sock );
+    release_object( sock );
 }

@@ -93,8 +93,8 @@
 #include "winerror.h"
 
 #include "wine/server.h"
-#include "async.h"
 #include "wine/unicode.h"
+#include "thread.h"
 
 #include "wine/debug.h"
 
@@ -125,31 +125,14 @@ static inline void release_comm_fd( HANDLE handle, int fd )
  * Asynchronous I/O for asynchronous wait requests                     *
  */
 
-static DWORD commio_get_async_count (const async_private *ovp);
-static void commio_async_cleanup  (async_private *ovp);
-
-static async_ops commio_async_ops =
-{
-    commio_get_async_count,        /* get_count */
-    NULL,                          /* call_completion */
-    commio_async_cleanup           /* cleanup */
-};
-
 typedef struct async_commio
 {
-    struct async_private             async;
-    char                             *buffer;
+    HANDLE              handle;
+    PIO_APC_ROUTINE     apc_internal;
+    int                 type;
+    char*               buffer;
+    int                 fd;
 } async_commio;
-
-static DWORD commio_get_async_count (const struct async_private *ovp)
-{
-    return 0;
-}
-
-static void commio_async_cleanup  (async_private *ovp)
-{
-    HeapFree(GetProcessHeap(), 0, ovp );
-}
 
 /***********************************************************************/
 
@@ -1928,17 +1911,27 @@ BOOL WINAPI GetCommModemStatus(
  *  This function is called while the client is waiting on the
  *  server, so we can't make any server calls here.
  */
-static void COMM_WaitCommEventService(async_private *ovp)
+static void WINAPI COMM_WaitCommEventService(void* ovp, IO_STATUS_BLOCK* iosb, ULONG status)
 {
     async_commio *commio = (async_commio*) ovp;
-    IO_STATUS_BLOCK* iosb = commio->async.iosb;
 
-    TRACE("iosb %p\n",iosb);
+    TRACE("iosb %p\n", iosb);
 
-    /* FIXME: detect other events */
-    *commio->buffer = EV_RXCHAR;
-
-    iosb->u.Status = STATUS_SUCCESS;
+    switch (status)
+    {
+    case STATUS_ALERTED: /* got some new stuff */
+        /* FIXME: detect other events */
+        *commio->buffer = EV_RXCHAR;
+        iosb->u.Status = STATUS_SUCCESS;
+        break;
+    default:
+        iosb->u.Status = status;
+        break;
+    }
+    wine_server_release_fd( commio->handle, commio->fd );
+    if ( ((LPOVERLAPPED)iosb)->hEvent != INVALID_HANDLE_VALUE )
+        NtSetEvent( ((LPOVERLAPPED)iosb)->hEvent, NULL );
+    HeapFree(GetProcessHeap(), 0, commio );
 }
 
 
@@ -1952,44 +1945,52 @@ static BOOL COMM_WaitCommEvent(
     LPDWORD lpdwEvents,        /* [out] event(s) that were detected */
     LPOVERLAPPED lpOverlapped) /* [in/out] for Asynchronous waiting */
 {
-    int fd;
-    async_commio *ovp;
+    int                 fd;
+    async_commio*       commio;
+    NTSTATUS            status;
 
-    if(!lpOverlapped)
+    if (!lpOverlapped)
     {
         SetLastError(ERROR_INVALID_PARAMETER);
         return FALSE;
     }
 
-    if(NtResetEvent(lpOverlapped->hEvent,NULL))
+    if (NtResetEvent(lpOverlapped->hEvent,NULL))
         return FALSE;
 
     fd = get_comm_fd( hFile, GENERIC_WRITE );
-    if(fd<0)
-	return FALSE;
+    if (fd < 0) return FALSE;
 
-    ovp = (async_commio*) HeapAlloc(GetProcessHeap(), 0, sizeof (async_commio));
-    if(!ovp)
+    commio = (async_commio*) HeapAlloc(GetProcessHeap(), 0, sizeof (async_commio));
+    if (!commio)
     {
         release_comm_fd( hFile, fd );
         return FALSE;
     }
 
-    ovp->async.ops = &commio_async_ops;
-    ovp->async.handle = hFile;
-    ovp->async.fd = fd;  /* FIXME */
-    ovp->async.type = ASYNC_TYPE_WAIT;
-    ovp->async.func = COMM_WaitCommEventService;
-    ovp->async.event = lpOverlapped->hEvent;
-    ovp->async.iosb = (IO_STATUS_BLOCK*)lpOverlapped;
-    ovp->buffer = (char *)lpdwEvents;
+    commio->handle = hFile;
+    commio->type = ASYNC_TYPE_WAIT;
+    commio->apc_internal = COMM_WaitCommEventService;
+    commio->buffer = (char *)lpdwEvents;
+    commio->fd = fd;  /* FIXME */
 
     lpOverlapped->InternalHigh = 0;
     lpOverlapped->Offset = 0;
     lpOverlapped->OffsetHigh = 0;
 
-    if ( !register_new_async (&ovp->async) )
-        SetLastError( ERROR_IO_PENDING );
+    SERVER_START_REQ( register_async )
+    {
+        req->handle = hFile;
+        req->io_apc = COMM_WaitCommEventService;
+        req->io_user = commio;
+        req->io_sb = (IO_STATUS_BLOCK*)lpOverlapped;
+        req->count = 0;
+        status = wine_server_call( req );
+    }
+    SERVER_END_REQ;
+
+    if ( status ) SetLastError( RtlNtStatusToDosError(status) );
+    else NtCurrentTeb()->num_async_io++;
 
     return FALSE;
 }

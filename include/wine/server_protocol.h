@@ -2282,18 +2282,30 @@ struct register_async_request
     struct request_header __header;
     obj_handle_t handle;
     int          type;
-    void*        overlapped;
+    void*        io_apc;
+    void*        io_sb;
+    void*        io_user;
     int          count;
-    unsigned int status;
 };
 struct register_async_reply
 {
     struct reply_header __header;
 };
-#define ASYNC_TYPE_NONE  0x00
 #define ASYNC_TYPE_READ  0x01
 #define ASYNC_TYPE_WRITE 0x02
 #define ASYNC_TYPE_WAIT  0x03
+
+
+
+struct cancel_async_request
+{
+    struct request_header __header;
+    obj_handle_t handle;
+};
+struct cancel_async_reply
+{
+    struct reply_header __header;
+};
 
 
 
@@ -3274,6 +3286,7 @@ enum request
     REQ_get_serial_info,
     REQ_set_serial_info,
     REQ_register_async,
+    REQ_cancel_async,
     REQ_create_named_pipe,
     REQ_open_named_pipe,
     REQ_connect_named_pipe,
@@ -3460,6 +3473,7 @@ union generic_request
     struct get_serial_info_request get_serial_info_request;
     struct set_serial_info_request set_serial_info_request;
     struct register_async_request register_async_request;
+    struct cancel_async_request cancel_async_request;
     struct create_named_pipe_request create_named_pipe_request;
     struct open_named_pipe_request open_named_pipe_request;
     struct connect_named_pipe_request connect_named_pipe_request;
@@ -3644,6 +3658,7 @@ union generic_reply
     struct get_serial_info_reply get_serial_info_reply;
     struct set_serial_info_reply set_serial_info_reply;
     struct register_async_reply register_async_reply;
+    struct cancel_async_reply cancel_async_reply;
     struct create_named_pipe_reply create_named_pipe_reply;
     struct open_named_pipe_reply open_named_pipe_reply;
     struct connect_named_pipe_reply connect_named_pipe_reply;
@@ -3697,6 +3712,6 @@ union generic_reply
     struct set_global_windows_reply set_global_windows_reply;
 };
 
-#define SERVER_PROTOCOL_VERSION 153
+#define SERVER_PROTOCOL_VERSION 154
 
 #endif /* __WINE_WINE_SERVER_PROTOCOL_H */

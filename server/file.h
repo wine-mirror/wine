@@ -38,8 +38,10 @@ struct fd_ops
     int  (*flush)(struct fd *, struct event **);
     /* get file information */
     int  (*get_file_info)(struct fd *);
-    /* queue an async operation - see register_async handler in async.c*/
-    void (*queue_async)(struct fd *, void* ptr, unsigned int status, int type, int count);
+    /* queue an async operation */
+    void (*queue_async)(struct fd *, void* apc, void* user, void* io_sb, int type, int count);
+    /* cancel an async operation */
+    void (*cancel_async)(struct fd *);
 };
 
 /* file descriptor functions */
@@ -65,7 +67,8 @@ extern int default_fd_signaled( struct object *obj, struct thread *thread );
 extern void default_poll_event( struct fd *fd, int event );
 extern int no_flush( struct fd *fd, struct event **event );
 extern int no_get_file_info( struct fd *fd );
-extern void no_queue_async( struct fd *fd, void* ptr, unsigned int status, int type, int count );
+extern void no_queue_async( struct fd *fd, void* apc, void* user, void* io_sb, int type, int count);
+extern void no_cancel_async( struct fd *fd );
 extern void main_loop(void);
 
 inline static struct fd *get_obj_fd( struct object *obj ) { return obj->ops->get_fd( obj ); }
@@ -106,5 +109,15 @@ extern void sigio_callback(void);
 
 extern int is_serial_fd( struct fd *fd );
 extern struct object *create_serial( struct fd *fd, unsigned int options );
+
+/* async I/O functions */
+extern struct async *create_async( struct fd *fd, struct thread *thread, int timeout,
+                                   struct async **head, void *, void *, void *);
+extern void async_terminate( struct async *async, int status );
+
+static inline void async_terminate_queue( struct async **head, int status )
+{
+    while (*head) async_terminate( *head, status );
+}
 
 #endif  /* __WINE_SERVER_FILE_H */

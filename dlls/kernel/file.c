@@ -43,7 +43,8 @@
 #include "excpt.h"
 #include "wine/unicode.h"
 #include "wine/debug.h"
-#include "async.h"
+#include "thread.h"
+#include "wine/server.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(file);
 
@@ -512,7 +513,7 @@ BOOL WINAPI GetOverlappedResult(HANDLE hFile, LPOVERLAPPED lpOverlapped,
         else
         {
             /* busy loop */
-            while ( (volatile DWORD)lpOverlapped->Internal == STATUS_PENDING )
+            while ( ((volatile OVERLAPPED*)lpOverlapped)->Internal == STATUS_PENDING )
                 Sleep( 10 );
         }
     }
@@ -532,7 +533,7 @@ BOOL WINAPI GetOverlappedResult(HANDLE hFile, LPOVERLAPPED lpOverlapped,
     }
     if ( r == WAIT_FAILED )
     {
-        ERR("wait operation failed\n");
+        WARN("wait operation failed\n");
         return FALSE;
     }
     if (lpTransferred) *lpTransferred = lpOverlapped->InternalHigh;
@@ -556,17 +557,14 @@ BOOL WINAPI GetOverlappedResult(HANDLE hFile, LPOVERLAPPED lpOverlapped,
  */
 BOOL WINAPI CancelIo(HANDLE handle)
 {
-    async_private *ovp,*t;
+    IO_STATUS_BLOCK    io_status;
 
-    TRACE("handle = %p\n",handle);
-
-    for (ovp = NtCurrentTeb()->pending_list; ovp; ovp = t)
+    NtCancelIoFile(handle, &io_status);
+    if (io_status.u.Status)
     {
-        t = ovp->next;
-        if ( ovp->handle == handle )
-             cancel_async ( ovp );
+        SetLastError( RtlNtStatusToDosError( io_status.u.Status ) );
+        return FALSE;
     }
-    SleepEx(1,TRUE);
     return TRUE;
 }
 

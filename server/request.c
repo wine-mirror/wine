@@ -100,7 +100,8 @@ static const struct fd_ops master_socket_fd_ops =
     master_socket_poll_event,      /* poll_event */
     no_flush,                      /* flush */
     no_get_file_info,              /* get_file_info */
-    no_queue_async                 /* queue_async */
+    no_queue_async,                /* queue_async */
+    no_cancel_async                /* cancel_async */
 };
 
 

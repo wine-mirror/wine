@@ -980,6 +980,89 @@ void unlock_fd( struct fd *fd, file_pos_t start, file_pos_t count )
 
 
 /****************************************************************/
+/* asynchronous operations support */
+
+struct async
+{
+    struct fd           *fd;
+    struct thread       *thread;
+    void                *apc;
+    void                *user;
+    void                *sb;
+    struct timeval       when;
+    struct timeout_user *timeout;
+    struct async        *next;
+    struct async       **head;
+};
+
+/* cb for timeout on an async request */
+static void async_callback(void *private)
+{
+    struct async *async = (struct async *)private;
+
+    /* fprintf(stderr, "async timeout out %p\n", async); */
+    async->timeout = NULL;
+    async_terminate( async, STATUS_TIMEOUT );
+}
+
+/* create an async on a given queue of a fd */
+struct async *create_async(struct fd *fd, struct thread *thread,
+                           int timeout, struct async **head, 
+                           void *io_apc, void *io_user, void* io_sb)
+{
+    struct async *async = mem_alloc( sizeof(struct async) );
+    struct async **p;
+
+    if (!async) return NULL;
+
+    async->fd = fd;
+    async->thread = (struct thread *)grab_object(thread);
+    async->apc = io_apc;
+    async->user = io_user;
+    async->sb = io_sb;
+    async->head = head;
+    async->next = NULL;
+
+    for (p = head; *p; p = &(*p)->next);
+    *p = async;
+
+    if (timeout)
+    {
+        gettimeofday( &async->when, 0 );
+        add_timeout( &async->when, timeout );
+        async->timeout = add_timeout_user( &async->when, async_callback, async );
+    }
+    else async->timeout = NULL;
+
+    return async;
+}
+
+/* notifies client thread of new status of its async request */
+/* destroys the server side of it */
+void async_terminate( struct async *async, int status )
+{
+    struct async** p;
+
+    thread_queue_apc( async->thread, NULL, async->apc, APC_ASYNC_IO,
+                      1, async->user, async->sb, (void *)status );
+
+    if (async->timeout) remove_timeout_user( async->timeout );
+    async->timeout = NULL;
+
+    for (p = async->head; *p; p = &(*p)->next)
+    {
+        if (*p == async)
+        {
+            *p = async->next;
+            break;
+        }
+    }
+
+    release_object( async->thread );
+    free( async );
+}
+
+/****************************************************************/
 /* file descriptor functions */
 
 static void fd_dump( struct object *obj, int verbose )
@@ -1309,7 +1392,14 @@ int no_get_file_info( struct fd *fd )
 }
 
 /* default queue_async() routine */
-void no_queue_async( struct fd *fd, void* ptr, unsigned int status, int type, int count )
+void no_queue_async( struct fd *fd, void* apc, void* user, void* io_sb, 
+                     int type, int count)
+{
+    set_error( STATUS_OBJECT_TYPE_MISMATCH );
+}
+
+/* default cancel_async() routine */
+void no_cancel_async( struct fd *fd )
 {
     set_error( STATUS_OBJECT_TYPE_MISMATCH );
 }
@@ -1338,7 +1428,7 @@ DECL_HANDLER(flush_file)
     if (fd)
     {
         fd->fd_ops->flush( fd, &event );
-        if( event )
+        if ( event )
         {
             reply->event = alloc_handle( current->process, event, SYNCHRONIZE, 0 );
         }
@@ -1372,26 +1462,41 @@ DECL_HANDLER(register_async)
 {
     struct fd *fd = get_handle_fd_obj( current->process, req->handle, 0 );
 
-/*
- * The queue_async method must do the following:
- *
- * 1. Get the async_queue for the request of given type.
- * 2. Call find_async() to look for the specific client request in the queue (=> NULL if not found).
- * 3. If status is STATUS_PENDING:
- *      a) If no async request found in step 2 (new request): call create_async() to initialize one.
- *      b) Set request's status to STATUS_PENDING.
- *      c) If the "queue" field of the async request is NULL: call async_insert() to put it into the queue.
- *    Otherwise:
- *      If the async request was found in step 2, destroy it by calling destroy_async().
- * 4. Carry out any operations necessary to adjust the object's poll events
- *    Usually: set_elect_events (obj, obj->ops->get_poll_events()).
- *
- * See also the implementations in file.c, serial.c, and sock.c.
-*/
+    /*
+     * The queue_async method must do the following:
+     *
+     * 1. Get the async_queue for the request of given type.
+     * 2. Create a new asynchronous request for the selected queue
+     * 3. Carry out any operations necessary to adjust the object's poll events
+     *    Usually: set_elect_events (obj, obj->ops->get_poll_events()).
+     * 4. When the async request is triggered, then send back (with a proper APC)
+     *    the trigger (STATUS_ALERTED) to the thread that posted the request. 
+     *    async_destroy() is to be called: it will both notify the sender about
+     *    the trigger and destroy the request by itself
+     * See also the implementations in file.c, serial.c, and sock.c.
+     */
 
     if (fd)
     {
-        fd->fd_ops->queue_async( fd, req->overlapped, req->status, req->type, req->count );
+        fd->fd_ops->queue_async( fd, req->io_apc, req->io_user, req->io_sb, 
+                                 req->type, req->count );
         release_object( fd );
     }
+}
+
+/* cancels all async I/O */
+DECL_HANDLER(cancel_async)
+{
+    struct fd *fd = get_handle_fd_obj( current->process, req->handle, 0 );
+    if (fd)
+    {
+        /* Note: we don't kill the queued APC_ASYNC_IO on this thread because
+         * NtCancelIoFile() will force the pending APC to be run. Since, 
+         * Windows only guarantees that the current thread will have no async 
+         * operation on the current fd when NtCancelIoFile returns, this shall
+         * do the work.
+         */
+        fd->fd_ops->cancel_async( fd );
+        release_object( fd );
+    }        
 }
