@@ -48,6 +48,21 @@ extern BOOL     DCE_InvalidateDCE(WND*, RECT16* );
 static HWND hwndActive      = 0;  /* Currently active window */
 static HWND hwndPrevActive  = 0;  /* Previously active window */
 
+extern MESSAGEQUEUE* pActiveQueue;
+
+/***********************************************************************
+ *           WINPOS_CheckActive
+ */
+void WINPOS_CheckActive( HWND32 hwnd )
+{
+  if( hwnd == hwndPrevActive ) hwndPrevActive = 0;
+  if( hwnd == hwndActive )
+  {
+      hwndActive = 0; 
+      dprintf_win(stddeb,"\tattempt to activate destroyed window!\n");
+  }
+}
+
 /***********************************************************************
  *           WINPOS_FindIconPos
  *
@@ -483,9 +498,19 @@ BOOL IsZoomed(HWND hWnd)
 /*******************************************************************
  *         GetActiveWindow    (USER.60)
  */
-HWND GetActiveWindow()
+HWND GetActiveWindow(void)
 {
     return hwndActive;
+}
+
+
+/*******************************************************************
+ *         WINPOS_IsGoodEnough
+ */
+static BOOL32 WINPOS_IsGoodEnough(WND* pWnd)
+{
+ return (pWnd) ? ((!(pWnd->dwStyle & WS_DISABLED) &&
+                     pWnd->dwStyle & WS_VISIBLE ) ? TRUE : FALSE) : FALSE;
 }
 
 
@@ -497,8 +522,7 @@ HWND SetActiveWindow( HWND hwnd )
     HWND prev = hwndActive;
     WND *wndPtr = WIN_FindWndPtr( hwnd );
 
-    if (!wndPtr || (wndPtr->dwStyle & WS_DISABLED) ||
-	!(wndPtr->dwStyle & WS_VISIBLE)) return 0;
+    if ( !WINPOS_IsGoodEnough(wndPtr) ) return 0;
 
     WINPOS_SetActiveWindow( hwnd, 0, 0 );
     return prev;
@@ -562,6 +586,9 @@ BOOL ShowWindow( HWND hwnd, int cmd )
             swpflags |= SWP_FRAMECHANGED;
             if (!(wndPtr->dwStyle & WS_MINIMIZE))
             {
+		if( HOOK_CallHooks( WH_CBT, HCBT_MINMAX, hwnd, cmd) )
+		    return 0;
+
                 if (wndPtr->dwStyle & WS_MAXIMIZE)
                 {
                     wndPtr->flags |= WIN_RESTORE_MAX;
@@ -587,6 +614,9 @@ BOOL ShowWindow( HWND hwnd, int cmd )
             swpflags |= SWP_SHOWWINDOW | SWP_FRAMECHANGED;
             if (!(wndPtr->dwStyle & WS_MAXIMIZE))
             {
+		if( HOOK_CallHooks( WH_CBT, HCBT_MINMAX, hwnd, cmd) )
+		    return 0;
+
                   /* Store the current position and find the maximized size */
                 if (!(wndPtr->dwStyle & WS_MINIMIZE))
                     wndPtr->rectNormal = wndPtr->rectWindow; 
@@ -630,6 +660,9 @@ BOOL ShowWindow( HWND hwnd, int cmd )
 
             if (wndPtr->dwStyle & WS_MINIMIZE)
             {
+		if( HOOK_CallHooks( WH_CBT, HCBT_MINMAX, hwnd, cmd) )
+		    return 0;
+
                 if( !SendMessage16( hwnd, WM_QUERYOPEN, 0, 0L) )
                   {
                     swpflags |= SWP_NOSIZE | SWP_NOMOVE;
@@ -660,6 +693,9 @@ BOOL ShowWindow( HWND hwnd, int cmd )
             }
             else if (wndPtr->dwStyle & WS_MAXIMIZE)
             {
+		if( HOOK_CallHooks( WH_CBT, HCBT_MINMAX, hwnd, cmd) )
+		    return 0;
+
                 wndPtr->ptMaxPos.x = wndPtr->rectWindow.left;
                 wndPtr->ptMaxPos.y = wndPtr->rectWindow.top;
                 wndPtr->dwStyle &= ~WS_MAXIMIZE;
@@ -855,6 +891,43 @@ BOOL32 SetWindowPlacement32( HWND32 hwnd, const WINDOWPLACEMENT32 *wndpl )
     return TRUE;
 }
 
+/***********************************************************************
+ *           WINPOS_ForceXWindowRaise
+ */
+void WINPOS_ForceXWindowRaise( WND* pWnd )
+{
+    XWindowChanges winChanges;
+    WND *wndStop, *wndLast;
+
+    if (!pWnd->window) return;
+
+    wndLast = wndStop = pWnd;
+    winChanges.stack_mode = Above;
+    XReconfigureWMWindow( display, pWnd->window, 0, CWStackMode, &winChanges );
+
+    /* Recursively raise owned popups according to their z-order
+     * (it would be easier with sibling-related Below but it doesn't
+     * work very well with SGI mwm for instance)
+     */
+    while (wndLast)
+    {
+        WND *wnd = WIN_GetDesktop()->child;
+        wndLast = NULL;
+        while (wnd != wndStop)
+        {
+            if (wnd->owner == pWnd &&
+                (wnd->dwStyle & WS_POPUP) &&
+                (wnd->dwStyle & WS_VISIBLE))
+                wndLast = wnd;
+            wnd = wnd->next;
+        }
+        if (wndLast)
+        {
+            WINPOS_ForceXWindowRaise( wndLast );
+            wndStop = wndLast;
+        }
+    }
+}
 
 /*******************************************************************
  *	   WINPOS_SetActiveWindow
@@ -867,20 +940,16 @@ BOOL32 WINPOS_SetActiveWindow( HWND32 hWnd, BOOL32 fMouse, BOOL32 fChangeFocus)
     WND                   *wndTemp         = WIN_FindWndPtr(hwndActive);
     CBTACTIVATESTRUCT16   *cbtStruct;
     WORD                   wIconized=0;
-    HANDLE hNewActiveQueue;
-
-    /* FIXME: When proper support for cooperative multitasking is in place 
-     *        hActiveQ will be global 
-     */
-
-    HANDLE                 hActiveQ = 0;   
+    HANDLE		   hOldActiveQueue = (pActiveQueue)?pActiveQueue->self:0;
+    HANDLE 		   hNewActiveQueue;
 
     /* paranoid checks */
-    if( hWnd == GetDesktopWindow() || hWnd == hwndActive )
+    if( hWnd == GetDesktopWindow32() || hWnd == hwndActive )
 	return 0;
 
-    if (wndPtr && (GetTaskQueue(0) != wndPtr->hmemTaskQ))
+/* if (wndPtr && (GetTaskQueue(0) != wndPtr->hmemTaskQ))
 	return 0;
+        */
 
     if( wndTemp )
 	wIconized = HIWORD(wndTemp->dwStyle & WS_MINIMIZE);
@@ -946,15 +1015,10 @@ BOOL32 WINPOS_SetActiveWindow( HWND32 hWnd, BOOL32 fMouse, BOOL32 fChangeFocus)
         if( !IsWindow(hWnd) ) return 0;
     }
 
-    if (hwndPrevActive)
-    {
-        wndTemp = WIN_FindWndPtr( hwndPrevActive );
-        if (wndTemp) hActiveQ = wndTemp->hmemTaskQ;
-    }
     hNewActiveQueue = wndPtr ? wndPtr->hmemTaskQ : 0;
 
     /* send WM_ACTIVATEAPP if necessary */
-    if (hActiveQ != hNewActiveQueue)
+    if (hOldActiveQueue != hNewActiveQueue)
     {
         WND **list, **ppWnd;
 
@@ -962,24 +1026,27 @@ BOOL32 WINPOS_SetActiveWindow( HWND32 hWnd, BOOL32 fMouse, BOOL32 fChangeFocus)
         {
             for (ppWnd = list; *ppWnd; ppWnd++)
             {
-                /* Make sure that the window still exists */
                 if (!IsWindow( (*ppWnd)->hwndSelf )) continue;
-                if ((*ppWnd)->hmemTaskQ != hActiveQ) continue;
-                SendMessage16( (*ppWnd)->hwndSelf, WM_ACTIVATEAPP,
-                               0, QUEUE_GetQueueTask(hNewActiveQueue) );
+
+                if ((*ppWnd)->hmemTaskQ == hOldActiveQueue)
+                   SendMessage16( (*ppWnd)->hwndSelf, WM_ACTIVATEAPP,
+                                   0, QUEUE_GetQueueTask(hNewActiveQueue) );
             }
             HeapFree( SystemHeap, 0, list );
         }
+
+	pActiveQueue = (hNewActiveQueue)
+		       ? (MESSAGEQUEUE*) GlobalLock16(hNewActiveQueue) : NULL;
 
         if ((list = WIN_BuildWinArray( WIN_GetDesktop() )))
         {
             for (ppWnd = list; *ppWnd; ppWnd++)
             {
-                /* Make sure that the window still exists */
                 if (!IsWindow( (*ppWnd)->hwndSelf )) continue;
-                if ((*ppWnd)->hmemTaskQ != hNewActiveQueue) continue;
-                SendMessage16( (*ppWnd)->hwndSelf, WM_ACTIVATEAPP,
-                               1, QUEUE_GetQueueTask( hActiveQ ) );
+
+                if ((*ppWnd)->hmemTaskQ == hNewActiveQueue)
+                   SendMessage16( (*ppWnd)->hwndSelf, WM_ACTIVATEAPP,
+                                  1, QUEUE_GetQueueTask( hOldActiveQueue ) );
             }
             HeapFree( SystemHeap, 0, list );
         }
@@ -1009,6 +1076,10 @@ BOOL32 WINPOS_SetActiveWindow( HWND32 hWnd, BOOL32 fMouse, BOOL32 fChangeFocus)
 	    FOCUS_SwitchFocus( GetFocus32(),
 			       (wndPtr->dwStyle & WS_MINIMIZE)? 0: hwndActive);
 
+    if( !hwndPrevActive && wndPtr && 
+	 wndPtr->window && !(wndPtr->flags & WIN_MANAGED) )
+	WINPOS_ForceXWindowRaise(wndPtr);
+
     /* if active wnd is minimized redraw icon title 
   if( hwndActive )
       {
@@ -1020,6 +1091,50 @@ BOOL32 WINPOS_SetActiveWindow( HWND32 hWnd, BOOL32 fMouse, BOOL32 fChangeFocus)
     return (hWnd == hwndActive);
 }
 
+/*******************************************************************
+ *         WINPOS_ActivateOtherWindow
+ *
+ * DestroyWindow() helper. pWnd must be a top-level window.
+ */
+BOOL32 WINPOS_ActivateOtherWindow(WND* pWnd)
+{
+  BOOL32	bRet = 0;
+  WND*  	pWndTo = NULL;
+
+  if( pWnd->hwndSelf == hwndPrevActive )
+      hwndPrevActive = 0;
+
+  if( hwndActive != pWnd->hwndSelf && 
+    ( hwndActive || QUEUE_IsDoomedQueue(pWnd->hmemTaskQ)) )
+      return 0;
+
+  if( pWnd->dwStyle & WS_POPUP &&
+      WINPOS_IsGoodEnough( pWnd->owner ) ) pWndTo = pWnd->owner;
+  else
+  {
+    WND* pWndPtr = pWnd;
+
+    pWndTo = WIN_FindWndPtr(hwndPrevActive);
+
+    while( !WINPOS_IsGoodEnough(pWndTo) ) 
+    {
+      /* by now owned windows should've been taken care of */
+
+      pWndTo = pWndPtr->next;
+      pWndPtr = pWndTo;
+      if( !pWndTo ) return 0;
+    }
+  }
+
+  bRet = WINPOS_SetActiveWindow( pWndTo->hwndSelf, FALSE, TRUE );
+
+  /* switch desktop queue to current active */
+  if( pWndTo->parent == WIN_GetDesktop())
+      WIN_GetDesktop()->hmemTaskQ = pWndTo->hmemTaskQ;
+
+  hwndPrevActive = 0;
+  return bRet;  
+}
 
 /*******************************************************************
  *	   WINPOS_ChangeActiveWindow
@@ -1219,67 +1334,41 @@ static void WINPOS_MoveWindowZOrder( HWND hwnd, HWND hwndAfter )
  */
 HWND WINPOS_ReorderOwnedPopups(HWND hwndInsertAfter, WND* wndPtr, WORD flags)
 {
- WND* 	w = WIN_GetDesktop();
+ WND* 	w = WIN_GetDesktop()->child;
 
- w = w->child;
+  if( wndPtr->dwStyle & WS_POPUP && wndPtr->owner )
+  {
+   /* implement "local z-order" between the top and owner window */
 
- /* if we are dealing with owned popup... 
-  */
- if( wndPtr->dwStyle & WS_POPUP && wndPtr->owner && hwndInsertAfter != HWND_TOP )
-   {
-     BOOL bFound = FALSE;
      HWND hwndLocalPrev = HWND_TOP;
-     HWND hwndNewAfter = 0;
 
-     while( w )
-       {
-         if( !bFound && hwndInsertAfter == hwndLocalPrev )
-             hwndInsertAfter = HWND_TOP;
+     if( hwndInsertAfter != HWND_TOP )
+     {
+	while( w != wndPtr->owner )
+	{
+	  hwndLocalPrev = w->hwndSelf;
+	  if( hwndLocalPrev == hwndInsertAfter ) break;
+	  w = w->next;
+	}
+	hwndInsertAfter = hwndLocalPrev;
+     }
 
-         if( w->dwStyle & WS_POPUP && w->owner == wndPtr->owner )
-           {
-             bFound = TRUE;
+  }
+  else if( wndPtr->dwStyle & WS_CHILD ) return hwndInsertAfter;
 
-             if( hwndInsertAfter == HWND_TOP )
-               {
-                 hwndInsertAfter = hwndLocalPrev;
-                 break;
-               }
-             hwndNewAfter = hwndLocalPrev;
-           }
+  w = WIN_GetDesktop()->child;
+  while( w )
+  {
+    if( w == wndPtr ) break;
 
-         if( w == wndPtr->owner )
-           {
-             /* basically HWND_BOTTOM */
-             hwndInsertAfter = hwndLocalPrev;
-
-             if( bFound )
-                 hwndInsertAfter = hwndNewAfter;
-             break;
-           }
-
-           if( w != wndPtr )
-               hwndLocalPrev = w->hwndSelf;
-
-           w = w->next;
-        }
-   }
- else 
-   /* or overlapped top-level window... 
-    */
-   if( !(wndPtr->dwStyle & WS_CHILD) )
-      while( w )
-        {
-          if( w == wndPtr ) break;
-
-          if( w->dwStyle & WS_POPUP && w->owner == wndPtr )
-            {
-              SetWindowPos(w->hwndSelf, hwndInsertAfter, 0, 0, 0, 0, SWP_NOMOVE | SWP_NOSIZE |
-                                        SWP_NOACTIVATE | SWP_NOSENDCHANGING | SWP_DEFERERASE);
-              hwndInsertAfter = w->hwndSelf;
-            }
-          w = w->next;
-        }
+    if( w->dwStyle & WS_POPUP && w->owner == wndPtr )
+    {
+      SetWindowPos(w->hwndSelf, hwndInsertAfter, 0, 0, 0, 0, SWP_NOMOVE | SWP_NOSIZE |
+                                SWP_NOACTIVATE | SWP_NOSENDCHANGING | SWP_DEFERERASE);
+      hwndInsertAfter = w->hwndSelf;
+    }
+    w = w->next;
+  }
 
   return hwndInsertAfter;
 }
@@ -1343,7 +1432,7 @@ static UINT WINPOS_SizeMoveClean(WND* Wnd, HRGN oldVisRgn, LPRECT16 lpOldWndRect
    } 
  else			/* bitblt old client area */
    { 
-     HDC   hDC;
+     HDC32 hDC;
      int   update;
      HRGN  updateRgn;
      int   xfrom,yfrom,xto,yto,width,height;
@@ -1386,11 +1475,13 @@ static UINT WINPOS_SizeMoveClean(WND* Wnd, HRGN oldVisRgn, LPRECT16 lpOldWndRect
 	 OffsetRgn( newVisRgn, Wnd->rectClient.left, Wnd->rectClient.top);
 	 CombineRgn( oldVisRgn, oldVisRgn, newVisRgn, RGN_OR );
 
-         hDC = GetDCEx( Wnd->parent->hwndSelf, oldVisRgn, DCX_KEEPCLIPRGN | DCX_INTERSECTRGN | DCX_CACHE | DCX_CLIPSIBLINGS);
+         hDC = GetDCEx32( Wnd->parent->hwndSelf, oldVisRgn,
+                          DCX_KEEPCLIPRGN | DCX_INTERSECTRGN |
+                          DCX_CACHE | DCX_CLIPSIBLINGS);
 
          BitBlt( hDC, xto, yto, width, height, hDC, xfrom, yfrom, SRCCOPY );
     
-	 ReleaseDC( Wnd->parent->hwndSelf, hDC); 
+	 ReleaseDC32( Wnd->parent->hwndSelf, hDC); 
        }
 
      if( update != NULLREGION )
@@ -1408,45 +1499,6 @@ static UINT WINPOS_SizeMoveClean(WND* Wnd, HRGN oldVisRgn, LPRECT16 lpOldWndRect
  DeleteObject(dirtyRgn);
  DeleteObject(newVisRgn);
  return uFlags;
-}
-
-
-/***********************************************************************
- *           WINPOS_ForceXWindowRaise
- */
-void WINPOS_ForceXWindowRaise( WND* pWnd )
-{
-    XWindowChanges winChanges;
-    WND *wndStop, *wndLast;
-
-    if (!pWnd->window) return;
-        
-    wndLast = wndStop = pWnd;
-    winChanges.stack_mode = Above;
-    XReconfigureWMWindow( display, pWnd->window, 0, CWStackMode, &winChanges );
-
-    /* Recursively raise owned popups according to their z-order 
-     * (it would be easier with sibling-related Below but it doesn't
-     * work very well with SGI mwm for instance)
-     */
-    while (wndLast)
-    {
-        WND *wnd = WIN_GetDesktop()->child;
-        wndLast = NULL;
-        while (wnd != wndStop)
-        {
-            if (wnd->owner == pWnd &&
-                (wnd->dwStyle & WS_POPUP) &&
-                (wnd->dwStyle & WS_VISIBLE))
-                wndLast = wnd;
-            wnd = wnd->next;
-        }
-        if (wndLast)
-        {
-            WINPOS_ForceXWindowRaise( wndLast );
-            wndStop = wndLast;
-        }
-    }
 }
 
 
@@ -1496,22 +1548,27 @@ static void WINPOS_SetXWindowPos( WINDOWPOS16 *winpos )
     }
     if (!(winpos->flags & SWP_NOZORDER))
     {
+	winChanges.stack_mode = Below;
+	changeMask |= CWStackMode;
+
         if (winpos->hwndInsertAfter == HWND_TOP) winChanges.stack_mode = Above;
-        else winChanges.stack_mode = Below;
-        if ((winpos->hwndInsertAfter != HWND_TOP) &&
-            (winpos->hwndInsertAfter != HWND_BOTTOM))
+        else if (winpos->hwndInsertAfter != HWND_BOTTOM)
         {
-            WND * insertPtr = WIN_FindWndPtr( winpos->hwndInsertAfter );
-            winChanges.sibling = insertPtr->window;
-            changeMask |= CWSibling;
-        }
-        changeMask |= CWStackMode;
+            WND*   insertPtr = WIN_FindWndPtr( winpos->hwndInsertAfter );
+	    Window stack[2];
+
+	    stack[0] = insertPtr->window;
+	    stack[1] = wndPtr->window;
+
+	    /* for stupid window managers (i.e. all of them) */
+
+	    XRestackWindows(display, stack, 2); 
+	    changeMask &= ~CWStackMode;
+	}
     }
     if (!changeMask) return;
-    if (wndPtr->flags & WIN_MANAGED)
-        XReconfigureWMWindow( display, wndPtr->window, 0,
-                              changeMask, &winChanges );
-    else XConfigureWindow( display, wndPtr->window, changeMask, &winChanges );
+
+    XReconfigureWMWindow( display, wndPtr->window, 0, changeMask, &winChanges );
 }
 
 
@@ -1533,7 +1590,7 @@ BOOL SetWindowPos( HWND hwnd, HWND hwndInsertAfter, INT x, INT y,
 						 hwnd, x, y, x+cx, y+cy, flags);  
       /* Check window handle */
 
-    if (hwnd == GetDesktopWindow()) return FALSE;
+    if (hwnd == GetDesktopWindow32()) return FALSE;
     if (!(wndPtr = WIN_FindWndPtr( hwnd ))) return FALSE;
 
     if (wndPtr->dwStyle & WS_VISIBLE) flags &= ~SWP_SHOWWINDOW;
@@ -1839,7 +1896,7 @@ BOOL SetWindowPos( HWND hwnd, HWND hwndInsertAfter, INT x, INT y,
 	    HWND newActive = hwndPrevActive;
 	    if (!IsWindow(newActive) || (newActive == winpos->hwnd))
 	    {
-		newActive = GetTopWindow( GetDesktopWindow() );
+		newActive = GetTopWindow( GetDesktopWindow32() );
 		if (newActive == winpos->hwnd)
                     newActive = wndPtr->next ? wndPtr->next->hwndSelf : 0;
 	    }	    
@@ -1859,7 +1916,14 @@ BOOL SetWindowPos( HWND hwnd, HWND hwndInsertAfter, INT x, INT y,
     EVENT_DummyMotionNotify(); /* Simulate a mouse event to set the cursor */
 
     if (!(flags & SWP_DEFERERASE) && !(uFlags & SMC_NOPARENTERASE) )
-        PAINT_RedrawWindow( wndPtr->parent->hwndSelf, NULL, 0, RDW_ALLCHILDREN | RDW_ERASENOW, 0 );
+    {
+	RECT32	rect;
+	CONV_RECT16TO32( &oldWindowRect, &rect );
+        PAINT_RedrawWindow( wndPtr->parent->hwndSelf, (wndPtr->flags & WIN_SAVEUNDER_OVERRIDE) 
+			    ? &rect : NULL, 0, RDW_ALLCHILDREN | RDW_ERASENOW |
+			  ((wndPtr->flags & WIN_SAVEUNDER_OVERRIDE) ? RDW_INVALIDATE : 0), 0 );
+        wndPtr->flags &= ~WIN_SAVEUNDER_OVERRIDE;
+    }
     else if( wndPtr->parent == WIN_GetDesktop() && wndPtr->parent->flags & WIN_NEEDS_ERASEBKGND )
 	PAINT_RedrawWindow( wndPtr->parent->hwndSelf, NULL, 0, RDW_NOCHILDREN | RDW_ERASENOW, 0 );
 
@@ -1911,7 +1975,7 @@ HDWP16 DeferWindowPos( HDWP16 hdwp, HWND hwnd, HWND hwndAfter, INT x, INT y,
 
     pDWP = (DWP *) USER_HEAP_LIN_ADDR( hdwp );
     if (!pDWP) return 0;
-    if (hwnd == GetDesktopWindow()) return 0;
+    if (hwnd == GetDesktopWindow32()) return 0;
 
       /* All the windows of a DeferWindowPos() must have the same parent */
 

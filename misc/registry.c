@@ -1106,19 +1106,19 @@ _w95_loadreg(char* fn,LPKEYSTRUCT lpkey) {
 	if (hfd==HFILE_ERROR)
 		return;
 	magic[4]=0;
-	if (4!=FILE_Read(hfd,magic,4))
+	if (4!=_lread32(hfd,magic,4))
 		return;
 	if (strcmp(magic,"CREG")) {
 		fprintf(stddeb,"%s is not a w95 registry.\n",fn);
 		return;
 	}
-	if (4!=FILE_Read(hfd,&version,4))
+	if (4!=_lread32(hfd,&version,4))
 		return;
-	if (4!=FILE_Read(hfd,&rgdbsection,4))
+	if (4!=_lread32(hfd,&rgdbsection,4))
 		return;
 	if (-1==_llseek(hfd,0x20,SEEK_SET))
 		return;
-	if (4!=FILE_Read(hfd,magic,4))
+	if (4!=_lread32(hfd,magic,4))
 		return;
 	if (strcmp(magic,"RGKN")) {
 		dprintf_reg(stddeb,"second IFF header not RGKN, but %s\n",magic);
@@ -1133,7 +1133,7 @@ _w95_loadreg(char* fn,LPKEYSTRUCT lpkey) {
 
 	nrofdkes = (end-where)/sizeof(struct dke)+100;
 	data = (char*)xmalloc(end-where);
-	if ((end-where)!=FILE_Read(hfd,data,end-where))
+	if ((end-where)!=_lread32(hfd,data,end-where))
 		return;
 	curdata = data;
 
@@ -1215,7 +1215,7 @@ _w95_loadreg(char* fn,LPKEYSTRUCT lpkey) {
 	if (-1==_llseek(hfd,rgdbsection,SEEK_SET))
 		return;
 	data = (char*)xmalloc(end-rgdbsection);
-	if ((end-rgdbsection)!=FILE_Read(hfd,data,end-rgdbsection))
+	if ((end-rgdbsection)!=_lread32(hfd,data,end-rgdbsection))
 		return;
 	_lclose(hfd);
 	curdata = data;
@@ -1554,13 +1554,14 @@ DWORD RegCreateKeyEx32W(
 	if (!lpszSubKey || !*lpszSubKey) {
 		add_handle(++currenthandle,lpNextKey,samDesired);
 		*retkey=currenthandle;
+		lpNextKey->flags|=REG_OPTION_TAINTED;
 		return SHELL_ERROR_SUCCESS;
 	}
 	split_keypath(lpszSubKey,&wps,&wpc);
 	i 	= 0;
 	while ((i<wpc) && (wps[i][0]=='\0')) i++;
 	lpxkey	= lpNextKey;
-	while (i<wpc) {
+	while (wps[i]) {
 		lpxkey=lpNextKey->nextsub;
 		while (lpxkey) {
 			if (!lstrcmp32W(wps[i],lpxkey->keyname))
@@ -1574,13 +1575,15 @@ DWORD RegCreateKeyEx32W(
 	}
 	if (lpxkey) {
 		add_handle(++currenthandle,lpxkey,samDesired);
+		lpxkey->flags  |= REG_OPTION_TAINTED;
 		*retkey		= currenthandle;
-		*lpDispos	= REG_OPENED_EXISTING_KEY;
+		if (lpDispos)
+			*lpDispos	= REG_OPENED_EXISTING_KEY;
 		FREE_KEY_PATH;
 		return	SHELL_ERROR_SUCCESS;
 	}
 	/* good. now the hard part */
-	while (i<wpc) {
+	while (wps[i]) {
 		lplpPrevKey	= &(lpNextKey->nextsub);
 		lpxkey		= *lplpPrevKey;
 		while (lpxkey) {
@@ -1598,6 +1601,7 @@ DWORD RegCreateKeyEx32W(
 		(*lplpPrevKey)->nextsub	= NULL;
 		(*lplpPrevKey)->values	= NULL;
 		(*lplpPrevKey)->nrofvalues = 0;
+		(*lplpPrevKey)->flags 	= REG_OPTION_TAINTED;
 		if (lpszClass)
 			(*lplpPrevKey)->class = strdupW(lpszClass);
 		else
@@ -1608,14 +1612,14 @@ DWORD RegCreateKeyEx32W(
 	add_handle(++currenthandle,lpNextKey,samDesired);
 
 	/*FIXME: flag handling correct? */
-	lpNextKey->flags= fdwOptions;
+	lpNextKey->flags= fdwOptions |REG_OPTION_TAINTED;
 	if (lpszClass)
 		lpNextKey->class = strdupW(lpszClass);
 	else
 		lpNextKey->class = NULL;
-	lpNextKey->flags|=REG_OPTION_TAINTED;
 	*retkey		= currenthandle;
-	*lpDispos	= REG_CREATED_NEW_KEY;
+	if (lpDispos)
+		*lpDispos	= REG_CREATED_NEW_KEY;
 	FREE_KEY_PATH;
 	return SHELL_ERROR_SUCCESS;
 }

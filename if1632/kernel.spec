@@ -132,7 +132,7 @@ type	win16
 131 pascal GetDOSEnvironment() GetDOSEnvironment
 132 pascal GetWinFlags() GetWinFlags
 133 pascal16 GetExePtr(word) GetExePtr
-134 pascal16 GetWindowsDirectory(ptr word) GetWindowsDirectory
+134 pascal16 GetWindowsDirectory(ptr word) GetWindowsDirectory16
 135 pascal16 GetSystemDirectory(ptr word) GetSystemDirectory16
 136 pascal16 GetDriveType(byte) GetDriveType16
 137 pascal FatalAppExit(word ptr) FatalAppExit

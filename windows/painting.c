@@ -114,8 +114,8 @@ HDC16 BeginPaint16( HWND16 hwnd, LPPAINTSTRUCT16 lps )
      * (because rectClient == rectWindow for WS_MINIMIZE windows).
      */
 
-    lps->hdc = GetDCEx( hwnd, hrgnUpdate, DCX_INTERSECTRGN | DCX_WINDOWPAINT |
-                        DCX_USESTYLE | (bIcon ? DCX_WINDOW : 0) );
+    lps->hdc = GetDCEx16(hwnd, hrgnUpdate, DCX_INTERSECTRGN | DCX_WINDOWPAINT |
+                         DCX_USESTYLE | (bIcon ? DCX_WINDOW : 0) );
 
     dprintf_win(stddeb,"hdc = %04x\n", lps->hdc);
 
@@ -166,7 +166,7 @@ HDC32 BeginPaint32( HWND32 hwnd, PAINTSTRUCT32 *lps )
  */
 BOOL16 EndPaint16( HWND16 hwnd, const PAINTSTRUCT16* lps )
 {
-    ReleaseDC( hwnd, lps->hdc );
+    ReleaseDC16( hwnd, lps->hdc );
     ShowCaret( hwnd );
     return TRUE;
 }
@@ -177,7 +177,7 @@ BOOL16 EndPaint16( HWND16 hwnd, const PAINTSTRUCT16* lps )
  */
 BOOL32 EndPaint32( HWND32 hwnd, const PAINTSTRUCT32 *lps )
 {
-    ReleaseDC( hwnd, (HDC16)lps->hdc );
+    ReleaseDC32( hwnd, lps->hdc );
     ShowCaret( hwnd );
     return TRUE;
 }
@@ -245,7 +245,7 @@ BOOL32 PAINT_RedrawWindow( HWND32 hwnd, const RECT32 *rectUpdate,
     RECT32 rectClient;
     WND* wndPtr;
 
-    if (!hwnd) hwnd = GetDesktopWindow();
+    if (!hwnd) hwnd = GetDesktopWindow32();
     if (!(wndPtr = WIN_FindWndPtr( hwnd ))) return FALSE;
     if (!IsWindowVisible(hwnd) || (wndPtr->flags & WIN_NO_REDRAW))
         return TRUE;  /* No redraw needed */
@@ -262,7 +262,14 @@ BOOL32 PAINT_RedrawWindow( HWND32 hwnd, const RECT32 *rectUpdate,
         dprintf_win(stddeb, "RedrawWindow: %04x NULL %04x flags=%04x\n",
                      hwnd, hrgnUpdate, flags);
     }
-    GetClientRect32( hwnd, &rectClient );
+
+    if (wndPtr->class->style & CS_PARENTDC)
+    {
+        GetClientRect32( wndPtr->parent->hwndSelf, &rectClient );
+        OffsetRect32( &rectClient, -wndPtr->rectClient.left,
+                      -wndPtr->rectClient.top );
+    }
+    else GetClientRect32( hwnd, &rectClient );
 
     if (flags & RDW_INVALIDATE)  /* Invalidate */
     {
@@ -364,17 +371,17 @@ BOOL32 PAINT_RedrawWindow( HWND32 hwnd, const RECT32 *rectUpdate,
 
         if (wndPtr->flags & WIN_NEEDS_ERASEBKGND)
         {
-            HDC hdc = GetDCEx( hwnd, wndPtr->hrgnUpdate,
-                               DCX_INTERSECTRGN | DCX_USESTYLE |
-                               DCX_KEEPCLIPRGN | DCX_WINDOWPAINT |
-                               (bIcon ? DCX_WINDOW : 0) );
+            HDC32 hdc = GetDCEx32( hwnd, wndPtr->hrgnUpdate,
+                                   DCX_INTERSECTRGN | DCX_USESTYLE |
+                                   DCX_KEEPCLIPRGN | DCX_WINDOWPAINT |
+                                   (bIcon ? DCX_WINDOW : 0) );
             if (hdc)
             {
                if (SendMessage16( hwnd, (bIcon) ? WM_ICONERASEBKGND
 						: WM_ERASEBKGND,
                                   (WPARAM)hdc, 0 ))
                   wndPtr->flags &= ~WIN_NEEDS_ERASEBKGND;
-               ReleaseDC( hwnd, hdc );
+               ReleaseDC32( hwnd, hdc );
             }
         }
     }
@@ -400,18 +407,29 @@ BOOL32 PAINT_RedrawWindow( HWND32 hwnd, const RECT32 *rectUpdate,
            for (wndPtr = wndPtr->child; wndPtr; wndPtr = wndPtr->next)
 	     if( wndPtr->dwStyle & WS_VISIBLE )
 	       {
-                 SetRectRgn( hrgn, wndPtr->rectWindow.left, wndPtr->rectWindow.top,
-                                   wndPtr->rectWindow.right, wndPtr->rectWindow.bottom);
-                 if( CombineRgn( hrgn, hrgn, hrgnUpdate, RGN_AND ) != NULLREGION )
-                 {
-		   if( control & RDW_C_USEHRGN &&
-		       wndPtr->dwStyle & WS_CLIPSIBLINGS ) 
-		       CombineRgn( hrgnUpdate, hrgnUpdate, hrgn, RGN_DIFF );
+                   if (wndPtr->class->style & CS_PARENTDC)
+                   {
+                       if (!CombineRgn( hrgn, hrgnUpdate, 0, RGN_COPY ))
+                           continue;
+                   }
+                   else
+                   {
+                       SetRectRgn( hrgn, wndPtr->rectWindow.left,
+                                   wndPtr->rectWindow.top,
+                                   wndPtr->rectWindow.right,
+                                   wndPtr->rectWindow.bottom);
+                       if (!CombineRgn( hrgn, hrgn, hrgnUpdate, RGN_AND ))
+                           continue;
+                   }
+#if 0
+                   if( control & RDW_C_USEHRGN &&
+                       wndPtr->dwStyle & WS_CLIPSIBLINGS ) 
+                       CombineRgn( hrgnUpdate, hrgnUpdate, hrgn, RGN_DIFF );
+#endif
 
                    OffsetRgn( hrgn, -wndPtr->rectClient.left,
                                  -wndPtr->rectClient.top );
                    PAINT_RedrawWindow( wndPtr->hwndSelf, NULL, hrgn, flags, RDW_C_USEHRGN );
-                 }
                }
 	   DeleteObject( hrgn );
 	   if( control & RDW_C_DELETEHRGN ) DeleteObject( hrgnUpdate );

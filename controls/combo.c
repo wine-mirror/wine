@@ -87,7 +87,7 @@ void ComboUpdateWindow(HWND hwnd, LPHEADLIST lphl, LPHEADCOMBO lphc, BOOL repain
   WND *wndPtr = WIN_FindWndPtr(hwnd);
 
   if (wndPtr->dwStyle & WS_VSCROLL) 
-    SetScrollRange(lphc->hWndLBox,SB_VERT,0,ListMaxFirstVisible(lphl),TRUE);
+    SetScrollRange32(lphc->hWndLBox,SB_VERT,0,ListMaxFirstVisible(lphl),TRUE);
   if (repaint && lphl->bRedrawFlag) InvalidateRect32( hwnd, NULL, TRUE );
 }
 
@@ -240,7 +240,11 @@ static LRESULT CBPaint(HWND hwnd, WPARAM wParam, LPARAM lParam)
   {
     Rectangle(hdc,lphc->RectButton.left-1,lphc->RectButton.top-1,
 	      lphc->RectButton.right+1,lphc->RectButton.bottom+1);
-    GRAPH_DrawReliefRect(hdc, &lphc->RectButton, 2, 2, FALSE);
+    {
+        RECT32 r;
+        CONV_RECT16TO32( &lphc->RectButton, &r );
+        GRAPH_DrawReliefRect(hdc, &r, 2, 2, FALSE);
+    }
     GRAPH_DrawBitmap(hdc, hComboBit,
 		     lphc->RectButton.left + 2,lphc->RectButton.top + 2,
 		     0, 0, CBitWidth, CBitHeight );
@@ -889,7 +893,7 @@ static LRESULT CBLKeyDown( HWND hwnd, WPARAM wParam, LPARAM lParam )
   SendMessage16(GetParent16(hwnd), WM_COMMAND,ID_CLB,MAKELONG(0,CBN_SELCHANGE));
   lphl->ItemFocused = newFocused;
   ListBoxScrollToFocus(lphl);
-  SetScrollPos(hwnd, SB_VERT, lphl->FirstVisible, TRUE);
+  SetScrollPos32(hwnd, SB_VERT, lphl->FirstVisible, TRUE);
   InvalidateRect32( hwnd, NULL, TRUE );
   return 0;
 }
@@ -971,7 +975,7 @@ static LRESULT CBLPaint( HWND hwnd, WPARAM wParam, LPARAM lParam )
   }
 
   if (wndPtr->dwStyle & WS_VSCROLL) 
-      SetScrollRange(hwnd, SB_VERT, 0, ListMaxFirstVisible(lphl), TRUE);
+      SetScrollRange32(hwnd, SB_VERT, 0, ListMaxFirstVisible(lphl), TRUE);
 
   SelectObject(hdc,hOldFont);
   EndPaint16( hwnd, &ps );
@@ -1008,7 +1012,7 @@ static LRESULT CBLLButtonDown( HWND hwnd, WPARAM wParam, LPARAM lParam )
   RECT16     rectsel;
 
 /*  SetFocus32(hwnd); */
-  SetCapture(hwnd);
+  SetCapture32(hwnd);
 
   lphl->PrevFocused = lphl->ItemFocused;
 
@@ -1030,7 +1034,7 @@ static LRESULT CBLLButtonUp( HWND hwnd, WPARAM wParam, LPARAM lParam )
 {
   LPHEADLIST lphl = CLBoxGetListHeader(hwnd);
 
-  if (GetCapture() == hwnd) ReleaseCapture();
+  if (GetCapture32() == hwnd) ReleaseCapture();
 
   if(!lphl)
      {
@@ -1070,7 +1074,7 @@ hwnd,wParam,lParam,y,lphl->ItemFocused,wRet,rectsel.left,rectsel.top,rectsel.rig
     if (y < CBLMM_EDGE) {
       if (lphl->FirstVisible > 0) {
 	lphl->FirstVisible--;
-	SetScrollPos(hwnd, SB_VERT, lphl->FirstVisible, TRUE);
+	SetScrollPos32(hwnd, SB_VERT, lphl->FirstVisible, TRUE);
 	ListBoxSetCurSel(lphl, wRet);
 	InvalidateRect32( hwnd, NULL, TRUE );
 	return 0;
@@ -1079,7 +1083,7 @@ hwnd,wParam,lParam,y,lphl->ItemFocused,wRet,rectsel.left,rectsel.top,rectsel.rig
     else if (y >= (rect.bottom-CBLMM_EDGE)) {
       if (lphl->FirstVisible < ListMaxFirstVisible(lphl)) {
 	lphl->FirstVisible++;
-	SetScrollPos(hwnd, SB_VERT, lphl->FirstVisible, TRUE);
+	SetScrollPos32(hwnd, SB_VERT, lphl->FirstVisible, TRUE);
 	ListBoxSetCurSel(lphl, wRet);
 	InvalidateRect32( hwnd, NULL, TRUE );
 	return 0;
@@ -1136,7 +1140,7 @@ static LRESULT CBLVScroll( HWND hwnd, WPARAM wParam, LPARAM lParam )
     lphl->FirstVisible = ListMaxFirstVisible(lphl);
 
   if (y != lphl->FirstVisible) {
-    SetScrollPos(hwnd, SB_VERT, lphl->FirstVisible, TRUE);
+    SetScrollPos32(hwnd, SB_VERT, lphl->FirstVisible, TRUE);
     InvalidateRect32( hwnd, NULL, TRUE );
   }
 

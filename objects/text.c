@@ -224,6 +224,8 @@ INT16 DrawText16( HDC16 hdc, LPCSTR str, INT16 i_count,
 	tabwidth = size.cx * tabstop;
     }
 
+    if (flags & DT_CALCRECT) flags |= DT_NOCLIP;
+
     do
     {
 	prefix_offset = -1;
@@ -268,7 +270,7 @@ INT16 DrawText16( HDC16 hdc, LPCSTR str, INT16 i_count,
 	y += lh;
 	if (strPtr)
 	{
-	    if (!(flags & DT_NOCLIP) && !(flags & DT_CALCRECT))
+	    if (!(flags & DT_NOCLIP))
 	    {
 		if (y > rect->bottom - lh)
 		    break;

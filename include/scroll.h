@@ -12,16 +12,18 @@
 
 typedef struct
 {
-    INT   CurVal;   /* Current scroll-bar value */
-    INT   MinVal;   /* Minimum scroll-bar value */
-    INT   MaxVal;   /* Maximum scroll-bar value */
-    INT   Page;     /* Page size of scroll bar (Win32) */
-    WORD  flags;    /* EnableScrollBar flags */
+    INT32   CurVal;   /* Current scroll-bar value */
+    INT32   MinVal;   /* Minimum scroll-bar value */
+    INT32   MaxVal;   /* Maximum scroll-bar value */
+    INT32   Page;     /* Page size of scroll bar (Win32) */
+    UINT32  flags;    /* EnableScrollBar flags */
 } SCROLLBAR_INFO;
 
-extern LONG ScrollBarWndProc( HWND hwnd, WORD uMsg, WORD wParam, LONG lParam );
-extern void SCROLL_DrawScrollBar( HWND hwnd, HDC hdc, int nBar );
-extern void SCROLL_HandleScrollEvent( HWND hwnd, int nBar,
-                                      WORD msg, POINT16 pt );
+extern LRESULT ScrollBarWndProc( HWND32 hwnd, UINT32 uMsg, WPARAM32 wParam,
+                                 LPARAM lParam );
+extern void SCROLL_DrawScrollBar( HWND32 hwnd, HDC32 hdc, INT32 nBar,
+                                  BOOL32 arrows );
+extern void SCROLL_HandleScrollEvent( HWND32 hwnd, INT32 nBar,
+                                      UINT32 msg, POINT32 pt );
 
 #endif  /* SCROLL_H */

@@ -697,6 +697,7 @@ FormatMessage32A(
 				char	*fmtstr,*sprintfbuf,*x;
 				DWORD	*argliststart;
 
+				fmtstr = NULL;
 				f++;
 				if (!*f) {
 					ADD_TO_T('%');
@@ -722,7 +723,7 @@ FormatMessage32A(
 						f++;
 						if (NULL!=(x=strchr(f,'!'))) {
 							*x='\0';
-							fmtstr=xmalloc(strlen(f)+2);
+							fmtstr=(char*)xmalloc(strlen(f)+2);
 							sprintf(fmtstr,"%%%s",f);
 							f=x+1;
 						}

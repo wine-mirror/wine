@@ -56,8 +56,8 @@ base	1
 0051 stub SHFormatDrive
 0052 stub SHFreeNameMappings
 0053 stub SHGetDesktopFolder
-0054 stub SHGetFileInfo
-0055 stub SHGetFileInfoA
+0054 stdcall SHGetFileInfo(ptr long ptr long long) SHGetFileInfo32A
+0055 stdcall SHGetFileInfoA(ptr long ptr long long) SHGetFileInfo32A
 0056 stub SHGetFileInfoW
 0057 stub SHGetInstanceExplorer
 0058 stub SHGetMalloc

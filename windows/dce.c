@@ -19,7 +19,7 @@
 #include "class.h"
 #include "win.h"
 #include "gdi.h"
-#include "user.h"
+#include "heap.h"
 #include "sysmetrics.h"
 #include "stddebug.h"
 /* #define DEBUG_DC */
@@ -27,7 +27,7 @@
 
 #define NB_DCE    5  /* Number of DCEs created at startup */
 
-static HANDLE firstDCE = 0;
+static DCE *firstDCE = 0;
 static HDC defaultDCstate = 0;
 
 BOOL   DCHook(HDC, WORD, DWORD, DWORD);
@@ -37,26 +37,24 @@ BOOL   DCHook(HDC, WORD, DWORD, DWORD);
 *
  * Allocate a new DCE.
  */
-HANDLE DCE_AllocDCE( HWND hWnd, DCE_TYPE type )
+DCE *DCE_AllocDCE( HWND32 hWnd, DCE_TYPE type )
 {
     DCE * dce;
-    HANDLE handle = USER_HEAP_ALLOC( sizeof(DCE) );
-    if (!handle) return 0;
-    dce = (DCE *) USER_HEAP_LIN_ADDR( handle );
+    if (!(dce = HeapAlloc( SystemHeap, 0, sizeof(DCE) ))) return NULL;
     if (!(dce->hDC = CreateDC( "DISPLAY", NULL, NULL, NULL )))
     {
-	USER_HEAP_FREE( handle );
+        HeapFree( SystemHeap, 0, dce );
 	return 0;
     }
 
     /* store DCE handle in DC hook data field */
 
-    SetDCHook(dce->hDC, GDI_GetDefDCHook(), MAKELONG(handle,DC_MAGIC));
+    SetDCHook(dce->hDC, GDI_GetDefDCHook(), (DWORD)dce);
 
     dce->hwndCurrent = hWnd;
-    dce->hNext = firstDCE;
-    dce->hClipRgn = 0;
-    firstDCE = handle;
+    dce->hClipRgn    = 0;
+    dce->next        = firstDCE;
+    firstDCE = dce;
 
     if( type != DCE_CACHE_DC )
       {
@@ -72,66 +70,49 @@ HANDLE DCE_AllocDCE( HWND hWnd, DCE_TYPE type )
       }
     else dce->DCXflags = DCX_CACHE;
 
-    return handle;
+    return dce;
 }
 
 
 /***********************************************************************
  *           DCE_FreeDCE
  */
-void DCE_FreeDCE( HANDLE hdce )
+void DCE_FreeDCE( DCE *dce )
 {
-    DCE * dce;
-    HANDLE *handle = &firstDCE;
+    DCE **ppDCE = &firstDCE;
 
-    if (!(dce = (DCE *) USER_HEAP_LIN_ADDR( hdce ))) return;
-    while (*handle && (*handle != hdce))
-    {
-	DCE * prev = (DCE *) USER_HEAP_LIN_ADDR( *handle );	
-	handle = &prev->hNext;
-    }
-    if (*handle == hdce) *handle = dce->hNext;
+    if (!dce) return;
+    while (*ppDCE && (*ppDCE != dce)) ppDCE = &(*ppDCE)->next;
+    if (*ppDCE == dce) *ppDCE = dce->next;
 
     SetDCHook(dce->hDC,(SEGPTR)NULL,0L);
 
     DeleteDC( dce->hDC );
     if( dce->hClipRgn && !(dce->DCXflags & DCX_KEEPCLIPRGN) )
 	DeleteObject(dce->hClipRgn);
-    USER_HEAP_FREE( hdce );
+    HeapFree( SystemHeap, 0, dce );
 }
 
-/***********************************************************************
- *           DCE_FindDCE
- */
-HANDLE DCE_FindDCE(HDC hDC)
-{
- HANDLE hdce = firstDCE;
- DCE*   dce;
-
- while( hdce )
-  {
-    dce = (DCE *) USER_HEAP_LIN_ADDR(hdce);
-    if( dce->hDC == hDC ) break;
-    hdce = dce->hNext;
-  }
- return hdce;
-}
 
 /**********************************************************************
- *          WindowFromDC   (USER.117) (USER32.580)
+ *          WindowFromDC16   (USER32.580)
  */
-HWND16 WindowFromDC( HDC32 hDC )
+HWND16 WindowFromDC16( HDC16 hDC )
 {
- HANDLE16 hdce = DCE_FindDCE(hDC); 
-
- if( hdce )
-   {
-     DCE* dce = (DCE *) USER_HEAP_LIN_ADDR(hdce);
-     return dce->hwndCurrent;
-   }
-
- return 0;
+    return (HWND16)WindowFromDC32( hDC );
 }
+
+
+/**********************************************************************
+ *          WindowFromDC32   (USER32.580)
+ */
+HWND32 WindowFromDC32( HDC32 hDC )
+{
+    DCE *dce = firstDCE;
+    while (dce && (dce->hDC != hDC)) dce = dce->next;
+    return dce ? dce->hwndCurrent : 0;
+}
+
 
 /***********************************************************************
  *   DCE_InvalidateDCE
@@ -139,10 +120,10 @@ HWND16 WindowFromDC( HDC32 hDC )
  * It is called from SetWindowPos - we have to invalidate all busy
  * DCE's for windows whose client rect intersects with update rectangle 
  */
-BOOL DCE_InvalidateDCE(WND* wndScope, RECT16* pRectUpdate)
+BOOL32 DCE_InvalidateDCE(WND* wndScope, RECT16* pRectUpdate)
 {
- HANDLE hdce;
- DCE*   dce;
+    BOOL32 bRet = FALSE;
+    DCE *dce;
 
  if( !wndScope ) return 0;
 
@@ -151,10 +132,8 @@ BOOL DCE_InvalidateDCE(WND* wndScope, RECT16* pRectUpdate)
 				        pRectUpdate->right,pRectUpdate->bottom);
  /* walk all DCE's */
 
- for( hdce = firstDCE; (hdce); hdce=dce->hNext)
+ for (dce = firstDCE; (dce); dce = dce->next)
   { 
-    dce = (DCE*)USER_HEAP_LIN_ADDR(hdce);
-
     if( dce->DCXflags & DCX_DCEBUSY )
       {
         WND * wndCurrent, * wnd; 
@@ -177,12 +156,15 @@ BOOL DCE_InvalidateDCE(WND* wndScope, RECT16* pRectUpdate)
 	        MapWindowPoints16(wndCurrent->parent->hwndSelf, wndScope->hwndSelf,
 			 				       (LPPOINT16)&wndRect, 2);
 	        if( IntersectRect16(&wndRect,&wndRect,pRectUpdate) )
-	            SetHookFlags(dce->hDC, DCHF_INVALIDATEVISRGN);
+	        {    
+		   SetHookFlags(dce->hDC, DCHF_INVALIDATEVISRGN);
+		   bRet = TRUE;
+		}
 	        break;
 	      }
       }
   }
- return 1;
+ return bRet;
 }
 
 /***********************************************************************
@@ -191,13 +173,11 @@ BOOL DCE_InvalidateDCE(WND* wndScope, RECT16* pRectUpdate)
 void DCE_Init()
 {
     int i;
-    HANDLE handle;
     DCE * dce;
         
     for (i = 0; i < NB_DCE; i++)
     {
-	if (!(handle = DCE_AllocDCE( 0, DCE_CACHE_DC ))) return;
-	dce = (DCE *) USER_HEAP_LIN_ADDR( handle );	
+	if (!(dce = DCE_AllocDCE( 0, DCE_CACHE_DC ))) return;
 	if (!defaultDCstate) defaultDCstate = GetDCState( dce->hDC );
     }
 }
@@ -400,14 +380,23 @@ static void DCE_SetDrawable( WND *wndPtr, DC *dc, WORD flags )
     }
 }
 
+
 /***********************************************************************
- *           GetDCEx    (USER.359)
+ *           GetDCEx16    (USER.359)
+ */
+HDC16 GetDCEx16( HWND16 hwnd, HRGN16 hrgnClip, DWORD flags )
+{
+    return (HDC16)GetDCEx32( hwnd, hrgnClip, flags );
+}
+
+
+/***********************************************************************
+ *           GetDCEx32    (USER32.230)
  *
  * Unimplemented flags: DCX_LOCKWINDOWUPDATE
  */
-HDC GetDCEx( HWND hwnd, HRGN hrgnClip, DWORD flags )
+HDC32 GetDCEx32( HWND32 hwnd, HRGN32 hrgnClip, DWORD flags )
 {
-    HANDLE 	hdce;
     HRGN 	hrgnVisible;
     HDC 	hdc = 0;
     DCE * 	dce;
@@ -446,7 +435,8 @@ HDC GetDCEx( HWND hwnd, HRGN hrgnClip, DWORD flags )
         flags &= ~(DCX_PARENTCLIP | DCX_CLIPCHILDREN);
       }
 
-    if (hwnd==GetDesktopWindow() || !(wndPtr->dwStyle & WS_CHILD)) flags &= ~DCX_PARENTCLIP;
+    if (hwnd == GetDesktopWindow32() || !(wndPtr->dwStyle & WS_CHILD))
+        flags &= ~DCX_PARENTCLIP;
 
     if (flags & DCX_WINDOW) flags = (flags & ~DCX_CLIPCHILDREN) | DCX_CACHE;
 
@@ -464,17 +454,14 @@ HDC GetDCEx( HWND hwnd, HRGN hrgnClip, DWORD flags )
 
     if (flags & DCX_CACHE)
     {
-	for (hdce = firstDCE; (hdce); hdce = dce->hNext)
+	for (dce = firstDCE; (dce); dce = dce->next)
 	{
-	    if (!(dce = (DCE *) USER_HEAP_LIN_ADDR( hdce ))) return 0;
 	    if ((dce->DCXflags & DCX_CACHE) && !(dce->DCXflags & DCX_DCEBUSY)) break;
 	}
     }
     else 
     {
-        hdce = (wndPtr->class->style & CS_OWNDC)?wndPtr->hdce:wndPtr->class->hdce;
-	dce = (DCE *) USER_HEAP_LIN_ADDR( hdce );
-
+        dce = (wndPtr->class->style & CS_OWNDC)?wndPtr->dce:wndPtr->class->dce;
 	if( dce->hwndCurrent == hwnd )
 	  {
 	    dprintf_dc(stddeb,"\tskipping hVisRgn update\n");
@@ -491,8 +478,7 @@ HDC GetDCEx( HWND hwnd, HRGN hrgnClip, DWORD flags )
 
     dcx_flags = flags & ( DCX_CLIPSIBLINGS | DCX_CLIPCHILDREN | DCX_CACHE | DCX_WINDOW | DCX_WINDOWPAINT);
 
-    if (!hdce) return 0;
-    dce = (DCE *) USER_HEAP_LIN_ADDR( hdce );
+    if (!dce) return 0;
     dce->hwndCurrent = hwnd;
     dce->hClipRgn = 0;
     dce->DCXflags = dcx_flags | DCX_DCEBUSY;
@@ -502,7 +488,7 @@ HDC GetDCEx( HWND hwnd, HRGN hrgnClip, DWORD flags )
 
     DCE_SetDrawable( wndPtr, dc, flags );
     if( need_update || dc->w.flags & DC_DIRTY )
-     {
+    {
       dprintf_dc(stddeb,"updating hDC anyway\n");
 
       if (flags & DCX_PARENTCLIP)
@@ -521,16 +507,27 @@ HDC GetDCEx( HWND hwnd, HRGN hrgnClip, DWORD flags )
         }
            /* optimize away GetVisRgn for desktop if it isn't there */
 
-      else if ((hwnd == GetDesktopWindow()) &&
+      else if ((hwnd == GetDesktopWindow32()) &&
                (rootWindow == DefaultRootWindow(display)))
 	       hrgnVisible = CreateRectRgn( 0, 0, SYSMETRICS_CXSCREEN,
                                                   SYSMETRICS_CYSCREEN);
       else hrgnVisible = DCE_GetVisRgn( hwnd, flags );
 
-      dc->w.flags &= ~DC_DIRTY;
+      if( wndPtr->parent && wndPtr->window )
+      {
+        WND* 	wnd = wndPtr->parent->child;
+	RECT16  rect;
+	
+        for( ; wnd != wndPtr; wnd = wnd->next )
+           if( wnd->class->style & CS_SAVEBITS &&
+               wnd->dwStyle & WS_VISIBLE &&
+	       IntersectRect16(&rect, &wndPtr->rectClient, &wnd->rectClient) )
+               wnd->flags |= WIN_SAVEUNDER_OVERRIDE;
+      }
 
+      dc->w.flags &= ~DC_DIRTY;
       SelectVisRgn( hdc, hrgnVisible );
-     }
+    }
     else hrgnVisible = CreateRectRgn(0,0,0,0);
 
     if ((flags & DCX_INTERSECTRGN) || (flags & DCX_EXCLUDERGN))
@@ -552,49 +549,67 @@ HDC GetDCEx( HWND hwnd, HRGN hrgnClip, DWORD flags )
     return hdc;
 }
 
-/***********************************************************************
- *           GetDC    (USER.66)
- */
-HDC GetDC( HWND hwnd )
-{
-    if( !hwnd ) return GetDCEx( GetDesktopWindow(), 0, DCX_CACHE | DCX_WINDOW );
 
-    return GetDCEx( hwnd, 0, DCX_USESTYLE );
+/***********************************************************************
+ *           GetDC16    (USER.66)
+ */
+HDC16 GetDC16( HWND16 hwnd )
+{
+    return (HDC16)GetDC32( hwnd );
 }
 
 
 /***********************************************************************
- *           GetWindowDC    (USER.67)
+ *           GetDC32    (USER32.229)
  */
-HDC GetWindowDC( HWND hwnd )
+HDC32 GetDC32( HWND32 hwnd )
 {
-    if (hwnd)
-    {
-	WND * wndPtr;
-	if (!(wndPtr = WIN_FindWndPtr( hwnd ))) return 0;
-    }
-    else hwnd = GetDesktopWindow();
-
-    return GetDCEx( hwnd, 0, DCX_USESTYLE | DCX_WINDOW );
+    if (!hwnd)
+        return GetDCEx32( GetDesktopWindow32(), 0, DCX_CACHE | DCX_WINDOW );
+    return GetDCEx32( hwnd, 0, DCX_USESTYLE );
 }
 
 
 /***********************************************************************
- *           ReleaseDC    (USER.68)
+ *           GetWindowDC16    (USER.67)
  */
-int ReleaseDC( HWND hwnd, HDC hdc )
+HDC16 GetWindowDC16( HWND16 hwnd )
 {
-    HANDLE hdce;
-    DCE * dce = NULL;
+    if (!hwnd) hwnd = GetDesktopWindow16();
+    return GetDCEx16( hwnd, 0, DCX_USESTYLE | DCX_WINDOW );
+}
+
+
+/***********************************************************************
+ *           GetWindowDC32    (USER32.)
+ */
+HDC32 GetWindowDC32( HWND32 hwnd )
+{
+    if (!hwnd) hwnd = GetDesktopWindow32();
+    return GetDCEx32( hwnd, 0, DCX_USESTYLE | DCX_WINDOW );
+}
+
+
+/***********************************************************************
+ *           ReleaseDC16    (USER.68)
+ */
+INT16 ReleaseDC16( HWND16 hwnd, HDC16 hdc )
+{
+    return (INT32)ReleaseDC32( hwnd, hdc );
+}
+
+
+/***********************************************************************
+ *           ReleaseDC32    (USER32.439)
+ */
+INT32 ReleaseDC32( HWND32 hwnd, HDC32 hdc )
+{
+    DCE * dce = firstDCE;
     
     dprintf_dc(stddeb, "ReleaseDC: %04x %04x\n", hwnd, hdc );
         
-    for (hdce = firstDCE; (hdce); hdce = dce->hNext)
-    {
-	if (!(dce = (DCE *) USER_HEAP_LIN_ADDR( hdce ))) return 0;
-	if (dce->hDC == hdc) break;
-    }
-    if (!hdce) return 0;
+    while (dce && (dce->hDC != hdc)) dce = dce->next;
+    if (!dce) return 0;
     if (!(dce->DCXflags & DCX_DCEBUSY) ) return 0;
 
     /* restore previous visible region */
@@ -631,24 +646,18 @@ int ReleaseDC( HWND hwnd, HDC hdc )
  */
 BOOL DCHook(HDC hDC, WORD code, DWORD data, DWORD lParam)
 {
-  HANDLE hdce;
-  HRGN hVisRgn;
+    HRGN32 hVisRgn;
+    DCE *dce = firstDCE;;
 
-  dprintf_dc(stddeb,"DCHook: hDC = %04x, %i\n", hDC, code);
+    dprintf_dc(stddeb,"DCHook: hDC = %04x, %i\n", hDC, code);
 
-  if( HIWORD(data) == DC_MAGIC )
-      hdce = (HANDLE)LOWORD(data);
-  else
-      hdce = DCE_FindDCE(hDC);
-
-  if( !hdce ) return 0;
+    while (dce && (dce->hDC != hDC)) dce = dce->next;
+    if (!dce) return 0;
 
   switch( code )
     {
       case DCHC_INVALIDVISRGN:
          {
-           DCE* dce = (DCE*) USER_HEAP_LIN_ADDR(hdce);
-
            if( dce->DCXflags & DCX_DCEBUSY )
  	     {
 	       SetHookFlags(hDC, DCHF_VALIDATEVISRGN);

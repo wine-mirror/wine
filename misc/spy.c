@@ -148,8 +148,17 @@ static const char * const MessageTypeNames[SPY_MAX_MSGNUM + 1] =
     NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
 
     /* 0x00E0 - Win32 Scrollbars */
-    NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
-    NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
+    "SBM_SETPOS32",             /* 0x00e0 */
+    "SBM_GETPOS32",             /* 0x00e1 */
+    "SBM_SETRANGE32",           /* 0x00e2 */
+    "SBM_GETRANGE32",           /* 0x00e3 */
+    "SBM_ENABLE_ARROWS32",      /* 0x00e4 */
+    NULL,
+    "SBM_SETRANGEREDRAW32",     /* 0x00e6 */
+    NULL, NULL,
+    "SBM_SETSCROLLINFO32",      /* 0x00e9 */
+    "SBM_GETSCROLLINFO32",      /* 0x00ea */
+    NULL, NULL, NULL, NULL, NULL,
 
     /* 0x00F0 - Win32 Buttons */
     "BM_GETCHECK32",            /* 0x00f0 */

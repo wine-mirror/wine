@@ -4,6 +4,7 @@
  * Copyright 1996 Bruce Milner
  */
 
+#define NO_TRANSITION_TYPES  /* This file is Win32-clean */
 #include <stdio.h>
 #include <stdlib.h>
 #include "windows.h"
@@ -226,9 +227,9 @@ SW_SetParts(STATUSWINDOWINFO *self, HWND32 hwnd, WPARAM32 wParam, LPARAM lParam)
     }
     SW_SetPartBounds(hwnd, self);
 
-    hdc = GetDC(hwnd);
+    hdc = GetDC32(hwnd);
     SW_Refresh(hwnd, hdc, self);
-    ReleaseDC(hwnd, hdc);
+    ReleaseDC32(hwnd, hdc);
     return TRUE;
 }
 
@@ -272,11 +273,11 @@ SW_Create(STATUSWINDOWINFO *self, HWND32 hwnd, WPARAM32 wParam, LPARAM lParam)
     self->part0.style = 0;
 
     height = 40;
-    if ((hdc = GetDC(0))) {
+    if ((hdc = GetDC32(0))) {
 	TEXTMETRIC32A tm;
 	GetTextMetrics32A(hdc, &tm);
 	self->textHeight = tm.tmHeight;
-	ReleaseDC(0, hdc);
+	ReleaseDC32(0, hdc);
     }
 
     parent = GetParent32(hwnd);
@@ -369,9 +370,9 @@ SW_Simple(STATUSWINDOWINFO *self, HWND32 hwnd, WPARAM32 wParam, LPARAM lParam)
 
     simple = (BOOL32) wParam;
     self->simple = simple;
-    hdc = GetDC(hwnd);
+    hdc = GetDC32(hwnd);
     SW_Refresh(hwnd, hdc, self);
-    ReleaseDC(hwnd, hdc);
+    ReleaseDC32(hwnd, hdc);
     return TRUE;
 }
 

@@ -12,6 +12,7 @@
 #ifndef PI
 #define PI M_PI
 #endif
+#include "graphics.h"
 #include "dc.h"
 #include "bitmap.h"
 #include "callback.h"
@@ -279,6 +280,7 @@ BOOL Ellipse( HDC hdc, INT left, INT top, INT right, INT bottom )
  */
 BOOL Rectangle( HDC hdc, INT left, INT top, INT right, INT bottom )
 {
+    INT32 width;
     DC * dc = (DC *) GDI_GetObjPtr( hdc, DC_MAGIC );
     if (!dc) 
     {
@@ -305,21 +307,24 @@ BOOL Rectangle( HDC hdc, INT left, INT top, INT right, INT bottom )
 		  dc->w.DCOrgY + bottom);
 	return TRUE;
     }
-    
+    width = dc->u.x.pen.width;
+    if (!width) width = 1;
+    if(dc->u.x.pen.style == PS_NULL) width = 0;
+
     if ((dc->u.x.pen.style == PS_INSIDEFRAME) &&
-        (dc->u.x.pen.width < right-left) &&
-        (dc->u.x.pen.width < bottom-top))
+        (width < right-left) && (width < bottom-top))
     {
-        left   += dc->u.x.pen.width / 2;
-        right  -= (dc->u.x.pen.width + 1) / 2;
-        top    += dc->u.x.pen.width / 2;
-        bottom -= (dc->u.x.pen.width + 1) / 2;
+        left   += width / 2;
+        right  -= (width + 1) / 2;
+        top    += width / 2;
+        bottom -= (width + 1) / 2;
     }
 
     if (DC_SetupGCForBrush( dc ))
 	XFillRectangle( display, dc->u.x.drawable, dc->u.x.gc,
-		        dc->w.DCOrgX + left, dc->w.DCOrgY + top,
-		        right-left, bottom-top );
+		        dc->w.DCOrgX + left + (width + 1) / 2,
+		        dc->w.DCOrgY + top + (width + 1) / 2,
+		        right-left-width-1, bottom-top-width-1);
     if (DC_SetupGCForPen( dc ))
 	XDrawRectangle( display, dc->u.x.drawable, dc->u.x.gc,
 		        dc->w.DCOrgX + left, dc->w.DCOrgY + top,
@@ -745,8 +750,8 @@ void DrawFocusRect32( HDC32 hdc, const RECT32* rect )
  * Short-cut function to blit a bitmap into a device.
  * Faster than CreateCompatibleDC() + SelectBitmap() + BitBlt() + DeleteDC().
  */
-BOOL GRAPH_DrawBitmap( HDC hdc, HBITMAP hbitmap, int xdest, int ydest,
-		       int xsrc, int ysrc, int width, int height )
+BOOL32 GRAPH_DrawBitmap( HDC32 hdc, HBITMAP32 hbitmap, int xdest, int ydest,
+                         int xsrc, int ysrc, int width, int height )
 {
     BITMAPOBJ *bmp;
     DC *dc;
@@ -778,8 +783,8 @@ BOOL GRAPH_DrawBitmap( HDC hdc, HBITMAP hbitmap, int xdest, int ydest,
 /**********************************************************************
  *          GRAPH_DrawReliefRect  (Not a MSWin Call)
  */
-void GRAPH_DrawReliefRect( HDC hdc, RECT16 *rect, int highlight_size,
-                           int shadow_size, BOOL pressed )
+void GRAPH_DrawReliefRect( HDC32 hdc, const RECT32 *rect, INT32 highlight_size,
+                           INT32 shadow_size, BOOL32 pressed )
 {
     HBRUSH hbrushOld;
     int i;

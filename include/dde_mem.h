@@ -25,14 +25,14 @@ typedef struct {
 
 WORD DDE_SyncHandle(HGLOBAL16 handle, WORD sel);
 void *DDE_malloc(unsigned int flags,unsigned long size, SHMDATA *shmdata);
-HANDLE DDE_GlobalReAlloc(WORD,long,WORD);
+HANDLE16 DDE_GlobalReAlloc(WORD,long,WORD);
 HGLOBAL16 DDE_GlobalFree(HGLOBAL16 block);
 void *DDE_AttachHandle(HGLOBAL16 handle, SEGPTR *segptr);
 WORD DDE_GlobalHandleToSel( HGLOBAL16 handle );
 int DDE_GlobalUnlock(int);
-HANDLE DDE_GlobalSize(WORD);
-HANDLE DDE_GlobalHandle(WORD);
-HANDLE DDE_GlobalFlags(WORD);
+HANDLE16 DDE_GlobalSize(WORD);
+HANDLE16 DDE_GlobalHandle(WORD);
+HANDLE16 DDE_GlobalFlags(WORD);
 
 #endif  /* CONFIG_IPC */
 

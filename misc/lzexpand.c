@@ -75,7 +75,7 @@ _lzget(struct lzstate *lzs,BYTE *b) {
 		*b		= lzs->get[lzs->getcur++];
 		return		1;
 	} else {
-		int ret = FILE_Read(lzs->realfd,lzs->get,GETLEN);
+		int ret = _lread32(lzs->realfd,lzs->get,GETLEN);
 		if (ret==HFILE_ERROR)
 			return HFILE_ERROR;
 		if (ret==0)
@@ -102,7 +102,7 @@ read_header(HFILE fd,struct lzfileheader *head) {
 	/* We can't directly read the lzfileheader struct due to 
 	 * structure element alignment
 	 */
-	if (FILE_Read(fd,buf,14)<14)
+	if (_lread32(fd,buf,14)<14)
 		return 0;
 	memcpy(head->magic,buf,8);
 	memcpy(&(head->compressiontype),buf+8,1);
@@ -306,7 +306,7 @@ LZRead32(HFILE fd,LPVOID vbuf,UINT32 toread) {
 		if (lzstates[i].lzfd==fd)
 			break;
 	if (i==nroflzstates)
-		return FILE_Read(fd,buf,toread);
+		return _lread32(fd,buf,toread);
 	lzs=lzstates+i;
 
 /* The decompressor itself is in a define, cause we need it twice
@@ -447,7 +447,7 @@ LZCopy(HFILE src,HFILE dest) {
 
 	/* not compressed? just copy */
 	if (i==nroflzstates)
-		xread=FILE_Read;
+		xread=(INT32(*)(HFILE,LPVOID,UINT32))_lread32;
 	else
 		xread=LZRead32;
 	len=0;

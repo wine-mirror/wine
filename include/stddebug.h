@@ -140,6 +140,7 @@
 #undef DEBUG_SCROLL
 #undef DEBUG_SELECTOR
 #undef DEBUG_SEM
+#undef DEBUG_SENDMSG
 #undef DEBUG_SHM
 #undef DEBUG_STRESS
 #undef DEBUG_SYSCOLOR
@@ -219,6 +220,7 @@
 #define DEBUG_SCROLL
 #define DEBUG_SELECTOR
 #define DEBUG_SEM
+#define DEBUG_SENDMSG
 #define DEBUG_SHM
 #define DEBUG_STRESS
 #define DEBUG_SYSCOLOR

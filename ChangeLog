@@ -1,4 +1,172 @@
 ----------------------------------------------------------------------
+Fri Sep 27 14:18:42 1996  Alexandre Julliard  <julliard@lrc.epfl.ch>
+
+	* [controls/button.c]
+	Fixed focus rectangle size and clipping.
+
+	* [controls/scroll.c]
+	Converted to Win32 and added support for scroll page.
+	Completed SetScrollInfo() and implemented other Win32 functions.
+
+	* [files/file.c]
+	Removed FILE_Read() (use _lread32 instead).
+
+	* [objects/dce.c] [include/dce.h]
+	Allocate DCE on the Win32 heap, and use pointers instead of
+	handles.
+	Implemented Win32 version of DC functions.
+
+	* [windows/painting.c]
+	Attempt to make CS_PARENTDC style work again.
+
+Wed Sep 25 23:40:52 1996 Alex Korobka <alex@trantor.pharm.sunysb.edu>
+
+	* [windows/dce.c] [windows/winpos.c]
+	Override SaveUnder attribute when painting took place
+	in a window below. Force X to raise activated window 
+	in seamless mode.
+
+	* [misc/clipboard.c] [windows/event.c]
+	Translation between DOS and Unix text formats and several
+	other fixes for the sudden selection loss.
+
+	* [windows/message.c]
+	Apply "first" and "last" when checking for WM_QUIT in 
+        MSG_PeekMessage().
+
+	* [windows/win.c]
+	Rearranged DestroyWindow() to fit "Windows Internals"
+	description.
+
+	* [windows/win.c] [windows/winpos.c] [windows/nonclient.c]
+	Misc. fixes to CBT hook calls.
+
+	* [controls/menu.c] [misc/user.c]
+	Fixup resident popup menu window so that it doesn't get
+	destroyed by USER_AppExit().
+
+	* [loader/module.c] [loader/task.c] [windows/event.c]
+	Process "unsafe" X events outside the scheduler to prevent
+	deadlocks.
+
+	* [windows/message.c] [windows/queue.c] [windows/winpos.c]
+	Lots of fixes for better Win16 multitasking.
+
+Wed Sep 25 20:36:30 1996  Marcus Meissner <msmeissn@cip.informatik.uni-erlangen.de>
+
+	* [include/windows.h]
+	Added some missing HOOK defines.
+
+	* [misc/shell.c][if1632/shell32.spec][include/shell.h]
+	SHGetFileInfoA stub added (win95 mplayer.exe /play bla.avi).
+
+	* [win32/console.c][include/wincon.h]
+	GetConsoleScreenBufferInfo, GetLargestConsoleWindowSize added.
+
+	* [misc/registry.c]
+	Some null ptr fixes.
+
+	* [loader/pe_image.c]
+	Fixed exported function lookup. (msvcrt20.dll)
+	Add debugsyms for entrypoint, exported functions and sections.
+
+	* [multimedia/mmsystem.c]
+	MCIOpen: support for element opens (mplayer.exe /play bla.avi).
+
+	* [several]
+	Added several missing things/stubs/simple thunks from win32
+	to win16 code.
+
+Sat Sep 21 17:27:44 1996  O.Flebbe  <flebbe@science-computing.uni-tuebingen.de>
+
+	* [windows/property.c]
+	Fixed debugging of 16 Bit RemoveProp().
+
+	* [debugger/memory.c]
+	Added DEBUG_checkmap_bad() for linux.
+
+Thu Sep 19 20:48:31 1996  Albrecht Kleine  <kleine@ak.sax.de>
+
+	* [windows/event.c] [windows/hook.c]
+	Use EnableHardwareInput() for JournalPlayback hook.
+
+	* [controls/listbox.c]
+	Changed handling of LB_GETITEMRECT in empty listboxes.
+
+Thu Sep 19 13:34:35 1996  Slaven Rezic  <eserte@cs.tu-berlin.de>
+
+	* [misc/main.c]
+	Fixes to X resources handling.	
+
+Wed Sep 18 00:31:15 1996  Huw D. M. Davies <h.davies1@physics.oxford.ac.uk>
+
+	* [objects/metafile.c] [include/gdi.h] [objects/dc.c]
+	Individual handle table created for each metafile. Fixed
+ 	GlobalReAlloc() bug in MF_AddHandleDC() (was MF_AddHandleInternal).
+
+	* [windows/graphics.c] [objects/dc.c]
+	Rectangle() changed to work better with wide pens and PS_NULL.
+	Use JoinMiter.
+
+	* [windows/winpos.c]
+	Make the whole (non X) window invalid on resize if CS_[VH]REDRAW
+ 	is set.
+
+	* [windows/nonclient.c]
+	AdjustWindowRectEx() should perform calculations even if the
+ 	window is minimized.
+
+	* [windows/mdi.c]
+	Better handling of system button painting. Maximized windows can
+ 	contain scroll bars. Icons now maximize properly.
+
+	* [windows/defwnd.c] [windows/nonclient.c] [controls/menu.c]
+	Improved greying of items in system menu. WM_INITMEMUPOPUP no
+ 	longer caught in DefWndProc, DEFWND_InitSysMenuPopup moved to
+ 	menu.c.
+
+Mon Sep 16 21:30:00 1996  Uwe Bonnes <bon@elektron.ikp.physik.th-darmstadt.de>
+
+	* [several files]
+	Fix missing includes and wrong printing arguments.
+
+	* [controls/listbox.c]
+	Don't sort drives in ListBoxDirectory().
+	
+Sat Sep 14 09:05:47 1996  Petri Tuomola <ptuomola@xs4all.nl>
+
+	* [windows/dialog.c]
+	Fixed handling of Shift-TAB in dialogs.
+
+Thu Sep 12 18:31:00 1996  Thomas Sandford <t.d.g.sandford@prds-grn.demon.co.uk>
+
+	* [if1632/gdi32.spec]
+	Added SelectClipRgn - call win16 version.
+
+	* [if1632/user32.spec]
+	Added GetAsyncKeyState, GetMenuItemID and GetMenuStringA.
+
+	* [include/wincon.h]
+	Added COORD and SMALL_RECT typedefs, moved CONSOLE_SCREEN_BUFFER_INFO
+	out of #if 0 protected portion of file.
+
+	* [loader/pe_image.c]
+	PE_InitTEB() - Tidy up, bug fix to stack pointer value (Borland
+	programs now work better)
+
+	* [win32/console.c]
+	Added stub functions for GetConsoleScreenBufferInfo and 
+	GetLargestConsoleWindowSize
+
+	* [win32/findfile.c]
+	FindFirstFile32A() - removed erroneous strcpy
+
+	* [windows/keyboard.c]
+	GetAsyncKeyState() - bug fix - now returns value as per Microsoft
+	specification. NB - I still have doubts about some other functions
+	in this file.
+
+----------------------------------------------------------------------
 Wed Sep 11 18:08:30 1996  Albrecht Kleine  <kleine@ak.sax.de>
 
 	* [windows/event.c]

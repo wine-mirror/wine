@@ -32,6 +32,8 @@
 #define RDW_C_USEHRGN		0x0001
 #define RDW_C_DELETEHRGN	0x0002
 
+struct tagDCE;
+
 typedef struct tagWND
 {
     struct tagWND *next;          /* Next sibling */
@@ -52,12 +54,12 @@ typedef struct tagWND
     void          *pVScroll;      /* Vertical scroll-bar info */
     void          *pHScroll;      /* Horizontal scroll-bar info */
     void          *pProp;         /* Pointer to properties list */
+    struct tagDCE *dce;           /* Window DCE (if CS_OWNDC or CS_CLASSDC) */
     HGLOBAL16      hmemTaskQ;     /* Task queue global memory handle */
     HRGN16         hrgnUpdate;    /* Update region */
     HWND16         hwndLastActive;/* Last active popup hwnd */
     DWORD          dwStyle;       /* Window style (from CreateWindow) */
     DWORD          dwExStyle;     /* Extended style (from CreateWindowEx) */
-    HANDLE16       hdce;          /* Window DCE (if CS_OWNDC or CS_CLASSDC) */
     UINT16         wIDmenu;       /* ID or hmenu (from CreateWindow) */
     WORD           flags;         /* Misc. flags (see below) */
     Window         window;        /* X window (only for top-level windows) */
@@ -77,6 +79,7 @@ typedef struct tagWND
 #define WIN_NCACTIVATED        0x0080 /* last WM_NCACTIVATE was positive */
 #define WIN_MANAGED            0x0100 /* Window managed by the X wm */
 #define WIN_ISDIALOG           0x0200 /* Window is a dialog */
+#define WIN_SAVEUNDER_OVERRIDE 0x0400
 
   /* Window functions */
 extern WND *WIN_FindWndPtr( HWND32 hwnd );
@@ -89,6 +92,7 @@ extern BOOL32 WIN_LinkWindow( HWND32 hwnd, HWND32 hwndInsertAfter );
 extern HWND32 WIN_FindWinToRepaint( HWND32 hwnd, HQUEUE16 hQueue );
 extern void WIN_SendParentNotify( HWND32 hwnd, WORD event,
                                   WORD idChild, LPARAM lValue );
+extern void WIN_DestroyQueueWindows( WND* wnd, HQUEUE16 hQueue );
 extern BOOL32 WIN_CreateDesktopWindow(void);
 extern HWND32 WIN_GetTopParent( HWND32 hwnd );
 extern BOOL32 WIN_IsWindowDrawable(WND*, BOOL32 );

@@ -542,23 +542,6 @@ HFILE FILE_Dup2( HFILE hFile1, HFILE hFile2 )
 
 
 /***********************************************************************
- *           FILE_Read
- */
-INT32 FILE_Read( HFILE hFile, LPVOID buffer, UINT32 count )
-{
-    DOS_FILE *file;
-    INT32 result;
-
-    dprintf_file( stddeb, "FILE_Read: %d %p %d\n", hFile, buffer, count );
-    if (!(file = FILE_GetFile( hFile ))) return -1;
-    if (!count) return 0;
-    if ((result = read( file->unix_handle, buffer, count )) == -1)
-        FILE_SetDosError();
-    return result;
-}
-
-
-/***********************************************************************
  *           GetTempFileName16   (KERNEL.97)
  */
 UINT16 GetTempFileName16( BYTE drive, LPCSTR prefix, UINT16 unique,
@@ -735,7 +718,7 @@ HFILE OpenFile( LPCSTR name, OFSTRUCT *ofs, UINT32 mode )
 
     /* Try the Windows directory */
 
-    GetWindowsDirectory( ofs->szPathName, len );
+    GetWindowsDirectory32A( ofs->szPathName, len );
     strcat( ofs->szPathName, "\\" );
     strcat( ofs->szPathName, name );
     if ((unixName = DOSFS_GetUnixFileName( ofs->szPathName, TRUE )) != NULL)
@@ -893,7 +876,7 @@ DWORD SearchPath32A(
         goto found;
 
     /* Try the Windows directory */
-    GetWindowsDirectory(testpath,len);
+    GetWindowsDirectory32A(testpath,len);
     strcat(testpath,"\\");
     strcat(testpath,name);
     if ((unixName = DOSFS_GetUnixFileName((LPCSTR)testpath,TRUE))!=NULL)
@@ -991,7 +974,7 @@ LONG WIN16_hread( HFILE hFile, SEGPTR buffer, LONG count )
     /* Some programs pass a count larger than the allocated buffer */
     maxlen = GetSelectorLimit( SELECTOROF(buffer) ) - OFFSETOF(buffer) + 1;
     if (count > maxlen) count = maxlen;
-    return FILE_Read( hFile, PTR_SEG_TO_LIN(buffer), count );
+    return _lread32( hFile, PTR_SEG_TO_LIN(buffer), count );
 }
 
 
@@ -1009,7 +992,15 @@ UINT16 WIN16_lread( HFILE hFile, SEGPTR buffer, UINT16 count )
  */
 UINT32 _lread32( HFILE hFile, LPVOID buffer, UINT32 count )
 {
-    return (UINT32)FILE_Read( hFile, buffer, (LONG)count );
+    DOS_FILE *file;
+    UINT32 result;
+
+    dprintf_file( stddeb, "_lread32: %d %p %d\n", hFile, buffer, count );
+    if (!(file = FILE_GetFile( hFile ))) return -1;
+    if (!count) return 0;
+    if ((result = read( file->unix_handle, buffer, count )) == -1)
+        FILE_SetDosError();
+    return result;
 }
 
 
@@ -1018,7 +1009,7 @@ UINT32 _lread32( HFILE hFile, LPVOID buffer, UINT32 count )
  */
 UINT16 _lread16( HFILE hFile, LPVOID buffer, UINT16 count )
 {
-    return (UINT16)FILE_Read( hFile, buffer, (LONG)count );
+    return (UINT16)_lread32( hFile, buffer, (LONG)count );
 }
 
 
@@ -1131,7 +1122,7 @@ UINT32 _lwrite32( HFILE hFile, LPCSTR buffer, UINT32 count )
  */
 LONG _hread( HFILE hFile, LPVOID buffer, LONG count)
 {
-    return FILE_Read( hFile, buffer, count );
+    return _lread32( hFile, buffer, count );
 }
 
 

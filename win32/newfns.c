@@ -33,6 +33,14 @@ HHOOK SetWindowsHookEx32A(int HookId, HOOKPROC32 hookfn, HINSTANCE hModule,
 	return (HHOOK) NULL;
 }
 
+HHOOK SetWindowsHook32A(int HookId, HOOKPROC32 hookfn)
+{
+	/* Stub for now */
+	fprintf(stdnimp, "SetWindowsHook32A Stub called! (hook Id %d)\n", HookId);
+	SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
+	return (HHOOK) NULL;
+}
+
 BOOL UnhookWindowsHookEx32(HHOOK hHook)
 
 {

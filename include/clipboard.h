@@ -2,8 +2,8 @@
 #define __WINE_CLIPBOARD_H
 
 void CLIPBOARD_ReadSelection(Window w,Atom prop);
-void CLIPBOARD_ReleaseSelection(HWND hwnd);
-void CLIPBOARD_DisOwn(HWND hWnd);
+void CLIPBOARD_ReleaseSelection(Window w,HWND hwnd);
+void CLIPBOARD_DisOwn(WND* pWnd);
 BOOL CLIPBOARD_IsPresent(WORD wFormat);
 
 #endif /* __WINE_CLIPBOARD_H */

@@ -2,7 +2,7 @@
  * Metafile functions
  *
  * Copyright  David W. Metcalfe, 1994
- *            Niels de Carpentier, Albrecht Kleine 1996
+ *            Niels de Carpentier, Albrecht Kleine, Huw Davies 1996
  *
  */
 
@@ -16,9 +16,6 @@
 #include "debug.h"
 
 #define HTINCR  10      /* handle table allocation size increment */
-
-static HANDLE hHT;      /* handle of the handle table */
-static int HTLen;       /* allocated length of handle table */
 
 /******************************************************************
  *         GetMetafile         GDI.124 By Kenny MacDonald 30 Nov 94
@@ -49,7 +46,7 @@ HMETAFILE16 GetMetaFile(LPSTR lpFilename)
     return 0;
   }
   
-  if (FILE_Read(hFile, (char *)mh, MFHEADERSIZE) == HFILE_ERROR) {
+  if (_lread32(hFile, (char *)mh, MFHEADERSIZE) == HFILE_ERROR) {
     GlobalFree16(hmf);
     return 0;
   }
@@ -64,7 +61,7 @@ HMETAFILE16 GetMetaFile(LPSTR lpFilename)
     return 0;
   }
   
-  if (FILE_Read(hFile, (char*)mh + mh->mtHeaderSize * 2, 
+  if (_lread32(hFile, (char*)mh + mh->mtHeaderSize * 2, 
 	        size - mh->mtHeaderSize * 2) == HFILE_ERROR) {
     GlobalFree16(hmf);
     return 0;
@@ -91,7 +88,7 @@ HANDLE CreateMetaFile(LPCSTR lpFilename)
     DC *dc;
     HANDLE handle;
     METAHEADER *mh;
-    int hFile;
+    HFILE hFile;
     
     dprintf_metafile(stddeb,"CreateMetaFile: %s\n", lpFilename);
 
@@ -106,7 +103,14 @@ HANDLE CreateMetaFile(LPCSTR lpFilename)
         GDI_FreeObject(handle);
 	return 0;
     }
-    dc->w.bitsPerPixel    = screenDepth;
+    if (!(dc->w.hHT = GlobalAlloc16(GMEM_MOVEABLE | GMEM_ZEROINIT,
+				    sizeof(HANDLETABLE16) * HTINCR))) {
+	GlobalFree16(dc->w.hMetaFile);
+	GDI_FreeObject(handle);
+	return 0;
+    }
+    dc->w.HTLen = HTINCR;
+    dc->w.bitsPerPixel = screenDepth;
     mh = (METAHEADER *)GlobalLock16(dc->w.hMetaFile);
 
     mh->mtHeaderSize = MFHEADERSIZE / 2;
@@ -122,7 +126,9 @@ HANDLE CreateMetaFile(LPCSTR lpFilename)
 	hFile = _lcreat(lpFilename, 0);
 	if (_lwrite32(hFile, (char *)mh, MFHEADERSIZE) == -1)
 	{
+	    GlobalFree16(dc->w.hHT);
 	    GlobalFree16(dc->w.hMetaFile);
+	    GDI_FreeObject(handle);
 	    return 0;
 	}
 	mh->mtNoParameters = hFile; /* store file descriptor here */
@@ -131,11 +137,6 @@ HANDLE CreateMetaFile(LPCSTR lpFilename)
     else                     /* memory based metafile */
 	mh->mtType = 0;
 
-    /* create the handle table */
-    HTLen = HTINCR;
-    hHT = GlobalAlloc16(GMEM_MOVEABLE | GMEM_ZEROINIT, 
-		      sizeof(HANDLETABLE16) * HTLen);
-    
     GlobalUnlock16(dc->w.hMetaFile);
     dprintf_metafile(stddeb,"CreateMetaFile: returning %04x\n", handle);
     return handle;
@@ -150,7 +151,7 @@ HMETAFILE16 CopyMetaFile(HMETAFILE16 hSrcMetaFile, LPCSTR lpFilename)
     HMETAFILE16 handle = 0;
     METAHEADER *mh;
     METAHEADER *mh2;
-    int hFile;
+    HFILE hFile;
     
     dprintf_metafile(stddeb,"CopyMetaFile: %s\n", lpFilename);
     
@@ -191,12 +192,13 @@ BOOL IsValidMetaFile(HMETAFILE16 hmf)
 {
     BOOL resu=FALSE;
     METAHEADER *mh = (METAHEADER *)GlobalLock16(hmf);
-    if (mh)
+    if (mh) {
       if (mh->mtType == 1 || mh->mtType == 0) 
         if (mh->mtHeaderSize == MFHEADERSIZE/sizeof(INT16))
           if (mh->mtVersion == MFVERSION)
             resu=TRUE;
-    GlobalUnlock16(hmf);            
+      GlobalUnlock16(hmf);
+    }
     dprintf_metafile(stddeb,"IsValidMetaFile %x => %d\n",hmf,resu);
     return resu;         
 }
@@ -228,7 +230,9 @@ HMETAFILE16 CloseMetaFile(HDC hdc)
 
     if (!MF_MetaParam0(dc, META_EOF))
     {
+	GlobalFree16(dc->w.hHT);
 	GlobalFree16(dc->w.hMetaFile);
+	GDI_FreeObject(hdc);
 	return 0;
     }	
 
@@ -238,20 +242,22 @@ HMETAFILE16 CloseMetaFile(HDC hdc)
 	mh->mtNoParameters = 0;
         if (_llseek(hFile, 0L, 0) == -1)
         {
+	    GlobalFree16(dc->w.hHT);
             GlobalFree16(dc->w.hMetaFile);
+	    GDI_FreeObject(hdc);
             return 0;
         }
         if (_lwrite32(hFile, (char *)mh, MFHEADERSIZE) == -1)
         {
+	    GlobalFree16(dc->w.hHT);
             GlobalFree16(dc->w.hMetaFile);
+	    GDI_FreeObject(hdc);
             return 0;
         }
         _lclose(hFile);
     }
 
-    /* delete the handle table */
-    GlobalFree16(hHT);
-
+    GlobalFree16(dc->w.hHT);
     hmf = dc->w.hMetaFile;
     GlobalUnlock16(hmf);
     GDI_FreeObject(hdc);
@@ -284,6 +290,7 @@ BOOL PlayMetaFile(HDC hdc, HMETAFILE16 hmf)
     METAHEADER *mh = (METAHEADER *)GlobalLock16(hmf);
     METARECORD *mr;
     HANDLETABLE16 *ht;
+    HGLOBAL16 hHT;
     int offset = 0;
     WORD i;
 
@@ -326,6 +333,7 @@ BOOL EnumMetaFile(HDC hdc, HMETAFILE16 hmf, MFENUMPROC16 lpEnumFunc,LPARAM lpDat
 {
     METAHEADER *mh = (METAHEADER *)GlobalLock16(hmf);
     METARECORD *mr;
+    HGLOBAL16 hHT;
     SEGPTR ht, spRecord;
     int offset = 0;
   
@@ -848,32 +856,27 @@ int MF_AddHandle(HANDLETABLE16 *ht, WORD htlen, HANDLE hobj)
 
 
 /******************************************************************
- *         MF_AddHandleInternal
+ *         MF_AddHandleDC
  *
- *    Add a handle to the internal handle table and return the index
+ *    Add a handle to the handle table in the DC, growing table if
+ *    necessary. Return the index
  */
 
-int MF_AddHandleInternal(HANDLE hobj)
+int MF_AddHandleDC(DC *dc, HANDLE hobj)
 {
     int i;
-    HANDLETABLE16 *ht = (HANDLETABLE16 *)GlobalLock16(hHT);
+    HANDLETABLE16 *ht = (HANDLETABLE16 *)GlobalLock16(dc->w.hHT);
 
-    for (i = 0; i < HTLen; i++)
-    {
-	if (*(ht->objectHandle + i) == 0)
-	{
-	    *(ht->objectHandle + i) = hobj;
-	    GlobalUnlock16(hHT);
-	    return i;
-	}
+    if((i = MF_AddHandle(ht, dc->w.HTLen, hobj)) == -1) {
+	GlobalUnlock16(dc->w.hHT);
+	if(!(dc->w.hHT = GlobalReAlloc16(dc->w.hHT, (dc->w.HTLen + HTINCR) *
+	 sizeof(HANDLETABLE16), GMEM_MOVEABLE | GMEM_ZEROINIT)))
+	    return -1;
+	dc->w.HTLen += HTINCR;
+	ht = (HANDLETABLE16 *)GlobalLock16(dc->w.hHT);
+	i = MF_AddHandle(ht, dc->w.HTLen, hobj);
     }
-    GlobalUnlock16(hHT);
-    if (!(hHT = GlobalReAlloc16(hHT, HTINCR, GMEM_MOVEABLE | GMEM_ZEROINIT)))
-	return -1;
-    HTLen += HTINCR;
-    ht = (HANDLETABLE16 *)GlobalLock16(hHT);
-    *(ht->objectHandle + i) = hobj;
-    GlobalUnlock16(hHT);
+    GlobalUnlock16(dc->w.hHT);
     return i;
 }
 
@@ -1036,7 +1039,7 @@ BOOL MF_CreateBrushIndirect(DC *dc, HBRUSH hBrush, LOGBRUSH16 *logbrush)
     mr->rdSize = sizeof(METARECORD) / 2;
     mr->rdFunction = META_SELECTOBJECT;
 
-    if ((index = MF_AddHandleInternal(hBrush)) == -1)
+    if ((index = MF_AddHandleDC(dc, hBrush)) == -1)
 	return FALSE;
 
     mh = (METAHEADER *)GlobalLock16(dc->w.hMetaFile);
@@ -1128,7 +1131,7 @@ BOOL MF_CreatePatternBrush(DC *dc, HBRUSH hBrush, LOGBRUSH16 *logbrush)
     mr = (METARECORD *)&buffer;
     mr->rdSize = sizeof(METARECORD) / 2;
     mr->rdFunction = META_SELECTOBJECT;
-    if ((index = MF_AddHandleInternal(hBrush)) == -1)
+    if ((index = MF_AddHandleDC(dc, hBrush)) == -1)
 	return FALSE;
 
     mh = (METAHEADER *)GlobalLock16(dc->w.hMetaFile);
@@ -1165,7 +1168,7 @@ BOOL MF_CreatePenIndirect(DC *dc, HPEN16 hPen, LOGPEN16 *logpen)
     mr->rdSize = sizeof(METARECORD) / 2;
     mr->rdFunction = META_SELECTOBJECT;
 
-    if ((index = MF_AddHandleInternal(hPen)) == -1)
+    if ((index = MF_AddHandleDC(dc, hPen)) == -1)
 	return FALSE;
 
     mh = (METAHEADER *)GlobalLock16(dc->w.hMetaFile);
@@ -1202,7 +1205,7 @@ BOOL MF_CreateFontIndirect(DC *dc, HFONT hFont, LOGFONT16 *logfont)
     mr->rdSize = sizeof(METARECORD) / 2;
     mr->rdFunction = META_SELECTOBJECT;
 
-    if ((index = MF_AddHandleInternal(hFont)) == -1)
+    if ((index = MF_AddHandleDC(dc, hFont)) == -1)
 	return FALSE;
 
     mh = (METAHEADER *)GlobalLock16(dc->w.hMetaFile);

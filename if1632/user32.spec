@@ -10,7 +10,7 @@ base	1
 0005 stdcall AppendMenuW(long long long ptr) AppendMenu32W
 0006 stub ArrangeIconicWindows
 0007 stub AttachThreadInput
-0008 stub BeginDeferWindowPos
+0008 stdcall BeginDeferWindowPos(long) BeginDeferWindowPos
 0009 stdcall BeginPaint(long ptr) BeginPaint32
 0010 stdcall BringWindowToTop(long) BringWindowToTop
 0011 stub BroadcastSystemMessage
@@ -62,7 +62,7 @@ base	1
 0057 stub CopyAcceleratorTableA
 0058 stub CopyAcceleratorTableW
 0059 stdcall CopyIcon(long) CopyIcon32
-0060 stub CopyImage
+0060 stdcall CopyImage(long long long long long) CopyImage32
 0061 stdcall CopyRect(ptr ptr) CopyRect32
 0062 stub CountClipboardFormats
 0063 stub CreateAcceleratorTableA
@@ -131,7 +131,7 @@ base	1
 0124 stdcall DefMDIChildProcW(long long long long) DefMDIChildProc32W
 0125 stdcall DefWindowProcA(long long long long) DefWindowProc32A
 0126 stdcall DefWindowProcW(long long long long) DefWindowProc32W
-0127 stub DeferWindowPos
+0127 stdcall DeferWindowPos(long long long long long long long long) DeferWindowPos
 0128 stdcall DeleteMenu(long) DeleteMenu
 0129 stub DestroyAcceleratorTable
 0130 stdcall DestroyCaret() DestroyCaret
@@ -174,9 +174,9 @@ base	1
 0167 stub EditWndProc
 0168 stdcall EmptyClipboard()				EmptyClipboard
 0169 stdcall EnableMenuItem(long long long) EnableMenuItem
-0170 stdcall EnableScrollBar(long long long)	EnableScrollBar
-0171 stdcall EnableWindow(long long)		EnableWindow
-0172 stub EndDeferWindowPos
+0170 stdcall EnableScrollBar(long long long) EnableScrollBar32
+0171 stdcall EnableWindow(long long) EnableWindow
+0172 stdcall EndDeferWindowPos(long) EndDeferWindowPos
 0173 stdcall EndDialog(long long) EndDialog
 0174 stub EndMenu
 0175 stdcall EndPaint(long ptr) EndPaint32
@@ -210,8 +210,8 @@ base	1
 0203 stub FreeDDElParam
 0204 stdcall GetActiveWindow() GetActiveWindow
 0205 stdcall GetAppCompatFlags(long) GetAppCompatFlags
-0206 stub GetAsyncKeyState
-0207 stub GetCapture
+0206 stdcall GetAsyncKeyState(long) GetAsyncKeyState
+0207 stdcall GetCapture() GetCapture32
 0208 stdcall GetCaretBlinkTime() GetCaretBlinkTime32
 0209 stdcall GetCaretPos(ptr) GetCaretPos32
 0210 stdcall GetClassInfoA(long ptr ptr) GetClassInfo32A
@@ -233,10 +233,10 @@ base	1
 0226 stub GetCursor
 0227 stub GetCursorInfo
 0228 stdcall GetCursorPos(ptr) GetCursorPos32
-0229 stdcall GetDC(long) GetDC
-0230 stub GetDCEx
-0231 stdcall GetDesktopWindow() GetDesktopWindow
-0232 stub GetDialogBaseUnits
+0229 stdcall GetDC(long) GetDC32
+0230 stdcall GetDCEx(long long long) GetDCEx32
+0231 stdcall GetDesktopWindow() GetDesktopWindow32
+0232 stdcall GetDialogBaseUnits() GetDialogBaseUnits
 0233 stdcall GetDlgCtrlID(long) GetDlgCtrlID
 0234 stdcall GetDlgItem(long long) GetDlgItem
 0235 stdcall GetDlgItemInt(long long long long) GetDlgItemInt
@@ -244,7 +244,7 @@ base	1
 0237 stdcall GetDlgItemTextW(long long ptr long) GetDlgItemText32W
 0238 stub GetDoubleClickTime
 0239 stdcall GetFocus() GetFocus32
-0240 stub GetForegroundWindow
+0240 return GetForegroundWindow 0 0		#FIXME
 0241 stub GetIconInfo
 0242 stub GetInputDesktop
 0243 stub GetInputState
@@ -266,12 +266,12 @@ base	1
 0259 stub GetMenuDefaultItem
 0260 stub GetMenuIndex
 0261 stdcall GetMenuItemCount(long) GetMenuItemCount
-0262 stub GetMenuItemID
+0262 stdcall GetMenuItemID(long long) GetMenuItemID
 0263 stub GetMenuItemInfoA
 0264 stub GetMenuItemInfoW
 0265 stub GetMenuItemRect
-0266 stub GetMenuState
-0267 stub GetMenuStringA
+0266 stdcall GetMenuState(long long long) GetMenuState
+0267 stdcall GetMenuStringA(long long ptr long long) GetMenuString
 0268 stub GetMenuStringW
 0269 stdcall GetMessageA(ptr long long long) USER32_GetMessageA
 0270 stub GetMessageExtraInfo
@@ -288,8 +288,8 @@ base	1
 0281 stdcall GetPropW(long ptr) GetProp32W
 0282 stub GetQueueStatus
 0283 stdcall GetScrollInfo(long long ptr) GetScrollInfo32
-0284 stdcall GetScrollPos(long long) GetScrollPos
-0285 stub GetScrollRange
+0284 stdcall GetScrollPos(long long) GetScrollPos32
+0285 stdcall GetScrollRange(long long ptr ptr) GetScrollRange32
 0286 return GetShellWindow 0 0
 0287 stdcall GetSubMenu(long long) GetSubMenu
 0288 stdcall GetSysColor(long) GetSysColor
@@ -307,7 +307,7 @@ base	1
 0300 stub GetUserObjectSecurity
 0301 stdcall GetWindow(long long) GetWindow
 0302 stub GetWindowContextHelpId
-0303 stdcall GetWindowDC(long) GetWindowDC
+0303 stdcall GetWindowDC(long) GetWindowDC32
 0304 stdcall GetWindowLongA(long long) GetWindowLong32A
 0305 stdcall GetWindowLongW(long long) GetWindowLong32W
 0306 stdcall GetWindowPlacement(long ptr) GetWindowPlacement32
@@ -443,7 +443,7 @@ base	1
 0436 stdcall RegisterWindowMessageA(ptr) RegisterWindowMessage32A
 0437 stdcall RegisterWindowMessageW(ptr) RegisterWindowMessage32W
 0438 stdcall ReleaseCapture() ReleaseCapture
-0439 stdcall ReleaseDC(long long) ReleaseDC
+0439 stdcall ReleaseDC(long long) ReleaseDC32
 0440 stub RemoveMenu
 0441 stdcall RemovePropA(long ptr) RemoveProp32A
 0442 stdcall RemovePropW(long ptr) RemoveProp32W
@@ -467,7 +467,7 @@ base	1
 0460 stub SendNotifyMessageW
 0461 stub ServerSetFunctionPointers
 0462 stub SetActiveWindow
-0463 stdcall SetCapture(long) SetCapture
+0463 stdcall SetCapture(long) SetCapture32
 0464 stdcall SetCaretBlinkTime(long) SetCaretBlinkTime
 0465 stdcall SetCaretPos(long long) SetCaretPos
 0466 stdcall SetClassLongA(long long long) SetClassLong32A
@@ -479,7 +479,7 @@ base	1
 0472 stub SetCursorContents
 0473 stub SetCursorPos
 0474 stub SetDebugErrorLevel
-0475 stub SetDeskWallpaper
+0475 stdcall SetDeskWallPaper(ptr) SetDeskWallPaper32
 0476 stdcall SetDlgItemInt(long long long long) SetDlgItemInt32
 0477 stdcall SetDlgItemTextA(long long ptr) SetDlgItemText32A
 0478 stdcall SetDlgItemTextW(long long ptr) SetDlgItemText32W
@@ -505,8 +505,8 @@ base	1
 0498 stdcall SetRect(ptr long long long long) SetRect32
 0499 stdcall SetRectEmpty(ptr) SetRectEmpty32
 0500 stdcall SetScrollInfo(long long ptr long) SetScrollInfo32
-0501 stdcall SetScrollPos(long long long long) SetScrollPos
-0502 stdcall SetScrollRange(long long long long long) SetScrollRange
+0501 stdcall SetScrollPos(long long long long) SetScrollPos32
+0502 stdcall SetScrollRange(long long long long long) SetScrollRange32
 0503 stub SetShellWindow
 0504 stub SetSysColors
 0505 stub SetSysColorsTemp
@@ -528,19 +528,19 @@ base	1
 0521 stdcall SetWindowTextA(long ptr) SetWindowText32A
 0522 stdcall SetWindowTextW(long ptr) SetWindowText32W
 0523 stdcall SetWindowWord(long long long) SetWindowWord
-0524 stub SetWindowsHookA
+0524 stdcall SetWindowsHookA(long ptr) SetWindowsHook32A
 0525 stdcall SetWindowsHookExA(long long long long) SetWindowsHookEx32A
 0526 stub SetWindowsHookExW
 0527 stub SetWindowsHookW
 0528 stdcall ShowCaret(long) ShowCaret
 0529 stdcall ShowCursor(long) ShowCursor
 0530 stub ShowOwnedPopups
-0531 stdcall ShowScrollBar(long long long) ShowScrollBar
+0531 stdcall ShowScrollBar(long long long) ShowScrollBar32
 0532 stub ShowStartGlass
 0533 stdcall ShowWindow(long long) ShowWindow
 0534 stub ShowWindowAsync
 0535 stdcall SubtractRect(ptr ptr ptr) SubtractRect32
-0536 stub SwapMouseButton
+0536 stdcall SwapMouseButton(long) SwapMouseButton
 0537 stub SwitchDesktop
 0538 stub SwitchToThisWindow
 0539 	stdcall SystemParametersInfoA(long long ptr long) SystemParametersInfo
@@ -584,7 +584,7 @@ base	1
 0577 stub WaitMessage
 0578 stdcall WinHelpA(long ptr long long)	WIN32_WinHelpA
 0579 stub WinHelpW
-0580 stdcall WindowFromDC(long) WindowFromDC
+0580 stdcall WindowFromDC(long) WindowFromDC32
 0581 stdcall WindowFromPoint(long long) WindowFromPoint32
 0582 stub keybd_event
 0583 stub mouse_event

@@ -270,7 +270,7 @@ static HANDLE CURSORICON32_LoadHandler( HANDLE32 handle, HINSTANCE hInstance,
                                       BOOL fCursor )
 {
     HANDLE hAndBits, hXorBits, hRes;
-    HDC hdc;
+    HDC32 hdc;
     int size, sizeAnd, sizeXor;
     POINT16 hotspot = { 0 ,0 };
     BITMAPOBJ *bmpXor, *bmpAnd;
@@ -320,7 +320,7 @@ static HANDLE CURSORICON32_LoadHandler( HANDLE32 handle, HINSTANCE hInstance,
 
     /* Create the XOR bitmap */
 
-    if (!(hdc = GetDC( 0 )))
+    if (!(hdc = GetDC32( 0 )))
     {
         free( pInfo );
         return 0;
@@ -358,7 +358,7 @@ static HANDLE CURSORICON32_LoadHandler( HANDLE32 handle, HINSTANCE hInstance,
 
     hAndBits = CreateDIBitmap( hdc, &pInfo->bmiHeader, CBM_INIT,
                                bits, pInfo, DIB_RGB_COLORS );
-    ReleaseDC( 0, hdc );
+    ReleaseDC32( 0, hdc );
 
     /* Now create the CURSORICONINFO structure */
 

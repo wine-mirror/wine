@@ -1576,7 +1576,7 @@ INT16 WriteComm(INT16 fd, LPSTR lpvBuf, INT16 cbWrite)
  *	GetCommTimeouts		(KERNEL32.160)
  */
 BOOL32 GetCommTimeouts(INT32 fd,LPCOMMTIMEOUTS lptimeouts) {
-	dprintf_comm(stddeb,"GetCommTimeouts(%lx,%p), empty stub.\n",
+	dprintf_comm(stddeb,"GetCommTimeouts(%x,%p), empty stub.\n",
 		fd,lptimeouts
 	);
 	return TRUE;
@@ -1586,7 +1586,7 @@ BOOL32 GetCommTimeouts(INT32 fd,LPCOMMTIMEOUTS lptimeouts) {
  *	SetCommTimeouts		(KERNEL32.453)
  */
 BOOL32 SetCommTimeouts(INT32 fd,LPCOMMTIMEOUTS lptimeouts) {
-	dprintf_comm(stddeb,"SetCommTimeouts(%lx,%p), empty stub.\n",
+	dprintf_comm(stddeb,"SetCommTimeouts(%x,%p), empty stub.\n",
 		fd,lptimeouts
 	);
 	return TRUE;

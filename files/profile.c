@@ -382,7 +382,7 @@ static BOOL PROFILE_Open( const char *filename )
     }
     else
     {
-        GetWindowsDirectory( buffer, sizeof(buffer) );
+        GetWindowsDirectory32A( buffer, sizeof(buffer) );
         strcat( buffer, "\\" );
         strcat( buffer, filename );
         if (!(dos_name = DOSFS_GetDosTrueName( buffer, FALSE ))) return FALSE;

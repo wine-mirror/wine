@@ -14,7 +14,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <windows.h>
+#include "windows.h"
 #include "win.h"
 #include "local.h"
 #include "stddebug.h"
@@ -503,7 +503,7 @@ static void EDIT_BuildLineDefs(WND *wndPtr)
 	EDITSTATE *es = EDITSTATEPTR(wndPtr);
 	char *text = EDIT_GetPasswordPointer(wndPtr);
 	int ww = EDIT_GetWndWidth(wndPtr);
-	HDC hdc;
+	HDC32 hdc;
 	HFONT hFont;
 	HFONT oldFont = 0;
 	char *start, *cp;
@@ -512,7 +512,7 @@ static void EDIT_BuildLineDefs(WND *wndPtr)
 	int length;
 	LINE_END ending;
 
-	hdc = GetDC(wndPtr->hwndSelf);
+	hdc = GetDC32(wndPtr->hwndSelf);
 	hFont = (HFONT)EDIT_WM_GetFont(wndPtr, 0, 0L);
 	if (hFont)
 		oldFont = SelectObject(hdc, hFont);
@@ -598,7 +598,7 @@ static void EDIT_BuildLineDefs(WND *wndPtr)
 	}
 	if (hFont)
 		SelectObject(hdc, oldFont);
-	ReleaseDC(wndPtr->hwndSelf, hdc);
+	ReleaseDC32(wndPtr->hwndSelf, hdc);
 
 	free(text);
 }
@@ -1441,7 +1441,7 @@ static INT EDIT_WndXFromCol(WND *wndPtr, UINT line, UINT col)
 	EDITSTATE *es = EDITSTATEPTR(wndPtr);
 	char *text = EDIT_GetPasswordPointer(wndPtr);
 	INT ret;
-	HDC hdc;
+	HDC32 hdc;
 	HFONT hFont;
 	HFONT oldFont = 0;
 	UINT lc = (UINT)EDIT_EM_GetLineCount(wndPtr, 0, 0L);
@@ -1449,7 +1449,7 @@ static INT EDIT_WndXFromCol(WND *wndPtr, UINT line, UINT col)
 	UINT ll = (UINT)EDIT_EM_LineLength(wndPtr, li, 0L);
 	UINT xoff = EDIT_GetXOffset(wndPtr);
 
-	hdc = GetDC(wndPtr->hwndSelf);
+	hdc = GetDC32(wndPtr->hwndSelf);
 	hFont = (HFONT)EDIT_WM_GetFont(wndPtr, 0, 0L);
 	if (hFont)
 		oldFont = SelectObject(hdc, hFont);
@@ -1460,7 +1460,7 @@ static INT EDIT_WndXFromCol(WND *wndPtr, UINT line, UINT col)
 			es->NumTabStops, es->TabStops)) - xoff;
 	if (hFont)
 		SelectObject(hdc, oldFont);
-	ReleaseDC(wndPtr->hwndSelf, hdc);
+	ReleaseDC32(wndPtr->hwndSelf, hdc);
 	free(text);
 	return ret;
 }
@@ -1859,10 +1859,10 @@ static LRESULT EDIT_EM_LineScroll(WND *wndPtr, WPARAM wParam, LPARAM lParam)
 		es->FirstVisibleLine = nfv;
 		es->XOffset = nxoff;
 		if (IsVScrollBar(wndPtr))
-			SetScrollPos(wndPtr->hwndSelf, SB_VERT,
+			SetScrollPos32(wndPtr->hwndSelf, SB_VERT,
 				EDIT_WM_VScroll(wndPtr, EM_GETTHUMB, 0L), TRUE);
 		if (IsHScrollBar(wndPtr))
-			SetScrollPos(wndPtr->hwndSelf, SB_HORZ,
+			SetScrollPos32(wndPtr->hwndSelf, SB_HORZ,
 				EDIT_WM_HScroll(wndPtr, EM_GETTHUMB, 0L), TRUE);
 		if (wndPtr->hwndSelf == GetFocus32()) {
 			GetCaretPos16(&pos);
@@ -2604,7 +2604,7 @@ static LRESULT EDIT_WM_LButtonDown(WND *wndPtr, WPARAM wParam, LPARAM lParam)
 	UINT li;
 
 	SetFocus32(wndPtr->hwndSelf);
-	SetCapture(wndPtr->hwndSelf);
+	SetCapture32(wndPtr->hwndSelf);
 	l = MIN(fv + vlc - 1, MAX(fv, l));
 	x = MIN(EDIT_GetWndWidth(wndPtr), MAX(0, x));
 	c = EDIT_ColFromWndX(wndPtr, l, x);
@@ -2626,7 +2626,7 @@ static LRESULT EDIT_WM_LButtonDown(WND *wndPtr, WPARAM wParam, LPARAM lParam)
  */
 static LRESULT EDIT_WM_LButtonUp(WND *wndPtr, WPARAM wParam, LPARAM lParam)
 {
-	if (GetCapture() == wndPtr->hwndSelf)
+	if (GetCapture32() == wndPtr->hwndSelf)
 		ReleaseCapture();
 	return 0L;
 }
@@ -2648,7 +2648,7 @@ static LRESULT EDIT_WM_MouseMove(WND *wndPtr, WPARAM wParam, LPARAM lParam)
 	UINT vlc;
 	UINT li;
 
-	if (GetCapture() == wndPtr->hwndSelf) {
+	if (GetCapture32() == wndPtr->hwndSelf) {
 		x = (INT)LOWORD(lParam);
 		y = (INT)HIWORD(lParam);
 		fv = (UINT)EDIT_EM_GetFirstVisibleLine(wndPtr, 0, 0L);
@@ -2775,11 +2775,11 @@ static LRESULT EDIT_WM_SetFont(WND *wndPtr, WPARAM wParam, LPARAM lParam)
 	TEXTMETRIC16 tm;
 	EDITSTATE *es = EDITSTATEPTR(wndPtr);
 	LPARAM sel = EDIT_EM_GetSel(wndPtr, 0, 0L);
-	HDC hdc;
+	HDC32 hdc;
 	HFONT oldFont = 0;
 
 	es->hFont = (HFONT)wParam;
-	hdc = GetDC(wndPtr->hwndSelf);
+	hdc = GetDC32(wndPtr->hwndSelf);
 	if (es->hFont)
 		oldFont = SelectObject(hdc, es->hFont);
 	GetTextMetrics16(hdc, &tm);
@@ -2787,7 +2787,7 @@ static LRESULT EDIT_WM_SetFont(WND *wndPtr, WPARAM wParam, LPARAM lParam)
 	es->AveCharWidth = tm.tmAveCharWidth;
 	if (es->hFont)
 		SelectObject(hdc, oldFont);
-	ReleaseDC(wndPtr->hwndSelf, hdc);
+	ReleaseDC32(wndPtr->hwndSelf, hdc);
 	EDIT_BuildLineDefs(wndPtr);
 	if ((BOOL)lParam && EDIT_GetRedraw(wndPtr))
 		InvalidateRect32( wndPtr->hwndSelf, NULL, TRUE );

@@ -406,7 +406,8 @@ void MDI_ChildGetMinMaxInfo(WND* clientWnd, HWND hwnd, MINMAXINFO16* lpMinMax )
 
  MapWindowPoints16(clientWnd->parent->hwndSelf, 
 	       ((MDICLIENTINFO*)clientWnd->wExtra)->self, (LPPOINT16)&rect, 2);
- AdjustWindowRectEx16( &rect, childWnd->dwStyle, 0, childWnd->dwExStyle );
+ AdjustWindowRectEx16( &rect, childWnd->dwStyle & ~(WS_VSCROLL | WS_HSCROLL),
+		      0, childWnd->dwExStyle );
 
  lpMinMax->ptMaxSize.x = rect.right -= rect.left;
  lpMinMax->ptMaxSize.y = rect.bottom -= rect.top;
@@ -539,6 +540,7 @@ LONG MDI_ChildActivate(WND *clientPtr, HWND hWndChild)
     /* deactivate prev. active child */
     if( wndPrev )
     {
+	wndPrev->dwStyle |= WS_SYSMENU;
 	SendMessage16( prevActiveWnd, WM_NCACTIVATE, FALSE, 0L );
 
 #ifdef WINELIB32
@@ -869,8 +871,6 @@ BOOL MDI_AugmentFrameMenu(MDICLIENTINFO* ci, WND *frame, HWND hChild)
  EnableMenuItem(hSysPopup, SC_MOVE, MF_BYCOMMAND | MF_GRAYED);
  EnableMenuItem(hSysPopup, SC_MAXIMIZE, MF_BYCOMMAND | MF_GRAYED);
 
- child->dwStyle &= ~WS_SYSMENU;
-
  /* redraw menu */
  DrawMenuBar(frame->hwndSelf);
 
@@ -882,7 +882,6 @@ BOOL MDI_AugmentFrameMenu(MDICLIENTINFO* ci, WND *frame, HWND hChild)
  */
 BOOL MDI_RestoreFrameMenu( WND *frameWnd, HWND hChild)
 {
- WND*   child    = WIN_FindWndPtr(hChild);
  INT	nItems   = GetMenuItemCount(frameWnd->wIDmenu) - 1;
 
  dprintf_mdi(stddeb,"MDI_RestoreFrameMenu: for child %04x\n",hChild);
@@ -890,7 +889,6 @@ BOOL MDI_RestoreFrameMenu( WND *frameWnd, HWND hChild)
  if( GetMenuItemID(frameWnd->wIDmenu,nItems) != SC_RESTORE )
      return 0; 
 
- child->dwStyle |= WS_SYSMENU;
 
  RemoveMenu(frameWnd->wIDmenu,0,MF_BYPOSITION);
  DeleteMenu(frameWnd->wIDmenu,nItems-1,MF_BYPOSITION);
@@ -1079,7 +1077,7 @@ LRESULT MDIClientWndProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
 	
       case WM_MDITILE:
 	ci->sbNeedUpdate = TRUE;
-	ShowScrollBar(hwnd,SB_BOTH,FALSE);
+	ShowScrollBar32(hwnd,SB_BOTH,FALSE);
 	MDITile(w, ci,wParam);
         ci->sbNeedUpdate = FALSE;
         return 0;
@@ -1366,10 +1364,15 @@ LRESULT DefMDIChildProc16( HWND16 hwnd, UINT16 message,
 		case SC_MOVE:
 		     if( ci->hwndChildMaximized == hwnd) return 0;
 		     break;
+	        case SC_RESTORE:
+	        case SC_MINIMIZE:
+		     WIN_FindWndPtr(hwnd)->dwStyle |= WS_SYSMENU;
+		     break;
 		case SC_MAXIMIZE:
 		     if( ci->hwndChildMaximized == hwnd) 
 			 return SendMessage16( clientWnd->parent->hwndSelf,
                                              message, wParam, lParam);
+		     WIN_FindWndPtr(hwnd)->dwStyle &= ~WS_SYSMENU;
 		     break;
 		case SC_NEXTWINDOW:
 		     SendMessage16( ci->self, WM_MDINEXT, 0, 0);
@@ -1627,15 +1630,15 @@ void CalcChildScroll( HWND hwnd, WORD scroll )
     vpos = clientRect.top - childRect.top;
 
     if( noscroll )
-	ShowScrollBar(hwnd, SB_BOTH, FALSE);
+	ShowScrollBar32(hwnd, SB_BOTH, FALSE);
     else
     switch( scroll )
       {
 	case SB_HORZ:
 			vpos = hpos; vmin = hmin; vmax = hmax;
 	case SB_VERT:
-			SetScrollPos(hwnd, scroll, vpos, FALSE);
-			SetScrollRange(hwnd, scroll, vmin, vmax, TRUE);
+			SetScrollPos32(hwnd, scroll, vpos, FALSE);
+			SetScrollRange32(hwnd, scroll, vmin, vmax, TRUE);
 			break;
 	case SB_BOTH:
 			SCROLL_SetNCSbState( Wnd, vmin, vmax, vpos,
@@ -1654,23 +1657,23 @@ void ScrollChildren(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
  short 	 newPos=-1;
  short 	 curPos;
  short 	 length;
- INT16 	 minPos;
- INT16 	 maxPos;
+ INT32 	 minPos;
+ INT32 	 maxPos;
  short   shift;
 
  if( !wndPtr ) return;
 
  if( uMsg == WM_HSCROLL )
    {
-     GetScrollRange(hWnd,SB_HORZ,&minPos,&maxPos);
-     curPos = GetScrollPos(hWnd,SB_HORZ);
+     GetScrollRange32(hWnd,SB_HORZ,&minPos,&maxPos);
+     curPos = GetScrollPos32(hWnd,SB_HORZ);
      length = (wndPtr->rectClient.right - wndPtr->rectClient.left)/2;
      shift = SYSMETRICS_CYHSCROLL;
    }
  else if( uMsg == WM_VSCROLL )
 	{
-	  GetScrollRange(hWnd,SB_VERT,&minPos,&maxPos);
-	  curPos = GetScrollPos(hWnd,SB_VERT);
+	  GetScrollRange32(hWnd,SB_VERT,&minPos,&maxPos);
+	  curPos = GetScrollPos32(hWnd,SB_VERT);
 	  length = (wndPtr->rectClient.bottom - wndPtr->rectClient.top)/2;
 	  shift = SYSMETRICS_CXVSCROLL;
 	}
@@ -1714,7 +1717,7 @@ void ScrollChildren(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
  else if( newPos < minPos )
 	  newPos = minPos;
 
- SetScrollPos(hWnd, (uMsg == WM_VSCROLL)?SB_VERT:SB_HORZ , newPos, TRUE);
+ SetScrollPos32(hWnd, (uMsg == WM_VSCROLL)?SB_VERT:SB_HORZ , newPos, TRUE);
 
  if( uMsg == WM_VSCROLL )
      ScrollWindow(hWnd ,0 ,curPos - newPos, NULL, NULL);

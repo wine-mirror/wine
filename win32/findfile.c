@@ -148,8 +148,6 @@ HANDLE32 FindFirstFile32A(LPCSTR lpfilename,
 	return INVALID_HANDLE_VALUE;
     }
 
-    strcpy(context->mask, slash+1);
-
     /* uppercase mask in place */
     for (p = context->mask ; *p; p++)
 	*p = toupper(*p);

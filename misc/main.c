@@ -9,13 +9,14 @@
 #include <string.h>
 #include <unistd.h>
 #include <ctype.h>
-#include <locale.h>
+/* #include <locale.h> */
 #ifdef MALLOC_DEBUGGING
 #include <malloc.h>
 #endif
 #include <X11/Xlib.h>
 #include <X11/Xresource.h>
 #include <X11/Xutil.h>
+#include <X11/Xlocale.h>
 #include <X11/cursorfont.h>
 #include "message.h"
 #include "module.h"
@@ -74,6 +75,8 @@ const WINE_LANGUAGE_DEF Languages[] =
 WORD WINE_LanguageId = 0;
 
 #define WINE_CLASS    "Wine"    /* Class name for resources */
+
+#define WINE_APP_DEFAULTS "/usr/lib/X11/app-defaults/Wine"
 
 typedef struct tagENVENTRY {
   LPSTR	       	        Name;
@@ -371,14 +374,21 @@ static void MAIN_ParseVersion( char *arg )
  */
 static void MAIN_ParseOptions( int *argc, char *argv[] )
 {
-    char *display_name;
+    char *display_name = NULL;
     XrmValue value;
-    XrmDatabase db = XrmGetFileDatabase("/usr/lib/X11/app-defaults/Wine");
+    XrmDatabase db = XrmGetFileDatabase(WINE_APP_DEFAULTS);
+    int i;
+    char *xrm_string;
 
-      /* Parse command line */
     Options.programName = MAIN_GetProgramName( *argc, argv );
-    XrmParseCommand( &db, optionsTable, NB_OPTIONS,
-		     Options.programName, argc, argv );
+
+      /* Get display name from command line */
+    for (i = 1; i < *argc - 1; i++)
+        if (!strcmp( argv[i], "-display" ))
+	{
+	    display_name = argv[i+1];
+	    break;
+        }
 
 #ifdef WINELIB
     /* Need to assemble command line and pass it to WinMain */
@@ -389,8 +399,8 @@ static void MAIN_ParseOptions( int *argc, char *argv[] )
 
       /* Open display */
 
-    if (MAIN_GetResource( db, ".display", &value )) display_name = value.addr;
-    else display_name = NULL;
+    if (display_name == NULL &&
+	MAIN_GetResource( db, ".display", &value )) display_name = value.addr;
 
     if (!(display = XOpenDisplay( display_name )))
     {
@@ -398,6 +408,17 @@ static void MAIN_ParseOptions( int *argc, char *argv[] )
 		 argv[0], display_name ? display_name : "(none specified)" );
 	exit(1);
     }
+
+      /* Merge file and screen databases */
+    if ((xrm_string = XResourceManagerString( display )) != NULL)
+    {
+        XrmDatabase display_db = XrmGetStringDatabase( xrm_string );
+        XrmMergeDatabases( display_db, &db );
+    }
+
+      /* Parse command line */
+    XrmParseCommand( &db, optionsTable, NB_OPTIONS,
+		     Options.programName, argc, argv );
 
       /* Get all options */
     if (MAIN_GetResource( db, ".iconic", &value ))
@@ -1130,7 +1151,7 @@ BOOL SystemParametersInfo (UINT uAction, UINT uParam, LPVOID lpvParam, UINT fuWi
 			break;
 
 		case SPI_SETDESKWALLPAPER:
-			return (SetDeskWallPaper((LPSTR) lpvParam));
+			return (SetDeskWallPaper32((LPSTR) lpvParam));
 			break;
 
 		case SPI_SETDESKPATTERN:

@@ -514,13 +514,12 @@ static HWND DIALOG_CreateIndirect( HINSTANCE hInst, LPCSTR dlgTemplate,
 	{
 	    TEXTMETRIC16 tm;
 	    HFONT oldFont;
-	    HDC hdc;
 
-	    hdc = GetDC(0);
+	    HDC32 hdc = GetDC32(0);
 	    oldFont = SelectObject( hdc, hFont );
 	    GetTextMetrics16( hdc, &tm );
 	    SelectObject( hdc, oldFont );
-	    ReleaseDC( 0, hdc );
+	    ReleaseDC32( 0, hdc );
 	    xUnit = tm.tmAveCharWidth;
 	    yUnit = tm.tmHeight;
             if (tm.tmPitchAndFamily & TMPF_FIXED_PITCH)
@@ -744,8 +743,8 @@ static INT32 DIALOG_DoDialogBox( HWND hwnd, HWND owner )
 	if (dlgInfo->fEnd) break;
     }
     retval = dlgInfo->msgResult;
-    DestroyWindow( hwnd );
     EnableWindow( owner, TRUE );
+    DestroyWindow( hwnd );
     return retval;
 }
 
@@ -897,7 +896,7 @@ BOOL IsDialogMessage( HWND hwndDlg, LPMSG16 msg )
             if (!(dlgCode & DLGC_WANTTAB))
             {
                 SendMessage16( hwndDlg, WM_NEXTDLGCTL,
-                             (GetKeyState(VK_SHIFT) & 0x80), 0 );
+                             (GetKeyState(VK_SHIFT) & 0x8000), 0 );
                 return TRUE;
             }
             break;

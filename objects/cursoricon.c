@@ -236,7 +236,7 @@ HANDLE CURSORICON_LoadHandler( HANDLE handle, HINSTANCE hInstance,
                                       BOOL fCursor )
 {
     HANDLE hAndBits, hXorBits;
-    HDC hdc;
+    HDC32 hdc;
     int size, sizeAnd, sizeXor;
     POINT16 hotspot = { 0 ,0 };
     BITMAPOBJ *bmpXor, *bmpAnd;
@@ -285,7 +285,7 @@ HANDLE CURSORICON_LoadHandler( HANDLE handle, HINSTANCE hInstance,
 
     /* Create the XOR bitmap */
 
-    if (!(hdc = GetDC( 0 )))
+    if (!(hdc = GetDC32( 0 )))
     {
         free( pInfo );
         return 0;
@@ -323,7 +323,7 @@ HANDLE CURSORICON_LoadHandler( HANDLE handle, HINSTANCE hInstance,
 
     hAndBits = CreateDIBitmap( hdc, &pInfo->bmiHeader, CBM_INIT,
                                bits, pInfo, DIB_RGB_COLORS );
-    ReleaseDC( 0, hdc );
+    ReleaseDC32( 0, hdc );
 
     /* Now create the CURSORICONINFO structure */
 
@@ -788,7 +788,7 @@ static BOOL CURSORICON_SetCursor( HCURSOR16 hCursor )
     else
     {
         /* Set the same cursor for all top-level windows */
-        HWND hwnd = GetWindow( GetDesktopWindow(), GW_CHILD );
+        HWND hwnd = GetWindow( GetDesktopWindow32(), GW_CHILD );
         while(hwnd)
         {
             Window win = WIN_GetXWindow( hwnd );

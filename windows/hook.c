@@ -37,7 +37,7 @@ static HANDLE16 HOOK_GetNextHook( HANDLE16 hook )
     if (data->next) return data->next;
     if (!data->ownerQueue) return 0;  /* Already system hook */
     /* Now start enumerating the system hooks */
-    return HOOK_systemHooks[data->id - WH_FIRST_HOOK];
+    return HOOK_systemHooks[data->id - WH_MINHOOK];
 }
 
 
@@ -52,8 +52,8 @@ HANDLE16 HOOK_GetHook( INT16 id , HQUEUE16 hQueue )
     HANDLE16 hook = 0;
 
     if ((queue = (MESSAGEQUEUE *)GlobalLock16( hQueue )) != NULL)
-        hook = queue->hooks[id - WH_FIRST_HOOK];
-    if (!hook) hook = HOOK_systemHooks[id - WH_FIRST_HOOK];
+        hook = queue->hooks[id - WH_MINHOOK];
+    if (!hook) hook = HOOK_systemHooks[id - WH_MINHOOK];
     return hook;
 }
 
@@ -70,7 +70,7 @@ static HANDLE16 HOOK_SetHook( INT16 id, HOOKPROC16 proc, HINSTANCE16 hInst,
     HANDLE16 handle;
     HQUEUE16 hQueue = 0;
 
-    if ((id < WH_FIRST_HOOK) || (id > WH_LAST_HOOK)) return 0;
+    if ((id < WH_MINHOOK) || (id > WH_MAXHOOK)) return 0;
     if (!(hInst = GetExePtr( hInst ))) return 0;
 
     dprintf_hook( stddeb, "Setting hook %d: %08x %04x %04x\n",
@@ -83,12 +83,19 @@ static HANDLE16 HOOK_SetHook( INT16 id, HOOKPROC16 proc, HINSTANCE16 hInst,
         if (!(hQueue = GetTaskQueue( hTask ))) return 0;
     }
 
-    if (id == WH_CBT || id == WH_DEBUG || id == WH_SHELL)
+    if (id == WH_DEBUG)
     {
-	fprintf( stdnimp, "Unimplemented hook set: (%d,%08lx,%04x,%04x)!\n",
-                 id, (DWORD)proc, hInst, hTask );
+        fprintf( stdnimp,"WH_DEBUG is broken in 16-bit Windows.\n");
+        return 0;
+    }
+    else if (id == WH_CBT || id == WH_SHELL)
+    {
+	fprintf( stdnimp, "Half-implemented hook set: (%s,%08lx,%04x,%04x)!\n",
+                 (id==WH_CBT)?"WH_CBT":"WH_SHELL", (DWORD)proc, hInst, hTask );
     }
 
+    if (id == WH_JOURNALPLAYBACK) EnableHardwareInput(FALSE);
+     
     /* Create the hook structure */
 
     if (!(handle = USER_HEAP_ALLOC( sizeof(HOOKDATA) ))) return 0;
@@ -105,13 +112,13 @@ static HANDLE16 HOOK_SetHook( INT16 id, HOOKPROC16 proc, HINSTANCE16 hInst,
     if (hQueue)
     {
         MESSAGEQUEUE *queue = (MESSAGEQUEUE *)GlobalLock16( hQueue );
-        data->next = queue->hooks[id - WH_FIRST_HOOK];
-        queue->hooks[id - WH_FIRST_HOOK] = handle;
+        data->next = queue->hooks[id - WH_MINHOOK];
+        queue->hooks[id - WH_MINHOOK] = handle;
     }
     else
     {
-        data->next = HOOK_systemHooks[id - WH_FIRST_HOOK];
-        HOOK_systemHooks[id - WH_FIRST_HOOK] = handle;
+        data->next = HOOK_systemHooks[id - WH_MINHOOK];
+        HOOK_systemHooks[id - WH_MINHOOK] = handle;
     }
     return handle;
 }
@@ -138,15 +145,17 @@ static BOOL32 HOOK_RemoveHook( HANDLE16 hook )
         return TRUE;
     }
 
+    if (data->id == WH_JOURNALPLAYBACK) EnableHardwareInput(TRUE);
+     
     /* Remove it from the linked list */
 
     if (data->ownerQueue)
     {
         MESSAGEQUEUE *queue = (MESSAGEQUEUE *)GlobalLock16( data->ownerQueue );
         if (!queue) return FALSE;
-        prevHook = &queue->hooks[data->id - WH_FIRST_HOOK];
+        prevHook = &queue->hooks[data->id - WH_MINHOOK];
     }
-    else prevHook = &HOOK_systemHooks[data->id - WH_FIRST_HOOK];
+    else prevHook = &HOOK_systemHooks[data->id - WH_MINHOOK];
 
     while (*prevHook && *prevHook != hook)
         prevHook = &((HOOKDATA *)USER_HEAP_LIN_ADDR(*prevHook))->next;
@@ -224,9 +233,9 @@ void HOOK_FreeModuleHooks( HMODULE16 hModule )
   HHOOK         hook, next;
   int           id;
 
-  for( id = WH_FIRST_HOOK; id <= WH_LAST_HOOK; id++ )
+  for( id = WH_MINHOOK; id <= WH_MAXHOOK; id++ )
     {
-       hook = HOOK_systemHooks[id - WH_FIRST_HOOK];
+       hook = HOOK_systemHooks[id - WH_MINHOOK];
        while( hook )
           if( (hptr = (HOOKDATA *)USER_HEAP_LIN_ADDR(hook)) )
 	    {
@@ -253,7 +262,7 @@ void HOOK_FreeQueueHooks( HQUEUE16 hQueue )
   HHOOK 	hook, next;
   int 		id;
 
-  for( id = WH_FIRST_HOOK; id <= WH_LAST_HOOK; id++ )
+  for( id = WH_MINHOOK; id <= WH_MAXHOOK; id++ )
     {
        hook = HOOK_GetHook( id, hQueue );
        while( hook )
@@ -277,15 +286,10 @@ void HOOK_FreeQueueHooks( HQUEUE16 hQueue )
 FARPROC16 SetWindowsHook( INT16 id, HOOKPROC16 proc )
 {
     HINSTANCE16 hInst = __winelib ? 0 : FarGetOwner( HIWORD(proc) );
-    /* WH_MSGFILTER is the only task-specific hook for SetWindowsHook() */
-    HTASK16 hTask = (id == WH_MSGFILTER) ? GetCurrentTask() : 0;
+    HTASK16 	hTask = (id == WH_MSGFILTER) ? GetCurrentTask() : 0;
+    HANDLE16 	handle = HOOK_SetHook( id, proc, hInst, hTask );
 
-    HANDLE16 handle = HOOK_SetHook( id, proc, hInst, hTask );
-    if (!handle) return (FARPROC16)-1;
-    if (!((HOOKDATA *)USER_HEAP_LIN_ADDR( handle ))->next) return 0;
-    /* Not sure if the return value is correct; should not matter much
-     * since it's never used (see DefHookProc). -- AJ */
-    return (FARPROC16)MAKELONG( handle, HOOK_MAGIC );
+    return (handle) ? (FARPROC16)MAKELONG( handle, HOOK_MAGIC ) : NULL;
 }
 
 
@@ -343,7 +347,7 @@ HHOOK SetWindowsHookEx( INT16 id, HOOKPROC16 proc, HINSTANCE16 hInst,
                         HTASK16 hTask )
 {
     HANDLE16 handle = HOOK_SetHook( id, proc, hInst, hTask );
-    return MAKELONG( handle, HOOK_MAGIC );
+    return (handle) ? MAKELONG( handle, HOOK_MAGIC ) : NULL;
 }
 
 

@@ -44,10 +44,10 @@ void CLASS_DumpClass( CLASS *ptr )
     fprintf( stderr, "Class %p:\n", ptr );
     fprintf( stderr,
              "next=%p  name=%04x '%s'  style=%08x  wndProc=%08x\n"
-             "inst=%04x  hdce=%04x  icon=%04x  cursor=%04x  bkgnd=%04x\n"
+             "inst=%04x  dce=%08x  icon=%04x  cursor=%04x  bkgnd=%04x\n"
              "clsExtra=%d  winExtra=%d  #windows=%d\n",
              ptr->next, ptr->atomName, className, ptr->style,
-             (UINT32)ptr->winproc, ptr->hInstance, ptr->hdce,
+             (UINT32)ptr->winproc, ptr->hInstance, (UINT32)ptr->dce,
              ptr->hIcon, ptr->hCursor, ptr->hbrBackground,
              ptr->cbClsExtra, ptr->cbWndExtra, ptr->cWindows );
     if (ptr->cbClsExtra)
@@ -181,7 +181,7 @@ static BOOL CLASS_FreeClass( CLASS *classPtr )
 
     /* Delete the class */
 
-    if (classPtr->hdce) DCE_FreeDCE( classPtr->hdce );
+    if (classPtr->dce) DCE_FreeDCE( classPtr->dce );
     if (classPtr->hbrBackground) DeleteObject( classPtr->hbrBackground );
     GlobalDeleteAtom( classPtr->atomName );
     CLASS_SetMenuNameA( classPtr, NULL );
@@ -288,7 +288,9 @@ static CLASS *CLASS_RegisterClass( ATOM atom, HINSTANCE32 hInstance,
     classPtr->atomName    = atom;
     classPtr->menuNameA   = 0;
     classPtr->menuNameW   = 0;
-    classPtr->hdce        = (style&CS_CLASSDC) ? DCE_AllocDCE(0, DCE_CLASS_DC): 0;
+    classPtr->dce         = (style & CS_CLASSDC) ?
+                                 DCE_AllocDCE( 0, DCE_CLASS_DC ) : NULL;
+
     WINPROC_SetProc( &classPtr->winproc, wndProc, wndProcType );
 
     /* Other values must be set by caller */

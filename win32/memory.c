@@ -268,6 +268,15 @@ BOOL32 VirtualFree(LPVOID lpvAddress, DWORD cbSize, DWORD fdwFreeType)
     return 1;
 }
 
+/***********************************************************************
+ *           VirtualQuery               (KERNEL32.554)
+ */
+BOOL32 VirtualQuery(LPCVOID address,LPMEMORY_BASIC_INFORMATION buf,DWORD len) 
+{
+	/* FIXME: fill out structure  ... */
+	return TRUE;
+}
+
 int TranslateProtectionFlags(DWORD protection_flags)
 {
     int prot;
@@ -308,7 +317,7 @@ int TranslateProtectionFlags(DWORD protection_flags)
  */
 BOOL WIN32_IsBadReadPtr(void* ptr, unsigned int bytes)
 {
-	dprintf_global(stddeb,"IsBadReadPtr(%x,%x)\n",ptr,bytes);
+	dprintf_global(stddeb,"IsBadReadPtr(%x,%x)\n",(int)ptr,bytes);
 	/* FIXME: Should make check based on actual mappings, here */
 	return FALSE;
 }
@@ -318,7 +327,7 @@ BOOL WIN32_IsBadReadPtr(void* ptr, unsigned int bytes)
  */
 BOOL WIN32_IsBadWritePtr(void* ptr, unsigned int bytes)
 {
-	dprintf_global(stddeb,"IsBadWritePtr(%x,%x)\n",ptr,bytes);
+	dprintf_global(stddeb,"IsBadWritePtr(%x,%x)\n",(int)ptr,bytes);
 	/* FIXME: Should make check based on actual mappings, here */
 	return FALSE;
 }
@@ -327,7 +336,7 @@ BOOL WIN32_IsBadWritePtr(void* ptr, unsigned int bytes)
  */
 BOOL WIN32_IsBadCodePtr(void* ptr, unsigned int bytes)
 {
-	dprintf_global(stddeb,"IsBadCodePtr(%x,%x)\n",ptr,bytes);
+	dprintf_global(stddeb,"IsBadCodePtr(%x,%x)\n",(int)ptr,bytes);
 	/* FIXME: Should make check based on actual mappings, here */
 	return FALSE;
 }

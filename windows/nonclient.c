@@ -15,6 +15,7 @@
 #include "syscolor.h"
 #include "menu.h"
 #include "winpos.h"
+#include "hook.h"
 #include "scroll.h"
 #include "nonclient.h"
 #include "graphics.h"
@@ -63,8 +64,6 @@ static HBITMAP hbitmapRestoreD = 0;
  */
 static void NC_AdjustRect(LPRECT16 rect, DWORD style, BOOL menu, DWORD exStyle)
 {
-    if (style & WS_ICONIC) return;  /* Nothing to change for an icon */
-
     /* Decide if the window will be managed (see CreateWindowEx) */
     if (!(Options.managed && !(style & WS_CHILD) &&
           ((style & (WS_DLGFRAME | WS_THICKFRAME)) ||
@@ -233,6 +232,10 @@ void NC_GetMinMaxInfo( HWND hwnd, POINT16 *maxSize, POINT16 *maxPos,
 LONG NC_HandleNCCalcSize( WND *pWnd, RECT16 *winRect )
 {
     RECT16 tmpRect = { 0, 0, 0, 0 };
+    LONG result = 0;
+
+    if (pWnd->class->style & CS_VREDRAW) result |= WVR_VREDRAW;
+    if (pWnd->class->style & CS_HREDRAW) result |= WVR_HREDRAW;
 
     if( !( pWnd->dwStyle & WS_MINIMIZE ) )
     {
@@ -249,7 +252,7 @@ LONG NC_HandleNCCalcSize( WND *pWnd, RECT16 *winRect )
                                               -tmpRect.left, -tmpRect.top ) + 1;
       }
     }
-    return 0;
+    return result;
 }
 
 
@@ -668,7 +671,7 @@ static void NC_DrawCaption( HDC hdc, RECT16 *rect, HWND hwnd,
  */
 void NC_DoNCPaint( HWND hwnd, HRGN clip, BOOL suppress_menupaint )
 {
-    HDC 	hdc;
+    HDC32 hdc;
     RECT16 rect;
     BOOL	active;
 
@@ -681,7 +684,7 @@ void NC_DoNCPaint( HWND hwnd, HRGN clip, BOOL suppress_menupaint )
 
     dprintf_nonclient(stddeb, "NC_DoNCPaint: %04x %d\n", hwnd, active );
 
-    if (!(hdc = GetDCEx( hwnd, 0, DCX_USESTYLE | DCX_WINDOW ))) return;
+    if (!(hdc = GetDCEx32( hwnd, 0, DCX_USESTYLE | DCX_WINDOW ))) return;
 
     if (ExcludeVisRect( hdc, wndPtr->rectClient.left-wndPtr->rectWindow.left,
 		        wndPtr->rectClient.top-wndPtr->rectWindow.top,
@@ -689,7 +692,7 @@ void NC_DoNCPaint( HWND hwnd, HRGN clip, BOOL suppress_menupaint )
 		        wndPtr->rectClient.bottom-wndPtr->rectWindow.top )
 	== NULLREGION)
     {
-	ReleaseDC( hwnd, hdc );
+	ReleaseDC32( hwnd, hdc );
 	return;
     }
 
@@ -735,8 +738,10 @@ void NC_DoNCPaint( HWND hwnd, HRGN clip, BOOL suppress_menupaint )
 
       /* Draw the scroll-bars */
 
-    if (wndPtr->dwStyle & WS_VSCROLL) SCROLL_DrawScrollBar(hwnd, hdc, SB_VERT);
-    if (wndPtr->dwStyle & WS_HSCROLL) SCROLL_DrawScrollBar(hwnd, hdc, SB_HORZ);
+    if (wndPtr->dwStyle & WS_VSCROLL)
+        SCROLL_DrawScrollBar( hwnd, hdc, SB_VERT, TRUE );
+    if (wndPtr->dwStyle & WS_HSCROLL)
+        SCROLL_DrawScrollBar( hwnd, hdc, SB_HORZ, TRUE );
 
       /* Draw the "size-box" */
 
@@ -748,7 +753,7 @@ void NC_DoNCPaint( HWND hwnd, HRGN clip, BOOL suppress_menupaint )
         FillRect16( hdc, &r, sysColorObjects.hbrushScrollbar );
     }    
 
-    ReleaseDC( hwnd, hdc );
+    ReleaseDC32( hwnd, hdc );
 }
 
 
@@ -870,7 +875,8 @@ static void NC_TrackSysMenu( HWND hwnd, HDC hdc, POINT16 pt )
     RECT16 rect;
     WND *wndPtr = WIN_FindWndPtr( hwnd );
     int iconic = wndPtr->dwStyle & WS_MINIMIZE;
-
+    HMENU hmenu;
+    
     if (!(wndPtr->dwStyle & WS_SYSMENU)) return;
 
     /* If window has a menu, track the menu bar normally if it not minimized */
@@ -881,7 +887,10 @@ static void NC_TrackSysMenu( HWND hwnd, HDC hdc, POINT16 pt )
 
 	NC_GetSysPopupPos( wndPtr, &rect );
 	if (!iconic) NC_DrawSysButton( hwnd, hdc, TRUE );
-	TrackPopupMenu16( GetSystemMenu(hwnd, 0), TPM_LEFTALIGN | TPM_LEFTBUTTON,
+	hmenu = GetSystemMenu(hwnd, 0);
+	MENU_InitSysMenuPopup(hmenu, wndPtr->dwStyle,
+				    wndPtr->class->style);
+	TrackPopupMenu16( hmenu, TPM_LEFTALIGN | TPM_LEFTBUTTON,
                           rect.left, rect.bottom, 0, hwnd, &rect );
 	if (!iconic) NC_DrawSysButton( hwnd, hdc, FALSE );
     }
@@ -920,7 +929,7 @@ static LONG NC_StartSizeMove( HWND hwnd, WPARAM wParam, POINT16 *capturePoint )
     }
     else  /* SC_SIZE */
     {
-	SetCapture(hwnd);
+	SetCapture32(hwnd);
 	while(!hittest)
 	{
             MSG_InternalGetMessage( &msg, 0, 0, MSGF_SIZE, PM_REMOVE, FALSE );
@@ -982,7 +991,7 @@ static void NC_DoSizeMove( HWND hwnd, WORD wParam, POINT16 pt )
     MSG16 msg;
     LONG hittest;
     RECT16 sizingRect, mouseRect;
-    HDC hdc;
+    HDC32 hdc;
     BOOL thickframe;
     POINT16 minTrack, maxTrack, capturePoint = pt;
     WND * wndPtr = WIN_FindWndPtr( hwnd );
@@ -1005,7 +1014,7 @@ static void NC_DoSizeMove( HWND hwnd, WORD wParam, POINT16 pt )
 	if (hittest) hittest += HTLEFT-1;
 	else
 	{
-	    SetCapture(hwnd);
+	    SetCapture32(hwnd);
 	    hittest = NC_StartSizeMove( hwnd, wParam, &capturePoint );
 	    if (!hittest)
 	    {
@@ -1044,16 +1053,16 @@ static void NC_DoSizeMove( HWND hwnd, WORD wParam, POINT16 pt )
     }
     SendMessage16( hwnd, WM_ENTERSIZEMOVE, 0, 0 );
 
-    if (GetCapture() != hwnd) SetCapture( hwnd );    
+    if (GetCapture32() != hwnd) SetCapture32( hwnd );    
 
     if (wndPtr->dwStyle & WS_CHILD)
     {
           /* Retrieve a default cache DC (without using the window style) */
-        hdc = GetDCEx( wndPtr->parent->hwndSelf, 0, DCX_CACHE );
+        hdc = GetDCEx32( wndPtr->parent->hwndSelf, 0, DCX_CACHE );
     }
     else
     {  /* Grab the server only when moving top-level windows without desktop */
-	hdc = GetDC( 0 );
+	hdc = GetDC32( 0 );
 	if (rootWindow == DefaultRootWindow(display)) XGrabServer( display );
     }
     NC_DrawMovingFrame( hdc, &sizingRect, thickframe );
@@ -1116,11 +1125,27 @@ static void NC_DoSizeMove( HWND hwnd, WORD wParam, POINT16 pt )
     NC_DrawMovingFrame( hdc, &sizingRect, thickframe );
     ReleaseCapture();
 
-    if (wndPtr->dwStyle & WS_CHILD) ReleaseDC( wndPtr->parent->hwndSelf, hdc );
+    if (wndPtr->dwStyle & WS_CHILD)
+        ReleaseDC32( wndPtr->parent->hwndSelf, hdc );
     else
     {
-	ReleaseDC( 0, hdc );
+	ReleaseDC32( 0, hdc );
 	if (rootWindow == DefaultRootWindow(display)) XUngrabServer( display );
+    }
+
+    if (HOOK_GetHook( WH_CBT, GetTaskQueue(0) ))
+    {
+       RECT16* pr = SEGPTR_NEW(RECT16);
+       if( pr )
+       {
+	 *pr = sizingRect;
+	  if( HOOK_CallHooks( WH_CBT, HCBT_MOVESIZE, hwnd,
+			             (LPARAM)SEGPTR_GET(pr)) )
+	      sizingRect = wndPtr->rectWindow;
+	  else
+	      sizingRect = *pr;
+	  SEGPTR_FREE(pr);
+       }
     }
     SendMessage16( hwnd, WM_EXITSIZEMOVE, 0, 0 );
     SendMessage16( hwnd, WM_SETVISIBLE, !IsIconic(hwnd), 0L);
@@ -1154,10 +1179,10 @@ static void NC_DoSizeMove( HWND hwnd, WORD wParam, POINT16 pt )
 static void NC_TrackMinMaxBox( HWND hwnd, WORD wParam )
 {
     MSG16 msg;
-    HDC hdc = GetWindowDC( hwnd );
+    HDC32 hdc = GetWindowDC32( hwnd );
     BOOL pressed = TRUE;
 
-    SetCapture( hwnd );
+    SetCapture32( hwnd );
     if (wParam == HTMINBUTTON) NC_DrawMinButton( hwnd, hdc, TRUE );
     else NC_DrawMaxButton( hwnd, hdc, TRUE );
 
@@ -1178,7 +1203,7 @@ static void NC_TrackMinMaxBox( HWND hwnd, WORD wParam )
     else NC_DrawMaxButton( hwnd, hdc, FALSE );
 
     ReleaseCapture();
-    ReleaseDC( hwnd, hdc );
+    ReleaseDC32( hwnd, hdc );
     if (!pressed) return;
 
     if (wParam == HTMINBUTTON) 
@@ -1194,10 +1219,10 @@ static void NC_TrackMinMaxBox( HWND hwnd, WORD wParam )
  *
  * Track a mouse button press on the horizontal or vertical scroll-bar.
  */
-static void NC_TrackScrollBar( HWND hwnd, WORD wParam, POINT16 pt )
+static void NC_TrackScrollBar( HWND32 hwnd, WPARAM32 wParam, POINT32 pt )
 {
     MSG16 *msg;
-    WORD scrollbar;
+    INT32 scrollbar;
     WND *wndPtr = WIN_FindWndPtr( hwnd );
 
     if ((wParam & 0xfff0) == SC_HSCROLL)
@@ -1214,7 +1239,7 @@ static void NC_TrackScrollBar( HWND hwnd, WORD wParam, POINT16 pt )
     if (!(msg = SEGPTR_NEW(MSG16))) return;
     pt.x -= wndPtr->rectWindow.left;
     pt.y -= wndPtr->rectWindow.top;
-    SetCapture( hwnd );
+    SetCapture32( hwnd );
     SCROLL_HandleScrollEvent( hwnd, scrollbar, WM_LBUTTONDOWN, pt );
 
     do
@@ -1252,7 +1277,7 @@ static void NC_TrackScrollBar( HWND hwnd, WORD wParam, POINT16 pt )
  */
 LONG NC_HandleNCLButtonDown( HWND hwnd, WPARAM wParam, LPARAM lParam )
 {
-    HDC hdc = GetWindowDC( hwnd );
+    HDC32 hdc;
 
     switch(wParam)  /* Hit test */
     {
@@ -1261,7 +1286,9 @@ LONG NC_HandleNCLButtonDown( HWND hwnd, WPARAM wParam, LPARAM lParam )
 	break;
 
     case HTSYSMENU:
+        hdc = GetWindowDC32( hwnd );
 	NC_TrackSysMenu( hwnd, hdc, MAKEPOINT16(lParam) );
+        ReleaseDC32( hwnd, hdc );
 	break;
 
     case HTMENU:
@@ -1295,8 +1322,6 @@ LONG NC_HandleNCLButtonDown( HWND hwnd, WPARAM wParam, LPARAM lParam )
     case HTBORDER:
 	break;
     }
-
-    ReleaseDC( hwnd, hdc );
     return 0;
 }
 
@@ -1345,6 +1370,7 @@ LONG NC_HandleNCLButtonDblClk( WND *pWnd, WPARAM wParam, LPARAM lParam )
 LONG NC_HandleSysCommand( HWND hwnd, WPARAM wParam, POINT16 pt )
 {
     WND *wndPtr = WIN_FindWndPtr( hwnd );
+    POINT32 pt32;
 
     dprintf_nonclient(stddeb, "Handling WM_SYSCOMMAND %x %d,%d\n", 
 		      wParam, pt.x, pt.y );
@@ -1380,7 +1406,8 @@ LONG NC_HandleSysCommand( HWND hwnd, WPARAM wParam, POINT16 pt )
 
     case SC_VSCROLL:
     case SC_HSCROLL:
-	NC_TrackScrollBar( hwnd, wParam, pt );
+        CONV_POINT16TO32( &pt, &pt32 );
+	NC_TrackScrollBar( hwnd, wParam, pt32 );
 	break;
 
     case SC_MOUSEMENU:

@@ -181,7 +181,20 @@ void INT_Int31Handler( SIGCONTEXT *context )
         AX_reg(context) = 0x8011; /* descriptor unavailable */
         SET_CFLAG(context);
         break;
-
+    case 0x0200: /* get real mode interrupt vector */
+	fprintf(stdnimp,
+		"int31: get realmode interupt vector(0x%02x) unimplemented.\n",
+		BL_reg(context)
+	);
+    	SET_CFLAG(context);
+        break;
+    case 0x0201: /* set real mode interrupt vector */
+	fprintf(stdnimp,
+		"int31: set realmode interupt vector(0x%02x,0x%04x:0x%04x) unimplemented\n",
+		BL_reg(context),CX_reg(context),DX_reg(context)
+	);
+    	SET_CFLAG(context);
+        break;
     case 0x0204:  /* Get protected mode interrupt vector */
 	dw = (DWORD)INT_GetHandler( BL_reg(context) );
 	CX_reg(context) = HIWORD(dw);

@@ -64,7 +64,7 @@ static void ListBoxInitialize(LPHEADLIST lphl)
 void CreateListBoxStruct(HWND hwnd, WORD CtlType, LONG styles, HWND parent)
 {
   LPHEADLIST lphl;
-  HDC         hdc;
+  HDC32         hdc;
 
   lphl = (LPHEADLIST)xmalloc(sizeof(HEADLIST));
   SetWindowLong32A(hwnd, 0, (LONG)lphl);
@@ -87,14 +87,14 @@ void CreateListBoxStruct(HWND hwnd, WORD CtlType, LONG styles, HWND parent)
   lphl->HasStrings     = (styles & LBS_HASSTRINGS) || !lphl->OwnerDrawn;
 
   /* create dummy hdc to set text height */
-  if ((hdc = GetDC(0)))
+  if ((hdc = GetDC32(0)))
   {
       TEXTMETRIC16 tm;
       GetTextMetrics16( hdc, &tm );
       lphl->StdItemHeight = tm.tmHeight;
       dprintf_listbox(stddeb,"CreateListBoxStruct:  font height %d\n",
                       lphl->StdItemHeight);
-      ReleaseDC( 0, hdc );
+      ReleaseDC32( 0, hdc );
   }
 
   if (lphl->OwnerDrawn)
@@ -148,9 +148,9 @@ int ListMaxFirstVisible(LPHEADLIST lphl)
 void ListBoxUpdateWindow(HWND hwnd, LPHEADLIST lphl, BOOL repaint)
 {
   if (lphl->dwStyle & WS_VSCROLL)
-    SetScrollRange(hwnd, SB_VERT, 0, ListMaxFirstVisible(lphl), TRUE);
+    SetScrollRange32(hwnd, SB_VERT, 0, ListMaxFirstVisible(lphl), TRUE);
   if ((lphl->dwStyle & WS_HSCROLL) && (lphl->ItemsPerColumn != 0))
-    SetScrollRange(hwnd, SB_HORZ, 1, lphl->ItemsVisible /
+    SetScrollRange32(hwnd, SB_HORZ, 1, lphl->ItemsVisible /
 		   lphl->ItemsPerColumn + 1, TRUE);
 
   if (repaint && lphl->bRedrawFlag) InvalidateRect32( hwnd, NULL, TRUE );
@@ -811,12 +811,16 @@ LONG ListBoxDirectory(LPHEADLIST lphl, UINT attrib, LPCSTR filespec)
     if (attrib & DDL_DRIVES)
     {
         int x;
+	DWORD oldstyle = lphl->dwStyle;
+	    
+	lphl->dwStyle &= ~LBS_SORT;
         strcpy( temp, "[-a-]" );
         for (x = 0; x < MAX_DOS_DRIVES; x++, temp[2]++)
         {
             if (DRIVE_IsValid(x))
                 if ((ret = ListBoxAddString(lphl, SEGPTR_GET(temp))) == LB_ERR) break;
         }
+	lphl->dwStyle = oldstyle;
     }
 
     free( path );
@@ -831,8 +835,22 @@ int ListBoxGetItemRect(LPHEADLIST lphl, WORD wIndex, LPRECT16 lprect)
 {
   LPLISTSTRUCT lpls = ListBoxGetItem(lphl,wIndex);
 
-  if (lpls == NULL) return LB_ERR;
-  *lprect = lpls->itemRect;
+  dprintf_listbox(stddeb,"ListBox LB_GETITEMRECT %i %p", wIndex,lpls);
+  if (lpls == NULL)
+  {
+    if (lphl->dwStyle & LBS_OWNERDRAWVARIABLE)
+      return LB_ERR;
+    else 
+    {
+     GetClientRect16(lphl->hSelf,lprect);
+     lprect->bottom=lphl->StdItemHeight;
+     if (lprect->right<0) lprect->right=0;
+    }
+  }
+  else
+   *lprect = lpls->itemRect;
+  dprintf_listbox(stddeb," = %d,%d  %d,%d\n", lprect->left,lprect->top,
+                                              lprect->right,lprect->bottom);
   return 0;
 }
 
@@ -897,9 +915,9 @@ static LONG LBCreate(HWND hwnd, WORD wParam, LONG lParam)
   lphl->ColumnsWidth = rect.right - rect.left;
 
   if (dwStyle & WS_VSCROLL) 
-    SetScrollRange(hwnd, SB_VERT, 0, ListMaxFirstVisible(lphl), TRUE);
+    SetScrollRange32(hwnd, SB_VERT, 0, ListMaxFirstVisible(lphl), TRUE);
   if (dwStyle & WS_HSCROLL) 
-    SetScrollRange(hwnd, SB_HORZ, 1, 1, TRUE);
+    SetScrollRange32(hwnd, SB_HORZ, 1, 1, TRUE);
 
   return 0;
 }
@@ -974,7 +992,7 @@ static LONG LBVScroll(HWND hwnd, WORD wParam, LONG lParam)
     lphl->FirstVisible = ListMaxFirstVisible(lphl);
 
   if (y != lphl->FirstVisible) {
-    SetScrollPos(hwnd, SB_VERT, lphl->FirstVisible, TRUE);
+    SetScrollPos32(hwnd, SB_VERT, lphl->FirstVisible, TRUE);
     InvalidateRect32( hwnd, NULL, TRUE );
   }
   return 0;
@@ -1029,7 +1047,7 @@ static LONG LBHScroll(HWND hwnd, WORD wParam, LONG lParam)
     lphl->FirstVisible = lphl->FirstVisible /
       lphl->ItemsPerColumn * lphl->ItemsPerColumn + 1;
     if (y != lphl->FirstVisible) {
-      SetScrollPos(hwnd, SB_HORZ, lphl->FirstVisible / 
+      SetScrollPos32(hwnd, SB_HORZ, lphl->FirstVisible / 
 		   lphl->ItemsPerColumn + 1, TRUE);
       InvalidateRect32( hwnd, NULL, TRUE );
     }
@@ -1048,7 +1066,7 @@ static LONG LBLButtonDown(HWND hwnd, WORD wParam, LONG lParam)
   RECT16     rectsel;
 
   SetFocus32(hwnd);
-  SetCapture(hwnd);
+  SetCapture32(hwnd);
 
   lphl->PrevFocused = lphl->ItemFocused;
 
@@ -1122,7 +1140,7 @@ static LONG LBLButtonUp(HWND hwnd, WORD wParam, LONG lParam)
 {
   LPHEADLIST lphl = ListBoxGetStorageHeader(hwnd);
 
-  if (GetCapture() == hwnd) ReleaseCapture();
+  if (GetCapture32() == hwnd) ReleaseCapture();
 
   if (lphl->PrevFocused != lphl->ItemFocused)
     ListBoxSendNotification(lphl, LBN_SELCHANGE);
@@ -1158,7 +1176,7 @@ static LONG LBMouseMove(HWND hwnd, WORD wParam, LONG lParam)
     if (y < LBMM_EDGE) {
       if (lphl->FirstVisible > 0) {
 	lphl->FirstVisible--;
-	SetScrollPos(hwnd, SB_VERT, lphl->FirstVisible, TRUE);
+	SetScrollPos32(hwnd, SB_VERT, lphl->FirstVisible, TRUE);
 	InvalidateRect32( hwnd, NULL, TRUE );
 	return 0;
       }
@@ -1167,7 +1185,7 @@ static LONG LBMouseMove(HWND hwnd, WORD wParam, LONG lParam)
     if (y >= (rect.bottom-LBMM_EDGE)) {
       if (lphl->FirstVisible < ListMaxFirstVisible(lphl)) {
 	lphl->FirstVisible++;
-	SetScrollPos(hwnd, SB_VERT, lphl->FirstVisible, TRUE);
+	SetScrollPos32(hwnd, SB_VERT, lphl->FirstVisible, TRUE);
 	InvalidateRect32( hwnd, NULL, TRUE );
 	return 0;
       }
@@ -1322,7 +1340,7 @@ static LONG LBKeyDown(HWND hwnd, WORD wParam, LONG lParam)
           }
     }
 
-  SetScrollPos(hwnd, SB_VERT, lphl->FirstVisible, TRUE);
+  SetScrollPos32(hwnd, SB_VERT, lphl->FirstVisible, TRUE);
 
   return 0;
 }
@@ -1358,7 +1376,7 @@ static LONG LBChar(HWND hwnd, WORD wParam, LONG lParam)
 
   lphl->ItemFocused = newFocused;
   ListBoxScrollToFocus(lphl);
-  SetScrollPos(hwnd, SB_VERT, lphl->FirstVisible, TRUE);
+  SetScrollPos32(hwnd, SB_VERT, lphl->FirstVisible, TRUE);
 
   InvalidateRect32( hwnd, NULL, TRUE );
 
@@ -1385,7 +1403,7 @@ static LONG LBSetRedraw(HWND hwnd, WORD wParam, LONG lParam)
 static LONG LBSetFont(HWND hwnd, WPARAM wParam, LPARAM lParam)
 {
   LPHEADLIST  lphl = ListBoxGetStorageHeader(hwnd);
-  HDC hdc;
+  HDC32 hdc;
 
   if (wParam == 0)
     lphl->hFont = GetStockObject(SYSTEM_FONT);
@@ -1395,14 +1413,14 @@ static LONG LBSetFont(HWND hwnd, WPARAM wParam, LPARAM lParam)
   /* a new font means possible new text height */
   /* does this mean the height of each entry must be separately changed? */
   /* or are we guaranteed to get a LBSetFont before the first insert/add? */
-  if ((hdc = GetDC(0)))
+  if ((hdc = GetDC32(0)))
   {
       TEXTMETRIC16 tm;
       GetTextMetrics16( hdc, &tm );
       lphl->StdItemHeight = tm.tmHeight;
       dprintf_listbox(stddeb,"LBSetFont:  new font %d with height %d\n",
                       lphl->hFont, lphl->StdItemHeight);
-      ReleaseDC( 0, hdc );
+      ReleaseDC32( 0, hdc );
   }
 
   return 0;
@@ -1517,7 +1535,7 @@ static LONG LBSetFocus(HWND hwnd, WORD wParam, LONG lParam)
   if(!(lphl->dwStyle & LBS_MULTIPLESEL) )
        if( lphl->ItemsCount && lphl->ItemFocused != -1)
          {
-           HDC          hDC = GetDC(hwnd);
+           HDC32        hDC = GetDC32(hwnd);
            HFONT        hOldFont = SelectObject(hDC, lphl->hFont);
            LPLISTSTRUCT lpls;
 
@@ -1526,7 +1544,7 @@ static LONG LBSetFocus(HWND hwnd, WORD wParam, LONG lParam)
 
            ListBoxDrawItem(hwnd,lphl,hDC,lpls,&lpls->itemRect, ODA_FOCUS, lpls->itemState);
            SelectObject(hDC, hOldFont);
-           ReleaseDC(hwnd,hDC);
+           ReleaseDC32(hwnd,hDC);
          }
 
   ListBoxSendNotification(lphl, LBN_SETFOCUS);
@@ -1547,7 +1565,7 @@ static LONG LBKillFocus(HWND hwnd, WORD wParam, LONG lParam)
        if( lphl->ItemsCount )
            if( lphl->ItemFocused != -1 )
              {
-              HDC          hDC = GetDC(hwnd);
+              HDC32        hDC = GetDC32(hwnd);
               HFONT        hOldFont = SelectObject(hDC, lphl->hFont);
               LPLISTSTRUCT lpls;
 
@@ -1556,7 +1574,7 @@ static LONG LBKillFocus(HWND hwnd, WORD wParam, LONG lParam)
 
               ListBoxDrawItem(hwnd,lphl,hDC,lpls,&lpls->itemRect, ODA_FOCUS, lpls->itemState);
               SelectObject(hDC, hOldFont);
-              ReleaseDC(hwnd,hDC);
+              ReleaseDC32(hwnd,hDC);
              }
            else
              dprintf_listbox(stddeb,"LBKillFocus: no focused item!\n");
@@ -1905,7 +1923,7 @@ static LONG LBSetCaretIndex(HWND hwnd, WORD wParam, LONG lParam)
   lphl->ItemFocused = wParam;
   i = ListBoxScrollToFocus (lphl);
 
-  SetScrollPos(hwnd, SB_VERT, lphl->FirstVisible, TRUE);
+  SetScrollPos32(hwnd, SB_VERT, lphl->FirstVisible, TRUE);
   if(i)
     InvalidateRect32( hwnd, NULL, TRUE );
  
@@ -1988,7 +2006,7 @@ static LONG LBSetCurSel(HWND hwnd, WORD wParam, LONG lParam)
 
   wRet = ListBoxSetCurSel(lphl, wParam);
 
-  SetScrollPos(hwnd, SB_VERT, lphl->FirstVisible, TRUE);
+  SetScrollPos32(hwnd, SB_VERT, lphl->FirstVisible, TRUE);
   InvalidateRect32( hwnd, NULL, TRUE );
 
   return wRet;
@@ -2034,7 +2052,7 @@ static LONG LBSetTopIndex(HWND hwnd, WORD wParam, LONG lParam)
   dprintf_listbox(stddeb,"ListBox LB_SETTOPINDEX wParam=%x !\n",
 		  wParam);
   lphl->FirstVisible = wParam;
-  SetScrollPos(hwnd, SB_VERT, lphl->FirstVisible, TRUE);
+  SetScrollPos32(hwnd, SB_VERT, lphl->FirstVisible, TRUE);
 
   InvalidateRect32( hwnd, NULL, TRUE );
 

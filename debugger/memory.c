@@ -11,6 +11,64 @@
 #include "debugger.h"
 
 
+/************************************************************
+ *   
+ *  Check if linear pointer in [addr, addr+size[
+ *     read  (rwflag == 1)
+ *   or
+ *     write (rwflag == 0)
+ ************************************************************/
+
+#ifdef linux
+BOOL32 DEBUG_checkmap_bad( const char *addr, size_t size, int rwflag)
+{
+  FILE *fp;
+  char buf[80];      /* temporary line buffer */
+  char prot[5];      /* protection string */
+  char *start, *end;
+  int ret = TRUE;
+
+  /* 
+     The entries in /proc/self/maps are of the form:
+     08000000-08002000 r-xp 00000000 03:41 2361
+     08002000-08003000 rw-p 00001000 03:41 2361
+     08003000-08005000 rwxp 00000000 00:00 0
+     40000000-40005000 r-xp 00000000 03:41 67219
+     40005000-40006000 rw-p 00004000 03:41 67219
+     40006000-40007000 rw-p 00000000 00:00 0
+     ...
+      start    end     perm   ???    major:minor inode
+
+     Only permissions start and end are used here
+     */
+  
+  if (!(fp = fopen("/proc/self/maps", "r")))
+    return FALSE; 
+
+  while (fgets( buf, 79, fp)) {
+    sscanf(buf, "%x-%x %3s", (int *) &start, (int *) &end, prot);
+    if ( end < addr)
+      continue;
+    if (start <= addr && addr+size < end) {
+      if (rwflag) 
+	ret = (prot[0] != 'r'); /* test for reading */
+      else
+	ret = (prot[1] != 'w'); /* test for writing */
+    }
+    break;
+  }
+  fclose( fp);
+  return ret;
+}
+#else  /* linux */
+/* FIXME: code needed for BSD et al. */
+BOOL32 DEBUG_checkmap_bad(char *addr, size_t size, int rwflag)
+{
+    return FALSE;
+}
+#endif  /* linux */
+
+
 /***********************************************************************
  *           DEBUG_IsBadReadPtr
  *
@@ -19,11 +77,12 @@
 BOOL32 DEBUG_IsBadReadPtr( const DBG_ADDR *address, int size )
 {
     if (address->seg)  /* segmented addr */
-        return IsBadReadPtr16( (SEGPTR)MAKELONG( (WORD)address->off,
-                                                 (WORD)address->seg ), size );
-        /* FIXME: should check if resulting linear addr is readable */
-    else  /* linear address */
-        return FALSE;  /* FIXME: should do some checks here */
+    {
+        if (IsBadReadPtr16( (SEGPTR)MAKELONG( (WORD)address->off,
+                                              (WORD)address->seg ), size ))
+            return TRUE;
+    }
+    return DEBUG_checkmap_bad( DBG_ADDR_TO_LIN(address), size, 1);
 }
 
 
@@ -35,13 +94,14 @@ BOOL32 DEBUG_IsBadReadPtr( const DBG_ADDR *address, int size )
 BOOL32 DEBUG_IsBadWritePtr( const DBG_ADDR *address, int size )
 {
     if (address->seg)  /* segmented addr */
+    {
         /* Note: we use IsBadReadPtr here because we are */
         /* always allowed to write to read-only segments */
-        return IsBadReadPtr16( (SEGPTR)MAKELONG( (WORD)address->off,
-                                                 (WORD)address->seg ), size );
-        /* FIXME: should check if resulting linear addr is writable */
-    else  /* linear address */
-        return FALSE;  /* FIXME: should do some checks here */
+        if (IsBadReadPtr16( (SEGPTR)MAKELONG( (WORD)address->off,
+                                              (WORD)address->seg ), size ))
+            return TRUE;
+    }
+    return DEBUG_checkmap_bad( DBG_ADDR_TO_LIN(address), size, 0);
 }
 
 

@@ -1229,3 +1229,8 @@ BOOL SetLocaleInfoA(DWORD lcid, DWORD lctype, LPCSTR data) {
 	fprintf(stdnimp,"SetLocaleInfoA(%ld,%ld,%s)\n",lcid,lctype,data);
 	return TRUE;
 }
+
+BOOL IsValidLocale(DWORD lcid,DWORD flags) {
+	fprintf(stdnimp,"IsValidLocale(%ld,%ld)\n",lcid,flags);
+	return TRUE;
+}

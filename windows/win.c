@@ -44,6 +44,9 @@ static WORD wDragWidth = 4;
 static WORD wDragHeight= 3;
 
 extern HCURSOR16 CURSORICON_IconToCursor(HICON16);
+extern HWND32 CARET_GetHwnd(void);
+extern BOOL32 WINPOS_ActivateOtherWindow(WND* pWnd);
+extern void   WINPOS_CheckActive(HWND32);
 
 /***********************************************************************
  *           WIN_FindWndPtr
@@ -90,13 +93,13 @@ void WIN_DumpWindow( HWND32 hwnd )
     fprintf( stderr, "Window %04x (%p):\n", hwnd, ptr );
     fprintf( stderr,
              "next=%p  child=%p  parent=%p  owner=%p  class=%p '%s'\n"
-             "inst=%04x  taskQ=%04x  updRgn=%04x  active=%04x hdce=%04x  idmenu=%04x\n"
+             "inst=%04x  taskQ=%04x  updRgn=%04x  active=%04x dce=%p  idmenu=%04x\n"
              "style=%08lx  exstyle=%08lx  wndproc=%08x  text='%s'\n"
              "client=%d,%d-%d,%d  window=%d,%d-%d,%d  iconpos=%d,%d  maxpos=%d,%d\n"
              "sysmenu=%04x  flags=%04x  props=%p  vscroll=%p  hscroll=%p\n",
              ptr->next, ptr->child, ptr->parent, ptr->owner,
              ptr->class, className, ptr->hInstance, ptr->hmemTaskQ,
-             ptr->hrgnUpdate, ptr->hwndLastActive, ptr->hdce, ptr->wIDmenu,
+             ptr->hrgnUpdate, ptr->hwndLastActive, ptr->dce, ptr->wIDmenu,
              ptr->dwStyle, ptr->dwExStyle, (UINT32)ptr->winproc,
              ptr->text ? ptr->text : "",
              ptr->rectClient.left, ptr->rectClient.top, ptr->rectClient.right,
@@ -301,37 +304,71 @@ void WIN_SendParentNotify(HWND32 hwnd, WORD event, WORD idChild, LPARAM lValue)
 /***********************************************************************
  *           WIN_DestroyWindow
  *
- * Destroy storage associated to a window
+ * Destroy storage associated to a window. "Internals" p.358
  */
-static void WIN_DestroyWindow( HWND hwnd )
+static void WIN_DestroyWindow( WND* wndPtr )
 {
-    WND *wndPtr = WIN_FindWndPtr( hwnd );
+    HWND hwnd = wndPtr->hwndSelf;
+    WND* pWnd,*pNext;
 
 #ifdef CONFIG_IPC
     if (main_block)
-	DDE_DestroyWindow(hwnd);
+	DDE_DestroyWindow(wndPtr->hwndSelf);
 #endif  /* CONFIG_IPC */
 	
-    if (!wndPtr) return;
-    WIN_UnlinkWindow( hwnd ); /* Remove the window from the linked list */
-    TIMER_RemoveWindowTimers( hwnd );
+    /* free child windows */
+
+    pNext = wndPtr->child;
+    while( (pWnd = pNext) )
+    {
+        pNext = pWnd->next;
+        WIN_DestroyWindow( pWnd );
+    }
+
+    SendMessage32A( wndPtr->hwndSelf, WM_NCDESTROY, 0, 0);
+
+    /* FIXME: do we need to fake QS_MOUSEMOVE wakebit? */
+
+    WINPOS_CheckActive( hwnd );
+    if( hwnd == GetCapture32()) ReleaseCapture();
+
+    /* free resources associated with the window */
+
+    TIMER_RemoveWindowTimers( wndPtr->hwndSelf );
     PROPERTY_RemoveWindowProps( wndPtr );
+
     wndPtr->dwMagic = 0;  /* Mark it as invalid */
     wndPtr->hwndSelf = 0;
+
     if ((wndPtr->hrgnUpdate) || (wndPtr->flags & WIN_INTERNAL_PAINT))
     {
         if (wndPtr->hrgnUpdate) DeleteObject( wndPtr->hrgnUpdate );
         QUEUE_DecPaintCount( wndPtr->hmemTaskQ );
     }
-    if (!(wndPtr->dwStyle & WS_CHILD))
+
+    /* toss stale messages from the queue */
+
+    if( wndPtr->hmemTaskQ )
     {
-        if (wndPtr->wIDmenu) DestroyMenu( (HMENU)wndPtr->wIDmenu );
+      int           pos;
+      MESSAGEQUEUE* msgQ = (MESSAGEQUEUE*) GlobalLock16(wndPtr->hmemTaskQ);
+
+      while( (pos = QUEUE_FindMsg(msgQ, hwnd, 0, 0)) != -1 ) 
+	      QUEUE_RemoveMsg(msgQ, pos);
+      wndPtr->hmemTaskQ = 0;
     }
+
+    if (!(wndPtr->dwStyle & WS_CHILD))
+       if (wndPtr->wIDmenu) DestroyMenu( (HMENU)wndPtr->wIDmenu );
     if (wndPtr->hSysMenu) DestroyMenu( wndPtr->hSysMenu );
     if (wndPtr->window) XDestroyWindow( display, wndPtr->window );
-    if (wndPtr->class->style & CS_OWNDC) DCE_FreeDCE( wndPtr->hdce );
+    if (wndPtr->class->style & CS_OWNDC) DCE_FreeDCE( wndPtr->dce );
+
     WINPROC_FreeProc( wndPtr->winproc );
+
     wndPtr->class->cWindows--;
+    wndPtr->class = NULL;
+
     USER_HEAP_FREE( hwnd );
 }
 
@@ -398,7 +435,7 @@ BOOL32 WIN_CreateDesktopWindow(void)
     pWndDesktop->dwStyle           = WS_VISIBLE | WS_CLIPCHILDREN |
                                      WS_CLIPSIBLINGS;
     pWndDesktop->dwExStyle         = 0;
-    pWndDesktop->hdce              = 0;
+    pWndDesktop->dce               = NULL;
     pWndDesktop->pVScroll          = NULL;
     pWndDesktop->pHScroll          = NULL;
     pWndDesktop->pProp             = NULL;
@@ -426,7 +463,7 @@ static HWND WIN_CreateWindowEx( CREATESTRUCT32A *cs, ATOM classAtom,
 {
     CLASS *classPtr;
     WND *wndPtr;
-    HWND16 hwnd;
+    HWND16 hwnd, hwndLinkAfter;
     POINT16 maxSize, maxPos, minTrack, maxTrack;
     LRESULT wmcreate;
 
@@ -493,12 +530,23 @@ static HWND WIN_CreateWindowEx( CREATESTRUCT32A *cs, ATOM classAtom,
     /* Fill the window structure */
 
     wndPtr = (WND *) USER_HEAP_LIN_ADDR( hwnd );
-    wndPtr->next           = NULL;
-    wndPtr->child          = NULL;
-    wndPtr->parent         = (cs->style & WS_CHILD) ?
-                              WIN_FindWndPtr( cs->hwndParent ) : pWndDesktop;
-    wndPtr->owner          = (cs->style & WS_CHILD) ? NULL :
-                              WIN_FindWndPtr(WIN_GetTopParent(cs->hwndParent));
+    wndPtr->next  = NULL;
+    wndPtr->child = NULL;
+
+    if (cs->style & WS_CHILD)
+    {
+        wndPtr->parent = WIN_FindWndPtr( cs->hwndParent );
+        wndPtr->owner  = NULL;
+    }
+    else
+    {
+        wndPtr->parent = pWndDesktop;
+        if (!cs->hwndParent || (cs->hwndParent == pWndDesktop->hwndSelf))
+            wndPtr->owner = NULL;
+        else
+            wndPtr->owner = WIN_FindWndPtr(WIN_GetTopParent(cs->hwndParent));
+    }
+
     wndPtr->window         = 0;
     wndPtr->class          = classPtr;
     wndPtr->winproc        = NULL;
@@ -524,10 +572,46 @@ static HWND WIN_CreateWindowEx( CREATESTRUCT32A *cs, ATOM classAtom,
     wndPtr->userdata       = 0;
 
     if (classPtr->cbWndExtra) memset( wndPtr->wExtra, 0, classPtr->cbWndExtra);
-    classPtr->cWindows++;
+
+    /* Call the WH_CBT hook */
+
+    hwndLinkAfter = (cs->style & WS_CHILD) ? HWND_BOTTOM : HWND_TOP;
+
+    if (HOOK_GetHook( WH_CBT, GetTaskQueue(0) ))
+    {
+        CBT_CREATEWND16* cbtc;
+
+        if ((cbtc = SEGPTR_NEW(CBT_CREATEWND16)))
+        {
+            /* Dummy message params to use WINPROC_MapMsg functions */
+            UINT16 msg;
+            WPARAM16 wparam;
+            LPARAM lparam;
+
+            /* Map the CREATESTRUCT to 16-bit format */
+            lparam = (LPARAM)cs;
+            if (unicode)
+                WINPROC_MapMsg32WTo16( WM_CREATE, 0, &msg, &wparam, &lparam );
+            else
+                WINPROC_MapMsg32ATo16( WM_CREATE, 0, &msg, &wparam, &lparam );
+            cbtc->lpcs = (CREATESTRUCT16 *)lparam;
+            cbtc->hwndInsertAfter = hwndLinkAfter;
+            wmcreate = !HOOK_CallHooks( WH_CBT, HCBT_CREATEWND, hwnd,
+                                        (LPARAM)SEGPTR_GET(cbtc) );
+            WINPROC_UnmapMsg32ATo16( WM_CREATE, 0, lparam );
+            SEGPTR_FREE(cbtc);
+            if (!wmcreate)
+            {
+                dprintf_win(stddeb,"CreateWindowEx: CBT-hook returned 0\n" );
+                USER_HEAP_FREE( hwnd );
+                return 0;
+            }
+        }
+    }
 
     /* Set the window procedure */
 
+    classPtr->cWindows++;
     WINPROC_SetProc( &wndPtr->winproc, (WNDPROC16)classPtr->winproc, 0 );
 
     /* Correct the window style */
@@ -541,54 +625,13 @@ static HWND WIN_CreateWindowEx( CREATESTRUCT32A *cs, ATOM classAtom,
 
     /* Get class or window DC if needed */
 
-    if (classPtr->style & CS_OWNDC) wndPtr->hdce = DCE_AllocDCE(hwnd, DCE_WINDOW_DC);
-    else if (classPtr->style & CS_CLASSDC) wndPtr->hdce = classPtr->hdce;
-    else wndPtr->hdce = 0;
+    if (classPtr->style & CS_OWNDC) wndPtr->dce = DCE_AllocDCE(hwnd,DCE_WINDOW_DC);
+    else if (classPtr->style & CS_CLASSDC) wndPtr->dce = classPtr->dce;
+    else wndPtr->dce = NULL;
 
     /* Insert the window in the linked list */
 
-    WIN_LinkWindow( hwnd, (cs->style & WS_CHILD) ? HWND_BOTTOM : HWND_TOP );
-
-    /* Call the WH_CBT hook */
-
-    if (HOOK_GetHook( WH_CBT, GetTaskQueue(0) ))
-    {
-        CBT_CREATEWND16* cbtc;
-
-        if ((cbtc = SEGPTR_NEW(CBT_CREATEWND16)))
-        {
-            /* Dummy message params to use WINPROC_MapMsg functions */
-            UINT16 msg;
-            WPARAM16 wparam;
-            LPARAM lparam;
-
-            HWND hwndZnew = (cs->style & WS_CHILD) ? HWND_BOTTOM : HWND_TOP;
-
-            /* Map the CREATESTRUCT to 16-bit format */
-            lparam = (LPARAM)cs;
-            if (unicode)
-                WINPROC_MapMsg32WTo16( WM_CREATE, 0, &msg, &wparam, &lparam );
-            else
-                WINPROC_MapMsg32ATo16( WM_CREATE, 0, &msg, &wparam, &lparam );
-            cbtc->lpcs = (CREATESTRUCT16 *)lparam;
-            cbtc->hwndInsertAfter = hwndZnew;
-            wmcreate = !HOOK_CallHooks( WH_CBT, HCBT_CREATEWND, hwnd,
-                                        (LPARAM)SEGPTR_GET(cbtc) );
-            WINPROC_UnmapMsg32ATo16( WM_CREATE, 0, lparam );
-            if (hwndZnew != cbtc->hwndInsertAfter)
-            {
-                WIN_UnlinkWindow( hwnd );
-                WIN_LinkWindow( hwnd, cbtc->hwndInsertAfter );
-            }
-            SEGPTR_FREE(cbtc);
-            if (!wmcreate)
-            {
-                dprintf_win(stddeb,"CreateWindowEx: CBT-hook returned 0\n" );
-                WIN_DestroyWindow( hwnd );
-                return 0;
-            }
-        }
-    }
+    WIN_LinkWindow( hwnd, hwndLinkAfter );
 
     /* Send the WM_GETMINMAXINFO message and fix the size if needed */
 
@@ -722,7 +765,8 @@ static HWND WIN_CreateWindowEx( CREATESTRUCT32A *cs, ATOM classAtom,
     {
 	  /* Abort window creation */
 	dprintf_win(stddeb,"CreateWindowEx: wmcreate==-1, aborting\n");
-        WIN_DestroyWindow( hwnd );
+        WIN_UnlinkWindow( hwnd );
+        WIN_DestroyWindow( wndPtr );
 	return 0;
     }
 
@@ -884,7 +928,14 @@ HWND32 CreateWindowEx32W( DWORD exStyle, LPCWSTR className, LPCWSTR windowName,
 
     if (!(classAtom = GlobalFindAtom32W( className )))
     {
-        fprintf( stderr, "CreateWindowEx32W: bad class name %p\n", className );
+    	if (HIWORD(className))
+        {
+            LPSTR cn = STRING32_DupUniToAnsi(className);
+            fprintf( stderr, "CreateWindowEx32W: bad class name '%s'\n",cn);
+            free(cn);
+	}
+        else
+            fprintf( stderr, "CreateWindowEx32W: bad class name %p\n", className );
         return 0;
     }
 
@@ -909,6 +960,45 @@ HWND32 CreateWindowEx32W( DWORD exStyle, LPCWSTR className, LPCWSTR windowName,
 
 
 /***********************************************************************
+ *           WIN_CheckFocus
+ */
+static void WIN_CheckFocus( WND* pWnd )
+{
+  if( GetFocus16() == pWnd->hwndSelf )
+      SetFocus16( (pWnd->dwStyle & WS_CHILD) ? pWnd->parent->hwndSelf : 0 ); 
+}
+
+/***********************************************************************
+ *           WIN_SendDestroyMsg
+ */
+static void WIN_SendDestroyMsg( WND* pWnd )
+{
+  WND*	pChild;
+
+  WIN_CheckFocus(pWnd);
+
+  if( CARET_GetHwnd() == pWnd->hwndSelf ) DestroyCaret();
+  if( !pWnd->window ) CLIPBOARD_DisOwn( pWnd ); 
+  
+  SendMessage32A( pWnd->hwndSelf, WM_DESTROY, 0, 0);
+
+  if( !IsWindow(pWnd->hwndSelf) )
+  {
+    dprintf_win(stddeb,"\tdestroyed itself while in WM_DESTROY!\n");
+    return;
+  }
+
+  pChild = pWnd->child;
+  while( pChild )
+  { 
+    WIN_SendDestroyMsg( pChild );
+    pChild = pChild->next;
+  }
+  WIN_CheckFocus(pWnd);
+}
+
+
+/***********************************************************************
  *           DestroyWindow   (USER.53)
  */
 BOOL DestroyWindow( HWND hwnd )
@@ -922,7 +1012,10 @@ BOOL DestroyWindow( HWND hwnd )
     if (!(wndPtr = WIN_FindWndPtr( hwnd ))) return FALSE;
     if (wndPtr == pWndDesktop) return FALSE; /* Can't destroy desktop */
 
-      /* Top-level window */
+      /* Call hooks */
+
+    if( HOOK_CallHooks( WH_CBT, HCBT_DESTROYWND, hwnd, 0L) )
+        return FALSE;
 
     if (!(wndPtr->dwStyle & WS_CHILD) && !wndPtr->owner)
     {
@@ -930,41 +1023,61 @@ BOOL DestroyWindow( HWND hwnd )
         /* FIXME: clean up palette - see "Internals" p.352 */
     }
 
+    if( !QUEUE_IsDoomedQueue(wndPtr->hmemTaskQ) )
+	 WIN_SendParentNotify( hwnd, WM_DESTROY, wndPtr->wIDmenu, (LPARAM)hwnd );
+    if( !IsWindow(hwnd) ) return TRUE;
+
+    if( wndPtr->window ) CLIPBOARD_DisOwn( wndPtr ); /* before window is unmapped */
+
       /* Hide the window */
 
     if (wndPtr->dwStyle & WS_VISIBLE)
-	SetWindowPos( hwnd, 0, 0, 0, 0, 0, SWP_HIDEWINDOW | SWP_NOACTIVATE |
-		      SWP_NOZORDER | SWP_NOMOVE | SWP_NOSIZE );
-    if ((hwnd == GetCapture()) || IsChild( hwnd, GetCapture() ))
-	ReleaseCapture();
-    WIN_SendParentNotify( hwnd, WM_DESTROY, wndPtr->wIDmenu, (LPARAM)hwnd );
-
-    CLIPBOARD_DisOwn( hwnd );
+    {
+        SetWindowPos( hwnd, 0, 0, 0, 0, 0, SWP_HIDEWINDOW |
+		      SWP_NOACTIVATE | SWP_NOZORDER | SWP_NOMOVE | SWP_NOSIZE |
+		    ((QUEUE_IsDoomedQueue(wndPtr->hmemTaskQ))?SWP_DEFERERASE:0) );
+	if( !IsWindow(hwnd) ) return TRUE;
+    }
 
       /* Recursively destroy owned windows */
 
-    for (;;)
+    if( !(wndPtr->dwStyle & WS_CHILD) )
     {
+      for (;;)
+      {
         WND *siblingPtr = wndPtr->parent->child;  /* First sibling */
         while (siblingPtr)
         {
-            if (siblingPtr->owner == wndPtr) break;
+            if (siblingPtr->owner == wndPtr)
+               if (siblingPtr->hmemTaskQ == wndPtr->hmemTaskQ)
+                   break;
+               else 
+                   siblingPtr->owner = NULL;
             siblingPtr = siblingPtr->next;
         }
         if (siblingPtr) DestroyWindow( siblingPtr->hwndSelf );
         else break;
+      }
+
+      WINPOS_ActivateOtherWindow(wndPtr);
+
+      if( wndPtr->owner &&
+	  wndPtr->owner->hwndLastActive == wndPtr->hwndSelf )
+	  wndPtr->owner->hwndLastActive = wndPtr->owner->hwndSelf;
     }
 
-      /* Send destroy messages and destroy children */
+      /* Send destroy messages */
 
-    SendMessage16( hwnd, WM_DESTROY, 0, 0 );
-    while (wndPtr->child)  /* The child removes itself from the list */
-	DestroyWindow( wndPtr->child->hwndSelf );
-    SendMessage16( hwnd, WM_NCDESTROY, 0, 0 );
+    WIN_SendDestroyMsg( wndPtr );
+    if( !IsWindow(hwnd) ) return TRUE;
 
-      /* Destroy the window */
+      /* Unlink now so we won't bother with the children later on */
 
-    WIN_DestroyWindow( hwnd );
+    if( wndPtr->parent ) WIN_UnlinkWindow(hwnd);
+
+      /* Destroy the window storage */
+
+    WIN_DestroyWindow( wndPtr );
     return TRUE;
 }
 
@@ -1145,9 +1258,18 @@ WND *WIN_GetDesktop(void)
 
 
 /**********************************************************************
- *           GetDesktopWindow   (USER.286)
+ *           GetDesktopWindow16   (USER.286)
  */
-HWND GetDesktopWindow(void)
+HWND16 GetDesktopWindow16(void)
+{
+    return (HWND16)pWndDesktop->hwndSelf;
+}
+
+
+/**********************************************************************
+ *           GetDesktopWindow32   (USER32.231)
+ */
+HWND32 GetDesktopWindow32(void)
 {
     return pWndDesktop->hwndSelf;
 }
@@ -1159,9 +1281,9 @@ HWND GetDesktopWindow(void)
  * Exactly the same thing as GetDesktopWindow(), but not documented.
  * Don't ask me why...
  */
-HWND GetDesktopHwnd(void)
+HWND16 GetDesktopHwnd(void)
 {
-    return pWndDesktop->hwndSelf;
+    return (HWND16)pWndDesktop->hwndSelf;
 }
 
 
@@ -1186,7 +1308,7 @@ BOOL EnableWindow( HWND hwnd, BOOL enable )
 	wndPtr->dwStyle |= WS_DISABLED;
 	if ((hwnd == GetFocus32()) || IsChild( hwnd, GetFocus32() ))
 	    SetFocus32( 0 );  /* A disabled window can't have the focus */
-	if ((hwnd == GetCapture()) || IsChild( hwnd, GetCapture() ))
+	if ((hwnd == GetCapture32()) || IsChild( hwnd, GetCapture32() ))
 	    ReleaseCapture();  /* A disabled window can't capture the mouse */
 	SendMessage16( hwnd, WM_ENABLE, FALSE, 0 );
 	return FALSE;
@@ -1892,12 +2014,12 @@ BOOL FlashWindow(HWND hWnd, BOOL bInvert)
     {
         if (bInvert && !(wndPtr->flags & WIN_NCACTIVATED))
         {
-            HDC hDC = GetDC(hWnd);
+            HDC32 hDC = GetDC32(hWnd);
             
             if (!SendMessage16( hWnd, WM_ERASEBKGND, (WPARAM)hDC, (LPARAM)0 ))
                 wndPtr->flags |= WIN_NEEDS_ERASEBKGND;
             
-            ReleaseDC( hWnd, hDC );
+            ReleaseDC32( hWnd, hDC );
             wndPtr->flags |= WIN_NCACTIVATED;
         }
         else
@@ -2026,7 +2148,7 @@ BOOL16 DragDetect(HWND16 hWnd, POINT16 pt)
   rect.top = pt.y - wDragHeight;
   rect.bottom = pt.y + wDragHeight;
 
-  SetCapture(hWnd);
+  SetCapture32(hWnd);
 
   while(1)
    {
@@ -2105,7 +2227,7 @@ DWORD DragObject(HWND hwndScope, HWND hWnd, WORD wObj, HANDLE hOfStruct,
  lpDragInfo->hOfStruct = hOfStruct;
  lpDragInfo->l = 0L; 
 
- SetCapture(hWnd);
+ SetCapture32(hWnd);
  ShowCursor(1);
 
  while( !dragDone )

@@ -483,7 +483,7 @@ base	1
 478 stub strtod
 479 stub strtok
 480 stub strtol
-481 stub strtoul
+481 cdecl strtoul(ptr ptr long) strtoul
 482 stub strxfrm
 483 stub swprintf
 484 stub swscanf

@@ -29,7 +29,7 @@ static int RgnType;
  */
 void ScrollWindow(HWND hwnd, short dx, short dy, LPRECT16 rect, LPRECT16 clipRect)
 {
-    HDC  	hdc;
+    HDC32  	hdc;
     HRGN 	hrgnUpdate,hrgnClip;
     RECT16 	rc, cliprc;
     HWND 	hCaretWnd = CARET_GetHwnd();
@@ -52,7 +52,7 @@ void ScrollWindow(HWND hwnd, short dx, short dy, LPRECT16 rect, LPRECT16 clipRec
               HideCaret(hCaretWnd);
           else hCaretWnd = 0;
  
-	  hdc      = GetDCEx(hwnd, hrgnClip, DCX_CACHE | DCX_CLIPSIBLINGS);
+	  hdc = GetDCEx32(hwnd, hrgnClip, DCX_CACHE | DCX_CLIPSIBLINGS);
           DeleteObject(hrgnClip);
        }
     else	/* clip children */
@@ -63,7 +63,7 @@ void ScrollWindow(HWND hwnd, short dx, short dy, LPRECT16 rect, LPRECT16 clipRec
           if (hCaretWnd == hwnd) HideCaret(hCaretWnd);
           else hCaretWnd = 0;
 
-	  hdc = GetDC(hwnd);
+	  hdc = GetDC32(hwnd);
        }
 
     if (clipRect == NULL)
@@ -73,7 +73,7 @@ void ScrollWindow(HWND hwnd, short dx, short dy, LPRECT16 rect, LPRECT16 clipRec
 
     hrgnUpdate = CreateRectRgn(0, 0, 0, 0);
     ScrollDC(hdc, dx, dy, &rc, &cliprc, hrgnUpdate, NULL);
-    ReleaseDC(hwnd, hdc);
+    ReleaseDC32(hwnd, hdc);
 
     if( !rect )		/* move child windows and update region */
     { 
@@ -230,12 +230,12 @@ BOOL ScrollDC(HDC hdc, short dx, short dy, LPRECT16 rc, LPRECT16 cliprc,
 int ScrollWindowEx(HWND hwnd, short dx, short dy, LPRECT16 rect, LPRECT16 clipRect,
 		   HRGN hrgnUpdate, LPRECT16 rcUpdate, WORD flags)
 {
-    HDC hdc;
+    HDC32 hdc;
     RECT16 rc, cliprc;
 
     dprintf_scroll(stddeb,"ScrollWindowEx: dx=%d, dy=%d, wFlags=%04x\n",dx, dy, flags);
 
-    hdc = GetDC(hwnd);
+    hdc = GetDC32(hwnd);
 
     if (rect == NULL)
 	GetClientRect16(hwnd, &rc);
@@ -254,6 +254,6 @@ int ScrollWindowEx(HWND hwnd, short dx, short dy, LPRECT16 rect, LPRECT16 clipRe
                         ((flags & SW_ERASE) ? RDW_ERASENOW : 0), 0 );
     }
 
-    ReleaseDC(hwnd, hdc);
+    ReleaseDC32(hwnd, hdc);
     return RgnType;
 }

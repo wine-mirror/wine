@@ -17,7 +17,7 @@ heap	65520
 15  pascal   GetCurrentTime() GetCurrentTime
 16  pascal16 ClipCursor(ptr) ClipCursor16
 17  pascal16 GetCursorPos(ptr) GetCursorPos16
-18  pascal16 SetCapture(word) SetCapture
+18  pascal16 SetCapture(word) SetCapture16
 19  pascal16 ReleaseCapture() ReleaseCapture
 20  pascal16 SetDoubleClickTime(word) SetDoubleClickTime
 21  pascal16 GetDoubleClickTime() GetDoubleClickTime
@@ -62,13 +62,13 @@ heap	65520
 59  pascal16 SetActiveWindow(word) SetActiveWindow
 60  pascal16 GetActiveWindow() GetActiveWindow
 61  pascal16 ScrollWindow(word s_word s_word ptr ptr) ScrollWindow
-62  pascal16 SetScrollPos(word word s_word word) SetScrollPos
-63  pascal16 GetScrollPos(word word) GetScrollPos
-64  pascal16 SetScrollRange(word word s_word s_word word) SetScrollRange
-65  pascal16 GetScrollRange(word word ptr ptr) GetScrollRange
-66  pascal16 GetDC(word) GetDC
-67  pascal16 GetWindowDC(word) GetWindowDC
-68  pascal16 ReleaseDC(word word) ReleaseDC
+62  pascal16 SetScrollPos(word word s_word word) SetScrollPos16
+63  pascal16 GetScrollPos(word word) GetScrollPos16
+64  pascal16 SetScrollRange(word word s_word s_word word) SetScrollRange16
+65  pascal16 GetScrollRange(word word ptr ptr) GetScrollRange16
+66  pascal16 GetDC(word) GetDC16
+67  pascal16 GetWindowDC(word) GetWindowDC16
+68  pascal16 ReleaseDC(word word) ReleaseDC16
 69  pascal16 SetCursor(word) SetCursor
 70  pascal16 SetCursorPos(word word) SetCursorPos
 71  pascal16 ShowCursor(word) ShowCursor
@@ -117,7 +117,7 @@ heap	65520
 115 pascal16 ReplyMessage(long) ReplyMessage
 116 pascal16 PostAppMessage(word word word long) PostAppMessage
 118 pascal16 RegisterWindowMessage(segptr) RegisterWindowMessage16
-117 pascal16 WindowFromDC(word) WindowFromDC
+117 pascal16 WindowFromDC(word) WindowFromDC16
 119 pascal   GetMessagePos() GetMessagePos
 120 pascal   GetMessageTime() GetMessageTime
 121 pascal   SetWindowsHook(s_word segptr) SetWindowsHook
@@ -236,7 +236,7 @@ heap	65520
 233 pascal16 SetParent(word word) SetParent
 234 pascal16 UnhookWindowsHook(s_word segptr) UnhookWindowsHook
 235 pascal   DefHookProc(s_word word long ptr) DefHookProc
-236 pascal16 GetCapture() GetCapture
+236 pascal16 GetCapture() GetCapture16
 237 pascal16 GetUpdateRgn(word word word) GetUpdateRgn
 238 pascal16 ExcludeUpdateRgn(word word) ExcludeUpdateRgn
 239 pascal16 DialogBoxParam(word segptr word segptr long) DialogBoxParam16
@@ -270,7 +270,7 @@ heap	65520
 264 pascal16 GetMenuItemID(word word) GetMenuItemID
 265 pascal16 ShowOwnedPopups(word word) ShowOwnedPopups
 266 pascal16 SetMessageQueue(word) SetMessageQueue
-267 pascal16 ShowScrollBar(word word word) ShowScrollBar
+267 pascal16 ShowScrollBar(word word word) ShowScrollBar16
 268 pascal16 GlobalAddAtom(segptr) GlobalAddAtom16
 269 pascal16 GlobalDeleteAtom(word) GlobalDeleteAtom
 270 pascal16 GlobalFindAtom(segptr) GlobalFindAtom16
@@ -288,8 +288,8 @@ heap	65520
 282 pascal16 SelectPalette(word word word) SelectPalette
 283 pascal16 RealizePalette(word) RealizePalette
 284 pascal16 GetFreeSystemResources(word) GetFreeSystemResources
-#285 BEAR285
-286 pascal16 GetDesktopWindow() GetDesktopWindow
+285 pascal16 SetDeskWallPaper(ptr) SetDeskWallPaper16
+286 pascal16 GetDesktopWindow() GetDesktopWindow16
 287 pascal16 GetLastActivePopup(word) GetLastActivePopup
 288 pascal   GetMessageExtraInfo() GetMessageExtraInfo
 #289 KEYB_EVENT
@@ -326,7 +326,7 @@ heap	65520
 356 stub LoadDIBCursorHandler
 357 stub LoadDIBIconHandler
 358 pascal16 IsMenu(word) IsMenu
-359 pascal16 GetDCEx(word word long) GetDCEx
+359 pascal16 GetDCEx(word word long) GetDCEx16
 362 pascal16 DCHook(word word long long) DCHook
 364 stub LookupIconIDFromDirectoryEx
 368 pascal16 CopyIcon(word word) CopyIcon16
@@ -416,14 +416,14 @@ heap	65520
 471 pascal16 lstrcmpi(ptr ptr) lstrcmpi16
 472 pascal   AnsiNext(segptr) AnsiNext
 473 pascal   AnsiPrev(segptr segptr) AnsiPrev
-475 stub SetScrollInfo
-476 stub GetScrollInfo
+475 pascal16 SetScrollInfo(word s_word ptr word) SetScrollInfo16
+476 pascal16 GetScrollInfo(word s_word ptr) GetScrollInfo16
 477 stub GetKeyboardLayoutName
 478 stub LoadKeyboardLayout
 479 stub MenuItemFromPoint
 480 stub GetUserLocalObjType
 #481 HARDWARE_EVENT
-482 pascal16 EnableScrollBar(word word word) EnableScrollBar
+482 pascal16 EnableScrollBar(word word word) EnableScrollBar16
 483 pascal16 SystemParametersInfo(word word ptr word) SystemParametersInfo
 #484 __GP
 # Stubs for Hebrew version

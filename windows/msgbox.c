@@ -23,7 +23,7 @@ LRESULT SystemMessageBoxProc(HWND hwnd,UINT message,WPARAM wParam,LPARAM lParam)
   LPMSGBOX lpmb;
   RECT16 rect, textrect;
   HWND hItem;
-  HDC hdc;
+  HDC32 hdc;
   LONG lRet;
   int i, buttons, bwidth, bheight, theight, wwidth, bpos;
   int borheight, iheight, tiheight;
@@ -111,12 +111,12 @@ LRESULT SystemMessageBoxProc(HWND hwnd,UINT message,WPARAM wParam,LPARAM lParam)
     MapWindowPoints16(0, hwnd, (LPPOINT16)&textrect, 2);
     
     GetClientRect16(hItem, &rect);
-    hdc = GetDC(hItem);
+    hdc = GetDC32(hItem);
     lRet = DrawText16( hdc, lpmb->text, -1, &rect,
                        DT_LEFT | DT_EXPANDTABS | DT_WORDBREAK | DT_CALCRECT);
     theight = rect.bottom  - rect.top;
     tiheight = 16 + MAX(iheight, theight);
-    ReleaseDC(hItem, hdc);
+    ReleaseDC32(hItem, hdc);
     
     /* Position the text */
     SetWindowPos(hItem, 0, textrect.left, (tiheight - theight) / 2, 

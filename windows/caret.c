@@ -49,7 +49,7 @@ HWND32 CARET_GetHwnd()
  */
 static void CARET_DisplayCaret( DISPLAY_CARET status )
 {
-    HDC16 hdc;
+    HDC32 hdc;
     HBRUSH16 hPrevBrush;
 
     if (Caret.on && (status == CARET_ON)) return;
@@ -58,11 +58,11 @@ static void CARET_DisplayCaret( DISPLAY_CARET status )
     /* So now it's always a toggle */
 
     Caret.on = !Caret.on;
-    if (!(hdc = GetDCEx( Caret.hwnd, 0, DCX_USESTYLE | DCX_CACHE ))) return;
+    if (!(hdc = GetDCEx32( Caret.hwnd, 0, DCX_USESTYLE | DCX_CACHE ))) return;
     hPrevBrush = SelectObject( hdc, Caret.hBrush );
     PatBlt( hdc, Caret.x, Caret.y, Caret.width, Caret.height, PATINVERT );
     SelectObject( hdc, hPrevBrush );
-    ReleaseDC( Caret.hwnd, hdc );
+    ReleaseDC32( Caret.hwnd, hdc );
 }
 
   

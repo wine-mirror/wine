@@ -1687,7 +1687,7 @@ INT WSACleanup(void)
 
 VOID
 WsControl(DWORD x1,DWORD x2,LPDWORD x3,LPDWORD x4,LPDWORD x5,LPDWORD x6) {
-	fprintf(stdnimp,"WsControl(%lx,%lx,%lx,%lx,%lx,%lx)\n",
+	fprintf(stdnimp,"WsControl(%lx,%lx,%p,%p,%p,%p)\n",
 		x1,x2,x3,x4,x5,x6
 	);
 	fprintf(stdnimp,"WsControl(x,x,%lx,%lx,%lx,%lx)\n",

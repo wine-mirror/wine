@@ -459,15 +459,15 @@ static HMODULE16 MODULE_LoadExeHeader( HFILE hFile, OFSTRUCT *ofs )
          ((offset)+(size) <= fastload_offset+fastload_length)) ? \
         (memcpy( buffer, fastload+(offset)-fastload_offset, (size) ), TRUE) : \
         (_llseek( hFile, mz_header.ne_offset+(offset), SEEK_SET), \
-         FILE_Read( hFile, (buffer), (size) ) == (size)))
+         _lread32( hFile, (buffer), (size) ) == (size)))
 
     _llseek( hFile, 0, SEEK_SET );
-    if ((FILE_Read(hFile,&mz_header,sizeof(mz_header)) != sizeof(mz_header)) ||
+    if ((_lread32(hFile,&mz_header,sizeof(mz_header)) != sizeof(mz_header)) ||
         (mz_header.mz_magic != MZ_SIGNATURE))
         return (HMODULE16)11;  /* invalid exe */
 
     _llseek( hFile, mz_header.ne_offset, SEEK_SET );
-    if (FILE_Read( hFile, &ne_header, sizeof(ne_header) ) != sizeof(ne_header))
+    if (_lread32( hFile, &ne_header, sizeof(ne_header) ) != sizeof(ne_header))
         return (HMODULE16)11;  /* invalid exe */
 
     if (ne_header.ne_magic == PE_SIGNATURE) return (HMODULE16)21;  /* win32 exe */
@@ -517,7 +517,7 @@ static HMODULE16 MODULE_LoadExeHeader( HFILE hFile, OFSTRUCT *ofs )
         if ((fastload = (char *)malloc( fastload_length )) != NULL)
         {
             _llseek( hFile, mz_header.ne_offset + fastload_offset, SEEK_SET );
-            if (FILE_Read( hFile, fastload, fastload_length ) != fastload_length)
+            if (_lread32(hFile, fastload, fastload_length) != fastload_length)
             {
                 free( fastload );
                 fastload = NULL;
@@ -632,7 +632,7 @@ static HMODULE16 MODULE_LoadExeHeader( HFILE hFile, OFSTRUCT *ofs )
         }
         buffer = GlobalLock16( pModule->nrname_handle );
         _llseek( hFile, ne_header.nrname_tab_offset, SEEK_SET );
-        if (FILE_Read( hFile, buffer, ne_header.nrname_tab_length )
+        if (_lread32( hFile, buffer, ne_header.nrname_tab_length )
               != ne_header.nrname_tab_length)
         {
             GlobalFree16( pModule->nrname_handle );
@@ -1165,7 +1165,6 @@ HINSTANCE LoadModule( LPCSTR name, LPVOID paramBlock )
 		  IF1632_Stack32_base = WIN16_GlobalLock16(hInitialStack32);
 
 		}
-                /* FIXME: we probably need a DOS handle here */
                 hf = FILE_DupUnixHandle( MODULE_OpenFile( hModule ) );
 		CallTo16_word_ww( selfloadheader->BootApp, hModule, hf );
                 _lclose(hf);
@@ -1215,6 +1214,7 @@ HINSTANCE LoadModule( LPCSTR name, LPVOID paramBlock )
 
     if (!(pModule->flags & NE_FFLAGS_LIBMODULE) && (paramBlock != (LPVOID)-1))
     {
+	HTASK16 hTask;
         WORD	showcmd;
 
 	/* PowerPoint passes NULL as showCmd */
@@ -1222,10 +1222,13 @@ HINSTANCE LoadModule( LPCSTR name, LPVOID paramBlock )
 		showcmd = *((WORD *)PTR_SEG_TO_LIN(params->showCmd)+1);
 	else
 		showcmd = 0; /* FIXME: correct */
-        TASK_CreateTask( hModule, hInstance, hPrevInstance,
-                         params->hEnvironment,
-                         (LPSTR)PTR_SEG_TO_LIN( params->cmdLine ),
-                         showcmd );
+
+        hTask = TASK_CreateTask( hModule, hInstance, hPrevInstance,
+                                 params->hEnvironment,
+                                (LPSTR)PTR_SEG_TO_LIN( params->cmdLine ),
+                                 showcmd );
+
+	if( hTask && TASK_GetNextTask(hTask)) Yield();
     }
 
     return hInstance;
@@ -1479,14 +1482,8 @@ HANDLE WinExec( LPSTR lpCmdLine, WORD nCmdShow )
 #if 0
     if (handle < (HANDLE)32)	/* Error? */
 	return handle;
-    
-/* FIXME: Yield never returns! 
-   We may want to run more applications or start the debugger
-   before calling Yield. If we don't Yield will be called immdiately
-   after returning.  Why is it needed for Word anyway? */
-    Yield();	/* program is executed immediately ....needed for word */
-
 #endif
+
     return handle;
 }
 

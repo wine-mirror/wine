@@ -387,8 +387,8 @@ HPALETTE16 SelectPalette( HDC hDC, HPALETTE16 hPal, BOOL bForceBackground )
 
     if( hPal != STOCK_DEFAULT_PALETTE )
     {
-	HWND hWnd = WindowFromDC( hDC );
-	HWND hActive = GetActiveWindow();
+	HWND32 hWnd = WindowFromDC32( hDC );
+	HWND32 hActive = GetActiveWindow();
 	
 	/* set primary palette if it's related to current active */
 
@@ -414,8 +414,8 @@ UINT16 RealizePalette( HDC32 hDC )
     {
 	/* Send palette change notification */
 
-	HWND hWnd;
- 	if( (hWnd = WindowFromDC( hDC )) )
+	HWND32 hWnd;
+ 	if( (hWnd = WindowFromDC32( hDC )) )
             SendMessage16( HWND_BROADCAST, WM_PALETTECHANGED, hWnd, 0L);
     }
     return realized;
@@ -428,7 +428,7 @@ UINT16 RealizePalette( HDC32 hDC )
  */
 int UpdateColors( HDC hDC )
 {
-    HWND hWnd = WindowFromDC( hDC );
+    HWND32 hWnd = WindowFromDC32( hDC );
 
     /* Docs say that we have to remap current drawable pixel by pixel
      * but it would take forever given the speed of XGet/PutPixel.

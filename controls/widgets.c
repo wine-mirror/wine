@@ -29,8 +29,6 @@ static const BUILTIN_CLASS_INFO16 WIDGETS_BuiltinClasses16[] =
 {
     { CS_GLOBALCLASS | CS_PARENTDC,
        sizeof(STATICINFO), 0, "StaticWndProc", "STATIC" },
-    { CS_GLOBALCLASS | CS_DBLCLKS | CS_VREDRAW | CS_HREDRAW | CS_PARENTDC,
-      sizeof(SCROLLBAR_INFO), 0, "ScrollBarWndProc", "SCROLLBAR" },
     { CS_GLOBALCLASS | CS_PARENTDC | CS_DBLCLKS,
       8, 0, "ListBoxWndProc", "LISTBOX" },
     { CS_GLOBALCLASS | CS_PARENTDC | CS_DBLCLKS,
@@ -54,9 +52,11 @@ static const BUILTIN_CLASS_INFO16 WIDGETS_BuiltinClasses16[] =
 static WNDCLASS32A WIDGETS_BuiltinClasses32[] =
 {
     { CS_GLOBALCLASS | CS_DBLCLKS | CS_VREDRAW | CS_HREDRAW | CS_PARENTDC,
-          ButtonWndProc, 0, sizeof(BUTTONINFO), 0, 0, 0, 0, 0, "BUTTON" },
+      ButtonWndProc, 0, sizeof(BUTTONINFO), 0, 0, 0, 0, 0, "BUTTON" },
+    { CS_GLOBALCLASS | CS_DBLCLKS | CS_VREDRAW | CS_HREDRAW | CS_PARENTDC,
+      ScrollBarWndProc, 0, sizeof(SCROLLBAR_INFO), 0, 0, 0, 0, 0, "SCROLLBAR"},
     { CS_GLOBALCLASS, DesktopWndProc, 0, sizeof(DESKTOPINFO),
-          0, 0, 0, 0, 0, DESKTOP_CLASS_NAME }
+      0, 0, 0, 0, 0, DESKTOP_CLASS_NAME }
 };
 
 #define NB_BUILTIN_CLASSES32 \

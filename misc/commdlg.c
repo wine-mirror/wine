@@ -1475,12 +1475,12 @@ static int CC_CheckDigitsInEdit(HWND hwnd,int maxval)
 static void CC_PaintSelectedColor(HWND hDlg,COLORREF cr)
 {
  RECT16 rect;
- HDC  hdc;
+ HDC32  hdc;
  HBRUSH hBrush;
  HWND hwnd=GetDlgItem(hDlg,0x2c5);
  if (IsWindowVisible(GetDlgItem(hDlg,0x2c6)))   /* if full size */
  {
-  hdc=GetDC(hwnd);
+  hdc=GetDC32(hwnd);
   GetClientRect16 (hwnd, &rect) ;
   hBrush = CreateSolidBrush(cr);
   if (hBrush)
@@ -1496,7 +1496,7 @@ static void CC_PaintSelectedColor(HWND hDlg,COLORREF cr)
     DeleteObject (SelectObject (hdc, hBrush)) ;
    }
   }
-  ReleaseDC(hwnd,hdc);
+  ReleaseDC32(hwnd,hdc);
  }
 }
 
@@ -1505,7 +1505,7 @@ static void CC_PaintSelectedColor(HWND hDlg,COLORREF cr)
  */
 static void CC_PaintTriangle(HWND hDlg,int y)
 {
- HDC hDC;
+ HDC32 hDC;
  long temp;
  int w=GetDialogBaseUnits();
  POINT16 points[3];
@@ -1519,7 +1519,7 @@ static void CC_PaintTriangle(HWND hDlg,int y)
  {
    GetClientRect16(hwnd,&rect);
    height=rect.bottom;
-   hDC=GetDC(hDlg);
+   hDC=GetDC32(hDlg);
 
    points[0].y=rect.top;
    points[0].x=rect.right;           /*  |  /|  */
@@ -1540,7 +1540,7 @@ static void CC_PaintTriangle(HWND hDlg,int y)
    lpp->old3angle.top   =points[2].y-1;
    lpp->old3angle.bottom=points[1].y+1;
    Polygon16(hDC,points,3);
-   ReleaseDC(hDlg,hDC);
+   ReleaseDC32(hDlg,hDC);
  }
 }
 
@@ -1550,7 +1550,7 @@ static void CC_PaintTriangle(HWND hDlg,int y)
  */
 static void CC_PaintCross(HWND hDlg,int x,int y)
 {
- HDC hDC;
+ HDC32 hDC;
  int w=GetDialogBaseUnits();
  HWND hwnd=GetDlgItem(hDlg,0x2c6);
  struct CCPRIVATE * lpp=(struct CCPRIVATE *)GetWindowLong32A(hDlg, DWL_USER); 
@@ -1561,7 +1561,7 @@ static void CC_PaintCross(HWND hDlg,int x,int y)
  if (IsWindowVisible(GetDlgItem(hDlg,0x2c6)))   /* if full size */
  {
    GetClientRect16(hwnd,&rect);
-   hDC=GetDC(hwnd);
+   hDC=GetDC32(hwnd);
    SelectClipRgn(hDC,CreateRectRgnIndirect16(&rect));   
    hPen=CreatePen(PS_SOLID,2,0);
    hPen=SelectObject(hDC,hPen);
@@ -1582,7 +1582,7 @@ static void CC_PaintCross(HWND hDlg,int x,int y)
    MoveTo(hDC,point.x,point.y-w); 
    LineTo(hDC,point.x,point.y+w);
    DeleteObject(SelectObject(hDC,hPen));
-   ReleaseDC(hwnd,hDC);
+   ReleaseDC32(hwnd,hDC);
  }
 }
 
@@ -1600,12 +1600,12 @@ static void CC_PrepareColorGraph(HWND hDlg)
  HWND hwnd=GetDlgItem(hDlg,0x2c6);
  struct CCPRIVATE * lpp=(struct CCPRIVATE *)GetWindowLong32A(hDlg, DWL_USER);  
  HBRUSH hbrush;
- HDC hdc ;
+ HDC32 hdc ;
  RECT16 rect,client;
  HCURSOR16 hcursor=SetCursor(LoadCursor16(0,IDC_WAIT));
 
  GetClientRect16(hwnd,&client);
- hdc=GetDC(hwnd);
+ hdc=GetDC32(hwnd);
  lpp->hdcMem = CreateCompatibleDC(hdc);
  lpp->hbmMem = CreateCompatibleBitmap(hdc,client.right,client.bottom);
  SelectObject(lpp->hdcMem,lpp->hbmMem);
@@ -1631,7 +1631,7 @@ static void CC_PrepareColorGraph(HWND hDlg)
   }
   rect.left=rect.right;
  }
- ReleaseDC(hwnd,hdc);
+ ReleaseDC32(hwnd,hdc);
  SetCursor(hcursor);
 }
 
@@ -1642,20 +1642,20 @@ static void CC_PaintColorGraph(HWND hDlg)
 {
  HWND hwnd=GetDlgItem(hDlg,0x2c6);
  struct CCPRIVATE * lpp=(struct CCPRIVATE *)GetWindowLong32A(hDlg, DWL_USER); 
- HDC  hDC;
+ HDC32  hDC;
  RECT16 rect;
  if (IsWindowVisible(hwnd))   /* if full size */
  {
   if (!lpp->hdcMem)
    CC_PrepareColorGraph(hDlg);   /* should not be necessary */
 
-  hDC=GetDC(hwnd);
+  hDC=GetDC32(hwnd);
   GetClientRect16(hwnd,&rect);
   if (lpp->hdcMem)
     BitBlt(hDC,0,0,rect.right,rect.bottom,lpp->hdcMem,0,0,SRCCOPY);
   else
     fprintf(stderr,"choose color: hdcMem is not defined\n");
-  ReleaseDC(hwnd,hDC);
+  ReleaseDC32(hwnd,hDC);
  }
 }
 /***********************************************************************
@@ -1667,11 +1667,11 @@ static void CC_PaintLumBar(HWND hDlg,int hue,int sat)
  RECT16 rect,client;
  int lum,ldif,ydif,r,g,b;
  HBRUSH hbrush;
- HDC hDC;
+ HDC32 hDC;
 
  if (IsWindowVisible(hwnd))
  {
-  hDC=GetDC(hwnd);
+  hDC=GetDC32(hwnd);
   GetClientRect16(hwnd,&client);
   rect=client;
 
@@ -1690,7 +1690,7 @@ static void CC_PaintLumBar(HWND hDlg,int hue,int sat)
   }
   GetClientRect16(hwnd,&rect);
   FrameRect16(hDC,&rect,GetStockObject(BLACK_BRUSH));
-  ReleaseDC(hwnd,hDC);
+  ReleaseDC32(hwnd,hDC);
  }
 }
 
@@ -1775,7 +1775,7 @@ static void CC_PaintPredefColorArray(HWND hDlg,int rows,int cols)
 {
  HWND hwnd=GetDlgItem(hDlg,0x2d0);
  RECT16 rect;
- HDC  hdc;
+ HDC32  hdc;
  HBRUSH hBrush;
  int dx,dy,i,j,k;
 
@@ -1784,7 +1784,7 @@ static void CC_PaintPredefColorArray(HWND hDlg,int rows,int cols)
  dy=rect.bottom/rows;
  k=rect.left;
 
- hdc=GetDC(hwnd);
+ hdc=GetDC32(hwnd);
  GetClientRect16 (hwnd, &rect) ;
 
  for (j=0;j<rows;j++)
@@ -1804,7 +1804,7 @@ static void CC_PaintPredefColorArray(HWND hDlg,int rows,int cols)
   rect.top=rect.top+dy;
   rect.left=k;
  }
- ReleaseDC(hwnd,hdc);
+ ReleaseDC32(hwnd,hdc);
  /* FIXME: draw_a_focus_rect */
 }
 /***********************************************************************
@@ -1814,7 +1814,7 @@ static void CC_PaintUserColorArray(HWND hDlg,int rows,int cols,COLORREF* lpcr)
 {
  HWND hwnd=GetDlgItem(hDlg,0x2d1);
  RECT16 rect;
- HDC  hdc;
+ HDC32  hdc;
  HBRUSH hBrush;
  int dx,dy,i,j,k;
 
@@ -1824,7 +1824,7 @@ static void CC_PaintUserColorArray(HWND hDlg,int rows,int cols,COLORREF* lpcr)
  dy=rect.bottom/rows;
  k=rect.left;
 
- hdc=GetDC(hwnd);
+ hdc=GetDC32(hwnd);
  if (hdc)
  {
   for (j=0;j<rows;j++)
@@ -1844,7 +1844,7 @@ static void CC_PaintUserColorArray(HWND hDlg,int rows,int cols,COLORREF* lpcr)
    rect.top=rect.top+dy;
    rect.left=k;
   }
-  ReleaseDC(hwnd,hdc);
+  ReleaseDC32(hwnd,hdc);
  }
  /* FIXME: draw_a_focus_rect */
 }
@@ -1940,7 +1940,7 @@ static LRESULT CC_WMCommand(HWND hDlg, WPARAM wParam, LPARAM lParam)
 {
     int r,g,b,i,xx;
     UINT cokmsg;
-    HDC hdc;
+    HDC32 hdc;
     COLORREF *cr;
     struct CCPRIVATE * lpp=(struct CCPRIVATE *)GetWindowLong32A(hDlg, DWL_USER); 
     dprintf_commdlg(stddeb,"CC_WMCommand wParam=%x lParam=%lx\n",wParam,lParam);
@@ -2018,9 +2018,9 @@ static LRESULT CC_WMCommand(HWND hDlg, WPARAM wParam, LPARAM lParam)
 	       break;
 
           case 0x2c9:              /* resulting color */
-	       hdc=GetDC(hDlg);
+	       hdc=GetDC32(hDlg);
 	       lpp->lpcc->rgbResult=GetNearestColor(hdc,lpp->lpcc->rgbResult);
-	       ReleaseDC(hDlg,hdc);
+	       ReleaseDC32(hDlg,hdc);
 	       CC_EditSetRGB(hDlg,lpp->lpcc->rgbResult);
 	       CC_PaintSelectedColor(hDlg,lpp->lpcc->rgbResult);
 	       r=GetRValue(lpp->lpcc->rgbResult);
@@ -2402,10 +2402,10 @@ INT16 FontStyleEnumProc( SEGPTR logfont, SEGPTR metrics,
 
   if (!SendMessage16(hcmb2,CB_GETCOUNT,0,0))
   {
-       HDC hdc= (lpcf->Flags & CF_PRINTERFONTS && lpcf->hDC) ? lpcf->hDC : GetDC(hDlg);
+       HDC hdc= (lpcf->Flags & CF_PRINTERFONTS && lpcf->hDC) ? lpcf->hDC : GetDC32(hDlg);
        i=SetFontStylesToCombo2(hcmb2,hdc,lplf,lptm);
        if (!(lpcf->Flags & CF_PRINTERFONTS && lpcf->hDC))
-         ReleaseDC(hDlg,hdc);
+         ReleaseDC32(hDlg,hdc);
        if (i)
         return 0;  
   }
@@ -2418,7 +2418,7 @@ INT16 FontStyleEnumProc( SEGPTR logfont, SEGPTR metrics,
  */
 LRESULT CFn_WMInitDialog(HWND hDlg, WPARAM wParam, LPARAM lParam)
 {
-  HDC hdc;
+  HDC32 hdc;
   int i,j,res,init=0;
   long l;
   LPLOGFONT16 lpxx;
@@ -2466,7 +2466,7 @@ LRESULT CFn_WMInitDialog(HWND hDlg, WPARAM wParam, LPARAM lParam)
     ShowWindow(GetDlgItem(hDlg,grp1),SW_HIDE);
     ShowWindow(GetDlgItem(hDlg,stc4),SW_HIDE);
   }
-  hdc= (lpcf->Flags & CF_PRINTERFONTS && lpcf->hDC) ? lpcf->hDC : GetDC(hDlg);
+  hdc= (lpcf->Flags & CF_PRINTERFONTS && lpcf->hDC) ? lpcf->hDC : GetDC32(hDlg);
   if (hdc)
   {
     if (!EnumFontFamilies (hdc, NULL,FontFamilyEnumProc,(LPARAM)GetDlgItem(hDlg,cmb1)))
@@ -2520,7 +2520,7 @@ LRESULT CFn_WMInitDialog(HWND hDlg, WPARAM wParam, LPARAM lParam)
   }
 
   if (!(lpcf->Flags & CF_PRINTERFONTS && lpcf->hDC))
-    ReleaseDC(hDlg,hdc);
+    ReleaseDC32(hDlg,hdc);
   res=TRUE;
   if (CFn_HookCallChk(lpcf))
     res=CallWindowProc16(lpcf->lpfnHook,hDlg,WM_INITDIALOG,wParam,lParam);
@@ -2670,7 +2670,7 @@ LRESULT CFn_WMCommand(HWND hDlg, WPARAM wParam, LPARAM lParam)
   {
 	case cmb1:if (HIWORD(lParam)==CBN_SELCHANGE)
 		  {
-		    hdc=(lpcf->Flags & CF_PRINTERFONTS && lpcf->hDC) ? lpcf->hDC : GetDC(hDlg);
+		    hdc=(lpcf->Flags & CF_PRINTERFONTS && lpcf->hDC) ? lpcf->hDC : GetDC32(hDlg);
 		    if (hdc)
 		    {
                       SendDlgItemMessage16(hDlg,cmb2,CB_RESETCONTENT,0,0); 
@@ -2689,7 +2689,7 @@ LRESULT CFn_WMCommand(HWND hDlg, WPARAM wParam, LPARAM lParam)
                         SEGPTR_FREE(str);
 		      }
 		      if (!(lpcf->Flags & CF_PRINTERFONTS && lpcf->hDC))
- 		        ReleaseDC(hDlg,hdc);
+ 		        ReleaseDC32(hDlg,hdc);
  		    }
  		    else
                     {

@@ -166,7 +166,12 @@ HANDLE32 RemoveProp32A( HWND32 hwnd, LPCSTR str )
     PROPERTY **pprop, *prop;
     WND *pWnd = WIN_FindWndPtr( hwnd );
 
-    dprintf_prop( stddeb, "RemoveProp: %04x '%s'\n", hwnd, str );
+    if (HIWORD(str))
+      dprintf_prop( stddeb, "RemoveProp: %04x '%s'\n", hwnd, str );
+    else
+      dprintf_prop( stddeb, "RemoveProp: %04x #%04x\n", hwnd, LOWORD(str));
+
+
     if (!pWnd) return NULL;
     if (HIWORD(str))
     {

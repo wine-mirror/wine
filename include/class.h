@@ -12,6 +12,8 @@
 
 #define CLASS_MAGIC   ('C' | ('L' << 8) | ('A' << 16) | ('S' << 24))
 
+struct tagDCE;
+
 typedef struct tagCLASS
 {
     struct tagCLASS *next;          /* Next class */
@@ -23,13 +25,13 @@ typedef struct tagCLASS
     INT32            cbWndExtra;    /* Window extra bytes */
     LPSTR            menuNameA;     /* Default menu name (ASCII string) */
     LPWSTR           menuNameW;     /* Default menu name (Unicode) */
+    struct tagDCE   *dce;           /* Class DCE (if CS_CLASSDC) */
     HINSTANCE32      hInstance;     /* Module that created the task */
     HICON16          hIcon;         /* Default icon */
     HICON16          hIconSm;       /* Default small icon */
     HCURSOR16        hCursor;       /* Default cursor */
     HBRUSH16         hbrBackground; /* Default background */
     ATOM             atomName;      /* Name of the class */
-    HANDLE16         hdce;          /* Class DCE (if CS_CLASSDC) */
     LONG             wExtra[1];     /* Class extra bytes */
 } CLASS;
 

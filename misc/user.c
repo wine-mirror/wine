@@ -16,11 +16,13 @@
 #include "hook.h"
 #include "debug.h"
 #include "toolhelp.h"
+#include "message.h"
 
 WORD USER_HeapSel = 0;
 
 
 extern HTASK	TASK_GetNextTask(HTASK);
+extern BOOL32   MENU_SwitchTPWndTo(HTASK);
 
 /***********************************************************************
  *           GetFreeSystemResources   (USER.284)
@@ -117,9 +119,12 @@ void USER_AppExit( HTASK16 hTask, HINSTANCE16 hInstance, HQUEUE16 hQueue )
 
     WND* desktop = WIN_GetDesktop();
 
-    /* Patch desktop window queue */
+    /* Patch desktop window */
     if( desktop->hmemTaskQ == hQueue )
 	desktop->hmemTaskQ = GetTaskQueue(TASK_GetNextTask(hTask));
+
+    /* Patch resident popup menu window */
+    MENU_SwitchTPWndTo(0);
 
     /* Nuke timers */
 

@@ -475,7 +475,7 @@ int DDE_GetRemoteMessage()
   }
 
   /* iterate through all the windows */
-  for (wndPtr = WIN_FindWndPtr(GetTopWindow(GetDesktopWindow()));
+  for (wndPtr = WIN_FindWndPtr(GetTopWindow(GetDesktopWindow32()));
        wndPtr != NULL;
        wndPtr = wndPtr->next)
   {

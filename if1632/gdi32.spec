@@ -283,7 +283,7 @@ base	1
 0276 stub Polyline
 0277 stub PolylineTo
 0278 stdcall PtInRegion(long long long) PtInRegion
-0279 stub PtVisible
+0279 stdcall PtVisible(long long long) PtVisible
 0280 stdcall RealizePalette(long) RealizePalette
 0281 stdcall RectInRegion(long ptr) RectInRegion32
 0282 stdcall RectVisible(long ptr) RectVisible32
@@ -301,7 +301,7 @@ base	1
 0294 stdcall ScaleWindowExtEx(long long long long long ptr) ScaleWindowExtEx32
 0295 stub SelectBrushLocal
 0296 stub SelectClipPath
-0297 stub SelectClipRgn
+0297 stdcall SelectClipRgn(long long) SelectClipRgn
 0298 stub SelectFontLocal
 0299 stdcall SelectObject(long long) SelectObject
 0300 stdcall SelectPalette(long long long) SelectPalette
@@ -356,7 +356,8 @@ base	1
 0348 stub StartDocW
 0349 stub StartPage
 0350 stdcall StretchBlt(long long long long long long long long long long long) StretchBlt
-0351 stub StretchDIBits
+0351 stdcall StretchDIBits(long long long long long long long
+                               long long long long long long) StretchDIBits
 0352 stub StrokeAndFillPath
 0353 stub StrokePath
 0354 stub SwapBuffers
@@ -392,5 +393,4 @@ base	1
 0383 stub UpdateICMRegKeyA
 0384 stub UpdateICMRegKeyW
 0385 stub gdiPlaySpoolStream
-
-
+0386 return SetObjectOwner 8 0

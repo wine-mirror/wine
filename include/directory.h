@@ -8,10 +8,10 @@
 #define __WINE_DIRECTORY_H
 
 extern int DIR_Init(void);
-extern UINT DIR_GetWindowsUnixDir( LPSTR path, UINT count );
-extern UINT DIR_GetSystemUnixDir( LPSTR path, UINT count );
-extern UINT DIR_GetTempUnixDir( LPSTR path, UINT count );
-extern UINT DIR_GetDosPath( int element, LPSTR path, UINT count );
-extern UINT DIR_GetUnixPath( int element, LPSTR path, UINT count );
+extern UINT32 DIR_GetWindowsUnixDir( LPSTR path, UINT32 count );
+extern UINT32 DIR_GetSystemUnixDir( LPSTR path, UINT32 count );
+extern UINT32 DIR_GetTempUnixDir( LPSTR path, UINT32 count );
+extern UINT32 DIR_GetDosPath( INT32 element, LPSTR path, UINT32 count );
+extern UINT32 DIR_GetUnixPath( INT32 element, LPSTR path, UINT32 count );
 
 #endif  /* __WINE_DIRECTORY_H */

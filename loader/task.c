@@ -671,18 +671,42 @@ void TASK_KillCurrentTask( INT16 exitCode )
     Yield();
     /* We should never return from this Yield() */
 
-    fprintf(stderr,"It's alive! Alive!!!\n");
+    fprintf(stderr,"Return of the living dead %04x!!!\n", hCurrentTask);
     exit(1);
 }
 
+/***********************************************************************
+ *           TASK_YieldToSystem
+ *
+ * Scheduler interface, this way we ensure that all "unsafe" events are
+ * processed outside the scheduler.
+ */
+void TASK_YieldToSystem(TDB* pTask)
+{
+  MESSAGEQUEUE*		pQ;
+
+  TASK_SCHEDULE();
+
+  if( pTask )
+  {
+    pQ = (MESSAGEQUEUE*)GlobalLock16(pTask->hQueue);
+    if( pQ && pQ->flags & QUEUE_FLAG_XEVENT )
+    {
+      pQ->flags &= ~QUEUE_FLAG_XEVENT;
+      EVENT_WaitXEvent( FALSE, FALSE );
+    }
+  }
+}
 
 /***********************************************************************
  *           TASK_Reschedule
  *
  * This is where all the magic of task-switching happens!
  *
- * This function should only be called via the TASK_SCHEDULE() macro, to make
- * sure that all the context is saved correctly.
+ * Note: This function should only be called via the TASK_YieldToSystem()
+ *       wrapper, to make sure that all the context is saved correctly.
+ *   
+ *       It must not call functions that may yield control.
  */
 void TASK_Reschedule(void)
 {
@@ -700,21 +724,21 @@ void TASK_Reschedule(void)
         hTaskToKill = 0;
     }
 
-    /* Flush any X events that happened in the meantime */
-
-    EVENT_WaitXEvent( FALSE );
-
     /* Find a task to yield to */
 
     pOldTask = (TDB *)GlobalLock16( hCurrentTask );
     if (pOldTask && pOldTask->hYieldTo)
     {
-        /* If a task is stored in hYieldTo of the current task (put there */
-        /* by DirectedYield), yield to it only if it has events pending.  */
+        /* check for DirectedYield() */
+
         hTask = pOldTask->hYieldTo;
         if (!(pNewTask = (TDB *)GlobalLock16( hTask )) || !pNewTask->nEvents)
             hTask = 0;
     }
+
+    /* extract hardware events only! */
+
+    EVENT_WaitXEvent( FALSE, TRUE );
 
     while (!hTask)
     {
@@ -724,6 +748,9 @@ void TASK_Reschedule(void)
         while (hTask)
         {
             pNewTask = (TDB *)GlobalLock16( hTask );
+
+	    dprintf_task( stddeb, "\ttask = %04x, events = %i\n", hTask, pNewTask->nEvents);
+
             if (pNewTask->nEvents) break;
             hTask = pNewTask->hNext;
         }
@@ -732,11 +759,14 @@ void TASK_Reschedule(void)
 
         /* No task found, wait for some events to come in */
 
-        EVENT_WaitXEvent( TRUE );
+        EVENT_WaitXEvent( TRUE, TRUE );
     }
 
-    if (hTask == hCurrentTask) return;  /* Nothing to do */
-
+    if (hTask == hCurrentTask) 
+    {
+       dprintf_task( stddeb, "returning to the current task(%04x)\n", hTask );
+       return;  /* Nothing to do */
+    }
     pNewTask = (TDB *)GlobalLock16( hTask );
     dprintf_task( stddeb, "Switching to task %04x (%.8s)\n",
                   hTask, pNewTask->module_name );
@@ -843,10 +873,11 @@ BOOL WaitEvent( HTASK hTask )
         pTask->nEvents--;
         return FALSE;
     }
-    TASK_SCHEDULE();
+    TASK_YieldToSystem(pTask);
+
     /* When we get back here, we have an event */
+
     if (pTask->nEvents > 0) pTask->nEvents--;
-    else fprintf( stderr, "WaitEvent: reschedule returned without event\n" );
     return TRUE;
 }
 
@@ -914,7 +945,7 @@ void OldYield(void)
 
     pCurTask = (TDB *)GlobalLock16( hCurrentTask );
     if (pCurTask) pCurTask->nEvents++;  /* Make sure we get back here */
-    TASK_SCHEDULE();
+    TASK_YieldToSystem(pCurTask);
     if (pCurTask) pCurTask->nEvents--;
 }
 

@@ -54,6 +54,7 @@ extern DWORD ListBoxGetItemData(LPHEADLIST lphl, UINT uIndex);
 extern int ListBoxSetItemData(LPHEADLIST lphl, UINT uIndex, DWORD ItemData);
 extern int ListBoxDeleteString(LPHEADLIST lphl, UINT uIndex);
 extern int ListBoxFindString(LPHEADLIST lphl, UINT nFirst, SEGPTR MatchStr);
+extern int ListBoxFindStringExact(LPHEADLIST lphl, UINT nFirst, SEGPTR MatchStr);
 extern int ListBoxResetContent(LPHEADLIST lphl);
 extern int ListBoxSetCurSel(LPHEADLIST lphl, WORD wIndex);
 extern int ListBoxSetSel(LPHEADLIST lphl, WORD wIndex, WORD state);

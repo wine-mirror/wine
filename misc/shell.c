@@ -414,11 +414,11 @@ static BYTE* SHELL_GetResourceTable(HFILE hFile)
   int		size;
   
   _llseek( hFile, 0, SEEK_SET );
-  if ((FILE_Read(hFile,&mz_header,sizeof(mz_header)) != sizeof(mz_header)) ||
+  if ((_lread32(hFile,&mz_header,sizeof(mz_header)) != sizeof(mz_header)) ||
       (mz_header.mz_magic != MZ_SIGNATURE)) return (BYTE*)-1;
 
   _llseek( hFile, mz_header.ne_offset, SEEK_SET );
-  if (FILE_Read( hFile, &ne_header, sizeof(ne_header) ) != sizeof(ne_header))
+  if (_lread32( hFile, &ne_header, sizeof(ne_header) ) != sizeof(ne_header))
       return NULL;
 
   if (ne_header.ne_magic == PE_SIGNATURE) 
@@ -436,7 +436,7 @@ static BYTE* SHELL_GetResourceTable(HFILE hFile)
       if( !pTypeInfo ) return NULL;
 
       _llseek(hFile, mz_header.ne_offset+ne_header.resource_tab_offset, SEEK_SET);
-      if( FILE_Read( hFile, (char*)pTypeInfo, size) != size )
+      if( _lread32( hFile, (char*)pTypeInfo, size) != size )
 	{ free(pTypeInfo); return NULL; }
       return pTypeInfo;
     }
@@ -456,7 +456,7 @@ static HANDLE	SHELL_LoadResource(HINSTANCE hInst, HFILE hFile, NE_NAMEINFO* pNIn
  if( (ptr = (BYTE*)GlobalLock16( handle )) )
    {
     _llseek( hFile, (DWORD)pNInfo->offset << sizeShift, SEEK_SET);
-     FILE_Read( hFile, (char*)ptr, pNInfo->length << sizeShift);
+     _lread32( hFile, (char*)ptr, pNInfo->length << sizeShift);
      return handle;
    }
  return (HANDLE)0;
@@ -473,7 +473,7 @@ static HANDLE   ICO_LoadIcon(HINSTANCE hInst, HFILE hFile, LPicoICONDIRENTRY lpi
  if( (ptr = (BYTE*)GlobalLock16( handle )) )
    {
     _llseek( hFile, lpiIDE->dwImageOffset, SEEK_SET);
-     FILE_Read( hFile, (char*)ptr, lpiIDE->dwBytesInRes);
+     _lread32( hFile, (char*)ptr, lpiIDE->dwBytesInRes);
      return handle;
    }
  return (HANDLE)0;
@@ -491,7 +491,7 @@ static HANDLE ICO_GetIconDirectory(HINSTANCE hInst, HFILE hFile, LPicoICONDIR* l
   int		i;
  
   _llseek( hFile, 0, SEEK_SET );
-  if( FILE_Read(hFile,(char*)id,sizeof(id)) != sizeof(id) ) return 0;
+  if( _lread32(hFile,(char*)id,sizeof(id)) != sizeof(id) ) return 0;
 
   /* check .ICO header 
    *
@@ -504,7 +504,7 @@ static HANDLE ICO_GetIconDirectory(HINSTANCE hInst, HFILE hFile, LPicoICONDIR* l
 
   lpiID = (LPicoICONDIR)xmalloc(i);
 
-  if( FILE_Read(hFile,(char*)lpiID->idEntries,i) == i )
+  if( _lread32(hFile,(char*)lpiID->idEntries,i) == i )
   {  
      HANDLE	handle = DirectResAlloc( hInst, 0x10,
 					 id[2]*sizeof(ICONDIRENTRY) + sizeof(id) );
@@ -819,4 +819,17 @@ int ShellHookProc(void)
 {
 	dprintf_reg(stdnimp, "ShellHookProc : Empty Stub !!!\n");
         return 0;
+}
+
+/*************************************************************************
+ *				SHGetFileInfoA		[SHELL32.54]
+ */
+DWORD
+SHGetFileInfo32A(LPCSTR path,DWORD dwFileAttributes,SHFILEINFO32A *psfi,
+	UINT32 sizeofpsfi,UINT32 flags
+) {
+	fprintf(stdnimp,"SHGetFileInfo32A(%s,0x%08lx,%p,%ld,0x%08lx)\n",
+		path,dwFileAttributes,psfi,sizeofpsfi,flags
+	);
+	return TRUE;
 }

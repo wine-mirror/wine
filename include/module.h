@@ -117,7 +117,9 @@ extern void MODULE_WalkModules(void);
 extern int MODULE_OpenFile( HMODULE16 hModule );
 extern LPSTR MODULE_GetModuleName( HMODULE16 hModule );
 extern void MODULE_RegisterModule( NE_MODULE *pModule );
+extern HMODULE16 MODULE_FindModule( LPCSTR path );
 extern HINSTANCE16 MODULE_GetInstance( HMODULE16 hModule );
+extern HMODULE16 MODULE_CreateDummyModule( const OFSTRUCT *ofs );
 extern WORD MODULE_GetOrdinal( HMODULE16 hModule, const char *name );
 extern FARPROC16 MODULE_GetEntryPoint( HMODULE16 hModule, WORD ordinal );
 extern BOOL16 MODULE_SetEntryPoint( HMODULE16 hModule, WORD ordinal,

@@ -16,6 +16,12 @@ typedef struct tagQMSG
     MSG16   msg;
 } QMSG;
 
+typedef struct
+{
+  LRESULT   lResult;
+  BOOL16    bPending;
+} QSMCTRL;
+
 #pragma pack(1)
 
 typedef struct tagMESSAGEQUEUE
@@ -40,7 +46,7 @@ typedef struct tagMESSAGEQUEUE
   WORD      wPostQMsg;              /* 2c PostQuitMessage flag */
   WORD      wExitCode;              /* 2e PostQuitMessage exit code */
   WORD      flags;                  /* 30 Queue flags */
-  WORD      reserved3[2];           /* 32 Unknown */
+  QSMCTRL*  smResultInit;           /* 32 1st LRESULT ptr - was: reserved */
   WORD      wWinVersion;            /* 36 Expected Windows version */
   HQUEUE16  InSendMessageHandle;    /* 38 Queue of task that sent a message */
   HTASK16   hSendingTask;           /* 3a Handle of task that sent a message */
@@ -50,21 +56,22 @@ typedef struct tagMESSAGEQUEUE
   WORD      changeBits;             /* 42 Changed wake-up bits */
   WORD      wakeBits;               /* 44 Queue wake-up bits */
   WORD      wakeMask;               /* 46 Queue wake-up mask */
-  WORD      SendMsgReturnPtrs[3];   /* 48 Near ptr to return values (?) */
+  QSMCTRL*  smResultCurrent;        /* 48 ptrs to SendMessage() LRESULT - point to */
+  WORD      SendMsgReturnPtr[1];    /*    values on stack */
   HANDLE16  hCurHook;               /* 4e Current hook */
   HANDLE16  hooks[WH_NB_HOOKS];     /* 50 Task hooks list */
-  WORD      reserved4[3];           /* 68 Unknown */
-  QMSG      messages[1];            /* 6e Queue messages */
+  QSMCTRL*  smResult;               /* 6c 3rd LRESULT ptr - was: reserved */
+  QMSG      messages[1];            /* 70 Queue messages */
 } MESSAGEQUEUE;
 
 #pragma pack(4)
 
-/* Extra (undocumented) queue wake bits; not sure about the values */
-#define QS_SMRESULT      0x0100  /* Queue has a SendMessage() result */
-#define QS_SMPARAMSFREE  0x0200  /* SendMessage() parameters are available */
+/* Extra (undocumented) queue wake bits - see "Undoc. Windows" */
+#define QS_SMRESULT      0x8000  /* Queue has a SendMessage() result */
+#define QS_SMPARAMSFREE  0x4000  /* SendMessage() parameters are available */
 
 /* Queue flags */
-#define QUEUE_FLAG_REPLIED  0x0001  /* Replied to a SendMessage() */
+#define QUEUE_FLAG_XEVENT  0x0001
 
 extern void QUEUE_DumpQueue( HQUEUE16 hQueue );
 extern void QUEUE_WalkQueues(void);

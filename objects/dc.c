@@ -26,6 +26,8 @@ static const WIN_DC_INFO DC_defaultValues =
     0,                      /* flags */
     NULL,                   /* devCaps */
     0,                      /* hMetaFile */
+    0,			    /* hHT */
+    0,			    /* HTLen */
     0,                      /* hClipRgn */
     0,                      /* hVisRgn */
     0,                      /* hGCClipRgn */
@@ -293,7 +295,7 @@ BOOL DC_SetupGCForPen( DC * dc )
     else val.line_style = LineSolid;
     val.line_width = dc->u.x.pen.width;
     val.cap_style  = CapRound;
-    val.join_style = JoinBevel;
+    val.join_style = JoinMiter;
     XChangeGC( display, dc->u.x.gc, 
 	       GCFunction | GCForeground | GCBackground | GCLineWidth |
 	       GCLineStyle | GCCapStyle | GCJoinStyle | GCFillStyle, &val );

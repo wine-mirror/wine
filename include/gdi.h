@@ -75,7 +75,9 @@ typedef struct
     int           flags;
     const DeviceCaps *devCaps;
 
-    HANDLE16      hMetaFile;
+    HMETAFILE16   hMetaFile;
+    HGLOBAL16     hHT;          /* Handle table for metafile */
+    WORD          HTLen;        /* Handle table length (in entries) */
     HRGN16        hClipRgn;     /* Clip region (may be 0) */
     HRGN16        hVisRgn;      /* Visible region (must never be 0) */
     HRGN16        hGCClipRgn;   /* GC clip region (ClipRgn AND VisRgn) */

@@ -2,6 +2,7 @@
 /* 
  *  Copyright	1994	Eric Youndale & Erik Bos
  *  Copyright	1995	Martin von Löwis
+ *  Copyright   1996    Marcus Meissner
  *
  *	based on Eric Youndale's pe-test and:
  *
@@ -30,6 +31,7 @@
 #include "registers.h"
 #include "stddebug.h"
 #include "debug.h"
+#include "debugger.h"
 #include "xmalloc.h"
 
 void my_wcstombs(char * result, u_short * source, int len)
@@ -77,34 +79,53 @@ char * xmmap(char * vaddr, unsigned int v_size, unsigned int r_size,
 
 void dump_exports(struct PE_Export_Directory * pe_exports, unsigned int load_addr)
 { 
-  char * Module;
-  int i;
-  u_short * ordinal;
-  u_long * function;
-  u_char ** name, *ename;
+  char		*Module;
+  int		i;
+  u_short	*ordinal;
+  u_long	*function,*functions;
+  u_char	**name,*ename;
+  char		buffer[1000];
+  DBG_ADDR	daddr;
 
-  Module = ((char *) load_addr) + pe_exports->Name;
+  daddr.seg = 0;
+  Module = ((char*)load_addr)+pe_exports->Name;
   dprintf_win32(stddeb,"\n*******EXPORT DATA*******\nModule name is %s, %ld functions, %ld names\n", 
 	 Module,
 	 pe_exports->Number_Of_Functions,
 	 pe_exports->Number_Of_Names);
 
-  ordinal = (u_short *) (((char *) load_addr) + (int) pe_exports->Address_Of_Name_Ordinals);
-  function = (u_long *)  (((char *) load_addr) + (int) pe_exports->AddressOfFunctions);
-  name = (u_char **)  (((char *) load_addr) + (int) pe_exports->AddressOfNames);
+  ordinal=(u_short*)(((char*)load_addr)+(int)pe_exports->Address_Of_Name_Ordinals);
+  functions=function=(u_long*)(((char*)load_addr)+(int)pe_exports->AddressOfFunctions);
+  name=(u_char**)(((char*)load_addr)+(int)pe_exports->AddressOfNames);
 
   dprintf_win32(stddeb,"%-32s Ordinal Virt Addr\n", "Function Name");
-  for(i=0; i< pe_exports->Number_Of_Functions; i++) {
+  for (i=0;i<pe_exports->Number_Of_Functions;i++) {
       if (i<pe_exports->Number_Of_Names) {
-	  ename =  (char *) (((char *) load_addr) + (int) *name++);
-	  dprintf_win32(stddeb,"%-32s %4d    %8.8lx\n", ename, *ordinal++, *function++);
+	  ename=(char*)(((char*)load_addr)+(int)*name++);
+	  dprintf_win32(stddeb,"%-32s %4d    %8.8lx (%8.8lx)\n",ename,*ordinal,functions[*ordinal],*function);
+	  sprintf(buffer,"%s.%s",Module,ename);
+	  daddr.off=load_addr+functions[*ordinal];
+	  ordinal++;
+	  function++;
       } else {
       	  /* ordinals/names no longer valid, but we still got functions */
-	  dprintf_win32(stddeb,"%-32s %4s    %8.8lx\n","","",*function++);
+	  dprintf_win32(stddeb,"%-32s %4s    %8s %8.8lx\n","","","",*function);
+	  sprintf(buffer,"%s.%d",Module,i);
+	  daddr.off=load_addr+*functions;
+	  function++;
       }
+      DEBUG_AddSymbol(buffer,&daddr);
   }
 }
 
+/* Look up the specified function or ordinal in the exportlist:
+ * If it is a string:
+ * 	- look up the name in the Name list. 
+ *	- look up the ordinal with that index.
+ *	- use the ordinal as offset into the functionlist
+ * If it is a ordinal:
+ *	- use ordinal-pe_export->Base as offset into the functionlist
+ */
 FARPROC32 PE_FindExportedFunction(struct pe_data *pe, LPCSTR funcName)
 {
 	struct PE_Export_Directory * exports = pe->pe_export;
@@ -114,32 +135,29 @@ FARPROC32 PE_FindExportedFunction(struct pe_data *pe, LPCSTR funcName)
 	u_char ** name, *ename;
 	int i;
 
+	if (HIWORD(funcName))
+		dprintf_win32(stddeb,"PE_FindExportedFunction(%s)\n",funcName);
+	else
+		dprintf_win32(stddeb,"PE_FindExportedFunction(%d)\n",(int)funcName);
 	if (!exports)
 		return NULL;
 	ordinal=(u_short*)(((char*)load_addr)+(int)exports->Address_Of_Name_Ordinals);
 	function=(u_long*)(((char*)load_addr)+(int)exports->AddressOfFunctions);
 	name=(u_char **)(((char*)load_addr)+(int)exports->AddressOfNames);
 	if (HIWORD(funcName)) {
-		for(i=0; i<exports->Number_Of_Names; i++)
-		{
-			ename =  (char *) (((char *) load_addr) + (int) *name);
-			if(strcmp(ename,funcName)==0)
-				return (FARPROC32)(load_addr + *function);
-			function++;
+		for(i=0; i<exports->Number_Of_Names; i++) {
+			ename=(char*)(((char*)load_addr)+(int)*name);
+			if(!strcmp(ename,funcName))
+				return (FARPROC32)(load_addr+function[*ordinal]);
+			ordinal++;
 			name++;
 		}
 	} else {
-		/* if we got no name directory, we use the ordinal as offset */
-		if (!exports->Number_Of_Names) {
-			i = function[(int)funcName-exports->Base];
-			return (FARPROC32)(load_addr+i);
+		if (funcName-exports->Base > exports->Number_Of_Functions) {
+			dprintf_win32(stddeb,"	ordinal %d out of range!\n",funcName);
+			return NULL;
 		}
-		for(i=0; i<exports->Number_Of_Names; i++) {
-			if((int)funcName == (int)*ordinal + exports->Base)
-				return (FARPROC32)(load_addr + *function);
-			function++;
-			ordinal++;
-		}
+		return (FARPROC32)(load_addr+function[(int)funcName-exports->Base]);
 	}
 	return NULL;
 }
@@ -357,6 +375,10 @@ static struct pe_data *PE_LoadImage( int fd, HMODULE16 hModule, WORD offset )
     int i, result;
     unsigned int load_addr;
     struct Directory dir;
+    char	buffer[200];
+    DBG_ADDR	daddr;
+
+	daddr.seg=0;
 
 	pe = xmalloc(sizeof(struct pe_data));
 	memset(pe,0,sizeof(struct pe_data));
@@ -511,9 +533,28 @@ static struct pe_data *PE_LoadImage( int fd, HMODULE16 hModule, WORD offset )
 		dprintf_win32(stdnimp,"Callback directory ignored\n");
 
 
+	if(pe->pe_reloc) do_relocations(pe);
 	if(pe->pe_import) fixup_imports(pe, hModule);
 	if(pe->pe_export) dump_exports(pe->pe_export,load_addr);
-	if(pe->pe_reloc) do_relocations(pe);
+  		
+	if (pe->pe_export) {
+		/* add start of sections as debugsymbols */
+		for(i=0;i<pe->pe_header->coff.NumberOfSections;i++) {
+			sprintf(buffer,"%s.%s",
+				((char*)load_addr)+pe->pe_export->Name,
+				pe->pe_seg[i].Name
+			);
+			daddr.off=load_addr+pe->pe_seg[i].Virtual_Address;
+			DEBUG_AddSymbol(buffer,&daddr);
+		}
+		/* add entry point */
+		sprintf(buffer,"%s.EntryPoint",((char*)load_addr)+pe->pe_export->Name);
+		daddr.off=load_addr+pe->pe_header->opt_coff.AddressOfEntryPoint;
+		DEBUG_AddSymbol(buffer,&daddr);
+		/* add start of DLL */
+		daddr.off=load_addr;
+		DEBUG_AddSymbol(((char*)load_addr)+pe->pe_export->Name,&daddr);
+	}
         return pe;
 }
 
@@ -607,7 +648,7 @@ static void PE_InitDLL(HMODULE16 hModule)
         printf("InitPEDLL() called!\n");
         CallDLLEntryProc32( (FARPROC32)(pe->load_addr + 
                                   pe->pe_header->opt_coff.AddressOfEntryPoint),
-                            hModule, DLL_PROCESS_ATTACH, 0 );
+                            hModule, DLL_PROCESS_ATTACH, (void *)-1 );
     }
 }
 
@@ -631,8 +672,8 @@ void PE_InitTEB(int hTEB)
     TEB *pTEB;
 
     pTask = (TDB *)(GlobalLock16(GetCurrentTask() & 0xffff));
-    pTEB = (TEB *)(PTR_SEG_OFF_TO_LIN(hTEB, 0));
-    pTEB->stack = (void *)(GlobalLock16(pTask->hStack32));
+    pTEB  = (TEB *)(GlobalLock16(hTEB));
+    pTEB->stack = pTask->esp;
     pTEB->Except = (void *)(-1); 
     pTEB->TEBDSAlias = pTEB;
     pTEB->taskid = getpid();

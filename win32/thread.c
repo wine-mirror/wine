@@ -67,6 +67,11 @@ void DeleteCriticalSection(CRITICAL_SECTION* lpCrit)
 	return;
 }
 
+void
+ReinitializeCriticalSection(CRITICAL_SECTION *lpCrit) {
+	/* hmm */
+}
+
 /***********************************************************************
  *           Tls is available only for the single thread
  * (BTW: TLS means Thread Local Storage)

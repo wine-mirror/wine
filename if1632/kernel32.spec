@@ -192,7 +192,7 @@ base	1
 0187 stub GetConsoleInputWaitHandle
 0188 stub GetConsoleMode
 0189 stub GetConsoleOutputCP
-0190 stub GetConsoleScreenBufferInfo
+0190 stdcall GetConsoleScreenBufferInfo(long ptr) GetConsoleScreenBufferInfo
 0191 stub GetConsoleTitleA
 0192 stub GetConsoleTitleW
 0193 stub GetCurrencyFormatA
@@ -225,10 +225,10 @@ base	1
 0220 stub GetFileSize
 0221 stub GetFileTime
 0222    stdcall GetFileType(long) GetFileType
-0223 stub GetFullPathNameA
+0223 stdcall GetFullPathNameA(ptr long ptr ptr) GetFullPathName32A
 0224 stub GetFullPathNameW
 0225 stub GetHandleInformation
-0226 stub GetLargestConsoleWindowSize
+0226 stdcall GetLargestConsoleWindowSize(long) GetLargestConsoleWindowSize
 0227    stdcall GetLastError() GetLastError
 0228    stdcall GetLocalTime(ptr) GetLocalTime
 0229 stdcall GetLocaleInfoA(long long ptr long) GetLocaleInfoA
@@ -283,7 +283,7 @@ base	1
 0278 stub GetStringTypeExW
 0279 stub GetStringTypeW
 0280 stdcall GetSystemDefaultLCID() GetSystemDefaultLCID
-0281 stub GetSystemDefaultLangID
+0281 stdcall GetSystemDefaultLangID() GetSystemDefaultLangID
 0282 stdcall GetSystemDirectoryA(ptr long) GetSystemDirectory32A
 0283 stdcall GetSystemDirectoryW(ptr long) GetSystemDirectory32W
 0284 stub GetSystemInfo
@@ -306,15 +306,15 @@ base	1
 0301 stub GetTimeFormatW
 0302    stdcall GetTimeZoneInformation(ptr) GetTimeZoneInformation
 0303 stdcall GetUserDefaultLCID() GetUserDefaultLCID
-0304 stub GetUserDefaultLangID
+0304 stdcall GetUserDefaultLangID() GetUserDefaultLangID
 0305 stub GetVDMCurrentDirectories
 0306 stdcall GetVersion() GetVersion32
 0307 stdcall GetVersionExA(ptr) GetVersionEx32A
 0308 stdcall GetVersionExW(ptr) GetVersionEx32W
 0309 stdcall GetVolumeInformationA(ptr ptr long ptr ptr ptr ptr long) GetVolumeInformation32A
 0310 stdcall GetVolumeInformationW(ptr ptr long ptr ptr ptr ptr long) GetVolumeInformation32W
-0311 stdcall GetWindowsDirectoryA(ptr long) GetWindowsDirectory
-0312 stub GetWindowsDirectoryW
+0311 stdcall GetWindowsDirectoryA(ptr long) GetWindowsDirectory32A
+0312 stdcall GetWindowsDirectoryW(ptr long) GetWindowsDirectory32W
 0313 stdcall GlobalAddAtomA(ptr) GlobalAddAtom32A
 0314 stdcall GlobalAddAtomW(ptr) GlobalAddAtom32W
 0315 stdcall GlobalAlloc(long long) GlobalAlloc32
@@ -363,7 +363,7 @@ base	1
 0358 return IsDBCSLeadByte 4 0
 0359 stub IsDBCSLeadByteEx
 0360 stub IsValidCodePage
-0361 stub IsValidLocale
+0361 stdcall IsValidLocale(long long) IsValidLocale
 0362 stub LCMapStringA
 0363 stub LCMapStringW
 0364 stdcall LeaveCriticalSection(ptr)	LeaveCriticalSection
@@ -556,7 +556,7 @@ base	1
 0551 stub VirtualLock
 0552 stub VirtualProtect
 0553 stub VirtualProtectEx
-0554 stub VirtualQuery
+0554 stdcall VirtualQuery(ptr ptr long) VirtualQuery
 0555 stub VirtualQueryEx
 0556 stub VirtualUnlock
 0557 stub WaitCommEvent
@@ -639,3 +639,13 @@ base	1
 0633 stub MakeCriticalSectionGlobal
 #extra late additions
 0634 stdcall ThunkConnect32(ptr ptr ptr ptr ptr ptr) ThunkConnect32
+0636 stub SUnMapLS
+0637 stub SMapLS
+0638 stdcall ReinitializeCriticalSection(ptr) ReinitializeCriticalSection
+0639 stub FT_Thunk
+0640 stub FT_Exit20
+0641 stub SMapLS_IP_EBP_12
+0642 stub SUnMapLS_IP_EBP_12
+0643 stub MapSLFix
+0644 stub UnMapSLFixArray
+0645 stub dprintf

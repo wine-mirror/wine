@@ -553,7 +553,7 @@ BOOL mciDriverNotify(HWND hWndCallBack, UINT wDevID, UINT wStatus)
 
 #define	_MCI_STRDUP_TO_SEG(dest,source) {\
 	HANDLE	x;\
-	x=USER_HEAP_ALLOC(strlen(source));\
+	x=USER_HEAP_ALLOC(strlen(source)+1);\
 	dest=(LPSTR)MAKELONG(x,USER_HeapSel);\
 	strcpy(PTR_SEG_TO_LIN(dest),source);\
 }
@@ -575,8 +575,44 @@ DWORD mciOpen(DWORD dwParam, LPMCI_OPEN_PARMS lp16Parms)
 		}
 	}
 	dprintf_mmsys(stddeb, "mciOpen // wDevID=%d \n", wDevID);
-
 	memcpy(&mciOpenDrv[wDevID],lpParms,sizeof(*lpParms));
+
+	if (dwParam & MCI_OPEN_ELEMENT) {
+		char	*s,*t;
+
+		dprintf_mmsys(stddeb,"mciOpen // lpstrElementName='%s'\n",
+			(char*)PTR_SEG_TO_LIN(lpParms->lpstrElementName)
+		);
+		s=(char*)PTR_SEG_TO_LIN(lpParms->lpstrElementName);
+		t=strrchr(s,'.');
+		if (t) {
+			GetProfileString("mci extensions",t+1,"*",str,sizeof(str));
+			AnsiUpper(str);
+			if (strcmp(str, "CDAUDIO") == 0) {
+				uDevTyp = MCI_DEVTYPE_CD_AUDIO;
+			} else
+			if (strcmp(str, "WAVEAUDIO") == 0) {
+				uDevTyp = MCI_DEVTYPE_WAVEFORM_AUDIO;
+			} else
+			if (strcmp(str, "SEQUENCER") == 0)	{
+				uDevTyp = MCI_DEVTYPE_SEQUENCER;
+			} else
+			if (strcmp(str, "ANIMATION1") == 0) {
+				uDevTyp = MCI_DEVTYPE_ANIMATION;
+			} else
+			if (strcmp(str, "AVIVIDEO") == 0) {
+				uDevTyp = MCI_DEVTYPE_DIGITAL_VIDEO;
+			} else 
+			if (strcmp(str,"*") == 0) {
+				dprintf_mmsys(stddeb,"No [mci extensions] entry for %s found.\n",t);
+				return MCIERR_EXTENSION_NOT_FOUND;
+			} else  {
+				dprintf_mmsys(stddeb,"[mci extensions] entry %s for %s not supported.\n",str,t);
+			}
+		} else
+			return MCIERR_EXTENSION_NOT_FOUND;
+	}
+
 	if (dwParam & MCI_OPEN_ALIAS) {
 		dprintf_mmsys(stddeb, "MCI_OPEN // Alias='%s' !\n",
 			(char*)PTR_SEG_TO_LIN(lpParms->lpstrAlias));
@@ -1911,7 +1947,7 @@ LONG mmioRead(HMMIO16 hmmio, HPSTR pch, LONG cch)
 	dprintf_mmio(stddeb, "mmioRead(%04X, %p, %ld);\n", hmmio, pch, cch);
 	lpmminfo = (LPMMIOINFO)GlobalLock16(hmmio);
 	if (lpmminfo == NULL) return 0;
-	count = FILE_Read(LOWORD(lpmminfo->dwReserved2), pch, cch);
+	count = _lread32(LOWORD(lpmminfo->dwReserved2), pch, cch);
 	GlobalUnlock16(hmmio);
 	dprintf_mmio(stddeb, "mmioRead // count=%ld\n", count);
 	return count;
@@ -2013,7 +2049,7 @@ UINT mmioAdvance(HMMIO16 hmmio, MMIOINFO * lpmmioinfo, UINT uFlags)
 	lpmminfo = (LPMMIOINFO)GlobalLock16(hmmio);
 	if (lpmminfo == NULL) return 0;
 	if (uFlags == MMIO_READ) {
-		count = FILE_Read(LOWORD(lpmminfo->dwReserved2), 
+		count = _lread32(LOWORD(lpmminfo->dwReserved2), 
 			lpmmioinfo->pchBuffer, lpmmioinfo->cchBuffer);
 		}
 	if (uFlags == MMIO_WRITE) {
@@ -2081,7 +2117,7 @@ UINT mmioDescend(HMMIO16 hmmio, MMCKINFO * lpck,
 		(uFlags & MMIO_FINDLIST)) {
 		dprintf_mmio(stddeb, "mmioDescend // MMIO_FINDxxxx dwfcc=%08lX !\n", dwfcc);
 		while (TRUE) {
-			if (FILE_Read(LOWORD(lpmminfo->dwReserved2), (LPSTR)lpck, 
+			if (_lread32(LOWORD(lpmminfo->dwReserved2), (LPSTR)lpck, 
 					sizeof(MMCKINFO)) < sizeof(MMCKINFO)) {
 				_llseek(LOWORD(lpmminfo->dwReserved2), dwOldPos, SEEK_SET);
 				GlobalUnlock16(hmmio);
@@ -2097,7 +2133,7 @@ UINT mmioDescend(HMMIO16 hmmio, MMCKINFO * lpck,
 			}
 		}
 	else {
-		if (FILE_Read(LOWORD(lpmminfo->dwReserved2), (LPSTR)lpck, 
+		if (_lread32(LOWORD(lpmminfo->dwReserved2), (LPSTR)lpck, 
 				sizeof(MMCKINFO)) < sizeof(MMCKINFO)) {
 			_llseek(LOWORD(lpmminfo->dwReserved2), dwOldPos, SEEK_SET);
 			GlobalUnlock16(hmmio);

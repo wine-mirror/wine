@@ -29,31 +29,6 @@
 static short iF10Key = 0;
 static short iMenuSysKey = 0;
 
-
-/***********************************************************************
- *           DEFWND_InitSysMenuPopup
- *
- * Handle the WM_INITMENUPOPUP message on the system menu.
- */
-static void DEFWND_InitSysMenuPopup( HMENU hmenu, DWORD style, DWORD clsStyle )
-{
-    BOOL gray;
-
-    gray = !(style & WS_THICKFRAME) || (style & (WS_MAXIMIZE | WS_MINIMIZE));
-    EnableMenuItem( hmenu, SC_SIZE, (gray ? MF_GRAYED : MF_ENABLED) );
-    gray = ((style & WS_MAXIMIZE) != 0);
-    EnableMenuItem( hmenu, SC_MOVE, (gray ? MF_GRAYED : MF_ENABLED) );
-    gray = !(style & WS_MINIMIZEBOX) || (style & WS_MINIMIZE);
-    EnableMenuItem( hmenu, SC_MINIMIZE, (gray ? MF_GRAYED : MF_ENABLED) );
-    gray = !(style & WS_MAXIMIZEBOX) || (style & WS_MAXIMIZE);
-    EnableMenuItem( hmenu, SC_MAXIMIZE, (gray ? MF_GRAYED : MF_ENABLED) );
-    gray = !(style & (WS_MAXIMIZE | WS_MINIMIZE));
-    EnableMenuItem( hmenu, SC_RESTORE, (gray ? MF_GRAYED : MF_ENABLED) );
-    gray = (clsStyle & CS_NOCLOSE) != 0;
-    EnableMenuItem( hmenu, SC_CLOSE, (gray ? MF_GRAYED : MF_ENABLED) );
-}
-
-
 /***********************************************************************
  *           DEFWND_HandleWindowPosChanged
  *
@@ -322,17 +297,10 @@ static LRESULT DEFWND_DefWinProc( WND *wndPtr, UINT32 msg, WPARAM32 wParam,
         ShowWindow( wndPtr->hwndSelf, wParam ? SW_SHOWNOACTIVATE : SW_HIDE );
 	break; 
 
-    case WM_INITMENUPOPUP:
-        /* Not absolutely sure this belongs here -- AJ */
-        if (HIWORD(lParam))  /* system menu */
-            DEFWND_InitSysMenuPopup( (HMENU)wParam, wndPtr->dwStyle,
-                                     wndPtr->class->style );
-        break;
-
     case WM_CANCELMODE:
 	/* EndMenu() should be called if in menu state but currently it's
 	   impossible to detect - menu code should be updated*/
-	if (GetCapture() == wndPtr->hwndSelf) ReleaseCapture();
+	if (GetCapture32() == wndPtr->hwndSelf) ReleaseCapture();
 	break;
 
     case WM_VKEYTOITEM:

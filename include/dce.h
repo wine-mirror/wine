@@ -34,18 +34,18 @@ typedef enum
 
 typedef struct tagDCE
 {
-    HANDLE     hNext;
-    HDC	       hDC;
-    HWND       hwndCurrent;
-    HWND       hwndDC;
-    HRGN       hClipRgn;
-    DCE_TYPE   type;
-    DWORD      DCXflags;
+    struct tagDCE *next;
+    HDC32          hDC;
+    HWND32         hwndCurrent;
+    HWND32         hwndDC;
+    HRGN32         hClipRgn;
+    DCE_TYPE       type;
+    DWORD          DCXflags;
 } DCE;
 
 
-extern void 	DCE_Init(void);
-extern HANDLE 	DCE_AllocDCE( HWND hWnd, DCE_TYPE type );
-extern void 	DCE_FreeDCE( HANDLE hdce );
+extern void DCE_Init(void);
+extern DCE *DCE_AllocDCE( HWND32 hWnd, DCE_TYPE type );
+extern void DCE_FreeDCE( DCE *dce );
 
 #endif  /* DCE_H */

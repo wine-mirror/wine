@@ -4,13 +4,13 @@
  * Copyright 1994 Alexandre Julliard
  */
 
+#define NO_TRANSITION_TYPES  /* This file is Win32-clean */
 #include <stdio.h>
 #include <string.h>
 #include <unistd.h>
 #include "win.h"
 #include "desktop.h"
 #include "directory.h"
-#include "file.h"
 #include "graphics.h"
 #include "heap.h"
 
@@ -20,11 +20,11 @@
  *
  * Load a bitmap from a file. Used by SetDeskWallPaper().
  */
-static HBITMAP DESKTOP_LoadBitmap( HDC hdc, const char *filename )
+static HBITMAP32 DESKTOP_LoadBitmap( HDC32 hdc, const char *filename )
 {
     BITMAPFILEHEADER *fileHeader;
     BITMAPINFO *bitmapInfo;
-    HBITMAP hbitmap;
+    HBITMAP32 hbitmap;
     HFILE file;
     LPSTR buffer;
     LONG size;
@@ -33,10 +33,10 @@ static HBITMAP DESKTOP_LoadBitmap( HDC hdc, const char *filename )
 
     if ((file = _lopen( filename, OF_READ )) == HFILE_ERROR)
     {
-        UINT32 len = GetWindowsDirectory( NULL, 0 );
+        UINT32 len = GetWindowsDirectory32A( NULL, 0 );
         if (!(buffer = HeapAlloc( SystemHeap, 0, len + strlen(filename) + 2 )))
             return 0;
-        GetWindowsDirectory( buffer, len + 1 );
+        GetWindowsDirectory32A( buffer, len + 1 );
         strcat( buffer, "\\" );
         strcat( buffer, filename );
         file = _lopen( buffer, OF_READ );
@@ -50,7 +50,7 @@ static HBITMAP DESKTOP_LoadBitmap( HDC hdc, const char *filename )
 	return 0;
     }
     _llseek( file, 0, 0 );
-    size = FILE_Read( file, buffer, size );
+    size = _lread32( file, buffer, size );
     _lclose( file );
     fileHeader = (BITMAPFILEHEADER *)buffer;
     bitmapInfo = (BITMAPINFO *)(buffer + sizeof(BITMAPFILEHEADER));
@@ -74,15 +74,16 @@ static HBITMAP DESKTOP_LoadBitmap( HDC hdc, const char *filename )
  *
  * Handle the WM_ERASEBKGND message.
  */
-static LONG DESKTOP_DoEraseBkgnd( HWND hwnd, HDC hdc, DESKTOPINFO *infoPtr )
+static LRESULT DESKTOP_DoEraseBkgnd( HWND32 hwnd, HDC32 hdc,
+                                     DESKTOPINFO *infoPtr )
 {
-    RECT16 rect;
+    RECT32 rect;
     WND*   Wnd = WIN_FindWndPtr( hwnd );
 
     if( Wnd->hrgnUpdate > 1 ) DeleteObject( Wnd->hrgnUpdate );
     Wnd->hrgnUpdate = 0;
 
-    GetClientRect16( hwnd, &rect );    
+    GetClientRect32( hwnd, &rect );    
 
     /* Paint desktop pattern (only if wall paper does not cover everything) */
 
@@ -93,14 +94,14 @@ static LONG DESKTOP_DoEraseBkgnd( HWND hwnd, HDC hdc, DESKTOPINFO *infoPtr )
 	  /* Set colors in case pattern is a monochrome bitmap */
 	SetBkColor( hdc, RGB(0,0,0) );
 	SetTextColor( hdc, GetSysColor(COLOR_BACKGROUND) );
-	FillRect16( hdc, &rect, infoPtr->hbrushPattern );
+	FillRect32( hdc, &rect, infoPtr->hbrushPattern );
     }
 
       /* Paint wall paper */
 
     if (infoPtr->hbitmapWallPaper)
     {
-	int x, y;
+	INT32 x, y;
 
 	if (infoPtr->fTileWallPaper)
 	{
@@ -147,12 +148,12 @@ LRESULT DesktopWndProc( HWND32 hwnd, UINT32 message,
 	infoPtr->hbrushPattern = 0;
 	infoPtr->hbitmapWallPaper = 0;
 	SetDeskPattern();
-	SetDeskWallPaper( (LPSTR)-1 );
+	SetDeskWallPaper32( (LPSTR)-1 );
 	break;
 	
     case WM_ERASEBKGND:
 	if (rootWindow == DefaultRootWindow(display)) return 1;
-	return DESKTOP_DoEraseBkgnd( hwnd, (HDC)wParam, infoPtr );
+	return DESKTOP_DoEraseBkgnd( hwnd, (HDC32)wParam, infoPtr );
 
     case WM_SYSCOMMAND:
 	if ((wParam & 0xfff0) != SC_CLOSE) return 0;
@@ -169,7 +170,7 @@ LRESULT DesktopWndProc( HWND32 hwnd, UINT32 message,
 /***********************************************************************
  *           SetDeskPattern   (USER.279)
  */
-BOOL SetDeskPattern(void)
+BOOL16 SetDeskPattern(void)
 {
     char buffer[100];
     GetProfileString( "desktop", "Pattern", "(None)", buffer, 100 );
@@ -178,14 +179,25 @@ BOOL SetDeskPattern(void)
 
 
 /***********************************************************************
- *           SetDeskWallPaper   (USER.285)
+ *           SetDeskWallPaper16   (USER.285)
  */
-BOOL SetDeskWallPaper( LPCSTR filename )
+BOOL16 SetDeskWallPaper16( LPCSTR filename )
 {
-    HBITMAP hbitmap;
-    HDC hdc;
+    return SetDeskWallPaper32( filename );
+}
+
+
+/***********************************************************************
+ *           SetDeskWallPaper32   (USER32.475)
+ *
+ * FIXME: is there a unicode version?
+ */
+BOOL32 SetDeskWallPaper32( LPCSTR filename )
+{
+    HBITMAP32 hbitmap;
+    HDC32 hdc;
     char buffer[256];
-    WND *wndPtr = WIN_FindWndPtr( GetDesktopWindow() );
+    WND *wndPtr = WIN_GetDesktop();
     DESKTOPINFO *infoPtr = (DESKTOPINFO *)wndPtr->wExtra;
 
     if (filename == (LPSTR)-1)
@@ -193,16 +205,16 @@ BOOL SetDeskWallPaper( LPCSTR filename )
 	GetProfileString( "desktop", "WallPaper", "(None)", buffer, 256 );
 	filename = buffer;
     }
-    hdc = GetDC( 0 );
+    hdc = GetDC32( 0 );
     hbitmap = DESKTOP_LoadBitmap( hdc, filename );
-    ReleaseDC( 0, hdc );
+    ReleaseDC32( 0, hdc );
     if (infoPtr->hbitmapWallPaper) DeleteObject( infoPtr->hbitmapWallPaper );
     infoPtr->hbitmapWallPaper = hbitmap;
     infoPtr->fTileWallPaper = GetProfileInt( "desktop", "TileWallPaper", 0 );
     if (hbitmap)
     {
-	BITMAP16 bmp;
-	GetObject16( hbitmap, sizeof(bmp), &bmp );
+	BITMAP32 bmp;
+	GetObject32A( hbitmap, sizeof(bmp), &bmp );
 	infoPtr->bitmapSize.cx = (bmp.bmWidth != 0) ? bmp.bmWidth : 1;
 	infoPtr->bitmapSize.cy = (bmp.bmHeight != 0) ? bmp.bmHeight : 1;
     }
@@ -215,9 +227,9 @@ BOOL SetDeskWallPaper( LPCSTR filename )
  *
  * Set the desktop pattern.
  */
-BOOL DESKTOP_SetPattern(char *pattern )
+BOOL32 DESKTOP_SetPattern( LPCSTR pattern )
 {
-    WND *wndPtr = WIN_FindWndPtr( GetDesktopWindow() );
+    WND *wndPtr = WIN_GetDesktop();
     DESKTOPINFO *infoPtr = (DESKTOPINFO *)wndPtr->wExtra;
     int pat[8];
 
@@ -228,7 +240,7 @@ BOOL DESKTOP_SetPattern(char *pattern )
 			   &pat[4], &pat[5], &pat[6], &pat[7] ))
     {
 	WORD pattern[8];
-	HBITMAP hbitmap;
+	HBITMAP32 hbitmap;
 	int i;
 
 	for (i = 0; i < 8; i++) pattern[i] = pat[i] & 0xffff;

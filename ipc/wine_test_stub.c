@@ -34,7 +34,7 @@ void dummy_usage_of_debug_msg_name()
 }
 
 /* stub */
-HWND GetDesktopWindow()
+HWND32 GetDesktopWindow32()
 {
   printf("GetDesktopWindow\n");
   return 0;

@@ -11,13 +11,13 @@
 
 typedef struct
 {
-    HBRUSH   hbrushPattern;
-    HBITMAP  hbitmapWallPaper;
-    SIZE16   bitmapSize;
-    BOOL     fTileWallPaper;
+    HBRUSH32   hbrushPattern;
+    HBITMAP32  hbitmapWallPaper;
+    SIZE32     bitmapSize;
+    BOOL32     fTileWallPaper;
 } DESKTOPINFO;
 
-extern BOOL DESKTOP_SetPattern(char *pattern );
+extern BOOL32 DESKTOP_SetPattern( LPCSTR pattern );
 extern LRESULT DesktopWndProc( HWND32 hwnd, UINT32 message,
                                WPARAM32 wParam, LPARAM lParam );
 

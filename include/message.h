@@ -27,7 +27,7 @@ extern BOOL32 TIMER_GetTimerMsg( MSG16 *msg, HWND32 hwnd,
                                  HQUEUE16 hQueue, BOOL32 remove );
 
 /* event.c */
-extern BOOL32 EVENT_WaitXEvent( BOOL32 sleep );
+extern BOOL32 EVENT_WaitXEvent( BOOL32 sleep, BOOL32 peek );
 extern void EVENT_Synchronize(void);
 extern void EVENT_ProcessEvent( XEvent *event );
 extern void EVENT_RegisterWindow( WND *pWnd );

@@ -167,7 +167,7 @@ static void UnixTimeToFileTime(time_t unix_time, FILETIME *filetime)
 time_t FileTimeToUnixTime(FILETIME *filetime)
 {
     /* reverse of UnixTimeToFileTime */
-    return filetime->dwLowDateTime+(filetime->dwHighDateTime<<16);
+    return (filetime->dwLowDateTime>>16)+(filetime->dwHighDateTime<<16);
 }
 
 /***********************************************************************
@@ -339,7 +339,9 @@ UINT32 SetHandleCount32( UINT32 cHandles )
 
 int CloseFileHandle(HFILE hFile)
 {
-    return _lclose(hFile);
+    if (!_lclose(hFile))
+	return TRUE;
+    return FALSE;
 }
 
 static int TranslateAccessFlags(DWORD access_flags)
@@ -451,6 +453,7 @@ BOOL32 SetFileAttributes32A(LPCSTR lpFileName, DWORD attributes)
 		buf.st_mode &= ~0222; /* octal!, clear write permission bits */
 		attributes &= ~FILE_ATTRIBUTE_READONLY;
 	}
+	attributes &= ~(FILE_ATTRIBUTE_HIDDEN|FILE_ATTRIBUTE_SYSTEM);
 	if (attributes)
 		fprintf(stdnimp,"SetFileAttributesA(%s):%lx attribute(s) not implemented.\n",lpFileName,attributes);
 	if (-1==chmod(fn,buf.st_mode)) {

@@ -34,15 +34,21 @@
 
 #define ASCII_CHAR_HACK 0x0800 
 
+typedef enum { SYSQ_MSG_ABANDON, SYSQ_MSG_SKIP, SYSQ_MSG_ACCEPT } SYSQ_STATUS;
+
 extern WPARAM	lastEventChar;				 /* event.c */
 extern BOOL MouseButtonsStates[3];
 extern BOOL AsyncMouseButtonsStates[3];
 extern BYTE KeyStateTable[256];
 extern BYTE AsyncKeyStateTable[256];
 
+extern MESSAGEQUEUE *pCursorQueue;			 /* queue.c */
+extern MESSAGEQUEUE *pActiveQueue;
+
 DWORD MSG_WineStartTicks; /* Ticks at Wine startup */
 
 static WORD doubleClickSpeed = 452;
+static INT32 debugSMRL = 0;       /* intertask SendMessage() recursion level */
 
 /***********************************************************************
  *           MSG_TranslateMouseMsg
@@ -59,7 +65,7 @@ static WORD doubleClickSpeed = 452;
  *   the coordinates to client coordinates.
  * - Send the WM_SETCURSOR message.
  */
-static BOOL MSG_TranslateMouseMsg( MSG16 *msg, BOOL remove )
+static SYSQ_STATUS MSG_TranslateMouseMsg( MSG16 *msg, BOOL remove )
 {
     WND *pWnd;
     BOOL eatMsg = FALSE;
@@ -70,6 +76,7 @@ static BOOL MSG_TranslateMouseMsg( MSG16 *msg, BOOL remove )
     static WORD  lastClickMsg = 0;
     static POINT16 lastClickPos = { 0, 0 };
     POINT16 pt = msg->pt;
+    MESSAGEQUEUE *queue = (MESSAGEQUEUE *)GlobalLock16(GetTaskQueue(0));
 
     BOOL mouseClick = ((msg->message == WM_LBUTTONDOWN) ||
 		       (msg->message == WM_RBUTTONDOWN) ||
@@ -77,7 +84,7 @@ static BOOL MSG_TranslateMouseMsg( MSG16 *msg, BOOL remove )
 
       /* Find the window */
 
-    if ((msg->hwnd = GetCapture()) != 0)
+    if ((msg->hwnd = GetCapture16()) != 0)
     {
         BOOL32 ret;
 
@@ -87,7 +94,7 @@ static BOOL MSG_TranslateMouseMsg( MSG16 *msg, BOOL remove )
 
         if (!HOOK_GetHook( WH_MOUSE, GetTaskQueue(0)) ||
             !(hook = SEGPTR_NEW(MOUSEHOOKSTRUCT16)))
-            return TRUE;
+            return SYSQ_MSG_ACCEPT;
         hook->pt           = msg->pt;
         hook->hwnd         = msg->hwnd;
         hook->wHitTestCode = HTCLIENT;
@@ -95,21 +102,22 @@ static BOOL MSG_TranslateMouseMsg( MSG16 *msg, BOOL remove )
         ret = !HOOK_CallHooks( WH_MOUSE, remove ? HC_ACTION : HC_NOREMOVE,
                                msg->message, (LPARAM)SEGPTR_GET(hook));
         SEGPTR_FREE(hook);
-        return ret;
+        return ret ? SYSQ_MSG_ACCEPT : SYSQ_MSG_SKIP ;
     }
    
     hittest = WINPOS_WindowFromPoint( msg->pt, &pWnd );
     if (pWnd->hmemTaskQ != GetTaskQueue(0))
     {
         /* Not for the current task */
-        MESSAGEQUEUE *queue = (MESSAGEQUEUE *)GlobalLock16( GetTaskQueue(0) );
         if (queue) QUEUE_ClearWakeBit( queue, QS_MOUSE );
         /* Wake up the other task */
         queue = (MESSAGEQUEUE *)GlobalLock16( pWnd->hmemTaskQ );
         if (queue) QUEUE_SetWakeBit( queue, QS_MOUSE );
-        return FALSE;
+        return SYSQ_MSG_ABANDON;
     }
-    msg->hwnd = pWnd->hwndSelf;
+    pCursorQueue = queue;
+    msg->hwnd    = pWnd->hwndSelf;
+
     if ((hittest != HTERROR) && mouseClick)
     {
         HWND hwndTop = WIN_GetTopParent( msg->hwnd );
@@ -121,7 +129,8 @@ static BOOL MSG_TranslateMouseMsg( MSG16 *msg, BOOL remove )
 
         /* Activate the window if needed */
 
-        if (msg->hwnd != GetActiveWindow() && msg->hwnd != GetDesktopWindow())
+        if (msg->hwnd != GetActiveWindow() &&
+            msg->hwnd != GetDesktopWindow16())
         {
             LONG ret = SendMessage16( msg->hwnd, WM_MOUSEACTIVATE, hwndTop,
                                     MAKELONG( hittest, msg->message ) );
@@ -139,7 +148,7 @@ static BOOL MSG_TranslateMouseMsg( MSG16 *msg, BOOL remove )
 
     SendMessage16( msg->hwnd, WM_SETCURSOR, (WPARAM)msg->hwnd,
                    MAKELONG( hittest, msg->message ));
-    if (eatMsg) return FALSE;
+    if (eatMsg) return SYSQ_MSG_SKIP;
 
       /* Check for double-click */
 
@@ -189,7 +198,7 @@ static BOOL MSG_TranslateMouseMsg( MSG16 *msg, BOOL remove )
 
     if (!HOOK_GetHook( WH_MOUSE, GetTaskQueue(0)) ||
         !(hook = SEGPTR_NEW(MOUSEHOOKSTRUCT16)))
-        return TRUE;
+        return SYSQ_MSG_ACCEPT;
 
     hook->pt           = msg->pt;
     hook->hwnd         = msg->hwnd;
@@ -198,7 +207,7 @@ static BOOL MSG_TranslateMouseMsg( MSG16 *msg, BOOL remove )
     ret = !HOOK_CallHooks( WH_MOUSE, remove ? HC_ACTION : HC_NOREMOVE,
                            msg->message, (LPARAM)SEGPTR_GET(hook) );
     SEGPTR_FREE(hook);
-    return ret;
+    return ret ? SYSQ_MSG_ACCEPT : SYSQ_MSG_SKIP;
 }
 
 
@@ -209,7 +218,7 @@ static BOOL MSG_TranslateMouseMsg( MSG16 *msg, BOOL remove )
  * Return value indicates whether the translated message must be passed
  * to the user.
  */
-static BOOL MSG_TranslateKeyboardMsg( MSG16 *msg, BOOL remove )
+static SYSQ_STATUS MSG_TranslateKeyboardMsg( MSG16 *msg, BOOL remove )
 {
     WND *pWnd;
 
@@ -235,11 +244,13 @@ static BOOL MSG_TranslateKeyboardMsg( MSG16 *msg, BOOL remove )
         /* Wake up the other task */
         queue = (MESSAGEQUEUE *)GlobalLock16( pWnd->hmemTaskQ );
         if (queue) QUEUE_SetWakeBit( queue, QS_KEY );
-        return FALSE;
+        return SYSQ_MSG_ABANDON;
     }
-    return !HOOK_CallHooks( WH_KEYBOARD, remove ? HC_ACTION : HC_NOREMOVE,
-                            msg->wParam, msg->lParam );
+    return (HOOK_CallHooks( WH_KEYBOARD, remove ? HC_ACTION : HC_NOREMOVE,
+                            msg->wParam, msg->lParam ))
+            ? SYSQ_MSG_SKIP : SYSQ_MSG_ACCEPT;
 }
+
 
 /***********************************************************************
  *           MSG_JournalRecordMsg
@@ -392,26 +403,30 @@ static int MSG_JournalPlayBackMsg(void)
 static BOOL MSG_PeekHardwareMsg( MSG16 *msg, HWND hwnd, WORD first, WORD last,
                                  BOOL remove )
 {
+    SYSQ_STATUS status;
     MESSAGEQUEUE *sysMsgQueue = QUEUE_GetSysQueue();
     int i, pos = sysMsgQueue->nextMessage;
 
     /* If the queue is empty, attempt to fill it */
-    if (!sysMsgQueue->msgCount && XPending(display)) EVENT_WaitXEvent( FALSE );
+    if (!sysMsgQueue->msgCount && XPending(display))
+        EVENT_WaitXEvent( FALSE, FALSE );
 
     for (i = 0; i < sysMsgQueue->msgCount; i++, pos++)
     {
         if (pos >= sysMsgQueue->queueSize) pos = 0;
 	*msg = sysMsgQueue->messages[pos].msg;
 
-          /* Translate message */
+          /* Translate message; return FALSE immediately on SYSQ_MSG_ABANDON */
 
         if ((msg->message >= WM_MOUSEFIRST) && (msg->message <= WM_MOUSELAST))
         {
-            if (!MSG_TranslateMouseMsg( msg, remove )) continue;
+            if ((status = MSG_TranslateMouseMsg(msg,remove)) == SYSQ_MSG_ABANDON)
+                return FALSE;
         }
         else if ((msg->message >= WM_KEYFIRST) && (msg->message <= WM_KEYLAST))
         {
-            if (!MSG_TranslateKeyboardMsg( msg, remove )) continue;
+            if ((status = MSG_TranslateKeyboardMsg(msg,remove)) == SYSQ_MSG_ABANDON)
+                return FALSE;
         }
         else  /* Non-standard hardware event */
         {
@@ -427,8 +442,15 @@ static BOOL MSG_PeekHardwareMsg( MSG16 *msg, HWND hwnd, WORD first, WORD last,
                                       remove ? HC_ACTION : HC_NOREMOVE,
                                       0, (LPARAM)SEGPTR_GET(hook) );
                 SEGPTR_FREE(hook);
-                if (ret) continue;
+                status = ret ? SYSQ_MSG_SKIP : SYSQ_MSG_ACCEPT;
             }
+        }
+
+        if (status == SYSQ_MSG_SKIP)
+        {
+            if (remove) QUEUE_RemoveMsg( sysMsgQueue, pos );
+            /* FIXME: call CBT_CLICKSKIPPED from here */
+            continue;
         }
 
           /* Check message against filters */
@@ -436,12 +458,12 @@ static BOOL MSG_PeekHardwareMsg( MSG16 *msg, HWND hwnd, WORD first, WORD last,
         if (hwnd && (msg->hwnd != hwnd)) continue;
         if ((first || last) && 
             ((msg->message < first) || (msg->message > last))) continue;
-        if ((msg->hwnd != GetDesktopWindow()) && 
-            (GetWindowTask16(msg->hwnd) != GetCurrentTask()))
-            continue;  /* Not for this task */
-        if (remove && HOOK_GetHook( WH_JOURNALRECORD, GetTaskQueue(0) ))
-            MSG_JournalRecordMsg( msg );
-        if (remove) QUEUE_RemoveMsg( sysMsgQueue, pos );
+        if (remove)
+        {
+            if (HOOK_GetHook( WH_JOURNALRECORD, GetTaskQueue(0) ))
+                MSG_JournalRecordMsg( msg );
+            QUEUE_RemoveMsg( sysMsgQueue, pos );
+        }
         return TRUE;
     }
     return FALSE;
@@ -474,43 +496,71 @@ WORD GetDoubleClickTime()
 static LRESULT MSG_SendMessage( HQUEUE16 hDestQueue, HWND hwnd, UINT msg,
                                 WPARAM wParam, LPARAM lParam )
 {
+    INT32	  prevSMRL = debugSMRL;
+    QSMCTRL 	  qCtrl = { 0, 1};
     MESSAGEQUEUE *queue, *destQ;
 
     if (!(queue = (MESSAGEQUEUE*)GlobalLock16( GetTaskQueue(0) ))) return 0;
     if (!(destQ = (MESSAGEQUEUE*)GlobalLock16( hDestQueue ))) return 0;
 
-    if (IsTaskLocked())
+    if (IsTaskLocked() || !IsWindow(hwnd)) return 0;
+
+    debugSMRL+=4;
+    dprintf_sendmsg(stddeb,"%*sSM: %s [%04x] (%04x -> %04x)\n", 
+		    prevSMRL, "", SPY_GetMsgName(msg), msg, queue->self, hDestQueue );
+
+    if( !(queue->wakeBits & QS_SMPARAMSFREE) )
     {
-        fprintf( stderr, "SendMessage: task is locked\n" );
-        return 0;
+      dprintf_sendmsg(stddeb,"\tIntertask SendMessage: sleeping since unreplied SendMessage pending\n");
+      queue->changeBits &= ~QS_SMPARAMSFREE;
+      QUEUE_WaitBits( QS_SMPARAMSFREE );
     }
 
-    if (queue->hWnd)
-    {
-        fprintf( stderr, "Nested SendMessage(), msg %04x skipped\n", msg );
-        return 0;
-    }
+    /* resume sending */ 
+
     queue->hWnd   = hwnd;
     queue->msg    = msg;
     queue->wParam = wParam;
     queue->lParam = lParam;
     queue->hPrevSendingTask = destQ->hSendingTask;
     destQ->hSendingTask = GetTaskQueue(0);
+
+    queue->wakeBits &= ~QS_SMPARAMSFREE;
+
+    dprintf_sendmsg(stddeb,"%*ssm: smResultInit = %08x\n", prevSMRL, "", (unsigned)&qCtrl);
+
+    queue->smResultInit = &qCtrl;
+
     QUEUE_SetWakeBit( destQ, QS_SENDMESSAGE );
 
-    /* Wait for the result */
+    /* perform task switch and wait for the result */
 
-    printf( "SendMessage %04x to %04x\n", msg, hDestQueue );
-
-    if (!(queue->wakeBits & QS_SMRESULT))
+    while( qCtrl.bPending )
     {
+      if (!(queue->wakeBits & QS_SMRESULT))
+      {
+        queue->changeBits &= ~QS_SMRESULT;
         DirectedYield( destQ->hTask );
         QUEUE_WaitBits( QS_SMRESULT );
+	dprintf_sendmsg(stddeb,"\tsm: have result!\n");
+      }
+      /* got something */
+
+      dprintf_sendmsg(stddeb,"%*ssm: smResult = %08x\n", prevSMRL, "", (unsigned)queue->smResult );
+
+      queue->smResult->lResult = queue->SendMessageReturn;
+      queue->smResult->bPending = FALSE;
+      queue->wakeBits &= ~QS_SMRESULT;
+
+      if( queue->smResult != &qCtrl )
+	  dprintf_msg(stddeb,"%*ssm: weird scenes inside the goldmine!\n", prevSMRL, "");
     }
-    printf( "SendMessage %04x to %04x: got %08lx\n",
-            msg, hDestQueue, queue->SendMessageReturn );
-    queue->wakeBits &= ~QS_SMRESULT;
-    return queue->SendMessageReturn;
+    queue->smResultInit = NULL;
+    
+    dprintf_sendmsg(stddeb,"%*sSM: [%04x] returning %08lx\n", prevSMRL, "", msg, qCtrl.lResult);
+    debugSMRL-=4;
+
+    return qCtrl.lResult;
 }
 
 
@@ -522,19 +572,33 @@ void ReplyMessage( LRESULT result )
     MESSAGEQUEUE *senderQ;
     MESSAGEQUEUE *queue;
 
-    printf( "ReplyMessage\n " );
     if (!(queue = (MESSAGEQUEUE*)GlobalLock16( GetTaskQueue(0) ))) return;
-    if (!(senderQ = (MESSAGEQUEUE*)GlobalLock16( queue->InSendMessageHandle)))
-        return;
-    for (;;)
+
+    dprintf_msg(stddeb,"ReplyMessage, queue %04x\n", queue->self);
+
+    while( (senderQ = (MESSAGEQUEUE*)GlobalLock16( queue->InSendMessageHandle)))
     {
-        if (queue->wakeBits & QS_SENDMESSAGE) QUEUE_ReceiveMessage( queue );
-        else if (senderQ->wakeBits & QS_SMRESULT) Yield();
-        else break;
-    }
-    printf( "ReplyMessage: res = %08lx\n", result );
+      dprintf_msg(stddeb,"\trpm: replying to %04x (%04x -> %04x)\n",
+                          queue->msg, queue->self, senderQ->self);
+
+      if( queue->wakeBits & QS_SENDMESSAGE )
+      {
+	QUEUE_ReceiveMessage( queue );
+	continue; /* ReceiveMessage() already called us */
+      }
+
+      if(!(senderQ->wakeBits & QS_SMRESULT) ) break;
+      OldYield();
+    } 
+    if( !senderQ ) { dprintf_msg(stddeb,"\trpm: done\n"); return; }
+
     senderQ->SendMessageReturn = result;
+    dprintf_msg(stddeb,"\trpm: smResult = %08x, result = %08lx\n", 
+			(unsigned)queue->smResultCurrent, result );
+
+    senderQ->smResult = queue->smResultCurrent;
     queue->InSendMessageHandle = 0;
+
     QUEUE_SetWakeBit( senderQ, QS_SMRESULT );
     DirectedYield( queue->hSendingTask );
 }
@@ -582,6 +646,23 @@ static BOOL MSG_PeekMessage( LPMSG16 msg, HWND hwnd, WORD first, WORD last,
 
 	if (msgQueue->wakeBits & QS_SENDMESSAGE)
             QUEUE_ReceiveMessage( msgQueue );
+
+        /* Now handle a WM_QUIT message 
+	 *
+	 * FIXME: PostQuitMessage() should post WM_QUIT and 
+	 *	  set QS_POSTMESSAGE wakebit instead of this.
+	 */
+
+        if (msgQueue->wPostQMsg &&
+	   (!first || WM_QUIT >= first) && 
+	   (!last || WM_QUIT <= last) )
+        {
+            msg->hwnd    = hwnd;
+            msg->message = WM_QUIT;
+            msg->wParam  = msgQueue->wExitCode;
+            msg->lParam  = 0;
+            break;
+        }
     
         /* Now find a normal message */
 
@@ -611,17 +692,6 @@ static BOOL MSG_PeekMessage( LPMSG16 msg, HWND hwnd, WORD first, WORD last,
 	    msgQueue->GetMessageExtraInfoVal = 0;  /* Always 0 for now */
             break;
         }
-
-        /* Now handle a WM_QUIT message */
-
-	if (msgQueue->wPostQMsg)
-	{
-	    msg->hwnd    = hwnd;
-	    msg->message = WM_QUIT;
-	    msg->wParam  = msgQueue->wExitCode;
-	    msg->lParam  = 0;
-	    break;
-	}
 
         /* Check again for SendMessage */
 

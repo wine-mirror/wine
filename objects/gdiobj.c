@@ -108,7 +108,7 @@ static FONTOBJ AnsiVarFont =
 static FONTOBJ SystemFont =
 {
     { 0, FONT_MAGIC, 1 },   /* header */
-    { 12, 0, 0, 0, FW_NORMAL, FALSE, FALSE, FALSE, ANSI_CHARSET,
+    { 12, 0, 0, 0, FW_BOLD, FALSE, FALSE, FALSE, ANSI_CHARSET,
       0, 0, DEFAULT_QUALITY, VARIABLE_PITCH | FF_SWISS, "" }
 };
 
@@ -122,7 +122,7 @@ static FONTOBJ DeviceDefaultFont =
 static FONTOBJ SystemFixedFont =
 {
     { 0, FONT_MAGIC, 1 },   /* header */
-    { 12, 0, 0, 0, FW_NORMAL, FALSE, FALSE, FALSE, ANSI_CHARSET,
+    { 12, 0, 0, 0, FW_BOLD, FALSE, FALSE, FALSE, ANSI_CHARSET,
       0, 0, DEFAULT_QUALITY, FIXED_PITCH | FF_MODERN, "" }
 };
 

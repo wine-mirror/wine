@@ -1,13 +1,11 @@
 /*		
- * Interface code to SCROLLBAR widget
+ * Scrollbar control
  *
- * Copyright  Martin Ayotte, 1993
- * Copyright  Alexandre Julliard, 1994
- *
- * Small fixes and implemented SB_THUMBPOSITION
- * by Peter Broadhurst, 940611
+ * Copyright 1993 Martin Ayotte
+ * Copyright 1994, 1996 Alexandre Julliard
  */
 
+#define NO_TRANSITION_TYPES  /* This file is Win32-clean */
 #include <stdlib.h>
 #include <stdio.h>
 #include <sys/types.h>
@@ -23,18 +21,18 @@
 #include "debug.h"
 
 
-static HBITMAP hUpArrow = 0;
-static HBITMAP hDnArrow = 0;
-static HBITMAP hLfArrow = 0;
-static HBITMAP hRgArrow = 0;
-static HBITMAP hUpArrowD = 0;
-static HBITMAP hDnArrowD = 0;
-static HBITMAP hLfArrowD = 0;
-static HBITMAP hRgArrowD = 0;
-static HBITMAP hUpArrowI = 0;
-static HBITMAP hDnArrowI = 0;
-static HBITMAP hLfArrowI = 0;
-static HBITMAP hRgArrowI = 0;
+static HBITMAP32 hUpArrow = 0;
+static HBITMAP32 hDnArrow = 0;
+static HBITMAP32 hLfArrow = 0;
+static HBITMAP32 hRgArrow = 0;
+static HBITMAP32 hUpArrowD = 0;
+static HBITMAP32 hDnArrowD = 0;
+static HBITMAP32 hLfArrowD = 0;
+static HBITMAP32 hRgArrowD = 0;
+static HBITMAP32 hUpArrowI = 0;
+static HBITMAP32 hDnArrowI = 0;
+static HBITMAP32 hLfArrowI = 0;
+static HBITMAP32 hRgArrowI = 0;
 
 #define TOP_ARROW(flags,pressed) \
    (((flags)&ESB_DISABLE_UP) ? hUpArrowI : ((pressed) ? hUpArrowD:hUpArrow))
@@ -48,6 +46,9 @@ static HBITMAP hRgArrowI = 0;
 
   /* Minimum size of the rectangle between the arrows */
 #define SCROLL_MIN_RECT  4  
+
+  /* Minimum size of the thumb in pixels */
+#define SCROLL_MIN_THUMB 4
 
   /* Delay (in ms) before first repetition when holding the button down */
 #define SCROLL_FIRST_DELAY   200
@@ -70,34 +71,38 @@ enum SCROLL_HITTEST
 };
 
  /* Thumb-tracking info */
-static HWND hwndTracking = 0;
-static int nBarTracking = 0;
-static UINT uTrackingPos = 0;
+static HWND32 SCROLL_TrackingWin = 0;
+static INT32  SCROLL_TrackingBar = 0;
+static INT32  SCROLL_TrackingPos = 0;
+static INT32  SCROLL_TrackingVal = 0;
+
+/* Is the moving thumb being displayed? */
+static BOOL32 SCROLL_MovingThumb = FALSE;
 
 /***********************************************************************
  *           SCROLL_LoadBitmaps
  */
 static void SCROLL_LoadBitmaps(void)
 {
-    hUpArrow  = LoadBitmap16((HINSTANCE)NULL, MAKEINTRESOURCE(OBM_UPARROW));
-    hDnArrow  = LoadBitmap16((HINSTANCE)NULL, MAKEINTRESOURCE(OBM_DNARROW));
-    hLfArrow  = LoadBitmap16((HINSTANCE)NULL, MAKEINTRESOURCE(OBM_LFARROW));
-    hRgArrow  = LoadBitmap16((HINSTANCE)NULL, MAKEINTRESOURCE(OBM_RGARROW));
-    hUpArrowD = LoadBitmap16((HINSTANCE)NULL, MAKEINTRESOURCE(OBM_UPARROWD));
-    hDnArrowD = LoadBitmap16((HINSTANCE)NULL, MAKEINTRESOURCE(OBM_DNARROWD));
-    hLfArrowD = LoadBitmap16((HINSTANCE)NULL, MAKEINTRESOURCE(OBM_LFARROWD));
-    hRgArrowD = LoadBitmap16((HINSTANCE)NULL, MAKEINTRESOURCE(OBM_RGARROWD));
-    hUpArrowI = LoadBitmap16((HINSTANCE)NULL, MAKEINTRESOURCE(OBM_UPARROWI));
-    hDnArrowI = LoadBitmap16((HINSTANCE)NULL, MAKEINTRESOURCE(OBM_DNARROWI));
-    hLfArrowI = LoadBitmap16((HINSTANCE)NULL, MAKEINTRESOURCE(OBM_LFARROWI));
-    hRgArrowI = LoadBitmap16((HINSTANCE)NULL, MAKEINTRESOURCE(OBM_RGARROWI));
+    hUpArrow  = LoadBitmap16( 0, MAKEINTRESOURCE(OBM_UPARROW) );
+    hDnArrow  = LoadBitmap16( 0, MAKEINTRESOURCE(OBM_DNARROW) );
+    hLfArrow  = LoadBitmap16( 0, MAKEINTRESOURCE(OBM_LFARROW) );
+    hRgArrow  = LoadBitmap16( 0, MAKEINTRESOURCE(OBM_RGARROW) );
+    hUpArrowD = LoadBitmap16( 0, MAKEINTRESOURCE(OBM_UPARROWD) );
+    hDnArrowD = LoadBitmap16( 0, MAKEINTRESOURCE(OBM_DNARROWD) );
+    hLfArrowD = LoadBitmap16( 0, MAKEINTRESOURCE(OBM_LFARROWD) );
+    hRgArrowD = LoadBitmap16( 0, MAKEINTRESOURCE(OBM_RGARROWD) );
+    hUpArrowI = LoadBitmap16( 0, MAKEINTRESOURCE(OBM_UPARROWI) );
+    hDnArrowI = LoadBitmap16( 0, MAKEINTRESOURCE(OBM_DNARROWI) );
+    hLfArrowI = LoadBitmap16( 0, MAKEINTRESOURCE(OBM_LFARROWI) );
+    hRgArrowI = LoadBitmap16( 0, MAKEINTRESOURCE(OBM_RGARROWI) );
 }
 
 
 /***********************************************************************
  *           SCROLL_GetPtrScrollInfo
  */
-static SCROLLBAR_INFO *SCROLL_GetPtrScrollInfo( WND* wndPtr, int nBar )
+static SCROLLBAR_INFO *SCROLL_GetPtrScrollInfo( WND* wndPtr, INT32 nBar )
 {
     SCROLLBAR_INFO *infoPtr;
 
@@ -114,7 +119,7 @@ static SCROLLBAR_INFO *SCROLL_GetPtrScrollInfo( WND* wndPtr, int nBar )
     {
         if ((infoPtr = HeapAlloc( SystemHeap, 0, sizeof(SCROLLBAR_INFO) )))
         {
-            infoPtr->MinVal = infoPtr->CurVal = 0;
+            infoPtr->MinVal = infoPtr->CurVal = infoPtr->Page = 0;
             infoPtr->MaxVal = 100;
             infoPtr->flags  = ESB_ENABLE_BOTH;
             if (nBar == SB_HORZ) wndPtr->pHScroll = infoPtr;
@@ -129,7 +134,7 @@ static SCROLLBAR_INFO *SCROLL_GetPtrScrollInfo( WND* wndPtr, int nBar )
 /***********************************************************************
  *           SCROLL_GetScrollInfo
  */
-static SCROLLBAR_INFO *SCROLL_GetScrollInfo( HWND hwnd, int nBar )
+static SCROLLBAR_INFO *SCROLL_GetScrollInfo( HWND32 hwnd, INT32 nBar )
 {
    WND *wndPtr = WIN_FindWndPtr( hwnd );
    return SCROLL_GetPtrScrollInfo( wndPtr, nBar );
@@ -141,16 +146,18 @@ static SCROLLBAR_INFO *SCROLL_GetScrollInfo( HWND hwnd, int nBar )
  *
  * Compute the scroll bar rectangle, in drawing coordinates (i.e. client
  * coords for SB_CTL, window coords for SB_VERT and SB_HORZ).
- * 'arrowSize' returns the width or height of an arrow (depending on the
- * orientation of the scrollbar), and 'thumbPos' returns the position of
- * the thumb relative to the left or to the top.
+ * 'arrowSize' returns the width or height of an arrow (depending on
+ * the orientation of the scrollbar), 'thumbSize' returns the size of
+ * the thumb, and 'thumbPos' returns the position of the thumb
+ * relative to the left or to the top.
  * Return TRUE if the scrollbar is vertical, FALSE if horizontal.
  */
-static BOOL SCROLL_GetScrollBarRect( HWND hwnd, int nBar, RECT16 *lprect,
-                                     WORD *arrowSize, WORD *thumbPos )
+static BOOL32 SCROLL_GetScrollBarRect( HWND32 hwnd, INT32 nBar, RECT32 *lprect,
+                                       INT32 *arrowSize, INT32 *thumbSize,
+                                       INT32 *thumbPos )
 {
-    int pixels;
-    BOOL vertical;
+    INT32 pixels;
+    BOOL32 vertical;
     WND *wndPtr = WIN_FindWndPtr( hwnd );
 
     switch(nBar)
@@ -172,7 +179,7 @@ static BOOL SCROLL_GetScrollBarRect( HWND hwnd, int nBar, RECT16 *lprect,
 	break;
 
       case SB_CTL:
-	GetClientRect16( hwnd, lprect );
+	GetClientRect32( hwnd, lprect );
         vertical = ((wndPtr->dwStyle & SBS_VERT) != 0);
 	break;
 
@@ -183,28 +190,44 @@ static BOOL SCROLL_GetScrollBarRect( HWND hwnd, int nBar, RECT16 *lprect,
     if (vertical) pixels = lprect->bottom - lprect->top;
     else pixels = lprect->right - lprect->left;
 
-    if (pixels > 2*SYSMETRICS_CXVSCROLL + SCROLL_MIN_RECT)
+    if (pixels <= 2*SYSMETRICS_CXVSCROLL + SCROLL_MIN_RECT)
     {
-        *arrowSize = SYSMETRICS_CXVSCROLL;
+        if (pixels > SCROLL_MIN_RECT)
+            *arrowSize = (pixels - SCROLL_MIN_RECT) / 2;
+        else
+            *arrowSize = 0;
+        *thumbPos = *thumbSize = 0;
     }
-    else if (pixels > SCROLL_MIN_RECT)
-    {
-        *arrowSize = (pixels - SCROLL_MIN_RECT) / 2;
-    }
-    else *arrowSize = 0;
-    
-    if ((pixels -= 3*SYSMETRICS_CXVSCROLL+1) > 0)
+    else
     {
         SCROLLBAR_INFO *info = SCROLL_GetPtrScrollInfo( wndPtr, nBar );
-        if ((info->flags & ESB_DISABLE_BOTH) == ESB_DISABLE_BOTH)
-            *thumbPos = 0;
-        else if (info->MinVal == info->MaxVal)
-            *thumbPos = *arrowSize;
+
+        *arrowSize = SYSMETRICS_CXVSCROLL;
+        pixels -= 2 * SYSMETRICS_CXVSCROLL;
+
+        if (info->Page)
+        {
+            *thumbSize = pixels * info->Page / (info->MaxVal-info->MinVal+1);
+            if (*thumbSize < SCROLL_MIN_THUMB) *thumbSize = SCROLL_MIN_THUMB;
+        }
+        else *thumbSize = SYSMETRICS_CXVSCROLL;
+
+        if (((pixels -= *thumbSize + 1) < 0) ||
+            ((info->flags & ESB_DISABLE_BOTH) == ESB_DISABLE_BOTH))
+        {
+            /* Rectangle too small or scrollbar disabled -> no thumb */
+            *thumbPos = *thumbSize = 0;
+        }
         else
-            *thumbPos = *arrowSize + pixels * (info->CurVal - info->MinVal) /
-                                              (info->MaxVal - info->MinVal);
+        {
+            INT32 max = info->MaxVal - MAX( info->Page-1, 0 );
+            if (info->MinVal >= max)
+                *thumbPos = *arrowSize;
+            else
+                *thumbPos = *arrowSize + pixels * (info->CurVal-info->MinVal) /
+                                                  (max - info->MinVal);
+        }
     }
-    else *thumbPos = 0;
     return vertical;
 }
 
@@ -215,20 +238,29 @@ static BOOL SCROLL_GetScrollBarRect( HWND hwnd, int nBar, RECT16 *lprect,
  * Compute the current scroll position based on the thumb position in pixels
  * from the top of the scroll-bar.
  */
-static UINT SCROLL_GetThumbVal( SCROLLBAR_INFO *infoPtr, RECT16 *rect,
-                                BOOL vertical, WORD pos )
+static UINT32 SCROLL_GetThumbVal( SCROLLBAR_INFO *infoPtr, RECT32 *rect,
+                                  BOOL32 vertical, INT32 pos )
 {
-    int pixels = vertical ? rect->bottom-rect->top : rect->right-rect->left;
-    if ((pixels -= 3*SYSMETRICS_CXVSCROLL+1) <= 0) return infoPtr->MinVal;
+    INT32 thumbSize;
+    INT32 pixels = vertical ? rect->bottom-rect->top : rect->right-rect->left;
+
+    if ((pixels -= 2*SYSMETRICS_CXVSCROLL) <= 0) return infoPtr->MinVal;
+
+    if (infoPtr->Page)
+    {
+        thumbSize = pixels * infoPtr->Page/(infoPtr->MaxVal-infoPtr->MinVal+1);
+        if (thumbSize < SCROLL_MIN_THUMB) thumbSize = SCROLL_MIN_THUMB;
+    }
+    else thumbSize = SYSMETRICS_CXVSCROLL;
+
+    if ((pixels -= thumbSize + 1) <= 0) return infoPtr->MinVal;
+
     pos = MAX( 0, pos - SYSMETRICS_CXVSCROLL );
     if (pos > pixels) pos = pixels;
-    dprintf_scroll(stddeb,"GetThumbVal: pos=%d ret=%d\n", pos,
-                   (infoPtr->MinVal
-            + (UINT)(((int)pos * (infoPtr->MaxVal-infoPtr->MinVal) + pixels/2)
-                     / pixels)) );
-    return (infoPtr->MinVal
-            + (UINT)(((int)pos * (infoPtr->MaxVal-infoPtr->MinVal) + pixels/2)
-                     / pixels));
+
+    if (!infoPtr->Page) pos *= infoPtr->MaxVal - infoPtr->MinVal;
+    else pos *= infoPtr->MaxVal - infoPtr->MinVal - infoPtr->Page + 1;
+    return infoPtr->MinVal + ((pos + pixels / 2) / pixels);
 }
 
 
@@ -237,14 +269,15 @@ static UINT SCROLL_GetThumbVal( SCROLLBAR_INFO *infoPtr, RECT16 *rect,
  *
  * Scroll-bar hit testing (don't confuse this with WM_NCHITTEST!).
  */
-static enum SCROLL_HITTEST SCROLL_HitTest( HWND hwnd, int nBar, POINT16 pt )
+static enum SCROLL_HITTEST SCROLL_HitTest( HWND32 hwnd, INT32 nBar,
+                                           POINT32 pt )
 {
-    WORD arrowSize, thumbPos;
-    RECT16 rect;
+    INT32 arrowSize, thumbSize, thumbPos;
+    RECT32 rect;
 
-    BOOL vertical = SCROLL_GetScrollBarRect( hwnd, nBar, &rect,
-                                             &arrowSize, &thumbPos );
-    if (!PtInRect16( &rect, pt )) return SCROLL_NOWHERE;
+    BOOL32 vertical = SCROLL_GetScrollBarRect( hwnd, nBar, &rect,
+                                           &arrowSize, &thumbSize, &thumbPos );
+    if (!PtInRect32( &rect, pt )) return SCROLL_NOWHERE;
 
     if (vertical)
     {
@@ -252,8 +285,8 @@ static enum SCROLL_HITTEST SCROLL_HitTest( HWND hwnd, int nBar, POINT16 pt )
         if (pt.y >= rect.bottom - arrowSize) return SCROLL_BOTTOM_ARROW;
         if (!thumbPos) return SCROLL_TOP_RECT;
         pt.y -= rect.top;
-        if (pt.y < (INT)thumbPos) return SCROLL_TOP_RECT;
-        if (pt.y > thumbPos+SYSMETRICS_CYHSCROLL) return SCROLL_BOTTOM_RECT;
+        if (pt.y < thumbPos) return SCROLL_TOP_RECT;
+        if (pt.y > thumbPos + thumbSize) return SCROLL_BOTTOM_RECT;
         return SCROLL_THUMB;
     }
     else  /* horizontal */
@@ -262,8 +295,8 @@ static enum SCROLL_HITTEST SCROLL_HitTest( HWND hwnd, int nBar, POINT16 pt )
         if (pt.x >= rect.right - arrowSize) return SCROLL_BOTTOM_ARROW;
         if (!thumbPos) return SCROLL_TOP_RECT;
         pt.x -= rect.left;
-        if (pt.x < (INT)thumbPos) return SCROLL_TOP_RECT;
-        if (pt.x > thumbPos+SYSMETRICS_CXVSCROLL) return SCROLL_BOTTOM_RECT;
+        if (pt.x < thumbPos) return SCROLL_TOP_RECT;
+        if (pt.x > thumbPos + thumbSize) return SCROLL_BOTTOM_RECT;
         return SCROLL_THUMB;
     }
 }
@@ -274,12 +307,12 @@ static enum SCROLL_HITTEST SCROLL_HitTest( HWND hwnd, int nBar, POINT16 pt )
  *
  * Draw the scroll bar arrows.
  */
-static void SCROLL_DrawArrows( HDC hdc, SCROLLBAR_INFO *infoPtr, RECT16 *rect,
-                               WORD arrowSize, BOOL vertical,
-                               BOOL top_pressed, BOOL bottom_pressed )
+static void SCROLL_DrawArrows( HDC32 hdc, SCROLLBAR_INFO *infoPtr,
+                               RECT32 *rect, INT32 arrowSize, BOOL32 vertical,
+                               BOOL32 top_pressed, BOOL32 bottom_pressed )
 {
-    HDC hdcMem = CreateCompatibleDC( hdc );
-    HBITMAP hbmpPrev = SelectObject( hdcMem, vertical ?
+    HDC32 hdcMem = CreateCompatibleDC( hdc );
+    HBITMAP32 hbmpPrev = SelectObject( hdcMem, vertical ?
                                     TOP_ARROW(infoPtr->flags, top_pressed)
                                     : LEFT_ARROW(infoPtr->flags, top_pressed));
     SetStretchBltMode( hdc, STRETCH_DELETESCANS );
@@ -315,28 +348,29 @@ static void SCROLL_DrawArrows( HDC hdc, SCROLLBAR_INFO *infoPtr, RECT16 *rect,
  *
  * Draw the moving thumb rectangle.
  */
-static void SCROLL_DrawMovingThumb( HDC hdc, RECT16 *rect, BOOL vertical,
-                                    WORD arrowSize, WORD thumbPos )
+static void SCROLL_DrawMovingThumb( HDC32 hdc, RECT32 *rect, BOOL32 vertical,
+                                    INT32 arrowSize, INT32 thumbSize )
 {
-    RECT16 r = *rect;
+    RECT32 r = *rect;
     if (vertical)
     {
-        r.top += thumbPos;
+        r.top += SCROLL_TrackingPos;
         if (r.top < rect->top + arrowSize) r.top = rect->top + arrowSize;
-        if (r.top + SYSMETRICS_CYHSCROLL >= rect->bottom - arrowSize)
-            r.top = rect->bottom - arrowSize - SYSMETRICS_CYHSCROLL - 1;
-        r.bottom = r.top + SYSMETRICS_CYHSCROLL + 1;
+        if (r.top + thumbSize >= rect->bottom - arrowSize)
+            r.top = rect->bottom - arrowSize - thumbSize - 1;
+        r.bottom = r.top + thumbSize + 1;
     }
     else
     {
-        r.left += thumbPos;
+        r.left += SCROLL_TrackingPos;
         if (r.left < rect->left + arrowSize) r.left = rect->left + arrowSize;
-        if (r.left + SYSMETRICS_CXVSCROLL >= rect->right - arrowSize)
-            r.left = rect->right - arrowSize - SYSMETRICS_CXVSCROLL - 1;
-        r.right = r.left + SYSMETRICS_CXVSCROLL + 1;
+        if (r.left + thumbSize >= rect->right - arrowSize)
+            r.left = rect->right - arrowSize - thumbSize - 1;
+        r.right = r.left + thumbSize + 1;
     }
-    InflateRect16( &r, -1, -1 );
-    DrawFocusRect16( hdc, &r );
+    InflateRect32( &r, -1, -1 );
+    DrawFocusRect32( hdc, &r );
+    SCROLL_MovingThumb = !SCROLL_MovingThumb;
 }
 
 
@@ -345,12 +379,13 @@ static void SCROLL_DrawMovingThumb( HDC hdc, RECT16 *rect, BOOL vertical,
  *
  * Draw the scroll bar interior (everything except the arrows).
  */
-static void SCROLL_DrawInterior( HWND hwnd, HDC hdc, int nBar, RECT16 *rect,
-                                 WORD arrowSize, WORD thumbPos, WORD flags,
-                                 BOOL vertical, BOOL top_selected,
-                                 BOOL bottom_selected )
+static void SCROLL_DrawInterior( HWND32 hwnd, HDC32 hdc, INT32 nBar, 
+                                 RECT32 *rect, INT32 arrowSize,
+                                 INT32 thumbSize, INT32 thumbPos,
+                                 UINT32 flags, BOOL32 vertical,
+                                 BOOL32 top_selected, BOOL32 bottom_selected )
 {
-    RECT16 r;
+    RECT32 r;
 
       /* Select the correct brush and pen */
 
@@ -364,8 +399,8 @@ static void SCROLL_DrawInterior( HWND hwnd, HDC hdc, int nBar, RECT16 *rect,
     {
         if (nBar == SB_CTL)  /* Only scrollbar controls send WM_CTLCOLOR */
         {
-            HBRUSH hbrush = SendMessage32A( GetParent32(hwnd),
-                                            WM_CTLCOLORSCROLLBAR, hdc, hwnd );
+            HBRUSH32 hbrush = SendMessage32A(GetParent32(hwnd),
+                                             WM_CTLCOLORSCROLLBAR, hdc, hwnd );
             SelectObject( hdc, hbrush );
         }
         else SelectObject( hdc, sysColorObjects.hbrushScrollbar );
@@ -409,11 +444,11 @@ static void SCROLL_DrawInterior( HWND hwnd, HDC hdc, int nBar, RECT16 *rect,
                 thumbPos - arrowSize,
                 top_selected ? 0x0f0000 : PATCOPY );
         r.top += thumbPos - arrowSize;
-        PatBlt( hdc, r.left + 1, r.top + SYSMETRICS_CYHSCROLL + 1,
+        PatBlt( hdc, r.left + 1, r.top + thumbSize + 1,
                 r.right - r.left - 2,
-                r.bottom - r.top - SYSMETRICS_CYHSCROLL - 2,
+                r.bottom - r.top - thumbSize - 2,
                 bottom_selected ? 0x0f0000 : PATCOPY );
-        r.bottom = r.top + SYSMETRICS_CYHSCROLL + 1;
+        r.bottom = r.top + thumbSize + 1;
     }
     else  /* horizontal */
     {
@@ -422,21 +457,26 @@ static void SCROLL_DrawInterior( HWND hwnd, HDC hdc, int nBar, RECT16 *rect,
                 r.bottom - r.top - 2,
                 top_selected ? 0x0f0000 : PATCOPY );
         r.left += thumbPos - arrowSize;
-        PatBlt( hdc, r.left + SYSMETRICS_CYHSCROLL + 1, r.top + 1,
-                r.right - r.left - SYSMETRICS_CYHSCROLL - 2,
+        PatBlt( hdc, r.left + thumbSize + 1, r.top + 1,
+                r.right - r.left - thumbSize - 2,
                 r.bottom - r.top - 2,
                 bottom_selected ? 0x0f0000 : PATCOPY );
-        r.right = r.left + SYSMETRICS_CXVSCROLL + 1;
+        r.right = r.left + thumbSize + 1;
     }
 
       /* Draw the thumb */
 
     SelectObject( hdc, sysColorObjects.hbrushBtnFace );
     Rectangle( hdc, r.left, r.top, r.right, r.bottom );
-    InflateRect16( &r, -1, -1 );
+    InflateRect32( &r, -1, -1 );
     GRAPH_DrawReliefRect( hdc, &r, 1, 2, FALSE );
-    if ((hwndTracking == hwnd) && (nBarTracking == nBar))
-        SCROLL_DrawMovingThumb( hdc, rect, vertical, arrowSize, uTrackingPos);
+    if (SCROLL_MovingThumb &&
+        (SCROLL_TrackingWin == hwnd) &&
+        (SCROLL_TrackingBar == nBar))
+    {
+        SCROLL_DrawMovingThumb( hdc, rect, vertical, arrowSize, thumbSize );
+        SCROLL_MovingThumb = TRUE;
+    }
 }
 
 
@@ -445,11 +485,11 @@ static void SCROLL_DrawInterior( HWND hwnd, HDC hdc, int nBar, RECT16 *rect,
  *
  * Redraw the whole scrollbar.
  */
-void SCROLL_DrawScrollBar( HWND hwnd, HDC hdc, int nBar )
+void SCROLL_DrawScrollBar( HWND32 hwnd, HDC32 hdc, INT32 nBar, BOOL32 arrows )
 {
-    WORD arrowSize, thumbPos;
-    RECT16 rect;
-    BOOL vertical;
+    INT32 arrowSize, thumbSize, thumbPos;
+    RECT32 rect;
+    BOOL32 vertical;
     WND *wndPtr = WIN_FindWndPtr( hwnd );
     SCROLLBAR_INFO *infoPtr = SCROLL_GetPtrScrollInfo( wndPtr, nBar );
 
@@ -458,14 +498,14 @@ void SCROLL_DrawScrollBar( HWND hwnd, HDC hdc, int nBar )
         ((nBar == SB_HORZ) && !(wndPtr->dwStyle & WS_HSCROLL))) return;
 
     vertical = SCROLL_GetScrollBarRect( hwnd, nBar, &rect,
-                                        &arrowSize, &thumbPos );
+                                        &arrowSize, &thumbSize, &thumbPos );
       /* Draw the arrows */
 
-    if (arrowSize) SCROLL_DrawArrows( hdc, infoPtr, &rect, arrowSize,
-                                      vertical, FALSE, FALSE );
+    if (arrows && arrowSize) SCROLL_DrawArrows( hdc, infoPtr, &rect, arrowSize,
+                                                vertical, FALSE, FALSE );
     
-    SCROLL_DrawInterior( hwnd, hdc, nBar, &rect, arrowSize, thumbPos,
-                         infoPtr->flags, vertical, FALSE, FALSE );
+    SCROLL_DrawInterior( hwnd, hdc, nBar, &rect, arrowSize, thumbSize,
+                         thumbPos, infoPtr->flags, vertical, FALSE, FALSE );
 }
 
 
@@ -475,26 +515,13 @@ void SCROLL_DrawScrollBar( HWND hwnd, HDC hdc, int nBar )
  * Repaint the scroll bar interior after a SetScrollRange() or
  * SetScrollPos() call.
  */
-static void SCROLL_RefreshScrollBar( HWND hwnd, int nBar )
+static void SCROLL_RefreshScrollBar( HWND32 hwnd, INT32 nBar, BOOL32 arrows )
 {
-    WORD arrowSize, thumbPos;
-    RECT16 rect;
-    BOOL vertical;
-    HDC hdc;
-    WND *wndPtr = WIN_FindWndPtr( hwnd );
-    SCROLLBAR_INFO *infoPtr = SCROLL_GetPtrScrollInfo( wndPtr, nBar );
-
-    if (!wndPtr || !infoPtr ||
-        ((nBar == SB_VERT) && !(wndPtr->dwStyle & WS_VSCROLL)) ||
-        ((nBar == SB_HORZ) && !(wndPtr->dwStyle & WS_HSCROLL))) return;
-
-    vertical = SCROLL_GetScrollBarRect( hwnd, nBar, &rect,
-                                        &arrowSize, &thumbPos );
-    hdc = GetDCEx( hwnd, 0, DCX_CACHE | ((nBar == SB_CTL) ? 0 : DCX_WINDOW) );
+    HDC32 hdc = GetDCEx32( hwnd, 0,
+                           DCX_CACHE | ((nBar == SB_CTL) ? 0 : DCX_WINDOW) );
     if (!hdc) return;
-    SCROLL_DrawInterior( hwnd, hdc, nBar, &rect, arrowSize, thumbPos,
-                         infoPtr->flags, vertical, FALSE, FALSE );
-    ReleaseDC( hwnd, hdc );
+    SCROLL_DrawScrollBar( hwnd, hdc, nBar, arrows );
+    ReleaseDC32( hwnd, hdc );
 }
 
 
@@ -503,10 +530,10 @@ static void SCROLL_RefreshScrollBar( HWND hwnd, int nBar )
  *
  * Handle a keyboard event (only for SB_CTL scrollbars).
  */
-static void SCROLL_HandleKbdEvent( HWND hwnd, WORD wParam )
+static void SCROLL_HandleKbdEvent( HWND32 hwnd, WPARAM32 wParam )
 {
     WND *wndPtr = WIN_FindWndPtr( hwnd );
-    WPARAM msg;
+    WPARAM32 msg;
     
     switch(wParam)
     {
@@ -532,33 +559,33 @@ static void SCROLL_HandleKbdEvent( HWND hwnd, WORD wParam )
  * 'pt' is the location of the mouse event in client (for SB_CTL) or
  * windows coordinates.
  */
-void SCROLL_HandleScrollEvent( HWND hwnd, int nBar, WORD msg, POINT16 pt )
+void SCROLL_HandleScrollEvent( HWND32 hwnd, INT32 nBar, UINT32 msg, POINT32 pt)
 {
       /* Previous mouse position for timer events */
-    static POINT16 prevPt;
+    static POINT32 prevPt;
       /* Hit test code of the last button-down event */
     static enum SCROLL_HITTEST trackHitTest;
       /* Thumb position when tracking started. */
-    static UINT trackThumbPos;
+    static UINT32 trackThumbPos;
       /* Position in the scroll-bar of the last button-down event. */
-    static int lastClickPos;
+    static INT32 lastClickPos;
       /* Position in the scroll-bar of the last mouse event. */
-    static int lastMousePos;
+    static INT32 lastMousePos;
 
     enum SCROLL_HITTEST hittest;
-    HWND hwndOwner, hwndCtl;
-    BOOL vertical;
-    WORD arrowSize, thumbPos;
-    RECT16 rect;
-    HDC hdc;
+    HWND32 hwndOwner, hwndCtl;
+    BOOL32 vertical;
+    INT32 arrowSize, thumbSize, thumbPos;
+    RECT32 rect;
+    HDC32 hdc;
 
     SCROLLBAR_INFO *infoPtr = SCROLL_GetScrollInfo( hwnd, nBar );
     if (!infoPtr) return;
     if ((trackHitTest == SCROLL_NOWHERE) && (msg != WM_LBUTTONDOWN)) return;
 
-    hdc = GetDCEx( hwnd, 0, DCX_CACHE | ((nBar == SB_CTL) ? 0 : DCX_WINDOW) );
+    hdc = GetDCEx32( hwnd, 0, DCX_CACHE | ((nBar == SB_CTL) ? 0 : DCX_WINDOW));
     vertical = SCROLL_GetScrollBarRect( hwnd, nBar, &rect,
-                                        &arrowSize, &thumbPos );
+                                        &arrowSize, &thumbSize, &thumbPos );
     hwndOwner = (nBar == SB_CTL) ? GetParent32(hwnd) : hwnd;
     hwndCtl   = (nBar == SB_CTL) ? hwnd : 0;
 
@@ -570,7 +597,7 @@ void SCROLL_HandleScrollEvent( HWND hwnd, int nBar, WORD msg, POINT16 pt )
           lastMousePos  = lastClickPos;
           trackThumbPos = thumbPos;
           prevPt = pt;
-          SetCapture( hwnd );
+          SetCapture32( hwnd );
           if (nBar == SB_CTL) SetFocus32( hwnd );
           break;
 
@@ -619,8 +646,8 @@ void SCROLL_HandleScrollEvent( HWND hwnd, int nBar, WORD msg, POINT16 pt )
         break;
 
     case SCROLL_TOP_RECT:
-        SCROLL_DrawInterior( hwnd, hdc, nBar, &rect, arrowSize, thumbPos,
-                             infoPtr->flags, vertical,
+        SCROLL_DrawInterior( hwnd, hdc, nBar, &rect, arrowSize, thumbSize,
+                             thumbPos, infoPtr->flags, vertical,
                              (hittest == trackHitTest), FALSE );
         if (hittest == trackHitTest)
         {
@@ -639,43 +666,46 @@ void SCROLL_HandleScrollEvent( HWND hwnd, int nBar, WORD msg, POINT16 pt )
     case SCROLL_THUMB:
         if (msg == WM_LBUTTONDOWN)
         {
-            SCROLL_DrawMovingThumb( hdc, &rect, vertical, arrowSize,
-                                 trackThumbPos + lastMousePos - lastClickPos );
-            hwndTracking = hwnd;
-            nBarTracking = nBar;
+            SCROLL_TrackingWin = hwnd;
+            SCROLL_TrackingBar = nBar;
+            SCROLL_TrackingPos = trackThumbPos + lastMousePos - lastClickPos;
+            SCROLL_DrawMovingThumb(hdc, &rect, vertical, arrowSize, thumbSize);
         }
         else if (msg == WM_LBUTTONUP)
         {
-            hwndTracking = 0;
-            SCROLL_DrawInterior( hwnd, hdc, nBar, &rect, arrowSize, thumbPos,
-                                 infoPtr->flags, vertical, FALSE, FALSE );
+            SCROLL_TrackingWin = 0;
+            SCROLL_MovingThumb = FALSE;
+            SCROLL_DrawInterior( hwnd, hdc, nBar, &rect, arrowSize, thumbSize,
+                                 thumbPos, infoPtr->flags, vertical,
+                                 FALSE, FALSE );
         }
         else  /* WM_MOUSEMOVE */
         {
-            UINT pos, val;
+            UINT32 pos;
 
-            if (!PtInRect16( &rect, pt )) pos = lastClickPos;
+            if (!PtInRect32( &rect, pt )) pos = lastClickPos;
             else pos = vertical ? (pt.y - rect.top) : (pt.x - rect.left);
             if (pos != lastMousePos)
             {
-                SCROLL_DrawMovingThumb( hdc, &rect, vertical, arrowSize,
-                                 trackThumbPos + lastMousePos - lastClickPos );
-                lastMousePos = pos;
-                val = SCROLL_GetThumbVal( infoPtr, &rect, vertical,
-                                 trackThumbPos + lastMousePos - lastClickPos );
-                /* Save tracking info */
-                uTrackingPos = trackThumbPos + pos - lastClickPos;
-                SendMessage32A( hwndOwner, vertical ? WM_VSCROLL : WM_HSCROLL,
-                                MAKEWPARAM( SB_THUMBTRACK, val ), hwndCtl );
                 SCROLL_DrawMovingThumb( hdc, &rect, vertical,
-                                        arrowSize, uTrackingPos );
+                                        arrowSize, thumbSize );
+                lastMousePos = pos;
+                SCROLL_TrackingPos = trackThumbPos + pos - lastClickPos;
+                SCROLL_TrackingVal = SCROLL_GetThumbVal( infoPtr, &rect,
+                                                         vertical,
+                                                         SCROLL_TrackingPos );
+                SendMessage32A( hwndOwner, vertical ? WM_VSCROLL : WM_HSCROLL,
+                                MAKEWPARAM( SB_THUMBTRACK, SCROLL_TrackingVal),
+                                hwndCtl );
+                SCROLL_DrawMovingThumb( hdc, &rect, vertical,
+                                        arrowSize, thumbSize );
             }
         }
         break;
         
     case SCROLL_BOTTOM_RECT:
-        SCROLL_DrawInterior( hwnd, hdc, nBar, &rect, arrowSize, thumbPos,
-                             infoPtr->flags, vertical,
+        SCROLL_DrawInterior( hwnd, hdc, nBar, &rect, arrowSize, thumbSize,
+                             thumbPos, infoPtr->flags, vertical,
                              FALSE, (hittest == trackHitTest) );
         if (hittest == trackHitTest)
         {
@@ -713,7 +743,7 @@ void SCROLL_HandleScrollEvent( HWND hwnd, int nBar, WORD msg, POINT16 pt )
     {
         if (trackHitTest == SCROLL_THUMB)
         {
-            UINT val = SCROLL_GetThumbVal( infoPtr, &rect, vertical,
+            UINT32 val = SCROLL_GetThumbVal( infoPtr, &rect, vertical,
                                  trackThumbPos + lastMousePos - lastClickPos );
             SendMessage32A( hwndOwner, vertical ? WM_VSCROLL : WM_HSCROLL,
                             MAKEWPARAM( SB_THUMBPOSITION, val ), hwndCtl );
@@ -724,20 +754,21 @@ void SCROLL_HandleScrollEvent( HWND hwnd, int nBar, WORD msg, POINT16 pt )
         trackHitTest = SCROLL_NOWHERE;  /* Terminate tracking */
     }
 
-    ReleaseDC( hwnd, hdc );
+    ReleaseDC32( hwnd, hdc );
 }
 
 
 /***********************************************************************
  *           ScrollBarWndProc
  */
-LONG ScrollBarWndProc( HWND hwnd, WORD message, WORD wParam, LONG lParam )
+LRESULT ScrollBarWndProc( HWND32 hwnd, UINT32 message, WPARAM32 wParam,
+                          LPARAM lParam )
 {
     switch(message)
     {
     case WM_CREATE:
         {
-	    CREATESTRUCT16 *lpCreat = (CREATESTRUCT16 *)PTR_SEG_TO_LIN(lParam);
+	    CREATESTRUCT32A *lpCreat = (CREATESTRUCT32A *)lParam;
             if (lpCreat->style & SBS_SIZEBOX)
             {
                 fprintf( stdnimp, "Unimplemented style SBS_SIZEBOX.\n" );
@@ -775,7 +806,11 @@ LONG ScrollBarWndProc( HWND hwnd, WORD message, WORD wParam, LONG lParam )
     case WM_LBUTTONUP:
     case WM_MOUSEMOVE:
     case WM_SYSTIMER:
-        SCROLL_HandleScrollEvent( hwnd, SB_CTL, message, MAKEPOINT16(lParam) );
+        {
+            POINT32 pt;
+            CONV_POINT16TO32( (POINT16 *)&lParam, &pt );
+            SCROLL_HandleScrollEvent( hwnd, SB_CTL, message, pt );
+        }
         break;
 
     case WM_KEYDOWN:
@@ -790,64 +825,265 @@ LONG ScrollBarWndProc( HWND hwnd, WORD message, WORD wParam, LONG lParam )
 
     case WM_PAINT:
         {
-            PAINTSTRUCT16 ps;
-            HDC16 hdc = BeginPaint16( hwnd, &ps );
-            SCROLL_DrawScrollBar( hwnd, hdc, SB_CTL );
-            EndPaint16( hwnd, &ps );
+            PAINTSTRUCT32 ps;
+            HDC32 hdc = BeginPaint32( hwnd, &ps );
+            SCROLL_DrawScrollBar( hwnd, hdc, SB_CTL, TRUE );
+            EndPaint32( hwnd, &ps );
         }
         break;
 
-    case SBM_SETSCROLLPOS:
-        return SetScrollPos( hwnd, SB_CTL, wParam, (BOOL)lParam );
+    case SBM_SETPOS16:
+    case SBM_SETPOS32:
+        return SetScrollPos32( hwnd, SB_CTL, wParam, (BOOL32)lParam );
 
-    case SBM_GETSCROLLPOS:
-        return GetScrollPos( hwnd, SB_CTL );
+    case SBM_GETPOS16:
+    case SBM_GETPOS32:
+        return GetScrollPos32( hwnd, SB_CTL );
 
-    case SBM_SETSCROLLRANGE:
-        SetScrollRange( hwnd, SB_CTL, LOWORD(lParam), HIWORD(lParam),
-                        wParam  /* FIXME: Is this correct? */ );
+    case SBM_SETRANGE16:
+        SetScrollRange32( hwnd, SB_CTL, LOWORD(lParam), HIWORD(lParam),
+                          wParam  /* FIXME: Is this correct? */ );
         return 0;
 
-    case SBM_ENABLE:
-        return EnableScrollBar( hwnd, SB_CTL, wParam ); /* FIXME: lParam? */
+    case SBM_SETRANGE32:
+        SetScrollRange32( hwnd, SB_CTL, wParam, lParam, FALSE );
+        return 0;  /* FIXME: return previous position */
 
-    case 0x403: /* SBM_REDRAW */
-        fprintf(stdnimp,"ScrollBarWndProc: undocumented message %04x, please report\n", message );
+    case SBM_GETRANGE16:
+        /* FIXME */
+        fprintf( stderr, "ScrollBar: don't know how to handle SBM_GETRANGE16 (wp=%04x,lp=%08lx)\n",
+                 wParam, lParam );
+        return 0;
+
+    case SBM_GETRANGE32:
+        GetScrollRange32( hwnd, SB_CTL, (LPINT32)wParam, (LPINT32)lParam );
+        return 0;
+
+    case SBM_ENABLE_ARROWS16:
+    case SBM_ENABLE_ARROWS32:
+        return EnableScrollBar32( hwnd, SB_CTL, wParam );
+
+    case SBM_SETRANGEREDRAW32:
+        SetScrollRange32( hwnd, SB_CTL, wParam, lParam, TRUE );
+        return 0;  /* FIXME: return previous position */
+        
+    case SBM_SETSCROLLINFO32:
+        return SetScrollInfo32( hwnd, SB_CTL, (SCROLLINFO *)lParam, wParam );
+
+    case SBM_GETSCROLLINFO32:
+        return GetScrollInfo32( hwnd, SB_CTL, (SCROLLINFO *)lParam );
+
+    case 0x00e5:
+    case 0x00e7:
+    case 0x00e8:
+    case 0x00eb:
+    case 0x00ec:
+    case 0x00ed:
+    case 0x00ee:
+    case 0x00ef:
+        fprintf(stderr, "ScrollBar: unknown Win32 msg %04x wp=%08x lp=%08lx\n",
+                message, wParam, lParam );
         break;
 
     default:
-        return DefWindowProc16( hwnd, message, wParam, lParam );
+        if (message >= WM_USER)
+            fprintf( stderr, "ScrollBar: unknown msg %04x wp=%04x lp=%08lx\n",
+                     message, wParam, lParam );
+        return DefWindowProc32A( hwnd, message, wParam, lParam );
     }
     return 0;
 }
 
 
 /*************************************************************************
- *           SetScrollPos   (USER.62)
+ *           SetScrollInfo16   (USER.475)
  */
-int SetScrollPos( HWND hwnd, int nBar, int nPos, BOOL bRedraw )
+INT16 SetScrollInfo16( HWND16 hwnd, INT16 nBar, const SCROLLINFO *info,
+                       BOOL16 bRedraw )
+{
+    return (INT16)SetScrollInfo32( hwnd, nBar, info, bRedraw );
+}
+
+
+/*************************************************************************
+ *           SetScrollInfo32   (USER32.500)
+ */
+INT32 SetScrollInfo32( HWND32 hwnd, INT32 nBar, const SCROLLINFO *info,
+                       BOOL32 bRedraw )
 {
     SCROLLBAR_INFO *infoPtr;
-    INT oldPos;
+    UINT32 new_flags;
+    BOOL32 repaint_arrows = FALSE;
+
+    if (!(infoPtr = SCROLL_GetScrollInfo(hwnd, nBar))) return 0;
+    if (info->fMask & ~(SIF_ALL | SIF_DISABLENOSCROLL)) return 0;
+    if ((info->cbSize != sizeof(*info)) &&
+        (info->cbSize != sizeof(*info)-sizeof(info->nTrackPos))) return 0;
+
+    dprintf_scroll( stddeb, "SetScrollInfo: hwnd=%04x bar=%d", hwnd, nBar );
+
+    /* Set the page size */
+
+    if (info->fMask & SIF_PAGE)
+    {
+        dprintf_scroll( stddeb, " page=%d", info->nPage );
+        infoPtr->Page = info->nPage;
+    }
+
+    /* Set the scroll pos */
+
+    if (info->fMask & SIF_POS)
+    {
+        dprintf_scroll( stddeb, " pos=%d", info->nPos );
+        infoPtr->CurVal = info->nPos;
+    }
+
+    /* Set the scroll range */
+
+    if (info->fMask & SIF_RANGE)
+    {
+        dprintf_scroll( stddeb, " min=%d max=%d", info->nMin, info->nMax );
+
+        /* Invalid range -> range is set to (0,0) */
+        if ((info->nMin > info->nMax) ||
+            ((UINT32)(info->nMax - info->nMin) >= 0x80000000))
+        {
+            infoPtr->MinVal = 0;
+            infoPtr->MaxVal = 0;
+        }
+        else
+        {
+            infoPtr->MinVal = info->nMin;
+            infoPtr->MaxVal = info->nMax;
+        }
+    }
+
+    /* Make sure the page size is valid */
+
+    if (infoPtr->Page < 0) infoPtr->Page = 0;
+    else if (infoPtr->Page > infoPtr->MaxVal - infoPtr->MinVal + 1 )
+        infoPtr->Page = infoPtr->MaxVal - infoPtr->MinVal + 1;
+
+    /* Make sure the pos is inside the range */
+
+    if (infoPtr->CurVal < infoPtr->MinVal)
+        infoPtr->CurVal = infoPtr->MinVal;
+    else if (infoPtr->CurVal > infoPtr->MaxVal - MAX( infoPtr->Page-1, 0 ))
+        infoPtr->CurVal = infoPtr->MaxVal - MAX( infoPtr->Page-1, 0 );
+
+    dprintf_scroll( stddeb, "\n   new values: page=%d pos=%d min=%d max=%d\n",
+                    infoPtr->Page, infoPtr->CurVal,
+                    infoPtr->MinVal, infoPtr->MaxVal );
+
+    /* Check if the scrollbar should be hidden or disabled */
+
+    new_flags = infoPtr->flags;
+    if (infoPtr->MinVal >= infoPtr->MaxVal - MAX( infoPtr->Page-1, 0 ))
+    {
+        /* Hide or disable scroll-bar */
+        if (info->fMask & SIF_DISABLENOSCROLL) new_flags = ESB_DISABLE_BOTH;
+        else if (nBar != SB_CTL)
+        {
+            ShowScrollBar32( hwnd, nBar, FALSE );
+            bRedraw = FALSE;  /* No need to repaint anything */
+        }
+    }
+    else  /* Show and enable scroll-bar */
+    {
+        new_flags = 0;
+        if (nBar != SB_CTL) ShowScrollBar32( hwnd, nBar, TRUE );
+    }
+
+    if (infoPtr->flags != new_flags)
+    {
+        infoPtr->flags = new_flags;
+        repaint_arrows = TRUE;
+    }
+
+    if (bRedraw || repaint_arrows)
+        SCROLL_RefreshScrollBar( hwnd, nBar, repaint_arrows );
+
+    /* Return current position */
+
+    return infoPtr->CurVal;
+}
+
+
+/*************************************************************************
+ *           GetScrollInfo16   (USER.476)
+ */
+BOOL16 GetScrollInfo16( HWND16 hwnd, INT16 nBar, LPSCROLLINFO info )
+{
+    return GetScrollInfo32( hwnd, nBar, info );
+}
+
+
+/*************************************************************************
+ *           GetScrollInfo32   (USER32.283)
+ */
+BOOL32 GetScrollInfo32( HWND32 hwnd, INT32 nBar, LPSCROLLINFO info )
+{
+    SCROLLBAR_INFO *infoPtr;
+
+    if (!(infoPtr = SCROLL_GetScrollInfo( hwnd, nBar ))) return FALSE;
+    if (info->fMask & ~(SIF_ALL | SIF_DISABLENOSCROLL)) return FALSE;
+    if ((info->cbSize != sizeof(*info)) &&
+        (info->cbSize != sizeof(*info)-sizeof(info->nTrackPos))) return FALSE;
+
+    if (info->fMask & SIF_PAGE) info->nPage = infoPtr->Page;
+    if (info->fMask & SIF_POS) info->nPos = infoPtr->CurVal;
+    if ((info->fMask & SIF_TRACKPOS) && (info->cbSize == sizeof(*info)))
+        info->nTrackPos = (SCROLL_TrackingWin==hwnd) ? SCROLL_TrackingVal : 0;
+    if (info->fMask & SIF_RANGE)
+    {
+	info->nMin = infoPtr->MinVal;
+	info->nMax = infoPtr->MaxVal;
+    }
+    return (info->fMask & SIF_ALL) != 0;
+}
+
+
+/*************************************************************************
+ *           SetScrollPos16   (USER.62)
+ */
+INT16 SetScrollPos16( HWND16 hwnd, INT16 nBar, INT16 nPos, BOOL16 bRedraw )
+{
+    return (INT16)SetScrollPos32( hwnd, nBar, nPos, bRedraw );
+}
+
+
+/*************************************************************************
+ *           SetScrollPos32   (USER32.501)
+ */
+INT32 SetScrollPos32( HWND32 hwnd, INT32 nBar, INT32 nPos, BOOL32 bRedraw )
+{
+    SCROLLINFO info;
+    SCROLLBAR_INFO *infoPtr;
+    INT32 oldPos;
 
     if (!(infoPtr = SCROLL_GetScrollInfo( hwnd, nBar ))) return 0;
-
-    dprintf_scroll( stddeb,"SetScrollPos min=%d max=%d pos=%d\n", 
-                    infoPtr->MinVal, infoPtr->MaxVal, nPos );
-
-    if (nPos < infoPtr->MinVal) nPos = infoPtr->MinVal;
-    else if (nPos > infoPtr->MaxVal) nPos = infoPtr->MaxVal;
-    oldPos = infoPtr->CurVal;
-    infoPtr->CurVal = nPos;
-    if (bRedraw) SCROLL_RefreshScrollBar( hwnd, nBar );
+    oldPos      = infoPtr->CurVal;
+    info.cbSize = sizeof(info);
+    info.nPos   = nPos;
+    info.fMask  = SIF_POS;
+    SetScrollInfo32( hwnd, nBar, &info, bRedraw );
     return oldPos;
 }
 
 
 /*************************************************************************
- *           GetScrollPos   (USER.63)
+ *           GetScrollPos16   (USER.63)
  */
-int GetScrollPos( HWND hwnd, int nBar )
+INT16 GetScrollPos16( HWND16 hwnd, INT16 nBar )
+{
+    return (INT16)GetScrollPos32( hwnd, nBar );
+}
+
+
+/*************************************************************************
+ *           GetScrollPos32   (USER32.284)
+ */
+INT32 GetScrollPos32( HWND32 hwnd, INT32 nBar )
 {
     SCROLLBAR_INFO *infoPtr;
 
@@ -857,29 +1093,33 @@ int GetScrollPos( HWND hwnd, int nBar )
 
 
 /*************************************************************************
- *           SetScrollRange   (USER.64)
+ *           SetScrollRange16   (USER.64)
  */
-void SetScrollRange(HWND hwnd, int nBar, int MinVal, int MaxVal, BOOL bRedraw)
+void SetScrollRange16( HWND16 hwnd, INT16 nBar, INT16 MinVal, INT16 MaxVal,
+                       BOOL16 bRedraw )
 {
-    SCROLLBAR_INFO *infoPtr;
-
-    if (!(infoPtr = SCROLL_GetScrollInfo( hwnd, nBar ))) return;
-
-    dprintf_scroll( stddeb,"SetScrollRange hwnd=%04x bar=%d min=%d max=%d\n",
-                    hwnd, nBar, MinVal, MaxVal );
-
-      /* Invalid range -> range is set to (0,0) */
-    if ((MinVal > MaxVal) || ((long)MaxVal - MinVal > 32767L))
-        MinVal = MaxVal = 0;
-    if (infoPtr->CurVal < MinVal) infoPtr->CurVal = MinVal;
-    else if (infoPtr->CurVal > MaxVal) infoPtr->CurVal = MaxVal;
-    infoPtr->MinVal = MinVal;
-    infoPtr->MaxVal = MaxVal;
-
-      /* Non-client scroll-bar is hidden if min==max */
-    if (nBar != SB_CTL) ShowScrollBar( hwnd, nBar, (MinVal != MaxVal) );
-    if (bRedraw) SCROLL_RefreshScrollBar( hwnd, nBar );
+    /* Invalid range -> range is set to (0,0) */
+    if ((INT32)MaxVal - (INT32)MinVal > 0x7fff) MinVal = MaxVal = 0;
+    SetScrollRange32( hwnd, nBar, MinVal, MaxVal, bRedraw );
 }
+
+
+/*************************************************************************
+ *           SetScrollRange32   (USER32.502)
+ */
+BOOL32 SetScrollRange32( HWND32 hwnd, INT32 nBar, INT32 MinVal, INT32 MaxVal,
+                         BOOL32 bRedraw )
+{
+    SCROLLINFO info;
+
+    info.cbSize = sizeof(info);
+    info.nMin   = MinVal;
+    info.nMax   = MaxVal;
+    info.fMask  = SIF_RANGE;
+    SetScrollInfo32( hwnd, nBar, &info, bRedraw );
+    return TRUE;
+}
+
 
 /*************************************************************************
  *	     SCROLL_SetNCSbState
@@ -914,44 +1154,74 @@ DWORD SCROLL_SetNCSbState(WND* wndPtr, int vMin, int vMax, int vPos,
   return wndPtr->dwStyle & (WS_VSCROLL | WS_HSCROLL);
 }
 
-/*************************************************************************
- *           GetScrollRange   (USER.65)
- */
-void GetScrollRange(HWND hwnd, int nBar, LPINT16 lpMin, LPINT16 lpMax)
-{
-    SCROLLBAR_INFO *infoPtr;
 
-    if (!(infoPtr = SCROLL_GetScrollInfo( hwnd, nBar ))) return;
-    if (lpMin) *lpMin = infoPtr->MinVal;
-    if (lpMax) *lpMax = infoPtr->MaxVal;
+/*************************************************************************
+ *           GetScrollRange16   (USER.65)
+ */
+BOOL16 GetScrollRange16( HWND16 hwnd, INT16 nBar, LPINT16 lpMin, LPINT16 lpMax)
+{
+    INT32 min, max;
+    BOOL16 ret = GetScrollRange32( hwnd, nBar, &min, &max );
+    if (lpMin) *lpMin = min;
+    if (lpMax) *lpMax = max;
+    return ret;
 }
 
 
 /*************************************************************************
- *           ShowScrollBar   (USER.267)
+ *           GetScrollRange32   (USER32.285)
  */
-void ShowScrollBar( HWND hwnd, WORD wBar, BOOL fShow )
+BOOL32 GetScrollRange32( HWND32 hwnd, INT32 nBar, LPINT32 lpMin, LPINT32 lpMax)
+{
+    SCROLLBAR_INFO *infoPtr;
+
+    if (!(infoPtr = SCROLL_GetScrollInfo( hwnd, nBar )))
+    {
+        if (lpMin) lpMin = 0;
+        if (lpMax) lpMax = 0;
+        return FALSE;
+    }
+    if (lpMin) *lpMin = infoPtr->MinVal;
+    if (lpMax) *lpMax = infoPtr->MaxVal;
+    return TRUE;
+}
+
+
+/*************************************************************************
+ *           ShowScrollBar16   (USER.267)
+ */
+void ShowScrollBar16( HWND16 hwnd, INT16 nBar, BOOL16 fShow )
+{
+    ShowScrollBar32( hwnd, nBar, fShow );
+}
+
+
+/*************************************************************************
+ *           ShowScrollBar32   (USER32.531)
+ */
+BOOL32 ShowScrollBar32( HWND32 hwnd, INT32 nBar, BOOL32 fShow )
 {
     WND *wndPtr = WIN_FindWndPtr( hwnd );
 
-    if (!wndPtr) return;
-    dprintf_scroll( stddeb, "ShowScrollBar: hwnd=%04x bar=%d on=%d\n", hwnd, wBar, fShow );
+    if (!wndPtr) return FALSE;
+    dprintf_scroll( stddeb, "ShowScrollBar: hwnd=%04x bar=%d on=%d\n",
+                    hwnd, nBar, fShow );
 
-    switch(wBar)
+    switch(nBar)
     {
     case SB_CTL:
         ShowWindow( hwnd, fShow ? SW_SHOW : SW_HIDE );
-        return;
+        return TRUE;
 
     case SB_HORZ:
         if (fShow)
         {
-            if (wndPtr->dwStyle & WS_HSCROLL) return;
+            if (wndPtr->dwStyle & WS_HSCROLL) return TRUE;
             wndPtr->dwStyle |= WS_HSCROLL;
         }
         else  /* hide it */
         {
-            if (!(wndPtr->dwStyle & WS_HSCROLL)) return;
+            if (!(wndPtr->dwStyle & WS_HSCROLL)) return TRUE;
             wndPtr->dwStyle &= ~WS_HSCROLL;
         }
         break;
@@ -959,12 +1229,12 @@ void ShowScrollBar( HWND hwnd, WORD wBar, BOOL fShow )
     case SB_VERT:
         if (fShow)
         {
-            if (wndPtr->dwStyle & WS_VSCROLL) return;
+            if (wndPtr->dwStyle & WS_VSCROLL) return TRUE;
             wndPtr->dwStyle |= WS_VSCROLL;
         }
         else  /* hide it */
         {
-            if (!(wndPtr->dwStyle & WS_VSCROLL)) return;
+            if (!(wndPtr->dwStyle & WS_VSCROLL)) return TRUE;
             wndPtr->dwStyle &= ~WS_VSCROLL;
         }
         break;
@@ -973,98 +1243,50 @@ void ShowScrollBar( HWND hwnd, WORD wBar, BOOL fShow )
         if (fShow)
         {
             if ((wndPtr->dwStyle & WS_HSCROLL)
-                && (wndPtr->dwStyle & WS_VSCROLL)) return;
+                && (wndPtr->dwStyle & WS_VSCROLL)) return TRUE;
             wndPtr->dwStyle |= WS_HSCROLL | WS_VSCROLL;
         }
         else  /* hide it */
         {
             if (!(wndPtr->dwStyle & WS_HSCROLL)
-                && !(wndPtr->dwStyle & WS_HSCROLL)) return;
+                && !(wndPtr->dwStyle & WS_HSCROLL)) return TRUE;
             wndPtr->dwStyle &= ~(WS_HSCROLL | WS_VSCROLL);
         }
         break;
 
     default:
-        return;  /* Nothing to do! */
+        return TRUE;  /* Nothing to do! */
     }
     SetWindowPos( hwnd, 0, 0, 0, 0, 0, SWP_NOSIZE | SWP_NOMOVE
                  | SWP_NOACTIVATE | SWP_NOZORDER | SWP_FRAMECHANGED );
-}
-
-
-/*************************************************************************
- *           EnableScrollBar   (USER.482)
- */
-BOOL EnableScrollBar( HWND hwnd, UINT nBar, UINT flags )
-{
-    SCROLLBAR_INFO *infoPtr;
-    HDC hdc;
-
-    if (!(infoPtr = SCROLL_GetScrollInfo( hwnd, nBar ))) return FALSE;
-    dprintf_scroll( stddeb, "EnableScrollBar: %04x %d %d\n", hwnd, nBar, flags );
-    flags &= ESB_DISABLE_BOTH;
-    if (infoPtr->flags == flags) return FALSE;
-    infoPtr->flags = flags;
-
-      /* Redraw the whole scroll bar */
-    hdc = GetDCEx( hwnd, 0, DCX_CACHE | ((nBar == SB_CTL) ? 0 : DCX_WINDOW) );
-    SCROLL_DrawScrollBar( hwnd, hdc, nBar );
-    ReleaseDC( hwnd, hdc );
     return TRUE;
 }
 
 
 /*************************************************************************
- *           SetScrollInfo32   (USER32.500)
+ *           EnableScrollBar16   (USER.482)
  */
-INT32 SetScrollInfo32( HWND32 hwnd, INT32 nBar, LPSCROLLINFO32 lpsi,
-                       BOOL32 bRedraw )
+BOOL16 EnableScrollBar16( HWND16 hwnd, INT16 nBar, UINT16 flags )
 {
-    SCROLLBAR_INFO *infoPtr;
-
-    if (!(infoPtr = SCROLL_GetScrollInfo(hwnd, nBar))) return 0;
-
-    if (lpsi->fMask & SIF_PAGE) {
-	/* fixme: The page size isn't used in the current
-	 * scrolling code - it's new for win32
-	 */
-	infoPtr->Page = lpsi->nPage;
-    }
-    if (lpsi->fMask & SIF_POS)
-        SetScrollPos(hwnd, nBar, lpsi->nPos, FALSE);
-    if (lpsi->fMask & SIF_RANGE)
-        SetScrollRange(hwnd, nBar, lpsi->nMin, lpsi->nMax, FALSE);
-    if (lpsi->fMask & SIF_DISABLENOSCROLL) {
-	/* fixme: Disable scroll bar if the new parameters make
-	 * the scroll bar unneeded
-	 */
-	dprintf_scroll(stddeb, "SetScrollInfo: SIF_DISABLENOSCROLL not supported yet\n");
-    }
-
-    if (bRedraw) SCROLL_RefreshScrollBar(hwnd, nBar);
-
-    /* return current thumb position */
-    return (infoPtr->CurVal);
+    return EnableScrollBar32( hwnd, nBar, flags );
 }
 
 
 /*************************************************************************
- *           GetScrollInfo32   (USER32.283)
+ *           EnableScrollBar32   (USER32.170)
  */
-BOOL32 GetScrollInfo32( HWND32 hwnd, INT32 nBar, LPSCROLLINFO32 lpsi )
+BOOL32 EnableScrollBar32( HWND32 hwnd, INT32 nBar, UINT32 flags )
 {
     SCROLLBAR_INFO *infoPtr;
 
     if (!(infoPtr = SCROLL_GetScrollInfo( hwnd, nBar ))) return FALSE;
+    dprintf_scroll( stddeb, "EnableScrollBar: %04x %d %d\n",
+                    hwnd, nBar, flags );
+    flags &= ESB_DISABLE_BOTH;
+    if (infoPtr->flags == flags) return FALSE;
+    infoPtr->flags = flags;
 
-    if (lpsi->fMask & SIF_PAGE) lpsi->nPage = infoPtr->Page;
-    if (lpsi->fMask & SIF_POS) lpsi->nPos = infoPtr->CurVal;
-    if (lpsi->fMask & SIF_TRACKPOS)
-        lpsi->nTrackPos = hwndTracking ? uTrackingPos : 0;
-    if (lpsi->fMask & SIF_RANGE)
-    {
-	lpsi->nMin = infoPtr->MinVal;
-	lpsi->nMax = infoPtr->MaxVal;
-    }
+    /* Redraw the whole scroll bar */
+    SCROLL_RefreshScrollBar( hwnd, nBar, TRUE );
     return TRUE;
 }

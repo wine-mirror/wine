@@ -15,10 +15,8 @@
 #include "msdos.h"
 #include "options.h"
 #include "xmalloc.h"
-#include "string32.h"
 #include "stddebug.h"
 #include "debug.h"
-#include "string32.h"
 
 #define MAX_PATH_ELEMENTS 20
 
@@ -200,18 +198,15 @@ UINT32 GetTempPath32A( UINT32 count, LPSTR path )
  */
 UINT32 GetTempPath32W( UINT32 count, LPWSTR path )
 {
-    LPSTR tmp = (char*)xmalloc(count);
-    UINT32 len = GetTempPath32A( count, tmp );
-    if (path) STRING32_AnsiToUni( path, tmp );
-    free(tmp);
-    return len;
+    if (path) lstrcpynAtoW( path, DIR_TempDosDir, count );
+    return strlen( DIR_TempDosDir );
 }
 
 
 /***********************************************************************
  *           DIR_GetTempUnixDir
  */
-UINT DIR_GetTempUnixDir( LPSTR path, UINT count )
+UINT32 DIR_GetTempUnixDir( LPSTR path, UINT32 count )
 {
     if (path) lstrcpyn32A( path, DIR_TempUnixDir, count );
     return strlen( DIR_TempUnixDir );
@@ -221,7 +216,7 @@ UINT DIR_GetTempUnixDir( LPSTR path, UINT count )
 /***********************************************************************
  *           DIR_GetWindowsUnixDir
  */
-UINT DIR_GetWindowsUnixDir( LPSTR path, UINT count )
+UINT32 DIR_GetWindowsUnixDir( LPSTR path, UINT32 count )
 {
     if (path) lstrcpyn32A( path, DIR_WindowsUnixDir, count );
     return strlen( DIR_WindowsUnixDir );
@@ -231,7 +226,7 @@ UINT DIR_GetWindowsUnixDir( LPSTR path, UINT count )
 /***********************************************************************
  *           DIR_GetSystemUnixDir
  */
-UINT DIR_GetSystemUnixDir( LPSTR path, UINT count )
+UINT32 DIR_GetSystemUnixDir( LPSTR path, UINT32 count )
 {
     if (path) lstrcpyn32A( path, DIR_SystemUnixDir, count );
     return strlen( DIR_SystemUnixDir );
@@ -241,7 +236,7 @@ UINT DIR_GetSystemUnixDir( LPSTR path, UINT count )
 /***********************************************************************
  *           DIR_GetDosPath
  */
-UINT DIR_GetDosPath( int element, LPSTR path, UINT count )
+UINT32 DIR_GetDosPath( INT32 element, LPSTR path, UINT32 count )
 {
     if ((element < 0) || (element >= DIR_PathElements)) return 0;
     if (path) lstrcpyn32A( path, DIR_DosPath[element], count );
@@ -272,12 +267,32 @@ UINT32 WIN16_GetTempDrive( BYTE ignored )
     return MAKELONG( GetTempDrive(ignored) | (':' << 8), 1 );
 }
 
+
 /***********************************************************************
- *           GetWindowsDirectory   (KERNEL.134)
+ *           GetWindowsDirectory16   (KERNEL.134)
  */
-UINT GetWindowsDirectory( LPSTR path, UINT count )
+UINT16 GetWindowsDirectory16( LPSTR path, UINT16 count )
+{
+    return (UINT16)GetWindowsDirectory32A( path, count );
+}
+
+
+/***********************************************************************
+ *           GetWindowsDirectory32A   (KERNEL32.311)
+ */
+UINT32 GetWindowsDirectory32A( LPSTR path, UINT32 count )
 {
     if (path) lstrcpyn32A( path, DIR_WindowsDosDir, count );
+    return strlen( DIR_WindowsDosDir );
+}
+
+
+/***********************************************************************
+ *           GetWindowsDirectory32W   (KERNEL32.312)
+ */
+UINT32 GetWindowsDirectory32W( LPWSTR path, UINT32 count )
+{
+    if (path) lstrcpynAtoW( path, DIR_WindowsDosDir, count );
     return strlen( DIR_WindowsDosDir );
 }
 
@@ -306,11 +321,6 @@ UINT32 GetSystemDirectory32A( LPSTR path, UINT32 count )
  */
 UINT32 GetSystemDirectory32W( LPWSTR path, UINT32 count )
 {
-    if (path)
-    {
-        LPWSTR tmp = STRING32_DupAnsiToUni( DIR_SystemDosDir );
-        lstrcpyn32W( path, tmp, count );
-	free (tmp);
-    }
+    if (path) lstrcpynAtoW( path, DIR_SystemDosDir, count );
     return strlen( DIR_SystemDosDir );
 }

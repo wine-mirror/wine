@@ -262,12 +262,34 @@ HANDLE32 LoadImage32A(
 }
 
 /**********************************************************************
+ *	    CopyImage32    (USER32.60)
+ *
+ * FIXME: implementation still lacks nearly all features, see LR_*
+ * defines in windows.h
+ */
+HANDLE32 CopyImage32( HANDLE32 hnd, UINT32 type, INT32 desiredx,
+                      INT32 desiredy, UINT32 flags )
+{
+    switch (type)
+    {
+	case IMAGE_BITMAP:
+		return hnd;	/* FIXME ... need to copy here */
+	case IMAGE_ICON:
+		return CopyIcon32(hnd);
+	case IMAGE_CURSOR:
+		return CopyCursor32(hnd);
+    }
+    return 0;
+}
+
+
+/**********************************************************************
  *	    LoadBitmap16    (USER.175)
  */
 HBITMAP16 LoadBitmap16( HINSTANCE16 instance, SEGPTR name )
 {
     HBITMAP16 hbitmap = 0;
-    HDC hdc;
+    HDC32 hdc;
     HRSRC16 hRsrc;
     HGLOBAL16 handle;
     BITMAPINFO *info;
@@ -292,12 +314,12 @@ HBITMAP16 LoadBitmap16( HINSTANCE16 instance, SEGPTR name )
     if (!(handle = LoadResource16( instance, hRsrc ))) return 0;
 
     info = (BITMAPINFO *)LockResource16( handle );
-    if ((hdc = GetDC(0)) != 0)
+    if ((hdc = GetDC32(0)) != 0)
     {
         char *bits = (char *)info + DIB_BitmapInfoSize( info, DIB_RGB_COLORS );
         hbitmap = CreateDIBitmap( hdc, &info->bmiHeader, CBM_INIT,
                                   bits, info, DIB_RGB_COLORS );
-        ReleaseDC( 0, hdc );
+        ReleaseDC32( 0, hdc );
     }
     FreeResource16( handle );
     return hbitmap;
@@ -309,7 +331,7 @@ HBITMAP16 LoadBitmap16( HINSTANCE16 instance, SEGPTR name )
 HBITMAP32 LoadBitmap32W( HINSTANCE32 instance, LPCWSTR name )
 {
     HBITMAP32 hbitmap = 0;
-    HDC hdc;
+    HDC32 hdc;
     HRSRC32 hRsrc;
     HGLOBAL32 handle;
     BITMAPINFO *info;
@@ -325,12 +347,12 @@ HBITMAP32 LoadBitmap32W( HINSTANCE32 instance, LPCWSTR name )
     if (!(handle = LoadResource32( instance, hRsrc ))) return 0;
 
     info = (BITMAPINFO *)LockResource32( handle );
-    if ((hdc = GetDC(0)) != 0)
+    if ((hdc = GetDC32(0)) != 0)
     {
         char *bits = (char *)info + DIB_BitmapInfoSize( info, DIB_RGB_COLORS );
         hbitmap = CreateDIBitmap( hdc, &info->bmiHeader, CBM_INIT,
                                   bits, info, DIB_RGB_COLORS );
-        ReleaseDC( 0, hdc );
+        ReleaseDC32( 0, hdc );
     }
     return hbitmap;
 }

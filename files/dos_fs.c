@@ -777,3 +777,15 @@ DWORD GetShortPathName32W( LPCWSTR longpath, LPWSTR shortpath, DWORD shortlen )
     lstrcpynAtoW( shortpath, dostruename, shortlen );
     return strlen(dostruename);
 }
+
+/***********************************************************************
+ *           GetFullPathNameA   (KERNEL32.272)
+ */
+DWORD GetFullPathName32A( LPCSTR fn, DWORD buflen, LPSTR buf, LPSTR *lastpart) {
+	dprintf_file(stddeb,"GetFullPathNameA(%s)\n",fn);
+	/* FIXME */
+	lstrcpyn32A(buf,fn,buflen);
+	if (lastpart)
+		*lastpart=strrchr(buf,'\\');
+	return strlen(fn);
+}

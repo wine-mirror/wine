@@ -22,17 +22,18 @@
 #include "windows.h"
 #include "gdi.h"
 #include "heap.h"
+#include "queue.h"
 #include "win.h"
 #include "class.h"
 #include "clipboard.h"
 #include "debugger.h"
-#include "hook.h"
 #include "message.h"
 #include "module.h"
 #include "options.h"
 #include "queue.h"
 #include "winpos.h"
 #include "registers.h"
+#include "xmalloc.h"
 #include "stddebug.h"
 #include "debug.h"
 #include "dde_proc.h"
@@ -52,8 +53,8 @@ BYTE AsyncKeyStateTable[256];
        WPARAM   lastEventChar = 0; /* this will have to be changed once
 				    * ToAscii starts working */
 
-static HWND 	captureWnd = 0;
-static BOOL	InputEnabled = TRUE;
+static HWND32 captureWnd = 0;
+static BOOL32 InputEnabled = TRUE;
 
 /* Keyboard translation tables */
 static const int special_key[] =
@@ -174,17 +175,17 @@ void EVENT_ProcessEvent( XEvent *event )
     {
     case KeyPress:
     case KeyRelease:
-        if (!HOOK_GetHook(WH_JOURNALPLAYBACK, 0) )
+        if (InputEnabled)
             EVENT_key( (XKeyEvent*)event );
 	break;
 	
     case ButtonPress:
-        if (!HOOK_GetHook(WH_JOURNALPLAYBACK, 0) )
+        if (InputEnabled)
             EVENT_ButtonPress( (XButtonEvent*)event );
 	break;
 
     case ButtonRelease:
-        if (!HOOK_GetHook(WH_JOURNALPLAYBACK, 0) )
+        if (InputEnabled)
             EVENT_ButtonRelease( (XButtonEvent*)event );
 	break;
 
@@ -197,7 +198,7 @@ void EVENT_ProcessEvent( XEvent *event )
 	   problems if the event order is important. I'm not yet seen
 	   of any problems. Jon 7/6/96.
 	 */
-	if (!HOOK_GetHook(WH_JOURNALPLAYBACK, 0) )
+        if (InputEnabled)
 	{
             while (XCheckTypedWindowEvent(display,((XAnyEvent *)event)->window,
                                           MotionNotify, event));    
@@ -240,6 +241,7 @@ void EVENT_ProcessEvent( XEvent *event )
     case ClientMessage:
 	EVENT_ClientMessage( pWnd, (XClientMessageEvent *) event );
 	break;
+
 /*  case EnterNotify:
  *       EVENT_EnterNotify( pWnd, (XCrossingEvent *) event );
  *       break;
@@ -287,7 +289,7 @@ void EVENT_RegisterWindow( WND *pWnd )
  * Return TRUE if an event is pending, FALSE on timeout or error
  * (for instance lost connection with the server).
  */
-BOOL32 EVENT_WaitXEvent( BOOL32 sleep )
+BOOL32 EVENT_WaitXEvent( BOOL32 sleep, BOOL32 peek )
 {
     fd_set read_set;
     struct timeval timeout;
@@ -335,6 +337,7 @@ BOOL32 EVENT_WaitXEvent( BOOL32 sleep )
     }
 
     /* Process the event (and possibly others that occurred in the meantime) */
+
     do
     {
 
@@ -346,8 +349,39 @@ BOOL32 EVENT_WaitXEvent( BOOL32 sleep )
         }
 #endif  /* CONFIG_IPC */
 
-        XNextEvent( display, &event );
-        EVENT_ProcessEvent( &event );
+	XNextEvent( display, &event );
+
+        if( peek )
+        {
+	  WND*		pWnd;
+	  MESSAGEQUEUE* pQ;
+  
+          if( XFindContext( display, ((XAnyEvent *)&event)->window, winContext, (char **)&pWnd) 
+	      || event.type == NoExpose )  
+              continue;
+
+	  /* check for the "safe" hardware events */
+
+	  if( event.type == MotionNotify ||
+	      event.type == ButtonPress || event.type == ButtonRelease ||
+	      event.type == KeyPress || event.type == KeyRelease ||
+	      event.type == SelectionRequest || event.type == SelectionClear )
+	  {
+	       EVENT_ProcessEvent( &event );
+               continue;
+	  }
+
+	  if( pWnd )
+            if( (pQ = (MESSAGEQUEUE*)GlobalLock16(pWnd->hmemTaskQ)) )
+            {
+              pQ->flags |= QUEUE_FLAG_XEVENT;
+              PostEvent(pQ->hTask);
+	      XPutBackEvent(display, &event);
+              break;
+	    }
+        }
+        else
+          EVENT_ProcessEvent( &event );
     }
     while (XPending( display ));
     return TRUE;
@@ -684,7 +718,7 @@ static void EVENT_ConfigureNotify( HWND hwnd, XConfigureEvent *event )
      * window structure is created. WIN_GetDesktop() check is a hack.
      */
 
-    if ( !WIN_GetDesktop() || hwnd == GetDesktopWindow())
+    if ( !WIN_GetDesktop() || hwnd == GetDesktopWindow32())
     {
         desktopX = event->x;
 	desktopY = event->y;
@@ -694,7 +728,7 @@ static void EVENT_ConfigureNotify( HWND hwnd, XConfigureEvent *event )
         WND *wndPtr;
 	WINDOWPOS16 *winpos;
 	RECT16 newWindowRect, newClientRect;
-        HRGN hrgnOldPos, hrgnNewPos;
+	HRGN hrgnOldPos, hrgnNewPos;
 
 	if (!(wndPtr = WIN_FindWndPtr( hwnd )) ||
 	    !(wndPtr->flags & WIN_MANAGED) )
@@ -702,6 +736,9 @@ static void EVENT_ConfigureNotify( HWND hwnd, XConfigureEvent *event )
 	
         if (!(winpos = SEGPTR_NEW(WINDOWPOS16))) return;
 
+/*	XTranslateCoordinates(display, event->window, rootWindow,
+	    event->x, event->y, &event->x, &event->y, &child);
+            */
 
 	/* Fill WINDOWPOS struct */
 	winpos->flags = SWP_NOACTIVATE | SWP_NOZORDER;
@@ -764,24 +801,45 @@ static void EVENT_SelectionRequest( WND *pWnd, XSelectionRequestEvent *event )
     if(event->target == XA_STRING)
     {
 	HANDLE hText;
-	LPSTR text;
+	LPSTR  text;
+	int    size,i,j;
 
         rprop = event->property;
 
 	if(rprop == None) rprop = event->target;
 
         if(event->selection!=XA_PRIMARY) rprop = None;
-        else if(!CLIPBOARD_IsPresent(CF_TEXT)) rprop = None;
-	else{
-            /* Don't worry if we can't open */
-	    BOOL couldOpen=OpenClipboard( pWnd->hwndSelf );
-	    hText=GetClipboardData(CF_TEXT);
-	    text=GlobalLock16(hText);
-	    XChangeProperty(display,request,rprop,XA_STRING,
-		8,PropModeReplace,text,strlen(text));
-	    GlobalUnlock16(hText);
+        else if(!CLIPBOARD_IsPresent(CF_OEMTEXT)) rprop = None;
+	else
+	{
+            /* open to make sure that clipboard is available */
+
+	    BOOL 	couldOpen = OpenClipboard( pWnd->hwndSelf );
+	    char*	lpstr = 0;
+
+	    hText = GetClipboardData(CF_TEXT);
+	    text = GlobalLock16(hText);
+	    size = GlobalSize16(hText);
+
+	    /* remove carriage returns */
+
+	    lpstr = (char*)xmalloc(size--);
+	    for(i=0,j=0; i < size; i++ )
+	    {
+	       if( text[i] == '\r' && text[i+1] == '\n' ) continue;
+	       lpstr[j++] = text[i];
+	       if( text[i] == '\0' ) break;
+	    }
+	    lpstr[j]='\0';
+
+	    XChangeProperty(display, request, rprop, 
+			    XA_STRING, 8, PropModeReplace, 
+			    lpstr, j);
+	    free(lpstr);
+
 	    /* close only if we opened before */
-	    if(couldOpen)CloseClipboard();
+
+	    if(couldOpen) CloseClipboard();
 	}
     }
 
@@ -805,8 +863,11 @@ static void EVENT_SelectionRequest( WND *pWnd, XSelectionRequestEvent *event )
 static void EVENT_SelectionNotify( XSelectionEvent *event )
 {
     if (event->selection != XA_PRIMARY) return;
+
     if (event->target != XA_STRING) CLIPBOARD_ReadSelection( 0, None );
-    CLIPBOARD_ReadSelection( event->requestor, event->property );
+    else CLIPBOARD_ReadSelection( event->requestor, event->property );
+
+    dprintf_clipboard(stddeb,"\tSelectionNotify done!\n");
 }
 
 
@@ -816,7 +877,7 @@ static void EVENT_SelectionNotify( XSelectionEvent *event )
 static void EVENT_SelectionClear( WND *pWnd, XSelectionClearEvent *event )
 {
     if (event->selection != XA_PRIMARY) return;
-    CLIPBOARD_ReleaseSelection( pWnd->hwndSelf ); 
+    CLIPBOARD_ReleaseSelection( event->window, pWnd->hwndSelf ); 
 }
 
 
@@ -857,6 +918,8 @@ static void EVENT_ClientMessage( WND *pWnd, XClientMessageEvent *event )
   }
  */ 
 
+extern void FOCUS_SetXFocus( HWND32 );
+
 /**********************************************************************
  *		EVENT_MapNotify
  */
@@ -865,18 +928,28 @@ void EVENT_MapNotify( HWND hWnd, XMapEvent *event )
     HWND32 hwndFocus = GetFocus32();
 
     if (hwndFocus && IsChild( hWnd, hwndFocus ))
-      FOCUS_SetXFocus( hwndFocus );
+      FOCUS_SetXFocus( (HWND32)hwndFocus );
 
     return;
 }
 
+
 /**********************************************************************
- *		SetCapture 	(USER.18)
+ *		SetCapture16   (USER.18)
  */
-HWND SetCapture( HWND hwnd )
+HWND16 SetCapture16( HWND16 hwnd )
+{
+    return (HWND16)SetCapture32( hwnd );
+}
+
+
+/**********************************************************************
+ *		SetCapture32   (USER32.463)
+ */
+HWND32 SetCapture32( HWND32 hwnd )
 {
     Window win;
-    HWND old_capture_wnd = captureWnd;
+    HWND32 old_capture_wnd = captureWnd;
 
     if (!hwnd)
     {
@@ -898,9 +971,9 @@ HWND SetCapture( HWND hwnd )
 
 
 /**********************************************************************
- *		ReleaseCapture	(USER.19)
+ *		ReleaseCapture   (USER.19) (USER32.438)
  */
-void ReleaseCapture()
+void ReleaseCapture(void)
 {
     if (captureWnd == 0) return;
     XUngrabPointer( display, CurrentTime );
@@ -908,10 +981,20 @@ void ReleaseCapture()
     dprintf_win(stddeb, "ReleaseCapture\n");
 }
 
+
 /**********************************************************************
- *		GetCapture 	(USER.236)
+ *		GetCapture16   (USER.236)
  */
-HWND GetCapture()
+HWND16 GetCapture16(void)
+{
+    return (HWND16)captureWnd;
+}
+
+
+/**********************************************************************
+ *		GetCapture32   (USER32.207)
+ */
+HWND32 GetCapture32(void)
 {
     return captureWnd;
 }
@@ -971,13 +1054,13 @@ void Mouse_Event( SIGCONTEXT *context )
 
 
 /**********************************************************************
- *			EnableHardwareInput 		[USER.331]
+ *			EnableHardwareInput   (USER.331)
  */
-BOOL EnableHardwareInput(BOOL bEnable)
+BOOL16 EnableHardwareInput(BOOL16 bEnable)
 {
-  BOOL bOldState = InputEnabled;
-  dprintf_event(stdnimp,"EMPTY STUB !!! EnableHardwareInput(%d);\n", bEnable);
+  BOOL16 bOldState = InputEnabled;
+  dprintf_event(stdnimp,"EnableHardwareInput(%d);\n", bEnable);
   InputEnabled = bEnable;
-  return (bOldState && !bEnable);
+  return bOldState;
 }
 

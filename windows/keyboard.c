@@ -64,7 +64,7 @@ void SetKeyboardState(BYTE *lpKeyState)
  *            GetAsyncKeyState        (USER.249)
  *
  *	Determine if a key is or was pressed.  retval has high-order 
- * byte set to 1 if currently pressed, low-order byte 1 if key has
+ * bit set to 1 if currently pressed, low-order bit set to 1 if key has
  * been pressed.
  *
  *	This uses the variable AsyncMouseButtonsStates and
@@ -92,7 +92,7 @@ int GetAsyncKeyState(int nKey)
 	break;
      default:
 	retval = AsyncKeyStateTable[nKey] | 
-	(KeyStateTable[nKey] << 8);
+	(KeyStateTable[nKey] ? 0x8000 : 0);
 	break;
     }
 
