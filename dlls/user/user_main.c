@@ -7,6 +7,7 @@
 #include "winuser.h"
 #include "winreg.h"
 #include "wine/winbase16.h"
+#include "wine/winuser16.h"
 
 #include "dce.h"
 #include "dialog.h"
@@ -94,6 +95,27 @@ static BOOL load_driver(void)
 
 
 /***********************************************************************
+ *           palette_init
+ *
+ * Patch the function pointers in GDI for SelectPalette and RealizePalette
+ */
+static void palette_init(void)
+{
+    void **ptr;
+    HMODULE module = GetModuleHandleA( "gdi32" );
+    if (!module)
+    {
+        ERR( "cannot get GDI32 handle\n" );
+        return;
+    }
+    if ((ptr = (void**)GetProcAddress( module, "pfnSelectPalette" ))) *ptr = SelectPalette16;
+    else ERR( "cannot find pfnSelectPalette in GDI32\n" );
+    if ((ptr = (void**)GetProcAddress( module, "pfnRealizePalette" ))) *ptr = UserRealizePalette;
+    else ERR( "cannot find pfnRealizePalette in GDI32\n" );
+}
+
+
+/***********************************************************************
  *           USER initialisation routine
  */
 BOOL WINAPI USER_Init(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
@@ -119,6 +141,9 @@ BOOL WINAPI USER_Init(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
     /* Initialize system colors and metrics*/
     SYSMETRICS_Init();
     SYSCOLOR_Init();
+
+    /* Setup palette function pointers */
+    palette_init();
 
     /* Create the DCEs */
     DCE_Init();

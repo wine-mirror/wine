@@ -23,10 +23,12 @@
 #include "callback.h"
 #include "winerror.h"
 
-DEFAULT_DEBUG_CHANNEL(palette)
+DEFAULT_DEBUG_CHANNEL(palette);
 
 PALETTE_DRIVER *PALETTE_Driver = NULL;
 
+/* Pointers to USER implementation of SelectPalette/RealizePalette */
+/* they will be patched by USER on startup */
 FARPROC pfnSelectPalette = NULL;
 FARPROC pfnRealizePalette = NULL;
 
@@ -641,7 +643,12 @@ HPALETTE16 WINAPI GDISelectPalette16( HDC16 hdc, HPALETTE16 hpal, WORD wBkg)
     DC *dc;
 
     TRACE("%04x %04x\n", hdc, hpal );
-    
+
+    if (GetObjectType(hpal) != PALETTE_MAGIC)
+    {
+      WARN("invalid selected palette %04x\n",hpal);
+      return 0;
+    }
     if (!(dc = DC_GetDCPtr( hdc ))) return 0;
     prev = dc->w.hPalette;
     dc->w.hPalette = hpal;
@@ -752,19 +759,7 @@ HPALETTE WINAPI SelectPalette(
     HPALETTE hPal,         /* [in] Handle of logical color palette */
     BOOL bForceBackground) /* [in] Foreground/background mode */
 {
-    WORD wBkgPalette = 1;
-
-    if (!bForceBackground && (hPal != STOCK_DEFAULT_PALETTE))
-    {
-	HWND hwnd = Callout.WindowFromDC( hDC );
-        if (hwnd)
-        {
-            HWND hForeground = Callout.GetForegroundWindow();
-            /* set primary palette if it's related to current active */
-            if (hForeground == hwnd || Callout.IsChild(hForeground,hwnd)) wBkgPalette = 0;
-        }
-    }
-    return GDISelectPalette16( hDC, hPal, wBkgPalette);
+    return pfnSelectPalette( hDC, hPal, bForceBackground );
 }
 
 
@@ -778,28 +773,7 @@ HPALETTE WINAPI SelectPalette(
 UINT WINAPI RealizePalette(
     HDC hDC) /* [in] Handle of device context */
 {
-    DC *dc;
-    UINT realized;
-
-    if (!(dc = (DC *) GDI_GetObjPtr( hDC, DC_MAGIC ))) return 0;
-    
-    realized = GDIRealizePalette16( hDC );
-
-    /* do not send anything if no colors were changed */
-
-    if( IsDCCurrentPalette16( hDC ) && realized &&
-	dc->w.devCaps->sizePalette )
-    {
-	/* Send palette change notification */
-
-	HWND hWnd;
-	GDI_ReleaseObj( hDC );
- 	if( (hWnd = Callout.WindowFromDC( hDC )) )
-            Callout.SendMessageA( HWND_BROADCAST, WM_PALETTECHANGED, hWnd, 0L);
-    }
-    else GDI_ReleaseObj( hDC );
-
-    return realized;
+    return pfnRealizePalette( hDC );
 }
 
 

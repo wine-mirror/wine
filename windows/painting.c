@@ -1681,7 +1681,19 @@ BOOL16 WINAPI DrawState16(HDC16 hdc, HBRUSH16 hbr,
 HPALETTE16 WINAPI SelectPalette16( HDC16 hDC, HPALETTE16 hPal,
                                    BOOL16 bForceBackground )
 {
-    return SelectPalette( hDC, hPal, bForceBackground );
+    WORD wBkgPalette = 1;
+
+    if (!bForceBackground && (hPal != STOCK_DEFAULT_PALETTE))
+    {
+        HWND hwnd = WindowFromDC( hDC );
+        if (hwnd)
+        {
+            HWND hForeground = GetForegroundWindow();
+            /* set primary palette if it's related to current active */
+            if (hForeground == hwnd || IsChild(hForeground,hwnd)) wBkgPalette = 0;
+        }
+    }
+    return GDISelectPalette16( hDC, hPal, wBkgPalette);
 }
 
 
@@ -1690,5 +1702,23 @@ HPALETTE16 WINAPI SelectPalette16( HDC16 hDC, HPALETTE16 hPal,
  */
 UINT16 WINAPI RealizePalette16( HDC16 hDC )
 {
-    return RealizePalette( hDC );
+    UINT16 realized = GDIRealizePalette16( hDC );
+
+    /* do not send anything if no colors were changed */
+    if (realized && IsDCCurrentPalette16( hDC ))
+    {
+        /* send palette change notification */
+        HWND hWnd = WindowFromDC( hDC );
+        if (hWnd) SendMessageA( HWND_BROADCAST, WM_PALETTECHANGED, hWnd, 0L);
+    }
+    return realized;
+}
+
+
+/***********************************************************************
+ *           UserRealizePalette    (USER32.@)
+ */
+UINT WINAPI UserRealizePalette( HDC hDC )
+{
+    return RealizePalette16( hDC );
 }

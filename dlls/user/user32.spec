@@ -574,7 +574,7 @@ import	kernel32.dll
 @ stub UpdatePerUserSystemParameters
 @ stdcall UpdateWindow(long) UpdateWindow
 @ stub UserClientDllInitialize
-@ stub UserRealizePalette
+@ stdcall UserRealizePalette(long) UserRealizePalette
 @ stub UserRegisterWowHandlers
 @ stdcall ValidateRect(long ptr) ValidateRect
 @ stdcall ValidateRgn(long long) ValidateRgn
