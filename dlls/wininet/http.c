@@ -670,6 +670,7 @@ HINTERNET WINAPI HTTP_HttpOpenRequestW(LPWININETHTTPSESSIONW lpwhs,
     HINTERNET handle = NULL;
     static const WCHAR szUrlForm[] = {'h','t','t','p',':','/','/','%','s',0};
     DWORD len;
+    INTERNET_ASYNC_RESULT iar;
 
     TRACE("--> \n");
 
@@ -688,6 +689,7 @@ HINTERNET WINAPI HTTP_HttpOpenRequestW(LPWININETHTTPSESSIONW lpwhs,
     lpwhr->hdr.dwContext = dwContext;
     lpwhr->hdr.dwRefCount = 1;
     lpwhr->hdr.destroy = HTTP_CloseHTTPRequestHandle;
+    lpwhr->hdr.lpfnStatusCB = lpwhs->hdr.lpfnStatusCB;
 
     handle = WININET_AllocHandle( &lpwhr->hdr );
     if (NULL == handle)
@@ -791,18 +793,12 @@ HINTERNET WINAPI HTTP_HttpOpenRequestW(LPWININETHTTPSESSIONW lpwhs,
     HeapFree(GetProcessHeap(), 0, lpszUrl);
 
 
+    iar.dwResult = (DWORD_PTR)handle;
+    iar.dwError = ERROR_SUCCESS;
 
-    if (hIC->lpfnStatusCB)
-    {
-        INTERNET_ASYNC_RESULT iar;
-
-        iar.dwResult = (DWORD)handle;
-        iar.dwError = ERROR_SUCCESS;
-
-        SendAsyncCallback(hIC, &lpwhs->hdr, dwContext,
-                      INTERNET_STATUS_HANDLE_CREATED, &iar,
-                      sizeof(INTERNET_ASYNC_RESULT));
-    }
+    SendAsyncCallback(&lpwhs->hdr, dwContext,
+                    INTERNET_STATUS_HANDLE_CREATED, &iar,
+                    sizeof(INTERNET_ASYNC_RESULT));
 
     /*
      * A STATUS_REQUEST_COMPLETE is NOT sent here as per my tests on windows
@@ -811,7 +807,7 @@ HINTERNET WINAPI HTTP_HttpOpenRequestW(LPWININETHTTPSESSIONW lpwhs,
     /*
      * According to my tests. The name is not resolved until a request is Opened
      */
-    SendAsyncCallback(hIC, &lpwhs->hdr, dwContext,
+    SendAsyncCallback(&lpwhr->hdr, dwContext,
                       INTERNET_STATUS_RESOLVING_NAME,
                       lpwhs->lpszServerName,
                       strlenW(lpwhs->lpszServerName)+1);
@@ -824,7 +820,7 @@ HINTERNET WINAPI HTTP_HttpOpenRequestW(LPWININETHTTPSESSIONW lpwhs,
         goto lend;
     }
 
-    SendAsyncCallback(hIC, &lpwhs->hdr, lpwhr->hdr.dwContext,
+    SendAsyncCallback(&lpwhr->hdr, lpwhr->hdr.dwContext,
                       INTERNET_STATUS_NAME_RESOLVED,
                       &(lpwhs->socketAddress),
                       sizeof(struct sockaddr_in));
@@ -1381,7 +1377,7 @@ static BOOL HTTP_HandleRedirect(LPWININETHTTPREQW lpwhr, LPCWSTR lpszUrl, LPCWST
 
         HTTP_ProcessHeader(lpwhr, g_szHost, hostName, HTTP_ADDREQ_FLAG_ADD | HTTP_ADDHDR_FLAG_REQ);
 
-        SendAsyncCallback(hIC, &lpwhs->hdr, lpwhr->hdr.dwContext,
+        SendAsyncCallback(&lpwhr->hdr, lpwhr->hdr.dwContext,
                       INTERNET_STATUS_RESOLVING_NAME,
                       lpwhs->lpszServerName,
                       strlenW(lpwhs->lpszServerName)+1);
@@ -1393,7 +1389,7 @@ static BOOL HTTP_HandleRedirect(LPWININETHTTPREQW lpwhr, LPCWSTR lpszUrl, LPCWST
             return FALSE;
         }
 
-        SendAsyncCallback(hIC, &lpwhs->hdr, lpwhr->hdr.dwContext,
+        SendAsyncCallback(&lpwhr->hdr, lpwhr->hdr.dwContext,
                       INTERNET_STATUS_NAME_RESOLVED,
                       &(lpwhs->socketAddress),
                       sizeof(struct sockaddr_in));
@@ -1469,6 +1465,7 @@ BOOL WINAPI HTTP_HttpSendRequestW(LPWININETHTTPREQW lpwhr, LPCWSTR lpszHeaders,
     LPWININETAPPINFOW hIC = NULL;
     BOOL loop_next = FALSE;
     int CustHeaderIndex;
+    INTERNET_ASYNC_RESULT iar;
 
     TRACE("--> %p\n", lpwhr);
 
@@ -1636,17 +1633,17 @@ BOOL WINAPI HTTP_HttpSendRequestW(LPWININETHTTPREQW lpwhr, LPCWSTR lpszHeaders,
         ascii_req[len] = 0;
         TRACE("full request -> %s\n", ascii_req );
 
-        SendAsyncCallback(hIC, &lpwhr->hdr, lpwhr->hdr.dwContext,
+        SendAsyncCallback(&lpwhr->hdr, lpwhr->hdr.dwContext,
                           INTERNET_STATUS_SENDING_REQUEST, NULL, 0);
 
         NETCON_send(&lpwhr->netConnection, ascii_req, len, 0, &cnt);
         HeapFree( GetProcessHeap(), 0, ascii_req );
 
-        SendAsyncCallback(hIC, &lpwhr->hdr, lpwhr->hdr.dwContext,
+        SendAsyncCallback(&lpwhr->hdr, lpwhr->hdr.dwContext,
                           INTERNET_STATUS_REQUEST_SENT,
                           &len,sizeof(DWORD));
 
-        SendAsyncCallback(hIC, &lpwhr->hdr, lpwhr->hdr.dwContext,
+        SendAsyncCallback(&lpwhr->hdr, lpwhr->hdr.dwContext,
                           INTERNET_STATUS_RECEIVING_RESPONSE, NULL, 0);
 
         if (cnt < 0)
@@ -1656,7 +1653,7 @@ BOOL WINAPI HTTP_HttpSendRequestW(LPWININETHTTPREQW lpwhr, LPCWSTR lpszHeaders,
         if (responseLen)
 	    bSuccess = TRUE;
 
-        SendAsyncCallback(hIC, &lpwhr->hdr, lpwhr->hdr.dwContext,
+        SendAsyncCallback(&lpwhr->hdr, lpwhr->hdr.dwContext,
                           INTERNET_STATUS_RESPONSE_RECEIVED, &responseLen,
                           sizeof(DWORD));
 
@@ -1757,7 +1754,7 @@ lend:
             dwIndex=0;
             if(HTTP_HttpQueryInfoW(lpwhr,HTTP_QUERY_LOCATION,szNewLocation,&dwBufferSize,&dwIndex))
             {
-                SendAsyncCallback(hIC, &lpwhr->hdr, lpwhr->hdr.dwContext,
+                SendAsyncCallback(&lpwhr->hdr, lpwhr->hdr.dwContext,
                       INTERNET_STATUS_REDIRECT, szNewLocation,
                       dwBufferSize);
                 return HTTP_HandleRedirect(lpwhr, szNewLocation, lpszHeaders,
@@ -1766,17 +1763,13 @@ lend:
         }
     }
 
-    if (hIC->lpfnStatusCB)
-    {
-        INTERNET_ASYNC_RESULT iar;
 
-        iar.dwResult = (DWORD)bSuccess;
-        iar.dwError = bSuccess ? ERROR_SUCCESS : INTERNET_GetLastError();
+    iar.dwResult = (DWORD)bSuccess;
+    iar.dwError = bSuccess ? ERROR_SUCCESS : INTERNET_GetLastError();
 
-        SendAsyncCallback(hIC, &lpwhr->hdr, lpwhr->hdr.dwContext,
-                      INTERNET_STATUS_REQUEST_COMPLETE, &iar,
-                      sizeof(INTERNET_ASYNC_RESULT));
-    }
+    SendAsyncCallback(&lpwhr->hdr, lpwhr->hdr.dwContext,
+                    INTERNET_STATUS_REQUEST_COMPLETE, &iar,
+                    sizeof(INTERNET_ASYNC_RESULT));
 
     TRACE("<--\n");
     return bSuccess;
@@ -1829,6 +1822,7 @@ HINTERNET HTTP_Connect(LPWININETAPPINFOW hIC, LPCWSTR lpszServerName,
     lpwhs->hdr.dwInternalFlags = dwInternalFlags;
     lpwhs->hdr.dwRefCount = 1;
     lpwhs->hdr.destroy = HTTP_CloseHTTPSessionHandle;
+    lpwhs->hdr.lpfnStatusCB = hIC->hdr.lpfnStatusCB;
 
     handle = WININET_AllocHandle( &lpwhs->hdr );
     if (NULL == handle)
@@ -1851,14 +1845,14 @@ HINTERNET HTTP_Connect(LPWININETAPPINFOW hIC, LPCWSTR lpszServerName,
     lpwhs->nServerPort = nServerPort;
 
     /* Don't send a handle created callback if this handle was created with InternetOpenUrl */
-    if (hIC->lpfnStatusCB && !(lpwhs->hdr.dwInternalFlags & INET_OPENURL))
+    if (!(lpwhs->hdr.dwInternalFlags & INET_OPENURL))
     {
         INTERNET_ASYNC_RESULT iar;
 
-        iar.dwResult = (DWORD)handle;
+        iar.dwResult = (DWORD_PTR)handle;
         iar.dwError = ERROR_SUCCESS;
 
-        SendAsyncCallback(hIC, &hIC->hdr, dwContext,
+        SendAsyncCallback(&lpwhs->hdr, dwContext,
                       INTERNET_STATUS_HANDLE_CREATED, &iar,
                       sizeof(INTERNET_ASYNC_RESULT));
     }
@@ -1907,7 +1901,7 @@ BOOL HTTP_OpenConnection(LPWININETHTTPREQW lpwhr)
     lpwhs = (LPWININETHTTPSESSIONW)lpwhr->hdr.lpwhparent;
 
     hIC = (LPWININETAPPINFOW) lpwhs->hdr.lpwhparent;
-    SendAsyncCallback(hIC, &lpwhr->hdr, lpwhr->hdr.dwContext,
+    SendAsyncCallback(&lpwhr->hdr, lpwhr->hdr.dwContext,
                       INTERNET_STATUS_CONNECTING_TO_SERVER,
                       &(lpwhs->socketAddress),
                        sizeof(struct sockaddr_in));
@@ -1926,7 +1920,7 @@ BOOL HTTP_OpenConnection(LPWININETHTTPREQW lpwhr)
        goto lend;
     }
 
-    SendAsyncCallback(hIC, &lpwhr->hdr, lpwhr->hdr.dwContext,
+    SendAsyncCallback(&lpwhr->hdr, lpwhr->hdr.dwContext,
                       INTERNET_STATUS_CONNECTED_TO_SERVER,
                       &(lpwhs->socketAddress),
                        sizeof(struct sockaddr_in));
@@ -2437,7 +2431,7 @@ VOID HTTP_CloseConnection(LPWININETHTTPREQW lpwhr)
     lpwhs = (LPWININETHTTPSESSIONW) lpwhr->hdr.lpwhparent;
     hIC = (LPWININETAPPINFOW) lpwhs->hdr.lpwhparent;
 
-    SendAsyncCallback(hIC, &lpwhr->hdr, lpwhr->hdr.dwContext,
+    SendAsyncCallback(&lpwhr->hdr, lpwhr->hdr.dwContext,
                       INTERNET_STATUS_CLOSING_CONNECTION, 0, 0);
 
     if (NETCON_connected(&lpwhr->netConnection))
@@ -2445,7 +2439,7 @@ VOID HTTP_CloseConnection(LPWININETHTTPREQW lpwhr)
         NETCON_close(&lpwhr->netConnection);
     }
 
-    SendAsyncCallback(hIC, &lpwhr->hdr, lpwhr->hdr.dwContext,
+    SendAsyncCallback(&lpwhr->hdr, lpwhr->hdr.dwContext,
                       INTERNET_STATUS_CONNECTION_CLOSED, 0, 0);
 }
 

@@ -856,7 +856,6 @@ lend:
 BOOL WINAPI INTERNET_FindNextFileW(LPWININETFINDNEXTW lpwh, LPVOID lpvFindData)
 {
     BOOL bSuccess = TRUE;
-    LPWININETAPPINFOW hIC = NULL;
     LPWIN32_FIND_DATAW lpFindFileData;
 
     TRACE("\n");
@@ -892,8 +891,7 @@ BOOL WINAPI INTERNET_FindNextFileW(LPWININETFINDNEXTW lpwh, LPVOID lpvFindData)
 
 lend:
 
-    hIC = GET_HWININET_FROM_LPWININETFINDNEXT(lpwh);
-    if (hIC->hdr.dwFlags & INTERNET_FLAG_ASYNC && hIC->lpfnStatusCB)
+    if (lpwh->hdr.dwFlags & INTERNET_FLAG_ASYNC && lpwh->hdr.lpfnStatusCB)
     {
         INTERNET_ASYNC_RESULT iar;
 
@@ -901,7 +899,7 @@ lend:
         iar.dwError = iar.dwError = bSuccess ? ERROR_SUCCESS :
                                                INTERNET_GetLastError();
 
-        SendAsyncCallback(hIC, &lpwh->hdr, lpwh->hdr.dwContext,
+        SendAsyncCallback(&lpwh->hdr, lpwh->hdr.dwContext,
                       INTERNET_STATUS_REQUEST_COMPLETE, &iar,
                        sizeof(INTERNET_ASYNC_RESULT));
     }
@@ -956,8 +954,7 @@ static VOID INTERNET_CloseHandle(LPWININETHANDLEHEADER hdr)
  */
 BOOL WINAPI InternetCloseHandle(HINTERNET hInternet)
 {
-    LPWININETHANDLEHEADER lpwh, parent;
-    LPWININETAPPINFOW hIC;
+    LPWININETHANDLEHEADER lpwh;
     
     TRACE("%p\n",hInternet);
 
@@ -968,12 +965,7 @@ BOOL WINAPI InternetCloseHandle(HINTERNET hInternet)
         return FALSE;
     }
 
-    parent = lpwh;
-    while( parent && (parent->htype != WH_HINIT ) )
-        parent = parent->lpwhparent;
-
-    hIC = (LPWININETAPPINFOW) parent;
-    SendAsyncCallback(hIC, lpwh, lpwh->dwContext,
+    SendAsyncCallback(lpwh, lpwh->dwContext,
                       INTERNET_STATUS_HANDLE_CLOSING, hInternet,
                       sizeof(HINTERNET));
 
@@ -1489,22 +1481,20 @@ BOOL WINAPI InternetCanonicalizeUrlW(LPCWSTR lpszUrl, LPWSTR lpszBuffer,
 INTERNET_STATUS_CALLBACK WINAPI InternetSetStatusCallbackA(
 	HINTERNET hInternet ,INTERNET_STATUS_CALLBACK lpfnIntCB)
 {
-    INTERNET_STATUS_CALLBACK retVal = INTERNET_INVALID_STATUS_CALLBACK;
-    LPWININETAPPINFOW lpwai;
+    INTERNET_STATUS_CALLBACK retVal;
+    LPWININETHANDLEHEADER lpwh;
 
-    TRACE("(%p, %p)\n", hInternet, lpfnIntCB);
+    TRACE("0x%08lx\n", (ULONG)hInternet);
     
-    lpwai = (LPWININETAPPINFOW)WININET_GetObject(hInternet);
-    if (!lpwai)
-        return retVal;
+    lpwh = WININET_GetObject(hInternet);
+    if (!lpwh)
+        return INTERNET_INVALID_STATUS_CALLBACK;
 
-    if (lpwai->hdr.htype == WH_HINIT)
-    {
-        lpwai->hdr.dwInternalFlags &= ~INET_CALLBACKW;
-        retVal = lpwai->lpfnStatusCB;
-        lpwai->lpfnStatusCB = lpfnIntCB;
-    }
-    WININET_Release( &lpwai->hdr );
+    lpwh->dwInternalFlags &= ~INET_CALLBACKW;
+    retVal = lpwh->lpfnStatusCB;
+    lpwh->lpfnStatusCB = lpfnIntCB;
+
+    WININET_Release( lpwh );
 
     return retVal;
 }
@@ -1523,23 +1513,20 @@ INTERNET_STATUS_CALLBACK WINAPI InternetSetStatusCallbackA(
 INTERNET_STATUS_CALLBACK WINAPI InternetSetStatusCallbackW(
 	HINTERNET hInternet ,INTERNET_STATUS_CALLBACK lpfnIntCB)
 {
-    INTERNET_STATUS_CALLBACK retVal = INTERNET_INVALID_STATUS_CALLBACK;
-    LPWININETAPPINFOW lpwai;
+    INTERNET_STATUS_CALLBACK retVal;
+    LPWININETHANDLEHEADER lpwh;
 
-    TRACE("(%p, %p)\n", hInternet, lpfnIntCB);
+    TRACE("0x%08lx\n", (ULONG)hInternet);
     
-    lpwai = (LPWININETAPPINFOW)WININET_GetObject(hInternet);
-    if (!lpwai)
-        return retVal;
+    lpwh = WININET_GetObject(hInternet);
+    if (!lpwh)
+        return INTERNET_INVALID_STATUS_CALLBACK;
 
-    if (lpwai->hdr.htype == WH_HINIT)
-    {
-        lpwai->hdr.dwInternalFlags |= INET_CALLBACKW;
-        retVal = lpwai->lpfnStatusCB;
-        lpwai->lpfnStatusCB = lpfnIntCB;
-    }
+    lpwh->dwInternalFlags |= INET_CALLBACKW;
+    retVal = lpwh->lpfnStatusCB;
+    lpwh->lpfnStatusCB = lpfnIntCB;
 
-    WININET_Release( &lpwai->hdr );
+    WININET_Release( lpwh );
 
     return retVal;
 }
@@ -2714,11 +2701,10 @@ static VOID INTERNET_ExecuteWork()
     case SENDCALLBACK:
         {
         struct WORKREQ_SENDCALLBACK *req = &workRequest.u.SendCallback;
-        LPWININETAPPINFOW hIC = (LPWININETAPPINFOW) workRequest.hdr;
 
-        TRACE("SENDCALLBACK %p\n", hIC);
+        TRACE("SENDCALLBACK %p\n", workRequest.hdr);
 
-        SendAsyncCallbackInt(hIC, req->hdr,
+        SendSyncCallback(workRequest.hdr,
                 req->dwContext, req->dwInternetStatus, req->lpvStatusInfo,
                 req->dwStatusInfoLength);
         }

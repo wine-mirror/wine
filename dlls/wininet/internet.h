@@ -140,6 +140,7 @@ struct _WININETHANDLEHEADER
     DWORD  dwInternalFlags;
     DWORD  dwRefCount;
     WININET_object_destructor destroy;
+    INTERNET_STATUS_CALLBACK lpfnStatusCB;
     struct _WININETHANDLEHEADER *lpwhparent;
 };
 
@@ -153,7 +154,6 @@ typedef struct
     LPWSTR  lpszProxyUsername;
     LPWSTR  lpszProxyPassword;
     DWORD   dwAccessType;
-    INTERNET_STATUS_CALLBACK lpfnStatusCB;
 } WININETAPPINFOW, *LPWININETAPPINFOW;
 
 
@@ -345,7 +345,6 @@ struct WORKREQ_HTTPSENDREQUESTW
 
 struct WORKREQ_SENDCALLBACK
 {
-    WININETHANDLEHEADER *hdr;
     DWORD     dwContext;
     DWORD     dwInternetStatus;
     LPVOID    lpvStatusInfo;
@@ -443,13 +442,13 @@ INTERNETAPI HINTERNET WINAPI HTTP_HttpOpenRequestW(LPWININETHTTPSESSIONW lpwhs,
 	LPCWSTR lpszReferrer , LPCWSTR *lpszAcceptTypes,
 	DWORD dwFlags, DWORD dwContext);
 
-VOID SendAsyncCallback(LPWININETAPPINFOW hIC, LPWININETHANDLEHEADER hdr,
-                             DWORD dwContext, DWORD dwInternetStatus, LPVOID
-                             lpvStatusInfo , DWORD dwStatusInfoLength);
+VOID SendAsyncCallback(LPWININETHANDLEHEADER hdr, DWORD dwContext,
+                       DWORD dwInternetStatus, LPVOID lpvStatusInfo,
+                       DWORD dwStatusInfoLength);
 
-VOID SendAsyncCallbackInt(LPWININETAPPINFOW hIC, LPWININETHANDLEHEADER hdr,
-                             DWORD dwContext, DWORD dwInternetStatus, LPVOID
-                             lpvStatusInfo , DWORD dwStatusInfoLength);
+VOID SendSyncCallback(LPWININETHANDLEHEADER hdr, DWORD dwContext,
+                      DWORD dwInternetStatus, LPVOID lpvStatusInfo,
+                      DWORD dwStatusInfoLength);
 
 BOOL HTTP_InsertProxyAuthorization( LPWININETHTTPREQW lpwhr,
                        LPCWSTR username, LPCWSTR password );

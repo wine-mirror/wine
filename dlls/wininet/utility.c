@@ -216,14 +216,14 @@ static const char *get_callback_name(DWORD dwInternetStatus) {
     return "Unknown";
 }
 
-VOID SendAsyncCallbackInt(LPWININETAPPINFOW hIC, LPWININETHANDLEHEADER hdr,
-                             DWORD dwContext, DWORD dwInternetStatus, LPVOID
-                             lpvStatusInfo, DWORD dwStatusInfoLength)
+VOID SendSyncCallback(LPWININETHANDLEHEADER hdr, DWORD dwContext,
+                      DWORD dwInternetStatus, LPVOID lpvStatusInfo,
+                      DWORD dwStatusInfoLength)
 {
     HINTERNET hHttpSession;
     LPVOID lpvNewInfo = NULL;
 
-    if( !hIC->lpfnStatusCB )
+    if( !hdr->lpfnStatusCB )
         return;
 
     /* the IE5 version of wininet does not
@@ -238,7 +238,7 @@ VOID SendAsyncCallbackInt(LPWININETAPPINFOW hIC, LPWININETHANDLEHEADER hdr,
         return;
 
     lpvNewInfo = lpvStatusInfo;
-    if(!(hIC->hdr.dwInternalFlags & INET_CALLBACKW)) {
+    if(!(hdr->dwInternalFlags & INET_CALLBACKW)) {
         switch(dwInternetStatus)
         {
         case INTERNET_STATUS_RESOLVING_NAME:
@@ -246,7 +246,7 @@ VOID SendAsyncCallbackInt(LPWININETAPPINFOW hIC, LPWININETHANDLEHEADER hdr,
             lpvNewInfo = WININET_strdup_WtoA(lpvStatusInfo);
         }
     }
-    hIC->lpfnStatusCB(hHttpSession, dwContext, dwInternetStatus,
+    hdr->lpfnStatusCB(hHttpSession, dwContext, dwInternetStatus,
                       lpvNewInfo, dwStatusInfoLength);
     if(lpvNewInfo != lpvStatusInfo)
         HeapFree(GetProcessHeap(), 0, lpvNewInfo);
@@ -258,23 +258,22 @@ VOID SendAsyncCallbackInt(LPWININETAPPINFOW hIC, LPWININETHANDLEHEADER hdr,
 
 
 
-VOID SendAsyncCallback(LPWININETAPPINFOW hIC, LPWININETHANDLEHEADER hdr,
-                             DWORD dwContext, DWORD dwInternetStatus, LPVOID
-                             lpvStatusInfo,  DWORD dwStatusInfoLength)
+VOID SendAsyncCallback(LPWININETHANDLEHEADER hdr, DWORD dwContext,
+                       DWORD dwInternetStatus, LPVOID lpvStatusInfo,
+                       DWORD dwStatusInfoLength)
 {
         TRACE("Send Callback %ld (%s)\n",dwInternetStatus, get_callback_name(dwInternetStatus));
 
-        if (! (hIC->lpfnStatusCB))
+        if (!(hdr->lpfnStatusCB))
             return;
-        if (hIC->hdr.dwFlags & INTERNET_FLAG_ASYNC)
+        if (hdr->dwFlags & INTERNET_FLAG_ASYNC)
         {
             WORKREQUEST workRequest;
             struct WORKREQ_SENDCALLBACK *req;
 
             workRequest.asyncall = SENDCALLBACK;
-            workRequest.hdr = WININET_AddRef( &hIC->hdr );
+            workRequest.hdr = WININET_AddRef( hdr );
             req = &workRequest.u.SendCallback;
-            req->hdr = hdr;
             req->dwContext = dwContext;
             req->dwInternetStatus = dwInternetStatus;
             req->lpvStatusInfo = lpvStatusInfo;
@@ -283,6 +282,6 @@ VOID SendAsyncCallback(LPWININETAPPINFOW hIC, LPWININETHANDLEHEADER hdr,
             INTERNET_AsyncCall(&workRequest);
         }
         else
-            SendAsyncCallbackInt(hIC, hdr, dwContext, dwInternetStatus,
-                                  lpvStatusInfo, dwStatusInfoLength);
+            SendSyncCallback(hdr, dwContext, dwInternetStatus,
+                             lpvStatusInfo, dwStatusInfoLength);
 }
