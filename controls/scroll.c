@@ -1239,8 +1239,8 @@ void SCROLL_TrackScrollBar( HWND hwnd, INT scrollbar, POINT pt )
         case WM_LBUTTONUP:
         case WM_MOUSEMOVE:
         case WM_SYSTIMER:
-            pt.x = LOWORD(msg.lParam) + xoffset;
-            pt.y = HIWORD(msg.lParam) + yoffset;
+            pt.x = (short)LOWORD(msg.lParam) + xoffset;
+            pt.y = (short)HIWORD(msg.lParam) + yoffset;
             SCROLL_HandleScrollEvent( hwnd, scrollbar, msg.message, pt );
             break;
         default:
