@@ -375,6 +375,8 @@ extern "C" {
 
 /* Microsoft Windows Extension function prototypes */
 
+int     WINAPI closesocket(SOCKET s);
+
 INT     WINAPI WSAStartup(UINT wVersionRequired, LPWSADATA lpWSAData);
 void      WINAPI WSASetLastError(INT iError);
 INT     WINAPI WSACleanup(void);

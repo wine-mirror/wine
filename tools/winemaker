@@ -1404,8 +1404,10 @@ sub generate_spec_file
     return;
   }
 
-  my $canon=canonize($basename);
-  print FILEO "name    $canon\n";
+  my $module=$basename;
+  $module =~ s+^lib++;
+  $module=canonize($module);
+  print FILEO "name    $module\n";
   print FILEO "type    win32\n";
   if (@$target[$T_TYPE] == $TT_GUIEXE) {
     print FILEO "mode    guiexe\n";
@@ -2793,7 +2795,7 @@ $(EXTRASUBDIRS:%=%/__clean__): dummy
 	-cd `dirname $@` && $(RM) $(CLEAN_FILES)
 
 clean:: $(SUBDIRS:%=%/__clean__) $(EXTRASUBDIRS:%=%/__clean__)
-	$(RM) $(CLEAN_FILES) $(RC_SRCS:.rc=.res) $(OBJS) $(EXES) $(EXES:%=%.so) $(DLLS)
+	$(RM) $(CLEAN_FILES) $(RC_SRCS:.rc=.res) $(OBJS) $(SPEC_SRCS:.spec=.tmp.o) $(EXES) $(EXES:%=%.so) $(DLLS)
 
 # Rules for installing
 
