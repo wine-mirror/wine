@@ -66,19 +66,21 @@ typedef struct IDirectSoundCapture IDirectSoundCapture,*LPDIRECTSOUNDCAPTURE;
 DEFINE_GUID(IID_IDirectSoundCaptureBuffer,0xB0210782,0x89CD,0x11D0,0xAF,0x08,0x00,0xA0,0xC9,0x25,0xCD,0x16);
 typedef struct IDirectSoundCaptureBuffer IDirectSoundCaptureBuffer,*LPDIRECTSOUNDCAPTUREBUFFER;
 
-DEFINE_GUID(DSDEVID_WinePlayback, 0x40316A1D,0x605B,0xD611,0x87,0xC6,0x00,0x80,0xAD,0x00,0x02,0xFE);
+DEFINE_GUID(IID_IDirectSoundCaptureBuffer8,0x00990DF4,0x0DBB,0x4872,0x83,0x3E,0x6D,0x30,0x3E,0x80,0xAE,0xB6);
+typedef struct IDirectSoundCaptureBuffer8 IDirectSoundCaptureBuffer8,*LPDIRECTSOUNDCAPTUREBUFFER8,**LPLPDIRECTSOUNDCAPTUREBUFFER8;
+
+DEFINE_GUID(IID_IDirectSoundFullDuplex,	0xEDCB4C7A,0xDAAB,0x4216,0xA4,0x2E,0x6C,0x50,0x59,0x6D,0xDC,0x1D);
+typedef struct IDirectSoundFullDuplex IDirectSoundFullDuplex,*LPDIRECTSOUNDFULLDUPLEX;
 
 DEFINE_GUID(IID_IKsPropertySet,		0x31EFAC30,0x515C,0x11D0,0xA9,0xAA,0x00,0xAA,0x00,0x61,0xBE,0x93);
 typedef struct IKsPropertySet IKsPropertySet,*LPKSPROPERTYSET;
-
-DEFINE_GUID(IID_IDirectSoundCaptureBuffer8,0x00990DF4,0x0DBB,0x4872,0x83,0x3E,0x6D,0x30,0x3E,0x80,0xAE,0xB6);
-typedef struct IDirectSoundCaptureBuffer8 IDirectSoundCaptureBuffer8,*LPDIRECTSOUNDCAPTUREBUFFER8;
 
 DEFINE_GUID(DSDEVID_DefaultPlayback,     0xDEF00000,0x9C6D,0x47Ed,0xAA,0xF1,0x4D,0xDA,0x8F,0x2B,0x5C,0x03);
 DEFINE_GUID(DSDEVID_DefaultCapture,      0xDEF00001,0x9C6D,0x47Ed,0xAA,0xF1,0x4D,0xDA,0x8F,0x2B,0x5C,0x03);
 DEFINE_GUID(DSDEVID_DefaultVoicePlayback,0xDEF00002,0x9C6D,0x47Ed,0xAA,0xF1,0x4D,0xDA,0x8F,0x2B,0x5C,0x03);
 DEFINE_GUID(DSDEVID_DefaultVoiceCapture, 0xDEF00003,0x9C6D,0x47ED,0xAA,0xF1,0x4D,0xDA,0x8F,0x2B,0x5C,0x03);
 
+DEFINE_GUID(DSDEVID_WinePlayback,        0x40316A1D,0x605B,0xD611,0x87,0xC6,0x00,0x80,0xAD,0x00,0x02,0xFE);
 
 #define	_FACDS		0x878
 #define	MAKE_DSHRESULT(code)		MAKE_HRESULT(1,_FACDS,code)
@@ -794,6 +796,23 @@ ICOM_DEFINE(IKsPropertySet,IUnknown)
 #define IKsPropertySet_Set(p,a,b,c,d,e,f)	ICOM_CALL6(Set,p,a,b,c,d,e,f)
 #define IKsPropertySet_QuerySupport(p,a,b,c)	ICOM_CALL3(QuerySupport,p,a,b,c)
 
+
+/*****************************************************************************
+ * IDirectSoundFullDuplex interface
+ */
+#define ICOM_INTERFACE IDirectSoundFullDuplex
+#define IDirectSoundFullDuplex_METHODS \
+    ICOM_METHOD8(HRESULT,Initialize,LPCGUID,pCaptureGuid,LPCGUID,pRendererGuid,LPCDSCBUFFERDESC,lpDscBufferDesc,LPCDSBUFFERDESC,lpDsBufferDesc,HWND,hWnd,DWORD,dwLevel,LPLPDIRECTSOUNDCAPTUREBUFFER8,lplpDirectSoundCaptureBuffer8,LPLPDIRECTSOUNDBUFFER8,lplpDirectSoundBuffer8)
+#define IDirectSoundFullDuplex_IMETHODS \
+        IUnknown_IMETHODS \
+	IDirectSoundFullDuplex_METHODS
+ICOM_DEFINE(IDirectSoundFullDuplex,IUnknown)
+#undef ICOM_INTERFACE
+
+#define IDirectSoundFullDuplex_QueryInterface(p,a,b)	ICOM_CALL2(QueryInterface,p,a,b)
+#define IDirectSoundFullDuplex_AddRef(p)		ICOM_CALL (AddRef,p)
+#define IDirectSoundFullDuplex_Release(p)		ICOM_CALL (Release,p)
+#define IDirectSoundFullDuplex_Initialize(p,a,b,c,d,e,f,g,h)	ICOM_CALL8(Initialize,p,a,b,c,d,e,f,g,h)
 
 #ifdef __cplusplus
 } /* extern "C" */
