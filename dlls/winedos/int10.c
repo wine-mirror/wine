@@ -328,7 +328,8 @@ static BOOL INT10_FillModeInformation( BYTE *buffer, WORD mode )
     *(DWORD*)(buffer + 12) = 0; /* not supported */
     
     /* 16 - WORD: bytes per scan line */
-    *(WORD*)(buffer + 16) = 0; /* FIXME */
+    /* FIXME: is this always correct? */
+    *(WORD*)(buffer + 16) = ptr->Width * (ptr->Depth ? (ptr->Depth + 7) / 8 : 1);
 
     /* 18 - WORD: width in pixels (graphics) or characters (text) */
     *(WORD*)(buffer + 18) = ptr->Width;
