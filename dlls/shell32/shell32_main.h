@@ -64,7 +64,8 @@ BOOL HCR_GetClassName (REFIID riid, LPSTR szDest, DWORD len);
 BOOL HCR_GetFolderAttributes (REFIID riid, LPDWORD szDest);
 
 INT_PTR CALLBACK AboutDlgProc(HWND,UINT,WPARAM,LPARAM);
-DWORD WINAPI ParseFieldA(LPCSTR src,DWORD field,LPSTR dst,DWORD len);
+DWORD WINAPI ParseFieldA(LPCSTR src, DWORD nField, LPSTR dst, DWORD len);
+DWORD WINAPI ParseFieldW(LPCWSTR src, DWORD nField, LPWSTR dst, DWORD len);
 
 /****************************************************************************
  * Class constructors

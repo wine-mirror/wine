@@ -107,9 +107,25 @@ DWORD WINAPI ParseFieldA(
  */
 DWORD WINAPI ParseFieldW(LPCWSTR src, DWORD nField, LPWSTR dst, DWORD len)
 {
-	FIXME("(%s,0x%08lx,%p,%ld) stub\n",
-	  debugstr_w(src), nField, dst, len);
-	return FALSE;
+	WARN("(%s,0x%08lx,%p,%ld) semi-stub.\n", debugstr_w(src), nField, dst, len);
+
+	if (!src || !src[0] || !dst || !len)
+	  return 0;
+
+	/* skip n fields delimited by ',' */
+	while (nField > 1)
+	{
+	  if (*src == 0x0) return FALSE;
+	  if (*src++ == ',') nField--;
+	}
+
+	/* copy part till the next ',' to dst */
+	while ( *src != 0x0 && *src != ',' && (len--)>0 ) *(dst++) = *(src++);
+
+	/* finalize the string */
+	*dst = 0x0;
+
+	return TRUE;
 }
 
 /*************************************************************************
