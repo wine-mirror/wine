@@ -355,7 +355,7 @@ debug_channels (bitblt bitmap clipping dc ddraw driver enhmetafile font gdi
 @ stdcall SetDIBColorTable(long long long ptr) SetDIBColorTable
 @ stdcall SetDIBits(long long long long ptr ptr long) SetDIBits
 @ stdcall SetDIBitsToDevice(long long long long long long long long long ptr ptr long) SetDIBitsToDevice
-@ stub SetDeviceGammaRamp
+@ stdcall SetDeviceGammaRamp(long ptr) SetDeviceGammaRamp
 @ stdcall SetEnhMetaFileBits(long ptr) SetEnhMetaFileBits
 @ stub SetFontEnumeration
 @ stdcall SetGraphicsMode(long long) SetGraphicsMode
