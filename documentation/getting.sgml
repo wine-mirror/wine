@@ -285,7 +285,7 @@
         </para>
   <screen>
   <prompt>$ </><userinput>su -</>
-  <prompt># </><userinput>cd /usr/port/emulators/</>
+  <prompt># </><userinput>cd /usr/ports/emulators/wine/</>
   <prompt># </><userinput>make</>
   <prompt># </><userinput>make install</>
   <prompt># </><userinput>make clean</>
