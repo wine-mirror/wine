@@ -577,8 +577,7 @@ gltex_final_release(IDirectDrawSurfaceImpl *This)
     /* All this should be part of main surface management not just a hack for texture.. */
     if (glThis->loaded) {
         mem_used = This->surface_desc.dwHeight *
-	           This->surface_desc.dwHeight *
-		   This->surface_desc.u4.ddpfPixelFormat.u1.dwRGBBitCount;
+	           This->surface_desc.u1.lPitch;
 	This->ddraw_owner->free_memory(This->ddraw_owner, mem_used);
     }
 
