@@ -195,7 +195,7 @@ static void save_key( HKEY hkey, const char *filename )
         handle = FILE_CreateFile( name, GENERIC_WRITE, 0, NULL,
                                   CREATE_NEW, FILE_ATTRIBUTE_NORMAL, -1 );
         if (handle != INVALID_HANDLE_VALUE) break;
-        if ((ret = GetLastError()) != ERROR_FILE_EXISTS) break;
+        if ((ret = GetLastError()) != ERROR_ALREADY_EXISTS) break;
     }
 
     if (handle != INVALID_HANDLE_VALUE)
@@ -212,6 +212,8 @@ static void save_key( HKEY hkey, const char *filename )
             unlink( name );
         }
     }
+    else ERR( "Failed to save registry to %s, err %ld\n", name, GetLastError() );
+
     HeapFree( GetProcessHeap(), 0, name );
 }
 
