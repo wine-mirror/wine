@@ -2144,6 +2144,18 @@ TREEVIEW_Edit_SubclassProc (HWND hwnd, UINT uMsg, WPARAM wParam,
       return DLGC_WANTARROWS | DLGC_WANTALLKEYS;
     }
 
+    case WM_KEYDOWN:
+        if (wParam == VK_ESCAPE)
+{
+            TREEVIEW_EndEditLabelNow(GetParent(hwnd), (WPARAM)TRUE, 0); 
+            return 1;
+}
+        else if (wParam == VK_RETURN)
+            TREEVIEW_EndEditLabelNow(GetParent(hwnd), (WPARAM)FALSE, 0); 
+    break; 
+
+
+
     default:
     {
       TREEVIEW_INFO *infoPtr = TREEVIEW_GetInfoPtr(GetParent(hwnd));
