@@ -16,6 +16,7 @@
  */
 
 #include "winbase.h"
+#include "winerror.h"
 #include "commctrl.h"
 #include "flatsb.h" 
 #include "debugtools.h"
@@ -27,93 +28,48 @@ DEFAULT_DEBUG_CHANNEL(commctrl)
 
 
 /***********************************************************************
- *		FlatSB_EnableScrollBar
+ *		InitializeFlatSB
+ *
+ *	returns nonzero if successful, zero otherwise
+ *
  */
-BOOL WINAPI 
-FlatSB_EnableScrollBar(HWND hwnd, INT dummy, UINT dummy2)
+BOOL WINAPI InitializeFlatSB(HWND hwnd)
 {
+    TRACE("[%04x]\n", hwnd);
     FIXME("stub\n");
-    return 0;
+    return FALSE;
 }
 
 /***********************************************************************
- *		FlatSB_ShowScrollBar
+ *		UninitializeFlatSB
+ *
+ *	returns:
+ *	E_FAIL		if one of the scroll bars is currently in use
+ *	S_FALSE		if InitializeFlatSB was never called on this hwnd
+ *	S_OK		otherwise
+ *
  */
-BOOL WINAPI 
-FlatSB_ShowScrollBar(HWND hwnd, INT code, BOOL flag)
+HRESULT WINAPI UninitializeFlatSB(HWND hwnd)
 {
+    TRACE("[%04x]\n", hwnd);
     FIXME("stub\n");
-    return 0;
-}
-
-/***********************************************************************
- *		FlatSB_GetScrollRange
- */
-BOOL WINAPI 
-FlatSB_GetScrollRange(HWND hwnd, INT code, LPINT min, LPINT max)
-{
-    FIXME("stub\n");
-    return 0;
-}
-
-/***********************************************************************
- *		FlatSB_GetScrollInfo
- */
-BOOL WINAPI 
-FlatSB_GetScrollInfo(HWND hwnd, INT code, LPSCROLLINFO info)
-{
-    FIXME("stub\n");
-    return 0;
-}
-
-/***********************************************************************
- *		FlatSB_GetScrollPos
- */
-INT WINAPI 
-FlatSB_GetScrollPos(HWND hwnd, INT code)
-{
-    FIXME("stub\n");
-    return 0;
+    return S_FALSE;
 }
 
 /***********************************************************************
  *		FlatSB_GetScrollProp
+ *
+ *	Returns nonzero if successful, or zero otherwise. If index is WSB_PROP_HSTYLE,
+ *	the return is nonzero if InitializeFlatSB has been called for this window, or
+ *	zero otherwise. 
+ *
  */
 BOOL WINAPI 
 FlatSB_GetScrollProp(HWND hwnd, INT propIndex, LPINT prop)
 {
+    TRACE("[%04x] propIndex=%d\n", hwnd, propIndex);
     FIXME("stub\n");
-    return 0;
-}
-
-/***********************************************************************
- *		FlatSB_SetScrollPos
- */
-INT WINAPI 
-FlatSB_SetScrollPos(HWND hwnd, INT code, INT pos, BOOL fRedraw)
-{
-    FIXME("stub\n");
-    return 0;
-}
-
-/***********************************************************************
- *		FlatSB_SetScrollInfo
- */
-INT WINAPI 
-FlatSB_SetScrollInfo(HWND hwnd, INT code, LPSCROLLINFO info, BOOL fRedraw)
-{
-    FIXME("stub\n");
-    return 0;
-}
-
-/***********************************************************************
- *		FlatSB_SetScrollRange
- */
-INT WINAPI 
-FlatSB_SetScrollRange(HWND hwnd, INT code, INT min, INT max, BOOL fRedraw)
-{
-    FIXME("stub\n");
-    return 0;
+    return FALSE;
 }
 
 /***********************************************************************
@@ -122,33 +78,104 @@ FlatSB_SetScrollRange(HWND hwnd, INT code, INT min, INT max, BOOL fRedraw)
 BOOL WINAPI 
 FlatSB_SetScrollProp(HWND hwnd, UINT index, INT newValue, BOOL flag)
 {
+    TRACE("[%04x] index=%u newValue=%d flag=%d\n", hwnd, index, newValue, flag);
     FIXME("stub\n");
-    return 0;
+    return FALSE;
 }
 
 /***********************************************************************
- *		InitializeFlatSB
+ * 	From the Microsoft docs:
+ *	"If flat scroll bars haven't been initialized for the
+ *	window, the flat scroll bar APIs will defer to the corresponding
+ *	standard APIs.  This allows the developer to turn flat scroll
+ *	bars on and off without having to write conditional code."
+ *
+ *	So, if we just call the standard functions until we implement
+ *	the flat scroll bar functions, flat scroll bars will show up and 
+ *	behave properly, as though they had simply not been setup to
+ *	have flat properties.
+ *
+ *	Susan <sfarley@codeweavers.com>
+ *
  */
-BOOL WINAPI InitializeFlatSB(HWND hwnd)
+
+/***********************************************************************
+ *		FlatSB_EnableScrollBar
+ */
+BOOL WINAPI 
+FlatSB_EnableScrollBar(HWND hwnd, int nBar, UINT flags)
 {
-    FIXME("stub\n");
-    return 0;
+    return EnableScrollBar(hwnd, nBar, flags);
 }
 
 /***********************************************************************
- *		UninitializeFlatSB
+ *		FlatSB_ShowScrollBar
  */
-HRESULT WINAPI UninitializeFlatSB(HWND hwnd)
+BOOL WINAPI 
+FlatSB_ShowScrollBar(HWND hwnd, int nBar, BOOL fShow)
 {
-    FIXME("stub\n");
-    return 0;
+    return ShowScrollBar(hwnd, nBar, fShow);
 }
 
+/***********************************************************************
+ *		FlatSB_GetScrollRange
+ */
+BOOL WINAPI 
+FlatSB_GetScrollRange(HWND hwnd, int nBar, LPINT min, LPINT max)
+{
+    return GetScrollRange(hwnd, nBar, min, max);
+}
+
+/***********************************************************************
+ *		FlatSB_GetScrollInfo
+ */
+BOOL WINAPI 
+FlatSB_GetScrollInfo(HWND hwnd, int nBar, LPSCROLLINFO info)
+{
+    return GetScrollInfo(hwnd, nBar, info);
+}
+
+/***********************************************************************
+ *		FlatSB_GetScrollPos
+ */
+INT WINAPI 
+FlatSB_GetScrollPos(HWND hwnd, int nBar)
+{
+    return GetScrollPos(hwnd, nBar);
+}
+
+/***********************************************************************
+ *		FlatSB_SetScrollPos
+ */
+INT WINAPI 
+FlatSB_SetScrollPos(HWND hwnd, int nBar, INT pos, BOOL bRedraw)
+{
+    return SetScrollPos(hwnd, nBar, pos, bRedraw);
+}
+
+/***********************************************************************
+ *		FlatSB_SetScrollInfo
+ */
+INT WINAPI 
+FlatSB_SetScrollInfo(HWND hwnd, int nBar, LPSCROLLINFO info, BOOL bRedraw)
+{
+    return SetScrollInfo(hwnd, nBar, info, bRedraw);
+}
+
+/***********************************************************************
+ *		FlatSB_SetScrollRange
+ */
+INT WINAPI 
+FlatSB_SetScrollRange(HWND hwnd, int nBar, INT min, INT max, BOOL bRedraw)
+{
+    return SetScrollRange(hwnd, nBar, min, max, bRedraw);
+}
 
 
 static LRESULT
 FlatSB_Create (HWND hwnd, WPARAM wParam, LPARAM lParam)
 {
+    TRACE("[%04x] wParam=%04x lParam=%08lx\n", hwnd, wParam, lParam);
     return 0;
 }
 
@@ -156,10 +183,9 @@ FlatSB_Create (HWND hwnd, WPARAM wParam, LPARAM lParam)
 static LRESULT
 FlatSB_Destroy (HWND hwnd, WPARAM wParam, LPARAM lParam)
 {
+    TRACE("[%04x] wParam=%04x lParam=%08lx\n", hwnd, wParam, lParam);
     return 0;
 }
-
-
 
 
 static LRESULT WINAPI
@@ -167,7 +193,6 @@ FlatSB_WindowProc (HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
     switch (uMsg)
     {
-
 	case WM_CREATE:
 	    return FlatSB_Create (hwnd, wParam, lParam);
 
