@@ -1,6 +1,6 @@
 @ stdcall AssociateColorProfileWithDeviceA(ptr ptr ptr)
 @ stdcall AssociateColorProfileWithDeviceW(ptr ptr ptr)
-@ stdcall CheckBitmapBits(ptr ptr long long long ptr ptr ptr)
+@ stdcall CheckBitmapBits(ptr ptr ptr long long long ptr ptr long)
 @ stdcall CheckColors(ptr ptr long long ptr)
 @ stdcall CloseColorProfile(ptr)
 @ stdcall ConvertColorNameToIndex(ptr ptr ptr long)
