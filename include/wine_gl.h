@@ -12,7 +12,6 @@
 #if defined(HAVE_OPENGL)
 
 #include "ts_xlib.h"
-#include "x11drv.h"
 
 /* As GLX relies on X, this is needed */
 #define ENTER_GL() wine_tsx11_lock()

@@ -172,6 +172,7 @@ is_OpenGL(
     
     TRACE("Creating OpenGL device for surface %p\n", surface);
     /* Create the OpenGL context */
+#if COMPILABLE
     /* First get the correct visual */
     ENTER_GL();
     /* Create the context */
@@ -192,7 +193,6 @@ is_OpenGL(
     else
       TRACE("Context created (%p)\n", odev->ctx);
     
-#if COMPILABLE
     /* Now override the surface's Flip method (if in double buffering) */
     ((x11_ds_private *) surface->private)->opengl_flip = TRUE;
     {
@@ -243,13 +243,15 @@ is_OpenGL(
 static ULONG WINAPI MESA_IDirect3DDevice2Impl_Release(LPDIRECT3DDEVICE2 iface)
 {
   ICOM_THIS(IDirect3DDevice2Impl,iface);
-  D3DDPRIVATE(This);
   FIXME("(%p)->() decrementing from %lu.\n", This, This->ref );
   
   if (!--(This->ref)) {
+#if 0  /* broken for now */
+    D3DDPRIVATE(This);
     ENTER_GL();
     glXDestroyContext(gdi_display, odev->ctx);
     LEAVE_GL();
+#endif
     This->private = NULL;
     HeapFree(GetProcessHeap(),0,This);
     return 0;
@@ -834,6 +836,7 @@ int is_OpenGL_dx3(REFCLSID rguid, IDirectDrawSurfaceImpl* surface, IDirect3DDevi
     /* First get the correct visual */
     /* if (surface->s.backbuffer == NULL)
        attributeList[3] = None; */
+#if 0 /* non working currently */
     ENTER_GL();
     xvis = glXChooseVisual(gdi_display,
 			   DefaultScreen(gdi_display),
@@ -849,7 +852,6 @@ int is_OpenGL_dx3(REFCLSID rguid, IDirectDrawSurfaceImpl* surface, IDirect3DDevi
 				 GL_TRUE);
     TRACE("Context created\n");
     
-#if 0 /* non working currently */
     /* Now override the surface's Flip method (if in double buffering) */
     surface->s.d3d_device = (void *) odev;
     {
@@ -889,10 +891,12 @@ static ULONG WINAPI MESA_IDirect3DDeviceImpl_Release(LPDIRECT3DDEVICE iface)
   FIXME("(%p)->() decrementing from %lu.\n", This, This->ref );
   
   if (!--(This->ref)) {
+#if 0  /* broken for now */
     D3DDPRIVATE(This);
     ENTER_GL();
     glXDestroyContext(gdi_display, odev->ctx);
     LEAVE_GL();
+#endif
     This->private = NULL;
     HeapFree(GetProcessHeap(),0,This);
     return 0;

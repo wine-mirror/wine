@@ -10,7 +10,6 @@
 #include "d3d_private.h"
 
 #include "wine_gl.h"
-#include "x11drv.h"
 
 /*****************************************************************************
  * IDirect3DLight MESA private structure
