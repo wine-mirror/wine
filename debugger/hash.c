@@ -28,6 +28,14 @@ static char * reg_name[] =
   "eax", "ecx", "edx", "ebx", "esp", "ebp", "esi", "edi"
 };
 
+static unsigned reg_ofs[] =
+{
+  FIELD_OFFSET(CONTEXT, Eax), FIELD_OFFSET(CONTEXT, Ecx),
+  FIELD_OFFSET(CONTEXT, Edx), FIELD_OFFSET(CONTEXT, Ebx),
+  FIELD_OFFSET(CONTEXT, Esp), FIELD_OFFSET(CONTEXT, Ebp),
+  FIELD_OFFSET(CONTEXT, Esi), FIELD_OFFSET(CONTEXT, Edi)
+};
+
 
 struct name_hash
 {
@@ -1267,13 +1275,17 @@ BOOL32 DEBUG_GetStackSymbolValue( const char * name, DBG_ADDR *addr )
 	  /*
 	   * OK, we found it.  Now figure out what to do with this.
 	   */
+	  /* FIXME: what if regno == 0 ($eax) */
 	  if( curr_func->local_vars[i].regno != 0 )
 	    {
 	      /*
-	       * Register variable.  We don't know how to treat
-	       * this yet.
+	       * Register variable.  Point to DEBUG_context field.
 	       */
-	      return FALSE;
+	      addr->seg = 0;
+	      addr->off = ((DWORD)&DEBUG_context) + reg_ofs[curr_func->local_vars[i].regno];
+	      addr->type = curr_func->local_vars[i].type;
+	      
+	      return TRUE;
 	    }
 
 	  addr->seg = 0;
@@ -1323,9 +1335,12 @@ DEBUG_InfoLocals()
       
       if( curr_func->local_vars[i].offset == 0 )
 	{
-	  fprintf(stderr, "%s:%s optimized into register $%s \n",
+	  ptr = (unsigned int *) (((DWORD)&DEBUG_context)
+		+ reg_ofs[curr_func->local_vars[i].regno]);
+	  fprintf(stderr, "%s:%s (optimized into register $%s) == 0x%8.8x\n",
 		  curr_func->name, curr_func->local_vars[i].name,
-		  reg_name[curr_func->local_vars[i].regno]);
+		  reg_name[curr_func->local_vars[i].regno],
+		  *ptr);
 	}
       else
 	{
