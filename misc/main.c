@@ -75,6 +75,7 @@ const WINE_LANGUAGE_DEF Languages[] =
     {"Cy",0x0492},	/* LANG_Cy */
     {"Br",0x0493},	/* LANG_Br  */
     {"Ja",0x0411},	/* LANG_Ja */
+    {"Hr",0x041A},	/* LANG_Hr */
     {NULL,0}
 };
 

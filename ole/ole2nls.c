@@ -240,6 +240,10 @@ LANG_BEGIN (LANG_RUSSIAN, SUBLANG_DEFAULT)	/*0x419*/
 #include "nls/rus.nls"
 LANG_END
 
+LANG_BEGIN (LANG_CROATIAN, SUBLANG_CROATIAN)	/*0x41a*/
+#include "nls/hrv.nls"
+LANG_END
+
 LANG_BEGIN (LANG_SLOVAK, SUBLANG_DEFAULT)	/*0x041b*/
 #include "nls/sky.nls"
 LANG_END

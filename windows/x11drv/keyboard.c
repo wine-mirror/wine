@@ -282,6 +282,26 @@ static const char main_key_PL[MAIN_LEN][4] =
  "<>|"
 };
 
+/*** Croatian keyboard layout specific for me <jelly@srk.fer.hr> ***/
+static const char main_key_HR_jelly[MAIN_LEN][4] =
+{
+ "`~","1!","2@","3#","4$","5%","6^","7&","8*","9(","0)","-_","=+",
+ "qQ","wW","eE","rR","tT","yY","uU","iI","oO","pP","[{¹©","]}ðÐ",
+ "aA","sS","dD","fF","gG","hH","jJ","kK","lL",";:èÈ","'\"æÆ","\\|¾®",
+ "zZ","xX","cC","vV","bB","nN","mM",",<",".>","/?",
+ "<>|"
+};
+
+/*** Croatian keyboard layout ***/
+static const char main_key_HR[MAIN_LEN][4] =
+{
+ "¸¨","1!","2\"·","3#^","4$¢","5%°","6&²","7/`","8(ÿ","9)´","0=½","'?¨","+*¸",
+ "qQ\\","wW|","eE","rR","tT","zZ","uU","iI","oO","pP","¹©÷","ðÐ×",
+ "aA","sS","dD","fF[","gG]","hH","jJ","kK³","lL£","èÈ","æÆß","¾®¤",
+ "yY","xX","cC","vV@","bB{","nN}","mM§",",;",".:","-_/",
+ "<>"
+};
+
 /*** Japanese 106 keyboard layout ***/
 static const char main_key_JA_jp106[MAIN_LEN][4] =
 {
@@ -332,6 +352,8 @@ static struct {
  {MAKELANGID(LANG_ICELANDIC,SUBLANG_DEFAULT),      1252, 850, &main_key_IS},
  {MAKELANGID(LANG_HUNGARIAN,SUBLANG_DEFAULT),      1252, 850, &main_key_HU},
  {MAKELANGID(LANG_POLISH,SUBLANG_DEFAULT),         1250, 852, &main_key_PL},
+ {MAKELANGID(LANG_CROATIAN,SUBLANG_CROATIAN),      1250, 852, &main_key_HR},
+ {MAKELANGID(LANG_CROATIAN,SUBLANG_CROATIAN),      1250, 852, &main_key_HR_jelly},
  {MAKELANGID(LANG_JAPANESE,SUBLANG_DEFAULT),        932, 932, &main_key_JA_jp106},
  {MAKELANGID(LANG_JAPANESE,SUBLANG_DEFAULT),        932, 932, &main_key_JA_pc98x1},
 
