@@ -284,16 +284,16 @@ static	void cvtSSima16K(PACMDRVSTREAMINSTANCE adsi,
         {
             for (i = 0; i < 4; i++)
             {
-                process_nibble(*src >> 4, &stepIndexL, &sampleL);
+                process_nibble(*src, &stepIndexL, &sampleL);
                 W16(dst + (2 * i + 0) * 4 + 0, sampleL);
-                process_nibble(*src++, &stepIndexL, &sampleL);
+                process_nibble(*src++ >> 4, &stepIndexL, &sampleL);
                 W16(dst + (2 * i + 1) * 4 + 0, sampleL);
             }
             for (i = 0; i < 4; i++)
             {
-                process_nibble(*src >> 4, &stepIndexR, &sampleR);
+                process_nibble(*src , &stepIndexR, &sampleR);
                 W16(dst + (2 * i + 0) * 4 + 2, sampleR);
-                process_nibble(*src++, &stepIndexR, &sampleR);
+                process_nibble(*src++ >>4, &stepIndexR, &sampleR);
                 W16(dst + (2 * i + 1) * 4 + 2, sampleR);
             }
             dst += 32;
@@ -335,9 +335,9 @@ static	void cvtMMima16K(PACMDRVSTREAMINSTANCE adsi,
 
 	for (nsamp = nsamp_blk; nsamp > 0; nsamp -= 2)
         {
-            process_nibble(*src >> 4, &stepIndex, &sample);
+            process_nibble(*src, &stepIndex, &sample);
 	    W16(dst, sample); dst += 2;
-            process_nibble(*src++, &stepIndex, &sample);
+            process_nibble(*src++ >> 4, &stepIndex, &sample);
 	    W16(dst, sample); dst += 2;
 	}
         /* we have now to realign the source pointer on block */
