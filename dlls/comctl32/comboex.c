@@ -1384,6 +1384,7 @@ static LRESULT COMBOEX_DrawItem (COMBOEX_INFO *infoPtr, DRAWITEMSTRUCT *dis)
 	    NMCOMBOBOXEXW nmce;
 	    ZeroMemory(&nmce, sizeof(nmce));
 	    nmce.ceItem.mask = CBEIF_INDENT;
+	    nmce.ceItem.lParam = item->lParam;
 	    COMBOEX_NotifyItem(infoPtr, CBEN_GETDISPINFOW, &nmce);
 	    if (nmce.ceItem.mask & CBEIF_DI_SETITEM)
 		item->iIndent = nmce.ceItem.iIndent;
@@ -1447,6 +1448,7 @@ static LRESULT COMBOEX_DrawItem (COMBOEX_INFO *infoPtr, DRAWITEMSTRUCT *dis)
 	    NMCOMBOBOXEXW nmce;
 	    ZeroMemory(&nmce, sizeof(nmce));
 	    nmce.ceItem.mask = (drawstate == ILD_NORMAL) ? CBEIF_IMAGE : CBEIF_SELECTEDIMAGE;
+	    nmce.ceItem.lParam = item->lParam;
 	    COMBOEX_NotifyItem(infoPtr, CBEN_GETDISPINFOW, &nmce);
 	    if (drawstate == ILD_NORMAL) {
 	    	if (nmce.ceItem.mask & CBEIF_DI_SETITEM) item->iImage = nmce.ceItem.iImage;
@@ -1461,6 +1463,7 @@ static LRESULT COMBOEX_DrawItem (COMBOEX_INFO *infoPtr, DRAWITEMSTRUCT *dis)
 	    NMCOMBOBOXEXW nmce;
 	    ZeroMemory(&nmce, sizeof(nmce));
 	    nmce.ceItem.mask = CBEIF_OVERLAY;
+	    nmce.ceItem.lParam = item->lParam;
 	    COMBOEX_NotifyItem(infoPtr, CBEN_GETDISPINFOW, &nmce);
 	    if (nmce.ceItem.mask & CBEIF_DI_SETITEM)
 		item->iOverlay = nmce.ceItem.iOverlay;
