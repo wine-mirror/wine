@@ -97,6 +97,8 @@ static struct serial *create_serial( const char *nameptr, size_t len, unsigned i
     default: break;
     }
 
+    flags |= O_NONBLOCK;
+
     fd = open( name, flags );
     free( name );
     if (fd < 0)
