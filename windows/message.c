@@ -1669,10 +1669,62 @@ DWORD WINAPI MsgWaitForMultipleObjects( DWORD nCount, HANDLE32 *pHandles,
     msgQueue->changeBits = 0;
     msgQueue->wakeMask = dwWakeMask;
 
+    if (THREAD_IsWin16(THREAD_Current()))
+    {
+      /*
+       * This is a temporary solution to a big problem.
+       * You see, the main thread of all Win32 programs is created as a 16 bit
+       * task. This means that if you want on an event using Win32 synchronization
+       * methods, the 16 bit scheduler is stopped and things might just stop happening.
+       * This implements a semi-busy loop that checks the handles to wait on and
+       * also the message queue. When either one is ready, the wait function returns.
+       *
+       * This will all go away when the real Win32 threads are implemented for all
+       * the threads of an applications. Including the main thread.
+       */
+      DWORD curTime = GetCurrentTime32();
+
+      do
+      {
+	/*
+	 * Check the handles in the list.
+	 */
+	ret = WaitForMultipleObjects(nCount, pHandles, fWaitAll, 5L);
+
+	/*
+	 * If the handles have been triggered, return.
+	 */
+	if (ret != WAIT_TIMEOUT)
+	  break;
+
+	/*
+	 * Then, let the 16 bit scheduler do it's thing.
+	 */
+	Yield16();
+
+	/*
+	 * If a message matching the wait mask has arrived, return.
+	 */
+	if (msgQueue->changeBits & dwWakeMask)
+	{
+	  ret = nCount;
+	  break;
+	}
+
+	/*
+	 * And continue doing this until we hit the timeout.
+	 */
+      } while ((dwMilliseconds == INFINITE32) || (GetCurrentTime32()-curTime < dwMilliseconds) );
+    }
+    else
+    {
     /* Add the thread event to the handle list */
-    for (i = 0; i < nCount; i++) handles[i] = pHandles[i];
+      for (i = 0; i < nCount; i++)
+	handles[i] = pHandles[i];
     handles[nCount] = msgQueue->hEvent;
+
     ret = WaitForMultipleObjects( nCount+1, handles, fWaitAll, dwMilliseconds );
+    } 
 
     QUEUE_Unlock( msgQueue );
     
