@@ -11,14 +11,12 @@
 #include <ctype.h>
 #include <stdlib.h>
 #include <string.h>
-#include "ole2.h"
+#include <assert.h>
 #include "debug.h"
-#include "shlobj.h"
 #include "shell.h"
+#include "shlguid.h"
 #include "winerror.h"
 #include "winnls.h"
-#include "winproc.h"
-#include "commctrl.h"
 #include "winversion.h"
 #include "shell32_main.h"
 
@@ -26,6 +24,8 @@
 
 DECLARE_DEBUG_CHANNEL(pidl)
 DECLARE_DEBUG_CHANNEL(shell)
+
+static char * szMyComp = "My Computer";	/* for comparing */
 
 void pdump (LPCITEMIDLIST pidl)
 {	DWORD type;
@@ -54,6 +54,7 @@ void pdump (LPCITEMIDLIST pidl)
 	  TRACE(pidl,"empty pidl (Desktop)\n");	
 }
 
+#define BYTES_PRINTED 32
 BOOL pcheck (LPCITEMIDLIST pidl)
 {       DWORD type, ret=TRUE;
 
@@ -69,27 +70,37 @@ BOOL pcheck (LPCITEMIDLIST pidl)
 	      case PT_DRIVE:
 	      case PT_FOLDER:
 	      case PT_VALUE:
+	      case PT_DRIVE1:
+	      case PT_FOLDER1:
+	      case PT_WORKGRP:
+	      case PT_COMP:
+	      case PT_NETWORK:
+	      case PT_SHARE:
 		break;
 	      default:
 	      {
-		char szTemp[100];      /* 3*32 + 3 + 1 */
+		char szTemp[BYTES_PRINTED*4 + 1];
 		int i;
-		for ( i = 0; i < pidltemp->mkid.cb; i++)
+		unsigned char c;
+
+		memset(szTemp, ' ', BYTES_PRINTED*4 + 1);
+		for ( i = 0; (i<pidltemp->mkid.cb) && (i<BYTES_PRINTED); i++)
 		{
-		  sprintf (&(szTemp[i*3]),"%02x ", ((LPBYTE)pidltemp)[i]);
-		  if (i>=31)
-		  {
-		    sprintf (&(szTemp[i*3+3]),"...");
-		    break;
-		  }
+		  c = ((unsigned char *)pidltemp)[i];
+
+		  szTemp[i*3+0] = ((c>>4)>9)? (c>>4)+55 : (c>>4)+48;
+		  szTemp[i*3+1] = ((0x0F&c)>9)? (0x0F&c)+55 : (0x0F&c)+48;
+		  szTemp[i*3+2] = ' ';
+		  szTemp[i+BYTES_PRINTED*3]  =  (c>=0x20 && c <=0x80) ? c : '.';
 		}
-	        ERR (pidl,"unknown IDLIST type size=%u type=%lx\n%s\n",pidltemp->mkid.cb,type, szTemp);
-	        ret = FALSE;
+		szTemp[BYTES_PRINTED*4] = 0x00;
+		ERR (pidl,"unknown IDLIST type size=%u type=%lx\n%s\n",pidltemp->mkid.cb,type, szTemp);
+		ret = FALSE;
 	      }
 	    }
-            pidltemp = ILGetNext(pidltemp);
-          } while (pidltemp->mkid.cb);
-        }
+	    pidltemp = ILGetNext(pidltemp);
+	  } while (pidltemp->mkid.cb);
+	}
 	return ret;
 }
 
@@ -97,7 +108,7 @@ BOOL pcheck (LPCITEMIDLIST pidl)
  * ILGetDisplayName			[SHELL32.15]
  */
 BOOL WINAPI ILGetDisplayName(LPCITEMIDLIST pidl,LPSTR path)
-{	FIXME(shell,"pidl=%p %p semi-stub\n",pidl,path);
+{	TRACE(shell,"pidl=%p %p semi-stub\n",pidl,path);
 	return SHGetPathFromIDListA(pidl, path);
 }
 /*************************************************************************
@@ -108,11 +119,9 @@ LPITEMIDLIST WINAPI ILFindLastID(LPITEMIDLIST pidl)
 
 	TRACE(pidl,"(pidl=%p)\n",pidl);
 
-	if(pidl)
-	{ while(pidl->mkid.cb)
-	  { pidlLast = (LPITEMIDLIST)pidl;
-	    pidl = ILGetNext(pidl);
-	  }  
+	while (pidl->mkid.cb)
+	{ pidlLast = pidl;
+	  pidl = ILGetNext(pidl);
 	}
 	return pidlLast;		
 }
@@ -170,7 +179,7 @@ LPITEMIDLIST WINAPI ILCloneFirst(LPCITEMIDLIST pidl)
 	  newpidl = (LPITEMIDLIST) SHAlloc (len+2);
 	  if (newpidl)
 	  { memcpy(newpidl,pidl,len);
-   	    ILGetNext(newpidl)->mkid.cb = 0x00;
+	    ILGetNext(newpidl)->mkid.cb = 0x00;
 	  }
 	}
 	TRACE(pidl,"-- newpidl=%p\n",newpidl);
@@ -331,7 +340,7 @@ BOOL WINAPI ILIsEqual(LPCITEMIDLIST pidl1, LPCITEMIDLIST pidl2)
 	if ( (!pidl1) || (!pidl2) )
 	{ return FALSE;
 	}
-
+	
 	if (pidltemp1->mkid.cb && pidltemp2->mkid.cb)
 	{ do
 	  { ppidldata = _ILGetDataPointer(pidltemp1);
@@ -348,7 +357,7 @@ BOOL WINAPI ILIsEqual(LPCITEMIDLIST pidl1, LPCITEMIDLIST pidl2)
 
 	  } while (pidltemp1->mkid.cb && pidltemp2->mkid.cb);
 	}	
-	if (!pidltemp1->mkid.cb && !pidltemp2->mkid.cb)
+ 	if (!pidltemp1 && !pidltemp2)
 	{ TRACE(shell, "--- equal\n");
 	  return TRUE;
 	}
@@ -383,6 +392,11 @@ LPITEMIDLIST WINAPI ILFindChild(LPCITEMIDLIST pidl1,LPCITEMIDLIST pidl2)
 	LPITEMIDLIST ret=NULL;
 
 	TRACE(pidl,"pidl1=%p pidl2=%p\n",pidl1, pidl2);
+
+	/* explorer reads from registry directly (StreamMRU),
+	   so we can only check here */
+	if ((!pcheck (pidl1)) || (!pcheck (pidl2)))
+	  return FALSE;
 
 	pdump (pidl1);
 	pdump (pidl2);
@@ -524,19 +538,22 @@ DWORD WINAPI ILGetSize(LPITEMIDLIST pidl)
  *
  * RETURNS
  *  pointer to next element
+ *  NULL when last element ist reached
  *
  */
 LPITEMIDLIST WINAPI ILGetNext(LPITEMIDLIST pidl)
 {	LPITEMIDLIST nextpidl;
-
-	/* TRACE(pidl,"(pidl=%p)\n",pidl);*/
+	WORD len;
+	
+	TRACE(pidl,"(pidl=%p)\n",pidl);
 	if(pidl)
-	{ nextpidl = (LPITEMIDLIST)(LPBYTE)(((LPBYTE)pidl) + pidl->mkid.cb);
-	  return nextpidl;
+	{ len =  pidl->mkid.cb;
+	  if (len)
+	  { nextpidl = (LPITEMIDLIST) (((LPBYTE)pidl)+len);
+	    return nextpidl;
+	  }
 	}
-	else
-	{  return (NULL);
-	}
+	return NULL;
 }
 /*************************************************************************
  * ILAppend [SHELL32.154]
@@ -713,7 +730,7 @@ LPITEMIDLIST WINAPI _ILCreateDesktop()
 }
 LPITEMIDLIST WINAPI _ILCreateMyComputer()
 {	TRACE(pidl,"()\n");
-	return _ILCreate(PT_MYCOMP, (void *)"My Computer", strlen ("My Computer")+1);
+	return _ILCreate(PT_MYCOMP, &IID_MyComputer, sizeof(GUID));
 }
 LPITEMIDLIST WINAPI _ILCreateDrive( LPCSTR lpszNew)
 {	char sTemp[4];
@@ -831,13 +848,13 @@ BOOL WINAPI _ILIsMyComputer(LPCITEMIDLIST pidl)
 BOOL WINAPI _ILIsDrive(LPCITEMIDLIST pidl)
 {	LPPIDLDATA lpPData = _ILGetDataPointer(pidl);
 	TRACE(pidl,"(%p)\n",pidl);
-	return (pidl && lpPData && PT_DRIVE == lpPData->type);
+	return (pidl && lpPData && (PT_DRIVE == lpPData->type || PT_DRIVE1 == lpPData->type));
 }
 
 BOOL WINAPI _ILIsFolder(LPCITEMIDLIST pidl)
 {	LPPIDLDATA lpPData = _ILGetDataPointer(pidl);
 	TRACE(pidl,"(%p)\n",pidl);
-	return (pidl && lpPData && PT_FOLDER == lpPData->type);
+	return (pidl && lpPData && (PT_FOLDER == lpPData->type || PT_FOLDER1 == lpPData->type));
 }
 
 BOOL WINAPI _ILIsValue(LPCITEMIDLIST pidl)
@@ -994,63 +1011,61 @@ DWORD WINAPI _ILGetPidlPath( LPCITEMIDLIST pidl, LPSTR lpszOut, DWORD dwOutSize)
  *  uInSize = size of data (raw)
  */
 
-LPITEMIDLIST WINAPI _ILCreate(PIDLTYPE type, LPVOID pIn, UINT16 uInSize)
-{	LPITEMIDLIST   pidlOut=NULL;
-	UINT16         uSize;
-	LPITEMIDLIST   pidlTemp=NULL;
+LPITEMIDLIST WINAPI _ILCreate(PIDLTYPE type, LPCVOID pIn, UINT16 uInSize)
+{	LPITEMIDLIST   pidlOut = NULL, pidlTemp = NULL;
 	LPPIDLDATA     pData;
+	UINT16         uSize = 0;
 	LPSTR	pszDest;
 	
 	TRACE(pidl,"(0x%02x %p %i)\n",type,pIn,uInSize);
 
-	if ( type == PT_DESKTOP)
-	{ pidlOut = SHAlloc(2);
-	  pidlOut->mkid.cb=0x0000;
-	  return pidlOut;
-	}
-
-	if (! pIn)
-	{ return NULL;
-	}	
-
-	/* the sizes of: cb(2), pidldata-1(26), szText+1, next cb(2) */
 	switch (type)
-	{ case PT_DRIVE:
-	    uSize = 4 + 9;
+	{ case PT_DESKTOP:
+	    uSize = 0;
+	    pidlOut = SHAlloc(uSize + 2);
+	    pidlOut->mkid.cb = uSize;
+	    TRACE(pidl,"- create Desktop\n");
 	    break;
-	  default:
-	    uSize = 4 + (sizeof(PIDLDATA)) + uInSize; 
-	 }   
-	pidlOut = SHAlloc(uSize);
-	pidlTemp = pidlOut;
-	if(pidlOut)
-	{ pidlTemp->mkid.cb = uSize - 2;
-	  pData =_ILGetDataPointer(pidlTemp);
-	  pszDest =  _ILGetTextPointer(type, pData);
-	  pData->type = type;
-	  switch(type)
-	  { case PT_MYCOMP:
-	      memcpy(pszDest, pIn, uInSize);
-	      TRACE(pidl,"- create My Computer: %s\n",debugstr_a(pszDest));
-	      break;
-	    case PT_DRIVE:
-	      memcpy(pszDest, pIn, uInSize);
-	      TRACE(pidl,"- create Drive: %s\n",debugstr_a(pszDest));
-	      break;
-	    case PT_FOLDER:
-	    case PT_VALUE:   
-	      memcpy(pszDest, pIn, uInSize);
-	      TRACE(pidl,"- create Value: %s\n",debugstr_a(pszDest));
-	      break;
-	    default: 
-	      FIXME(pidl,"-- wrong argument\n");
-	      break;
-	  }
-   
-	  pidlTemp = ILGetNext(pidlTemp);
-	  pidlTemp->mkid.cb = 0x00;
+
+	  case PT_MYCOMP:
+	    uSize = 2 + 2 + sizeof(GUID);
+	    pidlOut = SHAlloc(uSize + 2);
+	    pidlOut->mkid.cb = uSize;
+	    pData =_ILGetDataPointer(pidlOut);
+	    pData->type = type;
+	    memcpy(&(pData->u.mycomp.guid), pIn, uInSize);
+	    TRACE(pidl,"- create My Computer\n");
+	    break;
+
+	  case PT_DRIVE:
+	    uSize = 2 + 23;
+	    pidlOut = SHAlloc(uSize + 2);
+	    pidlOut->mkid.cb = uSize;
+	    pData =_ILGetDataPointer(pidlOut);
+	    pData->type = type;
+	    pszDest =  _ILGetTextPointer(type, pData);
+	    memcpy(pszDest, pIn, uInSize);
+	    TRACE(pidl,"- create Drive: %s\n",debugstr_a(pszDest));
+	    break;
+
+	  case PT_FOLDER:
+	  case PT_VALUE:   
+	    uSize = 2 + 12 + uInSize;
+	    pidlOut = SHAlloc(uSize + 2);
+	    pidlOut->mkid.cb = uSize;
+	    pData =_ILGetDataPointer(pidlOut);
+	    pData->type = type;
+	    pszDest =  _ILGetTextPointer(type, pData);
+	    memcpy(pszDest, pIn, uInSize);
+	    TRACE(pidl,"- create Value: %s\n",debugstr_a(pszDest));
+	    break;
 	}
-	TRACE(pidl,"-- (pidl=%p, size=%u)\n",pidlOut,uSize-2);
+	
+	pidlTemp = ILGetNext(pidlOut);
+	if (pidlTemp)
+	  pidlTemp->mkid.cb = 0x00;
+
+	TRACE(pidl,"-- (pidl=%p, size=%u)\n", pidlOut, uSize);
 	return pidlOut;
 }
 /**************************************************************************
@@ -1066,43 +1081,26 @@ DWORD WINAPI _ILGetData(PIDLTYPE type, LPCITEMIDLIST pidl, LPVOID pOut, UINT uOu
 	
 	TRACE(pidl,"(%x %p %p %x)\n",type,pidl,pOut,uOutSize);
 	
-	if(!pidl)
+	if( (!pidl) || (!pOut) || (uOutSize < 1))
 	{  return 0;
 	}
 
-	*(LPSTR)pOut = 0;	 
+	*(LPSTR)pOut = 0;
 
 	pData = _ILGetDataPointer(pidl);
-	if ( pData->type != type)
-	{ ERR(pidl,"-- wrong type\n");
-	  return 0;
-	}
+
+	assert ( pData->type == type);
+
 	pszSrc = _ILGetTextPointer(pData->type, pData);
 
-	switch(type)
-	{ case PT_MYCOMP:
-	    if(uOutSize < 1)
-	      return 0;
-	    strncpy((LPSTR)pOut, "My Computer", uOutSize);
-	    dwReturn = strlen((LPSTR)pOut)+1;
-	    break;
-
-	  case PT_DRIVE:
-	    if(uOutSize < 1)
-	      return 0;
-	    strncpy((LPSTR)pOut, pszSrc, uOutSize);
-	    dwReturn = strlen((LPSTR)pOut)+1;
-	    break;
-
-	  case PT_FOLDER:
-	  case PT_VALUE: 
-	     strncpy((LPSTR)pOut, pszSrc, uOutSize);
-	     dwReturn = strlen((LPSTR)pOut)+1;
-	     break;
-	  default:
-	    ERR(pidl,"-- unknown type\n");
-	    break;										 
+	if (pszSrc)
+	{ strncpy((LPSTR)pOut, pszSrc, uOutSize);
+	  dwReturn = strlen((LPSTR)pOut)+1;
 	}
+	else
+	{ ERR(pidl,"-- no data\n");
+	}
+
 	TRACE(pidl,"-- (%p=%s 0x%08lx)\n",pOut,(char*)pOut,dwReturn);
 	return dwReturn;
 }
@@ -1126,13 +1124,25 @@ LPSTR WINAPI _ILGetTextPointer(PIDLTYPE type, LPPIDLDATA pidldata)
 	if(!pidldata)
 	{ return NULL;
 	}
+
 	switch (type)
 	{ case PT_DRIVE:
+	  case PT_DRIVE1:
 	    return (LPSTR)&(pidldata->u.drive.szDriveName);
+
 	  case PT_MYCOMP:
+	    return szMyComp;
+
 	  case PT_FOLDER:
+	  case PT_FOLDER1:
 	  case PT_VALUE:
 	    return (LPSTR)&(pidldata->u.file.szNames);
+
+	  case PT_WORKGRP:
+	  case PT_COMP:
+	  case PT_NETWORK:
+	  case PT_SHARE:
+	    return (LPSTR)&(pidldata->u.network.szNames);
 	}
 	return NULL;
 }
@@ -1147,12 +1157,11 @@ LPSTR WINAPI _ILGetSTextPointer(PIDLTYPE type, LPPIDLDATA pidldata)
 	{ return NULL;
 	}
 	switch (type)
-	{ case PT_MYCOMP:
-	  case PT_DRIVE:
-	    return NULL;
-	  case PT_FOLDER:
+	{ case PT_FOLDER:
 	  case PT_VALUE:
 	    return (LPSTR)(pidldata->u.file.szNames + strlen (pidldata->u.file.szNames) + 1);
+	  case PT_WORKGRP:
+	    return (LPSTR)(pidldata->u.network.szNames + strlen (pidldata->u.network.szNames) + 1);
 	}
 	return NULL;
 }
@@ -1162,10 +1171,7 @@ BOOL WINAPI _ILGetFileDate (LPCITEMIDLIST pidl, LPSTR pOut, UINT uOutSize)
 	SYSTEMTIME time;
 
 	switch (pdata->type)
-	{ case PT_DRIVE:
-	  case PT_MYCOMP:
-	    return FALSE;
-	  case PT_FOLDER:
+	{ case PT_FOLDER:
 	    DosDateTimeToFileTime(pdata->u.folder.uFileDate, pdata->u.folder.uFileTime, &ft);
 	    break;	    
 	  case PT_VALUE:
@@ -1182,11 +1188,7 @@ BOOL WINAPI _ILGetFileSize (LPCITEMIDLIST pidl, LPSTR pOut, UINT uOutSize)
 	char stemp[20]; /* for filesize */
 	
 	switch (pdata->type)
-	{ case PT_DRIVE:
-	  case PT_MYCOMP:
-	  case PT_FOLDER:
-	    return FALSE;
-	  case PT_VALUE:
+	{ case PT_VALUE:
 	    break;
 	  default:
 	    return FALSE;

@@ -25,22 +25,42 @@
 * The structure of the pidl seems to be a union. The first byte of the
 * PIDLDATA desribes the type of pidl.
 *
-* first byte - 	my Computer	0x1F
-*		control/printer	0x2E
-*		drive		0x23 
-*		folder	 	0x31 
-* drive: the second byte is the start of a string
-*	  C  :  \ 
-*	 43 3A 5C
-* file: see the PIDLDATA structure	 
+*	object        ! first byte    ! format       ! living space
+*	----------------------------------------------------------------
+*	my computer	0x1F		mycomp (2)	(usual)
+*	drive		0x23		drive		(usual)
+*	control/printer	0x2E
+*	drive		0x2F		drive		(lnk/persistant)
+*	folder/file	0x30		folder/file (1)	(lnk/persistant)
+*	folder		0x31		folder		(usual)
+*	value		0x32		file		(usual)
+*	workgroup	0x41		network (3)
+*	computer	0x42		network (4)
+*	whole network	0x47		network (5)
+*	share		0xc3		metwork (6)
+*
+* guess: the persistant elements are non tracking
+*
+* (1) dummy byte is used, attributes are empty
+* (2) IID_MyComputer = 20D04FE0L-3AEA-1069-A2D8-08002B30309D
+* (3) two strings	"workgroup" "microsoft network"
+* (4) one string	"\\sirius"
+* (5) one string	"whole network" 
+* (6) one string	"\\sirius\c"
 */
 
 #define PT_DESKTOP	0x00 /* internal */
 #define PT_MYCOMP	0x1F
-#define PT_SPECIAL	0x2E
 #define PT_DRIVE	0x23
+#define PT_SPECIAL	0x2E
+#define PT_DRIVE1	0x2F
+#define PT_FOLDER1	0x30
 #define PT_FOLDER	0x31
 #define PT_VALUE	0x32
+#define PT_WORKGRP	0x41
+#define PT_COMP		0x42
+#define PT_NETWORK	0x47
+#define PT_SHARE	0xc3
 
 #pragma pack(1)
 typedef BYTE PIDLTYPE;
@@ -49,6 +69,10 @@ typedef struct tagPIDLDATA
 {	PIDLTYPE type;			/*00*/
 	union
 	{ struct
+	  { BYTE dummy;
+	    GUID guid;
+	  } mycomp;
+	  struct
 	  { CHAR szDriveName[4];	/*01*/
 	    /* end of MS compatible*/
 	    DWORD dwSFGAO;		/*05*/
@@ -64,6 +88,10 @@ typedef struct tagPIDLDATA
 	    /* Here are comming two strings. The first is the long name. 
 	    The second the dos name when needed or just 0x00 */
 	  } file, folder, generic; 
+	  struct
+	  { WORD dummy;		/*01*/
+	    CHAR szNames[1];	/*03*/
+	  } network;
 	}u;
 } PIDLDATA, *LPPIDLDATA;
 #pragma pack(4)
@@ -111,7 +139,7 @@ LPITEMIDLIST WINAPI _ILCreateValue(LPCSTR, LPCSTR);
  * data is binary / sizes are bytes
  */
 DWORD WINAPI _ILGetData(PIDLTYPE,LPCITEMIDLIST,LPVOID,UINT);
-LPITEMIDLIST WINAPI _ILCreate(PIDLTYPE,LPVOID,UINT16);
+LPITEMIDLIST WINAPI _ILCreate(PIDLTYPE,LPCVOID,UINT16);
 
 /*
  * helper functions (getting struct-pointer)
