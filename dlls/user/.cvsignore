@@ -5,5 +5,4 @@ keyboard.drv.spec.c
 mouse.drv.spec.c
 user.exe.spec.c
 user32.dll.dbg.c
-user32.spec.c
 user32.spec.def

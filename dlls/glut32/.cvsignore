@@ -1,4 +1,3 @@
 Makefile
 glut32.dll.dbg.c
-glut32.spec.c
 glut32.spec.def

@@ -1,4 +1,3 @@
 Makefile
 wined3d.dll.dbg.c
-wined3d.spec.c
 wined3d.spec.def

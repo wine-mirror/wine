@@ -1,4 +1,3 @@
 Makefile
 mciavi.drv.dbg.c
-mciavi.drv.spec.c
 mciavi_res.res

@@ -1,6 +1,4 @@
 Makefile
-dplayx.dll
 dplayx.dll.dbg.c
-dplayx.spec.c
 dplayx.spec.def
 version.res

@@ -1,4 +1,3 @@
 Makefile
 rsabase.dll.dbg.c
-rsabase.spec.c
 rsabase.spec.def

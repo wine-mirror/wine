@@ -1,4 +1,3 @@
 Makefile
 secur32.dll.dbg.c
-secur32.spec.c
 secur32.spec.def

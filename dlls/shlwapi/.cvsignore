@@ -1,6 +1,4 @@
 Makefile
-shlwapi.dll
 shlwapi.dll.dbg.c
 shlwapi.res
-shlwapi.spec.c
 shlwapi.spec.def

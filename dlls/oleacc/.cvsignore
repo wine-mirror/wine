@@ -1,4 +1,3 @@
 Makefile
 oleacc.dll.dbg.c
-oleacc.spec.c
 oleacc.spec.def

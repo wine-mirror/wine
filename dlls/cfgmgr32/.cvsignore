@@ -1,4 +1,3 @@
 Makefile
 cfgmgr32.dll.dbg.c
-cfgmgr32.spec.c
 cfgmgr32.spec.def

@@ -1,4 +1,3 @@
 Makefile
 msvcrt.dll.dbg.c
-msvcrt.spec.c
 msvcrt.spec.def

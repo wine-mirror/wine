@@ -1,5 +1,4 @@
 Makefile
 amstream.dll.dbg.c
-amstream.spec.c
 amstream.spec.def
 version.res

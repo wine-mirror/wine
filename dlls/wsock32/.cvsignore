@@ -1,5 +1,4 @@
 Makefile
 version.res
 wsock32.dll.dbg.c
-wsock32.spec.c
 wsock32.spec.def

@@ -1,4 +1,3 @@
 Makefile
 dplay.dll.dbg.c
-dplay.spec.c
 dplay.spec.def

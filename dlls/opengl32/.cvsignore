@@ -1,4 +1,3 @@
 Makefile
 opengl32.dll.dbg.c
-opengl32.spec.c
 opengl32.spec.def

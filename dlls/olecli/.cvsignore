@@ -1,5 +1,4 @@
 Makefile
 olecli.spec.c
 olecli32.dll.dbg.c
-olecli32.spec.c
 olecli32.spec.def
