@@ -3,6 +3,7 @@
  *
  * Copyright 2001 Ove Kåven, TransGaming Technologies
  * Copyright 2003 Mike Hearn
+ * Copyright 2004 Filip Navara
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -36,10 +37,12 @@
 #include "wine/unicode.h"
 
 #include "rpc.h"
+#include "rpcndr.h"
 
 #include "wine/debug.h"
 
 #include "rpc_binding.h"
+#include "rpc_message.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(ole);
 
@@ -117,6 +120,7 @@ RPC_STATUS RPCRT4_CreateConnection(RpcConnection** Connection, BOOL server, LPST
   NewConnection->NetworkAddr = RPCRT4_strdupA(NetworkAddr);
   NewConnection->Endpoint = RPCRT4_strdupA(Endpoint);
   NewConnection->Used = Binding;
+  NewConnection->MaxTransmissionSize = RPC_MAX_PACKET_SIZE;
 
   EnterCriticalSection(&conn_cache_cs);
   NewConnection->Next = conn_cache;
@@ -206,8 +210,9 @@ RPC_STATUS RPCRT4_OpenConnection(RpcConnection* Connection)
         pname = HeapAlloc(GetProcessHeap(), 0, strlen(prefix) + strlen(Connection->Endpoint) + 1);
         strcat(strcpy(pname, prefix), Connection->Endpoint);
         TRACE("listening on %s\n", pname);
-        Connection->conn = CreateNamedPipeA(pname, PIPE_ACCESS_DUPLEX | FILE_FLAG_OVERLAPPED,
-                                         0, PIPE_UNLIMITED_INSTANCES, 0, 0, 5000, NULL);
+        Connection->conn = CreateNamedPipeA(pname, PROFILE_SERVER | PIPE_ACCESS_DUPLEX,
+                                         PIPE_TYPE_MESSAGE | PIPE_READMODE_MESSAGE, PIPE_UNLIMITED_INSTANCES,
+                                         RPC_MAX_PACKET_SIZE, RPC_MAX_PACKET_SIZE, 5000, NULL);
         HeapFree(GetProcessHeap(), 0, pname);
         memset(&Connection->ovl, 0, sizeof(Connection->ovl));
         Connection->ovl.hEvent = CreateEventA(NULL, TRUE, FALSE, NULL);
@@ -215,6 +220,8 @@ RPC_STATUS RPCRT4_OpenConnection(RpcConnection* Connection)
           WARN("Couldn't ConnectNamedPipe (error was %ld)\n", GetLastError());
           if (GetLastError() == ERROR_PIPE_CONNECTED) {
             SetEvent(Connection->ovl.hEvent);
+            return RPC_S_OK;
+          } else if (GetLastError() == ERROR_IO_PENDING) {
             return RPC_S_OK;
           }
           return RPC_S_SERVER_UNAVAILABLE;
@@ -227,8 +234,9 @@ RPC_STATUS RPCRT4_OpenConnection(RpcConnection* Connection)
         pname = HeapAlloc(GetProcessHeap(), 0, strlen(prefix) + strlen(Connection->Endpoint) + 1);
         strcat(strcpy(pname, prefix), Connection->Endpoint);
         TRACE("listening on %s\n", pname);
-        Connection->conn = CreateNamedPipeA(pname, PIPE_ACCESS_DUPLEX | FILE_FLAG_OVERLAPPED,
-                                         0, PIPE_UNLIMITED_INSTANCES, 0, 0, 5000, NULL);
+        Connection->conn = CreateNamedPipeA(pname, PROFILE_SERVER | PIPE_ACCESS_DUPLEX,
+                                         PIPE_TYPE_MESSAGE | PIPE_READMODE_MESSAGE | PIPE_WAIT, PIPE_UNLIMITED_INSTANCES,
+                                         RPC_MAX_PACKET_SIZE, RPC_MAX_PACKET_SIZE, 5000, NULL);
         HeapFree(GetProcessHeap(), 0, pname);
         memset(&Connection->ovl, 0, sizeof(Connection->ovl));
         Connection->ovl.hEvent = CreateEventA(NULL, TRUE, FALSE, NULL);
@@ -254,6 +262,7 @@ RPC_STATUS RPCRT4_OpenConnection(RpcConnection* Connection)
         LPSTR pname;
         HANDLE conn;
         DWORD err;
+        DWORD dwMode;
 
         pname = HeapAlloc(GetProcessHeap(), 0, strlen(prefix) + strlen(Connection->Endpoint) + 1);
         strcat(strcpy(pname, prefix), Connection->Endpoint);
@@ -261,7 +270,7 @@ RPC_STATUS RPCRT4_OpenConnection(RpcConnection* Connection)
         while (TRUE) {
           if (WaitNamedPipeA(pname, NMPWAIT_WAIT_FOREVER)) {
             conn = CreateFileA(pname, GENERIC_READ|GENERIC_WRITE, 0, NULL,
-                               OPEN_EXISTING, FILE_FLAG_OVERLAPPED, 0);
+                               OPEN_EXISTING, 0, 0);
             if (conn != INVALID_HANDLE_VALUE) break;
             err = GetLastError();
             if (err == ERROR_PIPE_BUSY) continue;
@@ -279,6 +288,9 @@ RPC_STATUS RPCRT4_OpenConnection(RpcConnection* Connection)
         /* success */
         HeapFree(GetProcessHeap(), 0, pname);
         memset(&Connection->ovl, 0, sizeof(Connection->ovl));
+        /* pipe is connected; change to message-read mode. */
+        dwMode = PIPE_READMODE_MESSAGE; 
+        SetNamedPipeHandleState(conn, &dwMode, NULL, NULL);
         Connection->ovl.hEvent = CreateEventA(NULL, TRUE, FALSE, NULL);
         Connection->conn = conn;
       }
@@ -288,12 +300,13 @@ RPC_STATUS RPCRT4_OpenConnection(RpcConnection* Connection)
         LPSTR pname;
         HANDLE conn;
         DWORD err;
+        DWORD dwMode;
 
         pname = HeapAlloc(GetProcessHeap(), 0, strlen(prefix) + strlen(Connection->Endpoint) + 1);
         strcat(strcpy(pname, prefix), Connection->Endpoint);
         TRACE("connecting to %s\n", pname);
         conn = CreateFileA(pname, GENERIC_READ|GENERIC_WRITE, 0, NULL,
-                           OPEN_EXISTING, FILE_FLAG_OVERLAPPED, 0);
+                           OPEN_EXISTING, 0, 0);
         if (conn == INVALID_HANDLE_VALUE) {
           err = GetLastError();
           /* we don't need to handle ERROR_PIPE_BUSY here,
@@ -309,6 +322,9 @@ RPC_STATUS RPCRT4_OpenConnection(RpcConnection* Connection)
         /* success */
         HeapFree(GetProcessHeap(), 0, pname);
         memset(&Connection->ovl, 0, sizeof(Connection->ovl));
+        /* pipe is connected; change to message-read mode. */
+        dwMode = PIPE_READMODE_MESSAGE;
+        SetNamedPipeHandleState(conn, &dwMode, NULL, NULL);
         Connection->ovl.hEvent = CreateEventA(NULL, TRUE, FALSE, NULL);
         Connection->conn = conn;
       } else {
@@ -484,18 +500,100 @@ RPC_STATUS RPCRT4_DestroyBinding(RpcBinding* Binding)
   return RPC_S_OK;
 }
 
-RPC_STATUS RPCRT4_OpenBinding(RpcBinding* Binding, RpcConnection** Connection)
+RPC_STATUS RPCRT4_OpenBinding(RpcBinding* Binding, RpcConnection** Connection,
+                              PRPC_SYNTAX_IDENTIFIER TransferSyntax,
+                              PRPC_SYNTAX_IDENTIFIER InterfaceId)
 {
   RpcConnection* NewConnection;
-  TRACE("(Binding == ^%p)\n", Binding);
-  if (Binding->FromConn) {
-    *Connection = Binding->FromConn;
-    return RPC_S_OK;
-  }
+  RPC_STATUS status;
 
+  TRACE("(Binding == ^%p)\n", Binding);
+
+  /* if we try to bind a new interface and the connection is already opened,
+   * close the current connection and create a new with the new binding. */ 
+  if (!Binding->server && Binding->FromConn &&
+      memcmp(&Binding->FromConn->ActiveInterface, InterfaceId,
+             sizeof(RPC_SYNTAX_IDENTIFIER))) {
+    RPCRT4_ReleaseConnection(Binding->FromConn);
+    Binding->FromConn = NULL;
+  } else {
+    /* we already have an connection with acceptable binding, so use it */
+    if (Binding->FromConn) {
+      *Connection = Binding->FromConn;
+      return RPC_S_OK;
+    }
+  }
+  
+  /* create a new connection */
   RPCRT4_GetConnection(&NewConnection, Binding->server, Binding->Protseq, Binding->NetworkAddr, Binding->Endpoint, NULL, Binding);
   *Connection = NewConnection;
-  return RPCRT4_OpenConnection(NewConnection);
+  status = RPCRT4_OpenConnection(NewConnection);
+  if (status != RPC_S_OK) {
+    return status;
+  }
+
+  /* we need to send a binding packet if we are client. */
+  if (!(*Connection)->server) {
+    RpcPktHdr *hdr;
+    DWORD count;
+    BYTE *response;
+    RpcPktHdr *response_hdr;
+
+    TRACE("sending bind request to server\n");
+
+    hdr = RPCRT4_BuildBindHeader(NDR_LOCAL_DATA_REPRESENTATION,
+                                 RPC_MAX_PACKET_SIZE, RPC_MAX_PACKET_SIZE,
+                                 InterfaceId, TransferSyntax);
+
+    status = RPCRT4_Send(*Connection, hdr, NULL, 0);
+    if (status != RPC_S_OK) {
+      RPCRT4_ReleaseConnection(*Connection);
+      return status;
+    }
+
+    response = HeapAlloc(GetProcessHeap(), 0, RPC_MAX_PACKET_SIZE);
+    if (response == NULL) {
+      WARN("Can't allocate memory for binding response\n");
+      RPCRT4_ReleaseConnection(*Connection);
+      return E_OUTOFMEMORY;
+    }
+
+    /* get a reply */
+    if (!ReadFile(NewConnection->conn, response, RPC_MAX_PACKET_SIZE, &count, NULL)) {
+      WARN("ReadFile failed with error %ld\n", GetLastError());
+      RPCRT4_ReleaseConnection(*Connection);
+      return RPC_S_PROTOCOL_ERROR;
+    }
+
+    if (count < sizeof(response_hdr->common)) {
+      WARN("received invalid header\n");
+      RPCRT4_ReleaseConnection(*Connection);
+      return RPC_S_PROTOCOL_ERROR;
+    }
+
+    response_hdr = (RpcPktHdr*)response;
+
+    if (response_hdr->common.rpc_ver != RPC_VER_MAJOR ||
+        response_hdr->common.rpc_ver_minor != RPC_VER_MINOR ||
+        response_hdr->common.ptype != PKT_BIND_ACK) {
+      WARN("invalid protocol version or rejection packet\n");
+      RPCRT4_ReleaseConnection(Binding->FromConn);
+      return RPC_S_PROTOCOL_ERROR;
+    }
+
+    if (response_hdr->bind_ack.max_tsize < RPC_MIN_PACKET_SIZE) {
+      WARN("server doesn't allow large enough packets\n");
+      RPCRT4_ReleaseConnection(Binding->FromConn);
+      return RPC_S_PROTOCOL_ERROR;
+    }
+
+    /* FIXME: do more checks? */
+
+    (*Connection)->MaxTransmissionSize = response_hdr->bind_ack.max_tsize;
+    (*Connection)->ActiveInterface = *InterfaceId;
+  }
+
+  return RPC_S_OK;
 }
 
 RPC_STATUS RPCRT4_CloseBinding(RpcBinding* Binding, RpcConnection* Connection)

@@ -33,6 +33,9 @@ typedef struct _RpcConnection
   LPSTR Endpoint;
   HANDLE conn, thread;
   OVERLAPPED ovl;
+  USHORT MaxTransmissionSize;
+  /* The active interface bound to server. */
+  RPC_SYNTAX_IDENTIFIER ActiveInterface;
 } RpcConnection;
 
 /* don't know what MS's structure looks like */
@@ -42,7 +45,6 @@ typedef struct _RpcBinding
   struct _RpcBinding* Next;
   BOOL server;
   UUID ObjectUuid;
-  UUID ActiveUuid;
   LPSTR Protseq;
   LPSTR NetworkAddr;
   LPSTR Endpoint;
@@ -75,7 +77,7 @@ RPC_STATUS RPCRT4_SetBindingObject(RpcBinding* Binding, UUID* ObjectUuid);
 RPC_STATUS RPCRT4_MakeBinding(RpcBinding** Binding, RpcConnection* Connection);
 RPC_STATUS RPCRT4_ExportBinding(RpcBinding** Binding, RpcBinding* OldBinding);
 RPC_STATUS RPCRT4_DestroyBinding(RpcBinding* Binding);
-RPC_STATUS RPCRT4_OpenBinding(RpcBinding* Binding, RpcConnection** Connection);
+RPC_STATUS RPCRT4_OpenBinding(RpcBinding* Binding, RpcConnection** Connection, PRPC_SYNTAX_IDENTIFIER TransferSyntax, PRPC_SYNTAX_IDENTIFIER InterfaceId);
 RPC_STATUS RPCRT4_CloseBinding(RpcBinding* Binding, RpcConnection* Connection);
 BOOL RPCRT4_RPCSSOnDemandCall(PRPCSS_NP_MESSAGE msg, char *vardata_payload, PRPCSS_NP_REPLY reply);
 HANDLE RPCRT4_GetMasterMutex(void);
