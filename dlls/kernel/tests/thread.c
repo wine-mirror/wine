@@ -86,8 +86,9 @@ typedef struct {
    that the thread local storage routines work correctly, and that
    threads actually run concurrently
 */
-VOID WINAPI threadFunc1(t1Struct *tstruct)
+DWORD WINAPI threadFunc1(LPVOID p)
 {
+    t1Struct *tstruct = (t1Struct *)p;
    int i;
 /* write our thread # into shared memory */
    tstruct->threadmem[tstruct->threadnum]=GetCurrentThreadId();
@@ -107,34 +108,36 @@ VOID WINAPI threadFunc1(t1Struct *tstruct)
 /* Check that noone cahnged our tls memory */
    ok((int)TlsGetValue(tlsIndex)-1==tstruct->threadnum,
       "TlsGetValue failed\n");
-   ExitThread(NUM_THREADS+tstruct->threadnum);
+   return NUM_THREADS+tstruct->threadnum;
 }
 
-VOID WINAPI threadFunc2()
+DWORD WINAPI threadFunc2(LPVOID p)
 {
-   ExitThread(99);
+   return 99;
 }
 
-VOID WINAPI threadFunc3()
+DWORD WINAPI threadFunc3(LPVOID p)
 {
    HANDLE thread;
    thread=GetCurrentThread();
    SuspendThread(thread);
-   ExitThread(99);
+   return 99;
 }
 
-VOID WINAPI threadFunc4(HANDLE event)
+DWORD WINAPI threadFunc4(LPVOID p)
 {
+    HANDLE event = (HANDLE)p;
    if(event != NULL) {
      SetEvent(event);
    }
    Sleep(99000);
-   ExitThread(0);
+   return 0;
 }
 
 #if CHECK_STACK
-VOID WINAPI threadFunc5(DWORD *exitCode)
+DWORD WINAPI threadFunc5(LPVOID p)
 {
+  DWORD *exitCode = (DWORD *)p;
   SYSTEM_INFO sysInfo;
   sysInfo.dwPageSize=0;
   GetSystemInfo(&sysInfo);
@@ -147,7 +150,7 @@ VOID WINAPI threadFunc5(DWORD *exitCode)
      *exitCode=1;
    }
    __ENDTRY
-   ExitThread(0);
+   return 0;
 }
 #endif
 
@@ -179,7 +182,7 @@ VOID test_CreateThread_basic()
 
 /* Test that passing arguments to threads works okay */
   for(i=0;i<NUM_THREADS;i++) {
-    thread[i] = CreateThread(NULL,0,(LPTHREAD_START_ROUTINE)threadFunc1,
+    thread[i] = CreateThread(NULL,0,threadFunc1,
                              &tstruct[i],0,&threadid[i]);
     ok(thread[i]!=NULL,"Create Thread failed\n");
   }
@@ -220,7 +223,7 @@ VOID test_CreateThread_suspended()
   DWORD threadId;
   int error;
 
-  thread = CreateThread(NULL,0,(LPTHREAD_START_ROUTINE)threadFunc2,NULL,
+  thread = CreateThread(NULL,0,threadFunc2,NULL,
                         CREATE_SUSPENDED,&threadId);
   ok(thread!=NULL,"Create Thread failed\n");
 /* Check that the thread is suspended */
@@ -249,7 +252,7 @@ VOID test_SuspendThread()
   DWORD threadId,exitCode,error;
   int i;
 
-  thread = CreateThread(NULL,0,(LPTHREAD_START_ROUTINE)threadFunc3,NULL,
+  thread = CreateThread(NULL,0,threadFunc3,NULL,
                         0,&threadId);
   ok(thread!=NULL,"Create Thread failed\n");
 /* Check that the thread is suspended */
@@ -307,7 +310,7 @@ VOID test_TerminateThread()
   int i,error;
   i=0; error=0;
   event=CreateEventA(NULL,TRUE,FALSE,NULL);
-  thread = CreateThread(NULL,0,(LPTHREAD_START_ROUTINE)threadFunc4,
+  thread = CreateThread(NULL,0,threadFunc4,
                         (LPVOID)event, 0,&threadId);
   ok(thread!=NULL,"Create Thread failed\n");
 /* Terminate thread has a race condition in Wine.  If the thread is terminated
@@ -358,7 +361,7 @@ VOID test_CreateThread_stack()
      GetSystemInfo(&sysInfo);
      ok(sysInfo.dwPageSize>0,"GetSystemInfo should return a valid page size\n");
      thread = CreateThread(NULL,sysInfo.dwPageSize,
-                           (LPTHREAD_START_ROUTINE)threadFunc5,&exitCode,
+                           threadFunc5,&exitCode,
                            0,&threadId);
      ok(WaitForSingleObject(thread,5000)==WAIT_OBJECT_0,
         "TerminateThread didn't work\n");
@@ -461,7 +464,7 @@ VOID test_GetThreadTimes()
      DWORD threadId;
      int error;
 
-     thread = CreateThread(NULL,0,(LPTHREAD_START_ROUTINE)threadFunc2,NULL,
+     thread = CreateThread(NULL,0,threadFunc2,NULL,
                            CREATE_SUSPENDED,&threadId);
 
      ok(thread!=NULL,"Create Thread failed\n");

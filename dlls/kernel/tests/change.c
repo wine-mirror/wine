@@ -58,7 +58,7 @@ static HANDLE StartNotificationThread(LPCSTR path, BOOL subtree, DWORD flags)
     change = FindFirstChangeNotificationA(path, subtree, flags);
     ok(change != INVALID_HANDLE_VALUE, "FindFirstChangeNotification error: %ld\n", GetLastError());
 
-    thread = CreateThread(NULL, 0, (LPTHREAD_START_ROUTINE)NotificationThread, (LPVOID)change,
+    thread = CreateThread(NULL, 0, NotificationThread, (LPVOID)change,
                           0, &threadId);
     ok(thread != INVALID_HANDLE_VALUE, "CreateThread error: %ld\n", GetLastError());
 

@@ -453,8 +453,9 @@ static WIN16_SUBSYSTEM_TIB *allocate_win16_tib( TDB *pTask )
 }
 
 /* startup routine for a new 16-bit thread */
-static DWORD CALLBACK task_start( TDB *pTask )
+static DWORD CALLBACK task_start( LPVOID p )
 {
+    TDB *pTask = (TDB *)p;
     DWORD ret;
 
     NtCurrentTeb()->htask16 = pTask->hSelf;
@@ -480,7 +481,7 @@ HTASK16 TASK_SpawnTask( NE_MODULE *pModule, WORD cmdShow,
     TDB *pTask;
 
     if (!(pTask = TASK_Create( pModule, cmdShow, cmdline, len ))) return 0;
-    if (!(*hThread = CreateThread( NULL, 0, (LPTHREAD_START_ROUTINE)task_start, pTask, 0, NULL )))
+    if (!(*hThread = CreateThread( NULL, 0, task_start, pTask, 0, NULL )))
     {
         TASK_DeleteTask( pTask->hSelf );
         return 0;
