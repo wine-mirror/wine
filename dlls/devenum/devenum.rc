@@ -60,3 +60,12 @@ LANGUAGE LANG_PORTUGUESE, SUBLANG_DEFAULT
 	9  "Dispositivo padrão WaveOut"
 	10 "Dispositivo padrão MidiOut"
 }
+
+STRINGTABLE DISCARDABLE
+LANGUAGE LANG_GERMAN, SUBLANG_DEFAULT
+{
+	7  "Standard DirectSound"
+	8  "DirectSound: %s"
+	9  "Standard WaveOut - Gerät"
+	10 "Standard MidiOut - Gerät"
+}
