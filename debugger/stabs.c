@@ -1192,6 +1192,7 @@ static enum DbgInfoLoad DEBUG_ProcessElfFile(const char* filename,
 					     unsigned int load_offset,
 					     unsigned int* dyn_addr)
 {
+    static const unsigned char elf_signature[4] = { 0x7f, 'E', 'L', 'F' };
     enum DbgInfoLoad dil = DIL_ERROR;
     char*	addr = (char*)0xffffffff;
     int		fd = -1;
@@ -1229,7 +1230,7 @@ static enum DbgInfoLoad DEBUG_ProcessElfFile(const char* filename,
      * table.
      */
     ehptr = (Elf32_Ehdr*) addr;
-    if (memcmp( ehptr->e_ident, ELFMAG, SELFMAG )) goto leave;
+    if (memcmp( ehptr->e_ident, elf_signature, sizeof(elf_signature) )) goto leave;
 
     spnt = (Elf32_Shdr*) (addr + ehptr->e_shoff);
     shstrtab = (addr + spnt[ehptr->e_shstrndx].sh_offset);
