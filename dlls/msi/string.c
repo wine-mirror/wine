@@ -56,11 +56,14 @@ static int msistring_makehash( const WCHAR *str )
 {
     int hash = 0;
 
+    if (str==NULL)
+        return hash;
+
     while( *str )
     {
         hash ^= *str++;
         hash *= 53;
-        hash = (hash<<5) || (hash>>27);
+        hash = (hash<<5) | (hash>>27);
     }
     return hash;
 }
@@ -354,8 +357,9 @@ UINT msi_string2idW( string_table *st, LPCWSTR str, UINT *id )
     hash = msistring_makehash( str );
     for( i=0; i<st->maxcount; i++ )
     {
-        if( ( st->strings[i].hash == hash ) &&
-            !strcmpW( st->strings[i].str, str ) )
+        if ( (str == NULL && st->strings[i].str == NULL) || 
+            ( ( st->strings[i].hash == hash ) &&
+            !strcmpW( st->strings[i].str, str ) ))
         {
             r = ERROR_SUCCESS;
             *id = i;
