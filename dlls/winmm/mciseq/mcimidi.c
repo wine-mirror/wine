@@ -1435,7 +1435,7 @@ static DWORD MIDI_mciStatus(UINT wDevID, DWORD dwFlags, LPMCI_STATUS_PARMS lpPar
 	    break;
 	case MCI_SEQ_STATUS_PORT:
 	    TRACE("MCI_SEQ_STATUS_PORT (%u)!\n", wmm->wDevID);
-	    lpParms->dwReturn = wmm->wDevID;
+	    lpParms->dwReturn = MIDI_MAPPER;
 	    break;
 	case MCI_SEQ_STATUS_TEMPO:
 	    TRACE("MCI_SEQ_STATUS_TEMPO !\n");
