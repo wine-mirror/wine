@@ -1452,6 +1452,7 @@ LONG WINAPI RegLoadKeyW( HKEY hkey, LPCWSTR subkey, LPCWSTR filename )
 {
     HANDLE file;
     DWORD ret, len, err = GetLastError();
+    HKEY shkey;
 
     TRACE( "(%p,%s,%s)\n", hkey, debugstr_w(subkey), debugstr_w(filename) );
 
@@ -1469,15 +1470,18 @@ LONG WINAPI RegLoadKeyW( HKEY hkey, LPCWSTR subkey, LPCWSTR filename )
         goto done;
     }
 
+    RegCreateKeyW(hkey,subkey,&shkey);
+
     SERVER_START_REQ( load_registry )
     {
-        req->hkey  = hkey;
+        req->hkey  = shkey;
         req->file  = file;
         wine_server_add_data( req, subkey, len );
         ret = RtlNtStatusToDosError( wine_server_call(req) );
     }
     SERVER_END_REQ;
     CloseHandle( file );
+    RegCloseKey(shkey);
 
  done:
     SetLastError( err );  /* restore the last error code */
@@ -1493,6 +1497,7 @@ LONG WINAPI RegLoadKeyA( HKEY hkey, LPCSTR subkey, LPCSTR filename )
     WCHAR buffer[MAX_PATH];
     HANDLE file;
     DWORD ret, len, err = GetLastError();
+    HKEY shkey;
 
     TRACE( "(%p,%s,%s)\n", hkey, debugstr_a(subkey), debugstr_a(filename) );
 
@@ -1510,15 +1515,18 @@ LONG WINAPI RegLoadKeyA( HKEY hkey, LPCSTR subkey, LPCSTR filename )
         goto done;
     }
 
+    RegCreateKeyA(hkey,subkey,&shkey);
+
     SERVER_START_REQ( load_registry )
     {
-        req->hkey  = hkey;
+        req->hkey  = shkey;
         req->file  = file;
         wine_server_add_data( req, buffer, len * sizeof(WCHAR) );
         ret = RtlNtStatusToDosError( wine_server_call(req) );
     }
     SERVER_END_REQ;
     CloseHandle( file );
+    RegCloseKey(shkey);
 
  done:
     SetLastError( err );  /* restore the last error code */
