@@ -1110,6 +1110,11 @@ void WINAPI DOSVM_Int10Handler( CONTEXT86 *context )
         INT10_HandleVESA(context);
         break;
 
+    case 0xfe: /* GET SHADOW BUFFER */
+        TRACE( "GET SHADOW BUFFER %x:%x - ignored\n",
+               context->SegEs, DI_reg(context) );
+        break;
+
     default:
         FIXME("Unknown - 0x%x\n", AH_reg(context));
         INT_BARF( context, 0x10 );

@@ -283,11 +283,32 @@ static void VGA_DeinstallTimer(void)
 {
     if (VGA_timer_thread)
     {
+        /*
+         * Make sure the update thread is not holding
+         * system resources when we kill it.
+         *
+         * Now, we only need to worry about update thread
+         * getting terminated while in EnterCriticalSection 
+         * or WaitForMultipleObjectsEx.
+         *
+         * FIXME: Is this a problem?
+         */
+        EnterCriticalSection(&vga_lock);
+
         CancelWaitableTimer( VGA_timer );
         CloseHandle( VGA_timer );
         TerminateThread( VGA_timer_thread, 0 );
         CloseHandle( VGA_timer_thread );
         VGA_timer_thread = 0;
+
+        LeaveCriticalSection(&vga_lock);
+
+        /*
+         * Synchronize display. This makes sure that
+         * changes to display become visible even if program 
+         * terminates before update thread had time to run.
+         */
+        VGA_Poll( 0, 0, 0 );
     }
 }
 
