@@ -608,6 +608,7 @@ static Atom EVENT_SelectionRequest_TARGETS( Display *display, Window requestor,
     UINT wFormat;
     UINT alias;
     ULONG cTargets;
+    LPWINE_CLIPFORMAT lpFormat;
 
     /*
      * Count the number of items we wish to expose as selection targets.
@@ -617,9 +618,16 @@ static Atom EVENT_SelectionRequest_TARGETS( Display *display, Window requestor,
 
     for (wFormat = 0; (wFormat = X11DRV_EnumClipboardFormats(wFormat));)
     {
-        LPWINE_CLIPFORMAT lpFormat = X11DRV_CLIPBOARD_LookupFormat(wFormat);
-        if (lpFormat && X11DRV_CLIPBOARD_LookupPropertyAlias(lpFormat->drvData))
-            cTargets++;
+        lpFormat = X11DRV_CLIPBOARD_LookupFormat(wFormat);
+
+        if (lpFormat)
+        {
+            if (!lpFormat->lpDrvExportFunc)
+                cTargets--;
+
+            if (X11DRV_CLIPBOARD_LookupPropertyAlias(lpFormat->drvData))
+                cTargets++;
+        }
     }
 
     TRACE_(clipboard)(" found %ld formats\n", cTargets);
@@ -633,8 +641,9 @@ static Atom EVENT_SelectionRequest_TARGETS( Display *display, Window requestor,
     for (targets[0] = x11drv_atom(TARGETS), cTargets = 1, wFormat = 0;
           (wFormat = X11DRV_EnumClipboardFormats(wFormat));)
     {
-        LPWINE_CLIPFORMAT lpFormat = X11DRV_CLIPBOARD_LookupFormat(wFormat);
+        lpFormat = X11DRV_CLIPBOARD_LookupFormat(wFormat);
 
+        if (lpFormat->lpDrvExportFunc)
         EVENT_SelectionRequest_AddTARGETS(targets, &cTargets, lpFormat->drvData);
 
 	/* Check if any alias should be listed */
@@ -835,7 +844,7 @@ static void EVENT_SelectionRequest( HWND hWnd, XSelectionRequestEvent *event, BO
       if (!lpFormat)
           lpFormat = X11DRV_CLIPBOARD_LookupAliasProperty(event->target);
 
-      if (lpFormat)
+      if (lpFormat && lpFormat->lpDrvExportFunc)
       {
           LPWINE_CLIPDATA lpData = X11DRV_CLIPBOARD_LookupData(lpFormat->wFormatID);
 
@@ -848,7 +857,6 @@ static void EVENT_SelectionRequest( HWND hWnd, XSelectionRequestEvent *event, BO
 
               if (hClipData && (lpClipData = GlobalLock(hClipData)))
               {
-
                   TRACE_(clipboard)("\tUpdating property %s, %ld bytes\n",
                       lpFormat->Name, cBytes);
 

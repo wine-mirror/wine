@@ -435,6 +435,7 @@ enum x11drv_atoms
     XATOM_XdndSelection,
     XATOM_XdndTarget,
     XATOM_XdndTypeList,
+    XATOM_WCF_DIB,
     XATOM_image_gif,
     XATOM_text_html,
     XATOM_text_plain,
@@ -453,6 +454,7 @@ typedef struct tagWINE_CLIPDATA {
     UINT        wFormatID;
     HANDLE16    hData16;
     HANDLE      hData32;
+    UINT        drvData;
     UINT        wFlags;
     struct tagWINE_CLIPDATA *PrevData;
     struct tagWINE_CLIPDATA *NextData;
