@@ -132,7 +132,7 @@
 @ stub CryptMsgSignCTL
 @ stub CryptMsgUpdate
 @ stub CryptMsgVerifyCountersignatureEncoded
-@ stub CryptRegisterDefaultOIDFunction
+@ stdcall CryptRegisterDefaultOIDFunction(long str long wstr) CryptRegisterDefaultOIDFunction
 @ stdcall CryptRegisterOIDFunction(long str str wstr str) CryptRegisterOIDFunction
 @ stub CryptRegisterOIDInfo
 @ stdcall CryptSIPAddProvider(ptr) CryptSIPAddProvider

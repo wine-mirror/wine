@@ -86,6 +86,15 @@ BOOL WINAPI CryptGetOIDFunctionValue(DWORD dwEncodingType, LPCSTR pszFuncName,
     return FALSE;
 }
 
+BOOL WINAPI CryptRegisterDefaultOIDFunction(DWORD dwEncodingType,
+                                     LPCSTR pszFuncName, DWORD dwIndex,
+				     LPCWSTR pwszDll)
+{
+    FIXME("(%lx,%s,%lx,%s) stub!\n", dwEncodingType, pszFuncName, dwIndex,
+          debugstr_w(pwszDll));
+    return FALSE;
+}
+
 BOOL WINAPI CryptRegisterOIDFunction(DWORD dwEncodingType, LPCSTR pszFuncName,
                                      LPCSTR pszOID, LPCWSTR pwszDll, LPCSTR pszOverrideFuncName)
 {
