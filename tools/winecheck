@@ -36,6 +36,7 @@ my $hold = 0;
 
 my $count_tests = 0;
 my $count_ok = 0;
+my $count_notice = 0;
 my $count_suspect = 0;
 my $count_bad = 0;
 my $count_critical = 0;
@@ -43,10 +44,11 @@ my $count_failed = 0;
 
 my $is_notchecked = 0;
 my $is_ok = 1;
-my $is_suspect = 2;
-my $is_bad = 3;
-my $is_critical = 4;
-my $is_failed = 5;
+my $is_notice = 2;
+my $is_suspect = 3;
+my $is_bad = 4;
+my $is_critical = 5;
+my $is_failed = 6;
 
 my $factor_suspect = 0.995;
 my $factor_bad = 0.95;
@@ -133,6 +135,11 @@ sub Do_PrintResult {
     $advice = "";
     $count_ok++;
   }
+  elsif ($level == $is_notice)
+  {
+    $err = "NOTICE";
+    $count_notice++;
+  }
   elsif ($level == $is_suspect)
   {
     $err = "SUSPICIOUS";
@@ -196,6 +203,7 @@ sub Introduction {
   print "Note that this is an ALPHA version, and thus it doesn't catch all problems !\n";
   print "The results of the checks are printed on the right side:\n";
   print "OK         - test passed without problems.\n";
+  print "NOTICE	    - Not a problem but something for the user to be aware of.\n"; 
   print "SUSPICIOUS - potentially problematic. You might want to look into that.\n";
   print "BAD        - This is a problem, and it leads to configuration score penalty.\n";
   print "CRITICAL   - A critical problem which can easily lead to malfunction.\n";
@@ -607,7 +615,7 @@ sub Check_Registry {
   }
   else
   {
-    Do_PrintResult($is_critical, "entry \"Default Taskbar\" not found", "Windows registry does not seem to be added to Wine, as this typical Windows registry entry does not exist in Wine's registry. This can affect many newer programs. A complete original Windows registry entry set will *not* be available with a no-windows install, of course, so you'll have to live with that.");
+    Do_PrintResult($is_notice, "entry \"Default Taskbar\" not found", "A Windows registry does not seem to have been added to Wine as this typical Windows registry entry does not exist in Wine's registry.  A complete original Windows registry entry set will *not* be available with a no-windows install. Usually this will present no problem in running applications although this can affect newer programs");
   }
   @entries = ();
 }
