@@ -128,8 +128,8 @@ static WCHAR const mediatype_name[11] = {
     'M', 'e', 'd', 'i', 'a', ' ', 'T', 'y', 'p', 'e', 0 };
 static WCHAR const subtype_valuename[8] = {
     'S', 'u', 'b', 't', 'y', 'p', 'e', 0 };
-static WCHAR const filesource_valuename[12] = {
-    'F', 'i', 'l', 'e', ' ', 'S', 'o', 'u', 'r', 'c', 'e', 0 };
+static WCHAR const sourcefilter_valuename[14] = {
+    'S', 'o', 'u', 'r', 'c', 'e', ' ', 'F', 'i', 'l', 't', 'e', 'r', 0 };
 static WCHAR const extensions_keyname[11] = {
     'E', 'x', 't', 'e', 'n', 's', 'i', 'o', 'n', 's', 0 };
 
@@ -391,7 +391,7 @@ static HRESULT register_mediatypes_parsing(struct regsvr_mediatype_parsing const
 	if (res != ERROR_SUCCESS) goto error_close_keys;
 
 	StringFromGUID2(&CLSID_AsyncReader, buf, 39);
-	res = RegSetValueExW(subtype_key, filesource_valuename, 0, REG_SZ, (CONST BYTE*)buf,
+	res = RegSetValueExW(subtype_key, sourcefilter_valuename, 0, REG_SZ, (CONST BYTE*)buf,
 			     (lstrlenW(buf) + 1) * sizeof(WCHAR));
 	if (res != ERROR_SUCCESS) goto error_close_keys;
 
@@ -451,7 +451,7 @@ static HRESULT register_mediatypes_extension(struct regsvr_mediatype_extension c
 	if (res != ERROR_SUCCESS) goto error_close_key;
 
 	StringFromGUID2(&CLSID_AsyncReader, buf, 39);
-	res = RegSetValueExW(extension_key, filesource_valuename, 0, REG_SZ, (CONST BYTE*)buf,
+	res = RegSetValueExW(extension_key, sourcefilter_valuename, 0, REG_SZ, (CONST BYTE*)buf,
 			     (lstrlenW(buf) + 1) * sizeof(WCHAR));
 	if (res != ERROR_SUCCESS) goto error_close_key;
 
@@ -721,7 +721,7 @@ static struct regsvr_coclass const coclass_list[] = {
 	"Both"
     },
     {   &CLSID_FilterMapper2,
-	"Filter Mapper 2",
+	"Filter Mapper2",
 	NULL,
 	"quartz.dll",
 	"Both"
@@ -757,7 +757,7 @@ static struct regsvr_coclass const coclass_list[] = {
 	"Both"
     },
     {   &CLSID_DSoundRender,
-	"Direct Sound Audio Renderer",
+	"DirectSound Audio Renderer",
 	NULL,
 	"quartz.dll",
 	"Both"
@@ -791,7 +791,7 @@ static struct regsvr_mediatype_parsing const mediatype_parsing_list[] = {
     },
     {	&MEDIATYPE_Stream,
 	&MEDIASUBTYPE_MPEG1System,
-	{   "0, 16, FFFFFFFFF100010001800001FFFFFFFF, 000001BA2100010001800001000001BBA",
+	{   "0, 16, FFFFFFFFF100010001800001FFFFFFFF, 000001BA2100010001800001000001BB",
 	    NULL }
     },
     {	&MEDIATYPE_Stream,
