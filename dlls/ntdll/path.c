@@ -499,7 +499,7 @@ static ULONG get_full_path_helper(LPCWSTR name, LPWSTR buffer, ULONG size)
                         /* either collapse \foo\.. into \ or \.. into \ */
                         if (prev < buffer + mark) prev = p - 1;
                         reqsize -= (p + 2 - prev) * sizeof(WCHAR);
-                        memmove(prev, p + 2, buffer + reqsize - prev + sizeof(WCHAR));
+                        memmove(prev, p + 2, reqsize + sizeof(WCHAR) - (prev - buffer) * sizeof(WCHAR));
                         p = prev;
                     }
                     break;
@@ -511,7 +511,7 @@ static ULONG get_full_path_helper(LPCWSTR name, LPWSTR buffer, ULONG size)
                 break;
             case '\\':
                 reqsize -= 2 * sizeof(WCHAR);
-                memmove(ptr, ptr + 2, buffer + reqsize - ptr + sizeof(WCHAR));
+                memmove(p, p + 2, reqsize + sizeof(WCHAR) - (p - buffer) * sizeof(WCHAR));
                 break;
             }
         }
