@@ -379,7 +379,15 @@ static void RDW_ValidateParent(WND *wndChild)
                 ptOffset.x = rect.left - rectParent.left;
                 ptOffset.y = rect.top - rectParent.top;
                 OffsetRgn( hrg, ptOffset.x, ptOffset.y );
-                CombineRgn( wndParent->hrgnUpdate, wndParent->hrgnUpdate, hrg, RGN_DIFF );
+                if (CombineRgn( wndParent->hrgnUpdate, wndParent->hrgnUpdate, hrg, RGN_DIFF ) == NULLREGION)
+                {
+                    /* the update region has become empty */
+                    DeleteObject( wndParent->hrgnUpdate );
+                    wndParent->hrgnUpdate = 0;
+                    wndParent->flags &= ~WIN_NEEDS_ERASEBKGND;
+                    if( !(wndParent->flags & WIN_INTERNAL_PAINT) )
+                        add_paint_count( wndParent->hwndSelf, -1 );
+                }
                 OffsetRgn( hrg, -ptOffset.x, -ptOffset.y );
             }
         }
