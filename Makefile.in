@@ -190,8 +190,10 @@ uninstall_lib: uninstall_includes
 	$(RM) $(libdir)/wine.sym
 
 install_includes: dummy
-	[ -d $(includedir) ] || $(MKDIR) $(includedir)
-	cd $(TOPSRCDIR)/include; $(INSTALL_DATA) windows.h wintypes.h $(includedir)
+# Testing LIB_TARGET prevents installing header files
+# when --disable-lib is used.
+	if [ $(LIB_TARGET) ]; then [ -d $(includedir) ] || $(MKDIR) $(includedir); \
+	cd $(TOPSRCDIR)/include; $(INSTALL_DATA) windows.h wintypes.h $(includedir); fi
 
 # Don't just do a rm -rf on $(includedir) -- don't want to wipe out 
 # anything extra the user may have put there.
