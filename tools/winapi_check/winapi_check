@@ -91,10 +91,10 @@ my %includes;
 		my $header = $1;
 		if(-e "$file_dir/$header") {
 		    $includes{$file}{includes}{"$file_dir/$header"}++;
-		} elsif(-e "include/$header") {
+		} elsif(-e "$wine_dir/include/$header") {
 		    $includes{$file}{includes}{"include/$header"}++;
-		} else {
-		    $output->write("$file: #include \"$header\" is not a local include\n");
+		} else {		   
+		    $output->write("$file: #include \"$header\" is not a local include ($file_dir)\n");
 		}
 	    }
 	}
@@ -138,6 +138,7 @@ foreach my $file ($options->files) {
     
     my $found_function = sub {
 	my $documentation = shift;
+	my $linkage = shift;
 	my $return_type = shift;
 	my $calling_convention = shift;
 	my $name = shift;
@@ -165,6 +166,7 @@ foreach my $file ($options->files) {
 	    $functions{$name} = $function;
 	   
  	    $function->documentation($documentation);
+	    $function->linkage($linkage);
 	    $function->file($file);
 	    $function->return_type($return_type); 
 	    $function->calling_convention($calling_convention);
@@ -234,25 +236,72 @@ foreach my $file ($options->files) {
 		}
 	    }
 	    
-	    if($options->documentation && (defined($module16) || defined($module32))) {
-		my $name2 = $name;
-		my $name3 = $name;
-		my $name4 = $name;
-		my $name5 = $name;
+	    if($options->documentation && (defined($module16) || defined($module32)) && 
+	       $linkage ne "extern" && $statements ne "") 
+	    {		
+		my $name1;
+		my $name2;
+		my $name3;
+		my $name4;
+		my $name5;
 
 		if(defined($module16) && !defined($module32)) {
+		    my @uc_modules16 = split(/\s*\&\s*/, uc($module16));
+		    push @uc_modules16, "WIN16";
+
+		    $name1 = $name;
+		    foreach my $uc_module16 (@uc_modules16) {
+			if($name1 =~ s/^$uc_module16\_//) { last; }
+		    }
+
+		    $name2 = $name1;
 		    $name2 =~ s/([AW])$/16$1/;
-		    $name3 =~ s/16(([AW])?)$/$1/;		    
-		    $name4 =~ s/^\U$module16\E\_//;
-		    $name5 =~ s/^WIN16_//;
+
+		    $name3 = $name1;
+		    $name3 =~ s/16(([AW])?)$/$1/;
+
+		    $name4 = $name1;
+		    $name4 =~ s/^(.*?)(?:16)?$/\U$1\E/;
+
+		    $name5 = $name1;
+		    $name5 = s/^(.*?)16_fn(.*?)$/$116_$2/;
 		} elsif(!defined($module16) && defined($module32)) {
+		    my @uc_modules32 = split(/\s*\&\s*/, uc($module32));
+
+		    $name1 = $name;
+		    foreach my $uc_module32 (@uc_modules32) {
+			if($name1 =~ s/^$uc_module32\_//) { last; }
+		    }
+
+		    $name2 = $name1;
 		    $name2 =~ s/([AW])$/32$1/;
+
+		    $name3 = $name1;
 		    $name3 =~ s/32(([AW])?)$/$1/;
-		    $name4 =~ s/^\U$module32\E\_//;
-		    $name5 =~ s/^WIN16_//;
+
+		    $name4 = $name1;
+		    $name4 =~ s/AW$//;
+
+		    $name5 = $name1;
+		} else {
+		    my @uc_modules = split(/\s*\&\s*/, uc($module16));
+		    push @uc_modules, split(/\s*\&\s*/, uc($module32));
+
+		    $name1 = $name;
+		    foreach my $uc_module (@uc_modules) {
+			if($name1 =~ s/^$uc_module\_//) { last; }
+		    }
+
+		    $name2 = $name1;
+
+		    $name3 = $name1;
+
+		    $name4 = $name1;
+
+		    $name5 = $name1;
 		}
 
-		if($name !~ /^SMapLS|SUnMapLS/ && $documentation !~ /($name|$name2|$name3|$name4|$name5)/) {
+		if($name !~ /^SMapLS|SUnMapLS/ && $documentation !~ /($name|$name1|$name2|$name3|$name4|$name5)/) {
 		    $output->write("$file: $name: \\\n");
 		    $output->write("$documentation\n");
 		}	       
@@ -313,7 +362,9 @@ foreach my $file ($options->files) {
 
 		if($check_protection) {
 		    if((-e "$wine_dir/include/$header" || -e "$file_dir/$header")) {
-			$output->write("$file: #include \<$header\> is a local include\n");
+			if($header !~ /^ctype.h$/) {
+			    $output->write("$file: #include \<$header\> is a local include\n");
+			}
 		    }
 
 		    my $macro = uc($header);

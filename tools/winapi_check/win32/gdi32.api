@@ -24,7 +24,7 @@ LPARAM
 UINT
 WORD
 
-%long # --forbidden
+%long --forbidden
 
 int
 

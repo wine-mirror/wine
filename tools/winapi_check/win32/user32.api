@@ -27,6 +27,7 @@ HMONITOR
 HRESULT
 HRGN
 HSZ
+HTASK
 HWINSTA
 HWND
 INT
@@ -39,10 +40,9 @@ WCHAR
 WORD
 WPARAM
 
-%long # --forbidden
+%long --forbidden
 
 HMODULE16
-HTASK
 int
 
 %longlong

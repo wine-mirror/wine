@@ -175,7 +175,11 @@ sub new {
 
     @$files = map {
 	s/^.\/(.*)$/$1/;
-	$_; 
+	if(!/spec\.c$/) {
+	    $_;
+	} else {
+	    ();
+	}
     } split(/\n/, `find $paths -name \\*.c`);
 
     return $self;

@@ -33,6 +33,17 @@ sub documentation {
     return $$documentation;
 }
 
+sub linkage {
+    my $self = shift;
+    my $linkage = \${$self->{LINKAGE}};
+
+    local $_ = shift;
+
+    if(defined($_)) { $$linkage = $_; }
+    
+    return $$linkage;
+}
+
 sub return_type {
     my $self = shift;
     my $return_type = \${$self->{RETURN_TYPE}};

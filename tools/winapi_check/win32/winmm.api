@@ -12,6 +12,7 @@ HMIXER
 HMIXEROBJ
 HMMIO
 HMODULE
+HTASK
 HWAVEIN
 HWAVEOUT
 HWND
@@ -22,10 +23,9 @@ LPARAM
 LRESULT
 UINT
 
-%long # --forbidden
+%long --forbidden
 
 HMMIO16
-HTASK
 UINT16
 
 %ptr
