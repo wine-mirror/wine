@@ -2699,21 +2699,6 @@ with the <literal>GraphicsDriver</literal> option in the
       </listitem>
     </varlistentry>
     <varlistentry>
-      <term>UseXShm</term>
-      <listitem>
-	<para>
-	  If you don't want DirectX to use DGA, you can at least
-	  use X Shared Memory extensions (XShm). It is much
-	  slower than DGA, since the app doesn't have direct
-	  access to the physical frame buffer, but using shared
-	  memory to draw the frame is at least faster than
-	  sending the data through the standard X11 socket, even
-	  though Wine's XShm support is still known to crash
-	  sometimes.
-	</para>
-      </listitem>
-    </varlistentry>
-    <varlistentry>
       <term>DesktopDoubleBuffered</term>
       <listitem>
 	<para>

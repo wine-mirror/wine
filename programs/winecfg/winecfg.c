@@ -209,12 +209,10 @@ int loadConfig (WINECFG_DESC* pCfg)
     pCfg->sX11Drv.nDesktopSizeX = 640;
     pCfg->sX11Drv.nDesktopSizeY = 480;
     pCfg->sX11Drv.nDGA = 1;
-    pCfg->sX11Drv.nXShm = 1;
     pCfg->sX11Drv.nXVidMode = 1;
     pCfg->sX11Drv.nTakeFocus = 1;
     pCfg->sX11Drv.nDXGrab = 0;
     pCfg->sX11Drv.nDoubleBuffered = 0;
-    pCfg->sX11Drv.nXVideoPort = 43;
     pCfg->sX11Drv.nSynchronous = 1;
     
     RegCloseKey( hSession );

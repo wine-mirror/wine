@@ -1033,11 +1033,6 @@ die folgenden Programme und Dateien installiert sein:
           unterstützt, ist es oft erforderlich, den X-Server in der
           benötigten Farbtiefe zu starten, bevor WINE gestartet wird.
           
-   UseXShm
-          Hierbei handelt es sich um eine andere Erweiterung des X
-          Window Systems, die schnellere Graphikoperationen
-          ermöglicht.  Beispiel: "UseXShm" = "true".
-          
    DXGrab
           Diese Option bewirkt, dass der Mauszeiger - bei der
           Verwendung von DirectDraw (DirectX) - das von DirectDraw

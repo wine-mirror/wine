@@ -63,12 +63,10 @@ typedef struct
     int    nDesktopSizeX;
     int    nDesktopSizeY;
     int    nDGA;
-    int    nXShm;
     int    nXVidMode;
     int    nTakeFocus;
     int    nDXGrab;
     int    nDoubleBuffered;
-    int    nXVideoPort;
     int    nSynchronous;
 } X11DRV_DESC;
 
