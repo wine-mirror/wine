@@ -121,7 +121,7 @@ void TaskManager_OnOptionsShow16BitTasks(void)
 
     /*
      * FIXME: Currently this is useless because the
-     * current implemetation doesn't list the 16-bit
+     * current implementation doesn't list the 16-bit
      * processes. I believe that would require querying
      * each ntvdm.exe process for it's children.
      */

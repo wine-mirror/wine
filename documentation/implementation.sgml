@@ -434,7 +434,7 @@ cat log | shrink &gt; log2
 XXXX &gt; YY @ ZZZZ:ZZZZ
       </programlisting>
       <para>
-        where <literal>XXXX</literal> is the port in hexidecimal being
+        where <literal>XXXX</literal> is the port in hexadecimal being
         accessed, <literal>YY</literal> is the data written (or read)
         from the port, and <literal>ZZZZ:ZZZZ</literal> is the address
         in memory of the instruction that accessed the port. The

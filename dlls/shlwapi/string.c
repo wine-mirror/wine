@@ -710,10 +710,10 @@ int WINAPI StrToIntW(LPCWSTR lpszStr)
  *
  * NOTES
  *  Leading whitespace, '-' and '+' are allowed before the number. If
- *  dwFlags includes STIF_SUPPORT_HEX, hexidecimal numbers are allowed, if
+ *  dwFlags includes STIF_SUPPORT_HEX, hexadecimal numbers are allowed, if
  *  preceeded by '0x'. If this flag is not set, or there is no '0x' prefix,
  *  the string is treated as a decimal string. A leading '-' is ignored for
- *  hexidecimal numbers.
+ *  hexadecimal numbers.
  */
 BOOL WINAPI StrToIntExA(LPCSTR lpszStr, DWORD dwFlags, LPINT lpiRet)
 {
