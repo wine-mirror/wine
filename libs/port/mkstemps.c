@@ -17,6 +17,7 @@
    Boston, MA 02111-1307, USA.  */
 
 #include "config.h"
+#include "wine/port.h"
 
 #include <sys/types.h>
 #include <stdlib.h>
@@ -29,6 +30,9 @@
 #endif
 #ifdef HAVE_SYS_TIME_H
 #include <sys/time.h>
+#endif
+#ifdef HAVE_PROCESS_H
+#include <process.h>
 #endif
 
 /* We need to provide a type for gcc_uint64_t.  */
