@@ -65,6 +65,7 @@ struct window
     atom_t           atom;            /* class atom */
     user_handle_t    last_active;     /* last active popup */
     rectangle_t      window_rect;     /* window rectangle (relative to parent client area) */
+    rectangle_t      visible_rect;    /* visible part of window rect (relative to parent client area) */
     rectangle_t      client_rect;     /* client rectangle (relative to parent client area) */
     struct region   *win_region;      /* region for shaped windows (relative to window rect) */
     struct region   *update_region;   /* update region (relative to window rect) */
@@ -443,8 +444,8 @@ static inline int is_point_in_window( struct window *win, int x, int y )
         return 0;  /* disabled child */
     if ((win->ex_style & (WS_EX_LAYERED|WS_EX_TRANSPARENT)) == (WS_EX_LAYERED|WS_EX_TRANSPARENT))
         return 0;  /* transparent */
-    if (x < win->window_rect.left || x >= win->window_rect.right ||
-        y < win->window_rect.top || y >= win->window_rect.bottom)
+    if (x < win->visible_rect.left || x >= win->visible_rect.right ||
+        y < win->visible_rect.top || y >= win->visible_rect.bottom)
         return 0;  /* not in window */
     if (win->win_region &&
         !point_in_region( win->win_region, x - win->window_rect.left, y - win->window_rect.top ))
@@ -629,7 +630,7 @@ static struct region *clip_children( struct window *parent, struct window *last,
         if (ptr == last) break;
         if (!(ptr->style & WS_VISIBLE)) continue;
         if (ptr->ex_style & WS_EX_TRANSPARENT) continue;
-        set_region_rect( tmp, &ptr->window_rect );
+        set_region_rect( tmp, &ptr->visible_rect );
         if (ptr->win_region && !intersect_window_region( tmp, ptr ))
         {
             free_region( tmp );
@@ -689,7 +690,7 @@ static struct region *get_visible_region( struct window *win, unsigned int flags
     }
     else if (flags & DCX_WINDOW)
     {
-        set_region_rect( region, &win->window_rect );
+        set_region_rect( region, &win->visible_rect );
         if (win->win_region && !intersect_window_region( region, win )) goto error;
         offset_x = win->window_rect.left;
         offset_y = win->window_rect.top;
@@ -1067,10 +1068,12 @@ static void expose_window( struct window *win, struct region *region )
 /* set the window and client rectangles, updating the update region if necessary */
 static void set_window_pos( struct window *win, struct window *previous,
                             unsigned int swp_flags, const rectangle_t *window_rect,
-                            const rectangle_t *client_rect, const rectangle_t *valid_rects )
+                            const rectangle_t *client_rect, const rectangle_t *visible_rect,
+                            const rectangle_t *valid_rects )
 {
     struct region *old_vis_rgn = NULL, *new_vis_rgn;
     const rectangle_t old_window_rect = win->window_rect;
+    const rectangle_t old_visible_rect = win->visible_rect;
     const rectangle_t old_client_rect = win->client_rect;
     int visible = (win->style & WS_VISIBLE) || (swp_flags & SWP_SHOWWINDOW);
 
@@ -1080,8 +1083,9 @@ static void set_window_pos( struct window *win, struct window *previous,
 
     /* set the new window info before invalidating anything */
 
-    win->window_rect = *window_rect;
-    win->client_rect = *client_rect;
+    win->window_rect  = *window_rect;
+    win->visible_rect = *visible_rect;
+    win->client_rect  = *client_rect;
     if (!(swp_flags & SWP_NOZORDER)) link_window( win, win->parent, previous );
     if (swp_flags & SWP_SHOWWINDOW) win->style |= WS_VISIBLE;
     else if (swp_flags & SWP_HIDEWINDOW) win->style &= ~WS_VISIBLE;
@@ -1120,6 +1124,7 @@ static void set_window_pos( struct window *win, struct window *previous,
 
     if ((swp_flags & SWP_FRAMECHANGED) ||
         memcmp( window_rect, &old_window_rect, sizeof(old_window_rect) ) ||
+        memcmp( visible_rect, &old_visible_rect, sizeof(old_visible_rect) ) ||
         memcmp( client_rect, &old_client_rect, sizeof(old_client_rect) ))
     {
         struct region *tmp = create_empty_region();
@@ -1426,7 +1431,7 @@ DECL_HANDLER(get_window_tree)
 /* set the position and Z order of a window */
 DECL_HANDLER(set_window_pos)
 {
-    const rectangle_t *valid_rects = NULL;
+    const rectangle_t *visible_rect = NULL, *valid_rects = NULL;
     struct window *previous = NULL;
     struct window *win = get_window( req->handle );
     unsigned int flags = req->flags;
@@ -1464,9 +1469,11 @@ DECL_HANDLER(set_window_pos)
         return;
     }
 
-    if (get_req_data_size() >= 2 * sizeof(rectangle_t)) valid_rects = get_req_data();
+    if (get_req_data_size() >= sizeof(rectangle_t)) visible_rect = get_req_data();
+    if (get_req_data_size() >= 3 * sizeof(rectangle_t)) valid_rects = visible_rect + 1;
 
-    set_window_pos( win, previous, flags, &req->window, &req->client, valid_rects );
+    if (!visible_rect) visible_rect = &req->window;
+    set_window_pos( win, previous, flags, &req->window, &req->client, visible_rect, valid_rects );
     reply->new_style = win->style;
 }
 
@@ -1478,8 +1485,9 @@ DECL_HANDLER(get_window_rectangles)
 
     if (win)
     {
-        reply->window = win->window_rect;
-        reply->client = win->client_rect;
+        reply->window  = win->window_rect;
+        reply->visible = win->visible_rect;
+        reply->client  = win->client_rect;
     }
 }
 

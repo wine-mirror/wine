@@ -2218,6 +2218,9 @@ static void dump_get_window_rectangles_reply( const struct get_window_rectangles
     fprintf( stderr, " window=" );
     dump_rectangle( &req->window );
     fprintf( stderr, "," );
+    fprintf( stderr, " visible=" );
+    dump_rectangle( &req->visible );
+    fprintf( stderr, "," );
     fprintf( stderr, " client=" );
     dump_rectangle( &req->client );
 }

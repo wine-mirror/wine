@@ -1841,6 +1841,7 @@ enum message_type
     user_handle_t  handle;        /* handle to the window */
 @REPLY
     rectangle_t    window;        /* window rectangle */
+    rectangle_t    visible;       /* visible part of the window rectangle */
     rectangle_t    client;        /* client rectangle */
 @END
 

@@ -2607,6 +2607,7 @@ struct get_window_rectangles_reply
 {
     struct reply_header __header;
     rectangle_t    window;
+    rectangle_t    visible;
     rectangle_t    client;
 };
 
@@ -3780,6 +3781,6 @@ union generic_reply
     struct duplicate_token_reply duplicate_token_reply;
 };
 
-#define SERVER_PROTOCOL_VERSION 160
+#define SERVER_PROTOCOL_VERSION 161
 
 #endif /* __WINE_WINE_SERVER_PROTOCOL_H */

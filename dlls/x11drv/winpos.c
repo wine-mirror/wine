@@ -728,8 +728,12 @@ BOOL X11DRV_set_window_pos( HWND hwnd, HWND insert_after, const RECT *rectWindow
         req->client.top    = rectClient->top;
         req->client.right  = rectClient->right;
         req->client.bottom = rectClient->bottom;
-        if (!IsRectEmpty( &valid_rects[0] ))
-            wine_server_add_data( req, valid_rects, 2 * sizeof(*valid_rects) );
+        if (memcmp( rectWindow, &new_whole_rect, sizeof(RECT) ) || !IsRectEmpty( &valid_rects[0] ))
+        {
+            wine_server_add_data( req, &new_whole_rect, sizeof(new_whole_rect) );
+            if (!IsRectEmpty( &valid_rects[0] ))
+                wine_server_add_data( req, valid_rects, 2 * sizeof(*valid_rects) );
+        }
         ret = !wine_server_call( req );
         new_style = reply->new_style;
     }
