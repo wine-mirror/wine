@@ -253,7 +253,7 @@ typedef struct tagLISTVIEW_INFO
   BOOL bRedraw;  		/* Turns on/off repaints & invalidations */
   BOOL bAutoarrange;		/* Autoarrange flag when NOT in LVS_AUTOARRANGE */
   BOOL bFocus;
-  BOOL bDoChangeNotify;                /* send change notification messages? */
+  BOOL bDoChangeNotify;         /* send change notification messages? */
   INT nFocusedItem;
   RECT rcFocus;
   DWORD dwStyle;		/* the cached window GWL_STYLE */
@@ -6294,11 +6294,11 @@ static void column_fill_hditem(LISTVIEW_INFO *infoPtr, HDITEMW *lphdi, INT nColu
 	lphdi->mask |= HDI_FORMAT;
 
 	/* set text alignment (leftmost column must be left-aligned) */
-        if (nColumn == 0 || lpColumn->fmt & LVCFMT_LEFT)
+        if (nColumn == 0 || (lpColumn->fmt & LVCFMT_JUSTIFYMASK) == LVCFMT_LEFT)
             lphdi->fmt |= HDF_LEFT;
-        else if (lpColumn->fmt & LVCFMT_RIGHT)
+        else if ((lpColumn->fmt & LVCFMT_JUSTIFYMASK) == LVCFMT_RIGHT)
             lphdi->fmt |= HDF_RIGHT;
-        else if (lpColumn->fmt & LVCFMT_CENTER)
+        else if ((lpColumn->fmt & LVCFMT_JUSTIFYMASK) == LVCFMT_CENTER)
             lphdi->fmt |= HDF_CENTER;
 
         if (lpColumn->fmt & LVCFMT_BITMAP_ON_RIGHT)
