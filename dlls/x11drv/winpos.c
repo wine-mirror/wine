@@ -883,10 +883,10 @@ BOOL X11DRV_SetWindowPos( WINDOWPOS *winpos )
 
         if (!(winpos->flags & SWP_SHOWWINDOW) && (winpos->flags & SWP_HIDEWINDOW))
         {
-            WIN_SetStyle( winpos->hwnd, wndPtr->dwStyle & ~WS_VISIBLE );
             /* clear the update region */
-//            RedrawWindow( winpos->hwnd, NULL, 0, RDW_VALIDATE | RDW_NOFRAME |
-//                          RDW_NOERASE | RDW_NOINTERNALPAINT | RDW_ALLCHILDREN );
+            RedrawWindow( winpos->hwnd, NULL, 0, RDW_VALIDATE | RDW_NOFRAME |
+                          RDW_NOERASE | RDW_NOINTERNALPAINT | RDW_ALLCHILDREN );
+            WIN_SetStyle( winpos->hwnd, wndPtr->dwStyle & ~WS_VISIBLE );
         }
         else if ((wndPtr->dwStyle & WS_VISIBLE) &&
                  !IsRectEmpty( &oldWindowRect ) && IsRectEmpty( &newWindowRect ))
