@@ -1104,7 +1104,13 @@ static void COMBO_Size( LPHEADCOMBO lphc )
 	       (h == (lphc->RectEdit.bottom - lphc->RectEdit.top))  )
 	       return;
   }
+
+  //Maintain the RectCombo height
+  h = lphc->RectCombo.bottom - lphc->RectCombo.top;
+
   lphc->RectCombo = rect;
+  lphc->RectCombo.bottom = lphc->RectCombo.top + h;
+
   CBCalcPlacement( lphc, &lphc->RectEdit, &lphc->RectButton, &rect );
   CBResetPos( lphc, &rect, TRUE );
 }
