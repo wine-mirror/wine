@@ -19,7 +19,6 @@
  */
 
 LANGUAGE LANG_RUSSIAN, SUBLANG_DEFAULT
-#pragma code_page(1251)
 
 /* Menu */
 

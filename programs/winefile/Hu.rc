@@ -23,8 +23,6 @@
  */
 
 LANGUAGE LANG_HUNGARIAN, SUBLANG_DEFAULT
-#pragma code_page(1250)
-
 
 /* Menu */
 

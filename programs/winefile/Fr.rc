@@ -23,8 +23,6 @@
  */
 
 LANGUAGE LANG_FRENCH, SUBLANG_DEFAULT
-#pragma code_page(850)
-
 
 /* Menu */
 

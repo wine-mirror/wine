@@ -20,8 +20,6 @@
  */
 
 LANGUAGE LANG_SLOVENIAN, SUBLANG_DEFAULT
-#pragma code_page(1250)
-
 
 /* Menu */
 

@@ -19,7 +19,6 @@
  */
 
 LANGUAGE LANG_SLOVENIAN, SUBLANG_NEUTRAL
-#pragma code_page(1250)
 
 /*
  * Menu

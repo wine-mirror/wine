@@ -29,7 +29,6 @@
 #include "Si.rc"
 
 LANGUAGE LANG_NEUTRAL, SUBLANG_NEUTRAL
-#pragma code_page(1252)
 
 /* BINRES idb_wine.bmp */
 IDB_WINE BITMAP

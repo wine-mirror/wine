@@ -19,7 +19,6 @@
  */
 
 LANGUAGE LANG_SPANISH, SUBLANG_DEFAULT
-#pragma code_page(850)
 
 /*
  * Menu

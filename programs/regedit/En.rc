@@ -19,7 +19,6 @@
  */
 
 LANGUAGE LANG_ENGLISH, SUBLANG_ENGLISH_US
-#pragma code_page(850)
 
 /*
  * Menu

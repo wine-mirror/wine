@@ -20,8 +20,6 @@
  */
 
 LANGUAGE LANG_CHINESE, SUBLANG_CHINESE_SIMPLIFIED
-#pragma code_page(936)
-
 
 /* Menu */
 
