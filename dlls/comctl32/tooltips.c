@@ -863,9 +863,9 @@ TOOLTIPS_DelToolA (HWND hwnd, WPARAM wParam, LPARAM lParam)
 		(LPTT_SUBCLASS_INFO)GetPropA (toolPtr->hwnd, COMCTL32_aSubclass);
 	    if (lpttsi) {
 		if (lpttsi->uRefCount == 1) {
-		    SetWindowLongA ((HWND)toolPtr->uId, GWL_WNDPROC,
+		    SetWindowLongA ((HWND)toolPtr->hwnd, GWL_WNDPROC,
 				      (LONG)lpttsi->wpOrigProc);
-		    RemovePropA ((HWND)toolPtr->uId, COMCTL32_aSubclass);
+		    RemovePropA ((HWND)toolPtr->hwnd, COMCTL32_aSubclass);
 		    COMCTL32_Free (&lpttsi);
 		}
 		else
@@ -950,9 +950,9 @@ TOOLTIPS_DelToolW (HWND hwnd, WPARAM wParam, LPARAM lParam)
 		(LPTT_SUBCLASS_INFO)GetPropA (toolPtr->hwnd, COMCTL32_aSubclass);
 	    if (lpttsi) {
 		if (lpttsi->uRefCount == 1) {
-		    SetWindowLongA ((HWND)toolPtr->uId, GWL_WNDPROC,
+		    SetWindowLongA ((HWND)toolPtr->hwnd, GWL_WNDPROC,
 				      (LONG)lpttsi->wpOrigProc);
-		    RemovePropA ((HWND)toolPtr->uId, COMCTL32_aSubclass);
+		    RemovePropA ((HWND)toolPtr->hwnd, COMCTL32_aSubclass);
 		    COMCTL32_Free (&lpttsi);
 		}
 		else
@@ -1973,22 +1973,29 @@ TOOLTIPS_Destroy (HWND hwnd, WPARAM wParam, LPARAM lParam)
 	    }
 
 	    /* remove subclassing */
-	    if (toolPtr->uFlags & TTF_SUBCLASS) {
-		LPTT_SUBCLASS_INFO lpttsi;
-
-		if (toolPtr->uFlags & TTF_IDISHWND)
-		    lpttsi = (LPTT_SUBCLASS_INFO)GetPropA ((HWND)toolPtr->uId, COMCTL32_aSubclass);
-		else
-		    lpttsi = (LPTT_SUBCLASS_INFO)GetPropA (toolPtr->hwnd, COMCTL32_aSubclass);
-
-		if (lpttsi) {
-		    SetWindowLongA ((HWND)toolPtr->uId, GWL_WNDPROC,
-				      (LONG)lpttsi->wpOrigProc);
-		    RemovePropA ((HWND)toolPtr->uId, COMCTL32_aSubclass);
-		    COMCTL32_Free (&lpttsi);
-		}
-	    }
-	}
+        if (toolPtr->uFlags & TTF_SUBCLASS) {
+            LPTT_SUBCLASS_INFO lpttsi;
+    
+            if (toolPtr->uFlags & TTF_IDISHWND) {
+                lpttsi = (LPTT_SUBCLASS_INFO)GetPropA ((HWND)toolPtr->uId, COMCTL32_aSubclass);
+                if (lpttsi) {
+                    SetWindowLongA ((HWND)toolPtr->uId, GWL_WNDPROC,
+                              (LONG)lpttsi->wpOrigProc);
+                    RemovePropA ((HWND)toolPtr->uId, COMCTL32_aSubclass);
+                    COMCTL32_Free (&lpttsi);
+                }
+            }
+            else {
+                lpttsi = (LPTT_SUBCLASS_INFO)GetPropA (toolPtr->hwnd, COMCTL32_aSubclass);
+                if (lpttsi) {
+                    SetWindowLongA ((HWND)toolPtr->hwnd, GWL_WNDPROC,
+                               (LONG)lpttsi->wpOrigProc);
+                    RemovePropA ((HWND)toolPtr->hwnd, COMCTL32_aSubclass);
+                    COMCTL32_Free (&lpttsi);
+                }
+            }
+        }
+    }
 	COMCTL32_Free (infoPtr->tools);
     }
 
