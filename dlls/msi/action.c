@@ -78,6 +78,12 @@ static UINT ACTION_DuplicateFiles(MSIHANDLE hPackage);
 static UINT ACTION_WriteRegistryValues(MSIHANDLE hPackage);
 static UINT ACTION_CustomAction(MSIHANDLE hPackage,const WCHAR *action);
 
+static UINT HANDLE_CustomType1(MSIHANDLE hPackage, const LPWSTR source, 
+                                const LPWSTR target, const INT type);
+static UINT HANDLE_CustomType2(MSIHANDLE hPackage, const LPWSTR source, 
+                                const LPWSTR target, const INT type);
+
+
 static UINT set_property(MSIHANDLE hPackage, const WCHAR* prop, 
                           const WCHAR* value);
 UINT get_property(MSIHANDLE hPackage, const WCHAR* prop, WCHAR* value, 
@@ -101,6 +107,18 @@ static const WCHAR cszbs[]={'\\',0};
 /******************************************************** 
  * helper functions to get around current HACKS and such
  ********************************************************/
+inline static char *strdupWtoA( const WCHAR *str )
+{
+    char *ret = NULL;
+    if (str)
+    {
+        DWORD len = WideCharToMultiByte( CP_ACP, 0, str, -1, NULL, 0, NULL, NULL
+);
+        if ((ret = HeapAlloc( GetProcessHeap(), 0, len )))
+            WideCharToMultiByte( CP_ACP, 0, str, -1, ret, len, NULL, NULL );
+    }
+    return ret;
+}
 
 static VOID blitz_propertytable()
 {
@@ -248,7 +266,8 @@ static VOID set_installer_properties(MSIHANDLE hPackage)
 {'P','e','r','s','o','n','a','l','F','o','l','d','e','r',0};
     static const WCHAR WF[] = 
 {'W','i','n','d','o','w','s','F','o','l','d','e','r',0};
-
+    static const WCHAR TF[]=
+{'T','e','m','p','F','o','l','d','e','r',0};
 
 /* Not yet set ...  but needed by iTunes
  *
@@ -266,7 +285,6 @@ StartMenuFolder
 StartupFolder
 System16Folder
 System64Folder
-TempFolder
 TemplateFolder
  */
 
@@ -316,6 +334,9 @@ TemplateFolder
     SHGetFolderPathW(NULL,CSIDL_WINDOWS,NULL,0,pth);
     strcatW(pth,cszbs);
     set_property(hPackage, WF, pth);
+
+    GetTempPathW(MAX_PATH,pth);
+    set_property(hPackage, TF, pth);
 }
 
 
@@ -482,8 +503,67 @@ UINT ACTION_PerformAction(MSIHANDLE hPackage, const WCHAR *action)
     if (strcmpW(action,szWriteRegistryValues)==0)
         return ACTION_WriteRegistryValues(hPackage);
     /*
-     .
-     .
+     Current called during itunes but unimplemented
+
+     AppSearch
+     LaunchConditions
+     FindRelatedProducts
+     CostInitialize
+     MigrateFeatureStates
+     ResolveSource  (sets SourceDir)
+     FileCost
+     ValidateProductID (sets ProductID)
+     IsolateComponents (Empty)
+     SetODBCFolders 
+     MigrateFeatureStates
+     InstallValidate 
+     RemoveExistingProducts
+     InstallInitialize
+     AllocateRegistrySpace
+     ProcessComponents
+     UnpublishComponents
+     UnpublishFeatures
+     StopServices
+     DeleteServices
+     UnregisterComPlus
+     SelfUnregModules (Empty)
+     UnregisterTypeLibraries
+     RemoveODBC
+     UnregisterFonts
+     RemoveRegistryValues
+     UnregisterClassInfo
+     UnregisterExtensionInfo
+     UnregisterProgIdInfo
+     UnregisterMIMEInfo
+     RemoveIniValues
+     RemoveShortcuts
+     RemoveEnviromentStrings
+     RemoveDuplicateFiles
+     RemoveFiles (Empty)
+     MoveFiles (Empty)
+     RemoveRegistryValues (Empty)
+     SelfRegModules (Empty)
+     RemoveFolders
+     PatchFiles
+     BindImage (Empty)
+     CreateShortcuts (would be nice to have soon)
+     RegisterClassInfo
+     RegisterExtensionInfo (Empty)
+     RegisterProgIdInfo (Lots to do)
+     RegisterMIMEInfo (Empty)
+     WriteIniValues (Empty)
+     WriteEnvironmentStrings (Empty)
+     RegisterFonts(Empty)
+     InstallODBC
+     RegisterTypeLibraries
+     SelfRegModules
+     RegisterComPlus
+     RegisterUser
+     RegisterProduct
+     PublishComponents
+     PublishFeatures
+     PublishProduct
+     InstallFinalize
      .
      */
      if (ACTION_CustomAction(hPackage,action) != ERROR_SUCCESS)
@@ -531,23 +611,35 @@ static UINT ACTION_CustomAction(MSIHANDLE hPackage,const WCHAR *action)
         return rc;
     }
 
-    TRACE("Handling custom action %s\n",debugstr_w(action));
     type = MsiRecordGetInteger(row,2);
 
+    sz=0x100;
+    MsiRecordGetStringW(row,3,source,&sz);
+    sz=0x200;
+    MsiRecordGetStringW(row,4,target,&sz);
+
+    TRACE("Handling custom action %s (%x %s %s)\n",debugstr_w(action),type,
+          debugstr_w(source), debugstr_w(target));
+
+    /* we are ignoring ALOT of flags and important syncornication stuff */
     switch (type & CUSTOM_ACTION_TYPE_MASK)
     {
+        case 1: /* DLL file stored in a Binary table stream */
+            rc = HANDLE_CustomType1(hPackage,source,target,type);
+            break;
+        case 2: /* Exe file stored in a Binary table strem */
+            rc = HANDLE_CustomType2(hPackage,source,target,type);
+            break;
         case 35: /* Directory set with formatted text. */
         case 51: /* Property set with formatted text. */
-            sz=0x100;
-            MsiRecordGetStringW(row,3,source,&sz);
-            sz=0x200;
-            MsiRecordGetStringW(row,4,target,&sz);
             deformat_string(hPackage,target,&deformated);
             set_property(hPackage,source,deformated);
             HeapFree(GetProcessHeap(),0,deformated);
             break;
         default:
-            ERR("UNHANDLED ACTION TYPE %i\n",type & CUSTOM_ACTION_TYPE_MASK);
+            ERR("UNHANDLED ACTION TYPE %i (%s %s)\n",
+             type & CUSTOM_ACTION_TYPE_MASK, debugstr_w(source),
+             debugstr_w(target));
     }
 
     MsiCloseHandle(row);
@@ -556,6 +648,170 @@ static UINT ACTION_CustomAction(MSIHANDLE hPackage,const WCHAR *action)
     return rc;
 }
 
+static UINT store_binary_to_temp(MSIHANDLE hPackage, const LPWSTR source, 
+                                LPWSTR tmp_file)
+{
+    static const WCHAR TF[]= {'T','e','m','p','F','o','l','d','e','r',0};
+    DWORD sz=MAX_PATH;
+
+    if (get_property(hPackage, TF,tmp_file, &sz) != ERROR_SUCCESS)
+        GetTempPathW(MAX_PATH,tmp_file);
+
+    strcatW(tmp_file,source);
+
+    if (GetFileAttributesW(tmp_file) != INVALID_FILE_ATTRIBUTES)
+    {
+        TRACE("File already exists\n");
+        return ERROR_SUCCESS;
+    }
+    else
+    {
+        /* write out the file */
+        UINT rc;
+        MSIHANDLE view;
+        MSIHANDLE row = 0;
+        WCHAR Query[1024] =
+        {'s','e','l','e','c','t',' ','*',' ','f','r','o','m',' ','B','i'
+,'n','a','r','y',' ','w','h','e','r','e',' ','N','a','m','e','=','`',0};
+        static const WCHAR end[]={'`',0};
+        HANDLE the_file;
+        CHAR buffer[1024];
+
+        the_file = CreateFileW(tmp_file, GENERIC_WRITE, 0, NULL, CREATE_ALWAYS,
+                           FILE_ATTRIBUTE_NORMAL, NULL);
+    
+        if (the_file == INVALID_HANDLE_VALUE)
+            return ERROR_FUNCTION_FAILED;
+
+        strcatW(Query,source);
+        strcatW(Query,end);
+        rc = MsiDatabaseOpenViewW(hPackage, Query, &view);
+        if (rc != ERROR_SUCCESS)
+            return rc;
+
+        rc = MsiViewExecute(view, 0);
+        if (rc != ERROR_SUCCESS)
+        {
+            MsiViewClose(view);
+            MsiCloseHandle(view);
+            return rc;
+        }
+
+        rc = MsiViewFetch(view,&row);
+        if (rc != ERROR_SUCCESS)
+        {
+            MsiViewClose(view);
+            MsiCloseHandle(view);
+            return rc;
+        }
+
+        do 
+        {
+            DWORD write;
+            sz = 1024;
+            rc = MsiRecordReadStream(row,2,buffer,&sz);
+            if (rc != ERROR_SUCCESS)
+            {
+                ERR("Failed to get stream\n");
+                CloseHandle(the_file);  
+                DeleteFileW(tmp_file);
+                break;
+            }
+            WriteFile(the_file,buffer,sz,&write,NULL);
+        } while (sz == 1024);
+
+        CloseHandle(the_file);
+
+        MsiCloseHandle(row);
+        MsiViewClose(view);
+        MsiCloseHandle(view);
+    }
+
+    return ERROR_SUCCESS;
+}
+
+
+typedef UINT CustomEntry(MSIHANDLE);
+
+static UINT HANDLE_CustomType1(MSIHANDLE hPackage, const LPWSTR source, 
+                                const LPWSTR target, const INT type)
+{
+    WCHAR tmp_file[MAX_PATH];
+    CustomEntry *fn;
+    HANDLE DLL;
+    LPSTR proc;
+
+    store_binary_to_temp(hPackage, source, tmp_file);
+
+    TRACE("Calling function %s from %s\n",debugstr_w(target),
+          debugstr_w(tmp_file));
+
+    if (type & 0xc0)
+    {
+        ERR("Asyncronious execution.. UNHANDLED\n");
+        return ERROR_SUCCESS;
+    }
+
+    DLL = LoadLibraryW(tmp_file);
+    if (DLL)
+    {
+        proc = strdupWtoA( target );
+        fn = (CustomEntry*)GetProcAddress(DLL,proc);
+        if (fn)
+        {
+            TRACE("Calling function\n");
+            fn(hPackage);
+        }
+        else
+            ERR("Cannot load functon\n");
+
+        HeapFree(GetProcessHeap(),0,proc);
+        FreeLibrary(DLL);
+    }
+    else
+        ERR("Unable to load library\n");
+
+    return ERROR_SUCCESS;
+}
+
+static UINT HANDLE_CustomType2(MSIHANDLE hPackage, const LPWSTR source, 
+                                const LPWSTR target, const INT type)
+{
+    WCHAR tmp_file[MAX_PATH*2];
+    STARTUPINFOW si;
+    PROCESS_INFORMATION info;
+    BOOL rc;
+    WCHAR *deformated;
+    static const WCHAR c_collen[] = {'C',':','\\',0};
+    static const WCHAR spc[] = {' ',0};
+
+    memset(&si,0,sizeof(STARTUPINFOW));
+    memset(&info,0,sizeof(PROCESS_INFORMATION));
+
+    store_binary_to_temp(hPackage, source, tmp_file);
+
+    strcatW(tmp_file,spc);
+    deformat_string(hPackage,target,&deformated);
+    strcatW(tmp_file,deformated);
+
+    HeapFree(GetProcessHeap(),0,deformated);
+
+    TRACE("executing exe %s \n",debugstr_w(tmp_file));
+
+    rc = CreateProcessW(NULL, tmp_file, NULL, NULL, FALSE, 0, NULL,
+                  c_collen, &si, &info);
+
+    if ( !rc )
+    {
+        ERR("Unable to execute command\n");
+        return ERROR_SUCCESS;
+    }
+
+    if (!(type & 0xc0))
+        WaitForSingleObject(info.hProcess,INFINITE);
+
+    return ERROR_SUCCESS;
+}
 
 /***********************************************************************
  *            create_full_pathW
@@ -960,18 +1216,6 @@ end:
     return rc;
 }
 
-inline static char *strdupWtoA( const WCHAR *str )
-{
-    char *ret = NULL;
-    if (str)
-    {
-        DWORD len = WideCharToMultiByte( CP_ACP, 0, str, -1, NULL, 0, NULL, NULL
-);
-        if ((ret = HeapAlloc( GetProcessHeap(), 0, len )))
-            WideCharToMultiByte( CP_ACP, 0, str, -1, ret, len, NULL, NULL );
-    }
-    return ret;
-}
 
 /***********************************************************************
  *            extract_cabinet_file

@@ -201,7 +201,7 @@
 201 stub MsiDecomposeDescriptorW
 202 stub MsiProvideQualifiedComponentExA
 203 stub MsiProvideQualifiedComponentExW
-204 stub MsiEnumRelatedProductsA
+204 stdcall MsiEnumRelatedProductsA(str long long str)
 205 stub MsiEnumRelatedProductsW
 206 stub MsiSetFeatureAttributesA
 207 stub MsiSetFeatureAttributesW

@@ -1343,3 +1343,11 @@ MSIHANDLE WINAPI MsiGetActiveDatabase(MSIHANDLE hInstall)
     msihandle_addref(hInstall);
     return hInstall;
 }
+
+UINT WINAPI MsiEnumRelatedProductsA (LPCSTR lpUpgradeCode, DWORD dwReserved,
+                                    DWORD iProductIndex, LPSTR lpProductBuf)
+{
+    FIXME("STUB: (%s, %li %li %s)\n",lpUpgradeCode, dwReserved, iProductIndex,
+          lpProductBuf);
+    return ERROR_CALL_NOT_IMPLEMENTED;
+}
