@@ -127,7 +127,7 @@ then
     AC_CHECK_HEADERS(X11/xpm.h)
     if test "$ac_cv_header_X11_xpm_h" = "yes"
     then 
-        AC_CHECK_LIB(Xpm,XpmCreatePixmapFromData,AC_DEFINE(HAVE_LIBXXPM) X_PRE_LIBS="$X_PRE_LIBS -lXpm",,$X_LIBS -lXext -lX11)
+        AC_CHECK_LIB(Xpm,XpmCreatePixmapFromData,AC_DEFINE(HAVE_LIBXXPM) X_PRE_LIBS="$X_PRE_LIBS -lXpm",,$X_LIBS -lXext -lX11 $X_EXTRA_LIBS)
     else
     	echo "When compiling with X support, you need the Xpm library, or"
 	echo "WINE will not work. This Xpm library is within the following RPM,"
@@ -147,16 +147,16 @@ then
     AC_CHECK_HEADERS(X11/Xlib.h X11/extensions/XShm.h)
     if test "$ac_cv_header_X11_Xlib_h" = "yes" -a "$ac_cv_header_X11_extensions_XShm_h" = "yes"
     then 
-        AC_CHECK_LIB(Xext,XShmQueryExtension,AC_DEFINE(HAVE_LIBXXSHM),,$X_LIBS -lXext -lX11)
+        AC_CHECK_LIB(Xext,XShmQueryExtension,AC_DEFINE(HAVE_LIBXXSHM),,$X_LIBS -lXext -lX11 $X_EXTRA_LIBS)
     fi
     dnl Check for XFree86 DGA / DGA 2.0 extension
     AC_CHECK_HEADERS(X11/Xlib.h X11/extensions/xf86dga.h)
     if test "$ac_cv_header_X11_Xlib_h" = "yes" -a "$ac_cv_header_X11_extensions_xf86dga_h" = "yes"
     then 
-         AC_CHECK_LIB(Xxf86dga,XDGAQueryExtension,AC_DEFINE(HAVE_LIBXXF86DGA2) X_PRE_LIBS="$X_PRE_LIBS -lXxf86dga",,$X_LIBS -lXext -lX11)
+         AC_CHECK_LIB(Xxf86dga,XDGAQueryExtension,AC_DEFINE(HAVE_LIBXXF86DGA2) X_PRE_LIBS="$X_PRE_LIBS -lXxf86dga",,$X_LIBS -lXext -lX11 $X_EXTRA_LIBS)
 	 if test "$ac_cv_lib_Xxf86dga_XDGAQueryExtension" = "no"
 	 then
-           AC_CHECK_LIB(Xxf86dga,XF86DGAQueryExtension,AC_DEFINE(HAVE_LIBXXF86DGA) X_PRE_LIBS="$X_PRE_LIBS -lXxf86dga",,$X_LIBS -lXext -lX11)
+           AC_CHECK_LIB(Xxf86dga,XF86DGAQueryExtension,AC_DEFINE(HAVE_LIBXXF86DGA) X_PRE_LIBS="$X_PRE_LIBS -lXxf86dga",,$X_LIBS -lXext -lX11 $X_EXTRA_LIBS)
 	 fi
     fi
 
@@ -164,7 +164,7 @@ then
     AC_CHECK_HEADERS(X11/Xlib.h X11/extensions/xf86vmode.h)
     if test "$ac_cv_header_X11_Xlib_h" = "yes" -a "$ac_cv_header_X11_extensions_xf86vmode_h" = "yes"
     then 
-        AC_CHECK_LIB(Xxf86vm,XF86VidModeQueryExtension,AC_DEFINE(HAVE_LIBXXF86VM) X_PRE_LIBS="$X_PRE_LIBS -lXxf86vm",,$X_LIBS -lXext -lX11)
+        AC_CHECK_LIB(Xxf86vm,XF86VidModeQueryExtension,AC_DEFINE(HAVE_LIBXXF86VM) X_PRE_LIBS="$X_PRE_LIBS -lXxf86vm",,$X_LIBS -lXext -lX11 $X_EXTRA_LIBS)
     fi
 
     dnl Check for the presence of Mesa
@@ -184,10 +184,10 @@ then
         if test "$wine_cv_mesa_version_OK" = "yes"
         then
 	    dnl Check for the presense of the library
-            AC_CHECK_LIB(GL,glXCreateContext,AC_DEFINE(HAVE_LIBMESAGL) X_PRE_LIBS="$X_PRE_LIBS -lGL",,$X_LIBS -lXext -lX11 -lm)
+            AC_CHECK_LIB(GL,glXCreateContext,AC_DEFINE(HAVE_LIBMESAGL) X_PRE_LIBS="$X_PRE_LIBS -lGL",,$X_LIBS -lXext -lX11 -lm $X_EXTRA_LIBS)
 	    if test "$ac_cv_lib_GL_glXCreateContext" = "no"
 	    then
-		AC_CHECK_LIB(MesaGL,glXCreateContext,AC_DEFINE(HAVE_LIBMESAGL) X_PRE_LIBS="$X_PRE_LIBS -lMesaGL",,$X_LIBS -lXext -lX11 -lm)
+		AC_CHECK_LIB(MesaGL,glXCreateContext,AC_DEFINE(HAVE_LIBMESAGL) X_PRE_LIBS="$X_PRE_LIBS -lMesaGL",,$X_LIBS -lXext -lX11 -lm $X_EXTRA_LIBS)
 	    fi
 
 	    dnl Check for the Color Table and Paletted Texture extensions
@@ -200,9 +200,9 @@ then
 	    )
     	    if test "$ac_cv_lib_GL_glXCreateContext" = "no"
 	    then
-		AC_CHECK_LIB(MesaGL,glColorTableEXT,AC_DEFINE(HAVE_GL_PALETTED_TEXTURE),,$X_LIBS -lXext -lX11 -lm)
+		AC_CHECK_LIB(MesaGL,glColorTableEXT,AC_DEFINE(HAVE_GL_PALETTED_TEXTURE),,$X_LIBS -lXext -lX11 -lm $X_EXTRA_LIBS)
 	    else
-		AC_CHECK_LIB(GL,glColorTableEXT,AC_DEFINE(HAVE_GL_PALETTED_TEXTURE),,$X_LIBS -lXext -lX11 -lm)
+		AC_CHECK_LIB(GL,glColorTableEXT,AC_DEFINE(HAVE_GL_PALETTED_TEXTURE),,$X_LIBS -lXext -lX11 -lm $X_EXTRA_LIBS)
 	    fi
         fi
     fi
