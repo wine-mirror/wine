@@ -581,6 +581,7 @@ NTSTATUS WINAPI NtCreateMailslotFile(DWORD x1,DWORD x2,DWORD x3,DWORD x4,DWORD x
  *		0x12/0x18
  *		0x2/0x138
  *		0x8/0x600
+ *              0x25/0xc
  *  SystemInformation	caller supplies storage for the information structure
  *  Length		size of the structure
  *  ResultLength	Data written
@@ -591,10 +592,28 @@ NTSTATUS WINAPI NtQuerySystemInformation(
 	IN ULONG Length,
 	OUT PULONG ResultLength)
 {
+    switch(SystemInformationClass)
+    {
+    case 0x25:
+	/* Something to do with the size of the registry             *
+	 * Since we don't have a size limitation, fake it            *
+	 * This is almost certainly wrong.                           *
+	 * This sets each of the three words in the struct to 32 MB, *
+	 * which is enough to make the IE 5 installer happy.         */
+	FIXME("(0x%08x,%p,0x%08lx,%p) faking max registry size of 32 MB\n",
+	      SystemInformationClass,SystemInformation,Length,ResultLength);
+	*(DWORD *)SystemInformation = 0x2000000;
+	*(((DWORD *)SystemInformation)+1) = 0x200000;
+	*(((DWORD *)SystemInformation)+2) = 0x200000;
+	break;
+
+    default:
 	FIXME("(0x%08x,%p,0x%08lx,%p) stub\n",
-	SystemInformationClass,SystemInformation,Length,ResultLength);
+	      SystemInformationClass,SystemInformation,Length,ResultLength);
 	ZeroMemory (SystemInformation, Length);
-	return 0;
+    }
+
+    return STATUS_SUCCESS;
 }
 
 
