@@ -190,7 +190,7 @@ static LRESULT call_hook_AtoW( HOOKPROC proc, INT id, INT code, WPARAM wparam, L
         }
         if (HIWORD(cbtcwA->lpcs->lpszClass))
         {
-            RtlCreateUnicodeStringFromAsciiz(&usBuffer,cbtcwA->lpcs->lpszName);
+            RtlCreateUnicodeStringFromAsciiz(&usBuffer,cbtcwA->lpcs->lpszClass);
             csW.lpszClass = usBuffer.Buffer;
         }
         ret = proc( code, wparam, (LPARAM)&cbtcwW );
