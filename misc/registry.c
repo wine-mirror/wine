@@ -35,7 +35,6 @@
 #include <fcntl.h>
 #include <sys/fcntl.h>
 #include <sys/stat.h>
-#include <assert.h>
 #include <time.h>
 #include "windef.h"
 #include "winbase.h"
@@ -913,13 +912,24 @@ static _w95dkh * _w95_lookup_dkh (_w95creg *creg, int nrLS, int nrMS)
 	_w95dkh * dkh;
 	int i;
 	
-	rgdb = (_w95rgdb*)((char*)creg+creg->rgdb_off);		/* get the beginning of the rgdb datastore */
-	assert (creg->rgdb_num > nrMS);				/* check: requested block < last_block) */
+	/* get the beginning of the rgdb datastore */
+	rgdb = (_w95rgdb*)((char*)creg+creg->rgdb_off);
+
+	/* check: requested block < last_block) */
+	if (creg->rgdb_num <= nrMS)				
+	{
+	  ERR("registry file corrupt! requested block no. beyond end.\n");
+	  goto error;
+	}
 	
 	/* find the right block */
 	for(i=0; i<nrMS ;i++)
 	{
-	  assert(rgdb->id == W95_REG_RGDB_ID);				/* check the magic */
+	  if(rgdb->id != W95_REG_RGDB_ID)			/* check the magic */
+	  {
+	    ERR("registry file corrupt! bad magic 0x%08lx\n", rgdb->id);
+	    goto error;
+	  }
 	  rgdb = (_w95rgdb*) ((char*)rgdb+rgdb->size);		/* find next block */
 	}
 
@@ -931,7 +941,7 @@ static _w95dkh * _w95_lookup_dkh (_w95creg *creg, int nrLS, int nrMS)
 	  dkh = (_w95dkh*)((char*)dkh + dkh->nextkeyoff);	/* find next subblock */
 	} while ((char *)dkh < ((char*)rgdb+rgdb->size));
 
-	return NULL;
+error:	return NULL;
 }	
  
 /******************************************************************************
@@ -956,7 +966,7 @@ static int _w95_parse_dkv (
 	{
 	  name = _strdupnA(dkv->name, dkv->valnamelen+1);
 	  ret = RegSetValueExA(hkey, name, 0, dkv->type, &(dkv->name[dkv->valnamelen]),dkv->valdatalen); 
-	  if (ret) ERR("RegSetValueEx failed (0x%08lx)\n", ret);
+	  if (ret) FIXME("RegSetValueEx returned: 0x%08lx\n", ret);
 	  free (name);
 
 	  /* next value */
@@ -1090,7 +1100,7 @@ static int NativeRegLoadKey( HKEY hkey, char* fn, int level )
 	      regf = base;
 
 	      /* hbin block */
-	      hbin = (nt_hbin *) ((char *) base + 0x1000);
+	      hbin = (nt_hbin*)((char*) base + 0x1000);
 	      if (hbin->id != NT_REG_POOL_BLOCK_ID)
 	      {
 	        ERR_(reg)( "%s hbin block invalid\n", fn);
