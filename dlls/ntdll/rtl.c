@@ -276,10 +276,14 @@ BOOLEAN WINAPI RtlDestroyHeap(
 /******************************************************************************
  *	DbgPrint	[NTDLL] 
  */
-void __cdecl DbgPrint(LPCSTR fmt,LPVOID args) {
+void WINAPIV DbgPrint(LPCSTR fmt, ...) {
 	char buf[512];
+       va_list args;
 
-	wvsprintfA(buf,fmt,&args);
+       va_start(args, fmt);
+       wvsprintfA(buf,fmt, args);
+       va_end(args); 
+
 	MESSAGE("DbgPrint says: %s",buf);
 	/* hmm, raise exception? */
 }

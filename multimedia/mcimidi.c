@@ -1529,8 +1529,6 @@ LONG CALLBACK	MCIMIDI_DriverProc(DWORD dwDevID, HDRVR hDriv, DWORD wMsg,
     switch (wMsg) {
     case DRV_LOAD:		return 1;
     case DRV_FREE:		return 1;
-    case DRV_OPEN:		return MIDI_drvOpen((LPSTR)dwParam1, (LPMCI_OPEN_DRIVER_PARMSA)dwParam2);
-    case DRV_CLOSE:		return MIDI_drvClose(dwDevID);
     case DRV_ENABLE:		return 1;
     case DRV_DISABLE:		return 1;
     case DRV_QUERYCONFIGURE:	return 1;
@@ -1538,6 +1536,8 @@ LONG CALLBACK	MCIMIDI_DriverProc(DWORD dwDevID, HDRVR hDriv, DWORD wMsg,
     case DRV_INSTALL:		return DRVCNF_RESTART;
     case DRV_REMOVE:		return DRVCNF_RESTART;
 #ifdef SNDCTL_MIDI_INFO
+    case DRV_OPEN:		return MIDI_drvOpen((LPSTR)dwParam1, (LPMCI_OPEN_DRIVER_PARMSA)dwParam2);
+    case DRV_CLOSE:		return MIDI_drvClose(dwDevID);
     case MCI_OPEN_DRIVER:	return MIDI_mciOpen      (dwDevID, dwParam1, (LPMCI_OPEN_PARMSA)     dwParam2);
     case MCI_CLOSE_DRIVER:	return MIDI_mciClose     (dwDevID, dwParam1, (LPMCI_GENERIC_PARMS)   dwParam2);
     case MCI_PLAY:		return MIDI_mciPlay      (dwDevID, dwParam1, (LPMCI_PLAY_PARMS)      dwParam2);
@@ -1551,6 +1551,8 @@ LONG CALLBACK	MCIMIDI_DriverProc(DWORD dwDevID, HDRVR hDriv, DWORD wMsg,
     case MCI_INFO:		return MIDI_mciInfo      (dwDevID, dwParam1, (LPMCI_INFO_PARMSA)     dwParam2);
     case MCI_SEEK:		return MIDI_mciSeek      (dwDevID, dwParam1, (LPMCI_SEEK_PARMS)      dwParam2);
 #else
+    case DRV_OPEN:		return 1;
+    case DRV_CLOSE:		return 1;
     case MCI_OPEN_DRIVER:
     case MCI_CLOSE_DRIVER:
     case MCI_PLAY:

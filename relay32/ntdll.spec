@@ -25,7 +25,7 @@ type	win32
 017 stub CsrSetPriorityClass
 018 stub CsrpProcessCallbackRequest
 019 stub DbgBreakPoint
-020 cdecl DbgPrint(str long) DbgPrint
+020 varargs DbgPrint() DbgPrint
 021 stub DbgPrompt
 022 stub DbgSsHandleKmApiMsg
 023 stub DbgSsInitialize

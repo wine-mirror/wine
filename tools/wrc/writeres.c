@@ -25,17 +25,18 @@ char Underscore[] = "";
 #endif
 
 char s_file_head_str[] =
-	"#\n"
-	"# This file is generated with wrc version " WRC_FULLVERSION ". Do not edit!\n"
-	"# Source : %s\n"
-	"# Cmdline: %s\n"
-	"# Date   : %s"
-	"#\n\n"
-	"\t.data\n\n"
+        "/* This file is generated with wrc version " WRC_FULLVERSION ". Do not edit! */\n"
+        "/* Source : %s */\n"
+        "/* Cmdline: %s */\n"
+        "/* Date   : %s */\n"
+        "\n"
+	"\t.data\n"
+        "\n"
 	;
 
 char s_file_tail_str[] =
-	"# <eof>\n\n"
+        "/* <eof> */\n"
+        "\n"
 	;
 
 char s_file_autoreg_str[] =
@@ -575,7 +576,7 @@ void write_pe_segment(FILE *fp, resource_t *top)
 	/* Version */
 	fprintf(fp, "\t.long\t0\n");	/* FIXME: must version be filled out? */
 	/* # of id entries, # of name entries */
-	fprintf(fp, "\t.short\t%d, %d\n", n_name_entries, n_id_entries);
+	fprintf(fp, "\t.word\t%d, %d\n", n_name_entries, n_id_entries);
 
 	/* Write the type level of the tree */
 	for(i = 0; i < rccount; i++)
@@ -622,7 +623,7 @@ void write_pe_segment(FILE *fp, resource_t *top)
 		fprintf(fp, "\t.long\t0\n");		/* Flags */
 		fprintf(fp, "\t.long\t0x%08lx\n", (long)now);	/* TimeDate */
 		fprintf(fp, "\t.long\t0\n");	/* FIXME: must version be filled out? */
-		fprintf(fp, "\t.short\t%d, %d\n", rcp->n_name_entries, rcp->n_id_entries);
+		fprintf(fp, "\t.word\t%d, %d\n", rcp->n_name_entries, rcp->n_id_entries);
 		for(j = 0; j < rcp->count32; j++)
 		{
 			resource_t *rsc = rcp->rsc32array[j].rsc[0];
@@ -676,7 +677,7 @@ void write_pe_segment(FILE *fp, resource_t *top)
 			fprintf(fp, "\t.long\t0\n");		/* Flags */
 			fprintf(fp, "\t.long\t0x%08lx\n", (long)now);	/* TimeDate */
 			fprintf(fp, "\t.long\t0\n");	/* FIXME: must version be filled out? */
-			fprintf(fp, "\t.short\t0, %d\n", r32cp->count);
+			fprintf(fp, "\t.word\t0, %d\n", r32cp->count);
 
 			for(k = 0; k < r32cp->count; k++)
 			{
@@ -771,7 +772,7 @@ void write_ne_segment(FILE *fp, resource_t *top)
 	fprintf(fp, "\t.globl\t%s%s\n", prefix, _NEResTab);
 
 	/* AlignmentShift */
-	fprintf(fp, "\t.short\t%d\n", alignment_pwr);
+	fprintf(fp, "\t.word\t%d\n", alignment_pwr);
 
 	/* TypeInfo */
 	for(i = 0; i < rccount; i++)
@@ -780,15 +781,15 @@ void write_ne_segment(FILE *fp, resource_t *top)
 
 		/* TypeId */
 		if(rcp->type.type == name_ord)
-			fprintf(fp, "\t.short\t0x%04x\n", rcp->type.name.i_name | 0x8000);
+			fprintf(fp, "\t.word\t0x%04x\n", rcp->type.name.i_name | 0x8000);
 		else
-			fprintf(fp, "\t.short\t%s_%s_typename - %s%s\n",
+			fprintf(fp, "\t.word\t%s_%s_typename - %s%s\n",
 				prefix,
 				rcp->type.name.s_name->str.cstr,
 				prefix,
 				_NEResTab);
 		/* ResourceCount */
-		fprintf(fp, "\t.short\t%d\n", rcp->count);
+		fprintf(fp, "\t.word\t%d\n", rcp->count);
 		/* Reserved */
 		fprintf(fp, "\t.long\t0\n");
 		/* NameInfo */
@@ -803,32 +804,32 @@ void write_ne_segment(FILE *fp, resource_t *top)
  * All other things are as the MS doc describes (alignment etc.)
  */
 			/* Offset */
-			fprintf(fp, "\t.short\t(%s%s_data - %s%s) >> %d\n",
+			fprintf(fp, "\t.word\t(%s%s_data - %s%s) >> %d\n",
 				prefix,
 				rcp->rscarray[j]->c_name,
 				prefix,
 				_NEResTab,
 				alignment_pwr);
 			/* Length */
-			fprintf(fp, "\t.short\t%d\n",
+			fprintf(fp, "\t.word\t%d\n",
 				rcp->rscarray[j]->binres->size - rcp->rscarray[j]->binres->dataidx);
 			/* Flags */
-			fprintf(fp, "\t.short\t0x%04x\n", (WORD)rcp->rscarray[j]->memopt);
+			fprintf(fp, "\t.word\t0x%04x\n", (WORD)rcp->rscarray[j]->memopt);
 			/* Id */
 			if(rcp->rscarray[j]->name->type == name_ord)
-				fprintf(fp, "\t.short\t0x%04x\n", rcp->rscarray[j]->name->name.i_name | 0x8000);
+				fprintf(fp, "\t.word\t0x%04x\n", rcp->rscarray[j]->name->name.i_name | 0x8000);
 			else
-				fprintf(fp, "\t.short\t%s%s_name - %s%s\n",
+				fprintf(fp, "\t.word\t%s%s_name - %s%s\n",
 				prefix,
 				rcp->rscarray[j]->c_name,
 				prefix,
 				_NEResTab);
 			/* Handle and Usage */
-			fprintf(fp, "\t.short\t0, 0\n");
+			fprintf(fp, "\t.word\t0, 0\n");
 		}
 	}
 	/* EndTypes */
-	fprintf(fp, "\t.short\t0\n");
+	fprintf(fp, "\t.word\t0\n");
 }
 
 /*
@@ -935,11 +936,18 @@ void write_s_file(char *outname, resource_t *top)
 	if(!fo)
 	{
 		error("Could not open %s\n", outname);
+		return;
 	}
 
-	now = time(NULL);
-	fprintf(fo, s_file_head_str, input_name ? input_name : "stdin",
-                cmdline, ctime(&now));
+	{
+		char *s, *p;
+		now = time(NULL);
+		s = ctime(&now);
+		p = strchr(s, '\n');
+		if(p) *p = '\0';
+		fprintf(fo, s_file_head_str, input_name ? input_name : "stdin",
+			cmdline, s);
+	}
 
 	/* Get an idea how many we have and restructure the tables */
 	count_resources(top);
@@ -962,7 +970,7 @@ void write_s_file(char *outname, resource_t *top)
 	if(!indirect_only)
 	{
 		/* Write the resource data */
-		fprintf(fo, "#\n# Resource binary data\n#\n");
+	        fprintf(fo, "\n/* Resource binary data */\n\n");
 		for(rsc = top; rsc; rsc = rsc->next)
 		{
 			if(!rsc->binres)
@@ -1009,7 +1017,7 @@ void write_s_file(char *outname, resource_t *top)
 	if(indirect)
 	{
 		/* Write the indirection structures */
-		fprintf(fo, "\n#\n# Resource indirection structures\n#\n");
+	        fprintf(fo, "\n/* Resource indirection structures */\n\n");
 		fprintf(fo, "\t.align\t4\n");
 		for(rsc = top; rsc; rsc = rsc->next)
 		{
@@ -1074,7 +1082,7 @@ void write_s_file(char *outname, resource_t *top)
 		fprintf(fo, "\n");
 
 		/* Write the indirection table */
-		fprintf(fo, "#\n# Resource indirection table\n#\n");
+		fprintf(fo, "/* Resource indirection table */\n\n");
 		fprintf(fo, "\t.align\t4\n");
 		fprintf(fo, "%s%s:\n", prefix, _ResTable);
 		fprintf(fo, "\t.globl\t%s%s\n", prefix, _ResTable);

@@ -626,21 +626,6 @@ INT WINAPIV wsprintfW( LPWSTR buffer, LPCWSTR spec, ... )
 
 
 /***********************************************************************
- *           wsnprintf16   (Not a Windows API)
- */
-INT16 WINAPIV wsnprintf16( LPSTR buffer, UINT16 maxlen, LPCSTR spec, ... )
-{
-    va_list valist;
-    INT16 res;
-
-    va_start( valist, spec );
-    res = wvsnprintf16( buffer, maxlen, spec, valist );
-    va_end( valist );
-    return res;
-}
-
-
-/***********************************************************************
  *           wsnprintfA   (Not a Windows API)
  */
 INT WINAPIV wsnprintfA( LPSTR buffer, UINT maxlen, LPCSTR spec, ... )
