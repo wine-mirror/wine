@@ -121,5 +121,6 @@ HRESULT QUARTZ_CreateTransformBaseOutPin(
 
 HRESULT QUARTZ_CreateAVIDec(IUnknown* punkOuter,void** ppobj);
 HRESULT QUARTZ_CreateColour(IUnknown* punkOuter,void** ppobj);
+HRESULT QUARTZ_CreateACMWrapper(IUnknown* punkOuter,void** ppobj);
 
 #endif	/* WINE_DSHOW_XFORM_H */

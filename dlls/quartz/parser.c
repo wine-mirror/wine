@@ -465,6 +465,10 @@ DWORD WINAPI CParserImplThread_Entry( LPVOID pv )
 		}
 	}
 
+	This->m_dwThreadId = 0;
+	This->basefilter.bIntermediateState = FALSE;
+	SetEvent( This->m_hEventInit );
+
 	return 0;
 }
 
@@ -579,12 +583,21 @@ HRESULT CParserImpl_BeginThread( CParserImpl* This )
 		(LPVOID)This,
 		0, &This->m_dwThreadId );
 	if ( This->m_hThread == (HANDLE)NULL )
+	{
+		CloseHandle( This->m_hEventInit );
+		This->m_hEventInit = (HANDLE)NULL;
 		return E_FAIL;
+	}
 
 	hEvents[0] = This->m_hEventInit;
 	hEvents[1] = This->m_hThread;
 
 	dwRes = WaitForMultipleObjects(2,hEvents,FALSE,INFINITE);
+
+	ResetEvent( This->m_hEventInit );
+	CloseHandle( This->m_hThread );
+	This->m_hThread = (HANDLE)NULL;
+
 	if ( dwRes != WAIT_OBJECT_0 )
 		return E_FAIL;
 
@@ -592,25 +605,26 @@ HRESULT CParserImpl_BeginThread( CParserImpl* This )
 }
 
 static
-void CParserImpl_EndThread( CParserImpl* This )
+BOOL CParserImpl_EndThread( CParserImpl* This, BOOL bAsync )
 {
+	DWORD	dwThreadId;
+
 	TRACE("(%p)\n",This);
-	if ( This->m_hThread != (HANDLE)NULL )
-	{
-		if ( PostThreadMessageA(
-			This->m_dwThreadId, QUARTZ_MSG_EXITTHREAD, 0, 0 ) )
-		{
-			WaitForSingleObject( This->m_hThread, INFINITE );
-		}
-		CloseHandle( This->m_hThread );
-		This->m_hThread = (HANDLE)NULL;
-		This->m_dwThreadId = 0;
-	}
+	dwThreadId = This->m_dwThreadId;
 	if ( This->m_hEventInit != (HANDLE)NULL )
 	{
+		if ( dwThreadId != 0 ) /* FIXME? */
+			PostThreadMessageA(
+				dwThreadId, QUARTZ_MSG_EXITTHREAD, 0, 0 );
+		if ( bAsync )
+			return FALSE;
+
+		WaitForSingleObject( This->m_hEventInit, INFINITE );
 		CloseHandle( This->m_hEventInit );
 		This->m_hEventInit = (HANDLE)NULL;
 	}
+
+	return TRUE;
 }
 
 static
@@ -713,7 +727,7 @@ static HRESULT CParserImpl_OnInactive( CBaseFilterImpl* pImpl )
 	hr = CParserImpl_BeginThread(This);
 	if ( FAILED(hr) )
 	{
-		CParserImpl_EndThread(This);
+		CParserImpl_EndThread(This,FALSE);
 		return hr;
 	}
 
@@ -726,8 +740,11 @@ static HRESULT CParserImpl_OnStop( CBaseFilterImpl* pImpl )
 
 	FIXME( "(%p)\n", This );
 
-	CParserImpl_EndThread(This);
+	This->basefilter.bIntermediateState = TRUE;
+	if ( !CParserImpl_EndThread(This,TRUE) )
+		return VFW_S_STATE_INTERMEDIATE;
 
+	This->basefilter.bIntermediateState = FALSE;
 	return NOERROR;
 }
 
@@ -857,8 +874,9 @@ static HRESULT CParserInPinImpl_OnDisconnect( CPinBaseImpl* pImpl )
 {
 	CParserInPinImpl_THIS(pImpl,pin);
 
-	CParserImpl_OnInactive(&This->pParser->basefilter);
-	CParserImpl_OnStop(&This->pParser->basefilter);
+	/* assume the graph is already stopped */
+	/*CParserImpl_OnInactive(&This->pParser->basefilter);*/
+	/*CParserImpl_OnStop(&This->pParser->basefilter);*/
 	if ( This->pParser->m_pHandler->pUninitParser != NULL )
 		This->pParser->m_pHandler->pUninitParser(This->pParser);
 	CParserImpl_SetAsyncReader( This->pParser, NULL );

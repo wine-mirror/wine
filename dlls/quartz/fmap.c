@@ -1,7 +1,7 @@
 /*
  * Implementation of CLSID_FilterMapper and CLSID_FilterMapper2.
  *
- * FIXME - stub.
+ * FIXME - some stubs
  *
  * Copyright (C) Hidenori TAKESHIMA <hidenori@a2.ctktv.ne.jp>
  *
@@ -22,6 +22,7 @@
 
 #include "config.h"
 
+#include <stdlib.h>
 #include "windef.h"
 #include "winbase.h"
 #include "wingdi.h"
@@ -840,6 +841,19 @@ err:
 	return hr;
 }
 
+struct MATCHED_ITEM
+{
+	IMoniker*	pMonFilter;
+	DWORD		dwMerit;
+};
+
+static int sort_comp_merit(const void* p1,const void* p2)
+{
+	const struct MATCHED_ITEM*	pItem1 = (const struct MATCHED_ITEM*)p1;
+        const struct MATCHED_ITEM*      pItem2 = (const struct MATCHED_ITEM*)p2;
+
+	return (int)pItem2->dwMerit - (int)pItem1->dwMerit;
+}
 
 static HRESULT WINAPI
 IFilterMapper2_fnEnumMatchingFilters(IFilterMapper2* iface,
@@ -859,7 +873,10 @@ IFilterMapper2_fnEnumMatchingFilters(IFilterMapper2* iface,
 	BYTE*	pbFilterData = NULL;
 	DWORD	cbFilterData = 0;
 	REGFILTER2*	prf2 = NULL;
-	QUARTZ_CompList*	pList = NULL;
+	QUARTZ_CompList*	pListFilters = NULL;
+	struct MATCHED_ITEM*	pItems = NULL;
+	struct MATCHED_ITEM*	pItemsTmp;
+	int			cItems = 0;
 	const REGFILTERPINS2*	pRegFilterPin;
 	DWORD	n;
 	BOOL	bMatch;
@@ -995,32 +1012,44 @@ IFilterMapper2_fnEnumMatchingFilters(IFilterMapper2* iface,
 			}
 
 			/* matched - add pFilter to the list. */
-			if ( pList == NULL )
+			pItemsTmp = QUARTZ_ReallocMem( pItems, sizeof(struct MATCHED_ITEM) * (cItems+1) );
+			if ( pItemsTmp == NULL )
 			{
-				pList = QUARTZ_CompList_Alloc();
-				if ( pList == NULL )
-				{
-					hr = E_OUTOFMEMORY;
-					goto err;
-				}
-			}
-			TRACE("matched\n");
-			hr = QUARTZ_CompList_AddComp(
-				pList, (IUnknown*)pFilter, NULL, 0 );
-			if ( FAILED(hr) )
+				hr = E_OUTOFMEMORY;
 				goto err;
+			}
+			pItems = pItemsTmp;
+			pItemsTmp = pItems + cItems; cItems ++;
+			pItemsTmp->pMonFilter = pFilter; pFilter = NULL;
+			pItemsTmp->dwMerit = prf2->dwMerit;
 		}
 	}
 
-	if ( pList == NULL )
+	if ( pItems == NULL || cItems == 0 )
 	{
 		hr = S_FALSE;
 		goto err;
 	}
 
-	FIXME("create IEnumMoniker - not sorted\n");
-	/* FIXME - should be sorted?(in Merit order) */
-	hr = QUARTZ_CreateEnumUnknown( &IID_IEnumMoniker, (void**)ppEnumMoniker, pList );
+	/* FIXME - sort in Merit order */
+	TRACE("sort in Merit order\n");
+	qsort( pItems, cItems, sizeof(struct MATCHED_ITEM), sort_comp_merit );
+
+	pListFilters = QUARTZ_CompList_Alloc();
+	if ( pListFilters == NULL )
+	{
+		hr = E_OUTOFMEMORY;
+		goto err;
+	}
+	for ( n = 0; n < cItems; n++ )
+	{
+		TRACE("merit %08lx\n",pItems[n].dwMerit);
+		hr = QUARTZ_CompList_AddComp( pListFilters, (IUnknown*)pItems[n].pMonFilter, NULL, 0 );
+		if ( FAILED(hr) )
+			goto err;
+	}
+
+	hr = QUARTZ_CreateEnumUnknown( &IID_IEnumMoniker, (void**)ppEnumMoniker, pListFilters );
 	if ( FAILED(hr) )
 		goto err;
 
@@ -1040,8 +1069,17 @@ err:
 		QUARTZ_FreeMem(pbFilterData);
 	if ( prf2 != NULL )
 		QUARTZ_FreeMem(prf2);
-	if ( pList != NULL )
-		QUARTZ_CompList_Free( pList );
+	if ( pItems != NULL && cItems > 0 )
+	{
+		for ( n = 0; n < cItems; n++ )
+		{
+			if ( pItems[n].pMonFilter != NULL )
+				IMoniker_Release(pItems[n].pMonFilter);
+		}
+		QUARTZ_FreeMem(pItems);
+	}
+	if ( pListFilters != NULL )
+		QUARTZ_CompList_Free( pListFilters );
 
 	TRACE("returns %08lx\n",hr);
 

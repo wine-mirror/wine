@@ -389,9 +389,18 @@ static HRESULT CMPGParseImpl_GetStreamType( CParserImpl* pImpl, ULONG nStreamInd
 			pmpg1wav = (MPEG1WAVEFORMAT*)pmt->pbFormat;
 			switch ( hdrbuf[1] & 0x6 )
 			{
-			case 0x6: pmpg1wav->fwHeadLayer = ACM_MPEG_LAYER1;
-			case 0x4: pmpg1wav->fwHeadLayer = ACM_MPEG_LAYER2;
-			case 0x2: pmpg1wav->fwHeadLayer = ACM_MPEG_LAYER3;
+			case 0x6:
+				TRACE("layer 1\n");
+				pmpg1wav->fwHeadLayer = ACM_MPEG_LAYER1;
+				break;
+			case 0x4:
+				TRACE("layer 2\n");
+				pmpg1wav->fwHeadLayer = ACM_MPEG_LAYER2;
+				break;
+			case 0x2:
+				TRACE("layer 3\n");
+				pmpg1wav->fwHeadLayer = ACM_MPEG_LAYER3;
+				break;
 			default: return E_FAIL;
 			}
 
@@ -412,10 +421,22 @@ static HRESULT CMPGParseImpl_GetStreamType( CParserImpl* pImpl, ULONG nStreamInd
 
 			switch ( hdrbuf[3] & 0xc0 )
 			{
-			case 0x00: pmpg1wav->fwHeadMode = ACM_MPEG_STEREO;
-			case 0x40: pmpg1wav->fwHeadMode = ACM_MPEG_JOINTSTEREO;
-			case 0x80: pmpg1wav->fwHeadMode = ACM_MPEG_DUALCHANNEL;
-			case 0xc0: pmpg1wav->fwHeadMode = ACM_MPEG_SINGLECHANNEL;
+			case 0x00:
+				TRACE("STEREO\n");
+				pmpg1wav->fwHeadMode = ACM_MPEG_STEREO;
+				break;
+			case 0x40:
+				TRACE("JOINTSTEREO\n");
+				pmpg1wav->fwHeadMode = ACM_MPEG_JOINTSTEREO;
+				break;
+			case 0x80:
+				TRACE("DUALCHANNEL\n");
+				pmpg1wav->fwHeadMode = ACM_MPEG_DUALCHANNEL;
+				break;
+			case 0xc0:
+				TRACE("SINGLECHANNEL\n");
+				pmpg1wav->fwHeadMode = ACM_MPEG_SINGLECHANNEL;
+				break;
 			}
 
 			pmpg1wav->fwHeadModeExt = (hdrbuf[3] & 0x30) >> 4; /* FIXME?? */
@@ -436,9 +457,18 @@ static HRESULT CMPGParseImpl_GetStreamType( CParserImpl* pImpl, ULONG nStreamInd
 			pmpg1wav->wfx.nChannels = (pmpg1wav->fwHeadMode != ACM_MPEG_SINGLECHANNEL) ? 2 : 1;
 			switch ( hdrbuf[2] & 0x0c )
 			{
-			case 0x00: pmpg1wav->wfx.nSamplesPerSec = 44100;
-			case 0x01: pmpg1wav->wfx.nSamplesPerSec = 48000;
-			case 0x02: pmpg1wav->wfx.nSamplesPerSec = 32000;
+			case 0x00:
+				TRACE("44100Hz\n");
+				pmpg1wav->wfx.nSamplesPerSec = 44100;
+				break;
+			case 0x01:
+				TRACE("48000Hz\n");
+				pmpg1wav->wfx.nSamplesPerSec = 48000;
+				break;
+			case 0x02:
+				TRACE("32000Hz\n");
+				pmpg1wav->wfx.nSamplesPerSec = 32000;
+				break;
 			default: return E_FAIL;
 			}
 			pmpg1wav->wfx.nAvgBytesPerSec = pmpg1wav->dwHeadBitrate >> 3;
