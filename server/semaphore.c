@@ -92,8 +92,7 @@ static unsigned int release_semaphore( obj_handle_t handle, unsigned int count )
         }
         else if (sem->count)
         {
-            /* there cannot be any thread waiting if the count is != 0 */
-            assert( !sem->obj.head );
+            /* there cannot be any thread to wake up if the count is != 0 */
             sem->count += count;
         }
         else
