@@ -32,31 +32,36 @@
 
 /* Function ptrs for ntdll calls */
 static HMODULE hntdll = 0;
+static NTSTATUS (WINAPI *pRtlAnsiStringToUnicodeString)(PUNICODE_STRING, PCANSI_STRING, BOOLEAN);
 static NTSTATUS (WINAPI *pRtlAppendAsciizToString)(STRING *, LPCSTR);
 static NTSTATUS (WINAPI *pRtlAppendStringToString)(STRING *, const STRING *);
-static NTSTATUS (WINAPI *pRtlAppendUnicodeToString)(UNICODE_STRING *, LPCWSTR);
 static NTSTATUS (WINAPI *pRtlAppendUnicodeStringToString)(UNICODE_STRING *, const UNICODE_STRING *);
-static NTSTATUS (WINAPI *pRtlFindCharInUnicodeString)(UNICODE_STRING *, WCHAR, UNICODE_STRING **, long);
+static NTSTATUS (WINAPI *pRtlAppendUnicodeToString)(UNICODE_STRING *, LPCWSTR);
 static NTSTATUS (WINAPI *pRtlCharToInteger)(char *, ULONG, int *);
 static VOID     (WINAPI *pRtlCopyString)(STRING *, const STRING *);
 static BOOLEAN  (WINAPI *pRtlCreateUnicodeString)(PUNICODE_STRING, LPCWSTR);
+static BOOLEAN  (WINAPI *pRtlCreateUnicodeStringFromAsciiz)(PUNICODE_STRING, LPCSTR);
 static NTSTATUS (WINAPI *pRtlDowncaseUnicodeString)(UNICODE_STRING *, const UNICODE_STRING *, BOOLEAN);
+static NTSTATUS (WINAPI *pRtlDuplicateUnicodeString)(long, UNICODE_STRING *, UNICODE_STRING *);
 static BOOLEAN  (WINAPI *pRtlEqualUnicodeString)(const UNICODE_STRING *, const UNICODE_STRING *, BOOLEAN);
+static NTSTATUS (WINAPI *pRtlFindCharInUnicodeString)(int, const UNICODE_STRING *, const UNICODE_STRING *, USHORT *);
 static VOID     (WINAPI *pRtlFreeAnsiString)(PSTRING);
 static VOID     (WINAPI *pRtlInitAnsiString)(PSTRING, LPCSTR);
 static VOID     (WINAPI *pRtlInitString)(PSTRING, LPCSTR);
 static VOID     (WINAPI *pRtlInitUnicodeString)(PUNICODE_STRING, LPCWSTR);
+static NTSTATUS (WINAPI *pRtlInitUnicodeStringEx)(PUNICODE_STRING, LPCWSTR);
 static NTSTATUS (WINAPI *pRtlIntegerToChar)(ULONG, ULONG, ULONG, PCHAR);
 static NTSTATUS (WINAPI *pRtlIntegerToUnicodeString)(ULONG, ULONG, UNICODE_STRING *);
+static NTSTATUS (WINAPI *pRtlMultiAppendUnicodeStringBuffer)(UNICODE_STRING *, long, UNICODE_STRING *);
 static NTSTATUS (WINAPI *pRtlUnicodeStringToAnsiString)(STRING *, const UNICODE_STRING *, BOOLEAN);
 static NTSTATUS (WINAPI *pRtlUnicodeStringToInteger)(const UNICODE_STRING *, int, int *);
 static WCHAR    (WINAPI *pRtlUpcaseUnicodeChar)(WCHAR);
 static NTSTATUS (WINAPI *pRtlUpcaseUnicodeString)(UNICODE_STRING *, const UNICODE_STRING *, BOOLEAN);
 static CHAR     (WINAPI *pRtlUpperChar)(CHAR);
 static NTSTATUS (WINAPI *pRtlUpperString)(STRING *, const STRING *);
+static NTSTATUS (WINAPI *pRtlValidateUnicodeString)(long, UNICODE_STRING *);
 
 /*static VOID (WINAPI *pRtlFreeOemString)(PSTRING);*/
-/*static BOOLEAN (WINAPI *pRtlCreateUnicodeStringFromAsciiz)(PUNICODE_STRING,LPCSTR);*/
 /*static VOID (WINAPI *pRtlFreeUnicodeString)(PUNICODE_STRING);*/
 /*static VOID (WINAPI *pRtlCopyUnicodeString)(UNICODE_STRING *, const UNICODE_STRING *);*/
 /*static VOID (WINAPI *pRtlEraseUnicodeString)(UNICODE_STRING *);*/
@@ -65,7 +70,6 @@ static NTSTATUS (WINAPI *pRtlUpperString)(STRING *, const STRING *);
 /*static BOOLEAN (WINAPI *pRtlEqualString)(const STRING *,const STRING *,BOOLEAN);*/
 /*static BOOLEAN (WINAPI *pRtlPrefixString)(const STRING *, const STRING *, BOOLEAN);*/
 /*static BOOLEAN (WINAPI *pRtlPrefixUnicodeString)(const UNICODE_STRING *, const UNICODE_STRING *, BOOLEAN);*/
-/*static NTSTATUS (WINAPI *pRtlAnsiStringToUnicodeString)(PUNICODE_STRING, PCANSI_STRING, BOOLEAN);*/
 /*static NTSTATUS (WINAPI *pRtlOemStringToUnicodeString)(PUNICODE_STRING, const STRING *, BOOLEAN);*/
 /*static NTSTATUS (WINAPI *pRtlUnicodeStringToOemString)(STRING *, const UNICODE_STRING *, BOOLEAN);*/
 /*static NTSTATUS (WINAPI *pRtlMultiByteToUnicodeN)(LPWSTR, DWORD, LPDWORD, LPCSTR, DWORD);*/
@@ -94,28 +98,34 @@ static void InitFunctionPtrs(void)
     hntdll = LoadLibraryA("ntdll.dll");
     ok(hntdll != 0, "LoadLibrary failed");
     if (hntdll) {
+	pRtlAnsiStringToUnicodeString = (void *)GetProcAddress(hntdll, "RtlAnsiStringToUnicodeString");
 	pRtlAppendAsciizToString = (void *)GetProcAddress(hntdll, "RtlAppendAsciizToString");
 	pRtlAppendStringToString = (void *)GetProcAddress(hntdll, "RtlAppendStringToString");
-	pRtlAppendUnicodeToString = (void *)GetProcAddress(hntdll, "RtlAppendUnicodeToString");
 	pRtlAppendUnicodeStringToString = (void *)GetProcAddress(hntdll, "RtlAppendUnicodeStringToString");
-	pRtlFindCharInUnicodeString = (void *)GetProcAddress(hntdll, "RtlFindCharInUnicodeString");
+	pRtlAppendUnicodeToString = (void *)GetProcAddress(hntdll, "RtlAppendUnicodeToString");
 	pRtlCharToInteger = (void *)GetProcAddress(hntdll, "RtlCharToInteger");
 	pRtlCopyString = (void *)GetProcAddress(hntdll, "RtlCopyString");
 	pRtlCreateUnicodeString = (void *)GetProcAddress(hntdll, "RtlCreateUnicodeString");
+	pRtlCreateUnicodeStringFromAsciiz = (void *)GetProcAddress(hntdll, "RtlCreateUnicodeStringFromAsciiz");
 	pRtlDowncaseUnicodeString = (void *)GetProcAddress(hntdll, "RtlDowncaseUnicodeString");
+	pRtlDuplicateUnicodeString = (void *)GetProcAddress(hntdll, "RtlDuplicateUnicodeString");
 	pRtlEqualUnicodeString = (void *)GetProcAddress(hntdll, "RtlEqualUnicodeString");
+	pRtlFindCharInUnicodeString = (void *)GetProcAddress(hntdll, "RtlFindCharInUnicodeString");
 	pRtlFreeAnsiString = (void *)GetProcAddress(hntdll, "RtlFreeAnsiString");
 	pRtlInitAnsiString = (void *)GetProcAddress(hntdll, "RtlInitAnsiString");
 	pRtlInitString = (void *)GetProcAddress(hntdll, "RtlInitString");
 	pRtlInitUnicodeString = (void *)GetProcAddress(hntdll, "RtlInitUnicodeString");
+	pRtlInitUnicodeStringEx = (void *)GetProcAddress(hntdll, "RtlInitUnicodeStringEx");
 	pRtlIntegerToChar = (void *)GetProcAddress(hntdll, "RtlIntegerToChar");
 	pRtlIntegerToUnicodeString = (void *)GetProcAddress(hntdll, "RtlIntegerToUnicodeString");
+	pRtlMultiAppendUnicodeStringBuffer = (void *)GetProcAddress(hntdll, "RtlMultiAppendUnicodeStringBuffer");
 	pRtlUnicodeStringToAnsiString = (void *)GetProcAddress(hntdll, "RtlUnicodeStringToAnsiString");
 	pRtlUnicodeStringToInteger = (void *)GetProcAddress(hntdll, "RtlUnicodeStringToInteger");
 	pRtlUpcaseUnicodeChar = (void *)GetProcAddress(hntdll, "RtlUpcaseUnicodeChar");
 	pRtlUpcaseUnicodeString = (void *)GetProcAddress(hntdll, "RtlUpcaseUnicodeString");
 	pRtlUpperChar = (void *)GetProcAddress(hntdll, "RtlUpperChar");
 	pRtlUpperString = (void *)GetProcAddress(hntdll, "RtlUpperString");
+	pRtlValidateUnicodeString = (void *)GetProcAddress(hntdll, "RtlValidateUnicodeString");
     } /* if */
 }
 
@@ -162,6 +172,297 @@ static void test_RtlInitUnicodeString(void)
     ok(uni.MaximumLength == 0, "MaximumLength uninitialized");
     ok(uni.Buffer == NULL, "Buffer not equal to NULL");
 /*  pRtlInitUnicodeString(NULL, teststring); */
+}
+
+
+#define TESTSTRING2_LEN 1000000
+/* #define TESTSTRING2_LEN 32766 */
+
+
+static void test_RtlInitUnicodeStringEx(void)
+{
+    WCHAR teststring[] = {'S','o','m','e',' ','W','i','l','d',' ','S','t','r','i','n','g',0};
+    WCHAR *teststring2;
+    UNICODE_STRING uni;
+    NTSTATUS result;
+
+    teststring2 = (WCHAR *) malloc((TESTSTRING2_LEN + 1) * sizeof(WCHAR));
+    memset(teststring2, 'X', TESTSTRING2_LEN * sizeof(WCHAR));
+    teststring2[TESTSTRING2_LEN] = '\0';
+
+    uni.Length = 12345;
+    uni.MaximumLength = 12345;
+    uni.Buffer = (void *) 0xdeadbeef;
+    result = pRtlInitUnicodeStringEx(&uni, teststring);
+    ok(result == STATUS_SUCCESS,
+       "pRtlInitUnicodeStringEx(&uni, 0) returns %lx, expected %x",
+       result, STATUS_SUCCESS);
+    ok(uni.Length == 32,
+       "pRtlInitUnicodeStringEx(&uni, 0) sets Length to %u, expected %u",
+       uni.Length, 32);
+    ok(uni.MaximumLength == 34,
+       "pRtlInitUnicodeStringEx(&uni, 0) sets MaximumLength to %u, expected %u",
+       uni.MaximumLength, 34);
+    ok(uni.Buffer == teststring,
+       "pRtlInitUnicodeStringEx(&uni, 0) sets Buffer to %p, expected %p",
+       uni.Buffer, teststring);
+
+    uni.Length = 12345;
+    uni.MaximumLength = 12345;
+    uni.Buffer = (void *) 0xdeadbeef;
+    pRtlInitUnicodeString(&uni, teststring);
+    ok(uni.Length == 32,
+       "pRtlInitUnicodeString(&uni, 0) sets Length to %u, expected %u",
+       uni.Length, 32);
+    ok(uni.MaximumLength == 34,
+       "pRtlInitUnicodeString(&uni, 0) sets MaximumLength to %u, expected %u",
+       uni.MaximumLength, 34);
+    ok(uni.Buffer == teststring,
+       "pRtlInitUnicodeString(&uni, 0) sets Buffer to %p, expected %p",
+       uni.Buffer, teststring);
+
+    uni.Length = 12345;
+    uni.MaximumLength = 12345;
+    uni.Buffer = (void *) 0xdeadbeef;
+    result = pRtlInitUnicodeStringEx(&uni, teststring2);
+    ok(result == STATUS_NAME_TOO_LONG,
+       "pRtlInitUnicodeStringEx(&uni, 0) returns %lx, expected %x",
+       result, STATUS_NAME_TOO_LONG);
+    ok(uni.Length == 12345,
+       "pRtlInitUnicodeStringEx(&uni, 0) sets Length to %u, expected %u",
+       uni.Length, 12345);
+    ok(uni.MaximumLength == 12345,
+       "pRtlInitUnicodeStringEx(&uni, 0) sets MaximumLength to %u, expected %u",
+       uni.MaximumLength, 12345);
+    ok(uni.Buffer == (void *) 0xdeadbeef,
+       "pRtlInitUnicodeStringEx(&uni, 0) sets Buffer to %p, expected %x",
+       uni.Buffer, 0xdeadbeef);
+
+    uni.Length = 12345;
+    uni.MaximumLength = 12345;
+    uni.Buffer = (void *) 0xdeadbeef;
+    pRtlInitUnicodeString(&uni, teststring2);
+    ok(uni.Length == 33920,
+       "pRtlInitUnicodeString(&uni, 0) sets Length to %u, expected %u",
+       uni.Length, 33920);
+    ok(uni.MaximumLength == 33922,
+       "pRtlInitUnicodeString(&uni, 0) sets MaximumLength to %u, expected %u",
+       uni.MaximumLength, 33922);
+    ok(uni.Buffer == teststring2,
+       "pRtlInitUnicodeString(&uni, 0) sets Buffer to %p, expected %p",
+       uni.Buffer, teststring2);
+    ok(memcmp(uni.Buffer, teststring2, (TESTSTRING2_LEN + 1) * sizeof(WCHAR)) == 0,
+       "pRtlInitUnicodeString(&uni, 0) changes Buffer");
+
+    uni.Length = 12345;
+    uni.MaximumLength = 12345;
+    uni.Buffer = (void *) 0xdeadbeef;
+    result = pRtlInitUnicodeStringEx(&uni, 0);
+    ok(result == STATUS_SUCCESS,
+       "pRtlInitUnicodeStringEx(&uni, 0) returns %lx, expected %x",
+       result, STATUS_SUCCESS);
+    ok(uni.Length == 0,
+       "pRtlInitUnicodeStringEx(&uni, 0) sets Length to %u, expected %u",
+       uni.Length, 0);
+    ok(uni.MaximumLength == 0,
+       "pRtlInitUnicodeStringEx(&uni, 0) sets MaximumLength to %u, expected %u",
+       uni.MaximumLength, 0);
+    ok(uni.Buffer == NULL,
+       "pRtlInitUnicodeStringEx(&uni, 0) sets Buffer to %p, expected %p",
+       uni.Buffer, NULL);
+
+    uni.Length = 12345;
+    uni.MaximumLength = 12345;
+    uni.Buffer = (void *) 0xdeadbeef;
+    pRtlInitUnicodeString(&uni, 0);
+    ok(uni.Length == 0,
+       "pRtlInitUnicodeString(&uni, 0) sets Length to %u, expected %u",
+       uni.Length, 0);
+    ok(uni.MaximumLength == 0,
+       "pRtlInitUnicodeString(&uni, 0) sets MaximumLength to %u, expected %u",
+       uni.MaximumLength, 0);
+    ok(uni.Buffer == NULL,
+       "pRtlInitUnicodeString(&uni, 0) sets Buffer to %p, expected %p",
+       uni.Buffer, NULL);
+}
+
+
+typedef struct {
+    int add_nul;
+    int source_Length;
+    int source_MaximumLength;
+    int source_buf_size;
+    char *source_buf;
+    int dest_Length;
+    int dest_MaximumLength;
+    int dest_buf_size;
+    char *dest_buf;
+    int res_Length;
+    int res_MaximumLength;
+    int res_buf_size;
+    char *res_buf;
+    NTSTATUS result;
+} dupl_ustr_t;
+
+static const dupl_ustr_t dupl_ustr[] = {
+    { 0, 32, 34, 34, "This is a string", 40, 42, 42, "--------------------", 32, 32, 32, "This is a string",     STATUS_SUCCESS},
+    { 0, 32, 32, 32, "This is a string", 40, 42, 42, "--------------------", 32, 32, 32, "This is a string",     STATUS_SUCCESS},
+    { 0, 32, 30, 34, "This is a string", 40, 42, 42, "--------------------", 40, 42, 42, "--------------------", STATUS_INVALID_PARAMETER},
+    { 0, 32, 34, 34, "This is a string", 40, 42, 42, NULL,                   32, 32, 32, "This is a string",     STATUS_SUCCESS},
+    { 0, 32, 32, 32, "This is a string", 40, 42, 42, NULL,                   32, 32, 32, "This is a string",     STATUS_SUCCESS},
+    { 0, 32, 30, 34, "This is a string", 40, 42, 42, NULL,                   40, 42,  0, NULL,                   STATUS_INVALID_PARAMETER},
+    { 1, 32, 34, 34, "This is a string", 40, 42, 42, "--------------------", 32, 34, 34, "This is a string",     STATUS_SUCCESS},
+    { 1, 32, 32, 32, "This is a string", 40, 42, 42, "--------------------", 32, 34, 34, "This is a string",     STATUS_SUCCESS},
+    { 1, 32, 30, 34, "This is a string", 40, 42, 42, "--------------------", 40, 42, 42, "--------------------", STATUS_INVALID_PARAMETER},
+    { 1, 32, 34, 34, "This is a string", 40, 42, 42, NULL,                   32, 34, 34, "This is a string",     STATUS_SUCCESS},
+    { 1, 32, 32, 32, "This is a string", 40, 42, 42, NULL,                   32, 34, 34, "This is a string",     STATUS_SUCCESS},
+    { 1, 32, 30, 34, "This is a string", 40, 42, 42, NULL,                   40, 42,  0, NULL,                   STATUS_INVALID_PARAMETER},
+    { 2, 32, 34, 34, "This is a string", 40, 42, 42, "--------------------", 40, 42, 42, "--------------------", STATUS_INVALID_PARAMETER},
+    { 2, 32, 32, 32, "This is a string", 40, 42, 42, "--------------------", 40, 42, 42, "--------------------", STATUS_INVALID_PARAMETER},
+    { 2, 32, 30, 34, "This is a string", 40, 42, 42, "--------------------", 40, 42, 42, "--------------------", STATUS_INVALID_PARAMETER},
+    { 2, 32, 34, 34, "This is a string", 40, 42, 42, NULL,                   40, 42,  0, NULL,                   STATUS_INVALID_PARAMETER},
+    { 2, 32, 32, 32, "This is a string", 40, 42, 42, NULL,                   40, 42,  0, NULL,                   STATUS_INVALID_PARAMETER},
+    { 2, 32, 30, 34, "This is a string", 40, 42, 42, NULL,                   40, 42,  0, NULL,                   STATUS_INVALID_PARAMETER},
+    { 3, 32, 34, 34, "This is a string", 40, 42, 42, "--------------------", 32, 34, 34, "This is a string",     STATUS_SUCCESS},
+    { 3, 32, 32, 32, "This is a string", 40, 42, 42, "--------------------", 32, 34, 34, "This is a string",     STATUS_SUCCESS},
+    { 3, 32, 30, 32, "This is a string", 40, 42, 42, "--------------------", 40, 42, 42, "--------------------", STATUS_INVALID_PARAMETER},
+    { 3, 32, 34, 34, "This is a string", 40, 42, 42, NULL,                   32, 34, 34, "This is a string",     STATUS_SUCCESS},
+    { 3, 32, 32, 32, "This is a string", 40, 42, 42, NULL,                   32, 34, 34, "This is a string",     STATUS_SUCCESS},
+    { 3, 32, 30, 32, "This is a string", 40, 42, 42, NULL,                   40, 42,  0, NULL,                   STATUS_INVALID_PARAMETER},
+    { 4, 32, 34, 34, "This is a string", 40, 42, 42, "--------------------", 40, 42, 42, "--------------------", STATUS_INVALID_PARAMETER},
+    { 5, 32, 34, 34, "This is a string", 40, 42, 42, "--------------------", 40, 42, 42, "--------------------", STATUS_INVALID_PARAMETER},
+    { 6, 32, 34, 34, "This is a string", 40, 42, 42, "--------------------", 40, 42, 42, "--------------------", STATUS_INVALID_PARAMETER},
+    { 7, 32, 34, 34, "This is a string", 40, 42, 42, "--------------------", 40, 42, 42, "--------------------", STATUS_INVALID_PARAMETER},
+    { 8, 32, 34, 34, "This is a string", 40, 42, 42, "--------------------", 40, 42, 42, "--------------------", STATUS_INVALID_PARAMETER},
+    { 9, 32, 34, 34, "This is a string", 40, 42, 42, "--------------------", 40, 42, 42, "--------------------", STATUS_INVALID_PARAMETER},
+    {10, 32, 34, 34, "This is a string", 40, 42, 42, "--------------------", 40, 42, 42, "--------------------", STATUS_INVALID_PARAMETER},
+    {11, 32, 34, 34, "This is a string", 40, 42, 42, "--------------------", 40, 42, 42, "--------------------", STATUS_INVALID_PARAMETER},
+    {12, 32, 34, 34, "This is a string", 40, 42, 42, "--------------------", 40, 42, 42, "--------------------", STATUS_INVALID_PARAMETER},
+    {13, 32, 34, 34, "This is a string", 40, 42, 42, "--------------------", 40, 42, 42, "--------------------", STATUS_INVALID_PARAMETER},
+    {14, 32, 34, 34, "This is a string", 40, 42, 42, "--------------------", 40, 42, 42, "--------------------", STATUS_INVALID_PARAMETER},
+    {15, 32, 34, 34, "This is a string", 40, 42, 42, "--------------------", 40, 42, 42, "--------------------", STATUS_INVALID_PARAMETER},
+    {16, 32, 34, 34, "This is a string", 40, 42, 42, "--------------------", 40, 42, 42, "--------------------", STATUS_INVALID_PARAMETER},
+    {-1, 32, 34, 34, "This is a string", 40, 42, 42, "--------------------", 40, 42, 42, "--------------------", STATUS_INVALID_PARAMETER},
+    {-5, 32, 34, 34, "This is a string", 40, 42, 42, "--------------------", 40, 42, 42, "--------------------", STATUS_INVALID_PARAMETER},
+    {-9, 32, 34, 34, "This is a string", 40, 42, 42, "--------------------", 40, 42, 42, "--------------------", STATUS_INVALID_PARAMETER},
+    { 0,  0,  2,  2, "",                 40, 42, 42, "--------------------",  0,  0,  0, NULL,                   STATUS_SUCCESS},
+    { 0,  0,  0,  0, "",                 40, 42, 42, "--------------------",  0,  0,  0, NULL,                   STATUS_SUCCESS},
+    { 0,  0,  2,  2, "",                 40, 42, 42, NULL,                    0,  0,  0, NULL,                   STATUS_SUCCESS},
+    { 0,  0,  0,  0, "",                 40, 42, 42, NULL,                    0,  0,  0, NULL,                   STATUS_SUCCESS},
+    { 0,  0,  2,  2, NULL,               40, 42, 42, "--------------------", 40, 42, 42, "--------------------", STATUS_INVALID_PARAMETER},
+    { 0,  0,  0,  0, NULL,               40, 42, 42, "--------------------",  0,  0,  0, NULL,                   STATUS_SUCCESS},
+    { 0,  0,  2,  2, NULL,               40, 42, 42, NULL,                   40, 42,  0, NULL,                   STATUS_INVALID_PARAMETER},
+    { 0,  0,  0,  0, NULL,               40, 42, 42, NULL,                    0,  0,  0, NULL,                   STATUS_SUCCESS},
+    { 1,  0,  2,  2, "",                 40, 42, 42, "--------------------",  0,  0,  0, NULL,                   STATUS_SUCCESS},
+    { 1,  0,  0,  0, "",                 40, 42, 42, "--------------------",  0,  0,  0, NULL,                   STATUS_SUCCESS},
+    { 1,  0,  2,  2, "",                 40, 42, 42, NULL,                    0,  0,  0, NULL,                   STATUS_SUCCESS},
+    { 1,  0,  0,  0, "",                 40, 42, 42, NULL,                    0,  0,  0, NULL,                   STATUS_SUCCESS},
+    { 1,  0,  2,  2, NULL,               40, 42, 42, "--------------------", 40, 42, 42, "--------------------", STATUS_INVALID_PARAMETER},
+    { 1,  0,  0,  0, NULL,               40, 42, 42, "--------------------",  0,  0,  0, NULL,                   STATUS_SUCCESS},
+    { 1,  0,  2,  2, NULL,               40, 42, 42, NULL,                   40, 42,  0, NULL,                   STATUS_INVALID_PARAMETER},
+    { 1,  0,  0,  0, NULL,               40, 42, 42, NULL,                    0,  0,  0, NULL,                   STATUS_SUCCESS},
+    { 2,  0,  2,  2, "",                 40, 42, 42, "--------------------", 40, 42, 42, "--------------------", STATUS_INVALID_PARAMETER},
+    { 2,  0,  0,  0, "",                 40, 42, 42, "--------------------", 40, 42, 42, "--------------------", STATUS_INVALID_PARAMETER},
+    { 2,  0,  2,  2, "",                 40, 42, 42, NULL,                   40, 42,  0, NULL,                   STATUS_INVALID_PARAMETER},
+    { 2,  0,  0,  0, "",                 40, 42, 42, NULL,                   40, 42,  0, NULL,                   STATUS_INVALID_PARAMETER},
+    { 2,  0,  2,  2, NULL,               40, 42, 42, "--------------------", 40, 42, 42, "--------------------", STATUS_INVALID_PARAMETER},
+    { 2,  0,  0,  0, NULL,               40, 42, 42, "--------------------", 40, 42, 42, "--------------------", STATUS_INVALID_PARAMETER},
+    { 2,  0,  2,  2, NULL,               40, 42, 42, NULL,                   40, 42,  0, NULL,                   STATUS_INVALID_PARAMETER},
+    { 2,  0,  0,  0, NULL,               40, 42, 42, NULL,                   40, 42,  0, NULL,                   STATUS_INVALID_PARAMETER},
+    { 3,  0,  2,  2, "",                 40, 42, 42, "--------------------",  0,  2,  2, "",                     STATUS_SUCCESS},
+    { 3,  0,  0,  0, "",                 40, 42, 42, "--------------------",  0,  2,  2, "",                     STATUS_SUCCESS},
+    { 3,  0,  2,  2, "",                 40, 42, 42, NULL,                    0,  2,  2, "",                     STATUS_SUCCESS},
+    { 3,  0,  0,  0, "",                 40, 42, 42, NULL,                    0,  2,  2, "",                     STATUS_SUCCESS},
+    { 3,  0,  2,  2, NULL,               40, 42, 42, "--------------------", 40, 42, 42, "--------------------", STATUS_INVALID_PARAMETER},
+    { 3,  0,  0,  0, NULL,               40, 42, 42, "--------------------",  0,  2,  2, "",                     STATUS_SUCCESS},
+    { 3,  0,  2,  2, NULL,               40, 42, 42, NULL,                   40, 42,  0, NULL,                   STATUS_INVALID_PARAMETER},
+    { 3,  0,  0,  0, NULL,               40, 42, 42, NULL,                    0,  2,  2, "",                     STATUS_SUCCESS},
+};
+#define NB_DUPL_USTR (sizeof(dupl_ustr)/sizeof(*dupl_ustr))
+
+
+static void test_RtlDuplicateUnicodeString(void)
+{
+    int pos;
+    WCHAR source_buf[257];
+    WCHAR dest_buf[257];
+    WCHAR res_buf[257];
+    UNICODE_STRING source_str;
+    UNICODE_STRING dest_str;
+    UNICODE_STRING res_str;
+    CHAR dest_ansi_buf[257];
+    STRING dest_ansi_str;
+    NTSTATUS result;
+    int test_num;
+
+    for (test_num = 0; test_num < NB_DUPL_USTR; test_num++) {
+	source_str.Length        = dupl_ustr[test_num].source_Length;
+	source_str.MaximumLength = dupl_ustr[test_num].source_MaximumLength;
+	if (dupl_ustr[test_num].source_buf != NULL) {
+	    for (pos = 0; pos < dupl_ustr[test_num].source_buf_size/sizeof(WCHAR); pos++) {
+		source_buf[pos] = dupl_ustr[test_num].source_buf[pos];
+	    } /* for */
+	    source_str.Buffer = source_buf;
+	} else {
+	    source_str.Buffer = NULL;
+	} /* if */
+	dest_str.Length        = dupl_ustr[test_num].dest_Length;
+	dest_str.MaximumLength = dupl_ustr[test_num].dest_MaximumLength;
+	if (dupl_ustr[test_num].dest_buf != NULL) {
+	    for (pos = 0; pos < dupl_ustr[test_num].dest_buf_size/sizeof(WCHAR); pos++) {
+		dest_buf[pos] = dupl_ustr[test_num].dest_buf[pos];
+	    } /* for */
+	    dest_str.Buffer = dest_buf;
+	} else {
+	    dest_str.Buffer = NULL;
+	} /* if */
+	res_str.Length        = dupl_ustr[test_num].res_Length;
+	res_str.MaximumLength = dupl_ustr[test_num].res_MaximumLength;
+	if (dupl_ustr[test_num].res_buf != NULL) {
+	    for (pos = 0; pos < dupl_ustr[test_num].res_buf_size/sizeof(WCHAR); pos++) {
+		res_buf[pos] = dupl_ustr[test_num].res_buf[pos];
+	    } /* for */
+	    res_str.Buffer = res_buf;
+	} else {
+	    res_str.Buffer = NULL;
+	} /* if */
+	result = pRtlDuplicateUnicodeString(dupl_ustr[test_num].add_nul, &source_str, &dest_str);
+        dest_ansi_str.Length = dest_str.Length / sizeof(WCHAR);
+        dest_ansi_str.MaximumLength = dest_ansi_str.Length + 1;
+        for (pos = 0; pos < dest_ansi_str.Length; pos++) {
+       	    dest_ansi_buf[pos] = dest_buf[pos];
+        } /* for */
+        dest_ansi_buf[dest_ansi_str.Length] = '\0';
+        dest_ansi_str.Buffer = dest_ansi_buf;
+	ok(result == dupl_ustr[test_num].result,
+	   "(test %d): RtlDuplicateUnicodeString(%d, source, dest) has result %lx, expected %lx",
+	   test_num, dupl_ustr[test_num].add_nul, result, dupl_ustr[test_num].result);
+	ok(dest_str.Length == dupl_ustr[test_num].res_Length,
+	   "(test %d): RtlDuplicateUnicodeString(%d, source, dest) destination has Length %d, expected %d",
+	   test_num, dupl_ustr[test_num].add_nul, dest_str.Length, dupl_ustr[test_num].res_Length);
+	ok(dest_str.MaximumLength == dupl_ustr[test_num].res_MaximumLength,
+	   "(test %d): RtlDuplicateUnicodeString(%d, source, dest) destination has MaximumLength %d, expected %d",
+	   test_num, dupl_ustr[test_num].add_nul, dest_str.MaximumLength, dupl_ustr[test_num].res_MaximumLength);
+        if (result == STATUS_INVALID_PARAMETER) {
+	    ok((dest_str.Buffer == NULL && res_str.Buffer == NULL) ||
+               dest_str.Buffer == dest_buf,
+	       "(test %d): RtlDuplicateUnicodeString(%d, source, dest) destination buffer changed %p expected %p",
+	       test_num, dupl_ustr[test_num].add_nul, dest_str.Buffer, dest_buf);
+        } else {
+	    ok(dest_str.Buffer != dest_buf,
+	       "(test %d): RtlDuplicateUnicodeString(%d, source, dest) has destination buffer unchanged %p",
+	       test_num, dupl_ustr[test_num].add_nul, dest_str.Buffer);
+        } /* if */
+        if (dest_str.Buffer != NULL && dupl_ustr[test_num].res_buf != NULL) {
+	    ok(memcmp(dest_str.Buffer, res_str.Buffer, dupl_ustr[test_num].res_buf_size) == 0,
+	       "(test %d): RtlDuplicateUnicodeString(%d, source, dest) has destination \"%s\" expected \"%s\"",
+	       test_num, dupl_ustr[test_num].add_nul, dest_ansi_str.Buffer, dupl_ustr[test_num].res_buf);
+        } else {
+	    ok(dest_str.Buffer == NULL && dupl_ustr[test_num].res_buf == NULL,
+	       "(test %d): RtlDuplicateUnicodeString(%d, source, dest) has destination %p expected %p",
+	       test_num, dupl_ustr[test_num].add_nul, dest_str.Buffer, dupl_ustr[test_num].res_buf);
+        } /* if */
+    } /* for */
 }
 
 
@@ -440,6 +741,7 @@ static const ustr2astr_t ustr2astr[] = {
 };
 #define NB_USTR2ASTR (sizeof(ustr2astr)/sizeof(*ustr2astr))
 
+
 static void test_RtlUnicodeStringToAnsiString(void)
 {
     int pos;
@@ -463,11 +765,9 @@ static void test_RtlUnicodeStringToAnsiString(void)
 	uni_str.Length        = ustr2astr[test_num].uni_Length;
 	uni_str.MaximumLength = ustr2astr[test_num].uni_MaximumLength;
 	if (ustr2astr[test_num].uni_buf != NULL) {
-/*          memcpy(uni_buf, ustr2astr[test_num].uni_buf, ustr2astr[test_num].uni_buf_size); */
 	    for (pos = 0; pos < ustr2astr[test_num].uni_buf_size/sizeof(WCHAR); pos++) {
 		uni_buf[pos] = ustr2astr[test_num].uni_buf[pos];
 	    } /* for */
-/*	    uni_buf[ustr2astr[test_num].uni_buf_size/sizeof(WCHAR)] = '\0'; */
 	    uni_str.Buffer = uni_buf;
 	} else {
 	    uni_str.Buffer = NULL;
@@ -514,6 +814,7 @@ static const app_asc2str_t app_asc2str[] = {
     { 5, 12, 15, "Tst\0S01234abcde", "tr\0i",  7, 12, 15, "Tst\0Str234abcde", STATUS_SUCCESS},
 };
 #define NB_APP_ASC2STR (sizeof(app_asc2str)/sizeof(*app_asc2str))
+
 
 static void test_RtlAppendAsciizToString(void)
 {
@@ -583,6 +884,7 @@ static const app_str2str_t app_str2str[] = {
     { 5, 12, 15, "Tst\0S01234abcde", 4, 4, 7, "tr\0iZY",  9, 12, 15, "Tst\0Str\0i4abcde", STATUS_SUCCESS},
 };
 #define NB_APP_STR2STR (sizeof(app_str2str)/sizeof(*app_str2str))
+
 
 static void test_RtlAppendStringToString(void)
 {
@@ -666,6 +968,7 @@ static const app_uni2str_t app_uni2str[] = {
 };
 #define NB_APP_UNI2STR (sizeof(app_uni2str)/sizeof(*app_uni2str))
 
+
 static void test_RtlAppendUnicodeToString(void)
 {
     WCHAR dest_buf[257];
@@ -739,6 +1042,7 @@ static const app_ustr2str_t app_ustr2str[] = {
 };
 #define NB_APP_USTR2STR (sizeof(app_ustr2str)/sizeof(*app_ustr2str))
 
+
 static void test_RtlAppendUnicodeStringToString(void)
 {
     WCHAR dest_buf[257];
@@ -786,6 +1090,117 @@ static void test_RtlAppendUnicodeStringToString(void)
 	       "(test %d): RtlAppendStringToString(dest, src) dest has Buffer %p expected %p",
 	       test_num, dest_str.Buffer, app_ustr2str[test_num].res_buf);
 	} /* if */
+    } /* for */
+}
+
+
+typedef struct {
+    int flags;
+    char *main_str;
+    char *search_chars;
+    USHORT pos;
+    NTSTATUS result;
+} find_ch_in_ustr_t;
+
+static const find_ch_in_ustr_t find_ch_in_ustr[] = {
+    { 0, "Some Wild String",           "S",       2, STATUS_SUCCESS},
+    { 0, "This is a String",           "String",  6, STATUS_SUCCESS},
+    { 1, "This is a String",           "String", 30, STATUS_SUCCESS},
+    { 2, "This is a String",           "String",  2, STATUS_SUCCESS},
+    { 3, "This is a String",           "String", 18, STATUS_SUCCESS},
+    { 0, "This is a String",           "Wild",    6, STATUS_SUCCESS},
+    { 1, "This is a String",           "Wild",   26, STATUS_SUCCESS},
+    { 2, "This is a String",           "Wild",    2, STATUS_SUCCESS},
+    { 3, "This is a String",           "Wild",   30, STATUS_SUCCESS},
+    { 0, "abcdefghijklmnopqrstuvwxyz", "",        0, STATUS_NOT_FOUND},
+    { 0, "abcdefghijklmnopqrstuvwxyz", "123",     0, STATUS_NOT_FOUND},
+    { 0, "abcdefghijklmnopqrstuvwxyz", "a",       2, STATUS_SUCCESS},
+    { 0, "abcdefghijklmnopqrstuvwxyz", "12a34",   2, STATUS_SUCCESS},
+    { 0, "abcdefghijklmnopqrstuvwxyz", "12b34",   4, STATUS_SUCCESS},
+    { 0, "abcdefghijklmnopqrstuvwxyz", "12y34",  50, STATUS_SUCCESS},
+    { 0, "abcdefghijklmnopqrstuvwxyz", "12z34",  52, STATUS_SUCCESS},
+    { 0, "abcdefghijklmnopqrstuvwxyz", "rvz",    36, STATUS_SUCCESS},
+    { 0, "abcdefghijklmmlkjihgfedcba", "egik",   10, STATUS_SUCCESS},
+    { 1, "abcdefghijklmnopqrstuvwxyz", "",        0, STATUS_NOT_FOUND},
+    { 1, "abcdefghijklmnopqrstuvwxyz", "rvz",    50, STATUS_SUCCESS},
+    { 1, "abcdefghijklmnopqrstuvwxyz", "ravy",   48, STATUS_SUCCESS},
+    { 1, "abcdefghijklmnopqrstuvwxyz", "raxv",   46, STATUS_SUCCESS},
+    { 2, "abcdefghijklmnopqrstuvwxyz", "",        2, STATUS_SUCCESS},
+    { 2, "abcdefghijklmnopqrstuvwxyz", "rvz",     2, STATUS_SUCCESS},
+    { 2, "abcdefghijklmnopqrstuvwxyz", "vaz",     4, STATUS_SUCCESS},
+    { 2, "abcdefghijklmnopqrstuvwxyz", "ravbz",   6, STATUS_SUCCESS},
+    { 3, "abcdefghijklmnopqrstuvwxyz", "",       50, STATUS_SUCCESS},
+    { 3, "abcdefghijklmnopqrstuvwxyz", "123",    50, STATUS_SUCCESS},
+    { 3, "abcdefghijklmnopqrstuvwxyz", "ahp",    50, STATUS_SUCCESS},
+    { 3, "abcdefghijklmnopqrstuvwxyz", "rvz",    48, STATUS_SUCCESS},
+    { 0, NULL,                         "abc",     0, STATUS_NOT_FOUND},
+    { 1, NULL,                         "abc",     0, STATUS_NOT_FOUND},
+    { 2, NULL,                         "abc",     0, STATUS_NOT_FOUND},
+    { 3, NULL,                         "abc",     0, STATUS_NOT_FOUND},
+    { 0, "abcdefghijklmnopqrstuvwxyz", NULL,      0, STATUS_NOT_FOUND},
+    { 1, "abcdefghijklmnopqrstuvwxyz", NULL,      0, STATUS_NOT_FOUND},
+    { 2, "abcdefghijklmnopqrstuvwxyz", NULL,      2, STATUS_SUCCESS},
+    { 3, "abcdefghijklmnopqrstuvwxyz", NULL,     50, STATUS_SUCCESS},
+    { 0, NULL,                         NULL,      0, STATUS_NOT_FOUND},
+    { 1, NULL,                         NULL,      0, STATUS_NOT_FOUND},
+    { 2, NULL,                         NULL,      0, STATUS_NOT_FOUND},
+    { 3, NULL,                         NULL,      0, STATUS_NOT_FOUND},
+    { 0, "abcdabcdabcdabcdabcdabcd",   "abcd",    2, STATUS_SUCCESS},
+    { 1, "abcdabcdabcdabcdabcdabcd",   "abcd",   46, STATUS_SUCCESS},
+    { 2, "abcdabcdabcdabcdabcdabcd",   "abcd",    0, STATUS_NOT_FOUND},
+    { 3, "abcdabcdabcdabcdabcdabcd",   "abcd",    0, STATUS_NOT_FOUND},
+};
+#define NB_FIND_CH_IN_USTR (sizeof(find_ch_in_ustr)/sizeof(*find_ch_in_ustr))
+
+
+static void test_RtlFindCharInUnicodeString(void)
+{
+    WCHAR main_str_buf[257];
+    WCHAR search_chars_buf[257];
+    UNICODE_STRING main_str;
+    UNICODE_STRING search_chars;
+    USHORT pos;
+    NTSTATUS result;
+    int idx;
+    int test_num;
+
+    for (test_num = 0; test_num < NB_FIND_CH_IN_USTR; test_num++) {
+	if (find_ch_in_ustr[test_num].main_str != NULL) {
+	    main_str.Length        = strlen(find_ch_in_ustr[test_num].main_str) * sizeof(WCHAR);
+	    main_str.MaximumLength = main_str.Length + sizeof(WCHAR);
+	    for (idx = 0; idx < main_str.Length / sizeof(WCHAR); idx++) {
+		main_str_buf[idx] = find_ch_in_ustr[test_num].main_str[idx];
+	    } /* for */
+	    main_str.Buffer = main_str_buf;
+	} else {
+	    main_str.Length        = 0;
+	    main_str.MaximumLength = 0;
+	    main_str.Buffer        = NULL;
+	} /* if */
+	if (find_ch_in_ustr[test_num].search_chars != NULL) {
+	    search_chars.Length        = strlen(find_ch_in_ustr[test_num].search_chars) * sizeof(WCHAR);
+	    search_chars.MaximumLength = search_chars.Length + sizeof(WCHAR);
+	    for (idx = 0; idx < search_chars.Length / sizeof(WCHAR); idx++) {
+		search_chars_buf[idx] = find_ch_in_ustr[test_num].search_chars[idx];
+	    } /* for */
+	    search_chars.Buffer = search_chars_buf;
+	} else {
+	    search_chars.Length        = 0;
+	    search_chars.MaximumLength = 0;
+	    search_chars.Buffer        = NULL;
+	} /* if */
+	pos = 12345;
+        result = pRtlFindCharInUnicodeString(find_ch_in_ustr[test_num].flags, &main_str, &search_chars, &pos);
+        ok(result == find_ch_in_ustr[test_num].result,
+           "(test %d): RtlFindCharInUnicodeString(%d, %s, %s, [out]) has result %lx, expected %lx",
+           test_num, find_ch_in_ustr[test_num].flags,
+           find_ch_in_ustr[test_num].main_str, find_ch_in_ustr[test_num].search_chars,
+           result, find_ch_in_ustr[test_num].result);
+        ok(pos == find_ch_in_ustr[test_num].pos,
+           "(test %d): RtlFindCharInUnicodeString(%d, %s, %s, [out]) assigns %d to pos, expected %d",
+           test_num, find_ch_in_ustr[test_num].flags,
+           find_ch_in_ustr[test_num].main_str, find_ch_in_ustr[test_num].search_chars,
+           pos, find_ch_in_ustr[test_num].pos);
     } /* for */
 }
 
@@ -1271,6 +1686,16 @@ START_TEST(rtlstr)
 	test_RtlAppendStringToString();
 	test_RtlAppendUnicodeToString();
 	test_RtlAppendUnicodeStringToString();
+    } /* if */
+
+    if (pRtlInitUnicodeStringEx) {
+	test_RtlInitUnicodeStringEx();
+    } /* if */
+    if (pRtlDuplicateUnicodeString) {
+        test_RtlDuplicateUnicodeString();
+    } /* if */
+    if (pRtlFindCharInUnicodeString) {
+        test_RtlFindCharInUnicodeString();
     } /* if */
 	/*
 	 * test_RtlUpcaseUnicodeChar();
