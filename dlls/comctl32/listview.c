@@ -468,6 +468,19 @@ static inline char* debugrect(const RECT* rect)
     } else return "(null)";
 }
 
+static char* debugnmlistview(LPNMLISTVIEW plvnm)
+{
+    if (plvnm)
+    {
+	char* buf = debug_getbuf();
+        snprintf(buf, DEBUG_BUFFER_SIZE, "iItem=%d, iSubItem=%d, uNewState=0x%x,"
+	         " uOldState=0x%x, uChanged=0x%x, ptAction=%s, lParam=%ld\n",
+	         plvnm->iItem, plvnm->iSubItem, plvnm->uNewState, plvnm->uOldState,
+		 plvnm->uChanged, debugpoint(&plvnm->ptAction), plvnm->lParam);
+	return buf;
+    } else return "(null)";
+}
+
 static char* debuglvitem_t(LPLVITEMW lpLVItem, BOOL isW)
 {
     char* buf = debug_getbuf(), *text = buf;
@@ -577,6 +590,7 @@ static inline void notify_itemactivate(LISTVIEW_INFO *infoPtr)
 
 static inline LRESULT notify_listview(LISTVIEW_INFO *infoPtr, INT code, LPNMLISTVIEW plvnm)
 {
+    TRACE("(code=%d, plvnm=%s)\n", code, debugnmlistview(plvnm));
     return notify_hdr(infoPtr, code, (LPNMHDR)plvnm);
 }
 
@@ -603,7 +617,7 @@ static int get_ansi_notification(INT unicodeNotificationCode)
     case LVN_GETINFOTIPW: return LVN_GETINFOTIPA;
     }
     ERR("unknown notification %x\n", unicodeNotificationCode);
-    return unicodeNotificationCode;
+    assert(FALSE);
 }
 
 /*
@@ -661,6 +675,7 @@ static BOOL notify_dispinfoT(LISTVIEW_INFO *infoPtr, INT notificationCode, LPNML
 	realNotifCode = get_ansi_notification(notificationCode);
     else
 	realNotifCode = notificationCode;
+    TRACE(" pdi->item=%s\n", debuglvitem_t(&pdi->item, infoPtr->notifyFormat != NFR_ANSI));
     bResult = notify_hdr(infoPtr, realNotifCode, (LPNMHDR)pdi);
 
     if (convertToUnicode || convertToAnsi)
@@ -2873,6 +2888,8 @@ static BOOL set_owner_item(LISTVIEW_INFO *infoPtr, LPLVITEMW lpLVItem, BOOL isW,
     NMLISTVIEW nmlv;
     INT oldState;
 
+    TRACE("()\n");
+
     /* a virtual listview stores only the state for the main item */
     if (lpLVItem->iSubItem || !(lpLVItem->mask & LVIF_STATE)) return FALSE;
 
@@ -2945,6 +2962,8 @@ static BOOL set_main_item(LISTVIEW_INFO *infoPtr, LPLVITEMW lpLVItem, BOOL isW, 
     NMLISTVIEW nmlv;
     UINT uChanged = 0, oldState;
 
+    TRACE("()\n");
+
     hdpaSubItems = (HDPA)DPA_GetPtr(infoPtr->hdpaItems, lpLVItem->iItem);
     if (!hdpaSubItems && hdpaSubItems != (HDPA)-1) return FALSE;
     
@@ -2955,7 +2974,7 @@ static BOOL set_main_item(LISTVIEW_INFO *infoPtr, LPLVITEMW lpLVItem, BOOL isW, 
     oldState = (LVIS_FOCUSED | LVIS_SELECTED) & ~infoPtr->uCallbackMask;
     if (oldState) oldState = LISTVIEW_GetItemState(infoPtr, lpLVItem->iItem, oldState);
 
-    TRACE("oldState=0x%x, state=0x%x\n", oldState, lpItem->state);
+    TRACE("oldState=%x, newState=%x\n", oldState, lpLVItem->state);
     /* determine what fields will change */    
     if ((lpLVItem->mask & LVIF_STATE) && ((oldState ^ lpLVItem->state) & lpLVItem->stateMask & ~infoPtr->uCallbackMask))
 	uChanged |= LVIF_STATE;
@@ -4685,23 +4704,17 @@ static BOOL LISTVIEW_GetItemT(LISTVIEW_INFO *infoPtr, LPLVITEMW lpLVItem, BOOL i
     ITEMHDR* pItemHdr;
     HDPA hdpaSubItems;
 
-    /* In the following:
-     * lpLVItem describes the information requested by the user
-     * lpItem is what we have
-     * dispInfo is a structure we use to request the missing
-     *     information from the application
-     */
-
     TRACE("(lpLVItem=%s, isW=%d)\n", debuglvitem_t(lpLVItem, isW), isW);
 
-    if (!lpLVItem || (lpLVItem->iItem < 0) ||
-        (lpLVItem->iItem >= infoPtr->nItemCount))
+    if (!lpLVItem || lpLVItem->iItem < 0 || lpLVItem->iItem >= infoPtr->nItemCount)
 	return FALSE;
+
+    if (lpLVItem->mask == 0) return TRUE;
 
     /* a quick optimization if all we're asked is the focus state
      * these queries are worth optimising since they are common,
      * and can be answered in constant time, without the heavy accesses */
-    if ( (lpLVItem->mask == LVIF_STATE) && (lpLVItem->stateMask == LVIF_STATE) &&
+    if ( (lpLVItem->mask == LVIF_STATE) && (lpLVItem->stateMask == LVIS_FOCUSED) &&
 	 !(infoPtr->uCallbackMask & LVIS_FOCUSED) )
     {
 	lpLVItem->state = 0;
@@ -4784,7 +4797,7 @@ static BOOL LISTVIEW_GetItemT(LISTVIEW_INFO *infoPtr, LPLVITEMW lpLVItem, BOOL i
     }
   
     /* Do we need to enquire about the image? */
-    if ((lpLVItem->mask & LVIF_IMAGE) && (pItemHdr->iImage==I_IMAGECALLBACK))
+    if ((lpLVItem->mask & LVIF_IMAGE) && pItemHdr->iImage == I_IMAGECALLBACK)
 	dispInfo.item.mask |= LVIF_IMAGE;
 
     /* Do we need to enquire about the text? */
@@ -4831,7 +4844,7 @@ static BOOL LISTVIEW_GetItemT(LISTVIEW_INFO *infoPtr, LPLVITEMW lpLVItem, BOOL i
 	else textcpynT(lpLVItem->pszText, isW, pItemHdr->pszText, TRUE, lpLVItem->cchTextMax);
     }
 
-    /* if this is a subitem, we're done*/
+    /* if this is a subitem, we're done */
     if (lpLVItem->iSubItem) return TRUE;
   
     /* Next is the lParam field */
