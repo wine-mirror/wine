@@ -1,5 +1,5 @@
 /*
- *	IMM32 library
+ *	IMM32 stubs - please implement!
  *
  *	Copyright 1998	Patrik Stridvall
  */
@@ -9,14 +9,9 @@
 #include "wingdi.h"
 #include "winuser.h"
 #include "winerror.h"
+#include "immddk.h"
+
 #include "debugtools.h"
-#include "imm.h"
-
-typedef struct INPUTCONTEXT
-{
-  int dummy;
-} *LPINPUTCONTEXT;
-
 DEFAULT_DEBUG_CHANNEL(imm);
 
 /***********************************************************************
@@ -765,76 +760,6 @@ BOOL WINAPI ImmUnlockIMC(HIMC hIMC)
 DWORD WINAPI ImmGetIMCLockCount(HIMC hIMC)
 {
 	FIXME("(0x%08x): stub\n", (unsigned)hIMC);
-	SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
-	return 0;
-}
-
-/***********************************************************************
- *		ImmCreateIMCC (IMM32.@)
- */
-HIMCC WINAPI ImmCreateIMCC(DWORD dwSize)
-{
-	FIXME("(%lu): stub\n", dwSize);
-	SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
-	return (HIMCC)NULL;
-}
-
-/***********************************************************************
- *		ImmDestroyIMCC (IMM32.@)
- */
-HIMCC WINAPI ImmDestroyIMCC(HIMCC hIMCC)
-{
-	FIXME("(0x%08x): stub\n", (unsigned)hIMCC);
-	SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
-	return (HIMCC)hIMCC;
-}
-
-/***********************************************************************
- *		ImmLockIMCC (IMM32.@)
- */
-LPVOID WINAPI ImmLockIMCC(HIMCC hIMCC)
-{
-	FIXME("(0x%08x): stub\n", (unsigned)hIMCC);
-	SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
-	return NULL;
-}
-
-/***********************************************************************
- *		ImmUnlockIMCC (IMM32.@)
- */
-BOOL WINAPI ImmUnlockIMCC(HIMCC hIMCC)
-{
-	FIXME("(0x%08x): stub\n", (unsigned)hIMCC);
-	SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
-	return FALSE;
-}
-
-/***********************************************************************
- *		ImmGetIMCCLockCount (IMM32.@)
- */
-DWORD WINAPI ImmGetIMCCLockCount(HIMCC hIMCC)
-{
-	FIXME("(0x%08x): stub\n", (unsigned)hIMCC);
-	SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
-	return 0;
-}
-
-/***********************************************************************
- *		ImmReSizeIMCC (IMM32.@)
- */
-HIMCC WINAPI ImmReSizeIMCC(HIMCC hIMCC, DWORD dwSize)
-{
-	FIXME("(0x%08x,%lu): stub\n", (unsigned)hIMCC, dwSize);
-	SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
-	return (HIMCC)NULL;
-}
-
-/***********************************************************************
- *		ImmGetIMCCSize (IMM32.@)
- */
-DWORD WINAPI ImmGetIMCCSize(HIMCC hIMCC)
-{
-	FIXME("(0x%08x): stub\n", (unsigned)hIMCC);
 	SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
 	return 0;
 }

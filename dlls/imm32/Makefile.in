@@ -9,7 +9,10 @@ LDDLLFLAGS = @LDDLLFLAGS@
 SYMBOLFILE = $(MODULE).tmp.o
 
 C_SRCS = \
-	imm.c
+	imm.c \
+	main.c \
+	memory.c \
+	string.c
 
 @MAKE_DLL_RULES@
 

@@ -407,7 +407,7 @@ dsound/libdsound.@LIBEXT@: libwinmm.@LIBEXT@ libkernel32.@LIBEXT@ libntdll.@LIBE
 gdi/libgdi32.@LIBEXT@: libadvapi32.@LIBEXT@ libkernel32.@LIBEXT@ libntdll.@LIBEXT@
 icmp/libicmp.@LIBEXT@: libkernel32.@LIBEXT@ libntdll.@LIBEXT@
 imagehlp/libimagehlp.@LIBEXT@: libkernel32.@LIBEXT@ libntdll.@LIBEXT@
-imm32/libimm32.@LIBEXT@: libkernel32.@LIBEXT@ libntdll.@LIBEXT@
+imm32/libimm32.@LIBEXT@:  libuser32.@LIBEXT@ libgdi32.@LIBEXT@ libkernel32.@LIBEXT@ libntdll.@LIBEXT@
 kernel/libkernel32.@LIBEXT@: libntdll.@LIBEXT@
 lzexpand/liblz32.@LIBEXT@: libkernel32.@LIBEXT@ libntdll.@LIBEXT@
 mpr/libmpr.@LIBEXT@: libkernel32.@LIBEXT@ libntdll.@LIBEXT@
