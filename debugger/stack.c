@@ -207,7 +207,7 @@ void DEBUG_BackTrace(BOOL noisy)
              * available at SS:ESP, so let's try to retrieve it */
             tmp.seg = ss;
             tmp.off = DEBUG_context.Esp;
-            if (DEBUG_READ_MEM(DEBUG_ToLinear(&tmp), &code.off, sizeof(code.off))) {
+            if (DEBUG_READ_MEM((void *)DEBUG_ToLinear(&tmp), &code.off, sizeof(code.off))) {
                 DEBUG_ForceFrame( &addr, &code, ++frameno, 32, noisy, ", null call assumed" );
             }
         }
