@@ -1034,7 +1034,7 @@ BOOL16 WINAPI GetMessage16( SEGPTR msg, HWND16 hwnd, UINT16 first, UINT16 last)
 /***********************************************************************
  *          WIN16_GetMessage32   (USER.820)
  */
-BOOL16 WIN16_GetMessage32( SEGPTR msg16_32, HWND16 hWnd, UINT16 first,
+BOOL16 WINAPI WIN16_GetMessage32( SEGPTR msg16_32, HWND16 hWnd, UINT16 first,
                      UINT16 last, BOOL16 wHaveParamHigh )
 {
     MSG16_32 *lpmsg16_32 = (MSG16_32 *)PTR_SEG_TO_LIN(msg16_32);
