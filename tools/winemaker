@@ -2695,6 +2695,8 @@ if test -n "$WINE_ROOT"
 then
   WINE_INCLUDE_ROOT="$WINE_ROOT/include:$WINE_ROOT/include/wine"
   WINE_LIBRARY_ROOT="$WINE_ROOT:$WINE_ROOT/lib:$WINE_ROOT/library"
+  WINE_UNICODE_ROOT="$WINE_ROOT:$WINE_ROOT/lib:$WINE_ROOT/unicode"
+  WINE_UUID_ROOT="$WINE_ROOT:$WINE_ROOT/lib:$WINE_ROOT/ole"
   WINE_TOOL_PATH="$WINE_ROOT:$WINE_ROOT/bin:$WINE_ROOT/tools/wrc:$WINE_ROOT/tools/winebuild"
   WINE_DLL_ROOT="$WINE_ROOT/dlls:$WINE_ROOT/lib"
 fi
@@ -2721,6 +2723,8 @@ fi])
 if test -n "$WINE_LIBRARIES"
 then
   WINE_LIBRARY_ROOT="$WINE_LIBRARIES"
+  WINE_UNICODE_ROOT="$WINE_LIBRARIES:$WINE_LIBRARIES/unicode:$WINE_LIBRARIES/../unicode"
+  WINE_UUID_ROOT="$WINE_LIBRARIES:$WINE_LIBRARIES/ole:$WINE_LIBRARIES/../ole"
 fi
 
 AC_ARG_WITH(wine-dlls,
@@ -2784,13 +2788,49 @@ else
   WINE_LIBRARY_PATH=""
 fi
 
+if test -z "$WINE_UNICODE_ROOT"
+then
+  WINE_UNICODE_ROOT=":/usr/lib/wine:/usr/local/lib:/usr/local/lib/wine:/opt/wine/lib"
+else
+  AC_PATH_FILE(WINE_UNICODE_ROOT,[libwine_unicode.so],[
+    AC_MSG_ERROR([Could not find the Wine libraries (libwine_unicode.so)])
+  ],$WINE_UNICODE_ROOT)
+fi
+AC_PATH_LIBRARY(WINE_UNICODE_ROOT,[-lwine_unicode],[$WINE_LIBRARY_PATH -lwine],[
+  AC_MSG_ERROR([Could not link with the Wine libraries (libwine_unicode.so)])
+],[$WINE_UNICODE_ROOT])
+
+if test -n "$WINE_UNICODE_ROOT" -a "$WINE_UNICODE_ROOT" != "$WINE_LIBRARY_ROOT"
+then
+  WINE_LIBRARY_PATH="$WINE_LIBRARY_PATH -L$WINE_UNICODE_ROOT"
+  LD_PATH="$LD_PATH:$WINE_UNICODE_ROOT"
+fi
+
+if test -z "$WINE_UUID_ROOT"
+then
+  WINE_UUID_ROOT=":/usr/lib/wine:/usr/local/lib:/usr/local/lib/wine:/opt/wine/lib"
+else
+  AC_PATH_FILE(WINE_UUID_ROOT,[libwine_uuid.a],[
+    AC_MSG_ERROR([Could not find the Wine libraries (libwine_uuid.a)])
+  ],$WINE_UUID_ROOT)
+fi
+AC_PATH_LIBRARY(WINE_UUID_ROOT,[-lwine_uuid],[$WINE_LIBRARY_PATH -lwine],[
+  AC_MSG_ERROR([Could not link with the Wine libraries (libwine_uuid.a)])
+],[$WINE_UUID_ROOT])
+
+if test -n "$WINE_UUID_ROOT" -a "$WINE_UUID_ROOT" != "$WINE_LIBRARY_ROOT"
+then
+  WINE_LIBRARY_PATH="$WINE_LIBRARY_PATH -L$WINE_UUID_ROOT"
+  LD_PATH="$LD_PATH:$WINE_UUID_ROOT"
+fi
+
 if test -z "$WINE_DLL_ROOT"
 then
   if test -n "$WINE_LIBRARY_ROOT"
   then
     WINE_DLL_ROOT="$WINE_LIBRARY_ROOT:$WINE_LIBRARY_ROOT/dlls"
   else
-    WINE_DLL_ROOT="/lib:/lib/dlls:/usr/lib:/usr/lib/dlls:/usr/local/lib:/usr/local/lib/dlls"
+    WINE_DLL_ROOT="/lib:/lib/wine:/usr/lib:/usr/lib/wine:/usr/local/lib:/usr/local/lib/wine"
   fi
 fi
 AC_PATH_FILE(WINE_DLL_ROOT,[libntdll.dll.so],[
