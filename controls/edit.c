@@ -2896,8 +2896,8 @@ static void EDIT_WM_Char(WND *wnd, EDITSTATE *es, CHAR c, DWORD key_data)
         BOOL control = GetKeyState(VK_CONTROL) & 0x8000;
 	switch (c) {
 	case '\r':
-	    /* If the edit doesn't want the return, do nothing */
-	    if(!(es->style & ES_WANTRETURN))
+	    /* If the edit doesn't want the return and it's not a multiline edit, do nothing */
+	    if(!(es->style & ES_MULTILINE) && !(es->style & ES_WANTRETURN))
 		break;
 	case '\n':
 		if (es->style & ES_MULTILINE) {
