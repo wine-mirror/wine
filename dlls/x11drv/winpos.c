@@ -1014,7 +1014,7 @@ BOOL X11DRV_SetWindowPos( WINDOWPOS *winpos )
                           RDW_NOERASE | RDW_NOINTERNALPAINT | RDW_ALLCHILDREN );
             set_visible_style( winpos->hwnd, FALSE );
         }
-        else if ((wndPtr->dwStyle & WS_VISIBLE) &&
+        else if ((wndPtr->dwStyle & WS_VISIBLE) && bChangePos &&
                  X11DRV_is_window_rect_mapped( &oldWindowRect ) &&
                  !X11DRV_is_window_rect_mapped( &newWindowRect ))
         {
@@ -1046,7 +1046,7 @@ BOOL X11DRV_SetWindowPos( WINDOWPOS *winpos )
         {
             set_visible_style( winpos->hwnd, TRUE );
         }
-        else if ((wndPtr->dwStyle & WS_VISIBLE) &&
+        else if ((wndPtr->dwStyle & WS_VISIBLE) && bChangePos &&
                  !X11DRV_is_window_rect_mapped( &oldWindowRect ) &&
                  X11DRV_is_window_rect_mapped( &newWindowRect ))
         {
