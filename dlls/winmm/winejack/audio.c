@@ -1542,7 +1542,7 @@ static DWORD wodReset(WORD wDevID)
  */
 static DWORD wodGetPosition(WORD wDevID, LPMMTIME lpTime, DWORD uSize)
 {
-    int			time;
+    double		time;
     DWORD		val;
     WINE_WAVEOUT*	wwo;
     DWORD elapsedMS;
@@ -1584,14 +1584,14 @@ static DWORD wodGetPosition(WORD wDevID, LPMMTIME lpTime, DWORD uSize)
       TRACE("TIME_SAMPLES=%lu\n", lpTime->u.sample);
       break;
     case TIME_SMPTE:
-      time = val / (wwo->format.wf.nAvgBytesPerSec / 1000);
-      lpTime->u.smpte.hour = time / 108000;
-      time -= lpTime->u.smpte.hour * 108000;
-      lpTime->u.smpte.min = time / 1800;
-      time -= lpTime->u.smpte.min * 1800;
-      lpTime->u.smpte.sec = time / 30;
-      time -= lpTime->u.smpte.sec * 30;
-      lpTime->u.smpte.frame = time;
+      time = (double)val / (double)wwo->format.wf.nAvgBytesPerSec;
+      lpTime->u.smpte.hour = time / (60 * 60);
+      time -= lpTime->u.smpte.hour * (60 * 60);
+      lpTime->u.smpte.min = time / 60;
+      time -= lpTime->u.smpte.min * 60;
+      lpTime->u.smpte.sec = time;
+      time -= lpTime->u.smpte.sec;
+      lpTime->u.smpte.frame = ceil(time * 30);
       lpTime->u.smpte.fps = 30;
       TRACE("TIME_SMPTE=%02u:%02u:%02u:%02u\n",
         lpTime->u.smpte.hour, lpTime->u.smpte.min,
@@ -1601,7 +1601,7 @@ static DWORD wodGetPosition(WORD wDevID, LPMMTIME lpTime, DWORD uSize)
       FIXME("Format %d not supported ! use TIME_MS !\n", lpTime->wType);
       lpTime->wType = TIME_MS;
     case TIME_MS:
-      lpTime->u.ms = val / (wwo->format.wf.nAvgBytesPerSec / 1000);
+      lpTime->u.ms = val * 1000.0 / wwo->format.wf.nAvgBytesPerSec;
       TRACE("TIME_MS=%lu\n", lpTime->u.ms);
       break;
     }
