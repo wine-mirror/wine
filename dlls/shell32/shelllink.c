@@ -1027,6 +1027,8 @@ static HRESULT WINAPI IShellLinkA_fnGetPath(IShellLinkA * iface, LPSTR pszFile,
         WideCharToMultiByte( CP_ACP, 0, This->sPath, -1,
                              pszFile, cchMaxPath, NULL, NULL);
 
+    if (pfd) FIXME("(%p): WIN32_FIND_DATA is not yet filled.\n", This);
+
     return NOERROR;
 }
 
@@ -1430,11 +1432,15 @@ static HRESULT WINAPI IShellLinkW_fnGetPath(IShellLinkW * iface, LPWSTR pszFile,
 {
     _ICOM_THIS_From_IShellLinkW(IShellLinkImpl, iface);
 
-    FIXME("(%p)->(pfile=%p len=%u find_data=%p flags=%lu)\n",This, pszFile, cchMaxPath, pfd, fFlags);
+    TRACE("(%p)->(pfile=%p len=%u find_data=%p flags=%lu)\n",
+		  This, pszFile, cchMaxPath, pfd, fFlags);
+
     if( cchMaxPath )
         pszFile[0] = 0;
     if( This->sPath )
         lstrcpynW( pszFile, This->sPath, cchMaxPath );
+
+    if (pfd) FIXME("(%p): WIN32_FIND_DATA is not yet filled.\n", This);
 
     return NOERROR;
 }
