@@ -128,7 +128,7 @@ HRESULT WINAPI AtlInternalQueryInterface(LPVOID this, const _ATL_INTMAP_ENTRY* p
         TRACE("Trying entry %i (%p %li %p)\n",i,pEntries[i].piid,
               pEntries[i].dw, pEntries[i].pFunc);
 
-        if (IsEqualGUID(iid,pEntries[i].piid))
+        if (pEntries[i].piid && IsEqualGUID(iid,pEntries[i].piid))
         {
             TRACE("MATCH\n");
             if (pEntries[i].pFunc == (_ATL_CREATORARGFUNC*)1)
