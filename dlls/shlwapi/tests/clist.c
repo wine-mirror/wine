@@ -77,12 +77,12 @@ HRESULT WINAPI QueryInterface(_IDummyStream *This,REFIID riid, LPVOID *ppvObj)
 
 static ULONG WINAPI AddRef(_IDummyStream *This)
 {
-  return ++This->ref;
+  return InterlockedIncrement(&This->ref);
 }
 
 static ULONG WINAPI Release(_IDummyStream *This)
 {
-  return --This->ref;
+  return InterlockedDecrement(&This->ref);
 }
 
 static HRESULT WINAPI Read(_IDummyStream* This, LPVOID lpMem, ULONG ulSize,
