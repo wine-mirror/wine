@@ -23,17 +23,6 @@ GLUE =  lolvldrv.c \
 RC_SRCS= \
 	winmm_res.rc
 
-SUBDIRS = \
-	joystick \
-	mcianim \
-	mciavi \
-	mcicda \
-	mciseq \
-	mciwave \
-	midimap \
-	wavemap \
-	wineoss
-
 @MAKE_DLL_RULES@
 
 ### Dependencies:

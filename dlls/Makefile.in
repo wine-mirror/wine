@@ -170,6 +170,15 @@ SUBDIRS = \
 	wineps \
 	wininet \
 	winmm \
+	winmm/joystick \
+	winmm/mcianim \
+	winmm/mciavi \
+	winmm/mcicda \
+	winmm/mciseq \
+	winmm/mciwave \
+	winmm/midimap \
+	winmm/wavemap \
+	winmm/wineoss \
 	winsock \
 	winspool \
 	wow32 \

@@ -7,8 +7,7 @@ import user32.dll
 import kernel32.dll
 import	ntdll.dll
 
-debug_channels (joystick mci mcianim mciavi mcicda mcimidi mciwave midi mmaux
-                mmio mmsys mmtime msacm sound wave)
+debug_channels (mci mmio mmsys mmtime sound)
 
 # ordinal exports
 1 stdcall @(ptr long long) PlaySoundA
