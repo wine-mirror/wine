@@ -1618,12 +1618,13 @@ static void add_interface_typeinfo(msft_typelib_t *typelib, type_t *interface)
     msft_typeinfo->typeinfo->datatype2 = num_funcs << 16 | num_parents;
     msft_typeinfo->typeinfo->cbSizeVft = num_funcs * 4;
 
-    func = interface->funcs;
-    while(NEXT_LINK(func)) func = NEXT_LINK(func);
-    while(func) {
-        if(add_func_desc(msft_typeinfo, func, idx) == S_OK)
-            idx++;
-        func = PREV_LINK(func);
+    if((func = interface->funcs)) {
+        while(NEXT_LINK(func)) func = NEXT_LINK(func);
+        while(func) {
+            if(add_func_desc(msft_typeinfo, func, idx) == S_OK)
+                idx++;
+            func = PREV_LINK(func);
+        }
     }
 }
 
