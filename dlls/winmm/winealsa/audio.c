@@ -998,10 +998,12 @@ static DWORD wodNotifyClient(WINE_WAVEOUT* wwo, WORD wMsg, DWORD dwParam1, DWORD
  */
 static BOOL wodUpdatePlayedTotal(WINE_WAVEOUT* wwo, snd_pcm_status_t* ps)
 {
-   snd_pcm_sframes_t delay = 0;
-   snd_pcm_delay(wwo->p_handle, &delay);
-   wwo->dwPlayedTotal = wwo->dwWrittenTotal - snd_pcm_frames_to_bytes(wwo->p_handle, delay);
-   return TRUE;
+    snd_pcm_sframes_t delay = 0;
+    snd_pcm_delay(wwo->p_handle, &delay);
+    if (snd_pcm_state(wwo->p_handle) != SND_PCM_STATE_RUNNING)
+        delay=0;
+    wwo->dwPlayedTotal = wwo->dwWrittenTotal - snd_pcm_frames_to_bytes(wwo->p_handle, delay);
+    return TRUE;
 }
 
 /**************************************************************************
