@@ -7,9 +7,4 @@
  - Notepad segfaults when selecting "Find" button in "Search" dialog.
    This is probably a problem related to Winelib.
  
- - Page Setup dialog box should exchange strings with the corresponding
-   Globals.szMargin???-strings (needed to evaluate strings when printing)
-   
- - Fields in "Page Setup" dialog box should be initialized.
-   
  - create new *.rc files for all languages you know.

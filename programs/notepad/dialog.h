@@ -1,7 +1,7 @@
 /*
- * Notepad
+ *  Notepad (dialog.h)
  *
- * Copyright 1998 Marcel Baur <mbaur@g26.ethz.ch>
+ *  Copyright 1998 Marcel Baur <mbaur@g26.ethz.ch>
  */
 
 #include "windows.h"

@@ -1,5 +1,8 @@
 /*
- * Notepad (license.h)
+ *  Notepad (license.h)
+ *
+ *  Copyright 1997,98 Marcel Baur <mbaur@g26.ethz.ch>
+ *  To be distributed under the Wine License
  */
 
 VOID WineLicense(HWND hWnd, LPCSTR lpszLanguage);

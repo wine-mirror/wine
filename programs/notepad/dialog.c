@@ -1,23 +1,27 @@
 /*
- * Notepad
+ *  Notepad (dialog.c)
  *
- * Copyright 1998 Marcel Baur <mbaur@g26.ethz.ch>
+ *  Copyright 1998 Marcel Baur <mbaur@g26.ethz.ch>
+ *  To be distributed under the Wine License
  */
 
 #include <stdio.h>
-#include "windows.h"
-#include "commdlg.h"
-#include "winnls.h"
-#include "winerror.h"
+#include <windows.h>
+#include <commdlg.h>
+#include <winerror.h>
+
 #ifdef WINELIB
 #include "shell.h"
 #include "options.h"
 #endif
+
 #include "main.h"
 #include "license.h"
 #include "language.h"
 #include "dialog.h"
+
 #include "version.h"
+#include "winnls.h"
 #include "debug.h"
 
 
@@ -42,7 +46,7 @@ void AlertFileNotFound(LPCSTR szFilename) {
 
    int nResult;
    
-   nResult = AlertIDS(IDS_NOTFOUND, IDS_ERROR, 0);
+   nResult = AlertIDS(IDS_NOTFOUND, IDS_ERROR, MB_ICONEXCLAMATION);
 }
 
 
@@ -50,7 +54,7 @@ VOID AlertOutOfMemory(void) {
 
    int nResult;
    
-   nResult = AlertIDS(IDS_OUT_OF_MEMORY, IDS_ERROR, 0);
+   nResult = AlertIDS(IDS_OUT_OF_MEMORY, IDS_ERROR, MB_ICONEXCLAMATION);
    PostQuitMessage(1);
 }
 
@@ -60,10 +64,10 @@ BOOL ExistFile(LPCSTR szFilename) {
  *  Returns: TRUE  - if "szFileName" exists
  *           FALSE - if it does not
  */
-   WIN32_FIND_DATA32A entry;
+   WIN32_FIND_DATA entry;
    HANDLE32 handle;
    
-   handle = FindFirstFile32A(szFilename, &entry);
+   handle = FindFirstFile(szFilename, &entry);
    
    return (handle!=INVALID_HANDLE_VALUE32);
 }
@@ -90,6 +94,9 @@ BOOL DoCloseFile(void) {
    
    // FIXME: The following resources are not yet in the .rc files
    // szMessage, szCaption show up random values. Please keep these lines!
+
+   strcpy(szMessage, "Save changes ?");
+   strcpy(szCaption, "Save changes");
    
 //  LoadString(Globals.hInstance, ids_savechanges, szMessage, sizeof(szMessage));
 //  LoadString(Globals.hInstance, ids_savetitle, szCaption, sizeof(szCaption));
@@ -98,21 +105,22 @@ BOOL DoCloseFile(void) {
 
    switch (nResult) {
           case IDYES:     DoSaveFile();
-                     break;
+                          break;
+
           case IDNO:      break;
+
           case IDCANCEL:  return(FALSE);
-                     break;
+                          break;
                       
-         default:    return(FALSE);
-                     break;
+          default:        return(FALSE);
+                          break;
       }
       
     
   }
   
-  // Forget file name
-  
-  lstrcpyn(Globals.szFileName, "\0", 1);
+  // Forget file name 
+  lstrcpy(Globals.szFileName, "");
   LANGUAGE_UpdateWindowCaption();
 
   return(TRUE);
@@ -126,7 +134,7 @@ void DoOpenFile(LPCSTR szFileName) {
     if (DoCloseFile) {
 
         // Open file
-        lstrcpyn(Globals.szFileName, szFileName, strlen(szFileName)+1); 
+        lstrcpy(Globals.szFileName, szFileName); 
         LANGUAGE_UpdateWindowCaption();
     
     }
@@ -151,7 +159,10 @@ VOID DIALOG_FileOpen(VOID)
         CHAR szPath[MAX_PATHNAME_LEN];
         CHAR szDir[MAX_PATHNAME_LEN];
         CHAR szzFilter[2 * MAX_STRING_LEN + 100];
+        CHAR szDefaultExt[4];
         LPSTR p = szzFilter;
+
+        lstrcpy(szDefaultExt, "txt");
 
         LoadString(Globals.hInstance, IDS_TEXT_FILES_TXT, p, MAX_STRING_LEN);
         p += strlen(p) + 1;
@@ -163,9 +174,10 @@ VOID DIALOG_FileOpen(VOID)
         p += strlen(p) + 1;
         *p = '\0';
 
-        GetWindowsDirectory(szDir, sizeof(szDir));
+        GetCurrentDirectory(sizeof(szDir), szDir);
+        lstrcpy(szPath,"*.txt");
 
-        openfilename.lStructSize       = sizeof(openfilename);
+        openfilename.lStructSize       = sizeof(OPENFILENAME);
         openfilename.hwndOwner         = Globals.hMainWnd;
         openfilename.hInstance         = Globals.hInstance;
         openfilename.lpstrFilter       = szzFilter;
@@ -178,10 +190,10 @@ VOID DIALOG_FileOpen(VOID)
         openfilename.nMaxFileTitle     = 0;
         openfilename.lpstrInitialDir   = szDir;
         openfilename.lpstrTitle        = 0;
-        openfilename.Flags             = 0;
+        openfilename.Flags             = OFN_FILEMUSTEXIST + OFN_PATHMUSTEXIST;
         openfilename.nFileOffset       = 0;
         openfilename.nFileExtension    = 0;
-        openfilename.lpstrDefExt       = 0;
+        openfilename.lpstrDefExt       = szDefaultExt;
         openfilename.lCustData         = 0;
         openfilename.lpfnHook          = 0;
         openfilename.lpTemplateName    = 0;
@@ -194,7 +206,6 @@ VOID DIALOG_FileOpen(VOID)
                     AlertFileNotFound(openfilename.lpstrFile);
                     
         }
-          
 }
 
 VOID DIALOG_FileSave(VOID)
@@ -207,8 +218,12 @@ VOID DIALOG_FileSaveAs(VOID)
         OPENFILENAME saveas;
         CHAR szPath[MAX_PATHNAME_LEN];
         CHAR szDir[MAX_PATHNAME_LEN];
+        CHAR szDefaultExt[4];
         CHAR szzFilter[2 * MAX_STRING_LEN + 100];
+       
         LPSTR p = szzFilter;
+
+        lstrcpy(szDefaultExt, "txt");
 
         LoadString(Globals.hInstance, IDS_TEXT_FILES_TXT, p, MAX_STRING_LEN);
         p += strlen(p) + 1;
@@ -220,9 +235,11 @@ VOID DIALOG_FileSaveAs(VOID)
         p += strlen(p) + 1;
         *p = '\0';
 
-        GetWindowsDirectory(szDir, sizeof(szDir));
+        lstrcpy(szPath,"*.*");
 
-        saveas.lStructSize       = 0;
+        GetCurrentDirectory(sizeof(szDir), szDir);
+
+        saveas.lStructSize       = sizeof(OPENFILENAME);
         saveas.hwndOwner         = Globals.hMainWnd;
         saveas.hInstance         = Globals.hInstance;
         saveas.lpstrFilter       = szzFilter;
@@ -235,17 +252,16 @@ VOID DIALOG_FileSaveAs(VOID)
         saveas.nMaxFileTitle     = 0;
         saveas.lpstrInitialDir   = szDir;
         saveas.lpstrTitle        = 0;
-        saveas.Flags             = 0;
+        saveas.Flags             = OFN_PATHMUSTEXIST + OFN_OVERWRITEPROMPT + OFN_HIDEREADONLY;
         saveas.nFileOffset       = 0;
         saveas.nFileExtension    = 0;
-        saveas.lpstrDefExt       = 0;
+        saveas.lpstrDefExt       = szDefaultExt;
         saveas.lCustData         = 0;
         saveas.lpfnHook          = 0;
         saveas.lpTemplateName    = 0;
 
         if (GetSaveFileName(&saveas)) {
-            lstrcpyn(Globals.szFileName, saveas.lpstrFile, 
-            strlen(saveas.lpstrFile)+1);
+            lstrcpy(Globals.szFileName, saveas.lpstrFile);
             LANGUAGE_UpdateWindowCaption();
             DIALOG_FileSave();
         }
@@ -254,7 +270,7 @@ VOID DIALOG_FileSaveAs(VOID)
 VOID DIALOG_FilePrint(VOID)
 {
         PRINTDLG printer;
-        printer.lStructSize           = sizeof(printer);
+        printer.lStructSize           = sizeof(PRINTDLG);
         printer.hwndOwner             = Globals.hMainWnd;
         printer.hInstance             = Globals.hInstance;
         printer.hDevMode              = 0;
@@ -265,7 +281,7 @@ VOID DIALOG_FilePrint(VOID)
         printer.nToPage               = 0;
         printer.nMinPage              = 0;
         printer.nMaxPage              = 0;
-        printer.nCopies               = 0;
+        printer.nCopies               = 1;
         printer.lCustData             = 0;
         printer.lpfnPrintHook         = 0;
         printer.lpfnSetupHook         = 0;
@@ -274,7 +290,7 @@ VOID DIALOG_FilePrint(VOID)
         printer.hPrintTemplate        = 0;
         printer.hSetupTemplate        = 0;
         
-        if (PrintDlg16(&printer)) {
+        if (PrintDlg(&printer)) {
             // do nothing
         };
 }
@@ -286,7 +302,31 @@ VOID DIALOG_FilePageSetup(VOID)
 
 VOID DIALOG_FilePrinterSetup(VOID)
 {
-        fprintf(stderr, "FilePrinterSetup()\n");
+        PRINTDLG printer;
+        printer.lStructSize           = sizeof(PRINTDLG);
+        printer.hwndOwner             = Globals.hMainWnd;
+        printer.hInstance             = Globals.hInstance;
+        printer.hDevMode              = 0;
+        printer.hDevNames             = 0;
+        printer.hDC                   = 0;
+        printer.Flags                 = PD_PRINTSETUP;
+        printer.nFromPage             = 0;
+        printer.nToPage               = 0;
+        printer.nMinPage              = 0;
+        printer.nMaxPage              = 0;
+        printer.nCopies               = 1;
+        printer.lCustData             = 0;
+        printer.lpfnPrintHook         = 0;
+        printer.lpfnSetupHook         = 0;
+        printer.lpPrintTemplateName   = 0;
+        printer.lpSetupTemplateName   = 0;
+        printer.hPrintTemplate        = 0;
+        printer.hSetupTemplate        = 0;
+        
+        if (PrintDlg(&printer)) {
+            // do nothing
+        };
+
 }
 
 VOID DIALOG_FileExit(VOID)
@@ -341,27 +381,36 @@ VOID DIALOG_EditWrap(VOID)
 VOID DIALOG_Search(VOID)
 {
         FINDREPLACE find;
-        CHAR szFind[MAX_PATHNAME_LEN];
+        CHAR szFind[MAX_PATHNAME_LEN+10];
+        CHAR szReplace[MAX_PATHNAME_LEN+10];
           
-        lstrcpyn(szFind, Globals.szFindText, strlen(Globals.szFindText)+1);
+        HWND hResult;
+
+        lstrcpy(szReplace, "");
+        lstrcpy(szFind, Globals.szFindText);
           
-        find.lStructSize      = sizeof(find);
+        find.lStructSize      = sizeof(FINDREPLACE);
         find.hwndOwner        = Globals.hMainWnd;
-        find.hInstance        = Globals.hInstance;
+        find.hInstance        = 0;
         find.lpstrFindWhat    = szFind;
-        find.wFindWhatLen     = sizeof(szFind);
-        find.Flags            = 0;
+        find.wFindWhatLen     = MAX_PATHNAME_LEN;
+        find.lpstrReplaceWith = szReplace;
+        find.wReplaceWithLen  = MAX_PATHNAME_LEN;
+        find.Flags            = FR_DOWN;
         find.lCustData        = 0;
         find.lpfnHook         = 0;
         find.lpTemplateName   = 0;
 
-        if (FindText(&find)) {
-             lstrcpyn(Globals.szFindText, szFind, strlen(szFind)+1);
+        hResult = FindText(&find);
+
+        if (hResult) {
+             lstrcpy(Globals.szFindText, szFind);
         } 
              else 
         { 
              // do nothing yet
         };
+
 }
 
 VOID DIALOG_SearchNext(VOID)
@@ -406,7 +455,9 @@ VOID DIALOG_HelpAboutWine(VOID)
 
 VOID DIALOG_PageSetup(VOID)
 {
-  WNDPROC lpfnDlg = MakeProcInstance(DIALOG_PAGESETUP_DlgProc, Globals.hInstance);
+  WNDPROC lpfnDlg;
+
+  lpfnDlg = MakeProcInstance(DIALOG_PAGESETUP_DlgProc, Globals.hInstance);
   DialogBox(Globals.hInstance, STRING_PAGESETUP_Xx, Globals.hMainWnd, lpfnDlg);
   FreeProcInstance(lpfnDlg);
 }
@@ -456,6 +507,19 @@ static LRESULT DIALOG_PAGESETUP_DlgProc(HWND hDlg, UINT msg, WPARAM wParam, LPAR
           EndDialog(hDlg, IDCANCEL);
           return TRUE;
         }
+      break;
+
+    case WM_INITDIALOG:
+       SetDlgItemText(hDlg, NP_PAGESETUP_HEAD,   Globals.szHeader);
+       SetDlgItemText(hDlg, NP_PAGESETUP_TAIL,   Globals.szFooter);
+       SetDlgItemText(hDlg, NP_PAGESETUP_TOP,    Globals.szMarginTop);
+       SetDlgItemText(hDlg, NP_PAGESETUP_BOTTOM, Globals.szMarginBottom);
+       SetDlgItemText(hDlg, NP_PAGESETUP_LEFT,   Globals.szMarginLeft);
+       SetDlgItemText(hDlg, NP_PAGESETUP_RIGHT,  Globals.szMarginRight);
+       break;
+
+    case WM_CLOSE:
+       break;
     }
   return FALSE;
 }

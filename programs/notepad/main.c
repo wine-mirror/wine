@@ -1,19 +1,23 @@
 /*
- * Notepad
+ *  Notepad
  *
- * Copyright 1997 Marcel Baur <mbaur@g26.ethz.ch>
+ *  Copyright 1997,98 Marcel Baur <mbaur@g26.ethz.ch>
+ *  To be distributed under the Wine License
  */
 
 #include <stdio.h>
 #include "windows.h"
+#include "shell.h"
 #include "main.h"
 #include "license.h"
 #include "dialog.h"
 #include "language.h"
+
 #ifdef WINELIB
 #include "options.h"
 #include "resource.h"
 #include "shell.h"
+void LIBWINE_Register_Da();
 void LIBWINE_Register_De();
 void LIBWINE_Register_En();
 void LIBWINE_Register_Sw();
@@ -76,6 +80,9 @@ int NOTEPAD_MenuCommand (WPARAM wParam)
 LRESULT NOTEPAD_WndProc (HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
 {
     PAINTSTRUCT ps;
+    CHAR szFileName[MAX_STRING_LEN];
+
+    lstrcpy(szFileName, "");
 
     switch (msg) {
 
@@ -94,6 +101,13 @@ LRESULT NOTEPAD_WndProc (HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
        case WM_DESTROY:
           PostQuitMessage (0);
           break;
+
+       case WM_DROPFILES:
+          DragQueryFiles(wParam, 0, szFileName, sizeof(szFileName));
+          printf("file %s to be opened by drag and drop !\n", szFileName);
+          DragFinish(wParam);
+          break;
+          
 
        default:
           return DefWindowProc (hWnd, msg, wParam, lParam);
@@ -117,33 +131,35 @@ int PASCAL WinMain (HANDLE hInstance, HANDLE prev, LPSTR cmdline, int show)
 
     #if defined(WINELIB) && !defined(HAVE_WINE_CONSTRUCTOR)
       /* Register resources */
+      LIBWINE_Register_Da();
       LIBWINE_Register_De();
       LIBWINE_Register_En();
       LIBWINE_Register_Sw();
     #endif
 
-    /* Setup Globals */
-
-    Globals.lpszIniFile   = "notepad.ini";
-    Globals.lpszIcoFile   = "notepad.ico";
-
     /* Select Language */
     LANGUAGE_Init();
 
-    Globals.hInstance     = hInstance;
-    Globals.hMainIcon     = ExtractIcon(Globals.hInstance, 
+
+    /* Setup Globals */
+
+    Globals.lpszIniFile     = "notepad.ini";
+    Globals.lpszIcoFile     = "notepad.ico";
+
+    Globals.hInstance       = hInstance;
+    Globals.hMainIcon       = ExtractIcon(Globals.hInstance, 
                                         Globals.lpszIcoFile, 0);
     if (!Globals.hMainIcon) Globals.hMainIcon = 
                                   LoadIcon(0, MAKEINTRESOURCE(DEFAULTICON));
 
-    lstrcpyn(Globals.szFindText,     "\0", 1);
-    lstrcpyn(Globals.szFileName,     "\0", 1);
-    lstrcpyn(Globals.szMarginTop,    "\0", 1);
-    lstrcpyn(Globals.szMarginBottom, "\0", 1);
-    lstrcpyn(Globals.szMarginLeft,   "\0", 1);
-    lstrcpyn(Globals.szMarginRight,  "\0", 1);
-    lstrcpyn(Globals.szHeader,       "\0", 1);
-    lstrcpyn(Globals.szFooter,       "\0", 1);
+    lstrcpy(Globals.szFindText,     "");
+    lstrcpy(Globals.szFileName,     "");
+    lstrcpy(Globals.szMarginTop,    "25 mm");
+    lstrcpy(Globals.szMarginBottom, "25 mm");
+    lstrcpy(Globals.szMarginLeft,   "20 mm");
+    lstrcpy(Globals.szMarginRight,  "20 mm");
+    lstrcpy(Globals.szHeader,       "&n");
+    lstrcpy(Globals.szFooter,       "Page &s");
 
     if (!prev){
         class.style         = CS_HREDRAW | CS_VREDRAW;
@@ -179,7 +195,7 @@ int PASCAL WinMain (HANDLE hInstance, HANDLE prev, LPSTR cmdline, int show)
     
     {
         CHAR   option;
-        LPCSTR topic_id;
+//      LPCSTR topic_id;
 
         if (*cmdline++ == ' ') continue;
 
@@ -196,7 +212,9 @@ int PASCAL WinMain (HANDLE hInstance, HANDLE prev, LPSTR cmdline, int show)
         }
     }
 
-    
+    DragAcceptFiles(Globals.hMainWnd, TRUE);
+
+    // now enter mesage loop    
     
     while (GetMessage (&msg, 0, 0, 0)) {
         TranslateMessage (&msg);
@@ -208,4 +226,3 @@ int PASCAL WinMain (HANDLE hInstance, HANDLE prev, LPSTR cmdline, int show)
 /* Local Variables:    */
 /* c-file-style: "GNU" */
 /* End:                */
-

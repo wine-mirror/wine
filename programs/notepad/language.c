@@ -1,14 +1,15 @@
 /*
- * Notepad
+ *  Notepad
  *
- * Copyright 1997 Marcel Baur <mbaur@g26.ethz.ch>
- * Copyright 1998 Karl Backström <karl_b@geocities.com>
+ *  Copyright 1997,98 Marcel Baur <mbaur@g26.ethz.ch>
+ *  Copyright 1998 Karl Backstr÷m <karl_b@geocities.com>
  */
 
 #include <stdio.h>
 #include "windows.h"
 #include "main.h"
 #include "language.h"
+
 #ifdef WINELIB
 #include "options.h"
 #endif
@@ -147,7 +148,8 @@ VOID LANGUAGE_Init(VOID)
     PROFILE_GetWineIniString("programs", "language", "language", 
                              buffer, sizeof(buffer));
   Globals.lpszLanguage = p = LocalLock(LocalAlloc(LMEM_FIXED, lstrlen(buffer)));
-  hmemcpy(p, buffer, 1 + lstrlen(buffer));
+  strcpy(p, buffer);
+  // hmemcpy(p, buffer, 1 + lstrlen(buffer));
   #endif
 }
 

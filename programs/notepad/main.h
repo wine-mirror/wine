@@ -1,7 +1,8 @@
 /*
- * Notepad (notepad.h)
+ *  Notepad (notepad.h)
  *
- * Copyright 1997 Marcel Baur <mbaur@g26.ethz.ch>
+ *  Copyright 1997,98 Marcel Baur <mbaur@g26.ethz.ch>
+ *  To be distributed under the Wine License
  */
 
 #define MAX_STRING_LEN      255
@@ -74,6 +75,13 @@ extern CHAR STRING_PAGESETUP_Xx[];
 #define IDS_OUT_OF_MEMORY               STRINGID(0B)
 #define IDS_UNTITLED                    STRINGID(0C)
 
+#define IDS_PAGESETUP_HEADERVALUE       STRINGID(0D)
+#define IDS_PAGESETUP_FOOTERVALUE       STRINGID(0E)
+#define IDS_PAGESETUP_LEFTVALUE         STRINGID(0F)
+#define IDS_PAGESETUP_RIGHTVALUE        STRINGID(010)
+#define IDS_PAGESETUP_TOPVALUE          STRINGID(011)
+#define IDS_PAGESETUP_BOTTOMVALUE       STRINGID(012)
+
 /* main menu */
 
 #define NP_FILE_NEW              100
@@ -114,17 +122,16 @@ extern CHAR STRING_PAGESETUP_Xx[];
 #define NP_PAGESETUP_HEAD_TXT   1001
 #define NP_PAGESETUP_TAIL       1002
 #define NP_PAGESETUP_TAIL_TXT   1003
-#define NP_PAGESETUP_LEFT       1005
-#define NP_PAGESETUP_LEFT_TXT   1006
-#define NP_PAGESETUP_RIGHT      1007
-#define NP_PAGESETUP_RIGHT_TXT  1008
-#define NP_PAGESETUP_TOP        1009
-#define NP_PAGESETUP_TOP_TXT    1010
-#define NP_PAGESETUP_BOTTOM     1011
-#define NP_PAGESETUP_BOTTOM_TXT 1012
-#define NP_HELP                 1013
-#define NP_PAGESETUP_MARGIN     1014
-
+#define NP_PAGESETUP_LEFT       1004
+#define NP_PAGESETUP_LEFT_TXT   1005
+#define NP_PAGESETUP_RIGHT      1006
+#define NP_PAGESETUP_RIGHT_TXT  1007
+#define NP_PAGESETUP_TOP        1008
+#define NP_PAGESETUP_TOP_TXT    1009
+#define NP_PAGESETUP_BOTTOM     1010
+#define NP_PAGESETUP_BOTTOM_TXT 1011
+#define NP_HELP                 1012
+#define NP_PAGESETUP_MARGIN     1013
 
 /* Local Variables:    */
 /* c-file-style: "GNU" */
