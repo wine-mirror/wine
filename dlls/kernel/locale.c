@@ -71,6 +71,7 @@ static const struct charset_entry
     { "CP1256", 1256 },
     { "CP1257", 1257 },
     { "CP1258", 1258 },
+    { "EUCJP", 20932 },
     { "IBM037", 37 },
     { "IBM1026", 1026 },
     { "IBM424", 424 },
