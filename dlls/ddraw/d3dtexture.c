@@ -34,13 +34,8 @@
 #include "mesa_private.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(ddraw);
+WINE_DECLARE_DEBUG_CHANNEL(ddraw_tex);
 
-/* Define this if you want to save to a file all the textures used by a game
-   (can be funny to see how they managed to cram all the pictures in
-   texture memory) */
-#undef TEXTURE_SNOOP
-
-#ifdef TEXTURE_SNOOP
 #include <stdio.h>
 
 static void 
@@ -48,17 +43,14 @@ snoop_texture(IDirectDrawSurfaceImpl *This) {
     IDirect3DTextureGLImpl *glThis = (IDirect3DTextureGLImpl *) This->tex_private;
     char buf[128];
     FILE *f;
+
+    TRACE_(ddraw_tex)("Dumping surface id (%5d) level (%2d) : \n", glThis->tex_name, This->mipmap_level);
+    DDRAW_dump_surface_desc(&(This->surface_desc));
     
     sprintf(buf, "tex_%05d_%02d.pnm", glThis->tex_name, This->mipmap_level);
     f = fopen(buf, "wb");
     DDRAW_dump_surface_to_disk(This, f);
 }
-
-#else
-
-#define snoop_texture(a)
-
-#endif
 
 static IDirectDrawSurfaceImpl *
 get_sub_mimaplevel(IDirectDrawSurfaceImpl *tex_ptr)
@@ -261,9 +253,11 @@ gltex_upload_texture(IDirectDrawSurfaceImpl *surf_ptr, IDirect3DDeviceImpl *d3dd
 	} else {
 	    TRACE("   - uploading texture level %d (initial done = %d).\n",
 		  surf_ptr->mipmap_level, gl_surf_ptr->initial_upload_done);
-	    
+
 	    /* Texture snooping for the curious :-) */
-	    snoop_texture(surf_ptr);
+	    if (TRACE_ON(ddraw_tex)) {
+		snoop_texture(surf_ptr);
+	    }
 
 	    if (upload_surface_to_tex_memory_init(surf_ptr, surf_ptr->mipmap_level, &(gl_surf_ptr->current_internal_format),
 						  gl_surf_ptr->initial_upload_done == FALSE, TRUE, 0, 0) == DD_OK) {
