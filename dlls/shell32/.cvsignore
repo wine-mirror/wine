@@ -1,11 +1,16 @@
 Makefile
 authors.c
+cdrom.ico
 desktop.ico
 document.ico
 drive.ico
+floppy.ico
 folder.ico
 folder_open.ico
 mycomputer.ico
+netdrive.ico
+netdrive2.ico
+ramdisk.ico
 shell.spec.c
 shell32.dll.dbg.c
 shell32.spec.def
