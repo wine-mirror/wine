@@ -287,6 +287,8 @@ HRESULT WINAPI LoadTypeLibEx(
     INT index = 1;
 
     TRACE("(%s,%d,%p)\n",debugstr_w(szFile), regkind, pptLib);
+    
+    *pptLib = NULL;
     if(!SearchPathW(NULL,szFile,NULL,sizeof(szPath)/sizeof(WCHAR),szPath,
 		    NULL)) {
 
@@ -653,6 +655,10 @@ typedef struct tagITypeLibImpl
     TYPEDESC * pTypeDesc;       /* array of TypeDescriptions found in the
 				   libary. Only used while read MSFT
 				   typelibs */
+
+    /* typelibs are cached, keyed by path, so store the linked list info within them */
+    struct tagITypeLibImpl *next, *prev;
+    WCHAR *path;
 } ITypeLibImpl;
 
 static struct ICOM_VTABLE(ITypeLib2) tlbvt;
@@ -1708,6 +1714,7 @@ MSFT_DoFuncs(TLBContext*     pcx,
         recoffset += reclength;
     }
 }
+
 static void MSFT_DoVars(TLBContext *pcx, ITypeInfoImpl *pTI, int cFuncs,
 		       int cVars, int offset, TLBVarDesc ** pptvd)
 {
@@ -1965,6 +1972,22 @@ ITypeInfoImpl * MSFT_DoTypeInfo(
     return ptiRet;
 }
 
+/* Because type library parsing has some degree of overhead, and some apps repeatedly load the same
+ * typelibs over and over, we cache them here. According to MSDN Microsoft have a similar scheme in
+ * place. This will cause a deliberate memory leak, but generally losing RAM for cycles is an acceptable
+ * tradeoff here.
+ */
+static ITypeLibImpl *tlb_cache_first;
+static CRITICAL_SECTION cache_section;
+static CRITICAL_SECTION_DEBUG cache_section_debug =
+{
+    0, 0, &cache_section,
+    { &cache_section_debug.ProcessLocksList, &cache_section_debug.ProcessLocksList },
+      0, 0, { 0, (DWORD)(__FILE__ ": typelib loader cache") }
+};
+static CRITICAL_SECTION cache_section = { &cache_section_debug, -1, 0, 0, 0, 0 };
+
+
 /****************************************************************************
  *	TLB_ReadTypeLib
  *
@@ -1975,6 +1998,7 @@ ITypeInfoImpl * MSFT_DoTypeInfo(
 #define SLTG_SIGNATURE 0x47544c53 /* "SLTG" */
 int TLB_ReadTypeLib(LPCWSTR pszFileName, INT index, ITypeLib2 **ppTypeLib)
 {
+    ITypeLibImpl *entry;
     int ret = TYPE_E_CANTLOADLIBRARY;
     DWORD dwSignature = 0;
     HANDLE hFile;
@@ -1982,6 +2006,21 @@ int TLB_ReadTypeLib(LPCWSTR pszFileName, INT index, ITypeLib2 **ppTypeLib)
     TRACE_(typelib)("%s:%d\n", debugstr_w(pszFileName), index);
 
     *ppTypeLib = NULL;
+
+    /* We look the path up in the typelib cache. If found, we just addref it, and return the pointer. */
+    EnterCriticalSection(&cache_section);
+    for (entry = tlb_cache_first; entry != NULL; entry = entry->next)
+    {
+        if (!strcmpiW(entry->path, pszFileName))
+        {
+            TRACE("cache hit\n");
+            *ppTypeLib = (ITypeLib2*)entry;
+            ITypeLib_AddRef(*ppTypeLib);
+            LeaveCriticalSection(&cache_section);
+            return S_OK;
+        }
+    }
+    LeaveCriticalSection(&cache_section);
 
     /* check the signature of the file */
     hFile = CreateFileW( pszFileName, GENERIC_READ, FILE_SHARE_READ, NULL, OPEN_EXISTING, 0, 0 );
@@ -2054,11 +2093,23 @@ int TLB_ReadTypeLib(LPCWSTR pszFileName, INT index, ITypeLib2 **ppTypeLib)
       }
     }
 
-    if(*ppTypeLib)
-      ret = S_OK;
-    else
-      ERR("Loading of typelib %s failed with error %ld\n",
-	  debugstr_w(pszFileName), GetLastError());
+    if(*ppTypeLib) {
+	ITypeLibImpl *impl = (ITypeLibImpl*)*ppTypeLib;
+	
+	TRACE("adding to cache\n");
+	impl->path = HeapAlloc(GetProcessHeap(), 0, (strlenW(pszFileName)+1) * sizeof(WCHAR));
+	lstrcpyW(impl->path, pszFileName);
+	/* We should really canonicalise the path here. */
+
+        /* FIXME: check if it has added already in the meantime */
+        EnterCriticalSection(&cache_section);
+        if ((impl->next = tlb_cache_first) != NULL) impl->next->prev = impl;
+        impl->prev = NULL;
+        tlb_cache_first = impl;
+        LeaveCriticalSection(&cache_section);
+        ret = S_OK;
+    } else
+	ERR("Loading of typelib %s failed with error %ld\n", debugstr_w(pszFileName), GetLastError());
 
     return ret;
 }
@@ -3197,7 +3248,7 @@ static ULONG WINAPI ITypeLib2_fnAddRef( ITypeLib2 *iface)
 {
     ICOM_THIS( ITypeLibImpl, iface);
 
-    TRACE("(%p)->ref is %u\n",This, This->ref);
+    TRACE("(%p)->ref was %u\n",This, This->ref);
 
     return ++(This->ref);
 }
@@ -3214,8 +3265,15 @@ static ULONG WINAPI ITypeLib2_fnRelease( ITypeLib2 *iface)
 
     if (!This->ref)
     {
-      /* FIXME destroy child objects */
+      /* remove cache entry */
+      TRACE("removing from cache list\n");
+      EnterCriticalSection(&cache_section);
+      if (This->next) This->next->prev = This->prev;
+      if (This->prev) This->prev->next = This->next;
+      else tlb_cache_first = This->next;
+      LeaveCriticalSection(&cache_section);
 
+      /* FIXME destroy child objects */
       TRACE(" destroying ITypeLib(%p)\n",This);
 
       if (This->Name)
@@ -4448,6 +4506,7 @@ static HRESULT WINAPI ITypeInfo_fnInvoke(
 	    if (pFDesc->funcdesc.invkind & dwFlags)
 		break;
 	}
+    
     if (pFDesc) {
 	if (TRACE_ON(typelib)) dump_TLBFuncDescOne(pFDesc);
 	/* dump_FUNCDESC(&pFDesc->funcdesc);*/
@@ -4869,13 +4928,13 @@ static HRESULT WINAPI ITypeInfo_fnGetContainingTypeLib( ITypeInfo2 *iface,
     /* If a pointer is null, we simply ignore it, the ATL in particular passes pIndex as 0 */
     if (pIndex) {
       *pIndex=This->index;
-      TRACE("returning pIndex=%d", *pIndex);
+      TRACE("returning pIndex=%d\n", *pIndex);
     }
     
     if (ppTLib) {
       *ppTLib=(LPTYPELIB )(This->pTypeLib);
       ITypeLib2_AddRef(*ppTLib);
-      TRACE("returning ppTLib=%p", *ppTLib);
+      TRACE("returning ppTLib=%p\n", *ppTLib);
     }
     
     return S_OK;
