@@ -6527,7 +6527,12 @@ static BOOL LISTVIEW_SetItemCount(LISTVIEW_INFO *infoPtr, INT nItems, DWORD dwFl
 	UINT uView = infoPtr->dwStyle & LVS_TYPEMASK;
 	INT nOldCount = infoPtr->nItemCount;
 
-	LISTVIEW_DeselectAll(infoPtr);
+	if (nItems < nOldCount)
+	{
+	    RANGE range = { nItems, nOldCount };
+	    ranges_del(infoPtr->selectionRanges, range);
+	}
+
 	infoPtr->nItemCount = nItems;
 	LISTVIEW_UpdateScroll(infoPtr);
 
