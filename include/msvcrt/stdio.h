@@ -65,6 +65,7 @@
 
 #define EOF       (-1)
 #define FILENAME_MAX 260
+#define TMP_MAX   0x7fff
 #define FOPEN_MAX 20
 #define L_tmpnam  260
 
@@ -84,6 +85,7 @@
 #define MSVCRT__IOLBF    0x0040
 
 #define MSVCRT_FILENAME_MAX 260
+#define MSVCRT_TMP_MAX   0x7fff
 
 #define MSVCRT_EOF       (-1)
 

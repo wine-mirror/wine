@@ -262,6 +262,29 @@ static void msvcrt_alloc_buffer(MSVCRT_FILE* file)
 	file->_cnt = 0;
 }
 
+/* INTERNAL: Convert integer to base32 string (0-9a-v), 0 becomes "" */
+static void msvcrt_int_to_base32(int num, char *str)
+{
+  char *p;
+  int n = num;
+  int digits = 0;
+
+  while (n != 0)
+  {
+    n >>= 5;
+    digits++;
+  }
+  p = str + digits;
+  *p = 0;
+  while (--p >= str)
+  {
+    *p = (num & 31) + '0';
+    if (*p > '9')
+      *p += ('a' - '0' - 10);
+    num >>= 5;
+  }
+}
+
 /*********************************************************************
  *		__p__iob(MSVCRT.@)
  */
@@ -2397,16 +2420,22 @@ void MSVCRT_setbuf(MSVCRT_FILE* file, char *buf)
  */
 char *MSVCRT_tmpnam(char *s)
 {
-  char tmpbuf[MAX_PATH];
-  const char* prefix = "TMP";
-  if (!GetTempPathA(MAX_PATH,tmpbuf) ||
-      !GetTempFileNameA(tmpbuf,prefix,0,MSVCRT_tmpname))
+  static int unique;
+  char tmpstr[16];
+  char *p;
+  int count;
+  if (s == 0)
+    s = MSVCRT_tmpname;
+  msvcrt_int_to_base32(GetCurrentProcessId(), tmpstr);
+  p = s + sprintf(s, "\\s%s.", tmpstr);
+  for (count = 0; count < MSVCRT_TMP_MAX; count++)
   {
-    TRACE(":failed-last error (%ld)\n",GetLastError());
-    return NULL;
+    msvcrt_int_to_base32(unique++, tmpstr);
+    strcpy(p, tmpstr);
+    if (GetFileAttributesA(s) == INVALID_FILE_ATTRIBUTES &&
+        GetLastError() == ERROR_FILE_NOT_FOUND)
+      break;
   }
-  TRACE(":got tmpnam %s\n",MSVCRT_tmpname);
-  s = MSVCRT_tmpname;
   return s;
 }
 
