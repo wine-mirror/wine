@@ -9,6 +9,7 @@
 #include "display.h"
 #include "mouse.h"
 #include "windef.h"
+#include "message.h"
 #include "wine/winuser16.h"
 
 DEFAULT_DEBUG_CHANNEL(cursor)
@@ -53,5 +54,6 @@ VOID WINAPI DISPLAY_CheckCursor()
  */
 VOID WINAPI UserRepaintDisable16( BOOL16 disable )
 {
-    TRACE( cursor, "(%d): stub\n", disable );
+    EVENT_Driver->pUserRepaintDisable( disable );
 }
+

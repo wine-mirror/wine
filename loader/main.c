@@ -26,6 +26,7 @@
 #include "keyboard.h"
 #include "mouse.h"
 #include "input.h"
+#include "display.h"
 #include "miscemu.h"
 #include "options.h"
 #include "process.h"
@@ -267,6 +268,9 @@ BOOL WINAPI MAIN_UserInit(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserve
 
     /* Initialize mouse driver */
     MOUSE_Enable( mouse_event );
+
+    /* Start processing X events */
+    UserRepaintDisable16( FALSE );
 
     return TRUE;
 }

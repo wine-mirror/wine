@@ -23,6 +23,7 @@ WORD WINAPI DISPLAY_Inquire(LPCURSORINFO lpCursorInfo);
 VOID WINAPI DISPLAY_SetCursor( struct tagCURSORICONINFO *lpCursor );
 VOID WINAPI DISPLAY_MoveCursor( WORD wAbsX, WORD wAbsY );
 VOID WINAPI DISPLAY_CheckCursor();
+VOID WINAPI UserRepaintDisable16( BOOL16 bDisable );
 
 #endif /* __WINE_DISPLAY_H */
 
