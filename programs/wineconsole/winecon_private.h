@@ -89,4 +89,4 @@ extern void WINECON_DumpConfig(const char* pfx, const struct config_data* cfg);
 
 /* backends... */
 extern BOOL WCUSER_InitBackend(struct inner_data* data);
-extern BOOL WCCURSE_InitBackend(struct inner_data* data);
+extern BOOL WCCURSES_InitBackend(struct inner_data* data);

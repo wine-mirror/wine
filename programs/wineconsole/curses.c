@@ -58,11 +58,11 @@ struct inner_data_curse
 };
 
 /******************************************************************
- *		WCUSER_ResizeScreenBuffer
+ *		WCCURSES_ResizeScreenBuffer
  *
  *
  */
-static void WCCURSE_ResizeScreenBuffer(struct inner_data* data)
+static void WCCURSES_ResizeScreenBuffer(struct inner_data* data)
 {
     /* reallocate a new pad. next event would redraw the whole pad */
     if (PRIVATE(data)->pad) delwin(PRIVATE(data)->pad);
@@ -74,11 +74,11 @@ static void WCCURSE_ResizeScreenBuffer(struct inner_data* data)
 }
 
 /******************************************************************
- *		WCCURSE_PosCursor
+ *		WCCURSES_PosCursor
  *
  * Set a new position for the cursor (and refresh any modified part of our pad)
  */
-static void	WCCURSE_PosCursor(const struct inner_data* data)
+static void	WCCURSES_PosCursor(const struct inner_data* data)
 {
     wmove(PRIVATE(data)->pad, data->cursor.Y, data->cursor.X);
     prefresh(PRIVATE(data)->pad, 
@@ -87,30 +87,30 @@ static void	WCCURSE_PosCursor(const struct inner_data* data)
 }
 
 /******************************************************************
- *		WCCURSE_ShapeCursor
+ *		WCCURSES_ShapeCursor
  *
  * Sets a new shape for the cursor
  */
-void	WCCURSE_ShapeCursor(struct inner_data* data, int size, int vis, BOOL force)
+void	WCCURSES_ShapeCursor(struct inner_data* data, int size, int vis, BOOL force)
 {
 }
 
 /******************************************************************
- *		WCCURSE_ComputePositions
+ *		WCCURSES_ComputePositions
  *
  * Recomputes all the components (mainly scroll bars) positions
  */
-void	WCCURSE_ComputePositions(struct inner_data* data)
+void	WCCURSES_ComputePositions(struct inner_data* data)
 {
-    if (PRIVATE(data)->pad) WCCURSE_PosCursor(data);
+    if (PRIVATE(data)->pad) WCCURSES_PosCursor(data);
 }
 
 /******************************************************************
- *		WCCURSE_SetTitle
+ *		WCCURSES_SetTitle
  *
  * Sets the title to the wine console
  */
-static void	WCCURSE_SetTitle(const struct inner_data* data)
+static void	WCCURSES_SetTitle(const struct inner_data* data)
 {
     WCHAR   wbuf[256];
 
@@ -132,38 +132,44 @@ static void	WCCURSE_SetTitle(const struct inner_data* data)
  *
  *
  */
-static void WCCURSE_Refresh(const struct inner_data* data, int tp, int bm)
+static void WCCURSES_Refresh(const struct inner_data* data, int tp, int bm)
 {
     int         x, y;
     CHAR_INFO*	cell;
-    WORD        color;
+    DWORD       attr;
+    char        ch;
 
     for (y = tp; y <= bm; y++)
     {
 	cell = &data->cells[y * data->curcfg.sb_width];
         for (x = 0; x < data->curcfg.sb_width; x++)
         {
-            color = 0;
-            if (cell[x].Attributes & FOREGROUND_RED)   color |= COLOR_RED;
-            if (cell[x].Attributes & FOREGROUND_BLUE)  color |= COLOR_BLUE;
-            if (cell[x].Attributes & FOREGROUND_GREEN) color |= COLOR_GREEN;
-            if (cell[x].Attributes & BACKGROUND_RED)   color |= COLOR_RED << 3;
-            if (cell[x].Attributes & BACKGROUND_BLUE)  color |= COLOR_BLUE << 3;
-            if (cell[x].Attributes & BACKGROUND_GREEN) color |= COLOR_GREEN << 3;
+            WideCharToMultiByte(CP_ACP, 0, &cell[x].Char.UnicodeChar, 1, 
+                                &ch, 1, NULL, NULL);
+            attr = (BYTE)ch;
+            
+            if (cell[x].Attributes & FOREGROUND_RED)       attr |= COLOR_PAIR(COLOR_RED);
+            if (cell[x].Attributes & FOREGROUND_BLUE)      attr |= COLOR_PAIR(COLOR_BLUE);
+            if (cell[x].Attributes & FOREGROUND_GREEN)     attr |= COLOR_PAIR(COLOR_GREEN);
+            if (cell[x].Attributes & BACKGROUND_RED)       attr |= COLOR_PAIR(COLOR_RED << 3);
+            if (cell[x].Attributes & BACKGROUND_BLUE)      attr |= COLOR_PAIR(COLOR_BLUE << 3);
+            if (cell[x].Attributes & BACKGROUND_GREEN)     attr |= COLOR_PAIR(COLOR_GREEN << 3);
 
-            PRIVATE(data)->line[x] = (unsigned char)cell[x].Char.UnicodeChar | COLOR_PAIR(color);
+            if (cell[x].Attributes & FOREGROUND_INTENSITY) attr |= A_BOLD;
+
+            PRIVATE(data)->line[x] = attr;
         }
         mvwaddchnstr(PRIVATE(data)->pad, y, 0, PRIVATE(data)->line, data->curcfg.sb_width);
     }
-    WCCURSE_PosCursor(data);
+    WCCURSES_PosCursor(data);
 }
 
 /******************************************************************
- *		WCCURSE_Scroll
+ *		WCCURSES_Scroll
  *
  *
  */
-static void WCCURSE_Scroll(struct inner_data* data, int pos, BOOL horz)
+static void WCCURSES_Scroll(struct inner_data* data, int pos, BOOL horz)
 {
     if (horz)
     {
@@ -173,16 +179,16 @@ static void WCCURSE_Scroll(struct inner_data* data, int pos, BOOL horz)
     {
 	data->curcfg.win_pos.Y = pos;
     }
-    WCCURSE_Refresh(data, data->curcfg.win_pos.Y, 
-                    data->curcfg.win_pos.Y + data->curcfg.win_height - 1);
+    WCCURSES_Refresh(data, data->curcfg.win_pos.Y, 
+                     data->curcfg.win_pos.Y + data->curcfg.win_height - 1);
 }
 
 /******************************************************************
- *		WCCURSE_SetFont
+ *		WCCURSES_SetFont
  *
  *
  */
-static void WCCURSE_SetFont(struct inner_data* data, const WCHAR* font, 
+static void WCCURSES_SetFont(struct inner_data* data, const WCHAR* font, 
                             unsigned height, unsigned weight)
 {
     /* FIXME: really not much to do ? */
@@ -217,26 +223,38 @@ static int mapvkey_0[256] =
 }; 
 
 /******************************************************************
- *		WCCURSE_FillSimpleChar
+ *		WCCURSES_FillSimpleChar
  *
  *
  */
-static unsigned WCCURSE_FillSimpleChar(INPUT_RECORD* ir, unsigned inchar)
+static unsigned WCCURSES_FillSimpleChar(INPUT_RECORD* ir, unsigned inchar)
 {
-     unsigned 	vk;
-     
-     WINE_TRACE("[%u]\n", inchar);
+     unsigned vk;
+     unsigned second;
+     DWORD    cks = 0;
 
      switch (inchar)
      {
      case 127: inchar = '\b'; break;
      case  10: inchar = '\r'; break;
+     case  27:
+         /* we assume that ESC & and the second character are atomically generated
+          * otherwise, we'll have a race here
+          */
+         if ((second = wgetch(stdscr)) != ERR)
+         {
+             /* we got a alt-something key... */
+             /* FIXME: we don't generate the keydown message for the Alt key */
+             cks = LEFT_ALT_PRESSED;
+             inchar = second;
+         }
+         break;
      }
      
      ir->EventType                        = KEY_EVENT;
      ir->Event.KeyEvent.bKeyDown          = 1;
      ir->Event.KeyEvent.wRepeatCount      = 1;
-     ir->Event.KeyEvent.dwControlKeyState = 0;
+     ir->Event.KeyEvent.dwControlKeyState = cks;
      vk = vkkeyscan_table[inchar];
      if (vk & 0x0100)
 	  ir->Event.KeyEvent.dwControlKeyState |= SHIFT_PRESSED;
@@ -252,11 +270,11 @@ static unsigned WCCURSE_FillSimpleChar(INPUT_RECORD* ir, unsigned inchar)
 }
 
 /******************************************************************
- *		WCCURSE_FillComplexChar
+ *		WCCURSES_FillComplexChar
  *
  *
  */
-static unsigned WCCURSE_FillComplexChar(INPUT_RECORD* ir, WORD vk, WORD kc)
+static unsigned WCCURSES_FillComplexChar(INPUT_RECORD* ir, WORD vk, WORD kc)
 {
      ir->EventType			  = KEY_EVENT;
      ir->Event.KeyEvent.bKeyDown	  = 1;
@@ -272,20 +290,19 @@ static unsigned WCCURSE_FillComplexChar(INPUT_RECORD* ir, WORD vk, WORD kc)
 }
 
 /******************************************************************
- *		WCCURSE_FillMouse
+ *		WCCURSES_FillMouse
  *
  *
  */
-static unsigned WCCURSE_FillMouse(INPUT_RECORD* ir)
+static unsigned WCCURSES_FillMouse(INPUT_RECORD* ir)
 {
      static	unsigned	bstate /* = 0 */;
      static	COORD 		pos /* = {0, 0} */;
      
      MEVENT	mevt;
-     BOOL	ret = 0;
      
      if (getmouse(&mevt) == ERR)
-	  return FALSE;
+         return FALSE;
      
      WINE_TRACE("[%u]: (%d, %d) %08lx\n", 
                 mevt.id, mevt.x, mevt.y, (unsigned long)mevt.bstate);
@@ -296,7 +313,6 @@ static unsigned WCCURSE_FillMouse(INPUT_RECORD* ir)
 #define	BTN3_BIT	FROM_LEFT_2ND_BUTTON_PRESSED
 #define	BTN4_BIT	0 /* not done yet */
      
-     /* FIXME: to be checked */
      if (mevt.bstate & BUTTON1_PRESSED)	 bstate |= BTN1_BIT;
      if (mevt.bstate & BUTTON1_RELEASED) bstate &= ~BTN1_BIT;
      if (mevt.bstate & BUTTON2_PRESSED)	 bstate |= BTN2_BIT;
@@ -304,28 +320,12 @@ static unsigned WCCURSE_FillMouse(INPUT_RECORD* ir)
      if (mevt.bstate & BUTTON3_PRESSED)	 bstate |= BTN3_BIT;
      if (mevt.bstate & BUTTON3_RELEASED) bstate &= ~BTN3_BIT;
      
-     /* for the clicked & double click events, since we'll generate automatically
-      * the release event, we don't have to store the state
-      */
-     if ((mevt.bstate & (BUTTON1_CLICKED|BUTTON1_DOUBLE_CLICKED)) && !(bstate & BTN1_BIT))
-     {
-	  ret = BTN1_BIT;
-     }
-     if ((mevt.bstate & (BUTTON2_CLICKED|BUTTON2_DOUBLE_CLICKED)) && !(bstate & BTN2_BIT))
-     {
-	  ret = BTN2_BIT;
-     }
-     if ((mevt.bstate & (BUTTON3_CLICKED|BUTTON3_DOUBLE_CLICKED)) && !(bstate & BTN3_BIT))
-     {
-	  ret = BTN3_BIT;
-     }
-     
      ir->EventType = MOUSE_EVENT;
      ir->Event.MouseEvent.dwMousePosition.X = mevt.x;
      ir->Event.MouseEvent.dwMousePosition.Y = mevt.y;
      
-     ir->Event.MouseEvent.dwButtonState = (bstate | ret);
-     
+     ir->Event.MouseEvent.dwButtonState = bstate;
+
      /* partial conversion */
      ir->Event.MouseEvent.dwControlKeyState = 0;
      if (mevt.bstate & BUTTON_SHIFT)	ir->Event.MouseEvent.dwControlKeyState |= SHIFT_PRESSED;
@@ -338,27 +338,24 @@ static unsigned WCCURSE_FillMouse(INPUT_RECORD* ir)
       */
      
      ir->Event.MouseEvent.dwEventFlags = 0;
-     if ((mevt.bstate & BUTTON1_DOUBLE_CLICKED) && ((bstate|ret) & BTN1_BIT))
-	  ir->Event.MouseEvent.dwEventFlags |= DOUBLE_CLICK;
-     if ((mevt.bstate & BUTTON2_DOUBLE_CLICKED) && ((bstate|ret) & BTN2_BIT))
-	  ir->Event.MouseEvent.dwEventFlags |= DOUBLE_CLICK;
-     if ((mevt.bstate & BUTTON3_DOUBLE_CLICKED) && ((bstate|ret) & BTN3_BIT))
-	  ir->Event.MouseEvent.dwEventFlags |= DOUBLE_CLICK;
-     if (mevt.x != pos.X || mevt.y != pos.Y)
+     /* FIXME: we no longer generate double click events */
+
+     if (!(mevt.bstate & (BUTTON1_PRESSED|BUTTON1_RELEASED|BUTTON2_PRESSED|BUTTON2_RELEASED|BUTTON3_PRESSED|BUTTON3_RELEASED)) &&
+         (mevt.x != pos.X || mevt.y != pos.Y))
      {
 	  ir->Event.MouseEvent.dwEventFlags |= MOUSE_MOVED;
      }
      pos.X = mevt.x; pos.Y = mevt.y;
-     
-     return ret;
+
+     return FALSE;
 }
 
 /******************************************************************
- *		WCCURSE_FillCode
+ *		WCCURSES_FillCode
  *
  *
  */
-static unsigned WCCURSE_FillCode(INPUT_RECORD* ir, int inchar)
+static unsigned WCCURSES_FillCode(INPUT_RECORD* ir, int inchar)
 {
     unsigned secondEvent = 0;
 
@@ -367,22 +364,22 @@ static unsigned WCCURSE_FillCode(INPUT_RECORD* ir, int inchar)
     case KEY_BREAK:
         goto notFound;
     case KEY_DOWN:
-        secondEvent = WCCURSE_FillComplexChar(ir, 0x50, 0x28);
+        secondEvent = WCCURSES_FillComplexChar(ir, 0x50, 0x28);
         break;
     case KEY_UP:
-        secondEvent = WCCURSE_FillComplexChar(ir, 0x48, 0x26);
+        secondEvent = WCCURSES_FillComplexChar(ir, 0x48, 0x26);
         break;
     case KEY_LEFT:
-        secondEvent = WCCURSE_FillComplexChar(ir, 0x4b, 0x25);
+        secondEvent = WCCURSES_FillComplexChar(ir, 0x4b, 0x25);
         break;
     case KEY_RIGHT:
-        secondEvent = WCCURSE_FillComplexChar(ir, 0x4d, 0x27);
+        secondEvent = WCCURSES_FillComplexChar(ir, 0x4d, 0x27);
         break;
     case KEY_HOME:
-        secondEvent = WCCURSE_FillComplexChar(ir, 0x47, 0x24);
+        secondEvent = WCCURSES_FillComplexChar(ir, 0x47, 0x24);
         break;
     case KEY_BACKSPACE:
-        secondEvent = WCCURSE_FillSimpleChar(ir, '\b');
+        secondEvent = WCCURSES_FillSimpleChar(ir, '\b');
         break;
         
     case KEY_F0: /* up to F63 */
@@ -398,11 +395,11 @@ static unsigned WCCURSE_FillCode(INPUT_RECORD* ir, int inchar)
     case KEY_F( 8):
     case KEY_F( 9):
     case KEY_F(10):
-        secondEvent = WCCURSE_FillComplexChar(ir, 0x3b + inchar - KEY_F(1), 0);
+        secondEvent = WCCURSES_FillComplexChar(ir, 0x3b + inchar - KEY_F(1), 0);
         break;
     case KEY_F(11):
     case KEY_F(12):
-        secondEvent = WCCURSE_FillComplexChar(ir, 0xd9 + inchar - KEY_F(11), 0);
+        secondEvent = WCCURSES_FillComplexChar(ir, 0xd9 + inchar - KEY_F(11), 0);
         break;
 		    
     case KEY_DL:
@@ -418,10 +415,10 @@ static unsigned WCCURSE_FillCode(INPUT_RECORD* ir, int inchar)
         goto notFound;
 		    
     case KEY_NPAGE:
-        secondEvent = WCCURSE_FillComplexChar(ir, 0x51, 0x22);
+        secondEvent = WCCURSES_FillComplexChar(ir, 0x51, 0x22);
         break;
     case KEY_PPAGE:
-        secondEvent = WCCURSE_FillComplexChar(ir, 0x49, 0x21);
+        secondEvent = WCCURSES_FillComplexChar(ir, 0x49, 0x21);
         break;
         
     case KEY_STAB:
@@ -453,7 +450,7 @@ static unsigned WCCURSE_FillCode(INPUT_RECORD* ir, int inchar)
         goto notFound;
 		    
     case KEY_MOUSE:
-        secondEvent = WCCURSE_FillMouse(ir);
+        secondEvent = WCCURSES_FillMouse(ir);
         break;
         
     case KEY_MOVE:
@@ -511,11 +508,11 @@ static unsigned WCCURSE_FillCode(INPUT_RECORD* ir, int inchar)
 }
 
 /******************************************************************
- *		WCCURSE_GetEvents
+ *		WCCURSES_GetEvents
  *
  *
  */
-static void WCCURSE_GetEvents(struct inner_data* data)
+static void WCCURSES_GetEvents(struct inner_data* data)
 {
      int		inchar;
      INPUT_RECORD       ir[2];
@@ -530,11 +527,11 @@ static void WCCURSE_GetEvents(struct inner_data* data)
 	  
      if (inchar & KEY_CODE_YES)
      {
-         secondEvent = WCCURSE_FillCode(ir, inchar);
+         secondEvent = WCCURSES_FillCode(ir, inchar);
      }
      else
      {
-         secondEvent = WCCURSE_FillSimpleChar(ir, inchar);
+         secondEvent = WCCURSES_FillSimpleChar(ir, inchar);
      }
 
      if (secondEvent != 0)
@@ -559,11 +556,11 @@ static void WCCURSE_GetEvents(struct inner_data* data)
 }
 
 /******************************************************************
- *		WCCURSE_DeleteBackend
+ *		WCCURSES_DeleteBackend
  *
  *
  */
-static void WCCURSE_DeleteBackend(struct inner_data* data)
+static void WCCURSES_DeleteBackend(struct inner_data* data)
 {
     mmask_t     mm;
 
@@ -581,11 +578,11 @@ static void WCCURSE_DeleteBackend(struct inner_data* data)
 }
 
 /******************************************************************
- *		WCCURSE_MainLoop
+ *		WCCURSES_MainLoop
  *
  *
  */
-static int WCCURSE_MainLoop(struct inner_data* data)
+static int WCCURSES_MainLoop(struct inner_data* data)
 {
     HANDLE hin[2];
 
@@ -598,7 +595,7 @@ static int WCCURSE_MainLoop(struct inner_data* data)
         switch (ret)
         {
         case WAIT_OBJECT_0:
-            WCCURSE_GetEvents(data);
+            WCCURSES_GetEvents(data);
             break;
         case WAIT_OBJECT_0+1:
             if (!WINECON_GrabChanges(data)) return 0;
@@ -612,26 +609,26 @@ static int WCCURSE_MainLoop(struct inner_data* data)
 }
 
 /******************************************************************
- *		WCCURSE_InitBackend
+ *		WCCURSES_InitBackend
  *
  * Initialisation part II: creation of window.
  *
  */
-BOOL WCCURSE_InitBackend(struct inner_data* data)
+BOOL WCCURSES_InitBackend(struct inner_data* data)
 {
     data->private = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(struct inner_data_curse));
     if (!data->private) return FALSE;
 
-    data->fnMainLoop           = WCCURSE_MainLoop;
-    data->fnPosCursor          = WCCURSE_PosCursor;
-    data->fnShapeCursor        = WCCURSE_ShapeCursor;
-    data->fnComputePositions   = WCCURSE_ComputePositions;
-    data->fnRefresh            = WCCURSE_Refresh;
-    data->fnResizeScreenBuffer = WCCURSE_ResizeScreenBuffer;
-    data->fnSetTitle           = WCCURSE_SetTitle;
-    data->fnScroll             = WCCURSE_Scroll;
-    data->fnSetFont            = WCCURSE_SetFont;
-    data->fnDeleteBackend      = WCCURSE_DeleteBackend;
+    data->fnMainLoop           = WCCURSES_MainLoop;
+    data->fnPosCursor          = WCCURSES_PosCursor;
+    data->fnShapeCursor        = WCCURSES_ShapeCursor;
+    data->fnComputePositions   = WCCURSES_ComputePositions;
+    data->fnRefresh            = WCCURSES_Refresh;
+    data->fnResizeScreenBuffer = WCCURSES_ResizeScreenBuffer;
+    data->fnSetTitle           = WCCURSES_SetTitle;
+    data->fnScroll             = WCCURSES_Scroll;
+    data->fnSetFont            = WCCURSES_SetFont;
+    data->fnDeleteBackend      = WCCURSES_DeleteBackend;
 
     if (wine_server_fd_to_handle(0, GENERIC_READ|SYNCHRONIZE, FALSE, 
                                  (obj_handle_t*)&PRIVATE(data)->hInput))
@@ -659,12 +656,16 @@ BOOL WCCURSE_InitBackend(struct inner_data* data)
     nodelay(stdscr, TRUE);
     keypad(stdscr, TRUE);
     mousemask(0xffffffff, &PRIVATE(data)->initial_mouse_mask);
-
+    /* no click generation...
+     * --hmmm man page says -1, instead of 0, to disable click event generation
+     * -1 doesn't seem to work, while 0 does
+     */
+    mouseinterval(0);
     return TRUE;
 }
 
 #else
-BOOL WCCURSE_InitBackend(struct inner_data* data)
+BOOL WCCURSES_InitBackend(struct inner_data* data)
 {
     return FALSE;
 }

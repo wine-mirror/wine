@@ -633,7 +633,7 @@ int PASCAL WinMain(HINSTANCE hInst, HINSTANCE hPrev, LPSTR lpCmdLine, INT nCmdSh
         while (*src && *src != ' ') *dst++ = *src++;
         *dst = 0;
 
-        if (!(data = WINECON_Init(hInst, GetCurrentProcessId(), buffer, WCCURSE_InitBackend))) return 0;
+        if (!(data = WINECON_Init(hInst, GetCurrentProcessId(), buffer, WCCURSES_InitBackend))) return 0;
 	ret = WINECON_Spawn(data, wcmdLine);
         if (!ret)
 	{
