@@ -176,11 +176,13 @@ extern BOOL X11DRV_GetDeviceGammaRamp( X11DRV_PDEVICE *physDev, LPVOID ramp );
 extern BOOL X11DRV_SetDeviceGammaRamp( X11DRV_PDEVICE *physDev, LPVOID ramp );
 
 /* OpenGL / X11 driver functions */
-extern int X11DRV_ChoosePixelFormat(DC *dc, const PIXELFORMATDESCRIPTOR *pppfd) ;
-extern int X11DRV_DescribePixelFormat(DC *dc, int iPixelFormat, UINT nBytes, PIXELFORMATDESCRIPTOR *ppfd) ;
-extern int X11DRV_GetPixelFormat(DC *dc) ;
-extern BOOL X11DRV_SetPixelFormat(DC *dc, int iPixelFormat, const PIXELFORMATDESCRIPTOR *ppfd) ;
-extern BOOL X11DRV_SwapBuffers(DC *dc) ;
+extern int X11DRV_ChoosePixelFormat(X11DRV_PDEVICE *physDev,
+		                      const PIXELFORMATDESCRIPTOR *pppfd);
+extern int X11DRV_DescribePixelFormat(X11DRV_PDEVICE *physDev, 
+		                        int iPixelFormat, UINT nBytes,
+					PIXELFORMATDESCRIPTOR *ppfd);
+extern int X11DRV_GetPixelFormat(X11DRV_PDEVICE *physDev);
+extern BOOL X11DRV_SwapBuffers(X11DRV_PDEVICE *physDev);
 
 /* X11 driver internal functions */
 

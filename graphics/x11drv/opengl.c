@@ -84,20 +84,19 @@ static void dump_PIXELFORMATDESCRIPTOR(PIXELFORMATDESCRIPTOR *ppfd) {
 
      Equivalent of glXChooseVisual
 */
-int X11DRV_ChoosePixelFormat(DC *dc,
+int X11DRV_ChoosePixelFormat(X11DRV_PDEVICE *physDev,
 			     const PIXELFORMATDESCRIPTOR *ppfd) {
 #define TEST_AND_ADD1(t,a) if (t) att_list[att_pos++] = a
 #define TEST_AND_ADD2(t,a,b) if (t) { att_list[att_pos++] = a; att_list[att_pos++] = b; }
 #define NULL_TEST_AND_ADD2(tv,a,b) att_list[att_pos++] = a; att_list[att_pos++] = ((tv) == 0 ? 0 : b)
 #define ADD2(a,b) att_list[att_pos++] = a; att_list[att_pos++] = b
   
-  X11DRV_PDEVICE *physDev = (X11DRV_PDEVICE *)dc->physDev;
   int att_list[64];
   int att_pos = 0;
   XVisualInfo *vis;
   
   if (TRACE_ON(opengl)) {
-    TRACE("(%p,%p)\n", dc, ppfd);
+    TRACE("(%p,%p)\n", physDev, ppfd);
     
     dump_PIXELFORMATDESCRIPTOR((PIXELFORMATDESCRIPTOR *) ppfd);
   }
@@ -162,16 +161,15 @@ int X11DRV_ChoosePixelFormat(DC *dc,
 
      Get the pixel-format descriptor associated to the given id
 */
-int X11DRV_DescribePixelFormat(DC *dc,
+int X11DRV_DescribePixelFormat(X11DRV_PDEVICE *physDev,
 			       int iPixelFormat,
 			       UINT nBytes,
 			       PIXELFORMATDESCRIPTOR *ppfd) {
-  X11DRV_PDEVICE *physDev = (X11DRV_PDEVICE *)dc->physDev;
   XVisualInfo *vis;
   int value;
   int rb,gb,bb,ab;
   
-  TRACE("(%p,%d,%d,%p)\n", dc, iPixelFormat, nBytes, ppfd);
+  TRACE("(%p,%d,%d,%p)\n", physDev, iPixelFormat, nBytes, ppfd);
   
   if (nBytes < sizeof(PIXELFORMATDESCRIPTOR)) {
     ERR("Wrong structure size !\n");
@@ -275,10 +273,8 @@ int X11DRV_DescribePixelFormat(DC *dc,
 
      Get the pixel-format id used by this DC
 */
-int X11DRV_GetPixelFormat(DC *dc) {
-  X11DRV_PDEVICE *physDev = (X11DRV_PDEVICE *)dc->physDev;
-  
-  TRACE("(%p): returns %d\n", dc, physDev->current_pf);
+int X11DRV_GetPixelFormat(X11DRV_PDEVICE *physDev) {
+  TRACE("(%p): returns %d\n", physDev, physDev->current_pf);
 
   return physDev->current_pf;
 }
@@ -287,12 +283,10 @@ int X11DRV_GetPixelFormat(DC *dc) {
 
      Set the pixel-format id used by this DC
 */
-BOOL X11DRV_SetPixelFormat(DC *dc,
+BOOL X11DRV_SetPixelFormat(X11DRV_PDEVICE *physDev,
 			   int iPixelFormat,
 			   const PIXELFORMATDESCRIPTOR *ppfd) {
-  X11DRV_PDEVICE *physDev = (X11DRV_PDEVICE *)dc->physDev;
-  
-  TRACE("(%p,%d,%p)\n", dc, iPixelFormat, ppfd);
+  TRACE("(%p,%d,%p)\n", physDev, iPixelFormat, ppfd);
 
   physDev->current_pf = iPixelFormat;
   
@@ -303,10 +297,8 @@ BOOL X11DRV_SetPixelFormat(DC *dc,
 
      Swap the buffers of this DC
 */
-BOOL X11DRV_SwapBuffers(DC *dc) {
-  X11DRV_PDEVICE *physDev = (X11DRV_PDEVICE *)dc->physDev;
-  
-  TRACE("(%p)\n", dc);
+BOOL X11DRV_SwapBuffers(X11DRV_PDEVICE *physDev) {
+  TRACE("(%p)\n", physDev);
 
   ENTER_GL();
   glXSwapBuffers(gdi_display, physDev->drawable);
