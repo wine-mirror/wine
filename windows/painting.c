@@ -232,8 +232,14 @@ copyrgn:
 
     if( hClip ) /* NOTE: WM_NCPAINT allows wParam to be 1 */
     {
+        if ( hClip == hrgnRet && hrgnRet > 1 ) {
+	    hClip = CreateRectRgn( 0, 0, 0, 0 );
+	    CombineRgn( hClip, hrgnRet, 0, RGN_COPY );
+	}
+
 	SendMessageA( wnd->hwndSelf, WM_NCPAINT, hClip, 0L );
-	if( (hClip > 1)&& (hClip != hRgn) && (hClip != hrgnRet) ) DeleteObject( hClip );
+	if( (hClip > 1) && (hClip != hRgn) && (hClip != hrgnRet) )
+	    DeleteObject( hClip );
 	/*
          * Since all Window locks are suspended while processing the WM_NCPAINT
          * we want to make sure the window still exists before continuing.
