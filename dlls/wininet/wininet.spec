@@ -88,7 +88,7 @@ init    WININET_LibMain
 @ stub InternetAutodialHangup
 @ stdcall InternetCanonicalizeUrlA(str str ptr long) InternetCanonicalizeUrlA
 @ stub InternetCanonicalizeUrlW
-@ stub InternetCheckConnectionA
+@ stdcall InternetCheckConnectionA(ptr long long) InternetCheckConnectionA
 @ stub InternetCheckConnectionW
 @ stdcall InternetCloseHandle(long) InternetCloseHandle
 @ stub InternetCombineUrlA

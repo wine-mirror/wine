@@ -937,6 +937,85 @@ INTERNET_SCHEME GetInternetScheme(LPCSTR lpszScheme, INT nMaxCmp)
         return INTERNET_SCHEME_UNKNOWN;
 }
 
+/***********************************************************************
+ *	InternetCheckConnection
+ *
+ * Pings a requested host to check internet connection
+ *
+ * RETURNS
+ *
+ *  TRUE on success and FALSE on failure. if a failures then 
+ *   ERROR_NOT_CONNECTED is places into GetLastError
+ *
+ */
+BOOL WINAPI InternetCheckConnectionA( LPCSTR lpszUrl, DWORD dwFlags, DWORD dwReserved )
+{
+/*
+ * this is a kludge which runs the resident ping program and reads the output.
+ *
+ * Anyone have a better idea?
+ */
+
+  BOOL   rc = FALSE;
+  char command[1024];
+  char host[1024];
+  int status = -1;
+
+  /* 
+   * Crack or set the Address
+   */
+  if (lpszUrl == NULL)
+  {
+     /* 
+      * According to the doc we are supost to use the ip for the next
+      * server in the WnInet internal server database. I have 
+      * no idea what that is or how to get it.
+      *
+      * So someone needs to implement this.
+      */
+     FIXME("Unimplemented with URL of NULL");
+     return TRUE;
+  }
+  else
+  {
+     URL_COMPONENTSA componets;
+
+     ZeroMemory(&componets,sizeof(URL_COMPONENTSA));
+     componets.lpszHostName = (LPSTR)&host;
+     componets.dwHostNameLength = 1024;
+     
+     if (!InternetCrackUrlA(lpszUrl,0,0,&componets))
+       goto End;
+ 
+     TRACE("host name : %s\n",componets.lpszHostName);
+  }
+
+  /*
+   * Build our ping command
+   */
+  strcpy(command,"ping -w 1 ");
+  strcat(command,host);
+  strcat(command," >/dev/null 2>/dev/null");
+
+  TRACE("Ping command is : %s\n",command);
+
+  status = system(command);
+
+  TRACE("Ping returned a code of %i \n",status);
+ 
+  /* Ping return code of 0 indicates success */ 
+  if (status == 0)
+     rc = TRUE;
+
+End:
+ 
+  if (rc == FALSE)
+    SetLastError(ERROR_NOT_CONNECTED);
+
+  return rc;
+}
+
+
 
 /***********************************************************************
  *           INTERNET_WriteDataToStream (internal)
