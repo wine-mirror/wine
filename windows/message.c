@@ -689,7 +689,7 @@ DWORD WINAPI MsgWaitForMultipleObjectsEx( DWORD count, CONST HANDLE *pHandles,
                                           DWORD timeout, DWORD mask, DWORD flags )
 {
     HANDLE handles[MAXIMUM_WAIT_OBJECTS];
-    DWORD i, ret;
+    DWORD i, ret, lock;
     MESSAGEQUEUE *msgQueue;
 
     if (count > MAXIMUM_WAIT_OBJECTS-1)
@@ -714,7 +714,7 @@ DWORD WINAPI MsgWaitForMultipleObjectsEx( DWORD count, CONST HANDLE *pHandles,
     for (i = 0; i < count; i++) handles[i] = pHandles[i];
     handles[count] = msgQueue->server_queue;
 
-
+    ReleaseThunkLock( &lock );
     if (USER_Driver.pMsgWaitForMultipleObjectsEx)
     {
         ret = USER_Driver.pMsgWaitForMultipleObjectsEx( count+1, handles, timeout, mask, flags );
@@ -723,6 +723,7 @@ DWORD WINAPI MsgWaitForMultipleObjectsEx( DWORD count, CONST HANDLE *pHandles,
     else
         ret = WaitForMultipleObjectsEx( count+1, handles, flags & MWMO_WAITALL,
                                         timeout, flags & MWMO_ALERTABLE );
+    if (lock) RestoreThunkLock( lock );
     return ret;
 }
 
