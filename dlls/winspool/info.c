@@ -811,7 +811,7 @@ BOOL  WINAPI EnumPrintersW(DWORD dwType, LPWSTR lpszName,
  *              AddMonitor32A        [WINSPOOL.107]
  *
  */
-BOOL WINAPI AddMonitorA(LPCSTR pName, DWORD Level, LPBYTE pMonitors)
+BOOL WINAPI AddMonitorA(LPSTR pName, DWORD Level, LPBYTE pMonitors)
 {
     FIXME("(%s,%lx,%p):stub!\n", pName, Level, pMonitors);
     SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
