@@ -27,6 +27,7 @@
 #include "wownt32.h"
 #include "winternl.h"
 #include "file.h"
+#include "task.h"
 #include "miscemu.h"
 #include "stackframe.h"
 #include "wine/debug.h"
@@ -214,9 +215,11 @@ HANDLE WINAPI K32WOWHandle32( WORD handle, WOW_HANDLE_TYPE type )
     case WOW_TYPE_HPALETTE:
     case WOW_TYPE_HPEN:
     case WOW_TYPE_HACCEL:
-    case WOW_TYPE_HTASK:
     case WOW_TYPE_FULLHWND:
         return (HANDLE)(ULONG_PTR)handle;
+
+    case WOW_TYPE_HTASK:
+        return (HANDLE)TASK_GetPtr(handle)->teb->tid;
 
     default:
         ERR( "handle 0x%04x of unknown type %d\n", handle, type );
@@ -247,9 +250,11 @@ WORD WINAPI K32WOWHandle16( HANDLE handle, WOW_HANDLE_TYPE type )
     case WOW_TYPE_HPALETTE:
     case WOW_TYPE_HPEN:
     case WOW_TYPE_HACCEL:
-    case WOW_TYPE_HTASK:
     case WOW_TYPE_FULLHWND:
         return LOWORD(handle);
+
+    case WOW_TYPE_HTASK:
+        return THREAD_IdToTEB((DWORD)handle)->htask16;
 
     default:
         ERR( "handle 0x%08x of unknown type %d\n", handle, type );

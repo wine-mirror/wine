@@ -39,7 +39,6 @@
 #include "winproc.h"
 #include "wine/debug.h"
 #include "spy.h"
-#include "task.h"
 #include "thread.h"
 #include "dde.h"
 
@@ -1337,15 +1336,10 @@ INT WINPROC_MapMsg16To32A( HWND hwnd, UINT16 msg16, WPARAM16 wParam16, UINT *pms
     	*plparam = (LPARAM)MapSL(*plparam);
         return 0;
     case WM_ACTIVATEAPP:
-    	if (*plparam)
-	{ /* We need this when SetActiveWindow sends a Sendmessage16() to
-	     a 32bit window. Might be superflous with 32bit interprocess
-	     message queues.
-	  */
-	  HTASK16 htask = (HTASK16) *plparam;
-	  DWORD idThread = (DWORD)TASK_GetPtr(htask)->teb->tid;
-	  *plparam = (LPARAM) idThread;
-	}
+        /* We need this when SetActiveWindow sends a Sendmessage16() to
+         * a 32bit window. Might be superflous with 32bit interprocess
+         * message queues. */
+        if (*plparam) *plparam = HTASK_32( *plparam );
         return 0;
     case WM_NEXTMENU:
         {
@@ -2126,7 +2120,7 @@ INT WINPROC_MapMsg32ATo16( HWND hwnd, UINT msg32, WPARAM wParam32,
         return 0;
 
     case WM_ACTIVATEAPP:
-        if (*plparam) *plparam = (LPARAM)THREAD_IdToTEB((DWORD) *plparam)->htask16;
+        if (*plparam) *plparam = HTASK_16( (HANDLE)*plparam );
         return 0;
     case WM_NEXTMENU:
         {

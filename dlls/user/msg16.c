@@ -24,7 +24,6 @@
 #include "hook.h"
 #include "message.h"
 #include "spy.h"
-#include "task.h"
 #include "thread.h"
 #include "win.h"
 #include "wine/debug.h"
@@ -118,13 +117,13 @@ BOOL16 WINAPI PostAppMessage16( HTASK16 hTask, UINT16 msg, WPARAM16 wparam, LPAR
 {
     WPARAM wparam32;
     UINT msg32;
-    TDB *pTask = TASK_GetPtr( hTask );
-    if (!pTask) return FALSE;
+    DWORD tid = HTASK_32( hTask );
+    if (!tid) return FALSE;
 
     switch (WINPROC_MapMsg16To32W( 0, msg, wparam, &msg32, &wparam32, &lparam ))
     {
     case 0:
-        return PostThreadMessageW( (DWORD)pTask->teb->tid, msg32, wparam32, lparam );
+        return PostThreadMessageW( tid, msg32, wparam32, lparam );
     case 1:
         ERR( "16-bit message %x contains pointer, cannot post\n", msg );
         return FALSE;

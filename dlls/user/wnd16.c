@@ -22,7 +22,6 @@
 #include "wownt32.h"
 #include "user.h"
 #include "win.h"
-#include "task.h"
 #include "stackframe.h"
 
 /* handle --> handle16 conversions */
@@ -1033,12 +1032,12 @@ INT16 WINAPI DlgDirListComboBox16( HWND16 hDlg, LPSTR spec, INT16 idCBox,
 BOOL16 WINAPI EnumTaskWindows16( HTASK16 hTask, WNDENUMPROC16 func, LPARAM lParam )
 {
     struct wnd_enum_info info;
-    TDB *tdb = TASK_GetPtr( hTask );
+    DWORD tid = HTASK_32( hTask );
 
-    if (!tdb) return FALSE;
+    if (!tid) return FALSE;
     info.proc  = func;
     info.param = lParam;
-    return EnumThreadWindows( (DWORD)tdb->teb->tid, wnd_enum_callback, (LPARAM)&info );
+    return EnumThreadWindows( tid, wnd_enum_callback, (LPARAM)&info );
 }
 
 

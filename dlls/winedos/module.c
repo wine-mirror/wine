@@ -473,7 +473,7 @@ static BOOL MZ_InitTask(void)
 
 static void MZ_Launch(void)
 {
-  TDB *pTask = TASK_GetPtr( GetCurrentTask() );
+  TDB *pTask = GlobalLock16( GetCurrentTask() );
   BYTE *psp_start = PTR_REAL_TO_LIN( DOSVM_psp, 0 );
   LPSTR cmdline = GetCommandLineA();
   DWORD rv;

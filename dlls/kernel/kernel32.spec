@@ -1076,6 +1076,4 @@ init	MAIN_KernelInit
 @ cdecl LOCAL_Unlock(long long) LOCAL_Unlock
 @ stdcall NE_DefResourceHandler(long long long) NE_DefResourceHandler
 @ cdecl SELECTOR_AllocBlock(ptr long long) SELECTOR_AllocBlock
-@ cdecl TASK_GetPtr(long) TASK_GetPtr
-@ cdecl THREAD_IdToTEB(long) THREAD_IdToTEB
 @ cdecl VIRTUAL_SetFaultHandler(ptr ptr ptr) VIRTUAL_SetFaultHandler

@@ -45,7 +45,6 @@
 #include "winproc.h"
 #include "user.h"
 #include "thread.h"
-#include "task.h"
 #include "controls.h"
 #include "wine/debug.h"
 
