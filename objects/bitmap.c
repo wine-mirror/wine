@@ -183,7 +183,11 @@ HBITMAP WINAPI CreateCompatibleBitmap( HDC hdc, INT width, INT height)
 	FIXME_(bitmap)("got bad width %d or height %d, please look for reason\n",
 	      width, height );
     } else {
-        hbmpRet = CreateBitmap( width, height, 1, dc->w.bitsPerPixel, NULL );
+        /* MS doc says if width or height is 0, return 1-by-1 pixel, monochrome bitmap */
+        if (!width || !height) 
+	   hbmpRet = CreateBitmap( 1, 1, 1, 1, NULL );
+	else 
+	   hbmpRet = CreateBitmap( width, height, 1, dc->w.bitsPerPixel, NULL );
 	if(dc->funcs->pCreateBitmap)
 	    dc->funcs->pCreateBitmap( hbmpRet );
     }
