@@ -16,6 +16,10 @@ dlls/avifil32
 
 dlls/avifil32
 
+% dlls/comcat/comcat.spec
+
+dlls/comcat
+
 % dlls/comctl32/comctl32.spec
 
 dlls/comctl32
@@ -555,4 +559,3 @@ dlls/wintrust
 
 dlls/x11drv
 graphics/x11drv
-windows/x11drv

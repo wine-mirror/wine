@@ -143,6 +143,8 @@ sub new {
     foreach my $spec_file (@spec_files) {
 	(my $type, my $module) = get_spec_file_type("$wine_dir/$spec_file");
 
+	if(!$type) { $type = "win32"; }
+
 	$$spec_file2module{$spec_file} = $module;
 	$$module2spec_file{$module} = $spec_file;
 

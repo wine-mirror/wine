@@ -45,6 +45,10 @@ HRSRC16
 HTASK16
 UINT16
 
+%longlong
+
+DWORDLONG
+
 %ptr
 
 BOOL *

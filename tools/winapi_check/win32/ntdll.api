@@ -112,15 +112,10 @@ void *
 
 %ptr --extension
 
-GUID *
 WCHAR *
-WCHAR ***
 char *
-char ***
-enum __WINE_DEBUG_CLASS
 enum fd_type *
 int *
-va_list
 
 %str
 

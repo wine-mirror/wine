@@ -8,6 +8,7 @@ ULONG
 
 %ptr
 
+IAVIFile *
 LPCLSID
 PAVIFILE
 PAVIFILE *

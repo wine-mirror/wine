@@ -1,6 +1,8 @@
 %long
 
 DWORD
-LONG
+LPARAM
+LRESULT
 HDRVR
 UINT
+

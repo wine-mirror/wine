@@ -5,10 +5,10 @@ HRESULT
 
 %ptr
 
-CLSID *
 DLLVERSIONINFO *
-IID *
-void **
+LPVOID *
+REFCLSID
+REFIID
 
 %wstr
 
