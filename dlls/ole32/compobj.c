@@ -1094,29 +1094,23 @@ _LocalServerThread(LPVOID param) {
     }
     IStream_Release(pStm);
 
-    while (1) {
-	hPipe = CreateNamedPipeA(
-	    pipefn,
-	    PIPE_ACCESS_DUPLEX,
-	    PIPE_TYPE_BYTE|PIPE_WAIT,
-	    PIPE_UNLIMITED_INSTANCES,
-	    4096,
-	    4096,
-	    NMPWAIT_USE_DEFAULT_WAIT,
-	    NULL
-	);
-	if (hPipe == INVALID_HANDLE_VALUE) {
-	    FIXME("pipe creation failed for %s, le is %lx\n",pipefn,GetLastError());
-	    return 1;
-	}
-	if (!ConnectNamedPipe(hPipe,NULL)) {
-	    ERR("Failure during ConnectNamedPipe %lx, ABORT!\n",GetLastError());
-	    CloseHandle(hPipe);
-	    continue;
-	}
-	WriteFile(hPipe,buffer,buflen,&res,NULL);
-	CloseHandle(hPipe);
+    hPipe = CreateNamedPipeA( pipefn, PIPE_ACCESS_DUPLEX,
+               PIPE_TYPE_BYTE|PIPE_WAIT, PIPE_UNLIMITED_INSTANCES,
+               4096, 4096, NMPWAIT_USE_DEFAULT_WAIT, NULL );
+    if (hPipe == INVALID_HANDLE_VALUE) {
+        FIXME("pipe creation failed for %s, le is %lx\n",pipefn,GetLastError());
+        return 1;
     }
+    while (1) {
+        if (!ConnectNamedPipe(hPipe,NULL)) {
+            ERR("Failure during ConnectNamedPipe %lx, ABORT!\n",GetLastError());
+            break;
+        }
+        WriteFile(hPipe,buffer,buflen,&res,NULL);
+        FlushFileBuffers(hPipe);
+        DisconnectNamedPipe(hPipe);
+    }
+    CloseHandle(hPipe);
     return 0;
 }
 
