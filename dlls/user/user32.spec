@@ -180,7 +180,7 @@ debug_channels (accel caret class clipboard combo cursor dc ddeml dialog driver
 @ stdcall DrawTextExA(long str long ptr long ptr) DrawTextExA
 @ stdcall DrawTextExW(long wstr long ptr long ptr) DrawTextExW
 @ stdcall DrawTextW(long wstr long ptr long) DrawTextW
-@ stdcall EditWndProc(long long long long) EditWndProc
+@ stdcall EditWndProc(long long long long) EditWndProcA
 @ stdcall EmptyClipboard() EmptyClipboard
 @ stdcall EnableMenuItem(long long long) EnableMenuItem
 @ stdcall EnableScrollBar(long long long) EnableScrollBar
