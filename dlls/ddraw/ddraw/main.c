@@ -793,6 +793,9 @@ Main_DirectDraw_GetFourCCCodes(LPDIRECTDRAW7 iface, LPDWORD pNumCodes,
 			       LPDWORD pCodes)
 {
     ICOM_THIS(IDirectDrawImpl,iface);
+    if (*pNumCodes) {
+	    *pNumCodes=0;
+    }
     FIXME("(%p,%p,%p), stub\n",This,pNumCodes,pCodes);
     return DD_OK;
 }
