@@ -414,6 +414,7 @@
 # version 5.00 (Win2K)
 # _WIN32_IE >= 0x0500
 #
+@ stdcall SHBindToParent(ptr ptr ptr ptr)
 @ stdcall SHGetDiskFreeSpaceA(str ptr ptr ptr) kernel32.GetDiskFreeSpaceExA
 @ stdcall SHGetDiskFreeSpaceExA(str ptr ptr ptr) kernel32.GetDiskFreeSpaceExA
 @ stdcall SHGetDiskFreeSpaceExW(wstr ptr ptr ptr) kernel32.GetDiskFreeSpaceExW
