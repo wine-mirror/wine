@@ -1742,6 +1742,7 @@ static BOOL PROPSHEET_SetCurSel(HWND hwndDlg,
 {
   PropSheetInfo* psInfo = (PropSheetInfo*) GetPropW(hwndDlg, PropSheetInfoStr);
   HWND hwndHelp  = GetDlgItem(hwndDlg, IDHELP);
+  HWND hwndTabControl = GetDlgItem(hwndDlg, IDC_TABCONTROL);
 
   TRACE("index %d, skipdir %d, hpage %p\n", index, skipdir, hpage);
   /* hpage takes precedence over index */
@@ -1757,6 +1758,9 @@ static BOOL PROPSHEET_SetCurSel(HWND hwndDlg,
   while (1) {
     int result;
     PSHNOTIFY psn;
+
+    if (hwndTabControl)
+	SendMessageW(hwndTabControl, TCM_SETCURSEL, index, 0);
 
     psn.hdr.code     = PSN_SETACTIVE;
     psn.hdr.hwndFrom = hwndDlg;
