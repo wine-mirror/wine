@@ -260,7 +260,6 @@ static INT DCE_ReleaseDC( DCE* dce )
 BOOL DCE_InvalidateDCE(WND* pWnd, const RECT* pRectUpdate)
 {
     WND* wndScope = WIN_LockWndPtr(pWnd->parent);
-    WND *pDesktop = WIN_GetDesktop();
     BOOL bRet = FALSE;
 
     if( wndScope )
@@ -292,13 +291,6 @@ BOOL DCE_InvalidateDCE(WND* pWnd, const RECT* pRectUpdate)
                         WIN_ReleaseWndPtr(wndCurrent);
                         continue;
                     }
-
-		    if (wndCurrent == pDesktop && !(wndCurrent->flags & WIN_NATIVE))
-		    {
-			/* don't bother with fake desktop */
-                        WIN_ReleaseWndPtr(wndCurrent);
-			continue;
-		    }
 
 		    /* check if DCE window is within the z-order scope */
 
@@ -351,7 +343,6 @@ BOOL DCE_InvalidateDCE(WND* pWnd, const RECT* pRectUpdate)
 	} /* dce list */
         WIN_ReleaseWndPtr(wndScope);
     }
-    WIN_ReleaseDesktop();
     return bRet;
 }
 

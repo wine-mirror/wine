@@ -591,11 +591,7 @@ static void create_desktop( Display *display, WND *wndPtr )
     wine_tsx11_unlock();
 
     data->whole_window = data->client_window = root_window;
-    if (root_window != DefaultRootWindow(display))
-    {
-        wndPtr->flags |= WIN_NATIVE;
-        X11DRV_create_desktop_thread();
-    }
+    if (root_window != DefaultRootWindow(display)) X11DRV_create_desktop_thread();
 }
 
 
@@ -785,7 +781,6 @@ BOOL X11DRV_CreateWindow( HWND hwnd, CREATESTRUCTA *cs, BOOL unicode )
 
     wndPtr = WIN_FindWndPtr( hwnd );
     wndPtr->pDriverData = data;
-    wndPtr->flags |= WIN_NATIVE;
     WIN_ReleaseWndPtr( wndPtr );
 
     if (unicode)
@@ -793,7 +788,11 @@ BOOL X11DRV_CreateWindow( HWND hwnd, CREATESTRUCTA *cs, BOOL unicode )
     else
         ret = SendMessageA( hwnd, WM_NCCREATE, 0, (LPARAM)cs );
 
-    if (!ret) goto failed;
+    if (!ret)
+    {
+        X11DRV_DestroyWindow( hwnd );
+        return FALSE;
+    }
 
     TRACE( "hwnd %x cs %d,%d %dx%d\n", hwnd, cs->x, cs->y, cs->cx, cs->cy );
 
@@ -843,6 +842,7 @@ BOOL X11DRV_CreateWindow( HWND hwnd, CREATESTRUCTA *cs, BOOL unicode )
 
     /* Send the size messages */
 
+    if (!(wndPtr = WIN_FindWndPtr(hwnd))) return FALSE;
     if (!(wndPtr->flags & WIN_NEED_SIZE))
     {
         /* send it anyway */
@@ -875,6 +875,7 @@ BOOL X11DRV_CreateWindow( HWND hwnd, CREATESTRUCTA *cs, BOOL unicode )
                       newPos.right, newPos.bottom, swFlag );
     }
 
+    WIN_ReleaseWndPtr( wndPtr );
     return TRUE;
 
 
