@@ -333,7 +333,7 @@ static void write_header(FILE *f)
  
 static void write_glyph_names(FILE *f_c, FILE *f_h)
 {
-    int i, num_names = 0, index = 0, list_index = 0x00010000;
+    int i, num_names = 0, index = 0;
     
     for (i = 0; i < num_glyphs; ++i)
     	if (i == 0 || strcmp(glyphs[i - 1].name, glyphs[i].name) != 0)
@@ -357,17 +357,16 @@ static void write_glyph_names(FILE *f_c, FILE *f_h)
 	    fcpto(f_h, 32, fprintf(f_h, "#define GN_%s", glyphs[i].name));
 	    fprintf(f_h, "(PSDRV_AGLGlyphNames + %i)\n", index);
 	
-	    cp = fprintf(f_c, "    { -1, \"%s\" },", glyphs[i].name);
+	    cp = fprintf(f_c, "    { %4i, \"%s\" },", index, glyphs[i].name);
 	    glyphs[i].index = index;
 	    ++index;
-	    list_index += 0x00010000;
 	}
 	else
 	{
 	    glyphs[i].index = glyphs[i - 1].index;
 	}
 	
-	fcpto(f_c, 36, cp);
+	fcpto(f_c, 40, cp);
 	
 	fprintf(f_c, "/* %s */\n", glyphs[i].comment);
     }
@@ -376,7 +375,7 @@ static void write_glyph_names(FILE *f_c, FILE *f_h)
     fprintf(f_h, "(PSDRV_AGLGlyphNames + %i)\n", index);
     
     glyphs[i].index = index;
-    fcpto(f_c, 36, fprintf(f_c, "    { -1, \"%s\" }", glyphs[i].name));
+    fcpto(f_c, 40, fprintf(f_c, "    { %4i, \"%s\" }", index, glyphs[i].name));
     fprintf(f_c, "/* %s */\n};\n", glyphs[i].comment);
 }
 

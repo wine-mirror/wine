@@ -664,6 +664,8 @@ static BOOL SortFontMetrics()
 	    
 	    if (strcmp(afm->EncodingScheme, "FontSpecific") != 0)
 	    {
+	    	PSDRV_IndexGlyphList();     /* enable searching by name index */
+	    
 		for (i = 0; i < afm->NumofMetrics; ++i)
 		{
 		    UNICODEGLYPH    ug, *pug;
@@ -1009,7 +1011,6 @@ no_afmfiles:
 
 no_afmdirs:
 
-    PSDRV_IndexGlyphList(); 	    	/* So SortFontMetrics will work */
     if (SortFontMetrics() == FALSE)
     	return FALSE;
     CalcWindowsMetrics();

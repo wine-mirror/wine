@@ -74,1276 +74,1276 @@ const INT PSDRV_AGLGlyphNamesSize = 1258;
 
 GLYPHNAME PSDRV_AGLGlyphNames[1258] =
 {
-    { -1, "A" },		    /* LATIN CAPITAL LETTER A */
-    { -1, "AE" },		    /* LATIN CAPITAL LETTER AE */
-    { -1, "AEacute" },		    /* LATIN CAPITAL LETTER AE WITH ACUTE */
-    { -1, "AEsmall" },		    /* LATIN SMALL CAPITAL LETTER AE */
-    { -1, "Aacute" },		    /* LATIN CAPITAL LETTER A WITH ACUTE */
-    { -1, "Aacutesmall" },	    /* LATIN SMALL CAPITAL LETTER A WITH ACUTE */
-    { -1, "Abreve" },		    /* LATIN CAPITAL LETTER A WITH BREVE */
-    { -1, "Acircumflex" },	    /* LATIN CAPITAL LETTER A WITH CIRCUMFLEX */
-    { -1, "Acircumflexsmall" },	    /* LATIN SMALL CAPITAL LETTER A WITH CIRCUMFLEX */
-    { -1, "Acute" },		    /* CAPITAL ACUTE ACCENT */
-    { -1, "Acutesmall" },	    /* SMALL CAPITAL ACUTE ACCENT */
-    { -1, "Adieresis" },	    /* LATIN CAPITAL LETTER A WITH DIAERESIS */
-    { -1, "Adieresissmall" },	    /* LATIN SMALL CAPITAL LETTER A WITH DIAERESIS */
-    { -1, "Agrave" },		    /* LATIN CAPITAL LETTER A WITH GRAVE */
-    { -1, "Agravesmall" },	    /* LATIN SMALL CAPITAL LETTER A WITH GRAVE */
-    { -1, "Alpha" },		    /* GREEK CAPITAL LETTER ALPHA */
-    { -1, "Alphatonos" },	    /* GREEK CAPITAL LETTER ALPHA WITH TONOS */
-    { -1, "Amacron" },		    /* LATIN CAPITAL LETTER A WITH MACRON */
-    { -1, "Aogonek" },		    /* LATIN CAPITAL LETTER A WITH OGONEK */
-    { -1, "Aring" },		    /* LATIN CAPITAL LETTER A WITH RING ABOVE */
-    { -1, "Aringacute" },	    /* LATIN CAPITAL LETTER A WITH RING ABOVE AND ACUTE */
-    { -1, "Aringsmall" },	    /* LATIN SMALL CAPITAL LETTER A WITH RING ABOVE */
-    { -1, "Asmall" },		    /* LATIN SMALL CAPITAL LETTER A */
-    { -1, "Atilde" },		    /* LATIN CAPITAL LETTER A WITH TILDE */
-    { -1, "Atildesmall" },	    /* LATIN SMALL CAPITAL LETTER A WITH TILDE */
-    { -1, "B" },		    /* LATIN CAPITAL LETTER B */
-    { -1, "Beta" },		    /* GREEK CAPITAL LETTER BETA */
-    { -1, "Brevesmall" },	    /* SMALL CAPITAL BREVE */
-    { -1, "Bsmall" },		    /* LATIN SMALL CAPITAL LETTER B */
-    { -1, "C" },		    /* LATIN CAPITAL LETTER C */
-    { -1, "Cacute" },		    /* LATIN CAPITAL LETTER C WITH ACUTE */
-    { -1, "Caron" },		    /* CAPITAL CARON */
-    { -1, "Caronsmall" },	    /* SMALL CAPITAL CARON */
-    { -1, "Ccaron" },		    /* LATIN CAPITAL LETTER C WITH CARON */
-    { -1, "Ccedilla" },		    /* LATIN CAPITAL LETTER C WITH CEDILLA */
-    { -1, "Ccedillasmall" },	    /* LATIN SMALL CAPITAL LETTER C WITH CEDILLA */
-    { -1, "Ccircumflex" },	    /* LATIN CAPITAL LETTER C WITH CIRCUMFLEX */
-    { -1, "Cdotaccent" },	    /* LATIN CAPITAL LETTER C WITH DOT ABOVE */
-    { -1, "Cedillasmall" },	    /* SMALL CAPITAL CEDILLA */
-    { -1, "Chi" },		    /* GREEK CAPITAL LETTER CHI */
-    { -1, "Circumflexsmall" },	    /* SMALL CAPITAL MODIFIER LETTER CIRCUMFLEX ACCENT */
-    { -1, "Csmall" },		    /* LATIN SMALL CAPITAL LETTER C */
-    { -1, "D" },		    /* LATIN CAPITAL LETTER D */
-    { -1, "Dcaron" },		    /* LATIN CAPITAL LETTER D WITH CARON */
-    { -1, "Dcroat" },		    /* LATIN CAPITAL LETTER D WITH STROKE */
-    { -1, "Delta" },		    /* INCREMENT */
-				    /* GREEK CAPITAL LETTER DELTA;Duplicate */
-    { -1, "Dieresis" },		    /* CAPITAL DIAERESIS */
-    { -1, "DieresisAcute" },	    /* CAPITAL DIAERESIS ACUTE ACCENT */
-    { -1, "DieresisGrave" },	    /* CAPITAL DIAERESIS GRAVE ACCENT */
-    { -1, "Dieresissmall" },	    /* SMALL CAPITAL DIAERESIS */
-    { -1, "Dotaccentsmall" },	    /* SMALL CAPITAL DOT ABOVE */
-    { -1, "Dsmall" },		    /* LATIN SMALL CAPITAL LETTER D */
-    { -1, "E" },		    /* LATIN CAPITAL LETTER E */
-    { -1, "Eacute" },		    /* LATIN CAPITAL LETTER E WITH ACUTE */
-    { -1, "Eacutesmall" },	    /* LATIN SMALL CAPITAL LETTER E WITH ACUTE */
-    { -1, "Ebreve" },		    /* LATIN CAPITAL LETTER E WITH BREVE */
-    { -1, "Ecaron" },		    /* LATIN CAPITAL LETTER E WITH CARON */
-    { -1, "Ecircumflex" },	    /* LATIN CAPITAL LETTER E WITH CIRCUMFLEX */
-    { -1, "Ecircumflexsmall" },	    /* LATIN SMALL CAPITAL LETTER E WITH CIRCUMFLEX */
-    { -1, "Edieresis" },	    /* LATIN CAPITAL LETTER E WITH DIAERESIS */
-    { -1, "Edieresissmall" },	    /* LATIN SMALL CAPITAL LETTER E WITH DIAERESIS */
-    { -1, "Edotaccent" },	    /* LATIN CAPITAL LETTER E WITH DOT ABOVE */
-    { -1, "Egrave" },		    /* LATIN CAPITAL LETTER E WITH GRAVE */
-    { -1, "Egravesmall" },	    /* LATIN SMALL CAPITAL LETTER E WITH GRAVE */
-    { -1, "Emacron" },		    /* LATIN CAPITAL LETTER E WITH MACRON */
-    { -1, "Eng" },		    /* LATIN CAPITAL LETTER ENG */
-    { -1, "Eogonek" },		    /* LATIN CAPITAL LETTER E WITH OGONEK */
-    { -1, "Epsilon" },		    /* GREEK CAPITAL LETTER EPSILON */
-    { -1, "Epsilontonos" },	    /* GREEK CAPITAL LETTER EPSILON WITH TONOS */
-    { -1, "Esmall" },		    /* LATIN SMALL CAPITAL LETTER E */
-    { -1, "Eta" },		    /* GREEK CAPITAL LETTER ETA */
-    { -1, "Etatonos" },		    /* GREEK CAPITAL LETTER ETA WITH TONOS */
-    { -1, "Eth" },		    /* LATIN CAPITAL LETTER ETH */
-    { -1, "Ethsmall" },		    /* LATIN SMALL CAPITAL LETTER ETH */
-    { -1, "Euro" },		    /* EURO SIGN */
-    { -1, "F" },		    /* LATIN CAPITAL LETTER F */
-    { -1, "Fsmall" },		    /* LATIN SMALL CAPITAL LETTER F */
-    { -1, "G" },		    /* LATIN CAPITAL LETTER G */
-    { -1, "Gamma" },		    /* GREEK CAPITAL LETTER GAMMA */
-    { -1, "Gbreve" },		    /* LATIN CAPITAL LETTER G WITH BREVE */
-    { -1, "Gcaron" },		    /* LATIN CAPITAL LETTER G WITH CARON */
-    { -1, "Gcircumflex" },	    /* LATIN CAPITAL LETTER G WITH CIRCUMFLEX */
-    { -1, "Gcommaaccent" },	    /* LATIN CAPITAL LETTER G WITH CEDILLA */
-    { -1, "Gdotaccent" },	    /* LATIN CAPITAL LETTER G WITH DOT ABOVE */
-    { -1, "Grave" },		    /* CAPITAL GRAVE ACCENT */
-    { -1, "Gravesmall" },	    /* SMALL CAPITAL GRAVE ACCENT */
-    { -1, "Gsmall" },		    /* LATIN SMALL CAPITAL LETTER G */
-    { -1, "H" },		    /* LATIN CAPITAL LETTER H */
-    { -1, "H18533" },		    /* BLACK CIRCLE */
-    { -1, "H18543" },		    /* BLACK SMALL SQUARE */
-    { -1, "H18551" },		    /* WHITE SMALL SQUARE */
-    { -1, "H22073" },		    /* WHITE SQUARE */
-    { -1, "Hbar" },		    /* LATIN CAPITAL LETTER H WITH STROKE */
-    { -1, "Hcircumflex" },	    /* LATIN CAPITAL LETTER H WITH CIRCUMFLEX */
-    { -1, "Hsmall" },		    /* LATIN SMALL CAPITAL LETTER H */
-    { -1, "Hungarumlaut" },	    /* CAPITAL DOUBLE ACUTE ACCENT */
-    { -1, "Hungarumlautsmall" },    /* SMALL CAPITAL DOUBLE ACUTE ACCENT */
-    { -1, "I" },		    /* LATIN CAPITAL LETTER I */
-    { -1, "IJ" },		    /* LATIN CAPITAL LIGATURE IJ */
-    { -1, "Iacute" },		    /* LATIN CAPITAL LETTER I WITH ACUTE */
-    { -1, "Iacutesmall" },	    /* LATIN SMALL CAPITAL LETTER I WITH ACUTE */
-    { -1, "Ibreve" },		    /* LATIN CAPITAL LETTER I WITH BREVE */
-    { -1, "Icircumflex" },	    /* LATIN CAPITAL LETTER I WITH CIRCUMFLEX */
-    { -1, "Icircumflexsmall" },	    /* LATIN SMALL CAPITAL LETTER I WITH CIRCUMFLEX */
-    { -1, "Idieresis" },	    /* LATIN CAPITAL LETTER I WITH DIAERESIS */
-    { -1, "Idieresissmall" },	    /* LATIN SMALL CAPITAL LETTER I WITH DIAERESIS */
-    { -1, "Idot" },		    /* FONT FAMILY;Courier */
-    { -1, "Idotaccent" },	    /* LATIN CAPITAL LETTER I WITH DOT ABOVE */
-    { -1, "Ifraktur" },		    /* BLACK-LETTER CAPITAL I */
-    { -1, "Igrave" },		    /* LATIN CAPITAL LETTER I WITH GRAVE */
-    { -1, "Igravesmall" },	    /* LATIN SMALL CAPITAL LETTER I WITH GRAVE */
-    { -1, "Imacron" },		    /* LATIN CAPITAL LETTER I WITH MACRON */
-    { -1, "Iogonek" },		    /* LATIN CAPITAL LETTER I WITH OGONEK */
-    { -1, "Iota" },		    /* GREEK CAPITAL LETTER IOTA */
-    { -1, "Iotadieresis" },	    /* GREEK CAPITAL LETTER IOTA WITH DIALYTIKA */
-    { -1, "Iotatonos" },	    /* GREEK CAPITAL LETTER IOTA WITH TONOS */
-    { -1, "Ismall" },		    /* LATIN SMALL CAPITAL LETTER I */
-    { -1, "Itilde" },		    /* LATIN CAPITAL LETTER I WITH TILDE */
-    { -1, "J" },		    /* LATIN CAPITAL LETTER J */
-    { -1, "Jcircumflex" },	    /* LATIN CAPITAL LETTER J WITH CIRCUMFLEX */
-    { -1, "Jsmall" },		    /* LATIN SMALL CAPITAL LETTER J */
-    { -1, "K" },		    /* LATIN CAPITAL LETTER K */
-    { -1, "Kappa" },		    /* GREEK CAPITAL LETTER KAPPA */
-    { -1, "Kcommaaccent" },	    /* LATIN CAPITAL LETTER K WITH CEDILLA */
-    { -1, "Ksmall" },		    /* LATIN SMALL CAPITAL LETTER K */
-    { -1, "L" },		    /* LATIN CAPITAL LETTER L */
-    { -1, "LL" },		    /* LATIN CAPITAL LETTER LL */
-    { -1, "Lacute" },		    /* LATIN CAPITAL LETTER L WITH ACUTE */
-    { -1, "Lambda" },		    /* GREEK CAPITAL LETTER LAMDA */
-    { -1, "Lcaron" },		    /* LATIN CAPITAL LETTER L WITH CARON */
-    { -1, "Lcommaaccent" },	    /* LATIN CAPITAL LETTER L WITH CEDILLA */
-    { -1, "Ldot" },		    /* LATIN CAPITAL LETTER L WITH MIDDLE DOT */
-    { -1, "Lslash" },		    /* LATIN CAPITAL LETTER L WITH STROKE */
-    { -1, "Lslashsmall" },	    /* LATIN SMALL CAPITAL LETTER L WITH STROKE */
-    { -1, "Lsmall" },		    /* LATIN SMALL CAPITAL LETTER L */
-    { -1, "M" },		    /* LATIN CAPITAL LETTER M */
-    { -1, "Macron" },		    /* CAPITAL MACRON */
-    { -1, "Macronsmall" },	    /* SMALL CAPITAL MACRON */
-    { -1, "Msmall" },		    /* LATIN SMALL CAPITAL LETTER M */
-    { -1, "Mu" },		    /* GREEK CAPITAL LETTER MU */
-    { -1, "N" },		    /* LATIN CAPITAL LETTER N */
-    { -1, "Nacute" },		    /* LATIN CAPITAL LETTER N WITH ACUTE */
-    { -1, "Ncaron" },		    /* LATIN CAPITAL LETTER N WITH CARON */
-    { -1, "Ncommaaccent" },	    /* LATIN CAPITAL LETTER N WITH CEDILLA */
-    { -1, "Nsmall" },		    /* LATIN SMALL CAPITAL LETTER N */
-    { -1, "Ntilde" },		    /* LATIN CAPITAL LETTER N WITH TILDE */
-    { -1, "Ntildesmall" },	    /* LATIN SMALL CAPITAL LETTER N WITH TILDE */
-    { -1, "Nu" },		    /* GREEK CAPITAL LETTER NU */
-    { -1, "O" },		    /* LATIN CAPITAL LETTER O */
-    { -1, "OE" },		    /* LATIN CAPITAL LIGATURE OE */
-    { -1, "OEsmall" },		    /* LATIN SMALL CAPITAL LIGATURE OE */
-    { -1, "Oacute" },		    /* LATIN CAPITAL LETTER O WITH ACUTE */
-    { -1, "Oacutesmall" },	    /* LATIN SMALL CAPITAL LETTER O WITH ACUTE */
-    { -1, "Obreve" },		    /* LATIN CAPITAL LETTER O WITH BREVE */
-    { -1, "Ocircumflex" },	    /* LATIN CAPITAL LETTER O WITH CIRCUMFLEX */
-    { -1, "Ocircumflexsmall" },	    /* LATIN SMALL CAPITAL LETTER O WITH CIRCUMFLEX */
-    { -1, "Odieresis" },	    /* LATIN CAPITAL LETTER O WITH DIAERESIS */
-    { -1, "Odieresissmall" },	    /* LATIN SMALL CAPITAL LETTER O WITH DIAERESIS */
-    { -1, "Ogoneksmall" },	    /* SMALL CAPITAL OGONEK */
-    { -1, "Ograve" },		    /* LATIN CAPITAL LETTER O WITH GRAVE */
-    { -1, "Ogravesmall" },	    /* LATIN SMALL CAPITAL LETTER O WITH GRAVE */
-    { -1, "Ohorn" },		    /* LATIN CAPITAL LETTER O WITH HORN */
-    { -1, "Ohungarumlaut" },	    /* LATIN CAPITAL LETTER O WITH DOUBLE ACUTE */
-    { -1, "Omacron" },		    /* LATIN CAPITAL LETTER O WITH MACRON */
-    { -1, "Omega" },		    /* OHM SIGN */
-				    /* GREEK CAPITAL LETTER OMEGA;Duplicate */
-    { -1, "Omegatonos" },	    /* GREEK CAPITAL LETTER OMEGA WITH TONOS */
-    { -1, "Omicron" },		    /* GREEK CAPITAL LETTER OMICRON */
-    { -1, "Omicrontonos" },	    /* GREEK CAPITAL LETTER OMICRON WITH TONOS */
-    { -1, "Oslash" },		    /* LATIN CAPITAL LETTER O WITH STROKE */
-    { -1, "Oslashacute" },	    /* LATIN CAPITAL LETTER O WITH STROKE AND ACUTE */
-    { -1, "Oslashsmall" },	    /* LATIN SMALL CAPITAL LETTER O WITH STROKE */
-    { -1, "Osmall" },		    /* LATIN SMALL CAPITAL LETTER O */
-    { -1, "Otilde" },		    /* LATIN CAPITAL LETTER O WITH TILDE */
-    { -1, "Otildesmall" },	    /* LATIN SMALL CAPITAL LETTER O WITH TILDE */
-    { -1, "P" },		    /* LATIN CAPITAL LETTER P */
-    { -1, "Phi" },		    /* GREEK CAPITAL LETTER PHI */
-    { -1, "Pi" },		    /* GREEK CAPITAL LETTER PI */
-    { -1, "Psi" },		    /* GREEK CAPITAL LETTER PSI */
-    { -1, "Psmall" },		    /* LATIN SMALL CAPITAL LETTER P */
-    { -1, "Q" },		    /* LATIN CAPITAL LETTER Q */
-    { -1, "Qsmall" },		    /* LATIN SMALL CAPITAL LETTER Q */
-    { -1, "R" },		    /* LATIN CAPITAL LETTER R */
-    { -1, "Racute" },		    /* LATIN CAPITAL LETTER R WITH ACUTE */
-    { -1, "Rcaron" },		    /* LATIN CAPITAL LETTER R WITH CARON */
-    { -1, "Rcommaaccent" },	    /* LATIN CAPITAL LETTER R WITH CEDILLA */
-    { -1, "Rfraktur" },		    /* BLACK-LETTER CAPITAL R */
-    { -1, "Rho" },		    /* GREEK CAPITAL LETTER RHO */
-    { -1, "Ringsmall" },	    /* SMALL CAPITAL RING ABOVE */
-    { -1, "Rsmall" },		    /* LATIN SMALL CAPITAL LETTER R */
-    { -1, "S" },		    /* LATIN CAPITAL LETTER S */
-    { -1, "SF010000" },		    /* BOX DRAWINGS LIGHT DOWN AND RIGHT */
-    { -1, "SF020000" },		    /* BOX DRAWINGS LIGHT UP AND RIGHT */
-    { -1, "SF030000" },		    /* BOX DRAWINGS LIGHT DOWN AND LEFT */
-    { -1, "SF040000" },		    /* BOX DRAWINGS LIGHT UP AND LEFT */
-    { -1, "SF050000" },		    /* BOX DRAWINGS LIGHT VERTICAL AND HORIZONTAL */
-    { -1, "SF060000" },		    /* BOX DRAWINGS LIGHT DOWN AND HORIZONTAL */
-    { -1, "SF070000" },		    /* BOX DRAWINGS LIGHT UP AND HORIZONTAL */
-    { -1, "SF080000" },		    /* BOX DRAWINGS LIGHT VERTICAL AND RIGHT */
-    { -1, "SF090000" },		    /* BOX DRAWINGS LIGHT VERTICAL AND LEFT */
-    { -1, "SF100000" },		    /* BOX DRAWINGS LIGHT HORIZONTAL */
-    { -1, "SF110000" },		    /* BOX DRAWINGS LIGHT VERTICAL */
-    { -1, "SF190000" },		    /* BOX DRAWINGS VERTICAL SINGLE AND LEFT DOUBLE */
-    { -1, "SF200000" },		    /* BOX DRAWINGS VERTICAL DOUBLE AND LEFT SINGLE */
-    { -1, "SF210000" },		    /* BOX DRAWINGS DOWN DOUBLE AND LEFT SINGLE */
-    { -1, "SF220000" },		    /* BOX DRAWINGS DOWN SINGLE AND LEFT DOUBLE */
-    { -1, "SF230000" },		    /* BOX DRAWINGS DOUBLE VERTICAL AND LEFT */
-    { -1, "SF240000" },		    /* BOX DRAWINGS DOUBLE VERTICAL */
-    { -1, "SF250000" },		    /* BOX DRAWINGS DOUBLE DOWN AND LEFT */
-    { -1, "SF260000" },		    /* BOX DRAWINGS DOUBLE UP AND LEFT */
-    { -1, "SF270000" },		    /* BOX DRAWINGS UP DOUBLE AND LEFT SINGLE */
-    { -1, "SF280000" },		    /* BOX DRAWINGS UP SINGLE AND LEFT DOUBLE */
-    { -1, "SF360000" },		    /* BOX DRAWINGS VERTICAL SINGLE AND RIGHT DOUBLE */
-    { -1, "SF370000" },		    /* BOX DRAWINGS VERTICAL DOUBLE AND RIGHT SINGLE */
-    { -1, "SF380000" },		    /* BOX DRAWINGS DOUBLE UP AND RIGHT */
-    { -1, "SF390000" },		    /* BOX DRAWINGS DOUBLE DOWN AND RIGHT */
-    { -1, "SF400000" },		    /* BOX DRAWINGS DOUBLE UP AND HORIZONTAL */
-    { -1, "SF410000" },		    /* BOX DRAWINGS DOUBLE DOWN AND HORIZONTAL */
-    { -1, "SF420000" },		    /* BOX DRAWINGS DOUBLE VERTICAL AND RIGHT */
-    { -1, "SF430000" },		    /* BOX DRAWINGS DOUBLE HORIZONTAL */
-    { -1, "SF440000" },		    /* BOX DRAWINGS DOUBLE VERTICAL AND HORIZONTAL */
-    { -1, "SF450000" },		    /* BOX DRAWINGS UP SINGLE AND HORIZONTAL DOUBLE */
-    { -1, "SF460000" },		    /* BOX DRAWINGS UP DOUBLE AND HORIZONTAL SINGLE */
-    { -1, "SF470000" },		    /* BOX DRAWINGS DOWN SINGLE AND HORIZONTAL DOUBLE */
-    { -1, "SF480000" },		    /* BOX DRAWINGS DOWN DOUBLE AND HORIZONTAL SINGLE */
-    { -1, "SF490000" },		    /* BOX DRAWINGS UP DOUBLE AND RIGHT SINGLE */
-    { -1, "SF500000" },		    /* BOX DRAWINGS UP SINGLE AND RIGHT DOUBLE */
-    { -1, "SF510000" },		    /* BOX DRAWINGS DOWN SINGLE AND RIGHT DOUBLE */
-    { -1, "SF520000" },		    /* BOX DRAWINGS DOWN DOUBLE AND RIGHT SINGLE */
-    { -1, "SF530000" },		    /* BOX DRAWINGS VERTICAL DOUBLE AND HORIZONTAL SINGLE */
-    { -1, "SF540000" },		    /* BOX DRAWINGS VERTICAL SINGLE AND HORIZONTAL DOUBLE */
-    { -1, "Sacute" },		    /* LATIN CAPITAL LETTER S WITH ACUTE */
-    { -1, "Scaron" },		    /* LATIN CAPITAL LETTER S WITH CARON */
-    { -1, "Scaronsmall" },	    /* LATIN SMALL CAPITAL LETTER S WITH CARON */
-    { -1, "Scedilla" },		    /* LATIN CAPITAL LETTER S WITH CEDILLA */
-				    /* LATIN CAPITAL LETTER S WITH CEDILLA;Duplicate */
-    { -1, "Scircumflex" },	    /* LATIN CAPITAL LETTER S WITH CIRCUMFLEX */
-    { -1, "Scommaaccent" },	    /* LATIN CAPITAL LETTER S WITH COMMA BELOW */
-    { -1, "Sigma" },		    /* GREEK CAPITAL LETTER SIGMA */
-    { -1, "Ssmall" },		    /* LATIN SMALL CAPITAL LETTER S */
-    { -1, "T" },		    /* LATIN CAPITAL LETTER T */
-    { -1, "Tau" },		    /* GREEK CAPITAL LETTER TAU */
-    { -1, "Tbar" },		    /* LATIN CAPITAL LETTER T WITH STROKE */
-    { -1, "Tcaron" },		    /* LATIN CAPITAL LETTER T WITH CARON */
-    { -1, "Tcommaaccent" },	    /* LATIN CAPITAL LETTER T WITH CEDILLA */
-				    /* LATIN CAPITAL LETTER T WITH COMMA BELOW;Duplicate */
-    { -1, "Theta" },		    /* GREEK CAPITAL LETTER THETA */
-    { -1, "Thorn" },		    /* LATIN CAPITAL LETTER THORN */
-    { -1, "Thornsmall" },	    /* LATIN SMALL CAPITAL LETTER THORN */
-    { -1, "Tildesmall" },	    /* SMALL CAPITAL SMALL TILDE */
-    { -1, "Tsmall" },		    /* LATIN SMALL CAPITAL LETTER T */
-    { -1, "U" },		    /* LATIN CAPITAL LETTER U */
-    { -1, "Uacute" },		    /* LATIN CAPITAL LETTER U WITH ACUTE */
-    { -1, "Uacutesmall" },	    /* LATIN SMALL CAPITAL LETTER U WITH ACUTE */
-    { -1, "Ubreve" },		    /* LATIN CAPITAL LETTER U WITH BREVE */
-    { -1, "Ucircumflex" },	    /* LATIN CAPITAL LETTER U WITH CIRCUMFLEX */
-    { -1, "Ucircumflexsmall" },	    /* LATIN SMALL CAPITAL LETTER U WITH CIRCUMFLEX */
-    { -1, "Udieresis" },	    /* LATIN CAPITAL LETTER U WITH DIAERESIS */
-    { -1, "Udieresissmall" },	    /* LATIN SMALL CAPITAL LETTER U WITH DIAERESIS */
-    { -1, "Ugrave" },		    /* LATIN CAPITAL LETTER U WITH GRAVE */
-    { -1, "Ugravesmall" },	    /* LATIN SMALL CAPITAL LETTER U WITH GRAVE */
-    { -1, "Uhorn" },		    /* LATIN CAPITAL LETTER U WITH HORN */
-    { -1, "Uhungarumlaut" },	    /* LATIN CAPITAL LETTER U WITH DOUBLE ACUTE */
-    { -1, "Umacron" },		    /* LATIN CAPITAL LETTER U WITH MACRON */
-    { -1, "Uogonek" },		    /* LATIN CAPITAL LETTER U WITH OGONEK */
-    { -1, "Upsilon" },		    /* GREEK CAPITAL LETTER UPSILON */
-    { -1, "Upsilon1" },		    /* GREEK UPSILON WITH HOOK SYMBOL */
-    { -1, "Upsilondieresis" },	    /* GREEK CAPITAL LETTER UPSILON WITH DIALYTIKA */
-    { -1, "Upsilontonos" },	    /* GREEK CAPITAL LETTER UPSILON WITH TONOS */
-    { -1, "Uring" },		    /* LATIN CAPITAL LETTER U WITH RING ABOVE */
-    { -1, "Usmall" },		    /* LATIN SMALL CAPITAL LETTER U */
-    { -1, "Utilde" },		    /* LATIN CAPITAL LETTER U WITH TILDE */
-    { -1, "V" },		    /* LATIN CAPITAL LETTER V */
-    { -1, "Vsmall" },		    /* LATIN SMALL CAPITAL LETTER V */
-    { -1, "W" },		    /* LATIN CAPITAL LETTER W */
-    { -1, "Wacute" },		    /* LATIN CAPITAL LETTER W WITH ACUTE */
-    { -1, "Wcircumflex" },	    /* LATIN CAPITAL LETTER W WITH CIRCUMFLEX */
-    { -1, "Wdieresis" },	    /* LATIN CAPITAL LETTER W WITH DIAERESIS */
-    { -1, "Wgrave" },		    /* LATIN CAPITAL LETTER W WITH GRAVE */
-    { -1, "Wsmall" },		    /* LATIN SMALL CAPITAL LETTER W */
-    { -1, "X" },		    /* LATIN CAPITAL LETTER X */
-    { -1, "Xi" },		    /* GREEK CAPITAL LETTER XI */
-    { -1, "Xsmall" },		    /* LATIN SMALL CAPITAL LETTER X */
-    { -1, "Y" },		    /* LATIN CAPITAL LETTER Y */
-    { -1, "Yacute" },		    /* LATIN CAPITAL LETTER Y WITH ACUTE */
-    { -1, "Yacutesmall" },	    /* LATIN SMALL CAPITAL LETTER Y WITH ACUTE */
-    { -1, "Ycircumflex" },	    /* LATIN CAPITAL LETTER Y WITH CIRCUMFLEX */
-    { -1, "Ydieresis" },	    /* LATIN CAPITAL LETTER Y WITH DIAERESIS */
-    { -1, "Ydieresissmall" },	    /* LATIN SMALL CAPITAL LETTER Y WITH DIAERESIS */
-    { -1, "Ygrave" },		    /* LATIN CAPITAL LETTER Y WITH GRAVE */
-    { -1, "Ysmall" },		    /* LATIN SMALL CAPITAL LETTER Y */
-    { -1, "Z" },		    /* LATIN CAPITAL LETTER Z */
-    { -1, "Zacute" },		    /* LATIN CAPITAL LETTER Z WITH ACUTE */
-    { -1, "Zcaron" },		    /* LATIN CAPITAL LETTER Z WITH CARON */
-    { -1, "Zcaronsmall" },	    /* LATIN SMALL CAPITAL LETTER Z WITH CARON */
-    { -1, "Zdotaccent" },	    /* LATIN CAPITAL LETTER Z WITH DOT ABOVE */
-    { -1, "Zeta" },		    /* GREEK CAPITAL LETTER ZETA */
-    { -1, "Zsmall" },		    /* LATIN SMALL CAPITAL LETTER Z */
-    { -1, "a" },		    /* LATIN SMALL LETTER A */
-    { -1, "a1" },		    /* FONT FAMILY;ITC Zapf Dingbats */
-    { -1, "a10" },		    /* FONT FAMILY;ITC Zapf Dingbats */
-    { -1, "a100" },		    /* FONT FAMILY;ITC Zapf Dingbats */
-    { -1, "a101" },		    /* FONT FAMILY;ITC Zapf Dingbats */
-    { -1, "a102" },		    /* FONT FAMILY;ITC Zapf Dingbats */
-    { -1, "a103" },		    /* FONT FAMILY;ITC Zapf Dingbats */
-    { -1, "a104" },		    /* FONT FAMILY;ITC Zapf Dingbats */
-    { -1, "a105" },		    /* FONT FAMILY;ITC Zapf Dingbats */
-    { -1, "a106" },		    /* FONT FAMILY;ITC Zapf Dingbats */
-    { -1, "a107" },		    /* FONT FAMILY;ITC Zapf Dingbats */
-    { -1, "a108" },		    /* FONT FAMILY;ITC Zapf Dingbats */
-    { -1, "a109" },		    /* FONT FAMILY;ITC Zapf Dingbats */
-    { -1, "a11" },		    /* FONT FAMILY;ITC Zapf Dingbats */
-    { -1, "a110" },		    /* FONT FAMILY;ITC Zapf Dingbats */
-    { -1, "a111" },		    /* FONT FAMILY;ITC Zapf Dingbats */
-    { -1, "a112" },		    /* FONT FAMILY;ITC Zapf Dingbats */
-    { -1, "a117" },		    /* FONT FAMILY;ITC Zapf Dingbats */
-    { -1, "a118" },		    /* FONT FAMILY;ITC Zapf Dingbats */
-    { -1, "a119" },		    /* FONT FAMILY;ITC Zapf Dingbats */
-    { -1, "a12" },		    /* FONT FAMILY;ITC Zapf Dingbats */
-    { -1, "a120" },		    /* FONT FAMILY;ITC Zapf Dingbats */
-    { -1, "a121" },		    /* FONT FAMILY;ITC Zapf Dingbats */
-    { -1, "a122" },		    /* FONT FAMILY;ITC Zapf Dingbats */
-    { -1, "a123" },		    /* FONT FAMILY;ITC Zapf Dingbats */
-    { -1, "a124" },		    /* FONT FAMILY;ITC Zapf Dingbats */
-    { -1, "a125" },		    /* FONT FAMILY;ITC Zapf Dingbats */
-    { -1, "a126" },		    /* FONT FAMILY;ITC Zapf Dingbats */
-    { -1, "a127" },		    /* FONT FAMILY;ITC Zapf Dingbats */
-    { -1, "a128" },		    /* FONT FAMILY;ITC Zapf Dingbats */
-    { -1, "a129" },		    /* FONT FAMILY;ITC Zapf Dingbats */
-    { -1, "a13" },		    /* FONT FAMILY;ITC Zapf Dingbats */
-    { -1, "a130" },		    /* FONT FAMILY;ITC Zapf Dingbats */
-    { -1, "a131" },		    /* FONT FAMILY;ITC Zapf Dingbats */
-    { -1, "a132" },		    /* FONT FAMILY;ITC Zapf Dingbats */
-    { -1, "a133" },		    /* FONT FAMILY;ITC Zapf Dingbats */
-    { -1, "a134" },		    /* FONT FAMILY;ITC Zapf Dingbats */
-    { -1, "a135" },		    /* FONT FAMILY;ITC Zapf Dingbats */
-    { -1, "a136" },		    /* FONT FAMILY;ITC Zapf Dingbats */
-    { -1, "a137" },		    /* FONT FAMILY;ITC Zapf Dingbats */
-    { -1, "a138" },		    /* FONT FAMILY;ITC Zapf Dingbats */
-    { -1, "a139" },		    /* FONT FAMILY;ITC Zapf Dingbats */
-    { -1, "a14" },		    /* FONT FAMILY;ITC Zapf Dingbats */
-    { -1, "a140" },		    /* FONT FAMILY;ITC Zapf Dingbats */
-    { -1, "a141" },		    /* FONT FAMILY;ITC Zapf Dingbats */
-    { -1, "a142" },		    /* FONT FAMILY;ITC Zapf Dingbats */
-    { -1, "a143" },		    /* FONT FAMILY;ITC Zapf Dingbats */
-    { -1, "a144" },		    /* FONT FAMILY;ITC Zapf Dingbats */
-    { -1, "a145" },		    /* FONT FAMILY;ITC Zapf Dingbats */
-    { -1, "a146" },		    /* FONT FAMILY;ITC Zapf Dingbats */
-    { -1, "a147" },		    /* FONT FAMILY;ITC Zapf Dingbats */
-    { -1, "a148" },		    /* FONT FAMILY;ITC Zapf Dingbats */
-    { -1, "a149" },		    /* FONT FAMILY;ITC Zapf Dingbats */
-    { -1, "a15" },		    /* FONT FAMILY;ITC Zapf Dingbats */
-    { -1, "a150" },		    /* FONT FAMILY;ITC Zapf Dingbats */
-    { -1, "a151" },		    /* FONT FAMILY;ITC Zapf Dingbats */
-    { -1, "a152" },		    /* FONT FAMILY;ITC Zapf Dingbats */
-    { -1, "a153" },		    /* FONT FAMILY;ITC Zapf Dingbats */
-    { -1, "a154" },		    /* FONT FAMILY;ITC Zapf Dingbats */
-    { -1, "a155" },		    /* FONT FAMILY;ITC Zapf Dingbats */
-    { -1, "a156" },		    /* FONT FAMILY;ITC Zapf Dingbats */
-    { -1, "a157" },		    /* FONT FAMILY;ITC Zapf Dingbats */
-    { -1, "a158" },		    /* FONT FAMILY;ITC Zapf Dingbats */
-    { -1, "a159" },		    /* FONT FAMILY;ITC Zapf Dingbats */
-    { -1, "a16" },		    /* FONT FAMILY;ITC Zapf Dingbats */
-    { -1, "a160" },		    /* FONT FAMILY;ITC Zapf Dingbats */
-    { -1, "a161" },		    /* FONT FAMILY;ITC Zapf Dingbats */
-    { -1, "a162" },		    /* FONT FAMILY;ITC Zapf Dingbats */
-    { -1, "a163" },		    /* FONT FAMILY;ITC Zapf Dingbats */
-    { -1, "a164" },		    /* FONT FAMILY;ITC Zapf Dingbats */
-    { -1, "a165" },		    /* FONT FAMILY;ITC Zapf Dingbats */
-    { -1, "a166" },		    /* FONT FAMILY;ITC Zapf Dingbats */
-    { -1, "a167" },		    /* FONT FAMILY;ITC Zapf Dingbats */
-    { -1, "a168" },		    /* FONT FAMILY;ITC Zapf Dingbats */
-    { -1, "a169" },		    /* FONT FAMILY;ITC Zapf Dingbats */
-    { -1, "a17" },		    /* FONT FAMILY;ITC Zapf Dingbats */
-    { -1, "a170" },		    /* FONT FAMILY;ITC Zapf Dingbats */
-    { -1, "a171" },		    /* FONT FAMILY;ITC Zapf Dingbats */
-    { -1, "a172" },		    /* FONT FAMILY;ITC Zapf Dingbats */
-    { -1, "a173" },		    /* FONT FAMILY;ITC Zapf Dingbats */
-    { -1, "a174" },		    /* FONT FAMILY;ITC Zapf Dingbats */
-    { -1, "a175" },		    /* FONT FAMILY;ITC Zapf Dingbats */
-    { -1, "a176" },		    /* FONT FAMILY;ITC Zapf Dingbats */
-    { -1, "a177" },		    /* FONT FAMILY;ITC Zapf Dingbats */
-    { -1, "a178" },		    /* FONT FAMILY;ITC Zapf Dingbats */
-    { -1, "a179" },		    /* FONT FAMILY;ITC Zapf Dingbats */
-    { -1, "a18" },		    /* FONT FAMILY;ITC Zapf Dingbats */
-    { -1, "a180" },		    /* FONT FAMILY;ITC Zapf Dingbats */
-    { -1, "a181" },		    /* FONT FAMILY;ITC Zapf Dingbats */
-    { -1, "a182" },		    /* FONT FAMILY;ITC Zapf Dingbats */
-    { -1, "a183" },		    /* FONT FAMILY;ITC Zapf Dingbats */
-    { -1, "a184" },		    /* FONT FAMILY;ITC Zapf Dingbats */
-    { -1, "a185" },		    /* FONT FAMILY;ITC Zapf Dingbats */
-    { -1, "a186" },		    /* FONT FAMILY;ITC Zapf Dingbats */
-    { -1, "a187" },		    /* FONT FAMILY;ITC Zapf Dingbats */
-    { -1, "a188" },		    /* FONT FAMILY;ITC Zapf Dingbats */
-    { -1, "a189" },		    /* FONT FAMILY;ITC Zapf Dingbats */
-    { -1, "a19" },		    /* FONT FAMILY;ITC Zapf Dingbats */
-    { -1, "a190" },		    /* FONT FAMILY;ITC Zapf Dingbats */
-    { -1, "a191" },		    /* FONT FAMILY;ITC Zapf Dingbats */
-    { -1, "a192" },		    /* FONT FAMILY;ITC Zapf Dingbats */
-    { -1, "a193" },		    /* FONT FAMILY;ITC Zapf Dingbats */
-    { -1, "a194" },		    /* FONT FAMILY;ITC Zapf Dingbats */
-    { -1, "a195" },		    /* FONT FAMILY;ITC Zapf Dingbats */
-    { -1, "a196" },		    /* FONT FAMILY;ITC Zapf Dingbats */
-    { -1, "a197" },		    /* FONT FAMILY;ITC Zapf Dingbats */
-    { -1, "a198" },		    /* FONT FAMILY;ITC Zapf Dingbats */
-    { -1, "a199" },		    /* FONT FAMILY;ITC Zapf Dingbats */
-    { -1, "a2" },		    /* FONT FAMILY;ITC Zapf Dingbats */
-    { -1, "a20" },		    /* FONT FAMILY;ITC Zapf Dingbats */
-    { -1, "a200" },		    /* FONT FAMILY;ITC Zapf Dingbats */
-    { -1, "a201" },		    /* FONT FAMILY;ITC Zapf Dingbats */
-    { -1, "a202" },		    /* FONT FAMILY;ITC Zapf Dingbats */
-    { -1, "a203" },		    /* FONT FAMILY;ITC Zapf Dingbats */
-    { -1, "a204" },		    /* FONT FAMILY;ITC Zapf Dingbats */
-    { -1, "a205" },		    /* FONT FAMILY;ITC Zapf Dingbats */
-    { -1, "a206" },		    /* FONT FAMILY;ITC Zapf Dingbats */
-    { -1, "a21" },		    /* FONT FAMILY;ITC Zapf Dingbats */
-    { -1, "a22" },		    /* FONT FAMILY;ITC Zapf Dingbats */
-    { -1, "a23" },		    /* FONT FAMILY;ITC Zapf Dingbats */
-    { -1, "a24" },		    /* FONT FAMILY;ITC Zapf Dingbats */
-    { -1, "a25" },		    /* FONT FAMILY;ITC Zapf Dingbats */
-    { -1, "a26" },		    /* FONT FAMILY;ITC Zapf Dingbats */
-    { -1, "a27" },		    /* FONT FAMILY;ITC Zapf Dingbats */
-    { -1, "a28" },		    /* FONT FAMILY;ITC Zapf Dingbats */
-    { -1, "a29" },		    /* FONT FAMILY;ITC Zapf Dingbats */
-    { -1, "a3" },		    /* FONT FAMILY;ITC Zapf Dingbats */
-    { -1, "a30" },		    /* FONT FAMILY;ITC Zapf Dingbats */
-    { -1, "a31" },		    /* FONT FAMILY;ITC Zapf Dingbats */
-    { -1, "a32" },		    /* FONT FAMILY;ITC Zapf Dingbats */
-    { -1, "a33" },		    /* FONT FAMILY;ITC Zapf Dingbats */
-    { -1, "a34" },		    /* FONT FAMILY;ITC Zapf Dingbats */
-    { -1, "a35" },		    /* FONT FAMILY;ITC Zapf Dingbats */
-    { -1, "a36" },		    /* FONT FAMILY;ITC Zapf Dingbats */
-    { -1, "a37" },		    /* FONT FAMILY;ITC Zapf Dingbats */
-    { -1, "a38" },		    /* FONT FAMILY;ITC Zapf Dingbats */
-    { -1, "a39" },		    /* FONT FAMILY;ITC Zapf Dingbats */
-    { -1, "a4" },		    /* FONT FAMILY;ITC Zapf Dingbats */
-    { -1, "a40" },		    /* FONT FAMILY;ITC Zapf Dingbats */
-    { -1, "a41" },		    /* FONT FAMILY;ITC Zapf Dingbats */
-    { -1, "a42" },		    /* FONT FAMILY;ITC Zapf Dingbats */
-    { -1, "a43" },		    /* FONT FAMILY;ITC Zapf Dingbats */
-    { -1, "a44" },		    /* FONT FAMILY;ITC Zapf Dingbats */
-    { -1, "a45" },		    /* FONT FAMILY;ITC Zapf Dingbats */
-    { -1, "a46" },		    /* FONT FAMILY;ITC Zapf Dingbats */
-    { -1, "a47" },		    /* FONT FAMILY;ITC Zapf Dingbats */
-    { -1, "a48" },		    /* FONT FAMILY;ITC Zapf Dingbats */
-    { -1, "a49" },		    /* FONT FAMILY;ITC Zapf Dingbats */
-    { -1, "a5" },		    /* FONT FAMILY;ITC Zapf Dingbats */
-    { -1, "a50" },		    /* FONT FAMILY;ITC Zapf Dingbats */
-    { -1, "a51" },		    /* FONT FAMILY;ITC Zapf Dingbats */
-    { -1, "a52" },		    /* FONT FAMILY;ITC Zapf Dingbats */
-    { -1, "a53" },		    /* FONT FAMILY;ITC Zapf Dingbats */
-    { -1, "a54" },		    /* FONT FAMILY;ITC Zapf Dingbats */
-    { -1, "a55" },		    /* FONT FAMILY;ITC Zapf Dingbats */
-    { -1, "a56" },		    /* FONT FAMILY;ITC Zapf Dingbats */
-    { -1, "a57" },		    /* FONT FAMILY;ITC Zapf Dingbats */
-    { -1, "a58" },		    /* FONT FAMILY;ITC Zapf Dingbats */
-    { -1, "a59" },		    /* FONT FAMILY;ITC Zapf Dingbats */
-    { -1, "a6" },		    /* FONT FAMILY;ITC Zapf Dingbats */
-    { -1, "a60" },		    /* FONT FAMILY;ITC Zapf Dingbats */
-    { -1, "a61" },		    /* FONT FAMILY;ITC Zapf Dingbats */
-    { -1, "a62" },		    /* FONT FAMILY;ITC Zapf Dingbats */
-    { -1, "a63" },		    /* FONT FAMILY;ITC Zapf Dingbats */
-    { -1, "a64" },		    /* FONT FAMILY;ITC Zapf Dingbats */
-    { -1, "a65" },		    /* FONT FAMILY;ITC Zapf Dingbats */
-    { -1, "a66" },		    /* FONT FAMILY;ITC Zapf Dingbats */
-    { -1, "a67" },		    /* FONT FAMILY;ITC Zapf Dingbats */
-    { -1, "a68" },		    /* FONT FAMILY;ITC Zapf Dingbats */
-    { -1, "a69" },		    /* FONT FAMILY;ITC Zapf Dingbats */
-    { -1, "a7" },		    /* FONT FAMILY;ITC Zapf Dingbats */
-    { -1, "a70" },		    /* FONT FAMILY;ITC Zapf Dingbats */
-    { -1, "a71" },		    /* FONT FAMILY;ITC Zapf Dingbats */
-    { -1, "a72" },		    /* FONT FAMILY;ITC Zapf Dingbats */
-    { -1, "a73" },		    /* FONT FAMILY;ITC Zapf Dingbats */
-    { -1, "a74" },		    /* FONT FAMILY;ITC Zapf Dingbats */
-    { -1, "a75" },		    /* FONT FAMILY;ITC Zapf Dingbats */
-    { -1, "a76" },		    /* FONT FAMILY;ITC Zapf Dingbats */
-    { -1, "a77" },		    /* FONT FAMILY;ITC Zapf Dingbats */
-    { -1, "a78" },		    /* FONT FAMILY;ITC Zapf Dingbats */
-    { -1, "a79" },		    /* FONT FAMILY;ITC Zapf Dingbats */
-    { -1, "a8" },		    /* FONT FAMILY;ITC Zapf Dingbats */
-    { -1, "a81" },		    /* FONT FAMILY;ITC Zapf Dingbats */
-    { -1, "a82" },		    /* FONT FAMILY;ITC Zapf Dingbats */
-    { -1, "a83" },		    /* FONT FAMILY;ITC Zapf Dingbats */
-    { -1, "a84" },		    /* FONT FAMILY;ITC Zapf Dingbats */
-    { -1, "a85" },		    /* FONT FAMILY;ITC Zapf Dingbats */
-    { -1, "a86" },		    /* FONT FAMILY;ITC Zapf Dingbats */
-    { -1, "a87" },		    /* FONT FAMILY;ITC Zapf Dingbats */
-    { -1, "a88" },		    /* FONT FAMILY;ITC Zapf Dingbats */
-    { -1, "a89" },		    /* FONT FAMILY;ITC Zapf Dingbats */
-    { -1, "a9" },		    /* FONT FAMILY;ITC Zapf Dingbats */
-    { -1, "a90" },		    /* FONT FAMILY;ITC Zapf Dingbats */
-    { -1, "a91" },		    /* FONT FAMILY;ITC Zapf Dingbats */
-    { -1, "a92" },		    /* FONT FAMILY;ITC Zapf Dingbats */
-    { -1, "a93" },		    /* FONT FAMILY;ITC Zapf Dingbats */
-    { -1, "a94" },		    /* FONT FAMILY;ITC Zapf Dingbats */
-    { -1, "a95" },		    /* FONT FAMILY;ITC Zapf Dingbats */
-    { -1, "a96" },		    /* FONT FAMILY;ITC Zapf Dingbats */
-    { -1, "a97" },		    /* FONT FAMILY;ITC Zapf Dingbats */
-    { -1, "a98" },		    /* FONT FAMILY;ITC Zapf Dingbats */
-    { -1, "a99" },		    /* FONT FAMILY;ITC Zapf Dingbats */
-    { -1, "aacute" },		    /* LATIN SMALL LETTER A WITH ACUTE */
-    { -1, "abreve" },		    /* LATIN SMALL LETTER A WITH BREVE */
-    { -1, "acircumflex" },	    /* LATIN SMALL LETTER A WITH CIRCUMFLEX */
-    { -1, "acute" },		    /* ACUTE ACCENT */
-    { -1, "acutecomb" },	    /* COMBINING ACUTE ACCENT */
-    { -1, "adieresis" },	    /* LATIN SMALL LETTER A WITH DIAERESIS */
-    { -1, "ae" },		    /* LATIN SMALL LETTER AE */
-    { -1, "aeacute" },		    /* LATIN SMALL LETTER AE WITH ACUTE */
-    { -1, "afii00208" },	    /* HORIZONTAL BAR */
-    { -1, "afii10017" },	    /* CYRILLIC CAPITAL LETTER A */
-    { -1, "afii10018" },	    /* CYRILLIC CAPITAL LETTER BE */
-    { -1, "afii10019" },	    /* CYRILLIC CAPITAL LETTER VE */
-    { -1, "afii10020" },	    /* CYRILLIC CAPITAL LETTER GHE */
-    { -1, "afii10021" },	    /* CYRILLIC CAPITAL LETTER DE */
-    { -1, "afii10022" },	    /* CYRILLIC CAPITAL LETTER IE */
-    { -1, "afii10023" },	    /* CYRILLIC CAPITAL LETTER IO */
-    { -1, "afii10024" },	    /* CYRILLIC CAPITAL LETTER ZHE */
-    { -1, "afii10025" },	    /* CYRILLIC CAPITAL LETTER ZE */
-    { -1, "afii10026" },	    /* CYRILLIC CAPITAL LETTER I */
-    { -1, "afii10027" },	    /* CYRILLIC CAPITAL LETTER SHORT I */
-    { -1, "afii10028" },	    /* CYRILLIC CAPITAL LETTER KA */
-    { -1, "afii10029" },	    /* CYRILLIC CAPITAL LETTER EL */
-    { -1, "afii10030" },	    /* CYRILLIC CAPITAL LETTER EM */
-    { -1, "afii10031" },	    /* CYRILLIC CAPITAL LETTER EN */
-    { -1, "afii10032" },	    /* CYRILLIC CAPITAL LETTER O */
-    { -1, "afii10033" },	    /* CYRILLIC CAPITAL LETTER PE */
-    { -1, "afii10034" },	    /* CYRILLIC CAPITAL LETTER ER */
-    { -1, "afii10035" },	    /* CYRILLIC CAPITAL LETTER ES */
-    { -1, "afii10036" },	    /* CYRILLIC CAPITAL LETTER TE */
-    { -1, "afii10037" },	    /* CYRILLIC CAPITAL LETTER U */
-    { -1, "afii10038" },	    /* CYRILLIC CAPITAL LETTER EF */
-    { -1, "afii10039" },	    /* CYRILLIC CAPITAL LETTER HA */
-    { -1, "afii10040" },	    /* CYRILLIC CAPITAL LETTER TSE */
-    { -1, "afii10041" },	    /* CYRILLIC CAPITAL LETTER CHE */
-    { -1, "afii10042" },	    /* CYRILLIC CAPITAL LETTER SHA */
-    { -1, "afii10043" },	    /* CYRILLIC CAPITAL LETTER SHCHA */
-    { -1, "afii10044" },	    /* CYRILLIC CAPITAL LETTER HARD SIGN */
-    { -1, "afii10045" },	    /* CYRILLIC CAPITAL LETTER YERU */
-    { -1, "afii10046" },	    /* CYRILLIC CAPITAL LETTER SOFT SIGN */
-    { -1, "afii10047" },	    /* CYRILLIC CAPITAL LETTER E */
-    { -1, "afii10048" },	    /* CYRILLIC CAPITAL LETTER YU */
-    { -1, "afii10049" },	    /* CYRILLIC CAPITAL LETTER YA */
-    { -1, "afii10050" },	    /* CYRILLIC CAPITAL LETTER GHE WITH UPTURN */
-    { -1, "afii10051" },	    /* CYRILLIC CAPITAL LETTER DJE */
-    { -1, "afii10052" },	    /* CYRILLIC CAPITAL LETTER GJE */
-    { -1, "afii10053" },	    /* CYRILLIC CAPITAL LETTER UKRAINIAN IE */
-    { -1, "afii10054" },	    /* CYRILLIC CAPITAL LETTER DZE */
-    { -1, "afii10055" },	    /* CYRILLIC CAPITAL LETTER BYELORUSSIAN-UKRAINIAN I */
-    { -1, "afii10056" },	    /* CYRILLIC CAPITAL LETTER YI */
-    { -1, "afii10057" },	    /* CYRILLIC CAPITAL LETTER JE */
-    { -1, "afii10058" },	    /* CYRILLIC CAPITAL LETTER LJE */
-    { -1, "afii10059" },	    /* CYRILLIC CAPITAL LETTER NJE */
-    { -1, "afii10060" },	    /* CYRILLIC CAPITAL LETTER TSHE */
-    { -1, "afii10061" },	    /* CYRILLIC CAPITAL LETTER KJE */
-    { -1, "afii10062" },	    /* CYRILLIC CAPITAL LETTER SHORT U */
-    { -1, "afii10063" },	    /* CYRILLIC SMALL LETTER GHE VARIANT */
-    { -1, "afii10064" },	    /* CYRILLIC SMALL LETTER BE VARIANT */
-    { -1, "afii10065" },	    /* CYRILLIC SMALL LETTER A */
-    { -1, "afii10066" },	    /* CYRILLIC SMALL LETTER BE */
-    { -1, "afii10067" },	    /* CYRILLIC SMALL LETTER VE */
-    { -1, "afii10068" },	    /* CYRILLIC SMALL LETTER GHE */
-    { -1, "afii10069" },	    /* CYRILLIC SMALL LETTER DE */
-    { -1, "afii10070" },	    /* CYRILLIC SMALL LETTER IE */
-    { -1, "afii10071" },	    /* CYRILLIC SMALL LETTER IO */
-    { -1, "afii10072" },	    /* CYRILLIC SMALL LETTER ZHE */
-    { -1, "afii10073" },	    /* CYRILLIC SMALL LETTER ZE */
-    { -1, "afii10074" },	    /* CYRILLIC SMALL LETTER I */
-    { -1, "afii10075" },	    /* CYRILLIC SMALL LETTER SHORT I */
-    { -1, "afii10076" },	    /* CYRILLIC SMALL LETTER KA */
-    { -1, "afii10077" },	    /* CYRILLIC SMALL LETTER EL */
-    { -1, "afii10078" },	    /* CYRILLIC SMALL LETTER EM */
-    { -1, "afii10079" },	    /* CYRILLIC SMALL LETTER EN */
-    { -1, "afii10080" },	    /* CYRILLIC SMALL LETTER O */
-    { -1, "afii10081" },	    /* CYRILLIC SMALL LETTER PE */
-    { -1, "afii10082" },	    /* CYRILLIC SMALL LETTER ER */
-    { -1, "afii10083" },	    /* CYRILLIC SMALL LETTER ES */
-    { -1, "afii10084" },	    /* CYRILLIC SMALL LETTER TE */
-    { -1, "afii10085" },	    /* CYRILLIC SMALL LETTER U */
-    { -1, "afii10086" },	    /* CYRILLIC SMALL LETTER EF */
-    { -1, "afii10087" },	    /* CYRILLIC SMALL LETTER HA */
-    { -1, "afii10088" },	    /* CYRILLIC SMALL LETTER TSE */
-    { -1, "afii10089" },	    /* CYRILLIC SMALL LETTER CHE */
-    { -1, "afii10090" },	    /* CYRILLIC SMALL LETTER SHA */
-    { -1, "afii10091" },	    /* CYRILLIC SMALL LETTER SHCHA */
-    { -1, "afii10092" },	    /* CYRILLIC SMALL LETTER HARD SIGN */
-    { -1, "afii10093" },	    /* CYRILLIC SMALL LETTER YERU */
-    { -1, "afii10094" },	    /* CYRILLIC SMALL LETTER SOFT SIGN */
-    { -1, "afii10095" },	    /* CYRILLIC SMALL LETTER E */
-    { -1, "afii10096" },	    /* CYRILLIC SMALL LETTER YU */
-    { -1, "afii10097" },	    /* CYRILLIC SMALL LETTER YA */
-    { -1, "afii10098" },	    /* CYRILLIC SMALL LETTER GHE WITH UPTURN */
-    { -1, "afii10099" },	    /* CYRILLIC SMALL LETTER DJE */
-    { -1, "afii10100" },	    /* CYRILLIC SMALL LETTER GJE */
-    { -1, "afii10101" },	    /* CYRILLIC SMALL LETTER UKRAINIAN IE */
-    { -1, "afii10102" },	    /* CYRILLIC SMALL LETTER DZE */
-    { -1, "afii10103" },	    /* CYRILLIC SMALL LETTER BYELORUSSIAN-UKRAINIAN I */
-    { -1, "afii10104" },	    /* CYRILLIC SMALL LETTER YI */
-    { -1, "afii10105" },	    /* CYRILLIC SMALL LETTER JE */
-    { -1, "afii10106" },	    /* CYRILLIC SMALL LETTER LJE */
-    { -1, "afii10107" },	    /* CYRILLIC SMALL LETTER NJE */
-    { -1, "afii10108" },	    /* CYRILLIC SMALL LETTER TSHE */
-    { -1, "afii10109" },	    /* CYRILLIC SMALL LETTER KJE */
-    { -1, "afii10110" },	    /* CYRILLIC SMALL LETTER SHORT U */
-    { -1, "afii10145" },	    /* CYRILLIC CAPITAL LETTER DZHE */
-    { -1, "afii10146" },	    /* CYRILLIC CAPITAL LETTER YAT */
-    { -1, "afii10147" },	    /* CYRILLIC CAPITAL LETTER FITA */
-    { -1, "afii10148" },	    /* CYRILLIC CAPITAL LETTER IZHITSA */
-    { -1, "afii10192" },	    /* CYRILLIC SMALL LETTER DE VARIANT */
-    { -1, "afii10193" },	    /* CYRILLIC SMALL LETTER DZHE */
-    { -1, "afii10194" },	    /* CYRILLIC SMALL LETTER YAT */
-    { -1, "afii10195" },	    /* CYRILLIC SMALL LETTER FITA */
-    { -1, "afii10196" },	    /* CYRILLIC SMALL LETTER IZHITSA */
-    { -1, "afii10831" },	    /* CYRILLIC SMALL LETTER PE VARIANT */
-    { -1, "afii10832" },	    /* CYRILLIC SMALL LETTER TE VARIANT */
-    { -1, "afii10846" },	    /* CYRILLIC SMALL LETTER SCHWA */
-    { -1, "afii299" },		    /* LEFT-TO-RIGHT MARK */
-    { -1, "afii300" },		    /* RIGHT-TO-LEFT MARK */
-    { -1, "afii301" },		    /* ZERO WIDTH JOINER */
-    { -1, "afii57381" },	    /* ARABIC PERCENT SIGN */
-    { -1, "afii57388" },	    /* ARABIC COMMA */
-    { -1, "afii57392" },	    /* ARABIC-INDIC DIGIT ZERO */
-    { -1, "afii57393" },	    /* ARABIC-INDIC DIGIT ONE */
-    { -1, "afii57394" },	    /* ARABIC-INDIC DIGIT TWO */
-    { -1, "afii57395" },	    /* ARABIC-INDIC DIGIT THREE */
-    { -1, "afii57396" },	    /* ARABIC-INDIC DIGIT FOUR */
-    { -1, "afii57397" },	    /* ARABIC-INDIC DIGIT FIVE */
-    { -1, "afii57398" },	    /* ARABIC-INDIC DIGIT SIX */
-    { -1, "afii57399" },	    /* ARABIC-INDIC DIGIT SEVEN */
-    { -1, "afii57400" },	    /* ARABIC-INDIC DIGIT EIGHT */
-    { -1, "afii57401" },	    /* ARABIC-INDIC DIGIT NINE */
-    { -1, "afii57403" },	    /* ARABIC SEMICOLON */
-    { -1, "afii57407" },	    /* ARABIC QUESTION MARK */
-    { -1, "afii57409" },	    /* ARABIC LETTER HAMZA */
-    { -1, "afii57410" },	    /* ARABIC LETTER ALEF WITH MADDA ABOVE */
-    { -1, "afii57411" },	    /* ARABIC LETTER ALEF WITH HAMZA ABOVE */
-    { -1, "afii57412" },	    /* ARABIC LETTER WAW WITH HAMZA ABOVE */
-    { -1, "afii57413" },	    /* ARABIC LETTER ALEF WITH HAMZA BELOW */
-    { -1, "afii57414" },	    /* ARABIC LETTER YEH WITH HAMZA ABOVE */
-    { -1, "afii57415" },	    /* ARABIC LETTER ALEF */
-    { -1, "afii57416" },	    /* ARABIC LETTER BEH */
-    { -1, "afii57417" },	    /* ARABIC LETTER TEH MARBUTA */
-    { -1, "afii57418" },	    /* ARABIC LETTER TEH */
-    { -1, "afii57419" },	    /* ARABIC LETTER THEH */
-    { -1, "afii57420" },	    /* ARABIC LETTER JEEM */
-    { -1, "afii57421" },	    /* ARABIC LETTER HAH */
-    { -1, "afii57422" },	    /* ARABIC LETTER KHAH */
-    { -1, "afii57423" },	    /* ARABIC LETTER DAL */
-    { -1, "afii57424" },	    /* ARABIC LETTER THAL */
-    { -1, "afii57425" },	    /* ARABIC LETTER REH */
-    { -1, "afii57426" },	    /* ARABIC LETTER ZAIN */
-    { -1, "afii57427" },	    /* ARABIC LETTER SEEN */
-    { -1, "afii57428" },	    /* ARABIC LETTER SHEEN */
-    { -1, "afii57429" },	    /* ARABIC LETTER SAD */
-    { -1, "afii57430" },	    /* ARABIC LETTER DAD */
-    { -1, "afii57431" },	    /* ARABIC LETTER TAH */
-    { -1, "afii57432" },	    /* ARABIC LETTER ZAH */
-    { -1, "afii57433" },	    /* ARABIC LETTER AIN */
-    { -1, "afii57434" },	    /* ARABIC LETTER GHAIN */
-    { -1, "afii57440" },	    /* ARABIC TATWEEL */
-    { -1, "afii57441" },	    /* ARABIC LETTER FEH */
-    { -1, "afii57442" },	    /* ARABIC LETTER QAF */
-    { -1, "afii57443" },	    /* ARABIC LETTER KAF */
-    { -1, "afii57444" },	    /* ARABIC LETTER LAM */
-    { -1, "afii57445" },	    /* ARABIC LETTER MEEM */
-    { -1, "afii57446" },	    /* ARABIC LETTER NOON */
-    { -1, "afii57448" },	    /* ARABIC LETTER WAW */
-    { -1, "afii57449" },	    /* ARABIC LETTER ALEF MAKSURA */
-    { -1, "afii57450" },	    /* ARABIC LETTER YEH */
-    { -1, "afii57451" },	    /* ARABIC FATHATAN */
-    { -1, "afii57452" },	    /* ARABIC DAMMATAN */
-    { -1, "afii57453" },	    /* ARABIC KASRATAN */
-    { -1, "afii57454" },	    /* ARABIC FATHA */
-    { -1, "afii57455" },	    /* ARABIC DAMMA */
-    { -1, "afii57456" },	    /* ARABIC KASRA */
-    { -1, "afii57457" },	    /* ARABIC SHADDA */
-    { -1, "afii57458" },	    /* ARABIC SUKUN */
-    { -1, "afii57470" },	    /* ARABIC LETTER HEH */
-    { -1, "afii57505" },	    /* ARABIC LETTER VEH */
-    { -1, "afii57506" },	    /* ARABIC LETTER PEH */
-    { -1, "afii57507" },	    /* ARABIC LETTER TCHEH */
-    { -1, "afii57508" },	    /* ARABIC LETTER JEH */
-    { -1, "afii57509" },	    /* ARABIC LETTER GAF */
-    { -1, "afii57511" },	    /* ARABIC LETTER TTEH */
-    { -1, "afii57512" },	    /* ARABIC LETTER DDAL */
-    { -1, "afii57513" },	    /* ARABIC LETTER RREH */
-    { -1, "afii57514" },	    /* ARABIC LETTER NOON GHUNNA */
-    { -1, "afii57519" },	    /* ARABIC LETTER YEH BARREE */
-    { -1, "afii57534" },	    /* ARABIC LETTER AE */
-    { -1, "afii57636" },	    /* NEW SHEQEL SIGN */
-    { -1, "afii57645" },	    /* HEBREW PUNCTUATION MAQAF */
-    { -1, "afii57658" },	    /* HEBREW PUNCTUATION SOF PASUQ */
-    { -1, "afii57664" },	    /* HEBREW LETTER ALEF */
-    { -1, "afii57665" },	    /* HEBREW LETTER BET */
-    { -1, "afii57666" },	    /* HEBREW LETTER GIMEL */
-    { -1, "afii57667" },	    /* HEBREW LETTER DALET */
-    { -1, "afii57668" },	    /* HEBREW LETTER HE */
-    { -1, "afii57669" },	    /* HEBREW LETTER VAV */
-    { -1, "afii57670" },	    /* HEBREW LETTER ZAYIN */
-    { -1, "afii57671" },	    /* HEBREW LETTER HET */
-    { -1, "afii57672" },	    /* HEBREW LETTER TET */
-    { -1, "afii57673" },	    /* HEBREW LETTER YOD */
-    { -1, "afii57674" },	    /* HEBREW LETTER FINAL KAF */
-    { -1, "afii57675" },	    /* HEBREW LETTER KAF */
-    { -1, "afii57676" },	    /* HEBREW LETTER LAMED */
-    { -1, "afii57677" },	    /* HEBREW LETTER FINAL MEM */
-    { -1, "afii57678" },	    /* HEBREW LETTER MEM */
-    { -1, "afii57679" },	    /* HEBREW LETTER FINAL NUN */
-    { -1, "afii57680" },	    /* HEBREW LETTER NUN */
-    { -1, "afii57681" },	    /* HEBREW LETTER SAMEKH */
-    { -1, "afii57682" },	    /* HEBREW LETTER AYIN */
-    { -1, "afii57683" },	    /* HEBREW LETTER FINAL PE */
-    { -1, "afii57684" },	    /* HEBREW LETTER PE */
-    { -1, "afii57685" },	    /* HEBREW LETTER FINAL TSADI */
-    { -1, "afii57686" },	    /* HEBREW LETTER TSADI */
-    { -1, "afii57687" },	    /* HEBREW LETTER QOF */
-    { -1, "afii57688" },	    /* HEBREW LETTER RESH */
-    { -1, "afii57689" },	    /* HEBREW LETTER SHIN */
-    { -1, "afii57690" },	    /* HEBREW LETTER TAV */
-    { -1, "afii57694" },	    /* HEBREW LETTER SHIN WITH SHIN DOT */
-    { -1, "afii57695" },	    /* HEBREW LETTER SHIN WITH SIN DOT */
-    { -1, "afii57700" },	    /* HEBREW LETTER VAV WITH HOLAM */
-    { -1, "afii57705" },	    /* HEBREW LIGATURE YIDDISH YOD YOD PATAH */
-    { -1, "afii57716" },	    /* HEBREW LIGATURE YIDDISH DOUBLE VAV */
-    { -1, "afii57717" },	    /* HEBREW LIGATURE YIDDISH VAV YOD */
-    { -1, "afii57718" },	    /* HEBREW LIGATURE YIDDISH DOUBLE YOD */
-    { -1, "afii57723" },	    /* HEBREW LETTER VAV WITH DAGESH */
-    { -1, "afii57793" },	    /* HEBREW POINT HIRIQ */
-    { -1, "afii57794" },	    /* HEBREW POINT TSERE */
-    { -1, "afii57795" },	    /* HEBREW POINT SEGOL */
-    { -1, "afii57796" },	    /* HEBREW POINT QUBUTS */
-    { -1, "afii57797" },	    /* HEBREW POINT QAMATS */
-    { -1, "afii57798" },	    /* HEBREW POINT PATAH */
-    { -1, "afii57799" },	    /* HEBREW POINT SHEVA */
-    { -1, "afii57800" },	    /* HEBREW POINT HATAF PATAH */
-    { -1, "afii57801" },	    /* HEBREW POINT HATAF SEGOL */
-    { -1, "afii57802" },	    /* HEBREW POINT HATAF QAMATS */
-    { -1, "afii57803" },	    /* HEBREW POINT SIN DOT */
-    { -1, "afii57804" },	    /* HEBREW POINT SHIN DOT */
-    { -1, "afii57806" },	    /* HEBREW POINT HOLAM */
-    { -1, "afii57807" },	    /* HEBREW POINT DAGESH OR MAPIQ */
-    { -1, "afii57839" },	    /* HEBREW POINT METEG */
-    { -1, "afii57841" },	    /* HEBREW POINT RAFE */
-    { -1, "afii57842" },	    /* HEBREW PUNCTUATION PASEQ */
-    { -1, "afii57929" },	    /* MODIFIER LETTER APOSTROPHE */
-    { -1, "afii61248" },	    /* CARE OF */
-    { -1, "afii61289" },	    /* SCRIPT SMALL L */
-    { -1, "afii61352" },	    /* NUMERO SIGN */
-    { -1, "afii61573" },	    /* POP DIRECTIONAL FORMATTING */
-    { -1, "afii61574" },	    /* LEFT-TO-RIGHT OVERRIDE */
-    { -1, "afii61575" },	    /* RIGHT-TO-LEFT OVERRIDE */
-    { -1, "afii61664" },	    /* ZERO WIDTH NON-JOINER */
-    { -1, "afii63167" },	    /* ARABIC FIVE POINTED STAR */
-    { -1, "afii64937" },	    /* MODIFIER LETTER REVERSED COMMA */
-    { -1, "agrave" },		    /* LATIN SMALL LETTER A WITH GRAVE */
-    { -1, "aleph" },		    /* ALEF SYMBOL */
-    { -1, "alpha" },		    /* GREEK SMALL LETTER ALPHA */
-    { -1, "alphatonos" },	    /* GREEK SMALL LETTER ALPHA WITH TONOS */
-    { -1, "amacron" },		    /* LATIN SMALL LETTER A WITH MACRON */
-    { -1, "ampersand" },	    /* AMPERSAND */
-    { -1, "ampersandsmall" },	    /* SMALL CAPITAL AMPERSAND */
-    { -1, "angle" },		    /* ANGLE */
-    { -1, "angleleft" },	    /* LEFT-POINTING ANGLE BRACKET */
-    { -1, "angleright" },	    /* RIGHT-POINTING ANGLE BRACKET */
-    { -1, "anoteleia" },	    /* GREEK ANO TELEIA */
-    { -1, "aogonek" },		    /* LATIN SMALL LETTER A WITH OGONEK */
-    { -1, "apple" },		    /* FONT FAMILY;Symbol */
-    { -1, "approxequal" },	    /* ALMOST EQUAL TO */
-    { -1, "aring" },		    /* LATIN SMALL LETTER A WITH RING ABOVE */
-    { -1, "aringacute" },	    /* LATIN SMALL LETTER A WITH RING ABOVE AND ACUTE */
-    { -1, "arrowboth" },	    /* LEFT RIGHT ARROW */
-    { -1, "arrowdblboth" },	    /* LEFT RIGHT DOUBLE ARROW */
-    { -1, "arrowdbldown" },	    /* DOWNWARDS DOUBLE ARROW */
-    { -1, "arrowdblleft" },	    /* LEFTWARDS DOUBLE ARROW */
-    { -1, "arrowdblright" },	    /* RIGHTWARDS DOUBLE ARROW */
-    { -1, "arrowdblup" },	    /* UPWARDS DOUBLE ARROW */
-    { -1, "arrowdown" },	    /* DOWNWARDS ARROW */
-    { -1, "arrowhorizex" },	    /* HORIZONTAL ARROW EXTENDER */
-    { -1, "arrowleft" },	    /* LEFTWARDS ARROW */
-    { -1, "arrowright" },	    /* RIGHTWARDS ARROW */
-    { -1, "arrowup" },		    /* UPWARDS ARROW */
-    { -1, "arrowupdn" },	    /* UP DOWN ARROW */
-    { -1, "arrowupdnbse" },	    /* UP DOWN ARROW WITH BASE */
-    { -1, "arrowvertex" },	    /* VERTICAL ARROW EXTENDER */
-    { -1, "asciicircum" },	    /* CIRCUMFLEX ACCENT */
-    { -1, "asciitilde" },	    /* TILDE */
-    { -1, "asterisk" },		    /* ASTERISK */
-    { -1, "asteriskmath" },	    /* ASTERISK OPERATOR */
-    { -1, "asuperior" },	    /* SUPERSCRIPT LATIN SMALL LETTER A */
-    { -1, "at" },		    /* COMMERCIAL AT */
-    { -1, "atilde" },		    /* LATIN SMALL LETTER A WITH TILDE */
-    { -1, "b" },		    /* LATIN SMALL LETTER B */
-    { -1, "backslash" },	    /* REVERSE SOLIDUS */
-    { -1, "bar" },		    /* VERTICAL LINE */
-    { -1, "beta" },		    /* GREEK SMALL LETTER BETA */
-    { -1, "block" },		    /* FULL BLOCK */
-    { -1, "braceex" },		    /* CURLY BRACKET EXTENDER */
-    { -1, "braceleft" },	    /* LEFT CURLY BRACKET */
-    { -1, "braceleftbt" },	    /* LEFT CURLY BRACKET BOTTOM */
-    { -1, "braceleftmid" },	    /* LEFT CURLY BRACKET MID */
-    { -1, "bracelefttp" },	    /* LEFT CURLY BRACKET TOP */
-    { -1, "braceright" },	    /* RIGHT CURLY BRACKET */
-    { -1, "bracerightbt" },	    /* RIGHT CURLY BRACKET BOTTOM */
-    { -1, "bracerightmid" },	    /* RIGHT CURLY BRACKET MID */
-    { -1, "bracerighttp" },	    /* RIGHT CURLY BRACKET TOP */
-    { -1, "bracketleft" },	    /* LEFT SQUARE BRACKET */
-    { -1, "bracketleftbt" },	    /* LEFT SQUARE BRACKET BOTTOM */
-    { -1, "bracketleftex" },	    /* LEFT SQUARE BRACKET EXTENDER */
-    { -1, "bracketlefttp" },	    /* LEFT SQUARE BRACKET TOP */
-    { -1, "bracketright" },	    /* RIGHT SQUARE BRACKET */
-    { -1, "bracketrightbt" },	    /* RIGHT SQUARE BRACKET BOTTOM */
-    { -1, "bracketrightex" },	    /* RIGHT SQUARE BRACKET EXTENDER */
-    { -1, "bracketrighttp" },	    /* RIGHT SQUARE BRACKET TOP */
-    { -1, "breve" },		    /* BREVE */
-    { -1, "brokenbar" },	    /* BROKEN BAR */
-    { -1, "bsuperior" },	    /* SUPERSCRIPT LATIN SMALL LETTER B */
-    { -1, "bullet" },		    /* BULLET */
-    { -1, "c" },		    /* LATIN SMALL LETTER C */
-    { -1, "cacute" },		    /* LATIN SMALL LETTER C WITH ACUTE */
-    { -1, "caron" },		    /* CARON */
-    { -1, "carriagereturn" },	    /* DOWNWARDS ARROW WITH CORNER LEFTWARDS */
-    { -1, "ccaron" },		    /* LATIN SMALL LETTER C WITH CARON */
-    { -1, "ccedilla" },		    /* LATIN SMALL LETTER C WITH CEDILLA */
-    { -1, "ccircumflex" },	    /* LATIN SMALL LETTER C WITH CIRCUMFLEX */
-    { -1, "cdotaccent" },	    /* LATIN SMALL LETTER C WITH DOT ABOVE */
-    { -1, "cedilla" },		    /* CEDILLA */
-    { -1, "cent" },		    /* CENT SIGN */
-    { -1, "center" },		    /* FONT FAMILY;Courier */
-    { -1, "centinferior" },	    /* SUBSCRIPT CENT SIGN */
-    { -1, "centoldstyle" },	    /* OLDSTYLE CENT SIGN */
-    { -1, "centsuperior" },	    /* SUPERSCRIPT CENT SIGN */
-    { -1, "chi" },		    /* GREEK SMALL LETTER CHI */
-    { -1, "circle" },		    /* WHITE CIRCLE */
-    { -1, "circlemultiply" },	    /* CIRCLED TIMES */
-    { -1, "circleplus" },	    /* CIRCLED PLUS */
-    { -1, "circumflex" },	    /* MODIFIER LETTER CIRCUMFLEX ACCENT */
-    { -1, "club" },		    /* BLACK CLUB SUIT */
-    { -1, "colon" },		    /* COLON */
-    { -1, "colonmonetary" },	    /* COLON SIGN */
-    { -1, "comma" },		    /* COMMA */
-    { -1, "commaaccent" },	    /* COMMA BELOW */
-    { -1, "commainferior" },	    /* SUBSCRIPT COMMA */
-    { -1, "commasuperior" },	    /* SUPERSCRIPT COMMA */
-    { -1, "congruent" },	    /* APPROXIMATELY EQUAL TO */
-    { -1, "copyright" },	    /* COPYRIGHT SIGN */
-    { -1, "copyrightsans" },	    /* COPYRIGHT SIGN SANS SERIF */
-    { -1, "copyrightserif" },	    /* COPYRIGHT SIGN SERIF */
-    { -1, "currency" },		    /* CURRENCY SIGN */
-    { -1, "cyrBreve" },		    /* CAPITAL CYRILLIC BREVE */
-    { -1, "cyrFlex" },		    /* CAPITAL CYRILLIC CIRCUMFLEX */
-    { -1, "cyrbreve" },		    /* CYRILLIC BREVE */
-    { -1, "cyrflex" },		    /* CYRILLIC CIRCUMFLEX */
-    { -1, "d" },		    /* LATIN SMALL LETTER D */
-    { -1, "dagger" },		    /* DAGGER */
-    { -1, "daggerdbl" },	    /* DOUBLE DAGGER */
-    { -1, "dblGrave" },		    /* CAPITAL DOUBLE GRAVE ACCENT */
-    { -1, "dblgrave" },		    /* DOUBLE GRAVE ACCENT */
-    { -1, "dcaron" },		    /* LATIN SMALL LETTER D WITH CARON */
-    { -1, "dcroat" },		    /* LATIN SMALL LETTER D WITH STROKE */
-    { -1, "dectab" },		    /* FONT FAMILY;Courier */
-    { -1, "degree" },		    /* DEGREE SIGN */
-    { -1, "delta" },		    /* GREEK SMALL LETTER DELTA */
-    { -1, "diamond" },		    /* BLACK DIAMOND SUIT */
-    { -1, "dieresis" },		    /* DIAERESIS */
-    { -1, "dieresisacute" },	    /* DIAERESIS ACUTE ACCENT */
-    { -1, "dieresisgrave" },	    /* DIAERESIS GRAVE ACCENT */
-    { -1, "dieresistonos" },	    /* GREEK DIALYTIKA TONOS */
-    { -1, "divide" },		    /* DIVISION SIGN */
-    { -1, "dkshade" },		    /* DARK SHADE */
-    { -1, "dnblock" },		    /* LOWER HALF BLOCK */
-    { -1, "dollar" },		    /* DOLLAR SIGN */
-    { -1, "dollarinferior" },	    /* SUBSCRIPT DOLLAR SIGN */
-    { -1, "dollaroldstyle" },	    /* OLDSTYLE DOLLAR SIGN */
-    { -1, "dollarsuperior" },	    /* SUPERSCRIPT DOLLAR SIGN */
-    { -1, "dong" },		    /* DONG SIGN */
-    { -1, "dotaccent" },	    /* DOT ABOVE */
-    { -1, "dotbelowcomb" },	    /* COMBINING DOT BELOW */
-    { -1, "dotlessi" },		    /* LATIN SMALL LETTER DOTLESS I */
-    { -1, "dotlessj" },		    /* LATIN SMALL LETTER DOTLESS J */
-    { -1, "dotmath" },		    /* DOT OPERATOR */
-    { -1, "down" },		    /* FONT FAMILY;Courier */
-    { -1, "dsuperior" },	    /* SUPERSCRIPT LATIN SMALL LETTER D */
-    { -1, "e" },		    /* LATIN SMALL LETTER E */
-    { -1, "eacute" },		    /* LATIN SMALL LETTER E WITH ACUTE */
-    { -1, "ebreve" },		    /* LATIN SMALL LETTER E WITH BREVE */
-    { -1, "ecaron" },		    /* LATIN SMALL LETTER E WITH CARON */
-    { -1, "ecircumflex" },	    /* LATIN SMALL LETTER E WITH CIRCUMFLEX */
-    { -1, "edieresis" },	    /* LATIN SMALL LETTER E WITH DIAERESIS */
-    { -1, "edotaccent" },	    /* LATIN SMALL LETTER E WITH DOT ABOVE */
-    { -1, "egrave" },		    /* LATIN SMALL LETTER E WITH GRAVE */
-    { -1, "eight" },		    /* DIGIT EIGHT */
-    { -1, "eightinferior" },	    /* SUBSCRIPT EIGHT */
-    { -1, "eightoldstyle" },	    /* OLDSTYLE DIGIT EIGHT */
-    { -1, "eightsuperior" },	    /* SUPERSCRIPT EIGHT */
-    { -1, "element" },		    /* ELEMENT OF */
-    { -1, "ellipsis" },		    /* HORIZONTAL ELLIPSIS */
-    { -1, "emacron" },		    /* LATIN SMALL LETTER E WITH MACRON */
-    { -1, "emdash" },		    /* EM DASH */
-    { -1, "emptyset" },		    /* EMPTY SET */
-    { -1, "endash" },		    /* EN DASH */
-    { -1, "eng" },		    /* LATIN SMALL LETTER ENG */
-    { -1, "eogonek" },		    /* LATIN SMALL LETTER E WITH OGONEK */
-    { -1, "epsilon" },		    /* GREEK SMALL LETTER EPSILON */
-    { -1, "epsilontonos" },	    /* GREEK SMALL LETTER EPSILON WITH TONOS */
-    { -1, "equal" },		    /* EQUALS SIGN */
-    { -1, "equivalence" },	    /* IDENTICAL TO */
-    { -1, "estimated" },	    /* ESTIMATED SYMBOL */
-    { -1, "esuperior" },	    /* SUPERSCRIPT LATIN SMALL LETTER E */
-    { -1, "eta" },		    /* GREEK SMALL LETTER ETA */
-    { -1, "etatonos" },		    /* GREEK SMALL LETTER ETA WITH TONOS */
-    { -1, "eth" },		    /* LATIN SMALL LETTER ETH */
-    { -1, "exclam" },		    /* EXCLAMATION MARK */
-    { -1, "exclamdbl" },	    /* DOUBLE EXCLAMATION MARK */
-    { -1, "exclamdown" },	    /* INVERTED EXCLAMATION MARK */
-    { -1, "exclamdownsmall" },	    /* SMALL CAPITAL INVERTED EXCLAMATION MARK */
-    { -1, "exclamsmall" },	    /* SMALL CAPITAL EXCLAMATION MARK */
-    { -1, "existential" },	    /* THERE EXISTS */
-    { -1, "f" },		    /* LATIN SMALL LETTER F */
-    { -1, "female" },		    /* FEMALE SIGN */
-    { -1, "ff" },		    /* LATIN SMALL LIGATURE FF */
-    { -1, "ffi" },		    /* LATIN SMALL LIGATURE FFI */
-    { -1, "ffl" },		    /* LATIN SMALL LIGATURE FFL */
-    { -1, "fi" },		    /* LATIN SMALL LIGATURE FI */
-    { -1, "figuredash" },	    /* FIGURE DASH */
-    { -1, "filledbox" },	    /* BLACK SQUARE */
-    { -1, "filledrect" },	    /* BLACK RECTANGLE */
-    { -1, "five" },		    /* DIGIT FIVE */
-    { -1, "fiveeighths" },	    /* VULGAR FRACTION FIVE EIGHTHS */
-    { -1, "fiveinferior" },	    /* SUBSCRIPT FIVE */
-    { -1, "fiveoldstyle" },	    /* OLDSTYLE DIGIT FIVE */
-    { -1, "fivesuperior" },	    /* SUPERSCRIPT FIVE */
-    { -1, "fl" },		    /* LATIN SMALL LIGATURE FL */
-    { -1, "florin" },		    /* LATIN SMALL LETTER F WITH HOOK */
-    { -1, "format" },		    /* FONT FAMILY;Courier */
-    { -1, "four" },		    /* DIGIT FOUR */
-    { -1, "fourinferior" },	    /* SUBSCRIPT FOUR */
-    { -1, "fouroldstyle" },	    /* OLDSTYLE DIGIT FOUR */
-    { -1, "foursuperior" },	    /* SUPERSCRIPT FOUR */
-    { -1, "fraction" },		    /* FRACTION SLASH */
-				    /* DIVISION SLASH;Duplicate */
-    { -1, "franc" },		    /* FRENCH FRANC SIGN */
-    { -1, "g" },		    /* LATIN SMALL LETTER G */
-    { -1, "gamma" },		    /* GREEK SMALL LETTER GAMMA */
-    { -1, "gbreve" },		    /* LATIN SMALL LETTER G WITH BREVE */
-    { -1, "gcaron" },		    /* LATIN SMALL LETTER G WITH CARON */
-    { -1, "gcircumflex" },	    /* LATIN SMALL LETTER G WITH CIRCUMFLEX */
-    { -1, "gcommaaccent" },	    /* LATIN SMALL LETTER G WITH CEDILLA */
-    { -1, "gdotaccent" },	    /* LATIN SMALL LETTER G WITH DOT ABOVE */
-    { -1, "germandbls" },	    /* LATIN SMALL LETTER SHARP S */
-    { -1, "gradient" },		    /* NABLA */
-    { -1, "grave" },		    /* GRAVE ACCENT */
-    { -1, "gravecomb" },	    /* COMBINING GRAVE ACCENT */
-    { -1, "graybox" },		    /* FONT FAMILY;Courier */
-    { -1, "greater" },		    /* GREATER-THAN SIGN */
-    { -1, "greaterequal" },	    /* GREATER-THAN OR EQUAL TO */
-    { -1, "guillemotleft" },	    /* LEFT-POINTING DOUBLE ANGLE QUOTATION MARK */
-    { -1, "guillemotright" },	    /* RIGHT-POINTING DOUBLE ANGLE QUOTATION MARK */
-    { -1, "guilsinglleft" },	    /* SINGLE LEFT-POINTING ANGLE QUOTATION MARK */
-    { -1, "guilsinglright" },	    /* SINGLE RIGHT-POINTING ANGLE QUOTATION MARK */
-    { -1, "h" },		    /* LATIN SMALL LETTER H */
-    { -1, "hbar" },		    /* LATIN SMALL LETTER H WITH STROKE */
-    { -1, "hcircumflex" },	    /* LATIN SMALL LETTER H WITH CIRCUMFLEX */
-    { -1, "heart" },		    /* BLACK HEART SUIT */
-    { -1, "hookabovecomb" },	    /* COMBINING HOOK ABOVE */
-    { -1, "house" },		    /* HOUSE */
-    { -1, "hungarumlaut" },	    /* DOUBLE ACUTE ACCENT */
-    { -1, "hyphen" },		    /* HYPHEN-MINUS */
-				    /* SOFT HYPHEN;Duplicate */
-    { -1, "hypheninferior" },	    /* SUBSCRIPT HYPHEN-MINUS */
-    { -1, "hyphensuperior" },	    /* SUPERSCRIPT HYPHEN-MINUS */
-    { -1, "i" },		    /* LATIN SMALL LETTER I */
-    { -1, "iacute" },		    /* LATIN SMALL LETTER I WITH ACUTE */
-    { -1, "ibreve" },		    /* LATIN SMALL LETTER I WITH BREVE */
-    { -1, "icircumflex" },	    /* LATIN SMALL LETTER I WITH CIRCUMFLEX */
-    { -1, "idieresis" },	    /* LATIN SMALL LETTER I WITH DIAERESIS */
-    { -1, "igrave" },		    /* LATIN SMALL LETTER I WITH GRAVE */
-    { -1, "ij" },		    /* LATIN SMALL LIGATURE IJ */
-    { -1, "imacron" },		    /* LATIN SMALL LETTER I WITH MACRON */
-    { -1, "indent" },		    /* FONT FAMILY;Courier */
-    { -1, "infinity" },		    /* INFINITY */
-    { -1, "integral" },		    /* INTEGRAL */
-    { -1, "integralbt" },	    /* BOTTOM HALF INTEGRAL */
-    { -1, "integralex" },	    /* INTEGRAL EXTENDER */
-    { -1, "integraltp" },	    /* TOP HALF INTEGRAL */
-    { -1, "intersection" },	    /* INTERSECTION */
-    { -1, "invbullet" },	    /* INVERSE BULLET */
-    { -1, "invcircle" },	    /* INVERSE WHITE CIRCLE */
-    { -1, "invsmileface" },	    /* BLACK SMILING FACE */
-    { -1, "iogonek" },		    /* LATIN SMALL LETTER I WITH OGONEK */
-    { -1, "iota" },		    /* GREEK SMALL LETTER IOTA */
-    { -1, "iotadieresis" },	    /* GREEK SMALL LETTER IOTA WITH DIALYTIKA */
-    { -1, "iotadieresistonos" },    /* GREEK SMALL LETTER IOTA WITH DIALYTIKA AND TONOS */
-    { -1, "iotatonos" },	    /* GREEK SMALL LETTER IOTA WITH TONOS */
-    { -1, "isuperior" },	    /* SUPERSCRIPT LATIN SMALL LETTER I */
-    { -1, "itilde" },		    /* LATIN SMALL LETTER I WITH TILDE */
-    { -1, "j" },		    /* LATIN SMALL LETTER J */
-    { -1, "jcircumflex" },	    /* LATIN SMALL LETTER J WITH CIRCUMFLEX */
-    { -1, "k" },		    /* LATIN SMALL LETTER K */
-    { -1, "kappa" },		    /* GREEK SMALL LETTER KAPPA */
-    { -1, "kcommaaccent" },	    /* LATIN SMALL LETTER K WITH CEDILLA */
-    { -1, "kgreenlandic" },	    /* LATIN SMALL LETTER KRA */
-    { -1, "l" },		    /* LATIN SMALL LETTER L */
-    { -1, "lacute" },		    /* LATIN SMALL LETTER L WITH ACUTE */
-    { -1, "lambda" },		    /* GREEK SMALL LETTER LAMDA */
-    { -1, "largebullet" },	    /* FONT FAMILY;Courier */
-    { -1, "lcaron" },		    /* LATIN SMALL LETTER L WITH CARON */
-    { -1, "lcommaaccent" },	    /* LATIN SMALL LETTER L WITH CEDILLA */
-    { -1, "ldot" },		    /* LATIN SMALL LETTER L WITH MIDDLE DOT */
-    { -1, "left" },		    /* FONT FAMILY;Courier */
-    { -1, "less" },		    /* LESS-THAN SIGN */
-    { -1, "lessequal" },	    /* LESS-THAN OR EQUAL TO */
-    { -1, "lfblock" },		    /* LEFT HALF BLOCK */
-    { -1, "lira" },		    /* LIRA SIGN */
-    { -1, "ll" },		    /* LATIN SMALL LETTER LL */
-    { -1, "logicaland" },	    /* LOGICAL AND */
-    { -1, "logicalnot" },	    /* NOT SIGN */
-    { -1, "logicalor" },	    /* LOGICAL OR */
-    { -1, "longs" },		    /* LATIN SMALL LETTER LONG S */
-    { -1, "lozenge" },		    /* LOZENGE */
-    { -1, "lslash" },		    /* LATIN SMALL LETTER L WITH STROKE */
-    { -1, "lsuperior" },	    /* SUPERSCRIPT LATIN SMALL LETTER L */
-    { -1, "ltshade" },		    /* LIGHT SHADE */
-    { -1, "m" },		    /* LATIN SMALL LETTER M */
-    { -1, "macron" },		    /* MACRON */
-				    /* MODIFIER LETTER MACRON;Duplicate */
-    { -1, "male" },		    /* MALE SIGN */
-    { -1, "merge" },		    /* FONT FAMILY;Courier */
-    { -1, "minus" },		    /* MINUS SIGN */
-    { -1, "minute" },		    /* PRIME */
-    { -1, "msuperior" },	    /* SUPERSCRIPT LATIN SMALL LETTER M */
-    { -1, "mu" },		    /* MICRO SIGN */
-				    /* GREEK SMALL LETTER MU;Duplicate */
-    { -1, "multiply" },		    /* MULTIPLICATION SIGN */
-    { -1, "musicalnote" },	    /* EIGHTH NOTE */
-    { -1, "musicalnotedbl" },	    /* BEAMED EIGHTH NOTES */
-    { -1, "n" },		    /* LATIN SMALL LETTER N */
-    { -1, "nacute" },		    /* LATIN SMALL LETTER N WITH ACUTE */
-    { -1, "napostrophe" },	    /* LATIN SMALL LETTER N PRECEDED BY APOSTROPHE */
-    { -1, "ncaron" },		    /* LATIN SMALL LETTER N WITH CARON */
-    { -1, "ncommaaccent" },	    /* LATIN SMALL LETTER N WITH CEDILLA */
-    { -1, "nine" },		    /* DIGIT NINE */
-    { -1, "nineinferior" },	    /* SUBSCRIPT NINE */
-    { -1, "nineoldstyle" },	    /* OLDSTYLE DIGIT NINE */
-    { -1, "ninesuperior" },	    /* SUPERSCRIPT NINE */
-    { -1, "notegraphic" },	    /* FONT FAMILY;Courier */
-    { -1, "notelement" },	    /* NOT AN ELEMENT OF */
-    { -1, "notequal" },		    /* NOT EQUAL TO */
-    { -1, "notsubset" },	    /* NOT A SUBSET OF */
-    { -1, "nsuperior" },	    /* SUPERSCRIPT LATIN SMALL LETTER N */
-    { -1, "ntilde" },		    /* LATIN SMALL LETTER N WITH TILDE */
-    { -1, "nu" },		    /* GREEK SMALL LETTER NU */
-    { -1, "numbersign" },	    /* NUMBER SIGN */
-    { -1, "o" },		    /* LATIN SMALL LETTER O */
-    { -1, "oacute" },		    /* LATIN SMALL LETTER O WITH ACUTE */
-    { -1, "obreve" },		    /* LATIN SMALL LETTER O WITH BREVE */
-    { -1, "ocircumflex" },	    /* LATIN SMALL LETTER O WITH CIRCUMFLEX */
-    { -1, "odieresis" },	    /* LATIN SMALL LETTER O WITH DIAERESIS */
-    { -1, "oe" },		    /* LATIN SMALL LIGATURE OE */
-    { -1, "ogonek" },		    /* OGONEK */
-    { -1, "ograve" },		    /* LATIN SMALL LETTER O WITH GRAVE */
-    { -1, "ohorn" },		    /* LATIN SMALL LETTER O WITH HORN */
-    { -1, "ohungarumlaut" },	    /* LATIN SMALL LETTER O WITH DOUBLE ACUTE */
-    { -1, "omacron" },		    /* LATIN SMALL LETTER O WITH MACRON */
-    { -1, "omega" },		    /* GREEK SMALL LETTER OMEGA */
-    { -1, "omega1" },		    /* GREEK PI SYMBOL */
-    { -1, "omegatonos" },	    /* GREEK SMALL LETTER OMEGA WITH TONOS */
-    { -1, "omicron" },		    /* GREEK SMALL LETTER OMICRON */
-    { -1, "omicrontonos" },	    /* GREEK SMALL LETTER OMICRON WITH TONOS */
-    { -1, "one" },		    /* DIGIT ONE */
-    { -1, "onedotenleader" },	    /* ONE DOT LEADER */
-    { -1, "oneeighth" },	    /* VULGAR FRACTION ONE EIGHTH */
-    { -1, "onefitted" },	    /* PROPORTIONAL DIGIT ONE */
-    { -1, "onehalf" },		    /* VULGAR FRACTION ONE HALF */
-    { -1, "oneinferior" },	    /* SUBSCRIPT ONE */
-    { -1, "oneoldstyle" },	    /* OLDSTYLE DIGIT ONE */
-    { -1, "onequarter" },	    /* VULGAR FRACTION ONE QUARTER */
-    { -1, "onesuperior" },	    /* SUPERSCRIPT ONE */
-    { -1, "onethird" },		    /* VULGAR FRACTION ONE THIRD */
-    { -1, "openbullet" },	    /* WHITE BULLET */
-    { -1, "ordfeminine" },	    /* FEMININE ORDINAL INDICATOR */
-    { -1, "ordmasculine" },	    /* MASCULINE ORDINAL INDICATOR */
-    { -1, "orthogonal" },	    /* RIGHT ANGLE */
-    { -1, "oslash" },		    /* LATIN SMALL LETTER O WITH STROKE */
-    { -1, "oslashacute" },	    /* LATIN SMALL LETTER O WITH STROKE AND ACUTE */
-    { -1, "osuperior" },	    /* SUPERSCRIPT LATIN SMALL LETTER O */
-    { -1, "otilde" },		    /* LATIN SMALL LETTER O WITH TILDE */
-    { -1, "overscore" },	    /* FONT FAMILY;Courier */
-    { -1, "p" },		    /* LATIN SMALL LETTER P */
-    { -1, "paragraph" },	    /* PILCROW SIGN */
-    { -1, "parenleft" },	    /* LEFT PARENTHESIS */
-    { -1, "parenleftbt" },	    /* LEFT PAREN BOTTOM */
-    { -1, "parenleftex" },	    /* LEFT PAREN EXTENDER */
-    { -1, "parenleftinferior" },    /* SUBSCRIPT LEFT PARENTHESIS */
-    { -1, "parenleftsuperior" },    /* SUPERSCRIPT LEFT PARENTHESIS */
-    { -1, "parenlefttp" },	    /* LEFT PAREN TOP */
-    { -1, "parenright" },	    /* RIGHT PARENTHESIS */
-    { -1, "parenrightbt" },	    /* RIGHT PAREN BOTTOM */
-    { -1, "parenrightex" },	    /* RIGHT PAREN EXTENDER */
-    { -1, "parenrightinferior" },   /* SUBSCRIPT RIGHT PARENTHESIS */
-    { -1, "parenrightsuperior" },   /* SUPERSCRIPT RIGHT PARENTHESIS */
-    { -1, "parenrighttp" },	    /* RIGHT PAREN TOP */
-    { -1, "partialdiff" },	    /* PARTIAL DIFFERENTIAL */
-    { -1, "percent" },		    /* PERCENT SIGN */
-    { -1, "period" },		    /* FULL STOP */
-    { -1, "periodcentered" },	    /* MIDDLE DOT */
-				    /* BULLET OPERATOR;Duplicate */
-    { -1, "periodinferior" },	    /* SUBSCRIPT FULL STOP */
-    { -1, "periodsuperior" },	    /* SUPERSCRIPT FULL STOP */
-    { -1, "perpendicular" },	    /* UP TACK */
-    { -1, "perthousand" },	    /* PER MILLE SIGN */
-    { -1, "peseta" },		    /* PESETA SIGN */
-    { -1, "phi" },		    /* GREEK SMALL LETTER PHI */
-    { -1, "phi1" },		    /* GREEK PHI SYMBOL */
-    { -1, "pi" },		    /* GREEK SMALL LETTER PI */
-    { -1, "plus" },		    /* PLUS SIGN */
-    { -1, "plusminus" },	    /* PLUS-MINUS SIGN */
-    { -1, "prescription" },	    /* PRESCRIPTION TAKE */
-    { -1, "product" },		    /* N-ARY PRODUCT */
-    { -1, "propersubset" },	    /* SUBSET OF */
-    { -1, "propersuperset" },	    /* SUPERSET OF */
-    { -1, "proportional" },	    /* PROPORTIONAL TO */
-    { -1, "psi" },		    /* GREEK SMALL LETTER PSI */
-    { -1, "q" },		    /* LATIN SMALL LETTER Q */
-    { -1, "question" },		    /* QUESTION MARK */
-    { -1, "questiondown" },	    /* INVERTED QUESTION MARK */
-    { -1, "questiondownsmall" },    /* SMALL CAPITAL INVERTED QUESTION MARK */
-    { -1, "questionsmall" },	    /* SMALL CAPITAL QUESTION MARK */
-    { -1, "quotedbl" },		    /* QUOTATION MARK */
-    { -1, "quotedblbase" },	    /* DOUBLE LOW-9 QUOTATION MARK */
-    { -1, "quotedblleft" },	    /* LEFT DOUBLE QUOTATION MARK */
-    { -1, "quotedblright" },	    /* RIGHT DOUBLE QUOTATION MARK */
-    { -1, "quoteleft" },	    /* LEFT SINGLE QUOTATION MARK */
-    { -1, "quotereversed" },	    /* SINGLE HIGH-REVERSED-9 QUOTATION MARK */
-    { -1, "quoteright" },	    /* RIGHT SINGLE QUOTATION MARK */
-    { -1, "quotesinglbase" },	    /* SINGLE LOW-9 QUOTATION MARK */
-    { -1, "quotesingle" },	    /* APOSTROPHE */
-    { -1, "r" },		    /* LATIN SMALL LETTER R */
-    { -1, "racute" },		    /* LATIN SMALL LETTER R WITH ACUTE */
-    { -1, "radical" },		    /* SQUARE ROOT */
-    { -1, "radicalex" },	    /* RADICAL EXTENDER */
-    { -1, "rcaron" },		    /* LATIN SMALL LETTER R WITH CARON */
-    { -1, "rcommaaccent" },	    /* LATIN SMALL LETTER R WITH CEDILLA */
-    { -1, "reflexsubset" },	    /* SUBSET OF OR EQUAL TO */
-    { -1, "reflexsuperset" },	    /* SUPERSET OF OR EQUAL TO */
-    { -1, "registered" },	    /* REGISTERED SIGN */
-    { -1, "registersans" },	    /* REGISTERED SIGN SANS SERIF */
-    { -1, "registerserif" },	    /* REGISTERED SIGN SERIF */
-    { -1, "return" },		    /* FONT FAMILY;Courier */
-    { -1, "revlogicalnot" },	    /* REVERSED NOT SIGN */
-    { -1, "rho" },		    /* GREEK SMALL LETTER RHO */
-    { -1, "ring" },		    /* RING ABOVE */
-    { -1, "rsuperior" },	    /* SUPERSCRIPT LATIN SMALL LETTER R */
-    { -1, "rtblock" },		    /* RIGHT HALF BLOCK */
-    { -1, "rupiah" },		    /* RUPIAH SIGN */
-    { -1, "s" },		    /* LATIN SMALL LETTER S */
-    { -1, "sacute" },		    /* LATIN SMALL LETTER S WITH ACUTE */
-    { -1, "scaron" },		    /* LATIN SMALL LETTER S WITH CARON */
-    { -1, "scedilla" },		    /* LATIN SMALL LETTER S WITH CEDILLA */
-				    /* LATIN SMALL LETTER S WITH CEDILLA;Duplicate */
-    { -1, "scircumflex" },	    /* LATIN SMALL LETTER S WITH CIRCUMFLEX */
-    { -1, "scommaaccent" },	    /* LATIN SMALL LETTER S WITH COMMA BELOW */
-    { -1, "second" },		    /* DOUBLE PRIME */
-    { -1, "section" },		    /* SECTION SIGN */
-    { -1, "semicolon" },	    /* SEMICOLON */
-    { -1, "seven" },		    /* DIGIT SEVEN */
-    { -1, "seveneighths" },	    /* VULGAR FRACTION SEVEN EIGHTHS */
-    { -1, "seveninferior" },	    /* SUBSCRIPT SEVEN */
-    { -1, "sevenoldstyle" },	    /* OLDSTYLE DIGIT SEVEN */
-    { -1, "sevensuperior" },	    /* SUPERSCRIPT SEVEN */
-    { -1, "shade" },		    /* MEDIUM SHADE */
-    { -1, "sigma" },		    /* GREEK SMALL LETTER SIGMA */
-    { -1, "sigma1" },		    /* GREEK SMALL LETTER FINAL SIGMA */
-    { -1, "similar" },		    /* TILDE OPERATOR */
-    { -1, "six" },		    /* DIGIT SIX */
-    { -1, "sixinferior" },	    /* SUBSCRIPT SIX */
-    { -1, "sixoldstyle" },	    /* OLDSTYLE DIGIT SIX */
-    { -1, "sixsuperior" },	    /* SUPERSCRIPT SIX */
-    { -1, "slash" },		    /* SOLIDUS */
-    { -1, "smileface" },	    /* WHITE SMILING FACE */
-    { -1, "space" },		    /* SPACE */
-				    /* NO-BREAK SPACE;Duplicate */
-    { -1, "spade" },		    /* BLACK SPADE SUIT */
-    { -1, "square" },		    /* FONT FAMILY;Courier */
-    { -1, "ssuperior" },	    /* SUPERSCRIPT LATIN SMALL LETTER S */
-    { -1, "sterling" },		    /* POUND SIGN */
-    { -1, "stop" },		    /* FONT FAMILY;Courier */
-    { -1, "suchthat" },		    /* CONTAINS AS MEMBER */
-    { -1, "summation" },	    /* N-ARY SUMMATION */
-    { -1, "sun" },		    /* WHITE SUN WITH RAYS */
-    { -1, "t" },		    /* LATIN SMALL LETTER T */
-    { -1, "tab" },		    /* FONT FAMILY;Courier */
-    { -1, "tau" },		    /* GREEK SMALL LETTER TAU */
-    { -1, "tbar" },		    /* LATIN SMALL LETTER T WITH STROKE */
-    { -1, "tcaron" },		    /* LATIN SMALL LETTER T WITH CARON */
-    { -1, "tcommaaccent" },	    /* LATIN SMALL LETTER T WITH CEDILLA */
-				    /* LATIN SMALL LETTER T WITH COMMA BELOW;Duplicate */
-    { -1, "therefore" },	    /* THEREFORE */
-    { -1, "theta" },		    /* GREEK SMALL LETTER THETA */
-    { -1, "theta1" },		    /* GREEK THETA SYMBOL */
-    { -1, "thorn" },		    /* LATIN SMALL LETTER THORN */
-    { -1, "three" },		    /* DIGIT THREE */
-    { -1, "threeeighths" },	    /* VULGAR FRACTION THREE EIGHTHS */
-    { -1, "threeinferior" },	    /* SUBSCRIPT THREE */
-    { -1, "threeoldstyle" },	    /* OLDSTYLE DIGIT THREE */
-    { -1, "threequarters" },	    /* VULGAR FRACTION THREE QUARTERS */
-    { -1, "threequartersemdash" },  /* THREE QUARTERS EM DASH */
-    { -1, "threesuperior" },	    /* SUPERSCRIPT THREE */
-    { -1, "tilde" },		    /* SMALL TILDE */
-    { -1, "tildecomb" },	    /* COMBINING TILDE */
-    { -1, "tonos" },		    /* GREEK TONOS */
-    { -1, "trademark" },	    /* TRADE MARK SIGN */
-    { -1, "trademarksans" },	    /* TRADE MARK SIGN SANS SERIF */
-    { -1, "trademarkserif" },	    /* TRADE MARK SIGN SERIF */
-    { -1, "triagdn" },		    /* BLACK DOWN-POINTING TRIANGLE */
-    { -1, "triaglf" },		    /* BLACK LEFT-POINTING POINTER */
-    { -1, "triagrt" },		    /* BLACK RIGHT-POINTING POINTER */
-    { -1, "triagup" },		    /* BLACK UP-POINTING TRIANGLE */
-    { -1, "tsuperior" },	    /* SUPERSCRIPT LATIN SMALL LETTER T */
-    { -1, "two" },		    /* DIGIT TWO */
-    { -1, "twodotenleader" },	    /* TWO DOT LEADER */
-    { -1, "twoinferior" },	    /* SUBSCRIPT TWO */
-    { -1, "twooldstyle" },	    /* OLDSTYLE DIGIT TWO */
-    { -1, "twosuperior" },	    /* SUPERSCRIPT TWO */
-    { -1, "twothirds" },	    /* VULGAR FRACTION TWO THIRDS */
-    { -1, "u" },		    /* LATIN SMALL LETTER U */
-    { -1, "uacute" },		    /* LATIN SMALL LETTER U WITH ACUTE */
-    { -1, "ubreve" },		    /* LATIN SMALL LETTER U WITH BREVE */
-    { -1, "ucircumflex" },	    /* LATIN SMALL LETTER U WITH CIRCUMFLEX */
-    { -1, "udieresis" },	    /* LATIN SMALL LETTER U WITH DIAERESIS */
-    { -1, "ugrave" },		    /* LATIN SMALL LETTER U WITH GRAVE */
-    { -1, "uhorn" },		    /* LATIN SMALL LETTER U WITH HORN */
-    { -1, "uhungarumlaut" },	    /* LATIN SMALL LETTER U WITH DOUBLE ACUTE */
-    { -1, "umacron" },		    /* LATIN SMALL LETTER U WITH MACRON */
-    { -1, "underscore" },	    /* LOW LINE */
-    { -1, "underscoredbl" },	    /* DOUBLE LOW LINE */
-    { -1, "union" },		    /* UNION */
-    { -1, "universal" },	    /* FOR ALL */
-    { -1, "uogonek" },		    /* LATIN SMALL LETTER U WITH OGONEK */
-    { -1, "up" },		    /* FONT FAMILY;Courier */
-    { -1, "upblock" },		    /* UPPER HALF BLOCK */
-    { -1, "upsilon" },		    /* GREEK SMALL LETTER UPSILON */
-    { -1, "upsilondieresis" },	    /* GREEK SMALL LETTER UPSILON WITH DIALYTIKA */
-    { -1, "upsilondieresistonos" }, /* GREEK SMALL LETTER UPSILON WITH DIALYTIKA AND TONOS */
-    { -1, "upsilontonos" },	    /* GREEK SMALL LETTER UPSILON WITH TONOS */
-    { -1, "uring" },		    /* LATIN SMALL LETTER U WITH RING ABOVE */
-    { -1, "utilde" },		    /* LATIN SMALL LETTER U WITH TILDE */
-    { -1, "v" },		    /* LATIN SMALL LETTER V */
-    { -1, "w" },		    /* LATIN SMALL LETTER W */
-    { -1, "wacute" },		    /* LATIN SMALL LETTER W WITH ACUTE */
-    { -1, "wcircumflex" },	    /* LATIN SMALL LETTER W WITH CIRCUMFLEX */
-    { -1, "wdieresis" },	    /* LATIN SMALL LETTER W WITH DIAERESIS */
-    { -1, "weierstrass" },	    /* SCRIPT CAPITAL P */
-    { -1, "wgrave" },		    /* LATIN SMALL LETTER W WITH GRAVE */
-    { -1, "x" },		    /* LATIN SMALL LETTER X */
-    { -1, "xi" },		    /* GREEK SMALL LETTER XI */
-    { -1, "y" },		    /* LATIN SMALL LETTER Y */
-    { -1, "yacute" },		    /* LATIN SMALL LETTER Y WITH ACUTE */
-    { -1, "ycircumflex" },	    /* LATIN SMALL LETTER Y WITH CIRCUMFLEX */
-    { -1, "ydieresis" },	    /* LATIN SMALL LETTER Y WITH DIAERESIS */
-    { -1, "yen" },		    /* YEN SIGN */
-    { -1, "ygrave" },		    /* LATIN SMALL LETTER Y WITH GRAVE */
-    { -1, "z" },		    /* LATIN SMALL LETTER Z */
-    { -1, "zacute" },		    /* LATIN SMALL LETTER Z WITH ACUTE */
-    { -1, "zcaron" },		    /* LATIN SMALL LETTER Z WITH CARON */
-    { -1, "zdotaccent" },	    /* LATIN SMALL LETTER Z WITH DOT ABOVE */
-    { -1, "zero" },		    /* DIGIT ZERO */
-    { -1, "zeroinferior" },	    /* SUBSCRIPT ZERO */
-    { -1, "zerooldstyle" },	    /* OLDSTYLE DIGIT ZERO */
-    { -1, "zerosuperior" },	    /* SUPERSCRIPT ZERO */
-    { -1, "zeta" }		    /* GREEK SMALL LETTER ZETA */
+    {    0, "A" },			/* LATIN CAPITAL LETTER A */
+    {    1, "AE" },			/* LATIN CAPITAL LETTER AE */
+    {    2, "AEacute" },		/* LATIN CAPITAL LETTER AE WITH ACUTE */
+    {    3, "AEsmall" },		/* LATIN SMALL CAPITAL LETTER AE */
+    {    4, "Aacute" },			/* LATIN CAPITAL LETTER A WITH ACUTE */
+    {    5, "Aacutesmall" },		/* LATIN SMALL CAPITAL LETTER A WITH ACUTE */
+    {    6, "Abreve" },			/* LATIN CAPITAL LETTER A WITH BREVE */
+    {    7, "Acircumflex" },		/* LATIN CAPITAL LETTER A WITH CIRCUMFLEX */
+    {    8, "Acircumflexsmall" },	/* LATIN SMALL CAPITAL LETTER A WITH CIRCUMFLEX */
+    {    9, "Acute" },			/* CAPITAL ACUTE ACCENT */
+    {   10, "Acutesmall" },		/* SMALL CAPITAL ACUTE ACCENT */
+    {   11, "Adieresis" },		/* LATIN CAPITAL LETTER A WITH DIAERESIS */
+    {   12, "Adieresissmall" },		/* LATIN SMALL CAPITAL LETTER A WITH DIAERESIS */
+    {   13, "Agrave" },			/* LATIN CAPITAL LETTER A WITH GRAVE */
+    {   14, "Agravesmall" },		/* LATIN SMALL CAPITAL LETTER A WITH GRAVE */
+    {   15, "Alpha" },			/* GREEK CAPITAL LETTER ALPHA */
+    {   16, "Alphatonos" },		/* GREEK CAPITAL LETTER ALPHA WITH TONOS */
+    {   17, "Amacron" },		/* LATIN CAPITAL LETTER A WITH MACRON */
+    {   18, "Aogonek" },		/* LATIN CAPITAL LETTER A WITH OGONEK */
+    {   19, "Aring" },			/* LATIN CAPITAL LETTER A WITH RING ABOVE */
+    {   20, "Aringacute" },		/* LATIN CAPITAL LETTER A WITH RING ABOVE AND ACUTE */
+    {   21, "Aringsmall" },		/* LATIN SMALL CAPITAL LETTER A WITH RING ABOVE */
+    {   22, "Asmall" },			/* LATIN SMALL CAPITAL LETTER A */
+    {   23, "Atilde" },			/* LATIN CAPITAL LETTER A WITH TILDE */
+    {   24, "Atildesmall" },		/* LATIN SMALL CAPITAL LETTER A WITH TILDE */
+    {   25, "B" },			/* LATIN CAPITAL LETTER B */
+    {   26, "Beta" },			/* GREEK CAPITAL LETTER BETA */
+    {   27, "Brevesmall" },		/* SMALL CAPITAL BREVE */
+    {   28, "Bsmall" },			/* LATIN SMALL CAPITAL LETTER B */
+    {   29, "C" },			/* LATIN CAPITAL LETTER C */
+    {   30, "Cacute" },			/* LATIN CAPITAL LETTER C WITH ACUTE */
+    {   31, "Caron" },			/* CAPITAL CARON */
+    {   32, "Caronsmall" },		/* SMALL CAPITAL CARON */
+    {   33, "Ccaron" },			/* LATIN CAPITAL LETTER C WITH CARON */
+    {   34, "Ccedilla" },		/* LATIN CAPITAL LETTER C WITH CEDILLA */
+    {   35, "Ccedillasmall" },		/* LATIN SMALL CAPITAL LETTER C WITH CEDILLA */
+    {   36, "Ccircumflex" },		/* LATIN CAPITAL LETTER C WITH CIRCUMFLEX */
+    {   37, "Cdotaccent" },		/* LATIN CAPITAL LETTER C WITH DOT ABOVE */
+    {   38, "Cedillasmall" },		/* SMALL CAPITAL CEDILLA */
+    {   39, "Chi" },			/* GREEK CAPITAL LETTER CHI */
+    {   40, "Circumflexsmall" },	/* SMALL CAPITAL MODIFIER LETTER CIRCUMFLEX ACCENT */
+    {   41, "Csmall" },			/* LATIN SMALL CAPITAL LETTER C */
+    {   42, "D" },			/* LATIN CAPITAL LETTER D */
+    {   43, "Dcaron" },			/* LATIN CAPITAL LETTER D WITH CARON */
+    {   44, "Dcroat" },			/* LATIN CAPITAL LETTER D WITH STROKE */
+    {   45, "Delta" },			/* INCREMENT */
+					/* GREEK CAPITAL LETTER DELTA;Duplicate */
+    {   46, "Dieresis" },		/* CAPITAL DIAERESIS */
+    {   47, "DieresisAcute" },		/* CAPITAL DIAERESIS ACUTE ACCENT */
+    {   48, "DieresisGrave" },		/* CAPITAL DIAERESIS GRAVE ACCENT */
+    {   49, "Dieresissmall" },		/* SMALL CAPITAL DIAERESIS */
+    {   50, "Dotaccentsmall" },		/* SMALL CAPITAL DOT ABOVE */
+    {   51, "Dsmall" },			/* LATIN SMALL CAPITAL LETTER D */
+    {   52, "E" },			/* LATIN CAPITAL LETTER E */
+    {   53, "Eacute" },			/* LATIN CAPITAL LETTER E WITH ACUTE */
+    {   54, "Eacutesmall" },		/* LATIN SMALL CAPITAL LETTER E WITH ACUTE */
+    {   55, "Ebreve" },			/* LATIN CAPITAL LETTER E WITH BREVE */
+    {   56, "Ecaron" },			/* LATIN CAPITAL LETTER E WITH CARON */
+    {   57, "Ecircumflex" },		/* LATIN CAPITAL LETTER E WITH CIRCUMFLEX */
+    {   58, "Ecircumflexsmall" },	/* LATIN SMALL CAPITAL LETTER E WITH CIRCUMFLEX */
+    {   59, "Edieresis" },		/* LATIN CAPITAL LETTER E WITH DIAERESIS */
+    {   60, "Edieresissmall" },		/* LATIN SMALL CAPITAL LETTER E WITH DIAERESIS */
+    {   61, "Edotaccent" },		/* LATIN CAPITAL LETTER E WITH DOT ABOVE */
+    {   62, "Egrave" },			/* LATIN CAPITAL LETTER E WITH GRAVE */
+    {   63, "Egravesmall" },		/* LATIN SMALL CAPITAL LETTER E WITH GRAVE */
+    {   64, "Emacron" },		/* LATIN CAPITAL LETTER E WITH MACRON */
+    {   65, "Eng" },			/* LATIN CAPITAL LETTER ENG */
+    {   66, "Eogonek" },		/* LATIN CAPITAL LETTER E WITH OGONEK */
+    {   67, "Epsilon" },		/* GREEK CAPITAL LETTER EPSILON */
+    {   68, "Epsilontonos" },		/* GREEK CAPITAL LETTER EPSILON WITH TONOS */
+    {   69, "Esmall" },			/* LATIN SMALL CAPITAL LETTER E */
+    {   70, "Eta" },			/* GREEK CAPITAL LETTER ETA */
+    {   71, "Etatonos" },		/* GREEK CAPITAL LETTER ETA WITH TONOS */
+    {   72, "Eth" },			/* LATIN CAPITAL LETTER ETH */
+    {   73, "Ethsmall" },		/* LATIN SMALL CAPITAL LETTER ETH */
+    {   74, "Euro" },			/* EURO SIGN */
+    {   75, "F" },			/* LATIN CAPITAL LETTER F */
+    {   76, "Fsmall" },			/* LATIN SMALL CAPITAL LETTER F */
+    {   77, "G" },			/* LATIN CAPITAL LETTER G */
+    {   78, "Gamma" },			/* GREEK CAPITAL LETTER GAMMA */
+    {   79, "Gbreve" },			/* LATIN CAPITAL LETTER G WITH BREVE */
+    {   80, "Gcaron" },			/* LATIN CAPITAL LETTER G WITH CARON */
+    {   81, "Gcircumflex" },		/* LATIN CAPITAL LETTER G WITH CIRCUMFLEX */
+    {   82, "Gcommaaccent" },		/* LATIN CAPITAL LETTER G WITH CEDILLA */
+    {   83, "Gdotaccent" },		/* LATIN CAPITAL LETTER G WITH DOT ABOVE */
+    {   84, "Grave" },			/* CAPITAL GRAVE ACCENT */
+    {   85, "Gravesmall" },		/* SMALL CAPITAL GRAVE ACCENT */
+    {   86, "Gsmall" },			/* LATIN SMALL CAPITAL LETTER G */
+    {   87, "H" },			/* LATIN CAPITAL LETTER H */
+    {   88, "H18533" },			/* BLACK CIRCLE */
+    {   89, "H18543" },			/* BLACK SMALL SQUARE */
+    {   90, "H18551" },			/* WHITE SMALL SQUARE */
+    {   91, "H22073" },			/* WHITE SQUARE */
+    {   92, "Hbar" },			/* LATIN CAPITAL LETTER H WITH STROKE */
+    {   93, "Hcircumflex" },		/* LATIN CAPITAL LETTER H WITH CIRCUMFLEX */
+    {   94, "Hsmall" },			/* LATIN SMALL CAPITAL LETTER H */
+    {   95, "Hungarumlaut" },		/* CAPITAL DOUBLE ACUTE ACCENT */
+    {   96, "Hungarumlautsmall" },	/* SMALL CAPITAL DOUBLE ACUTE ACCENT */
+    {   97, "I" },			/* LATIN CAPITAL LETTER I */
+    {   98, "IJ" },			/* LATIN CAPITAL LIGATURE IJ */
+    {   99, "Iacute" },			/* LATIN CAPITAL LETTER I WITH ACUTE */
+    {  100, "Iacutesmall" },		/* LATIN SMALL CAPITAL LETTER I WITH ACUTE */
+    {  101, "Ibreve" },			/* LATIN CAPITAL LETTER I WITH BREVE */
+    {  102, "Icircumflex" },		/* LATIN CAPITAL LETTER I WITH CIRCUMFLEX */
+    {  103, "Icircumflexsmall" },	/* LATIN SMALL CAPITAL LETTER I WITH CIRCUMFLEX */
+    {  104, "Idieresis" },		/* LATIN CAPITAL LETTER I WITH DIAERESIS */
+    {  105, "Idieresissmall" },		/* LATIN SMALL CAPITAL LETTER I WITH DIAERESIS */
+    {  106, "Idot" },			/* FONT FAMILY;Courier */
+    {  107, "Idotaccent" },		/* LATIN CAPITAL LETTER I WITH DOT ABOVE */
+    {  108, "Ifraktur" },		/* BLACK-LETTER CAPITAL I */
+    {  109, "Igrave" },			/* LATIN CAPITAL LETTER I WITH GRAVE */
+    {  110, "Igravesmall" },		/* LATIN SMALL CAPITAL LETTER I WITH GRAVE */
+    {  111, "Imacron" },		/* LATIN CAPITAL LETTER I WITH MACRON */
+    {  112, "Iogonek" },		/* LATIN CAPITAL LETTER I WITH OGONEK */
+    {  113, "Iota" },			/* GREEK CAPITAL LETTER IOTA */
+    {  114, "Iotadieresis" },		/* GREEK CAPITAL LETTER IOTA WITH DIALYTIKA */
+    {  115, "Iotatonos" },		/* GREEK CAPITAL LETTER IOTA WITH TONOS */
+    {  116, "Ismall" },			/* LATIN SMALL CAPITAL LETTER I */
+    {  117, "Itilde" },			/* LATIN CAPITAL LETTER I WITH TILDE */
+    {  118, "J" },			/* LATIN CAPITAL LETTER J */
+    {  119, "Jcircumflex" },		/* LATIN CAPITAL LETTER J WITH CIRCUMFLEX */
+    {  120, "Jsmall" },			/* LATIN SMALL CAPITAL LETTER J */
+    {  121, "K" },			/* LATIN CAPITAL LETTER K */
+    {  122, "Kappa" },			/* GREEK CAPITAL LETTER KAPPA */
+    {  123, "Kcommaaccent" },		/* LATIN CAPITAL LETTER K WITH CEDILLA */
+    {  124, "Ksmall" },			/* LATIN SMALL CAPITAL LETTER K */
+    {  125, "L" },			/* LATIN CAPITAL LETTER L */
+    {  126, "LL" },			/* LATIN CAPITAL LETTER LL */
+    {  127, "Lacute" },			/* LATIN CAPITAL LETTER L WITH ACUTE */
+    {  128, "Lambda" },			/* GREEK CAPITAL LETTER LAMDA */
+    {  129, "Lcaron" },			/* LATIN CAPITAL LETTER L WITH CARON */
+    {  130, "Lcommaaccent" },		/* LATIN CAPITAL LETTER L WITH CEDILLA */
+    {  131, "Ldot" },			/* LATIN CAPITAL LETTER L WITH MIDDLE DOT */
+    {  132, "Lslash" },			/* LATIN CAPITAL LETTER L WITH STROKE */
+    {  133, "Lslashsmall" },		/* LATIN SMALL CAPITAL LETTER L WITH STROKE */
+    {  134, "Lsmall" },			/* LATIN SMALL CAPITAL LETTER L */
+    {  135, "M" },			/* LATIN CAPITAL LETTER M */
+    {  136, "Macron" },			/* CAPITAL MACRON */
+    {  137, "Macronsmall" },		/* SMALL CAPITAL MACRON */
+    {  138, "Msmall" },			/* LATIN SMALL CAPITAL LETTER M */
+    {  139, "Mu" },			/* GREEK CAPITAL LETTER MU */
+    {  140, "N" },			/* LATIN CAPITAL LETTER N */
+    {  141, "Nacute" },			/* LATIN CAPITAL LETTER N WITH ACUTE */
+    {  142, "Ncaron" },			/* LATIN CAPITAL LETTER N WITH CARON */
+    {  143, "Ncommaaccent" },		/* LATIN CAPITAL LETTER N WITH CEDILLA */
+    {  144, "Nsmall" },			/* LATIN SMALL CAPITAL LETTER N */
+    {  145, "Ntilde" },			/* LATIN CAPITAL LETTER N WITH TILDE */
+    {  146, "Ntildesmall" },		/* LATIN SMALL CAPITAL LETTER N WITH TILDE */
+    {  147, "Nu" },			/* GREEK CAPITAL LETTER NU */
+    {  148, "O" },			/* LATIN CAPITAL LETTER O */
+    {  149, "OE" },			/* LATIN CAPITAL LIGATURE OE */
+    {  150, "OEsmall" },		/* LATIN SMALL CAPITAL LIGATURE OE */
+    {  151, "Oacute" },			/* LATIN CAPITAL LETTER O WITH ACUTE */
+    {  152, "Oacutesmall" },		/* LATIN SMALL CAPITAL LETTER O WITH ACUTE */
+    {  153, "Obreve" },			/* LATIN CAPITAL LETTER O WITH BREVE */
+    {  154, "Ocircumflex" },		/* LATIN CAPITAL LETTER O WITH CIRCUMFLEX */
+    {  155, "Ocircumflexsmall" },	/* LATIN SMALL CAPITAL LETTER O WITH CIRCUMFLEX */
+    {  156, "Odieresis" },		/* LATIN CAPITAL LETTER O WITH DIAERESIS */
+    {  157, "Odieresissmall" },		/* LATIN SMALL CAPITAL LETTER O WITH DIAERESIS */
+    {  158, "Ogoneksmall" },		/* SMALL CAPITAL OGONEK */
+    {  159, "Ograve" },			/* LATIN CAPITAL LETTER O WITH GRAVE */
+    {  160, "Ogravesmall" },		/* LATIN SMALL CAPITAL LETTER O WITH GRAVE */
+    {  161, "Ohorn" },			/* LATIN CAPITAL LETTER O WITH HORN */
+    {  162, "Ohungarumlaut" },		/* LATIN CAPITAL LETTER O WITH DOUBLE ACUTE */
+    {  163, "Omacron" },		/* LATIN CAPITAL LETTER O WITH MACRON */
+    {  164, "Omega" },			/* OHM SIGN */
+					/* GREEK CAPITAL LETTER OMEGA;Duplicate */
+    {  165, "Omegatonos" },		/* GREEK CAPITAL LETTER OMEGA WITH TONOS */
+    {  166, "Omicron" },		/* GREEK CAPITAL LETTER OMICRON */
+    {  167, "Omicrontonos" },		/* GREEK CAPITAL LETTER OMICRON WITH TONOS */
+    {  168, "Oslash" },			/* LATIN CAPITAL LETTER O WITH STROKE */
+    {  169, "Oslashacute" },		/* LATIN CAPITAL LETTER O WITH STROKE AND ACUTE */
+    {  170, "Oslashsmall" },		/* LATIN SMALL CAPITAL LETTER O WITH STROKE */
+    {  171, "Osmall" },			/* LATIN SMALL CAPITAL LETTER O */
+    {  172, "Otilde" },			/* LATIN CAPITAL LETTER O WITH TILDE */
+    {  173, "Otildesmall" },		/* LATIN SMALL CAPITAL LETTER O WITH TILDE */
+    {  174, "P" },			/* LATIN CAPITAL LETTER P */
+    {  175, "Phi" },			/* GREEK CAPITAL LETTER PHI */
+    {  176, "Pi" },			/* GREEK CAPITAL LETTER PI */
+    {  177, "Psi" },			/* GREEK CAPITAL LETTER PSI */
+    {  178, "Psmall" },			/* LATIN SMALL CAPITAL LETTER P */
+    {  179, "Q" },			/* LATIN CAPITAL LETTER Q */
+    {  180, "Qsmall" },			/* LATIN SMALL CAPITAL LETTER Q */
+    {  181, "R" },			/* LATIN CAPITAL LETTER R */
+    {  182, "Racute" },			/* LATIN CAPITAL LETTER R WITH ACUTE */
+    {  183, "Rcaron" },			/* LATIN CAPITAL LETTER R WITH CARON */
+    {  184, "Rcommaaccent" },		/* LATIN CAPITAL LETTER R WITH CEDILLA */
+    {  185, "Rfraktur" },		/* BLACK-LETTER CAPITAL R */
+    {  186, "Rho" },			/* GREEK CAPITAL LETTER RHO */
+    {  187, "Ringsmall" },		/* SMALL CAPITAL RING ABOVE */
+    {  188, "Rsmall" },			/* LATIN SMALL CAPITAL LETTER R */
+    {  189, "S" },			/* LATIN CAPITAL LETTER S */
+    {  190, "SF010000" },		/* BOX DRAWINGS LIGHT DOWN AND RIGHT */
+    {  191, "SF020000" },		/* BOX DRAWINGS LIGHT UP AND RIGHT */
+    {  192, "SF030000" },		/* BOX DRAWINGS LIGHT DOWN AND LEFT */
+    {  193, "SF040000" },		/* BOX DRAWINGS LIGHT UP AND LEFT */
+    {  194, "SF050000" },		/* BOX DRAWINGS LIGHT VERTICAL AND HORIZONTAL */
+    {  195, "SF060000" },		/* BOX DRAWINGS LIGHT DOWN AND HORIZONTAL */
+    {  196, "SF070000" },		/* BOX DRAWINGS LIGHT UP AND HORIZONTAL */
+    {  197, "SF080000" },		/* BOX DRAWINGS LIGHT VERTICAL AND RIGHT */
+    {  198, "SF090000" },		/* BOX DRAWINGS LIGHT VERTICAL AND LEFT */
+    {  199, "SF100000" },		/* BOX DRAWINGS LIGHT HORIZONTAL */
+    {  200, "SF110000" },		/* BOX DRAWINGS LIGHT VERTICAL */
+    {  201, "SF190000" },		/* BOX DRAWINGS VERTICAL SINGLE AND LEFT DOUBLE */
+    {  202, "SF200000" },		/* BOX DRAWINGS VERTICAL DOUBLE AND LEFT SINGLE */
+    {  203, "SF210000" },		/* BOX DRAWINGS DOWN DOUBLE AND LEFT SINGLE */
+    {  204, "SF220000" },		/* BOX DRAWINGS DOWN SINGLE AND LEFT DOUBLE */
+    {  205, "SF230000" },		/* BOX DRAWINGS DOUBLE VERTICAL AND LEFT */
+    {  206, "SF240000" },		/* BOX DRAWINGS DOUBLE VERTICAL */
+    {  207, "SF250000" },		/* BOX DRAWINGS DOUBLE DOWN AND LEFT */
+    {  208, "SF260000" },		/* BOX DRAWINGS DOUBLE UP AND LEFT */
+    {  209, "SF270000" },		/* BOX DRAWINGS UP DOUBLE AND LEFT SINGLE */
+    {  210, "SF280000" },		/* BOX DRAWINGS UP SINGLE AND LEFT DOUBLE */
+    {  211, "SF360000" },		/* BOX DRAWINGS VERTICAL SINGLE AND RIGHT DOUBLE */
+    {  212, "SF370000" },		/* BOX DRAWINGS VERTICAL DOUBLE AND RIGHT SINGLE */
+    {  213, "SF380000" },		/* BOX DRAWINGS DOUBLE UP AND RIGHT */
+    {  214, "SF390000" },		/* BOX DRAWINGS DOUBLE DOWN AND RIGHT */
+    {  215, "SF400000" },		/* BOX DRAWINGS DOUBLE UP AND HORIZONTAL */
+    {  216, "SF410000" },		/* BOX DRAWINGS DOUBLE DOWN AND HORIZONTAL */
+    {  217, "SF420000" },		/* BOX DRAWINGS DOUBLE VERTICAL AND RIGHT */
+    {  218, "SF430000" },		/* BOX DRAWINGS DOUBLE HORIZONTAL */
+    {  219, "SF440000" },		/* BOX DRAWINGS DOUBLE VERTICAL AND HORIZONTAL */
+    {  220, "SF450000" },		/* BOX DRAWINGS UP SINGLE AND HORIZONTAL DOUBLE */
+    {  221, "SF460000" },		/* BOX DRAWINGS UP DOUBLE AND HORIZONTAL SINGLE */
+    {  222, "SF470000" },		/* BOX DRAWINGS DOWN SINGLE AND HORIZONTAL DOUBLE */
+    {  223, "SF480000" },		/* BOX DRAWINGS DOWN DOUBLE AND HORIZONTAL SINGLE */
+    {  224, "SF490000" },		/* BOX DRAWINGS UP DOUBLE AND RIGHT SINGLE */
+    {  225, "SF500000" },		/* BOX DRAWINGS UP SINGLE AND RIGHT DOUBLE */
+    {  226, "SF510000" },		/* BOX DRAWINGS DOWN SINGLE AND RIGHT DOUBLE */
+    {  227, "SF520000" },		/* BOX DRAWINGS DOWN DOUBLE AND RIGHT SINGLE */
+    {  228, "SF530000" },		/* BOX DRAWINGS VERTICAL DOUBLE AND HORIZONTAL SINGLE */
+    {  229, "SF540000" },		/* BOX DRAWINGS VERTICAL SINGLE AND HORIZONTAL DOUBLE */
+    {  230, "Sacute" },			/* LATIN CAPITAL LETTER S WITH ACUTE */
+    {  231, "Scaron" },			/* LATIN CAPITAL LETTER S WITH CARON */
+    {  232, "Scaronsmall" },		/* LATIN SMALL CAPITAL LETTER S WITH CARON */
+    {  233, "Scedilla" },		/* LATIN CAPITAL LETTER S WITH CEDILLA */
+					/* LATIN CAPITAL LETTER S WITH CEDILLA;Duplicate */
+    {  234, "Scircumflex" },		/* LATIN CAPITAL LETTER S WITH CIRCUMFLEX */
+    {  235, "Scommaaccent" },		/* LATIN CAPITAL LETTER S WITH COMMA BELOW */
+    {  236, "Sigma" },			/* GREEK CAPITAL LETTER SIGMA */
+    {  237, "Ssmall" },			/* LATIN SMALL CAPITAL LETTER S */
+    {  238, "T" },			/* LATIN CAPITAL LETTER T */
+    {  239, "Tau" },			/* GREEK CAPITAL LETTER TAU */
+    {  240, "Tbar" },			/* LATIN CAPITAL LETTER T WITH STROKE */
+    {  241, "Tcaron" },			/* LATIN CAPITAL LETTER T WITH CARON */
+    {  242, "Tcommaaccent" },		/* LATIN CAPITAL LETTER T WITH CEDILLA */
+					/* LATIN CAPITAL LETTER T WITH COMMA BELOW;Duplicate */
+    {  243, "Theta" },			/* GREEK CAPITAL LETTER THETA */
+    {  244, "Thorn" },			/* LATIN CAPITAL LETTER THORN */
+    {  245, "Thornsmall" },		/* LATIN SMALL CAPITAL LETTER THORN */
+    {  246, "Tildesmall" },		/* SMALL CAPITAL SMALL TILDE */
+    {  247, "Tsmall" },			/* LATIN SMALL CAPITAL LETTER T */
+    {  248, "U" },			/* LATIN CAPITAL LETTER U */
+    {  249, "Uacute" },			/* LATIN CAPITAL LETTER U WITH ACUTE */
+    {  250, "Uacutesmall" },		/* LATIN SMALL CAPITAL LETTER U WITH ACUTE */
+    {  251, "Ubreve" },			/* LATIN CAPITAL LETTER U WITH BREVE */
+    {  252, "Ucircumflex" },		/* LATIN CAPITAL LETTER U WITH CIRCUMFLEX */
+    {  253, "Ucircumflexsmall" },	/* LATIN SMALL CAPITAL LETTER U WITH CIRCUMFLEX */
+    {  254, "Udieresis" },		/* LATIN CAPITAL LETTER U WITH DIAERESIS */
+    {  255, "Udieresissmall" },		/* LATIN SMALL CAPITAL LETTER U WITH DIAERESIS */
+    {  256, "Ugrave" },			/* LATIN CAPITAL LETTER U WITH GRAVE */
+    {  257, "Ugravesmall" },		/* LATIN SMALL CAPITAL LETTER U WITH GRAVE */
+    {  258, "Uhorn" },			/* LATIN CAPITAL LETTER U WITH HORN */
+    {  259, "Uhungarumlaut" },		/* LATIN CAPITAL LETTER U WITH DOUBLE ACUTE */
+    {  260, "Umacron" },		/* LATIN CAPITAL LETTER U WITH MACRON */
+    {  261, "Uogonek" },		/* LATIN CAPITAL LETTER U WITH OGONEK */
+    {  262, "Upsilon" },		/* GREEK CAPITAL LETTER UPSILON */
+    {  263, "Upsilon1" },		/* GREEK UPSILON WITH HOOK SYMBOL */
+    {  264, "Upsilondieresis" },	/* GREEK CAPITAL LETTER UPSILON WITH DIALYTIKA */
+    {  265, "Upsilontonos" },		/* GREEK CAPITAL LETTER UPSILON WITH TONOS */
+    {  266, "Uring" },			/* LATIN CAPITAL LETTER U WITH RING ABOVE */
+    {  267, "Usmall" },			/* LATIN SMALL CAPITAL LETTER U */
+    {  268, "Utilde" },			/* LATIN CAPITAL LETTER U WITH TILDE */
+    {  269, "V" },			/* LATIN CAPITAL LETTER V */
+    {  270, "Vsmall" },			/* LATIN SMALL CAPITAL LETTER V */
+    {  271, "W" },			/* LATIN CAPITAL LETTER W */
+    {  272, "Wacute" },			/* LATIN CAPITAL LETTER W WITH ACUTE */
+    {  273, "Wcircumflex" },		/* LATIN CAPITAL LETTER W WITH CIRCUMFLEX */
+    {  274, "Wdieresis" },		/* LATIN CAPITAL LETTER W WITH DIAERESIS */
+    {  275, "Wgrave" },			/* LATIN CAPITAL LETTER W WITH GRAVE */
+    {  276, "Wsmall" },			/* LATIN SMALL CAPITAL LETTER W */
+    {  277, "X" },			/* LATIN CAPITAL LETTER X */
+    {  278, "Xi" },			/* GREEK CAPITAL LETTER XI */
+    {  279, "Xsmall" },			/* LATIN SMALL CAPITAL LETTER X */
+    {  280, "Y" },			/* LATIN CAPITAL LETTER Y */
+    {  281, "Yacute" },			/* LATIN CAPITAL LETTER Y WITH ACUTE */
+    {  282, "Yacutesmall" },		/* LATIN SMALL CAPITAL LETTER Y WITH ACUTE */
+    {  283, "Ycircumflex" },		/* LATIN CAPITAL LETTER Y WITH CIRCUMFLEX */
+    {  284, "Ydieresis" },		/* LATIN CAPITAL LETTER Y WITH DIAERESIS */
+    {  285, "Ydieresissmall" },		/* LATIN SMALL CAPITAL LETTER Y WITH DIAERESIS */
+    {  286, "Ygrave" },			/* LATIN CAPITAL LETTER Y WITH GRAVE */
+    {  287, "Ysmall" },			/* LATIN SMALL CAPITAL LETTER Y */
+    {  288, "Z" },			/* LATIN CAPITAL LETTER Z */
+    {  289, "Zacute" },			/* LATIN CAPITAL LETTER Z WITH ACUTE */
+    {  290, "Zcaron" },			/* LATIN CAPITAL LETTER Z WITH CARON */
+    {  291, "Zcaronsmall" },		/* LATIN SMALL CAPITAL LETTER Z WITH CARON */
+    {  292, "Zdotaccent" },		/* LATIN CAPITAL LETTER Z WITH DOT ABOVE */
+    {  293, "Zeta" },			/* GREEK CAPITAL LETTER ZETA */
+    {  294, "Zsmall" },			/* LATIN SMALL CAPITAL LETTER Z */
+    {  295, "a" },			/* LATIN SMALL LETTER A */
+    {  296, "a1" },			/* FONT FAMILY;ITC Zapf Dingbats */
+    {  297, "a10" },			/* FONT FAMILY;ITC Zapf Dingbats */
+    {  298, "a100" },			/* FONT FAMILY;ITC Zapf Dingbats */
+    {  299, "a101" },			/* FONT FAMILY;ITC Zapf Dingbats */
+    {  300, "a102" },			/* FONT FAMILY;ITC Zapf Dingbats */
+    {  301, "a103" },			/* FONT FAMILY;ITC Zapf Dingbats */
+    {  302, "a104" },			/* FONT FAMILY;ITC Zapf Dingbats */
+    {  303, "a105" },			/* FONT FAMILY;ITC Zapf Dingbats */
+    {  304, "a106" },			/* FONT FAMILY;ITC Zapf Dingbats */
+    {  305, "a107" },			/* FONT FAMILY;ITC Zapf Dingbats */
+    {  306, "a108" },			/* FONT FAMILY;ITC Zapf Dingbats */
+    {  307, "a109" },			/* FONT FAMILY;ITC Zapf Dingbats */
+    {  308, "a11" },			/* FONT FAMILY;ITC Zapf Dingbats */
+    {  309, "a110" },			/* FONT FAMILY;ITC Zapf Dingbats */
+    {  310, "a111" },			/* FONT FAMILY;ITC Zapf Dingbats */
+    {  311, "a112" },			/* FONT FAMILY;ITC Zapf Dingbats */
+    {  312, "a117" },			/* FONT FAMILY;ITC Zapf Dingbats */
+    {  313, "a118" },			/* FONT FAMILY;ITC Zapf Dingbats */
+    {  314, "a119" },			/* FONT FAMILY;ITC Zapf Dingbats */
+    {  315, "a12" },			/* FONT FAMILY;ITC Zapf Dingbats */
+    {  316, "a120" },			/* FONT FAMILY;ITC Zapf Dingbats */
+    {  317, "a121" },			/* FONT FAMILY;ITC Zapf Dingbats */
+    {  318, "a122" },			/* FONT FAMILY;ITC Zapf Dingbats */
+    {  319, "a123" },			/* FONT FAMILY;ITC Zapf Dingbats */
+    {  320, "a124" },			/* FONT FAMILY;ITC Zapf Dingbats */
+    {  321, "a125" },			/* FONT FAMILY;ITC Zapf Dingbats */
+    {  322, "a126" },			/* FONT FAMILY;ITC Zapf Dingbats */
+    {  323, "a127" },			/* FONT FAMILY;ITC Zapf Dingbats */
+    {  324, "a128" },			/* FONT FAMILY;ITC Zapf Dingbats */
+    {  325, "a129" },			/* FONT FAMILY;ITC Zapf Dingbats */
+    {  326, "a13" },			/* FONT FAMILY;ITC Zapf Dingbats */
+    {  327, "a130" },			/* FONT FAMILY;ITC Zapf Dingbats */
+    {  328, "a131" },			/* FONT FAMILY;ITC Zapf Dingbats */
+    {  329, "a132" },			/* FONT FAMILY;ITC Zapf Dingbats */
+    {  330, "a133" },			/* FONT FAMILY;ITC Zapf Dingbats */
+    {  331, "a134" },			/* FONT FAMILY;ITC Zapf Dingbats */
+    {  332, "a135" },			/* FONT FAMILY;ITC Zapf Dingbats */
+    {  333, "a136" },			/* FONT FAMILY;ITC Zapf Dingbats */
+    {  334, "a137" },			/* FONT FAMILY;ITC Zapf Dingbats */
+    {  335, "a138" },			/* FONT FAMILY;ITC Zapf Dingbats */
+    {  336, "a139" },			/* FONT FAMILY;ITC Zapf Dingbats */
+    {  337, "a14" },			/* FONT FAMILY;ITC Zapf Dingbats */
+    {  338, "a140" },			/* FONT FAMILY;ITC Zapf Dingbats */
+    {  339, "a141" },			/* FONT FAMILY;ITC Zapf Dingbats */
+    {  340, "a142" },			/* FONT FAMILY;ITC Zapf Dingbats */
+    {  341, "a143" },			/* FONT FAMILY;ITC Zapf Dingbats */
+    {  342, "a144" },			/* FONT FAMILY;ITC Zapf Dingbats */
+    {  343, "a145" },			/* FONT FAMILY;ITC Zapf Dingbats */
+    {  344, "a146" },			/* FONT FAMILY;ITC Zapf Dingbats */
+    {  345, "a147" },			/* FONT FAMILY;ITC Zapf Dingbats */
+    {  346, "a148" },			/* FONT FAMILY;ITC Zapf Dingbats */
+    {  347, "a149" },			/* FONT FAMILY;ITC Zapf Dingbats */
+    {  348, "a15" },			/* FONT FAMILY;ITC Zapf Dingbats */
+    {  349, "a150" },			/* FONT FAMILY;ITC Zapf Dingbats */
+    {  350, "a151" },			/* FONT FAMILY;ITC Zapf Dingbats */
+    {  351, "a152" },			/* FONT FAMILY;ITC Zapf Dingbats */
+    {  352, "a153" },			/* FONT FAMILY;ITC Zapf Dingbats */
+    {  353, "a154" },			/* FONT FAMILY;ITC Zapf Dingbats */
+    {  354, "a155" },			/* FONT FAMILY;ITC Zapf Dingbats */
+    {  355, "a156" },			/* FONT FAMILY;ITC Zapf Dingbats */
+    {  356, "a157" },			/* FONT FAMILY;ITC Zapf Dingbats */
+    {  357, "a158" },			/* FONT FAMILY;ITC Zapf Dingbats */
+    {  358, "a159" },			/* FONT FAMILY;ITC Zapf Dingbats */
+    {  359, "a16" },			/* FONT FAMILY;ITC Zapf Dingbats */
+    {  360, "a160" },			/* FONT FAMILY;ITC Zapf Dingbats */
+    {  361, "a161" },			/* FONT FAMILY;ITC Zapf Dingbats */
+    {  362, "a162" },			/* FONT FAMILY;ITC Zapf Dingbats */
+    {  363, "a163" },			/* FONT FAMILY;ITC Zapf Dingbats */
+    {  364, "a164" },			/* FONT FAMILY;ITC Zapf Dingbats */
+    {  365, "a165" },			/* FONT FAMILY;ITC Zapf Dingbats */
+    {  366, "a166" },			/* FONT FAMILY;ITC Zapf Dingbats */
+    {  367, "a167" },			/* FONT FAMILY;ITC Zapf Dingbats */
+    {  368, "a168" },			/* FONT FAMILY;ITC Zapf Dingbats */
+    {  369, "a169" },			/* FONT FAMILY;ITC Zapf Dingbats */
+    {  370, "a17" },			/* FONT FAMILY;ITC Zapf Dingbats */
+    {  371, "a170" },			/* FONT FAMILY;ITC Zapf Dingbats */
+    {  372, "a171" },			/* FONT FAMILY;ITC Zapf Dingbats */
+    {  373, "a172" },			/* FONT FAMILY;ITC Zapf Dingbats */
+    {  374, "a173" },			/* FONT FAMILY;ITC Zapf Dingbats */
+    {  375, "a174" },			/* FONT FAMILY;ITC Zapf Dingbats */
+    {  376, "a175" },			/* FONT FAMILY;ITC Zapf Dingbats */
+    {  377, "a176" },			/* FONT FAMILY;ITC Zapf Dingbats */
+    {  378, "a177" },			/* FONT FAMILY;ITC Zapf Dingbats */
+    {  379, "a178" },			/* FONT FAMILY;ITC Zapf Dingbats */
+    {  380, "a179" },			/* FONT FAMILY;ITC Zapf Dingbats */
+    {  381, "a18" },			/* FONT FAMILY;ITC Zapf Dingbats */
+    {  382, "a180" },			/* FONT FAMILY;ITC Zapf Dingbats */
+    {  383, "a181" },			/* FONT FAMILY;ITC Zapf Dingbats */
+    {  384, "a182" },			/* FONT FAMILY;ITC Zapf Dingbats */
+    {  385, "a183" },			/* FONT FAMILY;ITC Zapf Dingbats */
+    {  386, "a184" },			/* FONT FAMILY;ITC Zapf Dingbats */
+    {  387, "a185" },			/* FONT FAMILY;ITC Zapf Dingbats */
+    {  388, "a186" },			/* FONT FAMILY;ITC Zapf Dingbats */
+    {  389, "a187" },			/* FONT FAMILY;ITC Zapf Dingbats */
+    {  390, "a188" },			/* FONT FAMILY;ITC Zapf Dingbats */
+    {  391, "a189" },			/* FONT FAMILY;ITC Zapf Dingbats */
+    {  392, "a19" },			/* FONT FAMILY;ITC Zapf Dingbats */
+    {  393, "a190" },			/* FONT FAMILY;ITC Zapf Dingbats */
+    {  394, "a191" },			/* FONT FAMILY;ITC Zapf Dingbats */
+    {  395, "a192" },			/* FONT FAMILY;ITC Zapf Dingbats */
+    {  396, "a193" },			/* FONT FAMILY;ITC Zapf Dingbats */
+    {  397, "a194" },			/* FONT FAMILY;ITC Zapf Dingbats */
+    {  398, "a195" },			/* FONT FAMILY;ITC Zapf Dingbats */
+    {  399, "a196" },			/* FONT FAMILY;ITC Zapf Dingbats */
+    {  400, "a197" },			/* FONT FAMILY;ITC Zapf Dingbats */
+    {  401, "a198" },			/* FONT FAMILY;ITC Zapf Dingbats */
+    {  402, "a199" },			/* FONT FAMILY;ITC Zapf Dingbats */
+    {  403, "a2" },			/* FONT FAMILY;ITC Zapf Dingbats */
+    {  404, "a20" },			/* FONT FAMILY;ITC Zapf Dingbats */
+    {  405, "a200" },			/* FONT FAMILY;ITC Zapf Dingbats */
+    {  406, "a201" },			/* FONT FAMILY;ITC Zapf Dingbats */
+    {  407, "a202" },			/* FONT FAMILY;ITC Zapf Dingbats */
+    {  408, "a203" },			/* FONT FAMILY;ITC Zapf Dingbats */
+    {  409, "a204" },			/* FONT FAMILY;ITC Zapf Dingbats */
+    {  410, "a205" },			/* FONT FAMILY;ITC Zapf Dingbats */
+    {  411, "a206" },			/* FONT FAMILY;ITC Zapf Dingbats */
+    {  412, "a21" },			/* FONT FAMILY;ITC Zapf Dingbats */
+    {  413, "a22" },			/* FONT FAMILY;ITC Zapf Dingbats */
+    {  414, "a23" },			/* FONT FAMILY;ITC Zapf Dingbats */
+    {  415, "a24" },			/* FONT FAMILY;ITC Zapf Dingbats */
+    {  416, "a25" },			/* FONT FAMILY;ITC Zapf Dingbats */
+    {  417, "a26" },			/* FONT FAMILY;ITC Zapf Dingbats */
+    {  418, "a27" },			/* FONT FAMILY;ITC Zapf Dingbats */
+    {  419, "a28" },			/* FONT FAMILY;ITC Zapf Dingbats */
+    {  420, "a29" },			/* FONT FAMILY;ITC Zapf Dingbats */
+    {  421, "a3" },			/* FONT FAMILY;ITC Zapf Dingbats */
+    {  422, "a30" },			/* FONT FAMILY;ITC Zapf Dingbats */
+    {  423, "a31" },			/* FONT FAMILY;ITC Zapf Dingbats */
+    {  424, "a32" },			/* FONT FAMILY;ITC Zapf Dingbats */
+    {  425, "a33" },			/* FONT FAMILY;ITC Zapf Dingbats */
+    {  426, "a34" },			/* FONT FAMILY;ITC Zapf Dingbats */
+    {  427, "a35" },			/* FONT FAMILY;ITC Zapf Dingbats */
+    {  428, "a36" },			/* FONT FAMILY;ITC Zapf Dingbats */
+    {  429, "a37" },			/* FONT FAMILY;ITC Zapf Dingbats */
+    {  430, "a38" },			/* FONT FAMILY;ITC Zapf Dingbats */
+    {  431, "a39" },			/* FONT FAMILY;ITC Zapf Dingbats */
+    {  432, "a4" },			/* FONT FAMILY;ITC Zapf Dingbats */
+    {  433, "a40" },			/* FONT FAMILY;ITC Zapf Dingbats */
+    {  434, "a41" },			/* FONT FAMILY;ITC Zapf Dingbats */
+    {  435, "a42" },			/* FONT FAMILY;ITC Zapf Dingbats */
+    {  436, "a43" },			/* FONT FAMILY;ITC Zapf Dingbats */
+    {  437, "a44" },			/* FONT FAMILY;ITC Zapf Dingbats */
+    {  438, "a45" },			/* FONT FAMILY;ITC Zapf Dingbats */
+    {  439, "a46" },			/* FONT FAMILY;ITC Zapf Dingbats */
+    {  440, "a47" },			/* FONT FAMILY;ITC Zapf Dingbats */
+    {  441, "a48" },			/* FONT FAMILY;ITC Zapf Dingbats */
+    {  442, "a49" },			/* FONT FAMILY;ITC Zapf Dingbats */
+    {  443, "a5" },			/* FONT FAMILY;ITC Zapf Dingbats */
+    {  444, "a50" },			/* FONT FAMILY;ITC Zapf Dingbats */
+    {  445, "a51" },			/* FONT FAMILY;ITC Zapf Dingbats */
+    {  446, "a52" },			/* FONT FAMILY;ITC Zapf Dingbats */
+    {  447, "a53" },			/* FONT FAMILY;ITC Zapf Dingbats */
+    {  448, "a54" },			/* FONT FAMILY;ITC Zapf Dingbats */
+    {  449, "a55" },			/* FONT FAMILY;ITC Zapf Dingbats */
+    {  450, "a56" },			/* FONT FAMILY;ITC Zapf Dingbats */
+    {  451, "a57" },			/* FONT FAMILY;ITC Zapf Dingbats */
+    {  452, "a58" },			/* FONT FAMILY;ITC Zapf Dingbats */
+    {  453, "a59" },			/* FONT FAMILY;ITC Zapf Dingbats */
+    {  454, "a6" },			/* FONT FAMILY;ITC Zapf Dingbats */
+    {  455, "a60" },			/* FONT FAMILY;ITC Zapf Dingbats */
+    {  456, "a61" },			/* FONT FAMILY;ITC Zapf Dingbats */
+    {  457, "a62" },			/* FONT FAMILY;ITC Zapf Dingbats */
+    {  458, "a63" },			/* FONT FAMILY;ITC Zapf Dingbats */
+    {  459, "a64" },			/* FONT FAMILY;ITC Zapf Dingbats */
+    {  460, "a65" },			/* FONT FAMILY;ITC Zapf Dingbats */
+    {  461, "a66" },			/* FONT FAMILY;ITC Zapf Dingbats */
+    {  462, "a67" },			/* FONT FAMILY;ITC Zapf Dingbats */
+    {  463, "a68" },			/* FONT FAMILY;ITC Zapf Dingbats */
+    {  464, "a69" },			/* FONT FAMILY;ITC Zapf Dingbats */
+    {  465, "a7" },			/* FONT FAMILY;ITC Zapf Dingbats */
+    {  466, "a70" },			/* FONT FAMILY;ITC Zapf Dingbats */
+    {  467, "a71" },			/* FONT FAMILY;ITC Zapf Dingbats */
+    {  468, "a72" },			/* FONT FAMILY;ITC Zapf Dingbats */
+    {  469, "a73" },			/* FONT FAMILY;ITC Zapf Dingbats */
+    {  470, "a74" },			/* FONT FAMILY;ITC Zapf Dingbats */
+    {  471, "a75" },			/* FONT FAMILY;ITC Zapf Dingbats */
+    {  472, "a76" },			/* FONT FAMILY;ITC Zapf Dingbats */
+    {  473, "a77" },			/* FONT FAMILY;ITC Zapf Dingbats */
+    {  474, "a78" },			/* FONT FAMILY;ITC Zapf Dingbats */
+    {  475, "a79" },			/* FONT FAMILY;ITC Zapf Dingbats */
+    {  476, "a8" },			/* FONT FAMILY;ITC Zapf Dingbats */
+    {  477, "a81" },			/* FONT FAMILY;ITC Zapf Dingbats */
+    {  478, "a82" },			/* FONT FAMILY;ITC Zapf Dingbats */
+    {  479, "a83" },			/* FONT FAMILY;ITC Zapf Dingbats */
+    {  480, "a84" },			/* FONT FAMILY;ITC Zapf Dingbats */
+    {  481, "a85" },			/* FONT FAMILY;ITC Zapf Dingbats */
+    {  482, "a86" },			/* FONT FAMILY;ITC Zapf Dingbats */
+    {  483, "a87" },			/* FONT FAMILY;ITC Zapf Dingbats */
+    {  484, "a88" },			/* FONT FAMILY;ITC Zapf Dingbats */
+    {  485, "a89" },			/* FONT FAMILY;ITC Zapf Dingbats */
+    {  486, "a9" },			/* FONT FAMILY;ITC Zapf Dingbats */
+    {  487, "a90" },			/* FONT FAMILY;ITC Zapf Dingbats */
+    {  488, "a91" },			/* FONT FAMILY;ITC Zapf Dingbats */
+    {  489, "a92" },			/* FONT FAMILY;ITC Zapf Dingbats */
+    {  490, "a93" },			/* FONT FAMILY;ITC Zapf Dingbats */
+    {  491, "a94" },			/* FONT FAMILY;ITC Zapf Dingbats */
+    {  492, "a95" },			/* FONT FAMILY;ITC Zapf Dingbats */
+    {  493, "a96" },			/* FONT FAMILY;ITC Zapf Dingbats */
+    {  494, "a97" },			/* FONT FAMILY;ITC Zapf Dingbats */
+    {  495, "a98" },			/* FONT FAMILY;ITC Zapf Dingbats */
+    {  496, "a99" },			/* FONT FAMILY;ITC Zapf Dingbats */
+    {  497, "aacute" },			/* LATIN SMALL LETTER A WITH ACUTE */
+    {  498, "abreve" },			/* LATIN SMALL LETTER A WITH BREVE */
+    {  499, "acircumflex" },		/* LATIN SMALL LETTER A WITH CIRCUMFLEX */
+    {  500, "acute" },			/* ACUTE ACCENT */
+    {  501, "acutecomb" },		/* COMBINING ACUTE ACCENT */
+    {  502, "adieresis" },		/* LATIN SMALL LETTER A WITH DIAERESIS */
+    {  503, "ae" },			/* LATIN SMALL LETTER AE */
+    {  504, "aeacute" },		/* LATIN SMALL LETTER AE WITH ACUTE */
+    {  505, "afii00208" },		/* HORIZONTAL BAR */
+    {  506, "afii10017" },		/* CYRILLIC CAPITAL LETTER A */
+    {  507, "afii10018" },		/* CYRILLIC CAPITAL LETTER BE */
+    {  508, "afii10019" },		/* CYRILLIC CAPITAL LETTER VE */
+    {  509, "afii10020" },		/* CYRILLIC CAPITAL LETTER GHE */
+    {  510, "afii10021" },		/* CYRILLIC CAPITAL LETTER DE */
+    {  511, "afii10022" },		/* CYRILLIC CAPITAL LETTER IE */
+    {  512, "afii10023" },		/* CYRILLIC CAPITAL LETTER IO */
+    {  513, "afii10024" },		/* CYRILLIC CAPITAL LETTER ZHE */
+    {  514, "afii10025" },		/* CYRILLIC CAPITAL LETTER ZE */
+    {  515, "afii10026" },		/* CYRILLIC CAPITAL LETTER I */
+    {  516, "afii10027" },		/* CYRILLIC CAPITAL LETTER SHORT I */
+    {  517, "afii10028" },		/* CYRILLIC CAPITAL LETTER KA */
+    {  518, "afii10029" },		/* CYRILLIC CAPITAL LETTER EL */
+    {  519, "afii10030" },		/* CYRILLIC CAPITAL LETTER EM */
+    {  520, "afii10031" },		/* CYRILLIC CAPITAL LETTER EN */
+    {  521, "afii10032" },		/* CYRILLIC CAPITAL LETTER O */
+    {  522, "afii10033" },		/* CYRILLIC CAPITAL LETTER PE */
+    {  523, "afii10034" },		/* CYRILLIC CAPITAL LETTER ER */
+    {  524, "afii10035" },		/* CYRILLIC CAPITAL LETTER ES */
+    {  525, "afii10036" },		/* CYRILLIC CAPITAL LETTER TE */
+    {  526, "afii10037" },		/* CYRILLIC CAPITAL LETTER U */
+    {  527, "afii10038" },		/* CYRILLIC CAPITAL LETTER EF */
+    {  528, "afii10039" },		/* CYRILLIC CAPITAL LETTER HA */
+    {  529, "afii10040" },		/* CYRILLIC CAPITAL LETTER TSE */
+    {  530, "afii10041" },		/* CYRILLIC CAPITAL LETTER CHE */
+    {  531, "afii10042" },		/* CYRILLIC CAPITAL LETTER SHA */
+    {  532, "afii10043" },		/* CYRILLIC CAPITAL LETTER SHCHA */
+    {  533, "afii10044" },		/* CYRILLIC CAPITAL LETTER HARD SIGN */
+    {  534, "afii10045" },		/* CYRILLIC CAPITAL LETTER YERU */
+    {  535, "afii10046" },		/* CYRILLIC CAPITAL LETTER SOFT SIGN */
+    {  536, "afii10047" },		/* CYRILLIC CAPITAL LETTER E */
+    {  537, "afii10048" },		/* CYRILLIC CAPITAL LETTER YU */
+    {  538, "afii10049" },		/* CYRILLIC CAPITAL LETTER YA */
+    {  539, "afii10050" },		/* CYRILLIC CAPITAL LETTER GHE WITH UPTURN */
+    {  540, "afii10051" },		/* CYRILLIC CAPITAL LETTER DJE */
+    {  541, "afii10052" },		/* CYRILLIC CAPITAL LETTER GJE */
+    {  542, "afii10053" },		/* CYRILLIC CAPITAL LETTER UKRAINIAN IE */
+    {  543, "afii10054" },		/* CYRILLIC CAPITAL LETTER DZE */
+    {  544, "afii10055" },		/* CYRILLIC CAPITAL LETTER BYELORUSSIAN-UKRAINIAN I */
+    {  545, "afii10056" },		/* CYRILLIC CAPITAL LETTER YI */
+    {  546, "afii10057" },		/* CYRILLIC CAPITAL LETTER JE */
+    {  547, "afii10058" },		/* CYRILLIC CAPITAL LETTER LJE */
+    {  548, "afii10059" },		/* CYRILLIC CAPITAL LETTER NJE */
+    {  549, "afii10060" },		/* CYRILLIC CAPITAL LETTER TSHE */
+    {  550, "afii10061" },		/* CYRILLIC CAPITAL LETTER KJE */
+    {  551, "afii10062" },		/* CYRILLIC CAPITAL LETTER SHORT U */
+    {  552, "afii10063" },		/* CYRILLIC SMALL LETTER GHE VARIANT */
+    {  553, "afii10064" },		/* CYRILLIC SMALL LETTER BE VARIANT */
+    {  554, "afii10065" },		/* CYRILLIC SMALL LETTER A */
+    {  555, "afii10066" },		/* CYRILLIC SMALL LETTER BE */
+    {  556, "afii10067" },		/* CYRILLIC SMALL LETTER VE */
+    {  557, "afii10068" },		/* CYRILLIC SMALL LETTER GHE */
+    {  558, "afii10069" },		/* CYRILLIC SMALL LETTER DE */
+    {  559, "afii10070" },		/* CYRILLIC SMALL LETTER IE */
+    {  560, "afii10071" },		/* CYRILLIC SMALL LETTER IO */
+    {  561, "afii10072" },		/* CYRILLIC SMALL LETTER ZHE */
+    {  562, "afii10073" },		/* CYRILLIC SMALL LETTER ZE */
+    {  563, "afii10074" },		/* CYRILLIC SMALL LETTER I */
+    {  564, "afii10075" },		/* CYRILLIC SMALL LETTER SHORT I */
+    {  565, "afii10076" },		/* CYRILLIC SMALL LETTER KA */
+    {  566, "afii10077" },		/* CYRILLIC SMALL LETTER EL */
+    {  567, "afii10078" },		/* CYRILLIC SMALL LETTER EM */
+    {  568, "afii10079" },		/* CYRILLIC SMALL LETTER EN */
+    {  569, "afii10080" },		/* CYRILLIC SMALL LETTER O */
+    {  570, "afii10081" },		/* CYRILLIC SMALL LETTER PE */
+    {  571, "afii10082" },		/* CYRILLIC SMALL LETTER ER */
+    {  572, "afii10083" },		/* CYRILLIC SMALL LETTER ES */
+    {  573, "afii10084" },		/* CYRILLIC SMALL LETTER TE */
+    {  574, "afii10085" },		/* CYRILLIC SMALL LETTER U */
+    {  575, "afii10086" },		/* CYRILLIC SMALL LETTER EF */
+    {  576, "afii10087" },		/* CYRILLIC SMALL LETTER HA */
+    {  577, "afii10088" },		/* CYRILLIC SMALL LETTER TSE */
+    {  578, "afii10089" },		/* CYRILLIC SMALL LETTER CHE */
+    {  579, "afii10090" },		/* CYRILLIC SMALL LETTER SHA */
+    {  580, "afii10091" },		/* CYRILLIC SMALL LETTER SHCHA */
+    {  581, "afii10092" },		/* CYRILLIC SMALL LETTER HARD SIGN */
+    {  582, "afii10093" },		/* CYRILLIC SMALL LETTER YERU */
+    {  583, "afii10094" },		/* CYRILLIC SMALL LETTER SOFT SIGN */
+    {  584, "afii10095" },		/* CYRILLIC SMALL LETTER E */
+    {  585, "afii10096" },		/* CYRILLIC SMALL LETTER YU */
+    {  586, "afii10097" },		/* CYRILLIC SMALL LETTER YA */
+    {  587, "afii10098" },		/* CYRILLIC SMALL LETTER GHE WITH UPTURN */
+    {  588, "afii10099" },		/* CYRILLIC SMALL LETTER DJE */
+    {  589, "afii10100" },		/* CYRILLIC SMALL LETTER GJE */
+    {  590, "afii10101" },		/* CYRILLIC SMALL LETTER UKRAINIAN IE */
+    {  591, "afii10102" },		/* CYRILLIC SMALL LETTER DZE */
+    {  592, "afii10103" },		/* CYRILLIC SMALL LETTER BYELORUSSIAN-UKRAINIAN I */
+    {  593, "afii10104" },		/* CYRILLIC SMALL LETTER YI */
+    {  594, "afii10105" },		/* CYRILLIC SMALL LETTER JE */
+    {  595, "afii10106" },		/* CYRILLIC SMALL LETTER LJE */
+    {  596, "afii10107" },		/* CYRILLIC SMALL LETTER NJE */
+    {  597, "afii10108" },		/* CYRILLIC SMALL LETTER TSHE */
+    {  598, "afii10109" },		/* CYRILLIC SMALL LETTER KJE */
+    {  599, "afii10110" },		/* CYRILLIC SMALL LETTER SHORT U */
+    {  600, "afii10145" },		/* CYRILLIC CAPITAL LETTER DZHE */
+    {  601, "afii10146" },		/* CYRILLIC CAPITAL LETTER YAT */
+    {  602, "afii10147" },		/* CYRILLIC CAPITAL LETTER FITA */
+    {  603, "afii10148" },		/* CYRILLIC CAPITAL LETTER IZHITSA */
+    {  604, "afii10192" },		/* CYRILLIC SMALL LETTER DE VARIANT */
+    {  605, "afii10193" },		/* CYRILLIC SMALL LETTER DZHE */
+    {  606, "afii10194" },		/* CYRILLIC SMALL LETTER YAT */
+    {  607, "afii10195" },		/* CYRILLIC SMALL LETTER FITA */
+    {  608, "afii10196" },		/* CYRILLIC SMALL LETTER IZHITSA */
+    {  609, "afii10831" },		/* CYRILLIC SMALL LETTER PE VARIANT */
+    {  610, "afii10832" },		/* CYRILLIC SMALL LETTER TE VARIANT */
+    {  611, "afii10846" },		/* CYRILLIC SMALL LETTER SCHWA */
+    {  612, "afii299" },		/* LEFT-TO-RIGHT MARK */
+    {  613, "afii300" },		/* RIGHT-TO-LEFT MARK */
+    {  614, "afii301" },		/* ZERO WIDTH JOINER */
+    {  615, "afii57381" },		/* ARABIC PERCENT SIGN */
+    {  616, "afii57388" },		/* ARABIC COMMA */
+    {  617, "afii57392" },		/* ARABIC-INDIC DIGIT ZERO */
+    {  618, "afii57393" },		/* ARABIC-INDIC DIGIT ONE */
+    {  619, "afii57394" },		/* ARABIC-INDIC DIGIT TWO */
+    {  620, "afii57395" },		/* ARABIC-INDIC DIGIT THREE */
+    {  621, "afii57396" },		/* ARABIC-INDIC DIGIT FOUR */
+    {  622, "afii57397" },		/* ARABIC-INDIC DIGIT FIVE */
+    {  623, "afii57398" },		/* ARABIC-INDIC DIGIT SIX */
+    {  624, "afii57399" },		/* ARABIC-INDIC DIGIT SEVEN */
+    {  625, "afii57400" },		/* ARABIC-INDIC DIGIT EIGHT */
+    {  626, "afii57401" },		/* ARABIC-INDIC DIGIT NINE */
+    {  627, "afii57403" },		/* ARABIC SEMICOLON */
+    {  628, "afii57407" },		/* ARABIC QUESTION MARK */
+    {  629, "afii57409" },		/* ARABIC LETTER HAMZA */
+    {  630, "afii57410" },		/* ARABIC LETTER ALEF WITH MADDA ABOVE */
+    {  631, "afii57411" },		/* ARABIC LETTER ALEF WITH HAMZA ABOVE */
+    {  632, "afii57412" },		/* ARABIC LETTER WAW WITH HAMZA ABOVE */
+    {  633, "afii57413" },		/* ARABIC LETTER ALEF WITH HAMZA BELOW */
+    {  634, "afii57414" },		/* ARABIC LETTER YEH WITH HAMZA ABOVE */
+    {  635, "afii57415" },		/* ARABIC LETTER ALEF */
+    {  636, "afii57416" },		/* ARABIC LETTER BEH */
+    {  637, "afii57417" },		/* ARABIC LETTER TEH MARBUTA */
+    {  638, "afii57418" },		/* ARABIC LETTER TEH */
+    {  639, "afii57419" },		/* ARABIC LETTER THEH */
+    {  640, "afii57420" },		/* ARABIC LETTER JEEM */
+    {  641, "afii57421" },		/* ARABIC LETTER HAH */
+    {  642, "afii57422" },		/* ARABIC LETTER KHAH */
+    {  643, "afii57423" },		/* ARABIC LETTER DAL */
+    {  644, "afii57424" },		/* ARABIC LETTER THAL */
+    {  645, "afii57425" },		/* ARABIC LETTER REH */
+    {  646, "afii57426" },		/* ARABIC LETTER ZAIN */
+    {  647, "afii57427" },		/* ARABIC LETTER SEEN */
+    {  648, "afii57428" },		/* ARABIC LETTER SHEEN */
+    {  649, "afii57429" },		/* ARABIC LETTER SAD */
+    {  650, "afii57430" },		/* ARABIC LETTER DAD */
+    {  651, "afii57431" },		/* ARABIC LETTER TAH */
+    {  652, "afii57432" },		/* ARABIC LETTER ZAH */
+    {  653, "afii57433" },		/* ARABIC LETTER AIN */
+    {  654, "afii57434" },		/* ARABIC LETTER GHAIN */
+    {  655, "afii57440" },		/* ARABIC TATWEEL */
+    {  656, "afii57441" },		/* ARABIC LETTER FEH */
+    {  657, "afii57442" },		/* ARABIC LETTER QAF */
+    {  658, "afii57443" },		/* ARABIC LETTER KAF */
+    {  659, "afii57444" },		/* ARABIC LETTER LAM */
+    {  660, "afii57445" },		/* ARABIC LETTER MEEM */
+    {  661, "afii57446" },		/* ARABIC LETTER NOON */
+    {  662, "afii57448" },		/* ARABIC LETTER WAW */
+    {  663, "afii57449" },		/* ARABIC LETTER ALEF MAKSURA */
+    {  664, "afii57450" },		/* ARABIC LETTER YEH */
+    {  665, "afii57451" },		/* ARABIC FATHATAN */
+    {  666, "afii57452" },		/* ARABIC DAMMATAN */
+    {  667, "afii57453" },		/* ARABIC KASRATAN */
+    {  668, "afii57454" },		/* ARABIC FATHA */
+    {  669, "afii57455" },		/* ARABIC DAMMA */
+    {  670, "afii57456" },		/* ARABIC KASRA */
+    {  671, "afii57457" },		/* ARABIC SHADDA */
+    {  672, "afii57458" },		/* ARABIC SUKUN */
+    {  673, "afii57470" },		/* ARABIC LETTER HEH */
+    {  674, "afii57505" },		/* ARABIC LETTER VEH */
+    {  675, "afii57506" },		/* ARABIC LETTER PEH */
+    {  676, "afii57507" },		/* ARABIC LETTER TCHEH */
+    {  677, "afii57508" },		/* ARABIC LETTER JEH */
+    {  678, "afii57509" },		/* ARABIC LETTER GAF */
+    {  679, "afii57511" },		/* ARABIC LETTER TTEH */
+    {  680, "afii57512" },		/* ARABIC LETTER DDAL */
+    {  681, "afii57513" },		/* ARABIC LETTER RREH */
+    {  682, "afii57514" },		/* ARABIC LETTER NOON GHUNNA */
+    {  683, "afii57519" },		/* ARABIC LETTER YEH BARREE */
+    {  684, "afii57534" },		/* ARABIC LETTER AE */
+    {  685, "afii57636" },		/* NEW SHEQEL SIGN */
+    {  686, "afii57645" },		/* HEBREW PUNCTUATION MAQAF */
+    {  687, "afii57658" },		/* HEBREW PUNCTUATION SOF PASUQ */
+    {  688, "afii57664" },		/* HEBREW LETTER ALEF */
+    {  689, "afii57665" },		/* HEBREW LETTER BET */
+    {  690, "afii57666" },		/* HEBREW LETTER GIMEL */
+    {  691, "afii57667" },		/* HEBREW LETTER DALET */
+    {  692, "afii57668" },		/* HEBREW LETTER HE */
+    {  693, "afii57669" },		/* HEBREW LETTER VAV */
+    {  694, "afii57670" },		/* HEBREW LETTER ZAYIN */
+    {  695, "afii57671" },		/* HEBREW LETTER HET */
+    {  696, "afii57672" },		/* HEBREW LETTER TET */
+    {  697, "afii57673" },		/* HEBREW LETTER YOD */
+    {  698, "afii57674" },		/* HEBREW LETTER FINAL KAF */
+    {  699, "afii57675" },		/* HEBREW LETTER KAF */
+    {  700, "afii57676" },		/* HEBREW LETTER LAMED */
+    {  701, "afii57677" },		/* HEBREW LETTER FINAL MEM */
+    {  702, "afii57678" },		/* HEBREW LETTER MEM */
+    {  703, "afii57679" },		/* HEBREW LETTER FINAL NUN */
+    {  704, "afii57680" },		/* HEBREW LETTER NUN */
+    {  705, "afii57681" },		/* HEBREW LETTER SAMEKH */
+    {  706, "afii57682" },		/* HEBREW LETTER AYIN */
+    {  707, "afii57683" },		/* HEBREW LETTER FINAL PE */
+    {  708, "afii57684" },		/* HEBREW LETTER PE */
+    {  709, "afii57685" },		/* HEBREW LETTER FINAL TSADI */
+    {  710, "afii57686" },		/* HEBREW LETTER TSADI */
+    {  711, "afii57687" },		/* HEBREW LETTER QOF */
+    {  712, "afii57688" },		/* HEBREW LETTER RESH */
+    {  713, "afii57689" },		/* HEBREW LETTER SHIN */
+    {  714, "afii57690" },		/* HEBREW LETTER TAV */
+    {  715, "afii57694" },		/* HEBREW LETTER SHIN WITH SHIN DOT */
+    {  716, "afii57695" },		/* HEBREW LETTER SHIN WITH SIN DOT */
+    {  717, "afii57700" },		/* HEBREW LETTER VAV WITH HOLAM */
+    {  718, "afii57705" },		/* HEBREW LIGATURE YIDDISH YOD YOD PATAH */
+    {  719, "afii57716" },		/* HEBREW LIGATURE YIDDISH DOUBLE VAV */
+    {  720, "afii57717" },		/* HEBREW LIGATURE YIDDISH VAV YOD */
+    {  721, "afii57718" },		/* HEBREW LIGATURE YIDDISH DOUBLE YOD */
+    {  722, "afii57723" },		/* HEBREW LETTER VAV WITH DAGESH */
+    {  723, "afii57793" },		/* HEBREW POINT HIRIQ */
+    {  724, "afii57794" },		/* HEBREW POINT TSERE */
+    {  725, "afii57795" },		/* HEBREW POINT SEGOL */
+    {  726, "afii57796" },		/* HEBREW POINT QUBUTS */
+    {  727, "afii57797" },		/* HEBREW POINT QAMATS */
+    {  728, "afii57798" },		/* HEBREW POINT PATAH */
+    {  729, "afii57799" },		/* HEBREW POINT SHEVA */
+    {  730, "afii57800" },		/* HEBREW POINT HATAF PATAH */
+    {  731, "afii57801" },		/* HEBREW POINT HATAF SEGOL */
+    {  732, "afii57802" },		/* HEBREW POINT HATAF QAMATS */
+    {  733, "afii57803" },		/* HEBREW POINT SIN DOT */
+    {  734, "afii57804" },		/* HEBREW POINT SHIN DOT */
+    {  735, "afii57806" },		/* HEBREW POINT HOLAM */
+    {  736, "afii57807" },		/* HEBREW POINT DAGESH OR MAPIQ */
+    {  737, "afii57839" },		/* HEBREW POINT METEG */
+    {  738, "afii57841" },		/* HEBREW POINT RAFE */
+    {  739, "afii57842" },		/* HEBREW PUNCTUATION PASEQ */
+    {  740, "afii57929" },		/* MODIFIER LETTER APOSTROPHE */
+    {  741, "afii61248" },		/* CARE OF */
+    {  742, "afii61289" },		/* SCRIPT SMALL L */
+    {  743, "afii61352" },		/* NUMERO SIGN */
+    {  744, "afii61573" },		/* POP DIRECTIONAL FORMATTING */
+    {  745, "afii61574" },		/* LEFT-TO-RIGHT OVERRIDE */
+    {  746, "afii61575" },		/* RIGHT-TO-LEFT OVERRIDE */
+    {  747, "afii61664" },		/* ZERO WIDTH NON-JOINER */
+    {  748, "afii63167" },		/* ARABIC FIVE POINTED STAR */
+    {  749, "afii64937" },		/* MODIFIER LETTER REVERSED COMMA */
+    {  750, "agrave" },			/* LATIN SMALL LETTER A WITH GRAVE */
+    {  751, "aleph" },			/* ALEF SYMBOL */
+    {  752, "alpha" },			/* GREEK SMALL LETTER ALPHA */
+    {  753, "alphatonos" },		/* GREEK SMALL LETTER ALPHA WITH TONOS */
+    {  754, "amacron" },		/* LATIN SMALL LETTER A WITH MACRON */
+    {  755, "ampersand" },		/* AMPERSAND */
+    {  756, "ampersandsmall" },		/* SMALL CAPITAL AMPERSAND */
+    {  757, "angle" },			/* ANGLE */
+    {  758, "angleleft" },		/* LEFT-POINTING ANGLE BRACKET */
+    {  759, "angleright" },		/* RIGHT-POINTING ANGLE BRACKET */
+    {  760, "anoteleia" },		/* GREEK ANO TELEIA */
+    {  761, "aogonek" },		/* LATIN SMALL LETTER A WITH OGONEK */
+    {  762, "apple" },			/* FONT FAMILY;Symbol */
+    {  763, "approxequal" },		/* ALMOST EQUAL TO */
+    {  764, "aring" },			/* LATIN SMALL LETTER A WITH RING ABOVE */
+    {  765, "aringacute" },		/* LATIN SMALL LETTER A WITH RING ABOVE AND ACUTE */
+    {  766, "arrowboth" },		/* LEFT RIGHT ARROW */
+    {  767, "arrowdblboth" },		/* LEFT RIGHT DOUBLE ARROW */
+    {  768, "arrowdbldown" },		/* DOWNWARDS DOUBLE ARROW */
+    {  769, "arrowdblleft" },		/* LEFTWARDS DOUBLE ARROW */
+    {  770, "arrowdblright" },		/* RIGHTWARDS DOUBLE ARROW */
+    {  771, "arrowdblup" },		/* UPWARDS DOUBLE ARROW */
+    {  772, "arrowdown" },		/* DOWNWARDS ARROW */
+    {  773, "arrowhorizex" },		/* HORIZONTAL ARROW EXTENDER */
+    {  774, "arrowleft" },		/* LEFTWARDS ARROW */
+    {  775, "arrowright" },		/* RIGHTWARDS ARROW */
+    {  776, "arrowup" },		/* UPWARDS ARROW */
+    {  777, "arrowupdn" },		/* UP DOWN ARROW */
+    {  778, "arrowupdnbse" },		/* UP DOWN ARROW WITH BASE */
+    {  779, "arrowvertex" },		/* VERTICAL ARROW EXTENDER */
+    {  780, "asciicircum" },		/* CIRCUMFLEX ACCENT */
+    {  781, "asciitilde" },		/* TILDE */
+    {  782, "asterisk" },		/* ASTERISK */
+    {  783, "asteriskmath" },		/* ASTERISK OPERATOR */
+    {  784, "asuperior" },		/* SUPERSCRIPT LATIN SMALL LETTER A */
+    {  785, "at" },			/* COMMERCIAL AT */
+    {  786, "atilde" },			/* LATIN SMALL LETTER A WITH TILDE */
+    {  787, "b" },			/* LATIN SMALL LETTER B */
+    {  788, "backslash" },		/* REVERSE SOLIDUS */
+    {  789, "bar" },			/* VERTICAL LINE */
+    {  790, "beta" },			/* GREEK SMALL LETTER BETA */
+    {  791, "block" },			/* FULL BLOCK */
+    {  792, "braceex" },		/* CURLY BRACKET EXTENDER */
+    {  793, "braceleft" },		/* LEFT CURLY BRACKET */
+    {  794, "braceleftbt" },		/* LEFT CURLY BRACKET BOTTOM */
+    {  795, "braceleftmid" },		/* LEFT CURLY BRACKET MID */
+    {  796, "bracelefttp" },		/* LEFT CURLY BRACKET TOP */
+    {  797, "braceright" },		/* RIGHT CURLY BRACKET */
+    {  798, "bracerightbt" },		/* RIGHT CURLY BRACKET BOTTOM */
+    {  799, "bracerightmid" },		/* RIGHT CURLY BRACKET MID */
+    {  800, "bracerighttp" },		/* RIGHT CURLY BRACKET TOP */
+    {  801, "bracketleft" },		/* LEFT SQUARE BRACKET */
+    {  802, "bracketleftbt" },		/* LEFT SQUARE BRACKET BOTTOM */
+    {  803, "bracketleftex" },		/* LEFT SQUARE BRACKET EXTENDER */
+    {  804, "bracketlefttp" },		/* LEFT SQUARE BRACKET TOP */
+    {  805, "bracketright" },		/* RIGHT SQUARE BRACKET */
+    {  806, "bracketrightbt" },		/* RIGHT SQUARE BRACKET BOTTOM */
+    {  807, "bracketrightex" },		/* RIGHT SQUARE BRACKET EXTENDER */
+    {  808, "bracketrighttp" },		/* RIGHT SQUARE BRACKET TOP */
+    {  809, "breve" },			/* BREVE */
+    {  810, "brokenbar" },		/* BROKEN BAR */
+    {  811, "bsuperior" },		/* SUPERSCRIPT LATIN SMALL LETTER B */
+    {  812, "bullet" },			/* BULLET */
+    {  813, "c" },			/* LATIN SMALL LETTER C */
+    {  814, "cacute" },			/* LATIN SMALL LETTER C WITH ACUTE */
+    {  815, "caron" },			/* CARON */
+    {  816, "carriagereturn" },		/* DOWNWARDS ARROW WITH CORNER LEFTWARDS */
+    {  817, "ccaron" },			/* LATIN SMALL LETTER C WITH CARON */
+    {  818, "ccedilla" },		/* LATIN SMALL LETTER C WITH CEDILLA */
+    {  819, "ccircumflex" },		/* LATIN SMALL LETTER C WITH CIRCUMFLEX */
+    {  820, "cdotaccent" },		/* LATIN SMALL LETTER C WITH DOT ABOVE */
+    {  821, "cedilla" },		/* CEDILLA */
+    {  822, "cent" },			/* CENT SIGN */
+    {  823, "center" },			/* FONT FAMILY;Courier */
+    {  824, "centinferior" },		/* SUBSCRIPT CENT SIGN */
+    {  825, "centoldstyle" },		/* OLDSTYLE CENT SIGN */
+    {  826, "centsuperior" },		/* SUPERSCRIPT CENT SIGN */
+    {  827, "chi" },			/* GREEK SMALL LETTER CHI */
+    {  828, "circle" },			/* WHITE CIRCLE */
+    {  829, "circlemultiply" },		/* CIRCLED TIMES */
+    {  830, "circleplus" },		/* CIRCLED PLUS */
+    {  831, "circumflex" },		/* MODIFIER LETTER CIRCUMFLEX ACCENT */
+    {  832, "club" },			/* BLACK CLUB SUIT */
+    {  833, "colon" },			/* COLON */
+    {  834, "colonmonetary" },		/* COLON SIGN */
+    {  835, "comma" },			/* COMMA */
+    {  836, "commaaccent" },		/* COMMA BELOW */
+    {  837, "commainferior" },		/* SUBSCRIPT COMMA */
+    {  838, "commasuperior" },		/* SUPERSCRIPT COMMA */
+    {  839, "congruent" },		/* APPROXIMATELY EQUAL TO */
+    {  840, "copyright" },		/* COPYRIGHT SIGN */
+    {  841, "copyrightsans" },		/* COPYRIGHT SIGN SANS SERIF */
+    {  842, "copyrightserif" },		/* COPYRIGHT SIGN SERIF */
+    {  843, "currency" },		/* CURRENCY SIGN */
+    {  844, "cyrBreve" },		/* CAPITAL CYRILLIC BREVE */
+    {  845, "cyrFlex" },		/* CAPITAL CYRILLIC CIRCUMFLEX */
+    {  846, "cyrbreve" },		/* CYRILLIC BREVE */
+    {  847, "cyrflex" },		/* CYRILLIC CIRCUMFLEX */
+    {  848, "d" },			/* LATIN SMALL LETTER D */
+    {  849, "dagger" },			/* DAGGER */
+    {  850, "daggerdbl" },		/* DOUBLE DAGGER */
+    {  851, "dblGrave" },		/* CAPITAL DOUBLE GRAVE ACCENT */
+    {  852, "dblgrave" },		/* DOUBLE GRAVE ACCENT */
+    {  853, "dcaron" },			/* LATIN SMALL LETTER D WITH CARON */
+    {  854, "dcroat" },			/* LATIN SMALL LETTER D WITH STROKE */
+    {  855, "dectab" },			/* FONT FAMILY;Courier */
+    {  856, "degree" },			/* DEGREE SIGN */
+    {  857, "delta" },			/* GREEK SMALL LETTER DELTA */
+    {  858, "diamond" },		/* BLACK DIAMOND SUIT */
+    {  859, "dieresis" },		/* DIAERESIS */
+    {  860, "dieresisacute" },		/* DIAERESIS ACUTE ACCENT */
+    {  861, "dieresisgrave" },		/* DIAERESIS GRAVE ACCENT */
+    {  862, "dieresistonos" },		/* GREEK DIALYTIKA TONOS */
+    {  863, "divide" },			/* DIVISION SIGN */
+    {  864, "dkshade" },		/* DARK SHADE */
+    {  865, "dnblock" },		/* LOWER HALF BLOCK */
+    {  866, "dollar" },			/* DOLLAR SIGN */
+    {  867, "dollarinferior" },		/* SUBSCRIPT DOLLAR SIGN */
+    {  868, "dollaroldstyle" },		/* OLDSTYLE DOLLAR SIGN */
+    {  869, "dollarsuperior" },		/* SUPERSCRIPT DOLLAR SIGN */
+    {  870, "dong" },			/* DONG SIGN */
+    {  871, "dotaccent" },		/* DOT ABOVE */
+    {  872, "dotbelowcomb" },		/* COMBINING DOT BELOW */
+    {  873, "dotlessi" },		/* LATIN SMALL LETTER DOTLESS I */
+    {  874, "dotlessj" },		/* LATIN SMALL LETTER DOTLESS J */
+    {  875, "dotmath" },		/* DOT OPERATOR */
+    {  876, "down" },			/* FONT FAMILY;Courier */
+    {  877, "dsuperior" },		/* SUPERSCRIPT LATIN SMALL LETTER D */
+    {  878, "e" },			/* LATIN SMALL LETTER E */
+    {  879, "eacute" },			/* LATIN SMALL LETTER E WITH ACUTE */
+    {  880, "ebreve" },			/* LATIN SMALL LETTER E WITH BREVE */
+    {  881, "ecaron" },			/* LATIN SMALL LETTER E WITH CARON */
+    {  882, "ecircumflex" },		/* LATIN SMALL LETTER E WITH CIRCUMFLEX */
+    {  883, "edieresis" },		/* LATIN SMALL LETTER E WITH DIAERESIS */
+    {  884, "edotaccent" },		/* LATIN SMALL LETTER E WITH DOT ABOVE */
+    {  885, "egrave" },			/* LATIN SMALL LETTER E WITH GRAVE */
+    {  886, "eight" },			/* DIGIT EIGHT */
+    {  887, "eightinferior" },		/* SUBSCRIPT EIGHT */
+    {  888, "eightoldstyle" },		/* OLDSTYLE DIGIT EIGHT */
+    {  889, "eightsuperior" },		/* SUPERSCRIPT EIGHT */
+    {  890, "element" },		/* ELEMENT OF */
+    {  891, "ellipsis" },		/* HORIZONTAL ELLIPSIS */
+    {  892, "emacron" },		/* LATIN SMALL LETTER E WITH MACRON */
+    {  893, "emdash" },			/* EM DASH */
+    {  894, "emptyset" },		/* EMPTY SET */
+    {  895, "endash" },			/* EN DASH */
+    {  896, "eng" },			/* LATIN SMALL LETTER ENG */
+    {  897, "eogonek" },		/* LATIN SMALL LETTER E WITH OGONEK */
+    {  898, "epsilon" },		/* GREEK SMALL LETTER EPSILON */
+    {  899, "epsilontonos" },		/* GREEK SMALL LETTER EPSILON WITH TONOS */
+    {  900, "equal" },			/* EQUALS SIGN */
+    {  901, "equivalence" },		/* IDENTICAL TO */
+    {  902, "estimated" },		/* ESTIMATED SYMBOL */
+    {  903, "esuperior" },		/* SUPERSCRIPT LATIN SMALL LETTER E */
+    {  904, "eta" },			/* GREEK SMALL LETTER ETA */
+    {  905, "etatonos" },		/* GREEK SMALL LETTER ETA WITH TONOS */
+    {  906, "eth" },			/* LATIN SMALL LETTER ETH */
+    {  907, "exclam" },			/* EXCLAMATION MARK */
+    {  908, "exclamdbl" },		/* DOUBLE EXCLAMATION MARK */
+    {  909, "exclamdown" },		/* INVERTED EXCLAMATION MARK */
+    {  910, "exclamdownsmall" },	/* SMALL CAPITAL INVERTED EXCLAMATION MARK */
+    {  911, "exclamsmall" },		/* SMALL CAPITAL EXCLAMATION MARK */
+    {  912, "existential" },		/* THERE EXISTS */
+    {  913, "f" },			/* LATIN SMALL LETTER F */
+    {  914, "female" },			/* FEMALE SIGN */
+    {  915, "ff" },			/* LATIN SMALL LIGATURE FF */
+    {  916, "ffi" },			/* LATIN SMALL LIGATURE FFI */
+    {  917, "ffl" },			/* LATIN SMALL LIGATURE FFL */
+    {  918, "fi" },			/* LATIN SMALL LIGATURE FI */
+    {  919, "figuredash" },		/* FIGURE DASH */
+    {  920, "filledbox" },		/* BLACK SQUARE */
+    {  921, "filledrect" },		/* BLACK RECTANGLE */
+    {  922, "five" },			/* DIGIT FIVE */
+    {  923, "fiveeighths" },		/* VULGAR FRACTION FIVE EIGHTHS */
+    {  924, "fiveinferior" },		/* SUBSCRIPT FIVE */
+    {  925, "fiveoldstyle" },		/* OLDSTYLE DIGIT FIVE */
+    {  926, "fivesuperior" },		/* SUPERSCRIPT FIVE */
+    {  927, "fl" },			/* LATIN SMALL LIGATURE FL */
+    {  928, "florin" },			/* LATIN SMALL LETTER F WITH HOOK */
+    {  929, "format" },			/* FONT FAMILY;Courier */
+    {  930, "four" },			/* DIGIT FOUR */
+    {  931, "fourinferior" },		/* SUBSCRIPT FOUR */
+    {  932, "fouroldstyle" },		/* OLDSTYLE DIGIT FOUR */
+    {  933, "foursuperior" },		/* SUPERSCRIPT FOUR */
+    {  934, "fraction" },		/* FRACTION SLASH */
+					/* DIVISION SLASH;Duplicate */
+    {  935, "franc" },			/* FRENCH FRANC SIGN */
+    {  936, "g" },			/* LATIN SMALL LETTER G */
+    {  937, "gamma" },			/* GREEK SMALL LETTER GAMMA */
+    {  938, "gbreve" },			/* LATIN SMALL LETTER G WITH BREVE */
+    {  939, "gcaron" },			/* LATIN SMALL LETTER G WITH CARON */
+    {  940, "gcircumflex" },		/* LATIN SMALL LETTER G WITH CIRCUMFLEX */
+    {  941, "gcommaaccent" },		/* LATIN SMALL LETTER G WITH CEDILLA */
+    {  942, "gdotaccent" },		/* LATIN SMALL LETTER G WITH DOT ABOVE */
+    {  943, "germandbls" },		/* LATIN SMALL LETTER SHARP S */
+    {  944, "gradient" },		/* NABLA */
+    {  945, "grave" },			/* GRAVE ACCENT */
+    {  946, "gravecomb" },		/* COMBINING GRAVE ACCENT */
+    {  947, "graybox" },		/* FONT FAMILY;Courier */
+    {  948, "greater" },		/* GREATER-THAN SIGN */
+    {  949, "greaterequal" },		/* GREATER-THAN OR EQUAL TO */
+    {  950, "guillemotleft" },		/* LEFT-POINTING DOUBLE ANGLE QUOTATION MARK */
+    {  951, "guillemotright" },		/* RIGHT-POINTING DOUBLE ANGLE QUOTATION MARK */
+    {  952, "guilsinglleft" },		/* SINGLE LEFT-POINTING ANGLE QUOTATION MARK */
+    {  953, "guilsinglright" },		/* SINGLE RIGHT-POINTING ANGLE QUOTATION MARK */
+    {  954, "h" },			/* LATIN SMALL LETTER H */
+    {  955, "hbar" },			/* LATIN SMALL LETTER H WITH STROKE */
+    {  956, "hcircumflex" },		/* LATIN SMALL LETTER H WITH CIRCUMFLEX */
+    {  957, "heart" },			/* BLACK HEART SUIT */
+    {  958, "hookabovecomb" },		/* COMBINING HOOK ABOVE */
+    {  959, "house" },			/* HOUSE */
+    {  960, "hungarumlaut" },		/* DOUBLE ACUTE ACCENT */
+    {  961, "hyphen" },			/* HYPHEN-MINUS */
+					/* SOFT HYPHEN;Duplicate */
+    {  962, "hypheninferior" },		/* SUBSCRIPT HYPHEN-MINUS */
+    {  963, "hyphensuperior" },		/* SUPERSCRIPT HYPHEN-MINUS */
+    {  964, "i" },			/* LATIN SMALL LETTER I */
+    {  965, "iacute" },			/* LATIN SMALL LETTER I WITH ACUTE */
+    {  966, "ibreve" },			/* LATIN SMALL LETTER I WITH BREVE */
+    {  967, "icircumflex" },		/* LATIN SMALL LETTER I WITH CIRCUMFLEX */
+    {  968, "idieresis" },		/* LATIN SMALL LETTER I WITH DIAERESIS */
+    {  969, "igrave" },			/* LATIN SMALL LETTER I WITH GRAVE */
+    {  970, "ij" },			/* LATIN SMALL LIGATURE IJ */
+    {  971, "imacron" },		/* LATIN SMALL LETTER I WITH MACRON */
+    {  972, "indent" },			/* FONT FAMILY;Courier */
+    {  973, "infinity" },		/* INFINITY */
+    {  974, "integral" },		/* INTEGRAL */
+    {  975, "integralbt" },		/* BOTTOM HALF INTEGRAL */
+    {  976, "integralex" },		/* INTEGRAL EXTENDER */
+    {  977, "integraltp" },		/* TOP HALF INTEGRAL */
+    {  978, "intersection" },		/* INTERSECTION */
+    {  979, "invbullet" },		/* INVERSE BULLET */
+    {  980, "invcircle" },		/* INVERSE WHITE CIRCLE */
+    {  981, "invsmileface" },		/* BLACK SMILING FACE */
+    {  982, "iogonek" },		/* LATIN SMALL LETTER I WITH OGONEK */
+    {  983, "iota" },			/* GREEK SMALL LETTER IOTA */
+    {  984, "iotadieresis" },		/* GREEK SMALL LETTER IOTA WITH DIALYTIKA */
+    {  985, "iotadieresistonos" },	/* GREEK SMALL LETTER IOTA WITH DIALYTIKA AND TONOS */
+    {  986, "iotatonos" },		/* GREEK SMALL LETTER IOTA WITH TONOS */
+    {  987, "isuperior" },		/* SUPERSCRIPT LATIN SMALL LETTER I */
+    {  988, "itilde" },			/* LATIN SMALL LETTER I WITH TILDE */
+    {  989, "j" },			/* LATIN SMALL LETTER J */
+    {  990, "jcircumflex" },		/* LATIN SMALL LETTER J WITH CIRCUMFLEX */
+    {  991, "k" },			/* LATIN SMALL LETTER K */
+    {  992, "kappa" },			/* GREEK SMALL LETTER KAPPA */
+    {  993, "kcommaaccent" },		/* LATIN SMALL LETTER K WITH CEDILLA */
+    {  994, "kgreenlandic" },		/* LATIN SMALL LETTER KRA */
+    {  995, "l" },			/* LATIN SMALL LETTER L */
+    {  996, "lacute" },			/* LATIN SMALL LETTER L WITH ACUTE */
+    {  997, "lambda" },			/* GREEK SMALL LETTER LAMDA */
+    {  998, "largebullet" },		/* FONT FAMILY;Courier */
+    {  999, "lcaron" },			/* LATIN SMALL LETTER L WITH CARON */
+    { 1000, "lcommaaccent" },		/* LATIN SMALL LETTER L WITH CEDILLA */
+    { 1001, "ldot" },			/* LATIN SMALL LETTER L WITH MIDDLE DOT */
+    { 1002, "left" },			/* FONT FAMILY;Courier */
+    { 1003, "less" },			/* LESS-THAN SIGN */
+    { 1004, "lessequal" },		/* LESS-THAN OR EQUAL TO */
+    { 1005, "lfblock" },		/* LEFT HALF BLOCK */
+    { 1006, "lira" },			/* LIRA SIGN */
+    { 1007, "ll" },			/* LATIN SMALL LETTER LL */
+    { 1008, "logicaland" },		/* LOGICAL AND */
+    { 1009, "logicalnot" },		/* NOT SIGN */
+    { 1010, "logicalor" },		/* LOGICAL OR */
+    { 1011, "longs" },			/* LATIN SMALL LETTER LONG S */
+    { 1012, "lozenge" },		/* LOZENGE */
+    { 1013, "lslash" },			/* LATIN SMALL LETTER L WITH STROKE */
+    { 1014, "lsuperior" },		/* SUPERSCRIPT LATIN SMALL LETTER L */
+    { 1015, "ltshade" },		/* LIGHT SHADE */
+    { 1016, "m" },			/* LATIN SMALL LETTER M */
+    { 1017, "macron" },			/* MACRON */
+					/* MODIFIER LETTER MACRON;Duplicate */
+    { 1018, "male" },			/* MALE SIGN */
+    { 1019, "merge" },			/* FONT FAMILY;Courier */
+    { 1020, "minus" },			/* MINUS SIGN */
+    { 1021, "minute" },			/* PRIME */
+    { 1022, "msuperior" },		/* SUPERSCRIPT LATIN SMALL LETTER M */
+    { 1023, "mu" },			/* MICRO SIGN */
+					/* GREEK SMALL LETTER MU;Duplicate */
+    { 1024, "multiply" },		/* MULTIPLICATION SIGN */
+    { 1025, "musicalnote" },		/* EIGHTH NOTE */
+    { 1026, "musicalnotedbl" },		/* BEAMED EIGHTH NOTES */
+    { 1027, "n" },			/* LATIN SMALL LETTER N */
+    { 1028, "nacute" },			/* LATIN SMALL LETTER N WITH ACUTE */
+    { 1029, "napostrophe" },		/* LATIN SMALL LETTER N PRECEDED BY APOSTROPHE */
+    { 1030, "ncaron" },			/* LATIN SMALL LETTER N WITH CARON */
+    { 1031, "ncommaaccent" },		/* LATIN SMALL LETTER N WITH CEDILLA */
+    { 1032, "nine" },			/* DIGIT NINE */
+    { 1033, "nineinferior" },		/* SUBSCRIPT NINE */
+    { 1034, "nineoldstyle" },		/* OLDSTYLE DIGIT NINE */
+    { 1035, "ninesuperior" },		/* SUPERSCRIPT NINE */
+    { 1036, "notegraphic" },		/* FONT FAMILY;Courier */
+    { 1037, "notelement" },		/* NOT AN ELEMENT OF */
+    { 1038, "notequal" },		/* NOT EQUAL TO */
+    { 1039, "notsubset" },		/* NOT A SUBSET OF */
+    { 1040, "nsuperior" },		/* SUPERSCRIPT LATIN SMALL LETTER N */
+    { 1041, "ntilde" },			/* LATIN SMALL LETTER N WITH TILDE */
+    { 1042, "nu" },			/* GREEK SMALL LETTER NU */
+    { 1043, "numbersign" },		/* NUMBER SIGN */
+    { 1044, "o" },			/* LATIN SMALL LETTER O */
+    { 1045, "oacute" },			/* LATIN SMALL LETTER O WITH ACUTE */
+    { 1046, "obreve" },			/* LATIN SMALL LETTER O WITH BREVE */
+    { 1047, "ocircumflex" },		/* LATIN SMALL LETTER O WITH CIRCUMFLEX */
+    { 1048, "odieresis" },		/* LATIN SMALL LETTER O WITH DIAERESIS */
+    { 1049, "oe" },			/* LATIN SMALL LIGATURE OE */
+    { 1050, "ogonek" },			/* OGONEK */
+    { 1051, "ograve" },			/* LATIN SMALL LETTER O WITH GRAVE */
+    { 1052, "ohorn" },			/* LATIN SMALL LETTER O WITH HORN */
+    { 1053, "ohungarumlaut" },		/* LATIN SMALL LETTER O WITH DOUBLE ACUTE */
+    { 1054, "omacron" },		/* LATIN SMALL LETTER O WITH MACRON */
+    { 1055, "omega" },			/* GREEK SMALL LETTER OMEGA */
+    { 1056, "omega1" },			/* GREEK PI SYMBOL */
+    { 1057, "omegatonos" },		/* GREEK SMALL LETTER OMEGA WITH TONOS */
+    { 1058, "omicron" },		/* GREEK SMALL LETTER OMICRON */
+    { 1059, "omicrontonos" },		/* GREEK SMALL LETTER OMICRON WITH TONOS */
+    { 1060, "one" },			/* DIGIT ONE */
+    { 1061, "onedotenleader" },		/* ONE DOT LEADER */
+    { 1062, "oneeighth" },		/* VULGAR FRACTION ONE EIGHTH */
+    { 1063, "onefitted" },		/* PROPORTIONAL DIGIT ONE */
+    { 1064, "onehalf" },		/* VULGAR FRACTION ONE HALF */
+    { 1065, "oneinferior" },		/* SUBSCRIPT ONE */
+    { 1066, "oneoldstyle" },		/* OLDSTYLE DIGIT ONE */
+    { 1067, "onequarter" },		/* VULGAR FRACTION ONE QUARTER */
+    { 1068, "onesuperior" },		/* SUPERSCRIPT ONE */
+    { 1069, "onethird" },		/* VULGAR FRACTION ONE THIRD */
+    { 1070, "openbullet" },		/* WHITE BULLET */
+    { 1071, "ordfeminine" },		/* FEMININE ORDINAL INDICATOR */
+    { 1072, "ordmasculine" },		/* MASCULINE ORDINAL INDICATOR */
+    { 1073, "orthogonal" },		/* RIGHT ANGLE */
+    { 1074, "oslash" },			/* LATIN SMALL LETTER O WITH STROKE */
+    { 1075, "oslashacute" },		/* LATIN SMALL LETTER O WITH STROKE AND ACUTE */
+    { 1076, "osuperior" },		/* SUPERSCRIPT LATIN SMALL LETTER O */
+    { 1077, "otilde" },			/* LATIN SMALL LETTER O WITH TILDE */
+    { 1078, "overscore" },		/* FONT FAMILY;Courier */
+    { 1079, "p" },			/* LATIN SMALL LETTER P */
+    { 1080, "paragraph" },		/* PILCROW SIGN */
+    { 1081, "parenleft" },		/* LEFT PARENTHESIS */
+    { 1082, "parenleftbt" },		/* LEFT PAREN BOTTOM */
+    { 1083, "parenleftex" },		/* LEFT PAREN EXTENDER */
+    { 1084, "parenleftinferior" },	/* SUBSCRIPT LEFT PARENTHESIS */
+    { 1085, "parenleftsuperior" },	/* SUPERSCRIPT LEFT PARENTHESIS */
+    { 1086, "parenlefttp" },		/* LEFT PAREN TOP */
+    { 1087, "parenright" },		/* RIGHT PARENTHESIS */
+    { 1088, "parenrightbt" },		/* RIGHT PAREN BOTTOM */
+    { 1089, "parenrightex" },		/* RIGHT PAREN EXTENDER */
+    { 1090, "parenrightinferior" },	/* SUBSCRIPT RIGHT PARENTHESIS */
+    { 1091, "parenrightsuperior" },	/* SUPERSCRIPT RIGHT PARENTHESIS */
+    { 1092, "parenrighttp" },		/* RIGHT PAREN TOP */
+    { 1093, "partialdiff" },		/* PARTIAL DIFFERENTIAL */
+    { 1094, "percent" },		/* PERCENT SIGN */
+    { 1095, "period" },			/* FULL STOP */
+    { 1096, "periodcentered" },		/* MIDDLE DOT */
+					/* BULLET OPERATOR;Duplicate */
+    { 1097, "periodinferior" },		/* SUBSCRIPT FULL STOP */
+    { 1098, "periodsuperior" },		/* SUPERSCRIPT FULL STOP */
+    { 1099, "perpendicular" },		/* UP TACK */
+    { 1100, "perthousand" },		/* PER MILLE SIGN */
+    { 1101, "peseta" },			/* PESETA SIGN */
+    { 1102, "phi" },			/* GREEK SMALL LETTER PHI */
+    { 1103, "phi1" },			/* GREEK PHI SYMBOL */
+    { 1104, "pi" },			/* GREEK SMALL LETTER PI */
+    { 1105, "plus" },			/* PLUS SIGN */
+    { 1106, "plusminus" },		/* PLUS-MINUS SIGN */
+    { 1107, "prescription" },		/* PRESCRIPTION TAKE */
+    { 1108, "product" },		/* N-ARY PRODUCT */
+    { 1109, "propersubset" },		/* SUBSET OF */
+    { 1110, "propersuperset" },		/* SUPERSET OF */
+    { 1111, "proportional" },		/* PROPORTIONAL TO */
+    { 1112, "psi" },			/* GREEK SMALL LETTER PSI */
+    { 1113, "q" },			/* LATIN SMALL LETTER Q */
+    { 1114, "question" },		/* QUESTION MARK */
+    { 1115, "questiondown" },		/* INVERTED QUESTION MARK */
+    { 1116, "questiondownsmall" },	/* SMALL CAPITAL INVERTED QUESTION MARK */
+    { 1117, "questionsmall" },		/* SMALL CAPITAL QUESTION MARK */
+    { 1118, "quotedbl" },		/* QUOTATION MARK */
+    { 1119, "quotedblbase" },		/* DOUBLE LOW-9 QUOTATION MARK */
+    { 1120, "quotedblleft" },		/* LEFT DOUBLE QUOTATION MARK */
+    { 1121, "quotedblright" },		/* RIGHT DOUBLE QUOTATION MARK */
+    { 1122, "quoteleft" },		/* LEFT SINGLE QUOTATION MARK */
+    { 1123, "quotereversed" },		/* SINGLE HIGH-REVERSED-9 QUOTATION MARK */
+    { 1124, "quoteright" },		/* RIGHT SINGLE QUOTATION MARK */
+    { 1125, "quotesinglbase" },		/* SINGLE LOW-9 QUOTATION MARK */
+    { 1126, "quotesingle" },		/* APOSTROPHE */
+    { 1127, "r" },			/* LATIN SMALL LETTER R */
+    { 1128, "racute" },			/* LATIN SMALL LETTER R WITH ACUTE */
+    { 1129, "radical" },		/* SQUARE ROOT */
+    { 1130, "radicalex" },		/* RADICAL EXTENDER */
+    { 1131, "rcaron" },			/* LATIN SMALL LETTER R WITH CARON */
+    { 1132, "rcommaaccent" },		/* LATIN SMALL LETTER R WITH CEDILLA */
+    { 1133, "reflexsubset" },		/* SUBSET OF OR EQUAL TO */
+    { 1134, "reflexsuperset" },		/* SUPERSET OF OR EQUAL TO */
+    { 1135, "registered" },		/* REGISTERED SIGN */
+    { 1136, "registersans" },		/* REGISTERED SIGN SANS SERIF */
+    { 1137, "registerserif" },		/* REGISTERED SIGN SERIF */
+    { 1138, "return" },			/* FONT FAMILY;Courier */
+    { 1139, "revlogicalnot" },		/* REVERSED NOT SIGN */
+    { 1140, "rho" },			/* GREEK SMALL LETTER RHO */
+    { 1141, "ring" },			/* RING ABOVE */
+    { 1142, "rsuperior" },		/* SUPERSCRIPT LATIN SMALL LETTER R */
+    { 1143, "rtblock" },		/* RIGHT HALF BLOCK */
+    { 1144, "rupiah" },			/* RUPIAH SIGN */
+    { 1145, "s" },			/* LATIN SMALL LETTER S */
+    { 1146, "sacute" },			/* LATIN SMALL LETTER S WITH ACUTE */
+    { 1147, "scaron" },			/* LATIN SMALL LETTER S WITH CARON */
+    { 1148, "scedilla" },		/* LATIN SMALL LETTER S WITH CEDILLA */
+					/* LATIN SMALL LETTER S WITH CEDILLA;Duplicate */
+    { 1149, "scircumflex" },		/* LATIN SMALL LETTER S WITH CIRCUMFLEX */
+    { 1150, "scommaaccent" },		/* LATIN SMALL LETTER S WITH COMMA BELOW */
+    { 1151, "second" },			/* DOUBLE PRIME */
+    { 1152, "section" },		/* SECTION SIGN */
+    { 1153, "semicolon" },		/* SEMICOLON */
+    { 1154, "seven" },			/* DIGIT SEVEN */
+    { 1155, "seveneighths" },		/* VULGAR FRACTION SEVEN EIGHTHS */
+    { 1156, "seveninferior" },		/* SUBSCRIPT SEVEN */
+    { 1157, "sevenoldstyle" },		/* OLDSTYLE DIGIT SEVEN */
+    { 1158, "sevensuperior" },		/* SUPERSCRIPT SEVEN */
+    { 1159, "shade" },			/* MEDIUM SHADE */
+    { 1160, "sigma" },			/* GREEK SMALL LETTER SIGMA */
+    { 1161, "sigma1" },			/* GREEK SMALL LETTER FINAL SIGMA */
+    { 1162, "similar" },		/* TILDE OPERATOR */
+    { 1163, "six" },			/* DIGIT SIX */
+    { 1164, "sixinferior" },		/* SUBSCRIPT SIX */
+    { 1165, "sixoldstyle" },		/* OLDSTYLE DIGIT SIX */
+    { 1166, "sixsuperior" },		/* SUPERSCRIPT SIX */
+    { 1167, "slash" },			/* SOLIDUS */
+    { 1168, "smileface" },		/* WHITE SMILING FACE */
+    { 1169, "space" },			/* SPACE */
+					/* NO-BREAK SPACE;Duplicate */
+    { 1170, "spade" },			/* BLACK SPADE SUIT */
+    { 1171, "square" },			/* FONT FAMILY;Courier */
+    { 1172, "ssuperior" },		/* SUPERSCRIPT LATIN SMALL LETTER S */
+    { 1173, "sterling" },		/* POUND SIGN */
+    { 1174, "stop" },			/* FONT FAMILY;Courier */
+    { 1175, "suchthat" },		/* CONTAINS AS MEMBER */
+    { 1176, "summation" },		/* N-ARY SUMMATION */
+    { 1177, "sun" },			/* WHITE SUN WITH RAYS */
+    { 1178, "t" },			/* LATIN SMALL LETTER T */
+    { 1179, "tab" },			/* FONT FAMILY;Courier */
+    { 1180, "tau" },			/* GREEK SMALL LETTER TAU */
+    { 1181, "tbar" },			/* LATIN SMALL LETTER T WITH STROKE */
+    { 1182, "tcaron" },			/* LATIN SMALL LETTER T WITH CARON */
+    { 1183, "tcommaaccent" },		/* LATIN SMALL LETTER T WITH CEDILLA */
+					/* LATIN SMALL LETTER T WITH COMMA BELOW;Duplicate */
+    { 1184, "therefore" },		/* THEREFORE */
+    { 1185, "theta" },			/* GREEK SMALL LETTER THETA */
+    { 1186, "theta1" },			/* GREEK THETA SYMBOL */
+    { 1187, "thorn" },			/* LATIN SMALL LETTER THORN */
+    { 1188, "three" },			/* DIGIT THREE */
+    { 1189, "threeeighths" },		/* VULGAR FRACTION THREE EIGHTHS */
+    { 1190, "threeinferior" },		/* SUBSCRIPT THREE */
+    { 1191, "threeoldstyle" },		/* OLDSTYLE DIGIT THREE */
+    { 1192, "threequarters" },		/* VULGAR FRACTION THREE QUARTERS */
+    { 1193, "threequartersemdash" },	/* THREE QUARTERS EM DASH */
+    { 1194, "threesuperior" },		/* SUPERSCRIPT THREE */
+    { 1195, "tilde" },			/* SMALL TILDE */
+    { 1196, "tildecomb" },		/* COMBINING TILDE */
+    { 1197, "tonos" },			/* GREEK TONOS */
+    { 1198, "trademark" },		/* TRADE MARK SIGN */
+    { 1199, "trademarksans" },		/* TRADE MARK SIGN SANS SERIF */
+    { 1200, "trademarkserif" },		/* TRADE MARK SIGN SERIF */
+    { 1201, "triagdn" },		/* BLACK DOWN-POINTING TRIANGLE */
+    { 1202, "triaglf" },		/* BLACK LEFT-POINTING POINTER */
+    { 1203, "triagrt" },		/* BLACK RIGHT-POINTING POINTER */
+    { 1204, "triagup" },		/* BLACK UP-POINTING TRIANGLE */
+    { 1205, "tsuperior" },		/* SUPERSCRIPT LATIN SMALL LETTER T */
+    { 1206, "two" },			/* DIGIT TWO */
+    { 1207, "twodotenleader" },		/* TWO DOT LEADER */
+    { 1208, "twoinferior" },		/* SUBSCRIPT TWO */
+    { 1209, "twooldstyle" },		/* OLDSTYLE DIGIT TWO */
+    { 1210, "twosuperior" },		/* SUPERSCRIPT TWO */
+    { 1211, "twothirds" },		/* VULGAR FRACTION TWO THIRDS */
+    { 1212, "u" },			/* LATIN SMALL LETTER U */
+    { 1213, "uacute" },			/* LATIN SMALL LETTER U WITH ACUTE */
+    { 1214, "ubreve" },			/* LATIN SMALL LETTER U WITH BREVE */
+    { 1215, "ucircumflex" },		/* LATIN SMALL LETTER U WITH CIRCUMFLEX */
+    { 1216, "udieresis" },		/* LATIN SMALL LETTER U WITH DIAERESIS */
+    { 1217, "ugrave" },			/* LATIN SMALL LETTER U WITH GRAVE */
+    { 1218, "uhorn" },			/* LATIN SMALL LETTER U WITH HORN */
+    { 1219, "uhungarumlaut" },		/* LATIN SMALL LETTER U WITH DOUBLE ACUTE */
+    { 1220, "umacron" },		/* LATIN SMALL LETTER U WITH MACRON */
+    { 1221, "underscore" },		/* LOW LINE */
+    { 1222, "underscoredbl" },		/* DOUBLE LOW LINE */
+    { 1223, "union" },			/* UNION */
+    { 1224, "universal" },		/* FOR ALL */
+    { 1225, "uogonek" },		/* LATIN SMALL LETTER U WITH OGONEK */
+    { 1226, "up" },			/* FONT FAMILY;Courier */
+    { 1227, "upblock" },		/* UPPER HALF BLOCK */
+    { 1228, "upsilon" },		/* GREEK SMALL LETTER UPSILON */
+    { 1229, "upsilondieresis" },	/* GREEK SMALL LETTER UPSILON WITH DIALYTIKA */
+    { 1230, "upsilondieresistonos" },	/* GREEK SMALL LETTER UPSILON WITH DIALYTIKA AND TONOS */
+    { 1231, "upsilontonos" },		/* GREEK SMALL LETTER UPSILON WITH TONOS */
+    { 1232, "uring" },			/* LATIN SMALL LETTER U WITH RING ABOVE */
+    { 1233, "utilde" },			/* LATIN SMALL LETTER U WITH TILDE */
+    { 1234, "v" },			/* LATIN SMALL LETTER V */
+    { 1235, "w" },			/* LATIN SMALL LETTER W */
+    { 1236, "wacute" },			/* LATIN SMALL LETTER W WITH ACUTE */
+    { 1237, "wcircumflex" },		/* LATIN SMALL LETTER W WITH CIRCUMFLEX */
+    { 1238, "wdieresis" },		/* LATIN SMALL LETTER W WITH DIAERESIS */
+    { 1239, "weierstrass" },		/* SCRIPT CAPITAL P */
+    { 1240, "wgrave" },			/* LATIN SMALL LETTER W WITH GRAVE */
+    { 1241, "x" },			/* LATIN SMALL LETTER X */
+    { 1242, "xi" },			/* GREEK SMALL LETTER XI */
+    { 1243, "y" },			/* LATIN SMALL LETTER Y */
+    { 1244, "yacute" },			/* LATIN SMALL LETTER Y WITH ACUTE */
+    { 1245, "ycircumflex" },		/* LATIN SMALL LETTER Y WITH CIRCUMFLEX */
+    { 1246, "ydieresis" },		/* LATIN SMALL LETTER Y WITH DIAERESIS */
+    { 1247, "yen" },			/* YEN SIGN */
+    { 1248, "ygrave" },			/* LATIN SMALL LETTER Y WITH GRAVE */
+    { 1249, "z" },			/* LATIN SMALL LETTER Z */
+    { 1250, "zacute" },			/* LATIN SMALL LETTER Z WITH ACUTE */
+    { 1251, "zcaron" },			/* LATIN SMALL LETTER Z WITH CARON */
+    { 1252, "zdotaccent" },		/* LATIN SMALL LETTER Z WITH DOT ABOVE */
+    { 1253, "zero" },			/* DIGIT ZERO */
+    { 1254, "zeroinferior" },		/* SUBSCRIPT ZERO */
+    { 1255, "zerooldstyle" },		/* OLDSTYLE DIGIT ZERO */
+    { 1256, "zerosuperior" },		/* SUPERSCRIPT ZERO */
+    { 1257, "zeta" }			/* GREEK SMALL LETTER ZETA */
 };
 
 

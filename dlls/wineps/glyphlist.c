@@ -18,6 +18,7 @@ DEFAULT_DEBUG_CHANNEL(psdrv);
 
 static GLYPHNAME    **glyphList = NULL;
 static INT	    glyphListSize = 0;
+static BOOL 	    glyphNamesIndexed = TRUE;
 
 /*******************************************************************************
  *	PSDRV_GlyphListInit
@@ -60,9 +61,6 @@ INT PSDRV_GlyphListInit()
  *
  *  Inserts a copy of the  glyph name into the list at the index, growing the
  *  list if necessary; returns index on success (-1 on failure)
- *
- *  _glyphname is a version of GLYPHNAME with non-constant members, so it can
- *  be initialized without generating compiler warnings
  *
  */
 inline static INT GlyphListInsert(LPCSTR szName, INT index)
@@ -109,6 +107,7 @@ inline static INT GlyphListInsert(LPCSTR szName, INT index)
 
     glyphList[index] = g;
     ++glyphListSize;
+    glyphNamesIndexed = FALSE;
 
     TRACE("Added '%s' at glyphList[%i] (glyphListSize now %i)\n",
 	    glyphList[index]->sz, index, glyphListSize);
@@ -180,6 +179,9 @@ GLYPHNAME *PSDRV_GlyphName(LPCSTR szName)
 VOID PSDRV_IndexGlyphList()
 {
     INT i;
+    
+    if (glyphNamesIndexed == TRUE)
+    	return;
 
     TRACE("%i glyph names:\n", glyphListSize);
 
@@ -188,4 +190,6 @@ VOID PSDRV_IndexGlyphList()
     	glyphList[i]->index = i;
 	TRACE("  glyphList[%i] -> '%s'\n", i, glyphList[i]->sz);
     }
+    
+    glyphNamesIndexed = TRUE;
 }
