@@ -489,7 +489,7 @@ DWORD WINAPI SetWindowStationUser(DWORD x1,DWORD x2) {
  *           SetLogonNotifyWindow   (USER32.486)
  */
 DWORD WINAPI SetLogonNotifyWindow(HWINSTA32 hwinsta,HWND32 hwnd) {
-	FIXME(win32,"(0x%x,%ld),stub!\n",hwinsta,hwnd);
+	FIXME(win32,"(0x%x,%04x),stub!\n",hwinsta,hwnd);
 	return 1;
 }
 

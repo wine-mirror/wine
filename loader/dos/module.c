@@ -43,6 +43,8 @@
 #define SEG16(ptr,seg) ((LPVOID)((BYTE*)ptr+((DWORD)(seg)<<4)))
 #define SEGPTR16(ptr,segptr) ((LPVOID)((BYTE*)ptr+((DWORD)SELECTOROF(segptr)<<4)+OFFSETOF(segptr)))
 
+extern WORD WINAPI SYSTEM_KillSystemTimer( WORD timer );
+
 static void MZ_InitPSP( LPVOID lpPSP, LPCSTR cmdline, WORD env )
 {
  PDB*psp=lpPSP;

@@ -709,7 +709,7 @@ INT32 WINAPI GetLocaleInfo32A(LCID lcid,LCTYPE LCType,LPSTR buf,INT32 len)
 
     if(!found) {
       ERR(ole,"'%s' not supported for your language (%04X).\n",
-			retString,lcid);
+			retString,(WORD)lcid);
 		SetLastError(ERROR_INVALID_PARAMETER);
 		return 0;			
 	}

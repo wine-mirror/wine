@@ -151,7 +151,7 @@ NTSTATUS WINAPI NtFsControlFile(
  */
 NTSTATUS WINAPI NtOpenKey(DWORD x1,DWORD x2,LPUNICODE_STRING key) {
 	FIXME(ntdll,"(0x%08lx,0x%08lx,%s),stub!\n",x1,x2,debugstr_w(key->Buffer));
-	return RegOpenKey32W(HKEY_LOCAL_MACHINE,key->Buffer,x1);
+	return RegOpenKey32W(HKEY_LOCAL_MACHINE,key->Buffer,(LPHKEY)x1);
 }
 
 /******************************************************************************

@@ -101,7 +101,7 @@ static BYTE *GetCurrentDTA( CONTEXT *context )
 
     /* FIXME: This assumes DTA was set correctly! */
     return (BYTE *)CTX_SEG_OFF_TO_LIN( context, SELECTOROF(pTask->dta), 
-                                                OFFSETOF(pTask->dta) );
+                                                (DWORD)OFFSETOF(pTask->dta) );
 }
 
 

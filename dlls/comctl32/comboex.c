@@ -27,7 +27,7 @@
 #define COMBOEX_GetInfoPtr(wndPtr) ((COMBOEX_INFO *)wndPtr->wExtra[0])
 
 
-// << COMBOEX_DeleteItem >>
+/* << COMBOEX_DeleteItem >> */
 
 
 __inline__ static LRESULT
@@ -137,7 +137,7 @@ COMBOEX_SetItem32A (WND *wndPtr, WPARAM32 wParam, LPARAM lParam)
 }
 
 
-// << COMBOEX_SetItem32W >>
+/* << COMBOEX_SetItem32W >> */
 
 
 __inline__ static LRESULT
@@ -145,7 +145,7 @@ COMBOEX_Forward (WND *wndPtr, UINT32 uMsg, WPARAM32 wParam, LPARAM lParam)
 {
     COMBOEX_INFO *infoPtr = COMBOEX_GetInfoPtr(wndPtr);
 
-    FIXME (comboex, "(0x%lx 0x%lx 0x%lx): stub\n", uMsg, wParam, lParam);
+    FIXME (comboex, "(0x%x 0x%x 0x%lx): stub\n", uMsg, wParam, lParam);
 
     if (infoPtr->hwndCombo)    
 	return SendMessage32A (infoPtr->hwndCombo, uMsg, wParam, lParam);
@@ -234,7 +234,7 @@ COMBOEX_WindowProc (HWND32 hwnd, UINT32 uMsg, WPARAM32 wParam, LPARAM lParam)
 
     switch (uMsg)
     {
-//	case CBEM_DELETEITEM:
+/*	case CBEM_DELETEITEM: */
 
 	case CBEM_GETCOMBOCONTROL:
 	    return COMBOEX_GetComboControl (wndPtr, wParam, lParam);
@@ -248,15 +248,16 @@ COMBOEX_WindowProc (HWND32 hwnd, UINT32 uMsg, WPARAM32 wParam, LPARAM lParam)
 	case CBEM_GETIMAGELIST:
 	    return COMBOEX_GetImageList (wndPtr, wParam, lParam);
 
-//	case CBEM_GETITEM32A:
-//	case CBEM_GETITEM32W:
-//	case CBEM_GETUNICODEFORMAT:
-//	case CBEM_HASEDITCHANGED:
+/*	case CBEM_GETITEM32A:
+	case CBEM_GETITEM32W:
+	case CBEM_GETUNICODEFORMAT:
+	case CBEM_HASEDITCHANGED:
+*/
 
 	case CBEM_INSERTITEM32A:
 	    return COMBOEX_InsertItem32A (wndPtr, wParam, lParam);
 
-//	case CBEM_INSERTITEM32W:
+/*	case CBEM_INSERTITEM32W: */
 
 	case CBEM_SETEXTENDEDSTYLE:
 	    return COMBOEX_SetExtendedStyle (wndPtr, wParam, lParam);
@@ -267,8 +268,9 @@ COMBOEX_WindowProc (HWND32 hwnd, UINT32 uMsg, WPARAM32 wParam, LPARAM lParam)
 	case CBEM_SETITEM32A:
 	    return COMBOEX_SetItem32A (wndPtr, wParam, lParam);
 
-//	case CBEM_SETITEM32W:
-//	case CBEM_SETUNICODEFORMAT:
+/*	case CBEM_SETITEM32W:
+	case CBEM_SETUNICODEFORMAT:
+*/
 
 	case CB_DELETESTRING32:
 	case CB_FINDSTRINGEXACT32:

@@ -104,11 +104,11 @@ QueryPathOfRegTypeLib32(
  *    Success: S_OK
  *    Failure: Status
  */
-HRESULT WINAPI LoadTypeLib(
-    void *szFile,   /* [in] Name of file to load from */
+HRESULT WINAPI LoadTypeLib16(
+    OLECHAR32 *szFile, /* [in] Name of file to load from */
     void * *pptLib) /* [out] Pointer to pointer to loaded type library */
 {
-    FIXME(ole, "(%s,%p): stub\n",debugstr_a(szFile),pptLib);
+    FIXME(ole, "('%s',%p): stub\n",debugstr_a(szFile),pptLib);
     return E_FAIL;
 }
 
@@ -124,10 +124,10 @@ HRESULT WINAPI LoadTypeLib(
  *    Failure: Status
  */
 HRESULT WINAPI LoadTypeLib32(
-    void *szFile,   /* [in] Name of file to load from */
+    OLECHAR32 *szFile,   /* [in] Name of file to load from */
     void * *pptLib) /* [out] Pointer to pointer to loaded type library */
 {
-    FIXME(ole, "(%s,%p): stub\n",szFile,pptLib);
+    FIXME(ole, "('%s',%p): stub\n",debugstr_a(szFile),pptLib);
     (long *)pptLib=0x123;
     return S_OK;           /* fixme: pretend everything is OK*/
 }

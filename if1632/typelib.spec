@@ -2,7 +2,7 @@ name typelib
 type win16
 
 2  stub CREATETYPELIB                
-3  pascal LoadTypeLib(ptr ptr) LoadTypeLib
+3  pascal LoadTypeLib(ptr ptr) LoadTypeLib16
 4  stub LHASHVALOFNAMESYS            
 5  stub _IID_ICREATETYPEINFO         
 6  stub _IID_ICREATETYPELIB          

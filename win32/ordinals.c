@@ -147,7 +147,7 @@ LPVOID WINAPI GetPK16SysVar(void)
 REGS_ENTRYPOINT(CommonUnimpStub)
 {
     if (EAX_reg(context))
-        MSG( "*** Unimplemented Win32 API: %s\n", EAX_reg(context) );
+        MSG( "*** Unimplemented Win32 API: %s\n", (LPSTR)EAX_reg(context) );
 
     switch ((ECX_reg(context) >> 4) & 0x0f)
     {

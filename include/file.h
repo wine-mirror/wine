@@ -63,6 +63,7 @@ extern FILE_OBJECT *FILE_GetFile( HFILE32 handle );
 extern void FILE_ReleaseFile( FILE_OBJECT *file );
 extern HFILE32 FILE_Alloc( FILE_OBJECT **file );
 extern void FILE_SetDosError(void);
+extern int FILE_GetUnixHandle( HFILE32 hFile );
 extern HFILE32 FILE_DupUnixHandle( int fd );
 extern BOOL32 FILE_Stat( LPCSTR unixName, BY_HANDLE_FILE_INFORMATION *info );
 extern HFILE32 FILE_Dup( HFILE32 hFile );

@@ -87,7 +87,7 @@ ANIMATE_Free (ANIMATE_INFO *infoPtr)
 	infoPtr->lpAvi = NULL;
     }
     else {
-	GlobalFree32 (infoPtr->lpAvi);
+	GlobalFree32 ((HGLOBAL32)infoPtr->lpAvi);
 	infoPtr->lpAvi = NULL;
     }
 }

@@ -316,9 +316,9 @@ INT32 WINAPI MessageBoxIndirect32W( LPMSGBOXPARAMS32W msgbox )
 
     memcpy(&msgboxa,msgbox,sizeof(msgboxa));
     if (msgbox->lpszCaption)	
-      lstrcpyWtoA(msgboxa.lpszCaption,msgbox->lpszCaption);
+      lstrcpyWtoA((LPSTR)msgboxa.lpszCaption,msgbox->lpszCaption);
     if (msgbox->lpszText)	
-      lstrcpyWtoA(msgboxa.lpszText,msgbox->lpszText);
+      lstrcpyWtoA((LPSTR)msgboxa.lpszText,msgbox->lpszText);
 
     return MessageBoxIndirect32A(&msgboxa);
 }

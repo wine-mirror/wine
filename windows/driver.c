@@ -208,7 +208,7 @@ HDRVR32 WINAPI OpenDriver32A(
     while (lpdrv) {
 	if (!strcasecmp( lpDriverName, lpdrv->dis.szAliasName )) {
 	    lpdrv->count++;
-	    lpdrv->dis.hDriver = SendDriverMessage32( lpdrv->dis.hDriver, DRV_OPEN, ""/*FIXME*/, 0L );
+	    lpdrv->dis.hDriver = SendDriverMessage32( lpdrv->dis.hDriver, DRV_OPEN, (LPARAM)""/*FIXME*/, 0L );
 	    return (HDRVR32)lpdrv;
 	}
 	lpdrv = lpdrv->next;
@@ -243,7 +243,7 @@ HDRVR32 WINAPI OpenDriver32A(
     SendDriverMessage32( hDrvr, DRV_LOAD, 0L, lParam );
     SendDriverMessage32( hDrvr, DRV_ENABLE, 0L, lParam );
     tmpbuf = HeapAlloc(SystemHeap,0,256);
-    lpnewdrv->dis.hDriver=SendDriverMessage32(hDrvr,DRV_OPEN,tmpbuf,lParam);
+    lpnewdrv->dis.hDriver=SendDriverMessage32(hDrvr,DRV_OPEN,(LPARAM)tmpbuf,lParam);
     HeapFree(SystemHeap,0,tmpbuf);
     TRACE(driver, "hDrvr=%04x loaded !\n", hDrvr );
     return hDrvr;

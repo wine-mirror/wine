@@ -93,7 +93,7 @@ BOOL32 WINAPI GetMonitorInfo32W(HMONITOR hMonitor, LPMONITORINFO lpMonitorInfo)
         lpMonitorInfo->dwFlags = MONITORINFOF_PRIMARY;
 
         if (lpMonitorInfo->cbSize >= sizeof(MONITORINFOEX32W))
-            lstrcpy32W(((MONITORINFOEX32W*)lpMonitorInfo)->szDevice, "D\0I\0S\0P\0L\0A\0Y\0\0");
+            lstrcpy32W(((MONITORINFOEX32W*)lpMonitorInfo)->szDevice, (LPCWSTR)"D\0I\0S\0P\0L\0A\0Y\0\0");
 
         return TRUE;
     }
