@@ -36,6 +36,101 @@ static HRESULT WINAPI IShellFolder_GetDisplayNameOf(LPSHELLFOLDER,LPCITEMIDLIST,
 static HRESULT WINAPI IShellFolder_SetNameOf(LPSHELLFOLDER,HWND32,LPCITEMIDLIST,LPCOLESTR32,DWORD,LPITEMIDLIST*);
 static BOOL32 WINAPI IShellFolder_GetFolderPath(LPSHELLFOLDER,LPSTR,DWORD);
 
+/* Definition Here */
+
+
+/***************************************************************************
+ * IDropTarget interface definition for the ShellFolder
+ */
+
+/*
+ * Forward declarations of the structure
+ */
+typedef struct ShellFolderDropTargetImpl ShellFolderDropTargetImpl;
+
+/*
+ * ShellFolderDropTargetImpl definitions.
+ */
+struct ShellFolderDropTargetImpl
+{
+  ICOM_VTABLE(IDropTarget)* lpvtbl; /* Needs to be the first item in the struct
+                                     * since we want to cast this in a 
+                                     * IDropTarget pointer */
+  /*
+   * Reference count of this object (IUnknown)
+   */
+  ULONG ref;
+};
+
+/*
+ * ShellFolderDropTargetImpl prototypes definition
+ */
+static 
+  ShellFolderDropTargetImpl* WINAPI ShellFolderDropTargetImpl_Constructor();
+
+void WINAPI ShellFolderDropTargetImpl_Destroy( /* not static to avoid warning */
+  ShellFolderDropTargetImpl *This);
+
+static HRESULT WINAPI ShellFolderDropTargetImpl_QueryInterface(
+  ShellFolderDropTargetImpl *This,
+  REFIID                    iid,
+  VOID                      **ppvObject);
+
+static ULONG WINAPI ShellFolderDropTargetImpl_AddRef(
+  ShellFolderDropTargetImpl *This);
+
+static ULONG WINAPI ShellFolderDropTargetImpl_Release(
+  ShellFolderDropTargetImpl *This);
+
+static HRESULT WINAPI ShellFolderDropTargetImpl_DragEnter(
+  ShellFolderDropTargetImpl *This,
+  IDataObject               *pDataObject,
+  DWORD                     grfKeyState,
+  POINTL                    pt,
+  DWORD                     *pdwEffect);
+
+static HRESULT WINAPI ShellFolderDropTargetImpl_DragOver(
+  ShellFolderDropTargetImpl *This,
+  DWORD                     grfKeyState,
+  POINTL                    pt,
+  DWORD                     *pdwEffect);
+
+static HRESULT WINAPI ShellFolderDropTargetImpl_DragLeave(
+  ShellFolderDropTargetImpl *This);
+
+static HRESULT WINAPI ShellFolderDropTargetImpl_Drop(
+  ShellFolderDropTargetImpl *This,
+  DWORD                     grfKeyState,
+  POINTL                    pt,
+  DWORD                     *pdwEffect);
+
+/*
+ * This define allows me to assign a function to a vtable without having the
+ * nasty warning about incompatible types.
+ *
+ * This is necessary because of the usage of implementation classes pointers
+ * as the first parameter of the interface functions instead of the pointer
+ * to the interface.
+ */
+#define VTABLE_FUNC(a) ((void*)a)
+
+/*
+ * Virtual function table for the ShellFolderDropTargetImpl class.
+ */
+static ICOM_VTABLE(IDropTarget) ShellFolderDropTargetImpl_VTable =
+{
+  {
+    VTABLE_FUNC(ShellFolderDropTargetImpl_QueryInterface),
+    VTABLE_FUNC(ShellFolderDropTargetImpl_AddRef),
+    VTABLE_FUNC(ShellFolderDropTargetImpl_Release)
+  },
+  VTABLE_FUNC(ShellFolderDropTargetImpl_DragEnter),
+  VTABLE_FUNC(ShellFolderDropTargetImpl_DragOver),
+  VTABLE_FUNC(ShellFolderDropTargetImpl_DragLeave),
+  VTABLE_FUNC(ShellFolderDropTargetImpl_Drop),
+};
+
+
 /***************************************************************************
  *  GetNextElement (internal function)
  *
@@ -552,9 +647,16 @@ static HRESULT WINAPI IShellFolder_GetAttributesOf(LPSHELLFOLDER this,UINT32 cid
 *  a barely documented "Icon positions" structure to SetData when the drag starts,
 *  and GetData's it if the drop is in another explorer window that needs the positions.
 */
-static HRESULT WINAPI IShellFolder_GetUIObjectOf( LPSHELLFOLDER this,HWND32 hwndOwner,UINT32 cidl,
- LPCITEMIDLIST * apidl, REFIID riid, UINT32 * prgfInOut,LPVOID * ppvOut)
-{	char	        xclsid[50];
+static HRESULT WINAPI IShellFolder_GetUIObjectOf( 
+  LPSHELLFOLDER this,
+  HWND32        hwndOwner,
+  UINT32        cidl,
+  LPCITEMIDLIST * apidl, 
+  REFIID        riid, 
+  UINT32        *  prgfInOut,
+  LPVOID        * ppvOut)
+{	
+  char	        xclsid[50];
 	LPITEMIDLIST	pidl;
 	LPUNKNOWN	pObj = NULL; 
    
@@ -566,26 +668,42 @@ static HRESULT WINAPI IShellFolder_GetUIObjectOf( LPSHELLFOLDER this,HWND32 hwnd
 	*ppvOut = NULL;
 
 	if(IsEqualIID(riid, &IID_IContextMenu))
-	{ if(cidl < 1)
+	{ 
+    if(cidl < 1)
 	    return E_INVALIDARG;
+
 	  pObj  = (LPUNKNOWN)IContextMenu_Constructor(this, apidl, cidl);
 	}
 	else if (IsEqualIID(riid, &IID_IDataObject))
-        { if (cidl < 1)
+  { 
+    if (cidl < 1)
 	    return(E_INVALIDARG);
+
 	  pObj = (LPUNKNOWN)IDataObject_Constructor (hwndOwner, this, apidl, cidl);
         }
 	else if(IsEqualIID(riid, &IID_IExtractIcon))
-	{ if (cidl != 1)
+	{ 
+    if (cidl != 1)
 	    return(E_INVALIDARG);
+
 	  pidl = ILCombine(this->pMyPidl,apidl[0]);
 	  pObj = (LPUNKNOWN)IExtractIcon_Constructor( pidl );
 	  SHFree(pidl);
 	} 
+	else if (IsEqualIID(riid, &IID_IDropTarget))
+  { 
+    if (cidl < 1)
+	    return(E_INVALIDARG);
+
+	  pObj = (LPUNKNOWN)ShellFolderDropTargetImpl_Constructor();
+    ShellFolderDropTargetImpl_AddRef((ShellFolderDropTargetImpl*)pObj);
+  }
 	else
-	{ ERR(shell,"(%p)->E_NOINTERFACE\n",this);
+	{ 
+    ERR(shell,"(%p)->E_NOINTERFACE\n",this);
 	  return E_NOINTERFACE;
 	}
+
 	if(!pObj)
 	  return E_OUTOFMEMORY;
 
@@ -760,4 +878,138 @@ static BOOL32 WINAPI IShellFolder_GetFolderPath(LPSHELLFOLDER this, LPSTR lpszOu
 
 	TRACE(shell,"-- (%p)->(return=%s)\n",this, lpszOut);
 	return TRUE;
+}
+
+
+/****************************************************************************
+ * ShellFolderDropTargetImpl implementation
+ */
+
+static ShellFolderDropTargetImpl* WINAPI ShellFolderDropTargetImpl_Constructor()
+{
+  ShellFolderDropTargetImpl* newShellFolderDropTarget;
+
+  newShellFolderDropTarget = 
+    HeapAlloc(GetProcessHeap(), 0, sizeof(ShellFolderDropTargetImpl));
+
+  if (newShellFolderDropTarget!=0)
+  {
+    /*
+     * Set-up the virtual function table and reference count.
+     */
+    newShellFolderDropTarget->lpvtbl = &ShellFolderDropTargetImpl_VTable;
+    newShellFolderDropTarget->ref    = 0;
+
+    /*
+     * We want to nail-down the reference to the storage in case the
+     * enumeration out-lives the storage in the client application.
+     */
+    ShellFolderDropTargetImpl_AddRef(newShellFolderDropTarget);
+  }
+
+  return newShellFolderDropTarget;
+}
+
+void WINAPI ShellFolderDropTargetImpl_Destroy(
+  ShellFolderDropTargetImpl *This)
+{
+  ShellFolderDropTargetImpl_Release(This);
+  HeapFree(GetProcessHeap(), 0, This);
+}
+
+static HRESULT WINAPI ShellFolderDropTargetImpl_QueryInterface(
+  ShellFolderDropTargetImpl *This,
+  REFIID                    iid,
+  VOID                      **ppvObject)
+{
+  /*
+   * Perform a sanity check on the parameters.
+   */
+  if ( (This==0) || (ppvObject==0) )
+    return E_INVALIDARG;
+
+  /*
+   * Initialize the return parameter.
+   */
+  *ppvObject = 0;
+
+  /*
+   * Compare the riid with the interface IDs implemented by this object.
+   */
+  if (memcmp(&IID_IUnknown, iid, sizeof(IID_IUnknown)) == 0)
+  {
+    *ppvObject = (ShellFolderDropTargetImpl*)This;
+  }
+  else if (memcmp(&IID_IDropTarget, iid, sizeof(IID_IDropTarget)) == 0)
+  {
+    *ppvObject = (ShellFolderDropTargetImpl*)This;
+  }
+
+  /*
+   * Check that we obtained an interface.
+   */
+  if ((*ppvObject)==0)
+    return E_NOINTERFACE;
+
+  /*
+   * Query Interface always increases the reference count by one when it is
+   * successful
+   */
+  ShellFolderDropTargetImpl_AddRef(This);
+
+  return S_OK;
+}
+
+static ULONG WINAPI ShellFolderDropTargetImpl_AddRef(
+  ShellFolderDropTargetImpl *This)
+{
+  This->ref++;
+
+  return This->ref;          
+}
+
+static ULONG WINAPI ShellFolderDropTargetImpl_Release(
+  ShellFolderDropTargetImpl *This)
+{
+  This->ref--;
+
+  return This->ref;
+}
+
+static HRESULT WINAPI ShellFolderDropTargetImpl_DragEnter(
+  ShellFolderDropTargetImpl *This,
+  IDataObject               *pDataObject,
+  DWORD                     grfKeyState,
+  POINTL                    pt,
+  DWORD                     *pdwEffect)
+{	
+	FIXME(shell, "Stub: This=%p, DataObject=%p\n",This,pDataObject);
+	return E_NOTIMPL;
+}
+
+static HRESULT WINAPI ShellFolderDropTargetImpl_DragOver(
+  ShellFolderDropTargetImpl *This,
+  DWORD                     grfKeyState,
+  POINTL                    pt,
+  DWORD                     *pdwEffect)
+{
+	FIXME(shell, "Stub: This=%p\n",This);
+	return E_NOTIMPL;
+}
+
+static HRESULT WINAPI ShellFolderDropTargetImpl_DragLeave(
+  ShellFolderDropTargetImpl *This)
+{
+	FIXME(shell, "Stub: This=%p\n",This);
+	return E_NOTIMPL;
+}
+
+static HRESULT WINAPI ShellFolderDropTargetImpl_Drop(
+  ShellFolderDropTargetImpl *This,
+  DWORD                     grfKeyState,
+  POINTL                    pt,
+  DWORD                     *pdwEffect)
+{
+	FIXME(shell, "Stub: This=%p\n",This);
+	return E_NOTIMPL;
 }
