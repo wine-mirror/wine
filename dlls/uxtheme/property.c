@@ -35,18 +35,6 @@
 WINE_DEFAULT_DEBUG_CHANNEL(uxtheme);
 
 /***********************************************************************
- *      GetThemeDocumentationProperty                       (UXTHEME.@)
- */
-HRESULT WINAPI GetThemeDocumentationProperty(LPCWSTR pszThemeName,
-                                             LPCWSTR pszPropertyName,
-                                              LPWSTR pszValueBuff,
-                                              int cchMaxValChars)
-{
-    FIXME("%s %s: stub\n", debugstr_w(pszThemeName), debugstr_w(pszPropertyName));
-    return ERROR_CALL_NOT_IMPLEMENTED;
-}
-
-/***********************************************************************
  *      GetThemeBool                                        (UXTHEME.@)
  */
 HRESULT WINAPI GetThemeBool(HTHEME hTheme, int iPartId, int iStateId,

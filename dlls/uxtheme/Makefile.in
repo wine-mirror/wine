@@ -12,7 +12,9 @@ C_SRCS = \
 	metric.c \
 	msstyles.c \
 	property.c \
-	system.c
+	stylemap.c \
+	system.c \
+	uxini.c
 
 RC_SRCS = version.rc
 

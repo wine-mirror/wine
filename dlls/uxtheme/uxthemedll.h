@@ -85,6 +85,6 @@ HRESULT WINAPI EnumThemeSizes(LPWSTR pszThemeFileName, LPWSTR pszColorName,
 HRESULT WINAPI ParseThemeIniFile(LPCWSTR pszIniFileName, LPWSTR pszUnknown,
                                  ParseThemeIniFileProc callback, LPVOID lpData);
 
-extern void UXTHEME_InitSystem(void);
+extern void UXTHEME_InitSystem(HINSTANCE hInst);
 
 #endif
