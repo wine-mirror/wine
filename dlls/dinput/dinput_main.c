@@ -2273,3 +2273,45 @@ static ICOM_VTABLE(IDirectInputDevice2A) JoystickAvt =
 	IDirectInputDevice2AImpl_SendDeviceData,
 };
 #endif
+
+/***********************************************************************
+ *		DllCanUnloadNow (DINPUT.@)
+ */
+HRESULT WINAPI DINPUT_DllCanUnloadNow(void)
+{
+    FIXME("(void): stub\n");
+
+    return S_FALSE;
+}
+
+/***********************************************************************
+ *		DllGetClassObject (DINPUT.@)
+ */
+HRESULT WINAPI DINPUT_DllGetClassObject(REFCLSID rclsid, REFIID riid,
+					LPVOID *ppv)
+{
+    FIXME("(%p, %p, %p): stub\n", debugstr_guid(rclsid), 
+	  debugstr_guid(riid), ppv);
+
+    return CLASS_E_CLASSNOTAVAILABLE;
+}
+
+/***********************************************************************
+ *		DllRegisterServer (DINPUT.@)
+ */
+HRESULT WINAPI DINPUT_DllRegisterServer(void)
+{
+    FIXME("(void): stub\n");
+
+    return S_OK;
+}
+
+/***********************************************************************
+ *		DllUnregisterServer (DINPUT.@)
+ */
+HRESULT WINAPI DINPUT_DllUnregisterServer(void)
+{
+    FIXME("(void): stub\n");
+
+    return S_OK;
+}

@@ -16,7 +16,7 @@ init    WININET_LibMain
 @ stub DeleteUrlCacheContainerW
 @ stub DeleteUrlCacheEntry
 @ stub DeleteUrlCacheGroup
-@ stub DllInstall
+@ stdcall DllInstall(long ptr) WININET_DllInstall
 @ stub FindCloseUrlCache
 @ stub FindFirstUrlCacheContainerA
 @ stub FindFirstUrlCacheContainerW

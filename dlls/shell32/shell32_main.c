@@ -876,7 +876,7 @@ BOOL WINAPI Shell32LibMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID fImpLoad)
  *    LPCWSTR pszCmdLine - command line (unused by shell32?)
  */
 
-HRESULT WINAPI DllInstall(BOOL bInstall, LPCWSTR cmdline)
+HRESULT WINAPI SHELL32_DllInstall(BOOL bInstall, LPCWSTR cmdline)
 {
    FIXME("(%s, %s): stub!\n", bInstall ? "TRUE":"FALSE", debugstr_w(cmdline));
 

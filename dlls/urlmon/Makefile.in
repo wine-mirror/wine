@@ -9,7 +9,9 @@ WRCEXTRA  = -s -p$(MODULE)
 
 SPEC_SRCS = urlmon.spec
 
-C_SRCS = umon.c
+C_SRCS = \
+	umon.c \
+	urlmon_main.c
 
 @MAKE_DLL_RULES@
 

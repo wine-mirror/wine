@@ -11,5 +11,5 @@ import ole32.dll
   5 stdcall DirectPlayLobbyCreateW(ptr ptr ptr ptr long) DirectPlayLobbyCreateW
   6 stub gdwDPlaySPRefCount
   9 stdcall DirectPlayEnumerate(ptr ptr) DirectPlayEnumerateA
-  10 stub DllCanUnloadNow
-  11 stdcall DllGetClassObject(ptr ptr ptr) DP_and_DPL_DllGetClassObject
+  10 stdcall DllCanUnloadNow() DPLAYX_DllCanUnloadNow
+  11 stdcall DllGetClassObject(ptr ptr ptr) DPLAYX_DllGetClassObject

@@ -852,6 +852,16 @@ COMCTL32_DllGetVersion (DLLVERSIONINFO *pdvi)
     return S_OK;
 }
 
+/***********************************************************************
+ *		DllInstall (COMCTL32.@)
+ */
+HRESULT WINAPI COMCTL32_DllInstall(BOOL bInstall, LPCWSTR cmdline)
+{
+  FIXME("(%s, %s): stub\n", bInstall?"TRUE":"FALSE", 
+	debugstr_w(cmdline));
+
+  return S_OK;
+}
 
 static int iTrackMax = 0;
 static HWND TrackingList[10];

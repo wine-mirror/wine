@@ -396,4 +396,4 @@ import	comctl32.dll
 
 1224 stdcall SHFileOperationA (ptr) SHFileOperationA # exported by name
 1225 stdcall SHFileOperationW (ptr) SHFileOperationW # exported by name
-1226 stdcall DllInstall (long wstr) DllInstall # win98:202
+1226 stdcall DllInstall (long wstr) SHELL32_DllInstall # win98:202

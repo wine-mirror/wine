@@ -25,12 +25,12 @@ import	ole32.dll
 @ stub CreateAsyncBindCtxEx
 @ stub CreateFormatEnumerator
 @ stdcall CreateURLMoniker(ptr str ptr) CreateURLMoniker
-@ stub DllCanUnloadNow
-@ stub DllGetClassObject
-@ stub DllInstall
-@ stub DllRegisterServer
+@ stdcall DllCanUnloadNow() URLMON_DllCanUnloadNow
+@ stdcall DllGetClassObject(ptr ptr ptr) URLMON_DllGetClassObject
+@ stdcall DllInstall(long ptr) URLMON_DllInstall
+@ stdcall DllRegisterServer() URLMON_DllRegisterServer
 @ stub DllRegisterServerEx
-@ stub DllUnregisterServer
+@ stdcall DllUnregisterServer() URLMON_DllUnregisterServer
 @ stub Extract
 @ stub FaultInIEFeature
 @ stub FindMediaType

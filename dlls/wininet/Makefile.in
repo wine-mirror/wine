@@ -10,7 +10,8 @@ SPEC_SRCS = wininet.spec
 C_SRCS = \
 	internet.c \
 	ftp.c \
-	utility.c
+	utility.c \
+	wininet_main.c
 
 @MAKE_DLL_RULES@
 

@@ -32,7 +32,7 @@ rsrc	comctl32
  23 stdcall CreateToolbarEx(long long long long long long ptr long long long long long long) CreateToolbarEx
  24 stdcall DestroyPropertySheetPage(long) DestroyPropertySheetPage
  25 stdcall DllGetVersion(ptr) COMCTL32_DllGetVersion
- 26 stub DllInstall
+ 26 stdcall DllInstall(long ptr) COMCTL32_DllInstall
  27 stdcall DrawStatusText(long ptr ptr long) DrawStatusTextA
  28 stdcall DrawStatusTextW(long ptr wstr long) DrawStatusTextW
  29 stdcall FlatSB_EnableScrollBar (long long long) FlatSB_EnableScrollBar
