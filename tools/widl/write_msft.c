@@ -884,6 +884,8 @@ static int encode_type(
             case RPC_FC_IP:
                 add_interface_typeinfo(typelib, type);
                 break;
+            case 0:
+                error("encode_type: VT_USERDEFINED - can't yet add typedef's on the fly\n");
             default:
                 error("encode_type: VT_USERDEFINED - unhandled type %d\n", type->type);
             }
@@ -934,7 +936,7 @@ static int encode_type(
 
 static void dump_type(type_t *t)
 {
-    chat("dump_type: %p name %s type %d ref %p rname %s\n", t, t->name, t->type, t->ref, t->rname);
+    chat("dump_type: %p name %s type %d ref %p rname %s attrs %p\n", t, t->name, t->type, t->ref, t->rname, t->attrs);
     if(t->ref) dump_type(t->ref);
 }
 
@@ -1616,6 +1618,9 @@ static msft_typeinfo_t *create_msft_typeinfo(msft_typelib_t *typelib, enum type_
         case ATTR_ODL:
             break;
 
+        case ATTR_PUBLIC:
+            break;
+
         case ATTR_RESTRICTED:
             typeinfo->flags |= 0x200; /* TYPEFLAG_FRESTRICTED */
             break;
@@ -1685,6 +1690,7 @@ static void add_dispinterface_typeinfo(msft_typelib_t *typelib, type_t *dispinte
     var_t *var;
     msft_typeinfo_t *msft_typeinfo;
 
+    dispinterface->typelib_idx = typelib->typelib_header.nrtypeinfos;
     msft_typeinfo = create_msft_typeinfo(typelib, TKIND_DISPATCH, dispinterface->name,
                                          dispinterface->attrs, typelib->typelib_header.nrtypeinfos);
 
@@ -1813,6 +1819,24 @@ static void add_enum_typeinfo(msft_typelib_t *typelib, type_t *enumeration)
     }
 }
 
+
+static void add_typedef_typeinfo(msft_typelib_t *typelib, var_t *tdef)
+{
+    msft_typeinfo_t *msft_typeinfo;
+    int alignment;
+    attr_t *attrs;
+
+    tdef->type->typelib_idx = typelib->typelib_header.nrtypeinfos;
+    msft_typeinfo = create_msft_typeinfo(typelib, TKIND_ALIAS, tdef->name, tdef->type->attrs,
+                                         typelib->typelib_header.nrtypeinfos);
+    attrs = tdef->type->attrs;
+    tdef->type->attrs = NULL;
+    encode_var(typelib, tdef, &msft_typeinfo->typeinfo->datatype1, &msft_typeinfo->typeinfo->size,
+               &alignment, &msft_typeinfo->typeinfo->datatype2);
+    tdef->type->attrs = attrs;
+    msft_typeinfo->typeinfo->typekind |= (alignment << 11 | alignment << 6);
+}
+
 static void add_entry(msft_typelib_t *typelib, typelib_entry_t *entry)
 {
     switch(entry->kind) {
@@ -1826,6 +1850,10 @@ static void add_entry(msft_typelib_t *typelib, typelib_entry_t *entry)
 
     case TKIND_ENUM:
         add_enum_typeinfo(typelib, entry->u.enumeration);
+        break;
+
+    case TKIND_ALIAS:
+        add_typedef_typeinfo(typelib, entry->u.tdef);
         break;
 
     default:

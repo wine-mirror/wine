@@ -148,6 +148,8 @@ unsigned short get_type_vt(type_t *t)
   case RPC_FC_PSTRUCT:
     return VT_USERDEFINED;
   case 0:
+    if(t->attrs)
+        return VT_USERDEFINED;
     return 0;
   default:
     error("get_type_vt: unknown-type: %d\n", t->type);
@@ -261,6 +263,21 @@ void add_enum(type_t *enumeration)
      entry = xmalloc(sizeof(*entry));
      entry->kind = TKIND_ENUM;
      entry->u.enumeration = enumeration;
+     LINK(entry, typelib->entry);
+     typelib->entry = entry;
+}
+
+void add_typedef(type_t *tdef, var_t *name)
+{
+     typelib_entry_t *entry;
+     if (!typelib) return;
+
+     entry = xmalloc(sizeof(*entry));
+     entry->kind = TKIND_ALIAS;
+     entry->u.tdef = xmalloc(sizeof(*entry->u.tdef));
+     memcpy(entry->u.tdef, name, sizeof(*name));
+     entry->u.tdef->type = tdef;
+     entry->u.tdef->name = xstrdup(name->name);
      LINK(entry, typelib->entry);
      typelib->entry = entry;
 }
