@@ -3969,6 +3969,70 @@ static BOOL LISTVIEW_DeleteColumn(LISTVIEW_INFO *infoPtr, INT nColumn)
 
 /***
  * DESCRIPTION:
+ * Invalidates the listview after an item's insertion or deletion.
+ *
+ * PARAMETER(S):
+ * [I] infoPtr : valid pointer to the listview structure
+ * [I] nItem : item index
+ * [I] dir : -1 if deleting, 1 if inserting
+ *
+ * RETURN:
+ *   None
+ */
+static void LISTVIEW_ScrollOnInsert(LISTVIEW_INFO *infoPtr, INT nItem, INT dir)
+{
+    UINT uView = infoPtr->dwStyle & LVS_TYPEMASK;
+    INT nPerCol, nItemCol, nItemRow;
+    RECT rcScroll;
+    POINT Origin;
+
+    assert (abs(dir) == 1);
+
+    /* arrange icons if autoarrange is on */
+    if (infoPtr->dwStyle & LVS_AUTOARRANGE)
+	LISTVIEW_Arrange(infoPtr, LVA_DEFAULT);
+
+    /* scrollbars need updating */
+    LISTVIEW_UpdateScroll(infoPtr);
+
+    /* figure out the item's position */ 
+    if (uView == LVS_REPORT)
+	nPerCol = infoPtr->nItemCount + 1;
+    else if (uView == LVS_LIST)
+	nPerCol = LISTVIEW_GetCountPerColumn(infoPtr);
+    else /* LVS_ICON, or LVS_SMALLICON */
+	return;
+    
+    nItemCol = nItem / nPerCol;
+    nItemRow = nItem % nPerCol;
+    LISTVIEW_GetOrigin(infoPtr, &Origin);
+
+    /* move the items below up a slot */
+    rcScroll.left = nItemCol * infoPtr->nItemWidth;
+    rcScroll.top = nItemRow * infoPtr->nItemHeight;
+    rcScroll.right = rcScroll.left + infoPtr->nItemWidth;
+    rcScroll.bottom = nPerCol * infoPtr->nItemHeight;
+    OffsetRect(&rcScroll, Origin.x, Origin.y);
+    if (IntersectRect(&rcScroll, &rcScroll, &infoPtr->rcList))
+	ScrollWindowEx(infoPtr->hwndSelf, 0, dir * infoPtr->nItemHeight, 
+		       &rcScroll, &rcScroll, 0, 0, SW_ERASE | SW_INVALIDATE);
+
+    /* report has only that column, so we're done */
+    if (uView == LVS_REPORT) return;
+
+    /* now for LISTs, we have to deal with the columns to the right */
+    rcScroll.left = (nItemCol + 1) * infoPtr->nItemWidth;
+    rcScroll.top = 0;
+    rcScroll.right = (infoPtr->nItemCount / nPerCol + 1) * infoPtr->nItemWidth;
+    rcScroll.bottom = nPerCol * infoPtr->nItemHeight;
+    OffsetRect(&rcScroll, Origin.x, Origin.y);
+    if (IntersectRect(&rcScroll, &rcScroll, &infoPtr->rcList))
+	ScrollWindowEx(infoPtr->hwndSelf, 0, dir * infoPtr->nItemHeight,
+		       &rcScroll, &rcScroll, 0, 0, SW_ERASE | SW_INVALIDATE);
+}
+
+/***
+ * DESCRIPTION:
  * Removes an item from the listview control.
  *
  * PARAMETER(S):
@@ -3982,12 +4046,9 @@ static BOOL LISTVIEW_DeleteColumn(LISTVIEW_INFO *infoPtr, INT nColumn)
 static BOOL LISTVIEW_DeleteItem(LISTVIEW_INFO *infoPtr, INT nItem)
 {
     UINT uView = infoPtr->dwStyle & LVS_TYPEMASK;
-    INT nPerCol, nItemCol, nItemRow;
     NMLISTVIEW nmlv;
     LVITEMW item;
-    BOOL is_icon;
-    RECT rcScroll;
-    POINT Origin;
+    RECT rcBox;
 
     TRACE("(nItem=%d)\n", nItem);
 
@@ -3998,6 +4059,10 @@ static BOOL LISTVIEW_DeleteItem(LISTVIEW_INFO *infoPtr, INT nItem)
     item.stateMask = LVIS_SELECTED | LVIS_FOCUSED;
     LISTVIEW_SetItemState(infoPtr, nItem, &item);
 
+    /* we need to do this here, because we'll be deleting stuff */  
+    if (uView == LVS_SMALLICON || uView == LVS_ICON)
+	LISTVIEW_GetItemBox(infoPtr, nItem, &rcBox);
+	    
     /* send LVN_DELETEITEM notification. */
     ZeroMemory(&nmlv, sizeof (NMLISTVIEW));
     nmlv.iItem = nItem;
@@ -4018,13 +4083,9 @@ static BOOL LISTVIEW_DeleteItem(LISTVIEW_INFO *infoPtr, INT nItem)
         }
         DPA_Destroy(hdpaSubItems);
     }
-  
-    is_icon = (uView == LVS_SMALLICON || uView == LVS_ICON); 
-    if (is_icon)
-    {
-	RECT rcBox;
 
-	LISTVIEW_GetItemBox(infoPtr, nItem, &rcBox);
+    if (uView == LVS_SMALLICON || uView == LVS_ICON)
+    {
 	DPA_DeletePtr(infoPtr->hdpaPosX, nItem);
 	DPA_DeletePtr(infoPtr->hdpaPosY, nItem);
 	LISTVIEW_InvalidateRect(infoPtr, &rcBox);
@@ -4033,48 +4094,8 @@ static BOOL LISTVIEW_DeleteItem(LISTVIEW_INFO *infoPtr, INT nItem)
     infoPtr->nItemCount--;
     LISTVIEW_ShiftIndices(infoPtr, nItem, -1);
 
-    if (is_icon && (infoPtr->dwStyle & LVS_AUTOARRANGE))
-	    LISTVIEW_Arrange(infoPtr, LVA_DEFAULT);
-
-    LISTVIEW_UpdateScroll(infoPtr);
-
     /* now is the invalidation fun */
-    
-    /* there's nothing else to do in icon mode */
-    if (is_icon) return TRUE;
- 
-    /* figure out the item's position */ 
-    if (uView == LVS_REPORT)
-	nPerCol = infoPtr->nItemCount + 1;
-    else /* LVS_LIST */
-	nPerCol = LISTVIEW_GetCountPerColumn(infoPtr);
-    nItemCol = nItem / nPerCol;
-    nItemRow = nItem % nPerCol;
-    LISTVIEW_GetOrigin(infoPtr, &Origin);
-
-    /* move the items below up a slot */
-    rcScroll.left = nItemCol * infoPtr->nItemWidth;
-    rcScroll.top = nItemRow * infoPtr->nItemHeight;
-    rcScroll.right = rcScroll.left + infoPtr->nItemWidth;
-    rcScroll.bottom = nPerCol * infoPtr->nItemHeight;
-    OffsetRect(&rcScroll, Origin.x, Origin.y);
-    if (IntersectRect(&rcScroll, &rcScroll, &infoPtr->rcList))
-	ScrollWindowEx(infoPtr->hwndSelf, 0, -infoPtr->nItemHeight, 
-		       &rcScroll, &rcScroll, 0, 0, SW_ERASE | SW_INVALIDATE);
-
-    /* report has only that column, so we're done */
-    if (uView == LVS_REPORT) return TRUE;
-
-    /* now for LISTs, we have to deal with the columns to the right */
-    rcScroll.left = (nItemCol + 1) * infoPtr->nItemWidth;
-    rcScroll.top = 0;
-    rcScroll.right = (infoPtr->nItemCount / nPerCol + 1) * infoPtr->nItemWidth;
-    rcScroll.bottom = nPerCol * infoPtr->nItemHeight;
-    OffsetRect(&rcScroll, Origin.x, Origin.y);
-    if (IntersectRect(&rcScroll, &rcScroll, &infoPtr->rcList))
-	ScrollWindowEx(infoPtr->hwndSelf, 0, -infoPtr->nItemHeight,
-		       &rcScroll, &rcScroll, 0, 0, SW_ERASE | SW_INVALIDATE);
-
+    LISTVIEW_ScrollOnInsert(infoPtr, nItem, -1);
     return TRUE;
 }
 
@@ -5674,17 +5695,18 @@ static INT LISTVIEW_InsertItemT(LISTVIEW_INFO *infoPtr, LPLVITEMW lpLVItem, BOOL
     notify_listview(infoPtr, LVN_INSERTITEM, &nmlv);
 
     /* align items (set position of each item) */
-    if ((uView == LVS_SMALLICON) || (uView == LVS_ICON))
+    if ((uView == LVS_SMALLICON || uView == LVS_ICON))
     {
-	if (infoPtr->dwStyle & LVS_ALIGNLEFT) LISTVIEW_AlignLeft(infoPtr);
-        else LISTVIEW_AlignTop(infoPtr);
+	RECT rcBox;
+	/* FIXME: compute X, Y here, inline */
+    	/*if (is_icon && (infoPtr->dwStyle & LVS_AUTOARRANGE))*/
+	    LISTVIEW_Arrange(infoPtr, LVA_DEFAULT);
+	LISTVIEW_GetItemBox(infoPtr, nItem, &rcBox);
+	LISTVIEW_InvalidateRect(infoPtr, &rcBox);
     }
 
-    LISTVIEW_UpdateScroll(infoPtr);
-    
-    LISTVIEW_InvalidateList(infoPtr); /* FIXME: optimize */
-
-    TRACE("    <- %d\n", nItem);
+    /* now is the invalidation fun */
+    LISTVIEW_ScrollOnInsert(infoPtr, nItem, 1);
     return nItem;
 
 undo:
