@@ -985,71 +985,6 @@ void DrawPrimitiveI(LPDIRECT3DDEVICE8 iface,
     TRACE("glEnd\n");
 }
 
-/**
- * @nodoc: todo
- */
-void GetSrcAndOpFromValue(DWORD iValue, BOOL isAlphaArg, GLenum* source, GLenum* operand) 
-{
-  BOOL isAlphaReplicate = FALSE;
-  BOOL isComplement     = FALSE;
-  
-  *operand = GL_SRC_COLOR;
-  *source = GL_TEXTURE;
-  
-  /* Catch alpha replicate */
-  if (iValue & D3DTA_ALPHAREPLICATE) {
-    iValue = iValue & ~D3DTA_ALPHAREPLICATE;
-    isAlphaReplicate = TRUE;
-  }
-  
-  /* Catch Complement */
-  if (iValue & D3DTA_COMPLEMENT) {
-    iValue = iValue & ~D3DTA_COMPLEMENT;
-    isComplement = TRUE;
-  }
-  
-  /* Calculate the operand */
-  if (isAlphaReplicate && !isComplement) {
-    *operand = GL_SRC_ALPHA;
-  } else if (isAlphaReplicate && isComplement) {
-    *operand = GL_ONE_MINUS_SRC_ALPHA;
-  } else if (isComplement) {
-    if (isAlphaArg) {
-      *operand = GL_ONE_MINUS_SRC_ALPHA;
-    } else {
-      *operand = GL_ONE_MINUS_SRC_COLOR;
-    }
-  } else {
-    if (isAlphaArg) {
-      *operand = GL_SRC_ALPHA;
-    } else {
-      *operand = GL_SRC_COLOR;
-    }
-  }
-  
-  /* Calculate the source */
-  switch (iValue & D3DTA_SELECTMASK) {
-  case D3DTA_CURRENT:   *source  = GL_PREVIOUS_EXT;
-    break;
-  case D3DTA_DIFFUSE:   *source  = GL_PRIMARY_COLOR_EXT;
-    break;
-  case D3DTA_TEXTURE:   *source  = GL_TEXTURE;
-    break;
-  case D3DTA_TFACTOR:   *source  = GL_CONSTANT_EXT;
-    break;
-  case D3DTA_SPECULAR:
-    /**
-     * According to the GL_ARB_texture_env_combine specs, SPECULAR is 'Secondary color' and
-     * isnt supported until base GL supports it
-     * There is no concept of temp registers as far as I can tell
-     */
-
-  default:
-    FIXME("Unrecognized or unhandled texture arg %ld\n", iValue);
-    *source = GL_TEXTURE;
-  }
-}
-
 /* Apply the current values to the specified texture stage */
 void setupTextureStates(LPDIRECT3DDEVICE8 iface, DWORD Stage) {
     ICOM_THIS(IDirect3DDevice8Impl,iface);
@@ -3848,63 +3783,22 @@ HRESULT  WINAPI  IDirect3DDevice8Impl_SetTextureStageState(LPDIRECT3DDEVICE8 ifa
         }
         break;
 
-    case D3DTSS_COLORARG0             :
-    case D3DTSS_ALPHAARG0             :
-        /* FIXME: Mesa seems to struggle setting these at the moment */
-        /*FIXME("COLORARG0/ALPHAARG0 support still a stub, Stage=%ld, Type=%d, Value =%ld\n", Stage, Type, Value);*/
-        /*break;*/
-
-    case D3DTSS_COLORARG1             :
-    case D3DTSS_COLORARG2             :
-    case D3DTSS_ALPHAARG1             :
-    case D3DTSS_ALPHAARG2             :
-        {
-            BOOL isAlphaArg = (Type == D3DTSS_ALPHAARG1 || Type == D3DTSS_ALPHAARG2 || Type == D3DTSS_ALPHAARG0);
-            int  operand = GL_SRC_COLOR;
-            int  source = GL_TEXTURE;
-
-            GetSrcAndOpFromValue(Value, isAlphaArg, &source, &operand);
-            if (isAlphaArg) {
-
-                /* From MSDN (D3DTSS_ALPHAARG1) : 
-                   The default argument is D3DTA_TEXTURE. If no texture is set for this stage, 
-                   then the default argument is D3DTA_DIFFUSE.
-                   FIXME? If texture added/removed, may need to reset back as well? */
-                if (Type == D3DTSS_ALPHAARG1 && This->StateBlock->textures[Stage] == NULL && Value == D3DTA_TEXTURE) {
-                    GetSrcAndOpFromValue(D3DTA_DIFFUSE, isAlphaArg, &source, &operand);  
-                }
-                TRACE("Source %x = %x, Operand %x = %x\n", SOURCEx_ALPHA_EXT(Type), source, OPERANDx_ALPHA_EXT(Type), operand);
-                glTexEnvi(GL_TEXTURE_ENV, SOURCEx_ALPHA_EXT(Type), source);
-                vcheckGLcall("glTexEnvi(GL_TEXTURE_ENV, SOURCEx_ALPHA_EXT, source);");
-                glTexEnvi(GL_TEXTURE_ENV, OPERANDx_ALPHA_EXT(Type), operand);
-                vcheckGLcall("glTexEnvi(GL_TEXTURE_ENV, OPERANDx_ALPHA_EXT, operand);");
-            } else {
-                TRACE("Source %x = %x, Operand %x = %x\n", SOURCEx_RGB_EXT(Type), source, OPERANDx_RGB_EXT(Type), operand);
-                glTexEnvi(GL_TEXTURE_ENV, SOURCEx_RGB_EXT(Type), source);
-                vcheckGLcall("glTexEnvi(GL_TEXTURE_ENV, SOURCEx_RGB_EXT, source);");
-                glTexEnvi(GL_TEXTURE_ENV, OPERANDx_RGB_EXT(Type), operand);
-                vcheckGLcall("glTexEnvi(GL_TEXTURE_ENV, OPERANDx_RGB_EXT, operand);");
-            }
-        }
-        break;
-
     case D3DTSS_ALPHAOP               :
     case D3DTSS_COLOROP               :
         {
 
-            int Scale = 1;
-            int Parm = (Type == D3DTSS_ALPHAOP) ? GL_COMBINE_ALPHA_EXT : GL_COMBINE_RGB_EXT;
-
-            if (Type == D3DTSS_COLOROP && Value == D3DTOP_DISABLE) {
+            if (Value == D3DTOP_DISABLE) {
                 /* TODO: Disable by making this and all later levels disabled */
-                glDisable(GL_TEXTURE_1D);
-                checkGLcall("Disable GL_TEXTURE_1D");
-                glDisable(GL_TEXTURE_2D);
-                checkGLcall("Disable GL_TEXTURE_2D");
-                glDisable(GL_TEXTURE_3D);
-                checkGLcall("Disable GL_TEXTURE_3D");
+                if (Type == D3DTSS_COLOROP) {
+                    glDisable(GL_TEXTURE_1D);
+                    checkGLcall("Disable GL_TEXTURE_1D");
+                    glDisable(GL_TEXTURE_2D);
+                    checkGLcall("Disable GL_TEXTURE_2D");
+                    glDisable(GL_TEXTURE_3D);
+                    checkGLcall("Disable GL_TEXTURE_3D");
+                }
+                break; /* Dont bother setting the texture operations */
             } else {
-
                 /* Enable only the appropriate texture dimension */
                 if (Type == D3DTSS_COLOROP) {
                     if (This->StateBlock->textureDimensions[Stage] == GL_TEXTURE_1D) {
@@ -3936,139 +3830,27 @@ HRESULT  WINAPI  IDirect3DDevice8Impl_SetTextureStageState(LPDIRECT3DDEVICE8 ifa
                         checkGLcall("Disable GL_TEXTURE_CUBE_MAP");
                     }
                 }
-
-                /* Re-Enable GL_TEXTURE_ENV_MODE, GL_COMBINE_EXT */
-                if (Value != D3DTOP_DISABLE) {
-                    glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_COMBINE_EXT);
-                }
-
-                /* Now set up the operand correctly */
-                switch (Value) {
-                case D3DTOP_DISABLE                   :
-                    /* Contrary to the docs, alpha can be disabled when colorop is enabled
-                       and it works, so ignore this op */
-                    TRACE("Disable ALPHAOP but COLOROP enabled!\n");
-                    break;
-
-                case D3DTOP_SELECTARG1                :
-                    {
-                        glTexEnvi(GL_TEXTURE_ENV, Parm, GL_REPLACE);
-                        checkGLcall("glTexEnvi(GL_TEXTURE_ENV, Parm, GL_REPLACE)");
-                    }
-                    break;
-
-                case D3DTOP_SELECTARG2                :
-		    { 
-		        BOOL  isAlphaOp = (Type == D3DTSS_ALPHAOP);
-		        DWORD dwValue = 0;
-			GLenum source;
-			GLenum operand;
-		        /*FIXME("see if D3DTOP_SELECTARG2 behavior is correct now!\n");*/
-                        glTexEnvi(GL_TEXTURE_ENV, Parm, GL_REPLACE);
-			checkGLcall("glTexEnvi(GL_TEXTURE_ENV, Parm, GL_REPLACE)");
-			/* GL_REPLACE, swap args 0 and 1? */
-			dwValue = This->StateBlock->texture_state[Stage][(isAlphaOp) ? D3DTSS_ALPHAARG2 : D3DTSS_COLORARG2];
-			GetSrcAndOpFromValue(dwValue, isAlphaOp, &source, &operand);
-			if (isAlphaOp) {
-			  TRACE("Source %x = %x, Operand %x = %x\n", GL_SOURCE0_ALPHA_EXT, source, GL_OPERAND0_ALPHA_EXT, operand);
-			  glTexEnvi(GL_TEXTURE_ENV, GL_SOURCE0_ALPHA_EXT, source);
-			  checkGLcall("glTexEnvi(GL_TEXTURE_ENV, GL_SOURCE0_ALPHA_EXT, 'source')");
-			  glTexEnvi(GL_TEXTURE_ENV, GL_OPERAND0_ALPHA_EXT, operand);
-			  checkGLcall("glTexEnvi(GL_TEXTURE_ENV, GL_OPERAND0_ALPHA_EXT, 'operand')");
-			} else {
-			  TRACE("Source %x = %x, Operand %x = %x\n", GL_SOURCE0_RGB_EXT, source, GL_OPERAND0_RGB_EXT, operand);
-			  glTexEnvi(GL_TEXTURE_ENV, GL_SOURCE0_RGB_EXT, source);
-			  checkGLcall("glTexEnvi(GL_TEXTURE_ENV, GL_SOURCE0_RGB_EXT, 'source')");
-			  glTexEnvi(GL_TEXTURE_ENV, GL_OPERAND0_RGB_EXT, operand);
-			  checkGLcall("glTexEnvi(GL_TEXTURE_ENV, GL_OPERAND0_RGB_EXT, 'operand')");
-			}
-		        dwValue = This->StateBlock->texture_state[Stage][(isAlphaOp) ? D3DTSS_ALPHAARG1 : D3DTSS_COLORARG1];
-			GetSrcAndOpFromValue(dwValue, isAlphaOp, &source, &operand);
-			if (isAlphaOp) {
-			  TRACE("Source %x = %x, Operand %x = %x\n", GL_SOURCE1_ALPHA_EXT, source, GL_OPERAND1_ALPHA_EXT, operand);
-			  glTexEnvi(GL_TEXTURE_ENV, GL_SOURCE1_ALPHA_EXT, source);
-			  checkGLcall("glTexEnvi(GL_TEXTURE_ENV, GL_SOURCE1_ALPHA_EXT, 'source')");
-			  glTexEnvi(GL_TEXTURE_ENV, GL_OPERAND1_ALPHA_EXT, operand);
-			  checkGLcall("glTexEnvi(GL_TEXTURE_ENV, GL_OPERAND1_ALPHA_EXT, 'operand')");
-			} else {
-			  TRACE("Source %x = %x, Operand %x = %x\n", GL_SOURCE1_RGB_EXT, source, GL_OPERAND1_RGB_EXT, operand);
-			  glTexEnvi(GL_TEXTURE_ENV, GL_SOURCE1_RGB_EXT, source);
-			  checkGLcall("glTexEnvi(GL_TEXTURE_ENV, GL_SOURCE1_RGB_EXT, 'source')");
-			  glTexEnvi(GL_TEXTURE_ENV, GL_OPERAND1_RGB_EXT, operand);
-			  checkGLcall("glTexEnvi(GL_TEXTURE_ENV, GL_OPERAND1_RGB_EXT, 'operand')");
-			}
-		    }
-		    break;
-
-                case D3DTOP_MODULATE4X                : Scale = Scale * 2;  /* Drop through */
-                case D3DTOP_MODULATE2X                : Scale = Scale * 2;  /* Drop through */
-                case D3DTOP_MODULATE                  :
-
-                    /* Correct scale */
-                    if (Type == D3DTSS_ALPHAOP) {
-                        glTexEnvi(GL_TEXTURE_ENV, GL_ALPHA_SCALE, Scale);
-                        vcheckGLcall("glTexEnvi(GL_TEXTURE_ENV, GL_ALPHA_SCALE, Scale)");
-                    } else {
-                        glTexEnvi(GL_TEXTURE_ENV, GL_RGB_SCALE_EXT, Scale);
-                        vcheckGLcall("glTexEnvi(GL_TEXTURE_ENV, GL_RGB_SCALE_EXT, Scale)");
-                    }
-                    glTexEnvi(GL_TEXTURE_ENV, Parm, GL_MODULATE);
-                    checkGLcall("glTexEnvi(GL_TEXTURE_ENV, Parm, GL_MODULATE);");
-                    break;
-
-                case D3DTOP_ADD                       :
-                    glTexEnvi(GL_TEXTURE_ENV, Parm, GL_ADD);
-                    vcheckGLcall("glTexEnvi(GL_TEXTURE_ENV, Parm, GL_ADD)");
-                    break;
-
-                case D3DTOP_ADDSIGNED2X               : Scale = Scale * 2;  /* Drop through */
-                case D3DTOP_ADDSIGNED                 :
-                    glTexEnvi(GL_TEXTURE_ENV, Parm, GL_ADD_SIGNED_EXT);
-                    vcheckGLcall("glTexEnvi(GL_TEXTURE_ENV, Parm, GL_ADD_SIGNED_EXT)");
-                    break;
-
-                case D3DTOP_DOTPRODUCT3               :
-#if defined(GL_VERSION_1_3)
-                    if (GL_SUPPORT(ARB_TEXTURE_ENV_DOT3)) {
-                        glTexEnvi(GL_TEXTURE_ENV, Parm, GL_DOT3_RGBA);
-                        checkGLcall("glTexEnvi(GL_TEXTURE_ENV, comb_target, GL_DOT3_RGBA);");
-                        break;
-                    }
-#endif
-                    FIXME("DotProduct3 extension requested but not supported via this version of opengl\n");
-                    break;
-
-
-                case D3DTOP_SUBTRACT                  :
-#if defined(GL_VERSION_1_3)
-                    glTexEnvi(GL_TEXTURE_ENV, Parm, GL_SUBTRACT);
-		    checkGLcall("glTexEnvi(GL_TEXTURE_ENV, Parm, GL_SUBTRACT)");
-		    break;
-#else
-		    /**
-		     * @TODO: to check:
-		     *  if ARB_texture_env_combine is supported
-		     *   we can use GL_SUBTRACT_ARB here
-		     */
-#endif
-
-                case D3DTOP_ADDSMOOTH                 :
-                case D3DTOP_BLENDDIFFUSEALPHA         :
-                case D3DTOP_BLENDTEXTUREALPHA         :
-                case D3DTOP_BLENDFACTORALPHA          :
-                case D3DTOP_BLENDTEXTUREALPHAPM       :
-                case D3DTOP_BLENDCURRENTALPHA         :
-                case D3DTOP_PREMODULATE               :
-                case D3DTOP_MODULATEALPHA_ADDCOLOR    :
-                case D3DTOP_MODULATECOLOR_ADDALPHA    :
-                case D3DTOP_MODULATEINVALPHA_ADDCOLOR :
-                case D3DTOP_MODULATEINVCOLOR_ADDALPHA :
-                case D3DTOP_BUMPENVMAP                :
-                case D3DTOP_BUMPENVMAPLUMINANCE       :
-                case D3DTOP_MULTIPLYADD               :
-                case D3DTOP_LERP                      :
-                default:
-                    FIXME("Unhandled texture operation %ld\n", Value);
+            }
+            /* Drop through... (Except disable case) */
+        case D3DTSS_COLORARG0             :
+        case D3DTSS_COLORARG1             :
+        case D3DTSS_COLORARG2             :
+        case D3DTSS_ALPHAARG0             :
+        case D3DTSS_ALPHAARG1             :
+        case D3DTSS_ALPHAARG2             :
+            {
+                BOOL isAlphaArg = (Type == D3DTSS_ALPHAOP || Type == D3DTSS_ALPHAARG1 || 
+                                   Type == D3DTSS_ALPHAARG2 || Type == D3DTSS_ALPHAARG0);
+                if (isAlphaArg) {
+                    set_tex_op(iface, TRUE, Stage, This->StateBlock->texture_state[Stage][D3DTSS_ALPHAOP],
+                               This->StateBlock->texture_state[Stage][D3DTSS_ALPHAARG1], 
+                               This->StateBlock->texture_state[Stage][D3DTSS_ALPHAARG2], 
+                               This->StateBlock->texture_state[Stage][D3DTSS_ALPHAARG0]);
+                } else {
+                    set_tex_op(iface, FALSE, Stage, This->StateBlock->texture_state[Stage][D3DTSS_COLOROP],
+                               This->StateBlock->texture_state[Stage][D3DTSS_COLORARG1], 
+                               This->StateBlock->texture_state[Stage][D3DTSS_COLORARG2], 
+                               This->StateBlock->texture_state[Stage][D3DTSS_COLORARG0]);
                 }
             }
             break;
