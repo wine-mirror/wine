@@ -4472,7 +4472,7 @@ _invoke(FARPROC func,CALLCONV callconv, int nrargs, DWORD *args) {
     return res;
 }
 
-extern int const _argsize(DWORD vt);
+extern int _argsize(DWORD vt);
 
 /****************************************************************************
  * Helper functions for Dispcall / Invoke, which copies one variant

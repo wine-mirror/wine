@@ -405,7 +405,7 @@ static IRpcProxyBufferVtbl tmproxyvtable = {
 };
 
 /* how much space do we use on stack in DWORD steps. */
-int const
+int
 _argsize(DWORD vt) {
     switch (vt) {
     case VT_DATE:
