@@ -19,7 +19,7 @@
 #include "dde.h"
 #include "ddeml.h"
 #include "debugtools.h"
-#include "dde_private.h"
+#include "dde/dde_private.h"
 
 DEFAULT_DEBUG_CHANNEL(ddeml);
 

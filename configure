@@ -7595,6 +7595,7 @@ dlls/dinput/joystick \
 dlls/dinput/keyboard \
 dlls/dinput/mouse \
 dlls/kernel/messages \
+dlls/user/dde \
 dlls/user/resources \
 dlls/wineps/data \
 "
