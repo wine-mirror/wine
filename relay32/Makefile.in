@@ -7,6 +7,7 @@ MODULE    = relay32
 
 DLLS = \
 	advapi32.spec \
+	avifil32.spec \
 	comctl32.spec \
 	comdlg32.spec \
 	crtdll.spec \

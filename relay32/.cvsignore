@@ -1,5 +1,6 @@
 Makefile
 advapi32.c
+avifil32.c
 call32.s
 comctl32.c
 comdlg32.c

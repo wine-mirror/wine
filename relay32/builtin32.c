@@ -29,6 +29,7 @@ typedef struct
 
 
 extern const BUILTIN32_DESCRIPTOR ADVAPI32_Descriptor;
+extern const BUILTIN32_DESCRIPTOR AVIFIL32_Descriptor;
 extern const BUILTIN32_DESCRIPTOR COMCTL32_Descriptor;
 extern const BUILTIN32_DESCRIPTOR COMDLG32_Descriptor;
 extern const BUILTIN32_DESCRIPTOR CRTDLL_Descriptor;
@@ -69,6 +70,7 @@ extern const BUILTIN32_DESCRIPTOR WSOCK32_Descriptor;
 static BUILTIN32_DLL BuiltinDLLs[] =
 {
     { &ADVAPI32_Descriptor, TRUE  },
+    { &AVIFIL32_Descriptor, FALSE },
     { &COMCTL32_Descriptor, FALSE },
     { &COMDLG32_Descriptor, TRUE  },
     { &CRTDLL_Descriptor,   TRUE  },
