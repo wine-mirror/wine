@@ -35,7 +35,7 @@ typedef struct tagWINE_MM_DRIVER_PART {
 
 /* each low-level .drv will be associated with an instance of this structure */
 typedef struct tagWINE_MM_DRIVER {
-    HDRVR			hDrvr;		/* handle of loader driver */
+    HDRVR			hDriver;
     LPSTR			name;		/* name of the driver */
     BOOL			bIs32 : 1,	/* TRUE if 32 bit driver, FALSE for 16 */
 	                        bIsMapper : 1;	/* TRUE if mapper */
@@ -2244,32 +2244,33 @@ static	BOOL	MMDRV_Install(LPCSTR name, int num, BOOL bIsMapper)
 {
     int			count = 0;
     char		buffer[128];
-    HMODULE		hModule;
     LPWINE_MM_DRIVER	lpDrv = &MMDrvs[num];
+    LPWINE_DRIVER	d;
 
     TRACE("('%s');\n", name);
     
     memset(lpDrv, 0, sizeof(*lpDrv));
 
-    /* First load driver */
-    if ((lpDrv->hDrvr = OpenDriverA(name, 0, 0)) == 0) {
+    if (!(lpDrv->hDriver = OpenDriverA(name, 0, 0))) {
 	WARN("Couldn't open driver '%s'\n", name);
 	return FALSE;
     }
+    
+    d = DRIVER_FindFromHDrvr(lpDrv->hDriver);
+    lpDrv->bIs32 = (d->dwFlags & WINE_GDF_16BIT) ? FALSE : TRUE;
 
     /* Then look for xxxMessage functions */
-#define	AA(_w,_x,_y,_z)						\
-    func = (WINEMM_msgFunc##_y) _z (hModule, #_x);		\
+#define	AA(_h,_w,_x,_y,_z)					\
+    func = (WINEMM_msgFunc##_y) _z ((_h), #_x);			\
     if (func != NULL) 						\
         { lpDrv->parts[_w].u.fnMessage##_y = func; count++; 	\
           TRACE("Got %d bit func '%s'\n", _y, #_x);         }
 
-    if ((GetDriverFlags(lpDrv->hDrvr) & (WINE_GDF_EXIST|WINE_GDF_16BIT)) == WINE_GDF_EXIST) {
+    if (lpDrv->bIs32) {
 	WINEMM_msgFunc32	func;
 
-	lpDrv->bIs32 = TRUE;
-	if ((hModule = GetDriverModuleHandle(lpDrv->hDrvr))) {
-#define A(_x,_y)	AA(_x,_y,32,GetProcAddress)
+	if (d->d.d32.hModule) {
+#define A(_x,_y)	AA(d->d.d32.hModule,_x,_y,32,GetProcAddress)
 	    A(MMDRV_AUX,	auxMessage);
 	    A(MMDRV_MIXER,	mixMessage);
 	    A(MMDRV_MIDIIN,	midMessage);
@@ -2297,9 +2298,8 @@ static	BOOL	MMDRV_Install(LPCSTR name, int num, BOOL bIsMapper)
 	 * mixer for mixer devices 
 	 */
 	
-	lpDrv->bIs32 = FALSE;
-	if ((hModule = GetDriverModuleHandle16(lpDrv->hDrvr))) {
-#define A(_x,_y)	AA(_x,_y,16,GetProcAddress16)
+	if (d->d.d16.hDriver16) {
+#define A(_x,_y)	AA(d->d.d16.hDriver16,_x,_y,16,GetProcAddress16)
 	    A(MMDRV_AUX,	auxMessage);
 	    A(MMDRV_MIXER,	mixMessage);
 	    A(MMDRV_MIDIIN,	midMessage);
@@ -2320,7 +2320,7 @@ static	BOOL	MMDRV_Install(LPCSTR name, int num, BOOL bIsMapper)
     }
 
     if (!count) {
-	CloseDriver(lpDrv->hDrvr, 0, 0);
+	CloseDriver(lpDrv->hDriver, 0, 0);
 	WARN("No message functions found\n");
 	return FALSE;
     }

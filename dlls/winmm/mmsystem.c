@@ -32,9 +32,6 @@
 
 DEFAULT_DEBUG_CHANNEL(mmsys);
 
-LONG   WINAPI DrvDefDriverProc(DWORD dwDevID, HDRVR16 hDrv, WORD wMsg, 
-			       DWORD dwParam1, DWORD dwParam2);
-
 static LPWINE_MM_IDATA		lpFirstIData = NULL;
 
 static	LPWINE_MM_IDATA	MULTIMEDIA_GetIDataNoCheck(void)
@@ -634,18 +631,6 @@ UINT16 WINAPI mmsystemGetVersion16(void)
 {
     TRACE("3.10 (Win95?)\n");
     return 0x030a;
-}
-
-/**************************************************************************
- * 				DriverProc			[MMSYSTEM.6]
- */
-LRESULT WINAPI DriverProc16(DWORD dwDevID, HDRVR16 hDrv, WORD wMsg, 
-			    DWORD dwParam1, DWORD dwParam2)
-{
-    TRACE("dwDevID=%08lx hDrv=%04x wMsg=%04x dwParam1=%08lx dwParam2=%08lx\n",
-	  dwDevID, hDrv, wMsg, dwParam1, dwParam2);
-
-    return DrvDefDriverProc(dwDevID, hDrv, wMsg, dwParam1, dwParam2);
 }
 
 /**************************************************************************
@@ -4855,73 +4840,6 @@ DWORD WINAPI waveInMessage16(HWAVEIN16 hWaveIn, UINT16 uMessage,
 	return MMSYSERR_INVALHANDLE;
 
     return MMDRV_Message(wmld, uMessage, dwParam1, dwParam2, TRUE);
-}
-
-/**************************************************************************
- * 				DrvOpen	       		[MMSYSTEM.1100]
- */
-HDRVR16 WINAPI DrvOpen(LPSTR lpDriverName, LPSTR lpSectionName, LPARAM lParam)
-{
-    TRACE("('%s','%s', %08lX);\n", lpDriverName, lpSectionName, lParam);
-
-    return OpenDriver16(lpDriverName, lpSectionName, lParam);
-}
-
-/**************************************************************************
- * 				DrvClose       		[MMSYSTEM.1101]
- */
-LRESULT WINAPI DrvClose(HDRVR16 hDrv, LPARAM lParam1, LPARAM lParam2)
-{
-    TRACE("(%04X, %08lX, %08lX);\n", hDrv, lParam1, lParam2);
-
-    return CloseDriver16(hDrv, lParam1, lParam2);
-}
-
-/**************************************************************************
- * 				DrvSendMessage		[MMSYSTEM.1102]
- */
-LRESULT WINAPI DrvSendMessage(HDRVR16 hDrv, WORD msg, LPARAM lParam1,
-                              LPARAM lParam2)
-{
-    return SendDriverMessage(hDrv, msg, lParam1, lParam2);
-}
-
-/**************************************************************************
- * 				DrvGetModuleHandle	[MMSYSTEM.1103]
- */
-HANDLE16 WINAPI DrvGetModuleHandle16(HDRVR16 hDrv)
-{
-    return GetDriverModuleHandle16(hDrv);
-}
-
-/**************************************************************************
- * 				DrvDefDriverProc	[MMSYSTEM.1104]
- */
-LRESULT WINAPI DrvDefDriverProc(DWORD dwDriverID, HDRVR16 hDrv, WORD wMsg, 
-                                DWORD dwParam1, DWORD dwParam2)
-{
-    /* FIXME : any mapping from 32 to 16 bit structure ? */
-    return DefDriverProc16(dwDriverID, hDrv, wMsg, dwParam1, dwParam2);
-}
-
-/**************************************************************************
- * 				DefDriverProc			  [WINMM.5]
- */
-LRESULT WINAPI DefDriverProc(DWORD dwDriverIdentifier, HDRVR hDrv,
-			     UINT Msg, LPARAM lParam1, LPARAM lParam2)
-{
-    switch (Msg) {
-    case DRV_LOAD:
-    case DRV_FREE:
-    case DRV_ENABLE:
-    case DRV_DISABLE:
-        return 1;
-    case DRV_INSTALL:
-    case DRV_REMOVE:
-        return DRV_SUCCESS;
-    default:
-        return 0;
-    }
 }
 
 /*#define USE_MM_TSK_WINE*/

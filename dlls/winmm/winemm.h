@@ -15,6 +15,28 @@
 typedef DWORD WINAPI (*MessageProc16)(UINT16 wDevID, UINT16 wMsg, DWORD dwUser, DWORD dwParam1, DWORD dwParam2);
 typedef DWORD WINAPI (*MessageProc32)(UINT wDevID, UINT wMsg, DWORD dwUser, DWORD dwParam1, DWORD dwParam2);
 
+/* Who said goofy boy ? */
+#define	WINE_DI_MAGIC	0x900F1B01
+
+typedef struct tagWINE_DRIVER
+{
+    DWORD			dwMagic;
+    /* as usual LPWINE_DRIVER == hDriver32 */
+    DWORD			dwFlags;
+    union {
+	struct {
+	    HMODULE			hModule;
+	    DRIVERPROC			lpDrvProc;
+	    DWORD		  	dwDriverID;
+	} d32;
+	struct {
+	    HDRVR16			hDriver16;
+	} d16;
+    } d;
+    struct tagWINE_DRIVER*	lpPrevItem;
+    struct tagWINE_DRIVER*	lpNextItem;
+} WINE_DRIVER, *LPWINE_DRIVER;
+
 typedef struct tagWINE_MLD {
 /* EPP struct tagWINE_MLD*	lpNext; */		/* not used so far */
        UINT			uDeviceID;
@@ -85,7 +107,7 @@ typedef struct tagWINE_MCIDRIVER {
 	LPSTR			lpstrElementName;
         LPSTR			lpstrDeviceType;
         LPSTR			lpstrAlias;
-	HDRVR			hDrv;
+        HDRVR			hDriver;
 	DRIVERPROC16		driverProc;
 	DWORD			dwPrivate;
         YIELDPROC		lpfnYieldProc;
@@ -149,6 +171,10 @@ typedef struct tagWINE_MM_IDATA {
 
 typedef LONG			(*MCIPROC16)(DWORD, HDRVR16, WORD, DWORD, DWORD);
 typedef LONG			(*MCIPROC)(DWORD, HDRVR, DWORD, DWORD, DWORD);
+
+extern LPWINE_DRIVER		DRIVER_FindFromHDrvr(HDRVR hDrvr);
+extern BOOL			DRIVER_GetLibName(LPCSTR keyName, LPCSTR sectName, LPSTR buf, int sz);
+extern LPWINE_DRIVER		DRIVER_TryOpenDriver32(LPCSTR fn, LPARAM lParam2);
 
 extern LPWINE_MCIDRIVER		MCI_GetDriver(UINT16 uDevID);
 extern UINT			MCI_GetDriverFromString(LPCSTR str);

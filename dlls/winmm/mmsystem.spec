@@ -137,11 +137,11 @@ owner	winmm
 903    pascal  mmTaskSignal(word) mmTaskSignal16
 904    pascal  mmGetCurrentTask() WIN16_GetCurrentTask #just the same
 905    pascal  mmTaskYield() mmTaskYield16
-1100   pascal  DrvOpen(str str long) DrvOpen
-1101   pascal  DrvClose(word long long) DrvClose
-1102   pascal  DrvSendMessage(word word long long) DrvSendMessage
+1100   pascal  DrvOpen(str str long) DrvOpen16
+1101   pascal  DrvClose(word long long) DrvClose16
+1102   pascal  DrvSendMessage(word word long long) DrvSendMessage16
 1103   pascal  DrvGetModuleHandle(word) DrvGetModuleHandle16
-1104   pascal  DrvDefDriverProc(long word word long long) DrvDefDriverProc
+1104   pascal  DrvDefDriverProc(long word word long long) DrvDefDriverProc16
 1120   pascal  mmThreadCreate(segptr ptr long long) mmThreadCreate16
 1121   pascal  mmThreadSignal(word) mmThreadSignal16
 1122   pascal  mmThreadBlock(word) mmThreadBlock16
@@ -176,5 +176,5 @@ owner	winmm
 #2006   stub    WINMMSL_THUNKDATA16
 
 2046   pascal  DllEntryPoint(long word word word long word) MMSYSTEM_LibMain
-# this is a wine only exported function. Is there another way to do it ?
-2047   pascal  WINE_mmThreadEntryPoint(long) WINE_mmThreadEntryPoint
+# these are Wine only exported functions. Is there another way to do it ?
+2047   pascal  __wine_mmThreadEntryPoint(long) WINE_mmThreadEntryPoint

@@ -26,6 +26,18 @@ DEFAULT_DEBUG_CHANNEL(mci);
 static	int			MCI_InstalledCount;
 static	LPSTR			MCI_lpInstallNames = NULL;
 
+typedef enum {
+    MCI_MAP_NOMEM, 	/* ko, memory problem */
+    MCI_MAP_MSGERROR, 	/* ko, unknown message */
+    MCI_MAP_OK, 	/* ok, no memory allocated. to be sent to the proc. */
+    MCI_MAP_OKMEM, 	/* ok, some memory allocated, need to call UnMapMsg. to be sent to the proc. */
+} MCI_MapType;
+
+static	MCI_MapType	MCI_MapMsg16To32A  (WORD uDevType, WORD wMsg,                DWORD* lParam);
+static	MCI_MapType	MCI_UnMapMsg16To32A(WORD uDevType, WORD wMsg,                DWORD  lParam);
+static	MCI_MapType	MCI_MapMsg32ATo16  (WORD uDevType, WORD wMsg, DWORD dwFlags, DWORD* lParam);
+static	MCI_MapType	MCI_UnMapMsg32ATo16(WORD uDevType, WORD wMsg, DWORD dwFlags, DWORD  lParam);
+
 /* First MCI valid device ID (0 means error) */
 #define MCI_MAGIC 0x0001
 
@@ -387,8 +399,7 @@ static	BOOL	MCI_UnLoadMciDriver(LPWINE_MM_IDATA iData, LPWINE_MCIDRIVER wmd)
     if (!wmd)
 	return TRUE;
 
-    if (wmd->hDrv) 
-	CloseDriver(wmd->hDrv, 0, 0);
+    CloseDriver(wmd->hDriver, 0, 0);
 
     if (wmd->dwPrivate != 0)
 	WARN("Unloading mci driver with non nul dwPrivate field\n");
@@ -411,6 +422,42 @@ static	BOOL	MCI_UnLoadMciDriver(LPWINE_MM_IDATA iData, LPWINE_MCIDRIVER wmd)
 }
 
 /**************************************************************************
+ * 				MCI_OpenMciDriver		[internal]
+ */
+static	BOOL	MCI_OpenMciDriver(LPWINE_MCIDRIVER wmd, LPCSTR drvTyp, LPARAM lp)
+{
+    char	libName[128];
+    
+    if (!DRIVER_GetLibName(drvTyp, "mci", libName, sizeof(libName)))
+	return FALSE;
+
+    wmd->bIs32 = 0xFFFF;
+    /* First load driver */
+    if ((wmd->hDriver = (HDRVR)DRIVER_TryOpenDriver32(libName, lp))) {
+	wmd->bIs32 = TRUE;
+    } else {
+	MCI_MapType 	res;
+
+	switch (res = MCI_MapMsg32ATo16(0, MCI_OPEN_DRIVER, 0, &lp)) {
+	case MCI_MAP_MSGERROR:
+	    TRACE("Not handled yet (MCI_OPEN_DRIVER)\n");
+	    break;
+	case MCI_MAP_NOMEM:
+	    TRACE("Problem mapping msg=MCI_OPEN_DRIVER from 32a to 16\n");
+	    break;
+	case MCI_MAP_OK:
+	case MCI_MAP_OKMEM:
+	    if ((wmd->hDriver = OpenDriverA(drvTyp, "mci", lp)))
+		wmd->bIs32 = FALSE;
+	    if (res == MCI_MAP_OKMEM)
+		MCI_UnMapMsg32ATo16(0, MCI_OPEN_DRIVER, 0, lp);
+	    break;
+	}
+    }
+    return (wmd->bIs32 == 0xFFFF) ? FALSE : TRUE;
+}
+
+/**************************************************************************
  * 				MCI_LoadMciDriver		[internal]
  */
 static	DWORD	MCI_LoadMciDriver(LPWINE_MM_IDATA iData, LPCSTR _strDevTyp, 
@@ -420,8 +467,7 @@ static	DWORD	MCI_LoadMciDriver(LPWINE_MM_IDATA iData, LPCSTR _strDevTyp,
     LPWINE_MCIDRIVER		wmd = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*wmd));
     MCI_OPEN_DRIVER_PARMSA	modp;
     DWORD			dwRet = 0;
-    HDRVR			hDrv = 0;
-
+    
     if (!wmd || !strDevTyp) {
 	dwRet = MCIERR_OUT_OF_MEMORY;
 	goto errCleanUp;
@@ -450,28 +496,25 @@ static	DWORD	MCI_LoadMciDriver(LPWINE_MM_IDATA iData, LPCSTR _strDevTyp,
 
     modp.lpstrParams = NULL;
     
-    hDrv = OpenDriverA(strDevTyp, "mci", (LPARAM)&modp);
-    
-    if (!hDrv) {
+    if (!MCI_OpenMciDriver(wmd, strDevTyp, (LPARAM)&modp)) {
 	FIXME("Couldn't load driver for type %s.\n"
 	      "If you don't have a windows installation accessible from Wine,\n"
 	      "you perhaps forgot to create a [mci] section in system.ini\n",
 	      strDevTyp);
 	dwRet = MCIERR_DEVICE_NOT_INSTALLED;
 	goto errCleanUp;
-    }				
-
+    }
+ 
     /* FIXME: should also check that module's description is of the form
      * MODULENAME:[MCI] comment
      */
 
-    wmd->hDrv = hDrv;
     /* some drivers will return 0x0000FFFF, some others 0xFFFFFFFF */
     wmd->uSpecificCmdTable = LOWORD(modp.wCustomCommandTable);
     wmd->uTypeCmdTable = MCI_COMMAND_TABLE_NOT_LOADED;
 
     TRACE("Loaded driver %x (%s), type is %d, cmdTable=%08x\n", 
-	  hDrv, strDevTyp, modp.wType, modp.wCustomCommandTable);
+	  wmd->hDriver, strDevTyp, modp.wType, modp.wCustomCommandTable);
     
     wmd->lpstrDeviceType = strDevTyp;
     wmd->wType = modp.wType;
@@ -746,7 +789,9 @@ static	DWORD	MCI_HandleReturnValues(LPWINE_MM_IDATA iData, DWORD dwRet,
 	    case MCI_RESOURCE_RETURNED|MCI_RESOURCE_DRIVER:
 		/* return string which ID is HIWORD(data[1]), 
 		 * string is loaded from driver */
-		LoadStringA(wmd->hDrv, HIWORD(data[1]), lpstrRet, uRetLen);
+		/* FIXME: this is wrong for a 16 bit handle */
+		LoadStringA(GetDriverModuleHandle(wmd->hDriver), 
+			    HIWORD(data[1]), lpstrRet, uRetLen);
 		break;
 	    case MCI_COLONIZED3_RETURN:
 		snprintf(lpstrRet, uRetLen, "%d:%d:%d", 
@@ -1077,14 +1122,6 @@ BOOL WINAPI mciFreeCommandResource(UINT uTable)
 
     return mciFreeCommandResource16(uTable);
 }
-
-typedef enum {
-    MCI_MAP_NOMEM, 	/* ko, memory problem */
-    MCI_MAP_MSGERROR, 	/* ko, unknown message */
-    MCI_MAP_OK, 	/* ok, no memory allocated. to be sent to the proc. */
-    MCI_MAP_OKMEM, 	/* ok, some memory allocated, need to call UnMapMsg. to be sent to the proc. */
-    MCI_MAP_PASS	/* not handled (no memory allocated) to be sent to the driver */
-} MCI_MapType;
 
 /**************************************************************************
  * 			MCI_MapMsg16To32A			[internal]
@@ -1739,7 +1776,7 @@ static	MCI_MapType	MCI_MapMsg32ATo16(WORD uDevType, WORD wMsg, DWORD dwFlags, DW
     case DRV_EXITSESSION:
     case DRV_EXITAPPLICATION:
     case DRV_POWER:
-	return MCI_MAP_PASS;
+	return MCI_MAP_OK;
 
     default:
 	WARN("Don't know how to map msg=%s\n", MCI_MessageToString(wMsg));
@@ -1924,7 +1961,7 @@ static	MCI_MapType	MCI_UnMapMsg32ATo16(WORD uDevType, WORD wMsg, DWORD dwFlags, 
     case DRV_EXITAPPLICATION:
     case DRV_POWER:
 	FIXME("This is a hack\n");
-	return MCI_MAP_PASS;
+	return MCI_MAP_OK;
     default:
 	FIXME("Map/Unmap internal error on msg=%s\n", MCI_MessageToString(wMsg));
 	return MCI_MAP_MSGERROR;
@@ -1937,44 +1974,31 @@ static	MCI_MapType	MCI_UnMapMsg32ATo16(WORD uDevType, WORD wMsg, DWORD dwFlags, 
  */
 DWORD MCI_SendCommandFrom32(UINT wDevID, UINT16 wMsg, DWORD dwParam1, DWORD dwParam2)
 {
-    DWORD		dwRet = MCIERR_DEVICE_NOT_INSTALLED;
+    DWORD		dwRet = MCIERR_INVALID_DEVICE_ID;
     LPWINE_MCIDRIVER	wmd = MCI_GetDriver(wDevID);
 
-    if (!wmd) {
-	dwRet = MCIERR_INVALID_DEVICE_ID;
-    } else {
-	switch (GetDriverFlags(wmd->hDrv) & (WINE_GDF_EXIST|WINE_GDF_16BIT)) {
-	case WINE_GDF_EXIST|WINE_GDF_16BIT:
-	    {
-		MCI_MapType	res;
+    if (wmd) {
+	if (wmd->bIs32) {
+	    dwRet = SendDriverMessage(wmd->hDriver, wMsg, dwParam1, dwParam2);
+	} else {
+	    MCI_MapType	res;
 		
-		switch (res = MCI_MapMsg32ATo16(wmd->wType, wMsg, dwParam1, &dwParam2)) {
-		case MCI_MAP_MSGERROR:
-		    TRACE("Not handled yet (%s)\n", MCI_MessageToString(wMsg));
-		    dwRet = MCIERR_DRIVER_INTERNAL;
-		    break;
-		case MCI_MAP_NOMEM:
-		    TRACE("Problem mapping msg=%s from 32a to 16\n", MCI_MessageToString(wMsg));
-		    dwRet = MCIERR_OUT_OF_MEMORY;
-		    break;
-		case MCI_MAP_OK:
-		case MCI_MAP_OKMEM:
-		    dwRet = SendDriverMessage16(wmd->hDrv, wMsg, dwParam1, dwParam2);
-		    if (res == MCI_MAP_OKMEM)
-			MCI_UnMapMsg32ATo16(wmd->wType, wMsg, dwParam1, dwParam2);
-		    break;
-		case MCI_MAP_PASS:
-		    dwRet = SendDriverMessage(wmd->hDrv, wMsg, dwParam1, dwParam2);
-		    break;
-		}
+	    switch (res = MCI_MapMsg32ATo16(wmd->wType, wMsg, dwParam1, &dwParam2)) {
+	    case MCI_MAP_MSGERROR:
+		TRACE("Not handled yet (%s)\n", MCI_MessageToString(wMsg));
+		dwRet = MCIERR_DRIVER_INTERNAL;
+		break;
+	    case MCI_MAP_NOMEM:
+		TRACE("Problem mapping msg=%s from 32a to 16\n", MCI_MessageToString(wMsg));
+		dwRet = MCIERR_OUT_OF_MEMORY;
+		break;
+	    case MCI_MAP_OK:
+	    case MCI_MAP_OKMEM:
+		dwRet = SendDriverMessage(wmd->hDriver, wMsg, dwParam1, dwParam2);
+		if (res == MCI_MAP_OKMEM)
+		    MCI_UnMapMsg32ATo16(wmd->wType, wMsg, dwParam1, dwParam2);
+		break;
 	    }
-	    break;
-	case WINE_GDF_EXIST:
-	    dwRet = SendDriverMessage(wmd->hDrv, wMsg, dwParam1, dwParam2);
-	    break;
-	default:
-	    WARN("Unknown driver %u\n", wmd->hDrv);
-	    dwRet = MCIERR_DRIVER_INTERNAL;
 	}
     }
     return dwRet;
@@ -1985,19 +2009,15 @@ DWORD MCI_SendCommandFrom32(UINT wDevID, UINT16 wMsg, DWORD dwParam1, DWORD dwPa
  */
 DWORD MCI_SendCommandFrom16(UINT wDevID, UINT16 wMsg, DWORD dwParam1, DWORD dwParam2)
 {
-    DWORD		dwRet = MCIERR_DEVICE_NOT_INSTALLED;
+    DWORD		dwRet = MCIERR_INVALID_DEVICE_ID;
     LPWINE_MCIDRIVER	wmd = MCI_GetDriver(wDevID);
 
-    if (!wmd) {
+    if (wmd) {
 	dwRet = MCIERR_INVALID_DEVICE_ID;
-    } else {
-	MCI_MapType		res;
-	
-	switch (GetDriverFlags(wmd->hDrv) & (WINE_GDF_EXIST|WINE_GDF_16BIT)) {
-	case WINE_GDF_EXIST|WINE_GDF_16BIT:		
-	    dwRet = SendDriverMessage16(wmd->hDrv, wMsg, dwParam1, dwParam2);
-	    break;
-	case WINE_GDF_EXIST:
+
+	if (wmd->bIs32) {
+	    MCI_MapType		res;
+	    
 	    switch (res = MCI_MapMsg16To32A(wmd->wType, wMsg, &dwParam2)) {
 	    case MCI_MAP_MSGERROR:
 		TRACE("Not handled yet (%s)\n", MCI_MessageToString(wMsg));
@@ -2009,18 +2029,13 @@ DWORD MCI_SendCommandFrom16(UINT wDevID, UINT16 wMsg, DWORD dwParam1, DWORD dwPa
 		break;
 	    case MCI_MAP_OK:
 	    case MCI_MAP_OKMEM:
-		dwRet = SendDriverMessage(wmd->hDrv, wMsg, dwParam1, dwParam2);
+		dwRet = SendDriverMessage(wmd->hDriver, wMsg, dwParam1, dwParam2);
 		if (res == MCI_MAP_OKMEM)
 		    MCI_UnMapMsg16To32A(wmd->wType, wMsg, dwParam2);
 		break;
-	    case MCI_MAP_PASS:
-		dwRet = SendDriverMessage16(wmd->hDrv, wMsg, dwParam1, dwParam2);
-		break;
 	    }
-	    break;
-	default:
-	    WARN("Unknown driver %u\n", wmd->hDrv);
-	    dwRet = MCIERR_DRIVER_INTERNAL;
+	} else {
+	    dwRet = SendDriverMessage(wmd->hDriver, wMsg, dwParam1, dwParam2);
 	}
     }
     return dwRet;
