@@ -1556,7 +1556,7 @@ void SPY_DumpStructure (UINT msg, BOOL enter, LPARAM structure)
 	case WM_WINDOWPOSCHANGING:
 	    {   
 		WINDOWPOS *lpwp = (WINDOWPOS *)structure;
-		TRACE("WINDOWPOS hwnd=0x%04x, after=0x%04x, at (%d,%d) h=%d w=%d, flags=0x%08x\n",
+		TRACE("WINDOWPOS hwnd=0x%04x, after=0x%04x, at (%d,%d) w=%d h=%d, flags=0x%08x\n",
 		      lpwp->hwnd, lpwp->hwndInsertAfter, lpwp->x, lpwp->y,
 		      lpwp->cx, lpwp->cy, lpwp->flags);
 	    }
