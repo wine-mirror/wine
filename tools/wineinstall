@@ -111,10 +111,6 @@ CONVCONF=no		      # whether we are converting an existing .winerc or not
 # (DLLPATH should point to them if/when they are not in standard ld.so paths)
 DLLPATH=$libdir/wine          # default path of the dll .so files (except libwine.so)
 
-# having the Wine debugger launched automatically will be a plus for us
-DEBUGGER=$bindir/winedbg      # the (installed) path of winedbg
-HDEBUGGER=debugger/winedbg    # the (non-installed) path of winedbg
-
 # this is only for existing-windows installs
 WINECONF=tools/wineconf       # path to the wineconf perl script
 
@@ -130,7 +126,6 @@ DEFCAT=cat                    # program to cat $DEFREG with (some packages need 
 
 # temporary files used by the installer
 TMPCONF=/tmp/wineinstall.conf
-TMPREG=/tmp/wineinstall.reg
 
 # functions
 
@@ -414,7 +409,6 @@ then {
       else LD_LIBRARY_PATH="$LD_LIBRARY_PATH:$PWD:$DLLPATH"
       fi
       export LD_LIBRARY_PATH
-      DEBUGGER="$PWD/$HDEBUGGER"
       echo
       echo "NOTE! To run Wine without installing, you must set the environment variable"
       echo "LD_LIBRARY_PATH to $PWD:$DLLPATH"
@@ -510,7 +504,7 @@ then {
     echo -n "Searching for an existing Windows installation..."
     if ! $WINECONF -inifile "$WINEINI" > $TMPCONF 2>/dev/null
     then {
-      rm -f $TMPCONF $TMPREG > /dev/null
+      rm -f $TMPCONF > /dev/null
 
       echo " not found. (no matching /etc/fstab mount entry found)"
       conf_question low do_without_windows \
@@ -691,14 +685,10 @@ then {
     sed "s/\"GraphicsDriver\" = .*/\"GraphicsDriver\" = \"ttydrv\"/" $LCONF.new > $LCONF
   fi
 
-  # create a temporary wineinstall.reg with fixed debugger path
-  $DEFCAT $DEFREG | sed "s|debugger/winedbg|${DEBUGGER}|" > $TMPREG
-
   echo "Installing default Wine registry entries..."
   echo
-  if ! $REGEDIT $TMPREG > /dev/null
+  if ! $REGEDIT $DEFREG > /dev/null
   then {
-    rm -f $TMPREG
     echo "Registry install failed."
     conf_reset_question regedit_error
     conf_question high regedit_error
@@ -710,9 +700,8 @@ then {
     # registry data.  so if we are converting we need to run regedit twice
     if [ "$CONVCONF" = 'yes' ]
     then
-      if ! $REGEDIT $TMPREG > /dev/null
+      if ! $REGEDIT $DEFREG > /dev/null
       then
-        rm -f $TMPREG
         echo "Registry install failed."
         conf_reset_question regedit_error
         conf_question high regedit_error
@@ -727,7 +716,6 @@ then {
     fi
   }
   fi
-  rm -f $TMPREG
   if [ "$SYSREG" = 'auto' ]
   then SYSREG=yes
   fi
@@ -768,9 +756,6 @@ fi
 # cleanup any temporary files that may remain
 if [ -f $TMPCONF ]
 then rm -f $TMPCONF
-fi
-if [ -f $TMPREG ]
-then rm -f $TMPREG
 fi
 
 
