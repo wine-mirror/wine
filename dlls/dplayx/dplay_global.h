@@ -231,16 +231,6 @@ struct IDirectPlay4Impl
   DP_IMPL_FIELDS
 };
 
-/* Forward declarations of virtual tables */
-extern ICOM_VTABLE(IDirectPlay2) directPlay2AVT;
-extern ICOM_VTABLE(IDirectPlay3) directPlay3AVT;
-extern ICOM_VTABLE(IDirectPlay4) directPlay4AVT;
-
-extern ICOM_VTABLE(IDirectPlay2) directPlay2WVT;
-extern ICOM_VTABLE(IDirectPlay3) directPlay3WVT;
-extern ICOM_VTABLE(IDirectPlay4) directPlay4WVT;
-
-
 HRESULT DP_HandleMessage( IDirectPlay2Impl* This, LPCVOID lpMessageBody,
                           DWORD  dwMessageBodySize, LPCVOID lpMessageHeader,
                           WORD wCommandId, WORD wVersion,

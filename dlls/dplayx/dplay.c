@@ -76,6 +76,15 @@ static BOOL CALLBACK cbRemoveGroupOrPlayer( DPID dpId, DWORD dwPlayerType,
                                             LPVOID lpContext );
 static void DP_DeleteGroup( IDirectPlay2Impl* This, DPID dpid );
 
+/* Forward declarations of virtual tables */
+static ICOM_VTABLE(IDirectPlay2) directPlay2AVT;
+static ICOM_VTABLE(IDirectPlay3) directPlay3AVT;
+static ICOM_VTABLE(IDirectPlay4) directPlay4AVT;
+
+static ICOM_VTABLE(IDirectPlay2) directPlay2WVT;
+static ICOM_VTABLE(IDirectPlay3) directPlay3WVT;
+static ICOM_VTABLE(IDirectPlay4) directPlay4WVT;
+
 /* Helper methods for player/group interfaces */
 static HRESULT WINAPI DP_IF_DeletePlayerFromGroup
           ( IDirectPlay2Impl* This, LPVOID lpMsgHdr, DPID idGroup,
