@@ -34,6 +34,10 @@ EXTRA_OBJS = y.tab.o @LEX_OUTPUT_ROOT@.o
 y.tab.c y.tab.h: dbg.y
 	$(YACC) -d -t $(SRCDIR)/dbg.y
 
+# hack to allow parallel make
+y.tab.h: y.tab.c
+y.tab.o: y.tab.h
+
 @LEX_OUTPUT_ROOT@.c: debug.l
 	$(LEX) -8 -I $(SRCDIR)/debug.l
 

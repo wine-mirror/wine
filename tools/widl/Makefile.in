@@ -33,13 +33,14 @@ widl.exe: $(OBJS) $(TOPOBJDIR)/tools/wpp/libwpp.a
 y.tab.c y.tab.h: parser.y
 	$(YACC) $(YACCOPT) -d -t $(SRCDIR)/parser.y
 
+# hack to allow parallel make
+y.tab.h: y.tab.c
+y.tab.o: y.tab.h
+
 @LEX_OUTPUT_ROOT@.c: parser.l
 	$(LEX) $(LEXOPT) -d -8 $(SRCDIR)/parser.l
 
 @LEX_OUTPUT_ROOT@.o: y.tab.h
-
-clean::
-	$(RM) parser.output parser.tab.h lex.backup y.output
 
 install:: $(PROGRAMS)
 	$(MKINSTALLDIRS) $(bindir)

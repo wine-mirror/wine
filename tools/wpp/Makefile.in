@@ -26,6 +26,10 @@ libwpp.a: $(OBJS)
 y.tab.c y.tab.h: ppy.y
 	$(YACC) $(YACCOPT) -ppp -d -t $(SRCDIR)/ppy.y
 
+# hack to allow parallel make
+y.tab.h: y.tab.c
+y.tab.o: y.tab.h
+
 @LEX_OUTPUT_ROOT@.c: ppl.l
 	$(LEX) $(LEXOPT) -d -Ppp -o$@ -8 $(SRCDIR)/ppl.l
 

@@ -34,8 +34,9 @@ wmc.exe: $(OBJS)
 y.tab.c y.tab.h: mcy.y
 	$(YACC) $(YACCOPT) -d -t $(SRCDIR)/mcy.y
 
-clean::
-	$(RM) y.tab.c y.tab.h y.output
+# hack to allow parallel make
+y.tab.h: y.tab.c
+y.tab.o: y.tab.h
 
 install:: $(PROGRAMS)
 	$(MKINSTALLDIRS) $(bindir) $(mandir)/man$(prog_manext)
