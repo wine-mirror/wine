@@ -72,6 +72,15 @@
 #include "file.h"
 #include "wine/debug.h"
 
+/* Non-Linux systems do not have linux/cdrom.h and the like, and thus
+   lack the following constants. */
+
+#ifndef CD_SECS
+  #define CD_SECS              60 /* seconds per minute */
+#endif
+#ifndef CD_FRAMES
+  #define CD_FRAMES            75 /* frames per second */
+#endif
 
 static const struct iocodexs
 {
@@ -237,7 +246,7 @@ static int CDROM_SyncCache(int dev)
       goto end;
    }
    
-   TRACE("caching toc from=%d to=%d\n", hdr.cdth_trk0, hdr.cdth_trk1);
+   TRACE("caching toc from=%d to=%d\n", toc->FirstTrack, toc->LastTrack );
 
    toc->FirstTrack = hdr.cdth_trk0;
    toc->LastTrack  = hdr.cdth_trk1;
@@ -245,8 +254,6 @@ static int CDROM_SyncCache(int dev)
        + sizeof(TRACK_DATA) * (toc->LastTrack-toc->FirstTrack+2);
    toc->Length[0] = tsz >> 8;
    toc->Length[1] = tsz;
-
-   TRACE("from=%d to=%d\n", toc->FirstTrack, toc->LastTrack);
 
    for (i = toc->FirstTrack; i <= toc->LastTrack + 1; i++)
    {
@@ -285,8 +292,8 @@ static int CDROM_SyncCache(int dev)
         + sizeof(TRACK_DATA) * (toc->LastTrack-toc->FirstTrack+2);
     toc->Length[0] = tsz >> 8;
     toc->Length[1] = tsz;
-   
-    TRACE("caching toc from=%d to=%d\n", hdr.cdth_trk0, hdr.cdth_trk1);
+
+    TRACE("caching toc from=%d to=%d\n", toc->FirstTrack, toc->LastTrack );
 
     for (i = toc->FirstTrack; i <= toc->LastTrack + 1; i++)
     {
