@@ -47,6 +47,7 @@ ID_ACCEL ACCELERATORS
 #include "Fr.rc"
 #include "Hu.rc"
 #include "It.rc"
+#include "Ja.rc"
 #include "Nl.rc"
 #include "Pt.rc"
 #include "Ru.rc"

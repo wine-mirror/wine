@@ -39,14 +39,15 @@
  * which also have a neutral version. This is to
  * get localized bitmaps for example.
  */
+#include "wps_De.rc"
 #include "wps_En.rc"
 #include "wps_Es.rc"
+#include "wps_Fr.rc"
 #include "wps_It.rc"
+#include "wps_Ja.rc"
+#include "wps_Ko.rc"
 #include "wps_Nl.rc"
 #include "wps_Pt.rc"
 #include "wps_Ru.rc"
-#include "wps_Sk.rc"
-#include "wps_De.rc"
-#include "wps_Ko.rc"
-#include "wps_Fr.rc"
 #include "wps_Si.rc"
+#include "wps_Sk.rc"

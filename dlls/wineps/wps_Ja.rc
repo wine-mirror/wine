@@ -1,7 +1,5 @@
 /*
- * Top level resource file for MS ACM
- *
- * Copyright 2000 Eric Pouech
+ * Copyright 2004 Hajime Segawa
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -18,15 +16,22 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
-#include "windef.h"
-#include "winbase.h"
-#include "winuser.h"
-#include "wineacm.h"
+LANGUAGE LANG_JAPANESE, SUBLANG_DEFAULT
 
-#include "msacm_En.rc"
-#include "msacm_Es.rc"
-#include "msacm_Fr.rc"
-#include "msacm_It.rc"
-#include "msacm_Ja.rc"
-#include "msacm_Nl.rc"
-#include "msacm_Pt.rc"
+PAPER DIALOG LOADONCALL MOVEABLE DISCARDABLE 5, 43, 227, 215
+STYLE  WS_POPUP | WS_CAPTION | WS_CLIPSIBLINGS | WS_VISIBLE
+CAPTION "用紙"
+FONT 9, "MS UI Gothic"
+{
+ LTEXT "用紙サイズ(&z):", -1, 10, 6, 100, 8
+ LISTBOX IDD_PAPERS, 10, 15, 200, 45, LBS_STANDARD | LBS_HASSTRINGS |
+	 WS_TABSTOP
+ GROUPBOX "方向", -1, 10, 80, 200, 50
+ CONTROL "縦(&P)", IDD_ORIENT_PORTRAIT, "Button", BS_AUTORADIOBUTTON |
+	WS_TABSTOP, 20, 90, 60, 10
+ CONTROL "横(&L)", IDD_ORIENT_LANDSCAPE, "Button", BS_AUTORADIOBUTTON,
+	 20, 110, 60, 10
+ LTEXT "両面印刷:", IDD_DUPLEX_NAME, 10, 140, 100, 8 
+ COMBOBOX IDD_DUPLEX, 10, 151, 200, 20, CBS_DROPDOWNLIST | CBS_HASSTRINGS |
+        WS_TABSTOP
+}

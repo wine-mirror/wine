@@ -1,7 +1,7 @@
 /*
- * Top level resource file for MS ACM
+ * MPR dll resources
  *
- * Copyright 2000 Eric Pouech
+ * Copyright (C) 2004 Hajime Segawa
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -18,15 +18,9 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
-#include "windef.h"
-#include "winbase.h"
-#include "winuser.h"
-#include "wineacm.h"
+LANGUAGE LANG_JAPANESE, SUBLANG_DEFAULT
 
-#include "msacm_En.rc"
-#include "msacm_Es.rc"
-#include "msacm_Fr.rc"
-#include "msacm_It.rc"
-#include "msacm_Ja.rc"
-#include "msacm_Nl.rc"
-#include "msacm_Pt.rc"
+STRINGTABLE DISCARDABLE
+{
+    IDS_ENTIRENETWORK "ネットワーク全体"
+}

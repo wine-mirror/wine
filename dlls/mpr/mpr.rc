@@ -22,3 +22,4 @@
 #include "mprres.h"
 
 #include "mpr_En.rc"
+#include "mpr_Ja.rc"
