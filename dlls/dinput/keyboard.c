@@ -587,9 +587,15 @@ static HRESULT WINAPI SysKeyboardAImpl_GetCapabilities(
     lpDIDevCaps->dwFirmwareRevision = 100;
     lpDIDevCaps->dwHardwareRevision = 100;
     lpDIDevCaps->dwFFDriverVersion = 0;
+  } else if (lpDIDevCaps->dwSize == sizeof(DIDEVCAPS_DX3)) {
+    lpDIDevCaps->dwFlags = DIDC_ATTACHED;
+    lpDIDevCaps->dwDevType = DIDEVTYPE_KEYBOARD | (DIDEVTYPEKEYBOARD_UNKNOWN << 8);
+    lpDIDevCaps->dwAxes = 0;
+    lpDIDevCaps->dwButtons = 256;
+    lpDIDevCaps->dwPOVs = 0;
   } else {
-    /* DirectX 3.0 */
-    FIXME("DirectX 3.0 not supported....\n");
+    WARN("invalid parameter\n");
+    return DIERR_INVALIDPARAM;
   }
 
   return DI_OK;

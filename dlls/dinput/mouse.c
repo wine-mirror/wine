@@ -940,9 +940,15 @@ static HRESULT WINAPI SysMouseAImpl_GetCapabilities(
 	lpDIDevCaps->dwFirmwareRevision = 100;
 	lpDIDevCaps->dwHardwareRevision = 100;
 	lpDIDevCaps->dwFFDriverVersion = 0;
+    } else if (lpDIDevCaps->dwSize == sizeof(DIDEVCAPS_DX3)) {
+	lpDIDevCaps->dwFlags = DIDC_ATTACHED;
+	lpDIDevCaps->dwDevType = DIDEVTYPE_MOUSE | (DIDEVTYPEMOUSE_TRADITIONAL << 8);
+	lpDIDevCaps->dwAxes = 3;
+	lpDIDevCaps->dwButtons = 3;
+	lpDIDevCaps->dwPOVs = 0;
     } else {
-	/* DirectX 3.0 */
-	FIXME("DirectX 3.0 not supported....\n");
+        WARN("invalid parameter\n");
+        return DIERR_INVALIDPARAM;
     }
     
     return DI_OK;
