@@ -134,8 +134,7 @@ static LPSTR get_sobasename(LPCSTR path, LPSTR name)
 
 	strcpy(name, cptr);
 	cptr = strrchr(name, '.');
-	if(cptr)
-		*cptr = '\0';	/* Strip extension */
+	if(cptr && !strcasecmp(cptr,".dll")) *cptr = '\0'; /* Strip extension */
 
 	/* Convert to lower case.
 	 * This must be done manually because it is not sure that
