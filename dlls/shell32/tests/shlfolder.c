@@ -91,10 +91,10 @@ void test_EnumObjects(IShellFolder *iFolder)
     static const WORD iResults [5][5] =
     {
 	{ 0,-1,-1,-1,-1},
-	{ 1, 0,-1,-1, 1},
-	{ 1, 1, 0,-1, 1},
-	{ 1, 1, 1, 0, 1},
-	{ 1,-1,-1,-1, 0}
+	{ 1, 0,-1,-1,-1},
+	{ 1, 1, 0,-1,-1},
+	{ 1, 1, 1, 0,-1},
+	{ 1, 1, 1, 1, 0}
     };
 
     if SUCCEEDED(IShellFolder_EnumObjects(iFolder, NULL, SHCONTF_FOLDERS | SHCONTF_NONFOLDERS | SHCONTF_INCLUDEHIDDEN, &iEnumList))
@@ -106,10 +106,19 @@ void test_EnumObjects(IShellFolder *iFolder)
 	/* This fails on windows */
 	/* IEnumIDList_Release(iEnumList); */
     
+	/* Sort them first in case of wrong order from system */
+	for (i=0;i<5;i++) for (j=0;j<5;j++)
+	    if ((SHORT)IShellFolder_CompareIDs(iFolder, 0, idlArr[i], idlArr[j]) < 0)
+	    {
+		newPIDL = idlArr[i];
+		idlArr[i] = idlArr[j];
+		idlArr[j] = newPIDL;
+	    }
+	    
 	for (i=0;i<5;i++) for (j=0;j<5;j++)
 	{
 	    nResult = IShellFolder_CompareIDs(iFolder, 0, idlArr[i], idlArr[j]);
-	    ok(nResult == iResults[i][j], "Got %lx expected %x\n", nResult, iResults[i][j]);
+	    ok(nResult == iResults[i][j], "Got %lx expected [%d]-[%d]=%x\n", nResult, i, j, iResults[i][j]);
 	}
 
 	for (i=0;i<5;i++)
