@@ -570,11 +570,40 @@ COMBOEX_DrawItem (HWND hwnd, WPARAM wParam, LPARAM lParam)
 
     if (!IsWindowEnabled(infoPtr->hwndCombo)) return 0;
 
+    /* MSDN says:                                                       */
+    /*     "itemID - Specifies the menu item identifier for a menu      */
+    /*      item or the index of the item in a list box or combo box.   */
+    /*      For an empty list box or combo box, this member can be -1.  */
+    /*      This allows the application to draw only the focus          */
+    /*      rectangle at the coordinates specified by the rcItem        */
+    /*      member even though there are no items in the control.       */
+    /*      This indicates to the user whether the list box or combo    */
+    /*      box has the focus. How the bits are set in the itemAction   */
+    /*      member determines whether the rectangle is to be drawn as   */
+    /*      though the list box or combo box has the focus.             */
+    if (dis->itemID == 0xffffffff) {
+      if ( ( (dis->itemAction & ODA_FOCUS) && (dis->itemState & ODS_SELECTED)) ||
+	   ( (dis->itemAction & (ODA_SELECT | ODA_DRAWENTIRE)) && (dis->itemState & ODS_FOCUS) ) ) { 
+        TRACE("drawing item -1 special focus, rect=(%d,%d)-(%d,%d)\n",
+	      dis->rcItem.left, dis->rcItem.top,
+	      dis->rcItem.right, dis->rcItem.bottom);
+	DrawFocusRect(dis->hDC, &dis->rcItem);
+	return 0;
+      }
+      else {
+	TRACE("NOT drawing item  -1 special focus, rect=(%d,%d)-(%d,%d), action=%08x, state=%08x\n",
+	      dis->rcItem.left, dis->rcItem.top,
+	      dis->rcItem.right, dis->rcItem.bottom,
+	      dis->itemAction, dis->itemState);
+	return 0;
+      }
+    }
+
     item = (CBE_ITEMDATA *)SendMessageA (infoPtr->hwndCombo, CB_GETITEMDATA, 
 					 (WPARAM)dis->itemID, 0);
     if (item == (CBE_ITEMDATA *)CB_ERR)
     {
-        TRACE("invalid item for id %d \n",dis->itemID);
+        FIXME("invalid item for id %d \n",dis->itemID);
         return 0;
     }
     if (!TRACE_ON(message)) {
