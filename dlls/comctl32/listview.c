@@ -7313,9 +7313,12 @@ static INT WINAPI LISTVIEW_CallBackCompare(
   INT rv;
   HWND hwnd = (HWND)lParam;
   LISTVIEW_INFO *infoPtr = (LISTVIEW_INFO *)GetWindowLongA(hwnd, 0);
+  HDPA  hdpa_first = (HDPA) first;
+  HDPA  hdpa_second = (HDPA) second;
+  LISTVIEW_ITEM* lv_first = (LISTVIEW_ITEM*) DPA_GetPtr( hdpa_first, 0 );
+  LISTVIEW_ITEM* lv_second = (LISTVIEW_ITEM*) DPA_GetPtr( hdpa_second, 0 );
 
-  rv = (infoPtr->pfnCompare)( ((LISTVIEW_ITEM*) first)->lParam, 
-	  ((LISTVIEW_ITEM*) second)->lParam, infoPtr->lParamSort );
+  rv = (infoPtr->pfnCompare)( lv_first->lParam , lv_second->lParam, infoPtr->lParamSort );
 
   return rv;
 }
@@ -7336,12 +7339,9 @@ static INT WINAPI LISTVIEW_CallBackCompare(
 static LRESULT LISTVIEW_SortItems(HWND hwnd, WPARAM wParam, LPARAM lParam)
 {
     LISTVIEW_INFO *infoPtr = (LISTVIEW_INFO *)GetWindowLongA(hwnd, 0);
-    HDPA hdpaSubItems;
-    LISTVIEW_ITEM *lpItem;
-    int nCount, i;
-    HDPA sortList;
+    int nCount;
     UINT lStyle = GetWindowLongA(hwnd, GWL_STYLE);
-    
+
     if (lStyle & LVS_OWNERDATA)
       return FALSE;
 
@@ -7352,31 +7352,10 @@ static LRESULT LISTVIEW_SortItems(HWND hwnd, WPARAM wParam, LPARAM lParam)
     /* if there are 0 or 1 items, there is no need to sort */
     if (nCount > 1)
     {
-	sortList = DPA_Create(nCount);
-
 	infoPtr->pfnCompare = (PFNLVCOMPARE)lParam;
 	infoPtr->lParamSort = (LPARAM)wParam;
 	
-	/* append pointers one by one to sortList */
-	for (i = 0; i < nCount; i++)
-	{
-	    if ((hdpaSubItems = (HDPA) DPA_GetPtr(infoPtr->hdpaItems, i)))
-		if ((lpItem = (LISTVIEW_ITEM *) DPA_GetPtr(hdpaSubItems, 0)))
-		    DPA_InsertPtr(sortList, nCount + 1, lpItem);
-	}
-
-	/* sort the sortList */
-	DPA_Sort(sortList, LISTVIEW_CallBackCompare, hwnd);
-
-	/* copy the pointers back */
-	for (i = 0; i < nCount; i++)
-	{
-	    if ((hdpaSubItems = (HDPA) DPA_GetPtr(infoPtr->hdpaItems, i)) &&
-		(lpItem = (LISTVIEW_ITEM *) DPA_GetPtr(sortList, i)))
-		DPA_SetPtr(hdpaSubItems, 0, lpItem);
-	}
-
-	DPA_Destroy(sortList);
+        DPA_Sort(infoPtr->hdpaItems, LISTVIEW_CallBackCompare, hwnd);
     }
 
     return TRUE;
