@@ -169,7 +169,85 @@ static size_t cpu_register_map[] = {
     OFFSET_OF(CONTEXT, SegGs),
 };
 #else
-#error "Define the registers map for your CPU"
+# ifdef __powerpc__
+static size_t cpu_register_map[] = {
+    OFFSET_OF(CONTEXT, Gpr0),
+    OFFSET_OF(CONTEXT, Gpr1),
+    OFFSET_OF(CONTEXT, Gpr2),
+    OFFSET_OF(CONTEXT, Gpr3),
+    OFFSET_OF(CONTEXT, Gpr4),
+    OFFSET_OF(CONTEXT, Gpr5),
+    OFFSET_OF(CONTEXT, Gpr6),
+    OFFSET_OF(CONTEXT, Gpr7),
+    OFFSET_OF(CONTEXT, Gpr8),
+    OFFSET_OF(CONTEXT, Gpr9),
+    OFFSET_OF(CONTEXT, Gpr10),
+    OFFSET_OF(CONTEXT, Gpr11),
+    OFFSET_OF(CONTEXT, Gpr12),
+    OFFSET_OF(CONTEXT, Gpr13),
+    OFFSET_OF(CONTEXT, Gpr14),
+    OFFSET_OF(CONTEXT, Gpr15),
+    OFFSET_OF(CONTEXT, Gpr16),
+    OFFSET_OF(CONTEXT, Gpr17),
+    OFFSET_OF(CONTEXT, Gpr18),
+    OFFSET_OF(CONTEXT, Gpr19),
+    OFFSET_OF(CONTEXT, Gpr20),
+    OFFSET_OF(CONTEXT, Gpr21),
+    OFFSET_OF(CONTEXT, Gpr22),
+    OFFSET_OF(CONTEXT, Gpr23),
+    OFFSET_OF(CONTEXT, Gpr24),
+    OFFSET_OF(CONTEXT, Gpr25),
+    OFFSET_OF(CONTEXT, Gpr26),
+    OFFSET_OF(CONTEXT, Gpr27),
+    OFFSET_OF(CONTEXT, Gpr28),
+    OFFSET_OF(CONTEXT, Gpr29),
+    OFFSET_OF(CONTEXT, Gpr30),
+    OFFSET_OF(CONTEXT, Gpr31),
+    OFFSET_OF(CONTEXT, Fpr0),
+    OFFSET_OF(CONTEXT, Fpr1),
+    OFFSET_OF(CONTEXT, Fpr2),
+    OFFSET_OF(CONTEXT, Fpr3),
+    OFFSET_OF(CONTEXT, Fpr4),
+    OFFSET_OF(CONTEXT, Fpr5),
+    OFFSET_OF(CONTEXT, Fpr6),
+    OFFSET_OF(CONTEXT, Fpr7),
+    OFFSET_OF(CONTEXT, Fpr8),
+    OFFSET_OF(CONTEXT, Fpr9),
+    OFFSET_OF(CONTEXT, Fpr10),
+    OFFSET_OF(CONTEXT, Fpr11),
+    OFFSET_OF(CONTEXT, Fpr12),
+    OFFSET_OF(CONTEXT, Fpr13),
+    OFFSET_OF(CONTEXT, Fpr14),
+    OFFSET_OF(CONTEXT, Fpr15),
+    OFFSET_OF(CONTEXT, Fpr16),
+    OFFSET_OF(CONTEXT, Fpr17),
+    OFFSET_OF(CONTEXT, Fpr18),
+    OFFSET_OF(CONTEXT, Fpr19),
+    OFFSET_OF(CONTEXT, Fpr20),
+    OFFSET_OF(CONTEXT, Fpr21),
+    OFFSET_OF(CONTEXT, Fpr22),
+    OFFSET_OF(CONTEXT, Fpr23),
+    OFFSET_OF(CONTEXT, Fpr24),
+    OFFSET_OF(CONTEXT, Fpr25),
+    OFFSET_OF(CONTEXT, Fpr26),
+    OFFSET_OF(CONTEXT, Fpr27),
+    OFFSET_OF(CONTEXT, Fpr28),
+    OFFSET_OF(CONTEXT, Fpr29),
+    OFFSET_OF(CONTEXT, Fpr30),
+    OFFSET_OF(CONTEXT, Fpr31),
+
+    OFFSET_OF(CONTEXT, Iar),
+    OFFSET_OF(CONTEXT, Msr),
+    OFFSET_OF(CONTEXT, Cr),
+    OFFSET_OF(CONTEXT, Lr),
+    OFFSET_OF(CONTEXT, Ctr),
+    OFFSET_OF(CONTEXT, Xer),
+    /* FIXME: MQ is missing? OFFSET_OF(CONTEXT, Mq), */
+    /* see gdb/nlm/ppc.c */
+};
+# else
+#  error "Define the registers map for your CPU"
+# endif
 #endif
 #undef OFFSET_OF
 
@@ -186,6 +264,12 @@ static inline BOOL     cpu_enter_stepping(struct gdb_context* gdbctx)
 #ifdef __i386__
     gdbctx->context.EFlags |= 0x100;
     return TRUE;
+#elif __powerpc__
+#ifndef MSR_SE
+# define MSR_SE (1<<10)
+#endif 
+    gdbctx->context.Msr |= MSR_SE;
+    return TRUE;
 #else
 #error "Define step mode enter for your CPU"
 #endif
@@ -199,6 +283,9 @@ static inline BOOL     cpu_leave_stepping(struct gdb_context* gdbctx)
      * a single step instruction, so we don't need to clear when the
      * step is done.
      */
+    return TRUE;
+#elif __powerpc__
+    gdbctx->context.Msr &= MSR_SE;
     return TRUE;
 #else
 #error "Define step mode leave for your CPU"
@@ -315,6 +402,24 @@ static inline int      cpu_insert_Xpoint(struct gdb_context* gdbctx,
         return 0;
     }
     return 1;
+#elif defined(__powerpc__)
+    unsigned long       xbp;
+    unsigned long       sz;
+
+    switch (xpt->type)
+    {
+    case '0':
+        if (len != 4) return 0;
+        if (!ReadProcessMemory(gdbctx->process->handle, xpt->addr, &xbp, 4, &sz) || sz != 4) return 0;
+        xpt->val = xbp;
+        xbp = 0x7d821008; /* 7d 82 10 08 ... in big endian */
+        if (!WriteProcessMemory(gdbctx->process->handle, xpt->addr, &xbp, 4, &sz) || sz != 4) return 0;
+        break;
+    default:
+        fprintf(stderr, "Unknown/unsupported bp type %c\n", xpt->type);
+        return 0;
+    }
+    return 1;
 #else
 #error "Define insert Xpoint for your CPU"
 #endif
@@ -350,6 +455,25 @@ static inline BOOL      cpu_remove_Xpoint(struct gdb_context* gdbctx,
         break;
     default:
         fprintf(stderr, "Unknown bp type %c\n", xpt->type);
+        return 0;
+    }
+    return 1;
+#elif defined(__powerpc__)
+    unsigned long       sz;
+    unsigned long       xbp;
+
+    switch (xpt->type)
+    {
+    case '0':
+        if (len != 4) return 0;
+        xbp = xpt->val;
+        if (!WriteProcessMemory(gdbctx->process->handle, xpt->addr, &xbp, 4, &sz) || sz != 4) return 0;
+        break;
+    case '1':
+    case '2':
+    case '3':
+    default:
+        fprintf(stderr, "Unknown/unsupported bp type %c\n", xpt->type);
         return 0;
     }
     return 1;

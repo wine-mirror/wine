@@ -122,8 +122,11 @@ void DEBUG_GetCurrentAddress( DBG_ADDR *addr )
        addr->seg = 0;
     addr->off  = DEBUG_context.Eip;
 #elif defined(__sparc__)
-	 addr->seg = 0;
+    addr->seg = 0;
     addr->off = DEBUG_context.pc;
+#elif defined(__powerpc__)
+    addr->seg = 0;
+    addr->off = DEBUG_context.Iar;
 #else
 #	error You must define GET_IP for this CPU
 #endif
