@@ -65,8 +65,8 @@ int main_create_flags = 0;
 #define PDB32_FILE_APIS_OEM 0x0040  /* File APIs are OEM */
 #define PDB32_WIN32S_PROC   0x8000  /* Win32s process */
 
-static const WCHAR comW[] = {'c','o','m',0};
-static const WCHAR batW[] = {'b','a','t',0};
+static const WCHAR comW[] = {'.','c','o','m',0};
+static const WCHAR batW[] = {'.','b','a','t',0};
 static const WCHAR winevdmW[] = {'w','i','n','e','v','d','m','.','e','x','e',0};
 
 extern void SHELL_LoadRegistry(void);
