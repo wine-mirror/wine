@@ -1373,7 +1373,7 @@ static INT TREEVIEW_CompareItems(
 /***************************************************************************
  * Forward the DPA local callback to the treeview owner callback
  */
-static INT TREEVIEW_CallBackCompare( 
+static INT WINAPI TREEVIEW_CallBackCompare( 
   LPVOID first, 
   LPVOID second, 
   LPARAM tvInfoPtr)
