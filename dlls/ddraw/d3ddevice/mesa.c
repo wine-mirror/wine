@@ -3350,12 +3350,17 @@ d3ddevice_set_ortho(IDirect3DDeviceImpl *This)
     height = This->surface->surface_desc.dwHeight;
     
     /* The X axis is straighforward.. For the Y axis, we need to convert 'D3D' screen coordinates
-       to OpenGL screen coordinates (ie the upper left corner is not the same).
-       For Z, the mystery is what should it be mapped to ? Ie should the resulting range be between
-       -1.0 and 1.0 (as the X and Y coordinates) or between 0.0 and 1.0 ? */
+     * to OpenGL screen coordinates (ie the upper left corner is not the same).
+     */
     trans_mat[ 0] = 2.0 / width;  trans_mat[ 4] = 0.0;           trans_mat[ 8] = 0.0;    trans_mat[12] = -1.0;
     trans_mat[ 1] = 0.0;          trans_mat[ 5] = -2.0 / height; trans_mat[ 9] = 0.0;    trans_mat[13] =  1.0;
+#if 0
+    /* It has been checked that in Messiah, which mixes XYZ and XYZRHZ vertex format in the same scene,
+     * that the Z coordinate needs to be given to GL unchanged.
+     */
     trans_mat[ 2] = 0.0;          trans_mat[ 6] = 0.0;           trans_mat[10] = 2.0;    trans_mat[14] = -1.0;
+#endif
+    trans_mat[ 2] = 0.0;          trans_mat[ 6] = 0.0;           trans_mat[10] = 1.0;    trans_mat[14] =  0.0;
     trans_mat[ 3] = 0.0;          trans_mat[ 7] = 0.0;           trans_mat[11] = 0.0;    trans_mat[15] =  1.0;
     
     ENTER_GL();
