@@ -1621,6 +1621,9 @@ HRESULT _ILCreateFromPathA(LPCSTR szPath, LPITEMIDLIST* ppidl)
 	HANDLE hFile;
 	WIN32_FIND_DATAA stffile;
 
+    if (!ppidl)
+        return E_INVALIDARG;
+
 	hFile = FindFirstFileA(szPath, &stffile);
 
 	if (hFile == INVALID_HANDLE_VALUE)
@@ -1630,7 +1633,7 @@ HRESULT _ILCreateFromPathA(LPCSTR szPath, LPITEMIDLIST* ppidl)
 
 	*ppidl = _ILCreateFromFindDataA(&stffile);
 
-	return S_OK;
+	return *ppidl ? S_OK : E_OUTOFMEMORY;
 }
 
 LPITEMIDLIST _ILCreateDrive(LPCWSTR lpszNew)
