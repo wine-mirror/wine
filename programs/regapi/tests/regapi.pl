@@ -22,8 +22,6 @@ use strict;
 use diagnostics;
 
 test_diff();
-#TODO!!!
-#test_regedit();
 
 #removes all test output files
 sub clear_output
@@ -46,19 +44,5 @@ sub test_diff
         die "Original and generated registry files ($orig and $generated) " .
             "are different";
     }
-    clear_output();
-}
-
-#tests compatibility with regedit
-sub test_regedit
-{
-    my $orig = './tests/orig.reg';
-    my $regedit = 'regapi';
-    my $delete_cmd;
-    my $insert_cmd = "$regedit setValue < $orig";
-    my $export_cmd;
-
-    qx/$insert_cmd/;
-    print "Insert: $insert_cmd\n";
     clear_output();
 }
