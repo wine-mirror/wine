@@ -1671,29 +1671,11 @@ sub generate_wrapper_file($$)
   my $path=$_[0];
   my $target=$_[1];
 
-  if (!defined $templates{"wrapper.c"}) {
-    print STDERR "winemaker: internal error: No template called 'wrapper.c'\n";
-    return;
-  }
-
-  if (!open(FILEO,">$path@$target[$T_NAME]_wrapper.c")) {
-    print STDERR "error: unable to open \"$path@$target[$T_NAME]_wrapper.c\" for writing:\n";
-    print STDERR "       $!\n";
-    return;
-  }
-  my $app_name="\"@$target[$T_NAME]\"";
-  my $app_type=(@$target[$T_TYPE]==$TT_GUIEXE?"GUIEXE":"CUIEXE");
-  my $app_init=(@$target[$T_TYPE]==$TT_GUIEXE?"\"WinMain\"":"\"main\"");
-  my $app_mfc=(@$target[$T_FLAGS] & $TF_MFC?"\"mfc\"":"NULL");
-  foreach my $line (@{$templates{"wrapper.c"}}) {
-    my $l=$line;
-    $l =~ s/\#\#WINEMAKER_APP_NAME\#\#/$app_name/;
-    $l =~ s/\#\#WINEMAKER_APP_TYPE\#\#/$app_type/;
-    $l =~ s/\#\#WINEMAKER_APP_INIT\#\#/$app_init/;
-    $l =~ s/\#\#WINEMAKER_APP_MFC\#\#/$app_mfc/;
-    print FILEO $l;
-  }
-  close(FILEO);
+  return generate_from_template("wrapper.c","$path${app_name}_wrapper.c",[
+      ["APP_NAME",@$target[$T_NAME]],
+      ["APP_TYPE",(@$target[$T_TYPE]==$TT_GUIEXE?"GUIEXE":"CUIEXE")],
+      ["APP_INIT",(@$target[$T_TYPE]==$TT_GUIEXE?"\"WinMain\"":"\"main\"")],
+      ["APP_MFC",(@$target[$T_FLAGS] & $TF_MFC?"\"mfc\"":"NULL")]]);
 }
 
 ##
@@ -1797,45 +1779,19 @@ sub generate_project_files($)
 		  });
     print FILEO "\n\n\n";
 
-    print FILEO "### Global settings\n\n";
+    print FILEO "### Common settings\n\n";
     # Make it so that the project-wide settings override the global settings
-    # FIXME: We should be setting no_extra for each list but this does not
-    # really matter since global settings will very soon move to Make.rules
-    my $no_extra;
-    generate_list("DEFINES",0,@$project_settings[$T_DEFINES]);
-    generate_list("",1,$global_settings[$T_DEFINES]);
-    generate_list("INCLUDE_PATH",$no_extra,@$project_settings[$T_INCLUDE_PATH]);
-    generate_list("",1,$global_settings[$T_INCLUDE_PATH],sub
-		  {
-		    if ($_[0] !~ /^-I/ or is_absolute($')) {
-		      return "$_[0]";
-		    }
-		    return "-I\$(TOPSRCDIR)/$'";
-		  });
-    generate_list("DLL_PATH",$no_extra,@$project_settings[$T_DLL_PATH]);
-    generate_list("",1,$global_settings[$T_DLL_PATH],sub
-		  {
-		    if ($_[0] !~ /^-L/ or is_absolute($')) {
-		      return "$_[0]";
-		    }
-		    return "-L\$(TOPSRCDIR)/$'";
-		  });
-    generate_list("LIBRARY_PATH",$no_extra,@$project_settings[$T_LIBRARY_PATH]);
-    generate_list("",1,$global_settings[$T_LIBRARY_PATH],sub
-		  {
-		    if ($_[0] !~ /^-L/ or is_absolute($')) {
-		      return "$_[0]";
-		    }
-		    return "-L\$(TOPSRCDIR)/$'";
-		  });
-    generate_list("LIBRARIES",$no_extra,@$project_settings[$T_LIBRARIES]);
-    generate_list("",1,$global_settings[$T_LIBRARIES]);
+    generate_list("DEFINES",1,@$project_settings[$T_DEFINES]);
+    generate_list("INCLUDE_PATH",1,@$project_settings[$T_INCLUDE_PATH]);
+    generate_list("DLL_PATH",1,@$project_settings[$T_DLL_PATH]);
+    generate_list("LIBRARY_PATH",1,@$project_settings[$T_LIBRARY_PATH]);
+    generate_list("LIBRARIES",1,@$project_settings[$T_LIBRARIES]);
     print FILEO "\n\n";
 
     my $extra_source_count=@{@$project_settings[$T_SOURCES_C]}+
                            @{@$project_settings[$T_SOURCES_CXX]}+
                            @{@$project_settings[$T_SOURCES_RC]};
-    $no_extra=($extra_source_count == 0);
+    my $no_extra=($extra_source_count == 0);
     if (!$no_extra) {
       print FILEO "### Extra source lists\n\n";
       generate_list("EXTRA_C_SRCS",1,@$project_settings[$T_SOURCES_C]);
@@ -2013,15 +1969,14 @@ sub generate_project_files($)
 ##
 # Perform the replacements in the template configure files
 # Return 1 for success, 0 for failure
-sub generate_configure($$)
+sub generate_from_template($$;$)
 {
   my $filename=$_[0];
-  my $a_source_file=$_[1];
+  my $template=$_[1];
+  my $substitutions=$_[2];
 
-  if (!defined $templates{$filename}) {
-    if ($filename ne "configure") {
-      print STDERR "winemaker: internal error: No template called '$filename'\n";
-    }
+  if (!defined $templates{$template}) {
+    print STDERR "winemaker: internal error: No template called '$template'\n";
     return 0;
   }
 
@@ -2030,52 +1985,67 @@ sub generate_configure($$)
     print STDERR "       $!\n";
     return 0;
   }
-  foreach my $line (@{$templates{$filename}}) {
-    if ($line =~ /^\#\#WINEMAKER_PROJECTS\#\#$/) {
-      foreach my $project (@projects) {
-	print FILEO "@$project[$P_PATH]Makefile\n";
+  my $warned;
+  foreach my $line (@{$templates{$template}}) {
+    if ($line =~ /(\#\#WINEMAKER_[A-Z_]+\#\#)/) {
+      if (defined $substitutions) {
+        foreach my $pattern (@$substitutions) {
+          $line =~ s%\#\#WINEMAKER_@$pattern[0]\#\#%@$pattern[1]%;
+        }
       }
-    } else {
-      $line =~ s+\#\#WINEMAKER_SOURCE\#\#+$a_source_file+;
-      $line =~ s+\#\#WINEMAKER_NEEDS_MFC\#\#+$needs_mfc+;
-      print FILEO $line;
+      if (!$warned and $line =~ /(\#\#WINEMAKER_[A-Z_]+\#\#)/) {
+          print STDERR "warning: no value was provided for template $1 in \"$filename\"\n";
+          $warned=1;
+      }
     }
+    print FILEO $line;
   }
   close(FILEO);
   return 1;
 }
 
-sub generate_generic($)
-{
-  my $filename=$_[0];
-
-  if (!defined $templates{$filename}) {
-    print STDERR "winemaker: internal error: No template called '$filename'\n";
-    return;
-  }
-  if (!open(FILEO,">$filename")) {
-    print STDERR "error: unable to open \"$filename\" for writing:\n";
-    print STDERR "       $!\n";
-    return;
-  }
-  foreach my $line (@{$templates{$filename}}) {
-    print FILEO $line;
-  }
-  close(FILEO);
-}
-
 ##
 # Generates the global files:
 # configure
-# configure.in
+# configure.ac
 # Make.rules.in
 # wineapploader.in
 sub generate_global_files()
 {
-  generate_generic("Make.rules.in");
-  generate_generic("wineapploader.in");
+  my @include_path;
+  foreach my $path (@{$global_settings[$T_INCLUDE_PATH]}) {
+    if ($path !~ /^-L/ or is_absolute($')) {
+      push @include_path, $path;
+    } else {
+      push @include_path, "-L\$(TOPSRCDIR)/$'";
+    }
+  }
+  my @dll_path;
+  foreach my $path (@{$global_settings[$T_DLL_PATH]}) {
+    if ($path !~ /^-L/ or is_absolute($')) {
+      push @dll_path, $path;
+    } else {
+      push @dll_path, "-L\$(TOPSRCDIR)/$'";
+    }
+  }
+  my @library_path;
+  foreach my $path (@{$global_settings[$T_LIBRARY_PATH]}) {
+    if ($path !~ /^-L/ or is_absolute($')) {
+      push @library_path, $path;
+    } else {
+      push @library_path, "-L\$(TOPSRCDIR)/$'";
+    }
+  }
+  generate_from_template("Make.rules.in","Make.rules.in",[
+      ["DEFINES", join(" ", @{$global_settings[$T_DEFINES]}) ],
+      ["INCLUDE_PATH", join(" ", @include_path) ],
+      ["DLL_PATH", join(" ", @dll_path) ],
+      ["DLLS", join(" ", @{$global_settings[$T_DLLS]}) ],
+      ["LIBRARY_PATH", join(" ", @library_path) ],
+      ["LIBRARIES", join(" ", @{$global_settings[$T_LIBRARIES]}) ]]);
+  generate_from_template("wineapploader.in","wineapploader.in");
 
-  # Get the name of a source file for configure.in
+  # Get the name of a source file for configure.ac
   my $a_source_file;
   search_a_file: foreach my $project (@projects) {
     foreach my $target (@{@$project[$P_TARGETS]}, @$project[$P_SETTINGS]) {
@@ -2095,12 +2065,12 @@ sub generate_global_files()
   if (!defined $a_source_file) {
     $a_source_file="Makefile.in";
   }
+  generate_from_template("configure.ac","configure.ac",[
+      ["PROJECTS",join("\n",map { "@$_[$P_PATH]Makefile" } @projects)],
+      ["SOURCE","$a_source_file"],
+      ["NEEDS_MFC","$needs_mfc"]]);
+  system("autoconf");
 
-  generate_configure("configure.in",$a_source_file);
-  unlink("configure");
-  if (generate_configure("configure",$a_source_file) == 0) {
-    system("autoconf");
-  }
   # Add execute permission to configure for whoever has the right to read it
   my @st=stat("configure");
   if (@st) {
@@ -2314,6 +2284,7 @@ if ($opt_no_banner == 0) {
 }
 
 project_init(\@main_project,"");
+target_init(\@global_settings);
 
 # Fix the file and directory names
 fix_file_and_directory_names(".");
@@ -2336,13 +2307,13 @@ if (! $opt_no_generated_files) {
 
 
 __DATA__
---- configure.in ---
+--- configure.ac ---
 dnl Process this file with autoconf to produce a configure script.
 dnl Author: Michael Patra   <micky@marie.physik.tu-berlin.de>
 dnl                         <patra@itp1.physik.tu-berlin.de>
 dnl         Francois Gouget <fgouget@codeweavers.com> for CodeWeavers
 
-AC_REVISION([configure.in 1.00])
+AC_REVISION([configure.ac 1.00])
 AC_INIT(##WINEMAKER_SOURCE##)
 
 NEEDS_MFC=##WINEMAKER_NEEDS_MFC##
@@ -3067,6 +3038,15 @@ MFC_INCLUDE_PATH = @MFC_INCLUDE_PATH@
 MFC_LIBRARY_ROOT = @MFC_LIBRARY_ROOT@
 MFC_LIBRARY_PATH = @MFC_LIBRARY_PATH@
 
+# Global definitions and options
+
+GLOBAL_DEFINES      = ##WINEMAKER_DEFINES##
+GLOBAL_INCLUDE_PATH = ##WINEMAKER_INCLUDE_PATH##
+GLOBAL_DLL_PATH     = ##WINEMAKER_DLL_PATH##
+GLOBAL_DLLS         = ##WINEMAKER_DLLS##
+GLOBAL_LIBRARY_PATH = ##WINEMAKER_LIBRARY_PATH##
+GLOBAL_LIBRARIES    = ##WINEMAKER_LIBRARIES##
+
 # First some useful definitions
 
 SHELL     = /bin/sh
@@ -3077,13 +3057,13 @@ WRC       = @WRC@
 CFLAGS    = @CFLAGS@
 CXXFLAGS  = @CXXFLAGS@
 WRCFLAGS  = -r -L
-OPTIONS   = @OPTIONS@ -D_REENTRANT -DWINELIB
+OPTIONS   = @OPTIONS@ -D_REENTRANT -DWINELIB $(GLOBAL_DEFINES)
 LIBS      = @LIBS@ $(LIBRARY_PATH)
 ALLFLAGS  = $(DEFINES) -I$(SRCDIR) $(INCLUDE_PATH) $(WINE_INCLUDE_PATH)
 ALLCFLAGS = $(CFLAGS) $(CEXTRA) $(OPTIONS) $(ALLFLAGS)
 ALLCXXFLAGS=$(CXXFLAGS) $(CXXEXTRA) $(OPTIONS) $(ALLFLAGS)
 ALLWRCFLAGS=$(WRCFLAGS) $(WRCEXTRA) $(OPTIONS) $(ALLFLAGS)
-DLL_LINK  = $(LIBRARY_PATH) $(LIBRARIES:%=-l%) $(WINE_LIBRARY_PATH) -lwine -lwine_unicode -lwine_uuid
+DLL_LINK  = $(LIBRARY_PATH) $(LIBRARIES:%=-l%) $(WINE_LIBRARY_PATH) $(GLOBAL_LIBRARY_PATH) -lwine -lwine_unicode -lwine_uuid $(GLOBAL_LIBRARIES:%=-l%)
 LDCOMBINE = ld -r
 LDSHARED  = @LDSHARED@
 LDXXSHARED= @LDXXSHARED@
