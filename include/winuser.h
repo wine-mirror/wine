@@ -756,10 +756,11 @@ typedef struct
 
 /* end of MFC messages */
 
-  /* FIXME: This does not belong to any libwine interface header */
+/* FIXME: The following two lines do not belong to any libwine interface header */
 #define WM_COALESCE_FIRST    0x0390
 #define WM_COALESCE_LAST     0x039F
 
+#define WM_APP               0x8000
 
 
 #define DLGC_WANTARROWS      0x0001
