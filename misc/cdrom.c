@@ -261,7 +261,7 @@ BOOL CDROM_Audio_GetTracksInfo(WINE_CDAUDIO* wcda, int parentdev)
 #ifdef linux
 	entry.cdte_format = CDROM_MSF;
 #else
-	bzero((char *)&toc_buffer, sizeof(toc_buffer));
+	memset((char *)&toc_buffer, 0, sizeof(toc_buffer));
 	entry.address_format = CD_MSF_FORMAT;
 	entry.data_len = sizeof(toc_buffer);
 	entry.data = &toc_buffer;
