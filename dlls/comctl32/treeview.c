@@ -1058,8 +1058,8 @@ TREEVIEW_InsertAfter(TREEVIEW_ITEM *newItem, TREEVIEW_ITEM *sibling,
 }
 
 static BOOL
-TREEVIEW_DoSetItem(TREEVIEW_INFO *infoPtr, TREEVIEW_ITEM *wineItem,
-		   const TVITEMEXW *tvItem)
+TREEVIEW_DoSetItemT(TREEVIEW_INFO *infoPtr, TREEVIEW_ITEM *wineItem,
+		   const TVITEMEXW *tvItem, BOOL isW)
 {
     UINT callbackClear = 0;
     UINT callbackSet = 0;
@@ -1069,31 +1069,39 @@ TREEVIEW_DoSetItem(TREEVIEW_INFO *infoPtr, TREEVIEW_ITEM *wineItem,
     if (tvItem->mask & TVIF_TEXT)
     {
         wineItem->textWidth = 0; /* force width recalculation */
-	if (tvItem->pszText != LPSTR_TEXTCALLBACKW)
+	if (tvItem->pszText != LPSTR_TEXTCALLBACKW) /* covers != TEXTCALLBACKA too */
 	{
-	    int len = lstrlenW(tvItem->pszText) + 1;
-	    LPWSTR newText = ReAlloc(wineItem->pszText,
-                                         len * sizeof(WCHAR));
+            int len;
+            LPWSTR newText;
+            if (isW)
+                len = lstrlenW(tvItem->pszText) + 1;
+            else
+                len = MultiByteToWideChar(CP_ACP, 0, (LPSTR)tvItem->pszText, -1, NULL, 0);
+            
+            newText  = ReAlloc(wineItem->pszText, len * sizeof(WCHAR));
 
-	    if (newText == NULL) return FALSE;
+            if (newText == NULL) return FALSE;
 
-	    callbackClear |= TVIF_TEXT;
+            callbackClear |= TVIF_TEXT;
 
-	    wineItem->pszText = newText;
-	    wineItem->cchTextMax = len;
-	    lstrcpynW(wineItem->pszText, tvItem->pszText, len);
-	    TRACE("setting text %s, item %p\n",
-		  debugstr_w(wineItem->pszText), wineItem);
-	}
+            wineItem->pszText = newText;
+            wineItem->cchTextMax = len;
+            if (isW)
+                lstrcpynW(wineItem->pszText, tvItem->pszText, len);
+            else
+                MultiByteToWideChar(CP_ACP, 0, (LPSTR)tvItem->pszText, -1,
+                                    wineItem->pszText, len);
+
+            TRACE("setting text %s, item %p\n", debugstr_w(wineItem->pszText), wineItem);
+        }
 	else
 	{
 	    callbackSet |= TVIF_TEXT;
 
 	    wineItem->pszText = ReAlloc(wineItem->pszText,
-						 TEXT_CALLBACK_SIZE * sizeof(WCHAR));
+                                        TEXT_CALLBACK_SIZE * sizeof(WCHAR));
 	    wineItem->cchTextMax = TEXT_CALLBACK_SIZE;
-	    TRACE("setting callback, item %p\n",
-		  wineItem);
+	    TRACE("setting callback, item %p\n", wineItem);
 	}
     }
 
@@ -1151,9 +1159,8 @@ TREEVIEW_DoSetItem(TREEVIEW_INFO *infoPtr, TREEVIEW_ITEM *wineItem,
 
 /* Note that the new item is pre-zeroed. */
 static LRESULT
-TREEVIEW_InsertItemW(TREEVIEW_INFO *infoPtr, LPARAM lParam)
+TREEVIEW_InsertItemT(TREEVIEW_INFO *infoPtr, const TVINSERTSTRUCTW *ptdi, BOOL isW)
 {
-    const TVINSERTSTRUCTW *ptdi = (LPTVINSERTSTRUCTW) lParam;
     const TVITEMEXW *tvItem = &ptdi->DUMMYUNIONNAME.itemex;
     HTREEITEM insertAfter;
     TREEVIEW_ITEM *newItem, *parentItem;
@@ -1206,7 +1213,7 @@ TREEVIEW_InsertItemW(TREEVIEW_INFO *infoPtr, LPARAM lParam)
     newItem->parent = parentItem;
     newItem->iIntegral = 1;
 
-    if (!TREEVIEW_DoSetItem(infoPtr, newItem, tvItem))
+    if (!TREEVIEW_DoSetItemT(infoPtr, newItem, tvItem, isW))
 	return (LRESULT)(HTREEITEM)NULL;
 
     /* After this point, nothing can fail. (Except for TVI_SORT.) */
@@ -1350,62 +1357,6 @@ TREEVIEW_InsertItemW(TREEVIEW_INFO *infoPtr, LPARAM lParam)
 
     return (LRESULT)newItem;
 }
-
-
-static LRESULT
-TREEVIEW_InsertItemA(TREEVIEW_INFO *infoPtr, LPARAM lParam)
-{
-    TVINSERTSTRUCTW tvisW;
-    TVINSERTSTRUCTA *tvisA;
-    LRESULT lRes;
-
-    tvisA = (LPTVINSERTSTRUCTA) lParam;
-
-    tvisW.hParent = tvisA->hParent;
-    tvisW.hInsertAfter = tvisA->hInsertAfter;
-
-    tvisW.DUMMYUNIONNAME.item.mask = tvisA->DUMMYUNIONNAME.item.mask;
-    tvisW.DUMMYUNIONNAME.item.hItem = tvisA->DUMMYUNIONNAME.item.hItem;
-    tvisW.DUMMYUNIONNAME.item.state = tvisA->DUMMYUNIONNAME.item.state;
-    tvisW.DUMMYUNIONNAME.item.stateMask = tvisA->DUMMYUNIONNAME.item.stateMask;
-    tvisW.DUMMYUNIONNAME.item.cchTextMax =
-	tvisA->DUMMYUNIONNAME.item.cchTextMax;
-
-    if ((tvisA->DUMMYUNIONNAME.item.pszText) &&
-        (tvisA->DUMMYUNIONNAME.item.mask & TVIF_TEXT))
-        
-    {
-	if (tvisA->DUMMYUNIONNAME.item.pszText != LPSTR_TEXTCALLBACKA)
-	{
-            int len = MultiByteToWideChar( CP_ACP, 0, tvisA->DUMMYUNIONNAME.item.pszText, -1,
-                                           NULL, 0 );
-	    tvisW.DUMMYUNIONNAME.item.pszText = Alloc(len * sizeof(WCHAR));
-            MultiByteToWideChar( CP_ACP, 0, tvisA->DUMMYUNIONNAME.item.pszText, -1,
-                                 tvisW.DUMMYUNIONNAME.item.pszText, len );
-	}
-	else
-	{
-	    tvisW.DUMMYUNIONNAME.item.pszText = LPSTR_TEXTCALLBACKW;
-	    tvisW.DUMMYUNIONNAME.item.cchTextMax = 0;
-	}
-    }
-
-    tvisW.DUMMYUNIONNAME.item.iImage = tvisA->DUMMYUNIONNAME.item.iImage;
-    tvisW.DUMMYUNIONNAME.item.iSelectedImage =
-	tvisA->DUMMYUNIONNAME.item.iSelectedImage;
-    tvisW.DUMMYUNIONNAME.item.cChildren = tvisA->DUMMYUNIONNAME.item.cChildren;
-    tvisW.DUMMYUNIONNAME.item.lParam = tvisA->DUMMYUNIONNAME.item.lParam;
-
-    lRes = TREEVIEW_InsertItemW(infoPtr, (LPARAM)&tvisW);
-
-    if (tvisW.DUMMYUNIONNAME.item.pszText && tvisW.DUMMYUNIONNAME.item.pszText != LPSTR_TEXTCALLBACKW)
-    {
-	Free(tvisW.DUMMYUNIONNAME.item.pszText);
-    }
-
-    return lRes;
-}
-
 
 /* Item Deletion ************************************************************/
 static void
@@ -2081,7 +2032,7 @@ TREEVIEW_GetItemT(TREEVIEW_INFO *infoPtr, LPTVITEMEXW tvItem, BOOL isW)
 /* Beware MSDN Library Visual Studio 6.0. It says -1 on failure, 0 on success,
  * which is wrong. */
 static LRESULT
-TREEVIEW_SetItemW(TREEVIEW_INFO *infoPtr, LPTVITEMEXW tvItem)
+TREEVIEW_SetItemT(TREEVIEW_INFO *infoPtr, LPTVITEMEXW tvItem, BOOL isW)
 {
     TREEVIEW_ITEM *wineItem;
     TREEVIEW_ITEM originalItem;
@@ -2097,7 +2048,7 @@ TREEVIEW_SetItemW(TREEVIEW_INFO *infoPtr, LPTVITEMEXW tvItem)
     /* store the orignal item values */
     originalItem = *wineItem;
 
-    if (!TREEVIEW_DoSetItem(infoPtr, wineItem, tvItem))
+    if (!TREEVIEW_DoSetItemT(infoPtr, wineItem, tvItem, isW))
 	return FALSE;
 
     /* If the text or TVIS_BOLD was changed, and it is visible, recalculate. */
@@ -2134,50 +2085,6 @@ TREEVIEW_SetItemW(TREEVIEW_INFO *infoPtr, LPTVITEMEXW tvItem)
     }
 
     return TRUE;
-}
-
-static LRESULT
-TREEVIEW_SetItemA(TREEVIEW_INFO *infoPtr, LPTVITEMEXA tvItem)
-{
-    TVITEMEXW tvItemW;
-    INT len;
-    LRESULT rc;
-
-    tvItemW.mask = tvItem->mask;
-    tvItemW.hItem = tvItem->hItem;
-    tvItemW.state = tvItem->state;
-    tvItemW.stateMask = tvItem->stateMask;
-    tvItemW.cchTextMax = 0;
-    tvItemW.pszText = 0;
-
-    if (tvItem->mask & TVIF_TEXT)
-    {
-        if(tvItem->pszText && tvItem->pszText != LPSTR_TEXTCALLBACKA)
-        {
-            len = MultiByteToWideChar(CP_ACP, 0, tvItem->pszText, -1,
-                                      NULL, 0);
-            if (len)
-            {
-                tvItemW.pszText = Alloc(len*sizeof(WCHAR));
-                MultiByteToWideChar(CP_ACP, 0, tvItem->pszText, -1,
-                                    tvItemW.pszText ,len);
-                tvItemW.cchTextMax = len;
-            }
-        }
-        else if(tvItem->pszText == LPSTR_TEXTCALLBACKA)
-            tvItemW.pszText = LPSTR_TEXTCALLBACKW;
-    }
-           
-    tvItemW.iImage = tvItem->iImage;
-    tvItemW.iSelectedImage = tvItem->iSelectedImage;
-    tvItemW.cChildren = tvItem->cChildren;
-    tvItemW.lParam = tvItem->lParam;
-    tvItemW.iIntegral = tvItem->iIntegral;
-
-    rc = TREEVIEW_SetItemW(infoPtr,&tvItemW);
-    if(tvItemW.pszText && tvItemW.pszText != LPSTR_TEXTCALLBACKW)
-        Free(tvItemW.pszText);
-    return rc;
 }
 
 static LRESULT
@@ -5280,10 +5187,10 @@ TREEVIEW_WindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 	return TREEVIEW_HitTest(infoPtr, (LPTVHITTESTINFO)lParam);
 
     case TVM_INSERTITEMA:
-	return TREEVIEW_InsertItemA(infoPtr, lParam);
+	return TREEVIEW_InsertItemT(infoPtr, (LPTVINSERTSTRUCTW)lParam, FALSE);
 
     case TVM_INSERTITEMW:
-	return TREEVIEW_InsertItemW(infoPtr, lParam);
+	return TREEVIEW_InsertItemT(infoPtr, (LPTVINSERTSTRUCTW)lParam, TRUE);
 
     case TVM_SELECTITEM:
 	return TREEVIEW_SelectItem(infoPtr, (INT)wParam, (HTREEITEM)lParam);
@@ -5304,10 +5211,10 @@ TREEVIEW_WindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 	return TREEVIEW_SetInsertMarkColor(infoPtr, (COLORREF)lParam);
 
     case TVM_SETITEMA:
-	return TREEVIEW_SetItemA(infoPtr, (LPTVITEMEXA)lParam);
+	return TREEVIEW_SetItemT(infoPtr, (LPTVITEMEXW)lParam, FALSE);
 
     case TVM_SETITEMW:
-        return TREEVIEW_SetItemW(infoPtr, (LPTVITEMEXW)lParam);
+        return TREEVIEW_SetItemT(infoPtr, (LPTVITEMEXW)lParam, TRUE);
 
     case TVM_SETLINECOLOR:
 	return TREEVIEW_SetLineColor(infoPtr, (COLORREF)lParam);
