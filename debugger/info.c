@@ -11,7 +11,7 @@
 #include "expr.h"
 
 /***********************************************************************
- *           DEBUG_Print
+ *           DEBUG_PrintBasic
  *
  * Implementation of the 'print' command.
  */
