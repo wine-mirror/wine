@@ -39,6 +39,7 @@
 #include "debug.h"
 #include "dde_proc.h"
 #include "winsock.h"
+#include "callback.h"
 
 
 #define NB_BUTTONS      3     /* Windows can handle 3 buttons */
@@ -105,6 +106,9 @@ static void EVENT_MapNotify( HWND32 hwnd, XMapEvent *event );
 /* Usable only with OLVWM - compile option perhaps?
 static void EVENT_EnterNotify( WND *pWnd, XCrossingEvent *event );
 */
+
+static void EVENT_SendMouseEvent( WORD mouseStatus, WORD deltaX, WORD deltaY, 
+                                  WORD buttonCount, DWORD extraInfo );
 
 /***********************************************************************
  *           EVENT_Init
@@ -652,6 +656,11 @@ static void EVENT_MotionNotify( WND *pWnd, XMotionEvent *event )
                     pWnd->rectWindow.left + event->x,
                     pWnd->rectWindow.top + event->y,
                     event->time - MSG_WineStartTicks, pWnd->hwndSelf );
+
+    EVENT_SendMouseEvent( ME_MOVE, 
+                          pWnd->rectWindow.left + event->x,
+                          pWnd->rectWindow.top + event->y,
+                          0, 0 );
 }
 
 
@@ -682,6 +691,8 @@ static void EVENT_ButtonPress( WND *pWnd, XButtonEvent *event )
 {
     static WORD messages[NB_BUTTONS] = 
         { WM_LBUTTONDOWN, WM_MBUTTONDOWN, WM_RBUTTONDOWN };
+    static WORD statusCodes[NB_BUTTONS] = 
+        { ME_LDOWN, 0, ME_RDOWN };
     int buttonNum = event->button - 1;
 
     if (buttonNum >= NB_BUTTONS) return;
@@ -693,6 +704,11 @@ static void EVENT_ButtonPress( WND *pWnd, XButtonEvent *event )
                     pWnd->rectWindow.left + event->x,
                     pWnd->rectWindow.top + event->y,
 		    event->time - MSG_WineStartTicks, pWnd->hwndSelf );
+
+    EVENT_SendMouseEvent( statusCodes[buttonNum], 
+                          pWnd->rectWindow.left + event->x,
+                          pWnd->rectWindow.top + event->y,
+                          0, 0 );
 }
 
 
@@ -703,6 +719,8 @@ static void EVENT_ButtonRelease( WND *pWnd, XButtonEvent *event )
 {
     static const WORD messages[NB_BUTTONS] = 
         { WM_LBUTTONUP, WM_MBUTTONUP, WM_RBUTTONUP };
+    static WORD statusCodes[NB_BUTTONS] = 
+        { ME_LUP, 0, ME_RUP };
     int buttonNum = event->button - 1;
 
     if (buttonNum >= NB_BUTTONS) return;    
@@ -713,6 +731,11 @@ static void EVENT_ButtonRelease( WND *pWnd, XButtonEvent *event )
                     pWnd->rectWindow.left + event->x,
                     pWnd->rectWindow.top + event->y,
 		    event->time - MSG_WineStartTicks, pWnd->hwndSelf );
+
+    EVENT_SendMouseEvent( statusCodes[buttonNum], 
+                          pWnd->rectWindow.left + event->x,
+                          pWnd->rectWindow.top + event->y,
+                          0, 0 );
 }
 
 
@@ -1216,6 +1239,95 @@ HWND32 WINAPI GetCapture32(void)
 {
     return captureWnd;
 }
+
+
+
+/***********************************************************************
+ * Mouse driver routines:
+ */
+
+#pragma pack(1)
+typedef struct _MOUSEINFO
+{
+    BYTE msExist;
+    BYTE msRelative;
+    WORD msNumButtons;
+    WORD msRate;
+    WORD msXThreshold;
+    WORD msYThreshold;
+    WORD msXRes;
+    WORD msYRes;
+    WORD msMouseCommPort;
+} MOUSEINFO;
+#pragma pack(4)
+
+static SEGPTR MouseEventProc = 0;
+
+/***********************************************************************
+ *           MouseInquire                       (MOUSE.1)
+ */
+
+WORD WINAPI MouseInquire(MOUSEINFO *mouseInfo)
+{
+    mouseInfo->msExist = TRUE;
+    mouseInfo->msRelative = FALSE;
+    mouseInfo->msNumButtons = 2;
+    mouseInfo->msRate = 34;  /* the DDK says so ... */
+    mouseInfo->msXThreshold = 0;
+    mouseInfo->msYThreshold = 0;
+    mouseInfo->msXRes = 0;
+    mouseInfo->msYRes = 0;
+    mouseInfo->msMouseCommPort = 0;
+
+    return sizeof(MOUSEINFO);
+}
+
+/***********************************************************************
+ *           MouseEnable                        (MOUSE.2)
+ */
+VOID WINAPI MouseEnable(SEGPTR eventProc)
+{
+    MouseEventProc = eventProc;
+}
+
+/***********************************************************************
+ *           MouseDisable                       (MOUSE.3)
+ */
+VOID WINAPI MouseDisable(VOID)
+{
+    MouseEventProc = 0;
+}
+
+/***********************************************************************
+ *           EVENT_SendMouseEvent
+ */
+static void EVENT_SendMouseEvent( WORD mouseStatus, WORD deltaX, WORD deltaY, 
+                                  WORD buttonCount, DWORD extraInfo )
+{
+    CONTEXT context;
+
+    if ( !MouseEventProc ) return;
+
+    TRACE( keyboard, "(%04X,%d,%d,%d,%ld)\n", mouseStatus, deltaX, deltaY, buttonCount, extraInfo );
+
+    mouseStatus |= 0x8000;
+    deltaX = (((long)deltaX << 16) + screenWidth/2)  / screenWidth;
+    deltaY = (((long)deltaY << 16) + screenHeight/2) / screenHeight;
+
+    memset( &context, 0, sizeof(context) );
+    CS_reg(&context)  = SELECTOROF( MouseEventProc );
+    EIP_reg(&context) = OFFSETOF( MouseEventProc );
+    EAX_reg(&context) = mouseStatus;
+    EBX_reg(&context) = deltaX;
+    ECX_reg(&context) = deltaY;
+    EDX_reg(&context) = buttonCount;
+    ESI_reg(&context) = LOWORD( extraInfo );
+    EDI_reg(&context) = HIWORD( extraInfo );
+
+    Callbacks->CallRegisterShortProc( &context, 0 );
+}
+
+
 
 
 /***********************************************************************

@@ -1482,51 +1482,6 @@ VOID WINAPI KeyboardDisable(VOID)
     FIXME(keyboard, "(): stub\n");
 }
 
-/***********************************************************************
- *           MouseInquire			(MOUSE.1)
- */
-
-#pragma pack(1)
-typedef struct _MOUSEINFO
-{
-    BYTE msExist;
-    BYTE msRelative;
-    WORD msNumButtons;
-    WORD msRate;
-    WORD msXThreshold;
-    WORD msYThreshold;
-    WORD msXRes;
-    WORD msYRes;
-    WORD msMouseCommPort;
-} MOUSEINFO;
-#pragma pack(4)
-
-WORD WINAPI MouseInquire(MOUSEINFO *mouseInfo) 
-{
-    mouseInfo->msExist = TRUE;
-    mouseInfo->msRelative = FALSE;
-    mouseInfo->msNumButtons = 2;
-    mouseInfo->msRate = 34;  /* the DDK says so ... */
-    mouseInfo->msMouseCommPort = 0;
-
-    return sizeof(MOUSEINFO);
-}
-
-/***********************************************************************
- *           MouseEnable			(MOUSE.2)
- */
-VOID WINAPI MouseEnable(FARPROC16 eventProc)
-{
-    FIXME(keyboard, "(%08lx): stub\n", (DWORD)eventProc);
-}
-
-/***********************************************************************
- *           MouseDisable			(MOUSE.3)
- */
-VOID WINAPI MouseDisable(VOID)
-{
-    FIXME(keyboard, "(): stub\n");
-}
 
 /***********************************************************************
  *           DisplayInquire			(DISPLAY.101)
