@@ -60,7 +60,6 @@
 #include <errno.h>
 #include <ctype.h>
 
-#include "ntstatus.h"
 #include "windef.h"
 #include "winbase.h"
 #include "wingdi.h"
@@ -178,9 +177,9 @@ static unsigned comm_outbuf(struct DosDeviceStruct *ptr)
 static void comm_waitread(struct DosDeviceStruct *ptr);
 static void comm_waitwrite(struct DosDeviceStruct *ptr);
 
-static VOID WINAPI COMM16_ReadComplete(DWORD status, DWORD len, LPOVERLAPPED ov)
+static VOID WINAPI COMM16_ReadComplete(DWORD dwErrorCode, DWORD len, LPOVERLAPPED ov)
 {
-	int prev ;
+	int prev;
 	WORD mask = 0;
 	int cid = GetCommPort_ov(ov,0);
 	struct DosDeviceStruct *ptr;
@@ -192,15 +191,15 @@ static VOID WINAPI COMM16_ReadComplete(DWORD status, DWORD len, LPOVERLAPPED ov)
 	ptr = &COM[cid];
 
 	/* we get cancelled when CloseComm is called */
-	if (status==STATUS_CANCELLED)
+	if (dwErrorCode==ERROR_OPERATION_ABORTED)
 	{
 		TRACE("Cancelled\n");
 		return;
 	}
 
 	/* read data from comm port */
-	if (status != STATUS_SUCCESS) {
-		ERR("async read failed %08lx\n",status);
+	if (dwErrorCode != NO_ERROR) {
+		ERR("async read failed, error %ld\n",dwErrorCode);
 		COM[cid].commerror = CE_RXOVER;
 		return;
 	}
@@ -265,7 +264,7 @@ static INT COMM16_WriteFile(HANDLE hComm, LPCVOID buffer, DWORD len)
 	return count;
 }
 
-static VOID WINAPI COMM16_WriteComplete(DWORD status, DWORD len, LPOVERLAPPED ov)
+static VOID WINAPI COMM16_WriteComplete(DWORD dwErrorCode, DWORD len, LPOVERLAPPED ov)
 {
 	int prev, bleft;
 	WORD mask = 0;
@@ -279,8 +278,8 @@ static VOID WINAPI COMM16_WriteComplete(DWORD status, DWORD len, LPOVERLAPPED ov
 	ptr = &COM[cid];
 
 	/* read data from comm port */
-	if (status != STATUS_SUCCESS) {
-		ERR("async write failed\n");
+	if (dwErrorCode != NO_ERROR) {
+		ERR("async write failed, error %ld\n",dwErrorCode);
 		COM[cid].commerror = CE_RXOVER;
 		return;
 	}
