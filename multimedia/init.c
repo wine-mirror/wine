@@ -296,7 +296,7 @@ static	BOOL MULTIMEDIA_MidiInit(void)
 
 HINSTANCE	WINMM_hInstance = 0; 
 HINSTANCE	MMSYSTEM_hInstance = 0; 
-static		bInitDone = FALSE;
+static BOOL     bInitDone = FALSE;
 
 /**************************************************************************
  * 			WINMM_LibMain				[EntryPoint]
