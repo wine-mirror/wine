@@ -141,6 +141,8 @@ WINE REGISTRY Version 2
 "UseXShm" = "Y"
 ; Use XVidMode extension if present
 "UseXVidMode" = "Y"
+; Use the take focus protocol
+"UseTakeFocus" = "Y"
 ; Enable DirectX mouse grab
 "DXGrab" = "N"
 ; Create the desktop window with a double-buffered visual

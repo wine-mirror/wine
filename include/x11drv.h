@@ -329,6 +329,7 @@ struct x11drv_thread_data
     int      process_event_count;  /* recursion count for event processing */
     Cursor   cursor;               /* current cursor */
     Window   cursor_window;        /* current window that contains the cursor */
+    HWND     last_focus;           /* last window that had focus */
 };
 
 extern struct x11drv_thread_data *x11drv_init_thread_data(void);
@@ -348,6 +349,7 @@ extern unsigned int screen_width;
 extern unsigned int screen_height;
 extern unsigned int screen_depth;
 extern unsigned int text_caps;
+extern int use_take_focus;
 extern int managed_mode;
 
 extern Atom wmProtocols;

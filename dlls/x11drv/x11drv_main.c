@@ -64,6 +64,7 @@ unsigned int screen_height;
 unsigned int screen_depth;
 Window root_window;
 int dxgrab, usedga, usexvidmode;
+int use_take_focus = 1;
 int managed_mode = 1;
 
 unsigned int X11DRV_server_startticks;
@@ -246,6 +247,9 @@ static void setup_options(void)
 
     if (!get_config_key( hkey, appkey, "UseXVidMode", buffer, sizeof(buffer) ))
         usexvidmode = IS_OPTION_TRUE( buffer[0] );
+
+    if (!get_config_key( hkey, appkey, "UseTakeFocus", buffer, sizeof(buffer) ))
+        use_take_focus = IS_OPTION_TRUE( buffer[0] );
 
     screen_depth = 0;
     if (!get_config_key( hkey, appkey, "ScreenDepth", buffer, sizeof(buffer) ))
@@ -461,6 +465,7 @@ struct x11drv_thread_data *x11drv_init_thread_data(void)
     data->process_event_count = 0;
     data->cursor = None;
     data->cursor_window = None;
+    data->last_focus = 0;
     NtCurrentTeb()->driver_data = data;
     return data;
 }

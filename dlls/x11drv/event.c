@@ -48,7 +48,6 @@
 #include "shellapi.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(event);
-WINE_DECLARE_DEBUG_CHANNEL(win);
 
 /* X context to associate a hwnd to an X window */
 extern XContext winContext;
@@ -72,9 +71,6 @@ extern Atom dndSelection;
 
 #define DndURL          128   /* KDE drag&drop */
 
-/* The last X window which had the focus */
-static Window glastXFocusWin = 0;
-
 static const char * const event_names[] =
 {
   "", "", "KeyPress", "KeyRelease", "ButtonPress", "ButtonRelease",
@@ -89,7 +85,6 @@ static const char * const event_names[] =
 
 
 static void EVENT_ProcessEvent( XEvent *event );
-static BOOL X11DRV_CheckFocus(void);
 
   /* Event handlers */
 static void EVENT_FocusIn( HWND hWnd, XFocusChangeEvent *event );
@@ -368,90 +363,164 @@ static void EVENT_ProcessEvent( XEvent *event )
 
 
 /**********************************************************************
- *              EVENT_FocusIn
+ *              set_focus_error_handler
+ *
+ * Handler for X errors happening during XSetInputFocus call.
  */
-static void EVENT_FocusIn( HWND hWnd, XFocusChangeEvent *event )
+static int set_focus_error_handler( Display *display, XErrorEvent *event, void *arg )
 {
-    WND *pWndLastFocus;
-    XWindowAttributes win_attr;
-    BOOL bIsDisabled;
+    return (event->error_code == BadValue);
+}
 
-    if (!hWnd) return;
 
-    bIsDisabled = GetWindowLongA( hWnd, GWL_STYLE ) & WS_DISABLED;
+/**********************************************************************
+ *              set_focus
+ */
+static void set_focus( HWND hwnd, Time time )
+{
+    HWND focus = GetFocus();
+    Window win;
 
-    /* If the window has been disabled, revert the X focus back to the last
-     * focus window. This is to disallow the window manager from switching
-     * focus away while the app is in a modal state.
-     */
-    if (bIsDisabled && glastXFocusWin)
+    if (hwnd != focus && !IsChild( hwnd, focus ))
     {
-        /* Change focus only if saved focus window is registered and viewable */
-        wine_tsx11_lock();
-        if (XFindContext( event->display, glastXFocusWin, winContext,
-                           (char **)&pWndLastFocus ) == 0 )
-        {
-            if (XGetWindowAttributes( event->display, glastXFocusWin, &win_attr ) &&
-                (win_attr.map_state == IsViewable) )
-            {
-                XSetInputFocus( event->display, glastXFocusWin, RevertToParent, CurrentTime );
-                wine_tsx11_unlock();
-                return;
-            }
-        }
-        wine_tsx11_unlock();
+        TRACE( "changing window focus to %x\n", hwnd );
+        SetFocus( hwnd );
     }
 
-    if (event->detail != NotifyPointer && hWnd != GetForegroundWindow())
-        SetForegroundWindow( hWnd );
+    /* focus window might be changed by the above SetFocus() call */
+    focus = GetFocus();
+    win = X11DRV_get_whole_window(focus);
+
+    if (win)
+    {
+        Display *display = thread_display();
+        TRACE( "setting focus to %x (%lx) time=%ld\n", focus, win, time );
+        X11DRV_expect_error( display, set_focus_error_handler, NULL );
+        XSetInputFocus( display, win, RevertToParent, time );
+        if (X11DRV_check_error()) ERR("got BadMatch, ignoring\n" );
+    }
+}
+
+
+/**********************************************************************
+ *              handle_wm_protocols_message
+ */
+static void handle_wm_protocols_message( HWND hwnd, XClientMessageEvent *event )
+{
+    Atom protocol = (Atom)event->data.l[0];
+
+    if (!protocol) return;
+
+    if (protocol == wmDeleteWindow)
+    {
+        /* Ignore the delete window request if the window has been disabled
+         * and we are in managed mode. This is to disallow applications from
+         * being closed by the window manager while in a modal state.
+         */
+        if (IsWindowEnabled(hwnd)) PostMessageW( hwnd, WM_SYSCOMMAND, SC_CLOSE, 0 );
+    }
+    else if (protocol == wmTakeFocus)
+    {
+        Time event_time = (Time)event->data.l[1];
+        HWND last_focus = x11drv_thread_data()->last_focus;
+
+        TRACE( "got take focus msg for %x, enabled=%d, focus=%x, active=%x, fg=%x, last=%x\n",
+               hwnd, IsWindowEnabled(hwnd), GetFocus(), GetActiveWindow(),
+               GetForegroundWindow(), last_focus );
+
+        if (IsWindowEnabled(hwnd))
+        {
+            /* simulate a mouse click on the caption to find out
+             * whether the window wants to be activated */
+            LRESULT ma = SendMessageW( hwnd, WM_MOUSEACTIVATE,
+                                       GetAncestor( hwnd, GA_ROOT ),
+                                       MAKELONG(HTCAPTION,WM_LBUTTONDOWN) );
+            if (ma != MA_NOACTIVATEANDEAT && ma != MA_NOACTIVATE) set_focus( hwnd, event_time );
+            else TRACE( "not setting focus to %x (%lx), ma=%ld\n", hwnd, event->window, ma );
+        }
+        else
+        {
+            hwnd = GetFocus();
+            if (!hwnd) hwnd = GetActiveWindow();
+            if (!hwnd) hwnd = last_focus;
+            if (hwnd && IsWindowEnabled(hwnd)) set_focus( hwnd, event_time );
+        }
+    }
+}
+
+
+static const char * const focus_details[] =
+{
+    "NotifyAncestor",
+    "NotifyVirtual",
+    "NotifyInferior",
+    "NotifyNonlinear",
+    "NotifyNonlinearVirtual",
+    "NotifyPointer",
+    "NotifyPointerRoot",
+    "NotifyDetailNone"
+};
+
+/**********************************************************************
+ *              EVENT_FocusIn
+ */
+static void EVENT_FocusIn( HWND hwnd, XFocusChangeEvent *event )
+{
+    if (!hwnd) return;
+
+    TRACE( "win %x xwin %lx detail=%s\n", hwnd, event->window, focus_details[event->detail] );
+
+    if (wmTakeFocus) return;  /* ignore FocusIn if we are using take focus */
+    if (event->detail == NotifyPointer) return;
+
+    if (!IsWindowEnabled(hwnd))
+    {
+        HWND hwnd = GetFocus();
+        if (!hwnd) hwnd = GetActiveWindow();
+        if (!hwnd) hwnd = x11drv_thread_data()->last_focus;
+        if (hwnd && IsWindowEnabled(hwnd)) set_focus( hwnd, CurrentTime );
+    }
+    else if (hwnd != GetForegroundWindow())
+    {
+        SetForegroundWindow( hwnd );
+    }
 }
 
 
 /**********************************************************************
  *              EVENT_FocusOut
  *
- * Note: only top-level override-redirect windows get FocusOut events.
+ * Note: only top-level windows get FocusOut events.
  */
-static void EVENT_FocusOut( HWND hWnd, XFocusChangeEvent *event )
+static void EVENT_FocusOut( HWND hwnd, XFocusChangeEvent *event )
 {
-    /* Save the last window which had the focus */
-    glastXFocusWin = event->window;
-    if (!hWnd) return;
-    if (GetWindowLongA( hWnd, GWL_STYLE ) & WS_DISABLED) glastXFocusWin = 0;
+    HWND hwnd_tmp;
+    Window focus_win;
+    int revert;
 
-    if (event->detail != NotifyPointer && hWnd == GetForegroundWindow())
+    TRACE( "win %x xwin %lx detail=%s\n", hwnd, event->window, focus_details[event->detail] );
+
+    if (event->detail == NotifyPointer) return;
+    if (hwnd != GetForegroundWindow()) return;
+    SendMessageA( hwnd, WM_CANCELMODE, 0, 0 );
+
+    /* don't reset the foreground window, if the window which is
+       getting the focus is a Wine window */
+
+    TSXGetInputFocus( thread_display(), &focus_win, &revert );
+    if (!focus_win || TSXFindContext( thread_display(), focus_win, winContext, (char **)&hwnd_tmp ))
     {
-        /* don't reset the foreground window, if the window which is
-               getting the focus is a Wine window */
-        if (!X11DRV_CheckFocus())
+        /* Abey : 6-Oct-99. Check again if the focus out window is the
+           Foreground window, because in most cases the messages sent
+           above must have already changed the foreground window, in which
+           case we don't have to change the foreground window to 0 */
+        if (hwnd == GetForegroundWindow())
         {
-            SendMessageA( hWnd, WM_CANCELMODE, 0, 0 );
-            /* Abey : 6-Oct-99. Check again if the focus out window is the
-               Foreground window, because in most cases the messages sent
-               above must have already changed the foreground window, in which
-               case we don't have to change the foreground window to 0 */
-
-            if (hWnd == GetForegroundWindow())
-                SetForegroundWindow( 0 );
+            TRACE( "lost focus, setting fg to 0\n" );
+            x11drv_thread_data()->last_focus = hwnd;
+            SetForegroundWindow( 0 );
         }
     }
-}
-
-/**********************************************************************
- *		CheckFocus (X11DRV.@)
- */
-static BOOL X11DRV_CheckFocus(void)
-{
-    Display *display = thread_display();
-  HWND   hWnd;
-  Window xW;
-  int	   state;
-
-  TSXGetInputFocus(display, &xW, &state);
-    if( xW == None ||
-        TSXFindContext(display, xW, winContext, (char **)&hWnd) )
-      return FALSE;
-    return TRUE;
 }
 
 
@@ -1257,13 +1326,8 @@ static void EVENT_DropURLs( HWND hWnd, XClientMessageEvent *event )
 static void EVENT_ClientMessage( HWND hWnd, XClientMessageEvent *event )
 {
   if (event->message_type != None && event->format == 32) {
-    if ((event->message_type == wmProtocols) &&
-	(((Atom) event->data.l[0]) == wmDeleteWindow))
-    {
-        /* Ignore the delete window request if the window has been disabled */
-        if (!(GetWindowLongA( hWnd, GWL_STYLE ) & WS_DISABLED))
-            PostMessageA( hWnd, WM_SYSCOMMAND, SC_CLOSE, 0 );
-    }
+    if (event->message_type == wmProtocols)
+        handle_wm_protocols_message( hWnd, event );
     else if (event->message_type == dndProtocol)
     {
         /* query window (drag&drop event contains only drag window) */

@@ -404,9 +404,7 @@ void X11DRV_set_wm_hints( Display *display, WND *win )
     if ((wm_hints = TSXAllocWMHints()))
     {
         wm_hints->flags = InputHint | StateHint | WindowGroupHint;
-        /* use globally active model if take focus is supported,
-         * passive model otherwise (cf. ICCCM) */
-        wm_hints->input = !wmTakeFocus;
+        wm_hints->input = !(win->dwStyle & WS_DISABLED);
 
         set_icon_hints( display, win, wm_hints );
 
@@ -621,8 +619,7 @@ static void create_desktop( Display *display, WND *wndPtr, CREATESTRUCTA *cs )
     winContext     = XUniqueContext();
     wmProtocols    = XInternAtom( display, "WM_PROTOCOLS", False );
     wmDeleteWindow = XInternAtom( display, "WM_DELETE_WINDOW", False );
-/*    wmTakeFocus    = XInternAtom( display, "WM_TAKE_FOCUS", False );*/
-    wmTakeFocus = 0;  /* not yet */
+    if (use_take_focus) wmTakeFocus = XInternAtom( display, "WM_TAKE_FOCUS", False );
     dndProtocol = XInternAtom( display, "DndProtocol" , False );
     dndSelection = XInternAtom( display, "DndSelection" , False );
     wmChangeState = XInternAtom( display, "WM_CHANGE_STATE", False );
@@ -825,6 +822,7 @@ BOOL X11DRV_DestroyWindow( HWND hwnd )
     {
         TRACE( "win %x xwin %lx/%lx\n", hwnd, data->whole_window, data->client_window );
         if (thread_data->cursor_window == data->whole_window) thread_data->cursor_window = None;
+        if (thread_data->last_focus == hwnd) thread_data->last_focus = 0;
         wine_tsx11_lock();
         XSync( gdi_display, False );  /* flush any reference to this drawable in GDI queue */
         XDeleteContext( display, data->whole_window, winContext );
