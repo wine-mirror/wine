@@ -1442,6 +1442,9 @@ static HRESULT add_var_desc(msft_typeinfo_t *typeinfo, UINT index, var_t* var)
         case ATTR_ID:
             id = expr->u.lval;
             break;
+        case ATTR_READONLY:
+            varflags |= 0x01; /* VARFLAG_FREADONLY */
+            break;
         default:
             warning("AddVarDesc: unhandled attr type %d\n", attr->type);
             break;
