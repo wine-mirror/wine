@@ -120,6 +120,13 @@
 @="ole32.dll"
 "ThreadingModel"="Both"
 
+[HKEY_LOCAL_MACHINE\Software\Classes\CLSID\{B196B286-BAB4-101A-B69C-00AA00341D07}]
+@="PSFactoryBuffer"
+
+[HKEY_LOCAL_MACHINE\Software\Classes\CLSID\{B196B286-BAB4-101A-B69C-00AA00341D07}\InprocServer32]
+@="oleaut32.dll"
+"ThreadingModel"="Both"
+
 # IUnknown, the superclass for everything COM/OLE.
 [HKEY_LOCAL_MACHINE\SOFTWARE\Classes\Interface\{00000000-0000-0000-C000-000000000046}]
 @="IUnknown"
@@ -143,6 +150,429 @@
 [HKEY_LOCAL_MACHINE\SOFTWARE\Classes\Interface\{00000001-0000-0000-C000-000000000046}\ProxyStubClsid32]
 @="{00000320-0000-0000-C000-000000000046}"
 
+#IClassFactory2 - IClassFactory with licensing support
+[HKEY_LOCAL_MACHINE\Software\Classes\Interface\{B196B28F-BAB4-101A-B69C-00AA00341D07}]
+@="IClassFactory2"
+
+[HKEY_LOCAL_MACHINE\Software\Classes\Interface\{B196B28F-BAB4-101A-B69C-00AA00341D07}\NumMethods]
+@="8"
+
+[HKEY_LOCAL_MACHINE\Software\Classes\Interface\{B196B28F-BAB4-101A-B69C-00AA00341D07}\ProxyStubClsid32]
+@="{B196B286-BAB4-101A-B69C-00AA00341D07}"
+
+#ITypeLib2 - ITypeLib decendant
+[HKEY_LOCAL_MACHINE\Software\Classes\Interface\{00020411-0000-0000-C000-000000000046}]
+@="ITypeLib2"
+
+[HKEY_LOCAL_MACHINE\Software\Classes\Interface\{00020411-0000-0000-C000-000000000046}\NumMethods]
+@="16"
+
+[HKEY_LOCAL_MACHINE\Software\Classes\Interface\{00020411-0000-0000-C000-000000000046}\ProxyStubClsid32]
+@="{00020420-0000-0000-C000-000000000046}"
+
+#ITypeInfo2 - ITypeInfo decendant
+[HKEY_LOCAL_MACHINE\Software\Classes\Interface\{00020412-0000-0000-C000-000000000046}]
+@="ITypeInfo2"
+
+[HKEY_LOCAL_MACHINE\Software\Classes\Interface\{00020412-0000-0000-C000-000000000046}\NumMethods]
+@="32"
+
+[HKEY_LOCAL_MACHINE\Software\Classes\Interface\{00020412-0000-0000-C000-000000000046}\ProxyStubClsid32]
+@="{00020420-0000-0000-C000-000000000046}"
+
+#IErrorInfo - returns information about an error in addition to an error code
+[HKEY_LOCAL_MACHINE\Software\Classes\Interface\{1CF2B120-547D-101B-8E65-08002B2BD119}]
+@="IErrorInfo"
+
+[HKEY_LOCAL_MACHINE\Software\Classes\Interface\{1CF2B120-547D-101B-8E65-08002B2BD119}\NumMethods]
+@="8"
+
+[HKEY_LOCAL_MACHINE\Software\Classes\Interface\{1CF2B120-547D-101B-8E65-08002B2BD119}\ProxyStubClsid32]
+@="{B196B286-BAB4-101A-B69C-00AA00341D07}"
+
+#ICreateErrorInfo - creates an instance of generic error object
+[HKEY_LOCAL_MACHINE\Software\Classes\Interface\{22F03340-547D-101B-8E65-08002B2BD119}]
+@="ICreateErrorInfo"
+
+[HKEY_LOCAL_MACHINE\Software\Classes\Interface\{22F03340-547D-101B-8E65-08002B2BD119}\NumMethods]
+@="8"
+
+[HKEY_LOCAL_MACHINE\Software\Classes\Interface\{22F03340-547D-101B-8E65-08002B2BD119}\ProxyStubClsid32]
+@="{B196B286-BAB4-101A-B69C-00AA00341D07}"
+
+#IErrorLog - an error log interface
+[HKEY_LOCAL_MACHINE\Software\Classes\Interface\{3127CA40-446E-11CE-8135-00AA004BB851}]
+@="IErrorLog"
+
+[HKEY_LOCAL_MACHINE\Software\Classes\Interface\{3127CA40-446E-11CE-8135-00AA004BB851}\NumMethods]
+@="4"
+
+[HKEY_LOCAL_MACHINE\Software\Classes\Interface\{3127CA40-446E-11CE-8135-00AA004BB851}\ProxyStubClsid32]
+@="{B196B286-BAB4-101A-B69C-00AA00341D07}"
+
+#IPropertyPage - property page interface
+[HKEY_LOCAL_MACHINE\Software\Classes\Interface\{B196B28D-BAB4-101A-B69C-00AA00341D07}]
+@="IPropertyPage"
+
+[HKEY_LOCAL_MACHINE\Software\Classes\Interface\{B196B28D-BAB4-101A-B69C-00AA00341D07}\NumMethods]
+@="14"
+
+[HKEY_LOCAL_MACHINE\Software\Classes\Interface\{B196B28D-BAB4-101A-B69C-00AA00341D07}\ProxyStubClsid32]
+@="{B196B286-BAB4-101A-B69C-00AA00341D07}"
+
+#IPropertyPage2 - an extention of IPropertyPage to support initial selection on a property page
+[HKEY_LOCAL_MACHINE\Software\Classes\Interface\{01E44665-24AC-101B-84ED-08002B2EC713}]
+@="IPropertyPage2"
+
+[HKEY_LOCAL_MACHINE\Software\Classes\Interface\{01E44665-24AC-101B-84ED-08002B2EC713}\NumMethods]
+@="15"
+
+[HKEY_LOCAL_MACHINE\Software\Classes\Interface\{01E44665-24AC-101B-84ED-08002B2EC713}\ProxyStubClsid32]
+@="{B196B286-BAB4-101A-B69C-00AA00341D07}"
+
+#ISpecifyPropertyPages - property pages support
+[HKEY_LOCAL_MACHINE\Software\Classes\Interface\{B196B28B-BAB4-101A-B69C-00AA00341D07}]
+@="ISpecifyPropertyPages"
+
+[HKEY_LOCAL_MACHINE\Software\Classes\Interface\{B196B28B-BAB4-101A-B69C-00AA00341D07}\NumMethods]
+@="4"
+
+[HKEY_LOCAL_MACHINE\Software\Classes\Interface\{B196B28B-BAB4-101A-B69C-00AA00341D07}\ProxyStubClsid32]
+@="{B196B286-BAB4-101A-B69C-00AA00341D07}"
+
+#IPropertyPageSite - property pages management
+[HKEY_LOCAL_MACHINE\Software\Classes\Interface\{B196B28C-BAB4-101A-B69C-00AA00341D07}]
+@="IPropertyPageSite"
+
+[HKEY_LOCAL_MACHINE\Software\Classes\Interface\{B196B28C-BAB4-101A-B69C-00AA00341D07}\NumMethods]
+@="7"
+
+[HKEY_LOCAL_MACHINE\Software\Classes\Interface\{B196B28C-BAB4-101A-B69C-00AA00341D07}\ProxyStubClsid32]
+@="{B196B286-BAB4-101A-B69C-00AA00341D07}"
+
+#IPropertyBag - an object with a properties which can be persisted
+[HKEY_LOCAL_MACHINE\Software\Classes\Interface\{55272A00-42CB-11CE-8135-00AA004BB851}]
+@="IPropertyBag"
+
+[HKEY_LOCAL_MACHINE\Software\Classes\Interface\{55272A00-42CB-11CE-8135-00AA004BB851}\NumMethods]
+@="5"
+
+[HKEY_LOCAL_MACHINE\Software\Classes\Interface\{55272A00-42CB-11CE-8135-00AA004BB851}\ProxyStubClsid32]
+@="{B196B286-BAB4-101A-B69C-00AA00341D07}"
+
+#Enhancement of IPropertyBag interface
+[HKEY_LOCAL_MACHINE\Software\Classes\Interface\{22F55882-280B-11D0-A8A9-00A0C90C2004}]
+@="IPropertyBag2"
+
+[HKEY_LOCAL_MACHINE\Software\Classes\Interface\{22F55882-280B-11D0-A8A9-00A0C90C2004}\NumMethods]
+@="8"
+
+[HKEY_LOCAL_MACHINE\Software\Classes\Interface\{22F55882-280B-11D0-A8A9-00A0C90C2004}\ProxyStubClsid32]
+@="{B196B286-BAB4-101A-B69C-00AA00341D07}"
+
+#IPersistPropertyBag - property-based persistence interface
+[HKEY_LOCAL_MACHINE\Software\Classes\Interface\{37D84F60-42CB-11CE-8135-00AA004BB851}]
+@="IPersistPropertyBag"
+
+[HKEY_LOCAL_MACHINE\Software\Classes\Interface\{37D84F60-42CB-11CE-8135-00AA004BB851}\NumMethods]
+@="7"
+
+[HKEY_LOCAL_MACHINE\Software\Classes\Interface\{37D84F60-42CB-11CE-8135-00AA004BB851}\ProxyStubClsid32]
+@="{B196B286-BAB4-101A-B69C-00AA00341D07}"
+
+#IPersistPropertyBag2 - allows to support properties, implemented by IPropertyBag2
+[HKEY_LOCAL_MACHINE\Software\Classes\Interface\{22F55881-280B-11D0-A8A9-00A0C90C2004}]
+@="IPersistPropertyBag2"
+
+[HKEY_LOCAL_MACHINE\Software\Classes\Interface\{22F55881-280B-11D0-A8A9-00A0C90C2004}\NumMethods]
+@="8"
+
+[HKEY_LOCAL_MACHINE\Software\Classes\Interface\{22F55881-280B-11D0-A8A9-00A0C90C2004}\ProxyStubClsid32]
+@="{B196B286-BAB4-101A-B69C-00AA00341D07}"
+
+#IPerPropertyBrowsing - property pages browser
+[HKEY_LOCAL_MACHINE\Software\Classes\Interface\{376BD3AA-3845-101B-84ED-08002B2EC713}]
+@="IPerPropertyBrowsing"
+
+[HKEY_LOCAL_MACHINE\Software\Classes\Interface\{376BD3AA-3845-101B-84ED-08002B2EC713}\NumMethods]
+@="7"
+
+[HKEY_LOCAL_MACHINE\Software\Classes\Interface\{376BD3AA-3845-101B-84ED-08002B2EC713}\ProxyStubClsid32]
+@="{B196B286-BAB4-101A-B69C-00AA00341D07}"
+
+#IAdviseSinkEx - an extention of IAdviseSink which provides notifications about object status changes
+[HKEY_LOCAL_MACHINE\Software\Classes\Interface\{3AF24290-0C96-11CE-A0CF-00AA00600AB8}]
+@="IAdviseSinkEx"
+
+[HKEY_LOCAL_MACHINE\Software\Classes\Interface\{3AF24290-0C96-11CE-A0CF-00AA00600AB8}\NumMethods]
+@="9"
+
+[HKEY_LOCAL_MACHINE\Software\Classes\Interface\{3AF24290-0C96-11CE-A0CF-00AA00600AB8}\ProxyStubClsid32]
+@="{B196B286-BAB4-101A-B69C-00AA00341D07}"
+
+#IFontEventsDisp - interface used in font events processing
+[HKEY_LOCAL_MACHINE\Software\Classes\Interface\{4EF6100A-AF88-11D0-9846-00C04FC29993}]
+@="IFontEventsDisp"
+
+[HKEY_LOCAL_MACHINE\Software\Classes\Interface\{4EF6100A-AF88-11D0-9846-00C04FC29993}\NumMethods]
+@="7"
+
+[HKEY_LOCAL_MACHINE\Software\Classes\Interface\{4EF6100A-AF88-11D0-9846-00C04FC29993}\ProxyStubClsid32]
+@="{B196B286-BAB4-101A-B69C-00AA00341D07}"
+
+#IPointerInactive - allows an object to be inactive
+[HKEY_LOCAL_MACHINE\Software\Classes\Interface\{55980BA0-35AA-11CF-B671-00AA004CD6D8}]
+@="IPointerInactive"
+
+[HKEY_LOCAL_MACHINE\Software\Classes\Interface\{55980BA0-35AA-11CF-B671-00AA004CD6D8}\NumMethods]
+@="6"
+
+[HKEY_LOCAL_MACHINE\Software\Classes\Interface\{55980BA0-35AA-11CF-B671-00AA004CD6D8}\ProxyStubClsid32]
+@="{B196B286-BAB4-101A-B69C-00AA00341D07}"
+
+#ISimpleFrameSite - container-type interface
+[HKEY_LOCAL_MACHINE\Software\Classes\Interface\{742B0E01-14E6-101B-914E-00AA00300CAB}]
+@="ISimpleFrameSite"
+
+[HKEY_LOCAL_MACHINE\Software\Classes\Interface\{742B0E01-14E6-101B-914E-00AA00300CAB}\NumMethods]
+@="5"
+
+[HKEY_LOCAL_MACHINE\Software\Classes\Interface\{742B0E01-14E6-101B-914E-00AA00300CAB}\ProxyStubClsid32]
+@="{B196B286-BAB4-101A-B69C-00AA00341D07}"
+
+#IPicture - abstraction of a picture and its properties
+[HKEY_LOCAL_MACHINE\Software\Classes\Interface\{7BF80980-BF32-101A-8BBB-00AA00300CAB}]
+@="IPicture"
+
+[HKEY_LOCAL_MACHINE\Software\Classes\Interface\{7BF80980-BF32-101A-8BBB-00AA00300CAB}\NumMethods]
+@="17"
+
+[HKEY_LOCAL_MACHINE\Software\Classes\Interface\{7BF80980-BF32-101A-8BBB-00AA00300CAB}\ProxyStubClsid32]
+@="{B196B286-BAB4-101A-B69C-00AA00341D07}"
+
+#IPictureDisp - provides access to IPicture's properties
+[HKEY_LOCAL_MACHINE\Software\Classes\Interface\{7BF80981-BF32-101A-8BBB-00AA00300CAB}]
+@="IPictureDisp"
+
+[HKEY_LOCAL_MACHINE\Software\Classes\Interface\{7BF80981-BF32-101A-8BBB-00AA00300CAB}\NumMethods]
+@="7"
+
+[HKEY_LOCAL_MACHINE\Software\Classes\Interface\{7BF80981-BF32-101A-8BBB-00AA00300CAB}\ProxyStubClsid32]
+@="{B196B286-BAB4-101A-B69C-00AA00341D07}"
+
+#IPersistStreamInit - IPersistStream with an initialization method
+[HKEY_LOCAL_MACHINE\Software\Classes\Interface\{7FD52380-4E07-101B-AE2D-08002B2EC713}]
+@="IPersistStreamInit"
+
+[HKEY_LOCAL_MACHINE\Software\Classes\Interface\{7FD52380-4E07-101B-AE2D-08002B2EC713}\NumMethods]
+@="9"
+
+[HKEY_LOCAL_MACHINE\Software\Classes\Interface\{7FD52380-4E07-101B-AE2D-08002B2EC713}\ProxyStubClsid32]
+@="{B196B286-BAB4-101A-B69C-00AA00341D07}"
+
+#IPropertyNotifySink - processes notifications about object changes
+[HKEY_LOCAL_MACHINE\Software\Classes\Interface\{9BFBBC02-EFF1-101A-84ED-00AA00341D07}]
+@="IPropertyNotifySink"
+
+[HKEY_LOCAL_MACHINE\Software\Classes\Interface\{9BFBBC02-EFF1-101A-84ED-00AA00341D07}\NumMethods]
+@="5"
+
+[HKEY_LOCAL_MACHINE\Software\Classes\Interface\{9BFBBC02-EFF1-101A-84ED-00AA00341D07}\ProxyStubClsid32]
+@="{B196B286-BAB4-101A-B69C-00AA00341D07}"
+
+#IOleInPlaceSiteEx - allows an object to use activation and deactivation notifications
+[HKEY_LOCAL_MACHINE\Software\Classes\Interface\{9C2CAD80-3424-11CF-B670-00AA004CD6D8}]
+@="IOleInPlaceSiteEx"
+
+[HKEY_LOCAL_MACHINE\Software\Classes\Interface\{9C2CAD80-3424-11CF-B670-00AA004CD6D8}\NumMethods]
+@="18"
+
+[HKEY_LOCAL_MACHINE\Software\Classes\Interface\{9C2CAD80-3424-11CF-B670-00AA004CD6D8}\ProxyStubClsid32]
+@="{B196B286-BAB4-101A-B69C-00AA00341D07}"
+
+#IOleUndoUnit - an interface for actions undo
+[HKEY_LOCAL_MACHINE\Software\Classes\Interface\{894AD3B0-EF97-11CE-9BC9-00AA00608E01}]
+@="IOleUndoUnit"
+
+[HKEY_LOCAL_MACHINE\Software\Classes\Interface\{894AD3B0-EF97-11CE-9BC9-00AA00608E01}\NumMethods]
+@="7"
+
+[HKEY_LOCAL_MACHINE\Software\Classes\Interface\{894AD3B0-EF97-11CE-9BC9-00AA00608E01}\ProxyStubClsid32]
+@="{B196B286-BAB4-101A-B69C-00AA00341D07}"
+
+#IEnumOleUndoUnits - provides access to the list of OLE undo units
+[HKEY_LOCAL_MACHINE\Software\Classes\Interface\{B3E7C340-EF97-11CE-9BC9-00AA00608E01}]
+@="IEnumOleUndoUnits"
+
+[HKEY_LOCAL_MACHINE\Software\Classes\Interface\{B3E7C340-EF97-11CE-9BC9-00AA00608E01}\NumMethods]
+@="7"
+
+[HKEY_LOCAL_MACHINE\Software\Classes\Interface\{B3E7C340-EF97-11CE-9BC9-00AA00608E01}\ProxyStubClsid32]
+@="{B196B286-BAB4-101A-B69C-00AA00341D07}"
+
+#IOleParentUndoUnit - an undo unit which can contain other undo units
+[HKEY_LOCAL_MACHINE\Software\Classes\Interface\{A1FAF330-EF97-11CE-9BC9-00AA00608E01}]
+@="IOleParentUndoUnit"
+
+[HKEY_LOCAL_MACHINE\Software\Classes\Interface\{A1FAF330-EF97-11CE-9BC9-00AA00608E01}\NumMethods]
+@="12"
+
+[HKEY_LOCAL_MACHINE\Software\Classes\Interface\{A1FAF330-EF97-11CE-9BC9-00AA00608E01}\ProxyStubClsid32]
+@="{B196B286-BAB4-101A-B69C-00AA00341D07}"
+
+#IOleUndoManager - allows container to support multi-level undo/redo
+[HKEY_LOCAL_MACHINE\Software\Classes\Interface\{D001F200-EF97-11CE-9BC9-00AA00608E01}]
+@="IOleUndoManager"
+
+[HKEY_LOCAL_MACHINE\Software\Classes\Interface\{D001F200-EF97-11CE-9BC9-00AA00608E01}\NumMethods]
+@="15"
+
+[HKEY_LOCAL_MACHINE\Software\Classes\Interface\{D001F200-EF97-11CE-9BC9-00AA00608E01}\ProxyStubClsid32]
+@="{B196B286-BAB4-101A-B69C-00AA00341D07}"
+
+#Provides object's type information
+[HKEY_LOCAL_MACHINE\Software\Classes\Interface\{B196B283-BAB4-101A-B69C-00AA00341D07}]
+@="IProvideClassInfo"
+
+[HKEY_LOCAL_MACHINE\Software\Classes\Interface\{B196B283-BAB4-101A-B69C-00AA00341D07}\NumMethods]
+@="4"
+
+[HKEY_LOCAL_MACHINE\Software\Classes\Interface\{B196B283-BAB4-101A-B69C-00AA00341D07}\ProxyStubClsid32]
+@="{B196B286-BAB4-101A-B69C-00AA00341D07}"
+
+#IProvideClassInfo2 - extention of class IProvideClassInfo
+[HKEY_LOCAL_MACHINE\Software\Classes\Interface\{A6BC3AC0-DBAA-11CE-9DE3-00AA004BB851}]
+@="IProvideClassInfo2"
+
+[HKEY_LOCAL_MACHINE\Software\Classes\Interface\{A6BC3AC0-DBAA-11CE-9DE3-00AA004BB851}\NumMethods]
+@="5"
+
+[HKEY_LOCAL_MACHINE\Software\Classes\Interface\{A6BC3AC0-DBAA-11CE-9DE3-00AA004BB851}\ProxyStubClsid32]
+@="{B196B286-BAB4-101A-B69C-00AA00341D07}"
+
+#IProvideMultipleClassInfo - an extention of IProvideClassInfo2 which can provide information about
+#a few implemented classes
+[HKEY_LOCAL_MACHINE\Software\Classes\Interface\{A7ABA9C1-8983-11CF-8F20-00805F2CD064}]
+@="IProvideMultipleClassInfo"
+
+[HKEY_LOCAL_MACHINE\Software\Classes\Interface\{A7ABA9C1-8983-11CF-8F20-00805F2CD064}\NumMethods]
+@="7"
+
+[HKEY_LOCAL_MACHINE\Software\Classes\Interface\{A7ABA9C1-8983-11CF-8F20-00805F2CD064}\ProxyStubClsid32]
+@="{B196B286-BAB4-101A-B69C-00AA00341D07}"
+
+#IConnectionPointContainer - connection points support
+[HKEY_LOCAL_MACHINE\Software\Classes\Interface\{B196B284-BAB4-101A-B69C-00AA00341D07}]
+@="IConnectionPointContainer"
+
+[HKEY_LOCAL_MACHINE\Software\Classes\Interface\{B196B284-BAB4-101A-B69C-00AA00341D07}\NumMethods]
+@="5"
+
+[HKEY_LOCAL_MACHINE\Software\Classes\Interface\{B196B284-BAB4-101A-B69C-00AA00341D07}\ProxyStubClsid32]
+@="{B196B286-BAB4-101A-B69C-00AA00341D07}"
+
+#IEnumConnectionPoints - connection points list
+[HKEY_LOCAL_MACHINE\Software\Classes\Interface\{B196B285-BAB4-101A-B69C-00AA00341D07}]
+@="IEnumConnectionPoints"
+
+[HKEY_LOCAL_MACHINE\Software\Classes\Interface\{B196B285-BAB4-101A-B69C-00AA00341D07}\NumMethods]
+@="7"
+
+[HKEY_LOCAL_MACHINE\Software\Classes\Interface\{B196B285-BAB4-101A-B69C-00AA00341D07}\ProxyStubClsid32]
+@="{B196B286-BAB4-101A-B69C-00AA00341D07}"
+
+#IConnectionPoint - a connection point
+[HKEY_LOCAL_MACHINE\Software\Classes\Interface\{B196B286-BAB4-101A-B69C-00AA00341D07}]
+@="IConnectionPoint"
+
+[HKEY_LOCAL_MACHINE\Software\Classes\Interface\{B196B286-BAB4-101A-B69C-00AA00341D07}\NumMethods]
+@="8"
+
+[HKEY_LOCAL_MACHINE\Software\Classes\Interface\{B196B286-BAB4-101A-B69C-00AA00341D07}\ProxyStubClsid32]
+@="{B196B286-BAB4-101A-B69C-00AA00341D07}"
+
+#IEnumConnections - lists current connections
+[HKEY_LOCAL_MACHINE\Software\Classes\Interface\{B196B287-BAB4-101A-B69C-00AA00341D07}]
+@="IEnumConnections"
+
+[HKEY_LOCAL_MACHINE\Software\Classes\Interface\{B196B287-BAB4-101A-B69C-00AA00341D07}\NumMethods]
+@="7"
+
+[HKEY_LOCAL_MACHINE\Software\Classes\Interface\{B196B287-BAB4-101A-B69C-00AA00341D07}\ProxyStubClsid32]
+@="{B196B286-BAB4-101A-B69C-00AA00341D07}"
+
+#IOleControl - an interface for processing of keyboard events and ambient properties
+[HKEY_LOCAL_MACHINE\Software\Classes\Interface\{B196B288-BAB4-101A-B69C-00AA00341D07}]
+@="IOleControl"
+
+[HKEY_LOCAL_MACHINE\Software\Classes\Interface\{B196B288-BAB4-101A-B69C-00AA00341D07}\NumMethods]
+@="7"
+
+[HKEY_LOCAL_MACHINE\Software\Classes\Interface\{B196B288-BAB4-101A-B69C-00AA00341D07}\ProxyStubClsid32]
+@="{B196B286-BAB4-101A-B69C-00AA00341D07}"
+
+#IOleControlSite - used for management objects in a container
+[HKEY_LOCAL_MACHINE\Software\Classes\Interface\{B196B289-BAB4-101A-B69C-00AA00341D07}]
+@="IOleControlSite"
+
+[HKEY_LOCAL_MACHINE\Software\Classes\Interface\{B196B289-BAB4-101A-B69C-00AA00341D07}\NumMethods]
+@="10"
+
+[HKEY_LOCAL_MACHINE\Software\Classes\Interface\{B196B289-BAB4-101A-B69C-00AA00341D07}\ProxyStubClsid32]
+@="{B196B286-BAB4-101A-B69C-00AA00341D07}"
+
+#IPersistMemory - for storage and retrieving objects from a stream
+[HKEY_LOCAL_MACHINE\Software\Classes\Interface\{BD1AE5E0-A6AE-11CE-BD37-504200C10000}]
+@="IPersistMemory"
+
+[HKEY_LOCAL_MACHINE\Software\Classes\Interface\{BD1AE5E0-A6AE-11CE-BD37-504200C10000}\NumMethods]
+@="9"
+
+[HKEY_LOCAL_MACHINE\Software\Classes\Interface\{BD1AE5E0-A6AE-11CE-BD37-504200C10000}\ProxyStubClsid32]
+@="{B196B286-BAB4-101A-B69C-00AA00341D07}"
+
+#IFont - Windows font object wrapper
+[HKEY_LOCAL_MACHINE\Software\Classes\Interface\{BEF6E002-A874-101A-8BBA-00AA00300CAB}]
+@="IFont"
+
+[HKEY_LOCAL_MACHINE\Software\Classes\Interface\{BEF6E002-A874-101A-8BBA-00AA00300CAB}\NumMethods]
+@="27"
+
+[HKEY_LOCAL_MACHINE\Software\Classes\Interface\{BEF6E002-A874-101A-8BBA-00AA00300CAB}\ProxyStubClsid32]
+@="{B196B286-BAB4-101A-B69C-00AA00341D07}"
+
+#IFontDisp - provides access to IFont object properties
+[HKEY_LOCAL_MACHINE\Software\Classes\Interface\{BEF6E003-A874-101A-8BBA-00AA00300CAB}]
+@="IFontDisp"
+
+[HKEY_LOCAL_MACHINE\Software\Classes\Interface\{BEF6E003-A874-101A-8BBA-00AA00300CAB}\NumMethods]
+@="7"
+
+[HKEY_LOCAL_MACHINE\Software\Classes\Interface\{BEF6E003-A874-101A-8BBA-00AA00300CAB}\ProxyStubClsid32]
+@="{B196B286-BAB4-101A-B69C-00AA00341D07}"
+
+#IQuickActivate - efficient object loading
+[HKEY_LOCAL_MACHINE\Software\Classes\Interface\{CF51ED10-62FE-11CF-BF86-00A0C9034836}]
+@="IQuickActivate"
+
+[HKEY_LOCAL_MACHINE\Software\Classes\Interface\{CF51ED10-62FE-11CF-BF86-00A0C9034836}\NumMethods]
+@="6"
+
+[HKEY_LOCAL_MACHINE\Software\Classes\Interface\{CF51ED10-62FE-11CF-BF86-00A0C9034836}\ProxyStubClsid32]
+@="{B196B286-BAB4-101A-B69C-00AA00341D07}"
+
+#IObjectWithSite - an object with site
+[HKEY_LOCAL_MACHINE\Software\Classes\Interface\{FC4801A3-2BA9-11CF-A229-00AA003D7352}]
+@="IObjectWithSite"
+
+[HKEY_LOCAL_MACHINE\Software\Classes\Interface\{FC4801A3-2BA9-11CF-A229-00AA003D7352}\NumMethods]
+@="5"
+
+[HKEY_LOCAL_MACHINE\Software\Classes\Interface\{FC4801A3-2BA9-11CF-A229-00AA003D7352}\ProxyStubClsid32]
+@="{B196B286-BAB4-101A-B69C-00AA00341D07}"
+
+
+
 #
 # Entries for OLEAUT32 (OLE Automation)
 #
@@ -159,6 +589,65 @@
 @="oleaut32.dll"
 "ThreadingModel"="Both"
 
+#Other PS* classes
+[HKEY_LOCAL_MACHINE\Software\Classes\CLSID\{00020420-0000-0000-C000-000000000046}]
+@="PSDispatch"
+
+[HKEY_LOCAL_MACHINE\Software\Classes\CLSID\{00020420-0000-0000-C000-000000000046}\InprocServer]
+@="ole2disp.dll"
+
+[HKEY_LOCAL_MACHINE\Software\Classes\CLSID\{00020420-0000-0000-C000-000000000046}\InprocServer32]
+@="oleaut32.dll"
+"ThreadingModel"="Both"
+
+[HKEY_LOCAL_MACHINE\Software\Classes\CLSID\{00020421-0000-0000-C000-000000000046}]
+@="PSEnumVariant"
+
+[HKEY_LOCAL_MACHINE\Software\Classes\CLSID\{00020421-0000-0000-C000-000000000046}\InprocServer]
+@="ole2disp.dll"
+
+[HKEY_LOCAL_MACHINE\Software\Classes\CLSID\{00020421-0000-0000-C000-000000000046}\InprocServer32]
+@="oleaut32.dll"
+"ThreadingModel"="Both"
+
+[HKEY_LOCAL_MACHINE\Software\Classes\CLSID\{00020422-0000-0000-C000-000000000046}]
+@="PSTypeInfo"
+
+[HKEY_LOCAL_MACHINE\Software\Classes\CLSID\{00020422-0000-0000-C000-000000000046}\InprocServer]
+@="ole2disp.dll"
+
+[HKEY_LOCAL_MACHINE\Software\Classes\CLSID\{00020422-0000-0000-C000-000000000046}\InprocServer32]
+@="oleaut32.dll"
+"ThreadingModel"="Both"
+
+[HKEY_LOCAL_MACHINE\Software\Classes\CLSID\{00020423-0000-0000-C000-000000000046}]
+@="PSTypeLib"
+
+[HKEY_LOCAL_MACHINE\Software\Classes\CLSID\{00020423-0000-0000-C000-000000000046}\InprocServer]
+@="ole2disp.dll"
+
+[HKEY_LOCAL_MACHINE\Software\Classes\CLSID\{00020423-0000-0000-C000-000000000046}\InprocServer32]
+@="oleaut32.dll"
+"ThreadingModel"="Both"
+
+[HKEY_LOCAL_MACHINE\Software\Classes\CLSID\{00020425-0000-0000-C000-000000000046}]
+@="PSTypeComp"
+
+[HKEY_LOCAL_MACHINE\Software\Classes\CLSID\{00020425-0000-0000-C000-000000000046}\InprocServer]
+@="ole2disp.dll"
+
+[HKEY_LOCAL_MACHINE\Software\Classes\CLSID\{00020425-0000-0000-C000-000000000046}\InprocServer32]
+@="oleaut32.dll"
+"ThreadingModel"="Both"
+
+#Other OLEAUT32 entries
+[HKEY_LOCAL_MACHINE\Software\Classes\CLSID\{0000002F-0000-0000-C000-000000000046}]
+@="CLSID_RecordInfo"
+
+[HKEY_LOCAL_MACHINE\Software\Classes\CLSID\{0000002F-0000-0000-C000-000000000046}\InprocServer32]
+@="oleaut32.dll"
+"ThreadingModel"="Both"
+
 [HKEY_LOCAL_MACHINE\SOFTWARE\Classes\CLSID\{0BE35203-8F91-11CE-9DE3-00AA004BB851}]
 @="CLSID_StdFont"
 
@@ -172,8 +661,39 @@
 [HKEY_LOCAL_MACHINE\SOFTWARE\Classes\CLSID\{0BE35203-8F91-11CE-9DE3-00AA004BB851}\ProgID]
 @="StdFont"
 
+[HKEY_LOCAL_MACHINE\Software\Classes\CLSID\{0BE35204-8F91-11CE-9DE3-00AA004BB851}]
+@="CLSID_StdPict"
+
+[HKEY_LOCAL_MACHINE\Software\Classes\CLSID\{0BE35204-8F91-11CE-9DE3-00AA004BB851}\CLSID]
+@="Standard Picture"
+
+[HKEY_LOCAL_MACHINE\Software\Classes\CLSID\{0BE35204-8F91-11CE-9DE3-00AA004BB851}\InprocServer32]
+@="oleaut32.dll"
+"ThreadingModel"="Apartment"
+
+[HKEY_LOCAL_MACHINE\Software\Classes\CLSID\{0BE35204-8F91-11CE-9DE3-00AA004BB851}\ProgID]
+@="StdPicture"
+
+[HKEY_LOCAL_MACHINE\Software\Classes\CLSID\{46763EE0-CAB2-11CE-8C20-00AA0051E5D4}]
+@="Obsolete Font"
+
+[HKEY_LOCAL_MACHINE\Software\Classes\CLSID\{46763EE0-CAB2-11CE-8C20-00AA0051E5D4}\CLSID]
+@="Obsolete Font"
+
+[HKEY_LOCAL_MACHINE\Software\Classes\CLSID\{46763EE0-CAB2-11CE-8C20-00AA0051E5D4}\InprocServer32]
+@="oleaut32.dll"
+
+[HKEY_LOCAL_MACHINE\Software\Classes\CLSID\{46763EE0-CAB2-11CE-8C20-00AA0051E5D4}\ProgID]
+@="OldFont"
+
+[HKEY_LOCAL_MACHINE\Software\Classes\OldFont\CLSID]
+@="{46763EE0-CAB2-11CE-8C20-00AA0051E5D4}"
+
 [HKEY_LOCAL_MACHINE\SOFTWARE\Classes\StdFont\CLSID]
 @="{0BE35203-8F91-11CE-9DE3-00AA004BB851}"
+
+[HKEY_LOCAL_MACHINE\Software\Classes\StdPicture\CLSID]
+@="{0BE35204-8F91-11CE-9DE3-00AA004BB851}"
 
 # OLE Automation type libraries.
 [HKEY_LOCAL_MACHINE\SOFTWARE\Classes\TypeLib\{00020430-0000-0000-C000-000000000046}\1.0]
