@@ -2184,3 +2184,21 @@ BOOL WINAPI InvalidateNLSCache(void)
   FIXME("() stub\n");
   return FALSE;
 }
+
+/******************************************************************************
+ *           GetUserGeoID (KERNEL32.@)
+ */
+GEOID WINAPI GetUserGeoID( GEOCLASS GeoClass )
+{
+    FIXME("%ld\n",GeoClass);
+    return GEOID_NOT_AVAILABLE;
+}
+
+/******************************************************************************
+ *           SetUserGeoID (KERNEL32.@)
+ */
+BOOL WINAPI SetUserGeoID( GEOID GeoID )
+{
+    FIXME("%ld\n",GeoID);
+    return FALSE;
+}

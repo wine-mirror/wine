@@ -505,7 +505,7 @@
 @ stdcall GetUserDefaultLCID()
 @ stdcall GetUserDefaultLangID()
 @ stdcall GetUserDefaultUILanguage()
-@ stub GetUserGeoID
+@ stdcall GetUserGeoID(long)
 @ stdcall GetVersion()
 @ stdcall GetVersionExA(ptr)
 @ stdcall GetVersionExW(ptr)
@@ -791,7 +791,7 @@
 @ stub SetTimerQueueTimer
 @ stdcall SetTimeZoneInformation(ptr)
 @ stdcall SetUnhandledExceptionFilter(ptr)
-@ stub SetUserGeoID
+@ stdcall SetUserGeoID(long)
 @ stdcall SetVolumeLabelA(str str)
 @ stdcall SetVolumeLabelW(wstr wstr)
 @ stub SetVolumeMountPointA
