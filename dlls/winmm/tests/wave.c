@@ -32,29 +32,6 @@
 
 #include "winmm_test.h"
 
-const unsigned int win_formats[NB_WIN_FORMATS][4]={
-    {WAVE_FORMAT_1M08,  11025,  8, 1},
-    {WAVE_FORMAT_1S08,  11025,  8, 2},
-    {WAVE_FORMAT_1M16,  11025, 16, 1},
-    {WAVE_FORMAT_1S16,  11025, 16, 2},
-    {WAVE_FORMAT_2M08,  22050,  8, 1},
-    {WAVE_FORMAT_2S08,  22050,  8, 2},
-    {WAVE_FORMAT_2M16,  22050, 16, 1},
-    {WAVE_FORMAT_2S16,  22050, 16, 2},
-    {WAVE_FORMAT_4M08,  44100,  8, 1},
-    {WAVE_FORMAT_4S08,  44100,  8, 2},
-    {WAVE_FORMAT_4M16,  44100, 16, 1},
-    {WAVE_FORMAT_4S16,  44100, 16, 2},
-    {WAVE_FORMAT_48M08, 48000,  8, 1},
-    {WAVE_FORMAT_48S08, 48000,  8, 2},
-    {WAVE_FORMAT_48M16, 48000, 16, 1},
-    {WAVE_FORMAT_48S16, 48000, 16, 2},
-    {WAVE_FORMAT_96M08, 96000,  8, 1},
-    {WAVE_FORMAT_96S08, 96000,  8, 2},
-    {WAVE_FORMAT_96M16, 96000, 16, 1},
-    {WAVE_FORMAT_96S16, 96000, 16, 2}
-};
-
 /*
  * Note that in most of this test we may get MMSYSERR_BADDEVICEID errors
  * at about any time if the user starts another application that uses the
@@ -98,36 +75,45 @@ static char* wave_generate_la(WAVEFORMATEX* wfx, double duration, DWORD* size)
     return buf;
 }
 
+const char* mmsys_error(MMRESULT error)
+{
+#define DEVTYPE_TO_STR(dev) case dev: return #dev
+    static char	unknown[32];
+    switch (error) {
+    DEVTYPE_TO_STR(MMSYSERR_NOERROR);
+    DEVTYPE_TO_STR(MMSYSERR_ERROR);
+    DEVTYPE_TO_STR(MMSYSERR_BADDEVICEID);
+    DEVTYPE_TO_STR(MMSYSERR_NOTENABLED);
+    DEVTYPE_TO_STR(MMSYSERR_ALLOCATED);
+    DEVTYPE_TO_STR(MMSYSERR_INVALHANDLE);
+    DEVTYPE_TO_STR(MMSYSERR_NODRIVER);
+    DEVTYPE_TO_STR(MMSYSERR_NOMEM);
+    DEVTYPE_TO_STR(MMSYSERR_NOTSUPPORTED);
+    DEVTYPE_TO_STR(MMSYSERR_BADERRNUM);
+    DEVTYPE_TO_STR(MMSYSERR_INVALFLAG);
+    DEVTYPE_TO_STR(MMSYSERR_INVALPARAM);
+    DEVTYPE_TO_STR(WAVERR_BADFORMAT);
+    DEVTYPE_TO_STR(WAVERR_STILLPLAYING);
+    DEVTYPE_TO_STR(WAVERR_UNPREPARED);
+    DEVTYPE_TO_STR(WAVERR_SYNC);
+    } 
+    sprintf(unknown, "Unknown(0x%08x)", error);
+    return unknown;
+#undef DEVTYPE_TO_STR
+}
+
 static const char * wave_out_error(MMRESULT error)
 {
     static char msg[1024];
+    static char long_msg[1100];
     MMRESULT rc;
 
     rc = waveOutGetErrorText(error, msg, sizeof(msg));
     if (rc != MMSYSERR_NOERROR)
-        sprintf(msg, "waveOutGetErrorText(%x) failed with error %x", error, rc);
-    return msg;
-}
-
-const char* mmsys_error(DWORD error)
-{
-    static char	unknown[32];
-    switch (error) {
-    case MMSYSERR_NOERROR:      return "MMSYSERR_NOERROR";
-    case MMSYSERR_ERROR:        return "MMSYSERR_ERROR";
-    case MMSYSERR_BADDEVICEID:  return "MMSYSERR_BADDEVICEID";
-    case MMSYSERR_NOTENABLED:   return "MMSYSERR_NOTENABLED";
-    case MMSYSERR_ALLOCATED:    return "MMSYSERR_ALLOCATED";
-    case MMSYSERR_INVALHANDLE:  return "MMSYSERR_INVALHANDLE";
-    case MMSYSERR_NODRIVER:     return "MMSYSERR_NODRIVER";
-    case MMSYSERR_NOMEM:        return "MMSYSERR_NOMEM";
-    case MMSYSERR_NOTSUPPORTED: return "MMSYSERR_NOTSUPPORTED";
-    case MMSYSERR_BADERRNUM:    return "MMSYSERR_BADERRNUM";
-    case MMSYSERR_INVALFLAG:    return "MMSYSERR_INVALFLAG";
-    case MMSYSERR_INVALPARAM:   return "MMSYSERR_INVALPARAM";
-    } 
-    sprintf(unknown, "Unknown(0x%08lx)", error);
-    return unknown;
+        sprintf(long_msg, "waveOutGetErrorText(%x) failed with error %x", error, rc);
+    else
+        sprintf(long_msg, "%s(%s)", mmsys_error(error), msg);
+    return long_msg;
 }
 
 const char * wave_open_flags(DWORD flags)
@@ -196,7 +182,7 @@ static const char * wave_out_caps(DWORD dwSupport)
     ADD_FLAG(WAVECAPS_SAMPLEACCURATE);
 
     return msg[0] ? msg + 1 : "";
-#undef FLAG
+#undef ADD_FLAG
 }
 
 static void wave_out_test_deviceOut(int device, double duration, int format, DWORD flags, LPWAVEOUTCAPS pcaps)
@@ -227,9 +213,9 @@ static void wave_out_test_deviceOut(int device, double duration, int format, DWO
     ok(rc==MMSYSERR_NOERROR || rc==MMSYSERR_BADDEVICEID ||
        (rc==WAVERR_BADFORMAT && (flags & WAVE_FORMAT_DIRECT) && (pcaps->dwFormats & win_formats[format][0])) ||
        (rc==MMSYSERR_INVALFLAG && (flags & WAVE_FORMAT_DIRECT)),
-       "waveOutOpen: device=%d format=%ldx%2dx%d flags=%lx(%s) rc=%d(%s)\n",device,
+       "waveOutOpen: device=%d format=%ldx%2dx%d flags=%lx(%s) rc=%s\n",device,
        wfx.nSamplesPerSec,wfx.wBitsPerSample,wfx.nChannels,CALLBACK_EVENT|flags,
-       wave_open_flags(CALLBACK_EVENT|flags),rc,wave_out_error(rc));
+       wave_open_flags(CALLBACK_EVENT|flags),wave_out_error(rc));
     if (rc!=MMSYSERR_NOERROR) {
         CloseHandle(hevent);
         return;
@@ -248,30 +234,30 @@ static void wave_out_test_deviceOut(int device, double duration, int format, DWO
     frag.dwLoops=0;
 
     rc=waveOutGetVolume(wout,&volume);
-    ok(rc==MMSYSERR_NOERROR,"waveOutGetVolume: device=%d rc=%d\n",device,rc);
+    ok(rc==MMSYSERR_NOERROR,"waveOutGetVolume: device=%d rc=%s\n",device,wave_out_error(rc));
 
     rc=waveOutPrepareHeader(wout, &frag, sizeof(frag));
     ok(rc==MMSYSERR_NOERROR,
-       "waveOutPrepareHeader: device=%d rc=%d\n",device,rc);
+       "waveOutPrepareHeader: device=%d rc=%s\n",device,wave_out_error(rc));
 
     if (winetest_interactive && rc==MMSYSERR_NOERROR) {
-        trace("Playing %g second 440Hz tone at %ldx%2dx%d %04lx\n",duration,
+        trace("Playing %g second 440Hz tone at %5ldx%2dx%d %04lx\n",duration,
               wfx.nSamplesPerSec, wfx.wBitsPerSample,wfx.nChannels,flags);
         rc=waveOutSetVolume(wout,0x20002000);
-        ok(rc==MMSYSERR_NOERROR,"waveOutSetVolume: device=%d rc=%d\n",device,rc);
+        ok(rc==MMSYSERR_NOERROR,"waveOutSetVolume: device=%d rc=%s\n",device,wave_out_error(rc));
         WaitForSingleObject(hevent,INFINITE);
 
         rc=waveOutWrite(wout, &frag, sizeof(frag));
-        ok(rc==MMSYSERR_NOERROR,"waveOutWrite: device=%d rc=%d\n",device,rc);
+        ok(rc==MMSYSERR_NOERROR,"waveOutWrite: device=%d rc=%s\n",device,wave_out_error(rc));
         WaitForSingleObject(hevent,INFINITE);
 
         rc=waveOutSetVolume(wout,volume);
-        ok(rc==MMSYSERR_NOERROR,"waveOutSetVolume: device=%d rc=%d\n",device,rc);
+        ok(rc==MMSYSERR_NOERROR,"waveOutSetVolume: device=%d rc=%s\n",device,wave_out_error(rc));
     }
 
     rc=waveOutUnprepareHeader(wout, &frag, sizeof(frag));
     ok(rc==MMSYSERR_NOERROR,
-       "waveOutUnprepareHeader: device=%d rc=%d\n",device,rc);
+       "waveOutUnprepareHeader: device=%d rc=%s\n",device,wave_out_error(rc));
     free(frag.lpData);
 
     CloseHandle(hevent);
@@ -318,18 +304,18 @@ static void wave_out_tests()
     for (d=0;d<ndev;d++) {
         rc=waveOutGetDevCapsA(d,&caps,sizeof(caps));
         ok(rc==MMSYSERR_NOERROR || rc==MMSYSERR_BADDEVICEID,
-           "waveOutGetDevCapsA: failed to get capabilities of device %d: rc=%s\n",d,mmsys_error(rc));
+           "waveOutGetDevCapsA: failed to get capabilities of device %d: rc=%s\n",d,wave_out_error(rc));
         if (rc==MMSYSERR_BADDEVICEID)
             continue;
 
         name=NULL;
         rc=waveOutMessage((HWAVEOUT)d, DRV_QUERYDEVICEINTERFACESIZE, (DWORD_PTR)&size, 0);
         ok(rc==MMSYSERR_NOERROR || rc==MMSYSERR_INVALPARAM || rc==MMSYSERR_NOTSUPPORTED,
-           "waveOutMessage: failed to get interface size for device: %d rc=%s\n",d,mmsys_error(rc));
+           "waveOutMessage: failed to get interface size for device: %d rc=%s\n",d,wave_out_error(rc));
         if (rc==MMSYSERR_NOERROR) {
             wname = (WCHAR *)malloc(size);
             rc=waveOutMessage((HWAVEOUT)d, DRV_QUERYDEVICEINTERFACE, (DWORD_PTR)wname, size);
-            ok(rc==MMSYSERR_NOERROR,"waveOutMessage: failed to get interface name for device: %d rc=%s\n",d,mmsys_error(rc));
+            ok(rc==MMSYSERR_NOERROR,"waveOutMessage: failed to get interface name for device: %d rc=%s\n",d,wave_out_error(rc));
             ok(lstrlenW(wname)+1==size/sizeof(WCHAR),"got an incorrect size: %ld instead of %d\n",size,(lstrlenW(wname)+1)*sizeof(WCHAR));
             if (rc==MMSYSERR_NOERROR) {
                 name = malloc(size/sizeof(WCHAR));
@@ -375,7 +361,7 @@ static void wave_out_tests()
         oformat=format;
         rc=waveOutOpen(&wout,d,&format,0,0,CALLBACK_NULL|WAVE_FORMAT_DIRECT);
         ok(rc==WAVERR_BADFORMAT || rc==MMSYSERR_INVALFLAG || rc==MMSYSERR_INVALPARAM,
-           "waveOutOpen: opening the device in 11 bits mode should fail %d: rc=%s\n",d,mmsys_error(rc));
+           "waveOutOpen: opening the device in 11 bits mode should fail %d: rc=%s\n",d,wave_out_error(rc));
         if (rc==MMSYSERR_NOERROR) {
             trace("     got %ldx%2dx%d for %ldx%2dx%d\n",
                   format.nSamplesPerSec, format.wBitsPerSample,
@@ -396,7 +382,7 @@ static void wave_out_tests()
         oformat=format;
         rc=waveOutOpen(&wout,d,&format,0,0,CALLBACK_NULL|WAVE_FORMAT_DIRECT);
         ok(rc==WAVERR_BADFORMAT || rc==MMSYSERR_INVALFLAG || rc==MMSYSERR_INVALPARAM,
-           "waveOutOpen: opening the device at 2 MHz sample rate should fail %d: rc=%s\n",d,mmsys_error(rc));
+           "waveOutOpen: opening the device at 2 MHz sample rate should fail %d: rc=%s\n",d,wave_out_error(rc));
         if (rc==MMSYSERR_NOERROR) {
             trace("     got %ldx%2dx%d for %ldx%2dx%d\n",
                   format.nSamplesPerSec, format.wBitsPerSample,

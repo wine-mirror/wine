@@ -27,8 +27,29 @@
 #define WAVE_FORMAT_96S16      0x00080000    /* 96     kHz, Stereo, 16-bit */
 #endif
 
-#define NB_WIN_FORMATS 20
-extern const unsigned int win_formats[NB_WIN_FORMATS][4];
+static const unsigned int win_formats[][4] = {
+    {WAVE_FORMAT_1M08,  11025,  8, 1},
+    {WAVE_FORMAT_1S08,  11025,  8, 2},
+    {WAVE_FORMAT_1M16,  11025, 16, 1},
+    {WAVE_FORMAT_1S16,  11025, 16, 2},
+    {WAVE_FORMAT_2M08,  22050,  8, 1},
+    {WAVE_FORMAT_2S08,  22050,  8, 2},
+    {WAVE_FORMAT_2M16,  22050, 16, 1},
+    {WAVE_FORMAT_2S16,  22050, 16, 2},
+    {WAVE_FORMAT_4M08,  44100,  8, 1},
+    {WAVE_FORMAT_4S08,  44100,  8, 2},
+    {WAVE_FORMAT_4M16,  44100, 16, 1},
+    {WAVE_FORMAT_4S16,  44100, 16, 2},
+    {WAVE_FORMAT_48M08, 48000,  8, 1},
+    {WAVE_FORMAT_48S08, 48000,  8, 2},
+    {WAVE_FORMAT_48M16, 48000, 16, 1},
+    {WAVE_FORMAT_48S16, 48000, 16, 2},
+    {WAVE_FORMAT_96M08, 96000,  8, 1},
+    {WAVE_FORMAT_96S08, 96000,  8, 2},
+    {WAVE_FORMAT_96M16, 96000, 16, 1},
+    {WAVE_FORMAT_96S16, 96000, 16, 2}
+};
+#define NB_WIN_FORMATS (sizeof(win_formats)/sizeof(*win_formats))
 
 extern const char* wave_open_flags(DWORD);
-extern const char* mmsys_error(DWORD);
+extern const char* mmsys_error(MMRESULT);
