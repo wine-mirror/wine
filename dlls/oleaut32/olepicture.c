@@ -71,7 +71,9 @@
 #include "olectl.h"
 #include "oleauto.h"
 #include "connpt.h"
+#include "urlmon.h"
 #include "wine/debug.h"
+#include "wine/unicode.h"
 
 #include "wine/wingdi16.h"
 #include "cursoricon.h"
@@ -1998,11 +2000,104 @@ HRESULT WINAPI OleLoadPicturePath( LPOLESTR szURLorPath, LPUNKNOWN punkCaller,
 		DWORD dwReserved, OLE_COLOR clrReserved, REFIID riid,
 		LPVOID *ppvRet )
 {
-  FIXME("(%s,%p,%ld,%08lx,%s,%p): stub\n",
+  static const WCHAR file[] = { 'f','i','l','e',':','/','/',0 };
+  IPicture *ipicture;
+  HANDLE hFile;
+  DWORD dwFileSize;
+  HGLOBAL hGlobal = NULL;
+  DWORD dwBytesRead = 0;
+  IStream *stream;
+  BOOL bRead;
+  IPersistStream *pStream;
+  HRESULT hRes;
+
+  TRACE("(%s,%p,%ld,%08lx,%s,%p): stub\n",
         debugstr_w(szURLorPath), punkCaller, dwReserved, clrReserved,
         debugstr_guid(riid), ppvRet);
 
-  return E_NOTIMPL;
+  if (!ppvRet) return E_POINTER;
+
+  if (strncmpW(szURLorPath, file, 7) == 0) {	    
+      szURLorPath += 7;
+  
+      hFile = CreateFileW(szURLorPath, GENERIC_READ, 0, NULL, OPEN_EXISTING,
+				   0, NULL);
+      if (hFile == INVALID_HANDLE_VALUE)
+	  return E_UNEXPECTED;
+
+      dwFileSize = GetFileSize(hFile, NULL);
+      if (dwFileSize != INVALID_FILE_SIZE )
+      {
+	  hGlobal = GlobalAlloc(GMEM_FIXED,dwFileSize);
+	  if ( hGlobal)
+	  {
+	      bRead = ReadFile(hFile, hGlobal, dwFileSize, &dwBytesRead, NULL);
+	      if (!bRead)
+	      {
+		  GlobalFree(hGlobal);
+		  hGlobal = 0;
+	      }
+	  }
+      }
+      CloseHandle(hFile);
+      
+      if (!hGlobal)
+	  return E_UNEXPECTED;
+
+      hRes = CreateStreamOnHGlobal(hGlobal, TRUE, &stream);
+      if (FAILED(hRes)) 
+      {
+	  GlobalFree(hGlobal);
+	  return hRes;
+      }
+  } else {
+      IMoniker *pmnk;
+      IBindCtx *pbc;
+
+      hRes = CreateBindCtx(0, &pbc);
+      if (SUCCEEDED(hRes)) 
+      {
+	  hRes = CreateURLMoniker(NULL, szURLorPath, &pmnk);
+	  if (SUCCEEDED(hRes))
+	  {	         
+	      hRes = IMoniker_BindToStorage(pmnk, pbc, NULL, &IID_IStream, (LPVOID*)&stream);
+	      IMoniker_Release(pmnk);
+	  }
+	  IBindCtx_Release(pbc);
+      }
+      if (FAILED(hRes))
+	  return hRes;
+  }
+
+  hRes = CoCreateInstance(&CLSID_StdPicture, punkCaller, CLSCTX_INPROC_SERVER, 
+		   &IID_IPicture, (LPVOID*)&ipicture);
+  if (hRes != S_OK) {
+      IStream_Release(stream);
+      return hRes;
+  }
+  
+  hRes = IPicture_QueryInterface(ipicture, &IID_IPersistStream, (LPVOID*)&pStream);
+  if (hRes) {
+      IStream_Release(stream);
+      IPicture_Release(ipicture);
+      return hRes;
+  }
+
+  hRes = IPersistStream_Load(pStream, stream); 
+  IPersistStream_Release(pStream);
+  IStream_Release(stream);
+
+  if (hRes) {
+      IPicture_Release(ipicture);
+      return hRes;
+  }
+
+  hRes = IPicture_QueryInterface(ipicture,riid,ppvRet);
+  if (hRes)
+      FIXME("Failed to get interface %s from IPicture.\n",debugstr_guid(riid));
+  
+  IPicture_Release(ipicture);
+  return hRes;
 }
 
 /*******************************************************************************
@@ -2038,12 +2133,8 @@ static ULONG WINAPI SPCF_Release(LPCLASSFACTORY iface) {
 static HRESULT WINAPI SPCF_CreateInstance(
 	LPCLASSFACTORY iface,LPUNKNOWN pOuter,REFIID riid,LPVOID *ppobj
 ) {
-	PICTDESC	pd;
-
-	FIXME("(%p,%p,%s,%p), creating stdpic with PICTYPE_NONE.\n",iface,pOuter,debugstr_guid(riid),ppobj);
-	pd.cbSizeofstruct = sizeof(pd);
-	pd.picType = PICTYPE_NONE;
-	return OleCreatePictureIndirect(&pd,riid,TRUE,ppobj);
+    /* Creates an uninitialized picture */
+    return OleCreatePictureIndirect(NULL,riid,TRUE,ppobj);
 
 }
 
