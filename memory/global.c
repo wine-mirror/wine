@@ -7,6 +7,7 @@
 
 #include <sys/types.h>
 #include <stdlib.h>
+#include <time.h>
 #include <stdio.h>
 #include <unistd.h>
 #include <string.h>
@@ -1458,8 +1459,18 @@ DWORD WINAPI GlobalCompact( DWORD minfree )
 VOID WINAPI GlobalMemoryStatus(
             LPMEMORYSTATUS lpmem
 ) {
+    static MEMORYSTATUS	cached_memstatus;
+    static int cache_lastchecked = 0;
+    FILE *f;
+
+    if (time(NULL)==cache_lastchecked) {
+	memcpy(lpmem,&cached_memstatus,sizeof(MEMORYSTATUS));
+	return;
+    }
+    cache_lastchecked = time(NULL);
+
 #ifdef linux
-    FILE *f = fopen( "/proc/meminfo", "r" );
+    f = fopen( "/proc/meminfo", "r" );
     if (f)
     {
         char buffer[256];
