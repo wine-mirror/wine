@@ -377,7 +377,7 @@ DWORD WINAPI GetFileVersionInfoW( LPCWSTR filename, DWORD handle,
 /***********************************************************************
  *           VersionInfo16_FindChild             [internal]
  */
-VS_VERSION_INFO_STRUCT16 *VersionInfo16_FindChild( VS_VERSION_INFO_STRUCT16 *info, 
+static VS_VERSION_INFO_STRUCT16 *VersionInfo16_FindChild( VS_VERSION_INFO_STRUCT16 *info, 
                                             LPCSTR szKey, UINT cbKey )
 {
     VS_VERSION_INFO_STRUCT16 *child = VersionInfo16_Children( info );
@@ -397,7 +397,7 @@ VS_VERSION_INFO_STRUCT16 *VersionInfo16_FindChild( VS_VERSION_INFO_STRUCT16 *inf
 /***********************************************************************
  *           VersionInfo32_FindChild             [internal]
  */
-VS_VERSION_INFO_STRUCT32 *VersionInfo32_FindChild( VS_VERSION_INFO_STRUCT32 *info, 
+static VS_VERSION_INFO_STRUCT32 *VersionInfo32_FindChild( VS_VERSION_INFO_STRUCT32 *info, 
                                             LPCWSTR szKey, UINT cbKey )
 {
     VS_VERSION_INFO_STRUCT32 *child = VersionInfo32_Children( info );
