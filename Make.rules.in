@@ -77,10 +77,14 @@ OBJS = $(C_SRCS:.c=.o) $(GEN_ASM_SRCS:.s=.o) $(ASM_SRCS:.S=.o) $(RC_SRCS:.rc=.o)
 
 # Implicit rules
 
-.SUFFIXES: .rc .res .spec .spec.c .glue.s
+.SUFFIXES:
+.SUFFIXES: .rc .res .spec .spec.c .spec.o .glue.s $(SUFFIXES)
 
 .c.o:
 	$(CC) -c $(ALLCFLAGS) -o $*.o $<
+
+.spec.c.spec.o:
+	$(CC) -c $(ALLCFLAGS) @GCC_NO_BUILTIN@ -o $*.spec.o $<
 
 .s.o:
 	$(AS) -o $*.o $<  

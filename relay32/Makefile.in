@@ -1,4 +1,4 @@
-DEFS      = @DLLFLAGS@ @GCC_NO_BUILTIN@ -D__WINE__
+DEFS      = @DLLFLAGS@ -D__WINE__
 TOPSRCDIR = @top_srcdir@
 TOPOBJDIR = ..
 SRCDIR    = @srcdir@
