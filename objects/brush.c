@@ -7,8 +7,6 @@
 #include <stdlib.h>
 #include "brush.h"
 #include "bitmap.h"
-#include "metafile.h"
-#include "color.h"
 #include "debug.h"
 
 
@@ -25,6 +23,7 @@ HBRUSH16 WINAPI CreateBrushIndirect16( const LOGBRUSH16 * brush )
     brushPtr->logbrush.lbColor = brush->lbColor;
     brushPtr->logbrush.lbHatch = brush->lbHatch;
     GDI_HEAP_UNLOCK( hbrush );
+    TRACE(gdi, "%04x\n", hbrush);
     return hbrush;
 }
 
@@ -42,6 +41,7 @@ HBRUSH32 WINAPI CreateBrushIndirect32( const LOGBRUSH32 * brush )
     brushPtr->logbrush.lbColor = brush->lbColor;
     brushPtr->logbrush.lbHatch = brush->lbHatch;
     GDI_HEAP_UNLOCK( hbrush );
+    TRACE(gdi, "%08x\n", hbrush);
     return hbrush;
 }
 

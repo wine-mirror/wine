@@ -5,7 +5,6 @@
  */
 
 #include <stdlib.h>
-#include "color.h"
 #include "bitmap.h"
 #include "brush.h"
 #include "dc.h"

@@ -1114,8 +1114,8 @@ INT32 X11DRV_SetDIBitsToDevice( DC *dc, INT32 xDest, INT32 yDest, DWORD cx,
     if (xSrc + cx >= width) cx = width - xSrc;
     if (!cx || !cy) return 0;
 
-    DC_SetupGCForText( dc );  /* To have the correct colors */
-    TSXSetFunction( display, dc->u.x.gc, DC_XROPfunction[dc->w.ROPmode-1] );
+    X11DRV_SetupGCForText( dc );  /* To have the correct colors */
+    TSXSetFunction(display, dc->u.x.gc, X11DRV_XROPfunction[dc->w.ROPmode-1]);
 
     if (descr.infoBpp <= 8)
     {

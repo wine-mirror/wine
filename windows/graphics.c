@@ -35,7 +35,7 @@ BOOL32 GRAPH_DrawLines( HDC32 hdc, LPPOINT32 pXY, INT32 N, HPEN32 hPen )
 	HPEN32  hPrevPen  = 0;
 
 	if( hPen ) hPrevPen = SelectObject32( hdc, hPen );
-	if( DC_SetupGCForPen( dc ) )
+	if( X11DRV_SetupGCForPen( dc ) )
 	{
 	    XSegment	l[MAX_DRAWLINES];
 	    INT32 	i, j;
@@ -178,7 +178,7 @@ void  GRAPH_DrawGenericReliefRect(
 
     hPrevBrush = SelectObject32(hdc, highlight);
 
-    if ( DC_SetupGCForBrush( dc ) )
+    if ( X11DRV_SetupGCForBrush( dc ) )
     {
          INT32	i;
 
@@ -193,7 +193,7 @@ void  GRAPH_DrawGenericReliefRect(
     }
 
     SelectObject32( hdc, shadow );
-    if ( DC_SetupGCForBrush( dc ) )
+    if ( X11DRV_SetupGCForBrush( dc ) )
     {
 	 INT32	i;
 
@@ -226,7 +226,7 @@ void GRAPH_DrawRectangle( HDC32 hdc, INT32 x, INT32 y,
         HPEN32	hPrevPen  = 0; 
 
 	if( hPen ) hPrevPen = SelectObject32( hdc, hPen );
-	if( DC_SetupGCForPen( dc ) )
+	if( X11DRV_SetupGCForPen( dc ) )
 	    TSXDrawRectangle( display, dc->u.x.drawable, dc->u.x.gc, 
 			    x + dc->w.DCOrgX, y + dc->w.DCOrgY, w - 1, h - 1);
 	if( hPrevPen ) SelectObject32( hdc, hPrevPen );

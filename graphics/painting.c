@@ -21,7 +21,6 @@
 #include "metafile.h"
 #include "palette.h"
 #include "cache.h"
-#include "color.h"
 #include "region.h"
 #include "path.h"
 #include "debug.h"
@@ -331,17 +330,15 @@ INT16 WINAPI FrameRect16( HDC16 hdc, const RECT16 *rect, HBRUSH16 hbrush )
     if ( (right <= left) || (bottom <= top) ) return 0;
     if (!(prevBrush = SelectObject16( hdc, hbrush ))) return 0;
     
-    if (DC_SetupGCForBrush( dc ))
-    {
-   	PatBlt32( hdc, rect->left, rect->top, 1,
-                  rect->bottom - rect->top, PATCOPY );
-	PatBlt32( hdc, rect->right - 1, rect->top, 1,
-                  rect->bottom - rect->top, PATCOPY );
-	PatBlt32( hdc, rect->left, rect->top,
-                  rect->right - rect->left, 1, PATCOPY );
-	PatBlt32( hdc, rect->left, rect->bottom - 1,
-                  rect->right - rect->left, 1, PATCOPY );
-    }
+    PatBlt32( hdc, rect->left, rect->top, 1,
+	      rect->bottom - rect->top, PATCOPY );
+    PatBlt32( hdc, rect->right - 1, rect->top, 1,
+	      rect->bottom - rect->top, PATCOPY );
+    PatBlt32( hdc, rect->left, rect->top,
+	      rect->right - rect->left, 1, PATCOPY );
+    PatBlt32( hdc, rect->left, rect->bottom - 1,
+	      rect->right - rect->left, 1, PATCOPY );
+
     SelectObject16( hdc, prevBrush );
     return 1;
 }
@@ -646,7 +643,7 @@ void WINAPI DrawFocusRect32( HDC32 hdc, const RECT32* rc )
     /* Hack: make sure the XORPEN operation has an effect */
     dc->u.x.pen.pixel = (1 << screenDepth) - 1;
 
-    if (DC_SetupGCForPen( dc ))
+    if (X11DRV_SetupGCForPen( dc ))
 	TSXDrawRectangle( display, dc->u.x.drawable, dc->u.x.gc,
 		        dc->w.DCOrgX + left, dc->w.DCOrgY + top,
 		        right-left-1, bottom-top-1 );

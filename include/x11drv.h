@@ -150,6 +150,14 @@ extern int X11DRV_DIB_GetXImageWidthBytes( int width, int depth );
 extern BOOL32 X11DRV_DIB_Init(void);
 extern X11DRV_PHYSBITMAP *X11DRV_AllocBitmap( struct tagBITMAPOBJ *bmp );
 
+extern BOOL32 X11DRV_SetupGCForPatBlt( struct tagDC *dc, GC gc,
+				       BOOL32 fMapColors );
+extern BOOL32 X11DRV_SetupGCForBrush( struct tagDC *dc );
+extern BOOL32 X11DRV_SetupGCForPen( struct tagDC *dc );
+extern BOOL32 X11DRV_SetupGCForText( struct tagDC *dc );
+
+extern const int X11DRV_XROPfunction[];
+
 /* Xlib critical section */
 
 extern CRITICAL_SECTION X11DRV_CritSection;

@@ -24,6 +24,7 @@
 #include <string.h>
 
 #include "x11drv.h"
+#include "x11font.h"
 #include "bitmap.h"
 #include "gdi.h"
 #include "graphics.h"
@@ -39,6 +40,254 @@
 #include "xmalloc.h"
 
 #define ABS(x)    ((x)<0?(-(x)):(x))
+
+  /* ROP code to GC function conversion */
+const int X11DRV_XROPfunction[16] =
+{
+    GXclear,        /* R2_BLACK */
+    GXnor,          /* R2_NOTMERGEPEN */
+    GXandInverted,  /* R2_MASKNOTPEN */
+    GXcopyInverted, /* R2_NOTCOPYPEN */
+    GXandReverse,   /* R2_MASKPENNOT */
+    GXinvert,       /* R2_NOT */
+    GXxor,          /* R2_XORPEN */
+    GXnand,         /* R2_NOTMASKPEN */
+    GXand,          /* R2_MASKPEN */
+    GXequiv,        /* R2_NOTXORPEN */
+    GXnoop,         /* R2_NOP */
+    GXorInverted,   /* R2_MERGENOTPEN */
+    GXcopy,         /* R2_COPYPEN */
+    GXorReverse,    /* R2_MERGEPENNOT */
+    GXor,           /* R2_MERGEPEN */
+    GXset           /* R2_WHITE */
+};
+
+
+/***********************************************************************
+ *           X11DRV_SetupGCForPatBlt
+ *
+ * Setup the GC for a PatBlt operation using current brush.
+ * If fMapColors is TRUE, X pixels are mapped to Windows colors.
+ * Return FALSE if brush is BS_NULL, TRUE otherwise.
+ */
+BOOL32 X11DRV_SetupGCForPatBlt( DC * dc, GC gc, BOOL32 fMapColors )
+{
+    XGCValues val;
+    unsigned long mask;
+    Pixmap pixmap = 0;
+
+    if (dc->u.x.brush.style == BS_NULL) return FALSE;
+    if (dc->u.x.brush.pixel == -1)
+    {
+	/* Special case used for monochrome pattern brushes.
+	 * We need to swap foreground and background because
+	 * Windows does it the wrong way...
+	 */
+	val.foreground = dc->u.x.backgroundPixel;
+	val.background = dc->u.x.textPixel;
+    }
+    else
+    {
+	val.foreground = dc->u.x.brush.pixel;
+	val.background = dc->u.x.backgroundPixel;
+    }
+    if (fMapColors && COLOR_PixelToPalette)
+    {
+        val.foreground = COLOR_PixelToPalette[val.foreground];
+        val.background = COLOR_PixelToPalette[val.background];
+    }
+
+    if (dc->w.flags & DC_DIRTY) CLIPPING_UpdateGCRegion(dc);
+
+    val.function = X11DRV_XROPfunction[dc->w.ROPmode-1];
+    /*
+    ** Let's replace GXinvert by GXxor with (black xor white)
+    ** This solves the selection color and leak problems in excel
+    ** FIXME : Let's do that only if we work with X-pixels, not with Win-pixels
+    */
+    if (val.function == GXinvert)
+	{
+	val.foreground = BlackPixelOfScreen(screen) ^ WhitePixelOfScreen(screen);
+	val.function = GXxor;
+	}
+    val.fill_style = dc->u.x.brush.fillStyle;
+    switch(val.fill_style)
+    {
+    case FillStippled:
+    case FillOpaqueStippled:
+	if (dc->w.backgroundMode==OPAQUE) val.fill_style = FillOpaqueStippled;
+	val.stipple = dc->u.x.brush.pixmap;
+	mask = GCStipple;
+        break;
+
+    case FillTiled:
+        if (fMapColors && COLOR_PixelToPalette)
+        {
+            register int x, y;
+            XImage *image;
+            EnterCriticalSection( &X11DRV_CritSection );
+            pixmap = XCreatePixmap( display, rootWindow, 8, 8, screenDepth );
+            image = XGetImage( display, dc->u.x.brush.pixmap, 0, 0, 8, 8,
+                               AllPlanes, ZPixmap );
+            for (y = 0; y < 8; y++)
+                for (x = 0; x < 8; x++)
+                    XPutPixel( image, x, y,
+                               COLOR_PixelToPalette[XGetPixel( image, x, y)] );
+            XPutImage( display, pixmap, gc, image, 0, 0, 0, 0, 8, 8 );
+            XDestroyImage( image );
+            LeaveCriticalSection( &X11DRV_CritSection );
+            val.tile = pixmap;
+        }
+        else val.tile = dc->u.x.brush.pixmap;
+	mask = GCTile;
+        break;
+
+    default:
+        mask = 0;
+        break;
+    }
+    val.ts_x_origin = dc->w.DCOrgX + dc->w.brushOrgX;
+    val.ts_y_origin = dc->w.DCOrgY + dc->w.brushOrgY;
+    val.fill_rule = (dc->w.polyFillMode==WINDING) ? WindingRule : EvenOddRule;
+    TSXChangeGC( display, gc, 
+	       GCFunction | GCForeground | GCBackground | GCFillStyle |
+	       GCFillRule | GCTileStipXOrigin | GCTileStipYOrigin | mask,
+	       &val );
+    if (pixmap) TSXFreePixmap( display, pixmap );
+    return TRUE;
+}
+
+
+/***********************************************************************
+ *           X11DRV_SetupGCForBrush
+ *
+ * Setup dc->u.x.gc for drawing operations using current brush.
+ * Return FALSE if brush is BS_NULL, TRUE otherwise.
+ */
+BOOL32 X11DRV_SetupGCForBrush( DC * dc )
+{
+    return X11DRV_SetupGCForPatBlt( dc, dc->u.x.gc, FALSE );
+}
+
+
+/***********************************************************************
+ *           X11DRV_SetupGCForPen
+ *
+ * Setup dc->u.x.gc for drawing operations using current pen.
+ * Return FALSE if pen is PS_NULL, TRUE otherwise.
+ */
+BOOL32 X11DRV_SetupGCForPen( DC * dc )
+{
+    XGCValues val;
+
+    if (dc->u.x.pen.style == PS_NULL) return FALSE;
+
+    if (dc->w.flags & DC_DIRTY) CLIPPING_UpdateGCRegion(dc); 
+
+    switch (dc->w.ROPmode)
+    {
+    case R2_BLACK :
+	val.foreground = BlackPixelOfScreen( screen );
+	val.function = GXcopy;
+	break;
+    case R2_WHITE :
+	val.foreground = WhitePixelOfScreen( screen );
+	val.function = GXcopy;
+	break;
+    case R2_XORPEN :
+	val.foreground = dc->u.x.pen.pixel;
+	/* It is very unlikely someone wants to XOR with 0 */
+	/* This fixes the rubber-drawings in paintbrush */
+	if (val.foreground == 0)
+	    val.foreground = BlackPixelOfScreen( screen )
+			    ^ WhitePixelOfScreen( screen );
+	val.function = GXxor;
+	break;
+    default :
+	val.foreground = dc->u.x.pen.pixel;
+	val.function   = X11DRV_XROPfunction[dc->w.ROPmode-1];
+    }
+    val.background = dc->u.x.backgroundPixel;
+    val.fill_style = FillSolid;
+    if ((dc->u.x.pen.style!=PS_SOLID) && (dc->u.x.pen.style!=PS_INSIDEFRAME))
+    {
+	TSXSetDashes( display, dc->u.x.gc, 0,
+		    dc->u.x.pen.dashes, dc->u.x.pen.dash_len );
+	val.line_style = (dc->w.backgroundMode == OPAQUE) ?
+	                      LineDoubleDash : LineOnOffDash;
+    }
+    else val.line_style = LineSolid;
+    val.line_width = dc->u.x.pen.width;
+    if (val.line_width <= 1) {
+	val.cap_style = CapNotLast;
+    } else {
+	switch (dc->u.x.pen.endcap)
+	{
+	case PS_ENDCAP_SQUARE:
+	    val.cap_style = CapProjecting;
+	    break;
+	case PS_ENDCAP_FLAT:
+	    val.cap_style = CapButt;
+	    break;
+	case PS_ENDCAP_ROUND:
+	default:
+	    val.cap_style = CapRound;
+	}
+    }
+    switch (dc->u.x.pen.linejoin)
+    {
+    case PS_JOIN_BEVEL:
+	val.join_style = JoinBevel;
+        break;
+    case PS_JOIN_MITER:
+	val.join_style = JoinMiter;
+        break;
+    case PS_JOIN_ROUND:
+    default:
+	val.join_style = JoinRound;
+    }
+    TSXChangeGC( display, dc->u.x.gc, 
+	       GCFunction | GCForeground | GCBackground | GCLineWidth |
+	       GCLineStyle | GCCapStyle | GCJoinStyle | GCFillStyle, &val );
+    return TRUE;
+}
+
+
+/***********************************************************************
+ *           X11DRV_SetupGCForText
+ *
+ * Setup dc->u.x.gc for text drawing operations.
+ * Return FALSE if the font is null, TRUE otherwise.
+ */
+BOOL32 X11DRV_SetupGCForText( DC * dc )
+{
+    XFontStruct* xfs = XFONT_GetFontStruct( dc->u.x.font );
+
+    if( xfs )
+    {
+	XGCValues val;
+
+	if (dc->w.flags & DC_DIRTY) CLIPPING_UpdateGCRegion(dc);
+
+	val.function   = GXcopy;  /* Text is always GXcopy */
+	val.foreground = dc->u.x.textPixel;
+	val.background = dc->u.x.backgroundPixel;
+	val.fill_style = FillSolid;
+	val.font       = xfs->fid;
+
+	TSXChangeGC( display, dc->u.x.gc,
+		   GCFunction | GCForeground | GCBackground | GCFillStyle |
+		   GCFont, &val );
+	return TRUE;
+    } 
+    WARN(dc, "Physical font failure\n" );
+    return FALSE;
+}
+
+
+
+
+
 /**********************************************************************
  *	     X11DRV_MoveToEx
  */
@@ -60,7 +309,7 @@ X11DRV_MoveToEx(DC *dc,INT32 x,INT32 y,LPPOINT32 pt) {
 BOOL32
 X11DRV_LineTo( DC *dc, INT32 x, INT32 y )
 {
-    if (DC_SetupGCForPen( dc ))
+    if (X11DRV_SetupGCForPen( dc ))
 	TSXDrawLine(display, dc->u.x.drawable, dc->u.x.gc, 
 		  dc->w.DCOrgX + XLPTODP( dc, dc->w.CursPosX ),
 		  dc->w.DCOrgY + YLPTODP( dc, dc->w.CursPosY ),
@@ -145,7 +394,7 @@ X11DRV_DrawArc( DC *dc, INT32 left, INT32 top, INT32 right,
 
       /* Fill arc with brush if Chord() or Pie() */
 
-    if ((lines > 0) && DC_SetupGCForBrush( dc )) {
+    if ((lines > 0) && X11DRV_SetupGCForBrush( dc )) {
         TSXSetArcMode( display, dc->u.x.gc, (lines==1) ? ArcChord : ArcPieSlice);
         TSXFillArc( display, dc->u.x.drawable, dc->u.x.gc,
                  dc->w.DCOrgX + left, dc->w.DCOrgY + top,
@@ -154,7 +403,7 @@ X11DRV_DrawArc( DC *dc, INT32 left, INT32 top, INT32 right,
 
       /* Draw arc and lines */
 
-    if (DC_SetupGCForPen( dc )){
+    if (X11DRV_SetupGCForPen( dc )){
     TSXDrawArc( display, dc->u.x.drawable, dc->u.x.gc,
 	      dc->w.DCOrgX + left, dc->w.DCOrgY + top,
 	      right-left-1, bottom-top-1, istart_angle, idiff_angle );
@@ -288,11 +537,11 @@ X11DRV_Ellipse( DC *dc, INT32 left, INT32 top, INT32 right, INT32 bottom )
     if(width == 0) width=1; /* more accurate */
     dc->u.x.pen.width=width;
 
-    if (DC_SetupGCForBrush( dc ))
+    if (X11DRV_SetupGCForBrush( dc ))
 	TSXFillArc( display, dc->u.x.drawable, dc->u.x.gc,
 		  dc->w.DCOrgX + left, dc->w.DCOrgY + top,
 		  right-left-1, bottom-top-1, 0, 360*64 );
-    if (DC_SetupGCForPen( dc ))
+    if (X11DRV_SetupGCForPen( dc ))
 	TSXDrawArc( display, dc->u.x.drawable, dc->u.x.gc,
 		  dc->w.DCOrgX + left, dc->w.DCOrgY + top,
 		  right-left-1, bottom-top-1, 0, 360*64 );
@@ -343,13 +592,13 @@ X11DRV_Rectangle(DC *dc, INT32 left, INT32 top, INT32 right, INT32 bottom)
 
     if ((right > left + width) && (bottom > top + width))
     {
-        if (DC_SetupGCForBrush( dc ))
+        if (X11DRV_SetupGCForBrush( dc ))
             TSXFillRectangle( display, dc->u.x.drawable, dc->u.x.gc,
                             dc->w.DCOrgX + left + (width + 1) / 2,
                             dc->w.DCOrgY + top + (width + 1) / 2,
                             right-left-width-1, bottom-top-width-1);
     }
-    if (DC_SetupGCForPen( dc ))
+    if (X11DRV_SetupGCForPen( dc ))
 	TSXDrawRectangle( display, dc->u.x.drawable, dc->u.x.gc,
 		        dc->w.DCOrgX + left, dc->w.DCOrgY + top,
 		        right-left-1, bottom-top-1 );
@@ -407,7 +656,7 @@ X11DRV_RoundRect( DC *dc, INT32 left, INT32 top, INT32 right,
     dc->u.x.pen.width=width;
     dc->u.x.pen.endcap=PS_ENDCAP_SQUARE;
 
-    if (DC_SetupGCForBrush( dc ))
+    if (X11DRV_SetupGCForBrush( dc ))
     {
         if (ell_width > (right-left) )
             if (ell_height > (bottom-top) )
@@ -479,7 +728,7 @@ X11DRV_RoundRect( DC *dc, INT32 left, INT32 top, INT32 right,
      * BTW this stuff is optimized for an Xfree86 server
      * read the comments inside the X11DRV_DrawArc function
      */
-    if (DC_SetupGCForPen(dc)) {
+    if (X11DRV_SetupGCForPen(dc)) {
         if (ell_width > (right-left) )
             if (ell_height > (bottom-top) )
                 TSXDrawArc( display, dc->u.x.drawable, dc->u.x.gc,
@@ -639,7 +888,7 @@ X11DRV_PaintRgn( DC *dc, HRGN32 hrgn )
       /* Fill the region */
 
     GetRgnBox32( dc->w.hGCClipRgn, &box );
-    if (DC_SetupGCForBrush( dc ))
+    if (X11DRV_SetupGCForBrush( dc ))
 	TSXFillRectangle( display, dc->u.x.drawable, dc->u.x.gc,
 		          box.left, box.top,
 		          box.right-box.left, box.bottom-box.top );
@@ -668,7 +917,7 @@ X11DRV_Polyline( DC *dc, const POINT32* pt, INT32 count )
     points[i].y = dc->w.DCOrgY + YLPTODP( dc, pt[i].y );
     }
 
-    if (DC_SetupGCForPen ( dc ))
+    if (X11DRV_SetupGCForPen ( dc ))
     TSXDrawLines( display, dc->u.x.drawable, dc->u.x.gc,
            points, count, CoordModeOrigin );
 
@@ -695,11 +944,11 @@ X11DRV_Polygon( DC *dc, const POINT32* pt, INT32 count )
     }
     points[count] = points[0];
 
-    if (DC_SetupGCForBrush( dc ))
+    if (X11DRV_SetupGCForBrush( dc ))
 	TSXFillPolygon( display, dc->u.x.drawable, dc->u.x.gc,
 		     points, count+1, Complex, CoordModeOrigin);
 
-    if (DC_SetupGCForPen ( dc ))
+    if (X11DRV_SetupGCForPen ( dc ))
 	TSXDrawLines( display, dc->u.x.drawable, dc->u.x.gc,
 		   points, count+1, CoordModeOrigin );
 
@@ -726,7 +975,7 @@ X11DRV_PolyPolygon( DC *dc, const POINT32* pt, const INT32* counts, UINT32 polyg
 
       /* Draw the outline of the polygons */
 
-    if (DC_SetupGCForPen ( dc ))
+    if (X11DRV_SetupGCForPen ( dc ))
     {
 	int i, j, max = 0;
 	XPoint *points;
@@ -758,7 +1007,7 @@ X11DRV_PolyPolygon( DC *dc, const POINT32* pt, const INT32* counts, UINT32 polyg
 BOOL32 
 X11DRV_PolyPolyline( DC *dc, const POINT32* pt, const DWORD* counts, DWORD polylines )
 {
-    if (DC_SetupGCForPen ( dc ))
+    if (X11DRV_SetupGCForPen ( dc ))
     {
         int i, j, max = 0;
         XPoint *points;
@@ -885,7 +1134,7 @@ static BOOL32 X11DRV_DoFloodFill( const struct FloodFill_params *params )
                              rect.bottom - rect.top,
                              AllPlanes, ZPixmap ))) return FALSE;
 
-    if (DC_SetupGCForBrush( dc ))
+    if (X11DRV_SetupGCForBrush( dc ))
     {
           /* ROP mode is always GXcopy for flood-fill */
         XSetFunction( display, dc->u.x.gc, GXcopy );

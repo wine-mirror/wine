@@ -5,8 +5,6 @@
  */
 
 #include "pen.h"
-#include "metafile.h"
-#include "color.h"
 #include "debug.h"
 
 

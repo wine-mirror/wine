@@ -36,7 +36,7 @@ X11DRV_ExtTextOut( DC *dc, INT32 x, INT32 y, UINT32 flags,
     char		dfBreakChar, lfUnderline, lfStrikeOut;
     BOOL32		rotated = FALSE;
 
-    if (!DC_SetupGCForText( dc )) return TRUE;
+    if (!X11DRV_SetupGCForText( dc )) return TRUE;
 
     pfo = XFONT_GetFontObject( dc->u.x.font );
     font = pfo->fs;
