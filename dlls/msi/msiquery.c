@@ -423,8 +423,7 @@ UINT WINAPI MsiViewExecute(MSIHANDLE hView, MSIHANDLE hRec)
     msiobj_unlock( &rec->hdr );
 
 out:
-    if( query )
-        msiobj_release( &query->hdr );
+    msiobj_release( &query->hdr );
     if( rec )
         msiobj_release( &rec->hdr );
 
@@ -481,8 +480,7 @@ UINT WINAPI MsiViewGetColumnInfo(MSIHANDLE hView, MSICOLINFO info, MSIHANDLE *hR
     *hRec = alloc_msihandle( &rec->hdr );
 
 out:
-    if( query )
-        msiobj_release( &query->hdr );
+    msiobj_release( &query->hdr );
     if( rec )
         msiobj_release( &rec->hdr );
 
@@ -520,8 +518,7 @@ UINT WINAPI MsiViewModify( MSIHANDLE hView, MSIMODIFY eModifyMode,
     r = view->ops->modify( view, eModifyMode, rec );
 
 out:
-    if( query )
-        msiobj_release( &query->hdr );
+    msiobj_release( &query->hdr );
     if( rec )
         msiobj_release( &rec->hdr );
 

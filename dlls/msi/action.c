@@ -6546,6 +6546,7 @@ UINT WINAPI MsiSetFeatureStateW(MSIHANDLE hInstall, LPCWSTR szFeature,
 {
     MSIPACKAGE* package;
     INT index;
+    UINT rc = ERROR_SUCCESS;
 
     TRACE(" %s to %i\n",debugstr_w(szFeature), iState);
 
@@ -6555,12 +6556,17 @@ UINT WINAPI MsiSetFeatureStateW(MSIHANDLE hInstall, LPCWSTR szFeature,
 
     index = get_loaded_feature(package,szFeature);
     if (index < 0)
-        return ERROR_UNKNOWN_FEATURE;
+    {
+        rc = ERROR_UNKNOWN_FEATURE;
+        goto end;
+    }
 
     package->features[index].ActionRequest= iState;
     ACTION_UpdateComponentStates(package,szFeature);
 
-    return ERROR_SUCCESS;
+end:
+    msiobj_release( &package->hdr );
+    return rc;
 }
 
 UINT WINAPI MsiGetFeatureStateA(MSIHANDLE hInstall, LPSTR szFeature,

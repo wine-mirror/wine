@@ -484,6 +484,11 @@ UINT WINAPI MsiConfigureProductExW(LPCWSTR szProduct, int iInstallLevel,
         goto end;
 
     package = msihandle2msiinfo(handle, MSIHANDLETYPE_PACKAGE);
+    if (!package)
+    {
+        rc = ERROR_INVALID_HANDLE;
+        goto end;
+    }
   
     sz = strlenW(szInstalled);
 

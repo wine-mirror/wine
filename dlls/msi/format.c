@@ -538,11 +538,8 @@ UINT WINAPI MsiFormatRecordW( MSIHANDLE hInstall, MSIHANDLE hRecord,
 
     package = msihandle2msiinfo( hInstall, MSIHANDLETYPE_PACKAGE );
 
-    if( record )
-    {
-        r = MSI_FormatRecordW( package, record, szResult, sz );
-        msiobj_release( &record->hdr );
-    }
+    r = MSI_FormatRecordW( package, record, szResult, sz );
+    msiobj_release( &record->hdr );
     if (package)
         msiobj_release( &package->hdr );
     return r;
@@ -572,11 +569,8 @@ UINT WINAPI MsiFormatRecordA( MSIHANDLE hInstall, MSIHANDLE hRecord,
 
     package = msihandle2msiinfo( hInstall, MSIHANDLETYPE_PACKAGE );
 
-    if( record )
-    {
-        r = MSI_FormatRecordA( package, record, szResult, sz );
-        msiobj_release( &record->hdr );
-    }
+    r = MSI_FormatRecordA( package, record, szResult, sz );
+    msiobj_release( &record->hdr );
     if (package)
         msiobj_release( &package->hdr );
     return r;
