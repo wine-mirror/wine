@@ -29,7 +29,7 @@ static WCHAR BSCBHolder[] = { '_','B','S','C','B','_','H','o','l','d','e','r','_
  *    MK_E_SYNTAX	not a valid url
  *
  */
-HRESULT WINAPI CreateURLMoniker(IMoniker *pmkContext, LPWSTR szURL, IMoniker **ppmk)
+HRESULT WINAPI CreateURLMoniker(IMoniker *pmkContext, LPCWSTR szURL, IMoniker **ppmk)
 {
    TRACE("\n");
 

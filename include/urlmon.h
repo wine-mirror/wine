@@ -273,7 +273,7 @@ ICOM_DEFINE(IWinInetHttpInfo,IWinInetInfo)
 /*** IWinInetHttpInfo methods ***/
 #define IWinInetHttpInfo_QueryInfo(p,a,b,c,d,e) ICOM_CALL5(QueryInfo,p,a,b,c,d,e)
 
-HRESULT WINAPI CreateURLMoniker(IMoniker *pmkContext, LPWSTR szURL, IMoniker **ppmk);
+HRESULT WINAPI CreateURLMoniker(IMoniker *pmkContext, LPCWSTR szURL, IMoniker **ppmk);
 HRESULT WINAPI RegisterBindStatusCallback(IBindCtx *pbc, IBindStatusCallback *pbsc, IBindStatusCallback **ppbsc, DWORD dwReserved);
 
 #ifdef __cplusplus
