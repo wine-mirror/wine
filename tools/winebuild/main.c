@@ -47,7 +47,7 @@ int display_warnings = 0;
 int kill_at = 0;
 
 /* we only support relay debugging on i386 */
-#if defined(__i386__) && !defined(NO_TRACE_MSGS)
+#ifdef __i386__
 int debugging = 1;
 #else
 int debugging = 0;
