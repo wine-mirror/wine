@@ -88,33 +88,33 @@ static void test_acquire_context(void)
 	 * but since this is likely to change between CSP versions, we don't check
 	 * this. Please don't change the order of tests. */
 	result = CryptAcquireContext(&hProv, NULL, NULL, 0, 0);
-	ok(!result && GetLastError()==NTE_BAD_PROV_TYPE, "%08x\n", (unsigned int)GetLastError());
+	ok(!result && GetLastError()==NTE_BAD_PROV_TYPE, "%ld\n", GetLastError());
 	
 	result = CryptAcquireContext(&hProv, NULL, NULL, 1000, 0);
-	ok(!result && GetLastError()==NTE_BAD_PROV_TYPE, "%08x\n", (unsigned int)GetLastError());
+	ok(!result && GetLastError()==NTE_BAD_PROV_TYPE, "%ld\n", GetLastError());
 
 	result = CryptAcquireContext(&hProv, NULL, NULL, NON_DEF_PROV_TYPE, 0);
-	ok(!result && GetLastError()==NTE_PROV_TYPE_NOT_DEF, "%08x\n", (unsigned int)GetLastError());
+	ok(!result && GetLastError()==NTE_PROV_TYPE_NOT_DEF, "%ld\n", GetLastError());
 	
 	result = CryptAcquireContext(&hProv, szKeySet, szNonExistentProv, PROV_RSA_FULL, 0);
-	ok(!result && GetLastError()==NTE_KEYSET_NOT_DEF, "%08x\n", (unsigned int)GetLastError());
+	ok(!result && GetLastError()==NTE_KEYSET_NOT_DEF, "%ld\n", GetLastError());
 
 	result = CryptAcquireContext(&hProv, szKeySet, szRsaBaseProv, NON_DEF_PROV_TYPE, 0);
-	ok(!result && GetLastError()==NTE_PROV_TYPE_NO_MATCH, "%08x\n", (unsigned int)GetLastError());
+	ok(!result && GetLastError()==NTE_PROV_TYPE_NO_MATCH, "%ld\n", GetLastError());
 	
 	result = CryptAcquireContext(NULL, szKeySet, szRsaBaseProv, PROV_RSA_FULL, 0);
-	ok(!result && GetLastError()==ERROR_INVALID_PARAMETER, "%08x\n", (unsigned int)GetLastError());
+	ok(!result && GetLastError()==ERROR_INVALID_PARAMETER, "%ld\n", GetLastError());
 	
 	/* Last not least, try to really acquire a context. */
 	result = CryptAcquireContext(&hProv, szKeySet, szRsaBaseProv, PROV_RSA_FULL, 0);
-	ok(result, "%08x\n", (unsigned int)GetLastError());
+	ok(result, "%ld\n", GetLastError());
 
 	if (GetLastError() == ERROR_SUCCESS) 
 		CryptReleaseContext(hProv, 0);
 
 	/* Try again, witch an empty ("\0") szProvider parameter */
 	result = CryptAcquireContext(&hProv, szKeySet, "", PROV_RSA_FULL, 0);
-	ok(result, "%08x\n", (unsigned int)GetLastError());
+	ok(result, "%ld\n", GetLastError());
 
 	if (GetLastError() == ERROR_SUCCESS)
 		CryptReleaseContext(hProv, 0);
