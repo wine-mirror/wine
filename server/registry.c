@@ -1285,10 +1285,10 @@ static int update_level( struct key *key )
 }
 
 /* dump a string to a registry save file in the old v1 format */
-static void save_string_v1( LPCWSTR str, FILE *f )
+static void save_string_v1( LPCWSTR str, FILE *f, int len )
 {
     if (!str) return;
-    while (*str)
+    while ((len == -1) ? *str : (*str && len--))
     {
         if ((*str > 0x7f) || (*str == '\n') || (*str == '='))
             fprintf( f, "\\u%04x", *str );
@@ -1312,10 +1312,10 @@ static void save_subkeys_v1( struct key *key, int nesting, FILE *f )
     {
         struct key_value *value = &key->values[i];
         for (j = nesting; j > 0; j --) fputc( '\t', f );
-        save_string_v1( value->name, f );
+        save_string_v1( value->name, f, -1 );
         fprintf( f, "=%d,%d,", value->type, 0 );
         if (value->type == REG_SZ || value->type == REG_EXPAND_SZ)
-            save_string_v1( (LPWSTR)value->data, f );
+            save_string_v1( (LPWSTR)value->data, f, value->len / 2 );
         else
             for (j = 0; j < value->len; j++)
                 fprintf( f, "%02x", *((unsigned char *)value->data + j) );
@@ -1324,7 +1324,7 @@ static void save_subkeys_v1( struct key *key, int nesting, FILE *f )
     for (i = 0; i <= key->last_subkey; i++)
     {
         for (j = nesting; j > 0; j --) fputc( '\t', f );
-        save_string_v1( key->subkeys[i]->name, f );
+        save_string_v1( key->subkeys[i]->name, f, -1 );
         fputc( '\n', f );
         save_subkeys_v1( key->subkeys[i], nesting + 1, f );
     }
