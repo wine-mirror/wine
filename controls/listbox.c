@@ -1870,7 +1870,7 @@ static LRESULT LISTBOX_HandleLButtonDown( WND *wnd, LB_DESCR *descr,
  */
 
 static LRESULT LISTBOX_HandleLButtonDownCombo( WND *pWnd, LB_DESCR *pDescr,
-                                               WPARAM wParam, INT x, INT y)
+                                               UINT msg, WPARAM wParam, INT x, INT y)
 {
     RECT clientRect, screenRect;
     POINT mousePos;
@@ -1882,8 +1882,12 @@ static LRESULT LISTBOX_HandleLButtonDownCombo( WND *pWnd, LB_DESCR *pDescr,
 
     if(PtInRect(&clientRect, mousePos))
     {  
-        /* MousePos is in client, resume normal processing */
-        return LISTBOX_HandleLButtonDown( pWnd, pDescr, wParam, x, y);
+       /* MousePos is in client, resume normal processing */
+        if (msg == WM_LBUTTONDOWN)
+           return LISTBOX_HandleLButtonDown( pWnd, pDescr, wParam, x, y);
+        else if (pDescr->style & LBS_NOTIFY)
+            SEND_NOTIFICATION( pWnd, pDescr, LBN_DBLCLK );
+        return 0;
     }
     else
     {
@@ -2906,7 +2910,7 @@ static inline LRESULT WINAPI ComboLBWndProc_locked( WND* wnd, UINT msg,
 		     return LISTBOX_HandleLButtonUp( wnd, descr );
 		case WM_LBUTTONDBLCLK:
 		case WM_LBUTTONDOWN:
-                     return LISTBOX_HandleLButtonDownCombo(wnd, descr, wParam, 
+                     return LISTBOX_HandleLButtonDownCombo(wnd, descr, msg, wParam, 
                                           (INT16)LOWORD(lParam),
                                           (INT16)HIWORD(lParam) );
 		case WM_MOUSEACTIVATE:
