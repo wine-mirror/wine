@@ -28,6 +28,7 @@ WINE_DECLARE_DEBUG_CHANNEL(dmfile);
 /* IDirectMusicGraphImpl IUnknown part: */
 HRESULT WINAPI IDirectMusicGraphImpl_IUnknown_QueryInterface (LPUNKNOWN iface, REFIID riid, LPVOID *ppobj) {
 	ICOM_THIS_MULTI(IDirectMusicGraphImpl, UnknownVtbl, iface);
+	TRACE("(%p, %s, %p)\n", This, debugstr_guid(riid), ppobj);
 	
 	if (IsEqualIID (riid, &IID_IUnknown)) {
 		*ppobj = (LPVOID)&This->UnknownVtbl;
@@ -47,20 +48,20 @@ HRESULT WINAPI IDirectMusicGraphImpl_IUnknown_QueryInterface (LPUNKNOWN iface, R
 		return S_OK;
 	}
 	
-	WARN("(%p)->(%s,%p),not found\n", This, debugstr_guid(riid), ppobj);
+	WARN("(%p, %s, %p): not found\n", This, debugstr_guid(riid), ppobj);
 	return E_NOINTERFACE;
 }
 
 ULONG WINAPI IDirectMusicGraphImpl_IUnknown_AddRef (LPUNKNOWN iface) {
 	ICOM_THIS_MULTI(IDirectMusicGraphImpl, UnknownVtbl, iface);
-	TRACE("(%p) : AddRef from %ld\n", This, This->ref);
+	TRACE("(%p): AddRef from %ld\n", This, This->ref);
 	return ++(This->ref);
 }
 
 ULONG WINAPI IDirectMusicGraphImpl_IUnknown_Release (LPUNKNOWN iface) {
 	ICOM_THIS_MULTI(IDirectMusicGraphImpl, UnknownVtbl, iface);
 	ULONG ref = --This->ref;
-	TRACE("(%p) : ReleaseRef to %ld\n", This, This->ref);
+	TRACE("(%p): ReleaseRef to %ld\n", This, This->ref);
 	if (ref == 0) {
 		HeapFree(GetProcessHeap(), 0, This);
 	}
@@ -202,10 +203,7 @@ HRESULT WINAPI IDirectMusicGraphImpl_IDirectMusicObject_GetDescriptor (LPDIRECTM
 
 HRESULT WINAPI IDirectMusicGraphImpl_IDirectMusicObject_SetDescriptor (LPDIRECTMUSICOBJECT iface, LPDMUS_OBJECTDESC pDesc) {
 	ICOM_THIS_MULTI(IDirectMusicGraphImpl, ObjectVtbl, iface);
-	TRACE("(%p, %p): setting descriptor:\n", This, pDesc);
-	if (TRACE_ON(dmime)) {
-		DMUSIC_dump_DMUS_OBJECTDESC (pDesc);
-	}
+	TRACE("(%p, %p): setting descriptor:\n%s\n", This, pDesc, debugstr_DMUS_OBJECTDESC (pDesc));
 	
 	/* According to MSDN, we should copy only given values, not whole struct */	
 	if (pDesc->dwValidData & DMUS_OBJ_OBJECT)
@@ -381,10 +379,7 @@ HRESULT WINAPI IDirectMusicGraphImpl_IDirectMusicObject_ParseDescriptor (LPDIREC
 		}
 	}	
 	
-	TRACE(": returning descriptor:\n");
-	if (TRACE_ON(dmime)) {
-		DMUSIC_dump_DMUS_OBJECTDESC (pDesc);
-	}
+	TRACE(": returning descriptor:\n%s\n", debugstr_DMUS_OBJECTDESC (pDesc));
 	
 	return S_OK;
 }

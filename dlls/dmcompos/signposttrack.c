@@ -28,6 +28,7 @@ WINE_DECLARE_DEBUG_CHANNEL(dmfile);
 /* IDirectMusicSignPostTrack IUnknown part: */
 HRESULT WINAPI IDirectMusicSignPostTrack_IUnknown_QueryInterface (LPUNKNOWN iface, REFIID riid, LPVOID *ppobj) {
 	ICOM_THIS_MULTI(IDirectMusicSignPostTrack, UnknownVtbl, iface);
+	TRACE("(%p, %s, %p)\n", This, debugstr_dmguid(riid), ppobj);
 
 	if (IsEqualIID (riid, &IID_IUnknown)) {
 		*ppobj = (LPUNKNOWN)&This->UnknownVtbl;
@@ -44,20 +45,20 @@ HRESULT WINAPI IDirectMusicSignPostTrack_IUnknown_QueryInterface (LPUNKNOWN ifac
 		return S_OK;
 	}
 	
-	WARN("(%p)->(%s,%p),not found\n", This, debugstr_guid(riid), ppobj);
+	WARN("(%p, %s, %p): not found\n", This, debugstr_dmguid(riid), ppobj);
 	return E_NOINTERFACE;
 }
 
 ULONG WINAPI IDirectMusicSignPostTrack_IUnknown_AddRef (LPUNKNOWN iface) {
 	ICOM_THIS_MULTI(IDirectMusicSignPostTrack, UnknownVtbl, iface);
-	TRACE("(%p) : AddRef from %ld\n", This, This->ref);
+	TRACE("(%p): AddRef from %ld\n", This, This->ref);
 	return ++(This->ref);
 }
 
 ULONG WINAPI IDirectMusicSignPostTrack_IUnknown_Release (LPUNKNOWN iface) {
 	ICOM_THIS_MULTI(IDirectMusicSignPostTrack, UnknownVtbl, iface);
 	ULONG ref = --This->ref;
-	TRACE("(%p) : ReleaseRef to %ld\n", This, This->ref);
+	TRACE("(%p): ReleaseRef to %ld\n", This, This->ref);
 	if (ref == 0) {
 		HeapFree(GetProcessHeap(), 0, This);
 	}
@@ -113,19 +114,19 @@ HRESULT WINAPI IDirectMusicSignPostTrack_IDirectMusicTrack_Play (LPDIRECTMUSICTR
 
 HRESULT WINAPI IDirectMusicSignPostTrack_IDirectMusicTrack_GetParam (LPDIRECTMUSICTRACK8 iface, REFGUID rguidType, MUSIC_TIME mtTime, MUSIC_TIME* pmtNext, void* pParam) {
 	ICOM_THIS_MULTI(IDirectMusicSignPostTrack, TrackVtbl, iface);
-	FIXME("(%p, %s, %ld, %p, %p): stub\n", This, debugstr_guid(rguidType), mtTime, pmtNext, pParam);
+	FIXME("(%p, %s, %ld, %p, %p): stub\n", This, debugstr_dmguid(rguidType), mtTime, pmtNext, pParam);
 	return S_OK;
 }
 
 HRESULT WINAPI IDirectMusicSignPostTrack_IDirectMusicTrack_SetParam (LPDIRECTMUSICTRACK8 iface, REFGUID rguidType, MUSIC_TIME mtTime, void* pParam) {
 	ICOM_THIS_MULTI(IDirectMusicSignPostTrack, TrackVtbl, iface);
-	FIXME("(%p, %s, %ld, %p): stub\n", This, debugstr_guid(rguidType), mtTime, pParam);
+	FIXME("(%p, %s, %ld, %p): stub\n", This, debugstr_dmguid(rguidType), mtTime, pParam);
 	return S_OK;
 }
 
 HRESULT WINAPI IDirectMusicSignPostTrack_IDirectMusicTrack_IsParamSupported (LPDIRECTMUSICTRACK8 iface, REFGUID rguidType) {
 	ICOM_THIS_MULTI(IDirectMusicSignPostTrack, TrackVtbl, iface);
-	TRACE("(%p, %s): ", This, debugstr_guid(rguidType));
+	TRACE("(%p, %s): ", This, debugstr_dmguid(rguidType));
 	/* didn't find any params */
 	TRACE("param unsupported\n");
 	return DMUS_E_TYPE_UNSUPPORTED;
@@ -133,13 +134,13 @@ HRESULT WINAPI IDirectMusicSignPostTrack_IDirectMusicTrack_IsParamSupported (LPD
 
 HRESULT WINAPI IDirectMusicSignPostTrack_IDirectMusicTrack_AddNotificationType (LPDIRECTMUSICTRACK8 iface, REFGUID rguidNotificationType) {
 	ICOM_THIS_MULTI(IDirectMusicSignPostTrack, TrackVtbl, iface);
-	FIXME("(%p, %s): stub\n", This, debugstr_guid(rguidNotificationType));
+	FIXME("(%p, %s): stub\n", This, debugstr_dmguid(rguidNotificationType));
 	return S_OK;
 }
 
 HRESULT WINAPI IDirectMusicSignPostTrack_IDirectMusicTrack_RemoveNotificationType (LPDIRECTMUSICTRACK8 iface, REFGUID rguidNotificationType) {
 	ICOM_THIS_MULTI(IDirectMusicSignPostTrack, TrackVtbl, iface);
-	FIXME("(%p, %s): stub\n", This, debugstr_guid(rguidNotificationType));
+	FIXME("(%p, %s): stub\n", This, debugstr_dmguid(rguidNotificationType));
 	return S_OK;
 }
 
@@ -157,13 +158,13 @@ HRESULT WINAPI IDirectMusicSignPostTrack_IDirectMusicTrack_PlayEx (LPDIRECTMUSIC
 
 HRESULT WINAPI IDirectMusicSignPostTrack_IDirectMusicTrack_GetParamEx (LPDIRECTMUSICTRACK8 iface, REFGUID rguidType, REFERENCE_TIME rtTime, REFERENCE_TIME* prtNext, void* pParam, void* pStateData, DWORD dwFlags) {
 	ICOM_THIS_MULTI(IDirectMusicSignPostTrack, TrackVtbl, iface);
-	FIXME("(%p, %s, %lli, %p, %p, %p, %ld): stub\n", This, debugstr_guid(rguidType), rtTime, prtNext, pParam, pStateData, dwFlags);
+	FIXME("(%p, %s, %lli, %p, %p, %p, %ld): stub\n", This, debugstr_dmguid(rguidType), rtTime, prtNext, pParam, pStateData, dwFlags);
 	return S_OK;
 }
 
 HRESULT WINAPI IDirectMusicSignPostTrack_IDirectMusicTrack_SetParamEx (LPDIRECTMUSICTRACK8 iface, REFGUID rguidType, REFERENCE_TIME rtTime, void* pParam, void* pStateData, DWORD dwFlags) {
 	ICOM_THIS_MULTI(IDirectMusicSignPostTrack, TrackVtbl, iface);
-	FIXME("(%p, %s, %lli, %p, %p, %ld): stub\n", This, debugstr_guid(rguidType), rtTime, pParam, pStateData, dwFlags);
+	FIXME("(%p, %s, %lli, %p, %p, %ld): stub\n", This, debugstr_dmguid(rguidType), rtTime, pParam, pStateData, dwFlags);
 	return S_OK;
 }
 

@@ -28,6 +28,7 @@ WINE_DECLARE_DEBUG_CHANNEL(dmfile);
 /* IDirectMusicAudioPath IUnknown part: */
 HRESULT WINAPI IDirectMusicAudioPathImpl_IUnknown_QueryInterface (LPUNKNOWN iface, REFIID riid, LPVOID *ppobj) {
 	ICOM_THIS_MULTI(IDirectMusicAudioPathImpl, UnknownVtbl, iface);
+	TRACE("(%p, %s, %p)\n", This, debugstr_dmguid(riid), ppobj);
 	
 	if (IsEqualIID (riid, &IID_IUnknown)) {
 		*ppobj = (LPVOID)&This->UnknownVtbl;
@@ -47,20 +48,20 @@ HRESULT WINAPI IDirectMusicAudioPathImpl_IUnknown_QueryInterface (LPUNKNOWN ifac
 		return S_OK;
 	}
 	
-	WARN("(%p)->(%s,%p),not found\n", This, debugstr_guid(riid), ppobj);
+	WARN("(%p, %s, %p): not found\n", This, debugstr_dmguid(riid), ppobj);
 	return E_NOINTERFACE;
 }
 
 ULONG WINAPI IDirectMusicAudioPathImpl_IUnknown_AddRef (LPUNKNOWN iface) {
 	ICOM_THIS_MULTI(IDirectMusicAudioPathImpl, UnknownVtbl, iface);
-	TRACE("(%p) : AddRef from %ld\n", This, This->ref);
+	TRACE("(%p): AddRef from %ld\n", This, This->ref);
 	return ++(This->ref);
 }
 
 ULONG WINAPI IDirectMusicAudioPathImpl_IUnknown_Release (LPUNKNOWN iface) {
 	ICOM_THIS_MULTI(IDirectMusicAudioPathImpl, UnknownVtbl, iface);
 	ULONG ref = --This->ref;
-	TRACE("(%p) : ReleaseRef to %ld\n", This, This->ref);
+	TRACE("(%p): ReleaseRef to %ld\n", This, This->ref);
 	if (ref == 0) {
 		HeapFree(GetProcessHeap(), 0, This);
 	}
@@ -93,7 +94,7 @@ ULONG WINAPI IDirectMusicAudioPathImpl_IDirectMusicAudioPath_Release (LPDIRECTMU
 HRESULT WINAPI IDirectMusicAudioPathImpl_IDirectMusicAudioPath_GetObjectInPath (LPDIRECTMUSICAUDIOPATH iface, DWORD dwPChannel, DWORD dwStage, DWORD dwBuffer, REFGUID guidObject, WORD dwIndex, REFGUID iidInterface, void** ppObject) {
 	ICOM_THIS_MULTI(IDirectMusicAudioPathImpl, AudioPathVtbl, iface);
 
-	FIXME("(%p, %ld, %ld, %ld, %s, %d, %s, %p): stub\n", This, dwPChannel, dwStage, dwBuffer, debugstr_guid(guidObject), dwIndex, debugstr_guid(iidInterface), ppObject);
+	FIXME("(%p, %ld, %ld, %ld, %s, %d, %s, %p): stub\n", This, dwPChannel, dwStage, dwBuffer, debugstr_dmguid(guidObject), dwIndex, debugstr_dmguid(iidInterface), ppObject);
 
 	switch (dwStage) {
 	case DMUS_PATH_BUFFER:
@@ -233,10 +234,7 @@ HRESULT WINAPI IDirectMusicAudioPathImpl_IDirectMusicObject_GetDescriptor (LPDIR
 
 HRESULT WINAPI IDirectMusicAudioPathImpl_IDirectMusicObject_SetDescriptor (LPDIRECTMUSICOBJECT iface, LPDMUS_OBJECTDESC pDesc) {
 	ICOM_THIS_MULTI(IDirectMusicAudioPathImpl, ObjectVtbl, iface);
-	TRACE("(%p, %p): setting descriptor:\n", This, pDesc);
-	if (TRACE_ON(dmime)) {
-		DMUSIC_dump_DMUS_OBJECTDESC (pDesc);
-	}
+	TRACE("(%p, %p): setting descriptor:\n%s\n", This, pDesc, debugstr_DMUS_OBJECTDESC (pDesc));
 	
 	/* According to MSDN, we should copy only given values, not whole struct */	
 	if (pDesc->dwValidData & DMUS_OBJ_OBJECT)
@@ -412,10 +410,7 @@ HRESULT WINAPI IDirectMusicAudioPathImpl_IDirectMusicObject_ParseDescriptor (LPD
 		}
 	}	
 	
-	TRACE(": returning descriptor:\n");
-	if (TRACE_ON(dmime)) {
-		DMUSIC_dump_DMUS_OBJECTDESC (pDesc);
-	}
+	TRACE(": returning descriptor:\n%s\n", debugstr_DMUS_OBJECTDESC (pDesc));
 	
 	return S_OK;
 }

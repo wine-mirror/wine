@@ -27,6 +27,7 @@ const GUID IID_IDirectMusicInstrumentPRIVATE = {0xbcb20080,0xa40c,0x11d1,{0x86,0
 /* IDirectMusicInstrument IUnknown part: */
 HRESULT WINAPI IDirectMusicInstrumentImpl_IUnknown_QueryInterface (LPUNKNOWN iface, REFIID riid, LPVOID *ppobj) {
 	ICOM_THIS_MULTI(IDirectMusicInstrumentImpl, UnknownVtbl, iface);
+	TRACE("(%p, %s, %p)\n", This, debugstr_dmguid(riid), ppobj);
 	
 	if (IsEqualIID (riid, &IID_IUnknown)) {
 		*ppobj = (LPVOID)&This->UnknownVtbl;
@@ -47,20 +48,20 @@ HRESULT WINAPI IDirectMusicInstrumentImpl_IUnknown_QueryInterface (LPUNKNOWN ifa
 		return S_OK;	
 	}
 	
-	WARN("(%p)->(%s,%p),not found\n", This, debugstr_guid(riid), ppobj);
+	WARN("(%p, %s, %p): not found\n", This, debugstr_dmguid(riid), ppobj);
 	return E_NOINTERFACE;
 }
 
 ULONG WINAPI IDirectMusicInstrumentImpl_IUnknown_AddRef (LPUNKNOWN iface) {
 	ICOM_THIS_MULTI(IDirectMusicInstrumentImpl, UnknownVtbl, iface);
-	TRACE("(%p) : AddRef from %ld\n", This, This->ref);
+	TRACE("(%p): AddRef from %ld\n", This, This->ref);
 	return ++(This->ref);
 }
 
 ULONG WINAPI IDirectMusicInstrumentImpl_IUnknown_Release (LPUNKNOWN iface) {
 	ICOM_THIS_MULTI(IDirectMusicInstrumentImpl, UnknownVtbl, iface);
 	ULONG ref = --This->ref;
-	TRACE("(%p) : ReleaseRef to %ld\n", This, This->ref);
+	TRACE("(%p): ReleaseRef to %ld\n", This, This->ref);
 	if (ref == 0) {
 		HeapFree(GetProcessHeap(), 0, This);
 	}
@@ -403,7 +404,7 @@ HRESULT WINAPI IDirectMusicInstrumentImpl_Custom_Load (LPDIRECTMUSICINSTRUMENT i
 /*	if (TRACE_ON(dmusic)) {		
 		TRACE("*** IDirectMusicInstrument (%p) ***\n", This);
 		if (This->pInstrumentID)
-			TRACE(" - GUID = %s\n", debugstr_guid(This->pInstrumentID));
+			TRACE(" - GUID = %s\n", debugstr_dmguid(This->pInstrumentID));
 		
 		TRACE(" - Instrument header:\n");
 		TRACE("    - cRegions: %ld\n", This->pHeader->cRegions);

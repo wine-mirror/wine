@@ -24,26 +24,27 @@ WINE_DEFAULT_DEBUG_CHANNEL(dmusic);
 /* IDirectMusicPortImpl IUnknown part: */
 HRESULT WINAPI IDirectMusicPortImpl_QueryInterface (LPDIRECTMUSICPORT iface, REFIID riid, LPVOID *ppobj) {
 	ICOM_THIS(IDirectMusicPortImpl,iface);
+	TRACE("(%p, %s, %p)\n", This, debugstr_dmguid(riid), ppobj);
 
 	if (IsEqualIID (riid, &IID_IUnknown) || IsEqualGUID(riid, &IID_IDirectMusicPort)) {
 		IDirectMusicPortImpl_AddRef(iface);
 		*ppobj = This;
 		return S_OK;
 	}
-	WARN("(%p)->(%s,%p),not found\n",This,debugstr_guid(riid),ppobj);
+	WARN("(%p, %s, %p): not found\n", This, debugstr_dmguid(riid), ppobj);
 	return E_NOINTERFACE;
 }
 
 ULONG WINAPI IDirectMusicPortImpl_AddRef (LPDIRECTMUSICPORT iface) {
 	ICOM_THIS(IDirectMusicPortImpl,iface);
-	TRACE("(%p) : AddRef from %ld\n", This, This->ref);
+	TRACE("(%p): AddRef from %ld\n", This, This->ref);
 	return ++(This->ref);
 }
 
 ULONG WINAPI IDirectMusicPortImpl_Release (LPDIRECTMUSICPORT iface) {
 	ICOM_THIS(IDirectMusicPortImpl,iface);
 	ULONG ref = --This->ref;
-	TRACE("(%p) : ReleaseRef to %ld\n", This, This->ref);
+	TRACE("(%p): ReleaseRef to %ld\n", This, This->ref);
 	if (ref == 0) {
 		HeapFree(GetProcessHeap(), 0, This);
 	}

@@ -20,7 +20,9 @@
 #ifndef __WINE_DMSTYLE_PRIVATE_H
 #define __WINE_DMSTYLE_PRIVATE_H
 
+#include <stdio.h>
 #include <stdarg.h>
+#include <string.h>
 
 #include "windef.h"
 #include "winbase.h"
@@ -504,26 +506,16 @@ typedef struct _DMUS_PRIVATE_CHUNK {
 	DWORD dwSize; /* size of the chunk */
 } DMUS_PRIVATE_CHUNK, *LPDMUS_PRIVATE_CHUNK;
 
-/* check whether the given DWORD is even (return 0) or odd (return 1) */
-static inline int even_or_odd (DWORD number) {
-	return (number & 0x1); /* basically, check if bit 0 is set ;) */
-}
+/* used for generic dumping (copied from ddraw) */
+typedef struct {
+    DWORD val;
+    const char* name;
+} flag_info;
 
-/* FOURCC to string conversion for debug messages */
-static inline const char *debugstr_fourcc (DWORD fourcc) {
-    if (!fourcc) return "'null'";
-    return wine_dbg_sprintf ("\'%c%c%c%c\'",
-		(char)(fourcc), (char)(fourcc >> 8),
-        (char)(fourcc >> 16), (char)(fourcc >> 24));
-}
-
-/* DMUS_VERSION struct to string conversion for debug messages */
-static inline const char *debugstr_dmversion (LPDMUS_VERSION version) {
-	if (!version) return "'null'";
-	return wine_dbg_sprintf ("\'%i,%i,%i,%i\'",
-		(int)((version->dwVersionMS && 0xFFFF0000) >> 8), (int)(version->dwVersionMS && 0x0000FFFF), 
-		(int)((version->dwVersionLS && 0xFFFF0000) >> 8), (int)(version->dwVersionLS && 0x0000FFFF));
-}
+typedef struct {
+    const GUID *guid;
+    const char* name;
+} guid_info;
 
 /* used for initialising structs (primarily for DMUS_OBJECTDESC) */
 #define DM_STRUCT_INIT(x) 				\
@@ -532,65 +524,23 @@ static inline const char *debugstr_dmversion (LPDMUS_VERSION version) {
 		(x)->dwSize = sizeof(*x);		\
 	} while (0)
 
+#define FE(x) { x, #x }	
+#define GE(x) { &x, #x }
 
-/* used for generic dumping (copied from ddraw) */
-typedef struct {
-    DWORD val;
-    const char* name;
-} flag_info;
-
-#define FE(x) { x, #x }
-#define DMUSIC_dump_flags(flags,names,num_names) DMUSIC_dump_flags_(flags, names, num_names, 1)
-
-/* generic dump function */
-static inline void DMUSIC_dump_flags_ (DWORD flags, const flag_info* names, size_t num_names, int newline) {
-	unsigned int i;
-	
-	for (i=0; i < num_names; i++) {
-		if ((flags & names[i].val) ||      /* standard flag value */
-		((!flags) && (!names[i].val))) /* zero value only */
-	    	DPRINTF("%s ", names[i].name);
-	}
-	
-    if (newline) DPRINTF("\n");
-}
-
-static inline void DMUSIC_dump_DMUS_OBJ_FLAGS (DWORD flagmask) {
-    static const flag_info flags[] = {
-	    FE(DMUS_OBJ_OBJECT),
-	    FE(DMUS_OBJ_CLASS),
-	    FE(DMUS_OBJ_NAME),
-	    FE(DMUS_OBJ_CATEGORY),
-	    FE(DMUS_OBJ_FILENAME),
-	    FE(DMUS_OBJ_FULLPATH),
-	    FE(DMUS_OBJ_URL),
-	    FE(DMUS_OBJ_VERSION),
-	    FE(DMUS_OBJ_DATE),
-	    FE(DMUS_OBJ_LOADED),
-	    FE(DMUS_OBJ_MEMORY),
-	    FE(DMUS_OBJ_STREAM)
-	};
-    DMUSIC_dump_flags(flagmask, flags, sizeof(flags)/sizeof(flags[0]));
-}
-
-static inline void DMUSIC_dump_DMUS_OBJECTDESC (LPDMUS_OBJECTDESC pDesc) {
-	if (pDesc) {
-		DPRINTF("DMUS_OBJECTDESC (%p)\n", pDesc);
-		DPRINTF("  - dwSize = %ld\n", pDesc->dwSize);
-		DPRINTF("  - dwValidData = ");
-		DMUSIC_dump_DMUS_OBJ_FLAGS (pDesc->dwValidData);
-		if (pDesc->dwValidData & DMUS_OBJ_CLASS) DPRINTF("  - guidClass = %s\n", debugstr_guid(&pDesc->guidClass));
-		if (pDesc->dwValidData & DMUS_OBJ_OBJECT) DPRINTF("  - guidObject = %s\n", debugstr_guid(&pDesc->guidObject));
-		if (pDesc->dwValidData & DMUS_OBJ_DATE) DPRINTF("  - ftDate = FIXME\n");
-		if (pDesc->dwValidData & DMUS_OBJ_VERSION) DPRINTF("  - vVersion = %s\n", debugstr_dmversion(&pDesc->vVersion));
-		if (pDesc->dwValidData & DMUS_OBJ_NAME) DPRINTF("  - wszName = %s\n", debugstr_w(pDesc->wszName));
-		if (pDesc->dwValidData & DMUS_OBJ_CATEGORY) DPRINTF("  - wszCategory = %s\n", debugstr_w(pDesc->wszCategory));
-		if (pDesc->dwValidData & DMUS_OBJ_FILENAME) DPRINTF("  - wszFileName = %s\n", debugstr_w(pDesc->wszFileName));
-		if (pDesc->dwValidData & DMUS_OBJ_MEMORY) DPRINTF("  - llMemLength = %lli\n  - pbMemData = %p\n", pDesc->llMemLength, pDesc->pbMemData);
-		if (pDesc->dwValidData & DMUS_OBJ_STREAM) DPRINTF("  - pStream = %p\n", pDesc->pStream);		
-	} else {
-		DPRINTF("(NULL)\n");
-	}
-}
+/* check whether the given DWORD is even (return 0) or odd (return 1) */
+extern int even_or_odd (DWORD number);
+/* FOURCC to string conversion for debug messages */
+extern const char *debugstr_fourcc (DWORD fourcc);
+/* DMUS_VERSION struct to string conversion for debug messages */
+extern const char *debugstr_dmversion (LPDMUS_VERSION version);
+/* returns name of given GUID */
+extern const char *debugstr_dmguid (const GUID *id);
+/* returns name of given error code */
+extern const char *debugstr_dmreturn (DWORD code);
+/* generic flags-dumping function */
+extern const char *debugstr_flags (DWORD flags, const flag_info* names, size_t num_names);
+extern const char *debugstr_DMUS_OBJ_FLAGS (DWORD flagmask);
+/* dump whole DMUS_OBJECTDESC struct */
+extern const char *debugstr_DMUS_OBJECTDESC (LPDMUS_OBJECTDESC pDesc);
 
 #endif	/* __WINE_DMSTYLE_PRIVATE_H */

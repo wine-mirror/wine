@@ -518,7 +518,7 @@ static struct regsvr_coclass const coclass_list[] = {
 	"Microsoft.DirectMusicScriptAutoImpPerformance.1",
 	"Microsoft.DirectMusicScriptAutoImpPerformance"
     },
-    {   &CLSID_DirectMusicScripSourceCodeLoader,
+    {   &CLSID_DirectMusicScriptSourceCodeLoader,
         "DirectMusic Script Source Code Loader",
 	NULL,
 	"dmscript.dll",

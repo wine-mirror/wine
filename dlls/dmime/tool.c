@@ -24,6 +24,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(dmime);
 /* IDirectMusicTool8Impl IUnknown part: */
 HRESULT WINAPI IDirectMusicTool8Impl_QueryInterface (LPDIRECTMUSICTOOL8 iface, REFIID riid, LPVOID *ppobj) {
 	ICOM_THIS(IDirectMusicTool8Impl,iface);
+	TRACE("(%p, %s, %p)\n", This, debugstr_dmguid(riid), ppobj);
 	if (IsEqualIID (riid, &IID_IUnknown) || 
 	    IsEqualIID (riid, &IID_IDirectMusicTool) ||
 	    IsEqualIID (riid, &IID_IDirectMusicTool8)) {
@@ -31,7 +32,7 @@ HRESULT WINAPI IDirectMusicTool8Impl_QueryInterface (LPDIRECTMUSICTOOL8 iface, R
 		*ppobj = This;
 		return S_OK;
 	}
-	WARN("(%p)->(%s,%p),not found\n", This, debugstr_guid(riid), ppobj);
+	WARN("(%p, %s, %p): not found\n", This, debugstr_dmguid(riid), ppobj);
 	return E_NOINTERFACE;
 }
 

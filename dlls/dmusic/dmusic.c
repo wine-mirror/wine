@@ -23,6 +23,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(dmusic);
 /* IDirectMusic8Impl IUnknown part: */
 HRESULT WINAPI IDirectMusic8Impl_QueryInterface (LPDIRECTMUSIC8 iface, REFIID riid, LPVOID *ppobj) {
 	ICOM_THIS(IDirectMusic8Impl,iface);
+	TRACE("(%p, %s, %p)\n", This, debugstr_dmguid(riid), ppobj);
 
 	if (IsEqualIID (riid, &IID_IUnknown) || 
 	    IsEqualIID (riid, &IID_IDirectMusic) ||
@@ -33,20 +34,20 @@ HRESULT WINAPI IDirectMusic8Impl_QueryInterface (LPDIRECTMUSIC8 iface, REFIID ri
 		return S_OK;
 	}
 
-	WARN("(%p)->(%s,%p),not found\n",This,debugstr_guid(riid),ppobj);
+	WARN("(%p, %s, %p): not found\n", This, debugstr_dmguid(riid), ppobj);
 	return E_NOINTERFACE;
 }
 
 ULONG WINAPI IDirectMusic8Impl_AddRef (LPDIRECTMUSIC8 iface) {
 	ICOM_THIS(IDirectMusic8Impl,iface);
-	TRACE("(%p) : AddRef from %ld\n", This, This->ref);
+	TRACE("(%p): AddRef from %ld\n", This, This->ref);
 	return ++(This->ref);
 }
 
 ULONG WINAPI IDirectMusic8Impl_Release (LPDIRECTMUSIC8 iface) {
 	ICOM_THIS(IDirectMusic8Impl,iface);
 	ULONG ref = --This->ref;
-	TRACE("(%p) : ReleaseRef to %ld\n", This, This->ref);
+	TRACE("(%p): ReleaseRef to %ld\n", This, This->ref);
 	if (ref == 0) {
 		HeapFree(GetProcessHeap(), 0, This);
 	}
@@ -106,7 +107,7 @@ HRESULT WINAPI IDirectMusic8Impl_CreatePort (LPDIRECTMUSIC8 iface, REFCLSID rcls
 	int i/*, j*/;
 	DMUS_PORTCAPS PortCaps;
 	
-	TRACE("(%p, %s, %p, %p, %p)\n", This, debugstr_guid(rclsidPort), pPortParams, ppPort, pUnkOuter);
+	TRACE("(%p, %s, %p, %p, %p)\n", This, debugstr_dmguid(rclsidPort), pPortParams, ppPort, pUnkOuter);
 	for (i = 0; S_FALSE != IDirectMusic8Impl_EnumPort(iface, i, &PortCaps); i++) {				
 		if (IsEqualCLSID (rclsidPort, &PortCaps.guidPort)) {		
 			if(!This->ppPorts) This->ppPorts = HeapAlloc(GetProcessHeap(), 0, sizeof(LPDIRECTMUSICPORT) * This->nrofports);
@@ -177,7 +178,7 @@ HRESULT WINAPI IDirectMusic8Impl_GetMasterClock (LPDIRECTMUSIC8 iface, LPGUID pg
 
 HRESULT WINAPI IDirectMusic8Impl_SetMasterClock (LPDIRECTMUSIC8 iface, REFGUID rguidClock) {
 	ICOM_THIS(IDirectMusic8Impl,iface);
-	FIXME("(%p, %s): stub\n", This, debugstr_guid(rguidClock));
+	FIXME("(%p, %s): stub\n", This, debugstr_dmguid(rguidClock));
 	return S_OK;
 }
 

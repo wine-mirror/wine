@@ -124,4 +124,41 @@ extern HRESULT WINAPI IDirectMusicSynthSinkImpl_RefTimeToSample (LPDIRECTMUSICSY
 extern HRESULT WINAPI IDirectMusicSynthSinkImpl_SetDirectSound (LPDIRECTMUSICSYNTHSINK iface, LPDIRECTSOUND pDirectSound, LPDIRECTSOUNDBUFFER pDirectSoundBuffer);
 extern HRESULT WINAPI IDirectMusicSynthSinkImpl_GetDesiredBufferSize (LPDIRECTMUSICSYNTHSINK iface, LPDWORD pdwBufferSizeInSamples);
 
+
+/*****************************************************************************
+ * Misc.
+ */
+/* used for generic dumping (copied from ddraw) */
+typedef struct {
+    DWORD val;
+    const char* name;
+} flag_info;
+
+typedef struct {
+    const GUID *guid;
+    const char* name;
+} guid_info;
+
+/* used for initialising structs (primarily for DMUS_OBJECTDESC) */
+#define DM_STRUCT_INIT(x) 				\
+	do {								\
+		memset((x), 0, sizeof(*(x)));	\
+		(x)->dwSize = sizeof(*x);		\
+	} while (0)
+
+#define FE(x) { x, #x }	
+#define GE(x) { &x, #x }
+
+/* FOURCC to string conversion for debug messages */
+extern const char *debugstr_fourcc (DWORD fourcc);
+/* DMUS_VERSION struct to string conversion for debug messages */
+extern const char *debugstr_dmversion (LPDMUS_VERSION version);
+/* returns name of given GUID */
+extern const char *debugstr_dmguid (const GUID *id);
+/* returns name of given error code */
+extern const char *debugstr_dmreturn (DWORD code);
+/* generic flags-dumping function */
+extern const char *debugstr_flags (DWORD flags, const flag_info* names, size_t num_names);
+
+
 #endif	/* __WINE_DMSYNTH_PRIVATE_H */

@@ -59,7 +59,7 @@ void WINAPI ILoaderStream_Detach (LPSTREAM iface) {
 HRESULT WINAPI ILoaderStream_IUnknown_QueryInterface (LPUNKNOWN iface, REFIID riid, void** ppobj) {
 	ICOM_THIS_MULTI(ILoaderStream, UnknownVtbl, iface);
 	
-	TRACE("(%p, %s, %p)\n", This, debugstr_guid(riid), ppobj);
+	TRACE("(%p, %s, %p)\n", This, debugstr_dmguid(riid), ppobj);
 	if (IsEqualIID (riid, &IID_IUnknown)) {
 		*ppobj = (LPVOID)&This->UnknownVtbl;
 		ILoaderStream_IUnknown_AddRef ((LPUNKNOWN)&This->UnknownVtbl);
@@ -74,20 +74,20 @@ HRESULT WINAPI ILoaderStream_IUnknown_QueryInterface (LPUNKNOWN iface, REFIID ri
 		return S_OK;
 	}
 
-	WARN("(%p)->(%s,%p),not found\n", This, debugstr_guid(riid), ppobj);
+	WARN("(%p, %s,%p): not found\n", This, debugstr_dmguid(riid), ppobj);
 	return E_NOINTERFACE;
 }
 
 ULONG WINAPI ILoaderStream_IUnknown_AddRef (LPUNKNOWN iface) {
 	ICOM_THIS_MULTI(ILoaderStream, UnknownVtbl, iface);
-	TRACE("(%p) : AddRef from %ld\n", This, This->ref);
+	TRACE("(%p): AddRef from %ld\n", This, This->ref);
 	return ++(This->ref);
 }
 
 ULONG WINAPI ILoaderStream_IUnknown_Release (LPUNKNOWN iface) {
 	ICOM_THIS_MULTI(ILoaderStream, UnknownVtbl, iface);
 	ULONG ref = --This->ref;
-	TRACE("(%p) : ReleaseRef to %ld\n", This, This->ref);
+	TRACE("(%p): ReleaseRef to %ld\n", This, This->ref);
 	if (ref == 0) {
 		HeapFree(GetProcessHeap(), 0, This);
 	}

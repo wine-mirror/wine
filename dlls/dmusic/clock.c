@@ -24,6 +24,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(dmusic);
 /* IReferenceClockImpl IUnknown part: */
 HRESULT WINAPI IReferenceClockImpl_QueryInterface (IReferenceClock *iface, REFIID riid, LPVOID *ppobj) {
 	ICOM_THIS(IReferenceClockImpl,iface);
+	TRACE("(%p, %s, %p)\n", This, debugstr_dmguid(riid), ppobj);
 
 	if (IsEqualIID (riid, &IID_IUnknown) || 
 	    IsEqualIID (riid, &IID_IReferenceClock)) {
@@ -31,20 +32,20 @@ HRESULT WINAPI IReferenceClockImpl_QueryInterface (IReferenceClock *iface, REFII
 		*ppobj = This;
 		return S_OK;
 	}
-	WARN("(%p)->(%s,%p),not found\n", This, debugstr_guid(riid), ppobj);
+	WARN("(%p, %s, %p): not found\n", This, debugstr_dmguid(riid), ppobj);
 	return E_NOINTERFACE;
 }
 
 ULONG WINAPI IReferenceClockImpl_AddRef (IReferenceClock *iface) {
 	ICOM_THIS(IReferenceClockImpl,iface);
-	TRACE("(%p) : AddRef from %ld\n", This, This->ref);
+	TRACE("(%p): AddRef from %ld\n", This, This->ref);
 	return ++(This->ref);
 }
 
 ULONG WINAPI IReferenceClockImpl_Release (IReferenceClock *iface) {
 	ICOM_THIS(IReferenceClockImpl,iface);
 	ULONG ref = --This->ref;
-	TRACE("(%p) : ReleaseRef to %ld\n", This, This->ref);
+	TRACE("(%p): ReleaseRef to %ld\n", This, This->ref);
 	if (ref == 0) {
 		HeapFree(GetProcessHeap(), 0, This);
 	}

@@ -24,26 +24,27 @@ WINE_DEFAULT_DEBUG_CHANNEL(dmusic);
 /* IDirectMusicBufferImpl IUnknown part: */
 HRESULT WINAPI IDirectMusicBufferImpl_QueryInterface (LPDIRECTMUSICBUFFER iface, REFIID riid, LPVOID *ppobj) {
 	ICOM_THIS(IDirectMusicBufferImpl,iface);
+	TRACE("(%p, (%s, %p)\n",This,debugstr_dmguid(riid),ppobj);
 	if (IsEqualIID (riid, &IID_IUnknown) 
 		|| IsEqualIID (riid, &IID_IDirectMusicBuffer)) {
 		IDirectMusicBufferImpl_AddRef(iface);
 		*ppobj = This;
 		return S_OK;
 	}
-	WARN("(%p)->(%s,%p),not found\n",This,debugstr_guid(riid),ppobj);
+	WARN("(%p, (%s, %p): not found\n",This,debugstr_dmguid(riid),ppobj);
 	return E_NOINTERFACE;
 }
 
 ULONG WINAPI IDirectMusicBufferImpl_AddRef (LPDIRECTMUSICBUFFER iface) {
 	ICOM_THIS(IDirectMusicBufferImpl,iface);
-	TRACE("(%p) : AddRef from %ld\n", This, This->ref);
+	TRACE("(%p): AddRef from %ld\n", This, This->ref);
 	return ++(This->ref);
 }
 
 ULONG WINAPI IDirectMusicBufferImpl_Release (LPDIRECTMUSICBUFFER iface) {
 	ICOM_THIS(IDirectMusicBufferImpl,iface);
 	ULONG ref = --This->ref;
-	TRACE("(%p) : ReleaseRef to %ld\n", This, This->ref);
+	TRACE("(%p): ReleaseRef to %ld\n", This, This->ref);
 	if (ref == 0) {
 		HeapFree(GetProcessHeap(), 0, This);
 	}

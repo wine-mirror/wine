@@ -27,6 +27,7 @@ HRESULT WINAPI DMUSIC_GetDefaultGMPath (WCHAR wszPath[MAX_PATH]);
 HRESULT WINAPI IDirectMusicLoader8Impl_QueryInterface (LPDIRECTMUSICLOADER8 iface, REFIID riid, LPVOID *ppobj) {
 	ICOM_THIS(IDirectMusicLoader8Impl,iface);
 
+	TRACE("(%p, %s, %p)\n",This, debugstr_dmguid(riid), ppobj);
 	if (IsEqualIID (riid, &IID_IUnknown) || 
 	    IsEqualIID (riid, &IID_IDirectMusicLoader) ||
 	    IsEqualIID (riid, &IID_IDirectMusicLoader8)) {
@@ -35,20 +36,20 @@ HRESULT WINAPI IDirectMusicLoader8Impl_QueryInterface (LPDIRECTMUSICLOADER8 ifac
 		return S_OK;
 	}
 	
-	WARN("(%p)->(%s,%p),not found\n",This,debugstr_guid(riid),ppobj);
+	WARN("(%p, %s, %p): not found\n", This, debugstr_dmguid(riid), ppobj);
 	return E_NOINTERFACE;
 }
 
 ULONG WINAPI IDirectMusicLoader8Impl_AddRef (LPDIRECTMUSICLOADER8 iface) {
 	ICOM_THIS(IDirectMusicLoader8Impl,iface);
-	TRACE("(%p) : AddRef from %ld\n", This, This->ref);
+	TRACE("(%p): AddRef from %ld\n", This, This->ref);
 	return ++(This->ref);
 }
 
 ULONG WINAPI IDirectMusicLoader8Impl_Release (LPDIRECTMUSICLOADER8 iface) {
 	ICOM_THIS(IDirectMusicLoader8Impl,iface);
 	ULONG ref = --This->ref;
-	TRACE("(%p) : ReleaseRef to %ld\n", This, This->ref);
+	TRACE("(%p): ReleaseRef to %ld\n", This, This->ref);
 	if (ref == 0) {
 		HeapFree(GetProcessHeap(), 0, This);
 	}
@@ -66,9 +67,7 @@ HRESULT WINAPI IDirectMusicLoader8Impl_GetObject (LPDIRECTMUSICLOADER8 iface, LP
 	IDirectMusicObject* pObject;
 	LPDMUS_PRIVATE_CACHE_ENTRY newEntry;
 
-	TRACE("(%p, %p, %s, %p): pDesc:\n", This, pDesc, debugstr_guid(riid), ppv);
-	if (TRACE_ON(dmloader))
-		DMUSIC_dump_DMUS_OBJECTDESC(pDesc);
+	TRACE("(%p, %p, %s, %p): pDesc:\n%s\n", This, pDesc, debugstr_dmguid(riid), ppv, debugstr_DMUS_OBJECTDESC(pDesc));
 	
 	/* if I understand correctly, SetObject makes sort of aliases for entries in cache;
 		therefore I created alias list, which is similiar to cache list, and is used as resolver
@@ -79,7 +78,7 @@ HRESULT WINAPI IDirectMusicLoader8Impl_GetObject (LPDIRECTMUSICLOADER8 iface, LP
 		/* for the time being, we support only GUID/name mapping */
 		if ((aliasEntry->pDesc->dwValidData & DMUS_OBJ_OBJECT) && (pDesc->dwValidData & DMUS_OBJ_OBJECT)
 			&& IsEqualGUID (&aliasEntry->pDesc->guidObject, &pDesc->guidObject)) {
-			TRACE(": found alias by GUID (%s)... mapping:\n", debugstr_guid(&aliasEntry->pDesc->guidObject));
+			TRACE(": found alias by GUID (%s)... mapping:\n", debugstr_dmguid(&aliasEntry->pDesc->guidObject));
 			if ((aliasEntry->pDesc->dwValidData & DMUS_OBJ_FILENAME) && !(pDesc->dwValidData & DMUS_OBJ_FILENAME)) {
 				TRACE(":     - to filename (%s)\n", debugstr_w(aliasEntry->pDesc->wszFileName));
 				pDesc->dwValidData |= DMUS_OBJ_FILENAME;
@@ -114,7 +113,7 @@ HRESULT WINAPI IDirectMusicLoader8Impl_GetObject (LPDIRECTMUSICLOADER8 iface, LP
 				strncpyW (pDesc->wszFileName, aliasEntry->pDesc->wszFileName, DMUS_MAX_FILENAME);
 			}
 			if ((aliasEntry->pDesc->dwValidData & DMUS_OBJ_OBJECT) && !(pDesc->dwValidData & DMUS_OBJ_OBJECT)) {
-				TRACE(":     - to object GUID (%s)\n", debugstr_guid(&aliasEntry->pDesc->guidObject));
+				TRACE(":     - to object GUID (%s)\n", debugstr_dmguid(&aliasEntry->pDesc->guidObject));
 				pDesc->dwValidData |= DMUS_OBJ_OBJECT;
 				memcpy (&pDesc->guidObject, &aliasEntry->pDesc->guidObject, sizeof(GUID));
 			}
@@ -476,9 +475,9 @@ HRESULT WINAPI IDirectMusicLoader8Impl_GetObject (LPDIRECTMUSICLOADER8 iface, LP
 		if (cacheEntry->bIsFaultyDLS == FALSE) {
 			DM_STRUCT_INIT(&CacheDesc); /* prepare desc for reuse */
 			IDirectMusicObject_GetDescriptor (cacheEntry->pObject, &CacheDesc);
-			DMUSIC_dump_DMUS_OBJECTDESC(&CacheDesc);
+			TRACE(": %s\n", debugstr_DMUS_OBJECTDESC(&CacheDesc));
 		} else {
-			DPRINTF("faulty DLS collection\n");
+			TRACE(": faulty DLS collection\n");
 		}
 	}
 #endif
@@ -491,9 +490,7 @@ HRESULT WINAPI IDirectMusicLoader8Impl_SetObject (LPDIRECTMUSICLOADER8 iface, LP
 	DMUS_PRIVATE_ALIAS_ENTRY *newEntry;
 	DMUS_OBJECTDESC Desc;
 	
-	TRACE("(%p, %p): pDesc:\n", This, pDesc);
-	if (TRACE_ON(dmloader))
-		DMUSIC_dump_DMUS_OBJECTDESC(pDesc);
+	TRACE("(%p, %p): pDesc:\n%s\n", This, pDesc, debugstr_DMUS_OBJECTDESC(pDesc));
 	
 	/* create stream and load additional info from it */
 	if (pDesc->dwValidData & DMUS_OBJ_FILENAME) {
@@ -562,9 +559,7 @@ HRESULT WINAPI IDirectMusicLoader8Impl_SetObject (LPDIRECTMUSICLOADER8 iface, LP
 	pDesc->dwValidData |= Desc.dwValidData; /* add new flags */
 	
 	/* add new entry */
-	TRACE(": adding alias entry with following info:\n");
-	if (TRACE_ON(dmloader))
-		DMUSIC_dump_DMUS_OBJECTDESC(pDesc);
+	TRACE(": adding alias entry with following info: \n%s\n", debugstr_DMUS_OBJECTDESC(pDesc));
 	newEntry = HeapAlloc (GetProcessHeap (), HEAP_ZERO_MEMORY, sizeof(DMUS_PRIVATE_ALIAS_ENTRY));
 	newEntry->pDesc = HeapAlloc (GetProcessHeap (), HEAP_ZERO_MEMORY, sizeof(DMUS_OBJECTDESC));
 	memcpy (newEntry->pDesc, pDesc, sizeof(DMUS_OBJECTDESC));
@@ -575,7 +570,7 @@ HRESULT WINAPI IDirectMusicLoader8Impl_SetObject (LPDIRECTMUSICLOADER8 iface, LP
 
 HRESULT WINAPI IDirectMusicLoader8Impl_SetSearchDirectory (LPDIRECTMUSICLOADER8 iface, REFGUID rguidClass, WCHAR* pwzPath, BOOL fClear) {
 	ICOM_THIS(IDirectMusicLoader8Impl,iface);
-	TRACE("(%p, %s, %s, %d)\n", This, debugstr_guid(rguidClass), debugstr_w(pwzPath), fClear);
+	TRACE("(%p, %s, %s, %d)\n", This, debugstr_dmguid(rguidClass), debugstr_w(pwzPath), fClear);
 	if (0 == strncmpW(This->wzSearchPath, pwzPath, MAX_PATH)) {
 	  return S_FALSE;
 	} 
@@ -585,7 +580,7 @@ HRESULT WINAPI IDirectMusicLoader8Impl_SetSearchDirectory (LPDIRECTMUSICLOADER8 
 
 HRESULT WINAPI IDirectMusicLoader8Impl_ScanDirectory (LPDIRECTMUSICLOADER8 iface, REFGUID rguidClass, WCHAR* pwzFileExtension, WCHAR* pwzScanFileName) {
 	ICOM_THIS(IDirectMusicLoader8Impl,iface);
-	FIXME("(%p, %s, %p, %p): stub\n", This, debugstr_guid(rguidClass), pwzFileExtension, pwzScanFileName);
+	FIXME("(%p, %s, %p, %p): stub\n", This, debugstr_dmguid(rguidClass), pwzFileExtension, pwzScanFileName);
 	return S_OK;
 }
 
@@ -603,20 +598,20 @@ HRESULT WINAPI IDirectMusicLoader8Impl_ReleaseObject (LPDIRECTMUSICLOADER8 iface
 
 HRESULT WINAPI IDirectMusicLoader8Impl_ClearCache (LPDIRECTMUSICLOADER8 iface, REFGUID rguidClass) {
 	ICOM_THIS(IDirectMusicLoader8Impl,iface);
-	FIXME("(%p, %s): stub\n", This, debugstr_guid(rguidClass));
+	FIXME("(%p, %s): stub\n", This, debugstr_dmguid(rguidClass));
 	return S_OK;
 }
 
 HRESULT WINAPI IDirectMusicLoader8Impl_EnableCache (LPDIRECTMUSICLOADER8 iface, REFGUID rguidClass, BOOL fEnable) {
 	ICOM_THIS(IDirectMusicLoader8Impl,iface);
-	FIXME("(%p, %s, %d): stub\n", This, debugstr_guid(rguidClass), fEnable);
+	FIXME("(%p, %s, %d): stub\n", This, debugstr_dmguid(rguidClass), fEnable);
 	return S_OK;
 }
 
 HRESULT WINAPI IDirectMusicLoader8Impl_EnumObject (LPDIRECTMUSICLOADER8 iface, REFGUID rguidClass, DWORD dwIndex, LPDMUS_OBJECTDESC pDesc) {
 	ICOM_THIS(IDirectMusicLoader8Impl,iface);
-	FIXME("(%p, %s, %ld, %p): stub\n", This, debugstr_guid(rguidClass), dwIndex, pDesc);
-	return S_OK;
+	FIXME("(%p, %s, %ld, %p): stub\n", This, debugstr_dmguid(rguidClass), dwIndex, pDesc);
+	return S_FALSE;
 }
 
 /* IDirectMusicLoader8 Interface part follow: */
@@ -639,7 +634,7 @@ HRESULT WINAPI IDirectMusicLoader8Impl_LoadObjectFromFile (LPDIRECTMUSICLOADER8 
 	ICOM_THIS(IDirectMusicLoader8Impl,iface);
 	DMUS_OBJECTDESC ObjDesc;
 	
-	TRACE("(%p, %s, %s, %s, %p): wrapping to IDirectMusicLoader8Impl_GetObject\n", This, debugstr_guid(rguidClassID), debugstr_guid(iidInterfaceID), debugstr_w(pwzFilePath), ppObject);
+	TRACE("(%p, %s, %s, %s, %p): wrapping to IDirectMusicLoader8Impl_GetObject\n", This, debugstr_dmguid(rguidClassID), debugstr_dmguid(iidInterfaceID), debugstr_w(pwzFilePath), ppObject);
 	
 	ObjDesc.dwSize = sizeof(DMUS_OBJECTDESC);
 	ObjDesc.dwValidData = DMUS_OBJ_FILENAME | DMUS_OBJ_FULLPATH | DMUS_OBJ_CLASS; /* I believe I've read somewhere in MSDN that this function requires either full path or relative path */

@@ -28,7 +28,8 @@ WINE_DECLARE_DEBUG_CHANNEL(dmfile);
 /* IDirectMusicCollectionImpl IUnknown part: */
 HRESULT WINAPI IDirectMusicCollectionImpl_IUnknown_QueryInterface (LPUNKNOWN iface, REFIID riid, LPVOID *ppobj) {
 	ICOM_THIS_MULTI(IDirectMusicCollectionImpl, UnknownVtbl, iface);
-	
+	TRACE("(%p, %s, %p)\n", This, debugstr_dmguid(riid), ppobj);
+
 	if (IsEqualIID (riid, &IID_IUnknown)) {
 		*ppobj = (LPVOID)&This->UnknownVtbl;
 		IDirectMusicCollectionImpl_IUnknown_AddRef ((LPUNKNOWN)&This->UnknownVtbl);
@@ -47,20 +48,20 @@ HRESULT WINAPI IDirectMusicCollectionImpl_IUnknown_QueryInterface (LPUNKNOWN ifa
 		return S_OK;
 	}
 	
-	WARN("(%p)->(%s,%p),not found\n", This, debugstr_guid(riid), ppobj);
+	WARN("(%p, %s, %p): not found\n", This, debugstr_dmguid(riid), ppobj);
 	return E_NOINTERFACE;
 }
 
 ULONG WINAPI IDirectMusicCollectionImpl_IUnknown_AddRef (LPUNKNOWN iface) {
 	ICOM_THIS_MULTI(IDirectMusicCollectionImpl, UnknownVtbl, iface);
-	TRACE("(%p) : AddRef from %ld\n", This, This->ref);
+	TRACE("(%p): AddRef from %ld\n", This, This->ref);
 	return ++(This->ref);
 }
 
 ULONG WINAPI IDirectMusicCollectionImpl_IUnknown_Release (LPUNKNOWN iface) {
 	ICOM_THIS_MULTI(IDirectMusicCollectionImpl, UnknownVtbl, iface);
 	ULONG ref = --This->ref;
-	TRACE("(%p) : ReleaseRef to %ld\n", This, This->ref);
+	TRACE("(%p): ReleaseRef to %ld\n", This, This->ref);
 	if (ref == 0) {
 		HeapFree(GetProcessHeap(), 0, This);
 	}
@@ -173,10 +174,7 @@ HRESULT WINAPI IDirectMusicCollectionImpl_IDirectMusicObject_GetDescriptor (LPDI
 
 HRESULT WINAPI IDirectMusicCollectionImpl_IDirectMusicObject_SetDescriptor (LPDIRECTMUSICOBJECT iface, LPDMUS_OBJECTDESC pDesc) {
 	ICOM_THIS_MULTI(IDirectMusicCollectionImpl, ObjectVtbl, iface);
-	TRACE("(%p, %p): setting descriptor:\n", This, pDesc);
-	if (TRACE_ON(dmusic)) {
-		DMUSIC_dump_DMUS_OBJECTDESC (pDesc);
-	}
+	TRACE("(%p, %p): setting descriptor:\n%s\n", This, pDesc, debugstr_DMUS_OBJECTDESC (pDesc));
 	
 	/* According to MSDN, we should copy only given values, not whole struct */	
 	if (pDesc->dwValidData & DMUS_OBJ_OBJECT)
@@ -372,10 +370,7 @@ HRESULT WINAPI IDirectMusicCollectionImpl_IDirectMusicObject_ParseDescriptor (LP
 		}
 	}	
 	
-	TRACE(": returning descriptor:\n");
-	if (TRACE_ON(dmusic)) {
-		DMUSIC_dump_DMUS_OBJECTDESC (pDesc);
-	}
+	TRACE(": returning descriptor:\n%s\n", debugstr_DMUS_OBJECTDESC (pDesc));
 	
 	return S_OK;
 }
@@ -630,7 +625,7 @@ HRESULT WINAPI IDirectMusicCollectionImpl_IPersistStream_Load (LPPERSISTSTREAM i
                                                                                                                             if (TRACE_ON(dmusic)) {
 																TRACE("*** IDirectMusicInstrument (%p) ***\n", pInstrument);
 																if (pInstrument->pInstrumentID)
-																	TRACE(" - GUID = %s\n", debugstr_guid(pInstrument->pInstrumentID));
+																	TRACE(" - GUID = %s\n", debugstr_dmguid(pInstrument->pInstrumentID));
 																
 																TRACE(" - Instrument header:\n");
 																TRACE("    - cRegions: %ld\n", pInstrument->pHeader->cRegions);
@@ -703,7 +698,7 @@ HRESULT WINAPI IDirectMusicCollectionImpl_IPersistStream_Load (LPPERSISTSTREAM i
 
 		TRACE("*** IDirectMusicCollection (%p) ***\n", This->CollectionVtbl);
 		if (This->pDesc->dwValidData & DMUS_OBJ_OBJECT)
-			TRACE(" - GUID = %s\n", debugstr_guid(&This->pDesc->guidObject));
+			TRACE(" - GUID = %s\n", debugstr_dmguid(&This->pDesc->guidObject));
 		if (This->pDesc->dwValidData & DMUS_OBJ_VERSION)
 			TRACE(" - Version = %i,%i,%i,%i\n", (This->pDesc->vVersion.dwVersionMS >> 8) && 0x0000FFFF, This->pDesc->vVersion.dwVersionMS && 0x0000FFFF, \
 				(This->pDesc->vVersion.dwVersionLS >> 8) && 0x0000FFFF, This->pDesc->vVersion.dwVersionLS && 0x0000FFFF);

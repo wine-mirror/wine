@@ -29,7 +29,7 @@ WINE_DECLARE_DEBUG_CHANNEL(dmfile);
 HRESULT WINAPI IDirectMusicContainerImpl_IUnknown_QueryInterface (LPUNKNOWN iface, REFIID riid, LPVOID *ppobj) {
 	ICOM_THIS_MULTI(IDirectMusicContainerImpl, UnknownVtbl, iface);
 	
-	TRACE("(%p, %s, %p)\n", This, debugstr_guid(riid), ppobj);
+	TRACE("(%p, %s, %p)\n", This, debugstr_dmguid(riid), ppobj);
 	if (IsEqualIID (riid, &IID_IUnknown)) {
 		*ppobj = (LPVOID)&This->UnknownVtbl;
 		IDirectMusicContainerImpl_IUnknown_AddRef ((LPUNKNOWN)&This->UnknownVtbl);
@@ -48,20 +48,20 @@ HRESULT WINAPI IDirectMusicContainerImpl_IUnknown_QueryInterface (LPUNKNOWN ifac
 		return S_OK;
 	}
 	
-	WARN("(%p)->(%s,%p),not found\n", This, debugstr_guid(riid), ppobj);
+	WARN("(%p, %s, %p): not found\n", This, debugstr_dmguid(riid), ppobj);
 	return E_NOINTERFACE;
 }
 
 ULONG WINAPI IDirectMusicContainerImpl_IUnknown_AddRef (LPUNKNOWN iface) {
 	ICOM_THIS_MULTI(IDirectMusicContainerImpl, UnknownVtbl, iface);
-	TRACE("(%p) : AddRef from %ld\n", This, This->ref);
+	TRACE("(%p): AddRef from %ld\n", This, This->ref);
 	return ++(This->ref);
 }
 
 ULONG WINAPI IDirectMusicContainerImpl_IUnknown_Release (LPUNKNOWN iface) {
 	ICOM_THIS_MULTI(IDirectMusicContainerImpl, UnknownVtbl, iface);
 	ULONG ref = --This->ref;
-	TRACE("(%p) : ReleaseRef to %ld\n", This, This->ref);
+	TRACE("(%p): ReleaseRef to %ld\n", This, This->ref);
 	if (ref == 0) {
 		HeapFree(GetProcessHeap(), 0, This);
 	}
@@ -97,7 +97,7 @@ HRESULT WINAPI IDirectMusicContainerImpl_IDirectMusicContainer_EnumObject (LPDIR
 	struct list *listEntry;
 	LPDMUS_PRIVATE_CONTAINED_OBJECT_ENTRY objectEntry;
 
-	TRACE("(%p, %s, %ld, %p, %p)\n", This, debugstr_guid(rguidClass), dwIndex, pDesc, pwszAlias);
+	TRACE("(%p, %s, %ld, %p, %p)\n", This, debugstr_dmguid(rguidClass), dwIndex, pDesc, pwszAlias);
 	LIST_FOR_EACH (listEntry, &This->ObjectsList) {
 		objectEntry = LIST_ENTRY(listEntry, DMUS_PRIVATE_CONTAINED_OBJECT_ENTRY, entry);	
 		if (IsEqualGUID(rguidClass, &GUID_DirectMusicAllTypes)) i++;
@@ -153,10 +153,7 @@ HRESULT WINAPI IDirectMusicContainerImpl_IDirectMusicObject_GetDescriptor (LPDIR
 
 HRESULT WINAPI IDirectMusicContainerImpl_IDirectMusicObject_SetDescriptor (LPDIRECTMUSICOBJECT iface, LPDMUS_OBJECTDESC pDesc) {
 	ICOM_THIS_MULTI(IDirectMusicContainerImpl, ObjectVtbl, iface);
-	TRACE("(%p, %p): setting descriptor:\n", This, pDesc);
-	if (TRACE_ON(dmloader)) {
-		DMUSIC_dump_DMUS_OBJECTDESC (pDesc);
-	}
+	TRACE("(%p, %p): setting descriptor:\n%s\n", This, pDesc, debugstr_DMUS_OBJECTDESC (pDesc));
 	
 	/* According to MSDN, we should copy only given values, not whole struct */	
 	if (pDesc->dwValidData & DMUS_OBJ_OBJECT)
@@ -332,10 +329,7 @@ HRESULT WINAPI IDirectMusicContainerImpl_IDirectMusicObject_ParseDescriptor (LPD
 		}
 	}	
 	
-	TRACE(": returning descriptor:\n");
-	if (TRACE_ON(dmloader)) {
-		DMUSIC_dump_DMUS_OBJECTDESC (pDesc);
-	}
+	TRACE(": returning descriptor:\n%s\n", debugstr_DMUS_OBJECTDESC (pDesc));
 	
 	return S_OK;	
 }
@@ -749,11 +743,9 @@ HRESULT WINAPI IDirectMusicContainerImpl_IPersistStream_Load (LPPERSISTSTREAM if
 		struct list *listEntry;
 
 		TRACE("*** IDirectMusicContainer (%p) ***\n", This->ContainerVtbl);
-		TRACE(" - Object descriptor:\n");
-		DMUSIC_dump_DMUS_OBJECTDESC (This->pDesc);
+		TRACE(" - Object descriptor:\n%s\n", debugstr_DMUS_OBJECTDESC (This->pDesc));
 		TRACE(" - Header:\n");
-		TRACE("    - dwFlags: ");
-		DMUSIC_dump_DMUS_CONTAINER_FLAGS (This->pHeader->dwFlags);
+		TRACE("    - dwFlags: %s", debugstr_DMUS_CONTAINER_FLAGS (This->pHeader->dwFlags));
 
 		TRACE(" - Objects:\n");
 		
@@ -761,8 +753,7 @@ HRESULT WINAPI IDirectMusicContainerImpl_IPersistStream_Load (LPPERSISTSTREAM if
 			tmpEntry = LIST_ENTRY( listEntry, DMUS_PRIVATE_CONTAINED_OBJECT_ENTRY, entry );
 			TRACE("    - Object[%i]:\n", r);
 			TRACE("       - wszAlias: %s\n", debugstr_w(tmpEntry->wszAlias));
-			TRACE("       - Object descriptor:\n");
-			DMUSIC_dump_DMUS_OBJECTDESC(tmpEntry->pDesc);
+			TRACE("       - Object descriptor:\n%s\n", debugstr_DMUS_OBJECTDESC(tmpEntry->pDesc));
 			r++;
 		}
 	}
