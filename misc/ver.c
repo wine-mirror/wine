@@ -1346,32 +1346,32 @@ DWORD WINAPI VerQueryValue16(SEGPTR segblock,LPCSTR subblock,SEGPTR *buffer,
 	return 1;
 }
 
-DWORD WINAPI VerQueryValue32A(LPVOID vblock,LPCSTR subblock,
-                              LPVOID *vbuffer,UINT32 *buflen)
+DWORD WINAPI VER_VerQueryValueA(LPVOID,LPCSTR, LPVOID *,UINT32 *, BOOL32 *);
+
+DWORD WINAPI VER_VerQueryValueW(LPVOID vblock,LPCWSTR subblock,
+                              LPVOID *vbuffer,UINT32 *buflen, BOOL32 * bIsString)
 {
 	BYTE	*b,*block=(LPBYTE)vblock,**buffer=(LPBYTE*)vbuffer;
-	LPSTR	s;
 
 	TRACE(ver,"(%p,%s,%p,%d)\n",
-		block,subblock,buffer,*buflen
+		block,debugstr_w(subblock),buffer,*buflen
 	);
-
-	s=(char*)xmalloc(strlen("VS_VERSION_INFO\\")+strlen(subblock)+1);
-	strcpy(s,"VS_VERSION_INFO\\");strcat(s,subblock);
 
 	/* check for UNICODE version */
 	if (	(*(DWORD*)(block+0x14) != VS_FFI_SIGNATURE) && 
 		(*(DWORD*)(block+0x28) == VS_FFI_SIGNATURE)
 	) {
-		LPWSTR	wstr;
-		LPSTR	xs;
 		struct	dbW	*db;
+	        LPWSTR	s;
+	        LPWSTR  vs_version_info = HEAP_strdupAtoW (GetProcessHeap(),0,"VS_VERSION_INFO\\");
+	        s=(LPWSTR)xmalloc(2*lstrlen32W(vs_version_info)+2*lstrlen32W(subblock)+2);
+	        lstrcpy32W(s,vs_version_info);
+	        lstrcat32W(s,subblock);
 
-		wstr = HEAP_strdupAtoW(GetProcessHeap(),0,s);
-		b=_find_dataW(block,wstr,*(WORD*)block);
-		HeapFree(GetProcessHeap(),0,wstr);
+
+		b=_find_dataW(block,s,*(WORD*)block);
 		if (!b) {
-			WARN(ver,"key %s not found in versionresource.\n",s);
+			WARN(ver,"key %s not found in versionresource.\n",debugstr_w(s));
 			*buflen=0;
 			free (s);
 			return 0;
@@ -1380,16 +1380,62 @@ DWORD WINAPI VerQueryValue32A(LPVOID vblock,LPCSTR subblock,
 		*buflen	= db->datalen;
 		b	= b+DATA_OFFSET_W(db);
 		if (db->btext) {
-		    xs = HEAP_strdupWtoA(GetProcessHeap(),0,(WCHAR*)b);
-		    TRACE(ver,"->%s\n",xs);
-		    HeapFree(GetProcessHeap(),0,xs);
-
-		    /* This is a leak.  */
-		    b = HEAP_strdupWtoA(GetProcessHeap(),0,(WCHAR*)b);
+		    TRACE(ver,"%s->%s\n",debugstr_w(subblock), debugstr_w((LPWSTR)b));
+		    if (bIsString) *bIsString = TRUE;
 		} else
-		    TRACE(ver,"->%p\n",b);
+		    TRACE(ver,"%s->%p\n",debugstr_w(subblock),b);
+		free (s);
+		*buffer	= b;
+	} else {
+		BOOL32 bMyIsString = FALSE, ret;
+		LPSTR subblock_a;
+
+		if (!bIsString) return FALSE;
+
+		subblock_a = HEAP_strdupWtoA (GetProcessHeap(),0,subblock);
+		ret = VER_VerQueryValueA( vblock, subblock_a, vbuffer, buflen, &bMyIsString);
+		free (subblock_a);
+
+		if (bMyIsString)
+		{  /* This is a leak.  */
+		    *buffer = (LPBYTE) HEAP_strdupAtoW(GetProcessHeap(),0,*buffer);
+		}		
+		return ret; 
+	}
+	return 1;
+}
+DWORD WINAPI VER_VerQueryValueA(LPVOID vblock,LPCSTR subblock,
+                              LPVOID *vbuffer,UINT32 *buflen, BOOL32 * bIsString)
+{	BYTE	*b,*block=(LPBYTE)vblock,**buffer=(LPBYTE*)vbuffer;
+
+	TRACE(ver,"(%p,%s,%p,%d)\n",
+		block,subblock,buffer,*buflen
+	);
+
+	/* check for UNICODE version */
+	if (	(*(DWORD*)(block+0x14) != VS_FFI_SIGNATURE) && 
+		(*(DWORD*)(block+0x28) == VS_FFI_SIGNATURE)
+	) {
+		BOOL32 bMyIsString = FALSE, ret;
+		LPWSTR subblock_w;
+		
+		if (!bIsString) return FALSE;
+
+		subblock_w = HEAP_strdupAtoW (GetProcessHeap(),0,subblock);
+		ret = VER_VerQueryValueW( vblock, subblock_w, vbuffer, buflen, &bMyIsString);
+		free (subblock_w);
+
+		if (bMyIsString)
+		{  /* This is a leak.  */
+		   *buffer = (LPBYTE)HEAP_strdupWtoA(GetProcessHeap(),0,(LPWSTR) *buffer);
+		}		
+		return ret;  
 	} else {
 		struct	dbA	*db;
+	        LPSTR	s;
+	        s=(char*)xmalloc(strlen("VS_VERSION_INFO\\")+strlen(subblock)+1);
+	        strcpy(s,"VS_VERSION_INFO\\");strcat(s,subblock);
+
 		b=_find_dataA(block,s,*(WORD*)block);
 		if (!b) {
 			WARN(ver,"key %s not found in versionresource.\n",subblock);
@@ -1402,25 +1448,23 @@ DWORD WINAPI VerQueryValue32A(LPVOID vblock,LPCSTR subblock,
 		b	= b+DATA_OFFSET_A(db);
 
 		/* the string is only printable, if it is below \\StringFileInfo*/
-		if (!lstrncmpi32A("VS_VERSION_INFO\\StringFileInfo\\",s,strlen("VS_VERSION_INFO\\StringFileInfo\\")))
-		    TRACE(ver,"	-> %s=%s\n",subblock,b);
-		else
-		    TRACE(ver,"	-> %s=%p\n",subblock,b);
+		if (!lstrncmpi32A("VS_VERSION_INFO\\StringFileInfo\\",s,strlen("VS_VERSION_INFO\\StringFileInfo\\"))) { 
+		    TRACE(ver,"%s->%s\n",subblock,b);
+		    if (bIsString) *bIsString = TRUE;
+		} else
+		    TRACE(ver,"%s->%p\n",subblock,b);
+		free(s);
+	        *buffer	= b;
 	}
-	*buffer	= b;
-	free(s);
-	return 1;
+	return TRUE;
+
+}
+DWORD WINAPI VerQueryValue32A(LPVOID vblock,LPCSTR subblock,
+                              LPVOID *vbuffer,UINT32 *buflen)
+{	return VER_VerQueryValueA(vblock,subblock, vbuffer,buflen, NULL);
 }
 
 DWORD WINAPI VerQueryValue32W(LPVOID vblock,LPCWSTR subblock,LPVOID *vbuffer,
                               UINT32 *buflen)
-{
-	LPSTR		sb;
-	DWORD		ret;
-
-	sb = HEAP_strdupWtoA( GetProcessHeap(), 0, subblock );
-	ret = VerQueryValue32A(vblock,sb,vbuffer,buflen);
-        HeapFree( GetProcessHeap(), 0, sb );
-	return 1;
+{	return VER_VerQueryValueW(vblock,subblock, vbuffer,buflen, NULL);
 }
-/* 20 GETFILEVERSIONINFORAW */
