@@ -199,7 +199,6 @@ extern	WDML_LINK*	WDML_FindLink(WDML_INSTANCE* pInstance, HCONV hConv, WDML_SIDE
 				      HSZ hszItem, UINT uFmt);
 extern	void 		WDML_RemoveLink(WDML_INSTANCE* pInstance, HCONV hConv, WDML_SIDE side, 
 					HSZ hszItem, UINT wFmt);
-extern	inline void	WDML_ExtractAck(WORD status, DDEACK* da) {*da = *((DDEACK*)&status);}
 extern	void		WDML_RemoveAllLinks(WDML_INSTANCE* pInstance, WDML_CONV* pConv, WDML_SIDE side);
 /* string internals */
 extern	void 		WDML_FreeAllHSZ(WDML_INSTANCE* pInstance);
@@ -222,6 +221,11 @@ extern	WDML_INSTANCE*	WDML_GetInstanceFromWnd(HWND hWnd);
 extern	void		WDML_BroadcastDDEWindows(const char* clsName, UINT uMsg, 
 						 WPARAM wParam, LPARAM lParam);
 extern	void		WDML_NotifyThreadExit(DWORD tid);
+
+static inline void WDML_ExtractAck(WORD status, DDEACK* da)
+{
+    *da = *((DDEACK*)&status);
+}
 
 extern const char 	WDML_szEventClass[]; 	   /* class of window for events (aka instance) */
 extern const char  	WDML_szServerConvClassA[]; /* class of window for server side conv (ansi) */
