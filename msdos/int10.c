@@ -287,6 +287,9 @@ void WINAPI INT_Int10Handler( CONTEXT *context )
 		/* maby we should do this instead ? */
 		/* AH_reg(context = 0x001; not implemented so just fail */
 		break;
+	case 0x09: /* SET PALETTE ENTRIES */
+		FIXME(int10, "VESA Set palette entries - not implemented\n");
+		break;
 	case 0xff: /* Turn VESA ON/OFF */
 		/* i dont know what to do */
 		break;
@@ -681,9 +684,9 @@ else {
         switch AL_reg(context) {
         case 0x00: /* GET DISPLAY COMBINATION CODE */
             TRACE(int10, "Get Display Combination Code\n");
-            AL_reg(context) = 0x1a;
-            BH_reg(context) = 0x08; /* VGA w/ color analog display */
-            BL_reg(context) = 0x00; /* No secondary hardware */
+            AX_reg(context) = 0x001a;
+            BL_reg(context) = 0x08; /* VGA w/ color analog display */
+            BH_reg(context) = 0x00; /* No secondary hardware */
             break;
         case 0x01: /* SET DISPLAY COMBINATION CODE */
             FIXME(int10, "Set Display Combination Code - Not Supported\n");
