@@ -251,7 +251,7 @@ WINE_INCLUDES = \
 	library.h \
 	unicode.h
 
-EXTRASUBDIRS = bitmaps msvcrt msvcrt/sys wine
+EXTRASUBDIRS = msvcrt msvcrt/sys wine
 
 @MAKE_RULES@
 

@@ -52,8 +52,8 @@
 #include <objidl.h>
 #include <shlguid.h>
 
-#include "bitmaps/wine.xpm"
 #include "wine/debug.h"
+#include "wine.xpm"
 
 WINE_DEFAULT_DEBUG_CHANNEL(menubuilder);
 
