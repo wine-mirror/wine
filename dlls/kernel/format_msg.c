@@ -34,7 +34,7 @@ DEFAULT_DEBUG_CHANNEL(resource);
  *      8: DWORD offset from start to the stringentries
  *
  * (lastentry-firstentry) * stringentry:
- * 0: WORD len (0 marks end)
+ * 0: WORD len (0 marks end)	[ includes the 4 byte header length ]
  * 2: WORD flags
  * 4: CHAR[len-4]
  * 	(stringentry i of a subentry refers to the ID 'firstentry+i')
@@ -79,7 +79,7 @@ static INT load_messageA( HMODULE instance, UINT id, WORD lang,
     for (i=id;i--;) {
     	if (!mre->Length)
 		return 0;
-    	mre = (PMESSAGE_RESOURCE_ENTRY)(((char*)mre)+(mre->Length)+2*sizeof(USHORT));
+    	mre = (PMESSAGE_RESOURCE_ENTRY)(((char*)mre)+mre->Length);
     }
     slen=mre->Length;
     TRACE("	- strlen=%d\n",slen);
