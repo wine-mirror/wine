@@ -185,8 +185,7 @@ SHChangeNotifyRegister(
  * SHChangeNotifyDeregister			[SHELL32.4]
  */
 BOOL WINAPI
-SHChangeNotifyDeregister(
-	HANDLE hNotify)
+SHChangeNotifyDeregister(HANDLE hNotify)
 {
 	TRACE("(%p)\n",hNotify);
 
@@ -209,76 +208,44 @@ SHChangeNotifyUpdateEntryList(DWORD unknown1, DWORD unknown2,
 /*************************************************************************
  * SHChangeNotify				[SHELL32.@]
  */
-void WINAPI SHChangeNotifyW (LONG wEventId, UINT  uFlags, LPCVOID dwItem1, LPCVOID dwItem2)
-{
-	LPITEMIDLIST pidl1=(LPITEMIDLIST)dwItem1, pidl2=(LPITEMIDLIST)dwItem2;
-	LPNOTIFICATIONLIST ptr;
-
-	TRACE("(0x%08lx,0x%08x,%p,%p):stub.\n", wEventId,uFlags,dwItem1,dwItem2);
-
-	/* convert paths in IDLists*/
-	if(uFlags & SHCNF_PATHA)
-	{
-	  DWORD dummy;
-	  if (dwItem1) SHILCreateFromPathA((LPCSTR)dwItem1, &pidl1, &dummy);
-	  if (dwItem2) SHILCreateFromPathA((LPCSTR)dwItem2, &pidl2, &dummy);
-	}
-
-	EnterCriticalSection(&SHELL32_ChangenotifyCS);
-
-	/* loop through the list */
-	ptr = head.next;
-	while(ptr != &tail)
-	{
-	  TRACE("trying %p\n", ptr);
-
-	  if(wEventId & ptr->wEventMask)
-	  {
-	    TRACE("notifying\n");
-	    SendMessageA(ptr->hwnd, ptr->uMsg, (WPARAM)pidl1, (LPARAM)pidl2);
-	  }
-	  ptr = ptr->next;
-	}
-
-	LeaveCriticalSection(&SHELL32_ChangenotifyCS);
-
-	if(uFlags & SHCNF_PATHA)
-	{
-            if (pidl1) SHFree(pidl1);
-            if (pidl2) SHFree(pidl2);
-	}
-}
-
-/*************************************************************************
- * SHChangeNotify				[SHELL32.@]
- */
-void WINAPI SHChangeNotifyA (LONG wEventId, UINT  uFlags, LPCVOID dwItem1, LPCVOID dwItem2)
+void WINAPI SHChangeNotify(LONG wEventId, UINT uFlags, LPCVOID dwItem1, LPCVOID dwItem2)
 {
 	LPITEMIDLIST Pidls[2];
 	LPNOTIFICATIONLIST ptr;
+	DWORD dummy;
+	UINT typeFlag = uFlags & SHCNF_TYPE;
 
 	Pidls[0] = (LPITEMIDLIST)dwItem1;
 	Pidls[1] = (LPITEMIDLIST)dwItem2;
 
-	TRACE("(0x%08lx,0x%08x,%p,%p):stub.\n", wEventId,uFlags,dwItem1,dwItem2);
+	TRACE("(0x%08lx,0x%08x,%p,%p):stub.\n", wEventId, uFlags, dwItem1, dwItem2);
 
 	/* convert paths in IDLists*/
-	if(uFlags & SHCNF_PATHA)
+	switch (typeFlag)
 	{
-	  DWORD dummy;
-	  if (Pidls[0]) SHILCreateFromPathA((LPCSTR)dwItem1, &Pidls[0], &dummy);
-	  if (Pidls[1]) SHILCreateFromPathA((LPCSTR)dwItem2, &Pidls[1], &dummy);
+	  case SHCNF_PATHA:
+	    if (dwItem1) SHILCreateFromPathA((LPCSTR)dwItem1, &Pidls[0], &dummy);
+	    if (dwItem2) SHILCreateFromPathA((LPCSTR)dwItem2, &Pidls[1], &dummy);
+	    break;
+	  case SHCNF_PATHW:
+	    if (dwItem1) SHILCreateFromPathW((LPCWSTR)dwItem1, &Pidls[0], &dummy);
+	    if (dwItem2) SHILCreateFromPathW((LPCWSTR)dwItem2, &Pidls[1], &dummy);
+	    break;
+	  case SHCNF_PRINTERA:
+	  case SHCNF_PRINTERW:
+	    FIXME("SHChangeNotify with (uFlags & SHCNF_PRINTER)");
+	    break;
 	}
 
 	EnterCriticalSection(&SHELL32_ChangenotifyCS);
 
 	/* loop through the list */
 	ptr = head.next;
-	while(ptr != &tail)
+	while (ptr != &tail)
 	{
 	  TRACE("trying %p\n", ptr);
 
-	  if(wEventId & ptr->wEventMask)
+	  if (wEventId & ptr->wEventMask)
 	  {
 	    TRACE("notifying\n");
 	    SendMessageA(ptr->hwnd, ptr->uMsg, (WPARAM)&Pidls, (LPARAM)wEventId);
@@ -289,22 +256,11 @@ void WINAPI SHChangeNotifyA (LONG wEventId, UINT  uFlags, LPCVOID dwItem1, LPCVO
 	LeaveCriticalSection(&SHELL32_ChangenotifyCS);
 
 	/* if we allocated it, free it */
-	if(uFlags & SHCNF_PATHA)
+	if ((typeFlag == SHCNF_PATHA) || (typeFlag == SHCNF_PATHW))
 	{
-            if (Pidls[0]) SHFree(Pidls[0]);
-            if (Pidls[1]) SHFree(Pidls[1]);
+	  if (Pidls[0]) SHFree(Pidls[0]);
+	  if (Pidls[1]) SHFree(Pidls[1]);
 	}
-}
-
-/*************************************************************************
- * SHChangeNotify				[SHELL32.@]
- */
-void WINAPI SHChangeNotifyAW (LONG wEventId, UINT  uFlags, LPCVOID dwItem1, LPCVOID dwItem2)
-{
-	if(SHELL_OsIsUnicode())
-	  SHChangeNotifyW (wEventId, uFlags, dwItem1, dwItem2);
-	else
-	  SHChangeNotifyA (wEventId, uFlags, dwItem1, dwItem2);
 }
 
 /*************************************************************************

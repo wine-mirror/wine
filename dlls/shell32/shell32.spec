@@ -68,7 +68,7 @@
   74 stdcall SHCreateStdEnumFmtEtc(long ptr ptr) SHCreateStdEnumFmtEtc
   75 stdcall PathYetAnotherMakeUniqueName(ptr ptr ptr ptr) PathYetAnotherMakeUniqueNameA
   76 stub DragQueryInfo
-  77 stdcall SHMapPIDLToSystemImageListIndex(long long long) SHMapPIDLToSystemImageListIndex
+  77 stdcall SHMapPIDLToSystemImageListIndex(ptr ptr ptr) SHMapPIDLToSystemImageListIndex
   78 stdcall OleStrToStrN(str long wstr long) OleStrToStrNAW
   79 stdcall StrToOleStrN(wstr long str long) StrToOleStrNAW
   80 stdcall DragFinish(long) DragFinish
@@ -79,7 +79,7 @@
   85 forward OpenRegStream shlwapi.SHOpenRegStreamA
   86 stdcall SHRegisterDragDrop(long ptr) SHRegisterDragDrop
   87 stdcall SHRevokeDragDrop(long) SHRevokeDragDrop
-  88 stdcall SHDoDragDrop(long long long long long) SHDoDragDrop
+  88 stdcall SHDoDragDrop(long ptr ptr long ptr) SHDoDragDrop
   89 stdcall SHCloneSpecialIDList(long long long) SHCloneSpecialIDList
   90 stub SHFindFiles
   91 stub SHFindComputer
@@ -87,7 +87,7 @@
   93 stub Win32CreateDirectory
   94 stub Win32RemoveDirectory
   95 stdcall SHLogILFromFSIL (ptr) SHLogILFromFSIL
-  96 stdcall StrRetToStrN (long long long long) StrRetToStrNAW
+  96 stdcall StrRetToStrN (ptr long ptr ptr) StrRetToStrNAW
   97 stdcall SHWaitForFileToOpen (long long long) SHWaitForFileToOpen
   98 stdcall SHGetRealIDL (long long long) SHGetRealIDL
   99 stdcall SetAppStartingCursor (long long) SetAppStartingCursor
@@ -354,7 +354,7 @@
 @ stdcall SHBrowseForFolder(ptr) SHBrowseForFolderA
 @ stdcall SHBrowseForFolderA(ptr) SHBrowseForFolderA
 @ stdcall SHBrowseForFolderW(ptr) SHBrowseForFolderW
-@ stdcall SHChangeNotify (long long ptr ptr) SHChangeNotifyAW
+@ stdcall SHChangeNotify (long long ptr ptr) SHChangeNotify
 @ stub ShellHookProc
 @ stub SHEmptyRecycleBinA@12
 @ stub SHEmptyRecycleBinW@12
@@ -371,8 +371,8 @@
 @ stdcall SHGetMalloc(ptr)SHGetMalloc
 @ stub SHGetNewLinkInfo@20
 @ stdcall SHGetPathFromIDList(ptr ptr)SHGetPathFromIDListAW
-@ stdcall SHGetPathFromIDListA(long long)SHGetPathFromIDListA
-@ stdcall SHGetPathFromIDListW(long long)SHGetPathFromIDListW
+@ stdcall SHGetPathFromIDListA(ptr ptr)SHGetPathFromIDListA
+@ stdcall SHGetPathFromIDListW(ptr ptr)SHGetPathFromIDListW
 @ stdcall SHGetSettings(ptr long) SHGetSettings
 @ stdcall SHGetSpecialFolderLocation(long long ptr)SHGetSpecialFolderLocation
 @ stdcall SHHelpShortcuts_RunDLL(long long long long) SHHelpShortcuts_RunDLL

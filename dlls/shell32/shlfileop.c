@@ -141,7 +141,7 @@ DWORD WINAPI SHCreateDirectory(LPSECURITY_ATTRIBUTES sec,LPCSTR path)
 	TRACE("(%p,%s)\n",sec,path);
 	if ((ret = CreateDirectoryA(path,sec)))
 	{
-	  SHChangeNotifyA(SHCNE_MKDIR, SHCNF_PATHA, path, NULL);
+	  SHChangeNotify(SHCNE_MKDIR, SHCNF_PATHA, path, NULL);
 	}
 	return ret;
 }
@@ -152,17 +152,15 @@ DWORD WINAPI SHCreateDirectory(LPSECURITY_ATTRIBUTES sec,LPCSTR path)
  * Deletes a file.  Also triggers a change notify if one exists.
  *
  * FIXME:
- * Verified on Win98 / IE 5 (SHELL32 4.72, March 1999 build) to be
- * ANSI.  Is this Unicode on NT?
- *
+ * Verified on Win98 / IE 5 (SHELL32 4.72, March 1999 build) to be ANSI.
+ * This is Unicode on NT/2000
  */
-
 BOOL WINAPI Win32DeleteFile(LPSTR fName)
 {
 	TRACE("%p(%s)\n", fName, fName);
 
 	DeleteFileA(fName);
-	SHChangeNotifyA(SHCNE_DELETE, SHCNF_PATHA, fName, NULL);
+	SHChangeNotify(SHCNE_DELETE, SHCNF_PATHA, fName, NULL);
 	return TRUE;
 }
 
