@@ -126,6 +126,7 @@ LRESULT CALLBACK ChildWndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lPa
         pChildWnd->hWnd = hWnd;
         pChildWnd->hTreeWnd = CreateTreeView(hWnd, pChildWnd->szPath, TREE_WINDOW);
         pChildWnd->hListWnd = CreateListView(hWnd, LIST_WINDOW/*, pChildWnd->szPath*/);
+        SetFocus(pChildWnd->hTreeWnd);
         break;
     case WM_COMMAND:
         if (!_CmdWndProc(hWnd, message, wParam, lParam)) {
@@ -243,12 +244,17 @@ LRESULT CALLBACK ChildWndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lPa
 		    }
                 }
                 break;
+	    case NM_SETFOCUS:
+		pChildWnd->nFocusPanel = 1;
+		break;
             default:
                 goto def;
             }
         } else
             if ((int)wParam == LIST_WINDOW) {
-                if (!SendMessage(pChildWnd->hListWnd, message, wParam, lParam)) {
+		if (((LPNMHDR)lParam)->code == NM_SETFOCUS) {
+		    pChildWnd->nFocusPanel = 0;
+		} else if (!SendMessage(pChildWnd->hListWnd, message, wParam, lParam)) {
                     goto def;
                 }
             }
