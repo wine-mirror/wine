@@ -971,72 +971,117 @@ void WINAPI FreeProcInstance16( FARPROC16 func )
     TASK_FreeThunk( GetCurrentTask(), (SEGPTR)func );
 }
 
+/**********************************************************************
+ *	    TASK_GetCodeSegment
+ * 
+ * Helper function for GetCodeHandle/GetCodeInfo: Retrieve the module 
+ * and logical segment number of a given code segment.
+ *
+ * 'proc' either *is* already a pair of module handle and segment number,
+ * in which case there's nothing to do.  Otherwise, it is a pointer to
+ * a function, and we need to retrieve the code segment.  If the pointer
+ * happens to point to a thunk, we'll retrieve info about the code segment
+ * where the function pointed to by the thunk resides, not the thunk itself.
+ *
+ * FIXME: if 'proc' is a SNOOP16 return stub, we should retrieve info about
+ *        the function the snoop code will return to ...
+ *
+ */
+static BOOL TASK_GetCodeSegment( FARPROC16 proc, NE_MODULE **ppModule, 
+                                 SEGTABLEENTRY **ppSeg, int *pSegNr )
+{
+    NE_MODULE *pModule = NULL;
+    SEGTABLEENTRY *pSeg = NULL;
+    int segNr;
+
+    /* Try pair of module handle / segment number */
+    pModule = (NE_MODULE *) GlobalLock16( HIWORD( proc ) );
+    if ( pModule && pModule->magic == IMAGE_OS2_SIGNATURE )
+    {
+        segNr = LOWORD( proc );
+        if ( segNr && segNr <= pModule->seg_count )
+            pSeg = NE_SEG_TABLE( pModule ) + segNr-1;
+    }
+
+    /* Try thunk or function */
+    else 
+    {
+        BYTE *thunk = (BYTE *)PTR_SEG_TO_LIN( proc );
+        WORD selector;
+
+        if ((thunk[0] == 0xb8) && (thunk[3] == 0xea))
+            selector = thunk[6] + (thunk[7] << 8);
+        else
+            selector = HIWORD( proc );
+
+        pModule = NE_GetPtr( GlobalHandle16( selector ) );
+        pSeg = pModule? NE_SEG_TABLE( pModule ) : NULL;
+
+        if ( pModule )
+            for ( segNr = 1; segNr <= pModule->seg_count; segNr++, pSeg++ )
+                if ( GlobalHandleToSel16(pSeg->hSeg) == selector )
+                    break;
+
+        if ( pModule && segNr > pModule->seg_count )
+            pSeg = NULL;
+    }
+
+    /* Abort if segment not found */
+
+    if ( !pModule || !pSeg )
+        return FALSE;
+
+    /* Return segment data */
+
+    if ( ppModule ) *ppModule = pModule;
+    if ( ppSeg    ) *ppSeg    = pSeg;
+    if ( pSegNr   ) *pSegNr   = segNr;
+
+    return TRUE;
+}
 
 /**********************************************************************
  *	    GetCodeHandle    (KERNEL.93)
  */
 HANDLE16 WINAPI GetCodeHandle16( FARPROC16 proc )
 {
-    HANDLE16 handle;
-    BYTE *thunk = (BYTE *)PTR_SEG_TO_LIN( proc );
+    SEGTABLEENTRY *pSeg;
 
-    /* Return the code segment containing 'proc'. */
-    /* Not sure if this is really correct (shouldn't matter that much). */
+    if ( !TASK_GetCodeSegment( proc, NULL, &pSeg, NULL ) )
+        return (HANDLE16)0;
 
-    /* Check if it is really a thunk */
-    if ((thunk[0] == 0xb8) && (thunk[3] == 0xea))
-        handle = GlobalHandle16( thunk[6] + (thunk[7] << 8) );
-    else
-        handle = GlobalHandle16( HIWORD(proc) );
-
-    return handle;
+    return pSeg->hSeg;
 }
 
 /**********************************************************************
  *	    GetCodeInfo    (KERNEL.104)
  */
-VOID WINAPI GetCodeInfo16( FARPROC16 proc, SEGINFO *segInfo )
+BOOL16 WINAPI GetCodeInfo16( FARPROC16 proc, SEGINFO *segInfo )
 {
-    BYTE *thunk = (BYTE *)PTR_SEG_TO_LIN( proc );
-    NE_MODULE *pModule = NULL;
-    SEGTABLEENTRY *pSeg = NULL;
-    WORD segNr;
+    NE_MODULE *pModule;
+    SEGTABLEENTRY *pSeg;
+    int segNr;
 
-    /* proc is either a thunk, or else a pair of module handle
-       and segment number. In the first case, we also need to
-       extract module and segment number. */
+    if ( !TASK_GetCodeSegment( proc, &pModule, &pSeg, &segNr ) )
+        return FALSE;
 
-    if ((thunk[0] == 0xb8) && (thunk[3] == 0xea))
-    {
-        WORD selector = thunk[6] + (thunk[7] << 8);
-        pModule = NE_GetPtr( GlobalHandle16( selector ) );
-        pSeg = pModule? NE_SEG_TABLE( pModule ) : NULL;
+    /* Fill in segment information */
 
-        if ( pModule )
-            for ( segNr = 0; segNr < pModule->seg_count; segNr++, pSeg++ )
-                if ( GlobalHandleToSel16(pSeg->hSeg) == selector )
-                    break;
+    segInfo->offSegment = pSeg->filepos;
+    segInfo->cbSegment  = pSeg->size;
+    segInfo->flags      = pSeg->flags;
+    segInfo->cbAlloc    = pSeg->minsize;
+    segInfo->h          = pSeg->hSeg;
+    segInfo->alignShift = pModule->alignment;
 
-        if ( pModule && segNr >= pModule->seg_count )
-            pSeg = NULL;
-    }
-    else
-    {
-        pModule = NE_GetPtr( HIWORD( proc ) );
-        segNr   = LOWORD( proc );
+    if ( segNr == pModule->dgroup )
+        segInfo->cbAlloc += pModule->heap_size + pModule->stack_size;
 
-        if ( pModule && segNr < pModule->seg_count )
-            pSeg = NE_SEG_TABLE( pModule ) + segNr;
-    }
+    /* Return module handle in %es */
 
-    /* fill in segment information */
+    CURRENT_STACK16->es = GlobalHandleToSel16( pModule->self );
 
-    segInfo->offSegment = pSeg? pSeg->filepos : 0;
-    segInfo->cbSegment  = pSeg? pSeg->size : 0;
-    segInfo->flags      = pSeg? pSeg->flags : 0;
-    segInfo->cbAlloc    = pSeg? pSeg->minsize : 0;
-    segInfo->h          = pSeg? pSeg->hSeg : 0;
-    segInfo->alignShift = pModule? pModule->alignment : 0;
+    return TRUE;
 }
 
 
