@@ -22,6 +22,7 @@
 #include "sysmetrics.h"
 #include "task.h"
 #include "heap.h"
+#include "menu.h"
 #include "module.h"
 #include "neexe.h"
 #include "nonclient.h"
@@ -611,9 +612,9 @@ static HBITMAP32 MENU_LoadMagicItem(UINT32 id,BOOL32 hilite)
 
     switch(id)
     {
-    case 3  : return (hilite ? hBmpMinimizeD : hBmpMinimize);
-    case 2  : return (hilite ? hBmpMaximizeD: hBmpMaximize);
-    case 5  : return (hilite ? hBmpClose : hBmpClose);
+    case MAGIC_REDUCE   : return (hilite ? hBmpMinimizeD : hBmpMinimize);
+    case MAGIC_RESTORE  : return (hilite ? hBmpMaximizeD: hBmpMaximize);
+    case MAGIC_CLOSE    : return (hilite ? hBmpClose : hBmpClose);
     default : return 0;
     }
 

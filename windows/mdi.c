@@ -25,6 +25,7 @@
 #include "resource.h"
 #include "struct32.h"
 #include "sysmetrics.h"
+#include "tweak.h"
 #include "debug.h"
 
 #define MDIF_NEEDUPDATE		0x0001
@@ -775,20 +776,24 @@ static BOOL32 MDI_AugmentFrameMenu( MDICLIENTINFO* ci, WND *frame,
     TRACE(mdi,"\tgot popup %04x in sysmenu %04x\n", 
 		hSysPopup, child->hSysMenu);
  
+     AppendMenu32A(frame->wIDmenu,MF_HELP | MF_BITMAP,
+                   SC_MINIMIZE, (LPSTR)(DWORD)MAGIC_REDUCE ) ;
+     AppendMenu32A(frame->wIDmenu,MF_HELP | MF_BITMAP,
+                   SC_RESTORE, (LPSTR)(DWORD)MAGIC_RESTORE );
+
+     // The close button is only present in Win 95 look
+     if(TWEAK_WineLook > WIN31_LOOK)
+     {
     if( !InsertMenu32A(frame->wIDmenu,0,MF_BYPOSITION | MF_BITMAP | MF_POPUP,
                     hSysPopup, (LPSTR)(DWORD)hBmpClose ))
     {  
+             TRACE(mdi,"not inserted\n");
 	DestroyMenu32(hSysPopup); 
 	return 0; 
     }
-
-    // Using the magic menu id's to insert system buttons in the menu bar
     AppendMenu32A(frame->wIDmenu,MF_HELP | MF_BITMAP,
-                   SC_MINIMIZE, (LPSTR)(DWORD)3 ) ;
-    AppendMenu32A(frame->wIDmenu,MF_HELP | MF_BITMAP,
-                   SC_RESTORE, (LPSTR)(DWORD)2 );
-    AppendMenu32A(frame->wIDmenu,MF_HELP | MF_BITMAP,
-                    SC_CLOSE, (LPSTR)(DWORD)5 );
+                       SC_CLOSE, (LPSTR)(DWORD)MAGIC_CLOSE );
+     }
 
     EnableMenuItem32(hSysPopup, SC_SIZE, MF_BYCOMMAND | MF_GRAYED);
     EnableMenuItem32(hSysPopup, SC_MOVE, MF_BYCOMMAND | MF_GRAYED);
@@ -806,24 +811,30 @@ static BOOL32 MDI_AugmentFrameMenu( MDICLIENTINFO* ci, WND *frame,
 static BOOL32 MDI_RestoreFrameMenu( WND *frameWnd, HWND32 hChild )
 {
     INT32 nItems = GetMenuItemCount32(frameWnd->wIDmenu) - 1;
+    UINT32 iId = GetMenuItemID32(frameWnd->wIDmenu,nItems) ;
 
-    TRACE(mdi,"for child %04x\n",hChild);
+    TRACE(mdi,"frameWnd %p,child %04x\n",frameWnd,hChild);
 
-    if( GetMenuItemID32(frameWnd->wIDmenu,nItems) != SC_CLOSE )
+    if(!(iId == SC_RESTORE || iId == SC_CLOSE) )
 	return 0; 
 
+    if(TWEAK_WineLook > WIN31_LOOK)
+    {
+        // app button
     RemoveMenu32(frameWnd->wIDmenu,0,MF_BYPOSITION);
-
+        // close
     DeleteMenu32(frameWnd->wIDmenu,GetMenuItemCount32(frameWnd->wIDmenu) - 1,MF_BYPOSITION);
+    }
+    // restore
     DeleteMenu32(frameWnd->wIDmenu,GetMenuItemCount32(frameWnd->wIDmenu) - 1,MF_BYPOSITION);
+    // minimize
     DeleteMenu32(frameWnd->wIDmenu,GetMenuItemCount32(frameWnd->wIDmenu) - 1,MF_BYPOSITION);
-
-
 
     DrawMenuBar32(frameWnd->hwndSelf);
 
     return 1;
 }
+
 
 /**********************************************************************
  *				        MDI_UpdateFrameText

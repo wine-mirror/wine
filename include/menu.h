@@ -5,6 +5,10 @@
 #ifndef __WINE_MENU_H
 #define __WINE_MENU_H
 
+#define MAGIC_REDUCE  3
+#define MAGIC_RESTORE 2
+#define MAGIC_CLOSE   5
+
 extern BOOL32 MENU_Init(void);
 extern HMENU32 MENU_GetSysMenu(HWND32 hWndOwner, HMENU32 hSysPopup);
 extern UINT32 MENU_GetMenuBarHeight( HWND32 hwnd, UINT32 menubarWidth,
