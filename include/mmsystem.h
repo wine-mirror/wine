@@ -5,6 +5,10 @@
 #ifndef __WINE_MMSYSTEM_H
 #define __WINE_MMSYSTEM_H
 
+#ifdef __cplusplus
+extern "C" {
+#endif 
+
 typedef LPSTR		    HPSTR;          /* a huge version of LPSTR */
 typedef LPCSTR			HPCSTR;         /* a huge version of LPCSTR */
 
@@ -192,6 +196,7 @@ BOOL32 WINAPI PlaySound32W(LPCWSTR pszSound, HMODULE32 hmod, DWORD fdwSound);
 #define SND_FILENAME    0x00020000L /* name is file name */
 #define SND_RESOURCE    0x00040004L /* name is resource name or atom */
 #define SND_PURGE	0x00000040L /* purge all sounds */
+#define SND_APPLICATION     0x00000080L  /* look for application specific association */
 
 /* waveform audio error return values */
 #define WAVERR_BADFORMAT      (WAVERR_BASE + 0)    /* unsupported wave format */
@@ -1596,7 +1601,11 @@ typedef struct {
         DWORD		dwReserved1;
         DWORD		dwReserved2;
         HMMIO32		hmmio;
-} MMIOINFO32, *LPMMIOINFO32;
+} MMIOINFO32, *PMMIOINFO32, *LPMMIOINFO32;
+
+DECL_WINELIB_TYPE(MMIOINFO)
+DECL_WINELIB_TYPE(PMMIOINFO)
+DECL_WINELIB_TYPE(LPMMIOINFO)
 
 typedef struct _MMCKINFO
 {
@@ -1672,7 +1681,7 @@ typedef struct _MMCKINFO
 LPMMIOPROC16 WINAPI mmioInstallIOProc16(FOURCC,LPMMIOPROC16,DWORD);
 LPMMIOPROC32 WINAPI mmioInstallIOProc32A(FOURCC,LPMMIOPROC32,DWORD);
 LPMMIOPROC32 WINAPI mmioInstallIOProc32W(FOURCC,LPMMIOPROC32,DWORD);
-#define      mmioInstallIOPro WINELIB_NAME_AW(mmioInstallIOProc)
+#define      mmioInstallIOProc WINELIB_NAME_AW(mmioInstallIOProc)
 
 FOURCC WINAPI	mmioStringToFOURCC16(LPCSTR,UINT16);
 FOURCC WINAPI	mmioStringToFOURCC32A(LPCSTR,UINT32);
@@ -2960,5 +2969,9 @@ DWORD WINAPI widMessage(WORD wDevID, WORD wMsg, DWORD dwUser,
 DWORD WINAPI wodMessage(WORD wDevID, WORD wMsg, DWORD dwUser, 
 					DWORD dwParam1, DWORD dwParam2);
 #pragma pack(4)
+
+#ifdef __cplusplus
+}
+#endif 
 
 #endif /* __WINE_MMSYSTEM_H */
