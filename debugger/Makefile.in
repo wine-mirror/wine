@@ -24,14 +24,14 @@ C_SRCS = \
 	winedbg.c
 
 EXTRA_SRCS = dbg.y debug.l
-EXTRA_OBJS = y.tab.o lex.yy.o
+EXTRA_OBJS = y.tab.o @LEX_OUTPUT_ROOT@.o
 
 @MAKE_PROG_RULES@
 
 y.tab.c y.tab.h: dbg.y
 	$(YACC) -d -t $(SRCDIR)/dbg.y
 
-lex.yy.c: debug.l
+@LEX_OUTPUT_ROOT@.c: debug.l
 	$(LEX) -8 -I $(SRCDIR)/debug.l
 
 ### Dependencies:

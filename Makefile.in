@@ -151,7 +151,7 @@ clean::
 	$(RM) wine
 
 distclean: clean
-	$(RM) config.* TAGS Make.rules dlls/Makedll.rules programs/Makeprog.rules include/config.h documentation/wine.man documentation/wine.conf.man tools/winelauncher
+	$(RM) config.* TAGS Make.rules dlls/Makedll.rules programs/Makeprog.rules include/config.h include/wine/version.h
 	$(RM) `find . \( -name Makefile -o -size 0 \) -print`
 
 ### Dependencies:

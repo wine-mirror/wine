@@ -1,10 +1,10 @@
-DEFS      = -D__WINE__
+DEFS      = -D__WINE__ -DLEX_OUTPUT_ROOT="\"@LEX_OUTPUT_ROOT@\"" 
 TOPSRCDIR = @top_srcdir@
 TOPOBJDIR = ..
 SRCDIR    = @srcdir@
 VPATH     = @srcdir@
 
-PROGRAMS = makedep fnt2bdf bin2res
+PROGRAMS = makedep fnt2bdf bin2res winelauncher
 MODULE   = none
 
 C_SRCS = makedep.c fnt2bdf.c bin2res.c
@@ -39,6 +39,9 @@ fnt2bdf: fnt2bdf.o
 
 bin2res: bin2res.o
 	$(CC) $(CFLAGS) -o bin2res bin2res.o
+
+winelauncher: winelauncher.in
+	sed -e 's,@bindir\@,$(bindir),g' -e 's,@libdir\@,$(libdir),g' $(SRCDIR)/winelauncher.in >winelauncher
 
 install:: $(PROGRAMS) $(INSTALLSUBDIRS:%=%/__install__)
 	[ -d $(bindir) ] || $(MKDIR) $(bindir)

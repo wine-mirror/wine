@@ -13,7 +13,7 @@ C_SRCS = \
 	string.c
 
 EXTRA_SRCS = macro.yacc.y macro.lex.l
-EXTRA_OBJS = y.tab.o lex.yy.o
+EXTRA_OBJS = y.tab.o @LEX_OUTPUT_ROOT@.o
 
 RC_SRCS = rsrc.rc
 
@@ -33,7 +33,7 @@ uninstall::
 y.tab.c y.tab.h: macro.yacc.y
 	$(YACC) -d -t $(SRCDIR)/macro.yacc.y
 
-lex.yy.c: macro.lex.l
+@LEX_OUTPUT_ROOT@.c: macro.lex.l
 	$(LEX) -8 -i $(SRCDIR)/macro.lex.l
 
 ### Dependencies:

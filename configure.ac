@@ -1,54 +1,39 @@
 dnl Process this file with autoconf to produce a configure script.
-dnl Author: Michael Patra   <micky@marie.physik.tu-berlin.de>
-dnl                         <patra@itp1.physik.tu-berlin.de>
-dnl Ported to autoconf 2.5x by bero@redhat.com
-AC_REVISION([configure.in 1.00])
-AC_INIT(controls/edit.c)		
-AC_CONFIG_HEADER(include/config.h)
+dnl Original author: Michael Patra
+dnl See ChangeLog file for detailed change history.
+
+m4_define(WINE_VERSION,regexp(m4_include(VERSION),[version \([-.0-9A-Za-z]+\)],[\1]))
+
+AC_PREREQ(2.50)
+AC_INIT([Wine],WINE_VERSION)
+AC_CONFIG_SRCDIR(server/atom.c)		
+AC_CONFIG_HEADERS(include/config.h)
 AC_CONFIG_AUX_DIR(tools)
 
 dnl **** Command-line arguments ****
 
 dnl Default values
 LIBEXT=so       # library type .so or .a
-TRACE_MSGS=yes	# the TRACE() macro
-DEBUG_MSGS=yes	# the TRACE(), WARN(), and FIXME() macros.
-CURSES=yes
-OPENGL=normal
 
-AC_ARG_ENABLE(debug,
-[  --disable-debug         compile out all debugging messages],
-[if test "$enableval" = "no"; then DEBUG_MSGS="no"; fi])
-
-AC_ARG_ENABLE(opengl,
-[  --enable-opengl         force usage of OpenGL even if the latter is thread-safe via pthread],
-[if test "$enableval" = "no"; then OPENGL="no"; elif test "$enableval" = "yes"; then OPENGL="yes"; fi])
-
-AC_ARG_ENABLE(trace,
-[  --disable-trace         compile out TRACE messages],
-[if test "$enableval" = "no"; then TRACE_MSGS="no"; fi])
-
-AC_ARG_WITH(curses,
-[  --without-curses        do not use curses],
-[if test "$withval" = "no"; then CURSES="no"; fi])
-
-AC_ARG_WITH(reentrant-x,
-[  --without-reentrant-x   compile for use with non-reentrant X libraries])
+AC_ARG_ENABLE(debug, AC_HELP_STRING([--disable-debug],[compile out all debugging messages]))
+AC_ARG_ENABLE(trace, AC_HELP_STRING([--disable-trace],[compile out TRACE messages]))
+AC_ARG_ENABLE(opengl,AC_HELP_STRING([--enable-opengl],[force usage of OpenGL even if the latter is thread-safe via pthread]))
+AC_ARG_WITH(curses,     AC_HELP_STRING([--without-curses],[do not use curses]))
+AC_ARG_WITH(reentrant-x,AC_HELP_STRING([--without-reentrant-x],[compile for use with non-reentrant X libraries]))
 
 AC_SUBST(OPTIONS)
-
-if test "$DEBUG_MSGS" = "no"
+if test "x$enable_debug" = "xno"
 then
-    OPTIONS="$OPTIONS -DNO_DEBUG_MSGS"
+    AC_DEFINE(NO_DEBUG_MSGS,1,[Define to disable all debug messages.])
 fi
-
-if test "$TRACE_MSGS" = "no" -o "$DEBUG_MSGS" = "no"
+if test "x$enable_trace" = "xno" -o "x$enable_debug" = "xno"
 then
-    OPTIONS="$OPTIONS -DNO_TRACE_MSGS"
+    AC_DEFINE(NO_TRACE_MSGS,1,[Define to disable trace messages.])
 fi
 
 dnl **** Check for some programs ****
 
+AC_CANONICAL_TARGET
 AC_PROG_MAKE_SET
 AC_PROG_CC
 AC_PROG_CPP
@@ -61,24 +46,18 @@ dnl **** without one present.
 AC_CHECK_PROGS(XYACC,$YACC bison yacc,none)
 if test "$XYACC" = "none"
 then
-	echo "*** Error: No suitable bison/yacc found. ***"
-	echo "    Please install the 'bison' package."
-	exit 1
+  AC_MSG_ERROR([no suitable bison/yacc found. Please install the 'bison' package.])
 fi
 AC_CHECK_PROGS(XLEX,$LEX flex lex,none)
 if test "$XLEX" = "none"
 then
-	echo "*** Error: No suitable lex found. ***"
-	echo "    Please install the 'flex' package."
-	exit 1
+  AC_MSG_ERROR([no suitable lex found. Please install the 'flex' package.])
 fi
 AC_PROG_RANLIB
 AC_PROG_INSTALL
 AC_PROG_LN_S
 AC_CHECK_PROG(C2MAN,c2man,c2man,\$(TOPSRCDIR)/tools/c2man.pl)
 AC_PATH_PROG(LDCONFIG, ldconfig, true, /sbin:/usr/sbin:$PATH)
-AC_CYGWIN
-AC_CHECK_PROG(DLLWRAP,dllwrap,dllwrap,false)
 
 dnl Check for lint
 AC_CHECK_PROGS(LINT, lclint lint)
@@ -90,12 +69,10 @@ fi
 AC_SUBST(LINT)
 AC_SUBST(LINTFLAGS)
 
-if test "$CYGWIN" = "yes"
-then
-    LDCOMBINE="ld -r --enable-stdcall-fixup"
-else
-    LDCOMBINE="ld -r"
-fi
+case $host_os in
+  *cygwin*) LDCOMBINE="ld -r --enable-stdcall-fixup" ;;
+         *) LDCOMBINE="ld -r" ;;
+esac
 AC_SUBST(LDCOMBINE)
 
 dnl **** Check for some libraries ****
@@ -171,7 +148,7 @@ then
               AC_DEFINE(HAVE_XKB, 1, [Define if you have the XKB extension]),,
               $X_LIBS -lXext -lX11 $X_EXTRA_LIBS)
             ],
-            AC_MSG_WARN([XKB extension not found!!])
+            AC_MSG_WARN([[Xkb extension not found, Wine will be built without it]])
         )
 
         dnl *** Check for X Shm extension
@@ -181,7 +158,7 @@ then
               AC_DEFINE(HAVE_LIBXXSHM, 1, [Define if you have the X Shm extension]),,
               $X_LIBS -lXext -lX11 $X_EXTRA_LIBS)
             ],
-            AC_MSG_WARN([Xshm extension not found!!])
+            AC_MSG_WARN([[XShm extension not found, Wine will be built without it]])
         )
 
         dnl *** Check for X shape extension
@@ -191,7 +168,7 @@ then
 	      AC_DEFINE(HAVE_LIBXSHAPE, 1, [Define if you have the X Shape extension]),,
 	      $X_LIBS -lXext -lX11 $X_EXTRA_LIBS)
 	    ],
-	    AC_MSG_WARN([XShape extension not found!!])
+	    AC_MSG_WARN([[XShape extension not found, Wine will be built without it]])
 	)
         
         dnl *** Check for XFree86 DGA / DGA 2.0 extension
@@ -217,7 +194,7 @@ then
                 $X_LIBS -lXext -lX11 $X_EXTRA_LIBS
               )
             ],
-            AC_MSG_WARN([DGA extension not found!!])
+            AC_MSG_WARN([[DGA extension not found, Wine will be built without it]])
         )
 
         dnl *** Check for XFree86 VMODE extension
@@ -230,7 +207,7 @@ then
                   $X_LIBS -lXext -lX11 $X_EXTRA_LIBS
                 )
             ],
-            AC_MSG_WARN([XFree86 VMODE extension not found!!])
+            AC_MSG_WARN([[XFree86 VMODE extension not found, Wine will be built without it]])
         )
 
         dnl *** Check for XVideo extension supporting XvImages
@@ -243,7 +220,7 @@ then
                   $X_LIBS -lXext -lX11 $X_EXTRA_LIBS
                 )
             ],
-            AC_MSG_WARN([XVideo extension not found !!])
+            AC_MSG_WARN([[XVideo extension not found, Wine will be built without it]])
         )
 
         dnl *** Check for XRender extension
@@ -256,14 +233,14 @@ then
                   $X_LIBS -lXext -lX11 $X_EXTRA_LIBS
                 )
             ],
-            AC_MSG_WARN([XRender extension not found !!])
+            AC_MSG_WARN([[XRender extension not found, Wine will be built without it]])
         )
 
       ]
     ) dnl *** End of X11/Xlib.h check
 
     dnl Check for the presence of OpenGL
-    if test $OPENGL = "yes" -o $OPENGL = "normal"
+    if test "x$enable_opengl" != "xno"
     then
         if test -f /usr/X11R6/lib/libGL.a -a ! -f /usr/X11R6/lib/libGL.so
         then
@@ -295,7 +272,7 @@ This prevents linking to OpenGL. Delete the file and restart configure.])
 	       LIBS=$saved_libs]
 	    )
 
-	    if test "$wine_cv_opengl_version_OK" = "yes" -a \( "$wine_cv_opengl_version_threadsafe" = "no" -o $OPENGL = "yes" \)
+	    if test "$wine_cv_opengl_version_OK" = "yes" -a \( "$wine_cv_opengl_version_threadsafe" = "no" -o "x$enable_opengl" = "xyes" \)
             then
 		dnl Check for the presence of the library
 		AC_CHECK_LIB(GL,glXCreateContext,
@@ -355,7 +332,7 @@ fi
 
 dnl **** Check which curses lib to use ***
 CURSESLIBS=""
-if test "$CURSES" = "yes"
+if test "x$with_curses" != "xno"
 then
     AC_CHECK_HEADERS(ncurses.h,
         [AC_CHECK_LIB(ncurses,waddch,
@@ -732,22 +709,25 @@ then
   if test "$ac_cv_c_dll_gnuelf" = "no" -a "$ac_cv_c_dll_unixware" = "no"
   then
     LIBEXT="a"
+    AC_CHECK_PROG(DLLWRAP,dllwrap,dllwrap,false)
     if test "$DLLWRAP" = "dllwrap"; then
       dnl FIXME - check whether dllwrap works correctly...
-      if test "$CYGWIN" = "yes"; then
-        echo "*** use dllwrap for building shared library."
-        LIBEXT="dll"
-      fi
+      case $host_os in
+        *cygwin*)
+            LIBEXT="dll"
+            ;;
+      esac
     fi
   fi
 fi
 
 if test "$LIBEXT" = "a"; then
-  echo "*** It is currently not possible to build WINE without shared"
-  echo "*** library (.so) support to allow transparent switch between .so"
-  echo "*** and .dll files."
-  echo "*** If you are using Linux, you will need a newer binutils."
-  exit 1
+  AC_MSG_ERROR(
+[could not find a way to build shared libraries.
+It is currently not possible to build Wine without shared library
+(.so) support to allow transparent switch between .so and .dll files.
+If you are using Linux, you will need a newer binutils.]
+)
 fi
 
 DLLFLAGS=""
@@ -955,9 +935,12 @@ AC_HEADER_STAT()
 
 dnl **** Check for types ****
 
-AC_C_CONST()
-AC_C_INLINE()
-AC_TYPE_SIZE_T()
+AC_C_CONST
+AC_C_INLINE
+AC_TYPE_MODE_T
+AC_TYPE_OFF_T
+AC_TYPE_PID_T
+AC_TYPE_SIZE_T
 AC_CHECK_SIZEOF(long long,0)
 
 AC_CACHE_CHECK([whether linux/input.h is for real],
@@ -1103,152 +1086,129 @@ then
     fi
 fi
 
+dnl *** Check for some structure members
+
+dnl Macro to check if a structure contains a specified member
+dnl Usage: WINE_CHECK_STRUCT_MEMBER(struct,member,[includes,[action-if-found,[action-if-not-found]]])
+
+AC_DEFUN([WINE_CHECK_STRUCT_MEMBER],
+[AC_CACHE_CHECK([for $2 in struct $1], ac_cv_c_$1_$2,
+ AC_TRY_COMPILE([$3],[struct $1 s; s.$2 = 0],ac_cv_c_$1_$2="yes",ac_cv_c_$1_$2="no"))
+AS_IF([ test "x$ac_cv_c_$1_$2" = "xyes"],[$4],[$5])
+])
+
 dnl **** FIXME: what about mixed cases, where we need two of them? ***
 
-AC_CACHE_CHECK( [for statfs.f_bfree], wine_cv_statfs_bfree,
-  [ if test "x$statfs_bfree" = "xno"
-    then
-        wine_cv_statfs_bfree=no
-    else
-    	AC_TRY_COMPILE([
-	#include <sys/types.h>
-	#ifdef HAVE_SYS_PARAM_H
-	# include <sys/param.h>
-	#endif
-	#ifdef STATFS_DEFINED_BY_SYS_MOUNT
-	# include <sys/mount.h>
-	#else
-	# ifdef STATFS_DEFINED_BY_SYS_VFS
-	#  include <sys/vfs.h>
-	# else
-	#  ifdef STATFS_DEFINED_BY_SYS_STATFS
-	#   include <sys/statfs.h>
-	#  endif
-	# endif
-	#endif
-	],[
-		struct statfs stfs;
+WINE_CHECK_STRUCT_MEMBER(statfs,f_bfree,
+[#include <sys/types.h>
+#ifdef HAVE_SYS_PARAM_H
+# include <sys/param.h>
+#endif
+#ifdef STATFS_DEFINED_BY_SYS_MOUNT
+# include <sys/mount.h>
+#else
+# ifdef STATFS_DEFINED_BY_SYS_VFS
+#  include <sys/vfs.h>
+# else
+#  ifdef STATFS_DEFINED_BY_SYS_STATFS
+#   include <sys/statfs.h>
+#  endif
+# endif
+#endif],
+    [AC_DEFINE(STATFS_HAS_BFREE, 1, [Define if the struct statfs has the member bfree])])
 
-		stfs.f_bfree++;
-	],wine_cv_statfs_bfree=yes,wine_cv_statfs_bfree=no
-	)
-    fi ] )
-if test "$wine_cv_statfs_bfree" = "yes"
-then
-  AC_DEFINE(STATFS_HAS_BFREE, 1, [Define if the struct statfs has the member bfree])
-fi
+WINE_CHECK_STRUCT_MEMBER(statfs,f_bavail,
+[#include <sys/types.h>
+#ifdef HAVE_SYS_PARAM_H
+# include <sys/param.h>
+#endif
+#ifdef STATFS_DEFINED_BY_SYS_MOUNT
+# include <sys/mount.h>
+#else
+# ifdef STATFS_DEFINED_BY_SYS_VFS
+#  include <sys/vfs.h>
+# else
+#  ifdef STATFS_DEFINED_BY_SYS_STATFS
+#   include <sys/statfs.h>
+#  endif
+# endif
+#endif],
+    [AC_DEFINE(STATFS_HAS_BAVAIL, 1, [Define if the struct statfs has the member bavail])])
 
-AC_CACHE_CHECK( [for statfs.f_bavail], wine_cv_statfs_bavail,
-  [ if test "x$statfs_bavail" = "xno"
-    then
-        wine_cv_statfs_bavail=no
-    else
-    	AC_TRY_COMPILE([
-	#include <sys/types.h>
-	#ifdef HAVE_SYS_PARAM_H
-	# include <sys/param.h>
-	#endif
-	#ifdef STATFS_DEFINED_BY_SYS_MOUNT
-	# include <sys/mount.h>
-	#else
-	# ifdef STATFS_DEFINED_BY_SYS_VFS
-	#  include <sys/vfs.h>
-	# else
-	#  ifdef STATFS_DEFINED_BY_SYS_STATFS
-	#   include <sys/statfs.h>
-	#  endif
-	# endif
-	#endif
-	],[
-		struct statfs stfs;
+dnl Check for file descriptor passing with msg_accrights
+WINE_CHECK_STRUCT_MEMBER(msghdr,msg_accrights,
+[#include <sys/types.h>
+#include <sys/socket.h>],
+    [AC_DEFINE(HAVE_MSGHDR_ACCRIGHTS, 1, [Define if struct msghdr contains msg_accrights])])
 
-		stfs.f_bavail++;
-	],wine_cv_statfs_bavail=yes,wine_cv_statfs_bavail=no
-	)
-    fi ] )
-if test "$wine_cv_statfs_bavail" = "yes"
-then
-  AC_DEFINE(STATFS_HAS_BAVAIL, 1, [Define if the struct statfs has the member bavail])
-fi
+dnl Check for the sa_len member in struct sockaddr
+WINE_CHECK_STRUCT_MEMBER(sockaddr,sa_len,
+[#include <sys/types.h>
+#include <sys/socket.h>],
+    [AC_DEFINE(HAVE_SOCKADDR_SA_LEN, 1, [Define if struct sockaddr contains sa_len])])
 
-dnl *** check for file descriptor passing with msg_accrights
-
-AC_CACHE_CHECK([for msg_accrights in struct msghdr], ac_cv_c_msg_accrights,
- AC_TRY_COMPILE([#include <sys/types.h>
-#include <sys/socket.h>],[struct msghdr hdr; hdr.msg_accrights=0],
-                ac_cv_c_msg_accrights="yes", ac_cv_c_msg_accrights="no"))
-if test "$ac_cv_c_msg_accrights" = "yes"
-then
-    AC_DEFINE(HAVE_MSGHDR_ACCRIGHTS, 1, [Define if struct msghdr contains msg_accrights])
-fi
-
-dnl *** Check for the sa_len member in struct sockaddr
-
-AC_CACHE_CHECK([for sa_len in struct sockaddr], ac_cv_c_sockaddr_sa_len,
- AC_TRY_COMPILE([#include <sys/types.h>
+dnl Check for the sun_len member in struct sockaddr_un
+WINE_CHECK_STRUCT_MEMBER(sockaddr_un,sun_len,
+[#include <sys/types.h>
 #include <sys/socket.h>
-], [static struct sockaddr addr; addr.sa_len = 1],
-                ac_cv_c_sockaddr_sa_len="yes", ac_cv_c_sockaddr_sa_len="no"))
-if test "$ac_cv_c_sockaddr_sa_len" = "yes"
-then
-    AC_DEFINE(HAVE_SOCKADDR_SA_LEN, 1, [Define if struct sockaddr contains sa_len])
-fi
-
-dnl *** Check for the sun_len member in struct sockaddr_un
-
-AC_CACHE_CHECK([for sun_len in struct sockaddr_un], ac_cv_c_sockaddr_sun_len,
- AC_TRY_COMPILE([#include <sys/types.h>
-#include <sys/socket.h>
-#include <sys/un.h>], [static struct sockaddr_un addr; addr.sun_len = 1],
-                ac_cv_c_sockaddr_sun_len="yes", ac_cv_c_sockaddr_sun_len="no"))
-if test "$ac_cv_c_sockaddr_sun_len" = "yes"
-then
-    AC_DEFINE(HAVE_SOCKADDR_SUN_LEN, 1, [Define if struct sockaddr_un contains sun_len])
-fi
+#include <sys/un.h>],
+    [AC_DEFINE(HAVE_SOCKADDR_SUN_LEN, 1, [Define if struct sockaddr_un contains sun_len])])
 
 dnl *** check for the need to define __i386__
 
-AC_CACHE_CHECK([whether we need to define __i386__],ac_cv_cpp_def_i386,
- AC_EGREP_CPP(yes,[#if (defined(i386) || defined(__i386)) && !defined(__i386__)
+case $target_cpu in
+  *i[3456789]86* )
+    AC_CACHE_CHECK([whether we need to define __i386__],ac_cv_cpp_def_i386,
+      AC_EGREP_CPP(yes,[#ifndef __i386__
 yes
 #endif],
  ac_cv_cpp_def_i386="yes", ac_cv_cpp_def_i386="no"))
+    ;;
+esac
 if test "$ac_cv_cpp_def_i386" = "yes"
 then
     CFLAGS="$CFLAGS -D__i386__"
     LINTFLAGS="$LINTFLAGS -D__i386__"
 fi
 
-dnl $GCC is set by autoconf
-GCC_NO_BUILTIN=""
-if test "$GCC" = "yes"
-then
-    GCC_NO_BUILTIN="-fno-builtin"
-fi
-AC_SUBST(GCC_NO_BUILTIN)
-
 dnl **** Generate output files ****
 
-AC_DEFINE(__WINE_CONFIG_H, 1,
-          [This must always be defined to allow checking for config.h inclusion])
+dnl Macro to create non-existent directories from config.status
+dnl Usage: WINE_CONFIG_EXTRA_DIR(dirname)
+AC_DEFUN([WINE_CONFIG_EXTRA_DIR],
+[AC_CONFIG_COMMANDS([$1],[test -d "$1" || (AC_MSG_NOTICE([creating $1]) && mkdir "$1")])])
 
-AC_OUTPUT_COMMANDS([
-extra_subdirs="\
-dlls/ddraw/d3ddevice \
-dlls/ddraw/dclipper \
-dlls/ddraw/ddraw \
-dlls/ddraw/direct3d \
-dlls/ddraw/dpalette \
-dlls/ddraw/dsurface \
-dlls/dinput/joystick \
-dlls/dinput/keyboard \
-dlls/dinput/mouse \
-dlls/kernel/messages \
-dlls/user/dde \
-dlls/user/resources \
-dlls/wineps/data \
-"
-for i in $extra_subdirs; do [ -d $i ] || (echo "creating $i" && mkdir $i); done ])
+AH_TOP([#define __WINE_CONFIG_H])
+
+WINE_CONFIG_EXTRA_DIR(dlls/ddraw/d3ddevice)
+WINE_CONFIG_EXTRA_DIR(dlls/ddraw/dclipper)
+WINE_CONFIG_EXTRA_DIR(dlls/ddraw/ddraw)
+WINE_CONFIG_EXTRA_DIR(dlls/ddraw/direct3d)
+WINE_CONFIG_EXTRA_DIR(dlls/ddraw/dpalette)
+WINE_CONFIG_EXTRA_DIR(dlls/ddraw/dsurface)
+WINE_CONFIG_EXTRA_DIR(dlls/dinput/joystick)
+WINE_CONFIG_EXTRA_DIR(dlls/dinput/keyboard)
+WINE_CONFIG_EXTRA_DIR(dlls/dinput/mouse)
+WINE_CONFIG_EXTRA_DIR(dlls/kernel/messages)
+WINE_CONFIG_EXTRA_DIR(dlls/user/dde)
+WINE_CONFIG_EXTRA_DIR(dlls/user/resources)
+WINE_CONFIG_EXTRA_DIR(dlls/wineps/data)
+WINE_CONFIG_EXTRA_DIR(include/wine)
+
+AC_CONFIG_COMMANDS([include/wine/version.h],
+[AC_MSG_NOTICE([creating include/wine/version.h])
+cat >$tmp/version.h <<CEOF
+/* Generated automatically by configure; DO NOT EDIT! */
+#define WINE_RELEASE_INFO "Wine version $wine_version"
+CEOF
+if cmp -s $tmp/version.h include/wine/version.h 2>/dev/null; then
+  AC_MSG_NOTICE([include/wine/version.h is unchanged])
+  rm -f $tmp/version.h
+else
+  rm -f include/wine/version.h
+  mv $tmp/version.h include/wine/version.h
+fi],
+[wine_version=$PACKAGE_VERSION])
 
 MAKE_RULES=Make.rules
 AC_SUBST_FILE(MAKE_RULES)
@@ -1259,7 +1219,7 @@ AC_SUBST_FILE(MAKE_DLL_RULES)
 MAKE_PROG_RULES=programs/Makeprog.rules
 AC_SUBST_FILE(MAKE_PROG_RULES)
 
-AC_OUTPUT([
+AC_CONFIG_FILES([
 Make.rules
 dlls/Makedll.rules
 programs/Makeprog.rules
@@ -1351,8 +1311,6 @@ dlls/wow32/Makefile
 dlls/wsock32/Makefile
 dlls/x11drv/Makefile
 documentation/Makefile
-documentation/wine.conf.man
-documentation/wine.man
 files/Makefile
 graphics/Makefile
 graphics/enhmetafiledrv/Makefile
@@ -1396,7 +1354,6 @@ tools/Makefile
 tools/winapi/Makefile
 tools/winebuild/Makefile
 tools/winedump/Makefile
-tools/winelauncher
 tools/wmc/Makefile
 tools/wrc/Makefile
 tsx11/Makefile
@@ -1404,6 +1361,8 @@ unicode/Makefile
 win32/Makefile
 windows/Makefile
 windows/x11drv/Makefile ])
+
+AC_OUTPUT
 
 if test "$have_x" = "no"
 then
@@ -1424,8 +1383,8 @@ fi
 if test "$wine_cv_libc_reentrant" = "no" 
 then
   echo
-  echo "*** Warning: non-reentrant libc detected. Wine will be build without"
-  echo "*** thread support. Consider upgrading libc to a more recent"
+  echo "*** Warning: non-reentrant libc detected. Wine will be built without"
+  echo "*** threading support. Consider upgrading libc to a more recent"
   echo "*** reentrant version of libc."
 fi
 
@@ -1436,7 +1395,7 @@ then
   echo "*** support. Consider upgrading your Mesa libraries (http://www.mesa3d.org/)."
 fi
 
-if test "$wine_cv_opengl_version_threadsafe" = "yes" -a $OPENGL = "normal"
+if test "$wine_cv_opengl_version_threadsafe" = "yes" -a "x$enable_opengl" = "x"
 then
   echo
   echo "*** Warning: the OpenGL version you have installed relies on libpthread for"
@@ -1445,7 +1404,7 @@ then
   echo "*** start configure with '--enable-opengl' to force OpenGL support."
 fi
 
-if test "$wine_cv_opengl_version_threadsafe" = "yes" -a $OPENGL = "yes"
+if test "$wine_cv_opengl_version_threadsafe" = "yes" -a "x$enable_opengl" = "xyes"
 then
   echo
   echo "*** Warning: you explicitly linked in a thread-safe OpenGL version. If you"
@@ -1458,18 +1417,16 @@ then
   echo
   echo "*** Note: You have cups runtime libraries, but no development"
   echo "*** libraries. Install the cups-devel package or whichever package"
-  echo "*** contains cups.h to enable CUPS support in WINE."
+  echo "*** contains cups.h to enable CUPS support in Wine."
 fi
 
 if test "$wine_cv_msg_freetype" = "yes"
 then
   echo
   echo "*** Note: Your system appears to have the FreeType 2 runtime libraries"
-  echo "*** installed, but either 'freetype-config' is not in your PATH,"
-  echo "*** you do not have the FreeType include files or you have a version"
-  echo "*** of FreeType lower than 2.0.3.  Install the freetype-devel package"
-  echo "*** (or its equivalent on your distribution) to enable Wine to use"
-  echo "*** TrueType fonts."
+  echo "*** installed, but 'freetype-config' is not in your PATH. Install the"
+  echo "*** freetype-devel package (or its equivalent on your distribution) to"
+  echo "*** enable Wine to use TrueType fonts."
 fi
 
 echo

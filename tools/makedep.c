@@ -324,7 +324,7 @@ static void output_src( FILE *file, INCL_FILE *pFile, int *column )
         }
         else if (!strcmp( ext, "l" ))  /* lex file */
         {
-            *column += fprintf( file, "lex.yy.o: lex.yy.c" );
+            *column += fprintf( file, "%s.o: %s.c", LEX_OUTPUT_ROOT, LEX_OUTPUT_ROOT );
         }
         else if (!strcmp( ext, "rc" ))  /* resource file */
         {

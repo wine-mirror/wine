@@ -44,12 +44,14 @@ BOOK_SRCS = \
 	winelib-toolkit.sgml \
 	winelib-user.sgml
 
+MAN_TARGETS = wine.man
+
 BOOK_TARGETS = \
 	$(BOOKNAME)/index.html \
 	$(BOOKNAME).pdf \
 	$(BOOKNAME).ps
 
-all: $(BOOK_TARGETS)
+all: $(MAN_TARGETS) $(BOOK_TARGETS)
 
 @MAKE_RULES@
 
@@ -62,14 +64,15 @@ $(BOOKNAME).pdf: $(BOOK_SRCS)
 $(BOOKNAME).ps: $(BOOK_SRCS)
 	db2ps $(BOOKNAME).sgml > /dev/null
 
-install:: 
+wine.man: wine.man.in
+	sed -e 's,@bindir\@,$(bindir),g' -e 's,@libdir\@,$(libdir),g' $(SRCDIR)/wine.man.in >wine.man
+
+install:: $(MAN_TARGETS)
 	$(INSTALL) -d $(mandir)/man$(prog_manext)
 	$(INSTALL) -d $(mandir)/man$(conf_manext)
-	sed -e 's|$${prefix}|$(prefix)|g' < wine.man > wine.man.tmp && mv wine.man.tmp wine.man
 	$(INSTALL_DATA) wine.man $(mandir)/man$(prog_manext)/wine.$(prog_manext)
 	$(INSTALL_DATA) $(SRCDIR)/winemaker.man $(mandir)/man$(prog_manext)/winemaker.$(prog_manext)
-	sed -e 's|$${prefix}|$(prefix)|g' < wine.conf.man > wine.conf.man.tmp && mv wine.conf.man.tmp wine.conf.man
-	$(INSTALL_DATA) wine.conf.man $(mandir)/man$(conf_manext)/wine.conf.$(conf_manext)
+	$(INSTALL_DATA) $(SRCDIR)/wine.conf.man $(mandir)/man$(conf_manext)/wine.conf.$(conf_manext)
 
 uninstall::
 	$(RM) $(mandir)/man$(prog_manext)/wine.$(prog_manext)
@@ -77,7 +80,7 @@ uninstall::
 	$(RM) $(mandir)/man$(conf_manext)/wine.conf.$(conf_manext)
 
 clean::
-	$(RM) *.aux *.dvi *.out *.pdf *.ps *.tex *.log $(BOOKNAME).pdf $(BOOKNAME).ps
+	$(RM) *.aux *.dvi *.out *.pdf *.ps *.tex *.log $(BOOKNAME).pdf $(BOOKNAME).ps $(MAN_TARGETS)
 	$(RM) -r $(BOOKNAME) html man3w *.junk DBTOHTML_OUTPUT_DIR*
 
 ### Dependencies:

@@ -21,7 +21,7 @@ C_SRCS = \
 
 GEN_C_SRCS = ppy.tab.c lex.ppl.c
 EXTRA_SRCS = parser.y parser.l
-EXTRA_OBJS = y.tab.o lex.yy.o
+EXTRA_OBJS = y.tab.o @LEX_OUTPUT_ROOT@.o
 
 all: $(PROGRAMS)
 
@@ -39,7 +39,7 @@ y.tab.c y.tab.h: parser.y
 ppy.tab.c ppy.tab.h: ppy.y
 	$(YACC) $(YACCOPT) -bppy -ppp -d -t $(SRCDIR)/ppy.y
 
-lex.yy.c: parser.l
+@LEX_OUTPUT_ROOT@.c: parser.l
 	$(LEX) $(LEXOPT) -d -8 $(SRCDIR)/parser.l
 
 lex.ppl.c: ppl.l

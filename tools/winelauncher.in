@@ -19,14 +19,8 @@
 
 #------------------------------------------------------------------------------
 #  Primary configuration area - change this if you installed Wine to
-#    a location other than @prefix@
+#    a different location
 #------------------------------------------------------------------------------
-prefix=@prefix@
-
-#------------------------------------------------------------------------------
-#  Secondary configuration area; change these at your own risk.
-#------------------------------------------------------------------------------
-exec_prefix=@exec_prefix@
 WINEBIN=@bindir@
 WINELIB=@libdir@
 WINESERVER=

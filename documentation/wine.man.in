@@ -357,35 +357,32 @@ development, you might want to subscribe to the
 .SH FILES
 .PD 0
 .TP
-.I @prefix@/bin/wine
+.I @bindir@/wine
 The 
 .B wine 
 program loader.
 .TP
-.I @prefix@/bin/wineconsole
+.I @bindir@/wineconsole
 The 
 .B wine 
 program loader for CUI (console) applications.
 .TP
-.I @prefix@/bin/dosmod
-The DOS program loader.
-.TP
-.I @prefix@/bin/wineserver
+.I @bindir@/wineserver
 The 
 .B wine 
 server 
 .TP 
-.I @prefix@/bin/winedbg
+.I @bindir@/winedbg
 The 
 .B wine 
 debugger
 .TP 
-.I @prefix@/bin/wineclpsrv
+.I @bindir@/wineclpsrv
 The 
 .B wine 
 clipboard server
 .TP 
-.I @prefix@/lib/
+.I @libdir@
 Directory containing 
 .B wine's
 shared libraries 
