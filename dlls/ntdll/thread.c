@@ -37,6 +37,14 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(thread);
 
+/* info passed to a starting thread */
+struct startup_info
+{
+    struct wine_pthread_thread_info pthread_info;
+    PRTL_THREAD_START_ROUTINE       entry_point;
+    void                           *entry_arg;
+};
+
 static PEB peb;
 static PEB_LDR_DATA ldr;
 static RTL_USER_PROCESS_PARAMETERS params;  /* default parameters if no parent */
@@ -128,7 +136,7 @@ void thread_init(void)
 
     /* setup the server connection */
     server_init_process();
-    server_init_thread( thread_info.pid, thread_info.tid );
+    server_init_thread( thread_info.pid, thread_info.tid, NULL );
 
     /* create a memory view for the TEB */
     NtAllocateVirtualMemory( GetCurrentProcess(), &addr, teb, &size,
@@ -151,7 +159,9 @@ void thread_init(void)
 static void start_thread( struct wine_pthread_thread_info *info )
 {
     TEB *teb = info->teb_base;
-    LPTHREAD_START_ROUTINE func = (LPTHREAD_START_ROUTINE)teb->entry_point;
+    struct startup_info *startup_info = (struct startup_info *)info;
+    PRTL_THREAD_START_ROUTINE func = startup_info->entry_point;
+    void *arg = startup_info->entry_arg;
     struct debug_info debug_info;
     ULONG size;
 
@@ -161,7 +171,7 @@ static void start_thread( struct wine_pthread_thread_info *info )
 
     wine_pthread_init_thread( info );
     SIGNAL_Init();
-    server_init_thread( info->pid, info->tid );
+    server_init_thread( info->pid, info->tid, func );
 
     /* allocate a memory view for the stack */
     size = info->stack_size;
@@ -181,7 +191,7 @@ static void start_thread( struct wine_pthread_thread_info *info )
     InsertHeadList( &tls_links, &teb->TlsLinks );
     RtlReleasePebLock();
 
-    NtTerminateThread( GetCurrentThread(), func( NtCurrentTeb()->entry_arg ) );
+    func( arg );
 }
 
 
@@ -194,7 +204,7 @@ NTSTATUS WINAPI RtlCreateUserThread( HANDLE process, const SECURITY_DESCRIPTOR *
                                      PRTL_THREAD_START_ROUTINE start, void *param,
                                      HANDLE *handle_ptr, CLIENT_ID *id )
 {
-    struct wine_pthread_thread_info *info = NULL;
+    struct startup_info *info = NULL;
     HANDLE handle = 0;
     TEB *teb = NULL;
     DWORD tid = 0;
@@ -242,14 +252,12 @@ NTSTATUS WINAPI RtlCreateUserThread( HANDLE process, const SECURITY_DESCRIPTOR *
     teb->reply_fd    = -1;
     teb->wait_fd[0]  = -1;
     teb->wait_fd[1]  = -1;
-    teb->entry_point = start;
-    teb->entry_arg   = param;
     teb->htask16     = NtCurrentTeb()->htask16;
 
-    NtAllocateVirtualMemory( GetCurrentProcess(), &info->teb_base, teb, &size,
+    NtAllocateVirtualMemory( GetCurrentProcess(), &info->pthread_info.teb_base, teb, &size,
                              MEM_SYSTEM, PAGE_EXECUTE_READWRITE );
-    info->teb_size = size;
-    info->teb_sel  = teb->teb_sel;
+    info->pthread_info.teb_size = size;
+    info->pthread_info.teb_sel  = teb->teb_sel;
 
     if (!stack_reserve || !stack_commit)
     {
@@ -261,11 +269,13 @@ NTSTATUS WINAPI RtlCreateUserThread( HANDLE process, const SECURITY_DESCRIPTOR *
     stack_reserve = (stack_reserve + 0xffff) & ~0xffff;  /* round to 64K boundary */
     if (stack_reserve < 1024 * 1024) stack_reserve = 1024 * 1024;  /* Xlib needs a large stack */
 
-    info->stack_base = NULL;
-    info->stack_size = stack_reserve;
-    info->entry      = start_thread;
+    info->pthread_info.stack_base = NULL;
+    info->pthread_info.stack_size = stack_reserve;
+    info->pthread_info.entry      = start_thread;
+    info->entry_point             = start;
+    info->entry_arg               = param;
 
-    if (wine_pthread_create_thread( info ) == -1)
+    if (wine_pthread_create_thread( &info->pthread_info ) == -1)
     {
         status = STATUS_NO_MEMORY;
         goto error;

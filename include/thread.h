@@ -99,9 +99,7 @@ typedef struct _TEB
     DWORD        unknown4[7];    /* d-n 18c Unknown */
     void        *create_data;    /* d-n 1a8 Pointer to creation structure */
     DWORD        suspend_count;  /* d-n 1ac SuspendThread() counter */
-    void        *entry_point;    /* --3 1b0 Thread entry point (was: unknown) */
-    void        *entry_arg;      /* --3 1b4 Entry point arg (was: unknown) */
-    DWORD        unknown5[4];    /* --n 1b8 Unknown */
+    DWORD        unknown5[6];    /* --n 1b0 Unknown */
     DWORD        sys_count[4];   /* --3 1c8 Syslevel mutex entry counters */
     struct tagSYSLEVEL *sys_mutex[4];   /* --3 1d8 Syslevel mutex pointers */
     DWORD        unknown6[5];    /* --n 1e8 Unknown */
