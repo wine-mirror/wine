@@ -103,7 +103,7 @@ static const char*	INIDefaultSansSerif = "DefaultSansSerif";
 typedef struct __sufch
 {
   LPCSTR        psuffix;
-  BYTE          charset;
+  WORD          charset; /* hibyte != 0 means *internal* charset */
   WORD          codepage;
   WORD          cptable;
 } SuffixCharset;
@@ -177,8 +177,8 @@ static const SuffixCharset sufch_koi8[] = {
 
 /* FIXME: DBCS charsets need 2 or more fonts */
 static const SuffixCharset sufch_jisx0201[] = {
-    { "0", ANSI_CHARSET, 932, X11DRV_CPTABLE_SBCS },
-    { NULL, ANSI_CHARSET, 932, X11DRV_CPTABLE_SBCS }};
+    { "0", X11FONT_JISX0201_CHARSET, 932, X11DRV_CPTABLE_SBCS },
+    { NULL, X11FONT_JISX0201_CHARSET, 932, X11DRV_CPTABLE_SBCS }};
 
 static const SuffixCharset sufch_jisx0208[] = {
     { "0", SHIFTJIS_CHARSET, 932, X11DRV_CPTABLE_CP932 },
@@ -665,7 +665,8 @@ static int LFD_InitFontInfo( fontInfo* fi, const LFD* lfd, LPCSTR fullname )
 	       {
 		   if( !strcasecmp(lfd->charset_encoding, boba->sufch[j].psuffix ))
 		   {
-		       fi->df.dfCharSet = boba->sufch[j].charset;
+		       fi->df.dfCharSet = (BYTE)(boba->sufch[j].charset & 0xff);
+		       fi->internal_charset = boba->sufch[j].charset;
 		       fi->codepage = boba->sufch[j].codepage;
 		       fi->cptable = boba->sufch[j].cptable;
 		       goto done;
@@ -675,7 +676,8 @@ static int LFD_InitFontInfo( fontInfo* fi, const LFD* lfd, LPCSTR fullname )
 	       {
 		   WARN("font '%s' has unknown character encoding '%s'\n",
 			fullname, lfd->charset_encoding);
-		   fi->df.dfCharSet = boba->sufch[j].charset;
+		   fi->df.dfCharSet = (BYTE)(boba->sufch[j].charset & 0xff);
+		   fi->internal_charset = boba->sufch[j].charset;
 		   fi->codepage = boba->sufch[j].codepage;
 		   fi->cptable = boba->sufch[j].cptable;
 		   j = 254;
@@ -686,7 +688,8 @@ static int LFD_InitFontInfo( fontInfo* fi, const LFD* lfd, LPCSTR fullname )
 	   {
 	       for( j = 0; boba->sufch[j].psuffix; j++ )
 		   ;
-	       fi->df.dfCharSet = boba->sufch[j].charset;
+	       fi->df.dfCharSet = (BYTE)(boba->sufch[j].charset & 0xff);
+	       fi->internal_charset = boba->sufch[j].charset;
 	       fi->codepage = boba->sufch[j].codepage;
 	       fi->cptable = boba->sufch[j].cptable;
 	       j = 255;
@@ -2228,7 +2231,9 @@ static UINT XFONT_Match( fontMatch* pfm )
    pfm->flags &= FO_MATCH_MASK;
 
 /* Charset */
-   if (pfi->df.dfCharSet == DEFAULT_CHARSET)
+   /* pfm->internal_charset: given(required) charset */
+   /* pfi->internal_charset: charset of this font */
+   if (pfi->internal_charset == DEFAULT_CHARSET)
    {
       /* special case(unicode font) */
       /* priority: unmatched charset < unicode < matched charset */
@@ -2236,12 +2241,18 @@ static UINT XFONT_Match( fontMatch* pfm )
    }
    else
    {
-     if( plf->lfCharSet == DEFAULT_CHARSET )
+     if( pfm->internal_charset == DEFAULT_CHARSET )
      {
-         if (pfi->df.dfCharSet != ANSI_CHARSET)
+         if (pfi->internal_charset != ANSI_CHARSET)
 	    penalty += 0x200;
      }
-     else if (plf->lfCharSet != pfi->df.dfCharSet) penalty += 0x200;
+     else if (pfm->internal_charset != pfi->internal_charset)
+     {
+       if ( pfi->internal_charset & 0xff00 )
+         penalty += 0x1000; /* internal charset - should not be used */
+       else
+         penalty += 0x200;
+     }
    }
 
 /* Height */
@@ -2743,7 +2754,8 @@ static BOOL XFONT_SetX11Trans( fontObject *pfo )
  *           X Device Font Objects
  */
 static X_PHYSFONT XFONT_RealizeFont( const LPLOGFONT16 plf,
-				     LPCSTR* faceMatched, BOOL bSubFont )
+				     LPCSTR* faceMatched, BOOL bSubFont,
+				     WORD internal_charset )
 {
     UINT16	checksum;
     INT         index = 0;
@@ -2760,6 +2772,7 @@ static X_PHYSFONT XFONT_RealizeFont( const LPLOGFONT16 plf,
 	fm.height = 0;
 	fm.flags = 0;
 	fm.plf = plf;
+	fm.internal_charset = internal_charset;
 
 	if( XTextCaps & TC_SF_X_YINDEP ) fm.flags = FO_MATCH_XYINDEP;
 
@@ -2830,23 +2843,24 @@ static X_PHYSFONT XFONT_RealizeFont( const LPLOGFONT16 plf,
             /* All member of pfo must be set correctly. */
 	    if ( bSubFont == FALSE )
 	    {
-		BYTE charset;
+		WORD charset_sub;
 		LOGFONT16 lfSub;
 		LPCSTR faceMatchedSub;
 
 		for ( i = 0; i < X11FONT_REFOBJS_MAX; i++ )
 		{
-		    charset = X11DRV_cptable[pfo->fi->cptable].
+		    charset_sub = X11DRV_cptable[pfo->fi->cptable].
 				penum_subfont_charset( i );
-		    if ( charset == DEFAULT_CHARSET ) break;
+		    if ( charset_sub == DEFAULT_CHARSET ) break;
 
 		    lfSub = *plf;
-		    lfSub.lfCharSet = charset;
+		    lfSub.lfCharSet = (BYTE)(charset_sub & 0xff);
 		    lfSub.lfFaceName[0] = '\0'; /* FIXME? */
 		    /* this font has sub font */
 		    if ( i == 0 ) pfo->prefobjs[0] = (X_PHYSFONT)0;
 		    pfo->prefobjs[i] =
-			XFONT_RealizeFont( &lfSub, &faceMatchedSub, TRUE );
+			XFONT_RealizeFont( &lfSub, &faceMatchedSub,
+					   TRUE, charset_sub );
 		}
 	    }
 	}
@@ -2967,7 +2981,8 @@ HFONT X11DRV_FONT_SelectObject( DC* dc, HFONT hfont, FONTOBJ* font )
 	LPCSTR faceMatched;
 
 	TRACE("hfont=%04x\n", hfont); /* to connect with the trace from RealizeFont */
-	physDev->font = XFONT_RealizeFont( &lf, &faceMatched, FALSE );
+	physDev->font = XFONT_RealizeFont( &lf, &faceMatched,
+					   FALSE, lf.lfCharSet );
 
 	/* set face to the requested facename if it matched 
 	 * so that GetTextFace can get the correct face name

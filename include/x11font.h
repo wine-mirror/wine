@@ -90,6 +90,7 @@ typedef struct tagFontInfo
     UINT16			fi_encoding;
     UINT16			codepage;
     UINT16			cptable;
+    WORD			internal_charset;
 
  /* LFD parameters can be quite different from the actual metrics */
 
@@ -200,6 +201,7 @@ typedef struct
   UINT16		height;
   UINT16		flags;
   LPLOGFONT16		plf;
+  WORD			internal_charset;
 } fontMatch;
 
 typedef struct
@@ -229,9 +231,14 @@ extern fontObject* XFONT_GetFontObject( X_PHYSFONT pFont );
 extern XFontStruct* XFONT_GetFontStruct( X_PHYSFONT pFont );
 extern LPIFONTINFO16 XFONT_GetFontInfo( X_PHYSFONT pFont );
 
+/* internal charset(hibyte must be set) */
+/* lobyte is DEFAULT_CHARSET(=0). */
+#define X11FONT_JISX0201_CHARSET	0x100
+#define X11FONT_JISX0212_CHARSET	0x200
+
 typedef struct tagX11DRV_CP
 {
-    BYTE (*penum_subfont_charset)( UINT index );
+    WORD (*penum_subfont_charset)( UINT index );
     XChar2b* (*punicode_to_char2b)( fontObject* pfo,
                                     LPCWSTR lpwstr, UINT count );
     void (*pDrawString)( fontObject* pfo, Display* pdisp, Drawable d, GC gc,

@@ -19,30 +19,29 @@
 DEFAULT_DEBUG_CHANNEL(text);
 
 
-static BYTE X11DRV_enum_subfont_charset_normal( UINT index )
+static WORD X11DRV_enum_subfont_charset_normal( UINT index )
 {
     return DEFAULT_CHARSET;
 }
 
-static BYTE X11DRV_enum_subfont_charset_cp932( UINT index )
+static WORD X11DRV_enum_subfont_charset_cp932( UINT index )
 {
     switch ( index )
     {
-    /* FIXME: should treat internal charset... */
-    case 0: return ANSI_CHARSET; /*return X11FONT_JISX0201_CHARSET;*/
-    /*case 1: return X11FONT_JISX0212_CHARSET;*/
+    case 0: return X11FONT_JISX0201_CHARSET;
+    case 1: return X11FONT_JISX0212_CHARSET;
     }
 
     return DEFAULT_CHARSET;
 }
 
-static BYTE X11DRV_enum_subfont_charset_cp936( UINT index )
+static WORD X11DRV_enum_subfont_charset_cp936( UINT index )
 {
     FIXME( "please implement X11DRV_enum_subfont_charset_cp936!\n" );
     return DEFAULT_CHARSET;
 }
 
-static BYTE X11DRV_enum_subfont_charset_cp949( UINT index )
+static WORD X11DRV_enum_subfont_charset_cp949( UINT index )
 {
     switch ( index )
     {
@@ -52,7 +51,7 @@ static BYTE X11DRV_enum_subfont_charset_cp949( UINT index )
     return DEFAULT_CHARSET;
 }
 
-static BYTE X11DRV_enum_subfont_charset_cp950( UINT index )
+static WORD X11DRV_enum_subfont_charset_cp950( UINT index )
 {
     FIXME( "please implement X11DRV_enum_subfont_charset_cp950!\n" );
     return DEFAULT_CHARSET;
