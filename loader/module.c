@@ -1258,8 +1258,12 @@ HMODULE WINAPI LoadLibraryExA(LPCSTR libname, HANDLE hfile, DWORD flags)
             HANDLE hFile;
             HMODULE hmod = 0;
 
+            /* This method allows searching for the 'native' libraries only */
             if (!SearchPathA( NULL, libname, ".dll", sizeof(filename), filename, NULL ))
-                return 0;
+            {
+                flags |= DONT_RESOLVE_DLL_REFERENCES; /* Just in case */
+                goto try_builtin; /* Fallback to normal behaviour */
+            }
             /* FIXME: maybe we should use the hfile parameter instead */
             hFile = CreateFileA( filename, GENERIC_READ, FILE_SHARE_READ,
                                  NULL, OPEN_EXISTING, 0, 0 );
@@ -1270,7 +1274,7 @@ HMODULE WINAPI LoadLibraryExA(LPCSTR libname, HANDLE hfile, DWORD flags)
             }
             return hmod;
         }
-
+ try_builtin:
         RtlAcquirePebLock();
 
 	wm = MODULE_LoadLibraryExA( libname, hfile, flags );
