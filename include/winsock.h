@@ -417,7 +417,7 @@ typedef struct WS(timeval)
 } TIMEVAL, *PTIMEVAL, *LPTIMEVAL;
 #endif
 
-#define WINE_FD_CLR(fd, set, cast) do { \
+#define __WS_FD_CLR(fd, set, cast) do { \
     u_int __i; \
     for (__i = 0; __i < ((cast*)(set))->fd_count ; __i++) \
     { \
@@ -467,8 +467,8 @@ typedef struct WS(timeval)
 #define FD_ZERO(set)         (((fd_set*)(set))->fd_count=0)
 #define FD_ISSET(fd, set)    __WSAFDIsSet((SOCKET)(fd), (fd_set*)(set))
 #else
-#define WS_FD_CLR(fd, set)   WINE_FD_CLR((fd),(set), WS_fd_set)
-#define WS_FD_SET(fd, set)   WINE_FD_SET((fd),(set), WS_fd_set)
+#define WS_FD_CLR(fd, set)   __WS_FD_CLR((fd),(set), WS_fd_set)
+#define WS_FD_SET(fd, set)   __WS_FD_SET((fd),(set), WS_fd_set)
 #define WS_FD_ZERO(set)      ((WS_fd_set*)(set))->fd_count=0)
 #define WS_FD_ISSET(fd, set) __WSAFDIsSet((SOCKET)(fd), (WS_fd_set*)(set))
 #endif
