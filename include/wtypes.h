@@ -300,6 +300,10 @@ typedef struct _userCLIPFORMAT {
 typedef userCLIPFORMAT *wireCLIPFORMAT;
 
 typedef WORD CLIPFORMAT;
+unsigned long   __RPC_USER CLIPFORMAT_UserSize     (unsigned long *, unsigned long,   CLIPFORMAT *);
+unsigned char * __RPC_USER CLIPFORMAT_UserMarshal  (unsigned long *, unsigned char *, CLIPFORMAT *);
+unsigned char * __RPC_USER CLIPFORMAT_UserUnmarshal(unsigned long *, unsigned char *, CLIPFORMAT *);
+void            __RPC_USER CLIPFORMAT_UserFree     (unsigned long *, CLIPFORMAT *);
 
 typedef struct tagRemHGLOBAL {
     long fNullHGlobal;
@@ -422,19 +426,43 @@ typedef userHPALETTE *wireHPALETTE;
 
 #if 0
 typedef void *HGLOBAL;
+unsigned long   __RPC_USER HGLOBAL_UserSize     (unsigned long *, unsigned long,   HGLOBAL *);
+unsigned char * __RPC_USER HGLOBAL_UserMarshal  (unsigned long *, unsigned char *, HGLOBAL *);
+unsigned char * __RPC_USER HGLOBAL_UserUnmarshal(unsigned long *, unsigned char *, HGLOBAL *);
+void            __RPC_USER HGLOBAL_UserFree     (unsigned long *, HGLOBAL *);
 
 typedef HGLOBAL HLOCAL;
 
 typedef void *HBITMAP;
+unsigned long   __RPC_USER HBITMAP_UserSize     (unsigned long *, unsigned long,   HBITMAP *);
+unsigned char * __RPC_USER HBITMAP_UserMarshal  (unsigned long *, unsigned char *, HBITMAP *);
+unsigned char * __RPC_USER HBITMAP_UserUnmarshal(unsigned long *, unsigned char *, HBITMAP *);
+void            __RPC_USER HBITMAP_UserFree     (unsigned long *, HBITMAP *);
 
 typedef void *HPALETTE;
+unsigned long   __RPC_USER HPALETTE_UserSize     (unsigned long *, unsigned long,   HPALETTE *);
+unsigned char * __RPC_USER HPALETTE_UserMarshal  (unsigned long *, unsigned char *, HPALETTE *);
+unsigned char * __RPC_USER HPALETTE_UserUnmarshal(unsigned long *, unsigned char *, HPALETTE *);
+void            __RPC_USER HPALETTE_UserFree     (unsigned long *, HPALETTE *);
 
 typedef void *HENHMETAFILE;
+unsigned long   __RPC_USER HENHMETAFILE_UserSize     (unsigned long *, unsigned long,   HENHMETAFILE *);
+unsigned char * __RPC_USER HENHMETAFILE_UserMarshal  (unsigned long *, unsigned char *, HENHMETAFILE *);
+unsigned char * __RPC_USER HENHMETAFILE_UserUnmarshal(unsigned long *, unsigned char *, HENHMETAFILE *);
+void            __RPC_USER HENHMETAFILE_UserFree     (unsigned long *, HENHMETAFILE *);
 
 typedef void *HMETAFILE;
+unsigned long   __RPC_USER HMETAFILE_UserSize     (unsigned long *, unsigned long,   HMETAFILE *);
+unsigned char * __RPC_USER HMETAFILE_UserMarshal  (unsigned long *, unsigned char *, HMETAFILE *);
+unsigned char * __RPC_USER HMETAFILE_UserUnmarshal(unsigned long *, unsigned char *, HMETAFILE *);
+void            __RPC_USER HMETAFILE_UserFree     (unsigned long *, HMETAFILE *);
 
 #endif
 typedef void *HMETAFILEPICT;
+unsigned long   __RPC_USER HMETAFILEPICT_UserSize     (unsigned long *, unsigned long,   HMETAFILEPICT *);
+unsigned char * __RPC_USER HMETAFILEPICT_UserMarshal  (unsigned long *, unsigned char *, HMETAFILEPICT *);
+unsigned char * __RPC_USER HMETAFILEPICT_UserUnmarshal(unsigned long *, unsigned char *, HMETAFILEPICT *);
+void            __RPC_USER HMETAFILEPICT_UserFree     (unsigned long *, HMETAFILEPICT *);
 
 #ifndef GUID_DEFINED
 #define GUID_DEFINED
@@ -533,6 +561,10 @@ typedef DECIMAL *LPDECIMAL;
 typedef FLAGGED_WORD_BLOB *wireBSTR;
 
 typedef OLECHAR *BSTR;
+unsigned long   __RPC_USER BSTR_UserSize     (unsigned long *, unsigned long,   BSTR *);
+unsigned char * __RPC_USER BSTR_UserMarshal  (unsigned long *, unsigned char *, BSTR *);
+unsigned char * __RPC_USER BSTR_UserUnmarshal(unsigned long *, unsigned char *, BSTR *);
+void            __RPC_USER BSTR_UserFree     (unsigned long *, BSTR *);
 
 typedef BSTR *LPBSTR;
 

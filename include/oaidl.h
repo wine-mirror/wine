@@ -105,6 +105,10 @@ typedef struct tagSAFEARRAY {
 } SAFEARRAY;
 
 typedef SAFEARRAY *LPSAFEARRAY;
+unsigned long   __RPC_USER LPSAFEARRAY_UserSize     (unsigned long *, unsigned long,   LPSAFEARRAY *);
+unsigned char * __RPC_USER LPSAFEARRAY_UserMarshal  (unsigned long *, unsigned char *, LPSAFEARRAY *);
+unsigned char * __RPC_USER LPSAFEARRAY_UserUnmarshal(unsigned long *, unsigned char *, LPSAFEARRAY *);
+void            __RPC_USER LPSAFEARRAY_UserFree     (unsigned long *, LPSAFEARRAY *);
 
 #define FADF_AUTO (0x1)
 
@@ -146,6 +150,10 @@ typedef SAFEARRAY *LPSAFEARRAY;
 #define __VARIANT_NAME_4
 #endif
 typedef struct tagVARIANT VARIANT;
+unsigned long   __RPC_USER VARIANT_UserSize     (unsigned long *, unsigned long,   VARIANT *);
+unsigned char * __RPC_USER VARIANT_UserMarshal  (unsigned long *, unsigned char *, VARIANT *);
+unsigned char * __RPC_USER VARIANT_UserUnmarshal(unsigned long *, unsigned char *, VARIANT *);
+void            __RPC_USER VARIANT_UserFree     (unsigned long *, VARIANT *);
 
 struct tagVARIANT {
     union {
@@ -537,6 +545,10 @@ typedef struct tagCLEANLOCALSTORAGE {
     PVOID pStorage;
     DWORD flags;
 } CLEANLOCALSTORAGE;
+unsigned long   __RPC_USER CLEANLOCALSTORAGE_UserSize     (unsigned long *, unsigned long,   CLEANLOCALSTORAGE *);
+unsigned char * __RPC_USER CLEANLOCALSTORAGE_UserMarshal  (unsigned long *, unsigned char *, CLEANLOCALSTORAGE *);
+unsigned char * __RPC_USER CLEANLOCALSTORAGE_UserUnmarshal(unsigned long *, unsigned char *, CLEANLOCALSTORAGE *);
+void            __RPC_USER CLEANLOCALSTORAGE_UserFree     (unsigned long *, CLEANLOCALSTORAGE *);
 
 typedef struct tagCUSTDATAITEM {
     GUID guid;

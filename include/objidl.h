@@ -3618,6 +3618,10 @@ typedef struct tagRemSNB {
 typedef RemSNB *wireSNB;
 
 typedef OLECHAR **SNB;
+unsigned long   __RPC_USER SNB_UserSize     (unsigned long *, unsigned long,   SNB *);
+unsigned char * __RPC_USER SNB_UserMarshal  (unsigned long *, unsigned char *, SNB *);
+unsigned char * __RPC_USER SNB_UserUnmarshal(unsigned long *, unsigned char *, SNB *);
+void            __RPC_USER SNB_UserFree     (unsigned long *, SNB *);
 
 /*****************************************************************************
  * IStorage interface
@@ -4053,6 +4057,10 @@ typedef struct tagRemSNB16 {
 typedef RemSNB16 *wireSNB16;
 
 typedef OLECHAR16 **SNB16;
+unsigned long   __RPC_USER SNB16_UserSize     (unsigned long *, unsigned long,   SNB16 *);
+unsigned char * __RPC_USER SNB16_UserMarshal  (unsigned long *, unsigned char *, SNB16 *);
+unsigned char * __RPC_USER SNB16_UserUnmarshal(unsigned long *, unsigned char *, SNB16 *);
+void            __RPC_USER SNB16_UserFree     (unsigned long *, SNB16 *);
 
 /*****************************************************************************
  * IStorage16 interface
@@ -5767,10 +5775,18 @@ typedef struct _userSTGMEDIUM {
 typedef userSTGMEDIUM *wireSTGMEDIUM;
 
 typedef uSTGMEDIUM STGMEDIUM;
+unsigned long   __RPC_USER STGMEDIUM_UserSize     (unsigned long *, unsigned long,   STGMEDIUM *);
+unsigned char * __RPC_USER STGMEDIUM_UserMarshal  (unsigned long *, unsigned char *, STGMEDIUM *);
+unsigned char * __RPC_USER STGMEDIUM_UserUnmarshal(unsigned long *, unsigned char *, STGMEDIUM *);
+void            __RPC_USER STGMEDIUM_UserFree     (unsigned long *, STGMEDIUM *);
 
 typedef userSTGMEDIUM *wireASYNC_STGMEDIUM;
 
 typedef STGMEDIUM ASYNC_STGMEDIUM;
+unsigned long   __RPC_USER ASYNC_STGMEDIUM_UserSize     (unsigned long *, unsigned long,   ASYNC_STGMEDIUM *);
+unsigned char * __RPC_USER ASYNC_STGMEDIUM_UserMarshal  (unsigned long *, unsigned char *, ASYNC_STGMEDIUM *);
+unsigned char * __RPC_USER ASYNC_STGMEDIUM_UserUnmarshal(unsigned long *, unsigned char *, ASYNC_STGMEDIUM *);
+void            __RPC_USER ASYNC_STGMEDIUM_UserFree     (unsigned long *, ASYNC_STGMEDIUM *);
 
 typedef STGMEDIUM *LPSTGMEDIUM;
 
@@ -5787,6 +5803,10 @@ typedef struct _FLAG_STGMEDIUM {
     long fPassOwnership;
     STGMEDIUM Stgmed;
 } FLAG_STGMEDIUM;
+unsigned long   __RPC_USER FLAG_STGMEDIUM_UserSize     (unsigned long *, unsigned long,   FLAG_STGMEDIUM *);
+unsigned char * __RPC_USER FLAG_STGMEDIUM_UserMarshal  (unsigned long *, unsigned char *, FLAG_STGMEDIUM *);
+unsigned char * __RPC_USER FLAG_STGMEDIUM_UserUnmarshal(unsigned long *, unsigned char *, FLAG_STGMEDIUM *);
+void            __RPC_USER FLAG_STGMEDIUM_UserFree     (unsigned long *, FLAG_STGMEDIUM *);
 
 /*****************************************************************************
  * IAdviseSink interface
