@@ -10,7 +10,8 @@ CTESTS = \
 	imagelist.c \
 	mru.c \
 	subclass.c \
-	tab.c
+	tab.c \
+	updown.c
 
 @MAKE_TEST_RULES@
 
