@@ -28,6 +28,7 @@
 extern "C" {
 #endif /* defined(__cplusplus) */
 
+/* Except for specific structs, this header is byte packed */
 #include <pshpack1.h>
 
 #include <shtypes.h>
@@ -210,6 +211,8 @@ void WINAPI SHAddToRecentDocs(UINT uFlags, LPCVOID pv);
  */
 typedef INT (CALLBACK *BFFCALLBACK)(HWND hwnd, UINT uMsg, LPARAM lParam, LPARAM lpData);
 
+#include <pshpack8.h>
+
 typedef struct tagBROWSEINFOA {
     HWND        hwndOwner;
     LPCITEMIDLIST pidlRoot;
@@ -235,6 +238,8 @@ typedef struct tagBROWSEINFOW {
 #define BROWSEINFO   WINELIB_NAME_AW(BROWSEINFO)
 #define PBROWSEINFO  WINELIB_NAME_AW(PBROWSEINFO)
 #define LPBROWSEINFO WINELIB_NAME_AW(LPBROWSEINFO)
+
+#include <poppack.h>
 
 /* Browsing for directory. */
 #define BIF_RETURNONLYFSDIRS   0x0001
@@ -299,10 +304,14 @@ LPITEMIDLIST WINAPI SHBrowseForFolderW(LPBROWSEINFOW lpbi);
 #define SHDID_COMPUTER_AUDIO        19
 #define SHDID_COMPUTER_SHAREDDOCS   20
 
+#include <pshpack8.h>
+
 typedef struct _SHDESCRIPTIONID
 {   DWORD   dwDescriptionId;
     CLSID   clsid;
 } SHDESCRIPTIONID, *LPSHDESCRIPTIONID;
+
+#include <poppack.h>
 
 HRESULT WINAPI SHGetDataFromIDListA(LPSHELLFOLDER psf, LPCITEMIDLIST pidl, int nFormat, LPVOID pv, int cb);
 HRESULT WINAPI SHGetDataFromIDListW(LPSHELLFOLDER psf, LPCITEMIDLIST pidl, int nFormat, LPVOID pv, int cb);
@@ -375,6 +384,7 @@ typedef struct
     BOOL fShowSuperHidden : 1;
     BOOL fNoNetCrawling : 1;
 
+    DWORD :0; /* Required for proper binary layout with gcc */
     DWORD dwWin95Unused;
     UINT  uWin95Unused;
     LONG   lParamSort;
@@ -385,6 +395,7 @@ typedef struct
     BOOL fStartPanelOn: 1;
     BOOL fShowStartPage: 1;
     UINT fSpareFlags : 13;
+    UINT :0; /* Required for proper binary layout with gcc */
 } SHELLSTATE, *LPSHELLSTATE;
 
 /**********************************************************************
@@ -408,6 +419,7 @@ typedef struct
 
 	BOOL fHideIcons : 1;
 	UINT fRestFlags : 3;
+	UINT :0; /* Required for proper binary layout with gcc */
 } SHELLFLAGSTATE, * LPSHELLFLAGSTATE;
 
 VOID WINAPI SHGetSettings(LPSHELLFLAGSTATE lpsfs, DWORD dwMask);
@@ -888,6 +900,7 @@ typedef struct {
     BOOL fDontPrettyNames:1;
     BOOL fAdminsCreateCommonGroups:1;
     UINT fUnusedFlags:7;
+    UINT :0; /* Required for proper binary layout with gcc */
     UINT fMenuEnumFilter;
 } CABINETSTATE, *LPCABINETSTATE;
 
@@ -900,8 +913,6 @@ BOOL WINAPI WriteCabinetState(CABINETSTATE *);
  * Path Manipulation Routines
  */
 VOID WINAPI PathGetShortPath(LPWSTR pszPath);
-
-#include <poppack.h>
 
 /****************************************************************************
  * Drag And Drop Routines
@@ -1016,6 +1027,8 @@ UINT         WINAPI ILGetSize(LPCITEMIDLIST);
 BOOL         WINAPI ILIsEqual(LPCITEMIDLIST,LPCITEMIDLIST);
 BOOL         WINAPI ILIsParent(LPCITEMIDLIST,LPCITEMIDLIST,BOOL);
 BOOL         WINAPI ILRemoveLastID(LPITEMIDLIST);
+
+#include <poppack.h>
 
 #ifdef __cplusplus
 } /* extern "C" */

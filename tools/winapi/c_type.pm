@@ -64,6 +64,17 @@ sub set_find_size_callback {
     $$find_size = shift;
 }
 
+########################################################################
+# set_find_count_callback
+#
+sub set_find_count_callback {
+    my $self = shift;
+
+    my $find_count = \${$self->{FIND_COUNT}};
+
+    $$find_count = shift;
+}
+
 sub kind {
     my $self = shift;
     my $kind = \${$self->{KIND}};
@@ -236,6 +247,7 @@ sub _refresh {
     my $find_align = \${$self->{FIND_ALIGN}};
     my $find_kind = \${$self->{FIND_KIND}};
     my $find_size = \${$self->{FIND_SIZE}};
+    my $find_count = \${$self->{FIND_COUNT}};
 
     my $align = \${$self->{ALIGN}};
     my $kind = \${$self->{KIND}};
@@ -251,69 +263,99 @@ sub _refresh {
     my $max_field_align = 0;
 
     my $offset = 0;
-    my $offset_bits = 0;
+    my $bitfield_size = 0;
+    my $bitfield_bits = 0;
 
     my $n = 0;
     foreach my $field ($self->fields) {
 	my $type_name = $field->type_name;
-	my $type_size = &$$find_size($type_name);
 
-	my $base_type_name = $type_name;
-	if ($base_type_name =~ s/^(.*?)\s*(?:\[\s*(.*?)\s*\]|:(\d+))?$/$1/) {
-	    my $count = $2;
-	    my $bits = $3;
+        my $bits;
+	my $count;
+        if ($type_name =~ s/^(.*?)\s*(?:\[\s*(.*?)\s*\]|:(\d+))?$/$1/)
+        {
+            $count = $2;
+            $bits = $3;
 	}
-	my $base_size = &$$find_size($base_type_name);
-	$$align = &$$find_align($base_type_name);
+        my $declspec_align;
+        if ($type_name =~ s/\s+DECLSPEC_ALIGN\((\d+)\)//)
+        {
+            $declspec_align=$1;
+        }
+        my $base_size = &$$find_size($type_name);
+        my $type_size=$base_size;
+        if (defined $count)
+        {
+            $count=&$$find_count($count) if ($count !~ /^\d+$/);
+            if (!defined $count)
+            {
+                $type_size=undef;
+            }
+            else
+            {
+                $type_size *= int($count);
+            }
+        }
+        if ($bitfield_size != 0)
+        {
+            if (($type_name eq "" and defined $bits and $bits == 0) or
+                (defined $type_size and $bitfield_size != $type_size) or
+                !defined $bits or
+                $bitfield_bits + $bits > 8 * $bitfield_size)
+            {
+                # This marks the end of the previous bitfield
+                $bitfield_size=0;
+                $bitfield_bits=0;
+            }
+            else
+            {
+                $bitfield_bits+=$bits;
+                $n++;
+                next;
+            }
+        }
 
-	if (defined($$align)) { 
-	    $$align = $pack if $$align > $pack;
-	    $max_field_align = $$align if $$align > $max_field_align;
+        $$align = &$$find_align($type_name);
+        $$align=$declspec_align if (defined $declspec_align);
 
-	    if ($offset % $$align != 0) {
-		$offset = (int($offset / $$align) + 1) * $$align;
-	    }
-	}
+        if (defined $$align)
+        {
+            $$align = $pack if $$align > $pack;
+            $max_field_align = $$align if $$align > $max_field_align;
 
-	if ($$kind !~ /^(?:struct|union)$/) {
-	    $$kind = &$$find_kind($type_name) || "";
-	}
+            if ($offset % $$align != 0) {
+                $offset = (int($offset / $$align) + 1) * $$align;
+            }
+        }
 
-	if (!defined($type_size)) {
-	    $$align = undef;
-	    $$size = undef;
-	    return;
-	} elsif ($type_size >= 0) {
-	    if ($offset_bits) {
-		$offset += $pack * int(($offset_bits + 8 * $pack - 1 ) / (8 * $pack));
-		$offset_bits = 0;
-	    }
+        if ($$kind !~ /^(?:struct|union)$/)
+        {
+            $$kind = &$$find_kind($type_name) || "";
+        }
 
-	    $$$field_aligns[$n] = $$align;
-	    $$$field_base_sizes[$n] = $base_size;
-	    $$$field_offsets[$n] = $offset;
-	    $$$field_sizes[$n] = $type_size;
+        if (!$type_size)
+        {
+            $$align = undef;
+            $$size = undef;
+            return;
+        }
 
-	    $offset += $type_size;
-	} else {
-	    $$$field_aligns[$n] = $$align;
-	    $$$field_base_sizes[$n] = $base_size;
-	    $$$field_offsets[$n] = $offset;
-	    $$$field_sizes[$n] = $type_size;
+        $$$field_aligns[$n] = $$align;
+        $$$field_base_sizes[$n] = $base_size;
+        $$$field_offsets[$n] = $offset;
+        $$$field_sizes[$n] = $type_size;
+        $offset += $type_size;
 
-	    $offset_bits += -$type_size;
-	}
-
+        if ($bits)
+        {
+            $bitfield_size=$type_size;
+            $bitfield_bits=$bits;
+        }
 	$n++;
     }
 
     $$align = $pack;
     $$align = $max_field_align if $max_field_align < $pack;
-
-    if ($offset_bits) {
-	$offset += $pack * int(($offset_bits + 8 * $pack - 1 ) / (8 * $pack));
-	$offset_bits = 0;
-    }
 
     $$size = $offset;
     if ($$kind =~ /^(?:struct|union)$/) {

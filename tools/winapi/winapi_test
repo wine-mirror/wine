@@ -177,13 +177,6 @@ sub _find_align_kind_size {
 
     local $_ = $type_name;
 
-    my $count;
-    my $bits;
-    if (s/^(.*?)\s*(?:\[\s*(.*?)\s*\]|:(\d+))?$/$1/) {
-	$count = $2;
-	$bits = $3;
-    }
-
     my $align;
     my $kind;
     my $size;
@@ -313,21 +306,6 @@ sub _find_align_kind_size {
 	$output->write("$type_name: type needn't be kludged\n");
     }
 
-    if (!defined($size)) {
-	# $output->write("$type_name: can't find type\n");
-    } elsif (defined($count)) {
-	if ($count =~ /^\d+$/) {
-	    $size *= int($count);
-	} elsif (defined(my $count2 = $defines{$count})) {
-	    $size *= int($count2);
-	} else {
-	    $output->write("$type_name: can't parse type ('$_') ('$count')\n");
-	    $size = undef;
-	}
-    } elsif (defined($bits)) {
-	$size = -$bits;
-    }
-
     return ($align, $kind, $size);
 }
 
@@ -348,6 +326,11 @@ sub find_size {
     my $type_name = shift;
     (my $align, my $kind, my $size) = _find_align_kind_size($type_name);
     return $size;
+}
+
+sub find_count {
+    my $count = shift;
+    return $defines{$count};
 }
 
 foreach my $file (@files) {
@@ -426,6 +409,7 @@ foreach my $file (@files) {
 	$type->set_find_align_callback(\&find_align);
 	$type->set_find_kind_callback(\&find_kind);
 	$type->set_find_size_callback(\&find_size);
+	$type->set_find_count_callback(\&find_count);
 
 	my $pack = $packs[$#packs];
 	if (!defined($type->pack) && $type->kind =~ /^(?:struct|union)$/) {
@@ -728,6 +712,8 @@ sub output_test_pack_fields {
 	my $field_align = $field->align;
 
 	next if $field_name eq "" || (defined($field_size) && $field_size < 0);
+        # We cannot take the address of a bitfield with MSVC
+        next if ($field_type_name =~ /:/);
 
 	if ($$optional_fields{$field_name}) {
 	    # Nothing

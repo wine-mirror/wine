@@ -760,13 +760,13 @@ static void test_pack_SHNAMEMAPPINGW(void)
 
 static void test_pack_AUTO_SCROLL_DATA(void)
 {
-    /* AUTO_SCROLL_DATA (pack 4) */
-    TEST_TYPE(AUTO_SCROLL_DATA, 48, 4);
-    TEST_FIELD(AUTO_SCROLL_DATA, int, iNextSample, 0, 4, 4);
-    TEST_FIELD(AUTO_SCROLL_DATA, DWORD, dwLastScroll, 4, 4, 4);
-    TEST_FIELD(AUTO_SCROLL_DATA, BOOL, bFull, 8, 4, 4);
-    TEST_FIELD(AUTO_SCROLL_DATA, POINT[NUM_POINTS], pts, 12, 24, 4);
-    TEST_FIELD(AUTO_SCROLL_DATA, DWORD[NUM_POINTS], dwTimes, 36, 12, 4);
+    /* AUTO_SCROLL_DATA (pack 1) */
+    TEST_TYPE(AUTO_SCROLL_DATA, 48, 1);
+    TEST_FIELD(AUTO_SCROLL_DATA, int, iNextSample, 0, 4, 1);
+    TEST_FIELD(AUTO_SCROLL_DATA, DWORD, dwLastScroll, 4, 4, 1);
+    TEST_FIELD(AUTO_SCROLL_DATA, BOOL, bFull, 8, 4, 1);
+    TEST_FIELD(AUTO_SCROLL_DATA, POINT[NUM_POINTS], pts, 12, 24, 1);
+    TEST_FIELD(AUTO_SCROLL_DATA, DWORD[NUM_POINTS], dwTimes, 36, 12, 1);
 }
 
 static void test_pack_BFFCALLBACK(void)
@@ -778,10 +778,10 @@ static void test_pack_BFFCALLBACK(void)
 static void test_pack_CABINETSTATE(void)
 {
     /* CABINETSTATE (pack 1) */
-    TEST_TYPE(CABINETSTATE, 10, 1);
+    TEST_TYPE(CABINETSTATE, 12, 1);
     TEST_FIELD(CABINETSTATE, WORD, cLength, 0, 2, 1);
     TEST_FIELD(CABINETSTATE, WORD, nVersion, 2, 2, 1);
-    TEST_FIELD(CABINETSTATE, UINT, fMenuEnumFilter, 6, 4, 1);
+    TEST_FIELD(CABINETSTATE, UINT, fMenuEnumFilter, 8, 4, 1);
 }
 
 static void test_pack_CIDA(void)
@@ -876,7 +876,7 @@ static void test_pack_LPCABINETSTATE(void)
 {
     /* LPCABINETSTATE */
     TEST_TYPE(LPCABINETSTATE, 4, 4);
-    TEST_TYPE_POINTER(LPCABINETSTATE, 10, 1);
+    TEST_TYPE_POINTER(LPCABINETSTATE, 12, 1);
 }
 
 static void test_pack_LPDROPFILES(void)
@@ -939,21 +939,21 @@ static void test_pack_LPSHDESCRIPTIONID(void)
 {
     /* LPSHDESCRIPTIONID */
     TEST_TYPE(LPSHDESCRIPTIONID, 4, 4);
-    TEST_TYPE_POINTER(LPSHDESCRIPTIONID, 20, 1);
+    TEST_TYPE_POINTER(LPSHDESCRIPTIONID, 20, 4);
 }
 
 static void test_pack_LPSHELLFLAGSTATE(void)
 {
     /* LPSHELLFLAGSTATE */
     TEST_TYPE(LPSHELLFLAGSTATE, 4, 4);
-    TEST_TYPE_POINTER(LPSHELLFLAGSTATE, 2, 1);
+    TEST_TYPE_POINTER(LPSHELLFLAGSTATE, 4, 1);
 }
 
 static void test_pack_LPSHELLSTATE(void)
 {
     /* LPSHELLSTATE */
     TEST_TYPE(LPSHELLSTATE, 4, 4);
-    TEST_TYPE_POINTER(LPSHELLSTATE, 29, 1);
+    TEST_TYPE_POINTER(LPSHELLSTATE, 32, 1);
 }
 
 static void test_pack_SHChangeDWORDAsIDList(void)
@@ -983,27 +983,27 @@ static void test_pack_SHChangeProductKeyAsIDList(void)
 static void test_pack_SHDESCRIPTIONID(void)
 {
     /* SHDESCRIPTIONID (pack 1) */
-    TEST_TYPE(SHDESCRIPTIONID, 20, 1);
-    TEST_FIELD(SHDESCRIPTIONID, DWORD, dwDescriptionId, 0, 4, 1);
-    TEST_FIELD(SHDESCRIPTIONID, CLSID, clsid, 4, 16, 1);
+    TEST_TYPE(SHDESCRIPTIONID, 20, 4);
+    TEST_FIELD(SHDESCRIPTIONID, DWORD, dwDescriptionId, 0, 4, 4);
+    TEST_FIELD(SHDESCRIPTIONID, CLSID, clsid, 4, 16, 4);
 }
 
 static void test_pack_SHELLFLAGSTATE(void)
 {
     /* SHELLFLAGSTATE (pack 1) */
-    TEST_TYPE(SHELLFLAGSTATE, 2, 1);
+    TEST_TYPE(SHELLFLAGSTATE, 4, 1);
 }
 
 static void test_pack_SHELLSTATE(void)
 {
     /* SHELLSTATE (pack 1) */
-    TEST_TYPE(SHELLSTATE, 29, 1);
-    TEST_FIELD(SHELLSTATE, DWORD, dwWin95Unused, 3, 4, 1);
-    TEST_FIELD(SHELLSTATE, UINT, uWin95Unused, 7, 4, 1);
-    TEST_FIELD(SHELLSTATE, LONG, lParamSort, 11, 4, 1);
-    TEST_FIELD(SHELLSTATE, int, iSortDirection, 15, 4, 1);
-    TEST_FIELD(SHELLSTATE, UINT, version, 19, 4, 1);
-    TEST_FIELD(SHELLSTATE, UINT, uNotUsed, 23, 4, 1);
+    TEST_TYPE(SHELLSTATE, 32, 1);
+    TEST_FIELD(SHELLSTATE, DWORD, dwWin95Unused, 4, 4, 1);
+    TEST_FIELD(SHELLSTATE, UINT, uWin95Unused, 8, 4, 1);
+    TEST_FIELD(SHELLSTATE, LONG, lParamSort, 12, 4, 1);
+    TEST_FIELD(SHELLSTATE, int, iSortDirection, 16, 4, 1);
+    TEST_FIELD(SHELLSTATE, UINT, version, 20, 4, 1);
+    TEST_FIELD(SHELLSTATE, UINT, uNotUsed, 24, 4, 1);
 }
 
 static void test_pack_SHELLVIEWID(void)
