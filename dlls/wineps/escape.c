@@ -288,6 +288,7 @@ INT PSDRV_ExtEscape( PSDRV_PDEVICE *physDev, INT nEscape, INT cbInput, LPCVOID i
 	    TRACE("CLIP_TO_PATH: CLIP_INCLUSIVE\n");
 	    /* FIXME to clip or eoclip ? (see PATH_INFO.FillMode) */
 	    PSDRV_WriteClip(physDev);
+            PSDRV_WriteNewPath(physDev);
 	    return 1;
 	case CLIP_EXCLUSIVE:
 	    FIXME("CLIP_EXCLUSIVE: not implemented\n");
