@@ -23,7 +23,7 @@
 /* True this when security is implemented */
 #define CHECK_SAM FALSE
 
-#define ERR(s,d) fprintf(stderr, "%s:#%d(Status=%ld)\n", __FUNCTION__,s,d)
+#define ERROR(s,d) fprintf(stderr, "%s:#%d(Status=%ld)\n", __FUNCTION__,s,d)
 
 /*
  * NOTES: These individual routines are listed in alphabetical order.
@@ -40,14 +40,14 @@ void TestCloseKey()
     long lSts;
 
     lSts = RegCloseKey((HKEY)2);
-    if (lSts != ERROR_INVALID_HANDLE) ERR(1,lSts);
+    if (lSts != ERROR_INVALID_HANDLE) ERROR(1,lSts);
 
     lSts = RegCloseKey(HKEY_LOCAL_MACHINE);
-    if (lSts != ERROR_SUCCESS) ERR(2,lSts);
+    if (lSts != ERROR_SUCCESS) ERROR(2,lSts);
 
     /* Check twice just for kicks */
     lSts = RegCloseKey(HKEY_LOCAL_MACHINE);
-    if (lSts != ERROR_SUCCESS) ERR(3,lSts);
+    if (lSts != ERROR_SUCCESS) ERROR(3,lSts);
 }
 
 /******************************************************************************
@@ -59,14 +59,14 @@ void TestConnectRegistry()
     HKEY hkey;
 
     lSts = RegConnectRegistry("",(HKEY)2,&hkey);
-    if (lSts != ERROR_SUCCESS) ERR(1,lSts);
+    if (lSts != ERROR_SUCCESS) ERROR(1,lSts);
 
     lSts = RegConnectRegistry("",HKEY_LOCAL_MACHINE,&hkey);
-    if (lSts != ERROR_SUCCESS) ERR(2,lSts);
+    if (lSts != ERROR_SUCCESS) ERROR(2,lSts);
 
 #if TOO_SLOW
     lSts = RegConnectRegistry("\\\\regtest",HKEY_LOCAL_MACHINE,&hkey);
-    if (lSts != ERROR_BAD_NETPATH) ERR(3,lSts);
+    if (lSts != ERROR_BAD_NETPATH) ERROR(3,lSts);
 #endif
 }
 
@@ -79,22 +79,22 @@ void TestCreateKey()
     HKEY hkey;
 
     lSts = RegCreateKey((HKEY)2,"",&hkey);
-    if (lSts != ERROR_BADKEY) ERR(1,lSts);
+    if (lSts != ERROR_BADKEY) ERROR(1,lSts);
 
     lSts = RegCreateKey(HKEY_LOCAL_MACHINE,"",&hkey);
-    if (lSts != ERROR_SUCCESS) ERR(2,lSts);
+    if (lSts != ERROR_SUCCESS) ERROR(2,lSts);
     RegCloseKey(hkey);
 
     lSts = RegCreateKey(HKEY_LOCAL_MACHINE,"\\asdf",&hkey);
-    if (lSts != ERROR_BAD_PATHNAME) ERR(3,lSts);
+    if (lSts != ERROR_BAD_PATHNAME) ERROR(3,lSts);
 
 #if 0
     lSts = RegCreateKey(HKEY_LOCAL_MACHINE,"asdf\\",&hkey);
-    if (lSts != ERROR_INVALID_PARAMETER) ERR(4,lSts);
+    if (lSts != ERROR_INVALID_PARAMETER) ERROR(4,lSts);
 #endif
 
     lSts = RegCreateKey(HKEY_LOCAL_MACHINE,"\\asdf\\",&hkey);
-    if (lSts != ERROR_BAD_PATHNAME) ERR(5,lSts);
+    if (lSts != ERROR_BAD_PATHNAME) ERROR(5,lSts);
 }
 
 /******************************************************************************
@@ -107,19 +107,19 @@ void TestCreateKeyEx()
     DWORD dwDisp;
 
     lSts = RegCreateKeyEx((HKEY)2,"",0,"",0,0,NULL,&hkey,&dwDisp);
-    if (lSts != ERROR_INVALID_HANDLE) ERR(1,lSts);
+    if (lSts != ERROR_INVALID_HANDLE) ERROR(1,lSts);
 
     lSts = RegCreateKeyEx(HKEY_LOCAL_MACHINE,"regtest",0,"",0,0,NULL,&hkey,
                           &dwDisp);
-    if (lSts != ERROR_INVALID_PARAMETER) ERR(2,lSts);
+    if (lSts != ERROR_INVALID_PARAMETER) ERROR(2,lSts);
 
     lSts = RegCreateKeyEx(HKEY_LOCAL_MACHINE,"regtest",0,"asdf",0,
                           KEY_ALL_ACCESS,NULL,&hkey,&dwDisp);
-    if (lSts != ERROR_INVALID_PARAMETER) ERR(3,lSts);
+    if (lSts != ERROR_INVALID_PARAMETER) ERROR(3,lSts);
 
     lSts = RegCreateKeyEx(HKEY_LOCAL_MACHINE,"regtest",0,"",0,
                           KEY_ALL_ACCESS,NULL,&hkey,&dwDisp);
-    if (lSts != ERROR_INVALID_PARAMETER) ERR(4,lSts);
+    if (lSts != ERROR_INVALID_PARAMETER) ERROR(4,lSts);
 
 }
 
@@ -131,14 +131,14 @@ void TestDeleteKey()
     long lSts;
 
     lSts = RegDeleteKey((HKEY)2, "asdf");
-    if (lSts != ERROR_INVALID_HANDLE) ERR(1,lSts);
+    if (lSts != ERROR_INVALID_HANDLE) ERROR(1,lSts);
 
     lSts = RegDeleteKey(HKEY_CURRENT_USER, "asdf");
-    if (lSts != ERROR_FILE_NOT_FOUND) ERR(2,lSts);
+    if (lSts != ERROR_FILE_NOT_FOUND) ERROR(2,lSts);
 
 #if CHECK_SAM
     lSts = RegDeleteKey(HKEY_CURRENT_USER, "");
-    if (lSts != ERROR_ACCESS_DENIED) ERR(3,lSts);
+    if (lSts != ERROR_ACCESS_DENIED) ERROR(3,lSts);
 #endif
 }
 
@@ -150,16 +150,16 @@ void TestDeleteValue()
     long lSts;
 
     lSts = RegDeleteValue((HKEY)2, "asdf");
-    if (lSts != ERROR_INVALID_HANDLE) ERR(1,lSts);
+    if (lSts != ERROR_INVALID_HANDLE) ERROR(1,lSts);
 
     lSts = RegDeleteValue(HKEY_CURRENT_USER, "");
-    if (lSts != ERROR_FILE_NOT_FOUND) ERR(2,lSts);
+    if (lSts != ERROR_FILE_NOT_FOUND) ERROR(2,lSts);
 
     lSts = RegDeleteValue(HKEY_CURRENT_USER, "asdf");
-    if (lSts != ERROR_FILE_NOT_FOUND) ERR(3,lSts);
+    if (lSts != ERROR_FILE_NOT_FOUND) ERROR(3,lSts);
 
     lSts = RegDeleteValue(HKEY_CURRENT_USER, "\\asdf");
-    if (lSts != ERROR_FILE_NOT_FOUND) ERR(4,lSts);
+    if (lSts != ERROR_FILE_NOT_FOUND) ERROR(4,lSts);
 }
 
 /******************************************************************************
@@ -175,13 +175,13 @@ void TestEnumKey()
     sVal = (char *)malloc(lVal * sizeof(char));
 
     lSts = RegEnumKey((HKEY)2,3,sVal,lVal);
-    if (lSts != ERROR_INVALID_HANDLE) ERR(1,lSts);
+    if (lSts != ERROR_INVALID_HANDLE) ERROR(1,lSts);
 
     lSts = RegEnumKey(HKEY_CURRENT_USER,-1,sVal,lVal);
-    if (lSts != ERROR_NO_MORE_ITEMS) ERR(2,lSts);
+    if (lSts != ERROR_NO_MORE_ITEMS) ERROR(2,lSts);
 
     lSts = RegEnumKey(HKEY_CURRENT_USER,0,sVal,lVal);
-    if (lSts != ERROR_MORE_DATA) ERR(3,lSts);
+    if (lSts != ERROR_MORE_DATA) ERROR(3,lSts);
 }
 
 /******************************************************************************
@@ -202,13 +202,13 @@ void TestEnumKeyEx()
     sClass = (char *)malloc(lLen2 * sizeof(char));
 
     lSts = RegEnumKeyEx((HKEY)2,0,sVal,&lLen1,0,sClass,&lLen2,&ft);
-    if (lSts != ERROR_INVALID_HANDLE) ERR(1,lSts);
+    if (lSts != ERROR_INVALID_HANDLE) ERROR(1,lSts);
 
     lSts = RegEnumKeyEx(HKEY_LOCAL_MACHINE,0,sVal,&lLen1,0,sClass,&lLen2,&ft);
-    if (lSts != ERROR_MORE_DATA) ERR(2,lSts);
+    if (lSts != ERROR_MORE_DATA) ERROR(2,lSts);
 
     lSts = RegEnumKeyEx(HKEY_LOCAL_MACHINE,0,sVal,&lLen1,0,sClass,&lLen2,&ft);
-    if (lSts != ERROR_MORE_DATA) ERR(3,lSts);
+    if (lSts != ERROR_MORE_DATA) ERROR(3,lSts);
 }
 
 /******************************************************************************
@@ -229,19 +229,19 @@ void TestEnumValue()
     bVal = (char *)malloc(lLen1 * sizeof(char));
 
     lSts = RegEnumValue((HKEY)2,-1,sVal,&lVal,0,&lType,NULL,&lLen1);
-    if (lSts != ERROR_INVALID_HANDLE) ERR(1,lSts);
+    if (lSts != ERROR_INVALID_HANDLE) ERROR(1,lSts);
 
     lSts = RegEnumValue(HKEY_LOCAL_MACHINE,-1,sVal,&lVal,0,&lType,NULL,&lLen1);
-    if (lSts != ERROR_NO_MORE_ITEMS) ERR(2,lSts);
+    if (lSts != ERROR_NO_MORE_ITEMS) ERROR(2,lSts);
 
     lSts = RegEnumValue(HKEY_LOCAL_MACHINE,0,sVal,&lVal,0,&lType,NULL,&lLen1);
-    if (lSts != ERROR_SUCCESS) ERR(3,lSts);
+    if (lSts != ERROR_SUCCESS) ERROR(3,lSts);
 
     lSts = RegEnumValue(HKEY_LOCAL_MACHINE,0,sVal,&lVal,0,NULL,NULL,&lLen1);
-    if (lSts != ERROR_SUCCESS) ERR(4,lSts);
+    if (lSts != ERROR_SUCCESS) ERROR(4,lSts);
 
     lSts = RegEnumValue(HKEY_LOCAL_MACHINE,1,sVal,&lVal,0,&lType,bVal,&lLen1);
-    if (lSts != ERROR_NO_MORE_ITEMS) ERR(5,lSts);
+    if (lSts != ERROR_NO_MORE_ITEMS) ERROR(5,lSts);
 }
 
 /******************************************************************************
@@ -252,10 +252,10 @@ void TestFlushKey()
     long lSts;
 
     lSts = RegFlushKey((HKEY)2);
-    if (lSts != ERROR_INVALID_HANDLE) ERR(1,lSts);
+    if (lSts != ERROR_INVALID_HANDLE) ERROR(1,lSts);
 
     lSts = RegFlushKey(HKEY_LOCAL_MACHINE);
-    if (lSts != ERROR_SUCCESS) ERR(2,lSts);
+    if (lSts != ERROR_SUCCESS) ERROR(2,lSts);
 }
 
 /******************************************************************************
@@ -271,14 +271,14 @@ void TestGetKeySecurity()
     lLen = sizeof(sd);
     si = 0;
     lSts = RegGetKeySecurity((HKEY)2,si,&sd,&lLen);
-    if (lSts != ERROR_INVALID_HANDLE) ERR(1,lSts);
+    if (lSts != ERROR_INVALID_HANDLE) ERROR(1,lSts);
 
     lSts = RegGetKeySecurity(HKEY_LOCAL_MACHINE,si,&sd,&lLen);
-    if (lSts != ERROR_INSUFFICIENT_BUFFER) ERR(2,lSts);
+    if (lSts != ERROR_INSUFFICIENT_BUFFER) ERROR(2,lSts);
 
     si = GROUP_SECURITY_INFORMATION;
     lSts = RegGetKeySecurity(HKEY_LOCAL_MACHINE,si,&sd,&lLen);
-    if (lSts != ERROR_SUCCESS) ERR(3,lSts);
+    if (lSts != ERROR_SUCCESS) ERROR(3,lSts);
 }
 
 /******************************************************************************
@@ -289,23 +289,23 @@ void TestLoadKey()
     long lSts;
 
     lSts = RegLoadKey((HKEY)2,"","");
-    if (lSts != ERROR_INVALID_PARAMETER) ERR(1,lSts);
+    if (lSts != ERROR_INVALID_PARAMETER) ERROR(1,lSts);
 
     lSts = RegLoadKey(HKEY_CURRENT_USER,"","");
-    if (lSts != ERROR_INVALID_PARAMETER) ERR(2,lSts);
+    if (lSts != ERROR_INVALID_PARAMETER) ERROR(2,lSts);
 
     lSts = RegLoadKey(HKEY_CURRENT_USER,"regtest","");
-    if (lSts != ERROR_INVALID_PARAMETER) ERR(3,lSts);
+    if (lSts != ERROR_INVALID_PARAMETER) ERROR(3,lSts);
 
     lSts = RegLoadKey(HKEY_CURRENT_USER,"\\regtest","");
-    if (lSts != ERROR_INVALID_PARAMETER) ERR(4,lSts);
+    if (lSts != ERROR_INVALID_PARAMETER) ERROR(4,lSts);
 
 #if CHECK_SAM
     lSts = RegLoadKey(HKEY_CURRENT_USER,"regtest","regtest.dat");
-    if (lSts != ERROR_PRIVILEGE_NOT_HELD) ERR(5,lSts);
+    if (lSts != ERROR_PRIVILEGE_NOT_HELD) ERROR(5,lSts);
 
     lSts = RegLoadKey(HKEY_CURRENT_USER,"\\regtest","regtest.dat");
-    if (lSts != ERROR_PRIVILEGE_NOT_HELD) ERR(6,lSts);
+    if (lSts != ERROR_PRIVILEGE_NOT_HELD) ERROR(6,lSts);
 #endif
 }
 
@@ -320,14 +320,14 @@ void TestNotifyChangeKeyValue()
     hEvent = (HANDLE)0;
 
     lSts = RegNotifyChangeKeyValue((HKEY)2, TRUE, REG_NOTIFY_CHANGE_NAME, 0, 0);
-    if (lSts != ERROR_INVALID_HANDLE) ERR(1,lSts);
+    if (lSts != ERROR_INVALID_HANDLE) ERROR(1,lSts);
 
     lSts = RegNotifyChangeKeyValue(HKEY_CURRENT_USER, TRUE, REG_NOTIFY_CHANGE_NAME, 0, 1);
-    if (lSts != ERROR_INVALID_PARAMETER) ERR(2,lSts);
+    if (lSts != ERROR_INVALID_PARAMETER) ERROR(2,lSts);
 
     hEvent = (HANDLE)HKEY_CURRENT_USER;
     lSts = RegNotifyChangeKeyValue(HKEY_CURRENT_USER, TRUE, REG_NOTIFY_CHANGE_NAME, hEvent, 1);
-    if (lSts != ERROR_INVALID_HANDLE) ERR(3,lSts);
+    if (lSts != ERROR_INVALID_HANDLE) ERROR(3,lSts);
 }
 
 /******************************************************************************
@@ -339,17 +339,17 @@ void TestOpenKey()
     HKEY hkey;
 
     lSts = RegOpenKey((HKEY)72, "",&hkey);
-    if (lSts != ERROR_SUCCESS) ERR(1,lSts);
+    if (lSts != ERROR_SUCCESS) ERROR(1,lSts);
     RegCloseKey(hkey);
 
     lSts = RegOpenKey((HKEY)2, "regtest",&hkey);
-    if (lSts != ERROR_INVALID_HANDLE) ERR(2,lSts);
+    if (lSts != ERROR_INVALID_HANDLE) ERROR(2,lSts);
 
     lSts = RegOpenKey(HKEY_CURRENT_USER, "regtest",&hkey);
-    if (lSts != ERROR_FILE_NOT_FOUND) ERR(3,lSts);
+    if (lSts != ERROR_FILE_NOT_FOUND) ERROR(3,lSts);
 
     lSts = RegOpenKey(HKEY_CURRENT_USER, "\\regtest",&hkey);
-    if (lSts != ERROR_BAD_PATHNAME) ERR(4,lSts);
+    if (lSts != ERROR_BAD_PATHNAME) ERROR(4,lSts);
 }
 
 /******************************************************************************
@@ -361,16 +361,16 @@ void TestOpenKeyEx()
     HKEY hkey;
 
     lSts = RegOpenKeyEx((HKEY)2,"",0,KEY_ALL_ACCESS,&hkey);
-    if (lSts != ERROR_INVALID_HANDLE) ERR(1,lSts);
+    if (lSts != ERROR_INVALID_HANDLE) ERROR(1,lSts);
 
     lSts = RegOpenKeyEx(HKEY_CURRENT_USER,"\\regtest",0,KEY_ALL_ACCESS,&hkey);
-    if (lSts != ERROR_BAD_PATHNAME) ERR(2,lSts);
+    if (lSts != ERROR_BAD_PATHNAME) ERROR(2,lSts);
 
     lSts = RegOpenKeyEx(HKEY_CURRENT_USER,"regtest",0,0,&hkey);
-    if (lSts != ERROR_FILE_NOT_FOUND) ERR(3,lSts);
+    if (lSts != ERROR_FILE_NOT_FOUND) ERROR(3,lSts);
 
     lSts = RegOpenKeyEx(HKEY_CURRENT_USER,"regtest\\",0,0,&hkey);
-    if (lSts != ERROR_FILE_NOT_FOUND) ERR(4,lSts);
+    if (lSts != ERROR_FILE_NOT_FOUND) ERROR(4,lSts);
 }
 
 /******************************************************************************
@@ -396,12 +396,12 @@ void TestQueryInfoKey()
     lSts = RegQueryInfoKey((HKEY)2,sClass,&lClass,0,&lSubKeys,&lMaxSubLen,
                            &lMaxClassLen,&lValues,&lMaxValNameLen,&lMaxValLen,
                            &lSecDescLen, &ft);
-    if (lSts != ERROR_INVALID_HANDLE) ERR(1,lSts);
+    if (lSts != ERROR_INVALID_HANDLE) ERROR(1,lSts);
 
     lSts = RegQueryInfoKey(HKEY_CURRENT_USER,sClass,&lClass,0,&lSubKeys,
                            &lMaxSubLen,&lMaxClassLen,&lValues,&lMaxValNameLen,
                            &lMaxValLen,&lSecDescLen, &ft);
-    if (lSts != ERROR_SUCCESS) ERR(2,lSts);
+    if (lSts != ERROR_SUCCESS) ERROR(2,lSts);
 }
 
 /******************************************************************************
@@ -417,16 +417,16 @@ void TestQueryValue()
     lLen = strlen(sVal);
 
     lSts = RegQueryValue((HKEY)2,"",NULL,&lLen);
-    if (lSts != ERROR_INVALID_HANDLE) ERR(1,lSts);
+    if (lSts != ERROR_INVALID_HANDLE) ERROR(1,lSts);
 
     lSts = RegQueryValue(HKEY_CURRENT_USER,"",NULL,&lLen);
-    if (lSts != ERROR_SUCCESS) ERR(2,lSts);
+    if (lSts != ERROR_SUCCESS) ERROR(2,lSts);
 
     lSts = RegQueryValue(HKEY_CURRENT_USER,"\\regtest",NULL,&lLen);
-    if (lSts != ERROR_BAD_PATHNAME) ERR(3,lSts);
+    if (lSts != ERROR_BAD_PATHNAME) ERROR(3,lSts);
 
     lSts = RegQueryValue(HKEY_CURRENT_USER,"",sVal,&lLen);
-    if (lSts != ERROR_SUCCESS) ERR(4,lSts);
+    if (lSts != ERROR_SUCCESS) ERROR(4,lSts);
 }
 
 /******************************************************************************
@@ -443,13 +443,13 @@ void TestQueryValueEx()
     sVal = (char *)malloc(lLen * sizeof(char));
 
     lSts = RegQueryValueEx((HKEY)2,"",0,&lType,sVal,&lLen);
-    if (lSts != ERROR_INVALID_HANDLE) ERR(1,lSts);
+    if (lSts != ERROR_INVALID_HANDLE) ERROR(1,lSts);
 
     lSts = RegQueryValueEx(HKEY_CURRENT_USER,"",(LPDWORD)1,&lType,sVal,&lLen);
-    if (lSts != ERROR_INVALID_PARAMETER) ERR(2,lSts);
+    if (lSts != ERROR_INVALID_PARAMETER) ERROR(2,lSts);
 
     lSts = RegQueryValueEx(HKEY_LOCAL_MACHINE,"",0,&lType,sVal,&lLen);
-    if (lSts != ERROR_SUCCESS) ERR(3,lSts);
+    if (lSts != ERROR_SUCCESS) ERROR(3,lSts);
 }
 
 /******************************************************************************
@@ -460,14 +460,14 @@ void TestReplaceKey()
     long lSts;
 
     lSts = RegReplaceKey((HKEY)2,"","","");
-    if (lSts != ERROR_INVALID_HANDLE) ERR(1,lSts);
+    if (lSts != ERROR_INVALID_HANDLE) ERROR(1,lSts);
 
 #if CHECK_SAM
     lSts = RegReplaceKey(HKEY_LOCAL_MACHINE,"","","");
-    if (lSts != ERROR_ACCESS_DENIED) ERR(2,lSts);
+    if (lSts != ERROR_ACCESS_DENIED) ERROR(2,lSts);
 
     lSts = RegReplaceKey(HKEY_LOCAL_MACHINE,"Software","","");
-    if (lSts != ERROR_ACCESS_DENIED) ERR(3,lSts);
+    if (lSts != ERROR_ACCESS_DENIED) ERROR(3,lSts);
 #endif
 }
 
@@ -479,13 +479,13 @@ void TestRestoreKey()
     long lSts;
 
     lSts = RegRestoreKey((HKEY)2,"",0);
-    if (lSts != ERROR_INVALID_PARAMETER) ERR(1,lSts);
+    if (lSts != ERROR_INVALID_PARAMETER) ERROR(1,lSts);
 
     lSts = RegRestoreKey(HKEY_LOCAL_MACHINE,"",0);
-    if (lSts != ERROR_INVALID_PARAMETER) ERR(2,lSts);
+    if (lSts != ERROR_INVALID_PARAMETER) ERROR(2,lSts);
 
     lSts = RegRestoreKey(HKEY_LOCAL_MACHINE,"a.a",0);
-    if (lSts != ERROR_FILE_NOT_FOUND) ERR(3,lSts);
+    if (lSts != ERROR_FILE_NOT_FOUND) ERROR(3,lSts);
 }
 
 /******************************************************************************
@@ -496,14 +496,14 @@ void TestSaveKey()
     long lSts;
 
     lSts = RegSaveKey((HKEY)2,"",NULL);
-    if (lSts != ERROR_INVALID_PARAMETER) ERR(1,lSts);
+    if (lSts != ERROR_INVALID_PARAMETER) ERROR(1,lSts);
 
     lSts = RegSaveKey(HKEY_LOCAL_MACHINE,"",NULL);
-    if (lSts != ERROR_INVALID_PARAMETER) ERR(2,lSts);
+    if (lSts != ERROR_INVALID_PARAMETER) ERROR(2,lSts);
 
 #if CHECK_SAM
     lSts = RegSaveKey(HKEY_LOCAL_MACHINE,"a.a",NULL);
-    if (lSts != ERROR_PRIVILEGE_NOT_HELD) ERR(3,lSts);
+    if (lSts != ERROR_PRIVILEGE_NOT_HELD) ERROR(3,lSts);
 #endif
 }
 
@@ -516,16 +516,16 @@ void TestSetKeySecurity()
     SECURITY_DESCRIPTOR sd;
 
     lSts = RegSetKeySecurity((HKEY)2,0,NULL);
-    if (lSts != ERROR_INVALID_PARAMETER) ERR(1,lSts);
+    if (lSts != ERROR_INVALID_PARAMETER) ERROR(1,lSts);
 
     lSts = RegSetKeySecurity(HKEY_LOCAL_MACHINE,0,NULL);
-    if (lSts != ERROR_INVALID_PARAMETER) ERR(2,lSts);
+    if (lSts != ERROR_INVALID_PARAMETER) ERROR(2,lSts);
 
     lSts = RegSetKeySecurity(HKEY_LOCAL_MACHINE,OWNER_SECURITY_INFORMATION,NULL);
-    if (lSts != ERROR_INVALID_PARAMETER) ERR(3,lSts);
+    if (lSts != ERROR_INVALID_PARAMETER) ERROR(3,lSts);
 
     lSts = RegSetKeySecurity(HKEY_LOCAL_MACHINE,OWNER_SECURITY_INFORMATION,&sd);
-    if (lSts != ERROR_INVALID_PARAMETER) ERR(4,lSts);
+    if (lSts != ERROR_INVALID_PARAMETER) ERROR(4,lSts);
 }
 
 /******************************************************************************
@@ -539,22 +539,22 @@ void TestSetValue()
 
 #if MAKE_NT_CRASH
     lSts = RegSetValue((HKEY)2,"",0,NULL,0);
-    if (lSts != ERROR_INVALID_PARAMETER) ERR(1,lSts);
+    if (lSts != ERROR_INVALID_PARAMETER) ERROR(1,lSts);
 #endif
 
 #if MAKE_NT_CRASH
     lSts = RegSetValue((HKEY)2,"regtest",0,NULL,0);
-    if (lSts != ERROR_INVALID_PARAMETER) ERR(2,lSts);
+    if (lSts != ERROR_INVALID_PARAMETER) ERROR(2,lSts);
 #endif
 
 #if MAKE_NT_CRASH
     lSts = RegSetValue((HKEY)2,"regtest",REG_SZ,NULL,0);
-    if (lSts != ERROR_INVALID_HANDLE) ERR(3,lSts);
+    if (lSts != ERROR_INVALID_HANDLE) ERROR(3,lSts);
 #endif
 
 #if MAKE_NT_CRASH
     lSts = RegSetValue(HKEY_LOCAL_MACHINE,"regtest",REG_SZ,NULL,0);
-    if (lSts != ERROR_INVALID_HANDLE) ERR(4,lSts);
+    if (lSts != ERROR_INVALID_HANDLE) ERROR(4,lSts);
 #endif
 }
 
@@ -566,10 +566,10 @@ void TestSetValueEx()
     long lSts;
 
     lSts = RegSetValueEx((HKEY)2,"",0,0,NULL,0);
-    if (lSts != ERROR_INVALID_HANDLE) ERR(1,lSts);
+    if (lSts != ERROR_INVALID_HANDLE) ERROR(1,lSts);
 
     lSts = RegSetValueEx(HKEY_LOCAL_MACHINE,"",0,0,NULL,0);
-    if (lSts != ERROR_SUCCESS) ERR(2,lSts);
+    if (lSts != ERROR_SUCCESS) ERROR(2,lSts);
 }
 
 /******************************************************************************
@@ -583,13 +583,13 @@ void TestUnLoadKey()
 
 #if CHECK_SAM
     lSts = RegUnLoadKey((HKEY)2,"");
-    if (lSts != ERROR_PRIVILEGE_NOT_HELD) ERR(1,lSts);
+    if (lSts != ERROR_PRIVILEGE_NOT_HELD) ERROR(1,lSts);
 
     lSts = RegUnLoadKey(HKEY_LOCAL_MACHINE,"");
-    if (lSts != ERROR_PRIVILEGE_NOT_HELD) ERR(2,lSts);
+    if (lSts != ERROR_PRIVILEGE_NOT_HELD) ERROR(2,lSts);
 
     lSts = RegUnLoadKey(HKEY_LOCAL_MACHINE,"\\regtest");
-    if (lSts != ERROR_PRIVILEGE_NOT_HELD) ERR(3,lSts);
+    if (lSts != ERROR_PRIVILEGE_NOT_HELD) ERROR(3,lSts);
 #endif
 }
 
@@ -602,14 +602,14 @@ void TestSequence1()
     long lSts;
 
     lSts = RegCreateKey(HKEY_CURRENT_USER,"regtest",&hkey);
-    if (lSts != ERROR_SUCCESS) ERR(1,lSts);
+    if (lSts != ERROR_SUCCESS) ERROR(1,lSts);
 
 /*    fprintf(stderr, " hkey=0x%x\n", hkey); */
 
     lSts = RegDeleteKey(HKEY_CURRENT_USER, "regtest");
-    if (lSts != ERROR_SUCCESS) ERR(2,lSts);
+    if (lSts != ERROR_SUCCESS) ERROR(2,lSts);
     lSts = RegCloseKey(hkey);
-    if (lSts != ERROR_SUCCESS) ERR(3,lSts);
+    if (lSts != ERROR_SUCCESS) ERROR(3,lSts);
 }
 
 
