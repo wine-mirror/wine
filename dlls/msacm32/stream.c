@@ -185,9 +185,12 @@ MMRESULT WINAPI acmStreamOpen(PHACMSTREAM phas, HACMDRIVER had, PWAVEFORMATEX pw
 		    was->hAcmDriver = had;
 		    
 		    ret = SendDriverMessage(wad->hDrvr, ACMDM_STREAM_OPEN, (DWORD)&was->drvInst, 0L);
-		    /* FIXME: when shall the acmDriver be Close():d ? */
-		    if (ret == MMSYSERR_NOERROR)
+		    if (ret == MMSYSERR_NOERROR) {
+			if (fdwOpen & ACM_STREAMOPENF_QUERY) {
+			    acmDriverClose(had, 0L);
+			}
 			break;
+		    }
 		}
 		/* no match, close this acm driver and try next one */
 		acmDriverClose(had, 0L);
@@ -198,13 +201,16 @@ MMRESULT WINAPI acmStreamOpen(PHACMSTREAM phas, HACMDRIVER had, PWAVEFORMATEX pw
 	    goto errCleanUp;
 	}
     }
-    if (phas)
-	*phas = (HACMSTREAM)was;
-    TRACE("=> (%d)\n", ret);
     ret = MMSYSERR_NOERROR;
-    if (!(fdwOpen & ACM_STREAMOPENF_QUERY))
+    if (!(fdwOpen & ACM_STREAMOPENF_QUERY)) {
+	if (phas)
+	    *phas = (HACMSTREAM)was;
+	TRACE("=> (%d)\n", ret);
 	return ret;
+    }
 errCleanUp:		
+    if (phas)
+	*phas = (HACMSTREAM)0;
     HeapFree(MSACM_hHeap, 0, was);
     TRACE("=> (%d)\n", ret);
     return ret;
