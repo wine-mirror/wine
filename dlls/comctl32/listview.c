@@ -74,8 +74,6 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(listview);
 
-/* Some definitions for inline edit control */
-
 typedef struct tagCOLUMNCACHE
 {
   RECT rc;
@@ -108,6 +106,14 @@ typedef struct tagRANGE
   INT lower;
   INT upper;
 } RANGE;
+
+typedef struct tagITERATOR
+{
+  INT nItem;
+  RANGE range;
+  HDPA ranges;
+  INT index;
+} ITERATOR;
 
 typedef struct tagLISTVIEW_INFO
 {
@@ -637,12 +643,12 @@ static BOOL notify_dispinfoT(LISTVIEW_INFO *infoPtr, INT notificationCode, LPNML
     return bResult;
 }
 
-static inline void notify_odcachehint(LISTVIEW_INFO *infoPtr, INT iFrom, INT iTo)
+static inline void notify_odcachehint(LISTVIEW_INFO *infoPtr, RANGE range)
 {
     NMLVCACHEHINT nmlv;
 
-    nmlv.iFrom = iFrom;
-    nmlv.iTo   = iTo;
+    nmlv.iFrom = range.lower;
+    nmlv.iTo   = range.upper;
     notify(infoPtr, LVN_ODCACHEHINT, &nmlv.hdr);
 }
 
@@ -711,6 +717,106 @@ static BOOL notify_customdrawitem (LISTVIEW_INFO *infoPtr, HDC hdc, UINT iItem, 
     return bReturn;
 }
 
+/******** Item iterator functions **********************************/
+
+static BOOL iterator_create_frameditems(ITERATOR*, LISTVIEW_INFO*, const RECT*, HRGN);
+
+static inline BOOL iterator_next(ITERATOR* i)
+{
+    if (i->nItem == -1)
+    {
+	if (i->ranges) goto pickarange;
+	return (i->nItem = i->range.lower) != -1;
+    }
+    i->nItem++;
+    if (i->nItem <= i->range.upper)
+	return TRUE;
+
+pickarange:
+    if (i->ranges && i->index < i->ranges->nItemCount)
+    {
+	i->range = *(RANGE*)DPA_GetPtr(i->ranges, i->index++);
+	return (i->nItem = i->range.lower) != -1;
+    }
+    i->nItem = i->range.lower = i->range.upper = -1;
+    return FALSE;
+}
+
+static RANGE iterator_range(ITERATOR* i)
+{
+    RANGE range;
+
+    if (!i->ranges) return i->range;
+
+    range.lower = (*(RANGE*)DPA_GetPtr(i->ranges, 0)).lower;
+    range.upper = (*(RANGE*)DPA_GetPtr(i->ranges, i->ranges->nItemCount - 1)).upper;
+    return range;
+}
+
+static inline void iterator_destroy(ITERATOR* i)
+{
+    if (i->ranges) DPA_Destroy(i->ranges);
+}
+
+static inline BOOL iterator_create_empty(ITERATOR* i)
+{
+    ZeroMemory(i, sizeof(*i));
+    i->nItem = i->range.lower = i->range.upper = -1;
+    return TRUE;
+}
+
+static inline BOOL iterator_create_visibleitems(ITERATOR* i, LISTVIEW_INFO *infoPtr)
+{
+    return iterator_create_frameditems(i, infoPtr, &infoPtr->rcList, 0);
+}
+
+static BOOL iterator_create_clippeditems(ITERATOR* i, LISTVIEW_INFO *infoPtr, HDC  hdc)
+{
+    HRGN rgnClip;
+    RECT rcClip;
+    INT rgntype;
+    
+    rgntype = GetClipBox(hdc, &rcClip);
+    if (rgntype == NULLREGION) 
+	return iterator_create_empty(i);
+    if (rgntype == SIMPLEREGION)
+	rgnClip = 0;
+    else
+    {
+	FIXME("TODO: complex clipped region!\n");
+	rgnClip = 0;
+    }
+    return iterator_create_frameditems(i, infoPtr, &rcClip, rgnClip);
+}
+
+static BOOL iterator_create_frameditems(ITERATOR* i, LISTVIEW_INFO* infoPtr, const RECT* lprc, HRGN rgn)
+{
+    UINT uView = infoPtr->dwStyle & LVS_TYPEMASK;
+    INT nPerCol, nPerRow;
+    
+    if (rgn) FIXME("Don't know how to handle regions yet.\n");
+
+    /* in case we fail, we want to return an empty iterator */
+    if (!iterator_create_empty(i)) return FALSE;
+
+    if (uView == LVS_ICON || uView == LVS_SMALLICON)
+    {
+	i->range.lower = 0;
+	i->range.upper = infoPtr->nItemCount;
+	return TRUE;
+    }
+    
+    i->range.lower = LISTVIEW_GetTopIndex(infoPtr);
+    
+    nPerCol = max((infoPtr->rcList.bottom - infoPtr->rcList.top) / infoPtr->nItemHeight, 1) + 1;
+    if (uView == LVS_REPORT)
+	nPerRow = 1;
+    else /* uView == LVS_LIST */
+	nPerRow = max((infoPtr->rcList.right - infoPtr->rcList.left)/infoPtr->nItemWidth, 1);
+
+    i->range.upper = min(i->range.lower + nPerCol * nPerRow, infoPtr->nItemCount);
+    return TRUE;
+}
 /******** Misc helper functions ************************************/
 
 static inline LRESULT CallWindowProcT(WNDPROC proc, HWND hwnd, UINT uMsg,
@@ -781,51 +887,6 @@ static inline INT LISTVIEW_GetCountPerColumn(LISTVIEW_INFO *infoPtr)
     INT nListHeight = infoPtr->rcList.bottom - infoPtr->rcList.top;
 
     return max(nListHeight / infoPtr->nItemHeight, 1);
-}
-
-/***
- * DESCRIPTION:
- * Retrieves the range of visible items. Note that the upper limit
- * may be a bit larger than the actual last visible item.
- *
- * PARAMETER(S):
- * [I] infoPtr : valid pointer to the listview structure
- *
- * RETURN:
- * maximum range of visible items
- */
-static RANGE LISTVIEW_GetVisibleRange(LISTVIEW_INFO *infoPtr)
-{
-    UINT uView = LISTVIEW_GetType(infoPtr);
-    INT nPerCol, nPerRow;
-    RANGE visrange;
-    
-    visrange.lower = LISTVIEW_GetTopIndex(infoPtr);
-    
-    if (uView == LVS_REPORT)
-    {
-	nPerCol = LISTVIEW_GetCountPerColumn(infoPtr) + 1;
-	nPerRow = 1;
-    }
-    else if (uView == LVS_LIST)
-    {
-	nPerCol = LISTVIEW_GetCountPerColumn(infoPtr) + 1;
-	nPerRow = LISTVIEW_GetCountPerRow(infoPtr);
-    }
-    else
-    {
-	/* FIXME: this is correct only in autoarrange mode */
-	nPerCol = LISTVIEW_GetCountPerColumn(infoPtr) + 1;
-	nPerRow = LISTVIEW_GetCountPerRow(infoPtr) + 1;
-    }
-
-    visrange.upper = visrange.lower + nPerCol * nPerRow;
-    if (visrange.upper > infoPtr->nItemCount) 
-	visrange.upper = infoPtr->nItemCount;
-   
-    TRACE("range=(%d, %d)\n", visrange.lower, visrange.upper);
-
-    return visrange;
 }
 
 
@@ -1201,15 +1262,15 @@ done:
  */
 static void LISTVIEW_InvalidateSelectedItems(LISTVIEW_INFO *infoPtr)
 {
-    RANGE visrange;
-    INT i;
-
-    visrange = LISTVIEW_GetVisibleRange(infoPtr);
-    for (i = visrange.lower; i <= visrange.upper; i++)
+    ITERATOR i; 
+   
+    iterator_create_visibleitems(&i, infoPtr); 
+    while(iterator_next(&i))
     {
-	if (LISTVIEW_GetItemState(infoPtr, i, LVIS_SELECTED))
-	    LISTVIEW_InvalidateItem(infoPtr, i);
+	if (LISTVIEW_GetItemState(infoPtr, i.nItem, LVIS_SELECTED))
+	    LISTVIEW_InvalidateItem(infoPtr, i.nItem);
     }
+    iterator_destroy(&i);
 }
 
 	    
@@ -2327,18 +2388,21 @@ static void LISTVIEW_SetGroupSelection(LISTVIEW_INFO *infoPtr, INT nItem)
     else
     {
 	RECT rcItem, rcSelMark;
+	ITERATOR i;
 	
 	rcItem.left = LVIR_BOUNDS;
 	if (!LISTVIEW_GetItemRect(infoPtr, nItem, &rcItem)) return;
 	rcSelMark.left = LVIR_BOUNDS;
 	if (!LISTVIEW_GetItemRect(infoPtr, infoPtr->nSelectionMark, &rcSelMark)) return;
 	UnionRect(&rcSel, &rcItem, &rcSelMark);
-	for (i = 0; i <= infoPtr->nItemCount; i++)
+	iterator_create_frameditems(&i, infoPtr, &rcSel, 0);
+	while(iterator_next(&i))
 	{
-	    LISTVIEW_GetItemPosition(infoPtr, i, &ptItem);
+	    LISTVIEW_GetItemPosition(infoPtr, i.nItem, &ptItem);
 	    if (PtInRect(&rcSel, ptItem)) 
-		LISTVIEW_SetItemState(infoPtr, i, &item);
+		LISTVIEW_SetItemState(infoPtr, i.nItem, &item);
 	}
+	iterator_destroy(&i);
     }
 
     LISTVIEW_SetItemFocus(infoPtr, nItem);
@@ -2434,23 +2498,25 @@ static BOOL LISTVIEW_KeySelection(LISTVIEW_INFO *infoPtr, INT nItem)
  *   SUCCESS : item index
  *   FAILURE : -1
  */
+/* FIXME: get rid of this function, use HitTest instead */
 static INT LISTVIEW_GetItemAtPt(LISTVIEW_INFO *infoPtr, POINT pt)
 {
-    RANGE visrange;
+    ITERATOR i;
     RECT rcItem;
-    INT i;
-
-    visrange = LISTVIEW_GetVisibleRange(infoPtr);
-    for (i = visrange.lower; i <= visrange.upper; i++)
+   
+    iterator_create_visibleitems(&i, infoPtr); 
+    while(iterator_next(&i))
     {
 	rcItem.left = LVIR_SELECTBOUNDS;
-	if (LISTVIEW_GetItemRect(infoPtr, i, &rcItem))
+	if (LISTVIEW_GetItemRect(infoPtr, i.nItem, &rcItem))
 	{
-	    TRACE("i=%d, rcItem=%s\n", i, debugrect(&rcItem));
-	    if (PtInRect(&rcItem, pt)) return i;
+	    TRACE("i=%d, rcItem=%s\n", i.nItem, debugrect(&rcItem));
+	    if (PtInRect(&rcItem, pt)) break;
 	}
     }
-    return -1;
+    iterator_destroy(&i);
+    
+    return i.nItem;
 }
 
 /***
@@ -3286,44 +3352,31 @@ static BOOL LISTVIEW_DrawLargeItem(LISTVIEW_INFO *infoPtr, HDC hdc, INT nItem, R
  */
 static void LISTVIEW_RefreshOwnerDraw(LISTVIEW_INFO *infoPtr, HDC hdc)
 {
-    INT nTop, nItem, nLast, nUpdateHeight, nUpdateWidth, rgntype;
     UINT uID = GetWindowLongW(infoPtr->hwndSelf, GWL_ID);
     HWND hwndParent = GetParent(infoPtr->hwndSelf);
     POINT Origin, Position;
     DRAWITEMSTRUCT dis;
     LVITEMW item;
-    RECT rcClip;
+    ITERATOR i;
     
     TRACE("()\n");
 
-    /* figure out what to draw */
-    /* FIXME: this works for REPORT only */
-    rgntype = GetClipBox(hdc, &rcClip);
-    if (rgntype == NULLREGION) return;
-    nUpdateHeight = rcClip.bottom - rcClip.top + 1;
-    nUpdateWidth = rcClip.right - rcClip.left;
-    nTop = LISTVIEW_GetTopIndex(infoPtr);
-    nItem = nTop + (rcClip.top - infoPtr->rcList.top) / infoPtr->nItemHeight;
-    if (nItem < nTop)
-        nItem = nTop;
-    nLast = nItem + nUpdateHeight / infoPtr->nItemHeight;
-    if (nUpdateHeight % infoPtr->nItemHeight) nLast++;
-    if (nLast > infoPtr->nItemCount)
-        nLast = infoPtr->nItemCount;
     ZeroMemory(&dis, sizeof(dis));
     
     /* Get scroll info once before loop */
     if (!LISTVIEW_GetOrigin(infoPtr, &Origin)) return;
-    
 
+    /* figure out what we need to draw */
+    iterator_create_clippeditems(&i, infoPtr, hdc);
+    
     /* send cache hint notification */
     if (infoPtr->dwStyle & LVS_OWNERDATA) 
-	notify_odcachehint(infoPtr, nItem, nLast);
+	notify_odcachehint(infoPtr, iterator_range(&i));
 
-    /* iterate through the invalidated rows */ 
-    for (; nItem < nLast; nItem++)
+    /* iterate through the invalidated rows */
+    while(iterator_next(&i))
     {
-	item.iItem = nItem;
+	item.iItem = i.nItem;
 	item.iSubItem = 0;
 	item.mask = LVIF_PARAM | LVIF_STATE;
 	item.stateMask = LVIS_SELECTED | LVIS_FOCUSED;
@@ -3331,14 +3384,14 @@ static void LISTVIEW_RefreshOwnerDraw(LISTVIEW_INFO *infoPtr, HDC hdc)
 	   
 	dis.CtlType = ODT_LISTVIEW;
 	dis.CtlID = uID;
-	dis.itemID = nItem;
+	dis.itemID = item.iItem;
 	dis.itemAction = ODA_DRAWENTIRE;
 	dis.itemState = 0;
 	if (item.state & LVIS_SELECTED) dis.itemState |= ODS_SELECTED;
 	if (infoPtr->bFocus && (item.state & LVIS_FOCUSED)) dis.itemState |= ODS_FOCUS;
 	dis.hwndItem = infoPtr->hwndSelf;
 	dis.hDC = hdc;
-	if (!LISTVIEW_GetItemListOrigin(infoPtr, nItem, &Position)) continue;
+	if (!LISTVIEW_GetItemListOrigin(infoPtr, dis.itemID, &Position)) continue;
 	dis.rcItem.left = Position.x + Origin.x;
 	dis.rcItem.right = dis.rcItem.left + infoPtr->nItemWidth;
 	dis.rcItem.top = Position.y + Origin.y;
@@ -3348,6 +3401,7 @@ static void LISTVIEW_RefreshOwnerDraw(LISTVIEW_INFO *infoPtr, HDC hdc)
 	TRACE("item=%s, rcItem=%s\n", debuglvitem_t(&item, TRUE), debugrect(&dis.rcItem));
 	SendMessageW(hwndParent, WM_DRAWITEM, dis.CtlID, (LPARAM)&dis);
     }
+    iterator_destroy(&i);
 }
 
 /***
@@ -3365,7 +3419,6 @@ static void LISTVIEW_RefreshOwnerDraw(LISTVIEW_INFO *infoPtr, HDC hdc)
 static void LISTVIEW_RefreshReport(LISTVIEW_INFO *infoPtr, HDC hdc, DWORD cdmode)
 {
     INT rgntype, nDrawPosY, j;
-    INT nTop, nItem, nLast, nUpdateHeight, nUpdateWidth;
     INT nColumnCount, nFirstCol, nLastCol;
     RECT rcItem, rcClip, rcFullSelect;
     BOOL bFullSelected, isFocused;
@@ -3375,27 +3428,14 @@ static void LISTVIEW_RefreshReport(LISTVIEW_INFO *infoPtr, HDC hdc, DWORD cdmode
     LVCOLUMNW lvColumn;
     LVITEMW item;
     POINT ptOrig;
+    ITERATOR i;
 
     TRACE("()\n");
 
     /* figure out what to draw */
     rgntype = GetClipBox(hdc, &rcClip);
     if (rgntype == NULLREGION) return;
-    nUpdateHeight = rcClip.bottom - rcClip.top + 1;
-    nUpdateWidth = rcClip.right - rcClip.left;
-    nTop = LISTVIEW_GetTopIndex(infoPtr);
-    nItem = nTop + (rcClip.top - infoPtr->rcList.top) / infoPtr->nItemHeight;
-    if (nItem < nTop)
-        nItem = nTop;
-    nLast = nItem + nUpdateHeight / infoPtr->nItemHeight;
-    if (nUpdateHeight % infoPtr->nItemHeight) nLast++;
-    if (nLast > infoPtr->nItemCount)
-        nLast = infoPtr->nItemCount;
-
-    /* send cache hint notification */
-    if (infoPtr->dwStyle & LVS_OWNERDATA) 
-	notify_odcachehint(infoPtr, nItem, nLast);
-
+    
     /* cache column info */
     nColumnCount = Header_GetItemCount(infoPtr->hwndHeader);
     lpCols = COMCTL32_Alloc(nColumnCount * sizeof(COLUMNCACHE));
@@ -3428,27 +3468,34 @@ static void LISTVIEW_RefreshReport(LISTVIEW_INFO *infoPtr, HDC hdc, DWORD cdmode
 	else if (lvColumn.fmt & LVCFMT_CENTER)
 	    lpCols[j].align = DT_CENTER;
     }
-	
-    /* a last few bits before we start drawing */
-    TRACE("nTop=%d, nItem=%d, nLast=%d, nFirstCol=%d, nLastCol=%d\n",
-	  nTop, nItem, nLast, nFirstCol, nLastCol);
-    bFullSelected = infoPtr->dwLvExStyle & LVS_EX_FULLROWSELECT;
-    nDrawPosY = infoPtr->rcList.top + (nItem - nTop) * infoPtr->nItemHeight;
 
     /* save dc values we're gonna trash while drawing */
     oldTa.bkMode = GetBkMode(hdc);
     oldTa.bkColor = GetBkColor(hdc);
     oldTa.fgColor = GetTextColor(hdc);
    
-    /* iterate through the invalidated rows */ 
-    for (; nItem < nLast; nItem++, nDrawPosY += infoPtr->nItemHeight)
+    /* figure out what we need to draw */
+    iterator_create_clippeditems(&i, infoPtr, hdc);
+    
+    /* a last few bits before we start drawing */
+    bFullSelected = infoPtr->dwLvExStyle & LVS_EX_FULLROWSELECT;
+    TRACE("Colums=(%di - %d)\n", nFirstCol, nLastCol);
+
+    /* send cache hint notification */
+    if (infoPtr->dwStyle & LVS_OWNERDATA) 
+	notify_odcachehint(infoPtr, iterator_range(&i));
+
+    /* iterate through the invalidated rows */
+    while(iterator_next(&i))
     {
+	nDrawPosY = i.nItem * infoPtr->nItemHeight;
+
 	/* compute the full select rectangle, if needed */
 	if (bFullSelected)
 	{
 	    item.mask = LVIF_IMAGE | LVIF_STATE | LVIF_INDENT;
 	    item.stateMask = LVIS_SELECTED;
-	    item.iItem = nItem;
+	    item.iItem = i.nItem;
 	    item.iSubItem = 0;
   	    if (!LISTVIEW_GetItemW(infoPtr, &item)) continue;
 	     
@@ -3458,7 +3505,7 @@ static void LISTVIEW_RefreshReport(LISTVIEW_INFO *infoPtr, HDC hdc, DWORD cdmode
 	    rcFullSelect.right = max(rcFullSelect.left, lpCols[nColumnCount - 1].rc.right - REPORT_MARGINX);
 	    rcFullSelect.top = nDrawPosY;
 	    rcFullSelect.bottom = rcFullSelect.top + infoPtr->nItemHeight;
-	    OffsetRect(&rcFullSelect, ptOrig.x, 0);
+	    OffsetRect(&rcFullSelect, ptOrig.x, ptOrig.y);
 	}
 
 	/* draw the background of the selection rectangle, if need be */
@@ -3471,7 +3518,7 @@ static void LISTVIEW_RefreshReport(LISTVIEW_INFO *infoPtr, HDC hdc, DWORD cdmode
 	for (j = nFirstCol; j <= nLastCol; j++)
 	{
 	    if (cdmode & CDRF_NOTIFYITEMDRAW)
-		cditemmode = notify_customdrawitem (infoPtr, hdc, nItem, j, CDDS_ITEMPREPAINT);
+		cditemmode = notify_customdrawitem (infoPtr, hdc, i.nItem, j, CDDS_ITEMPREPAINT);
 	    if (cditemmode & CDRF_SKIPDEFAULT) continue;
 
 	    rcItem = lpCols[j].rc;
@@ -3481,20 +3528,21 @@ static void LISTVIEW_RefreshReport(LISTVIEW_INFO *infoPtr, HDC hdc, DWORD cdmode
 	    rcItem.bottom = rcItem.top + infoPtr->nItemHeight;
 
 	    /* Offset the Scroll Bar Pos */
-	    OffsetRect(&rcItem, ptOrig.x, 0);
+	    OffsetRect(&rcItem, ptOrig.x, ptOrig.y);
 
 	    if (j == 0)
-		isFocused = LISTVIEW_DrawItem(infoPtr, hdc, nItem, rcItem);
+		isFocused = LISTVIEW_DrawItem(infoPtr, hdc, i.nItem, rcItem);
 	    else
-		LISTVIEW_DrawSubItem(infoPtr, hdc, nItem, j, rcItem, lpCols[j].align);
+		LISTVIEW_DrawSubItem(infoPtr, hdc, i.nItem, j, rcItem, lpCols[j].align);
 
 	    if (cditemmode & CDRF_NOTIFYPOSTPAINT)
-		notify_customdrawitem(infoPtr, hdc, nItem, 0, CDDS_ITEMPOSTPAINT);
+		notify_customdrawitem(infoPtr, hdc, i.nItem, 0, CDDS_ITEMPOSTPAINT);
 	}
 
 	/* Adjust focus if we have it, and we are in full select */
 	if (bFullSelected && isFocused) infoPtr->rcFocus = rcFullSelect;
     }
+    iterator_destroy(&i);
 
     /* cleanup the mess */
     set_text_attr(hdc, &oldTa);
@@ -3515,48 +3563,37 @@ static void LISTVIEW_RefreshReport(LISTVIEW_INFO *infoPtr, HDC hdc, DWORD cdmode
  */
 static void LISTVIEW_RefreshList(LISTVIEW_INFO *infoPtr, HDC hdc, DWORD cdmode)
 {
-  RECT rcItem;
-  INT i, j;
-  INT nItem;
-  INT nColumnCount;
-  INT nCountPerColumn;
-  INT nItemWidth = infoPtr->nItemWidth;
-  INT nItemHeight = infoPtr->nItemHeight;
-  INT nListWidth = infoPtr->rcList.right - infoPtr->rcList.left;
-  DWORD cditemmode = CDRF_DODEFAULT;
+    DWORD cditemmode = CDRF_DODEFAULT;
+    POINT Origin, Position;
+    RECT rcItem;
+    ITERATOR i;
 
-  /* get number of fully visible columns */
-  nColumnCount = nListWidth / nItemWidth;
-  if (nListWidth % nItemWidth) nColumnCount++;
-  nCountPerColumn = LISTVIEW_GetCountPerColumn(infoPtr);
-  nItem = ListView_GetTopIndex(infoPtr->hwndSelf);
-  TRACE("nColumnCount=%d, nCountPerColumn=%d, start item=%d\n",
-	nColumnCount, nCountPerColumn, nItem);
-
-  for (i = 0; i < nColumnCount; i++)
-  {
-    for (j = 0; j < nCountPerColumn; j++, nItem++)
+    /* Get scroll info once before loop */
+    if (!LISTVIEW_GetOrigin(infoPtr, &Origin)) return;
+    
+    /* figure out what we need to draw */
+    iterator_create_clippeditems(&i, infoPtr, hdc);
+    
+    while(iterator_next(&i))
     {
-      if (nItem >= infoPtr->nItemCount)
-        return;
+        if (cdmode & CDRF_NOTIFYITEMDRAW)
+            cditemmode = notify_customdrawitem (infoPtr, hdc, i.nItem, 0, CDDS_ITEMPREPAINT);
+        if (cditemmode & CDRF_SKIPDEFAULT) continue;
 
-      if (cdmode & CDRF_NOTIFYITEMDRAW)
-        cditemmode = notify_customdrawitem (infoPtr, hdc, nItem, 0, CDDS_ITEMPREPAINT);
-      if (cditemmode & CDRF_SKIPDEFAULT)
-        continue;
+	if (!LISTVIEW_GetItemListOrigin(infoPtr, i.nItem, &Position)) continue;
+	rcItem.left = Position.x;
+	rcItem.top = Position.y;
+	rcItem.bottom = rcItem.top + infoPtr->nItemHeight;
+	rcItem.right = rcItem.left + infoPtr->nItemWidth;
+	OffsetRect(&rcItem, Origin.x, Origin.y);
 
-      rcItem.top = j * nItemHeight;
-      rcItem.left = i * nItemWidth;
-      rcItem.bottom = rcItem.top + nItemHeight;
-      rcItem.right = rcItem.left + nItemWidth;
+        LISTVIEW_DrawItem(infoPtr, hdc, i.nItem, rcItem);
 
-      LISTVIEW_DrawItem(infoPtr, hdc, nItem, rcItem);
-
-      if (cditemmode & CDRF_NOTIFYPOSTPAINT)
-        notify_customdrawitem(infoPtr, hdc, nItem, 0, CDDS_ITEMPOSTPAINT);
+        if (cditemmode & CDRF_NOTIFYPOSTPAINT)
+            notify_customdrawitem(infoPtr, hdc, i.nItem, 0, CDDS_ITEMPOSTPAINT);
 
     }
-  }
+    iterator_destroy(&i);
 }
 
 /***
@@ -3571,102 +3608,65 @@ static void LISTVIEW_RefreshList(LISTVIEW_INFO *infoPtr, HDC hdc, DWORD cdmode)
  * RETURN:
  * None
  */
-static void LISTVIEW_RefreshIcon(LISTVIEW_INFO *infoPtr, HDC hdc, BOOL bSmall, DWORD cdmode)
+static void LISTVIEW_RefreshIcon(LISTVIEW_INFO *infoPtr, HDC hdc, DWORD cdmode)
 {
-  POINT ptPosition;
-  RECT rcItem, rcClip, rcTemp;
-  INT i;
-  DWORD cditemmode = CDRF_DODEFAULT;
+    DWORD cditemmode = CDRF_DODEFAULT;
+    POINT Origin, Position;
+    RECT rcItem, rcClip, rcTemp;
+    BOOL bDrawFocusedItem = FALSE;
+    ITERATOR i;
 
-  TRACE("\n");
-
-  GetClipBox(hdc, &rcClip);
-
-  /* Draw the visible non-selected items */
-  for (i = 0; i < infoPtr->nItemCount; i++)
-  {
-    if (LISTVIEW_GetItemState(infoPtr,i,LVIS_SELECTED))
-	continue;
-
-    rcItem.left = LVIR_BOUNDS;
-    LISTVIEW_GetItemRect(infoPtr, i, &rcItem);
-    if (!IntersectRect(&rcTemp, &rcItem, &rcClip))
-	continue;
-
-    if (cdmode & CDRF_NOTIFYITEMDRAW)
-      cditemmode = notify_customdrawitem (infoPtr, hdc, i, 0, CDDS_ITEMPREPAINT);
-    if (cditemmode & CDRF_SKIPDEFAULT)
-        continue;
-
-    LISTVIEW_GetItemPosition(infoPtr, i, &ptPosition);
-
-    if (ptPosition.y + infoPtr->nItemHeight > infoPtr->rcList.top)
+    GetClipBox(hdc, &rcClip); /* FIXME: get rid of this */
+     
+    /* Get scroll info once before loop */
+    if (!LISTVIEW_GetOrigin(infoPtr, &Origin)) return;
+    
+    /* figure out what we need to draw */
+    iterator_create_clippeditems(&i, infoPtr, hdc);
+    
+    while(iterator_next(&i))
     {
-      if (ptPosition.x + infoPtr->nItemWidth > infoPtr->rcList.left)
-      {
-        if (ptPosition.y < infoPtr->rcList.bottom)
-        {
-          if (ptPosition.x < infoPtr->rcList.right)
-          {
-            rcItem.top = ptPosition.y;
-            rcItem.left = ptPosition.x;
-            rcItem.bottom = rcItem.top + infoPtr->nItemHeight;
-            rcItem.right = rcItem.left + infoPtr->nItemWidth;
-	    
-            if (bSmall)
-              LISTVIEW_DrawItem(infoPtr, hdc, i, rcItem);
-            else
-              LISTVIEW_DrawLargeItem(infoPtr, hdc, i, rcItem);
-          }
-        }
-      }
+	if (!LISTVIEW_GetItemListOrigin(infoPtr, i.nItem, &Position)) continue;
+	rcItem.left = Position.x;
+	rcItem.top = Position.y;
+	rcItem.bottom = rcItem.top + infoPtr->nItemHeight;
+	rcItem.right = rcItem.left + infoPtr->nItemWidth;
+	OffsetRect(&rcItem, Origin.x, Origin.y);
+
+	if (!IntersectRect(&rcTemp, &rcItem, &rcClip)) continue;
+
+	/* FIXME: move this before the rcItem computation, when we no longer need rcClip */	
+	if (LISTVIEW_GetItemState(infoPtr, i.nItem, LVIS_FOCUSED))
+	{
+	    bDrawFocusedItem = TRUE;
+	    continue;
+	}
+
+        if (cdmode & CDRF_NOTIFYITEMDRAW)
+            cditemmode = notify_customdrawitem (infoPtr, hdc, i.nItem, 0, CDDS_ITEMPREPAINT);
+        if (cditemmode & CDRF_SKIPDEFAULT) continue;
+
+        LISTVIEW_DrawLargeItem(infoPtr, hdc, i.nItem, rcItem);
+
+        if (cditemmode & CDRF_NOTIFYPOSTPAINT)
+            notify_customdrawitem(infoPtr, hdc, i.nItem, 0, CDDS_ITEMPOSTPAINT);
     }
-    if (cditemmode & CDRF_NOTIFYPOSTPAINT)
-        notify_customdrawitem(infoPtr, hdc, i, 0, CDDS_ITEMPOSTPAINT);
-  }
+    iterator_destroy(&i);
 
-  /* Draw the visible selected items */
-  for (i = 0; i < infoPtr->nItemCount; i++)
-  {
-    if (!LISTVIEW_GetItemState(infoPtr,i,LVIS_SELECTED))
-	continue;
-
-    rcItem.left = LVIR_BOUNDS;
-    LISTVIEW_GetItemRect(infoPtr, i, &rcItem);
-    if (!IntersectRect(&rcTemp, &rcItem, &rcClip))
-	continue;
-
-    if (cdmode & CDRF_NOTIFYITEMDRAW)
-      cditemmode = notify_customdrawitem (infoPtr, hdc, i, 0, CDDS_ITEMPREPAINT);
-    if (cditemmode & CDRF_SKIPDEFAULT)
-        continue;
-
-    LISTVIEW_GetItemPosition(infoPtr, i, &ptPosition);
-
-    if (ptPosition.y + infoPtr->nItemHeight > infoPtr->rcList.top)
+    /* use the 'while' trick so we can break out of the loop */
+    while (bDrawFocusedItem)
     {
-      if (ptPosition.x + infoPtr->nItemWidth > infoPtr->rcList.left)
-      {
-        if (ptPosition.y < infoPtr->rcList.bottom)
-        {
-          if (ptPosition.x < infoPtr->rcList.right)
-          {
-            rcItem.top = ptPosition.y;
-            rcItem.left = ptPosition.x;
-            rcItem.bottom = rcItem.top + infoPtr->nItemHeight;
-            rcItem.right = rcItem.left + infoPtr->nItemWidth;
-	    
-            if (bSmall)
-              LISTVIEW_DrawItem(infoPtr, hdc, i, rcItem);
-            else
-              LISTVIEW_DrawLargeItem(infoPtr, hdc, i, rcItem);
-          }
-        }
-      }
+	if (!LISTVIEW_GetItemMeasures(infoPtr, infoPtr->nFocusedItem, &rcItem, 0, 0, 0)) break;
+	if (cdmode & CDRF_NOTIFYITEMDRAW)
+	    cditemmode = notify_customdrawitem (infoPtr, hdc, infoPtr->nFocusedItem, 0, CDDS_ITEMPREPAINT);
+	if (cditemmode & CDRF_SKIPDEFAULT) break;
+	
+	LISTVIEW_DrawLargeItem(infoPtr, hdc, infoPtr->nFocusedItem, rcItem);
+	
+        if (cditemmode & CDRF_NOTIFYPOSTPAINT)
+            notify_customdrawitem(infoPtr, hdc, i.nItem, 0, CDDS_ITEMPOSTPAINT);
+	bDrawFocusedItem = FALSE;
     }
-    if (cditemmode & CDRF_NOTIFYPOSTPAINT)
-        notify_customdrawitem(infoPtr, hdc, i, 0, CDDS_ITEMPOSTPAINT);
-  }
 }
 
 /***
@@ -3704,12 +3704,12 @@ static void LISTVIEW_Refresh(LISTVIEW_INFO *infoPtr, HDC hdc)
 
     if (infoPtr->dwStyle & LVS_OWNERDRAWFIXED)
 	LISTVIEW_RefreshOwnerDraw(infoPtr, hdc);
-    else if (uView == LVS_LIST)
-	LISTVIEW_RefreshList(infoPtr, hdc, cdmode);
+    else if (uView == LVS_ICON)
+	LISTVIEW_RefreshIcon(infoPtr, hdc, cdmode);
     else if (uView == LVS_REPORT)
 	LISTVIEW_RefreshReport(infoPtr, hdc, cdmode);
-    else
-	LISTVIEW_RefreshIcon(infoPtr, hdc, uView == LVS_SMALLICON, cdmode);
+    else /* LVS_LIST or LVS_SMALLICON */
+	LISTVIEW_RefreshList(infoPtr, hdc, cdmode);
 
     /* if we have a focus rect, draw it */
     if (infoPtr->bFocus && !(infoPtr->dwStyle & LVS_OWNERDRAWFIXED))
@@ -5338,7 +5338,7 @@ static LRESULT LISTVIEW_GetItemTextT(LISTVIEW_INFO *infoPtr, INT nItem, LPLVITEM
  * [I] uFlags : relationship flag
  *
  * FIXME:
- *   This function is ver, very inefficient! Needs work.
+ *   This function is very, very inefficient! Needs work.
  * 
  * RETURN:
  *   SUCCESS : item index
@@ -5608,6 +5608,7 @@ static INT LISTVIEW_SuperHitTestItem(LISTVIEW_INFO *infoPtr, LPLVHITTESTINFO lph
     bottomindex = infoPtr->nItemCount;
   }
 
+  /* FIXME iter */
   for (i = topindex; i < bottomindex; i++)
   {
     rcItem.left = LVIR_BOUNDS;
@@ -6982,6 +6983,7 @@ static LRESULT LISTVIEW_SortItems(LISTVIEW_INFO *infoPtr, PFNLVCOMPARE pfnCompar
      * be after the sort (otherwise, the list items move around, but
      * whatever is at the item's previous original position will be
      * selected instead)
+     * FIXME: can't this be made more efficient?
      */
     selectionMarkItem=(infoPtr->nSelectionMark>=0)?DPA_GetPtr(infoPtr->hdpaItems, infoPtr->nSelectionMark):NULL;
     for (i=0; i < infoPtr->nItemCount; i++)
