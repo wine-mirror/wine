@@ -568,9 +568,11 @@ LONG WINAPI EscapeCommFunction16(UINT16 cid,UINT16 nFunction)
     	TRACE("cid=%d, function=%d\n", cid, nFunction);
 	if ((nFunction != GETMAXCOM) && (nFunction != GETMAXLPT)) {
 		if ((ptr = GetDeviceStruct(cid)) == NULL) {
+		        TRACE("GetDeviceStruct failed\n");
 			return -1;
 		}
 		if (tcgetattr(ptr->fd,&port) == -1) {
+		        TRACE("tcgetattr failed\n");
 			ptr->commerror=WinError();	
 			return -1;
 		}
@@ -578,21 +580,25 @@ LONG WINAPI EscapeCommFunction16(UINT16 cid,UINT16 nFunction)
 
 	switch (nFunction) {
 		case RESETDEV:
+		        TRACE("RESETDEV\n");
 			break;					
 
 		case GETMAXCOM:
+		        TRACE("GETMAXCOM\n"); 
 			for (max = MAX_PORTS;!COM[max].devicename;max--)
 				;
 			return max;
 			break;
 
 		case GETMAXLPT:
+		        TRACE("GETMAXLPT\n"); 
 			for (max = MAX_PORTS;!LPT[max].devicename;max--)
 				;
 			return FLAG_LPT + max;
 			break;
 
 		case GETBASEIRQ:
+		        TRACE("GETBASEIRQ\n"); 
 			/* FIXME: use tables */
 			/* just fake something for now */
 			if (cid & FLAG_LPT) {
@@ -605,30 +611,36 @@ LONG WINAPI EscapeCommFunction16(UINT16 cid,UINT16 nFunction)
 			}
 			break;
 
-#ifdef TIOCM_DTR
 		case CLRDTR:
+		        TRACE("CLRDTR\n"); 
+#ifdef TIOCM_DTR
 			return COMM_WhackModem(ptr->fd, ~TIOCM_DTR, 0);
 #endif
-#ifdef TIOCM_RTS
 		case CLRRTS:
+		        TRACE("CLRRTS\n"); 
+#ifdef TIOCM_RTS
 			return COMM_WhackModem(ptr->fd, ~TIOCM_RTS, 0);
 #endif
 	
-#ifdef TIOCM_DTR
 		case SETDTR:
+		        TRACE("SETDTR\n"); 
+#ifdef TIOCM_DTR
 			return COMM_WhackModem(ptr->fd, 0, TIOCM_DTR);
 #endif
 
-#ifdef TIOCM_RTS			
 		case SETRTS:
+		        TRACE("SETRTS\n"); 
+#ifdef TIOCM_RTS			
 			return COMM_WhackModem(ptr->fd, 0, TIOCM_RTS);
 #endif
 
 		case SETXOFF:
+		        TRACE("SETXOFF\n"); 
 			port.c_iflag |= IXOFF;
 			break;
 
 		case SETXON:
+		        TRACE("SETXON\n"); 
 			port.c_iflag |= IXON;
 			break;
 
@@ -1517,8 +1529,28 @@ int commerror=0,eventmask=0;
  */
 BOOL WINAPI SetCommBreak(HANDLE handle)
 {
-	FIXME("handle %d, stub!\n", handle);
+#if defined(TIOCSBRK) && defined(TIOCCBRK) /* check if available for compilation */
+        int fd,result;
+ 
+	fd = COMM_GetWriteFd(handle);
+	if(fd<0) {
+	        TRACE("COMM_GetWriteFd failed\n");
+		return FALSE;
+	}
+	result = ioctl(fd,TIOCSBRK,0);
+	close(fd);
+	if (result ==-1)
+	  {
+	        TRACE("ioctl failed\n");
+		SetLastError(ERROR_NOT_SUPPORTED);
+		return FALSE;
+	  }
 	return TRUE;
+#else
+	FIXME("ioctl not available\n");
+	SetLastError(ERROR_NOT_SUPPORTED);
+	return FALSE;
+#endif
 }
 
 /*****************************************************************************
@@ -1526,8 +1558,28 @@ BOOL WINAPI SetCommBreak(HANDLE handle)
  */
 BOOL WINAPI ClearCommBreak(HANDLE handle)
 {
-	FIXME("handle %d, stub!\n", handle);
+#if defined(TIOCSBRK) && defined(TIOCCBRK) /* check if available for compilation */
+        int fd,result;
+ 
+	fd = COMM_GetWriteFd(handle);
+	if(fd<0) {
+	        TRACE("COMM_GetWriteFd failed\n");
+		return FALSE;
+	}
+	result = ioctl(fd,TIOCCBRK,0);
+	close(fd);
+	if (result ==-1)
+	  {
+	        TRACE("ioctl failed\n");
+		SetLastError(ERROR_NOT_SUPPORTED);
+		return FALSE;
+	  }
 	return TRUE;
+#else
+	FIXME("ioctl not available\n");
+	SetLastError(ERROR_NOT_SUPPORTED);
+	return FALSE;
+#endif
 }
 
 /*****************************************************************************
@@ -1535,7 +1587,7 @@ BOOL WINAPI ClearCommBreak(HANDLE handle)
  */
 BOOL WINAPI EscapeCommFunction(HANDLE handle,UINT nFunction)
 {
-	int fd;
+	int fd,direct=FALSE,result=FALSE;
 	struct termios	port;
 
     	TRACE("handle %d, function=%d\n", handle, nFunction);
@@ -1551,60 +1603,89 @@ BOOL WINAPI EscapeCommFunction(HANDLE handle,UINT nFunction)
 
 	switch (nFunction) {
 		case RESETDEV:
+		        TRACE("\n");
 			break;					
 
-#ifdef TIOCM_DTR
 		case CLRDTR:
-			port.c_cflag &= TIOCM_DTR;
+		        TRACE("CLRDTR\n");
+#ifdef TIOCM_DTR
+			direct=TRUE;
+			result= COMM_WhackModem(fd, ~TIOCM_DTR, 0);
 			break;
 #endif
 
-#ifdef TIOCM_RTS
 		case CLRRTS:
-			port.c_cflag &= TIOCM_RTS;
+		        TRACE("CLRRTS\n");
+#ifdef TIOCM_RTS
+			direct=TRUE;
+			result= COMM_WhackModem(fd, ~TIOCM_RTS, 0);
 			break;
 #endif
 	
-#ifdef CRTSCTS
 		case SETDTR:
-			port.c_cflag |= CRTSCTS;
+		        TRACE("SETDTR\n");
+#ifdef TIOCM_DTR
+			direct=TRUE;
+			result= COMM_WhackModem(fd, 0, TIOCM_DTR);
 			break;
+#endif
 
 		case SETRTS:
-			port.c_cflag |= CRTSCTS;
+		        TRACE("SETRTS\n");
+#ifdef TIOCM_DTR
+			direct=TRUE;
+			result= COMM_WhackModem(fd, 0, TIOCM_RTS);
 			break;
 #endif
 
 		case SETXOFF:
+		        TRACE("SETXOFF\n");
 			port.c_iflag |= IXOFF;
 			break;
 
 		case SETXON:
+		        TRACE("SETXON\n");
 			port.c_iflag |= IXON;
 			break;
 		case SETBREAK:
-			FIXME("setbreak, stub\n");
-/*			ptr->suspended = 1; */
+			TRACE("setbreak\n");
+#ifdef 	TIOCSBRK
+			direct=TRUE;
+			result = ioctl(fd,TIOCSBRK,0);
 			break;
+#endif
 		case CLRBREAK:
-			FIXME("clrbreak, stub\n");
-/*			ptr->suspended = 0; */
+			TRACE("clrbreak\n");
+#ifdef 	TIOCSBRK
+			direct=TRUE;
+			result = ioctl(fd,TIOCCBRK,0);
 			break;
+#endif
 		default:
 			WARN("(handle=%d,nFunction=%d): Unknown function\n", 
 			handle, nFunction);
 			break;				
 	}
 	
-	if (tcsetattr(fd, TCSADRAIN, &port) == -1) {
+	if (!direct)
+	  if (tcsetattr(fd, TCSADRAIN, &port) == -1) {
 		commerror = WinError();
 		close(fd);
 		return FALSE;	
-	} else {
-		commerror = 0;
-		close(fd);
-		return TRUE;
-	}
+	  } else 
+	        result= TRUE;
+	else
+	  {
+	    if (result == -1)
+	      {
+		result= FALSE;
+		commerror=WinError();
+	      }
+	    else
+	      result = TRUE;
+	  }
+	close(fd);
+	return result;
 }
 
 /********************************************************************
@@ -2258,8 +2339,38 @@ BOOL WINAPI SetCommTimeouts(INT cid,LPCOMMTIMEOUTS lptimeouts) {
  */
 BOOL WINAPI GetCommModemStatus(HANDLE hFile,LPDWORD lpModemStat )
 {
-	FIXME("(%d %p)\n",hFile,lpModemStat );
+	int fd,mstat, result=FALSE;
+	
+	*lpModemStat=0;
+#ifdef TIOCMGET
+	fd = COMM_GetWriteFd(hFile);
+	if(fd<0)
+		return FALSE;
+	result = ioctl(fd, TIOCMGET, &mstat);
+	close(fd);
+	if (result == -1)
+	  {
+	    TRACE("ioctl failed\n");
+	    return FALSE;
+	  }
+	if (mstat & TIOCM_CTS)
+	    *lpModemStat |= MS_CTS_ON;
+	if (mstat & TIOCM_DSR)
+	  *lpModemStat |= MS_DSR_ON;
+	if (mstat & TIOCM_RNG)
+	  *lpModemStat |= MS_RING_ON;
+	/*FIXME:  Not really sure about RLSD  UB 990810*/
+	if (mstat & TIOCM_CAR)
+	  *lpModemStat |= MS_RLSD_ON;
+	TRACE("%s%s%s%s\n",
+	      (*lpModemStat &MS_RLSD_ON)?"MS_RLSD_ON ":"",
+	      (*lpModemStat &MS_RING_ON)?"MS_RING_ON ":"",
+	      (*lpModemStat &MS_DSR_ON)?"MS_DSR_ON ":"",
+	      (*lpModemStat &MS_CTS_ON)?"MS_CTS_ON ":"");
 	return TRUE;
+#else
+	return FALSE;
+#endif
 }
 /***********************************************************************
  *           WaitCommEvent   (KERNEL32.719)
