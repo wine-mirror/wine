@@ -85,7 +85,7 @@ const char * PropSheetInfoStr = "PropertySheetInfo";
  * Prototypes
  */
 static BOOL PROPSHEET_CreateDialog(PropSheetInfo* psInfo);
-static BOOL PROPSHEET_IsTooSmall(HWND hwndDlg, PropSheetInfo* psInfo);
+static BOOL PROPSHEET_SizeMismatch(HWND hwndDlg, PropSheetInfo* psInfo);
 static BOOL PROPSHEET_AdjustSize(HWND hwndDlg, PropSheetInfo* psInfo);
 static BOOL PROPSHEET_AdjustButtons(HWND hwndParent, PropSheetInfo* psInfo);
 static BOOL PROPSHEET_CollectSheetInfo(LPCPROPSHEETHEADERA lppsh,
@@ -227,6 +227,9 @@ BOOL PROPSHEET_CollectPageInfo(LPCPROPSHEETPAGEA lppsp,
   /*
    * Extract the size of the page and the caption.
    */
+  if (!pTemplate)
+      return FALSE;
+
   p = (const WORD *)pTemplate;
 
   if (((MyDLGTEMPLATEEX*)pTemplate)->signature == 0xFFFF)
@@ -433,11 +436,12 @@ BOOL PROPSHEET_CreateDialog(PropSheetInfo* psInfo)
 }
 
 /******************************************************************************
- *            PROPSHEET_IsTooSmall
+ *            PROPSHEET_SizeMismatch
  * 
- * Verify that the resource property sheet is big enough.
+ *     Verify that the tab control and the "largest" property sheet page dlg. template
+ *     match in size.
  */
-static BOOL PROPSHEET_IsTooSmall(HWND hwndDlg, PropSheetInfo* psInfo)
+static BOOL PROPSHEET_SizeMismatch(HWND hwndDlg, PropSheetInfo* psInfo)
 {
   HWND hwndTabCtrl = GetDlgItem(hwndDlg, IDC_TABCONTROL);
   RECT rcOrigTab, rcPage;
@@ -461,10 +465,9 @@ static BOOL PROPSHEET_IsTooSmall(HWND hwndDlg, PropSheetInfo* psInfo)
   TRACE("biggest page %d %d %d %d\n", rcPage.left, rcPage.top,
         rcPage.right, rcPage.bottom);
 
-  if (rcPage.right > rcOrigTab.right)
+  if ( (rcPage.right - rcPage.left) != (rcOrigTab.right - rcOrigTab.left) )
     return TRUE;
-
-  if (rcPage.bottom > rcOrigTab.bottom)
+  if ( (rcPage.bottom - rcPage.top) != (rcOrigTab.bottom - rcOrigTab.top) )
     return TRUE;
 
   return FALSE;
@@ -522,9 +525,11 @@ static BOOL PROPSHEET_AdjustSize(HWND hwndDlg, PropSheetInfo* psInfo)
 {
   HWND hwndTabCtrl = GetDlgItem(hwndDlg, IDC_TABCONTROL);
   HWND hwndButton = GetDlgItem(hwndDlg, IDOK);
-  RECT rc;
+  RECT rc,tabRect;
   int tabOffsetX, tabOffsetY, buttonHeight;
   PADDING_INFO padding = PROPSHEET_GetPaddingInfo(hwndDlg);
+  WND * wndPtr = WIN_FindWndPtr( hwndDlg );
+  DIALOGINFO * dlgInfo = (DIALOGINFO *)wndPtr->wExtra;
 
   /* Get the height of buttons */
   GetClientRect(hwndButton, &rc);
@@ -543,6 +548,22 @@ static BOOL PROPSHEET_AdjustSize(HWND hwndDlg, PropSheetInfo* psInfo)
   /*
    * Resize the tab control.
    */
+  GetClientRect(hwndTabCtrl,&tabRect);
+
+  SendMessageA(hwndTabCtrl, TCM_ADJUSTRECT, FALSE, (LPARAM)&tabRect);
+
+  if ((rc.bottom - rc.top) < (tabRect.bottom - tabRect.top))
+  {
+      rc.bottom = rc.top + tabRect.bottom - tabRect.top;
+      psInfo->height = MulDiv((rc.bottom - rc.top),8,dlgInfo->yBaseUnit);
+  }
+  
+  if ((rc.right - rc.left) < (tabRect.right - tabRect.left))
+  {
+      rc.right = rc.left + tabRect.right - tabRect.left;
+      psInfo->width  = MulDiv((rc.right - rc.left),4,dlgInfo->xBaseUnit);
+  }
+
   SendMessageA(hwndTabCtrl, TCM_ADJUSTRECT, TRUE, (LPARAM)&rc);
 
   tabOffsetX = -(rc.left);
@@ -567,6 +588,7 @@ static BOOL PROPSHEET_AdjustSize(HWND hwndDlg, PropSheetInfo* psInfo)
   SetWindowPos(hwndDlg, 0, 0, 0, rc.right, rc.bottom,
                SWP_NOMOVE | SWP_NOZORDER | SWP_NOACTIVATE);
 
+  WIN_ReleaseWndPtr(wndPtr);
   return TRUE;
 }
 
@@ -579,9 +601,12 @@ static BOOL PROPSHEET_AdjustSizeWizard(HWND hwndDlg, PropSheetInfo* psInfo)
 {
   HWND hwndButton = GetDlgItem(hwndDlg, IDCANCEL);
   HWND hwndLine = GetDlgItem(hwndDlg, IDC_SUNKEN_LINE);
-  RECT rc;
+  HWND hwndTabCtrl = GetDlgItem(hwndDlg, IDC_TABCONTROL);
+  RECT rc,tabRect;
   int buttonHeight, lineHeight;
   PADDING_INFO padding = PROPSHEET_GetPaddingInfoWizard(hwndDlg);
+  WND * wndPtr = WIN_FindWndPtr( hwndDlg );
+  DIALOGINFO * dlgInfo = (DIALOGINFO *)wndPtr->wExtra;
 
   /* Get the height of buttons */
   GetClientRect(hwndButton, &rc);
@@ -600,6 +625,20 @@ static BOOL PROPSHEET_AdjustSizeWizard(HWND hwndDlg, PropSheetInfo* psInfo)
 
   MapDialogRect(hwndDlg, &rc);
 
+  GetClientRect(hwndTabCtrl,&tabRect);
+
+  if ((rc.bottom - rc.top) < (tabRect.bottom - tabRect.top))
+  {
+      rc.bottom = rc.top + tabRect.bottom - tabRect.top;
+      psInfo->height = MulDiv((rc.bottom - rc.top), 8, dlgInfo->yBaseUnit);
+  }
+  
+  if ((rc.right - rc.left) < (tabRect.right - tabRect.left))
+  {
+      rc.right = rc.left + tabRect.right - tabRect.left;
+      psInfo->width  = MulDiv((rc.right - rc.left), 4, dlgInfo->xBaseUnit);
+  }
+
   TRACE("Biggest page %d %d %d %d\n", rc.left, rc.top, rc.right, rc.bottom);
 
   /* Make room */
@@ -612,6 +651,7 @@ static BOOL PROPSHEET_AdjustSizeWizard(HWND hwndDlg, PropSheetInfo* psInfo)
   SetWindowPos(hwndDlg, 0, 0, 0, rc.right, rc.bottom,
                SWP_NOMOVE | SWP_NOZORDER | SWP_NOACTIVATE);
 
+  WIN_ReleaseWndPtr(wndPtr);
   return TRUE;
 }
 
@@ -906,7 +946,7 @@ static BOOL PROPSHEET_CreateTabControl(HWND hwndParent,
   item.pszText = tabtext;
   item.cchTextMax = MAX_TABTEXT_LENGTH;
 
-  nTabs = psInfo->ppshheader->nPages;
+  nTabs = psInfo->nPages;
 
   /*
    * Set the image list for icons.
@@ -953,6 +993,7 @@ static int PROPSHEET_CreatePage(HWND hwndParent,
   RECT rc;
   PropPageInfo* ppInfo = psInfo->proppage;
   PADDING_INFO padding;
+  UINT pageWidth,pageHeight;
 
   TRACE("index %d\n", index);
 
@@ -1008,6 +1049,9 @@ static int PROPSHEET_CreatePage(HWND hwndParent,
 
   MapDialogRect(hwndParent, &rc);
 
+  pageWidth = rc.right - rc.left;
+  pageHeight = rc.bottom - rc.top;
+
   if (psInfo->ppshheader->dwFlags & PSH_WIZARD)
     padding = PROPSHEET_GetPaddingInfoWizard(hwndParent);
   else
@@ -1024,7 +1068,7 @@ static int PROPSHEET_CreatePage(HWND hwndParent,
   SetWindowPos(hwndPage, HWND_TOP,
                rc.left + padding.x,
                rc.top + padding.y,
-               0, 0, SWP_NOSIZE);
+               pageWidth, pageHeight, 0);
 
   return TRUE;
 }
@@ -1036,48 +1080,44 @@ static int PROPSHEET_CreatePage(HWND hwndParent,
  */
 static BOOL PROPSHEET_ShowPage(HWND hwndDlg, int index, PropSheetInfo * psInfo)
 {
-  if (index == psInfo->active_page)
-    {
-      if (GetTopWindow(hwndDlg) != psInfo->proppage[index].hwndPage)
-          SetWindowPos(psInfo->proppage[index].hwndPage, HWND_TOP, 0, 0, 0, 0, SWP_NOSIZE | SWP_NOMOVE);
-    return TRUE;
-    }
+  PSHNOTIFY psn;
+  HWND hwndTabCtrl;
 
-  if (psInfo->active_page != -1)
-     ShowWindow(psInfo->proppage[psInfo->active_page].hwndPage, SW_HIDE);
+  if (index == psInfo->active_page)
+  {
+     if (GetTopWindow(hwndDlg) != psInfo->proppage[index].hwndPage)
+          SetWindowPos(psInfo->proppage[index].hwndPage, HWND_TOP, 0, 0, 0, 0, SWP_NOSIZE | SWP_NOMOVE);
+     return TRUE;
+  }
+
+  /* Synchronize current selection with tab control */
+  hwndTabCtrl = GetDlgItem(hwndDlg, IDC_TABCONTROL);
+  SendMessageA(hwndTabCtrl, TCM_SETCURSEL, index, 0);
 
   if (psInfo->proppage[index].hwndPage == 0)
   {
      LPCPROPSHEETPAGEA ppshpage;
-     PSHNOTIFY psn;
 
      ppshpage = (LPCPROPSHEETPAGEA)psInfo->proppage[index].hpage;
      PROPSHEET_CreatePage(hwndDlg, index, psInfo, ppshpage);
-
-     psn.hdr.hwndFrom = hwndDlg;
-     psn.hdr.code     = PSN_SETACTIVE;
-     psn.hdr.idFrom   = 0;
-     psn.lParam       = 0;
-
-     /* Send the notification before showing the page. */
-     SendMessageA(psInfo->proppage[index].hwndPage,
-                  WM_NOTIFY, 0, (LPARAM) &psn);
-
-     /*
-      * TODO: check return value. 
-      */
   }
+
+  psn.hdr.hwndFrom = hwndDlg;
+  psn.hdr.code     = PSN_SETACTIVE;
+  psn.hdr.idFrom   = 0;
+  psn.lParam       = 0;
+
+  /* Send the notification before showing the page. */
+  SendMessageA(psInfo->proppage[index].hwndPage, WM_NOTIFY, 0, (LPARAM) &psn);
+
+  /*
+   * TODO: check return value. 
+   */
+
+  if (psInfo->active_page != -1)
+     ShowWindow(psInfo->proppage[psInfo->active_page].hwndPage, SW_HIDE);
 
   ShowWindow(psInfo->proppage[index].hwndPage, SW_SHOW);
-
-  if (!(psInfo->ppshheader->dwFlags & PSH_WIZARD))
-  {
-     HWND hwndTabCtrl;
-
-     /* Synchronize current selection with tab control */
-     hwndTabCtrl = GetDlgItem(hwndDlg, IDC_TABCONTROL);
-     SendMessageA(hwndTabCtrl, TCM_SETCURSEL, index, 0);
-  }
 
   psInfo->active_page = index;
   psInfo->activeValid = TRUE;
@@ -1477,27 +1517,6 @@ static BOOL PROPSHEET_SetCurSel(HWND hwndDlg,
   hwndPage = psInfo->proppage[index].hwndPage;
 
   /*
-   * Notify the new page if it's already created.
-   * If not it will get created and notified in PROPSHEET_ShowPage.
-   */
-  if (hwndPage)
-  {
-    int result;
-    PSHNOTIFY psn;
-
-    psn.hdr.code     = PSN_SETACTIVE;
-    psn.hdr.hwndFrom = hwndDlg;
-    psn.hdr.idFrom   = 0;
-    psn.lParam       = 0;
-
-    result = SendMessageA(hwndPage, WM_NOTIFY, 0, (LPARAM) &psn);
-
-    /*
-     * TODO: check return value. 
-     */
-  }
-
-  /*
    * Display the new page.
    */
   PROPSHEET_ShowPage(hwndDlg, index, psInfo);
@@ -1607,8 +1626,9 @@ static BOOL PROPSHEET_AddPage(HWND hwndDlg,
   psInfo->proppage = (PropPageInfo*) COMCTL32_ReAlloc(psInfo->proppage,
                                                       sizeof(PropPageInfo) *
                                                       (psInfo->nPages + 1));
+  if (!PROPSHEET_CollectPageInfo(ppsp, psInfo, psInfo->nPages))
+      return FALSE;
 
-  PROPSHEET_CollectPageInfo(ppsp, psInfo, psInfo->nPages);
   psInfo->proppage[psInfo->nPages].hpage = hpage;
 
   if (ppsp->dwFlags & PSP_PREMATURE)
@@ -1859,7 +1879,7 @@ INT WINAPI PropertySheetA(LPCPROPSHEETHEADERA lppsh)
   int bRet = 0;
   PropSheetInfo* psInfo = (PropSheetInfo*) GlobalAlloc(GPTR,
                                                        sizeof(PropSheetInfo));
-  int i;
+  int i, n;
   BYTE* pByte;
 
   PROPSHEET_CollectSheetInfo(lppsh, psInfo);
@@ -1868,18 +1888,24 @@ INT WINAPI PropertySheetA(LPCPROPSHEETHEADERA lppsh)
                                                     lppsh->nPages);
   pByte = (BYTE*) psInfo->ppshheader->u3.ppsp;
 
-  for (i = 0; i < lppsh->nPages; i++)
+  for (n = i = 0; i < lppsh->nPages; i++, n++)
   {
     if (!(lppsh->dwFlags & PSH_PROPSHEETPAGE))
-      psInfo->proppage[i].hpage = psInfo->ppshheader->u3.phpage[i];
+      psInfo->proppage[n].hpage = psInfo->ppshheader->u3.phpage[i];
     else
     {
-       psInfo->proppage[i].hpage = CreatePropertySheetPageA((LPCPROPSHEETPAGEA)pByte);
+       psInfo->proppage[n].hpage = CreatePropertySheetPageA((LPCPROPSHEETPAGEA)pByte);
        pByte += ((LPPROPSHEETPAGEA)pByte)->dwSize;
     }
 
-    PROPSHEET_CollectPageInfo((LPCPROPSHEETPAGEA)psInfo->proppage[i].hpage,
-                               psInfo, i);
+    if (!PROPSHEET_CollectPageInfo((LPCPROPSHEETPAGEA)psInfo->proppage[n].hpage,
+                               psInfo, n))
+    {
+	if (lppsh->dwFlags & PSH_PROPSHEETPAGE)
+	    DestroyPropertySheetPage(psInfo->proppage[n].hpage);
+	n--;
+	psInfo->nPages--;
+    }
   }
 
   bRet = PROPSHEET_CreateDialog(psInfo);
@@ -2067,7 +2093,7 @@ PROPSHEET_DialogProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
       }
       else
       {
-        if (PROPSHEET_IsTooSmall(hwnd, psInfo))
+        if (PROPSHEET_SizeMismatch(hwnd, psInfo))
         {
           PROPSHEET_AdjustSize(hwnd, psInfo);
           PROPSHEET_AdjustButtons(hwnd, psInfo);
@@ -2084,8 +2110,7 @@ PROPSHEET_DialogProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
  
       PROPSHEET_SetCurSel(hwnd, idx, psInfo->proppage[idx].hpage);
 
-      if (!(psInfo->ppshheader->dwFlags & PSH_WIZARD))
-        SendMessageA(hwndTabCtrl, TCM_SETCURSEL, psInfo->active_page, 0);
+      SendMessageA(hwndTabCtrl, TCM_SETCURSEL, psInfo->active_page, 0);
 
       if (!HIWORD(psInfo->ppshheader->pszCaption) &&
               psInfo->ppshheader->hInstance)
