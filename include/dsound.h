@@ -5,24 +5,34 @@
 #include "mmsystem.h"
 #include "d3d.h"			/*FIXME: Need to break out d3dtypes.h */
 
+/*****************************************************************************
+ * Predeclare the interfaces
+ */
 DEFINE_GUID(CLSID_DirectSound,		0x47d4d946, 0x62e8, 0x11cf, 0x93, 0xbc, 0x44, 0x45, 0x53, 0x54, 0x0, 0x0);
 
 DEFINE_GUID(IID_IDirectSound,		0x279AFA83,0x4981,0x11CE,0xA5,0x21,0x00,0x20,0xAF,0x0B,0xE5,0x60);
+typedef struct IDirectSound IDirectSound,*LPDIRECTSOUND;
+
 DEFINE_GUID(IID_IDirectSoundBuffer,	0x279AFA85,0x4981,0x11CE,0xA5,0x21,0x00,0x20,0xAF,0x0B,0xE5,0x60); 
+typedef struct IDirectSoundBuffer IDirectSoundBuffer,*LPDIRECTSOUNDBUFFER,**LPLPDIRECTSOUNDBUFFER;
+
 DEFINE_GUID(IID_IDirectSoundNotify,	0xB0210783,0x89cd,0x11d0,0xAF,0x08,0x00,0xA0,0xC9,0x25,0xCD,0x16);
+typedef struct IDirectSoundNotify IDirectSoundNotify,*LPDIRECTSOUNDNOTIFY;
+
 DEFINE_GUID(IID_IDirectSound3DListener,	0x279AFA84,0x4981,0x11CE,0xA5,0x21,0x00,0x20,0xAF,0x0B,0xE5,0x60);
+typedef struct IDirectSound3DListener IDirectSound3DListener,*LPDIRECTSOUND3DLISTENER;
+
 DEFINE_GUID(IID_IDirectSound3DBuffer,	0x279AFA86,0x4981,0x11CE,0xA5,0x21,0x00,0x20,0xAF,0x0B,0xE5,0x60); 
+typedef struct IDirectSound3DBuffer IDirectSound3DBuffer,*LPDIRECTSOUND3DBUFFER;
+
 DEFINE_GUID(IID_IDirectSoundCapture,	0xB0210781,0x89CD,0x11D0,0xAF,0x08,0x00,0xA0,0xC9,0x25,0xCD,0x16);
+typedef struct IDirectSoundCapture IDirectSoundCapture,*LPDIRECTSOUNDCAPTURE;
+
 DEFINE_GUID(IID_IDirectSoundCaptureBuffer,0xB0210782,0x89CD,0x11D0,0xAF,0x08,0x00,0xA0,0xC9,0x25,0xCD,0x16);
+typedef struct IDirectSoundCaptureBuffer IDirectSoundCaptureBuffer,*LPDIRECTSOUNDCAPTUREBUFFER;
+
 DEFINE_GUID(IID_IKsPropertySet,		0x31EFAC30,0x515C,0x11D0,0xA9,0xAA,0x00,0xAA,0x00,0x61,0xBE,0x93);
 
-
-
-typedef struct IDirectSound IDirectSound,*LPDIRECTSOUND;
-typedef struct IDirectSoundNotify IDirectSoundNotify,*LPDIRECTSOUNDNOTIFY;
-typedef struct IDirectSoundBuffer IDirectSoundBuffer,*LPDIRECTSOUNDBUFFER,**LPLPDIRECTSOUNDBUFFER;
-typedef struct IDirectSound3DListener IDirectSound3DListener,*LPDIRECTSOUND3DLISTENER,**LPLPDIRECTSOUND3DLISTENER;
-typedef struct IDirectSound3DBuffer IDirectSound3DBuffer,*LPDIRECTSOUND3DBUFFER,**LPLPDIRECTSOUND3DBUFFER;
 
 #define	_FACDS		0x878
 #define	MAKE_DSHRESULT(code)		MAKE_HRESULT(1,_FACDS,code)
@@ -173,116 +183,140 @@ typedef BOOL (CALLBACK *LPDSENUMCALLBACKA)(LPGUID,LPSTR,LPSTR,LPVOID);
 
 extern HRESULT WINAPI DirectSoundCreate(REFGUID lpGUID,LPDIRECTSOUND * ppDS,IUnknown *pUnkOuter );
 
-#define STDMETHOD(xfn) HRESULT (CALLBACK *fn##xfn)
-#define STDMETHOD_(ret,xfn) ret (CALLBACK *fn##xfn)
-#define PURE
-#define FAR
-#define THIS_ THIS,
 
-#define THIS LPDIRECTSOUND this
-typedef struct tagLPDIRECTSOUND_VTABLE
-{
+/*****************************************************************************
+ * IDirectSound interface
+ */
+#define ICOM_INTERFACE IDirectSound
+#define IDirectSound_METHODS \
+    ICOM_METHOD3(HRESULT,CreateSoundBuffer,    LPDSBUFFERDESC,lpcDSBufferDesc, LPLPDIRECTSOUNDBUFFER,lplpDirectSoundBuffer, IUnknown*,pUnkOuter) \
+    ICOM_METHOD1(HRESULT,GetCaps,              LPDSCAPS,lpDSCaps) \
+    ICOM_METHOD2(HRESULT,DuplicateSoundBuffer, LPDIRECTSOUNDBUFFER,lpDsbOriginal, LPLPDIRECTSOUNDBUFFER,lplpDsbDuplicate) \
+    ICOM_METHOD2(HRESULT,SetCooperativeLevel,  HWND,hwnd, DWORD,dwLevel) \
+    ICOM_METHOD (HRESULT,Compact) \
+    ICOM_METHOD1(HRESULT,GetSpeakerConfig,     LPDWORD,lpdwSpeakerConfig) \
+    ICOM_METHOD1(HRESULT,SetSpeakerConfig,     DWORD,dwSpeakerConfig) \
+    ICOM_METHOD1(HRESULT,Initialize,           LPGUID,lpGuid)
+#define IDirectSound_IMETHODS \
+    IUnknown_IMETHODS \
+    IDirectSound_METHODS
+ICOM_DEFINE(IDirectSound,IUnknown)
+#undef ICOM_INTERFACE
+
+#ifdef ICOM_CINTERFACE
     /*** IUnknown methods ***/
-    STDMETHOD(QueryInterface) (THIS_ REFIID riid, LPVOID * ppvObj) PURE;
-    STDMETHOD_(ULONG,AddRef) (THIS)  PURE;
-    STDMETHOD_(ULONG,Release) (THIS) PURE;
+#define IDirectSound_QueryInterface(p,a,b) ICOM_CALL2(QueryInterface,p,a,b)
+#define IDirectSound_AddRef(p)             ICOM_CALL (AddRef,p)
+#define IDirectSound_Release(p)            ICOM_CALL (Release,p)
     /*** IDirectSound methods ***/
+#define IDirectSound_CreateSoundBuffer(p,a,b,c)  ICOM_CALL3(CreateSoundBuffer,p,a,b,c)
+#define IDirectSound_GetCaps(p,a)                ICOM_CALL1(GetCaps,p,a)
+#define IDirectSound_DuplicateSoundBuffer(p,a,b) ICOM_CALL2(DuplicateSoundBuffer,p,a,b)
+#define IDirectSound_SetCooperativeLevel(p,a,b)  ICOM_CALL2(SetCooperativeLevel,p,a,b)
+#define IDirectSound_Compact(p)                  ICOM_CALL (Compact,p)
+#define IDirectSound_GetSpeakerConfig(p,a)       ICOM_CALL1(GetSpeakerConfig,p,a)
+#define IDirectSound_SetSpeakerConfig(p,a)       ICOM_CALL1(SetSpeakerConfig,p,a)
+#define IDirectSound_Initialize(p,a)             ICOM_CALL1(Initialize,p,a)
+#endif
 
-    STDMETHOD( CreateSoundBuffer)(THIS_ LPDSBUFFERDESC, LPLPDIRECTSOUNDBUFFER, IUnknown FAR *) PURE;
-    STDMETHOD( GetCaps)(THIS_ LPDSCAPS ) PURE;
-    STDMETHOD( DuplicateSoundBuffer)(THIS_ LPDIRECTSOUNDBUFFER, LPLPDIRECTSOUNDBUFFER ) PURE;
-    STDMETHOD( SetCooperativeLevel)(THIS_ HWND, DWORD ) PURE;
-    STDMETHOD( Compact)(THIS ) PURE;
-    STDMETHOD( GetSpeakerConfig)(THIS_ LPDWORD ) PURE;
-    STDMETHOD( SetSpeakerConfig)(THIS_ DWORD ) PURE;
-    STDMETHOD( Initialize)(THIS_ LPGUID ) PURE;
-} *LPDIRECTSOUND_VTABLE;
 
-struct IDirectSound {
-	LPDIRECTSOUND_VTABLE	lpvtbl;
-	DWORD			ref;
-	DWORD			priolevel;
-	int			nrofbuffers;
-	LPDIRECTSOUNDBUFFER	*buffers;
-	LPDIRECTSOUNDBUFFER	primary;
-	LPDIRECTSOUND3DLISTENER	listener;
-	WAVEFORMATEX		wfx; /* current main waveformat */
-};
-#undef THIS
+/*****************************************************************************
+ * IDirectSoundBuffer interface
+ */
+#define ICOM_INTERFACE IDirectSoundBuffer
+#define IDirectSoundBuffer_METHODS \
+    ICOM_METHOD1(HRESULT,GetCaps,              LPDSBCAPS,lpDSBufferCaps) \
+    ICOM_METHOD2(HRESULT,GetCurrentPosition,   LPDWORD,lpdwCurrentPlayCursor, LPDWORD,lpdwCurrentWriteCursor) \
+    ICOM_METHOD3(HRESULT,GetFormat,            LPWAVEFORMATEX,lpwfxFormat, DWORD,dwSizeAllocated, LPDWORD,lpdwSizeWritten) \
+    ICOM_METHOD1(HRESULT,GetVolume,            LPLONG,lplVolume) \
+    ICOM_METHOD1(HRESULT,GetPan,               LPLONG,lplpan) \
+    ICOM_METHOD1(HRESULT,GetFrequency,         LPDWORD,lpdwFrequency) \
+    ICOM_METHOD1(HRESULT,GetStatus,            LPDWORD,lpdwStatus) \
+    ICOM_METHOD2(HRESULT,Initialize,           LPDIRECTSOUND,lpDirectSound, LPDSBUFFERDESC,lpcDSBufferDesc) \
+    ICOM_METHOD7(HRESULT,Lock,                 DWORD,dwWriteCursor, DWORD,dwWriteBytes, LPVOID,lplpvAudioPtr1, LPDWORD,lpdwAudioBytes1, LPVOID,lplpvAudioPtr2, LPDWORD,lpdwAudioBytes2, DWORD,dwFlags) \
+    ICOM_METHOD3(HRESULT,Play,                 DWORD,dwReserved1, DWORD,dwReserved2, DWORD,dwFlags) \
+    ICOM_METHOD1(HRESULT,SetCurrentPosition,   DWORD,dwNewPosition) \
+    ICOM_METHOD1(HRESULT,SetFormat,            LPWAVEFORMATEX,lpcfxFormat) \
+    ICOM_METHOD1(HRESULT,SetVolume,            LONG,lVolume) \
+    ICOM_METHOD1(HRESULT,SetPan,               LONG,lPan) \
+    ICOM_METHOD1(HRESULT,SetFrequency,         DWORD,dwFrequency) \
+    ICOM_METHOD (HRESULT,Stop) \
+    ICOM_METHOD4(HRESULT,Unlock,               LPVOID,lpvAudioPtr1, DWORD,dwAudioBytes1, LPVOID,lpvAudioPtr2, DWORD,dwAudioPtr2) \
+    ICOM_METHOD (HRESULT,Restore)
+#define IDirectSoundBuffer_IMETHODS \
+    IUnknown_IMETHODS \
+    IDirectSoundBuffer_METHODS
+ICOM_DEFINE(IDirectSoundBuffer,IUnknown)
+#undef ICOM_INTERFACE
 
-#define THIS LPDIRECTSOUNDBUFFER this
-typedef struct tagLPDIRECTSOUNDBUFFER_VTABLE
-{
+#ifdef ICOM_CINTERFACE
     /*** IUnknown methods ***/
-    STDMETHOD(QueryInterface) (THIS_ REFIID riid, LPVOID * ppvObj) PURE;
-    STDMETHOD_(ULONG,AddRef) (THIS)  PURE;
-    STDMETHOD_(ULONG,Release) (THIS) PURE;
+#define IDirectSoundBuffer_QueryInterface(p,a,b) ICOM_CALL2(QueryInterface,p,a,b)
+#define IDirectSoundBuffer_AddRef(p)             ICOM_CALL (AddRef,p)
+#define IDirectSoundBuffer_Release(p)            ICOM_CALL (Release,p)
     /*** IDirectSoundBuffer methods ***/
+#define IDirectSoundBuffer_GetCaps(p,a)                ICOM_CALL1(GetCaps,p,a)
+#define IDirectSoundBuffer_GetCurrentPosition16(p,a,b) ICOM_CALL2(GetCurrentPosition16,p,a,b)
+#define IDirectSoundBuffer_GetFormat(p,a,b,c)          ICOM_CALL3(GetFormat,p,a,b,c)
+#define IDirectSoundBuffer_GetVolume(p,a)              ICOM_CALL1(GetVolume,p,a)
+#define IDirectSoundBuffer_GetPan(p,a)                 ICOM_CALL1(GetPan,p,a)
+#define IDirectSoundBuffer_GetFrequency(p,a)           ICOM_CALL1(GetFrequency,p,a)
+#define IDirectSoundBuffer_GetStatus(p,a)              ICOM_CALL1(GetStatus,p,a
+#define IDirectSoundBuffer_Initialize(p,a,b)           ICOM_CALL2(Initialize,p,a,b)
+#define IDirectSoundBuffer_Lock(p,a,b,c,d,e,f,g)       ICOM_CALL7(Lock,p,a,b,c,d,e,f,g)
+#define IDirectSoundBuffer_Play(p,a,b,c)               ICOM_CALL3(Play,p,a,b,c)
+#define IDirectSoundBuffer_SetCurrentPosition(p,a)     ICOM_CALL1(SetCurrentPosition,p,a)
+#define IDirectSoundBuffer_SetFormat(p,a)              ICOM_CALL1(SetFormat,p,a)
+#define IDirectSoundBuffer_SetVolume(p,a)              ICOM_CALL1(SetVolume,p,a)
+#define IDirectSoundBuffer_SetPan(p,a)                 ICOM_CALL1(SetPan,p,a)
+#define IDirectSoundBuffer_SetFrequency(p,a)           ICOM_CALL1(SetFrequency,p,a)
+#define IDirectSoundBuffer_Stop(p)                     ICOM_CALL (Stop,p)
+#define IDirectSoundBuffer_Unlock(p,a,b,c,d)           ICOM_CALL4(Unlock,p,a,b,c,)
+#define IDirectSoundBuffer_Restore(p)                  ICOM_CALL (Restore,p)
+#endif
 
-    STDMETHOD(           GetCaps)(THIS_ LPDSBCAPS ) PURE;
-    STDMETHOD(GetCurrentPosition16)(THIS_ LPDWORD,LPDWORD ) PURE;
-    STDMETHOD(         GetFormat)(THIS_ LPWAVEFORMATEX, DWORD, LPDWORD ) PURE;
-    STDMETHOD(         GetVolume)(THIS_ LPLONG ) PURE;
-    STDMETHOD(            GetPan)(THIS_ LPLONG ) PURE;
-    STDMETHOD(      GetFrequency)(THIS_ LPDWORD ) PURE;
-    STDMETHOD(         GetStatus)(THIS_ LPDWORD ) PURE;
-    STDMETHOD(        Initialize)(THIS_ LPDIRECTSOUND, LPDSBUFFERDESC ) PURE;
-    STDMETHOD(              Lock)(THIS_ DWORD,DWORD,LPVOID,LPDWORD,LPVOID,LPDWORD,DWORD ) PURE;
-    STDMETHOD(              Play)(THIS_ DWORD,DWORD,DWORD ) PURE;
-    STDMETHOD(SetCurrentPosition)(THIS_ DWORD ) PURE;
-    STDMETHOD(         SetFormat)(THIS_ LPWAVEFORMATEX ) PURE;
-    STDMETHOD(         SetVolume)(THIS_ LONG ) PURE;
-    STDMETHOD(            SetPan)(THIS_ LONG ) PURE;
-    STDMETHOD(      SetFrequency)(THIS_ DWORD ) PURE;
-    STDMETHOD(              Stop)(THIS  ) PURE;
-    STDMETHOD(            Unlock)(THIS_ LPVOID,DWORD,LPVOID,DWORD ) PURE;
-    STDMETHOD(           Restore)(THIS  ) PURE;
-} *LPDIRECTSOUNDBUFFER_VTABLE;
 
-struct IDirectSoundBuffer {
-	LPDIRECTSOUNDBUFFER_VTABLE	lpvtbl;
-	WAVEFORMATEX			wfx;
-	DWORD				ref;
-	LPBYTE				buffer;
-	LPDIRECTSOUND3DBUFFER		ds3db;
-	DWORD				playflags,playing;
-	DWORD				playpos,writepos,buflen;
-	DWORD				nAvgBytesPerSec;
-	DWORD				freq;
-	ULONG				freqAdjust;
-	LONG				volume,pan;
-	LONG				lVolAdjust,rVolAdjust;
-	LPDIRECTSOUNDBUFFER		parent;		/* for duplicates */
-	LPDIRECTSOUND			dsound;
-	DSBUFFERDESC			dsbd;
-	LPDSBPOSITIONNOTIFY		notifies;
-	int				nrofnotifies;
-	CRITICAL_SECTION		lock;
-};
-#undef THIS
+/*****************************************************************************
+ * IDirectSoundCapture interface
+ */
+/* FIXME: not implemented yet */
 
+
+/*****************************************************************************
+ * IDirectSoundCaptureBuffer interface
+ */
+/* FIXME: not implemented yet */
+
+
+/*****************************************************************************
+ * IDirectSoundNotify interface
+ */
 #define WINE_NOBUFFER                   0x80000000
 
 #define DSBPN_OFFSETSTOP		-1
 
-#define THIS LPDIRECTSOUNDNOTIFY this
-typedef struct IDirectSoundNotify_VTable {
-	/* IUnknown methods */
-	STDMETHOD(QueryInterface)           (THIS_ REFIID, LPVOID *) PURE;
-	STDMETHOD_(ULONG,AddRef)            (THIS) PURE;
-	STDMETHOD_(ULONG,Release)           (THIS) PURE;
+#define ICOM_INTERFACE IDirectSoundNotify
+#define IDirectSoundNotify_METHODS \
+    ICOM_METHOD2(HRESULT,SetNotificationPositions, DWORD,cPositionNotifies, LPCDSBPOSITIONNOTIFY,lpcPositionNotifies)
+#define IDirectSoundNotify_IMETHODS \
+    IUnknown_IMETHODS \
+    IDirectSoundNotify_METHODS
+ICOM_DEFINE(IDirectSoundNotify,IUnknown)
+#undef ICOM_INTERFACE
 
-	/* IDirectSoundNotify methods */
-	STDMETHOD(SetNotificationPositions) (THIS_ DWORD, LPCDSBPOSITIONNOTIFY) PURE;
-} *LPDIRECTSOUNDNOTIFY_VTABLE,IDirectSoundNotify_VTable;
+#ifdef ICOM_CINTERFACE
+/*** IUnknown methods ***/
+#define IDirectSoundNotify_QueryInterface(p,a,b) ICOM_CALL2(QueryInterface,p,a,b)
+#define IDirectSoundNotify_AddRef(p)             ICOM_CALL (AddRef,p)
+#define IDirectSoundNotify_Release(p)            ICOM_CALL (Release,p)
+/*** IDirectSoundNotify methods ***/
+#define IDirectSoundNotify_SetNotificationPositions(p,a,b) ICOM_CALL2(SetNotificationPositions,p,a,b)
+#endif
 
-struct IDirectSoundNotify {
-	LPDIRECTSOUNDNOTIFY_VTABLE	lpvtbl;
-	DWORD				ref;
-	LPDIRECTSOUNDBUFFER		dsb;
-};
-#undef THIS
 
+/*****************************************************************************
+ * IDirectSound3DListener interface
+ */
 #define DS3DMODE_NORMAL             0x00000000
 #define DS3DMODE_HEADRELATIVE       0x00000001
 #define DS3DMODE_DISABLE            0x00000002
@@ -324,41 +358,56 @@ typedef struct _DS3DLISTENER {
 
 typedef const DS3DLISTENER *LPCDS3DLISTENER;
 	
-#define THIS LPDIRECTSOUND3DLISTENER this
-typedef struct IDirectSound3DListener_VTable
-{
-	/* IUnknown methods */
-	STDMETHOD(QueryInterface)           (THIS_ REFIID, LPVOID FAR *) PURE;
-	STDMETHOD_(ULONG,AddRef)            (THIS) PURE;
-	STDMETHOD_(ULONG,Release)           (THIS) PURE;
+#define ICOM_INTERFACE IDirectSound3DListener
+#define IDirectSound3DListener_METHODS \
+    ICOM_METHOD1(HRESULT,GetAllParameters,  LPDS3DLISTENER,lpListener) \
+    ICOM_METHOD1(HRESULT,GetDistanceFactor, LPD3DVALUE,lpflDistanceFactor) \
+    ICOM_METHOD1(HRESULT,GetDopplerFactor,  LPD3DVALUE,lpflDopplerFactor) \
+    ICOM_METHOD2(HRESULT,GetOrientation,    LPD3DVECTOR,lpvOrientFront, LPD3DVECTOR,lpvOrientTop) \
+    ICOM_METHOD1(HRESULT,GetPosition,       LPD3DVECTOR,lpvPosition) \
+    ICOM_METHOD1(HRESULT,GetRolloffFactor,  LPD3DVALUE,lpflRolloffFactor) \
+    ICOM_METHOD1(HRESULT,GetVelocity,       LPD3DVECTOR,lpvVelocity) \
+    ICOM_METHOD2(HRESULT,SetAllParameters,  LPCDS3DLISTENER,lpcListener, DWORD,dwApply) \
+    ICOM_METHOD2(HRESULT,SetDistanceFactor, D3DVALUE,flDistanceFactor, DWORD,dwApply) \
+    ICOM_METHOD2(HRESULT,SetDopplerFactor,  D3DVALUE,flDopplerFactor, DWORD,dwApply) \
+    ICOM_METHOD7(HRESULT,SetOrientation,    D3DVALUE,xFront, D3DVALUE,yFront, D3DVALUE,zFront, D3DVALUE,xTop, D3DVALUE,yTop, D3DVALUE,zTop, DWORD,dwApply) \
+    ICOM_METHOD4(HRESULT,SetPosition,       D3DVALUE,x, D3DVALUE,y, D3DVALUE,z, DWORD,dwApply) \
+    ICOM_METHOD2(HRESULT,SetRolloffFactor,  D3DVALUE,flRolloffFactor, DWORD,dwApply) \
+    ICOM_METHOD4(HRESULT,SetVelocity,       D3DVALUE,x, D3DVALUE,y, D3DVALUE,z, DWORD,dwApply) \
+    ICOM_METHOD (HRESULT,CommitDeferredSettings)
+#define IDirectSound3DListener_IMETHODS \
+    IUnknown_IMETHODS \
+    IDirectSound3DListener_METHODS
+ICOM_DEFINE(IDirectSound3DListener,IUnknown)
+#undef ICOM_INTERFACE
 
-	/* IDirectSound3DListener methods */
-	STDMETHOD(GetAllParameters)         (THIS_ LPDS3DLISTENER) PURE;
-	STDMETHOD(GetDistanceFactor)        (THIS_ LPD3DVALUE) PURE;
-	STDMETHOD(GetDopplerFactor)         (THIS_ LPD3DVALUE) PURE;
-	STDMETHOD(GetOrientation)           (THIS_ LPD3DVECTOR, LPD3DVECTOR) PURE;
-	STDMETHOD(GetPosition)              (THIS_ LPD3DVECTOR) PURE;
-	STDMETHOD(GetRolloffFactor)         (THIS_ LPD3DVALUE) PURE;
-	STDMETHOD(GetVelocity)              (THIS_ LPD3DVECTOR) PURE;
-	STDMETHOD(SetAllParameters)         (THIS_ LPCDS3DLISTENER, DWORD) PURE;
-	STDMETHOD(SetDistanceFactor)        (THIS_ D3DVALUE, DWORD) PURE;
-	STDMETHOD(SetDopplerFactor)         (THIS_ D3DVALUE, DWORD) PURE;
-	STDMETHOD(SetOrientation)           (THIS_ D3DVALUE, D3DVALUE, D3DVALUE, D3DVALUE, D3DVALUE, D3DVALUE, DWORD) PURE;
-	STDMETHOD(SetPosition)              (THIS_ D3DVALUE, D3DVALUE, D3DVALUE, DWORD) PURE;
-	STDMETHOD(SetRolloffFactor)         (THIS_ D3DVALUE, DWORD) PURE;
-	STDMETHOD(SetVelocity)              (THIS_ D3DVALUE, D3DVALUE, D3DVALUE, DWORD) PURE;
-	STDMETHOD(CommitDeferredSettings)   (THIS) PURE;
-} *LPDIRECTSOUND3DLISTENER_VTABLE, IDirectSound3DListener_VTable;
+#ifdef ICOM_CINTERFACE
+/*** IUnknown methods ***/
+#define IDirectSound3DListener_QueryInterface(p,a,b) ICOM_CALL2(QueryInterface,p,a,b)
+#define IDirectSound3DListener_AddRef(p)             ICOM_CALL (AddRef,p)
+#define IDirectSound3DListener_Release(p)            ICOM_CALL (Release,p)
+/*** IDirectSound3DListener methods ***/
+#define IDirectSound3DListener_GetAllParameters(p,a)           ICOM_CALL1(GetAllParameters,p,a)
+#define IDirectSound3DListener_GetDistanceFactor(p,a)          ICOM_CALL1(GetDistanceFactor,p,a)
+#define IDirectSound3DListener_GetDopplerFactor(p,a)           ICOM_CALL1(GetDopplerFactor,p,a)
+#define IDirectSound3DListener_GetOrientation(p,a,b)           ICOM_CALL2(GetOrientation,p,a,b)
+#define IDirectSound3DListener_GetPosition(p,a)                ICOM_CALL1(GetPosition,p,a)
+#define IDirectSound3DListener_GetRolloffFactor(p,a)           ICOM_CALL1(GetRolloffFactor,p,a)
+#define IDirectSound3DListener_GetVelocity(p,a)                ICOM_CALL1(GetVelocity,p,a)
+#define IDirectSound3DListener_SetAllParameters(p,a,b)         ICOM_CALL2(SetAllParameters,p,a,b)
+#define IDirectSound3DListener_SetDistanceFactor(p,a,b)        ICOM_CALL2(SetDistanceFactor,p,a,b)
+#define IDirectSound3DListener_SetDopplerFactor(p,a,b)         ICOM_CALL2(SetDopplerFactor,p,a,b)
+#define IDirectSound3DListener_SetOrientation(p,a,b,c,d,e,f,g) ICOM_CALL7(SetOrientation,p,a,b,c,d,e,f,g)
+#define IDirectSound3DListener_SetPosition(p,a,b,c,d)          ICOM_CALL4(SetPosition,p,a,b,c,d)
+#define IDirectSound3DListener_SetRolloffFactor(p,a,b)         ICOM_CALL2(SetRolloffFactor,p,a,b)
+#define IDirectSound3DListener_SetVelocity(p,a,b,c,d)          ICOM_CALL4(SetVelocity,p,a,b,c,d)
+#define IDirectSound3DListener_CommitDeferredSettings(p)       ICOM_CALL (CommitDeferredSettings,p)
+#endif
 
-struct IDirectSound3DListener {
-	LPDIRECTSOUND3DLISTENER_VTABLE	lpvtbl;
-	DWORD				ref;
-	LPDIRECTSOUNDBUFFER		dsb;
-	DS3DLISTENER			ds3dl;
-	CRITICAL_SECTION		lock;	
-};
-#undef THIS
 
+/*****************************************************************************
+ * IDirectSound3DBuffer interface
+ */
 typedef struct  _DS3DBUFFER {
 	DWORD				dwSize;
 	D3DVECTOR			vPosition;
@@ -374,48 +423,63 @@ typedef struct  _DS3DBUFFER {
 
 typedef const DS3DBUFFER *LPCDS3DBUFFER;
 
-#define THIS LPDIRECTSOUND3DBUFFER this
-typedef struct IDirectSound3DBuffer_VTable
-{
-	/* IUnknown methods */
-	STDMETHOD(QueryInterface)           (THIS_ REFIID, LPVOID FAR *) PURE;
-	STDMETHOD_(ULONG,AddRef)            (THIS) PURE;
-	STDMETHOD_(ULONG,Release)           (THIS) PURE;
+#define ICOM_INTERFACE IDirectSound3DBuffer
+#define IDirectSound3DBuffer_METHODS \
+    ICOM_METHOD1(HRESULT,GetAllParameters,     LPDS3DBUFFER,lpDs3dBuffer) \
+    ICOM_METHOD2(HRESULT,GetConeAngles,        LPDWORD,lpdwInsideConeAngle, LPDWORD,lpdwOutsideConeAngle) \
+    ICOM_METHOD1(HRESULT,GetConeOrientation,   LPD3DVECTOR,lpvOrientation) \
+    ICOM_METHOD1(HRESULT,GetConeOutsideVolume, LPLONG,lplConeOutsideVolume) \
+    ICOM_METHOD1(HRESULT,GetMaxDistance,       LPD3DVALUE,lpflMaxDistance) \
+    ICOM_METHOD1(HRESULT,GetMinDistance,       LPD3DVALUE,lpflMinDistance) \
+    ICOM_METHOD1(HRESULT,GetMode,              LPDWORD,lpwdMode) \
+    ICOM_METHOD1(HRESULT,GetPosition,          LPD3DVECTOR,lpvPosition) \
+    ICOM_METHOD1(HRESULT,GetVelocity,          LPD3DVECTOR,lpvVelocity) \
+    ICOM_METHOD2(HRESULT,SetAllParameters,     LPCDS3DBUFFER,lpcDs3dBuffer, DWORD,dwApply) \
+    ICOM_METHOD3(HRESULT,SetConeAngles,        DWORD,dwInsideConeAngle, DWORD,dwOutsideConeAngle, DWORD,dwApply) \
+    ICOM_METHOD4(HRESULT,SetConeOrientation,   D3DVALUE,x, D3DVALUE,y, D3DVALUE,z, DWORD,dwApply) \
+    ICOM_METHOD2(HRESULT,SetConeOutsideVolume, LONG,lConeOutsideVolume, DWORD,dwApply) \
+    ICOM_METHOD2(HRESULT,SetMaxDistance,       D3DVALUE,flMaxDistance, DWORD,dwApply) \
+    ICOM_METHOD2(HRESULT,SetMinDistance,       D3DVALUE,flMinDistance, DWORD,dwApply) \
+    ICOM_METHOD2(HRESULT,SetMode,              DWORD,dwMode, DWORD,dwApply) \
+    ICOM_METHOD4(HRESULT,SetPosition,          D3DVALUE,x, D3DVALUE,y, D3DVALUE,z, DWORD,dwApply) \
+    ICOM_METHOD4(HRESULT,SetVelocity,          D3DVALUE,x, D3DVALUE,y, D3DVALUE,z, DWORD,dwApply)
+#define IDirectSound3DBuffer_IMETHODS \
+    IUnknown_IMETHODS \
+    IDirectSound3DBuffer_METHODS
+ICOM_DEFINE(IDirectSound3DBuffer,IUnknown)
+#undef ICOM_INTERFACE
 
-	/* IDirectSound3DBuffer methods */
-	STDMETHOD(GetAllParameters)         (THIS_ LPDS3DBUFFER) PURE;
-	STDMETHOD(GetConeAngles)            (THIS_ LPDWORD, LPDWORD) PURE;
-	STDMETHOD(GetConeOrientation)       (THIS_ LPD3DVECTOR) PURE;
-	STDMETHOD(GetConeOutsideVolume)     (THIS_ LPLONG) PURE;
-	STDMETHOD(GetMaxDistance)           (THIS_ LPD3DVALUE) PURE;
-	STDMETHOD(GetMinDistance)           (THIS_ LPD3DVALUE) PURE;
-	STDMETHOD(GetMode)                  (THIS_ LPDWORD) PURE;
-	STDMETHOD(GetPosition)              (THIS_ LPD3DVECTOR) PURE;
-	STDMETHOD(GetVelocity)              (THIS_ LPD3DVECTOR) PURE;
-	STDMETHOD(SetAllParameters)         (THIS_ LPCDS3DBUFFER, DWORD) PURE;
-	STDMETHOD(SetConeAngles)            (THIS_ DWORD, DWORD, DWORD) PURE;
-	STDMETHOD(SetConeOrientation)       (THIS_ D3DVALUE, D3DVALUE, D3DVALUE, DWORD) PURE;
-	STDMETHOD(SetConeOutsideVolume)     (THIS_ LONG, DWORD) PURE;
-	STDMETHOD(SetMaxDistance)           (THIS_ D3DVALUE, DWORD) PURE;
-	STDMETHOD(SetMinDistance)           (THIS_ D3DVALUE, DWORD) PURE;
-	STDMETHOD(SetMode)                  (THIS_ DWORD, DWORD) PURE;
-	STDMETHOD(SetPosition)              (THIS_ D3DVALUE, D3DVALUE, D3DVALUE, DWORD) PURE;
-	STDMETHOD(SetVelocity)              (THIS_ D3DVALUE, D3DVALUE, D3DVALUE, DWORD) PURE;
-} *LPDIRECTSOUND3DBUFFER_VTABLE, IDirectSound3DBuffer_VTable;
-
-struct IDirectSound3DBuffer {
-	LPDIRECTSOUND3DBUFFER_VTABLE	lpvtbl;
-	DWORD				ref;
-	LPDIRECTSOUNDBUFFER		dsb;
-	DS3DBUFFER			ds3db;
-	LPBYTE				buffer;
-	DWORD				buflen;
-	CRITICAL_SECTION		lock;
-};
-#undef THIS
-#undef STDMETHOD
-#undef STDMETHOD_
-#undef PURE
-#undef FAR
-#undef THIS_
+#ifdef ICOM_CINTERFACE
+/*** IUnknown methods ***/
+#define IDirectSound3DBuffer_QueryInterface(p,a,b) ICOM_CALL2(QueryInterface,p,a,b)
+#define IDirectSound3DBuffer_AddRef(p)             ICOM_CALL (AddRef,p)
+#define IDirectSound3DBuffer_Release(p)            ICOM_CALL (Release,p)
+/*** IDirectSound3DBuffer methods ***/
+#define IDirectSound3DBuffer_GetAllParameters(p,a)         ICOM_CALL1(GetAllParameters,p,a)
+#define IDirectSound3DBuffer_GetConeAngles(p,a,b)          ICOM_CALL2(GetConeAngles,p,a,b)
+#define IDirectSound3DBuffer_GetConeOrientation(p,a)       ICOM_CALL1(GetConeOrientation,p,a)
+#define IDirectSound3DBuffer_GetConeOutsideVolume(p,a)     ICOM_CALL1(GetConeOutsideVolume,p,a)
+#define IDirectSound3DBuffer_GetMaxDistance(p,a)           ICOM_CALL1(GetMaxDistance,p,a)
+#define IDirectSound3DBuffer_GetMinDistance(p,a)           ICOM_CALL1(GetMinDistance,p,a)
+#define IDirectSound3DBuffer_GetMode(p,a)                  ICOM_CALL1(GetMode,p,a)
+#define IDirectSound3DBuffer_GetPosition(p,a)              ICOM_CALL1(GetPosition,p,a)
+#define IDirectSound3DBuffer_GetVelocity(p,a)              ICOM_CALL1(GetVelocity,p,a)
+#define IDirectSound3DBuffer_SetAllParameters(p,a,b)       ICOM_CALL2(SetAllParameters,p,a,b)
+#define IDirectSound3DBuffer_SetConeAngles(p,a,b)          ICOM_CALL3(SetConeAngles,p,a,b)
+#define IDirectSound3DBuffer_SetConeOrientation(p,a,b,c,d) ICOM_CALL4(SetConeOrientation,p,a,b,c,d)
+#define IDirectSound3DBuffer_SetConeOutsideVolume(p,a,b)   ICOM_CALL2(SetConeOutsideVolume,p,a,b)
+#define IDirectSound3DBuffer_SetMaxDistance(p,a,b)         ICOM_CALL2(SetMaxDistance,p,a,b)
+#define IDirectSound3DBuffer_SetMinDistance(p,a,b)         ICOM_CALL2(SetMinDistance,p,a,b)
+#define IDirectSound3DBuffer_SetMode(p,a,b)                ICOM_CALL2(SetMode,p,a,b)
+#define IDirectSound3DBuffer_SetPosition(p,a,b,c,d)        ICOM_CALL4(SetPosition,p,a,b,c,d)
+#define IDirectSound3DBuffer_SetVelocity(p,a,b,c,d)        ICOM_CALL4(SetVelocity,p,a,b,c,d)
 #endif
+
+
+/*****************************************************************************
+ * IKsPropertySet interface
+ */
+/* FIXME: not implemented yet */
+
+
+#endif /* __WINE_DSOUND_H */
