@@ -85,14 +85,14 @@ static	BOOL	start_console_renderer(void)
     /* first try environment variable */
     if ((p = getenv("WINECONSOLE")) != NULL)
     {
-	if (snprintf(buffer, sizeof(buffer), "%s %d", p, hEvent) > 0 &&
+	if (snprintf(buffer, sizeof(buffer), "%s -- --use-event=%d", p, hEvent) > 0 &&
 	    CreateProcessA(NULL, buffer, NULL, NULL, TRUE, DETACHED_PROCESS, NULL, NULL, &si, &pi))
 	    goto succeed;
 	ERR("Couldn't launch Wine console from WINECONSOLE env var... trying default access\n");
     }
 
     /* then the regular installation dir */
-    if (snprintf(buffer, sizeof(buffer), "%s %d", BINDIR "/wineconsole", hEvent) > 0 &&
+    if (snprintf(buffer, sizeof(buffer), "%s -- --use-event=%d", BINDIR "/wineconsole", hEvent) > 0 &&
 	CreateProcessA(NULL, buffer, NULL, NULL, TRUE, DETACHED_PROCESS, NULL, NULL, &si, &pi))
 	goto succeed;
 
@@ -104,10 +104,10 @@ static	BOOL	start_console_renderer(void)
 	if ((p = strrchr(strcpy( path, full_argv0 ), '/')))
 	{
 	    p++;
-	    sprintf(p, "wineconsole %d", hEvent);
+	    sprintf(p, "wineconsole -- --use-event=%d", hEvent);
 	    if (CreateProcessA(NULL, path, NULL, NULL, TRUE, DETACHED_PROCESS, NULL, NULL, &si, &pi))
 		goto succeed;
-	    sprintf(p, "programs/wineconsole/wineconsole %d", hEvent);
+	    sprintf(p, "programs/wineconsole/wineconsole -- --use-event=%d", hEvent);
 	    if (CreateProcessA(NULL, path, NULL, NULL, TRUE, DETACHED_PROCESS, NULL, NULL, &si, &pi))
 		goto succeed;
 	}
@@ -127,10 +127,10 @@ static	BOOL	start_console_renderer(void)
 	    if ((p = strrchr(path, '/')))
 	    {
 		p++;
-		sprintf(p, "wineconsole %d", hEvent);
+		sprintf(p, "wineconsole -- --use-event=%d", hEvent);
 		if (CreateProcessA(NULL, path, NULL, NULL, TRUE, DETACHED_PROCESS, NULL, NULL, &si, &pi))
 		    goto succeed;
-		sprintf(p, "programs/wineconsole/wineconsole %d", hEvent);
+		sprintf(p, "programs/wineconsole/wineconsole -- --use-event=%d", hEvent);
 		if (CreateProcessA(NULL, path, NULL, NULL, TRUE, DETACHED_PROCESS, NULL, NULL, &si, &pi))
 		    goto succeed;
 	    }
@@ -140,7 +140,7 @@ static	BOOL	start_console_renderer(void)
     }
 	
     /* then try the regular PATH */
-    sprintf(buffer, "wineconsole %d\n", hEvent);
+    sprintf(buffer, "wineconsole -- --use-event=%d\n", hEvent);
     if (CreateProcessA(NULL, buffer, NULL, NULL, TRUE, DETACHED_PROCESS, NULL, NULL, &si, &pi))
 	goto succeed;
 

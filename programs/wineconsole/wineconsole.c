@@ -443,11 +443,18 @@ static BOOL WINECON_Spawn(struct inner_data* data, LPCSTR lpCmdLine)
     return done;
 }
 
+static BOOL WINECON_HasEvent(LPCSTR ptr, unsigned *evt)
+{
+    while (*ptr == ' ' || *ptr == '\t') ptr++;
+    if (strncmp(ptr, "--use-event=", 12)) return FALSE;
+    return sscanf(ptr + 12, "%d", evt) == 1;
+}
+
 /******************************************************************
  *		WINECON_WinMain
  *
  * wineconsole can either be started as:
- *	wineconsole <int>		used when a new console is created (AllocConsole)
+ *	wineconsole --use-event=<int>	used when a new console is created (AllocConsole)
  *	wineconsole <pgm> <arguments>	used to start the program <pgm> from the command line in
  *					a freshly created console
  */
@@ -458,7 +465,7 @@ int PASCAL WINECON_WinMain(HINSTANCE hInst, HINSTANCE hPrev, LPCSTR lpCmdLine, U
     unsigned		evt;
 
     /* case of wineconsole <evt>, signal process that created us that we're up and running */
-    if (sscanf(lpCmdLine, "%d", &evt) == 1)
+    if (WINECON_HasEvent(lpCmdLine, &evt))
     {
         if (!(data = WINECON_Init(hInst, 0))) return 0;
 	ret = SetEvent((HANDLE)evt);
