@@ -197,8 +197,8 @@ function link_app {
 #puts windows applications replacements to windows directories,
 #configures them
 function configure_wine_applications {
+  link_app notepad      "$CROOT/windows/notepad.exe"
   link_app regedit      "$CROOT/windows/regedit.exe"
-  link_app uninstaller  "$CROOT/windows/uninstall.exe"
   link_app wcmd         "$CROOT/windows/system32/cmd.exe"
   link_app control      "$CROOT/windows/system32/control.exe"
   link_app winhelp      "$CROOT/windows/system32/help.exe"
@@ -207,6 +207,7 @@ function configure_wine_applications {
   link_app regsvr32     "$CROOT/windows/system32/regsvr32.exe"
   link_app winemine     "$CROOT/windows/system32/winmine.exe"
   link_app winver       "$CROOT/windows/system32/winver.exe"
+  link_app uninstaller  "$CROOT/windows/uninstall.exe"
   link_app winhelp      "$CROOT/windows/winhelp.exe"
   link_app winhelp      "$CROOT/windows/winhlp32.exe"
 }
