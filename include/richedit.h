@@ -435,7 +435,7 @@ typedef struct _findtextW {
     LPWSTR     lpstrText;
 } FINDTEXTW;
 
-DECL_WINELIB_TYPE_AW(FINDTEXT);
+DECL_WINELIB_TYPE_AW(FINDTEXT)
 
 typedef struct _findtextexA {
     CHARRANGE  chrg;
@@ -449,7 +449,7 @@ typedef struct _findtextexW {
     CHARRANGE  chrgText;
 } FINDTEXTEXW;
 
-DECL_WINELIB_TYPE_AW(FINDTEXTEX);
+DECL_WINELIB_TYPE_AW(FINDTEXTEX)
 
 typedef struct _formatrange {
     HDC        hdc;

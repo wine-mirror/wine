@@ -402,9 +402,9 @@ typedef void *HANDLE;
 typedef HANDLE *PHANDLE, *LPHANDLE;
 
 #ifdef STRICT
-#define DECLARE_HANDLE(a) typedef struct a##__ { int unused; } *a;
+#define DECLARE_HANDLE(a) typedef struct a##__ { int unused; } *a
 #else /*STRICT*/
-#define DECLARE_HANDLE(a) typedef HANDLE a;
+#define DECLARE_HANDLE(a) typedef HANDLE a
 #endif /*STRICT*/
 
 /* Defines */
