@@ -304,6 +304,7 @@ static void EVENT_ProcessEvent( XEvent *event )
       XFocusChangeEvent *xfocChange = (XFocusChangeEvent*)event;
       glastXFocusWin = xfocChange->window;
       if (!hWnd || bUserRepaintDisabled) return;
+      if (GetWindowLongA( hWnd, GWL_STYLE ) & WS_DISABLED) glastXFocusWin = 0;
       EVENT_FocusOut( hWnd, (XFocusChangeEvent*)event );
       break;
     }
