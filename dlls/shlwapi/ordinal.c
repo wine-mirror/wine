@@ -3792,6 +3792,25 @@ INT WINAPI GetMenuPosFromID(HMENU hMenu, UINT wID)
 }
 
 /*************************************************************************
+ *      @	[SHLWAPI.179]
+ *
+ * Same as SHLWAPI.GetMenuPosFromID
+ */
+DWORD WINAPI SHMenuIndexFromID(HMENU hMenu, UINT uID)
+{
+    return GetMenuPosFromID(hMenu, uID);
+}
+
+/*************************************************************************
+ *      @	[SHLWAPI.549]
+ */
+HRESULT WINAPI SHCoCreateInstanceAC(REFCLSID rclsid, LPUNKNOWN pUnkOuter,
+                                    DWORD dwClsContext, REFIID iid, LPVOID *ppv)
+{
+    return CoCreateInstance(rclsid, pUnkOuter, dwClsContext, iid, ppv);
+}
+
+/*************************************************************************
  * SHSkipJunction	[SHLWAPI.@]
  *
  * Determine if a bind context can be bound to an object

@@ -176,7 +176,7 @@
 176 stdcall -noname IUnknown_QueryService(ptr ptr ptr ptr)
 177 stdcall -noname SHLoadMenuPopup(ptr wstr)
 178 stdcall -noname SHPropagateMessage(ptr long long long long)
-179 stub -noname SHMenuIndexFromID
+179 stdcall -noname SHMenuIndexFromID(long long)
 180 stdcall -noname SHRemoveAllSubMenus(long)
 181 stdcall -noname SHEnableMenuItem(long long long)
 182 stdcall -noname SHCheckMenuItem(long long long)
@@ -542,7 +542,7 @@
 546 stub -noname IUnknown_DoContextMenuPopup
 
 548 stub -noname SHAreIconsEqual
-549 stub -noname SHCoCreateInstanceAC
+549 stdcall -noname SHCoCreateInstanceAC(ptr ptr long ptr ptr)
 550 stub -noname GetTemplateInfoFroHandle
 551 stub -noname IShellFolder_CompareIDs
 
