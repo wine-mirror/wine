@@ -34,7 +34,8 @@
 #include "debug.h"
 
 extern BYTE InputKeyStateTable[256];
-extern BYTE vkey2scode[512];
+extern int min_keycode, max_keycode;
+extern WORD keyc2vkey[256];
 
 static IDirectInputA_VTable ddiavt;
 static IDirectInputDeviceA_VTable SysKeyboardAvt;
@@ -269,14 +270,19 @@ static HRESULT WINAPI SysKeyboardA_GetDeviceState(
 	LPDIRECTINPUTDEVICE32A this,DWORD len,LPVOID ptr
 ) {
 	if (len==256) {
-		int	i;
+		int keyc,vkey;
 
 		memset(ptr,0,256);
-		for (i=0;i<256;i++)
-			if (InputKeyStateTable[i]&0x80) {
-				((LPBYTE)ptr)[vkey2scode[i]     ]=0x80;
-				((LPBYTE)ptr)[vkey2scode[i]|0x80]=0x80;
-			}
+		for (keyc=min_keycode;keyc<max_keycode;keyc++)
+                {
+                    /* X keycode to virtual key */
+                    vkey = keyc2vkey[keyc] & 0xFF;
+                    /* The windows scancode is keyc-min_keycode */
+                    if (InputKeyStateTable[vkey]&0x80) {
+                        ((LPBYTE)ptr)[keyc-min_keycode]=0x80;
+                        ((LPBYTE)ptr)[(keyc-min_keycode)|0x80]=0x80;
+                    }
+                }
 		return 0;
 	}
 	WARN(dinput,"whoops, SysKeyboardA_GetDeviceState got len %ld?\n",len);
@@ -287,7 +293,7 @@ static HRESULT WINAPI SysKeyboardA_GetDeviceData(
 	LPDIRECTINPUTDEVICE32A this,DWORD dodsize,LPDIDEVICEOBJECTDATA dod,
 	LPDWORD entries,DWORD flags
 ) {
-	int			i,n,xentries;
+	int			keyc,n,vkey,xentries;
 	LPSYSKEYBOARD32A	kthis = (LPSYSKEYBOARD32A)this;
 
 	TRACE(dinput,"(this=%p,%ld,%p,%p(%ld)),0x%08lx)\n",
@@ -298,20 +304,27 @@ static HRESULT WINAPI SysKeyboardA_GetDeviceData(
 	else
 		xentries = 1;
 
-	for (n=i=0;(i<256) && (n<*entries);i++) {
-		if (kthis->keystate[i] == (InputKeyStateTable[i]&0x80))
+        n = 0;
+
+        for (keyc=min_keycode;(keyc<max_keycode) && (n<*entries);keyc++)
+        {
+                    /* X keycode to virtual key */
+                    vkey = keyc2vkey[keyc] & 0xFF;
+                    if (kthis->keystate[vkey] == (InputKeyStateTable[vkey]&0x80))
 			continue;
 		if (dod) {
 			/* add an entry */
-			dod[n].dwOfs		= vkey2scode[i];
-			dod[n].dwData		= InputKeyStateTable[i]&0x80;
+                        dod[n].dwOfs		= keyc-min_keycode; /* scancode */
+			dod[n].dwData		= InputKeyStateTable[vkey]&0x80;
 			dod[n].dwTimeStamp	= 0; /* umm */
 			dod[n].dwSequence	= 0; /* umm */
 			n++;
 		}
 		if (!(flags & DIGDD_PEEK))
-			kthis->keystate[i] = InputKeyStateTable[i]&0x80;
-	}
+			kthis->keystate[vkey] = InputKeyStateTable[vkey]&0x80;
+                    
+        }
+        
 	if (n) fprintf(stderr,"%d entries\n",n);
 	*entries = n;
 	return 0;
@@ -324,14 +337,6 @@ static HRESULT WINAPI SysKeyboardA_Acquire(LPDIRECTINPUTDEVICE32A this) {
 
 static HRESULT WINAPI SysKeyboardA_Unacquire(LPDIRECTINPUTDEVICE32A this) {
 	FIXME(dinput,"(this=%p): stub\n",this);
-	return 0;
-}
-
-
-static HRESULT WINAPI IDirectInputDeviceA_GetDeviceState(
-	LPDIRECTINPUTDEVICE32A this,DWORD len,LPVOID ptr
-) {
-	FIXME(dinput,"(this=%p,0x%08lx,%p): stub\n",this,len,ptr);
 	return 0;
 }
 
@@ -381,7 +386,7 @@ static HRESULT WINAPI SysMouseA_SetDataFormat(
       strcpy(xbuf,"<no guid>");
     TRACE(dinput,"df.rgodf[%d].guid %s\n",i,xbuf);
     TRACE(dinput,"df.rgodf[%d].dwOfs %ld\n",i,df->rgodf[i].dwOfs);
-    TRACE(dinput,"dwType 0x%02lx,dwInstance %ld\n",DIDFT_GETTYPE(df->rgodf[i].dwType),DIDFT_GETINSTANCE(df->rgodf[i].dwType));
+    TRACE(dinput,"dwType 0x%02x,dwInstance %d\n",DIDFT_GETTYPE(df->rgodf[i].dwType),DIDFT_GETINSTANCE(df->rgodf[i].dwType));
     TRACE(dinput,"df.rgodf[%d].dwFlags 0x%08lx\n",i,df->rgodf[i].dwFlags);
   }
 
