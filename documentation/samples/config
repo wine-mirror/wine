@@ -144,7 +144,7 @@ WINE REGISTRY Version 2
 [serialports]
 "Com1" = "/dev/ttyS0"
 "Com2" = "/dev/ttyS1"
-"Com3" = "/dev/modem,38400"
+"Com3" = "/dev/ttyS2"
 "Com4" = "/dev/modem"
 
 [parallelports]
