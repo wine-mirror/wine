@@ -1013,7 +1013,8 @@ DWORD WINAPI RegQueryValueExW( HKEY hkey, LPCWSTR name, LPDWORD reserved, LPDWOR
     static const int info_size = offsetof( KEY_VALUE_PARTIAL_INFORMATION, Data );
 
     TRACE("(%p,%s,%p,%p,%p,%p=%ld)\n",
-          hkey, debugstr_w(name), reserved, type, data, count, count ? *count : 0 );
+          hkey, debugstr_w(name), reserved, type, data, count,
+          (count && data) ? *count : 0 );
 
     if ((data && !count) || reserved) return ERROR_INVALID_PARAMETER;
     if (!(hkey = get_special_root_hkey( hkey ))) return ERROR_INVALID_HANDLE;

@@ -275,7 +275,8 @@ NTSTATUS WINAPI LdrFindResourceDirectory_U( HMODULE hmod, const LDR_RESOURCE_INF
 
     if (info) TRACE( "module %p type %s name %s lang %04lx level %ld\n",
                      hmod, debugstr_w((LPCWSTR)info->Type),
-                     debugstr_w((LPCWSTR)info->Name), info->Language, level );
+                     level > 1 ? debugstr_w((LPCWSTR)info->Name) : "",
+                     level > 2 ? info->Language : 0, level );
 
     __TRY
     {
@@ -302,7 +303,8 @@ NTSTATUS WINAPI LdrFindResource_U( HMODULE hmod, const LDR_RESOURCE_INFO *info,
 
     if (info) TRACE( "module %p type %s name %s lang %04lx level %ld\n",
                      hmod, debugstr_w((LPCWSTR)info->Type),
-                     debugstr_w((LPCWSTR)info->Name), info->Language, level );
+                     level > 1 ? debugstr_w((LPCWSTR)info->Name) : "",
+                     level > 2 ? info->Language : 0, level );
 
     __TRY
     {
