@@ -2034,40 +2034,69 @@ HRESULT WINAPI CoInitializeWOW(DWORD x,DWORD y) {
 /***********************************************************************
  *           CoGetState [OLE32.@]
  *
- * NOTES: might be incomplete
+ * Retrieves the thread state object previously stored by CoSetState().
+ *
+ * PARAMS
+ *  ppv [I] Address where pointer to object will be stored.
+ *
+ * RETURNS
+ *  Success: S_OK.
+ *  Failure: E_OUTOFMEMORY.
+ *
+ * NOTES
+ *  Crashes on all invalid ppv addresses, including NULL.
+ *  If the function returns a non-NULL object then the caller must release its
+ *  reference on the object when the object is no longer required.
+ *
+ * SEE ALSO
+ *  CoSetState().
  */
 HRESULT WINAPI CoGetState(IUnknown ** ppv)
 {
-    HRESULT    hr  = E_FAIL;
+    struct oletls *info = COM_CurrentInfo();
+    if (!info) return E_OUTOFMEMORY;
 
     *ppv = NULL;
 
-    if (COM_CurrentInfo()->state)
+    if (info->state)
     {
-        IUnknown_AddRef(COM_CurrentInfo()->state);
-        *ppv = COM_CurrentInfo()->state;
-        TRACE("apt->state=%p\n", COM_CurrentInfo()->state);
-        hr = S_OK;
+        IUnknown_AddRef(info->state);
+        *ppv = info->state;
+        TRACE("apt->state=%p\n", info->state);
     }
 
-    return hr;
+    return S_OK;
 }
 
 /***********************************************************************
  *           CoSetState [OLE32.@]
  *
+ * Sets the thread state object.
+ *
+ * PARAMS
+ *  pv [I] Pointer to state object to be stored.
+ *
+ * NOTES
+ *  The system keeps a reference on the object while the object stored.
+ *
+ * RETURNS
+ *  Success: S_OK.
+ *  Failure: E_OUTOFMEMORY.
  */
 HRESULT WINAPI CoSetState(IUnknown * pv)
 {
+    struct oletls *info = COM_CurrentInfo();
+    if (!info) return E_OUTOFMEMORY;
+
     if (pv) IUnknown_AddRef(pv);
 
-    if (COM_CurrentInfo()->state)
+    if (info->state)
     {
-        TRACE("-- release %p now\n", COM_CurrentInfo()->state);
-        IUnknown_Release(COM_CurrentInfo()->state);
+        TRACE("-- release %p now\n", info->state);
+        IUnknown_Release(info->state);
     }
 
-    COM_CurrentInfo()->state = pv;
+    info->state = pv;
 
     return S_OK;
 }

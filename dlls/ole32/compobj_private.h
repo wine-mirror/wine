@@ -227,9 +227,9 @@ struct oletls
 /* will create if necessary */
 static inline struct oletls *COM_CurrentInfo(void)
 {
-    if (!NtCurrentTeb()->ReservedForOle)     
+    if (!NtCurrentTeb()->ReservedForOle)
         NtCurrentTeb()->ReservedForOle = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(struct oletls));
-    
+
     return NtCurrentTeb()->ReservedForOle;
 }
 
