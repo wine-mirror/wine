@@ -78,6 +78,7 @@ static const BYTE VIRTUAL_Win32Flags[16] =
 
 
 static FILE_VIEW *VIRTUAL_FirstView;
+static CRITICAL_SECTION csVirtual = CRITICAL_SECTION_INIT;
 
 #ifdef __i386__
 /* These are always the same on an i386, and it will be faster this way */
@@ -163,13 +164,16 @@ static void VIRTUAL_DumpView( FILE_VIEW *view )
  */
 void VIRTUAL_Dump(void)
 {
-    FILE_VIEW *view = VIRTUAL_FirstView;
+    FILE_VIEW *view;
     DPRINTF( "\nDump of all virtual memory views:\n\n" );
+    EnterCriticalSection(&csVirtual);
+    view = VIRTUAL_FirstView;
     while (view)
     {
         VIRTUAL_DumpView( view );
         view = view->next;
     }
+    LeaveCriticalSection(&csVirtual);
 }
 
 
@@ -185,14 +189,22 @@ void VIRTUAL_Dump(void)
 static FILE_VIEW *VIRTUAL_FindView(
                   UINT addr /* [in] Address */
 ) {
-    FILE_VIEW *view = VIRTUAL_FirstView;
+    FILE_VIEW *view;
+
+    EnterCriticalSection(&csVirtual);
+    view = VIRTUAL_FirstView;
     while (view)
     {
-        if (view->base > addr) return NULL;
-        if (view->base + view->size > addr) return view;
+        if (view->base > addr)
+        {
+            view = NULL;
+            break;
+        }
+        if (view->base + view->size > addr) break;
         view = view->next;
     }
-    return NULL;
+    LeaveCriticalSection(&csVirtual);
+    return view;
 }
 
 
@@ -233,6 +245,7 @@ static FILE_VIEW *VIRTUAL_CreateView( UINT base, UINT size, UINT flags,
 
     /* Insert it in the linked list */
 
+    EnterCriticalSection(&csVirtual);
     if (!VIRTUAL_FirstView || (VIRTUAL_FirstView->base > base))
     {
         view->next = VIRTUAL_FirstView;
@@ -249,6 +262,7 @@ static FILE_VIEW *VIRTUAL_CreateView( UINT base, UINT size, UINT flags,
         if (view->next) view->next->prev = view;
         prev->next  = view;
     }
+    LeaveCriticalSection(&csVirtual);
     VIRTUAL_DEBUG_DUMP_VIEW( view );
     return view;
 }
@@ -266,9 +280,11 @@ static void VIRTUAL_DeleteView(
 ) {
     if (!(view->flags & VFLAG_SYSTEM))
         munmap( (void *)view->base, view->size );
+    EnterCriticalSection(&csVirtual);
     if (view->next) view->next->prev = view->prev;
     if (view->prev) view->prev->next = view->next;
     else VIRTUAL_FirstView = view->next;
+    LeaveCriticalSection(&csVirtual);
     if (view->mapping) CloseHandle( view->mapping );
     free( view );
 }
@@ -1055,13 +1071,15 @@ DWORD WINAPI VirtualQuery(
              LPMEMORY_BASIC_INFORMATION info, /* [out] Address of info buffer */
              DWORD len                        /* [in]  Size of buffer */
 ) {
-    FILE_VIEW *view = VIRTUAL_FirstView;
+    FILE_VIEW *view;
     UINT base = ROUND_ADDR( addr );
     UINT alloc_base = 0;
     UINT size = 0;
 
     /* Find the view containing the address */
 
+    EnterCriticalSection(&csVirtual);
+    view = VIRTUAL_FirstView;
     for (;;)
     {
         if (!view)
@@ -1084,6 +1102,7 @@ DWORD WINAPI VirtualQuery(
         alloc_base = view->base + view->size;
         view = view->next;
     }
+    LeaveCriticalSection(&csVirtual);
 
     /* Fill the info structure */
 
