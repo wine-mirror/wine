@@ -143,6 +143,7 @@ typedef struct IDirect3DDeviceGLImpl
     D3DVALUE prev_clear_Z;
     BOOLEAN depth_mask, depth_test, alpha_test, stencil_test, cull_face, lighting, blending, fogging;
     GLenum current_tex_env;
+    GLenum current_active_tex_unit;
 } IDirect3DDeviceGLImpl;
 
 /* This is for the OpenGL additions... */
@@ -162,7 +163,12 @@ typedef struct {
 typedef struct {
     /* Mirrored Repeat */
     BOOLEAN mirrored_repeat;
+    /* Mipmap lod-bias */
     BOOLEAN mipmap_lodbias;
+    /* Multi-texturing */
+    GLint max_texture_units;
+    void (*glActiveTexture)(GLenum texture);
+    void (*glMultiTexCoord2fv)(GLenum target, const GLfloat *v);
 } GL_EXTENSIONS_LIST; 
 extern GL_EXTENSIONS_LIST GL_extensions;
 

@@ -162,7 +162,9 @@ convert_tex_address_to_GL(D3DTEXTUREADDRESS dwState)
 HRESULT
 gltex_upload_texture(IDirectDrawSurfaceImpl *surf_ptr, IDirect3DDeviceImpl *d3ddev, DWORD stage) {
     IDirect3DTextureGLImpl *gl_surf_ptr = (IDirect3DTextureGLImpl *) surf_ptr->tex_private;
+    IDirect3DDeviceGLImpl *gl_d3ddev = (IDirect3DDeviceGLImpl *) d3ddev;
     BOOLEAN changed = FALSE;
+    GLenum unit = GL_TEXTURE0_WINE + stage;
     
     if (surf_ptr->mipmap_level != 0) {
         WARN(" application activating a sub-level of the mipmapping chain (level %d) !\n", surf_ptr->mipmap_level);
@@ -189,6 +191,10 @@ gltex_upload_texture(IDirectDrawSurfaceImpl *surf_ptr, IDirect3DDeviceImpl *d3dd
 		}
 	    }
 	}
+	if (unit != gl_d3ddev->current_active_tex_unit) {
+	    GL_extensions.glActiveTexture(unit);
+	    gl_d3ddev->current_active_tex_unit = unit;
+	}
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAX_LEVEL, max_mip_level);
 	changed = TRUE;
     }
@@ -196,6 +202,10 @@ gltex_upload_texture(IDirectDrawSurfaceImpl *surf_ptr, IDirect3DDeviceImpl *d3dd
     if ((gl_surf_ptr->tex_parameters == NULL) ||
 	(gl_surf_ptr->tex_parameters[D3DTSS_MAGFILTER - D3DTSS_ADDRESSU] != 
 	 d3ddev->state_block.texture_stage_state[stage][D3DTSS_MAGFILTER - 1])) {
+	if (unit != gl_d3ddev->current_active_tex_unit) {
+	    GL_extensions.glActiveTexture(unit);
+	    gl_d3ddev->current_active_tex_unit = unit;
+	}
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, 
 			convert_mag_filter_to_GL(d3ddev->state_block.texture_stage_state[stage][D3DTSS_MAGFILTER - 1]));
 	changed = TRUE;
@@ -205,6 +215,10 @@ gltex_upload_texture(IDirectDrawSurfaceImpl *surf_ptr, IDirect3DDeviceImpl *d3dd
 	 d3ddev->state_block.texture_stage_state[stage][D3DTSS_MINFILTER - 1]) ||
 	(gl_surf_ptr->tex_parameters[D3DTSS_MIPFILTER - D3DTSS_ADDRESSU] != 
 	 d3ddev->state_block.texture_stage_state[stage][D3DTSS_MIPFILTER - 1])) {
+	if (unit != gl_d3ddev->current_active_tex_unit) {
+	    GL_extensions.glActiveTexture(unit);
+	    gl_d3ddev->current_active_tex_unit = unit;
+	}
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER,
 			convert_min_filter_to_GL(d3ddev->state_block.texture_stage_state[stage][D3DTSS_MINFILTER - 1],
 						 d3ddev->state_block.texture_stage_state[stage][D3DTSS_MIPFILTER - 1]));
@@ -213,6 +227,10 @@ gltex_upload_texture(IDirectDrawSurfaceImpl *surf_ptr, IDirect3DDeviceImpl *d3dd
     if ((gl_surf_ptr->tex_parameters == NULL) ||
 	(gl_surf_ptr->tex_parameters[D3DTSS_ADDRESSU - D3DTSS_ADDRESSU] != 
 	 d3ddev->state_block.texture_stage_state[stage][D3DTSS_ADDRESSU - 1])) {
+	if (unit != gl_d3ddev->current_active_tex_unit) {
+	    GL_extensions.glActiveTexture(unit);
+	    gl_d3ddev->current_active_tex_unit = unit;
+	}
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S,
 			convert_tex_address_to_GL(d3ddev->state_block.texture_stage_state[stage][D3DTSS_ADDRESSU - 1]));
 	changed = TRUE;
@@ -220,6 +238,10 @@ gltex_upload_texture(IDirectDrawSurfaceImpl *surf_ptr, IDirect3DDeviceImpl *d3dd
     if ((gl_surf_ptr->tex_parameters == NULL) ||
 	(gl_surf_ptr->tex_parameters[D3DTSS_ADDRESSV - D3DTSS_ADDRESSU] != 
 	 d3ddev->state_block.texture_stage_state[stage][D3DTSS_ADDRESSV - 1])) {
+	if (unit != gl_d3ddev->current_active_tex_unit) {
+	    GL_extensions.glActiveTexture(unit);
+	    gl_d3ddev->current_active_tex_unit = unit;
+	}
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T,
 			convert_tex_address_to_GL(d3ddev->state_block.texture_stage_state[stage][D3DTSS_ADDRESSV - 1]));	
 	changed = TRUE;
@@ -233,6 +255,10 @@ gltex_upload_texture(IDirectDrawSurfaceImpl *surf_ptr, IDirect3DDeviceImpl *d3dd
 	color[1] = ((d3ddev->state_block.texture_stage_state[stage][D3DTSS_BORDERCOLOR - 1] >>  8) & 0xFF) / 255.0;
 	color[2] = ((d3ddev->state_block.texture_stage_state[stage][D3DTSS_BORDERCOLOR - 1] >>  0) & 0xFF) / 255.0;
 	color[3] = ((d3ddev->state_block.texture_stage_state[stage][D3DTSS_BORDERCOLOR - 1] >> 24) & 0xFF) / 255.0;
+	if (unit != gl_d3ddev->current_active_tex_unit) {
+	    GL_extensions.glActiveTexture(unit);
+	    gl_d3ddev->current_active_tex_unit = unit;
+	}
 	glTexParameterfv(GL_TEXTURE_2D, GL_TEXTURE_BORDER_COLOR, color);
 	changed = TRUE;
     }
@@ -265,6 +291,11 @@ gltex_upload_texture(IDirectDrawSurfaceImpl *surf_ptr, IDirect3DDeviceImpl *d3dd
 		snoop_texture(surf_ptr);
 	    }
 
+	    if (unit != gl_d3ddev->current_active_tex_unit) {
+		GL_extensions.glActiveTexture(unit);
+		gl_d3ddev->current_active_tex_unit = unit;
+	    }
+	    
 	    if (upload_surface_to_tex_memory_init(surf_ptr, surf_ptr->mipmap_level, &(gl_surf_ptr->current_internal_format),
 						  gl_surf_ptr->initial_upload_done == FALSE, TRUE, 0, 0) == DD_OK) {
 	        upload_surface_to_tex_memory(NULL, 0, 0, &(gl_surf_ptr->surface_ptr));

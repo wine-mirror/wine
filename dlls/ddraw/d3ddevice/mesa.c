@@ -102,6 +102,10 @@ static DWORD d3ddevice_set_state_for_flush(IDirect3DDeviceImpl *d3d_dev, LPCRECT
     IDirect3DDeviceGLImpl* gl_d3d_dev = (IDirect3DDeviceGLImpl*) d3d_dev;
     DWORD opt_bitmap = 0x00000000;
     
+    if (gl_d3d_dev->current_active_tex_unit != GL_TEXTURE0_WINE) {
+	GL_extensions.glActiveTexture(GL_TEXTURE0_WINE);
+	gl_d3d_dev->current_active_tex_unit = GL_TEXTURE0_WINE;
+    }
     if (gl_d3d_dev->unlock_tex == 0) {
         glGenTextures(1, &gl_d3d_dev->unlock_tex);
 	glBindTexture(GL_TEXTURE_2D, gl_d3d_dev->unlock_tex);
@@ -128,6 +132,15 @@ static DWORD d3ddevice_set_state_for_flush(IDirect3DDeviceImpl *d3d_dev, LPCRECT
     if ((gl_d3d_dev->current_bound_texture[0] == NULL) ||
 	(d3d_dev->state_block.texture_stage_state[0][D3DTSS_COLOROP - 1] == D3DTOP_DISABLE))
 	glEnable(GL_TEXTURE_2D);
+    if (gl_d3d_dev->current_bound_texture[1] != NULL) {
+	if (gl_d3d_dev->current_active_tex_unit != GL_TEXTURE1_WINE) {
+	    GL_extensions.glActiveTexture(GL_TEXTURE1_WINE);
+	    gl_d3d_dev->current_active_tex_unit = GL_TEXTURE1_WINE;
+	}
+	/* 'unbound' texture level 1 in that case to disable multi-texturing */
+	glBindTexture(GL_TEXTURE_2D, 0);
+	glDisable(GL_TEXTURE_2D);
+    }
     glEnable(GL_SCISSOR_TEST);
     if ((d3d_dev->active_viewport.dvMinZ != 0.0) ||
 	(d3d_dev->active_viewport.dvMaxZ != 1.0)) {
@@ -201,6 +214,7 @@ static void d3ddevice_restore_state_after_flush(IDirect3DDeviceImpl *d3d_dev, DW
     /* This is a hack to prevent querying the current texture from GL. Basically, at the next
        DrawPrimitive call, this will bind the correct texture to this stage. */
     gl_d3d_dev->current_bound_texture[0] = (IDirectDrawSurfaceImpl *) 0x00000001;
+    gl_d3d_dev->current_bound_texture[1] = (IDirectDrawSurfaceImpl *) 0x00000000;
     if (d3d_dev->state_block.texture_stage_state[0][D3DTSS_COLOROP - 1] == D3DTOP_DISABLE) glDisable(GL_TEXTURE_2D);
 }
 
@@ -1201,8 +1215,11 @@ inline static void handle_texture(D3DVALUE *coords) {
     glTexCoord2fv(coords);
 }
 inline static void handle_textures(D3DVALUE *coords, int tex_stage) {
-    /* For the moment, draw only the first texture.. */
-    if (tex_stage == 0) glTexCoord2fv(coords);
+    if (GL_extensions.glMultiTexCoord2fv) {
+	GL_extensions.glMultiTexCoord2fv(GL_TEXTURE0_WINE + tex_stage, coords);
+    } else {
+	if (tex_stage == 0) glTexCoord2fv(coords);
+    }
 }
 
 static void draw_primitive_strided(IDirect3DDeviceImpl *This,
@@ -1244,6 +1261,13 @@ static void draw_primitive_strided(IDirect3DDeviceImpl *This,
     /* Compute the number of active texture stages and set the various texture parameters */
     num_active_stages = draw_primitive_handle_textures(This);
 
+    /* And restore to handle '0' in the case we use glTexCorrd calls */
+    if (glThis->current_active_tex_unit != GL_TEXTURE0_WINE) {
+	GL_extensions.glActiveTexture(GL_TEXTURE0_WINE);
+	glThis->current_active_tex_unit = GL_TEXTURE0_WINE;
+    }
+
+    
     draw_primitive_handle_GL_state(This,
 				   (d3dvtVertexType & D3DFVF_POSITION_MASK) != D3DFVF_XYZ,
 				   vertex_lighted);
@@ -1668,11 +1692,21 @@ GL_IDirect3DDeviceImpl_7_3T_SetTextureStageState(LPDIRECT3DDEVICE7 iface,
     IDirect3DDeviceGLImpl *glThis = (IDirect3DDeviceGLImpl *) This;
     const char *type;
     DWORD prev_state;
+    GLenum unit;
     
     TRACE("(%p/%p)->(%08lx,%08x,%08lx)\n", This, iface, dwStage, d3dTexStageStateType, dwState);
 
-    if (dwStage > 0) return DD_OK; /* We nothing in this case for now */
+    if (((GL_extensions.max_texture_units == 0) && (dwStage > 0)) ||
+	((GL_extensions.max_texture_units != 0) && (dwStage >= GL_extensions.max_texture_units))) {
+	return DD_OK;
+    }
 
+    unit = GL_TEXTURE0_WINE + dwStage;
+    if (unit != glThis->current_active_tex_unit) {
+	GL_extensions.glActiveTexture(unit);
+	glThis->current_active_tex_unit = unit;
+    }
+    
     switch (d3dTexStageStateType) {
 #define GEN_CASE(a) case a: type = #a; break
         GEN_CASE(D3DTSS_COLOROP);
@@ -1801,12 +1835,12 @@ GL_IDirect3DDeviceImpl_7_3T_SetTextureStageState(LPDIRECT3DDEVICE7 iface,
 	        default: value = "UNKNOWN";
 	    }
 
-            if ((d3dTexStageStateType == D3DTSS_COLOROP) && (dwState == D3DTOP_DISABLE) && (dwStage == 0)) {
+            if ((d3dTexStageStateType == D3DTSS_COLOROP) && (dwState == D3DTOP_DISABLE)) {
                 glDisable(GL_TEXTURE_2D);
 		TRACE(" disabling 2D texturing.\n");
             } else {
 	        /* Re-enable texturing */
-	        if ((dwStage == 0) && (This->current_texture[0] != NULL)) {
+	        if (This->current_texture[0] != NULL) {
 		    glEnable(GL_TEXTURE_2D);
 		    TRACE(" enabling 2D texturing.\n");
 		}
@@ -2046,16 +2080,32 @@ draw_primitive_handle_textures(IDirect3DDeviceImpl *This)
     
     for (stage = 0; stage < MAX_TEXTURES; stage++) {
 	IDirectDrawSurfaceImpl *surf_ptr = This->current_texture[stage];
+	GLenum unit;
 
 	/* First check if we need to bind any other texture for this stage */
 	if (This->current_texture[stage] != glThis->current_bound_texture[stage]) {
 	    if (This->current_texture[stage] == NULL) {
 		TRACE(" disabling 2D texturing for stage %ld.\n", stage);
+		
+		unit = GL_TEXTURE0_WINE + stage;
+		if (unit != glThis->current_active_tex_unit) {
+		    GL_extensions.glActiveTexture(unit);
+		    glThis->current_active_tex_unit = unit;
+		}
 		glBindTexture(GL_TEXTURE_2D, 0);
-		glDisable(GL_TEXTURE_2D);
+
+		if (stage == 0) {
+		    glDisable(GL_TEXTURE_2D);
+		}
 	    } else {
 		GLenum tex_name = ((IDirect3DTextureGLImpl *) surf_ptr->tex_private)->tex_name;
 		
+		unit = GL_TEXTURE0_WINE + stage;
+		if (unit != glThis->current_active_tex_unit) {
+		    GL_extensions.glActiveTexture(unit);
+		    glThis->current_active_tex_unit = unit;
+		}
+
 		if (glThis->current_bound_texture[stage] == NULL) {
 		    if (This->state_block.texture_stage_state[stage][D3DTSS_COLOROP - 1] != D3DTOP_DISABLE) {
 			TRACE(" enabling 2D texturing and");
@@ -2096,8 +2146,14 @@ GL_IDirect3DDeviceImpl_7_3T_SetTexture(LPDIRECT3DDEVICE7 iface,
     ICOM_THIS_FROM(IDirect3DDeviceImpl, IDirect3DDevice7, iface);
     
     TRACE("(%p/%p)->(%08lx,%p)\n", This, iface, dwStage, lpTexture2);
-    
-    if (dwStage > 0) return DD_OK;
+
+    if (((GL_extensions.max_texture_units == 0) && (dwStage > 0)) ||
+	((GL_extensions.max_texture_units != 0) && (dwStage >= GL_extensions.max_texture_units))) {
+	if (lpTexture2 != NULL) {
+	    WARN(" setting a texture to a non-supported texture stage !\n");
+	}
+	return DD_OK;
+    }
 
     if (This->current_texture[dwStage] != NULL) {
 	IDirectDrawSurface7_Release(ICOM_INTERFACE(This->current_texture[dwStage], IDirectDrawSurface7));
@@ -3254,25 +3310,29 @@ d3ddevice_matrices_updated(IDirect3DDeviceImpl *This, DWORD matrices)
     {
         ENTER_GL();
 	for (tex_mat = TEXMAT0_CHANGED, tex_stage = 0; tex_mat <= TEXMAT7_CHANGED; tex_mat <<= 1, tex_stage++) {
+	    GLenum unit = GL_TEXTURE0_WINE + tex_stage;
 	    if (matrices & tex_mat) {
 	        if (This->state_block.texture_stage_state[tex_stage][D3DTSS_TEXTURETRANSFORMFLAGS - 1] != D3DTTFF_DISABLE) {
-		    if (tex_stage == 0) {
-		        /* No multi-texturing support for now ... */
-		        glMatrixMode(GL_TEXTURE);
+		    int is_identity = (memcmp(This->tex_mat[tex_stage], id_mat, 16 * sizeof(D3DVALUE)) != 0);
+
+		    if (This->tex_mat_is_identity[tex_stage] != is_identity) {
+			if (glThis->current_active_tex_unit != unit) {
+			    GL_extensions.glActiveTexture(unit);
+			    glThis->current_active_tex_unit = unit;
+			}
+			glMatrixMode(GL_TEXTURE);
 			glLoadMatrixf((float *) This->tex_mat[tex_stage]);
-			if (memcmp(This->tex_mat[tex_stage], id_mat, 16 * sizeof(D3DVALUE))) {
-			    This->tex_mat_is_identity[tex_stage] = FALSE;
-			} else {
-			    This->tex_mat_is_identity[tex_stage] = TRUE;
-			}
 		    }
+		    This->tex_mat_is_identity[tex_stage] = is_identity;
 		} else {
-		    if (tex_stage == 0) {
-			if (This->tex_mat_is_identity[tex_stage] == FALSE) {
-			    glMatrixMode(GL_TEXTURE);
-			    glLoadIdentity();
-			    This->tex_mat_is_identity[tex_stage] = TRUE;
+		    if (This->tex_mat_is_identity[tex_stage] == FALSE) {
+			if (glThis->current_active_tex_unit != unit) {
+			    GL_extensions.glActiveTexture(unit);
+			    glThis->current_active_tex_unit = unit;
 			}
+			glMatrixMode(GL_TEXTURE);
+			glLoadIdentity();
+			This->tex_mat_is_identity[tex_stage] = TRUE;
 		    }
 		}
 	    }
@@ -3729,6 +3789,10 @@ d3ddevice_create(IDirect3DDeviceImpl **obj, IDirectDrawImpl *d3d, IDirectDrawSur
     glDisable(GL_FOG);
     glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_REPLACE);
     gl_object->current_tex_env = GL_REPLACE;
+    gl_object->current_active_tex_unit = GL_TEXTURE0_WINE;
+    if (GL_extensions.glActiveTexture != NULL) {
+	GL_extensions.glActiveTexture(GL_TEXTURE0_WINE);
+    }
     
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
     glDrawBuffer(buffer);
@@ -3809,7 +3873,7 @@ static void fill_caps(void)
     GLint max_clip_planes;
     
     /* Fill first all the fields with default values which will be overriden later on with
-       corrent one from the GL code
+       correct ones from the GL code
     */
     opengl_device_caps.dwDevCaps = D3DDEVCAPS_CANRENDERAFTERFLIP | D3DDEVCAPS_DRAWPRIMTLVERTEX | D3DDEVCAPS_EXECUTESYSTEMMEMORY |
       D3DDEVCAPS_EXECUTEVIDEOMEMORY | D3DDEVCAPS_FLOATTLVERTEX | D3DDEVCAPS_TEXTURENONLOCALVIDMEM | D3DDEVCAPS_TEXTURESYSTEMMEMORY |
@@ -3834,10 +3898,18 @@ static void fill_caps(void)
     opengl_device_caps.dvExtentsAdjust = 0.0;
     opengl_device_caps.dwStencilCaps = D3DSTENCILCAPS_DECRSAT | D3DSTENCILCAPS_INCRSAT | D3DSTENCILCAPS_INVERT | D3DSTENCILCAPS_KEEP |
       D3DSTENCILCAPS_REPLACE | D3DSTENCILCAPS_ZERO;
-    opengl_device_caps.dwFVFCaps = D3DFVFCAPS_DONOTSTRIPELEMENTS | 1;
-    opengl_device_caps.dwTextureOpCaps = 0;
-    opengl_device_caps.wMaxTextureBlendStages = 1;
-    opengl_device_caps.wMaxSimultaneousTextures = 1;
+    opengl_device_caps.dwTextureOpCaps = D3DTEXOPCAPS_DISABLE | D3DTEXOPCAPS_SELECTARG1 | D3DTEXOPCAPS_SELECTARG2 | D3DTEXOPCAPS_MODULATE4X |
+	D3DTEXOPCAPS_MODULATE2X | D3DTEXOPCAPS_MODULATE | D3DTEXOPCAPS_ADD | D3DTEXOPCAPS_ADDSIGNED2X | D3DTEXOPCAPS_ADDSIGNED |
+	    D3DTEXOPCAPS_BLENDDIFFUSEALPHA | D3DTEXOPCAPS_BLENDTEXTUREALPHA | D3DTEXOPCAPS_BLENDFACTORALPHA | D3DTEXOPCAPS_BLENDCURRENTALPHA;
+    if (GL_extensions.max_texture_units != 0) {
+	opengl_device_caps.wMaxTextureBlendStages = GL_extensions.max_texture_units;
+	opengl_device_caps.wMaxSimultaneousTextures = GL_extensions.max_texture_units;
+	opengl_device_caps.dwFVFCaps = D3DFVFCAPS_DONOTSTRIPELEMENTS | GL_extensions.max_texture_units;
+    } else {
+	opengl_device_caps.wMaxTextureBlendStages = 1;
+	opengl_device_caps.wMaxSimultaneousTextures = 1;
+	opengl_device_caps.dwFVFCaps = D3DFVFCAPS_DONOTSTRIPELEMENTS | 1;
+    }
     opengl_device_caps.dwMaxActiveLights = 16;
     opengl_device_caps.dvMaxVertexW = 100000000.0; /* No idea exactly what to put here... */
     opengl_device_caps.deviceGUID = IID_IDirect3DTnLHalDevice;
@@ -3939,17 +4011,36 @@ d3ddevice_init_at_startup(void *gl_handle)
     */
     if ((strstr(glExtensions, "GL_ARB_texture_mirrored_repeat")) ||
 	(strstr(glExtensions, "GL_IBM_texture_mirrored_repeat")) ||
-	((major >= 1) && (minor >= 4))) {
+	(major > 1) ||
+	((major == 1) && (minor >= 4))) {
 	TRACE(" - mirrored repeat\n");
 	GL_extensions.mirrored_repeat = TRUE;
     }
 
     /* Texture LOD Bias :
-         - GL_EXT_texture_lod_bias
+        - GL_EXT_texture_lod_bias
     */
     if (strstr(glExtensions, "GL_EXT_texture_lod_bias")) {
 	TRACE(" - texture lod bias\n");
 	GL_extensions.mipmap_lodbias = TRUE;
+    }
+
+    /* For all subsequent extensions, we need glXGetProcAddress */
+    if (pglXGetProcAddressARB != NULL) {
+	/* Multi-texturing :
+	    - GL_ARB_multitexture
+	    - GL >= 1.2.1
+	*/
+	if ((strstr(glExtensions, "GL_ARB_multitexture")) ||
+	    (major > 1) ||
+	    ((major == 1) && (minor > 2)) ||
+	    ((major == 1) && (minor == 2) && (patch >= 1))) {
+	    glGetIntegerv(GL_MAX_TEXTURE_UNITS_WINE, &(GL_extensions.max_texture_units));
+	    TRACE(" - multi-texturing (%d stages)\n", GL_extensions.max_texture_units);
+	    /* We query the ARB version to be the most portable we can... */
+	    GL_extensions.glActiveTexture = pglXGetProcAddressARB("glActiveTextureARB");
+	    GL_extensions.glMultiTexCoord2fv = pglXGetProcAddressARB("glMultiTexCoord2fv");
+	}
     }
     
     /* Fill the D3D capabilities according to what GL tells us... */

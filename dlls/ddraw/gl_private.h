@@ -57,6 +57,15 @@
 #define GL_MIRRORED_REPEAT_WINE                 0x8370
 #define GL_TEXTURE_FILTER_CONTROL_WINE          0x8500
 #define GL_TEXTURE_LOD_BIAS_WINE                0x8501
+#define GL_TEXTURE0_WINE                        0x84C0
+#define GL_TEXTURE1_WINE                        0x84C1
+#define GL_TEXTURE2_WINE                        0x84C2
+#define GL_TEXTURE3_WINE                        0x84C3
+#define GL_TEXTURE4_WINE                        0x84C4
+#define GL_TEXTURE5_WINE                        0x84C5
+#define GL_TEXTURE6_WINE                        0x84C6
+#define GL_TEXTURE7_WINE                        0x84C7
+#define GL_MAX_TEXTURE_UNITS_WINE               0x84E2
 
 #ifndef GLPRIVATE_NO_REDEFINE
 
