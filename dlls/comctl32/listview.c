@@ -102,7 +102,6 @@ typedef struct tagLISTVIEW_ITEM
   INT iIndent;
   POINT ptPosition;
   BOOL valid;
-  RECT rcLastDraw;
 } LISTVIEW_ITEM;
 
 typedef struct tagRANGE
@@ -151,6 +150,7 @@ typedef struct tagLISTVIEW_INFO
   BOOL bFocus;
   INT nFocusedItem;
   RECT rcFocus;
+  RECT rcLargeFocus;            /* non-empty when a large item in ICON mode has focus */
   DWORD dwStyle;		/* the cached window GWL_STYLE */
   DWORD dwLvExStyle;		/* extended listview style */
   HDPA hdpaItems;
@@ -2454,80 +2454,6 @@ static LRESULT LISTVIEW_MouseMove(LISTVIEW_INFO *infoPtr, WORD fwKeys, POINTS pt
 }
 
 
- /***
-  * DESCRIPTION:          [INTERNAL]
-  * Sets rectangle that the item was last drawn at.
-  *
-  * PARAMETER(S):
-  * [I] HWND : window handle
-  * [I] INT : item index
-  * [I] LPRECT : coordinate information
-  *
-  * RETURN:
-  *   SUCCESS : TRUE
-  *   FAILURE : FALSE
-  */
-static BOOL LISTVIEW_SetItemDrawRect(LISTVIEW_INFO *infoPtr, INT nItem, LPRECT lpRect)
-{
-  BOOL bResult = FALSE;
-  HDPA hdpaSubItems;
-  LISTVIEW_ITEM *lpItem;
-
-  TRACE("(hwnd=%x,nItem=%d,rect=(%d,%d)-(%d,%d))\n",
-	infoPtr->hwndSelf, nItem,
-	lpRect->left, lpRect->top, lpRect->right, lpRect->bottom);
-
-  if ((nItem >= 0) && (nItem < GETITEMCOUNT(infoPtr)) && (lpRect != NULL))
-  {
-    if ((hdpaSubItems = (HDPA)DPA_GetPtr(infoPtr->hdpaItems, nItem)))
-    {
-      if ((lpItem = (LISTVIEW_ITEM *)DPA_GetPtr(hdpaSubItems, 0)))
-      {
-        bResult = TRUE;
-        lpItem->rcLastDraw = *lpRect;
-      }
-    }
-  }
-  return bResult;
-}
-
- /***
-  * DESCRIPTION:          [INTERNAL]
-  * Gets rectangle that the item was last drawn at.
-  *
-  * PARAMETER(S):
-  * [I] HWND : window handle
-  * [I] INT : item index
-  * [O] LPRECT : coordinate information
-  *
-  * RETURN:
-  *   SUCCESS : TRUE
-  *   FAILURE : FALSE
-  */
-static BOOL LISTVIEW_GetItemDrawRect(LISTVIEW_INFO *infoPtr, INT nItem, LPRECT lpRect)
-{
-  BOOL bResult = FALSE;
-  HDPA hdpaSubItems;
-  LISTVIEW_ITEM *lpItem;
-
-  if ((nItem >= 0) && (nItem < GETITEMCOUNT(infoPtr)) && (lpRect != NULL))
-  {
-    if ((hdpaSubItems = (HDPA)DPA_GetPtr(infoPtr->hdpaItems, nItem)))
-    {
-      if ((lpItem = (LISTVIEW_ITEM *)DPA_GetPtr(hdpaSubItems, 0)))
-      {
-        bResult = TRUE;
-        if (lpRect) *lpRect = lpItem->rcLastDraw;
-	TRACE("(hwnd=%x,nItem=%d,rect=(%d,%d)-(%d,%d))\n",
-	      infoPtr->hwndSelf, nItem,
-	      lpRect->left, lpRect->top, lpRect->right, lpRect->bottom);
-      }
-    }
-  }
-  return bResult;
-}
-
-
 /***
  * Tests wheather the item is assignable to a list with style lStyle 
  */
@@ -2827,30 +2753,18 @@ static BOOL LISTVIEW_SetItemT(LISTVIEW_INFO *infoPtr, LPLVITEMW lpLVItem, BOOL i
     /* redraw item, if necessary */
     if (bResult && !infoPtr->bIsDrawing)
     {
-	RECT rcOldItem={0,0,0,0};
-
 	if (oldFocus != infoPtr->nFocusedItem && infoPtr->bFocus)
-	    LISTVIEW_ToggleFocusRect(infoPtr);
-
-	/* Note that ->rcLastDraw is normally all zero, so
-	 * no second InvalidateRect is issued.
-	 *
-	 * However, when a large icon style is drawn (LVS_ICON),
-	 * the rectangle drawn is saved in rcLastDraw. That way
-	 * the InvalidateRect will invalidate the entire area drawn
-	 *
-	 * FIXME: this is not right. We have already a ton of rects,
-	 *        we have two functions to get to them (GetItemRect,
-	 *        and GetItemMeasurements), and we introduce yet
-	 *        another rectangle with setter/getter functions!!!
-	 *        This is too much. Besides, this does not work
-	 *        correctly for owner drawn control...
-	 */
-	if ((oldFocus >= 0) && (oldFocus < GETITEMCOUNT(infoPtr)))
 	{
-	    LISTVIEW_GetItemDrawRect(infoPtr, oldFocus, &rcOldItem);
-	    if(!IsRectEmpty(&rcOldItem))
-		LISTVIEW_InvalidateRect(infoPtr, &rcOldItem);
+	    LISTVIEW_ToggleFocusRect(infoPtr);
+	    /* Note that ->rcLargeFocus is normally all zero, so
+	     * no second InvalidateRect is issued.
+	     *
+	     * However, when a large icon style is drawn (LVS_ICON),
+	     * the rectangle drawn is saved in rcLastDraw. That way
+	     * the InvalidateRect will invalidate the entire area drawn
+	     */
+	   if (!IsRectEmpty(&infoPtr->rcLargeFocus))
+		LISTVIEW_InvalidateRect(infoPtr, &infoPtr->rcLargeFocus);
 	}
 	LISTVIEW_InvalidateItem(infoPtr, lpLVItem->iItem);
     }
@@ -3266,6 +3180,7 @@ static BOOL LISTVIEW_DrawLargeItem(LISTVIEW_INFO *infoPtr, HDC hdc, INT nItem, R
    * that the background is complete
    */
   rcFocus = rcLabel;  /* save for focus */
+  SetRectEmpty(&infoPtr->rcLargeFocus);
   if ((uFormat & DT_NOCLIP) || (lvItem.state & LVIS_SELECTED))
   {
       /* FIXME: why do we need this??? */
@@ -3276,7 +3191,7 @@ static BOOL LISTVIEW_DrawLargeItem(LISTVIEW_INFO *infoPtr, HDC hdc, INT nItem, R
       DeleteObject(hBrush);
 
       /* Save size of item drawing for next InvalidateRect */
-      LISTVIEW_SetItemDrawRect(infoPtr, nItem, &rcFullText);
+      infoPtr->rcLargeFocus = rcFullText;
       TRACE("focused/selected, rcFocus=%s\n", debugrect(&rcFocus));
   }
   /* else ? What if we are losing the focus? will we not get a complete
