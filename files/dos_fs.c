@@ -1607,7 +1607,8 @@ HANDLE WINAPI FindFirstFileExA(
           if (!DOSFS_GetFullName( lpFileName, FALSE, &full_name )) break;
           if (!(handle = GlobalAlloc(GMEM_MOVEABLE, sizeof(FIND_FIRST_INFO)))) break;
           info = (FIND_FIRST_INFO *)GlobalLock( handle );
-          info->path = HEAP_strdupA( GetProcessHeap(), 0, full_name.long_name );
+          info->path = HeapAlloc( GetProcessHeap(), 0, strlen(full_name.long_name)+1 );
+          strcpy( info->path, full_name.long_name );
           info->long_mask = strrchr( info->path, '/' );
           *(info->long_mask++) = '\0';
           info->short_mask = NULL;
@@ -2294,7 +2295,8 @@ HANDLE16 WINAPI FindFirstFile16( LPCSTR path, WIN32_FIND_DATAA *data )
     if (!(handle = GlobalAlloc16( GMEM_MOVEABLE, sizeof(FIND_FIRST_INFO) )))
         return INVALID_HANDLE_VALUE16;
     info = (FIND_FIRST_INFO *)GlobalLock16( handle );
-    info->path = HEAP_strdupA( GetProcessHeap(), 0, full_name.long_name );
+    info->path = HeapAlloc( GetProcessHeap(), 0, strlen(full_name.long_name)+1 );
+    strcpy( info->path, full_name.long_name );
     info->long_mask = strrchr( info->path, '/' );
     if (info->long_mask )
         *(info->long_mask++) = '\0';

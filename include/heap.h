@@ -23,25 +23,26 @@ extern SEGPTR HEAP_GetSegptr( HANDLE heap, DWORD flags, LPCVOID ptr );
      (HeapAlloc( GetProcessHeap(), HEAP_WINE_SEGPTR, (size) ))
 #define SEGPTR_NEW(type) \
      ((type *)HeapAlloc( GetProcessHeap(), HEAP_WINE_SEGPTR, sizeof(type) ))
-#define SEGPTR_STRDUP(str) \
-     (HIWORD(str) ? HEAP_strdupA( GetProcessHeap(), HEAP_WINE_SEGPTR, (str) ) : (LPSTR)(str))
 #define SEGPTR_STRDUP_WtoA(str) \
      (HIWORD(str) ? HEAP_strdupWtoA( GetProcessHeap(), HEAP_WINE_SEGPTR, (str) ) : (LPSTR)(str))
 #define SEGPTR_FREE(ptr) \
      (HIWORD(ptr) ? HeapFree( GetProcessHeap(), HEAP_WINE_SEGPTR, (ptr) ) : 0)
 #define SEGPTR_GET(ptr) MapLS(ptr)
 
+inline static LPSTR SEGPTR_STRDUP( LPCSTR str )
+{
+    if (HIWORD(str))
+    {
+        INT len = strlen(str) + 1;
+        LPSTR p = HeapAlloc( GetProcessHeap(), HEAP_WINE_SEGPTR, len );
+        if (p) memcpy( p, str, len );
+        return p;
+    }
+    return (LPSTR)str;
+}
 
 /* strdup macros */
 /* DO NOT USE THEM!!  they will go away soon */
-
-inline static LPSTR HEAP_strdupA( HANDLE heap, DWORD flags, LPCSTR str )
-{
-    INT len = strlen(str) + 1;
-    LPSTR p = HeapAlloc( heap, flags, len );
-    if (p) memcpy( p, str, len );
-    return p;
-}
 
 inline static LPWSTR HEAP_strdupAtoW( HANDLE heap, DWORD flags, LPCSTR str )
 {

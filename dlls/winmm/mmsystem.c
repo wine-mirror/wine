@@ -536,8 +536,10 @@ BOOL WINAPI PlaySoundA(LPCSTR pszSound, HMODULE hmod, DWORD fdwSound)
 	    StrDup = NULL;
 	}
 	if (!((fdwSound & SND_MEMORY) || ((fdwSound & SND_RESOURCE) && 
-					  !((DWORD)pszSound >> 16)) || !pszSound)) {
-	    StrDup = HEAP_strdupA(GetProcessHeap(), 0,pszSound);
+					  !((DWORD)pszSound >> 16)) || !pszSound))
+        {
+	    StrDup = HeapAlloc(GetProcessHeap(), 0, strlen(pszSound)+1 );
+	    strcpy( StrDup, pszSound );
 	    PlaySound_pszSound = StrDup;
 	} else PlaySound_pszSound = pszSound;
 	PlaySound_Loop = fdwSound & SND_LOOP;

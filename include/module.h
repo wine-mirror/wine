@@ -132,6 +132,8 @@ typedef struct _wine_modref
 	char			*modname;
 	char			*short_filename;
 	char			*short_modname;
+
+    char data[1];  /* space for storing filename and short_filename */
 } WINE_MODREF;
 
 #define WINE_MODREF_INTERNAL              0x00000001

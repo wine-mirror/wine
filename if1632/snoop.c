@@ -12,7 +12,6 @@
 #include "winnt.h"
 #include "wine/winbase16.h"
 #include "wine/library.h"
-#include "heap.h"
 #include "global.h"
 #include "stackframe.h"
 #include "builtin16.h"
@@ -43,8 +42,8 @@ typedef struct tagSNOOP16_DLL {
 	HMODULE16	hmod;
 	HANDLE16	funhandle;
 	SNOOP16_FUN	*funs;
-	LPCSTR		name;
 	struct tagSNOOP16_DLL	*next;
+	char name[1];
 } SNOOP16_DLL;
 
 typedef struct tagSNOOP16_RETURNENTRY {
@@ -118,12 +117,12 @@ SNOOP16_RegisterDLL(NE_MODULE *pModule,LPCSTR name) {
 			return; /* already registered */
 		dll = &((*dll)->next);
 	}
-	*dll = (SNOOP16_DLL*)HeapAlloc(GetProcessHeap(),HEAP_ZERO_MEMORY,sizeof(SNOOP16_DLL));
+	*dll = HeapAlloc(GetProcessHeap(),HEAP_ZERO_MEMORY,sizeof(SNOOP16_DLL)+strlen(name));
 	(*dll)->next	= NULL;
 	(*dll)->hmod	= pModule->self;
 	if ((s=strrchr(name,'\\')))
 		name = s+1;
-	(*dll)->name	= HEAP_strdupA(GetProcessHeap(),0,name);
+	strcpy( (*dll)->name, name );
 	if ((s=strrchr((*dll)->name,'.')))
 		*s='\0';
 	(*dll)->funhandle = GlobalHandleToSel16(GLOBAL_Alloc(GMEM_ZEROINIT,65535,0,WINE_LDT_FLAGS_CODE));
@@ -184,9 +183,13 @@ SNOOP16_GetProcAddress16(HMODULE16 hmod,DWORD ordinal,FARPROC16 origfun) {
 		}
 	}
 	if (*cpnt)
-		fun->name = HEAP_strdupA(GetProcessHeap(),0,name);
+        {
+            fun->name = HeapAlloc(GetProcessHeap(),0,strlen(name)+1);
+            strcpy( fun->name, name );
+        }
 	else
-		fun->name = HEAP_strdupA(GetProcessHeap(),0,"");
+            fun->name = HeapAlloc(GetProcessHeap(),HEAP_ZERO_MEMORY,1); /* empty string */
+
 	if (!SNOOP_ShowDebugmsgSnoop(dll->name, ordinal, fun->name))
 		return origfun;
 

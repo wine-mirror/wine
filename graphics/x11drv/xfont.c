@@ -26,12 +26,12 @@
 #include "wingdi.h"
 #include "winnls.h"
 #include "winreg.h"
-#include "heap.h"
 #include "font.h"
 #include "debugtools.h"
 #include "user.h" /* for TWEAK_WineLook (FIXME) */
 #include "x11font.h"
 #include "wine/server.h"
+#include "wine/unicode.h"
 
 DEFAULT_DEBUG_CHANNEL(font);
 
@@ -1519,7 +1519,10 @@ static void XFONT_LoadAlias(const LFD* lfd, LPCSTR lpAlias, BOOL bSubst)
 
 		/* Update any references to the substituted font in aliasTable */
 		if(!strcmp(frMatch->lfFaceName, pfa->faTypeFace))
-		    pfa->faTypeFace = HEAP_strdupA( GetProcessHeap(), 0, lpAlias );
+                {
+                    pfa->faTypeFace = HeapAlloc( GetProcessHeap(), 0, strlen(lpAlias)+1 );
+                    strcpy( pfa->faTypeFace, lpAlias );
+                }
 		prev = pfa;
 	    }
 						
@@ -1959,9 +1962,8 @@ static int XFONT_BuildMetrics(char** x_pattern, int res, unsigned x_checksum, in
 	XFontStruct*  x_fs;
 	fontInfo*    pfi;
 
-	typeface = HEAP_strdupA(GetProcessHeap(), 0, x_pattern[i]);
-	if (!typeface)
-	    break;
+	if (!(typeface = HeapAlloc(GetProcessHeap(), 0, strlen(x_pattern[i])+1))) break;
+	strcpy( typeface, x_pattern[i] );
 
 	lfd = LFD_Parse(typeface);
 	if (!lfd)
@@ -1996,8 +1998,10 @@ static int XFONT_BuildMetrics(char** x_pattern, int res, unsigned x_checksum, in
 		memset(fr->resource, 0, sizeof(LFD));
 	      
 		TRACE("family: -%s-%s-\n", lfd->foundry, lfd->family );
-		fr->resource->foundry = HEAP_strdupA(GetProcessHeap(), 0, lfd->foundry);
-		fr->resource->family = HEAP_strdupA(GetProcessHeap(), 0, lfd->family);
+		fr->resource->foundry = HeapAlloc(GetProcessHeap(), 0, strlen(lfd->foundry)+1);
+		strcpy( (char *)fr->resource->foundry, lfd->foundry );
+		fr->resource->family = HeapAlloc(GetProcessHeap(), 0, strlen(lfd->family)+1);
+		strcpy( (char *)fr->resource->family, lfd->family );
 		fr->resource->weight = "";
 
 		if( pfr ) pfr->next = fr;

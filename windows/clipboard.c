@@ -1217,12 +1217,13 @@ UINT WINAPI RegisterClipboardFormatA( LPCSTR FormatName )
     lpNewFormat->wFormatID = LastRegFormat;
     lpNewFormat->wRefCount = 1;
 
-    lpNewFormat->Name = (LPSTR)HEAP_strdupA(GetProcessHeap(), 0, FormatName);
-    if(lpNewFormat->Name == NULL) {
+    if (!(lpNewFormat->Name = HeapAlloc(GetProcessHeap(), 0, strlen(FormatName)+1 )))
+    {
         WARN("No more memory for the new format name!\n");
         HeapFree(GetProcessHeap(), 0, lpNewFormat);
         return 0;
     }
+    strcpy( lpNewFormat->Name, FormatName );
 
     lpNewFormat->wDataPresent = 0;
     lpNewFormat->hData16 = 0;

@@ -26,7 +26,6 @@
 #include "winerror.h"
 #include "drive.h"
 #include "file.h"
-#include "heap.h"
 #include "msdos.h"
 #include "options.h"
 #include "miscemu.h"
@@ -615,7 +614,8 @@ static int INT21_FindFirst( CONTEXT86 *context )
         SET_CFLAG(context);
         return 0;
     }
-    dta->unixPath = HEAP_strdupA( GetProcessHeap(), 0, full_name.long_name );
+    dta->unixPath = HeapAlloc( GetProcessHeap(), 0, strlen(full_name.long_name)+1 );
+    strcpy( dta->unixPath, full_name.long_name );
     p = strrchr( dta->unixPath, '/' );
     *p = '\0';
 

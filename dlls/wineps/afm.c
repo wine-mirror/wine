@@ -20,7 +20,6 @@
 #include "winreg.h"
 #include "psdrv.h"
 #include "debugtools.h"
-#include "heap.h"
 
 DEFAULT_DEBUG_CHANNEL(psdrv);
 #include <ctype.h>
@@ -282,23 +281,23 @@ static const AFM *PSDRV_AFMParse(char const *file)
 	        value++;
 
 	if(!strncmp("FontName", buf, 8)) {
-	    afm->FontName = font_name = HEAP_strdupA(PSDRV_Heap, 0, value);
-	    if (afm->FontName == NULL)
+	    if (!(afm->FontName = font_name = HeapAlloc(PSDRV_Heap, 0, strlen(value)+1 )))
 		goto cleanup_fp;
+            strcpy( (char *)afm->FontName, value );
 	    continue;
 	}
 
 	if(!strncmp("FullName", buf, 8)) {
-	    afm->FullName = full_name = HEAP_strdupA(PSDRV_Heap, 0, value);
-	    if (afm->FullName == NULL)
+	    if (!(afm->FullName = full_name = HeapAlloc(PSDRV_Heap, 0, strlen(value)+1 )))
 		goto cleanup_fp;
+	    strcpy( (char *)afm->FullName, value );
 	    continue;
 	}
 
 	if(!strncmp("FamilyName", buf, 10)) {
-	    afm->FamilyName = family_name = HEAP_strdupA(PSDRV_Heap, 0, value);
-	    if (afm->FamilyName == NULL)
-	    	goto cleanup_fp;
+	    if (!(afm->FamilyName = family_name = HeapAlloc(PSDRV_Heap, 0, strlen(value)+1 )))
+		goto cleanup_fp;
+	    strcpy( (char *)afm->FamilyName, value );
 	    continue;
 	}
 	
@@ -381,10 +380,9 @@ static const AFM *PSDRV_AFMParse(char const *file)
 	}
 
 	if(!strncmp("EncodingScheme", buf, 14)) {
-	    afm->EncodingScheme = encoding_scheme =
-	    	    HEAP_strdupA(PSDRV_Heap, 0, value);
-	    if (afm->EncodingScheme == NULL)
-	    	goto cleanup_fp;
+            if (!(afm->EncodingScheme = encoding_scheme = HeapAlloc(PSDRV_Heap, 0, strlen(value)+1)))
+                goto cleanup_fp;
+            strcpy( (char *)afm->EncodingScheme, value );
 	    continue;
 	}
 
@@ -398,21 +396,23 @@ static const AFM *PSDRV_AFMParse(char const *file)
 
     if(afm->FontName == NULL) {
         WARN("%s contains no FontName.\n", file);
-	afm->FontName = font_name = HEAP_strdupA(PSDRV_Heap, 0, "nofont");
-	if (afm->FontName == NULL)
+	if (!(afm->FontName = font_name = HeapAlloc(PSDRV_Heap, 0, 7)))
 	    goto cleanup;
+	strcpy( (char *)afm->FontName, "nofont" );
     }
-    
     if(afm->FullName == NULL)
-        afm->FullName = full_name = HEAP_strdupA(PSDRV_Heap, 0, afm->FontName);
-	
+    {
+        if (!(afm->FullName = full_name = HeapAlloc(PSDRV_Heap, 0, strlen(afm->FontName)+1 )))
+            goto cleanup;
+        strcpy( (char *)afm->FullName, afm->FontName );
+    }
     if(afm->FamilyName == NULL)
-        afm->FamilyName = family_name =
-	    	HEAP_strdupA(PSDRV_Heap, 0, afm->FontName);
-		
-    if (afm->FullName == NULL || afm->FamilyName == NULL)
-    	goto cleanup;
-    
+    {
+        if (!(afm->FamilyName = family_name = HeapAlloc(PSDRV_Heap, 0, strlen(afm->FontName)+1 )))
+            goto cleanup;
+        strcpy( (char *)afm->FamilyName, afm->FontName );
+    }
+
     if(afm->Ascender == 0.0)
         afm->Ascender = afm->FontBBox.ury;
     if(afm->Descender == 0.0)
@@ -528,13 +528,12 @@ BOOL PSDRV_AddAFMtoList(FONTFAMILY **head, const AFM *afm)
 	    return FALSE;
 	}
 	*insert = family;
-	family->FamilyName = HEAP_strdupA(PSDRV_Heap, 0,
-					  afm->FamilyName);
-	if (family->FamilyName == NULL) {
+	if (!(family->FamilyName = HeapAlloc(PSDRV_Heap, 0, strlen(afm->FamilyName)+1 ))) {
 	    HeapFree(PSDRV_Heap, 0, family);
 	    HeapFree(PSDRV_Heap, 0, newafmle);
 	    return FALSE;
 	}
+	strcpy( family->FamilyName, afm->FamilyName );
 	family->afmlist = newafmle;
 	return TRUE;
     }

@@ -165,8 +165,10 @@ DWORD WINAPI FormatMessageA(
     if (width && width != FORMAT_MESSAGE_MAX_WIDTH_MASK) 
         FIXME("line wrapping (%lu) not supported.\n", width);
     from = NULL;
-    if (dwFlags & FORMAT_MESSAGE_FROM_STRING) {
-        from = HEAP_strdupA( GetProcessHeap(), 0, (LPSTR)lpSource);
+    if (dwFlags & FORMAT_MESSAGE_FROM_STRING)
+    {
+        from = HeapAlloc( GetProcessHeap(), 0, strlen((LPSTR)lpSource)+1 );
+        strcpy( from, (LPSTR)lpSource );
     }
     else {
         if (dwFlags & FORMAT_MESSAGE_FROM_SYSTEM)
@@ -257,10 +259,9 @@ DWORD WINAPI FormatMessageA(
                                 f+=strlen(f); /*at \0*/
                             }
                         } else {
-                            if(!args)
-                                break;
-                            else
-                                fmtstr=HEAP_strdupA(GetProcessHeap(),0,"%s");
+                            if(!args) break;
+                            fmtstr = HeapAlloc(GetProcessHeap(),0,3);
+                            strcpy( fmtstr, "%s" );
                         }
                         if (args) {
                             int sz;
@@ -482,10 +483,9 @@ DWORD WINAPI FormatMessageW(
                                 f+=strlen(f); /*at \0*/
                             }
                         } else {
-                            if(!args)
-                                break;
-                            else
-                                fmtstr=HEAP_strdupA( GetProcessHeap(),0,"%s");
+                            if(!args) break;
+                            fmtstr = HeapAlloc( GetProcessHeap(),0,3);
+                            strcpy( fmtstr, "%s" );
                         }
                         if (dwFlags & FORMAT_MESSAGE_ARGUMENT_ARRAY)
                             argliststart=args+insertnr-1;

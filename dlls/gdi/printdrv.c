@@ -570,9 +570,13 @@ HPJOB16 WINAPI OpenJob16(LPCSTR lpOutput, LPCSTR lpTitle, HDC16 hDC)
             
             hHandle = 1;
 
-	    pPrintJob->pszOutput = HEAP_strdupA(GetProcessHeap(), 0, lpOutput);
+	    pPrintJob->pszOutput = HeapAlloc(GetProcessHeap(), 0, strlen(lpOutput)+1);
+	    strcpy( pPrintJob->pszOutput, lpOutput );
 	    if(lpTitle)
-	        pPrintJob->pszTitle = HEAP_strdupA(GetProcessHeap(), 0, lpTitle);
+            {
+	        pPrintJob->pszTitle = HeapAlloc(GetProcessHeap(), 0, strlen(lpTitle)+1);
+	        strcpy( pPrintJob->pszTitle, lpTitle );
+            }
 	    pPrintJob->hDC = hDC;
 	    pPrintJob->fd = fd;
 	    pPrintJob->nIndex = 0;

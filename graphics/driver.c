@@ -6,7 +6,6 @@
 
 #include <string.h>
 #include "gdi.h"
-#include "heap.h"
 #include "debugtools.h"
 
 DEFAULT_DEBUG_CHANNEL(driver);
@@ -18,8 +17,8 @@ typedef struct tagGRAPHICS_DRIVER
     const DC_FUNCTIONS        *funcs;
 } GRAPHICS_DRIVER;
 
-static GRAPHICS_DRIVER *firstDriver = NULL;
-static GRAPHICS_DRIVER *genericDriver = NULL;
+static GRAPHICS_DRIVER *firstDriver;
+static GRAPHICS_DRIVER *genericDriver;
 
 /**********************************************************************
  *	     DRIVER_RegisterDriver
@@ -31,8 +30,9 @@ BOOL DRIVER_RegisterDriver( LPCSTR name, const DC_FUNCTIONS *funcs )
     driver->funcs = funcs;
     if (name)
     {
-        driver->name  = HEAP_strdupA( GetProcessHeap(), 0, name );
+        driver->name  = HeapAlloc( GetProcessHeap(), 0, strlen(name)+1 );
         driver->next  = firstDriver;
+        strcpy( driver->name, name );
         firstDriver = driver;
         return TRUE;
     }

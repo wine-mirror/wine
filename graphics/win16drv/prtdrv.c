@@ -187,7 +187,8 @@ LOADED_PRINTER_DRIVER *LoadPrinterDriver(const char *pszDriver)
 	memset(pLPD, 0 , sizeof(LOADED_PRINTER_DRIVER));
 	
 	pLPD->hInst	= hInst;
-	pLPD->szDriver	= HEAP_strdupA(GetProcessHeap(),0,pszDriver);
+	pLPD->szDriver = HeapAlloc(GetProcessHeap(),0,strlen(pszDriver)+1);
+	strcpy( pLPD->szDriver, pszDriver );
 
 	/* Get DS for the printer module */
 	pLPD->ds_reg	= hInst;

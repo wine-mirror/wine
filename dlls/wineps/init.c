@@ -14,7 +14,6 @@
 #include "gdi.h"
 #include "psdrv.h"
 #include "debugtools.h"
-#include "heap.h"
 #include "winreg.h"
 #include "winspool.h"
 #include "winerror.h"
@@ -426,9 +425,10 @@ static BOOL PSDRV_CreateDC( DC *dc, LPCSTR driver, LPCSTR device,
     			    dc->devCaps->vertRes);
     
     dc->hFont = PSDRV_DefaultFont;
-    physDev->job.output = output ?
-      HEAP_strdupA( PSDRV_Heap, 0, output ) :
-      HEAP_strdupA( PSDRV_Heap, 0, "LPT1:" );  /* HACK */
+
+    if (!output) output = "LPT1:";  /* HACK */
+    physDev->job.output = HeapAlloc( PSDRV_Heap, 0, strlen(output)+1 );
+    strcpy( physDev->job.output, output );
     physDev->job.hJob = 0;
     return TRUE;
 }
@@ -481,11 +481,10 @@ PRINTERINFO *PSDRV_FindPrinterInfo(LPCSTR name)
     pi = *last = HeapAlloc( PSDRV_Heap, HEAP_ZERO_MEMORY, sizeof(*pi) );
     if (pi == NULL)
     	return NULL;
-	
-    pi->FriendlyName = HEAP_strdupA( PSDRV_Heap, 0, name );
-    if (pi->FriendlyName == NULL)
-    	goto fail;
-	
+
+    if (!(pi->FriendlyName = HeapAlloc( PSDRV_Heap, 0, strlen(name)+1 ))) goto fail;
+    strcpy( pi->FriendlyName, name );
+
     /* Use Get|SetPrinterDataExA instead? */
     
     res = DrvGetPrinterData16((LPSTR)name, (LPSTR)INT_PD_DEFAULT_DEVMODE, &type,

@@ -17,7 +17,6 @@
 #include <sys/types.h>
 
 #include "snoop.h"
-#include "heap.h"
 #include "file.h"
 #include "module.h"
 #include "debugtools.h"
@@ -193,16 +192,17 @@ static FARPROC ELF_FindExportedFunction( WINE_MODREF *wm, LPCSTR funcName, BOOL 
 		/* Function@nrofargs usually marks a stdcall function 
 		 * with nrofargs bytes that are popped at the end
 		 */
-		if (strchr(funcName,'@')) {
-			LPSTR	t,fn = HEAP_strdupA( GetProcessHeap(), 0, funcName );
-
-			t = strchr(fn,'@');
-			*t = '\0';
-			nrofargs = 0;
-			sscanf(t+1,"%d",&nrofargs);
-			fun = wine_dlsym(wm->dlhandle,fn,error,sizeof(error));
-			HeapFree( GetProcessHeap(), 0, fn );
-		}
+            LPCSTR t;
+            if ((t = strchr(funcName,'@')))
+            {
+                LPSTR fn = HeapAlloc( GetProcessHeap(), 0, t - funcName + 1 );
+                memcpy( fn, funcName, t - funcName );
+                fn[t - funcName] = 0;
+                nrofargs = 0;
+                sscanf(t+1,"%d",&nrofargs);
+                fun = wine_dlsym(wm->dlhandle,fn,error,sizeof(error));
+                HeapFree( GetProcessHeap(), 0, fn );
+            }
 	}
 	/* We sometimes have Win32 dlls implemented using stdcall but UNIX 
 	 * dlls using cdecl. If we find out the number of args the function

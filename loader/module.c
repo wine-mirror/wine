@@ -63,20 +63,23 @@ static WINE_MODREF *MODULE32_LookupHMODULE( HMODULE hmod )
 WINE_MODREF *MODULE_AllocModRef( HMODULE hModule, LPCSTR filename )
 {
     WINE_MODREF *wm;
-    DWORD len;
 
-    if ((wm = HeapAlloc( GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*wm) )))
+    DWORD long_len = strlen( filename );
+    DWORD short_len = GetShortPathNameA( filename, NULL, 0 );
+
+    if ((wm = HeapAlloc( GetProcessHeap(), HEAP_ZERO_MEMORY,
+                         sizeof(*wm) + long_len + short_len + 1 )))
     {
         wm->module = hModule;
         wm->tlsindex = -1;
 
-        wm->filename = HEAP_strdupA( GetProcessHeap(), 0, filename );
+        wm->filename = wm->data;
+        memcpy( wm->filename, filename, long_len + 1 );
         if ((wm->modname = strrchr( wm->filename, '\\' ))) wm->modname++;
         else wm->modname = wm->filename;
 
-        len = GetShortPathNameA( wm->filename, NULL, 0 );
-        wm->short_filename = (char *)HeapAlloc( GetProcessHeap(), 0, len+1 );
-        GetShortPathNameA( wm->filename, wm->short_filename, len+1 );
+        wm->short_filename = wm->filename + long_len + 1;
+        GetShortPathNameA( wm->filename, wm->short_filename, short_len + 1 );
         if ((wm->short_modname = strrchr( wm->short_filename, '\\' ))) wm->short_modname++;
         else wm->short_modname = wm->short_filename;
 
@@ -842,7 +845,8 @@ HINSTANCE WINAPI WinExec( LPCSTR lpCmdLine, UINT nCmdShow )
     startup.wShowWindow = nCmdShow;
 
     /* cmdline needs to be writeable for CreateProcess */
-    if (!(cmdline = HEAP_strdupA( GetProcessHeap(), 0, lpCmdLine ))) return 0;
+    if (!(cmdline = HeapAlloc( GetProcessHeap(), 0, strlen(lpCmdLine)+1 ))) return 0;
+    strcpy( cmdline, lpCmdLine );
 
     if (CreateProcessA( NULL, cmdline, NULL, NULL, FALSE,
                         0, NULL, NULL, &startup, &info ))
@@ -1527,8 +1531,6 @@ static void MODULE_FlushModrefs(void)
                 else UnmapViewOfFile( (LPVOID)wm->module );
                 FreeLibrary16(wm->hDummyMod);
                 HeapFree( GetProcessHeap(), 0, wm->deps );
-                HeapFree( GetProcessHeap(), 0, wm->filename );
-                HeapFree( GetProcessHeap(), 0, wm->short_filename );
                 HeapFree( GetProcessHeap(), 0, wm );
 	}
 }

@@ -11,7 +11,6 @@
 #include "config.h"
 #include "gdi.h"
 #include "debugtools.h"
-#include "heap.h"
 
 DEFAULT_DEBUG_CHANNEL(gdi);
 
@@ -49,26 +48,17 @@ static ATOM GDI_GetNullPortAtom(void)
 
 static ATOM PortNameToAtom(LPCSTR lpPortName, BOOL16 add)
 {
-    char *p;
-    BOOL needfree = FALSE;
-    ATOM ret;
+    char buffer[256];
 
-    if (lpPortName[strlen(lpPortName) - 1] == ':') {
-        p = HEAP_strdupA(GetProcessHeap(), 0, lpPortName);
-        p[strlen(lpPortName) - 1] = '\0';
-        needfree = TRUE;
-    }
-    else
-        p = (char *)lpPortName;
+    strncpy( buffer, lpPortName, sizeof(buffer) );
+    buffer[sizeof(buffer)-1] = 0;
+
+    if (buffer[0] && buffer[strlen(buffer)-1] == ':') buffer[strlen(buffer)-1] = 0;
 
     if (add)
-        ret = AddAtomA(p);
+        return AddAtomA(buffer);
     else
-        ret =  FindAtomA(p);
-
-    if(needfree) HeapFree(GetProcessHeap(), 0, p);
-
-    return ret;
+        return FindAtomA(buffer);
 }
 
 

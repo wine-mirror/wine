@@ -49,7 +49,6 @@
 #include "setupx16.h"
 #include "setupapi_private.h"
 #include "winerror.h"
-#include "heap.h"
 #include "debugtools.h"
 
 DEFAULT_DEBUG_CHANNEL(setupapi);
@@ -723,11 +722,20 @@ RETERR16 WINAPI CtlSetLdd16(LPLOGDISKDESC pldd)
     memcpy(pCurrLDD, pldd, sizeof(LOGDISKDESC_S));
 
     if (pldd->pszPath)
-        pCurrLDD->pszPath	= HEAP_strdupA(heap, 0, pldd->pszPath);
+    {
+        pCurrLDD->pszPath = HeapAlloc( heap, 0, strlen(pldd->pszPath)+1 );
+        strcpy( pCurrLDD->pszPath, pldd->pszPath );
+    }
     if (pldd->pszVolLabel)
-	pCurrLDD->pszVolLabel	= HEAP_strdupA(heap, 0, pldd->pszVolLabel);
+    {
+        pCurrLDD->pszVolLabel = HeapAlloc( heap, 0, strlen(pldd->pszVolLabel)+1 );
+        strcpy( pCurrLDD->pszVolLabel, pldd->pszVolLabel );
+    }
     if (pldd->pszDiskName)
-	pCurrLDD->pszDiskName	= HEAP_strdupA(heap, 0, pldd->pszDiskName);
+    {
+        pCurrLDD->pszDiskName = HeapAlloc( heap, 0, strlen(pldd->pszDiskName)+1 );
+        strcpy( pCurrLDD->pszDiskName, pldd->pszDiskName );
+    }
 
     if (is_new) /* link into list */
     {

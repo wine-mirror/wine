@@ -153,9 +153,10 @@ static BOOL PROPSHEET_CollectSheetInfo(LPCPROPSHEETHEADERA lppsh,
   memcpy(&psInfo->ppshheader,lppsh,dwSize);
 
   if (HIWORD(lppsh->pszCaption))
-     psInfo->ppshheader.pszCaption = HEAP_strdupA( GetProcessHeap(),
-                                                 0, lppsh->pszCaption );
-
+  {
+     psInfo->ppshheader.pszCaption = HeapAlloc( GetProcessHeap(), 0, strlen(lppsh->pszCaption)+1 );
+     strcpy( (char *)psInfo->ppshheader.pszCaption, lppsh->pszCaption );
+  }
   psInfo->nPages = lppsh->nPages;
 
   if (dwFlags & PSH_USEPSTARTPAGE)
@@ -1964,14 +1965,21 @@ HPROPSHEETPAGE WINAPI CreatePropertySheetPageA(
   memcpy(ppsp,lpPropSheetPage,min(lpPropSheetPage->dwSize,sizeof(PROPSHEETPAGEA)));
 
   if ( !(ppsp->dwFlags & PSP_DLGINDIRECT) && HIWORD( ppsp->u.pszTemplate ) )
-    ppsp->u.pszTemplate = HEAP_strdupA( GetProcessHeap(), 0, lpPropSheetPage->u.pszTemplate );
-
+  {
+    ppsp->u.pszTemplate = HeapAlloc( GetProcessHeap(),0,strlen(lpPropSheetPage->u.pszTemplate)+1 );
+    strcpy( (char *)ppsp->u.pszTemplate, lpPropSheetPage->u.pszTemplate );
+  }
   if ( (ppsp->dwFlags & PSP_USEICONID) && HIWORD( ppsp->u2.pszIcon ) )
-      ppsp->u2.pszIcon = HEAP_strdupA( GetProcessHeap(), 0, lpPropSheetPage->u2.pszIcon );
-       
+  {
+      ppsp->u2.pszIcon = HeapAlloc( GetProcessHeap(), 0, strlen(lpPropSheetPage->u2.pszIcon)+1 );
+      strcpy( (char *)ppsp->u2.pszIcon, lpPropSheetPage->u2.pszIcon );
+  }
 
   if ((ppsp->dwFlags & PSP_USETITLE) && HIWORD( ppsp->pszTitle ))
-      ppsp->pszTitle = HEAP_strdupA( GetProcessHeap(), 0, lpPropSheetPage->pszTitle );
+  {
+      ppsp->pszTitle = HeapAlloc( GetProcessHeap(), 0, strlen(lpPropSheetPage->pszTitle)+1 );
+      strcpy( (char *)ppsp->pszTitle, lpPropSheetPage->pszTitle );
+  }
   else if ( !(ppsp->dwFlags & PSP_USETITLE) )
       ppsp->pszTitle = NULL;
 

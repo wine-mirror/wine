@@ -22,7 +22,6 @@
 #include "wine/unicode.h"
 #include "wine/winbase16.h"
 #include "wine/winuser16.h"
-#include "heap.h"
 
 #include "debugtools.h"
 
@@ -602,7 +601,11 @@ DWORD WINAPI FormatMessage16(
         FIXME("line wrapping (%lu) not supported.\n", width);
     from = NULL;
     if (dwFlags & FORMAT_MESSAGE_FROM_STRING)
-        from = HEAP_strdupA( GetProcessHeap(), 0, MapSL(lpSource));
+    {
+        char *source = MapSL(lpSource);
+        from = HeapAlloc( GetProcessHeap(), 0, strlen(source)+1 );
+        strcpy( from, source );
+    }
     if (dwFlags & FORMAT_MESSAGE_FROM_SYSTEM) {
         from = HeapAlloc( GetProcessHeap(),0,200 );
 	sprintf(from,"Systemmessage, messageid = 0x%08x\n",dwMessageId);
@@ -673,11 +676,13 @@ DWORD WINAPI FormatMessage16(
 			    sprintf(fmtstr,"%%%s",f);
 			    f+=strlen(f); /*at \0*/
 			}
-		    } else
-		        if(!args) 
-			    break;
-			else
-			  fmtstr=HEAP_strdupA(GetProcessHeap(),0,"%s");
+		    }
+                    else
+                    {
+                        if(!args) break;
+                        fmtstr=HeapAlloc( GetProcessHeap(), 0, 3 );
+                        strcpy( fmtstr, "%s" );
+                    }
 		    if (args) {
 		        int	sz;
 			LPSTR	b = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sz = 100);

@@ -108,6 +108,14 @@ static int DRIVE_CurDrive = -1;
 
 static HTASK16 DRIVE_LastTask = 0;
 
+/* strdup on the process heap */
+inline static char *heap_strdup( const char *str )
+{
+    INT len = strlen(str) + 1;
+    LPSTR p = HeapAlloc( GetProcessHeap(), 0, len );
+    if (p) memcpy( p, str, len );
+    return p;
+}
 
 /***********************************************************************
  *           DRIVE_GetDriveType
@@ -179,9 +187,9 @@ int DRIVE_Init(void)
                 continue;
             }
 
-            drive->root = HEAP_strdupA( GetProcessHeap(), 0, path );
-            drive->dos_cwd  = HEAP_strdupA( GetProcessHeap(), 0, "" );
-            drive->unix_cwd = HEAP_strdupA( GetProcessHeap(), 0, "" );
+            drive->root     = heap_strdup( path );
+            drive->dos_cwd  = heap_strdup( "" );
+            drive->unix_cwd = heap_strdup( "" );
             drive->type     = DRIVE_GetDriveType( name );
             drive->device   = NULL;
             drive->flags    = 0;
@@ -212,7 +220,7 @@ int DRIVE_Init(void)
                                       buffer, sizeof(buffer) );
             if (buffer[0])
 	    {
-                drive->device = HEAP_strdupA( GetProcessHeap(), 0, buffer );
+                drive->device = heap_strdup( buffer );
 		if (PROFILE_GetWineIniBool( name, "ReadVolInfo", 1))
                     drive->flags |= DRIVE_READ_VOL_INFO;
 	    }
@@ -239,9 +247,9 @@ int DRIVE_Init(void)
     {
         MESSAGE("Warning: no valid DOS drive found, check your configuration file.\n" );
         /* Create a C drive pointing to Unix root dir */
-        DOSDrives[2].root     = HEAP_strdupA( GetProcessHeap(), 0, "/" );
-        DOSDrives[2].dos_cwd  = HEAP_strdupA( GetProcessHeap(), 0, "" );
-        DOSDrives[2].unix_cwd = HEAP_strdupA( GetProcessHeap(), 0, "" );
+        DOSDrives[2].root     = heap_strdup( "/" );
+        DOSDrives[2].dos_cwd  = heap_strdup( "" );
+        DOSDrives[2].unix_cwd = heap_strdup( "" );
         strcpy( DOSDrives[2].label_conf, "Drive C    " );
         DOSDrives[2].serial_conf   = 12345678;
         DOSDrives[2].type     = DRIVE_FIXED;
@@ -694,9 +702,8 @@ int DRIVE_Chdir( int drive, const char *path )
 
     HeapFree( GetProcessHeap(), 0, DOSDrives[drive].dos_cwd );
     HeapFree( GetProcessHeap(), 0, DOSDrives[drive].unix_cwd );
-    DOSDrives[drive].dos_cwd  = HEAP_strdupA( GetProcessHeap(), 0,
-                                              full_name.short_name + 3 );
-    DOSDrives[drive].unix_cwd = HEAP_strdupA( GetProcessHeap(), 0, unix_cwd );
+    DOSDrives[drive].dos_cwd  = heap_strdup( full_name.short_name + 3 );
+    DOSDrives[drive].unix_cwd = heap_strdup( unix_cwd );
 
     if (pTask && (pTask->curdrive & 0x80) && 
         ((pTask->curdrive & ~0x80) == drive))
@@ -771,10 +778,10 @@ int DRIVE_SetLogicalMapping ( int existing_drive, int new_drive )
 	return 0;
     }
 
-    new->root = HEAP_strdupA( GetProcessHeap(), 0, old->root );
-    new->dos_cwd = HEAP_strdupA( GetProcessHeap(), 0, old->dos_cwd );
-    new->unix_cwd = HEAP_strdupA( GetProcessHeap(), 0, old->unix_cwd );
-    new->device = HEAP_strdupA( GetProcessHeap(), 0, old->device );
+    new->root     = heap_strdup( old->root );
+    new->dos_cwd  = heap_strdup( old->dos_cwd );
+    new->unix_cwd = heap_strdup( old->unix_cwd );
+    new->device   = heap_strdup( old->device );
     memcpy ( new->label_conf, old->label_conf, 12 );
     memcpy ( new->label_read, old->label_read, 12 );
     new->serial_conf = old->serial_conf;

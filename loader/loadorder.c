@@ -13,7 +13,6 @@
 #include "winreg.h"
 #include "winerror.h"
 #include "options.h"
-#include "heap.h"
 #include "file.h"
 #include "module.h"
 #include "debugtools.h"
@@ -119,7 +118,8 @@ static char *get_tok(const char *str, const char *delim)
 
 	if(str && !buf)
 	{
-		buf = HEAP_strdupA(GetProcessHeap(), 0, str);
+		buf = HeapAlloc(GetProcessHeap(), 0, strlen(str)+1);
+		strcpy( buf, str );
 		cptr = strtok(buf, delim);
 	}
 	else
@@ -220,7 +220,8 @@ static BOOL AddLoadOrder(module_loadorder_t *plo)
 		}
 	}
 	memcpy(cmdline_list.order[i].loadorder, plo->loadorder, sizeof(plo->loadorder));
-	cmdline_list.order[i].modulename = HEAP_strdupA(GetProcessHeap(), 0, plo->modulename);
+	cmdline_list.order[i].modulename = HeapAlloc(GetProcessHeap(), 0, strlen(plo->modulename)+1);
+	strcpy( (char *)cmdline_list.order[i].modulename, plo->modulename );
 	cmdline_list.count++;
 	return TRUE;
 }
@@ -267,10 +268,10 @@ static BOOL AddLoadOrderSet(char *key, char *order)
  */
 void MODULE_AddLoadOrderOption( const char *option )
 {
-    char *key = HEAP_strdupA(GetProcessHeap(), 0, option);
-    char *value = strchr(key, '=');
+    char *value, *key = HeapAlloc(GetProcessHeap(), 0, strlen(option)+1);
 
-    if (!value) goto error;
+    strcpy( key, option );
+    if (!(value = strchr(key, '='))) goto error;
     *value++ = '\0';
 
     TRACE("Commandline override '%s' = '%s'\n", key, value);

@@ -44,6 +44,19 @@ static	MCI_MapType	MCI_UnMapMsg32ATo16(WORD uDevType, WORD wMsg, DWORD dwFlags, 
 /* First MCI valid device ID (0 means error) */
 #define MCI_MAGIC 0x0001
 
+/* dup a string and uppercase it */
+inline static LPSTR str_dup_upper( LPCSTR str )
+{
+    INT len = strlen(str) + 1;
+    LPSTR p = HeapAlloc( GetProcessHeap(), 0, len );
+    if (p)
+    {
+        memcpy( p, str, len );
+        CharUpperA( p );
+    }
+    return p;
+}
+
 /**************************************************************************
  * 				MCI_GetDriver			[internal]
  */
@@ -464,7 +477,7 @@ static	BOOL	MCI_OpenMciDriver(LPWINE_MCIDRIVER wmd, LPCSTR drvTyp, LPARAM lp)
 static	DWORD	MCI_LoadMciDriver(LPWINE_MM_IDATA iData, LPCSTR _strDevTyp, 
 				  LPWINE_MCIDRIVER* lpwmd)
 {
-    LPSTR			strDevTyp = CharUpperA(HEAP_strdupA(GetProcessHeap(), 0, _strDevTyp));
+    LPSTR			strDevTyp = str_dup_upper(_strDevTyp);
     LPWINE_MCIDRIVER		wmd = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*wmd));
     MCI_OPEN_DRIVER_PARMSA	modp;
     DWORD			dwRet = 0;
@@ -538,12 +551,15 @@ static	DWORD	MCI_FinishOpen(LPWINE_MCIDRIVER wmd, LPMCI_OPEN_PARMSA lpParms,
 			       DWORD dwParam)
 {
     if (dwParam & MCI_OPEN_ELEMENT)
-	wmd->lpstrElementName = HEAP_strdupA(GetProcessHeap(), 0, 
-					     lpParms->lpstrElementName);
-
+    {
+        wmd->lpstrElementName = HeapAlloc(GetProcessHeap(),0,strlen(lpParms->lpstrElementName)+1);
+        strcpy( wmd->lpstrElementName, lpParms->lpstrElementName );
+    }
     if (dwParam & MCI_OPEN_ALIAS)
-	wmd->lpstrAlias = HEAP_strdupA(GetProcessHeap(), 0, lpParms->lpstrAlias);
-
+    {
+        wmd->lpstrAlias = HeapAlloc(GetProcessHeap(), 0, strlen(lpParms->lpstrAlias)+1);
+        strcpy( wmd->lpstrAlias, lpParms->lpstrAlias);
+    }
     lpParms->wDeviceID = wmd->wDeviceID;
 
     return MCI_SendCommandFrom32(wmd->wDeviceID, MCI_OPEN_DRIVER, dwParam, 
@@ -855,8 +871,9 @@ DWORD WINAPI mciSendStringA(LPCSTR lpstrCommand, LPSTR lpstrRet,
     TRACE("('%s', %p, %d, %X)\n", lpstrCommand, lpstrRet, uRetLen, hwndCallback);
 
     /* format is <command> <device> <optargs> */
-    if (!(verb = HEAP_strdupA(GetProcessHeap(), 0, lpstrCommand)))
+    if (!(verb = HeapAlloc(GetProcessHeap(), 0, strlen(lpstrCommand)+1)))
 	return MCIERR_OUT_OF_MEMORY;
+    strcpy( verb, lpstrCommand );
 
     memset(data, 0, sizeof(data));
 
@@ -886,14 +903,14 @@ DWORD WINAPI mciSendStringA(LPCSTR lpstrCommand, LPSTR lpstrRet,
 
 	    dwFlags |= MCI_OPEN_TYPE;
 	    data[2] = (DWORD)devType;
-	    devType = CharUpperA(HEAP_strdupA(GetProcessHeap(), 0, devType));
+	    devType = str_dup_upper(devType);
 	    dwFlags |= MCI_OPEN_ELEMENT;
 	    data[3] = (DWORD)dev;
 	} else if (strchr(dev, '.') == NULL) {
 	    tmp = strchr(dev,' ');
 	    if (tmp) *tmp = '\0';
 	    data[2] = (DWORD)dev;
-	    devType = CharUpperA(HEAP_strdupA(GetProcessHeap(), 0, dev));
+	    devType = str_dup_upper(dev);
 	    if (tmp) *tmp = ' ';
 	    dwFlags |= MCI_OPEN_TYPE;
 	} else {
@@ -901,7 +918,7 @@ DWORD WINAPI mciSendStringA(LPCSTR lpstrCommand, LPSTR lpstrRet,
 		devType += 5;
 		tmp = strchr(devType, ' ');
 		if (tmp) *tmp = '\0';
-		devType = CharUpperA(HEAP_strdupA(GetProcessHeap(), 0, devType));
+		devType = str_dup_upper(devType);
 		if (tmp) *tmp = ' ';
 		/* dwFlags and data[2] will be correctly set in ParseOpt loop */
 	    } else {
@@ -909,17 +926,20 @@ DWORD WINAPI mciSendStringA(LPCSTR lpstrCommand, LPSTR lpstrRet,
 		if ((dwRet = MCI_GetDevTypeFromFileName(dev, buf, sizeof(buf))))
 		    goto errCleanUp;
 
-		devType = CharUpperA(HEAP_strdupA(GetProcessHeap(), 0, buf));
+		devType = str_dup_upper(buf);
 	    }
 	    dwFlags |= MCI_OPEN_ELEMENT;
 	    data[3] = (DWORD)dev;
 	}
 	if ((devAlias = strstr(args," alias "))) {
+            char *tmp2;
 	    devAlias += 7;
-	    tmp = strchr(devAlias,' ');
+	    if (!(tmp = strchr(devAlias,' '))) tmp = devAlias + strlen(devAlias);
 	    if (tmp) *tmp = '\0';
-	    data[4] = (DWORD)HEAP_strdupA(GetProcessHeap(), 0, devAlias);
-	    if (tmp) *tmp = ' ';
+            tmp2 = HeapAlloc(GetProcessHeap(), 0, tmp - devAlias + 1 );
+            memcpy( tmp2, devAlias, tmp - devAlias );
+            tmp2[tmp - devAlias] = 0;
+            data[4] = (DWORD)tmp2;
 	    /* should be done in regular options parsing */
 	    /* dwFlags |= MCI_OPEN_ALIAS; */
 	}

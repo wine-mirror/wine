@@ -9,7 +9,6 @@
 #include <stdio.h>
 #include <ctype.h>
 #include "winnt.h" /* HEAP_ZERO_MEMORY */
-#include "heap.h"
 #include "debugtools.h"
 #include "psdrv.h"
 #include "winspool.h"
@@ -650,8 +649,10 @@ PPD *PSDRV_ParsePPD(char *fname)
 	        if(tuple.opttrans) {
 		    page->FullName = tuple.opttrans;
 		    tuple.opttrans = NULL;
-		} else {
-		    page->FullName = HEAP_strdupA( PSDRV_Heap, 0, page->Name );
+		} else
+                {
+                    page->FullName = HeapAlloc( PSDRV_Heap, 0, strlen(page->Name)+1 );
+                    strcpy( page->FullName, page->Name );
 		}
 	    }
 	    if(!page->InvocationString) {

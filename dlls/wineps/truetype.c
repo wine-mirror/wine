@@ -43,7 +43,6 @@
 #include "winreg.h"
 #include "psdrv.h"
 #include "debugtools.h"
-#include "heap.h"
 
 DEFAULT_DEBUG_CHANNEL(psdrv);
 
@@ -126,10 +125,10 @@ static BOOL FindCharMap(AFM *afm, AFMSTRINGS *str)
 	
     if (charmap->encoding_id < 7)
     {
-    	str->EncodingScheme = HEAP_strdupA(PSDRV_Heap, 0,
-	    	encoding_names[charmap->encoding_id]);
-	if (str->EncodingScheme == NULL)
+        if (!(str->EncodingScheme = HeapAlloc(PSDRV_Heap, 0,
+                                              strlen(encoding_names[charmap->encoding_id])+1 )))
 	    return FALSE;
+        strcpy( str->EncodingScheme, encoding_names[charmap->encoding_id] );
     }
     else
     {

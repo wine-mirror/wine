@@ -28,7 +28,8 @@ DEFAULT_DEBUG_CHANNEL(shell);
 #define INVALID_INDEX -1
 
 typedef struct
-{	LPCSTR sSourceFile;	/* file (not path!) containing the icon */
+{
+	LPSTR sSourceFile;	/* file (not path!) containing the icon */
 	DWORD dwSourceIndex;	/* index within the file, if it is a resoure ID it will be negated */
 	DWORD dwListIndex;	/* index within the iconlist */
 	DWORD dwFlags;		/* GIL_* flags */
@@ -64,12 +65,15 @@ INT CALLBACK SIC_CompareEntrys( LPVOID p1, LPVOID p2, LPARAM lparam)
 static INT SIC_IconAppend (LPCSTR sSourceFile, INT dwSourceIndex, HICON hSmallIcon, HICON hBigIcon)
 {	LPSIC_ENTRY lpsice;
 	INT ret, index, index1;
-	
+	char *path;
 	TRACE("%s %i %x %x\n", sSourceFile, dwSourceIndex, hSmallIcon ,hBigIcon);
 
 	lpsice = (LPSIC_ENTRY) SHAlloc (sizeof (SIC_ENTRY));
 
-	lpsice->sSourceFile = HEAP_strdupA (GetProcessHeap(), 0, PathFindFileNameA(sSourceFile));
+        path = PathFindFileNameA(sSourceFile);
+        lpsice->sSourceFile = HeapAlloc( GetProcessHeap(), 0, strlen(path)+1 );
+        strcpy( lpsice->sSourceFile, path );
+
 	lpsice->dwSourceIndex = dwSourceIndex;
 	
 	EnterCriticalSection(&SHELL32_SicCS);

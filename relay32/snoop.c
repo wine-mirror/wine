@@ -11,7 +11,6 @@
 #include <string.h>
 #include "winbase.h"
 #include "winnt.h"
-#include "heap.h"
 #include "snoop.h"
 #include "stackframe.h"
 #include "debugtools.h"
@@ -58,11 +57,12 @@ typedef	struct tagSNOOP_FUN {
 typedef struct tagSNOOP_DLL {
 	HMODULE	hmod;
 	SNOOP_FUN	*funs;
-	LPCSTR		name;
 	DWORD		ordbase;
 	DWORD		nrofordinals;
 	struct tagSNOOP_DLL	*next;
+	char name[1];
 } SNOOP_DLL;
+
 typedef struct tagSNOOP_RETURNENTRY {
 	/* code part */
 	BYTE		lcall;		/* 0xe8 call snoopret relative*/
@@ -137,12 +137,12 @@ SNOOP_RegisterDLL(HMODULE hmod,LPCSTR name,DWORD ordbase,DWORD nrofordinals) {
 			return; /* already registered */
 		dll = &((*dll)->next);
 	}
-	*dll = (SNOOP_DLL*)HeapAlloc(GetProcessHeap(),HEAP_ZERO_MEMORY,sizeof(SNOOP_DLL));
+	*dll = HeapAlloc(GetProcessHeap(),HEAP_ZERO_MEMORY,sizeof(SNOOP_DLL)+strlen(name));
 	(*dll)->next	= NULL;
 	(*dll)->hmod	= hmod;
 	(*dll)->ordbase = ordbase;
 	(*dll)->nrofordinals = nrofordinals;
-	(*dll)->name	= HEAP_strdupA(GetProcessHeap(),0,name);
+	strcpy( (*dll)->name, name );
 	if ((s=strrchr((*dll)->name,'.')))
 		*s='\0';
 	(*dll)->funs = VirtualAlloc(NULL,nrofordinals*sizeof(SNOOP_FUN),MEM_COMMIT|MEM_RESERVE,PAGE_EXECUTE_READWRITE);
@@ -196,7 +196,8 @@ SNOOP_GetProcAddress(HMODULE hmod,LPCSTR name,DWORD ordinal,FARPROC origfun) {
 	fun = dll->funs+ordinal;
 	if (!fun->name) 
 	  {
-	    fun->name = HEAP_strdupA(GetProcessHeap(),0,name);
+	    fun->name = HeapAlloc(GetProcessHeap(),0,strlen(name)+1);
+	    strcpy( fun->name, name );
 	    fun->lcall	= 0xe8;
 	    /* NOTE: origreturn struct member MUST come directly after snoopentry */
 	    fun->snoopentry	= (char*)SNOOP_Entry-((char*)(&fun->nrofargs));

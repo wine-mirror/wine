@@ -32,17 +32,17 @@ DEFAULT_DEBUG_CHANNEL(profile);
 
 typedef struct tagPROFILEKEY
 {
-    char                  *name;
     char                  *value;
     struct tagPROFILEKEY  *next;
+    char                   name[1];
 } PROFILEKEY;
 
 typedef struct tagPROFILESECTION
 {
-    char                       *name;
     struct tagPROFILEKEY       *key;
     struct tagPROFILESECTION   *next;
-} PROFILESECTION; 
+    char                        name[1];
+} PROFILESECTION;
 
 
 typedef struct
@@ -168,11 +168,9 @@ static void PROFILE_Free( PROFILESECTION *section )
 
     for ( ; section; section = next_section)
     {
-        if (section->name) HeapFree( GetProcessHeap(), 0, section->name );
         for (key = section->key; key; key = next_key)
         {
             next_key = key->next;
-            if (key->name) HeapFree( GetProcessHeap(), 0, key->name );
             if (key->value) HeapFree( GetProcessHeap(), 0, key->value );
             HeapFree( GetProcessHeap(), 0, key );
         }
@@ -205,8 +203,8 @@ static PROFILESECTION *PROFILE_Load( FILE *file )
     PROFILEKEY *key, *prev_key, **next_key;
 
     first_section = HeapAlloc( GetProcessHeap(), 0, sizeof(*section) );
-    if(first_section == NULL) return NULL; 
-    first_section->name = NULL;
+    if(first_section == NULL) return NULL;
+    first_section->name[0] = 0;
     first_section->key  = NULL;
     first_section->next = NULL;
     next_section = &first_section->next;
@@ -229,9 +227,9 @@ static PROFILESECTION *PROFILE_Load( FILE *file )
             {
                 *p2 = '\0';
                 p++;
-                section = HeapAlloc( GetProcessHeap(), 0, sizeof(*section) );
-		if(section == NULL) break;
-                section->name = HEAP_strdupA( GetProcessHeap(), 0, p );
+                if (!(section = HeapAlloc( GetProcessHeap(), 0, sizeof(*section) + strlen(p) )))
+                    break;
+                strcpy( section->name, p );
                 section->key  = NULL;
                 section->next = NULL;
                 *next_section = section;
@@ -258,10 +256,15 @@ static PROFILESECTION *PROFILE_Load( FILE *file )
 
         if(*p || !prev_key || *prev_key->name)
         {
-           key = HeapAlloc( GetProcessHeap(), 0, sizeof(*key) );
-	   if(key == NULL) break;
-           key->name  = HEAP_strdupA( GetProcessHeap(), 0, p );
-           key->value = p2 ? HEAP_strdupA( GetProcessHeap(), 0, p2 ) : NULL;
+            if (!(key = HeapAlloc( GetProcessHeap(), 0, sizeof(*key) + strlen(p) ))) break;
+            strcpy( key->name, p );
+            if (p2)
+            {
+                key->value = HeapAlloc( GetProcessHeap(), 0, strlen(p2)+1 );
+                strcpy( key->value, p2 );
+            }
+            else key->value = NULL;
+
            key->next  = NULL;
            *next_key  = key;
            next_key   = &key->next;
@@ -361,7 +364,7 @@ static BOOL PROFILE_DeleteSection( PROFILESECTION **section, LPCSTR name )
 {
     while (*section)
     {
-        if ((*section)->name && !strcasecmp( (*section)->name, name ))
+        if ((*section)->name[0] && !strcasecmp( (*section)->name, name ))
         {
             PROFILESECTION *to_del = *section;
             *section = to_del->next;
@@ -385,7 +388,7 @@ static BOOL PROFILE_DeleteKey( PROFILESECTION **section,
 {
     while (*section)
     {
-        if ((*section)->name && !strcasecmp( (*section)->name, section_name ))
+        if ((*section)->name[0] && !strcasecmp( (*section)->name, section_name ))
         {
             PROFILEKEY **key = &(*section)->key;
             while (*key)
@@ -394,7 +397,6 @@ static BOOL PROFILE_DeleteKey( PROFILESECTION **section,
                 {
                     PROFILEKEY *to_del = *key;
                     *key = to_del->next;
-                    if (to_del->name) HeapFree( GetProcessHeap(), 0, to_del->name );
                     if (to_del->value) HeapFree( GetProcessHeap(), 0, to_del->value);
                     HeapFree( GetProcessHeap(), 0, to_del );
                     return TRUE;
@@ -418,14 +420,13 @@ void PROFILE_DeleteAllKeys( LPCSTR section_name)
     PROFILESECTION **section= &CurProfile->section;
     while (*section)
     {
-        if ((*section)->name && !strcasecmp( (*section)->name, section_name ))
+        if ((*section)->name[0] && !strcasecmp( (*section)->name, section_name ))
         {
             PROFILEKEY **key = &(*section)->key;
             while (*key)
             {
                 PROFILEKEY *to_del = *key;
 		*key = to_del->next;
-		if (to_del->name) HeapFree( GetProcessHeap(), 0, to_del->name );
 		if (to_del->value) HeapFree( GetProcessHeap(), 0, to_del->value);
 		HeapFree( GetProcessHeap(), 0, to_del );
 		CurProfile->changed =TRUE;
@@ -460,7 +461,7 @@ static PROFILEKEY *PROFILE_Find( PROFILESECTION **section,
 
     while (*section)
     {
-        if ( ((*section)->name)
+        if ( ((*section)->name[0])
 	  && (!(strncasecmp( (*section)->name, section_name, seclen )))
 	  && (((*section)->name)[seclen] == '\0') )
         {
@@ -473,9 +474,9 @@ static PROFILEKEY *PROFILE_Find( PROFILESECTION **section,
                 key = &(*key)->next;
             }
             if (!create) return NULL;
-            *key = HeapAlloc( GetProcessHeap(), 0, sizeof(PROFILEKEY) );
-	    if(*key == NULL) return NULL;
-            (*key)->name  = HEAP_strdupA( GetProcessHeap(), 0, key_name );
+            if (!(*key = HeapAlloc( GetProcessHeap(), 0, sizeof(PROFILEKEY) + strlen(key_name) )))
+                return NULL;
+            strcpy( (*key)->name, key_name );
             (*key)->value = NULL;
             (*key)->next  = NULL;
             return *key;
@@ -483,17 +484,17 @@ static PROFILEKEY *PROFILE_Find( PROFILESECTION **section,
         section = &(*section)->next;
     }
     if (!create) return NULL;
-    *section = HeapAlloc( GetProcessHeap(), 0, sizeof(PROFILESECTION) );
+    *section = HeapAlloc( GetProcessHeap(), 0, sizeof(PROFILESECTION) + strlen(section_name) );
     if(*section == NULL) return NULL;
-    (*section)->name = HEAP_strdupA( GetProcessHeap(), 0, section_name );
+    strcpy( (*section)->name, section_name );
     (*section)->next = NULL;
-    (*section)->key  = HeapAlloc( GetProcessHeap(), 0, sizeof(PROFILEKEY) );
-    if((*section)->key  == NULL)
+    if (!((*section)->key  = HeapAlloc( GetProcessHeap(), 0,
+                                        sizeof(PROFILEKEY) + strlen(key_name) )))
     {
-	    HeapFree(GetProcessHeap(), 0, *section);
-	    return NULL;
+        HeapFree(GetProcessHeap(), 0, *section);
+        return NULL;
     }
-    (*section)->key->name  = HEAP_strdupA( GetProcessHeap(), 0, key_name );
+    strcpy( (*section)->key->name, key_name );
     (*section)->key->value = NULL;
     (*section)->key->next  = NULL;
     return (*section)->key;
@@ -651,9 +652,11 @@ static BOOL PROFILE_Open( LPCSTR filename )
     if(CurProfile->filename) PROFILE_ReleaseFile();
 
     /* OK, now that CurProfile is definitely free we assign it our new file */
-    newdos_name = HEAP_strdupA( GetProcessHeap(), 0, full_name.short_name );
+    newdos_name = HeapAlloc( GetProcessHeap(), 0, strlen(full_name.short_name)+1 );
+    strcpy( newdos_name, full_name.short_name );
     CurProfile->dos_name  = newdos_name;
-    CurProfile->filename  = HEAP_strdupA( GetProcessHeap(), 0, filename );
+    CurProfile->filename  = HeapAlloc( GetProcessHeap(), 0, strlen(filename)+1 );
+    strcpy( CurProfile->filename, filename );
 
     /* Try to open the profile file, first in $HOME/.wine */
 
@@ -667,13 +670,14 @@ static BOOL PROFILE_Open( LPCSTR filename )
     {
         TRACE("(%s): found it in %s\n",
               filename, buffer );
-        CurProfile->unix_name = HEAP_strdupA( GetProcessHeap(), 0, buffer );
+        CurProfile->unix_name = HeapAlloc( GetProcessHeap(), 0, strlen(buffer)+1 );
+        strcpy( CurProfile->unix_name, buffer );
     }
 
     if (!file)
     {
-        CurProfile->unix_name = HEAP_strdupA( GetProcessHeap(), 0,
-                                             full_name.long_name );
+        CurProfile->unix_name = HeapAlloc( GetProcessHeap(), 0, strlen(full_name.long_name)+1 );
+        strcpy( CurProfile->unix_name, full_name.long_name );
         if ((file = fopen( full_name.long_name, "r" )))
             TRACE("(%s): found it in %s\n",
                              filename, full_name.long_name );
@@ -711,7 +715,7 @@ static INT PROFILE_GetSection( PROFILESECTION *section, LPCSTR section_name,
 
     while (section)
     {
-        if (section->name && !strcasecmp( section->name, section_name ))
+        if (section->name[0] && !strcasecmp( section->name, section_name ))
         {
             UINT oldlen = len;
             for (key = section->key; key; key = key->next)
@@ -761,7 +765,7 @@ static INT PROFILE_GetSectionNames( LPSTR buffer, UINT len )
     if(!buffer) return 0;
 
     for (section = CurProfile->section; section; section = section->next)
-	if (section->name) {
+	if (section->name[0]) {
 	    l = strlen(section->name);
 	    cursize += l+1;
 	    if (cursize > len+1)
@@ -873,7 +877,8 @@ static BOOL PROFILE_SetString( LPCSTR section_name, LPCSTR key_name,
             HeapFree( GetProcessHeap(), 0, key->value );
         }
         else TRACE("  creating key\n" );
-        key->value = HEAP_strdupA( GetProcessHeap(), 0, value );
+        key->value = HeapAlloc( GetProcessHeap(), 0, strlen(value)+1 );
+        strcpy( key->value, value );
         CurProfile->changed = TRUE;
     }
     return TRUE;
@@ -1517,7 +1522,8 @@ BOOL WINAPI WritePrivateProfileSectionA( LPCSTR section,
 	    PROFILE_DeleteAllKeys(section);
 	    ret = TRUE;
 	    while(*string) {
-	        LPSTR buf=HEAP_strdupA( GetProcessHeap(), 0, string );
+	        LPSTR buf = HeapAlloc( GetProcessHeap(), 0, strlen(string)+1 );
+                strcpy( buf, string );
                 if((p=strchr( buf, '='))){
                     *p='\0';
                     ret = PROFILE_SetString( section, buf, p+1 );

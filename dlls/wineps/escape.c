@@ -9,7 +9,6 @@
 #include "psdrv.h"
 #include "debugtools.h"
 #include "winspool.h"
-#include "heap.h"
 
 DEFAULT_DEBUG_CHANNEL(psdrv);
 
@@ -403,7 +402,8 @@ INT PSDRV_StartDoc( DC *dc, const DOCINFOA *doc )
 
     if(doc->lpszOutput) {
         HeapFree( PSDRV_Heap, 0, physDev->job.output );
-	physDev->job.output = HEAP_strdupA( PSDRV_Heap, 0, doc->lpszOutput );
+	physDev->job.output = HeapAlloc( PSDRV_Heap, 0, strlen(doc->lpszOutput)+1 );
+	strcpy( physDev->job.output, doc->lpszOutput );
     }
     physDev->job.hJob = OpenJob16(physDev->job.output,  doc->lpszDocName,
 				  dc->hSelf);
