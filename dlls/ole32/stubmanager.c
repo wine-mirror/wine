@@ -243,11 +243,103 @@ static struct ifstub *stub_manager_ipid_to_ifstub(struct stub_manager *m, const 
     return result;
 }
 
-IRpcStubBuffer *stub_manager_ipid_to_stubbuffer(struct stub_manager *m, const IPID *ipid)
+/* gets the stub manager associated with an ipid - caller must have
+ * a reference to the apartment while a reference to the stub manager is held.
+ * it must also call release on the stub manager when it is no longer needed */
+static struct stub_manager *get_stub_manager_from_ipid(APARTMENT *apt, const IPID *ipid)
 {
-    struct ifstub *ifstub = stub_manager_ipid_to_ifstub(m, ipid);
-    
-    return ifstub ? ifstub->stubbuffer : NULL;
+    struct stub_manager *result = NULL;
+    struct list         *cursor;
+
+    EnterCriticalSection(&apt->cs);
+    LIST_FOR_EACH( cursor, &apt->stubmgrs )
+    {
+        struct stub_manager *m = LIST_ENTRY( cursor, struct stub_manager, entry );
+
+        if (stub_manager_ipid_to_ifstub(m, ipid))
+        {
+            result = m;
+            stub_manager_int_addref(result);
+            break;
+        }
+    }
+    LeaveCriticalSection(&apt->cs);
+
+    if (result)
+        TRACE("found %p for ipid %s\n", result, debugstr_guid(ipid));
+    else
+        ERR("not found for ipid %s\n", debugstr_guid(ipid));
+
+    return result;
+}
+
+HRESULT ipid_to_stub_manager(const IPID *ipid, APARTMENT **stub_apt, struct stub_manager **stubmgr_ret)
+{
+    /* FIXME: hack for IRemUnknown */
+    if (ipid->Data2 == 0xffff)
+        *stub_apt = COM_ApartmentFromOXID(*(OXID *)ipid->Data4, TRUE);
+    else
+        *stub_apt = COM_ApartmentFromTID(ipid->Data2);
+    if (!*stub_apt)
+    {
+        ERR("Couldn't find apartment corresponding to TID 0x%04x\n", ipid->Data2);
+        return RPC_E_INVALID_OBJECT;
+    }
+    *stubmgr_ret = get_stub_manager_from_ipid(*stub_apt, ipid);
+    if (!*stubmgr_ret)
+    {
+        COM_ApartmentRelease(*stub_apt);
+        *stub_apt = NULL;
+        return RPC_E_INVALID_OBJECT;
+    }
+    return S_OK;
+}
+
+IRpcStubBuffer *ipid_to_stubbuffer(const IPID *ipid)
+{
+    IRpcStubBuffer *ret = NULL;
+    APARTMENT *apt;
+    struct stub_manager *stubmgr;
+    struct ifstub *ifstub;
+    HRESULT hr;
+
+    hr = ipid_to_stub_manager(ipid, &apt, &stubmgr);
+    if (hr != S_OK) return NULL;
+
+    ifstub = stub_manager_ipid_to_ifstub(stubmgr, ipid);
+    if (ifstub)
+        ret = ifstub->stubbuffer;
+
+    stub_manager_int_release(stubmgr);
+
+    COM_ApartmentRelease(apt);
+
+    return ret;
+}
+
+/* generates an ipid in the following format (similar to native version):
+ * Data1 = apartment-local ipid counter
+ * Data2 = apartment creator thread ID
+ * Data3 = process ID
+ * Data4 = random value
+ */
+static inline HRESULT generate_ipid(struct stub_manager *m, IPID *ipid)
+{
+    HRESULT hr;
+    hr = UuidCreate(ipid);
+    if (FAILED(hr))
+    {
+        ERR("couldn't create IPID for stub manager %p\n", m);
+        UuidCreateNil(ipid);
+        return hr;
+    }
+
+    EnterCriticalSection(&m->apt->cs);
+    ipid->Data1 = m->apt->ipidc++;
+    LeaveCriticalSection(&m->apt->cs);
+    ipid->Data2 = (USHORT)m->apt->tid;
+    ipid->Data3 = (USHORT)GetCurrentProcessId();
+    return S_OK;
 }
 
 /* registers a new interface stub COM object with the stub manager and returns registration record */
@@ -273,11 +365,25 @@ struct ifstub *stub_manager_new_ifstub(struct stub_manager *m, IRpcStubBuffer *s
         stub->state = IFSTUB_STATE_NORMAL_MARSHALED;
 
     stub->iid = *iid;
-    stub->ipid = *iid; /* FIXME: should be globally unique */
+
+    /* FIXME: hack for IRemUnknown because we don't notify SCM of our IPID
+     * yet, so we need to use a well-known one */
+    if (IsEqualIID(iid, &IID_IRemUnknown))
+    {
+        stub->ipid.Data1 = 0xffffffff;
+        stub->ipid.Data2 = 0xffff;
+        stub->ipid.Data3 = 0xffff;
+        assert(sizeof(stub->ipid.Data4) == sizeof(m->apt->oxid));
+        memcpy(&stub->ipid.Data4, &m->apt->oxid, sizeof(OXID));
+    }
+    else
+        generate_ipid(m, &stub->ipid);
 
     EnterCriticalSection(&m->lock);
     list_add_head(&m->ifstubs, &stub->entry);
     LeaveCriticalSection(&m->lock);
+
+    TRACE("ifstub %p created with ipid %s\n", stub, debugstr_guid(&stub->ipid));
 
     return stub;
 }
@@ -351,3 +457,5 @@ BOOL stub_manager_is_table_marshaled(struct stub_manager *m, const IPID *ipid)
 
     return ret;
 }
+
+const IID IID_IRemUnknown = { 0x00000131, 0, 0, {0xc0, 0, 0, 0, 0, 0, 0, 0x46} };

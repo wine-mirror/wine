@@ -56,6 +56,8 @@ extern const CLSID CLSID_DfMarshal;
  * when the proxy disconnects or is destroyed */
 #define SORFP_NOLIFETIMEMGMT SORF_OXRES1
 
+static HRESULT unmarshal_object(const STDOBJREF *stdobjref, APARTMENT *apt, REFIID riid, void **object);
+
 /* Marshalling just passes a unique identifier to the remote client,
  * that makes it possible to find the passed interface again.
  *
@@ -83,35 +85,8 @@ get_facbuf_for_iid(REFIID riid,IPSFactoryBuffer **facbuf) {
     return CoGetClassObject(&pxclsid,CLSCTX_INPROC_SERVER,NULL,&IID_IPSFactoryBuffer,(LPVOID*)facbuf);
 }
 
-IRpcStubBuffer *mid_to_stubbuffer(wine_marshal_id *mid)
-{
-    IRpcStubBuffer *ret;
-    APARTMENT *apt;
-    struct stub_manager *m;
-
-    if (!(apt = COM_ApartmentFromOXID(mid->oxid, TRUE)))
-    {
-        WARN("Could not map OXID %s to apartment object\n", wine_dbgstr_longlong(mid->oxid));
-        return NULL;
-    }
-
-    if (!(m = get_stub_manager(apt, mid->oid)))
-    {
-        WARN("unknown OID %s\n", wine_dbgstr_longlong(mid->oid));
-        return NULL;
-    }
-
-    ret = stub_manager_ipid_to_stubbuffer(m, &mid->ipid);
-
-    stub_manager_int_release(m);
-
-    COM_ApartmentRelease(apt);
-
-    return ret;
-}
-
 /* creates a new stub manager and sets stdobjref->oid when stdobjref->oid == 0 */
-static HRESULT register_ifstub(APARTMENT *apt, STDOBJREF *stdobjref, REFIID riid, IUnknown *obj, MSHLFLAGS mshlflags)
+HRESULT register_ifstub(APARTMENT *apt, STDOBJREF *stdobjref, REFIID riid, IUnknown *obj, MSHLFLAGS mshlflags)
 {
     struct stub_manager *manager = NULL;
     struct ifstub       *ifstub;

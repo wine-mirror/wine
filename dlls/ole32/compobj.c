@@ -246,8 +246,10 @@ APARTMENT* COM_CreateApartment(DWORD model)
 
         list_init(&apt->proxies);
         list_init(&apt->stubmgrs);
-        apt->oidc = 1;
+        apt->ipidc = 1;
         apt->refs = 1;
+        apt->remunk_exported = FALSE;
+        apt->oidc = 1;
         InitializeCriticalSection(&apt->cs);
 
         apt->model = model;
@@ -355,6 +357,30 @@ APARTMENT *COM_ApartmentFromOXID(OXID oxid, BOOL ref)
         {
             result = apt;
             if (ref) COM_ApartmentAddRef(result);
+            break;
+        }
+    }
+    LeaveCriticalSection(&csApartment);
+
+    return result;
+}
+
+/* gets the apartment which has a given creator thread ID. The caller must
+ * release the reference from the apartment as soon as the apartment pointer
+ * is no longer required. */
+APARTMENT *COM_ApartmentFromTID(DWORD tid)
+{
+    APARTMENT *result = NULL;
+    struct list *cursor;
+
+    EnterCriticalSection(&csApartment);
+    LIST_FOR_EACH( cursor, &apts )
+    {
+        struct apartment *apt = LIST_ENTRY( cursor, struct apartment, entry );
+        if (apt->tid == tid)
+        {
+            result = apt;
+            COM_ApartmentAddRef(result);
             break;
         }
     }

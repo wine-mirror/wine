@@ -110,6 +110,7 @@ struct proxy_manager
   DWORD refs;               /* proxy reference count (LOCK) */
   CRITICAL_SECTION cs;      /* thread safety for this object and children */
   ULONG sorflags;           /* STDOBJREF flags (RO) */
+  IRemUnknown *remunk;      /* proxy to IRemUnknown used for lifecycle management (CS cs) */
 };
 
 /* this needs to become a COM object that implements IRemUnknown */
@@ -122,13 +123,15 @@ struct apartment
   DWORD tid;               /* thread id (RO) */
   HANDLE thread;           /* thread handle (RO) */
   OXID oxid;               /* object exporter ID (RO) */
-  OID oidc;                /* object ID counter, starts at 1, zero is invalid OID (CS cs) */
+  DWORD ipidc;             /* interface pointer ID counter, starts at 1 (CS cs) */
   HWND win;                /* message window (RO) */
   CRITICAL_SECTION cs;     /* thread safety */
   LPMESSAGEFILTER filter;  /* message filter (CS cs) */
   struct list proxies;     /* imported objects (CS cs) */
   struct list stubmgrs;    /* stub managers for exported objects (CS cs) */
+  BOOL remunk_exported;    /* has the IRemUnknown interface for this apartment been created yet? (CS cs) */
 
+  OID oidc;                /* object ID counter, starts at 1, zero is invalid OID (CS cs). FIXME: remove me */
   DWORD listenertid;       /* id of apartment_listener_thread. FIXME: remove me */
 };
 
@@ -177,12 +180,15 @@ ULONG stub_manager_int_release(struct stub_manager *This);
 struct stub_manager *new_stub_manager(APARTMENT *apt, IUnknown *object);
 ULONG stub_manager_ext_addref(struct stub_manager *m, ULONG refs);
 ULONG stub_manager_ext_release(struct stub_manager *m, ULONG refs);
-IRpcStubBuffer *stub_manager_ipid_to_stubbuffer(struct stub_manager *m, const IPID *ipid);
 struct ifstub *stub_manager_new_ifstub(struct stub_manager *m, IRpcStubBuffer *sb, IUnknown *iptr, REFIID iid, BOOL tablemarshal);
 struct stub_manager *get_stub_manager(APARTMENT *apt, OID oid);
 struct stub_manager *get_stub_manager_from_object(APARTMENT *apt, void *object);
 BOOL stub_manager_notify_unmarshal(struct stub_manager *m, const IPID *ipid);
 BOOL stub_manager_is_table_marshaled(struct stub_manager *m, const IPID *ipid);
+HRESULT register_ifstub(APARTMENT *apt, STDOBJREF *stdobjref, REFIID riid, IUnknown *obj, MSHLFLAGS mshlflags);
+HRESULT ipid_to_stub_manager(const IPID *ipid, APARTMENT **stub_apt, struct stub_manager **stubmgr_ret);
+IRpcStubBuffer *ipid_to_stubbuffer(const IPID *ipid);
+HRESULT start_apartment_remote_unknown(void);
 
 IRpcStubBuffer *mid_to_stubbuffer(wine_marshal_id *mid);
 
@@ -203,6 +209,7 @@ int WINAPI FileMonikerImpl_DecomposePath(LPCOLESTR str, LPOLESTR** stringTable);
 /* compobj.c */
 APARTMENT *COM_CreateApartment(DWORD model);
 APARTMENT *COM_ApartmentFromOXID(OXID oxid, BOOL ref);
+APARTMENT *COM_ApartmentFromTID(DWORD tid);
 DWORD COM_ApartmentAddRef(struct apartment *apt);
 DWORD COM_ApartmentRelease(struct apartment *apt);
 

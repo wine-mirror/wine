@@ -59,7 +59,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(ole);
 struct request_header
 {
     DWORD		reqid;
-    wine_marshal_id	mid;
+    IPID		ipid;
     DWORD		iMethod;
     DWORD		cbBuffer;
 };
@@ -162,7 +162,6 @@ static DWORD WINAPI stub_dispatch_thread(LPVOID);
 static HRESULT
 PIPE_RegisterPipe(wine_marshal_id *mid, HANDLE hPipe, BOOL startreader)
 {
-
     /* FIXME: this pipe caching code is commented out because it is breaks the
      * tests, causing them hang due to writing to or reading from the wrong pipe.
      */
@@ -205,15 +204,21 @@ PIPE_FindByMID(wine_marshal_id *mid) {
 }
 
 static struct pipe*
-PIPE_GetFromMID(wine_marshal_id *mid) {
-  int i;
-  for (i=0;i<nrofpipes;i++) {
-    if ((pipes[i].mid.oxid==mid->oxid) &&
-	(GetCurrentThreadId()==pipes[i].tid)
-    )
-      return pipes+i;
-  }
-  return NULL;
+PIPE_GetFromIPID(const IPID *ipid) {
+    int i;
+    for (i=0; i<nrofpipes; i++)
+    {
+        /* compare TID and PID fields */
+        if ((pipes[i].mid.ipid.Data2 == ipid->Data2) &&
+            (pipes[i].mid.ipid.Data3 == ipid->Data3) &&
+    	    (GetCurrentThreadId() == pipes[i].tid))
+          return pipes+i;
+        /* special case for IRemUnknown IPID */
+        else if ((pipes[i].mid.oxid == *(OXID *)ipid->Data4) &&
+    	    (GetCurrentThreadId() == pipes[i].tid))
+          return pipes+i;
+    }
+    return NULL;
 }
 
 static HRESULT
@@ -331,7 +336,7 @@ COM_InvokeAndRpcSend(struct rpc *req) {
     HRESULT		hres;
     DWORD		reqtype;
 
-    if (!(stub = mid_to_stubbuffer(&(req->reqh.mid))))
+    if (!(stub = ipid_to_stubbuffer(&(req->reqh.ipid))))
     {
 	ERR("Stub not found?\n");
 	return E_FAIL;
@@ -366,7 +371,7 @@ RPC_QueueRequestAndWait(struct rpc *req) {
     struct rpc         *xreq;
     HRESULT             hres;
     DWORD               reqtype;
-    struct pipe        *xpipe = PIPE_GetFromMID(&(req->reqh.mid));
+    struct pipe        *xpipe = PIPE_GetFromIPID(&(req->reqh.ipid));
 
     if (!xpipe) {
 	FIXME("no pipe found.\n");
@@ -421,7 +426,7 @@ PipeBuf_SendReceive(LPRPCCHANNELBUFFER iface,RPCOLEMESSAGE* msg,ULONG *status)
     if (hres) return hres;
     req->reqh.iMethod	= msg->iMethod;
     req->reqh.cbBuffer	= msg->cbBuffer;
-    memcpy(&(req->reqh.mid),&(This->mid),sizeof(This->mid));
+    req->reqh.ipid = This->mid.ipid;
     req->Buffer = msg->Buffer;
     hres = RPC_QueueRequestAndWait(req);
     if (hres) {
