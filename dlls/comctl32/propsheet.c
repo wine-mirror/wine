@@ -1380,10 +1380,17 @@ static BOOL PROPSHEET_SetCurSel(HWND hwndDlg,
  */
 static void PROPSHEET_SetTitleA(HWND hwndDlg, DWORD dwStyle, LPCSTR lpszText)
 {
+  PropSheetInfo*	psInfo = (PropSheetInfo*) GetPropA(hwndDlg, PropSheetInfoStr);
+  char 				szTitle[256];
+
+  if (HIWORD(lpszText) == 0) {
+    if (!LoadStringA(psInfo->ppshheader->hInstance, 
+                     LOWORD(lpszText), szTitle, sizeof(szTitle)-1))
+      return;
+    lpszText = szTitle;
+  }
   if (dwStyle & PSH_PROPTITLE)
   {
-    PropSheetInfo* psInfo = (PropSheetInfo*) GetPropA(hwndDlg,
-                                                      PropSheetInfoStr);
     char* dest;
     int lentitle = strlen(lpszText);
     int lenprop  = strlen(psInfo->strPropertiesFor);
