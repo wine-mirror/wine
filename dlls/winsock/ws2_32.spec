@@ -49,8 +49,8 @@ debug_channels (winsock)
 34  stub     WSAEnumNameSpaceProvidersA
 35  stub     WSAEnumNameSpaceProvidersW
 36  stdcall  WSAEnumNetworkEvents(long long ptr) WSAEnumNetworkEvents
-37  stub     WSAEnumProtocolsA
-38  stub     WSAEnumProtocolsW
+37  stdcall  WSAEnumProtocolsA(ptr ptr ptr) WSAEnumProtocolsA
+38  stdcall  WSAEnumProtocolsW(ptr ptr ptr) WSAEnumProtocolsW
 39  stdcall  WSAEventSelect(long long long) WSAEventSelect
 40  stub     WSAGetOverlappedResult
 41  stub     WSAGetQOSByName

@@ -3420,3 +3420,22 @@ SOCKET WINAPI WSAAccept( SOCKET s, struct WS_sockaddr *addr, LPINT addrlen,
        return SOCKET_ERROR;
 }
 
+/***********************************************************************
+ *              WSAEnumProtocolsA                        (WS2_32.37)
+ */
+WINAPI int WSAEnumProtocolsA(LPINT lpiProtocols, LPWSAPROTOCOL_INFOA lpProtocolBuffer, LPDWORD lpdwBufferLength)
+{
+    FIXME("(%p,%p,%p): stub\n", lpiProtocols,lpProtocolBuffer, lpdwBufferLength);
+    return 0;
+}
+
+/***********************************************************************
+ *              WSAEnumProtocolsW                        (WS2_32.38)
+ */
+WINAPI int WSAEnumProtocolsW(LPINT lpiProtocols, LPWSAPROTOCOL_INFOW lpProtocolBuffer, LPDWORD lpdwBufferLength)
+{
+    FIXME("(%p,%p,%p): stub\n", lpiProtocols,lpProtocolBuffer, lpdwBufferLength);
+    return 0;
+}
+
+
