@@ -7,7 +7,6 @@ MODULE    = ntdll.dll
 EXTRALIBS = $(LIBUNICODE)
 
 C_SRCS = \
-	$(TOPOBJDIR)/files/change.c \
 	$(TOPOBJDIR)/files/directory.c \
 	$(TOPOBJDIR)/files/dos_fs.c \
 	$(TOPOBJDIR)/files/drive.c \

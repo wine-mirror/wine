@@ -1055,12 +1055,18 @@ enum char_info_mode
 
 /* Create a change notification */
 @REQ(create_change_notification)
+    obj_handle_t handle;        /* handle to the directory */
     int          subtree;       /* watch all the subtree */
-    int          filter;        /* notification filter */
+    unsigned int filter;        /* notification filter */
 @REPLY
     obj_handle_t handle;        /* handle to the change notification */
 @END
 
+
+/* Move to the next change notification */
+@REQ(next_change_notification)
+    obj_handle_t handle;        /* handle to the change notification */
+@END
 
 /* Create a file mapping */
 @REQ(create_mapping)

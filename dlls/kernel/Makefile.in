@@ -21,6 +21,7 @@ SPEC_SRCS16 = \
 
 C_SRCS = \
 	$(TOPOBJDIR)/ole/ole2nls.c \
+	change.c \
 	comm.c \
 	computername.c \
 	console.c \

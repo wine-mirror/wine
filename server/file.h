@@ -95,4 +95,9 @@ extern int grow_file( struct file *file, int size_high, int size_low );
 extern struct file *create_temp_file( int access );
 extern void file_set_error(void);
 
+/* change notification functions */
+
+extern void do_change_notify( int unix_fd );
+extern void sigio_callback(void);
+
 #endif  /* __WINE_SERVER_FILE_H */

@@ -170,12 +170,6 @@ static void sigint_callback(void)
     exit(1);
 }
 
-/* SIGIO callback */
-static void sigio_callback(void)
-{
-    /* nothing here yet */
-}
-
 /* SIGHUP handler */
 static void do_sighup()
 {
@@ -203,8 +197,8 @@ static void do_sigchld()
 /* SIGIO handler */
 static void do_sigio( int signum, siginfo_t *si, void *x )
 {
-    /* do_change_notify( si->si_fd ); */
     do_signal( handler_sigio );
+    do_change_notify( si->si_fd );
 }
 
 void init_signals(void)

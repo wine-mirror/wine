@@ -1429,8 +1429,9 @@ struct send_console_signal_reply
 struct create_change_notification_request
 {
     struct request_header __header;
+    obj_handle_t handle;
     int          subtree;
-    int          filter;
+    unsigned int filter;
 };
 struct create_change_notification_reply
 {
@@ -1438,6 +1439,17 @@ struct create_change_notification_reply
     obj_handle_t handle;
 };
 
+
+
+struct next_change_notification_request
+{
+    struct request_header __header;
+    obj_handle_t handle;
+};
+struct next_change_notification_reply
+{
+    struct reply_header __header;
+};
 
 
 struct create_mapping_request
@@ -3095,6 +3107,7 @@ enum request
     REQ_move_console_output,
     REQ_send_console_signal,
     REQ_create_change_notification,
+    REQ_next_change_notification,
     REQ_create_mapping,
     REQ_open_mapping,
     REQ_get_mapping_info,
@@ -3276,6 +3289,7 @@ union generic_request
     struct move_console_output_request move_console_output_request;
     struct send_console_signal_request send_console_signal_request;
     struct create_change_notification_request create_change_notification_request;
+    struct next_change_notification_request next_change_notification_request;
     struct create_mapping_request create_mapping_request;
     struct open_mapping_request open_mapping_request;
     struct get_mapping_info_request get_mapping_info_request;
@@ -3455,6 +3469,7 @@ union generic_reply
     struct move_console_output_reply move_console_output_reply;
     struct send_console_signal_reply send_console_signal_reply;
     struct create_change_notification_reply create_change_notification_reply;
+    struct next_change_notification_reply next_change_notification_reply;
     struct create_mapping_reply create_mapping_reply;
     struct open_mapping_reply open_mapping_reply;
     struct get_mapping_info_reply get_mapping_info_reply;
@@ -3557,6 +3572,6 @@ union generic_reply
     struct get_next_hook_reply get_next_hook_reply;
 };
 
-#define SERVER_PROTOCOL_VERSION 102
+#define SERVER_PROTOCOL_VERSION 103
 
 #endif /* __WINE_WINE_SERVER_PROTOCOL_H */

@@ -1,11 +1,6 @@
 /*
  * Win32 file change notification functions
  *
- * FIXME: this is VERY difficult to implement with proper Unix support
- * at the wineserver side.
- * (Unix doesn't really support this)
- * See http://x57.deja.com/getdoc.xp?AN=575483053 for possible solutions.
- *
  * Copyright 1998 Ulrich Weigand
  *
  * This library is free software; you can redistribute it and/or
@@ -25,13 +20,9 @@
 
 #include "config.h"
 
-#include <assert.h>
 #include <stdlib.h>
-#ifdef HAVE_UNISTD_H
-# include <unistd.h>
-#endif
 #include <string.h>
-#include <time.h>
+
 #include "winbase.h"
 #include "winerror.h"
 #include "wine/server.h"
@@ -45,38 +36,49 @@ WINE_DEFAULT_DEBUG_CHANNEL(file);
 HANDLE WINAPI FindFirstChangeNotificationA( LPCSTR lpPathName, BOOL bWatchSubtree,
                                             DWORD dwNotifyFilter )
 {
-    HANDLE ret = INVALID_HANDLE_VALUE;
+    HANDLE file, ret = INVALID_HANDLE_VALUE;
 
-    FIXME("this is not supported yet (non-trivial).\n");
+    TRACE( "%s %d %lx\n", debugstr_a(lpPathName), bWatchSubtree, dwNotifyFilter );
+
+    if ((file = CreateFileA( lpPathName, 0, FILE_SHARE_READ|FILE_SHARE_WRITE, NULL,
+                             OPEN_EXISTING, FILE_FLAG_BACKUP_SEMANTICS, 0 )) == INVALID_HANDLE_VALUE)
+        return INVALID_HANDLE_VALUE;
 
     SERVER_START_REQ( create_change_notification )
     {
+        req->handle  = file;
         req->subtree = bWatchSubtree;
         req->filter  = dwNotifyFilter;
         if (!wine_server_call_err( req )) ret = reply->handle;
     }
     SERVER_END_REQ;
+    CloseHandle( file );
     return ret;
 }
 
 /****************************************************************************
  *		FindFirstChangeNotificationW (KERNEL32.@)
  */
-HANDLE WINAPI FindFirstChangeNotificationW( LPCWSTR lpPathName,
-                                                BOOL bWatchSubtree,
-                                                DWORD dwNotifyFilter)
+HANDLE WINAPI FindFirstChangeNotificationW( LPCWSTR lpPathName, BOOL bWatchSubtree,
+                                            DWORD dwNotifyFilter)
 {
-    HANDLE ret = INVALID_HANDLE_VALUE;
+    HANDLE file, ret = INVALID_HANDLE_VALUE;
 
-    FIXME("this is not supported yet (non-trivial).\n");
+    TRACE( "%s %d %lx\n", debugstr_w(lpPathName), bWatchSubtree, dwNotifyFilter );
+
+    if ((file = CreateFileW( lpPathName, 0, FILE_SHARE_READ|FILE_SHARE_WRITE, NULL,
+                             OPEN_EXISTING, FILE_FLAG_BACKUP_SEMANTICS, 0 )) == INVALID_HANDLE_VALUE)
+        return INVALID_HANDLE_VALUE;
 
     SERVER_START_REQ( create_change_notification )
     {
+        req->handle  = file;
         req->subtree = bWatchSubtree;
         req->filter  = dwNotifyFilter;
         if (!wine_server_call_err( req )) ret = reply->handle;
     }
     SERVER_END_REQ;
+    CloseHandle( file );
     return ret;
 }
 
@@ -85,15 +87,23 @@ HANDLE WINAPI FindFirstChangeNotificationW( LPCWSTR lpPathName,
  */
 BOOL WINAPI FindNextChangeNotification( HANDLE handle )
 {
-    /* FIXME: do something */
-    return TRUE;
+    BOOL ret;
+
+    TRACE("%p\n",handle);
+
+    SERVER_START_REQ( next_change_notification )
+    {
+        req->handle = handle;
+        ret = !wine_server_call_err( req );
+    }
+    SERVER_END_REQ;
+    return ret;
 }
 
 /****************************************************************************
  *		FindCloseChangeNotification (KERNEL32.@)
  */
-BOOL WINAPI FindCloseChangeNotification( HANDLE handle)
+BOOL WINAPI FindCloseChangeNotification( HANDLE handle )
 {
     return CloseHandle( handle );
 }
-

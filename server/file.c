@@ -221,7 +221,7 @@ static struct file *create_file( const char *nameptr, size_t len, unsigned int a
         return NULL;
     }
     /* refuse to open a directory */
-    if (S_ISDIR(mode))
+    if (S_ISDIR(mode) && !(file->flags & FILE_FLAG_BACKUP_SEMANTICS))
     {
         set_error( STATUS_ACCESS_DENIED );
         release_object( file );

@@ -1241,11 +1241,17 @@ static void dump_send_console_signal_request( const struct send_console_signal_r
 
 static void dump_create_change_notification_request( const struct create_change_notification_request *req )
 {
+    fprintf( stderr, " handle=%p,", req->handle );
     fprintf( stderr, " subtree=%d,", req->subtree );
-    fprintf( stderr, " filter=%d", req->filter );
+    fprintf( stderr, " filter=%08x", req->filter );
 }
 
 static void dump_create_change_notification_reply( const struct create_change_notification_reply *req )
+{
+    fprintf( stderr, " handle=%p", req->handle );
+}
+
+static void dump_next_change_notification_request( const struct next_change_notification_request *req )
 {
     fprintf( stderr, " handle=%p", req->handle );
 }
@@ -2495,6 +2501,7 @@ static const dump_func req_dumpers[REQ_NB_REQUESTS] = {
     (dump_func)dump_move_console_output_request,
     (dump_func)dump_send_console_signal_request,
     (dump_func)dump_create_change_notification_request,
+    (dump_func)dump_next_change_notification_request,
     (dump_func)dump_create_mapping_request,
     (dump_func)dump_open_mapping_request,
     (dump_func)dump_get_mapping_info_request,
@@ -2672,6 +2679,7 @@ static const dump_func reply_dumpers[REQ_NB_REQUESTS] = {
     (dump_func)0,
     (dump_func)0,
     (dump_func)dump_create_change_notification_reply,
+    (dump_func)0,
     (dump_func)dump_create_mapping_reply,
     (dump_func)dump_open_mapping_reply,
     (dump_func)dump_get_mapping_info_reply,
@@ -2849,6 +2857,7 @@ static const char * const req_names[REQ_NB_REQUESTS] = {
     "move_console_output",
     "send_console_signal",
     "create_change_notification",
+    "next_change_notification",
     "create_mapping",
     "open_mapping",
     "get_mapping_info",
