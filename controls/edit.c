@@ -618,6 +618,7 @@ static LRESULT WINAPI EditWndProc_locked( WND *wnd, UINT msg,
 	case EM_REPLACESEL16:
 		DPRINTF_EDIT_MSG16("EM_REPLACESEL");
 		lParam = (LPARAM)MapSL(lParam);
+		unicode = FALSE;  /* 16-bit message is always ascii */
 		/* fall through */
 	case EM_REPLACESEL:
 	{
@@ -657,6 +658,7 @@ static LRESULT WINAPI EditWndProc_locked( WND *wnd, UINT msg,
 	case EM_GETLINE16:
 		DPRINTF_EDIT_MSG16("EM_GETLINE");
 		lParam = (LPARAM)MapSL(lParam);
+		unicode = FALSE;  /* 16-bit message is always ascii */
 		/* fall through */
 	case EM_GETLINE:
 		DPRINTF_EDIT_MSG32("EM_GETLINE");
@@ -729,6 +731,7 @@ static LRESULT WINAPI EditWndProc_locked( WND *wnd, UINT msg,
 
 	case EM_SETPASSWORDCHAR16:
 		DPRINTF_EDIT_MSG16("EM_SETPASSWORDCHAR");
+		unicode = FALSE;  /* 16-bit message is always ascii */
 		/* fall through */
 	case EM_SETPASSWORDCHAR:
 	{
@@ -799,6 +802,7 @@ static LRESULT WINAPI EditWndProc_locked( WND *wnd, UINT msg,
 
 	case EM_GETPASSWORDCHAR16:
 		DPRINTF_EDIT_MSG16("EM_GETPASSWORDCHAR");
+		unicode = FALSE;  /* 16-bit message is always ascii */
 		/* fall through */
 	case EM_GETPASSWORDCHAR:
 	{
