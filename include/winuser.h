@@ -1064,7 +1064,7 @@ void        WINAPI GetClipCursor32(LPRECT32);
 #define     GetCurrentTime WINELIB_NAME(GetCurrentTime)
 HCURSOR32   WINAPI GetCursor32(void);
 #define     GetCursor WINELIB_NAME(GetCursor)
-void        WINAPI GetCursorPos32(LPPOINT32);
+BOOL32      WINAPI GetCursorPos32(LPPOINT32);
 #define     GetCursorPos WINELIB_NAME(GetCursorPos)
 HDC32       WINAPI GetDC32(HWND32);
 #define     GetDC WINELIB_NAME(GetDC)

@@ -1275,11 +1275,11 @@ BOOL32 WINAPI ClipCursor32( const RECT32 *rect )
 /***********************************************************************
  *           GetCursorPos16    (USER.17)
  */
-void WINAPI GetCursorPos16( POINT16 *pt )
+BOOL16 WINAPI GetCursorPos16( POINT16 *pt )
 {
     DWORD posX, posY, state;
 
-    if (!pt) return;
+    if (!pt) return 0;
     if (!EVENT_QueryPointer( &posX, &posY, &state ))
 	pt->x = pt->y = 0;
     else
@@ -1300,17 +1300,21 @@ void WINAPI GetCursorPos16( POINT16 *pt )
             MouseButtonsStates[2] = FALSE;
     }
     TRACE(cursor, "ret=%d,%d\n", pt->x, pt->y );
+    return 1;
 }
 
 
 /***********************************************************************
  *           GetCursorPos32    (USER32.229)
  */
-void WINAPI GetCursorPos32( POINT32 *pt )
+BOOL32 WINAPI GetCursorPos32( POINT32 *pt )
 {
+    BOOL32 ret;
+
     POINT16 pt16;
-    GetCursorPos16( &pt16 );
+    ret = GetCursorPos16( &pt16 );
     if (pt) CONV_POINT16TO32( &pt16, pt );
+    return ((pt) ? ret : 0);
 }
 
 

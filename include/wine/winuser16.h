@@ -349,7 +349,7 @@ HWND16      WINAPI GetClipboardViewer16(void);
 void        WINAPI GetClipCursor16(LPRECT16);
 DWORD       WINAPI GetCurrentTime16(void);
 HCURSOR16   WINAPI GetCursor16(void);
-void        WINAPI GetCursorPos16(LPPOINT16);
+BOOL16      WINAPI GetCursorPos16(LPPOINT16);
 HDC16       WINAPI GetDC16(HWND16);
 HDC16       WINAPI GetDCEx16(HWND16,HRGN16,DWORD);
 HWND16      WINAPI GetDesktopWindow16(void);
