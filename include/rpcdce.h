@@ -15,6 +15,27 @@ typedef RPC_BINDING_HANDLE handle_t;
 #define rpc_binding_handle_t RPC_BINDING_HANDLE
 #define RPC_MGR_EPV void
 
+typedef struct _RPC_BINDING_VECTOR
+{
+  unsigned long Count;
+  RPC_BINDING_HANDLE BindingH[1];
+} RPC_BINDING_VECTOR;
+#define rpc_binding_vector_t RPC_BINDING_VECTOR
+
+typedef struct _UUID_VECTOR
+{
+  unsigned long Count;
+  UUID *Uuid[1];
+} UUID_VECTOR;
+#define uuid_vector_t UUID_VECTOR
+
+typedef struct _RPC_IF_ID
+{
+  UUID Uuid;
+  unsigned short VersMajor;
+  unsigned short VersMinor;
+} RPC_IF_ID;
+
 #define RPC_C_BINDING_INFINITE_TIMEOUT 10
 #define RPC_C_BINDING_MIN_TIMEOUT 0
 #define RPC_C_BINDING_DEFAULT_TIMEOUT 5
@@ -42,7 +63,7 @@ typedef RPC_BINDING_HANDLE handle_t;
 
 
 typedef RPC_STATUS RPC_ENTRY RPC_IF_CALLBACK_FN( RPC_IF_HANDLE InterfaceUuid, LPVOID Context );
-typedef void (__RPC_USER * RPC_AUTH_KEY_RETRIEVAL_FN)( LPVOID Arg, LPWSTR ServerPrincName,
+typedef void __RPC_USER (* RPC_AUTH_KEY_RETRIEVAL_FN)( LPVOID Arg, LPWSTR ServerPrincName,
                                                        ULONG KeyVer, LPVOID* Key, RPC_STATUS* status );
 
 typedef struct _RPC_POLICY 
@@ -52,6 +73,33 @@ typedef struct _RPC_POLICY
   ULONG NICFlags;
 } RPC_POLICY,  *PRPC_POLICY;
 
+
+RPCRTAPI RPC_STATUS RPC_ENTRY
+  RpcBindingCopy( RPC_BINDING_HANDLE SourceBinding, RPC_BINDING_HANDLE* DestinationBinding );
+
+RPCRTAPI RPC_STATUS RPC_ENTRY
+  RpcBindingFree( RPC_BINDING_HANDLE Binding );
+
+RPCRTAPI RPC_STATUS RPC_ENTRY
+  RpcBindingFromStringBindingA( LPSTR StringBinding, RPC_BINDING_HANDLE* Binding );
+RPCRTAPI RPC_STATUS RPC_ENTRY
+  RpcBindingFromStringBindingW( LPWSTR StringBinding, RPC_BINDING_HANDLE* Binding );
+#define RpcBindingFromStringBinding WINELIB_NAME_AW(RpcBindingFromStringBinding)
+
+RPCRTAPI RPC_STATUS RPC_ENTRY
+  RpcBindingToStringBindingA( RPC_BINDING_HANDLE Binding, LPSTR* StringBinding );
+RPCRTAPI RPC_STATUS RPC_ENTRY
+  RpcBindingToStringBindingW( RPC_BINDING_HANDLE Binding, LPWSTR* StringBinding );
+#define RpcBindingFromStringBinding WINELIB_NAME_AW(RpcBindingFromStringBinding)
+
+RPCRTAPI RPC_STATUS RPC_ENTRY
+  RpcBindingVectorFree( RPC_BINDING_VECTOR** BindingVector );
+
+RPCRTAPI RPC_STATUS RPC_ENTRY
+  RpcServerInqBindings( RPC_BINDING_VECTOR** BindingVector );
+
+RPCRTAPI RPC_STATUS RPC_ENTRY
+  RpcServerListen( UINT MinimumCallThreads, UINT MaxCalls, UINT DontWait );
 
 RPCRTAPI RPC_STATUS RPC_ENTRY
   RpcServerRegisterIf( RPC_IF_HANDLE IfSpec, UUID* MgrTypeUuid, RPC_MGR_EPV* MgrEpv );
@@ -68,6 +116,7 @@ RPCRTAPI RPC_STATUS RPC_ENTRY
   RpcServerUseProtseqEpA( LPSTR Protseq, UINT MaxCalls, LPSTR Endpoint, LPVOID SecurityDescriptor );
 RPCRTAPI RPC_STATUS RPC_ENTRY
   RpcServerUseProtseqEpW( LPWSTR Protseq, UINT MaxCalls, LPWSTR Endpoint, LPVOID SecurityDescriptor );
+#define RpcServerUseProtseqEp WINELIB_NAME_AW(RpcServerUseProtseqEp)
 
 RPCRTAPI RPC_STATUS RPC_ENTRY
   RpcServerUseProtseqEpExA( LPSTR Protseq, UINT MaxCalls, LPSTR Endpoint, LPVOID SecurityDescriptor,
@@ -75,8 +124,6 @@ RPCRTAPI RPC_STATUS RPC_ENTRY
 RPCRTAPI RPC_STATUS RPC_ENTRY
   RpcServerUseProtseqEpExW( LPWSTR Protseq, UINT MaxCalls, LPWSTR Endpoint, LPVOID SecurityDescriptor,
                             PRPC_POLICY Policy );
-
-#define RpcServerUseProtseqEp WINELIB_NAME_AW(RpcServerUseProtseqEp)
 #define RpcServerUseProtseqEpEx WINELIB_NAME_AW(RpcServerUseProtseqEpEx)
 
 RPCRTAPI RPC_STATUS RPC_ENTRY
@@ -85,7 +132,6 @@ RPCRTAPI RPC_STATUS RPC_ENTRY
 RPCRTAPI RPC_STATUS RPC_ENTRY
   RpcServerRegisterAuthInfoW( LPWSTR ServerPrincName, ULONG AuthnSvc, RPC_AUTH_KEY_RETRIEVAL_FN GetKeyFn,
                               LPVOID Arg );
-			    
 #define RpcServerRegisterAuthInfo WINELIB_NAME_AW(RpcServerRegisterAuthInfo)
 
 RPCRTAPI RPC_STATUS RPC_ENTRY
@@ -97,18 +143,25 @@ RPCRTAPI RPC_STATUS RPC_ENTRY
 RPCRTAPI RPC_STATUS RPC_ENTRY
   RpcStringBindingComposeW( LPWSTR ObjUuid, LPWSTR Protseq, LPWSTR NetworkAddr, LPWSTR Endpoint,
                             LPWSTR Options, LPWSTR* StringBinding );
-			    
 #define RpcStringBindingCompose WINELIB_NAME_AW(RpcStringBindingCompose)
 
 RPCRTAPI RPC_STATUS RPC_ENTRY
-  RpcBindingFromStringBindingA( LPSTR StringBinding, RPC_BINDING_HANDLE* Binding );
+  RpcStringFreeA(unsigned char** String);
 RPCRTAPI RPC_STATUS RPC_ENTRY
-  RpcBindingFromStringBindingW( LPWSTR StringBinding, RPC_BINDING_HANDLE* Binding );
+  RpcStringFreeW(unsigned short** String);
+#define RpcStringFree WINELIB_NAME_AW(RpcStringFree)
 
-#define RpcBindingFromStringBinding WINELIB_NAME_AW(RpcBindingFromStringBinding)
+RPCRTAPI RPC_STATUS RPC_ENTRY
+  UuidCreate( UUID* Uuid );
+
+RPCRTAPI RPC_STATUS RPC_ENTRY
+  UuidToStringA( UUID* Uuid, unsigned char** StringUuid );
+RPCRTAPI RPC_STATUS RPC_ENTRY
+  UuidToStringW( UUID* Uuid, unsigned short** StringUuid );
+#define UuidToString WINELIB_NAME_AW(UuidToString)
 
 RPCRTAPI unsigned short RPC_ENTRY
-  UuidHash(UUID *, RPC_STATUS*);
+  UuidHash(UUID* Uuid, RPC_STATUS* Status_ );
 
 #include "rpcdcep.h"
 
