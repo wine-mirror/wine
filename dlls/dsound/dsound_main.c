@@ -2,12 +2,9 @@
  * 
  * Copyright 1998 Marcus Meissner
  * Copyright 1998 Rob Riggs
+ * Copyright 2000 Ove Kåven, TransGaming Technologies, Inc.
  */
 /*
- * Note: This file requires multithread ability. It is not possible to
- * implement the stuff in a single thread anyway. And most DirectX apps
- * require threading themselves.
- *
  * Most thread locking is complete. There may be a few race
  * conditions still lurking.
  *
@@ -17,42 +14,13 @@
  * TODO:
  *	Implement DirectSoundCapture API
  *	Implement SetCooperativeLevel properly (need to address focus issues)
- *	Use wavetable synth for static buffers if available
  *	Implement DirectSound3DBuffers (stubs in place)
- *	Use hardware 3D support if available (OSS support may be needed first)
- *	Add support for APIs other than OSS: ALSA (http://alsa.jcu.cz/)
- *	and esound (http://www.gnome.org), for instance
+ *	Use hardware 3D support if available
  *      Add critical section locking inside Release and AddRef methods
- *      Race conditions exist between DSOUND_WriteAudio and DSOUND_CloseAudio/
- *        DSOUND_OpenAudio
- *
- * FIXME: Status needs updating.
- *
- * Status:
- * - Wing Commander 4/W95:
- *   The intromovie plays without problems. Nearly lipsynchron.
- * - DiscWorld 2
- *   The sound works, but noticeable chunks are left out (from the sound and
- *   the animation). Don't know why yet.
- * - Diablo:
- *   Sound works, but slows down the movieplayer.
- * - XvT: 
- *   Doesn't sound yet.
- * - Monkey Island 3:
- *   The background sound of the startscreen works ;)
- * - WingCommander Prophecy Demo:
- *   Sound works for the intromovie.
- * - Total Annihilation (1998/12/04):
- *   Sound plays perfectly in the game, but the Smacker movies
- *   (http://www.smacker.com/) play silently.
- * - A-10 Cuba! Demo (1998/12/04):
- *   Sound works properly (for some people).
- * - dsstream.exe, from DirectX 5.2 SDK (1998/12/04):
- *   Works properly, but requires "-dll -winmm".
- * - dsshow.exe, from DirectX 5.2 SDK (1998/12/04):
- *   Initializes the DLL properly with CoCreateInstance(), but the
- *   FileOpen dialog box is broken - could not test properly
- * - The Dilbert Desktop Game: works (SB16)
+ *      Handle static buffers - put those in hardware, non-static not in hardware
+ *      Hardware DuplicateSoundBuffer
+ *      Proper volume calculation, and setting volume in HEL primary buffer
+ *      Optimize WINMM and negotiate fragment size, decrease DS_HEL_MARGIN
  */
 
 #include "config.h"
@@ -67,16 +35,29 @@
 #include <string.h>
 #include <math.h>	/* Insomnia - pow() function */
 #include "dsound.h"
+#include "dsdriver.h"
 #include "windef.h"
 #include "wingdi.h"
 #include "winuser.h"
 #include "winerror.h"
+#include "mmsystem.h"
 #include "wine/obj_base.h"
 #include "thread.h"
 #include "debugtools.h"
 
 DEFAULT_DEBUG_CHANNEL(dsound);
 
+/* these are eligible for tuning... they must be high on slow machines... */
+/* especially since the WINMM overhead is pretty high, and could be improved quite a bit;
+ * the high DS_HEL_MARGIN reflects the currently high wineoss/HEL latency */
+#define DS_HEL_FRAGS 48 /* HEL only: number of waveOut fragments in primary buffer */
+#define DS_HEL_QUEUE 28 /* HEL only: number of waveOut fragments to prebuffer */
+			/* (Starcraft videos won't work with higher than 32 x10ms) */
+#define DS_HEL_MARGIN 4 /* HEL only: number of waveOut fragments ahead to mix in new buffers */
+
+/* Linux does not support better timing than 10ms */
+#define DS_TIME_RES 10  /* Resolution of multimedia timer */
+#define DS_TIME_DEL 10  /* Delay of multimedia timer callback, and duration of HEL fragment */
 
 /*****************************************************************************
  * Predeclare the interface implementation structures
@@ -98,6 +79,13 @@ struct IDirectSoundImpl
     ICOM_VFIELD(IDirectSound);
     DWORD                      ref;
     /* IDirectSoundImpl fields */
+    PIDSDRIVER                  driver;
+    DSDRIVERDESC                drvdesc;
+    DSDRIVERCAPS                drvcaps;
+    HWAVEOUT                    hwo;
+    LPWAVEHDR                   pwave[DS_HEL_FRAGS];
+    UINT                        timerID, pwplay, pwwrite, pwqueue;
+    DWORD                       fraglen;
     DWORD                       priolevel;
     int                         nrofbuffers;
     IDirectSoundBufferImpl**    buffers;
@@ -116,16 +104,16 @@ struct IDirectSoundBufferImpl
     ICOM_VFIELD(IDirectSoundBuffer);
     DWORD                            ref;
     /* IDirectSoundBufferImpl fields */
+    PIDSDRIVERBUFFER          hwbuf;
     WAVEFORMATEX              wfx;
     LPBYTE                    buffer;
     IDirectSound3DBufferImpl* ds3db;
-    DWORD                     playflags,playing;
-    DWORD                     playpos,writepos,buflen;
+    DWORD                     playflags,state,leadin;
+    DWORD                     playpos,mixpos,writelead,buflen;
     DWORD                     nAvgBytesPerSec;
     DWORD                     freq;
     ULONG                     freqAdjust;
-    LONG                      volume,pan;
-    LONG                      lVolAdjust,rVolAdjust;
+    DSVOLUMEPAN               volpan;
     IDirectSoundBufferImpl*   parent;         /* for duplicates */
     IDirectSoundImpl*         dsound;
     DSBUFFERDESC              dsbd;
@@ -133,6 +121,11 @@ struct IDirectSoundBufferImpl
     int                       nrofnotifies;
     CRITICAL_SECTION          lock;
 };
+
+#define STATE_STOPPED  0
+#define STATE_STARTING 1
+#define STATE_PLAYING  2
+#define STATE_STOPPING 3
 
 /*****************************************************************************
  * IDirectSoundNotify implementation structure
@@ -204,41 +197,42 @@ struct IDirectSoundCaptureBufferImpl
 };
 
 
-#ifdef HAVE_OSS
-# include <sys/ioctl.h>
-# ifdef HAVE_MACHINE_SOUNDCARD_H
-#  include <machine/soundcard.h>
-# endif
-# ifdef HAVE_SYS_SOUNDCARD_H
-#  include <sys/soundcard.h>
-# endif
-# ifdef HAVE_SOUNDCARD_H
-#  include <soundcard.h>
-# endif
-
 /* #define USE_DSOUND3D 1 */
 
-#define DSOUND_FRAGLEN ((primarybuf->wfx.nAvgBytesPerSec >> 4) & ~3)
 #define DSOUND_FREQSHIFT (14)
-
-static int audiofd = -1;
-static int audioOK = 0;
 
 static IDirectSoundImpl*	dsound = NULL;
 
 static IDirectSoundBufferImpl*	primarybuf = NULL;
 
-static int DSOUND_setformat(LPWAVEFORMATEX wfex);
 static void DSOUND_CheckEvent(IDirectSoundBufferImpl *dsb, int len);
-static void DSOUND_CloseAudio(void);
-
-#endif
 
 static HRESULT DSOUND_CreateDirectSoundCapture( LPVOID* ppobj );
 static HRESULT DSOUND_CreateDirectSoundCaptureBuffer( LPCDSCBUFFERDESC lpcDSCBufferDesc, LPVOID* ppobj );
 
 static ICOM_VTABLE(IDirectSoundCapture) dscvt;
 static ICOM_VTABLE(IDirectSoundCaptureBuffer) dscbvt;
+
+static HRESULT mmErr(UINT err)
+{
+	switch(err) {
+	case MMSYSERR_NOERROR:
+		return DS_OK;
+	case MMSYSERR_ALLOCATED:
+		return DSERR_ALLOCATED;
+	case MMSYSERR_INVALHANDLE:
+		return DSERR_GENERIC; /* FIXME */
+	case MMSYSERR_NODRIVER:
+		return DSERR_NODRIVER;
+	case MMSYSERR_NOMEM:
+		return DSERR_OUTOFMEMORY;
+	case MMSYSERR_INVALPARAM:
+		return DSERR_INVALIDPARAM;
+	default:
+		FIXME("Unknown MMSYS error %d\n",err);
+		return DSERR_GENERIC;
+	}
+}
 
 /***************************************************************************
  * DirectSoundEnumerateA [DSOUND.2]  
@@ -285,7 +279,6 @@ HRESULT WINAPI DirectSoundEnumerateW(
 }
 
 
-#ifdef HAVE_OSS
 static void _dump_DSBCAPS(DWORD xmask) {
 	struct {
 		DWORD	mask;
@@ -880,6 +873,112 @@ static ICOM_VTABLE(IDirectSoundNotify) dsnvt =
  *		IDirectSoundBuffer
  */
 
+static void DSOUND_RecalcVolPan(PDSVOLUMEPAN volpan)
+{
+	double temp;
+
+	/* the AmpFactors are expressed in 16.16 fixed point */
+	volpan->dwVolAmpFactor = (ULONG) (pow(2.0, volpan->lVolume / 600.0) * 65536);
+	/* FIXME: dwPan{Left|Right}AmpFactor */
+
+	/* FIXME: use calculated vol and pan ampfactors */
+	temp = (double) (volpan->lVolume - (volpan->lPan > 0 ? volpan->lPan : 0));
+	volpan->dwTotalLeftAmpFactor = (ULONG) (pow(2.0, temp / 600.0) * 65536);
+	temp = (double) (volpan->lVolume + (volpan->lPan < 0 ? volpan->lPan : 0));
+	volpan->dwTotalRightAmpFactor = (ULONG) (pow(2.0, temp / 600.0) * 65536);
+
+	TRACE("left = %lx, right = %lx\n", volpan->dwTotalLeftAmpFactor, volpan->dwTotalRightAmpFactor);
+}
+
+static void DSOUND_RecalcFormat(IDirectSoundBufferImpl *dsb)
+{
+	DWORD sw;
+
+	sw = dsb->wfx.nChannels * (dsb->wfx.wBitsPerSample / 8);
+	if ((dsb->dsbd.dwFlags & DSBCAPS_PRIMARYBUFFER) && dsb->hwbuf) {
+		DWORD fraglen;
+		/* let fragment size approximate the timer delay */
+		fraglen = (dsb->freq * DS_TIME_DEL / 1000) * sw;
+		/* reduce fragment size until an integer number of them fits in the buffer */
+		/* (FIXME: this may or may not be a good idea) */
+		while (dsb->buflen % fraglen) fraglen -= sw;
+		dsb->dsound->fraglen = fraglen;
+		TRACE("fraglen=%ld\n", dsb->dsound->fraglen);
+	}
+	/* calculate the 10ms write lead */
+	dsb->writelead = (dsb->freq / 100) * sw;
+}
+
+static HRESULT DSOUND_PrimaryOpen(IDirectSoundBufferImpl *dsb)
+{
+	HRESULT err = DS_OK;
+
+	/* are we using waveOut stuff? */
+	if (!dsb->hwbuf) {
+		LPBYTE newbuf;
+		DWORD buflen;
+		HRESULT merr = DS_OK;
+		/* use fragments of 10ms (1/100s) each (which should get us within
+		 * the documented write cursor lead of 10-15ms) */
+		buflen = ((dsb->wfx.nAvgBytesPerSec / 100) & ~3) * DS_HEL_FRAGS;
+		TRACE("desired buflen=%ld, old buffer=%p\n", buflen, dsb->buffer);
+		/* reallocate emulated primary buffer */
+		newbuf = (LPBYTE)HeapReAlloc(GetProcessHeap(),0,dsb->buffer,buflen);
+		if (newbuf == NULL) {
+			ERR("failed to allocate primary buffer\n");
+			merr = DSERR_OUTOFMEMORY;
+			/* but the old buffer might still exists and must be re-prepared */
+		} else {
+			dsb->buffer = newbuf;
+			dsb->buflen = buflen;
+		}
+		if (dsb->buffer) {
+			unsigned c;
+			IDirectSoundImpl *ds = dsb->dsound;
+
+			ds->fraglen = dsb->buflen / DS_HEL_FRAGS;
+
+			/* prepare fragment headers */
+			for (c=0; c<DS_HEL_FRAGS; c++) {
+				ds->pwave[c]->lpData = dsb->buffer + c*ds->fraglen;
+				ds->pwave[c]->dwBufferLength = ds->fraglen;
+				ds->pwave[c]->dwUser = (DWORD)dsb;
+				ds->pwave[c]->dwFlags = 0;
+				ds->pwave[c]->dwLoops = 0;
+				err = mmErr(waveOutPrepareHeader(ds->hwo,ds->pwave[c],sizeof(WAVEHDR)));
+				if (err != DS_OK) {
+					while (c--)
+						waveOutUnprepareHeader(ds->hwo,ds->pwave[c],sizeof(WAVEHDR));
+					break;
+				}
+			}
+
+			ds->pwplay = 0;
+			ds->pwwrite = 0;
+			ds->pwqueue = 0;
+			memset(dsb->buffer, (dsb->wfx.wBitsPerSample == 16) ? 0 : 128, dsb->buflen);
+			TRACE("fraglen=%ld\n", ds->fraglen);
+		}
+		if ((err == DS_OK) && (merr != DS_OK))
+			err = merr;
+	}
+	return err;
+}
+
+
+static void DSOUND_PrimaryClose(IDirectSoundBufferImpl *dsb)
+{
+	/* are we using waveOut stuff? */
+	if (!dsb->hwbuf) {
+		unsigned c;
+		IDirectSoundImpl *ds = dsb->dsound;
+
+		waveOutReset(ds->hwo);
+		for (c=0; c<DS_HEL_FRAGS; c++)
+			waveOutUnprepareHeader(ds->hwo, ds->pwave[c], sizeof(WAVEHDR));
+	}
+}
+
 /* This sets this format for the <em>Primary Buffer Only</em> */
 /* See file:///cdrom/sdk52/docs/worddoc/dsound.doc page 120 */
 static HRESULT WINAPI IDirectSoundBufferImpl_SetFormat(
@@ -927,7 +1026,20 @@ static HRESULT WINAPI IDirectSoundBufferImpl_SetFormat(
 
 	primarybuf->wfx.nAvgBytesPerSec =
 		This->wfx.nSamplesPerSec * This->wfx.nBlockAlign;
-	DSOUND_CloseAudio();
+	if (primarybuf->dsound->drvdesc.dwFlags & DSDDESC_DOMMSYSTEMSETFORMAT) {
+		/* FIXME: check for errors */
+		DSOUND_PrimaryClose(primarybuf);
+		waveOutClose(This->dsound->hwo);
+		This->dsound->hwo = 0;
+                waveOutOpen(&(This->dsound->hwo), This->dsound->drvdesc.dnDevNode,
+			    &(primarybuf->wfx), 0, 0, 0);
+		/* Start in pause mode until buffers are filled */
+		waveOutPause(This->dsound->hwo);
+		DSOUND_PrimaryOpen(primarybuf);
+	}
+	if (primarybuf->hwbuf)
+		IDsDriverBuffer_SetFormat(primarybuf->hwbuf, &(primarybuf->wfx));
+	DSOUND_RecalcFormat(primarybuf);
 
 	LeaveCriticalSection(&(This->dsound->lock));
 	/* **** */
@@ -939,7 +1051,6 @@ static HRESULT WINAPI IDirectSoundBufferImpl_SetVolume(
 	LPDIRECTSOUNDBUFFER iface,LONG vol
 ) {
 	ICOM_THIS(IDirectSoundBufferImpl,iface);
-	double	temp;
 
 	TRACE("(%p,%ld)\n",This,vol);
 
@@ -950,28 +1061,28 @@ static HRESULT WINAPI IDirectSoundBufferImpl_SetVolume(
 	if ((vol > DSBVOLUME_MAX) || (vol < DSBVOLUME_MIN))
 		return DSERR_INVALIDPARAM;
 
-	/* This needs to adjust the soundcard volume when */
-	/* called for the primary buffer */
-	if (This->dsbd.dwFlags & DSBCAPS_PRIMARYBUFFER) {
-		FIXME("Volume control of primary unimplemented.\n");
-		This->volume = vol;
-		return DS_OK;
-	}
-
 	/* **** */
 	EnterCriticalSection(&(This->lock));
 
-	This->volume = vol;
+	This->volpan.lVolume = vol;
 
-	temp = (double) (This->volume - (This->pan > 0 ? This->pan : 0));
-	This->lVolAdjust = (ULONG) (pow(2.0, temp / 600.0) * 32768.0);
-	temp = (double) (This->volume + (This->pan < 0 ? This->pan : 0));
-	This->rVolAdjust = (ULONG) (pow(2.0, temp / 600.0) * 32768.0);
+	DSOUND_RecalcVolPan(&(This->volpan));
+
+	if (This->hwbuf) {
+		IDsDriverBuffer_SetVolumePan(This->hwbuf, &(This->volpan));
+	}
+	else if (This->dsbd.dwFlags & DSBCAPS_PRIMARYBUFFER) {
+#if 0 /* should we really do this? */
+		/* the DS volume ranges from 0 (max, 0dB attenuation) to -10000 (min, 100dB attenuation) */
+		/* the MM volume ranges from 0 to 0xffff in an unspecified logarithmic scale */
+		WORD cvol = 0xffff + vol*6 + vol/2;
+		DWORD vol = cvol | ((DWORD)cvol << 16)
+		waveOutSetVolume(This->dsound->hwo, vol);
+#endif
+	}
 
 	LeaveCriticalSection(&(This->lock));
 	/* **** */
-
-	TRACE("left = %lx, right = %lx\n", This->lVolAdjust, This->rVolAdjust);
 
 	return DS_OK;
 }
@@ -985,7 +1096,7 @@ static HRESULT WINAPI IDirectSoundBufferImpl_GetVolume(
 	if (vol == NULL)
 		return DSERR_INVALIDPARAM;
 
-	*vol = This->volume;
+	*vol = This->volpan.lVolume;
 	return DS_OK;
 }
 
@@ -1000,6 +1111,8 @@ static HRESULT WINAPI IDirectSoundBufferImpl_SetFrequency(
 	    (This->dsbd.dwFlags & DSBCAPS_PRIMARYBUFFER))
 		return DSERR_CONTROLUNAVAIL;
 
+	if (!freq) freq = This->wfx.nSamplesPerSec;
+
 	if ((freq < DSBFREQUENCY_MIN) || (freq > DSBFREQUENCY_MAX))
 		return DSERR_INVALIDPARAM;
 
@@ -1009,6 +1122,7 @@ static HRESULT WINAPI IDirectSoundBufferImpl_SetFrequency(
 	This->freq = freq;
 	This->freqAdjust = (freq << DSOUND_FREQSHIFT) / primarybuf->wfx.nSamplesPerSec;
 	This->nAvgBytesPerSec = freq * This->wfx.nBlockAlign;
+	DSOUND_RecalcFormat(This);
 
 	LeaveCriticalSection(&(This->lock));
 	/* **** */
@@ -1024,7 +1138,15 @@ static HRESULT WINAPI IDirectSoundBufferImpl_Play(
 		This,reserved1,reserved2,flags
 	);
 	This->playflags = flags;
-	This->playing = 1;
+	if (This->state == STATE_STOPPED) {
+		This->state = STATE_STARTING;
+		This->leadin = TRUE;
+	} else if (This->state == STATE_STOPPING)
+		This->state = STATE_PLAYING;
+	if (!(This->dsbd.dwFlags & DSBCAPS_PRIMARYBUFFER) && This->hwbuf) {
+		IDsDriverBuffer_Play(This->hwbuf, 0, 0, This->playflags);
+		This->state = STATE_PLAYING;
+	}
 	return DS_OK;
 }
 
@@ -1036,7 +1158,14 @@ static HRESULT WINAPI IDirectSoundBufferImpl_Stop(LPDIRECTSOUNDBUFFER iface)
 	/* **** */
 	EnterCriticalSection(&(This->lock));
 
-	This->playing = 0;
+	if (This->state == STATE_PLAYING)
+		This->state = STATE_STOPPING;
+	else if (This->state == STATE_STARTING)
+		This->state = STATE_STOPPED;
+	if (!(This->dsbd.dwFlags & DSBCAPS_PRIMARYBUFFER) && This->hwbuf) {
+		IDsDriverBuffer_Stop(This->hwbuf);
+		This->state = STATE_STOPPED;
+	}
 	DSOUND_CheckEvent(This, 0);
 
 	LeaveCriticalSection(&(This->lock));
@@ -1075,6 +1204,11 @@ static DWORD WINAPI IDirectSoundBufferImpl_Release(LPDIRECTSOUNDBUFFER iface) {
 	LeaveCriticalSection(&(This->dsound->lock));
 
 	DeleteCriticalSection(&(This->lock));
+	if (This->dsbd.dwFlags & DSBCAPS_PRIMARYBUFFER)
+		DSOUND_PrimaryClose(This);
+	if (This->hwbuf) {
+		IDsDriverBuffer_Release(This->hwbuf);
+	}
 	if (This->ds3db)
 		IDirectSound3DBuffer_Release((LPDIRECTSOUND3DBUFFER)This->ds3db);
 	if (This->parent)
@@ -1097,8 +1231,82 @@ static HRESULT WINAPI IDirectSoundBufferImpl_GetCurrentPosition(
 ) {
 	ICOM_THIS(IDirectSoundBufferImpl,iface);
 	TRACE("(%p,%p,%p)\n",This,playpos,writepos);
-	if (playpos) *playpos = This->playpos;
-	if (writepos) *writepos = This->writepos;
+	if (This->hwbuf) {
+		IDsDriverBuffer_GetPosition(This->hwbuf, playpos, writepos);
+	}
+	else if (This->dsbd.dwFlags & DSBCAPS_PRIMARYBUFFER) {
+		if (playpos && (This->dsbd.dwFlags & DSBCAPS_GETCURRENTPOSITION2)) {
+			MMTIME mtime;
+			mtime.wType = TIME_BYTES;
+			waveOutGetPosition(This->dsound->hwo, &mtime, sizeof(mtime));
+			mtime.u.cb = mtime.u.cb % This->buflen;
+			*playpos = mtime.u.cb;
+		}
+		/* don't know how exactly non-GETCURRENTPOSITION2 behaves,
+		 * but I think this works for Starcraft */
+		else if (playpos) *playpos = This->playpos;
+		if (writepos) {
+			/* the writepos should only be used by apps with WRITEPRIMARY priority,
+			 * in which case our software mixer is disabled anyway */
+			*writepos = This->playpos + DS_HEL_MARGIN * This->dsound->fraglen;
+			while (*writepos >= This->buflen)
+				*writepos -= This->buflen;
+		}
+	} else {
+		if (playpos && (This->state != STATE_PLAYING)) {
+			/* we haven't been merged into the primary buffer (yet) */
+			*playpos = 0;
+		}
+		else if (playpos) {
+			DWORD pplay, lplay, splay;
+			/* let's get this exact; first, recursively call GetPosition on the primary */
+			EnterCriticalSection(&(primarybuf->lock));
+			if ((This->dsbd.dwFlags & DSBCAPS_GETCURRENTPOSITION2) || primarybuf->hwbuf) {
+				IDirectSoundBufferImpl_GetCurrentPosition((LPDIRECTSOUNDBUFFER)primarybuf, &pplay, NULL);
+			} else {
+				/* (unless the app isn't using GETCURRENTPOSITION2) */
+				/* don't know exactly how this should be handled either */
+				pplay = primarybuf->playpos;
+			}
+			/* get last mixed primary play position */
+			lplay = primarybuf->mixpos;
+			/* get our own last mixed position while we still have the lock */
+			splay = This->mixpos;
+			LeaveCriticalSection(&(primarybuf->lock));
+			TRACE("primary playpos=%ld, mixpos=%ld\n", pplay, lplay);
+			TRACE("this mixpos=%ld\n", splay);
+
+			/* the actual primary play position (pplay) is always behind last mixed (lplay)
+			 * (unless the computer is too slow, which we can't fix anyway) */
+			/* we need to know how far away we are from there */
+			if (lplay < pplay) lplay += primarybuf->buflen; /* wraparound */
+			lplay -= pplay;
+			/* divide the offset by its sample size */
+			lplay /= primarybuf->wfx.nChannels * (primarybuf->wfx.wBitsPerSample / 8);
+			TRACE("primary back-samples=%ld\n",lplay);
+			/* adjust for our frequency */
+			lplay = (lplay * This->freqAdjust) >> DSOUND_FREQSHIFT;
+			/* multiply by our own sample size */
+			lplay *= This->wfx.nChannels * (This->wfx.wBitsPerSample / 8);
+			TRACE("this back-offset=%ld\n", lplay);
+			/* subtract from our last mixed position */
+			if ((splay < lplay) && This->leadin) {
+				/* seems we haven't started playing yet */
+				splay = 0;
+			} else {
+				while (splay < lplay) splay += This->buflen; /* wraparound */
+				splay -= lplay;
+			}
+			/* return the result */
+			*playpos = splay;
+		}
+		if (writepos) *writepos = This->mixpos;
+	}
+	/* apply the documented 10ms lead to writepos */
+	if (writepos) {
+		*writepos += This->writelead;
+		while (*writepos >= This->buflen) *writepos -= This->buflen;
+	}
 	TRACE("playpos = %ld, writepos = %ld\n", playpos?*playpos:0, writepos?*writepos:0);
 	return DS_OK;
 }
@@ -1113,7 +1321,7 @@ static HRESULT WINAPI IDirectSoundBufferImpl_GetStatus(
 		return DSERR_INVALIDPARAM;
 
 	*status = 0;
-	if (This->playing)
+	if ((This->state == STATE_STARTING) || (This->state == STATE_PLAYING))
 		*status |= DSBSTATUS_PLAYING;
 	if (This->playflags & DSBPLAY_LOOPING)
 		*status |= DSBSTATUS_LOOPING;
@@ -1147,6 +1355,7 @@ static HRESULT WINAPI IDirectSoundBufferImpl_Lock(
 	LPDIRECTSOUNDBUFFER iface,DWORD writecursor,DWORD writebytes,LPVOID lplpaudioptr1,LPDWORD audiobytes1,LPVOID lplpaudioptr2,LPDWORD audiobytes2,DWORD flags
 ) {
 	ICOM_THIS(IDirectSoundBufferImpl,iface);
+	DWORD capf;
 
 	TRACE("(%p,%ld,%ld,%p,%p,%p,%p,0x%08lx)\n",
 		This,
@@ -1158,8 +1367,13 @@ static HRESULT WINAPI IDirectSoundBufferImpl_Lock(
 		audiobytes2,
 		flags
 	);
-	if (flags & DSBLOCK_FROMWRITECURSOR)
-		writecursor += This->writepos;
+
+	if (flags & DSBLOCK_FROMWRITECURSOR) {
+		DWORD writepos;
+		/* GetCurrentPosition does too much magic to duplicate here */
+		IDirectSoundBufferImpl_GetCurrentPosition(iface, NULL, &writepos);
+		writecursor += writepos;
+	}
 	if (flags & DSBLOCK_ENTIREBUFFER)
 		writebytes = This->buflen;
 	if (writebytes > This->buflen)
@@ -1167,6 +1381,18 @@ static HRESULT WINAPI IDirectSoundBufferImpl_Lock(
 
 	assert(audiobytes1!=audiobytes2);
 	assert(lplpaudioptr1!=lplpaudioptr2);
+
+	if (This->dsbd.dwFlags & DSBCAPS_PRIMARYBUFFER)
+		capf = DSDDESC_DONTNEEDPRIMARYLOCK;
+	else
+		capf = DSDDESC_DONTNEEDSECONDARYLOCK;
+	if (!(This->dsound->drvdesc.dwFlags & capf) && This->hwbuf) {
+		IDsDriverBuffer_Lock(This->hwbuf,
+				     lplpaudioptr1, audiobytes1,
+				     lplpaudioptr2, audiobytes2,
+				     writecursor, writebytes,
+				     0);
+	} else
 	if (writecursor+writebytes <= This->buflen) {
 		*(LPBYTE*)lplpaudioptr1 = This->buffer+writecursor;
 		*audiobytes1 = writebytes;
@@ -1184,8 +1410,6 @@ static HRESULT WINAPI IDirectSoundBufferImpl_Lock(
 			*audiobytes2 = writebytes-(This->buflen-writecursor);
 		TRACE("->%ld.%ld\n",*audiobytes1,audiobytes2?*audiobytes2:0);
 	}
-	/* No. See file:///cdrom/sdk52/docs/worddoc/dsound.doc page 21 */
-	/* This->writepos=(writecursor+writebytes)%This->buflen; */
 	return DS_OK;
 }
 
@@ -1198,7 +1422,9 @@ static HRESULT WINAPI IDirectSoundBufferImpl_SetCurrentPosition(
 	/* **** */
 	EnterCriticalSection(&(This->lock));
 
-	This->playpos = newpos;
+	This->mixpos = newpos;
+	if (This->hwbuf)
+		IDsDriverBuffer_SetPosition(This->hwbuf, This->mixpos);
 
 	LeaveCriticalSection(&(This->lock));
 	/* **** */
@@ -1210,7 +1436,6 @@ static HRESULT WINAPI IDirectSoundBufferImpl_SetPan(
 	LPDIRECTSOUNDBUFFER iface,LONG pan
 ) {
 	ICOM_THIS(IDirectSoundBufferImpl,iface);
-	double	temp;
 
 	TRACE("(%p,%ld)\n",This,pan);
 
@@ -1227,12 +1452,13 @@ static HRESULT WINAPI IDirectSoundBufferImpl_SetPan(
 	/* **** */
 	EnterCriticalSection(&(This->lock));
 
-	This->pan = pan;
-	
-	temp = (double) (This->volume - (This->pan > 0 ? This->pan : 0));
-	This->lVolAdjust = (ULONG) (pow(2.0, temp / 600.0) * 32768.0);
-	temp = (double) (This->volume + (This->pan < 0 ? This->pan : 0));
-	This->rVolAdjust = (ULONG) (pow(2.0, temp / 600.0) * 32768.0);
+	This->volpan.lPan = pan;
+
+	DSOUND_RecalcVolPan(&(This->volpan));
+
+	if (This->hwbuf) {
+		IDsDriverBuffer_SetVolumePan(This->hwbuf, &(This->volpan));
+	}
 
 	LeaveCriticalSection(&(This->lock));
 	/* **** */
@@ -1249,7 +1475,7 @@ static HRESULT WINAPI IDirectSoundBufferImpl_GetPan(
 	if (pan == NULL)
 		return DSERR_INVALIDPARAM;
 
-	*pan = This->pan;
+	*pan = This->volpan.lPan;
 
 	return DS_OK;
 }
@@ -1258,21 +1484,25 @@ static HRESULT WINAPI IDirectSoundBufferImpl_Unlock(
 	LPDIRECTSOUNDBUFFER iface,LPVOID p1,DWORD x1,LPVOID p2,DWORD x2
 ) {
 	ICOM_THIS(IDirectSoundBufferImpl,iface);
+	DWORD capf;
+
 	TRACE("(%p,%p,%ld,%p,%ld):stub\n", This,p1,x1,p2,x2);
 
-	/* There is really nothing to do here. Should someone */
-	/* choose to implement static buffers in hardware (by */
-	/* using a wave table synth, for example) this is where */
-	/* you'd want to do the loading. For software buffers, */
-	/* which is what we currently use, we need do nothing. */
-
 #if 0
-	/* It's also the place to pre-process 3D buffers... */
-	
+	/* Preprocess 3D buffers... */
+
 	/* This is highly experimental and liable to break things */
 	if (This->dsbd.dwFlags & DSBCAPS_CTRL3D)
 		DSOUND_Create3DBuffer(This);
 #endif
+
+	if (This->dsbd.dwFlags & DSBCAPS_PRIMARYBUFFER)
+		capf = DSDDESC_DONTNEEDPRIMARYLOCK;
+	else
+		capf = DSDDESC_DONTNEEDSECONDARYLOCK;
+	if (!(This->dsound->drvdesc.dwFlags & capf) && This->hwbuf) {
+		IDsDriverBuffer_Unlock(This->hwbuf, p1, x1, p2, x2);
+	}
 
 	return DS_OK;
 }
@@ -1314,14 +1544,19 @@ static HRESULT WINAPI IDirectSoundBufferImpl_GetCaps(
 	/* Inside DirectX, p215. That should apply here, too. */
 	caps->dwSize = sizeof(*caps);
 
-	caps->dwFlags = This->dsbd.dwFlags | DSBCAPS_LOCSOFTWARE;
+	caps->dwFlags = This->dsbd.dwFlags;
+	if (This->hwbuf) caps->dwFlags |= DSBCAPS_LOCHARDWARE;
+	else caps->dwFlags |= DSBCAPS_LOCSOFTWARE;
+
 	caps->dwBufferBytes = This->dsbd.dwBufferBytes;
+
 	/* This value represents the speed of the "unlock" command.
 	   As unlock is quite fast (it does not do anything), I put
 	   4096 ko/s = 4 Mo / s */
+	/* FIXME: hwbuf speed */
 	caps->dwUnlockTransferRate = 4096;
 	caps->dwPlayCpuOverhead = 0;
-	
+
 	return DS_OK;
 }
 
@@ -1486,6 +1721,7 @@ static HRESULT WINAPI IDirectSoundImpl_CreateSoundBuffer(
 	ICOM_THIS(IDirectSoundImpl,iface);
 	IDirectSoundBufferImpl** ippdsb=(IDirectSoundBufferImpl**)ppdsb;
 	LPWAVEFORMATEX	wfex;
+	HRESULT err = DS_OK;
 
 	TRACE("(%p,%p,%p,%p)\n",This,dsbd,ippdsb,lpunk);
 	
@@ -1516,39 +1752,87 @@ static HRESULT WINAPI IDirectSoundImpl_CreateSoundBuffer(
 			*ippdsb = primarybuf;
 			primarybuf->dsbd.dwFlags = dsbd->dwFlags;
 			return DS_OK;
-		} /* Else create primarybuf */
+		} /* Else create primary buffer */
 	}
 
 	*ippdsb = (IDirectSoundBufferImpl*)HeapAlloc(GetProcessHeap(),HEAP_ZERO_MEMORY,sizeof(IDirectSoundBufferImpl));
 	if (*ippdsb == NULL)
 		return DSERR_OUTOFMEMORY;
+	ICOM_VTBL(*ippdsb) = &dsbvt;
 	(*ippdsb)->ref = 1;
+	(*ippdsb)->dsound = This;
+	(*ippdsb)->parent = NULL;
+	(*ippdsb)->buffer = NULL;
+
+	memcpy(&((*ippdsb)->dsbd),dsbd,sizeof(*dsbd));
+	if (dsbd->lpwfxFormat)
+		memcpy(&((*ippdsb)->wfx), dsbd->lpwfxFormat, sizeof((*ippdsb)->wfx));
 
 	TRACE("Created buffer at %p\n", *ippdsb);
 
 	if (dsbd->dwFlags & DSBCAPS_PRIMARYBUFFER) {
 		(*ippdsb)->buflen = dsound->wfx.nAvgBytesPerSec;
 		(*ippdsb)->freq = dsound->wfx.nSamplesPerSec;
+
+		/* FIXME: verify that hardware capabilities (DSCAPS_PRIMARY flags) match */
+
+		if (This->driver) {
+			err = IDsDriver_CreateSoundBuffer(This->driver,wfex,dsbd->dwFlags,0,
+							  &((*ippdsb)->buflen),&((*ippdsb)->buffer),
+							  (LPVOID*)&((*ippdsb)->hwbuf));
+		}
+		if (err == DS_OK)
+			err = DSOUND_PrimaryOpen(*ippdsb);
 	} else {
+		DWORD capf = 0;
+		int use_hw;
+
 		(*ippdsb)->buflen = dsbd->dwBufferBytes;
 		(*ippdsb)->freq = dsbd->lpwfxFormat->nSamplesPerSec;
+
+		/* Check necessary hardware mixing capabilities */
+		if (wfex->nChannels==2) capf |= DSCAPS_SECONDARYSTEREO;
+		else capf |= DSCAPS_SECONDARYMONO;
+		if (wfex->wBitsPerSample==16) capf |= DSCAPS_SECONDARY16BIT;
+		else capf |= DSCAPS_SECONDARY8BIT;
+		use_hw = (This->drvcaps.dwFlags & capf) == capf;
+
+		/* FIXME: check hardware sample rate mixing capabilities */
+		/* FIXME: check app hints for software/hardware buffer (STATIC, LOCHARDWARE, etc) */
+		/* FIXME: check whether any hardware buffers are left */
+		/* FIXME: handle DSDHEAP_CREATEHEAP for hardware buffers */
+
+		/* Allocate system memory if applicable */
+		if ((This->drvdesc.dwFlags & DSDDESC_USESYSTEMMEMORY) || !use_hw) {
+			(*ippdsb)->buffer = (LPBYTE)HeapAlloc(GetProcessHeap(),0,(*ippdsb)->buflen);
+			if ((*ippdsb)->buffer == NULL)
+				err = DSERR_OUTOFMEMORY;
+		}
+
+		/* Allocate the hardware buffer */
+		if (use_hw && (err == DS_OK)) {
+			err = IDsDriver_CreateSoundBuffer(This->driver,wfex,dsbd->dwFlags,0,
+							  &((*ippdsb)->buflen),&((*ippdsb)->buffer),
+							  (LPVOID*)&((*ippdsb)->hwbuf));
+		}
 	}
-	(*ippdsb)->buffer = (LPBYTE)HeapAlloc(GetProcessHeap(),0,(*ippdsb)->buflen);
-	if ((*ippdsb)->buffer == NULL) {
+
+	if (err != DS_OK) {
+		if ((*ippdsb)->buffer)
+			HeapFree(GetProcessHeap(),0,(*ippdsb)->buffer);
 		HeapFree(GetProcessHeap(),0,(*ippdsb));
 		*ippdsb = NULL;
-		return DSERR_OUTOFMEMORY;
+		return err;
 	}
+	/* calculate fragment size and write lead */
+	DSOUND_RecalcFormat(*ippdsb);
+
 	/* It's not necessary to initialize values to zero since */
 	/* we allocated this structure with HEAP_ZERO_MEMORY... */
 	(*ippdsb)->playpos = 0;
-	(*ippdsb)->writepos = 0;
-	(*ippdsb)->parent = NULL;
-	ICOM_VTBL(*ippdsb) = &dsbvt;
-	(*ippdsb)->dsound = This;
-	(*ippdsb)->playing = 0;
-	(*ippdsb)->lVolAdjust = (1 << 15);
-	(*ippdsb)->rVolAdjust = (1 << 15);
+	(*ippdsb)->mixpos = 0;
+	(*ippdsb)->state = STATE_STOPPED;
+	DSOUND_RecalcVolPan(&((*ippdsb)->volpan));
 
 	if (!(dsbd->dwFlags & DSBCAPS_PRIMARYBUFFER)) {
 		(*ippdsb)->freqAdjust = ((*ippdsb)->freq << DSOUND_FREQSHIFT) /
@@ -1556,8 +1840,6 @@ static HRESULT WINAPI IDirectSoundImpl_CreateSoundBuffer(
 		(*ippdsb)->nAvgBytesPerSec = (*ippdsb)->freq *
 			dsbd->lpwfxFormat->nBlockAlign;
 	}
-
-	memcpy(&((*ippdsb)->dsbd),dsbd,sizeof(*dsbd));
 
 	EnterCriticalSection(&(This->lock));
 	/* register buffer */
@@ -1569,9 +1851,6 @@ static HRESULT WINAPI IDirectSoundImpl_CreateSoundBuffer(
 	LeaveCriticalSection(&(This->lock));
 
 	IDirectSound_AddRef(iface);
-
-	if (dsbd->lpwfxFormat)
-		memcpy(&((*ippdsb)->wfx), dsbd->lpwfxFormat, sizeof((*ippdsb)->wfx));
 
 	InitializeCriticalSection(&((*ippdsb)->lock));
 	
@@ -1626,13 +1905,17 @@ static HRESULT WINAPI IDirectSoundImpl_DuplicateSoundBuffer(
 	IDirectSoundBufferImpl** ippdsb=(IDirectSoundBufferImpl**)ppdsb;
 	TRACE("(%p,%p,%p)\n",This,ipdsb,ippdsb);
 
+	if (ipdsb->hwbuf) {
+		FIXME("need to duplicate hardware buffer\n");
+	}
+
 	*ippdsb = (IDirectSoundBufferImpl*)HeapAlloc(GetProcessHeap(),HEAP_ZERO_MEMORY,sizeof(IDirectSoundBufferImpl));
 
 	IDirectSoundBuffer_AddRef(pdsb);
 	memcpy(*ippdsb, ipdsb, sizeof(IDirectSoundBufferImpl));
 	(*ippdsb)->ref = 1;
 	(*ippdsb)->playpos = 0;
-	(*ippdsb)->writepos = 0;
+	(*ippdsb)->mixpos = 0;
 	(*ippdsb)->dsound = This;
 	(*ippdsb)->parent = ipdsb;
 	memcpy(&((*ippdsb)->wfx), &(ipdsb->wfx), sizeof((*ippdsb)->wfx));
@@ -1658,13 +1941,9 @@ static HRESULT WINAPI IDirectSoundImpl_GetCaps(LPDIRECTSOUND iface,LPDSCAPS caps
 	/* We should check this value, not set it. See Inside DirectX, p215. */
 	caps->dwSize = sizeof(*caps);
 
-	caps->dwFlags =
-		DSCAPS_PRIMARYSTEREO |
-		DSCAPS_PRIMARY16BIT |
-		DSCAPS_SECONDARYSTEREO |
-		DSCAPS_SECONDARY16BIT |
-		DSCAPS_CONTINUOUSRATE;
-	/* FIXME: query OSS */
+	caps->dwFlags = This->drvcaps.dwFlags;
+
+	/* FIXME: copy caps from This->drvcaps */
 	caps->dwMinSecondarySampleRate		= DSBFREQUENCY_MIN;
 	caps->dwMaxSecondarySampleRate		= DSBFREQUENCY_MAX;
 
@@ -1709,7 +1988,9 @@ static ULONG WINAPI IDirectSoundImpl_Release(LPDIRECTSOUND iface) {
 	TRACE("(%p), ref was %ld\n",This,This->ref);
 	if (!--(This->ref)) {
 		UINT i;
-		DSOUND_CloseAudio();
+
+		timeKillEvent(This->timerID);
+		timeEndPeriod(DS_TIME_RES);
 
 		IDirectSoundBuffer_Release((LPDIRECTSOUNDBUFFER)primarybuf);
 
@@ -1722,6 +2003,19 @@ static ULONG WINAPI IDirectSoundImpl_Release(LPDIRECTSOUND iface) {
 			IDirectSoundBuffer_Release((LPDIRECTSOUNDBUFFER)This->primary);
 
 		DeleteCriticalSection(&This->lock);
+		if (This->driver) {
+			IDsDriver_Close(This->driver);
+		} else {
+			unsigned c;
+			for (c=0; c<DS_HEL_FRAGS; c++)
+				HeapFree(GetProcessHeap(),0,This->pwave[c]);
+		}
+		if (This->drvdesc.dwFlags & DSDDESC_DOMMSYSTEMOPEN) {
+			waveOutClose(This->hwo);
+		}
+		if (This->driver)
+			IDsDriver_Release(This->driver);
+
 		HeapFree(GetProcessHeap(),0,This);
 		dsound = NULL;
 		return 0;
@@ -1829,62 +2123,6 @@ static ICOM_VTABLE(IDirectSound) dsvt =
 };
 
 
-/* See http://www.opensound.com/pguide/audio.html for more details */
-
-static int
-DSOUND_setformat(LPWAVEFORMATEX wfex) {
-	int	xx,channels,speed,format,nformat;
-
-	if (!audioOK) {
-		TRACE("(%p) deferred\n", wfex);
-		return 0;
-	}
-	switch (wfex->wFormatTag) {
-	default:
-		WARN("unknown WAVE_FORMAT tag %d\n",wfex->wFormatTag);
-		return DSERR_BADFORMAT;
-	case WAVE_FORMAT_PCM:
-		break;
-	}
-	if (wfex->wBitsPerSample==8)
-		format = AFMT_U8;
-	else
-		format = AFMT_S16_LE;
-
-	if (-1==ioctl(audiofd,SNDCTL_DSP_GETFMTS,&xx)) {
-		perror("ioctl SNDCTL_DSP_GETFMTS");
-		return -1;
-	}
-	if ((xx&format)!=format) {/* format unsupported */
-		FIXME("SNDCTL_DSP_GETFMTS: format not supported\n"); 
-		return -1;
-	}
-	nformat = format;
-	if (-1==ioctl(audiofd,SNDCTL_DSP_SETFMT,&nformat)) {
-		perror("ioctl SNDCTL_DSP_SETFMT");
-		return -1;
-	}
-	if (nformat!=format) {/* didn't work */
-		FIXME("SNDCTL_DSP_GETFMTS: format not set\n"); 
-		return -1;
-	}
-
-	channels = wfex->nChannels-1;
-	if (-1==ioctl(audiofd,SNDCTL_DSP_STEREO,&channels)) {
-		perror("ioctl SNDCTL_DSP_STEREO");
-		return -1;
-	}
-	speed = wfex->nSamplesPerSec;
-	if (-1==ioctl(audiofd,SNDCTL_DSP_SPEED,&speed)) {
-		perror("ioctl SNDCTL_DSP_SPEED");
-		return -1;
-	}
-	TRACE("(freq=%ld,channels=%d,bits=%d)\n",
-		wfex->nSamplesPerSec,wfex->nChannels,wfex->wBitsPerSample
-	);
-	return 0;
-}
-
 static void DSOUND_CheckEvent(IDirectSoundBufferImpl *dsb, int len)
 {
 	int			i;
@@ -1907,7 +2145,7 @@ static void DSOUND_CheckEvent(IDirectSoundBufferImpl *dsb, int len)
 		/* This also means we can't sort the entries by offset, */
 		/* because DSBPN_OFFSETSTOP == -1 */
 		if (offset == DSBPN_OFFSETSTOP) {
-			if (dsb->playing == 0) {
+			if (dsb->state == STATE_STOPPED) {
 				SetEvent(event->hEventNotify);
 				TRACE("signalled event %d (%d)\n", event->hEventNotify, i);
 				return;
@@ -2027,15 +2265,15 @@ static INT DSOUND_MixerNorm(IDirectSoundBufferImpl *dsb, BYTE *buf, INT len)
 	INT	iAdvance = dsb->wfx.nBlockAlign;
 	INT	oAdvance = primarybuf->wfx.nBlockAlign;
 
-	ibp = dsb->buffer + dsb->playpos;
+	ibp = dsb->buffer + dsb->mixpos;
 	obp = buf;
 
-	TRACE("(%p, %p, %p), playpos=%8.8lx\n", dsb, ibp, obp, dsb->playpos);
+	TRACE("(%p, %p, %p), mixpos=%8.8lx\n", dsb, ibp, obp, dsb->mixpos);
 	/* Check for the best case */
 	if ((dsb->freq == primarybuf->wfx.nSamplesPerSec) &&
 	    (dsb->wfx.wBitsPerSample == primarybuf->wfx.wBitsPerSample) &&
 	    (dsb->wfx.nChannels == primarybuf->wfx.nChannels)) {
-	        DWORD bytesleft = dsb->buflen - dsb->playpos;
+	        DWORD bytesleft = dsb->buflen - dsb->mixpos;
 		TRACE("(%p) Best case\n", dsb);
 	    	if (len <= bytesleft )
 			memcpy(obp, ibp, len);
@@ -2075,7 +2313,7 @@ static INT DSOUND_MixerNorm(IDirectSoundBufferImpl *dsb, BYTE *buf, INT len)
 	ilen = ((size * dsb->freqAdjust) >> DSOUND_FREQSHIFT) * iAdvance;
 	for (i = 0; i < size; i++) {
 
-		ipos = (((i * dsb->freqAdjust) >> DSOUND_FREQSHIFT) * iAdvance) + dsb->playpos;
+		ipos = (((i * dsb->freqAdjust) >> DSOUND_FREQSHIFT) * iAdvance) + dsb->mixpos;
 
 		if (ipos >= dsb->buflen)
 			ipos %= dsb->buflen;	/* wrap */
@@ -2094,9 +2332,9 @@ static void DSOUND_MixerVol(IDirectSoundBufferImpl *dsb, BYTE *buf, INT len)
 	INT16	*bps = (INT16 *) buf;
 	
 	TRACE("(%p) left = %lx, right = %lx\n", dsb,
-		dsb->lVolAdjust, dsb->rVolAdjust);
-	if ((!(dsb->dsbd.dwFlags & DSBCAPS_CTRLPAN) || (dsb->pan == 0)) &&
-	    (!(dsb->dsbd.dwFlags & DSBCAPS_CTRLVOLUME) || (dsb->volume == 0)) &&
+		dsb->volpan.dwTotalLeftAmpFactor, dsb->volpan.dwTotalRightAmpFactor);
+	if ((!(dsb->dsbd.dwFlags & DSBCAPS_CTRLPAN) || (dsb->volpan.lPan == 0)) &&
+	    (!(dsb->dsbd.dwFlags & DSBCAPS_CTRLVOLUME) || (dsb->volpan.lVolume == 0)) &&
 	    !(dsb->dsbd.dwFlags & DSBCAPS_CTRL3D))
 		return;		/* Nothing to do */
 
@@ -2113,14 +2351,14 @@ static void DSOUND_MixerVol(IDirectSoundBufferImpl *dsb, BYTE *buf, INT len)
 			/* 8-bit WAV is unsigned, but we need to operate */
 			/* on signed data for this to work properly */
 			val = *bpc - 128;
-			val = ((val * (i & inc ? dsb->rVolAdjust : dsb->lVolAdjust)) >> 15);
+			val = ((val * (i & inc ? dsb->volpan.dwTotalRightAmpFactor : dsb->volpan.dwTotalLeftAmpFactor)) >> 16);
 			*bpc = val + 128;
 			bpc++;
 			break;
 		case 2:
 			/* 16-bit WAV is signed -- much better */
 			val = *bps;
-			val = ((val * ((i & inc) ? dsb->rVolAdjust : dsb->lVolAdjust)) >> 15);
+			val = ((val * ((i & inc) ? dsb->volpan.dwTotalRightAmpFactor : dsb->volpan.dwTotalLeftAmpFactor)) >> 16);
 			*bps = val;
 			bps++;
 			break;
@@ -2135,25 +2373,25 @@ static void DSOUND_MixerVol(IDirectSoundBufferImpl *dsb, BYTE *buf, INT len)
 static void DSOUND_Mixer3D(IDirectSoundBufferImpl *dsb, BYTE *buf, INT len)
 {
 	BYTE	*ibp, *obp;
-	DWORD	buflen, playpos;
+	DWORD	buflen, mixpos;
 
 	buflen = dsb->ds3db->buflen;
-	playpos = (dsb->playpos * primarybuf->wfx.nBlockAlign) / dsb->wfx.nBlockAlign;
-	ibp = dsb->ds3db->buffer + playpos;
+	mixpos = (dsb->mixpos * primarybuf->wfx.nBlockAlign) / dsb->wfx.nBlockAlign;
+	ibp = dsb->ds3db->buffer + mixpos;
 	obp = buf;
 
-	if (playpos > buflen) {
+	if (mixpos > buflen) {
 		FIXME("Major breakage");
 		return;
 	}
 
-	if (len <= (playpos + buflen))
+	if (len <= (mixpos + buflen))
 		memcpy(obp, ibp, len);
 	else { /* wrap */
-		memcpy(obp, ibp, buflen - playpos);
-		memcpy(obp + (buflen - playpos),
+		memcpy(obp, ibp, buflen - mixpos);
+		memcpy(obp + (buflen - mixpos),
 		    dsb->buffer,
-		    len - (buflen - playpos));
+		    len - (buflen - mixpos));
 	}
 	return;
 }
@@ -2175,18 +2413,18 @@ static void *DSOUND_tmpbuffer(size_t len)
   return tmp_buffer;
 }
 
-static DWORD DSOUND_MixInBuffer(IDirectSoundBufferImpl *dsb)
+static DWORD DSOUND_MixInBuffer(IDirectSoundBufferImpl *dsb, DWORD writepos)
 {
 	INT	i, len, ilen, temp, field;
 	INT	advance = primarybuf->wfx.wBitsPerSample >> 3;
 	BYTE	*buf, *ibuf, *obuf;
 	INT16	*ibufs, *obufs;
 
-	len = DSOUND_FRAGLEN;			/* The most we will use */
+	len = dsound->fraglen;
 	if (!(dsb->playflags & DSBPLAY_LOOPING)) {
 		temp = MulDiv(primarybuf->wfx.nAvgBytesPerSec, dsb->buflen,
 			dsb->nAvgBytesPerSec) -
-		       MulDiv(primarybuf->wfx.nAvgBytesPerSec, dsb->playpos,
+		       MulDiv(primarybuf->wfx.nAvgBytesPerSec, dsb->mixpos,
 			dsb->nAvgBytesPerSec);
 		len = (len > temp) ? temp : len;
 	}
@@ -2196,11 +2434,11 @@ static DWORD DSOUND_MixInBuffer(IDirectSoundBufferImpl *dsb)
 		/* This should only happen if we aren't looping and temp < 4 */
 
 		/* We skip the remainder, so check for possible events */
-		DSOUND_CheckEvent(dsb, dsb->buflen - dsb->playpos);
+		DSOUND_CheckEvent(dsb, dsb->buflen - dsb->mixpos);
 		/* Stop */
-		dsb->playing = 0;
-		dsb->writepos = 0;
+		dsb->state = STATE_STOPPED;
 		dsb->playpos = 0;
+		dsb->mixpos = 0;
 		/* Check for DSBPN_OFFSETSTOP */
 		DSOUND_CheckEvent(dsb, 0);
 		return 0;
@@ -2211,14 +2449,14 @@ static DWORD DSOUND_MixInBuffer(IDirectSoundBufferImpl *dsb)
 	if ((buf = ibuf = (BYTE *) DSOUND_tmpbuffer(len)) == NULL)
 		return 0;
 
-	TRACE("MixInBuffer (%p) len = %d\n", dsb, len);
+	TRACE("MixInBuffer (%p) len = %d, dest = %ld\n", dsb, len, writepos);
 
 	ilen = DSOUND_MixerNorm(dsb, ibuf, len);
 	if ((dsb->dsbd.dwFlags & DSBCAPS_CTRLPAN) ||
 	    (dsb->dsbd.dwFlags & DSBCAPS_CTRLVOLUME))
 		DSOUND_MixerVol(dsb, ibuf, len);
 
-	obuf = primarybuf->buffer + primarybuf->playpos;
+	obuf = primarybuf->buffer + writepos;
 	for (i = 0; i < len; i += advance) {
 		obufs = (INT16 *) obuf;
 		ibufs = (INT16 *) ibuf;
@@ -2247,26 +2485,32 @@ static DWORD DSOUND_MixInBuffer(IDirectSoundBufferImpl *dsb)
 	if (dsb->dsbd.dwFlags & DSBCAPS_CTRLPOSITIONNOTIFY)
 		DSOUND_CheckEvent(dsb, ilen);
 
-	dsb->playpos += ilen;
-	dsb->writepos = dsb->playpos + ilen;
+	dsb->mixpos += ilen;
+	/* dsb->writepos = dsb->playpos + ilen; */
 	
-	if (dsb->playpos >= dsb->buflen) {
+	if (dsb->mixpos >= dsb->buflen) {
 		if (!(dsb->playflags & DSBPLAY_LOOPING)) {
-			dsb->playing = 0;
-			dsb->writepos = 0;
+			dsb->state = STATE_STOPPED;
 			dsb->playpos = 0;
+			dsb->mixpos = 0;
 			DSOUND_CheckEvent(dsb, 0);		/* For DSBPN_OFFSETSTOP */
-		} else
-			dsb->playpos %= dsb->buflen;		/* wrap */
+		} else {
+			dsb->mixpos %= dsb->buflen;		/* wrap */
+			/* HACK... leadin should be reset when the PLAY position reaches the wrap,
+			 * not the MIX position... but if the sound buffer is bigger than our prebuffering
+			 * (which must be the case for the streaming buffers that need this hack anyway)
+			 * plus DS_HEL_MARGIN or equivalent, then this ought to work anyway. */
+			dsb->leadin = FALSE;
+		}
 	}
 	
-	if (dsb->writepos >= dsb->buflen)
-		dsb->writepos %= dsb->buflen;
+	/* if (dsb->writepos >= dsb->buflen)
+		dsb->writepos %= dsb->buflen; */
 
 	return len;
 }
 
-static DWORD WINAPI DSOUND_MixPrimary(void)
+static DWORD WINAPI DSOUND_MixPrimary(DWORD writepos, BOOL starting)
 {
 	INT			i, len, maxlen = 0;
 	IDirectSoundBufferImpl	*dsb;
@@ -2277,10 +2521,15 @@ static DWORD WINAPI DSOUND_MixPrimary(void)
 		if (!dsb || !(ICOM_VTBL(dsb)))
 			continue;
 		IDirectSoundBuffer_AddRef((LPDIRECTSOUNDBUFFER)dsb);
- 		if (dsb->buflen && dsb->playing) {
+ 		if (dsb->buflen && dsb->state && !(starting && (dsb->state != STATE_STARTING))) {
 			EnterCriticalSection(&(dsb->lock));
-			len = DSOUND_MixInBuffer(dsb);
-			maxlen = len > maxlen ? len : maxlen;
+			if (dsb->state == STATE_STOPPING) {
+				/* FIXME: perhaps attempt to remove the buffer from the prebuffer */
+				dsb->state = STATE_STOPPED;
+			} else {
+				len = DSOUND_MixInBuffer(dsb, writepos);
+				maxlen = len > maxlen ? len : maxlen;
+			}
 			LeaveCriticalSection(&(dsb->lock));
 		}
 		IDirectSoundBuffer_Release((LPDIRECTSOUNDBUFFER)dsb);
@@ -2289,195 +2538,127 @@ static DWORD WINAPI DSOUND_MixPrimary(void)
 	return maxlen;
 }
 
-static int DSOUND_OpenAudio(void)
+static void WINAPI DSOUND_MarkPlaying(void)
 {
-	int	audioFragment,flags;
+	INT			i;
+	IDirectSoundBufferImpl	*dsb;
 
-	if (primarybuf == NULL)
-		return DSERR_OUTOFMEMORY;
+	for (i = dsound->nrofbuffers - 1; i >= 0; i--) {
+		dsb = dsound->buffers[i];
 
-	while (audiofd >= 0)
+		if (!dsb || !(ICOM_VTBL(dsb)))
+			continue;
+ 		if (dsb->buflen && (dsb->state == STATE_STARTING))
+ 			dsb->state = STATE_PLAYING;
+	}
+}
 
-		sleep(5);
-	/* we will most likely not get one, avoid excessive opens ... */
-	if (audiofd == -ENODEV)
-		return -1;
-	audiofd = open("/dev/audio",O_WRONLY|O_NDELAY);
-	if (audiofd==-1) {
-		/* Don't worry if sound is busy at the moment */
-		if ((errno != EBUSY) && (errno != ENODEV))
-			perror("open /dev/audio");
-		audiofd = -errno;
-		return -1; /* -1 */
+static void CALLBACK DSOUND_timer(UINT timerID, UINT msg, DWORD dwUser, DWORD dw1, DWORD dw2)
+{
+	DWORD len;
+	int nfiller;
+
+	if (!dsound || !primarybuf) {
+		ERR("dsound died without killing us?\n");
+		timeKillEvent(timerID);
+		timeEndPeriod(DS_TIME_RES);
+		return;
 	}
 
-	/* We should probably do something here if SETFRAGMENT fails... */
-	audioFragment=0x0002000c;
-	if (-1==ioctl(audiofd,SNDCTL_DSP_SETFRAGMENT,&audioFragment))
-		perror("ioctl SETFRAGMENT");
-	
-	if ((flags = fcntl(audiofd,F_GETFL,0)) != -1) {
-	    flags &= ~O_NDELAY;
-	    if (-1==fcntl(audiofd,F_SETFL,flags))
-		perror("clearing the non-blocking flags in DSOUND_OpenAudio");
-	} else 
-	    perror("cannot get flags of audiofd");
+	EnterCriticalSection(&(dsound->lock));
 
-	audioOK = 1;
-	DSOUND_setformat(&(primarybuf->wfx));
+	/* the sound of silence */
+	nfiller = primarybuf->wfx.wBitsPerSample == 8 ? 128 : 0;
 
-	return 0;
-}
-
-static void DSOUND_CloseAudio(void)
-{
-	int	neutral;
-	
-	neutral = primarybuf->wfx.wBitsPerSample == 8 ? 128 : 0;
-	audioOK = 0;	/* race condition */
-	Sleep(5);
-	/* It's possible we've been called with audio closed */
-	/* from SetFormat()... this is just to force a call */
-	/* to OpenAudio() to reset the hardware properly */
-	if (audiofd >= 0)
-		close(audiofd);
-	primarybuf->playpos = 0;
-	primarybuf->writepos = DSOUND_FRAGLEN;
-	memset(primarybuf->buffer, neutral, primarybuf->buflen);
-	audiofd = -1;
-	TRACE("Audio stopped\n");
-}
-	
-static int DSOUND_WriteAudio(char *buf, int len)
-{
-	int	result, left = 0;
-
-	while (left < len) {
-		result = write(audiofd, buf + left, len - left);
-		if (result == -1) {
-			if (errno == EINTR)
-				continue;
-			else
-				return result;
-		}
-		left += result;
-	}
-	return 0;
-}
-
-static void DSOUND_OutputPrimary(int len)
-{
-	int	neutral, flen1, flen2;
-	char	*frag1, *frag2;
-	
-	/* This is a bad place for this. We need to clear the */
-	/* buffer with a neutral value, for unsigned 8-bit WAVE */
-	/* that's 128, for signed 16-bit it's 0 */
-	neutral = primarybuf->wfx.wBitsPerSample == 8 ? 128 : 0;
-	
-	/* **** */
-	EnterCriticalSection(&(primarybuf->lock));
-
-	/* Write out the  */
-	if ((audioOK == 1) || (DSOUND_OpenAudio() == 0)) {
-		if (primarybuf->playpos + len >= primarybuf->buflen) {
-			frag1 = primarybuf->buffer + primarybuf->playpos;
-			flen1 = primarybuf->buflen - primarybuf->playpos;
-			frag2 = primarybuf->buffer;
-			flen2 = len - (primarybuf->buflen - primarybuf->playpos);
-			if (DSOUND_WriteAudio(frag1, flen1) != 0) {
-				perror("DSOUND_WriteAudio");
-				LeaveCriticalSection(&(primarybuf->lock));
-				ExitThread(0);
-			}
-			memset(frag1, neutral, flen1);
-			if (DSOUND_WriteAudio(frag2, flen2) != 0) {
-				perror("DSOUND_WriteAudio");
-				LeaveCriticalSection(&(primarybuf->lock));
-				ExitThread(0);
-			}
-			memset(frag2, neutral, flen2);
-		} else {
-			frag1 = primarybuf->buffer + primarybuf->playpos;
-			flen1 = len;
-			if (DSOUND_WriteAudio(frag1, flen1) != 0) {
-				perror("DSOUND_WriteAudio");
-				LeaveCriticalSection(&(primarybuf->lock));
-				ExitThread(0);
-			}
-			memset(frag1, neutral, flen1);
-		}
+	if (primarybuf->hwbuf) {
+		DWORD playpos, writepos;
+		IDsDriverBuffer_GetPosition(primarybuf->hwbuf, &playpos, &writepos);
+		/* Well, we *could* do Just-In-Time mixing using the writepos,
+		 * but that's a little bit ambitious and unnecessary...
+		 * let's stick with the fraglen */
+		/* FIXME: do something clever */
 	} else {
-		/* Can't play audio at the moment -- we need to sleep */
-		/* to make up for the time we'd be blocked in write() */
-		/* to /dev/audio */
-		Sleep(60);
-	}
-	primarybuf->playpos += len;
-	if (primarybuf->playpos >= primarybuf->buflen)
-		primarybuf->playpos %= primarybuf->buflen;
-	primarybuf->writepos = primarybuf->playpos + DSOUND_FRAGLEN;
-	if (primarybuf->writepos >= primarybuf->buflen)
-		primarybuf->writepos %= primarybuf->buflen;
-
-	LeaveCriticalSection(&(primarybuf->lock));
-	/* **** */
-}
-
-static DWORD WINAPI DSOUND_thread(LPVOID arg)
-{
-	int	len;
-
-	TRACE("dsound is at pid %d\n",getpid());
-	while (1) {
-		if (!dsound) {
-			WARN("DSOUND thread giving up.\n");
-			ExitThread(0);
+		/* using waveOut stuff */
+		/* if no buffers are playing, we should be in pause mode now */
+		BOOL in_pause = !dsound->pwqueue;
+		DWORD writepos;
+		/* clean out completed fragments */
+		while (dsound->pwqueue && (dsound->pwave[dsound->pwplay]->dwFlags & WHDR_DONE)) {
+			if (dsound->priolevel != DSSCL_WRITEPRIMARY) {
+				DWORD pos = dsound->pwplay * dsound->fraglen;
+				TRACE("done playing primary pos=%ld\n",pos);
+				memset(primarybuf->buffer + pos, nfiller, dsound->fraglen);
+			}
+			dsound->pwplay++;
+			if (dsound->pwplay >= DS_HEL_FRAGS) dsound->pwplay = 0;
+			dsound->pwqueue--;
 		}
-#if 0
-		/* EP: since the thread creating this thread can
-		 * die before the end of the DSOUND one, this
-		 * test is of no use
-		 * What shall be tested is whether the DSOUND thread 
-		 * is the last one in the process
-		 */
-		if (getppid()==1) {
-			WARN("DSOUND father died? Giving up.\n");
-			ExitThread(0);
+		primarybuf->playpos = dsound->pwplay * dsound->fraglen;
+		TRACE("primary playpos=%ld, mixpos=%ld\n",primarybuf->playpos,primarybuf->mixpos);
+		if (!(in_pause || dsound->pwqueue)) {
+			/* this is either an underrun or we have nothing more to play...
+			 * since playback has already stopped now, we can enter pause mode,
+			 * in order to allow buffers to refill */
+			 waveOutPause(dsound->hwo);
+			 in_pause = TRUE;
 		}
-#endif
- 		/* RACE: dsound could be deleted */
-		EnterCriticalSection(&(dsound->lock));
-		if (primarybuf == NULL) {
-			/* Should never happen */
-			WARN("Lost the primary buffer!\n");
-			IDirectSound_Release((LPDIRECTSOUND)dsound);
-			ExitThread(0);
-		}
+
+		/* find next write position, plus some extra margin */
+		writepos = primarybuf->playpos + DS_HEL_MARGIN * dsound->fraglen;
+		while (writepos >= primarybuf->buflen) writepos -= primarybuf->buflen;
 
 		EnterCriticalSection(&(primarybuf->lock));
+		if (primarybuf->state == STATE_STARTING)
+			primarybuf->state = STATE_PLAYING;
+		/* see if some new buffers have been started that we want to merge into our prebuffer;
+		 * this should minimize latency even when we have a large prebuffer */
+		if (dsound->priolevel != DSSCL_WRITEPRIMARY) {
+			if (!in_pause) {
+				while (writepos != primarybuf->mixpos) {
+					len = DSOUND_MixPrimary(writepos, TRUE);
+					if (!len) break;
+					writepos += dsound->fraglen;
+					if (writepos >= primarybuf->buflen)
+						writepos -= primarybuf->buflen;
+				}
+			}
+			DSOUND_MarkPlaying();
+		}
 
-		len = DSOUND_MixPrimary();
-
+		/* we want at least DS_HEL_QUEUE fragments in the prebuffer outqueue;
+		 * mix a bunch of fragments now as necessary */
+		while (dsound->pwqueue < DS_HEL_QUEUE) {
+			if (dsound->priolevel != DSSCL_WRITEPRIMARY) {
+				len = DSOUND_MixPrimary(primarybuf->mixpos, FALSE);
+			} else len=0;
+			if (primarybuf->state == STATE_PLAYING)
+				len = dsound->fraglen;
+			/* if we have nothing to play, don't bother to */
+			if (!len) break;
+			if (len < dsound->fraglen) {
+				TRACE("len=%ld is less than fraglen=%ld\n",len,dsound->fraglen);
+			}
+			/* ok, we have something to play */
+			/* advance mix positions */
+			primarybuf->mixpos += dsound->fraglen;
+			if (primarybuf->mixpos >= primarybuf->buflen)
+				primarybuf->mixpos -= primarybuf->buflen;
+			/* output it */
+			waveOutWrite(dsound->hwo, dsound->pwave[dsound->pwwrite], sizeof(WAVEHDR));
+			dsound->pwwrite++;
+			if (dsound->pwwrite >= DS_HEL_FRAGS) dsound->pwwrite = 0;
+			dsound->pwqueue++;
+		}
+		if (primarybuf->state == STATE_STOPPING)
+			primarybuf->state = STATE_STOPPED;
 		LeaveCriticalSection(&(primarybuf->lock));
-		LeaveCriticalSection(&(dsound->lock));
-
-		if (primarybuf->playing)
-			len = DSOUND_FRAGLEN > len ? DSOUND_FRAGLEN : len;
-		if (len) {
-			/* This does all the work */
-			DSOUND_OutputPrimary(len);
-		} else {
-			/* no buffers playing -- close and wait */
-			if (audioOK)
-				DSOUND_CloseAudio();
-			Sleep(100);
+		if (in_pause && dsound->pwqueue) {
+			/* buffers have been filled, restart playback */
+			waveOutRestart(dsound->hwo);
 		}
 	}
-	ExitThread(0);
+	LeaveCriticalSection(&(dsound->lock));
 }
-
-#endif /* HAVE_OSS */
 
 /*******************************************************************************
  *		DirectSoundCreate
@@ -2485,12 +2666,15 @@ static DWORD WINAPI DSOUND_thread(LPVOID arg)
 HRESULT WINAPI DirectSoundCreate(REFGUID lpGUID,LPDIRECTSOUND *ppDS,IUnknown *pUnkOuter )
 {
 	IDirectSoundImpl** ippDS=(IDirectSoundImpl**)ppDS;
+	PIDSDRIVER drv = NULL;
+	WAVEOUTCAPSA wcaps;
+	unsigned wod, wodn;
+	HRESULT err = DS_OK;
+
 	if (lpGUID)
 		TRACE("(%p,%p,%p)\n",lpGUID,ippDS,pUnkOuter);
 	else
 		TRACE("DirectSoundCreate (%p)\n", ippDS);
-
-#ifdef HAVE_OSS
 
 	if (ippDS == NULL)
 		return DSERR_INVALIDPARAM;
@@ -2501,26 +2685,19 @@ HRESULT WINAPI DirectSoundCreate(REFGUID lpGUID,LPDIRECTSOUND *ppDS,IUnknown *pU
 		return DS_OK;
 	}
 
-	/* Check that we actually have audio capabilities */
-	/* If we do, whether it's busy or not, we continue */
-	/* otherwise we return with DSERR_NODRIVER */
+	/* Enumerate WINMM audio devices and find the one we want */
+	wodn = waveOutGetNumDevs();
+	if (!wodn) return DSERR_NODRIVER;
 
-	audiofd = open("/dev/audio",O_WRONLY|O_NDELAY);
-	if (audiofd == -1) {
-		audiofd = -errno;
-		if (errno == ENODEV) {
-			MESSAGE("No sound hardware found, but continuing anyway.\n");
-		} else if (errno == EBUSY) {
-			MESSAGE("Sound device busy, will keep trying.\n");
-		} else {
-			MESSAGE("Unexpected error (%d) while checking for sound support.\n",errno);
-			return DSERR_GENERIC;
-		}
-	} else {
-		close(audiofd);
-		audiofd = -1;
-	}
+	/* FIXME: How do we find the GUID of an audio device? */
+	/* Well, just use the first available device for now... */
+	wod = 0;
+	/* Get output device caps */
+	waveOutGetDevCapsA(wod, &wcaps, sizeof(wcaps));
+	/* 0x810 is a "Wine extension" to get the DSound interface */
+	waveOutMessage(wod, 0x810, (DWORD)&drv, 0);
 
+	/* Allocate memory */
 	*ippDS = (IDirectSoundImpl*)HeapAlloc(GetProcessHeap(),0,sizeof(IDirectSoundImpl));
 	if (*ippDS == NULL)
 		return DSERR_OUTOFMEMORY;
@@ -2528,32 +2705,88 @@ HRESULT WINAPI DirectSoundCreate(REFGUID lpGUID,LPDIRECTSOUND *ppDS,IUnknown *pU
 	ICOM_VTBL(*ippDS)	= &dsvt;
 	(*ippDS)->ref		= 1;
 
+	(*ippDS)->driver	= drv;
+	(*ippDS)->fraglen	= 0;
 	(*ippDS)->priolevel	= DSSCL_NORMAL; 
 	(*ippDS)->nrofbuffers	= 0;
 	(*ippDS)->buffers	= NULL;
 	(*ippDS)->primary	= NULL; 
 	(*ippDS)->listener	= NULL; 
 
-	(*ippDS)->wfx.wFormatTag	= 1;
+	/* Get driver description */
+	if (drv) {
+		IDsDriver_GetDriverDesc(drv,&((*ippDS)->drvdesc));
+	} else {
+		/* if no DirectSound interface available, use WINMM API instead */
+		(*ippDS)->drvdesc.dwFlags = DSDDESC_DOMMSYSTEMOPEN | DSDDESC_DOMMSYSTEMSETFORMAT;
+		(*ippDS)->drvdesc.dnDevNode = wod; /* FIXME? */
+	}
+
+	/* Set default wave format (may need it for waveOutOpen) */
+	(*ippDS)->wfx.wFormatTag	= WAVE_FORMAT_PCM;
 	(*ippDS)->wfx.nChannels		= 2;
 	(*ippDS)->wfx.nSamplesPerSec	= 22050;
 	(*ippDS)->wfx.nAvgBytesPerSec	= 44100;
 	(*ippDS)->wfx.nBlockAlign	= 2;
 	(*ippDS)->wfx.wBitsPerSample	= 8;
 
+	/* If the driver requests being opened through MMSYSTEM
+	 * (which is recommended by the DDK), it is supposed to happen
+	 * before the DirectSound interface is opened */
+	if ((*ippDS)->drvdesc.dwFlags & DSDDESC_DOMMSYSTEMOPEN) {
+		/* FIXME: is this right? */
+		err = mmErr(waveOutOpen(&((*ippDS)->hwo), (*ippDS)->drvdesc.dnDevNode, &((*ippDS)->wfx),
+					0, 0, CALLBACK_NULL));
+	}
+
+	if (drv && (err == DS_OK))
+		err = IDsDriver_Open(drv);
+
+	/* FIXME: do we want to handle a temporarily busy device? */
+	if (err != DS_OK) {
+		HeapFree(GetProcessHeap(),0,*ippDS);
+		*ippDS = NULL;
+		return err;
+	}
+
+	/* the driver is now open, so it's now allowed to call GetCaps */
+	if (drv) {
+		IDsDriver_GetCaps(drv,&((*ippDS)->drvcaps));
+	} else {
+		unsigned c;
+
+		/* FIXME: look at wcaps */
+		(*ippDS)->drvcaps.dwFlags = DSCAPS_EMULDRIVER |
+			DSCAPS_PRIMARY16BIT | DSCAPS_PRIMARYSTEREO | DSCAPS_CONTINUOUSRATE;
+
+		/* Allocate memory for HEL buffer headers */
+		for (c=0; c<DS_HEL_FRAGS; c++) {
+			(*ippDS)->pwave[c] = HeapAlloc(GetProcessHeap(),HEAP_ZERO_MEMORY,sizeof(WAVEHDR));
+			if (!(*ippDS)->pwave[c]) {
+				/* Argh, out of memory */
+				while (c--) {
+					HeapFree(GetProcessHeap(),0,(*ippDS)->pwave[c]);
+					waveOutClose((*ippDS)->hwo);
+					HeapFree(GetProcessHeap(),0,*ippDS);
+					*ippDS = NULL;
+					return DSERR_OUTOFMEMORY;
+				}
+			}
+		}
+		/* Start in pause mode until buffers are filled */
+		waveOutPause((*ippDS)->hwo);
+	}
+
 	InitializeCriticalSection(&((*ippDS)->lock));
 
 	if (!dsound) {
-		HANDLE	hnd;
-		DWORD		xid;
-
 		dsound = (*ippDS);
 		if (primarybuf == NULL) {
 			DSBUFFERDESC	dsbd;
 			HRESULT		hr;
 
 			dsbd.dwSize = sizeof(DSBUFFERDESC);
-			dsbd.dwFlags = DSBCAPS_PRIMARYBUFFER;
+			dsbd.dwFlags = DSBCAPS_PRIMARYBUFFER | DSBCAPS_GETCURRENTPOSITION2;
 			dsbd.dwBufferBytes = 0;
 			dsbd.lpwfxFormat = &(dsound->wfx);
 			hr = IDirectSound_CreateSoundBuffer(*ppDS, &dsbd, (LPDIRECTSOUNDBUFFER*)&primarybuf, NULL);
@@ -2564,14 +2797,11 @@ HRESULT WINAPI DirectSoundCreate(REFGUID lpGUID,LPDIRECTSOUND *ppDS,IUnknown *pU
 			dsound->primary = primarybuf;
 			IDirectSoundBuffer_AddRef((LPDIRECTSOUNDBUFFER)primarybuf);
 		}
-		memset(primarybuf->buffer, 128, primarybuf->buflen);
-		hnd = CreateThread(NULL,0,DSOUND_thread,0,0,&xid);
+		timeBeginPeriod(DS_TIME_RES);
+		dsound->timerID = timeSetEvent(DS_TIME_DEL, DS_TIME_RES, DSOUND_timer,
+					       (DWORD)dsound, TIME_PERIODIC | TIME_CALLBACK_FUNCTION);
 	}
 	return DS_OK;
-#else
-	MessageBoxA(0,"DirectSound needs the Open Sound System Driver, which has not been found by ./configure.","WINE DirectSound",MB_OK|MB_ICONSTOP);
-	return DSERR_NODRIVER;
-#endif
 }
 
 /***************************************************************************

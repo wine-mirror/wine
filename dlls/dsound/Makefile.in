@@ -4,6 +4,7 @@ SRCDIR    = @srcdir@
 VPATH     = @srcdir@
 MODULE    = dsound
 SOVERSION = 1.0
+IMPORTS   = winmm
 
 C_SRCS = \
 	dsound_main.c

@@ -155,7 +155,7 @@ ICOM_DEFINE(IDsDriverBuffer,IUnknown)
 #define IDsDriverBuffer_SetVolumePan(p,a)	ICOM_CALL1(SetVolumePan,p,a)
 #define IDsDriverBuffer_SetPosition(p,a)	ICOM_CALL1(SetPosition,p,a)
 #define IDsDriverBuffer_GetPosition(p,a,b)	ICOM_CALL2(GetPosition,p,a,b)
-#define IDsDriverBuffer_Play(p,a,b,c)		ICOM_CALL2(Play,p,a,b,c)
+#define IDsDriverBuffer_Play(p,a,b,c)		ICOM_CALL3(Play,p,a,b,c)
 #define IDsDriverBuffer_Stop(p)			ICOM_CALL (Stop,p)
 
 /*****************************************************************************
