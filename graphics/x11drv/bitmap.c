@@ -25,6 +25,7 @@ DEFAULT_DEBUG_CHANNEL(x11drv);
   /* GCs used for B&W and color bitmap operations */
 GC BITMAP_monoGC = 0, BITMAP_colorGC = 0;
 
+extern const DC_FUNCTIONS *X11DRV_DC_Funcs;  /* hack */
 
 /***********************************************************************
  *           X11DRV_BITMAP_Init
@@ -157,7 +158,7 @@ BOOL X11DRV_CreateBitmap( HBITMAP hbitmap )
 	GDI_ReleaseObj( hbitmap );
 	return FALSE;
     }
-    bmp->funcs = &X11DRV_DC_Funcs;
+    bmp->funcs = X11DRV_DC_Funcs;
 
     if (bmp->bitmap.bmBits) /* Set bitmap bits */
 	X11DRV_BitmapBits( hbitmap, bmp->bitmap.bmBits,
@@ -480,7 +481,7 @@ HBITMAP X11DRV_BITMAP_CreateBitmapHeaderFromPixmap(Pixmap pixmap)
 
     pBmp = (BITMAPOBJ *)GDI_GetObjPtr( hBmp, BITMAP_MAGIC );
     
-    pBmp->funcs = &X11DRV_DC_Funcs;
+    pBmp->funcs = X11DRV_DC_Funcs;
     pBmp->physBitmap = (void *)pixmap;
     GDI_ReleaseObj( hBmp );
 

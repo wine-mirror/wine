@@ -87,8 +87,6 @@ extern unsigned int X11DRV_server_startticks;
 
 /* Wine driver X11 functions */
 
-extern const DC_FUNCTIONS X11DRV_DC_Funcs;
-
 extern BOOL X11DRV_BitBlt( struct tagDC *dcDst, INT xDst, INT yDst,
                              INT width, INT height, struct tagDC *dcSrc,
                              INT xSrc, INT ySrc, DWORD rop );

@@ -181,6 +181,7 @@ static XpmColorSymbol OBM_BlackAndWhite[2] =
 };
 #endif /* defined(HAVE_LIBXXPM) */
 
+extern const DC_FUNCTIONS *X11DRV_DC_Funcs;  /* hack */
 
 
 /***********************************************************************
@@ -232,7 +233,7 @@ static HBITMAP16 OBM_MakeBitmap( WORD width, WORD height,
     bmpObjPtr->bitmap.bmBits       = NULL;
     bmpObjPtr->dib                 = NULL;
 
-    bmpObjPtr->funcs = &X11DRV_DC_Funcs;
+    bmpObjPtr->funcs = X11DRV_DC_Funcs;
     bmpObjPtr->physBitmap = (void *)pixmap;
 
     GDI_ReleaseObj( hbitmap );

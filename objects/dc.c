@@ -557,8 +557,17 @@ HDC WINAPI CreateDCA( LPCSTR driver, LPCSTR device, LPCSTR output,
     if (!device || !DRIVER_GetDriverName( device, buf, sizeof(buf) ))
         strcpy(buf, driver);
 
-    if (!(funcs = DRIVER_FindDriver( buf ))) return 0;
-    if (!(dc = DC_AllocDC( funcs ))) return 0;
+    if (!(funcs = DRIVER_load_driver( buf )))
+    {
+        ERR( "no driver found for %s\n", buf );
+        return 0;
+    }
+    if (!(dc = DC_AllocDC( funcs )))
+    {
+        DRIVER_release_driver( funcs );
+        return 0;
+    }
+
     dc->flags = 0;
 
     TRACE("(driver=%s, device=%s, output=%s): returning %04x\n",
@@ -569,6 +578,7 @@ HDC WINAPI CreateDCA( LPCSTR driver, LPCSTR device, LPCSTR output,
     {
         WARN("creation aborted by device\n" );
         GDI_FreeObject( dc->hSelf, dc );
+        DRIVER_release_driver( funcs );
         return 0;
     }
 
@@ -647,14 +657,22 @@ HDC WINAPI CreateCompatibleDC( HDC hdc )
     DC *dc, *origDC;
     const DC_FUNCTIONS *funcs;
 
-    if ((origDC = GDI_GetObjPtr( hdc, DC_MAGIC ))) funcs = origDC->funcs;
-    else funcs = DRIVER_FindDriver( "DISPLAY" );
+    if ((origDC = GDI_GetObjPtr( hdc, DC_MAGIC ))) funcs = DRIVER_get_driver(origDC->funcs);
+    else funcs = DRIVER_load_driver( "DISPLAY" );
 
-    if (!funcs || !(dc = DC_AllocDC( funcs )))
+    if (!funcs)
     {
         if (origDC) GDI_ReleaseObj( hdc );
         return 0;
     }
+
+    if (!(dc = DC_AllocDC( funcs )))
+    {
+        DRIVER_release_driver( funcs );
+        if (origDC) GDI_ReleaseObj( hdc );
+        return 0;
+    }
+
 
     TRACE("(%04x): returning %04x\n",
                hdc, dc->hSelf );
@@ -674,7 +692,8 @@ HDC WINAPI CreateCompatibleDC( HDC hdc )
     {
         WARN("creation aborted by device\n");
         GDI_FreeObject( dc->hSelf, dc );
-	if (origDC) GDI_ReleaseObj( hdc );
+        DRIVER_release_driver( funcs );
+        if (origDC) GDI_ReleaseObj( hdc );
         return 0;
     }
 
@@ -734,6 +753,7 @@ BOOL WINAPI DeleteDC( HDC hdc )
 	SelectObject( hdc, GetStockObject(WHITE_BRUSH) );
 	SelectObject( hdc, GetStockObject(SYSTEM_FONT) );
         if (dc->funcs->pDeleteDC) dc->funcs->pDeleteDC(dc);
+        DRIVER_release_driver( dc->funcs );
     }
 
     if (dc->hClipRgn) DeleteObject( dc->hClipRgn );
@@ -742,7 +762,7 @@ BOOL WINAPI DeleteDC( HDC hdc )
     if (dc->pAbortProc) THUNK_Free( (FARPROC)dc->pAbortProc );
     if (dc->hookThunk) THUNK_Free( (FARPROC)dc->hookThunk );
     PATH_DestroyGdiPath(&dc->path);
-    
+
     return GDI_FreeObject( hdc, dc );
 }
 

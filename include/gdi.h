@@ -564,9 +564,9 @@ extern BOOL GDI_FreeObject( HGDIOBJ, void *obj );
 extern void *GDI_GetObjPtr( HGDIOBJ, WORD );
 extern void GDI_ReleaseObj( HGDIOBJ );
 
-extern BOOL DRIVER_RegisterDriver( LPCSTR name, const DC_FUNCTIONS *funcs );
-extern const DC_FUNCTIONS *DRIVER_FindDriver( LPCSTR name );
-extern BOOL DRIVER_UnregisterDriver( LPCSTR name );
+extern const DC_FUNCTIONS *DRIVER_load_driver( LPCSTR name );
+extern const DC_FUNCTIONS *DRIVER_get_driver( const DC_FUNCTIONS *funcs );
+extern void DRIVER_release_driver( const DC_FUNCTIONS *funcs );
 extern BOOL DRIVER_GetDriverName( LPCSTR device, LPSTR driver, DWORD size );
 
 extern POINT *GDI_Bezier( const POINT *Points, INT count, INT *nPtsOut );

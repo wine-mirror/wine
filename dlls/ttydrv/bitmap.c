@@ -15,6 +15,8 @@ DEFAULT_DEBUG_CHANNEL(ttydrv);
 
 /**********************************************************************/
 
+extern const DC_FUNCTIONS *TTYDRV_DC_Funcs;  /* hack */
+
 static LONG TTYDRV_DC_GetBitmapBits(BITMAPOBJ *bitmap, void *bits, LONG count);
 static LONG TTYDRV_DC_SetBitmapBits(BITMAPOBJ *bitmap, void *bits, LONG count);
 
@@ -31,7 +33,7 @@ TTYDRV_PHYSBITMAP *TTYDRV_DC_AllocBitmap(BITMAPOBJ *bitmap)
   }
 
   bitmap->physBitmap = physBitmap;
-  bitmap->funcs = DRIVER_FindDriver("DISPLAY");
+  bitmap->funcs = TTYDRV_DC_Funcs;
 
   return physBitmap;
 }

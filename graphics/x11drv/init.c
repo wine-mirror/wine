@@ -19,113 +19,7 @@
 
 DEFAULT_DEBUG_CHANNEL(x11drv);
 
-static BOOL X11DRV_CreateDC( DC *dc, LPCSTR driver, LPCSTR device,
-                               LPCSTR output, const DEVMODEA* initData );
-static BOOL X11DRV_DeleteDC( DC *dc );
-
-static INT X11DRV_Escape( DC *dc, INT nEscape, INT cbInput,
-                            SEGPTR lpInData, SEGPTR lpOutData );
-
-const DC_FUNCTIONS X11DRV_DC_Funcs =
-{
-    NULL,                            /* pAbortDoc */
-    NULL,                            /* pAbortPath */
-    NULL,                            /* pAngleArc */
-    X11DRV_Arc,                      /* pArc */
-    NULL,                            /* pArcTo */
-    NULL,                            /* pBeginPath */
-    X11DRV_BitBlt,                   /* pBitBlt */
-    X11DRV_BitmapBits,               /* pBitmapBits */
-    X11DRV_ChoosePixelFormat,        /* pChoosePixelFormat */
-    X11DRV_Chord,                    /* pChord */
-    NULL,                            /* pCloseFigure */
-    X11DRV_CreateBitmap,             /* pCreateBitmap */
-    X11DRV_CreateDC,                 /* pCreateDC */
-    X11DRV_DIB_CreateDIBSection,     /* pCreateDIBSection */
-    X11DRV_DeleteDC,                 /* pDeleteDC */
-    X11DRV_DeleteObject,             /* pDeleteObject */
-    X11DRV_DescribePixelFormat,      /* pDescribePixelFormat */
-    NULL,                            /* pDeviceCapabilities */
-    X11DRV_Ellipse,                  /* pEllipse */
-    NULL,                            /* pEndDoc */
-    NULL,                            /* pEndPage */
-    NULL,                            /* pEndPath */
-    X11DRV_EnumDeviceFonts,          /* pEnumDeviceFonts */
-    X11DRV_Escape,                   /* pEscape */
-    NULL,                            /* pExcludeClipRect */
-    NULL,                            /* pExtDeviceMode */
-    X11DRV_ExtFloodFill,             /* pExtFloodFill */
-    X11DRV_ExtTextOut,               /* pExtTextOut */
-    NULL,                            /* pFillPath */
-    NULL,                            /* pFillRgn */
-    NULL,                            /* pFlattenPath */
-    NULL,                            /* pFrameRgn */
-    X11DRV_GetCharWidth,             /* pGetCharWidth */
-    X11DRV_GetDCOrgEx,               /* pGetDCOrgEx */
-    X11DRV_GetDeviceGammaRamp,       /* pGetDeviceGammaRamp */
-    X11DRV_GetPixel,                 /* pGetPixel */
-    X11DRV_GetPixelFormat,           /* pGetPixelFormat */
-    X11DRV_GetTextExtentPoint,       /* pGetTextExtentPoint */
-    X11DRV_GetTextMetrics,           /* pGetTextMetrics */
-    NULL,                            /* pIntersectClipRect */
-    NULL,                            /* pInvertRgn */
-    X11DRV_LineTo,                   /* pLineTo */
-    NULL,                            /* pMoveTo */
-    NULL,                            /* pOffsetClipRgn */
-    NULL,                            /* pOffsetViewportOrg (optional) */
-    NULL,                            /* pOffsetWindowOrg (optional) */
-    X11DRV_PaintRgn,                 /* pPaintRgn */
-    X11DRV_PatBlt,                   /* pPatBlt */
-    X11DRV_Pie,                      /* pPie */
-    NULL,                            /* pPolyBezier */
-    NULL,                            /* pPolyBezierTo */
-    NULL,                            /* pPolyDraw */
-    X11DRV_PolyPolygon,              /* pPolyPolygon */
-    X11DRV_PolyPolyline,             /* pPolyPolyline */
-    X11DRV_Polygon,                  /* pPolygon */
-    X11DRV_Polyline,                 /* pPolyline */
-    NULL,                            /* pPolylineTo */
-    NULL,                            /* pRealizePalette */
-    X11DRV_Rectangle,                /* pRectangle */
-    NULL,                            /* pRestoreDC */
-    X11DRV_RoundRect,                /* pRoundRect */
-    NULL,                            /* pSaveDC */
-    NULL,                            /* pScaleViewportExt (optional) */
-    NULL,                            /* pScaleWindowExt (optional) */
-    NULL,                            /* pSelectClipPath */
-    NULL,                            /* pSelectClipRgn */
-    X11DRV_SelectObject,             /* pSelectObject */
-    NULL,                            /* pSelectPalette */
-    X11DRV_SetBkColor,               /* pSetBkColor */
-    NULL,                            /* pSetBkMode */
-    X11DRV_SetDeviceClipping,        /* pSetDeviceClipping */
-    X11DRV_SetDeviceGammaRamp,       /* pSetDeviceGammaRamp */
-    X11DRV_SetDIBitsToDevice,        /* pSetDIBitsToDevice */
-    NULL,                            /* pSetMapMode (optional) */
-    NULL,                            /* pSetMapperFlags */
-    X11DRV_SetPixel,                 /* pSetPixel */
-    X11DRV_SetPixelFormat,           /* pSetPixelFormat */
-    NULL,                            /* pSetPolyFillMode */
-    NULL,                            /* pSetROP2 */
-    NULL,                            /* pSetRelAbs */
-    NULL,                            /* pSetStretchBltMode */
-    NULL,                            /* pSetTextAlign */
-    NULL,                            /* pSetTextCharacterExtra */
-    X11DRV_SetTextColor,             /* pSetTextColor */
-    NULL,                            /* pSetTextJustification */
-    NULL,                            /* pSetViewportExt (optional) */
-    NULL,                            /* pSetViewportOrg (optional) */
-    NULL,                            /* pSetWindowExt (optional) */
-    NULL,                            /* pSetWindowOrg (optional) */
-    NULL,                            /* pStartDoc */
-    NULL,                            /* pStartPage */
-    X11DRV_StretchBlt,               /* pStretchBlt */
-    NULL,                            /* pStretchDIBits */
-    NULL,                            /* pStrokeAndFillPath */
-    NULL,                            /* pStrokePath */
-    X11DRV_SwapBuffers,              /* pSwapBuffers */
-    NULL                             /* pWidenPath */
-};
+const DC_FUNCTIONS *X11DRV_DC_Funcs = NULL;  /* hack */
 
 BITMAP_DRIVER X11DRV_BITMAP_Driver =
 {
@@ -214,9 +108,7 @@ BOOL X11DRV_GDI_Initialize( Display *display )
 
     /* Initialize fonts and text caps */
 
-    if (!X11DRV_FONT_Init( &X11DRV_DevCaps )) return FALSE;
-
-    return DRIVER_RegisterDriver( "DISPLAY", &X11DRV_DC_Funcs );
+    return X11DRV_FONT_Init( &X11DRV_DevCaps );
 }
 
 /**********************************************************************
@@ -232,10 +124,12 @@ void X11DRV_GDI_Finalize(void)
 /**********************************************************************
  *	     X11DRV_CreateDC
  */
-static BOOL X11DRV_CreateDC( DC *dc, LPCSTR driver, LPCSTR device,
-                               LPCSTR output, const DEVMODEA* initData )
+BOOL X11DRV_CreateDC( DC *dc, LPCSTR driver, LPCSTR device,
+                      LPCSTR output, const DEVMODEA* initData )
 {
     X11DRV_PDEVICE *physDev;
+
+    if (!X11DRV_DC_Funcs) X11DRV_DC_Funcs = dc->funcs;  /* hack */
 
     dc->physDev = physDev = HeapAlloc( GetProcessHeap(), HEAP_ZERO_MEMORY,
 				       sizeof(*physDev) );
@@ -296,7 +190,7 @@ static BOOL X11DRV_CreateDC( DC *dc, LPCSTR driver, LPCSTR device,
 /**********************************************************************
  *	     X11DRV_DeleteDC
  */
-static BOOL X11DRV_DeleteDC( DC *dc )
+BOOL X11DRV_DeleteDC( DC *dc )
 {
     X11DRV_PDEVICE *physDev = (X11DRV_PDEVICE *)dc->physDev;
     wine_tsx11_lock();
@@ -312,8 +206,7 @@ static BOOL X11DRV_DeleteDC( DC *dc )
 /**********************************************************************
  *           X11DRV_Escape
  */
-static INT X11DRV_Escape( DC *dc, INT nEscape, INT cbInput,
-                            SEGPTR lpInData, SEGPTR lpOutData )
+INT X11DRV_Escape( DC *dc, INT nEscape, INT cbInput, SEGPTR lpInData, SEGPTR lpOutData )
 {
     switch( nEscape )
     {

@@ -9,6 +9,7 @@ IMPORTS   = kernel32 ntdll
 
 C_SRCS = \
 	bidi16.c \
+	driver.c \
 	gdi_main.c \
 	printdrv.c \
 	thunk.c \

@@ -17,14 +17,7 @@
 BOOL WINAPI MAIN_GdiInit(HINSTANCE hinstDLL, DWORD reason, LPVOID lpvReserved)
 {
     if (reason != DLL_PROCESS_ATTACH) return TRUE;
-
-    /* GDI initialisation */
-    if(!GDI_Init()) return FALSE;
-
-    /* Create the Win16 printer driver */
-    if (!WIN16DRV_Init()) return FALSE;
-
-    return TRUE;
+    return GDI_Init();
 }
 
 

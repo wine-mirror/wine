@@ -17,108 +17,6 @@ DEFAULT_DEBUG_CHANNEL(ttydrv);
 
 /**********************************************************************/
 
-static const DC_FUNCTIONS TTYDRV_DC_Driver =
-{
-  NULL,                /* pAbortDoc */
-  NULL,                /* pAbortPath */
-  NULL,                /* pAngleArc */
-  TTYDRV_DC_Arc,       /* pArc */
-  NULL,                /* pArcTo */
-  NULL,                /* pBeginPath */
-  TTYDRV_DC_BitBlt,    /* pBitBlt */
-  TTYDRV_DC_BitmapBits,/* pBitmapBits */
-  NULL,                /* pChoosePixelFormat */
-  TTYDRV_DC_Chord,     /* pChord */
-  NULL,                /* pCloseFigure */
-  TTYDRV_DC_CreateBitmap, /* pCreateBitmap */
-  TTYDRV_DC_CreateDC,  /* pCreateDC */
-  NULL,                /* pCreateDIBSection */
-  TTYDRV_DC_DeleteDC,  /* pDeleteDC */
-  TTYDRV_DC_DeleteObject, /* pDeleteObject */
-  NULL,                /* pDescribePixelFormat */
-  NULL,                /* pDeviceCapabilities */
-  TTYDRV_DC_Ellipse,   /* pEllipse */
-  NULL,                /* pEndDoc */
-  NULL,                /* pEndPage */
-  NULL,                /* pEndPath */
-  NULL,                /* pEnumDeviceFonts */
-  TTYDRV_DC_Escape,    /* pEscape */
-  NULL,                /* pExcludeClipRect */
-  NULL,                /* pExtDeviceMode */
-  TTYDRV_DC_ExtFloodFill, /* pExtFloodFill */
-  TTYDRV_DC_ExtTextOut, /* pExtTextOut */
-  NULL,                /* pFillPath */
-  NULL,                /* pFillRgn */
-  NULL,                /* pFlattenPath */
-  NULL,                /* pFrameRgn */
-  TTYDRV_DC_GetCharWidth, /* pGetCharWidth */
-  NULL,                /* pGetDCOrgEx */
-  NULL,                /* pGetDeviceGammaRamp */
-  TTYDRV_DC_GetPixel,  /* pGetPixel */
-  NULL,                /* pGetPixelFormat */
-  TTYDRV_DC_GetTextExtentPoint, /* pGetTextExtentPoint */
-  TTYDRV_DC_GetTextMetrics,  /* pGetTextMetrics */
-  NULL,                /* pIntersectClipRect */
-  NULL,                /* pIntersectVisRect */
-  TTYDRV_DC_LineTo,    /* pLineTo */
-  NULL,                /* pMoveTo */
-  NULL,                /* pOffsetClipRgn */
-  NULL,                /* pOffsetViewportOrg (optional) */
-  NULL,                /* pOffsetWindowOrg (optional) */
-  TTYDRV_DC_PaintRgn,  /* pPaintRgn */
-  TTYDRV_DC_PatBlt,    /* pPatBlt */
-  TTYDRV_DC_Pie,       /* pPie */
-  NULL,                /* pPolyBezier */
-  NULL,                /* pPolyBezierTo */
-  NULL,                /* pPolyDraw */
-  TTYDRV_DC_PolyPolygon, /* pPolyPolygon */
-  TTYDRV_DC_PolyPolyline, /* pPolyPolyline */
-  TTYDRV_DC_Polygon,   /* pPolygon */
-  TTYDRV_DC_Polyline,  /* pPolyline */
-  NULL,                /* pPolylineTo */
-  NULL,                /* pRealizePalette */
-  TTYDRV_DC_Rectangle, /* pRectangle */
-  NULL,                /* pRestoreDC */
-  TTYDRV_DC_RoundRect, /* pRoundRect */
-  NULL,                /* pSaveDC */
-  NULL,                /* pScaleViewportExt (optional) */
-  NULL,                /* pScaleWindowExt (optional) */
-  NULL,                /* pSelectClipPath */
-  NULL,                /* pSelectClipRgn */
-  TTYDRV_DC_SelectObject, /* pSelectObject */
-  NULL,                /* pSelectPalette */
-  TTYDRV_DC_SetBkColor, /* pSetBkColor */
-  NULL,                /* pSetBkMode */
-  TTYDRV_DC_SetDeviceClipping, /* pSetDeviceClipping */
-  NULL,                /* pSetDeviceGammaRamp */
-  TTYDRV_DC_SetDIBitsToDevice, /* pSetDIBitsToDevice */
-  NULL,                /* pSetMapMode (optional) */
-  NULL,                /* pSetMapperFlags */
-  TTYDRV_DC_SetPixel,  /* pSetPixel */
-  NULL,                /* pSetPixelFormat */
-  NULL,                /* pSetPolyFillMode */
-  NULL,                /* pSetROP2 */
-  NULL,                /* pSetRelAbs */
-  NULL,                /* pSetStretchBltMode */
-  NULL,                /* pSetTextAlign */
-  NULL,                /* pSetTextCharacterExtra */
-  TTYDRV_DC_SetTextColor, /* pSetTextColor */
-  NULL,                /* pSetTextJustification */
-  NULL,                /* pSetViewportExt (optional) */
-  NULL,                /* pSetViewportOrg (optional) */
-  NULL,                /* pSetWindowExt (optional) */
-  NULL,                /* pSetWindowOrg (optional) */
-  NULL,                /* pStartDoc */
-  NULL,                /* pStartPage */
-  TTYDRV_DC_StretchBlt, /* pStretchBlt */
-  NULL,                /* pStretchDIBits */
-  NULL,                /* pStrokeAndFillPath */
-  NULL,                /* pStrokePath */
-  NULL,                /* pSwapBuffers */
-  NULL                 /* pWidenPath */
-};
-
-
 BITMAP_DRIVER TTYDRV_BITMAP_Driver =
 {
   TTYDRV_BITMAP_SetDIBits,
@@ -162,6 +60,8 @@ DeviceCaps TTYDRV_DC_DevCaps = {
 /* ..etc */		0, 0
 };
 
+const DC_FUNCTIONS *TTYDRV_DC_Funcs = NULL;  /* hack */
+
 /**********************************************************************
  *	     TTYDRV_GDI_Initialize
  */
@@ -183,10 +83,7 @@ BOOL TTYDRV_GDI_Initialize(void)
   TTYDRV_DC_DevCaps.logPixelsX = (int) (TTYDRV_DC_DevCaps.horzRes * 25.4 / TTYDRV_DC_DevCaps.horzSize);
   TTYDRV_DC_DevCaps.logPixelsY = (int) (TTYDRV_DC_DevCaps.vertRes * 25.4 / TTYDRV_DC_DevCaps.vertSize);
  
-  if(!TTYDRV_PALETTE_Initialize())
-    return FALSE;
-
-  return DRIVER_RegisterDriver( "DISPLAY", &TTYDRV_DC_Driver );
+  return TTYDRV_PALETTE_Initialize();
 }
 
 /**********************************************************************
@@ -209,6 +106,8 @@ BOOL TTYDRV_DC_CreateDC(DC *dc, LPCSTR driver, LPCSTR device,
   TRACE("(%p, %s, %s, %s, %p)\n",
     dc, debugstr_a(driver), debugstr_a(device), 
     debugstr_a(output), initData);
+
+  if (!TTYDRV_DC_Funcs) TTYDRV_DC_Funcs = dc->funcs;  /* hack */
 
   dc->physDev = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY,
 			  sizeof(TTYDRV_PDEVICE));  

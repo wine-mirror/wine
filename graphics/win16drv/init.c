@@ -144,17 +144,16 @@ static const DC_FUNCTIONS WIN16DRV_Funcs =
 };
 
 
-
-
-
+/* FIXME: this no longer works */
+#if 0
 /**********************************************************************
  *	     WIN16DRV_Init
  */
 BOOL WIN16DRV_Init(void)
 {
     return DRIVER_RegisterDriver( NULL /* generic driver */, &WIN16DRV_Funcs );
-        
 }
+#endif
 
 /* Tempory functions, for initialising structures */
 /* These values should be calculated, not hardcoded */

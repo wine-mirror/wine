@@ -11,6 +11,52 @@ import	ntdll.dll
 debug_channels (bitblt bitmap clipboard cursor dinput event font gdi graphics
                 key keyboard opengl palette text win x11drv)
 
+# GDI driver
+
+@ cdecl Arc(ptr long long long long long long long long) X11DRV_Arc
+@ cdecl BitBlt(ptr long long long long ptr long long long) X11DRV_BitBlt
+@ cdecl BitmapBits(long ptr long long) X11DRV_BitmapBits
+@ cdecl ChoosePixelFormat(ptr ptr) X11DRV_ChoosePixelFormat
+@ cdecl Chord(ptr long long long long long long long long) X11DRV_Chord
+@ cdecl CreateBitmap(long) X11DRV_CreateBitmap
+@ cdecl CreateDC(ptr str str str ptr) X11DRV_CreateDC
+@ cdecl CreateDIBSection(ptr ptr long ptr long long long) X11DRV_DIB_CreateDIBSection
+@ cdecl DeleteDC(ptr) X11DRV_DeleteDC
+@ cdecl DeleteObject(long) X11DRV_DeleteObject
+@ cdecl DescribePixelFormat(ptr long long ptr) X11DRV_DescribePixelFormat
+@ cdecl Ellipse(ptr long long long long) X11DRV_Ellipse
+@ cdecl EnumDeviceFonts(long ptr ptr long) X11DRV_EnumDeviceFonts
+@ cdecl Escape(ptr long long long long) X11DRV_Escape
+@ cdecl ExtFloodFill(ptr long long long long) X11DRV_ExtFloodFill
+@ cdecl ExtTextOut(ptr long long long ptr ptr long ptr) X11DRV_ExtTextOut
+@ cdecl GetCharWidth(ptr long long ptr) X11DRV_GetCharWidth
+@ cdecl GetDCOrgEx(ptr ptr) X11DRV_GetDCOrgEx
+@ cdecl GetDeviceGammaRamp(ptr ptr) X11DRV_GetDeviceGammaRamp
+@ cdecl GetPixel(ptr long long) X11DRV_GetPixel
+@ cdecl GetPixelFormat(ptr) X11DRV_GetPixelFormat
+@ cdecl GetTextExtentPoint(ptr ptr long ptr) X11DRV_GetTextExtentPoint
+@ cdecl GetTextMetrics(ptr ptr) X11DRV_GetTextMetrics
+@ cdecl LineTo(ptr long long) X11DRV_LineTo
+@ cdecl PaintRgn(ptr long) X11DRV_PaintRgn
+@ cdecl PatBlt(ptr long long long long long) X11DRV_PatBlt
+@ cdecl Pie(ptr long long long long long long long long) X11DRV_Pie
+@ cdecl PolyPolygon(ptr ptr ptr long) X11DRV_PolyPolygon
+@ cdecl PolyPolyline(ptr ptr ptr long) X11DRV_PolyPolyline
+@ cdecl Polygon(ptr ptr long) X11DRV_Polygon
+@ cdecl Polyline(ptr ptr long) X11DRV_Polyline
+@ cdecl Rectangle(ptr long long long long) X11DRV_Rectangle
+@ cdecl RoundRect(ptr long long long long long long) X11DRV_RoundRect
+@ cdecl SelectObject(ptr long) X11DRV_SelectObject
+@ cdecl SetBkColor(ptr long) X11DRV_SetBkColor
+@ cdecl SetDIBitsToDevice(ptr long long long long long long long long ptr ptr long) X11DRV_SetDIBitsToDevice
+@ cdecl SetDeviceClipping(ptr) X11DRV_SetDeviceClipping
+@ cdecl SetDeviceGammaRamp(ptr ptr) X11DRV_SetDeviceGammaRamp
+@ cdecl SetPixel(ptr long long long) X11DRV_SetPixel
+@ cdecl SetPixelFormat(ptr long ptr) X11DRV_SetPixelFormat
+@ cdecl SetTextColor(ptr long) X11DRV_SetTextColor
+@ cdecl StretchBlt(ptr long long long long ptr long long long long long) X11DRV_StretchBlt
+@ cdecl SwapBuffers(ptr) X11DRV_SwapBuffers
+
 # USER driver
 
 @ cdecl InitKeyboard() X11DRV_InitKeyboard

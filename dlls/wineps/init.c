@@ -24,112 +24,6 @@
 
 DEFAULT_DEBUG_CHANNEL(psdrv);
 
-static BOOL PSDRV_CreateDC( DC *dc, LPCSTR driver, LPCSTR device,
-                               LPCSTR output, const DEVMODEA* initData );
-static BOOL PSDRV_DeleteDC( DC *dc );
-
-static const DC_FUNCTIONS PSDRV_Funcs =
-{
-    NULL,                            /* pAbortDoc */
-    NULL,                            /* pAbortPath */
-    NULL,                            /* pAngleArc */
-    PSDRV_Arc,                       /* pArc */
-    NULL,                            /* pArcTo */
-    NULL,                            /* pBeginPath */
-    NULL,                            /* pBitBlt */
-    NULL,                            /* pBitmapBits */
-    NULL,                            /* pChoosePixelFormat */
-    PSDRV_Chord,                     /* pChord */
-    NULL,                            /* pCloseFigure */
-    NULL,                            /* pCreateBitmap */
-    PSDRV_CreateDC,                  /* pCreateDC */
-    NULL,                            /* pCreateDIBSection */
-    PSDRV_DeleteDC,                  /* pDeleteDC */
-    NULL,                            /* pDeleteObject */
-    NULL,                            /* pDescribePixelFormat */
-    PSDRV_DeviceCapabilities,        /* pDeviceCapabilities */
-    PSDRV_Ellipse,                   /* pEllipse */
-    PSDRV_EndDoc,                    /* pEndDoc */
-    PSDRV_EndPage,                   /* pEndPage */
-    NULL,                            /* pEndPath */
-    PSDRV_EnumDeviceFonts,           /* pEnumDeviceFonts */
-    PSDRV_Escape,                    /* pEscape */
-    NULL,                            /* pExcludeClipRect */
-    PSDRV_ExtDeviceMode,             /* pExtDeviceMode */
-    NULL,                            /* pExtFloodFill */
-    PSDRV_ExtTextOut,                /* pExtTextOut */
-    NULL,                            /* pFillPath */
-    NULL,                            /* pFillRgn */
-    NULL,                            /* pFlattenPath */
-    NULL,                            /* pFrameRgn */
-    PSDRV_GetCharWidth,              /* pGetCharWidth */
-    NULL,                            /* pGetDCOrgEx */
-    NULL,                            /* pGetDeviceGammaRamp */
-    NULL,                            /* pGetPixel */
-    NULL,                            /* pGetPixelFormat */
-    PSDRV_GetTextExtentPoint,        /* pGetTextExtentPoint */
-    PSDRV_GetTextMetrics,            /* pGetTextMetrics */
-    NULL,                            /* pIntersectClipRect */
-    NULL,                            /* pInvertRgn */
-    PSDRV_LineTo,                    /* pLineTo */
-    NULL,                            /* pMoveTo */
-    NULL,                            /* pOffsetClipRgn */
-    NULL,                            /* pOffsetViewportOrg (optional) */
-    NULL,                            /* pOffsetWindowOrg (optional) */
-    NULL,                            /* pPaintRgn */
-    PSDRV_PatBlt,                    /* pPatBlt */
-    PSDRV_Pie,                       /* pPie */
-    NULL,                            /* pPolyBezier */
-    NULL,                            /* pPolyBezierTo */
-    NULL,                            /* pPolyDraw */
-    PSDRV_PolyPolygon,               /* pPolyPolygon */
-    PSDRV_PolyPolyline,              /* pPolyPolyline */
-    PSDRV_Polygon,                   /* pPolygon */
-    PSDRV_Polyline,                  /* pPolyline */
-    NULL,                            /* pPolylineTo */
-    NULL,                            /* pRealizePalette */
-    PSDRV_Rectangle,                 /* pRectangle */
-    NULL,                            /* pRestoreDC */
-    PSDRV_RoundRect,                 /* pRoundRect */
-    NULL,                            /* pSaveDC */
-    NULL,                            /* pScaleViewportExt (optional) */
-    NULL,                            /* pScaleWindowExt (optional) */
-    NULL,                            /* pSelectClipPath */
-    NULL,                            /* pSelectClipRgn */
-    PSDRV_SelectObject,              /* pSelectObject */
-    NULL,                            /* pSelectPalette */
-    PSDRV_SetBkColor,                /* pSetBkColor */
-    NULL,                            /* pSetBkMode */
-    PSDRV_SetDeviceClipping,         /* pSetDeviceClipping */
-    NULL,                            /* pSetDeviceGammaRamp */
-    NULL,                            /* pSetDIBitsToDevice */
-    NULL,                            /* pSetMapMode (optional) */
-    NULL,                            /* pSetMapperFlags */
-    PSDRV_SetPixel,                  /* pSetPixel */
-    NULL,                            /* pSetPixelFormat */
-    NULL,                            /* pSetPolyFillMode */
-    NULL,                            /* pSetROP2 */
-    NULL,                            /* pSetRelAbs */
-    NULL,                            /* pSetStretchBltMode */
-    NULL,                            /* pSetTextAlign */
-    NULL,                            /* pSetTextCharacterExtra */
-    PSDRV_SetTextColor,              /* pSetTextColor */
-    NULL,                            /* pSetTextJustification */
-    NULL,                            /* pSetViewportExt (optional) */
-    NULL,                            /* pSetViewportOrg (optional) */
-    NULL,                            /* pSetWindowExt (optional) */
-    NULL,                            /* pSetWindowOrg (optional) */
-    PSDRV_StartDoc,                  /* pStartDoc */
-    PSDRV_StartPage,                 /* pStartPage */
-    NULL,                            /* pStretchBlt */
-    PSDRV_StretchDIBits,             /* pStretchDIBits */
-    NULL,                            /* pStrokeAndFillPath */
-    NULL,                            /* pStrokePath */
-    NULL,                            /* pSwapBuffers */
-    NULL                             /* pWidenPath */
-};
-
-
 /* Default entries for devcaps */
 
 static DeviceCaps PSDRV_DevCaps = {
@@ -258,38 +152,12 @@ BOOL WINAPI PSDRV_Init( HINSTANCE hinst, DWORD reason, LPVOID reserved )
 		HeapDestroy(PSDRV_Heap);
 		return FALSE;
 	    }
-
-	    /* Register driver as "WINEPS", "WINEPS.DLL" and "WINEPS.DRV"
-		to allow an easy configuring for users */
-
-	    if (DRIVER_RegisterDriver("WINEPS", &PSDRV_Funcs) == FALSE) {
-	 	HeapDestroy(PSDRV_Heap);
-		return FALSE;
-	    }
-
-	    if (DRIVER_RegisterDriver("WINEPS.DLL", &PSDRV_Funcs) == FALSE) {
-		DRIVER_UnregisterDriver("WINEPS");
-		HeapDestroy(PSDRV_Heap);
-		return FALSE;
-	    }
-
-	    if (DRIVER_RegisterDriver("WINEPS.DRV", &PSDRV_Funcs) == FALSE) {
-		DRIVER_UnregisterDriver("WINEPS");
-		DRIVER_UnregisterDriver("WINEPS.DLL");
-		HeapDestroy(PSDRV_Heap);
-		return FALSE;
-	    }
-
             break;
 
 	case DLL_PROCESS_DETACH:
 
 	    DeleteObject( PSDRV_DefaultFont );
 	    HeapDestroy( PSDRV_Heap );
-	    DRIVER_UnregisterDriver( "WINEPS" );
-	    DRIVER_UnregisterDriver( "WINEPS.DLL" );
-	    DRIVER_UnregisterDriver( "WINEPS.DRV" );
-
             break;
     }
  
@@ -300,8 +168,8 @@ BOOL WINAPI PSDRV_Init( HINSTANCE hinst, DWORD reason, LPVOID reserved )
 /**********************************************************************
  *	     PSDRV_CreateDC
  */
-static BOOL PSDRV_CreateDC( DC *dc, LPCSTR driver, LPCSTR device,
-                               LPCSTR output, const DEVMODEA* initData )
+BOOL PSDRV_CreateDC( DC *dc, LPCSTR driver, LPCSTR device,
+                     LPCSTR output, const DEVMODEA* initData )
 {
     PSDRV_PDEVICE *physDev;
     PRINTERINFO *pi;
@@ -437,7 +305,7 @@ static BOOL PSDRV_CreateDC( DC *dc, LPCSTR driver, LPCSTR device,
 /**********************************************************************
  *	     PSDRV_DeleteDC
  */
-static BOOL PSDRV_DeleteDC( DC *dc )
+BOOL PSDRV_DeleteDC( DC *dc )
 {
     PSDRV_PDEVICE *physDev = (PSDRV_PDEVICE *)dc->physDev;
     
