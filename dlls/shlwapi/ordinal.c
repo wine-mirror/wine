@@ -212,6 +212,62 @@ HRESULT WINAPI SHLWAPI_16 (
 }
 
 /*************************************************************************
+ *      @	[SHLWAPI.18]
+ *
+ *  w is pointer to address of callback routine
+ *  x is pointer to LPVOID to receive address of locally allocated
+ *         space size 0x14
+ *  return is 0 (unless out of memory???)
+ *
+ * related to _21 and _22 below
+ *  only seen invoked by SHDOCVW
+ */
+LONG WINAPI SHLWAPI_18 (
+	LPVOID *w,
+	LPVOID x)
+{
+	FIXME("(%p %p)stub\n",w,x);
+	*w = 0;
+	return 0;
+}
+
+/*************************************************************************
+ *      @	[SHLWAPI.21]
+ *
+ *  w points to space allocated via .18 above
+ *      LocalSize is done on it (retrieves 18)
+ *      LocalReAlloc is done on it to size 8 with LMEM_MOVEABLE & LMEM_ZEROINIT
+ *  x values seen 0xa0000005
+ *  returns 1
+ *
+ *  relates to _18 and _22 above and below
+ *   only seen invoked by SHDOCVW
+ */
+LONG WINAPI SHLWAPI_21 (
+	LPVOID w,
+	DWORD  x)
+{
+	FIXME("(%p %lx)stub\n",w,x);
+	return 1;
+}
+
+/*************************************************************************
+ *      @	[SHLWAPI.22]
+ *
+ *  return is 'w' value seen in x is 0xa0000005
+ *
+ *  relates to _18 and _21 above
+ *   only seen invoked by SHDOCVW
+ */
+LPVOID WINAPI SHLWAPI_22 (
+	LPVOID w,
+	DWORD  x)
+{
+	FIXME("(%p %lx)stub\n",w,x);
+	return w;
+}
+
+/*************************************************************************
  *      @	[SHLWAPI.23]
  *
  * NOTES
@@ -267,6 +323,36 @@ BOOL WINAPI SHLWAPI_25(WCHAR wc)
 }
 
 /*************************************************************************
+ *      SHLWAPI_26	[SHLWAPI.26]
+ *
+ * Seems to be iswupper
+ */
+BOOL WINAPI SHLWAPI_26(WCHAR wc)
+{
+    return (get_char_typeW(wc) & C1_UPPER) != 0;
+}
+
+/*************************************************************************
+ *      SHLWAPI_27	[SHLWAPI.27]
+ *
+ * Seems to be iswlower
+ */
+BOOL WINAPI SHLWAPI_27(WCHAR wc)
+{
+    return (get_char_typeW(wc) & C1_LOWER) != 0;
+}
+
+/*************************************************************************
+ *      SHLWAPI_28	[SHLWAPI.28]
+ *
+ * Seems to be iswalnum
+ */
+BOOL WINAPI SHLWAPI_28(WCHAR wc)
+{
+    return (get_char_typeW(wc) & (C1_ALPHA|C1_DIGIT)) != 0;
+}
+
+/*************************************************************************
  *      SHLWAPI_29	[SHLWAPI.29]
  *
  * Seems to be iswspace
@@ -298,16 +384,12 @@ BOOL WINAPI SHLWAPI_31(WCHAR wc)
 
 /*************************************************************************
  *      @	[SHLWAPI.32]
+ *
+ * Seems to be iswcntrl
  */
-BOOL WINAPI SHLWAPI_32(LPCWSTR lpcChar)
+BOOL WINAPI SHLWAPI_32(WCHAR wc)
 {
- if (*lpcChar < (WCHAR)' ')
-   return TRUE;
-
- /* This is probably a shlwapi bug, but we do it the same for compatability */
- if (((DWORD)lpcChar & 0xffff) - 127 <= (WCHAR)' ')
-   return TRUE;
- return FALSE;
+    return (get_char_typeW(wc) & C1_CNTRL) != 0;
 }
 
 /*************************************************************************
@@ -318,6 +400,16 @@ BOOL WINAPI SHLWAPI_32(LPCWSTR lpcChar)
 BOOL WINAPI SHLWAPI_33(WCHAR wc)
 {
     return (get_char_typeW(wc) & C1_DIGIT) != 0;
+}
+
+/*************************************************************************
+ *      SHLWAPI_34	[SHLWAPI.34]
+ *
+ * Seems to be iswxdigit
+ */
+BOOL WINAPI SHLWAPI_34(WCHAR wc)
+{
+    return (get_char_typeW(wc) & C1_XDIGIT) != 0;
 }
 
 /*************************************************************************

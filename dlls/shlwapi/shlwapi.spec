@@ -27,23 +27,23 @@ debug_channels (shell)
 15  stdcall @(ptr ptr) SHLWAPI_15
 16  stdcall @(long long long long) SHLWAPI_16
 17  stub @
-18  stub @
+18  stdcall @(ptr ptr) SHLWAPI_18
 19  stub @
 20  stub @
-21  stub @
-22  stub @
+21  stdcall @(ptr long) SHLWAPI_21
+22  stdcall @(ptr long) SHLWAPI_22
 23  stdcall @(ptr ptr long) SHLWAPI_23
 24  stdcall @(ptr ptr long) SHLWAPI_24
 25  stdcall @(long) SHLWAPI_25
-26  stub @
-27  stub @
-28  stub @
+26  stdcall @(long) SHLWAPI_26
+27  stdcall @(long) SHLWAPI_27
+28  stdcall @(long) SHLWAPI_28
 29  stdcall @(long) SHLWAPI_29
 30  stdcall @(long) SHLWAPI_30
 31  stdcall @(long) SHLWAPI_31
 32  stdcall @(ptr)  SHLWAPI_32
 33  stdcall @(long) SHLWAPI_33
-34  stub @
+34  stdcall @(long) SHLWAPI_34
 35  stdcall @(ptr long ptr) SHLWAPI_35
 36  stub @
 37  forward @ user32.CallWindowProcW
@@ -665,8 +665,8 @@ debug_channels (shell)
 @ stdcall UrlApplySchemeW(str ptr ptr long) UrlApplySchemeW
 @ stdcall UrlCanonicalizeA(str ptr ptr long) UrlCanonicalizeA
 @ stdcall UrlCanonicalizeW(wstr ptr ptr long) UrlCanonicalizeW
-@ stub    UrlCombineA
-@ stub    UrlCombineW
+@ stdcall UrlCombineA(str str str ptr long) UrlCombineA
+@ stdcall UrlCombineW(wstr wstr wstr ptr long) UrlCombineW
 @ stub    UrlCompareA
 @ stub    UrlCompareW
 @ stub    UrlCreateFromPathA
