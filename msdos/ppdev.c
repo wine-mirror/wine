@@ -1,5 +1,5 @@
 /*
- * Parallel-port device support
+ * Parallel port device support
  *
  * Copyright 2001 Uwe Bonnes
  *
@@ -48,9 +48,9 @@ WINE_DEFAULT_DEBUG_CHANNEL(int);
 typedef struct _PPDEVICESTRUCT{
   int fd; /* NULL if device not available */
   char *devicename;
-  int userbase; /* where wine thinks the ports are*/
+  int userbase; /* where wine thinks the ports are */
   DWORD lastaccess; /* or NULL if release */
-  int timeout; /* time in second of inactivity to release the port*/
+  int timeout; /* time in second of inactivity to release the port */
 } PPDeviceStruct;
 
 static PPDeviceStruct PPDeviceList[5];
@@ -64,7 +64,7 @@ static int IO_pp_sort(const void *p1,const  void *p2)
 /* IO_pp_init
  *
  * Read the ppdev entries from wine.conf, open the device and check
- * for nescessary IOCTRL
+ * for necessary IOCTRL
  * Report verbose about possible errors
  */
 char IO_pp_init(void)
@@ -117,7 +117,7 @@ char IO_pp_init(void)
 	idx++;
 	if(nports >4)
 	  {
-	    FIXME("Make the PPDeviceList larger then 5 elements\n");
+	    FIXME("Make the PPDeviceList larger than 5 elements\n");
 	    break;
 	  }
 	TRACE("Device '%s' at virtual userbase '%s'\n", buffer,name);
@@ -131,7 +131,7 @@ char IO_pp_init(void)
 	    WARN("Configuration: No access to %s Cause: %s\n",buffer,strerror(lasterror));
 	    WARN("Rejecting configuration item\n");
 	    if (lasterror == ENODEV)
-	      FIXME("Is the ppdev module loaded?\n");
+	      ERR("Is the ppdev module loaded?\n");
 	    continue;
 	  }
 	userbase = strtol(name,(char **)NULL, 16);
@@ -179,7 +179,7 @@ char IO_pp_init(void)
 	PPDeviceList[nports].devicename = malloc(sizeof(buffer)+1);
 	if (!PPDeviceList[nports].devicename)
 	  {
-	    ERR("No (more)space for devicename\n");
+	    ERR("No (more) space for devicename\n");
 	    break;
 	  }
 	strcpy(PPDeviceList[nports].devicename,buffer);
@@ -191,7 +191,7 @@ char IO_pp_init(void)
 	    PPDeviceList[nports].timeout = strtol(timeout,(char **)NULL, 10);
 	    if (errno == ERANGE)
 	      {
-		WARN("Configuration:Invalid timeout %s in configuration for %s, Setting to 0\n",
+		WARN("Configuration: Invalid timeout %s in configuration for %s, Setting to 0\n",
 		     timeout,buffer);
 		PPDeviceList[nports].timeout = 0;
 	      }
@@ -205,7 +205,7 @@ char IO_pp_init(void)
 
     PPDeviceNum= nports;
     if (nports > 1)
-      /* sort in accending order for userbase for faster access*/
+      /* sort in ascending order for userbase for faster access */
       qsort (PPDeviceList,PPDeviceNum,sizeof(PPDeviceStruct),IO_pp_sort);
 
     if (nports)
@@ -215,7 +215,7 @@ char IO_pp_init(void)
 	    PPDeviceList[idx].devicename, PPDeviceList[idx].userbase,
 	    PPDeviceList[idx].fd,PPDeviceList[idx].timeout);
     /* FIXME:
-       register a timer callback perhaps every 30 second to release unused ports
+       register a timer callback perhaps every 30 seconds to release unused ports
        Set lastaccess = 0 as indicator when port was released
     */
     return ret;
