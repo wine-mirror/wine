@@ -774,7 +774,7 @@ HINTERNET WINAPI HTTP_HttpOpenRequestW(HINTERNET hHttpSession,
 
 
 /***********************************************************************
- *           HttpQueryInfoA (WININET.@)
+ *           HttpQueryInfoW (WININET.@)
  *
  * Queries for information about an HTTP request
  *
@@ -1091,20 +1091,28 @@ BOOL WINAPI HttpQueryInfoA(HINTERNET hHttpRequest, DWORD dwInfoLevel,
 	LPVOID lpBuffer, LPDWORD lpdwBufferLength, LPDWORD lpdwIndex)
 {
     BOOL result;
-    DWORD charLen=*lpdwBufferLength;
-    WCHAR* tempBuffer=HeapAlloc(GetProcessHeap(), 0, charLen);
-    result=HttpQueryInfoW(hHttpRequest, dwInfoLevel, tempBuffer, &charLen, lpdwIndex);
+    DWORD len;
+    WCHAR* bufferW;
+
     if((dwInfoLevel & HTTP_QUERY_FLAG_NUMBER) ||
        (dwInfoLevel & HTTP_QUERY_FLAG_SYSTEMTIME))
     {
-        memcpy(lpBuffer,tempBuffer,charLen);
+        return HttpQueryInfoW( hHttpRequest, dwInfoLevel, lpBuffer,
+                               lpdwBufferLength, lpdwIndex );
     }
-    else
+
+    len = (*lpdwBufferLength)*sizeof(WCHAR);
+    bufferW = HeapAlloc( GetProcessHeap(), 0, len );
+    result = HttpQueryInfoW( hHttpRequest, dwInfoLevel, bufferW,
+                           &len, lpdwIndex );
+    if( result )
     {
-        int nChars=WideCharToMultiByte(CP_ACP,0, tempBuffer,charLen,lpBuffer,*lpdwBufferLength,NULL,NULL);
-        *lpdwBufferLength=nChars;
+        len = WideCharToMultiByte( CP_ACP,0, bufferW, len / sizeof(WCHAR),
+                                     lpBuffer, *lpdwBufferLength, NULL, NULL );
+        *lpdwBufferLength = len * sizeof(WCHAR);
     }
-    HeapFree(GetProcessHeap(), 0, tempBuffer);
+    HeapFree(GetProcessHeap(), 0, bufferW );
+
     return result;
 }
 
