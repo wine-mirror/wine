@@ -24,6 +24,7 @@
 #include "objbase.h"
 #include "winbase.h"
 #include "winerror.h"
+#include "winreg.h"
 
 #include "wine/unicode.h"
 #include "comctl32.h"
@@ -429,20 +430,94 @@ typedef struct tagCREATEMRULIST
  * Need to check what return value means identical - 0?
  */
 
-typedef struct tagMRU
+typedef struct tagWINEMRUITEM
 {
-    DWORD  dwParam1;  /* some kind of flag */
-    DWORD  dwParam2;
-    DWORD  dwParam3;
-    HKEY   hkeyMRU;
-    LPCSTR lpszSubKey;
-    DWORD  dwParam6;
-} MRU, *HMRU;
+    DWORD          size;        /* size of data stored               */
+    DWORD          itemFlag;    /* flags                             */
+    BYTE           datastart;
+} WINEMRUITEM, *LPWINEMRUITEM;
+
+/* itemFlag */
+#define WMRUIF_CHANGED   0x0001 /* this dataitem changed             */
+
+typedef struct tagWINEMRULIST
+{
+    CREATEMRULIST  extview;     /* original create information       */
+    DWORD          wineFlags;   /* internal flags                    */
+    DWORD          cursize;     /* current size of realMRU           */
+    LPSTR          realMRU;     /* pointer to string of index names  */
+    LPWINEMRUITEM  *array;      /* array of pointers to data         */
+                                /* in 'a' to 'z' order               */
+} WINEMRULIST, *LPWINEMRULIST;
+
+/* wineFlags */
+#define WMRUF_CHANGED  0x0001   /* MRU list has changed              */
 
 HANDLE WINAPI
 CreateMRUListLazyA (LPCREATEMRULIST lpcml, DWORD dwParam2,
 		    DWORD dwParam3, DWORD dwParam4);
 
+/**************************************************************************
+ *              MRU_SaveChanged - Localize MRU saving code
+ *
+ */
+VOID MRU_SaveChanged( LPWINEMRULIST mp )
+{
+    INT i, err;
+    HKEY newkey;
+    CHAR realname[2];
+    LPWINEMRUITEM witem;
+
+    /* or should we do the following instead of RegOpenKeyEx:
+     */
+
+    /* open the sub key */
+    if ((err = RegOpenKeyExA( mp->extview.hKey, mp->extview.lpszSubKey, 
+			       0, KEY_WRITE, &newkey))) {
+	/* not present - what to do ??? */
+	ERR("Can not open key, error=%d, attempting to create\n",
+	    err);
+	if ((err = RegCreateKeyExA( mp->extview.hKey, mp->extview.lpszSubKey,
+				    0,
+				    "",
+				    REG_OPTION_NON_VOLATILE,
+				    KEY_READ | KEY_WRITE,
+				    0,
+				    &newkey,
+				    0))) {
+	    ERR("failed to create key /%s/, err=%d\n",
+		mp->extview.lpszSubKey, err);
+	    return;
+	}
+    }
+    if (mp->wineFlags & WMRUF_CHANGED) {
+	mp->wineFlags &= ~WMRUF_CHANGED;
+	err = RegSetValueExA(newkey, "MRUList", 0, REG_SZ, 
+			     mp->realMRU, lstrlenA(mp->realMRU) + 1);
+	if (err) {
+	    ERR("error saving MRUList, err=%d\n", err);
+	}
+	TRACE("saving MRUList=/%s/\n", mp->realMRU);
+    }
+    realname[1] = 0;
+    for(i=0; i<mp->cursize; i++) {
+	witem = mp->array[i];
+	if (witem->itemFlag & WMRUIF_CHANGED) {
+	    witem->itemFlag &= ~WMRUIF_CHANGED;
+	    realname[0] = 'a' + i;
+	    err = RegSetValueExA(newkey, realname, 0, 
+				 (mp->extview.dwFlags & MRUF_BINARY_LIST) ? 
+				 REG_BINARY : REG_SZ,
+				 &witem->datastart, witem->size);
+	    if (err) {
+		ERR("error saving /%s/, err=%d\n", realname, err);
+	    }
+	    TRACE("saving value for name /%s/ size=%ld\n",
+		  realname, witem->size);
+	}
+    }
+    RegCloseKey( newkey );
+}
 
 /**************************************************************************
  *              CreateMRUListA [COMCTL32.151]
@@ -469,21 +544,74 @@ CreateMRUListA (LPCREATEMRULIST lpcml)
 DWORD WINAPI
 FreeMRUListA (HANDLE hMRUList)
 {
-    FIXME("(%08x) empty stub!\n", hMRUList);
+    LPWINEMRULIST mp = (LPWINEMRULIST)hMRUList;
+    INT i;
 
-#if 0
-    if (!(hmru->dwParam1 & 1001)) {
-	RegSetValueExA (hmru->hKeyMRU, "MRUList", 0, REG_SZ,
-			  hmru->lpszMRUString,
-			  strlen (hmru->lpszMRUString));
+    TRACE("\n");
+    if (mp->wineFlags & WMRUF_CHANGED) {
+	/* need to open key and then save the info */
+	MRU_SaveChanged( mp );
     }
 
+    for(i=0; i<mp->extview.nMaxItems; i++) {
+	if (mp->array[i])
+	    COMCTL32_Free(mp->array[i]);
+    }
+    COMCTL32_Free(mp->realMRU);
+    COMCTL32_Free(mp->array);
+    return COMCTL32_Free(mp);
+}
 
-    RegClosKey (hmru->hkeyMRU
-    COMCTL32_Free32 (hmru->lpszMRUString);
-#endif
 
-    return COMCTL32_Free ((LPVOID)hMRUList);
+/**************************************************************************
+ *                  FindMRUData [COMCTL32.169]
+ * 
+ * Searches binary list for item that matches lpData of length cbData.
+ * Returns position in list order 0 -> MRU and if lpRegNum != NULL then value
+ * corresponding to item's reg. name will be stored in it ('a' -> 0).
+ *
+ * PARAMS
+ *    hList [I] list handle
+ *    lpData [I] data to find
+ *    cbData [I] length of data
+ *    lpRegNum [O] position in registry (maybe NULL)
+ *
+ * RETURNS
+ *    Position in list 0 -> MRU.  -1 if item not found.
+ */
+INT WINAPI
+FindMRUData (HANDLE hList, LPCVOID lpData, DWORD cbData, LPINT lpRegNum)
+{
+    LPWINEMRULIST mp = (LPWINEMRULIST)hList;
+    INT i, ret;
+
+    if (!mp->extview.lpfnCompare) {
+	ERR("MRU list not properly created. No compare procedure.\n");
+	return -1;
+    }
+
+    for(i=0; i<mp->cursize; i++) {
+	if (mp->extview.dwFlags & MRUF_BINARY_LIST) {
+	    if (!mp->extview.lpfnCompare(lpData, &mp->array[i]->datastart, 
+					 cbData))
+		break;
+	}
+	else {
+	    if (!mp->extview.lpfnCompare(lpData, &mp->array[i]->datastart))
+		break;
+	}
+    }
+    if (i < mp->cursize)
+	ret = i;
+    else
+	ret = -1;
+    if (lpRegNum && (ret != -1))
+	*lpRegNum = 'a' + i;
+
+    TRACE("(%08x, %p, %ld, %p) returning %d\n",
+	   hList, lpData, cbData, lpRegNum, ret);
+
+    return ret;
 }
 
 
@@ -506,9 +634,51 @@ FreeMRUListA (HANDLE hMRUList)
 INT WINAPI
 AddMRUData (HANDLE hList, LPCVOID lpData, DWORD cbData)
 {
-    FIXME("(%08x, %p, %ld) empty stub!\n", hList, lpData, cbData);
+    LPWINEMRULIST mp = (LPWINEMRULIST)hList;
+    LPWINEMRUITEM witem;
+    INT i, replace, ret;
 
-    return 0;
+    if ((replace = FindMRUData (hList, lpData, cbData, NULL)) < 0) {
+	/* either add a new entry or replace oldest */
+	if (mp->cursize < mp->extview.nMaxItems) {
+	    /* Add in a new item */
+	    replace = mp->cursize;
+	    mp->cursize++;
+	}
+	else {
+	    /* get the oldest entry and replace data */
+	    replace = mp->realMRU[mp->cursize - 1] - 'a';
+	    COMCTL32_Free(mp->array[replace]);
+	}
+    }
+    else {
+	/* free up the old data */
+	COMCTL32_Free(mp->array[replace]);
+    }
+
+    /* Allocate space for new item and move in the data */
+    mp->array[replace] = witem = (LPWINEMRUITEM)COMCTL32_Alloc(cbData + 
+							       sizeof(WINEMRUITEM));
+    witem->itemFlag |= WMRUIF_CHANGED;
+    witem->size = cbData;
+    memcpy( &witem->datastart, lpData, cbData);
+
+    /* now rotate MRU list */
+    mp->wineFlags |= WMRUF_CHANGED;
+    for(i=mp->cursize-1; i>=1; i--) {
+	mp->realMRU[i] = mp->realMRU[i-1];
+    }
+    mp->realMRU[0] = replace + 'a';
+    TRACE("(%08x, %p, %ld) adding data, /%c/ now most current\n", 
+	  hList, lpData, cbData, replace+'a');
+    ret = replace;
+
+    if (!(mp->extview.dwFlags & MRUF_DELAYED_SAVE)) {
+	/* save changed stuff right now */
+	MRU_SaveChanged( mp );
+    }
+
+    return ret;
 }
 
 /**************************************************************************
@@ -554,31 +724,6 @@ DelMRUString(HANDLE hList, INT nItemPos)
 }
 
 /**************************************************************************
- *                  FindMRUData [COMCTL32.169]
- * 
- * Searches binary list for item that matches lpData of length cbData.
- * Returns position in list order 0 -> MRU and if lpRegNum != NULL then value
- * corresponding to item's reg. name will be stored in it ('a' -> 0).
- *
- * PARAMS
- *    hList [I] list handle
- *    lpData [I] data to find
- *    cbData [I] length of data
- *    lpRegNum [O] position in registry (maybe NULL)
- *
- * RETURNS
- *    Position in list 0 -> MRU.  -1 if item not found.
- */
-INT WINAPI
-FindMRUData (HANDLE hList, LPCVOID lpData, DWORD cbData, LPINT lpRegNum)
-{
-    FIXME("(%08x, %p, %ld, %p) empty stub!\n",
-	   hList, lpData, cbData, lpRegNum);
-
-    return 0;
-}
-
-/**************************************************************************
  *                  FindMRUStringA [COMCTL32.155]
  * 
  * Searches string list for item that matches lpszString.
@@ -596,10 +741,8 @@ FindMRUData (HANDLE hList, LPCVOID lpData, DWORD cbData, LPINT lpRegNum)
 INT WINAPI
 FindMRUStringA (HANDLE hList, LPCSTR lpszString, LPINT lpRegNum)
 {
-    FIXME("(%08x, %s, %p) empty stub!\n", hList, debugstr_a(lpszString),
-	  lpRegNum);
-
-    return 0;
+    return FindMRUData(hList, (LPVOID)lpszString, lstrlenA(lpszString),
+		       lpRegNum);
 }
 
 /**************************************************************************
@@ -608,19 +751,13 @@ FindMRUStringA (HANDLE hList, LPCSTR lpszString, LPINT lpRegNum)
 HANDLE WINAPI
 CreateMRUListLazyA (LPCREATEMRULIST lpcml, DWORD dwParam2, DWORD dwParam3, DWORD dwParam4)
 {
-    /* DWORD  dwLocal1;   *
-     * HKEY   hkeyResult; *
-     * DWORD  dwLocal3;   *
-     * LPVOID lMRU;       *
-     * DWORD  dwLocal5;   *
-     * DWORD  dwLocal6;   *
-     * DWORD  dwLocal7;   *
-     * DWORD  dwDisposition; */
-
-    /* internal variables */
-    LPVOID ptr;
-
-    FIXME("(%p) empty stub!\n", lpcml);
+    LPWINEMRULIST mp;
+    INT i, err;
+    HKEY newkey;
+    DWORD datasize, dwdisp;
+    CHAR realname[2];
+    LPWINEMRUITEM witem;
+    DWORD type;
 
     if (lpcml == NULL)
 	return 0;
@@ -628,16 +765,80 @@ CreateMRUListLazyA (LPCREATEMRULIST lpcml, DWORD dwParam2, DWORD dwParam3, DWORD
     if (lpcml->cbSize < sizeof(CREATEMRULIST))
 	return 0;
 
-    FIXME("(%lu %lu %lx %lx \"%s\" %p)\n",
+    mp = (LPWINEMRULIST) COMCTL32_Alloc(sizeof(WINEMRULIST));
+    memcpy(mp, lpcml, sizeof(CREATEMRULIST));
+
+    /* get space to save indexes that will turn into names
+     * but in order of most to least recently used
+     */
+    mp->realMRU = (LPSTR) COMCTL32_Alloc(mp->extview.nMaxItems + 2);
+
+    /* get space to save pointers to actual data in order of
+     * 'a' to 'z' (0 to n).
+     */
+    mp->array = (LPVOID) COMCTL32_Alloc(mp->extview.nMaxItems *
+					sizeof(LPVOID));
+
+    /* open the sub key */
+     if ((err = RegCreateKeyExA( mp->extview.hKey, mp->extview.lpszSubKey, 
+			       0,
+				"",
+				REG_OPTION_NON_VOLATILE, 
+				KEY_READ | KEY_WRITE,
+                                0,
+				&newkey,
+				&dwdisp))) {
+	/* error - what to do ??? */
+	ERR("(%lu %lu %lx %lx \"%s\" %p): Can not open key, error=%d\n",
+	    lpcml->cbSize, lpcml->nMaxItems, lpcml->dwFlags,
+	    (DWORD)lpcml->hKey, lpcml->lpszSubKey, lpcml->lpfnCompare,
+	    err);
+	return 0;
+    }
+
+    /* get values from key 'MRUList' */
+    if (newkey) {
+	datasize = mp->extview.nMaxItems + 1;
+	if((err=RegQueryValueExA( newkey, "MRUList", 0, &type, mp->realMRU, 
+				  &datasize))) {
+	    /* not present - set size to 1 (will become 0 later) */
+	    datasize = 1;
+	    *mp->realMRU = 0;
+	}
+
+	TRACE("MRU list = %s\n", mp->realMRU);
+
+	mp->cursize = datasize - 1;
+	/* datasize now has number of items in the MRUList */
+
+	/* get actual values for each entry */
+	realname[1] = 0;
+	for(i=0; i<mp->cursize; i++) {
+	    realname[0] = 'a' + i;
+	    if(RegQueryValueExA( newkey, realname, 0, &type, 0, &datasize)) {
+		/* not present - what to do ??? */
+		ERR("Key %s not found 1\n", realname);
+	    }
+	    mp->array[i] = witem = (LPWINEMRUITEM)COMCTL32_Alloc(datasize + 
+								 sizeof(WINEMRUITEM));
+	    witem->size = datasize;
+	    if(RegQueryValueExA( newkey, realname, 0, &type, 
+				 &witem->datastart, &datasize)) {
+		/* not present - what to do ??? */
+		ERR("Key %s not found 2\n", realname);
+	    }
+	}
+	RegCloseKey( newkey );
+    }
+    else
+	mp->cursize = 0;
+
+    TRACE("(%lu %lu %lx %lx \"%s\" %p): Current Size = %ld\n",
 	  lpcml->cbSize, lpcml->nMaxItems, lpcml->dwFlags,
-	  (DWORD)lpcml->hKey, lpcml->lpszSubKey, lpcml->lpfnCompare);
+	  (DWORD)lpcml->hKey, lpcml->lpszSubKey, lpcml->lpfnCompare,
+	  mp->cursize);
 
-    /* dummy pointer creation */
-    ptr = COMCTL32_Alloc (32);
-
-    FIXME("-- ret = %p\n", ptr);
-
-    return (HANDLE)ptr;
+    return (HANDLE)mp;
 }
 
 /**************************************************************************
@@ -661,9 +862,21 @@ CreateMRUListLazyA (LPCREATEMRULIST lpcml, DWORD dwParam2, DWORD dwParam3, DWORD
 INT WINAPI EnumMRUListA(HANDLE hList, INT nItemPos, LPVOID lpBuffer,
 DWORD nBufferSize)
 {
-    FIXME("(%08x, %d, %p, %ld): stub\n", hList, nItemPos, lpBuffer,
-	  nBufferSize);
-    return 0;
+    LPWINEMRULIST mp = (LPWINEMRULIST) hList;
+    LPWINEMRUITEM witem;
+    INT desired, datasize;
+
+    if (nItemPos >= mp->cursize) return -1;
+    if ((nItemPos < 0) || !lpBuffer) return mp->cursize;
+    desired = mp->realMRU[nItemPos];
+    desired -= 'a';
+    TRACE("nItemPos=%d, desired=%d\n", nItemPos, desired);
+    witem = mp->array[desired];
+    datasize = min( witem->size, nBufferSize ); 
+    memcpy( lpBuffer, &witem->datastart, datasize);
+    TRACE("(%08x, %d, %p, %ld): returning len=%d\n", 
+	  hList, nItemPos, lpBuffer, nBufferSize, datasize);
+    return datasize;
 }
 
 /**************************************************************************
