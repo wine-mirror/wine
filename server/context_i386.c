@@ -13,9 +13,10 @@
 #ifdef HAVE_SYS_REG_H
 #include <sys/reg.h>
 #endif
-#include <sys/ptrace.h>
-#include <sys/user.h>
 #include <unistd.h>
+#include <sys/ptrace.h>
+#include <sys/param.h>
+#include <sys/user.h>
 
 #include "winbase.h"
 
@@ -34,6 +35,12 @@
 #endif
 #ifndef PTRACE_GETFPREGS
 #define PTRACE_GETFPREGS PT_GETFPREGS
+#endif
+#ifndef PTRACE_SETREGS
+#define PTRACE_SETREGS PT_SETREGS
+#endif
+#ifndef PTRACE_SETFPREGS
+#define PTRACE_SETFPREGS PT_SETFPREGS
 #endif
 
 #ifdef linux
@@ -288,9 +295,117 @@ static void set_thread_context( struct thread *thread, unsigned int flags, CONTE
     file_set_error();
 }
 
-#else  /* linux || __sun__ */
+#elif defined(__FreeBSD__)
+#include <machine/reg.h>
+
+/* retrieve a thread context */
+static void get_thread_context( struct thread *thread, unsigned int flags, CONTEXT *context )
+{
+    int pid = thread->unix_pid;
+    if (flags & CONTEXT_FULL)
+    {
+        struct reg regs;
+        if (ptrace( PTRACE_GETREGS, pid, 0, (int) &regs ) == -1) goto error;
+        if (flags & CONTEXT_INTEGER)
+        {
+            context->Eax = regs.r_eax;
+            context->Ebx = regs.r_ebx;
+            context->Ecx = regs.r_ecx;
+            context->Edx = regs.r_edx;
+            context->Esi = regs.r_esi;
+            context->Edi = regs.r_edi;
+        }
+        if (flags & CONTEXT_CONTROL)
+        {
+            context->Ebp    = regs.r_ebp;
+            context->Esp    = regs.r_esp;
+            context->Eip    = regs.r_eip;
+            context->SegCs  = regs.r_cs & 0xffff;
+            context->SegSs  = regs.r_ss & 0xffff;
+            context->EFlags = regs.r_eflags;
+        }
+        if (flags & CONTEXT_SEGMENTS)
+        {
+            context->SegDs = regs.r_ds & 0xffff;
+            context->SegEs = regs.r_es & 0xffff;
+            context->SegFs = regs.r_fs & 0xffff;
+            context->SegGs = regs.r_gs & 0xffff;
+        }
+    }
+    if (flags & CONTEXT_DEBUG_REGISTERS)
+    {
+        /* FIXME: How is this done on FreeBSD? */
+    }
+    if (flags & CONTEXT_FLOATING_POINT)
+    {
+        /* we can use context->FloatSave directly as it is using the */
+        /* correct structure (the same as fsave/frstor) */
+        if (ptrace( PTRACE_GETFPREGS, pid, 0, (int) &context->FloatSave ) == -1) goto error;
+        context->FloatSave.Cr0NpxState = 0;  /* FIXME */
+    }
+    return;
+ error:
+    file_set_error();
+}
+
+
+/* set a thread context */
+static void set_thread_context( struct thread *thread, unsigned int flags, CONTEXT *context )
+{
+    int pid = thread->unix_pid;
+    if (flags & CONTEXT_FULL)
+    {
+        struct reg regs;
+        if ((flags & CONTEXT_FULL) != CONTEXT_FULL)  /* need to preserve some registers */
+        {
+            if (ptrace( PTRACE_GETREGS, pid, 0, (int) &regs ) == -1) goto error;
+        }
+        if (flags & CONTEXT_INTEGER)
+        {
+            regs.r_eax = context->Eax;
+            regs.r_ebx = context->Ebx;
+            regs.r_ecx = context->Ecx;
+            regs.r_edx = context->Edx;
+            regs.r_esi = context->Esi;
+            regs.r_edi = context->Edi;
+        }
+        if (flags & CONTEXT_CONTROL)
+        {
+            regs.r_ebp = context->Ebp;
+            regs.r_esp = context->Esp;
+            regs.r_eip = context->Eip;
+            regs.r_cs = context->SegCs;
+            regs.r_ss = context->SegSs;
+            regs.r_eflags = context->EFlags;
+        }
+        if (flags & CONTEXT_SEGMENTS)
+        {
+            regs.r_ds = context->SegDs;
+            regs.r_es = context->SegEs;
+            regs.r_fs = context->SegFs;
+            regs.r_gs = context->SegGs;
+        }
+        if (ptrace( PTRACE_SETREGS, pid, 0, (int) &regs ) == -1) goto error;
+    }
+    if (flags & CONTEXT_DEBUG_REGISTERS)
+    {
+        /* FIXME: How is this done on FreeBSD? */
+    }
+    if (flags & CONTEXT_FLOATING_POINT)
+    {
+        /* we can use context->FloatSave directly as it is using the */
+        /* correct structure (the same as fsave/frstor) */
+        if (ptrace( PTRACE_SETFPREGS, pid, 0, (int) &context->FloatSave ) == -1) goto error;
+        context->FloatSave.Cr0NpxState = 0;  /* FIXME */
+    }
+    return;
+ error:
+    file_set_error();
+}
+
+#else  /* linux || __sun__ || __FreeBSD__ */
 #error You must implement get/set_thread_context for your platform
-#endif  /* linux || __sun__*/
+#endif  /* linux || __sun__ || __FreeBSD__ */
 
 
 /* copy a context structure according to the flags */
