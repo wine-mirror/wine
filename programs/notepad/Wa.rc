@@ -20,6 +20,8 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
+#ifdef LANG_WALON
+
 LANGUAGE LANG_WALON, SUBLANG_DEFAULT
 
 MAIN_MENU MENU
@@ -124,3 +126,5 @@ STRING_OUT_OF_MEMORY,                   "Li memwere est plinne. \n\
 Cloyoz on programe ou pus po monter li memwere libe."
 
 }
+
+#endif  /* LANG_WALON */

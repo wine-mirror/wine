@@ -20,6 +20,8 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
+#ifdef LANG_WALON
+
 /* Menu */
 
 MAIN_MENU MENU LANGUAGE LANG_WALON, SUBLANG_DEFAULT
@@ -69,3 +71,5 @@ STID_TOPICS,		"&Topics"
 STID_ALL_FILES, 	"Tos les fitchîs (*.*)"
 STID_HELP_FILES_HLP, 	"Fitchîs d' aide (*.hlp)"
 }
+
+#endif  /* LANG_WALON */
