@@ -52,7 +52,7 @@ int yyerror(char *);
 
 %token tCONT tPASS tSTEP tLIST tNEXT tQUIT tHELP tBACKTRACE tINFO tWALK tUP tDOWN
 %token tENABLE tDISABLE tBREAK tWATCH tDELETE tSET tMODE tPRINT tEXAM tABORT tVM86
-%token tCLASS tMAPS tMODULE tSTACK tSEGMENTS tREGS tWND tQUEUE tLOCAL tEXCEPTION
+%token tCLASS tMAPS tMODULE tSTACK tSEGMENTS tSYMBOL tREGS tWND tQUEUE tLOCAL tEXCEPTION
 %token tPROCESS tTHREAD tMODREF tEOL tEOF
 %token tFRAME tSHARE tCOND tDISPLAY tUNDISPLAY tDISASSEMBLE
 %token tSTEPI tNEXTI tFINISH tSHOW tDIR tWHATIS tSOURCE
@@ -234,6 +234,7 @@ info_command:
     | tINFO tSEGMENTS expr_value tEOL { DEBUG_InfoSegments( $3, 1 ); DEBUG_FreeExprMem(); }
     | tINFO tSEGMENTS tEOL      { DEBUG_InfoSegments( 0, -1 ); }
     | tINFO tSTACK tEOL         { DEBUG_InfoStack(); }
+    | tINFO tSYMBOL tSTRING     { DEBUG_InfoSymbols($3); }
     | tINFO tMAPS tEOL          { DEBUG_InfoVirtual(); }
     | tINFO tWND expr_value tEOL{ DEBUG_InfoWindow( (HWND)$3 ); DEBUG_FreeExprMem(); }
     | tINFO tLOCAL tEOL         { DEBUG_InfoLocals(); }

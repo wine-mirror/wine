@@ -152,6 +152,7 @@ STRING     \"[^\n"]+\"
 <INFO_CMD>registers|regs|reg|re		{ return tREGS; }
 <INFO_CMD>segments|segment|segm|seg|se	{ return tSEGMENTS; }
 <INFO_CMD>stack|stac|sta|st     	{ return tSTACK; }
+<INFO_CMD>symbol|sym                    { BEGIN(ASTRING_EXPECTED); return tSYMBOL; }
 <INFO_CMD>maps|map			{ return tMAPS; }
 <INFO_CMD,WALK_CMD>window|windo|wind|win|wnd	{ return tWND; }
 <HELP_CMD>info|inf|in                   { return tINFO; }

@@ -1334,3 +1334,65 @@ int DEBUG_SetLocalSymbolType(struct wine_locals * sym, struct datatype * type)
 
   return TRUE;
 }
+
+static int cmp_sym_by_name(const void * p1, const void * p2)
+{
+  struct name_hash ** name1 = (struct name_hash **) p1;
+  struct name_hash ** name2 = (struct name_hash **) p2;
+
+  return strcmp( (*name1)->name, (*name2)->name );
+}
+
+#include <regex.h>
+
+void DEBUG_InfoSymbols(const char* str)
+{
+    int                 i;
+    struct name_hash*   nh;
+    struct name_hash**  array = NULL;
+    unsigned            num_used_array = 0;
+    unsigned            num_alloc_array = 0;
+    const char*         name;
+    enum dbg_mode       mode;
+    regex_t             preg;
+
+    regcomp(&preg, str, REG_NOSUB);
+
+    /* grab all symbols */
+    for (i = 0; i < NR_NAME_HASH; i++)
+    {
+        for (nh = name_hash_table[i]; nh; nh = nh->next)
+	{
+            if (regexec(&preg, nh->name, 0, NULL, 0) == 0)
+            {
+                if (num_used_array == num_alloc_array)
+                {
+                    array = HeapReAlloc(GetProcessHeap(), 0, array, sizeof(*array) * (num_alloc_array += 32));
+                    if (!array) return;
+                }
+                array[num_used_array++] = nh;
+            }
+	}
+    }
+    regfree(&preg);
+
+    /* now sort them by alphabetical order */
+    qsort(array, num_used_array, sizeof(*array), cmp_sym_by_name);
+
+    /* and display them */
+    for (i = 0; i < num_used_array; i++)
+    {
+        mode = DEBUG_GetSelectorType(array[i]->value.addr.seg);
+        name = DEBUG_FindNearestSymbol( &array[i]->value.addr, TRUE, 
+                                        NULL, 0, NULL );
+
+        if (mode != MODE_32) 
+            DEBUG_Printf( DBG_CHN_MESG, "%04lx:%04lx :", 
+                          array[i]->value.addr.seg & 0xFFFF,
+                          array[i]->value.addr.off );
+        else
+            DEBUG_Printf( DBG_CHN_MESG, "%08lx  :", array[i]->value.addr.off );
+        if (name) DEBUG_Printf( DBG_CHN_MESG, " %s\n", name );
+    }
+    HeapFree(GetProcessHeap(), 0, array);
+}

@@ -388,6 +388,7 @@ extern BOOL DEBUG_GetLineNumberAddr( const struct name_hash *, const int lineno,
 extern int DEBUG_SetLocalSymbolType(struct wine_locals * sym,
 				    struct datatype * type);
 extern BOOL DEBUG_Normalize(struct name_hash * nh );
+void DEBUG_InfoSymbols(const char* str);
 
   /* debugger/info.c */
 extern void DEBUG_PrintBasic( const DBG_VALUE* value, int count, char format );
