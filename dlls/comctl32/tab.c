@@ -80,7 +80,7 @@ typedef struct
  * Positioning constants
  */
 #define SELECTED_TAB_OFFSET     2
-#define HORIZONTAL_ITEM_PADDING 5
+#define HORIZONTAL_ITEM_PADDING 6
 #define VERTICAL_ITEM_PADDING   3
 #define ROUND_CORNER_SIZE       2
 #define DISPLAY_AREA_PADDINGX   2
@@ -137,6 +137,44 @@ TAB_RelayEvent (HWND hwndTip, HWND hwndMsg, UINT uMsg,
     msg.pt.y = HIWORD(GetMessagePos ());
 
     SendMessageA (hwndTip, TTM_RELAYEVENT, 0, (LPARAM)&msg);
+}
+
+static void
+TAB_DumpItemExternalA(TCITEMA *pti, UINT iItem)
+{
+    if (TRACE_ON(tab)) {
+	TRACE("external tab %d, mask=0x%08x, dwState=0x%08x, dwStateMask=0x%08x, cchTextMax=0x%08x\n",
+	      iItem, pti->mask, pti->dwState, pti->dwStateMask, pti->cchTextMax);
+	TRACE("external tab %d,   iImage=%d, lParam=0x%08lx, pszTextA=%s\n",
+	      iItem, pti->iImage, pti->lParam, debugstr_a(pti->pszText));
+    }
+}
+
+
+static void
+TAB_DumpItemExternalW(TCITEMW *pti, UINT iItem)
+{
+    if (TRACE_ON(tab)) {
+	TRACE("external tab %d, mask=0x%08x, dwState=0x%08lx, dwStateMask=0x%08lx, cchTextMax=0x%08x\n",
+	      iItem, pti->mask, pti->dwState, pti->dwStateMask, pti->cchTextMax);
+	TRACE("external tab %d,   iImage=%d, lParam=0x%08lx, pszTextW=%s\n",
+	      iItem, pti->iImage, pti->lParam, debugstr_w(pti->pszText));
+    }
+}
+
+static void
+TAB_DumpItemInternal(TAB_INFO *infoPtr, UINT iItem)
+{
+    if (TRACE_ON(tab)) {
+	TAB_ITEM *ti;
+
+	ti = &infoPtr->items[iItem];
+	TRACE("tab %d, mask=0x%08x, dwState=0x%08lx, pszText=%s, iImage=%d\n",
+	      iItem, ti->mask, ti->dwState, debugstr_w(ti->pszText),
+	      ti->iImage);
+	TRACE("tab %d, lParam=0x%08lx, rect.left=%d, rect.top(row)=%d\n",
+	      iItem, ti->lParam, ti->rect.left, ti->rect.top);
+    }
 }
 
 static LRESULT
@@ -1077,6 +1115,8 @@ static void TAB_SetItemBounds (HWND hwnd)
 	  infoPtr->tabHeight, fontMetrics.tmHeight, icon_height);
   }
 
+  TRACE("client right=%d\n", clientRect.right);
+
   for (curItem = 0; curItem < infoPtr->uNumItem; curItem++)
   {
     /* Set the leftmost position of the tab. */
@@ -1112,6 +1152,11 @@ static void TAB_SetItemBounds (HWND hwnd)
       infoPtr->items[curItem].rect.right = infoPtr->items[curItem].rect.left +
                                            size.cx + icon_width +
                                            num * HORIZONTAL_ITEM_PADDING;
+      TRACE("for <%s>, l,r=%d,%d, num=%d\n",
+	  debugstr_w(infoPtr->items[curItem].pszText),
+	  infoPtr->items[curItem].rect.left,
+	  infoPtr->items[curItem].rect.right,
+	  num);
     }
 
     /*
@@ -1131,6 +1176,10 @@ static void TAB_SetItemBounds (HWND hwnd)
 
 	infoPtr->items[curItem].rect.left = 0;
         curItemRowCount++;
+	TRACE("wrapping <%s>, l,r=%d,%d\n",
+	    debugstr_w(infoPtr->items[curItem].pszText),
+	    infoPtr->items[curItem].rect.left,
+	    infoPtr->items[curItem].rect.right);
     }
 
     infoPtr->items[curItem].rect.bottom = 0;
@@ -1194,22 +1243,48 @@ static void TAB_SetItemBounds (HWND hwnd)
            iItm<infoPtr->uNumItem;
            iItm++,iCount++)
       {
-          /* if we have reached the maximum number of tabs on this row */
-          /* move to the next row, reset our current item left position and */
-          /* the count of items on this row */
-          if (iCount >= ((iRow<remTab)?tabPerRow + 1:tabPerRow))
-          {
-              iRow++;
-              curItemLeftPos = 0;
-              iCount = 0;
-          }
-
           /* normalize the current rect */
 
           /* shift the item to the left side of the clientRect */
           infoPtr->items[iItm].rect.right -=
             infoPtr->items[iItm].rect.left;
           infoPtr->items[iItm].rect.left = 0;
+
+	  TRACE("r=%d, cl=%d, cl.r=%d, iCount=%d, iRow=%d, uNumRows=%d, remTab=%d, tabPerRow=%d\n",
+	      infoPtr->items[iItm].rect.right,
+	      curItemLeftPos, clientRect.right,
+	      iCount, iRow, infoPtr->uNumRows, remTab, tabPerRow);
+
+          /* if we have reached the maximum number of tabs on this row */
+          /* move to the next row, reset our current item left position and */
+          /* the count of items on this row */
+
+	  /* ************  FIXME FIXME FIXME  *************** */
+	  /*                                                  */
+	  /* FIXME:                                           */
+	  /* if vertical,                                     */ 
+	  /*   if item n and n+1 are in the same row,         */
+	  /*      then the display has n+1 lower (toward the  */
+	  /*      bottom) than n. We do it just the           */
+	  /*      opposite!!!                                 */
+	  /*                                                  */
+	  /* ************  FIXME FIXME FIXME  *************** */
+
+	  if (lStyle & TCS_VERTICAL) {
+	      /* Vert: Add the remaining tabs in the *last* remainder rows */
+	      if (iCount >= ((iRow>=(INT)infoPtr->uNumRows - remTab)?tabPerRow + 1:tabPerRow)) {
+		  iRow++;
+		  curItemLeftPos = 0;
+		  iCount = 0;
+	      }
+	  } else {
+	      /* Horz: Add the remaining tabs in the *first* remainder rows */
+	      if (iCount >= ((iRow<remTab)?tabPerRow + 1:tabPerRow)) {
+		  iRow++;
+		  curItemLeftPos = 0;
+		  iCount = 0;
+	      }
+	  } 
 
           /* shift the item to the right to place it as the next item in this row */
           infoPtr->items[iItm].rect.left += curItemLeftPos;
@@ -1223,6 +1298,12 @@ static void TAB_SetItemBounds (HWND hwnd)
 	  }
           else
             curItemLeftPos = infoPtr->items[iItm].rect.right;
+
+	  TRACE("arranging <%s>, l,r=%d,%d, row=%d\n",
+	      debugstr_w(infoPtr->items[iItm].pszText),
+	      infoPtr->items[iItm].rect.left,
+	      infoPtr->items[iItm].rect.right,
+	      infoPtr->items[iItm].rect.top);
       }
 
       /*
@@ -1265,6 +1346,12 @@ static void TAB_SetItemBounds (HWND hwnd)
            {
               infoPtr->items[iIndex].rect.left += iCount * widthDiff;
               infoPtr->items[iIndex].rect.right += (iCount + 1) * widthDiff;
+
+	      TRACE("adjusting 1 <%s>, l,r=%d,%d\n",
+		  debugstr_w(infoPtr->items[iIndex].pszText),
+		  infoPtr->items[iIndex].rect.left,
+		  infoPtr->items[iIndex].rect.right);
+
            }
            infoPtr->items[iIndex - 1].rect.right += remainder;
         }
@@ -1272,6 +1359,12 @@ static void TAB_SetItemBounds (HWND hwnd)
         {
           infoPtr->items[iIndexStart].rect.left = clientRect.left;
           infoPtr->items[iIndexStart].rect.right = clientRect.right - 4;
+
+	  TRACE("adjusting 2 <%s>, l,r=%d,%d\n",
+	      debugstr_w(infoPtr->items[iIndexStart].pszText),
+	      infoPtr->items[iIndexStart].rect.left,
+	      infoPtr->items[iIndexStart].rect.right);
+
         }
 
 
@@ -1451,6 +1544,8 @@ TAB_DrawItemInterior
 
     rcTemp = *drawRect;
 
+    rcText.left = rcText.top = rcText.right = rcText.bottom = 0;
+
     /*
      * Setup for text output
      */
@@ -1472,41 +1567,45 @@ TAB_DrawItemInterior
       ImageList_GetIconSize(infoPtr->himl, &cx, &cy);
 
       if(lStyle & TCS_VERTICAL)
-        center_offset = ((drawRect->bottom - drawRect->top) - (cy + VERTICAL_ITEM_PADDING + (rcText.right - rcText.left))) / 2;
+        center_offset = ((drawRect->bottom - drawRect->top) - (cy + HORIZONTAL_ITEM_PADDING + (rcText.right - rcText.left))) / 2;
       else
         center_offset = ((drawRect->right - drawRect->left) - (cx + HORIZONTAL_ITEM_PADDING + (rcText.right - rcText.left))) / 2;
 
+      TRACE("for <%s>, c_o=%d, draw=(%d,%d)-(%d,%d), textlen=%d\n",
+	  debugstr_w(infoPtr->items[iItem].pszText), center_offset,
+	  drawRect->left, drawRect->top, drawRect->right, drawRect->bottom,
+	  (rcText.right-rcText.left));
+
       if((lStyle & TCS_VERTICAL) && (lStyle & TCS_BOTTOM))
       {
-        /* rcImage.left = drawRect->left; */ /* explicit from above rcImage = *drawRect */
         rcImage.top = drawRect->top + center_offset;
         rcImage.left = drawRect->right - cx; /* if tab is TCS_VERTICAL and TCS_BOTTOM, the text is drawn from the */
                                              /* right side of the tab, but the image still uses the left as its x position */
                                              /* this keeps the image always drawn off of the same side of the tab */
-        drawRect->top = rcImage.top + (cx + VERTICAL_ITEM_PADDING);
+        drawRect->top = rcImage.top + (cx + HORIZONTAL_ITEM_PADDING);
       }
       else if(lStyle & TCS_VERTICAL)
       {
-        /* rcImage.left = drawRect->left; */ /* explicit from above rcImage = *drawRect */
         rcImage.top = drawRect->bottom - cy - center_offset;
-
-        drawRect->bottom = rcImage.top - VERTICAL_ITEM_PADDING;
+	rcImage.left--; 
+        drawRect->bottom = rcImage.top - HORIZONTAL_ITEM_PADDING;
       }
       else /* normal style, whether TCS_BOTTOM or not */
       {
-        rcImage.left = drawRect->left + center_offset;
-        /* rcImage.top = drawRect->top; */ /* explicit from above rcImage = *drawRect */
-
+        rcImage.left = drawRect->left + center_offset + 3;
         drawRect->left = rcImage.left + cx + HORIZONTAL_ITEM_PADDING;
+	rcImage.top -= (lStyle & TCS_BOTTOM) ? 2 : 1; 
       }
 
+      TRACE("drawing image=%d, left=%d, top=%d\n",
+	    infoPtr->items[iItem].iImage, rcImage.left, rcImage.top-1);
       ImageList_Draw
         (
         infoPtr->himl,
         infoPtr->items[iItem].iImage,
         hdc,
         rcImage.left,
-        rcImage.top + 1,
+        rcImage.top,
         ILD_NORMAL
         );
     } else /* no image, so just shift the drawRect borders around */
@@ -1937,6 +2036,8 @@ static void TAB_DrawItem(
       }
     }
 
+    TAB_DumpItemInternal(infoPtr, iItem);
+
     /* This modifies r to be the text rectangle. */
     {
       HFONT hOldFont = SelectObject(hdc, infoPtr->hFont);
@@ -2295,6 +2396,9 @@ TAB_InsertItemA (HWND hwnd, WPARAM wParam, LPARAM lParam)
   if (iItem > infoPtr->uNumItem)
     iItem = infoPtr->uNumItem;
 
+  TAB_DumpItemExternalA(pti, iItem);
+
+
   if (infoPtr->uNumItem == 0) {
     infoPtr->items = COMCTL32_Alloc (sizeof (TAB_ITEM));
     infoPtr->uNumItem++;
@@ -2366,6 +2470,8 @@ TAB_InsertItemW (HWND hwnd, WPARAM wParam, LPARAM lParam)
   if (iItem < 0) return -1;
   if (iItem > infoPtr->uNumItem)
     iItem = infoPtr->uNumItem;
+
+  TAB_DumpItemExternalW(pti, iItem);
 
   if (infoPtr->uNumItem == 0) {
     infoPtr->items = COMCTL32_Alloc (sizeof (TAB_ITEM));
@@ -2456,6 +2562,8 @@ TAB_SetItemA (HWND hwnd, WPARAM wParam, LPARAM lParam)
   TRACE("%d %p\n", iItem, tabItem);
   if ((iItem<0) || (iItem>=infoPtr->uNumItem)) return FALSE;
 
+  TAB_DumpItemExternalA(tabItem, iItem);
+
   wineItem = &infoPtr->items[iItem];
 
   if (tabItem->mask & TCIF_IMAGE)
@@ -2494,6 +2602,8 @@ TAB_SetItemW (HWND hwnd, WPARAM wParam, LPARAM lParam)
 
   TRACE("%d %p\n", iItem, tabItem);
   if ((iItem<0) || (iItem>=infoPtr->uNumItem)) return FALSE;
+
+  TAB_DumpItemExternalW(tabItem, iItem);
 
   wineItem = &infoPtr->items[iItem];
 
@@ -2560,6 +2670,8 @@ TAB_GetItemA (HWND hwnd, WPARAM wParam, LPARAM lParam)
   if (tabItem->mask & TCIF_TEXT)
    Str_GetPtrWtoA (wineItem->pszText, tabItem->pszText, tabItem->cchTextMax);
 
+  TAB_DumpItemExternalA(tabItem, iItem);
+
   return TRUE;
 }
 
@@ -2594,6 +2706,8 @@ TAB_GetItemW (HWND hwnd, WPARAM wParam, LPARAM lParam)
 
   if (tabItem->mask & TCIF_TEXT)
    Str_GetPtrW (wineItem->pszText, tabItem->pszText, tabItem->cchTextMax);
+
+  TAB_DumpItemExternalW(tabItem, iItem);
 
   return TRUE;
 }
