@@ -1072,10 +1072,19 @@ AC_CHECK_HEADERS(sys/mount.h sys/user.h,,,
      # include <sys/param.h>
      #endif])
 
-AC_CHECK_HEADERS([net/if.h net/if_arp.h net/if_dl.h net/if_types.h net/route.h resolv.h],,,
+AC_CHECK_HEADERS([net/if.h net/if_arp.h net/if_dl.h net/if_types.h net/route.h],,,
     [#include <sys/types.h>
      #if HAVE_SYS_SOCKET_H
      # include <sys/socket.h>
+     #endif])
+
+AC_CHECK_HEADERS([resolv.h],,,
+    [#include <sys/types.h>
+     #if HAVE_SYS_SOCKET_H
+     # include <sys/socket.h>
+     #endif
+     #if HAVE_NETINET_IN_H
+     # include <netinet/in.h>
      #endif])
 
 AC_CHECK_HEADERS(netinet/ip.h,,,
