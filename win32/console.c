@@ -59,6 +59,11 @@ const K32OBJ_OPS CONSOLE_Ops =
 	CONSOLE_Destroy		/* destroy */
 };
 
+/* FIXME:  Should be in an internal header file.  OK, so which one?
+   Used by CONSOLE_makecomplex. */
+FILE *wine_openpty(int *master, int *slave, char *name,
+                   struct termios *term, struct winsize *winsize);
+
 /***********************************************************************
  * CONSOLE_Destroy
  */

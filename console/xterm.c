@@ -22,7 +22,7 @@
 #define ESC '\x1b'
 
 static BOOL32 wine_create_console(FILE **master, FILE **slave, int *pid);
-static FILE *wine_openpty(FILE **master, FILE **slave, char *name,
+FILE *wine_openpty(int *master, int *slave, char *name,
                         struct termios *term, struct winsize *winsize);
 
 /* The console -- I chose to keep the master and slave
