@@ -69,21 +69,26 @@ static int running_under_wine ()
 
 static int running_on_visible_desktop ()
 {
-    FARPROC pGetProcessWindowStation = GetProcAddress(GetModuleHandle("user32.dll"), "GetProcessWindowStation");
+    HWND desktop;
+    HMODULE huser32 = GetModuleHandle("user32.dll");
+    FARPROC pGetProcessWindowStation = GetProcAddress(huser32, "GetProcessWindowStation");
+    FARPROC pGetUserObjectInformationA = GetProcAddress(huser32, "GetUserObjectInformationA");
 
-    if (pGetProcessWindowStation)
+    desktop = GetDesktopWindow();
+    if (!GetWindowLongPtrW(desktop, GWLP_WNDPROC)) /* Win9x */
+        return IsWindowVisible(desktop);
+
+    if (pGetProcessWindowStation && pGetUserObjectInformationA)
     {
         DWORD len;
         HWINSTA wstation;
         USEROBJECTFLAGS uoflags;
-        FARPROC pGetUserObjectInformationA = GetProcAddress(GetModuleHandle("user32.dll"), "GetUserObjectInformationA");
 
         wstation = (HWINSTA)pGetProcessWindowStation();
         assert(pGetUserObjectInformationA(wstation, UOI_FLAGS, &uoflags, sizeof(uoflags), &len));
         return (uoflags.dwFlags & WSF_VISIBLE) != 0;
     }
-    else
-        return IsWindowVisible(GetDesktopWindow());
+    return IsWindowVisible(desktop);
 }
 
 void print_version ()
