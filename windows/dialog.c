@@ -1334,12 +1334,17 @@ BOOL16 WINAPI WIN16_IsDialogMessage16( HWND16 hwndDlg, SEGPTR msg16 )
 {
     LPMSG16 msg = PTR_SEG_TO_LIN(msg16);
     BOOL ret, translate, dispatch;
-    INT dlgCode;
+    INT dlgCode = 0;
 
     if ((hwndDlg != msg->hwnd) && !IsChild16( hwndDlg, msg->hwnd ))
         return FALSE;
 
-    dlgCode = SendMessage16( msg->hwnd, WM_GETDLGCODE, 0, (LPARAM)msg16);
+    if ((msg->message == WM_KEYDOWN) ||
+        (msg->message == WM_SYSCHAR) ||
+        (msg->message == WM_CHAR))
+    {
+       dlgCode = SendMessage16( msg->hwnd, WM_GETDLGCODE, 0, (LPARAM)msg16);
+    }
     ret = DIALOG_IsDialogMessage( msg->hwnd, hwndDlg, msg->message,
                                   msg->wParam, msg->lParam,
                                   &translate, &dispatch, dlgCode );
@@ -1366,12 +1371,17 @@ BOOL16 WINAPI IsDialogMessage16( HWND16 hwndDlg, LPMSG16 msg )
 BOOL WINAPI IsDialogMessageA( HWND hwndDlg, LPMSG msg )
 {
     BOOL ret, translate, dispatch;
-    INT dlgCode;
+    INT dlgCode = 0;
 
     if ((hwndDlg != msg->hwnd) && !IsChild( hwndDlg, msg->hwnd ))
         return FALSE;
 
-    dlgCode = SendMessageA( msg->hwnd, WM_GETDLGCODE, 0, (LPARAM)msg);
+    if ((msg->message == WM_KEYDOWN) ||
+        (msg->message == WM_SYSCHAR) ||
+        (msg->message == WM_CHAR))
+    {
+        dlgCode = SendMessageA( msg->hwnd, WM_GETDLGCODE, 0, (LPARAM)msg);
+    }
     ret = DIALOG_IsDialogMessage( msg->hwnd, hwndDlg, msg->message,
                                   msg->wParam, msg->lParam,
                                   &translate, &dispatch, dlgCode );
@@ -1387,12 +1397,17 @@ BOOL WINAPI IsDialogMessageA( HWND hwndDlg, LPMSG msg )
 BOOL WINAPI IsDialogMessageW( HWND hwndDlg, LPMSG msg )
 {
     BOOL ret, translate, dispatch;
-    INT dlgCode;
+    INT dlgCode = 0;
 
     if ((hwndDlg != msg->hwnd) && !IsChild( hwndDlg, msg->hwnd ))
         return FALSE;
 
-    dlgCode = SendMessageW( msg->hwnd, WM_GETDLGCODE, 0, (LPARAM)msg);
+    if ((msg->message == WM_KEYDOWN) ||
+        (msg->message == WM_SYSCHAR) ||
+        (msg->message == WM_CHAR))
+    {
+        dlgCode = SendMessageW( msg->hwnd, WM_GETDLGCODE, 0, (LPARAM)msg);
+    }
     ret = DIALOG_IsDialogMessage( msg->hwnd, hwndDlg, msg->message,
                                   msg->wParam, msg->lParam,
                                   &translate, &dispatch, dlgCode );
