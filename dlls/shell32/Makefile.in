@@ -16,8 +16,9 @@ SPEC_SRCS = \
 
 C_SRCS = \
 	brsfolder.c \
+	changenotify.c \
 	classes.c \
-	contmenu.c \
+	clipboard.c \
 	dataobject.c \
 	enumidlist.c \
 	folders.c \
@@ -33,10 +34,12 @@ C_SRCS = \
 	shellole.c \
 	shellord.c \
 	shellpath.c \
+	shlfileop.c \
 	shlfolder.c \
 	shlview.c \
 	shpolicy.c \
 	shv_bg_cmenu.c \
+	shv_item_cmenu.c \
 	systray.c
 
 RC_SRCS= \

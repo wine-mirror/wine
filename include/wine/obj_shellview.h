@@ -62,14 +62,25 @@ typedef struct IShellView IShellView, *LPSHELLVIEW;
 #define FCIDM_SHVIEW_UNDO	0x701B
 #define FCIDM_SHVIEW_INSERTLINK	0x701C
 #define FCIDM_SHVIEW_SELECTALL	0x7021
-#define FCIDM_SHVIEW_INVERTSELECTION	0x7022
+#define FCIDM_SHVIEW_INVERTSELECTION 0x7022
+
 #define FCIDM_SHVIEW_BIGICON	0x7029
 #define FCIDM_SHVIEW_SMALLICON	0x702A
 #define FCIDM_SHVIEW_LISTVIEW	0x702B	
 #define FCIDM_SHVIEW_REPORTVIEW	0x702C
-#define FCIDM_SHVIEW_AUTOARRANGE	0x7031  
+/* 0x7030-0x703f are used by the shellbrowser */
+#define FCIDM_SHVIEW_AUTOARRANGE 0x7031  
 #define FCIDM_SHVIEW_SNAPTOGRID	0x7032
+
 #define FCIDM_SHVIEW_HELP	0x7041
+#define FCIDM_SHVIEW_RENAME	0x7050
+#define FCIDM_SHVIEW_CREATELINK	0x7051
+#define FCIDM_SHVIEW_NEWLINK	0x7052
+#define FCIDM_SHVIEW_NEWFOLDER	0x7053
+
+#define FCIDM_SHVIEW_REFRESH    0x7100 /* fixme */
+#define FCIDM_SHVIEW_EXPLORE	0x7101 /* fixme */
+#define FCIDM_SHVIEW_OPEN	0x7102 /* fixme */
 
 #define FCIDM_SHVIEWLAST	0x7fff
 #define FCIDM_BROWSERFIRST	0xA000
@@ -121,7 +132,8 @@ typedef enum
 	ICOM_METHOD3(HRESULT, AddPropertySheetPages, DWORD, dwReserved, LPFNADDPROPSHEETPAGE, lpfn, LPARAM, lparam) \
 	ICOM_METHOD (HRESULT, SaveViewState) \
 	ICOM_METHOD2(HRESULT, SelectItem, LPCITEMIDLIST, pidlItem, UINT, uFlags) \
-	ICOM_METHOD3(HRESULT, GetItemObject, UINT, uItem, REFIID, riid, LPVOID*, ppv)
+	ICOM_METHOD3(HRESULT, GetItemObject, UINT, uItem, REFIID, riid, LPVOID*, ppv) \
+	ICOM_METHOD1(HRESULT, EditItem, LPCITEMIDLIST, pidlItem)
 #define IShellView_IMETHODS \
 	IOleWindow_IMETHODS \
 	IShellView_METHODS
@@ -146,6 +158,8 @@ ICOM_DEFINE(IShellView,IOleWindow)
 #define IShellView_SaveViewState(p)		ICOM_CALL(SaveViewState,p)
 #define IShellView_SelectItem(p,a,b)		ICOM_CALL2(SelectItem,p,a,b)
 #define IShellView_GetItemObject(p,a,b,c)	ICOM_CALL3(GetItemObject,p,a,b,c)
+/* WINE specific */
+#define IShellView_EditItem(p,a)		ICOM_CALL1(EditItem,p,a)
 
 #ifdef __cplusplus
 } /* extern "C" */

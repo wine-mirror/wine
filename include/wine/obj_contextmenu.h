@@ -17,12 +17,6 @@ DEFINE_SHLGUID(IID_IContextMenu,        0x000214E4L, 0, 0);
 DEFINE_SHLGUID(IID_IContextMenu2,       0x000214F4L, 0, 0);
 typedef struct IContextMenu IContextMenu, *LPCONTEXTMENU;
 
-/* default menu items*/
-#define IDM_EXPLORE  0
-#define IDM_OPEN     1
-#define IDM_RENAME   2
-#define IDM_LAST     IDM_RENAME
-
 /* QueryContextMenu uFlags */
 #define CMF_NORMAL              0x00000000
 #define CMF_DEFAULTONLY         0x00000001
