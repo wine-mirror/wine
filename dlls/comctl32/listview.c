@@ -262,6 +262,7 @@ DEFINE_COMMON_NOTIFICATIONS(LISTVIEW_INFO, hwndSelf);
  */
 static BOOL LISTVIEW_GetItemT(LISTVIEW_INFO *, LPLVITEMW, BOOL);
 static INT LISTVIEW_SuperHitTestItem(LISTVIEW_INFO *, LPLVHITTESTINFO, BOOL, BOOL);
+static BOOL LISTVIEW_GetItemMeasures(LISTVIEW_INFO *, INT, LPRECT, LPRECT, LPRECT, LPRECT);
 static void LISTVIEW_AlignLeft(LISTVIEW_INFO *);
 static void LISTVIEW_AlignTop(LISTVIEW_INFO *);
 static void LISTVIEW_AddGroupSelection(LISTVIEW_INFO *, INT);
@@ -1142,67 +1143,57 @@ static void LISTVIEW_UpdateScroll(LISTVIEW_INFO *infoPtr)
  */
 static void LISTVIEW_ShowFocusRect(LISTVIEW_INFO *infoPtr, BOOL fShow)
 {
-    RECT rcItem;
-    INT nItem = infoPtr->nFocusedItem;
+    HDC hdc;
 
-    TRACE("fShow=%d, nItem=%d\n", fShow, nItem);
+    TRACE("fShow=%d, nItem=%d\n", fShow, infoPtr->nFocusedItem);
 
-    if (nItem < 0 || nItem >= infoPtr->nItemCount) return;
+    if (infoPtr->nFocusedItem < 0) return;
 
-    rcItem.left = LVIR_BOUNDS;
-    rcItem.top = 0;
-    if ( (infoPtr->dwStyle & LVS_TYPEMASK) == LVS_REPORT &&
-	 !(infoPtr->dwLvExStyle & LVS_EX_FULLROWSELECT) &&
-	 !(infoPtr->dwStyle & LVS_OWNERDRAWFIXED))
+    /* we need some gymnastics in ICON mode to handle large items */
+    if ( (infoPtr->dwStyle & LVS_TYPEMASK) == LVS_ICON )
     {
-	/* this little optimization eliminates some nasty flicker */
-	if (!LISTVIEW_GetSubItemRect(infoPtr, nItem, &rcItem)) return;
+	RECT rcBox;
+
+	if (!LISTVIEW_GetItemMeasures(infoPtr, infoPtr->nFocusedItem, &rcBox, 0, 0, 0)) 
+	    return;
+	if ((rcBox.bottom - rcBox.top) > infoPtr->nItemHeight)
+	{
+	    LISTVIEW_InvalidateRect(infoPtr, &rcBox);
+	    return;
+	}
     }
-    else
-    {
-	if (!LISTVIEW_GetItemRect(infoPtr, nItem, &rcItem)) return;
-    }
-    
+
+    if (!(hdc = GetDC(infoPtr->hwndSelf))) return;
+
     if (infoPtr->dwStyle & LVS_OWNERDRAWFIXED)
     {
 	DRAWITEMSTRUCT dis;
 	LVITEMW item;
-	HDC hdc;
 
-        item.iItem = nItem;
+        item.iItem = infoPtr->nFocusedItem;
 	item.iSubItem = 0;
         item.mask = LVIF_PARAM;
-	if (!LISTVIEW_GetItemW(infoPtr, &item)) goto invalidate;
+	if (!LISTVIEW_GetItemW(infoPtr, &item)) goto done;
 	   
-	if (!(hdc = GetDC(infoPtr->hwndSelf))) goto invalidate;
 	ZeroMemory(&dis, sizeof(dis)); 
 	dis.CtlType = ODT_LISTVIEW;
 	dis.CtlID = GetWindowLongW(infoPtr->hwndSelf, GWL_ID);
-	dis.itemID = nItem;
+	dis.itemID = item.iItem;
 	dis.itemAction = ODA_FOCUS;
 	if (fShow) dis.itemState |= ODS_FOCUS;
 	dis.hwndItem = infoPtr->hwndSelf;
 	dis.hDC = hdc;
-	dis.rcItem = rcItem;
+	if (!LISTVIEW_GetItemMeasures(infoPtr, dis.itemID, &dis.rcItem, 0, 0, 0)) goto done;
 	dis.itemData = item.lParam;
 
 	SendMessageW(GetParent(infoPtr->hwndSelf), WM_DRAWITEM, dis.CtlID, (LPARAM)&dis);
-	ReleaseDC(infoPtr->hwndSelf, hdc);
-	return;
     }
     else
     {
-        /* Here we are inneficient. We could, in theory, simply DrawFocusRect
-         * to erase/show the focus, without all this heavy duty redraw.
-         * Note that there are cases where we can not do that: when the list
-         * is in ICON mode, and the item is large, we must to invalidate it.
-         * Moreover, in the vast majority of cases, the selection status of
-         * the item changes anyway, and so the item is invalidated already,
-         * so not too much harm is done. If we do notice any flicker, we should
-         * refine this method. */
-invalidate:
-	LISTVIEW_InvalidateRect(infoPtr, &rcItem);
+	DrawFocusRect(hdc, &infoPtr->rcFocus);
     }
+done:
+    ReleaseDC(infoPtr->hwndSelf, hdc);
 }
 
 /***
@@ -1451,8 +1442,6 @@ static BOOL LISTVIEW_GetItemMeasures(LISTVIEW_INFO *infoPtr, INT nItem,
 
 	if (uView == LVS_ICON)
 	{
-	    if (!oversizedBox && labelSize.cy > infoPtr->ntmHeight)
-		labelSize.cy = (labelSize.cy / infoPtr->ntmHeight) * infoPtr->ntmHeight;
 	    Label.left = Box.left + (infoPtr->iconSpacing.cx - labelSize.cx) / 2;
 	    Label.top  = Box.top + ICON_TOP_PADDING_HITABLE +
 		         infoPtr->iconSize.cy + ICON_BOTTOM_PADDING;
@@ -1460,7 +1449,16 @@ static BOOL LISTVIEW_GetItemMeasures(LISTVIEW_INFO *infoPtr, INT nItem,
 	    if (infoPtr->dwStyle & LVS_OWNERDRAWFIXED)
 	        Label.bottom = Label.top + infoPtr->nItemHeight;
 	    else
+	    {
+		if (!oversizedBox && labelSize.cy > infoPtr->ntmHeight)
+		{
+		    labelSize.cy = min(Box.bottom - Label.top, labelSize.cy);
+		    labelSize.cy /= infoPtr->ntmHeight;
+		    labelSize.cy = max(labelSize.cy, 1);
+		    labelSize.cy *= infoPtr->ntmHeight;
+		}
 	        Label.bottom = Label.top + labelSize.cy + HEIGHT_PADDING;
+	    }
 	}
 	else /* LVS_SMALLICON, LVS_LIST or LVS_REPORT */
 	{
