@@ -132,6 +132,7 @@ static BOOL FindProvRegVals(DWORD dwIndex, DWORD *pdwProvType, LPSTR *pszProvNam
 	
 	RegQueryInfoKey(hKey, NULL, NULL, NULL, pdwProvCount, pcbProvName, 
 				 NULL, NULL, NULL, NULL, NULL, NULL);
+	(*pcbProvName)++;
 	
 	if (!(*pszProvName = ((LPSTR)LocalAlloc(LMEM_ZEROINIT, *pcbProvName))))
 		return FALSE;
@@ -193,7 +194,7 @@ static void test_enum_providers(void)
 	 * after loop ends, count should be provCount + 1 so subtract 1
 	 * to get actual number of providers */
 	count = 0;
-	while(CryptEnumProviders(count++, NULL, 0, &dwType, NULL, &providerLen))
+	while(CryptEnumProviders(count++, NULL, 0, &type, NULL, &providerLen))
 		;
 	count--;
 	ok(count==provCount, "expected %i, got %i\n", (int)provCount, (int)count);
@@ -201,7 +202,7 @@ static void test_enum_providers(void)
 	/* loop past the actual number of providers to get the error
 	 * ERROR_NO_MORE_ITEMS */
 	for (count = 0; count < provCount + 1; count++)
-		result = CryptEnumProviders(count, NULL, 0, &dwType, NULL, &providerLen);
+		result = CryptEnumProviders(count, NULL, 0, &type, NULL, &providerLen);
 	ok(!result && GetLastError()==ERROR_NO_MORE_ITEMS, "expected %08x, got %08x\n", 
 			ERROR_NO_MORE_ITEMS, (unsigned int)GetLastError());
 	
