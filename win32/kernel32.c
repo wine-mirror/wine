@@ -1018,9 +1018,9 @@ FreeSLCallback(
  * 		GetTEBSelectorFS	(KERNEL.475)
  * 	Set the 16-bit %fs to the 32-bit %fs (current TEB selector)
  */
-VOID WINAPI GetTEBSelectorFS16( CONTEXT86 *context ) 
+void WINAPI GetTEBSelectorFS16(void) 
 {
-    GET_FS( FS_reg(context) );
+    GET_FS( CURRENT_STACK16->fs );
 }
 
 /**********************************************************************

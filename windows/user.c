@@ -433,6 +433,14 @@ DWORD WINAPI UserSeeUserDo16(WORD wReqType, WORD wParam1, WORD wParam2, WORD wPa
 }
 
 /***********************************************************************
+ *         GetSystemDebugState16   (USER.231)
+ */
+WORD WINAPI GetSystemDebugState16(void)
+{
+    return 0;  /* FIXME */
+}
+
+/***********************************************************************
  *           RegisterLogonProcess   (USER32.434)
  */
 DWORD WINAPI RegisterLogonProcess(HANDLE hprocess,BOOL x) {

@@ -5,7 +5,7 @@ type	win16
 2 pascal16 IsPeFormat(str word) IsPeFormat16
 3 stub EXECPE
 4 stub GETPEEXEINFO
-5 return GETW32SYSVERSION 0 0x100
+5 pascal GetW32SysVersion() GetW32SysVersion16
 6 stub LOADPERESOURCE
 7 pascal16 GetPEResourceTable(word) GetPEResourceTable16
 8 stub EXECPEEX

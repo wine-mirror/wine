@@ -1235,20 +1235,20 @@ void WINAPI SwitchStackBack16( CONTEXT86 *context )
 
 
 /***********************************************************************
- *           GetTaskQueueDS  (KERNEL.118)
+ *           GetTaskQueueDS16  (KERNEL.118)
  */
-void WINAPI GetTaskQueueDS16( CONTEXT86 *context )
+void WINAPI GetTaskQueueDS16(void)
 {
-    DS_reg(context) = GlobalHandleToSel16( GetTaskQueue16(0) );
+    CURRENT_STACK16->ds = GlobalHandleToSel16( GetTaskQueue16(0) );
 }
 
 
 /***********************************************************************
- *           GetTaskQueueES  (KERNEL.119)
+ *           GetTaskQueueES16  (KERNEL.119)
  */
-void WINAPI GetTaskQueueES16( CONTEXT86 *context )
+void WINAPI GetTaskQueueES16(void)
 {
-    ES_reg(context) = GlobalHandleToSel16( GetTaskQueue16(0) );
+    CURRENT_STACK16->es = GlobalHandleToSel16( GetTaskQueue16(0) );
 }
 
 
@@ -1279,6 +1279,15 @@ DWORD WINAPI GetCurrentPDB16(void)
 
     if (!(pTask = (TDB *)GlobalLock16( GetCurrentTask() ))) return 0;
     return MAKELONG(pTask->hPDB, 0); /* FIXME */
+}
+
+
+/***********************************************************************
+ *           GetCurPID16   (KERNEL.157)
+ */
+DWORD WINAPI GetCurPID16( DWORD unused )
+{
+    return 0;
 }
 
 
@@ -1357,18 +1366,16 @@ HINSTANCE16 WINAPI GetTaskDS16(void)
 /***********************************************************************
  *           GetDummyModuleHandleDS   (KERNEL.602)
  */
-VOID WINAPI GetDummyModuleHandleDS16( CONTEXT86 *context )
+WORD WINAPI GetDummyModuleHandleDS16(void)
 {
     TDB *pTask;
     WORD selector;
 
-    AX_reg( context ) = 0;
-    if (!(pTask = (TDB *)GlobalLock16( GetCurrentTask() ))) return;
-    if (!(pTask->flags & TDBF_WIN32)) return;
-
+    if (!(pTask = (TDB *)GlobalLock16( GetCurrentTask() ))) return 0;
+    if (!(pTask->flags & TDBF_WIN32)) return 0;
     selector = GlobalHandleToSel16( pTask->hModule );
-    DS_reg( context ) = selector;
-    AX_reg( context ) = selector;
+    CURRENT_DS = selector;
+    return selector;
 }
 
 /***********************************************************************
@@ -1383,6 +1390,15 @@ BOOL16 WINAPI IsTask16( HTASK16 hTask )
     return (pTask->magic == TDB_MAGIC);
 }
 
+
+/***********************************************************************
+ *           IsWinOldApTask16   (KERNEL.158)
+ */
+BOOL16 WINAPI IsWinOldApTask16( HTASK16 hTask )
+{
+    /* should return bit 0 of byte 0x48 in PSP */
+    return FALSE;
+}
 
 /***********************************************************************
  *           SetTaskSignalProc   (KERNEL.38)
@@ -1445,7 +1461,7 @@ VOID WINAPI GlobalNotify16( FARPROC16 proc )
 /***********************************************************************
  *           GetExePtr   (KERNEL.133)
  */
-static HMODULE16 GetExePtrHelper( HANDLE16 handle, HTASK16 *hTask )
+static inline HMODULE16 GetExePtrHelper( HANDLE16 handle, HTASK16 *hTask )
 {
     char *ptr;
     HANDLE16 owner;
@@ -1492,21 +1508,15 @@ static HMODULE16 GetExePtrHelper( HANDLE16 handle, HTASK16 *hTask )
 
 HMODULE16 WINAPI GetExePtr( HANDLE16 handle )
 {
-    HTASK16 dummy;
-    return GetExePtrHelper( handle, &dummy );
-}
-
-void WINAPI WIN16_GetExePtr( CONTEXT86 *context )
-{
-    WORD *stack = PTR_SEG_OFF_TO_LIN(SS_reg(context), SP_reg(context));
-    HANDLE16 handle = (HANDLE16)stack[2];
+    STACK16FRAME *frame;
     HTASK16 hTask = 0;
-    HMODULE16 hModule;
-
-    hModule = GetExePtrHelper( handle, &hTask );
-
-    AX_reg(context) = CX_reg(context) = hModule;
-    if (hTask) ES_reg(context) = hTask;
+    HMODULE16 hModule = GetExePtrHelper( handle, &hTask );
+    if ((frame  = CURRENT_STACK16) != NULL)
+    {
+        frame->ecx = hModule;
+        if (hTask) frame->es = hTask;
+    }
+    return hModule;
 }
 
 /***********************************************************************

@@ -26,12 +26,13 @@
 #include "task.h"
 #include "thread.h"
 #include "process.h"
-#include "debugtools.h"
 #include "winerror.h"
 #include "mdi.h"
 #include "local.h"
 #include "desktop.h"
 #include "syslevel.h"
+#include "stackframe.h"
+#include "debugtools.h"
 
 DECLARE_DEBUG_CHANNEL(msg)
 DECLARE_DEBUG_CHANNEL(win)
@@ -2283,16 +2284,8 @@ INT WINAPI GetWindowTextLengthW( HWND hwnd )
  */
 BOOL16 WINAPI IsWindow16( HWND16 hwnd )
 {
+    CURRENT_STACK16->es = USER_HeapSel;
     return IsWindow( hwnd );
-}
-
-void WINAPI WIN16_IsWindow16( CONTEXT86 *context )
-{
-    WORD *stack = PTR_SEG_OFF_TO_LIN(SS_reg(context), SP_reg(context));
-    HWND16 hwnd = (HWND16)stack[2];
-
-    AX_reg(context) = IsWindow( hwnd );
-    ES_reg(context) = USER_HeapSel;
 }
 
 

@@ -49,7 +49,6 @@ typedef enum
     TYPE_PASCAL_16,    /* pascal function with 16-bit return (Win16) */
     TYPE_PASCAL,       /* pascal function with 32-bit return (Win16) */
     TYPE_ABS,          /* absolute value (Win16) */
-    TYPE_RETURN,       /* simple return value function (Win16) */
     TYPE_REGISTER,     /* register function */
     TYPE_STUB,         /* unimplemented stub */
     TYPE_STDCALL,      /* stdcall function (Win32) */
@@ -69,7 +68,6 @@ static const char * const TypeNames[TYPE_NBTYPES] =
     "pascal16",     /* TYPE_PASCAL_16 */
     "pascal",       /* TYPE_PASCAL */
     "equate",       /* TYPE_ABS */
-    "return",       /* TYPE_RETURN */
     "register",     /* TYPE_REGISTER */
     "stub",         /* TYPE_STUB */
     "stdcall",      /* TYPE_STDCALL */
@@ -502,45 +500,6 @@ static int ParseEquate( ORDDEF *odp )
 
 
 /*******************************************************************
- *         ParseReturn
- *
- * Parse a 'return' definition.
- */
-static int ParseReturn( ORDDEF *odp )
-{
-    char *token;
-    char *endptr;
-    
-    token = GetToken();
-    odp->u.ret.arg_size = strtol(token, &endptr, 0);
-    if (endptr == NULL || *endptr != '\0')
-    {
-	fprintf(stderr, "%s:%d: Expected number value, got '%s'\n",
-                SpecName, Line, token);
-	return -1;
-    }
-
-    token = GetToken();
-    odp->u.ret.ret_value = strtol(token, &endptr, 0);
-    if (endptr == NULL || *endptr != '\0')
-    {
-	fprintf(stderr, "%s:%d: Expected number value, got '%s'\n",
-                SpecName, Line, token);
-	return -1;
-    }
-
-    if (SpecType == SPEC_WIN32)
-    {
-        fprintf( stderr, "%s:%d: 'return' not supported for Win32\n",
-                 SpecName, Line );
-        return -1;
-    }
-
-    return 0;
-}
-
-
-/*******************************************************************
  *         ParseStub
  *
  * Parse a 'stub' definition.
@@ -684,8 +643,6 @@ static int ParseOrdinal(int ordinal)
 	return ParseExportFunction( odp );
     case TYPE_ABS:
 	return ParseEquate( odp );
-    case TYPE_RETURN:
-	return ParseReturn( odp );
     case TYPE_STUB:
 	return ParseStub( odp );
     case TYPE_VARARGS:
@@ -983,7 +940,6 @@ static int BuildModule16( FILE *outfile, int max_code_offset,
         case TYPE_PASCAL:
         case TYPE_PASCAL_16:
         case TYPE_REGISTER:
-        case TYPE_RETURN:
         case TYPE_STUB:
             selector = 1;  /* Code selector */
             break;
@@ -1410,22 +1366,13 @@ static int BuildSpec16File( char * specfile, FILE *outfile )
             data_offset += StoreVariableCode( data + data_offset, 4, odp);
             break;
 
-          case TYPE_RETURN:
-            fprintf( outfile, "    /* %s.%d */ ", DLLName, i );
-            fprintf( outfile, "EP_RET( %d, %d ),\n",
-                              odp->u.ret.ret_value, odp->u.ret.arg_size );
-
-            odp->offset = code_offset;
-            code_offset += sizeof(ENTRYPOINT16);
-            break;
-
           case TYPE_REGISTER:
           case TYPE_CDECL:
           case TYPE_PASCAL:
           case TYPE_PASCAL_16:
           case TYPE_STUB:
             fprintf( outfile, "    /* %s.%d */ ", DLLName, i );
-            fprintf( outfile, "EP_STD( %s, %s_CallFrom16_%s_%s_%s ),\n",
+            fprintf( outfile, "EP( %s, %s_CallFrom16_%s_%s_%s ),\n",
                               odp->u.func.link_name,
                               DLLName,
                               (odp->type == TYPE_CDECL) ? "c" : "p",

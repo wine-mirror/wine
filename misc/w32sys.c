@@ -25,6 +25,14 @@ WORD WINAPI GetWin32sInfo16(
 }
 
 /***********************************************************************
+ *            GetW32SysVersion16  (W32SYS.5)
+ */
+void WINAPI GetW32SysVersion16(void)
+{
+    return 0x100;
+}
+
+/***********************************************************************
  *           GetPEResourceTable   (W32SYS.7)
  * retrieves the resourcetable from the passed filedescriptor
  * RETURNS

@@ -97,6 +97,16 @@ BOOL16 WINAPI StackTraceNext16(STACKTRACEENTRY *ste)
     return TRUE;
 }
 
+BOOL16 WINAPI InterruptRegister16( HTASK16 task, FARPROC callback )
+{
+    return TRUE;
+}
+
+BOOL16 WINAPI InterruptUnRegister16( HTASK16 task )
+{
+    return TRUE;
+}
+
 /***********************************************************************
  *           ToolHelpHook                             (KERNEL.341)
  *	see "Undocumented Windows"

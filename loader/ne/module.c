@@ -1614,6 +1614,22 @@ BOOL16 WINAPI ModuleFindHandle16( MODULEENTRY *lpme, HMODULE16 hModule )
 
 
 /***************************************************************************
+ *          IsRomModule16    (KERNEL.323)
+ */
+BOOL16 WINAPI IsRomModule16( HMODULE16 unused )
+{
+    return FALSE;
+}
+
+/***************************************************************************
+ *          IsRomFile16    (KERNEL.326)
+ */
+BOOL16 WINAPI IsRomFile16( HFILE16 unused )
+{
+    return FALSE;
+}
+
+/***************************************************************************
  *		MapHModuleLS			(KERNEL32.520)
  */
 HMODULE16 WINAPI MapHModuleLS(HMODULE hmod) {

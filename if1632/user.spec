@@ -48,7 +48,7 @@ file	user.exe
 44  pascal16 OpenIcon(word) OpenIcon16
 45  pascal16 BringWindowToTop(word) BringWindowToTop16
 46  pascal16 GetParent(word) GetParent16
-47  register IsWindow(word) WIN16_IsWindow16
+47  pascal16 IsWindow(word) IsWindow16
 48  pascal16 IsChild(word word) IsChild16
 49  pascal16 IsWindowVisible(word) IsWindowVisible16
 50  pascal16 FindWindow(segstr str) FindWindow16
@@ -233,7 +233,7 @@ file	user.exe
 228 pascal16 GetNextDlgTabItem(word word word) GetNextDlgTabItem16
 229 pascal16 GetTopWindow(word) GetTopWindow16
 230 pascal16 GetNextWindow(word word) GetNextWindow16
-231 return GetSystemDebugState 0 0  #FIXME
+231 pascal16 GetSystemDebugState() GetSystemDebugState16
 232 pascal16 SetWindowPos(word word word word word word word) SetWindowPos16
 233 pascal16 SetParent(word word) SetParent16
 234 pascal16 UnhookWindowsHook(s_word segptr) THUNK_UnhookWindowsHook16

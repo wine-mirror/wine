@@ -328,7 +328,8 @@ BOOL16 WINAPI LocalInit16( HANDLE16 selector, WORD start, WORD end )
     LOCALHEAPINFO *pHeapInfo;
     LOCALARENA *pArena, *pFirstArena, *pLastArena;
     NE_MODULE *pModule;
-    
+    BOOL16 ret = FALSE;
+
       /* The initial layout of the heap is: */
       /* - first arena         (FIXED)      */
       /* - heap info structure (FIXED)      */
@@ -390,7 +391,7 @@ BOOL16 WINAPI LocalInit16( HANDLE16 selector, WORD start, WORD end )
 
       /* Make sure there's enough space.       */
 
-    if (freeArena + sizeof(LOCALARENA) >= lastArena) return FALSE;
+    if (freeArena + sizeof(LOCALARENA) >= lastArena) goto done;
 
       /* Initialise the first arena */
 
@@ -442,7 +443,11 @@ BOOL16 WINAPI LocalInit16( HANDLE16 selector, WORD start, WORD end )
 
     ((INSTANCEDATA *)ptr)->heap = heapInfoArena + ARENA_HEADER_SIZE;
     LOCAL_PrintHeap( selector );
-    return TRUE;
+    ret = TRUE;
+
+ done:
+    CURRENT_STACK16->ecx = ret;  /* must be returned in cx too */
+    return ret;
 }
 
 /***********************************************************************
@@ -1532,20 +1537,9 @@ HLOCAL16 LOCAL_Handle( HANDLE16 ds, WORD addr )
  */
 HLOCAL16 WINAPI LocalAlloc16( UINT16 flags, WORD size )
 {
-    return LOCAL_Alloc( CURRENT_DS, flags, size );
-}
-
-
-/***********************************************************************
- *           WIN16_LocalAlloc
- */
-void WINAPI WIN16_LocalAlloc( CONTEXT86 *context )
-{
-    WORD *stack = PTR_SEG_OFF_TO_LIN(SS_reg(context), SP_reg(context));
-    UINT16 flags = (UINT16)stack[3];
-    WORD size = (WORD)stack[2];
-    TRACE_(local)("WIN16LocalAlloc: %04x %d \n", flags, size);
-    AX_reg(context) = CX_reg(context) = LOCAL_Alloc( DS_reg(context), flags, size );
+    HLOCAL16 ret = LOCAL_Alloc( CURRENT_DS, flags, size );
+    CURRENT_STACK16->ecx = ret;  /* must be returned in cx too */
+    return ret;
 }
 
 

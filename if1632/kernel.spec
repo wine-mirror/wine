@@ -9,7 +9,7 @@ file	krnl386.exe
 2   pascal16 ExitKernel() ExitKernel16
 3   pascal GetVersion() GetVersion16
 4   pascal16 LocalInit(word word word) LocalInit16
-5   register LocalAlloc(word word) WIN16_LocalAlloc
+5   pascal16 LocalAlloc(word word) LocalAlloc16
 6   pascal16 LocalReAlloc(word word word) LocalReAlloc16
 7   pascal16 LocalFree(word) LocalFree16
 8   pascal LocalLock(word) LocalLock16
@@ -43,8 +43,8 @@ file	krnl386.exe
 36  pascal   GetCurrentTask() WIN16_GetCurrentTask
 37  pascal GetCurrentPDB() GetCurrentPDB16
 38  pascal   SetTaskSignalProc(word segptr) THUNK_SetTaskSignalProc
-41  return EnableDos 0 0
-42  return DisableDos 0 0
+41  pascal16 EnableDos() KERNEL_nop
+42  pascal16 DisableDos() KERNEL_nop
 45  pascal16 LoadModule(str ptr) LoadModule16
 46  pascal16 FreeModule(word) FreeModule16
 47  pascal   GetModuleHandle(segstr) WIN16_GetModuleHandle
@@ -99,9 +99,9 @@ file	krnl386.exe
 95  pascal16 LoadLibrary(str) LoadLibrary16
 96  pascal16 FreeLibrary(word) FreeLibrary16
 97  pascal16 GetTempFileName(word str word ptr) GetTempFileName16
-98  return GetLastDiskChange 0 0
+98  pascal16 GetLastDiskChange() KERNEL_nop
 99  stub GetLPErrMode
-100 return ValidateCodeSegments 0 0
+100 pascal16 ValidateCodeSegments() KERNEL_nop
 101 stub NoHookDosCall
 102 register DOS3Call() DOS3Call
 103 register NetBIOSCall() NetBIOSCall16
@@ -119,14 +119,14 @@ file	krnl386.exe
 115 pascal16 OutputDebugString(str) OutputDebugString16
 116 stub InitLib
 117 pascal16 OldYield() OldYield16
-118 register GetTaskQueueDS() GetTaskQueueDS16
-119 register GetTaskQueueES() GetTaskQueueES16
+118 pascal16 GetTaskQueueDS() GetTaskQueueDS16
+119 pascal16 GetTaskQueueES() GetTaskQueueES16
 120 stub UndefDynLink
 121 pascal16 LocalShrink(word word) LocalShrink16
 122 pascal16 IsTaskLocked() IsTaskLocked16
-123 return KbdRst 0 0
-124 return EnableKernel 0 0
-125 return DisableKernel 0 0
+123 pascal16 KbdRst() KERNEL_nop
+124 pascal16 EnableKernel() KERNEL_nop
+125 pascal16 DisableKernel() KERNEL_nop
 126 stub MemoryFreed
 127 pascal16 GetPrivateProfileInt(str str s_word str) GetPrivateProfileInt16
 128 pascal16 GetPrivateProfileString(str str str ptr word str)
@@ -136,7 +136,7 @@ file	krnl386.exe
 130 pascal FileCDR(ptr) FileCDR16
 131 pascal GetDOSEnvironment() GetDOSEnvironment16
 132 pascal GetWinFlags() GetWinFlags16
-133 register GetExePtr(word) WIN16_GetExePtr
+133 pascal16 GetExePtr(word) GetExePtr
 134 pascal16 GetWindowsDirectory(ptr word) GetWindowsDirectory16
 135 pascal16 GetSystemDirectory(ptr word) GetSystemDirectory16
 136 pascal16 GetDriveType(word) GetDriveType16
@@ -158,16 +158,16 @@ file	krnl386.exe
 152 pascal16 GetNumTasks() GetNumTasks16
 154 pascal16 GlobalNotify(segptr) GlobalNotify16
 155 pascal16 GetTaskDS() GetTaskDS16
-156 return LimitEMSPages 4 0
-157 return GetCurPID 4 0
-158 return IsWinOldApTask 2 0
+156 pascal   LimitEMSPages(long) LimitEMSPages16
+157 pascal   GetCurPID(long) GetCurPID16
+158 pascal16 IsWinOldApTask(word) IsWinOldApTask16
 159 pascal GlobalHandleNoRIP(word) GlobalHandleNoRIP16
 160 stub EMSCopy
 161 pascal16 LocalCountFree() LocalCountFree16
 162 pascal16 LocalHeapSize() LocalHeapSize16
 163 pascal16 GlobalLRUOldest(word) GlobalLRUOldest16
 164 pascal16 GlobalLRUNewest(word) GlobalLRUNewest16
-165 return A20Proc 2 0
+165 pascal16 A20Proc(word) A20Proc16
 166 pascal16 WinExec(str word) WinExec16
 167 pascal16 GetExpWinVer(word) GetExpWinVer16
 168 pascal16 DirectResAlloc(word word word) DirectResAlloc16
@@ -202,7 +202,7 @@ file	krnl386.exe
 197 pascal16 GlobalFix(word) GlobalFix16
 198 pascal16 GlobalUnfix(word) GlobalUnfix16
 199 pascal16 SetHandleCount(word) SetHandleCount16
-200 return ValidateFreeSpaces 0 0
+200 pascal16 ValidateFreeSpaces() KERNEL_nop
 201 stub ReplaceInst
 202 stub RegisterPtrace
 203 register DebugBreak() DebugBreak16
@@ -243,7 +243,7 @@ file	krnl386.exe
 234 stub RegSaveKey
 235 stub InvalidateNlsCache
 236 stub GetProductName
-237 return K237 0 0
+237 pascal16 K237() KERNEL_nop
 
 
 # 262-274 are WinNT extensions; those are not present in Win95
@@ -264,10 +264,10 @@ file	krnl386.exe
 318 stub FatalExitHook
 319 stub FlushCachedFileHandle
 320 pascal16 IsTask(word) IsTask16
-323 return IsRomModule 2 0
+323 pascal16 IsRomModule(word) IsRomModule16
 324 pascal16 LogError(word ptr) LogError16
 325 pascal16 LogParamError(word ptr ptr) LogParamError16
-326 return IsRomFile 2 0
+326 pascal16 IsRomFile(word) IsRomFile16
 327 register K327() HandleParamError
 328 pascal16 _DebugOutput() _DebugOutput
 329 pascal16 K329(str word) DebugFillBuffer
@@ -289,7 +289,7 @@ file	krnl386.exe
 348 pascal16 hmemcpy(ptr ptr long) hmemcpy16
 349 pascal   _hread(word segptr long) WIN16_hread
 350 pascal   _hwrite(word ptr long) _hwrite16
-351 return BUNNY_351 0 0
+351 pascal16 BUNNY_351() KERNEL_nop
 352 pascal   lstrcatn(segstr str word) lstrcatn16
 353 pascal   lstrcpyn(segptr str word) lstrcpyn16
 354 pascal   GetAppCompatFlags(word) GetAppCompatFlags16
@@ -305,7 +305,7 @@ file	krnl386.exe
 358 pascal MapLS(long) MapLS
 359 pascal UnMapLS(segptr) UnMapLS
 360 pascal16 OpenFileEx(str ptr word) OpenFile16
-361 return PIGLET_361 0 0
+361 pascal16 PIGLET_361() KERNEL_nop
 362 stub ThunkTerminateProcess
 365 register GlobalChangeLockCount(word word) GlobalChangeLockCount16
 
@@ -351,7 +351,7 @@ file	krnl386.exe
 444 pascal16 Local32Info(ptr word) Local32Info16
 445 pascal16 Local32First(ptr word) Local32First16
 446 pascal16 Local32Next(ptr) Local32Next16
-447 return KERNEL_447 0 0
+447 pascal16 KERNEL_447() KERNEL_nop
 448 stub KERNEL_448
 449 pascal GetpWin16Lock() GetpWin16Lock16
 450 pascal VWin32_EventWait(long) VWin32_EventWait
@@ -379,7 +379,7 @@ file	krnl386.exe
 472 register MapHInstLS() WIN16_MapHInstLS
 473 register MapHInstSL() WIN16_MapHInstSL
 474 pascal CloseW32Handle(long) CloseHandle
-475 register GetTEBSelectorFS() GetTEBSelectorFS16
+475 pascal16 GetTEBSelectorFS() GetTEBSelectorFS16
 476 pascal ConvertToGlobalHandle(long) ConvertToGlobalHandle
 477 stub WOAFullScreen
 478 stub WOATerminateProcess
@@ -471,7 +471,7 @@ file	krnl386.exe
 
 600 stub AllocCodeAlias
 601 stub FreeCodeAlias
-602 register GetDummyModuleHandleDS() GetDummyModuleHandleDS16
+602 pascal16 GetDummyModuleHandleDS() GetDummyModuleHandleDS16
 603 stub KERNEL_603  # OutputDebugString (?)
 604 register CBClientGlueSL() CBClientGlueSL
 605 pascal AllocSLThunkletCallback(long long) AllocSLThunkletCallback16
@@ -480,7 +480,7 @@ file	krnl386.exe
 608 pascal AllocSLThunkletSysthunk(long segptr long) AllocSLThunkletSysthunk16
 609 pascal FindLSThunkletCallback(segptr long) FindLSThunkletCallback
 610 pascal FindSLThunkletCallback(long long) FindSLThunkletCallback
-611 return FreeThunklet 8 0
+611 pascal16 FreeThunklet() FreeThunklet16
 612 pascal16 IsSLThunklet(ptr) IsSLThunklet16
 613 stub HugeMapLS
 614 stub HugeUnMapLS

@@ -53,3 +53,4 @@ long WINAPI stub_USER_919(void) { FIXME("stub\n"); return 0; }
 long WINAPI stub_USER_920(void) { FIXME("stub\n"); return 0; }
 long WINAPI stub_USER_922(void) { FIXME("stub\n"); return 0; }
 long WINAPI stub_USER_923(void) { FIXME("stub\n"); return 0; }
+long WINAPI KERNEL_nop(void) { return 0; }

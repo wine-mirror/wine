@@ -1437,6 +1437,14 @@ SEGPTR WINAPI FindSLThunkletCallback( FARPROC target, DWORD relay )
 
 
 /***********************************************************************
+ *     FreeThunklet16            (KERNEL.611)
+ */
+BOOL16 WINAPI FreeThunklet16( DWORD unused1, DWORD unused2 )
+{
+    return FALSE;
+}
+
+/***********************************************************************
  * Callback Client API
  */
 

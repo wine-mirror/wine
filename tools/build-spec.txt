@@ -13,8 +13,6 @@ ORDINAL stub EXPORTNAME
 
 ORDINAL equate EXPORTNAME DATA
 
-ORDINAL return EXPORTNAME ARGLENGTH RETVALUE
-
 ORDINAL extern EXPORTNAME SYMBOLNAME
 
 ORDINAL forward EXPORTNAME SYMBOLNAME
@@ -121,16 +119,6 @@ Equate ordinals:
 "ORDINAL" is replaced by the ordinal number corresponding to the
 variable.  "EXPORTNAME" will be the name available for dynamic linking.  
 "DATA" can be a decimal number or a hex number preceeded by "0x".
-
-Return ordinals:
-================
-
-    This type defines a function entry point whose handler should do
-nothing but return a value.
-    "ORDINAL" is replaced by the ordinal number corresponding to the
-variable.  ARGLENGTH is the number of bytes that need to be removed
-from the stack before returning to the caller.  RETVALUE is the
-return value which will be passed back to the caller.
 
 Extern ordinals:
 ================

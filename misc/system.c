@@ -152,3 +152,35 @@ void WINAPI DisableSystemTimers16(void)
     if ( SYS_Service != INVALID_HANDLE_VALUE )
         SERVICE_Disable( SYS_Service );
 }
+
+
+/***********************************************************************
+ *           Get80x87SaveSize16   (SYSTEM.7)
+ */
+WORD Get80x87SaveSize16(void)
+{
+    return 94;
+}
+
+
+/***********************************************************************
+ *           Save80x87State16   (SYSTEM.8)
+ */
+void Save80x87State16( char *ptr )
+{
+#ifdef __i386__
+    __asm__(".byte 0x66; fsave %0; fwait" : "=m" (ptr) );
+#endif
+}
+
+
+/***********************************************************************
+ *           Restore80x87State16   (SYSTEM.9)
+ */
+void Restore80x87State16( const char *ptr )
+{
+#ifdef __i386__
+    __asm__(".byte 0x66; frstor %0" : : "m" (ptr) );
+#endif
+}
+

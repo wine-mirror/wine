@@ -101,6 +101,15 @@ void KEYBOARD_SendEvent( BYTE bVk, BYTE bScan, DWORD dwFlags,
 }
 
 /**********************************************************************
+ *           SetSpeed16      (KEYBOARD.7)
+ */
+WORD WINAPI SetSpeed16(WORD unused)
+{
+    FIXME_(keyboard)("(%04x): stub\n",unused);
+    return 0xffff;
+}
+
+/**********************************************************************
  *           ScreenSwitchEnable      (KEYBOARD.100)
  */
 VOID WINAPI ScreenSwitchEnable16(WORD unused)

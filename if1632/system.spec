@@ -7,7 +7,7 @@ type	win16
 4 pascal16 EnableSystemTimers() EnableSystemTimers16
 5 pascal16 DisableSystemTimers() DisableSystemTimers16
 6 pascal   GetSystemMSecCount() GetTickCount
-7 return Get80x87SaveSize 0 94
-8 stub Save80x87State
-9 stub Restore80x87State
-#20 stub A20_Proc
+7 pascal16 Get80x87SaveSize() Get80x87SaveSize16
+8 pascal16 Save80x87State(ptr) Save80x87State16
+9 pascal16 Restore80x87State(ptr) Restore80x87State16
+20 pascal16 A20_Proc(word) A20Proc16

@@ -7,7 +7,7 @@ type	win16
 4   pascal16 ToAscii(word word ptr ptr word) ToAscii16
 5   pascal16 AnsiToOem(str ptr) AnsiToOem16
 6   pascal16 OemToAnsi(str ptr) OemToAnsi16
-7   return   SetSpeed 2 65535
+7   pascal16 SetSpeed(word) SetSpeed16
 100	pascal	ScreenSwitchEnable(word) ScreenSwitchEnable16
 #126	pascal	GetTableSeg
 #127	pascal	NewTable

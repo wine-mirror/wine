@@ -15,35 +15,13 @@ typedef struct
 {
     WORD   pushw_bp;               /* pushw %bp */
     BYTE   pushl;                  /* pushl $target */      
-    DWORD  target;
+    void (*target)();
     BYTE   lcall;                  /* lcall __FLATCS__:relay */
-    DWORD  relay;
+    void (*relay)();
     WORD   flatcs;
-} STD_ENTRYPOINT16;
-
-typedef struct
-{
-    WORD   movw_ax;                /* movw $<ax>, %ax */
-    WORD   ax;
-    WORD   movw_dx;                /* movw $<dx>, %dx */
-    WORD   dx;
-    WORD   lret;                   /* lret $<args> */
-    WORD   args;
-    WORD   nopnop;                 /* nop; nop */
-} RET_ENTRYPOINT16;
-
-typedef union
-{
-    STD_ENTRYPOINT16  std;
-    RET_ENTRYPOINT16  ret;
 } ENTRYPOINT16;
 
-#define EP_STD( target, relay ) \
-    { std: { 0x5566, 0x68, (DWORD)(target), 0x9a, (DWORD)(relay), __FLATCS__ } }
-
-#define EP_RET( retval, nargs ) \
-    { ret: { 0xb866, LOWORD(retval), 0xba66, HIWORD(retval), \
-             (nargs)? 0xca66 : 0xcb66, (nargs)? (nargs) : 0x9090, 0x9090 } }
+#define EP(target,relay) { 0x5566, 0x68, (target), 0x9a, (relay), __FLATCS__ }
 
 #include "poppack.h"
 

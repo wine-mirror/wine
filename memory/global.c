@@ -1481,3 +1481,20 @@ WORD WINAPI WOWGlobalUnlockFree16(DWORD vpmem) {
     	return 0;
     return GlobalFree16(HIWORD(vpmem));
 }
+
+
+/***********************************************************************
+ *           A20Proc16   (KERNEL.165)
+ */
+void WINAPI A20Proc16( WORD unused )
+{
+    /* this is also a NOP in Windows */
+}
+
+/***********************************************************************
+ *           LimitEMSPages16   (KERNEL.156)
+ */
+DWORD WINAPI LimitEMSPages16( DWORD unused )
+{
+    return 0;
+}
