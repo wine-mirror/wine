@@ -417,8 +417,8 @@ static wine_signal_handler handlers[256];
 
 extern void WINAPI EXC_RtlRaiseException( PEXCEPTION_RECORD, PCONTEXT );
 
-/* Global variable to save current TEB while in 16-bit code (FIXME) */
-WORD SYSLEVEL_Win16CurrentTeb = 0;
+/* Global variable to save the thread %fs register while in 16-bit code (FIXME) */
+static unsigned int signal_fs;
 
 /***********************************************************************
  *           dispatch_signal
@@ -542,7 +542,7 @@ static void save_context( CONTEXT *context, const SIGCONTEXT *sigcontext )
          * SS is still non-system segment. This is why both CS and SS
          * are checked.
          */
-        wine_set_fs( SYSLEVEL_Win16CurrentTeb );
+        wine_set_fs( signal_fs );
         wine_set_gs( NtCurrentTeb()->gs_sel );
     }
 #ifdef __HAVE_VM86
@@ -650,7 +650,7 @@ static void init_handler( const SIGCONTEXT *sigcontext )
     if (!IS_SELECTOR_SYSTEM(CS_sig(sigcontext)) ||
         !IS_SELECTOR_SYSTEM(SS_sig(sigcontext)))  /* 16-bit mode */
     {
-        wine_set_fs( SYSLEVEL_Win16CurrentTeb );
+        wine_set_fs( signal_fs );
         wine_set_gs( NtCurrentTeb()->gs_sel );
     }
 #ifdef __HAVE_VM86
@@ -1190,6 +1190,15 @@ int __wine_set_signal_handler(unsigned int sig, wine_signal_handler wsh)
     if (handlers[sig] != NULL) return -2;
     handlers[sig] = wsh;
     return 0;
+}
+
+
+/***********************************************************************
+ *           __wine_set_signal_fs  (NTDLL.@)
+ */
+void __wine_set_signal_fs( unsigned int fs )
+{
+    signal_fs = fs;
 }
 
 

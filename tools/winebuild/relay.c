@@ -169,11 +169,11 @@ static void BuildCallFrom16Core( FILE *outfile, int reg_func, int thunk, int sho
 
     if ( UsePIC )
     {
-        fprintf( outfile, "\tmovl " __ASM_NAME("SYSLEVEL_Win16CurrentTeb@GOT") "(%%ecx), %%edx\n" );
+        fprintf( outfile, "\tmovl " __ASM_NAME("CallTo16_TebSelector@GOT") "(%%ecx), %%edx\n" );
         fprintf( outfile, "\tmovw (%%edx), %%fs\n" );
     }
     else
-        fprintf( outfile, "\tmovw " __ASM_NAME("SYSLEVEL_Win16CurrentTeb") ", %%fs\n" );
+        fprintf( outfile, "\tmovw " __ASM_NAME("CallTo16_TebSelector") ", %%fs\n" );
 
     fprintf( outfile, "\t.byte 0x64\n\tmovl (%d),%%gs\n", STRUCTOFFSET(TEB,gs_sel) );
 
@@ -615,11 +615,6 @@ static void BuildCallTo16Core( FILE *outfile, int reg_func )
  */
 static void BuildRet16Func( FILE *outfile )
 {
-    /*
-     *  Note: This must reside in the .data section to allow
-     *        run-time relocation of the SYSLEVEL_Win16CurrentTeb symbol
-     */
-
     function_header( outfile, "CallTo16_Ret" );
 
     /* Save %esp into %esi */
@@ -637,7 +632,7 @@ static void BuildRet16Func( FILE *outfile )
 #endif
     fprintf( outfile, "\tmovw %%di,%%es\n" );
 
-    fprintf( outfile, "\tmovw " __ASM_NAME("SYSLEVEL_Win16CurrentTeb") ",%%fs\n" );
+    fprintf( outfile, "\t.byte 0x2e\n\tmovl " __ASM_NAME("CallTo16_TebSelector") "-" __ASM_NAME("Call16_Ret_Start") ",%%fs\n" );
 
     fprintf( outfile, "\t.byte 0x64\n\tmovl (%d),%%gs\n", STRUCTOFFSET(TEB,gs_sel) );
 
@@ -658,6 +653,8 @@ static void BuildRet16Func( FILE *outfile )
     fprintf( outfile, "\n\t.align %d\n", get_alignment(4) );
     fprintf( outfile, "\t.globl " __ASM_NAME("CallTo16_DataSelector") "\n" );
     fprintf( outfile, __ASM_NAME("CallTo16_DataSelector") ":\t.long 0\n" );
+    fprintf( outfile, "\t.globl " __ASM_NAME("CallTo16_TebSelector") "\n" );
+    fprintf( outfile, __ASM_NAME("CallTo16_TebSelector") ":\t.long 0\n" );
 }
 
 
