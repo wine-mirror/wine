@@ -378,22 +378,21 @@ static LRESULT MDISetMenu( HWND hwnd, HMENU hmenuFrame,
     if( ci->hwndChildMaximized && hmenuFrame && hmenuFrame!=oldFrameMenu )
         MDI_RestoreFrameMenu( GetParent(hwnd), ci->hwndChildMaximized );
 
-    if( hmenuWindow && ci->hWindowMenu && hmenuWindow!=ci->hWindowMenu )
+    if( hmenuWindow && hmenuWindow != ci->hWindowMenu )
     {
         /* delete menu items from ci->hWindowMenu
          * and add them to hmenuWindow */
-
-        INT i = GetMenuItemCount(ci->hWindowMenu) - 1;
-        INT pos = GetMenuItemCount(hmenuWindow) + 1;
-
-        AppendMenuA( hmenuWindow, MF_SEPARATOR, 0, NULL);
-
-        if( ci->nActiveChildren )
+        /* Agent newsreader calls this function with  ci->hWindowMenu == NULL */
+        if( ci->hWindowMenu && ci->nActiveChildren )
         {
             INT j;
             LPWSTR buffer = NULL;
 	    MENUITEMINFOW mii;
             INT nbWindowsMenuItems; /* num of documents shown + "More Windows..." if present */
+            INT i = GetMenuItemCount(ci->hWindowMenu) - 1;
+            INT pos = GetMenuItemCount(hmenuWindow) + 1;
+
+            AppendMenuA( hmenuWindow, MF_SEPARATOR, 0, NULL);
 
             if (ci->nActiveChildren <= MDI_MOREWINDOWSLIMIT)
                 nbWindowsMenuItems = ci->nActiveChildren;
@@ -424,11 +423,9 @@ static LRESULT MDISetMenu( HWND hwnd, HMENU hmenuFrame,
 		    buffer = NULL;
 		}
             }
+            /* remove separator */
+            DeleteMenu(ci->hWindowMenu, i, MF_BYPOSITION);
         }
-
-        /* remove separator */
-        DeleteMenu(ci->hWindowMenu, i, MF_BYPOSITION);
-
         ci->hWindowMenu = hmenuWindow;
     }
 
