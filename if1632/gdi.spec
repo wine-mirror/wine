@@ -160,7 +160,7 @@ file	gdi.exe
 190 pascal16 SetDCHook(word segptr long) THUNK_SetDCHook
 191 pascal   GetDCHook(word ptr) THUNK_GetDCHook
 192 pascal16 SetHookFlags(word word) SetHookFlags
-193 stub SetBoundsRect
+193 pascal16 SetBoundsRect(word ptr word) SetBoundsRect16
 194 pascal16 GetBoundsRect(word ptr word) GetBoundsRect16
 195 stub SelectBitmap
 196 pascal16 SetMetaFileBitsBetter(word) SetMetaFileBitsBetter

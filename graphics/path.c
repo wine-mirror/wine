@@ -424,7 +424,7 @@ BOOL32 WINAPI FillPath32(HDC32 hdc)
 BOOL32 WINAPI SelectClipPath32(HDC32 hdc, INT32 iMode)
 {
    GdiPath *pPath;
-   HRGN32  hrgnPath, hrgnClip;
+   HRGN32  hrgnPath;
    BOOL32  success;
    
    /* Get pointer to path */
@@ -444,17 +444,7 @@ BOOL32 WINAPI SelectClipPath32(HDC32 hdc, INT32 iMode)
    /* Construct a region from the path */
    if(PATH_PathToRegion(pPath, GetPolyFillMode32(hdc), &hrgnPath))
    {
-      hrgnClip=CreateRectRgn32(0, 0, 0, 0);
-      if(hrgnClip==(HRGN32)0)
-         success=FALSE;
-      else
-      {
-         success=(GetClipRgn32(hdc, hrgnClip)!=-1) &&
-	    (CombineRgn32(hrgnClip, hrgnClip, hrgnPath, iMode)!=ERROR) &&
-	    (SelectClipRgn32(hdc, hrgnClip)!=ERROR);
-	 DeleteObject32(hrgnClip);
-      }
-
+      success = ExtSelectClipRgn( hdc, hrgnPath, iMode ) != ERROR;
       DeleteObject32(hrgnPath);
 
       /* Empty the path */

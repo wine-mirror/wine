@@ -1035,7 +1035,6 @@ static BOOL32 BITBLT_GetVisRectangles( DC *dcDst, INT32 xDst, INT32 yDst,
     if (widthDst < 0) SWAP_INT32( &rect.left, &rect.right );
     if (heightDst < 0) SWAP_INT32( &rect.top, &rect.bottom );
     GetRgnBox32( dcDst->w.hGCClipRgn, &clipRect );
-    OffsetRect32( &clipRect, dcDst->w.DCOrgX, dcDst->w.DCOrgY );
     if (!IntersectRect32( visRectDst, &rect, &clipRect )) return FALSE;
 
       /* Get the source visible rectangle */
@@ -1046,7 +1045,6 @@ static BOOL32 BITBLT_GetVisRectangles( DC *dcDst, INT32 xDst, INT32 yDst,
     if (heightSrc < 0) SWAP_INT32( &rect.top, &rect.bottom );
     /* Apparently the clip region is only for output, so use hVisRgn here */
     GetRgnBox32( dcSrc->w.hVisRgn, &clipRect );
-    OffsetRect32( &clipRect, dcSrc->w.DCOrgX, dcSrc->w.DCOrgY );
     if (!IntersectRect32( visRectSrc, &rect, &clipRect )) return FALSE;
 
       /* Intersect the rectangles */

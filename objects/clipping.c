@@ -60,27 +60,7 @@ INT16 WINAPI SelectClipRgn16( HDC16 hdc, HRGN16 hrgn )
  */
 INT32 WINAPI SelectClipRgn32( HDC32 hdc, HRGN32 hrgn )
 {
-    INT32 retval;
-    DC * dc = (DC *) GDI_GetObjPtr( hdc, DC_MAGIC );
-    if (!dc) return ERROR;
-
-    TRACE(clipping, "%04x %04x\n", hdc, hrgn );
-
-    if (hrgn)
-    {
-	if (!dc->w.hClipRgn) dc->w.hClipRgn = CreateRectRgn32(0,0,0,0);
-	retval = CombineRgn32( dc->w.hClipRgn, hrgn, 0, RGN_COPY );
-    }
-    else
-    {
-	if (dc->w.hClipRgn) DeleteObject16( dc->w.hClipRgn );
-	dc->w.hClipRgn = 0;
-	retval = SIMPLEREGION; /* Clip region == whole DC */
-    }
-
-    CLIPPING_UpdateGCRegion( dc );
-    GDI_HEAP_UNLOCK( hdc );
-    return retval;
+    return ExtSelectClipRgn( hdc, hrgn, RGN_COPY );
 }
 
 /******************************************************************************
@@ -88,9 +68,44 @@ INT32 WINAPI SelectClipRgn32( HDC32 hdc, HRGN32 hrgn )
  */
 INT32 WINAPI ExtSelectClipRgn( HDC32 hdc, HRGN32 hrgn, INT32 fnMode )
 {
-    if (fnMode != RGN_COPY)
-        FIXME(clipping, "Unimplemented mode: %d\n", fnMode); 
-    return SelectClipRgn32( hdc, hrgn );
+    INT32 retval;
+    DC * dc = (DC *) GDI_GetObjPtr( hdc, DC_MAGIC );
+    if (!dc) return ERROR;
+
+    TRACE( clipping, "%04x %04x %d\n", hdc, hrgn, fnMode );
+
+    if (!hrgn)
+    {
+        if (fnMode == RGN_COPY)
+        {
+            if (dc->w.hClipRgn) DeleteObject16( dc->w.hClipRgn );
+            dc->w.hClipRgn = 0;
+            retval = SIMPLEREGION; /* Clip region == whole DC */
+        }
+        else
+        {
+            FIXME(clipping, "Unimplemented: hrgn NULL in mode: %d\n", fnMode); 
+            return ERROR;
+        }
+    }
+    else 
+    {
+        if (!dc->w.hClipRgn)
+        {
+            RECT32 rect;
+            GetRgnBox32( dc->w.hVisRgn, &rect );
+            dc->w.hClipRgn = CreateRectRgnIndirect32( &rect );
+        }
+
+        OffsetRgn32( dc->w.hClipRgn, -dc->w.DCOrgX, -dc->w.DCOrgY );
+        retval = CombineRgn32( dc->w.hClipRgn, dc->w.hClipRgn, hrgn, fnMode );
+        OffsetRgn32( dc->w.hClipRgn, dc->w.DCOrgX, dc->w.DCOrgY );
+    }
+
+
+    CLIPPING_UpdateGCRegion( dc );
+    GDI_HEAP_UNLOCK( hdc );
+    return retval;
 }
 
 /***********************************************************************
@@ -179,6 +194,11 @@ INT32 CLIPPING_IntersectClipRect( DC * dc, INT32 left, INT32 top,
 {
     HRGN32 newRgn;
     INT32 ret;
+
+    left   += dc->w.DCOrgX;
+    right  += dc->w.DCOrgX;
+    top    += dc->w.DCOrgY;
+    bottom += dc->w.DCOrgY;
 
     if (!(newRgn = CreateRectRgn32( left, top, right, bottom ))) return ERROR;
     if (!dc->w.hClipRgn)
@@ -293,19 +313,21 @@ INT32 WINAPI IntersectClipRect32( HDC32 hdc, INT32 left, INT32 top,
 /***********************************************************************
  *           CLIPPING_IntersectVisRect
  *
- * Helper function for {Intersect,Exclude}VisRect
+ * Helper function for {Intersect,Exclude}VisRect, can be called from
+ * elsewhere (like ExtTextOut()) to skip redundant metafile update and
+ * coordinate conversion.
  */
-static INT32 CLIPPING_IntersectVisRect( DC * dc, INT32 left, INT32 top,
-                                        INT32 right, INT32 bottom,
-                                        BOOL32 exclude )
+INT32 CLIPPING_IntersectVisRect( DC * dc, INT32 left, INT32 top,
+                                 INT32 right, INT32 bottom,
+                                 BOOL32 exclude )
 {
     HRGN32 tempRgn, newRgn;
     INT32 ret;
 
-    left   = XLPTODP( dc, left );
-    right  = XLPTODP( dc, right );
-    top    = YLPTODP( dc, top );
-    bottom = YLPTODP( dc, bottom );
+    left   += dc->w.DCOrgX;
+    right  += dc->w.DCOrgX;
+    top    += dc->w.DCOrgY;
+    bottom += dc->w.DCOrgY;
 
     if (!(newRgn = CreateRectRgn32( 0, 0, 0, 0 ))) return ERROR;
     if (!(tempRgn = CreateRectRgn32( left, top, right, bottom )))
@@ -340,6 +362,12 @@ INT16 WINAPI ExcludeVisRect( HDC16 hdc, INT16 left, INT16 top,
 {
     DC * dc = (DC *) GDI_GetObjPtr( hdc, DC_MAGIC );
     if (!dc) return ERROR;    
+
+    left   = XLPTODP( dc, left );
+    right  = XLPTODP( dc, right );
+    top    = YLPTODP( dc, top );
+    bottom = YLPTODP( dc, bottom );
+
     TRACE(clipping, "%04x %dx%d,%dx%d\n",
 	    hdc, left, top, right, bottom );
 
@@ -355,6 +383,12 @@ INT16 WINAPI IntersectVisRect( HDC16 hdc, INT16 left, INT16 top,
 {
     DC * dc = (DC *) GDI_GetObjPtr( hdc, DC_MAGIC );
     if (!dc) return ERROR;    
+
+    left   = XLPTODP( dc, left );
+    right  = XLPTODP( dc, right );
+    top    = YLPTODP( dc, top );
+    bottom = YLPTODP( dc, bottom );
+
     TRACE(clipping, "%04x %dx%d,%dx%d\n",
 	    hdc, left, top, right, bottom );
 
@@ -385,7 +419,8 @@ BOOL32 WINAPI PtVisible32( HDC32 hdc, INT32 x, INT32 y )
     if( dc->w.flags & DC_DIRTY ) UPDATE_DIRTY_DC(dc);
     dc->w.flags &= ~DC_DIRTY;
 
-    return PtInRegion32( dc->w.hGCClipRgn, XLPTODP(dc,x), YLPTODP(dc,y) );
+    return PtInRegion32( dc->w.hGCClipRgn, XLPTODP(dc,x) + dc->w.DCOrgX, 
+                                           YLPTODP(dc,y) + dc->w.DCOrgY );
 }
 
 
@@ -403,6 +438,7 @@ BOOL16 WINAPI RectVisible16( HDC16 hdc, LPRECT16 rect )
     /* copy rectangle to avoid overwriting by LPtoDP */
     tmpRect = *rect;
     LPtoDP16( hdc, (LPPOINT16)&tmpRect, 2 );
+    OffsetRect16( &tmpRect, dc->w.DCOrgX, dc->w.DCOrgY );
     return RectInRegion16( dc->w.hGCClipRgn, &tmpRect );
 }
 
@@ -427,6 +463,7 @@ INT16 WINAPI GetClipBox16( HDC16 hdc, LPRECT16 rect )
     DC * dc = (DC *) GDI_GetObjPtr( hdc, DC_MAGIC );
     if (!dc) return ERROR;    
     ret = GetRgnBox16( dc->w.hGCClipRgn, rect );
+    OffsetRect16( rect, -dc->w.DCOrgX, -dc->w.DCOrgY );
     DPtoLP16( hdc, (LPPOINT16)rect, 2 );
     return ret;
 }
@@ -441,6 +478,7 @@ INT32 WINAPI GetClipBox32( HDC32 hdc, LPRECT32 rect )
     DC * dc = (DC *) GDI_GetObjPtr( hdc, DC_MAGIC );
     if (!dc) return ERROR;    
     ret = GetRgnBox32( dc->w.hGCClipRgn, rect );
+    OffsetRect32( rect, -dc->w.DCOrgX, -dc->w.DCOrgY );
     DPtoLP32( hdc, (LPPOINT32)rect, 2 );
     return ret;
 }
@@ -456,10 +494,13 @@ INT32 WINAPI GetClipRgn32( HDC32 hdc, HRGN32 hRgn )
       if( dc->w.hClipRgn )
       { 
 	/* this assumes that dc->w.hClipRgn is in coordinates
-	   relative to the DC origin (not device) */
+	   relative to the device (not DC origin) */
 
 	if( CombineRgn32(hRgn, dc->w.hClipRgn, 0, RGN_COPY) != ERROR )
+        {
+            OffsetRgn32( hRgn, -dc->w.DCOrgX, -dc->w.DCOrgY );
 	    return 1;
+        }
       }
       else return 0;
     return -1;

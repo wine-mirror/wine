@@ -54,8 +54,8 @@ void X11DRV_SetDeviceClipping( DC * dc )
     else
         pXrect = NULL;
 
-    TSXSetClipRectangles( display, dc->u.x.gc, dc->w.DCOrgX, dc->w.DCOrgY, 
-                pXrect, obj->rgn->numRects, YXBanded );
+    TSXSetClipRectangles( display, dc->u.x.gc, 0, 0,
+                          pXrect, obj->rgn->numRects, YXBanded );
 
     if(pXrect)
         HeapFree( GetProcessHeap(), 0, pXrect );

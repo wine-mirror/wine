@@ -28,7 +28,6 @@ X11DRV_ExtTextOut( DC *dc, INT32 x, INT32 y, UINT32 flags,
                    const RECT32 *lprect, LPCSTR str, UINT32 count,
                    const INT32 *lpDx )
 {
-    HRGN32		hRgnClip = 0;
     int 	        i;
     fontObject*		pfo;
     INT32	 	width, ascent, descent, xwidth, ywidth;
@@ -176,9 +175,9 @@ X11DRV_ExtTextOut( DC *dc, INT32 x, INT32 y, UINT32 flags,
 
     if (flags & ETO_CLIPPED)
     {
-        hRgnClip = dc->w.hClipRgn;
-        CLIPPING_IntersectClipRect( dc, rect.left, rect.top, rect.right,
-                                    rect.bottom, CLIP_INTERSECT|CLIP_KEEPRGN );
+        SaveVisRgn( dc->hSelf );
+        CLIPPING_IntersectVisRect( dc, rect.left, rect.top, rect.right,
+                                   rect.bottom, FALSE );
     }
 
       /* Draw the text background if necessary */
@@ -331,10 +330,8 @@ X11DRV_ExtTextOut( DC *dc, INT32 x, INT32 y, UINT32 flags,
     }
 
     if (flags & ETO_CLIPPED) 
-    {
-      SelectClipRgn32( dc->hSelf, hRgnClip );
-      DeleteObject32( hRgnClip );
-    }
+        RestoreVisRgn( dc->hSelf );
+
     return TRUE;
 }
 

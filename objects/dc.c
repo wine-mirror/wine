@@ -546,8 +546,11 @@ HDC16 WINAPI GetDCState( HDC16 hdc )
     newdc->w.breakRem         = dc->w.breakRem;
     newdc->w.MapMode          = dc->w.MapMode;
     newdc->w.GraphicsMode     = dc->w.GraphicsMode;
+#if 0
+    /* Apparently, the DC origin is not changed by [GS]etDCState */
     newdc->w.DCOrgX           = dc->w.DCOrgX;
     newdc->w.DCOrgY           = dc->w.DCOrgY;
+#endif
     newdc->w.CursPosX         = dc->w.CursPosX;
     newdc->w.CursPosY         = dc->w.CursPosY;
     newdc->w.ArcDirection     = dc->w.ArcDirection;
@@ -627,8 +630,11 @@ void WINAPI SetDCState( HDC16 hdc, HDC16 hdcs )
     dc->w.breakRem         = dcs->w.breakRem;
     dc->w.MapMode          = dcs->w.MapMode;
     dc->w.GraphicsMode     = dcs->w.GraphicsMode;
+#if 0
+    /* Apparently, the DC origin is not changed by [GS]etDCState */
     dc->w.DCOrgX           = dcs->w.DCOrgX;
     dc->w.DCOrgY           = dcs->w.DCOrgY;
+#endif
     dc->w.CursPosX         = dcs->w.CursPosX;
     dc->w.CursPosY         = dcs->w.CursPosY;
     dc->w.ArcDirection     = dcs->w.ArcDirection;
@@ -647,7 +653,15 @@ void WINAPI SetDCState( HDC16 hdc, HDC16 hdcs )
     dc->vportExtY          = dcs->vportExtY;
 
     if (!(dc->w.flags & DC_MEMORY)) dc->w.bitsPerPixel = dcs->w.bitsPerPixel;
-    SelectClipRgn32( hdc, dcs->w.hClipRgn );
+
+    if (dcs->w.hClipRgn)
+    {
+        if (!dc->w.hClipRgn) dc->w.hClipRgn = CreateRectRgn32( 0, 0, 0, 0 );
+        CombineRgn32( dc->w.hClipRgn, dcs->w.hClipRgn, 0, RGN_COPY );
+        CLIPPING_UpdateGCRegion( dc );
+    }
+    else
+        dc->w.hClipRgn = 0;
 
     SelectObject32( hdc, dcs->w.hBitmap );
     SelectObject32( hdc, dcs->w.hBrush );
@@ -1514,5 +1528,14 @@ UINT16 WINAPI GetBoundsRect16(HDC16 hdc, LPRECT16 rect, UINT16 flags)
 {
     FIXME(dc, "(): stub\n");
     return DCB_RESET;   /* bounding rectangle always empty */
+}
+
+/***********************************************************************
+ *           SetBoundsRect16    (GDI.193)
+ */
+UINT16 WINAPI SetBoundsRect16(HDC16 hdc, LPRECT16 rect, UINT16 flags)
+{
+    FIXME(dc, "(): stub\n");
+    return DCB_DISABLE;   /* bounding rectangle always empty */
 }
 

@@ -6584,6 +6584,7 @@ BOOL32      WINAPI EnumTimeFormats32W(TIMEFMT_ENUMPROC32W lpTimeFmtEnumProc, LCI
 VOID        WINAPI ExitProcess(DWORD);
 VOID        WINAPI ExitThread(DWORD);
 BOOL32      WINAPI ExitWindowsEx(UINT32,DWORD);
+INT32       WINAPI ExtSelectClipRgn(HDC32,HRGN32,INT32);
 DWORD       WINAPI ExpandEnvironmentStrings32A(LPCSTR,LPSTR,DWORD);
 DWORD       WINAPI ExpandEnvironmentStrings32W(LPCWSTR,LPWSTR,DWORD);
 #define     ExpandEnvironmentStrings WINELIB_NAME_AW(ExpandEnvironmentStrings)

@@ -129,6 +129,7 @@ DC_GET_X_Y( DWORD, GetViewportOrg, vportOrgX, vportOrgY )       /* GDI.95    */
 DC_GET_X_Y( DWORD, GetWindowExt, wndExtX, wndExtY )             /* GDI.96    */
 DC_GET_X_Y( DWORD, GetWindowOrg, wndOrgX, wndOrgY )             /* GDI.97    */
 DC_GET_VAL_16( HRGN16, InquireVisRgn, w.hVisRgn )               /* GDI.131   */
+DC_GET_VAL_16( HRGN16, GetClipRgn16, w.hClipRgn )               /* GDI.173   */
 DC_GET_X_Y( DWORD, GetBrushOrg, w.brushOrgX, w.brushOrgY )      /* GDI.149   */
 DC_GET_VAL_16( UINT16, GetTextAlign16, w.textAlign )            /* GDI.345   */
 DC_GET_VAL_32( UINT32, GetTextAlign32, w.textAlign )            /* GDI32.224 */
@@ -140,9 +141,3 @@ DC_GET_VAL_EX( GetViewportExtEx, vportExtX, vportExtY ) /* GDI.472 GDI32.239 */
 DC_GET_VAL_EX( GetViewportOrgEx, vportOrgX, vportOrgY ) /* GDI.473 GDI32.240 */
 DC_GET_VAL_EX( GetWindowExtEx, wndExtX, wndExtY )       /* GDI.474 GDI32.242 */
 DC_GET_VAL_EX( GetWindowOrgEx, wndOrgX, wndOrgY )       /* GDI.475 GDI32.243 */
-
-/* this one is wrong - Windows returns region that
-   is relative to the device and not to the DC origin */
-
-DC_GET_VAL_16( HRGN16, GetClipRgn16, w.hClipRgn )              /* GDI.173    */
-

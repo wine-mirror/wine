@@ -619,7 +619,8 @@ X11DRV_PaintRgn( DC *dc, HRGN32 hrgn )
     if (!(tmpVisRgn = CreateRectRgn32( 0, 0, 0, 0 ))) return FALSE;
 
       /* Transform region into device co-ords */
-    if (!REGION_LPTODP( hdc, tmpVisRgn, hrgn )) {
+    if (  !REGION_LPTODP( hdc, tmpVisRgn, hrgn )
+        || OffsetRgn32( tmpVisRgn, dc->w.DCOrgX, dc->w.DCOrgY ) == ERROR) {
         DeleteObject32( tmpVisRgn );
 	return FALSE;
     }
@@ -638,8 +639,8 @@ X11DRV_PaintRgn( DC *dc, HRGN32 hrgn )
     GetRgnBox32( dc->w.hGCClipRgn, &box );
     if (DC_SetupGCForBrush( dc ))
 	TSXFillRectangle( display, dc->u.x.drawable, dc->u.x.gc,
-		        dc->w.DCOrgX + box.left, dc->w.DCOrgY + box.top,
-		        box.right-box.left, box.bottom-box.top );
+		          box.left, box.top,
+		          box.right-box.left, box.bottom-box.top );
 
       /* Restore the visible region */
 
@@ -876,8 +877,8 @@ static BOOL32 X11DRV_DoFloodFill( const struct FloodFill_params *params )
     if (GetRgnBox32( dc->w.hGCClipRgn, &rect ) == ERROR) return FALSE;
 
     if (!(image = XGetImage( display, dc->u.x.drawable,
-                             dc->w.DCOrgX + rect.left,
-                             dc->w.DCOrgY + rect.top,
+                             rect.left,
+                             rect.top,
                              rect.right - rect.left,
                              rect.bottom - rect.top,
                              AllPlanes, ZPixmap ))) return FALSE;
@@ -887,10 +888,10 @@ static BOOL32 X11DRV_DoFloodFill( const struct FloodFill_params *params )
           /* ROP mode is always GXcopy for flood-fill */
         XSetFunction( display, dc->u.x.gc, GXcopy );
         X11DRV_InternalFloodFill(image, dc,
-                                 XLPTODP(dc,params->x) - rect.left,
-                                 YLPTODP(dc,params->y) - rect.top,
-                                 dc->w.DCOrgX + rect.left,
-                                 dc->w.DCOrgY + rect.top,
+                                 XLPTODP(dc,params->x) + dc->w.DCOrgX - rect.left,
+                                 YLPTODP(dc,params->y) + dc->w.DCOrgY - rect.top,
+                                 rect.left,
+                                 rect.top,
                                  COLOR_ToPhysical( dc, params->color ),
                                  params->fillType );
     }

@@ -497,6 +497,22 @@ HRGN32 DCE_GetVisRgn( HWND32 hwnd, WORD flags )
     return hrgnVis;
 }
 
+/***********************************************************************
+ *           DCE_OffsetVisRgn
+ *
+ * Change region from DC-origin relative coordinates to screen coords.
+ */
+
+static void DCE_OffsetVisRgn( HDC32 hDC, HRGN32 hVisRgn )
+{
+    DC *dc;
+    if (!(dc = (DC *) GDI_GetObjPtr( hDC, DC_MAGIC ))) return;
+
+    OffsetRgn32( hVisRgn, dc->w.DCOrgX, dc->w.DCOrgY );
+
+    GDI_HEAP_UNLOCK( hDC );
+}
+
 
 /***********************************************************************
  *           DCE_SetDrawable
@@ -535,6 +551,7 @@ static void DCE_SetDrawable( WND *wndPtr, DC *dc, WORD flags, BOOL32 bSetClipOri
         dc->w.DCOrgY -= wndPtr->rectWindow.top;
         dc->u.x.drawable = wndPtr->window;
 
+#if 0
 	/* This is needed when we reuse a cached DC because
 	 * SetDCState() called by ReleaseDC() screws up DC
 	 * origins for child windows.
@@ -542,6 +559,7 @@ static void DCE_SetDrawable( WND *wndPtr, DC *dc, WORD flags, BOOL32 bSetClipOri
 
 	if( bSetClipOrigin )
 	    TSXSetClipOrigin( display, dc->u.x.gc, dc->w.DCOrgX, dc->w.DCOrgY );
+#endif
     }
 }
 /***********************************************************************
@@ -552,9 +570,7 @@ static void DCE_SetDrawable( WND *wndPtr, DC *dc, WORD flags, BOOL32 bSetClipOri
  */
 INT16 DCE_ExcludeRgn( HDC32 hDC, WND* wnd, HRGN32 hRgn )
 {
-  INT16	   ret;
   POINT32  pt = {0, 0};
-  HRGN32   hRgnClip = GetClipRgn16( hDC );
   DCE     *dce = firstDCE;
 
   while (dce && (dce->hDC != hDC)) dce = dce->next;
@@ -570,14 +586,8 @@ INT16 DCE_ExcludeRgn( HDC32 hDC, WND* wnd, HRGN32 hRgn )
   }
   else return ERROR;
   OffsetRgn32(hRgn, pt.x, pt.y);
-  if( hRgnClip ) ret = CombineRgn32( hRgnClip, hRgnClip, hRgn, RGN_DIFF );
-  else 
-  {
-      hRgnClip = InquireVisRgn( hDC );
-      ret = CombineRgn32( hRgn, hRgnClip, hRgn, RGN_DIFF );
-      SelectClipRgn32( hDC, hRgn );
-  }
-  return ret;
+
+  return ExtSelectClipRgn( hDC, hRgn, RGN_DIFF );
 }
 
 /***********************************************************************
@@ -755,6 +765,7 @@ HDC32 WINAPI GetDCEx32( HWND32 hwnd, HRGN32 hrgnClip, DWORD flags )
 		else
 		    OffsetRgn32( hrgnVisible, -wndPtr->rectClient.left,
 					      -wndPtr->rectClient.top );
+                DCE_OffsetVisRgn( hdc, hrgnVisible );
 	    }
 	    else
 		hrgnVisible = CreateRectRgn32( 0, 0, 0, 0 );
@@ -764,7 +775,11 @@ HDC32 WINAPI GetDCEx32( HWND32 hwnd, HRGN32 hrgnClip, DWORD flags )
                 (rootWindow == DefaultRootWindow(display)))
                  hrgnVisible = CreateRectRgn32( 0, 0, SYSMETRICS_CXSCREEN,
 						      SYSMETRICS_CYSCREEN );
-	    else hrgnVisible = DCE_GetVisRgn( hwnd, flags );
+	    else 
+            {
+                hrgnVisible = DCE_GetVisRgn( hwnd, flags );
+                DCE_OffsetVisRgn( hdc, hrgnVisible );
+            }
 
 	dc->w.flags &= ~DC_DIRTY;
 	dce->DCXflags &= ~DCX_DCEDIRTY;
@@ -785,7 +800,9 @@ HDC32 WINAPI GetDCEx32( HWND32 hwnd, HRGN32 hrgnClip, DWORD flags )
 	TRACE(dc, "\tsaved VisRgn, clipRgn = %04x\n", hrgnClip);
 
 	SaveVisRgn( hdc );
-        CombineRgn32( hrgnVisible, InquireVisRgn( hdc ), hrgnClip,
+        CombineRgn32( hrgnVisible, hrgnClip, 0, RGN_COPY );
+        DCE_OffsetVisRgn( hdc, hrgnVisible );
+        CombineRgn32( hrgnVisible, InquireVisRgn( hdc ), hrgnVisible,
                       (flags & DCX_INTERSECTRGN) ? RGN_AND : RGN_DIFF );
 	SelectVisRgn( hdc, hrgnVisible );
     }
@@ -919,6 +936,7 @@ BOOL16 WINAPI DCHook( HDC16 hDC, WORD code, DWORD data, LPARAM lParam )
                                       (dce->DCXflags & DCX_EXCLUDERGN)? RGN_DIFF:RGN_AND);
 	       }
 	       dce->DCXflags &= ~DCX_DCEDIRTY;
+               DCE_OffsetVisRgn( hDC, hVisRgn );
 	       SelectVisRgn(hDC, hVisRgn);
 	       DeleteObject32( hVisRgn );
 	   }

@@ -28,6 +28,8 @@ extern const int DC_XROPfunction[];
 /* objects/clipping.c */
 INT32 CLIPPING_IntersectClipRect( DC * dc, INT32 left, INT32 top,
     INT32 right, INT32 bottom, UINT32 flags );
+INT32 CLIPPING_IntersectVisRect( DC * dc, INT32 left, INT32 top,
+    INT32 right, INT32 bottom, BOOL32 exclude );
 extern void CLIPPING_UpdateGCRegion( DC * dc );
 
 #endif /* __WINE_DC_H */
