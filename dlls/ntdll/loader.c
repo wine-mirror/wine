@@ -187,7 +187,7 @@ static void stub_entry_point( const char *dll, const char *name, ... )
 }
 
 
-#include <pshpack1.h>
+#include "pshpack1.h"
 struct stub
 {
     BYTE        popl_eax;   /* popl %eax */
@@ -199,7 +199,7 @@ struct stub
     BYTE        jmp;        /* jmp stub_entry_point */
     DWORD       entry;
 };
-#include <poppack.h>
+#include "poppack.h"
 
 /*************************************************************************
  *		allocate_stub

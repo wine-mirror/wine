@@ -203,11 +203,11 @@
  */
 
 #include "editor.h"
-#include <ole2.h>
-#include <richole.h>
-#include <winreg.h>
+#include "ole2.h"
+#include "richole.h"
+#include "winreg.h"
 #define NO_SHLWAPI_STREAM 
-#include <shlwapi.h>
+#include "shlwapi.h"
 
 #include "rtf.h"
  
