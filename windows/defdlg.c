@@ -255,7 +255,7 @@ static LRESULT DEFDLG_Proc( HWND hwnd, UINT msg, WPARAM wParam,
             return dlgInfo ? (LRESULT)dlgInfo->hUserFont : 0;
 
         case WM_CLOSE:
-            PostMessageA( hwnd, WM_COMMAND, IDCANCEL,
+            PostMessageA( hwnd, WM_COMMAND, MAKEWPARAM(IDCANCEL, BN_CLICKED),
                             (LPARAM)GetDlgItem( hwnd, IDCANCEL ) );
             return 0;
 
