@@ -470,7 +470,7 @@ sub process_source_file
     elsif ($parse_state == 3) # Reading in the first line of a comment
     {
       s/^ *\** *//;
-      if ( /^(@|[A-Za-z0-9_]+) +(\(|\[)([A-Za-z0-9_]+)\.(([0-9]+)|@)(\)|\])$/ )
+      if ( /^([\@A-Za-z0-9_]+) +(\(|\[)([A-Za-z0-9_]+)\.(([0-9]+)|@)(\)|\])$/ )
       {
         # Found a correctly formed "ApiName (DLLNAME.Ordinal)" line.
         $comment->{COMMENT_NAME} = $1;
@@ -1641,6 +1641,11 @@ sub output_api_comment
     }
     else
     {
+      if ($opt_output_format eq "h")
+      {
+        # Link to the file in WineHQ cvs
+        s/^(Implemented in \")(.+?)(\"\.)/$1$2$3 http:\/\/source.winehq.org\/source\/$2/g;
+      }
       # Highlight strings
       s/(\".+?\")/$fmt[2]$1$fmt[3]/g;
       # Highlight literal chars
