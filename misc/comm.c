@@ -347,6 +347,11 @@ static void comm_waitwrite(struct DosDeviceStruct *ptr)
 
 /**************************************************************************
  *         BuildCommDCB		(USER.213)
+ *
+ * According to the ECMA-234 (368.3) the function will return FALSE on 
+ * success, otherwise it will return -1. 
+ * IF THIS IS NOT CORRECT THE RETURNVALUE CHECK IN BuildCommDCBAndTimeoutsA
+ * NEEDS TO BE FIXED
  */
 BOOL16 WINAPI BuildCommDCB16(LPCSTR device, LPDCB16 lpdcb)
 {
@@ -1497,7 +1502,7 @@ BOOL WINAPI BuildCommDCBAndTimeoutsA(LPCSTR device, LPDCB lpdcb,
 		char	last=temp[strlen(temp)-1];
 
 		ret=BuildCommDCB16(device,&dcb16);
-		if (!ret)
+		if (ret)
 			return FALSE;
 		lpdcb->BaudRate		= dcb16.BaudRate;
 		lpdcb->ByteSize		= dcb16.ByteSize;
