@@ -1438,18 +1438,8 @@ void		RTFSetPanicProc ();
  * stdarg.h.
  */
 
-# ifndef rtfInternal
-void		RTFMsg ();
-void		RTFPanic ();
-# else
-# ifdef STDARG
 void	RTFMsg (char *fmt, ...);
 void	RTFPanic (char *fmt, ...);
-# else
-void		RTFMsg ();
-void		RTFPanic ();
-# endif	/* STDARG */
-# endif /* rtfInternal */
 
 int 	    	RTFReadOutputMap ();
 int		RTFReadCharSetMap ();

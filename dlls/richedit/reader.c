@@ -44,24 +44,12 @@
  * any purpose whatsoever.
  */
 
-# ifndef STRING_H
-# define STRING_H <string.h>
-# endif
-
 # include	<stdio.h>
 # include	<ctype.h>
-# include	STRING_H
-# ifdef STDARG
+# include	<string.h>
 # include	<stdarg.h>
-# else
-# ifdef	VARARGS
-# include	<varargs.h>
-# endif	/* VARARGS */
-# endif	/* STDARG */
 
-# define	rtfInternal
 # include	"rtf.h"
-# undef		rtfInternal
 
 /*
  *  include hard coded charsets
@@ -2786,12 +2774,6 @@ void RTFSetMsgProc(RTFFuncPtr proc)
 }
 
 
-# ifdef STDARG
-
-/*
- * This version is for systems with stdarg
- */
-
 void RTFMsg (char *fmt, ...)
 {
 char	buf[rtfBufSiz];
@@ -2802,45 +2784,6 @@ char	buf[rtfBufSiz];
 	va_end (args);
 	(*msgProc) (buf);
 }
-
-# else /* !STDARG */
-
-# ifdef	VARARGS
-
-
-/*
- * This version is for systems that have varargs.
- */
-
-void RTFMsg (va_dcl va_alist)
-{
-va_list	args;
-char	*fmt;
-char	buf[rtfBufSiz];
-
-	va_start (args);
-	fmt = va_arg (args, char *);
-	vsprintf (buf, fmt, args);
-	va_end (args);
-	(*msgProc) (buf);
-}
-
-# else	/* !VARARGS */
-
-/*
- * This version is for systems that don't have varargs.
- */
-
-void RTFMsg (char *fmt, char *a1, char *a2, char *a3, char *a4, char *a5, char *a6, char *a7, char *a8, char *a9)
-{
-char	buf[rtfBufSiz];
-
-	sprintf (buf, fmt, a1, a2, a3, a4, a5, a6, a7, a8, a9);
-	(*msgProc) (buf);
-}
-
-# endif	/* !VARARGS */
-# endif /* !STDARG */
 
 
 /* ---------------------------------------------------------------------- */
@@ -2869,12 +2812,6 @@ void RTFSetPanicProc(RTFFuncPtr proc)
 }
 
 
-# ifdef STDARG
-
-/*
- * This version is for systems with stdarg
- */
-
 void RTFPanic(char *fmt, ...)
 {
 char	buf[rtfBufSiz];
@@ -2892,56 +2829,3 @@ char	buf[rtfBufSiz];
 	}
 	(*panicProc) (buf);
 }
-
-# else /* !STDARG */
-
-# ifdef	VARARGS
-
-
-/*
- * This version is for systems that have varargs.
- */
-
-void RTFPanic(va_dcl va_alist)
-{
-va_list	args;
-char	*fmt;
-char	buf[rtfBufSiz];
-
-	va_start (args);
-	fmt = va_arg (args, char *);
-	vsprintf (buf, fmt, args);
-	va_end (args);
-	(void) strcat (buf, "\n");
-	if (prevChar != EOF && rtfTextBuf != (char *) NULL)
-	{
-		sprintf (buf + strlen (buf),
-			"Last token read was \"%s\" near line %ld, position %d.\n",
-			rtfTextBuf, rtfLineNum, rtfLinePos);
-	}
-	(*panicProc) (buf);
-}
-
-# else	/* !VARARGS */
-
-/*
- * This version is for systems that don't have varargs.
- */
-
-void RTFPanic (char *fmt, char *a1, char *a2, char *a3, char *a4, char *a5, char *a6, char *a7, char *a8, char *a9)
-{
-char	buf[rtfBufSiz];
-
-	sprintf (buf, fmt, a1, a2, a3, a4, a5, a6, a7, a8, a9);
-	(void) strcat (buf, "\n");
-	if (prevChar != EOF && rtfTextBuf != (char *) NULL)
-	{
-		sprintf (buf + strlen (buf),
-			"Last token read was \"%s\" near line %ld, position %d.\n",
-			rtfTextBuf, rtfLineNum, rtfLinePos);
-	}
-	(*panicProc) (buf);
-}
-
-# endif	/* !VARARGS */
-# endif /* !STDARG */
