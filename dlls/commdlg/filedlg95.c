@@ -1063,7 +1063,7 @@ static LRESULT FILEDLG95_InitUI(HWND hwnd)
   }
 
   /* Initialise the file name edit control */
-  if(strlen(fodInfos->ofnInfos.lpstrFile))
+  if(fodInfos->ofnInfos.lpstrFile)
   {
       SetDlgItemTextA(hwnd,IDC_FILENAME,fodInfos->ofnInfos.lpstrFile);
   }
@@ -1421,27 +1421,30 @@ BOOL FILEDLG95_OnOpen(HWND hwnd)
        	  int iExt; 
        	  LPSTR lpstrExt;
        	  iExt = CBGetCurSel(fodInfos->DlgInfos.hwndFileTypeCB);
-       	  lpstrTemp = (LPSTR) CBGetItemDataPtr(fodInfos->DlgInfos.hwndFileTypeCB,iExt);
+	  lpstrTemp = (LPSTR) CBGetItemDataPtr(fodInfos->DlgInfos.hwndFileTypeCB,iExt);
 
-	  if((lpstrExt = strchr(lpstrTemp,';')))
-	  {
-      	      int i = lpstrExt - lpstrTemp;
-       	      lpstrExt = MemAlloc(i);
-       	      strncpy(lpstrExt,&lpstrTemp[1],i-1);
-      	  }
-       	  else
-       	  {
-       	      lpstrExt = MemAlloc(strlen(lpstrTemp));
-       	      strcpy(lpstrExt,&lpstrTemp[1]);
-       	  }
+	  if((LPSTR)-1 != lpstrTemp)
+	  { 
+	      if((lpstrExt = strchr(lpstrTemp,';')))
+	      {
+      	          int i = lpstrExt - lpstrTemp;
+       	          lpstrExt = MemAlloc(i);
+       	          strncpy(lpstrExt,&lpstrTemp[1],i-1);
+      	      }
+       	      else
+       	      {
+       	          lpstrExt = MemAlloc(strlen(lpstrTemp));
+       	          strcpy(lpstrExt,&lpstrTemp[1]);
+       	      }
 		  
-	  if(!strcmp(&lpstrExt[1],"*") && fodInfos->ofnInfos.lpstrDefExt)
-	  {
-       	      lpstrExt = MemAlloc(strlen(fodInfos->ofnInfos.lpstrDefExt)+2);
-       	      strcat(lpstrExt,".");
-       	      strcat(lpstrExt,(LPSTR) fodInfos->ofnInfos.lpstrDefExt);
-       	  }
-	  strcat(lpstrPathAndFile,lpstrExt);
+	      if(!strcmp(&lpstrExt[1],"*") && fodInfos->ofnInfos.lpstrDefExt)
+	      {
+       	          lpstrExt = MemAlloc(strlen(fodInfos->ofnInfos.lpstrDefExt)+2);
+       	          strcat(lpstrExt,".");
+       	          strcat(lpstrExt,(LPSTR) fodInfos->ofnInfos.lpstrDefExt);
+       	      }
+	      strcat(lpstrPathAndFile,lpstrExt);
+	  }
       }
       /* Check that size size of the file does not exceed buffer size */
       if(strlen(lpstrPathAndFile) > fodInfos->ofnInfos.nMaxFile)
@@ -1793,11 +1796,9 @@ static int FILEDLG95_FILETYPE_SearchExt(HWND hwnd,LPSTR lpstrExt)
 
   for(;i<iCount;i++)
   {
-    LPSTR ext = (LPSTR) CBGetItemDataPtr(hwnd,i);
-
-    if(!_stricmp(lpstrExt,ext))
-      return i;
-
+      LPSTR ext = (LPSTR) CBGetItemDataPtr(hwnd,i);
+      if(!strcasecmp(lpstrExt,ext))
+          return i;
   }
 
   return -1;
