@@ -315,6 +315,16 @@ VOID WINAPI GetSystemInfo(
 				PF[PF_MMX_INSTRUCTIONS_AVAILABLE] = TRUE;
 			if (strstr(value,"tsc"))
 				PF[PF_RDTSC_INSTRUCTION_AVAILABLE] = TRUE;
+			if (strstr(value,"3dnow"))
+				PF[PF_3DNOW_INSTRUCTIONS_AVAILABLE] = TRUE;
+			/* This will also catch sse2, but we have sse itself
+			 * if we have sse2, so no problem */
+			if (strstr(value,"sse"))
+				PF[PF_XMMI_INSTRUCTIONS_AVAILABLE] = TRUE;
+			if (strstr(value,"sse2"))
+				PF[PF_XMMI64_INSTRUCTIONS_AVAILABLE] = TRUE;
+			if (strstr(value,"pae"))
+				PF[PF_PAE_ENABLED] = TRUE;
 
 		}
 	}
@@ -455,7 +465,7 @@ VOID WINAPI GetSystemInfo(
 			do_cpuid(0x80000000, regs);		/* get vendor cpuid level */
 			if (regs[0]>=0x80000001) {
 				do_cpuid(0x80000001, regs2);	/* get vendor features */
-				PF[PF_AMD3D_INSTRUCTIONS_AVAILABLE] = 
+				PF[PF_3DNOW_INSTRUCTIONS_AVAILABLE] = 
 				    (regs2[3] & (1 << 31 )) >> 31;
 			}
 		}
