@@ -1379,9 +1379,6 @@ BOOL WINAPI DestroyWindow( HWND hwnd )
 
     if( !(wndPtr->dwStyle & WS_CHILD) )
     {
-      /* make sure top menu popup doesn't get destroyed */
-      MENU_PatchResidentPopup( (HQUEUE16)0xFFFF, wndPtr );
-
       for (;;)
       {
         WND *siblingPtr = WIN_LockWndPtr(wndPtr->parent->child);  /* First sibling */

@@ -117,9 +117,6 @@ static void USER_QueueCleanup( HQUEUE16 hQueue )
             desktop->hmemTaskQ = GetTaskQueue16( nextTask );
         }
 
-        /* Patch resident popup menu window */
-        MENU_PatchResidentPopup( hQueue, NULL );
-
         TIMER_RemoveQueueTimers( hQueue );
 
         HOOK_FreeQueueHooks( hQueue );
