@@ -12,6 +12,9 @@
 
 DEFAULT_DEBUG_CHANNEL(imagehlp);
 
+static WORD CalcCheckSum(DWORD StartValue, LPVOID BaseAddress, DWORD WordCount);
+
+
 /***********************************************************************
  *		BindImage (IMAGEHLP.@)
  */
@@ -36,6 +39,33 @@ BOOL WINAPI BindImageEx(
   return FALSE;
 }
 
+
+/***********************************************************************
+ *		CheckSum (internal)
+ */
+static WORD CalcCheckSum(
+  DWORD StartValue, LPVOID BaseAddress, DWORD WordCount)
+{
+   LPWORD Ptr;
+   DWORD Sum;
+   DWORD i;
+
+   Sum = StartValue;
+   Ptr = (LPWORD)BaseAddress;
+   for (i = 0; i < WordCount; i++)
+     {
+	Sum += *Ptr;
+	if (HIWORD(Sum) != 0)
+	  {
+	     Sum = LOWORD(Sum) + HIWORD(Sum);
+	  }
+	Ptr++;
+     }
+
+   return (WORD)(LOWORD(Sum) + HIWORD(Sum));
+}
+
+
 /***********************************************************************
  *		CheckSumMappedFile (IMAGEHLP.@)
  */
@@ -43,11 +73,49 @@ PIMAGE_NT_HEADERS WINAPI CheckSumMappedFile(
   LPVOID BaseAddress, DWORD FileLength, 
   LPDWORD HeaderSum, LPDWORD CheckSum)
 {
+  PIMAGE_NT_HEADERS Header;
+  DWORD CalcSum;
+  DWORD HdrSum;
+
   FIXME("(%p, %ld, %p, %p): stub\n",
     BaseAddress, FileLength, HeaderSum, CheckSum
   );
-  SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
-  return NULL;
+
+  CalcSum = (DWORD)CalcCheckSum(0,
+				BaseAddress,
+				(FileLength + 1) / sizeof(WORD));
+
+  Header = ImageNtHeader(BaseAddress);
+  HdrSum = Header->OptionalHeader.CheckSum;
+
+  /* Subtract image checksum from calculated checksum. */
+  /* fix low word of checksum */
+  if (LOWORD(CalcSum) >= LOWORD(HdrSum))
+  {
+    CalcSum -= LOWORD(HdrSum);
+  }
+  else
+  {
+    CalcSum = ((LOWORD(CalcSum) - LOWORD(HdrSum)) & 0xFFFF) - 1;
+  }
+
+   /* fix high word of checksum */
+  if (LOWORD(CalcSum) >= HIWORD(HdrSum))
+  {
+    CalcSum -= HIWORD(HdrSum);
+  }
+  else
+  {
+    CalcSum = ((LOWORD(CalcSum) - HIWORD(HdrSum)) & 0xFFFF) - 1;
+  }
+
+  /* add file length */
+  CalcSum += FileLength;
+
+  *CheckSum = CalcSum;
+  *HeaderSum = Header->OptionalHeader.CheckSum;
+
+  return Header;
 }
 
 /***********************************************************************
@@ -56,11 +124,64 @@ PIMAGE_NT_HEADERS WINAPI CheckSumMappedFile(
 DWORD WINAPI MapFileAndCheckSumA(
   LPSTR Filename, LPDWORD HeaderSum, LPDWORD CheckSum)
 {
-  FIXME("(%s, %p, %p): stub\n",
+  HANDLE hFile;
+  HANDLE hMapping;
+  LPVOID BaseAddress;
+  DWORD FileLength;
+
+  TRACE("(%s, %p, %p): stub\n",
     debugstr_a(Filename), HeaderSum, CheckSum
   );
-  SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
+
+  hFile = CreateFileA(Filename,
+		      GENERIC_READ,
+		      FILE_SHARE_READ | FILE_SHARE_WRITE,
+		      NULL,
+		      OPEN_EXISTING,
+		      FILE_ATTRIBUTE_NORMAL,
+		      0);
+  if (hFile == INVALID_HANDLE_VALUE)
+  {
   return CHECKSUM_OPEN_FAILURE;
+}
+
+  hMapping = CreateFileMappingW(hFile,
+			       NULL,
+			       PAGE_READONLY,
+			       0,
+			       0,
+			       NULL);
+  if (hMapping == 0)
+  {
+    CloseHandle(hFile);
+    return CHECKSUM_MAP_FAILURE;
+  }
+
+  BaseAddress = MapViewOfFile(hMapping,
+			      FILE_MAP_READ,
+			      0,
+			      0,
+			      0);
+  if (hMapping == 0)
+  {
+    CloseHandle(hMapping);
+    CloseHandle(hFile);
+    return CHECKSUM_MAPVIEW_FAILURE;
+  }
+
+  FileLength = GetFileSize(hFile,
+			   NULL);
+
+  CheckSumMappedFile(BaseAddress,
+		     FileLength,
+		     HeaderSum,
+		     CheckSum);
+
+  UnmapViewOfFile(BaseAddress);
+  CloseHandle(hMapping);
+  CloseHandle(hFile);
+
+  return 0;
 }
 
 /***********************************************************************
@@ -69,11 +190,64 @@ DWORD WINAPI MapFileAndCheckSumA(
 DWORD WINAPI MapFileAndCheckSumW(
   LPWSTR Filename, LPDWORD HeaderSum, LPDWORD CheckSum)
 {
-  FIXME("(%s, %p, %p): stub\n",
+  HANDLE hFile;
+  HANDLE hMapping;
+  LPVOID BaseAddress;
+  DWORD FileLength;
+
+  TRACE("(%s, %p, %p): stub\n",
     debugstr_w(Filename), HeaderSum, CheckSum
   );
-  SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
+
+  hFile = CreateFileW(Filename,
+		      GENERIC_READ,
+		      FILE_SHARE_READ | FILE_SHARE_WRITE,
+		      NULL,
+		      OPEN_EXISTING,
+		      FILE_ATTRIBUTE_NORMAL,
+		      0);
+  if (hFile == INVALID_HANDLE_VALUE)
+  {
   return CHECKSUM_OPEN_FAILURE;
+  }
+
+  hMapping = CreateFileMappingW(hFile,
+			       NULL,
+			       PAGE_READONLY,
+			       0,
+			       0,
+			       NULL);
+  if (hMapping == 0)
+  {
+    CloseHandle(hFile);
+    return CHECKSUM_MAP_FAILURE;
+  }
+
+  BaseAddress = MapViewOfFile(hMapping,
+			      FILE_MAP_READ,
+			      0,
+			      0,
+			      0);
+  if (hMapping == 0)
+  {
+    CloseHandle(hMapping);
+    CloseHandle(hFile);
+    return CHECKSUM_MAPVIEW_FAILURE;
+  }
+
+  FileLength = GetFileSize(hFile,
+			   NULL);
+
+  CheckSumMappedFile(BaseAddress,
+		     FileLength,
+		     HeaderSum,
+		     CheckSum);
+
+  UnmapViewOfFile(BaseAddress);
+  CloseHandle(hMapping);
+  CloseHandle(hFile);
+
+  return 0;
 }
 
 /***********************************************************************
