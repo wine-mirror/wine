@@ -1308,13 +1308,11 @@ extern "C" {
     ((fn)(hwnd), 0L)
 #define FORWARD_WM_QUEUESYNC(hwnd, fn) \
     (void)(fn)((hwnd), WM_QUEUESYNC, 0L, 0L)
-#if (WINVER >= 0x030a)
 /* void Cls_OnCommNotify(HWND hwnd, int cid, UINT flags) */
 #define HANDLE_WM_COMMNOTIFY(hwnd, wParam, lParam, fn) \
     ((fn)((hwnd), (int)(wParam), (UINT)LOWORD(lParam)), 0L)
 #define FORWARD_WM_COMMNOTIFY(hwnd, cid, flags, fn) \
     (void)(fn)((hwnd), WM_COMMNOTIFY, (WPARAM)(cid), MAKELPARAM((flags), 0))
-#endif
 
 /* void Cls_OnDisplayChange(HWND hwnd, UINT bitsPerPixel, UINT cxScreen, UINT cyScreen) */
 #define HANDLE_WM_DISPLAYCHANGE(hwnd, wParam, lParam, fn) \
@@ -1434,4 +1432,3 @@ extern "C" {
 #endif
 
 #endif
-

@@ -37,6 +37,7 @@ extern "C" {
 #define RAS_MaxX25Address     200
 #define RAS_MaxFacilities     200
 #define RAS_MaxUserData       200
+#define RAS_MaxDnsSuffix      256
 
 DECLARE_HANDLE(HRASCONN);
 
@@ -193,8 +194,6 @@ typedef struct tagRASENTRYA {
     DWORD dwReserved1;
     DWORD dwReserved2;
 
-#if (WINVER >= 0x401)
-
     /* Multilink and BAP */
 
     DWORD dwSubEntries;
@@ -207,17 +206,13 @@ typedef struct tagRASENTRYA {
     /* Idle time out */
     DWORD dwIdleDisconnectSeconds;
 
-#endif
-#if (WINVER >= 0x500)
-
     DWORD dwType;		/* entry type */
     DWORD dwEncryptionType;	/* type of encryption to use */
     DWORD dwCustomAuthKey;	/* authentication key for EAP */
     GUID guidId;		/* guid that represents the phone-book entry  */
     CHAR szCustomDialDll[MAX_PATH];    /* DLL for custom dialing  */
     DWORD dwVpnStrategy;         /* specifies type of VPN protocol */
-#endif
-#if (WINVER >= 0x501)
+
     DWORD dwfOptions2;
     DWORD dwfOptions3;
     CHAR szDnsSuffix[RAS_MaxDnsSuffix];
@@ -226,7 +221,6 @@ typedef struct tagRASENTRYA {
     CHAR szPrerequisiteEntry[RAS_MaxEntryName + 1];
     DWORD dwRedialCount;
     DWORD dwRedialPause;
-#endif
 } RASENTRYA, *LPRASENTRYA;
 
 typedef struct tagRASENTRYW {
@@ -274,8 +268,6 @@ typedef struct tagRASENTRYW {
     DWORD dwReserved1;
     DWORD dwReserved2;
 
-#if (WINVER >= 0x401)
-
     /* Multilink and BAP */
 
     DWORD dwSubEntries;
@@ -288,17 +280,13 @@ typedef struct tagRASENTRYW {
     /* Idle time out */
     DWORD dwIdleDisconnectSeconds;
 
-#endif
-#if (WINVER >= 0x500)
-
     DWORD dwType;		/* entry type */
     DWORD dwEncryptionType;	/* type of encryption to use */
     DWORD dwCustomAuthKey;	/* authentication key for EAP */
     GUID guidId;		/* guid that represents the phone-book entry  */
     WCHAR szCustomDialDll[MAX_PATH];    /* DLL for custom dialing  */
     DWORD dwVpnStrategy;         /* specifies type of VPN protocol */
-#endif
-#if (WINVER >= 0x501)
+
     DWORD dwfOptions2;
     DWORD dwfOptions3;
     WCHAR szDnsSuffix[RAS_MaxDnsSuffix];
@@ -307,7 +295,6 @@ typedef struct tagRASENTRYW {
     WCHAR szPrerequisiteEntry[RAS_MaxEntryName + 1];
     DWORD dwRedialCount;
     DWORD dwRedialPause;
-#endif
 } RASENTRYW, *LPRASENTRYW;
 
 DECL_WINELIB_TYPE_AW(RASENTRY)

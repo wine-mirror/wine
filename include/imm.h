@@ -68,8 +68,6 @@ typedef struct tagSTYLEBUFW
 DECL_WINELIB_TYPE_AW(STYLEBUF)
 DECL_WINELIB_TYPE_AW(LPSTYLEBUF)
 
-#if	(WINVER >= 0x040A)
-
 typedef struct tagRECONVERTSTRING
 {
 	DWORD	dwSize;
@@ -113,8 +111,6 @@ typedef struct tagIMEMENUITEMINFOW
 
 DECL_WINELIB_TYPE_AW(IMEMENUITEMINFO)
 DECL_WINELIB_TYPE_AW(LPIMEMENUITEMINFO)
-
-#endif	/* WINVER >= 0x040A */
 
 
 typedef struct _tagCOMPOSITIONFORM
@@ -385,16 +381,12 @@ typedef struct _tagCOMPOSITIONFORM
 #define IMN_PRIVATE                     0x000E
 
 
-#if	(WINVER >= 0x040A)
-
 /* wParam of report message WM_IME_REQUEST */
 #define IMR_COMPOSITIONWINDOW		0x0001
 #define IMR_CANDIDATEWINDOW		0x0002
 #define IMR_COMPOSITIONFONT		0x0003
 #define IMR_RECONVERTSTRING		0x0004
 #define IMR_CONFIRMRECONVERTSTRING	0x0005
-
-#endif	/* WINVER >= 0x040A */
 
 
 /* error code of ImmGetCompositionString */
@@ -431,8 +423,6 @@ typedef struct _tagCOMPOSITIONFORM
 #define IME_REGWORD_STYLE_USER_LAST     0xFFFFFFFF
 
 
-#if	(WINVER >= 0x040A)
-
 /* dwFlags for ImmAssociateContextEx */
 #define IACE_CHILDREN			0x0001
 #define IACE_DEFAULT			0x0010
@@ -465,9 +455,6 @@ typedef struct _tagCOMPOSITIONFORM
 #define IMFS_UNHILITE			MFS_UNHILITE
 #define IMFS_DEFAULT			MFS_DEFAULT
 
-#endif	/* WINVER >= 0x040A */
-
-
 
 /*
  * type of soft keyboard
@@ -479,6 +466,7 @@ typedef struct _tagCOMPOSITIONFORM
 
 
 HIMC   WINAPI ImmAssociateContext(HWND, HIMC);
+BOOL   WINAPI ImmAssociateContextEx(HWND, HIMC, DWORD);
 BOOL   WINAPI ImmConfigureIMEA(HKL, HWND, DWORD, LPVOID);
 BOOL   WINAPI ImmConfigureIMEW(HKL, HWND, DWORD, LPVOID);
 #define  ImmConfigureIME WINELIB_NAME_AW(ImmConfigureIME)
@@ -554,12 +542,6 @@ BOOL   WINAPI ImmSimulateHotKey(HWND, DWORD);
 BOOL   WINAPI ImmUnregisterWordA(HKL, LPCSTR, DWORD, LPCSTR);
 BOOL   WINAPI ImmUnregisterWordW(HKL, LPCWSTR, DWORD, LPCWSTR);
 #define  ImmUnregisterWord WINELIB_NAME_AW(ImmUnregisterWord)
-
-#if	(WINVER >= 0x040A)
-
-BOOL   WINAPI ImmAssociateContextEx(HWND, HIMC, DWORD);
-
-#endif	/* WINVER >= 0x040A */
 
 
 #ifdef __cplusplus
