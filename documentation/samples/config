@@ -311,6 +311,14 @@ WINE REGISTRY Version 2
 [AppDefaults\\_INS5576._MP\\x11drv]
 "Desktop" = "640x480"
 
+; force it to install even though wine has a newer version
+[AppDefaults\\dcom98.exe\\DllOverrides]
+"ole32" = "native"
+
+[AppDefaults\\dcom95.exe\\DllOverrides]
+"ole32" = "native"
+
+
 ;[AppDefaults\\iexplore.exe\\DllOverrides]
 ;"shlwapi" = "native"
 ;"rpcrt4" = "native"
