@@ -40,7 +40,6 @@ struct DIDEVICEOBJECTDATA;
  */
 
 extern BOOL TTYDRV_GDI_Initialize(void);
-extern void TTYDRV_GDI_Finalize(void);
 
 /* TTY GDI bitmap driver */
 
@@ -109,8 +108,6 @@ INT TTYDRV_DC_SetDIBitsToDevice(struct tagDC *dc, INT xDest, INT yDest, DWORD cx
 extern struct tagPALETTE_DRIVER TTYDRV_PALETTE_Driver;
 
 extern BOOL TTYDRV_PALETTE_Initialize(void);
-extern void TTYDRV_PALETTE_Finalize(void);
-
 extern int TTYDRV_PALETTE_SetMapping(struct tagPALETTEOBJ *palPtr, UINT uStart, UINT uNum, BOOL mapOnly);
 extern int TTYDRV_PALETTE_UpdateMapping(struct tagPALETTEOBJ *palPtr);
 extern BOOL TTYDRV_PALETTE_IsDark(int pixel);

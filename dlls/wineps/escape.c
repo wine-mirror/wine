@@ -26,8 +26,8 @@ INT PSDRV_Escape( DC *dc, INT nEscape, INT cbInput,
 	    physDev->job.banding = TRUE;
             r->left   = 0;
             r->top    = 0;
-            r->right  = dc->devCaps->horzRes;
-            r->bottom = dc->devCaps->vertRes;
+            r->right  = physDev->horzRes;
+            r->bottom = physDev->vertRes;
 	    TRACE("NEXTBAND returning %d,%d - %d,%d\n", r->left,
 		  r->top, r->right, r->bottom );
 	    return 1;
@@ -154,8 +154,8 @@ INT PSDRV_Escape( DC *dc, INT nEscape, INT cbInput,
 		TRACE("Found '%s' for paper size %u\n", page->FullName,
 		    	pdev->Devmode->dmPublic.u1.s1.dmPaperSize);
 		
-		p->x = page->PaperDimension->x * dc->devCaps->logPixelsX / 72;
-		p->y = page->PaperDimension->y * dc->devCaps->logPixelsY / 72;
+		p->x = page->PaperDimension->x * physDev->logPixelsX / 72;
+		p->y = page->PaperDimension->y * physDev->logPixelsY / 72;
 		
 		TRACE("%fx%f PostScript points = %ix%i device units\n", 
 		    	page->PaperDimension->x, page->PaperDimension->y,
@@ -168,7 +168,7 @@ INT PSDRV_Escape( DC *dc, INT nEscape, INT cbInput,
 	    	    pdev->Devmode->dmPublic.u1.s1.dmPaperWidth != 0)
 	    {
 		p->x = (pdev->Devmode->dmPublic.u1.s1.dmPaperWidth *
-		    	dc->devCaps->logPixelsX) / 254;
+		    	physDev->logPixelsX) / 254;
 		TRACE("dmPaperWidth = %i device units\n", p->x);
 	    }
 	    
@@ -176,7 +176,7 @@ INT PSDRV_Escape( DC *dc, INT nEscape, INT cbInput,
 	    	    pdev->Devmode->dmPublic.u1.s1.dmPaperLength != 0)
 	    {
 	    	p->y = (pdev->Devmode->dmPublic.u1.s1.dmPaperLength *
-		    	dc->devCaps->logPixelsY) / 254;
+		    	physDev->logPixelsY) / 254;
 		TRACE("dmPaperLength = %i device units\n", p->y);
 	    }
 			

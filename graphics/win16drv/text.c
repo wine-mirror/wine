@@ -45,8 +45,8 @@ BOOL WIN16DRV_ExtTextOut( DC *dc, INT x, INT y, UINT flags,
     clipRect.left = 0;
     clipRect.top = 0;
         
-    clipRect.right = dc->devCaps->horzRes;
-    clipRect.bottom = dc->devCaps->vertRes;
+    clipRect.right = physDev->DevCaps.horzRes;
+    clipRect.bottom = physDev->DevCaps.vertRes;
     if (lprect) {
 	opaqueRect.left = lprect->left;
 	opaqueRect.top = lprect->top;

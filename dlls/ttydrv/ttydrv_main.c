@@ -49,8 +49,6 @@ static void process_attach(void)
  */
 static void process_detach(void)
 {
-    TTYDRV_GDI_Finalize();
-
 #ifdef WINE_CURSES
     if (root_window) endwin();
 #endif  /* WINE_CURSES */

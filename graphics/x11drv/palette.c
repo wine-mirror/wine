@@ -58,6 +58,8 @@ static int X11DRV_PALETTE_Blueshift  = 0;
 static int X11DRV_PALETTE_Bluemax    = 0;
 static int X11DRV_PALETTE_Graymax    = 0;
 
+static int palette_size;
+
 /* First free dynamic color cell, 0 = full palette, -1 = fixed palette */
 static int           X11DRV_PALETTE_firstFree = 0; 
 static unsigned char X11DRV_PALETTE_freeList[256];
@@ -94,7 +96,7 @@ static int X11DRV_PALETTE_LookupSystemXPixel(COLORREF col);
  *
  * Initialize color management.
  */
-BOOL X11DRV_PALETTE_Init(void)
+int X11DRV_PALETTE_Init(void)
 {
     int	mask, white, black;
     int monoPlane;
@@ -107,7 +109,7 @@ BOOL X11DRV_PALETTE_Init(void)
     for( mask = 1; !((white & mask)^(black & mask)); mask <<= 1 )
 	 monoPlane++;
     X11DRV_PALETTE_PaletteFlags = (white & mask) ? X11DRV_PALETTE_WHITESET : 0;
-    X11DRV_DevCaps.sizePalette = visual->map_entries;
+    palette_size = visual->map_entries;
 
     switch(visual->class)
     {
@@ -141,7 +143,7 @@ BOOL X11DRV_PALETTE_Init(void)
 	        X11DRV_PALETTE_PaletteFlags |= (X11DRV_PALETTE_PRIVATE | X11DRV_PALETTE_WHITESET);
 
 		monoPlane = 1;
-		for( white = X11DRV_DevCaps.sizePalette - 1; !(white & 1); white >>= 1 )
+		for( white = palette_size - 1; !(white & 1); white >>= 1 )
 		     monoPlane++;
 
 	        if( root_window != DefaultRootWindow(gdi_display) )
@@ -174,7 +176,7 @@ BOOL X11DRV_PALETTE_Init(void)
 	depths=TSXListDepths(gdi_display,DefaultScreen(gdi_display),&nrofdepths);
 	if ((nrofdepths==2) && ((depths[0]==4) || depths[1]==4)) {
 	    monoPlane = 1;
-	    for( white = X11DRV_DevCaps.sizePalette - 1; !(white & 1); white >>= 1 )
+	    for( white = palette_size - 1; !(white & 1); white >>= 1 )
 	        monoPlane++;
     	    X11DRV_PALETTE_PaletteFlags = (white & mask) ? X11DRV_PALETTE_WHITESET : 0;
             X11DRV_PALETTE_PaletteXColormap = TSXCreateColormap(gdi_display, root_window,
@@ -210,14 +212,11 @@ BOOL X11DRV_PALETTE_Init(void)
     X11DRV_PALETTE_FillDefaultColors();
 
     if( X11DRV_PALETTE_PaletteFlags & X11DRV_PALETTE_VIRTUAL ) 
-	X11DRV_DevCaps.sizePalette = 0;
+        palette_size = 0;
     else
-    {
-	X11DRV_DevCaps.rasterCaps |= RC_PALETTE;
-	X11DRV_DevCaps.sizePalette = visual->map_entries;
-    }
+        palette_size = visual->map_entries;
 
-    return TRUE;
+    return palette_size;
 }
 
 /***********************************************************************
@@ -268,16 +267,16 @@ static BOOL X11DRV_PALETTE_BuildPrivateMap(void)
     XColor color;
     int i; 
 
-    if((COLOR_sysPal = (PALETTEENTRY*)HeapAlloc(GetProcessHeap(), 0, sizeof(PALETTEENTRY)*X11DRV_DevCaps.sizePalette)) == NULL) {
+    if((COLOR_sysPal = (PALETTEENTRY*)HeapAlloc(GetProcessHeap(), 0, sizeof(PALETTEENTRY)*palette_size)) == NULL) {
         WARN("Can not allocate system palette\n");
         return FALSE;
     }
 
-    TRACE("Building private map - %i palette entries\n", X11DRV_DevCaps.sizePalette);
+    TRACE("Building private map - %i palette entries\n", palette_size);
 
       /* Allocate system palette colors */ 
 
-    for( i=0; i < X11DRV_DevCaps.sizePalette; i++ )
+    for( i=0; i < palette_size; i++ )
     {
        if( i < NB_RESERVED_COLORS/2 )
        {
@@ -286,9 +285,9 @@ static BOOL X11DRV_PALETTE_BuildPrivateMap(void)
          color.blue  = COLOR_sysPalTemplate[i].peBlue * 65535 / 255;
 	 COLOR_sysPal[i] = COLOR_sysPalTemplate[i];
        }
-       else if( i >= X11DRV_DevCaps.sizePalette - NB_RESERVED_COLORS/2 )
+       else if( i >= palette_size - NB_RESERVED_COLORS/2 )
        {
-	 int j = NB_RESERVED_COLORS + i - X11DRV_DevCaps.sizePalette;
+	 int j = NB_RESERVED_COLORS + i - palette_size;
          color.red   = COLOR_sysPalTemplate[j].peRed * 65535 / 255;
          color.green = COLOR_sysPalTemplate[j].peGreen * 65535 / 255;
          color.blue  = COLOR_sysPalTemplate[j].peBlue * 65535 / 255;
@@ -303,15 +302,15 @@ static BOOL X11DRV_PALETTE_BuildPrivateMap(void)
 
        if (i < 8)
            X11DRV_PALETTE_mapEGAPixel[i] = color.pixel;
-       else if (i >= X11DRV_DevCaps.sizePalette - 8 )
-           X11DRV_PALETTE_mapEGAPixel[i - (X11DRV_DevCaps.sizePalette - 16)] = color.pixel;
+       else if (i >= palette_size - 8 )
+           X11DRV_PALETTE_mapEGAPixel[i - (palette_size - 16)] = color.pixel;
     }
 
     X11DRV_PALETTE_XPixelToPalette = X11DRV_PALETTE_PaletteToXPixel = NULL;
 
     COLOR_gapStart = 256; COLOR_gapEnd = -1;
 
-    X11DRV_PALETTE_firstFree = (X11DRV_DevCaps.sizePalette > NB_RESERVED_COLORS)?NB_RESERVED_COLORS/2 : -1;
+    X11DRV_PALETTE_firstFree = (palette_size > NB_RESERVED_COLORS)?NB_RESERVED_COLORS/2 : -1;
 
     return FALSE;
 }
@@ -369,7 +368,7 @@ static BOOL X11DRV_PALETTE_BuildSharedMap(void)
    else if (COLOR_max < 20) COLOR_max = 20;
    TRACE("%d colors configured.\n", COLOR_max);
 
-   TRACE("Building shared map - %i palette entries\n", X11DRV_DevCaps.sizePalette);
+   TRACE("Building shared map - %i palette entries\n", palette_size);
 
    /* Be nice and allocate system colors as read-only */
 
@@ -439,7 +438,7 @@ static BOOL X11DRV_PALETTE_BuildSharedMap(void)
 
    if( !(X11DRV_PALETTE_PaletteFlags & X11DRV_PALETTE_FIXED) )  
      {
-	int c_min = 0, c_max = X11DRV_DevCaps.sizePalette, c_val;
+	int c_min = 0, c_max = palette_size, c_val;
 
 	TRACE("Dynamic colormap... \n");
 
@@ -447,7 +446,7 @@ static BOOL X11DRV_PALETTE_BuildSharedMap(void)
 	 * X guidelines and does binary search...
 	 */
 
-	if((pixDynMapping = (unsigned long*)HeapAlloc(GetProcessHeap(), 0, sizeof(long)*X11DRV_DevCaps.sizePalette)) == NULL) {
+	if((pixDynMapping = (unsigned long*)HeapAlloc(GetProcessHeap(), 0, sizeof(long)*palette_size)) == NULL) {
 	    WARN("Out of memory while building system palette.\n");
 	    return FALSE;
         }
@@ -482,11 +481,11 @@ static BOOL X11DRV_PALETTE_BuildSharedMap(void)
 	      c_min = 0;
 	    }
 
-        X11DRV_DevCaps.sizePalette = c_min + NB_RESERVED_COLORS;
+        palette_size = c_min + NB_RESERVED_COLORS;
 
 	TSXUngrabServer(gdi_display);
 
-	TRACE("adjusted size %i colorcells\n", X11DRV_DevCaps.sizePalette);
+	TRACE("adjusted size %i colorcells\n", palette_size);
      }
    else if( X11DRV_PALETTE_PaletteFlags & X11DRV_PALETTE_VIRTUAL ) 
 	{
@@ -494,23 +493,23 @@ static BOOL X11DRV_PALETTE_BuildSharedMap(void)
            * color translations but we have to allocate full palette 
 	   * to maintain compatibility
 	   */
-	  X11DRV_DevCaps.sizePalette = 256;
+	  palette_size = 256;
 	  TRACE("Virtual colorspace - screendepth %i\n", screen_depth);
 	}
-   else X11DRV_DevCaps.sizePalette = NB_RESERVED_COLORS;	/* system palette only - however we can alloc a bunch
+   else palette_size = NB_RESERVED_COLORS;	/* system palette only - however we can alloc a bunch
 			                 * of colors and map to them */
 
-   TRACE("Shared system palette uses %i colors.\n", X11DRV_DevCaps.sizePalette);
+   TRACE("Shared system palette uses %i colors.\n", palette_size);
 
    /* set gap to account for pixel shortage. It has to be right in the center
     * of the system palette because otherwise raster ops get screwed. */
 
-   if( X11DRV_DevCaps.sizePalette >= 256 )
+   if( palette_size >= 256 )
      { COLOR_gapStart = 256; COLOR_gapEnd = -1; }
    else
-     { COLOR_gapStart = X11DRV_DevCaps.sizePalette/2; COLOR_gapEnd = 255 - X11DRV_DevCaps.sizePalette/2; }
+     { COLOR_gapStart = palette_size/2; COLOR_gapEnd = 255 - palette_size/2; }
 
-   X11DRV_PALETTE_firstFree = ( X11DRV_DevCaps.sizePalette > NB_RESERVED_COLORS && 
+   X11DRV_PALETTE_firstFree = ( palette_size > NB_RESERVED_COLORS && 
 		      (X11DRV_PALETTE_PaletteFlags & X11DRV_PALETTE_VIRTUAL || !(X11DRV_PALETTE_PaletteFlags & X11DRV_PALETTE_FIXED)) ) 
 		     ? NB_RESERVED_COLORS/2 : -1;
 
@@ -590,12 +589,12 @@ static void X11DRV_PALETTE_FillDefaultColors(void)
   int green, no_g, inc_g; 
   int blue, no_b, inc_b;
 
-  if (X11DRV_DevCaps.sizePalette <= NB_RESERVED_COLORS)
+  if (palette_size <= NB_RESERVED_COLORS)
   	return;
-  while (i*i*i < (X11DRV_DevCaps.sizePalette - NB_RESERVED_COLORS)) i++;
+  while (i*i*i < (palette_size - NB_RESERVED_COLORS)) i++;
   no_r = no_g = no_b = --i;
-  if ((no_r * (no_g+1) * no_b) < (X11DRV_DevCaps.sizePalette - NB_RESERVED_COLORS)) no_g++;
-  if ((no_r * no_g * (no_b+1)) < (X11DRV_DevCaps.sizePalette - NB_RESERVED_COLORS)) no_b++;
+  if ((no_r * (no_g+1) * no_b) < (palette_size - NB_RESERVED_COLORS)) no_g++;
+  if ((no_r * no_g * (no_b+1)) < (palette_size - NB_RESERVED_COLORS)) no_b++;
   inc_r = (255 - NB_COLORCUBE_START_INDEX)/no_r;
   inc_g = (255 - NB_COLORCUBE_START_INDEX)/no_g;
   inc_b = (255 - NB_COLORCUBE_START_INDEX)/no_b;
@@ -846,7 +845,7 @@ int X11DRV_PALETTE_ToPhysical( DC *dc, COLORREF color )
 static int X11DRV_PALETTE_LookupSystemXPixel(COLORREF col)
 {
  int            i, best = 0, diff = 0x7fffffff;
- int            size = X11DRV_DevCaps.sizePalette;
+ int            size = palette_size;
  int            r,g,b;
 
  for( i = 0; i < size && diff ; i++ )
@@ -1016,7 +1015,7 @@ int X11DRV_PALETTE_UpdateMapping(PALETTEOBJ *palPtr)
 {
   int i, index, realized = 0;    
   
-  if (!X11DRV_DevCaps.sizePalette)
+  if (!palette_size)
     return 0;
 
   for( i = 0; i < 20; i++ )

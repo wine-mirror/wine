@@ -146,6 +146,40 @@ typedef struct WINE_ENUM_PRINTER_FONT_CALLBACK
 #define DRVOBJ_FONT 	3   
 #define DRVOBJ_PBITMAP 	5
 
+typedef struct tagDeviceCaps
+{
+    WORD   version;       /*   0: driver version */
+    WORD   technology;    /*   2: device technology */
+    WORD   horzSize;      /*   4: width of display in mm */
+    WORD   vertSize;      /*   6: height of display in mm */
+    WORD   horzRes;       /*   8: width of display in pixels */
+    WORD   vertRes;       /*  10: width of display in pixels */
+    WORD   bitsPixel;     /*  12: bits per pixel */
+    WORD   planes;        /*  14: color planes */
+    WORD   numBrushes;    /*  16: device-specific brushes */
+    WORD   numPens;       /*  18: device-specific pens */
+    WORD   numMarkers;    /*  20: device-specific markers */
+    WORD   numFonts;      /*  22: device-specific fonts */
+    WORD   numColors;     /*  24: size of color table */
+    WORD   pdeviceSize;   /*  26: size of PDEVICE structure */
+    WORD   curveCaps;     /*  28: curve capabilities */
+    WORD   lineCaps;      /*  30: line capabilities */
+    WORD   polygonalCaps; /*  32: polygon capabilities */
+    WORD   textCaps;      /*  34: text capabilities */
+    WORD   clipCaps;      /*  36: clipping capabilities */
+    WORD   rasterCaps;    /*  38: raster capabilities */
+    WORD   aspectX;       /*  40: relative width of device pixel */
+    WORD   aspectY;       /*  42: relative height of device pixel */
+    WORD   aspectXY;      /*  44: relative diagonal width of device pixel */
+    WORD   pad1[21];      /*  46-86: reserved */
+    WORD   logPixelsX;    /*  88: pixels / logical X inch */
+    WORD   logPixelsY;    /*  90: pixels / logical Y inch */
+    WORD   pad2[6];       /*  92-102: reserved */
+    WORD   sizePalette;   /* 104: entries in system palette */
+    WORD   numReserved;   /* 106: reserved entries */
+    WORD   colorRes;      /* 108: color resolution */
+} DeviceCaps;
+
 /* Win16 printer driver physical DC */
 typedef struct
 {
@@ -155,6 +189,7 @@ typedef struct
     LPFONTINFO16       	FontInfo;       /* Current font realized by printer driver */
     LPLOGBRUSH16	BrushInfo;      /* Current brush realized by printer driver */
     LPLOGPEN16		PenInfo;        /* Current pen realized by printer driver */
+    DeviceCaps          DevCaps;        /* Device caps */
 } WIN16DRV_PDEVICE;
 
 /*

@@ -105,8 +105,8 @@ static void ScaleFont(DC *dc, LOGFONTW *lf, PSDRV_PDEVICE *physDev)
 	    
     tm->tmCharSet = ANSI_CHARSET;   	/* FIXME */
     tm->tmOverhang = 0;
-    tm->tmDigitizedAspectX = dc->devCaps->logPixelsY;
-    tm->tmDigitizedAspectY = dc->devCaps->logPixelsX;
+    tm->tmDigitizedAspectX = physDev->logPixelsY;
+    tm->tmDigitizedAspectY = physDev->logPixelsX;
     
     /*
      *	This is kludgy.  font->scale is used in several places in the driver
@@ -456,10 +456,7 @@ static UINT PSDRV_GetFontMetric(HDC hdc, const AFM *pafm,
     	NEWTEXTMETRICEXW *pTM, ENUMLOGFONTEXW *pLF, INT16 size)
 
 {
-    DC *dc = DC_GetDCPtr( hdc );
     float scale = size / (pafm->FullAscender - pafm->Descender);
-
-    if (!dc) return FALSE;
 
     memset( pLF, 0, sizeof(*pLF) );
     memset( pTM, 0, sizeof(*pTM) );
@@ -488,14 +485,13 @@ static UINT PSDRV_GetFontMetric(HDC hdc, const AFM *pafm,
     ptm->tmDescent = -pafm->Descender * scale;
     ptm->tmInternalLeading = (pafm->FullAscender - pafm->Ascender) * scale;
     ptm->tmMaxCharWidth = pafm->CharWidths[77] * scale;
-    ptm->tmDigitizedAspectX = dc->devCaps->logPixelsY;
-    ptm->tmDigitizedAspectY = dc->devCaps->logPixelsX;
+    /* FIXME: X and Y are swapped here, is this on purpose? */
+    ptm->tmDigitizedAspectX = GetDeviceCaps( hdc, LOGPIXELSY );
+    ptm->tmDigitizedAspectY = GetDeviceCaps( hdc, LOGPIXELSX );
 
     *(INT*)&ptm->tmFirstChar = 32;
 
-    GDI_ReleaseObj( hdc );
     /* return font type */
-
     return DEVICE_FONTTYPE;
 #undef ptm
 }

@@ -258,6 +258,12 @@ typedef struct {
     PSDRV_DEVMODEA	*Devmode;
     PRINTERINFO		*pi;
     RECT                PageSize;      /* Imageable area in device co-ords */
+    int                 horzRes;       /* device caps */
+    int                 vertRes;
+    int                 horzSize;
+    int                 vertSize;
+    int                 logPixelsX;
+    int                 logPixelsY;
 } PSDRV_PDEVICE;
 
 typedef struct {

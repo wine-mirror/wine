@@ -81,8 +81,6 @@ extern GC BITMAP_monoGC, BITMAP_colorGC;
 #define BITMAP_GC(bmp) \
   (((bmp)->bitmap.bmBitsPixel == 1) ? BITMAP_monoGC : BITMAP_colorGC)
 
-extern DeviceCaps X11DRV_DevCaps;
-
 extern unsigned int X11DRV_server_startticks;
 
 /* Wine driver X11 functions */
@@ -169,7 +167,7 @@ extern BOOL X11DRV_SwapBuffers(DC *dc) ;
 /* X11 driver internal functions */
 
 extern BOOL X11DRV_BITMAP_Init(void);
-extern BOOL X11DRV_FONT_Init( struct tagDeviceCaps* );
+extern int X11DRV_FONT_Init( int *log_pixels_x, int *log_pixels_y );
 extern BOOL X11DRV_OBM_Init(void);
 
 struct tagBITMAPOBJ;
@@ -285,7 +283,7 @@ extern int *X11DRV_PALETTE_XPixelToPalette;
 
 extern int X11DRV_PALETTE_mapEGAPixel[16];
 
-extern BOOL X11DRV_PALETTE_Init(void);
+extern int X11DRV_PALETTE_Init(void);
 extern void X11DRV_PALETTE_Cleanup(void);
 
 extern COLORREF X11DRV_PALETTE_ToLogical(int pixel);

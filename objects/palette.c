@@ -478,26 +478,14 @@ UINT WINAPI GetSystemPaletteEntries(
     LPPALETTEENTRY entries) /* [out] Array receiving system-palette entries */
 {
     UINT i;
-    DC *dc;
+    INT sizePalette = GetDeviceCaps( hdc, SIZEPALETTE );
 
     TRACE("hdc=%04x,start=%i,count=%i\n", hdc,start,count);
 
-    if (!(dc = DC_GetDCPtr( hdc ))) return 0;
+    if (!entries) return sizePalette;
+    if (start >= sizePalette) return 0;
+    if (start+count >= sizePalette) count = sizePalette - start;
 
-    if (!entries)
-    {
-	count = dc->devCaps->sizePalette;
-        goto done;
-    }
-
-    if (start >= dc->devCaps->sizePalette)
-      {
-	count = 0;
-        goto done;
-      }
-
-    if (start+count >= dc->devCaps->sizePalette)
-	count = dc->devCaps->sizePalette - start;
     for (i = 0; i < count; i++)
     {
 	*(COLORREF*)(entries + i) = COLOR_GetSystemPaletteEntry( start + i );
@@ -505,8 +493,6 @@ UINT WINAPI GetSystemPaletteEntries(
         TRACE("\tidx(%02x) -> RGB(%08lx)\n",
                          start + i, *(COLORREF*)(entries + i) );
     }
- done:
-    GDI_ReleaseObj( hdc );
     return count;
 }
 
@@ -788,12 +774,9 @@ BOOL WINAPI UpdateColors(
     HDC hDC) /* [in] Handle of device context */
 {
     HMODULE mod;
-    DC *dc;
-    int size;
+    int size = GetDeviceCaps( hDC, SIZEPALETTE );
 
-    if (!(dc = DC_GetDCPtr( hDC ))) return 0;
-    size = dc->devCaps->sizePalette;
-    GDI_ReleaseObj( hDC );
+    if (!size) return 0;
 
     mod = GetModuleHandleA("user32.dll");
     if (mod)

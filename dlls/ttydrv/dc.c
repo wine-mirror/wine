@@ -35,31 +35,6 @@ PALETTE_DRIVER TTYDRV_PALETTE_Driver =
   TTYDRV_PALETTE_IsDark
 };
 
-/* FIXME: Adapt to the TTY driver. Copied from the X11 driver */
-
-DeviceCaps TTYDRV_DC_DevCaps = {
-/* version */		0, 
-/* technology */	DT_RASDISPLAY,
-/* size, resolution */	0, 0, 0, 0, 0, 
-/* device objects */	1, 16 + 6, 16, 0, 0, 100, 0,	
-/* curve caps */	CC_CIRCLES | CC_PIE | CC_CHORD | CC_ELLIPSES |
-			CC_WIDE | CC_STYLED | CC_WIDESTYLED | CC_INTERIORS | CC_ROUNDRECT,
-/* line caps */		LC_POLYLINE | LC_MARKER | LC_POLYMARKER | LC_WIDE |
-			LC_STYLED | LC_WIDESTYLED | LC_INTERIORS,
-/* polygon caps */	PC_POLYGON | PC_RECTANGLE | PC_WINDPOLYGON |
-			PC_SCANLINE | PC_WIDE | PC_STYLED | PC_WIDESTYLED | PC_INTERIORS,
-/* text caps */		0,
-/* regions */		CP_REGION,
-/* raster caps */	RC_BITBLT | RC_BANDING | RC_SCALING | RC_BITMAP64 |
-			RC_DI_BITMAP | RC_DIBTODEV | RC_BIGFONT | RC_STRETCHBLT | RC_STRETCHDIB | RC_DEVBITS,
-/* aspects */		36, 36, 51,
-/* pad1 */		{ 0 },
-/* log pixels */	0, 0, 
-/* pad2 */		{ 0 },
-/* palette size */	0,
-/* ..etc */		0, 0
-};
-
 const DC_FUNCTIONS *TTYDRV_DC_Funcs = NULL;  /* hack */
 
 /**********************************************************************
@@ -70,28 +45,7 @@ BOOL TTYDRV_GDI_Initialize(void)
   BITMAP_Driver = &TTYDRV_BITMAP_Driver;
   PALETTE_Driver = &TTYDRV_PALETTE_Driver;
 
-  TTYDRV_DC_DevCaps.version = 0x300;
-  TTYDRV_DC_DevCaps.horzSize = 0;    /* FIXME: Screen width in mm */
-  TTYDRV_DC_DevCaps.vertSize = 0;    /* FIXME: Screen height in mm */
-  TTYDRV_DC_DevCaps.horzRes = 640;   /* FIXME: Screen width in pixel */
-  TTYDRV_DC_DevCaps.vertRes = 480;   /* FIXME: Screen height in pixel */
-  TTYDRV_DC_DevCaps.bitsPixel = 1;   /* FIXME: Bits per pixel */
-  TTYDRV_DC_DevCaps.sizePalette = 256; /* FIXME: ??? */
-  
-  /* Resolution will be adjusted during the font init */
-  
-  TTYDRV_DC_DevCaps.logPixelsX = (int) (TTYDRV_DC_DevCaps.horzRes * 25.4 / TTYDRV_DC_DevCaps.horzSize);
-  TTYDRV_DC_DevCaps.logPixelsY = (int) (TTYDRV_DC_DevCaps.vertRes * 25.4 / TTYDRV_DC_DevCaps.vertSize);
- 
   return TTYDRV_PALETTE_Initialize();
-}
-
-/**********************************************************************
- *	     TTYDRV_GDI_Finalize
- */
-void TTYDRV_GDI_Finalize(void)
-{
-    TTYDRV_PALETTE_Finalize();
 }
 
 /***********************************************************************
@@ -117,8 +71,6 @@ BOOL TTYDRV_DC_CreateDC(DC *dc, LPCSTR driver, LPCSTR device,
   }
   physDev = (TTYDRV_PDEVICE *) dc->physDev;
   
-  dc->devCaps = &TTYDRV_DC_DevCaps;
-
   if(dc->flags & DC_MEMORY){
     physDev->window = NULL;
     physDev->cellWidth = 1;
@@ -165,14 +117,89 @@ BOOL TTYDRV_DC_DeleteDC(DC *dc)
   return TRUE;
 }
 
+
 /***********************************************************************
- *           TTYDRV_DC_Escape
+ *           GetDeviceCaps    (TTYDRV.@)
  */
-INT TTYDRV_DC_Escape(DC *dc, INT nEscape, INT cbInput,
-		     SEGPTR lpInData, SEGPTR lpOutData)
+INT TTYDRV_GetDeviceCaps( DC *dc, INT cap )
 {
-  return 0;
+    switch(cap)
+    {
+    case DRIVERVERSION:
+        return 0x300;
+    case TECHNOLOGY:
+        return DT_RASDISPLAY;
+    case HORZSIZE:
+        return 0;    /* FIXME: Screen width in mm */
+    case VERTSIZE:
+        return 0;    /* FIXME: Screen height in mm */
+    case HORZRES:
+        return 640;  /* FIXME: Screen width in pixel */
+    case VERTRES:
+        return 480;  /* FIXME: Screen height in pixel */
+    case BITSPIXEL:
+        return 1;    /* FIXME */
+    case PLANES:
+        return 1;
+    case NUMBRUSHES:
+        return 16 + 6;
+    case NUMPENS:
+        return 16;
+    case NUMMARKERS:
+        return 0;
+    case NUMFONTS:
+        return 0;
+    case NUMCOLORS:
+        return 100;
+    case PDEVICESIZE:
+        return sizeof(TTYDRV_PDEVICE);
+    case CURVECAPS:
+        return (CC_CIRCLES | CC_PIE | CC_CHORD | CC_ELLIPSES | CC_WIDE |
+                CC_STYLED | CC_WIDESTYLED | CC_INTERIORS | CC_ROUNDRECT);
+    case LINECAPS:
+        return (LC_POLYLINE | LC_MARKER | LC_POLYMARKER | LC_WIDE |
+                LC_STYLED | LC_WIDESTYLED | LC_INTERIORS);
+    case POLYGONALCAPS:
+        return (PC_POLYGON | PC_RECTANGLE | PC_WINDPOLYGON |
+                PC_SCANLINE | PC_WIDE | PC_STYLED | PC_WIDESTYLED | PC_INTERIORS);
+    case TEXTCAPS:
+        return 0;
+    case CLIPCAPS:
+        return CP_REGION;
+    case RASTERCAPS:
+        return (RC_BITBLT | RC_BANDING | RC_SCALING | RC_BITMAP64 | RC_DI_BITMAP |
+                RC_DIBTODEV | RC_BIGFONT | RC_STRETCHBLT | RC_STRETCHDIB | RC_DEVBITS);
+    case ASPECTX:
+    case ASPECTY:
+        return 36;
+    case ASPECTXY:
+        return 51;
+    case LOGPIXELSX:
+    case LOGPIXELSY:
+        return 72;  /* FIXME */
+    case SIZEPALETTE:
+        return 256;  /* FIXME */
+    case NUMRESERVED:
+        return 0;
+    case COLORRES:
+        return 0;
+    case PHYSICALWIDTH:
+    case PHYSICALHEIGHT:
+    case PHYSICALOFFSETX:
+    case PHYSICALOFFSETY:
+    case SCALINGFACTORX:
+    case SCALINGFACTORY:
+    case VREFRESH:
+    case DESKTOPVERTRES:
+    case DESKTOPHORZRES:
+    case BTLALIGNMENT:
+        return 0;
+    default:
+        FIXME("(%04x): unsupported capability %d, will return 0\n", dc->hSelf, cap );
+        return 0;
+    }
 }
+
 
 /***********************************************************************
  *		TTYDRV_DC_SetDeviceClipping

@@ -31,6 +31,7 @@ debug_channels (bitblt bitmap clipboard cursor dinput event font gdi graphics
 @ cdecl ExtTextOut(ptr long long long ptr ptr long ptr) X11DRV_ExtTextOut
 @ cdecl GetCharWidth(ptr long long ptr) X11DRV_GetCharWidth
 @ cdecl GetDCOrgEx(ptr ptr) X11DRV_GetDCOrgEx
+@ cdecl GetDeviceCaps(ptr long) X11DRV_GetDeviceCaps
 @ cdecl GetDeviceGammaRamp(ptr ptr) X11DRV_GetDeviceGammaRamp
 @ cdecl GetPixel(ptr long long) X11DRV_GetPixel
 @ cdecl GetPixelFormat(ptr) X11DRV_GetPixelFormat

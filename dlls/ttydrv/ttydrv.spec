@@ -20,10 +20,10 @@ debug_channels (ttydrv)
 @ cdecl DeleteDC(ptr) TTYDRV_DC_DeleteDC
 @ cdecl DeleteObject(long) TTYDRV_DC_DeleteObject
 @ cdecl Ellipse(ptr long long long long) TTYDRV_DC_Ellipse
-@ cdecl Escape(ptr long long long long) TTYDRV_DC_Escape
 @ cdecl ExtFloodFill(ptr long long long long) TTYDRV_DC_ExtFloodFill
 @ cdecl ExtTextOut(ptr long long long ptr ptr long ptr) TTYDRV_DC_ExtTextOut
 @ cdecl GetCharWidth(ptr long long ptr) TTYDRV_DC_GetCharWidth
+@ cdecl GetDeviceCaps(ptr long) TTYDRV_GetDeviceCaps
 @ cdecl GetPixel(ptr long long) TTYDRV_DC_GetPixel
 @ cdecl GetTextExtentPoint(ptr ptr long ptr) TTYDRV_DC_GetTextExtentPoint
 @ cdecl GetTextMetrics(ptr ptr) TTYDRV_DC_GetTextMetrics

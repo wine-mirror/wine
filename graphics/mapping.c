@@ -17,10 +17,10 @@ DEFAULT_DEBUG_CHANNEL(gdi);
  */
 void MAPPING_FixIsotropic( DC * dc )
 {
-    double xdim = (double)dc->vportExtX * dc->devCaps->horzSize /
-	          (dc->devCaps->horzRes * dc->wndExtX);
-    double ydim = (double)dc->vportExtY * dc->devCaps->vertSize /
-	          (dc->devCaps->vertRes * dc->wndExtY);
+    double xdim = (double)dc->vportExtX * GetDeviceCaps( dc->hSelf, HORZSIZE ) /
+                  (GetDeviceCaps( dc->hSelf, HORZRES ) * dc->wndExtX);
+    double ydim = (double)dc->vportExtY * GetDeviceCaps( dc->hSelf, VERTSIZE ) /
+                  (GetDeviceCaps( dc->hSelf, VERTRES ) * dc->wndExtY);
     if (xdim > ydim)
     {
 	dc->vportExtX = dc->vportExtX * fabs( ydim / xdim );
@@ -30,7 +30,7 @@ void MAPPING_FixIsotropic( DC * dc )
     {
 	dc->vportExtY = dc->vportExtY * fabs( xdim / ydim );
 	if (!dc->vportExtY) dc->vportExtY = 1;
-    }	
+    }
 }
 
 
@@ -124,6 +124,8 @@ INT16 WINAPI SetMapMode16( HDC16 hdc, INT16 mode )
 INT WINAPI SetMapMode( HDC hdc, INT mode )
 {
     INT prevMode;
+    INT horzSize, vertSize, horzRes, vertRes;
+
     DC * dc = DC_GetDCPtr( hdc );
     if (!dc) return 0;
     if (dc->funcs->pSetMapMode)
@@ -133,58 +135,55 @@ INT WINAPI SetMapMode( HDC hdc, INT mode )
     }
 
     TRACE("%04x %d\n", hdc, mode );
-    
+
     prevMode = dc->MapMode;
+    horzSize = GetDeviceCaps( hdc, HORZSIZE );
+    vertSize = GetDeviceCaps( hdc, VERTSIZE );
+    horzRes  = GetDeviceCaps( hdc, HORZRES );
+    vertRes  = GetDeviceCaps( hdc, VERTRES );
     switch(mode)
     {
-      case MM_TEXT:
-	  dc->wndExtX   = 1;
-	  dc->wndExtY   = 1;
-	  dc->vportExtX = 1;
-	  dc->vportExtY = 1;
-	  break;
-	  
-      case MM_LOMETRIC:
-      case MM_ISOTROPIC:
-	  dc->wndExtX   = dc->devCaps->horzSize;
-	  dc->wndExtY   = dc->devCaps->vertSize;
-	  dc->vportExtX = dc->devCaps->horzRes / 10;
-	  dc->vportExtY = dc->devCaps->vertRes / -10;
-	  break;
-	  
-      case MM_HIMETRIC:
-	  dc->wndExtX   = dc->devCaps->horzSize * 10;
-	  dc->wndExtY   = dc->devCaps->vertSize * 10;
-	  dc->vportExtX = dc->devCaps->horzRes / 10;
-	  dc->vportExtY = dc->devCaps->vertRes / -10;
-	  break;
-	  
-      case MM_LOENGLISH:
-	  dc->wndExtX   = dc->devCaps->horzSize;
-	  dc->wndExtY   = dc->devCaps->vertSize;
-	  dc->vportExtX = 254L * dc->devCaps->horzRes / 1000;
-	  dc->vportExtY = -254L * dc->devCaps->vertRes / 1000;
-	  break;	  
-	  
-      case MM_HIENGLISH:
-	  dc->wndExtX   = dc->devCaps->horzSize * 10;
-	  dc->wndExtY   = dc->devCaps->vertSize * 10;
-	  dc->vportExtX = 254L * dc->devCaps->horzRes / 1000;
-	  dc->vportExtY = -254L * dc->devCaps->vertRes / 1000;
-	  break;
-	  
-      case MM_TWIPS:
-	  dc->wndExtX   = 144L * dc->devCaps->horzSize / 10;
-	  dc->wndExtY   = 144L * dc->devCaps->vertSize / 10;
-	  dc->vportExtX = 254L * dc->devCaps->horzRes / 1000;
-	  dc->vportExtY = -254L * dc->devCaps->vertRes / 1000;
-	  break;
-	  
-      case MM_ANISOTROPIC:
-	  break;
-
-      default:
-	  goto done;
+    case MM_TEXT:
+        dc->wndExtX   = 1;
+        dc->wndExtY   = 1;
+        dc->vportExtX = 1;
+        dc->vportExtY = 1;
+        break;
+    case MM_LOMETRIC:
+    case MM_ISOTROPIC:
+        dc->wndExtX   = horzSize;
+        dc->wndExtY   = vertSize;
+        dc->vportExtX = horzRes / 10;
+        dc->vportExtY = vertRes / -10;
+        break;
+    case MM_HIMETRIC:
+        dc->wndExtX   = horzSize * 10;
+        dc->wndExtY   = vertSize * 10;
+        dc->vportExtX = horzRes / 10;
+        dc->vportExtY = vertRes / -10;
+        break;
+    case MM_LOENGLISH:
+        dc->wndExtX   = horzSize;
+        dc->wndExtY   = vertSize;
+        dc->vportExtX = 254L * horzRes / 1000;
+        dc->vportExtY = -254L * vertRes / 1000;
+        break;
+    case MM_HIENGLISH:
+        dc->wndExtX   = horzSize * 10;
+        dc->wndExtY   = vertSize * 10;
+        dc->vportExtX = 254L * horzRes / 1000;
+        dc->vportExtY = -254L * vertRes / 1000;
+        break;
+    case MM_TWIPS:
+        dc->wndExtX   = 144L * horzSize / 10;
+        dc->wndExtY   = 144L * vertSize / 10;
+        dc->vportExtX = 254L * horzRes / 1000;
+        dc->vportExtY = -254L * vertRes / 1000;
+        break;
+    case MM_ANISOTROPIC:
+        break;
+    default:
+        goto done;
     }
     dc->MapMode = mode;
     DC_UpdateXforms( dc );

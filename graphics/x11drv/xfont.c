@@ -63,12 +63,10 @@ typedef struct __fontAlias
 
 static fontAlias *aliasTable = NULL;
 
-UINT16			XTextCaps = TC_OP_CHARACTER | TC_OP_STROKE |
-TC_CP_STROKE | TC_CR_ANY |
-				    TC_SA_DOUBLE | TC_SA_INTEGER | TC_SA_CONTIN |
-			 	    TC_UA_ABLE | TC_SO_ABLE | TC_RA_ABLE;
-
-			/* X11R6 adds TC_SF_X_YINDEP, maybe more... */
+static UINT XTextCaps = (TC_OP_CHARACTER | TC_OP_STROKE | TC_CP_STROKE | TC_CR_ANY |
+                         TC_SA_DOUBLE | TC_SA_INTEGER | TC_SA_CONTIN |
+                         TC_UA_ABLE | TC_SO_ABLE | TC_RA_ABLE);
+                         /* X11R6 adds TC_SF_X_YINDEP, maybe more... */
 
 static const char*	INIFontMetrics = "/cachedmetrics.";
 static const char*	INIFontSection = "Software\\Wine\\Wine\\Config\\fonts";
@@ -2300,7 +2298,7 @@ static BOOL XFONT_WriteCachedMetrics( int fd, unsigned x_checksum, int x_count, 
  * XFONT_Match() penalty function. We also load the point
  * resolution value (higher values result in larger fonts).
  */
-static int XFONT_GetPointResolution( DeviceCaps* pDevCaps )
+static int XFONT_GetPointResolution( int *log_pixels_x, int *log_pixels_y )
 {
     int i, j, point_resolution, num = 3; 
     int allowed_xfont_resolutions[3] = { 72, 75, 100 };
@@ -2319,9 +2317,9 @@ static int XFONT_GetPointResolution( DeviceCaps* pDevCaps )
     }
 
     if( !point_resolution )
-	point_resolution = pDevCaps->logPixelsY;
+        point_resolution = *log_pixels_y;
     else
-	pDevCaps->logPixelsX = pDevCaps->logPixelsY = point_resolution;
+        *log_pixels_x = *log_pixels_y = point_resolution;
 
 
     /* FIXME We can only really guess at a best DefResolution
@@ -2337,18 +2335,6 @@ static int XFONT_GetPointResolution( DeviceCaps* pDevCaps )
 	}
     }
     DefResolution = allowed_xfont_resolutions[best];
-
-    /* FIXME - do win95,nt40,... do this as well ? */
-    if (TWEAK_WineLook == WIN98_LOOK)
-    {
-	/* Lie about the screen size, so that eg MM_LOMETRIC becomes MM_logical_LOMETRIC */
-	int denom;
-	denom = pDevCaps->logPixelsX * 10;
-	pDevCaps->horzSize = (pDevCaps->horzRes * 254 + (denom>>1)) / denom;
-	denom = pDevCaps->logPixelsY * 10;
-	pDevCaps->vertSize = (pDevCaps->vertRes * 254 + (denom>>1)) / denom;
-    }
-
     return point_resolution;
 }
 
@@ -2784,7 +2770,7 @@ static int XFONT_ReleaseCacheEntry(const fontObject* pfo)
  *
  * Initialize font resource list and allocate font cache.
  */
-BOOL X11DRV_FONT_Init( DeviceCaps* pDevCaps )
+int X11DRV_FONT_Init( int *log_pixels_x, int *log_pixels_y )
 {
   char**    x_pattern;
   unsigned  x_checksum;
@@ -2792,7 +2778,7 @@ BOOL X11DRV_FONT_Init( DeviceCaps* pDevCaps )
   char      *buffer;
   HKEY hkey;
 
-  res = XFONT_GetPointResolution( pDevCaps );
+  res = XFONT_GetPointResolution( log_pixels_x, log_pixels_y );
       
   x_pattern = TSXListFonts(gdi_display, "*", MAX_FONTS, &x_count );
 
@@ -2883,12 +2869,9 @@ BOOL X11DRV_FONT_Init( DeviceCaps* pDevCaps )
 
   /* update text caps parameter */
 
-  pDevCaps->textCaps = XTextCaps;
-
   RAW_ASCENT  = TSXInternAtom(gdi_display, "RAW_ASCENT", TRUE);
   RAW_DESCENT = TSXInternAtom(gdi_display, "RAW_DESCENT", TRUE);
-  
-  return TRUE;
+  return XTextCaps;
 }
 
 /**********************************************************************
@@ -3158,7 +3141,7 @@ HFONT X11DRV_FONT_SelectObject( DC* dc, HFONT hfont, FONTOBJ* font )
 	    lf.lfHeight = MIN_FONT_SIZE;
     }
     else
-	lf.lfHeight = -(DEF_POINT_SIZE * dc->devCaps->logPixelsY + (72>>1)) / 72;
+	lf.lfHeight = -(DEF_POINT_SIZE * GetDeviceCaps(dc->hSelf,LOGPIXELSY) + (72>>1)) / 72;
     
     {
 	/* Fixup aliases before passing to RealizeFont */

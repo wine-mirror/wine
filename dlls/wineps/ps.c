@@ -314,10 +314,10 @@ INT PSDRV_WriteHeader( DC *dc, LPCSTR title )
     
     /* BBox co-ords are in default user co-ord system so urx < ury even in
        landscape mode */
-    llx = physDev->PageSize.left * 72.0 / dc->devCaps->logPixelsX;
-    lly = physDev->PageSize.bottom * 72.0 / dc->devCaps->logPixelsY;
-    urx = physDev->PageSize.right * 72.0 / dc->devCaps->logPixelsX;
-    ury = physDev->PageSize.top * 72.0 / dc->devCaps->logPixelsY;
+    llx = physDev->PageSize.left * 72.0 / physDev->logPixelsX;
+    lly = physDev->PageSize.bottom * 72.0 / physDev->logPixelsY;
+    urx = physDev->PageSize.right * 72.0 / physDev->logPixelsX;
+    ury = physDev->PageSize.top * 72.0 / physDev->logPixelsY;
 
     if(physDev->Devmode->dmPublic.u1.s1.dmOrientation == DMORIENT_LANDSCAPE) {
 	orient = "Landscape";
@@ -461,7 +461,7 @@ INT PSDRV_WriteNewPage( DC *dc )
     }
 
     sprintf(buf, psnewpage, name, physDev->job.PageNo,
-	    dc->devCaps->logPixelsX, dc->devCaps->logPixelsY,
+	    physDev->logPixelsX, physDev->logPixelsY,
 	    xtrans, ytrans, rotation);
 
     if( WriteSpool16( physDev->job.hJob, buf, strlen(buf) ) != 

@@ -39,6 +39,7 @@ LPDRAWMODE 	win16drv_DrawModeP;
 
 static BOOL WIN16DRV_CreateDC( DC *dc, LPCSTR driver, LPCSTR device,
                                  LPCSTR output, const DEVMODEA* initData );
+static INT WIN16DRV_GetDeviceCaps( DC *dc, INT cap );
 static INT WIN16DRV_Escape( DC *dc, INT nEscape, INT cbInput, 
                               SEGPTR lpInData, SEGPTR lpOutData );
 
@@ -78,6 +79,7 @@ static const DC_FUNCTIONS WIN16DRV_Funcs =
     NULL,                            /* pFrameRgn */
     WIN16DRV_GetCharWidth,           /* pGetCharWidth */
     NULL,                            /* pGetDCOrgEx */
+    WIN16DRV_GetDeviceCaps,          /* pGetDeviceCaps */
     NULL,                            /* pGetDeviceGammaRamp */
     NULL,                            /* pGetPixel */
     NULL,                            /* pGetPixelFormat */
@@ -198,7 +200,6 @@ BOOL WIN16DRV_CreateDC( DC *dc, LPCSTR driver, LPCSTR device, LPCSTR output,
 {
     LOADED_PRINTER_DRIVER *pLPD;
     WORD wRet;
-    DeviceCaps *printerDevCaps;
     int nPDEVICEsize;
     PDEVICE_HEADER *pPDH;
     WIN16DRV_PDEVICE *physDev;
@@ -238,32 +239,25 @@ BOOL WIN16DRV_CreateDC( DC *dc, LPCSTR driver, LPCSTR device, LPCSTR output,
     TRACE("windevCreateDC pLPD 0x%p\n", pLPD);
 
     /* Now Get the device capabilities from the printer driver */
-    
-    printerDevCaps = (DeviceCaps *) calloc(1, sizeof(DeviceCaps));
-    if(printerDevCaps == NULL) {
-        ERR("No memory to read the device capabilities!\n");
-        HeapFree( GetProcessHeap(), 0, physDev );
-        return FALSE;
-    }
-
+    memset( &physDev->DevCaps, 0, sizeof(physDev->DevCaps) );
     if(!output) output = "LPT1:";
+
     /* Get GDIINFO which is the same as a DeviceCaps structure */
-    wRet = PRTDRV_Enable(printerDevCaps, GETGDIINFO, device, driver, output,NULL); 
+    wRet = PRTDRV_Enable(&physDev->DevCaps, GETGDIINFO, device, driver, output,NULL); 
 
     /* Add this to the DC */
-    dc->devCaps = printerDevCaps;
-    dc->hVisRgn = CreateRectRgn(0, 0, dc->devCaps->horzRes, dc->devCaps->vertRes);
-    dc->bitsPerPixel = dc->devCaps->bitsPixel;
+    dc->hVisRgn = CreateRectRgn(0, 0, physDev->DevCaps.horzRes, physDev->DevCaps.vertRes);
+    dc->bitsPerPixel = physDev->DevCaps.bitsPixel;
     
     TRACE("Got devcaps width %d height %d bits %d planes %d\n",
-	  dc->devCaps->horzRes, dc->devCaps->vertRes, 
-	  dc->devCaps->bitsPixel, dc->devCaps->planes);
+	  physDev->DevCaps.horzRes, physDev->DevCaps.vertRes, 
+	  physDev->DevCaps.bitsPixel, physDev->DevCaps.planes);
 
     /* Now we allocate enough memory for the PDEVICE structure */
     /* The size of this varies between printer drivers */
     /* This PDEVICE is used by the printer DRIVER not by the GDI so must */
     /* be accessable from 16 bit code */
-    nPDEVICEsize = dc->devCaps->pdeviceSize + sizeof(PDEVICE_HEADER);
+    nPDEVICEsize = physDev->DevCaps.pdeviceSize + sizeof(PDEVICE_HEADER);
 
     /* TTD Shouldn't really do pointer arithmetic on segment points */
     physDev->segptrPDEVICE = K32WOWGlobalLock16(GlobalAlloc16(GHND, nPDEVICEsize))+sizeof(PDEVICE_HEADER);
@@ -308,6 +302,23 @@ BOOL WIN16DRV_PatBlt( struct tagDC *dc, INT left, INT top,
 
     return bRet;
 }
+
+
+/***********************************************************************
+ *           WIN16DRV_GetDeviceCaps
+ */
+static INT WIN16DRV_GetDeviceCaps( DC *dc, INT cap )
+{
+    WIN16DRV_PDEVICE *physDev = dc->physDev;
+    if (cap >= PHYSICALWIDTH || (cap % 2))
+    {
+        FIXME("(%04x): unsupported capability %d, will return 0\n", dc->hSelf, cap );
+        return 0;
+    }
+    return *((WORD *)&physDev->DevCaps + (cap / 2));
+}
+
+
 /* 
  * Escape (GDI.38)
  */

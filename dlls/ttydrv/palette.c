@@ -16,13 +16,13 @@ DEFAULT_DEBUG_CHANNEL(ttydrv);
 
 /**********************************************************************/
 
-extern DeviceCaps TTYDRV_DC_DevCaps;
-
 extern PALETTEENTRY *COLOR_sysPal;
 extern int COLOR_gapStart;
 extern int COLOR_gapEnd;
 extern int COLOR_gapFilled;
 extern int COLOR_max;
+
+static int palette_size = 256;  /* FIXME */
 
 extern const PALETTEENTRY COLOR_sysPalTemplate[NB_RESERVED_COLORS]; 
 
@@ -35,20 +35,20 @@ BOOL TTYDRV_PALETTE_Initialize(void)
 
   TRACE("(void)\n");
 
-  COLOR_sysPal = (PALETTEENTRY *) HeapAlloc(GetProcessHeap(), 0, sizeof(PALETTEENTRY) * TTYDRV_DC_DevCaps.sizePalette);
+  COLOR_sysPal = (PALETTEENTRY *) HeapAlloc(GetProcessHeap(), 0, sizeof(PALETTEENTRY) * palette_size);
   if(COLOR_sysPal == NULL) {
     WARN("No memory to create system palette!\n");
     return FALSE;
   }
 
-  for(i=0; i < TTYDRV_DC_DevCaps.sizePalette; i++ ) {
+  for(i=0; i < palette_size; i++ ) {
     const PALETTEENTRY *src;
     PALETTEENTRY *dst = &COLOR_sysPal[i];
 
     if(i < NB_RESERVED_COLORS/2) {
       src = &COLOR_sysPalTemplate[i];
-    } else if(i >= TTYDRV_DC_DevCaps.sizePalette - NB_RESERVED_COLORS/2) {
-      src = &COLOR_sysPalTemplate[NB_RESERVED_COLORS + i - TTYDRV_DC_DevCaps.sizePalette];
+    } else if(i >= palette_size - NB_RESERVED_COLORS/2) {
+      src = &COLOR_sysPalTemplate[NB_RESERVED_COLORS + i - palette_size];
     } else {
       PALETTEENTRY pe = { 0, 0, 0, 0 };
       src = &pe;
@@ -71,15 +71,6 @@ BOOL TTYDRV_PALETTE_Initialize(void)
   COLOR_gapEnd = NB_RESERVED_COLORS/2;
 
   return TRUE;
-}
-
-/***********************************************************************
- *	     TTYDRV_PALETTE_Finalize
- *
- */
-void TTYDRV_PALETTE_Finalize(void)
-{
-  TRACE("(void)\n");
 }
 
 /***********************************************************************

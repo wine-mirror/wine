@@ -27,6 +27,7 @@ debug_channels (psdrv)
 @ cdecl ExtDeviceMode(ptr long ptr ptr ptr ptr ptr long) PSDRV_ExtDeviceMode
 @ cdecl ExtTextOut(ptr long long long ptr ptr long ptr) PSDRV_ExtTextOut
 @ cdecl GetCharWidth(ptr long long ptr) PSDRV_GetCharWidth
+@ cdecl GetDeviceCaps(ptr long) PSDRV_GetDeviceCaps
 @ cdecl GetTextExtentPoint(ptr ptr long ptr) PSDRV_GetTextExtentPoint
 @ cdecl GetTextMetrics(ptr ptr) PSDRV_GetTextMetrics
 @ cdecl LineTo(ptr long long) PSDRV_LineTo

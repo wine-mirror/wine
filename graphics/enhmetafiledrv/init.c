@@ -51,6 +51,7 @@ static const DC_FUNCTIONS EMFDRV_Funcs =
     EMFDRV_FrameRgn,                 /* pFrameRgn */
     NULL,                            /* pGetCharWidth */
     NULL,                            /* pGetDCOrgEx */
+    NULL,                            /* pGetDeviceCaps */
     NULL,                            /* pGetDeviceGammaRamp */
     NULL, /* no implementation */    /* pGetPixel */
     NULL,                            /* pGetPixelFormat */

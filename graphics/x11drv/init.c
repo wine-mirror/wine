@@ -39,31 +39,17 @@ PALETTE_DRIVER X11DRV_PALETTE_Driver =
   X11DRV_PALETTE_IsDark
 };
 
-DeviceCaps X11DRV_DevCaps = {
-/* version */		0, 
-/* technology */	DT_RASDISPLAY,
-/* size, resolution */	0, 0, 0, 0, 0, 
-/* device objects */	1, -1, -1, 0, 0, -1, 1152,	
-/* curve caps */	CC_CIRCLES | CC_PIE | CC_CHORD | CC_ELLIPSES |
-			CC_WIDE | CC_STYLED | CC_WIDESTYLED | CC_INTERIORS | CC_ROUNDRECT,
-/* line caps */		LC_POLYLINE | LC_MARKER | LC_POLYMARKER | LC_WIDE |
-			LC_STYLED | LC_WIDESTYLED | LC_INTERIORS,
-/* polygon caps */	PC_POLYGON | PC_RECTANGLE | PC_WINDPOLYGON |
-			PC_SCANLINE | PC_WIDE | PC_STYLED | PC_WIDESTYLED | PC_INTERIORS,
-/* text caps */		0,
-/* regions */		CP_REGION,
-/* raster caps */	RC_BITBLT | RC_BANDING | RC_SCALING | RC_BITMAP64 |
-			RC_DI_BITMAP | RC_DIBTODEV | RC_BIGFONT | RC_STRETCHBLT | RC_STRETCHDIB | RC_DEVBITS,
-/* aspects */		36, 36, 51,
-/* pad1 */		{ 0 },
-/* log pixels */	0, 0, 
-/* pad2 */		{ 0 },
-/* palette size */	0,
-/* ..etc */		0, 0 };
-
 
 Display *gdi_display;  /* display to use for all GDI functions */
 
+
+/* a few dynamic device caps */
+static int log_pixels_x;  /* pixels per logical inch in x direction */
+static int log_pixels_y;  /* pixels per logical inch in y direction */
+static int horz_size;     /* horz. size of screen in millimeters */
+static int vert_size;     /* vert. size of screen in millimeters */
+static int palette_size;
+static int text_caps;
 
 /**********************************************************************
  *	     X11DRV_GDI_Initialize
@@ -76,39 +62,20 @@ BOOL X11DRV_GDI_Initialize( Display *display )
     BITMAP_Driver = &X11DRV_BITMAP_Driver;
     PALETTE_Driver = &X11DRV_PALETTE_Driver;
 
-    /* FIXME: colormap management should be merged with the X11DRV */
-
-    if( !X11DRV_PALETTE_Init() ) return FALSE;
+    palette_size = X11DRV_PALETTE_Init();
 
     if( !X11DRV_OBM_Init() ) return FALSE;
-
-    /* Finish up device caps */
-
-    X11DRV_DevCaps.version   = 0x300;
-    X11DRV_DevCaps.horzSize  = WidthMMOfScreen(screen) * screen_width / WidthOfScreen(screen);
-    X11DRV_DevCaps.vertSize  = HeightMMOfScreen(screen) * screen_height / HeightOfScreen(screen);
-    X11DRV_DevCaps.horzRes   = screen_width;
-    X11DRV_DevCaps.vertRes   = screen_height;
-    X11DRV_DevCaps.bitsPixel = screen_depth;
-
-    /* MSDN: Number of entries in the device's color table, if the device has
-     * a color depth of no more than 8 bits per pixel.For devices with greater
-     * color depths, -1 is returned.
-     */
-    X11DRV_DevCaps.numColors = (screen_depth>8)?-1:(1<<screen_depth);
- 
-    /* Resolution will be adjusted during the font init */
-
-    X11DRV_DevCaps.logPixelsX = (int)(X11DRV_DevCaps.horzRes * 25.4 / X11DRV_DevCaps.horzSize);
-    X11DRV_DevCaps.logPixelsY = (int)(X11DRV_DevCaps.vertRes * 25.4 / X11DRV_DevCaps.vertSize);
-
-    /* Create default bitmap */
 
     if (!X11DRV_BITMAP_Init()) return FALSE;
 
     /* Initialize fonts and text caps */
 
-    return X11DRV_FONT_Init( &X11DRV_DevCaps );
+    log_pixels_x = MulDiv( WidthOfScreen(screen), 254, WidthMMOfScreen(screen) * 10 );
+    log_pixels_y = MulDiv( HeightOfScreen(screen), 254, HeightMMOfScreen(screen) * 10 );
+    text_caps = X11DRV_FONT_Init( &log_pixels_x, &log_pixels_y );
+    horz_size = MulDiv( screen_width, 254, log_pixels_x * 10 );
+    vert_size = MulDiv( screen_height, 254, log_pixels_y * 10 );
+    return TRUE;
 }
 
 /**********************************************************************
@@ -138,7 +105,6 @@ BOOL X11DRV_CreateDC( DC *dc, LPCSTR driver, LPCSTR device,
 	return FALSE;
     }
 
-    dc->devCaps      = &X11DRV_DevCaps;
     if (dc->flags & DC_MEMORY)
     {
         BITMAPOBJ *bmp = (BITMAPOBJ *) GDI_GetObjPtr( dc->hBitmap, BITMAP_MAGIC );
@@ -202,6 +168,99 @@ BOOL X11DRV_DeleteDC( DC *dc )
     dc->physDev = NULL;
     return TRUE;
 }
+
+
+/***********************************************************************
+ *           GetDeviceCaps    (X11DRV.@)
+ */
+INT X11DRV_GetDeviceCaps( DC *dc, INT cap )
+{
+    switch(cap)
+    {
+    case DRIVERVERSION:
+        return 0x300;
+    case TECHNOLOGY:
+        return DT_RASDISPLAY;
+    case HORZSIZE:
+        return horz_size;
+    case VERTSIZE:
+        return vert_size;
+    case HORZRES:
+        return screen_width;
+    case VERTRES:
+        return screen_height;
+    case BITSPIXEL:
+        return screen_depth;
+    case PLANES:
+        return 1;
+    case NUMBRUSHES:
+        return -1;
+    case NUMPENS:
+        return -1;
+    case NUMMARKERS:
+        return 0;
+    case NUMFONTS:
+        return 0;
+    case NUMCOLORS:
+        /* MSDN: Number of entries in the device's color table, if the device has
+         * a color depth of no more than 8 bits per pixel.For devices with greater
+         * color depths, -1 is returned. */
+        return (screen_depth > 8) ? -1 : (1 << screen_depth);
+    case PDEVICESIZE:
+        return sizeof(X11DRV_PDEVICE);
+    case CURVECAPS:
+        return (CC_CIRCLES | CC_PIE | CC_CHORD | CC_ELLIPSES | CC_WIDE |
+                CC_STYLED | CC_WIDESTYLED | CC_INTERIORS | CC_ROUNDRECT);
+    case LINECAPS:
+        return (LC_POLYLINE | LC_MARKER | LC_POLYMARKER | LC_WIDE |
+                LC_STYLED | LC_WIDESTYLED | LC_INTERIORS);
+    case POLYGONALCAPS:
+        return (PC_POLYGON | PC_RECTANGLE | PC_WINDPOLYGON | PC_SCANLINE |
+                PC_WIDE | PC_STYLED | PC_WIDESTYLED | PC_INTERIORS);
+    case TEXTCAPS:
+        return text_caps;
+    case CLIPCAPS:
+        return CP_REGION;
+    case RASTERCAPS:
+        return (RC_BITBLT | RC_BANDING | RC_SCALING | RC_BITMAP64 | RC_DI_BITMAP |
+                RC_DIBTODEV | RC_BIGFONT | RC_STRETCHBLT | RC_STRETCHDIB | RC_DEVBITS |
+                (palette_size ? RC_PALETTE : 0));
+    case ASPECTX:
+    case ASPECTY:
+        return 36;
+    case ASPECTXY:
+        return 51;
+    case LOGPIXELSX:
+        return log_pixels_x;
+    case LOGPIXELSY:
+        return log_pixels_y;
+    case CAPS1:
+        FIXME("(%04x): CAPS1 is unimplemented, will return 0\n", dc->hSelf );
+        /* please see wingdi.h for the possible bit-flag values that need
+           to be returned. also, see 
+           http://msdn.microsoft.com/library/ddkdoc/win95ddk/graphcnt_1m0p.htm */
+        return 0;
+    case SIZEPALETTE:
+        return palette_size;
+    case NUMRESERVED:
+    case COLORRES:
+    case PHYSICALWIDTH:
+    case PHYSICALHEIGHT:
+    case PHYSICALOFFSETX:
+    case PHYSICALOFFSETY:
+    case SCALINGFACTORX:
+    case SCALINGFACTORY:
+    case VREFRESH:
+    case DESKTOPVERTRES:
+    case DESKTOPHORZRES:
+    case BTLALIGNMENT:
+        return 0;
+    default:
+        FIXME("(%04x): unsupported capability %d, will return 0\n", dc->hSelf, cap );
+        return 0;
+    }
+}
+
 
 /**********************************************************************
  *           X11DRV_Escape

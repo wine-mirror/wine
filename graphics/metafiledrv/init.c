@@ -52,6 +52,7 @@ static const DC_FUNCTIONS MFDRV_Funcs =
     MFDRV_FrameRgn,                  /* pFrameRgn */
     NULL,                            /* pGetCharWidth */
     NULL,                            /* pGetDCOrgEx */
+    NULL,                            /* pGetDeviceCaps */
     NULL,                            /* pGetDeviceGammaRamp */
     NULL, /* no implementation */    /* pGetPixel */
     NULL,                            /* pGetPixelFormat */

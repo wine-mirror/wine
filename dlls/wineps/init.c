@@ -24,46 +24,6 @@
 
 DEFAULT_DEBUG_CHANNEL(psdrv);
 
-/* Default entries for devcaps */
-
-static DeviceCaps PSDRV_DevCaps = {
-/* version */		0, 
-/* technology */	DT_RASPRINTER,
-/* horzSize */		210,
-/* vertSize */		297,
-/* horzRes */		4961,
-/* vertRes */		7016, 
-/* bitsPixel */		1,
-/* planes */		1,
-/* numBrushes */	-1,
-/* numPens */		10,
-/* numMarkers */	0,
-/* numFonts */		39,
-/* numColors */		0xffff,
-/* pdeviceSize */	0,	
-/* curveCaps */		CC_CIRCLES | CC_PIE | CC_CHORD | CC_ELLIPSES |
-			CC_WIDE | CC_STYLED | CC_WIDESTYLED | CC_INTERIORS |
-			CC_ROUNDRECT,
-/* lineCaps */		LC_POLYLINE | LC_MARKER | LC_POLYMARKER | LC_WIDE |
-			LC_STYLED | LC_WIDESTYLED | LC_INTERIORS,
-/* polygoalnCaps */	PC_POLYGON | PC_RECTANGLE | PC_WINDPOLYGON |
-			PC_SCANLINE | PC_WIDE | PC_STYLED | PC_WIDESTYLED |
-			PC_INTERIORS,
-/* textCaps */		TC_CR_ANY, /* psdrv 0x59f7 */
-/* clipCaps */		CP_RECTANGLE,
-/* rasterCaps */	RC_BITBLT | RC_BITMAP64 | RC_GDI20_OUTPUT |
-			RC_DIBTODEV | RC_STRETCHBLT |
-			RC_STRETCHDIB, /* psdrv 0x6e99 */
-/* aspectX */		600,
-/* aspectY */		600,
-/* aspectXY */		848,
-/* pad1 */		{ 0 },
-/* logPixelsX */	600,
-/* logPixelsY */	600, 
-/* pad2 */		{ 0 },
-/* palette size */	0,
-/* ..etc */		0, 0 };
-
 static PSDRV_DEVMODEA DefaultDevmode = 
 {
   { /* dmPublic */
@@ -173,7 +133,6 @@ BOOL PSDRV_CreateDC( DC *dc, LPCSTR driver, LPCSTR device,
 {
     PSDRV_PDEVICE *physDev;
     PRINTERINFO *pi;
-    DeviceCaps *devCaps;
     PAGESIZE *page;
     INT width = 0, height = 0;
 
@@ -216,82 +175,56 @@ BOOL PSDRV_CreateDC( DC *dc, LPCSTR driver, LPCSTR device,
         PSDRV_MergeDevmodes(physDev->Devmode, (PSDRV_DEVMODEA *)initData, pi);
     }
 
-    
-    devCaps = HeapAlloc( PSDRV_Heap, 0, sizeof(PSDRV_DevCaps) );
-    memcpy(devCaps, &PSDRV_DevCaps, sizeof(PSDRV_DevCaps));
-
-    /* Are aspect[XY] and logPixels[XY] correct? */
-    /* Need to handle different res in x and y => fix ppd */
-    devCaps->aspectX = devCaps->logPixelsX = 
-				physDev->pi->ppd->DefaultResolution;
-    devCaps->aspectY = devCaps->logPixelsY = 
-				physDev->pi->ppd->DefaultResolution;
-    devCaps->aspectXY = (int)hypot( (double)devCaps->aspectX, 
-				    (double)devCaps->aspectY );
-
+    physDev->logPixelsX = physDev->pi->ppd->DefaultResolution;
+    physDev->logPixelsY = physDev->pi->ppd->DefaultResolution;
 
     for(page = pi->ppd->PageSizes; page; page = page->next) {
         if(page->WinPage == physDev->Devmode->dmPublic.u1.s1.dmPaperSize)
 	    break;
     }
+
     if(!page) {
         FIXME("Can't find page\n");
 	physDev->PageSize.left = 0;
 	physDev->PageSize.right = 0;
 	physDev->PageSize.bottom = 0;
         physDev->PageSize.top = 0;
-    } else if(page->ImageableArea) { /* PageSize is in device units */
-        physDev->PageSize.left = page->ImageableArea->llx *
-	  devCaps->logPixelsX / 72;
-       physDev->PageSize.right = page->ImageableArea->urx *
-	  devCaps->logPixelsX / 72;
-       physDev->PageSize.bottom = page->ImageableArea->lly *
-	  devCaps->logPixelsY / 72;
-       physDev->PageSize.top = page->ImageableArea->ury *
-	  devCaps->logPixelsY / 72;
+    } else if(page->ImageableArea) {  /* PageSize is in device units */
+        physDev->PageSize.left = page->ImageableArea->llx * physDev->logPixelsX / 72;
+        physDev->PageSize.right = page->ImageableArea->urx * physDev->logPixelsX / 72;
+        physDev->PageSize.bottom = page->ImageableArea->lly * physDev->logPixelsY / 72;
+        physDev->PageSize.top = page->ImageableArea->ury * physDev->logPixelsY / 72;
     } else {
         physDev->PageSize.left = physDev->PageSize.bottom = 0;
-	physDev->PageSize.right = page->PaperDimension->x *
-	  devCaps->logPixelsX / 72;
-	physDev->PageSize.top = page->PaperDimension->y *
-	  devCaps->logPixelsY / 72;
+        physDev->PageSize.right = page->PaperDimension->x * physDev->logPixelsX / 72;
+        physDev->PageSize.top = page->PaperDimension->y * physDev->logPixelsY / 72;
     }
-    TRACE("PageSize = (%d,%d - %d,%d)\n", physDev->PageSize.left, physDev->PageSize.bottom, physDev->PageSize.right, physDev->PageSize.top);
+    TRACE("PageSize = (%d,%d - %d,%d)\n",physDev->PageSize.left, physDev->PageSize.bottom, physDev->PageSize.right, physDev->PageSize.top);
 
     /* these are in device units */
     width = physDev->PageSize.right - physDev->PageSize.left;
     height = physDev->PageSize.top - physDev->PageSize.bottom;
 
     if(physDev->Devmode->dmPublic.u1.s1.dmOrientation == DMORIENT_PORTRAIT) {
-        devCaps->horzRes = width;
-	devCaps->vertRes = height;
+        physDev->horzRes = width;
+        physDev->vertRes = height;
     } else {
-        devCaps->horzRes = height;
-	devCaps->vertRes = width;
+        physDev->horzRes = height;
+        physDev->vertRes = width;
     }
 
     /* these are in mm */
-    devCaps->horzSize = (devCaps->horzRes * 25.4) / devCaps->logPixelsX;
-    devCaps->vertSize = (devCaps->vertRes * 25.4) / devCaps->logPixelsY;
+    physDev->horzSize = (physDev->horzRes * 25.4) / physDev->logPixelsX;
+    physDev->vertSize = (physDev->vertRes * 25.4) / physDev->logPixelsY;
 
     TRACE("devcaps: horzSize = %dmm, vertSize = %dmm, "
 	  "horzRes = %d, vertRes = %d\n",
-	  devCaps->horzSize, devCaps->vertSize,
-	  devCaps->horzRes, devCaps->vertRes);
-
-    if(physDev->pi->ppd->ColorDevice) {
-        devCaps->bitsPixel = 8;
-	devCaps->numColors = 256;
-	/* FIXME are these values OK? */
-    }
+	  physDev->horzSize, physDev->vertSize,
+	  physDev->horzRes, physDev->vertRes);
 
     /* etc */
 
-    dc->devCaps = devCaps;
-
-    dc->hVisRgn = CreateRectRgn(0, 0, dc->devCaps->horzRes,
-    			    dc->devCaps->vertRes);
-    
+    dc->hVisRgn = CreateRectRgn(0, 0, physDev->horzRes, physDev->vertRes);
     dc->hFont = PSDRV_DefaultFont;
 
     if (!output) output = "LPT1:";  /* HACK */
@@ -313,11 +246,112 @@ BOOL PSDRV_DeleteDC( DC *dc )
 
     HeapFree( PSDRV_Heap, 0, physDev->Devmode );
     HeapFree( PSDRV_Heap, 0, physDev->job.output );
-    HeapFree( PSDRV_Heap, 0, (void *)dc->devCaps );
     HeapFree( PSDRV_Heap, 0, physDev );
     dc->physDev = NULL;
 
     return TRUE;
+}
+
+
+/***********************************************************************
+ *           GetDeviceCaps    (WINEPS.@)
+ */
+INT PSDRV_GetDeviceCaps( DC *dc, INT cap )
+{
+    PSDRV_PDEVICE *physDev = dc->physDev;
+    POINT pt;
+
+    switch(cap)
+    {
+    case DRIVERVERSION:
+        return 0;
+    case TECHNOLOGY:
+        return DT_RASPRINTER;
+    case HORZSIZE:
+        return physDev->horzSize;
+    case VERTSIZE:
+        return physDev->vertSize;
+    case HORZRES:
+        return physDev->horzRes;
+    case VERTRES:
+        return physDev->vertRes;
+    case BITSPIXEL:
+        return (physDev->pi->ppd->ColorDevice ? 8 : 1);
+    case PLANES:
+        return 1;
+    case NUMBRUSHES:
+        return -1;
+    case NUMPENS:
+        return 10;
+    case NUMMARKERS:
+        return 0;
+    case NUMFONTS:
+        return 39;
+    case NUMCOLORS:
+        return (physDev->pi->ppd->ColorDevice ? 256 : -1);
+    case PDEVICESIZE:
+        return sizeof(PSDRV_PDEVICE);
+    case CURVECAPS:
+        return (CC_CIRCLES | CC_PIE | CC_CHORD | CC_ELLIPSES | CC_WIDE |
+                CC_STYLED | CC_WIDESTYLED | CC_INTERIORS | CC_ROUNDRECT);
+    case LINECAPS:
+        return (LC_POLYLINE | LC_MARKER | LC_POLYMARKER | LC_WIDE |
+                LC_STYLED | LC_WIDESTYLED | LC_INTERIORS);
+    case POLYGONALCAPS:
+        return (PC_POLYGON | PC_RECTANGLE | PC_WINDPOLYGON | PC_SCANLINE |
+                PC_WIDE | PC_STYLED | PC_WIDESTYLED | PC_INTERIORS);
+    case TEXTCAPS:
+        return TC_CR_ANY; /* psdrv 0x59f7 */
+    case CLIPCAPS:
+        return CP_RECTANGLE;
+    case RASTERCAPS:
+        return (RC_BITBLT | RC_BITMAP64 | RC_GDI20_OUTPUT | RC_DIBTODEV |
+                RC_STRETCHBLT | RC_STRETCHDIB); /* psdrv 0x6e99 */
+    /* Are aspect[XY] and logPixels[XY] correct? */
+    /* Need to handle different res in x and y => fix ppd */
+    case ASPECTX:
+    case ASPECTY:
+        return physDev->pi->ppd->DefaultResolution;
+    case ASPECTXY:
+        return (int)hypot( (double)physDev->pi->ppd->DefaultResolution,
+                           (double)physDev->pi->ppd->DefaultResolution );
+    case LOGPIXELSX:
+        return physDev->logPixelsX;
+    case LOGPIXELSY:
+        return physDev->logPixelsY;
+    case SIZEPALETTE:
+        return 0;
+    case NUMRESERVED:
+        return 0;
+    case COLORRES:
+        return 0;
+    case PHYSICALWIDTH:
+        if (Escape(dc->hSelf, GETPHYSPAGESIZE, 0, NULL, &pt) > 0) return pt.x;
+        return 0;
+    case PHYSICALHEIGHT:
+        if (Escape(dc->hSelf, GETPHYSPAGESIZE, 0, NULL, &pt) > 0) return pt.y;
+        return 0;
+    case PHYSICALOFFSETX:
+        if(Escape(dc->hSelf, GETPRINTINGOFFSET, 0, NULL, &pt) > 0) return pt.x;
+        return 0;
+    case PHYSICALOFFSETY:
+        if (Escape(dc->hSelf, GETPRINTINGOFFSET, 0, NULL, &pt) > 0) return pt.y;
+        return 0;
+    case SCALINGFACTORX:
+        if (Escape(dc->hSelf, GETSCALINGFACTOR, 0, NULL, &pt) > 0) return pt.x;
+        return 0;
+    case SCALINGFACTORY:
+        if (Escape(dc->hSelf, GETSCALINGFACTOR, 0, NULL, &pt) > 0) return pt.y;
+        return 0;
+    case VREFRESH:
+    case DESKTOPVERTRES:
+    case DESKTOPHORZRES:
+    case BTLALIGNMENT:
+        return 0;
+    default:
+        FIXME("(%04x): unsupported capability %d, will return 0\n", dc->hSelf, cap );
+        return 0;
+    }
 }
 
 

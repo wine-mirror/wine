@@ -48,7 +48,6 @@ DC *DC_AllocDC( const DC_FUNCTIONS *funcs )
     dc->vportExtX           = 1;
     dc->vportExtY           = 1;
     dc->flags               = 0;
-    dc->devCaps             = NULL;
     dc->hClipRgn            = 0;
     dc->hVisRgn             = 0;
     dc->hGCClipRgn          = 0;
@@ -247,7 +246,6 @@ HDC16 WINAPI GetDCState16( HDC16 hdc )
     TRACE("(%04x): returning %04x\n", hdc, handle );
 
     newdc->flags            = dc->flags | DC_SAVED;
-    newdc->devCaps          = dc->devCaps;
     newdc->hPen             = dc->hPen;       
     newdc->hBrush           = dc->hBrush;     
     newdc->hFont            = dc->hFont;      
@@ -341,7 +339,6 @@ void WINAPI SetDCState16( HDC16 hdc, HDC16 hdcs )
     TRACE("%04x %04x\n", hdc, hdcs );
 
     dc->flags            = dcs->flags & ~DC_SAVED;
-    dc->devCaps          = dcs->devCaps;
     dc->hDevice          = dcs->hDevice;
     dc->totalExtent      = dcs->totalExtent;
     dc->ROPmode          = dcs->ROPmode;
@@ -816,61 +813,12 @@ INT WINAPI GetDeviceCaps( HDC hdc, INT cap )
 {
     DC *dc;
     INT ret = 0;
-    POINT pt;
 
-    /* Device capabilities for the printer */
-    switch (cap)
+    if ((dc = DC_GetDCPtr( hdc )))
     {
-    case PHYSICALWIDTH:
-        if(Escape(hdc, GETPHYSPAGESIZE, 0, NULL, (LPVOID)&pt) > 0) ret = pt.x;
-        break;
-    case PHYSICALHEIGHT:
-        if(Escape(hdc, GETPHYSPAGESIZE, 0, NULL, (LPVOID)&pt) > 0) ret = pt.y;
-        break;
-    case PHYSICALOFFSETX:
-        if(Escape(hdc, GETPRINTINGOFFSET, 0, NULL, (LPVOID)&pt) > 0) ret = pt.x;
-        break;
-    case PHYSICALOFFSETY:
-        if(Escape(hdc, GETPRINTINGOFFSET, 0, NULL, (LPVOID)&pt) > 0) ret = pt.y;
-        break;
-    case SCALINGFACTORX:
-        if(Escape(hdc, GETSCALINGFACTOR, 0, NULL, (LPVOID)&pt) > 0) ret = pt.x;
-        break;
-    case SCALINGFACTORY:
-        if(Escape(hdc, GETSCALINGFACTOR, 0, NULL, (LPVOID)&pt) > 0) ret = pt.y;
-        break;
-    case CAPS1:
-        FIXME("(%04x,%d): DeviceCaps param CAPS1 is UNIMPLEMENTED, will yield 0!\n",
-                  hdc,cap );
-
-        /* please see wingdi.h for the possible bit-flag values that need
-           to be returned.
-
-           also, see 
-           http://msdn.microsoft.com/library/ddkdoc/win95ddk/graphcnt_1m0p.htm
-
-           the fall-through to 'default' is on purpose */
-
-
-    default:
-        if ((cap < 0) || (cap > sizeof(DeviceCaps)-sizeof(WORD))) break;
-
-        if (((cap>=46) && (cap<88)) || ((cap>=92) && (cap<104)))
-            FIXME("(%04x,%d): unsupported DeviceCaps capability, will yield 0!\n",
-                  hdc,cap );
-        if ((dc = DC_GetDCPtr( hdc )))
-        {
-            if (dc->devCaps)
-            {
-                ret = *(WORD *)(((char *)dc->devCaps) + cap);
-                if ((cap == NUMCOLORS) && (ret == 0xffff)) ret = -1;
-            }
-            GDI_ReleaseObj( hdc );
-        }
-        break;
+        if (dc->funcs->pGetDeviceCaps) ret = dc->funcs->pGetDeviceCaps( dc, cap );
+        GDI_ReleaseObj( hdc );
     }
-
-    TRACE("(%04x,%d): returning %d\n", hdc, cap, ret );
     return ret;
 }
 
