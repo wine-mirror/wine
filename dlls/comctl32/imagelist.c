@@ -1074,20 +1074,21 @@ ImageList_DrawEx (HIMAGELIST himl, INT i, HDC hdc, INT x, INT y,
 BOOL WINAPI
 ImageList_DrawIndirect (IMAGELISTDRAWPARAMS *pimldp)
 {
-    INT cx, cy, nOvlIdx;
+    INT cx, cy, lx, ly, nOvlIdx;
     DWORD fState, dwRop;
     UINT fStyle;
     COLORREF clrBk, oldImageBk, oldImageFg;
     HDC hImageDC, hImageListDC, hMaskListDC;
     HBITMAP hImageBmp, hOldImageBmp, hOldImageListBmp, hOldMaskListBmp, hBlendMaskBmp;
     BOOL bIsTransparent, bBlend, bResult = FALSE;
-    const HIMAGELIST himl = pimldp->himl;
-    const INT lx = himl->cx * pimldp->i + pimldp->xBitmap;
-    const INT ly = pimldp->yBitmap;
-   
-    if (!pimldp || !himl) return FALSE;
+    HIMAGELIST himl;
+
+    if (!pimldp || !(himl = pimldp->himl)) return FALSE;
     if ((pimldp->i < 0) || (pimldp->i >= himl->cCurImage)) return FALSE;
-   
+
+    lx = himl->cx * pimldp->i + pimldp->xBitmap;
+    ly = pimldp->yBitmap;
+
     fState = pimldp->cbSize < sizeof(IMAGELISTDRAWPARAMS) ? ILS_NORMAL : pimldp->fState;
     fStyle = pimldp->fStyle & ~ILD_OVERLAYMASK;
     cx = (pimldp->cx == 0) ? himl->cx : pimldp->cx;
