@@ -466,11 +466,15 @@ static BOOL32 MSG_PeekHardwareMsg( MSG32 *msg, HWND32 hwnd, DWORD first, DWORD l
     DWORD status = SYSQ_MSG_ACCEPT;
     MESSAGEQUEUE *sysMsgQueue = QUEUE_GetSysQueue();
     int kbd_msg;
-    QMSG *nextqmsg, *qmsg = sysMsgQueue->firstMsg;
+    QMSG *nextqmsg, *qmsg = 0;
 
     /* FIXME: there has to be a better way to do this */
     joySendMessages();
 
+    EnterCriticalSection(&sysMsgQueue->cSection);
+
+    qmsg = sysMsgQueue->firstMsg;
+    
     /* If the queue is empty, attempt to fill it */
     if (!sysMsgQueue->msgCount && THREAD_IsWin16( THREAD_Current() )
                                && EVENT_Pending())
@@ -557,6 +561,7 @@ static BOOL32 MSG_PeekHardwareMsg( MSG32 *msg, HWND32 hwnd, DWORD first, DWORD l
 		continue;
 
 	   case SYSQ_MSG_ABANDON: 
+               LeaveCriticalSection(&sysMsgQueue->cSection);
 		return FALSE;
 	}
 
@@ -565,8 +570,10 @@ static BOOL32 MSG_PeekHardwareMsg( MSG32 *msg, HWND32 hwnd, DWORD first, DWORD l
             if (HOOK_IsHooked( WH_JOURNALRECORD )) MSG_JournalRecordMsg( msg );
             QUEUE_RemoveMsg( sysMsgQueue, qmsg );
         }
+        LeaveCriticalSection(&sysMsgQueue->cSection);
         return TRUE;
     }
+    LeaveCriticalSection(&sysMsgQueue->cSection);
     return FALSE;
 }
 
