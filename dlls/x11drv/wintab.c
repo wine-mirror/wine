@@ -608,8 +608,11 @@ int X11DRV_ProcessTabletEvent(HWND hwnd, XEvent *event)
         gMsgPacket.pkY = motion->axis_data[1];
         gMsgPacket.pkOrientation.orAzimuth =
                     figure_deg(motion->axis_data[3],motion->axis_data[4]);
-        gMsgPacket.pkOrientation.orAltitude = 1000 - 15 * max
-                    (abs(motion->axis_data[3]),abs(motion->axis_data[4]));
+        gMsgPacket.pkOrientation.orAltitude = 
+                    (1000 - 15 * max
+                        (abs(motion->axis_data[3]),
+                        abs(motion->axis_data[4]))
+                        )*(gMsgPacket.pkStatus & TPS_INVERT?-1:1);
         gMsgPacket.pkNormalPressure = motion->axis_data[2];
         gMsgPacket.pkButtons = get_button_state(motion->deviceid);
         SendMessageW(hwndTabletDefault,WT_PACKET,0,(LPARAM)hwnd);
@@ -634,8 +637,11 @@ int X11DRV_ProcessTabletEvent(HWND hwnd, XEvent *event)
         gMsgPacket.pkY = button->axis_data[1];
         gMsgPacket.pkOrientation.orAzimuth =
                     figure_deg(button->axis_data[3],button->axis_data[4]);
-        gMsgPacket.pkOrientation.orAltitude = 1000 - 15 * max
-                    (abs(button->axis_data[3]),abs(button->axis_data[4]));
+        gMsgPacket.pkOrientation.orAltitude =
+                    (1000 - 15 * max
+                        (abs(button->axis_data[3]),
+                        abs(button->axis_data[4]))
+                        )*(gMsgPacket.pkStatus & TPS_INVERT?-1:1);
         gMsgPacket.pkNormalPressure = button->axis_data[2];
         gMsgPacket.pkButtons = get_button_state(button->deviceid);
         SendMessageW(hwndTabletDefault,WT_PACKET,0,(LPARAM)hwnd);
@@ -668,8 +674,11 @@ int X11DRV_ProcessTabletEvent(HWND hwnd, XEvent *event)
         gMsgPacket.pkY = proximity->axis_data[1];
         gMsgPacket.pkOrientation.orAzimuth =
                     figure_deg(proximity->axis_data[3],proximity->axis_data[4]);
-        gMsgPacket.pkOrientation.orAltitude = 1000 - 15 * max
-                    (abs(proximity->axis_data[3]),abs(proximity->axis_data[4]));
+        gMsgPacket.pkOrientation.orAltitude =
+                    (1000 - 15 * max
+                        (abs(proximity->axis_data[3]),
+                        abs(proximity->axis_data[4]))
+                        )*(gMsgPacket.pkStatus & TPS_INVERT?-1:1);
         gMsgPacket.pkNormalPressure = proximity->axis_data[2];
         gMsgPacket.pkButtons = get_button_state(proximity->deviceid);
 
