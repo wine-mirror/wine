@@ -135,13 +135,7 @@ static BOOL HEAP_IsRealArena( HEAP *heapPtr, DWORD flags, LPCVOID block, BOOL qu
 /* SetLastError for ntdll */
 inline static void set_status( NTSTATUS status )
 {
-#if defined(__i386__) && defined(__GNUC__)
-    /* in this case SetLastError is an inline function so we can use it */
-    SetLastError( RtlNtStatusToDosError( status ) );
-#else
-    /* cannot use SetLastError, do it manually */
     NtCurrentTeb()->last_error = RtlNtStatusToDosError( status );
-#endif
 }
 
 /* set the process main heap */
