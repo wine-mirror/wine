@@ -309,12 +309,14 @@ static	void	Control_DoLaunch(CPanel* panel, HWND hWnd, LPCSTR cmd)
     *	foo.cpl,,str
     *	foo.cpl @sp
     *	foo.cpl str
+    *   "a path\foo.cpl"
     */
 {
     char*	buffer;
     char*	beg = NULL;
     char*	end;
     char	ch;
+    char*       ptr;
     unsigned 	sp = 0;
     char*	extraPmts = NULL;
     int        quoted = 0;
@@ -344,6 +346,8 @@ static	void	Control_DoLaunch(CPanel* panel, HWND hWnd, LPCSTR cmd)
 	}
 	end++;
     }
+    while (ptr = strchr(buffer, (int) '"'))
+	memmove(ptr, ptr+1, strlen(ptr));
 
     TRACE("cmd %s, extra %s, sp %d\n", buffer, debugstr_a(extraPmts), sp);
 
