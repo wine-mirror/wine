@@ -2400,7 +2400,10 @@ INT WINAPI GetNumberFormatA(LCID locale, DWORD dwflags,
     if (cchNumber!=0)
     {
         memcpy( lpNumberStr, sDestination, min(cchNumber, retVal) );
-        if (cchNumber < retVal) retVal = 0;
+        if (cchNumber < retVal) {
+            retVal = 0;
+            SetLastError(ERROR_INSUFFICIENT_BUFFER);
+        }
     }
     return retVal;
 }
@@ -2653,7 +2656,10 @@ INT WINAPI GetCurrencyFormatA(LCID locale, DWORD dwflags,
     if (cchCurrency)
     {
         memcpy( lpCurrencyStr, pDestination, min(cchCurrency, retVal) );
-        if (cchCurrency < retVal) retVal = 0;
+        if (cchCurrency < retVal) {
+            retVal = 0;
+            SetLastError(ERROR_INSUFFICIENT_BUFFER);
+        }
     }
     return retVal;
 }
