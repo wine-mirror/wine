@@ -22,6 +22,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
+#include <limits.h>
 
 #include "winbase.h"
 #include "winerror.h"
@@ -39,66 +40,107 @@ DEFAULT_DEBUG_CHANNEL(storage)
  * class.
  */
 
-/***
- * Itdentifies a single big block and the related 
- * information
- */
-struct BigBlock
+/* We map in PAGE_SIZE-sized chunks. Must be a multiple of 4096. */
+#define PAGE_SIZE       131072
+
+#define BLOCKS_PER_PAGE (PAGE_SIZE / BIG_BLOCK_SIZE)
+
+/* We keep a list of recently-discarded pages. This controls the
+ * size of that list. */
+#define MAX_VICTIM_PAGES 16
+
+/* This structure provides one bit for each block in a page.
+ * Use BIGBLOCKFILE_{Test,Set,Clear}Bit to manipulate it. */
+typedef struct
 {
-  BigBlock * next;
-  DWORD index;
-  DWORD access_mode;
-  LPVOID lpBlock;
-};
+    unsigned int bits[BLOCKS_PER_PAGE / (CHAR_BIT * sizeof(unsigned int))];
+} BlockBits;
 
 /***
  * This structure identifies the paged that are mapped
  * from the file and their position in memory. It is 
  * also used to hold a reference count to those pages.
+ *
+ * page_index identifies which PAGE_SIZE chunk from the
+ * file this mapping represents. (The mappings are always
+ * PAGE_SIZE-aligned.)
  */
 struct MappedPage
 {
-  MappedPage * next;
-  DWORD number;
-  int ref;
-  LPVOID lpBytes;
+    MappedPage *next;
+    MappedPage *prev;
+
+    DWORD  page_index;
+    LPVOID lpBytes;
+    LONG   refcnt;
+
+    BlockBits readable_blocks;
+    BlockBits writable_blocks;
 };
-
-#define PAGE_SIZE       131072
-#define BLOCKS_PER_PAGE 256
-
-#define NUMBER_OF_MAPPED_PAGES 100
 
 /***********************************************************
  * Prototypes for private methods
  */
 static void*     BIGBLOCKFILE_GetMappedView(LPBIGBLOCKFILE This,
-                                            DWORD          pagenum,
-                                            DWORD          desired_access);
+                                            DWORD          page_index);
 static void      BIGBLOCKFILE_ReleaseMappedPage(LPBIGBLOCKFILE This,
-                                                DWORD          pagenum,
-                                                DWORD          access);
+                                                MappedPage *page);
 static void      BIGBLOCKFILE_FreeAllMappedPages(LPBIGBLOCKFILE This);
+static void      BIGBLOCKFILE_UnmapAllMappedPages(LPBIGBLOCKFILE This);
+static void      BIGBLOCKFILE_RemapAllMappedPages(LPBIGBLOCKFILE This);
 static void*     BIGBLOCKFILE_GetBigBlockPointer(LPBIGBLOCKFILE This,
                                                  ULONG          index,
                                                  DWORD          desired_access);
-static BigBlock* BIGBLOCKFILE_GetBigBlockFromPointer(LPBIGBLOCKFILE This, 
-                                                     void*          pBlock);
-static void      BIGBLOCKFILE_RemoveBlock(LPBIGBLOCKFILE This,
-                                          ULONG          index);
-static BigBlock* BIGBLOCKFILE_AddBigBlock(LPBIGBLOCKFILE This, 
-                                          ULONG          index);
-static BigBlock* BIGBLOCKFILE_CreateBlock(ULONG index);
+static MappedPage* BIGBLOCKFILE_GetPageFromPointer(LPBIGBLOCKFILE This, 
+						   void*         pBlock);
+static MappedPage* BIGBLOCKFILE_CreatePage(LPBIGBLOCKFILE This,
+					   ULONG page_index);
 static DWORD     BIGBLOCKFILE_GetProtectMode(DWORD openFlags);
 static BOOL      BIGBLOCKFILE_FileInit(LPBIGBLOCKFILE This, HANDLE hFile);
 static BOOL      BIGBLOCKFILE_MemInit(LPBIGBLOCKFILE This, ILockBytes* plkbyt);
-static void      BIGBLOCKFILE_RemoveAllBlocks(LPBIGBLOCKFILE This);
+
+/* Note that this evaluates a and b multiple times, so don't
+ * pass expressions with side effects. */
+#define ROUND_UP(a, b) ((((a) + (b) - 1)/(b))*(b))
+
+/***********************************************************
+ * Blockbits functions.
+ */
+static inline BOOL BIGBLOCKFILE_TestBit(const BlockBits *bb,
+					unsigned int index)
+{
+    unsigned int array_index = index / (CHAR_BIT * sizeof(unsigned int));
+    unsigned int bit_index = index % (CHAR_BIT * sizeof(unsigned int));
+
+    return bb->bits[array_index] & (1 << bit_index);
+}
+
+static inline void BIGBLOCKFILE_SetBit(BlockBits *bb, unsigned int index)
+{
+    unsigned int array_index = index / (CHAR_BIT * sizeof(unsigned int));
+    unsigned int bit_index = index % (CHAR_BIT * sizeof(unsigned int));
+
+    bb->bits[array_index] |= (1 << bit_index);
+}
+
+static inline void BIGBLOCKFILE_ClearBit(BlockBits *bb, unsigned int index)
+{
+    unsigned int array_index = index / (CHAR_BIT * sizeof(unsigned int));
+    unsigned int bit_index = index % (CHAR_BIT * sizeof(unsigned int));
+
+    bb->bits[array_index] &= ~(1 << bit_index);
+}
+
+static inline void BIGBLOCKFILE_Zero(BlockBits *bb)
+{
+    memset(bb->bits, 0, sizeof(bb->bits));
+}
 
 /******************************************************************************
  *      BIGBLOCKFILE_Construct
  *
  * Construct a big block file. Create the file mapping object. 
- * Create the read only mapped pages list, the writeable mapped page list
+ * Create the read only mapped pages list, the writable mapped page list
  * and the blocks in use list.
  */
 BigBlockFile * BIGBLOCKFILE_Construct(
@@ -121,9 +163,10 @@ BigBlockFile * BIGBLOCKFILE_Construct(
 
   This->blocksize = blocksize;
 
-  /* initialize the block list
-   */
-  This->headblock = NULL;
+  This->maplist = NULL;
+  This->victimhead = NULL;
+  This->victimtail = NULL;
+  This->num_victim_pages = 0;
 
   if (This->fileBased)
   {
@@ -175,20 +218,12 @@ static BOOL BIGBLOCKFILE_FileInit(LPBIGBLOCKFILE This, HANDLE hFile)
     return FALSE;
   }
 
-  This->filesize.s.LowPart = GetFileSize(This->hfile, NULL);
+  This->filesize.s.LowPart = GetFileSize(This->hfile,
+					 &This->filesize.s.HighPart);
 
-  /* create the mapped pages list
-   */
-  This->maplisthead = HeapAlloc(GetProcessHeap(), 0, sizeof(MappedPage));
+  This->maplist = NULL;
 
-  if (This->maplisthead == NULL)
-  {
-    CloseHandle(This->hfilemap);
-    CloseHandle(This->hfile);
-    return FALSE;
-  }
-
-  This->maplisthead->next = NULL;
+  TRACE("file len %lu\n", This->filesize.s.LowPart);
 
   return TRUE;
 }
@@ -202,7 +237,6 @@ static BOOL BIGBLOCKFILE_MemInit(LPBIGBLOCKFILE This, ILockBytes* plkbyt)
 {
   This->hfile       = 0;
   This->hfilemap    = NULL;
-  This->maplisthead = NULL;
 
   /*
    * Retrieve the handle to the byte array from the LockByte object.
@@ -226,6 +260,8 @@ static BOOL BIGBLOCKFILE_MemInit(LPBIGBLOCKFILE This, ILockBytes* plkbyt)
 
   This->pbytearray = GlobalLock(This->hbytearray);
 
+  TRACE("mem on %p len %lu\n", This->pbytearray, This->filesize.s.LowPart);
+
   return TRUE;
 }
 
@@ -237,15 +273,10 @@ static BOOL BIGBLOCKFILE_MemInit(LPBIGBLOCKFILE This, ILockBytes* plkbyt)
 void BIGBLOCKFILE_Destructor(
   LPBIGBLOCKFILE This)
 {
+  BIGBLOCKFILE_FreeAllMappedPages(This);
+
   if (This->fileBased)
   {
-    /* unmap all views and destroy the mapped page list
-     */
-    BIGBLOCKFILE_FreeAllMappedPages(This);
-    HeapFree(GetProcessHeap(), 0, This->maplisthead);
-  
-    /* close all open handles
-     */
     CloseHandle(This->hfilemap);
     CloseHandle(This->hfile);
   }
@@ -254,11 +285,6 @@ void BIGBLOCKFILE_Destructor(
     GlobalUnlock(This->hbytearray);
     ILockBytes_Release(This->pLkbyt);
   }
-
-  /*
-   * Destroy the blocks list.
-   */
-  BIGBLOCKFILE_RemoveAllBlocks(This);
 
   /* destroy this
    */
@@ -288,10 +314,13 @@ void* BIGBLOCKFILE_GetROBigBlock(
    * validate the block index
    * 
    */
-  if ((This->blocksize * (index + 1)) >
-      (This->filesize.s.LowPart +
-       (This->blocksize - (This->filesize.s.LowPart % This->blocksize))))
-    return 0;
+  if (This->blocksize * (index + 1)
+      > ROUND_UP(This->filesize.s.LowPart, This->blocksize))
+  {
+    TRACE("out of range %lu vs %lu\n", This->blocksize * (index + 1),
+	  This->filesize.s.LowPart);
+    return NULL;
+  }
 
   return BIGBLOCKFILE_GetBigBlockPointer(This, index, FILE_MAP_READ);
 }
@@ -336,37 +365,17 @@ void* BIGBLOCKFILE_GetBigBlock(LPBIGBLOCKFILE This, ULONG index)
  */
 void BIGBLOCKFILE_ReleaseBigBlock(LPBIGBLOCKFILE This, void *pBlock)
 {
-  DWORD page_num;
-  BigBlock* theBigBlock;
+    MappedPage *page;
 
-  if (pBlock == NULL)
-    return;
+    if (pBlock == NULL)
+	return;
 
-  /*
-   * get the block from the block list
-   */
-  theBigBlock = BIGBLOCKFILE_GetBigBlockFromPointer(This, pBlock);
+    page = BIGBLOCKFILE_GetPageFromPointer(This, pBlock);
 
-  if (theBigBlock == NULL)
-    return;
+    if (page == NULL)
+	return;
 
-  if (This->fileBased)
-  {
-    /*
-     * find out which page this block is in
-     */
-    page_num = theBigBlock->index / BLOCKS_PER_PAGE;
-  
-    /*
-     * release this page
-     */
-    BIGBLOCKFILE_ReleaseMappedPage(This, page_num, theBigBlock->access_mode);
-  }
-
-  /*
-   * remove block from list
-   */
-  BIGBLOCKFILE_RemoveBlock(This, theBigBlock->index);
+    BIGBLOCKFILE_ReleaseMappedPage(This, page);
 }
 
 /******************************************************************************
@@ -380,19 +389,41 @@ void BIGBLOCKFILE_SetSize(LPBIGBLOCKFILE This, ULARGE_INTEGER newSize)
   if (This->filesize.s.LowPart == newSize.s.LowPart)
     return;
 
+  TRACE("from %lu to %lu\n", This->filesize.s.LowPart, newSize.s.LowPart);
+  /*
+   * unmap all views, must be done before call to SetEndFile
+   */
+  BIGBLOCKFILE_UnmapAllMappedPages(This);
+  
   if (This->fileBased)
   {
-    /*
-     * unmap all views, must be done before call to SetEndFile
-     */
-    BIGBLOCKFILE_FreeAllMappedPages(This);
-  
+    char buf[10];
+
     /*
      * close file-mapping object, must be done before call to SetEndFile
      */
     CloseHandle(This->hfilemap);
     This->hfilemap = NULL;
-  
+
+    /*
+     * BEGIN HACK
+     * This fixes a bug when saving through smbfs.
+     * smbmount a Windows shared directory, save a structured storage file
+     * to that dir: crash.
+     *
+     * The problem is that the SetFilePointer-SetEndOfFile combo below
+     * doesn't always succeed. The file is not grown. It seems like the 
+     * operation is cached. By doing the WriteFile, the file is actually
+     * grown on disk.
+     * This hack is only needed when saving to smbfs.
+     */
+    memset(buf, '0', 10);
+    SetFilePointer(This->hfile, newSize.s.LowPart, NULL, FILE_BEGIN);
+    WriteFile(This->hfile, buf, 10, NULL, NULL);
+    /*
+     * END HACK 
+     */
+
     /*
      * set the new end of file
      */
@@ -424,13 +455,10 @@ void BIGBLOCKFILE_SetSize(LPBIGBLOCKFILE This, ULARGE_INTEGER newSize)
     This->pbytearray = GlobalLock(This->hbytearray);
   }
 
-  /*
-   * empty the blocks list.
-   */
-  BIGBLOCKFILE_RemoveAllBlocks(This);
-
   This->filesize.s.LowPart = newSize.s.LowPart;
   This->filesize.s.HighPart = newSize.s.HighPart;
+
+  BIGBLOCKFILE_RemapAllMappedPages(This);
 }
 
 /******************************************************************************
@@ -445,287 +473,116 @@ ULARGE_INTEGER BIGBLOCKFILE_GetSize(LPBIGBLOCKFILE This)
 }
 
 /******************************************************************************
+ *      BIGBLOCKFILE_AccessCheck     [PRIVATE]
+ *
+ * block_index is the index within the page.
+ */
+static BOOL BIGBLOCKFILE_AccessCheck(MappedPage *page, ULONG block_index,
+				     DWORD desired_access)
+{
+    assert(block_index < BLOCKS_PER_PAGE);
+
+    if (desired_access == FILE_MAP_READ)
+    {
+	if (BIGBLOCKFILE_TestBit(&page->writable_blocks, block_index))
+	    return FALSE;
+
+	BIGBLOCKFILE_SetBit(&page->readable_blocks, block_index);
+    }
+    else
+    {
+	assert(desired_access == FILE_MAP_WRITE);
+
+	if (BIGBLOCKFILE_TestBit(&page->readable_blocks, block_index))
+	    return FALSE;
+
+	BIGBLOCKFILE_SetBit(&page->writable_blocks, block_index);
+    }
+
+    return TRUE;
+}
+
+/******************************************************************************
  *      BIGBLOCKFILE_GetBigBlockPointer     [PRIVATE]
  *
  * Returns a pointer to the specified block.
  */
 static void* BIGBLOCKFILE_GetBigBlockPointer(
   LPBIGBLOCKFILE This, 
-  ULONG          index, 
+  ULONG          block_index, 
   DWORD          desired_access)
 {
-  DWORD block_num;
-  void * pBytes;
-  BigBlock *aBigBlock;
+    DWORD page_index = block_index / BLOCKS_PER_PAGE;
+    DWORD block_on_page = block_index % BLOCKS_PER_PAGE;
 
-  /* get the big block from the list or add it to the list
-   */
-  aBigBlock = BIGBLOCKFILE_AddBigBlock(This, index);
+    MappedPage *page = BIGBLOCKFILE_GetMappedView(This, page_index);
+    if (!page || !page->lpBytes) return NULL;
 
-  if (aBigBlock == NULL)
-    return NULL;
+    if (!BIGBLOCKFILE_AccessCheck(page, block_on_page, desired_access))
+    {
+	BIGBLOCKFILE_ReleaseMappedPage(This, page);
+	return NULL;
+    }
 
-  /* we already have an address for this block
-   */
-  if (aBigBlock->lpBlock != NULL)
-  {
-    /* make sure the desired access matches what we already have
-     */
-    if (aBigBlock->access_mode == desired_access)
-      return aBigBlock->lpBlock;
-    else
-      return NULL;
-  }
-
-  /*
-   * else aBigBlock->lpBigBlock == NULL, it's a new block
-   */
-
-  if (This->fileBased)
-  {
-    DWORD page_num;
-
-    /* find out which page this block is in
-     */
-    page_num = index / BLOCKS_PER_PAGE;
-  
-    /* offset of the block in the page
-     */
-    block_num = index % BLOCKS_PER_PAGE;
-  
-    /* get a pointer to the first byte in the page
-     */
-    pBytes = BIGBLOCKFILE_GetMappedView(This, page_num, desired_access);
-  }
-  else
-  {
-    pBytes = This->pbytearray; 
-    block_num = index;
-  }
-
-  if (pBytes == NULL)
-    return NULL;
-
-  /* initialize block
-   */
-  aBigBlock->lpBlock = ((BYTE*)pBytes + (block_num*This->blocksize));
-  aBigBlock->access_mode = desired_access;
-
-  return aBigBlock->lpBlock;
+    return (LPBYTE)page->lpBytes + (block_on_page * This->blocksize);
 }
 
 /******************************************************************************
- *      BIGBLOCKFILE_CreateBlock      [PRIVATE]
+ *      BIGBLOCKFILE_GetMappedPageFromPointer     [PRIVATE]
  *
- * Creates a node of the blocks list.
+ * pBlock is a pointer to a block on a page.
+ * The page has to be on the in-use list. (As oppsed to the victim list.)
+ *
+ * Does not increment the usage count.
  */
-static BigBlock* BIGBLOCKFILE_CreateBlock(
-  ULONG index)
+static MappedPage *BIGBLOCKFILE_GetPageFromPointer(LPBIGBLOCKFILE This,
+						   void *pBlock)
 {
-  BigBlock *newBigBlock;
+    MappedPage *page;
 
-  /* create new list node
-   */
-  newBigBlock = HeapAlloc(GetProcessHeap(), 0, sizeof(BigBlock));
+    for (page = This->maplist; page != NULL; page = page->next)
+    {
+	if ((LPBYTE)pBlock >= (LPBYTE)page->lpBytes
+	    && (LPBYTE)pBlock <= (LPBYTE)page->lpBytes + PAGE_SIZE)
+	    break;
 
-  if (newBigBlock == NULL)
-    return NULL;
+    }
 
-  /* initialize node
-   */
-  newBigBlock->index = index;
-  newBigBlock->lpBlock = NULL;
-
-  return newBigBlock;
+    return page;
 }
 
 /******************************************************************************
- *      BIGBLOCKFILE_AddBigBlock      [PRIVATE]
+ *      BIGBLOCKFILE_FindPageInList      [PRIVATE]
  *
- * Returns the specified block from the blocks list.
- * If the block is not found in the list, we will create it and add it to the
- * list.
  */
-static BigBlock* BIGBLOCKFILE_AddBigBlock(
-  LPBIGBLOCKFILE This, 
-  ULONG          index)
+static MappedPage *BIGBLOCKFILE_FindPageInList(MappedPage *head,
+					       ULONG page_index)
 {
-  BigBlock *current = This->headblock;
-  BigBlock *newBigBlock;
-
-  if (current == NULL) /* empty list */
-  {
-    newBigBlock = BIGBLOCKFILE_CreateBlock(index);
-    
-    if (newBigBlock != NULL)
+    for (; head != NULL; head = head->next)
     {
-      newBigBlock->next = NULL;
-      This->headblock = newBigBlock;
+	if (head->page_index == page_index)
+	{
+	    InterlockedIncrement(&head->refcnt);
+	    break;
+	}
     }
 
-    return newBigBlock;
-  }
-  else
-  {
-    /* 
-     * special handling for head of the list
-     */
+    return head;
 
-    if (current->index == index) /* it's already here */
-      return current;
-    else if (current->index > index) /* insertion at head of the list */
-    {
-      newBigBlock = BIGBLOCKFILE_CreateBlock(index);
-
-      if (newBigBlock != NULL)
-      {
-        newBigBlock->next = current;
-        This->headblock = newBigBlock;
-      }
-
-      return newBigBlock;
-    }
-  }
-
-  /* iterate through rest the list
-   */
-  while (current->next != NULL)
-  {
-    if (current->next->index == index) /* found it */
-    {
-      return current->next;
-    }
-    else if (current->next->index > index) /* it's not in the list */
-    {
-      newBigBlock = BIGBLOCKFILE_CreateBlock(index);
-
-      if (newBigBlock != NULL)
-      {
-        newBigBlock->next = current->next;
-        current->next = newBigBlock;
-      }
-
-      return newBigBlock;
-    }
-    else
-      current = current->next;
-  }
-
-  /* 
-   * insertion at end of the list
-   */
-  if (current->next == NULL)
-  {
-    newBigBlock = BIGBLOCKFILE_CreateBlock(index);
-
-    if (newBigBlock != NULL)
-    {
-      newBigBlock->next = NULL;
-      current->next = newBigBlock;
-    }
-
-    return newBigBlock;
-  }
-
-  return NULL;
 }
 
-/******************************************************************************
- *      BIGBLOCKFILE_RemoveAllBlocks      [PRIVATE]
- *
- * Removes all blocks from the blocks list.
- */
-static void BIGBLOCKFILE_RemoveAllBlocks(
-  LPBIGBLOCKFILE This)
+static void BIGBLOCKFILE_UnlinkPage(MappedPage *page)
 {
-  BigBlock *current;
-
-  while (This->headblock != NULL)
-  {
-    current = This->headblock;
-    This->headblock = current->next;
-    HeapFree(GetProcessHeap(), 0, current);
-  }
+    if (page->next) page->next->prev = page->prev;
+    if (page->prev) page->prev->next = page->next;
 }
 
-/******************************************************************************
- *      BIGBLOCKFILE_RemoveBlock      [PRIVATE]
- *
- * Removes the specified block from the blocks list.
- */
-static void BIGBLOCKFILE_RemoveBlock(
-  LPBIGBLOCKFILE This, 
-  ULONG          index)
+static void BIGBLOCKFILE_LinkHeadPage(MappedPage **head, MappedPage *page)
 {
-  BigBlock *current = This->headblock;
-
-  /* 
-   * empty list
-   */
-  if (current == NULL)
-    return;
-
-  /* 
-   *special case: removing head of list
-   */
-  if (current->index == index)
-  {
-    /*
-     * set new head free the old one
-     */
-    This->headblock = current->next;
-    HeapFree(GetProcessHeap(), 0, current);
-    
-    return;
-  }
-
-  /* 
-   * iterate through rest of the list
-   */
-  while (current->next != NULL)
-  {
-    if (current->next->index == index) /* found it */
-    {
-      /* 
-       * unlink the block and free the block
-       */
-      current->next = current->next->next;
-      HeapFree(GetProcessHeap(), 0, current->next);
-
-      return;
-    }
-    else
-    {
-      /* next node
-       */
-      current = current->next;
-    }
-  }
-}
-
-/******************************************************************************
- *      BIGBLOCKFILE_GetBigBlockFromPointer     [PRIVATE]
- *
- * Given a block pointer, this will return the corresponding block
- * from the blocks list.
- */
-static BigBlock* BIGBLOCKFILE_GetBigBlockFromPointer(
-  LPBIGBLOCKFILE This, 
-  void*          pBlock)
-{
-  BigBlock *current = This->headblock;
-
-  while (current != NULL)
-  {
-    if (current->lpBlock == pBlock)
-    {
-      break;
-    }
-    else
-      current = current->next;
-  }
-
-  return current;
+    if (*head) (*head)->prev = page;
+    page->next = *head;
+    page->prev = NULL;
+    *head = page;
 }
 
 /******************************************************************************
@@ -736,107 +593,120 @@ static BigBlock* BIGBLOCKFILE_GetBigBlockFromPointer(
  */
 static void * BIGBLOCKFILE_GetMappedView(
   LPBIGBLOCKFILE This,
-  DWORD          pagenum,
-  DWORD          desired_access)
+  DWORD          page_index)
 {
-  MappedPage* current = This->maplisthead;
-  ULONG       count   = 1;
-  BOOL        found   = FALSE;
+    MappedPage *page;
 
-  assert(This->maplisthead != NULL);
-
-  /*
-   * Search for the page in the list.
-   */
-  while ((found == FALSE) && (current->next != NULL))
-  {
-    if (current->next->number == pagenum)
+    page = BIGBLOCKFILE_FindPageInList(This->maplist, page_index);
+    if (!page)
     {
-      found = TRUE;
+	page = BIGBLOCKFILE_FindPageInList(This->victimhead, page_index);
+	if (page)
+	{
+	    This->num_victim_pages--;
 
-      /*
-       * If it's not already at the head of the list
-       * move it there.
-       */
-      if (current != This->maplisthead)
-      {
-        MappedPage* temp = current->next;
-
-        current->next = current->next->next;
-
-        temp->next = This->maplisthead->next;
-        This->maplisthead->next = temp;
-      }
+	    BIGBLOCKFILE_Zero(&page->readable_blocks);
+	    BIGBLOCKFILE_Zero(&page->writable_blocks);
+	}
     }
 
-    /*
-     * The list is full and we haven't found it.
-     * Free the last element of the list because we'll add a new
-     * one at the head.
-     */
-    if ((found == FALSE) && 
-        (count >= NUMBER_OF_MAPPED_PAGES) &&
-        (current->next != NULL))
+    if (page)
     {
-      UnmapViewOfFile(current->next->lpBytes);
+	/* If the page is not already at the head of the list, move
+	 * it there. (Also moves pages from victim to main list.) */
+	if (This->maplist != page)
+	{
+	    if (This->victimhead == page) This->victimhead = page->next;
+	    if (This->victimtail == page) This->victimtail = page->prev;
 
-      HeapFree(GetProcessHeap(), 0, current->next);
-      current->next = NULL;
+	    BIGBLOCKFILE_UnlinkPage(page);
+
+	    BIGBLOCKFILE_LinkHeadPage(&This->maplist, page);
+	}
+
+	return page;
     }
 
-    if (current->next != NULL)
-      current = current->next;
+    page = BIGBLOCKFILE_CreatePage(This, page_index);
+    if (!page) return NULL;
 
-    count++;
-  }
+    BIGBLOCKFILE_LinkHeadPage(&This->maplist, page);
 
-  /*
-   * Add the page at the head of the list.
-   */
-  if (found == FALSE)
-  {
-    MappedPage* newMappedPage;
-    DWORD       numBytesToMap;
-    DWORD       hioffset  = 0;
-    DWORD       lowoffset = PAGE_SIZE * pagenum;
+    return page;
+}
 
-    newMappedPage = HeapAlloc(GetProcessHeap(), 0, sizeof(MappedPage));
+static BOOL BIGBLOCKFILE_MapPage(LPBIGBLOCKFILE This, MappedPage *page)
+{
+    DWORD lowoffset = PAGE_SIZE * page->page_index;
 
-    if (newMappedPage == NULL)
+    if (This->fileBased)
+    {
+	DWORD numBytesToMap;
+	DWORD desired_access;
+
+	if (lowoffset + PAGE_SIZE > This->filesize.s.LowPart)
+	    numBytesToMap = This->filesize.s.LowPart - lowoffset;
+	else
+	    numBytesToMap = PAGE_SIZE;
+
+	if (This->flProtect == PAGE_READONLY)
+	    desired_access = FILE_MAP_READ;
+	else
+	    desired_access = FILE_MAP_WRITE;
+
+	page->lpBytes = MapViewOfFile(This->hfilemap, desired_access, 0,
+				      lowoffset, numBytesToMap);
+    }
+    else
+    {
+	page->lpBytes = (LPBYTE)This->pbytearray + lowoffset;
+    }
+
+    TRACE("mapped page %lu to %p\n", page->page_index, page->lpBytes);
+
+    return page->lpBytes != NULL;
+}
+
+static MappedPage *BIGBLOCKFILE_CreatePage(LPBIGBLOCKFILE This,
+					   ULONG page_index)
+{
+    MappedPage *page;
+
+    page = HeapAlloc(GetProcessHeap(), 0, sizeof(MappedPage));
+    if (page == NULL)
       return NULL;
 
-    newMappedPage->number = pagenum;
-    newMappedPage->ref = 0;
+    page->page_index = page_index;
+    page->refcnt = 1;
 
-    newMappedPage->next = This->maplisthead->next;
-    This->maplisthead->next = newMappedPage;
+    page->next = NULL;
+    page->prev = NULL;
 
-    if (((pagenum + 1) * PAGE_SIZE) > This->filesize.s.LowPart)
-      numBytesToMap = This->filesize.s.LowPart - (pagenum * PAGE_SIZE);
-    else
-      numBytesToMap = PAGE_SIZE;
+    BIGBLOCKFILE_MapPage(This, page);
 
-    if (This->flProtect == PAGE_READONLY)
-      desired_access = FILE_MAP_READ;
-    else
-      desired_access = FILE_MAP_WRITE;
+    BIGBLOCKFILE_Zero(&page->readable_blocks);
+    BIGBLOCKFILE_Zero(&page->writable_blocks);
 
-    newMappedPage->lpBytes = MapViewOfFile(This->hfilemap,
-                                           desired_access,
-                                           hioffset,
-                                           lowoffset,
-                                           numBytesToMap);
-  }
+    return page;
+}
 
-  /*
-   * The page we want should now be at the head of the list.
-   */
-  assert(This->maplisthead->next != NULL);
+static void BIGBLOCKFILE_UnmapPage(LPBIGBLOCKFILE This, MappedPage *page)
+{
+    TRACE("%ld at %p\n", page->page_index, page->lpBytes);
+    if (page->refcnt > 0)
+	ERR("unmapping inuse page %p\n", page->lpBytes);
 
-  current = This->maplisthead->next;
-  current->ref++;
+    if (This->fileBased && page->lpBytes)
+	UnmapViewOfFile(page->lpBytes);
 
-  return current->lpBytes;
+    page->lpBytes = NULL;
+}
+
+static void BIGBLOCKFILE_DeletePage(LPBIGBLOCKFILE This, MappedPage *page)
+{
+    BIGBLOCKFILE_UnmapPage(This, page);
+
+    HeapFree(GetProcessHeap(), 0, page);
 }
 
 /******************************************************************************
@@ -846,33 +716,54 @@ static void * BIGBLOCKFILE_GetMappedView(
  */
 static void BIGBLOCKFILE_ReleaseMappedPage(
   LPBIGBLOCKFILE This,
-  DWORD          pagenum,
-  DWORD          access)
+  MappedPage    *page)
 {
-  MappedPage* previous = This->maplisthead;
-  MappedPage* current;
+    assert(This != NULL);
+    assert(page != NULL);
 
-  assert(This->maplisthead->next != NULL);
-
-  current = previous->next;
-
-  /* search for the page in the list
-   */
-  while (current != NULL)
-  {
-    if (current->number == pagenum)
+    /* If the page is no longer refenced, move it to the victim list.
+     * If the victim list is too long, kick somebody off. */
+    if (!InterlockedDecrement(&page->refcnt))
     {
-      /* decrement the reference count
-       */
-      current->ref--;
-      return;
+	if (This->maplist == page) This->maplist = page->next;
+
+	BIGBLOCKFILE_UnlinkPage(page);
+
+	if (MAX_VICTIM_PAGES > 0)
+	{
+	    if (This->num_victim_pages >= MAX_VICTIM_PAGES)
+	    {
+		MappedPage *victim = This->victimtail;
+		if (victim)
+		{
+		    This->victimtail = victim->prev;
+		    if (This->victimhead == victim)
+			This->victimhead = victim->next;
+
+		    BIGBLOCKFILE_UnlinkPage(victim);
+		    BIGBLOCKFILE_DeletePage(This, victim);
+		}
+	    }
+	    else This->num_victim_pages++;
+
+	    BIGBLOCKFILE_LinkHeadPage(&This->victimhead, page);
+	    if (This->victimtail == NULL) This->victimtail = page;
+	}
+	else
+	    BIGBLOCKFILE_DeletePage(This, page);
     }
-    else
+}
+
+static void BIGBLOCKFILE_DeleteList(LPBIGBLOCKFILE This, MappedPage *list)
+{
+    while (list != NULL)
     {
-      previous = current;
-      current = current->next;
+	MappedPage *next = list->next;
+
+	BIGBLOCKFILE_DeletePage(This, list);
+
+	list = next;
     }
-  }
 }
 
 /******************************************************************************
@@ -884,21 +775,57 @@ static void BIGBLOCKFILE_ReleaseMappedPage(
 static void BIGBLOCKFILE_FreeAllMappedPages(
   LPBIGBLOCKFILE This)
 {
-  MappedPage * current = This->maplisthead->next;
+    BIGBLOCKFILE_DeleteList(This, This->maplist);
+    BIGBLOCKFILE_DeleteList(This, This->victimhead);
 
-  while (current != NULL)
-  {
-    /* Unmap views.
-     */
-    UnmapViewOfFile(current->lpBytes);
+    This->maplist = NULL;
+    This->victimhead = NULL;
+    This->victimtail = NULL;
+    This->num_victim_pages = 0;
+}
 
-    /* Free the nodes.
-     */
-    This->maplisthead->next = current->next;
-    HeapFree(GetProcessHeap(), 0, current);
+static void BIGBLOCKFILE_UnmapList(LPBIGBLOCKFILE This, MappedPage *list)
+{
+    for (; list != NULL; list = list->next)
+    {
+	BIGBLOCKFILE_UnmapPage(This, list);
+    }
+}
 
-    current = This->maplisthead->next;
-  }
+static void BIGBLOCKFILE_UnmapAllMappedPages(LPBIGBLOCKFILE This)
+{
+    BIGBLOCKFILE_UnmapList(This, This->maplist);
+    BIGBLOCKFILE_UnmapList(This, This->victimhead);
+}
+
+static void BIGBLOCKFILE_RemapList(LPBIGBLOCKFILE This, MappedPage *list)
+{
+    while (list != NULL)
+    {
+	MappedPage *next = list->next;
+
+	if (list->page_index * PAGE_SIZE > This->filesize.s.LowPart)
+	{
+	    TRACE("discarding %lu\n", list->page_index);
+
+	    /* page is entirely outside of the file, delete it */
+	    BIGBLOCKFILE_UnlinkPage(list);
+	    BIGBLOCKFILE_DeletePage(This, list);
+	}
+	else
+	{
+	    /* otherwise, remap it */
+	    BIGBLOCKFILE_MapPage(This, list);
+	}
+
+	list = next;
+    }
+}
+
+static void BIGBLOCKFILE_RemapAllMappedPages(LPBIGBLOCKFILE This)
+{
+    BIGBLOCKFILE_RemapList(This, This->maplist);
+    BIGBLOCKFILE_RemapList(This, This->victimhead);
 }
 
 /****************************************************************************
@@ -909,18 +836,8 @@ static void BIGBLOCKFILE_FreeAllMappedPages(
  */
 static DWORD BIGBLOCKFILE_GetProtectMode(DWORD openFlags)
 {
-  DWORD flProtect        = PAGE_READONLY;
-  BOOL bSTGM_WRITE     = ((openFlags & STGM_WRITE) == STGM_WRITE);
-  BOOL bSTGM_READWRITE = ((openFlags & STGM_READWRITE) == STGM_READWRITE);
-  BOOL bSTGM_READ      = ! (bSTGM_WRITE || bSTGM_READWRITE);
-
-  if (bSTGM_READ)
-    flProtect = PAGE_READONLY;
-
-  if ((bSTGM_WRITE) || (bSTGM_READWRITE))
-    flProtect = PAGE_READWRITE;
-
-  return flProtect;
+    if (openFlags & (STGM_WRITE | STGM_READWRITE))
+	return PAGE_READWRITE;
+    else
+	return PAGE_READONLY;
 }
-
- 

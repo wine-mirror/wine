@@ -135,7 +135,6 @@ struct StgProperty
  */
 typedef struct BigBlockFile BigBlockFile,*LPBIGBLOCKFILE;
 typedef struct MappedPage   MappedPage,*LPMAPPEDPAGE;
-typedef struct BigBlock     BigBlock,*LPBIGBLOCK;
 
 struct BigBlockFile
 {
@@ -145,11 +144,12 @@ struct BigBlockFile
   HANDLE hfile;
   HANDLE hfilemap;
   DWORD flProtect;
-  MappedPage *maplisthead;
+  MappedPage *maplist;
+  MappedPage *victimhead, *victimtail;
+  ULONG num_victim_pages;
   ILockBytes *pLkbyt;
   HGLOBAL hbytearray;
   LPVOID pbytearray;
-  BigBlock *headblock;
 };
 
 /*
