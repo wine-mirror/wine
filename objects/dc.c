@@ -15,7 +15,6 @@
 #include "dc.h"
 #include "gdi.h"
 #include "heap.h"
-#include "metafiledrv.h"
 #include "debug.h"
 #include "font.h"
 #include "winerror.h"
@@ -120,7 +119,8 @@ DC *DC_GetDCPtr( HDC hdc )
 {
     GDIOBJHDR *ptr = (GDIOBJHDR *)GDI_HEAP_LOCK( hdc );
     if (!ptr) return NULL;
-    if ((ptr->wMagic == DC_MAGIC) || (ptr->wMagic == METAFILE_DC_MAGIC))
+    if ((ptr->wMagic == DC_MAGIC) || (ptr->wMagic == METAFILE_DC_MAGIC) ||
+	(ptr->wMagic == ENHMETAFILE_DC_MAGIC))
         return (DC *)ptr;
     GDI_HEAP_UNLOCK( hdc );
     return NULL;
@@ -407,15 +407,12 @@ INT WINAPI SaveDC( HDC hdc )
     DC * dc, * dcs;
     INT ret;
 
-    dc = (DC *) GDI_GetObjPtr( hdc, DC_MAGIC );
-    if (!dc) 
-    {
-	dc = (DC *)GDI_GetObjPtr(hdc, METAFILE_DC_MAGIC);
-	if (!dc) return 0;
-	MFDRV_MetaParam0(dc, META_SAVEDC);
-	GDI_HEAP_UNLOCK( hdc );
-	return 1;  /* ?? */
-    }
+    dc = DC_GetDCPtr( hdc );
+    if (!dc) return 0;
+
+    if(dc->funcs->pSaveDC)
+        return dc->funcs->pSaveDC( dc );
+
     if (!(hdcs = GetDCState16( hdc )))
     {
       GDI_HEAP_UNLOCK( hdc );
@@ -465,20 +462,11 @@ BOOL WINAPI RestoreDC( HDC hdc, INT level )
     BOOL success;
 
     TRACE(dc, "%04x %d\n", hdc, level );
-    dc = (DC *) GDI_GetObjPtr( hdc, DC_MAGIC );
-    if (!dc) 
-    {
-	dc = (DC *)GDI_GetObjPtr(hdc, METAFILE_DC_MAGIC);
-	if (!dc) return FALSE;
-	if (level != -1) 
-	{
-	  GDI_HEAP_UNLOCK( hdc );
-	  return FALSE;
-	}
-	MFDRV_MetaParam1(dc, META_RESTOREDC, level);
-	GDI_HEAP_UNLOCK( hdc );
-	return TRUE;
-    }
+    dc = DC_GetDCPtr( hdc );
+    if(!dc) return FALSE;
+    if(dc->funcs->pRestoreDC)
+        return dc->funcs->pRestoreDC( dc, level );
+
     if (level == -1) level = dc->saveLevel;
     if ((level < 1) || (level > dc->saveLevel))
     {
@@ -823,36 +811,32 @@ COLORREF WINAPI SetTextColor( HDC hdc, COLORREF color )
     return oldColor;
 }
 
-
 /***********************************************************************
  *           SetTextAlign16    (GDI.346)
  */
-UINT16 WINAPI SetTextAlign16( HDC16 hdc, UINT16 textAlign )
+UINT16 WINAPI SetTextAlign16( HDC16 hdc, UINT16 align )
 {
-    return SetTextAlign( hdc, textAlign );
+    return SetTextAlign( hdc, align );
 }
 
 
 /***********************************************************************
- *           SetTextAlign32    (GDI32.336)
+ *           SetTextAlign    (GDI32.336)
  */
-UINT WINAPI SetTextAlign( HDC hdc, UINT textAlign )
+UINT WINAPI SetTextAlign( HDC hdc, UINT align )
 {
     UINT prevAlign;
-    DC * dc = (DC *) GDI_GetObjPtr( hdc, DC_MAGIC );
-    if (!dc)
-    {
-	if (!(dc = (DC *)GDI_GetObjPtr( hdc, METAFILE_DC_MAGIC ))) return 0;
-	MFDRV_MetaParam1( dc, META_SETTEXTALIGN, textAlign );
-	GDI_HEAP_UNLOCK( hdc );
-	return 1;
+    DC *dc = DC_GetDCPtr( hdc );
+    if (!dc) return 0x0;
+    if (dc->funcs->pSetTextAlign)
+        prevAlign = dc->funcs->pSetTextAlign(dc, align);
+    else {
+	prevAlign = dc->w.textAlign;
+	dc->w.textAlign = align;
     }
-    prevAlign = dc->w.textAlign;
-    dc->w.textAlign = textAlign;
     GDI_HEAP_UNLOCK( hdc );
     return prevAlign;
 }
-
 
 /***********************************************************************
  *           GetDCOrgEx  (GDI32.168)

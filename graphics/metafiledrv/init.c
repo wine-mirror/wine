@@ -32,20 +32,21 @@ static const DC_FUNCTIONS MFDRV_Funcs =
     MFDRV_Ellipse,                   /* pEllipse */
     NULL,                            /* pEnumDeviceFonts */
     NULL,                            /* pEscape */
-    NULL,                            /* pExcludeClipRect */
-    NULL,                            /* pExcludeVisRect */
+    MFDRV_ExcludeClipRect,           /* pExcludeClipRect */
     MFDRV_ExtFloodFill,              /* pExtFloodFill */
     MFDRV_ExtTextOut,                /* pExtTextOut */
+    MFDRV_FillRgn,                   /* pFillRgn */
+    MFDRV_FrameRgn,                  /* pFrameRgn */
     NULL,                            /* pGetCharWidth */
     NULL, /* no implementation */    /* pGetPixel */
     NULL,                            /* pGetTextExtentPoint */
     NULL,                            /* pGetTextMetrics */
-    NULL,                            /* pIntersectClipRect */
-    NULL,                            /* pIntersectVisRect */
+    MFDRV_IntersectClipRect,         /* pIntersectClipRect */
+    MFDRV_InvertRgn,                 /* pInvertRgn */
     MFDRV_LineTo,                    /* pLineTo */
     NULL,                            /* pLoadOEMResource */
     MFDRV_MoveToEx,                  /* pMoveToEx */
-    NULL,                            /* pOffsetClipRgn */
+    MFDRV_OffsetClipRgn,             /* pOffsetClipRgn */
     MFDRV_OffsetViewportOrg,         /* pOffsetViewportOrg */
     MFDRV_OffsetWindowOrg,           /* pOffsetWindowOrg */
     MFDRV_PaintRgn,                  /* pPaintRgn */
@@ -58,29 +59,29 @@ static const DC_FUNCTIONS MFDRV_Funcs =
     NULL,                            /* pPolyBezier */
     NULL,                            /* pRealizePalette */
     MFDRV_Rectangle,                 /* pRectangle */
-    NULL,                            /* pRestoreDC */
+    MFDRV_RestoreDC,                 /* pRestoreDC */
     MFDRV_RoundRect,                 /* pRoundRect */
-    NULL,                            /* pSaveDC */
+    MFDRV_SaveDC,                    /* pSaveDC */
     MFDRV_ScaleViewportExt,          /* pScaleViewportExt */
     MFDRV_ScaleWindowExt,            /* pScaleWindowExt */
     NULL,                            /* pSelectClipRgn */
     MFDRV_SelectObject,              /* pSelectObject */
     NULL,                            /* pSelectPalette */
     MFDRV_SetBkColor,                /* pSetBkColor */
-    NULL,                            /* pSetBkMode */
+    MFDRV_SetBkMode,                 /* pSetBkMode */
     NULL,                            /* pSetDeviceClipping */
     MFDRV_SetDIBitsToDevice,         /* pSetDIBitsToDevice */
     MFDRV_SetMapMode,                /* pSetMapMode */
-    NULL,                            /* pSetMapperFlags */
+    MFDRV_SetMapperFlags,            /* pSetMapperFlags */
     MFDRV_SetPixel,                  /* pSetPixel */
-    NULL,                            /* pSetPolyFillMode */
-    NULL,                            /* pSetROP2 */
-    NULL,                            /* pSetRelAbs */
-    NULL,                            /* pSetStretchBltMode */
-    NULL,                            /* pSetTextAlign */
-    NULL,                            /* pSetTextCharacterExtra */
+    MFDRV_SetPolyFillMode,           /* pSetPolyFillMode */
+    MFDRV_SetROP2,                   /* pSetROP2 */
+    MFDRV_SetRelAbs,                 /* pSetRelAbs */
+    MFDRV_SetStretchBltMode,         /* pSetStretchBltMode */
+    MFDRV_SetTextAlign,              /* pSetTextAlign */
+    MFDRV_SetTextCharacterExtra,     /* pSetTextCharacterExtra */
     MFDRV_SetTextColor,              /* pSetTextColor */
-    NULL,                            /* pSetTextJustification */
+    MFDRV_SetTextJustification,      /* pSetTextJustification */
     MFDRV_SetViewportExt,            /* pSetViewportExt */
     MFDRV_SetViewportOrg,            /* pSetViewportOrg */
     MFDRV_SetWindowExt,              /* pSetWindowExt */

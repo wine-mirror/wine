@@ -31,47 +31,39 @@ static HBITMAP16 MFDRV_BITMAP_SelectObject( DC * dc, HBITMAP16 hbitmap,
  *         MFDRV_CreateBrushIndirect
  */
 
-static BOOL MFDRV_CreateBrushIndirect(DC *dc, HBRUSH16 hBrush,
-				      LOGBRUSH16 *logbrush)
+INT16 MFDRV_CreateBrushIndirect(DC *dc, HBRUSH hBrush )
 {
-    int index;
-    char buffer[sizeof(METARECORD) - 2 + sizeof(*logbrush)];
-    METARECORD *mr = (METARECORD *)&buffer;
-
-    mr->rdSize = (sizeof(METARECORD) + sizeof(*logbrush) - 2) / 2;
-    mr->rdFunction = META_CREATEBRUSHINDIRECT;
-    memcpy(&(mr->rdParm), logbrush, sizeof(*logbrush));
-    if (!(MFDRV_WriteRecord( dc, mr, mr->rdSize * 2))) return FALSE;
-
-    mr->rdSize = sizeof(METARECORD) / 2;
-    mr->rdFunction = META_SELECTOBJECT;
-
-    if ((index = MFDRV_AddHandleDC( dc )) == -1) return FALSE;
-    *(mr->rdParm) = index;
-    return MFDRV_WriteRecord( dc, mr, mr->rdSize * 2);
-}
-
-
-/******************************************************************
- *         MFDRV_CreatePatternBrush
- */
-static BOOL MFDRV_CreatePatternBrush(DC *dc, HBRUSH16 hBrush,
-				     LOGBRUSH16 *logbrush)
-{
-    DWORD len, bmSize, biSize;
+    INT16 index;
+    DWORD size;
     METARECORD *mr;
-    BITMAPINFO *info;
-    int index;
-    char buffer[sizeof(METARECORD)];
+    BRUSHOBJ *brushObj = (BRUSHOBJ *)GDI_GetObjPtr( hBrush, BRUSH_MAGIC );
+    if(!brushObj) return -1;
+    
+    switch(brushObj->logbrush.lbStyle) {
+    case BS_SOLID:
+    case BS_NULL:
+    case BS_HATCHED:
+        {
+	    LOGBRUSH16 lb16;
 
-    switch (logbrush->lbStyle)
-    {
+	    lb16.lbStyle = brushObj->logbrush.lbStyle;
+	    lb16.lbColor = brushObj->logbrush.lbColor;
+	    lb16.lbHatch = brushObj->logbrush.lbHatch;
+	    size = sizeof(METARECORD) + sizeof(LOGBRUSH16) - 2;
+	    mr = HeapAlloc( SystemHeap, 0, size );
+	    mr->rdSize = size / 2;
+	    mr->rdFunction = META_CREATEBRUSHINDIRECT;
+	    memcpy( mr->rdParm, &lb16, sizeof(LOGBRUSH));
+	    break;
+	}
     case BS_PATTERN:
         {
 	    BITMAP bm;
 	    BYTE *bits;
+	    BITMAPINFO *info;
+	    DWORD bmSize;
 
-	    GetObjectA(logbrush->lbHatch, sizeof(bm), &bm);
+	    GetObjectA(brushObj->logbrush.lbHatch, sizeof(bm), &bm);
 	    if(bm.bmBitsPixel != 1 || bm.bmPlanes != 1) {
 	        FIXME(metafile, "Trying to store a colour pattern brush\n");
 		return FALSE;
@@ -79,13 +71,13 @@ static BOOL MFDRV_CreatePatternBrush(DC *dc, HBRUSH16 hBrush,
 
 	    bmSize = DIB_GetDIBImageBytes(bm.bmWidth, bm.bmHeight, 1);
 
-	    len = sizeof(METARECORD) +  sizeof(WORD) + sizeof(BITMAPINFO) + 
+	    size = sizeof(METARECORD) + sizeof(WORD) + sizeof(BITMAPINFO) + 
 	      sizeof(RGBQUAD) + bmSize;
-	     
-	    mr = HeapAlloc(SystemHeap, HEAP_ZERO_MEMORY, len);
+
+	    mr = HeapAlloc(SystemHeap, HEAP_ZERO_MEMORY, size);
 	    if(!mr) return FALSE;
 	    mr->rdFunction = META_DIBCREATEPATTERNBRUSH;
-	    mr->rdSize = len / 2;
+	    mr->rdSize = size / 2;
 	    mr->rdParm[0] = BS_PATTERN;
 	    mr->rdParm[1] = DIB_RGB_COLORS;
 	    info = (BITMAPINFO *)(mr->rdParm + 2);
@@ -97,76 +89,67 @@ static BOOL MFDRV_CreatePatternBrush(DC *dc, HBRUSH16 hBrush,
 	    info->bmiHeader.biBitCount = 1;
 	    bits = ((BYTE *)info) + sizeof(BITMAPINFO) + sizeof(RGBQUAD);
 
-	    GetDIBits(dc->hSelf, logbrush->lbHatch, 0, bm.bmHeight, bits,
-		      info, DIB_RGB_COLORS);
+	    GetDIBits(dc->hSelf, brushObj->logbrush.lbHatch, 0, bm.bmHeight,
+		      bits, info, DIB_RGB_COLORS);
 	    *(DWORD *)info->bmiColors = 0;
 	    *(DWORD *)(info->bmiColors + 1) = 0xffffff;
 	    break;
 	}
 
     case BS_DIBPATTERN:
-	info = (BITMAPINFO *)GlobalLock16((HGLOBAL16)logbrush->lbHatch);
-	if (info->bmiHeader.biCompression)
-            bmSize = info->bmiHeader.biSizeImage;
-        else
-	    bmSize = DIB_GetDIBImageBytes(info->bmiHeader.biWidth,
-					  info->bmiHeader.biHeight,
-					  info->bmiHeader.biBitCount);
-	biSize = DIB_BitmapInfoSize(info, LOWORD(logbrush->lbColor)); 
-	len = sizeof(METARECORD) + biSize + bmSize + 2;
-	mr = HeapAlloc(SystemHeap, HEAP_ZERO_MEMORY, len);
-	if(!mr) return FALSE;
-	mr->rdFunction = META_DIBCREATEPATTERNBRUSH;
-	mr->rdSize = len / 2;
-	*(mr->rdParm) = logbrush->lbStyle;
-	*(mr->rdParm + 1) = LOWORD(logbrush->lbColor);
-	memcpy(mr->rdParm + 2, info, biSize + bmSize);
-	break;
-    default:
-        return FALSE;
-    }
-    if (!(MFDRV_WriteRecord(dc, mr, len)))
-    {
-	HeapFree(SystemHeap, 0, mr);
-	return FALSE;
-    }
+        {
+	      BITMAPINFO *info;
+	      DWORD bmSize, biSize;
 
+	      info = GlobalLock16((HGLOBAL16)brushObj->logbrush.lbHatch);
+	      if (info->bmiHeader.biCompression)
+		  bmSize = info->bmiHeader.biSizeImage;
+	      else
+		  bmSize = DIB_GetDIBImageBytes(info->bmiHeader.biWidth,
+						info->bmiHeader.biHeight,
+						info->bmiHeader.biBitCount);
+	      biSize = DIB_BitmapInfoSize(info,
+					  LOWORD(brushObj->logbrush.lbColor)); 
+	      size = sizeof(METARECORD) + biSize + bmSize + 2;
+	      mr = HeapAlloc(SystemHeap, HEAP_ZERO_MEMORY, size);
+	      if(!mr) return FALSE;
+	      mr->rdFunction = META_DIBCREATEPATTERNBRUSH;
+	      mr->rdSize = size / 2;
+	      *(mr->rdParm) = brushObj->logbrush.lbStyle;
+	      *(mr->rdParm + 1) = LOWORD(brushObj->logbrush.lbColor);
+	      memcpy(mr->rdParm + 2, info, biSize + bmSize);
+	      break;
+	}
+	default:
+	    FIXME(metafile, "Unkonwn brush style %x\n", 
+		  brushObj->logbrush.lbStyle);
+	    return -1;
+    }
+    index = MFDRV_AddHandleDC( dc );
+    if(!MFDRV_WriteRecord( dc, mr, mr->rdSize * 2))
+        index = -1;
     HeapFree(SystemHeap, 0, mr);
-    
-    mr = (METARECORD *)&buffer;
-    mr->rdSize = sizeof(METARECORD) / 2;
-    mr->rdFunction = META_SELECTOBJECT;
-
-    if ((index = MFDRV_AddHandleDC( dc )) == -1) return FALSE;
-    *(mr->rdParm) = index;
-    return MFDRV_WriteRecord( dc, mr, mr->rdSize * 2);
+    GDI_HEAP_UNLOCK( hBrush );
+    return index;
 }
+
 
 /***********************************************************************
  *           MFDRV_BRUSH_SelectObject
  */
-static HBRUSH MFDRV_BRUSH_SelectObject( DC * dc, HBRUSH hbrush,
-                                          BRUSHOBJ * brush )
+static HBRUSH MFDRV_BRUSH_SelectObject( DC *dc, HBRUSH hbrush,
+					BRUSHOBJ * brush )
 {
-    LOGBRUSH16 logbrush;
-                                                        
-    logbrush.lbStyle = brush->logbrush.lbStyle;
-    logbrush.lbColor = brush->logbrush.lbColor;
-    logbrush.lbHatch = brush->logbrush.lbHatch;   
+    INT16 index;
+    METARECORD mr;
 
-    switch (brush->logbrush.lbStyle)
-    {
-    case BS_SOLID:
-    case BS_HATCHED:
-    case BS_HOLLOW:
-        if (!MFDRV_CreateBrushIndirect( dc, hbrush, &logbrush )) return 0;
-        break;
-    case BS_PATTERN:
-    case BS_DIBPATTERN:
-        if (!MFDRV_CreatePatternBrush( dc, hbrush, &logbrush )) return 0;
-        break;
-    }
-    return 1;  /* FIXME? */
+    index = MFDRV_CreateBrushIndirect( dc, hbrush );
+    if(index == -1) return 0;
+
+    mr.rdSize = sizeof(mr) / 2;
+    mr.rdFunction = META_SELECTOBJECT;
+    mr.rdParm[0] = index;
+    return MFDRV_WriteRecord( dc, &mr, mr.rdSize * 2);
 }
 
 /******************************************************************

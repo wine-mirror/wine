@@ -737,7 +737,7 @@ static BOOL MF_Play_MetaExtTextOut(HDC16 hdc, METARECORD *mr);
  * BUGS
  *  The following metafile records are unimplemented:
  *
- *  FRAMEREGION, DRAWTEXT, ANIMATEPALETTE, SETPALENTRIES,
+ *  DRAWTEXT, ANIMATEPALETTE, SETPALENTRIES,
  *  RESIZEPALETTE, EXTFLOODFILL, RESETDC, STARTDOC, STARTPAGE, ENDPAGE,
  *  ABORTDOC, ENDDOC, CREATEBRUSH, CREATEBITMAPINDIRECT, and CREATEBITMAP.
  *
@@ -1001,7 +1001,7 @@ void WINAPI PlayMetaFileRecord16(
 	break;
 
     case META_SETMAPPERFLAGS:
-	SetMapperFlags16(hdc, *(mr->rdParm));
+	SetMapperFlags16(hdc, MAKELONG(mr->rdParm[0],mr->rdParm[1]));
 	break;
 
     case META_REALIZEPALETTE:
@@ -1083,8 +1083,14 @@ void WINAPI PlayMetaFileRecord16(
       break;
 
     case META_FILLREGION:
-        FillRgn16(hdc, *(ht->objectHandle + *(mr->rdParm)),
-		       *(ht->objectHandle + *(mr->rdParm+1)));
+        FillRgn16(hdc, *(ht->objectHandle + *(mr->rdParm+1)),
+		       *(ht->objectHandle + *(mr->rdParm)));
+        break;
+
+    case META_FRAMEREGION:
+        FrameRgn16(hdc, *(ht->objectHandle + *(mr->rdParm+3)),
+		        *(ht->objectHandle + *(mr->rdParm+2)),
+		        *(mr->rdParm+1), *(mr->rdParm));
         break;
 
     case META_INVERTREGION:
@@ -1168,7 +1174,6 @@ void WINAPI PlayMetaFileRecord16(
 #define META_UNIMP(x) case x: \
 FIXME(metafile, "PlayMetaFileRecord:record type "#x" not implemented.\n"); \
 break;
-    META_UNIMP(META_FRAMEREGION)
     META_UNIMP(META_DRAWTEXT)
     META_UNIMP(META_ANIMATEPALETTE)
     META_UNIMP(META_SETPALENTRIES)

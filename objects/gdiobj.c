@@ -581,7 +581,12 @@ DWORD WINAPI GetObjectType( HANDLE handle )
       case METAFILE_DC_MAGIC:
 	  result = OBJ_METADC;
 	  break;
-
+      case ENHMETAFILE_MAGIC:
+	  result = OBJ_ENHMETAFILE;
+	  break;
+      case ENHMETAFILE_DC_MAGIC:
+	  result = OBJ_ENHMETADC;
+	  break;
       default:
 	  FIXME(gdi, "Magic %04x not implemented\n",
 			   ptr->wMagic );

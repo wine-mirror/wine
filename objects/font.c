@@ -14,6 +14,7 @@
 #include "options.h"
 #include "debug.h"
 #include "winerror.h"
+#include "dc.h"
 
 DECLARE_DEBUG_CHANNEL(font)
 DECLARE_DEBUG_CHANNEL(gdi)
@@ -659,8 +660,10 @@ INT16 WINAPI SetTextCharacterExtra16( HDC16 hdc, INT16 extra )
 INT WINAPI SetTextCharacterExtra( HDC hdc, INT extra )
 {
     INT prev;
-    DC * dc = (DC *) GDI_GetObjPtr( hdc, DC_MAGIC );
+    DC * dc = DC_GetDCPtr( hdc );
     if (!dc) return 0;
+    if (dc->funcs->pSetTextCharacterExtra)
+        return dc->funcs->pSetTextCharacterExtra( dc, extra );
     extra = (extra * dc->vportExtX + dc->wndExtX / 2) / dc->wndExtX;
     prev = dc->w.charExtra;
     dc->w.charExtra = abs(extra);
@@ -678,12 +681,14 @@ INT16 WINAPI SetTextJustification16( HDC16 hdc, INT16 extra, INT16 breaks )
 
 
 /***********************************************************************
- *           SetTextJustification32    (GDI32.339)
+ *           SetTextJustification    (GDI32.339)
  */
 BOOL WINAPI SetTextJustification( HDC hdc, INT extra, INT breaks )
 {
-    DC * dc = (DC *) GDI_GetObjPtr( hdc, DC_MAGIC );
+    DC * dc = DC_GetDCPtr( hdc );
     if (!dc) return 0;
+    if (dc->funcs->pSetTextJustification)
+        return dc->funcs->pSetTextJustification( dc, extra, breaks );
 
     extra = abs((extra * dc->vportExtX + dc->wndExtX / 2) / dc->wndExtX);
     if (!extra) breaks = 0;
@@ -1172,8 +1177,15 @@ DWORD WINAPI SetMapperFlags16( HDC16 hDC, DWORD dwFlag )
  */
 DWORD WINAPI SetMapperFlags( HDC hDC, DWORD dwFlag )
 {
-    FIXME(font, "(0x%04x, 0x%08lx): stub - harmless\n", hDC, dwFlag);
-    return 0;
+    DC *dc = DC_GetDCPtr( hDC );
+    DWORD ret = 0; 
+    if(!dc) return 0;
+    if(dc->funcs->pSetMapperFlags)
+        ret = dc->funcs->pSetMapperFlags( dc, dwFlag );
+    else
+        FIXME(font, "(0x%04x, 0x%08lx): stub - harmless\n", hDC, dwFlag);
+    GDI_HEAP_UNLOCK( hDC );
+    return ret;
 }
 
 /***********************************************************************

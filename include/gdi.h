@@ -26,6 +26,9 @@
 #define META_DC_MAGIC         0x4f4f
 #define METAFILE_MAGIC        0x4f50
 #define METAFILE_DC_MAGIC     0x4f51
+#define ENHMETAFILE_MAGIC     0x4f52
+#define ENHMETAFILE_DC_MAGIC  0x4f53
+
 #define MAGIC_DONTCARE	      0xffff
 
 typedef struct tagGDIOBJHDR
@@ -161,27 +164,31 @@ typedef struct tagDC_FUNCS
 {
     BOOL     (*pArc)(DC*,INT,INT,INT,INT,INT,INT,INT,INT);
     BOOL     (*pBitBlt)(DC*,INT,INT,INT,INT,DC*,INT,INT,DWORD);
-    LONG       (*pBitmapBits)(HBITMAP,void*,LONG,WORD);
+    LONG     (*pBitmapBits)(HBITMAP,void*,LONG,WORD);
     BOOL     (*pChord)(DC*,INT,INT,INT,INT,INT,INT,INT,INT);
     BOOL     (*pCreateBitmap)(HBITMAP); 
     BOOL     (*pCreateDC)(DC*,LPCSTR,LPCSTR,LPCSTR,const DEVMODE16*);
     BOOL     (*pDeleteDC)(DC*);
-    HBITMAP  (*pCreateDIBSection)(DC *,BITMAPINFO *,UINT,LPVOID *,HANDLE,DWORD);
-    HBITMAP16 (*pCreateDIBSection16)(DC *,BITMAPINFO *,UINT16,SEGPTR *,HANDLE,DWORD);
+    HBITMAP  (*pCreateDIBSection)(DC *,BITMAPINFO *,UINT,LPVOID *,HANDLE,
+				  DWORD);
+    HBITMAP16 (*pCreateDIBSection16)(DC *,BITMAPINFO *,UINT16,SEGPTR *,HANDLE,
+				     DWORD);
     BOOL     (*pDeleteObject)(HGDIOBJ);
     BOOL     (*pEllipse)(DC*,INT,INT,INT,INT);
     BOOL     (*pEnumDeviceFonts)(DC*,LPLOGFONT16,DEVICEFONTENUMPROC,LPARAM);
     INT      (*pEscape)(DC*,INT,INT,SEGPTR,SEGPTR);
     INT      (*pExcludeClipRect)(DC*,INT,INT,INT,INT);
-    INT      (*pExcludeVisRect)(DC*,INT,INT,INT,INT);
     BOOL     (*pExtFloodFill)(DC*,INT,INT,COLORREF,UINT);
-    BOOL     (*pExtTextOut)(DC*,INT,INT,UINT,const RECT*,LPCSTR,UINT,const INT*);
+    BOOL     (*pExtTextOut)(DC*,INT,INT,UINT,const RECT*,LPCSTR,UINT,
+			    const INT*);
+    BOOL     (*pFillRgn)(DC*,HRGN,HBRUSH);
+    BOOL     (*pFrameRgn)(DC*,HRGN,HBRUSH,INT,INT);
     BOOL     (*pGetCharWidth)(DC*,UINT,UINT,LPINT);
-    COLORREF   (*pGetPixel)(DC*,INT,INT);
+    COLORREF (*pGetPixel)(DC*,INT,INT);
     BOOL     (*pGetTextExtentPoint)(DC*,LPCSTR,INT,LPSIZE);
     BOOL     (*pGetTextMetrics)(DC*,TEXTMETRICA*);
     INT      (*pIntersectClipRect)(DC*,INT,INT,INT,INT);
-    INT      (*pIntersectVisRect)(DC*,INT,INT,INT,INT);
+    BOOL     (*pInvertRgn)(DC*,HRGN);    
     BOOL     (*pLineTo)(DC*,INT,INT);
     HANDLE   (*pLoadOEMResource)(WORD,WORD);
     BOOL     (*pMoveToEx)(DC*,INT,INT,LPPOINT);
@@ -206,27 +213,29 @@ typedef struct tagDC_FUNCS
     INT      (*pSelectClipRgn)(DC*,HRGN);
     HANDLE   (*pSelectObject)(DC*,HANDLE);
     HPALETTE (*pSelectPalette)(DC*,HPALETTE,BOOL);
-    COLORREF   (*pSetBkColor)(DC*,COLORREF);
-    WORD       (*pSetBkMode)(DC*,WORD);
-    VOID       (*pSetDeviceClipping)(DC*);
-    INT      (*pSetDIBitsToDevice)(DC*,INT,INT,DWORD,DWORD,INT,INT,UINT,UINT,LPCVOID,const BITMAPINFO*,UINT);
+    COLORREF (*pSetBkColor)(DC*,COLORREF);
+    INT      (*pSetBkMode)(DC*,INT);
+    VOID     (*pSetDeviceClipping)(DC*);
+    INT      (*pSetDIBitsToDevice)(DC*,INT,INT,DWORD,DWORD,INT,INT,UINT,UINT,
+				   LPCVOID,const BITMAPINFO*,UINT);
     INT      (*pSetMapMode)(DC*,INT);
-    DWORD      (*pSetMapperFlags)(DC*,DWORD);
-    COLORREF   (*pSetPixel)(DC*,INT,INT,COLORREF);
-    WORD       (*pSetPolyFillMode)(DC*,WORD);
-    WORD       (*pSetROP2)(DC*,WORD);
-    WORD       (*pSetRelAbs)(DC*,WORD);
-    WORD       (*pSetStretchBltMode)(DC*,WORD);
-    WORD       (*pSetTextAlign)(DC*,WORD);
+    DWORD    (*pSetMapperFlags)(DC*,DWORD);
+    COLORREF (*pSetPixel)(DC*,INT,INT,COLORREF);
+    INT      (*pSetPolyFillMode)(DC*,INT);
+    INT      (*pSetROP2)(DC*,INT);
+    INT      (*pSetRelAbs)(DC*,INT);
+    INT      (*pSetStretchBltMode)(DC*,INT);
+    UINT     (*pSetTextAlign)(DC*,UINT);
     INT      (*pSetTextCharacterExtra)(DC*,INT);
-    DWORD      (*pSetTextColor)(DC*,DWORD);
+    DWORD    (*pSetTextColor)(DC*,DWORD);
     INT      (*pSetTextJustification)(DC*,INT,INT);
     BOOL     (*pSetViewportExt)(DC*,INT,INT);
     BOOL     (*pSetViewportOrg)(DC*,INT,INT);
     BOOL     (*pSetWindowExt)(DC*,INT,INT);
     BOOL     (*pSetWindowOrg)(DC*,INT,INT);
     BOOL     (*pStretchBlt)(DC*,INT,INT,INT,INT,DC*,INT,INT,INT,INT,DWORD);
-    INT     (*pStretchDIBits)(DC*,INT,INT,INT,INT,INT,INT,INT,INT,const void *,const BITMAPINFO *,UINT,DWORD);
+    INT      (*pStretchDIBits)(DC*,INT,INT,INT,INT,INT,INT,INT,INT,
+			       const void *,const BITMAPINFO *,UINT,DWORD);
 } DC_FUNCTIONS;
 
   /* LoadOEMResource types */

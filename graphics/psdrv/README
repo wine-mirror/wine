@@ -66,9 +66,9 @@ specify whether you have optional extras such as envelope feeders. You will
 therefore find a larger than normal selection of input bins in the print setup
 dialog box. I've only really tested ppd parsing on the hp4m6_v1.ppd file.
 
-Many graphics functions to do.
-
 No TrueType download.
+
+StretchDIBits uses level 2 PostScript.
 
 AdvancedSetup dialog box.
 

@@ -46,15 +46,16 @@ static const DC_FUNCTIONS X11DRV_Funcs =
     X11DRV_EnumDeviceFonts,          /* pEnumDeviceFonts */
     X11DRV_Escape,                   /* pEscape */
     NULL,                            /* pExcludeClipRect */
-    NULL,                            /* pExcludeVisRect */
     X11DRV_ExtFloodFill,             /* pExtFloodFill */
     X11DRV_ExtTextOut,               /* pExtTextOut */
+    NULL,                            /* pFillRgn */
+    NULL,                            /* pFrameRgn */
     X11DRV_GetCharWidth,             /* pGetCharWidth */
     X11DRV_GetPixel,                 /* pGetPixel */
     X11DRV_GetTextExtentPoint,       /* pGetTextExtentPoint */
     X11DRV_GetTextMetrics,           /* pGetTextMetrics */
     NULL,                            /* pIntersectClipRect */
-    NULL,                            /* pIntersectVisRect */
+    NULL,                            /* pInvertRgn */
     X11DRV_LineTo,                   /* pLineTo */
     X11DRV_LoadOEMResource,          /* pLoadOEMResource */
     X11DRV_MoveToEx,                 /* pMoveToEx */

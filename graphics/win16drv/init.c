@@ -58,15 +58,16 @@ static const DC_FUNCTIONS WIN16DRV_Funcs =
     WIN16DRV_EnumDeviceFonts,        /* pEnumDeviceFonts */
     WIN16DRV_Escape,                 /* pEscape */
     NULL,                            /* pExcludeClipRect */
-    NULL,                            /* pExcludeVisRect */
     NULL,                            /* pExtFloodFill */
     WIN16DRV_ExtTextOut,             /* pExtTextOut */
+    NULL,                            /* pFillRgn */
+    NULL,                            /* pFrameRgn */
     WIN16DRV_GetCharWidth,           /* pGetCharWidth */
     NULL,                            /* pGetPixel */
     WIN16DRV_GetTextExtentPoint,     /* pGetTextExtentPoint */
     WIN16DRV_GetTextMetrics,         /* pGetTextMetrics */
     NULL,                            /* pIntersectClipRect */
-    NULL,                            /* pIntersectVisRect */
+    NULL,                            /* pInvertRgn */
     WIN16DRV_LineTo,                 /* pLineTo */
     NULL,                            /* pLoadOEMResource */
     WIN16DRV_MoveToEx,               /* pMoveToEx */

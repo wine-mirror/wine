@@ -6,8 +6,7 @@
  */
 
 #include "gdi.h"
-#include "metafiledrv.h"
-
+#include "dc.h"
 
 #define DC_GET_VAL_16( func_type, func_name, dc_field ) \
 func_type WINAPI func_name( HDC16 hdc ) \
@@ -56,61 +55,45 @@ BOOL WINAPI func_name( HDC hdc, LP##type pt ) \
     return TRUE; \
 }
 
-#define DC_SET_MODE_16( func_name, dc_field, min_val, max_val, meta_func ) \
-INT16 WINAPI func_name( HDC16 hdc, INT16 mode ) \
+#define DC_SET_MODE( func_name, dc_field, min_val, max_val ) \
+INT16 WINAPI func_name##16( HDC16 hdc, INT16 mode ) \
 { \
-    INT16 prevMode; \
-    DC * dc = (DC *) GDI_GetObjPtr( hdc, DC_MAGIC ); \
-    if ((mode < min_val) || (mode > max_val)) return 0; \
-    if (!dc) { \
-	dc = (DC *)GDI_GetObjPtr(hdc, METAFILE_DC_MAGIC); \
-	if (!dc) return 0; \
-	MFDRV_MetaParam1(dc, meta_func, mode); \
-	return 1; \
-    } \
-    prevMode = dc->dc_field; \
-    dc->dc_field = mode; \
-    return prevMode; \
-}
-
-#define DC_SET_MODE_32( func_name, dc_field, min_val, max_val, meta_func ) \
+    return func_name( hdc, mode ); \
+} \
+ \
 INT WINAPI func_name( HDC hdc, INT mode ) \
 { \
     INT prevMode; \
-    DC * dc = (DC *) GDI_GetObjPtr( hdc, DC_MAGIC ); \
+    DC *dc = DC_GetDCPtr( hdc ); \
+    if(!dc) return 0; \
     if ((mode < min_val) || (mode > max_val)) return 0; \
-    if (!dc) { \
-	dc = (DC *)GDI_GetObjPtr(hdc, METAFILE_DC_MAGIC); \
-	if (!dc) return 0; \
-	MFDRV_MetaParam1(dc, meta_func, mode); \
-	return 1; \
+    if (dc->funcs->p##func_name) { \
+	prevMode = dc->funcs->p##func_name( dc, mode ); \
+    } else { \
+        prevMode = dc->dc_field; \
+        dc->dc_field = mode; \
     } \
-    prevMode = dc->dc_field; \
-    dc->dc_field = mode; \
+    GDI_HEAP_UNLOCK( hdc ); \
     return prevMode; \
 }
 
 
-DC_SET_MODE_16( SetBkMode16, w.backgroundMode, TRANSPARENT,     /* GDI.2     */
-                OPAQUE, META_SETBKMODE )
-DC_SET_MODE_32( SetBkMode, w.backgroundMode, TRANSPARENT,     /* GDI32.306 */
-                OPAQUE, META_SETBKMODE )
-DC_SET_MODE_16( SetROP216, w.ROPmode, R2_BLACK, R2_WHITE,       /* GDI.4     */
-                META_SETROP2 )
-DC_SET_MODE_32( SetROP2, w.ROPmode, R2_BLACK, R2_WHITE,       /* GDI32.331 */
-                META_SETROP2 )
-DC_SET_MODE_16( SetRelAbs16, w.relAbsMode, ABSOLUTE, RELATIVE,  /* GDI.5     */
-                META_SETRELABS )
-DC_SET_MODE_32( SetRelAbs, w.relAbsMode, ABSOLUTE, RELATIVE,  /* GDI32.333 */
-                META_SETRELABS )
-DC_SET_MODE_16( SetPolyFillMode16, w.polyFillMode,              /* GDI.6     */
-                ALTERNATE, WINDING, META_SETPOLYFILLMODE )
-DC_SET_MODE_32( SetPolyFillMode, w.polyFillMode,              /* GDI32.330 */
-                ALTERNATE, WINDING, META_SETPOLYFILLMODE )
-DC_SET_MODE_16( SetStretchBltMode16, w.stretchBltMode,          /* GDI.7     */
-                BLACKONWHITE, COLORONCOLOR, META_SETSTRETCHBLTMODE )
-DC_SET_MODE_32( SetStretchBltMode, w.stretchBltMode,          /* GDI32.334 */
-                BLACKONWHITE, COLORONCOLOR, META_SETSTRETCHBLTMODE )
+
+/* GDI.2 GDI32.306 */
+DC_SET_MODE( SetBkMode, w.backgroundMode, TRANSPARENT, OPAQUE ) 
+
+/* GDI.4 GDI32.331 */
+DC_SET_MODE( SetROP2, w.ROPmode, R2_BLACK, R2_WHITE )
+
+/* GDI.5 GDI32.333 */
+DC_SET_MODE( SetRelAbs, w.relAbsMode, ABSOLUTE, RELATIVE )
+
+/* GDI.6 GDI32.330 */
+DC_SET_MODE( SetPolyFillMode, w.polyFillMode, ALTERNATE, WINDING )
+
+/* GDI.7 GDI32.334 */
+DC_SET_MODE( SetStretchBltMode, w.stretchBltMode, BLACKONWHITE, HALFTONE )
+
 DC_GET_VAL_16( COLORREF, GetBkColor16, w.backgroundColor )      /* GDI.75    */
 DC_GET_VAL_32( COLORREF, GetBkColor, w.backgroundColor )      /* GDI32.145 */
 DC_GET_VAL_16( INT16, GetBkMode16, w.backgroundMode )           /* GDI.76    */

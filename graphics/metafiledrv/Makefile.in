@@ -7,6 +7,7 @@ MODULE    = metafiledrv
 
 C_SRCS = \
 	bitblt.c \
+	dc.c \
 	graphics.c \
 	init.c \
 	mapping.c \

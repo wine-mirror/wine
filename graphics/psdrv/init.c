@@ -36,15 +36,16 @@ static const DC_FUNCTIONS PSDRV_Funcs =
     PSDRV_EnumDeviceFonts,           /* pEnumDeviceFonts */
     PSDRV_Escape,                    /* pEscape */
     NULL,                            /* pExcludeClipRect */
-    NULL,                            /* pExcludeVisRect */
     NULL,                            /* pExtFloodFill */
     PSDRV_ExtTextOut,                /* pExtTextOut */
+    NULL,                            /* pFillRgn */
+    NULL,                            /* pFrameRgn */
     PSDRV_GetCharWidth,              /* pGetCharWidth */
     NULL,                            /* pGetPixel */
     PSDRV_GetTextExtentPoint,        /* pGetTextExtentPoint */
     PSDRV_GetTextMetrics,            /* pGetTextMetrics */
     NULL,                            /* pIntersectClipRect */
-    NULL,                            /* pIntersectVisRect */
+    NULL,                            /* pInvertRgn */
     PSDRV_LineTo,                    /* pLineTo */
     NULL,                            /* pLoadOEMResource */
     PSDRV_MoveToEx,                  /* pMoveToEx */

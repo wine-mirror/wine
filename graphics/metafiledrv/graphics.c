@@ -318,6 +318,53 @@ MFDRV_PaintRgn( DC *dc, HRGN hrgn )
 
 
 /**********************************************************************
+ *          MFDRV_InvertRgn
+ */
+BOOL
+MFDRV_InvertRgn( DC *dc, HRGN hrgn )
+{
+    INT16 index;
+    index = MFDRV_CreateRegion( dc, hrgn );
+    if(index == -1)
+        return FALSE;
+    return MFDRV_MetaParam1( dc, META_INVERTREGION, index );
+}
+
+
+/**********************************************************************
+ *          MFDRV_FillRgn
+ */
+BOOL
+MFDRV_FillRgn( DC *dc, HRGN hrgn, HBRUSH hbrush )
+{
+    INT16 iRgn, iBrush;
+    iRgn = MFDRV_CreateRegion( dc, hrgn );
+    if(iRgn == -1)
+        return FALSE;
+    iBrush = MFDRV_CreateBrushIndirect( dc, hbrush );
+    if(iBrush == -1)
+        return FALSE;
+    return MFDRV_MetaParam2( dc, META_FILLREGION, iRgn, iBrush );
+}
+
+/**********************************************************************
+ *          MFDRV_FrameRgn
+ */
+BOOL
+MFDRV_FrameRgn( DC *dc, HRGN hrgn, HBRUSH hbrush, INT x, INT y )
+{
+    INT16 iRgn, iBrush;
+    iRgn = MFDRV_CreateRegion( dc, hrgn );
+    if(iRgn == -1)
+        return FALSE;
+    iBrush = MFDRV_CreateBrushIndirect( dc, hbrush );
+    if(iBrush == -1)
+        return FALSE;
+    return MFDRV_MetaParam4( dc, META_FRAMEREGION, iRgn, iBrush, x, y );
+}
+
+
+/**********************************************************************
  *          MFDRV_SetBkColor
  */
 COLORREF

@@ -6,7 +6,6 @@
 
 #include <stdlib.h>
 #include "dc.h"
-#include "metafiledrv.h"
 #include "region.h"
 #include "debug.h"
 #include "wine/winuser16.h"
@@ -150,27 +149,20 @@ INT16 WINAPI OffsetClipRgn16( HDC16 hdc, INT16 x, INT16 y )
  */
 INT WINAPI OffsetClipRgn( HDC hdc, INT x, INT y )
 {
-    DC * dc = (DC *) GDI_GetObjPtr( hdc, DC_MAGIC );
-    if (!dc) 
-    {
-	dc = (DC *)GDI_GetObjPtr(hdc, METAFILE_DC_MAGIC);
-	if (!dc) return ERROR;
-	MFDRV_MetaParam2(dc, META_OFFSETCLIPRGN, x, y);
-	GDI_HEAP_UNLOCK( hdc );
-	return NULLREGION;   /* ?? */
-    }
+    INT ret = SIMPLEREGION;
+    DC *dc = DC_GetDCPtr( hdc );
+    if (!dc) return ERROR;
 
     TRACE(clipping, "%04x %d,%d\n", hdc, x, y );
 
-    if (dc->w.hClipRgn)
-    {
-	INT ret = OffsetRgn( dc->w.hClipRgn, XLSTODS(dc,x), YLSTODS(dc,y));
+    if(dc->funcs->pOffsetClipRgn)
+        ret = dc->funcs->pOffsetClipRgn( dc, x, y );
+    else if (dc->w.hClipRgn) {
+        ret = OffsetRgn( dc->w.hClipRgn, XLSTODS(dc,x), YLSTODS(dc,y));
 	CLIPPING_UpdateGCRegion( dc );
-	GDI_HEAP_UNLOCK( hdc );
-	return ret;
     }
     GDI_HEAP_UNLOCK( hdc );
-    return SIMPLEREGION; /* Clip region == client area */
+    return ret;
 }
 
 
@@ -255,24 +247,22 @@ INT WINAPI ExcludeClipRect( HDC hdc, INT left, INT top,
                                 INT right, INT bottom )
 {
     INT ret;
-    DC * dc = (DC *) GDI_GetObjPtr( hdc, DC_MAGIC );
-    if (!dc) 
-    {
-	dc = (DC *)GDI_GetObjPtr(hdc, METAFILE_DC_MAGIC);
-	if (!dc) return ERROR;
-	MFDRV_MetaParam4(dc, META_EXCLUDECLIPRECT, left, top, right, bottom);
-	GDI_HEAP_UNLOCK( hdc );
-	return NULLREGION;   /* ?? */
-    }
-
-    left   = XLPTODP( dc, left );
-    right  = XLPTODP( dc, right );
-    top    = YLPTODP( dc, top );
-    bottom = YLPTODP( dc, bottom );
+    DC *dc = DC_GetDCPtr( hdc );
+    if (!dc) return ERROR;
 
     TRACE(clipping, "%04x %dx%d,%dx%d\n",
 	    hdc, left, top, right, bottom );
-    ret = CLIPPING_IntersectClipRect( dc, left, top, right, bottom, CLIP_EXCLUDE );
+
+    if(dc->funcs->pExcludeClipRect)
+        ret = dc->funcs->pExcludeClipRect( dc, left, top, right, bottom );
+    else {
+        left   = XLPTODP( dc, left );
+	right  = XLPTODP( dc, right );
+	top    = YLPTODP( dc, top );
+	bottom = YLPTODP( dc, bottom );
+
+	ret = CLIPPING_IntersectClipRect( dc, left, top, right, bottom, CLIP_EXCLUDE );
+    }
     GDI_HEAP_UNLOCK( hdc );
     return ret;
 }
@@ -295,24 +285,22 @@ INT WINAPI IntersectClipRect( HDC hdc, INT left, INT top,
                                   INT right, INT bottom )
 {
     INT ret;
-    DC * dc = (DC *) GDI_GetObjPtr( hdc, DC_MAGIC );
-    if (!dc) 
-    {
-	dc = (DC *)GDI_GetObjPtr(hdc, METAFILE_DC_MAGIC);
-	if (!dc) return ERROR;
-	MFDRV_MetaParam4(dc, META_INTERSECTCLIPRECT, left, top, right, bottom);
-	GDI_HEAP_UNLOCK( hdc );
-	return NULLREGION;   /* ?? */
-    }
-
-    left   = XLPTODP( dc, left );
-    right  = XLPTODP( dc, right );
-    top    = YLPTODP( dc, top );
-    bottom = YLPTODP( dc, bottom );
+    DC *dc = DC_GetDCPtr( hdc );
+    if (!dc) return ERROR;
 
     TRACE(clipping, "%04x %dx%d,%dx%d\n",
-	    hdc, left, top, right, bottom );
-    ret = CLIPPING_IntersectClipRect( dc, left, top, right, bottom, CLIP_INTERSECT );
+	  hdc, left, top, right, bottom );
+
+    if(dc->funcs->pIntersectClipRect)
+        ret = dc->funcs->pIntersectClipRect( dc, left, top, right, bottom );
+    else {
+        left   = XLPTODP( dc, left );
+	right  = XLPTODP( dc, right );
+	top    = YLPTODP( dc, top );
+	bottom = YLPTODP( dc, bottom );
+
+	ret = CLIPPING_IntersectClipRect( dc, left, top, right, bottom, CLIP_INTERSECT );
+    }
     GDI_HEAP_UNLOCK( hdc );
     return ret;
 }

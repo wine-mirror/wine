@@ -580,7 +580,13 @@ BOOL16 WINAPI FillRgn16( HDC16 hdc, HRGN16 hrgn, HBRUSH16 hbrush )
 BOOL WINAPI FillRgn( HDC hdc, HRGN hrgn, HBRUSH hbrush )
 {
     BOOL retval;
-    HBRUSH prevBrush = SelectObject( hdc, hbrush );
+    HBRUSH prevBrush;
+    DC * dc = DC_GetDCPtr( hdc );
+
+    if(dc->funcs->pFillRgn)
+        return dc->funcs->pFillRgn(dc, hrgn, hbrush);
+
+    prevBrush = SelectObject( hdc, hbrush );
     if (!prevBrush) return FALSE;
     retval = PaintRgn( hdc, hrgn );
     SelectObject( hdc, prevBrush );
@@ -604,7 +610,13 @@ BOOL16 WINAPI FrameRgn16( HDC16 hdc, HRGN16 hrgn, HBRUSH16 hbrush,
 BOOL WINAPI FrameRgn( HDC hdc, HRGN hrgn, HBRUSH hbrush,
                           INT nWidth, INT nHeight )
 {
-    HRGN tmp = CreateRectRgn( 0, 0, 0, 0 );
+    HRGN tmp;
+    DC *dc = DC_GetDCPtr( hdc );
+
+    if(dc->funcs->pFrameRgn)
+        return dc->funcs->pFrameRgn( dc, hrgn, hbrush, nWidth, nHeight );
+
+    tmp = CreateRectRgn( 0, 0, 0, 0 );
     if(!REGION_FrameRgn( tmp, hrgn, nWidth, nHeight )) return FALSE;
     FillRgn( hdc, tmp, hbrush );
     DeleteObject( tmp );
@@ -626,9 +638,17 @@ BOOL16 WINAPI InvertRgn16( HDC16 hdc, HRGN16 hrgn )
  */
 BOOL WINAPI InvertRgn( HDC hdc, HRGN hrgn )
 {
-    HBRUSH prevBrush = SelectObject( hdc, GetStockObject(BLACK_BRUSH) );
-    INT prevROP = SetROP2( hdc, R2_NOT );
-    BOOL retval = PaintRgn( hdc, hrgn );
+    HBRUSH prevBrush;
+    INT prevROP;
+    BOOL retval;
+    DC *dc = DC_GetDCPtr( hdc );
+
+    if(dc->funcs->pInvertRgn)
+        return dc->funcs->pInvertRgn( dc, hrgn );
+
+    prevBrush = SelectObject( hdc, GetStockObject(BLACK_BRUSH) );
+    prevROP = SetROP2( hdc, R2_NOT );
+    retval = PaintRgn( hdc, hrgn );
     SelectObject( hdc, prevBrush );
     SetROP2( hdc, prevROP );
     return retval;
