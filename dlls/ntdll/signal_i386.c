@@ -549,8 +549,16 @@ static void save_context( CONTEXT *context, const SIGCONTEXT *sigcontext )
     context->SegFs = fs;
 
     /* now restore a proper %fs for the fault handler */
-    if (!IS_SELECTOR_SYSTEM(CS_sig(sigcontext)))  /* 16-bit mode */
+    if (!IS_SELECTOR_SYSTEM(CS_sig(sigcontext)) ||
+        !IS_SELECTOR_SYSTEM(SS_sig(sigcontext)))  /* 16-bit mode */
     {
+        /*
+         * Win16 or DOS protected mode. Note that during switch 
+         * from 16-bit mode to linear mode, CS may be set to system 
+         * segment before FS is restored. Fortunately, in this case 
+         * SS is still non-system segment. This is why both CS and SS
+         * are checked.
+         */
         fs = SYSLEVEL_Win16CurrentTeb;
     }
 #ifdef __HAVE_VM86
@@ -1079,6 +1087,7 @@ static int set_handler( int sig, int have_sigaltstack, void (*func)() )
         sig_act.ksa_handler = func;
         sig_act.ksa_flags   = SA_RESTART;
         sig_act.ksa_mask    = (1 << (SIGINT-1)) |
+                              (1 << (SIGUSR2-1)) |
                               (1 << (SIGALRM-1));
         /* point to the top of the stack */
         sig_act.ksa_restorer = (char *)NtCurrentTeb()->signal_stack + SIGNAL_STACK_SIZE;
@@ -1088,6 +1097,7 @@ static int set_handler( int sig, int have_sigaltstack, void (*func)() )
     sig_act.sa_handler = func;
     sigemptyset( &sig_act.sa_mask );
     sigaddset( &sig_act.sa_mask, SIGINT );
+    sigaddset( &sig_act.sa_mask, SIGUSR2 );
     sigaddset( &sig_act.sa_mask, SIGALRM );
 
 #ifdef linux
