@@ -144,7 +144,7 @@ static char szUsage[] =
 void MAIN_Usage( char *name )
 {
     MESSAGE( szUsage, WINE_RELEASE_INFO, name );
-    exit(1);
+    ExitProcess(1);
 }
 
 /***********************************************************************
@@ -312,7 +312,8 @@ BOOL MAIN_ParseDebugOptions(char *options)
       MESSAGE("%-9s%c",debug_ch_name[i],
 	  (((i+2)%8==0)?'\n':' '));
   MESSAGE("\n\n");
-  exit(1);
+  ExitProcess(1);
+  return FALSE;
 }
 
 /***********************************************************************
@@ -697,7 +698,7 @@ void MAIN_ParseLanguageOption( char *arg )
     MESSAGE( "Invalid language specified '%s'. Supported languages are: ", arg );
     for (p = Languages; p->name; p++) MESSAGE( "%s ", p->name );
     MESSAGE( "\n" );
-    exit(1);
+    ExitProcess(1);
 }
 
 
@@ -714,7 +715,7 @@ void MAIN_ParseModeOption( char *arg )
     {
         MESSAGE( "Invalid mode '%s' specified.\n", arg);
         MESSAGE( "Valid modes are: 'standard', 'enhanced' (default).\n");
-	exit(1);
+	ExitProcess(1);
     }
 }
 
@@ -745,12 +746,12 @@ static void MAIN_ParseOptions( int *argc, char *argv[] )
         if (!strcmp( argv[i], "-v" ) || !strcmp( argv[i], "-version" ))
         {
             MESSAGE( "%s\n", WINE_RELEASE_INFO );
-            exit(0);
+            ExitProcess(0);
         }
         if (!strcmp( argv[i], "-h" ) || !strcmp( argv[i], "-help" ))
         {
             MAIN_Usage(argv[0]);
-            exit(0);
+            ExitProcess(0);
         }
     }
 }
