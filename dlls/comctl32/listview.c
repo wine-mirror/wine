@@ -289,7 +289,7 @@ static INT LISTVIEW_ProcessLetterKeys(LISTVIEW_INFO *, WPARAM, LPARAM);
 static BOOL LISTVIEW_KeySelection(LISTVIEW_INFO *, INT);
 static LRESULT LISTVIEW_GetItemState(LISTVIEW_INFO *, INT, UINT);
 static LRESULT LISTVIEW_SetItemState(LISTVIEW_INFO *, INT, LPLVITEMW);
-static void LISTVIEW_UpdateLargeItemLabelRect (LISTVIEW_INFO *, int, RECT*);
+static BOOL LISTVIEW_UpdateLargeItemLabelRect (LISTVIEW_INFO *, int, RECT*);
 static LRESULT LISTVIEW_GetColumnT(LISTVIEW_INFO *, INT, LPLVCOLUMNW, BOOL);
 static LRESULT LISTVIEW_VScroll(LISTVIEW_INFO *, INT, INT, HWND);
 static LRESULT LISTVIEW_HScroll(LISTVIEW_INFO *, INT, INT, HWND);
@@ -677,7 +677,7 @@ static BOOL notify_customdrawitem (LISTVIEW_INFO *infoPtr, HDC hdc, UINT iItem, 
     item.iItem = iItem;
     item.iSubItem = 0;
     item.mask = LVIF_PARAM;
-    LISTVIEW_GetItemT(infoPtr, &item, TRUE, TRUE);
+    if (!LISTVIEW_GetItemT(infoPtr, &item, TRUE, TRUE)) return FALSE;
 
     uItemState = 0;
 
@@ -955,7 +955,7 @@ static INT LISTVIEW_ProcessLetterKeys(LISTVIEW_INFO *infoPtr, WPARAM charCode, L
         item.iSubItem = 0;
         item.pszText = buffer;
         item.cchTextMax = COUNTOF(buffer);
-        ListView_GetItemW(infoPtr->hwndSelf, &item);
+        if (!LISTVIEW_GetItemW(infoPtr, &item, TRUE)) return 0;
 
         /* check for a match */
         if (lstrncmpiW(item.pszText,infoPtr->szSearchParam,infoPtr->nSearchParamLength) == 0) {
@@ -1248,7 +1248,7 @@ static BOOL LISTVIEW_GetItemMeasures(LISTVIEW_INFO *infoPtr, INT nItem,
 	lvItem.mask = LVIF_INDENT;
 	lvItem.iItem = nItem;
 	lvItem.iSubItem = 0;
-	LISTVIEW_GetItemW(infoPtr, &lvItem, TRUE);
+	if (!LISTVIEW_GetItemW(infoPtr, &lvItem, TRUE)) return FALSE;
 
 	/* do indent */
 	nIndent = infoPtr->iconSize.cx * lvItem.iIndent;
@@ -2985,9 +2985,10 @@ static inline BOOL LISTVIEW_FillBkgnd(LISTVIEW_INFO *infoPtr, HDC hdc, const REC
  * [I] RECT * : clipping rectangle
  *
  * RETURN:
- * None
+ *   Success: TRUE
+ *   Failure: FALSE
  */
-static void LISTVIEW_DrawSubItem(LISTVIEW_INFO *infoPtr, HDC hdc, INT nItem, 
+static BOOL LISTVIEW_DrawSubItem(LISTVIEW_INFO *infoPtr, HDC hdc, INT nItem, 
 		                 INT nSubItem, RECT rcItem, UINT align)
 {
     WCHAR szDispText[DISP_TEXT_SIZE];
@@ -3003,13 +3004,16 @@ static void LISTVIEW_DrawSubItem(LISTVIEW_INFO *infoPtr, HDC hdc, INT nItem,
     lvItem.cchTextMax = COUNTOF(szDispText);
     lvItem.pszText = szDispText;
     *lvItem.pszText = '\0';
-    LISTVIEW_GetItemW(infoPtr, &lvItem, TRUE);
+    if (!LISTVIEW_GetItemW(infoPtr, &lvItem, TRUE)) return FALSE;
+    
     TRACE("   lvItem=%s\n", debuglvitem_t(&lvItem, TRUE));
 
     if (lvItem.iImage) FIXME("Draw the image for the subitem\n");
     
     DrawTextW(hdc, lvItem.pszText, -1, &rcItem, 
 	      DT_SINGLELINE | DT_VCENTER | DT_WORD_ELLIPSIS | align);
+
+    return TRUE;
 }
 
 
@@ -3140,7 +3144,7 @@ static BOOL LISTVIEW_DrawLargeItem(LISTVIEW_INFO *infoPtr, HDC hdc, INT nItem, R
   lvItem.cchTextMax = DISP_TEXT_SIZE;
   lvItem.pszText = szDispText;
   *lvItem.pszText = '\0';
-  LISTVIEW_GetItemW(infoPtr, &lvItem, FALSE);
+  if (!LISTVIEW_GetItemW(infoPtr, &lvItem, FALSE)) return FALSE;
   TRACE("   lvItem=%s\n", debuglvitem_t(&lvItem, TRUE));
 
   /* now check if we need to update the focus rectangle */
@@ -4170,7 +4174,7 @@ static BOOL LISTVIEW_EndEditLabelT(LISTVIEW_INFO *infoPtr, LPWSTR pszText, BOOL 
     item.iSubItem = 0;
     item.mask = LVIF_PARAM | LVIF_STATE;
     item.stateMask = ~0;
-    ListView_GetItemW(infoPtr->hwndSelf, &item);
+    if (!LISTVIEW_GetItemW(infoPtr, &item, TRUE)) return FALSE;
     lvItemRef.hdr.iImage = item.iImage;
     lvItemRef.state = item.state;
     lvItemRef.lParam = item.lParam;
@@ -4252,7 +4256,7 @@ static HWND LISTVIEW_EditLabelT(LISTVIEW_INFO *infoPtr, INT nItem, BOOL isW)
     item.iSubItem = 0;
     item.mask = LVIF_PARAM | LVIF_STATE;
     item.stateMask = ~0;
-    ListView_GetItemW(infoPtr->hwndSelf, &item);
+    if (!LISTVIEW_GetItemW(infoPtr, &item, TRUE)) return FALSE;
     lvItemRef.hdr.iImage = item.iImage;
     lvItemRef.state = item.state;
     lvItemRef.lParam = item.lParam;
@@ -4266,7 +4270,7 @@ static HWND LISTVIEW_EditLabelT(LISTVIEW_INFO *infoPtr, INT nItem, BOOL isW)
   lvItem.cchTextMax = DISP_TEXT_SIZE;
   lvItem.pszText = szDispText;
   *lvItem.pszText = '\0';
-  LISTVIEW_GetItemT(infoPtr, &lvItem, FALSE, isW);
+  if (!LISTVIEW_GetItemT(infoPtr, &lvItem, FALSE, isW)) return FALSE;
 
   ZeroMemory(&dispInfo, sizeof(dispInfo));
   dispInfo.item.mask = 0;
@@ -5098,7 +5102,7 @@ static void LISTVIEW_GetIntegralLines(
  *
  * This appears to be weird, even in the Microsoft implementation.
  */
-static void LISTVIEW_UpdateLargeItemLabelRect (LISTVIEW_INFO *infoPtr, int nItem, RECT *rect)
+static BOOL LISTVIEW_UpdateLargeItemLabelRect (LISTVIEW_INFO *infoPtr, int nItem, RECT *rect)
 {
     HDC hdc = GetDC (infoPtr->hwndSelf);
     HFONT hOldFont = SelectObject (hdc, infoPtr->hFont);
@@ -5134,9 +5138,9 @@ static void LISTVIEW_UpdateLargeItemLabelRect (LISTVIEW_INFO *infoPtr, int nItem
     lvItem.iSubItem = 0;
     /* We will specify INTERNAL and so will receive back a const
      * pointer to the text, rather than specifying a buffer to which
-     * to copy it.
+     * to copy it. FIXME: what about OWNERDRAW???
      */
-    LISTVIEW_GetItemW (infoPtr, &lvItem, TRUE);
+    if (!LISTVIEW_GetItemW(infoPtr, &lvItem, TRUE)) return FALSE;
 
     InflateRect(&rcText, -2, 0);
     DrawTextW (hdc, lvItem.pszText, -1, &rcText, uFormat);
@@ -5169,6 +5173,8 @@ static void LISTVIEW_UpdateLargeItemLabelRect (LISTVIEW_INFO *infoPtr, int nItem
 
     SelectObject (hdc, hOldFont);
     ReleaseDC (infoPtr->hwndSelf, hdc);
+
+    return TRUE;
 }
 
 /***
@@ -6450,7 +6456,7 @@ static LRESULT LISTVIEW_SetColumnWidth(LISTVIEW_INFO *infoPtr, INT iCol, INT cx)
         for(item_index = 0; item_index < GETITEMCOUNT(infoPtr); item_index++)
         {
           lvItem.iItem = item_index;
-          LISTVIEW_GetItemT(infoPtr, &lvItem, FALSE, TRUE);
+          if (!LISTVIEW_GetItemT(infoPtr, &lvItem, FALSE, TRUE)) continue;
           nLabelWidth = LISTVIEW_GetStringWidthT(infoPtr, lvItem.pszText, TRUE);
           cx = (nLabelWidth>cx)?nLabelWidth:cx;
         }
@@ -6514,7 +6520,7 @@ static LRESULT LISTVIEW_SetColumnWidth(LISTVIEW_INFO *infoPtr, INT iCol, INT cx)
         for(item_index = 0; item_index < GETITEMCOUNT(infoPtr); item_index++)
         {
           lvItem.iItem = item_index;
-          LISTVIEW_GetItemT(infoPtr, &lvItem, FALSE, TRUE);
+          if (!LISTVIEW_GetItemT(infoPtr, &lvItem, FALSE, TRUE)) continue;
           nLabelWidth = LISTVIEW_GetStringWidthT(infoPtr, lvItem.pszText, TRUE);
           nLabelWidth += TRAILING_PADDING;
           /* While it is possible for subitems to have icons, even MS messes
