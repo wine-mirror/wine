@@ -81,7 +81,6 @@ static void DEBUG_LocateDebugInfoFile(const char *filename, char *dbg_filename)
 static void*	DEBUG_MapDebugInfoFile(const char* name, DWORD offset, DWORD size,
 				       HANDLE* hFile, HANDLE* hMap)
 {
-    OFSTRUCT	ofs;
     DWORD	g_offset;	/* offset aligned on map granuality */
     DWORD	g_size;		/* size to map, with offset aligned */
     char*	ret;
@@ -92,7 +91,7 @@ static void*	DEBUG_MapDebugInfoFile(const char* name, DWORD offset, DWORD size,
        char 	filename[MAX_PATHNAME_LEN];
 
        DEBUG_LocateDebugInfoFile(name, filename);
-       if ((*hFile = OpenFile(filename, &ofs, OF_READ)) == HFILE_ERROR)
+       if ((*hFile = CreateFile(filename, GENERIC_READ, FILE_SHARE_READ, NULL, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL)) == INVALID_HANDLE_VALUE)
 	  return NULL;
     }
 

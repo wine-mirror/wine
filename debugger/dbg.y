@@ -225,7 +225,7 @@ walk_command:
     | tWALK tMODULE tEOL        { DEBUG_WalkModules(); }
     | tWALK tQUEUE tEOL         { DEBUG_WalkQueues(); }
     | tWALK tWND tEOL           { DEBUG_WalkWindows( 0, 0 ); }
-    | tWALK tWND tNUM tEOL      { DEBUG_WalkWindows( $3, 0 ); }
+    | tWALK tWND tNUM tEOL      { DEBUG_WalkWindows( (HWND)$3, 0 ); }
     | tWALK tPROCESS tEOL       { DEBUG_WalkProcess(); }
     | tWALK tTHREAD tEOL        { DEBUG_WalkThreads(); }
     | tWALK tMODREF expr_value tEOL   { DEBUG_WalkModref( $3 ); DEBUG_FreeExprMem(); }

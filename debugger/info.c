@@ -249,7 +249,7 @@ void DEBUG_InfoClass(const char* name)
    DEBUG_Printf(DBG_CHN_MESG,  "Class '%s':\n", name);
    DEBUG_Printf(DBG_CHN_MESG,  
 		"style=%08x  wndProc=%08lx\n"
-		"inst=%04x  icon=%04x  cursor=%04x  bkgnd=%04x\n"
+		"inst=%p  icon=%p  cursor=%p  bkgnd=%p\n"
 		"clsExtra=%d  winExtra=%d\n",
 		wca.style, (DWORD)wca.lpfnWndProc, wca.hInstance,
 		wca.hIcon, wca.hCursor, wca.hbrBackground,
@@ -265,7 +265,7 @@ static	void DEBUG_InfoClass2(HWND hWnd, const char* name)
 {
    WNDCLASSEXA	wca;
 
-   if (!GetClassInfoEx(GetWindowLong(hWnd, GWL_HINSTANCE), name, &wca)) {
+   if (!GetClassInfoEx((HINSTANCE)GetWindowLong(hWnd, GWL_HINSTANCE), name, &wca)) {
       DEBUG_Printf(DBG_CHN_MESG, "Cannot find class '%s'\n", name);
       return;
    }
@@ -273,7 +273,7 @@ static	void DEBUG_InfoClass2(HWND hWnd, const char* name)
    DEBUG_Printf(DBG_CHN_MESG,  "Class '%s':\n", name);
    DEBUG_Printf(DBG_CHN_MESG,  
 		"style=%08x  wndProc=%08lx\n"
-		"inst=%04x  icon=%04x  cursor=%04x  bkgnd=%04x\n"
+		"inst=%p  icon=%p  cursor=%p  bkgnd=%p\n"
 		"clsExtra=%d  winExtra=%d\n",
 		wca.style, (DWORD)wca.lpfnWndProc, wca.hInstance,
 		wca.hIcon, wca.hCursor, wca.hbrBackground,
@@ -371,16 +371,16 @@ void DEBUG_InfoWindow(HWND hWnd)
 
    /* FIXME missing fields: hmemTaskQ, hrgnUpdate, dce, flags, pProp, scroll */
    DEBUG_Printf(DBG_CHN_MESG,
-		"next=0x%04x  child=0x%04x  parent=0x%04x  owner=0x%04x  class='%s'\n"
-		"inst=%08lx  active=%04x  idmenu=%08lx\n"
+		"next=%p  child=%p  parent=%p  owner=%p  class='%s'\n"
+		"inst=%p  active=%p  idmenu=%08lx\n"
 		"style=%08lx  exstyle=%08lx  wndproc=%08lx  text='%s'\n"
-		"client=%d,%d-%d,%d  window=%d,%d-%d,%d sysmenu=%04x\n",
+		"client=%d,%d-%d,%d  window=%d,%d-%d,%d sysmenu=%p\n",
 		GetWindow(hWnd, GW_HWNDNEXT), 
 		GetWindow(hWnd, GW_CHILD),
 		GetParent(hWnd), 
 		GetWindow(hWnd, GW_OWNER),
 		clsName,
-		GetWindowLong(hWnd, GWL_HINSTANCE), 
+		(HINSTANCE)GetWindowLong(hWnd, GWL_HINSTANCE), 
 		GetLastActivePopup(hWnd),
 		GetWindowLong(hWnd, GWL_ID),
 		GetWindowLong(hWnd, GWL_STYLE),
@@ -425,7 +425,7 @@ void DEBUG_WalkWindows(HWND hWnd, int indent)
 	  strcpy(wndName, "-- Empty --");
        
        /* FIXME: missing hmemTaskQ */
-       DEBUG_Printf(DBG_CHN_MESG, "%*s%04x%*s", indent, "", hWnd, 13-indent,"");
+       DEBUG_Printf(DBG_CHN_MESG, "%*s%04x%*s", indent, "", (UINT)hWnd, 13-indent,"");
        DEBUG_Printf(DBG_CHN_MESG, "%-17.17s %08lx %08lx %.14s\n",
 		    clsName, GetWindowLong(hWnd, GWL_STYLE),
 		    GetWindowLong(hWnd, GWL_WNDPROC), wndName);

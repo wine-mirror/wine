@@ -584,13 +584,13 @@ void DEBUG_DumpModule(DWORD mod)
 {
     DBG_MODULE*	wmod;
 
-    if (!(wmod = DEBUG_FindModuleByHandle(mod, DMT_UNKNOWN)) &&
+    if (!(wmod = DEBUG_FindModuleByHandle((HANDLE)mod, DMT_UNKNOWN)) &&
 	!(wmod = DEBUG_FindModuleByAddr((void*)mod, DMT_UNKNOWN))) {
 	DEBUG_Printf(DBG_CHN_MESG, "'0x%08lx' is not a valid module handle or address\n", mod);
 	return;
     }
 
-    DEBUG_Printf(DBG_CHN_MESG, "Module '%s' (handle=0x%08x) 0x%08lx-0x%08lx (%s, debug info %s)\n",
+    DEBUG_Printf(DBG_CHN_MESG, "Module '%s' (handle=%p) 0x%08lx-0x%08lx (%s, debug info %s)\n",
 		 wmod->module_name, wmod->handle, (DWORD)wmod->load_addr,
 		 (DWORD)wmod->load_addr + wmod->size,
 		 DEBUG_GetModuleType(wmod->type), DEBUG_GetDbgInfo(wmod->dil));

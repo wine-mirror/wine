@@ -849,7 +849,7 @@ int DEBUG_main(int argc, char** argv)
 	HANDLE	hEvent;
 	DWORD	pid;
 
-	if ((pid = atoi(argv[1])) != 0 && (hEvent = atoi(argv[2])) != 0) {
+	if ((pid = atoi(argv[1])) != 0 && (hEvent = (HANDLE)atoi(argv[2])) != 0) {
 	    BOOL	ret = DEBUG_Attach(pid, TRUE);
 
 	    SetEvent(hEvent);
