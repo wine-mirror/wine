@@ -292,6 +292,14 @@ BOOL WINAPI GetPrinterDriverDirectoryA(LPSTR,LPSTR,DWORD,LPBYTE,DWORD,LPDWORD);
 BOOL WINAPI GetPrinterDriverDirectoryW(LPWSTR,LPWSTR,DWORD,LPBYTE,DWORD,LPDWORD);
 #define GetPrinterDriverDirectory WINELIB_NAME_AW(GetPrinterDriverDirectory)
 
+BOOL WINAPI GetPrinterDriverA(HANDLE hPrinter, LPSTR pEnvironment,
+			      DWORD Level, LPBYTE pDriverInfo,
+			      DWORD cbBuf, LPDWORD pcbNeeded);
+BOOL WINAPI GetPrinterDriverW(HANDLE hPrinter, LPWSTR pEnvironment,
+			      DWORD Level, LPBYTE pDriverInfo,
+			      DWORD cbBuf, LPDWORD pcbNeeded);
+#define GetPrinterDriver WINELIB_NAME_AW(GetPrinterDriver)
+
 #ifdef __cplusplus
 } /* extern "C" */
 #endif

@@ -256,13 +256,13 @@ DWORD ENUMPRINTERS_GetDWORDFromRegistryA(
  *    FALSE if there is still space left in the buffer.
  */
 BOOL ENUMPRINTERS_AddStringFromRegistryA(
-				HKEY  hPrinterSettings,  /* handle to registry key */
-				LPSTR KeyName,			 /* name key to retrieve string from*/
-                LPSTR* Dest,		     /* pointer to write string addres to */
-                LPBYTE lpbPrinters,      /* buffer which receives info*/
-                LPDWORD dwNextStringPos, /* pos in buffer for next string */
-			    DWORD  dwBufSize,        /* max size of buffer in bytes */
-                BOOL   bCalcSpaceOnly    /* TRUE if out-of-space in buffer */
+		HKEY  hPrinterSettings, /* handle to registry key */
+		LPSTR KeyName,	        /* name key to retrieve string from*/
+                LPSTR* Dest,	        /* pointer to write string addres to */
+                LPBYTE lpbPrinters,     /* buffer which receives info*/
+                LPDWORD dwNextStringPos,/* pos in buffer for next string */
+	        DWORD  dwBufSize,       /* max size of buffer in bytes */
+                BOOL   bCalcSpaceOnly   /* TRUE if out-of-space in buffer */
 ){                   
  DWORD DataSize=34;
  DWORD DataType;
@@ -597,8 +597,7 @@ BOOL  WINAPI EnumPrintersA(
 					DWORD dwType,      /* Types of print objects to enumerate */
                     LPSTR lpszName,    /* name of objects to enumerate */
 			        DWORD dwLevel,     /* type of printer info structure */
-                    LPBYTE lpbPrinters,/* buffer which receives info*/
-			        DWORD cbBuf,       /* max size of buffer in bytes */
+                    LPBYTE lpbPrinters,/* buffer which receives info*/		        DWORD cbBuf,       /* max size of buffer in bytes */
                     LPDWORD lpdwNeeded,/* pointer to var: # bytes used/needed */
 			        LPDWORD lpdwReturned/* number of entries returned */
                    )
@@ -1165,25 +1164,170 @@ BOOL WINAPI ResetPrinterW(HANDLE hPrinter, LPPRINTER_DEFAULTSW pDefault)
     return FALSE;
 }
 
+
+/*****************************************************************************
+ *    WINSPOOL_GetStringFromRegA
+ *
+ * Get ValueName from hkey storing result in str.  buflen is space left in str
+ */ 
+static BOOL WINSPOOL_GetStringFromRegA(HKEY hkey, LPCSTR ValueName, LPSTR ptr,
+				       DWORD buflen, DWORD *needed)
+{
+    DWORD sz = buflen, type;
+    LONG ret;
+
+    ret = RegQueryValueExA(hkey, ValueName, 0, &type, ptr, &sz);
+
+    if(ret != ERROR_SUCCESS && ret != ERROR_MORE_DATA) {
+        ERR("Got ret = %ld\n", ret);
+	return FALSE;
+    }
+    *needed = sz;
+    return TRUE;
+}
+
+
 /*****************************************************************************
  *          GetPrinter32A  [WINSPOOL.187]
  */
 BOOL WINAPI GetPrinterA(HANDLE hPrinter, DWORD Level, LPBYTE pPrinter,
 			DWORD cbBuf, LPDWORD pcbNeeded)
 {
-    FIXME("(%d,%ld,%p,%ld,%p): stub\n", hPrinter, Level, pPrinter,
-		  cbBuf, pcbNeeded);
+    OPENEDPRINTERA *lpOpenedPrinter;
+    DWORD size, needed = 0;
+    LPBYTE ptr = NULL;
+    HKEY hkeyPrinter, hkeyPrinters;
+    
+    TRACE("(%d,%ld,%p,%ld,%p)\n",hPrinter,Level,pPrinter,cbBuf, pcbNeeded);
 
-    *pcbNeeded = sizeof(PRINTER_INFO_2A);
-
-    if(cbBuf < *pcbNeeded) {
-        SetLastError(ERROR_INSUFFICIENT_BUFFER);
+    lpOpenedPrinter = WINSPOOL_GetOpenedPrinterA(hPrinter);
+    if(!lpOpenedPrinter) {
+        SetLastError(ERROR_INVALID_HANDLE);
 	return FALSE;
     }
-    memset(pPrinter, 0, cbBuf);
+    if(RegCreateKeyA(HKEY_LOCAL_MACHINE, Printers, &hkeyPrinters) !=
+       ERROR_SUCCESS) {
+        ERR("Can't create Printers key\n");
+	return FALSE;
+    }
+    if(RegOpenKeyA(hkeyPrinters, lpOpenedPrinter->lpsPrinterName, &hkeyPrinter)
+       != ERROR_SUCCESS) {
+        ERR("Can't find opened printer `%s' in registry\n",
+	    lpOpenedPrinter->lpsPrinterName);
+	RegCloseKey(hkeyPrinters);
+        SetLastError(ERROR_INVALID_PRINTER_NAME); /* ? */
+	return FALSE;
+    }
 
-    return TRUE;
+    switch(Level) {
+    case 2:
+      {
+        PRINTER_INFO_2A *pi2 = (PRINTER_INFO_2A *)pPrinter;
+
+        size = sizeof(PRINTER_INFO_2A);
+	if(size <= cbBuf) {
+	    ptr = pPrinter + size;
+	    cbBuf -= size;
+	    memset(pPrinter, 0, size);
+	} else
+	    cbBuf = 0;
+	needed = size;
+
+	WINSPOOL_GetStringFromRegA(hkeyPrinter, "Name", ptr, cbBuf, &size);
+	if(size <= cbBuf) {
+	    pi2->pPrinterName = ptr;
+	    ptr += size;
+	} else
+	    cbBuf = 0;
+	needed += size;
+
+	WINSPOOL_GetStringFromRegA(hkeyPrinter, "Port", ptr, cbBuf, &size);
+	if(size <= cbBuf) {
+	    pi2->pPortName = ptr;
+	    ptr += size;
+	} else
+	    cbBuf = 0;
+	needed += size;
+
+	WINSPOOL_GetStringFromRegA(hkeyPrinter, "Printer Driver", ptr, cbBuf,
+				   &size);
+	if(size <= cbBuf) {
+	    pi2->pDriverName = ptr;
+	    ptr += size;
+	} else
+	    cbBuf = 0;
+	needed += size;
+
+	WINSPOOL_GetStringFromRegA(hkeyPrinter, "Default DevMode", ptr, cbBuf,
+				   &size);
+	if(size <= cbBuf) {
+	    pi2->pDevMode = (LPDEVMODEA)ptr;
+	    ptr += size;
+	} else
+	    cbBuf = 0;
+	needed += size;
+
+	WINSPOOL_GetStringFromRegA(hkeyPrinter, "Print Processor", ptr, cbBuf,
+				   &size);
+	if(size <= cbBuf) {
+	    pi2->pPrintProcessor = ptr;
+	    ptr += size;
+	} else
+	    cbBuf = 0;
+	needed += size;
+
+	break;
+      }
+      
+    case 5:
+      {
+        PRINTER_INFO_5A *pi5 = (PRINTER_INFO_5A *)pPrinter;
+
+        size = sizeof(PRINTER_INFO_5A);
+	if(size <= cbBuf) {
+	    ptr = pPrinter + size;
+	    cbBuf -= size;
+	    memset(pPrinter, 0, size);
+	} else
+	    cbBuf = 0;
+	needed = size;
+
+	WINSPOOL_GetStringFromRegA(hkeyPrinter, "Name", ptr, cbBuf, &size);
+	if(size <= cbBuf) {
+	    pi5->pPrinterName = ptr;
+	    ptr += size;
+	} else
+	    cbBuf = 0;
+	needed += size;
+
+	WINSPOOL_GetStringFromRegA(hkeyPrinter, "Port", ptr, cbBuf, &size);
+	if(size <= cbBuf) {
+	    pi5->pPortName = ptr;
+	    ptr += size;
+	} else
+	    cbBuf = 0;
+	needed += size;
+
+	break;
+      }
+
+    default:
+        FIXME("Unimplemented level %ld\n", Level);
+        SetLastError(ERROR_INVALID_LEVEL);
+	RegCloseKey(hkeyPrinters);
+	RegCloseKey(hkeyPrinter);
+	return FALSE;
+    }
+
+    RegCloseKey(hkeyPrinter);
+    RegCloseKey(hkeyPrinters);
+
+    if(pcbNeeded) *pcbNeeded = needed;
+    if(cbBuf) return TRUE;
+    SetLastError(ERROR_INSUFFICIENT_BUFFER);
+    return FALSE;
 }
+
 
 /*****************************************************************************
  *          GetPrinter32W  [WINSPOOL.194]
@@ -1196,6 +1340,7 @@ BOOL WINAPI GetPrinterW(HANDLE hPrinter, DWORD Level, LPBYTE pPrinter,
     return FALSE;
 }
 
+
 /*****************************************************************************
  *          GetPrinterDriver32A  [WINSPOOL.190]
  */
@@ -1204,9 +1349,12 @@ BOOL WINAPI GetPrinterDriverA(HANDLE hPrinter, LPSTR pEnvironment,
 			      DWORD cbBuf, LPDWORD pcbNeeded)
 {
     OPENEDPRINTERA *lpOpenedPrinter;
-    LPSTR lpName;
-
-    FIXME("(%d,%s,%ld,%p,%ld,%p): stub\n",hPrinter,pEnvironment,
+    char DriverName[100];
+    DWORD ret, type, size, dw, needed = 0;
+    LPBYTE ptr = NULL;
+    HKEY hkeyPrinter, hkeyPrinters, hkeyDriver, hkeyDrivers;
+    
+    TRACE("(%d,%s,%ld,%p,%ld,%p)\n",hPrinter,pEnvironment,
          Level,pDriverInfo,cbBuf, pcbNeeded);
 
     lpOpenedPrinter = WINSPOOL_GetOpenedPrinterA(hPrinter);
@@ -1214,13 +1362,174 @@ BOOL WINAPI GetPrinterDriverA(HANDLE hPrinter, LPSTR pEnvironment,
         SetLastError(ERROR_INVALID_HANDLE);
 	return FALSE;
     }
-    lpName = lpOpenedPrinter->lpsPrinterName;
     if(pEnvironment) {
         FIXME("pEnvironment = `%s'\n", pEnvironment);
 	SetLastError(ERROR_INVALID_ENVIRONMENT);
 	return FALSE;
     }
-    
+    if(Level < 1 || Level > 3) {
+        SetLastError(ERROR_INVALID_LEVEL);
+	return FALSE;
+    }
+    if(RegCreateKeyA(HKEY_LOCAL_MACHINE, Printers, &hkeyPrinters) !=
+       ERROR_SUCCESS) {
+        ERR("Can't create Printers key\n");
+	return FALSE;
+    }
+    if(RegOpenKeyA(hkeyPrinters, lpOpenedPrinter->lpsPrinterName, &hkeyPrinter)
+       != ERROR_SUCCESS) {
+        ERR("Can't find opened printer `%s' in registry\n",
+	    lpOpenedPrinter->lpsPrinterName);
+	RegCloseKey(hkeyPrinters);
+        SetLastError(ERROR_INVALID_PRINTER_NAME); /* ? */
+	return FALSE;
+    }
+    size = sizeof(DriverName);
+    ret = RegQueryValueExA(hkeyPrinter, "Printer Driver", 0, &type, DriverName,
+			   &size);
+    RegCloseKey(hkeyPrinter);
+    RegCloseKey(hkeyPrinters);
+    if(ret != ERROR_SUCCESS) {
+        ERR("Can't get DriverName for printer `%s'\n",
+	    lpOpenedPrinter->lpsPrinterName);
+	return FALSE;
+    }
+    if(RegCreateKeyA(HKEY_LOCAL_MACHINE, Drivers, &hkeyDrivers) !=
+       ERROR_SUCCESS) {
+        ERR("Can't create Drivers key\n");
+	return FALSE;
+    }
+    if(RegOpenKeyA(hkeyDrivers, DriverName, &hkeyDriver)
+       != ERROR_SUCCESS) {
+        ERR("Can't find driver `%s' in registry\n", DriverName);
+	RegCloseKey(hkeyDrivers);
+        SetLastError(ERROR_UNKNOWN_PRINTER_DRIVER); /* ? */
+	return FALSE;
+    }
+
+    switch(Level) {
+    case 1:
+        size = sizeof(DRIVER_INFO_1A);
+	break;
+    case 2:
+        size = sizeof(DRIVER_INFO_2A);
+	break;
+    case 3:
+        size = sizeof(DRIVER_INFO_3A);
+	break;
+    default:
+        ERR("Invalid level\n");
+	return FALSE;
+    }
+
+    if(size <= cbBuf) {
+        ptr = pDriverInfo + size;
+	cbBuf -= size;
+    } else
+        cbBuf = 0;
+    needed = size;
+
+    size = strlen(DriverName) + 1;
+    if(size <= cbBuf) {
+        cbBuf -= size;
+        strcpy(ptr, DriverName);
+        if(Level == 1)
+	    ((DRIVER_INFO_1A *)pDriverInfo)->pName = ptr;
+	else
+	    ((DRIVER_INFO_2A *)pDriverInfo)->pName = ptr;    
+	ptr += size;
+    }
+    needed += size;
+
+    if(Level > 1) {
+        DRIVER_INFO_2A *di2 = (DRIVER_INFO_2A *)pDriverInfo;
+
+	size = sizeof(dw);
+        if(RegQueryValueExA(hkeyDriver, "Version", 0, &type, (PBYTE)&dw,
+			    &size) !=
+	   ERROR_SUCCESS)
+	    WARN("Can't get Version\n");
+	else if(cbBuf)
+	    di2->cVersion = dw;
+
+	size = strlen("Wine") + 1;  /* FIXME */
+	if(size <= cbBuf) {
+	    cbBuf -= size;
+	    strcpy(ptr, "Wine");
+	    di2->pEnvironment = ptr;
+	    ptr += size;
+	} else 
+	    cbBuf = 0;
+	needed += size;
+
+	WINSPOOL_GetStringFromRegA(hkeyDriver, "Driver", ptr, cbBuf, &size);
+	if(size <= cbBuf) {
+	    di2->pDriverPath = ptr;
+	    ptr += size;
+	} else
+	    cbBuf = 0;
+	needed += size;
+
+	WINSPOOL_GetStringFromRegA(hkeyDriver, "Data File", ptr, cbBuf, &size);
+	if(size <= cbBuf) {
+	    di2->pDataFile = ptr;
+	    ptr += size;
+	} else
+	    cbBuf = 0;
+	needed += size;
+
+	WINSPOOL_GetStringFromRegA(hkeyDriver, "Configuration File", ptr,
+				   cbBuf, &size);
+	if(size <= cbBuf) {
+	    di2->pConfigFile = ptr;
+	    ptr += size;
+	} else
+	    cbBuf = 0;
+	needed += size;
+    }
+
+    if(Level > 2) {
+        DRIVER_INFO_3A *di3 = (DRIVER_INFO_3A *)pDriverInfo;
+
+	WINSPOOL_GetStringFromRegA(hkeyDriver, "Help File", ptr, cbBuf, &size);
+	if(size <= cbBuf) {
+	    di3->pHelpFile = ptr;
+	    ptr += size;
+	} else
+	    cbBuf = 0;
+	needed += size;
+
+	WINSPOOL_GetStringFromRegA(hkeyDriver, "Dependent Files", ptr, cbBuf,
+				   &size);
+	if(size <= cbBuf) {
+	    di3->pDependentFiles = ptr;
+	    ptr += size;
+	} else
+	    cbBuf = 0;
+	needed += size;
+
+	WINSPOOL_GetStringFromRegA(hkeyDriver, "Monitor", ptr, cbBuf, &size);
+	if(size <= cbBuf) {
+	    di3->pMonitorName = ptr;
+	    ptr += size;
+	} else
+	    cbBuf = 0;
+	needed += size;
+
+	WINSPOOL_GetStringFromRegA(hkeyDriver, "DataType", ptr, cbBuf, &size);
+	if(size <= cbBuf) {
+	    di3->pDefaultDataType = ptr;
+	    ptr += size;
+	} else
+	    cbBuf = 0;
+	needed += size;
+    }
+    RegCloseKey(hkeyDriver);
+    RegCloseKey(hkeyDrivers);
+
+    if(pcbNeeded) *pcbNeeded = needed;
+    if(cbBuf) return TRUE;
+    SetLastError(ERROR_INSUFFICIENT_BUFFER);
     return FALSE;
 }
 

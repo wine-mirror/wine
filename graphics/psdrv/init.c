@@ -349,7 +349,7 @@ PRINTERINFO *PSDRV_FindPrinterInfo(LPCSTR name)
     res = DrvGetPrinterData16((LPSTR)name, (LPSTR)INT_PD_DEFAULT_DEVMODE, &type,
 			    NULL, 0, &needed );
 
-    if(res == ERROR_INVALID_PRINTER_NAME) {
+    if(res == ERROR_INVALID_PRINTER_NAME || needed != sizeof(DefaultDevmode)) {
         pi->Devmode = HeapAlloc( PSDRV_Heap, 0, sizeof(DefaultDevmode) );
 	memcpy(pi->Devmode, &DefaultDevmode, sizeof(DefaultDevmode) );
 	DrvSetPrinterData16((LPSTR)name, (LPSTR)INT_PD_DEFAULT_DEVMODE,
