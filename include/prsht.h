@@ -29,24 +29,6 @@ typedef INT  (CALLBACK *PFNPROPSHEETCALLBACK)(HWND, UINT, LPARAM);
 typedef BOOL (CALLBACK *LPFNADDPROPSHEETPAGE)(HPROPSHEETPAGE, LPARAM);
 typedef BOOL (CALLBACK *LPFNADDPROPSHEETPAGES)(LPVOID, LPFNADDPROPSHEETPAGE, LPARAM);
 
-/* c++ likes nameless unions whereas c doesnt */
-/* (used in property sheet structures)        */
-#if defined(__cplusplus) && !defined(NONAMELESSUNION)
-#define DUMMYUNIONNAME
-#define DUMMYUNIONNAME1
-#define DUMMYUNIONNAME2
-#define DUMMYUNIONNAME3
-#define DUMMYUNIONNAME4
-#define DUMMYUNIONNAME5
-#else /*  defined(__cplusplus) && !defined(NONAMELESSUNION) */
-#define DUMMYUNIONNAME   u
-#define DUMMYUNIONNAME1  u1
-#define DUMMYUNIONNAME2  u2
-#define DUMMYUNIONNAME3  u3
-#define DUMMYUNIONNAME4  u4
-#define DUMMYUNIONNAME5  u5
-#endif /* defined(__cplusplus) && !defined(NONAMELESSUNION) */
-
 /*
  * Property sheet support (structures)
  */

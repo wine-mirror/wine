@@ -56,7 +56,7 @@ VOID WINAPI GetSystemInfo(
 	/* choose sensible defaults ...
 	 * FIXME: perhaps overrideable with precompiler flags?
 	 */
-	cachedsi.u.x.wProcessorArchitecture	= PROCESSOR_ARCHITECTURE_INTEL;
+	cachedsi.u.s.wProcessorArchitecture     = PROCESSOR_ARCHITECTURE_INTEL;
 	cachedsi.dwPageSize 			= VIRTUAL_GetPageSize();
 
 	/* FIXME: better values for the two entries below... */

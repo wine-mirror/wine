@@ -1242,11 +1242,11 @@ typedef struct {
 	struct {
 	    LONG	lMinimum;	/* signed minimum for this control */
 	    LONG	lMaximum;	/* signed maximum for this control */
-	} l;
+	} DUMMYSTRUCTNAME;
 	struct {
 	    DWORD	dwMinimum;	/* unsigned minimum for this control */
 	    DWORD	dwMaximum;	/* unsigned maximum for this control */
-	} dw;
+	} DUMMYSTRUCTNAME1;
 	DWORD       	dwReserved[6];
     } Bounds;
     union {
@@ -1268,11 +1268,11 @@ typedef struct {
 	struct {
 	    LONG	lMinimum;
 	    LONG	lMaximum;
-	} l;
+	} DUMMYSTRUCTNAME;
 	struct {
 	    DWORD	dwMinimum;
 	    DWORD	dwMaximum;
-	} dw;
+	} DUMMYSTRUCTNAME1;
 	DWORD       	dwReserved[6];
     } Bounds;
     union {
@@ -1294,11 +1294,11 @@ typedef struct {
 	struct {
 	    LONG	lMinimum;
 	    LONG	lMaximum;
-	} l;
+	} DUMMYSTRUCTNAME;
 	struct {
 	    DWORD	dwMinimum;
 	    DWORD	dwMaximum;
-	} dw;
+	} DUMMYSTRUCTNAME1;
 	DWORD       	dwReserved[6];
     } Bounds;
     union {
@@ -1317,7 +1317,7 @@ typedef struct {
     union {
 	DWORD	dwControlID;	/* MIXER_GETLINECONTROLSF_ONEBYID */
 	DWORD	dwControlType;	/* MIXER_GETLINECONTROLSF_ONEBYTYPE */
-    } u;
+    } DUMMYUNIONNAME;
     DWORD	cControls;	/* count of controls pmxctrl points to */
     DWORD	cbmxctrl;	/* size in bytes of _one_ MIXERCONTROL */
     LPMIXERCONTROL16	pamxctrl;/* pointer to first MIXERCONTROL array */
@@ -1329,7 +1329,7 @@ typedef struct {
     union {
 	DWORD	dwControlID;
 	DWORD	dwControlType;
-    } u;
+    } DUMMYUNIONNAME;
     DWORD	cControls;
     DWORD	cbmxctrl;
     LPMIXERCONTROLA	pamxctrl;
@@ -1341,7 +1341,7 @@ typedef struct {
     union {
 	DWORD	dwControlID;
 	DWORD	dwControlType;
-    } u;
+    } DUMMYUNIONNAME;
     DWORD	cControls;
     DWORD	cbmxctrl;
     LPMIXERCONTROLW	pamxctrl;
@@ -1357,7 +1357,7 @@ typedef struct {
     union {
         HWND16	hwndOwner;	/* for MIXER_SETCONTROLDETAILSF_CUSTOM */
         DWORD	cMultipleItems;	/* if _MULTIPLE, the number of items per channel */
-    } u;
+    } DUMMYUNIONNAME;
     DWORD	cbDetails;	/* size of _one_ details_XX struct */
     LPVOID	paDetails;	/* pointer to array of details_XX structs */
 } MIXERCONTROLDETAILS16,*LPMIXERCONTROLDETAILS16;
@@ -1369,7 +1369,7 @@ typedef struct {
     union {
         HWND	hwndOwner;
         DWORD	cMultipleItems;
-    } u;
+    } DUMMYUNIONNAME;
     DWORD	cbDetails;
     LPVOID	paDetails;
 } MIXERCONTROLDETAILS,*LPMIXERCONTROLDETAILS;

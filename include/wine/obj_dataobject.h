@@ -10,12 +10,6 @@
 #include "wine/obj_moniker.h"
 #include "wine/obj_storage.h"
 
-#if defined(__cplusplus) && !defined(NONAMELESSUNION)
-#define DUMMYUNIONNAME
-#else /* defined(__cplusplus) && !defined(NONAMELESSUNION) */
-#define DUMMYUNIONNAME u
-#endif /* defined(__cplusplus) && !defined(NONAMELESSUNION) */
-
 #ifdef __cplusplus
 extern "C" {
 #endif /* defined(__cplusplus) */

@@ -20,10 +20,11 @@ extern "C" {
 #undef Status	/* conflict with X11-includes*/
 
 typedef struct _IO_STATUS_BLOCK 
-{	union 
-	{ NTSTATUS Status;
+{
+	union {
+	  NTSTATUS Status;
 	  PVOID Pointer;
-	} u;
+	} DUMMYUNIONNAME;
 	ULONG_PTR Information;
 } IO_STATUS_BLOCK, *PIO_STATUS_BLOCK;    
 

@@ -798,12 +798,12 @@ DECL_WINELIB_TYPE_AW(LOCALE_ENUMPROC)
 typedef struct tagSYSTEM_INFO
 {
     union {
-    	DWORD	dwOemId;
+	DWORD	dwOemId; /* Obsolete field - do not use */
 	struct {
 		WORD wProcessorArchitecture;
 		WORD wReserved;
-	} x;
-    } u;
+	} DUMMYSTRUCTNAME;
+    } DUMMYUNIONNAME;
     DWORD	dwPageSize;
     LPVOID	lpMinimumApplicationAddress;
     LPVOID	lpMaximumApplicationAddress;

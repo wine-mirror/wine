@@ -61,11 +61,6 @@ typedef struct ISupportErrorInfo ISupportErrorInfo,*LPSUPPORTERRORINFO;
 /*****************************************************************************
  * Automation data types
  */
-#if defined(__cplusplus) && !defined(NONAMELESSUNION)
-#define DUMMYUNIONNAME 
-#else /* defined(__cplusplus) && !defined(NONAMELESSUNION) */
-#define DUMMYUNIONNAME u
-#endif /* defined(__cplusplus) && !defined(NONAMELESSUNION) */
 
 /*****************************************************************
  *  SafeArray defines and structs 

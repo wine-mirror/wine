@@ -387,8 +387,8 @@ static	DWORD	MIX_GetLineControls(WORD wDevID, LPMIXERLINECONTROLSA lpMlc, DWORD 
      * FIXME: sounds like MIXERCONTROL_CONTROLTYPE_VOLUME is always between 0 and 65536...
      * look at conversions done in (Get|Set)ControlDetails to stay in [0, 100] range
      */
-    mc->Bounds.dw.dwMinimum = 0;
-    mc->Bounds.dw.dwMaximum = 100;
+    mc->Bounds.s1.dwMinimum = 0;
+    mc->Bounds.s1.dwMaximum = 100;
     memset(&mc->Metrics, 0, sizeof(mc->Metrics));
     mc->Metrics.cSteps = 0;
     return MMSYSERR_NOERROR;
