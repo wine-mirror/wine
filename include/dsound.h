@@ -265,7 +265,7 @@ typedef const DSCBUFFERDESC *LPCDSCBUFFERDESC;
 
 typedef struct _DSCCAPS
 {
-  DWORD DwSize;
+  DWORD dwSize;
   DWORD dwFlags;
   DWORD dwFormats;
   DWORD dwChannels;
@@ -280,6 +280,19 @@ typedef struct _DSCBCAPS
   DWORD dwReserved;
 } DSCBCAPS, *LPDSCBCAPS;
 typedef const DSCBCAPS *LPCDSCBCAPS;
+
+#define DSCCAPS_EMULDRIVER          DSCAPS_EMULDRIVER
+#define DSCCAPS_CERTIFIED           DSCAPS_CERTIFIED
+
+#define DSCBCAPS_WAVEMAPPED         0x80000000
+#define DSCBCAPS_CTRLFX             0x00000200
+
+#define DSCBLOCL_ENTIREBUFFER       0x00000001
+#define DSCBSTART_LOOPING           0x00000001
+#define DSCBPN_OFFSET_STOP          0xffffffff
+
+#define DSCBSTATUS_CAPTURING        0x00000001
+#define DSCBSTATUS_LOOPING          0x00000002
 
 #ifndef __LPCGUID_DEFINED__
 #define __LPCGUID_DEFINED__
@@ -510,8 +523,8 @@ ICOM_DEFINE(IDirectSoundCapture,IUnknown)
 #define IDirectSoundCapture_AddRef(p)                    ICOM_CALL (AddRef,p)
 #define IDirectSoundCapture_Release(p)                   ICOM_CALL (Release,p)
 #define IDirectSoundCapture_CreateCaptureBuffer(p,a,b,c) ICOM_CALL3(CreateCaptureBuffer,p,a,b,c)
-#define IDirectSoundCapture_GetCaps(p,a)                 ICOM_CALL (GetCaps,p,a)
-#define IDirectSoundCapture_Initialize(p,a)              ICOM_CALL (Initialize,p,a)
+#define IDirectSoundCapture_GetCaps(p,a)                 ICOM_CALL1(GetCaps,p,a)
+#define IDirectSoundCapture_Initialize(p,a)              ICOM_CALL1(Initialize,p,a)
 
 /*****************************************************************************
  * IDirectSoundCaptureBuffer interface
@@ -537,6 +550,7 @@ ICOM_DEFINE(IDirectSoundCaptureBuffer,IUnknown)
 #define IDirectSoundCaptureBuffer_QueryInterface(p,a,b)     ICOM_CALL2(QueryInterface,p,a,b)
 #define IDirectSoundCaptureBuffer_AddRef(p)                 ICOM_CALL (AddRef,p)
 #define IDirectSoundCaptureBuffer_Release(p)                ICOM_CALL (Release,p)
+#define IDirectSoundCaptureBuffer_GetCaps(p,a)              ICOM_CALL1(GetCaps,p,a)
 #define IDirectSoundCaptureBuffer_GetCurrentPosition(p,a,b) ICOM_CALL2(GetCurrentPosition,p,a,b)
 #define IDirectSoundCaptureBuffer_GetFormat(p,a,b,c)        ICOM_CALL3(GetFormat,p,a,b,c)
 #define IDirectSoundCaptureBuffer_GetStatus(p,a)            ICOM_CALL1(GetStatus,p,a)
@@ -563,6 +577,7 @@ ICOM_DEFINE(IDirectSoundCaptureBuffer8,IDirectSoundCaptureBuffer)
 #define IDirectSoundCaptureBuffer8_QueryInterface(p,a,b)      ICOM_CALL2(QueryInterface,p,a,b)
 #define IDirectSoundCaptureBuffer8_AddRef(p)                  ICOM_CALL (AddRef,p)
 #define IDirectSoundCaptureBuffer8_Release(p)                 ICOM_CALL (Release,p)
+#define IDirectSoundCaptureBuffer8_GetCaps(p,a)               ICOM_CALL1(GetCaps,p,a)
 #define IDirectSoundCaptureBuffer8_GetCurrentPosition(p,a,b)  ICOM_CALL2(GetCurrentPosition,p,a,b)
 #define IDirectSoundCaptureBuffer8_GetFormat(p,a,b,c)         ICOM_CALL3(GetFormat,p,a,b,c)
 #define IDirectSoundCaptureBuffer8_GetStatus(p,a)             ICOM_CALL1(GetStatus,p,a)

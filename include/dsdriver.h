@@ -38,6 +38,15 @@ typedef struct IDsDriverBuffer IDsDriverBuffer,*PIDSDRIVERBUFFER;
 DEFINE_GUID(IID_IDsDriverPropertySet,	0x0F6F2E8E0, 0xD842, 0x11D0, 0x8F, 0x75, 0x00, 0xC0, 0x4F, 0xC2, 0x8A, 0xCA);
 typedef struct IDsDriverPropertySet IDsDriverPropertySet,*PIDSDRIVERPROPERTYSET;
 
+DEFINE_GUID(IID_IDsDriverNotify,	0x00363EF44, 0x3B57, 0x11D3, 0xAC, 0x79, 0x00, 0x10, 0x5A, 0x01, 0x7f, 0xe1);
+typedef struct IDsDriverNotify IDsDriverNotify,*PIDSDRIVERNOTIFY;
+
+DEFINE_GUID(IID_IDsCaptureDriver,	0x03DD10C47, 0x74FB, 0x11D3, 0x90, 0x49, 0xCB, 0xB4, 0xB3, 0x2E, 0xAA, 0x08);
+typedef struct IDsCaptureDriver IDsCaptureDriver,*PIDSCDRIVER;
+
+DEFINE_GUID(IID_IDsCaptureDriverBuffer,	0x03DD10C48, 0x74FB, 0x11D3, 0x90, 0x49, 0xCB, 0xB4, 0xB3, 0x2E, 0xAA, 0x08);
+typedef struct IDsCaptureDriverBuffer IDsCaptureDriverBuffer,*PIDSCDRIVERBUFFER;
+
 #define DSDDESC_DOMMSYSTEMOPEN		0x00000001
 #define DSDDESC_DOMMSYSTEMSETFORMAT	0x00000002
 #define DSDDESC_USESYSTEMMEMORY		0x00000004
@@ -111,6 +120,14 @@ typedef union _DSPROPERTY
     } DUMMYSTRUCTNAME;
     ULONGLONG	Alignment;
 } DSPROPERTY,*PDSPROPERTY;
+
+typedef struct _DSCDRIVERCAPS
+{
+    DWORD	dwSize;
+    DWORD	dwFlags;
+    DWORD	dwFormats;
+    DWORD	dwChannels;
+} DSCDRIVERCAPS,*PDSCDRIVERCAPS;
 
 /*****************************************************************************
  * IDsDriver interface
@@ -233,6 +250,83 @@ typedef enum
 {
     DSPROPERTY_DIRECTSOUNDSPEAKERCONFIG_SPEAKERCONFIG
 } DSPROPERTY_DIRECTSOUNDSPEAKERCONFIG;
+
+/*****************************************************************************
+ * IDsDriverNotify interface
+ */
+#define ICOM_INTERFACE IDsDriverNotify
+#define IDsDriverNotify_METHODS \
+    ICOM_METHOD2(HRESULT,SetNotificationPositions,	DWORD,dwPositionNotifies,LPCDSBPOSITIONNOTIFY,pcPositionNotifies)
+#define IDsDriverNotify_IMETHODS \
+    IUnknown_METHODS \
+    IDsDriverNotify_METHODS
+ICOM_DEFINE(IDsDriverNotify,IUnknown)
+#undef ICOM_INTERFACE
+
+    /*** IUnknown methods ***/
+#define IDsDriverNotify_QueryInterface(p,a,b)		ICOM_CALL2(QueryInterface,p,a,b)
+#define IDsDriverNotify_AddRef(p)			ICOM_CALL (AddRef,p)
+#define IDsDriverNotify_Release(p)			ICOM_CALL (Release,p)
+    /*** IDsDriverNotify methods ***/
+#define IDsDriverNotify_SetNotificationPositions(p,a,b)	ICOM_CALL2(SetNotificationPositions,p,a,b)
+
+/*****************************************************************************
+ * IDsCaptureDriver interface
+ */
+#define ICOM_INTERFACE IDsCaptureDriver
+#define IDsCaptureDriver_METHODS \
+    ICOM_METHOD1(HRESULT,GetDriverDesc,		PDSDRIVERDESC,pDsDriverDesc) \
+    ICOM_METHOD (HRESULT,Open) \
+    ICOM_METHOD (HRESULT,Close) \
+    ICOM_METHOD1(HRESULT,GetCaps,		PDSDRIVERCAPS,pDsDrvCaps) \
+    ICOM_METHOD6(HRESULT,CreateCaptureBuffer,	LPWAVEFORMATEX,pwfx,DWORD,dwFlags,DWORD,dwCardAddress,LPDWORD,pdwcbBufferSize,LPBYTE*,ppbBuffer,LPVOID*,ppvObj)
+#define IDsCaptureDriver_IMETHODS \
+    IUnknown_METHODS \
+    IDsCaptureDriver_METHODS
+ICOM_DEFINE(IDsCaptureDriver,IUnknown)
+#undef ICOM_INTERFACE
+
+    /*** IUnknown methods ***/
+#define IDsCaptureDriver_QueryInterface(p,a,b)		ICOM_CALL2(QueryInterface,p,a,b)
+#define IDsCaptureDriver_AddRef(p)			ICOM_CALL (AddRef,p)
+#define IDsCaptureDriver_Release(p)			ICOM_CALL (Release,p)
+    /*** IDsCaptureDriver methods ***/
+#define IDsCaptureDriver_GetDriverDesc(p,a)		ICOM_CALL1(GetDriverDesc,p,a)
+#define IDsCaptureDriver_Open(p)			ICOM_CALL (Open,p)
+#define IDsCaptureDriver_Close(p)			ICOM_CALL (Close,p)
+#define IDsCaptureDriver_GetCaps(p,a)			ICOM_CALL1(GetCaps,p,a)
+#define IDsCaptureDriver_CreateCaptureBuffer(p,a,b,c,d,e,f) ICOM_CALL6(CreateCaptureBuffer,p,a,b,c,d,e,f)
+
+/*****************************************************************************
+ * IDsCaptureDriverBuffer interface
+ */
+#define ICOM_INTERFACE IDsCaptureDriverBuffer
+#define IDsCaptureDriverBuffer_METHODS \
+    ICOM_METHOD7(HRESULT,Lock,		LPVOID*,ppvAudio1,LPDWORD,pdwLen1,LPVOID*,ppvAudio2,LPDWORD,pdwLen2,DWORD,dwWritePosition,DWORD,dwWriteLen,DWORD,dwFlags) \
+    ICOM_METHOD4(HRESULT,Unlock,	LPVOID,pvAudio1,DWORD,dwLen1,LPVOID,pvAudio2,DWORD,dwLen2) \
+    ICOM_METHOD1(HRESULT,SetFormat,	LPWAVEFORMATEX,pwfxToSet) \
+    ICOM_METHOD2(HRESULT,GetPosition,	LPDWORD,lpdwCurrentPlayCursor,LPDWORD,lpdwCurrentWriteCursor) \
+    ICOM_METHOD1(HRESULT,GetStatus,	LPDWORD,lpdwStatus) \
+    ICOM_METHOD1(HRESULT,Start,		DWORD,dwFlags) \
+    ICOM_METHOD (HRESULT,Stop)
+#define IDsCaptureDriverBuffer_IMETHODS \
+    IUnknown_METHODS \
+    IDsCaptureDriverBuffer_METHODS
+ICOM_DEFINE(IDsCaptureDriverBuffer,IUnknown)
+#undef ICOM_INTERFACE
+
+    /*** IUnknown methods ***/
+#define IDsCaptureDriverBuffer_QueryInterface(p,a,b)	ICOM_CALL2(QueryInterface,p,a,b)
+#define IDsCaptureDriverBuffer_AddRef(p)		ICOM_CALL (AddRef,p)
+#define IDsCaptureDriverBuffer_Release(p)		ICOM_CALL (Release,p)
+    /*** IDsCaptureDriverBuffer methods ***/
+#define IDsCaptureDriverBuffer_Lock(p,a,b,c,d,e,f,g)	ICOM_CALL7(Lock,p,a,b,c,d,e,f,g)
+#define IDsCaptureDriverBuffer_Unlock(p,a,b,c,d)	ICOM_CALL4(Unlock,p,a,b,c,d)
+#define IDsCaptureDriverBuffer_SetFormat(p,a)		ICOM_CALL1(SetFormat,p,a)
+#define IDsCaptureDriverBuffer_GetPosition(p,a,b)	ICOM_CALL2(GetPosition,p,a,b)
+#define IDsCaptureDriverBuffer_GetStatus(p,a)		ICOM_CALL1(GetStatus,p,a)
+#define IDsCaptureDriverBuffer_Start(p,a)		ICOM_CALL1(Start,p,a)
+#define IDsCaptureDriverBuffer_Stop(p)			ICOM_CALL (Stop,p)
 
 #ifdef __cplusplus
 } /* extern "C" */
