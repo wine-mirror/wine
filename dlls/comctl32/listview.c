@@ -48,6 +48,7 @@ DEFAULT_DEBUG_CHANNEL(listview);
 
 /* Some definitions for inline edit control */    
 typedef BOOL (*EditlblCallbackW)(HWND, LPWSTR, DWORD);
+typedef BOOL (*EditlblCallbackA)(HWND, LPWSTR, DWORD);
 
 typedef struct tagEDITLABEL_ITEM
 {
@@ -167,12 +168,11 @@ typedef struct tagLISTVIEW_INFO
  */
 /* retrieve the number of items in the listview */
 #define GETITEMCOUNT(infoPtr) ((infoPtr)->hdpaItems->nItemCount)
-#define LVN_GETDISPINFOT(isW) ( (isW) ? LVN_GETDISPINFOW : LVN_GETDISPINFOA )
 #define HDM_INSERTITEMT(isW) ( (isW) ? HDM_INSERTITEMW : HDM_INSERTITEMA )
 
-HWND CreateEditLabelW(LPCWSTR text, DWORD style, INT x, INT y, 
+HWND CreateEditLabelT(LPCWSTR text, DWORD style, INT x, INT y, 
 	INT width, INT height, HWND parent, HINSTANCE hinst, 
-	EditlblCallbackW EditLblCb, DWORD param);
+	EditlblCallbackW EditLblCb, DWORD param, BOOL isW);
  
 /* 
  * forward declarations 
@@ -214,6 +214,7 @@ static BOOL LISTVIEW_ToggleSelection(HWND, INT);
 static VOID LISTVIEW_UnsupportedStyles(LONG lStyle);
 static HWND LISTVIEW_EditLabelT(HWND hwnd, INT nItem, BOOL isW);
 static BOOL LISTVIEW_EndEditLabelW(HWND hwnd, LPWSTR pszText, DWORD nItem);
+static BOOL LISTVIEW_EndEditLabelA(HWND hwnd, LPSTR pszText, DWORD nItem);
 static LRESULT LISTVIEW_Command(HWND hwnd, WPARAM wParam, LPARAM lParam);
 static LRESULT LISTVIEW_SortItems(HWND hwnd, PFNLVCOMPARE pfnCompare, LPARAM lParamSort);
 static LRESULT LISTVIEW_GetStringWidthT(HWND hwnd, LPCWSTR lpszText, BOOL isW);
@@ -284,6 +285,29 @@ static inline LPWSTR textdupTtoW(LPCWSTR text, BOOL isW)
 static inline void textfreeT(LPWSTR wstr, BOOL isW)
 {
   if (!isW && wstr) HeapFree(GetProcessHeap(), 0, wstr);
+}
+
+/*
+ * dest is a pointer to a Unicode string
+ * src is a pointer to a string (Unicode if isW, ANSI if !isW)
+ */
+static inline BOOL textsetptrT(LPWSTR *dest, LPWSTR src, BOOL isW)
+{
+    LPWSTR pszText = textdupTtoW(src, isW);
+    BOOL bResult = TRUE;
+    if (*dest == LPSTR_TEXTCALLBACKW) *dest = NULL;
+    bResult = Str_SetPtrW(dest, pszText);
+    textfreeT(pszText, isW);
+    return bResult;
+}
+
+static inline LRESULT CallWindowProcT(WNDPROC proc, HWND hwnd, UINT uMsg, 
+		                      WPARAM wParam, LPARAM lParam, BOOL isW)
+{
+  if (isW)
+    return CallWindowProcW(proc, hwnd, uMsg, wParam, lParam);
+  else
+    return CallWindowProcA(proc, hwnd, uMsg, wParam, lParam);
 }
 
 static inline BOOL notify(HWND self, INT code, LPNMHDR pnmh)
@@ -2374,12 +2398,7 @@ static BOOL LISTVIEW_InitItemT(HWND hwnd, LISTVIEW_ITEM *lpItem,
         lpItem->pszText = LPSTR_TEXTCALLBACKW;
       }
       else 
-      {
-	LPWSTR pszText = textdupTtoW(lpLVItem->pszText, isW);
-        if (lpItem->pszText == LPSTR_TEXTCALLBACKW) lpItem->pszText = NULL;
-        bResult = Str_SetPtrW(&lpItem->pszText, pszText);
-	textfreeT(pszText, isW);
-      }
+	bResult = textsetptrT(&lpItem->pszText, lpLVItem->pszText, isW);
     }
   }
 
@@ -2436,12 +2455,7 @@ static BOOL LISTVIEW_InitSubItemT(HWND hwnd, LISTVIEW_SUBITEM *lpSubItem,
           lpSubItem->pszText = LPSTR_TEXTCALLBACKW;
         }
         else 
-        {
-	  LPWSTR pszText = textdupTtoW(lpLVItem->pszText, isW);
-          if(lpSubItem->pszText == LPSTR_TEXTCALLBACKW) lpSubItem->pszText=NULL;
-          bResult = Str_SetPtrW(&lpSubItem->pszText, pszText);
-	  textfreeT(pszText, isW);
-        }
+	  bResult = textsetptrT(&lpSubItem->pszText, lpLVItem->pszText, isW);
       }
     }
   }
@@ -4144,12 +4158,13 @@ static LRESULT LISTVIEW_GetEditControl(HWND hwnd)
  * [I] HWND : window handle
  * [I] LPSTR : modified text
  * [I] DWORD : item index
+ * [I] isW : TRUE if psxText is Unicode, FALSE if it's ANSI
  *
  * RETURN:
  *   SUCCESS : TRUE
  *   FAILURE : FALSE
  */
-static BOOL LISTVIEW_EndEditLabelW(HWND hwnd, LPWSTR pszText, DWORD nItem)
+static BOOL LISTVIEW_EndEditLabelT(HWND hwnd, LPWSTR pszText, DWORD nItem, BOOL isW)
 {
   LISTVIEW_INFO *infoPtr = (LISTVIEW_INFO *)GetWindowLongW(hwnd, 0);
   LONG lStyle = GetWindowLongW(hwnd, GWL_STYLE);
@@ -4158,13 +4173,16 @@ static BOOL LISTVIEW_EndEditLabelW(HWND hwnd, LPWSTR pszText, DWORD nItem)
   HDPA hdpaSubItems;
   LISTVIEW_ITEM lvItemRef;
   LVITEMW item;
- 
+  BOOL bResult = TRUE;
+
+  TRACE("(hwnd=%x, pszText=%s, nItem=%ld, isW=%d)\n", hwnd, debugstr_t(pszText, isW), nItem, isW);
+  
   if (!(lStyle & LVS_OWNERDATA))
   {
-    if (NULL == (hdpaSubItems = (HDPA)DPA_GetPtr(infoPtr->hdpaItems, nItem)))
+    if (!(hdpaSubItems = (HDPA)DPA_GetPtr(infoPtr->hdpaItems, nItem)))
 	  return FALSE;
 
-    if (NULL == (lpItem = (LISTVIEW_ITEM *)DPA_GetPtr(hdpaSubItems, 0)))
+    if (!(lpItem = (LISTVIEW_ITEM *)DPA_GetPtr(hdpaSubItems, 0)))
   	  return FALSE;
   }
   else
@@ -4187,17 +4205,53 @@ static BOOL LISTVIEW_EndEditLabelW(HWND hwnd, LPWSTR pszText, DWORD nItem)
   dispInfo.item.state = lpItem->state;
   dispInfo.item.stateMask = 0;
   dispInfo.item.pszText = pszText;
-  dispInfo.item.cchTextMax = pszText ? lstrlenW(pszText) : 0;
+  dispInfo.item.cchTextMax = textlenT(pszText, isW);
   dispInfo.item.iImage = lpItem->iImage;
   dispInfo.item.lParam = lpItem->lParam;
   infoPtr->hwndEdit = 0;
 
   /* Do we need to update the Item Text */
-  if(dispinfo_notifyT(hwnd, LVN_ENDLABELEDITW, &dispInfo, TRUE))
-    if ((lpItem->pszText != LPSTR_TEXTCALLBACKW)&&(!(lStyle & LVS_OWNERDATA)))
-        Str_SetPtrW(&lpItem->pszText, pszText);
+  if(dispinfo_notifyT(hwnd, LVN_ENDLABELEDITW, &dispInfo, isW))
+    if (lpItem->pszText != LPSTR_TEXTCALLBACKW && !(lStyle & LVS_OWNERDATA))
+      bResult = textsetptrT(&lpItem->pszText, pszText, isW);
+  
+  return bResult;
+}
 
-  return TRUE;
+/***
+ * DESCRIPTION:
+ * Callback implementation for editlabel control
+ *
+ * PARAMETER(S):
+ * [I] HWND : window handle
+ * [I] LPSTR : modified text
+ * [I] DWORD : item index
+ *
+ * RETURN:
+ *   SUCCESS : TRUE
+ *   FAILURE : FALSE
+ */
+static BOOL LISTVIEW_EndEditLabelW(HWND hwnd, LPWSTR pszText, DWORD nItem)
+{
+    return LISTVIEW_EndEditLabelT(hwnd, pszText, nItem, TRUE);
+}
+
+/***
+ * DESCRIPTION:
+ * Callback implementation for editlabel control
+ *
+ * PARAMETER(S):
+ * [I] HWND : window handle
+ * [I] LPSTR : modified text
+ * [I] DWORD : item index
+ *
+ * RETURN:
+ *   SUCCESS : TRUE
+ *   FAILURE : FALSE
+ */
+static BOOL LISTVIEW_EndEditLabelA(HWND hwnd, LPSTR pszText, DWORD nItem)
+{
+    return LISTVIEW_EndEditLabelT(hwnd, (LPWSTR)pszText, nItem, FALSE);
 }
 
 /***
@@ -4287,13 +4341,10 @@ static HWND LISTVIEW_EditLabelT(HWND hwnd, INT nItem, BOOL isW)
   if (!LISTVIEW_GetItemRect(hwnd, nItem, &rect))
 	  return 0;
  
-  /* FIXME: if !isW, should we create a ASCII edit label instead
-   *        with a ASCII callback which should send ASCII notification msgs???
-   */ 
-  if (!(hedit = CreateEditLabelW(szDispText , WS_VISIBLE, 
-		 rect.left-2, rect.top-1, 0, 
-		 rect.bottom - rect.top+2, 
-		 hwnd, hinst, LISTVIEW_EndEditLabelW, nItem)))
+  if (!(hedit = CreateEditLabelT(szDispText , WS_VISIBLE, 
+		 rect.left-2, rect.top-1, 0, rect.bottom - rect.top+2, hwnd, hinst, 
+		 isW ? LISTVIEW_EndEditLabelW : (EditlblCallbackW)LISTVIEW_EndEditLabelA,
+		 nItem, isW)))
 	 return 0;
 
   infoPtr->hwndEdit = hedit;
@@ -5117,10 +5168,7 @@ static LRESULT LISTVIEW_GetItemT(HWND hwnd, LPLVITEMW lpLVItem, BOOL internal, B
   if (dispInfo.item.mask & LVIF_TEXT)
   {
     if ((dispInfo.item.mask & LVIF_DI_SETITEM) && *ppszText) 
-    {
-      if (isW) Str_SetPtrW(ppszText, dispInfo.item.pszText);
-      else Str_SetPtrA((LPSTR *)ppszText, (LPCSTR)dispInfo.item.pszText);
-    }
+      textsetptrT(ppszText, dispInfo.item.pszText, isW);
     
     /* If lpLVItem->pszText==dispInfo.item.pszText a copy is unnecessary, but */
     /* some apps give a new pointer in ListView_Notify so we can't be sure.  */
@@ -9153,14 +9201,17 @@ static LRESULT LISTVIEW_Command(HWND hwnd, WPARAM wParam, LPARAM lParam)
  *
  * RETURN:
  */
-LRESULT CALLBACK EditLblWndProcW(HWND hwnd, UINT uMsg, 
-	WPARAM wParam, LPARAM lParam)
+static LRESULT EditLblWndProcT(HWND hwnd, UINT uMsg, 
+	WPARAM wParam, LPARAM lParam, BOOL isW)
 {
     LISTVIEW_INFO *infoPtr = (LISTVIEW_INFO *)GetWindowLongW(GetParent(hwnd), 0);
     EDITLABEL_ITEM *einfo = infoPtr->pedititem;
     static BOOL bIgnoreKillFocus = FALSE;
     BOOL cancel = FALSE;
 
+    TRACE("(hwnd=%x, uMsg=%x, wParam=%x, lParam=%lx, isW=%d)\n",
+	  hwnd, uMsg, wParam, lParam, isW);
+    
     switch (uMsg)
     {
 	case WM_GETDLGCODE:
@@ -9176,7 +9227,7 @@ LRESULT CALLBACK EditLblWndProcW(HWND hwnd, UINT uMsg,
 	    SetWindowLongW(hwnd, GWL_WNDPROC, (LONG)editProc);
 	    COMCTL32_Free(einfo);
 	    infoPtr->pedititem = NULL;
-	    return CallWindowProcW(editProc, hwnd, uMsg, wParam, lParam);
+	    return CallWindowProcT(editProc, hwnd, uMsg, wParam, lParam, isW);
 	}
 
 	case WM_KEYDOWN:
@@ -9189,8 +9240,7 @@ LRESULT CALLBACK EditLblWndProcW(HWND hwnd, UINT uMsg,
 		break;
 
 	default:
-	    return CallWindowProcW(einfo->EditWndProc, hwnd, 
-			uMsg, wParam, lParam);
+	    return CallWindowProcT(einfo->EditWndProc, hwnd, uMsg, wParam, lParam, isW);
     }
 
     if (einfo->EditLblCb)
@@ -9199,12 +9249,15 @@ LRESULT CALLBACK EditLblWndProcW(HWND hwnd, UINT uMsg,
         
 	if (!cancel)
 	{
-	    int len = 1 + GetWindowTextLengthW(hwnd);
+	    int len = 1 + isW ? GetWindowTextLengthW(hwnd) : GetWindowTextLengthA(hwnd);
 
 	    if (len > 1)
 	    {
-		if ( (buffer = COMCTL32_Alloc(len*sizeof(WCHAR))) )
-		    GetWindowTextW(hwnd, buffer, len);
+		if ( (buffer = COMCTL32_Alloc(len*(isW ? sizeof(WCHAR) : sizeof(CHAR)))) )
+		{
+		    if (isW) GetWindowTextW(hwnd, buffer, len);
+		    else GetWindowTextA(hwnd, (CHAR*)buffer, len);
+		}
 	    }
 	}
         /* Processing LVN_ENDLABELEDIT message could kill the focus       */
@@ -9222,6 +9275,31 @@ LRESULT CALLBACK EditLblWndProcW(HWND hwnd, UINT uMsg,
     return TRUE;
 }
 
+/***
+ * DESCRIPTION:
+ * Subclassed edit control windproc function
+ *
+ * PARAMETER(S):
+ *
+ * RETURN:
+ */
+LRESULT CALLBACK EditLblWndProcW(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
+{
+    return EditLblWndProcT(hwnd, uMsg, wParam, lParam, TRUE);
+}
+
+/***
+ * DESCRIPTION:
+ * Subclassed edit control windproc function
+ *
+ * PARAMETER(S):
+ *
+ * RETURN:
+ */
+LRESULT CALLBACK EditLblWndProcA(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
+{
+    return EditLblWndProcT(hwnd, uMsg, wParam, lParam, FALSE);
+}
 
 /***
  * DESCRIPTION:
@@ -9231,9 +9309,9 @@ LRESULT CALLBACK EditLblWndProcW(HWND hwnd, UINT uMsg,
  *
  * RETURN:
  */
-HWND CreateEditLabelW(LPCWSTR text, DWORD style, INT x, INT y, 
+HWND CreateEditLabelT(LPCWSTR text, DWORD style, INT x, INT y, 
 	INT width, INT height, HWND parent, HINSTANCE hinst, 
-	EditlblCallbackW EditLblCb, DWORD param)
+	EditlblCallbackW EditLblCb, DWORD param, BOOL isW)
 {
     LISTVIEW_INFO *infoPtr = (LISTVIEW_INFO *)GetWindowLongW(parent, 0);
     WCHAR editName[5] = { 'E', 'd', 'i', 't', '\0' };
@@ -9243,6 +9321,8 @@ HWND CreateEditLabelW(LPCWSTR text, DWORD style, INT x, INT y,
     HDC hOldFont=0;
     TEXTMETRICW textMetric;
 
+    TRACE("(text=%s, ..., isW=%d)\n", debugstr_t(text, isW), isW);
+    
     if (NULL == (infoPtr->pedititem = COMCTL32_Alloc(sizeof(EDITLABEL_ITEM))))
 	return 0;
 
@@ -9264,8 +9344,12 @@ HWND CreateEditLabelW(LPCWSTR text, DWORD style, INT x, INT y,
         SelectObject(hdc, hOldFont);
 
     ReleaseDC(parent, hdc);
-    if (!(hedit = CreateWindowW(editName, text, style, x, y, sz.cx, height, 
-		    parent, 0, hinst, 0)))
+    if (isW) 
+	hedit = CreateWindowW(editName, text, style, x, y, sz.cx, height, parent, 0, hinst, 0);
+    else
+	hedit = CreateWindowA("Edit", (LPCSTR)text, style, x, y, sz.cx, height, parent, 0, hinst, 0);
+
+    if (!hedit)
     {
 	COMCTL32_Free(infoPtr->pedititem);
 	return 0;
@@ -9273,8 +9357,9 @@ HWND CreateEditLabelW(LPCWSTR text, DWORD style, INT x, INT y,
 
     infoPtr->pedititem->param = param;
     infoPtr->pedititem->EditLblCb = EditLblCb;
-    infoPtr->pedititem->EditWndProc = (WNDPROC)SetWindowLongW(hedit, 
-	  GWL_WNDPROC, (LONG) EditLblWndProcW);
+    infoPtr->pedititem->EditWndProc = (WNDPROC) 
+	(isW ? SetWindowLongW(hedit, GWL_WNDPROC, (LONG)EditLblWndProcW) :
+               SetWindowLongA(hedit, GWL_WNDPROC, (LONG)EditLblWndProcA) );
 
     SendMessageW(hedit, WM_SETFONT, infoPtr->hFont, FALSE);
 
