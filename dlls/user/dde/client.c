@@ -592,7 +592,7 @@ static	HGLOBAL	WDML_BuildExecuteCommand(WDML_CONV* pConv, LPCVOID pData, DWORD c
 	}
 	else
 	{
-	    memSize = MultiByteToWideChar( CP_ACP, 0, pData, cbData, NULL, 0);
+	    memSize = MultiByteToWideChar( CP_ACP, 0, pData, cbData, NULL, 0) * sizeof(WCHAR);
 	}
     }
 
@@ -617,7 +617,7 @@ static	HGLOBAL	WDML_BuildExecuteCommand(WDML_CONV* pConv, LPCVOID pData, DWORD c
 		}
 		else
 		{
-		    MultiByteToWideChar( CP_ACP, 0, pData, cbData, (LPWSTR)pDst, memSize);
+		    MultiByteToWideChar( CP_ACP, 0, pData, cbData, (LPWSTR)pDst, memSize/sizeof(WCHAR));
 		}
 	    }
 
