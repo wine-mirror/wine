@@ -74,8 +74,8 @@ static const char *app_loader_script =
 ;
 	
 static char *output_name;
-static char **lib_files, **obj_files;
-static int nb_lib_files, nb_obj_files;
+static char **lib_files, **dll_files, **lib_paths, **obj_files;
+static int nb_lib_files, nb_dll_files, nb_lib_paths, nb_obj_files;
 static int verbose = 0;
 
 void error(const char *s, ...)
@@ -89,7 +89,6 @@ void error(const char *s, ...)
     va_end(ap);
     exit(2);
 }
-
 
 char *strmake(const char *fmt, ...) 
 {
@@ -147,14 +146,49 @@ int is_resource(const char* file)
     return !memcmp(buf, res_sig, sizeof(buf));
 }
 
+/* open the .def library for a given dll in a specified path */
+static char *try_dll_path( const char *path, const char *name )
+{
+    char *fullname;
+    int fd;
+
+    fullname = strmake("%s/lib%s.def", path, name );
+
+    /* check if the file exists */
+    if ((fd = open( fullname, O_RDONLY )) != -1)
+    {
+        close( fd );
+        return fullname;
+    }
+    free( fullname );
+    return NULL;
+}
+
+/* open the .def library for a given dll */
+static char *open_dll( const char *name )
+{
+    char *fullname;
+    int i;
+
+    for (i = 0; i < nb_lib_paths; i++)
+    {
+        if ((fullname = try_dll_path( lib_paths[i], name ))) return fullname;
+    }
+    return try_dll_path( ".", name );
+}
+
 int main(int argc, char **argv)
 {
-    char *library = 0, *p;
+    char *library = 0, *path = 0, *p;
     int i, j, no_opt = 0, gui_mode = 0;
     char *spec_name, *spec_c_name, *spec_o_name;
     char **spec_args, **comp_args, **link_args;
     FILE *file;
-    
+   
+    /* include the standard DLL path first */
+    lib_paths = realloc( lib_paths, (nb_lib_paths+1) * sizeof(*lib_paths) );
+    lib_paths[nb_lib_paths++] = WINEDLLS;
+	
     for (i = 1; i < argc; i++)
     {
 	if (!no_opt && argv[i][0] == '-')
@@ -168,12 +202,32 @@ int main(int argc, char **argv)
 		if ( !(p = strstr(output_name, ".exe")) || *(p+4) )
 		    output_name = strmake("%s.exe", output_name);
 		break;
+	    case 'L':
+		if (argv[i][2]) path = argv[i] + 2;
+		else if (i + 1 < argc) path = argv[++i];
+		else error("The -L switch takes an argument\n.");
+		lib_paths = realloc( lib_paths, (nb_lib_paths+1) * sizeof(*lib_paths) );
+		lib_paths[nb_lib_paths++] = strdup(path);
+		dll_files = realloc( dll_files, (nb_dll_files+1) * sizeof(*dll_files) );
+		
+		dll_files[nb_dll_files++] = strmake("-L%s", path);
+		lib_files = realloc( lib_files, (nb_lib_files+1) * sizeof(*lib_files) );
+		lib_files[nb_lib_files++] = strmake("-L%s", path);
+		break;
 	    case 'l':
-		if (argv[i][2]) library = argv[i]+ 2;
+		if (argv[i][2]) library = argv[i] + 2;
 		else if (i + 1 < argc) library = argv[++i];
 		else error("The -l switch takes an argument\n.");
-		lib_files = realloc( lib_files, (nb_lib_files+1) * sizeof(*lib_files) );
-		lib_files[nb_lib_files++] = strdup(library);
+		if (open_dll(library))
+		{
+		    dll_files = realloc( dll_files, (nb_dll_files+1) * sizeof(*dll_files) );
+		    dll_files[nb_dll_files++] = strmake("-l%s", library);
+		}
+		else
+		{
+		    lib_files = realloc( lib_files, (nb_lib_files+1) * sizeof(*lib_files) );
+		    lib_files[nb_lib_files++] = strmake("-l%s", library);
+		}
 		break;
 	    case 'm':
 		if (strcmp("-mwindows", argv[i]) == 0) gui_mode = 1;
@@ -183,6 +237,9 @@ int main(int argc, char **argv)
             case 'v':        /* verbose */
                 if (argv[i][2] == 0) verbose = 1;
                 break;
+	    case 'W':
+		/* ignore such options for now for gcc compatibility */
+		break;
 	    case '-':
 		if (argv[i][2]) error("No long option supported.");
 		no_opt = 1;
@@ -203,7 +260,7 @@ int main(int argc, char **argv)
     spec_o_name = strmake("%s.o", spec_name);
     
     /* build winebuild's argument list */
-    spec_args = malloc( (nb_lib_files + nb_obj_files + 20) * sizeof (char *) );
+    spec_args = malloc( (nb_lib_files + nb_dll_files + nb_obj_files + 20) * sizeof (char *) );
     j = 0;
     spec_args[j++] = BINDIR "/winebuild";
     spec_args[j++] = "-fPIC";
@@ -215,8 +272,8 @@ int main(int argc, char **argv)
     for (i = 0; i < nb_obj_files; i++)
 	spec_args[j++] = obj_files[i];
     spec_args[j++] = "-L" WINEDLLS;
-    for (i = 0; i < nb_lib_files; i++)
-	spec_args[j++] = strmake("-l%s", lib_files[i]);
+    for (i = 0; i < nb_dll_files; i++)
+	spec_args[j++] = dll_files[i];
     spec_args[j] = 0;
 
     /* build gcc's argument list */
@@ -235,6 +292,8 @@ int main(int argc, char **argv)
     link_args[j++] = "gcc";
     link_args[j++] = "-shared";
     link_args[j++] = "-Wl,-Bsymbolic,-z,defs";
+    for (i = 0; i < nb_lib_files; i++)
+	link_args[j++] = lib_files[i];
     link_args[j++] = "-lwine";
     link_args[j++] = "-lm";
     link_args[j++] = "-o";
