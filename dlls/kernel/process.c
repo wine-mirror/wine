@@ -110,7 +110,7 @@ static BOOL get_builtin_path( const WCHAR *libname, const WCHAR *ext, WCHAR *fil
         if (strncmpiW( filename, sysdir, len ) || filename[len] != '\\')
             return FALSE;
         while (filename[len] == '\\') len++;
-        if (filename != file_part) return FALSE;
+        if (filename + len != file_part) return FALSE;
     }
     else
     {
