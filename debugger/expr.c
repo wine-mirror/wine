@@ -106,7 +106,7 @@ struct expr
 #define EXPR_TYPE_CAST		11
 
 static char expr_list[4096];
-static int next_expr_free = 0;
+static unsigned int next_expr_free = 0;
 
 /*
  * This is how we turn an expression address into the actual value.

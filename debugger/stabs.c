@@ -264,7 +264,7 @@ static int DEBUG_PTS_ReadTypedef(struct ParseTypedefData* ptd, const char* typen
 static int DEBUG_PTS_ReadID(struct ParseTypedefData* ptd)
 {
     char*	first = ptd->ptr;
-    int		len;
+    unsigned int	len;
 
     if ((ptd->ptr = strchr(ptd->ptr, ':')) == NULL) return -1;
     len = ptd->ptr - first;
@@ -316,7 +316,7 @@ static int DEBUG_PTS_ReadRange(struct ParseTypedefData* ptd, struct datatype** d
     return 0;
 }
 
-static int inline DEBUG_PTS_ReadAggregate(struct ParseTypedefData* ptd, struct datatype* sdt)
+static inline int DEBUG_PTS_ReadAggregate(struct ParseTypedefData* ptd, struct datatype* sdt)
 {
     int			sz, ofs;
     char*		last;
@@ -356,7 +356,7 @@ static int inline DEBUG_PTS_ReadAggregate(struct ParseTypedefData* ptd, struct d
     return 0;
 }
 
-static int inline DEBUG_PTS_ReadEnum(struct ParseTypedefData* ptd, struct datatype* edt)
+static inline int DEBUG_PTS_ReadEnum(struct ParseTypedefData* ptd, struct datatype* edt)
 {
     int			ofs;
     int			idx;
@@ -373,7 +373,7 @@ static int inline DEBUG_PTS_ReadEnum(struct ParseTypedefData* ptd, struct dataty
     return 0;
 }
 
-static int inline DEBUG_PTS_ReadArray(struct ParseTypedefData* ptd, struct datatype* adt)
+static inline int DEBUG_PTS_ReadArray(struct ParseTypedefData* ptd, struct datatype* adt)
 {
     int			lo, hi;
     struct datatype*	rdt;
@@ -612,12 +612,12 @@ enum DbgInfoLoad DEBUG_ParseStabs(char * addr, unsigned int load_offset,
   int                   i;
   int                   in_external_file = FALSE;
   int                   last_nso = -1;
-  int                   len;
+  unsigned int          len;
   DBG_VALUE	        new_value;
   int                   nstab;
   char                * ptr;
   char                * stabbuff;
-  int                   stabbufflen;
+  unsigned int          stabbufflen;
   struct stab_nlist   * stab_ptr;
   char                * strs;
   int                   strtabinc;

@@ -214,9 +214,10 @@ static enum DbgInfoLoad DEBUG_ProcessCoff( DBG_MODULE *module, LPBYTE root )
   PIMAGE_SYMBOL			coff_symbols;
   struct CoffFileSet	        coff_files;
   int				curr_file_idx = -1;
-  int		       		i;
-  int		       		j;
-  int		       		k;
+  unsigned int		       	i;
+  int			       	j;
+  int			       	k;
+  int			       	l;
   int		       		linetab_indx;
   const char	     	      * nampnt;
   int		       		naux;
@@ -476,7 +477,7 @@ static enum DbgInfoLoad DEBUG_ProcessCoff( DBG_MODULE *module, LPBYTE root )
        */
       for(j=0; j < coff_files.nfiles; j++)
 	{
-	  i = 0;
+	  l = 0;
 	  if( coff_files.files[j].neps != 0 )
 	    for(k=0; k < coff_files.files[j].linecnt; k++)
 	    {
@@ -487,12 +488,12 @@ static enum DbgInfoLoad DEBUG_ProcessCoff( DBG_MODULE *module, LPBYTE root )
 	       */
 	      while(TRUE)
 		{
-		  if (i+1 >= coff_files.files[j].neps) break;
-		  DEBUG_GetSymbolAddr(coff_files.files[j].entries[i+1], &new_value.addr);
+		  if (l+1 >= coff_files.files[j].neps) break;
+		  DEBUG_GetSymbolAddr(coff_files.files[j].entries[l+1], &new_value.addr);
 		  if( (((unsigned int)module->load_addr +
 		        linepnt->Type.VirtualAddress) >= new_value.addr.off) )
 		  {
-		      i++;
+		      l++;
 		  } else break;
 		}
 
@@ -501,8 +502,8 @@ static enum DbgInfoLoad DEBUG_ProcessCoff( DBG_MODULE *module, LPBYTE root )
 	       * start of the function, so we need to subtract that offset
 	       * first.
 	       */
-	      DEBUG_GetSymbolAddr(coff_files.files[j].entries[i], &new_value.addr);
-	      DEBUG_AddLineNumber(coff_files.files[j].entries[i], 
+	      DEBUG_GetSymbolAddr(coff_files.files[j].entries[l], &new_value.addr);
+	      DEBUG_AddLineNumber(coff_files.files[j].entries[l], 
 				  linepnt->Linenumber,
 				  (unsigned int) module->load_addr 
 				  + linepnt->Type.VirtualAddress 
@@ -1092,7 +1093,7 @@ union codeview_fieldtype
 
 #define MAX_BUILTIN_TYPES	0x480
 static struct datatype * cv_basic_types[MAX_BUILTIN_TYPES];
-static int num_cv_defined_types = 0;
+static unsigned int num_cv_defined_types = 0;
 static struct datatype **cv_defined_types = NULL;
 
 void
@@ -2041,7 +2042,8 @@ DEBUG_MapCVOffset( DBG_MODULE *module, unsigned int offset )
 
 static struct name_hash *
 DEBUG_AddCVSymbol( DBG_MODULE *module, char *name, int namelen,
-                   int type, int seg, int offset, int size, int cookie, int flags, 
+                   int type, unsigned int seg, unsigned int offset,
+                   int size, int cookie, int flags, 
                    struct codeview_linetab_hdr *linetab )
 {
     int			  nsect = module->msc_info->nsect;
@@ -2106,7 +2108,7 @@ DEBUG_AddCVSymbol( DBG_MODULE *module, char *name, int namelen,
      */
     if ( linetab )
     {
-        int i;
+        unsigned int i;
         for ( i = 0; i < linetab->nline; i++ )
             if (    linetab->offtab[i] >= offset
                  && linetab->offtab[i] <  offset + size )
@@ -2448,11 +2450,11 @@ static void *pdb_read( LPBYTE image, WORD *block_list, int size )
     return buffer;
 }
 
-static void *pdb_read_file( LPBYTE image, PPDB_TOC toc, int fileNr )
+static void *pdb_read_file( LPBYTE image, PPDB_TOC toc, DWORD fileNr )
 {
     PPDB_HEADER pdb = (PPDB_HEADER)image;
     WORD *block_list;
-    int i;
+    DWORD i;
 
     if ( !toc || fileNr >= toc->nFiles )
         return NULL;
@@ -2768,7 +2770,7 @@ static enum DbgInfoLoad DEBUG_ProcessCodeView( DBG_MODULE *module, LPBYTE root )
     {
         PCV_DIRECTORY_HEADER hdr = (PCV_DIRECTORY_HEADER)(root + cv->lfoDirectory);
         PCV_DIRECTORY_ENTRY ent, prev, next;
-        int i;
+        unsigned int i;
 
         ent = (PCV_DIRECTORY_ENTRY)((LPBYTE)hdr + hdr->cbDirHeader);
         for ( i = 0; i < hdr->cDir; i++, ent = next )

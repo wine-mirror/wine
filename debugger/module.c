@@ -304,7 +304,7 @@ enum DbgInfoLoad	DEBUG_RegisterPEDebugInfo(DBG_MODULE* wmod, HANDLE hFile,
     DBG_VALUE			value;
     char			buffer[512];
     char			bufstr[256];
-    int 			i;
+    unsigned int 		i;
     IMAGE_SECTION_HEADER 	pe_seg;
     DWORD			pe_seg_ofs;
     IMAGE_DATA_DIRECTORY 	dir;
@@ -351,7 +351,7 @@ enum DbgInfoLoad	DEBUG_RegisterPEDebugInfo(DBG_MODULE* wmod, HANDLE hFile,
 	WORD*			ordinals = NULL;
 	void**			functions = NULL;
 	DWORD*			names = NULL;
-	int			j;
+	unsigned int		j;
 	
 	if (DEBUG_READ_MEM_VERBOSE((void*)(base + dir.VirtualAddress), 
 				   &exports, sizeof(exports)) &&
@@ -512,7 +512,7 @@ static int	DEBUG_ModuleCompare(const void* p1, const void* p2)
  *
  * returns TRUE is wmod_child is contained (inside bounds) of wmod_cntnr
  */
-static BOOL inline DEBUG_IsContainer(const DBG_MODULE* wmod_cntnr, 
+static inline BOOL DEBUG_IsContainer(const DBG_MODULE* wmod_cntnr, 
 				     const DBG_MODULE* wmod_child)
 {
     return wmod_cntnr->load_addr < wmod_child->load_addr &&
