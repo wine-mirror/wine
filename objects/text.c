@@ -21,7 +21,7 @@ DEFAULT_DEBUG_CHANNEL(text);
 
 
 /***********************************************************************
- *           ExtTextOut16    (DISPLAY.351)
+ *           ExtTextOut    (DISPLAY.351)
  *           ExtTextOut16    (GDI.351)
  */
 BOOL16 WINAPI ExtTextOut16( HDC16 hdc, INT16 x, INT16 y, UINT16 flags,
@@ -115,7 +115,7 @@ BOOL WINAPI ExtTextOutW( HDC hdc, INT x, INT y, UINT flags,
 
 
 /***********************************************************************
- *           TextOut16    (GDI.33)
+ *           TextOut    (GDI.33)
  */
 BOOL16 WINAPI TextOut16( HDC16 hdc, INT16 x, INT16 y, LPCSTR str, INT16 count )
 {
@@ -160,7 +160,7 @@ UINT WINAPI GetTextCharset(
 }
 
 /***********************************************************************
- * GetTextCharset16 [GDI.612]
+ * GetTextCharset [GDI.612]
  */
 UINT16 WINAPI GetTextCharset16(HDC16 hdc)
 {

@@ -70,7 +70,7 @@ static inline void release( void *ptr )
 }
 
 /***********************************************************************
- *		wine_dbgstr_an
+ *		wine_dbgstr_an (NTDLL.@)
  */
 const char *wine_dbgstr_an( const char *src, int n )
 {
@@ -122,7 +122,7 @@ const char *wine_dbgstr_an( const char *src, int n )
 }
 
 /***********************************************************************
- *		wine_dbgstr_wn
+ *		wine_dbgstr_wn (NTDLL.@)
  */
 const char *wine_dbgstr_wn( const WCHAR *src, int n )
 {
@@ -174,7 +174,7 @@ const char *wine_dbgstr_wn( const WCHAR *src, int n )
 }
 
 /***********************************************************************
- *		wine_dbgstr_guid
+ *		wine_dbgstr_guid (NTDLL.@)
  */
 const char *wine_dbgstr_guid( const GUID *id )
 {
@@ -198,7 +198,7 @@ const char *wine_dbgstr_guid( const GUID *id )
 }
 
 /***********************************************************************
- *		wine_dbg_vprintf
+ *		wine_dbg_vprintf (NTDLL.@)
  */
 int wine_dbg_vprintf( const char *format, va_list args )
 {
@@ -228,7 +228,7 @@ int wine_dbg_vprintf( const char *format, va_list args )
 }
 
 /***********************************************************************
- *		wine_dbg_printf
+ *		wine_dbg_printf (NTDLL.@)
  */
 int wine_dbg_printf(const char *format, ...)
 {
@@ -242,7 +242,7 @@ int wine_dbg_printf(const char *format, ...)
 }
 
 /***********************************************************************
- *		wine_dbg_log
+ *		wine_dbg_log (NTDLL.@)
  */
 int wine_dbg_log(enum __DEBUG_CLASS cls, const char *channel,
                  const char *function, const char *format, ... )

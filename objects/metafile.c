@@ -151,7 +151,7 @@ static BOOL16 MF_ReleaseMetaHeader16( HMETAFILE16 hmf )
 
 
 /******************************************************************
- *	     DeleteMetaFile16   (GDI.127)
+ *	     DeleteMetaFile   (GDI.127)
  */
 BOOL16 WINAPI DeleteMetaFile16(  HMETAFILE16 hmf )
 {
@@ -211,7 +211,7 @@ static METAHEADER *MF_ReadMetaFile(HFILE hfile)
 }
 
 /******************************************************************
- *         GetMetaFile16   (GDI.124)
+ *         GetMetaFile   (GDI.124)
  */
 HMETAFILE16 WINAPI GetMetaFile16( LPCSTR lpFilename )
 {
@@ -332,7 +332,7 @@ METAHEADER *MF_CreateMetaHeaderDisk(METAHEADER *mh, LPCSTR filename)
 }
 
 /******************************************************************
- *         CopyMetaFile16   (GDI.151)
+ *         CopyMetaFile   (GDI.151)
  */
 HMETAFILE16 WINAPI CopyMetaFile16( HMETAFILE16 hSrcMetaFile, LPCSTR lpFilename)
 {
@@ -528,7 +528,7 @@ static BOOL MF_PlayMetaFile( HDC hdc, METAHEADER *mh)
 }
 
 /******************************************************************
- *         PlayMetaFile16   (GDI.123)
+ *         PlayMetaFile   (GDI.123)
  *
  */
 BOOL16 WINAPI PlayMetaFile16( HDC16 hdc, HMETAFILE16 hmf )
@@ -743,7 +743,7 @@ BOOL WINAPI EnumMetaFile(
 static BOOL MF_Play_MetaCreateRegion( METARECORD *mr, HRGN hrgn );
 static BOOL MF_Play_MetaExtTextOut(HDC16 hdc, METARECORD *mr);
 /******************************************************************
- *             PlayMetaFileRecord16   (GDI.176)
+ *             PlayMetaFileRecord   (GDI.176)
  *
  *   Render a single metafile record specified by *mr in the DC hdc, while
  *   using the handle table *ht, of length nHandles, 

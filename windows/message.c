@@ -1934,7 +1934,7 @@ DWORD WINAPI MsgWaitForMultipleObjects( DWORD count, CONST HANDLE *handles,
 
 
 /***********************************************************************
- *		MsgWaitForMultipleObjects16  (USER.640)
+ *		MsgWaitForMultipleObjects  (USER.640)
  */
 DWORD WINAPI MsgWaitForMultipleObjects16( DWORD count, CONST HANDLE *handles,
                                           BOOL wait_all, DWORD timeout, DWORD mask )

@@ -1524,6 +1524,7 @@ BOOL16 WINAPI IsDialogMessage16( HWND16 hwndDlg, SEGPTR msg16 )
 
 
 /***********************************************************************
+ *		IsDialogMessage  (USER32.@)
  *		IsDialogMessageA (USER32.@)
  */
 BOOL WINAPI IsDialogMessageA( HWND hwndDlg, LPMSG msg )

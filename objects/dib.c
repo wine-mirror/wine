@@ -115,7 +115,7 @@ int DIB_GetBitmapInfo( const BITMAPINFOHEADER *header, DWORD *width,
 
 
 /***********************************************************************
- *           StretchDIBits16   (GDI.439)
+ *           StretchDIBits   (GDI.439)
  */
 INT16 WINAPI StretchDIBits16(HDC16 hdc, INT16 xDst, INT16 yDst, INT16 widthDst,
                        INT16 heightDst, INT16 xSrc, INT16 ySrc, INT16 widthSrc,
@@ -198,7 +198,7 @@ INT WINAPI StretchDIBits(HDC hdc, INT xDst, INT yDst, INT widthDst,
 
 
 /***********************************************************************
- *           SetDIBits16    (GDI.440)
+ *           SetDIBits    (GDI.440)
  */
 INT16 WINAPI SetDIBits16( HDC16 hdc, HBITMAP16 hbitmap, UINT16 startscan,
                           UINT16 lines, LPCVOID bits, const BITMAPINFO *info,
@@ -253,7 +253,7 @@ INT WINAPI SetDIBits( HDC hdc, HBITMAP hbitmap, UINT startscan,
 
 
 /***********************************************************************
- *           SetDIBitsToDevice16    (GDI.443)
+ *           SetDIBitsToDevice    (GDI.443)
  */
 INT16 WINAPI SetDIBitsToDevice16(HDC16 hdc, INT16 xDest, INT16 yDest, INT16 cx,
                            INT16 cy, INT16 xSrc, INT16 ySrc, UINT16 startscan,
@@ -292,7 +292,7 @@ INT WINAPI SetDIBitsToDevice(HDC hdc, INT xDest, INT yDest, DWORD cx,
 }
 
 /***********************************************************************
- *           SetDIBColorTable16    (GDI.602)
+ *           SetDIBColorTable    (GDI.602)
  */
 UINT16 WINAPI SetDIBColorTable16( HDC16 hdc, UINT16 startpos, UINT16 entries,
 				  RGBQUAD *colors )
@@ -326,7 +326,7 @@ UINT WINAPI SetDIBColorTable( HDC hdc, UINT startpos, UINT entries,
 }
 
 /***********************************************************************
- *           GetDIBColorTable16    (GDI.603)
+ *           GetDIBColorTable    (GDI.603)
  */
 UINT16 WINAPI GetDIBColorTable16( HDC16 hdc, UINT16 startpos, UINT16 entries,
 				  RGBQUAD *colors )
@@ -411,7 +411,7 @@ static RGBQUAD DefLogPalette[20] = { /* Copy of Default Logical Palette */
 };
 
 /***********************************************************************
- *           GetDIBits16    (GDI.441)
+ *           GetDIBits    (GDI.441)
  */
 INT16 WINAPI GetDIBits16( HDC16 hdc, HBITMAP16 hbitmap, UINT16 startscan,
                           UINT16 lines, LPVOID bits, BITMAPINFO * info,
@@ -757,7 +757,7 @@ INT WINAPI GetDIBits(
 
 
 /***********************************************************************
- *           CreateDIBitmap16    (GDI.442)
+ *           CreateDIBitmap    (GDI.442)
  *           CreateDIBitmap16    (DISPLAY.442)
  */
 HBITMAP16 WINAPI CreateDIBitmap16( HDC16 hdc, const BITMAPINFOHEADER * header,
@@ -851,7 +851,7 @@ HBITMAP WINAPI CreateDIBitmap( HDC hdc, const BITMAPINFOHEADER *header,
 }
 
 /***********************************************************************
- *           CreateDIBSection16    (GDI.489)
+ *           CreateDIBSection    (GDI.489)
  */
 HBITMAP16 WINAPI CreateDIBSection16 (HDC16 hdc, BITMAPINFO *bmi, UINT16 usage,
 				     SEGPTR *bits, HANDLE section,

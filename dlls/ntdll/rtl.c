@@ -360,13 +360,19 @@ BOOLEAN WINAPI RtlGetNtProductType(LPDWORD type)
 
 /**************************************************************************
  *                 NTDLL_chkstk				[NTDLL.@]
- *                 NTDLL_alloca_probe				[NTDLL.@]
+ *
  * Glorified "enter xxxx".
  */
 void WINAPI NTDLL_chkstk( CONTEXT86 *context )
 {
     context->Esp -= context->Eax;
 }
+
+/**************************************************************************
+ *                 NTDLL_alloca_probe		        [NTDLL.@]
+ *
+ * Glorified "enter xxxx".
+ */
 void WINAPI NTDLL_alloca_probe( CONTEXT86 *context )
 {
     context->Esp -= context->Eax;

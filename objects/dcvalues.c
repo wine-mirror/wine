@@ -142,7 +142,7 @@ DC_GET_VAL( COLORREF, GetBkColor, backgroundColor )
 DC_GET_VAL( INT, GetBkMode, backgroundMode )
 
 /***********************************************************************
- *		GetCurrentPosition16	(GDI.78)
+ *		GetCurrentPosition	(GDI.78)
  */
 DC_GET_X_Y( DWORD, GetCurrentPosition16, CursPosX, CursPosY )
 
@@ -162,7 +162,7 @@ DC_GET_VAL( INT, GetPolyFillMode, polyFillMode )
 DC_GET_VAL( INT, GetROP2, ROPmode )
 
 /***********************************************************************
- *		GetRelAbs16		(GDI.86)
+ *		GetRelAbs		(GDI.86)
  */
 DC_GET_VAL_16( INT16, GetRelAbs16, relAbsMode )
 
@@ -177,37 +177,37 @@ DC_GET_VAL( INT, GetStretchBltMode, stretchBltMode )
 DC_GET_VAL( COLORREF, GetTextColor, textColor )
 
 /***********************************************************************
- *		GetViewportExt16	(GDI.94)
+ *		GetViewportExt	(GDI.94)
  */
 DC_GET_X_Y( DWORD, GetViewportExt16, vportExtX, vportExtY )
 
 /***********************************************************************
- *		GetViewportOrg16	(GDI.95)
+ *		GetViewportOrg	(GDI.95)
  */
 DC_GET_X_Y( DWORD, GetViewportOrg16, vportOrgX, vportOrgY )
 
 /***********************************************************************
- *		GetWindowExt16		(GDI.96)
+ *		GetWindowExt		(GDI.96)
  */
 DC_GET_X_Y( DWORD, GetWindowExt16, wndExtX, wndExtY )
 
 /***********************************************************************
- *		GetWindowOrg16	(GDI.97)
+ *		GetWindowOrg	(GDI.97)
  */
 DC_GET_X_Y( DWORD, GetWindowOrg16, wndOrgX, wndOrgY )
 
 /***********************************************************************
- *		InquireVisRgn16	(GDI.131)
+ *		InquireVisRgn	(GDI.131)
  */
 DC_GET_VAL_16( HRGN16, InquireVisRgn16, hVisRgn )
 
 /***********************************************************************
- *		GetClipRgn16	(GDI.173)
+ *		GetClipRgn	(GDI.173)
  */
 DC_GET_VAL_16( HRGN16, GetClipRgn16, hClipRgn )
 
 /***********************************************************************
- *		GetBrushOrg16	(GDI.149)
+ *		GetBrushOrg	(GDI.149)
  */
 DC_GET_X_Y( DWORD, GetBrushOrg16, brushOrgX, brushOrgY )
 
@@ -217,7 +217,7 @@ DC_GET_X_Y( DWORD, GetBrushOrg16, brushOrgX, brushOrgY )
 DC_GET_VAL( UINT, GetTextAlign, textAlign )
 
 /***********************************************************************
- *		GetCurLogFont16	(GDI.411)
+ *		GetCurLogFont	(GDI.411)
  */
 DC_GET_VAL_16( HFONT16, GetCurLogFont16, hFont )
 
@@ -242,7 +242,7 @@ DC_GET_VAL_EX( GetBrushOrgEx, brushOrgX, brushOrgY, POINT ) /*  */
 DC_GET_VAL_EX( GetCurrentPositionEx, CursPosX, CursPosY, POINT )
 
 /***********************************************************************
- *		GetViewportExtEx	(GDI.472 GDI32.@)
+ *		GetViewportExtEx	(GDI.472) (GDI32.@)
  */
 DC_GET_VAL_EX( GetViewportExtEx, vportExtX, vportExtY, SIZE )
 

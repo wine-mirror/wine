@@ -13,7 +13,7 @@ DEFAULT_DEBUG_CHANNEL(gdi);
 
 
 /***********************************************************************
- *           CreatePen16    (GDI.61)
+ *           CreatePen    (GDI.61)
  */
 HPEN16 WINAPI CreatePen16( INT16 style, INT16 width, COLORREF color )
 {
@@ -49,7 +49,7 @@ HPEN WINAPI CreatePen( INT style, INT width, COLORREF color )
 
 
 /***********************************************************************
- *           CreatePenIndirect16    (GDI.62)
+ *           CreatePenIndirect    (GDI.62)
  */
 HPEN16 WINAPI CreatePenIndirect16( const LOGPEN16 * pen )
 {

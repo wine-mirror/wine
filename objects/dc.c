@@ -410,7 +410,7 @@ void WINAPI SetDCState16( HDC16 hdc, HDC16 hdcs )
 
 
 /***********************************************************************
- *           SaveDC16    (GDI.30)
+ *           SaveDC    (GDI.30)
  */
 INT16 WINAPI SaveDC16( HDC16 hdc )
 {
@@ -469,7 +469,7 @@ INT WINAPI SaveDC( HDC hdc )
 
 
 /***********************************************************************
- *           RestoreDC16    (GDI.39)
+ *           RestoreDC    (GDI.39)
  */
 BOOL16 WINAPI RestoreDC16( HDC16 hdc, INT16 level )
 {
@@ -535,7 +535,7 @@ BOOL WINAPI RestoreDC( HDC hdc, INT level )
 
 
 /***********************************************************************
- *           CreateDC16    (GDI.53)
+ *           CreateDC    (GDI.53)
  */
 HDC16 WINAPI CreateDC16( LPCSTR driver, LPCSTR device, LPCSTR output,
                          const DEVMODEA *initData )
@@ -598,7 +598,7 @@ HDC WINAPI CreateDCW( LPCWSTR driver, LPCWSTR device, LPCWSTR output,
 
 
 /***********************************************************************
- *           CreateIC16    (GDI.153)
+ *           CreateIC    (GDI.153)
  */
 HDC16 WINAPI CreateIC16( LPCSTR driver, LPCSTR device, LPCSTR output,
                          const DEVMODEA* initData )
@@ -631,7 +631,7 @@ HDC WINAPI CreateICW( LPCWSTR driver, LPCWSTR device, LPCWSTR output,
 
 
 /***********************************************************************
- *           CreateCompatibleDC16    (GDI.52)
+ *           CreateCompatibleDC    (GDI.52)
  */
 HDC16 WINAPI CreateCompatibleDC16( HDC16 hdc )
 {
@@ -686,7 +686,7 @@ HDC WINAPI CreateCompatibleDC( HDC hdc )
 
 
 /***********************************************************************
- *           DeleteDC16    (GDI.68)
+ *           DeleteDC    (GDI.68)
  */
 BOOL16 WINAPI DeleteDC16( HDC16 hdc )
 {
@@ -748,7 +748,7 @@ BOOL WINAPI DeleteDC( HDC hdc )
 
 
 /***********************************************************************
- *           ResetDC16    (GDI.376)
+ *           ResetDC    (GDI.376)
  */
 HDC16 WINAPI ResetDC16( HDC16 hdc, const DEVMODEA *devmode )
 {
@@ -778,7 +778,7 @@ HDC WINAPI ResetDCW( HDC hdc, const DEVMODEW *devmode )
 
 
 /***********************************************************************
- *           GetDeviceCaps16    (GDI.80)
+ *           GetDeviceCaps    (GDI.80)
  */
 INT16 WINAPI GetDeviceCaps16( HDC16 hdc, INT16 cap )
 {
@@ -856,7 +856,7 @@ INT WINAPI GetDeviceCaps( HDC hdc, INT cap )
 
 
 /***********************************************************************
- *           SetBkColor16    (GDI.1)
+ *           SetBkColor    (GDI.1)
  */
 COLORREF WINAPI SetBkColor16( HDC16 hdc, COLORREF color )
 {
@@ -885,7 +885,7 @@ COLORREF WINAPI SetBkColor( HDC hdc, COLORREF color )
 
 
 /***********************************************************************
- *           SetTextColor16    (GDI.9)
+ *           SetTextColor    (GDI.9)
  */
 COLORREF WINAPI SetTextColor16( HDC16 hdc, COLORREF color )
 {
@@ -913,7 +913,7 @@ COLORREF WINAPI SetTextColor( HDC hdc, COLORREF color )
 }
 
 /***********************************************************************
- *           SetTextAlign16    (GDI.346)
+ *           SetTextAlign    (GDI.346)
  */
 UINT16 WINAPI SetTextAlign16( HDC16 hdc, UINT16 align )
 {
@@ -1011,7 +1011,7 @@ INT WINAPI SetGraphicsMode( HDC hdc, INT mode )
 
 
 /***********************************************************************
- *           SetArcDirection16    (GDI.525)
+ *           SetArcDirection    (GDI.525)
  */
 INT16 WINAPI SetArcDirection16( HDC16 hdc, INT16 nDirection )
 {
@@ -1366,7 +1366,7 @@ HCOLORSPACE WINAPI SetColorSpace( HDC hDC, HCOLORSPACE hColorSpace )
 }
 
 /***********************************************************************
- *           GetBoundsRect16    (GDI.194)
+ *           GetBoundsRect    (GDI.194)
  */
 UINT16 WINAPI GetBoundsRect16(HDC16 hdc, LPRECT16 rect, UINT16 flags)
 {
@@ -1383,7 +1383,7 @@ UINT WINAPI GetBoundsRect(HDC hdc, LPRECT rect, UINT flags)
 }
  
 /***********************************************************************
- *           SetBoundsRect16    (GDI.193)
+ *           SetBoundsRect    (GDI.193)
  */
 UINT16 WINAPI SetBoundsRect16(HDC16 hdc, const RECT16* rect, UINT16 flags)
 {

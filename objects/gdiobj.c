@@ -576,7 +576,7 @@ void GDI_ReleaseObj( HGDIOBJ handle )
 
 
 /***********************************************************************
- *           DeleteObject16    (GDI.605)
+ *           DeleteObject    (GDI.605)
  */
 BOOL16 WINAPI DeleteObject16( HGDIOBJ16 obj )
 {
@@ -635,7 +635,7 @@ BOOL WINAPI DeleteObject( HGDIOBJ obj )
 }
 
 /***********************************************************************
- *           GetStockObject16    (GDI.87)
+ *           GetStockObject    (GDI.87)
  */
 HGDIOBJ16 WINAPI GetStockObject16( INT16 obj )
 {
@@ -658,7 +658,7 @@ HGDIOBJ WINAPI GetStockObject( INT obj )
 
 
 /***********************************************************************
- *           GetObject16    (GDI.82)
+ *           GetObject    (GDI.82)
  */
 INT16 WINAPI GetObject16( HANDLE16 handle, INT16 count, LPVOID buffer )
 {
@@ -884,7 +884,7 @@ HANDLE WINAPI GetCurrentObject(HDC hdc,UINT type)
 
 
 /***********************************************************************
- *           SelectObject16    (GDI.45)
+ *           SelectObject    (GDI.45)
  */
 HGDIOBJ16 WINAPI SelectObject16( HDC16 hdc, HGDIOBJ16 handle )
 {
@@ -909,7 +909,7 @@ HGDIOBJ WINAPI SelectObject( HDC hdc, HGDIOBJ handle )
 
 
 /***********************************************************************
- *           UnrealizeObject16    (GDI.150)
+ *           UnrealizeObject    (GDI.150)
  */
 BOOL16 WINAPI UnrealizeObject16( HGDIOBJ16 obj )
 {
@@ -1122,7 +1122,7 @@ BOOL16 WINAPI IsGDIObject16( HGDIOBJ16 handle )
 
 
 /***********************************************************************
- *           SetObjectOwner16    (GDI.461)
+ *           SetObjectOwner    (GDI.461)
  */
 void WINAPI SetObjectOwner16( HGDIOBJ16 handle, HANDLE16 owner )
 {
@@ -1221,7 +1221,7 @@ WORD WINAPI GdiSignalProc( UINT uCode, DWORD dwThreadOrProcessID,
 }
 
 /***********************************************************************
- *           FinalGdiInit16     (GDI.405)
+ *           FinalGdiInit     (GDI.405)
  */
 void WINAPI FinalGdiInit16( HANDLE16 unknown )
 {
@@ -1237,7 +1237,7 @@ WORD WINAPI GdiFreeResources16( DWORD reserve )
 }
 
 /***********************************************************************
- *           MulDiv16   (GDI.128)
+ *           MulDiv   (GDI.128)
  */
 INT16 WINAPI MulDiv16(
 	     INT16 nMultiplicand, 

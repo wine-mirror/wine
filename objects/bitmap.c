@@ -55,7 +55,7 @@ INT BITMAP_GetWidthBytes( INT bmWidth, INT bpp )
 }
 
 /***********************************************************************
- *           CreateUserBitmap16    (GDI.407)
+ *           CreateUserBitmap    (GDI.407)
  */
 HBITMAP16 WINAPI CreateUserBitmap16( INT16 width, INT16 height, UINT16 planes,
                                      UINT16 bpp, LPCVOID bits )
@@ -64,7 +64,7 @@ HBITMAP16 WINAPI CreateUserBitmap16( INT16 width, INT16 height, UINT16 planes,
 }
 
 /***********************************************************************
- *           CreateUserDiscardableBitmap16    (GDI.409)
+ *           CreateUserDiscardableBitmap    (GDI.409)
  */
 HBITMAP16 WINAPI CreateUserDiscardableBitmap16( WORD dummy, 
                                                 INT16 width, INT16 height )
@@ -77,7 +77,7 @@ HBITMAP16 WINAPI CreateUserDiscardableBitmap16( WORD dummy,
 
 
 /***********************************************************************
- *           CreateBitmap16    (GDI.48)
+ *           CreateBitmap    (GDI.48)
  *           CreateBitmap16    (DISPLAY.48)
  */
 HBITMAP16 WINAPI CreateBitmap16( INT16 width, INT16 height, UINT16 planes,
@@ -149,7 +149,7 @@ HBITMAP WINAPI CreateBitmap( INT width, INT height, UINT planes,
 
 
 /***********************************************************************
- *           CreateCompatibleBitmap16    (GDI.51)
+ *           CreateCompatibleBitmap    (GDI.51)
  */
 HBITMAP16 WINAPI CreateCompatibleBitmap16(HDC16 hdc, INT16 width, INT16 height)
 {
@@ -195,7 +195,7 @@ HBITMAP WINAPI CreateCompatibleBitmap( HDC hdc, INT width, INT height)
 
 
 /***********************************************************************
- *           CreateBitmapIndirect16    (GDI.49)
+ *           CreateBitmapIndirect    (GDI.49)
  */
 HBITMAP16 WINAPI CreateBitmapIndirect16( const BITMAP16 * bmp )
 {
@@ -220,7 +220,7 @@ HBITMAP WINAPI CreateBitmapIndirect(
 
 
 /***********************************************************************
- *           GetBitmapBits16    (GDI.74)
+ *           GetBitmapBits    (GDI.74)
  */
 LONG WINAPI GetBitmapBits16( HBITMAP16 hbitmap, LONG count, LPVOID buffer )
 {
@@ -301,7 +301,7 @@ LONG WINAPI GetBitmapBits(
 
 
 /***********************************************************************
- *           SetBitmapBits16    (GDI.106)
+ *           SetBitmapBits    (GDI.106)
  */
 LONG WINAPI SetBitmapBits16( HBITMAP16 hbitmap, LONG count, LPCVOID buffer )
 {
@@ -486,7 +486,7 @@ INT BITMAP_GetObject( BITMAPOBJ * bmp, INT count, LPVOID buffer )
     
 
 /***********************************************************************
- *           CreateDiscardableBitmap16    (GDI.156)
+ *           CreateDiscardableBitmap    (GDI.156)
  */
 HBITMAP16 WINAPI CreateDiscardableBitmap16( HDC16 hdc, INT16 width,
                                             INT16 height )
@@ -512,7 +512,7 @@ HBITMAP WINAPI CreateDiscardableBitmap(
 
 
 /***********************************************************************
- *           GetBitmapDimensionEx16    (GDI.468)
+ *           GetBitmapDimensionEx    (GDI.468)
  *
  * NOTES
  *    Can this call GetBitmapDimensionEx?
@@ -559,7 +559,7 @@ DWORD WINAPI GetBitmapDimension16( HBITMAP16 hbitmap )
 
 
 /***********************************************************************
- *           SetBitmapDimensionEx16    (GDI.478)
+ *           SetBitmapDimensionEx    (GDI.478)
  */
 BOOL16 WINAPI SetBitmapDimensionEx16( HBITMAP16 hbitmap, INT16 x, INT16 y,
                                       LPSIZE16 prevSize )

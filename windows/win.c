@@ -2127,7 +2127,8 @@ BOOL16 WINAPI SetWindowText16( HWND16 hwnd, SEGPTR lpString )
 
 
 /*******************************************************************
- *		SetWindowText (USER32.@)
+ *		SetWindowText  (USER32.@)
+ *		SetWindowTextA (USER32.@)
  */
 BOOL WINAPI SetWindowTextA( HWND hwnd, LPCSTR lpString )
 {

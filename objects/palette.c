@@ -89,7 +89,7 @@ void PALETTE_ValidateFlags(PALETTEENTRY* lpPalE, int size)
 
 
 /***********************************************************************
- *           CreatePalette16    (GDI.360)
+ *           CreatePalette    (GDI.360)
  */
 HPALETTE16 WINAPI CreatePalette16( const LOGPALETTE* palette )
 {
@@ -130,7 +130,7 @@ HPALETTE WINAPI CreatePalette(
 
 
 /***********************************************************************
- * CreateHalftonePalette16 [GDI.529]  Creates a halftone palette
+ * CreateHalftonePalette [GDI.529]  Creates a halftone palette
  *
  * RETURNS
  *    Success: Handle to logical halftone palette
@@ -189,7 +189,7 @@ HPALETTE WINAPI CreateHalftonePalette(
 
 
 /***********************************************************************
- *           GetPaletteEntries16    (GDI.363)
+ *           GetPaletteEntries    (GDI.363)
  */
 UINT16 WINAPI GetPaletteEntries16( HPALETTE16 hpalette, UINT16 start,
                                    UINT16 count, LPPALETTEENTRY entries )
@@ -241,7 +241,7 @@ UINT WINAPI GetPaletteEntries(
 
 
 /***********************************************************************
- *           SetPaletteEntries16    (GDI.364)
+ *           SetPaletteEntries    (GDI.364)
  */
 UINT16 WINAPI SetPaletteEntries16( HPALETTE16 hpalette, UINT16 start,
                                    UINT16 count, LPPALETTEENTRY entries )
@@ -290,7 +290,7 @@ UINT WINAPI SetPaletteEntries(
 
 
 /***********************************************************************
- *           ResizePalette16   (GDI.368)
+ *           ResizePalette   (GDI.368)
  */
 BOOL16 WINAPI ResizePalette16( HPALETTE16 hPal, UINT16 cEntries )
 {
@@ -356,7 +356,7 @@ BOOL WINAPI ResizePalette(
 
 
 /***********************************************************************
- *           AnimatePalette16   (GDI.367)
+ *           AnimatePalette   (GDI.367)
  */
 void WINAPI AnimatePalette16( HPALETTE16 hPal, UINT16 StartIndex,
                               UINT16 NumEntries, const PALETTEENTRY* PaletteColors)
@@ -406,7 +406,7 @@ BOOL WINAPI AnimatePalette(
 
 
 /***********************************************************************
- *           SetSystemPaletteUse16   (GDI.373)
+ *           SetSystemPaletteUse   (GDI.373)
  */
 UINT16 WINAPI SetSystemPaletteUse16( HDC16 hdc, UINT16 use )
 {
@@ -433,7 +433,7 @@ UINT WINAPI SetSystemPaletteUse(
 
 
 /***********************************************************************
- *           GetSystemPaletteUse16   (GDI.374)
+ *           GetSystemPaletteUse   (GDI.374)
  */
 UINT16 WINAPI GetSystemPaletteUse16( HDC16 hdc )
 {
@@ -455,7 +455,7 @@ UINT WINAPI GetSystemPaletteUse(
 
 
 /***********************************************************************
- *           GetSystemPaletteEntries16   (GDI.375)
+ *           GetSystemPaletteEntries   (GDI.375)
  */
 UINT16 WINAPI GetSystemPaletteEntries16( HDC16 hdc, UINT16 start, UINT16 count,
                                          LPPALETTEENTRY entries )
@@ -512,7 +512,7 @@ UINT WINAPI GetSystemPaletteEntries(
 
 
 /***********************************************************************
- *           GetNearestPaletteIndex16   (GDI.370)
+ *           GetNearestPaletteIndex   (GDI.370)
  */
 UINT16 WINAPI GetNearestPaletteIndex16( HPALETTE16 hpalette, COLORREF color )
 {
@@ -551,7 +551,7 @@ UINT WINAPI GetNearestPaletteIndex(
 
 
 /***********************************************************************
- *           GetNearestColor16   (GDI.154)
+ *           GetNearestColor   (GDI.154)
  */
 COLORREF WINAPI GetNearestColor16( HDC16 hdc, COLORREF color )
 {
@@ -778,7 +778,7 @@ typedef HWND WINAPI (*WindowFromDC_funcptr)( HDC );
 typedef BOOL WINAPI (*RedrawWindow_funcptr)( HWND, const RECT *, HRGN, UINT );
 
 /**********************************************************************
- *            UpdateColors16   (DISPLAY.366)
+ *            UpdateColors   (DISPLAY.366)
  *            UpdateColors16   (GDI.366)
  */
 INT16 WINAPI UpdateColors16( HDC16 hDC )
@@ -829,7 +829,7 @@ BOOL WINAPI UpdateColors(
 
 
 /*********************************************************************
- *           SetMagicColors16   (GDI.606)
+ *           SetMagicColors   (GDI.606)
  */
 VOID WINAPI SetMagicColors16(HDC16 hDC, COLORREF color, UINT16 index)
 {

@@ -99,7 +99,7 @@ static BOOL create_brush_indirect(BRUSHOBJ *brushPtr, BOOL v16)
 
 
 /***********************************************************************
- *           CreateBrushIndirect16    (GDI.50)
+ *           CreateBrushIndirect    (GDI.50)
  */
 HBRUSH16 WINAPI CreateBrushIndirect16( const LOGBRUSH16 * brush )
 {
@@ -154,7 +154,7 @@ HBRUSH WINAPI CreateBrushIndirect( const LOGBRUSH * brush )
 
 
 /***********************************************************************
- *           CreateHatchBrush16    (GDI.58)
+ *           CreateHatchBrush    (GDI.58)
  */
 HBRUSH16 WINAPI CreateHatchBrush16( INT16 style, COLORREF color )
 {
@@ -180,7 +180,7 @@ HBRUSH WINAPI CreateHatchBrush( INT style, COLORREF color )
 
 
 /***********************************************************************
- *           CreatePatternBrush16    (GDI.60)
+ *           CreatePatternBrush    (GDI.60)
  */
 HBRUSH16 WINAPI CreatePatternBrush16( HBITMAP16 hbitmap )
 {
@@ -202,7 +202,7 @@ HBRUSH WINAPI CreatePatternBrush( HBITMAP hbitmap )
 
 
 /***********************************************************************
- *           CreateDIBPatternBrush16    (GDI.445)
+ *           CreateDIBPatternBrush    (GDI.445)
  */
 HBRUSH16 WINAPI CreateDIBPatternBrush16( HGLOBAL16 hbitmap, UINT16 coloruse )
 {
@@ -398,7 +398,7 @@ INT BRUSH_GetObject( BRUSHOBJ * brush, INT count, LPSTR buffer )
 
 
 /***********************************************************************
- *           SetSolidBrush16   (GDI.604)
+ *           SetSolidBrush   (GDI.604)
  *
  *  If hBrush is a solid brush, change its color to newColor.
  *

@@ -68,7 +68,7 @@ NTSTATUS WINAPI NtQueryTimerResolution(DWORD x1,DWORD x2,DWORD x3)
  */
 
 /******************************************************************************
- *  NtTerminateProcess			[NTDLL.] 
+ *  NtTerminateProcess			[NTDLL.@]
  *
  *  Native applications must kill themselves when done
  */
@@ -89,7 +89,7 @@ NTSTATUS WINAPI NtTerminateProcess( HANDLE handle, LONG exit_code )
 }
 
 /******************************************************************************
-*  NtQueryInformationProcess		[NTDLL.] 
+*  NtQueryInformationProcess		[NTDLL.@]
 *
 */
 NTSTATUS WINAPI NtQueryInformationProcess(
@@ -169,7 +169,7 @@ NTSTATUS WINAPI NtTerminateThread( HANDLE handle, LONG exit_code )
 
 
 /******************************************************************************
-*  NtQueryInformationThread		[NTDLL.] 
+*  NtQueryInformationThread		[NTDLL.@]
 *
 */
 NTSTATUS WINAPI NtQueryInformationThread(
