@@ -29,7 +29,6 @@
  *
  *
  * TODO:
- *   - A little bug in TOOLBAR_DrawMasked()
  *   - Button wrapping (under construction).
  *   - Messages.
  *   - Notifications (under construction).
@@ -67,6 +66,7 @@
 #include "winuser.h"
 #include "wine/unicode.h"
 #include "commctrl.h"
+#include "imagelist.h"
 #include "comctl32.h"
 #include "wine/debug.h"
 
@@ -3952,8 +3952,12 @@ TOOLBAR_SetBitmapSize (HWND hwnd, WPARAM wParam, LPARAM lParam)
     infoPtr->nBitmapWidth = (INT)LOWORD(lParam);
     infoPtr->nBitmapHeight = (INT)HIWORD(lParam);
 
-    if (himlDef)
-        ImageList_SetIconSize(himlDef, infoPtr->nBitmapWidth, infoPtr->nBitmapHeight);
+
+    /* uses image list internals directly */
+    if (himlDef) {
+        himlDef->cx = infoPtr->nBitmapWidth;
+        himlDef->cy = infoPtr->nBitmapHeight;
+    }
 
     return TRUE;
 }
