@@ -407,17 +407,15 @@ static LRESULT WINPROC_CallWndProc( WNDPROC proc, HWND hwnd, UINT msg,
                                       WPARAM wParam, LPARAM lParam )
 {
     LRESULT retvalue;
-    int iWndsLocks;
+
+    USER_CheckNotLock();
 
     hwnd = WIN_GetFullHandle( hwnd );
     if (TRACE_ON(relay))
         DPRINTF( "%04lx:Call window proc %p (hwnd=%p,msg=%s,wp=%08x,lp=%08lx)\n",
                  GetCurrentThreadId(), proc, hwnd, SPY_GetMsgName(msg, hwnd), wParam, lParam );
-    /* To avoid any deadlocks, all the locks on the windows structures
-       must be suspended before the control is passed to the application */
-    iWndsLocks = WIN_SuspendWndsLock();
+
     retvalue = WINPROC_wrapper( proc, hwnd, msg, wParam, lParam );
-    WIN_RestoreWndsLock(iWndsLocks);
 
     if (TRACE_ON(relay))
         DPRINTF( "%04lx:Ret  window proc %p (hwnd=%p,msg=%s,wp=%08x,lp=%08lx) retval=%08lx\n",
@@ -439,7 +437,8 @@ static LRESULT WINAPI WINPROC_CallWndProc16( WNDPROC16 proc, HWND16 hwnd,
     WORD args[5];
     DWORD offset = 0;
     TEB *teb = NtCurrentTeb();
-    int iWndsLocks;
+
+    USER_CheckNotLock();
 
     /* Window procedures want ax = hInstance, ds = es = ss */
 
@@ -479,8 +478,6 @@ static LRESULT WINAPI WINPROC_CallWndProc16( WNDPROC16 proc, HWND16 hwnd,
         }
     }
 
-    iWndsLocks = WIN_SuspendWndsLock();
-
     args[4] = hwnd;
     args[3] = msg;
     args[2] = wParam;
@@ -490,9 +487,6 @@ static LRESULT WINAPI WINPROC_CallWndProc16( WNDPROC16 proc, HWND16 hwnd,
     ret = MAKELONG( LOWORD(context.Eax), LOWORD(context.Edx) );
 
     if (offset) stack16_pop( offset );
-
-    WIN_RestoreWndsLock(iWndsLocks);
-
     return ret;
 }
 

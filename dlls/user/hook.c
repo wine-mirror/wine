@@ -332,6 +332,8 @@ LRESULT HOOK_CallHooks( INT id, INT code, WPARAM wparam, LPARAM lparam, BOOL uni
     BOOL unicode_hook = FALSE;
     LRESULT ret = 0;
 
+    USER_CheckNotLock();
+
     if (!queue) return 0;
     SERVER_START_REQ( start_hook_chain )
     {
@@ -378,12 +380,10 @@ LRESULT HOOK_CallHooks( INT id, INT code, WPARAM wparam, LPARAM lparam, BOOL uni
 
         if (!module[0] || (proc = get_hook_proc( proc, module )) != NULL)
         {
-            int locks = WIN_SuspendWndsLock();
             HHOOK prev = queue->hook;
             queue->hook = handle;
             ret = call_hook( proc, id, code, wparam, lparam, unicode, unicode_hook );
             queue->hook = prev;
-            WIN_RestoreWndsLock( locks );
         }
 
     }
@@ -772,6 +772,8 @@ void WINAPI NotifyWinEvent(DWORD event, HWND hwnd, LONG object_id, LONG child_id
         return;
     }
 
+    USER_CheckNotLock();
+
 #if 0
     if (event & 0x80000000)
     {
@@ -803,8 +805,6 @@ void WINAPI NotifyWinEvent(DWORD event, HWND hwnd, LONG object_id, LONG child_id
 
             if (!info.module[0] || (info.proc = get_hook_proc( info.proc, info.module )) != NULL)
             {
-                int locks = WIN_SuspendWndsLock();
-
                 if (TRACE_ON(relay))
                     DPRINTF( "%04lx:Call winevent hook proc %p (hhook=%p,event=%lx,hwnd=%p,object_id=%lx,child_id=%lx,tid=%04lx,time=%lx)\n",
                              GetCurrentThreadId(), info.proc, info.handle, event, hwnd, object_id,
@@ -817,8 +817,6 @@ void WINAPI NotifyWinEvent(DWORD event, HWND hwnd, LONG object_id, LONG child_id
                     DPRINTF( "%04lx:Ret  winevent hook proc %p (hhook=%p,event=%lx,hwnd=%p,object_id=%lx,child_id=%lx,tid=%04lx,time=%lx)\n",
                              GetCurrentThreadId(), info.proc, info.handle, event, hwnd, object_id,
                              child_id, GetCurrentThreadId(), GetCurrentTime());
-
-                WIN_RestoreWndsLock( locks );
             }
         }
         else

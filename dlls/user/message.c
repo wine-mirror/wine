@@ -2231,25 +2231,20 @@ static LRESULT retrieve_reply( const struct send_message_info *info,
 static LRESULT send_inter_thread_message( DWORD dest_tid, const struct send_message_info *info,
                                           LRESULT *res_ptr )
 {
-    LRESULT ret;
-    int locks;
     size_t reply_size = 0;
 
     TRACE( "hwnd %p msg %x (%s) wp %x lp %lx\n",
            info->hwnd, info->msg, SPY_GetMsgName(info->msg, info->hwnd), info->wparam, info->lparam );
+
+    USER_CheckNotLock();
 
     if (!put_message_in_queue( dest_tid, info, &reply_size )) return 0;
 
     /* there's no reply to wait for on notify/callback messages */
     if (info->type == MSG_NOTIFY || info->type == MSG_CALLBACK) return 1;
 
-    locks = WIN_SuspendWndsLock();
-
     wait_message_reply( info->flags );
-    ret = retrieve_reply( info, reply_size, res_ptr );
-
-    WIN_RestoreWndsLock( locks );
-    return ret;
+    return retrieve_reply( info, reply_size, res_ptr );
 }
 
 
@@ -2664,14 +2659,14 @@ BOOL WINAPI PeekMessageW( MSG *msg_out, HWND hwnd, UINT first, UINT last, UINT f
 {
     MESSAGEQUEUE *queue;
     MSG msg;
-    int locks;
+
+    USER_CheckNotLock();
 
     /* check for graphics events */
     if (USER_Driver.pMsgWaitForMultipleObjectsEx)
         USER_Driver.pMsgWaitForMultipleObjectsEx( 0, NULL, 0, QS_ALLINPUT, 0 );
 
     hwnd = WIN_GetFullHandle( hwnd );
-    locks = WIN_SuspendWndsLock();
 
     if (!peek_message( &msg, hwnd, first, last, (flags & PM_REMOVE) ? GET_MSG_REMOVE : 0 ))
     {
@@ -2681,7 +2676,6 @@ BOOL WINAPI PeekMessageW( MSG *msg_out, HWND hwnd, UINT first, UINT last, UINT f
             ReleaseThunkLock(&count);
             if (count) RestoreThunkLock(count);
         }
-        WIN_RestoreWndsLock( locks );
         return FALSE;
     }
 
@@ -2693,8 +2687,6 @@ BOOL WINAPI PeekMessageW( MSG *msg_out, HWND hwnd, UINT first, UINT last, UINT f
     }
 
     HOOK_CallHooks( WH_GETMESSAGE, HC_ACTION, flags & PM_REMOVE, (LPARAM)&msg, TRUE );
-
-    WIN_RestoreWndsLock( locks );
 
     /* copy back our internal safe copy of message data to msg_out.
      * msg_out is a variable from the *program*, so it can't be used
@@ -2727,9 +2719,8 @@ BOOL WINAPI PeekMessageA( MSG *msg, HWND hwnd, UINT first, UINT last, UINT flags
 BOOL WINAPI GetMessageW( MSG *msg, HWND hwnd, UINT first, UINT last )
 {
     MESSAGEQUEUE *queue = QUEUE_Current();
-    int mask, locks;
+    int mask = QS_POSTMESSAGE | QS_SENDMESSAGE;  /* Always selected */
 
-    mask = QS_POSTMESSAGE | QS_SENDMESSAGE;  /* Always selected */
     if (first || last)
     {
         if ((first <= WM_KEYLAST) && (last >= WM_KEYFIRST)) mask |= QS_KEY;
@@ -2740,8 +2731,6 @@ BOOL WINAPI GetMessageW( MSG *msg, HWND hwnd, UINT first, UINT last )
         if ((first <= WM_PAINT) && (last >= WM_PAINT)) mask |= QS_PAINT;
     }
     else mask |= QS_MOUSE | QS_KEY | QS_TIMER | QS_PAINT;
-
-    locks = WIN_SuspendWndsLock();
 
     while (!PeekMessageW( msg, hwnd, first, last, PM_REMOVE ))
     {
@@ -2776,8 +2765,6 @@ BOOL WINAPI GetMessageW( MSG *msg, HWND hwnd, UINT first, UINT last )
             WaitForSingleObject( queue->server_queue, INFINITE );
         if (dwlc) RestoreThunkLock( dwlc );
     }
-
-    WIN_RestoreWndsLock( locks );
 
     return (msg->message != WM_QUIT);
 }

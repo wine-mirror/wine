@@ -116,7 +116,6 @@ static WND *create_window_handle( HWND parent, HWND owner, ATOM atom,
     user_handles[index] = win;
     win->hwndSelf   = handle;
     win->dwMagic    = WND_MAGIC;
-    win->irefCount  = 1;
     win->cbWndExtra = extra_bytes;
     memset( win->wExtra, 0, extra_bytes );
     CLASS_AddWindow( class, win, type );
@@ -149,6 +148,7 @@ static WND *free_window_handle( HWND hwnd )
         SERVER_END_REQ;
     }
     USER_Unlock();
+    ptr->dwMagic = 0;
     HeapFree( GetProcessHeap(), 0, ptr );
     return ptr;
 }
@@ -389,63 +389,6 @@ HWND WIN_Handle32( HWND16 hwnd16 )
 
 
 /***********************************************************************
- *           WIN_FindWndPtr
- *
- * Return a pointer to the WND structure corresponding to a HWND.
- */
-WND * WIN_FindWndPtr( HWND hwnd )
-{
-    WND * ptr;
-
-    if (!hwnd) return NULL;
-
-    if ((ptr = WIN_GetPtr( hwnd )))
-    {
-        if (ptr != WND_OTHER_PROCESS)
-        {
-            /* increment destruction monitoring */
-            ptr->irefCount++;
-            return ptr;
-        }
-        if (IsWindow( hwnd )) /* check other processes */
-        {
-            ERR( "window %p belongs to other process\n", hwnd );
-            /* DbgBreakPoint(); */
-        }
-    }
-    SetLastError( ERROR_INVALID_WINDOW_HANDLE );
-    return NULL;
-}
-
-
-/***********************************************************************
- *           WIN_ReleaseWndPtr
- *
- * Release the pointer to the WND structure.
- */
-void WIN_ReleaseWndPtr(WND *wndPtr)
-{
-    if(!wndPtr) return;
-
-    /* Decrement destruction monitoring value */
-     wndPtr->irefCount--;
-     /* Check if it's time to release the memory */
-     if(wndPtr->irefCount == 0 && !wndPtr->dwMagic)
-     {
-         /* Release memory */
-         free_window_handle( wndPtr->hwndSelf );
-     }
-     else if(wndPtr->irefCount < 0)
-     {
-         /* This else if is useful to monitor the WIN_ReleaseWndPtr function */
-         ERR("forgot a Lock on %p somewhere\n",wndPtr);
-     }
-     /* unlock all WND structures for thread safeness */
-     USER_Unlock();
-}
-
-
-/***********************************************************************
  *           WIN_UnlinkWindow
  *
  * Remove a window from the siblings linked list.
@@ -622,6 +565,7 @@ LRESULT WIN_DestroyWindow( HWND hwnd )
 {
     WND *wndPtr;
     HWND *list;
+    HMENU menu = 0, sys_menu;
 
     TRACE("%p\n", hwnd );
 
@@ -643,13 +587,6 @@ LRESULT WIN_DestroyWindow( HWND hwnd )
         HeapFree( GetProcessHeap(), 0, list );
     }
 
-    /*
-     * Clear the update region to make sure no WM_PAINT messages will be
-     * generated for this window while processing the WM_NCDESTROY.
-     */
-    RedrawWindow( hwnd, NULL, 0,
-                  RDW_VALIDATE | RDW_NOFRAME | RDW_NOERASE | RDW_NOINTERNALPAINT | RDW_NOCHILDREN);
-
     /* Unlink now so we won't bother with the children later on */
     WIN_UnlinkWindow( hwnd );
 
@@ -664,23 +601,18 @@ LRESULT WIN_DestroyWindow( HWND hwnd )
 
     /* free resources associated with the window */
 
-    if (!(wndPtr = WIN_FindWndPtr( hwnd ))) return 0;
+    if (!(wndPtr = WIN_GetPtr( hwnd )) || wndPtr == WND_OTHER_PROCESS) return 0;
+    if (!(wndPtr->dwStyle & WS_CHILD)) menu = (HMENU)wndPtr->wIDmenu;
+    sys_menu = wndPtr->hSysMenu;
+    WIN_ReleasePtr( wndPtr );
 
-    if (!(wndPtr->dwStyle & WS_CHILD))
-    {
-        HMENU menu = (HMENU)SetWindowLongPtrW( hwnd, GWLP_ID, 0 );
-        if (menu) DestroyMenu( menu );
-    }
-    if (wndPtr->hSysMenu)
-    {
-	DestroyMenu( wndPtr->hSysMenu );
-	wndPtr->hSysMenu = 0;
-    }
+    if (menu) DestroyMenu( menu );
+    if (sys_menu) DestroyMenu( sys_menu );
+
     DCE_FreeWindowDCE( hwnd );    /* Always do this to catch orphaned DCs */
     if (USER_Driver.pDestroyWindow) USER_Driver.pDestroyWindow( hwnd );
-    wndPtr->class = NULL;
-    wndPtr->dwMagic = 0;  /* Mark it as invalid */
-    WIN_ReleaseWndPtr( wndPtr );
+
+    free_window_handle( hwnd );
     return 0;
 }
 
@@ -760,14 +692,11 @@ BOOL WIN_CreateDesktopWindow(void)
         pWndDesktop->wIDmenu   = reply->old_id;
     }
     SERVER_END_REQ;
+    WIN_ReleasePtr( pWndDesktop );
 
     if (!USER_Driver.pCreateWindow || !USER_Driver.pCreateWindow( hwndDesktop, &cs, FALSE ))
-    {
-        WIN_ReleaseWndPtr( pWndDesktop );
         return FALSE;
-    }
 
-    WIN_ReleaseWndPtr( pWndDesktop );
     return TRUE;
 }
 
@@ -1210,7 +1139,7 @@ static HWND WIN_CreateWindowEx( CREATESTRUCTA *cs, ATOM classAtom,
         }
     }
     else SetWindowLongPtrW( hwnd, GWLP_ID, (ULONG_PTR)cs->hMenu );
-    WIN_ReleaseWndPtr( wndPtr );
+    WIN_ReleasePtr( wndPtr );
 
     if (!USER_Driver.pCreateWindow || !USER_Driver.pCreateWindow( hwnd, cs, unicode))
     {
@@ -2908,7 +2837,9 @@ BOOL WINAPI EnumWindows( WNDENUMPROC lpEnumFunc, LPARAM lParam )
 {
     HWND *list;
     BOOL ret = TRUE;
-    int i, iWndsLocks;
+    int i;
+
+    USER_CheckNotLock();
 
     /* We have to build a list of all windows first, to avoid */
     /* unpleasant side-effects, for instance if the callback */
@@ -2918,14 +2849,12 @@ BOOL WINAPI EnumWindows( WNDENUMPROC lpEnumFunc, LPARAM lParam )
 
     /* Now call the callback function for every window */
 
-    iWndsLocks = WIN_SuspendWndsLock();
     for (i = 0; list[i]; i++)
     {
         /* Make sure that the window still exists */
         if (!IsWindow( list[i] )) continue;
         if (!(ret = lpEnumFunc( list[i], lParam ))) break;
     }
-    WIN_RestoreWndsLock(iWndsLocks);
     HeapFree( GetProcessHeap(), 0, list );
     return ret;
 }
@@ -2937,16 +2866,16 @@ BOOL WINAPI EnumWindows( WNDENUMPROC lpEnumFunc, LPARAM lParam )
 BOOL WINAPI EnumThreadWindows( DWORD id, WNDENUMPROC func, LPARAM lParam )
 {
     HWND *list;
-    int i, iWndsLocks;
+    int i;
+
+    USER_CheckNotLock();
 
     if (!(list = list_window_children( GetDesktopWindow(), 0, id ))) return TRUE;
 
     /* Now call the callback function for every window */
 
-    iWndsLocks = WIN_SuspendWndsLock();
     for (i = 0; list[i]; i++)
         if (!func( list[i], lParam )) break;
-    WIN_RestoreWndsLock(iWndsLocks);
     HeapFree( GetProcessHeap(), 0, list );
     return TRUE;
 }
@@ -2990,12 +2919,11 @@ static BOOL WIN_EnumChildWindows( HWND *list, WNDENUMPROC func, LPARAM lParam )
 BOOL WINAPI EnumChildWindows( HWND parent, WNDENUMPROC func, LPARAM lParam )
 {
     HWND *list;
-    int iWndsLocks;
+
+    USER_CheckNotLock();
 
     if (!(list = WIN_ListChildren( parent ))) return FALSE;
-    iWndsLocks = WIN_SuspendWndsLock();
     WIN_EnumChildWindows( list, func, lParam );
-    WIN_RestoreWndsLock(iWndsLocks);
     HeapFree( GetProcessHeap(), 0, list );
     return TRUE;
 }

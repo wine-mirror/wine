@@ -151,36 +151,6 @@ void USER_CheckNotLock(void)
 
 
 /***********************************************************************
- *           WIN_SuspendWndsLock
- *
- * Suspend the lock on WND structures.
- * Returns the number of locks suspended
- * FIXME: should be removed
- */
-int WIN_SuspendWndsLock( void )
-{
-    int isuspendedLocks = _ConfirmSysLevel( &USER_SysLevel );
-    int count = isuspendedLocks;
-
-    while ( count-- > 0 )
-        _LeaveSysLevel( &USER_SysLevel );
-
-    return isuspendedLocks;
-}
-
-/***********************************************************************
- *           WIN_RestoreWndsLock
- *
- * Restore the suspended locks on WND structures
- * FIXME: should be removed
- */
-void WIN_RestoreWndsLock( int ipreviousLocks )
-{
-    while ( ipreviousLocks-- > 0 )
-        _EnterSysLevel( &USER_SysLevel );
-}
-
-/***********************************************************************
  *		SignalProc32 (USER.391)
  *		UserSignalProc (USER32.@)
  *

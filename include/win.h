@@ -32,7 +32,6 @@
 
 struct tagCLASS;
 struct tagDCE;
-struct tagMESSAGEQUEUE;
 
 typedef struct tagWND
 {
@@ -60,7 +59,6 @@ typedef struct tagWND
     HICON          hIcon;         /* window's icon */
     HICON          hIconSmall;    /* window's small icon */
     int            cbWndExtra;    /* class cbWndExtra at window creation */
-    int            irefCount;     /* window's reference count*/
     DWORD          userdata;      /* User private data */
     DWORD          wExtra[1];     /* Window extra bytes */
 } WND;
@@ -76,10 +74,6 @@ typedef struct tagWND
 
   /* Window functions */
 extern WND *WIN_GetPtr( HWND hwnd );
-extern int    WIN_SuspendWndsLock( void );
-extern void   WIN_RestoreWndsLock(int ipreviousLock);
-extern WND*   WIN_FindWndPtr( HWND hwnd );
-extern void   WIN_ReleaseWndPtr(WND *wndPtr);
 extern HWND WIN_Handle32( HWND16 hwnd16 );
 extern HWND WIN_IsCurrentProcess( HWND hwnd );
 extern HWND WIN_IsCurrentThread( HWND hwnd );
@@ -105,7 +99,7 @@ inline static HWND WIN_GetFullHandle( HWND hwnd )
     return hwnd;
 }
 
-/* to release pointers retrieved by WIN_GetPtr; do not confuse with WIN_ReleaseWndPtr!! */
+/* to release pointers retrieved by WIN_GetPtr */
 inline static void WIN_ReleasePtr( WND *ptr )
 {
     USER_Unlock();
