@@ -421,7 +421,8 @@ PDB *PROCESS_Create( NE_MODULE *pModule, LPCSTR cmd_line, LPCSTR env,
         req.hstdout = GetStdHandle( STD_OUTPUT_HANDLE );
         req.hstderr = GetStdHandle( STD_ERROR_HANDLE );
     }
-    CLIENT_SendRequest( REQ_NEW_PROCESS, -1, 1, &req, sizeof(req) );
+    CLIENT_SendRequest( REQ_NEW_PROCESS, -1, 2,
+                        &req, sizeof(req), cmd_line, strlen(cmd_line) + 1 );
     if (CLIENT_WaitSimpleReply( &reply, sizeof(reply), NULL )) goto error;
     pdb->server_pid   = reply.pid;
     info->hProcess    = reply.handle;
