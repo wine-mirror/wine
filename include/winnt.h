@@ -510,6 +510,7 @@ typedef struct _MEMORY_BASIC_INFORMATION
 #define MEM_MAPPED              0x00040000
 #define MEM_RESET               0x00080000
 #define MEM_TOP_DOWN            0x00100000
+#define MEM_PHYSICAL            0x00400000
 #ifdef __WINESRC__
 #define MEM_SYSTEM              0x80000000
 #endif
@@ -3268,6 +3269,7 @@ typedef enum tagSID_NAME_USE {
 #define SECTION_MAP_READ           0x0004
 #define SECTION_MAP_EXECUTE        0x0008
 #define SECTION_EXTEND_SIZE        0x0010
+#define SECTION_MAP_EXECUTE_EXPLICIT 0x0020
 #define SECTION_ALL_ACCESS         (STANDARD_RIGHTS_REQUIRED|0x01f)
 
 #define FILE_READ_DATA            0x0001    /* file & pipe */
