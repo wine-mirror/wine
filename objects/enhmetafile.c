@@ -303,7 +303,7 @@ BOOL WINAPI PlayEnhMetaFileRecord(
      )
 {
   int type;
-  RECT tmprc;
+  POINT pt[2];
 
   TRACE(
 	"hdc = %08x, handletable = %p, record = %p, numHandles = %d\n",
@@ -1566,11 +1566,12 @@ BOOL WINAPI PlayEnhMetaFileRecord(
       FIXME("type %d is unimplemented\n", type);
       break;
     }
-  tmprc.left = tmprc.top = 0;
-  tmprc.right = tmprc.bottom = 1000;
-  LPtoDP(hdc, (POINT*)&tmprc, 2);
-  TRACE("L:0,0 - 1000,1000 -> D:%d,%d - %d,%d\n", tmprc.left,
-	tmprc.top, tmprc.right, tmprc.bottom);
+
+  pt[0].x = pt[0].y = 0;
+  pt[1].x = pt[1].y = 1000;
+  LPtoDP(hdc, pt, 2);
+  TRACE("L:0,0 - 1000,1000 -> D:%ld,%ld - %ld,%ld\n", pt[0].x, pt[0].y,
+	pt[1].x, pt[1].y);
   return TRUE;
 }
 
@@ -1612,7 +1613,7 @@ BOOL WINAPI EnumEnhMetaFile(
     HPEN hPen = (HPEN)NULL;
     HBRUSH hBrush = (HBRUSH)NULL;
     HFONT hFont = (HFONT)NULL;
-    RECT tmprc;
+    POINT pt[2];
 
     if(!lpRect)
     {
@@ -1671,11 +1672,11 @@ BOOL WINAPI EnumEnhMetaFile(
 	hFont = GetCurrentObject(hdc, OBJ_FONT);
     }
 
-    tmprc.left = tmprc.top = 0;
-    tmprc.right = tmprc.bottom = 1000;
-    LPtoDP(hdc, (POINT*)&tmprc, 2);
-    TRACE("L:0,0-1000,1000 maps to D:%d,%d - %d,%d\n", tmprc.left, tmprc.top,
-	  tmprc.right, tmprc.bottom);
+    pt[0].x = pt[0].y = 0;
+    pt[1].x = pt[1].y = 1000;
+    LPtoDP(hdc, pt, 2);
+    TRACE("L:0,0-1000,1000 maps to D:%ld,%ld - %ld,%ld\n", pt[0].x, pt[0].y,
+	  pt[1].x, pt[1].y);
     TRACE("nSize = %ld, nBytes = %ld, nHandles = %d, nRecords = %ld, nPalEntries = %ld\n",
 	emh->nSize, emh->nBytes, emh->nHandles, emh->nRecords, emh->nPalEntries);
 
