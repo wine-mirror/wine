@@ -41,6 +41,7 @@
 
 #include "wine/debug.h"
 #include "x11drv.h"
+#include "wine/server.h"
 #include "win.h"
 #include "winpos.h"
 #include "mwm.h"
@@ -739,6 +740,49 @@ void X11DRV_register_window( Display *display, HWND hwnd, struct x11drv_win_data
 }
 
 
+/***********************************************************************
+ *           X11DRV_set_window_rectangles
+ *
+ * Set the window and client rectangles.
+ */
+void X11DRV_set_window_rectangles( HWND hwnd, const RECT *rectWindow, const RECT *rectClient )
+{
+    WND *win = WIN_GetPtr( hwnd );
+    BOOL ret;
+
+    if (!win) return;
+    if (win == WND_OTHER_PROCESS)
+    {
+        if (IsWindow( hwnd )) ERR( "cannot set rectangles of other process window %p\n", hwnd );
+        return;
+    }
+    SERVER_START_REQ( set_window_rectangles )
+    {
+        req->handle        = hwnd;
+        req->window.left   = rectWindow->left;
+        req->window.top    = rectWindow->top;
+        req->window.right  = rectWindow->right;
+        req->window.bottom = rectWindow->bottom;
+        req->client.left   = rectClient->left;
+        req->client.top    = rectClient->top;
+        req->client.right  = rectClient->right;
+        req->client.bottom = rectClient->bottom;
+        ret = !wine_server_call( req );
+    }
+    SERVER_END_REQ;
+    if (ret)
+    {
+        win->rectWindow = *rectWindow;
+        win->rectClient = *rectClient;
+
+        TRACE( "win %p window (%ld,%ld)-(%ld,%ld) client (%ld,%ld)-(%ld,%ld)\n", hwnd,
+               rectWindow->left, rectWindow->top, rectWindow->right, rectWindow->bottom,
+               rectClient->left, rectClient->top, rectClient->right, rectClient->bottom );
+    }
+    WIN_ReleasePtr( win );
+}
+
+
 /**********************************************************************
  *		create_desktop
  */
@@ -997,7 +1041,7 @@ BOOL X11DRV_CreateWindow( HWND hwnd, CREATESTRUCTA *cs, BOOL unicode )
 
     /* initialize the dimensions before sending WM_GETMINMAXINFO */
     SetRect( &rect, cs->x, cs->y, cs->x + cs->cx, cs->y + cs->cy );
-    WIN_SetRectangles( hwnd, &rect, &rect );
+    X11DRV_set_window_rectangles( hwnd, &rect, &rect );
 
     if (!wndPtr->parent)
     {
@@ -1038,7 +1082,7 @@ BOOL X11DRV_CreateWindow( HWND hwnd, CREATESTRUCTA *cs, BOOL unicode )
 
         if (!(wndPtr = WIN_GetPtr( hwnd ))) return FALSE;
         SetRect( &rect, cs->x, cs->y, cs->x + cs->cx, cs->y + cs->cy );
-        WIN_SetRectangles( hwnd, &rect, &rect );
+        X11DRV_set_window_rectangles( hwnd, &rect, &rect );
         X11DRV_sync_whole_window_position( display, wndPtr, 0 );
     }
     WIN_ReleasePtr( wndPtr );
@@ -1066,7 +1110,7 @@ BOOL X11DRV_CreateWindow( HWND hwnd, CREATESTRUCTA *cs, BOOL unicode )
 
     if (!(wndPtr = WIN_GetPtr(hwnd))) return FALSE;
     if (rect.left > rect.right || rect.top > rect.bottom) rect = wndPtr->rectWindow;
-    WIN_SetRectangles( hwnd, &wndPtr->rectWindow, &rect );
+    X11DRV_set_window_rectangles( hwnd, &wndPtr->rectWindow, &rect );
     X11DRV_sync_client_window_position( display, wndPtr );
     X11DRV_register_window( display, hwnd, data );
 

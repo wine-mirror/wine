@@ -25,6 +25,7 @@
 #include "winpos.h"
 #include "wownt32.h"
 #include "wine/wingdi16.h"
+#include "wine/server.h"
 #include "wine/debug.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(ttydrv);
@@ -36,17 +37,65 @@ WINE_DEFAULT_DEBUG_CHANNEL(ttydrv);
 #define SWP_AGG_STATUSFLAGS \
     (SWP_AGG_NOPOSCHANGE | SWP_FRAMECHANGED | SWP_HIDEWINDOW | SWP_SHOWWINDOW)
 
+/***********************************************************************
+ *           set_window_rectangles
+ *
+ * Set the window and client rectangles.
+ */
+static void set_window_rectangles( HWND hwnd, const RECT *rectWindow, const RECT *rectClient )
+{
+    WND *win = WIN_GetPtr( hwnd );
+    BOOL ret;
+
+    if (!win) return;
+    if (win == WND_OTHER_PROCESS)
+    {
+        if (IsWindow( hwnd )) ERR( "cannot set rectangles of other process window %p\n", hwnd );
+        return;
+    }
+    SERVER_START_REQ( set_window_rectangles )
+    {
+        req->handle        = hwnd;
+        req->window.left   = rectWindow->left;
+        req->window.top    = rectWindow->top;
+        req->window.right  = rectWindow->right;
+        req->window.bottom = rectWindow->bottom;
+        req->client.left   = rectClient->left;
+        req->client.top    = rectClient->top;
+        req->client.right  = rectClient->right;
+        req->client.bottom = rectClient->bottom;
+        ret = !wine_server_call( req );
+    }
+    SERVER_END_REQ;
+    if (ret)
+    {
+        win->rectWindow = *rectWindow;
+        win->rectClient = *rectClient;
+
+        TRACE( "win %p window (%ld,%ld)-(%ld,%ld) client (%ld,%ld)-(%ld,%ld)\n", hwnd,
+               rectWindow->left, rectWindow->top, rectWindow->right, rectWindow->bottom,
+               rectClient->left, rectClient->top, rectClient->right, rectClient->bottom );
+    }
+    WIN_ReleasePtr( win );
+}
+
+
 /**********************************************************************
  *		CreateWindow   (TTYDRV.@)
  */
 BOOL TTYDRV_CreateWindow( HWND hwnd, CREATESTRUCTA *cs, BOOL unicode )
 {
     BOOL ret;
+    RECT rect;
     HWND hwndLinkAfter;
     CBT_CREATEWNDA cbtc;
     WND *wndPtr = WIN_GetPtr( hwnd );
 
     TRACE("(%p)\n", hwnd);
+
+    /* initialize the dimensions before sending WM_GETMINMAXINFO */
+    SetRect( &rect, cs->x, cs->y, cs->x + cs->cx, cs->y + cs->cy );
+    set_window_rectangles( hwnd, &rect, &rect );
 
     if (!wndPtr->parent)  /* desktop window */
     {
@@ -602,7 +651,7 @@ BOOL TTYDRV_SetWindowPos( WINDOWPOS *winpos )
 
     /* FIXME: actually do something with WVR_VALIDRECTS */
 
-    WIN_SetRectangles( winpos->hwnd, &newWindowRect, &newClientRect );
+    set_window_rectangles( winpos->hwnd, &newWindowRect, &newClientRect );
 
     if( winpos->flags & SWP_SHOWWINDOW )
         WIN_SetStyle( winpos->hwnd, wndPtr->dwStyle | WS_VISIBLE );

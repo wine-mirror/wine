@@ -540,49 +540,6 @@ LONG WIN_SetExStyle( HWND hwnd, LONG style )
 
 
 /***********************************************************************
- *           WIN_SetRectangles
- *
- * Set the window and client rectangles.
- */
-void WIN_SetRectangles( HWND hwnd, const RECT *rectWindow, const RECT *rectClient )
-{
-    WND *win = WIN_GetPtr( hwnd );
-    BOOL ret;
-
-    if (!win) return;
-    if (win == WND_OTHER_PROCESS)
-    {
-        if (IsWindow( hwnd )) ERR( "cannot set rectangles of other process window %p\n", hwnd );
-        return;
-    }
-    SERVER_START_REQ( set_window_rectangles )
-    {
-        req->handle        = hwnd;
-        req->window.left   = rectWindow->left;
-        req->window.top    = rectWindow->top;
-        req->window.right  = rectWindow->right;
-        req->window.bottom = rectWindow->bottom;
-        req->client.left   = rectClient->left;
-        req->client.top    = rectClient->top;
-        req->client.right  = rectClient->right;
-        req->client.bottom = rectClient->bottom;
-        ret = !wine_server_call( req );
-    }
-    SERVER_END_REQ;
-    if (ret)
-    {
-        win->rectWindow = *rectWindow;
-        win->rectClient = *rectClient;
-
-        TRACE( "win %p window (%ld,%ld)-(%ld,%ld) client (%ld,%ld)-(%ld,%ld)\n", hwnd,
-               rectWindow->left, rectWindow->top, rectWindow->right, rectWindow->bottom,
-               rectClient->left, rectClient->top, rectClient->right, rectClient->bottom );
-    }
-    WIN_ReleasePtr( win );
-}
-
-
-/***********************************************************************
  *           WIN_GetRectangles
  *
  * Get the window and client rectangles.
@@ -731,7 +688,6 @@ BOOL WIN_CreateDesktopWindow(void)
 {
     HWND hwndDesktop;
     CREATESTRUCTA cs;
-    RECT rect;
 
     TRACE("Creating desktop window\n");
 
@@ -764,9 +720,6 @@ BOOL WIN_CreateDesktopWindow(void)
     cs.dwExStyle      = pWndDesktop->dwExStyle;
     cs.lpszName       = NULL;
     cs.lpszClass      = DESKTOP_CLASS_ATOM;
-
-    SetRect( &rect, 0, 0, cs.cx, cs.cy );
-    WIN_SetRectangles( hwndDesktop, &rect, &rect );
 
     SERVER_START_REQ( set_window_info )
     {

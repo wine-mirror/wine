@@ -967,7 +967,7 @@ BOOL X11DRV_SetWindowPos( WINDOWPOS *winpos )
 
     /* FIXME: actually do something with WVR_VALIDRECTS */
 
-    WIN_SetRectangles( winpos->hwnd, &newWindowRect, &newClientRect );
+    X11DRV_set_window_rectangles( winpos->hwnd, &newWindowRect, &newClientRect );
 
     if (get_whole_window(wndPtr))  /* don't do anything if X window not created yet */
     {
@@ -1579,7 +1579,7 @@ void X11DRV_handle_desktop_resize( unsigned int width, unsigned int height )
     screen_height = height;
     TRACE("desktop %p change to (%dx%d)\n", hwnd, width, height);
     SetRect( &rect, 0, 0, width, height );
-    WIN_SetRectangles( hwnd, &rect, &rect );
+    X11DRV_set_window_rectangles( hwnd, &rect, &rect );
     SendMessageTimeoutW( HWND_BROADCAST, WM_DISPLAYCHANGE, screen_depth,
                          MAKELPARAM( width, height ), SMTO_ABORTIFHUNG, 2000, NULL );
 }
