@@ -47,6 +47,8 @@ static const WCHAR **debug_snoop_excludelist;
 static const WCHAR **debug_snoop_includelist;
 static const WCHAR **debug_from_relay_excludelist;
 static const WCHAR **debug_from_relay_includelist;
+static const WCHAR **debug_from_snoop_excludelist;
+static const WCHAR **debug_from_snoop_includelist;
 
 /* compare an ASCII and a Unicode string without depending on the current codepage */
 inline static int strcmpAW( const char *strA, const WCHAR *strW )
@@ -126,6 +128,8 @@ void RELAY_InitDebugLists(void)
     static const WCHAR SnoopExcludeW[] = {'S','n','o','o','p','E','x','c','l','u','d','e',0};
     static const WCHAR RelayFromIncludeW[] = {'R','e','l','a','y','F','r','o','m','I','n','c','l','u','d','e',0};
     static const WCHAR RelayFromExcludeW[] = {'R','e','l','a','y','F','r','o','m','E','x','c','l','u','d','e',0};
+    static const WCHAR SnoopFromIncludeW[] = {'S','n','o','o','p','F','r','o','m','I','n','c','l','u','d','e',0};
+    static const WCHAR SnoopFromExcludeW[] = {'S','n','o','o','p','F','r','o','m','E','x','c','l','u','d','e',0};
 
     attr.Length = sizeof(attr);
     attr.RootDirectory = 0;
@@ -178,6 +182,20 @@ void RELAY_InitDebugLists(void)
     {
         TRACE( "RelayFromExclude = %s\n", debugstr_w(str) );
         debug_from_relay_excludelist = build_list( str );
+    }
+
+    RtlInitUnicodeString( &name, SnoopFromIncludeW );
+    if (!NtQueryValueKey( hkey, &name, KeyValuePartialInformation, buffer, sizeof(buffer), &count ))
+    {
+        TRACE_(snoop)("SnoopFromInclude = %s\n", debugstr_w(str) );
+        debug_from_snoop_includelist = build_list( str );
+    }
+
+    RtlInitUnicodeString( &name, SnoopFromExcludeW );
+    if (!NtQueryValueKey( hkey, &name, KeyValuePartialInformation, buffer, sizeof(buffer), &count ))
+    {
+        TRACE_(snoop)( "SnoopFromExclude = %s\n", debugstr_w(str) );
+        debug_from_snoop_excludelist = build_list( str );
     }
 
     NtClose( hkey );
@@ -302,28 +320,28 @@ static BOOL check_relay_include( const char *module, int ordinal, const char *fu
     return TRUE;
 }
 
-
 /***********************************************************************
- *           check_relay_from_module
+ *           check_from_module
  *
- * Check if calls from a given module must be included in the relay output.
+ * Check if calls from a given module must be included in the relay/snoop output,
+ * given the exclusion and inclusion lists.
  */
-static BOOL check_relay_from_module( const WCHAR *module )
+static BOOL check_from_module( const WCHAR **includelist, const WCHAR **excludelist, const WCHAR *module )
 {
     static const WCHAR dllW[] = {'.','d','l','l',0 };
     const WCHAR **listitem;
     BOOL show;
 
-    if (!debug_from_relay_excludelist && !debug_from_relay_includelist) return TRUE;
-    if (debug_from_relay_excludelist)
+    if (!includelist && !excludelist) return TRUE;
+    if (excludelist)
     {
         show = TRUE;
-        listitem = debug_from_relay_excludelist;
+        listitem = excludelist;
     }
     else
     {
         show = FALSE;
-        listitem = debug_from_relay_includelist;
+        listitem = includelist;
     }
     for(; *listitem; listitem++)
     {
@@ -336,7 +354,6 @@ static BOOL check_relay_from_module( const WCHAR *module )
     }
     return show;
 }
-
 
 /***********************************************************************
  *           find_exported_name
@@ -702,7 +719,8 @@ FARPROC RELAY_GetProcAddress( HMODULE module, IMAGE_EXPORT_DIRECTORY *exports,
 
     if (debug < list || debug >= list + exports->NumberOfFunctions) return proc;
     if (list + (debug - list) != debug) return proc;  /* not a valid address */
-    if (check_relay_from_module( user )) return proc;  /* we want to relay it */
+    if (check_from_module( debug_from_relay_includelist, debug_from_relay_excludelist, user ))
+       return proc;  /* we want to relay it */
     if (!debug->call) return proc;  /* not a normal function */
     if (debug->call != 0xe8 && debug->call != 0xe9) return proc; /* not a debug thunk at all */
     return debug->orig;
@@ -793,7 +811,7 @@ void SNOOP_SetupDLL(HMODULE hmod)
     if (!exports) return;
     name = (char *)hmod + exports->Name;
 
-    TRACE("hmod=%p, name=%s\n", hmod, name);
+    TRACE_(snoop)("hmod=%p, name=%s\n", hmod, name);
 
     while (*dll) {
         if ((*dll)->hmod == hmod)
@@ -840,7 +858,8 @@ void SNOOP_SetupDLL(HMODULE hmod)
  * Return the proc address to use for a given function.
  */
 FARPROC SNOOP_GetProcAddress( HMODULE hmod, IMAGE_EXPORT_DIRECTORY *exports,
-                              DWORD exp_size, FARPROC origfun, DWORD ordinal )
+                              DWORD exp_size, FARPROC origfun, DWORD ordinal,
+                              const WCHAR *user)
 {
         int i;
         const char *ename;
@@ -851,6 +870,9 @@ FARPROC SNOOP_GetProcAddress( HMODULE hmod, IMAGE_EXPORT_DIRECTORY *exports,
         IMAGE_SECTION_HEADER *sec;
 
 	if (!TRACE_ON(snoop)) return origfun;
+       if (!check_from_module( debug_from_snoop_includelist, debug_from_snoop_excludelist, user ))
+           return origfun; /* the calling module was explicitly excluded */
+
 	if (!*(LPBYTE)origfun) /* 0x00 is an imposs. opcode, poss. dataref. */
 		return origfun;
 

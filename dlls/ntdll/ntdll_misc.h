@@ -64,7 +64,7 @@ extern void RELAY_InitDebugLists(void);
 extern FARPROC RELAY_GetProcAddress( HMODULE module, IMAGE_EXPORT_DIRECTORY *exports,
                                      DWORD exp_size, FARPROC proc, const WCHAR *user );
 extern FARPROC SNOOP_GetProcAddress( HMODULE hmod, IMAGE_EXPORT_DIRECTORY *exports, DWORD exp_size,
-                                     FARPROC origfun, DWORD ordinal );
+                                     FARPROC origfun, DWORD ordinal, const WCHAR *user );
 extern void RELAY_SetupDLL( HMODULE hmod );
 extern void SNOOP_SetupDLL( HMODULE hmod );
 

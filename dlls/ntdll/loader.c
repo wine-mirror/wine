@@ -273,9 +273,10 @@ static FARPROC find_ordinal_export( HMODULE module, IMAGE_EXPORT_DIRECTORY *expo
     if (((char *)proc >= (char *)exports) && ((char *)proc < (char *)exports + exp_size))
         return find_forwarded_export( module, (char *)proc );
 
-    if (TRACE_ON(snoop))
+    if (TRACE_ON(snoop) && current_modref)
     {
-        proc = SNOOP_GetProcAddress( module, exports, exp_size, proc, ordinal );
+        proc = SNOOP_GetProcAddress( module, exports, exp_size, proc, ordinal,
+                                    current_modref->ldr.BaseDllName.Buffer );
     }
     if (TRACE_ON(relay) && current_modref)
     {
