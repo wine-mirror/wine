@@ -695,6 +695,18 @@ DWORD WINAPI SHCreateDirectoryExW(HWND, LPCWSTR, LPSECURITY_ATTRIBUTES);
 HRESULT WINAPI SHGetSpecialFolderLocation(HWND hwndOwner, int nFolder, LPITEMIDLIST * ppidl);
 HRESULT WINAPI SHGetFolderLocation(HWND hwndOwner, int nFolder, HANDLE hToken, DWORD dwReserved, LPITEMIDLIST *ppidl);
 
+/****************************************************************************
+* SHGetFolderPath API
+*/
+typedef enum {
+    SHGFP_TYPE_CURRENT = 0,
+    SHGFP_TYPE_DEFAULT = 1
+} SHGFP_TYPE;
+
+HRESULT WINAPI SHGetFolderPathA(HWND hwnd, int nFolder, HANDLE hToken, DWORD dwFlags, LPSTR pszPath);
+HRESULT WINAPI SHGetFolderPathW(HWND hwnd, int nFolder, HANDLE hToken, DWORD dwFlags, LPWSTR pszPath);
+#define        SHGetFolderPath WINELIB_NAME_AW(SHGetFolderPath)
+
 #define CSIDL_DESKTOP		0x0000
 #define CSIDL_INTERNET		0x0001
 #define CSIDL_PROGRAMS		0x0002
