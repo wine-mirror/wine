@@ -1047,7 +1047,7 @@ UINT16 WINAPI mmioAscend16(HMMIO16 hmmio, MMCKINFO * lpck, UINT16 uFlags)
 /**************************************************************************
  * 				mmioCreateChunk		[MMSYSTEM.1225]
  */
-UINT16 WINAPI mmioCreateChunk(HMMIO16 hmmio, MMCKINFO * lpck, UINT16 uFlags)
+UINT16 WINAPI mmioCreateChunk16(HMMIO16 hmmio, MMCKINFO * lpck, UINT16 uFlags)
 {
 	DWORD	dwOldPos;
 	LONG ix;
@@ -1082,11 +1082,18 @@ UINT16 WINAPI mmioCreateChunk(HMMIO16 hmmio, MMCKINFO * lpck, UINT16 uFlags)
 	return 0;
 }
 
+/**************************************************************************
+ * 					mmioCreateChunk					[WINMM.115]
+ */
+UINT32 WINAPI mmioCreateChunk32(HMMIO32 hmmio, MMCKINFO * lpck, UINT32 uFlags)
+{
+	return mmioCreateChunk16(hmmio, lpck, uFlags);
+}
 
 /**************************************************************************
  * 				mmioRename     		[MMSYSTEM.1226]
  */
-UINT16 WINAPI mmioRename(LPCSTR szFileName, LPCSTR szNewFileName,
+UINT16 WINAPI mmioRename16(LPCSTR szFileName, LPCSTR szNewFileName,
                          MMIOINFO16 * lpmmioinfo, DWORD dwRenameFlags)
 {
 	UINT16 result;
@@ -1125,3 +1132,27 @@ UINT16 WINAPI mmioRename(LPCSTR szFileName, LPCSTR szNewFileName,
 	return result;
 }
 
+/**************************************************************************
+ * 				mmioRenameA     			[WINMM.125]
+ */
+UINT32 WINAPI mmioRename32A(LPCSTR szFileName, LPCSTR szNewFileName,
+                         MMIOINFO32* lpmmioinfo, DWORD dwRenameFlags)
+{
+	FIXME(mmio, "This may fail\n");
+	return mmioRename16(szFileName, szNewFileName, (MMIOINFO16*)lpmmioinfo, dwRenameFlags);
+}
+
+/**************************************************************************
+ * 				mmioRenameW     			[WINMM.126]
+ */
+UINT32 WINAPI mmioRename32W(LPCWSTR szFileName, LPCWSTR szNewFileName,
+									 MMIOINFO32* lpmmioinfo, DWORD dwRenameFlags)
+{
+	LPSTR		szFn = HEAP_strdupWtoA(GetProcessHeap(), 0, szFileName);
+	LPSTR		sznFn = HEAP_strdupWtoA(GetProcessHeap(), 0, szNewFileName);
+	UINT32	ret = mmioRename32A(szFn, sznFn, lpmmioinfo, dwRenameFlags);
+
+	HeapFree(GetProcessHeap(),0,szFn);
+	HeapFree(GetProcessHeap(),0,sznFn);
+	return ret;
+}
