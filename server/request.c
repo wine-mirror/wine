@@ -188,7 +188,7 @@ void read_request( struct thread *thread )
         kill_thread( thread, 0 );
     else if (ret > 0)
         fatal_protocol_error( thread, "partial read %d\n", ret );
-    else
+    else if (errno != EWOULDBLOCK && errno != EAGAIN)
         fatal_protocol_perror( thread, "read" );
 }
 
