@@ -440,6 +440,19 @@ BOOL16 WINAPI SystemParametersInfo16( UINT16 uAction, UINT16 uParam,
                                GetSystemMetrics( SM_CYSCREEN ) );
                     break;
 
+                /* FIXME need to implement SPI_SETMOUSEHOVER... */
+                case SPI_GETMOUSEHOVERWIDTH:
+                    *(INT16 *)lpvParam = 4;
+                    break;
+
+                case SPI_GETMOUSEHOVERHEIGHT:
+                    *(INT16 *)lpvParam = 4;
+                    break;
+
+                case SPI_GETMOUSEHOVERTIME:
+                    *(INT16 *)lpvParam = 400; /* default for menu dropdowns */
+                    break;
+                
 		default:
 			FIXME("Unknown option %d.\n", uAction);
 			SetLastError(ERROR_INVALID_SPI_VALUE);
