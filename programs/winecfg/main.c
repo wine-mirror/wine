@@ -36,8 +36,6 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(winecfg);
 
-WINECFG_DESC config;
-
 void CALLBACK
 PropSheetCallback (HWND hWnd, UINT uMsg, LPARAM lParam)
 {

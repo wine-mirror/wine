@@ -79,48 +79,7 @@ void destroyTransaction(struct transaction *trans);
 
 /* Initializes the transaction system */
 int initialize(void);
-
-
-
-
-
-
-
-
-
-
-
-
-typedef struct structWineCfg
-{
-    char   szWinVer[MAX_VERSION_LENGTH];
-    char   szWinLook[MAX_VERSION_LENGTH];
-    char   szDOSVer[MAX_VERSION_LENGTH];
-
-    char   szWinDir[MAX_PATH];
-    char   szWinSysDir[MAX_PATH];
-    char   szWinPath[MAX_PATH];
-    char   szWinTmpDir[MAX_PATH];
-    char   szWinProfDir[MAX_PATH];
-
-    char   szGraphDriver[MAX_NAME_LENGTH];
-
-    HDPA   pDlls;
-    HDPA   pApps;
-    HDPA   pDrives;
-
-    int    driveCount;
-
-    X11DRV_DESC sX11Drv;
-} WINECFG_DESC;
-
-extern WINECFG_DESC config;
-
-WINECFG_DESC *allocConfig(void);
-int freeConfig(WINECFG_DESC *pCfg);
-
-int loadConfig(WINECFG_DESC *pCfg);
-int saveConfig(const WINECFG_DESC *pCfg);
+extern HKEY configKey;
 
 int setConfigValue (char *subkey, char *valueName, const char *value);
 char *getConfigValue (char *subkey, char *valueName, char *defaultResult);

@@ -63,17 +63,6 @@ typedef struct
 
 typedef struct
 {
-    char szName[MAX_NAME_LENGTH];
-    char szPath[MAX_NAME_LENGTH];
-    char szType[MAX_NAME_LENGTH];
-    char szFS[MAX_NAME_LENGTH];
-    char szLabel[MAX_NAME_LENGTH];
-    char szDevice[MAX_NAME_LENGTH];
-    char szSerial[MAX_NAME_LENGTH];
-} DRIVE_DESC;
-
-typedef struct
-{
     char   szX11Display[MAX_NAME_LENGTH];
     int    nSysColors;
     int    nPrivateMap;
