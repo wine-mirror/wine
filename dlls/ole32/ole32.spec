@@ -74,7 +74,7 @@ type	win32
  71 stdcall GetHGlobalFromStream(ptr ptr) GetHGlobalFromStream
  72 stub GetHookInterface
  73 stdcall GetRunningObjectTable(long ptr) GetRunningObjectTable
- 74 stub IIDFromString
+ 74 stdcall IIDFromString(wstr ptr) CLSIDFromString 
  75 stdcall IsAccelerator(long long ptr long) IsAccelerator
  76 stdcall IsEqualGUID(ptr ptr) IsEqualGUID32
  77 stub IsValidIid
