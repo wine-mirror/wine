@@ -281,5 +281,8 @@ void* MSVCRT_malloc(MSVCRT_size_t size)
  */
 void* MSVCRT_realloc(void* ptr, MSVCRT_size_t size)
 {
-  return HeapReAlloc(GetProcessHeap(), 0, ptr, size);
+  if (!ptr) return MSVCRT_malloc(size);
+  if (size) return HeapReAlloc(GetProcessHeap(), 0, ptr, size);
+  MSVCRT_free(ptr);
+  return NULL;
 }
