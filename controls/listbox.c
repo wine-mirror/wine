@@ -243,7 +243,8 @@ static LRESULT LISTBOX_SetTopItem( WND *wnd, LB_DESCR *descr, INT32 index,
         INT32 diff = (descr->top_item - index) / descr->page_size * descr->column_width;
         if (scroll && (abs(diff) < descr->width))
             ScrollWindowEx32( wnd->hwndSelf, diff, 0, NULL, NULL, 0, NULL, 
-				SW_INVALIDATE | SW_ERASE );
+                              SW_INVALIDATE | SW_ERASE | SW_SCROLLCHILDREN );
+
         else
             scroll = FALSE;
     }
@@ -270,7 +271,7 @@ static LRESULT LISTBOX_SetTopItem( WND *wnd, LB_DESCR *descr, INT32 index,
 
         if (abs(diff) < descr->height)
             ScrollWindowEx32( wnd->hwndSelf, 0, diff, NULL, NULL, 0, NULL,
-					SW_INVALIDATE | SW_ERASE );
+                              SW_INVALIDATE | SW_ERASE | SW_SCROLLCHILDREN );
         else
             scroll = FALSE;
     }
@@ -1043,7 +1044,7 @@ static void LISTBOX_SetHorizontalPos( WND *wnd, LB_DESCR *descr, INT32 pos )
     LISTBOX_UpdateScroll( wnd, descr );
     if (abs(diff) < descr->width)
         ScrollWindowEx32( wnd->hwndSelf, diff, 0, NULL, NULL, 0, NULL,
-			SW_INVALIDATE | SW_ERASE );
+                          SW_INVALIDATE | SW_ERASE | SW_SCROLLCHILDREN );
     else
         InvalidateRect32( wnd->hwndSelf, NULL, TRUE );
 }
