@@ -1901,11 +1901,19 @@ BOOL WINAPI DrawIconEx( HDC hdc, INT x0, INT y0, HICON hIcon,
     HBITMAP hB_off = 0, hOld = 0;
 
     if (!ptr) return FALSE;
+    TRACE_(icon)("(hdc=%x,pos=%d.%d,hicon=%x,extend=%d.%d,istep=%d,br=%x,flags=0x%08x)\n",
+	    hdc,x0,y0,hIcon,cxWidth,cyWidth,istep,hbr,flags
+    );
 
     if (istep)
         FIXME_(icon)("Ignoring istep=%d\n", istep);
     if (flags & DI_COMPAT)
         FIXME_(icon)("Ignoring flag DI_COMPAT\n");
+
+    if (!flags) {
+	FIXME_(icon)("no flags set? setting to DI_NORMAL\n");
+	flags = DI_NORMAL;
+    }
 
     /* Calculate the size of the destination image.  */
     if (cxWidth == 0)
