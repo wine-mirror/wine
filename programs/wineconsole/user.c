@@ -1355,19 +1355,11 @@ static int WCUSER_MainLoop(struct inner_data* data)
 	    /* need to use PeekMessage loop instead of simple GetMessage:
 	     * multiple messages might have arrived in between,
 	     * so GetMessage would lead to delayed processing */
-	    while (PeekMessage(&msg, 0, 0, 0, PM_NOREMOVE))
+	    while (PeekMessage(&msg, 0, 0, 0, PM_REMOVE))
 	    {
-	        switch (GetMessage(&msg, 0, 0, 0))
-	        {
-	        case -1: /* the event handle became invalid, so exit */
-		    return -1;
-	        case 0: /* WM_QUIT has been posted */
-		    return 0;
-	        default:
-		    WINE_TRACE("dispatching msg %04x\n", msg.message);
-		    DispatchMessage(&msg);
-		    break;
-	        }
+                if (msg.message == WM_QUIT) return 0;
+                WINE_TRACE("dispatching msg %04x\n", msg.message);
+                DispatchMessage(&msg);
 	    }
 	    break;
 	default:
