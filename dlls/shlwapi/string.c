@@ -1116,7 +1116,7 @@ LPSTR WINAPI StrPBrkA(LPCSTR lpszStr, LPCSTR lpszMatch)
       if (StrChrA(lpszMatch, *lpszStr))
         return (LPSTR)lpszStr;
       lpszStr = CharNextA(lpszStr);
-    };
+    }
   }
   return NULL;
 }
@@ -1132,12 +1132,12 @@ LPWSTR WINAPI StrPBrkW(LPCWSTR lpszStr, LPCWSTR lpszMatch)
 
   if (lpszStr && lpszMatch && *lpszMatch)
   {
-    while (*lpszStr);
+    while (*lpszStr)
     {
       if (StrChrW(lpszMatch, *lpszStr))
         return (LPWSTR)lpszStr;
       lpszStr = CharNextW(lpszStr);
-    } while (*lpszStr);
+    }
   }
   return NULL;
 }
