@@ -255,6 +255,15 @@ HIMC WINAPI ImmAssociateContext(HWND hWnd, HIMC hIMC)
 }
 
 /***********************************************************************
+ *              ImmAssociateContextEx (IMM32.@)
+ */
+BOOL WINAPI ImmAssociateContextEx(HWND hWnd, HIMC hIMC, DWORD dwFlags)
+{
+    FIXME("(%p, %p, %ld): stub\n", hWnd, hIMC, dwFlags);
+    return FALSE;
+}
+
+/***********************************************************************
  *		ImmConfigureIMEA (IMM32.@)
  */
 BOOL WINAPI ImmConfigureIMEA(

@@ -1,4 +1,5 @@
 @ stdcall ImmAssociateContext(long long)
+@ stdcall ImmAssociateContextEx(long long long)
 @ stdcall ImmConfigureIMEA(long long long ptr)
 @ stdcall ImmConfigureIMEW(long long long ptr)
 @ stdcall ImmCreateContext()
