@@ -57,16 +57,13 @@ static void DCE_DumpCache(void)
     DCE *dce;
 
     USER_Lock();
-    dce = firstDCE;
 
-    DPRINTF("DCE:\n");
-    while( dce )
+    for(dce = firstDCE; dce; dce = dce->next)
     {
-	DPRINTF("\t[0x%08x] hWnd %p, dcx %08x, %s %s\n",
-	     (unsigned)dce, dce->hwndCurrent, (unsigned)dce->DCXflags,
-	     (dce->DCXflags & DCX_CACHE) ? "Cache" : "Owned",
-	     (dce->DCXflags & DCX_DCEBUSY) ? "InUse" : "" );
-	dce = dce->next;
+	TRACE("\t[0x%08x] hWnd %p, dcx %08x, %s %s\n",
+	      (unsigned)dce, dce->hwndCurrent, (unsigned)dce->DCXflags,
+	      (dce->DCXflags & DCX_CACHE) ? "Cache" : "Owned",
+	      (dce->DCXflags & DCX_DCEBUSY) ? "InUse" : "" );
     }
 
     USER_Unlock();
