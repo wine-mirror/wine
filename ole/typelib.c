@@ -31,6 +31,7 @@
 #include "winerror.h"
 #include "winreg.h"
 #include "oleauto.h"
+#include "winnls.h"
 #include "wine/winbase16.h"
 #include "heap.h"
 #include "wine/obj_base.h"
@@ -65,8 +66,8 @@ QueryPathOfRegTypeLib16(
 
 	if (HIWORD(guid)) {
 		WINE_StringFromCLSID(guid,xguid);
-		sprintf(typelibkey,"SOFTWARE\\Classes\\Typelib\\%s\\%d.%d\\%ld\\win16",
-			xguid,wMaj,wMin,lcid&0xff
+		sprintf(typelibkey,"SOFTWARE\\Classes\\Typelib\\%s\\%d.%d\\%lx\\win16",
+			xguid,wMaj,wMin,lcid
 		);
 	} else {
 		sprintf(xguid,"<guid 0x%08lx>",(DWORD)guid);
@@ -75,6 +76,9 @@ QueryPathOfRegTypeLib16(
 	}
 	plen = sizeof(pathname);
 	if (RegQueryValue16(HKEY_LOCAL_MACHINE,typelibkey,pathname,&plen)) {
+		/* try again without lang specific id */
+		if (SUBLANGID(lcid))
+			return QueryPathOfRegTypeLib16(guid,wMaj,wMin,PRIMARYLANGID(lcid),path);
 		FIXME(ole,"key %s not found\n",typelibkey);
 		return E_FAIL;
 	}
@@ -102,8 +106,8 @@ QueryPathOfRegTypeLib(
 
 	if (HIWORD(guid)) {
 		WINE_StringFromCLSID(guid,xguid);
-		sprintf(typelibkey,"SOFTWARE\\Classes\\Typelib\\%s\\%d.%d\\%ld\\win32",
-			xguid,wMaj,wMin,lcid&0xff
+		sprintf(typelibkey,"SOFTWARE\\Classes\\Typelib\\%s\\%d.%d\\%lx\\win32",
+			xguid,wMaj,wMin,lcid
 		);
 	} else {
 		sprintf(xguid,"<guid 0x%08lx>",(DWORD)guid);
@@ -112,6 +116,9 @@ QueryPathOfRegTypeLib(
 	}
 	plen = sizeof(pathname);
 	if (RegQueryValue16(HKEY_LOCAL_MACHINE,typelibkey,pathname,&plen)) {
+		/* try again without lang specific id */
+		if (SUBLANGID(lcid))
+			return QueryPathOfRegTypeLib(guid,wMaj,wMin,PRIMARYLANGID(lcid),path);
 		FIXME(ole,"key %s not found\n",typelibkey);
 		return E_FAIL;
 	}
