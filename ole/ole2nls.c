@@ -2230,6 +2230,7 @@ INT WINAPI GetNumberFormatA(LCID locale, DWORD dwflags,
         sprintf(sNumberDigits, "%d",lpFormat->NumDigits);
         strcpy(sDecimalSymbol, lpFormat->lpDecimalSep);
         sprintf(sDigitsInGroup, "%d;0",lpFormat->Grouping);
+        /* Win95-WinME only allow 0-9 for grouping, no matter what MSDN says. */
         strcpy(sDigitGroupSymbol, lpFormat->lpThousandSep);
         sprintf(sILZero, "%d",lpFormat->LeadingZero);
         sprintf(sNegNumber, "%d",lpFormat->NegativeOrder);
@@ -2275,6 +2276,8 @@ INT WINAPI GetNumberFormatA(LCID locale, DWORD dwflags,
         nStep = nCounter = i = j = 0;
         nRuleIndex = 1;
         nGrouping = OLE_GetGrouping(sRule, nRuleIndex);
+        if (nGrouping == 0) /* If the first grouping is zero */
+            nGrouping = nNumberDecimal; /* Don't do grouping */
 
         /* Here, we will loop until we reach the end of the string.
          * An internal counter (j) is used in order to know when to
@@ -2343,7 +2346,7 @@ INT WINAPI GetNumberFormatA(LCID locale, DWORD dwflags,
 
     for (i=0; i<j; i++)
         memcpy(sNumber + nCounter+i+strlen(sDecimalSymbol), sDigitsAfterDecimal + i, 1);
-    memcpy(sNumber + nCounter+i+strlen(sDecimalSymbol), "\0", 1);
+    memcpy(sNumber + nCounter+i+ (i ? strlen(sDecimalSymbol) : 0), "\0", 1);
 
     /* Is it a negative number */
     if (bNegative == TRUE)

@@ -285,6 +285,7 @@ void TestGetNumberFormat()
 int ret, error, cmp;
 char buffer[BUFFER_SIZE], Expected[BUFFER_SIZE], input[BUFFER_SIZE];
 LCID lcid;
+NUMBERFMTA format;
 
 	lcid = MAKELCID(MAKELANGID(LANG_ENGLISH, SUBLANG_ENGLISH_US), SORT_DEFAULT );
 
@@ -319,6 +320,23 @@ LCID lcid;
 	cmp = strncmp (Expected, buffer, BUFFER_SIZE);
 	ok (cmp == 0, "GetNumberFormat got %s instead of %s", buffer, Expected);
 	eq (ret, strlen(Expected)+1, "GetNumberFormat", "%d");
+
+        /* If the number of decimals is zero there should be no decimal
+         * separator.
+         * If the grouping size is zero there should be no grouping symbol
+         */
+        format.NumDigits = 0;
+        format.LeadingZero = 0;
+        format.Grouping = 0;
+        format.NegativeOrder = 0;
+        format.lpDecimalSep = ".";
+        format.lpThousandSep = ",";
+        strcpy (Expected, "123456789");
+	memset( buffer, 'x', sizeof (buffer)/sizeof(buffer[0]) );
+        ret = GetNumberFormatA (0, 0, "123456789.0", &format, buffer, sizeof(buffer));
+        cmp = strncmp (Expected, buffer ,sizeof(buffer));
+	ok (cmp == 0, "GetNumberFormat got %s instead of %s", buffer, Expected);
+
 }
 
 
