@@ -133,7 +133,7 @@ type win32
 130 stdcall mmioSetInfo(long ptr long) mmioSetInfo32
 131 stdcall mmioStringToFOURCCA(str long) mmioStringToFOURCC32A
 132 stdcall mmioStringToFOURCCW(wstr long) mmioStringToFOURCC32W
-133 stub mmioWrite
+133 stdcall mmioWrite(long ptr long) mmioWrite32
 134 stdcall mmsystemGetVersion() mmsystemGetVersion32
 135 stdcall sndPlaySoundA(ptr long) sndPlaySound
 136 stub sndPlaySoundW
