@@ -11,17 +11,44 @@
 #  source rather than grep config.cache
 #  use sourced config.cache to start ldconfig
 #  reconfigure if config.cache doesn't exist
+# Mar 30 2000 - Ove Kåven
+#  autoconfigure no-windows installs
+#  do not install registry on real-windows installs
+#  some support for binary package installs
+#  set and tell user about LD_LIBRARY_PATH if necessary
+#  set EXTRA_LD_LIBRARY_PATH in wine.conf
 
-# defaults
-
-sysconfdir=/usr/local/etc
-DOCONF=auto
-DOREG=yes
+# defaults (change these if you are a packager)
+CONFARGS=                     # configure args, e.g. --prefix=/usr --sysconfdir=/etc
+prefix=/usr/local             # installation prefix
+sysconfdir=$prefix/etc        # where wine.conf is supposed to be
+libdir=$prefix/lib            # where libwine.so will be installed
+CONF=$sysconfdir/wine.conf    # default path of the wine.conf
+BINDIST=no                    # whether called from a binary package config script
+DOCONF=auto                   # whether to autogenerate wine.conf
+DOWCHK=auto                   # whether to autoconfigure existing-windows installation
+DOWINE=auto                   # whether to autoconfigure no-windows installation
+DOREG=auto                    # whether to install default registry
+# elfdlls are not implemented yet, so this has no effect yet
+DLLPATH=$libdir/wine          # default path of the elfdll .so files
+# only for existing-windows installs
+WINECONF=tools/wineconf       # the path of wineconf perl script (for existing-windows)
+# only for no-windows installs
+WINEINI=wine.ini              # the path of default wine.ini (also used by wineconf)
+WININI=/dev/null              # the path of default win.ini
+SYSTEMINI=documentation/samples/system.ini          # the path of default system.ini
+REGAPI=programs/regapi/regapi # the path of regapi winelib application
+DEFREG=winedefault.reg        # the path of the registry file to be fed to regapi
+# CROOT=/var/wine             # the path of the fake Drive C (for no-windows)
 
 # startup...
 
-echo "WINE Installer v0.2"
+echo "WINE Installer v0.3"
 echo
+
+if [ "$BINDIST" = 'no' ]
+then {
+
 if ! [ -f configure ]
 then {
   echo "You're running this from the wrong directory."
@@ -39,10 +66,9 @@ then {
   . ./config.cache
 }
 else {
-  # we'll run with defaults (we need libwine.a later)
   echo "Running configure..."
   echo
-  if ! ./configure
+  if ! ./configure $CONFARGS
   then {
     echo
     echo "Configure failed, aborting install."
@@ -95,6 +121,17 @@ fi
 if [ `whoami` != 'root' ]
 then {
   echo "You aren't root, so I'll skip the make install."
+  # setup to run from current directory
+  DLLPATH="$PWD/dlls"
+  if [ -z "$LD_LIBRARY_PATH" ]
+  then LD_LIBRARY_PATH="$PWD:$DLLPATH"
+  else LD_LIBRARY_PATH="$LD_LIBRARY_PATH:$PWD:$DLLPATH"
+  fi
+  export LD_LIBRARY_PATH
+  echo
+  echo "NOTE! To run Wine without installing, you must set the environment variable"
+  echo "LD_LIBRARY_PATH to $PWD:$DLLPATH"
+  echo "in your logon scripts."
 }
 else {
   echo "Now installing binaries onto the system..."
@@ -106,11 +143,11 @@ else {
     exit 1
   }
   fi
-  if [ -f /etc/ld.so.conf ] && ! grep -qs "/usr/local/lib" /etc/ld.so.conf
+  if [ -f /etc/ld.so.conf ] && ! grep -qs "$libdir" /etc/ld.so.conf
   then {
     echo
-    echo "/usr/local/lib didn't exist in your /etc/ld.so.conf, adding it now..."
-    echo /usr/local/lib >>/etc/ld.so.conf
+    echo "$libdir didn't exist in your /etc/ld.so.conf, adding it now..."
+    echo "$libdir" >>/etc/ld.so.conf
     echo "Re-running ldconfig..."
     eval "$ac_cv_path_LDCONFIG"
   }
@@ -118,6 +155,9 @@ else {
 }
 fi
 echo
+
+}
+fi # BINDIST
 
 # now check whether we should generate wine.conf
 if [ -z "$DOCONF" ]
@@ -127,7 +167,7 @@ fi
 if [ "$DOCONF" = 'auto' ]
 then {
   # see if we already have a system wine.conf
-  if [ -f $sysconfdir/wine.conf ] || [ -f /etc/wine.conf ]
+  if [ -f $CONF ]
   then DOCONF=no
   fi
 }
@@ -150,13 +190,16 @@ then {
       }
       fi
       if [ "$DOCONF" = 'no' ]
-      then echo "Skipping generation of .winerc."
+      then {
+        echo "Aborting install. Try again as root to generate a system wine.conf."
+        exit 1
+      }
       fi
+      echo
     }
     fi
   }
   else {
-    CONF=$sysconfdir/wine.conf
     mkdir -p $sysconfdir
     DOCONF=yes
   }
@@ -164,36 +207,150 @@ then {
 }
 fi
 
+# generate wine.conf from existing windows install, if any
 if [ "$DOCONF" = 'yes' ]
 then {
-  echo "Now automatically generating $CONF for you..."
-  echo
-  tools/wineconf > $CONF
-  echo
-  echo "Done. You probably want to review the file, though."
+  if [ "$DOWCHK" = 'yes' ] || [ "$DOWCHK" = 'auto' ]
+  then {
+    echo "Searching for an existing Windows installation..."
+    if ! $WINECONF > $CONF 2>/dev/null
+    then {
+      rm -f $CONF
+      echo
+      echo "Windows was not found on your system, so I assume you want a Wine-only installation."
+      echo "Am I correct? (yes/no)"
+      while [ "$DOWINE" != 'yes' ] && [ "$DOWINE" != 'no' ]
+      do read DOWINE
+      done
+      if [ "$DOWINE" = 'no' ]
+      then {
+        echo "Aborting install. Make sure your Windows partition is mounted and try again,"
+        echo "or create $CONF manually by copying from $WINEINI and adapting the drive paths."
+        exit 1
+      }
+      fi
+    }
+    else {
+      echo
+      echo "Created $CONF using your existing Windows installation."
+      echo "You probably want to review the file, though."
+      DOWINE=no
+    }
+    fi
+    echo
+  }
+  elif [ "$DOWINE" = 'auto' ]
+  then DOWINE=yes
+  fi
+}
+elif [ "$DOWINE" = 'auto' ]
+then DOWINE=no
+fi
+
+# generate wine.conf for no-windows install, if necessary
+if [ "$DOWINE" = 'yes' ]
+then {
+  if [ `whoami` != 'root' ]
+  then DCROOT=~/c
+  else DCROOT=/c
+  fi
+  echo "Configuring Wine without Windows. Some fake Windows directories must be created, to"
+  echo "hold any .ini files, DLLs, and start menu entries your applications may need to install."
+  while [ -z "$CROOT" ]
+  do {
+    echo "Where would you like your fake C drive to be placed? (default is $DCROOT)"
+    read CROOT
+    if [ -z "$CROOT" ]
+    then CROOT="$DCROOT"
+    fi
+    if ! [ -d "$CROOT" ]
+    then {
+      if ! mkdir -p "$CROOT"
+      then unset CROOT
+      fi
+    }
+    fi
+  }
+  done
+  echo "Configuring Wine for a no-windows install in $CROOT..."
+  for tdir in "$CROOT/windows" "$CROOT/windows/system" "$CROOT/windows/Start Menu" "$CROOT/windows/Start Menu/Programs"
+  do [ -d "$tdir" ] || mkdir "$tdir"
+  done
+  [ -f "$CROOT/windows/win.ini" ]    || cp "$WININI"    "$CROOT/windows/win.ini"
+  [ -f "$CROOT/windows/system.ini" ] || cp "$SYSTEMINI" "$CROOT/windows/system.ini"
+  if [ "$DOCONF" = 'yes' ]
+  then {
+    sed "s/Path=\/c$/Path=${CROOT//\//\\/}/" $WINEINI > $CONF
+    echo "Created $CONF using default Wine configuration."
+    echo "You probably want to review the file, though."
+  }
+  fi
+  # now we really need to install the registry
+  DOREG=yes
+}
+elif [ -z "$CROOT" ]
+then {
+  echo "Reading current Wine configuration from $CONF..."
+  CROOT=`sed -n '/^\[Drive C\]$/,/^\[.*\]$/ s/^Path=\(.*\)/\1/p' $CONF`
+  echo "Drive C is configured at $CROOT."
 }
 fi
 echo
 
+# fixup EXTRA_LD_LIBRARY_PATH
+if [ "$DOCONF" = 'yes' ]
+then {
+  echo "Setting EXTRA_LD_LIBRARY_PATH in .winerc to $DLLPATH..."
+  sed "s/EXTRA_LD_LIBRARY_PATH=.*/EXTRA_LD_LIBRARY_PATH=${DLLPATH//\//\\/}/" $CONF > $CONF.new
+  mv -f $CONF.new $CONF
+  echo
+}
+fi
+
+# check whether we need to install default registry
+# (not to be done if windows registry exists)
+if [ "$DOREG" = 'auto' ]
+then {
+  echo "Checking for real Windows registry..."
+  if [ -f "$CROOT/windows/system.dat" ]
+  then DOREG=no
+  elif [ -f "$CROOT/windows/system32/config/system" ]
+  then DOREG=no
+  else DOREG=yes
+  fi
+  if [ "$DOREG" = 'yes' ]
+  then echo "Not found, default Wine registry will be installed."
+  else echo "Windows registry found, will not install default Wine registry."
+  fi
+  echo
+}
+fi
+
 # install default registry entries
 if [ "$DOREG" = 'yes' ]
 then {
-  echo "Compiling regapi..."
+  if [ "$BINDIST" = 'no' ]
+  then {
+    echo "Compiling regapi..."
+    echo
+    (cd programs/regapi; make)
+    echo
+  }
+  fi
+  echo "Installing default Wine registry entries..."
   echo
-  (cd programs/regapi; make)
-  echo
-  echo "Installing default registry entries, please wait..."
-  echo
-  if ! programs/regapi/regapi setValue < winedefault.reg
+  if ! $REGAPI setValue < $DEFREG > /dev/null
   then {
     echo
     echo "Registry install failed. Perhaps you weren't running X."
     exit 1
   }
+  else echo "Registry successfully installed."
   fi
   # FIXME: perhaps install registry to $sysconfdir/winesystem.reg and $sysconfdir/wineuser.reg?
 }
 fi
 echo
 echo "Installation complete for now. Good luck (this is still alpha software)."
-echo "If you have problems with WINE, please read the documentation first."
+echo "If you have problems with WINE, please read the documentation first,"
+echo "as many kinds of potential problems are explained there."
