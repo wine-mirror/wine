@@ -170,9 +170,8 @@ static RegisteredClass* firstRegisteredClass = NULL;
  * space assuming that there is one OLE32 per process.
  */
 typedef struct tagOpenDll {
-  char *DllName;                /* really only needed for debugging */
-    HINSTANCE hLibrary;       
-    struct tagOpenDll *next;
+  HINSTANCE hLibrary;       
+  struct tagOpenDll *next;
 } OpenDll;
 
 static OpenDll *openDllList = NULL; /* linked list of open dlls */
@@ -1290,11 +1289,10 @@ HRESULT WINAPI CoRevokeClassObject(
 HRESULT WINAPI CoGetClassObject(REFCLSID rclsid, DWORD dwClsContext,
                         LPVOID pvReserved, REFIID iid, LPVOID *ppv)
 {
-    LPUNKNOWN regClassObject;
-    char xclsid[50],xiid[50];
-    HRESULT hres = E_UNEXPECTED;
-
-    char dllName[MAX_PATH+1];
+    LPUNKNOWN	regClassObject;
+    HRESULT	hres = E_UNEXPECTED;
+    char	xclsid[80];
+    WCHAR dllName[MAX_PATH+1];
     DWORD dllNameLen = sizeof(dllName);
     HINSTANCE hLibrary;
     typedef HRESULT (CALLBACK *DllGetClassObjectFunc)(REFCLSID clsid, 
@@ -1302,8 +1300,11 @@ HRESULT WINAPI CoGetClassObject(REFCLSID rclsid, DWORD dwClsContext,
     DllGetClassObjectFunc DllGetClassObject;
 
     WINE_StringFromCLSID((LPCLSID)rclsid,xclsid);
-    WINE_StringFromCLSID((LPCLSID)iid,xiid);
-    TRACE("\n\tCLSID:\t%s,\n\tIID:\t%s\n",xclsid,xiid);
+
+    TRACE("\n\tCLSID:\t%s,\n\tIID:\t%s\n",
+	debugstr_guid(rclsid),
+	debugstr_guid(iid)
+    );
 
     /*
      * First, try and see if we can't match the class ID with one of the 
@@ -1335,6 +1336,8 @@ HRESULT WINAPI CoGetClassObject(REFCLSID rclsid, DWORD dwClsContext,
 
     if ((CLSCTX_INPROC_SERVER|CLSCTX_INPROC_HANDLER) & dwClsContext) {
         HKEY CLSIDkey,key;
+	WCHAR valname[]={	'I','n','p','r','o','c',
+				'S','e','r','v','e','r','3','2',0};
 
         /* lookup CLSID in registry key HKCR/CLSID */
         hres = RegOpenKeyExA(HKEY_CLASSES_ROOT, "CLSID", 0, 
@@ -1347,23 +1350,28 @@ HRESULT WINAPI CoGetClassObject(REFCLSID rclsid, DWORD dwClsContext,
 	    RegCloseKey(CLSIDkey);
 	    return REGDB_E_CLASSNOTREG;
 	}
-	hres = RegQueryValueA(key, "InprocServer32", dllName, &dllNameLen);
+	memset(dllName,0,sizeof(dllName));
+	hres = RegQueryValueW(key, valname, dllName, &dllNameLen);
+	if (hres) {
+		ERR("RegQueryValue of %s failed with hres %lx\n",debugstr_w(dllName),hres);
+		return REGDB_E_CLASSNOTREG; /* FIXME: check retval */
+	}
 	RegCloseKey(key);
 	RegCloseKey(CLSIDkey);
 	if (hres != ERROR_SUCCESS)
 	        return REGDB_E_READREGDB;
-	TRACE("found InprocServer32 dll %s\n", dllName);
+	TRACE("found InprocServer32 dll %s\n", debugstr_w(dllName));
 
 	/* open dll, call DllGetClassFactory */
 	hLibrary = CoLoadLibrary(dllName, TRUE);
 	if (hLibrary == 0) {
-	    TRACE("couldn't load InprocServer32 dll %s\n", dllName);
+	    FIXME("couldn't load InprocServer32 dll %s\n", debugstr_w(dllName));
 	    return E_ACCESSDENIED; /* or should this be CO_E_DLLNOTFOUND? */
 	}
 	DllGetClassObject = (DllGetClassObjectFunc)GetProcAddress(hLibrary, "DllGetClassObject");
 	if (!DllGetClassObject) {
 	    /* not sure if this should be called here CoFreeLibrary(hLibrary);*/
-	    TRACE("couldn't find function DllGetClassObject in %s\n", dllName);
+	    FIXME("couldn't find function DllGetClassObject in %s\n", debugstr_w(dllName));
 	    return E_ACCESSDENIED;
 	}
 
@@ -1634,12 +1642,10 @@ void WINAPI CoFreeLibrary(HINSTANCE hLibrary)
     FreeLibrary(hLibrary);
     if (ptr == openDllList) {
 	tmp = openDllList->next;
-	HeapFree(GetProcessHeap(), 0, openDllList->DllName);
 	HeapFree(GetProcessHeap(), 0, openDllList);
 	openDllList = tmp;
     } else {
 	tmp = ptr->next;
-	HeapFree(GetProcessHeap(), 0, ptr->DllName);
 	HeapFree(GetProcessHeap(), 0, ptr);
 	prev->next = tmp;
     }
@@ -1751,15 +1757,15 @@ LPVOID WINAPI CoTaskMemRealloc(
 /***********************************************************************
  *           CoLoadLibrary (OLE32.30)
  */
-HINSTANCE WINAPI CoLoadLibrary(LPOLESTR16 lpszLibName, BOOL bAutoFree)
+HINSTANCE WINAPI CoLoadLibrary(LPOLESTR lpszLibName, BOOL bAutoFree)
 {
     HINSTANCE hLibrary;
     OpenDll *ptr;
     OpenDll *tmp;
   
-    TRACE("CoLoadLibrary(%p, %d\n", lpszLibName, bAutoFree);
+    TRACE("CoLoadLibrary(%p, %d\n", debugstr_w(lpszLibName), bAutoFree);
 
-    hLibrary = LoadLibraryExA(lpszLibName, 0, LOAD_WITH_ALTERED_SEARCH_PATH);
+    hLibrary = LoadLibraryExW(lpszLibName, 0, LOAD_WITH_ALTERED_SEARCH_PATH);
 
     if (!bAutoFree)
 	return hLibrary;
@@ -1767,8 +1773,7 @@ HINSTANCE WINAPI CoLoadLibrary(LPOLESTR16 lpszLibName, BOOL bAutoFree)
     if (openDllList == NULL) {
         /* empty list -- add first node */
         openDllList = (OpenDll*)HeapAlloc(GetProcessHeap(),0, sizeof(OpenDll));
-	openDllList->DllName = HEAP_strdupA(GetProcessHeap(), 0, lpszLibName);
-	openDllList->hLibrary = hLibrary;
+	openDllList->hLibrary=hLibrary;
 	openDllList->next = NULL;
     } else {
         /* search for this dll */
@@ -1783,7 +1788,6 @@ HINSTANCE WINAPI CoLoadLibrary(LPOLESTR16 lpszLibName, BOOL bAutoFree)
 	    /* dll not found, add it */
  	    tmp = openDllList;
 	    openDllList = (OpenDll*)HeapAlloc(GetProcessHeap(),0, sizeof(OpenDll));
-	    openDllList->DllName = HEAP_strdupA(GetProcessHeap(), 0, lpszLibName);
 	    openDllList->hLibrary = hLibrary;
 	    openDllList->next = tmp;
 	}
@@ -1866,13 +1870,8 @@ HRESULT WINAPI CoSetState(LPDWORD state)
  */
 HRESULT WINAPI OLE32_DllGetClassObject(REFCLSID rclsid, REFIID iid,LPVOID *ppv)
 {	
-	char xclsid[50],xiid[50];
-	WINE_StringFromCLSID((LPCLSID)rclsid,xclsid);
-	WINE_StringFromCLSID((LPCLSID)iid,xiid);
-	FIXME("\n\tCLSID:\t%s,\n\tIID:\t%s\n",xclsid,xiid);
-	
+	FIXME("\n\tCLSID:\t%s,\n\tIID:\t%s\n",debugstr_guid(rclsid),debugstr_guid(iid));
 	*ppv = NULL;
-
 	return CLASS_E_CLASSNOTAVAILABLE;
 }
 

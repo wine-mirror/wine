@@ -275,7 +275,7 @@ OLESTATUS WINAPI OleCreateFromClip16(
 
 /* com functions */
 void WINAPI CoFreeUnusedLibraries(void);
-HINSTANCE WINAPI CoLoadLibrary(LPSTR lpszLibName, BOOL bAutoFree);
+HINSTANCE WINAPI CoLoadLibrary(LPOLESTR lpszLibName, BOOL bAutoFree);
 void WINAPI CoFreeUnusedLibraries(void);
 void WINAPI CoFreeAllLibraries(void);
 

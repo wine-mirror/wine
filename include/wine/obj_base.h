@@ -868,8 +868,6 @@ typedef enum tagCOINIT
 /* FIXME: not implemented */
 BOOL WINAPI CoIsOle1Class(REFCLSID rclsid);
 
-HINSTANCE WINAPI CoLoadLibrary(LPOLESTR16 lpszLibName, BOOL bAutoFree);
-
 HRESULT WINAPI CoLockObjectExternal16(LPUNKNOWN pUnk, BOOL16 fLock, BOOL16 fLastUnlockReleases);
 HRESULT WINAPI CoLockObjectExternal(LPUNKNOWN pUnk, BOOL fLock, BOOL fLastUnlockReleases);
 
