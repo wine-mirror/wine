@@ -333,7 +333,7 @@ DWORD WINAPI GetASPI32SupportInfo32()
 /***********************************************************************
  *             SendASPI32Command32 (WNASPI32.1)
  */
-DWORD WINAPI SendASPI32Command32(LPSRB32 lpSRB)
+DWORD __cdecl SendASPI32Command32(LPSRB32 lpSRB)
 {
 #ifdef linux
   switch (lpSRB->common.SRB_Cmd) {

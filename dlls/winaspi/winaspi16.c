@@ -221,7 +221,7 @@ ASPI_ExecScsiCmd(DWORD ptrPRB, UINT16 mode)
 
   fd = ASPI_OpenDevice16(lpPRB);
   if (fd == -1) {
-      ERR(aspi, "Failed: could not open device. Device permissions !?\n");
+      WARN(aspi, "Failed: could not open device. Device permissions !?\n");
       lpPRB->SRB_Status = SS_ERR;
       return SS_ERR;
   }
