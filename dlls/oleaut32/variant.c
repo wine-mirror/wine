@@ -984,8 +984,13 @@ HRESULT WINAPI VariantChangeTypeEx(VARIANTARG* pvargDest, VARIANTARG* pvargSrc,
       {
         VARIANTARG vTmp;
 
-        V_VT(&vTmp) = VT_EMPTY;
-        res = VariantCopyInd(&vTmp, pvargSrc);
+        if(V_VT(pvargSrc)&VT_BYREF && !V_BYREF(pvargSrc))
+          res = DISP_E_TYPEMISMATCH;
+        else
+        {
+          V_VT(&vTmp) = VT_EMPTY;
+          res = VariantCopyInd(&vTmp, pvargSrc);
+        }
 
         if (SUCCEEDED(res))
         {

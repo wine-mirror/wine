@@ -5249,7 +5249,35 @@ static void test_ClearCustData(void)
   ok(!ci.cCustData && !ci.prgCustData, "ClearCustData didn't clear fields!\n");
 }
 
+static void test_NullByRef()
+{
+  VARIANT v1, v2;
+  HRESULT hRes;
 
+  VariantClear(&v1);
+  VariantClear(&v2);
+  V_VT(&v1) = VT_BYREF|VT_VARIANT;
+  V_BYREF(&v1) = 0;
+
+  hRes = VariantChangeTypeEx(&v2, &v1, 0, 0, VT_I4);
+  ok(hRes == DISP_E_TYPEMISMATCH, "VariantChangeTypeEx should return DISP_E_TYPEMISMATCH\n");
+
+  VariantClear(&v1);
+  V_VT(&v1) = VT_BYREF|VT_VARIANT;
+  V_BYREF(&v1) = 0;
+  V_VT(&v2) = VT_I4;
+  V_I4(&v2) = 123;
+
+  hRes = VariantChangeTypeEx(&v2, &v1, 0, 0, VT_VARIANT);
+  ok(hRes == DISP_E_TYPEMISMATCH, "VariantChangeTypeEx should return DISP_E_TYPEMISMATCH\n");
+  ok(V_VT(&v2) == VT_I4 && V_I4(&v2) == 123, "VariantChangeTypeEx shouldn't change pvargDest\n");
+
+  hRes = VariantChangeTypeEx(&v2, &v1, 0, 0, VT_BYREF|VT_I4);
+  ok(hRes == DISP_E_TYPEMISMATCH, "VariantChangeTypeEx should return DISP_E_TYPEMISMATCH\n");
+
+  hRes = VariantChangeTypeEx(&v2, &v1, 0, 0, 0x3847);
+  ok(hRes == DISP_E_BADVARTYPE, "VariantChangeTypeEx should return DISP_E_BADVARTYPE\n");
+}
 
 START_TEST(vartype)
 {
@@ -5539,4 +5567,6 @@ START_TEST(vartype)
   test_UintChangeTypeEx();
 
   test_ClearCustData();
+
+  test_NullByRef();
 }
