@@ -1524,3 +1524,24 @@ BOOL WINAPI SHFindFiles( LPCITEMIDLIST pidlFolder, LPCITEMIDLIST pidlSaveFile )
     FIXME("%p %p\n", pidlFolder, pidlSaveFile );
     return FALSE;
 }
+
+/*************************************************************************
+ *		SHUpdateImageW (SHELL32.192)
+ *
+ * Notifies the shell that an icon in the system image list has been changed.
+ *
+ * PARAMS
+ *  pszHashItem [I] Path to file that contains the icon.
+ *  iIndex      [I] Zero-based index of the icon in the file.
+ *  uFlags      [I] Flags determining the icon attributes. See notes.
+ *  iImageIndex [I] Index of the icon in the system image list.
+ *
+ * NOTES
+ *  uFlags can be one or more of the following flags:
+ *  GIL_NOTFILENAME - pszHashItem is not a file name.
+ *  GIL_SIMULATEDOC - Create a document icon using the specified icon.
+ */
+void WINAPI SHUpdateImageW(LPCWSTR pszHashItem, int iIndex, UINT uFlags, int iImageIndex)
+{
+    FIXME("%s, %d, 0x%x, %d\n", debugstr_w(pszHashItem), iIndex, uFlags, iImageIndex);
+}
