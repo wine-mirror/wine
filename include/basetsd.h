@@ -147,8 +147,8 @@ typedef ULONG_PTR SIZE_T, *PSIZE_T;
 # define BITFIELDS_BIGENDIAN
 # undef  ALLOW_UNALIGNED_ACCESS
 #elif defined(__ALPHA__)
-# define WORDS_LITTLEENDIAN
-# define BITFIELDS_LITTLEENDIAN
+# undef  WORDS_BIGENDIAN
+# undef  BITFIELDS_BIGENDIAN
 # undef  ALLOW_UNALIGNED_ACCESS
 #elif !defined(RC_INVOKED) && !defined(__WIDL__)
 # error Unknown CPU architecture!
