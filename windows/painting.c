@@ -772,7 +772,7 @@ static HRGN RDW_Paint( WND* wndPtr, HRGN hrgn, UINT flags, UINT ex )
     if (flags & RDW_UPDATENOW)
     {
         if (wndPtr->hrgnUpdate) /* wm_painticon wparam is 1 */
-            SendMessage16( hWnd, (bIcon) ? WM_PAINTICON : WM_PAINT, bIcon, 0 );
+            SendMessageW( hWnd, (bIcon) ? WM_PAINTICON : WM_PAINT, bIcon, 0 );
     }
     else if (flags & RDW_ERASENOW)
     {
@@ -798,8 +798,8 @@ static HRGN RDW_Paint( WND* wndPtr, HRGN hrgn, UINT flags, UINT ex )
 		    dcx &= ~DCX_INTERSECTRGN;
 		if (( hDC = GetDCEx( hWnd, hrgnRet, dcx )) )
 		{
-		    if (SendMessage16( hWnd, (bIcon) ? WM_ICONERASEBKGND
-                                       : WM_ERASEBKGND, (WPARAM16)hDC, 0 ))
+		    if (SendMessageW( hWnd, (bIcon) ? WM_ICONERASEBKGND : WM_ERASEBKGND,
+                                      (WPARAM)hDC, 0 ))
 		    wndPtr->flags &= ~WIN_NEEDS_ERASEBKGND;
 		    ReleaseDC( hWnd, hDC );
 		}
@@ -1405,9 +1405,8 @@ BOOL WINAPI DrawAnimatedRects( HWND hwnd, INT idAni,
  * Jams in the requested type in the dc
  */
 static BOOL PAINTING_DrawStateJam(HDC hdc, UINT opcode,
-                                    DRAWSTATEPROC func, LPARAM lp, WPARAM wp, 
-                                    LPRECT rc, UINT dtflags,
-                                    BOOL unicode, BOOL _32bit)
+                                  DRAWSTATEPROC func, LPARAM lp, WPARAM wp,
+                                  LPRECT rc, UINT dtflags, BOOL unicode )
 {
     HDC memdc;
     HBITMAP hbmsave;
@@ -1421,10 +1420,8 @@ static BOOL PAINTING_DrawStateJam(HDC hdc, UINT opcode,
     case DST_PREFIXTEXT:
         if(unicode)
             return DrawTextW(hdc, (LPWSTR)lp, (INT)wp, rc, dtflags);
-        else if(_32bit)
-            return DrawTextA(hdc, (LPSTR)lp, (INT)wp, rc, dtflags);
         else
-            return DrawTextA(hdc, MapSL(lp), (INT)wp, rc, dtflags);
+            return DrawTextA(hdc, (LPSTR)lp, (INT)wp, rc, dtflags);
 
     case DST_ICON:
         return DrawIcon(hdc, rc->left, rc->top, (HICON)lp);
@@ -1449,10 +1446,7 @@ static BOOL PAINTING_DrawStateJam(HDC hdc, UINT opcode,
 	    /* DRAWSTATEPROC assumes that it draws at the center of coordinates  */
 
 	    OffsetViewportOrgEx(hdc, rc->left, rc->top, NULL);
-            if(_32bit)
-                bRet = func(hdc, lp, wp, cx, cy);
-            else
-                bRet = (BOOL)((DRAWSTATEPROC16)func)((HDC16)hdc, (LPARAM)lp, (WPARAM16)wp, (INT16)cx, (INT16)cy);
+            bRet = func(hdc, lp, wp, cx, cy);
 	    /* Restore origin */
 	    OffsetViewportOrgEx(hdc, -rc->left, -rc->top, NULL);
 	    return bRet;
@@ -1465,10 +1459,8 @@ static BOOL PAINTING_DrawStateJam(HDC hdc, UINT opcode,
 /**********************************************************************
  *      PAINTING_DrawState()
  */
-static BOOL PAINTING_DrawState(HDC hdc, HBRUSH hbr, 
-                                   DRAWSTATEPROC func, LPARAM lp, WPARAM wp,
-                                   INT x, INT y, INT cx, INT cy, 
-                                   UINT flags, BOOL unicode, BOOL _32bit)
+static BOOL PAINTING_DrawState(HDC hdc, HBRUSH hbr, DRAWSTATEPROC func, LPARAM lp, WPARAM wp,
+                               INT x, INT y, INT cx, INT cy, UINT flags, BOOL unicode )
 {
     HBITMAP hbm, hbmsave;
     HFONT hfsave;
@@ -1485,10 +1477,8 @@ static BOOL PAINTING_DrawState(HDC hdc, HBRUSH hbr,
     {
         if(unicode)
             len = strlenW((LPWSTR)lp);
-        else if(_32bit)
-            len = strlen((LPSTR)lp);
         else
-            len = strlen(MapSL(lp));
+            len = strlen((LPSTR)lp);
     }
 
     /* Find out what size the image has if not given by caller */
@@ -1504,10 +1494,8 @@ static BOOL PAINTING_DrawState(HDC hdc, HBRUSH hbr,
         case DST_PREFIXTEXT:
             if(unicode)
                 retval = GetTextExtentPoint32W(hdc, (LPWSTR)lp, len, &s);
-            else if(_32bit)
-                retval = GetTextExtentPoint32A(hdc, (LPSTR)lp, len, &s);
             else
-                retval = GetTextExtentPoint32A(hdc, MapSL(lp), len, &s);
+                retval = GetTextExtentPoint32A(hdc, (LPSTR)lp, len, &s);
             if(!retval) return FALSE;
             break;
             
@@ -1547,7 +1535,7 @@ static BOOL PAINTING_DrawState(HDC hdc, HBRUSH hbr,
     /* For DSS_NORMAL we just jam in the image and return */
     if((flags & 0x7ff0) == DSS_NORMAL)
     {
-        return PAINTING_DrawStateJam(hdc, opcode, func, lp, len, &rc, dtflags, unicode, _32bit);
+        return PAINTING_DrawStateJam(hdc, opcode, func, lp, len, &rc, dtflags, unicode);
     }
 
     /* For all other states we need to convert the image to B/W in a local bitmap */
@@ -1577,7 +1565,7 @@ static BOOL PAINTING_DrawState(HDC hdc, HBRUSH hbr,
      * so we must be sure that correct font is selected
      */
     if(!hfsave && (opcode <= DST_PREFIXTEXT)) goto cleanup;
-    tmp = PAINTING_DrawStateJam(memdc, opcode, func, lp, len, &rc, dtflags, unicode, _32bit);
+    tmp = PAINTING_DrawStateJam(memdc, opcode, func, lp, len, &rc, dtflags, unicode);
     if(hfsave) SelectObject(memdc, hfsave);
     if(!tmp) goto cleanup;
     
@@ -1644,7 +1632,7 @@ BOOL WINAPI DrawStateA(HDC hdc, HBRUSH hbr,
                    DRAWSTATEPROC func, LPARAM ldata, WPARAM wdata,
                    INT x, INT y, INT cx, INT cy, UINT flags)
 {
-    return PAINTING_DrawState(hdc, hbr, func, ldata, wdata, x, y, cx, cy, flags, FALSE, TRUE);
+    return PAINTING_DrawState(hdc, hbr, func, ldata, wdata, x, y, cx, cy, flags, FALSE);
 }
 
 /**********************************************************************
@@ -1654,19 +1642,8 @@ BOOL WINAPI DrawStateW(HDC hdc, HBRUSH hbr,
                    DRAWSTATEPROC func, LPARAM ldata, WPARAM wdata,
                    INT x, INT y, INT cx, INT cy, UINT flags)
 {
-    return PAINTING_DrawState(hdc, hbr, func, ldata, wdata, x, y, cx, cy, flags, TRUE, TRUE);
+    return PAINTING_DrawState(hdc, hbr, func, ldata, wdata, x, y, cx, cy, flags, TRUE);
 }
-
-/**********************************************************************
- *		DrawState (USER.449)
- */
-BOOL16 WINAPI DrawState16(HDC16 hdc, HBRUSH16 hbr,
-                   DRAWSTATEPROC16 func, LPARAM ldata, WPARAM16 wdata,
-                   INT16 x, INT16 y, INT16 cx, INT16 cy, UINT16 flags)
-{
-    return PAINTING_DrawState(hdc, hbr, (DRAWSTATEPROC)func, ldata, wdata, x, y, cx, cy, flags, FALSE, FALSE);
-}
-
 
 /***********************************************************************
  *		SelectPalette (USER.282)

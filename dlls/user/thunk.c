@@ -13,6 +13,7 @@
 /* ### start build ### */
 extern WORD CALLBACK THUNK_CallTo16_word_wl   (FARPROC16,WORD,LONG);
 extern WORD CALLBACK THUNK_CallTo16_word_wlw  (FARPROC16,WORD,LONG,WORD);
+extern WORD CALLBACK THUNK_CallTo16_word_wlwww(FARPROC16,WORD,LONG,WORD,WORD,WORD);
 /* ### stop build ### */
 
 
@@ -74,3 +75,26 @@ BOOL16 WINAPI THUNK_GrayString16( HDC16 hdc, HBRUSH16 hbr,
 }
 
 
+/**********************************************************************
+ *	     DrawState    (USER.449)
+ */
+BOOL16 WINAPI DrawState16( HDC16 hdc, HBRUSH16 hbr, DRAWSTATEPROC16 func, LPARAM ldata,
+                           WPARAM16 wdata, INT16 x, INT16 y, INT16 cx, INT16 cy, UINT16 flags )
+{
+    UINT opcode = flags & 0xf;
+    DECL_THUNK( thunk, func, THUNK_CallTo16_word_wlwww );
+
+    if (opcode == DST_TEXT || opcode == DST_PREFIXTEXT)
+    {
+        /* make sure DrawStateA doesn't try to use ldata as a pointer */
+        if (!wdata) wdata = strlen( MapSL(ldata) );
+        if (!cx || !cy)
+        {
+            SIZE s;
+            if (!GetTextExtentPoint32A( hdc, MapSL(ldata), wdata, &s )) return FALSE;
+            if (!cx) cx = s.cx;
+            if (!cy) cy = s.cy;
+        }
+    }
+    return DrawStateA( hdc, hbr, (DRAWSTATEPROC)&thunk, ldata, wdata, x, y, cx, cy, flags );
+}
