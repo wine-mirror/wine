@@ -8,7 +8,7 @@
 
 DEFAULT_DEBUG_CHANNEL(msvcrt);
 
-typedef INT (__cdecl *MSVCRT_comp_func)(LPCVOID, LPCVOID );
+typedef int (__cdecl *MSVCRT_comp_func)(const void*, const void*);
 
 /*********************************************************************
  *		_beep (MSVCRT.@)
@@ -24,7 +24,7 @@ extern int rand(void);
 /*********************************************************************
  *		rand (MSVCRT.@)
  */
-INT __cdecl MSVCRT_rand()
+int __cdecl MSVCRT_rand()
 {
   return (rand() & 0x7fff);
 }
@@ -32,7 +32,7 @@ INT __cdecl MSVCRT_rand()
 /*********************************************************************
  *		_sleep (MSVCRT.@)
  */
-VOID __cdecl MSVCRT__sleep(ULONG timeout)
+void __cdecl MSVCRT__sleep(unsigned long timeout)
 {
   TRACE("MSVCRT__sleep for %ld milliseconds\n",timeout);
   Sleep((timeout)?timeout:1);

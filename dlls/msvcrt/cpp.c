@@ -48,7 +48,7 @@ typedef struct __type_info
 } type_info;
 
 /******************************************************************
- *		??0exception@@QAE@ABQBD@Z (MSVCRT.@)
+ *		exception_ctor (MSVCRT.@)
  */
 void __cdecl MSVCRT_exception_ctor(exception * _this, const char ** name)
 {
@@ -60,7 +60,7 @@ void __cdecl MSVCRT_exception_ctor(exception * _this, const char ** name)
 }
 
 /******************************************************************
- *		??0exception@@QAE@ABV0@@Z (MSVCRT.@)
+ *		exception_copy_ctor (MSVCRT.@)
  */
 void __cdecl MSVCRT_exception_copy_ctor(exception * _this, const exception * rhs)
 {
@@ -71,7 +71,7 @@ void __cdecl MSVCRT_exception_copy_ctor(exception * _this, const exception * rhs
 }
 
 /******************************************************************
- *		??0exception@@QAE@XZ (MSVCRT.@)
+ *		exception_default_ctor (MSVCRT.@)
  */
 void __cdecl MSVCRT_exception_default_ctor(exception * _this)
 {
@@ -82,7 +82,7 @@ void __cdecl MSVCRT_exception_default_ctor(exception * _this)
 }
 
 /******************************************************************
- *		??1exception@@UAE@XZ (MSVCRT.@)
+ *		exception_dtor (MSVCRT.@)
  */
 void __cdecl MSVCRT_exception_dtor(exception * _this)
 {
@@ -90,7 +90,7 @@ void __cdecl MSVCRT_exception_dtor(exception * _this)
 }
 
 /******************************************************************
- *		??4exception@@QAEAAV0@ABV0@@Z (MSVCRT.@)
+ *		exception_opequals (MSVCRT.@)
  */
 exception * __cdecl MSVCRT_exception_opequals(exception * _this, const exception * rhs)
 {
@@ -101,7 +101,7 @@ exception * __cdecl MSVCRT_exception_opequals(exception * _this, const exception
 }
 
 /******************************************************************
- *		??_Eexception@@UAEPAXI@Z (MSVCRT.@)
+ *		exception__unknown_E (MSVCRT.@)
  */
 void * __cdecl MSVCRT_exception__unknown_E(exception * _this, unsigned int arg1)
 {
@@ -111,7 +111,7 @@ void * __cdecl MSVCRT_exception__unknown_E(exception * _this, unsigned int arg1)
 }
 
 /******************************************************************
- *		??_Gexception@@UAEPAXI@Z (MSVCRT.@)
+ *		exception__unknown_G (MSVCRT.@)
  */
 void * __cdecl MSVCRT_exception__unknown_G(exception * _this, unsigned int arg1)
 {
@@ -121,7 +121,7 @@ void * __cdecl MSVCRT_exception__unknown_G(exception * _this, unsigned int arg1)
 }
 
 /******************************************************************
- *		?what@exception@@UBEPBDXZ (MSVCRT.@)
+ *		exception_what (MSVCRT.@)
  */
 const char * __stdcall MSVCRT_exception_what(exception * _this)
 {
@@ -131,7 +131,7 @@ const char * __stdcall MSVCRT_exception_what(exception * _this)
 
 
 /******************************************************************
- *		??0bad_typeid@@QAE@ABV0@@Z (MSVCRT.@)
+ *		bad_typeid_copy_ctor (MSVCRT.@)
  */
 void __cdecl MSVCRT_bad_typeid_copy_ctor(bad_typeid * _this, const bad_typeid * rhs)
 {
@@ -140,7 +140,7 @@ void __cdecl MSVCRT_bad_typeid_copy_ctor(bad_typeid * _this, const bad_typeid * 
 }
 
 /******************************************************************
- *		??0bad_typeid@@QAE@PBD@Z (MSVCRT.@)
+ *		bad_typeid_ctor (MSVCRT.@)
  */
 void __cdecl MSVCRT_bad_typeid_ctor(bad_typeid * _this, const char * name)
 {
@@ -150,7 +150,7 @@ void __cdecl MSVCRT_bad_typeid_ctor(bad_typeid * _this, const char * name)
 }
 
 /******************************************************************
- *		??1bad_typeid@@UAE@XZ (MSVCRT.@)
+ *		bad_typeid_dtor (MSVCRT.@)
  */
 void __cdecl MSVCRT_bad_typeid_dtor(bad_typeid * _this)
 {
@@ -159,7 +159,7 @@ void __cdecl MSVCRT_bad_typeid_dtor(bad_typeid * _this)
 }
 
 /******************************************************************
- *		??4bad_typeid@@QAEAAV0@ABV0@@Z (MSVCRT.@)
+ *		bad_typeid_opequals (MSVCRT.@)
  */
 bad_typeid * __cdecl MSVCRT_bad_typeid_opequals(bad_typeid * _this, const bad_typeid * rhs)
 {
@@ -169,7 +169,7 @@ bad_typeid * __cdecl MSVCRT_bad_typeid_opequals(bad_typeid * _this, const bad_ty
 }
 
 /******************************************************************
- *		??0__non_rtti_object@@QAE@ABV0@@Z (MSVCRT.@)
+ *		__non_rtti_object_copy_ctor (MSVCRT.@)
  */
 void __cdecl MSVCRT___non_rtti_object_copy_ctor(__non_rtti_object * _this,
                                                 const __non_rtti_object * rhs)
@@ -179,7 +179,7 @@ void __cdecl MSVCRT___non_rtti_object_copy_ctor(__non_rtti_object * _this,
 }
 
 /******************************************************************
- *		??0__non_rtti_object@@QAE@PBD@Z (MSVCRT.@)
+ *		__non_rtti_object_ctor (MSVCRT.@)
  */
 void __cdecl MSVCRT___non_rtti_object_ctor(__non_rtti_object * _this,
                                            const char * name)
@@ -190,7 +190,7 @@ void __cdecl MSVCRT___non_rtti_object_ctor(__non_rtti_object * _this,
 }
 
 /******************************************************************
- *		??1__non_rtti_object@@UAE@XZ (MSVCRT.@)
+ *		__non_rtti_object_dtor (MSVCRT.@)
  */
 void __cdecl MSVCRT___non_rtti_object_dtor(__non_rtti_object * _this)
 {
@@ -199,7 +199,7 @@ void __cdecl MSVCRT___non_rtti_object_dtor(__non_rtti_object * _this)
 }
 
 /******************************************************************
- *		??4__non_rtti_object@@QAEAAV0@ABV0@@Z (MSVCRT.@)
+ *		__non_rtti_object_opequals (MSVCRT.@)
  */
 __non_rtti_object * __cdecl MSVCRT___non_rtti_object_opequals(__non_rtti_object * _this,
                                                               const __non_rtti_object *rhs)
@@ -211,7 +211,7 @@ __non_rtti_object * __cdecl MSVCRT___non_rtti_object_opequals(__non_rtti_object 
 }
 
 /******************************************************************
- *		??_E__non_rtti_object@@UAEPAXI@Z (MSVCRT.@)
+ *		__non_rtti_object__unknown_E (MSVCRT.@)
  */
 void * __cdecl MSVCRT___non_rtti_object__unknown_E(__non_rtti_object * _this, unsigned int arg1)
 {
@@ -221,7 +221,7 @@ void * __cdecl MSVCRT___non_rtti_object__unknown_E(__non_rtti_object * _this, un
 }
 
 /******************************************************************
- *		??_G__non_rtti_object@@UAEPAXI@Z (MSVCRT.@)
+ *		__non_rtti_object__unknown_G (MSVCRT.@)
  */
 void * __cdecl MSVCRT___non_rtti_object__unknown_G(__non_rtti_object * _this, unsigned int arg1)
 {
@@ -231,7 +231,7 @@ void * __cdecl MSVCRT___non_rtti_object__unknown_G(__non_rtti_object * _this, un
 }
 
 /******************************************************************
- *		??0bad_cast@@QAE@ABQBD@Z (MSVCRT.@)
+ *		bad_cast_ctor (MSVCRT.@)
  */
 void __cdecl MSVCRT_bad_cast_ctor(bad_cast * _this, const char ** name)
 {
@@ -241,7 +241,7 @@ void __cdecl MSVCRT_bad_cast_ctor(bad_cast * _this, const char ** name)
 }
 
 /******************************************************************
- *		??0bad_cast@@QAE@ABV0@@Z (MSVCRT.@)
+ *		bad_cast_copy_ctor (MSVCRT.@)
  */
 void __cdecl MSVCRT_bad_cast_copy_ctor(bad_cast * _this, const bad_cast * rhs)
 {
@@ -250,7 +250,7 @@ void __cdecl MSVCRT_bad_cast_copy_ctor(bad_cast * _this, const bad_cast * rhs)
 }
 
 /******************************************************************
- *		??1bad_cast@@UAE@XZ (MSVCRT.@)
+ *		bad_cast_dtor (MSVCRT.@)
  */
 void __cdecl MSVCRT_bad_cast_dtor(bad_cast * _this)
 {
@@ -259,7 +259,7 @@ void __cdecl MSVCRT_bad_cast_dtor(bad_cast * _this)
 }
 
 /******************************************************************
- *		??4bad_cast@@QAEAAV0@ABV0@@Z (MSVCRT.@)
+ *		bad_cast_opequals (MSVCRT.@)
  */
 bad_cast * __cdecl MSVCRT_bad_cast_opequals(bad_cast * _this, const bad_cast * rhs)
 {
@@ -269,7 +269,7 @@ bad_cast * __cdecl MSVCRT_bad_cast_opequals(bad_cast * _this, const bad_cast * r
 }
 
 /******************************************************************
- *		??8type_info@@QBEHABV0@@Z (MSVCRT.@)
+ *		type_info_opequals_equals (MSVCRT.@)
  */
 int __stdcall MSVCRT_type_info_opequals_equals(type_info * _this, const type_info * rhs)
 {
@@ -278,7 +278,7 @@ int __stdcall MSVCRT_type_info_opequals_equals(type_info * _this, const type_inf
 }
 
 /******************************************************************
- *		??9type_info@@QBEHABV0@@Z (MSVCRT.@)
+ *		type_info_opnot_equals (MSVCRT.@)
  */
 int __stdcall MSVCRT_type_info_opnot_equals(type_info * _this, const type_info * rhs)
 {
@@ -287,7 +287,7 @@ int __stdcall MSVCRT_type_info_opnot_equals(type_info * _this, const type_info *
 }
 
 /******************************************************************
- *		??1type_info@@UAE@XZ (MSVCRT.@)
+ *		type_info_dtor (MSVCRT.@)
  */
 void __cdecl MSVCRT_type_info_dtor(type_info * _this)
 {
@@ -297,7 +297,7 @@ void __cdecl MSVCRT_type_info_dtor(type_info * _this)
 }
 
 /******************************************************************
- *		?name@type_info@@QBEPBDXZ (MSVCRT.@)
+ *		type_info_name (MSVCRT.@)
  */
 const char * __stdcall MSVCRT_type_info_name(type_info * _this)
 {
@@ -306,7 +306,7 @@ const char * __stdcall MSVCRT_type_info_name(type_info * _this)
 }
 
 /******************************************************************
- *		?raw_name@type_info@@QBEPBDXZ (MSVCRT.@)
+ *		type_info_raw_name (MSVCRT.@)
  */
 const char * __stdcall MSVCRT_type_info_raw_name(type_info * _this)
 {

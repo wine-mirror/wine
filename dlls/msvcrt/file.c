@@ -14,14 +14,15 @@
 DEFAULT_DEBUG_CHANNEL(msvcrt);
 
 /* stat() mode bits */
-#define _S_IFMT                  0170000
-#define _S_IFREG                 0100000
-#define _S_IFDIR                 0040000
-#define _S_IFCHR                 0020000
-#define _S_IFIFO                 0010000
-#define _S_IREAD                 0000400
-#define _S_IWRITE                0000200
-#define _S_IEXEC                 0000100
+#define _S_IFMT   0xF000
+#define _S_IFREG  0x8000
+#define _S_IFDIR  0x4000
+#define _S_IFCHR  0x2000
+#define _S_IFIFO  0x1000
+#define _S_IFBLK  0x3000
+#define _S_IREAD  0x0100
+#define _S_IWRITE 0x0080
+#define _S_IEXEC  0x0040
 
 /* for stat mode, permissions apply to all,owner and group */
 #define MSVCRT_S_IREAD  (_S_IREAD  | (_S_IREAD  >> 3) | (_S_IREAD  >> 6))
@@ -66,6 +67,12 @@ typedef struct _crtfile
 #define SEEK_SET    0
 #define SEEK_CUR    1
 #define SEEK_END    2
+
+#define _IOFBF 0
+#define _IOLBF 1
+#define _IONBF 2
+
+#define BUFSIZ 512
 
 #define MSVCRT_stdin  (&MSVCRT__iob[0])
 #define MSVCRT_stdout (&MSVCRT__iob[1])
@@ -117,12 +124,24 @@ static const unsigned int BAT = 'b' << 16 | 'a' << 8 | 't';
 static const unsigned int CMD = 'c' << 16 | 'm' << 8 | 'd';
 static const unsigned int COM = 'c' << 16 | 'o' << 8 | 'm';
 
+#define TOUL(x) (ULONGLONG)((WCHAR)L##x)
+static const ULONGLONG WCEXE = TOUL('e') << 32 | TOUL('x') << 16 | TOUL('e');
+static const ULONGLONG WCBAT = TOUL('b') << 32 | TOUL('a') << 16 | TOUL('t');
+static const ULONGLONG WCCMD = TOUL('c') << 32 | TOUL('m') << 16 | TOUL('d');
+static const ULONGLONG WCCOM = TOUL('c') << 32 | TOUL('o') << 16 | TOUL('m');
+
 extern CRITICAL_SECTION MSVCRT_file_cs;
 #define LOCK_FILES     EnterCriticalSection(&MSVCRT_file_cs)
 #define UNLOCK_FILES   LeaveCriticalSection(&MSVCRT_file_cs)
 
 time_t __cdecl MSVCRT_time(time_t *);
 int __cdecl MSVCRT__getdrive(void);
+WCHAR *__cdecl MSVCRT__wcsdup(const WCHAR *);
+unsigned int __cdecl wcslen(const WCHAR*);
+int __cdecl iswalpha(WCHAR);
+int __cdecl towupper(WCHAR);
+int __cdecl towlower(WCHAR);
+int __cdecl MSVCRT__vsnwprintf(WCHAR *,unsigned int,const WCHAR *,va_list);
 
 /* INTERNAL: Get the HANDLE for a fd */
 static HANDLE MSVCRT__fdtoh(int fd)
@@ -246,14 +265,10 @@ int __cdecl MSVCRT__access(const char *filename, int mode)
 {
   DWORD attr = GetFileAttributesA(filename);
 
-  if (attr == 0xffffffff)
+  TRACE("(%s,%d) %ld\n",filename,mode,attr);
+
+  if (!filename || attr == 0xffffffff)
   {
-    if (!filename)
-    {
-	/* FIXME: Should GetFileAttributesA() return this? */
-      MSVCRT__set_errno(ERROR_INVALID_DATA);
-      return -1;
-    }
     MSVCRT__set_errno(GetLastError());
     return -1;
   }
@@ -262,10 +277,30 @@ int __cdecl MSVCRT__access(const char *filename, int mode)
     MSVCRT__set_errno(ERROR_ACCESS_DENIED);
     return -1;
   }
-  TRACE(":file %s, mode (%d) ok\n",filename,mode);
   return 0;
 }
 
+/*********************************************************************
+ *		_waccess (MSVCRT.@)
+ */
+int __cdecl MSVCRT__waccess(const WCHAR *filename, int mode)
+{
+  DWORD attr = GetFileAttributesW(filename);
+
+  TRACE("(%s,%d) %ld\n",debugstr_w(filename),mode,attr);
+
+  if (!filename || attr == 0xffffffff)
+  {
+    MSVCRT__set_errno(GetLastError());
+    return -1;
+  }
+  if ((attr & FILE_ATTRIBUTE_READONLY) && (mode & W_OK))
+  {
+    MSVCRT__set_errno(ERROR_ACCESS_DENIED);
+    return -1;
+  }
+  return 0;
+}
 
 /*********************************************************************
  *		_chmod (MSVCRT.@)
@@ -287,14 +322,46 @@ int __cdecl MSVCRT__chmod(const char *path, int flags)
 }
 
 /*********************************************************************
+ *		_wchmod (MSVCRT.@)
+ */
+int __cdecl MSVCRT__wchmod(const WCHAR *path, int flags)
+{
+  DWORD oldFlags = GetFileAttributesW(path);
+
+  if (oldFlags != 0x0FFFFFFFF)
+  {
+    DWORD newFlags = (flags & _S_IWRITE)? oldFlags & ~FILE_ATTRIBUTE_READONLY:
+      oldFlags | FILE_ATTRIBUTE_READONLY;
+
+    if (newFlags == oldFlags || SetFileAttributesW(path, newFlags))
+      return 0;
+  }
+  MSVCRT__set_errno(GetLastError());
+  return -1;
+}
+
+/*********************************************************************
  *		_unlink (MSVCRT.@)
  */
 int __cdecl MSVCRT__unlink(const char *path)
 {
-  TRACE("path (%s)\n",path);
+  TRACE("(%s)\n",path);
   if(DeleteFileA(path))
     return 0;
-  TRACE("failed-last error (%ld)\n",GetLastError());
+  TRACE("failed (%ld)\n",GetLastError());
+  MSVCRT__set_errno(GetLastError());
+  return -1;
+}
+
+/*********************************************************************
+ *		_wunlink (MSVCRT.@)
+ */
+int __cdecl MSVCRT__wunlink(const WCHAR *path)
+{
+  TRACE("(%s)\n",debugstr_w(path));
+  if(DeleteFileW(path))
+    return 0;
+  TRACE("failed (%ld)\n",GetLastError());
   MSVCRT__set_errno(GetLastError());
   return -1;
 }
@@ -458,7 +525,7 @@ LONG __cdecl MSVCRT__lseek(int fd, LONG offset, int whence)
 /*********************************************************************
  *		rewind (MSVCRT.@)
  */
-VOID __cdecl MSVCRT_rewind(MSVCRT_FILE* file)
+void __cdecl MSVCRT_rewind(MSVCRT_FILE* file)
 {
   TRACE(":file (%p) fd (%d)\n",file,file->_file);
   MSVCRT__lseek(file->_file,0,SEEK_SET);
@@ -473,6 +540,20 @@ MSVCRT_FILE* __cdecl MSVCRT__fdopen(int fd, const char *mode)
   MSVCRT_FILE* file = MSVCRT__alloc_fp(fd);
 
   TRACE(":fd (%d) mode (%s) FILE* (%p)\n",fd,mode,file);
+  if (file)
+    MSVCRT_rewind(file);
+
+  return file;
+}
+
+/*********************************************************************
+ *		_wfdopen (MSVCRT.@)
+ */
+MSVCRT_FILE* __cdecl MSVCRT__wfdopen(int fd, const WCHAR *mode)
+{
+  MSVCRT_FILE* file = MSVCRT__alloc_fp(fd);
+
+  TRACE(":fd (%d) mode (%s) FILE* (%p)\n",fd,debugstr_w(mode),file);
   if (file)
     MSVCRT_rewind(file);
 
@@ -510,7 +591,7 @@ int __cdecl MSVCRT__fileno(MSVCRT_FILE* file)
 /*********************************************************************
  *		_flushall (MSVCRT.@)
  */
-int __cdecl MSVCRT__flushall(VOID)
+int __cdecl MSVCRT__flushall(void)
 {
   int num_flushed = 0, i = 3;
 
@@ -664,10 +745,44 @@ char *__cdecl MSVCRT__mktemp(char *pattern)
   do
   {
     if (GetFileAttributesA(retVal) == 0xFFFFFFFF &&
-	GetLastError() == ERROR_FILE_NOT_FOUND)
+        GetLastError() == ERROR_FILE_NOT_FOUND)
       return retVal;
     *pattern = letter++;
   } while(letter != '|');
+  return NULL;
+}
+
+/*********************************************************************
+ *		_wmktemp (MSVCRT.@)
+ */
+WCHAR *__cdecl MSVCRT__wmktemp(WCHAR *pattern)
+{
+  int numX = 0;
+  WCHAR *retVal = pattern;
+  int id;
+  WCHAR letter = (WCHAR)L'a';
+
+  while(*pattern)
+    numX = (*pattern++ == (WCHAR)L'X')? numX + 1 : 0;
+  if (numX < 5)
+    return NULL;
+  pattern--;
+  id = GetCurrentProcessId();
+  numX = 6;
+  while(numX--)
+  {
+    int tempNum = id / 10;
+    *pattern-- = id - (tempNum * 10) + (WCHAR)L'0';
+    id = tempNum;
+  }
+  pattern++;
+  do
+  {
+    if (GetFileAttributesW(retVal) == 0xFFFFFFFF &&
+        GetLastError() == ERROR_FILE_NOT_FOUND)
+      return retVal;
+    *pattern = letter++;
+  } while(letter != (WCHAR)L'|');
   return NULL;
 }
 
@@ -758,12 +873,39 @@ int __cdecl MSVCRT__open(const char *path,int flags)
 }
 
 /*********************************************************************
+ *		_wopen (MSVCRT.@)
+ */
+int __cdecl MSVCRT__wopen(const WCHAR *path,int flags)
+{
+  const unsigned int len = wcslen(path);
+  char *patha = MSVCRT_calloc(len + 1,1);
+  if (patha && WideCharToMultiByte(CP_ACP,0,path,len,patha,len,NULL,NULL))
+  {
+    int retval = MSVCRT__open(patha,flags);
+    MSVCRT_free(patha);
+    return retval;
+  }
+
+  MSVCRT__set_errno(GetLastError());
+  return -1;
+}
+
+/*********************************************************************
  *		_creat (MSVCRT.@)
  */
 int __cdecl MSVCRT__creat(const char *path, int flags)
 {
   int usedFlags = (flags & _O_TEXT)| _O_CREAT| _O_WRONLY| _O_TRUNC;
   return MSVCRT__open(path, usedFlags);
+}
+
+/*********************************************************************
+ *		_wcreat (MSVCRT.@)
+ */
+int __cdecl MSVCRT__wcreat(const WCHAR *path, int flags)
+{
+  int usedFlags = (flags & _O_TEXT)| _O_CREAT| _O_WRONLY| _O_TRUNC;
+  return MSVCRT__wopen(path, usedFlags);
 }
 
 /*********************************************************************
@@ -798,7 +940,7 @@ int __cdecl MSVCRT__rmtmp(void)
 /*********************************************************************
  *		_read (MSVCRT.@)
  */
-int __cdecl MSVCRT__read(int fd, LPVOID buf, unsigned int count)
+int __cdecl MSVCRT__read(int fd, void *buf, unsigned int count)
 {
   DWORD num_read;
   HANDLE hand = MSVCRT__fdtoh(fd);
@@ -865,7 +1007,7 @@ int __cdecl MSVCRT__stat(const char* path, struct _stat * buf)
 
   if (!GetFileAttributesExA(path, GetFileExInfoStandard, &hfi))
   {
-      TRACE("failed-last error (%ld)\n",GetLastError());
+      TRACE("failed (%ld)\n",GetLastError());
       MSVCRT__set_errno(ERROR_FILE_NOT_FOUND);
       return -1;
   }
@@ -890,10 +1032,10 @@ int __cdecl MSVCRT__stat(const char* path, struct _stat * buf)
     /* executable? */
     if (plen > 6 && path[plen-4] == '.')  /* shortest exe: "\x.exe" */
     {
-      unsigned int ext = tolower(path[plen-1]) | (tolower(path[plen-2]) << 8)
-	| (tolower(path[plen-3]) << 16);
+      unsigned int ext = tolower(path[plen-1]) | (tolower(path[plen-2]) << 8) |
+                                 (tolower(path[plen-3]) << 16);
       if (ext == EXE || ext == BAT || ext == CMD || ext == COM)
-	mode |= MSVCRT_S_IEXEC;
+          mode |= MSVCRT_S_IEXEC;
     }
   }
 
@@ -908,7 +1050,68 @@ int __cdecl MSVCRT__stat(const char* path, struct _stat * buf)
   RtlTimeToSecondsSince1970(&hfi.ftLastWriteTime, &dw);
   buf->st_mtime = buf->st_ctime = dw;
   TRACE("\n%d %d %d %d %d %d\n", buf->st_mode,buf->st_nlink,buf->st_size,
-	buf->st_atime,buf->st_mtime, buf->st_ctime);
+    buf->st_atime,buf->st_mtime, buf->st_ctime);
+  return 0;
+}
+
+/*********************************************************************
+ *		_wstat (MSVCRT.@)
+ */
+int __cdecl MSVCRT__wstat(const WCHAR* path, struct _stat * buf)
+{
+  DWORD dw;
+  WIN32_FILE_ATTRIBUTE_DATA hfi;
+  unsigned short mode = MSVCRT_S_IREAD;
+  int plen;
+
+  TRACE(":file (%s) buf(%p)\n",debugstr_w(path),buf);
+
+  if (!GetFileAttributesExW(path, GetFileExInfoStandard, &hfi))
+  {
+      TRACE("failed (%ld)\n",GetLastError());
+      MSVCRT__set_errno(ERROR_FILE_NOT_FOUND);
+      return -1;
+  }
+
+  memset(buf,0,sizeof(struct _stat));
+
+  /* FIXME: rdev isnt drive num,despite what the docs say-what is it? */
+  if (iswalpha(*path))
+    buf->st_dev = buf->st_rdev = towupper(*path - (WCHAR)L'A'); /* drive num */
+  else
+    buf->st_dev = buf->st_rdev = MSVCRT__getdrive() - 1;
+
+  plen = wcslen(path);
+
+  /* Dir, or regular file? */
+  if ((hfi.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) ||
+      (path[plen-1] == (WCHAR)L'\\'))
+    mode |= (_S_IFDIR | MSVCRT_S_IEXEC);
+  else
+  {
+    mode |= _S_IFREG;
+    /* executable? */
+    if (plen > 6 && path[plen-4] == (WCHAR)L'.')  /* shortest exe: "\x.exe" */
+    {
+      ULONGLONG ext = towlower(path[plen-1]) | (towlower(path[plen-2]) << 16) |
+                               ((ULONGLONG)towlower(path[plen-3]) << 32);
+      if (ext == WCEXE || ext == WCBAT || ext == WCCMD || ext == WCCOM)
+        mode |= MSVCRT_S_IEXEC;
+    }
+  }
+
+  if (!(hfi.dwFileAttributes & FILE_ATTRIBUTE_READONLY))
+    mode |= MSVCRT_S_IWRITE;
+
+  buf->st_mode  = mode;
+  buf->st_nlink = 1;
+  buf->st_size  = hfi.nFileSizeLow;
+  RtlTimeToSecondsSince1970(&hfi.ftLastAccessTime, &dw);
+  buf->st_atime = dw;
+  RtlTimeToSecondsSince1970(&hfi.ftLastWriteTime, &dw);
+  buf->st_mtime = buf->st_ctime = dw;
+  TRACE("\n%d %d %d %d %d %d\n", buf->st_mode,buf->st_nlink,buf->st_size,
+        buf->st_atime,buf->st_mtime, buf->st_ctime);
   return 0;
 }
 
@@ -933,7 +1136,24 @@ char *__cdecl MSVCRT__tempnam(const char *dir, const char *prefix)
     TRACE("got name (%s)\n",tmpbuf);
     return MSVCRT__strdup(tmpbuf);
   }
-  TRACE("failed-last error (%ld)\n",GetLastError());
+  TRACE("failed (%ld)\n",GetLastError());
+  return NULL;
+}
+
+/*********************************************************************
+ *		_wtempnam (MSVCRT.@)
+ */
+WCHAR *__cdecl MSVCRT__wtempnam(const WCHAR *dir, const WCHAR *prefix)
+{
+  WCHAR tmpbuf[MAX_PATH];
+
+  TRACE("dir (%s) prefix (%s)\n",debugstr_w(dir),debugstr_w(prefix));
+  if (GetTempFileNameW(dir,prefix,0,tmpbuf))
+  {
+    TRACE("got name (%s)\n",debugstr_w(tmpbuf));
+    return MSVCRT__wcsdup(tmpbuf);
+  }
+  TRACE("failed (%ld)\n",GetLastError());
   return NULL;
 }
 
@@ -943,7 +1163,7 @@ char *__cdecl MSVCRT__tempnam(const char *dir, const char *prefix)
 int __cdecl MSVCRT__umask(int umask)
 {
   int old_umask = MSVCRT_umask;
-  TRACE("umask (%d)\n",umask);
+  TRACE("(%d)\n",umask);
   MSVCRT_umask = umask;
   return old_umask;
 }
@@ -965,9 +1185,25 @@ int __cdecl MSVCRT__utime(const char *path, struct _utimbuf *t)
 }
 
 /*********************************************************************
+ *		_wutime (MSVCRT.@)
+ */
+int __cdecl MSVCRT__wutime(const WCHAR *path, struct _utimbuf *t)
+{
+  int fd = MSVCRT__wopen(path, _O_WRONLY | _O_BINARY);
+
+  if (fd > 0)
+  {
+    int retVal = MSVCRT__futime(fd, t);
+    MSVCRT__close(fd);
+    return retVal;
+  }
+  return -1;
+}
+
+/*********************************************************************
  *		_write (MSVCRT.@)
  */
-unsigned int __cdecl MSVCRT__write(int fd, LPCVOID buf, unsigned int count)
+unsigned int __cdecl MSVCRT__write(int fd, const void *buf, unsigned int count)
 {
   DWORD num_written;
   HANDLE hand = MSVCRT__fdtoh(fd);
@@ -1010,7 +1246,7 @@ int __cdecl MSVCRT__putw(int val, MSVCRT_FILE* file)
 /*********************************************************************
  *		clearerr (MSVCRT.@)
  */
-VOID __cdecl MSVCRT_clearerr(MSVCRT_FILE* file)
+void __cdecl MSVCRT_clearerr(MSVCRT_FILE* file)
 {
   TRACE(":file (%p) fd (%d)\n",file,file->_file);
   file->_flag &= ~(_IOERR | _IOEOF);
@@ -1087,7 +1323,7 @@ int __cdecl MSVCRT_fgetpos(MSVCRT_FILE* file, MSVCRT_fpos_t *pos)
 /*********************************************************************
  *		fgets (MSVCRT.@)
  */
-CHAR* __cdecl MSVCRT_fgets(char *s, int size, MSVCRT_FILE* file)
+char *__cdecl MSVCRT_fgets(char *s, int size, MSVCRT_FILE* file)
 {
   int    cc;
   char * buf_start = s;
@@ -1181,7 +1417,7 @@ MSVCRT_FILE* __cdecl MSVCRT_fopen(const char *path, const char *mode)
   int flags = 0, plus = 0, fd;
   const char* search = mode;
 
-  TRACE(":path (%s) mode (%s)\n",path,mode);
+  TRACE("(%s,%s)\n",path,mode);
 
   while (*search)
     if (*search++ == '+')
@@ -1226,11 +1462,36 @@ MSVCRT_FILE* __cdecl MSVCRT_fopen(const char *path, const char *mode)
     return NULL;
 
   file = MSVCRT__alloc_fp(fd);
-  TRACE(":get file (%p)\n",file);
+  TRACE(":got (%p)\n",file);
   if (!file)
     MSVCRT__close(fd);
 
   return file;
+}
+
+/*********************************************************************
+ *		_wfopen (MSVCRT.@)
+ */
+MSVCRT_FILE *__cdecl MSVCRT__wfopen(const WCHAR *path, const WCHAR *mode)
+{
+  const unsigned int plen = wcslen(path), mlen = wcslen(mode);
+  char *patha = MSVCRT_calloc(plen + 1, 1);
+  char *modea = MSVCRT_calloc(mlen + 1, 1);
+
+  TRACE("(%s,%s)\n",debugstr_w(path),debugstr_w(mode));
+
+  if (patha && modea &&
+      WideCharToMultiByte(CP_ACP,0,path,plen,patha,plen,NULL,NULL) &&
+      WideCharToMultiByte(CP_ACP,0,mode,mlen,modea,mlen,NULL,NULL))
+  {
+    MSVCRT_FILE *retval = MSVCRT_fopen(patha,modea);
+    MSVCRT_free(patha);
+    MSVCRT_free(modea);
+    return retval;
+  }
+
+  MSVCRT__set_errno(GetLastError());
+  return NULL;
 }
 
 /*********************************************************************
@@ -1240,6 +1501,16 @@ MSVCRT_FILE*  __cdecl MSVCRT__fsopen(const char *path, const char *mode, int sha
 {
   FIXME(":(%s,%s,%d),ignoring share mode!\n",path,mode,share);
   return MSVCRT_fopen(path,mode);
+}
+
+/*********************************************************************
+ *		_wfsopen (MSVCRT.@)
+ */
+MSVCRT_FILE*  __cdecl MSVCRT__wfsopen(const WCHAR *path, const WCHAR *mode, int share)
+{
+  FIXME(":(%s,%s,%d),ignoring share mode!\n",
+        debugstr_w(path),debugstr_w(mode),share);
+  return MSVCRT__wfopen(path,mode);
 }
 
 /*********************************************************************
@@ -1269,7 +1540,7 @@ int __cdecl MSVCRT__fputchar(int c)
 /*********************************************************************
  *		fread (MSVCRT.@)
  */
-DWORD __cdecl MSVCRT_fread(LPVOID ptr, int size, int nmemb, MSVCRT_FILE* file)
+DWORD __cdecl MSVCRT_fread(void *ptr, int size, int nmemb, MSVCRT_FILE* file)
 {
   DWORD read = MSVCRT__read(file->_file,ptr, size * nmemb);
   if (read <= 0)
@@ -1473,7 +1744,7 @@ LONG __cdecl MSVCRT_ftell(MSVCRT_FILE* file)
 /*********************************************************************
  *		fwrite (MSVCRT.@)
  */
-unsigned int __cdecl MSVCRT_fwrite(LPCVOID ptr, int size, int nmemb, MSVCRT_FILE* file)
+unsigned int __cdecl MSVCRT_fwrite(const void *ptr, int size, int nmemb, MSVCRT_FILE* file)
 {
   unsigned int written = MSVCRT__write(file->_file, ptr, size * nmemb);
   if (written <= 0)
@@ -1487,6 +1758,14 @@ unsigned int __cdecl MSVCRT_fwrite(LPCVOID ptr, int size, int nmemb, MSVCRT_FILE
 int __cdecl MSVCRT_fputs(const char *s, MSVCRT_FILE* file)
 {
   return MSVCRT_fwrite(s,strlen(s),1,file) == 1 ? 0 : MSVCRT_EOF;
+}
+
+/*********************************************************************
+ *		fputws (MSVCRT.@)
+ */
+int __cdecl MSVCRT_fputws(const WCHAR *s, MSVCRT_FILE* file)
+{
+  return MSVCRT_fwrite(s,wcslen(s),1,file) == 1 ? 0 : MSVCRT_EOF;
 }
 
 /*********************************************************************
@@ -1555,14 +1834,38 @@ int __cdecl MSVCRT_puts(const char *s)
 }
 
 /*********************************************************************
+ *		_putws (MSVCRT.@)
+ */
+int __cdecl MSVCRT__putws(const WCHAR *s)
+{
+  static const WCHAR nl = (WCHAR)L'\n';
+  if (MSVCRT_fwrite(s,wcslen(s),1,MSVCRT_stdout) == 1)
+    return MSVCRT_fwrite(&nl,sizeof(nl),1,MSVCRT_stdout) == 1 ? 0 : MSVCRT_EOF;
+  return MSVCRT_EOF;
+}
+
+/*********************************************************************
  *		remove (MSVCRT.@)
  */
 int __cdecl MSVCRT_remove(const char *path)
 {
-  TRACE(":path (%s)\n",path);
+  TRACE("(%s)\n",path);
   if (DeleteFileA(path))
     return 0;
-  TRACE(":failed-last error (%ld)\n",GetLastError());
+  TRACE(":failed (%ld)\n",GetLastError());
+  MSVCRT__set_errno(GetLastError());
+  return -1;
+}
+
+/*********************************************************************
+ *		_wremove (MSVCRT.@)
+ */
+int __cdecl MSVCRT__wremove(const WCHAR *path)
+{
+  TRACE("(%s)\n",debugstr_w(path));
+  if (DeleteFileW(path))
+    return 0;
+  TRACE(":failed (%ld)\n",GetLastError());
   MSVCRT__set_errno(GetLastError());
   return -1;
 }
@@ -1589,21 +1892,38 @@ int __cdecl MSVCRT_rename(const char *oldpath,const char *newpath)
   TRACE(":from %s to %s\n",oldpath,newpath);
   if (MoveFileExA(oldpath, newpath, MOVEFILE_REPLACE_EXISTING))
     return 0;
-  TRACE(":failed-last error (%ld)\n",GetLastError());
+  TRACE(":failed (%ld)\n",GetLastError());
   MSVCRT__set_errno(GetLastError());
   return -1;
 }
 
 /*********************************************************************
+ *		_wrename (MSVCRT.@)
+ */
+int __cdecl MSVCRT__wrename(const WCHAR *oldpath,const WCHAR *newpath)
+{
+  TRACE(":from %s to %s\n",debugstr_w(oldpath),debugstr_w(newpath));
+  if (MoveFileExW(oldpath, newpath, MOVEFILE_REPLACE_EXISTING))
+    return 0;
+  TRACE(":failed (%ld)\n",GetLastError());
+  MSVCRT__set_errno(GetLastError());
+  return -1;
+}
+
+/*********************************************************************
+ *		setvbuf (MSVCRT.@)
+ */
+void MSVCRT_setvbuf(MSVCRT_FILE* file, char *buf, int mode, unsigned int size)
+{
+  FIXME("(%p,%p,%d,%d)stub\n",file, buf, mode, size);
+}
+
+/*********************************************************************
  *		setbuf (MSVCRT.@)
  */
-int __cdecl MSVCRT_setbuf(MSVCRT_FILE* file, char *buf)
+void __cdecl MSVCRT_setbuf(MSVCRT_FILE* file, char *buf)
 {
-  TRACE(":file (%p) fd (%d) buf (%p)\n", file, file->_file,buf);
-  if (buf)
-    WARN(":user buffer will not be used!\n");
-  /* FIXME: no buffering for now */
-  return 0;
+  MSVCRT_setvbuf(file, buf, buf ? _IOFBF : _IONBF, BUFSIZ);
 }
 
 /*********************************************************************
@@ -1644,7 +1964,7 @@ extern int vsnprintf(void *, unsigned int, const void*, va_list);
 int __cdecl MSVCRT_vfprintf(MSVCRT_FILE* file, const char *format, va_list valist)
 {
   char buf[2048], *mem = buf;
-  int written, resize = sizeof(buf);
+  int written, resize = sizeof(buf), retval;
   /* There are two conventions for vsnprintf failing:
    * Return -1 if we truncated, or
    * Return the number of bytes that would have been written
@@ -1659,9 +1979,49 @@ int __cdecl MSVCRT_vfprintf(MSVCRT_FILE* file, const char *format, va_list valis
     if (!(mem = (char *)MSVCRT_malloc(resize)))
       return MSVCRT_EOF;
   }
+  retval = MSVCRT_fwrite(mem, 1, written, file);
   if (mem != buf)
     MSVCRT_free (mem);
-  return MSVCRT_fwrite(mem, 1, written, file);
+  return retval;
+}
+
+/*********************************************************************
+ *		vfwprintf (MSVCRT.@)
+ */
+int __cdecl MSVCRT_vfwprintf(MSVCRT_FILE* file, const WCHAR *format, va_list valist)
+{
+  WCHAR buf[2048], *mem = buf;
+  int written, resize = sizeof(buf) / sizeof(WCHAR), retval;
+  /* See vfprintf comments */
+  while ((written = MSVCRT__vsnwprintf(mem, resize, format, valist)) == -1 ||
+          written > resize)
+  {
+    resize = (written == -1 ? resize * 2 : written + sizeof(WCHAR));
+    if (mem != buf)
+      MSVCRT_free (mem);
+    if (!(mem = (WCHAR *)MSVCRT_malloc(resize)))
+      return MSVCRT_EOF;
+  }
+  retval = MSVCRT_fwrite(mem, 1, written * sizeof (WCHAR), file);
+  if (mem != buf)
+    MSVCRT_free (mem);
+  return retval;
+}
+
+/*********************************************************************
+ *		vprintf (MSVCRT.@)
+ */
+int __cdecl MSVCRT_vprintf(const char *format, va_list valist)
+{
+  return MSVCRT_vfprintf(MSVCRT_stdout,format,valist);
+}
+
+/*********************************************************************
+ *		vwprintf (MSVCRT.@)
+ */
+int __cdecl MSVCRT_vwprintf(const WCHAR *format, va_list valist)
+{
+  return MSVCRT_vfwprintf(MSVCRT_stdout,format,valist);
 }
 
 /*********************************************************************
@@ -1673,6 +2033,19 @@ int __cdecl MSVCRT_fprintf(MSVCRT_FILE* file, const char *format, ...)
     int res;
     va_start(valist, format);
     res = MSVCRT_vfprintf(file, format, valist);
+    va_end(valist);
+    return res;
+}
+
+/*********************************************************************
+ *		fwprintf (MSVCRT.@)
+ */
+int __cdecl MSVCRT_fwprintf(MSVCRT_FILE* file, const WCHAR *format, ...)
+{
+    va_list valist;
+    int res;
+    va_start(valist, format);
+    res = MSVCRT_vfwprintf(file, format, valist);
     va_end(valist);
     return res;
 }
@@ -1690,3 +2063,15 @@ int __cdecl MSVCRT_printf(const char *format, ...)
     return res;
 }
 
+/*********************************************************************
+ *		wprintf (MSVCRT.@)
+ */
+int __cdecl MSVCRT_wprintf(const WCHAR *format, ...)
+{
+    va_list valist;
+    int res;
+    va_start(valist, format);
+    res = MSVCRT_vwprintf(format, valist);
+    va_end(valist);
+    return res;
+}

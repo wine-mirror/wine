@@ -18,8 +18,8 @@ LPWSTR __cdecl wcsrchr( LPWSTR str, WCHAR ch );
  */
 char *__cdecl MSVCRT_getenv(const char *name)
 {
-  LPSTR environ = GetEnvironmentStringsA();
-  LPSTR pp,pos = NULL;
+  char *environ = GetEnvironmentStringsA();
+  char *pp,*pos = NULL;
   unsigned int length;
 
   for (pp = environ; (*pp); pp = pp + strlen(pp) +1)
@@ -65,4 +65,54 @@ WCHAR *__cdecl MSVCRT__wgetenv(const WCHAR *name)
   }
   FreeEnvironmentStringsW( environ );
   return pp;
+}
+
+/*********************************************************************
+ *		_putenv (MSVCRT.@)
+ */
+int __cdecl MSVCRT__putenv(const char *str)
+{
+ char name[256], value[512];
+ char *dst = name;
+
+ TRACE("%s\n", str);
+
+ if (!str)
+   return -1;
+ while (*str && *str != '=')
+  *dst++ = *str++;
+ if (!*str++)
+   return -1;
+ *dst = '\0';
+ dst = value;
+ while (*str)
+  *dst++ = *str++;
+ *dst = '\0';
+
+ return !SetEnvironmentVariableA(name, value[0] ? value : NULL);
+}
+
+/*********************************************************************
+ *		_wputenv (MSVCRT.@)
+ */
+int __cdecl MSVCRT__wputenv(const WCHAR *str)
+{
+ WCHAR name[256], value[512];
+ WCHAR *dst = name;
+
+ TRACE("%s\n", debugstr_w(str));
+
+ if (!str)
+   return -1;
+ while (*str && *str != (WCHAR)L'=')
+  *dst++ = *str++;
+ if (!*str++)
+   return -1;
+ *dst = (WCHAR)L'\0';
+ dst = value;
+ while (*str)
+  *dst++ = *str++;
+ *dst = (WCHAR)L'\0';
+
+ return !SetEnvironmentVariableW(name, value[0] ? value : NULL);
 }

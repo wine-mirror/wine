@@ -86,6 +86,12 @@ char * MSVCRT__strndup(const char *, unsigned int);
 LPWSTR __cdecl MSVCRT__wcsdup( LPCWSTR );
 LPWSTR __cdecl MSVCRT__wstrndup( LPCWSTR , unsigned int );
 char *__cdecl  MSVCRT_getenv(const char *);
+WCHAR *__cdecl wcscpy(WCHAR *,const WCHAR *);
+WCHAR *__cdecl wcsncpy(WCHAR *,const WCHAR *,unsigned int);
+WCHAR *__cdecl wcscat(WCHAR *,const WCHAR *);
+WCHAR *__cdecl wcschr(WCHAR *,WCHAR);
+WCHAR *__cdecl wcsrchr(WCHAR *,WCHAR);
+void __cdecl _splitpath(const char *,char *, char *,char *,char *);
 
 /*********************************************************************
  *		_chdir (MSVCRT.@)
@@ -430,46 +436,46 @@ int __cdecl MSVCRT__wrmdir(const WCHAR * dir)
 }
 
 /*********************************************************************
- *		_splitpath (MSVCRT.@)
+ *		_wsplitpath (MSVCRT.@)
  */
-void __cdecl MSVCRT__splitpath(const char* inpath, char * drv, char * dir,
-                               char* fname, char * ext )
+void __cdecl MSVCRT__wsplitpath(const WCHAR *inpath, WCHAR *drv, WCHAR *dir,
+                                WCHAR *fname, WCHAR *ext )
 {
   /* Modified PD code from 'snippets' collection. */
-  char ch, *ptr, *p;
-  char pathbuff[MAX_PATH],*path=pathbuff;
+  WCHAR ch, *ptr, *p;
+  WCHAR pathbuff[MAX_PATH],*path=pathbuff;
 
-  TRACE(":splitting path '%s'\n",path);
-  strcpy(pathbuff, inpath);
+  TRACE(":splitting path '%s'\n",debugstr_w(path));
+  wcscpy(pathbuff, inpath);
 
   /* convert slashes to backslashes for searching */
-  for (ptr = (char*)path; *ptr; ++ptr)
-    if ('/' == *ptr)
-      *ptr = '\\';
+  for (ptr = (WCHAR*)path; *ptr; ++ptr)
+    if (*ptr == (WCHAR)L'/')
+      *ptr = (WCHAR)L'\\';
 
   /* look for drive spec */
-  if ('\0' != (ptr = strchr(path, ':')))
+  if ((ptr = wcschr(path, (WCHAR)L':')) != (WCHAR)L'\0')
   {
     ++ptr;
     if (drv)
     {
-      strncpy(drv, path, ptr - path);
-      drv[ptr - path] = '\0';
+      wcsncpy(drv, path, ptr - path);
+      drv[ptr - path] = (WCHAR)L'\0';
     }
     path = ptr;
   }
   else if (drv)
-    *drv = '\0';
+    *drv = (WCHAR)L'\0';
 
   /* find rightmost backslash or leftmost colon */
-  if (NULL == (ptr = strrchr(path, '\\')))
-    ptr = (strchr(path, ':'));
+  if ((ptr = wcsrchr(path, (WCHAR)L'\\')) == NULL)
+    ptr = (wcschr(path, (WCHAR)L':'));
 
   if (!ptr)
   {
-    ptr = (char *)path; /* no path */
+    ptr = (WCHAR *)path; /* no path */
     if (dir)
-      *dir = '\0';
+      *dir = (WCHAR)L'\0';
   }
   else
   {
@@ -477,41 +483,41 @@ void __cdecl MSVCRT__splitpath(const char* inpath, char * drv, char * dir,
     if (dir)
     {
       ch = *ptr;
-      *ptr = '\0';
-      strcpy(dir, path);
+      *ptr = (WCHAR)L'\0';
+      wcscpy(dir, path);
       *ptr = ch;
     }
   }
 
-  if (NULL == (p = strrchr(ptr, '.')))
+  if ((p = wcsrchr(ptr, (WCHAR)L'.')) == NULL)
   {
     if (fname)
-      strcpy(fname, ptr);
+      wcscpy(fname, ptr);
     if (ext)
-      *ext = '\0';
+      *ext = (WCHAR)L'\0';
   }
   else
   {
-    *p = '\0';
+    *p = (WCHAR)L'\0';
     if (fname)
-      strcpy(fname, ptr);
-    *p = '.';
+      wcscpy(fname, ptr);
+    *p = (WCHAR)L'.';
     if (ext)
-      strcpy(ext, p);
+      wcscpy(ext, p);
   }
 
   /* Fix pathological case - Win returns ':' as part of the
    * directory when no drive letter is given.
    */
-  if (drv && drv[0] == ':')
+  if (drv && drv[0] == (WCHAR)L':')
   {
-    *drv = '\0';
+    *drv = (WCHAR)L'\0';
     if (dir)
     {
-      pathbuff[0] = ':';
-      pathbuff[1] = '\0';
-      strcat(pathbuff,dir);
-      strcpy(dir,pathbuff);
+      pathbuff[0] = (WCHAR)L':';
+      pathbuff[1] = (WCHAR)L'\0';
+      wcscat(pathbuff,dir);
+      wcscpy(dir, pathbuff);
     }
   }
 }
@@ -621,7 +627,7 @@ static void fln_fix(char *path)
 /*********************************************************************
  *		_fullpath (MSVCRT.@)
  */
-LPSTR __cdecl MSVCRT__fullpath(char * absPath, const char* relPath, unsigned int size)
+char *__cdecl MSVCRT__fullpath(char * absPath, const char* relPath, unsigned int size)
 {
   char drive[5],dir[MAX_PATH],file[MAX_PATH],ext[MAX_PATH];
   char res[MAX_PATH];
@@ -640,7 +646,7 @@ LPSTR __cdecl MSVCRT__fullpath(char * absPath, const char* relPath, unsigned int
 
   TRACE(":resolving relative path '%s'\n",relPath);
 
-  MSVCRT__splitpath(relPath, drive, dir, file, ext);
+  _splitpath(relPath, drive, dir, file, ext);
 
   /* Get Directory and drive into 'res' */
   if (!dir[0] || (dir[0] != '/' && dir[0] != '\\'))
@@ -749,7 +755,7 @@ void __cdecl MSVCRT__searchenv(const char* file, const char* env, char *buf)
 
   do
   {
-    LPSTR end = penv;
+    char *end = penv;
 
     while(*end && *end != ';') end++; /* Find end of next path */
     if (penv == end || !*penv)

@@ -50,14 +50,50 @@ GET_UINT_PTR(_osver)
 GET_UINT_PTR(_winmajor)
 GET_UINT_PTR(_winminor)
 GET_UINT_PTR(_winver)
+
+/*********************************************************************
+ *		__p__acmdln (MSVCRT.@)
+ */
 char **__cdecl MSVCRT___p__acmdln(void) { return &MSVCRT__acmdln; }
+
+/*********************************************************************
+ *		__p__wcmdln (MSVCRT.@)
+ */
 WCHAR **__cdecl MSVCRT___p__wcmdln(void) { return &MSVCRT__wcmdln; }
+
+/*********************************************************************
+ *		__p___argv (MSVCRT.@)
+ */
 char ***__cdecl MSVCRT___p___argv(void) { return &MSVCRT___argv; }
+
+/*********************************************************************
+ *		__p___wargv (MSVCRT.@)
+ */
 WCHAR ***__cdecl MSVCRT___p___wargv(void) { return &MSVCRT___wargv; }
+
+/*********************************************************************
+ *		__p__environ (MSVCRT.@)
+ */
 char **__cdecl MSVCRT___p__environ(void) { return &MSVCRT__environ; }
+
+/*********************************************************************
+ *		__p__wenviron (MSVCRT.@)
+ */
 WCHAR **__cdecl MSVCRT___p__wenviron(void) { return &MSVCRT__wenviron; }
+
+/*********************************************************************
+ *		__p___initenv (MSVCRT.@)
+ */
 char ***__cdecl MSVCRT___p___initenv(void) { return &MSVCRT___initenv; }
+
+/*********************************************************************
+ *		__p___winitenv (MSVCRT.@)
+ */
 WCHAR ***__cdecl MSVCRT___p___winitenv(void) { return &MSVCRT___winitenv; }
+
+/*********************************************************************
+ *		__p__timezone (MSVCRT.@)
+ */
 int *__cdecl MSVCRT___p__timezone(void) { return &MSVCRT_timezone; }
 
 /* INTERNAL: Create a wide string from an ascii string */

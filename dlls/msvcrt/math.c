@@ -3,6 +3,7 @@
  *
  * Copyright 2000 Jon Griffiths
  */
+#include "config.h"
 #include "msvcrt.h"
 #include "ms_errno.h"
 
@@ -437,7 +438,7 @@ unsigned int __cdecl MSVCRT__statusfp(void)
  */
 unsigned int __cdecl MSVCRT__clearfp(void)
 {
-  UINT retVal = MSVCRT__statusfp();
+  unsigned int retVal = MSVCRT__statusfp();
 #if defined(__GNUC__) && defined(__i386__)
   __asm__ __volatile__( "fnclex" );
 #else
@@ -483,7 +484,7 @@ double __cdecl MSVCRT__chgsign(double num)
 unsigned int __cdecl MSVCRT__control87(unsigned int newval, unsigned int mask)
 {
 #if defined(__GNUC__) && defined(__i386__)
-   UINT fpword, flags = 0;
+   unsigned int fpword, flags = 0;
 
   /* Get fp control word */
   __asm__ __volatile__( "fstsw %0" : "=m" (fpword) : );

@@ -73,7 +73,7 @@ void MSVCRT__set_errno(int err)
 /*********************************************************************
  *		_errno (MSVCRT.@)
  */
-LPINT __cdecl MSVCRT__errno( VOID )
+int *__cdecl MSVCRT__errno(void)
 {
   return GET_THREAD_VAR_PTR(errno);
 }
@@ -81,7 +81,7 @@ LPINT __cdecl MSVCRT__errno( VOID )
 /*********************************************************************
  *		__doserrno (MSVCRT.@)
  */
-LPINT __cdecl MSVCRT___doserrno( VOID )
+int *__cdecl MSVCRT___doserrno(void)
 {
   return GET_THREAD_VAR_PTR(doserrno);
 }
@@ -101,7 +101,7 @@ char * __cdecl MSVCRT_strerror (int err)
  */
 extern int sprintf(char *str, const char *format, ...);
 
-LPSTR __cdecl MSVCRT__strerror (LPCSTR err)
+const char *__cdecl MSVCRT__strerror (const char *err)
 {
   static char strerrbuff[256]; /* FIXME: Per thread, nprintf */
   sprintf(strerrbuff,"%s: %s\n",err,MSVCRT_strerror(GET_THREAD_VAR(errno)));

@@ -14,7 +14,7 @@ DEFAULT_DEBUG_CHANNEL(msvcrt);
 unsigned long __cdecl MSVCRT__beginthreadex(void *sec,
                                             unsigned int stack,
                                             LPTHREAD_START_ROUTINE start,
-                                            void *arg, unsigned flag,
+                                            void *arg, unsigned int flag,
                                             unsigned int*addr)
 {
   TRACE("(%p,%d,%p,%p,%d,%p)\n",sec, stack,start, arg,flag,addr);

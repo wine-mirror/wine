@@ -157,7 +157,7 @@ int __cdecl MSVCRT__spawnve(int flags, const char *name, const char **argv,
 {
   char * args = __MSVCRT__argvtos(argv,' ');
   char * envs = __MSVCRT__argvtos(envv,0);
-  LPCSTR fullname = name;
+  const char *fullname = name;
   int ret = -1;
 
   FIXME(":not translating name %s to locate program\n",fullname);

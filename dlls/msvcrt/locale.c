@@ -495,7 +495,7 @@ const char *__cdecl MSVCRT__Getnames(void)
  *		_Strftime (MSVCRT.@)
  */
 const char *__cdecl MSVCRT__Strftime(char *out, unsigned int len, const char *fmt,
-                                     const /* struct tm */ void *tm, void *foo)
+                                     const void *tm, void *foo)
 {
   /* FIXME: */
   TRACE("(%p %d %s %p %p) stub", out, len, fmt, tm, foo);
