@@ -14,7 +14,7 @@ DEFAULT_DEBUG_CHANNEL(psdrv);
 
 
 /**********************************************************************
- *           ExtEscape  (PSDRV.@)
+ *           ExtEscape  (WINEPS.@)
  */
 INT PSDRV_ExtEscape( DC *dc, INT nEscape, INT cbInput, LPCVOID in_data,
                      INT cbOutput, LPVOID out_data )
