@@ -665,19 +665,32 @@ BOOL DrawIcon(HDC hDC, short x, short y, HICON hIcon)
     BITMAP	bm;
     HBITMAP	hBitTemp;
     HDC		hMemDC;
+    COLORREF    oldFg, oldBg;
 
+    oldFg = SetTextColor( hDC, RGB(0,0,0) );
+    oldBg = SetBkColor( hDC, RGB(255,255,255) );
     dprintf_icon(stddeb,"DrawIcon(%04X, %d, %d, %04X) \n", hDC, x, y, hIcon);
     if (hIcon == (HICON)NULL) return FALSE;
     lpico = (ICONALLOC *)GlobalLock(hIcon);
     GetObject(lpico->hBitmap, sizeof(BITMAP), (LPSTR)&bm);
     hMemDC = CreateCompatibleDC(hDC);
-    hBitTemp = SelectObject(hMemDC, lpico->hBitMask);
-    BitBlt(hDC, x, y, bm.bmWidth, bm.bmHeight, hMemDC, 0, 0, SRCAND);
-    SelectObject(hMemDC, lpico->hBitmap);
-    BitBlt(hDC, x, y, bm.bmWidth, bm.bmHeight, hMemDC, 0, 0, SRCINVERT);
+    if (lpico->hBitMask)
+    {
+        hBitTemp = SelectObject(hMemDC, lpico->hBitMask);
+        BitBlt(hDC, x, y, bm.bmWidth, bm.bmHeight, hMemDC, 0, 0, SRCAND);
+        SelectObject(hMemDC, lpico->hBitmap);
+        BitBlt(hDC, x, y, bm.bmWidth, bm.bmHeight, hMemDC, 0, 0, SRCINVERT);
+    }
+    else  /* no mask -> everything is masked; so use SRCCOPY as it's faster */
+    {
+        hBitTemp = SelectObject(hMemDC, lpico->hBitmap);
+        BitBlt(hDC, x, y, bm.bmWidth, bm.bmHeight, hMemDC, 0, 0, SRCCOPY);
+    }
     SelectObject( hMemDC, hBitTemp );
     DeleteDC(hMemDC);
     GlobalUnlock( hIcon );
+    SetTextColor( hDC, oldFg );
+    SetBkColor( hDC, oldBg );
     return TRUE;
 }
 

@@ -414,6 +414,7 @@ char *DOS_GetUnixFileName(char *dosfilename)
 	/*   a:\windows\system.ini  =>  /dos/windows/system.ini */
 	
 	static char temp[256];
+	static char dostemp[256];
 	int drive;
 
 	if (dosfilename[1] == ':') 
@@ -427,14 +428,17 @@ char *DOS_GetUnixFileName(char *dosfilename)
 	} else
 		drive = CurrentDrive;
 
+	/* Consider dosfilename const */
+	strcpy(dostemp,dosfilename);
+
         /* Expand the filename to it's full path if it doesn't
          * start from the root.
          */
-        DOS_ExpandToFullPath(dosfilename, drive);
+        DOS_ExpandToFullPath(dostemp, drive);
 
 	strcpy(temp, DosDrives[drive].rootdir);
 	strcat(temp, DosDrives[drive].cwd);
-	GetUnixDirName(temp + strlen(DosDrives[drive].rootdir), dosfilename);
+	GetUnixDirName(temp + strlen(DosDrives[drive].rootdir), dostemp);
 
 	dprintf_dosfs(stddeb,"GetUnixFileName: %s => %s\n", dosfilename, temp);
 	return(temp);

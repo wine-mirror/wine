@@ -19,6 +19,13 @@ DLLOBJS = \
 	dll_keyboard.o \
 	dll_mmsystem.o \
 	dll_mouse.o \
+	dll_ole2.o \
+	dll_ole2conv.o \
+	dll_ole2disp.o \
+	dll_ole2nls.o \
+	dll_ole2prox.o \
+	dll_olecli.o \
+	dll_olesvr.o \
 	dll_shell.o \
 	dll_sound.o \
 	dll_stress.o \
@@ -46,6 +53,13 @@ MakeDllFromSpec(keyboard)
 MakeDllFromSpec(shell)
 MakeDllFromSpec(mmsystem)
 MakeDllFromSpec(mouse)
+MakeDllFromSpec(ole2)
+MakeDllFromSpec(ole2conv)
+MakeDllFromSpec(ole2disp)
+MakeDllFromSpec(ole2nls)
+MakeDllFromSpec(ole2prox)
+MakeDllFromSpec(olecli)
+MakeDllFromSpec(olesvr)
 MakeDllFromSpec(sound)
 MakeDllFromSpec(stress)
 MakeDllFromSpec(system)

@@ -28,7 +28,16 @@ static char Copyright[] = "Copyright Martin Ayotte, 1993";
  * Defaults for button-texts
  */
 
-ButtonTexts ButtonText = {
+ButtonTexts ButtonText = {    /* FIXME: Norwegian Translation missing */
+#if #LANG(De)
+  "&Ja",     'J',
+  "&Nein",   'N',
+  "&Ok",     'O',
+  "&Abbruch",'A',
+  "&Abbruch",'A',
+  "&Wiederholen", 'W',
+  "&Ignorieren", 'I'
+#else
   "&Yes",    'Y',
   "&No",     'N',
   "&Ok",     'O',
@@ -36,6 +45,7 @@ ButtonTexts ButtonText = {
   "&Abort",  'A',
   "&Retry",  'R',
   "&Ignore", 'I'
+#endif
 };
 
 extern HBITMAP hUpArrow;

@@ -1,4 +1,87 @@
 ----------------------------------------------------------------------
+Thu Mar  2 17:44:32 1995  Alexandre Julliard  (julliard@sunsite.unc.edu)
+
+	* [loader/resource.c] [objects/oembitmap.c]
+	Removed sysres bitmap code; you need libXpm to compile now.
+	Implemented LoadIcon() for OEM icons.
+
+	* [include/bitmaps/oic_*]
+	Added OEM icons in XPM format.
+
+	* [objects/dib.c]
+	Bug fix in DrawIcon().
+
+	* [rc/sysresbm.rc]
+	Removed; all bitmaps are stored in XPM format now.
+
+Tue Feb 28 18:54:28 1995  Tomi Leppikangas  (tomilepp@paju.oulu.fi)
+
+	* [controls/edit.c]
+	Small patch to fix edit-control when it's created with text.
+
+Sun Feb 26 20:22:15 1995  Michael Veksler  (e1678223@tochnapc2.technion.ac.il)
+
+	* [tools/make_debug]
+	The created macros won't have side effects anymore when used in
+	an "if-else" structure. No more warnings from the compiler when
+	compiled without defining DEBUG_RUNTIME.
+ 
+Sun Feb 26 20:20:49 1995  Michael Patra <micky@marie.physik.TU-Berlin.DE>
+
+	* [controls/listbox.c]
+	ListBoxDeleteString(): Fixed
+
+	* [loader/selector.c]
+	GetMemoryReference(): When special segments are referenced by
+	pseudo-functions like __0040H, a reference to a "normal" segment
+	will be returned preventing the program from crashing as soon
+	as the referenced segment is actually accessed.
+
+Sun Feb 26 15:55:14 MET 1995  Martin von Loewis (loewis@informatik.hu-berlin.de)
+
+	* [Configure]
+	Ask for OLE stubs and malloc debugging
+
+	* [Imakefile]
+	link with libmcheck.a if necessary
+
+	* [if1632/relay.c][include/dll.h][if1632/Imakefile]
+	Add OLE stubs, increase number of builtins
+	dll_name_table_entry_s: new field dll_is_used
+
+	* [loader/library.c]
+	GetModuleHandle,ModuleNext: Check dll_is_used
+
+	* [loader/ne_image.c]
+	Bark on unsupported NE_RADDR_LOWBYTE flag (what is it supposed
+	to mean, anyway?)
+
+	* [misc/olecli.c][misc/olesvr.c]
+	New files. Add to misc/Imakefile
+
+	* [misc/dos_fs.c]
+	DOS_GetUnixFileName: make a copy of the input parameter to 
+	prevent overwriting
+
+	* [misc/main.c]
+	MAIN_ParseDLLOptions: new function
+	MAIN_ParseOptions: treat -dll command line flag
+	main: add support for malloc debugging
+
+Fri Feb 24 12:43:27 1995  Erik Svendsen  <z3esv@kmd-ac.dk>
+
+	* [loader/signal.c]
+	Small patch for people using FreeBSD-2.1.0.
+
+Fri Feb 17 22:49:18 1995  Miguel de Icaza (miguel@roxanne.nuclecu.unam.mx)
+
+	* [toolkit/sup.c]
+	Added return values to the Call* routines
+
+	* [toolkit/winmain.c]
+	Load the resource file properly for WineLib applications.
+
+----------------------------------------------------------------------
 Thu Feb 16 18:57:31 1995  Alexandre Julliard  (julliard@sunsite.unc.edu)
 
 	* [if1632/call.S]

@@ -7,7 +7,6 @@
 
 WINELIB=''
 SHORTNAMES=''
-XPM=''
 LANGUAGE=not_matching
 NEWBUILD=''
 ALLDEFINES=''
@@ -29,6 +28,9 @@ prompt ()
 	fi
 }
 
+echo Read the RELEASE-NOTES for an explanation of the various flags
+echo
+
 echo -n 'Build Wine as emulator or library (E/L) [E]? '
 read input
 if [ "$input" = 'l' -o "$input" = 'L' ]
@@ -46,16 +48,6 @@ then
 	ALLDEFINES="$ALLDEFINES -DSHORTNAMES"
 fi
 
-echo
-echo -n 'Use the XPM library (Y/N) [Y]? '
-read input
-if [ "$input" = 'n' -o "$input" = 'N' ]
-then :
-else
-	XPM='#define USE_XPM'
-	ALLDEFINES="$ALLDEFINES -DUSE_XPM"
-fi
-
 LANGS=`echo En rc/sysres_*.rc | sed -e 's/rc\/sysres_//g' -e 's/\.rc//g' -e 's/ /\//g;'`
 while	expr "$LANGS" : ".*$LANGUAGE" = 0 > /dev/null
 do
@@ -66,6 +58,15 @@ do
 	fi
 done
 ALLDEFINES="$ALLDEFINES -ALANG\($LANGUAGE\)"
+
+prompt "Malloc debugging" MALLOC_DEBUGGING N
+if [ MALLOC_DEBUGGING = 'Y' -o $MALLOC_DEBUGGING = 'y' ]
+then
+       MALLOC_DEBUGGING="#define MALLOC_DEBUGGING"
+       ALLDEFINES="$ALLDEFINES -DMALLOC_DEBUGGING"
+else
+       MALLOC_DEBUGGING=''
+fi
 
 if [ "`(domainname)`" = 'amscons.com' ]
 then
@@ -202,8 +203,8 @@ cat > autoconf.h << EOF
 /* autoconf.h generated automatically.  Run Configure. */
 $WINELIB
 $SHORTNAMES
-$XPM
 $NEWBUILD
+$MALLOC_DEBUGGING
 #define WINE_INI_GLOBAL "$WINE_CONFIGFILE"
 #define AutoDefines $ALLDEFINES
 EOF

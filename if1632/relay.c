@@ -42,21 +42,28 @@ dprintf_stack
 
 struct dll_name_table_entry_s dll_builtin_table[N_BUILTINS] =
 {
-    { "KERNEL",  WineLibSkip(KERNEL_table), 	410, 1 },
-    { "USER",    WineLibSkip(USER_table), 	540, 2 },
-    { "GDI",     WineLibSkip(GDI_table), 	490, 3 },
-    { "UNIXLIB", WineLibSkip(UNIXLIB_table),  10, 4 },
-    { "WIN87EM", WineLibSkip(WIN87EM_table),  10, 5 },
-    { "SHELL",   WineLibSkip(SHELL_table),   103, 6 },
-    { "SOUND",   WineLibSkip(SOUND_table),    20, 7 },
-    { "KEYBOARD",WineLibSkip(KEYBOARD_table),137, 8 },
-    { "WINSOCK", WineLibSkip(WINSOCK_table), 155, 9 },
-    { "STRESS",  WineLibSkip(STRESS_table),   15, 10},
-    { "MMSYSTEM",WineLibSkip(MMSYSTEM_table),1226,11},
-    { "SYSTEM",  WineLibSkip(SYSTEM_table),   20 ,12},
-    { "TOOLHELP",WineLibSkip(TOOLHELP_table), 83, 13},
-    { "MOUSE",   WineLibSkip(MOUSE_table),     8, 14},
-    { "EMUCOMMDLG", WineLibSkip(COMMDLG_table),  31, 15},
+    { "KERNEL",  WineLibSkip(KERNEL_table), 	410, 1, 1 },
+    { "USER",    WineLibSkip(USER_table), 	540, 2, 1 },
+    { "GDI",     WineLibSkip(GDI_table), 	490, 3, 1 },
+    { "UNIXLIB", WineLibSkip(UNIXLIB_table),  10, 4, 1 },
+    { "WIN87EM", WineLibSkip(WIN87EM_table),  10, 5, 1 },
+    { "SHELL",   WineLibSkip(SHELL_table),   103, 6, 1 },
+    { "SOUND",   WineLibSkip(SOUND_table),    20, 7, 1 },
+    { "KEYBOARD",WineLibSkip(KEYBOARD_table),137, 8, 1 },
+    { "WINSOCK", WineLibSkip(WINSOCK_table), 155, 9, 1 },
+    { "STRESS",  WineLibSkip(STRESS_table),   15, 10, 1},
+    { "MMSYSTEM",WineLibSkip(MMSYSTEM_table),1226,11, 1},
+    { "SYSTEM",  WineLibSkip(SYSTEM_table),   20 ,12, 1},
+    { "TOOLHELP",WineLibSkip(TOOLHELP_table), 83, 13, 1},
+    { "MOUSE",   WineLibSkip(MOUSE_table),     8, 14, 1},
+    { "COMMDLG", WineLibSkip(COMMDLG_table),  31, 15, 1},
+    { "OLE2",    WineLibSkip(OLE2_table),     31, 16, 1},
+    { "OLE2CONV",WineLibSkip(OLE2CONV_table), 31, 17, 1},
+    { "OLE2DISP",WineLibSkip(OLE2DISP_table), 31, 18, 1},
+    { "OLE2NLS", WineLibSkip(OLE2NLS_table),  31, 19, 1},
+    { "OLE2PROX",WineLibSkip(OLE2PROX_table), 31, 20, 1},
+    { "OLECLI",  WineLibSkip(OLECLI_table),   31, 21, 1},
+    { "OLESVR",  WineLibSkip(OLESVR_table),   31, 22, 1},
 };
 /* don't forget to increase N_BUILTINS in dll.h if you add a dll */
 
@@ -79,7 +86,14 @@ struct dll_conversions {
   SYSTEM_offsets,   SYSTEM_types,   /* SYSTEM     */
   TOOLHELP_offsets, TOOLHELP_types, /* TOOLHELP   */
   MOUSE_offsets,    MOUSE_types,    /* MOUSE      */
-  COMMDLG_offsets,  COMMDLG_types   /* EMUCOMMDLG */
+  COMMDLG_offsets,  COMMDLG_types,  /* EMUCOMMDLG */
+  OLE2_offsets,     OLE2_types,     /* OLE2       */
+  OLE2CONV_offsets, OLE2CONV_types, /* OLE2CONV   */
+  OLE2DISP_offsets, OLE2DISP_types, /* OLE2DISP   */
+  OLE2NLS_offsets,  OLE2NLS_types,  /* OLE2NLS    */
+  OLE2DISP_offsets, OLE2DISP_types, /* OLE2PROX   */
+  OLECLI_offsets,   OLECLI_types,   /* OLE2CLI    */
+  OLESVR_offsets,   OLESVR_types    /* OLE2CLI    */
 };
 
 
@@ -124,7 +138,7 @@ DLLRelay(unsigned int func_num, unsigned int seg_off)
     int conv_ref;
     unsigned char *type_conv;
     unsigned short *offset_conv;
-    
+
     /*
      * Determine address of arguments.
      */
@@ -141,17 +155,14 @@ DLLRelay(unsigned int func_num, unsigned int seg_off)
 
     if (debugging_relay)
     {
-	unsigned int *ret_addr;
-	
-	ret_addr = (unsigned int *) ((char *) seg_off + 0x14);
-	printf("Call %s (%s.%d), stack=%04x:%04x, ",
+	printf( "Call %s (%s.%d), stack=%04x:%04x, ret=%04x:%04x",
 	       dll_p->export_name,
 	       dll_builtin_table[dll_id].dll_name, ordinal,
-	       seg_off >> 16, seg_off & 0xffff);
-	printf("ret=%08x", *ret_addr);
-	printf("  ESP=%04x, EBP=%04x, SS=%04x\n", 
-	       IF1632_Saved16_sp, IF1632_Saved16_bp,
-	       IF1632_Saved16_ss);
+	       seg_off >> 16, seg_off & 0xffff,
+               pStack16Frame->cs, pStack16Frame->ip );
+	printf(" bp=%04x ds=%04x args=%d\n",
+               pStack16Frame->bp, pStack16Frame->ds,
+               pStack16Frame->arg_length );
 
 	if(debugging_stack)
         {
@@ -245,15 +256,17 @@ DLLRelay(unsigned int func_num, unsigned int seg_off)
 			  arg_table[12], arg_table[13], arg_table[14], 
 			  arg_table[15]);
 
+    pStack16Frame = pOldStack16Frame;
+
     if (debugging_relay)
     {
-	printf("Returning %08x from %s (%s.%d)\n",
+	printf("Returning %08x from %s (%s.%d) ds=%04x\n",
 	       ret_val,
 	       dll_p->export_name,
-	       dll_builtin_table[dll_id].dll_name, ordinal);
+	       dll_builtin_table[dll_id].dll_name, ordinal,
+               pStack16Frame->ds );
     }
 
-    pStack16Frame = pOldStack16Frame;
     return ret_val;
 }
 #endif
@@ -267,7 +280,8 @@ FindDLLTable(char *dll_name)
     int i;
 
     for (i = 0; i < N_BUILTINS; i++)
-	if (strcasecmp(dll_builtin_table[i].dll_name, dll_name) == 0)
+	if (strcasecmp(dll_builtin_table[i].dll_name, dll_name) == 0
+	  && dll_builtin_table[i].dll_is_used)
 #ifdef WINELIB
 	    return dll_builtin_table[i].dll_number;
 #else

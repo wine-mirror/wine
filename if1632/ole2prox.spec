@@ -1,0 +1,6 @@
+name	ole2prox
+id	20
+length	3
+#1 DLLGETCLASSOBJECT
+#2 WEP
+#3 ___EXPORTEDSTUB

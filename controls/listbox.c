@@ -920,12 +920,16 @@ int ListBoxDeleteString(HWND hwnd, UINT uIndex)
     lpls = lphl->lpFirst;
     if (lpls == NULL) return LB_ERR;
     if (uIndex > lphl->ItemsCount) return LB_ERR;
-    for(Count = 1; Count < uIndex; Count++) {
+    if( uIndex == 0 )
+      lphl->lpFirst = lpls->lpNext;
+    else {
+      for(Count = 0; Count < uIndex; Count++) {
 	if (lpls->lpNext == NULL) return LB_ERR;
 	lpls2 = lpls;
 	lpls = (LPLISTSTRUCT)lpls->lpNext;
+      }
+      lpls2->lpNext = (LPLISTSTRUCT)lpls->lpNext;
     }
-    lpls2->lpNext = (LPLISTSTRUCT)lpls->lpNext;
     lphl->ItemsCount--;
     if (lpls->hData != 0) LIST_HEAP_FREE(lphl, lpls->hData);
     if (lpls->hMem != 0) LIST_HEAP_FREE(lphl, lpls->hMem);

@@ -280,6 +280,11 @@ HANDLE GetModuleHandle(LPSTR lpModuleName)
 /* 	dprintf_module(stddeb,"GetModuleHandle // searching in builtin libraries\n");*/
 	for (i = 0; i < N_BUILTINS; i++) {
 		if (dll_builtin_table[i].dll_name == NULL) break;
+		if (!dll_builtin_table[i].dll_is_used){
+			dprintf_module(stddeb,"Skipping builtin %s\n",
+			dll_builtin_table[i].dll_name);
+			continue;
+		}
 		if (((int) lpModuleName & 0xffff0000) == 0) {
 			if (0xFF00 + i == (int) lpModuleName) {
 				dprintf_module(stddeb,"GetModuleHandle('%s') return %04X \n",
@@ -576,16 +581,22 @@ BOOL ModuleNext(MODULEENTRY *lpModule)
 
 	dprintf_module(stddeb,"ModuleNext(%08X)\n", (int) lpModule);
 
-	if (IS_BUILTIN_DLL(lpModule->hModule)) {
-		/* last built-in ? */
-		if ((lpModule->hModule & 0xff) == (N_BUILTINS - 1) ) {
-			if (wine_files) {
-				FillModStructLoaded(lpModule, wine_files);
-				return TRUE;
-			} else
-				return FALSE;
-		}
-		FillModStructBuiltIn(lpModule, &dll_builtin_table[(lpModule->hModule & 0xff)+1]);
+	if (IS_BUILTIN_DLL(lpModule->hModule)) 
+	{
+		int builtin_no=lpModule->hModule & 0xff;
+		do{
+			/* last built-in ? */
+			if (builtin_no == (N_BUILTINS - 1) ) {
+				if (wine_files) {
+					FillModStructLoaded(lpModule, wine_files);
+					return TRUE;
+				} else
+					return FALSE;
+			}
+			builtin_no++;
+		}while(!dll_builtin_table[builtin_no].dll_is_used);
+
+		FillModStructBuiltIn(lpModule, &dll_builtin_table[builtin_no]);
 		return TRUE;
 	}
 	w = GetFileInfo(lpModule->hModule);

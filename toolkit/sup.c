@@ -10,17 +10,17 @@
 LONG CallWindowProc (WNDPROC func, HWND hwnd, WORD message,
 		     WORD wParam, LONG lParam)
 {
-    (*func)(hwnd, message, wParam, lParam);
+    return (*func)(hwnd, message, wParam, lParam);
 }
 
 CallLineDDAProc (FARPROC back, int x, int y, long lParam)
 {
-    (*back)(x, y, lParam);
+    return (*back)(x, y, lParam);
 }
 
 DWORD CallHookProc (HOOKPROC func, short code, WPARAM wParam, LPARAM lParam)
 {
-    (*func)(code, wParam, lParam);
+    return (*func)(code, wParam, lParam);
 }
 
 BOOL CallGrayStringProc (FARPROC func, HDC hdc, LPARAM lParam, INT cch)

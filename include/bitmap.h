@@ -43,4 +43,8 @@ extern HBITMAP BITMAP_SelectObject( HDC hdc, DC * dc, HBITMAP hbitmap,
 extern int DIB_GetImageWidthBytes( int width, int depth );
 extern int DIB_BitmapInfoSize( BITMAPINFO * info, WORD coloruse );
 
+  /* objects/oembitmap.c */
+extern HBITMAP OBM_LoadBitmap( WORD id );
+extern HICON OBM_LoadIcon( WORD id );
+
 #endif  /* __WINE_BITMAP_H */

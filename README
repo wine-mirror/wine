@@ -17,9 +17,13 @@ You must have one of:
 	NetBSD-current
 	FreeBSD-current or FreeBSD 1.1
 
+You also need to have libXpm installed on your system. The sources for
+it are probably available on the ftp site where you got Wine. They can
+also be found on ftp.x.org and all its mirror sites.
+
 To build Wine, first do a "./Configure" and then a "make" (or "gmake"
 if you're running *BSD).  The executable "wine" will be built.  "wine"
-will load and run 16-bit Windows' executables. 
+will load and run 16-bit Windows executables. 
 
 To upgrade to a new release by using a patch file, first cd to the
 top-level directory of the release (the one containing this README

@@ -22,7 +22,6 @@ static char Copyright[] = "Copyright  Robert J. Amstadt, 1993";
 #include "library.h"
 #include "stddebug.h"
 #include "debug.h"
-#include "../rc/sysresbm.h"
 
 #define MIN(a,b)	((a) < (b) ? (a) : (b))
 
@@ -30,7 +29,6 @@ RESOURCE *Top = NULL;
 
 extern int NE_FindResource(HANDLE, LPSTR, LPSTR, RESOURCE *);
 extern int PE_FindResource(HANDLE, LPSTR, LPSTR, RESOURCE *);
-extern HBITMAP OBM_LoadOEMBitmap( WORD id );  /* objects/oembitmap.c */
 
 #define PrintId(name) \
 	if (HIWORD((DWORD)name)) \
@@ -54,9 +52,6 @@ HANDLE FindResource(HANDLE instance, LPSTR name, LPSTR type)
 	printf(")\n");
 	}
 	
-	if (instance == (HANDLE)NULL)
-		instance = hSysRes;
-
 	/* FIXME: did we already find this one ? */
 
 	if ((rh = GlobalAlloc(GMEM_MOVEABLE, sizeof(RESOURCE))) == 0)
@@ -111,9 +106,6 @@ HANDLE AllocResource(HANDLE instance, HANDLE hResInfo, DWORD dwSize)
 	dprintf_resource(stddeb, "AllocResource(%04X, %04X, %08X);\n", 
 		instance, hResInfo, (int) dwSize);
 
-	if (instance == (HANDLE)NULL)
-		instance = hSysRes;
-
 	if ((r = (RESOURCE *)GlobalLock(hResInfo)) == NULL)
 		return 0;
     
@@ -140,9 +132,6 @@ int AccessResource(HANDLE instance, HANDLE hResInfo)
 	dprintf_resource(stddeb, "AccessResource(%04X, %04X);\n", 
 		instance, hResInfo);
 
-	if (instance == (HANDLE)NULL)
-		instance = hSysRes;
-
 	if ((r = (RESOURCE *)GlobalLock(hResInfo)) == NULL)
 		return -1;
 
@@ -164,9 +153,6 @@ WORD SizeofResource(HANDLE instance, HANDLE hResInfo)
 	dprintf_resource(stddeb, "SizeofResource(%04X, %04X);\n", 
 		instance, hResInfo);
 
-	if (instance == (HANDLE)NULL)
-		instance = hSysRes;
-
 	if ((r = (RESOURCE *)GlobalLock(hResInfo)) == NULL)
 		return 0;
 
@@ -187,9 +173,6 @@ HANDLE LoadResource(HANDLE instance, HANDLE hResInfo)
     HANDLE h;
 
     dprintf_resource(stddeb, "LoadResource(%04X, %04X);\n", instance, hResInfo);
-
-    if (instance == (HANDLE)NULL)
-	instance = hSysRes;
 
     if ((r = (RESOURCE *)GlobalLock(hResInfo)) == NULL)
 	return 0;
@@ -324,9 +307,6 @@ RSC_LoadResource(int instance, LPSTR rsc_name, LPSTR type, int *image_size_ret)
 	HANDLE hResInfo;
 	RESOURCE *r;
 
-	if (instance == (HANDLE)NULL)
-		instance = hSysRes;
-
 	dprintf_resource(stddeb, "RSC_LoadResource: instance = %04x, name = %08x, type = %08x\n",
 	   instance, (int) rsc_name, (int) type);
 
@@ -364,6 +344,12 @@ HICON LoadIcon(HANDLE instance, LPSTR icon_name)
 	printf(")\n");
     }
     
+    if (!instance)
+    {
+        if (HIWORD((int)icon_name)) return 0; /* FIXME: should handle '#xxx' */
+        return OBM_LoadIcon( LOWORD((int)icon_name) );
+    }
+
     if (!(hdc = GetDC(GetDesktopWindow()))) return 0;
     rsc_mem = RSC_LoadResource(instance, icon_name, (LPSTR) NE_RSCTYPE_GROUP_ICON, 
 			       &image_size);
@@ -711,24 +697,11 @@ LoadBitmap(HANDLE instance, LPSTR bmp_name)
 	printf(")\n");
     }
 
-    if (!instance) {
-	struct ResourceTable *it;
-	hbitmap = OBM_LoadOEMBitmap(((int) bmp_name) & 0xffff);
-	if (hbitmap)
-		return hbitmap;
-	/* Load from sysresbm */
-	dprintf_resource(stddeb,"Searching for %d\n", (int) bmp_name);
-	for(it=sysresbmTable;it->value;it++){
-	    if(it->type==NE_RSCTYPE_BITMAP)
-	    if((((int)bmp_name & 0xFFFF0000) == 0))
-		{if(it->id==(int)bmp_name)break;}
-	    else if(!strcmp(it->name,bmp_name))break;
-	}
-	if(!it->value)return 0;
-	dprintf_resource(stddeb,"Found %s\n",it->name);
-	lp=(long *)it->value;
-	rsc_mem=(HANDLE)NULL;
-    } else { /* Load from file - indent this code properly later */
+    if (!instance)
+    {
+        if (HIWORD((int)bmp_name)) return 0;  /* FIXME: should handle '#xxx' */
+        return OBM_LoadBitmap( LOWORD((int)bmp_name) );
+    }
 
     rsc_mem = RSC_LoadResource(instance, bmp_name, (LPSTR) NE_RSCTYPE_BITMAP, 
 			       &image_size);
@@ -744,7 +717,6 @@ LoadBitmap(HANDLE instance, LPSTR bmp_name)
 	GlobalFree(rsc_mem);
 	return 0;
     }
-    } /* Load from file */
     if (!(hdc = GetDC(0))) lp = NULL;
     size = CONV_LONG (*lp);
     if (size == sizeof(BITMAPCOREHEADER)){

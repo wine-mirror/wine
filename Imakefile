@@ -89,17 +89,20 @@ SYSLIBS = -ll -lm -lgnumalloc
 SYSLIBS = -lm -lg
 #endif
 
-#ifdef USE_XPM
+/* You may need to add the full path of your libXpm here */
 XPM_LIB = -lXpm
+
+#ifdef MALLOC_DEBUGGING
+MALLOCLIB = -lmcheck
 #else
-XPM_LIB =
+MALLOCLIB =
 #endif
 
 MakeSubdirs($(SUBDIRS))
 DependSubdirs($(SUBDIRS))
 
 #ifndef WINELIB
-NormalProgramTarget(wine,$(OBJS),$(DEPXLIB),$(XPM_LIB) $(XLIB),$(SYSLIBS))
+NormalProgramTarget(wine,$(OBJS),$(DEPXLIB),$(XPM_LIB) $(XLIB),$(MALLOCLIB) $(SYSLIBS))
 AllTarget(wine.sym)
 #else
 NormalLibraryTarget(wine,$(OBJS))

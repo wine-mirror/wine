@@ -10,6 +10,9 @@ static char Copyright[] = "Copyright  Alexandre Julliard, 1994";
 #include <string.h>
 #include <ctype.h>
 #include <locale.h>
+#ifdef MALLOC_DEBUGGING
+#include <malloc.h>
+#endif
 #include <X11/Xlib.h>
 #include <X11/Xresource.h>
 #include <X11/Xutil.h>
@@ -26,6 +29,7 @@ static char Copyright[] = "Copyright  Alexandre Julliard, 1994";
 #include "prototypes.h"
 #include "texts.h"
 #include "selectors.h" /* for InitSelectors prototype */
+#include "library.h"
 #define DEBUG_DEFINE_VARIABLES
 #include "stddebug.h"
 #include "debug.h"
@@ -86,7 +90,8 @@ static XrmOptionDescRec optionsTable[] =
     { "-synchronous",   ".synchronous",     XrmoptionNoArg,  (caddr_t)"on" },
     { "-spy",           ".spy",             XrmoptionSepArg, (caddr_t)NULL },
     { "-debug",         ".debug",           XrmoptionNoArg,  (caddr_t)"on" },
-    { "-debugmsg",      ".debugmsg",        XrmoptionSepArg, (caddr_t)NULL }
+    { "-debugmsg",      ".debugmsg",        XrmoptionSepArg, (caddr_t)NULL },
+    { "-dll",           ".dll",             XrmoptionSepArg, (caddr_t)NULL }
 };
 
 #define NB_OPTIONS  (sizeof(optionsTable) / sizeof(optionsTable[0]))
@@ -106,7 +111,9 @@ static XrmOptionDescRec optionsTable[] =
   "    -backingstore   Turn on backing store\n" \
   "    -spy file       Turn on message spying to the specified file\n" \
   "    -relaydbg       Obsolete. Use -debugmsg +relay instead\n" \
-  "    -debugmsg name  Turn debugging-messages on or off\n"
+  "    -debugmsg name  Turn debugging-messages on or off\n" \
+  "    -dll name       Enable or disable built-in DLLs\n"
+
 
 
 /***********************************************************************
@@ -264,6 +271,43 @@ BOOL ParseDebugOptions(char *options)
 #endif
 
 /***********************************************************************
+ *           MAIN_ParseDLLOptions
+ *
+ * Set runtime DLL usage flags
+ */
+static BOOL MAIN_ParseDLLOptions(char *options)
+{
+  int l;
+  int i;
+  if (strlen(options)<3)
+    return FALSE;
+  do
+  {
+    if ((*options!='+')&&(*options!='-'))
+      return FALSE;
+    if (strchr(options,','))
+      l=strchr(options,',')-options;
+    else l=strlen(options);
+    for (i=0;i<N_BUILTINS;i++)
+         if (!strncasecmp(options+1,dll_builtin_table[i].dll_name,l-1))
+           {
+             dll_builtin_table[i].dll_is_used=(*options=='+');
+             break;
+           }
+    if (i==N_BUILTINS)
+         return FALSE;
+    options+=l;
+  }
+  while((*options==',')&&(*(++options)));
+  if (*options)
+    return FALSE;
+  else
+    return TRUE;
+}
+
+
+
+/***********************************************************************
  *           MAIN_ParseOptions
  *
  * Parse command line options and open display.
@@ -343,6 +387,20 @@ static void MAIN_ParseOptions( int *argc, char *argv[] )
 	  }
 #endif
       }
+
+      if(MAIN_GetResource( db, ".dll", &value))
+       if(MAIN_ParseDLLOptions((char*)value.addr)==FALSE)
+       {
+         int i;
+         fprintf(stderr,"%s: Syntax: -dll +xxx,... or -dll -xxx,...\n",argv[0]);
+         fprintf(stderr,"Example: -dll -ole2    Do not use emulated OLE2.DLL\n");
+         fprintf(stderr,"Available DLLs\n");
+         for(i=0;i<N_BUILTINS;i++)
+               fprintf(stderr,"%-9s%c",dll_builtin_table[i].dll_name,
+                       (((i+2)%8==0)?'\n':' '));
+         fprintf(stderr,"\n\n");
+         exit(1);
+       }
 
 /*    MAIN_GetAllButtonTexts(db); */
  
@@ -444,6 +502,12 @@ static void MAIN_RestoreSetup(void)
     	KBBellPitch | KBBellDuration | KBAutoRepeatMode, &keyboard_value);
 }
 
+static void malloc_error()
+{
+       fprintf(stderr,"malloc is not feeling well. Good bye\n");
+       exit(1);
+}
+
 static void called_at_exit(void)
 {
     Comm_DeInit();
@@ -467,6 +531,22 @@ int main( int argc, char *argv[] )
     XrmInitialize();
     
     MAIN_ParseOptions( &argc, argv );
+
+#ifdef MALLOC_DEBUGGING
+    if(debugging_malloc)
+    {
+       char *trace=getenv("MALLOC_TRACE");
+       if(!trace)
+       {       
+       	dprintf_malloc(stddeb,"MALLOC_TRACE not set. No trace generated\n");
+       }else
+       {
+               dprintf_malloc(stddeb,"malloc trace goes to %s\n",trace);
+               mtrace();
+       }
+      mcheck(malloc_error);
+    }
+#endif
 
     screen       = DefaultScreenOfDisplay( display );
     screenWidth  = WidthOfScreen( screen );

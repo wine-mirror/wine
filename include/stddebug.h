@@ -110,6 +110,7 @@
 #undef DEBUG_KEYBOARD
 #undef DEBUG_LDT
 #undef DEBUG_LISTBOX
+#undef DEBUG_MALLOC
 #undef DEBUG_MCI
 #undef DEBUG_MCIANIM
 #undef DEBUG_MCIWAVE
@@ -125,6 +126,7 @@
 #undef DEBUG_MSG
 #undef DEBUG_MSGBOX
 #undef DEBUG_NONCLIENT
+#undef DEBUG_OLE
 #undef DEBUG_PALETTE
 #undef DEBUG_PROFILE
 #undef DEBUG_PROP
@@ -180,6 +182,7 @@
 #define DEBUG_KEYBOARD
 #define DEBUG_LDT
 #define DEBUG_LISTBOX
+#define DEBUG_MALLOC
 #define DEBUG_MCI
 #define DEBUG_MCIANIM
 #define DEBUG_MCIWAVE
@@ -195,6 +198,7 @@
 #define DEBUG_MSG
 #define DEBUG_MSGBOX
 #define DEBUG_NONCLIENT
+#define DEBUG_OLE
 #define DEBUG_PALETTE
 #define DEBUG_PROFILE
 #define DEBUG_PROP

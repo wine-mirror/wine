@@ -253,6 +253,9 @@ int NE_FixupSegment(struct w_files *wpnt, int segment_num)
 	
 	switch (rep->address_type)
 	{
+	  case NE_RADDR_LOWBYTE:
+	    dprintf_fixup(stddeb,"Unhandled address type NE_RADDR_LOWBYTE\n");
+	    return -1;
 	  case NE_RADDR_OFFSET16:
 	    do {
 		dprintf_fixup(stddeb,"    %04x:%04x:%04x OFFSET16\n",

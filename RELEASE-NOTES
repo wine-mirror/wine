@@ -1,0 +1,29 @@
+This file contains information about the current release of Wine.
+If you are new to Wine, read the files ANNOUNCE and README and the FAQ 
+list first.
+If you want to contribute code to Wine, read the DEVELOPER-HINTS. The
+primary source of information to developers is the ChangeLog (next to
+the source, of course).
+
+1. make: No rule to make target xxx/xxx.o. Stop.
+This frequently happens when a prior attempt to make xxx.o failed.
+In the current setup, make does not terminate then, but continues and
+realises the problem later on. 'make' again and watch the output. Be
+sure to analyze the problem before you report it to the newsgroup.
+
+2. What are these questions in Configure?
+Emulator/Library: You need an emulator when you want to run MS-Win
+binaries. You need a library when you want to compile the source code
+of a Windows program.
+Short filenames: Some file systems are limited to 11 characters per
+file name. Files generated in if1632 will get gracefully translated
+names.
+Language: Wine can present the system menu in multiple languages. Select
+one of English, German, or Norwegian here.
+Malloc debugging: When enabled, the mtrace and mcheck GNU libc functions
+are called. You might want to set the MALLOC_TRACE environment variable
+to a trace file name. If your system supports another way of malloc 
+debugging, feel free to add it.
+Config file: Sets the Wine environment. See README for details.
+
+

@@ -501,6 +501,8 @@ long EDIT_NCCreateMsg(HWND hwnd, LONG lParam)
 	es->hText = EDIT_HeapAlloc(hwnd, EditBufLen(wndPtr) + 2);
 	text = EDIT_HeapAddr(hwnd, es->hText);
 	memset(text, 0, es->textlen + 2);
+        es->wlines = 0;
+        es->textwidth = 0;
 	EDIT_ClearTextPointers(hwnd);
     }
     else
@@ -569,12 +571,10 @@ long EDIT_CreateMsg(HWND hwnd, LONG lParam)
     /* --- other structure variables */
     GetTextMetrics(hdc, &tm);
     es->txtht = tm.tmHeight + tm.tmExternalLeading;
-    es->wlines = 0;
     es->wtop = es->wleft = 0;
     es->CurrCol = es->CurrLine = 0;
     es->WndCol = es->WndRow = 0;
     es->TextChanged = FALSE;
-    es->textwidth = 0;
     es->SelBegLine = es->SelBegCol = 0;
     es->SelEndLine = es->SelEndCol = 0;
     es->hFont = 0;

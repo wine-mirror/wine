@@ -1,61 +1,20 @@
 /*
  * GDI OEM bitmap objects
  *
- * Copyright 1994 Alexandre Julliard
+ * Copyright 1994, 1995 Alexandre Julliard
  *
-static char Copyright[] = "Copyright  Alexandre Julliard, 1994";
-*/
+ */
+
+#include <stdlib.h>
 #include <X11/Xlib.h>
 #include <X11/Xutil.h>
-#ifdef USE_XPM
 #include <X11/xpm.h>
-#endif
 #include "gdi.h"
 #include "bitmap.h"
-#include "stddebug.h"
 #include "color.h"
+#include "icon.h"
+#include "stddebug.h"
 #include "debug.h"
-
-#define OBM_FIRST  OBM_LFARROWI    /* First OEM bitmap */
-#define OBM_LAST   OBM_OLD_CLOSE   /* Last OEM bitmap */
-
-#ifdef USE_XPM
-
-
-#define NB_COLOR_SYMBOLS  5
-
-  /* This is the list of the symbolic colors. All the colors used */
-  /* in the xpm files must be included in this list. If you need  */
-  /* to add new colors, add them just before "black", and add the */
-  /* color identifier in OBM_Sys_Colors_Symbols below.            */
-  /* Warning: black and white must always be the last 2 colors.   */
-
-static XpmColorSymbol OBM_Color_Symbols[NB_COLOR_SYMBOLS+2] =
-{
-    { "button_face", NULL, 0 },       /* COLOR_BTNFACE */
-    { "button_shadow", NULL, 0 },     /* COLOR_BTNSHADOW */
-    { "button_highlight", NULL, 0 },  /* COLOR_BTNHIGHLIGHT */
-    { "button_text", NULL, 0 },       /* COLOR_BTNTEXT */
-    { "window_frame", NULL, 0 },      /* COLOR_WINDOWFRAME */
-    { "black", NULL, 0 },
-    { "white", NULL, 0 }
-};
-
-static const int OBM_Sys_Colors_Symbols[NB_COLOR_SYMBOLS] =
-{
-    COLOR_BTNFACE,
-    COLOR_BTNSHADOW,
-    COLOR_BTNHIGHLIGHT,
-    COLOR_BTNTEXT,
-    COLOR_WINDOWFRAME
-};
-
-  /* Don't change this list! */
-static XpmColorSymbol OBM_BW_Symbols[2] =
-{
-    { "white", NULL, 0 },
-    { "black", NULL, 1 }
-};
 
 
   /* Include OEM pixmaps */
@@ -93,6 +52,9 @@ static XpmColorSymbol OBM_BW_Symbols[2] =
 #include "bitmaps/obm_old_uparrow"
 #include "bitmaps/obm_size"
 #include "bitmaps/obm_old_close"
+
+#define OBM_FIRST  OBM_LFARROWI    /* First OEM bitmap */
+#define OBM_LAST   OBM_OLD_CLOSE   /* Last OEM bitmap */
 
 static const struct
 {
@@ -135,142 +97,102 @@ static const struct
     { obm_old_close, FALSE },   /* OBM_OLD_CLOSE */
 };
 
-#else  /* USE_XPM */
 
-  /* Include OEM bitmaps */
-#include "bitmaps/check_boxes"
-#include "bitmaps/check_mark"
-#include "bitmaps/menu_arrow"
+  /* Include OEM icons */
+#include "bitmaps/oic_sample"
+#include "bitmaps/oic_hand"
+#include "bitmaps/oic_ques"
+#include "bitmaps/oic_bang"
+#include "bitmaps/oic_note"
+
+#define OIC_FIRST  OIC_SAMPLE      /* First OEM icon */
+#define OIC_LAST   OIC_NOTE        /* Last OEM icon */
+
+static char **OBM_Icons_Data[OIC_LAST-OIC_FIRST+1] =
+{
+    oic_sample,    /* OIC_SAMPLE */
+    oic_hand,      /* OIC_HAND */
+    oic_ques,      /* OIC_QUES */
+    oic_bang,      /* OIC_BANG */
+    oic_note       /* OIC_NOTE */
+};
+
+
+  /* All the colors used in the xpm files must be included in this   */
+  /* list, to make sure that the loaded bitmaps only use colors from */
+  /* the Windows colormap. Note: the PALETTEINDEX() are not really   */
+  /* palette indexes, but system colors that will be converted to    */
+  /* indexes later on.                                               */
 
 static const struct
 {
-    WORD width, height;
-    char *data;
-} OBM_Bitmaps_Data[OBM_LAST-OBM_FIRST+1] =
+    char *   name;
+    COLORREF color;
+} OBM_SymbolicColors[] =
 {
-    { 0, 0, NULL },  /* OBM_LFARROWI */
-    { 0, 0, NULL },  /* OBM_RGARROWI */
-    { 0, 0, NULL },  /* OBM_DNARROWI */
-    { 0, 0, NULL },  /* OBM_UPARROWI */
-    { 0, 0, NULL },  /* OBM_COMBO */
-    { menu_arrow_width, menu_arrow_height, menu_arrow_bits }, /* OBM_MNARROW */
-    { 0, 0, NULL },  /* OBM_LFARROWD */
-    { 0, 0, NULL },  /* OBM_RGARROWD */
-    { 0, 0, NULL },  /* OBM_DNARROWD */
-    { 0, 0, NULL },  /* OBM_UPARROWD */
-    { 0, 0, NULL },  /* OBM_RESTORED */
-    { 0, 0, NULL },  /* OBM_ZOOMD */
-    { 0, 0, NULL },  /* OBM_REDUCED */
-    { 0, 0, NULL },  /* OBM_RESTORE */
-    { 0, 0, NULL },  /* OBM_ZOOM */
-    { 0, 0, NULL },  /* OBM_REDUCE */
-    { 0, 0, NULL },  /* OBM_LFARROW */
-    { 0, 0, NULL },  /* OBM_RGARROW */
-    { 0, 0, NULL },  /* OBM_DNARROW */
-    { 0, 0, NULL },  /* OBM_UPARROW */
-    { 0, 0, NULL },  /* OBM_CLOSE */
-    { 0, 0, NULL },  /* OBM_OLD_RESTORE */
-    { 0, 0, NULL },  /* OBM_OLD_ZOOM */
-    { 0, 0, NULL },  /* OBM_OLD_REDUCE */
-    { 0, 0, NULL },  /* OBM_BTNCORNERS */
-    { check_boxes_width, check_boxes_height,
-          check_boxes_bits },  /* OBM_CHECKBOXES */
-    { check_mark_width, check_mark_height, check_mark_bits },  /* OBM_CHECK */
-    { 0, 0, NULL },  /* OBM_BTSIZE */
-    { 0, 0, NULL },  /* OBM_OLD_LFARROW */
-    { 0, 0, NULL },  /* OBM_OLD_RGARROW */
-    { 0, 0, NULL },  /* OBM_OLD_DNARROW */
-    { 0, 0, NULL },  /* OBM_OLD_UPARROW */
-    { 0, 0, NULL },  /* OBM_SIZE */
-    { 0, 0, NULL },  /* OBM_OLD_CLOSE */
+      /* Black & white must always be the first 2 colors */
+    { "black",            RGB(0,0,0) },
+    { "white",            RGB(255,255,255) },
+    { "red",              RGB(255,0,0) },
+    { "green",            RGB(0,255,0) },
+    { "blue",             RGB(0,0,255) },
+    { "yellow",           RGB(255,255,0) },
+    { "button_face",      PALETTEINDEX(COLOR_BTNFACE) },
+    { "button_shadow",    PALETTEINDEX(COLOR_BTNSHADOW) },
+    { "button_highlight", PALETTEINDEX(COLOR_BTNHIGHLIGHT) },
+    { "button_text",      PALETTEINDEX(COLOR_BTNTEXT) },
+    { "window_frame",     PALETTEINDEX(COLOR_WINDOWFRAME) }
 };
 
-#endif /* USE_XPM */
+#define NB_COLOR_SYMBOLS \
+            (sizeof(OBM_SymbolicColors)/sizeof(OBM_SymbolicColors[0]))
+
+static XpmColorSymbol *OBM_Colors = NULL;
 
 
 /***********************************************************************
  *           OBM_InitColorSymbols
  */
-#ifdef USE_XPM
-static void OBM_InitColorSymbols()
+static BOOL OBM_InitColorSymbols()
 {
     int i;
-    static int already_done = 0;
 
-    if (already_done) return;
+    if (OBM_Colors) return TRUE;  /* Already initialised */
 
-      /* Init the system colors */
+    OBM_Colors = (XpmColorSymbol *) malloc( sizeof(XpmColorSymbol) *
+                                            NB_COLOR_SYMBOLS );
+    if (!OBM_Colors) return FALSE;
     for (i = 0; i < NB_COLOR_SYMBOLS; i++)
     {
-        OBM_Color_Symbols[i].pixel = COLOR_ToPhysical( NULL,
-                                       GetSysColor(OBM_Sys_Colors_Symbols[i]));
+        OBM_Colors[i].name  = OBM_SymbolicColors[i].name;
+        OBM_Colors[i].value = NULL;
+        if (OBM_SymbolicColors[i].color & 0xff000000)  /* PALETTEINDEX */
+            OBM_Colors[i].pixel = COLOR_ToPhysical( NULL,
+                              GetSysColor(OBM_SymbolicColors[i].color & 0xff));
+        else  /* RGB*/
+            OBM_Colors[i].pixel = COLOR_ToPhysical( NULL,
+                                                 OBM_SymbolicColors[i].color );
     }
-      /* Init black and white */
-    OBM_Color_Symbols[i++].pixel = COLOR_ToPhysical( NULL, RGB(0,0,0) );
-    OBM_Color_Symbols[i++].pixel = COLOR_ToPhysical( NULL, RGB(255,255,255) );
-    already_done = 1;
+    return TRUE;
 }
-#endif  /* USE_XPM */
+
 
 /***********************************************************************
- *           OBM_LoadOEMBitmap
+ *           OBM_MakeBitmap
+ *
+ * Allocate a GDI bitmap.
  */
-HBITMAP OBM_LoadOEMBitmap( WORD id )
+static HBITMAP OBM_MakeBitmap( WORD width, WORD height,
+                               WORD bpp, Pixmap pixmap )
 {
-    BITMAPOBJ * bmpObjPtr;
     HBITMAP hbitmap;
-    WORD width, height, bpp;
-    Pixmap pixmap;
-
-    if ((id < OBM_FIRST) || (id > OBM_LAST)) return 0;
-    id -= OBM_FIRST;
-
-#ifdef USE_XPM
-    if (!OBM_Pixmaps_Data[id].data) return 0;
-    {
-        XpmAttributes attrs;
-        int err;
-
-        OBM_InitColorSymbols();
-        attrs.valuemask    = XpmColormap | XpmDepth | XpmColorSymbols;
-        attrs.colormap     = COLOR_WinColormap;
-        if (OBM_Pixmaps_Data[id].color) attrs.depth = bpp = screenDepth;
-        else attrs.depth = bpp = 1;
-        attrs.colorsymbols = (bpp > 1) ? OBM_Color_Symbols : OBM_BW_Symbols;
-        attrs.numsymbols   = (bpp > 1) ? NB_COLOR_SYMBOLS + 2 : 2;
-        
-        if ((err = XpmCreatePixmapFromData( display, rootWindow,
-                                            OBM_Pixmaps_Data[id].data,
-                                            &pixmap, NULL,
-                                            &attrs )) != XpmSuccess)
-        {
-            fprintf( stderr, "Error %d creating pixmap %d\n",
-                     err, OBM_FIRST+id );
-            pixmap = width = height = 0;
-        }
-        else
-        {
-            width = attrs.width;
-            height = attrs.height;
-        }
-    }
-#else
-    if (!OBM_Bitmaps_Data[id].data) return 0;
-    bpp = 1;
-    width  = OBM_Bitmaps_Data[id].width;
-    height = OBM_Bitmaps_Data[id].height;
-    pixmap = XCreateBitmapFromData( display, rootWindow, 
-                                    OBM_Bitmaps_Data[id].data, width, height );
-#endif  /* USE_XPM */
+    BITMAPOBJ * bmpObjPtr;
 
     if (!pixmap) return 0;
 
-      /* Create the BITMAPOBJ */
-    if (!(hbitmap = GDI_AllocObject( sizeof(BITMAPOBJ), BITMAP_MAGIC )))
-    {
-        XFreePixmap( display, pixmap );
-	return 0;
-    }
+    hbitmap = GDI_AllocObject( sizeof(BITMAPOBJ), BITMAP_MAGIC );
+    if (!hbitmap) return 0;
+
     bmpObjPtr = (BITMAPOBJ *) GDI_HEAP_ADDR( hbitmap );
     bmpObjPtr->size.cx = 0;
     bmpObjPtr->size.cy = 0;
@@ -286,3 +208,121 @@ HBITMAP OBM_LoadOEMBitmap( WORD id )
 }
 
 
+/***********************************************************************
+ *           OBM_CreateBitmaps
+ *
+ * Create the 2 bitmaps from XPM data.
+ */
+static BOOL OBM_CreateBitmaps( char **data, BOOL color, BOOL mask,
+                               HBITMAP *hBitmap, HBITMAP *hBitmapMask )
+{
+    Pixmap pixmap, pixmask;
+    XpmAttributes attrs;
+    int err;
+
+    attrs.valuemask    = XpmColormap | XpmDepth | XpmColorSymbols;
+    attrs.colormap     = COLOR_WinColormap;
+    attrs.depth        = color ? screenDepth : 1;
+    attrs.colorsymbols = OBM_Colors;
+    attrs.numsymbols   = (attrs.depth > 1) ? NB_COLOR_SYMBOLS : 2;
+        
+    err = XpmCreatePixmapFromData( display, rootWindow, data,
+                                   &pixmap, &pixmask, &attrs );
+
+    if (err != XpmSuccess) return FALSE;
+    *hBitmap = OBM_MakeBitmap( attrs.width, attrs.height,
+                               attrs.depth, pixmap );
+    if (mask) *hBitmapMask = OBM_MakeBitmap( attrs.width, attrs.height,
+                                             1, pixmask );
+    if (!*hBitmap)
+    {
+        if (pixmap) XFreePixmap( display, pixmap );
+        if (pixmask) XFreePixmap( display, pixmask );
+        if (*hBitmap) GDI_FreeObject( *hBitmap );
+        if (*hBitmapMask) GDI_FreeObject( *hBitmapMask );
+        return FALSE;
+    }
+    else return TRUE;
+}
+
+
+/***********************************************************************
+ *           OBM_LoadBitmap
+ */
+HBITMAP OBM_LoadBitmap( WORD id )
+{
+    HBITMAP hbitmap, hbitmask;
+
+    if ((id < OBM_FIRST) || (id > OBM_LAST)) return 0;
+    id -= OBM_FIRST;
+
+    if (!OBM_InitColorSymbols()) return 0;
+    
+    if (!OBM_CreateBitmaps( OBM_Pixmaps_Data[id].data,
+                            OBM_Pixmaps_Data[id].color,
+                            FALSE, &hbitmap, &hbitmask ))
+    {
+        fprintf( stderr, "Error creating OEM bitmap %d\n", OBM_FIRST+id );
+        return 0;
+    }
+    return hbitmap;
+}
+
+
+/***********************************************************************
+ *           OBM_LoadIcon
+ */
+HICON OBM_LoadIcon( WORD id )
+{
+    HICON hicon;
+    ICONALLOC *pIcon;
+    BITMAPOBJ *bmp;
+
+    if ((id < OIC_FIRST) || (id > OIC_LAST)) return 0;
+    id -= OIC_FIRST;
+
+    if (!OBM_InitColorSymbols()) return 0;
+    
+    if (!(hicon = GlobalAlloc( GMEM_MOVEABLE, sizeof(ICONALLOC) ))) return 0;
+    pIcon = (ICONALLOC *)GlobalLock( hicon );
+
+    if (!OBM_CreateBitmaps( OBM_Icons_Data[id], TRUE, TRUE,
+                            &pIcon->hBitmap, &pIcon->hBitMask ))
+    {
+        fprintf( stderr, "Error creating OEM icon %d\n", OIC_FIRST+id );
+        GlobalFree( hicon );
+        return 0;
+    }
+
+    bmp = (BITMAPOBJ *) GDI_GetObjPtr( pIcon->hBitmap, BITMAP_MAGIC );
+    pIcon->descriptor.Width = bmp->bitmap.bmWidth;
+    pIcon->descriptor.Height = bmp->bitmap.bmHeight;
+    pIcon->descriptor.ColorCount = bmp->bitmap.bmBitsPixel;
+
+    if (pIcon->hBitMask)
+    {
+        BITMAPOBJ *bmpMask;
+
+          /* Invert the mask */
+        bmpMask = (BITMAPOBJ *) GDI_GetObjPtr( pIcon->hBitMask, BITMAP_MAGIC );
+        XSetFunction( display, BITMAP_monoGC, GXinvert );
+        XFillRectangle( display, bmpMask->pixmap, BITMAP_monoGC, 0, 0,
+                        bmpMask->bitmap.bmWidth, bmpMask->bitmap.bmHeight );
+
+          /* Set the masked pixels to black */
+        if (bmp->bitmap.bmBitsPixel != 1)
+        {
+            XSetForeground( display, BITMAP_colorGC,
+                            COLOR_ToPhysical( NULL, RGB(0,0,0) ));
+            XSetBackground( display, BITMAP_colorGC, 0 );
+            XSetFunction( display, BITMAP_colorGC, GXor );
+            XCopyPlane( display, bmpMask->pixmap, bmp->pixmap, BITMAP_colorGC,
+                        0, 0, bmp->bitmap.bmWidth, bmp->bitmap.bmHeight,
+                        0, 0, 1 );
+            XSetFunction( display, BITMAP_colorGC, GXcopy );
+        }
+        XSetFunction( display, BITMAP_monoGC, GXcopy );
+    }
+
+    return hicon;
+}

@@ -15,6 +15,8 @@ SRCS = \
 	keyboard.c \
 	lstr.c \
 	main.c \
+	olecli.c \
+	olesvr.c \
 	message.c \
 	network.c \
 	profile.c \

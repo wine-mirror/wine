@@ -14,7 +14,7 @@ MODULE = rc
 XCOMM This would be nicer, but it breaks gcc (2.5.8 on Linux)  --AJ
 XCOMM gcc -E -x c -P $(CFLAGS) -imacros ../include/windows.h $*.rc | ./winerc -o $* -v -p $*
 
-RCSRCS = sysres.rc sysresbm.rc
+RCSRCS = sysres.rc
 
 RCOBJS = $(RCSRCS:.rc=.o)
 

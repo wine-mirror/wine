@@ -240,10 +240,13 @@ void init_wine_signals(void)
 #endif
 #if defined(__NetBSD__) || defined(__FreeBSD__)
         sigset_t sig_mask;
-#if defined(BSD4_4) && !defined (__FreeBSD__)
         struct sigaltstack ss;
         
+#if !defined (__FreeBSD__)
         if ((ss.ss_base = malloc(MINSIGSTKSZ)) == NULL) {
+#else
+        if ((ss.ss_sp = malloc(MINSIGSTKSZ)) == NULL) {
+#endif
 	        fprintf(stderr, "Unable to allocate signal stack (%d bytes)\n",
 		        MINSIGSTKSZ);
 		exit(1);
@@ -254,16 +257,6 @@ void init_wine_signals(void)
                 perror("sigstack");
                 exit(1);
         }
-#else
-        struct sigstack ss;
-        
-        ss.ss_sp = (char *) (((unsigned int)(cstack) + sizeof(cstack) - 4) & ~3);
-        ss.ss_onstack = 0;
-        if (sigstack(&ss, NULL) < 0) {
-                perror("sigstack");
-                exit(1);
-        }
-#endif
         sigemptyset(&sig_mask);
         segv_act.sa_handler = (void (*)) win_fault;
 	segv_act.sa_flags = SA_ONSTACK;

@@ -91,6 +91,7 @@ struct dll_name_table_entry_s
     struct dll_table_entry_s *dll_table;
     int dll_table_length;
     int dll_number;
+    int dll_is_used;   /* use MS provided if set to zero */
 };
 
 extern struct dll_table_entry_s KERNEL_table[];
@@ -108,6 +109,13 @@ extern struct dll_table_entry_s SYSTEM_table[];
 extern struct dll_table_entry_s TOOLHELP_table[];
 extern struct dll_table_entry_s MOUSE_table[];
 extern struct dll_table_entry_s COMMDLG_table[];
+extern struct dll_table_entry_s OLE2_table[];
+extern struct dll_table_entry_s OLE2CONV_table[];
+extern struct dll_table_entry_s OLE2DISP_table[];
+extern struct dll_table_entry_s OLE2NLS_table[];
+extern struct dll_table_entry_s OLE2PROX_table[];
+extern struct dll_table_entry_s OLECLI_table[];
+extern struct dll_table_entry_s OLESVR_table[];
 
 
 extern unsigned short KERNEL_offsets[];
@@ -125,6 +133,13 @@ extern unsigned short SYSTEM_offsets[];
 extern unsigned short TOOLHELP_offsets[];
 extern unsigned short MOUSE_offsets[];
 extern unsigned short COMMDLG_offsets[];
+extern unsigned short OLE2_offsets[];
+extern unsigned short OLE2CONV_offsets[];
+extern unsigned short OLE2DISP_offsets[];
+extern unsigned short OLE2NLS_offsets[];
+extern unsigned short OLE2PROX_offsets[];
+extern unsigned short OLECLI_offsets[];
+extern unsigned short OLESVR_offsets[];
 
 
 extern unsigned char KERNEL_types[];
@@ -142,9 +157,15 @@ extern unsigned char SYSTEM_types[];
 extern unsigned char TOOLHELP_types[];
 extern unsigned char MOUSE_types[];
 extern unsigned char COMMDLG_types[];
+extern unsigned char OLE2_types[];
+extern unsigned char OLE2CONV_types[];
+extern unsigned char OLE2DISP_types[];
+extern unsigned char OLE2NLS_types[];
+extern unsigned char OLE2PROX_types[];
+extern unsigned char OLECLI_types[];
+extern unsigned char OLESVR_types[];
 
-
-#define N_BUILTINS	15
+#define N_BUILTINS	22
 
 #endif /* DLLS_H */
 
