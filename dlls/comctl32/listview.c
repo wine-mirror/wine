@@ -272,6 +272,7 @@ static BOOL LISTVIEW_IsSelected(HWND hwnd, INT nItem);
 static VOID LISTVIEW_RemoveSelectionRange(HWND hwnd, INT lItem, INT uItem);
 static void LISTVIEW_FillBackground(HWND hwnd, HDC hdc, LPRECT rc);
 static void ListView_UpdateLargeItemLabelRect (HWND hwnd, const LISTVIEW_INFO* infoPtr, int nItem, RECT *rect);
+static LRESULT LISTVIEW_GetColumnT(HWND, INT, LPLVCOLUMNW, BOOL);
 
 /******** Defines that LISTVIEW_ProcessLetterKeys uses ****************/
 #define KEY_DELAY       450
@@ -3006,8 +3007,11 @@ static VOID LISTVIEW_DrawSubItem(HWND hwnd, HDC hdc, INT nItem, INT nSubItem,
   LISTVIEW_INFO *infoPtr = (LISTVIEW_INFO *)GetWindowLongW(hwnd, 0); 
   WCHAR szDispText[DISP_TEXT_SIZE];
   LVITEMW lvItem;
+  LVCOLUMNW lvColumn;
   UINT textoutOptions = ETO_CLIPPED | ETO_OPAQUE;
   RECT rcTemp;
+  INT textLeft;
+  INT nLabelWidth = 0;
 
   TRACE("(hwnd=%x, hdc=%x, nItem=%d, nSubItem=%d)\n", hwnd, hdc,
         nItem, nSubItem);
@@ -3022,6 +3026,22 @@ static VOID LISTVIEW_DrawSubItem(HWND hwnd, HDC hdc, INT nItem, INT nSubItem,
   *lvItem.pszText = '\0';
   LISTVIEW_GetItemW(hwnd, &lvItem, TRUE);
   TRACE("   lvItem=%s\n", debuglvitem_t(&lvItem, TRUE));
+  
+  ZeroMemory(&lvColumn, sizeof(lvColumn));
+  lvColumn.mask = LVCF_FMT;
+  LISTVIEW_GetColumnT(hwnd, nSubItem, &lvColumn, TRUE);
+  textLeft = rcItem.left;
+  if (lvColumn.fmt != LVCFMT_LEFT)
+  {
+    if ((nLabelWidth = LISTVIEW_GetStringWidthT(hwnd, lvItem.pszText, TRUE)))
+    {
+      if (lvColumn.fmt == LVCFMT_RIGHT)
+        textLeft = rcItem.right - nLabelWidth;
+      else
+        textLeft = rcItem.left + (rcItem.right-rcItem.left-nLabelWidth)/2;
+    }
+  }
+    
 
   /* redraw the background of the item */
   rcTemp = rcItem;
@@ -3062,7 +3082,7 @@ static VOID LISTVIEW_DrawSubItem(HWND hwnd, HDC hdc, INT nItem, INT nSubItem,
     SetTextColor(hdc, infoPtr->clrText);
   }
 
-  ExtTextOutW(hdc, rcItem.left, rcItem.top, textoutOptions, 
+  ExtTextOutW(hdc, textLeft, rcItem.top, textoutOptions, 
               &rcItem, lvItem.pszText, lstrlenW(lvItem.pszText), NULL);
 
   if (Selected)
