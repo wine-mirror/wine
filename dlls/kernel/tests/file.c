@@ -426,8 +426,7 @@ static void test__lwrite( void )
     while (i < bytes_written - 1);
 
     ok( checksum[0] == contents[i], "stored checksum differ from computed checksum." );
-    return;
-    
+
     ok( HFILE_ERROR != _lclose( filehandle ), "_lclose complains." );
 
     ok( DeleteFileA( filename ) != 0, "DeleteFile complains." );
