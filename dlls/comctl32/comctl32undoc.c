@@ -1470,23 +1470,14 @@ DSA_SetItem (const HDSA hdsa, INT nIndex, LPVOID pSrc)
 INT WINAPI
 DSA_InsertItem (const HDSA hdsa, INT nIndex, LPVOID pSrc)
 {
-    INT   nNewItems, nSize, i;
+    INT   nNewItems, nSize;
     LPVOID  lpTemp, lpDest;
-    LPDWORD p;
     
     TRACE("(%p %d %p)\n", hdsa, nIndex, pSrc);
 
     if ((!hdsa) || nIndex < 0)
 	return -1;
 
-    for (i = 0; i < hdsa->nItemSize; i += 4) {
-	p = *(DWORD**)((char *) pSrc + i);
-	if (IsBadStringPtrA ((char*)p, 256))
-	    TRACE("-- %d=%p\n", i, (DWORD*)p);
-	else
-	    TRACE("-- %d=%p [%s]\n", i, p, debugstr_a((char*)p));
-    }
-   
     /* when nIndex >= nItemCount then append */
     if (nIndex >= hdsa->nItemCount)
  	nIndex = hdsa->nItemCount;
