@@ -9,9 +9,7 @@
 #include "wine/winbase16.h"
 #include "wine/winuser16.h"
 #include "services.h"
-#include "callback.h"
 #include "stackframe.h"
-#include "builtin16.h"
 #include "debugtools.h"
 
 DEFAULT_DEBUG_CHANNEL(system);
@@ -19,8 +17,9 @@ DEFAULT_DEBUG_CHANNEL(system);
 typedef struct
 {
     SYSTEMTIMERPROC callback;  /* NULL if not in use */
-    INT     rate;
-    INT     ticks;
+    FARPROC16       callback16;
+    INT             rate;
+    INT             ticks;
 } SYSTEM_TIMER;
 
 #define NB_SYS_TIMERS   8
@@ -126,9 +125,11 @@ WORD WINAPI CreateSystemTimer( WORD rate, SYSTEMTIMERPROC callback )
 
 /**********************************************************************/
 
-static void SYSTEM_CallSystemTimerProc( FARPROC16 proc, WORD timer )
+static void call_timer_proc16( WORD timer )
 {
     CONTEXT86 context;
+    FARPROC16 proc = SYS_Timers[timer-1].callback16;
+
     memset( &context, '\0', sizeof(context) );
 
     context.SegCs = SELECTOROF( proc );
@@ -145,10 +146,9 @@ static void SYSTEM_CallSystemTimerProc( FARPROC16 proc, WORD timer )
 
 WORD WINAPI WIN16_CreateSystemTimer( WORD rate, FARPROC16 proc )
 {
-    FARPROC thunk = THUNK_Alloc( proc, (RELAY)SYSTEM_CallSystemTimerProc );
-    WORD timer = CreateSystemTimer( rate, (SYSTEMTIMERPROC)thunk );
-    if (!timer) THUNK_Free( thunk );
-    return timer;
+    WORD ret = CreateSystemTimer( rate, call_timer_proc16 );
+    if (ret) SYS_Timers[ret - 1].callback16 = proc;
+    return ret;
 }
 
 
@@ -161,10 +161,7 @@ WORD WINAPI SYSTEM_KillSystemTimer( WORD timer )
 {
     if ( !timer || timer > NB_SYS_TIMERS || !SYS_Timers[timer-1].callback ) 
         return timer;  /* Error */
-
-    THUNK_Free( (FARPROC)SYS_Timers[timer-1].callback );
     SYS_Timers[timer-1].callback = NULL;
-
     if (!--SYS_NbTimers) SYSTEM_StopTicks();
     return 0;
 }
