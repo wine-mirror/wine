@@ -10,3 +10,5 @@
 10 stdcall DirectSoundFullDuplexCreate8(ptr ptr ptr ptr long long ptr ptr ptr ptr) DirectSoundFullDuplexCreate
 11 stdcall DirectSoundCreate8(ptr ptr ptr)
 12 stdcall DirectSoundCaptureCreate8(ptr ptr ptr)
+@ stdcall -private DllRegisterServer() DSOUND_DllRegisterServer
+@ stdcall -private DllUnregisterServer() DSOUND_DllUnregisterServer
