@@ -163,3 +163,7 @@ type	win32
 160 stub WriteFmtUserTypeStg
 161 stub WriteOleStg
 162 stub WriteStringStream
+163 stub CoInitializeEx
+164 stub CoInitializeSecurity
+165 stub CoCreateInstanceEx
+166 stub PropVariantClear

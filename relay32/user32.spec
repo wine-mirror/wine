@@ -438,8 +438,8 @@ init	MAIN_UserInit
 434 stdcall RegisterLogonProcess(long long) RegisterLogonProcess
 435 stub RegisterSystemThread
 436 stdcall RegisterTasklist (long) RegisterTaskList32
-437 stdcall RegisterWindowMessageA(ptr) RegisterWindowMessage32A
-438 stdcall RegisterWindowMessageW(ptr) RegisterWindowMessage32W
+437 stdcall RegisterWindowMessageA(str) RegisterWindowMessage32A
+438 stdcall RegisterWindowMessageW(wstr) RegisterWindowMessage32W
 439 stdcall ReleaseCapture() ReleaseCapture
 440 stdcall ReleaseDC(long long) ReleaseDC32
 441 stdcall RemoveMenu(long long long) RemoveMenu32

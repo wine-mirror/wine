@@ -985,3 +985,6 @@ type	win32
 980 stub RtlGuidToPropertySetName
 981 stub RtlClosePropertySet
 982 stub RtlCreatePropertySet
+983 stub _wtoi
+984 stub _wtol
+985 stub RtlSetPropertySetClassId
