@@ -13,7 +13,9 @@ C_SRCS = \
 	header.c \
 	hotkey.c \
 	imagelist.c \
+	ipaddress.c \
 	listview.c \
+	nativefont.c \
 	pager.c \
 	progress.c \
 	rebar.c \

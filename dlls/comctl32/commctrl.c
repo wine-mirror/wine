@@ -13,7 +13,9 @@
 #include "comboex.h"
 #include "header.h"
 #include "hotkey.h"
+#include "ipaddress.h"
 #include "listview.h"
+#include "nativefont.h"
 #include "pager.h"
 #include "progress.h"
 #include "rebar.h"
@@ -28,13 +30,17 @@
 #include "winerror.h"
 
 
+HANDLE32 COMCTL32_hHeap = (HANDLE32)NULL;
+DWORD    COMCTL32_dwProcessesAttached = 0;
+
+
 /***********************************************************************
  * ComCtl32LibMain [Internal] Initializes the internal 'COMCTL32.DLL'.
  *
  * PARAMS
  *     hinstDLL    [I] handle to the 'dlls' instance
  *     fdwReason   [I]
- *     lpvReserved [I]
+ *     lpvReserved [I] reserverd, must be NULL
  *
  * RETURNS
  *     Success: TRUE
@@ -48,18 +54,43 @@ ComCtl32LibMain (HINSTANCE32 hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
 
     switch (fdwReason) {
 	case DLL_PROCESS_ATTACH:
-	    ANIMATE_Register ();
-	    HEADER_Register ();
-	    HOTKEY_Register ();
-	    LISTVIEW_Register ();
-	    PROGRESS_Register ();
-	    STATUS_Register ();
-	    TAB_Register ();
-	    TOOLBAR_Register ();
-	    TOOLTIPS_Register ();
-	    TRACKBAR_Register ();
-	    TREEVIEW_Register ();
-	    UPDOWN_Register ();
+	    if (COMCTL32_dwProcessesAttached == 0) {
+		/* create private heap */
+		COMCTL32_hHeap = HeapCreate (0, 1, 0x40000000);
+		TRACE (commctrl, "Heap created: 0x%x\n", COMCTL32_hHeap);
+
+		/* register all Win95 common control classes */
+		ANIMATE_Register ();
+		HEADER_Register ();
+		HOTKEY_Register ();
+		LISTVIEW_Register ();
+		PROGRESS_Register ();
+		STATUS_Register ();
+		TAB_Register ();
+		TOOLBAR_Register ();
+		TOOLTIPS_Register ();
+		TRACKBAR_Register ();
+		TREEVIEW_Register ();
+		UPDOWN_Register ();
+	    }
+	    COMCTL32_dwProcessesAttached++;
+	    break;
+
+	case DLL_PROCESS_DETACH:
+	    COMCTL32_dwProcessesAttached--;
+	    if (COMCTL32_dwProcessesAttached == 0) {
+		/* unregister all common control classes */
+		IPADDRESS_Unregister ();
+
+		NATIVEFONT_Unregister ();
+
+		TOOLTIPS_Unregister ();
+
+		/* destroy private heap */
+		HeapDestroy (COMCTL32_hHeap);
+		TRACE (commctrl, "Heap destroyed: 0x%x\n", COMCTL32_hHeap);
+		COMCTL32_hHeap = (HANDLE32)NULL;
+	    }
 	    break;
     }
 
@@ -117,7 +148,7 @@ MenuHelp (UINT32 uMsg, WPARAM32 wParam, LPARAM lParam, HMENU32 hMainMenu,
 		    CHAR szText[256];
 
 		    if (!LoadString32A (hInst, uMenuID, szText, 256))
-			szText[0] = 0;
+			szText[0] = '\0';
 
 		    SendMessage32A (hwndStatus, SB_SETTEXT32A,
 				    255 | SBT_NOBORDERS, (LPARAM)szText);
@@ -127,7 +158,7 @@ MenuHelp (UINT32 uMsg, WPARAM32 wParam, LPARAM lParam, HMENU32 hMainMenu,
 	    break;
 
 	default:
-	    WARN (commctrl, "Invalid Message!\n");
+	    FIXME (commctrl, "Invalid Message!\n");
 	    break;
     }
 }
@@ -291,7 +322,7 @@ DrawStatusText32A (HDC32 hdc, LPRECT32 lprc, LPCSTR text, UINT32 style)
  *     hdc   [I] handle to the window's display context
  *     lprc  [I] pointer to a rectangle
  *     text  [I] pointer to the text
- *     style [I] 
+ *     style [I]
  *
  * RETURNS
  *     No return value.
@@ -336,8 +367,8 @@ CreateStatusWindow32A (INT32 style, LPCSTR text, HWND32 parent, UINT32 wid)
  * PARAMS
  *     style  [I]
  *     text   [I]
- *     parent [I]
- *     wid    [I]
+ *     parent [I] handle to the parent window
+ *     wid    [I] control id of the status bar
  *
  * RETURNS
  *     Success: handle to the control
@@ -440,10 +471,12 @@ InitCommonControlsEx (LPINITCOMMONCONTROLSEX lpInitCtrls)
     INT32 cCount;
     DWORD dwMask;
 
-    TRACE(commctrl,"\n");
-  
-    if (lpInitCtrls == NULL) return FALSE;
-    if (lpInitCtrls->dwSize < sizeof(INITCOMMONCONTROLSEX)) return FALSE;
+    if (!lpInitCtrls)
+	return FALSE;
+    if (lpInitCtrls->dwSize != sizeof(INITCOMMONCONTROLSEX))
+	return FALSE;
+
+    TRACE(commctrl,"(0x%08lx)\n", lpInitCtrls->dwICC);
 
     for (cCount = 0; cCount < 32; cCount++) {
 	dwMask = 1 << cCount;
@@ -465,8 +498,7 @@ InitCommonControlsEx (LPINITCOMMONCONTROLSEX lpInitCtrls)
 	    /* advanced classes - not included in Win95 */
 	    case ICC_DATE_CLASSES:
 		FIXME (commctrl, "No month calendar class implemented!\n");
-		FIXME (commctrl, "No date picker class implemented!\n");
-		FIXME (commctrl, "No time picker class implemented!\n");
+		FIXME (commctrl, "No date and time picker class implemented!\n");
 		break;
 
 	    case ICC_USEREX_CLASSES:
@@ -478,7 +510,7 @@ InitCommonControlsEx (LPINITCOMMONCONTROLSEX lpInitCtrls)
 		break;
 
 	    case ICC_INTERNET_CLASSES:
-		FIXME (commctrl, "No IPAddress class implemented!\n");
+		IPADDRESS_Register ();
 		break;
 
 	    case ICC_PAGESCROLLER_CLASS:
@@ -486,11 +518,11 @@ InitCommonControlsEx (LPINITCOMMONCONTROLSEX lpInitCtrls)
 		break;
 
 	    case ICC_NATIVEFNTCTL_CLASS:
-		FIXME (commctrl, "No native font class implemented!\n");
+		NATIVEFONT_Register ();
 		break;
 
 	    default:
-		WARN (commctrl, "Unknown class! dwICC=0x%lX\n", dwMask);
+		FIXME (commctrl, "Unknown class! dwICC=0x%lX\n", dwMask);
 		break;
 	}
     }
