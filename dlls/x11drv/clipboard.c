@@ -1610,26 +1610,7 @@ static int X11DRV_CLIPBOARD_QueryAvailableData(LPCLIPBOARDINFO lpcbinfo)
     {
         ERR("Received request to cache selection but process is owner=(%08x)\n", 
             (unsigned) selectionWindow);
-
-        selectionAcquired  = S_NOSELECTION;
-
-        wine_tsx11_lock();
-        if (XGetSelectionOwner(display,XA_PRIMARY) == selectionWindow)
-	    selectionAcquired |= S_PRIMARY;
-
-        if (XGetSelectionOwner(display,x11drv_atom(CLIPBOARD)) == selectionWindow)
-	    selectionAcquired |= S_CLIPBOARD;
-        wine_tsx11_unlock();
-
-        if (!(selectionAcquired == (S_PRIMARY | S_CLIPBOARD)))
-        {
-            WARN("Lost selection but process didn't process SelectClear\n");
-            selectionWindow = None;
-        }
-	else
-	{
-            return -1; /* Prevent self request */
-	}
+        return -1; /* Prevent self request */
     }
 
     if (lpcbinfo->flags & CB_OWNER)
@@ -2175,23 +2156,7 @@ void X11DRV_AcquireClipboard(HWND hWndClipWindow)
     }
     else
     {
-        WARN("Received request to acquire selection but process is already owner=(%08x)\n", (unsigned) selectionWindow);
-
-        selectionAcquired  = S_NOSELECTION;
-
-        wine_tsx11_lock();
-        if (XGetSelectionOwner(display,XA_PRIMARY) == selectionWindow)
-	    selectionAcquired |= S_PRIMARY;
-
-        if (XGetSelectionOwner(display,x11drv_atom(CLIPBOARD)) == selectionWindow)
-	    selectionAcquired |= S_CLIPBOARD;
-        wine_tsx11_unlock();
-
-        if (!(selectionAcquired == (S_PRIMARY | S_CLIPBOARD)))
-	{
-            WARN("Lost selection but process didn't process SelectClear\n");
-            selectionWindow = None;
-	}
+        ERR("Received request to acquire selection but process is already owner=(%08x)\n", (unsigned) selectionWindow);
     }
 }
 
