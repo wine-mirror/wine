@@ -28,6 +28,11 @@
 #endif
 
 static const unsigned int win_formats[][4] = {
+    {0,                  8000,  8, 1},
+    {0,                  8000,  8, 2},
+    {0,                  8000, 16, 1},
+    {0,                  8000, 16, 2},
+    {0,                 12000, 16, 2},
     {WAVE_FORMAT_1M08,  11025,  8, 1},
     {WAVE_FORMAT_1S08,  11025,  8, 2},
     {WAVE_FORMAT_1M16,  11025, 16, 1},

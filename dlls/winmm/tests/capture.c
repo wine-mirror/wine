@@ -46,37 +46,43 @@ static const char * wave_in_error(MMRESULT error)
     return long_msg;
 }
 
-static void wave_in_test_deviceIn(int device, int format, DWORD flags, LPWAVEINCAPS pcaps)
+static void wave_in_test_deviceIn(int device, LPWAVEFORMATEX pwfx, DWORD format, DWORD flags, LPWAVEINCAPS pcaps)
 {
-    WAVEFORMATEX wfx;
     HWAVEIN win;
     HANDLE hevent;
     WAVEHDR frag;
     MMRESULT rc;
     DWORD res;
+    WORD nChannels = pwfx->nChannels;
+    WORD wBitsPerSample = pwfx->wBitsPerSample;
+    DWORD nSamplesPerSec = pwfx->nSamplesPerSec;
 
     hevent=CreateEvent(NULL,FALSE,FALSE,NULL);
     ok(hevent!=NULL,"CreateEvent: error=%ld\n",GetLastError());
     if (hevent==NULL)
         return;
 
-    wfx.wFormatTag=WAVE_FORMAT_PCM;
-    wfx.nChannels=win_formats[format][3];
-    wfx.wBitsPerSample=win_formats[format][2];
-    wfx.nSamplesPerSec=win_formats[format][1];
-    wfx.nBlockAlign=wfx.nChannels*wfx.wBitsPerSample/8;
-    wfx.nAvgBytesPerSec=wfx.nSamplesPerSec*wfx.nBlockAlign;
-    wfx.cbSize=0;
-
     win=NULL;
-    rc=waveInOpen(&win,device,&wfx,(DWORD)hevent,0,CALLBACK_EVENT|flags);
+    rc=waveInOpen(&win,device,pwfx,(DWORD)hevent,0,CALLBACK_EVENT|flags);
     /* Note: Win9x doesn't know WAVE_FORMAT_DIRECT */
     ok(rc==MMSYSERR_NOERROR || rc==MMSYSERR_BADDEVICEID ||
-       (rc==WAVERR_BADFORMAT && (flags & WAVE_FORMAT_DIRECT) && (pcaps->dwFormats & win_formats[format][0])) ||
+       ((rc==WAVERR_BADFORMAT || rc==MMSYSERR_NOTSUPPORTED) &&
+       (flags & WAVE_FORMAT_DIRECT) && !(pcaps->dwFormats & format)) ||
+       ((rc==WAVERR_BADFORMAT || rc==MMSYSERR_NOTSUPPORTED) &&
+       (!(flags & WAVE_FORMAT_DIRECT) || (flags & WAVE_MAPPED)) && !(pcaps->dwFormats & format)) ||
        (rc==MMSYSERR_INVALFLAG && (flags & WAVE_FORMAT_DIRECT)),
        "waveInOpen: device=%d format=%ldx%2dx%d flags=%lx(%s) rc=%s\n",device,
-       wfx.nSamplesPerSec,wfx.wBitsPerSample,wfx.nChannels,CALLBACK_EVENT|flags,
+       pwfx->nSamplesPerSec,pwfx->wBitsPerSample,pwfx->nChannels,CALLBACK_EVENT|flags,
        wave_open_flags(CALLBACK_EVENT|flags),wave_in_error(rc));
+    if ((rc==WAVERR_BADFORMAT || rc==MMSYSERR_NOTSUPPORTED) &&
+       (flags & WAVE_FORMAT_DIRECT) && (pcaps->dwFormats & format))
+        trace(" Reason: The device lists this format as supported in it's capabilities but opening it failed.\n");
+    if ((rc==WAVERR_BADFORMAT || rc==MMSYSERR_NOTSUPPORTED) &&
+       !(pcaps->dwFormats & format))
+        trace("waveInOpen: device=%d format=%ldx%2dx%d %s rc=%s failed but format not supported so OK.\n",
+              device, pwfx->nSamplesPerSec,pwfx->wBitsPerSample,pwfx->nChannels,
+              flags & WAVE_FORMAT_DIRECT ? "flags=WAVE_FORMAT_DIRECT" :
+              flags & WAVE_MAPPED ? "flags=WAVE_MAPPED" : "", mmsys_error(rc));
     if (rc!=MMSYSERR_NOERROR) {
         CloseHandle(hevent);
         return;
@@ -84,16 +90,15 @@ static void wave_in_test_deviceIn(int device, int format, DWORD flags, LPWAVEINC
     res=WaitForSingleObject(hevent,1000);
     ok(res==WAIT_OBJECT_0,"WaitForSingleObject failed for open\n");
 
-    ok(wfx.nChannels==win_formats[format][3] &&
-       wfx.wBitsPerSample==win_formats[format][2] &&
-       wfx.nSamplesPerSec==win_formats[format][1],
-       "got the wrong format: %ldx%2dx%d instead of %dx%2dx%d\n",
-       wfx.nSamplesPerSec, wfx.wBitsPerSample,
-       wfx.nChannels, win_formats[format][1], win_formats[format][2],
-       win_formats[format][3]);
+    ok(pwfx->nChannels==nChannels &&
+       pwfx->wBitsPerSample==wBitsPerSample &&
+       pwfx->nSamplesPerSec==nSamplesPerSec,
+       "got the wrong format: %ldx%2dx%d instead of %ldx%2dx%d\n",
+       pwfx->nSamplesPerSec, pwfx->wBitsPerSample,
+       pwfx->nChannels, nSamplesPerSec, wBitsPerSample, nChannels);
 
-    frag.lpData=malloc(wfx.nAvgBytesPerSec);
-    frag.dwBufferLength=wfx.nAvgBytesPerSec;
+    frag.lpData=malloc(pwfx->nAvgBytesPerSec);
+    frag.dwBufferLength=pwfx->nAvgBytesPerSec;
     frag.dwBytesRecorded=0;
     frag.dwUser=0;
     frag.dwFlags=0;
@@ -105,9 +110,10 @@ static void wave_in_test_deviceIn(int device, int format, DWORD flags, LPWAVEINC
     ok(frag.dwFlags&WHDR_PREPARED,"waveInPrepareHeader: prepared flag not set\n");
 
     if (winetest_interactive && rc==MMSYSERR_NOERROR) {
-        trace("Recording for 1 second at %5ldx%2dx%d %04lx\n",
-              wfx.nSamplesPerSec, wfx.wBitsPerSample,wfx.nChannels,flags);
-
+        trace("Recording for 1 second at %5ldx%2dx%d %s\n",
+              pwfx->nSamplesPerSec, pwfx->wBitsPerSample,pwfx->nChannels,
+              flags & WAVE_FORMAT_DIRECT ? "WAVE_FORMAT_DIRECT" :
+              flags & WAVE_MAPPED ? "WAVE_MAPPED" : "");
         rc=waveInAddBuffer(win, &frag, sizeof(frag));
         ok(rc==MMSYSERR_NOERROR,"waveInAddBuffer: device=%d rc=%s\n",device,wave_in_error(rc));
 
@@ -117,8 +123,8 @@ static void wave_in_test_deviceIn(int device, int format, DWORD flags, LPWAVEINC
         res = WaitForSingleObject(hevent,1200);
         ok(res==WAIT_OBJECT_0,"WaitForSingleObject failed for header\n");
         ok(frag.dwFlags&WHDR_DONE,"WHDR_DONE not set in frag.dwFlags\n");
-        ok(frag.dwBytesRecorded==wfx.nAvgBytesPerSec,"frag.dwBytesRecorded=%ld, should=%ld\n",
-           frag.dwBytesRecorded,wfx.nAvgBytesPerSec);
+        ok(frag.dwBytesRecorded==pwfx->nAvgBytesPerSec,"frag.dwBytesRecorded=%ld, should=%ld\n",
+           frag.dwBytesRecorded,pwfx->nAvgBytesPerSec);
         /* stop playing on error */
         if (res!=WAIT_OBJECT_0) {
             rc=waveInStop(win);
@@ -131,7 +137,9 @@ static void wave_in_test_deviceIn(int device, int format, DWORD flags, LPWAVEINC
     ok(rc==MMSYSERR_NOERROR,
        "waveInUnprepareHeader: device=%d rc=%s\n",device,wave_in_error(rc));
 
-    waveInClose(win);
+    rc=waveInClose(win);
+    ok(rc==MMSYSERR_NOERROR,
+       "waveInClose: device=%d rc=%s\n",device,wave_in_error(rc));
     res=WaitForSingleObject(hevent,1000);
     ok(res==WAIT_OBJECT_0,"WaitForSingleObject failed for close\n");
     free(frag.lpData);
@@ -148,6 +156,14 @@ static void wave_in_tests()
     WCHAR * wname;
     CHAR * name;
     DWORD size;
+    DWORD dwPageSize;
+    BYTE * twoPages;
+    SYSTEM_INFO sSysInfo;
+    DWORD flOldProtect;
+    BOOL res;
+
+    GetSystemInfo(&sSysInfo);
+    dwPageSize = sSysInfo.dwPageSize;
 
     ndev=waveInGetNumDevs();
     trace("found %d WaveIn devices\n",ndev);
@@ -205,13 +221,41 @@ static void wave_in_tests()
               caps.vDriverVersion & 0xff,
               caps.wMid,caps.wPid,
               caps.wChannels,caps.dwFormats);
+
         free(name);
 
         for (f=0;f<NB_WIN_FORMATS;f++) {
-            if (caps.dwFormats & win_formats[f][0]) {
-                wave_in_test_deviceIn(d,f,0, &caps);
-                wave_in_test_deviceIn(d,f,WAVE_FORMAT_DIRECT, &caps);
+            format.wFormatTag=WAVE_FORMAT_PCM;
+            format.nChannels=win_formats[f][3];
+            format.wBitsPerSample=win_formats[f][2];
+            format.nSamplesPerSec=win_formats[f][1];
+            format.nBlockAlign=format.nChannels*format.wBitsPerSample/8;
+            format.nAvgBytesPerSec=format.nSamplesPerSec*format.nBlockAlign;
+            format.cbSize=0;
+            wave_in_test_deviceIn(d,&format,win_formats[f][0],0, &caps);
+            wave_in_test_deviceIn(d,&format,win_formats[f][0],WAVE_FORMAT_DIRECT, &caps);
+            wave_in_test_deviceIn(d,&format,win_formats[f][0],WAVE_MAPPED, &caps);
+        }
+
+        /* Try a PCMWAVEFORMAT aligned next to an unaccessable page for bounds checking */
+        twoPages = VirtualAlloc(NULL, 2 * dwPageSize, MEM_RESERVE | MEM_COMMIT, PAGE_READWRITE);
+        ok(twoPages!=NULL,"Failed to allocate 2 pages of memory\n");
+        if (twoPages) {
+            res = VirtualProtect(twoPages + dwPageSize, dwPageSize, PAGE_NOACCESS, &flOldProtect);
+            ok(res, "Failed to set memory access on second page\n");
+            if (res) {
+                LPWAVEFORMATEX pwfx = (LPWAVEFORMATEX)(twoPages + dwPageSize - sizeof(PCMWAVEFORMAT));
+                pwfx->wFormatTag=WAVE_FORMAT_PCM;
+                pwfx->nChannels=1;
+                pwfx->wBitsPerSample=8;
+                pwfx->nSamplesPerSec=22050;
+                pwfx->nBlockAlign=pwfx->nChannels*pwfx->wBitsPerSample/8;
+                pwfx->nAvgBytesPerSec=pwfx->nSamplesPerSec*pwfx->nBlockAlign;
+                wave_in_test_deviceIn(d,pwfx,WAVE_FORMAT_2M08,0, &caps);
+                wave_in_test_deviceIn(d,pwfx,WAVE_FORMAT_2M08,WAVE_FORMAT_DIRECT, &caps);
+                wave_in_test_deviceIn(d,pwfx,WAVE_FORMAT_2M08,WAVE_MAPPED, &caps);
             }
+            VirtualFree(twoPages, 2 * dwPageSize, MEM_RELEASE);
         }
 
         /* Try invalid formats to test error handling */
