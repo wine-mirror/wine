@@ -132,6 +132,7 @@ static char szUsage[] =
   "    -name name      Set the application name\n"
   "    -nodga          Disable XFree86 DGA extensions\n"
   "    -noxshm         Disable XSHM extension\n"
+  "    -dxgrab         Enable DirectX mouse grab\n"
   "    -perfect        Favor correctness over speed for graphical operations\n"
   "    -privatemap     Use a private color map\n"
   "    -synchronous    Turn on synchronous display mode\n"

@@ -75,6 +75,7 @@ struct options
     int    perfectGraphics; /* Favor correctness over speed for graphics */
     int    noDGA;           /* Disable XFree86 DGA extensions */
     int    noXSHM;          /* Disable use of XSHM extension */
+    int    DXGrab;          /* Enable DirectX mouse grab */
     char * configFileName;  /* Command line config file */
     int screenDepth;
 };

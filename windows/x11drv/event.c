@@ -2120,7 +2120,7 @@ static void X11DRV_EVENT_WaitReplaceShmCompletionInternal( int *compl, Drawable 
     TRACE("Wait complete (thread %lx) (time %ld)\n", GetCurrentThreadId(), GetTickCount() );
 
     /* clear wait */
-    st = InterlockedExchange(&shm_q[n-1].state, 2);
+    st = InterlockedExchange((LPLONG)&shm_q[n-1].state, 2);
     if (st != 2) {
       /* first waiter to return, release all other waiters */
       nn = shm_q[n-1].waiter;

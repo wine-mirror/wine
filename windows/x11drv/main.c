@@ -70,6 +70,7 @@ static XrmOptionDescRec optionsTable[] =
     { "-config",        ".config",          XrmoptionSepArg, (caddr_t)NULL },
     { "-nodga",         ".nodga",           XrmoptionNoArg,  (caddr_t)"off"},
     { "-noxshm",        ".noxshm",          XrmoptionNoArg,  (caddr_t)"off"},
+    { "-dxgrab",        ".dxgrab",          XrmoptionNoArg,  (caddr_t)"on" },
     { "-console",       ".console",         XrmoptionSepArg, (caddr_t)NULL },
     { "-dosver",        ".dosver",          XrmoptionSepArg, (caddr_t)NULL }
 };
@@ -290,6 +291,8 @@ void X11DRV_USER_ParseOptions(int *argc, char *argv[])
     Options.noDGA = TRUE;
   if (X11DRV_USER_GetResource( db, ".noxshm", &value))
     Options.noXSHM = TRUE;
+  if (X11DRV_USER_GetResource( db, ".dxgrab", &value))
+    Options.DXGrab = TRUE;
   if (X11DRV_USER_GetResource( db, ".console", &value))
       driver.driver_list = xstrdup((char *)value.addr);
   else

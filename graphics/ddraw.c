@@ -4094,6 +4094,11 @@ static HRESULT WINAPI Xlib_IDirectDrawImpl_SetDisplayMode(
         }
 	TRACE("Setting drawable to %ld\n", This->d.drawable);
 
+	if (Options.DXGrab) {
+	    /* Confine cursor movement (risky, but the user asked for it) */
+	    TSXGrabPointer(display, This->d.drawable, True, 0, GrabModeAsync, GrabModeAsync, This->d.drawable, None, CurrentTime);
+	}
+
 	return DD_OK;
 }
 
