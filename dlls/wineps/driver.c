@@ -206,7 +206,7 @@ INT_PTR CALLBACK PSDRV_PaperDlgProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM
   switch(msg) {
   case WM_INITDIALOG:
     di = (PSDRV_DLGINFO*)((PROPSHEETPAGEA*)lParam)->lParam;
-    SetWindowLongA(hwnd, DWL_USER, (LONG)di);
+    SetWindowLongPtrW(hwnd, DWLP_USER, (LONG_PTR)di);
 
     for(ps = di->pi->ppd->PageSizes, i = 0; ps; ps = ps->next, i++) {
       SendDlgItemMessageA(hwnd, IDD_PAPERS, LB_INSERTSTRING, i,
@@ -237,7 +237,7 @@ INT_PTR CALLBACK PSDRV_PaperDlgProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM
     break;
 
   case WM_COMMAND:
-    di = (PSDRV_DLGINFO *)GetWindowLongA(hwnd, DWL_USER);
+    di = (PSDRV_DLGINFO *)GetWindowLongPtrW(hwnd, DWLP_USER);
     switch(LOWORD(wParam)) {
     case IDD_PAPERS:
       if(HIWORD(wParam) == LBN_SELCHANGE) {
@@ -272,11 +272,11 @@ INT_PTR CALLBACK PSDRV_PaperDlgProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM
   case WM_NOTIFY:
    {
     NMHDR *nmhdr = (NMHDR *)lParam;
-    di = (PSDRV_DLGINFO *)GetWindowLongA(hwnd, DWL_USER);
+    di = (PSDRV_DLGINFO *)GetWindowLongPtrW(hwnd, DWLP_USER);
     switch(nmhdr->code) {
     case PSN_APPLY:
       memcpy(di->pi->Devmode, di->dlgdm, sizeof(PSDRV_DEVMODEA));
-      SetWindowLongA(hwnd, DWL_MSGRESULT, PSNRET_NOERROR);
+      SetWindowLongPtrW(hwnd, DWLP_MSGRESULT, PSNRET_NOERROR);
       return TRUE;
 
     default:

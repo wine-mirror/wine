@@ -372,7 +372,7 @@ AppDlgProc (HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
             break;
         case PSN_APPLY:
             apply();
-            SetWindowLong(hDlg, DWL_MSGRESULT, PSNRET_NOERROR);
+            SetWindowLongPtr(hDlg, DWLP_MSGRESULT, PSNRET_NOERROR);
             break;
       }
       

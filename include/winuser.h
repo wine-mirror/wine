@@ -1351,16 +1351,16 @@ typedef struct tagSTYLESTRUCT {
   /* Offsets for GetWindowLong() and GetWindowWord() */
 #define GWL_EXSTYLE         (-20)
 #define GWL_STYLE           (-16)
-#ifndef __WINESRC__
+#if !defined _WIN64 && !defined __WINESRC__
 # define GWL_USERDATA        (-21)
 # define GWL_ID              (-12)
 # define GWL_HWNDPARENT      (-8)
 # define GWL_HINSTANCE       (-6)
 # define GWL_WNDPROC         (-4)
-#endif /* __WINESRC__ */
-#define DWL_MSGRESULT	    0
-#define DWL_DLGPROC	    4
-#define DWL_USER	    8
+# define DWL_MSGRESULT       0
+# define DWL_DLGPROC         4
+# define DWL_USER            8
+#endif /* _WIN64 && __WINESRC__ */
 
   /* Offsets for GetWindowLongPtr() and SetWindowLongPtr() */
 #define GWLP_USERDATA        (-21)
@@ -1555,17 +1555,20 @@ typedef struct
 #define PRF_OWNED           0x00000020L
 
   /* Offsets for GetClassLong() and GetClassWord() */
-#define GCL_MENUNAME        (-8)
-#define GCL_HBRBACKGROUND   (-10)
-#define GCL_HCURSOR         (-12)
-#define GCL_HICON           (-14)
-#define GCL_HMODULE         (-16)
+#if !defined _WIN64 && !defined __WINESRC__
+# define GCL_MENUNAME       (-8)
+# define GCL_HBRBACKGROUND  (-10)
+# define GCL_HCURSOR        (-12)
+# define GCL_HICON          (-14)
+# define GCL_HMODULE        (-16)
+# define GCL_WNDPROC        (-24)
+# define GCL_HICONSM        (-34)
+#endif /* _WIN64 && __WINESRC__ */
+
 #define GCL_CBWNDEXTRA      (-18)
 #define GCL_CBCLSEXTRA      (-20)
-#define GCL_WNDPROC         (-24)
 #define GCL_STYLE           (-26)
 #define GCW_ATOM            (-32)
-#define GCL_HICONSM         (-34)
 
 #define GCLP_MENUNAME       (-8)
 #define GCLP_HBRBACKGROUND  (-10)
@@ -4181,12 +4184,12 @@ BOOL        WINAPI GetClassInfoW(HINSTANCE,LPCWSTR,WNDCLASSW *);
 BOOL      WINAPI GetClassInfoExA(HINSTANCE,LPCSTR,WNDCLASSEXA *);
 BOOL      WINAPI GetClassInfoExW(HINSTANCE,LPCWSTR,WNDCLASSEXW *);
 #define     GetClassInfoEx WINELIB_NAME_AW(GetClassInfoEx)
-LONG        WINAPI GetClassLongA(HWND,INT);
-LONG        WINAPI GetClassLongW(HWND,INT);
+DWORD       WINAPI GetClassLongA(HWND,INT);
+DWORD       WINAPI GetClassLongW(HWND,INT);
 #define     GetClassLong WINELIB_NAME_AW(GetClassLong)
 #ifdef _WIN64
-LONG_PTR    WINAPI GetClassLongPtrA(HWND,INT);
-LONG_PTR    WINAPI GetClassLongPtrW(HWND,INT);
+ULONG_PTR   WINAPI GetClassLongPtrA(HWND,INT);
+ULONG_PTR   WINAPI GetClassLongPtrW(HWND,INT);
 #else
 #define     GetClassLongPtrA GetClassLongA
 #define     GetClassLongPtrW GetClassLongW
@@ -4470,9 +4473,17 @@ HWND        WINAPI SetActiveWindow(HWND);
 HWND        WINAPI SetCapture(HWND);
 BOOL        WINAPI SetCaretBlinkTime(UINT);
 BOOL        WINAPI SetCaretPos(INT,INT);
-LONG        WINAPI SetClassLongA(HWND,INT,LONG);
-LONG        WINAPI SetClassLongW(HWND,INT,LONG);
+DWORD       WINAPI SetClassLongA(HWND,INT,LONG);
+DWORD       WINAPI SetClassLongW(HWND,INT,LONG);
 #define     SetClassLong WINELIB_NAME_AW(SetClassLong)
+#ifdef _WIN64
+ULONG_PTR   WINAPI SetClassLongPtrA(HWND,INT,LONG_PTR);
+ULONG_PTR   WINAPI SetClassLongPtrW(HWND,INT,LONG_PTR);
+#else
+#define     SetClassLongPtrA SetClassLongA
+#define     SetClassLongPtrW SetClassLongW
+#endif
+#define     SetClassLongPtr WINELIB_NAME_AW(SetClassLongPtr)
 WORD        WINAPI SetClassWord(HWND,INT,WORD);
 HANDLE    WINAPI SetClipboardData(UINT,HANDLE);
 HWND      WINAPI SetClipboardViewer(HWND);

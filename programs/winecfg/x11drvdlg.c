@@ -245,12 +245,12 @@ GraphDlgProc (HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
 	case WM_NOTIFY:
 	    switch (((LPNMHDR)lParam)->code) {
 		case PSN_KILLACTIVE: {
-		    SetWindowLong(hDlg, DWL_MSGRESULT, FALSE);
+		    SetWindowLongPtr(hDlg, DWLP_MSGRESULT, FALSE);
 		    break;
 		}
 		case PSN_APPLY: {
                     apply();
-		    SetWindowLong(hDlg, DWL_MSGRESULT, PSNRET_NOERROR);
+		    SetWindowLongPtr(hDlg, DWLP_MSGRESULT, PSNRET_NOERROR);
 		    break;
 		}
 		case PSN_SETACTIVE: {

@@ -148,7 +148,7 @@ typedef struct
 #define DF_OWNERENABLED 0x0002
 
 /* offset of DIALOGINFO ptr in dialog extra bytes */
-#define DWL_WINE_DIALOGINFO (DWL_USER+sizeof(ULONG_PTR))
+#define DWLP_WINE_DIALOGINFO (DWLP_USER+sizeof(ULONG_PTR))
 
 extern DIALOGINFO *DIALOG_get_info( HWND hwnd, BOOL create );
 extern BOOL DIALOG_GetCharSize( HDC hdc, HFONT hFont, SIZE * pSize );

@@ -150,7 +150,7 @@ static BOOL ICONTITLE_Paint( HWND hwnd, HWND owner, HDC hDC, BOOL bActive )
     {
         if( GetWindowLongA( hwnd, GWL_STYLE ) & WS_CHILD )
 	{
-	    hBrush = (HBRUSH) GetClassLongA(hwnd, GCL_HBRBACKGROUND);
+	    hBrush = (HBRUSH) GetClassLongPtrW(hwnd, GCLP_HBRBACKGROUND);
 	    if( hBrush )
 	    {
 		INT level;

@@ -1866,8 +1866,8 @@ void X11DRV_SysCommandSizeMove( HWND hwnd, WPARAM wParam )
 
     if( iconic ) /* create a cursor for dragging */
     {
-        hDragCursor = (HCURSOR)GetClassLongA( hwnd, GCL_HICON);
-        if( !hDragCursor ) hDragCursor = (HCURSOR)SendMessageA( hwnd, WM_QUERYDRAGICON, 0, 0L);
+        hDragCursor = (HCURSOR)GetClassLongPtrW( hwnd, GCLP_HICON);
+        if( !hDragCursor ) hDragCursor = (HCURSOR)SendMessageW( hwnd, WM_QUERYDRAGICON, 0, 0L);
         if( !hDragCursor ) iconic = FALSE;
     }
 

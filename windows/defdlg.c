@@ -46,7 +46,7 @@ static WNDPROC DEFDLG_GetDlgProc( HWND hwnd )
         ERR( "cannot get dlg proc %p from other process\n", hwnd );
         return 0;
     }
-    ret = *(WNDPROC *)((char *)wndPtr->wExtra + DWL_DLGPROC);
+    ret = *(WNDPROC *)((char *)wndPtr->wExtra + DWLP_DLGPROC);
     WIN_ReleasePtr( wndPtr );
     return ret;
 }
@@ -127,9 +127,9 @@ static HWND DEFDLG_FindDefButton( HWND hwndDlg )
             break;
 
         /* Recurse into WS_EX_CONTROLPARENT controls */
-        if (GetWindowLongA( hwndChild, GWL_EXSTYLE ) & WS_EX_CONTROLPARENT)
+        if (GetWindowLongW( hwndChild, GWL_EXSTYLE ) & WS_EX_CONTROLPARENT)
         {
-            LONG dsStyle = GetWindowLongA( hwndChild, GWL_STYLE );
+            LONG dsStyle = GetWindowLongW( hwndChild, GWL_STYLE );
             if ((dsStyle & WS_VISIBLE) && !(dsStyle & WS_DISABLED) &&
                 (hwndTmp = DEFDLG_FindDefButton(hwndChild)) != NULL)
            return hwndTmp;
@@ -237,7 +237,7 @@ static LRESULT DEFDLG_Proc( HWND hwnd, UINT msg, WPARAM wParam,
             return 1;
         }
 	case WM_NCDESTROY:
-            if ((dlgInfo = (DIALOGINFO *)SetWindowLongW( hwnd, DWL_WINE_DIALOGINFO, 0 )))
+            if ((dlgInfo = (DIALOGINFO *)SetWindowLongPtrW( hwnd, DWLP_WINE_DIALOGINFO, 0 )))
             {
                 /* Free dialog heap (if created) */
                 if (dlgInfo->hDialogHeap)
@@ -333,7 +333,7 @@ static LRESULT DEFDLG_Epilog(HWND hwnd, UINT msg, BOOL fResult)
          msg == WM_QUERYDRAGICON || msg == WM_INITDIALOG)
         return fResult;
 
-    return GetWindowLongA( hwnd, DWL_MSGRESULT );
+    return GetWindowLongPtrW( hwnd, DWLP_MSGRESULT );
 }
 
 /***********************************************************************
@@ -345,7 +345,7 @@ static LRESULT DEFDLG_Epilog(HWND hwnd, UINT msg, BOOL fResult)
 DIALOGINFO *DIALOG_get_info( HWND hwnd, BOOL create )
 {
     WND* wndPtr;
-    DIALOGINFO* dlgInfo = (DIALOGINFO *)GetWindowLongW( hwnd, DWL_WINE_DIALOGINFO );
+    DIALOGINFO* dlgInfo = (DIALOGINFO *)GetWindowLongPtrW( hwnd, DWLP_WINE_DIALOGINFO );
 
     if(!dlgInfo && create)
     {
@@ -363,7 +363,7 @@ DIALOGINFO *DIALOG_get_info( HWND hwnd, BOOL create )
         {
             wndPtr->flags |= WIN_ISDIALOG;
             WIN_ReleasePtr( wndPtr );
-            SetWindowLongW( hwnd, DWL_WINE_DIALOGINFO, (LONG)dlgInfo );
+            SetWindowLongPtrW( hwnd, DWLP_WINE_DIALOGINFO, (ULONG_PTR)dlgInfo );
         }
         else
         {
@@ -388,7 +388,7 @@ LRESULT WINAPI DefDlgProc16( HWND16 hwnd, UINT16 msg, WPARAM16 wParam,
     /* Perform DIALOGINFO intialization if not done */
     if(!(dlgInfo = DIALOG_get_info(hwnd32, TRUE))) return -1;
 
-    SetWindowLongW( hwnd32, DWL_MSGRESULT, 0 );
+    SetWindowLongPtrW( hwnd32, DWLP_MSGRESULT, 0 );
 
     if ((dlgproc = (WNDPROC16)DEFDLG_GetDlgProc( hwnd32 )))
     {
@@ -445,7 +445,7 @@ LRESULT WINAPI DefDlgProcA( HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam )
     /* Perform DIALOGINFO initialization if not done */
     if(!(dlgInfo = DIALOG_get_info( hwnd, TRUE ))) return -1;
 
-    SetWindowLongW( hwnd, DWL_MSGRESULT, 0 );
+    SetWindowLongPtrW( hwnd, DWLP_MSGRESULT, 0 );
 
     if ((dlgproc = DEFDLG_GetDlgProc( hwnd )))
     {
@@ -502,7 +502,7 @@ LRESULT WINAPI DefDlgProcW( HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam )
     /* Perform DIALOGINFO intialization if not done */
     if(!(dlgInfo = DIALOG_get_info( hwnd, TRUE ))) return -1;
 
-    SetWindowLongW( hwnd, DWL_MSGRESULT, 0 );
+    SetWindowLongPtrW( hwnd, DWLP_MSGRESULT, 0 );
 
     if ((dlgproc = DEFDLG_GetDlgProc( hwnd )))
     {

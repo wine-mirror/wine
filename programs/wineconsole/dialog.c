@@ -127,7 +127,7 @@ static BOOL WINAPI WCUSER_OptionDlgProc(HWND hDlg, UINT msg, WPARAM wParam, LPAR
             val = (IsDlgButtonChecked(hDlg, IDC_OPT_QUICK_EDIT) & BST_CHECKED) ? TRUE : FALSE;
             di->config.quick_edit = val;
 
-            SetWindowLong(hDlg, DWL_MSGRESULT, PSNRET_NOERROR);
+            SetWindowLongPtr(hDlg, DWLP_MSGRESULT, PSNRET_NOERROR);
 	    return TRUE;
 	default:
 	    return FALSE;
@@ -573,7 +573,7 @@ static BOOL WINAPI WCUSER_FontDlgProc(HWND hDlg, UINT msg, WPARAM wParam, LPARAM
                 GetWindowLong(GetDlgItem(hDlg, IDC_FNT_COLOR_FG), 0);
             di->config.def_attr = val;
 
-            SetWindowLong(hDlg, DWL_MSGRESULT, PSNRET_NOERROR);
+            SetWindowLongPtr(hDlg, DWLP_MSGRESULT, PSNRET_NOERROR);
 	    return TRUE;
 	default:
 	    return FALSE;
@@ -643,14 +643,14 @@ static BOOL WINAPI WCUSER_ConfigDlgProc(HWND hDlg, UINT msg, WPARAM wParam, LPAR
             sb_h = GetDlgItemInt(hDlg, IDC_CNF_SB_HEIGHT, &st2, FALSE);
             if (!st1 || ! st2)
             {
-                SetWindowLong(hDlg, DWL_MSGRESULT, PSNRET_INVALID);        
+                SetWindowLongPtr(hDlg, DWLP_MSGRESULT, PSNRET_INVALID);        
                 return TRUE;
             }
             win_w = GetDlgItemInt(hDlg, IDC_CNF_WIN_WIDTH,  &st1, FALSE);
             win_h = GetDlgItemInt(hDlg, IDC_CNF_WIN_HEIGHT, &st2, FALSE);
             if (!st1 || !st2)
             {
-                SetWindowLong(hDlg, DWL_MSGRESULT, PSNRET_INVALID); 
+                SetWindowLongPtr(hDlg, DWLP_MSGRESULT, PSNRET_INVALID); 
                 return TRUE;
             }
             if (win_w > sb_w || win_h > sb_h)
@@ -664,7 +664,7 @@ static BOOL WINAPI WCUSER_ConfigDlgProc(HWND hDlg, UINT msg, WPARAM wParam, LPAR
                            txt, sizeof(txt) / sizeof(WCHAR));
                 
                 MessageBox(hDlg, txt, cap, MB_OK);
-                SetWindowLong(hDlg, DWL_MSGRESULT, PSNRET_INVALID); 
+                SetWindowLongPtr(hDlg, DWLP_MSGRESULT, PSNRET_INVALID); 
                 return TRUE;
             }
             di->config.win_width  = win_w;
@@ -675,7 +675,7 @@ static BOOL WINAPI WCUSER_ConfigDlgProc(HWND hDlg, UINT msg, WPARAM wParam, LPAR
             di->config.exit_on_die = IsDlgButtonChecked(hDlg, IDC_CNF_CLOSE_EXIT) ? 1 : 0;
             di->config.edition_mode = SendDlgItemMessage(hDlg, IDC_CNF_EDITION_MODE, CB_GETCURSEL,
                                                          0, 0);
-            SetWindowLong(hDlg, DWL_MSGRESULT, PSNRET_NOERROR);
+            SetWindowLongPtr(hDlg, DWLP_MSGRESULT, PSNRET_NOERROR);
 	    return TRUE;
 	default:
 	    return FALSE;

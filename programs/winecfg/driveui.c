@@ -642,11 +642,11 @@ DriveDlgProc (HWND dialog, UINT msg, WPARAM wParam, LPARAM lParam)
             {
                 case PSN_KILLACTIVE:
                     WINE_TRACE("PSN_KILLACTIVE\n");
-                    SetWindowLong(dialog, DWL_MSGRESULT, FALSE);
+                    SetWindowLongPtr(dialog, DWLP_MSGRESULT, FALSE);
                     break;
                 case PSN_APPLY:
                     apply_drive_changes();
-                    SetWindowLong(dialog, DWL_MSGRESULT, PSNRET_NOERROR);
+                    SetWindowLongPtr(dialog, DWLP_MSGRESULT, PSNRET_NOERROR);
                     break;
                 case PSN_SETACTIVE:
                     break;

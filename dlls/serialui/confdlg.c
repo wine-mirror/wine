@@ -356,7 +356,7 @@ INT_PTR CALLBACK SERIALUI_ConfigDialogProc(HWND hWnd, UINT uMsg, WPARAM wParam, 
         info = (SERIALUI_DialogInfo*) lParam;
         if(!info)
             return FALSE;
-        SetWindowLongW(hWnd, DWL_USER, lParam);
+        SetWindowLongPtrW(hWnd, DWLP_USER, lParam);
         strcpyW( szTitle, szSettings );
         strcatW( szTitle, info->lpszDevice );
         SetWindowTextW(hWnd, szTitle);
@@ -367,7 +367,7 @@ INT_PTR CALLBACK SERIALUI_ConfigDialogProc(HWND hWnd, UINT uMsg, WPARAM wParam, 
     {
         WORD wID = LOWORD(wParam);
 
-        info = (SERIALUI_DialogInfo *) GetWindowLongW(hWnd, DWL_USER);
+        info = (SERIALUI_DialogInfo *) GetWindowLongPtrW(hWnd, DWLP_USER);
         if(!info)
             EndDialog(hWnd,0);
         switch (wID)

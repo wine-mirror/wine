@@ -188,14 +188,14 @@ static HICON NC_IconForWindow( HWND hwnd )
         if (!hIcon) hIcon = wndPtr->hIcon;
         WIN_ReleasePtr( wndPtr );
     }
-    if (!hIcon) hIcon = (HICON) GetClassLongA( hwnd, GCL_HICONSM );
-    if (!hIcon) hIcon = (HICON) GetClassLongA( hwnd, GCL_HICON );
+    if (!hIcon) hIcon = (HICON) GetClassLongPtrW( hwnd, GCLP_HICONSM );
+    if (!hIcon) hIcon = (HICON) GetClassLongPtrW( hwnd, GCLP_HICON );
 
     /* If there is no hIcon specified and this is a modal dialog,
      * get the default one.
      */
-    if (!hIcon && (GetWindowLongA( hwnd, GWL_STYLE ) & DS_MODALFRAME))
-        hIcon = LoadImageA(0, (LPSTR)IDI_WINLOGO, IMAGE_ICON, 0, 0, LR_DEFAULTCOLOR);
+    if (!hIcon && (GetWindowLongW( hwnd, GWL_STYLE ) & DS_MODALFRAME))
+        hIcon = LoadImageW(0, (LPCWSTR)IDI_WINLOGO, IMAGE_ICON, 0, 0, LR_DEFAULTCOLOR);
     return hIcon;
 }
 
@@ -375,9 +375,9 @@ LONG NC_HandleNCCalcSize( HWND hwnd, RECT *winRect )
 {
     RECT tmpRect = { 0, 0, 0, 0 };
     LONG result = 0;
-    LONG cls_style = GetClassLongA(hwnd, GCL_STYLE);
-    LONG style = GetWindowLongA( hwnd, GWL_STYLE );
-    LONG exStyle = GetWindowLongA( hwnd, GWL_EXSTYLE );
+    LONG cls_style = GetClassLongW(hwnd, GCL_STYLE);
+    LONG style = GetWindowLongW( hwnd, GWL_STYLE );
+    LONG exStyle = GetWindowLongW( hwnd, GWL_EXSTYLE );
 
     if (cls_style & CS_VREDRAW) result |= WVR_VREDRAW;
     if (cls_style & CS_HREDRAW) result |= WVR_HREDRAW;
@@ -679,7 +679,7 @@ static void NC_DrawCloseButton (HWND hwnd, HDC hdc, BOOL down, BOOL bGrayed)
     NC_GetInsideRect( hwnd, &rect );
 
     /* A tool window has a smaller Close button */
-    if (GetWindowLongA( hwnd, GWL_EXSTYLE ) & WS_EX_TOOLWINDOW)
+    if (GetWindowLongW( hwnd, GWL_EXSTYLE ) & WS_EX_TOOLWINDOW)
     {
         INT iBmpHeight = 11; /* Windows does not use SM_CXSMSIZE and SM_CYSMSIZE   */
         INT iBmpWidth = 11;  /* it uses 11x11 for  the close button in tool window */
@@ -721,7 +721,7 @@ static void NC_DrawMaxButton(HWND hwnd,HDC hdc,BOOL down, BOOL bGrayed)
     flags = IsZoomed(hwnd) ? DFCS_CAPTIONRESTORE : DFCS_CAPTIONMAX;
 
     NC_GetInsideRect( hwnd, &rect );
-    if (GetWindowLongA( hwnd, GWL_STYLE) & WS_SYSMENU)
+    if (GetWindowLongW( hwnd, GWL_STYLE) & WS_SYSMENU)
         rect.right -= GetSystemMetrics(SM_CXSIZE) + 1;
     rect.left = rect.right - GetSystemMetrics(SM_CXSIZE);
     rect.bottom = rect.top + GetSystemMetrics(SM_CYSIZE) - 1;
@@ -742,7 +742,7 @@ static void  NC_DrawMinButton(HWND hwnd,HDC hdc,BOOL down, BOOL bGrayed)
 {
     RECT rect;
     UINT flags = DFCS_CAPTIONMIN;
-    DWORD style = GetWindowLongA( hwnd, GWL_STYLE );
+    DWORD style = GetWindowLongW( hwnd, GWL_STYLE );
 
     /* never draw minimize box when window has WS_EX_TOOLWINDOW style */
     if (GetWindowLongW( hwnd, GWL_EXSTYLE ) & WS_EX_TOOLWINDOW)
@@ -1136,7 +1136,7 @@ LONG NC_HandleSetCursor( HWND hwnd, WPARAM wParam, LPARAM lParam )
 
     case HTCLIENT:
 	{
-	    HCURSOR hCursor = (HCURSOR)GetClassLongA(hwnd, GCL_HCURSOR);
+	    HCURSOR hCursor = (HCURSOR)GetClassLongPtrW(hwnd, GCLP_HCURSOR);
 	    if(hCursor) {
 		SetCursor(hCursor);
 		return TRUE;
@@ -1202,7 +1202,7 @@ static void NC_TrackMinMaxBox( HWND hwnd, WORD wParam )
     HDC hdc = GetWindowDC( hwnd );
     BOOL pressed = TRUE;
     UINT state;
-    DWORD wndStyle = GetWindowLongA( hwnd, GWL_STYLE);
+    DWORD wndStyle = GetWindowLongW( hwnd, GWL_STYLE);
     HMENU hSysMenu = GetSystemMenu(hwnd, FALSE);
 
     void  (*paintButton)(HWND, HDC, BOOL, BOOL);
@@ -1357,7 +1357,7 @@ static void NC_TrackScrollBar( HWND hwnd, WPARAM wParam, POINT pt )
  */
 LONG NC_HandleNCLButtonDown( HWND hwnd, WPARAM wParam, LPARAM lParam )
 {
-    LONG style = GetWindowLongA( hwnd, GWL_STYLE );
+    LONG style = GetWindowLongW( hwnd, GWL_STYLE );
 
     switch(wParam)  /* Hit test */
     {
@@ -1451,7 +1451,7 @@ LONG NC_HandleNCLButtonDblClk( HWND hwnd, WPARAM wParam, LPARAM lParam )
     {
     case HTCAPTION:
         /* stop processing if WS_MAXIMIZEBOX is missing */
-        if (GetWindowLongA( hwnd, GWL_STYLE ) & WS_MAXIMIZEBOX)
+        if (GetWindowLongW( hwnd, GWL_STYLE ) & WS_MAXIMIZEBOX)
             SendMessageW( hwnd, WM_SYSCOMMAND,
                           IsZoomed(hwnd) ? SC_RESTORE : SC_MAXIMIZE, lParam );
 	break;

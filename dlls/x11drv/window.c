@@ -484,7 +484,7 @@ void X11DRV_set_wm_hints( Display *display, struct x11drv_win_data *data )
         wm_hints->input = !(style & WS_DISABLED);
 
         set_icon_hints( display, data, wm_hints,
-                        (HICON)GetClassLongW( data->hwnd, GCL_HICON ) );
+                        (HICON)GetClassLongPtrW( data->hwnd, GCLP_HICON ) );
 
         wm_hints->initial_state = (style & WS_MINIMIZE) ? IconicState : NormalState;
         wm_hints->window_group = group_leader;

@@ -118,7 +118,7 @@ extern "C" {
 
 /****** USER Macro APIs ******************************************************/
 
-#define     GetWindowInstance(hwnd) ((HMODULE)GetWindowLong(hwnd, GWL_HINSTANCE))
+#define     GetWindowInstance(hwnd) ((HMODULE)GetWindowLongPtr(hwnd, GWLP_HINSTANCE))
 
 #define     GetWindowStyle(hwnd)    ((DWORD)GetWindowLong(hwnd, GWL_STYLE))
 #define     GetWindowExStyle(hwnd)  ((DWORD)GetWindowLong(hwnd, GWL_EXSTYLE))
@@ -136,7 +136,7 @@ extern "C" {
 #define     SetWindowRedraw(hwnd, fRedraw)  \
 	        ((void)SendMessage(hwnd, WM_SETREDRAW, (WPARAM)(BOOL)(fRedraw), 0L))
 #define     SubclassWindow(hwnd, lpfn)      \
-		((WNDPROC)SetWindowLong((hwnd), GWL_WNDPROC, (LPARAM)(WNDPROC)(lpfn)))
+		((WNDPROC)SetWindowLongPtr((hwnd), GWLP_WNDPROC, (LPARAM)(WNDPROC)(lpfn)))
 
 #define     IsMinimized(hwnd)        IsIconic(hwnd)
 #define     IsMaximized(hwnd)        IsZoomed(hwnd)
@@ -166,7 +166,7 @@ extern "C" {
         (msg) == WM_CHARTOITEM          || \
         (msg) == WM_QUERYDRAGICON       || \
         (msg) == WM_INITDIALOG             \
-    ) ? (BOOL)(result) : (SetWindowLong((hwnd), DWL_MSGRESULT, (LPARAM)(LRESULT)(result)), TRUE))
+    ) ? (BOOL)(result) : (SetWindowLongPtr((hwnd), DWLP_MSGRESULT, (LPARAM)(LRESULT)(result)), TRUE))
 
 #define     DefDlgProcEx(hwnd, msg, wParam, lParam, pfRecursion) \
     (*(pfRecursion) = TRUE, DefDlgProc(hwnd, msg, wParam, lParam))
@@ -175,7 +175,7 @@ extern "C" {
     if (*(pfRecursion)) { *(pfRecursion) = FALSE; return FALSE; }
 
 #define     SubclassDialog(hwndDlg, lpfn) \
-		((DLGPROC)SetWindowLong(hwndDlg, DWL_DLGPROC, (LPARAM)(DLGPROC)(lpfn)))
+		((DLGPROC)SetWindowLongPtr(hwndDlg, DWLP_DLGPROC, (LPARAM)(DLGPROC)(lpfn)))
 
 #define     DeletePen(hpen)      DeleteObject((HGDIOBJ)(HPEN)(hpen))
 #define     SelectPen(hdc, hpen)    ((HPEN)SelectObject((hdc), (HGDIOBJ)(HPEN)(hpen)))

@@ -286,8 +286,8 @@ BOOL CALLBACK EnumWindowsProc(HWND hWnd, LPARAM lParam)
 
     if (!hIcon)
     {
-        hIcon = (HICON)GetClassLong(hWnd, bLargeIcon ? GCL_HICON : GCL_HICONSM);
-        if (!hIcon) hIcon = (HICON)GetClassLong(hWnd, bLargeIcon ? GCL_HICONSM : GCL_HICON);
+        hIcon = (HICON)GetClassLongPtr(hWnd, bLargeIcon ? GCLP_HICON : GCLP_HICONSM);
+        if (!hIcon) hIcon = (HICON)GetClassLongPtr(hWnd, bLargeIcon ? GCLP_HICONSM : GCLP_HICON);
         if (!hIcon) SendMessageTimeout(hWnd, WM_QUERYDRAGICON, 0, 0, 0, 1000, (unsigned long*)&hIcon);
         if (!hIcon) SendMessageTimeout(hWnd, WM_GETICON, bLargeIcon ? ICON_SMALL /*0*/ : ICON_BIG /*1*/, 0, 0, 1000, (unsigned long*)&hIcon);
     }

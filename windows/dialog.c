@@ -652,8 +652,8 @@ static HWND DIALOG_CreateIndirect( HINSTANCE hInst, LPCVOID dlgTemplate,
     
     if (template.helpId) SetWindowContextHelpId( hwnd, template.helpId );
 
-    if (unicode) SetWindowLongW( hwnd, DWL_DLGPROC, (LONG)dlgProc );
-    else SetWindowLongA( hwnd, DWL_DLGPROC, (LONG)dlgProc );
+    if (unicode) SetWindowLongPtrW( hwnd, DWLP_DLGPROC, (ULONG_PTR)dlgProc );
+    else SetWindowLongPtrA( hwnd, DWLP_DLGPROC, (ULONG_PTR)dlgProc );
 
     if (dlgInfo->hUserFont)
         SendMessageW( hwnd, WM_SETFONT, (WPARAM)dlgInfo->hUserFont, 0 );

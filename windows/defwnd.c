@@ -413,7 +413,7 @@ static LRESULT DEFWND_DefWinProc( HWND hwnd, UINT msg, WPARAM wParam, LPARAM lPa
 	    if( hdc )
 	    {
               HICON hIcon;
-	      if (IsIconic(hwnd) && ((hIcon = (HICON)GetClassLongW( hwnd, GCL_HICON))) )
+	      if (IsIconic(hwnd) && ((hIcon = (HICON)GetClassLongPtrW( hwnd, GCLP_HICON))) )
 	      {
                   RECT rc;
                   int x, y;
@@ -475,7 +475,7 @@ static LRESULT DEFWND_DefWinProc( HWND hwnd, UINT msg, WPARAM wParam, LPARAM lPa
 	{
 	    RECT rect;
             HDC hdc = (HDC)wParam;
-            HBRUSH hbr = (HBRUSH)GetClassLongW( hwnd, GCL_HBRBACKGROUND );
+            HBRUSH hbr = (HBRUSH)GetClassLongPtrW( hwnd, GCLP_HBRBACKGROUND );
             if (!hbr) return 0;
 
             if (GetClassLongW( hwnd, GCL_STYLE ) & CS_PARENTDC)
@@ -609,7 +609,7 @@ static LRESULT DEFWND_DefWinProc( HWND hwnd, UINT msg, WPARAM wParam, LPARAM lPa
         {
             UINT len;
 
-            HICON hIcon = (HICON)GetClassLongW( hwnd, GCL_HICON );
+            HICON hIcon = (HICON)GetClassLongPtrW( hwnd, GCLP_HICON );
             HINSTANCE instance = (HINSTANCE)GetWindowLongPtrW( hwnd, GWLP_HINSTANCE );
             if (hIcon) return (LRESULT)hIcon;
             for(len=1; len<64; len++)
@@ -680,7 +680,7 @@ static LRESULT DEFWND_DefWinProc( HWND hwnd, UINT msg, WPARAM wParam, LPARAM lPa
                 break;
             case ICON_SMALL2:
                 ret = wndPtr->hIconSmall;
-                if (!ret) ret = (HICON)GetClassLongA( hwnd, GCL_HICONSM );
+                if (!ret) ret = (HICON)GetClassLongPtrW( hwnd, GCLP_HICONSM );
                 /* FIXME: should have a default here if class icon is null */
                 break;
             default:

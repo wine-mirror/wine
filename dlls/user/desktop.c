@@ -142,7 +142,7 @@ BOOL WINAPI PaintDesktop(HDC hdc)
             (!fTileWallPaper && ((bitmapSize.cx < rect.right) || (bitmapSize.cy < rect.bottom))))
         {
             HBRUSH brush = hbrushPattern;
-            if (!brush) brush = (HBRUSH)GetClassLongA( hwnd, GCL_HBRBACKGROUND );
+            if (!brush) brush = (HBRUSH)GetClassLongPtrW( hwnd, GCLP_HBRBACKGROUND );
             /* Set colors in case pattern is a monochrome bitmap */
             SetBkColor( hdc, RGB(0,0,0) );
             SetTextColor( hdc, GetSysColor(COLOR_BACKGROUND) );

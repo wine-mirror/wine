@@ -1184,7 +1184,7 @@ static HWND WIN_CreateWindowEx( CREATESTRUCTA *cs, ATOM classAtom,
         if (cs->hMenu) MENU_SetMenu(hwnd, cs->hMenu);
         else
         {
-            LPCSTR menuName = (LPCSTR)GetClassLongA( hwnd, GCL_MENUNAME );
+            LPCSTR menuName = (LPCSTR)GetClassLongPtrA( hwnd, GCLP_MENUNAME );
             if (menuName)
             {
                 if (HIWORD(cs->hInstance))
@@ -1981,7 +1981,7 @@ static LONG_PTR WIN_GetWindowLong( HWND hwnd, INT offset, WINDOWPROCTYPE type )
                ERR( "- replaced invalid offset %d with %d\n",
                     offset, offset2 );
 
-                retvalue = *(LONG *)(((char *)wndPtr->wExtra) + offset2);
+                retvalue = *(LONG_PTR *)(((char *)wndPtr->wExtra) + offset2);
                 WIN_ReleasePtr( wndPtr );
                 return retvalue;
             }
@@ -1990,10 +1990,10 @@ static LONG_PTR WIN_GetWindowLong( HWND hwnd, INT offset, WINDOWPROCTYPE type )
             SetLastError( ERROR_INVALID_INDEX );
             return 0;
         }
-        retvalue = *(LONG *)(((char *)wndPtr->wExtra) + offset);
+        retvalue = *(LONG_PTR *)(((char *)wndPtr->wExtra) + offset);
         /* Special case for dialog window procedure */
-        if ((offset == DWL_DLGPROC) && (wndPtr->flags & WIN_ISDIALOG))
-            retvalue = (LONG)WINPROC_GetProc( (WNDPROC)retvalue, type );
+        if ((offset == DWLP_DLGPROC) && (wndPtr->flags & WIN_ISDIALOG))
+            retvalue = (LONG_PTR)WINPROC_GetProc( (WNDPROC)retvalue, type );
         WIN_ReleasePtr( wndPtr );
         return retvalue;
     }
@@ -2029,7 +2029,7 @@ static LONG_PTR WIN_SetWindowLong( HWND hwnd, INT offset, LONG_PTR newval,
 {
     STYLESTRUCT style;
     BOOL ok;
-    LONG retval = 0;
+    LONG_PTR retval = 0;
     WND *wndPtr;
 
     TRACE( "%p %d %lx %x\n", hwnd, offset, newval, type );
@@ -2092,7 +2092,7 @@ static LONG_PTR WIN_SetWindowLong( HWND hwnd, INT offset, LONG_PTR newval,
     case GWLP_USERDATA:
         break;
     case DWLP_DLGPROC:
-        if ((wndPtr->cbWndExtra + sizeof(LONG) >= DWLP_DLGPROC) && (wndPtr->flags & WIN_ISDIALOG))
+        if ((wndPtr->cbWndExtra + sizeof(LONG_PTR) >= DWLP_DLGPROC) && (wndPtr->flags & WIN_ISDIALOG))
         {
             WNDPROC *ptr = (WNDPROC *)((char *)wndPtr->wExtra + DWLP_DLGPROC);
             retval = (ULONG_PTR)WINPROC_GetProc( *ptr, type );
@@ -2102,7 +2102,7 @@ static LONG_PTR WIN_SetWindowLong( HWND hwnd, INT offset, LONG_PTR newval,
         }
         /* fall through */
     default:
-        if (offset < 0 || offset > (int)(wndPtr->cbWndExtra - sizeof(LONG)))
+        if (offset < 0 || offset > (int)(wndPtr->cbWndExtra - sizeof(LONG_PTR)))
         {
             WARN("Invalid offset %d\n", offset );
             WIN_ReleasePtr( wndPtr );
@@ -2722,7 +2722,7 @@ BOOL WIN_IsWindowDrawable( HWND hwnd, BOOL icon )
     LONG style = GetWindowLongW( hwnd, GWL_STYLE );
 
     if (!(style & WS_VISIBLE)) return FALSE;
-    if ((style & WS_MINIMIZE) && icon && GetClassLongA( hwnd, GCL_HICON ))  return FALSE;
+    if ((style & WS_MINIMIZE) && icon && GetClassLongPtrW( hwnd, GCLP_HICON ))  return FALSE;
 
     if (!(list = list_window_parents( hwnd ))) return TRUE;
     for (i = 0; list[i]; i++)

@@ -2406,14 +2406,14 @@ INT WINPROC_MapMsg32ATo16( HWND hwnd, UINT msg32, WPARAM wParam32,
             return 1;
         }
     case WM_PAINT:
-        if (IsIconic( hwnd ) && GetClassLongW( hwnd, GCL_HICON ))
+        if (IsIconic( hwnd ) && GetClassLongPtrW( hwnd, GCLP_HICON ))
         {
             *pmsg16 = WM_PAINTICON;
             *pwparam16 = 1;
         }
         return 0;
     case WM_ERASEBKGND:
-        if (IsIconic( hwnd ) && GetClassLongW( hwnd, GCL_HICON ))
+        if (IsIconic( hwnd ) && GetClassLongPtrW( hwnd, GCLP_HICON ))
             *pmsg16 = WM_ICONERASEBKGND;
         return 0;
     case WM_PAINTCLIPBOARD:
