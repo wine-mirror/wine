@@ -17,16 +17,11 @@
 #include <unistd.h>
 #include <stdlib.h>
 #include <string.h>
-#include <fcntl.h>
-#include <sys/ioctl.h>
 #include <assert.h>
 #include "multimedia.h"
 #include "digitalv.h"
 #include "heap.h"
-#include "ldt.h"
-#include "user.h"
-#include "driver.h"
-#include "callback.h"
+#include "winuser.h"
 #include "debugtools.h"
 #include "xmalloc.h"
 
@@ -84,7 +79,7 @@ _MCISTR_printtf(char *buf, UINT16 uDevType, DWORD timef, DWORD val)
     case MCI_FORMAT_SAMPLES:
     case MCI_VD_FORMAT_TRACK:
 	/*case MCI_SEQ_FORMAT_SONGPTR: sameas MCI_VD_FORMAT_TRACK */
-	sprintf(buf, "%ld",val);
+	sprintf(buf, "%ld", val);
 	break;
     case MCI_FORMAT_HMS:
 	/* well, the macros have the same content*/
@@ -433,6 +428,10 @@ MCISTR_Open(_MCISTR_PROTO_)
     _MCISTR_Unquote(pU->openParams.lpstrElementName);
 
     res = mciSendCommandA(0, MCI_OPEN, dwFlags, (DWORD)pU);
+
+    if (res == 0) {
+	snprintf(lpstrReturnString, uReturnLength, "%d", pU->openParams.wDeviceID);
+    }
 
     free(pU->openParams.lpstrElementName);
     free(pU->openParams.lpstrDeviceType);
@@ -2624,7 +2623,7 @@ DWORD WINAPI mciSendString16(LPCSTR lpstrCommand, LPSTR lpstrReturnString,
 	    res = MCIERR_INVALID_DEVICE_NAME;
 	    goto the_end;
 	}
-	uDevTyp = MCI_GetDrv(wDevID)->modp.wType;
+	uDevTyp = MCI_GetDriver(wDevID)->wType;
     }
 
     if (lpstrReturnString && uReturnLength > 0)
@@ -2644,6 +2643,7 @@ DWORD WINAPI mciSendString16(LPCSTR lpstrCommand, LPSTR lpstrReturnString,
 	res = MCIERR_MISSING_COMMAND_STRING;
     }
 the_end:
+    TRACE("=> %d [%s]\n", res, lpstrReturnString);
     free(keywords); free(cmd);
     return res;
 }
