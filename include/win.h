@@ -158,6 +158,7 @@ typedef struct
 #define BWA_SKIPICONIC		0x0008
 
   /* Window functions */
+extern void   WIN_Init( void );
 extern void   WIN_LockWnds();
 extern void   WIN_UnlockWnds();
 extern int    WIN_SuspendWndsLock();

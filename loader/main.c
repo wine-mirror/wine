@@ -36,6 +36,7 @@
 #include "global.h"
 #include "dce.h"
 #include "shell.h"
+#include "win.h"
 #include "winproc.h"
 #include "syslevel.h"
 #include "services.h"
@@ -212,6 +213,9 @@ BOOL WINAPI MAIN_UserInit(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserve
 
      /* Global atom table initialisation */
     if (!ATOM_Init( USER_HeapSel )) return FALSE;
+
+    /* Initialize window handling (critical section) */
+    WIN_Init();
 
     /* Initialize system colors and metrics*/
     SYSMETRICS_Init();

@@ -53,6 +53,16 @@ static WORD wDragHeight= 3;
 static CRITICAL_SECTION WIN_CritSection;
 
 /***********************************************************************
+ *           WIN_Init
+ */ 
+void WIN_Init( void )
+{
+    /* Initialisation of the critical section for thread safeness */
+    InitializeCriticalSection(&WIN_CritSection);
+    MakeCriticalSectionGlobal(&WIN_CritSection);
+}
+
+/***********************************************************************
  *           WIN_LockWnds
  *
  *   Locks access to all WND structures for thread safeness
@@ -604,10 +614,6 @@ BOOL WIN_CreateDesktopWindow(void)
 
     TRACE_(win)("Creating desktop window\n");
 
-    
-    /* Initialisation of the critical section for thread safeness */
-    InitializeCriticalSection(&WIN_CritSection);
-    MakeCriticalSectionGlobal(&WIN_CritSection);
 
     if (!ICONTITLE_Init() ||
 	!WINPOS_CreateInternalPosAtom() ||
