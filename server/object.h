@@ -126,6 +126,15 @@ extern void remove_client( struct client *client, int exit_code );
 extern void client_pass_fd( struct client *client, int pass_fd );
 extern void client_reply( struct client *client, unsigned int res );
 
+/* event functions */
+
+struct event;
+
+extern struct event *get_event_obj( struct process *process, int handle, unsigned int access );
+extern void pulse_event( struct event *event );
+extern void set_event( struct event *event );
+extern void reset_event( struct event *event );
+
 /* mutex functions */
 
 extern void abandon_mutexes( struct thread *thread );

@@ -59,45 +59,29 @@ static struct event *create_event( const char *name, size_t len,
     return event;
 }
 
-static int pulse_event( int handle )
+struct event *get_event_obj( struct process *process, int handle, unsigned int access )
 {
-    struct event *event;
+    return (struct event *)get_handle_obj( current->process, handle, access, &event_ops );
+}
 
-    if (!(event = (struct event *)get_handle_obj( current->process, handle,
-                                                  EVENT_MODIFY_STATE, &event_ops )))
-        return 0;
+void pulse_event( struct event *event )
+{
     event->signaled = 1;
     /* wake up all waiters if manual reset, a single one otherwise */
     wake_up( &event->obj, !event->manual_reset );
     event->signaled = 0;
-    release_object( event );
-    return 1;
 }
 
-static int set_event( int handle )
+void set_event( struct event *event )
 {
-    struct event *event;
-
-    if (!(event = (struct event *)get_handle_obj( current->process, handle,
-                                                  EVENT_MODIFY_STATE, &event_ops )))
-        return 0;
     event->signaled = 1;
     /* wake up all waiters if manual reset, a single one otherwise */
     wake_up( &event->obj, !event->manual_reset );
-    release_object( event );
-    return 1;
 }
 
-static int reset_event( int handle )
+void reset_event( struct event *event )
 {
-    struct event *event;
-
-    if (!(event = (struct event *)get_handle_obj( current->process, handle,
-                                                  EVENT_MODIFY_STATE, &event_ops )))
-        return 0;
     event->signaled = 0;
-    release_object( event );
-    return 1;
 }
 
 static void event_dump( struct object *obj, int verbose )
@@ -149,18 +133,22 @@ DECL_HANDLER(open_event)
 /* do an event operation */
 DECL_HANDLER(event_op)
 {
+    struct event *event;
+
+    if (!(event = get_event_obj( current->process, req->handle, EVENT_MODIFY_STATE ))) return;
     switch(req->op)
     {
     case PULSE_EVENT:
-        pulse_event( req->handle );
+        pulse_event( event );
         break;
     case SET_EVENT:
-        set_event( req->handle );
+        set_event( event );
         break;
     case RESET_EVENT:
-        reset_event( req->handle );
+        reset_event( event );
         break;
     default:
         fatal_protocol_error( current, "event_op: invalid operation %d\n", req->op );
     }
+    release_object( event );
 }
