@@ -360,6 +360,36 @@ DECL_WINELIB_TYPE_AW(LPCHOOSEFONT)
 #define CommDlg_OpenSave_SetDefExt(_hdlg, _pszext) \
         (void)SNDMSG(_hdlg, CDM_SETDEFEXT, 0, (LPARAM)(LPSTR)_pszext)
 
+#define CommDlg_OpenSave_GetSpecA(_hdlg, _psz, _cbmax) \
+        (int)SNDMSG(_hdlg, CDM_GETSPEC, (WPARAM)_cbmax, (LPARAM)(LPSTR)_psz)
+#define CommDlg_OpenSave_GetSpecW(_hdlg, _psz, _cbmax) \
+        (int)SNDMSG(_hdlg, CDM_GETSPEC, (WPARAM)_cbmax, (LPARAM)(LPWSTR)_psz)
+#define CommDlg_OpenSave_GetSpec WINELIB_NAME_AW(CommDlg_OpenSave_GetSpec)
+
+#define CommDlg_OpenSave_GetFilePathA(_hdlg, _psz, _cbmax) \
+        (int)SNDMSG(_hdlg, CDM_GETFILEPATH, (WPARAM)_cbmax, (LPARAM)(LPSTR)_psz)
+#define CommDlg_OpenSave_GetFilePathW(_hdlg, _psz, _cbmax) \
+        (int)SNDMSG(_hdlg, CDM_GETFILEPATH, (WPARAM)_cbmax, (LPARAM)(LPWSTR)_psz)
+#define CommDlg_OpenSave_GetFilePath WINELIB_NAME_AW(CommDlg_OpenSave_GetFilePath)
+
+#define CommDlg_OpenSave_GetFolderPathA(_hdlg, _psz, _cbmax) \
+        (int)SNDMSG(_hdlg, CDM_GETFOLDERPATH, (WPARAM)_cbmax, (LPARAM)(LPSTR)_psz)
+#define CommDlg_OpenSave_GetFolderPathW(_hdlg, _psz, _cbmax) \
+        (int)SNDMSG(_hdlg, CDM_GETFOLDERPATH, (WPARAM)_cbmax, (LPARAM)(LPWSTR)_psz)
+#define CommDlg_OpenSave_GetFolderPath WINELIB_NAME_AW(CommDlg_OpenSave_GetFolderPath)
+
+#define CommDlg_OpenSave_GetFolderIDList(_hdlg, _pidl, _cbmax) \
+        (int)SNDMSG(_hdlg, CDM_GETFOLDERIDLIST, (WPARAM)_cbmax, (LPARAM)(LPVOID)_pidl)
+
+#define CommDlg_OpenSave_SetControlText(_hdlg, _id, _text) \
+        (void)SNDMSG(_hdlg, CDM_SETCONTROLTEXT, (WPARAM)_id, (LPARAM)(LPSTR)_text)
+
+#define CommDlg_OpenSave_HideControl(_hdlg, _id) \
+        (void)SNDMSG(_hdlg, CDM_HIDECONTROL, (WPARAM)_id, 0)
+
+#define CommDlg_OpenSave_SetDefExt(_hdlg, _pszext) \
+        (void)SNDMSG(_hdlg, CDM_SETDEFEXT, 0, (LPARAM)(LPSTR)_pszext)
+
 
 typedef UINT (CALLBACK *LPPRINTHOOKPROC) (HWND, UINT, WPARAM, LPARAM);
 typedef UINT (CALLBACK *LPSETUPHOOKPROC) (HWND, UINT, WPARAM, LPARAM);
