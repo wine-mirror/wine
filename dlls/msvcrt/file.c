@@ -2518,7 +2518,20 @@ MSVCRT_FILE* MSVCRT_freopen(const char *path, const char *mode,MSVCRT_FILE* file
  */
 int MSVCRT_fsetpos(MSVCRT_FILE* file, MSVCRT_fpos_t *pos)
 {
-  return _lseek(file->_file,*pos,SEEK_SET);
+  /* Note that all this has been lifted 'as is' from fseek */
+  if(file->_flag & MSVCRT__IOWRT)
+	msvcrt_flush_buffer(file);
+
+  /* Discard buffered input */
+  file->_cnt = 0;
+  file->_ptr = file->_base;
+  
+  /* Reset direction of i/o */
+  if(file->_flag & MSVCRT__IORW) {
+        file->_flag &= ~(MSVCRT__IOREAD|MSVCRT__IOWRT);
+  }
+
+  return _lseeki64(file->_file,*pos,SEEK_SET);
 }
 
 /*********************************************************************
@@ -2545,8 +2558,23 @@ LONG MSVCRT_ftell(MSVCRT_FILE* file)
  */
 int MSVCRT_fgetpos(MSVCRT_FILE* file, MSVCRT_fpos_t *pos)
 {
-  *pos = MSVCRT_ftell(file);
-  return (*pos == -1? -1 : 0);
+  /* This code has been lifted form the MSVCRT_ftell function */
+  int off=0;
+
+  *pos = _lseeki64(file->_file,0,SEEK_CUR);
+
+  if (*pos == -1) return -1;
+  
+  if(file->_bufsiz)  {
+	if( file->_flag & MSVCRT__IOWRT ) {
+		off = file->_ptr - file->_base;
+	} else {
+		off = -file->_cnt;
+	}
+  }
+  *pos += off;
+  
+  return 0;
 }
 
 /*********************************************************************
