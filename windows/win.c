@@ -664,45 +664,55 @@ static void WIN_FixCoordinates( CREATESTRUCTA *cs, INT *sw)
     if (cs->x == CW_USEDEFAULT || cs->x == CW_USEDEFAULT16 ||
         cs->cx == CW_USEDEFAULT || cs->cx == CW_USEDEFAULT16)
     {
-        STARTUPINFOA info;
-        int defcx = 0, defcy = 0;
-        info.dwFlags = 0;
-        if (!(cs->style & (WS_CHILD | WS_POPUP))) GetStartupInfoA( &info );
-
-        if (cs->x == CW_USEDEFAULT || cs->x == CW_USEDEFAULT16)
+        if (cs->style & (WS_CHILD | WS_POPUP))
         {
-            /* Never believe Microsoft's documentation... CreateWindowEx doc says 
-             * that if an overlapped window is created with WS_VISIBLE style bit 
-             * set and the x parameter is set to CW_USEDEFAULT, the system ignores
-             * the y parameter. However, disassembling NT implementation (WIN32K.SYS)
-             * reveals that
-             *
-             * 1) not only it checks for CW_USEDEFAULT but also for CW_USEDEFAULT16 
-             * 2) it does not ignore the y parameter as the docs claim; instead, it 
-             *    uses it as second parameter to ShowWindow() unless y is either
-             *    CW_USEDEFAULT or CW_USEDEFAULT16.
-             * 
-             * The fact that we didn't do 2) caused bogus windows pop up when wine
-             * was running apps that were using this obscure feature. Example - 
-             * calc.exe that comes with Win98 (only Win98, it's different from 
-             * the one that comes with Win95 and NT)
-             */
-            if (cs->y != CW_USEDEFAULT && cs->y != CW_USEDEFAULT16) *sw = cs->y;
-            cs->x = (info.dwFlags & STARTF_USEPOSITION) ? info.dwX : 0;
-            cs->y = (info.dwFlags & STARTF_USEPOSITION) ? info.dwY : 0;
+            if (cs->x == CW_USEDEFAULT || cs->x == CW_USEDEFAULT16) cs->x = cs->y = 0;
+            if (cs->cx == CW_USEDEFAULT || cs->cx == CW_USEDEFAULT16) cs->cx = cs->cy = 0;
         }
-
-        if (!(cs->style & (WS_CHILD | WS_POPUP)))
-        { /* if no other hint from the app, pick 3/4 of the screen real estate */
-            RECT r;
-            SystemParametersInfoA( SPI_GETWORKAREA, 0, &r, 0);
-            defcx = (((r.right - r.left) * 3) / 4) - cs->x;
-            defcy = (((r.bottom - r.top) * 3) / 4) - cs->y;
-        }
-        if (cs->cx == CW_USEDEFAULT || cs->cx == CW_USEDEFAULT16)
+        else  /* overlapped window */
         {
-            cs->cx = (info.dwFlags & STARTF_USESIZE) ? info.dwXSize : defcx;
-            cs->cy = (info.dwFlags & STARTF_USESIZE) ? info.dwYSize : defcy;
+            STARTUPINFOA info;
+
+            GetStartupInfoA( &info );
+
+            if (cs->x == CW_USEDEFAULT || cs->x == CW_USEDEFAULT16)
+            {
+                /* Never believe Microsoft's documentation... CreateWindowEx doc says 
+                 * that if an overlapped window is created with WS_VISIBLE style bit 
+                 * set and the x parameter is set to CW_USEDEFAULT, the system ignores
+                 * the y parameter. However, disassembling NT implementation (WIN32K.SYS)
+                 * reveals that
+                 *
+                 * 1) not only it checks for CW_USEDEFAULT but also for CW_USEDEFAULT16 
+                 * 2) it does not ignore the y parameter as the docs claim; instead, it 
+                 *    uses it as second parameter to ShowWindow() unless y is either
+                 *    CW_USEDEFAULT or CW_USEDEFAULT16.
+                 * 
+                 * The fact that we didn't do 2) caused bogus windows pop up when wine
+                 * was running apps that were using this obscure feature. Example - 
+                 * calc.exe that comes with Win98 (only Win98, it's different from 
+                 * the one that comes with Win95 and NT)
+                 */
+                if (cs->y != CW_USEDEFAULT && cs->y != CW_USEDEFAULT16) *sw = cs->y;
+                cs->x = (info.dwFlags & STARTF_USEPOSITION) ? info.dwX : 0;
+                cs->y = (info.dwFlags & STARTF_USEPOSITION) ? info.dwY : 0;
+            }
+
+            if (cs->cx == CW_USEDEFAULT || cs->cx == CW_USEDEFAULT16)
+            {
+                if (info.dwFlags & STARTF_USESIZE)
+                {
+                    cs->cx = info.dwXSize;
+                    cs->cy = info.dwYSize;
+                }
+                else  /* if no other hint from the app, pick 3/4 of the screen real estate */
+                {
+                    RECT r;
+                    SystemParametersInfoA( SPI_GETWORKAREA, 0, &r, 0);
+                    cs->cx = (((r.right - r.left) * 3) / 4) - cs->x;
+                    cs->cy = (((r.bottom - r.top) * 3) / 4) - cs->y;
+                }
+            }
         }
     }
 }
