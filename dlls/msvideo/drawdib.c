@@ -147,6 +147,7 @@ BOOL VFWAPI DrawDibBegin(HDRAWDIB hdd,
 	TRACE("(%d,0x%lx,%d,%d,%p,%d,%d,0x%08lx)\n",
 		hdd,(DWORD)hdc,dxDst,dyDst,lpbi,dxSrc,dySrc,(DWORD)wFlags
 	);
+	TRACE("lpbi: %ld,%ld/%ld,%d,%d,%ld,%ld,%ld,%ld,%ld,%ld\n", lpbi->biSize, lpbi->biWidth, lpbi->biHeight, lpbi->biPlanes, lpbi->biBitCount, lpbi->biCompression, lpbi->biSizeImage, lpbi->biXPelsPerMeter, lpbi->biYPelsPerMeter, lpbi->biClrUsed, lpbi->biClrImportant);
 
 	if (wFlags)
 		FIXME("wFlags == 0x%08lx not handled\n",(DWORD)wFlags);
@@ -190,10 +191,12 @@ BOOL VFWAPI DrawDibBegin(HDRAWDIB hdd,
 			TRACE("biBitCount == %d\n",whdd->lpbiOut->biBitCount);
 		}
 	} else {
+		DWORD dwSize;
 		/* No compression */
 		TRACE("Not compressed!\n");
-		whdd->lpbiOut = HeapAlloc(GetProcessHeap(),0,lpbi->biSize);
-		memcpy(whdd->lpbiOut,lpbi,lpbi->biSize);
+		dwSize = lpbi->biSize + lpbi->biClrUsed*sizeof(RGBQUAD);
+		whdd->lpbiOut = HeapAlloc(GetProcessHeap(),0,dwSize);
+		memcpy(whdd->lpbiOut,lpbi,dwSize);
 	}
 
 	if (ret) {
@@ -250,19 +253,13 @@ BOOL16 VFWAPI DrawDibBegin16(HDRAWDIB16 hdd,
 /**********************************************************************
  *		DrawDibDraw		[MSVFW32.6]
  */
-BOOL VFWAPI DrawDibDraw(HDRAWDIB hdd,             
-						HDC hdc,
-						INT xDst,
-						INT yDst,
-						INT dxDst,
-						INT dyDst,
-						LPBITMAPINFOHEADER lpbi,
-						LPVOID lpBits,
-						INT xSrc,
-						INT ySrc,
-						INT dxSrc,
-						INT dySrc,
-						UINT wFlags) {
+BOOL VFWAPI DrawDibDraw(HDRAWDIB hdd, HDC hdc,
+	INT xDst, INT yDst, INT dxDst, INT dyDst,
+	LPBITMAPINFOHEADER lpbi,
+	LPVOID lpBits,
+	INT xSrc, INT ySrc, INT dxSrc, INT dySrc,
+	UINT wFlags
+) {
 	WINE_HDD *whdd;
 	BOOL ret = TRUE;
 
@@ -290,10 +287,14 @@ BOOL VFWAPI DrawDibDraw(HDRAWDIB hdd,
 
 #undef CHANGED
 
-    if ((dxDst == -1) && (dyDst == -1)) {
+        if ((dxDst == -1) && (dyDst == -1)) {
 		dxDst = dxSrc;
 		dyDst = dySrc;
 	}
+
+	/* biSizeImage may be set to 0 for BI_RGB (uncompressed) bitmaps */
+	if ((lpbi->biCompression == BI_RGB) && (lpbi->biSizeImage == 0))
+	    lpbi->biSizeImage = ((lpbi->biWidth * lpbi->biBitCount + 31) / 32) * 4 * lpbi->biHeight;
 
 	if (lpbi->biCompression) {
 		DWORD flags = 0;
@@ -308,9 +309,11 @@ BOOL VFWAPI DrawDibDraw(HDRAWDIB hdd,
 		memcpy(whdd->lpvbits,lpBits,lpbi->biSizeImage);
 	}
 
-	SelectPalette(hdc,whdd->hpal,FALSE);
+	if (whdd->hpal)
+	    SelectPalette(hdc,whdd->hpal,FALSE);
 
-	StretchBlt(whdd->hdc,xDst,yDst,dxDst,dyDst,whdd->hMemDC,xSrc,ySrc,dxSrc,dySrc,SRCCOPY);
+	if (!(StretchBlt(whdd->hdc,xDst,yDst,dxDst,dyDst,whdd->hMemDC,xSrc,ySrc,dxSrc,dySrc,SRCCOPY)))
+	    ret = FALSE;
 
 	GlobalUnlock16(hdd);
 	return ret;
