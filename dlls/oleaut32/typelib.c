@@ -4214,6 +4214,11 @@ _copy_arg(	ITypeInfo2 *tinfo, TYPEDESC *tdesc,
     UINT arglen = _argsize(vt)*sizeof(DWORD);
     VARTYPE	oldvt;
 
+    if ((vt==VT_PTR) && tdesc && (tdesc->u.lptdesc->vt == VT_VARIANT)) {
+	memcpy(argpos,&arg,sizeof(void*));
+	return S_OK;
+    }
+
     if (V_VT(arg) == vt) {
 	memcpy(argpos, &V_UNION(arg,lVal), arglen);
 	return S_OK;
