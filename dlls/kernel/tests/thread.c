@@ -24,7 +24,6 @@
 #include <stdarg.h>
 
 #include "wine/test.h"
-#include <ntstatus.h>
 #include <windef.h>
 #include <winbase.h>
 #include <winnt.h>
