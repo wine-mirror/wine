@@ -104,7 +104,10 @@ BOOL HCR_GetDefaultIcon (LPCSTR szClass, LPSTR szDest, DWORD len, LPDWORD dwNr)
 	      ExpandEnvironmentStringsA(szDest, sTemp, MAX_PATH);
 	      strcpy(szDest, sTemp);
 	    }
-	    if (ParseFieldA (szDest, 2, sNum, 5)) *dwNr=atoi(sNum);
+	    if (ParseFieldA (szDest, 2, sNum, 5))
+               *dwNr=atoi(sNum);
+            else
+               *dwNr=0; /* sometimes the icon number is missing */
 	    ParseFieldA (szDest, 1, szDest, len);
 	    ret = TRUE;
 	  }	
