@@ -441,7 +441,7 @@ void BuildSpec32File( FILE *outfile )
     AssignOrdinals();
     nr_exports = Base <= Limit ? Limit - Base + 1 : 0;
 
-    resolve_imports( outfile );
+    resolve_imports();
 
     fprintf( outfile, "/* File generated automatically from %s; do not edit! */\n\n",
              input_file_name );
@@ -451,7 +451,7 @@ void BuildSpec32File( FILE *outfile )
     fprintf( outfile, "extern char pe_header[];\n" );
     fprintf( outfile, "asm(\".section .text\\n\\t\"\n" );
     fprintf( outfile, "    \".align %d\\n\"\n", get_alignment(page_size) );
-    fprintf( outfile, "    \"pe_header:\\t.fill %ld,1,0\\n\\t\");\n", page_size );
+    fprintf( outfile, "    \"" PREFIX "pe_header:\\t.fill %ld,1,0\\n\\t\");\n", page_size );
 
     fprintf( outfile, "static const char dllname[] = \"%s\";\n\n", DLLName );
     fprintf( outfile, "extern int __wine_spec_exports[];\n\n" );

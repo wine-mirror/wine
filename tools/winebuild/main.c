@@ -244,7 +244,10 @@ int main(int argc, char **argv)
         do_usage();
         break;
     }
-    fclose( output_file );
-    output_file_name = NULL;
+    if (output_file_name)
+    {
+        fclose( output_file );
+        output_file_name = NULL;
+    }
     return 0;
 }

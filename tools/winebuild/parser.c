@@ -264,8 +264,6 @@ static void ParseExportFunction( ORDDEF *odp )
         fatal_error( "Too many arguments\n" );
 
     odp->u.func.arg_types[i] = '\0';
-    if ((odp->type == TYPE_STDCALL) && !i)
-        odp->type = TYPE_CDECL; /* stdcall is the same as cdecl for 0 args */
     if (odp->type == TYPE_VARARGS)
         odp->flags |= FLAG_NORELAY;  /* no relay debug possible for varags entry point */
     odp->link_name = xstrdup( GetToken(0) );

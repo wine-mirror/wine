@@ -519,8 +519,8 @@ static void output_stub_funcs( FILE *outfile )
         fprintf( outfile, "    void *rec, *addr;\n" );
         fprintf( outfile, "    unsigned int params;\n" );
         fprintf( outfile, "    const void *info[15];\n" );
-        fprintf( outfile, "  } rec;\n" );
-        fprintf( outfile, "  extern void RtlRaiseException( struct exc_record * );\n\n" );
+        fprintf( outfile, "  } rec;\n\n" );
+        fprintf( outfile, "  extern void __stdcall RtlRaiseException( struct exc_record * );\n\n" );
         fprintf( outfile, "  rec.code    = 0x%08x;\n", EXCEPTION_WINE_STUB );
         fprintf( outfile, "  rec.flags   = %d;\n", EH_NONCONTINUABLE );
         fprintf( outfile, "  rec.rec     = 0;\n" );
@@ -582,6 +582,13 @@ void BuildSpec16File( FILE *outfile )
     strupper( DLLName );
 
     fprintf( outfile, "static const char dllname[] = \"%s\";\n\n", DLLName );
+
+#ifdef __i386__
+    fprintf( outfile, "#define __stdcall __attribute__((__stdcall__))\n\n" );
+#else
+    fprintf( outfile, "#define __stdcall\n\n" );
+#endif
+
     output_stub_funcs( outfile );
 
     /* Build sorted list of all argument types, without duplicates */

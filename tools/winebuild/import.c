@@ -317,7 +317,7 @@ static void remove_ignored_symbols(void)
 }
 
 /* resolve the imports for a Win32 module */
-int resolve_imports( FILE *outfile )
+int resolve_imports( void )
 {
     int i, j;
 

@@ -137,7 +137,7 @@ extern int get_alignment(int alignBoundary);
 
 extern void add_import_dll( const char *name, int delay );
 extern void add_ignore_symbol( const char *name );
-extern int resolve_imports( FILE *outfile );
+extern int resolve_imports( void );
 extern int output_imports( FILE *outfile );
 extern void load_res32_file( const char *name );
 extern int output_resources( FILE *outfile );
