@@ -21,20 +21,28 @@ RC_BINARIES = wine.ico
 TESTBINS = \
 	advapi32_test.exe$(DLLEXT) \
 	comctl32_test.exe$(DLLEXT) \
+	ddraw_test.exe$(DLLEXT) \
 	dsound_test.exe$(DLLEXT) \
 	gdi32_test.exe$(DLLEXT) \
 	iphlpapi_test.exe$(DLLEXT) \
 	kernel32_test.exe$(DLLEXT) \
+	lz32_test.exe$(DLLEXT) \
 	mapi32_test.exe$(DLLEXT) \
 	mlang_test.exe$(DLLEXT) \
 	msacm32_test.exe$(DLLEXT) \
+	mscms_test.exe$(DLLEXT) \
+	msi_test.exe$(DLLEXT) \
 	msvcrt_test.exe$(DLLEXT) \
 	msvcrtd_test.exe$(DLLEXT) \
 	netapi32_test.exe$(DLLEXT) \
 	ntdll_test.exe$(DLLEXT) \
+	ole32_test.exe$(DLLEXT) \
 	oleaut32_test.exe$(DLLEXT) \
 	psapi_test.exe$(DLLEXT) \
+	quartz_test.exe$(DLLEXT) \
 	rpcrt4_test.exe$(DLLEXT) \
+	rsabase_test.exe$(DLLEXT) \
+	rsaenh_test.exe$(DLLEXT) \
 	shell32_test.exe$(DLLEXT) \
 	shlwapi_test.exe$(DLLEXT) \
 	urlmon_test.exe$(DLLEXT) \
@@ -82,6 +90,8 @@ advapi32_test.exe$(DLLEXT): $(DLLDIR)/advapi32/tests/advapi32_test.exe$(DLLEXT)
 	cp $(DLLDIR)/advapi32/tests/advapi32_test.exe$(DLLEXT) $@ && $(STRIP) $@
 comctl32_test.exe$(DLLEXT): $(DLLDIR)/comctl32/tests/comctl32_test.exe$(DLLEXT)
 	cp $(DLLDIR)/comctl32/tests/comctl32_test.exe$(DLLEXT) $@ && $(STRIP) $@
+ddraw_test.exe$(DLLEXT): $(DLLDIR)/ddraw/tests/ddraw_test.exe$(DLLEXT)
+	cp $(DLLDIR)/ddraw/tests/ddraw_test.exe$(DLLEXT) $@ && $(STRIP) $@
 dsound_test.exe$(DLLEXT): $(DLLDIR)/dsound/tests/dsound_test.exe$(DLLEXT)
 	cp $(DLLDIR)/dsound/tests/dsound_test.exe$(DLLEXT) $@ && $(STRIP) $@
 gdi32_test.exe$(DLLEXT): $(DLLDIR)/gdi/tests/gdi32_test.exe$(DLLEXT)
@@ -90,12 +100,18 @@ iphlpapi_test.exe$(DLLEXT): $(DLLDIR)/iphlpapi/tests/iphlpapi_test.exe$(DLLEXT)
 	cp $(DLLDIR)/iphlpapi/tests/iphlpapi_test.exe$(DLLEXT) $@ && $(STRIP) $@
 kernel32_test.exe$(DLLEXT): $(DLLDIR)/kernel/tests/kernel32_test.exe$(DLLEXT)
 	cp $(DLLDIR)/kernel/tests/kernel32_test.exe$(DLLEXT) $@ && $(STRIP) $@
+lz32_test.exe$(DLLEXT): $(DLLDIR)/lzexpand/tests/lz32_test.exe$(DLLEXT)
+	cp $(DLLDIR)/lzexpand/tests/lz32_test.exe$(DLLEXT) $@ && $(STRIP) $@
 mapi32_test.exe$(DLLEXT): $(DLLDIR)/mapi32/tests/mapi32_test.exe$(DLLEXT)
 	cp $(DLLDIR)/mapi32/tests/mapi32_test.exe$(DLLEXT) $@ && $(STRIP) $@
 mlang_test.exe$(DLLEXT): $(DLLDIR)/mlang/tests/mlang_test.exe$(DLLEXT)
 	cp $(DLLDIR)/mlang/tests/mlang_test.exe$(DLLEXT) $@ && $(STRIP) $@
 msacm32_test.exe$(DLLEXT): $(DLLDIR)/msacm/tests/msacm32_test.exe$(DLLEXT)
 	cp $(DLLDIR)/msacm/tests/msacm32_test.exe$(DLLEXT) $@ && $(STRIP) $@
+mscms_test.exe$(DLLEXT): $(DLLDIR)/mscms/tests/mscms_test.exe$(DLLEXT)
+	cp $(DLLDIR)/mscms/tests/mscms_test.exe$(DLLEXT) $@ && $(STRIP) $@
+msi_test.exe$(DLLEXT): $(DLLDIR)/msi/tests/msi_test.exe$(DLLEXT)
+	cp $(DLLDIR)/msi/tests/msi_test.exe$(DLLEXT) $@ && $(STRIP) $@
 msvcrt_test.exe$(DLLEXT): $(DLLDIR)/msvcrt/tests/msvcrt_test.exe$(DLLEXT)
 	cp $(DLLDIR)/msvcrt/tests/msvcrt_test.exe$(DLLEXT) $@ && $(STRIP) $@
 msvcrtd_test.exe$(DLLEXT): $(DLLDIR)/msvcrtd/tests/msvcrtd_test.exe$(DLLEXT)
@@ -104,12 +120,20 @@ netapi32_test.exe$(DLLEXT): $(DLLDIR)/netapi32/tests/netapi32_test.exe$(DLLEXT)
 	cp $(DLLDIR)/netapi32/tests/netapi32_test.exe$(DLLEXT) $@ && $(STRIP) $@
 ntdll_test.exe$(DLLEXT): $(DLLDIR)/ntdll/tests/ntdll_test.exe$(DLLEXT)
 	cp $(DLLDIR)/ntdll/tests/ntdll_test.exe$(DLLEXT) $@ && $(STRIP) $@
+ole32_test.exe$(DLLEXT): $(DLLDIR)/ole32/tests/ole32_test.exe$(DLLEXT)
+	cp $(DLLDIR)/ole32/tests/ole32_test.exe$(DLLEXT) $@ && $(STRIP) $@
 oleaut32_test.exe$(DLLEXT): $(DLLDIR)/oleaut32/tests/oleaut32_test.exe$(DLLEXT)
 	cp $(DLLDIR)/oleaut32/tests/oleaut32_test.exe$(DLLEXT) $@ && $(STRIP) $@
 psapi_test.exe$(DLLEXT): $(DLLDIR)/psapi/tests/psapi_test.exe$(DLLEXT)
 	cp $(DLLDIR)/psapi/tests/psapi_test.exe$(DLLEXT) $@ && $(STRIP) $@
+quartz_test.exe$(DLLEXT): $(DLLDIR)/quartz/tests/quartz_test.exe$(DLLEXT)
+	cp $(DLLDIR)/quartz/tests/quartz_test.exe$(DLLEXT) $@ && $(STRIP) $@
 rpcrt4_test.exe$(DLLEXT): $(DLLDIR)/rpcrt4/tests/rpcrt4_test.exe$(DLLEXT)
 	cp $(DLLDIR)/rpcrt4/tests/rpcrt4_test.exe$(DLLEXT) $@ && $(STRIP) $@
+rsabase_test.exe$(DLLEXT): $(DLLDIR)/rsabase/tests/rsabase_test.exe$(DLLEXT)
+	cp $(DLLDIR)/rsabase/tests/rsabase_test.exe$(DLLEXT) $@ && $(STRIP) $@
+rsaenh_test.exe$(DLLEXT): $(DLLDIR)/rsaenh/tests/rsaenh_test.exe$(DLLEXT)
+	cp $(DLLDIR)/rsaenh/tests/rsaenh_test.exe$(DLLEXT) $@ && $(STRIP) $@
 shell32_test.exe$(DLLEXT): $(DLLDIR)/shell32/tests/shell32_test.exe$(DLLEXT)
 	cp $(DLLDIR)/shell32/tests/shell32_test.exe$(DLLEXT) $@ && $(STRIP) $@
 shlwapi_test.exe$(DLLEXT): $(DLLDIR)/shlwapi/tests/shlwapi_test.exe$(DLLEXT)
