@@ -19,6 +19,7 @@ struct import
     int          nb_exports;  /* number of exported functions */
     char       **imports;     /* functions we want to import from this dll */
     int          nb_imports;  /* number of imported functions */
+    int          lineno;      /* line in .spec file where import is defined */
 };
 
 static char **undef_symbols;  /* list of undefined symbols */
@@ -133,6 +134,8 @@ void add_import_dll( const char *name )
     imp->dll        = xstrdup( name );
     imp->imports    = NULL;
     imp->nb_imports = 0;
+    /* GetToken for the file name has swallowed the '\n', hence pointing to next line */
+    imp->lineno = current_line - 1;
 
     read_exported_symbols( name, imp );
 
@@ -197,22 +200,26 @@ static void add_extra_undef_symbols(void)
 }
 
 /* warn if a given dll is not used, but check forwards first */
-static void warn_unused( const char *dllname )
+static void warn_unused( const struct import* imp )
 {
-    int i;
-    size_t len = strlen(dllname);
-    const char *p = strchr( dllname, '.' );
-    if (p && !strcasecmp( p, ".dll" )) len = p - dllname;
+    int i, curline;
+    size_t len = strlen(imp->dll);
+    const char *p = strchr( imp->dll, '.' );
+    if (p && !strcasecmp( p, ".dll" )) len = p - imp->dll;
 
     for (i = Base; i <= Limit; i++)
     {
         ORDDEF *odp = Ordinals[i];
         if (!odp || odp->type != TYPE_FORWARD) continue;
-        if (!strncasecmp( odp->u.fwd.link_name, dllname, len ) &&
+        if (!strncasecmp( odp->u.fwd.link_name, imp->dll, len ) &&
             odp->u.fwd.link_name[len] == '.')
             return;  /* found an import, do not warn */
     }
-    warning( "%s imported but no symbols used\n", dllname );
+    /* switch current_line temporarily to the line of the import declaration */
+    curline = current_line;
+    current_line = imp->lineno;
+    warning( "%s imported but no symbols used\n", imp->dll );
+    current_line = curline;
 }
 
 /* read in the list of undefined symbols */
@@ -269,7 +276,7 @@ int resolve_imports( FILE *outfile )
             else undef_symbols[j - off] = undef_symbols[j];
         }
         nb_undef_symbols -= off;
-        if (!off) warn_unused( imp->dll );
+        if (!off) warn_unused( imp );
     }
     return 1;
 }
