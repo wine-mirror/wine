@@ -2126,6 +2126,10 @@ INT WINAPI MulDiv(
 BOOL WINAPI DosDateTimeToFileTime( WORD fatdate, WORD fattime, LPFILETIME ft)
 {
     struct tm newtm;
+#ifndef HAVE_TIMEGM
+    struct tm *gtm;
+    time_t time1, time2;
+#endif
 
     newtm.tm_sec  = (fattime & 0x1f) * 2;
     newtm.tm_min  = (fattime >> 5) & 0x3f;
@@ -2133,7 +2137,14 @@ BOOL WINAPI DosDateTimeToFileTime( WORD fatdate, WORD fattime, LPFILETIME ft)
     newtm.tm_mday = (fatdate & 0x1f);
     newtm.tm_mon  = ((fatdate >> 5) & 0x0f) - 1;
     newtm.tm_year = (fatdate >> 9) + 80;
-    RtlSecondsSince1970ToTime( mktime( &newtm ), ft );
+#ifdef HAVE_TIMEGM
+    RtlSecondsSince1970ToTime( timegm(&newtm), ft );
+#else
+    time1 = mktime(&newtm);
+    gtm = gmtime(&time1);
+    time2 = mktime(gtm);
+    RtlSecondsSince1970ToTime( 2*time1-time2, ft );
+#endif
     return TRUE;
 }
 
@@ -2145,7 +2156,7 @@ BOOL WINAPI FileTimeToDosDateTime( const FILETIME *ft, LPWORD fatdate,
                                      LPWORD fattime )
 {
     time_t unixtime = DOSFS_FileTimeToUnixTime( ft, NULL );
-    struct tm *tm = localtime( &unixtime );
+    struct tm *tm = gmtime( &unixtime );
     if (fattime)
         *fattime = (tm->tm_hour << 11) + (tm->tm_min << 5) + (tm->tm_sec / 2);
     if (fatdate)
@@ -2163,11 +2174,14 @@ BOOL WINAPI LocalFileTimeToFileTime( const FILETIME *localft,
 {
     struct tm *xtm;
     DWORD remainder;
+    time_t utctime;
 
-    /* convert from local to UTC. Perhaps not correct. FIXME */
-    time_t unixtime = DOSFS_FileTimeToUnixTime( localft, &remainder );
-    xtm = gmtime( &unixtime );
-    DOSFS_UnixTimeToFileTime( mktime(xtm), utcft, remainder );
+    /* Converts from local to UTC. */
+    time_t localtime = DOSFS_FileTimeToUnixTime( localft, &remainder );
+    xtm = gmtime( &localtime );
+    utctime = mktime(xtm);
+    if(xtm->tm_isdst > 0) utctime-=3600;
+    DOSFS_UnixTimeToFileTime( utctime, utcft, remainder );
     return TRUE; 
 }
 
@@ -2179,7 +2193,7 @@ BOOL WINAPI FileTimeToLocalFileTime( const FILETIME *utcft,
                                        LPFILETIME localft )
 {
     DWORD remainder;
-    /* convert from UTC to local. Perhaps not correct. FIXME */
+    /* Converts from UTC to local. */
     time_t unixtime = DOSFS_FileTimeToUnixTime( utcft, &remainder );
 #ifdef HAVE_TIMEGM
     struct tm *xtm = localtime( &unixtime );
@@ -2189,14 +2203,13 @@ BOOL WINAPI FileTimeToLocalFileTime( const FILETIME *utcft,
     DOSFS_UnixTimeToFileTime( localtime, localft, remainder );
 
 #else
-    struct tm *xtm,*gtm;
-    time_t time1,time2;
+    struct tm *xtm;
+    time_t time;
 
-    xtm = localtime( &unixtime );
-    gtm = gmtime( &unixtime );
-    time1 = mktime(xtm);
-    time2 = mktime(gtm);
-    DOSFS_UnixTimeToFileTime( 2*time1-time2, localft, remainder );
+    xtm = gmtime( &unixtime );
+    time = mktime(xtm);
+    if(xtm->tm_isdst > 0) time-=3600;
+    DOSFS_UnixTimeToFileTime( 2*unixtime-time, localft, remainder );
 #endif
     return TRUE; 
 }
@@ -2291,7 +2304,7 @@ BOOL WINAPI SystemTimeToFileTime( const SYSTEMTIME *syst, LPFILETIME ft )
     struct tm xtm;
     time_t utctime;
 #else
-    struct tm xtm,*local_tm,*utc_tm;
+    struct tm xtm,*utc_tm;
     time_t localtim,utctime;
 #endif
 
@@ -2309,7 +2322,6 @@ BOOL WINAPI SystemTimeToFileTime( const SYSTEMTIME *syst, LPFILETIME ft )
 			      syst->wMilliseconds * 10000 );
 #else
     localtim = mktime(&xtm);    /* now we've got local time */
-    local_tm = localtime(&localtim);
     utc_tm = gmtime(&localtim);
     utctime = mktime(utc_tm);
     DOSFS_UnixTimeToFileTime( 2*localtim -utctime, ft, 

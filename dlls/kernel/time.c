@@ -353,12 +353,11 @@ BOOL WINAPI SetLocalTime(
  * BUGS
  *
  *  Only the special case of disabled time adjustments is supported.
- *  (also the signature is wrong it should have a return type of BOOL)
  */
-DWORD WINAPI GetSystemTimeAdjustment(
-    LPDWORD lpTimeAdjustment,         /* [out] The clock adjustment per interupt in 100's of nanoseconds. */
-    LPDWORD lpTimeIncrement,          /* [out] The time between clock interupts in 100's of nanoseconds. */
-    LPBOOL  lpTimeAdjustmentDisabled) /* [out] The clock synchonisation has been disabled. */
+BOOL WINAPI GetSystemTimeAdjustment(
+    PDWORD lpTimeAdjustment,         /* [out] The clock adjustment per interupt in 100's of nanoseconds. */
+    PDWORD lpTimeIncrement,          /* [out] The time between clock interupts in 100's of nanoseconds. */
+    PBOOL  lpTimeAdjustmentDisabled) /* [out] The clock synchonisation has been disabled. */
 {
     *lpTimeAdjustment = 0;
     *lpTimeIncrement = 0;
