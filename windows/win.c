@@ -38,7 +38,6 @@
 #include "hook.h"
 #include "message.h"
 #include "queue.h"
-#include "task.h"
 #include "winpos.h"
 #include "winerror.h"
 #include "stackframe.h"
@@ -2976,8 +2975,7 @@ BOOL WINAPI EnumThreadWindows( DWORD id, WNDENUMPROC func, LPARAM lParam )
     HWND *list;
     int i, iWndsLocks;
 
-    if (!(list = list_window_children( GetDesktopWindow(), 0, GetCurrentThreadId() )))
-        return TRUE ;
+    if (!(list = list_window_children( GetDesktopWindow(), 0, id ))) return TRUE;
 
     /* Now call the callback function for every window */
 
