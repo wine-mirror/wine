@@ -1727,7 +1727,7 @@ TREEVIEW_InsertItemA (HWND hwnd, WPARAM wParam, LPARAM lParam)
   	iItem=infoPtr->uNumItems;
   	infoPtr->uMaxHandle = (HTREEITEM)((INT)infoPtr->uMaxHandle + 1);
   } else {					 /* check freelist */
-  	for (i=0; i<infoPtr->uNumPtrsAlloced>>5; i++) {
+  	for (i=0; i<=infoPtr->uNumPtrsAlloced>>5; i++) {
   		if (infoPtr->freeList[i]) {
   			iItem=ffs (infoPtr->freeList[i])-1;
   			tv_clear_bit(iItem,&infoPtr->freeList[i]);
@@ -1738,7 +1738,7 @@ TREEVIEW_InsertItemA (HWND hwnd, WPARAM wParam, LPARAM lParam)
   }
 
   if (TRACE_ON(treeview)) { 
-    for (i=0; i<infoPtr->uNumPtrsAlloced>>5; i++) 
+    for (i=0; i<=infoPtr->uNumPtrsAlloced>>5; i++) 
 	    TRACE("%8x\n",infoPtr->freeList[i]);
   }
 
@@ -3916,8 +3916,6 @@ TREEVIEW_Register (void)
 
     TRACE("\n");
 
-    if (GlobalFindAtomA (WC_TREEVIEWA)) return;
-
     ZeroMemory (&wndClass, sizeof(WNDCLASSA));
     wndClass.style         = CS_GLOBALCLASS | CS_DBLCLKS;
     wndClass.lpfnWndProc   = (WNDPROC)TREEVIEW_WindowProc;
@@ -3934,8 +3932,7 @@ TREEVIEW_Register (void)
 VOID
 TREEVIEW_Unregister (void)
 {
-    if (GlobalFindAtomA (WC_TREEVIEWA))
-	UnregisterClassA (WC_TREEVIEWA, (HINSTANCE)NULL);
+    UnregisterClassA (WC_TREEVIEWA, (HINSTANCE)NULL);
 }
 
 
