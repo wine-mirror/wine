@@ -5,6 +5,7 @@ VPATH     = @srcdir@
 MODULE    = msvfw32.dll
 IMPORTS   = winmm comctl32 version user32 gdi32 kernel32
 ALTNAMES  = msvideo.dll
+EXTRALIBS = $(LIBUNICODE)
 
 SPEC_SRCS16 = $(ALTNAMES:.dll=.spec)
 

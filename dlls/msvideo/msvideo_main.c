@@ -62,6 +62,22 @@ struct _reg_driver
 
 static reg_driver* reg_driver_list = NULL;
 
+HMODULE MSVFW32_hModule;
+
+BOOL WINAPI DllMain( HINSTANCE hinst, DWORD reason, LPVOID reserved )
+{
+    TRACE("%p,%lx,%p\n", hinst, reason, reserved);
+
+    switch(reason)
+    {
+        case DLL_PROCESS_ATTACH:
+            DisableThreadLibraryCalls(hinst);
+            MSVFW32_hModule = (HMODULE)hinst;
+            break;
+    }
+    return TRUE;
+}
+
 static int compare_fourcc(DWORD fcc1, DWORD fcc2)
 {
   char fcc_str1[5];
