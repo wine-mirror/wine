@@ -673,7 +673,7 @@ static const char *get_resource_type( unsigned int id )
         "HTML"
     };
 
-    if (id < sizeof(types)/sizeof(types[0])) return types[id];
+    if ((size_t)id < sizeof(types)/sizeof(types[0])) return types[id];
     return NULL;
 }
 
@@ -948,7 +948,7 @@ int pe_analysis(const char* name, void (*fn)(enum FileSig), enum FileSig wanted_
 #endif
     {
         if (!(PE_base = malloc( PE_total_len ))) fatal( "Out of memory" );
-        if (read( fd, PE_base, PE_total_len ) != (int)PE_total_len) fatal( "Cannot read file" );
+        if ((unsigned long)read( fd, PE_base, PE_total_len ) != PE_total_len) fatal( "Cannot read file" );
     }
 
     effective_sig = check_headers();

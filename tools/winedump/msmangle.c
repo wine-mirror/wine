@@ -507,11 +507,12 @@ static char *demangle_datatype (char **str, compound_type *ct,
 	{
 	  if (*iter == '6')
 	  {
+	      int sub_expressions = 0;
 	      /* FIXME: there are a tons of memory leaks here */
 	      /* FIXME: this is still broken in some cases and it has to be
 	       * merged with the function prototype parsing above...
 	       */
-	      iter += 3; /* FIXME */
+	      iter += iter[1] == 'A' ? 2 : 3; /* FIXME */
 	      if (!demangle_datatype (&iter, &sub_ct, sym))
 		  return NULL;
 	      ct->expression = str_create(2, sub_ct.expression, " (*)(");
@@ -523,8 +524,12 @@ static char *demangle_datatype (char **str, compound_type *ct,
 		      INIT_CT (sub_ct);
 		      if (!demangle_datatype (&iter, &sub_ct, sym))
 			  return NULL;
-		      ct->expression = str_create(3, ct->expression, ", ", sub_ct.expression);
+		      if (sub_expressions)
+                              ct->expression = str_create(3, ct->expression, ", ", sub_ct.expression);
+		      else
+                              ct->expression = str_create(2, ct->expression, sub_ct.expression);
 		      while (*iter == '@') iter++;
+		      sub_expressions++;
 		  }
 	      } else while (*iter == '@') iter++;
 	      iter++;
@@ -739,7 +744,7 @@ static int get_type_constant (const char c, const int constraints)
   case 'J': case 'K':
     return ARG_LONG;
   case 'M':
-    return -1; /* FIXME */
+    return ARG_FLOAT;
   case 'N': case 'O':
     return ARG_DOUBLE;
   case 'P': case 'Q':

@@ -259,6 +259,9 @@ int   symbol_get_type (const char *string)
   if (strstr (string, "double"))
     return ARG_DOUBLE;
 
+  if (strstr (string, "float"))
+    return ARG_FLOAT;
+
   if (strstr (string, "void") || strstr (string, "VOID"))
     return ARG_VOID;
 
