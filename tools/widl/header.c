@@ -185,7 +185,7 @@ void write_type(FILE *h, type_t *t, var_t *v, char *n)
         break;
       case RPC_FC_HYPER:
         if (t->ref) fprintf(h, t->ref->name);
-        else fprintf(h, "__int64");
+        else fprintf(h, "hyper");
         break;
       case RPC_FC_FLOAT:
         fprintf(h, "float");
@@ -205,6 +205,14 @@ void write_type(FILE *h, type_t *t, var_t *v, char *n)
           fprintf(h, "}");
         }
         else fprintf(h, "enum %s", t->name);
+        break;
+      case RPC_FC_ERROR_STATUS_T:
+        if (t->ref) fprintf(h, t->ref->name);
+        else fprintf(h, "error_status_t");
+        break;
+      case RPC_FC_BIND_PRIMITIVE:
+        if (t->ref) fprintf(h, t->ref->name);
+        else fprintf(h, "handle_t");
         break;
       case RPC_FC_STRUCT:
       case RPC_FC_ENCAPSULATED_UNION:
@@ -283,6 +291,10 @@ static void do_write_expr(FILE *h, expr_t *e, int p)
     fprintf(h, "-");
     do_write_expr(h, e->ref, 1);
     break;
+  case EXPR_NOT:
+    fprintf(h, "~");
+    do_write_expr(h, e->ref, 1);
+    break;
   case EXPR_PPTR:
     fprintf(h, "*");
     do_write_expr(h, e->ref, 1);
@@ -350,40 +362,46 @@ void write_externdef(var_t *v)
 
 /********** INTERFACES **********/
 
-uuid_t *get_uuid(attr_t *a)
+int is_attr(attr_t *a, enum attr_type t)
 {
   while (a) {
-    if (a->type == ATTR_UUID) return a->u.pval;
+    if (a->type == t) return 1;
+    a = NEXT_LINK(a);
+  }
+  return 0;
+}
+
+void *get_attrp(attr_t *a, enum attr_type t)
+{
+  while (a) {
+    if (a->type == t) return a->u.pval;
     a = NEXT_LINK(a);
   }
   return NULL;
+}
+
+DWORD get_attrv(attr_t *a, enum attr_type t)
+{
+  while (a) {
+    if (a->type == t) return a->u.ival;
+    a = NEXT_LINK(a);
+  }
+  return 0;
 }
 
 int is_object(attr_t *a)
 {
-  while (a) {
-    if (a->type == ATTR_OBJECT) return 1;
-    a = NEXT_LINK(a);
-  }
-  return 0;
+  return is_attr(a, ATTR_OBJECT);
 }
 
 int is_local(attr_t *a)
 {
-  while (a) {
-    if (a->type == ATTR_LOCAL) return 1;
-    a = NEXT_LINK(a);
-  }
-  return 0;
+  return is_attr(a, ATTR_LOCAL);
 }
 
 var_t *is_callas(attr_t *a)
 {
-  while (a) {
-    if (a->type == ATTR_CALLAS) return a->u.pval;
-    a = NEXT_LINK(a);
-  }
-  return NULL;
+  return get_attrp(a, ATTR_CALLAS);
 }
 
 static void write_method_def(type_t *iface)
@@ -476,19 +494,25 @@ static int write_method_macro(type_t *iface, char *name)
   return idx;
 }
 
-void write_method_args(FILE *h, var_t *arg, char *name)
+void write_args(FILE *h, var_t *arg, char *name, int method)
 {
+  int count = 0;
   if (arg) {
     while (NEXT_LINK(arg))
       arg = NEXT_LINK(arg);
   }
-  fprintf(h, "    %s* This", name);
+  if (method) {
+    fprintf(h, "    %s* This", name);
+    count++;
+  }
+  else fprintf(h, "    ");
   while (arg) {
-    fprintf(h, ",\n    ");
+    if (count) fprintf(h, ",\n    ");
     write_type(h, arg->type, arg, arg->tname);
     fprintf(h, " ");
     write_name(h,arg);
     arg = PREV_LINK(arg);
+    count++;
   }
 }
 
@@ -503,9 +527,9 @@ static void write_method_proto(type_t *iface)
       /* proxy prototype */
       write_type(header, def->type, def, def->tname);
       fprintf(header, " CALLBACK %s_", iface->name);
-      write_name(header,def);
+      write_name(header, def);
       fprintf(header, "_Proxy(\n");
-      write_method_args(header, cur->args, iface->name);
+      write_args(header, cur->args, iface->name, 1);
       fprintf(header, ");\n");
       /* stub prototype */
       fprintf(header, "void __RPC_STUB %s_", iface->name);
@@ -527,20 +551,38 @@ static void write_method_proto(type_t *iface)
         fprintf(header, " CALLBACK %s_", iface->name);
         write_name(header, mdef);
         fprintf(header, "_Proxy(\n");
-        write_method_args(header, m->args, iface->name);
+        write_args(header, m->args, iface->name, 1);
         fprintf(header, ");\n");
         /* stub prototype - use remotable prototype */
         write_type(header, def->type, def, def->tname);
         fprintf(header, " __RPC_STUB %s_", iface->name);
         write_name(header, mdef);
         fprintf(header, "_Stub(\n");
-        write_method_args(header, cur->args, iface->name);
+        write_args(header, cur->args, iface->name, 1);
         fprintf(header, ");\n");
       }
       else {
         yywarning("invalid call_as attribute (%s -> %s)\n", get_name(def), cas->name);
       }
     }
+
+    cur = PREV_LINK(cur);
+  }
+}
+
+static void write_function_proto(type_t *iface)
+{
+  func_t *cur = iface->funcs;
+  while (NEXT_LINK(cur)) cur = NEXT_LINK(cur);
+  while (cur) {
+    var_t *def = cur->def;
+    /* FIXME: do we need to handle call_as? */
+    write_type(header, def->type, def, def->tname);
+    fprintf(header, " ");
+    write_name(header, def);
+    fprintf(header, "(\n");
+    write_args(header, cur->args, iface->name, 0);
+    fprintf(header, ");\n");
 
     cur = PREV_LINK(cur);
   }
@@ -561,21 +603,15 @@ void write_forward(type_t *iface)
 
 void write_guid(type_t *iface)
 {
-  uuid_t *uuid = get_uuid(iface->attrs);
+  uuid_t *uuid = get_attrp(iface->attrs, ATTR_UUID);
   if (!uuid) return;
   fprintf(header, "DEFINE_GUID(IID_%s, 0x%08lx, 0x%04x, 0x%04x, 0x%02x,0x%02x, 0x%02x,0x%02x,0x%02x,0x%02x,0x%02x,0x%02x);\n",
           iface->name, uuid->Data1, uuid->Data2, uuid->Data3, uuid->Data4[0], uuid->Data4[1],
           uuid->Data4[2], uuid->Data4[3], uuid->Data4[4], uuid->Data4[5], uuid->Data4[6], uuid->Data4[7]);
 }
 
-void write_interface(type_t *iface)
+void write_com_interface(type_t *iface)
 {
-  if (!is_object(iface->attrs)) {
-    if (!iface->funcs) return;
-    yywarning("RPC interfaces not supported yet\n");
-    return;
-  }
-
   if (!iface->funcs) {
     yywarning("%s has no methods", iface->name);
     return;
@@ -605,4 +641,30 @@ void write_interface(type_t *iface)
 
   if (!is_local(iface->attrs))
     write_proxy(iface);
+}
+
+void write_rpc_interface(type_t *iface)
+{
+  DWORD ver = get_attrv(iface->attrs, ATTR_VERSION);
+
+  if (!iface->funcs) return;
+
+  fprintf(header, "/*****************************************************************************\n");
+  fprintf(header, " * %s interface (v%d.%d)\n", iface->name, LOWORD(ver), HIWORD(ver));
+  fprintf(header, " */\n");
+  write_guid(iface);
+  fprintf(header, "extern RPC_IF_HANDLE %s_v%d_%d_c_ifspec;\n", iface->name, LOWORD(ver), HIWORD(ver));
+  fprintf(header, "extern RPC_IF_HANDLE %s_v%d_%d_s_ifspec;\n", iface->name, LOWORD(ver), HIWORD(ver));
+  write_function_proto(iface);
+  fprintf(header, "\n");
+
+  /* FIXME: server/client code */
+}
+
+void write_interface(type_t *iface)
+{
+  if (is_object(iface->attrs))
+    write_com_interface(iface);
+  else
+    write_rpc_interface(iface);
 }

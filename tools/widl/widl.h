@@ -43,6 +43,7 @@ extern int header_only;
 extern char *input_name;
 extern char *header_name;
 extern char *proxy_name;
+extern char *proxy_token;
 extern time_t now;
 
 extern int line_number;

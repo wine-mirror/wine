@@ -37,8 +37,6 @@ typedef struct _uuid_t uuid_t;
   type *l_prev;
 
 #define LINK(x,y) do { x->l_next = y; if (y) y->l_prev = x; } while (0)
-#define LINK_LAST(x,y) do { if (y) { attr_t *_c = x; while (_c->l_next) _c = _c->l_next; LINK(_c, y); } } while (0)
-#define LINK_SAFE(x,y) do { if (x) LINK_LAST(x,y); else { x = y; } } while (0)
 
 #define INIT_LINK(x) do { x->l_next = NULL; x->l_prev = NULL; } while (0)
 #define NEXT_LINK(x) ((x)->l_next)
@@ -48,18 +46,26 @@ enum attr_type
 {
     ATTR_ASYNC,
     ATTR_CALLAS,
+    ATTR_CASE,
+    ATTR_CONTEXTHANDLE,
     ATTR_DEFAULT,
+    ATTR_IDEMPOTENT,
     ATTR_IIDIS,
     ATTR_IN,
+    ATTR_LENGTHIS,
     ATTR_LOCAL,
     ATTR_OBJECT,
     ATTR_OLEAUTOMATION,
     ATTR_OUT,
     ATTR_POINTERDEFAULT,
     ATTR_POINTERTYPE,
+    ATTR_SIZEIS,
     ATTR_STRING,
+    ATTR_SWITCHIS,
+    ATTR_SWITCHTYPE,
     ATTR_UUID,
     ATTR_V1ENUM,
+    ATTR_VERSION,
     ATTR_WIREMARSHAL,
 };
 
@@ -70,6 +76,7 @@ enum expr_type
     EXPR_HEXNUM,
     EXPR_IDENTIFIER,
     EXPR_NEG,
+    EXPR_NOT,
     EXPR_PPTR,
     EXPR_CAST,
     EXPR_SIZEOF,

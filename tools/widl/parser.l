@@ -80,18 +80,18 @@ static uuid_t* parse_uuid(const char*u)
   uuid_t* uuid = xmalloc(sizeof(uuid_t));
   char b[3];
   /* it would be nice to use UuidFromStringA */
-  uuid->Data1 = strtol(u, NULL, 16);
-  uuid->Data2 = strtol(u+9, NULL, 16);
-  uuid->Data3 = strtol(u+14, NULL, 16);
+  uuid->Data1 = strtoul(u, NULL, 16);
+  uuid->Data2 = strtoul(u+9, NULL, 16);
+  uuid->Data3 = strtoul(u+14, NULL, 16);
   b[2] = 0;
-  memcpy(b, u+19, 2); uuid->Data4[0] = strtol(b, NULL, 16);
-  memcpy(b, u+21, 2); uuid->Data4[1] = strtol(b, NULL, 16);
-  memcpy(b, u+24, 2); uuid->Data4[2] = strtol(b, NULL, 16);
-  memcpy(b, u+26, 2); uuid->Data4[3] = strtol(b, NULL, 16);
-  memcpy(b, u+28, 2); uuid->Data4[4] = strtol(b, NULL, 16);
-  memcpy(b, u+30, 2); uuid->Data4[5] = strtol(b, NULL, 16);
-  memcpy(b, u+32, 2); uuid->Data4[6] = strtol(b, NULL, 16);
-  memcpy(b, u+34, 2); uuid->Data4[7] = strtol(b, NULL, 16);
+  memcpy(b, u+19, 2); uuid->Data4[0] = strtoul(b, NULL, 16);
+  memcpy(b, u+21, 2); uuid->Data4[1] = strtoul(b, NULL, 16);
+  memcpy(b, u+24, 2); uuid->Data4[2] = strtoul(b, NULL, 16);
+  memcpy(b, u+26, 2); uuid->Data4[3] = strtoul(b, NULL, 16);
+  memcpy(b, u+28, 2); uuid->Data4[4] = strtoul(b, NULL, 16);
+  memcpy(b, u+30, 2); uuid->Data4[5] = strtoul(b, NULL, 16);
+  memcpy(b, u+32, 2); uuid->Data4[6] = strtoul(b, NULL, 16);
+  memcpy(b, u+34, 2); uuid->Data4[7] = strtoul(b, NULL, 16);
   return uuid;
 }
 
@@ -188,12 +188,17 @@ static struct keyword {
 	{"double",			tDOUBLE},
 /* ... */
 	{"enum",			tENUM},
+	{"error_status_t",		tERRORSTATUST},
 /* ... */
 	{"extern",			tEXTERN},
 /* ... */
 	{"float",			tFLOAT},
 /* ... */
+	{"handle_t",			tHANDLET},
+/* ... */
 	{"hyper",			tHYPER},
+/* ... */
+	{"idempotent",			tIDEMPOTENT},
 /* ... */
 	{"iid_is",			tIIDIS},
 /* ... */
@@ -271,7 +276,10 @@ static int kw_token(const char *kw)
 			}
 	}
 #endif
-	if (kwp) return kwp->token;
+	if (kwp) {
+		yylval.str = (char*)kwp->kw;
+		return kwp->token;
+	}
 	yylval.str = xstrdup(kw);
 	return is_type(kw) ? aKNOWNTYPE : aIDENTIFIER;
 }

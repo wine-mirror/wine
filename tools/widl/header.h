@@ -28,7 +28,7 @@ extern void write_type(FILE *h, type_t *t, var_t *v, char *n);
 extern int is_object(attr_t *a);
 extern int is_local(attr_t *a);
 extern var_t *is_callas(attr_t *a);
-extern void write_method_args(FILE *h, var_t *arg, char *name);
+extern void write_args(FILE *h, var_t *arg, char *name, int obj);
 extern void write_forward(type_t *iface);
 extern void write_interface(type_t *iface);
 extern void write_typedef(type_t *type, var_t *names);

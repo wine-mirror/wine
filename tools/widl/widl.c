@@ -74,6 +74,7 @@ char *input_name;
 char *header_name;
 char *header_token;
 char *proxy_name;
+char *proxy_token;
 char *temp_name;
 
 int line_number = 1;
@@ -179,6 +180,7 @@ int main(int argc,char *argv[])
 
   if (!proxy_name) {
     proxy_name = dup_basename(input_name, ".idl");
+    proxy_token = xstrdup(proxy_name);
     strcat(proxy_name, "_p.c");
   }
 
@@ -218,10 +220,16 @@ int main(int argc,char *argv[])
   fprintf(header, "#include \"rpcndr.h\"\n\n" );
   fprintf(header, "#ifndef __WIDL_%s\n", header_token);
   fprintf(header, "#define __WIDL_%s\n", header_token);
+  fprintf(header, "#ifdef __cplusplus\n");
+  fprintf(header, "extern \"C\" {\n");
+  fprintf(header, "#endif\n");
 
   ret = yyparse();
 
   finish_proxy();
+  fprintf(header, "#ifdef __cplusplus\n");
+  fprintf(header, "}\n");
+  fprintf(header, "#endif\n");
   fprintf(header, "#endif /* __WIDL_%s */\n", header_token);
   fclose(header);
   fclose(yyin);

@@ -94,6 +94,8 @@ static var_t *find_const(char *name, int f);
 
 static type_t std_bool = { "boolean" };
 static type_t std_int = { "int" };
+static type_t std_int64 = { "__int64" };
+static type_t std_uhyper = { "MIDL_uhyper" };
 
 %}
 %union {
@@ -122,10 +124,12 @@ static type_t std_int = { "int" };
 %token tCONTEXTHANDLESERIALIZE tCONTROL tCPPQUOTE
 %token tDEFAULT
 %token tDOUBLE
-%token tENUM
+%token tENUM tERRORSTATUST
 %token tEXTERN
 %token tFLOAT
+%token tHANDLET
 %token tHYPER
+%token tIDEMPOTENT
 %token tIIDIS
 %token tIMPORT tIMPORTLIB
 %token tIN tINCLUDE tINLINE
@@ -158,7 +162,8 @@ static type_t std_int = { "int" };
 %token tPOINTERTYPE
 
 %type <attr> m_attributes attributes attrib_list attribute
-%type <expr> exprs expr_list expr array expr_const
+%type <expr> m_exprs /* exprs expr_list */ m_expr expr expr_list_const expr_const
+%type <expr> array array_list
 %type <type> inherit interface interfacehdr interfacedef lib_statements
 %type <type> base_type int_std
 %type <type> enumdef structdef typedef uniondef
@@ -167,7 +172,7 @@ static type_t std_int = { "int" };
 %type <var> fields field s_field cases case enums enum_list enum constdef externdef
 %type <var> m_ident t_ident ident p_ident pident pident_list
 %type <func> funcdef int_statements
-%type <num> pointer_type
+%type <num> pointer_type version
 
 %left ','
 %left '|'
@@ -175,6 +180,7 @@ static type_t std_int = { "int" };
 %left '-' '+'
 %left '*' '/'
 %left SHL SHR
+%right '~'
 %right CAST
 %right PPTR
 %right NEG
@@ -240,8 +246,13 @@ arg:	  attributes type pident array		{ $$ = $3;
 	;
 
 array:						{ $$ = NULL; }
-	| '[' exprs ']'				{ $$ = $2; }
+	| '[' array_list ']'			{ $$ = $2; }
 	| '[' '*' ']'				{ $$ = make_expr(EXPR_VOID); }
+	;
+
+array_list: m_expr /* size of first dimension is optional */
+	| array_list ',' expr			{ LINK($3, $1); $$ = $3; }
+	| array_list ']' '[' expr		{ LINK($4, $1); $$ = $4; }
 	;
 
 m_attributes:					{ $$ = NULL; }
@@ -249,36 +260,38 @@ m_attributes:					{ $$ = NULL; }
 	;
 
 attributes:
-	  m_attributes '[' attrib_list ']'	{ LINK_LAST($3, $1); $$ = $3; }
+	  '[' attrib_list ']'			{ $$ = $2; }
 	;
 
 attrib_list: attribute
-	| attrib_list ',' attribute		{ LINK_SAFE($3, $1); $$ = $3; /* FIXME: don't use SAFE */ }
+	| attrib_list ',' attribute		{ LINK($3, $1); $$ = $3; }
+	| attrib_list ']' '[' attribute		{ LINK($4, $1); $$ = $4; }
 	;
 
 attribute:
 	  tASYNC				{ $$ = make_attr(ATTR_ASYNC); }
 	| tCALLAS '(' ident ')'			{ $$ = make_attrp(ATTR_CALLAS, $3); }
-	| tCASE '(' expr_list ')'		{ $$ = NULL; }
-	| tCONTEXTHANDLE			{ $$ = NULL; }
-	| tCONTEXTHANDLENOSERIALIZE		{ $$ = NULL; }
-	| tCONTEXTHANDLESERIALIZE		{ $$ = NULL; }
+	| tCASE '(' expr_list_const ')'		{ $$ = make_attrp(ATTR_CASE, $3); }
+	| tCONTEXTHANDLE			{ $$ = make_attrv(ATTR_CONTEXTHANDLE, 0); }
+	| tCONTEXTHANDLENOSERIALIZE		{ $$ = make_attrv(ATTR_CONTEXTHANDLE, 0); /* RPC_CONTEXT_HANDLE_DONT_SERIALIZE */ }
+	| tCONTEXTHANDLESERIALIZE		{ $$ = make_attrv(ATTR_CONTEXTHANDLE, 0); /* RPC_CONTEXT_HANDLE_SERIALIZE */ }
 	| tDEFAULT				{ $$ = make_attr(ATTR_DEFAULT); }
+	| tIDEMPOTENT				{ $$ = make_attr(ATTR_IDEMPOTENT); }
 	| tIIDIS '(' ident ')'			{ $$ = make_attrp(ATTR_IIDIS, $3); }
 	| tIN					{ $$ = make_attr(ATTR_IN); }
-	| tLENGTHIS '(' exprs ')'		{ $$ = NULL; }
+	| tLENGTHIS '(' m_exprs ')'		{ $$ = make_attrp(ATTR_LENGTHIS, $3); }
 	| tLOCAL				{ $$ = make_attr(ATTR_LOCAL); }
 	| tOBJECT				{ $$ = make_attr(ATTR_OBJECT); }
 	| tOLEAUTOMATION			{ $$ = make_attr(ATTR_OLEAUTOMATION); }
 	| tOUT					{ $$ = make_attr(ATTR_OUT); }
 	| tPOINTERDEFAULT '(' pointer_type ')'	{ $$ = make_attrv(ATTR_POINTERDEFAULT, $3); }
-	| tSIZEIS '(' exprs ')'			{ $$ = NULL; }
+	| tSIZEIS '(' m_exprs ')'		{ $$ = make_attrp(ATTR_SIZEIS, $3); }
 	| tSTRING				{ $$ = make_attr(ATTR_STRING); }
-	| tSWITCHIS '(' expr ')'		{ $$ = NULL; }
-	| tSWITCHTYPE '(' type ')'		{ $$ = NULL; }
+	| tSWITCHIS '(' expr ')'		{ $$ = make_attrp(ATTR_SWITCHIS, $3); }
+	| tSWITCHTYPE '(' type ')'		{ $$ = make_attrp(ATTR_SWITCHTYPE, type_ref($3)); }
 	| tUUID '(' aUUID ')'			{ $$ = make_attrp(ATTR_UUID, $3); }
 	| tV1ENUM				{ $$ = make_attr(ATTR_V1ENUM); }
-	| tVERSION '(' version ')'		{ $$ = NULL; }
+	| tVERSION '(' version ')'		{ $$ = make_attrv(ATTR_VERSION, $3); }
 	| tWIREMARSHAL '(' type ')'		{ $$ = make_attrp(ATTR_WIREMARSHAL, type_ref($3)); }
 	| pointer_type				{ $$ = make_attrv(ATTR_POINTERTYPE, $1); }
 	;
@@ -293,9 +306,9 @@ cases:						{ $$ = NULL; }
 						}
 	;
 
-case:	  tCASE expr ':' field			{ /* attr_t *a = NULL; */ /* FIXME */
+case:	  tCASE expr ':' field			{ attr_t *a = make_attrp(ATTR_CASE, $2);
 						  $$ = $4; if (!$$) $$ = make_var(NULL);
-						  /* LINK(a, $$->attrs); $$->attrs = a; */
+						  LINK(a, $$->attrs); $$->attrs = a;
 						}
 	| tDEFAULT ':' field			{ attr_t *a = make_attr(ATTR_DEFAULT);
 						  $$ = $3; if (!$$) $$ = make_var(NULL);
@@ -337,12 +350,22 @@ enumdef: tENUM t_ident '{' enums '}'		{ $$ = get_typev(RPC_FC_ENUM16, $2, tsENUM
 						}
 	;
 
+m_exprs:  m_expr
+	| m_exprs ',' m_expr			{ LINK($3, $1); $$ = $3; }
+	;
+
+/*
 exprs:						{ $$ = make_expr(EXPR_VOID); }
 	| expr_list
 	;
 
 expr_list: expr
 	| expr_list ',' expr			{ LINK($3, $1); $$ = $3; }
+	;
+*/
+
+m_expr:						{ $$ = make_expr(EXPR_VOID); }
+	| expr
 	;
 
 expr:	  aNUM					{ $$ = make_exprl(EXPR_NUM, $1); }
@@ -356,11 +379,16 @@ expr:	  aNUM					{ $$ = make_exprl(EXPR_NUM, $1); }
 	| expr '/' expr				{ $$ = make_expr2(EXPR_DIV, $1, $3); }
 	| expr SHL expr				{ $$ = make_expr2(EXPR_SHL, $1, $3); }
 	| expr SHR expr				{ $$ = make_expr2(EXPR_SHR, $1, $3); }
+	| '~' expr				{ $$ = make_expr1(EXPR_NOT, $2); }
 	| '-' expr %prec NEG			{ $$ = make_expr1(EXPR_NEG, $2); }
 	| '*' expr %prec PPTR			{ $$ = make_expr1(EXPR_PPTR, $2); }
 	| '(' type ')' expr %prec CAST		{ $$ = make_exprt(EXPR_CAST, $2, $4); }
 	| tSIZEOF '(' type ')'			{ $$ = make_exprt(EXPR_SIZEOF, $3, NULL); }
 	| '(' expr ')'				{ $$ = $2; }
+	;
+
+expr_list_const: expr_const
+	| expr_list_const ',' expr_const	{ LINK($3, $1); $$ = $3; }
 	;
 
 expr_const: expr				{ $$ = $1;
@@ -406,6 +434,8 @@ t_ident:					{ $$ = NULL; }
 	;
 
 ident:	  aIDENTIFIER				{ $$ = make_var($1); }
+/* some "reserved words" used in attributes are also used as field names in some MS IDL files */
+	| tVERSION				{ $$ = make_var($<str>1); }
 	;
 
 base_type: tBYTE				{ $$ = make_type(RPC_FC_BYTE, NULL); }
@@ -417,12 +447,17 @@ base_type: tBYTE				{ $$ = make_type(RPC_FC_BYTE, NULL); }
 						  case RPC_FC_SMALL: $$->type = RPC_FC_USMALL; break;
 						  case RPC_FC_SHORT: $$->type = RPC_FC_USHORT; break;
 						  case RPC_FC_LONG:  $$->type = RPC_FC_ULONG;  break;
+						  case RPC_FC_HYPER:
+						    if (!$$->ref) { $$->ref = &std_uhyper; $$->sign = 0; }
+						    break;
 						  default: break;
 						  }
 						}
 	| tFLOAT				{ $$ = make_type(RPC_FC_FLOAT, NULL); }
 	| tDOUBLE				{ $$ = make_type(RPC_FC_DOUBLE, NULL); }
 	| tBOOLEAN				{ $$ = make_type(RPC_FC_BYTE, &std_bool); /* ? */ }
+	| tERRORSTATUST				{ $$ = make_type(RPC_FC_ERROR_STATUS_T, NULL); }
+	| tHANDLET				{ $$ = make_type(RPC_FC_BIND_PRIMITIVE, NULL); /* ? */ }
 	;
 
 m_int:
@@ -433,7 +468,7 @@ int_std:  tINT					{ $$ = make_type(RPC_FC_LONG, &std_int); } /* win32 only */
 	| tSHORT m_int				{ $$ = make_type(RPC_FC_SHORT, NULL); }
 	| tLONG m_int				{ $$ = make_type(RPC_FC_LONG, NULL); }
 	| tHYPER m_int				{ $$ = make_type(RPC_FC_HYPER, NULL); }
-	| tINT64				{ $$ = make_type(RPC_FC_HYPER, NULL); }
+	| tINT64				{ $$ = make_type(RPC_FC_HYPER, &std_int64); }
 	| tCHAR					{ $$ = make_type(RPC_FC_CHAR, NULL); }
 	;
 
@@ -535,8 +570,8 @@ uniondef: tUNION t_ident '{' fields '}'		{ $$ = get_typev(RPC_FC_NON_ENCAPSULATE
 	;
 
 version:
-	  aNUM					{}
-	| aNUM '.' aNUM				{}
+	  aNUM					{ $$ = MAKELONG($1, 0); }
+	| aNUM '.' aNUM				{ $$ = MAKELONG($1, $3); }
 	;
 
 %%
@@ -649,6 +684,9 @@ static expr_t *make_expr1(enum expr_type type, expr_t *expr)
     switch (type) {
     case EXPR_NEG:
       e->cval = -expr->cval;
+      break;
+    case EXPR_NOT:
+      e->cval = ~expr->cval;
       break;
     default:
       e->is_const = FALSE;
