@@ -1093,8 +1093,8 @@ static const SPY_NOTIFY spnfy_array[] = {
     SPNFY(CBEN_INSERTITEM,       NMHDR),    /* NMCOMBOBOXEX), */
     SPNFY(CBEN_DELETEITEM,       NMHDR),    /* NMCOMBOBOXEX), */
     SPNFY(CBEN_BEGINEDIT,        NMHDR),
-    SPNFY(CBEN_ENDEDITA,         NMHDR),    /* NMCBEENDEDITA), */
-    SPNFY(CBEN_ENDEDITW,         NMHDR),    /* NMCBEENDEDITW), */
+    SPNFY(CBEN_ENDEDITA,         NMCBEENDEDITA),
+    SPNFY(CBEN_ENDEDITW,         NMCBEENDEDITW),
     SPNFY(CBEN_GETDISPINFOW,     NMHDR),    /* NMCOMBOBOXEXW), */
     SPNFY(CBEN_DRAGBEGINA,       NMHDR),    /* NMCBEDRAGBEGINA), */
     SPNFY(CBEN_DRAGBEGINW,       NMHDR),    /* NMCBEDRAGBEGINW), */
@@ -1263,6 +1263,16 @@ void SPY_DumpStructure (UINT msg, BOOL enter, LPARAM structure)
 		TRACE("itemID=0x%08x itemWidth=0x%08x itemHeight=0x%08x\n", 
 		      lpmis->itemID, lpmis->itemWidth, lpmis->itemHeight);
 		TRACE("itemData=0x%08lx\n", lpmis->itemData);
+	    }
+	    break;
+	case WM_WINDOWPOSCHANGED:
+	    if (!enter) break;
+	case WM_WINDOWPOSCHANGING:
+	    {   
+		WINDOWPOS *lpwp = (WINDOWPOS *)structure;
+		TRACE("WINDOWPOS hwnd=0x%04x, after=0x%04x, at (%d,%d) h=%d w=%d, flags=0x%08x\n",
+		      lpwp->hwnd, lpwp->hwndInsertAfter, lpwp->x, lpwp->y,
+		      lpwp->cx, lpwp->cy, lpwp->flags);
 	    }
 	    break;
 	case WM_STYLECHANGED:
