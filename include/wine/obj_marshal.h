@@ -31,7 +31,8 @@ typedef struct IStdMarshalInfo IStdMarshalInfo,*LPSTDMARSHALINFO;
     ICOM_METHOD1(HRESULT,ReleaseMarshalData, IStream32*,pStm); \
     ICOM_METHOD1(HRESULT,DisconnectObject,   DWORD,dwReserved);
 #define IMarshal_IMETHODS \
-    ICOM_INHERITS(IMarshal,IUnknown)
+    IUnknown_IMETHODS \
+    IMarshal_METHODS
 ICOM_DEFINE(IMarshal,IUnknown)
 #undef ICOM_INTERFACE
 
@@ -57,7 +58,8 @@ ICOM_DEFINE(IMarshal,IUnknown)
 #define IStdMarshalInfo_METHODS \
     ICOM_METHOD3(HRESULT,GetClassForHandler,  DWORD,dwDestContext, void*,pvDestContext, CLSID*,pClsid);
 #define IStdMarshalInfo_IMETHODS \
-    ICOM_INHERITS(IStdMarshalInfo,IUnknown)
+    IUnknown_IMETHODS \
+    IStdMarshalInfo_METHODS
 ICOM_DEFINE(IStdMarshalInfo,IUnknown)
 #undef ICOM_INTERFACE
 

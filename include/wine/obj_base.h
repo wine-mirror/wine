@@ -93,7 +93,8 @@ BOOL32 WINAPI IsEqualGUID32(REFGUID rguid1,REFGUID rguid2);
  *        ICOM_METHOD2(HRESULT,CreateViewport,LPDIRECT3DVIEWPORT*,, IUnknown*,); \
  *        ICOM_METHOD2(HRESULT,FindDevice,    LPD3DFINDDEVICESEARCH,, LPD3DFINDDEVICERESULT,);
  *    #define IDirect3D_IMETHODS \
- *        ICOM_INHERITS(IDirect3D,IUnknown)
+ *        IUnknown_IMETHODS \
+ *        IDirect3D_METHODS
  *    ICOM_DEFINE(IDirect3D,IUnknown)
  *    #undef ICOM_INTERFACE
  *
@@ -616,6 +617,7 @@ BOOL32 WINAPI IsEqualGUID32(REFGUID rguid1,REFGUID rguid2);
 #define ICOM_END(iface) \
     };
 
+/* FIXME: to be removed as soon as it's no longer used */
 #define ICOM_INHERITS(iface, ibase) \
      ibase##_IMETHODS \
      iface##_METHODS
@@ -679,9 +681,9 @@ typedef struct IUnknown IUnknown, *LPUNKNOWN;
  */
 #define ICOM_INTERFACE IUnknown
 #define IUnknown_IMETHODS \
-    ICOM_METHOD2(HRESULT,QueryInterface,REFIID,riid, LPVOID*,ppvObj); \
-    ICOM_METHOD (ULONG,AddRef); \
-    ICOM_METHOD (ULONG,Release);
+    ICOM_METHOD2(HRESULT,QueryInterface,REFIID,riid, LPVOID*,ppvObj) \
+    ICOM_METHOD (ULONG,AddRef) \
+    ICOM_METHOD (ULONG,Release)
 #ifdef ICOM_CINTERFACE
 typedef struct ICOM_VTABLE(IUnknown) ICOM_VTABLE(IUnknown);
 struct IUnknown {
@@ -716,10 +718,11 @@ struct IUnknown {
  */
 #define ICOM_INTERFACE IClassFactory
 #define IClassFactory_METHODS \
-    ICOM_METHOD3(HRESULT,CreateInstance, LPUNKNOWN,pUnkOuter, REFIID,riid, LPVOID*,ppvObject); \
-    ICOM_METHOD1(HRESULT,LockServer,     BOOL32,fLock);
+    ICOM_METHOD3(HRESULT,CreateInstance, LPUNKNOWN,pUnkOuter, REFIID,riid, LPVOID*,ppvObject) \
+    ICOM_METHOD1(HRESULT,LockServer,     BOOL32,fLock)
 #define IClassFactory_IMETHODS \
-    ICOM_INHERITS(IClassFactory,IUnknown)
+    IUnknown_IMETHODS \
+    IClassFactory_METHODS
 ICOM_DEFINE(IClassFactory,IUnknown)
 #undef ICOM_INTERFACE
 
@@ -739,14 +742,15 @@ ICOM_DEFINE(IClassFactory,IUnknown)
  */
 #define ICOM_INTERFACE IMalloc16
 #define IMalloc16_METHODS \
-    ICOM_METHOD1 (LPVOID,Alloc,       DWORD,cb); \
-    ICOM_METHOD2 (LPVOID,Realloc,     LPVOID,pv, DWORD,cb); \
-    ICOM_VMETHOD1(       Free,        LPVOID,pv); \
-    ICOM_CMETHOD1(DWORD, GetSize,     LPVOID,pv); \
-    ICOM_CMETHOD1(INT16, DidAlloc,    LPVOID,pv); \
-    ICOM_METHOD  (LPVOID,HeapMinimize);
+    ICOM_METHOD1 (LPVOID,Alloc,       DWORD,cb) \
+    ICOM_METHOD2 (LPVOID,Realloc,     LPVOID,pv, DWORD,cb) \
+    ICOM_VMETHOD1(       Free,        LPVOID,pv) \
+    ICOM_CMETHOD1(DWORD, GetSize,     LPVOID,pv) \
+    ICOM_CMETHOD1(INT16, DidAlloc,    LPVOID,pv) \
+    ICOM_METHOD  (LPVOID,HeapMinimize)
 #define IMalloc16_IMETHODS \
-    ICOM_INHERITS(IMalloc16,IUnknown)
+    IUnknown_IMETHODS \
+    IMalloc16_METHODS
 ICOM_DEFINE(IMalloc16,IUnknown)
 #undef ICOM_INTERFACE
 
@@ -767,14 +771,15 @@ ICOM_DEFINE(IMalloc16,IUnknown)
 
 #define ICOM_INTERFACE IMalloc32
 #define IMalloc32_METHODS \
-    ICOM_METHOD1 (LPVOID,Alloc,       DWORD,cb); \
-    ICOM_METHOD2 (LPVOID,Realloc,     LPVOID,pv, DWORD,cb); \
-    ICOM_VMETHOD1(       Free,        LPVOID,pv); \
-    ICOM_CMETHOD1(DWORD, GetSize,     LPVOID,pv); \
-    ICOM_CMETHOD1(INT32, DidAlloc,    LPVOID,pv); \
-    ICOM_METHOD  (LPVOID,HeapMinimize);
+    ICOM_METHOD1 (LPVOID,Alloc,       DWORD,cb) \
+    ICOM_METHOD2 (LPVOID,Realloc,     LPVOID,pv, DWORD,cb) \
+    ICOM_VMETHOD1(       Free,        LPVOID,pv) \
+    ICOM_CMETHOD1(DWORD, GetSize,     LPVOID,pv) \
+    ICOM_CMETHOD1(INT32, DidAlloc,    LPVOID,pv) \
+    ICOM_METHOD  (LPVOID,HeapMinimize)
 #define IMalloc32_IMETHODS \
-    ICOM_INHERITS(IMalloc32,IUnknown)
+    IUnknown_IMETHODS \
+    IMalloc32_METHODS
 ICOM_DEFINE(IMalloc32,IUnknown)
 #undef ICOM_INTERFACE
 
