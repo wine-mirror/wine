@@ -591,9 +591,8 @@ static	HDRVR32	DRIVER_TryOpenDriver32(LPCSTR lpFileName, LPARAM lParam)
     lpSFN = strrchr(lpFileName, '\\');
     lpSFN = (lpSFN) ? (lpSFN + 1) : lpFileName;
 
-    /* FIXME need not to pass LPVOID(-1) */
-    if ((hModule = LoadModule32(lpFileName, (LPVOID)-1)) != 0) {
-	if ((lpProc = GetProcAddress32(hModule, "DRIVERPROC")) != NULL) {
+    if ((hModule = LoadLibrary32A(lpFileName)) != 0) {
+	if ((lpProc = GetProcAddress32(hModule, "DriverProc")) != NULL) {
 	    lpDrv = DRIVER_RegisterDriver32(lpSFN, hModule, lpProc, lParam);
 	} else {
 	    TRACE(driver, "No DriverProc found\n");
