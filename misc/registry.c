@@ -1040,7 +1040,7 @@ static void _init_registry_saving( HKEY hkey_users_default )
     /* set saving level (0 for saving everything, 1 for saving only modified keys) */
     _set_registry_levels(1,!all,period*1000);
 
-    if (PROFILE_GetWineIniBool("registry","WritetoHomeRegistries",1))
+    if (PROFILE_GetWineIniBool("registry","WritetoHomeRegistryFiles",1))
     {
         _save_at_exit(HKEY_CURRENT_USER,SAVE_LOCAL_REGBRANCH_CURRENT_USER );
         _save_at_exit(HKEY_LOCAL_MACHINE,SAVE_LOCAL_REGBRANCH_LOCAL_MACHINE);
