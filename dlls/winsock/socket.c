@@ -588,20 +588,50 @@ static void fd_set_unimport( WS_fd_set* wsfds, int lfd[] )
     }
 }
 
+/* Utility: get the SO_RCVTIMEO or SO_SNDTIMEO socket option
+ * from an fd and return the value converted to milli seconds
+ * or -1 if there is an infinite time out */
+static inline int get_rcvsnd_timeo( int fd, int optname)
+{
+  struct timeval tv;
+  int len = sizeof(tv);
+  int ret = getsockopt(fd, SOL_SOCKET, optname, &tv, &len);
+  if( ret >= 0)
+      ret = tv.tv_sec * 1000 + tv.tv_usec / 1000;
+  if( ret <= 0 ) /* tv == {0,0} means infinite time out */
+      return -1;
+  return ret;
+}
+
+/* macro wrappers for portability */
+#ifdef SO_RCVTIMEO
+#define GET_RCVTIMEO(fd) get_rcvsnd_timeo( (fd), SO_RCVTIMEO)
+#else
+#define GET_RCVTIMEO(fd) (-1)
+#endif
+
+#ifdef SO_SNDTIMEO
+#define GET_SNDTIMEO(fd) get_rcvsnd_timeo( (fd), SO_SNDTIMEO)
+#else
+#define GET_SNDTIMEO(fd) (-1)
+#endif
+
 /* utility: given an fd, will block until one of the events occurs */
-static inline int do_block( int fd, int events )
+static inline int do_block( int fd, int events, int timeout )
 {
   struct pollfd pfd;
+  int ret;
 
   pfd.fd = fd;
   pfd.events = events;
 
-  while (poll(&pfd, 1, -1) < 0)
+  while ((ret = poll(&pfd, 1, timeout)) < 0)
   {
       if (errno != EINTR)
           return -1;
   }
-
+  if( ret == 0 )
+      return 0;
   return pfd.revents;
 }
 
@@ -1285,7 +1315,7 @@ SOCKET WINAPI WS_accept(SOCKET s, struct WS_sockaddr *addr,
         int fd = get_sock_fd( s, GENERIC_READ, NULL );
         if (fd == -1) return INVALID_SOCKET;
         /* block here */
-        do_block(fd, POLLIN);
+        do_block(fd, POLLIN, -1);
         _sync_sock_state(s); /* let wineserver notice connection */
         release_sock_fd( s, fd );
         /* retrieve any error codes from it */
@@ -1416,7 +1446,7 @@ int WINAPI WS_connect(SOCKET s, const struct WS_sockaddr* name, int namelen)
             {
                 int result;
                 /* block here */
-                do_block(fd, POLLIN | POLLOUT );
+                do_block(fd, POLLIN | POLLOUT, -1);
                 _sync_sock_state(s); /* let wineserver notice connection */
                 /* retrieve any error codes from it */
                 result = _get_sock_error(s, FD_CONNECT_BIT);
@@ -2243,7 +2273,11 @@ INT WINAPI WSASendTo( SOCKET s, LPWSABUF lpBuffers, DWORD dwBufferCount,
     if (_is_blocking(s))
     {
         /* FIXME: exceptfds? */
-        do_block(fd, POLLOUT);
+        int timeout = GET_SNDTIMEO(fd);
+        if( !do_block(fd, POLLOUT, timeout)) {
+            err = WSAETIMEDOUT;
+            goto err_free; /* msdn says a timeout in send is fatal */
+        }
     }
 
     n = WS2_send ( fd, iovec, dwBufferCount, to, tolen, dwFlags );
@@ -2413,10 +2447,11 @@ int WINAPI WS_setsockopt(SOCKET s, int level, int optname,
         {
             if (optlen == sizeof(UINT32)) {
                 /* WinSock passes miliseconds instead of struct timeval */
-                tval.tv_usec = *(PUINT32)optval % 1000;
+                tval.tv_usec = (*(PUINT32)optval % 1000) * 1000;
                 tval.tv_sec = *(PUINT32)optval / 1000;
                 /* min of 500 milisec */
-                if (tval.tv_sec == 0 && tval.tv_usec < 500) tval.tv_usec = 500;
+                if (tval.tv_sec == 0 && tval.tv_usec < 500000)
+                    tval.tv_usec = 500000;
                 optlen = sizeof(struct timeval);
                 optval = (char*)&tval;
             } else if (optlen == sizeof(struct timeval)) {
@@ -3419,7 +3454,13 @@ INT WINAPI WSARecvFrom( SOCKET s, LPWSABUF lpBuffers, DWORD dwBufferCount,
     {
         /* block here */
         /* FIXME: OOB and exceptfds? */
-        do_block(fd, POLLIN);
+        int timeout = GET_RCVTIMEO(fd);
+        if( !do_block(fd, POLLIN, timeout)) {
+            err = WSAETIMEDOUT;
+            /* a timeout is not fatal */
+            _enable_event(SOCKET2HANDLE(s), FD_READ, 0, 0);
+            goto err_free;
+        }
     }
 
     n = WS2_recv ( fd, iovec, dwBufferCount, lpFrom, lpFromlen, lpFlags );
