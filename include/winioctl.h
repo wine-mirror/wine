@@ -81,6 +81,9 @@
 #define FILE_DEVICE_FULLSCREEN_VIDEO    0x00000034
 #define FILE_DEVICE_DFS_FILE_SYSTEM     0x00000035
 #define FILE_DEVICE_DFS_VOLUME          0x00000036
+#define FILE_DEVICE_SERENUM             0x00000037
+#define FILE_DEVICE_TERMSRV             0x00000038
+#define FILE_DEVICE_KSEC                0x00000039
 
 #define METHOD_BUFFERED                 0
 #define METHOD_IN_DIRECT                1
@@ -344,5 +347,52 @@ typedef struct tagMID {
 #include "poppack.h"
 
 /* End VWIN32 information */
+
+/*
+ *	NT I/O-Manager
+ */
+
+/*
+ * structures for NtQueryVolumeInformationFile
+ * (wdm.h)
+ */
+
+/* FileFsVolumeInformation = 1 */
+typedef struct _FILE_FS_VOLUME_INFORMATION {
+	LARGE_INTEGER	VolumeCreationTime;
+	ULONG		VolumeSerialNumber;
+	ULONG		VolumeLabelLength;
+	BOOLEAN		SupportsObjects;
+	WCHAR		VolumeLabel[1];
+} FILE_FS_VOLUME_INFORMATION, *PFILE_FS_VOLUME_INFORMATION;
+
+/* FileFsLabelInformation = 2 */
+/*
+ unknown 
+*/
+
+/* FileFsSizeInformation = 3 */
+typedef struct _FILE_FS_SIZE_INFORMATION {
+	LARGE_INTEGER	TotalAllocationUnits;
+	LARGE_INTEGER	AvailableAllocationUnits;
+	ULONG		SectorsPerAllocationUnit;
+	ULONG		BytesPerSector;
+} FILE_FS_SIZE_INFORMATION, *PFILE_FS_SIZE_INFORMATION;
+
+/* FileFsDeviceInformation = 4 */
+typedef struct _FILE_FS_DEVICE_INFORMATION {
+	DEVICE_TYPE DeviceType;
+	ULONG Characteristics;
+} FILE_FS_DEVICE_INFORMATION, *PFILE_FS_DEVICE_INFORMATION;
+
+/* FileFsAttributeInformation = 5 */
+typedef struct _FILE_FS_ATTRIBUTE_INFORMATION {
+	ULONG	FileSystemAttribute;
+	LONG	MaximumComponentNameLength;
+	ULONG	FileSystemNameLength;
+	WCHAR	FileSystemName[1];
+} FILE_FS_ATTRIBUTE_INFORMATION, *PFILE_FS_ATTRIBUTE_INFORMATION;
+
+
 
 #endif

@@ -22,6 +22,7 @@
 #include "ntdll_misc.h"
 
 #include "ntddk.h"
+#include "winioctl.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(ntdll);
 
@@ -252,7 +253,85 @@ NTSTATUS WINAPI NtQueryVolumeInformationFile (
 	IN ULONG Length,
 	IN FS_INFORMATION_CLASS FSInformationClass)
 {
+	ULONG len = 0;
+
 	FIXME("(0x%08x %p %p 0x%08lx 0x%08x) stub!\n",
 	FileHandle, IoStatusBlock, FSInformation, Length, FSInformationClass);
+
+	switch ( FSInformationClass )
+	{
+	  case FileFsVolumeInformation:
+	    len = sizeof( FILE_FS_VOLUME_INFORMATION );
+	    break;
+	  case FileFsLabelInformation:
+	    len = 0;
+	    break;
+
+	  case FileFsSizeInformation:
+	    len = sizeof( FILE_FS_SIZE_INFORMATION );
+	    break;
+
+	  case FileFsDeviceInformation:	
+	    len = sizeof( FILE_FS_DEVICE_INFORMATION );
+	    break;
+	  case FileFsAttributeInformation:
+	    len = sizeof( FILE_FS_ATTRIBUTE_INFORMATION );
+	    break;
+
+	  case FileFsControlInformation:
+	    len = 0;
+	    break;
+
+	  case FileFsFullSizeInformation:
+	    len = 0;
+	    break;
+
+	  case FileFsObjectIdInformation:
+	    len = 0;
+	    break;
+
+	  case FileFsMaximumInformation:
+	    len = 0;
+	    break;
+	}
+
+	if (Length < len)
+	  return STATUS_BUFFER_TOO_SMALL;
+
+	switch ( FSInformationClass )
+	{
+	  case FileFsVolumeInformation:
+	    break;
+	  case FileFsLabelInformation:
+	    break;
+
+	  case FileFsSizeInformation:
+	    break;
+
+	  case FileFsDeviceInformation:	
+	    if (FSInformation)
+	    {
+	      FILE_FS_DEVICE_INFORMATION * DeviceInfo = FSInformation;
+	      DeviceInfo->DeviceType = FILE_DEVICE_DISK; 
+	      DeviceInfo->Characteristics = 0;
+	      break;
+	    };
+	  case FileFsAttributeInformation:
+	    break;
+
+	  case FileFsControlInformation:
+	    break;
+
+	  case FileFsFullSizeInformation:
+	    break;
+
+	  case FileFsObjectIdInformation:
+	    break;
+
+	  case FileFsMaximumInformation:
+	    break;
+	}
+	IoStatusBlock->DUMMYUNIONNAME.Status = STATUS_SUCCESS;
+	IoStatusBlock->Information = len;
 	return STATUS_SUCCESS;
 }
