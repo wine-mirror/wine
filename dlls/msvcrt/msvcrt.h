@@ -34,6 +34,7 @@ typedef struct __MSVCRT_thread_data
   ((MSVCRT_thread_data*)TlsGetValue(MSVCRT_tls_index))->x = y
 
 void  MSVCRT__set_errno(int);
+int   __cdecl MSVCRT__set_new_mode(int mode);
 int   __cdecl MSVCRT__fcloseall(void);
 void *__cdecl MSVCRT_malloc(unsigned int);
 void *__cdecl MSVCRT_calloc(unsigned int, unsigned int);

@@ -233,24 +233,26 @@ void MSVCRT_free_args(void)
  *		__getmainargs (MSVCRT.@)
  */
 void __cdecl MSVCRT___getmainargs(int *argc, char ***argv, char **environ,
-				  int expand_wildcards, void *_startupinfo)
+                                  int expand_wildcards, int *new_mode)
 {
-  TRACE("(%p,%p,%p,%d,%p).\n", argc, argv, environ, expand_wildcards, _startupinfo);
+  TRACE("(%p,%p,%p,%d,%p).\n", argc, argv, environ, expand_wildcards, new_mode);
   *argc = MSVCRT___argc;
   *argv = MSVCRT___argv;
   *environ = MSVCRT__environ;
+  MSVCRT__set_new_mode( *new_mode );
 }
 
 /*********************************************************************
  *		__wgetmainargs (MSVCRT.@)
  */
 void __cdecl MSVCRT___wgetmainargs(int *argc, WCHAR ***wargv, WCHAR **wenviron,
-				   int expand_wildcards, void *_startupinfo)
+                                   int expand_wildcards, int *new_mode)
 {
-  TRACE("(%p,%p,%p,%d,%p).\n", argc, wargv, wenviron, expand_wildcards, _startupinfo);
+  TRACE("(%p,%p,%p,%d,%p).\n", argc, wargv, wenviron, expand_wildcards, new_mode);
   *argc = MSVCRT___argc;
   *wargv = MSVCRT___wargv;
   *wenviron = MSVCRT__wenviron;
+  MSVCRT__set_new_mode( *new_mode );
 }
 
 /*********************************************************************
