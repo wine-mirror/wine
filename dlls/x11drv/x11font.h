@@ -21,7 +21,7 @@
 #ifndef __WINE_X11FONT_H
 #define __WINE_X11FONT_H
 
-#include "gdi.h"
+#include "wine/wingdi16.h"
 #include "x11drv.h"
 #include "pshpack1.h"
 

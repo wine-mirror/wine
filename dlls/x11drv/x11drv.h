@@ -40,7 +40,6 @@ typedef int Status;
 
 #include "windef.h"
 #include "winbase.h"
-#include "gdi.h"
 #include "user.h"
 #include "win.h"
 #include "ddrawi.h"
@@ -87,7 +86,7 @@ typedef struct tagXRENDERINFO *XRENDERINFO;
 typedef struct
 {
     HDC           hdc;
-    DC           *dc;          /* direct pointer to DC, should go away */
+    struct tagDC *dc;          /* direct pointer to DC, should go away */
     GC            gc;          /* X Window GC */
     Drawable      drawable;
     POINT         org;          /* DC origin relative to drawable */

@@ -25,6 +25,7 @@
 
 #include "windef.h"
 #include "x11drv.h"
+#include "wine/library.h"
 #include "wine/debug.h"
 #include "wintab.h"
 

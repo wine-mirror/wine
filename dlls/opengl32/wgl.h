@@ -20,7 +20,7 @@
 #ifndef __DLLS_OPENGL32_WGL_H
 #define __DLLS_OPENGL32_WGL_H
 
-#include "gdi.h"
+#include "wingdi.h"
 
 typedef void *HGLRC;
 

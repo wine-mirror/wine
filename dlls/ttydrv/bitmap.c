@@ -22,7 +22,6 @@
 
 #include <string.h>
 
-#include "gdi.h"
 #include "ttydrv.h"
 #include "winbase.h"
 #include "wine/debug.h"

@@ -20,11 +20,11 @@
 
 #include "config.h"
 
-#include "gdi.h"
 #include "ttydrv.h"
 #include "win.h"
 #include "winpos.h"
 #include "wownt32.h"
+#include "wine/wingdi16.h"
 #include "wine/debug.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(ttydrv);

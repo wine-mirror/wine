@@ -21,6 +21,7 @@
 #include "config.h"
 #include <string.h>
 #include <stdio.h>
+#include <math.h>
 
 #include <X11/Xlib.h>
 

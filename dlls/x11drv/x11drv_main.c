@@ -55,7 +55,6 @@
 #include "wine/winbase16.h"
 #include "winreg.h"
 
-#include "gdi.h"
 #include "user.h"
 #include "win.h"
 #include "x11drv.h"

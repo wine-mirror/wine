@@ -29,7 +29,6 @@
 #include "wingdi.h"
 #include "winspool.h"
 
-#include "gdi.h"
 #include "psdrv.h"
 #include "wine/debug.h"
 

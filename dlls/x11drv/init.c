@@ -27,6 +27,7 @@
 #include "winbase.h"
 #include "x11drv.h"
 #include "x11font.h"
+#include "gdi.h"
 #include "ddrawi.h"
 #include "wine/debug.h"
 

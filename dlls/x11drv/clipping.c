@@ -22,7 +22,6 @@
 
 #include <stdio.h>
 
-#include "gdi.h"
 #include "x11drv.h"
 #include "wine/debug.h"
 

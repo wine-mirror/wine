@@ -24,8 +24,8 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include "gdi.h"
 #include "x11drv.h"
+#include "wine/library.h"
 #include "wine/debug.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(opengl);

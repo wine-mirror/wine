@@ -18,6 +18,7 @@
  */
 
 #include "config.h"
+#include "wine/port.h"
 
 #include <stdarg.h>
 #include <stdlib.h>
@@ -30,8 +31,8 @@
 
 #include "wgl.h"
 #include "opengl_ext.h"
+#include "wine/library.h"
 #include "wine/debug.h"
-#include "wine/port.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(opengl);
 

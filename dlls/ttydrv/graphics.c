@@ -25,7 +25,6 @@
 #include "windef.h"
 #include "winbase.h"
 #include "winnls.h"
-#include "gdi.h"
 #include "wine/debug.h"
 #include "ttydrv.h"
 
