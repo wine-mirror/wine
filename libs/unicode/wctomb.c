@@ -143,6 +143,17 @@ static inline int wcstombs_sbcs( const struct sbcs_table *table,
         ret = -1;
     }
 
+    if (dst <= (char *)src && dst + 16 > (char *)src)
+    {
+        /* overlapping buffers, do it char by char */
+        while (srclen--)
+        {
+            *dst++ = uni2cp_low[uni2cp_high[*src >> 8] + (*src & 0xff)];
+            src++;
+        }
+        return ret;
+    }
+
     for (;;)
     {
         switch(srclen)
