@@ -1627,7 +1627,6 @@ LPINT lpMax /* [O] Where to store maximum value */)
  *           SCROLL_ShowScrollBar()
  *
  * Back-end for ShowScrollBar(). Returns FALSE if no action was taken.
- * NOTE: fShowV/fShowH must be zero when nBar is SB_HORZ/SB_VERT.
  */
 BOOL SCROLL_ShowScrollBar( HWND hwnd, INT nBar, 
 			     BOOL fShowH, BOOL fShowV )

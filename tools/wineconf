@@ -219,7 +219,7 @@ sub IsMounted {
 }
 
 sub RegisterDrive {
-    my($DOSdrive, $Drive, $Type) = @_;
+    my($DOSdrive, $Drive) = @_;
     $::DOS2Unix{$DOSdrive} = $Drive;
     $::Device2DOS{$Drive->[0]} = $DOSdrive;
     $::MntPoint2DOS{$Drive->[1]} = $DOSdrive;

@@ -8,7 +8,7 @@ The X11 driver
    currently available is Patrik Stridvall's ncurses-based ttydrv, which
    he claims works for displaying calc.exe). The display driver is chosen
    with the "GraphicsDriver" option in the [wine] section of
-   wine.conf/.winerc, but I will only cover the x11drv in this article.
+   wine.conf/.winerc, but I will only cover the x11drv in this document.
    
   x11drv modes of operation
   
