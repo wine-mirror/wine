@@ -1487,7 +1487,7 @@ BOOL WINAPI SetThreadLocale( LCID lcid )
  *   not SUBLANG_NEUTRAL.
  *  GetSystemDefaultLCID(), if lcid == LOCALE_SYSTEM_DEFAULT.
  *  GetUserDefaultLCID(), if lcid == LOCALE_USER_DEFAULT or LOCALE_NEUTRAL.
- *  Otherwise, lcid with sublanguage cheanged to SUBLANG_DEFAULT.
+ *  Otherwise, lcid with sublanguage changed to SUBLANG_DEFAULT.
  */
 LCID WINAPI ConvertDefaultLocale( LCID lcid )
 {
@@ -1922,6 +1922,67 @@ INT WINAPI LCMapStringA(LCID lcid, DWORD flags, LPCSTR src, INT srclen,
 
 map_string_exit:
     if (srcW != bufW) HeapFree(GetProcessHeap(), 0, srcW);
+    return ret;
+}
+
+/*************************************************************************
+ *           FoldStringA    (KERNEL32.@)
+ *
+ * Map characters in a string.
+ *
+ * PARAMS
+ *  dwFlags [I] Flags controlling chars to map (MAP_ constants from "winnls.h")
+ *  src     [I] String to map
+ *  srclen  [I] Length of src, or -1 if src is NUL terminated
+ *  dst     [O] Destination for mapped string
+ *  dstlen  [I] Length of dst, or 0 to find the required length for the mapped string
+ *
+ * RETURNS
+ *  Success: The length of the string written to dst, including the terminating NUL. If
+ *           dstlen is 0, the value returned is the same, but nothing is written to dst,
+ *           and dst may be NULL.
+ *  Failure: 0. Use GetLastError() to determine the cause.
+ */
+INT WINAPI FoldStringA(DWORD dwFlags, LPCSTR src, INT srclen,
+                       LPSTR dst, INT dstlen)
+{
+    FIXME( "not implemented\n" );
+    SetLastError( ERROR_CALL_NOT_IMPLEMENTED );
+    return 0;
+}
+
+/*************************************************************************
+ *           FoldStringW    (KERNEL32.@)
+ *
+ * See FoldStringA.
+ */
+INT WINAPI FoldStringW(DWORD dwFlags, LPCWSTR src, INT srclen,
+                       LPWSTR dst, INT dstlen)
+{
+    int ret;
+
+    switch (dwFlags & (MAP_COMPOSITE|MAP_PRECOMPOSED|MAP_EXPAND_LIGATURES))
+    {
+    case 0:
+        if (dwFlags)
+          break;
+        /* Fall through for dwFlags == 0 */
+    case MAP_PRECOMPOSED|MAP_COMPOSITE:
+    case MAP_PRECOMPOSED|MAP_EXPAND_LIGATURES:
+    case MAP_COMPOSITE|MAP_EXPAND_LIGATURES:
+        SetLastError(ERROR_INVALID_FLAGS);
+        return 0;
+    }
+
+    if (!src || !srclen || dstlen < 0 || (dstlen && !dst) || src == dst)
+    {
+        SetLastError(ERROR_INVALID_PARAMETER);
+        return 0;
+    }
+
+    ret = wine_fold_string(dwFlags, src, srclen, dst, dstlen);
+    if (!ret)
+        SetLastError(ERROR_INSUFFICIENT_BUFFER);
     return ret;
 }
 

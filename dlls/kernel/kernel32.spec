@@ -322,8 +322,8 @@
 @ stdcall FlushFileBuffers(long)
 @ stdcall FlushInstructionCache(long long long)
 @ stdcall FlushViewOfFile(ptr long)
-@ stub FoldStringA
-@ stub FoldStringW
+@ stdcall FoldStringA(long str long ptr long)
+@ stdcall FoldStringW(long wstr long ptr long)
 @ stdcall FormatMessageA(long ptr long long ptr long ptr)
 @ stdcall FormatMessageW(long ptr long long ptr long ptr)
 @ stdcall FreeConsole()
