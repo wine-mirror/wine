@@ -294,7 +294,7 @@
 @ stdcall GetPropA(long str)
 @ stdcall GetPropW(long wstr)
 @ stdcall GetQueueStatus(long)
-# @ stub GetScrollBarInfo
+@ stdcall GetScrollBarInfo(long long ptr)
 @ stdcall GetScrollInfo(long long ptr)
 @ stdcall GetScrollPos(long long)
 @ stdcall GetScrollRange(long long ptr ptr)
@@ -616,9 +616,9 @@
 @ stdcall VkKeyScanExA(long long)
 @ stdcall VkKeyScanExW(long long)
 @ stdcall VkKeyScanW(long)
-# @ stub WINNLSEnableIME
-# @ stub WINNLSGetEnableStatus
-# @ stub WINNLSGetIMEHotkey
+@ stdcall WINNLSEnableIME(long long)
+@ stdcall WINNLSGetEnableStatus(long)
+@ stdcall WINNLSGetIMEHotkey(long)
 @ stdcall WaitForInputIdle(long long)
 @ stdcall WaitMessage()
 @ stub WCSToMBEx

@@ -229,6 +229,7 @@ WINDOWS_INCLUDES = \
 	winioctl.h \
 	winnetwk.h \
 	winnls.h \
+	winnls32.h \
 	winnt.h \
 	winreg.h \
 	winres.h \

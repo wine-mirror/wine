@@ -358,7 +358,38 @@ LONG WINAPI stub_USER_496(void) { FIXME("stub\n"); return 0; }
 /***********************************************************************
  *		User32InitializeImmEntryTable
  */
-BOOL WINAPI User32InitializeImmEntryTable(LPVOID ptr) { 
-  FIXME("(%p): stub\n", ptr); 
-  return TRUE; 
+BOOL WINAPI User32InitializeImmEntryTable(LPVOID ptr)
+{
+  FIXME("(%p): stub\n", ptr);
+  return TRUE;
+}
+
+/**********************************************************************
+ * WINNLSGetIMEHotkey [USER32.@]
+ *
+ */
+UINT WINAPI WINNLSGetIMEHotkey(HWND hUnknown1)
+{
+    FIXME("hUnknown1 %p: stub!\n", hUnknown1);
+    return 0; /* unknown */
+}
+
+/**********************************************************************
+ * WINNLSEnableIME [USER32.@]
+ *
+ */
+BOOL WINAPI WINNLSEnableIME(HWND hUnknown1, BOOL bUnknown2)
+{
+    FIXME("hUnknown1 %p bUnknown2 %d: stub!\n", hUnknown1, bUnknown2);
+    return TRUE; /* success (?) */
+}
+
+/**********************************************************************
+ * WINNLSGetEnableStatus [USER32.@]
+ *
+ */
+BOOL WINAPI WINNLSGetEnableStatus(HWND hUnknown1)
+{
+    FIXME("hUnknown1 %p: stub!\n", hUnknown1);
+    return TRUE; /* success (?) */
 }
