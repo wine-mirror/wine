@@ -883,7 +883,7 @@ Str_SetPtrAtoW (LPWSTR *lppDest, LPCSTR lpSrc)
 
     if (lpSrc) {
 	INT len = MultiByteToWideChar(CP_ACP,0,lpSrc,-1,NULL,0);
-	LPWSTR ptr = COMCTL32_ReAlloc (*lppDest, len);
+	LPWSTR ptr = COMCTL32_ReAlloc (*lppDest, len*sizeof(WCHAR));
 
 	if (!ptr)
 	    return FALSE;
