@@ -2460,7 +2460,6 @@ static ITypeLib2* ITypeLib2_Constructor_MSFT(LPVOID pLib, DWORD dwTLBLength)
         {
             *ppTI = MSFT_DoTypeInfo(&cx, i, pTypeLibImpl);
 
-            ITypeInfo_AddRef((ITypeInfo*) *ppTI);
             ppTI = &((*ppTI)->next);
             (pTypeLibImpl->TypeInfoCount)++;
         }
@@ -4079,6 +4078,7 @@ static ULONG WINAPI ITypeInfo_fnAddRef( ITypeInfo2 *iface)
     ICOM_THIS( ITypeInfoImpl, iface);
 
     ++(This->ref);
+    ITypeLib2_AddRef((ITypeLib2*)This->pTypeLib);
 
     TRACE("(%p)->ref is %u\n",This, This->ref);
     return This->ref;
@@ -4086,7 +4086,7 @@ static ULONG WINAPI ITypeInfo_fnAddRef( ITypeInfo2 *iface)
 
 /* ITypeInfo::Release
  */
-static ULONG WINAPI ITypeInfo_fnRelease( ITypeInfo2 *iface)
+static ULONG WINAPI ITypeInfo_fnRelease(ITypeInfo2 *iface)
 {
     ICOM_THIS( ITypeInfoImpl, iface);
 
@@ -4094,8 +4094,11 @@ static ULONG WINAPI ITypeInfo_fnRelease( ITypeInfo2 *iface)
 
     TRACE("(%p)->(%u)\n",This, This->ref);
 
-    if (!This->ref)
-    {
+    if (This->ref)   {
+      /* We don't release ITypeLib when ref=0 becouse
+         it means that funtion is called by ITypeLi2_Release */
+      ITypeLib2_Release((ITypeLib2*)This->pTypeLib);
+    } else   {
       FIXME("destroy child objects\n");
 
       TRACE("destroying ITypeInfo(%p)\n",This);

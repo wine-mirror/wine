@@ -2,5 +2,6 @@ Makefile
 olefont.ok
 safearray.ok
 testlist.c
+typelib.ok
 vartest.ok
 vartype.ok

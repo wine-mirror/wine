@@ -9,6 +9,7 @@ EXTRALIBS = -luuid
 CTESTS = \
 	olefont.c \
 	safearray.c \
+	typelib.c \
 	vartest.c \
 	vartype.c
 
