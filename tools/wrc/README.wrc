@@ -110,7 +110,7 @@ __FILE__       | "..."         | Current filename as string
 __LINE__       | nnn           | Current linenumber as integer
 __TIME__       | "23:59:59"    | Timestring of compilation
 __DATE__       | "May  1 2000" | Datestring of compilation
-__WRC__         1             | Wrc's major version
+__WRC__        | 1             | Wrc's major version
 __WRC_MINOR__  | 1             | Wrc's minor version
 __WRC_MICRO__  | 7             | Wrc's minor version
 __WRC_PATCH__  | 8             | Alias of __WRC_MICRO__

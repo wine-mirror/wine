@@ -369,7 +369,7 @@ static struct keyword *iskeyword(char *kw)
 0[oO][0-7]+[lL]?	{ yylval.num = strtoul(yytext+2, 0, 8); return toupper(yytext[yyleng-1]) == 'L' ? tLNUMBER : tNUMBER; }
 
 	/*
-	 * The next to rules scan identifiers and filenames.
+	 * The next two rules scan identifiers and filenames.
 	 * This is achieved by using the priority ruling
 	 * of the scanner where a '.' is valid in a filename
 	 * and *only* in a filename. In this case, the second
@@ -396,7 +396,7 @@ static struct keyword *iskeyword(char *kw)
 					return tIDENT;
 				}
 			}
-[A-Za-z_0-9.]+		yylval.str = make_string(yytext); return tFILENAME;
+[A-Za-z_0-9./\\]+		yylval.str = make_string(yytext); return tFILENAME;
 
 	/*
 	 * Wide string scanning
