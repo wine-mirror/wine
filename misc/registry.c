@@ -1145,7 +1145,9 @@ static int _wine_loadsubkey( FILE *F, LPKEYSTRUCT lpkey, int level, char **buf,
                 WARN_(reg)("Got a subhierarchy without resp. key?\n");
                 return 0;
             }
-            _wine_loadsubkey(F,lpxkey,level+1,buf,buflen,optflag);
+	    if (!_wine_loadsubkey(F,lpxkey,level+1,buf,buflen,optflag))
+	       if (!_wine_read_line(F,buf,buflen))
+		  return 1;
             continue;
         }
 
@@ -1176,7 +1178,11 @@ static int _wine_loadsubkey( FILE *F, LPKEYSTRUCT lpkey, int level, char **buf,
 				}
 				/* skip the 2 , */
 				s=strchr(s,',');s++;
-				s=strchr(s,',');s++;
+				s=strchr(s,',');
+				if (!s++) {
+					WARN_(reg)("Haven't understood possible value in |%s|, skipping.\n",*buf);
+					break;
+				}
 				if (type == REG_SZ || type == REG_EXPAND_SZ) {
 					s=_wine_read_USTRING(s,(LPWSTR*)&data);
 					if (data)
