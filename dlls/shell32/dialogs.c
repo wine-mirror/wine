@@ -283,7 +283,7 @@ void FillList (HWND hCb, char *pszLatest)
 
         if (NULL != pszLatest)
             {
-            if (!strcasecmp (pszCmd, pszLatest))
+            if (!lstrcmpiA(pszCmd, pszLatest))
                 {
                 /*
                 sprintf (szDbgMsg, "Found existing (%d).\n", Nix) ;
