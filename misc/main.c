@@ -246,22 +246,24 @@ BOOL MAIN_ParseDebugOptions(char *options)
 				&debug_relay_excludelist :
 				&debug_snoop_excludelist);
 	s = options + 7;
-	i = 1;
+	/* if there are n ':', there are n+1 modules, and we need n+2 slots
+	 * last one being for the sentinel (NULL) */
+	i = 2;	
 	while((s = strchr(s, ':'))) i++, s++;
-	*output = malloc(sizeof(char **) * i + 1);
+	*output = malloc(sizeof(char **) * i);
 	i = 0;
 	s = options + 7;
 	while((s2 = strchr(s, ':'))) {
           c = *s2;
           *s2 = '\0';
-	  *((*output)+i) = strdup(s);
+	  *((*output)+i) = CharUpperA(strdup(s));
           *s2 = c;
 	  s = s2 + 1;
 	  i++;
 	}
 	c = *(options + l);
 	*(options + l) = '\0';
-	*((*output)+i) = strdup(s);
+	*((*output)+i) = CharUpperA(strdup(s));
 	*(options + l) = c;
 	*((*output)+i+1) = NULL;
       }
