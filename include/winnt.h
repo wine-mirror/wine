@@ -2459,7 +2459,7 @@ typedef struct _IMAGE_RESOURCE_DATA_ENTRY {
 	DWORD	OffsetToData;
 	DWORD	Size;
 	DWORD	CodePage;
-	DWORD	ResourceHandle;
+	DWORD	Reserved;
 } IMAGE_RESOURCE_DATA_ENTRY,*PIMAGE_RESOURCE_DATA_ENTRY;
 
 
