@@ -1964,6 +1964,8 @@ BOOL WINAPI CreateScalableFontResourceA( DWORD fHidden,
                                              LPCSTR lpszFontFile,
                                              LPCSTR lpszCurrentPath )
 {
+    HANDLE f;
+
     /* fHidden=1 - only visible for the calling app, read-only, not
      * enumbered with EnumFonts/EnumFontFamilies
      * lpszCurrentPath can be NULL
@@ -1971,6 +1973,13 @@ BOOL WINAPI CreateScalableFontResourceA( DWORD fHidden,
     FIXME("(%ld,%s,%s,%s): stub\n",
           fHidden, debugstr_a(lpszResourceFile), debugstr_a(lpszFontFile),
           debugstr_a(lpszCurrentPath) );
+
+    /* If the output file already exists, return the ERROR_FILE_EXISTS error as specified in MSDN */
+    if ((f = CreateFileA(lpszResourceFile, 0, 0, NULL, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, 0)) != INVALID_HANDLE_VALUE) {
+        CloseHandle(f);
+        SetLastError(ERROR_FILE_EXISTS);
+        return FALSE;
+    }
     return FALSE; /* create failed */
 }
 
