@@ -636,7 +636,6 @@ DBG_VALUE DEBUG_EvalExpr(struct expr * exp)
 	  break;
 	case EXP_OP_ADDR:
           /* FIXME: even for a 16 bit entity ? */
-	  rtn.cookie = DV_TARGET;
 	  rtn.type = DEBUG_FindOrMakePointerType(exp1.type);
 	  exp->un.unop.result = exp1.addr.off;
 	  break;
