@@ -211,8 +211,11 @@ int PASCAL WinMain (HANDLE hInstance, HANDLE prev, LPSTR cmdline, int show)
 
     #if defined(WINELIB) && !defined(HAVE_WINE_CONSTRUCTOR)
       /* Register resources */
+      LIBWINE_Register_Da();
       LIBWINE_Register_De();
       LIBWINE_Register_En();
+      LIBWINE_Register_Es();
+      LIBWINE_Register_Fr();
       LIBWINE_Register_Sw();
     #endif
 

@@ -1,3 +1,8 @@
+Mon Nov  2 19:52:22 1998  Robert Pouliot <krynos@clic.net>
+       * [Fr.rc] [main.c] [Makefile.in]
+         Added French language support.
+	 Fixes for other languages.
+
 Sun Jul  5 20:10:53 1998  Marcel Baur <mbaur@g26.ethz.ch>
        * Moved "Always on top" menu into system menu (as in Windows)
          This required minor changes in 
