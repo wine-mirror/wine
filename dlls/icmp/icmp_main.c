@@ -32,7 +32,6 @@
 #endif
 
 #include <sys/time.h>
-#include <stdlib.h>
 #include <string.h>
 #include <errno.h>
 #include <unistd.h>
@@ -171,7 +170,7 @@ HANDLE WINAPI IcmpCreateFile(VOID)
         return INVALID_HANDLE_VALUE;
     }
 
-    icp=malloc(sizeof(*icp));
+    icp=HeapAlloc(GetProcessHeap(), 0, sizeof(*icp));
     if (icp==NULL) {
         SetLastError(IP_NO_RESOURCES);
         return INVALID_HANDLE_VALUE;
@@ -195,7 +194,7 @@ BOOL WINAPI IcmpCloseHandle(HANDLE  IcmpHandle)
     }
 
     ISOCK_shutdown(icp->sid,2);
-    free(icp);
+    HeapFree(GetProcessHeap (), 0, icp);
     return TRUE;
 }
 
@@ -248,7 +247,7 @@ DWORD WINAPI IcmpSendEcho(
     seq=InterlockedIncrement(&icmp_sequence) & 0xFFFF;
 
     reqsize=ICMP_MINLEN+RequestSize;
-    reqbuf=malloc(reqsize);
+    reqbuf=HeapAlloc(GetProcessHeap(), 0, reqsize);
     if (reqbuf==NULL) {
         SetLastError(ERROR_OUTOFMEMORY);
         return 0;
@@ -330,7 +329,7 @@ DWORD WINAPI IcmpSendEcho(
 
     gettimeofday(&send_time,NULL);
     res=ISOCK_sendto(icp->sid, reqbuf, reqsize, 0, (struct sockaddr*)&addr, sizeof(addr));
-    free(reqbuf);
+    HeapFree(GetProcessHeap (), 0, reqbuf);
     if (res<0) {
         if (errno==EMSGSIZE)
             SetLastError(IP_PACKET_TOO_BIG);
