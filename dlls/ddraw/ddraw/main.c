@@ -2,7 +2,7 @@
  *
  * Copyright 1997-2000 Marcus Meissner
  * Copyright 1998-2000 Lionel Ulmer (most of Direct3D stuff)
- * Copyright 2000 TransGaming Technologies Inc.
+ * Copyright 2000-2001 TransGaming Technologies Inc.
  */
 
 /*
@@ -30,7 +30,6 @@
 #include "dsurface/main.h"
 #include "dsurface/dib.h"
 #include "dsurface/fakezbuffer.h"
-#include "dsurface/dibtexture.h"
 
 DEFAULT_DEBUG_CHANNEL(ddraw);
 
@@ -53,6 +52,9 @@ HRESULT Main_DirectDraw_Construct(IDirectDrawImpl *This, BOOL ex)
     /* NOTE: The creator must use HEAP_ZERO_MEMORY or equivalent. */
     This->ref = 1;
     This->ex = ex;
+
+    if (ex) This->local.dwLocalFlags |= DDRAWILCL_DIRECTDRAW7;
+    This->local.dwProcessId = GetCurrentProcessId();
 
     This->final_release = Main_DirectDraw_final_release;
 
@@ -84,6 +86,12 @@ void Main_DirectDraw_final_release(IDirectDrawImpl* This)
     Main_DirectDraw_DeleteSurfaces(This);
     Main_DirectDraw_DeleteClippers(This);
     Main_DirectDraw_DeletePalettes(This);
+    if (This->local.lpGbl && This->local.lpGbl->lpExclusiveOwner == &This->local)
+    {
+	This->local.lpGbl->lpExclusiveOwner = NULL;
+	if (This->set_exclusive_mode)
+	    This->set_exclusive_mode(This, FALSE);
+    }
 }
 
 /* There is no Main_DirectDraw_Create. */
@@ -249,7 +257,7 @@ Main_create_texture(IDirectDrawImpl* This, const DDSURFACEDESC2* pDDSD,
 {
     assert(pOuter == NULL);
 
-    return DIBTexture_DirectDrawSurface_Create(This, pDDSD, ppSurf, pOuter);
+    return DIB_DirectDrawSurface_Create(This, pDDSD, ppSurf, pOuter);
 }
 
 HRESULT
@@ -312,6 +320,7 @@ create_texture(IDirectDrawImpl* This, const DDSURFACEDESC2 *pDDSD,
 	prev_mipmap = *ppSurf;
 	IDirectDrawSurface7_AddRef(prev_mipmap);
 	mipmap_surface_desc = ddsd;
+	mipmap_surface_desc.ddsCaps.dwCaps2 |= DDSCAPS2_MIPMAPSUBLEVEL;
 
 	while (more_mipmaps(&mipmap_surface_desc))
 	{
@@ -762,6 +771,19 @@ Main_DirectDraw_FlipToGDISurface(LPDIRECTDRAW7 iface)
     return DD_OK;
 }
 
+HRESULT WINAPI
+Main_DirectDraw_GetCaps(LPDIRECTDRAW7 iface, LPDDCAPS pDriverCaps,
+			LPDDCAPS pHELCaps)
+{
+    ICOM_THIS(IDirectDrawImpl,iface);
+    TRACE("(%p,%p,%p), stub\n",This,pDriverCaps,pHELCaps);
+    if (pDriverCaps != NULL)
+	DD_STRUCT_COPY_BYSIZE(pDriverCaps,&This->caps);
+    if (pHELCaps != NULL)
+	DD_STRUCT_COPY_BYSIZE(pHELCaps,&This->caps);
+    return DD_OK;
+}
+
 /* GetCaps */
 /* GetDeviceIdentifier */
 /* GetDIsplayMode */
@@ -889,6 +911,26 @@ Main_DirectDraw_SetCooperativeLevel(LPDIRECTDRAW7 iface, HWND hwnd,
 
     This->window = hwnd;
     This->cooperative_level = cooplevel;
+
+    This->local.hWnd = hwnd;
+    This->local.dwLocalFlags |= DDRAWILCL_SETCOOPCALLED;
+    /* not entirely sure about these */
+    if (cooplevel & DDSCL_EXCLUSIVE)     This->local.dwLocalFlags |= DDRAWILCL_HASEXCLUSIVEMODE;
+    if (cooplevel & DDSCL_FULLSCREEN)    This->local.dwLocalFlags |= DDRAWILCL_ISFULLSCREEN;
+    if (cooplevel & DDSCL_ALLOWMODEX)    This->local.dwLocalFlags |= DDRAWILCL_ALLOWMODEX;
+    if (cooplevel & DDSCL_MULTITHREADED) This->local.dwLocalFlags |= DDRAWILCL_MULTITHREADED;
+    if (cooplevel & DDSCL_FPUSETUP)      This->local.dwLocalFlags |= DDRAWILCL_FPUSETUP;
+    if (cooplevel & DDSCL_FPUPRESERVE)   This->local.dwLocalFlags |= DDRAWILCL_FPUPRESERVE;
+
+    if (This->local.lpGbl) {
+	/* assume that this app is the active app (in wine, there's
+	 * probably only one app per global ddraw object anyway) */
+	if (cooplevel & DDSCL_EXCLUSIVE) This->local.lpGbl->lpExclusiveOwner = &This->local;
+	else if (This->local.lpGbl->lpExclusiveOwner == &This->local)
+	    This->local.lpGbl->lpExclusiveOwner = NULL;
+	if (This->set_exclusive_mode)
+	    This->set_exclusive_mode(This, (cooplevel & DDSCL_EXCLUSIVE) != 0);
+    }
 
     ShowWindow(hwnd, SW_SHOW);
 

@@ -1,4 +1,4 @@
-/* Copyright 2000 TransGaming Technologies Inc. */
+/* Copyright 2000-2001 TransGaming Technologies Inc. */
 
 #ifndef WINE_DDRAW_DDRAW_MAIN_H_INCLUDED
 #define WINE_DDRAW_DDRAW_MAIN_H_INCLUDED
@@ -27,7 +27,7 @@ void Main_DirectDraw_AddClipper(IDirectDrawImpl* This,
 void Main_DirectDraw_RemoveClipper(IDirectDrawImpl* This,
 				   IDirectDrawClipperImpl* clipper);
 void Main_DirectDraw_AddPalette(IDirectDrawImpl* This,
-				IDirectDrawPaletteImpl* surface);
+				IDirectDrawPaletteImpl* palette);
 void Main_DirectDraw_RemovePalette(IDirectDrawImpl* This,
 				   IDirectDrawPaletteImpl* palette);
 
@@ -62,6 +62,9 @@ Main_DirectDraw_EnumSurfaces(LPDIRECTDRAW7 iface, DWORD dwFlags,
 HRESULT WINAPI
 Main_DirectDraw_EvaluateMode(LPDIRECTDRAW7 iface,DWORD a,DWORD* b);
 HRESULT WINAPI Main_DirectDraw_FlipToGDISurface(LPDIRECTDRAW7 iface);
+HRESULT WINAPI
+Main_DirectDraw_GetCaps(LPDIRECTDRAW7 iface, LPDDCAPS pDriverCaps,
+			LPDDCAPS pHELCaps);
 HRESULT WINAPI
 Main_DirectDraw_GetFourCCCodes(LPDIRECTDRAW7 iface, LPDWORD pNumCodes,
 			       LPDWORD pCodes);
