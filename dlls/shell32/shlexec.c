@@ -77,6 +77,7 @@ static const WCHAR wszEmpty[] = {0};
  * %* all following parameters (see batfile)
  *
  * FIXME: use 'len'
+ * FIXME: Careful of going over string boundaries. No checking is done to 'res'...
  */
 static BOOL SHELL_ArgifyW(WCHAR* out, int len, const WCHAR* fmt, const WCHAR* lpFile, LPITEMIDLIST pidl, LPCWSTR args)
 {
@@ -178,10 +179,36 @@ static BOOL SHELL_ArgifyW(WCHAR* out, int len, const WCHAR* fmt, const WCHAR* lp
 		}
                 break;
 
-            default: FIXME("Unknown escape sequence %%%c\n", *fmt);
+	    default:
+                /*
+                 * Check if this is a env-variable here...
+                 */
+
+                /* Make sure that we have at least one more %.*/
+                if (strchrW(fmt, '%'))
+                {
+                    WCHAR   tmpBuffer[1024];
+                    PWSTR   tmpB = tmpBuffer;
+                    WCHAR   tmpEnvBuff[MAX_PATH];
+                    DWORD   envRet;
+
+                    while (*fmt != '%')
+                        *tmpB++ = *fmt++;
+                    *tmpB++ = 0;
+
+                    TRACE("Checking %s to be a env-var\n", debugstr_w(tmpBuffer));
+
+                    envRet = GetEnvironmentVariableW(tmpBuffer, tmpEnvBuff, MAX_PATH);
+                    if (envRet == 0 || envRet > MAX_PATH)
+                        strcpyW( res, tmpBuffer );
+                    else
+                        strcpyW( res, tmpEnvBuff );
+                    res += strlenW(res);
+                }
+                fmt++;
+                done = TRUE;
+                break;
             }
-            fmt++;
-            done = TRUE;
         }
         else
             *res++ = *fmt++;
@@ -342,7 +369,7 @@ static UINT SHELL_ExecuteW(const WCHAR *lpCmd, WCHAR *env, BOOL shWait,
     TRACE("returning %u\n", retval);
 
     psei_out->hInstApp = (HINSTANCE)retval;
-    if( gcdret ) 
+    if( gcdret )
         if( !SetCurrentDirectoryW( curdir))
             ERR("cannot return to directory %s\n", debugstr_w(curdir));
 
@@ -1234,7 +1261,7 @@ BOOL WINAPI ShellExecuteExW32 (LPSHELLEXECUTEINFOW sei, SHELL_ExecuteW32 execfun
     if (retval > 32)  /* Found */
     {
         WCHAR wszQuotedCmd[MAX_PATH+2];
-        /* Must quote to handle case where cmd contains spaces, 
+        /* Must quote to handle case where cmd contains spaces,
          * else security hole if malicious user creates executable file "C:\\Program"
          */
         strcpyW(wszQuotedCmd, wQuote);
