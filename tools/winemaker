@@ -1902,8 +1902,7 @@ sub generate_project_files($)
     print FILEO "\t_list=\"\$(SUBDIRS)\"; for i in \$\$_list; do (cd \$\$i; \$(MAKE) install) || exit 1; done\n";
   }
   if (@{@$project[$P_TARGETS]} > 0) {
-    print FILEO "\t_list=\"\$(EXES:%=%.so)\"; for i in \$\$_list; do \$(INSTALL_PROGRAM) \$\$i \$(libdir); done\n";
-    print FILEO "\t_list=\"\$(EXES)\"; for i in \$\$_list; do \$(INSTALL_SCRIPT) \$\$i \$(bindir); done\n";
+    print FILEO "\t_list=\"\$(EXES:%=%.so)\"; for i in \$\$_list; do \$(INSTALL_PROGRAM) \$\$i \$(dlldir); done\n";
     print FILEO "\t_list=\"\$(DLLS)\"; for i in \$\$_list; do \$(INSTALL_PROGRAM) \$\$i \$(libdir); done\n";
   }
   print FILEO "\n";
@@ -1914,8 +1913,7 @@ sub generate_project_files($)
     print FILEO "\t_list=\"\$(SUBDIRS)\"; for i in \$\$_list; do (cd \$\$i; \$(MAKE) uninstall) || exit 1; done\n";
   }
   if (@{@$project[$P_TARGETS]} > 0) {
-    print FILEO "\t_list=\"\$(EXES) \$(EXES:%=%.so)\"; for i in \$\$_list; do \$(RM) \$(libdir)/\$\$i;done\n";
-    print FILEO "\t_list=\"\$(EXES)\"; for i in \$\$_list; do \$(RM) \$(bindir)/\$\$i;done\n";
+    print FILEO "\t_list=\"\$(EXES:%=%.so)\"; for i in \$\$_list; do \$(RM) \$(dlldir)/\$\$i;done\n";
     print FILEO "\t_list=\"\$(DLLS)\"; for i in \$\$_list; do \$(RM) \$(libdir)/\$\$i;done\n";
   }
   print FILEO "\n";
@@ -3119,6 +3117,8 @@ bindir          = @bindir@
 libdir          = @libdir@
 infodir         = @infodir@
 mandir          = @mandir@
+dlldir          = @libdir@/wine
+
 prog_manext     = 1
 conf_manext     = 5
 
