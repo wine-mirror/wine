@@ -64,12 +64,10 @@ typedef struct tagOleMenuHookItem   /* OleMenu hook item in per thread hook list
   HANDLE hHeap;             /* Heap this is allocated from */
   HHOOK GetMsg_hHook;       /* message hook for WH_GETMESSAGE */
   HHOOK CallWndProc_hHook;  /* message hook for WH_CALLWNDPROC */
+  struct tagOleMenuHookItem *next;
 } OleMenuHookItem;
 
-/*
- * Dynamic pointer array of per thread message hooks (maintained by OleSetMenuDescriptor)
- */
-static HDPA OLEMenu_MsgHookDPA = NULL;
+static OleMenuHookItem *hook_list;
 
 /*
  * This is the lock count on the OLE library. It is controlled by the
@@ -99,7 +97,7 @@ static void OLEMenu_Initialize();
 static void OLEMenu_UnInitialize();
 BOOL OLEMenu_InstallHooks( DWORD tid );
 BOOL OLEMenu_UnInstallHooks( DWORD tid );
-OleMenuHookItem * OLEMenu_IsHookInstalled( DWORD tid, INT *pixHook );
+OleMenuHookItem * OLEMenu_IsHookInstalled( DWORD tid );
 static BOOL OLEMenu_FindMainMenuIndex( HMENU hMainMenu, HMENU hPopupMenu, UINT *pnPos );
 BOOL OLEMenu_SetIsServerMenu( HMENU hmenu, OleMenuDescriptor *pOleMenuDescriptor );
 LRESULT CALLBACK OLEMenu_CallWndProc(INT code, WPARAM wParam, LPARAM lParam);
@@ -822,9 +820,6 @@ HRESULT WINAPI OleSave(
  */
 static void OLEMenu_Initialize()
 {
-  /* Create a dynamic pointer array to store the hook handles */
-  if ( !OLEMenu_MsgHookDPA )
-    OLEMenu_MsgHookDPA = DPA_CreateEx( 2, GetProcessHeap() );
 }
 
 /***
@@ -834,11 +829,6 @@ static void OLEMenu_Initialize()
  */
 static void OLEMenu_UnInitialize()
 {
-  /* Release the hook table */
-  if ( OLEMenu_MsgHookDPA )
-    DPA_Destroy( OLEMenu_MsgHookDPA );
-
-  OLEMenu_MsgHookDPA = NULL;
 }
 
 /*************************************************************************
@@ -851,13 +841,6 @@ static void OLEMenu_UnInitialize()
 BOOL OLEMenu_InstallHooks( DWORD tid )
 {
   OleMenuHookItem *pHookItem = NULL;
-
-  if ( !OLEMenu_MsgHookDPA ) /* No hook table? Create one */
-  {
-    /* Create a dynamic pointer array to store the hook handles */
-    if ( !(OLEMenu_MsgHookDPA = DPA_CreateEx( 2, GetProcessHeap() )) ) 
-      return FALSE;
-  }
 
   /* Create an entry for the hook table */
   if ( !(pHookItem = HeapAlloc(GetProcessHeap(), 0,
@@ -880,8 +863,8 @@ BOOL OLEMenu_InstallHooks( DWORD tid )
     goto CLEANUP;
 
   /* Insert the hook table entry */
-  if ( -1 == DPA_InsertPtr( OLEMenu_MsgHookDPA, 0, pHookItem ) )
-    goto CLEANUP;
+  pHookItem->next = hook_list;
+  hook_list = pHookItem;
   
   return TRUE;
   
@@ -906,19 +889,20 @@ CLEANUP:
  */
 BOOL OLEMenu_UnInstallHooks( DWORD tid )
 {
-  INT ixHook;
   OleMenuHookItem *pHookItem = NULL;
+  OleMenuHookItem **ppHook = &hook_list;
 
-  if ( !OLEMenu_MsgHookDPA )  /* No hooks set */
-    return TRUE;
-
-  /* Lookup the hHook index for this tid */
-  if ( !OLEMenu_IsHookInstalled( tid , &ixHook ) )
-    return TRUE;
-
-  /* Remove the hook entry from the table(the pointer itself is not deleted) */
-  if ( !( pHookItem = DPA_DeletePtr(OLEMenu_MsgHookDPA, ixHook) ) )
-    return FALSE;
+  while (*ppHook)
+  {
+      if ((*ppHook)->tid == tid)
+      {
+          pHookItem = *ppHook;
+          *ppHook = pHookItem->next;
+          break;
+      }
+      ppHook = &(*ppHook)->next;
+  }
+  if (!pHookItem) return FALSE;
 
   /* Uninstall the hooks installed for this thread */
   if ( !UnhookWindowsHookEx( pHookItem->GetMsg_hHook ) )
@@ -946,31 +930,16 @@ CLEANUP:
  * RETURNS: The pointer and index of the hook table entry for the tid
  *          NULL and -1 for the index if no hooks were installed for this thread
  */
-OleMenuHookItem * OLEMenu_IsHookInstalled( DWORD tid, INT *pixHook )
+OleMenuHookItem * OLEMenu_IsHookInstalled( DWORD tid )
 {
-  INT ixHook;
   OleMenuHookItem *pHookItem = NULL;
-
-  if ( pixHook )
-    *pixHook = -1;
-  
-  if ( !OLEMenu_MsgHookDPA )  /* No hooks set */
-    return NULL;
 
   /* Do a simple linear search for an entry whose tid matches ours.
    * We really need a map but efficiency is not a concern here. */
-  for( ixHook = 0; ; ixHook++ )
+  for (pHookItem = hook_list; pHookItem; pHookItem = pHookItem->next)
   {
-    /* Retrieve the hook entry */
-    if ( !( pHookItem = DPA_GetPtr(OLEMenu_MsgHookDPA, ixHook) ) )
-      return NULL;
-
     if ( tid == pHookItem->tid )
-    {
-      if ( pixHook )
-        *pixHook = ixHook;
       return pHookItem;
-    }
   }
   
   return NULL;
@@ -1155,7 +1124,7 @@ NEXTHOOK:
     GlobalUnlock( hOleMenu );
   
   /* Lookup the hook item for the current thread */
-  if ( !( pHookItem = OLEMenu_IsHookInstalled( GetCurrentThreadId(), NULL ) ) )
+  if ( !( pHookItem = OLEMenu_IsHookInstalled( GetCurrentThreadId() ) ) )
   {
     /* This should never fail!! */
     WARN("could not retrieve hHook for current thread!\n" );
@@ -1229,7 +1198,7 @@ NEXTHOOK:
     GlobalUnlock( hOleMenu );
   
   /* Lookup the hook item for the current thread */
-  if ( !( pHookItem = OLEMenu_IsHookInstalled( GetCurrentThreadId(), NULL ) ) )
+  if ( !( pHookItem = OLEMenu_IsHookInstalled( GetCurrentThreadId() ) ) )
   {
     /* This should never fail!! */
     WARN("could not retrieve hHook for current thread!\n" );
@@ -1345,7 +1314,7 @@ HRESULT WINAPI OleSetMenuDescriptor(
      * Note: This effectively means that OleSetMenuDescriptor cannot
      * be called twice in succession on the same frame window
      * without first calling it with a null hOleMenu to uninstall */
-    if ( OLEMenu_IsHookInstalled( GetCurrentThreadId(), NULL ) )
+    if ( OLEMenu_IsHookInstalled( GetCurrentThreadId() ) )
   return E_FAIL;
         
     /* Get the menu descriptor */
