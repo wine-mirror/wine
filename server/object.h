@@ -74,7 +74,7 @@ extern int no_read_fd( struct object *obj );
 extern int no_write_fd( struct object *obj );
 extern int no_flush( struct object *obj );
 extern int no_get_file_info( struct object *obj, struct get_file_info_reply *info );
-extern void default_select_event( int fd, int event, void *private );
+extern void default_select_event( int event, void *private );
 
 /* request handlers */
 
@@ -84,7 +84,7 @@ struct thread;
 extern void fatal_protocol_error( const char *err, ... );
 extern void call_req_handler( struct thread *thread, enum request req,
                               void *data, int len, int fd );
-extern void call_timeout_handler( struct thread *thread );
+extern void call_timeout_handler( void *thread );
 extern void call_kill_handler( struct thread *thread, int exit_code );
 
 extern void trace_request( enum request req, void *data, int len, int fd );
@@ -103,25 +103,37 @@ extern void trace_reply( struct thread *thread, int type, int pass_fd,
 #define READ_EVENT    1
 #define WRITE_EVENT   2
 
-struct select_ops
+struct select_user
 {
-    void (*event)( int fd, int event, void *private );
-    void (*timeout)( int fd, void *private );
+    int    fd;                              /* user fd */
+    void (*func)(int event, void *private); /* callback function */
+    void  *private;                         /* callback private data */
 };
 
-extern int add_select_user( int fd, int events, const struct select_ops *ops, void *private );
-extern void remove_select_user( int fd );
-extern void set_select_timeout( int fd, struct timeval *when );
-extern void set_select_events( int fd, int events );
-extern void *get_select_private_data( const struct select_ops *ops, int fd );
+extern void register_select_user( struct select_user *user );
+extern void unregister_select_user( struct select_user *user );
+extern void set_select_events( struct select_user *user, int events );
+extern int check_select_events( struct select_user *user, int events );
 extern void select_loop(void);
+
+/* timeout functions */
+
+struct timeout_user;
+
+typedef void (*timeout_callback)( void *private );
+
+extern struct timeout_user *add_timeout_user( struct timeval *when,
+                                              timeout_callback func, void *private );
+extern void remove_timeout_user( struct timeout_user *user );
+extern void make_timeout( struct timeval *when, int timeout );
 
 /* socket functions */
 
-extern int add_client( int client_fd, struct thread *self );
-extern void remove_client( int client_fd, int exit_code );
-extern void set_timeout( int client_fd, struct timeval *when );
-extern int send_reply_v( int client_fd, int type, int pass_fd,
+struct client;
+
+extern struct client *add_client( int client_fd, struct thread *self );
+extern void remove_client( struct client *client, int exit_code );
+extern int send_reply_v( struct client *client, int type, int pass_fd,
                          struct iovec *vec, int veclen );
 
 /* mutex functions */

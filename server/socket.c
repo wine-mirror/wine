@@ -37,13 +37,15 @@ enum state
 /* client structure */
 struct client
 {
-    enum state         state;        /* client state */
-    unsigned int       seq;          /* current sequence number */
-    struct header      head;         /* current msg header */
-    char              *data;         /* current msg data */
-    int                count;        /* bytes sent/received so far */
-    int                pass_fd;      /* fd to pass to and from the client */
-    struct thread     *self;         /* client thread (opaque pointer) */
+    enum state           state;      /* client state */
+    struct select_user   select;     /* select user */
+    unsigned int         seq;        /* current sequence number */
+    struct header        head;       /* current msg header */
+    char                *data;       /* current msg data */
+    int                  count;      /* bytes sent/received so far */
+    int                  pass_fd;    /* fd to pass to and from the client */
+    struct thread       *self;       /* client thread (opaque pointer) */
+    struct timeout_user *timeout;    /* current timeout (opaque pointer) */
 };
 
 
@@ -54,12 +56,12 @@ struct client
 
 
 /* signal a client protocol error */
-static void protocol_error( int client_fd, const char *err, ... )
+static void protocol_error( struct client *client, const char *err, ... )
 {
     va_list args;
 
     va_start( args, err );
-    fprintf( stderr, "Protocol error:%d: ", client_fd );
+    fprintf( stderr, "Protocol error:%d: ", client->select.fd );
     vfprintf( stderr, err, args );
     va_end( args );
 }
@@ -131,7 +133,7 @@ static void do_write( struct client *client, int client_fd )
     if (ret == -1)
     {
         if (errno != EPIPE) perror("sendmsg");
-        remove_client( client_fd, BROKEN_PIPE );
+        remove_client( client, BROKEN_PIPE );
         return;
     }
     if (client->pass_fd != -1)  /* We sent the fd, now we can close it */
@@ -147,7 +149,7 @@ static void do_write( struct client *client, int client_fd )
     client->count = 0;
     client->state = RUNNING;
     client->seq++;
-    set_select_events( client_fd, READ_EVENT );
+    set_select_events( &client->select, READ_EVENT );
 }
 
 
@@ -191,7 +193,7 @@ static void do_read( struct client *client, int client_fd )
         if (!client->data &&
             !(client->data = malloc(client->head.len-sizeof(client->head))))
         {
-            remove_client( client_fd, OUT_OF_MEMORY );
+            remove_client( client, OUT_OF_MEMORY );
             return;
         }
         vec.iov_base = client->data + client->count - sizeof(client->head);
@@ -202,7 +204,7 @@ static void do_read( struct client *client, int client_fd )
     if (ret == -1)
     {
         perror("recvmsg");
-        remove_client( client_fd, BROKEN_PIPE );
+        remove_client( client, BROKEN_PIPE );
         return;
     }
 #ifndef HAVE_MSGHDR_ACCRIGHTS
@@ -216,7 +218,7 @@ static void do_read( struct client *client, int client_fd )
     }
     else if (!ret)  /* closed pipe */
     {
-        remove_client( client_fd, BROKEN_PIPE );
+        remove_client( client, BROKEN_PIPE );
         return;
     }
 
@@ -231,17 +233,17 @@ static void do_read( struct client *client, int client_fd )
     /* sanity checks */
     if (client->head.seq != client->seq)
     {
-        protocol_error( client_fd, "bad sequence %08x instead of %08x\n",
+        protocol_error( client, "bad sequence %08x instead of %08x\n",
                         client->head.seq, client->seq );
-        remove_client( client_fd, PROTOCOL_ERROR );
+        remove_client( client, PROTOCOL_ERROR );
         return;
     }
     if ((client->head.len < sizeof(client->head)) ||
         (client->head.len > MAX_MSG_LENGTH + sizeof(client->head)))
     {
-        protocol_error( client_fd, "bad header length %08x\n",
+        protocol_error( client, "bad header length %08x\n",
                         client->head.len );
-        remove_client( client_fd, PROTOCOL_ERROR );
+        remove_client( client, PROTOCOL_ERROR );
         return;
     }
 
@@ -270,66 +272,51 @@ static void do_read( struct client *client, int client_fd )
     }
 }
 
-/* handle a client timeout */
-static void client_timeout( int client_fd, void *private )
-{
-    struct client *client = (struct client *)private;
-    set_select_timeout( client_fd, 0 );  /* Remove the timeout */
-    call_timeout_handler( client->self );
-}
-
 /* handle a client event */
-static void client_event( int client_fd, int event, void *private )
+static void client_event( int event, void *private )
 {
     struct client *client = (struct client *)private;
-    if (event & WRITE_EVENT)
-        do_write( client, client_fd );
-    if (event & READ_EVENT)
-        do_read( client, client_fd );
+    if (event & WRITE_EVENT) do_write( client, client->select.fd );
+    if (event & READ_EVENT) do_read( client, client->select.fd );
 }
 
-static const struct select_ops client_ops =
-{
-    client_event,
-    client_timeout
-};
 
 /*******************************************************************/
 /* server-side exported functions                                  */
 
 /* add a client */
-int add_client( int client_fd, struct thread *self )
+struct client *add_client( int fd, struct thread *self )
 {
-    struct client *client = malloc( sizeof(*client) );
-    if (!client) return -1;
+    struct client *client = mem_alloc( sizeof(*client) );
+    if (!client) return NULL;
 
     client->state                = RUNNING;
+    client->select.fd            = fd;
+    client->select.func          = client_event;
+    client->select.private       = client;
     client->seq                  = 0;
     client->head.len             = 0;
     client->head.type            = 0;
     client->count                = 0;
     client->data                 = NULL;
     client->self                 = self;
+    client->timeout              = NULL;
     client->pass_fd              = -1;
-
-    if (add_select_user( client_fd, READ_EVENT, &client_ops, client ) == -1)
-    {
-        free( client );
-        return -1;
-    }
-    return client_fd;
+    register_select_user( &client->select );
+    set_select_events( &client->select, READ_EVENT );
+    return client;
 }
 
 /* remove a client */
-void remove_client( int client_fd, int exit_code )
+void remove_client( struct client *client, int exit_code )
 {
-    struct client *client = (struct client *)get_select_private_data( &client_ops, client_fd );
     assert( client );
 
     call_kill_handler( client->self, exit_code );
 
-    remove_select_user( client_fd );
-    close( client_fd );
+    if (client->timeout) remove_timeout_user( client->timeout );
+    unregister_select_user( &client->select );
+    close( client->select.fd );
 
     /* Purge messages */
     if (client->data) free( client->data );
@@ -338,13 +325,12 @@ void remove_client( int client_fd, int exit_code )
 }
 
 /* send a reply to a client */
-int send_reply_v( int client_fd, int type, int pass_fd,
+int send_reply_v( struct client *client, int type, int pass_fd,
                   struct iovec *vec, int veclen )
 {
     int i;
     unsigned int len;
     char *p;
-    struct client *client = (struct client *)get_select_private_data( &client_ops, client_fd );
 
     assert( client );
     assert( client->state == WAITING );
@@ -369,6 +355,6 @@ int send_reply_v( int client_fd, int type, int pass_fd,
     }
 
     client->state = READING;
-    set_select_events( client_fd, WRITE_EVENT );
+    set_select_events( &client->select, WRITE_EVENT );
     return 0;
 }

@@ -188,7 +188,7 @@ int no_get_file_info( struct object *obj, struct get_file_info_reply *info )
     return 0;
 }
 
-void default_select_event( int fd, int event, void *private )
+void default_select_event( int event, void *private )
 {
     struct object *obj = (struct object *)private;
     assert( obj );

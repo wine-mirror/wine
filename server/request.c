@@ -33,7 +33,7 @@ void fatal_protocol_error( const char *err, ... )
     fprintf( stderr, "Protocol error:%p: ", current );
     vfprintf( stderr, err, args );
     va_end( args );
-    remove_client( current->client_fd, -2 );
+    remove_client( current->client, -2 );
 }
 
 /* call a request handler */
@@ -68,10 +68,10 @@ void call_req_handler( struct thread *thread, enum request req,
     current = NULL;
 }
 
-/* handle a client timeout (unused for now) */
-void call_timeout_handler( struct thread *thread )
+/* handle a client timeout */
+void call_timeout_handler( void *thread )
 {
-    current = thread;
+    current = (struct thread *)thread;
     if (debug_level) trace_timeout();
     CLEAR_ERROR();
     thread_timeout();
