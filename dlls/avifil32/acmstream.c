@@ -467,8 +467,11 @@ static HRESULT WINAPI ACMStream_fnRead(IAVIStream *iface, LONG start,
   /* need bigger source buffer? */
   if (This->acmStreamHdr.pbSrc == NULL ||
       This->acmStreamHdr.dwSrcUser < size) {
-    This->acmStreamHdr.pbSrc = GlobalReAllocPtr(This->acmStreamHdr.pbSrc,
-						size, GMEM_MOVEABLE);
+    if (This->acmStreamHdr.pbSrc == NULL)
+      This->acmStreamHdr.pbSrc = GlobalAllocPtr(GMEM_MOVEABLE, size);
+    else
+      This->acmStreamHdr.pbSrc = GlobalReAllocPtr(This->acmStreamHdr.pbSrc,
+						  size, GMEM_MOVEABLE);
     if (This->acmStreamHdr.pbSrc == NULL)
       return AVIERR_MEMORY;
     This->acmStreamHdr.dwSrcUser = size;
@@ -568,8 +571,11 @@ static HRESULT WINAPI ACMStream_fnWrite(IAVIStream *iface, LONG start,
   /* Need bigger destination buffer? */
   if (This->acmStreamHdr.pbDst == NULL ||
       This->acmStreamHdr.dwDstUser < size) {
-    This->acmStreamHdr.pbDst = GlobalReAllocPtr(This->acmStreamHdr.pbDst,
-						size, GMEM_MOVEABLE);
+    if (This->acmStreamHdr.pbDst == NULL)
+      This->acmStreamHdr.pbDst = GlobalAllocPtr(GMEM_MOVEABLE, size);
+    else
+      This->acmStreamHdr.pbDst = GlobalReAllocPtr(This->acmStreamHdr.pbDst,
+						  size, GMEM_MOVEABLE);
     if (This->acmStreamHdr.pbDst == NULL)
       return AVIERR_MEMORY;
     This->acmStreamHdr.dwDstUser = size;

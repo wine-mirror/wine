@@ -1382,7 +1382,13 @@ static HRESULT AVIFILE_AddFrame(IAVIStreamImpl *This, DWORD ckid, DWORD size, DW
       UINT n = This->sInfo.dwFormatChangeCount;
 
       This->nIdxFmtChanges += 16;
-      This->idxFmtChanges = GlobalReAllocPtr(This->idxFmtChanges, This->nIdxFmtChanges * sizeof(AVIINDEXENTRY), GHND);
+      if (This->idxFmtChanges == NULL)
+	This->idxFmtChanges =
+	  GlobalAllocPtr(GHND, This->nIdxFmtChanges * sizeof(AVIINDEXENTRY));
+      else
+	This->idxFmtChanges =
+	  GlobalReAllocPtr(This->idxFmtChanges,
+			   This->nIdxFmtChanges * sizeof(AVIINDEXENTRY), GHND);
       if (This->idxFmtChanges == NULL)
 	return AVIERR_MEMORY;
 
@@ -1413,7 +1419,13 @@ static HRESULT AVIFILE_AddFrame(IAVIStreamImpl *This, DWORD ckid, DWORD size, DW
   /* get memory for index */
   if (This->idxFrames == NULL || This->lLastFrame + 1 >= This->nIdxFrames) {
     This->nIdxFrames += 512;
-    This->idxFrames = GlobalReAllocPtr(This->idxFrames, This->nIdxFrames * sizeof(AVIINDEXENTRY), GHND);
+    if (This->idxFrames == NULL)
+      This->idxFrames =
+	GlobalAllocPtr(GHND, This->nIdxFrames * sizeof(AVIINDEXENTRY));
+      else
+	This->idxFrames =
+	  GlobalReAllocPtr(This->idxFrames,
+			   This->nIdxFrames * sizeof(AVIINDEXENTRY), GHND);
     if (This->idxFrames == NULL)
       return AVIERR_MEMORY;
   }
@@ -2016,8 +2028,13 @@ static HRESULT AVIFILE_ReadBlock(IAVIStreamImpl *This, DWORD pos,
 
     /* check that buffer is big enough -- don't trust dwSuggestedBufferSize */
     if (This->lpBuffer == NULL || size < This->cbBuffer) {
-      This->lpBuffer =
-	(LPDWORD)GlobalReAllocPtr(This->lpBuffer, max(size, This->sInfo.dwSuggestedBufferSize), GMEM_MOVEABLE);
+      DWORD maxSize = max(size, This->sInfo.dwSuggestedBufferSize);
+
+      if (This->lpBuffer == NULL)
+	This->lpBuffer = (LPDWORD)GlobalAllocPtr(GMEM_MOVEABLE, maxSize);
+      else
+	This->lpBuffer =
+	  (LPDWORD)GlobalReAllocPtr(This->lpBuffer, maxSize, GMEM_MOVEABLE);
       if (This->lpBuffer == NULL)
 	return AVIERR_MEMORY;
       This->cbBuffer = max(size, This->sInfo.dwSuggestedBufferSize);
