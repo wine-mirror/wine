@@ -20,13 +20,40 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  *
  *
- * This is (or will be) a largely redundant reimplementation of the stuff in
- * cabextract.c... it would theoretically be preferable to have only one, shared
- * implementation, however there are semantic differences which may discourage efforts
- * to unify the two.  It should be possible, if awkward, to go back and reimplement
- * cabextract.c using FDI (once the FDI implementation is complete, of course).  Also,
- * cabextract's implementation is pretty efficient; fdi.c is, by contrast, extremely
- * wasteful...
+ * This is a largely redundant reimplementation of the stuff in cabextract.c.  It
+ * would be theoretically preferable to have only one, shared implementation, however
+ * there are semantic differences which may discourage efforts to unify the two.  It
+ * should be possible, if awkward, to go back and reimplement cabextract.c using FDI.
+ * But this approach would be quite a bit less performant.  Probably a better way
+ * would be to create a "library" of routines in cabextract.c which do the actual
+ * decompression, and have both fdi.c and cabextract share those routines.  The rest
+ * of the code is not sufficiently similar to merit a shared implementation.
+ *
+ * The worst thing about this API is the bug.  "The bug" is this: when you extract a
+ * cabinet, it /always/ informs you (via the hasnext field of PFDICABINETINFO), that
+ * there is no subsequent cabinet, even if there is one.  wine faithfully reproduces
+ * this behavior.
+ *
+ * TODO:
+ *
+ * Wine does not implement the AFAIK undocumented "enumerate" callback during
+ * FDICopy.  It is implemented in Windows and therefore worth investigating...
+ *
+ * Lots of pointers flying around here... am I leaking RAM?
+ *
+ * WTF is FDITruncate?
+ *
+ * Probably, I need to weed out some dead code-paths.
+ *
+ * Test unit(s).
+ *
+ * The fdintNEXT_CABINET callbacks are probably not working quite as they should.
+ * There are several FIXME's in the source describing some of the deficiencies in
+ * some detail.  Additionally, we do not do a very good job of returning the right
+ * error codes to this callback.
+ *
+ * FDICopy and fdi_decomp are incomprehensibly large; separating these into smaller
+ * functions would be nice.
  *
  *   -gmt
  */
@@ -55,7 +82,7 @@ struct fdi_file {
   cab_ULONG offset;                    /* uncompressed offset in folder  */
   cab_UWORD index;                     /* magic index number of folder   */
   cab_UWORD time, date, attribs;       /* MS-DOS time/date/attributes    */
-  BOOL oppressed;                       /* never to be processed          */
+  BOOL oppressed;                      /* never to be processed          */
 };
 
 struct fdi_folder {
@@ -71,7 +98,7 @@ struct fdi_folder {
  * this structure fills the gaps between what is available in a PFDICABINETINFO
  * vs what is needed by FDICopy.  Memory allocated for these becomes the responsibility
  * of the caller to free.  Yes, I am aware that this is totally, utterly inelegant.
- * To make things even more unneccesarily confusing, we now attach these to the
+ * To make things even more unnecessarily confusing, we now attach these to the
  * fdi_decomp_state.
  */
 typedef struct {
@@ -84,7 +111,7 @@ typedef struct {
 
 /*
  * ugh, well, this ended up being pretty damn silly...
- * now that I've conceeded to build equivalent structures to struct cab.*,
+ * now that I've conceded to build equivalent structures to struct cab.*,
  * I should have just used those, or, better yet, unified the two... sue me.
  * (Note to Microsoft: That's a joke.  Please /don't/ actually sue me! -gmt).
  * Nevertheless, I've come this far, it works, so I'm not gonna change it
@@ -122,6 +149,42 @@ typedef struct fdi_cds_fwd {
 
 /***********************************************************************
  *		FDICreate (CABINET.20)
+ *
+ * Provided with several callbacks (all of them are mandatory),
+ * returns a handle which can be used to perform operations
+ * on cabinet files.
+ *
+ * PARAMS
+ *   pfnalloc [I]  A pointer to a function which allocates ram.  Uses
+ *                 the same interface as malloc.
+ *   pfnfree  [I]  A pointer to a function which frees ram.  Uses the
+ *                 same interface as free.
+ *   pfnopen  [I]  A pointer to a function which opens a file.  Uses
+ *                 the same interface as _open.
+ *   pfnread  [I]  A pointer to a function which reads from a file into
+ *                 a caller-provided buffer.  Uses the same interface
+ *                 as _read
+ *   pfnwrite [I]  A pointer to a function which writes to a file from
+ *                 a caller-provided buffer.  Uses the same interface
+ *                 as _write.
+ *   pfnclose [I]  A pointer to a function which closes a file handle.
+ *                 Uses the same interface as _close.
+ *   pfnseek  [I]  A pointer to a function which seeks in a file.
+ *                 Uses the same interface as _lseek.
+ *   cpuType  [I]  The type of CPU; ignored in wine (recommended value:
+ *                 cpuUNKNOWN, aka -1).
+ *   perf     [IO] A pointer to an ERF structure.  When FDICreate
+ *                 returns an error condition, error information may
+ *                 be found here as well as from GetLastError.
+ *
+ * RETURNS
+ *   On success, returns an FDI handle of type HFDI.
+ *   On failure, the NULL file handle is returned. Error
+ *   info can be retrieved from perf.
+ *
+ * INCLUDES
+ *   fdi.h
+ * 
  */
 HFDI __cdecl FDICreate(
 	PFNALLOC pfnalloc,
@@ -177,7 +240,7 @@ HFDI __cdecl FDICreate(
 /*******************************************************************
  * FDI_getoffset (internal)
  *
- * returns the file pointer position of a cab
+ * returns the file pointer position of a file handle.
  */
 long FDI_getoffset(HFDI hfdi, INT_PTR hf)
 {
@@ -188,7 +251,7 @@ long FDI_getoffset(HFDI hfdi, INT_PTR hf)
  * FDI_realloc (internal)
  *
  * we can't use _msize; the user might not be using malloc, so we require
- * an explicit specification of the previous size. utterly inefficient.
+ * an explicit specification of the previous size.  inefficient.
  */
 void *FDI_realloc(HFDI hfdi, void *mem, size_t prevsize, size_t newsize)
 {
@@ -207,7 +270,7 @@ void *FDI_realloc(HFDI hfdi, void *mem, size_t prevsize, size_t newsize)
 /**********************************************************************
  * FDI_read_string (internal)
  *
- * allocate and read an aribitrarily long string from the cabinet
+ * allocate and read an arbitrarily long string from the cabinet
  */
 char *FDI_read_string(HFDI hfdi, INT_PTR hf, long cabsize)
 {
@@ -261,7 +324,6 @@ char *FDI_read_string(HFDI hfdi, INT_PTR hf, long cabsize)
  *
  * process the cabinet header in the style of FDIIsCabinet, but
  * without the sanity checks (and bug)
- *
  */
 BOOL FDI_read_entries(
         HFDI             hfdi,
@@ -276,6 +338,36 @@ BOOL FDI_read_entries(
   char *prevname = NULL, *previnfo = NULL, *nextname = NULL, *nextinfo = NULL;
 
   TRACE("(hfdi == ^%p, hf == %d, pfdici == ^%p)\n", hfdi, hf, pfdici);
+
+  /* 
+   * FIXME: I just noticed that I am memorizing the initial file pointer
+   * offset and restoring it before reading in the rest of the header
+   * information in the cabinet.  Perhaps that's correct -- that is, perhaps
+   * this API is supposed to support "streaming" cabinets which are embedded
+   * in other files, or cabinets which begin at file offsets other than zero.
+   * Otherwise, I should instead go to the absolute beginning of the file.
+   * (Either way, the semantics of wine's FDICopy require me to leave the
+   * file pointer where it is afterwards -- If Windows does not do so, we
+   * ought to duplicate the native behavior in the FDIIsCabinet API, not here.
+   * 
+   * So, the answer lies in Windows; will native cabinet.dll recognize a
+   * cabinet "file" embedded in another file?  Note that cabextract.c does
+   * support this, which implies that Microsoft's might.  I haven't tried it
+   * yet so I don't know.  ATM, most of wine's FDI cabinet routines (except
+   * this one) would not work in this way.  To fix it, we could just make the
+   * various references to absolute file positions in the code relative to an
+   * initial "beginning" offset.  Because the FDICopy API doesn't take a
+   * file-handle like this one, we would therein need to search through the
+   * file for the beginning of the cabinet (as we also do in cabextract.c).
+   * Note that this limits us to a maximum of one cabinet per. file: the first.
+   *
+   * So, in summary: either the code below is wrong, or the rest of fdi.c is
+   * wrong... I cannot imagine that both are correct ;)  One of these flaws
+   * should be fixed after determining the behavior on Windows.   We ought
+   * to check both FDIIsCabinet and FDICopy for the right behavior.
+   *
+   * -gmt
+   */
 
   /* get basic offset & size info */
   base_offset = FDI_getoffset(hfdi, hf);
@@ -449,6 +541,30 @@ BOOL FDI_read_entries(
 
 /***********************************************************************
  *		FDIIsCabinet (CABINET.21)
+ *
+ * Informs the caller as to whether or not the provided file handle is
+ * really a cabinet or not, filling out the provided PFDICABINETINFO
+ * structure with information about the cabinet.  Brief explanations of
+ * the elements of this structure are available as comments accompanying
+ * its definition in wine's include/fdi.h.
+ *
+ * PARAMS
+ *   hfdi   [I]  An HFDI from FDICreate
+ *   hf     [I]  The file handle about which the caller inquires
+ *   pfdici [IO] Pointer to a PFDICABINETINFO structure which will
+ *               be filled out with information about the cabinet
+ *               file indicated by hf if, indeed, it is determined
+ *               to be a cabinet.
+ * 
+ * RETURNS
+ *   TRUE  if the file is a cabinet.  The info pointed to by pfdici will
+ *         be provided.
+ *   FALSE if the file is not a cabinet, or if an error was encountered
+ *         while processing the cabinet.  The PERF structure provided to
+ *         FDICreate can be queried for more error information.
+ *
+ * INCLUDES
+ *   fdi.c
  */
 BOOL __cdecl FDIIsCabinet(
 	HFDI            hfdi,
@@ -493,7 +609,7 @@ BOOL __cdecl FDIIsCabinet(
 /******************************************************************
  * QTMfdi_initmodel (internal)
  *
- * Initialise a model which decodes symbols from [s] to [s]+[n]-1
+ * Initialize a model which decodes symbols from [s] to [s]+[n]-1
  */
 void QTMfdi_initmodel(struct QTMmodel *m, struct QTMmodelsym *sym, int n, int s) {
   int i;
@@ -530,7 +646,7 @@ int QTMfdi_init(int window, int level, fdi_decomp_state *decomp_state) {
   QTM(window_size) = wndsize;
   QTM(window_posn) = 0;
 
-  /* initialise static slot/extrabits tables */
+  /* initialize static slot/extrabits tables */
   for (i = 0, j = 0; i < 27; i++) {
     CAB(q_length_extra)[i] = (i == 26) ? 0 : (i < 2 ? 0 : i - 2) >> 2;
     CAB(q_length_base)[i] = j; j += 1 << ((i == 26) ? 5 : CAB(q_length_extra)[i]);
@@ -540,7 +656,7 @@ int QTMfdi_init(int window, int level, fdi_decomp_state *decomp_state) {
     CAB(q_position_base)[i] = j; j += 1 << CAB(q_extra_bits)[i];
   }
 
-  /* initialise arithmetic coding models */
+  /* initialize arithmetic coding models */
 
   QTMfdi_initmodel(&QTM(model7), &QTM(m7sym)[0], 7, 0);
 
@@ -580,7 +696,7 @@ int LZXfdi_init(int window, fdi_decomp_state *decomp_state) {
   }
   LZX(window_size) = wndsize;
 
-  /* initialise static tables */
+  /* initialize static tables */
   for (i=0, j=0; i <= 50; i += 2) {
     CAB(extra_bits)[i] = CAB(extra_bits)[i+1] = j; /* 0,0,0,0,1,1,2,2,3,3... */
     if ((i != 0) && (j < 17)) j++; /* 0,0,1,2,3,4...15,16,17,17,17,17... */
@@ -607,7 +723,7 @@ int LZXfdi_init(int window, fdi_decomp_state *decomp_state) {
   LZX(intel_started)   = 0;
   LZX(window_posn)     = 0;
 
-  /* initialise tables to 0 (because deltas will be applied to them) */
+  /* initialize tables to 0 (because deltas will be applied to them) */
   for (i = 0; i < LZX_MAINTREE_MAXSYMBOLS; i++) LZX(MAINTREE_len)[i] = 0;
   for (i = 0; i < LZX_LENGTH_MAXSYMBOLS; i++)   LZX(LENGTH_len)[i]   = 0;
 
@@ -1694,13 +1810,14 @@ int LZXfdi_decomp(int inlen, int outlen, fdi_decomp_state *decomp_state) {
 /**********************************************************
  * fdi_decomp (internal)
  *
- * Decompress the "appropriate" number of bytes.  If savemode is zero,
+ * Decompress the requested number of bytes.  If savemode is zero,
  * do not save the output anywhere, just plow through blocks until we
- * reach the starting point for fi, and remember the position of the
- * cabfile pointer after we are done; otherwise, save it out, decompressing
- * the number of bytes in the file specified by fi.  This is also where we
- * jumping to additional cabinets in the case of split cab's, and provide
- * (most of) the NEXT_CABINET notification semantics described in the SDK.
+ * reach the specified (uncompressed) distance from the starting point,
+ * and remember the position of the cabfile pointer (and which cabfile)
+ * after we are done; otherwise, save the data out to CAB(filehf),
+ * decompressing the requested number of bytes and writing them out.  This
+ * is also where we jump to additional cabinets in the case of split
+ * cab's, and provide (some of) the NEXT_CABINET notification semantics.
  */
 int fdi_decomp(struct fdi_file *fi, int savemode, fdi_decomp_state *decomp_state,
   char *pszCabPath, PFNFDINOTIFY pfnfdin, void *pvUser)
@@ -1788,7 +1905,7 @@ int fdi_decomp(struct fdi_file *fi, int savemode, fdi_decomp_state *decomp_state
             if (pathlen < 256) {
               for (i = 0; i <= pathlen; i++)
                 userpath[i] = pszCabPath[i];
-            } /* else we are in a wierd place... let's leave it blank and see if the user fixes it */
+            } /* else we are in a weird place... let's leave it blank and see if the user fixes it */
           } 
 
           /* initial fdintNEXT_CABINET notification */
@@ -1950,7 +2067,8 @@ int fdi_decomp(struct fdi_file *fi, int savemode, fdi_decomp_state *decomp_state
             }
           }
         }
-        if (!success) goto tryanothercab; /* this should never happen */
+        if (!success) goto tryanothercab; /* FIXME: shouldn't this trigger
+                                             "Wrong Cabinet" notification? */
       }
     }
 
@@ -1967,6 +2085,167 @@ int fdi_decomp(struct fdi_file *fi, int savemode, fdi_decomp_state *decomp_state
 
 /***********************************************************************
  *		FDICopy (CABINET.22)
+ *
+ * Iterates through the files in the Cabinet file indicated by name and
+ * file-location.  May chain forward to additional cabinets (typically
+ * only one) if files which begin in this Cabinet are continued in another
+ * cabinet.  For each file which is partially contained in this cabinet,
+ * and partially contained in a prior cabinet, provides fdintPARTIAL_FILE
+ * notification to the pfnfdin callback.  For each file which begins in
+ * this cabinet, fdintCOPY_FILE notification is provided to the pfnfdin
+ * callback, and the file is optionally decompressed and saved to disk.
+ * Notification is not provided for files which are not at least partially
+ * contained in the specified cabinet file.
+ *
+ * See below for a thorough explanation of the various notification
+ * callbacks.
+ *
+ * PARAMS
+ *   hfdi       [I] An HFDI from FDICreate
+ *   pszCabinet [I] C-style string containing the filename of the cabinet
+ *   pszCabPath [I] C-style string containing the file path of the cabinet
+ *   flags      [I] "Decoder parameters".  Ignored.  Suggested value: 0.
+ *   pfnfdin    [I] Pointer to a notification function.  See CALLBACKS below.
+ *   pfnfdid    [I] Pointer to a decryption function.  Ignored.  Suggested
+ *                  value: NULL.
+ *   pvUser     [I] arbitrary void * value which is passed to callbacks.
+ *
+ * RETURNS
+ *   TRUE if successful.
+ *   FALSE if unsuccessful (error information is provided in the ERF structure
+ *     associated with the provided decompression handle by FDICreate).
+ *
+ * CALLBACKS
+ *
+ *   Two pointers to callback functions are provided as parameters to FDICopy:
+ *   pfnfdin(of type PFNFDINOTIFY), and pfnfdid (of type PFNFDIDECRYPT).  These
+ *   types are as follows:
+ *
+ *     typedef INT_PTR (__cdecl *PFNFDINOTIFY)  ( FDINOTIFICATIONTYPE fdint,
+ *                                               PFDINOTIFICATION  pfdin );
+ *
+ *     typedef int     (__cdecl *PFNFDIDECRYPT) ( PFDIDECRYPT pfdid );
+ *
+ *   You can create functions of this type using the FNFDINOTIFY() and
+ *   FNFDIDECRYPT() macros, respectively.  For example:
+ *
+ *     FNFDINOTIFY(mycallback) {
+ *       / * use variables fdint and pfdin to process notification * /
+ *     }
+ *
+ *   The second callback, which could be used for decrypting encrypted data,
+ *   is not used at all.
+ *
+ *   Each notification informs the user of some event which has occurred during
+ *   decompression of the cabinet file; each notification is also an opportunity
+ *   for the callee to abort decompression.  The information provided to the
+ *   callback and the meaning of the callback's return value vary drastically
+ *   across the various types of notification.  The type of notification is the
+ *   fdint parameter; all other information is provided to the callback in
+ *   notification-specific parts of the FDINOTIFICATION structure pointed to by
+ *   pfdin.  The only part of that structure which is assigned for every callback
+ *   is the pv element, which contains the arbitrary value which was passed to
+ *   FDICopy in the pvUser argument (psz1 is also used each time, but its meaning
+ *   is highly dependant on fdint).
+ *   
+ *   If you encounter unknown notifications, you should return zero if you want
+ *   decompression to continue (or -1 to abort).  All strings used in the
+ *   callbacks are regular C-style strings.  Detailed descriptions of each
+ *   notification type follow:
+ *
+ *   fdintCABINET_INFO:
+ * 
+ *     This is the first notification provided after calling FDICopy, and provides
+ *     the user with various information about the cabinet.  Note that this is
+ *     called for each cabinet FDICopy opens, not just the first one.  In the
+ *     structure pointed to by pfdin, psz1 contains a pointer to the name of the
+ *     next cabinet file in the set after the one just loaded (if any), psz2
+ *     contains a pointer to the name or "info" of the next disk, psz3
+ *     contains a pointer to the file-path of the current cabinet, setID
+ *     contains an arbitrary constant associated with this set of cabinet files,
+ *     and iCabinet contains the numerical index of the current cabinet within
+ *     that set.  Return zero, or -1 to abort.
+ *
+ *   fdintPARTIAL_FILE:
+ *
+ *     This notification is provided when FDICopy encounters a part of a file
+ *     contained in this cabinet which is missing its beginning.  Files can be
+ *     split across cabinets, so this is not necessarily an abnormality; it just
+ *     means that the file in question begins in another cabinet.  No file
+ *     corresponding to this notification is extracted from the cabinet.  In the
+ *     structure pointed to by pfdin, psz1 contains a pointer to the name of the
+ *     partial file, psz2 contains a pointer to the file name of the cabinet in
+ *     which this file begins, and psz3 contains a pointer to the disk name or
+ *     "info" of the cabinet where the file begins. Return zero, or -1 to abort.
+ *
+ *   fdintCOPY_FILE:
+ *
+ *     This notification is provided when FDICopy encounters a file which starts
+ *     in the cabinet file, provided to FDICopy in pszCabinet.  (FDICopy will not
+ *     look for files in cabinets after the first one).  One notification will be
+ *     sent for each such file, before the file is decompressed.  By returning
+ *     zero, the callback can instruct FDICopy to skip the file.  In the structure
+ *     pointed to by pfdin, psz1 contains a pointer to the file's name, cb contains
+ *     the size of the file (uncompressed), attribs contains the file attributes,
+ *     and date and time contain the date and time of the file.  attributes, date,
+ *     and time are of the 16-bit ms-dos variety.  Return -1 to abort decompression
+ *     for the entire cabinet, 0 to skip just this file but continue scanning the
+ *     cabinet for more files, or an FDIClose()-compatible file-handle.
+ *
+ *   fdintCLOSE_FILE_INFO:
+ *
+ *     This notification is important, don't forget to implement it.  This
+ *     notification indicates that a file has been successfully uncompressed and
+ *     written to disk.  Upon receipt of this notification, the callee is expected
+ *     to close the file handle, to set the attributes and date/time of the
+ *     closed file, and possibly to execute the file.  In the structure pointed to
+ *     by pfdin, psz1 contains a pointer to the name of the file, hf will be the
+ *     open file handle (close it), cb contains 1 or zero, indicating respectively
+ *     that the callee should or should not execute the file, and date, time
+ *     and attributes will be set as in fdintCOPY_FILE.  Bizarrely, the Cabinet SDK
+ *     specifies that _A_EXEC will be xor'ed out of attributes!  wine does not do
+ *     do so.  Return TRUE, or FALSE to abort decompression.
+ *
+ *   fdintNEXT_CABINET:
+ *
+ *     This notification is called when FDICopy must load in another cabinet.  This
+ *     can occur when a file's data is "split" across multiple cabinets.  The
+ *     callee has the opportunity to request that FDICopy look in a different file
+ *     path for the specified cabinet file, by writing that data into a provided
+ *     buffer (see below for more information).  This notification will be received
+ *     more than once per-cabinet in the instance that FDICopy failed to find a
+ *     valid cabinet at the location specified by the first per-cabinet
+ *     fdintNEXT_CABINET notification.  In such instances, the fdie element of the
+ *     structure pointed to by pfdin indicates the error which prevented FDICopy
+ *     from proceeding successfully.  Return zero to indicate success, or -1 to
+ *     indicate failure and abort FDICopy.
+ *
+ *     Upon receipt of this notification, the structure pointed to by pfdin will
+ *     contain the following values: psz1 pointing to the name of the cabinet
+ *     which FDICopy is attempting to open, psz2 pointing to the name ("info") of
+ *     the next disk, psz3 pointing to the presumed file-location of the cabinet,
+ *     and fdie containing either FDIERROR_NONE, or one of the following: 
+ *
+ *       FDIERROR_CABINET_NOT_FOUND, FDIERROR_NOT_A_CABINET,
+ *       FDIERROR_UNKNOWN_CABINET_VERSION, FDIERROR_CORRUPT_CABINET,
+ *       FDIERROR_BAD_COMPR_TYPE, FDIERROR_RESERVE_MISMATCH, and 
+ *       FDIERROR_WRONG_CABINET.
+ *
+ *     The callee may choose to change the path where FDICopy will look for the
+ *     cabinet after this notification.  To do so, the caller may write the new
+ *     pathname to the buffer pointed to by psz3, which is 256 characters in
+ *     length, including the terminating null character, before returning zero.
+ *
+ *   fdintENUMERATE:
+ *
+ *     Undocumented and unimplemented in wine, this seems to be sent each time
+ *     a cabinet is opened, along with the fdintCABINET_INFO notification.  It
+ *     probably has an interface similar to that of fdintCABINET_INFO; maybe this
+ *     provides information about the current cabinet instead of the next one....
+ *     this is just a guess, it has not been looked at closely.
+ *
+ * INCLUDES
+ *   fdi.c
  */
 BOOL __cdecl FDICopy(
         HFDI           hfdi,
@@ -2145,25 +2424,54 @@ BOOL __cdecl FDICopy(
   }
 
   for (file = CAB(firstfile); (file); file = file->next) {
-    /* partial-file notification (do it just once for the first cabinet) */
+
+    /*
+     * FIXME: This implementation keeps multiple cabinet files open at once
+     * when encountering a split cabinet.  It is a quirk of this implementation
+     * that sometimes we decrypt the same block of data more than once, to find
+     * the right starting point for a file, moving the file-pointer backwards.
+     * If we kept a cache of certain file-pointer information, we could eliminate
+     * that behavior... in fact I am not sure that the caching we already have
+     * is not sufficient.
+     * 
+     * The current implementation seems to work fine in straightforward situations
+     * where all the cabinet files needed for decryption are simultaneously
+     * available.  But presumably, the API is supposed to support cabinets which
+     * are split across multiple CDROMS; we may need to change our implementation
+     * to strictly serialize it's file usage so that it opens only one cabinet
+     * at a time.  Some experimentation with Windows is needed to figure out the
+     * precise semantics required.  The relevant code is here and in fdi_decomp().
+     */
+
+    /* partial-file notification */
     if ((file->index & cffileCONTINUED_FROM_PREV) == cffileCONTINUED_FROM_PREV) {
-      /* OK, more MS bugs to simulate here, I think.  I don't have a huge spanning
-       * cabinet to test this theory on ATM, but here's the deal.  The SDK says that we
-       * are supposed to notify the user of the filename and "disk name" (info) of
-       * the cabinet where the spanning file /started/.  That would certainly be convenient
-       * for the consumer, who could decide to abort everything and try to start over with
-       * that cabinet so as to avoid partial file notification and successfully unpack.  This
-       * task would be a horrible bitch from the implementor's (wine's) perspective: the
-       * information is associated nowhere with the file header and is not to be found in
-       * the cabinet header.  So we would have to open the previous cabinet, and check
-       * if it contains a single spanning file that's continued from yet another prior cabinet,
-       * and so-on, until we find the beginning.  Note that cabextract.c has code to do exactly
-       * this.  Luckily, MS clearly didn't implement this logic, so we don't have to either.
-       * Watching the callbacks (and debugmsg +file) clearly shows that they don't open
-       * the preceeding cabinet -- and therefore, I deduce, there is NO WAY they could
-       * have implemented what's in the spec.  Instead, they are obviously just returning
-       * the previous cabinet and it's info from the header of this cabinet.  So we shall
-       * do the same.  Of course, I could be missing something...
+      /*
+       * FIXME: Need to create a Cabinet with a single file spanning multiple files
+       * and perform some tests to figure out the right behavior.  The SDK says
+       * FDICopy will notify the user of the filename and "disk name" (info) of
+       * the cabinet where the spanning file /started/.
+       *
+       * That would certainly be convenient for the API-user, who could abort,
+       * everything (or parallelize, if that's allowed (it is in wine)), and call
+       * FDICopy again with the provided filename, so as to avoid partial file
+       * notification and successfully unpack.  This task could be quite unpleasant
+       * from wine's perspective: the information specifying the "start cabinet" for
+       * a file is associated nowhere with the file header and is not to be found in
+       * the cabinet header.  We have only the index of the cabinet wherein the folder
+       * begins, which contains the file.  To find that cabinet, we must consider the
+       * index of the current cabinet, and chain backwards, cabinet-by-cabinet (for
+       * each cabinet refers to its "next" and "previous" cabinet only, like a linked
+       * list).
+       *
+       * Bear in mind that, in the spirit of CABINET.DLL, we must assume that any
+       * cabinet other than the active one might be at another filepath than the
+       * current one, or on another CDROM. This could get rather dicey, especially
+       * if we imagine parallelized access to the FDICopy API.
+       *
+       * The current implementation punts -- it just returns the previous cabinet and
+       * it's info from the header of this cabinet.  This provides the right answer in
+       * 95% of the cases; its worth checking if Microsoft cuts the same corner before
+       * we "fix" it.
        */
       ZeroMemory(&fdin, sizeof(FDINOTIFICATION));
       fdin.pv = pvUser;
@@ -2231,7 +2539,7 @@ BOOL __cdecl FDICopy(
 
         TRACE("Resetting folder for file %s.\n", debugstr_a(file->filename));
 
-        /* free stuff for the old decompressor */
+        /* free stuff for the old decompresser */
         switch (ct2) {
         case cffoldCOMPTYPE_LZX:
           if (LZX(window)) {
@@ -2252,7 +2560,7 @@ BOOL __cdecl FDICopy(
         CAB(offset) = 0;
         CAB(outlen) = 0;
 
-        /* initialize the new decompressor */
+        /* initialize the new decompresser */
         switch (ct1) {
         case cffoldCOMPTYPE_NONE:
           CAB(decompress) = NONEfdi_decomp;
@@ -2346,10 +2654,10 @@ BOOL __cdecl FDICopy(
       fdin.pv = pvUser;
       fdin.psz1 = (char *)file->filename;
       fdin.hf = filehf;
-      fdin.cb = (file->attribs & cffile_A_EXEC) ? TRUE : FALSE;
+      fdin.cb = (file->attribs & cffile_A_EXEC) ? TRUE : FALSE; /* FIXME: is that right? */
       fdin.date = file->date;
       fdin.time = file->time;
-      fdin.attribs = file->attribs;
+      fdin.attribs = file->attribs; /* FIXME: filter _A_EXEC? */
       err = ((*pfnfdin)(fdintCLOSE_FILE_INFO, &fdin));
       if (err == FALSE || err == -1) {
         /*
@@ -2450,6 +2758,16 @@ BOOL __cdecl FDICopy(
 
 /***********************************************************************
  *		FDIDestroy (CABINET.23)
+ *
+ * Frees a handle created by FDICreate.  Do /not/ call this in the middle
+ * of FDICopy.  Only reason for failure would be an invalid handle.
+ * 
+ * PARAMS
+ *   hfdi [I] The HFDI to free
+ *
+ * RETURNS
+ *   TRUE for success
+ *   FALSE for failure
  */
 BOOL __cdecl FDIDestroy(HFDI hfdi)
 {
@@ -2466,6 +2784,8 @@ BOOL __cdecl FDIDestroy(HFDI hfdi)
 
 /***********************************************************************
  *		FDITruncateCabinet (CABINET.24)
+ *
+ * Undocumented and unimplemented.
  */
 BOOL __cdecl FDITruncateCabinet(
 	HFDI    hfdi,
