@@ -115,7 +115,6 @@ HRESULT WINAPI Xlib_IDirectDrawSurface4Impl_Lock(
 	    (lprect->bottom < 0) ||
 	    (lprect->right < 0)) {
 	  ERR(" Negative values in LPRECT !!!\n");
-          IDirectDrawSurface4_Release(iface);
 	  return DDERR_INVALIDPARAMS;
 	}
 	lpddsd->u1.lpSurface=(LPVOID)((char*)This->s.surface_desc.u1.lpSurface+
