@@ -1781,7 +1781,7 @@ TMStubImpl_Invoke(
 	    if (!lstrcmpW(names[i+1],ppvObjectW)) {
 		hres = deserialize_LPVOID_ptr(
 		    This->tinfo,
-		    elem->u.paramdesc.wParamFlags & PARAMFLAG_FOUT,
+		    elem->u.paramdesc.wParamFlags & PARAMFLAG_FIN,
 		    FALSE,
 		    TRUE,
 		    &elem->tdesc,
