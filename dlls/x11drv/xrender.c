@@ -1013,6 +1013,19 @@ BOOL X11DRV_XRender_ExtTextOut( X11DRV_PDEVICE *physDev, INT x, INT y, UINT flag
     INT *deltas = NULL, char_extra;
     HRGN saved_region = 0;
     UINT align = GetTextAlign( hdc );
+    BOOL disable_antialias = FALSE;
+    AA_Type antialias = AA_None;
+    DIBSECTION bmp;
+
+    /* Do we need to disable antialiasing because of palette mode? */
+    HBITMAP hBitmap = GetCurrentObject( physDev->hdc, OBJ_BITMAP );
+    if( GetObjectW( hBitmap, sizeof(bmp), &bmp ) != sizeof(bmp) ) {
+        TRACE("bitmap is not a DIB\n");
+    }
+    else if (bmp.dsBmih.biBitCount <= 8) {
+        TRACE("Disabling antialiasing\n");
+        disable_antialias = TRUE;
+    }
 
     TRACE("%p, %d, %d, %08x, %p, %s, %d, %p)\n", hdc, x, y, flags,
 	  lprect, debugstr_wn(wstr, count), count, lpDx);
@@ -1307,14 +1320,16 @@ BOOL X11DRV_XRender_ExtTextOut( X11DRV_PDEVICE *physDev, INT x, INT y, UINT flag
 
     EnterCriticalSection(&xrender_cs);
     entry = glyphsetCache + physDev->xrender->cache_index;
-    formatEntry = entry->format[entry->aa_default];
+    if( disable_antialias == FALSE )
+        antialias = entry->aa_default;
+    formatEntry = entry->format[antialias];
 
     for(idx = 0; idx < count; idx++) {
         if( !formatEntry ) {
-	    UploadGlyph(physDev, glyphs[idx], entry->aa_default);
-            formatEntry = entry->format[entry->aa_default];
+	    UploadGlyph(physDev, glyphs[idx], antialias);
+            formatEntry = entry->format[antialias];
         } else if( glyphs[idx] >= formatEntry->nrealized || formatEntry->realized[glyphs[idx]] == FALSE) {
-	    UploadGlyph(physDev, glyphs[idx], entry->aa_default);
+	    UploadGlyph(physDev, glyphs[idx], antialias);
 	}
     }
     assert(formatEntry);
@@ -1354,7 +1369,7 @@ BOOL X11DRV_XRender_ExtTextOut( X11DRV_PDEVICE *physDev, INT x, INT y, UINT flag
         wine_tsx11_lock();
 	XSetForeground( gdi_display, physDev->gc, textPixel );
 
-	if(entry->aa_default == AA_None) {
+	if(antialias == AA_None) {
 	    for(idx = 0; idx < count; idx++) {
 	        SharpGlyphMono(physDev, physDev->org.x + x + xoff,
 			       physDev->org.y + y + yoff,
