@@ -1801,7 +1801,7 @@ void WINAPI DOS3Call( CONTEXT86 *context )
                 BX_reg(context) = DOSMEM_Available()>>4;
             }
         }
-        break;
+	break;
 
     case 0x49: /* FREE MEMORY */
         TRACE("FREE MEMORY segment %04lX\n", context->SegEs);
@@ -2265,7 +2265,7 @@ void WINAPI DOS3Call( CONTEXT86 *context )
         case 0x60:  
 	  switch(CL_reg(context))
 	  {
-	    case 0x01:  /*Get short filename or path */
+	    case 0x01:  /* Get short filename or path */
 	      if (!GetShortPathNameA
 		  ( CTX_SEG_OFF_TO_LIN(context, context->SegDs,
 				       context->Esi),
@@ -2274,7 +2274,7 @@ void WINAPI DOS3Call( CONTEXT86 *context )
 		bSetDOSExtendedError = TRUE;
 	      else AX_reg(context) = 0;
 	      break;
-	    case 0x02:  /*Get canonical long filename or path */
+	    case 0x02:  /* Get canonical long filename or path */
 	      if (!GetFullPathNameA
 		  ( CTX_SEG_OFF_TO_LIN(context, context->SegDs,
 				       context->Esi), 128,
@@ -2290,7 +2290,7 @@ void WINAPI DOS3Call( CONTEXT86 *context )
 	      AL_reg(context) = 0;
 	      break;
 	  }
-	    break;
+	  break;
         case 0x6c:  /* Create or open file */
             TRACE("LONG FILENAME - CREATE OR OPEN FILE %s\n",
 		 (LPCSTR)CTX_SEG_OFF_TO_LIN(context,  context->SegDs, context->Esi)); 
@@ -2322,9 +2322,17 @@ void WINAPI DOS3Call( CONTEXT86 *context )
 	    }
 	    break;
         case 0x56:  /* Move (rename) file */
-            FIXME("LONG FILENAME - RENAME FILE %s to %s stub\n",
-		  (LPCSTR)CTX_SEG_OFF_TO_LIN(context,  context->SegDs, context->Edx),
-		  (LPCSTR)CTX_SEG_OFF_TO_LIN(context,  context->SegEs, context->Edi)); 
+	    {
+		LPCSTR fn1 = (LPCSTR)CTX_SEG_OFF_TO_LIN(context,  context->SegDs, context->Edx);
+		LPCSTR fn2 = (LPCSTR)CTX_SEG_OFF_TO_LIN(context,  context->SegEs, context->Edi);
+                TRACE("LONG FILENAME - RENAME FILE %s to %s\n", fn1, fn2);
+	        if (!MoveFileA(fn1, fn2))
+		{
+		    SET_CFLAG(context);
+		    AL_reg(context) = GetLastError();
+		}
+	    }
+	    break;
         default:
             FIXME("Unimplemented long file name function:\n");
             INT_BARF( context, 0x21 );
