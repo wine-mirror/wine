@@ -736,8 +736,6 @@ struct Ziphuft **t, cab_LONG *m, cab_decomp_state *decomp_state)
       /* backup over finished tables */
       while ((i & ((1 << w) - 1)) != ZIP(x)[h])
         w -= l[--h];            /* don't need to update q */
-
-      free(q);
     }
   }
 
