@@ -1100,16 +1100,55 @@ HFILE WINAPI _lclose( HFILE hFile )
 
 /***********************************************************************
  *              GetOverlappedResult     (KERNEL32.360)
+ *
+ * Check the result of an Asynchronous data transfer from a file.
+ *
+ * RETURNS
+ *   TRUE on success
+ *   FALSE on failure
+ *
+ *  If successful (and relevant) lpTransfered will hold the number of
+ *   bytes transfered during the async operation.
+ *
+ * BUGS
+ *
+ * Currently only works for WaitCommEvent, ReadFile, WriteFile 
+ *   with communications ports.
+ *
  */
-BOOL WINAPI GetOverlappedResult(HANDLE hFile,LPOVERLAPPED lpOverlapped,
-                                LPDWORD lpNumberOfBytesTransferred,
-                                BOOL bWait)
-{
-    /* Since all i/o is currently synchronous,
-     * return true, assuming ReadFile/WriteFile
-     * have completed the operation */
-    FIXME("NO Asynch I/O, assuming Read/Write succeeded\n" );
-    return TRUE;
+BOOL WINAPI GetOverlappedResult(
+    HANDLE hFile,              /* [I] handle of file to check on */
+    LPOVERLAPPED lpOverlapped, /* [I/O] pointer to overlapped  */
+    LPDWORD lpTransferred,     /* [I/O] number of bytes transfered  */
+    BOOL bWait                 /* [I] wait for the transfer to complete ? */
+) {
+    DWORD r;
+
+    TRACE("(%d %p %p %x)\n", hFile, lpOverlapped, lpTransferred, bWait);
+
+    if(lpOverlapped==NULL)
+    {
+        ERR("lpOverlapped was null\n");
+        return FALSE;
+    }
+    if(!lpOverlapped->hEvent)
+    {
+        ERR("lpOverlapped->hEvent was null\n");
+        return FALSE;
+    }
+
+    do {
+        TRACE("waiting on %p\n",lpOverlapped);
+        r = WaitForSingleObjectEx(lpOverlapped->hEvent, bWait?INFINITE:0, TRUE);
+        TRACE("wait on %p returned %ld\n",lpOverlapped,r);
+    } while (r==STATUS_USER_APC);
+
+    if(lpTransferred)
+        *lpTransferred = lpOverlapped->Offset;
+
+    SetLastError(lpOverlapped->Internal);
+ 
+    return (r==WAIT_OBJECT_0);
 }
 
 /***********************************************************************
