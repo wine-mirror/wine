@@ -732,14 +732,36 @@ else
   AC_DEFINE([__ASM_NAME(name)], [name])
 fi
 
-dnl **** Check for .string in assembler ****
+dnl **** Check how to do strings in assembler ****
 
 AC_CACHE_CHECK([whether assembler accepts .string], ac_cv_c_asm_string,
     WINE_TRY_ASM_LINK([".data\n\t.string \"test\"\n\t.text"],,,
                       ac_cv_c_asm_string="yes",ac_cv_c_asm_string="no"))
 if test "$ac_cv_c_asm_string" = "yes"
 then
-  AC_DEFINE(HAVE_ASM_STRING, 1, [Define to use .string instead of .ascii])
+  AC_DEFINE(__ASM_STRING, [".string"], [Define to the assembler keyword used to specify an ASCII string])
+else
+    AC_CACHE_CHECK([whether assembler accepts .asciz], ac_cv_c_asm_asciz,
+        WINE_TRY_ASM_LINK([".data\n\t.asciz \"test\"\n\t.text"],,,
+                      ac_cv_c_asm_asciz="yes",ac_cv_c_asm_asciz="no"))
+    if test "$ac_cv_c_asm_asciz" = "yes"
+    then
+      AC_DEFINE(__ASM_STRING, [".asciz"])
+    else
+      AC_DEFINE(__ASM_STRING, [".ascii"])
+    fi					
+fi
+
+dnl **** Check for .short in assembler ****
+
+AC_CACHE_CHECK([whether assembler accepts .short], ac_cv_c_asm_short,
+    WINE_TRY_ASM_LINK([".data\n\t.short 1\n\t.text"],,,
+                      ac_cv_c_asm_short="yes",ac_cv_c_asm_short="no"))
+if test "$ac_cv_c_asm_short" = "yes"
+then
+  AC_DEFINE(__ASM_SHORT, [".short"], [Define to the assembler keyword used to specify a word value])
+else
+  AC_DEFINE(__ASM_SHORT, [".half"])
 fi
 
 dnl **** Check for working dll ****

@@ -210,7 +210,7 @@ static int output_exports( FILE *outfile, int nr_exports )
         fprintf( outfile, "    \"\\t.text\\n\"\n" );
         fprintf( outfile, "    \"__wine_spec_exp_names:\\n\"\n" );
         for (i = 0; i < nb_names; i++)
-            fprintf( outfile, "    \"\\t" STRING " \\\"%s\\\"\\n\"\n", Names[i]->name );
+            fprintf( outfile, "    \"\\t" __ASM_STRING " \\\"%s\\\"\\n\"\n", Names[i]->name );
         fprintf( outfile, "    \"\\t.data\\n\"\n" );
 
         /* output the function ordinals */
@@ -218,12 +218,12 @@ static int output_exports( FILE *outfile, int nr_exports )
         fprintf( outfile, "    \"__wine_spec_exp_ordinals:\\n\"\n" );
         for (i = 0; i < nb_names; i++)
         {
-            fprintf( outfile, "    \"\\t.short %d\\n\"\n", Names[i]->ordinal - Base );
+            fprintf( outfile, "    \"\\t" __ASM_SHORT " %d\\n\"\n", Names[i]->ordinal - Base );
         }
         total_size += nb_names * sizeof(short);
         if (nb_names % 2)
         {
-            fprintf( outfile, "    \"\\t.short 0\\n\"\n" );
+            fprintf( outfile, "    \"\\t" __ASM_SHORT " 0\\n\"\n" );
             total_size += sizeof(short);
         }
     }
@@ -237,7 +237,7 @@ static int output_exports( FILE *outfile, int nr_exports )
         {
             ORDDEF *odp = Ordinals[i];
             if (odp && (odp->flags & FLAG_FORWARD))
-                fprintf( outfile, "    \"\\t" STRING " \\\"%s\\\"\\n\"\n", odp->link_name );
+                fprintf( outfile, "    \"\\t" __ASM_STRING " \\\"%s\\\"\\n\"\n", odp->link_name );
         }
         fprintf( outfile, "    \"\\t.align %d\\n\"\n", get_alignment(4) );
         total_size += (fwd_size + 3) & ~3;
@@ -281,7 +281,7 @@ static int output_exports( FILE *outfile, int nr_exports )
             case TYPE_CDECL:
                 fprintf( outfile, "    \"\\tjmp " __ASM_NAME("%s") "\\n\"\n", name );
                 fprintf( outfile, "    \"\\tret\\n\"\n" );
-                fprintf( outfile, "    \"\\t.short %d\\n\"\n", args );
+                fprintf( outfile, "    \"\\t" __ASM_SHORT " %d\\n\"\n", args );
                 fprintf( outfile, "    \"\\t.long " __ASM_NAME("%s") ",0x%08x\\n\"\n", name, mask );
                 break;
             default:

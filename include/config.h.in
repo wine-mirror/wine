@@ -35,9 +35,6 @@
 /* Define if you have ARTS sound server */
 #undef HAVE_ARTS
 
-/* Define to use .string instead of .ascii */
-#undef HAVE_ASM_STRING
-
 /* Define to 1 if you have the <audio/audiolib.h> header file. */
 #undef HAVE_AUDIO_AUDIOLIB_H
 
@@ -778,6 +775,12 @@
 
 /* Define to a macro to generate an assembly name from a C symbol */
 #undef __ASM_NAME
+
+/* Define to the assembler keyword used to specify a word value */
+#undef __ASM_SHORT
+
+/* Define to the assembler keyword used to specify an ASCII string */
+#undef __ASM_STRING
 
 /* Define to empty if `const' does not conform to ANSI C. */
 #undef const
