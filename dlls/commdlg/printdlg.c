@@ -47,7 +47,7 @@ typedef struct
   HWND              hwndUpDown;
 } PRINT_PTRA;
 
-/* Debugiging info */
+/* Debugging info */
 static struct pd_flags {
   DWORD flag;
   LPSTR name;
@@ -1049,6 +1049,54 @@ BOOL WINAPI PrintDlgProcA(HWND hDlg, UINT uMsg, WPARAM wParam,
     return res;
 }
 
+
+/************************************************************
+ *
+ *      PRINTDLG_Get16TemplateFrom32             [Internal]
+ *      Generates a 16 bits template from the Wine 32 bits resource
+ *
+ */
+static HGLOBAL16 PRINTDLG_Get16TemplateFrom32(char *PrintResourceName)
+{
+        HANDLE hResInfo, hDlgTmpl32;
+        LPCVOID template32;
+        DWORD size;
+        HGLOBAL16 hGlobal16;
+        LPVOID template;
+ 
+        if (!(hResInfo = FindResourceA(COMMDLG_hInstance32,
+               PrintResourceName, RT_DIALOGA)))
+        {
+            COMDLG32_SetCommDlgExtendedError(CDERR_FINDRESFAILURE);
+            return 0;
+        }
+        if (!(hDlgTmpl32 = LoadResource(COMMDLG_hInstance32, hResInfo )) ||
+            !(template32 = LockResource( hDlgTmpl32 )))
+        {
+            COMDLG32_SetCommDlgExtendedError(CDERR_LOADRESFAILURE);
+            return 0;
+        }
+        size = SizeofResource(COMMDLG_hInstance32, hResInfo);
+        hGlobal16 = GlobalAlloc16(0, size);
+        if (!hGlobal16)
+        {
+            COMDLG32_SetCommDlgExtendedError(CDERR_MEMALLOCFAILURE);
+            ERR("alloc failure for %ld bytes\n", size);
+            return 0;
+        }
+        template = GlobalLock16(hGlobal16);
+        if (!template)
+        {
+            COMDLG32_SetCommDlgExtendedError(CDERR_MEMLOCKFAILURE);
+            ERR("global lock failure for %x handle\n", hGlobal16);
+            GlobalFree16(hGlobal16);
+            return 0;
+        }
+        ConvertDialog32To16((LPVOID)template32, size, (LPVOID)template);
+        GlobalUnlock16(hGlobal16);
+        return hGlobal16;
+}
+
 /************************************************************
  *
  *      PRINTDLG_GetDlgTemplate
@@ -1104,8 +1152,7 @@ static HGLOBAL16 PRINTDLG_GetDlgTemplate16(PRINTDLG16 *lppd)
 				     MapSL(lppd->lpSetupTemplateName), RT_DIALOGA);
 	    hDlgTmpl = LoadResource16(lppd->hInstance, hResInfo);
 	} else {
-	    ERR("no comctl32 templates for printing setup currently!\n");
-	    hDlgTmpl = 0;
+	    hDlgTmpl = PRINTDLG_Get16TemplateFrom32("PRINT32_SETUP");
 	}
     } else {
 	if(lppd->Flags & PD_ENABLEPRINTTEMPLATEHANDLE) {
@@ -1116,8 +1163,7 @@ static HGLOBAL16 PRINTDLG_GetDlgTemplate16(PRINTDLG16 *lppd)
 				     RT_DIALOGA);
 	    hDlgTmpl = LoadResource16(lppd->hInstance, hResInfo);
 	} else {
-	    ERR("no comctl32 templates for printing currently!\n");
-	    hDlgTmpl = 0;
+	    hDlgTmpl = PRINTDLG_Get16TemplateFrom32("PRINT32");
 	}
     }
     return hDlgTmpl;
@@ -1474,6 +1520,8 @@ BOOL16 WINAPI PrintDlg16(
 				    lpdmReturn->dmDeviceName, pi->pPortName);
 	    GlobalUnlock16(lppd->hDevMode);
 	}
+	if (!(lppd->Flags & (PD_ENABLESETUPTEMPLATEHANDLE | PD_ENABLESETUPTEMPLATE)))
+            GlobalFree16(hDlgTmpl); /* created from the 32 bits resource */
 	HeapFree(GetProcessHeap(), 0, PrintStructures->lpDevMode);
 	HeapFree(GetProcessHeap(), 0, PrintStructures->lpPrinterInfo);
 	HeapFree(GetProcessHeap(), 0, PrintStructures);
@@ -1553,7 +1601,7 @@ LRESULT WINAPI PrintDlgProc16(HWND16 hDlg, UINT16 uMsg, WPARAM16 wParam,
 		(WNDPROC16)PrintStructures->dlg.lpPrintDlg16->lpfnPrintHook,
 		hDlg,uMsg, wParam, lParam
 	);
-	if(res) return res;
+	if(LOWORD(res)) return res;
     }
 
     switch (uMsg) {
