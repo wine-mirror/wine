@@ -470,7 +470,7 @@ static void symt_fill_sym_info(const struct module* module,
             case DataIsParam:
                 if (data->u.s.reg_id)
                 {
-                    sym_info->Flags |= SYMFLAG_REGISTER;
+                    sym_info->Flags |= SYMFLAG_LOCAL | SYMFLAG_REGISTER;
                     sym_info->Register = data->u.s.reg_id;
                     sym_info->Address = 0;
                 }
@@ -480,7 +480,8 @@ static void symt_fill_sym_info(const struct module* module,
                         sym_info->Flags |= SYMFLAG_LOCAL | SYMFLAG_FRAMEREL;
                     else
                         sym_info->Flags |= SYMFLAG_PARAMETER | SYMFLAG_FRAMEREL;
-                    sym_info->Register = CV_REG_EBP; /* FIXME: needed ? */
+                    /* FIXME: needed ? moreover, it's i386 dependant !!! */
+                    sym_info->Register = CV_REG_EBP;
                     sym_info->Address = data->u.s.offset;
                 }
                 break;

@@ -108,6 +108,7 @@ struct module* module_new(struct process* pcs, const char* name,
      */
     hash_table_init(&module->pool, &module->ht_symbols, 4096);
     hash_table_init(&module->pool, &module->ht_types,   4096);
+    vector_init(&module->vtypes, sizeof(struct symt*),  32);
 
     module->sources_used      = 0;
     module->sources_alloc     = 0;
@@ -497,6 +498,7 @@ void module_reset_debug_info(struct module* module)
     hash_table_destroy(&module->ht_types);
     module->ht_types.num_buckets = 0;
     module->ht_types.buckets = NULL;
+    module->vtypes.num_elts = 0;
     hash_table_destroy(&module->ht_symbols);
     module->sources_used = module->sources_alloc = 0;
     module->sources = NULL;

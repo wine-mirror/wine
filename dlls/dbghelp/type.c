@@ -124,6 +124,14 @@ static struct symt* symt_find_type_by_name(struct module* module,
     return NULL;
 }
 
+static void symt_add_type(struct module* module, struct symt* symt)
+{
+    struct symt**       p;
+    p = vector_add(&module->vtypes, &module->pool);
+    assert(p);
+    *p = symt;
+}
+
 struct symt_basic* symt_new_basic(struct module* module, enum BasicType bt, 
                                   const char* typename, unsigned size)
 {
@@ -146,6 +154,7 @@ struct symt_basic* symt_new_basic(struct module* module, enum BasicType bt,
         } else sym->hash_elt.name = NULL;
         sym->bt = bt;
         sym->size = size;
+        symt_add_type(module, &sym->symt);
     }
     return sym;
 }
@@ -167,6 +176,7 @@ struct symt_udt* symt_new_udt(struct module* module, const char* typename,
             hash_table_add(&module->ht_types, &sym->hash_elt);
         } else sym->hash_elt.name = NULL;
         vector_init(&sym->vchildren, sizeof(struct symt*), 8);
+        symt_add_type(module, &sym->symt);
     }
     return sym;
 }
@@ -282,6 +292,7 @@ struct symt_array* symt_new_array(struct module* module, int min, int max,
         sym->start     = min;
         sym->end       = max;
         sym->basetype  = base;
+        symt_add_type(module, &sym->symt);
     }
     return sym;
 }
@@ -296,6 +307,7 @@ struct symt_function_signature* symt_new_function_signature(struct module* modul
         sym->symt.tag = SymTagFunctionType;
         sym->rettype  = ret_type;
         vector_init(&sym->vchildren, sizeof(struct symt*), 4);
+        symt_add_type(module, &sym->symt);
     }
     return sym;
 }
@@ -322,6 +334,7 @@ struct symt_pointer* symt_new_pointer(struct module* module, struct symt* ref_ty
     {
         sym->symt.tag = SymTagPointerType;
         sym->pointsto = ref_type;
+        symt_add_type(module, &sym->symt);
     }
     return sym;
 }
@@ -337,6 +350,7 @@ struct symt_typedef* symt_new_typedef(struct module* module, struct symt* ref,
         sym->type     = ref;
         sym->hash_elt.name = pool_strdup(&module->pool, name);
         hash_table_add(&module->ht_types, &sym->hash_elt);
+        symt_add_type(module, &sym->symt);
     }
     return sym;
 }
@@ -349,15 +363,14 @@ BOOL WINAPI SymEnumTypes(HANDLE hProcess, unsigned long BaseOfDll,
                          PSYM_ENUMERATESYMBOLS_CALLBACK EnumSymbolsCallback,
                          void* UserContext)
 {
-    struct process*             pcs;
-    struct module*              module;
-    struct symt_ht*             type;
-    void*                       ptr;
-    char                        buffer[sizeof(SYMBOL_INFO) + 256];
-    SYMBOL_INFO*                sym_info = (SYMBOL_INFO*)buffer;
-    struct hash_table_iter      hti;
-    const char*                 tmp;
-
+    struct process*     pcs;
+    struct module*      module;
+    char                buffer[sizeof(SYMBOL_INFO) + 256];
+    SYMBOL_INFO*        sym_info = (SYMBOL_INFO*)buffer;
+    const char*         tmp;
+    struct symt*        type;
+    void*               pos = NULL;
+    
     TRACE("(%p %08lx %p %p)\n",
           hProcess, BaseOfDll, EnumSymbolsCallback, UserContext);
 
@@ -368,24 +381,27 @@ BOOL WINAPI SymEnumTypes(HANDLE hProcess, unsigned long BaseOfDll,
     sym_info->SizeOfStruct = sizeof(SYMBOL_INFO);
     sym_info->MaxNameLen = sizeof(buffer) - sizeof(SYMBOL_INFO);
 
-    hash_table_iter_init(&module->ht_types, &hti, NULL);
-    while ((ptr = hash_table_iter_up(&hti)))
+    while ((pos = vector_iter_up(&module->vtypes, pos)))
     {
-        type = GET_ENTRY(ptr, struct symt_ht, hash_elt);
+        type = *(struct symt**)pos;
         sym_info->TypeIndex = (DWORD)type;
         sym_info->info = 0; /* FIXME */
-        symt_get_info(&type->symt, TI_GET_LENGTH, &sym_info->Size);
+        symt_get_info(type, TI_GET_LENGTH, &sym_info->Size);
         sym_info->ModBase = module->module.BaseOfImage;
         sym_info->Flags = 0; /* FIXME */
         sym_info->Value = 0; /* FIXME */
         sym_info->Address = 0; /* FIXME */
         sym_info->Register = 0; /* FIXME */
         sym_info->Scope = 0; /* FIXME */
-        sym_info->Tag = type->symt.tag;
-        tmp = symt_get_name(&type->symt);
-        sym_info->NameLen = strlen(tmp) + 1;
-        strncpy(sym_info->Name, tmp, min(sym_info->NameLen, sym_info->MaxNameLen));
-        sym_info->Name[sym_info->MaxNameLen - 1] = '\0';
+        sym_info->Tag = type->tag;
+        tmp = symt_get_name(type);
+        if (tmp)
+        {
+            sym_info->NameLen = strlen(tmp) + 1;
+            strncpy(sym_info->Name, tmp, min(sym_info->NameLen, sym_info->MaxNameLen));
+            sym_info->Name[sym_info->MaxNameLen - 1] = '\0';
+        }       
+        else sym_info->Name[sym_info->NameLen = 0] = '\0';
         if (!EnumSymbolsCallback(sym_info, sym_info->Size, UserContext)) break;
     }
     return TRUE;
@@ -580,6 +596,8 @@ BOOL symt_get_info(const struct symt* type, IMAGEHLP_SYMBOL_TYPE_INFO req,
         default:
             FIXME("Unsupported sym-tag %s for get-length\n", 
                   symt_get_tag_str(type->tag));
+            /* fall through */
+        case SymTagFunctionType:
             return 0;
         }
         break;
