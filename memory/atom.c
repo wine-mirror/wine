@@ -40,6 +40,7 @@
 #define GET_ATOM_TABLE(sel)  ((ATOMTABLE*)PTR_SEG_OFF_TO_LIN(sel, \
           ((INSTANCEDATA*)PTR_SEG_OFF_TO_LIN(sel,0))->atomtable))
 		
+static WORD ATOM_GlobalTable = 0;
 
 /***********************************************************************
  *           ATOM_InitTable
@@ -58,6 +59,14 @@ static HANDLE16 ATOM_InitTable(
     int i;
     HANDLE16 handle;
     ATOMTABLE *table;
+
+      /* We consider the first table to be initialized as the global table. 
+       * This works, as USER (both built-in and native) is the first one to 
+       * register ... 
+       */
+
+    if (!ATOM_GlobalTable) ATOM_GlobalTable = selector; 
+
 
       /* Allocate the table */
 
@@ -80,9 +89,9 @@ static HANDLE16 ATOM_InitTable(
  *
  * Global table initialisation.
  */
-BOOL32 ATOM_Init(void)
+BOOL32 ATOM_Init( WORD globalTableSel )
 {
-    return ATOM_InitTable( USER_HeapSel, DEFAULT_ATOMTABLE_SIZE ) != 0;
+    return ATOM_InitTable( globalTableSel, DEFAULT_ATOMTABLE_SIZE ) != 0;
 }
 
 
@@ -498,7 +507,7 @@ ATOM WINAPI GlobalAddAtom16( SEGPTR str )
 #ifdef CONFIG_IPC
     return DDE_GlobalAddAtom( str );
 #else
-    return ATOM_AddAtom( USER_HeapSel, (LPCSTR)PTR_SEG_TO_LIN(str) );
+    return ATOM_AddAtom( ATOM_GlobalTable, (LPCSTR)PTR_SEG_TO_LIN(str) );
 #endif
 }
 
@@ -516,7 +525,7 @@ ATOM WINAPI GlobalAddAtom32A(
             LPCSTR str /* [in] Pointer to string to add */
 ) {
     if (!HIWORD(str)) return (ATOM)LOWORD(str);  /* Integer atom */
-    return ATOM_AddAtom( USER_HeapSel, str );
+    return ATOM_AddAtom( ATOM_GlobalTable, str );
 }
 
 
@@ -529,7 +538,7 @@ ATOM WINAPI GlobalAddAtom32W( LPCWSTR str )
     char buffer[MAX_ATOM_LEN+1];
     if (!HIWORD(str)) return (ATOM)LOWORD(str);  /* Integer atom */
     lstrcpynWtoA( buffer, str, sizeof(buffer) );
-    return ATOM_AddAtom( USER_HeapSel, buffer );
+    return ATOM_AddAtom( ATOM_GlobalTable, buffer );
 }
 
 
@@ -548,7 +557,7 @@ ATOM WINAPI GlobalDeleteAtom(
 #ifdef CONFIG_IPC
     return DDE_GlobalDeleteAtom( atom );
 #else
-    return ATOM_DeleteAtom( USER_HeapSel, atom );
+    return ATOM_DeleteAtom( ATOM_GlobalTable, atom );
 #endif
 }
 
@@ -562,7 +571,7 @@ ATOM WINAPI GlobalFindAtom16( SEGPTR str )
 #ifdef CONFIG_IPC
     return DDE_GlobalFindAtom( str );
 #else
-    return ATOM_FindAtom( USER_HeapSel, (LPCSTR)PTR_SEG_TO_LIN(str) );
+    return ATOM_FindAtom( ATOM_GlobalTable, (LPCSTR)PTR_SEG_TO_LIN(str) );
 #endif
 }
 
@@ -580,7 +589,7 @@ ATOM WINAPI GlobalFindAtom32A(
             LPCSTR str /* [in] Pointer to string to search for */
 ) {
     if (!HIWORD(str)) return (ATOM)LOWORD(str);  /* Integer atom */
-    return ATOM_FindAtom( USER_HeapSel, str );
+    return ATOM_FindAtom( ATOM_GlobalTable, str );
 }
 
 
@@ -593,7 +602,7 @@ ATOM WINAPI GlobalFindAtom32W( LPCWSTR str )
     char buffer[MAX_ATOM_LEN+1];
     if (!HIWORD(str)) return (ATOM)LOWORD(str);  /* Integer atom */
     lstrcpynWtoA( buffer, str, sizeof(buffer) );
-    return ATOM_FindAtom( USER_HeapSel, buffer );
+    return ATOM_FindAtom( ATOM_GlobalTable, buffer );
 }
 
 
@@ -605,7 +614,7 @@ UINT16 WINAPI GlobalGetAtomName16( ATOM atom, LPSTR buffer, INT16 count )
 #ifdef CONFIG_IPC
     return DDE_GlobalGetAtomName( atom, buffer, count );
 #else
-    return (UINT16)ATOM_GetAtomName( USER_HeapSel, atom, buffer, count );
+    return (UINT16)ATOM_GetAtomName( ATOM_GlobalTable, atom, buffer, count );
 #endif
 }
 
@@ -623,7 +632,7 @@ UINT32 WINAPI GlobalGetAtomName32A(
               LPSTR buffer, /* [out] Pointer to buffer for atom string */
               INT32 count   /* [in]  Size of buffer */
 ) {
-    return ATOM_GetAtomName( USER_HeapSel, atom, buffer, count );
+    return ATOM_GetAtomName( ATOM_GlobalTable, atom, buffer, count );
 }
 
 
@@ -634,7 +643,7 @@ UINT32 WINAPI GlobalGetAtomName32A(
 UINT32 WINAPI GlobalGetAtomName32W( ATOM atom, LPWSTR buffer, INT32 count )
 {
     char tmp[MAX_ATOM_LEN+1];
-    ATOM_GetAtomName( USER_HeapSel, atom, tmp, sizeof(tmp) );
+    ATOM_GetAtomName( ATOM_GlobalTable, atom, tmp, sizeof(tmp) );
     lstrcpynAtoW( buffer, tmp, count );
     return lstrlen32W( buffer );
 }

@@ -9,7 +9,7 @@
 
 #include "windows.h"
 
-extern BOOL32 ATOM_Init(void);
+extern BOOL32 ATOM_Init( WORD globalTableSel );
 
 typedef struct
 {
