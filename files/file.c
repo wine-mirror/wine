@@ -180,6 +180,7 @@ void FILE_SetDosError(void)
  *           FILE_DupUnixHandle
  *
  * Duplicate a Unix handle into a task handle.
+ * Returns 0 on failure.
  */
 HANDLE FILE_DupUnixHandle( int fd, DWORD access )
 {
@@ -194,6 +195,7 @@ HANDLE FILE_DupUnixHandle( int fd, DWORD access )
  *           FILE_GetUnixHandle
  *
  * Retrieve the Unix handle corresponding to a file handle.
+ * Returns -1 on failure.
  */
 int FILE_GetUnixHandle( HANDLE handle, DWORD access )
 {
@@ -677,7 +679,7 @@ static UINT FILE_GetTempFileName( LPCSTR path, LPCSTR prefix, UINT unique,
         do
         {
             HFILE handle = CreateFileA( buffer, GENERIC_WRITE, 0, NULL,
-                                            CREATE_NEW, FILE_ATTRIBUTE_NORMAL, -1 );
+                                            CREATE_NEW, FILE_ATTRIBUTE_NORMAL, 0 );
             if (handle != INVALID_HANDLE_VALUE)
             {  /* We created it */
                 TRACE("created %s\n",
@@ -836,7 +838,7 @@ static HFILE FILE_DoOpenFile( LPCSTR name, OFSTRUCT *ofs, UINT mode,
     {
         if ((hFileRet = CreateFileA( name, GENERIC_READ | GENERIC_WRITE,
                                        sharing, NULL, CREATE_ALWAYS,
-                                       FILE_ATTRIBUTE_NORMAL, -1 ))== INVALID_HANDLE_VALUE)
+                                       FILE_ATTRIBUTE_NORMAL, 0 ))== INVALID_HANDLE_VALUE)
             goto error;
         goto success;
     }
@@ -1304,7 +1306,7 @@ HFILE WINAPI _lcreat( LPCSTR path, INT attr )
     TRACE("%s %02x\n", path, attr );
     return CreateFileA( path, GENERIC_READ | GENERIC_WRITE,
                         FILE_SHARE_READ | FILE_SHARE_WRITE, NULL,
-                        CREATE_ALWAYS, attr, -1 );
+                        CREATE_ALWAYS, attr, 0 );
 }
 
 
@@ -1389,7 +1391,7 @@ HFILE WINAPI _lopen( LPCSTR path, INT mode )
 
     TRACE("('%s',%04x)\n", path, mode );
     FILE_ConvertOFMode( mode, &access, &sharing );
-    return CreateFileA( path, access, sharing, NULL, OPEN_EXISTING, 0, -1 );
+    return CreateFileA( path, access, sharing, NULL, OPEN_EXISTING, 0, 0 );
 }
 
 
@@ -1808,7 +1810,7 @@ BOOL WINAPI CopyFileA( LPCSTR source, LPCSTR dest, BOOL fail_if_exists )
     mode = (info.dwFileAttributes & FILE_ATTRIBUTE_READONLY) ? 0444 : 0666;
     if ((h2 = CreateFileA( dest, GENERIC_WRITE, FILE_SHARE_READ | FILE_SHARE_WRITE, NULL,
                              fail_if_exists ? CREATE_NEW : CREATE_ALWAYS,
-                             info.dwFileAttributes, h1 )) == HFILE_ERROR)
+                             info.dwFileAttributes, h1 )) == INVALID_HANDLE_VALUE)
     {
         CloseHandle( h1 );
         return FALSE;
