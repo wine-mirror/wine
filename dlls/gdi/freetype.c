@@ -1724,6 +1724,33 @@ BOOL WineEngGetTextExtentPoint(GdiFont font, LPCWSTR wstr, INT count,
 }
 
 /*************************************************************
+ * WineEngGetTextExtentPointI
+ *
+ */
+BOOL WineEngGetTextExtentPointI(GdiFont font, const WORD *indices, INT count,
+				LPSIZE size)
+{
+    UINT idx;
+    GLYPHMETRICS gm;
+    TEXTMETRICW tm;
+
+    TRACE("%p, %p, %d, %p\n", font, indices, count, size);
+
+    size->cx = 0;
+    WineEngGetTextMetrics(font, &tm);
+    size->cy = tm.tmHeight;
+ 
+   for(idx = 0; idx < count; idx++) {
+        WineEngGetGlyphOutline(font, indices[idx],
+			       GGO_METRICS | GGO_GLYPH_INDEX, &gm, 0, NULL,
+			       NULL);
+	size->cx += font->gm[indices[idx]].adv;
+    }
+    TRACE("return %ld,%ld\n", size->cx, size->cy);
+    return TRUE;
+}
+
+/*************************************************************
  * WineEngGetFontData
  *
  */
@@ -1819,6 +1846,13 @@ BOOL WineEngGetCharWidth(GdiFont font, UINT firstChar, UINT lastChar,
 
 BOOL WineEngGetTextExtentPoint(GdiFont font, LPCWSTR wstr, INT count,
 			       LPSIZE size)
+{
+    ERR("called but we don't have FreeType\n");
+    return FALSE;
+}
+
+BOOL WineEngGetTextExtentPointI(GdiFont font, LPWORD indices, INT count,
+				LPSIZE size)
 {
     ERR("called but we don't have FreeType\n");
     return FALSE;

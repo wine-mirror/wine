@@ -99,6 +99,7 @@ extern DWORD WineEngGetGlyphOutline(GdiFont, UINT glyph, UINT format,
 				    const MAT2*);
 extern UINT WineEngGetOutlineTextMetrics(GdiFont, UINT, LPOUTLINETEXTMETRICW);
 extern BOOL WineEngGetTextExtentPoint(GdiFont, LPCWSTR, INT, LPSIZE);
+extern BOOL WineEngGetTextExtentPointI(GdiFont, const WORD *, INT, LPSIZE);
 extern BOOL WineEngGetTextMetrics(GdiFont, LPTEXTMETRICW);
 extern BOOL WineEngInit(void);
 

@@ -365,7 +365,7 @@ void X11DRV_XRender_UpdateDrawable(X11DRV_PDEVICE *physDev)
     return;
 }
 
-static BOOL UploadGlyph(X11DRV_PDEVICE *physDev, WCHAR glyph)
+static BOOL UploadGlyph(X11DRV_PDEVICE *physDev, int glyph)
 {
     int buflen;
     char *buf;
@@ -373,7 +373,7 @@ static BOOL UploadGlyph(X11DRV_PDEVICE *physDev, WCHAR glyph)
     GLYPHMETRICS gm;
     XGlyphInfo gi;
     gsCacheEntry *entry = physDev->xrender->cacheEntry;
-    UINT ggo_format;
+    UINT ggo_format = GGO_GLYPH_INDEX;
     BOOL aa;
 
     if(entry->nrealized <= glyph) {
@@ -387,10 +387,10 @@ static BOOL UploadGlyph(X11DRV_PDEVICE *physDev, WCHAR glyph)
 
     if(entry->font_format->depth == 8) {
         aa = TRUE;
-	ggo_format = WINE_GGO_GRAY16_BITMAP;
+	ggo_format |= WINE_GGO_GRAY16_BITMAP;
     } else {
         aa = FALSE;
-	ggo_format = GGO_BITMAP;
+	ggo_format |= GGO_BITMAP;
     }
 
     buflen = GetGlyphOutlineW(physDev->hdc, glyph, ggo_format, &gm, 0, NULL,
@@ -490,11 +490,20 @@ BOOL X11DRV_XRender_ExtTextOut( X11DRV_PDEVICE *physDev, INT x, INT y, UINT flag
     XGCValues xgcval;
     LOGFONTW lf;
     int render_op = PictOpOver;
+    WORD *glyphs;
     HDC hdc = physDev->hdc;
     DC *dc = physDev->dc;
 
     TRACE("%04x, %d, %d, %08x, %p, %s, %d, %p)\n", hdc, x, y, flags,
 	  lprect, debugstr_wn(wstr, count), count, lpDx);
+
+    if(flags & ETO_GLYPH_INDEX)
+        glyphs = (LPWORD)wstr;
+    else {
+        glyphs = HeapAlloc(GetProcessHeap(), 0, count * sizeof(WCHAR));
+        GetGlyphIndicesW(hdc, wstr, count, glyphs, 0);
+    }
+
     if(lprect)
       TRACE("rect: %d,%d - %d,%d\n", lprect->left, lprect->top, lprect->right,
 	    lprect->bottom);
@@ -517,7 +526,7 @@ BOOL X11DRV_XRender_ExtTextOut( X11DRV_PDEVICE *physDev, INT x, INT y, UINT flag
     if(flags & (ETO_CLIPPED | ETO_OPAQUE)) {
         if(!lprect) {
 	    if(flags & ETO_CLIPPED) return FALSE;
-	        GetTextExtentPointW(hdc, wstr, count, &sz);
+	        GetTextExtentPointI(hdc, glyphs, count, &sz);
 		done_extents = TRUE;
 		rc.left = x;
 		rc.top = y;
@@ -567,7 +576,7 @@ BOOL X11DRV_XRender_ExtTextOut( X11DRV_PDEVICE *physDev, INT x, INT y, UINT flag
 	    width += lpDx[idx];
     } else {
 	if(!done_extents) {
-	    GetTextExtentPointW(hdc, wstr, count, &sz);
+	    GetTextExtentPointI(hdc, glyphs, count, &sz);
 	    done_extents = TRUE;
 	}
 	width = sz.cx;
@@ -746,9 +755,9 @@ BOOL X11DRV_XRender_ExtTextOut( X11DRV_PDEVICE *physDev, INT x, INT y, UINT flag
         render_op = PictOpOutReverse; /* This gives us 'black' text */
     
     for(idx = 0; idx < count; idx++) {
-        if(wstr[idx] >= physDev->xrender->cacheEntry->nrealized ||
-	   physDev->xrender->cacheEntry->realized[wstr[idx]] == FALSE) {
-	    UploadGlyph(physDev, wstr[idx]);
+        if(glyphs[idx] >= physDev->xrender->cacheEntry->nrealized ||
+	   physDev->xrender->cacheEntry->realized[glyphs[idx]] == FALSE) {
+	    UploadGlyph(physDev, glyphs[idx]);
 	}
     }
 
@@ -761,8 +770,8 @@ BOOL X11DRV_XRender_ExtTextOut( X11DRV_PDEVICE *physDev, INT x, INT y, UINT flag
 				   physDev->xrender->pict,
 				   physDev->xrender->cacheEntry->font_format,
 				   physDev->xrender->cacheEntry->glyphset,
-				   0, 0, dc->DCOrgX + x, dc->DCOrgY + y, (unsigned short *)wstr,
-				   count);
+				   0, 0, dc->DCOrgX + x, dc->DCOrgY + y,
+				   glyphs, count);
 
     else {
         INT offset = 0, xoff = 0, yoff = 0;
@@ -774,7 +783,7 @@ BOOL X11DRV_XRender_ExtTextOut( X11DRV_PDEVICE *physDev, INT x, INT y, UINT flag
 				       physDev->xrender->cacheEntry->glyphset,
 				       0, 0, dc->DCOrgX + x + xoff,
 				       dc->DCOrgY + y + yoff,
-				       (unsigned short *)wstr + idx, 1);
+				       glyphs + idx, 1);
 	    offset += INTERNAL_XWSTODS(dc, lpDx[idx]);
 	    xoff = offset * cosEsc;
 	    yoff = offset * -sinEsc;
@@ -791,6 +800,7 @@ BOOL X11DRV_XRender_ExtTextOut( X11DRV_PDEVICE *physDev, INT x, INT y, UINT flag
         RestoreVisRgn16( hdc );
 
     X11DRV_UnlockDIBSection( physDev, TRUE );
+    if(glyphs != wstr) HeapFree(GetProcessHeap(), 0, glyphs);
     return TRUE;
 }
 

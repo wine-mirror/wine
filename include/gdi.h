@@ -493,6 +493,58 @@ static inline INT WINE_UNUSED INTERNAL_YWSTODS(DC *dc, INT height)
 }
 
 
+  /* Device -> World size conversion */
+
+/* Performs a device to world transformation on the specified width (which
+ * is in floating point format).
+ */
+static inline void INTERNAL_XDSTOWS_FLOAT(DC *dc, FLOAT *width)
+{
+    /* Perform the transformation */
+    *width = *width * dc->xformVport2World.eM11;
+}
+
+/* Performs a device to world transformation on the specified width (which
+ * is in integer format).
+ */
+static inline INT INTERNAL_XDSTOWS(DC *dc, INT width)
+{
+    FLOAT floatWidth;
+
+    /* Perform operation with floating point */
+    floatWidth = (FLOAT)width;
+    INTERNAL_XDSTOWS_FLOAT(dc, &floatWidth);
+
+    /* Round to integers */
+    return GDI_ROUND(floatWidth);
+}
+
+
+/* Performs a device to world transformation on the specified size (which
+ * is in floating point format).
+ */
+static inline void INTERNAL_YDSTOWS_FLOAT(DC *dc, FLOAT *height)
+{
+    /* Perform the transformation */
+    *height = *height * dc->xformVport2World.eM22;
+}
+
+/* Performs a device to world transformation on the specified size (which
+ * is in integer format).
+ */
+static inline INT INTERNAL_YDSTOWS(DC *dc, INT height)
+{
+    FLOAT floatHeight;
+
+    /* Perform operation with floating point */
+    floatHeight = (FLOAT)height;
+    INTERNAL_YDSTOWS_FLOAT(dc, &floatHeight);
+
+    /* Round to integers */
+    return GDI_ROUND(floatHeight);
+}
+
+
   /* Device <-> logical size conversion */
 
 #define XDSTOLS(dc,x) \

@@ -273,10 +273,11 @@ debug_channels (bitblt bitmap clipping dc ddraw driver enhmetafile font gdi
 @ stdcall GetTextColor(long) GetTextColor
 @ stdcall GetTextExtentExPointA(long str long long ptr ptr ptr) GetTextExtentExPointA
 @ stdcall GetTextExtentExPointW(long wstr long long ptr ptr ptr) GetTextExtentExPointW
-@ stdcall GetTextExtentPoint32A(long ptr long ptr) GetTextExtentPoint32A
-@ stdcall GetTextExtentPoint32W(long ptr long ptr) GetTextExtentPoint32W
-@ stdcall GetTextExtentPointA(long ptr long ptr) GetTextExtentPointA
-@ stdcall GetTextExtentPointW(long ptr long ptr) GetTextExtentPointW
+@ stdcall GetTextExtentPoint32A(long str long ptr) GetTextExtentPoint32A
+@ stdcall GetTextExtentPoint32W(long wstr long ptr) GetTextExtentPoint32W
+@ stdcall GetTextExtentPointA(long str long ptr) GetTextExtentPointA
+@ stdcall GetTextExtentPointI(long ptr long ptr) GetTextExtentPointI
+@ stdcall GetTextExtentPointW(long wstr long ptr) GetTextExtentPointW
 @ stdcall GetTextFaceA(long long ptr) GetTextFaceA
 @ stdcall GetTextFaceW(long long ptr) GetTextFaceW
 @ stdcall GetTextMetricsA(long ptr) GetTextMetricsA

@@ -1343,7 +1343,7 @@ typedef struct tagGCP_RESULTSW
     UINT   *lpOrder;
     INT    *lpDx;
     INT    *lpCaretPos;
-    LPWSTR lpClass;
+    LPSTR  lpClass;
     LPWSTR lpGlyphs;
     UINT   nGlyphs;
     UINT   nMaxFit;
@@ -3270,13 +3270,15 @@ BOOL      WINAPI GetTextExtentExPointA(HDC,LPCSTR,INT,INT,
                                            LPINT,LPINT,LPSIZE);
 BOOL      WINAPI GetTextExtentExPointW(HDC,LPCWSTR,INT,INT,
                                            LPINT,LPINT,LPSIZE);
+#define     GetTextExtentExPoint WINELIB_NAME_AW(GetTextExtentExPoint)
 BOOL      WINAPI GetTextExtentPointA(HDC,LPCSTR,INT,LPSIZE);
 BOOL      WINAPI GetTextExtentPointW(HDC,LPCWSTR,INT,LPSIZE);
 #define     GetTextExtentPoint WINELIB_NAME_AW(GetTextExtentPoint)
 BOOL      WINAPI GetTextExtentPoint32A(HDC,LPCSTR,INT,LPSIZE);
 BOOL      WINAPI GetTextExtentPoint32W(HDC,LPCWSTR,INT,LPSIZE);
 #define     GetTextExtentPoint32 WINELIB_NAME_AW(GetTextExtentPoint32)
-#define     GetTextExtentExPoint WINELIB_NAME_AW(GetTextExtentExPoint)
+BOOL      WINAPI GetTextExtentExPointI(HDC,const WORD*,INT,INT,LPINT,LPINT,LPSIZE);
+BOOL      WINAPI GetTextExtentPointI(HDC,const WORD*,INT,LPSIZE);
 INT       WINAPI GetTextFaceA(HDC,INT,LPSTR);
 INT       WINAPI GetTextFaceW(HDC,INT,LPWSTR);
 #define     GetTextFace WINELIB_NAME_AW(GetTextFace)
