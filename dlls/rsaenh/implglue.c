@@ -308,7 +308,8 @@ BOOL encrypt_block_impl(ALG_ID aiAlgid, KEY_CONTEXT *pKeyContext, CONST BYTE *in
                 reverse_bytes((BYTE*)in, inlen);
                 rsa_exptmod(in, inlen, out, &outlen, PK_PUBLIC, &pKeyContext->rsa);
             }
-        
+            break;
+
         default:
             SetLastError(NTE_BAD_ALGID);
             return FALSE;
