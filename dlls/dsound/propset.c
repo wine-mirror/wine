@@ -246,7 +246,6 @@ static HRESULT WINAPI IKsPrivatePropertySetImpl_QueryInterface(
 static ULONG WINAPI IKsPrivatePropertySetImpl_AddRef(LPKSPROPERTYSET iface)
 {
     IKsPrivatePropertySetImpl *This = (IKsPrivatePropertySetImpl *)iface;
-
     TRACE("(%p) ref was %ld\n", This, This->ref);
     return InterlockedIncrement(&(This->ref));
 }

@@ -379,14 +379,8 @@ static HRESULT WINAPI IDirectSound3DBufferImpl_QueryInterface(
 static ULONG WINAPI IDirectSound3DBufferImpl_AddRef(LPDIRECTSOUND3DBUFFER iface)
 {
 	IDirectSound3DBufferImpl *This = (IDirectSound3DBufferImpl *)iface;
-	ULONG ref;
-
 	TRACE("(%p) ref was %ld, thread is %04lx\n",This, This->ref, GetCurrentThreadId());
-	ref = InterlockedIncrement(&(This->ref));
-	if (!ref) {
-		FIXME("thread-safety alert! AddRef-ing with a zero refcount!\n");
-	}
-	return ref;
+	return InterlockedIncrement(&(This->ref));
 }
 
 static ULONG WINAPI IDirectSound3DBufferImpl_Release(LPDIRECTSOUND3DBUFFER iface)
@@ -822,16 +816,8 @@ static HRESULT WINAPI IDirectSound3DListenerImpl_QueryInterface(
 static ULONG WINAPI IDirectSound3DListenerImpl_AddRef(LPDIRECTSOUND3DLISTENER iface)
 {
 	IDirectSound3DListenerImpl *This = (IDirectSound3DListenerImpl *)iface;
-	ULONG ref;
 	TRACE("(%p) ref was %ld, thread is %04lx\n",This, This->ref, GetCurrentThreadId());
-
-	ref = InterlockedIncrement(&(This->ref));
-
-	if (!ref) {
-		FIXME("thread-safety alert! AddRef-ing with a zero refcount!\n");
-	}
-
-	return ref;
+	return InterlockedIncrement(&(This->ref));
 }
 
 static ULONG WINAPI IDirectSound3DListenerImpl_Release(LPDIRECTSOUND3DLISTENER iface)

@@ -68,17 +68,16 @@ static HRESULT WINAPI IDirectSoundNotifyImpl_QueryInterface(
 	return IDirectSoundBuffer_QueryInterface((LPDIRECTSOUNDBUFFER)This->dsb, riid, ppobj);
 }
 
-static ULONG WINAPI IDirectSoundNotifyImpl_AddRef(LPDIRECTSOUNDNOTIFY iface) {
+static ULONG WINAPI IDirectSoundNotifyImpl_AddRef(LPDIRECTSOUNDNOTIFY iface)
+{
 	IDirectSoundNotifyImpl *This = (IDirectSoundNotifyImpl *)iface;
-
 	TRACE("(%p) ref was %ld, thread is %04lx\n",This, This->ref, GetCurrentThreadId());
-
 	return InterlockedIncrement(&(This->ref));
 }
 
 static ULONG WINAPI IDirectSoundNotifyImpl_Release(LPDIRECTSOUNDNOTIFY iface) {
 	IDirectSoundNotifyImpl *This = (IDirectSoundNotifyImpl *)iface;
-	DWORD ref;
+	ULONG ref;
 
 	TRACE("(%p) ref was %ld, thread is %04lx\n",This, This->ref, GetCurrentThreadId());
 
@@ -367,28 +366,23 @@ static HRESULT WINAPI IDirectSoundBufferImpl_Stop(LPDIRECTSOUNDBUFFER8 iface)
 	return hres;
 }
 
-static DWORD WINAPI IDirectSoundBufferImpl_AddRef(LPDIRECTSOUNDBUFFER8 iface) {
-	IDirectSoundBufferImpl *This = (IDirectSoundBufferImpl *)iface;
-	DWORD ref;
-
-	TRACE("(%p) ref was %ld, thread is %04lx\n",This, This->ref, GetCurrentThreadId());
-
-	ref = InterlockedIncrement(&(This->ref));
-	if (!ref) {
-		FIXME("thread-safety alert! AddRef-ing with a zero refcount!\n");
-	}
-	return ref;
-}
-
-static DWORD WINAPI IDirectSoundBufferImpl_Release(LPDIRECTSOUNDBUFFER8 iface)
+static ULONG WINAPI IDirectSoundBufferImpl_AddRef(LPDIRECTSOUNDBUFFER8 iface)
 {
 	IDirectSoundBufferImpl *This = (IDirectSoundBufferImpl *)iface;
-	DWORD ref;
+	TRACE("(%p) ref was %ld, thread is %04lx\n",This, This->ref, GetCurrentThreadId());
+	return InterlockedIncrement(&(This->ref));
+}
+
+static ULONG WINAPI IDirectSoundBufferImpl_Release(LPDIRECTSOUNDBUFFER8 iface)
+{
+	IDirectSoundBufferImpl *This = (IDirectSoundBufferImpl *)iface;
+	ULONG ref;
 
 	TRACE("(%p) ref was %ld, thread is %04lx\n",This, This->ref, GetCurrentThreadId());
 
 	ref = InterlockedDecrement(&(This->ref));
-	if (ref) return ref;
+	if (ref)
+		return ref;
 
 	DSOUND_RemoveBuffer(This->dsound, This);
 
@@ -1285,23 +1279,17 @@ static HRESULT WINAPI SecondaryBufferImpl_QueryInterface(
 	return IDirectSoundBufferImpl_QueryInterface((LPDIRECTSOUNDBUFFER8)This->dsb,riid,ppobj);
 }
 
-static DWORD WINAPI SecondaryBufferImpl_AddRef(LPDIRECTSOUNDBUFFER8 iface)
+static ULONG WINAPI SecondaryBufferImpl_AddRef(LPDIRECTSOUNDBUFFER8 iface)
 {
 	IDirectSoundBufferImpl *This = (IDirectSoundBufferImpl *)iface;
-	DWORD ref;
 	TRACE("(%p) ref was %ld, thread is %04lx\n",This, This->ref, GetCurrentThreadId());
-
-	ref = InterlockedIncrement(&(This->ref));
-	if (!ref) {
-		FIXME("thread-safety alert! AddRef-ing with a zero refcount!\n");
-	}
-	return ref;
+	return InterlockedIncrement(&(This->ref));
 }
 
-static DWORD WINAPI SecondaryBufferImpl_Release(LPDIRECTSOUNDBUFFER8 iface)
+static ULONG WINAPI SecondaryBufferImpl_Release(LPDIRECTSOUNDBUFFER8 iface)
 {
 	IDirectSoundBufferImpl *This = (IDirectSoundBufferImpl *)iface;
-	DWORD ref;
+	ULONG ref;
 	TRACE("(%p) ref was %ld, thread is %04lx\n",This, This->ref, GetCurrentThreadId());
 
 	ref = InterlockedDecrement(&(This->ref));

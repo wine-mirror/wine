@@ -578,13 +578,13 @@ static HRESULT WINAPI PrimaryBufferImpl_Stop(LPDIRECTSOUNDBUFFER8 iface)
 	return DS_OK;
 }
 
-static DWORD WINAPI PrimaryBufferImpl_AddRef(LPDIRECTSOUNDBUFFER8 iface) {
+static ULONG WINAPI PrimaryBufferImpl_AddRef(LPDIRECTSOUNDBUFFER8 iface) {
 	PrimaryBufferImpl *This = (PrimaryBufferImpl *)iface;
 	TRACE("(%p) ref was %ld, thread is %04lx\n",This, This->ref, GetCurrentThreadId());
 	return InterlockedIncrement(&(This->ref));
 }
 
-static DWORD WINAPI PrimaryBufferImpl_Release(LPDIRECTSOUNDBUFFER8 iface) {
+static ULONG WINAPI PrimaryBufferImpl_Release(LPDIRECTSOUNDBUFFER8 iface) {
 	PrimaryBufferImpl *This = (PrimaryBufferImpl *)iface;
 	DWORD ref;
 
