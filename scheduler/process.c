@@ -269,15 +269,18 @@ static int load_system_dlls(void)
 /***********************************************************************
  *           build_command_line
  *
- * Build the command-line of a process from the argv array.
+ * Build the command line of a process from the argv array.
+ *
+ * Note that it does NOT necessarily include the file name.
+ * Sometimes we don't even have any command line options at all.
  */
 static inline char *build_command_line( char **argv )
 {
-    int len, quote;
+    int len, quote = 0;
     char *cmdline, *p, **arg;
 
     for (arg = argv, len = 0; *arg; arg++) len += strlen(*arg) + 1;
-    if ((quote = (strchr( argv[0], ' ' ) != NULL))) len += 2;
+    if ((argv[0]) && (quote = (strchr( argv[0], ' ' ) != NULL))) len += 2;
     if (!(p = cmdline = HeapAlloc( GetProcessHeap(), 0, len ))) return NULL;
     arg = argv;
     if (quote)
@@ -604,7 +607,7 @@ static char **build_envp( const char *env )
 
 
 /***********************************************************************
- *           find_wine_binary
+ *           exec_wine_binary
  *
  * Locate the Wine binary to exec for a new Win32 process.
  */
