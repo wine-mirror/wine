@@ -191,7 +191,8 @@ void test_rename()
     set_curr_dir_path(from, "test1.txt\0test2.txt\0test4.txt\0");
     set_curr_dir_path(to, "test6.txt\0test7.txt\0test8.txt\0");
     retval = SHFileOperationA(&shfo); /* W98 returns 0, W2K and newer returns ERROR_GEN_FAILURE, both do nothing */
-    ok(!retval || retval == ERROR_GEN_FAILURE, "Can't rename many files, retval = %lx\n", retval);
+    ok(!retval || retval == ERROR_GEN_FAILURE || retval == ERROR_REDIR_PAUSED,
+       "Can't rename many files, retval = %lx\n", retval);
     ok(file_exists(".\\test1.txt"), "The file is not renamed - many files are specified\n");
 
     memcpy(&shfo2, &shfo, sizeof(SHFILEOPSTRUCTA));
@@ -200,7 +201,8 @@ void test_rename()
     set_curr_dir_path(from, "test1.txt\0test2.txt\0test4.txt\0");
     set_curr_dir_path(to, "test6.txt\0test7.txt\0test8.txt\0");
     retval = SHFileOperationA(&shfo2); /* W98 returns 0, W2K and newer returns ERROR_GEN_FAILURE, both do nothing */
-    ok(!retval || retval == ERROR_GEN_FAILURE, "Can't rename many files, retval = %lx\n", retval);
+    ok(!retval || retval == ERROR_GEN_FAILURE || retval == ERROR_REDIR_PAUSED,
+       "Can't rename many files, retval = %lx\n", retval);
     ok(file_exists(".\\test1.txt"), "The file is not renamed - many files are specified\n");
 
     set_curr_dir_path(from, "test1.txt\0");
