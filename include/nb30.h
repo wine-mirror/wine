@@ -26,18 +26,34 @@ extern "C" {
 #define NCBNAMSZ 16
 #define MAX_LANA 0xfe
 
-#define NCBRESET       0x32
-#define NCBADDNAME     0x30
-#define NCBADDGRNAME   0x36
-#define NCBDELNAME     0x31
+#define NCBCALL        0x10
+#define NCBLISTEN      0x11
+#define NCBHANGUP      0x12
 #define NCBSEND        0x14
 #define NCBRECV        0x15
-#define NCBHANGUP      0x12
-#define NCBCANCEL      0x35
-#define NCBLISTEN      0x11
-#define NCBCALL        0x10
+#define NCBRECVANY     0x16
+#define NCBCHAINSEND   0x17
+#define NCBDGSEND      0x20
+#define NCBDGRECV      0x21
+#define NCBDGSENDBC    0x22
+#define NCBDGRECVBC    0x23
+#define NCBADDNAME     0x30
+#define NCBDELNAME     0x31
+#define NCBRESET       0x32
 #define NCBASTAT       0x33
+#define NCBSSTAT       0x34
+#define NCBCANCEL      0x35
+#define NCBADDGRNAME   0x36
 #define NCBENUM        0x37
+#define NCBUNLINK      0x70
+#define NCBSENDNA      0x71
+#define NCBCHAINSENDNA 0x72
+#define NCBLANSTALERT  0x73
+#define NCBACTION      0x77
+#define NCBFINDNAME    0x78
+#define NCBTRACE       0x79
+
+#define ASYNCH         0x80
 
 typedef struct _NCB
 {
@@ -51,7 +67,7 @@ typedef struct _NCB
 	UCHAR	ncb_name[NCBNAMSZ];
 	UCHAR	ncb_rto;
 	UCHAR	ncb_sto;
-	VOID	(*ncb_post)(struct _NCB *);
+	VOID	(CALLBACK *ncb_post)(struct _NCB *);
 	UCHAR	ncb_lana_num;
 	UCHAR	ncb_cmd_cplt;
 	UCHAR	ncb_reserved[10];
@@ -89,22 +105,111 @@ typedef struct _ADAPTER_STATUS
 	WORD	name_count;
 } ADAPTER_STATUS, *PADAPTER_STATUS;
 
+typedef struct _NAME_BUFFER
+{
+  UCHAR name[NCBNAMSZ];
+  UCHAR name_num;
+  UCHAR name_flags;
+} NAME_BUFFER, *PNAME_BUFFER;
+
+#define NAME_FLAGS_MASK 0x87
+#define GROUP_NAME      0x80
+#define UNIQUE_NAME     0x00
+#define REGISTERING     0x00
+#define REGISTERED      0x04
+#define DEREGISTERED    0x05
+#define DUPLICATE       0x06
+#define DUPLICATE_DEREG 0x07
+
 typedef struct _LANA_ENUM
 {
 	UCHAR length;
 	UCHAR lana[MAX_LANA+1];
 } LANA_ENUM, *PLANA_ENUM;
 
-#define NRC_GOODRET 0x00
-#define NRC_BUFLEN  0x01
-#define NRC_ILLCMD  0x03
-#define NRC_CMDTMO  0x05
-#define NRC_INCOMP  0x06
+typedef struct _FIND_NAME_HEADER
+{
+  WORD  node_count;
+  UCHAR reserved;
+  UCHAR unique_group;
+} FIND_NAME_HEADER, *PFIND_NAME_HEADER;
+
+typedef struct _FIND_NAME_BUFFER
+{
+  UCHAR length;
+  UCHAR access_control;
+  UCHAR frame_control;
+  UCHAR destination_addr[6];
+  UCHAR source_addr[6];
+  UCHAR routing_info[6];
+} FIND_NAME_BUFFER, *PFIND_NAME_BUFFER;
+
+typedef struct _SESSION_HEADER {
+  UCHAR sess_name;
+  UCHAR num_sess;
+  UCHAR rcv_dg_outstanding;
+  UCHAR rcv_any_outstanding;
+} SESSION_HEADER, *PSESSION_HEADER;
+
+typedef struct _SESSION_BUFFER {
+  UCHAR lsn;
+  UCHAR state;
+  UCHAR local_name[NCBNAMSZ];
+  UCHAR remote_name[NCBNAMSZ];
+  UCHAR rcvs_outstanding;
+  UCHAR sends_outstanding;
+} SESSION_BUFFER, *PSESSION_BUFFER;
+
+#define LISTEN_OUTSTANDING  0x01
+#define CALL_PENDING        0x02
+#define SESSION_ESTABLISHED 0x03
+#define HANGUP_PENDING      0x04
+#define HANGUP_COMPLETE     0x05
+#define SESSION_ABORTED     0x06
+
+#define ALL_TRANSPORTS "M\0\0\0"
+
+#define NRC_GOODRET     0x00
+#define NRC_BUFLEN      0x01
+#define NRC_ILLCMD      0x03
+#define NRC_CMDTMO      0x05
+#define NRC_INCOMP      0x06
+#define NRC_BADDR       0x07
+#define NRC_SNUMOUT     0x08
+#define NRC_NORES       0x09
+#define NRC_SCLOSED     0x0a
+#define NRC_CMDCAN      0x0b
+#define NRC_DUPNAME     0x0d
+#define NRC_NAMTFUL     0x0e
+#define NRC_ACTSES      0x0f
+#define NRC_LOCTFUL     0x11
+#define NRC_REMTFUL     0x12
+#define NRC_ILLNN       0x13
+#define NRC_NOCALL      0x14
+#define NRC_NOWILD      0x15
+#define NRC_INUSE       0x16
+#define NRC_NAMERR      0x17
+#define NRC_SABORT      0x18
+#define NRC_NAMCONF     0x19
+#define NRC_IFBUSY      0x21
+#define NRC_TOOMANY     0x22
+#define NRC_BRIDGE      0x23
+#define NRC_CANOCCR     0x24
+#define NRC_CANCEL      0x26
+#define NRC_DUPENV      0x30
+#define NRC_ENVNOTDEF   0x34
+#define NRC_OSRESNOTAV  0x35
+#define NRC_MAXAPPS     0x36
+#define NRC_NOSAPS      0x37
 #define NRC_NORESOURCES 0x38
-#define NRC_INVADDRESS 0x39
-#define NRC_PENDING 0xff
-#define NRC_OPENERROR 0x3f
-#define NRC_SYSTEM  0x40
+#define NRC_INVADDRESS  0x39
+#define NRC_INVDDID     0x3b
+#define NRC_LOCKFAIL    0x3c
+#define NRC_OPENERROR   0x3f
+#define NRC_SYSTEM      0x40
+#define NRC_PENDING     0xff
+
+UCHAR WINAPI Netbios(PNCB pncb);
 
 #ifdef __cplusplus
 }

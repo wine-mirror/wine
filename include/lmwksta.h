@@ -25,9 +25,6 @@
 extern "C" {
 #endif
 
-/* NetBIOS */
-UCHAR WINAPI Netbios(PNCB pncb);
-
 typedef struct _WKSTA_TRANSPORT_INFO_0 {
   DWORD wkti0_quality_of_service;
   DWORD wkti0_number_of_vcs;

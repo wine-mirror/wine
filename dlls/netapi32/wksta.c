@@ -1,5 +1,5 @@
-/*
- * Copyright 2002 Andriy Palamarchuk
+/* Copyright 2002 Andriy Palamarchuk
+ * Copyright (c) 2003 Juan Lang
  *
  * netapi32 user functions
  *
@@ -33,6 +33,7 @@
 #include "winreg.h"
 #include "winternl.h"
 #include "ntsecapi.h"
+#include "netbios.h"
 #include "wine/debug.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(netapi32);
@@ -65,151 +66,228 @@ BOOL NETAPI_IsLocalComputer(LPCWSTR ServerName)
     }
 }
 
-static void wprint_mac(WCHAR* buffer, PIP_ADAPTER_INFO adapter)
+static void wprint_mac(WCHAR* buffer, int len, PMIB_IFROW ifRow)
 {
-  if (adapter != NULL)
-    {
-      int i;
-      unsigned char  val;
+    int i;
+    unsigned char val;
 
-      for (i = 0; i<max(adapter->AddressLength, 6); i++)
-        {
-          val = adapter->Address[i];
-          if ((val >>4) >9)
-            buffer[2*i] = (WCHAR)((val >>4) + 'A' - 10);
-          else
-            buffer[2*i] = (WCHAR)((val >>4) + '0');
-          if ((val & 0xf ) >9)
-            buffer[2*i+1] = (WCHAR)((val & 0xf) + 'A' - 10);
-          else
-            buffer[2*i+1] = (WCHAR)((val & 0xf) + '0');
-        }
-      buffer[12]=(WCHAR)0;
+    if (!buffer)
+        return;
+    if (len < 1)
+        return;
+    if (!ifRow)
+    {
+        *buffer = '\0';
+        return;
     }
-  else
-    buffer[0] = 0;
+
+    for (i = 0; i < ifRow->dwPhysAddrLen && 2 * i < len; i++)
+    {
+        val = ifRow->bPhysAddr[i];
+        if ((val >>4) >9)
+            buffer[2*i] = (WCHAR)((val >>4) + 'A' - 10);
+        else
+            buffer[2*i] = (WCHAR)((val >>4) + '0');
+        if ((val & 0xf ) >9)
+            buffer[2*i+1] = (WCHAR)((val & 0xf) + 'A' - 10);
+        else
+            buffer[2*i+1] = (WCHAR)((val & 0xf) + '0');
+    }
+    buffer[2*i]=(WCHAR)0;
 }
 
-#define TRANSPORT_NAME_HEADER "\\Device\\NetBT_Tcpip_"
-#define TRANSPORT_NAME_LEN \
- (sizeof(TRANSPORT_NAME_HEADER) + MAX_ADAPTER_NAME_LENGTH)
+/* Theoretically this could be too short, except that MS defines
+ * MAX_ADAPTER_NAME as 128, and MAX_INTERFACE_NAME_LEN as 256, and both
+ * represent a count of WCHARs, so even with an extroardinarily long header
+ * this will be plenty
+ */
+#define MAX_TRANSPORT_NAME MAX_INTERFACE_NAME_LEN
+#define MAX_TRANSPORT_ADDR 13
 
-static void wprint_name(WCHAR *buffer, int len, PIP_ADAPTER_INFO adapter)
+#define NBT_TRANSPORT_NAME_HEADER "\\Device\\NetBT_Tcpip_"
+#define UNKNOWN_TRANSPORT_NAME_HEADER "\\Device\\UnknownTransport_"
+
+static void wprint_name(WCHAR *buffer, int len, ULONG transport,
+ PMIB_IFROW ifRow)
 {
-  WCHAR *ptr;
-  const char *name;
+    WCHAR *ptr1, *ptr2;
+    const char *name;
 
-  if (!buffer)
-    return;
-  if (!adapter)
-    return;
+    if (!buffer)
+        return;
+    if (!ifRow)
+    {
+        *buffer = '\0';
+        return;
+    }
 
-  for (ptr = buffer, name = TRANSPORT_NAME_HEADER; *name && ptr < buffer + len;
-   ptr++, name++)
-    *ptr = *name;
-  for (name = adapter->AdapterName; name && *name && ptr < buffer + len;
-   ptr++, name++)
-    *ptr = *name;
-  *ptr = '\0';
+    if (!memcmp(&transport, TRANSPORT_NBT, sizeof(ULONG)))
+        name = NBT_TRANSPORT_NAME_HEADER;
+    else
+        name = UNKNOWN_TRANSPORT_NAME_HEADER;
+
+    for (ptr1 = buffer; *name && ptr1 < buffer + len; ptr1++, name++)
+        *ptr1 = *name;
+    for (ptr2 = ifRow->wszName; *ptr2 && ptr1 < buffer + len; ptr1++, ptr2++)
+        *ptr1 = *ptr2;
+    *ptr1 = '\0';
+}
+ 
+struct WkstaTransportEnumData
+{
+    UCHAR          n_adapt;
+    UCHAR          n_read;
+    DWORD          prefmaxlen;
+    LPBYTE        *pbuf;
+    NET_API_STATUS ret;
+};
+
+static BOOL WkstaEnumAdaptersCallback(UCHAR totalLANAs, UCHAR lanaIndex,
+ ULONG transport, const NetBIOSAdapterImpl *data, void *closure)
+{
+    BOOL ret;
+    struct WkstaTransportEnumData *enumData = (struct WkstaTransportEnumData *)
+     closure;
+
+    if (enumData && enumData->pbuf)
+    {
+        if (lanaIndex == 0)
+        {
+            DWORD toAllocate;
+
+            enumData->n_adapt = totalLANAs;
+            enumData->n_read = 0;
+
+            toAllocate = totalLANAs * (sizeof(WKSTA_TRANSPORT_INFO_0)
+             + MAX_TRANSPORT_NAME * sizeof(WCHAR) +
+             MAX_TRANSPORT_ADDR * sizeof(WCHAR));
+            if (enumData->prefmaxlen != MAX_PREFERRED_LENGTH)
+                toAllocate = enumData->prefmaxlen;
+            NetApiBufferAllocate(toAllocate, (LPVOID *)enumData->pbuf);
+        }
+        if (*(enumData->pbuf))
+        {
+            UCHAR spaceFor;
+
+            if (enumData->prefmaxlen == MAX_PREFERRED_LENGTH)
+                spaceFor = totalLANAs;
+            else
+                spaceFor = enumData->prefmaxlen /
+                 (sizeof(WKSTA_TRANSPORT_INFO_0) + (MAX_TRANSPORT_NAME +
+                 MAX_TRANSPORT_ADDR) * sizeof(WCHAR));
+            if (enumData->n_read < spaceFor)
+            {
+                PWKSTA_TRANSPORT_INFO_0 ti;
+                LPWSTR transport_name, transport_addr;
+                MIB_IFROW ifRow;
+
+                ti = (PWKSTA_TRANSPORT_INFO_0)(*(enumData->pbuf) +
+                 enumData->n_read * sizeof(WKSTA_TRANSPORT_INFO_0));
+                transport_name = (LPWSTR)(*(enumData->pbuf) +
+                 totalLANAs * sizeof(WKSTA_TRANSPORT_INFO_0) +
+                 enumData->n_read * MAX_TRANSPORT_NAME * sizeof(WCHAR));
+                transport_addr = (LPWSTR)(*(enumData->pbuf) +
+                 totalLANAs * (sizeof(WKSTA_TRANSPORT_INFO_0) +
+                 MAX_TRANSPORT_NAME * sizeof(WCHAR)) +
+                 (enumData->n_read + MAX_TRANSPORT_ADDR) * sizeof(WCHAR));
+
+                ifRow.dwIndex = data->ifIndex;
+                GetIfEntry(&ifRow);
+                ti->wkti0_quality_of_service = 0;
+                ti->wkti0_number_of_vcs = 0;
+                ti->wkti0_transport_name = transport_name;
+                wprint_name(ti->wkti0_transport_name, MAX_TRANSPORT_NAME,
+                 transport, &ifRow);
+                ti->wkti0_transport_address = transport_addr;
+                wprint_mac(ti->wkti0_transport_address, MAX_TRANSPORT_ADDR,
+                 &ifRow);
+                if (!memcmp(&transport, TRANSPORT_NBT, sizeof(ULONG)))
+                    ti->wkti0_wan_ish = TRUE;
+                else
+                    ti->wkti0_wan_ish = FALSE;
+                TRACE("%d of %d:ti at %p\n", lanaIndex, totalLANAs, ti);
+                TRACE("transport_name at %p %s\n",
+                 ti->wkti0_transport_name,
+                 debugstr_w(ti->wkti0_transport_name));
+                TRACE("transport_address at %p %s\n",
+                 ti->wkti0_transport_address,
+                 debugstr_w(ti->wkti0_transport_address));
+                enumData->n_read++;
+                enumData->ret = NERR_Success;
+                ret = TRUE;
+            }
+            else
+            {
+                enumData->ret = ERROR_MORE_DATA;
+                ret = FALSE;
+            }
+        }
+        else
+        {
+            enumData->ret = ERROR_OUTOFMEMORY;
+            ret = FALSE;
+        }
+    }
+    else
+        ret = FALSE;
+    return ret;
 }
 
 NET_API_STATUS WINAPI 
 NetWkstaTransportEnum(LPCWSTR ServerName, DWORD level, LPBYTE* pbuf,
-		      DWORD prefmaxlen, LPDWORD read_entries,
-		      LPDWORD total_entries, LPDWORD hresume)
+      DWORD prefmaxlen, LPDWORD read_entries,
+      LPDWORD total_entries, LPDWORD hresume)
 {
-  FIXME(":%s, 0x%08lx, %p, 0x%08lx, %p, %p, %p\n", debugstr_w(ServerName), 
-	level, pbuf, prefmaxlen, read_entries, total_entries,hresume);
-  if (!NETAPI_IsLocalComputer(ServerName))
-    {
-      FIXME(":not implemented for non-local computers\n");
-      return ERROR_INVALID_LEVEL;
-    }
-  else
-    {
-      if (hresume && *hresume)
-	{
-	  FIXME(":resume handle not implemented\n");
-	  return ERROR_INVALID_LEVEL;
-	}
-	
-      switch (level)
-	{
-  	case 0: /* transport info */
-  	  {
-  	    PWKSTA_TRANSPORT_INFO_0 ti;
-	    int i,size_needed,n_adapt;
-            DWORD apiReturn, adaptInfoSize = 0;
-            PIP_ADAPTER_INFO info, ptr;
-  	    
-            apiReturn = GetAdaptersInfo(NULL, &adaptInfoSize);
-	    if (apiReturn == ERROR_NO_DATA)
-              return ERROR_NETWORK_UNREACHABLE;
-	    if (!read_entries)
-              return STATUS_ACCESS_VIOLATION;
-	    if (!total_entries || !pbuf)
-              return RPC_X_NULL_REF_POINTER;
+    NET_API_STATUS ret;
 
-            info = (PIP_ADAPTER_INFO)malloc(adaptInfoSize);
-            apiReturn = GetAdaptersInfo(info, &adaptInfoSize);
-            if (apiReturn != NO_ERROR)
-              {
-                free(info);
-                return apiReturn;
-              }
-
-            for (n_adapt = 0, ptr = info; ptr; ptr = ptr->Next)
-              n_adapt++;
-  	    size_needed = n_adapt * sizeof(WKSTA_TRANSPORT_INFO_0) 
-	     + n_adapt * TRANSPORT_NAME_LEN * sizeof (WCHAR)
-	     + n_adapt * 13 * sizeof (WCHAR);
-  	    if (prefmaxlen == MAX_PREFERRED_LENGTH)
-  	      NetApiBufferAllocate( size_needed, (LPVOID *) pbuf);
-  	    else
-  	      {
-  		if (size_needed > prefmaxlen)
-                  {
-                    free(info);
-		    return ERROR_MORE_DATA;
-                  }
-  		NetApiBufferAllocate(prefmaxlen,
-  				     (LPVOID *) pbuf);
-  	      }
-	    for (i = 0, ptr = info; ptr; ptr = ptr->Next, i++)
-  	      {
-  		ti = (PWKSTA_TRANSPORT_INFO_0) 
-  		  ((PBYTE) *pbuf + i * sizeof(WKSTA_TRANSPORT_INFO_0));
-  		ti->wkti0_quality_of_service=0;
-  		ti->wkti0_number_of_vcs=0;
-		ti->wkti0_transport_name= (LPWSTR)
-		  ((PBYTE )*pbuf +
-                   n_adapt * sizeof(WKSTA_TRANSPORT_INFO_0)
-		   + i * TRANSPORT_NAME_LEN * sizeof (WCHAR));
-                wprint_name(ti->wkti0_transport_name,TRANSPORT_NAME_LEN, ptr);
-  		ti->wkti0_transport_address= (LPWSTR)
-		  ((PBYTE )*pbuf +
-                   n_adapt * sizeof(WKSTA_TRANSPORT_INFO_0) +
-                   n_adapt * TRANSPORT_NAME_LEN * sizeof (WCHAR)
-  		   + i * 13 * sizeof (WCHAR));
-  		ti->wkti0_wan_ish=TRUE; /*TCPIP/NETBIOS Protocoll*/
-		wprint_mac(ti->wkti0_transport_address, ptr);
-  		TRACE("%d of %d:ti at %p transport_address at %p %s\n",i,n_adapt,
-  		      ti, ti->wkti0_transport_address, debugstr_w(ti->wkti0_transport_address));
-  	      }
-	    *read_entries = n_adapt;
-	    *total_entries = n_adapt;
-            free(info);
-  	    if(hresume) *hresume= 0;
-  	    break;
-  	  }
-	default:
-	  ERR("Invalid level %ld is specified\n", level);
-	  return ERROR_INVALID_LEVEL;
-	}
-      return NERR_Success;
+    TRACE(":%s, 0x%08lx, %p, 0x%08lx, %p, %p, %p\n", debugstr_w(ServerName), 
+     level, pbuf, prefmaxlen, read_entries, total_entries,hresume);
+    if (!NETAPI_IsLocalComputer(ServerName))
+    {
+        FIXME(":not implemented for non-local computers\n");
+        ret = ERROR_INVALID_LEVEL;
     }
+    else
+    {
+        if (hresume && *hresume)
+        {
+          FIXME(":resume handle not implemented\n");
+          return ERROR_INVALID_LEVEL;
+        }
+
+        switch (level)
+        {
+            case 0: /* transport info */
+            {
+                ULONG allTransports;
+                struct WkstaTransportEnumData enumData;
+
+                if (NetBIOSNumAdapters() == 0)
+                  return ERROR_NETWORK_UNREACHABLE;
+                if (!read_entries)
+                  return STATUS_ACCESS_VIOLATION;
+                if (!total_entries || !pbuf)
+                  return RPC_X_NULL_REF_POINTER;
+
+                enumData.prefmaxlen = prefmaxlen;
+                enumData.pbuf = pbuf;
+                memcpy(&allTransports, ALL_TRANSPORTS, sizeof(ULONG));
+                NetBIOSEnumAdapters(allTransports, WkstaEnumAdaptersCallback,
+                 &enumData);
+                *read_entries = enumData.n_read;
+                *total_entries = enumData.n_adapt;
+                if (hresume) *hresume= 0;
+                ret = enumData.ret;
+                break;
+            }
+            default:
+                ERR("Invalid level %ld is specified\n", level);
+                ret = ERROR_INVALID_LEVEL;
+        }
+    }
+    return ret;
 }
-					    
+
 
 /************************************************************
  *                NetWkstaUserGetInfo  (NETAPI32.@)
