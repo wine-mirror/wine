@@ -212,7 +212,7 @@ BOOL X11DRV_EVENT_WaitNetEvent( BOOL sleep, BOOL peek )
    * in this case, we fall through directly to the XNextEvent loop.
    */
   
-  if ((maxWait != -1) && !pending)
+  if (!pending)
     {
       int num_pending;
       struct timeval timeout;
@@ -220,8 +220,10 @@ BOOL X11DRV_EVENT_WaitNetEvent( BOOL sleep, BOOL peek )
       
       memcpy( io_set, __event_io_set, sizeof(io_set) );
       
-      timeout.tv_usec = (maxWait % 1000) * 1000;
-      timeout.tv_sec = maxWait / 1000;
+      if(maxWait != -1) {
+	timeout.tv_usec = (maxWait % 1000) * 1000;
+	timeout.tv_sec = maxWait / 1000;
+      }
       
 #ifdef CONFIG_IPC
       sigsetjmp(env_wait_x, 1);
@@ -236,23 +238,35 @@ BOOL X11DRV_EVENT_WaitNetEvent( BOOL sleep, BOOL peek )
       /* The code up to the next "stop_wait_op = CONT" must be reentrant */
       num_pending = select( __event_max_fd, &io_set[EVENT_IO_READ], 
 			    &io_set[EVENT_IO_WRITE], 
-			    &io_set[EVENT_IO_EXCEPT], &timeout );
+			    &io_set[EVENT_IO_EXCEPT], (maxWait == -1) ? 0 : &timeout );
+      if ( num_pending == -1 )
+	{
+	  /* Error - signal, invalid arguments, out of memory */
+	  stop_wait_op = CONT;
+	  return FALSE;
+	}
       if ( num_pending == 0 )
         {
+	  /* Timeout */
 	  stop_wait_op = CONT;
-	  TIMER_ExpireTimers();
+	  TIMER_ExpireTimers(); /* FIXME: should this be done even if sleep == 0? */
 	  return FALSE;
 	}
       else stop_wait_op = CONT;
 #else  /* CONFIG_IPC */
       num_pending = select( __event_max_fd, &io_set[EVENT_IO_READ],
 			    &io_set[EVENT_IO_WRITE],
-			    &io_set[EVENT_IO_EXCEPT], &timeout );
+			    &io_set[EVENT_IO_EXCEPT], (maxWait == -1) ? 0 : &timeout );
       
-      if ( num_pending == 0)
+      if ( num_pending == -1 )
+	{
+	  /* Error - signal, invalid arguments, out of memory */
+	  return FALSE;
+	}
+      if ( num_pending == 0 )
         {
-	  /* Timeout or error */
-	  TIMER_ExpireTimers();
+	  /* Timeout */
+	  TIMER_ExpireTimers(); /* FIXME: should this be done even if sleep == 0? */
 	  return FALSE;
         }
 #endif  /* CONFIG_IPC */
@@ -278,28 +292,6 @@ BOOL X11DRV_EVENT_WaitNetEvent( BOOL sleep, BOOL peek )
 	WINSOCK_HandleIO( &__event_max_fd, num_pending, io_set, __event_io_set );
 	return FALSE;
       }
-    }
-  else if(!pending)
-    {				/* Wait for X11 input. */
-      fd_set set;
-      int max_fd;
-      
-      FD_ZERO(&set);
-      FD_SET(__event_x_connection, &set);
-
-      /* wait on wake-up pipe also */
-      FD_SET(__wakeup_pipe[0], &set);
-      if (__event_x_connection > __wakeup_pipe[0])
-          max_fd = __event_x_connection + 1;
-      else
-          max_fd = __wakeup_pipe[0] + 1;
-          
-      select(max_fd, &set, 0, 0, 0 );
-
-      /* Flush the wake-up pipe, it's just dummy data for waking-up this
-       thread. This will be obsolete when the input thread will be done */
-      if ( FD_ISSET( __wakeup_pipe[0], &set ) )
-          EVENT_ReadWakeUpPipe();
     }
   
   /* Process current X event (and possibly others that occurred in the meantime) */
