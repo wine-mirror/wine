@@ -45,7 +45,7 @@ static int nb_dlls;
 /* list of DLLs that should always be loaded at startup */
 static const char * const always_load[] =
 {
-    "system", "display", "wprocs", "wineps", NULL
+    "system", "display", "wprocs", NULL
 };
 
   /* Ordinal number for interrupt 0 handler in WPROCS.DLL */
