@@ -8,7 +8,8 @@
 
 #include <string.h>
 
-#include "windows.h"
+#include "winuser.h"
+#include "wine/winuser16.h"
 #include "sysmetrics.h"
 #include "win.h"
 #include "spy.h"
@@ -1545,7 +1546,15 @@ LRESULT WINAPI ComboWndProc( HWND32 hwnd, UINT32 message,
 	case CB_SETCURSEL16:
 		wParam = (INT32)(INT16)wParam;
 	case CB_SETCURSEL32:
-		return SendMessage32A( lphc->hWndLBox, LB_SETCURSEL32, wParam, 0);
+		lParam = SendMessage32A( lphc->hWndLBox, LB_SETCURSEL32, wParam, 0);
+		if( lphc->wState & CBF_SELCHANGE )
+		{
+		    /* no LBN_SELCHANGE in this case, update manually */
+		   
+		    CBPaintText( lphc, 0 );
+		    lphc->wState &= ~CBF_SELCHANGE;
+		}
+	        return lParam;
 
 	case CB_GETLBTEXT16: 
 		wParam = (INT32)(INT16)wParam;

@@ -5,7 +5,8 @@
  */
 
 #include <string.h>
-#include "windows.h"
+#include "wine/winuser16.h"
+#include "winuser.h"
 #include "winerror.h"
 #include "drive.h"
 #include "heap.h"
@@ -1231,6 +1232,9 @@ static LRESULT LISTBOX_SetSelection( WND *wnd, LB_DESCR *descr, INT32 index,
         if (index != -1) LISTBOX_RepaintItem( wnd, descr, index, ODA_SELECT );
         if (send_notify) SEND_NOTIFICATION( wnd, descr,
                                (index != -1) ? LBN_SELCHANGE : LBN_SELCANCEL );
+	else
+	    if( descr->lphc ) /* set selection change flag for parent combo */
+		descr->lphc->wState |= CBF_SELCHANGE;
     }
     return LB_OKAY;
 }
@@ -2281,7 +2285,7 @@ LRESULT WINAPI ListBoxWndProc( HWND32 hwnd, UINT32 msg,
         /* fall through */
     case LB_SETCURSEL32:
         if (wParam != -1) LISTBOX_MakeItemVisible( wnd, descr, wParam, TRUE );
-        return LISTBOX_SetSelection( wnd, descr, wParam, TRUE, (descr->lphc != NULL) );
+        return LISTBOX_SetSelection( wnd, descr, wParam, TRUE, FALSE );
 
     case LB_GETSELCOUNT16:
     case LB_GETSELCOUNT32:
@@ -2583,6 +2587,11 @@ LRESULT WINAPI ComboLBWndProc( HWND32 hwnd, UINT32 msg,
 			 }
 		     }
 		     return LISTBOX_HandleKeyDown( wnd, descr, wParam );
+
+		case LB_SETCURSEL16:
+		case LB_SETCURSEL32:
+		     lRet = ListBoxWndProc( hwnd, msg, wParam, lParam );
+		     return (lRet == LB_ERR) ? lRet : descr->selected_item; 
 
 		case WM_NCDESTROY:
 		     if( CB_GETTYPE(lphc) != CBS_SIMPLE )

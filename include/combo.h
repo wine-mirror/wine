@@ -20,6 +20,7 @@
 #define CBF_NORESIZE		0x0080
 #define CBF_NOTIFY		0x0100
 #define CBF_NOREDRAW            0x0200
+#define CBF_SELCHANGE		0x0400
 #define CBF_EUI                 0x8000
 
 /* Combo state struct */
