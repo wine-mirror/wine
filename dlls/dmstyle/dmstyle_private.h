@@ -539,6 +539,12 @@ extern HRESULT WINAPI IDirectMusicStyleTrack_IPersistStream_Load (LPPERSISTSTREA
 extern HRESULT WINAPI IDirectMusicStyleTrack_IPersistStream_Save (LPPERSISTSTREAM iface, IStream* pStm, BOOL fClearDirty);
 extern HRESULT WINAPI IDirectMusicStyleTrack_IPersistStream_GetSizeMax (LPPERSISTSTREAM iface, ULARGE_INTEGER* pcbSize);
 
+/**********************************************************************
+ * Dll lifetime tracking declaration for dmstyle.dll
+ */
+extern LONG DMSTYLE_refCount;
+static inline void DMSTYLE_LockModule() { InterlockedIncrement( &DMSTYLE_refCount ); }
+static inline void DMSTYLE_UnlockModule() { InterlockedDecrement( &DMSTYLE_refCount ); }
 
 /*****************************************************************************
  * Misc.

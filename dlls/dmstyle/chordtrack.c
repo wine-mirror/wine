@@ -56,6 +56,8 @@ ULONG WINAPI IDirectMusicChordTrack_IUnknown_AddRef (LPUNKNOWN iface) {
 
 	TRACE("(%p): AddRef from %ld\n", This, ref - 1);
 
+	DMSTYLE_LockModule();
+
 	return ref;
 }
 
@@ -68,6 +70,9 @@ ULONG WINAPI IDirectMusicChordTrack_IUnknown_Release (LPUNKNOWN iface) {
 	if (ref == 0) {
 		HeapFree(GetProcessHeap(), 0, This);
 	}
+
+	DMSTYLE_UnlockModule();
+
 	return ref;
 }
 
