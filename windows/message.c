@@ -316,7 +316,7 @@ static DWORD MSG_ProcessMouseMsg( MSG *msg, BOOL remove, INT16 hittest,
 
             /* Activate the window if needed */
 
-            if (hWnd != GetActiveWindow() && hWnd != GetDesktopWindow())
+            if (hWnd != GetActiveWindow() && hwndTop != GetDesktopWindow())
             {
                 LONG ret = SendMessageA( hWnd, WM_MOUSEACTIVATE, hwndTop,
                                           MAKELONG( hittest, message ) );

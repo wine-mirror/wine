@@ -2952,8 +2952,6 @@ static LRESULT WINAPI ListBoxWndProc_locked( WND* wnd, UINT msg,
         return LISTBOX_HandleHScroll( wnd, descr, wParam );
     case WM_VSCROLL:
         return LISTBOX_HandleVScroll( wnd, descr, wParam );
-    case WM_MOUSEACTIVATE:
-        return MA_NOACTIVATE;
     case WM_MOUSEWHEEL:
         if (wParam & (MK_SHIFT | MK_CONTROL))
             return unicode ? DefWindowProcW( hwnd, msg, wParam, lParam ) :
@@ -3178,8 +3176,6 @@ static LRESULT WINAPI ComboLBWndProc_locked( WND* wnd, UINT msg,
                      return LISTBOX_HandleLButtonDownCombo(wnd, descr, msg, wParam, 
                                           (INT16)LOWORD(lParam),
                                           (INT16)HIWORD(lParam) );
-		case WM_MOUSEACTIVATE:
-		     return MA_NOACTIVATE;
                 case WM_NCACTIVATE:
                      return FALSE;
 		case WM_KEYDOWN:
