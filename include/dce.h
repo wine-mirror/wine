@@ -11,16 +11,7 @@
 
 struct tagWND;
 
-/* additional DCX flags 
- */
-
-#define DCX_NORESETATTR		0x00000004
-#define DCX_EXCLUDEUPDATE    	0x00000100
-#define DCX_INTERSECTUPDATE  	0x00000200
-#define DCX_LOCKWINDOWUPDATE 	0x00000400
-#define DCX_NORECOMPUTE      	0x00100000
-#define DCX_VALIDATE         	0x00200000
-
+/* internal DCX flags */
 #define DCX_DCEEMPTY		0x00000800
 #define DCX_DCEBUSY		0x00001000
 #define DCX_DCEDIRTY		0x00002000
@@ -47,8 +38,6 @@ typedef struct tagDCE
     DWORD          DCXflags;
 } DCE;
 
-
-extern void  DCE_Init(void);
 extern DCE*  DCE_AllocDCE( HWND hWnd, DCE_TYPE type );
 extern DCE*  DCE_FreeDCE( DCE *dce );
 extern void  DCE_FreeWindowDCE( struct tagWND* );

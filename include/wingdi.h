@@ -1429,17 +1429,6 @@ typedef struct tagEXTLOGPEN
 #define RGN_MAX           RGN_COPY
   /* Device contexts */
 
-/* GetDCEx flags */
-#define DCX_WINDOW           0x00000001
-#define DCX_CACHE            0x00000002
-#define DCX_CLIPCHILDREN     0x00000008
-#define DCX_CLIPSIBLINGS     0x00000010
-#define DCX_PARENTCLIP       0x00000020
-#define DCX_EXCLUDERGN       0x00000040
-#define DCX_INTERSECTRGN     0x00000080
-#define DCX_LOCKWINDOWUPDATE 0x00000400
-#define DCX_USESTYLE         0x00010000
-
   /* Polygon modes */
 #define ALTERNATE         1
 #define WINDING           2
