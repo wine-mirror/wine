@@ -30,11 +30,11 @@
 #define RPC_FC_OP			0x13 /* unique pointer in object ? */
 #define RPC_FC_FP			0x14 /* full pointer */
 /* FC_RP/UP/OP/FP: flags, NdrFcShort(typeofs)/basetype */
- #define RPC_FC_P_ALLOCALLNODES		0x01
- #define RPC_FC_P_DONTFREE		0x02
- #define RPC_FC_P_ONSTACK		0x04 /* [alloced_on_stack] */
- #define RPC_FC_P_SIMPLEPOINTER		0x08 /* [simple_pointer] */
- #define RPC_FC_P_DEREF			0x10
+#define RPC_FC_P_ALLOCALLNODES		0x01
+#define RPC_FC_P_DONTFREE		0x02
+#define RPC_FC_P_ONSTACK		0x04 /* [alloced_on_stack] */
+#define RPC_FC_P_SIMPLEPOINTER		0x08 /* [simple_pointer] */
+#define RPC_FC_P_DEREF			0x10
 
 #define RPC_FC_STRUCT			0x15 /* simple structure */
 /* FC_STRUCT: align-1, NdrFcShort(size), fields */
@@ -43,6 +43,8 @@
 /* FC_PTRUCT: align-1, NdrFcShort(size), ptrs, fields */
 
 #define RPC_FC_CSTRUCT			0x17 /* conformant structure */
+
+#define RPC_FC_CPSTRUCT                 0x18 /* conformant structure w/ pointers */
 
 #define RPC_FC_BOGUS_STRUCT		0x1a /* complex structure */
 
@@ -53,6 +55,12 @@
 #define RPC_FC_SMFARRAY			0x1d /* small (<64K) fixed array */
 /* FC_SMFARRAY: align-1, NdrFcShort(size), ptrs, fields */
 
+#define RPC_FC_LGFARRAY                 0x1e /* large (>= 64k) fixed array */
+
+#define RPC_FC_SMVARRAY                 0x1f /* small (<64k) varying array */
+
+#define RPC_FC_LGVARRAY                 0x20 /* large (>= 64k) varying array */
+
 #define RPC_FC_BOGUS_ARRAY		0x21 /* complex array */
 
 #define RPC_FC_C_CSTRING		0x22
@@ -61,10 +69,16 @@
 #define RPC_FC_ENCAPSULATED_UNION	0x2a
 #define RPC_FC_NON_ENCAPSULATED_UNION	0x2b
 
+#define RPC_FC_BYTE_COUNT_POINTER       0x2c /* [byte_count] ACF attribute */
+
+#define RPC_FC_TRANSMIT_AS              0x2d
+#define RPC_FC_REPRESENT_AS             0x2e
+
 #define RPC_FC_IP			0x2f /* interface pointer */
 /* FC_IP: FC_CONSTANT_IID iid */
 /* FC_IP: FC_PAD correlation */
 
+#define RPC_FC_BIND_EXPLICIT		0x00
 #define RPC_FC_BIND_CONTEXT		0x30
 
 #define RPC_FC_BIND_GENERIC		0x31
@@ -100,6 +114,11 @@
  #define RPC_FC_PROC_PF_DONTFREEINST	0x0200
  #define RPC_FC_PROC_PF_SAVEASYNC	0x0400
  #define RPC_FC_PROC_PF_SRVALLOCSIZE	0xe000 /* in 8 byte units */
+#define RPC_FC_PROC_EXT_NEWCORRDESC     0x01
+#define RPC_FC_PROC_EXT_CLIENTCORRCHECK 0x02
+#define RPC_FC_PROC_EXT_SERVERCORRCHECK 0x04
+#define RPC_FC_PROC_EXT_HASNOTIFY       0x08
+#define RPC_FC_PROC_EXT_HASNOTIFY2      0x10
 
 #define RPC_FC_POINTER			0x36
 

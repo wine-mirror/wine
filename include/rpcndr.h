@@ -308,7 +308,82 @@ typedef enum {
   PROXY_UNMARSHAL
 } PROXY_PHASE;
 
+typedef enum {
+  XLAT_SERVER = 1,
+  XLAT_CLIENT
+} XLAT_SIDE;
+
+typedef struct _FULL_PTR_TO_REFID_ELEMENT {
+  struct _FULL_PTR_TO_REFID_ELEMENT *Next;
+  void *Pointer;
+  unsigned long RefId;
+  unsigned char State;
+} FULL_PTR_TO_REFID_ELEMENT, *PFULL_PTR_TO_REFID_ELEMENT;
+
+/* Full pointer translation tables */
+typedef struct _FULL_PTR_XLAT_TABLES {
+  struct {
+    void **XlatTable;
+    unsigned char *StateTable;
+    unsigned long NumberOfEntries;
+  } RefIdToPointer;
+
+  struct {
+    PFULL_PTR_TO_REFID_ELEMENT *XlatTable;
+    unsigned long NumberOfBuckets;
+    unsigned long HashMask;
+  } PointerToRefId;
+
+  unsigned long           NextRefId;
+  XLAT_SIDE               XlatSide;
+} FULL_PTR_XLAT_TABLES,  *PFULL_PTR_XLAT_TABLES;
+
 struct IRpcStubBuffer;
+
+typedef unsigned long error_status_t;
+typedef void  * NDR_CCONTEXT;
+
+typedef struct _SCONTEXT_QUEUE {
+  unsigned long NumberOfObjects;
+  NDR_SCONTEXT *ArrayOfObjects;
+} SCONTEXT_QUEUE, *PSCONTEXT_QUEUE;
+
+RPCRTAPI RPC_BINDING_HANDLE RPC_ENTRY
+  NDRCContextBinding( IN NDR_CCONTEXT CContext );
+
+RPCRTAPI void RPC_ENTRY
+  NDRCContextMarshall( IN NDR_CCONTEXT CContext, OUT void *pBuff );
+
+RPCRTAPI void RPC_ENTRY
+  NDRCContextUnmarshall( OUT NDR_CCONTEXT *pCContext, IN RPC_BINDING_HANDLE hBinding,
+                         IN void *pBuff, IN unsigned long DataRepresentation );
+
+RPCRTAPI void RPC_ENTRY
+  NDRSContextMarshall( IN NDR_SCONTEXT CContext, OUT void *pBuff, IN NDR_RUNDOWN userRunDownIn );
+
+RPCRTAPI NDR_SCONTEXT RPC_ENTRY
+  NDRSContextUnmarshall( IN void *pBuff, IN unsigned long DataRepresentation );
+
+RPCRTAPI void RPC_ENTRY
+  NDRSContextMarshallEx( IN RPC_BINDING_HANDLE BindingHandle, IN NDR_SCONTEXT CContext, 
+                         OUT void *pBuff, IN NDR_RUNDOWN userRunDownIn );
+
+RPCRTAPI void RPC_ENTRY
+  NDRSContextMarshall2( IN RPC_BINDING_HANDLE BindingHandle, IN NDR_SCONTEXT CContext,
+                        OUT void *pBuff, IN NDR_RUNDOWN userRunDownIn, IN void * CtxGuard,
+                        IN unsigned long Flags );
+
+RPCRTAPI NDR_SCONTEXT RPC_ENTRY
+  NDRSContextUnmarshallEx( IN RPC_BINDING_HANDLE BindingHandle, IN void *pBuff, 
+                           IN unsigned long DataRepresentation );
+
+RPCRTAPI NDR_SCONTEXT RPC_ENTRY
+  NDRSContextUnmarshall2( IN RPC_BINDING_HANDLE BindingHandle, IN void *pBuff,
+                          IN unsigned long DataRepresentation, IN void *CtxGuard,
+                          IN unsigned long Flags );
+
+RPCRTAPI void RPC_ENTRY
+  RpcSsDestroyClientContext( IN void **ContextHandle );
 
 RPCRTAPI void RPC_ENTRY
   NdrSimpleTypeMarshall( PMIDL_STUB_MESSAGE pStubMsg, unsigned char* pMemory, unsigned char FormatChar );
@@ -359,9 +434,9 @@ RPCRTAPI void RPC_ENTRY
 RPCRTAPI void RPC_ENTRY
   NdrConvert( PMIDL_STUB_MESSAGE pStubMsg, PFORMAT_STRING pFormat );
 
-LONG_PTR /* CLIENT_CALL_RETURN */ RPC_VAR_ENTRY
+LONG_PTR RPC_VAR_ENTRY
   NdrClientCall2( PMIDL_STUB_DESC pStubDescriptor, PFORMAT_STRING pFormat, ... );
-LONG_PTR /* CLIENT_CALL_RETURN */ RPC_VAR_ENTRY
+LONG_PTR RPC_VAR_ENTRY
   NdrClientCall( PMIDL_STUB_DESC pStubDescriptor, PFORMAT_STRING pFormat, ... );
 
 RPCRTAPI void RPC_ENTRY
@@ -396,5 +471,40 @@ RPCRTAPI void RPC_ENTRY
   NdrFreeBuffer( MIDL_STUB_MESSAGE *pStubMsg );
 RPCRTAPI unsigned char* RPC_ENTRY
   NdrSendReceive( MIDL_STUB_MESSAGE *stubmsg, unsigned char *buffer );
+
+RPCRTAPI unsigned char * RPC_ENTRY
+  NdrNsGetBuffer( PMIDL_STUB_MESSAGE pStubMsg, unsigned long BufferLength, RPC_BINDING_HANDLE Handle );
+RPCRTAPI unsigned char * RPC_ENTRY
+  NdrNsSendReceive( PMIDL_STUB_MESSAGE pStubMsg, unsigned char *pBufferEnd, RPC_BINDING_HANDLE *pAutoHandle );
+
+RPCRTAPI PFULL_PTR_XLAT_TABLES RPC_ENTRY
+  NdrFullPointerXlatInit( unsigned long NumberOfPointers, XLAT_SIDE XlatSide );
+RPCRTAPI void RPC_ENTRY
+  NdrFullPointerXlatFree( PFULL_PTR_XLAT_TABLES pXlatTables );
+RPCRTAPI int RPC_ENTRY
+  NdrFullPointerQueryPointer( PFULL_PTR_XLAT_TABLES pXlatTables, void *pPointer,
+                              unsigned char QueryType, unsigned long *pRefId );
+RPCRTAPI int RPC_ENTRY
+  NdrFullPointerQueryRefId( PFULL_PTR_XLAT_TABLES pXlatTables, unsigned long RefId,
+                            unsigned char QueryType, void **ppPointer );
+RPCRTAPI void RPC_ENTRY
+  NdrFullPointerInsertRefId( PFULL_PTR_XLAT_TABLES pXlatTables, unsigned long RefId, void *pPointer );
+RPCRTAPI int RPC_ENTRY
+  NdrFullPointerFree( PFULL_PTR_XLAT_TABLES pXlatTables, void *Pointer );
+
+RPCRTAPI void RPC_ENTRY
+  NdrRpcSsEnableAllocate( PMIDL_STUB_MESSAGE pMessage );
+RPCRTAPI void RPC_ENTRY
+  NdrRpcSsDisableAllocate( PMIDL_STUB_MESSAGE pMessage );
+RPCRTAPI void RPC_ENTRY
+  NdrRpcSmSetClientToOsf( PMIDL_STUB_MESSAGE pMessage );
+RPCRTAPI void * RPC_ENTRY
+  NdrRpcSmClientAllocate( IN size_t Size );
+RPCRTAPI void RPC_ENTRY
+  NdrRpcSmClientFree( IN void *NodeToFree );
+RPCRTAPI void * RPC_ENTRY
+  NdrRpcSsDefaultAllocate( IN size_t Size );
+RPCRTAPI void RPC_ENTRY
+  NdrRpcSsDefaultFree( IN void *NodeToFree );
 
 #endif /*__WINE_RPCNDR_H */
