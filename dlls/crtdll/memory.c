@@ -8,6 +8,9 @@
  *
  * Implementation Notes:
  * MT Safe.
+ * heapwalk from win does not work. This is most likely due to internal
+ * differences between wine and win (see memory/heap.c comments). This
+ * version works fine, however.
  */
 
 #include "crtdll.h"
@@ -63,6 +66,100 @@ new_handler_type __cdecl CRTDLL_set_new_handler(new_handler_type func)
 LPVOID __cdecl CRTDLL__expand(LPVOID ptr, INT size)
 {
     return HeapReAlloc( GetProcessHeap(), HEAP_REALLOC_IN_PLACE_ONLY, ptr, size );
+}
+
+
+/*********************************************************************
+ *                  _heapchk        (CRTDLL.130)
+ *
+ * Check the consistency of the process heap.
+ */
+INT __cdecl CRTDLL__heapchk(VOID)
+{
+  if (!HeapValidate( GetProcessHeap(), 0, NULL))
+  {
+    __CRTDLL__set_errno(GetLastError());
+    return _HEAPBADNODE;
+  }
+  return _HEAPOK;
+}
+
+
+/*********************************************************************
+ *                  _heapmin        (CRTDLL.131)
+ *
+ * Minimise the size of the heap.
+ */
+INT __cdecl CRTDLL__heapmin(VOID)
+{
+  if (!HeapCompact( GetProcessHeap(), 0 ))
+  {
+    if (GetLastError() != ERROR_CALL_NOT_IMPLEMENTED)
+      __CRTDLL__set_errno(GetLastError());
+    return -1;
+  }
+  return 0;
+}
+
+
+/*********************************************************************
+ *                  _heapset        (CRTDLL.132)
+ *
+ * Fill free memory in the heap with a given value.
+ */
+INT __cdecl CRTDLL__heapset(UINT value)
+{
+  INT retVal;
+  struct _heapinfo heap;
+
+  memset( &heap, 0, sizeof(heap) );
+
+  while ((retVal = CRTDLL__heapwalk(&heap)) == _HEAPOK)
+  {
+    if (heap._useflag == _FREEENTRY)
+      memset(heap._pentry, value, heap._size);
+  }
+  return retVal == _HEAPEND? _HEAPOK : retVal;
+}
+
+
+/*********************************************************************
+ *                  _heapwalk        (CRTDLL.133)
+ *
+ * Walk the heap block by block.
+ */
+INT __cdecl CRTDLL__heapwalk(struct _heapinfo *next)
+{
+  PROCESS_HEAP_ENTRY phe;
+
+  phe.lpData = next->_pentry;
+  phe.cbData = next->_size;
+  phe.wFlags = next->_useflag == _USEDENTRY ? PROCESS_HEAP_ENTRY_BUSY : 0;
+
+  if (phe.lpData && phe.wFlags & PROCESS_HEAP_ENTRY_BUSY && 
+      !HeapValidate( GetProcessHeap(), 0, phe.lpData ))
+  {
+    __CRTDLL__set_errno(GetLastError());
+    return _HEAPBADNODE;
+  }
+
+  do
+  {
+    if (!HeapWalk( GetProcessHeap(), &phe ))
+    {
+      if (GetLastError() == ERROR_NO_MORE_ITEMS)
+        return _HEAPEND;
+      __CRTDLL__set_errno(GetLastError());
+      if (!phe.lpData)
+        return _HEAPBADBEGIN;
+      return _HEAPBADNODE;
+    }
+  } while (phe.wFlags & (PROCESS_HEAP_REGION|PROCESS_HEAP_UNCOMMITTED_RANGE));
+
+  next->_pentry = phe.lpData;
+  next->_size = phe.cbData;
+  next->_useflag = phe.wFlags & PROCESS_HEAP_ENTRY_BUSY ? _USEDENTRY : _FREEENTRY;
+  return _HEAPOK;
 }
 
 

@@ -137,10 +137,10 @@ debug_channels (crtdll)
 @ stub _getsystime
 @ stub _getw
 @ cdecl _global_unwind2(ptr) CRTDLL__global_unwind2
-@ stub _heapchk
-@ stub _heapmin
-@ stub _heapset
-@ stub _heapwalk
+@ cdecl _heapchk() CRTDLL__heapchk
+@ cdecl _heapmin() CRTDLL__heapmin
+@ cdecl _heapset(long) CRTDLL__heapset
+@ cdecl _heapwalk(ptr) CRTDLL__heapwalk
 @ cdecl _hypot(double double) hypot
 @ cdecl _initterm(ptr ptr) CRTDLL__initterm
 @ extern _iob __CRTDLL_iob
@@ -174,9 +174,9 @@ debug_channels (crtdll)
 @ cdecl _isnan(double) CRTDLL__isnan
 @ forward _itoa ntdll._itoa
 @ cdecl _itow(long str long) CRTDLL__itow
-@ cdecl _j0(double) CRTDLL__j0
-@ cdecl _j1(double) CRTDLL__j1
-@ cdecl _jn(long double) CRTDLL__jn
+@ cdecl _j0(double) j0
+@ cdecl _j1(double) j1
+@ cdecl _jn(long double) jn
 @ stub _kbhit
 @ stub _lfind
 @ cdecl _loaddll(str) CRTDLL__loaddll
@@ -299,7 +299,7 @@ debug_channels (crtdll)
 @ cdecl _strinc(str) CRTDLL__strinc
 @ forward _strlwr ntdll._strlwr
 @ cdecl _strncnt(str long) CRTDLL__strncnt
-@ stub _strnextc
+@ cdecl _strnextc(str) CRTDLL__strnextc
 @ cdecl _strnicmp(str str long) strncasecmp
 @ cdecl _strninc(str long) CRTDLL__strninc
 @ cdecl _strnset(str long long) CRTDLL__strnset

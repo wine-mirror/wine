@@ -87,6 +87,17 @@ LPSTR __cdecl CRTDLL__strinc(LPSTR str)
 
 
 /*********************************************************************
+ *                   _strnextc         (CRTDLL.290)
+ *
+ * Return an unsigned int from a string.
+ */
+UINT __cdecl CRTDLL__strnextc(LPCSTR str)
+{
+  return (UINT)*str;
+}
+
+
+/*********************************************************************
  *                  _strninc           (CRTDLL.292)
  *
  * Return a pointer to the 'n'th character in a string

@@ -278,13 +278,14 @@ INT __cdecl CRTDLL__commit(INT fd)
 
 
 /*********************************************************************
- *                  _creat     (CRTDLL.66)
+ *                  _creat         (CRTDLL.066)
  *
  * Open a file, creating it if it is not present.
  */
 INT __cdecl CTRDLL__creat(LPCSTR path, INT flags)
 {
-  return CRTDLL__open(path,_O_CREAT|_O_WRONLY|_O_TRUNC);
+  INT usedFlags = (flags & _O_TEXT)| _O_CREAT| _O_WRONLY| _O_TRUNC;
+  return CRTDLL__open(path, usedFlags);
 }
 
 

@@ -545,7 +545,7 @@ LPINT __cdecl CRTDLL__errno( VOID )
 
 
 /*********************************************************************
- *                  _doserrno           (CRTDLL.26)
+ *                  __doserrno       (CRTDLL.26)
  * 
  * Return the address of the DOS errno (holding the last OS error).
  *
@@ -1021,32 +1021,4 @@ INT __cdecl  CRTDLL__isnan(double d)
    * Do the same, as the result may be used in calculations.
    */
   return isnan(d)?1:0;
-}
-
-
-/*********************************************************************
- *                  _j0           (CRTDLL.166)
- */
-double CRTDLL__j0(double x)
-{
-  FIXME(":stub!\n");
-  return x;
-}
-
-/*********************************************************************
- *                  _j1           (CRTDLL.167)
- */
-double CRTDLL__j1(double x)
-{
-  FIXME(":stub!\n");
-  return x;
-}
-
-/*********************************************************************
- *                  _jn           (CRTDLL.168)
- */
-double CRTDLL__jn(LONG x,double y)
-{
-  FIXME(":stub!\n");
-  return x;
 }

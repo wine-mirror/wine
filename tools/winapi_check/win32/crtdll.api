@@ -51,6 +51,7 @@ struct _stat *
 struct win_stat *
 struct _timeb *
 time_t *
+struct _heapinfo *
 fpos_t *
 diskfree_t *
 unsigned char *

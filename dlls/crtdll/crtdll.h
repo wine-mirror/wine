@@ -61,6 +61,16 @@
 /* windows.h RAND_MAX is smaller than normal RAND_MAX */
 #define CRTDLL_RAND_MAX         0x7fff
 
+/* heap function constants */
+#define _HEAPEMPTY    -1
+#define _HEAPOK       -2
+#define _HEAPBADBEGIN -3
+#define _HEAPBADNODE  -4
+#define _HEAPEND      -5
+#define _HEAPBADPTR   -6
+#define _FREEENTRY    0
+#define _USEDENTRY    1
+
 /* CRTDLL Globals */
 extern INT  CRTDLL_doserrno;
 extern INT  CRTDLL_errno;
@@ -152,6 +162,13 @@ struct complex
   double real;
   double imaginary;
 };
+
+typedef struct _heapinfo
+{
+  int * _pentry;
+  size_t _size;
+  int    _useflag;
+} _HEAPINFO;
 
 typedef VOID (*sig_handler_type)(VOID);
 
@@ -308,6 +325,10 @@ LPVOID __cdecl CRTDLL__lsearch( LPVOID match, LPVOID start, LPUINT array_size,
 LPVOID  __cdecl CRTDLL_new( DWORD size );
 VOID   __cdecl CRTDLL_delete( LPVOID ptr );
 new_handler_type __cdecl CRTDLL_set_new_handler( new_handler_type func );
+INT    __cdecl CRTDLL__heapchk( VOID );
+INT    __cdecl CRTDLL__heapmin( VOID );
+INT    __cdecl CRTDLL__heapset( UINT value );
+INT    __cdecl CRTDLL__heapwalk( struct _heapinfo *next );
 LPVOID __cdecl CRTDLL__expand( LPVOID ptr, INT size );
 LONG   __cdecl CRTDLL__msize( LPVOID mem );
 LPVOID __cdecl CRTDLL_calloc( DWORD size, DWORD count );
@@ -323,6 +344,7 @@ INT    __cdecl CRTDLL_system( LPSTR x );
 LPSTR  __cdecl CRTDLL__strdec( LPSTR str1, LPSTR str2 );
 LPSTR  __cdecl CRTDLL__strdup( LPCSTR ptr );
 LPSTR  __cdecl CRTDLL__strinc( LPSTR str );
+UINT   __cdecl CRTDLL__strnextc( LPCSTR str );
 LPSTR  __cdecl CRTDLL__strninc( LPSTR str, INT n );
 LPSTR  __cdecl CRTDLL__strnset( LPSTR str, INT c, INT len );
 LPSTR  __cdecl CRTDLL__strrev ( LPSTR str );
