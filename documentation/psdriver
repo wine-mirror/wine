@@ -44,7 +44,7 @@ printer.
 Then create a [afmfiles] section in your wine.conf (or ~/.winerc) and add a
 line of the form
 
-file=/unix/path/name/filename.afm
+file<n>=/unix/path/name/filename.afm
 
 for each AFM file that you wish to use. [This might change in the future]
 
