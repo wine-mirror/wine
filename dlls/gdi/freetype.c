@@ -1063,7 +1063,9 @@ not_found:
 	  debugstr_w(face->StyleName));
 
     ret->ft_face = OpenFontFile(ret, face->file, face->face_index,
-				INTERNAL_YWSTODS(dc,lf.lfHeight));
+				lf.lfHeight < 0 ?
+				-abs(INTERNAL_YWSTODS(dc,lf.lfHeight)) :
+				abs(INTERNAL_YWSTODS(dc, lf.lfHeight)));
     if (!ret->ft_face)
     {
         free_font( ret );
@@ -1590,7 +1592,8 @@ DWORD WineEngGetGlyphOutline(GdiFont font, UINT glyph, UINT format,
 		    if(buf)
 		        FTVectorToPOINTFX(&outline->points[first_pt], &ppc->apfx[cpfx]);
 		    cpfx++;
-		} else if(outline->tags[point] & FT_Curve_Tag_On) {
+		} else if(point <= outline->contours[contour] &&
+			  outline->tags[point] & FT_Curve_Tag_On) {
 		  /* add closing pt for bezier */
 		    if(buf)
 		        FTVectorToPOINTFX(&outline->points[point], &ppc->apfx[cpfx]);
