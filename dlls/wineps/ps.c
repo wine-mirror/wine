@@ -29,22 +29,7 @@ static char psbeginprolog[] =
 static char psendprolog[] =
 "%%EndProlog\n";
 
-static char psvectorstart[] =
-"/ANSIEncoding [\n";
-
-static char psvectorend[] =
-"] def\n";
-
-static char psprolog[] = /* output ANSIEncoding vector first */
-"/reencodefont {\n"
-"  findfont\n"
-"  dup length dict begin\n"
-"  {1 index /FID ne {def} {pop pop} ifelse} forall\n"
-"  /Encoding ANSIEncoding def\n"
-"  currentdict\n"
-"  end\n"
-"  definefont pop\n"
-"} bind def\n"
+static char psprolog[] =
 "/tmpmtrx matrix def\n"
 "/hatch {\n"
 "  pathbbox\n"
@@ -189,73 +174,6 @@ static char psarrayput[] =
 static char psarraydef[] = 
 "/%s %d array def\n";
 
-char *PSDRV_ANSIVector[256] = {
-NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, /* 0x00 */
-NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 
-NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, /* 0x10 */
-NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
-"space",	"exclam",	"quotedbl",	"numbersign", /* 0x20 */
-"dollar",	"percent",	"ampersand",	"quotesingle",
-"parenleft",	"parenright",	"asterisk",	"plus",
-"comma",	"hyphen",	"period",	"slash",
-"zero",		"one",		"two",		"three", /* 0x30 */
-"four",		"five",		"six",		"seven",
-"eight",	"nine",		"colon",	"semicolon",
-"less",		"equal",	"greater",	"question",
-"at",		"A",		"B",		"C", /* 0x40 */
-"D",		"E",		"F",		"G",
-"H",		"I",		"J",		"K",
-"L",		"M",		"N",		"O",
-"P",		"Q",		"R",		"S", /* 0x50 */
-"T",		"U",		"V",		"W",
-"X",		"Y",		"Z",		"bracketleft",
-"backslash",	"bracketright",	"asciicircum",	"underscore",
-"grave",	"a",		"b",		"c", /* 0x60 */
-"d",		"e",		"f",		"g",
-"h",		"i",		"j",		"k",
-"l",		"m",		"n",		"o",
-"p",		"q",		"r",		"s", /* 0x70 */
-"t",		"u",		"v",		"w",
-"x",		"y",		"z",		"braceleft",
-"bar",		"braceright",	"asciitilde",	NULL,
-NULL,		NULL,		NULL,		NULL, /* 0x80 */
-NULL,		NULL,		NULL,		NULL,
-NULL,		NULL,		NULL,		NULL,
-NULL,		NULL,		NULL,		NULL,
-NULL,		"quoteleft",	"quoteright",	"quotedblleft", /* 0x90 */
-"quotedblright","bullet",	"endash",	"emdash",
-NULL,		NULL,		NULL,		NULL,
-NULL,		NULL,		NULL,		NULL,
-"space",	"exclamdown",	"cent",		"sterling", /* 0xa0 */
-"currency",	"yen",		"brokenbar",	"section",
-"dieresis",	"copyright",	"ordfeminine",	"guillemotleft",
-"logicalnot",	"hyphen",	"registered",	"macron",
-"degree",	"plusminus",	"twosuperior",	"threesuperior", /* 0xb0 */
-"acute",	"mu",		"paragraph",	"periodcentered",
-"cedilla",	"onesuperior",	"ordmasculine",	"guillemotright",
-"onequarter",	"onehalf",	"threequarters","questiondown",
-"Agrave",	"Aacute",	"Acircumflex",	"Atilde", /* 0xc0 */
-"Adieresis",	"Aring",	"AE",		"Ccedilla",
-"Egrave",	"Eacute",	"Ecircumflex",	"Edieresis",
-"Igrave",	"Iacute",	"Icircumflex",	"Idieresis",
-"Eth",		"Ntilde",	"Ograve",	"Oacute", /* 0xd0 */
-"Ocircumflex",	"Otilde",	"Odieresis",	"multiply",
-"Oslash",	"Ugrave",	"Uacute",	"Ucircumflex",
-"Udieresis",	"Yacute",	"Thorn",	"germandbls",
-"agrave",	"aacute",	"acircumflex",	"atilde", /* 0xe0 */
-"adieresis",	"aring",	"ae",		"ccedilla",
-"egrave",	"eacute",	"ecircumflex",	"edieresis",
-"igrave",	"iacute",	"icircumflex",	"idieresis",
-"eth",		"ntilde",	"ograve",	"oacute", /* 0xf0 */
-"ocircumflex",	"otilde",	"odieresis",	"divide",
-"oslash",	"ugrave",	"uacute",	"ucircumflex",
-"udieresis",	"yacute",	"thorn",	"ydieresis"
-};
-
-
-char psreencodefont[] = /* newfontname basefontname*/
-"/%s /%s reencodefont\n";
-
 
 int PSDRV_WriteSpool(DC *dc, LPSTR lpData, WORD cch)
 {
@@ -293,10 +211,10 @@ INT PSDRV_WriteFeature(HANDLE16 hJob, char *feature, char *value,
 INT PSDRV_WriteHeader( DC *dc, LPCSTR title )
 {
     PSDRV_PDEVICE *physDev = (PSDRV_PDEVICE *)dc->physDev;
-    char *buf, *orient, vectbuf[256];
+    char *buf, *orient;
     INPUTSLOT *slot;
     PAGESIZE *page;
-    int llx, lly, urx, ury, i, j;
+    int llx, lly, urx, ury;
 
     TRACE("'%s'\n", title);
 
@@ -333,27 +251,8 @@ INT PSDRV_WriteHeader( DC *dc, LPCSTR title )
     HeapFree( PSDRV_Heap, 0, buf );
 
     WriteSpool16( physDev->job.hJob, psbeginprolog, strlen(psbeginprolog) );
-    WriteSpool16( physDev->job.hJob, psvectorstart, strlen(psvectorstart) );
-    
-    for(i = 0; i < 256; i += 8) {
-        vectbuf[0] = '\0';
-        for(j = 0; j < 8; j++) {
-	    strcat(vectbuf, "/");
-	    if(PSDRV_ANSIVector[i+j]) {
-	        strcat(vectbuf, PSDRV_ANSIVector[i+j]);
-		strcat(vectbuf, " ");
-	    } else {
-	        strcat(vectbuf, ".notdef ");
-	    }
-	}
-	strcat(vectbuf, "\n");
-	WriteSpool16( physDev->job.hJob, vectbuf, strlen(vectbuf) );
-    }
-
-    WriteSpool16( physDev->job.hJob, psvectorend, strlen(psvectorend) );
     WriteSpool16( physDev->job.hJob, psprolog, strlen(psprolog) );
     WriteSpool16( physDev->job.hJob, psendprolog, strlen(psendprolog) );
-
 
     WriteSpool16( physDev->job.hJob, psbeginsetup, strlen(psbeginsetup) );
 
@@ -523,12 +422,10 @@ BOOL PSDRV_WriteArc(DC *dc, INT x, INT y, INT w, INT h, double ang1,
     return PSDRV_WriteSpool(dc, buf, strlen(buf));
 }
 
-static char encodingext[] = "-ANSI";
-
-BOOL PSDRV_WriteSetFont(DC *dc, BOOL UseANSI)
+BOOL PSDRV_WriteSetFont(DC *dc)
 {
     PSDRV_PDEVICE *physDev = (PSDRV_PDEVICE *)dc->physDev;
-    char *buf, *newbuf;
+    char *buf;
 
     buf = (char *)HeapAlloc( PSDRV_Heap, 0,
 	     sizeof(pssetfont) + strlen(physDev->font.afm->FontName) + 40);
@@ -537,22 +434,8 @@ BOOL PSDRV_WriteSetFont(DC *dc, BOOL UseANSI)
         WARN("HeapAlloc failed\n");
         return FALSE;
     }
-
-    newbuf = (char *)HeapAlloc( PSDRV_Heap, 0,
-	      strlen(physDev->font.afm->FontName) + sizeof(encodingext));
-
-    if(!newbuf) {
-        WARN("HeapAlloc failed\n");
-	HeapFree(PSDRV_Heap, 0, buf);
-        return FALSE;
-    }
-
-    if(UseANSI)
-        sprintf(newbuf, "%s%s", physDev->font.afm->FontName, encodingext);
-    else
-        strcpy(newbuf, physDev->font.afm->FontName);
-
-    sprintf(buf, pssetfont, newbuf, 
+    
+    sprintf(buf, pssetfont, physDev->font.afm->FontName, 
 		physDev->font.size, -physDev->font.size,
 	        -physDev->font.escapement);
 
@@ -601,40 +484,7 @@ BOOL PSDRV_WriteSetPen(DC *dc)
     return TRUE;
 }
 
-BOOL PSDRV_WriteReencodeFont(DC *dc)
-{
-    PSDRV_PDEVICE *physDev = (PSDRV_PDEVICE *)dc->physDev;
-    char *buf, *newbuf;
- 
-    buf = (char *)HeapAlloc( PSDRV_Heap, 0,
-	     sizeof(psreencodefont) + 2 * strlen(physDev->font.afm->FontName) 
-			     + sizeof(encodingext));
-
-    if(!buf) {
-        WARN("HeapAlloc failed\n");
-        return FALSE;
-    }
-
-    newbuf = (char *)HeapAlloc( PSDRV_Heap, 0,
-	      strlen(physDev->font.afm->FontName) + sizeof(encodingext));
-
-    if(!newbuf) {
-        WARN("HeapAlloc failed\n");
-	HeapFree(PSDRV_Heap, 0, buf);
-        return FALSE;
-    }
-
-    sprintf(newbuf, "%s%s", physDev->font.afm->FontName, encodingext);
-    sprintf(buf, psreencodefont, newbuf, physDev->font.afm->FontName);
-
-    PSDRV_WriteSpool(dc, buf, strlen(buf));
-
-    HeapFree(PSDRV_Heap, 0, newbuf);
-    HeapFree(PSDRV_Heap, 0, buf);
-    return TRUE;
-}    
-
-BOOL PSDRV_WriteShow(DC *dc, LPCWSTR str, INT count)
+BOOL PSDRV_WriteGlyphShow(DC *dc, LPCWSTR str, INT count)
 {
     char    buf[128];
     int     i;
@@ -963,7 +813,3 @@ BOOL PSDRV_WritePatternDict(DC *dc, BITMAP *bm, BYTE *bits)
     HeapFree(PSDRV_Heap, 0, buf);
     return TRUE;
 }
-
-
-
-

@@ -334,9 +334,8 @@ extern BOOL PSDRV_WriteRectangle(DC *dc, INT x, INT y, INT width,
 			INT height);
 extern BOOL PSDRV_WriteRRectangle(DC *dc, INT x, INT y, INT width, 
 			INT height);
-extern BOOL PSDRV_WriteSetFont(DC *dc, BOOL UseANSI);
-extern BOOL PSDRV_WriteShow(DC *dc, LPCWSTR str, INT count);
-extern BOOL PSDRV_WriteReencodeFont(DC *dc);
+extern BOOL PSDRV_WriteSetFont(DC *dc);
+extern BOOL PSDRV_WriteGlyphShow(DC *dc, LPCWSTR str, INT count);
 extern BOOL PSDRV_WriteSetPen(DC *dc);
 extern BOOL PSDRV_WriteArc(DC *dc, INT x, INT y, INT w, INT h,
 			     double ang1, double ang2);

@@ -361,17 +361,11 @@ BOOL PSDRV_GetCharWidth(DC *dc, UINT firstChar, UINT lastChar, LPINT buffer)
 BOOL PSDRV_SetFont( DC *dc )
 {
     PSDRV_PDEVICE *physDev = (PSDRV_PDEVICE *)dc->physDev;
-    BOOL ReEncode = FALSE;
 
     PSDRV_WriteSetColor(dc, &physDev->font.color);
     if(physDev->font.set) return TRUE;
 
-    if(physDev->font.afm->EncodingScheme && 
-       !strcmp(physDev->font.afm->EncodingScheme, "AdobeStandardEncoding"))
-        ReEncode = TRUE;
-    if(ReEncode)
-        PSDRV_WriteReencodeFont(dc);
-    PSDRV_WriteSetFont(dc, ReEncode);
+    PSDRV_WriteSetFont(dc);
     physDev->font.set = TRUE;
     return TRUE;
 }
