@@ -4,27 +4,35 @@ static char Copyright[] = "Copyright  Robert J. Amstadt, 1993";
 #include <stdio.h>
 #include <stdlib.h>
 #include <errno.h>
-#include <linux/unistd.h>
-#include <linux/head.h>
-#include <linux/ldt.h>
+
 #include "prototypes.h"
+#ifdef __NetBSD__
+#include <machine/segments.h>
+#endif
 
 /**********************************************************************
  *					print_ldt
  */
+/* XXX These are *real* 386 descriptors !! */
 void
 print_ldt()
 {
     char buffer[0x10000];
-    struct modify_ldt_ldt_s ldt_info;
     unsigned long *lp;
     unsigned long base_addr, limit;
     int type, dpl, i;
+#ifdef __NetBSD__
+    struct segment_descriptor *sd;
+#endif
     
     if (get_ldt(buffer) < 0)
 	exit(1);
     
     lp = (unsigned long *) buffer;
+#ifdef __NetBSD__
+    sd = (struct segment_descriptor *) buffer;
+#endif
+    
     for (i = 0; i < 32; i++, lp++)
     {
 	/* First 32 bits of descriptor */
@@ -35,9 +43,15 @@ print_ldt()
 	/* First 32 bits of descriptor */
 	base_addr |= (*lp & 0xFF000000) | ((*lp << 16) & 0x00FF0000);
 	limit |= (*lp & 0x000F0000);
-	type = (*lp >> 9) & 7;
+#ifdef linux
+	type = (*lp >> 10) & 5;
 	dpl = (*lp >> 13) & 3;
-
+#endif
+#ifdef __NetBSD__
+        type = sd->sd_type;
+        dpl = sd->sd_dpl;
+	sd++;
+#endif
 	if (*lp & 1000)
 	{
 	    printf("Entry %2d: Base %08.8x, Limit %05.5x, DPL %d, Type %d\n",

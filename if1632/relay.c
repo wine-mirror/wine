@@ -7,17 +7,19 @@ static char Copyright[] = "Copyright  Robert J. Amstadt, 1993";
 #include <sys/stat.h>
 #include <fcntl.h>
 #include <unistd.h>
+#ifdef linux
 #include <linux/unistd.h>
 #include <linux/head.h>
 #include <linux/ldt.h>
 #include <linux/segment.h>
+#endif
 #include <errno.h>
 #include "neexe.h"
 #include "segmem.h"
 #include "prototypes.h"
 #include "dlls.h"
 
-#define N_BUILTINS	6
+#define N_BUILTINS	8
 
 struct dll_name_table_entry_s dll_builtin_table[N_BUILTINS] =
 {
@@ -27,6 +29,8 @@ struct dll_name_table_entry_s dll_builtin_table[N_BUILTINS] =
     { "UNIXLIB", UNIXLIB_table,  10, 4 },
     { "WIN87EM", WIN87EM_table,  10, 5 },
     { "SHELL",   SHELL_table,   256, 6 },
+    { "SOUND",   SOUND_table,    20, 7 },
+    { "KEYBOARD",KEYBOARD_table,137, 8 },
 };
 
 unsigned short *Stack16Frame;
@@ -239,3 +243,40 @@ ReturnArg(int arg)
 {
     return arg;
 }
+
+#ifdef WINESTAT
+void winestat(){
+	int i, j;
+	double perc;
+	int used, implemented;
+	int tused, timplemented;
+	struct dll_table_entry_s *table;
+
+	tused = 0;
+	timplemented = 0;
+    for (i = 0; i < N_BUILTINS; i++) {
+	    table = dll_builtin_table[i].dll_table;
+	    used = 0;
+	    implemented = 0;
+	    for(j=0; j < dll_builtin_table[i].dll_table_length; j++) {
+		    if(table[j].used){
+			    used++;
+			    if (table[j].handler) implemented++;
+			    else 
+				    printf("%s.%d\n",
+					   dll_builtin_table[i].dll_name,
+					   j);
+		    };
+	    };
+	    tused += used;
+	    timplemented += implemented;
+	    if(used)
+		    perc = implemented * 100.00 / used;
+	    else
+		    perc = 0.0;
+	    printf("%s: %d %d %3.1f\n", dll_builtin_table[i].dll_name, implemented, used, perc);
+    };
+	perc = timplemented * 100.00 / tused;
+	printf("TOTAL: %d %d %3.1f\n",timplemented, tused, perc);
+}
+#endif /* WINESTAT */

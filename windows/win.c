@@ -21,6 +21,8 @@ extern Display * XT_display;
 
 static HWND firstWindow = 0;
 
+void BUTTON_CreateButton(LPSTR className, LPSTR buttonLabel, HWND hwnd);
+
 
 /***********************************************************************
  *           WIN_FindWndPtr
@@ -99,7 +101,7 @@ HWND CreateWindow( LPSTR className, LPSTR windowName,
     {
 	  /* Check if parent is valid */
 	parentPtr = WIN_FindWndPtr( parent );
-	if (!parentPtr) return 0;
+	if (!parent) return 0;
     }
     else if (style & WS_CHILD) return 0;  /* WS_CHILD needs a parent */
 
@@ -160,10 +162,16 @@ HWND CreateWindow( LPSTR className, LPSTR windowName,
     
       /* Create the widgets */
 
-    if (style & WS_CHILD)
+    if (!strcasecmp(className, "BUTTON"))
     {
-	wndPtr->shellWidget = 0;
-	wndPtr->winWidget = XtVaCreateManagedWidget(className,
+	BUTTON_CreateButton(className, windowName, hwnd);
+    }
+    else
+    {
+	if (style & WS_CHILD)
+	{
+	    wndPtr->shellWidget = 0;
+	    wndPtr->winWidget = XtVaCreateManagedWidget(className,
 						    coreWidgetClass,
 						    parentPtr->winWidget,
 						    XtNx, x,
@@ -171,58 +179,61 @@ HWND CreateWindow( LPSTR className, LPSTR windowName,
 						    XtNwidth, width,
 						    XtNheight, height,
 						    NULL );
-    }
-    else
-    {
-	wndPtr->shellWidget = XtVaAppCreateShell(className, 
+	}
+	else
+	{
+	    wndPtr->shellWidget = XtVaAppCreateShell(className, 
 						 windowName,
 						 topLevelShellWidgetClass,
 						 XT_display,
 						 XtNx, x,
 						 XtNy, y,
 						 NULL );
-    	wndPtr->compositeWidget = XtVaCreateManagedWidget(className,
+	    wndPtr->compositeWidget = XtVaCreateManagedWidget(className,
 						    formWidgetClass,
 						    wndPtr->shellWidget,
 						    NULL );
-	if (wndPtr->wIDmenu == 0)
-	{
-	    wndPtr->menuBarPtr = MENU_CreateMenuBar(wndPtr->compositeWidget,
-						    instance, hwnd,
-						    classPtr->wc.lpszMenuName,
-						    width);
-	    wndPtr->wIDmenu = 
-		GlobalHandleFromPointer(wndPtr->menuBarPtr->firstItem);
-	}
-	else
-	{
-	    wndPtr->menuBarPtr = MENU_UseMenu(wndPtr->compositeWidget,
-					      instance, hwnd,
-					      wndPtr->wIDmenu, width);
-	}
+	    if (wndPtr->wIDmenu == 0)
+	    {
+		wndPtr->menuBarPtr = 
+		    MENU_CreateMenuBar(wndPtr->compositeWidget,
+				       instance, hwnd,
+				       classPtr->wc.lpszMenuName,
+				       width);
+		if (wndPtr->menuBarPtr)
+		    wndPtr->wIDmenu = 
+			GlobalHandleFromPointer(wndPtr->menuBarPtr->firstItem);
+	    }
+	    else
+	    {
+		wndPtr->menuBarPtr = MENU_UseMenu(wndPtr->compositeWidget,
+						  instance, hwnd,
+						  wndPtr->wIDmenu, width);
+	    }
 
-	if (wndPtr->menuBarPtr != NULL)
-	{
-	    wndPtr->winWidget = 
-		XtVaCreateManagedWidget(className,
+	    if (wndPtr->menuBarPtr != NULL)
+	    {
+		wndPtr->winWidget = 
+		    XtVaCreateManagedWidget(className,
+					    compositeWidgetClass,
+					    wndPtr->compositeWidget,
+					    XtNwidth, width,
+					    XtNheight, height,
+					    XtNfromVert,
+					    wndPtr->menuBarPtr->menuBarWidget,
+					    XtNvertDistance, 4,
+					    NULL );
+	    }
+	    else
+	    {
+		wndPtr->winWidget = 
+		    XtVaCreateManagedWidget(className,
 					compositeWidgetClass,
 					wndPtr->compositeWidget,
 					XtNwidth, width,
 					XtNheight, height,
-					XtNfromVert,
-					wndPtr->menuBarPtr->menuBarWidget,
-					XtNvertDistance, 4,
 					NULL );
-	}
-	else
-	{
-	    wndPtr->winWidget = 
-		XtVaCreateManagedWidget(className,
-					compositeWidgetClass,
-					wndPtr->compositeWidget,
-					XtNwidth, width,
-					XtNheight, height,
-					NULL );
+	    }
 	}
     }
 

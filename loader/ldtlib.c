@@ -4,16 +4,66 @@ static char Copyright[] = "Copyright  Robert J. Amstadt, 1993";
 #include <stdio.h>
 #include <stdlib.h>
 #include <errno.h>
+#ifdef linux
 #include <linux/unistd.h>
 #include <linux/head.h>
 #include <linux/ldt.h>
 
 _syscall3(int, modify_ldt, int, func, void *, ptr, unsigned long, bytecount)
+#endif
+#ifdef __NetBSD__
+#include <machine/segments.h>
 
+extern int i386_get_ldt(int, union descriptor *, int);
+extern int i386_set_ldt(int, union descriptor *, int);
+
+struct segment_descriptor *
+make_sd(unsigned base, unsigned limit, int contents, int read_exec_only, int seg32, int inpgs)
+{
+#if 1
+        static long d[2];
+
+        d[0] = ((base & 0x0000ffff) << 16) |
+                (limit & 0x0ffff);
+        d[1] = (base & 0xff000000) |
+                ((base & 0x00ff0000)>>16) |
+                        (limit & 0xf0000) |
+                                (contents << 10) |
+                                        ((read_exec_only ^ 1) << 9) |
+                                                (seg32 << 22) |
+                                                        (inpgs << 23) |
+                                                                0xf000;
+        
+        printf("%x %x\n", d[1], d[0]);
+        
+        return ((struct segment_descriptor *)d);
+#else        
+        static struct segment_descriptor d;
+
+        d.sd_lolimit = limit & 0x0000ffff;
+        d.sd_lobase  = base & 0x00ffffff;
+        d.sd_type    = contents & 0x01f;
+        d.sd_dpl     = SEL_UPL & 0x3;
+        d.sd_p       = 1;
+        d.sd_hilimit = (limit & 0x00ff0000) >> 16;
+        d.sd_xx      = 0;
+        d.sd_def32   = seg32?1:0;
+        d.sd_gran    = inpgs?1:0;
+        d.sd_hibase  = (base & 0xff000000) >> 24;
+        return ((struct segment_descriptor *)&d);
+#endif
+}
+#endif
+        
 int
 get_ldt(void *buffer)
 {
+#ifdef linux
     return modify_ldt(0, buffer, 32 * sizeof(struct modify_ldt_ldt_s));
+#endif
+#ifdef __NetBSD__
+    return i386_get_ldt(0, (union descriptor *)buffer, 32);
+#endif
 }
 
 int
@@ -21,6 +71,7 @@ set_ldt_entry(int entry, unsigned long base, unsigned int limit,
 	      int seg_32bit_flag, int contents, int read_only_flag,
 	      int limit_in_pages_flag)
 {
+#ifdef linux
     struct modify_ldt_ldt_s ldt_info;
 
     ldt_info.entry_number   = entry;
@@ -32,4 +83,24 @@ set_ldt_entry(int entry, unsigned long base, unsigned int limit,
     ldt_info.limit_in_pages = limit_in_pages_flag;
 
     return modify_ldt(1, &ldt_info, sizeof(ldt_info));
+#endif
+#ifdef __NetBSD__
+    struct segment_descriptor *sd;
+    int ret;
+    
+#ifdef DEBUG
+    printf("set_ldt_entry: entry=%x base=%x limit=%x%s %s-bit contents=%d %s\n",
+           entry, base, limit, limit_in_pages_flag?"-pages":"",
+           seg_32bit_flag?"32":"16",
+           contents, read_only_flag?"read-only":"");
+#endif
+
+    sd = make_sd(base, limit, contents, read_only_flag, seg_32bit_flag, limit_in_pages_flag);
+    ret = i386_set_ldt(entry, (union descriptor *)sd, 1);
+    if (ret < 0)
+            perror("i386_set_ldt");
+    
+    return ret;
+    
+#endif
 }

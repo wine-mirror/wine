@@ -1,0 +1,45 @@
+		       Status of MS Windows 3.1 Applets
+
+
+September 13, 1993
+
+I copied the following DLLs from my Windows (3.1) directory to my Wine
+directory.  Below I show how most of the programs included with
+Windows 3.1 died.
+
+        commdlg.dll   olesvr.dll    recorder.dll
+        olecli.dll    pbrush.dll    toolhelp.dll
+
+Scott Laird (lair@midway.uchicago.edu)
+
+
+calc.exe	dies no USER.89 (CreateDialog)
+calendar.exe	dies no KERNEL.60 (FindResource)
+cardfile.exe	cannot read relocation info
+charmap.exe	dies no USER.89 (CreateDialog)
+clipbrd.exe	dies no error
+clock.exe	dies no KERNEL.60 (FindResource)
+control.exe	dies no KERNEL.90 (lstrlen)
+drwatson.exe	dies no KERNEL.36 (GetCurrentTask)
+mplayer.exe	no MMSYSTEM.dll
+notepad.exe	dies no error
+nwpopup.exe	dies no KERNEL.47 (GetModuleHandle)
+packager.exe	cannot read relocation info
+pbrush.exe	cannot read relocation info
+pifedit.exe	dies no KERNEL.60 (FindResource)
+printman.exe	dies no KERNEL.107 (SetErrorMode)
+progman.exe	dies no error
+recorder.exe	cannot read relocation info
+regedit.exe	dies no KERNEL.90 (lstrlen)
+sol.exe		** RUNS **
+soundrec.exe	no MMSYSTEM.dll
+sysedit.exe	dies no USER.159 (GetSubMenu)
+terminal.exe	dies int21 2a
+winfile.exe	DOS ax=2fdf, dies no KERNEL.107
+winhelp.exe	dies no KERNEL.60 (FindResource)
+winmine.exe	dies no USER.256 (GetDesktopWindow)
+winpopup.exe	no NETAPI
+wintutor.exe	'Cannot load WINTUTOR.DAT' (file present)
+write.exe	cannot read relocation info
+
+

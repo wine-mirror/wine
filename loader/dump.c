@@ -7,9 +7,11 @@ static char Copyright[] = "Copyright  Robert J. Amstadt, 1993";
 #include <sys/stat.h>
 #include <fcntl.h>
 #include <unistd.h>
+#ifdef linux
 #include <linux/unistd.h>
 #include <linux/head.h>
 #include <linux/ldt.h>
+#endif
 #include <errno.h>
 #include "neexe.h"
 #include "segmem.h"

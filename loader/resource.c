@@ -274,6 +274,7 @@ LoadString(HANDLE instance, WORD resource_id, LPSTR buffer, int buflen)
 HICON
 LoadIcon(HANDLE instance, LPSTR icon_name)
 {
+  fprintf(stderr,"LoadIcon: (%d),%d\n",instance,icon_name);
     return 0;
 }
 
@@ -283,6 +284,17 @@ LoadIcon(HANDLE instance, LPSTR icon_name)
 HCURSOR
 LoadCursor(HANDLE instance, LPSTR cursor_name)
 {
+  fprintf(stderr,"LoadCursor: (%d),%d\n",instance,cursor_name);
+    return 0;
+}
+
+/**********************************************************************
+ *					LoadAccelerators
+ */
+HANDLE
+LoadAccelerators(HANDLE instance, LPSTR lpTableName)
+{
+  fprintf(stderr,"LoadAccelerators: (%d),%d\n",instance,lpTableName);
     return 0;
 }
 

@@ -83,3 +83,5 @@ length	540
 373 pascal SubtractRect(ptr ptr ptr) SubtractRect(1 2 3)
 403 pascal UnregisterClass(ptr word) UnregisterClass(1 2)
 411 pascal AppendMenu(word word word ptr) AppendMenu(1 2 3 4)
+177 pascal LoadAccelerators(word ptr) LoadAccelerators(1 2)
+421 pascal wvsprintf(ptr ptr ptr) wvsprintf(1 2 3)

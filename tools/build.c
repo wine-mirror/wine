@@ -6,6 +6,13 @@ static char Copyright[] = "Copyright  Robert J. Amstadt, 1993";
 #include <string.h>
 #include <ctype.h>
 
+#ifdef linux
+#define UTEXTSEL 0x23
+#endif
+#ifdef __NetBSD__
+#define UTEXTSEL 0x1f
+#endif
+
 #define VARTYPE_BYTE	0
 #define VARTYPE_SIGNEDWORD	0
 #define VARTYPE_WORD	1
@@ -738,9 +745,12 @@ main(int argc, char **argv)
 	{
 	  case FUNCTYPE_PASCAL:
 	  case FUNCTYPE_REG:
-	    fprintf(fp, "    { 0x23, %s_Ordinal_%d, ", UpperDLLName, i);
+	    fprintf(fp, "    { 0x%x, %s_Ordinal_%d, ", UTEXTSEL, UpperDLLName, i);
 	    fprintf(fp, "\042%s\042, ", odp->export_name);
 	    fprintf(fp, "%s, DLL_HANDLERTYPE_PASCAL, ", fdp->internal_name);
+#ifdef WINESTAT
+	    fprintf(fp, "0, ");
+#endif	    
 	    fprintf(fp, "%d, ", fdp->n_args_32);
 	    if (fdp->n_args_32 > 0)
 	    {
@@ -759,9 +769,12 @@ main(int argc, char **argv)
 	    break;
 		
 	  case FUNCTYPE_C:
-	    fprintf(fp, "    { 0x23, %s_Ordinal_%d, ", UpperDLLName, i);
+	    fprintf(fp, "    { 0x%x, %s_Ordinal_%d, ", UTEXTSEL, UpperDLLName, i);
 	    fprintf(fp, "\042%s\042, ", odp->export_name);
 	    fprintf(fp, "%s, DLL_HANDLERTYPE_C, ", fdp->internal_name);
+#ifdef WINESTAT
+	    fprintf(fp, "0, ");
+#endif	    
 	    fprintf(fp, "%d, ", fdp->n_args_32);
 	    if (fdp->n_args_32 > 0)
 	    {
@@ -780,8 +793,8 @@ main(int argc, char **argv)
 	    break;
 	    
 	  default:
-	    fprintf(fp, "    { 0x23, %s_Ordinal_%d, \042\042, NULL },\n", 
-		    UpperDLLName, i);
+	    fprintf(fp, "    { 0x%x, %s_Ordinal_%d, \042\042, NULL },\n", 
+		    UTEXTSEL, UpperDLLName, i);
 	    break;
 	}
     }

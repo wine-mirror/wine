@@ -136,6 +136,7 @@ struct relocation_entry_s
 /* Used by Windows 3.0 programs, like when getting selector to be
    given to makeprocinst */
 #define NE_RELTYPE_INT1		4
+#define NE_RELTYPE_OFFSET16	5
 /*
  * DOS PSP
  */

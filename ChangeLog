@@ -1,3 +1,118 @@
+Mon Sep 13 05:00:11 1993  Eric Youngdale
+
+	* [Makefile] [if1632/relay.c] [include/dlls.h] [selector.c]
+	  [loader/wine.c] [tools/build.c]
+	Added ability to generate missing functions statistics.
+
+Mon Sep 13 12:09:47 1993  Scott A. Laird  (scott@curly)
+
+	* [WIN31-APPLETS]
+	Added new file.
+
+	* [if1632/kernel.spec]
+	Added definitions for GetProfile{Int,String} and SetHandleCount.
+
+	* [if1632/keyboard.spec]
+	Created interface specification for Keyboard driver DLL.
+
+	* [if1632/relay.c]
+	Added keyboard.dll to list of included DLLs.
+
+	* [if1632/user.spec]
+	Added LoadAccelerators definition.
+
+	* [loader/resource.c]
+	Added LoadAccelerators stub.
+
+	* [misc/file.c]
+	Changed OpenFile, and added SetHandleCount (for winfile.exe)
+
+	* [misc/keyboard.c]
+	Added keyboard code.
+
+	* [misc/profile.c] [misc/xt.c]
+	Moved GetPrivateProfile* commands here, and added GetProfile*
+	commands.
+
+Mon Sep 13 10:24:37 1993  Andrew Bulhak
+
+	* [windows/utility.c]
+	Implemented MulDiv(), OutputDebugString() and wvsprintf()
+
+Fri Sep 10 09:13:30 1993  John Brezak
+
+	* [*/Makefile]
+	Created patch to allow BSD make to build wine.
+
+	* [windows/win.c]
+	Fixed NULL pointer reference.
+
+	* [windows/message.c] [misc/xt.c]
+	Defined HZ to handle system specific timing.
+
+	* [windows/graphics.c]
+	Use M_PI is PI
+
+	* [objects/pallete.c]
+	NetBSD does not have /usr/include/values.h and MAXINT is INT_MAX.
+
+	* [dump.c] [ldt.c] [wine.c]
+	ifdef'ed linux headers for linux compile.
+
+	* [loader/ldtlib.c]
+	Add NetBSD system calls when compiled on that system.
+
+	* [loader/selector.c]
+	Use mmap(MAP_ANON, ...) for NetBSD.
+
+	* [if1632/call.S]
+	Fixed selector assumptions.
+
+Thu Sep 9 20:01:37 1993  David Metcalfe
+
+	* [controls/WinButton*] [controls/button.c] [controls/widget.c]
+  	  [windows/win.c] [windows/class.c]
+	Added 3D button control and tied into CreateWindow()
+
+Thu Sep  9 07:35:24 1993  Scott Laird
+
+	* [if1632/sound.spec]
+	Created interface specification for SOUND DLL.
+
+	* [if1632/win87em.spec]
+	Added more functions to the WIN87EM DLL interface specification
+
+	* [misc/emulate.c]
+	Created stubs for the new math emulation functions.
+
+	* [misc/sound.c]
+	Created stubs for the SOUND DLL.
+
+Sun Sep  5 21:02:10 1993  John Burton
+
+	* [if1632/kernel.spec]
+	Added interface specifications for OpenFile, _lclose, _lread, _lopen,
+	and _lwrite.
+
+	* [include/windows.h]
+	Added OF_ macros
+
+	* [misc/file.c]
+	Implemented OpenFile, _lclose, _lread, _lopen and _lwrite.
+
+Fri Sep  3 18:47:03 1993  Alexandre Julliard
+
+        * [windows/dc.c]
+	Bug fix
+
+	* [objects/text.c]
+	Bug fix
+
+Fri Sep  3 18:47:03 1993  Bob Amstadt
+
+        * [objects/linedda.c]
+        Finished LineDDA().
+
 Fri Sep  3 11:52:18 1993  Bob Amstadt
 
 	* [windows/timer.c]

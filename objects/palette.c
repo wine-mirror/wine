@@ -7,7 +7,13 @@
 static char Copyright[] = "Copyright  Alexandre Julliard, 1993";
 
 #include <stdlib.h>
+#ifdef linux
 #include <values.h>
+#endif
+#ifdef __NetBSD__
+#include <limits.h>
+#define MAXINT INT_MAX
+#endif
 #include <X11/Xlib.h>
 
 #include "gdi.h"

@@ -338,7 +338,6 @@ HDC CreateDC( LPSTR driver, LPSTR device, LPSTR output, LPSTR initData )
     dc->w.planes       = displayDevCaps->planes;
     dc->w.bitsPerPixel = displayDevCaps->bitsPixel;
 
-    XSetSubwindowMode( XT_display, dc->u.x.gc, IncludeInferiors );    
     DC_SetDeviceInfo( handle, dc );
 
     return handle;

@@ -8,6 +8,9 @@ static char Copyright[] = "Copyright  Alexandre Julliard, 1993";
 
 #include <math.h>
 #include <X11/Xlib.h>
+#ifndef PI
+#define PI M_PI
+#endif
 
 #include "gdi.h"
 

@@ -2,7 +2,7 @@
 #
 name	kernel
 id	1
-length	410
+length	415
 
 3   return GetVersion 0 0x301
 4   pascal LocalInit(word word word) LocalInit(1 2 3)
@@ -32,6 +32,11 @@ length	410
 50  pascal GetProcAddress(word ptr) GetProcAddress(1 2)
 51  pascal MakeProcInstance(ptr word) CALLBACK_MakeProcInstance(1 2)
 52  pascal FreeProcInstance(ptr) FreeProcInstance(1)
+74  pascal OpenFile(ptr ptr word) KERNEL_OpenFile(1 2 3)
+81  pascal _lclose(word) KERNEL__lclose(1)
+82  pascal _lread(word ptr word) KERNEL__lread(1 2 3)
+85  pascal _lopen(ptr word) KERNEL__lopen(1 2)
+86  pascal _lwrite(word ptr word) KERNEL__lwrite(1 2 3)
 91  register InitTask(word word word word word
 		      word word word word word) 
 	     KERNEL_InitTask()
@@ -40,6 +45,7 @@ length	410
 	     KERNEL_DOS3Call()
 111 pascal GlobalWire(word) GlobalLock(1)
 112 pascal GlobalUnWire(word) GlobalUnlock(1)
+115 pascal OutputDebugString(ptr) OutputDebugString(1)
 121 return LocalShrink 4 0
 127 pascal GetPrivateProfileInt(ptr ptr s_word ptr)
 	   GetPrivateProfileInt(1 2 3 4)
@@ -57,3 +63,6 @@ length	410
 192 pascal GlobalPageUnlock(word) GlobalUnlock(1)
 197 pascal GlobalFix(word) GlobalLock(1)
 198 pascal GlobalUnfix(word) GlobalUnlock(1)
+57  pascal GetProfileInt(ptr ptr word) GetProfileInt(1 2 3)
+58  pascal GetProfileString(ptr ptr ptr ptr word) GetProfileString(1 2 3 4 5)
+199 pascal SetHandleCount(word) SetHandleCount(1)

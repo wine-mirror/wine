@@ -7,6 +7,7 @@
 static char Copyright[] = "Copyright  Alexandre Julliard, 1993";
 
 #include "windows.h"
+#include "win.h"
 
 
 static LONG WIDGETS_ButtonWndProc( HWND hwnd, WORD message,
@@ -71,18 +72,20 @@ static LONG WIDGETS_ButtonWndProc( HWND hwnd, WORD message,
 	return 0;
 	
     case WM_PAINT:
-	{
-	    HDC hdc;
-	    PAINTSTRUCT ps;
-	    RECT rect;
-	
-	    hdc = BeginPaint( hwnd, &ps );
-	    GetClientRect( hwnd, &rect );
-	    DrawText(hdc, "Button", -1, &rect,
-		     DT_SINGLELINE | DT_CENTER | DT_VCENTER );
-	    EndPaint( hwnd, &ps );
-	    return 0;
-	}
+    {
+	PAINTSTRUCT ps;
+	BeginPaint( hwnd, &ps );
+	EndPaint( hwnd, &ps );
+	return 0;
+    }
+
+    case WM_COMMAND:
+    {
+	WND  *wndParent;
+	wndParent = WIN_FindWndPtr(hwnd);
+	CallWindowProc(wndParent->lpfnWndProc, hwnd, message, wParam, lParam);
+	return 0;
+    }
 	
     default:
 	return DefWindowProc( hwnd, message, wParam, lParam );

@@ -7,10 +7,12 @@ static char Copyright[] = "Copyright  Robert J. Amstadt, 1993";
 #include <sys/stat.h>
 #include <fcntl.h>
 #include <unistd.h>
+#ifdef linux
 #include <linux/unistd.h>
 #include <linux/head.h>
 #include <linux/ldt.h>
 #include <linux/segment.h>
+#endif
 #include <string.h>
 #include <errno.h>
 #include "neexe.h"
@@ -222,6 +224,9 @@ LoadImage(char * filename,  char * modulename)
 _WinMain(int argc, char **argv)
 {
 	int segment;
+#ifdef WINESTAT
+	char * cp;
+#endif
 	struct w_files * wpnt;
 	int cs_reg, ds_reg, ss_reg, ip_reg, sp_reg;
 	int i;
@@ -269,6 +274,16 @@ _WinMain(int argc, char **argv)
     ip_reg = wine_files->ne_header->ip;
     ss_reg = wine_files->selector_table[wine_files->ne_header->ss-1].selector;
     sp_reg = wine_files->ne_header->sp;
+
+#ifdef WINESTAT
+    cp = strrchr(argv[0], '/');
+    if(!cp) cp = argv[0];
+	else cp++;
+    if(strcmp(cp,"winestat") == 0) {
+	    winestat();
+	    exit(0);
+    };
+#endif
 
     init_wine_signals();
 
@@ -489,12 +504,13 @@ FixupSegment(struct w_files * wpnt, int segment_num)
 	    
 	  default:
 #ifndef DEBUG_FIXUP
-	    printf("%d: ADDR TYPE %d,  TYPE %d,  OFFSET %04.4x,  ",
+	    fprintf(stderr,"%d: ADDR TYPE %d,  TYPE %d,  OFFSET %04.4x,  ",
 		   i + 1, rep->address_type, rep->relocation_type, 
 		   rep->offset);
-	    printf("TARGET %04.4x %04.4x\n", rep->target1, rep->target2);
+	    fprintf(stderr,"TARGET %04.4x %04.4x\n", rep->target1, rep->target2);
 #endif
 	    free(rep1);
+
 	    return -1;
 	}
 
@@ -530,13 +546,15 @@ FixupSegment(struct w_files * wpnt, int segment_num)
 		next_addr = *sp;
 		*sp     = (unsigned short) selector;
 		sp = (unsigned short *) ((char *) sel->base_addr + next_addr);
+		if (rep->relocation_type == NE_RELTYPE_INT1) break;
+
 	    } 
 	    while (next_addr != 0xffff);
 
 	    break;
 	    
 	  default:
-#ifdef DEBUG_FIXUP
+#ifndef DEBUG_FIXUP
 	    printf("%d: ADDR TYPE %d,  TYPE %d,  OFFSET %04.4x,  ",
 		   i + 1, rep->address_type, rep->relocation_type, 
 		   rep->offset);

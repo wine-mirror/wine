@@ -7,16 +7,36 @@ static char Copyright[] = "Copyright  Robert J. Amstadt, 1993";
 #include <sys/stat.h>
 #include <fcntl.h>
 #include <unistd.h>
+#ifdef linux
 #include <linux/unistd.h>
 #include <linux/head.h>
 #include <linux/mman.h>
 #include <linux/a.out.h>
 #include <linux/ldt.h>
+#endif
+#ifdef __NetBSD__
+#include <sys/mman.h>
+#endif
 #include <errno.h>
 #include "neexe.h"
 #include "segmem.h"
 #include "prototypes.h"
 #include "wine.h"
+
+
+#ifdef linux
+#define DEV_ZERO
+#define UTEXTSEL 0x23
+#endif
+
+#ifdef __NetBSD__
+#include <machine/segments.h>
+#define PAGE_SIZE getpagesize()
+#define MODIFY_LDT_CONTENTS_DATA	0
+#define MODIFY_LDT_CONTENTS_STACK	1
+#define MODIFY_LDT_CONTENTS_CODE	2
+#define UTEXTSEL 0x1f
+#endif
 
 #define MAX_SELECTORS	512
 
@@ -42,19 +62,21 @@ GetNextSegment(unsigned int flags, unsigned int limit)
 {
     struct segment_descriptor_s *selectors, *s;
     int sel_idx;
+#ifdef DEV_ZERO
     FILE *zfile;
+#endif
 
     sel_idx = next_unused_selector++;
 
     /*
      * Fill in selector info.
      */
-    zfile = fopen("/dev/zero","r");
-
     s = malloc(sizeof(*s));
     s->flags = NE_SEGFLAGS_DATA;
     s->selector = (sel_idx << 3) | 0x0007;
     s->length = limit;
+#ifdef DEV_ZERO
+    zfile = fopen("/dev/zero","r");
     s->base_addr = (void *) mmap((char *) (s->selector << 16),
 				 ((s->length + PAGE_SIZE - 1) & 
 				  ~(PAGE_SIZE - 1)),
@@ -62,6 +84,14 @@ GetNextSegment(unsigned int flags, unsigned int limit)
 				 MAP_FIXED | MAP_PRIVATE, fileno(zfile), 0);
 
     fclose(zfile);
+#else
+    s->base_addr = (void *) mmap((char *) (s->selector << 16),
+				 ((s->length + PAGE_SIZE - 1) & 
+				  ~(PAGE_SIZE - 1)),
+				 PROT_EXEC | PROT_READ | PROT_WRITE,
+				 MAP_FIXED | MAP_PRIVATE | MAP_ANON, -1, 0);
+
+#endif
 
     if (set_ldt_entry(sel_idx, (unsigned long) s->base_addr, 
 		      (s->length - 1) & 0xffff, 0, 
@@ -99,6 +129,9 @@ unsigned int GetEntryDLLName(char * dll_name, char * function, int * sel,
 		ordinal = FindOrdinalFromName(dll_table, function);
 		*sel = dll_table[ordinal].selector;
 		*addr  = (unsigned int) dll_table[ordinal].address;
+#ifdef WINESTAT
+		dll_table[ordinal].used++;
+#endif
 		return 0;
 	};
 
@@ -136,6 +169,9 @@ unsigned int GetEntryDLLOrdinal(char * dll_name, int ordinal, int * sel,
 	if(dll_table) {
 	    *sel = dll_table[ordinal].selector;
 	    *addr  = (unsigned int) dll_table[ordinal].address;
+#ifdef WINESTAT
+		dll_table[ordinal].used++;
+#endif
 	    return 0;
 	};
 
@@ -239,7 +275,11 @@ GetDOSEnvironment()
  *					CreateEnvironment
  */
 static struct segment_descriptor_s *
+#ifdef DEV_ZERO
 CreateEnvironment(FILE *zfile)
+#else
+CreateEnvironment(void)
+#endif
 {
     char *p;
     int sel_idx;
@@ -248,17 +288,24 @@ CreateEnvironment(FILE *zfile)
     s = (struct segment_descriptor_s *) 
 	    malloc(sizeof(struct segment_descriptor_s));
 
-    sel_idx =  next_unused_selector;
+    sel_idx =  next_unused_selector++;
     /*
      * Create memory to hold environment.
      */
     s->flags = NE_SEGFLAGS_DATA;
-    s->selector = (next_unused_selector++ << 3) | 0x0007;
+    s->selector = (sel_idx << 3) | 0x0007;
     s->length = PAGE_SIZE;
+#ifdef DEV_ZERO
     s->base_addr = (void *) mmap((char *) (s->selector << 16),
 				 PAGE_SIZE,
 				 PROT_EXEC | PROT_READ | PROT_WRITE,
 				 MAP_FIXED | MAP_PRIVATE, fileno(zfile), 0);
+#else
+    s->base_addr = (void *) mmap((char *) (s->selector << 16),
+				 PAGE_SIZE,
+				 PROT_EXEC | PROT_READ | PROT_WRITE,
+				 MAP_FIXED | MAP_PRIVATE | MAP_ANON, -1, 0);
+#endif
 
     /*
      * Fill environment with meaningless babble.
@@ -287,7 +334,11 @@ CreateEnvironment(FILE *zfile)
  *					CreateThunks
  */
 static struct segment_descriptor_s *
+#ifdef DEV_ZERO
 CreateThunks(FILE *zfile)
+#else
+CreateThunks(void)
+#endif
 {
     int sel_idx;
     struct segment_descriptor_s * s;
@@ -295,17 +346,24 @@ CreateThunks(FILE *zfile)
     s = (struct segment_descriptor_s *) 
 	    malloc(sizeof(struct segment_descriptor_s));
 
-    sel_idx =  next_unused_selector;
+    sel_idx =  next_unused_selector++;
     /*
      * Create memory to hold environment.
      */
     s->flags = 0;
-    s->selector = (next_unused_selector++ << 3) | 0x0007;
+    s->selector = (sel_idx << 3) | 0x0007;
     s->length = 0x10000;
+#ifdef DEV_ZERO
     s->base_addr = (void *) mmap((char *) (s->selector << 16),
 				 s->length,
 				 PROT_EXEC | PROT_READ | PROT_WRITE,
 				 MAP_FIXED | MAP_PRIVATE, fileno(zfile), 0);
+#else
+    s->base_addr = (void *) mmap((char *) (s->selector << 16),
+				 s->length,
+				 PROT_EXEC | PROT_READ | PROT_WRITE,
+				 MAP_FIXED | MAP_PRIVATE | MAP_ANON, -1, 0);
+#endif
 
 
     /*
@@ -324,7 +382,11 @@ CreateThunks(FILE *zfile)
  *					CreatePSP
  */
 static struct segment_descriptor_s *
+#ifdef DEV_ZERO
 CreatePSP(FILE *zfile)
+#else
+CreatePSP(void)
+#endif
 {
     struct dos_psp_s *psp;
     unsigned short *usp;
@@ -336,17 +398,24 @@ CreatePSP(FILE *zfile)
     s = (struct segment_descriptor_s *) 
 	    malloc(sizeof(struct segment_descriptor_s));
     
-    sel_idx =  next_unused_selector;
+    sel_idx =  next_unused_selector++;
     /*
      * Create memory to hold PSP.
      */
     s->flags = NE_SEGFLAGS_DATA;
-    s->selector = (next_unused_selector++ << 3) | 0x0007;
+    s->selector = (sel_idx << 3) | 0x0007;
     s->length = PAGE_SIZE;
+#ifdef DEV_ZERO
     s->base_addr = (void *) mmap((char *) (s->selector << 16),
 				 PAGE_SIZE,
 				 PROT_EXEC | PROT_READ | PROT_WRITE,
 				 MAP_FIXED | MAP_PRIVATE, fileno(zfile), 0);
+#else
+    s->base_addr = (void *) mmap((char *) (s->selector << 16),
+				 PAGE_SIZE,
+				 PROT_EXEC | PROT_READ | PROT_WRITE,
+				 MAP_FIXED | MAP_PRIVATE | MAP_ANON, -1, 0);
+#endif
 
     /*
      * Fill PSP
@@ -357,13 +426,13 @@ CreatePSP(FILE *zfile)
     psp->pspDispatcher[0] = 0x9a;
     usp = (unsigned short *) &psp->pspDispatcher[1];
     *usp       = (unsigned short) KERNEL_Ordinal_102;
-    *(usp + 1) = 0x23;
+    *(usp + 1) = UTEXTSEL;
     psp->pspTerminateVector[0] = (unsigned short) UNIXLIB_Ordinal_0;
-    psp->pspTerminateVector[1] = 0x0023;
+    psp->pspTerminateVector[1] = UTEXTSEL;
     psp->pspControlCVector[0] = (unsigned short) UNIXLIB_Ordinal_0;
-    psp->pspControlCVector[1] = 0x0023;
+    psp->pspControlCVector[1] = UTEXTSEL;
     psp->pspCritErrorVector[0] = (unsigned short) UNIXLIB_Ordinal_0;
-    psp->pspCritErrorVector[1] = 0x0023;
+    psp->pspCritErrorVector[1] = UTEXTSEL;
     psp->pspEnvironment = EnvironmentSelector->selector;
 
     p1 = psp->pspCommandTail;
@@ -409,7 +478,9 @@ CreateSelectors(struct  w_files * wpnt)
     int SelectorTableLength;
     int i;
     int status;
+#ifdef DEV_ZERO
     FILE * zfile;
+#endif
     int old_length, file_image_length;
 
     /*
@@ -424,7 +495,9 @@ CreateSelectors(struct  w_files * wpnt)
      * Step through the segment table in the exe header.
      */
     s = selectors;
+#ifdef DEV_ZERO
     zfile = fopen("/dev/zero","r");
+#endif
     for (i = 0; i < ne_header->n_segment_tab; i++, s++)
     {
 #ifdef DEBUG_SEGMENT
@@ -497,11 +570,19 @@ CreateSelectors(struct  w_files * wpnt)
 	    if (s->flags & NE_SEGFLAGS_EXECUTEONLY)
 		read_only = 1;
 	}
+#ifdef DEV_ZERO        
 	s->base_addr =
 	  (void *) mmap((char *) (s->selector << 16),
 			(s->length + PAGE_SIZE - 1) & ~(PAGE_SIZE - 1),
 			PROT_EXEC | PROT_READ | PROT_WRITE,
 			MAP_FIXED | MAP_PRIVATE, fileno(zfile), 0);
+#else
+	s->base_addr =
+	  (void *) mmap((char *) (s->selector << 16),
+			(s->length + PAGE_SIZE - 1) & ~(PAGE_SIZE - 1),
+			PROT_EXEC | PROT_READ | PROT_WRITE,
+			MAP_FIXED | MAP_PRIVATE | MAP_ANON, -1, 0);
+#endif
 	if (seg_table[i].seg_data_offset != 0)
 	{
 	    /*
@@ -524,6 +605,11 @@ CreateSelectors(struct  w_files * wpnt)
 	    ran_out++;
 	    return NULL;
 	}
+#ifdef DEBUG_SEGMENT
+	printf("      SELECTOR %04.4x, %s\n",
+	       s->selector, 
+	       contents == MODIFY_LDT_CONTENTS_CODE ? "CODE" : "DATA");
+#endif
 	/*
 	 * If this is the automatic data segment, then we must initialize
 	 * the local heap.
@@ -543,12 +629,20 @@ CreateSelectors(struct  w_files * wpnt)
     next_unused_selector += ne_header->n_segment_tab;
 
     if(!EnvironmentSelector) {
+#ifdef DEV_ZERO
 	    EnvironmentSelector = CreateEnvironment(zfile);
 	    PSP_Selector = CreatePSP(zfile);
 	    MakeProcThunks = CreateThunks(zfile);
+#else
+	    EnvironmentSelector = CreateEnvironment();
+	    PSP_Selector = CreatePSP();
+	    MakeProcThunks = CreateThunks();
+#endif
     };
 
+#ifdef DEV_ZERO
     fclose(zfile);
+#endif
 
     return selectors;
 }

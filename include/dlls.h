@@ -36,6 +36,9 @@ struct dll_table_entry_s
     char *export_name;
     void *handler;		/* Address of function to process request */
     int handler_type;		/* C or PASCAL calling convention	  */
+#ifdef WINESTAT
+    int used;			/* Number of times this function referenced */
+#endif
     int n_args;			/* Number of arguments passed to function */
     DLL_ARG args[DLL_MAX_ARGS]; /* Argument conversion data		  */
 };
@@ -54,5 +57,7 @@ extern struct dll_table_entry_s GDI_table[];
 extern struct dll_table_entry_s UNIXLIB_table[];
 extern struct dll_table_entry_s WIN87EM_table[];
 extern struct dll_table_entry_s SHELL_table[];
+extern struct dll_table_entry_s SOUND_table[];
+extern struct dll_table_entry_s KEYBOARD_table[];
 
 #endif /* DLLS_H */

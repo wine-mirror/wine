@@ -13,6 +13,10 @@ static char Copyright[] = "Copyright  Alexandre Julliard, 1993";
 
 #include <stdlib.h>
 
+#ifdef __NetBSD__
+#define HZ 100
+#endif
+
 #include "message.h"
 #include "win.h"
 

@@ -4,13 +4,46 @@ License.
 
 INSTALLATION:
 
+Linux:
+
     Uncompress and untar this archive into the directory of your
 choice.  This release requires a Linux version 0.99 pl12 kernel with
-ALPHA-diffs and sognal-diffs.  Apply ALPHA-diffs first, and then
-signal-diffs.
+ALPHA-pl13-diffs.
+
+NetBSD:
+
+    If you use BSD make rather than GNU make, you must apply the patches
+in the file "bsdmake.patch".  This release requires NetBSD 0.9 with
+additional patches.
+
+All:
 
 To build Wine, first do a "make depend" and then a "make".  The
 executable "wine" will be built.
+
+Grab a copy of Windows sol.exe (Solitaire) and run it with the command:
+
+	wine sol.exe
+
+Have a nice game of solitaire, but be careful.  Emulation isn't perfect.
+So, occassionally it will crash.
+
+WHAT'S NEW with version 0.4.0: (see ChangeLog for details)
+	- Wine now compiles and runs under NetBSD.  Patches are
+	  required for NetBSD.
+	- Wine stat patches included.  Add "-DWINESTAT" to the definition
+	  of COPTS in the main Makefile to activate.
+	- Preliminary keyboard handling.
+	- Button control window implemented.
+	- many other new functions added.
+
+WHAT'S NEW with version 0.3.1: (see ChangeLog for details)
+	- LineDDA() completed
+	- numerous bug fixes
+	- INT 1Ah implemented
+	- SOUND DLL implemented
+	- More of WIN87EM DLL implemented
+	- OpenFile() and friends implemented
 
 WHAT'S NEW with version 0.3.0: (see ChangeLog for details)
 	- Mouse capture

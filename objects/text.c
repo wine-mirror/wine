@@ -23,10 +23,16 @@ static char Copyright[] = "Copyright  Alexandre Julliard, 1993";
  */
 int DrawText( HDC hdc, LPSTR str, int count, LPRECT rect, WORD flags )
 {
+    SIZE size;
     int x = rect->left, y = rect->top;
-    if (flags & DT_CENTER) x = (rect->left + rect->right) / 2;
-    if (flags & DT_VCENTER) y = (rect->top + rect->bottom) / 2;
     if (count == -1) count = strlen(str);
+
+    if (!GetTextExtentPoint( hdc, str, count, &size )) return 0;
+    
+    if (flags & DT_CENTER) x = (rect->left + rect->right - size.cx) / 2;
+    else if (flags & DT_RIGHT) x = rect->right - size.cx;
+    if (flags & DT_VCENTER) y = (rect->top + rect->bottom - size.cy) / 2;
+    else if (flags & DT_BOTTOM) y = rect->bottom - size.cy;
 
     if (!TextOut( hdc, x, y, str, count )) return 0;
     return 1;

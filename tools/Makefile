@@ -1,8 +1,10 @@
+CFLAGS=$(COPTS) $(DEBUGOPTS) -I$(INCLUDE_DIR)
+
 build: build.c
-	cc -O2 -o build build.c
+	cc $(CFLAGS) -o build build.c
 
 clean:
-	rm -f *.o *~
+	rm -f *.o *~ build
 
 depend:
 	$(CC) $(CFLAGS) -M *.c > .depend

@@ -45,6 +45,9 @@ typedef int *LPCATCHBUF;
 #define NULL (void *)0
 #endif
 
+#define MAKELPARAM(low, high) ((LONG)(((WORD)(low)) | \
+			      (((DWORD)((WORD)(high))) << 16)))
+
 typedef struct { short left, top, right, bottom; } RECT;
 typedef RECT *LPRECT;
 typedef RECT *NPRECT;
@@ -697,6 +700,20 @@ typedef OFSTRUCT *LPOFSTRUCT;
 #define OF_READ 0x0000
 #define OF_WRITE 0x0001
 #define OF_READWRITE 0x0002
+#define OF_CANCEL 0x0800
+#define OF_CREATE 0x1000
+#define OF_DELETE 0x0200
+#define OF_EXIST 0x4000
+#define OF_PARSE 0x0100
+#define OF_PROMPT 0x2000
+#define OF_REOPEN 0x8000
+#define OF_SHARE_COMPAT 0x0000
+#define OF_SHARE_DENY_NONE 0x0040
+#define OF_SHARE_DENY_READ 0x0030
+#define OF_SHARE_DENY_WRITE 0x0020
+#define OF_SHARE_EXCLUSIVE 0x0010
+#define OF_VERIFY 0x0400
+
 
 typedef struct 
 {
@@ -904,6 +921,29 @@ enum { SW_HIDE, SW_SHOWNORMAL, SW_NORMAL, SW_SHOWMINIMIZED, SW_SHOWMAXIMIZED,
 #define WS_POPUPWINDOW (WS_POPUP | WS_BORDER | WS_SYSMENU)
 #define WS_CHILDWINDOW (WS_CHILD)
 #define WS_TILEDWINDOW (WS_OVERLAPPEDWINDOW)
+
+/* Button control styles */
+#define BS_PUSHBUTTON          0x00000000L
+#define BS_DEFPUSHBUTTON       0x00000001L
+#define BS_CHECKBOX            0x00000002L
+#define BS_AUTOCHECKBOX        0x00000003L
+#define BS_RADIOBUTTON         0x00000004L
+#define BS_3STATE              0x00000005L
+#define BS_AUTO3STATE          0x00000006L
+#define BS_GROUPBOX            0x00000007L
+#define BS_USERBUTTON          0x00000008L
+#define BS_AUTORADIOBUTTON     0x00000009L
+#define BS_OWNERDRAW           0x0000000BL
+#define BS_LEFTTEXT            0x00000020L
+
+/* Button notification codes */
+#define BN_CLICKED             0
+#define BN_PAINT               1
+#define BN_HILITE              2
+#define BN_UNLITE              3
+#define BN_DISABLE             4
+#define BN_DOUBLECLICKED       5
+
 
 #define GMEM_MOVEABLE	0x0002
 

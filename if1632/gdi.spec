@@ -111,6 +111,7 @@ length	490
 105 pascal SelectVisRgn(word word) SelectVisRgn(1 2)
 106 pascal SetBitmapBits(word long ptr) SetBitmapBits(1 2 3)
 117 pascal SetDCOrg(word s_word s_word) SetDCOrg(1 2 3)
+128 pascal MulDiv(s_word s_word s_word) MulDiv(1 2 3)
 129 pascal SaveVisRgn(word) SaveVisRgn(1)
 130 pascal RestoreVisRgn(word) RestoreVisRgn(1)
 131 pascal InquireVisRgn(word) InquireVisRgn(1)

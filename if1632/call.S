@@ -1,6 +1,12 @@
 /*
  * Copyright  Robert J. Amstadt, 1993
  */
+#ifdef linux
+#define UDATASEL 0x2b
+#endif
+#ifdef __NetBSD__
+#define UDATASEL 0x27
+#endif
 	.data
 jump_target:
 return_value:
@@ -95,7 +101,11 @@ _CallToInit16:
 	movw	%ax,%ss
 	movl	%esp,%eax
 	movl	%eax,%ebp
-
+#if 1
+	movw	$ UDATASEL,%ax
+	movw	%ax,%fs
+	movw	%ax,%gs
+#endif	
 	/*
 	 * Call entry point
 	 */
@@ -114,7 +124,7 @@ _CallToInit16:
 	 * GDT usage.
 	 */
 	pushl	%eax
-	movw	$0x2b,%ax
+	movw	$ UDATASEL,%ax
 	movw	%ax,%ds
 	movw	%ax,%es
 	movw	%ax,%fs
@@ -194,7 +204,7 @@ _CallTo16:
 	 * GDT usage.
 	 */
 	pushl	%eax
-	movw	$0x2b,%ax
+	movw	$ UDATASEL,%ax
 	movw	%ax,%ds
 	movw	%ax,%es
 	movw	%ax,%fs
@@ -249,7 +259,7 @@ _CallTo32:
 	 * Restore segment registers.
 	 */
 	pushl	%eax
-	movw	$0x2b,%ax
+	movw	$ UDATASEL,%ax
 	movw	%ax,%ds
 	movw	%ax,%es
 	popl	%eax

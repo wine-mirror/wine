@@ -20,6 +20,9 @@ static char Copyright[] = "Copyright  Alexandre Julliard, 1993";
 #include "class.h"
 #include "gdi.h"
 
+#ifdef __NetBSD__
+#define HZ 100
+#endif
 
 Display * XT_display;
 Screen * XT_screen;
@@ -146,21 +149,6 @@ void AdjustWindowRect( LPRECT rect, DWORD style, BOOL menu )
 	   rect->right, rect->bottom, style, menu );
 }
 
-WORD GetPrivateProfileInt( LPSTR section, LPSTR entry,
-			   short defval, LPSTR filename )
-{
-    printf( "GetPrivateProfileInt: %s %s %d %s\n", section, entry, defval, filename );
-    return defval;
-}
-
-short GetPrivateProfileString( LPSTR section, LPSTR entry, LPSTR defval,
-			       LPSTR buffer, short count, LPSTR filename )
-{
-    printf( "GetPrivateProfileString: %s %s %s %d %s\n", section, entry, defval, count, filename );
-    strncpy( buffer, defval, count );
-    buffer[count-1] = 0;
-    return strlen(buffer);
-}
 
 BOOL IsIconic( HWND hwnd )
 {

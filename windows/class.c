@@ -25,7 +25,7 @@ HCLASS CLASS_FindClassByName( char * name, CLASS **ptr )
     while(class)
     {
 	*ptr = (CLASS *) USER_HEAP_ADDR(class);
-	if (!strcmp( (*ptr)->wc.lpszClassName, name )) return class;
+	if (!strcasecmp( (*ptr)->wc.lpszClassName, name )) return class;
 	class = (*ptr)->hNext;
     }
     return 0;
