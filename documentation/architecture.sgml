@@ -55,7 +55,7 @@
           Win16 and Win32 applications have different requirements;
           for example, Win16 apps expect cooperative multitasking
           among themselves, and to exist in the same address space,
-          while Win32 apps except the complete opposite, i.e.
+          while Win32 apps expect the complete opposite, i.e.
           preemptive multitasking, and separate address spaces.
         </para>
         <para>
@@ -109,8 +109,8 @@
           The wineserver itself is a single and separate process and
           does not have its own threading - instead, it is built on
           top of a large <function>poll()</function> loop that alerts
-          the wineserver whenever anything happens, such that a client
-          has sent a command, or a wait condition has been satisfied.
+          the wineserver whenever anything happens, such as a client
+          having sent a command, or a wait condition having been satisfied.
           There is thus no danger of race conditions inside the
           wineserver itself - it is often called upon to do operations
           that look completely atomic to its clients.
@@ -118,13 +118,13 @@
         <para>
           Because the wineserver needs to manage processes, threads,
           shared handles, synchronization, and any related issues, all
-          the client's Win32 objects are also managed by the
+          the clients' Win32 objects are also managed by the
           wineserver, and the clients must send requests to the
           wineserver whenever they need to know any Win32 object
           handle's associated Unix file descriptor (in which case the
           wineserver duplicates the file descriptor, transmits it to
-          the client, and leaves to the client to close the duplicate
-          when it's done with it).
+          the client, and leaves it to the client to close the duplicate
+          when the client has finished with it).
         </para>
       </sect2>
 
