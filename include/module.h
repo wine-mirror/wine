@@ -128,22 +128,8 @@ typedef struct
 
 #include <poppack.h>
 
-/* internal representation of 32bit modules. per process. */
-typedef struct _wine_modref
-{
-	void                *dlhandle;  /* handle returned by dlopen() */
-        LDR_MODULE           ldr;
-
-	int			nDeps;
-	struct _wine_modref	**deps;
-
-	char			*filename;
-	char			*modname;
-	char			*short_filename;
-	char			*short_modname;
-
-    char data[1];  /* space for storing filename and short_filename */
-} WINE_MODREF;
+struct _wine_modref;
+typedef struct _wine_modref WINE_MODREF;
 
 /* Resource types */
 

@@ -32,6 +32,7 @@
 #include "file.h"
 #include "wine/exception.h"
 #include "excpt.h"
+#include "wine/unicode.h"
 #include "wine/debug.h"
 #include "wine/server.h"
 #include "ntdll_misc.h"
@@ -60,6 +61,20 @@ static const char * const reason_names[] =
     "PROCESS_ATTACH",
     "THREAD_ATTACH",
     "THREAD_DETACH"
+};
+
+static const WCHAR dllW[] = {'.','d','l','l',0};
+
+/* internal representation of 32bit modules. per process. */
+struct _wine_modref
+{
+    void                 *dlhandle;  /* handle returned by dlopen() */
+    LDR_MODULE            ldr;
+    int                   nDeps;
+    struct _wine_modref **deps;
+    char                 *filename;
+    char                 *modname;
+    char                  data[1];  /* space for storing filename and modname */
 };
 
 static UINT tls_module_count;      /* number of modules with TLS directory */
@@ -141,8 +156,6 @@ static WINE_MODREF *find_module( LPCSTR path )
     {
         if ( !FILE_strcasecmp( dllname, wm->modname ) ) return wm;
         if ( !FILE_strcasecmp( dllname, wm->filename ) ) return wm;
-        if ( !FILE_strcasecmp( dllname, wm->short_modname ) ) return wm;
-        if ( !FILE_strcasecmp( dllname, wm->short_filename ) ) return wm;
     }
 
     mark = &NtCurrentTeb()->Peb->LdrData->InLoadOrderModuleList;
@@ -153,8 +166,6 @@ static WINE_MODREF *find_module( LPCSTR path )
 
         if ( !FILE_strcasecmp( dllname, wm->modname ) ) break;
         if ( !FILE_strcasecmp( dllname, wm->filename ) ) break;
-        if ( !FILE_strcasecmp( dllname, wm->short_modname ) ) break;
-        if ( !FILE_strcasecmp( dllname, wm->short_filename ) ) break;
     }
     if (entry == mark) wm = NULL;
 
@@ -412,22 +423,14 @@ WINE_MODREF *MODULE_AllocModRef( HMODULE hModule, LPCSTR filename )
     IMAGE_NT_HEADERS *nt = RtlImageNtHeader(hModule);
     PLIST_ENTRY entry, mark;
     BOOLEAN linked = FALSE;
+    DWORD len = strlen( filename ) + 1;
 
-    DWORD long_len = strlen( filename );
-    DWORD short_len = GetShortPathNameA( filename, NULL, 0 );
-
-    if ((wm = RtlAllocateHeap( ntdll_get_process_heap(), HEAP_ZERO_MEMORY,
-                               sizeof(*wm) + long_len + short_len + 1 )))
+    if ((wm = RtlAllocateHeap( ntdll_get_process_heap(), HEAP_ZERO_MEMORY, sizeof(*wm) + len )))
     {
-        wm->filename = wm->data;
-        memcpy( wm->filename, filename, long_len + 1 );
+        wm->filename = (char *)(wm + 1);
+        memcpy( wm->filename, filename, len );
         if ((wm->modname = strrchr( wm->filename, '\\' ))) wm->modname++;
         else wm->modname = wm->filename;
-
-        wm->short_filename = wm->filename + long_len + 1;
-        GetShortPathNameA( wm->filename, wm->short_filename, short_len + 1 );
-        if ((wm->short_modname = strrchr( wm->short_filename, '\\' ))) wm->short_modname++;
-        else wm->short_modname = wm->short_filename;
 
         wm->ldr.BaseAddress = hModule;
         wm->ldr.EntryPoint = (nt->OptionalHeader.AddressOfEntryPoint) ?
@@ -895,33 +898,59 @@ NTSTATUS WINAPI LdrUnlockLoaderLock( ULONG flags, ULONG magic )
 
 /******************************************************************
  *		LdrGetDllHandle (NTDLL.@)
- *
- *
  */
 NTSTATUS WINAPI LdrGetDllHandle(ULONG x, ULONG y, PUNICODE_STRING name, HMODULE *base)
 {
-    WINE_MODREF *wm;
-    STRING str;
+    NTSTATUS status = STATUS_DLL_NOT_FOUND;
+    WCHAR dllname[MAX_PATH+4], *p;
+    UNICODE_STRING str;
+    PLIST_ENTRY mark, entry;
+    PLDR_MODULE mod;
 
     if (x != 0 || y != 0)
         FIXME("Unknown behavior, please report\n");
 
-    /* FIXME: we should store module name information as unicode */
-    RtlUnicodeStringToAnsiString( &str, name, TRUE );
-    wm = find_module( str.Buffer );
-    RtlFreeAnsiString( &str );
-
-    if (!wm)
+    /* Append .DLL to name if no extension present */
+    if (!(p = strrchrW( name->Buffer, '.')) || strchrW( p, '/' ) || strchrW( p, '\\'))
     {
-        *base = 0;
-        return STATUS_DLL_NOT_FOUND;
+        if (name->Length >= MAX_PATH) return STATUS_NAME_TOO_LONG;
+        strcpyW( dllname, name->Buffer );
+        strcatW( dllname, dllW );
+        RtlInitUnicodeString( &str, dllname );
+        name = &str;
     }
 
-    *base = wm->ldr.BaseAddress;
+    RtlEnterCriticalSection( &loader_section );
 
-    TRACE("%lx %lx %s -> %p\n", x, y, debugstr_us(name), *base);
+    if (cached_modref)
+    {
+        if (RtlEqualUnicodeString( name, &cached_modref->ldr.FullDllName, TRUE ) ||
+            RtlEqualUnicodeString( name, &cached_modref->ldr.BaseDllName, TRUE ))
+        {
+            *base = cached_modref->ldr.BaseAddress;
+            status = STATUS_SUCCESS;
+            goto done;
+        }
+    }
 
-    return STATUS_SUCCESS;
+    mark = &NtCurrentTeb()->Peb->LdrData->InLoadOrderModuleList;
+    for (entry = mark->Flink; entry != mark; entry = entry->Flink)
+    {
+        mod = CONTAINING_RECORD(entry, LDR_MODULE, InLoadOrderModuleList);
+
+        if (RtlEqualUnicodeString( name, &mod->FullDllName, TRUE ) ||
+            RtlEqualUnicodeString( name, &mod->BaseDllName, TRUE ))
+        {
+            cached_modref = CONTAINING_RECORD(mod, WINE_MODREF, ldr);
+            *base = mod->BaseAddress;
+            status = STATUS_SUCCESS;
+            break;
+        }
+    }
+done:
+    RtlLeaveCriticalSection( &loader_section );
+    TRACE("%lx %lx %s -> %p\n", x, y, debugstr_us(name), status ? NULL : *base);
+    return status;
 }
 
 
