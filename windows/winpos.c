@@ -8,6 +8,7 @@
 #include <string.h>
 #include "windef.h"
 #include "wingdi.h"
+#include "winerror.h"
 #include "wine/winuser16.h"
 #include "heap.h"
 #include "module.h"
@@ -2929,7 +2930,14 @@ HDWP WINAPI BeginDeferWindowPos( INT count )
     HDWP handle;
     DWP *pDWP;
 
-    if (count <= 0) return 0;
+    if (count < 0) 
+    {
+        SetLastError(ERROR_INVALID_PARAMETER);
+        return 0;
+    }
+    /* Windows allows zero count, in which case it allocates context for 8 moves */
+    if (count == 0) count = 8;
+
     handle = USER_HEAP_ALLOC( sizeof(DWP) + (count-1)*sizeof(WINDOWPOS) );
     if (!handle) return 0;
     pDWP = (DWP *) USER_HEAP_LIN_ADDR( handle );
