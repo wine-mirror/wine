@@ -195,6 +195,20 @@ ULONG WINAPI CStdStubBuffer_Release(IRpcStubBuffer *This) \
 
 #define IID_GENERIC_CHECK_IID(name,pIID,index) memcmp(pIID, name##_ProxyVtblList[index]->header.piid, sizeof(IID))
 
+/*
+ * In these macros, BS stands for Binary Search. MIDL uses these to
+ * "unroll" a binary search into the module's IID_Lookup function.
+ * However, I haven't bothered to reimplement that stuff yet;
+ * I've just implemented a linear search for now.
+ */
+#define IID_BS_LOOKUP_SETUP \
+  int c;
+#define IID_BS_LOOKUP_INITIAL_TEST(name, sz, split)
+#define IID_BS_LOOKUP_NEXT_TEST(name, split)
+#define IID_BS_LOOKUP_RETURN_RESULT(name, sz, index) \
+  for (c=0; c<sz; c++) if (!name##_CHECK_IID(c)) { (index)=c; return 1; } \
+  return 0;
+
 #if defined(__WINESRC__) && defined(__WINE_WINE_OBJ_OLEAUT_H)
 /* see http://msdn.microsoft.com/library/en-us/dnmsj99/html/com0199.asp?frame=true */
 
