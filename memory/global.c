@@ -1023,9 +1023,15 @@ DWORD WINAPI GetFreeMemInfo16(void)
 #define GLOBAL_LOCK_MAX   0xFF
 #define HANDLE_TO_INTERN(h)  ((PGLOBAL32_INTERN)(((char *)(h))-2))
 #define INTERN_TO_HANDLE(i)  ((HGLOBAL) &((i)->Pointer))
-#define POINTER_TO_HANDLE(p) (*(((HGLOBAL *)(p))-1))
+#define POINTER_TO_HANDLE(p) (*(((HGLOBAL *)(p))-2))
 #define ISHANDLE(h)          (((DWORD)(h)&2)!=0)
 #define ISPOINTER(h)         (((DWORD)(h)&2)==0)
+/* allign the storage needed for the HGLOBAL on an 8byte boundary thus
+ * GlobalAlloc/GlobalReAlloc'ing with GMEM_MOVEABLE of memory with
+ * size = 8*k, where k=1,2,3,... alloc's exactly the given size.
+ * The Minolta DiMAGE Image Viewer heavily relies on this, corrupting
+ * the output jpeg's > 1 MB if not */
+#define HGLOBAL_STORAGE      8	/* sizeof(HGLOBAL)*2 */
 
 typedef struct __GLOBAL32_INTERN
 {
@@ -1070,12 +1076,12 @@ HGLOBAL WINAPI GlobalAlloc(
       if (!pintern) return 0;
       if(size)
       {
-	 if (!(palloc=HeapAlloc(GetProcessHeap(), hpflags, size+sizeof(HGLOBAL)))) {
+	 if (!(palloc=HeapAlloc(GetProcessHeap(), hpflags, size+HGLOBAL_STORAGE))) {
 	    HeapFree(GetProcessHeap(), 0, pintern);
 	    return 0;
 	 }
 	 *(HGLOBAL *)palloc=INTERN_TO_HANDLE(pintern);
-	 pintern->Pointer=(char *) palloc+sizeof(HGLOBAL);
+	 pintern->Pointer=(char *) palloc+HGLOBAL_STORAGE;
       }
       else
 	 pintern->Pointer=NULL;
@@ -1211,7 +1217,7 @@ HGLOBAL WINAPI GlobalHandle(
         maybe_intern = HANDLE_TO_INTERN( handle );
         if (maybe_intern->Magic == MAGIC_GLOBAL_USED) {
             test = maybe_intern->Pointer;
-            if (HeapValidate( GetProcessHeap(), 0, ((HGLOBAL *)test)-1 ) && /* obj(-handle) valid arena? */
+            if (HeapValidate( GetProcessHeap(), 0, (char *)test - HGLOBAL_STORAGE ) && /* obj(-handle) valid arena? */
                 HeapValidate( GetProcessHeap(), 0, maybe_intern ))  /* intern valid arena? */
                 break;  /* valid moveable block */
         }
@@ -1306,25 +1312,25 @@ HGLOBAL WINAPI GlobalReAlloc(
 	    if(pintern->Pointer)
 	    {
 	       if((palloc = HeapReAlloc(GetProcessHeap(), heap_flags,
-				   (char *) pintern->Pointer-sizeof(HGLOBAL),
-				   size+sizeof(HGLOBAL))) == NULL)
+				   (char *) pintern->Pointer-HGLOBAL_STORAGE,
+				   size+HGLOBAL_STORAGE)) == NULL)
 		   return 0; /* Block still valid */
-	       pintern->Pointer=(char *) palloc+sizeof(HGLOBAL);
+	       pintern->Pointer=(char *) palloc+HGLOBAL_STORAGE;
 	    }
 	    else
 	    {
-	        if((palloc=HeapAlloc(GetProcessHeap(), heap_flags, size+sizeof(HGLOBAL)))
+	        if((palloc=HeapAlloc(GetProcessHeap(), heap_flags, size+HGLOBAL_STORAGE))
 		   == NULL)
 		    return 0;
 	       *(HGLOBAL *)palloc=hmem;
-	       pintern->Pointer=(char *) palloc+sizeof(HGLOBAL);
+	       pintern->Pointer=(char *) palloc+HGLOBAL_STORAGE;
 	    }
 	 }
 	 else
 	 {
 	    if(pintern->Pointer)
 	    {
-	       HeapFree(GetProcessHeap(), 0, (char *) pintern->Pointer-sizeof(HGLOBAL));
+	       HeapFree(GetProcessHeap(), 0, (char *) pintern->Pointer-HGLOBAL_STORAGE);
 	       pintern->Pointer=NULL;
 	    }
 	 }
@@ -1368,7 +1374,7 @@ HGLOBAL WINAPI GlobalFree(
                 /*    SetLastError(ERROR_INVALID_HANDLE);  */
 
                 if(pintern->Pointer)
-                    if(!HeapFree(GetProcessHeap(), 0, (char *)(pintern->Pointer)-sizeof(HGLOBAL)))
+                    if(!HeapFree(GetProcessHeap(), 0, (char *)(pintern->Pointer)-HGLOBAL_STORAGE))
                         hreturned=hmem;
                 if(!HeapFree(GetProcessHeap(), 0, pintern))
                     hreturned=hmem;
@@ -1413,8 +1419,8 @@ SIZE_T WINAPI GlobalSize(
         if (!pintern->Pointer) /* handle case of GlobalAlloc( ??,0) */
             return 0;
 	 retval=HeapSize(GetProcessHeap(), 0,
-	                 (char *)(pintern->Pointer)-sizeof(HGLOBAL))-4;
-	 if (retval == 0xffffffff-4) retval = 0;
+	                 (char *)(pintern->Pointer) - HGLOBAL_STORAGE );
+         if (retval != (DWORD)-1) retval -= HGLOBAL_STORAGE;
       }
       else
       {
