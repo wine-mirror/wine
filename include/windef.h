@@ -29,10 +29,12 @@ extern "C" {
 #endif
 #define TRUE  1
 
-#ifdef NULL
 #undef NULL
-#endif
+#ifdef __cplusplus
 #define NULL  0
+#else
+#define NULL  ((void*)0)
+#endif
 
 /* Macros to map Winelib names to the correct implementation name */
 /* depending on __WINE__ and UNICODE macros.                      */
