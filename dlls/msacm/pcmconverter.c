@@ -30,9 +30,11 @@ DEFAULT_DEBUG_CHANNEL(msacm);
 /***********************************************************************
  *           PCM_drvOpen
  */
-static	DWORD	PCM_drvOpen(LPCSTR str)
+static	DWORD	PCM_drvOpen(LPCSTR str, PACMDRVOPENDESCW adod)
 {
-    return 1;
+    return 
+	adod->fccType == ACMDRIVERDETAILS_FCCTYPE_AUDIOCODEC &&
+	adod->fccComp == ACMDRIVERDETAILS_FCCCOMP_UNDEFINED;
 }
 
 /***********************************************************************
@@ -726,7 +728,7 @@ static	LRESULT	PCM_FormatTagDetails(PACMFORMATTAGDETAILSW aftd, DWORD dwQuery)
 	break;
     case ACM_FORMATTAGDETAILSF_LARGESTSIZE:
 	if (aftd->dwFormatTag != WAVE_FORMAT_UNKNOWN && 
-	    aftd->dwFormatTag != WAVE_FORMAT_UNKNOWN)
+	    aftd->dwFormatTag != WAVE_FORMAT_PCM)
 	    return ACMERR_NOTPOSSIBLE;
 	break;
     default:
@@ -752,8 +754,7 @@ static	LRESULT	PCM_FormatDetails(PACMFORMATDETAILSW afd, DWORD dwQuery)
 {
     switch (dwQuery) {
     case ACM_FORMATDETAILSF_FORMAT:
-	afd->dwFormatIndex = PCM_GetFormatIndex(afd->pwfx);
-	if (afd->dwFormatIndex == 0xFFFFFFFF) return ACMERR_NOTPOSSIBLE;
+	if (PCM_GetFormatIndex(afd->pwfx) == 0xFFFFFFFF) return ACMERR_NOTPOSSIBLE;
 	break;
     case ACM_FORMATDETAILSF_INDEX:
 	assert(afd->dwFormatIndex < NUM_PCM_FORMATS);
@@ -875,18 +876,21 @@ static	inline DWORD	PCM_round(DWORD a, DWORD b, DWORD c)
  */
 static	LRESULT PCM_StreamSize(PACMDRVSTREAMINSTANCE adsi, PACMDRVSTREAMSIZE adss)
 {
+    DWORD	srcMask = ~(adsi->pwfxSrc->nBlockAlign - 1);
+    DWORD	dstMask = ~(adsi->pwfxDst->nBlockAlign - 1);
+
     switch (adss->fdwSize) {
     case ACM_STREAMSIZEF_DESTINATION:
 	/* cbDstLength => cbSrcLength */
-	adss->cbSrcLength = PCM_round(adss->cbDstLength, 
+	adss->cbSrcLength = PCM_round(adss->cbDstLength & dstMask,
 				      adsi->pwfxSrc->nAvgBytesPerSec, 
-				      adsi->pwfxDst->nAvgBytesPerSec);
+				      adsi->pwfxDst->nAvgBytesPerSec) & srcMask;
 	break;
     case ACM_STREAMSIZEF_SOURCE:
 	/* cbSrcLength => cbDstLength */
-	adss->cbDstLength =  PCM_round(adss->cbSrcLength, 
+	adss->cbDstLength =  PCM_round(adss->cbSrcLength & srcMask,
 				       adsi->pwfxDst->nAvgBytesPerSec, 
-				       adsi->pwfxSrc->nAvgBytesPerSec);
+				       adsi->pwfxSrc->nAvgBytesPerSec) & dstMask;
 	break;
     default:
 	WARN("Unsupported query %08lx\n", adss->fdwSize);
@@ -954,7 +958,7 @@ LRESULT CALLBACK	PCM_DriverProc(DWORD dwDevID, HDRVR hDriv, UINT wMsg,
     switch (wMsg) {
     case DRV_LOAD:		return 1;
     case DRV_FREE:		return 1;
-    case DRV_OPEN:		return PCM_drvOpen((LPSTR)dwParam1);
+    case DRV_OPEN:		return PCM_drvOpen((LPSTR)dwParam1, (PACMDRVOPENDESCW)dwParam2);
     case DRV_CLOSE:		return PCM_drvClose(dwDevID);
     case DRV_ENABLE:		return 1;	
     case DRV_DISABLE:		return 1;
