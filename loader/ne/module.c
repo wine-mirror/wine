@@ -950,7 +950,7 @@ static HINSTANCE16 MODULE_LoadModule16( LPCSTR libname, BOOL implicit, BOOL lib_
 				hModule = GetModuleHandle16(libname);
 				if(!hModule)
 				{
-					ERR("Serious trouble. Just loaded module '%s' (hinst=0x%04x), but can't get module handle\n",
+					ERR("Serious trouble. Just loaded module '%s' (hinst=0x%04x), but can't get module handle. Filename too long ?\n",
 						libname, hinst);
 					return 6;	/* ERROR_INVALID_HANDLE seems most appropriate */
 				}
@@ -963,7 +963,7 @@ static HINSTANCE16 MODULE_LoadModule16( LPCSTR libname, BOOL implicit, BOOL lib_
 					return 6;	/* ERROR_INVALID_HANDLE seems most appropriate */
 				}
 
-				TRACE("Loaded module '%s' at 0x%04x, \n", libname, hinst);
+				TRACE("Loaded module '%s' at 0x%04x.\n", libname, hinst);
 
 				/*
 				 * Call initialization routines for all loaded DLLs. Note that
@@ -1332,7 +1332,7 @@ INT16 WINAPI GetModuleFileName16( HINSTANCE16 hModule, LPSTR lpFileName,
     lstrcpynA( lpFileName, NE_MODULE_NAME(pModule), nSize );
     if (pModule->expected_version >= 0x400)
 	GetLongPathNameA(NE_MODULE_NAME(pModule), lpFileName, nSize);
-    TRACE("%s\n", lpFileName );
+    TRACE("%04x -> '%s'\n", hModule, lpFileName );
     return strlen(lpFileName);
 }
 

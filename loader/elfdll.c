@@ -102,6 +102,8 @@ void *ELFDLL_dlopen(const char *libname, int flags)
 		handle = dlopen(buffer, flags);
 		if(handle)
 			return handle;
+		else
+			TRACE("possible dlopen() error: %s\n", dlerror());
 	}
 	return NULL;
 }

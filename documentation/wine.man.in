@@ -15,9 +15,14 @@ section of the man page.
 loads and runs the given program, where the program is a DOS, Windows 3.x,
 or Win32 executable (x86 binaries only).
 .PP
+For debugging wine, use
+.B winedbg
+.I program
+instead.
+.PP
 .B wine 
 currently runs a growing list of applications written for Win3.1,
-Win95, Win95, and Windows NT. Older, simpler applications work better than
+Win95, Win98, and Windows NT. Older, simpler applications work better than
 newer, more complex ones.  A large percentage of the API has been implemented,
 although there are still several major pieces of work left to do.
 .SH REQUIREMENTS
@@ -39,7 +44,7 @@ If you have FreeBSD, make sure you have the USER_LDT,
 SYSVSHM, SYSVSEM, and SYSVMSG options turned on in your kernel. If you
 are building 
 .B wine 
-on Solaris, you will most likely need to build Wine with the GNU toolchain 
+on Solaris, you will most likely need to build wine with the GNU toolchain 
 (gcc, gas, etc.)
 .PP
 .B X
