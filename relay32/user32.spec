@@ -56,9 +56,9 @@ init	MAIN_UserInit
  52 stdcall ClientToScreen(long ptr) ClientToScreen
  53 stdcall ClipCursor(ptr) ClipCursor
  54 stdcall CloseClipboard() CloseClipboard
- 55 stub CloseDesktop
+ 55 stdcall CloseDesktop(long) CloseDesktop
  56 stdcall CloseWindow(long) CloseWindow
- 57 stub CloseWindowStation
+ 57 stdcall CloseWindowStation(long) CloseWindowStation			
  58 stdcall CopyAcceleratorTableA(long ptr long) CopyAcceleratorTableA
  59 stdcall CopyAcceleratorTableW(long ptr long) CopyAcceleratorTableW
  60 stdcall CopyIcon(long) CopyIcon

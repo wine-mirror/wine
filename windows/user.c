@@ -500,6 +500,17 @@ HDESK WINAPI CreateDesktopW(
 	return 0xcafedead;
 }
 
+BOOL WINAPI CloseWindowStation(HWINSTA hWinSta)
+{
+    FIXME(win32, "(0x%08x)\n", hWinSta);
+    return TRUE;
+}
+BOOL WINAPI CloseDesktop(HDESK hDesk)
+{
+    FIXME(win32, "(0x%08x)\n", hDesk);
+    return TRUE;
+}
+
 /***********************************************************************
  *           SetWindowStationUser   (USER32.521)
  */
