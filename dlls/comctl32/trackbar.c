@@ -1266,9 +1266,7 @@ TRACKBAR_Create (HWND hwnd, LPCREATESTRUCTW lpcs)
                              hwnd, 0, 0, 0);
 
     	if (infoPtr->hwndToolTip) {
-            TTTOOLINFOW ti;
-	    TRACKBAR_SendNotify(infoPtr, NM_TOOLTIPSCREATED);
-
+            TTTOOLINFOW ti;	    
             ZeroMemory (&ti, sizeof(ti));
             ti.cbSize   = sizeof(ti);
      	    ti.uFlags   = TTF_IDISHWND | TTF_TRACK | TTF_ABSOLUTE;
