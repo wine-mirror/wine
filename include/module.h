@@ -236,6 +236,7 @@ HGLOBAL16 NE_LoadPEResource( NE_MODULE *pModule, WORD type, LPVOID bits, DWORD s
 
 /* relay32/builtin.c */
 extern WINE_MODREF *BUILTIN32_LoadLibraryExA(LPCSTR name, DWORD flags, DWORD *err);
+extern HMODULE16 BUILTIN32_LoadExeModule(void);
 extern void BUILTIN32_UnloadLibrary(WINE_MODREF *wm);
 
 #endif  /* __WINE_MODULE_H */

@@ -19,7 +19,6 @@
 #include "heap.h"
 #include "task.h"
 #include "process.h"
-#include "libres.h"
 #include "stackframe.h"
 #include "neexe.h"
 #include "crtdll.h"

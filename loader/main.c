@@ -9,6 +9,7 @@
 #include <unistd.h>
 #include <string.h>
 #include <errno.h>
+#include <assert.h>
 #include "wine/winbase16.h"
 #include "wine/winuser16.h"
 #include "bitmap.h"
@@ -292,24 +293,26 @@ BOOL WINAPI MAIN_UserInit(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserve
  */
 HINSTANCE MAIN_WinelibInit( int *argc, char *argv[] )
 {
-    WINE_MODREF *wm;
     NE_MODULE *pModule;
     HMODULE16 hModule;
 
     /* Main initialization */
     if (!MAIN_MainInit( argc, argv, TRUE )) return 0;
 
-    /* Create and switch to initial task */
-    if (!(wm = ELF_CreateDummyModule( argv[0], argv[0] )))
-        return 0;
-    PROCESS_Current()->exe_modref = wm;
-
-    if ((hModule = MODULE_CreateDummyModule( wm->filename, 0 )) < 32) return 0;
+    /* Load WineLib EXE module */
+    if ( (hModule = BUILTIN32_LoadExeModule()) < 32 ) return 0;
     pModule = (NE_MODULE *)GlobalLock16( hModule );
-    pModule->flags = NE_FFLAGS_WIN32;
-    pModule->module32 = wm->module;
 
+    /* Create initial task */
     if (!TASK_Create( pModule, FALSE )) return 0;
+
+    /* Create 32-bit MODREF */
+    if ( !PE_CreateModule( pModule->module32, NE_MODULE_NAME(pModule), 0, FALSE ) )
+        return 0;
+
+    /* Increment EXE refcount */
+    assert( PROCESS_Current()->exe_modref );
+    PROCESS_Current()->exe_modref->refCount++;
 
     /* Load system DLLs into the initial process (and initialize them) */
     if (   !LoadLibrary16("GDI.EXE" ) || !LoadLibraryA("GDI32.DLL" )
@@ -319,7 +322,7 @@ HINSTANCE MAIN_WinelibInit( int *argc, char *argv[] )
     /* Get pointers to USER routines called by KERNEL */
     THUNK_InitCallout();
 
-    return wm->module;
+    return pModule->module32;
 }
 
 /***********************************************************************

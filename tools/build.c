@@ -94,6 +94,13 @@ typedef enum
     SPEC_WIN32
 } SPEC_TYPE;
 
+typedef enum
+{
+    SPEC_MODE_DLL,
+    SPEC_MODE_GUIEXE,
+    SPEC_MODE_CUIEXE
+} SPEC_MODE;
+
 typedef struct
 {
     int n_values;
@@ -144,6 +151,7 @@ static ORDDEF *Ordinals[MAX_ORDINALS];
 static ORDDEF *Names[MAX_ORDINALS];
 
 static SPEC_TYPE SpecType = SPEC_INVALID;
+static SPEC_MODE SpecMode = SPEC_MODE_DLL;
 static char DLLName[80];
 static char DLLFileName[80];
 static int Limit = 0;
@@ -341,6 +349,8 @@ static int name_compare( const void *name1, const void *name2 )
 static void AssignOrdinals(void)
 {
     int i, ordinal;
+
+    if ( !nb_names ) return;
 
     /* sort the list of names */
     qsort( Names, nb_names, sizeof(Names[0]), name_compare );
@@ -680,7 +690,6 @@ static void ParseTopLevel(void)
 	{
 	    strcpy(DLLName, GetToken());
 	    strupper(DLLName);
-            if (!DLLFileName[0]) sprintf( DLLFileName, "%s.DLL", DLLName );
 	}
 	else if (strcmp(token, "file") == 0)
 	{
@@ -693,6 +702,14 @@ static void ParseTopLevel(void)
             if (!strcmp(token, "win16" )) SpecType = SPEC_WIN16;
             else if (!strcmp(token, "win32" )) SpecType = SPEC_WIN32;
             else fatal_error( "Type must be 'win16' or 'win32'\n" );
+        }
+        else if (strcmp(token, "mode") == 0)
+        {
+            token = GetToken();
+            if (!strcmp(token, "dll" )) SpecMode = SPEC_MODE_DLL;
+            else if (!strcmp(token, "guiexe" )) SpecMode = SPEC_MODE_GUIEXE;
+            else if (!strcmp(token, "cuiexe" )) SpecMode = SPEC_MODE_CUIEXE;
+            else fatal_error( "Mode must be 'dll', 'guiexe' or 'cuiexe'\n" );
         }
 	else if (strcmp(token, "heap") == 0)
 	{
@@ -734,6 +751,12 @@ static void ParseTopLevel(void)
 	else
             fatal_error( "Expected name, id, length or ordinal\n" );
     }
+
+    if (!DLLFileName[0])
+        if (SpecMode == SPEC_MODE_DLL)
+            sprintf( DLLFileName, "%s.DLL", DLLName );
+        else
+            sprintf( DLLFileName, "%s.EXE", DLLName );
 }
 
 
@@ -998,8 +1021,10 @@ static int BuildSpec32File( FILE *outfile )
 {
     ORDDEF *odp;
     int i, fwd_size = 0, have_regs = FALSE;
+    int nr_exports;
 
     AssignOrdinals();
+    nr_exports = Base <= Limit ? Limit - Base + 1 : 0;
 
     fprintf( outfile, "/* File generated automatically from %s; do not edit! */\n\n",
              input_file_name );
@@ -1072,7 +1097,7 @@ static int BuildSpec32File( FILE *outfile )
     /* Output the DLL functions table */
 
     fprintf( outfile, "\nstatic const ENTRYPOINT32 Functions[%d] =\n{\n",
-             Limit - Base + 1 );
+             nr_exports );
     for (i = Base; i <= Limit; i++)
     {
         ORDDEF *odp = Ordinals[i];
@@ -1126,7 +1151,7 @@ static int BuildSpec32File( FILE *outfile )
     /* Output the DLL argument types */
 
     fprintf( outfile, "static const unsigned int ArgTypes[%d] =\n{\n",
-             Limit - Base + 1 );
+             nr_exports );
     for (i = Base; i <= Limit; i++)
     {
         ORDDEF *odp = Ordinals[i];
@@ -1147,7 +1172,7 @@ static int BuildSpec32File( FILE *outfile )
     /* Output the DLL functions arguments */
 
     fprintf( outfile, "static const unsigned char FuncArgs[%d] =\n{\n",
-             Limit - Base + 1 );
+             nr_exports );
     for (i = Base; i <= Limit; i++)
     {
         unsigned char args = 0xff;
@@ -1196,8 +1221,8 @@ static int BuildSpec32File( FILE *outfile )
              DLLName );
     fprintf( outfile, "    \"%s\",\n", DLLName );
     fprintf( outfile, "    \"%s\",\n", DLLFileName );
-    fprintf( outfile, "    %d,\n", Base );
-    fprintf( outfile, "    %d,\n", Limit - Base + 1 );
+    fprintf( outfile, "    %d,\n", nr_exports? Base : 0 );
+    fprintf( outfile, "    %d,\n", nr_exports );
     fprintf( outfile, "    %d,\n", nb_names );
     fprintf( outfile, "    %d,\n", nb_imports );
     fprintf( outfile, "    %d,\n", (fwd_size + 3) & ~3 );
@@ -1209,6 +1234,7 @@ static int BuildSpec32File( FILE *outfile )
              "    ArgTypes,\n");
     fprintf( outfile, "    %s,\n", nb_imports ? "Imports" : "0" );
     fprintf( outfile, "    %s,\n", DLLInitFunc[0] ? DLLInitFunc : "0" );
+    fprintf( outfile, "    %d,\n", SpecMode == SPEC_MODE_DLL ? IMAGE_FILE_DLL : 0 );
     fprintf( outfile, "    %s\n", rsrc_name[0] ? rsrc_name : "0" );
     fprintf( outfile, "};\n" );
 

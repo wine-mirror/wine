@@ -28,7 +28,6 @@
 #include "module.h"
 #include "file.h"
 #include "debugtools.h"
-#include "libres.h"
 #include "winerror.h"
 #include "winnls.h"
 
@@ -151,7 +150,7 @@ static HRSRC RES_FindResource( HMODULE hModule, LPCSTR type,
 
     if ( wm )
     {
-        /* 32-bit PE/ELF module */
+        /* 32-bit PE module */
         LPWSTR typeStr, nameStr;
 
         if ( HIWORD( type ) && !bUnicode )
@@ -163,20 +162,7 @@ static HRSRC RES_FindResource( HMODULE hModule, LPCSTR type,
         else
             nameStr = (LPWSTR)name;
 
-        switch ( wm->type ) 
-        {
-        case MODULE32_PE:
-            hRsrc = PE_FindResourceExW( wm, nameStr, typeStr, lang );
-            break;
-
-        case MODULE32_ELF:
-            hRsrc = LIBRES_FindResource( hModule, nameStr, typeStr );
-            break;
-	
-        default:
-            ERR("unknown module type %d\n", wm->type );
-            break;
-        }
+        hRsrc = PE_FindResourceExW( wm, nameStr, typeStr, lang );
 
         if ( HIWORD( type ) && !bUnicode ) 
             HeapFree( GetProcessHeap(), 0, typeStr );
@@ -237,25 +223,12 @@ static DWORD RES_SizeofResource( HMODULE hModule, HRSRC hRsrc, BOOL bRet16 )
 
     if ( wm )
     {
-        /* 32-bit PE/ELF module */
+        /* 32-bit PE module */
 
         /* If we got a 16-bit hRsrc, convert it */
         HRSRC hRsrc32 = HIWORD(hRsrc)? hRsrc : MapHRsrc16To32( pModule, hRsrc );
 
-        switch ( wm->type ) 
-        {
-        case MODULE32_PE:
-            size = PE_SizeofResource( hModule, hRsrc32 );
-            break;
-
-        case MODULE32_ELF:
-            size = LIBRES_SizeofResource( hModule, hRsrc32 );
-            break;
-
-        default:
-            ERR("unknown module type %d\n", wm->type );
-            break;
-        }
+        size = PE_SizeofResource( hModule, hRsrc32 );
     }
     else
     {
@@ -288,7 +261,7 @@ static HFILE RES_AccessResource( HMODULE hModule, HRSRC hRsrc, BOOL bRet16 )
 
     if ( wm )
     {
-        /* 32-bit PE/ELF module */
+        /* 32-bit PE module */
 #if 0
         /* If we got a 16-bit hRsrc, convert it */
         HRSRC hRsrc32 = HIWORD(hRsrc)? hRsrc : MapHRsrc16To32( pModule, hRsrc );
@@ -336,25 +309,12 @@ static HGLOBAL RES_LoadResource( HMODULE hModule, HRSRC hRsrc, BOOL bRet16 )
 
     if ( wm )
     {
-        /* 32-bit PE/ELF module */
+        /* 32-bit PE module */
 
         /* If we got a 16-bit hRsrc, convert it */
         HRSRC hRsrc32 = HIWORD(hRsrc)? hRsrc : MapHRsrc16To32( pModule, hRsrc );
 
-        switch ( wm->type ) 
-        {
-        case MODULE32_PE:
-            hMem = PE_LoadResource( wm, hRsrc32 );
-            break;
-
-        case MODULE32_ELF:
-            hMem = LIBRES_LoadResource( hModule, hRsrc32 );
-            break;
-
-        default:
-            ERR("unknown module type %d\n", wm->type );
-            break;
-        }
+        hMem = PE_LoadResource( wm, hRsrc32 );
 
         /* If we need to return a 16-bit resource, convert it */
         if ( bRet16 )

@@ -25,6 +25,7 @@ typedef struct
     const unsigned int   *argtypes;     /* Pointer to argument types bitmask */
     const char * const   *imports;      /* Pointer to imports */
     const ENTRYPOINT32    dllentrypoint;/* Pointer to LibMain function */
+    int                   characteristics;
     const void           *rsrc;         /* Resource descriptor */
 } BUILTIN32_DESCRIPTOR;
 

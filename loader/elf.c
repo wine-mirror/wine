@@ -29,7 +29,16 @@
 
 DEFAULT_DEBUG_CHANNEL(win32)
 
-WINE_MODREF *ELF_CreateDummyModule( LPCSTR libname, LPCSTR modname )
+#if defined(HAVE_DL_API)
+
+#define UNIX_DLL_ENDING		"so"
+
+#define	STUBSIZE		4095
+
+#include <dlfcn.h>
+
+
+static WINE_MODREF *ELF_CreateDummyModule( LPCSTR libname, LPCSTR modname )
 {
 	PIMAGE_DOS_HEADER	dh;
 	PIMAGE_NT_HEADERS	nth;
@@ -92,15 +101,6 @@ WINE_MODREF *ELF_CreateDummyModule( LPCSTR libname, LPCSTR modname )
 	wm->module = hmod;
 	return wm;
 }
-
-
-#if defined(HAVE_DL_API)
-
-#define UNIX_DLL_ENDING		"so"
-
-#define	STUBSIZE		4095
-
-#include <dlfcn.h>
 
 WINE_MODREF *ELF_LoadLibraryExA( LPCSTR libname, DWORD flags, DWORD *err)
 {

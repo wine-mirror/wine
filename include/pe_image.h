@@ -64,7 +64,6 @@ typedef struct {
 	ELF_STDCALL_STUB	*stubs;
 } ELF_MODREF;
 
-extern struct _wine_modref *ELF_CreateDummyModule(LPCSTR,LPCSTR);
 extern struct _wine_modref *ELF_LoadLibraryExA( LPCSTR libname, DWORD flags, DWORD *err);
 extern void ELF_UnloadLibrary(struct _wine_modref *);
 extern FARPROC ELF_FindExportedFunction(struct _wine_modref *wm, LPCSTR funcName);

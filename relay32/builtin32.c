@@ -129,7 +129,7 @@ static HMODULE BUILTIN32_DoLoadImage( const BUILTIN32_DESCRIPTOR *descr )
     nt->FileHeader.Machine              = IMAGE_FILE_MACHINE_I386;
     nt->FileHeader.NumberOfSections     = nb_sections;
     nt->FileHeader.SizeOfOptionalHeader = sizeof(nt->OptionalHeader);
-    nt->FileHeader.Characteristics      = IMAGE_FILE_DLL;
+    nt->FileHeader.Characteristics      = descr->characteristics;
 
     nt->OptionalHeader.Magic = IMAGE_NT_OPTIONAL_HDR_MAGIC;
     nt->OptionalHeader.SizeOfCode                  = 0x1000;
@@ -389,6 +389,49 @@ WINE_MODREF *BUILTIN32_LoadLibraryExA(LPCSTR path, DWORD flags, DWORD *err)
 
     *err = 0;
     return wm;
+}
+
+/***********************************************************************
+ *           BUILTIN32_LoadExeModule
+ */
+HMODULE16 BUILTIN32_LoadExeModule( void )
+{
+    HMODULE16 hModule16;
+    NE_MODULE *pModule;
+    int i, exe = -1;
+
+    /* Search built-in EXE descriptor */
+    for ( i = 0; i < nb_dlls; i++ )
+        if ( !(builtin_dlls[i]->characteristics & IMAGE_FILE_DLL) ) 
+        {
+            if ( exe != -1 )
+            {
+                MESSAGE( "More than one built-in EXE module loaded!\n" );
+                break;
+            }
+
+            exe = i;
+        }
+
+    if ( exe == -1 ) 
+    {
+        MESSAGE( "No built-in EXE module loaded!  Did you create a .spec file?\n" );
+        return 0;
+    }
+
+    /* Load built-in module */
+    if ( !dll_modules[exe] )
+        if ( !(dll_modules[exe] = BUILTIN32_DoLoadImage( builtin_dlls[exe] )) )
+            return 0;
+
+    /* Create 16-bit dummy module */
+    hModule16 = MODULE_CreateDummyModule( builtin_dlls[exe]->filename, 0 );
+    if ( hModule16 < 32 ) return 0;
+    pModule = (NE_MODULE *)GlobalLock16( hModule16 );
+    pModule->flags = NE_FFLAGS_SINGLEDATA | NE_FFLAGS_WIN32 | NE_FFLAGS_BUILTIN;
+    pModule->module32 = dll_modules[exe];
+
+    return hModule16;
 }
 
 
