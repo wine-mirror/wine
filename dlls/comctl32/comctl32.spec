@@ -1,6 +1,7 @@
 name	comctl32
 type	win32
 init	COMCTL32_LibMain
+rsrc	comctl32
 
 # Functions exported by the Win95 comctl32.dll 
 # (these need to have these exact ordinals, because some win95 dlls 

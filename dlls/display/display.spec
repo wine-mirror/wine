@@ -1,5 +1,6 @@
 name	display
 type	win16
+rsrc	display
 
 1   stub BitBlt
 2   stub ColorInfo

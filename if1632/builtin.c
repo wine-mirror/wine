@@ -24,7 +24,7 @@
 #include "debugtools.h"
 #include "toolhelp.h"
 
-DEFAULT_DEBUG_CHANNEL(module)
+DEFAULT_DEBUG_CHANNEL(module);
 
 typedef struct
 {
@@ -33,16 +33,6 @@ typedef struct
     DWORD   res_size;           /* size of resource data */
 } BUILTIN16_RESOURCE;
 
-typedef struct
-{
-    const WIN16_DESCRIPTOR *descr;     /* DLL descriptor */
-    int                     flags;     /* flags (see below) */
-    const BUILTIN16_RESOURCE *res;     /* resource descriptor */
-} BUILTIN16_DLL;
-
-/* DLL flags */
-#define DLL_FLAG_NOT_USED    0x01  /* Use original Windows DLL if possible */
-#define DLL_FLAG_ALWAYS_USED 0x02  /* Always use built-in DLL */
 
 /* 16-bit DLLs */
 
@@ -89,57 +79,60 @@ extern const WIN16_DESCRIPTOR WING_Descriptor;
 extern const WIN16_DESCRIPTOR WINSOCK_Descriptor;
 extern const WIN16_DESCRIPTOR WPROCS_Descriptor;
 
-extern const BUILTIN16_RESOURCE display_ResourceDescriptor;
-extern const BUILTIN16_RESOURCE mouse_ResourceDescriptor;
-
 /* Table of all built-in DLLs */
 
-static BUILTIN16_DLL BuiltinDLLs[] =
+static const WIN16_DESCRIPTOR *BuiltinDLLs[] =
 {
-    { &KERNEL_Descriptor,   0, NULL },
-    { &USER_Descriptor,     0, NULL },
-    { &GDI_Descriptor,      0, NULL },
-    { &SYSTEM_Descriptor,   DLL_FLAG_ALWAYS_USED, NULL },
-    { &DISPLAY_Descriptor,  DLL_FLAG_ALWAYS_USED, &display_ResourceDescriptor },
-    { &WPROCS_Descriptor,   DLL_FLAG_ALWAYS_USED, NULL },
-    { &WINDEBUG_Descriptor, DLL_FLAG_NOT_USED, NULL },
-    { &AVIFILE_Descriptor,  DLL_FLAG_NOT_USED, NULL },
-    { &COMMDLG_Descriptor,  DLL_FLAG_NOT_USED, NULL },
-    { &COMPOBJ_Descriptor,  DLL_FLAG_NOT_USED, NULL },
-    { &DDEML_Descriptor,    DLL_FLAG_NOT_USED, NULL },
-    { &DISPDIB_Descriptor,  0, NULL },
-    { &KEYBOARD_Descriptor, 0, NULL },
-    { &COMM_Descriptor,     0, NULL },
-    { &LZEXPAND_Descriptor, 0, NULL },
-    { &MMSYSTEM_Descriptor, 0, NULL },
-    { &MOUSE_Descriptor,    0, &mouse_ResourceDescriptor },
-    { &MSACM_Descriptor,    0, NULL },
-    { &MSVIDEO_Descriptor,  0, NULL },
-    { &OLE2CONV_Descriptor, DLL_FLAG_NOT_USED, NULL },
-    { &OLE2DISP_Descriptor, DLL_FLAG_NOT_USED, NULL },
-    { &OLE2NLS_Descriptor,  DLL_FLAG_NOT_USED, NULL },
-    { &OLE2PROX_Descriptor, DLL_FLAG_NOT_USED, NULL },
-    { &OLE2THK_Descriptor,  DLL_FLAG_NOT_USED, NULL },
-    { &OLE2_Descriptor,     DLL_FLAG_NOT_USED, NULL },
-    { &OLECLI_Descriptor,   DLL_FLAG_NOT_USED, NULL },
-    { &OLESVR_Descriptor,   DLL_FLAG_NOT_USED, NULL },
-    { &RASAPI16_Descriptor, 0, NULL },
-    { &SHELL_Descriptor,    0, NULL },
-    { &SOUND_Descriptor,    0, NULL },
-    { &STORAGE_Descriptor,  DLL_FLAG_NOT_USED, NULL },
-    { &STRESS_Descriptor,   0, NULL },
-    { &TOOLHELP_Descriptor, 0, NULL },
-    { &TYPELIB_Descriptor,  DLL_FLAG_NOT_USED, NULL },
-    { &VER_Descriptor,      0, NULL },
-    { &W32SYS_Descriptor,   DLL_FLAG_NOT_USED, NULL },
-    { &WIN32S16_Descriptor, DLL_FLAG_NOT_USED, NULL },
-    { &WIN87EM_Descriptor,  DLL_FLAG_NOT_USED, NULL },
-    { &WINASPI_Descriptor,  0, NULL },
-    { &WINEPS_Descriptor,   DLL_FLAG_ALWAYS_USED, NULL },
-    { &WING_Descriptor,     0, NULL },
-    { &WINSOCK_Descriptor,  0, NULL },
+    &KERNEL_Descriptor,
+    &USER_Descriptor,
+    &GDI_Descriptor,
+    &SYSTEM_Descriptor,
+    &DISPLAY_Descriptor,
+    &WPROCS_Descriptor,
+    &WINDEBUG_Descriptor,
+    &AVIFILE_Descriptor,
+    &COMMDLG_Descriptor,
+    &COMPOBJ_Descriptor,
+    &DDEML_Descriptor,
+    &DISPDIB_Descriptor,
+    &KEYBOARD_Descriptor,
+    &COMM_Descriptor,
+    &LZEXPAND_Descriptor,
+    &MMSYSTEM_Descriptor,
+    &MOUSE_Descriptor,
+    &MSACM_Descriptor,
+    &MSVIDEO_Descriptor,
+    &OLE2CONV_Descriptor,
+    &OLE2DISP_Descriptor,
+    &OLE2NLS_Descriptor,
+    &OLE2PROX_Descriptor,
+    &OLE2THK_Descriptor,
+    &OLE2_Descriptor,
+    &OLECLI_Descriptor,
+    &OLESVR_Descriptor,
+    &RASAPI16_Descriptor,
+    &SHELL_Descriptor,
+    &SOUND_Descriptor,
+    &STORAGE_Descriptor,
+    &STRESS_Descriptor,
+    &TOOLHELP_Descriptor,
+    &TYPELIB_Descriptor,
+    &VER_Descriptor,
+    &W32SYS_Descriptor,
+    &WIN32S16_Descriptor,
+    &WIN87EM_Descriptor,
+    &WINASPI_Descriptor,
+    &WINEPS_Descriptor,
+    &WING_Descriptor,
+    &WINSOCK_Descriptor,
     /* Last entry */
-    { NULL, 0, NULL }
+    NULL
+};
+
+/* list of DLLs that should always be loaded at startup */
+static const char * const always_load[] =
+{
+    "system", "display", "wprocs", "wineps", NULL
 };
 
   /* Ordinal number for interrupt 0 handler in WPROCS.DLL */
@@ -152,63 +145,64 @@ static BUILTIN16_DLL BuiltinDLLs[] =
  * Load a built-in Win16 module. Helper function for BUILTIN_LoadModule
  * and BUILTIN_Init.
  */
-static HMODULE16 BUILTIN_DoLoadModule16( const BUILTIN16_DLL *dll )
+static HMODULE16 BUILTIN_DoLoadModule16( const WIN16_DESCRIPTOR *descr )
 {
     NE_MODULE *pModule;
     int minsize, res_off;
     SEGTABLEENTRY *pSegTable;
     HMODULE16 hModule;
+    const BUILTIN16_RESOURCE *rsrc = descr->rsrc;
 
-    if ( !dll->res )
+    if (!rsrc)
     {
-        hModule = GLOBAL_CreateBlock( GMEM_MOVEABLE, dll->descr->module_start,
-                                      dll->descr->module_size, 0,
+        hModule = GLOBAL_CreateBlock( GMEM_MOVEABLE, descr->module_start,
+                                      descr->module_size, 0,
                                             FALSE, FALSE, FALSE, NULL );
-    if (!hModule) return 0;
-    FarSetOwner16( hModule, hModule );
+        if (!hModule) return 0;
+        FarSetOwner16( hModule, hModule );
 
-    pModule = (NE_MODULE *)GlobalLock16( hModule );
+        pModule = (NE_MODULE *)GlobalLock16( hModule );
     }
     else
     {
         ET_BUNDLE *bundle;
 
         hModule = GLOBAL_Alloc( GMEM_MOVEABLE, 
-                                dll->descr->module_size + dll->res->res_size, 
+                                descr->module_size + rsrc->res_size, 
                                 0, FALSE, FALSE, FALSE );
         if (!hModule) return 0;
         FarSetOwner16( hModule, hModule );
 
         pModule = (NE_MODULE *)GlobalLock16( hModule );
-        res_off = ((NE_MODULE *)dll->descr->module_start)->res_table;
+        res_off = ((NE_MODULE *)descr->module_start)->res_table;
 
-        memcpy( (LPBYTE)pModule, dll->descr->module_start, res_off );
-        memcpy( (LPBYTE)pModule + res_off, dll->res->res_start, dll->res->res_size );
-        memcpy( (LPBYTE)pModule + res_off + dll->res->res_size, 
-                dll->descr->module_start + res_off, dll->descr->module_size - res_off );
+        memcpy( (LPBYTE)pModule, descr->module_start, res_off );
+        memcpy( (LPBYTE)pModule + res_off, rsrc->res_start, rsrc->res_size );
+        memcpy( (LPBYTE)pModule + res_off + rsrc->res_size, 
+                descr->module_start + res_off, descr->module_size - res_off );
 
         /* Have to fix up various pModule-based near pointers.  Ugh! */
-        pModule->name_table   += dll->res->res_size;
-        pModule->modref_table += dll->res->res_size;
-        pModule->import_table += dll->res->res_size;
-        pModule->entry_table  += dll->res->res_size;
+        pModule->name_table   += rsrc->res_size;
+        pModule->modref_table += rsrc->res_size;
+        pModule->import_table += rsrc->res_size;
+        pModule->entry_table  += rsrc->res_size;
 
         for ( bundle = (ET_BUNDLE *)((LPBYTE)pModule + pModule->entry_table);
               bundle->next;
               bundle = (ET_BUNDLE *)((LPBYTE)pModule + bundle->next) )
-            bundle->next += dll->res->res_size;
+            bundle->next += rsrc->res_size;
 
         /* NOTE: (Ab)use the hRsrcMap parameter for resource data pointer */
-        pModule->hRsrcMap = dll->res->res_start;
+        pModule->hRsrcMap = rsrc->res_start;
     }
     pModule->self = hModule;
 
-    TRACE( "Built-in %s: hmodule=%04x\n", dll->descr->name, hModule );
+    TRACE( "Built-in %s: hmodule=%04x\n", descr->name, hModule );
 
     /* Allocate the code segment */
 
     pSegTable = NE_SEG_TABLE( pModule );
-    pSegTable->hSeg = GLOBAL_CreateBlock( GMEM_FIXED, dll->descr->code_start,
+    pSegTable->hSeg = GLOBAL_CreateBlock( GMEM_FIXED, descr->code_start,
                                               pSegTable->minsize, hModule,
                                               TRUE, TRUE, FALSE, NULL );
     if (!pSegTable->hSeg) return 0;
@@ -223,12 +217,12 @@ static HMODULE16 BUILTIN_DoLoadModule16( const BUILTIN16_DLL *dll )
                                         hModule, FALSE, FALSE, FALSE );
     if (!pSegTable->hSeg) return 0;
     if (pSegTable->minsize) memcpy( GlobalLock16( pSegTable->hSeg ),
-                                    dll->descr->data_start, pSegTable->minsize);
+                                    descr->data_start, pSegTable->minsize);
     if (pModule->heap_size)
         LocalInit16( GlobalHandleToSel16(pSegTable->hSeg),
 		pSegTable->minsize, minsize );
 
-	if (dll->res)
+	if (rsrc)
 		NE_InitResourceHandler(hModule);
 
     NE_RegisterModule( pModule );
@@ -243,14 +237,14 @@ static HMODULE16 BUILTIN_DoLoadModule16( const BUILTIN16_DLL *dll )
  */
 BOOL BUILTIN_Init(void)
 {
-    BUILTIN16_DLL *dll;
     WORD vector;
     HMODULE16 hModule;
+    const char * const *ptr = always_load;
 
-    for (dll = BuiltinDLLs; dll->descr; dll++)
+    while (*ptr)
     {
-        if (dll->flags & DLL_FLAG_ALWAYS_USED)
-            if (!BUILTIN_DoLoadModule16( dll )) return FALSE;
+        if (!BUILTIN_LoadModule( *ptr )) return FALSE;
+        ptr++;
     }
 
     /* Set interrupt vectors from entry points in WPROCS.DLL */
@@ -271,12 +265,11 @@ BOOL BUILTIN_Init(void)
 /***********************************************************************
  *           BUILTIN_LoadModule
  *
- * Load a built-in module. If the 'force' parameter is FALSE, we only
- * load the module if it has not been disabled via the -dll option.
+ * Load a built-in module.
  */
-HMODULE16 BUILTIN_LoadModule( LPCSTR name, BOOL force )
+HMODULE16 BUILTIN_LoadModule( LPCSTR name )
 {
-    BUILTIN16_DLL *table;
+    const WIN16_DESCRIPTOR **table;
     char dllname[16], *p;
 
     /* Fix the name in case we have a full path and extension */
@@ -287,18 +280,15 @@ HMODULE16 BUILTIN_LoadModule( LPCSTR name, BOOL force )
 	 
     if (!p) strcat( dllname, ".dll" );
 
-    for (table = BuiltinDLLs; table->descr; table++)
+    for (table = BuiltinDLLs; *table; table++)
     {
-       NE_MODULE *pModule = (NE_MODULE *)table->descr->module_start;
+       NE_MODULE *pModule = (NE_MODULE *)(*table)->module_start;
        OFSTRUCT *pOfs = (OFSTRUCT *)((LPBYTE)pModule + pModule->fileinfo);
        if (!lstrcmpiA( pOfs->szPathName, dllname )) break;
     }
 
-    if (!table->descr) return (HMODULE16)2;
-
-    if ((table->flags & DLL_FLAG_NOT_USED) && !force) return (HMODULE16)2;
-
-    return BUILTIN_DoLoadModule16( table );
+    if (!*table) return (HMODULE16)2;
+    return BUILTIN_DoLoadModule16( *table );
 }
 
 

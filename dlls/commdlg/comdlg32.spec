@@ -1,6 +1,7 @@
 name	comdlg32
 type	win32
 init	COMDLG32_DllEntryPoint
+rsrc	comdlg32
 
  0 stub ArrowBtnWndProc
  1 stdcall ChooseColorA(ptr) ChooseColorA

@@ -153,6 +153,7 @@ static FILE *SpecFp;
 static WORD Code_Selector, Data_Selector;
 static char DLLInitFunc[80];
 static char *DLLImports[MAX_IMPORTS];
+static char rsrc_name[80];
 static int nb_imports;
 static int nb_entry_points;
 static int nb_names;
@@ -715,6 +716,11 @@ static void ParseTopLevel(void)
                 fatal_error( "Imports not supported for Win16\n" );
             DLLImports[nb_imports++] = xstrdup(GetToken());
         }
+        else if (strcmp(token, "rsrc") == 0)
+        {
+            strcpy( rsrc_name, GetToken() );
+            strcat( rsrc_name, "_ResourceDescriptor" );
+        }
         else if (strcmp(token, "@") == 0)
 	{
             if (SpecType != SPEC_WIN32)
@@ -1184,6 +1190,8 @@ static int BuildSpec32File( FILE *outfile )
 
     /* Output the DLL descriptor */
 
+    if (rsrc_name[0]) fprintf( outfile, "extern const char %s[];\n\n", rsrc_name );
+
     fprintf( outfile, "const BUILTIN32_DESCRIPTOR %s_Descriptor =\n{\n",
              DLLName );
     fprintf( outfile, "    \"%s\",\n", DLLName );
@@ -1200,8 +1208,9 @@ static int BuildSpec32File( FILE *outfile )
              "    FuncArgs,\n"
              "    ArgTypes,\n");
     fprintf( outfile, "    %s,\n", nb_imports ? "Imports" : "0" );
-    fprintf( outfile, "    %s\n", DLLInitFunc[0] ? DLLInitFunc : "0" );
-    fprintf( outfile, "};\n" );             
+    fprintf( outfile, "    %s,\n", DLLInitFunc[0] ? DLLInitFunc : "0" );
+    fprintf( outfile, "    %s\n", rsrc_name[0] ? rsrc_name : "0" );
+    fprintf( outfile, "};\n" );
     return 0;
 }
 
@@ -1440,12 +1449,15 @@ static int BuildSpec16File( FILE *outfile )
 
     /* Output the DLL descriptor */
 
-    fprintf( outfile, "\nWIN16_DESCRIPTOR %s_Descriptor = \n{\n", DLLName );
+    if (rsrc_name[0]) fprintf( outfile, "extern const char %s[];\n\n", rsrc_name );
+
+    fprintf( outfile, "\nconst WIN16_DESCRIPTOR %s_Descriptor = \n{\n", DLLName );
     fprintf( outfile, "    \"%s\",\n", DLLName );
     fprintf( outfile, "    Module,\n" );
     fprintf( outfile, "    sizeof(Module),\n" );
     fprintf( outfile, "    (BYTE *)&Code_Segment,\n" );
-    fprintf( outfile, "    (BYTE *)Data_Segment\n" );
+    fprintf( outfile, "    (BYTE *)Data_Segment,\n" );
+    fprintf( outfile, "    %s\n", rsrc_name[0] ? rsrc_name : "0" );
     fprintf( outfile, "};\n" );
     
     return 0;
@@ -1768,6 +1780,7 @@ static void BuildCallFrom16Core( FILE *outfile, int reg_func, int thunk, int sho
     fprintf( outfile, ".stabs \"CallFrom16%s:F1\",36,0,0," PREFIX "CallFrom16%s\n", 
 	     name, name);
 #endif
+    fprintf( outfile, "\t.type " PREFIX "CallFrom16%s,@function\n", name );
     fprintf( outfile, "\t.globl " PREFIX "CallFrom16%s\n", name );
     fprintf( outfile, PREFIX "CallFrom16%s:\n", name );
 

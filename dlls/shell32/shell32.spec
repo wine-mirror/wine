@@ -1,6 +1,7 @@
 name	shell32
 type	win32
 init	Shell32LibMain
+rsrc	shell32
 
 # Functions exported by the Win95 shell32.dll 
 # (these need to have these exact ordinals, for some 

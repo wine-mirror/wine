@@ -1,6 +1,7 @@
 name winmm
 type win32
 init WINMM_LibMain
+rsrc winmm
 
 # ordinal exports
 1 stdcall @(ptr long long) PlaySoundA

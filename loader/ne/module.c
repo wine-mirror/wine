@@ -928,7 +928,7 @@ static HINSTANCE16 MODULE_LoadModule16( LPCSTR libname, BOOL implicit, BOOL lib_
 
 		case MODULE_LOADORDER_BI:
 			TRACE("Trying built-in '%s'\n", libname);
-			hinst = BUILTIN_LoadModule(libname, TRUE);
+			hinst = BUILTIN_LoadModule(libname);
 			break;
 
 		default:
