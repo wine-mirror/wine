@@ -1398,6 +1398,8 @@ HANDLE WINAPI FindFirstFileExW( LPCWSTR filename, FINDEX_INFO_LEVELS level,
     IO_STATUS_BLOCK io;
     NTSTATUS status;
 
+    TRACE("%s %d %p %d %p %lx\n", debugstr_w(filename), level, data, search_op, filter, flags);
+
     if ((search_op != FindExSearchNameMatch) || (flags != 0))
     {
         FIXME("options not implemented 0x%08x 0x%08lx\n", search_op, flags );
@@ -1495,6 +1497,8 @@ BOOL WINAPI FindNextFileW( HANDLE handle, WIN32_FIND_DATAW *data )
     FILE_BOTH_DIR_INFORMATION *dir_info;
     BOOL ret = FALSE;
 
+    TRACE("%p %p\n", handle, data);
+    
     if (handle == INVALID_HANDLE_VALUE)
     {
         SetLastError( ERROR_INVALID_HANDLE );
@@ -1679,6 +1683,8 @@ DWORD WINAPI GetFileAttributesW( LPCWSTR name )
     OBJECT_ATTRIBUTES attr;
     NTSTATUS status;
 
+    TRACE("%s\n", debugstr_w(name));
+
     if (!RtlDosPathNameToNtPathName_U( name, &nt_name, NULL, NULL ))
     {
         SetLastError( ERROR_PATH_NOT_FOUND );
@@ -1727,6 +1733,8 @@ BOOL WINAPI SetFileAttributesW( LPCWSTR name, DWORD attributes )
     IO_STATUS_BLOCK io;
     NTSTATUS status;
     HANDLE handle;
+
+    TRACE("%s %lx\n", debugstr_w(name), attributes);
 
     if (!RtlDosPathNameToNtPathName_U( name, &nt_name, NULL, NULL ))
     {
@@ -1782,6 +1790,8 @@ BOOL WINAPI GetFileAttributesExW( LPCWSTR name, GET_FILEEX_INFO_LEVELS level, LP
     UNICODE_STRING nt_name;
     OBJECT_ATTRIBUTES attr;
     NTSTATUS status;
+    
+    TRACE("%s %d %p\n", debugstr_w(name), level, ptr);
 
     if (level != GetFileExInfoStandard)
     {
@@ -1853,6 +1863,8 @@ DWORD WINAPI GetCompressedFileSizeW(
     NTSTATUS status;
     HANDLE handle;
     DWORD ret = INVALID_FILE_SIZE;
+
+    TRACE("%s %p\n", debugstr_w(name), size_high);
 
     if (!RtlDosPathNameToNtPathName_U( name, &nt_name, NULL, NULL ))
     {
