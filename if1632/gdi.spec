@@ -43,9 +43,8 @@ length	490
 33  pascal TextOut(word s_word s_word ptr word) TextOut(1 2 3 4 5)
 34  pascal BitBlt( word s_word s_word s_word s_word word s_word s_word long)
 	   BitBlt(1 2 3 4 5 6 7 8 9)
-35  pascal StrechBlt( word s_word s_word s_word s_word word s_word s_word s_word s_word long)
-           StrechBlt(1 2 3 4 5 6 7 8 9 10 11)
-
+35  pascal StretchBlt( word s_word s_word s_word s_word word s_word s_word s_word s_word long)
+           StretchBlt(1 2 3 4 5 6 7 8 9 10 11)
 36  pascal Polygon (word ptr word) Polygon (1 2 3)
 37  pascal Polyline (word ptr word) Polyline (1 2 3)
 39  pascal RestoreDC(word s_word) RestoreDC(1 2)

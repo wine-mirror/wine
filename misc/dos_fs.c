@@ -338,8 +338,9 @@ char *GetDirectUnixFileName(char *dosfilename)
 { 
 	/*   a:\windows\system.ini  =>  /dos/windows/system.ini   */
 	
+	static char temp[256];
 	int drive;
-	char x, temp[256];
+	char x;
 
 	if (dosfilename[1] == ':') 
 	{

@@ -1,9 +1,7 @@
 CFLAGS=$(COPTS) $(DEBUGOPTS) -I$(INCLUDE_DIR)
 
 OBJS = menu.o caption.o widgets.o button.o \
-	scroll.o listbox.o combo.o static.o \
-	SmeMenuButto.o WinLabel.o WinCommand.o \
-	WinMenuButto.o
+	scroll.o listbox.o combo.o static.o
 
 default: controls.o
 

@@ -41,6 +41,12 @@ For example: to run Windows' solitaire:
 Have a nice game of solitaire, but be careful.  Emulation isn't perfect.
 So, occassionally it will crash.
 
+WHAT'S NEW with version 0.7: (see ChangeLog for details)
+	- Eliminated Xt-dependent code.  Thanks to Alexandre and Martin.
+	- Other bug fixes.
+	- IsWIndowEnabled() and EnableWindow() now implemented.
+	- New command line options.
+
 WHAT'S NEW with version 0.6: (see ChangeLog for details)
 	- Working towards elimination of Xt-dependent code.  Thanks to
 	  Alexandre and Martin.

@@ -26,6 +26,9 @@ typedef struct tagWND
     HANDLE       hInstance;      /* Window hInstance (from CreateWindow) */
     RECT         rectClient;     /* Client area rel. to parent client area */
     RECT         rectWindow;     /* Whole window rel. to parent client area */
+    RECT         rectNormal;     /* Window rect. when in normal state */
+    POINT        ptIconPos;      /* Icon position */
+    POINT        ptMaxPos;       /* Maximized window position */
     HANDLE       hmemTaskQ;      /* Task queue global memory handle */
     HRGN         hrgnUpdate;     /* Update region */
     HWND         hwndLastActive; /* Last active popup hwnd */
@@ -54,6 +57,10 @@ typedef struct tagWND
 #define WIN_OWN_DC              0x08  /* Win class has style CS_OWNDC */
 #define WIN_CLASS_DC            0x10  /* Win class has style CS_CLASSDC */
 #define WIN_DOUBLE_CLICKS       0x20  /* Win class has style CS_DBLCLKS */
+#define WIN_RESTORE_MAX         0x40  /* Maximize when restoring */
+
+  /* First top-level window */
+extern HWND firstWindow;
 
   /* Window functions */
 WND *WIN_FindWndPtr( HWND hwnd );

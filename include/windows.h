@@ -111,6 +111,19 @@ typedef int *LPCATCHBUF;
 #endif
 */
 
+typedef struct { short x, y; } POINT;
+typedef POINT *PPOINT;
+typedef POINT *NPPOINT;
+typedef POINT *LPPOINT;
+
+typedef struct 
+{
+    short cx;
+    short cy;
+} SIZE, *LPSIZE;
+
+#define MAKEPOINT(l) (*((POINT *)&(l)))
+
 #define MAKELPARAM(low, high) ((LONG)(((WORD)(low)) | \
 			      (((DWORD)((WORD)(high))) << 16)))
 
@@ -221,6 +234,21 @@ typedef struct
     UINT    flags;
 } WINDOWPOS;
 
+  /* SetWindowPlacement() struct */
+typedef struct
+{
+    UINT   length;
+    UINT   flags;
+    UINT   showCmd;
+    POINT  ptMinPosition __attribute__ ((packed));
+    POINT  ptMaxPosition __attribute__ ((packed));
+    RECT   rcNormalPosition __attribute__ ((packed));
+} WINDOWPLACEMENT, *LPWINDOWPLACEMENT;
+
+  /* WINDOWPLACEMENT flags */
+#define WPF_SETMINPOSITION      0x0001
+#define WPF_RESTORETOMAXIMIZED  0x0002
+
   /* WM_NCCALCSIZE parameter structure */
 typedef struct
 {
@@ -323,19 +351,6 @@ typedef struct
 #define IDYES               6
 #define IDNO                7
 
-
-typedef struct { short x, y; } POINT;
-typedef POINT *PPOINT;
-typedef POINT *NPPOINT;
-typedef POINT *LPPOINT;
-
-typedef struct 
-{
-    short cx;
-    short cy;
-} SIZE, *LPSIZE;
-
-#define MAKEPOINT(l) (*((POINT *)&(l)))
 
 typedef struct tagMSG
 {
@@ -2002,6 +2017,7 @@ Fa(ATOM,FindAtom,LPCSTR,a)
 Fa(ATOM,GlobalAddAtom,LPCSTR,a)
 Fa(ATOM,GlobalDeleteAtom,ATOM,a)
 Fa(ATOM,GlobalFindAtom,LPCSTR,a)
+Fa(BOOL,BringWindowToTop,HWND,a)
 Fa(BOOL,DeleteDC,HDC,a)
 Fa(BOOL,DeleteMetaFile,HANDLE,a)
 Fa(BOOL,DeleteObject,HANDLE,a)
@@ -2156,7 +2172,6 @@ Fa(int,ShowCursor,BOOL,a)
 Fa(int,UpdateColors,HDC,a)
 Fa(int,WaitSoundState,int,a)
 Fa(short,GetTextCharacterExtra,HDC,a)
-Fa(void,BringWindowToTop,HWND,a)
 Fa(void,ClipCursor,LPRECT,a)
 Fa(void,CloseWindow,HWND,a)
 Fa(void,DrawMenuBar,HWND,a)
@@ -2179,6 +2194,8 @@ Fa(void,ShowCaret,HWND,a)
 Fa(void,SwapRecording,WORD,a)
 Fb(BOOL,ExitWindows,DWORD,dwReserved,WORD,wReturnCode)
 Fb(BOOL,GetBitmapDimensionEx,HBITMAP,a,LPSIZE,b)
+Fb(BOOL,GetWindowPlacement,HWND,a,LPWINDOWPLACEMENT,b)
+Fb(BOOL,SetWindowPlacement,HWND,a,LPWINDOWPLACEMENT,b)
 Fb(BOOL,ShowWindow,HWND,a,int,b) 
 Fb(HDC,BeginPaint,HWND,a,LPPAINTSTRUCT,b) 
 Fb(LPSTR,lstrcat,LPSTR,a,LPCSTR,b )
@@ -2270,6 +2287,12 @@ Fb(WORD,IsDlgButtonChecked,HWND,a,WORD,b)
 Fb(WORD,LocalShrink,HANDLE,a,WORD,b)
 Fb(WORD,MapVirtualKey,WORD,a,WORD,b)
 Fb(WORD,SetSystemPaletteUse,HDC,a,WORD,b)
+Fb(WORD,SetBkMode,HDC,a,WORD,b)
+Fb(WORD,SetMapMode,HDC,a,WORD,b)
+Fb(WORD,SetPolyFillMode,HDC,a,WORD,b)
+Fb(WORD,SetRelAbs,HDC,a,WORD,b)
+Fb(WORD,SetROP2,HDC,a,WORD,b)
+Fb(WORD,SetStretchBltMode,HDC,a,WORD,b)
 Fb(WORD,SetTaskQueue,HANDLE,a,HANDLE,b)
 Fb(WORD,SetTextAlign,HDC,a,WORD,b)
 Fb(WORD,SizeofResource,HANDLE,a,HANDLE,b)
@@ -2317,6 +2340,7 @@ Fb(void,Throw,LPCATCHBUF,a,int,b)
 Fb(void,ValidateRect,HWND,a,LPRECT,b)
 Fb(void,ValidateRgn,HWND,a,HRGN,b)
 Fc(BOOL,LineTo,HDC,a,short,b,short,c)
+Fc(WORD,GetInternalWindowPos,HWND,a,LPRECT,b,LPPOINT,c)
 Fc(LONG,_llseek,int,a,long,b,int,c)
 Fc(WORD,_lread,int,a,LPSTR,b,int,c)
 Fc(WORD,_lwrite,int,a,LPSTR,b,int,c)
@@ -2378,12 +2402,6 @@ Fc(WORD,GetProfileInt,LPSTR,a,LPSTR,b,int,c)
 Fc(WORD,GlobalGetAtomName,ATOM,a,LPSTR,b,short,c)
 Fc(WORD,SetClassWord,HWND,a,short,b,WORD,c)
 Fc(WORD,SetWindowWord,HWND,a,short,b,WORD,c)
-Fb(WORD,SetBkMode,HDC,a,WORD,b)
-Fb(WORD,SetMapMode,HDC,a,WORD,b)
-Fb(WORD,SetPolyFillMode,HDC,a,WORD,b)
-Fb(WORD,SetRelAbs,HDC,a,WORD,b)
-Fb(WORD,SetROP2,HDC,a,WORD,b)
-Fb(WORD,SetStretchBltMode,HDC,a,WORD,b)
 Fc(int,FrameRect,HDC,a,LPRECT,b,HBRUSH,c)
 Fc(int,GetClassName,HWND,a,LPSTR,b,short,c)
 Fc(int,GetClipboardFormatName,WORD,a,LPSTR,b,int,c)
@@ -2479,6 +2497,7 @@ Fd(void,FillWindow,HWND,a,HWND,b,HDC,c,HBRUSH,d)
 Fd(void,GetScrollRange,HWND,a,int,b,LPINT,c,LPINT,d)
 Fd(void,MapWindowPoints,HWND,a,HWND,b,LPPOINT,c,WORD,d)
 Fd(void,PlayMetaFileRecord,HDC,a,LPHANDLETABLE,b,LPMETARECORD,c,WORD,d)
+Fd(void,SetInternalWindowPos,HWND,a,WORD,b,LPRECT,c,LPPOINT,d)
 Fd(void,SetDlgItemInt,HWND,a,WORD,b,WORD,c,BOOL,d)
 Fe(BOOL,Rectangle,HDC,a,int,xLeft,int,yTop,int,xRight,int,yBottom)
 Fe(int,DrawText,HDC,a,LPSTR,str,int,c,LPRECT,d,WORD,flag)

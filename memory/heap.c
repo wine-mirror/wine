@@ -6,8 +6,16 @@ static char Copyright[] = "Copyright  Robert J. Amstadt, 1993";
 #include "prototypes.h"
 #include "segmem.h"
 #include "heap.h"
+#include "regfunc.h"
 
-MDESC *LOCAL_FreeList;
+typedef struct heap_local_heap_s
+{
+    struct heap_local_heap_s *next;
+    MDESC *free_list;
+    unsigned short selector;
+} LHEAP;
+
+LHEAP *LocalHeaps = NULL;
 
 /**********************************************************************
  *					HEAP_Init
@@ -274,12 +282,49 @@ HEAP_Free(MDESC **free_list, void *block)
 }
 
 /**********************************************************************
+ *					HEAP_LocalFindHeap
+ */
+MDESC **
+HEAP_LocalFindHeap(unsigned short owner)
+{
+    LHEAP *lh;
+    
+#ifdef DEBUG_HEAP
+    printf("HEAP_LocalFindHeap: owner %04x\n", owner);
+#endif
+    
+    for (lh = LocalHeaps; lh != NULL; lh = lh->next)
+    {
+	if (lh->selector == owner)
+	    return &lh->free_list;
+    }
+
+    return NULL;
+}
+
+#define LOCALHEAP() HEAP_LocalFindHeap(Segments[Stack16Frame[11] >> 3].owner)
+
+/**********************************************************************
  *					HEAP_LocalInit
  */
 void
-HEAP_LocalInit(void *start, int length)
+HEAP_LocalInit(unsigned short owner, void *start, int length)
 {
-    HEAP_Init(&LOCAL_FreeList, start, length);
+    LHEAP *lh;
+
+#ifdef DEBUG_HEAP
+    printf("HEAP_LocalInit: owner %04x, start %08x, length %04x\n",
+	   owner, start, length);
+#endif
+    
+    lh = (LHEAP *) malloc(sizeof(*lh));
+    if (lh == NULL)
+	return;
+    
+    lh->selector = owner;
+    lh->next = LocalHeaps;
+    HEAP_Init(&lh->free_list, start, length);
+    LocalHeaps = lh;
 }
 
 /**********************************************************************
@@ -292,9 +337,10 @@ LocalAlloc(int flags, int bytes)
     
 #ifdef DEBUG_HEAP
     printf("LocalAlloc: flags %x, bytes %d\n", flags, bytes);
+    printf("    called from segment %04x\n", Stack16Frame[11]);
 #endif
 
-    m = HEAP_Alloc(&LOCAL_FreeList, flags, bytes);
+    m = HEAP_Alloc(LOCALHEAP(), flags, bytes);
 	
 #ifdef DEBUG_HEAP
 	printf("LocalAlloc: returning %x\n", (int) m);
@@ -312,7 +358,7 @@ LocalCompact(int min_free)
     int max_block;
     
     max_block = 0;
-    for (m = LOCAL_FreeList; m != NULL; m = m->next)
+    for (m = *LOCALHEAP(); m != NULL; m = m->next)
 	if (m->length > max_block)
 	    max_block = m->length;
     
@@ -327,7 +373,7 @@ LocalFlags(unsigned int handle)
 {
     MDESC *m;
     
-    m = (MDESC *) (((int) LOCAL_FreeList & 0xffff0000) | 
+    m = (MDESC *) (((int) *LOCALHEAP() & 0xffff0000) | 
 		   (handle & 0xffff)) - 1;
     if (m->next != m || m->prev != m)
 	return 0;
@@ -343,8 +389,8 @@ LocalFree(unsigned int handle)
 {
     unsigned int addr;
     
-    addr = ((int) LOCAL_FreeList & 0xffff0000) | (handle & 0xffff);
-    if (HEAP_Free(&LOCAL_FreeList, (void *) addr) < 0)
+    addr = ((int) *LOCALHEAP() & 0xffff0000) | (handle & 0xffff);
+    if (HEAP_Free(LOCALHEAP(), (void *) addr) < 0)
 	return handle;
     else
 	return 0;
@@ -356,7 +402,7 @@ LocalFree(unsigned int handle)
 unsigned int
 LocalInit(unsigned int segment, unsigned int start, unsigned int end)
 {
-    HEAP_Init(&LOCAL_FreeList, 
+    HEAP_Init(LOCALHEAP(), 
 	      (void *) ((segment << 16) | start), end - start + 1);
 
     return segment;
@@ -370,7 +416,7 @@ LocalLock(unsigned int handle)
 {
     MDESC *m;
     
-    m = (MDESC *) (((int) LOCAL_FreeList & 0xffff0000) | 
+    m = (MDESC *) (((int) *LOCALHEAP() & 0xffff0000) | 
 		   (handle & 0xffff)) - 1;
     if (m->next != m || m->prev != m)
 	return 0;
@@ -387,8 +433,8 @@ LocalReAlloc(unsigned int handle, int flags, int bytes)
 {
     void *m;
     
-    m = HEAP_ReAlloc(&LOCAL_FreeList, (void *)
-		     (((int) LOCAL_FreeList & 0xffff0000) | (handle & 0xffff)),
+    m = HEAP_ReAlloc(LOCALHEAP(), (void *)
+		     (((int) *LOCALHEAP() & 0xffff0000) | (handle & 0xffff)),
 		     bytes, flags);
 	
     return m;
@@ -402,7 +448,7 @@ LocalSize(unsigned int handle)
 {
     MDESC *m;
     
-    m = (MDESC *) (((int) LOCAL_FreeList & 0xffff0000) | 
+    m = (MDESC *) (((int) *LOCALHEAP() & 0xffff0000) | 
 		   (handle & 0xffff)) - 1;
     if (m->next != m || m->prev != m)
 	return 0;
@@ -418,7 +464,7 @@ LocalUnlock(unsigned int handle)
 {
     MDESC *m;
     
-    m = (MDESC *) (((int) LOCAL_FreeList & 0xffff0000) | 
+    m = (MDESC *) (((int) *LOCALHEAP() & 0xffff0000) | 
 		   (handle & 0xffff)) - 1;
     if (m->next != m || m->prev != m)
 	return 1;

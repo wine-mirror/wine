@@ -113,9 +113,9 @@ BOOL BitBlt( HDC hdcDest, short xDest, short yDest, short width, short height,
 
 
 /***********************************************************************
- *           StrechBlt    (GDI.35)
+ *           StretchBlt    (GDI.35)
  */
-BOOL StrechBlt( HDC hdcDest, short xDest, short yDest, short widthDest, short heightDest,
+BOOL StretchBlt( HDC hdcDest, short xDest, short yDest, short widthDest, short heightDest,
                HDC hdcSrc, short xSrc, short ySrc, short widthSrc, short heightSrc, DWORD rop )
 {
     int xs1, xs2, ys1, ys2;
@@ -124,7 +124,7 @@ BOOL StrechBlt( HDC hdcDest, short xDest, short yDest, short widthDest, short he
 
 /*#ifdef DEBUG_GDI     */
 
-    printf( "StrechBlt: %d %d,%d %dx%d %d %d,%d %dx%d %08x\n",
+    printf( "StretchBlt: %d %d,%d %dx%d %d %d,%d %dx%d %08x\n",
            hdcDest, xDest, yDest, widthDest, heightDest, hdcSrc, xSrc, 
            ySrc, widthSrc, heightSrc, rop );
 /*#endif */

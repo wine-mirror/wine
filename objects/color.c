@@ -10,16 +10,11 @@ static char Copyright[] = "Copyright  Alexandre Julliard, 1993";
 #include <X11/Xlib.h>
 
 #include "windows.h"
+#include "options.h"
 
-extern Display * XT_display;
-extern Screen * XT_screen;
+extern Display * display;
+extern Screen * screen;
 
-
-/* 
- * We try to use a private color map if possible, because Windows programs
- * assume that palette(0) == Black and palette(max-1) == White.
- */
-#undef USE_PRIVATE_MAP
 
 Colormap COLOR_WinColormap = 0;
 
@@ -55,10 +50,10 @@ static int COLOR_FillDefaultMap()
 
     for (i = 0; i < NB_SYS_COLORS; i++)
     {
-	if (XParseColor( XT_display, DefaultColormapOfScreen( XT_screen ),
+	if (XParseColor( display, DefaultColormapOfScreen( screen ),
 			 SysColors[i], &color ))
 	{
-	    if (XAllocColor( XT_display, DefaultColormapOfScreen( XT_screen ), 
+	    if (XAllocColor( display, DefaultColormapOfScreen( screen ), 
 			     &color ))
 		total++;
 	}
@@ -72,8 +67,6 @@ static int COLOR_FillDefaultMap()
  *
  * Fill the private colormap.
  */
-#ifdef USE_PRIVATE_MAP
-
 static BOOL COLOR_BuildMap( Colormap map, int depth, int size )
 {
     XColor color;
@@ -99,7 +92,7 @@ static BOOL COLOR_BuildMap( Colormap map, int depth, int size )
 		    color.red   = r;
 		    color.green = g;
 		    color.blue  = b;
-		    XStoreColor( XT_display, map, &color );
+		    XStoreColor( display, map, &color );
 		}
     }
     
@@ -107,46 +100,47 @@ static BOOL COLOR_BuildMap( Colormap map, int depth, int size )
 
     for (i = 0; i < NB_SYS_COLORS; i++)
     {
-	if (!XParseColor( XT_display, map, SysColors[i], &color ))
+	if (!XParseColor( display, map, SysColors[i], &color ))
 	    color.red = color.green = color.blue = color.flags = 0;
 	if (i < NB_SYS_COLORS/2) color.pixel = i;
 	else color.pixel = (1 << depth) - NB_SYS_COLORS + i;
-	if (color.pixel < size) XStoreColor( XT_display, map, &color );
+	if (color.pixel < size) XStoreColor( display, map, &color );
     }
     return TRUE;
 }
-#endif  /* USE_PRIVATE_MAP */
+
 
 /***********************************************************************
  *           COLOR_Init
  */
 BOOL COLOR_Init()
 {
-    Visual * visual = DefaultVisual( XT_display, DefaultScreen(XT_display) );
+    Visual * visual = DefaultVisual( display, DefaultScreen(display) );
     
     switch(visual->class)
     {
-      case GrayScale:
-      case PseudoColor:
-      case DirectColor:
-
-#ifdef USE_PRIVATE_MAP
-	COLOR_WinColormap = XCreateColormap( XT_display,
-					     DefaultRootWindow(XT_display),
-					     visual, AllocAll );
-	if (COLOR_WinColormap)
-	    COLOR_BuildMap(COLOR_WinColormap,
-			   DefaultDepth(XT_display, DefaultScreen(XT_display)),
-			   visual->map_entries );
-	else COLOR_FillDefaultMap();
-	break;
-#endif  /* USE_PRIVATE_MAP */
-
-      case StaticGray:
-      case StaticColor:
-      case TrueColor:
+    case GrayScale:
+    case PseudoColor:
+    case DirectColor:
+	if (Options.usePrivateMap)
+	{
+	    COLOR_WinColormap = XCreateColormap( display,
+						 DefaultRootWindow(display),
+						 visual, AllocAll );
+	    if (COLOR_WinColormap)
+	    {
+		COLOR_BuildMap(COLOR_WinColormap,
+			       DefaultDepth(display, DefaultScreen(display)),
+			       visual->map_entries );
+		break;
+	    }
+	}
+	/* Fall through */
+    case StaticGray:
+    case StaticColor:
+    case TrueColor:
 	COLOR_FillDefaultMap();
-	COLOR_WinColormap = DefaultColormapOfScreen( XT_screen );	
+	COLOR_WinColormap = DefaultColormapOfScreen( screen );
 	break;	
     }
     return TRUE;

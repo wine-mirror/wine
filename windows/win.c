@@ -22,7 +22,7 @@ extern Colormap COLOR_WinColormap;
 
 extern void EVENT_RegisterWindow( Window w, HWND hwnd );  /* event.c */
 
-static HWND firstWindow = 0;
+HWND firstWindow = 0;
 
 /***********************************************************************
  *           WIN_FindWndPtr
@@ -240,6 +240,11 @@ HWND CreateWindowEx( DWORD exStyle, LPSTR className, LPSTR windowName,
     wndPtr->rectWindow.right  = x + width;
     wndPtr->rectWindow.bottom = y + height;
     wndPtr->rectClient        = wndPtr->rectWindow;
+    wndPtr->rectNormal        = wndPtr->rectWindow;
+    wndPtr->ptIconPos.x       = -1;
+    wndPtr->ptIconPos.y       = -1;
+    wndPtr->ptMaxPos.x        = -1;
+    wndPtr->ptMaxPos.y        = -1;
     wndPtr->hmemTaskQ         = GetTaskQueue(0);
     wndPtr->hrgnUpdate        = 0;
     wndPtr->hwndLastActive    = 0;
@@ -281,10 +286,9 @@ HWND CreateWindowEx( DWORD exStyle, LPSTR className, LPSTR windowName,
       /* Create the X window */
 
     win_attr.event_mask = ExposureMask | KeyPressMask | KeyReleaseMask |
-	                  PointerMotionMask | ButtonPressMask |
-			  ButtonReleaseMask | StructureNotifyMask |
-			  FocusChangeMask | EnterWindowMask;
-    win_attr.override_redirect = /*True*/ False;
+	                 PointerMotionMask | ButtonPressMask |
+			 ButtonReleaseMask | FocusChangeMask | EnterWindowMask;
+    win_attr.override_redirect = True;
     win_attr.colormap = COLOR_WinColormap;
     if (style & WS_CHILD)
     {
@@ -360,12 +364,14 @@ HWND CreateWindowEx( DWORD exStyle, LPSTR className, LPSTR windowName,
 
       /* Create scrollbars */
 
+#if 0
     if (windowName != NULL) SetWindowText(hwnd, windowName);
     if ((style & WS_CAPTION) == WS_CAPTION) {
 	wndPtr->hWndCaption = CreateWindow("CAPTION", "",
 		WS_CHILD | WS_CLIPSIBLINGS | WS_VISIBLE,
 		0, -20, width, 20, hwnd, 1, instance, 0L);
 	}
+#endif
     if (((style & WS_CHILD) != WS_CHILD) && (wndPtr->wIDmenu != 0)) {
 	lpbar = (LPPOPUPMENU) GlobalLock(wndPtr->wIDmenu);
 	if (lpbar != NULL) {
@@ -434,6 +440,7 @@ BOOL DestroyWindow( HWND hwnd )
 
       /* Destroy the window */
 
+    wndPtr->dwMagic = 0;  /* Mark it as invalid */
     XDestroyWindow( display, wndPtr->window );
     if (wndPtr->flags & WIN_OWN_DC) DCE_FreeDCE( wndPtr->hdce );
     classPtr->cWindows--;
@@ -553,6 +560,86 @@ WORD SetWindowWord( HWND hwnd, short offset, WORD newval )
     *ptr = newval;
     return retval;
 }
+
+
+
+/*******************************************************************
+ *    WIN_SetSensitive
+ * 
+ *      sets hWnd and all children to the same sensitivity
+ * 
+ *      sets hWnd sensitive and then calls SetSensitive on hWnd's child
+ *      and all of hWnd's child's Next windows 
+ */
+static BOOL WIN_SetSensitive(HWND hWnd, BOOL fEnable)
+{
+    WND *wndPtr;
+    HWND hwnd;
+
+    printf("in SetSenitive\n");
+
+    if (!hWnd) return 0;
+    if (!(wndPtr = WIN_FindWndPtr(hWnd))) return 0;
+
+	
+    if (fEnable) {
+        wndPtr->dwStyle &= ~WS_DISABLED;
+     } else {
+        wndPtr->dwStyle |= WS_DISABLED;
+     }
+  
+    hwnd=wndPtr->hwndChild;
+    while (hwnd) {					/* mk next child sens */
+        WIN_SetSensitive(hwnd, fEnable); 
+        if ( !(wndPtr=WIN_FindWndPtr(hwnd)) ) return 0;
+	hwnd=wndPtr->hwndNext;
+    }
+    return 1;
+
+}
+
+/*******************************************************************
+ *           EnableWindow   (USER.34)
+ * 
+ *
+ */
+
+BOOL EnableWindow(HWND hWnd, BOOL fEnable)
+{
+    WND *wndPtr;
+    int eprev;
+   
+    if (hWnd == 0) return 0;
+    
+    wndPtr = WIN_FindWndPtr(hWnd);
+    if (wndPtr == 0) return 0;
+
+    eprev = ! (wndPtr->dwStyle & WS_DISABLED);
+
+    if (fEnable != eprev) {                        /* change req */
+        printf("changing window\n");
+        WIN_SetSensitive(hWnd, fEnable); 
+        SendMessage(hWnd, WM_ENABLE, (WORD)fEnable, 0);  
+    }
+    return !eprev;
+}
+
+/***********************************************************************
+ *           IsWindowEnabled   (USER.35)
+ */
+ 
+BOOL IsWindowEnabled(HWND hWnd)
+{
+    WND * wndPtr; 
+
+    if (hWnd == 0) return 0;
+    wndPtr = WIN_FindWndPtr(hWnd);
+    if (wndPtr == 0) return 0;
+
+    return !(wndPtr->dwStyle & WS_DISABLED);
+}
+
+
 
 
 /**********************************************************************

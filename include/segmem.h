@@ -69,4 +69,10 @@ static __inline__ int Is16bitAddress(void *address)
     return ((int) address >= (((FIRST_SELECTOR << 3) | 0x0007) << 16));
 }
 
+extern SEGDESC Segments[];
+
 #endif /* SEGMEM_H */
+
+
+
+

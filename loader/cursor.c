@@ -77,6 +77,14 @@ HCURSOR LoadCursor(HANDLE instance, LPSTR cursor_name)
 		lpcur->xcursor = XCreateFontCursor(XT_display, XC_watch);
 		GlobalUnlock(hCursor);
 	    	return hCursor;
+	    case IDC_SIZENS:
+		lpcur->xcursor = XCreateFontCursor(XT_display, XC_sb_v_double_arrow);
+		GlobalUnlock(hCursor);
+	    	return hCursor;
+	    case IDC_SIZEWE:
+		lpcur->xcursor = XCreateFontCursor(XT_display, XC_sb_h_double_arrow);
+		GlobalUnlock(hCursor);
+	    	return hCursor;
 	    default:
 		break;
 	    }

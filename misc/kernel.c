@@ -5,6 +5,7 @@ static char Copyright[] = "Copyright  Robert J. Amstadt, 1993";
 #include <stdlib.h>
 #include "prototypes.h"
 #include "regfunc.h"
+#include "options.h"
 
 extern unsigned short WIN_StackSize;
 
@@ -48,7 +49,7 @@ KERNEL_InitTask()
     _BX = 0x81;
     _AX = 1;
     _CX = WIN_StackSize;
-    _DX = 1;
+    _DX = Options.cmdShow;
     _SI = 0;
     ReturnFromRegisterFunc();
     /* Function does not return */

@@ -21,6 +21,8 @@ static char Copyright[] = "Copyright Martin Ayotte, 1993";
 #include <dirent.h>
 #include <sys/stat.h>
 
+HBITMAP hComboBit = 0;
+
 LPHEADCOMBO ComboGetStorageHeader(HWND hwnd);
 int CreateComboStruct(HWND hwnd);
 
@@ -37,12 +39,21 @@ LONG ComboBoxWndProc( HWND hwnd, WORD message, WORD wParam, LONG lParam )
     int		AltState;
     WND  	*wndPtr;
     LPHEADCOMBO lphc;
+    LPDRAWITEMSTRUCT lpdis;
+    HDC		hMemDC;
+    BITMAP	bm;
     char	str[128];
     PAINTSTRUCT paintstruct;
     static RECT rectsel;
     switch(message)
     {
     case WM_CREATE:
+	ShowScrollBar(hwnd, SB_BOTH, FALSE);
+	GetClientRect(hwnd, &rect);
+	width = rect.right - rect.left;
+	height = rect.bottom - rect.top;
+/*	SetWindowPos(hwnd, 0, 0, 0, width, 16, 
+		SWP_NOMOVE | SWP_NOZORDER); */
 	CreateComboStruct(hwnd);
 	wndPtr = WIN_FindWndPtr(hwnd);
 	lphc = ComboGetStorageHeader(hwnd);
@@ -50,10 +61,10 @@ LONG ComboBoxWndProc( HWND hwnd, WORD message, WORD wParam, LONG lParam )
 #ifdef DEBUG_COMBO
         printf("Combo WM_CREATE %lX !\n", lphc);
 #endif
-	width = wndPtr->rectClient.right - wndPtr->rectClient.left;
-	height = wndPtr->rectClient.bottom - wndPtr->rectClient.top;
+	if (hComboBit == (HBITMAP)NULL) 
+	    hComboBit = LoadBitmap((HINSTANCE)NULL, MAKEINTRESOURCE(OBM_COMBO));
 	lphc->hWndDrop = CreateWindow("BUTTON", "", 
-        	WS_CHILD | WS_CLIPCHILDREN | WS_VISIBLE | BS_PUSHBUTTON,
+        	WS_CHILD | WS_CLIPCHILDREN | WS_VISIBLE | BS_OWNERDRAW,
         	width - 16, 0, 16, 16, hwnd, 1, wndPtr->hInstance, 0L);
 	lphc->hWndEdit = CreateWindow("STATIC", "", 
         	WS_CHILD | WS_CLIPCHILDREN | WS_VISIBLE | SS_LEFT,
@@ -189,6 +200,24 @@ LONG ComboBoxWndProc( HWND hwnd, WORD message, WORD wParam, LONG lParam )
 	break;
     case WM_CTLCOLOR:
     	return(SendMessage(GetParent(hwnd), WM_CTLCOLOR, wParam, lParam));
+    case WM_DRAWITEM:
+#ifdef DEBUG_SCROLL
+	    printf("ComboBox WM_DRAWITEM w=%04X l=%08X\n", wParam, lParam);
+#endif
+        lpdis = (LPDRAWITEMSTRUCT)lParam;
+	if (lpdis->CtlType == ODT_BUTTON && lpdis->itemAction == ODA_DRAWENTIRE) {
+	    hMemDC = CreateCompatibleDC(lpdis->hDC);
+	    GetObject(hComboBit, sizeof(BITMAP), (LPSTR)&bm);
+	    SelectObject(hMemDC, hComboBit);
+	    BitBlt(lpdis->hDC, 0, 0, bm.bmWidth, bm.bmHeight, hMemDC, 0, 0, SRCCOPY);
+	    DeleteDC(hMemDC);
+	    }
+	if (lpdis->CtlType == ODT_BUTTON && lpdis->itemAction == ODA_SELECT) {
+	    CopyRect(&rect, &lpdis->rcItem);
+	    InflateRect(&rect, -1, -1);
+	    DrawReliefRect(lpdis->hDC, rect, 1, 1);
+	    }
+	break;
     case WM_PAINT:
 	BeginPaint( hwnd, &paintstruct );
 	EndPaint( hwnd, &paintstruct );

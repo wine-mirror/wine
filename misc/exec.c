@@ -73,7 +73,7 @@ BOOL WinHelp(HWND hWnd, LPSTR lpHelpFile, WORD wCommand, DWORD dwData)
       case 0:
          printf("New process started !\n");
          ArgV[0] = "wine";
-         ArgV[1] = "/C:/windows/winhelp.exe";
+         ArgV[1] = "winhelp.exe";
          ArgV[2] = lpHelpFile;
          switch (wCommand) {
 	     case HELP_CONTEXT:
@@ -99,5 +99,3 @@ BOOL WinHelp(HWND hWnd, LPSTR lpHelpFile, WORD wCommand, DWORD dwData)
       }
 return(TRUE);
 }
-
-

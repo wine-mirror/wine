@@ -12,12 +12,15 @@ static char Copyright[] = "Copyright  Alexandre Julliard, 1993";
 #include "class.h"
 #include "user.h"
 
-extern Display * display;
-
 extern LONG NC_HandleNCPaint( HWND hwnd, HRGN hrgn );
 extern LONG NC_HandleNCCalcSize( HWND hwnd, NCCALCSIZE_PARAMS *params );
 extern LONG NC_HandleNCHitTest( HWND hwnd, POINT pt );
-extern LONG NC_HandleNCMouseMsg(HWND hwnd, WORD msg, WORD wParam, LONG lParam);
+extern LONG NC_HandleNCLButtonDown( HWND hwnd, WORD wParam, LONG lParam );
+extern LONG NC_HandleNCLButtonUp( HWND hwnd, WORD wParam, LONG lParam );
+extern LONG NC_HandleNCLButtonDblClk( HWND hwnd, WORD wParam, LONG lParam );
+extern LONG NC_HandleNCMouseMove( HWND hwnd, WORD wParam, POINT pt );
+extern LONG NC_HandleSysCommand( HWND hwnd, WORD wParam, POINT pt );
+extern LONG NC_HandleSetCursor( HWND hwnd, WORD wParam, LONG lParam );
 
 
 /***********************************************************************
@@ -28,7 +31,6 @@ LONG DefWindowProc( HWND hwnd, WORD msg, WORD wParam, LONG lParam )
     CLASS * classPtr;
     LPSTR textPtr;
     int len;
-    int tempwidth, tempheight;
     WND * wndPtr = WIN_FindWndPtr( hwnd );
     
 #ifdef DEBUG_MESSAGE
@@ -63,10 +65,16 @@ LONG DefWindowProc( HWND hwnd, WORD msg, WORD wParam, LONG lParam )
 	return NC_HandleNCHitTest( hwnd, MAKEPOINT(lParam) );
 
     case WM_NCLBUTTONDOWN:
+	return NC_HandleNCLButtonDown( hwnd, wParam, lParam );
+
     case WM_NCLBUTTONUP:
+	return NC_HandleNCLButtonUp( hwnd, wParam, lParam );
+
     case WM_NCLBUTTONDBLCLK:
+	return NC_HandleNCLButtonDblClk( hwnd, wParam, lParam );
+
     case WM_NCMOUSEMOVE:
-	return NC_HandleNCMouseMsg( hwnd, msg, wParam, lParam );
+	return NC_HandleNCMouseMove( hwnd, wParam, MAKEPOINT(lParam) );
 
     case WM_NCDESTROY:
 	{
@@ -170,32 +178,18 @@ LONG DefWindowProc( HWND hwnd, WORD msg, WORD wParam, LONG lParam )
 					    strlen((LPSTR)lParam) + 1);
 	    textPtr = (LPSTR)USER_HEAP_ADDR(wndPtr->hText);
 	    strcpy(textPtr, (LPSTR)lParam);
-	    XStoreName( display, wndPtr->window, textPtr );
 	    return (0L);
 	}
+
     case WM_SETCURSOR:
-	if (wndPtr->hCursor != (HCURSOR)NULL)
-	    SetCursor(wndPtr->hCursor);
-	return 0L;
+	if (wndPtr->dwStyle & WS_CHILD)
+	    if (SendMessage(wndPtr->hwndParent, WM_SETCURSOR, wParam, lParam))
+		return TRUE;
+	return NC_HandleSetCursor( hwnd, wParam, lParam );
+
     case WM_SYSCOMMAND:
-	switch (wParam)
-	    {
-	    case SC_CLOSE:
-		ShowWindow(hwnd, SW_MINIMIZE);
-		printf("defdwndproc WM_SYSCOMMAND SC_CLOSE !\n");
-	        return SendMessage( hwnd, WM_CLOSE, 0, 0 );
-	    case SC_RESTORE:
-		ShowWindow(hwnd, SW_RESTORE);
-		break;
-	    case SC_MINIMIZE:
-		ShowWindow(hwnd, SW_MINIMIZE);
-		printf("defdwndproc WM_SYSCOMMAND SC_MINIMIZE !\n");
-		break;
-	    case SC_MAXIMIZE:
-		ShowWindow(hwnd, SW_MAXIMIZE);
-		break;
-	    }
-    	break;    	
+	return NC_HandleSysCommand( hwnd, wParam, MAKEPOINT(lParam) );
+
     case WM_SYSKEYDOWN:
     	if (wParam == VK_MENU) {
     	    printf("VK_MENU Pressed // hMenu=%04X !\n", GetMenu(hwnd));

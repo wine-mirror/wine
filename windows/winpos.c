@@ -60,6 +60,44 @@ void ScreenToClient( HWND hwnd, LPPOINT lppnt )
 
 
 /*******************************************************************
+ *         WindowFromPoint   (USER.30)
+ */
+HWND WindowFromPoint( POINT pt )
+{
+    RECT rect;
+    HWND hwnd = firstWindow;
+    while (hwnd)
+    {
+	GetWindowRect( hwnd, &rect );
+	if (PtInRect( &rect, pt )) return hwnd;
+	hwnd = GetWindow( hwnd, GW_HWNDNEXT );
+    }
+    return 0;
+}
+
+
+/*******************************************************************
+ *         ChildWindowFromPoint   (USER.191)
+ */
+HWND ChildWindowFromPoint( HWND hwndParent, POINT pt )
+{
+    RECT rect;
+    HWND hwnd;
+    
+    GetWindowRect( hwndParent, &rect );
+    if (!PtInRect( &rect, pt )) return 0;
+    hwnd = GetTopWindow( hwndParent );
+    while (hwnd)
+    {
+	GetWindowRect( hwnd, &rect );
+	if (PtInRect( &rect, pt )) return hwnd;
+	hwnd = GetWindow( hwnd, GW_HWNDNEXT );
+    }
+    return 0;
+}
+
+
+/*******************************************************************
  *         MapWindowPoints   (USER.258)
  */
 void MapWindowPoints( HWND hwndFrom, HWND hwndTo, LPPOINT lppt, WORD count )
@@ -115,6 +153,15 @@ BOOL IsZoomed(HWND hWnd)
     WND * wndPtr = WIN_FindWndPtr(hWnd);
     if (wndPtr == NULL) return FALSE;
     return (wndPtr->dwStyle & WS_MAXIMIZE) != 0;
+}
+
+
+/***********************************************************************
+ *           BringWindowToTop   (USER.45)
+ */
+BOOL BringWindowToTop( HWND hwnd )
+{
+    return SetWindowPos( hwnd, HWND_TOP, 0, 0, 0, 0, SWP_NOMOVE | SWP_NOSIZE );
 }
 
 
@@ -192,6 +239,75 @@ BOOL ShowWindow( HWND hwnd, int cmd )
 		   MAKELONG(wndPtr->rectClient.left, wndPtr->rectClient.top) );
     }
     return wasVisible;
+}
+
+
+/***********************************************************************
+ *           GetInternalWindowPos   (USER.460)
+ */
+WORD GetInternalWindowPos( HWND hwnd, LPRECT rectWnd, LPPOINT ptIcon )
+{
+    WINDOWPLACEMENT wndpl;
+    if (!GetWindowPlacement( hwnd, &wndpl )) return 0;
+    if (rectWnd) *rectWnd = wndpl.rcNormalPosition;
+    if (ptIcon)  *ptIcon = wndpl.ptMinPosition;
+    return wndpl.showCmd;
+}
+
+
+/***********************************************************************
+ *           SetInternalWindowPos   (USER.461)
+ */
+void SetInternalWindowPos( HWND hwnd, WORD showCmd, LPRECT rect, LPPOINT pt )
+{
+    WINDOWPLACEMENT wndpl;
+    WND *wndPtr = WIN_FindWndPtr( hwnd );
+
+    wndpl.length  = sizeof(wndpl);
+    wndpl.flags   = (pt != NULL) ? WPF_SETMINPOSITION : 0;
+    wndpl.showCmd = showCmd;
+    if (pt) wndpl.ptMinPosition = *pt;
+    wndpl.rcNormalPosition = (rect != NULL) ? *rect : wndPtr->rectNormal;
+    wndpl.ptMaxPosition = wndPtr->ptMaxPos;
+    SetWindowPlacement( hwnd, &wndpl );
+}
+
+
+/***********************************************************************
+ *           GetWindowPlacement   (USER.370)
+ */
+BOOL GetWindowPlacement( HWND hwnd, WINDOWPLACEMENT *wndpl )
+{
+    WND *wndPtr = WIN_FindWndPtr( hwnd );
+    if (!wndPtr) return FALSE;
+
+    wndpl->length  = sizeof(*wndpl);
+    wndpl->flags   = 0;
+    wndpl->showCmd = IsZoomed(hwnd) ? SW_SHOWMAXIMIZED : 
+	             (IsIconic(hwnd) ? SW_SHOWMINIMIZED : SW_SHOWNORMAL);
+    wndpl->ptMinPosition = wndPtr->ptIconPos;
+    wndpl->ptMaxPosition = wndPtr->ptMaxPos;
+    wndpl->rcNormalPosition = wndPtr->rectNormal;
+    return TRUE;
+}
+
+
+/***********************************************************************
+ *           SetWindowPlacement   (USER.371)
+ */
+BOOL SetWindowPlacement( HWND hwnd, WINDOWPLACEMENT *wndpl )
+{
+    WND *wndPtr = WIN_FindWndPtr( hwnd );
+    if (!wndPtr) return FALSE;
+
+    if (wndpl->flags & WPF_SETMINPOSITION)
+	wndPtr->ptIconPos = wndpl->ptMinPosition;
+    if ((wndpl->flags & WPF_RESTORETOMAXIMIZED) &&
+	(wndpl->showCmd == SW_SHOWMINIMIZED)) wndPtr->flags |= WIN_RESTORE_MAX;
+    wndPtr->ptMaxPos   = wndpl->ptMaxPosition;
+    wndPtr->rectNormal = wndpl->rcNormalPosition;
+    ShowWindow( hwnd, wndpl->showCmd );
+    return TRUE;
 }
 
 

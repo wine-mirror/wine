@@ -196,10 +196,11 @@ static void MSG_RemoveMsg( MESSAGEQUEUE * msgQueue, int pos )
  *
  * Translate an mouse hardware event into a real mouse message.
  * Actions performed:
- * - Translate button down messages in double-clicks.
+ * - Translate button-down messages in double-clicks.
  * - Send the WM_NCHITTEST message to find where the cursor is.
  * - Translate the message into a non-client message, or translate
  *   the coordinates to client coordinates.
+ * - Send the WM_SETCURSOR message.
  */
 static void MSG_TranslateMouseMsg( MSG *msg )
 {
@@ -209,6 +210,8 @@ static void MSG_TranslateMouseMsg( MSG *msg )
 
     LONG hittest_result = SendMessage( msg->hwnd, WM_NCHITTEST, 0,
 				       MAKELONG( msg->pt.x, msg->pt.y ) );
+    SendMessage( msg->hwnd, WM_SETCURSOR, msg->hwnd,
+		 MAKELONG( hittest_result, msg->message ));
 
     if ((msg->message == WM_LBUTTONDOWN) ||
         (msg->message == WM_RBUTTONDOWN) ||
@@ -697,3 +700,13 @@ WORD RegisterWindowMessage( LPCSTR str )
     return GlobalAddAtom( str );
 }
 
+
+/***********************************************************************
+ *           GetTickCount    (USER.13)
+ */
+DWORD GetTickCount()
+{
+    struct timeval t;
+    gettimeofday( &t, NULL );
+    return (t.tv_sec * 1000) + (t.tv_usec / 1000);
+}

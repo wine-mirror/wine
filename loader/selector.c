@@ -62,6 +62,35 @@ extern int Argc;
  *					FindUnusedSelector
  */
 int
+FindUnusedSelectors(int n_selectors)
+{
+    int i;
+    int n_found;
+
+    n_found = 0;
+    for (i = LastUsedSelector + 1; i != LastUsedSelector; i++)
+    {
+	if (i >= MAX_SELECTORS)
+	{
+	    n_found = 0;
+	    i = FIRST_SELECTOR;
+	}
+	
+	if (!SelectorMap[i] && ++n_found == n_selectors)
+	    break;
+    }
+    
+    if (i == LastUsedSelector)
+	return 0;
+
+    LastUsedSelector = i;
+    return i - n_selectors + 1;
+}
+
+/**********************************************************************
+ *					FindUnusedSelector
+ */
+int
 FindUnusedSelector(void)
 {
     int i;
@@ -728,6 +757,7 @@ CreateSelectors(struct  w_files * wpnt)
     int i;
     int status;
     int old_length, file_image_length;
+    int saved_old_length;
 
     /*
      * Allocate memory for the table to keep track of all selectors.
@@ -828,14 +858,18 @@ CreateSelectors(struct  w_files * wpnt)
 	if (i + 1 == ne_header->auto_data_seg)
 	{
 	    auto_data_sel = s->selector;
-	    HEAP_LocalInit(s->base_addr + old_length, 
-			   ne_header->local_heap_length);
+	    saved_old_length = old_length;
 	}
     }
 
     s = selectors;
     for (i = 0; i < ne_header->n_segment_tab; i++, s++)
+    {
 	Segments[s->selector >> 3].owner = auto_data_sel;
+	if (s->selector == auto_data_sel)
+	    HEAP_LocalInit(auto_data_sel, s->base_addr + saved_old_length, 
+			   ne_header->local_heap_length);
+    }
 
     if(!EnvironmentSelector) {
 	    EnvironmentSelector = CreateEnvironment();

@@ -5,9 +5,12 @@
 
 #include <stdlib.h>
 #include <stdio.h>
+#include <X11/Xlib.h>
+#include <X11/Xresource.h>
 #include "wineopts.h"
 #include "windows.h"
 #include "wine.h"
+#include "options.h"
 
 #ifndef NOSPY
 
@@ -244,9 +247,14 @@ void SpyInit(void)
 
     if (SpyFp == NULL)
 	return;
-    
-    GetPrivateProfileString("spy", "file", "", filename, sizeof(filename),
-			    WINE_INI);
+
+    if (Options.spyFilename == NULL)
+    {
+	GetPrivateProfileString("spy", "file", "", filename, sizeof(filename),
+				WINE_INI);
+    }
+    else
+	strncpy(filename, Options.spyFilename, 100);
 
     if (strcasecmp(filename, "CON") == 0)
 	SpyFp = stdout;

@@ -117,7 +117,6 @@ static void EVENT_EnterNotify( HWND hwnd, XCrossingEvent *event );
 static void EVENT_FocusIn( HWND hwnd, XFocusChangeEvent *event );
 static void EVENT_FocusOut( HWND hwnd, XFocusChangeEvent *event );
 static void EVENT_Expose( HWND hwnd, XExposeEvent *event );
-static void EVENT_ConfigureNotify( HWND hwnd, XConfigureEvent *event );
 
 
 /***********************************************************************
@@ -170,10 +169,6 @@ void EVENT_ProcessEvent( XEvent *event )
 
     case Expose:
 	EVENT_Expose( hwnd, (XExposeEvent*)event );
-	break;
-
-    case ConfigureNotify:
-	EVENT_ConfigureNotify( hwnd, (XConfigureEvent*)event );
 	break;
 
 #ifdef DEBUG_EVENT
@@ -256,6 +251,12 @@ static void EVENT_key( HWND hwnd, XKeyEvent *event )
     printf("WM_KEY??? : keysym=%lX, count=%u / %X / '%s'\n", 
 	   keysym, count, Str[0], Str);
 #endif
+
+    if (wndPtr->dwStyle & WS_DISABLED) {
+	if (event->type == KeyPress) XBell(display, 0);
+	return;
+    }
+
 
     xkey = LOWORD(keysym);
     key_type = HIBYTE(xkey);
@@ -358,6 +359,14 @@ static void EVENT_key( HWND hwnd, XKeyEvent *event )
  */
 static void EVENT_MotionNotify( HWND hwnd, XMotionEvent *event )
 {
+    WND * wndPtr = WIN_FindWndPtr( hwnd );
+
+    if (!wndPtr) return;
+    if (wndPtr->dwStyle & WS_DISABLED) {
+        return;
+    }
+
+
     hardware_event( hwnd, WM_MOUSEMOVE,
 		    EVENT_XStateToKeyState( event->state ), 0L,
 		    event->x_root & 0xffff, event->y_root & 0xffff,
@@ -373,6 +382,18 @@ static void EVENT_ButtonPress( HWND hwnd, XButtonEvent *event )
     static WORD messages[NB_BUTTONS] = 
         { WM_LBUTTONDOWN, WM_MBUTTONDOWN, WM_RBUTTONDOWN };
     int buttonNum = event->button - 1;
+    WND * wndPtr = WIN_FindWndPtr( hwnd );
+
+    if (!wndPtr)  { 
+	printf("couldn't find window\n");
+	return;
+    }
+    if (wndPtr->dwStyle & WS_DISABLED) {
+	XBell(display, 0);
+        return;
+    }
+
+	
 
     if (buttonNum >= NB_BUTTONS) return;    
     winHasCursor = event->window;
@@ -391,6 +412,13 @@ static void EVENT_ButtonRelease( HWND hwnd, XButtonEvent *event )
     static const WORD messages[NB_BUTTONS] = 
         { WM_LBUTTONUP, WM_MBUTTONUP, WM_RBUTTONUP };
     int buttonNum = event->button - 1;
+    WND * wndPtr = WIN_FindWndPtr( hwnd );
+
+    if (!wndPtr) return;
+    if (wndPtr->dwStyle & WS_DISABLED) {
+        return;
+    } 
+
 
     if (buttonNum >= NB_BUTTONS) return;    
     winHasCursor = event->window;
@@ -401,42 +429,20 @@ static void EVENT_ButtonRelease( HWND hwnd, XButtonEvent *event )
 }
 
 
-/***********************************************************************
- *           EVENT_ConfigureNotify
- */
-static void EVENT_ConfigureNotify( HWND hwnd, XConfigureEvent *event )
-{
-    HANDLE handle;
-    NCCALCSIZE_PARAMS *params;	    
-    WND * wndPtr = WIN_FindWndPtr( hwnd );
-    if (!wndPtr) return;
-    wndPtr->rectWindow.left   = event->x;
-    wndPtr->rectWindow.top    = event->y;
-    wndPtr->rectWindow.right  = event->x + event->width;
-    wndPtr->rectWindow.bottom = event->y + event->height;
-
-      /* Send WM_NCCALCSIZE message */
-    handle = GlobalAlloc( GMEM_MOVEABLE, sizeof(*params) );
-    params = (NCCALCSIZE_PARAMS *)GlobalLock( handle );
-    params->rgrc[0] = wndPtr->rectWindow;
-    params->lppos   = NULL;  /* Should be WINDOWPOS struct */
-    SendMessage( hwnd, WM_NCCALCSIZE, FALSE, (LPARAM)params );
-    wndPtr->rectClient = params->rgrc[0];
-    PostMessage( hwnd, WM_MOVE, 0,
-		 MAKELONG( wndPtr->rectClient.left, wndPtr->rectClient.top ));
-    PostMessage( hwnd, WM_SIZE, SIZE_RESTORED,
-		 MAKELONG( wndPtr->rectClient.right-wndPtr->rectClient.left,
-			   wndPtr->rectClient.bottom-wndPtr->rectClient.top) );
-    GlobalUnlock( handle );
-    GlobalFree( handle );
-}
-
-
 /**********************************************************************
  *              EVENT_FocusIn
  */
 static void EVENT_FocusIn( HWND hwnd, XFocusChangeEvent *event )
 {
+
+    WND * wndPtr = WIN_FindWndPtr( hwnd );
+
+    if (!wndPtr) return;
+    if (wndPtr->dwStyle & WS_DISABLED) {
+	return;
+    }
+
+
     PostMessage( hwnd, WM_SETFOCUS, hwnd, 0 );
     hWndFocus = hwnd;
 }
@@ -447,6 +453,14 @@ static void EVENT_FocusIn( HWND hwnd, XFocusChangeEvent *event )
  */
 static void EVENT_FocusOut( HWND hwnd, XFocusChangeEvent *event )
 {
+
+    WND * wndPtr = WIN_FindWndPtr( hwnd );
+
+    if (!wndPtr) return;
+    if (wndPtr->dwStyle & WS_DISABLED) {
+	return;
+    }
+
     if (hWndFocus)
     {
 	PostMessage( hwnd, WM_KILLFOCUS, hwnd, 0 );
@@ -460,9 +474,20 @@ static void EVENT_FocusOut( HWND hwnd, XFocusChangeEvent *event )
  */
 static void EVENT_EnterNotify( HWND hwnd, XCrossingEvent *event )
 {
+    WND * wndPtr = WIN_FindWndPtr( hwnd );
+
+    if (!wndPtr) return;
+    if (wndPtr->dwStyle & WS_DISABLED) {
+	return;
+    }
+
     if (captureWnd != 0) return;
     winHasCursor = event->window;
-    PostMessage( hwnd, WM_SETCURSOR, hwnd, 0 );
+      /* Simulate a mouse motion to set the correct cursor */
+    hardware_event( hwnd, WM_MOUSEMOVE,
+		    EVENT_XStateToKeyState( event->state ), 0L,
+		    event->x_root & 0xffff, event->y_root & 0xffff,
+		    event->time, 0 );		    
 }
 
 

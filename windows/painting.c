@@ -33,13 +33,14 @@ HDC BeginPaint( HWND hwnd, LPPAINTSTRUCT lps )
 
     if (wndPtr->hrgnUpdate)
     {
-	DeleteObject( wndPtr->hrgnUpdate );
 	wndPtr->hrgnUpdate = 0;
 	MSG_DecPaintCount( wndPtr->hmemTaskQ );
     }
     wndPtr->flags &= ~WIN_NEEDS_BEGINPAINT;
 
     SendMessage( hwnd, WM_NCPAINT, hrgnUpdate, 0 );
+    if (hrgnUpdate) DeleteObject( hrgnUpdate );
+
     if (!(wndPtr->flags & WIN_ERASE_UPDATERGN)) lps->fErase = TRUE;
     else lps->fErase = !SendMessage( hwnd, WM_ERASEBKGND, lps->hdc, 0 );
     

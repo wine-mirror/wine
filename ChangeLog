@@ -1,3 +1,73 @@
+Thu Jan 13 11:45:13 1994  John Richardson <jrichard@cs.uml.edu>
+
+	* [window/win.c]
+	Added functions EnableWindow, IsWindowEnabled, and helper 
+	WIN_SetSensitive.
+	
+	* [window/event.c]
+	Added checks for WS_DISABLED windows in EVENT_key, EVENT_MotionNotify,
+	EVENT_ButtonPress, EVENT_ButtonRelease, EVENT_ConfigureNotify,
+	EVENT_FocusIn, EVENT_FocusOut, and EVENT_EnterNotify.  Key and 
+	button presses beep for a disabled window.  
+	If anyone finds better places for these checks, please tell me.
+
+Jan 17, 94 martin2@trgcorp.solucorp.qc.ca (Martin Ayotte)
+
+	* [misc/message.c]
+	Cleanup on buttons answer value returned.
+
+	* [control/combo.c]
+	Now use OBM_COMBO bitmap dropdown button.
+
+Mon Jan 17 21:56:45 1994  Erik Bos (erik@trashcan.hacktic.nl)
+
+	* [misc/comm/c]
+	A few bugfixes.
+
+Tue Jan 18 06:36:48 1994  julliard@di.epfl.ch (Alexandre Julliard)
+
+	* [loader/cursor.c]
+	Added X cursor for IDC_SIZENS and IDC_SIZEWE.
+
+	* [include/options.h] [misc/main.c]  (New files)
+	Rewrote main() function to get rid of Xt application context,
+	and added command-line option parsing.
+
+	* [objects/color.c]
+	Use of a private map now configurable with command-line option.
+
+	* [windows/defwnd.c]
+	Added WM_SYSCOMMAND handling, and better WM_SETCURSOR handling.
+
+	* [windows/event.c]
+	Removed ConfigureNotify event handler (no longer needed).
+
+	* [windows/message.c]
+	Send WM_SETCURSOR message on mouse events.
+
+	* [windows/nonclient.c]
+	Use OEM bitmaps for the drawing of the non-client area.
+	Added caption bar buttons handling, and moving and resizing of
+	the window via the window frame (bypassing the window manager).
+
+	* [windows/painting.c]
+	Bug fix in BeginPaint().
+
+	* [windows/win.c]
+	Set the override_redirect flag for windows (to bypass window
+	manager).
+
+	* [windows/winpos.c]
+	Implemented WindowFromPoint(), ChildWindowFromPoint(),
+	BringWindowToTop(), Get/SetInternalWindowPos(),
+	Get/SetWindowPlacement().
+
+Mon Jan 17 20:48:24 1994  Bob Amstadt  (bob@pooh)
+
+	* [memory/heap.c]
+	Added support for multiple local heaps.
+
+----------------------------------------------------------------------
 Tue Jan  4 13:01:33 1994  David Metcalfe <david@prism.demon.co.uk>
 
         * [window/caret.c]
@@ -84,7 +154,6 @@ Tue Jan 11 05:27:45 1994  julliard@di.epfl.ch (Alexandre Julliard
 	Added sending of the WM_NCPAINT message in SetWindowPos().
 	Removed the Xt code.
 
-----------------------------------------------------------------------
 Sun Jan  2 12:38:53 1994  David Metcalfe <david@prism.demon.co.uk>
 
 	* [windows/class.c]

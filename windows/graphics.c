@@ -382,7 +382,7 @@ BOOL FillRgn( HDC hdc, HRGN hrgn, HBRUSH hbrush )
 
 
 /***********************************************************************
- *           DrawFocusRect    (GDI.466)
+ *           DrawFocusRect    (USER.466)
  */
 void DrawFocusRect( HDC hdc, LPRECT rc )
 {

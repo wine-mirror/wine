@@ -108,6 +108,9 @@ LONG SystemMessageBoxProc(HWND hWnd, WORD message, WORD wParam, LONG lParam)
     int		x;
     switch(message) {
 	case WM_CREATE:
+#ifdef DEBUG_MSGBOX
+	    printf("MessageBox WM_CREATE !\n");
+#endif
 	    wndPtr = WIN_FindWndPtr(hWnd);
 	    createStruct = (CREATESTRUCT *)lParam;
      	    lpmbInit = (LPMSGBOX)createStruct->lpCreateParams;
@@ -122,55 +125,55 @@ LONG SystemMessageBoxProc(HWND hWnd, WORD message, WORD wParam, LONG lParam)
 		    lpmb->hWndYes = CreateWindow("BUTTON", "&Ok", 
 			WS_CHILD | WS_CLIPCHILDREN | WS_VISIBLE | BS_PUSHBUTTON,
 			rect.right / 2 - 30, rect.bottom - 25, 
-			60, 18, hWnd, 1, wndPtr->hInstance, 0L);
+			60, 18, hWnd, IDOK, wndPtr->hInstance, 0L);
 		    break;
 		case MB_OKCANCEL :
 		    lpmb->hWndYes = CreateWindow("BUTTON", "&Ok", 
 			WS_CHILD | WS_CLIPCHILDREN | WS_VISIBLE | BS_PUSHBUTTON,
 			rect.right / 2 - 65, rect.bottom - 25, 
-			60, 18, hWnd, 1, wndPtr->hInstance, 0L);
+			60, 18, hWnd, IDOK, wndPtr->hInstance, 0L);
 		    lpmb->hWndCancel = CreateWindow("BUTTON", "&Cancel", 
 			WS_CHILD | WS_CLIPCHILDREN | WS_VISIBLE | BS_PUSHBUTTON,
 			rect.right / 2 + 5, rect.bottom - 25, 
-			60, 18, hWnd, 2, wndPtr->hInstance, 0L);
+			60, 18, hWnd, IDCANCEL, wndPtr->hInstance, 0L);
 		    break;
 		case MB_ABORTRETRYIGNORE :
 		    lpmb->hWndYes = CreateWindow("BUTTON", "&Retry", 
 			WS_CHILD | WS_CLIPCHILDREN | WS_VISIBLE | BS_PUSHBUTTON,
 			rect.right / 2 - 100, rect.bottom - 25, 
-			60, 18, hWnd, 1, wndPtr->hInstance, 0L);
+			60, 18, hWnd, IDRETRY, wndPtr->hInstance, 0L);
 		    lpmb->hWndNo = CreateWindow("BUTTON", "&Ignore", 
 			WS_CHILD | WS_CLIPCHILDREN | WS_VISIBLE | BS_PUSHBUTTON,
 			rect.right / 2 - 30, rect.bottom - 25, 
-			60, 18, hWnd, 2, wndPtr->hInstance, 0L);
+			60, 18, hWnd, IDIGNORE, wndPtr->hInstance, 0L);
 		    lpmb->hWndCancel = CreateWindow("BUTTON", "&Abort", 
 			WS_CHILD | WS_CLIPCHILDREN | WS_VISIBLE | BS_PUSHBUTTON,
 			rect.right / 2 + 40, rect.bottom - 25, 
-			60, 18, hWnd, 3, wndPtr->hInstance, 0L);
+			60, 18, hWnd, IDABORT, wndPtr->hInstance, 0L);
 		    break;
 		case MB_YESNO :
 		    lpmb->hWndYes = CreateWindow("BUTTON", "&Yes", 
 			WS_CHILD | WS_CLIPCHILDREN | WS_VISIBLE | BS_PUSHBUTTON,
 			rect.right / 2 - 65, rect.bottom - 25, 
-			60, 18, hWnd, 1, wndPtr->hInstance, 0L);
+			60, 18, hWnd, IDYES, wndPtr->hInstance, 0L);
 		    lpmb->hWndNo = CreateWindow("BUTTON", "&No", 
 			WS_CHILD | WS_CLIPCHILDREN | WS_VISIBLE | BS_PUSHBUTTON,
 			rect.right / 2 + 5, rect.bottom - 25, 
-			60, 18, hWnd, 2, wndPtr->hInstance, 0L);
+			60, 18, hWnd, IDNO, wndPtr->hInstance, 0L);
 		    break;
 		case MB_YESNOCANCEL :
 		    lpmb->hWndYes = CreateWindow("BUTTON", "&Yes", 
 			WS_CHILD | WS_CLIPCHILDREN | WS_VISIBLE | BS_PUSHBUTTON,
 			rect.right / 2 - 100, rect.bottom - 25, 
-			60, 18, hWnd, 1, wndPtr->hInstance, 0L);
+			60, 18, hWnd, IDYES, wndPtr->hInstance, 0L);
 		    lpmb->hWndNo = CreateWindow("BUTTON", "&No", 
 			WS_CHILD | WS_CLIPCHILDREN | WS_VISIBLE | BS_PUSHBUTTON,
 			rect.right / 2 - 30, rect.bottom - 25, 
-			60, 18, hWnd, 2, wndPtr->hInstance, 0L);
+			60, 18, hWnd, IDNO, wndPtr->hInstance, 0L);
 		    lpmb->hWndCancel = CreateWindow("BUTTON", "&Cancel", 
 			WS_CHILD | WS_CLIPCHILDREN | WS_VISIBLE | BS_PUSHBUTTON,
 			rect.right / 2 + 40, rect.bottom - 25, 
-			60, 18, hWnd, 3, wndPtr->hInstance, 0L);
+			60, 18, hWnd, IDCANCEL, wndPtr->hInstance, 0L);
 		    break;
 		}
 	    switch(lpmb->wType & MB_ICONMASK) {
@@ -199,6 +202,9 @@ LONG SystemMessageBoxProc(HWND hWnd, WORD message, WORD wParam, LONG lParam)
 		}
 	    break;
 	case WM_PAINT:
+#ifdef DEBUG_MSGBOX
+	    printf("MessageBox WM_PAINT !\n");
+#endif
 	    lpmb = MsgBoxGetStorageHeader(hWnd);
 	    CopyRect(&rect, &lpmb->rectStr);
 	    hDC = BeginPaint(hWnd, &ps);
@@ -224,65 +230,12 @@ LONG SystemMessageBoxProc(HWND hWnd, WORD message, WORD wParam, LONG lParam)
 	    break;
 	case WM_COMMAND:
 	    lpmb = MsgBoxGetStorageHeader(hWnd);
-	    switch(wParam) {
-		case 1:
-		    lpmb->wRetVal = IDOK;
-		    break;
-		case 2:
-		    wndPtr = WIN_FindWndPtr(hWnd);
-		    hDC = GetDC(hWnd);
-/*
-		    for (x = 1; x < 50; x++) {
-			hBitMap = LoadBitmap(wndPtr->hInstance, MAKEINTRESOURCE(x));
-			GetObject(hBitMap, sizeof(BITMAP), (LPSTR)&bm);
-			hMemDC = CreateCompatibleDC(hDC);
-			SelectObject(hMemDC, hBitMap);
-			printf(" bm.bmWidth=%d bm.bmHeight=%d\n",
-				bm.bmWidth, bm.bmHeight);
-			BitBlt(hDC, x * 20, 30, bm.bmWidth, bm.bmHeight, hMemDC, 0, 0, SRCCOPY);
-			DeleteDC(hMemDC);
-			}
-*/
-		    hBitMap = LoadBitmap((HINSTANCE)NULL, "WINELOGO");
-		    GetObject(hBitMap, sizeof(BITMAP), (LPSTR)&bm);
-		    printf("bm.bmWidth=%d bm.bmHeight=%d\n",
-		    	bm.bmWidth, bm.bmHeight);  
-		    hMemDC = CreateCompatibleDC(hDC);
-		    SelectObject(hMemDC, hBitMap);
-		    BitBlt(hDC, 100, 30, bm.bmWidth, bm.bmHeight, hMemDC, 0, 0, SRCCOPY);
-		    DeleteDC(hMemDC);
-		    ReleaseDC(hWnd, hDC);
-		    lpmb->wRetVal = IDCANCEL;
-/*
-		    SetWindowPos(lpmb->hWndNo, (HWND)NULL, 20, 20, 0, 0, 
-		    		SWP_NOSIZE | SWP_NOZORDER);
-*/
-		    return 0;
-		    break;
-		case 3:
-		    hDC = GetDC(hWnd);
-		    hInst2 = LoadImage("ev3lite.exe");
-		    printf("hInst2=%04X\n", hInst2);
-		    hIcon = LoadIcon(hInst2, "EV3LITE");
-		    DrawIcon(hDC, 20, 20, hIcon);
-		    DestroyIcon(hIcon);
-		    hInst2 = LoadImage("moricons.dll");
-		    printf("hInst2=%04X\n", hInst2);
-		    hIcon = LoadIcon(hInst2, MAKEINTRESOURCE(1));
-/*		    hIcon = LoadIcon(hInst2, "WINEICON"); */
-		    DrawIcon(hDC, 60, 20, hIcon);
-		    DestroyIcon(hIcon);
-		    hIcon = LoadIcon((HINSTANCE)NULL, IDI_EXCLAMATION);
-		    DrawIcon(hDC, 1000, 20, hIcon);
-		    DestroyIcon(hIcon);
-		    ReleaseDC(hWnd, hDC);
-		    lpmb->wRetVal = IDIGNORE;
-		    return(0);
-		    break;
-		default:
-		    return(0);
-		}
-	    CloseWindow(hWnd);
+	    if (wParam < IDOK || wParam > IDNO) return(0);
+	    lpmb->wRetVal = wParam;
+#ifdef DEBUG_MSGBOX
+	    printf("MessageBox sending WM_CLOSE !\n");
+#endif
+	    PostMessage(hWnd, WM_CLOSE, 0, 0L);
 	    break;
 	default:
 	    return DefWindowProc(hWnd, message, wParam, lParam );
@@ -290,5 +243,54 @@ LONG SystemMessageBoxProc(HWND hWnd, WORD message, WORD wParam, LONG lParam)
 return(0);
 }
 
+
+
+/*************************************************************************
+ *			"About Wine..." Dialog Box
+ */
+BOOL FAR PASCAL AboutWine_Proc(HWND hDlg, WORD msg, WORD wParam, LONG lParam)
+{
+    HDC  	hDC;
+    HDC		hMemDC;
+    PAINTSTRUCT ps;
+    int 	OldBackMode;
+    HFONT	hOldFont;
+    RECT 	rect;
+    BITMAP	bm;
+    char 	C[80];
+    int 	X;
+    static HBITMAP	hBitMap;
+    switch (msg) {
+    case WM_INITDIALOG:
+	strcpy(C, "WINELOGO");
+	hBitMap = LoadBitmap((HINSTANCE)NULL, (LPSTR)C);
+	return TRUE;
+    case WM_PAINT:
+	hDC = BeginPaint(hDlg, &ps);
+	GetClientRect(hDlg, &rect);
+	FillRect(hDC, &rect, GetStockObject(GRAY_BRUSH));
+	InflateRect(&rect, -3, -3);
+	FrameRect(hDC, &rect, GetStockObject(BLACK_BRUSH));
+	InflateRect(&rect, -10, -10);
+	hMemDC = CreateCompatibleDC(hDC);
+	SelectObject(hMemDC, hBitMap);
+	GetObject(hBitMap, sizeof(BITMAP), (LPSTR)&bm);
+	BitBlt(hDC, rect.left, rect.top, bm.bmWidth, bm.bmHeight, 
+					hMemDC, 0, 0, SRCCOPY);
+	DeleteDC(hMemDC);
+	EndPaint(hDlg, &ps);
+	return TRUE;
+    case WM_COMMAND:
+	switch (wParam)
+	    {
+	    case IDOK:
+CloseDLG:	EndDialog(hDlg, TRUE);
+		return TRUE;
+	    default:
+		return TRUE;
+	    }
+    }
+return FALSE;
+}
 
 

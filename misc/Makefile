@@ -1,6 +1,6 @@
 CFLAGS=$(COPTS) $(DEBUGOPTS) -I../include
 
-OBJS=kernel.o user.o xt.o rect.o file.o sound.o emulate.o \
+OBJS=main.o kernel.o user.o rect.o file.o sound.o emulate.o \
      keyboard.o profile.o lstr.o exec.o message.o int1a.o int21.o \
      dos_fs.o comm.o spy.o
 

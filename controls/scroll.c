@@ -205,7 +205,9 @@ LONG ScrollBarWndProc( HWND hwnd, WORD message, WORD wParam, LONG lParam )
 	    if (lpdis->CtlID == 1) {
 		GetObject(hUpArrow, sizeof(BITMAP), (LPSTR)&bm);
 		SelectObject(hMemDC, hUpArrow);
-		BitBlt(lpdis->hDC, 0, 0, bm.bmWidth, bm.bmHeight, hMemDC, 0, 0, SRCCOPY);
+/*		BitBlt(lpdis->hDC, 0, 0, bm.bmWidth, bm.bmHeight, hMemDC, 0, 0, SRCCOPY); */
+		StretchBlt(lpdis->hDC, 0, 0, lpdis->rcItem.right, lpdis->rcItem.right,
+			hMemDC, 0, 0, bm.bmWidth, bm.bmHeight, SRCCOPY);
 		}
 	    if (lpdis->CtlID == 2) {
 		GetObject(hDnArrow, sizeof(BITMAP), (LPSTR)&bm);

@@ -25,6 +25,8 @@ struct DosDeviceStruct {
 	char *devicename;	/* /dev/cua1 */
 	int fd;
 	int suspended;
+	int unget;
+	int unget_byte;
 };
 
 struct DosDeviceStruct COM[MAX_PORTS];
@@ -83,15 +85,6 @@ void Comm_Init(void)
 
 	}
 	atexit(Comm_DeInit);
-
-#ifdef DEBUG_COMM
-	for (x=0; x!=MAX_PORTS; x++) {
-	    if (COM[x].devicename)
-		fprintf(stderr, "comm: COM%d = %s\n", x, COM[x].devicename);
-	    if (LPT[x].devicename)
-		fprintf(stderr, "comm: LPT%d = %s\n", x, LPT[x].devicename);
-	}
-#endif
 }
 
 void Comm_DeInit(void)
@@ -103,13 +96,11 @@ void Comm_DeInit(void)
 		if (COM[x].devicename) {
 			if (COM[x].fd)
 	    			close(COM[x].fd);
-			fprintf(stderr, "comm: COM%d = %s\n",x,COM[x].devicename);
 	        	free(COM[x].devicename);
 	    	}
 		if (LPT[x].devicename) {
 			if (LPT[x].fd)
 		    		close(LPT[x].fd);
-			fprintf(stderr, "comm: LPT%d = %s\n",x,LPT[x].devicename);
 			free(LPT[x].devicename);
 		}
 	}
@@ -799,7 +790,6 @@ int UngetCommChar(int fd, char chUnget)
 #ifdef DEBUG_COMM
 fprintf(stderr,"UngetCommChar: fd %d (char %d)\n", fd, chUnget);
 #endif	
-	fprintf(stderr,"NOT implemented!\n");
 
 	if ((ptr = GetDeviceStruct(fd)) == NULL) {
 		commerror = IE_BADID;
@@ -811,16 +801,22 @@ fprintf(stderr,"UngetCommChar: fd %d (char %d)\n", fd, chUnget);
 		return -1;
 	}	
 
+	ptr->unget = 1;
+	ptr->unget_byte = chUnget;
+	
 	commerror = 0;
 	return 0;
 }
 
 int ReadComm(int fd, LPSTR lpvBuf, int cbRead)
 {
+	int status, length;
 	struct DosDeviceStruct *ptr;
+
 #ifdef DEBUG_COMM
 fprintf(stderr,"ReadComm: fd %d, ptr %d, length %d\n", fd, lpvBuf, cbRead);
 #endif	
+
 	if ((ptr = GetDeviceStruct(fd)) == NULL) {
 		commerror = IE_BADID;
 		return -1;
@@ -831,18 +827,29 @@ fprintf(stderr,"ReadComm: fd %d, ptr %d, length %d\n", fd, lpvBuf, cbRead);
 		return -1;
 	}	
 
-	if (read(fd, (void *) lpvBuf, cbRead) == -1) {
+	if (ptr->unget) {
+		*lpvBuf = ptr->unget_byte;
+		lpvBuf++;
+		ptr->unget = 0;
+
+		length = 1;
+	} else
+	 	length = 0;
+
+	status = read(fd, (void *) lpvBuf, cbRead);
+
+	if (status == -1) {
 		commerror = WinError();
-		return -1;	
+		return -1 - length;	
 	} else {
 		commerror = 0;
-		return 0;
+		return length + status;
 	}
 }
 
 int WriteComm(int fd, LPSTR lpvBuf, int cbWrite)
 {
-	int x;
+	int x, length;
 	struct DosDeviceStruct *ptr;
 
 #ifdef DEBUG_COMM
@@ -859,14 +866,18 @@ fprintf(stderr,"WriteComm: fd %d, ptr %d, length %d\n", fd, lpvBuf, cbWrite);
 		return -1;
 	}	
 	
+#ifdef DEBUG_COMM
 	for (x=0; x != cbWrite ; x++)
 		fprintf(stderr,"%c", *(lpvBuf + x) );
+#endif
 
-	if (write(fd, (void *) lpvBuf, cbWrite) == -1) {
+	length = write(fd, (void *) lpvBuf, cbWrite);
+	
+	if (length == -1) {
 		commerror = WinError();
 		return -1;	
 	} else {
 		commerror = 0;	
-		return 0;
+		return length;
 	}
 }

@@ -9,11 +9,6 @@ static char Copyright2[] = "Copyright  Martin Ayotte, 1993";
 
 #include <X11/Intrinsic.h>
 #include <X11/StringDefs.h>
-#include <X11/Xaw/SmeBSB.h>
-#include <X11/Xaw/SmeLine.h>
-#include <X11/Xaw/SimpleMenu.h>
-#include "WinMenuButto.h"
-#include "SmeMenuButto.h"
 #include "windows.h"
 #include "menu.h"
 #include "heap.h"
