@@ -8,9 +8,11 @@ sub new {
     my $self  = {};
     bless ($self, $class);
 
+    my $options = \${$self->{OPTIONS}};
     my $output = \${$self->{OUTPUT}};
     my $name = \${$self->{NAME}};
 
+    $$options = shift;
     $$output = shift;
     $$name = shift;
     my $path = shift;
@@ -143,12 +145,12 @@ sub read_spec_files {
 sub parse_spec_file {
     my $self = shift;
 
+    my $options = \${$self->{OPTIONS}};
     my $output = \${$self->{OUTPUT}};
     my $function_arguments = \%{$self->{FUNCTION_ARGUMENTS}};
     my $function_calling_convention = \%{$self->{FUNCTION_CALLING_CONVENTION}};
     my $function_stub = \%{$self->{FUNCTION_STUB}};
     my $function_module = \%{$self->{FUNCTION_MODULE}};
-
 
     my $file = shift;
 
@@ -191,6 +193,38 @@ sub parse_spec_file {
 		$$function_module{$internal_name} = "$module";
 	    } elsif($$function_module{$internal_name} !~ /$module/) {
 		$$function_module{$internal_name} .= " & $module";
+	    }
+
+	    if($$options->spec_mismatch) {
+		if($external_name eq "@") {
+		    if($internal_name !~ /^\U$module\E_$ordinal$/) {
+			$$output->write("$file: $external_name: the internal name ($internal_name) mismatch\n");
+		    }
+		} else {
+		    my $name = $external_name;
+
+		    my $name1 = $name;
+		    $name1 =~ s/^Zw/Nt/;
+
+		    my $name2 = $name;
+		    $name2 =~ s/^(?:_|Rtl|k32|K32)//;
+
+		    my $name3 = $name;
+		    $name3 =~ s/^INT_Int[0-9a-f]{2}Handler$/BUILTIN_DefaultIntHandler/;
+
+		    my $name4 = $name;
+		    $name4 =~ s/^(VxDCall)\d$/$1/;
+
+		    # FIXME: This special case is becuase of a very ugly kludge that should be fixed IMHO
+		    my $name5 = $name;
+		    $name5 =~ s/^(.*?16)_(.*?)$/$1_fn$2/;
+
+		    if(uc($internal_name) ne uc($external_name) &&
+		       $internal_name !~ /(\Q$name\E|\Q$name1\E|\Q$name2\E|\Q$name3\E|\Q$name4\E|\Q$name5\E)/)
+		    {
+			$$output->write("$file: $external_name: internal name ($internal_name) mismatch\n");
+		    }
+		}
 	    }
 	} elsif(/^(\d+|@)\s+stub\s+(\S+)$/) {
 	    my $external_name = $2;
@@ -372,6 +406,13 @@ sub all_functions {
     my $function_calling_convention = \%{$self->{FUNCTION_CALLING_CONVENTION}};
 
     return sort(keys(%$function_calling_convention));
+}
+
+sub all_functions_stub {
+    my $self = shift;
+    my $function_stub = \%{$self->{FUNCTION_STUB}};
+
+    return sort(keys(%$function_stub));
 }
 
 sub all_functions_found {

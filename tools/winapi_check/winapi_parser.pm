@@ -36,6 +36,7 @@ sub parse_c_file {
     my %regs_entrypoints;
     my @comments = ();
     my $level = 0;
+    my $extern_c = 0;
     my $again = 0;
     my $lookahead = 0;
     my $lookahead_count = 0;
@@ -55,7 +56,8 @@ sub parse_c_file {
 		$lookahead_count = 0;
 	    }
 	    $lookahead_count++;
-	    print " $level: $line\n" if $options->debug >= 2;
+	    print " $level($lookahead_count): $line\n" if $options->debug >= 2;
+	    print "*** $_\n" if $options->debug >= 3;
 	} else {
 	    $lookahead_count = 0;
 	    $again = 0;
@@ -88,9 +90,15 @@ sub parse_c_file {
 		} else {
 		    &$preprocessor_found_callback($1, "");
 		}
-		$again = 1;
 		next;
 	    }
+	}
+
+	# Remove extern "C"
+	if(s/^\s*extern\s+"C"\s+\{//m) { 
+	    $extern_c = 1;
+	    $again = 1;
+	    next; 
 	}
 
 	my $documentation; 
@@ -157,6 +165,10 @@ sub parse_c_file {
 		$line .= "}" if $level > 1;
 		print "-1: \}$_\n" if $options->debug >= 2; 
 		$level--;
+		if($level == -1 && $extern_c) {
+		    $extern_c = 0;
+		    $level = 0;
+		}
 	    }
 
 	    if($line !~ /^\s*$/) {
@@ -166,7 +178,7 @@ sub parse_c_file {
 	    if($function && $level == 0) {
 		&$function_end;
 	    }
-	    next;
+	    next;	    
 	} elsif(/(extern\s+|static\s+)?((struct\s+|union\s+|enum\s+)?\w+((\s*\*)+\s*|\s+))((__cdecl|__stdcall|VFWAPIV|VFWAPI|WINAPIV|WINAPI)\s+)?(\w+(\(\w+\))?)\s*\(([^\)]*)\)\s*(\{|\;)/s) {
 	    $_ = $'; $again = 1;
 	    
@@ -299,6 +311,8 @@ sub parse_c_file {
 	} elsif(/\"[^\"]*\"/s) {
 	    $_ = $'; $again = 1;
 	} elsif(/;/s) {
+	    $_ = $'; $again = 1;
+	} elsif(/extern\s+"C"\s+{/s) {
 	    $_ = $'; $again = 1;
         } elsif(/\{/s) {
             $_ = $'; $again = 1;

@@ -34,6 +34,8 @@ my %options = (
     "config" => { default => 1, description => "check configuration include consistancy" },
     "config-unnessary" => { default => 0, parent => "config", description => "check for unnessary #include \"config.h\"" },
 
+    "spec-mismatch" => { default => 0, description => "spec file mismatch checking" },
+
     "local" =>  { default => 1, description => "local checking" },
     "module" => { 
 	default => { active => 1, filter => 0, hash => {} },
@@ -60,12 +62,15 @@ my %options = (
     "misplaced" => { default => 0, parent => "local", description => "check for misplaced functions" },
     "cross-call" => { default => 0, parent => "local", description => "check for cross calling functions" },
     "documentation" => { default => 1, parent => "local", description => "check for documentation inconsistances\n" },
-             
-    "global" => { default => 1, description => "global checking" }, 
+    "documentation-width" => { default => 0, parent => "documentation", description => "check for documentation width inconsistances\n" },
+
+    "global" => { default => 1, description => "global checking" },
     "declared" => { default => 1, parent => "global", description => "declared checking" }, 
     "implemented" => { default => 1, parent => "global", description => "implemented checking" },
     "implemented-win32" => { default => 0, parent => "implemented", description => "implemented as win32 checking" },
-    "include" => { default => 1, parent => "global", description => "include checking" }
+    "include" => { default => 1, parent => "global", description => "include checking" },
+    "headers" => { default => 0, parent => "global", description => "headers checking" },
+    "stubs" => { default => 0, parent => "global", description => "stubs checking" }
 );
 
 my %short_options = (
@@ -82,6 +87,7 @@ sub new {
 
     my $refarguments = shift;
     my @ARGV = @$refarguments;
+    my $wine_dir = shift;
 
     for my $name (sort(keys(%options))) {
         my $option = $options{$name};
@@ -92,7 +98,8 @@ sub new {
 	$$refvalue = $$option{default};
     }
 
-    my $files = \@{$self->{FILES}};
+    my $c_files = \@{$self->{C_FILES}};
+    my $h_files = \@{$self->{H_FILES}};
     my $module = \${$self->{MODULE}};
     my $global = \${$self->{GLOBAL}};
 
@@ -161,26 +168,33 @@ sub new {
 	    print STDERR "<internal>: usage: winapi-check [--help] [<files>]\n";
 	    exit 1;
 	} else {
-	    push @$files, $_;
+	    push @$c_files, $_;
 	}
     }
 
-    my $paths;
-    if($#$files == -1) {
-	$paths = ".";
+    my $c_paths;
+    if($#$c_files == -1) {
+	$c_paths = ".";
 	$$global = 1;
     } else {
-	$paths = join(" ",@$files);
+	$c_paths = join(" ", @$c_files);
     }
 
-    @$files = sort(map {
+    my $h_paths = "$wine_dir/include $wine_dir/include/wine";
+
+    @$c_files = sort(map {
 	s/^.\/(.*)$/$1/;
 	if(!/spec\.c$/) {
 	    $_;
 	} else {
 	    ();
 	}
-    } split(/\n/, `find $paths -name \\*.c`));
+    } split(/\n/, `find $c_paths -name \\*.c`));
+
+    @$h_files = sort(map {
+	s/^.\/(.*)$/$1/;
+	$_;
+    } split(/\n/, `find $h_paths -name \\*.h`));
 
     return $self;
 }
@@ -250,7 +264,9 @@ sub AUTOLOAD {
     return $$refvalue;
 }
 
-sub files { my $self = shift; return @{$self->{FILES}}; }
+sub c_files { my $self = shift; return @{$self->{C_FILES}}; }
+
+sub h_files { my $self = shift; return @{$self->{H_FILES}}; }
 
 sub report_module {
     my $self = shift;

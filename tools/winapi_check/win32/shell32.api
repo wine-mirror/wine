@@ -22,7 +22,6 @@ LRESULT
 UINT
 ULONG
 WCHAR
-WORD
 WPARAM
 
 %long # --forbidden

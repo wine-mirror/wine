@@ -42,7 +42,7 @@ BEGIN {
     import winapi_parser;
 }
 
-my $options = winapi_options->new(\@ARGV);
+my $options = winapi_options->new(\@ARGV, $wine_dir);
 if($options->help) {
     $options->show_help;
     exit;
@@ -50,8 +50,8 @@ if($options->help) {
 
 my $output = 'output'->new;
 
-my $win16api = 'winapi'->new($output, "win16", "$winapi_check_dir/win16");
-my $win32api = 'winapi'->new($output, "win32", "$winapi_check_dir/win32");
+my $win16api = 'winapi'->new($options, $output, "win16", "$winapi_check_dir/win16");
+my $win32api = 'winapi'->new($options, $output, "win32", "$winapi_check_dir/win32");
 'winapi'->read_spec_files($wine_dir, $win16api, $win32api);
 
 my $nativeapi = 'nativeapi'->new($output, "$winapi_check_dir/nativeapi.dat", "$wine_dir/configure.in", "$wine_dir/include/config.h.in");
@@ -108,11 +108,51 @@ my %includes;
     }    
 }
 
+my %declared_functions;
+
 my $progress_output;
 my $progress_current=0;
-my $progress_max=scalar($options->files);
-foreach my $file ($options->files) {
-    my %functions;
+my $progress_max=scalar($options->c_files);
+
+if($options->headers) {
+    $progress_max += scalar($options->h_files);
+
+    foreach my $file ($options->h_files) {
+	my %functions;
+	
+	$progress_current++;
+	if($options->progress) {
+	    $output->progress("$file: file $progress_current of $progress_max");
+	}
+	
+	my $found_function = sub {
+	    my $documentation = shift;
+	    my $linkage = shift;
+	    my $return_type = shift;
+	    my $calling_convention = shift;
+	    my $name = shift;
+	    my $refarguments = shift;
+	    my @arguments = @$refarguments;
+	    my $statements = shift;
+	    
+	    $declared_functions{$name}++;
+	};
+	
+	my $found_preprocessor = sub {
+	    my $directive = shift;
+	    my $argument = shift;
+	};
+	
+        winapi_parser::parse_c_file $options, $output, $file, $found_function, $found_preprocessor;
+    }
+}
+
+my %comment_width;
+my %module_pseudo_stub_count16;
+my %module_pseudo_stub_count32;
+
+foreach my $file ($options->c_files) {
+    my %functions = ();
 
     $progress_current++;
     if($options->progress) {
@@ -187,7 +227,18 @@ foreach my $file ($options->files) {
 	    };
 	    my $output16 = &$output_module($module16);
 	    my $output32 = &$output_module($module32);
-	    
+
+	    if($options->headers) {
+		if(!$declared_functions{$name}) {
+		    if($options->win16 && $options->report_module($module16)) {
+			&$output16("no prototype");
+		    }
+		    if($options->win32 && $options->report_module($module32)) {
+			&$output32("no prototype");
+		    }
+		} 
+	    }
+
 	    if($options->argument) {
 		if($options->win16 && $options->report_module($module16)) {
 		  winapi_local::check_function $options, $output16,
@@ -235,16 +286,28 @@ foreach my $file ($options->files) {
 		    }
 		}
 	    }
+
+	    if($options->stubs) {
+		if(defined($statements) && $statements =~ /FIXME[^;]*stub/) {
+		    if($options->win16 && $options->report_module($module16)) {
+			foreach my $module (split(/ \& /, $module16)) {
+			    $module_pseudo_stub_count16{$module}++;
+			}
+		    }
+		    if($options->win32 && $options->report_module($module32)) {
+			foreach my $module (split(/ \& /, $module32)) {
+			    $module_pseudo_stub_count32{$module}++;
+			}
+		    }
+		}
+	    }
 	    
 	    if($options->documentation && (defined($module16) || defined($module32)) && 
 	       $linkage ne "extern" && $statements ne "") 
 	    {		
 		my $name1;
 		my $name2;
-		my $name3;
-		my $name4;
-		my $name5;
-
+		
 		if(defined($module16) && !defined($module32)) {
 		    my @uc_modules16 = split(/\s*\&\s*/, uc($module16));
 		    push @uc_modules16, "WIN16";
@@ -254,17 +317,9 @@ foreach my $file ($options->files) {
 			if($name1 =~ s/^$uc_module16\_//) { last; }
 		    }
 
+		    # FIXME: This special case is becuase of a very ugly kludge that should be fixed IMHO
 		    $name2 = $name1;
-		    # $name2 =~ s/([AW])$/16$1/;
-
-		    $name3 = $name1;
-		    $name3 =~ s/16(([AW])?)$/$1/;
-
-		    $name4 = $name1;
-		    # $name4 =~ s/^(.*?)(?:16)?$/\U$1\E/;
-
-		    $name5 = $name1;
-		    $name5 = s/^(.*?)16_fn(.*?)$/$116_$2/;
+		    $name2 = s/^(.*?)16_fn(.*?)$/$116_$2/;
 		} elsif(!defined($module16) && defined($module32)) {
 		    my @uc_modules32 = split(/\s*\&\s*/, uc($module32));
 
@@ -274,15 +329,7 @@ foreach my $file ($options->files) {
 		    }
 
 		    $name2 = $name1;
-		    # $name2 =~ s/([AW])$/32$1/;
-
-		    $name3 = $name1;
-		    # $name3 =~ s/32(([AW])?)$/$1/;
-
-		    $name4 = $name1;
-		    $name4 =~ s/AW$//;
-
-		    $name5 = $name1;
+		    $name2 =~ s/AW$//;
 		} else {
 		    my @uc_modules = split(/\s*\&\s*/, uc($module16));
 		    push @uc_modules, split(/\s*\&\s*/, uc($module32));
@@ -293,20 +340,24 @@ foreach my $file ($options->files) {
 		    }
 
 		    $name2 = $name1;
-
-		    $name3 = $name1;
-
-		    $name4 = $name1;
-
-		    $name5 = $name1;
 		}
 
-		if($name !~ /^SMapLS|SUnMapLS/ && $documentation !~ /\b($name|$name1|$name2|$name3|$name4|$name5)\b/) {
+		if($documentation !~ /\b($name|$name1|$name2)\b/) {
 		    $output->write("$file: $name: \\\n");
 		    $output->write("$documentation\n");
-		}	       
-	    }
+		}
 
+		if($options->documentation_width) {		
+		    if($documentation =~ /(\/\**)/) {
+			my $width = length($1);
+			
+			$comment_width{$width}++;
+			if($width <= 65 || $width >= 81) {
+			    $output->write("$file: $name: comment is $width columns wide\n");
+			}
+		    }
+		}
+	    }
 	}
     };
 
@@ -424,10 +475,81 @@ foreach my $file ($options->files) {
 $output->hide_progress;
 
 if($options->global) {
+    if($options->documentation_width) {
+	foreach my $width (sort(keys(%comment_width))) {
+	    my $count = $comment_width{$width};
+	    $output->write("*.c: $count functions have comments of width $width\n");
+	}
+    }
+
+    if($options->stubs) {
+	if($options->win16) {
+	    my %module_stub_count16;
+	    my %module_total_count16;
+
+	    foreach my $name ($win16api->all_functions,$win16api->all_functions_stub) {
+		foreach my $module (split(/ \& /, $win16api->function_module($name))) {
+		    if($win16api->function_stub($name)) {
+			$module_stub_count16{$module}++;
+		    }
+		    $module_total_count16{$module}++;
+		}
+	    }
+
+	    foreach my $module (sort(keys(%module_pseudo_stub_count16))) {
+		if($options->report_module($module)) {
+		    my $real_stubs = $module_stub_count16{$module};
+		    my $pseudo_stubs = $module_pseudo_stub_count16{$module};
+
+		    if(!defined($real_stubs)) { $real_stubs = 0; }
+		    if(!defined($pseudo_stubs)) { $pseudo_stubs = 0; }
+
+		    my $stubs = $real_stubs + $pseudo_stubs;
+		    my $total = $module_total_count16{$module};
+
+		    if($stubs) {
+			$output->write("*.c: $module: $stubs of $total functions are stubs ($real_stubs real, $pseudo_stubs pseudo)\n");
+		    }
+		}
+	    }
+	}
+	
+	if($options->win32) {
+	    my %module_stub_count32;
+	    my %module_total_count32;
+
+	    foreach my $name ($win32api->all_functions,$win32api->all_functions_stub) {
+		foreach my $module (split(/ \& /, $win32api->function_module($name))) {
+		    if($win32api->function_stub($name)) {
+			$module_stub_count32{$module}++;
+		    }
+		    $module_total_count32{$module}++;
+		}
+	    }
+
+	    foreach my $module (sort(keys(%module_pseudo_stub_count32))) {
+		if($options->report_module($module)) {
+		    my $real_stubs = $module_stub_count32{$module};
+		    my $pseudo_stubs = $module_pseudo_stub_count32{$module};
+
+		    if(!defined($real_stubs)) { $real_stubs = 0; }
+		    if(!defined($pseudo_stubs)) { $pseudo_stubs = 0; }
+
+		    my $stubs = $real_stubs + $pseudo_stubs;
+		    my $total = $module_total_count32{$module};
+
+		    if($stubs) {
+			$output->write("*.c: $module: $stubs of $total functions are stubs ($real_stubs real, $pseudo_stubs pseudo)\n");
+		    }
+		}
+	    }
+	}
+    }
+
     foreach my $name (sort(keys(%includes))) {
 	if(!$includes{$name}{used}) {
 	    if($options->include) {
-		$output->write("$name: include file is never used\n");
+		$output->write("*.c: $name: include file is never used\n");
 	    }
 	}
     }
@@ -435,4 +557,3 @@ if($options->global) {
     winapi_global::check $options, $output, $win16api, $nativeapi if $options->win16;
     winapi_global::check $options, $output, $win32api, $nativeapi if $options->win32;
 }
-
