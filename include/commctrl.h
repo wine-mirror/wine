@@ -101,7 +101,6 @@ VOID WINAPI InitMUILanguage (LANGID uiLang);
 #define NM_SETCURSOR            (NM_FIRST-17)
 #define NM_CHAR                 (NM_FIRST-18)
 #define NM_TOOLTIPSCREATED      (NM_FIRST-19)
-#define NMUPDOWN                NM_UPDOWN
 
 /* callback constants */
 #define LPSTR_TEXTCALLBACKA    ((LPSTR)-1L)
@@ -341,6 +340,16 @@ typedef struct tagUDACCEL
 #define UDM_GETBASE        (WM_USER+110)
 #define UDM_SETRANGE32     (WM_USER+111)
 #define UDM_GETRANGE32     (WM_USER+112)
+
+#define NMUPDOWN    NM_UPDOWN
+#define LPNMUPDOWN  LPNM_UPDOWN
+
+typedef struct tagNM_UPDOWN
+{
+  NMHDR hdr;
+  int iPos;
+  int iDelta;
+} NM_UPDOWN, *LPNM_UPDOWN;
 
 HWND WINAPI CreateUpDownControl (DWORD, INT, INT, INT, INT,
                                    HWND, INT, HINSTANCE, HWND,

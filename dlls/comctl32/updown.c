@@ -56,13 +56,6 @@ typedef struct
   INT       Flags;        /* Internal Flags FLAG_* */
 } UPDOWN_INFO;
 
-typedef struct tagNM_UPDOWN
-{
-  NMHDR hdr;
-  int iPos;
-  int iDelta;
-} NM_UPDOWN;
-
 /* Control configuration constants */
 
 #define INITIAL_DELAY    500 /* initial timer until auto-increment kicks in */
