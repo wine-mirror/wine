@@ -745,18 +745,21 @@ static LRESULT WINAPI EditWndProc_common( HWND hwnd, UINT msg,
 
 	case WM_GETDLGCODE:
 		result = DLGC_HASSETSEL | DLGC_WANTCHARS | DLGC_WANTARROWS;
-                if( es->hwndListBox )
-                {
-                    if (lParam && (((LPMSG)lParam)->message == WM_KEYDOWN))
-                    {
-                       int vk = (int)((LPMSG)lParam)->wParam;
-                       if( vk == VK_RETURN || vk == VK_ESCAPE)
-                           if( SendMessageW(GetParent(hwnd), CB_GETDROPPEDSTATE, 0, 0))
-                                result |= DLGC_WANTMESSAGE;
-                    }
-		} else
-                    /* It seems in all other cases Windows has this set: */
-                    result |= DLGC_WANTMESSAGE;
+
+		if (lParam && (((LPMSG)lParam)->message == WM_KEYDOWN))
+		{
+		   int vk = (int)((LPMSG)lParam)->wParam;
+
+		   if (vk == VK_RETURN && (GetWindowLongW( hwnd, GWL_STYLE ) & ES_WANTRETURN))
+		   {
+		      result |= DLGC_WANTMESSAGE;
+		   }
+		   else if (es->hwndListBox && (vk == VK_RETURN || vk == VK_ESCAPE))
+		   {
+		      if (SendMessageW(GetParent(hwnd), CB_GETDROPPEDSTATE, 0, 0))
+		         result |= DLGC_WANTMESSAGE;
+		   }
+		}
 		break;
 
         case WM_IME_CHAR:
