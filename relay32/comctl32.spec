@@ -17,7 +17,7 @@ init	ComCtl32LibMain
   9 stub COMCTL32_9
  10 stub COMCTL32_10
  11 stdcall COMCTL32_11(long long long long long long) COMCTL32_11
- 12 stub Cctl1632_ThunkData32
+#12 stub Cctl1632_ThunkData32
  13 stub MakeDragList
  14 stub LBItemFromPt
  15 stub DrawInsert
@@ -95,7 +95,7 @@ init	ComCtl32LibMain
  87 stub _TrackMouseEvent
 
 151 stdcall CreateMRUListA(ptr) CreateMRUList32A
-152 stdcall FreeMRUList(long) FreeMRUList32A
+152 stdcall FreeMRUList(ptr) FreeMRUList32A
 153 stub AddMRUStringA@8
 154 stub EnumMRUListA@16
 155 stub FindMRUStringA@12
@@ -105,8 +105,8 @@ init	ComCtl32LibMain
 163 stub CreatePage
 164 stub CreateProxyPage
 
-167 stdcall AddMRUData(long long long) AddMRUData
-169 stdcall FindMRUData(long long long long) FindMRUData
+167 stdcall AddMRUData(ptr long long) AddMRUData
+169 stdcall FindMRUData(ptr long long long) FindMRUData
 
 233 stdcall Str_GetPtrA(str str long) Str_GetPtr32A
 234 stdcall Str_SetPtrA(str str) Str_SetPtr32A
@@ -134,8 +134,8 @@ init	ComCtl32LibMain
 338 stdcall DPA_Sort(ptr ptr long) DPA_Sort
 339 stdcall DPA_Search(ptr ptr long ptr long long) DPA_Search
 340 stdcall DPA_CreateEx(long long) DPA_CreateEx
-341 stdcall SendNotify(long long long long) COMCTL32_SendNotify
-342 stub SendNotifyEx
+341 stdcall SendNotify(long long long ptr) COMCTL32_SendNotify
+342 stdcall SendNotifyEx(long long long ptr long) COMCTL32_SendNotifyEx
 
 350 stdcall StrChrA(str str) COMCTL32_StrChrA
 351 stub StrRChrA

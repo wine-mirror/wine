@@ -23,21 +23,31 @@
 #include "debug.h"
 
 
-CRITICAL_SECTION cs_comctl_alloc;
-HANDLE32 hComctl32Heap = 0;
+extern HANDLE32 COMCTL32_hHeap; /* handle to the private heap */
 
 
 /**************************************************************************
  * COMCTL32_11 [COMCTL32.11]
+ *
+ * PARAMS
+ *     hdpa1    [I] handle to a dynamic pointer array
+ *     hdpa2    [I] handle to a dynamic pointer array
+ *     dwParam3
+ *     dwParam4
+ *     dwParam5
+ *     dwParam6
+ *
+ * NOTES
+ *     No more information available yet!
  */
 
 DWORD WINAPI
-COMCTL32_11 (DWORD dwParam1, DWORD dwParam2, DWORD dwParam3,
+COMCTL32_11 (HDPA hdpa1, HDPA hdpa2, DWORD dwParam3,
 	     DWORD dwParam4, DWORD dwParam5, DWORD dwParam6)
 {
 
-    FIXME (commctrl, "(%08lx, %08lx, %08lx, %08lx, %08lx, %08lx): empty stub\n",
-	   dwParam1, dwParam2, dwParam3, dwParam4, dwParam5, dwParam6);
+    FIXME (commctrl, "(%p %p %08lx %08lx %08lx %08lx): empty stub\n",
+	   hdpa1, hdpa2, dwParam3, dwParam4, dwParam5, dwParam6);
 
     return 0;
 }
@@ -46,7 +56,7 @@ COMCTL32_11 (DWORD dwParam1, DWORD dwParam2, DWORD dwParam3,
 /**************************************************************************
  * Alloc [COMCTL32.71]
  *
- * Allocates memory block from the dll's local heap
+ * Allocates memory block from the dll's private heap
  *
  * PARAMS
  *     dwSize [I] size of the allocated memory block
@@ -63,17 +73,10 @@ COMCTL32_Alloc (DWORD dwSize)
 
     TRACE (commctrl, "(0x%lx)\n", dwSize);
 
-    if (hComctl32Heap == 0) {
-	EnterCriticalSection ((void*)&cs_comctl_alloc);
-	hComctl32Heap = HeapCreate (0, 1, 0x4000000);
-	LeaveCriticalSection ((void*)&cs_comctl_alloc);
-	TRACE (commctrl, "Heap created: 0x%x\n", hComctl32Heap);
-	if (!hComctl32Heap)
-	    return NULL;        
-    }
+    lpPtr = HeapAlloc (COMCTL32_hHeap, HEAP_ZERO_MEMORY, dwSize);
 
-    lpPtr = HeapAlloc (hComctl32Heap, HEAP_ZERO_MEMORY, dwSize);
     TRACE (commctrl, "-- ret=%p\n", lpPtr);
+
     return lpPtr;
 }
 
@@ -82,7 +85,7 @@ COMCTL32_Alloc (DWORD dwSize)
  * ReAlloc [COMCTL32.72]
  *
  * Changes the size of an allocated memory block or allocates a memory
- * block using the dll's local heap.
+ * block using the dll's private heap.
  *
  * PARAMS
  *     lpSrc  [I] pointer to memory block which will be resized
@@ -104,19 +107,10 @@ COMCTL32_ReAlloc (LPVOID lpSrc, DWORD dwSize)
 
     TRACE (commctrl, "(%p 0x%08lx)\n", lpSrc, dwSize);
 
-    if (hComctl32Heap == 0) {
-	EnterCriticalSection ((void*)&cs_comctl_alloc);
-	hComctl32Heap = HeapCreate (0, 1, 0x4000000);
-	LeaveCriticalSection ((void*)&cs_comctl_alloc);
-	TRACE (commctrl, "Heap created: 0x%x\n", hComctl32Heap);
-	if (!hComctl32Heap)
-	    return NULL;        
-    }
-    
     if (lpSrc)
-	lpDest = HeapReAlloc (hComctl32Heap, HEAP_ZERO_MEMORY, lpSrc, dwSize);
+	lpDest = HeapReAlloc (COMCTL32_hHeap, HEAP_ZERO_MEMORY, lpSrc, dwSize);
     else
-	lpDest = HeapAlloc (hComctl32Heap, HEAP_ZERO_MEMORY, dwSize);
+	lpDest = HeapAlloc (COMCTL32_hHeap, HEAP_ZERO_MEMORY, dwSize);
 
     TRACE (commctrl, "-- ret=%p\n", lpDest);
 
@@ -127,7 +121,7 @@ COMCTL32_ReAlloc (LPVOID lpSrc, DWORD dwSize)
 /**************************************************************************
  * Free [COMCTL32.73]
 .*
- * Frees an allocated memory block from the dll's local heap.
+ * Frees an allocated memory block from the dll's private heap.
  *
  * PARAMS
  *     lpMem [I] pointer to memory block which will be freed
@@ -142,7 +136,7 @@ COMCTL32_Free (LPVOID lpMem)
 {
     TRACE (commctrl, "(%p)\n", lpMem);
 
-    return HeapFree (hComctl32Heap, 0, lpMem);
+    return HeapFree (COMCTL32_hHeap, 0, lpMem);
 }
 
 
@@ -150,7 +144,7 @@ COMCTL32_Free (LPVOID lpMem)
  * GetSize [COMCTL32.74]
  *
  * Retrieves the size of the specified memory block from the dll's
- * local heap.
+ * private heap.
  *
  * PARAMS
  *     lpMem [I] pointer to an allocated memory block
@@ -165,7 +159,7 @@ COMCTL32_GetSize (LPVOID lpMem)
 {
     TRACE (commctrl, "(%p)\n", lpMem);
 
-    return HeapSize (hComctl32Heap, 0, lpMem);
+    return HeapSize (COMCTL32_hHeap, 0, lpMem);
 }
 
 
@@ -185,7 +179,21 @@ typedef struct tagMRUINFO
     LPCSTR lpszSubKey;
     DWORD  dwParam6;
 } MRUINFO, *LPMRUINFO;
+
  
+typedef struct tagMRU
+{
+    DWORD  dwParam1;  /* some kind of flag */
+    DWORD  dwParam2;
+    DWORD  dwParam3;
+    HKEY   hkeyMRU;
+    LPCSTR lpszSubKey;
+    DWORD  dwParam6;
+} MRU, *HMRU;
+
+LPVOID WINAPI
+CreateMRUListEx32A (LPMRUINFO lpmi, DWORD dwParam2,
+		    DWORD dwParam3, DWORD dwParam4);
 
 
 /**************************************************************************
@@ -198,30 +206,54 @@ typedef struct tagMRUINFO
  */
 
 LPVOID WINAPI
-CreateMRUListEx32A (LPMRUINFO lpmi, DWORD dwParam2,
-		    DWORD dwParam3, DWORD dwParam4);
-
-LPVOID WINAPI
 CreateMRUList32A (LPMRUINFO lpmi)
 {
      return CreateMRUListEx32A (lpmi, 0, 0, 0);
 }
 
 
-
 DWORD WINAPI
-FreeMRUList32A (LPVOID ptr)
+FreeMRUList32A (HMRU hmru)
 {
-    FIXME (commctrl, "(%p) empty stub!\n", ptr);
+    FIXME (commctrl, "(%p) empty stub!\n", hmru);
 
-    COMCTL32_Free (ptr);
+#if 0
+    if (!(hmru->dwParam1 & 1001)) {
+	RegSetValueEx32A (hmru->hKeyMRU, "MRUList", 0, REG_SZ,
+			  hmru->lpszMRUString,
+			  lstrlen32A (hmru->lpszMRUString));
+    }
 
-    return TRUE;
+
+    RegClosKey32 (hmru->hkeyMRU
+    COMCTL32_Free32 (hmru->lpszMRUString);
+#endif
+
+    return COMCTL32_Free (hmru);
 }
 
 
 
+DWORD WINAPI
+AddMRUData (DWORD dwParam1, DWORD dwParam2, DWORD dwParam3)
+{
 
+    FIXME (commctrl, "(%lx %lx %lx) empty stub!\n",
+	   dwParam1, dwParam2, dwParam3);
+
+    return 0;
+}
+
+
+DWORD WINAPI
+FindMRUData (DWORD dwParam1, DWORD dwParam2, DWORD dwParam3, DWORD dwParam4)
+{
+
+    FIXME (commctrl, "(%lx %lx %lx %lx) empty stub!\n",
+	   dwParam1, dwParam2, dwParam3, dwParam4);
+
+    return -1;
+}
 
 
 LPVOID WINAPI
@@ -255,28 +287,6 @@ CreateMRUListEx32A (LPMRUINFO lpmi, DWORD dwParam2, DWORD dwParam3, DWORD dwPara
     return ptr;
 }
 
-
-
-DWORD WINAPI
-AddMRUData (DWORD dwParam1, DWORD dwParam2, DWORD dwParam3)
-{
-
-    FIXME (commctrl, "(%lx %lx %lx) empty stub!\n",
-	   dwParam1, dwParam2, dwParam3);
-
-    return 0;
-}
-
-
-DWORD WINAPI
-FindMRUData (DWORD dwParam1, DWORD dwParam2, DWORD dwParam3, DWORD dwParam4)
-{
-
-    FIXME (commctrl, "(%lx %lx %lx %lx) empty stub!\n",
-	   dwParam1, dwParam2, dwParam3, dwParam4);
-
-    return -1;
-}
 
 
 
@@ -459,7 +469,7 @@ DSA_Create (INT32 nSize, INT32 nGrow)
         hdsa->pData = NULL;
 	hdsa->nMaxCount = 0;
 	hdsa->nItemSize = nSize;
-	hdsa->nGrow = MIN(1, nGrow);
+	hdsa->nGrow = MAX(1, nGrow);
     }
 
     return hdsa;
@@ -795,8 +805,8 @@ DPA_Create (INT32 nGrow)
 
     hdpa = (HDPA)COMCTL32_Alloc (sizeof(DPA));
     if (hdpa) {
-	hdpa->nGrow = MIN(8, nGrow);
-	hdpa->hHeap = hComctl32Heap;
+	hdpa->nGrow = MAX(8, nGrow);
+	hdpa->hHeap = COMCTL32_hHeap;
 	hdpa->nMaxCount = hdpa->nGrow * 2;
 	hdpa->ptrs =
 	    (LPVOID*)COMCTL32_Alloc (hdpa->nMaxCount * sizeof(LPVOID));
@@ -856,7 +866,7 @@ DPA_Grow (const HDPA hdpa, INT32 nGrow)
     if (!hdpa)
 	return FALSE;
 
-    hdpa->nGrow = MIN(8, nGrow);
+    hdpa->nGrow = MAX(8, nGrow);
 
     return TRUE;
 }
@@ -1020,14 +1030,14 @@ DPA_InsertPtr (const HDPA hdpa, INT32 i, LPVOID p)
     if (!hdpa->ptrs) {
 	hdpa->ptrs =
 	    (LPVOID*)HeapAlloc (hdpa->hHeap, HEAP_ZERO_MEMORY,
-				hdpa->nGrow * sizeof(LPVOID));
+				2 * hdpa->nGrow * sizeof(LPVOID));
 	if (!hdpa->ptrs)
 	    return -1;
-	hdpa->nMaxCount = hdpa->nGrow;
+	hdpa->nMaxCount = hdpa->nGrow * 2;
         nIndex = 0;
     }
     else {
-	if (hdpa->nItemCount > hdpa->nMaxCount) {
+	if (hdpa->nItemCount >= hdpa->nMaxCount) {
 	    TRACE (commctrl, "-- resizing\n");
 	    nNewItems = hdpa->nMaxCount + hdpa->nGrow;
 	    nSize = nNewItems * sizeof(LPVOID);
@@ -1041,8 +1051,8 @@ DPA_InsertPtr (const HDPA hdpa, INT32 i, LPVOID p)
 	}
 
 	if (i >= hdpa->nItemCount) {
-	    TRACE (commctrl, "-- appending at %d\n", nIndex);
 	    nIndex = hdpa->nItemCount;
+	    TRACE (commctrl, "-- appending at %d\n", nIndex);
 	}
 	else {
 	    TRACE (commctrl, "-- inserting at %d\n", i);
@@ -1210,7 +1220,7 @@ DPA_DeleteAllPtrs (const HDPA hdpa)
 /**************************************************************************
  * DPA_QuickSort [Internal]
  *
- * Modified version of quicksort (used by DPA_Sort).
+ * Ordinary quicksort (used by DPA_Sort).
  *
  * PARAMS
  *     lpPtrs     [I] pointer to the pointer array
@@ -1221,38 +1231,32 @@ DPA_DeleteAllPtrs (const HDPA hdpa)
  *
  * RETURNS
  *     NONE
- *
- * NOTES
- *     Taken from R.Sedgewick "Algorithms in C"!
- *     If something goes wrong, blame HIM not ME! (Eric Kohl)
  */
 
 static VOID
-DPA_QuickSort (LPVOID *lpPtrs , INT32 l, INT32 r,
+DPA_QuickSort (LPVOID *lpPtrs, INT32 l, INT32 r,
 	       PFNDPACOMPARE pfnCompare, LPARAM lParam)
 {
     LPVOID t, v;
     INT32  i, j;
 
-    if (r > l) {
-	v = lpPtrs[r];
-	i = l - 1;
-	j = r;
-	for (;;) {
-	    while ((pfnCompare)(lpPtrs[++i], v, lParam) < 0);
-	    while ((pfnCompare)(lpPtrs[--j], v, lParam) > 0);
-	    if (i >= j)
-		break;
+    TRACE (commctrl, "l=%i r=%i\n", l, r);
+ 
+    i = l;
+    j = r;
+    v = lpPtrs[(int)(l+r)/2];
+    do {
+	while ((pfnCompare)(lpPtrs[i], v, lParam) < 0) i++;
+	while ((pfnCompare)(lpPtrs[j], v, lParam) > 0) j--;
+	if (i <= j) 
+	{
 	    t = lpPtrs[i];
-	    lpPtrs[i] = lpPtrs[j];
-	    lpPtrs[j] = t;
+	    lpPtrs[i++] = lpPtrs[j];
+	    lpPtrs[j--] = t;
 	}
-	t = lpPtrs[i];
-	lpPtrs[i] = lpPtrs[r];
-	lpPtrs[r] = t;
-	DPA_QuickSort (lpPtrs, l, i - 1, pfnCompare, lParam);
-	DPA_QuickSort (lpPtrs, i + 1, r, pfnCompare, lParam);
-    }
+    } while (i <= j);
+    if (l < j) DPA_QuickSort (lpPtrs, l, j, pfnCompare, lParam);
+    if (i < r) DPA_QuickSort (lpPtrs, i, r, pfnCompare, lParam);
 }
 
 
@@ -1306,6 +1310,7 @@ DPA_Sort (const HDPA hdpa, PFNDPACOMPARE pfnCompare, LPARAM lParam)
  *
  * NOTES
  *     Binary search taken from R.Sedgewick "Algorithms in C"!
+ *     Function is NOT tested!
  *     If something goes wrong, blame HIM not ME! (Eric Kohl)
  */
 
@@ -1402,7 +1407,7 @@ DPA_CreateEx (INT32 nGrow, HANDLE32 hHeap)
 
     if (hdpa) {
 	hdpa->nGrow = MIN(8, nGrow);
-	hdpa->hHeap = hHeap ? hHeap : hComctl32Heap;
+	hdpa->hHeap = hHeap ? hHeap : COMCTL32_hHeap;
 	hdpa->nMaxCount = hdpa->nGrow * 2;
 	hdpa->ptrs =
 	    (LPVOID*)HeapAlloc (hHeap, HEAP_ZERO_MEMORY,
@@ -1416,19 +1421,136 @@ DPA_CreateEx (INT32 nGrow, HANDLE32 hHeap)
 
 
 /**************************************************************************
- * SendNotify [COMCTL32.341]
- *
+ * Notification functions
  */
 
-DWORD WINAPI
-COMCTL32_SendNotify (DWORD dw1, DWORD dw2, DWORD dw3, DWORD dw4)
+typedef struct tagNOTIFYDATA
 {
-    FIXME (commctrl, "(0x%08lx 0x%08lx 0x%08lx 0x%08lx)\n",
-	   dw1, dw2, dw3, dw4);
+    HWND32 hwndFrom;
+    HWND32 hwndTo;
+    DWORD  dwParam3;
+    DWORD  dwParam4;
+    DWORD  dwParam5;
+    DWORD  dwParam6;
+} NOTIFYDATA, *LPNOTIFYDATA;
 
-    return 0;
+
+/**************************************************************************
+ * DoNotify [Internal]
+ */
+
+static LRESULT
+DoNotify (LPNOTIFYDATA lpNotify, UINT32 uCode, LPNMHDR lpHdr)
+{
+    NMHDR nmhdr;
+    LPNMHDR lpNmh = NULL;
+    UINT32 idFrom = 0;
+
+    TRACE (commctrl, "(0x%04x 0x%04x %d %p 0x%08lx)\n",
+	   lpNotify->hwndFrom, lpNotify->hwndTo, uCode, lpHdr,
+	   lpNotify->dwParam5);
+
+    if (!lpNotify->hwndTo)
+	return 0;
+
+    if (lpNotify->hwndFrom == -1) {
+	lpNmh = lpHdr;
+	idFrom = lpHdr->idFrom;
+    }
+    else {
+	if (lpNotify->hwndFrom) {
+	    HWND32 hwndParent = GetParent32 (lpNotify->hwndFrom);
+	    if (hwndParent) {
+		hwndParent = GetWindow32 (lpNotify->hwndFrom, GW_OWNER);
+		if (hwndParent)
+		    idFrom = GetDlgCtrlID32 (lpNotify->hwndFrom);
+	    }
+	}
+
+	lpNmh = (lpHdr) ? lpHdr : &nmhdr;
+
+	lpNmh->hwndFrom = lpNotify->hwndFrom;
+	lpNmh->idFrom = idFrom;
+	lpNmh->code = uCode;
+    }
+
+    return SendMessage32A (lpNotify->hwndTo, WM_NOTIFY, idFrom, (LPARAM)lpNmh);
 }
 
+
+/**************************************************************************
+ * SendNotify [COMCTL32.341]
+ *
+ * PARAMS
+ *     hwndFrom [I]
+ *     hwndTo   [I]
+ *     uCode    [I]
+ *     lpHdr    [I]
+ *
+ * RETURNS
+ *     Success: return value from notification
+ *     Failure: 0
+ */
+
+LRESULT WINAPI
+COMCTL32_SendNotify (HWND32 hwndFrom, HWND32 hwndTo,
+		     UINT32 uCode, LPNMHDR lpHdr)
+{
+    NOTIFYDATA notify;
+
+    TRACE (commctrl, "(0x%04x 0x%04x %d %p)\n",
+	   hwndFrom, hwndTo, uCode, lpHdr);
+
+    notify.hwndFrom = hwndFrom;
+    notify.hwndTo   = hwndTo;
+    notify.dwParam5 = 0;
+    notify.dwParam6 = 0;
+
+    return DoNotify (&notify, uCode, lpHdr);
+}
+
+
+/**************************************************************************
+ * SendNotifyEx [COMCTL32.342]
+ *
+ * PARAMS
+ *     hwndFrom [I]
+ *     hwndTo   [I]
+ *     uCode    [I]
+ *     lpHdr    [I]
+ *     dwParam5 [I]
+ *
+ * RETURNS
+ *     Success: return value from notification
+ *     Failure: 0
+ */
+
+LRESULT WINAPI
+COMCTL32_SendNotifyEx (HWND32 hwndTo, HWND32 hwndFrom, UINT32 uCode,
+		       LPNMHDR lpHdr, DWORD dwParam5)
+{
+    NOTIFYDATA notify;
+    HWND32 hwndNotify;
+
+    TRACE (commctrl, "(0x%04x 0x%04x %d %p 0x%08lx)\n",
+	   hwndFrom, hwndTo, uCode, lpHdr, dwParam5);
+
+    hwndNotify = hwndTo;
+    if (!hwndTo) {
+	if (IsWindow32 (hwndFrom)) {
+	    hwndNotify = GetParent32 (hwndFrom);
+	    if (!hwndNotify)
+		return 0;
+	}
+    }
+
+    notify.hwndFrom = hwndFrom;
+    notify.hwndTo   = hwndNotify;
+    notify.dwParam5 = dwParam5;
+    notify.dwParam6 = 0;
+
+    return DoNotify (&notify, uCode, lpHdr);
+}
 
 
 /**************************************************************************
@@ -1489,60 +1611,139 @@ COMCTL32_StrToIntA (LPSTR lpString)
 
 /**************************************************************************
  * COMCTL32_385 [COMCTL32.385]
+ *
+ * Enumerates all items in a dynamic pointer array.
+ *
+ * PARAMS
+ *     hdpa     [I] handle to the dynamic pointer array
+ *     enumProc [I]
+ *     dwParam3 [I] 
+ *
+ * RETURNS
+ *     none
+ *
+ * NOTES
+ *     Original function name unknown!
  */
 
-DWORD WINAPI
-COMCTL32_385 (DWORD dwParam1, DWORD dwParam2, DWORD dwParam3)
+typedef DWORD (CALLBACK *DPAENUMPROC)(LPVOID, DWORD);
+
+VOID WINAPI
+COMCTL32_385 (HDPA hdpa, DPAENUMPROC enumProc, DWORD dwParam3)
 {
+    INT32 i;
 
-    FIXME (commctrl, "(%08lx, %08lx, %08lx): empty stub\n",
-	   dwParam1, dwParam2, dwParam3);
+    TRACE (commctrl, "(%p %p %08lx)\n", hdpa, enumProc, dwParam3);
 
-    return 0;
+    if (!hdpa)
+	return;
+    if (hdpa->nItemCount <= 0)
+	return;
+
+    for (i = 0; i < hdpa->nItemCount; i++) {
+	if ((enumProc)(hdpa->ptrs[i], dwParam3) == 0)
+	    return;
+    }
+
+    return;
 }
 
 
 /**************************************************************************
  * COMCTL32_386 [COMCTL32.386]
+ *
+ * Enumerates all items in a dynamic pointer array and destroys it.
+ *
+ * PARAMS
+ *     hdpa     [I] handle to the dynamic pointer array
+ *     enumProc [I]
+ *     dwParam3 [I]
+ *
+ * RETURNS
+ *     Success: TRUE
+ *     Failure: FALSE
+ *
+ * NOTES
+ *     Original function name unknown!
  */
 
-DWORD WINAPI
-COMCTL32_386 (DWORD dwParam1, DWORD dwParam2, DWORD dwParam3)
+BOOL32 WINAPI
+COMCTL32_386 (HDPA hdpa, DPAENUMPROC enumProc, DWORD dwParam3)
 {
+    TRACE (commctrl, "(%p %p %08lx)\n", hdpa, enumProc, dwParam3);
 
-    FIXME (commctrl, "(%08lx, %08lx, %08lx): empty stub\n",
-	   dwParam1, dwParam2, dwParam3);
+    COMCTL32_385 (hdpa, enumProc, dwParam3);
 
-    return 0;
+    return DPA_Destroy (hdpa);
 }
 
 
 /**************************************************************************
  * COMCTL32_387 [COMCTL32.387]
+ *
+ * Enumerates all items in a dynamic storage array.
+ *
+ * PARAMS
+ *     hdsa     [I] handle to the dynamic storage array
+ *     enumProc [I]
+ *     dwParam3 [I] 
+ *
+ * RETURNS
+ *     none
+ *
+ * NOTES
+ *     Original function name unknown!
  */
 
-DWORD WINAPI
-COMCTL32_387 (DWORD dwParam1, DWORD dwParam2, DWORD dwParam3)
+typedef DWORD (CALLBACK *DSAENUMPROC)(LPVOID, DWORD);
+
+VOID WINAPI
+COMCTL32_387 (HDSA hdsa, DSAENUMPROC enumProc, DWORD dwParam3)
 {
+    INT32 i;
 
-    FIXME (commctrl, "(%08lx, %08lx, %08lx): empty stub\n",
-	   dwParam1, dwParam2, dwParam3);
+    TRACE (commctrl, "(%p %p %08lx)\n", hdsa, enumProc, dwParam3);
 
-    return 0;
+    if (!hdsa)
+	return;
+    if (hdsa->nItemCount <= 0)
+	return;
+
+    for (i = 0; i < hdsa->nItemCount; i++) {
+	LPVOID lpItem = DSA_GetItemPtr (hdsa, i);
+	if ((enumProc)(lpItem, dwParam3) == 0)
+	    return;
+    }
+
+    return;
 }
 
 
 /**************************************************************************
  * COMCTL32_388 [COMCTL32.388]
+ *
+ * Enumerates all items in a dynamic storage array and destroys it.
+ *
+ * PARAMS
+ *     hdsa     [I] handle to the dynamic storage array
+ *     enumProc [I]
+ *     dwParam3 [I] 
+ *
+ * RETURNS
+ *     Success: TRUE
+ *     Failure: FALSE
+ *
+ * NOTES
+ *     Original function name unknown!
  */
 
-DWORD WINAPI
-COMCTL32_388 (DWORD dwParam1, DWORD dwParam2, DWORD dwParam3)
+BOOL32 WINAPI
+COMCTL32_388 (HDSA hdsa, DSAENUMPROC enumProc, DWORD dwParam3)
 {
+    TRACE (commctrl, "(%p %p %08lx)\n", hdsa, enumProc, dwParam3);
 
-    FIXME (commctrl, "(%08lx, %08lx, %08lx): empty stub\n",
-	   dwParam1, dwParam2, dwParam3);
+    COMCTL32_387 (hdsa, enumProc, dwParam3);
 
-    return 0;
+    return DSA_Destroy (hdsa);
 }
 

@@ -328,14 +328,14 @@ BOOL32     WINAPI ImageList_DrawEx(HIMAGELIST,INT32,HDC32,INT32,INT32,INT32,
                                    INT32,COLORREF,COLORREF,UINT32);
 BOOL32     WINAPI ImageList_DrawIndirect(IMAGELISTDRAWPARAMS*); 
 HIMAGELIST WINAPI ImageList_Duplicate(HIMAGELIST);
-BOOL32     WINAPI ImageList_EndDrag (VOID);
+BOOL32     WINAPI ImageList_EndDrag(VOID);
 COLORREF   WINAPI ImageList_GetBkColor(HIMAGELIST);
 HIMAGELIST WINAPI ImageList_GetDragImage(POINT32*,POINT32*);
 HICON32    WINAPI ImageList_GetIcon(HIMAGELIST,INT32,UINT32);
 BOOL32     WINAPI ImageList_GetIconSize(HIMAGELIST,INT32*,INT32*);
 INT32      WINAPI ImageList_GetImageCount(HIMAGELIST);
 BOOL32     WINAPI ImageList_GetImageInfo(HIMAGELIST,INT32,IMAGEINFO*);
-BOOL32     WINAPI ImageList_GetImageRect (HIMAGELIST,INT32,LPRECT32);
+BOOL32     WINAPI ImageList_GetImageRect(HIMAGELIST,INT32,LPRECT32);
 HIMAGELIST WINAPI ImageList_LoadImage32A(HINSTANCE32,LPCSTR,INT32,INT32,
                                          COLORREF,UINT32,UINT32);
 HIMAGELIST WINAPI ImageList_LoadImage32W(HINSTANCE32,LPCWSTR,INT32,INT32,
@@ -343,7 +343,7 @@ HIMAGELIST WINAPI ImageList_LoadImage32W(HINSTANCE32,LPCWSTR,INT32,INT32,
 #define    ImageList_LoadImage WINELIB_NAME_AW(ImageList_LoadImage)
 HIMAGELIST WINAPI ImageList_Merge(HIMAGELIST,INT32,HIMAGELIST,INT32,INT32,INT32);
 #ifdef __IStream_INTREFACE_DEFINED__
-HIMAGELIST WINAPI ImageList_Read (LPSTREAM32);
+HIMAGELIST WINAPI ImageList_Read(LPSTREAM32);
 #endif
 BOOL32     WINAPI ImageList_Remove(HIMAGELIST,INT32);
 BOOL32     WINAPI ImageList_Replace(HIMAGELIST,INT32,HBITMAP32,HBITMAP32);
@@ -351,11 +351,11 @@ INT32      WINAPI ImageList_ReplaceIcon(HIMAGELIST,INT32,HICON32);
 COLORREF   WINAPI ImageList_SetBkColor(HIMAGELIST,COLORREF);
 BOOL32     WINAPI ImageList_SetDragCursorImage(HIMAGELIST,INT32,INT32,INT32);
 
-BOOL32     WINAPI ImageList_SetIconSize (HIMAGELIST,INT32,INT32);
-BOOL32     WINAPI ImageList_SetImageCount (HIMAGELIST,INT32);
+BOOL32     WINAPI ImageList_SetIconSize(HIMAGELIST,INT32,INT32);
+BOOL32     WINAPI ImageList_SetImageCount(HIMAGELIST,INT32);
 BOOL32     WINAPI ImageList_SetOverlayImage(HIMAGELIST,INT32,INT32);
 #ifdef __IStream_INTREFACE_DEFINED__
-BOOL32     WINAPI ImageList_Write (HIMAGELIST, LPSTREAM32);
+BOOL32     WINAPI ImageList_Write(HIMAGELIST, LPSTREAM32);
 #endif
 
 #ifndef __WINE__
@@ -369,10 +369,10 @@ BOOL32     WINAPI ImageList_Write (HIMAGELIST, LPSTREAM32);
 
 /* Header control */
 
-#define WC_HEADER16             "SysHeader" 
-#define WC_HEADER32A            "SysHeader32" 
-#define WC_HEADER32W            L"SysHeader32" 
-#define WC_HEADER  WINELIB_NAME_AW(WC_HEADER)
+#define WC_HEADER16		"SysHeader" 
+#define WC_HEADER32A		"SysHeader32" 
+#define WC_HEADER32W		L"SysHeader32" 
+#define WC_HEADER		WINELIB_NAME_AW(WC_HEADER)
  
 #define HDS_HORZ                0x0000 
 #define HDS_BUTTONS             0x0002 
@@ -2189,6 +2189,55 @@ typedef INT32 (CALLBACK *PFNLVCOMPARE)(LPARAM, LPARAM, LPARAM);
     (BOOL32)SendMessage32A(hwnd,ACM_PLAY,1,(LPARAM)MAKELONG(frame,frame))
 
 
+/**************************************************************************
+ * IP Address control
+ */
+
+#define WC_IPADDRESS32A		"SysIPAddress32"
+#define WC_IPADDRESS32W		L"SysIPAddress32"
+#define WC_IPADDRESS		WINELIB_NAME_AW(WC_IPADDRESS)
+
+#define IPM_CLEARADDRESS	(WM_USER+100)
+#define IPM_SETADDRESS		(WM_USER+101)
+#define IPM_GETADDRESS		(WM_USER+102)
+#define IPM_SETRANGE		(WM_USER+103)
+#define IPM_SETFOCUS		(WM_USER+104)
+#define IPM_ISBLANK		(WM_USER+105)
+
+#define IPN_FIELDCHANGED	(IPN_FIRST-0)
+
+typedef struct tagNMIPADDRESS
+{
+    NMHDR hdr;
+    INT32 iField;
+    INT32 iValue;
+} NMIPADDRESS, *LPNMIPADDRESS;
+
+#define MAKEIPRANGE(low,high) \
+    ((LPARAM)(WORD)(((BYTE)(high)<<8)+(BYTE)(low)))
+#define MAKEIPADDRESS(b1,b2,b3,b4) \
+    ((LPARAM)(((DWORD)(b1)<<24)+((DWORD)(b2)<16)+((DWORD)(b3)<<8)+((DWORD)(b4))))
+
+#define FIRST_IPADDRESS(x)	(((x)>>24)&0xff)
+#define SECOND_IPADDRESS(x)	(((x)>>16)&0xff)
+#define THIRD_IPADDRESS(x)	(((x)>>8)&0xff)
+#define FOURTH_IPADDRESS(x)	((x)&0xff)
+
+
+/**************************************************************************
+ * Native Font control
+ */
+
+#define WC_NATIVEFONTCTL32A	"NativeFontCtl"
+#define WC_NATIVEFONTCTL32W	L"NativeFontCtl"
+#define WC_NATIVEFONTCTL	WINELIB_NAME_AW(WC_NATIVEFONTCTL)
+
+#define NFS_EDIT		0x0001
+#define NFS_STATIC		0x0002
+#define NFS_LISTCOMBO		0x0004
+#define NFS_BUTTON		0x0008
+#define NFS_ALL			0x0010
+
 
 /**************************************************************************
  *  UNDOCUMENTED functions
@@ -2196,16 +2245,16 @@ typedef INT32 (CALLBACK *PFNLVCOMPARE)(LPARAM, LPARAM, LPARAM);
 
 /* local heap memory functions */
 
-LPVOID WINAPI COMCTL32_Alloc (DWORD dwSize);
-LPVOID WINAPI COMCTL32_ReAlloc (LPVOID lpSrc, DWORD dwSize);
-BOOL32 WINAPI COMCTL32_Free (LPVOID lpMem);
-DWORD  WINAPI COMCTL32_GetSize (LPVOID lpMem);
+LPVOID WINAPI COMCTL32_Alloc (DWORD);
+LPVOID WINAPI COMCTL32_ReAlloc (LPVOID, DWORD);
+BOOL32 WINAPI COMCTL32_Free (LPVOID);
+DWORD  WINAPI COMCTL32_GetSize (LPVOID);
 
 
-INT32  WINAPI Str_GetPtr32A (LPCSTR lpSrc, LPSTR lpDest, INT32 nMaxLen);
-BOOL32 WINAPI Str_SetPtr32A (LPSTR *lppDest, LPCSTR lpSrc);
-INT32  WINAPI Str_GetPtr32W (LPCWSTR lpSrc, LPWSTR lpDest, INT32 nMaxLen);
-BOOL32 WINAPI Str_SetPtr32W (LPWSTR *lppDest, LPCWSTR lpSrc);
+INT32  WINAPI Str_GetPtr32A (LPCSTR, LPSTR, INT32);
+BOOL32 WINAPI Str_SetPtr32A (LPSTR *, LPCSTR);
+INT32  WINAPI Str_GetPtr32W (LPCWSTR, LPWSTR, INT32);
+BOOL32 WINAPI Str_SetPtr32W (LPWSTR *, LPCWSTR);
 #define Str_GetPtr WINELIB_NAME_AW(Str_GetPtr)
 #define Str_SetPtr WINELIB_NAME_AW(Str_SetPtr)
 
@@ -2221,14 +2270,14 @@ typedef struct _DSA
     INT32  nGrow;
 } DSA, *HDSA;
 
-HDSA   WINAPI DSA_Create (INT32 nSize, INT32 nGrow);
-BOOL32 WINAPI DSA_DeleteAllItems (const HDSA hdsa);
-INT32  WINAPI DSA_DeleteItem (const HDSA hdsa, INT32 nIndex);
-BOOL32 WINAPI DSA_Destroy (const HDSA hdsa);
-BOOL32 WINAPI DSA_GetItem (const HDSA hdsa, INT32 nIndex, LPVOID pDest);
-LPVOID WINAPI DSA_GetItemPtr (const HDSA hdsa, INT32 nIndex);
-INT32  WINAPI DSA_InsertItem (const HDSA hdsa, INT32 nIndex, LPVOID pSrc);
-BOOL32 WINAPI DSA_SetItem (const HDSA hdsa, INT32 nIndex, LPVOID pSrc);
+HDSA   WINAPI DSA_Create (INT32, INT32);
+BOOL32 WINAPI DSA_DeleteAllItems (const HDSA);
+INT32  WINAPI DSA_DeleteItem (const HDSA, INT32);
+BOOL32 WINAPI DSA_Destroy (const HDSA);
+BOOL32 WINAPI DSA_GetItem (const HDSA, INT32, LPVOID);
+LPVOID WINAPI DSA_GetItemPtr (const HDSA, INT32);
+INT32  WINAPI DSA_InsertItem (const HDSA, INT32, LPVOID);
+BOOL32 WINAPI DSA_SetItem (const HDSA, INT32, LPVOID);
 
 
 /* Dynamic Pointer Array */
@@ -2242,32 +2291,38 @@ typedef struct _DPA
     INT32    nMaxCount;
 } DPA, *HDPA;
 
-HDPA   WINAPI DPA_Create (INT32 nGrow);
-HDPA   WINAPI DPA_CreateEx (INT32 nGrow, HANDLE32 hHeap);
-BOOL32 WINAPI DPA_Destroy (const HDPA hdpa);
-HDPA   WINAPI DPA_Clone (const HDPA hdpa, const HDPA hdpaNew);
-LPVOID WINAPI DPA_GetPtr (const HDPA hdpa, INT32 i);
-INT32  WINAPI DPA_GetPtrIndex (const HDPA hdpa, LPVOID p);
-BOOL32 WINAPI DPA_Grow (const HDPA pdpa, INT32 cp);
-BOOL32 WINAPI DPA_SetPtr (const HDPA hdpa, INT32 i, LPVOID p);
-INT32  WINAPI DPA_InsertPtr (const HDPA hdpa, INT32 i, LPVOID p);
-LPVOID WINAPI DPA_DeletePtr (const HDPA hdpa, INT32 i);
-BOOL32 WINAPI DPA_DeleteAllPtrs (const HDPA hdpa);
+HDPA   WINAPI DPA_Create (INT32);
+HDPA   WINAPI DPA_CreateEx (INT32, HANDLE32);
+BOOL32 WINAPI DPA_Destroy (const HDPA);
+HDPA   WINAPI DPA_Clone (const HDPA, const HDPA);
+LPVOID WINAPI DPA_GetPtr (const HDPA, INT32);
+INT32  WINAPI DPA_GetPtrIndex (const HDPA, LPVOID);
+BOOL32 WINAPI DPA_Grow (const HDPA, INT32);
+BOOL32 WINAPI DPA_SetPtr (const HDPA, INT32, LPVOID);
+INT32  WINAPI DPA_InsertPtr (const HDPA, INT32, LPVOID);
+LPVOID WINAPI DPA_DeletePtr (const HDPA, INT32);
+BOOL32 WINAPI DPA_DeleteAllPtrs (const HDPA);
 
-typedef INT32 (CALLBACK *PFNDPACOMPARE)(LPVOID p1, LPVOID p2, LPARAM lParam);
-BOOL32 WINAPI DPA_Sort (const HDPA hdpa, PFNDPACOMPARE pfnCompare, LPARAM lParam);
+typedef INT32 (CALLBACK *PFNDPACOMPARE)(LPVOID, LPVOID, LPARAM);
+BOOL32 WINAPI DPA_Sort (const HDPA, PFNDPACOMPARE, LPARAM);
 
 #define DPAS_SORTED             0x0001
 #define DPAS_INSERTBEFORE       0x0002
 #define DPAS_INSERTAFTER        0x0004
  
-INT32 WINAPI DPA_Search (const HDPA hdpa, LPVOID pFind, INT32 nStart,
-			 PFNDPACOMPARE pfnCompare,
-			 LPARAM lParam, UINT32 uOptions);
+INT32  WINAPI DPA_Search (const HDPA, LPVOID, INT32, PFNDPACOMPARE, LPARAM, UINT32);
 
 #define DPA_GetPtrCount(hdpa)  (*(INT32*)(hdpa))
 #define DPA_GetPtrPtr(hdpa)    (*((LPVOID**)((BYTE*)(hdpa)+sizeof(INT32))))
 #define DPA_FastGetPtr(hdpa,i) (DPA_GetPtrPtr(hdpa)[i])
+
+
+/* notification helper functions */
+
+LRESULT WINAPI COMCTL32_SendNotify (HWND32, HWND32, UINT32, LPNMHDR);
+
+/* type and functionality of last parameter is still unknown */
+LRESULT WINAPI COMCTL32_SendNotifyEx (HWND32, HWND32, UINT32, LPNMHDR, DWORD);
 
 
 #endif  /* __WINE_COMMCTRL_H */
