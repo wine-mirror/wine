@@ -47,9 +47,9 @@
 #include "wine/unicode.h"
 #include "wine/debug.h"
 #include "msvcrt/excpt.h"
+#include "console_private.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(console);
-
 
 static UINT console_input_codepage;
 static UINT console_output_codepage;
@@ -823,9 +823,6 @@ COORD WINAPI GetLargestConsoleWindowSize(HANDLE hConsoleOutput)
 }
 #endif /* defined(__i386__) */
 
-/* editline.c */
-extern WCHAR* CONSOLE_Readline(HANDLE, int);
-
 static WCHAR*	S_EditString /* = NULL */;
 static unsigned S_EditStrPos /* = 0 */;
 
@@ -850,15 +847,35 @@ BOOL WINAPI FreeConsole(VOID)
  * helper for AllocConsole
  * starts the renderer process
  */
-static	BOOL	start_console_renderer(void)
+static  BOOL    start_console_renderer_helper(const char* appname, STARTUPINFOA* si,
+                                              HANDLE hEvent)
 {
-    char		buffer[256];
-    int			ret;
-    STARTUPINFOA	si;
+    char		buffer[1024];
+    int                 ret;
     PROCESS_INFORMATION	pi;
+
+    /* FIXME: use dynamic allocation for most of the buffers below */
+    ret = snprintf(buffer, sizeof(buffer), "%s --use-event=%d", appname, hEvent);
+    if ((ret > -1) && (ret < sizeof(buffer)) &&
+        CreateProcessA(NULL, buffer, NULL, NULL, TRUE, DETACHED_PROCESS,
+                       NULL, NULL, si, &pi))
+    {
+        if (WaitForSingleObject(hEvent, INFINITE) != WAIT_OBJECT_0) return FALSE;
+
+        TRACE("Started wineconsole pid=%08lx tid=%08lx\n",
+              pi.dwProcessId, pi.dwThreadId);
+
+        return TRUE;
+    }
+    return FALSE;
+}
+
+static	BOOL	start_console_renderer(STARTUPINFOA* si)
+{
     HANDLE		hEvent = 0;
     LPSTR		p;
     OBJECT_ATTRIBUTES	attr;
+    BOOL                ret = FALSE;
 
     attr.Length                   = sizeof(attr);
     attr.RootDirectory            = 0;
@@ -870,39 +887,21 @@ static	BOOL	start_console_renderer(void)
     NtCreateEvent(&hEvent, EVENT_ALL_ACCESS, &attr, TRUE, FALSE);
     if (!hEvent) return FALSE;
 
-    memset(&si, 0, sizeof(si));
-    si.cb = sizeof(si);
-
-    /* FIXME: use dynamic allocation for most of the buffers below */
     /* first try environment variable */
     if ((p = getenv("WINECONSOLE")) != NULL)
     {
-	ret = snprintf(buffer, sizeof(buffer), "%s --use-event=%d", p, hEvent);
-	if ((ret > -1) && (ret < sizeof(buffer)) &&
-	    CreateProcessA(NULL, buffer, NULL, NULL, TRUE, DETACHED_PROCESS, NULL, NULL, &si, &pi))
-	    goto succeed;
-	ERR("Couldn't launch Wine console from WINECONSOLE env var... trying default access\n");
+        ret = start_console_renderer_helper(p, si, hEvent);
+        if (!ret)
+            ERR("Couldn't launch Wine console from WINECONSOLE env var (%s)... "
+                "trying default access\n", p);
     }
 
     /* then try the regular PATH */
-    sprintf(buffer, "wineconsole --use-event=%d", hEvent);
-    if (CreateProcessA(NULL, buffer, NULL, NULL, TRUE, DETACHED_PROCESS, NULL, NULL, &si, &pi))
-	goto succeed;
+    if (!ret)
+        ret = start_console_renderer_helper("wineconsole", si, hEvent);
 
-    goto the_end;
-
- succeed:
-    if (WaitForSingleObject(hEvent, INFINITE) != WAIT_OBJECT_0) goto the_end;
     CloseHandle(hEvent);
-
-    TRACE("Started wineconsole pid=%08lx tid=%08lx\n", pi.dwProcessId, pi.dwThreadId);
-
-    return TRUE;
-
- the_end:
-    ERR("Can't allocate console\n");
-    CloseHandle(hEvent);
-    return FALSE;
+    return ret;
 }
 
 /***********************************************************************
@@ -915,7 +914,9 @@ BOOL WINAPI AllocConsole(void)
     HANDLE 		handle_in = INVALID_HANDLE_VALUE;
     HANDLE		handle_out = INVALID_HANDLE_VALUE;
     HANDLE 		handle_err = INVALID_HANDLE_VALUE;
-    STARTUPINFOW si;
+    STARTUPINFOA        siCurrent;
+    STARTUPINFOA	siConsole;
+    char                buffer[1024];
 
     TRACE("()\n");
 
@@ -929,7 +930,29 @@ BOOL WINAPI AllocConsole(void)
 	return FALSE;
     }
 
-    if (!start_console_renderer())
+    GetStartupInfoA(&siCurrent);
+
+    memset(&siConsole, 0, sizeof(siConsole));
+    siConsole.cb = sizeof(siConsole);
+    /* setup a view arguments for wineconsole (it'll use them as default values)  */
+    if (siCurrent.dwFlags & STARTF_USECOUNTCHARS)
+    {
+        siConsole.dwFlags |= STARTF_USECOUNTCHARS;
+        siConsole.dwXCountChars = siCurrent.dwXCountChars;
+        siConsole.dwYCountChars = siCurrent.dwYCountChars;
+    }
+    if (siCurrent.dwFlags & STARTF_USEFILLATTRIBUTE)
+    {
+        siConsole.dwFlags |= STARTF_USEFILLATTRIBUTE;
+        siConsole.dwFillAttribute = siCurrent.dwFillAttribute;
+    }
+    /* FIXME (should pass the unicode form) */
+    if (siCurrent.lpTitle)
+        siConsole.lpTitle = siCurrent.lpTitle;
+    else if (GetModuleFileNameA(0, buffer, sizeof(buffer)))
+        siConsole.lpTitle = buffer;
+
+    if (!start_console_renderer(&siConsole))
 	goto the_end;
 
     handle_in = CreateFileA( "CONIN$", GENERIC_READ|GENERIC_WRITE|SYNCHRONIZE,
@@ -948,19 +971,6 @@ BOOL WINAPI AllocConsole(void)
     SetStdHandle(STD_INPUT_HANDLE,  handle_in);
     SetStdHandle(STD_OUTPUT_HANDLE, handle_out);
     SetStdHandle(STD_ERROR_HANDLE,  handle_err);
-
-    GetStartupInfoW(&si);
-    if (si.dwFlags & STARTF_USECOUNTCHARS)
-    {
-	COORD	c;
-	c.X = si.dwXCountChars;
-	c.Y = si.dwYCountChars;
-	SetConsoleScreenBufferSize(handle_out, c);
-    }
-    if (si.dwFlags & STARTF_USEFILLATTRIBUTE)
-	SetConsoleTextAttribute(handle_out, si.dwFillAttribute);
-    if (si.lpTitle)
-	SetConsoleTitleW(si.lpTitle);
 
     SetLastError(ERROR_SUCCESS);
 

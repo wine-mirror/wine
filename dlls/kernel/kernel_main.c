@@ -38,12 +38,13 @@
 #include "miscemu.h"
 #include "module.h"
 #include "task.h"
+#include "wincon.h"
+#include "console_private.h"
 
 extern void LOCALE_Init(void);
 extern BOOL RELAY_Init(void);
 
 extern  int __wine_set_signal_handler(unsigned, int (*)(unsigned));
-extern  int CONSOLE_HandleCtrlC(unsigned);
 
 extern int main_create_flags;
 
@@ -108,7 +109,7 @@ static BOOL process_attach(void)
     /* Create the shared heap for broken win95 native dlls */
     HeapCreate( HEAP_SHARED, 0, 0 );
 
-    /* finish the process initialisation, if needed */
+    /* finish the process initialisation for console bits, if needed */
     __wine_set_signal_handler(SIGINT, CONSOLE_HandleCtrlC);
 
     if (main_create_flags & CREATE_NEW_CONSOLE)
@@ -117,6 +118,8 @@ static BOOL process_attach(void)
         if (RtlImageNtHeader(mod)->OptionalHeader.Subsystem == IMAGE_SUBSYSTEM_WINDOWS_CUI)
             AllocConsole();
     }
+    if (main_create_flags & CREATE_NEW_PROCESS_GROUP)
+        SetConsoleCtrlHandler(NULL, TRUE);
 
     return TRUE;
 }

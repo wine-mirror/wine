@@ -29,14 +29,9 @@
 #include "wine/unicode.h"
 #include "winnls.h"
 #include "wine/debug.h"
+#include "console_private.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(console);
-
-/* console.c */
-extern int CONSOLE_GetHistory(int idx, WCHAR* buf, int buf_len);
-extern BOOL CONSOLE_AppendHistory(const WCHAR *p);
-extern unsigned int CONSOLE_GetNumHistoryEntries(void);
-extern void CONSOLE_FillLineUniform(HANDLE hConsoleOutput, int i, int j, int len, LPCHAR_INFO lpFill);
 
 struct WCEL_Context;
 
