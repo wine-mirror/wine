@@ -35,7 +35,6 @@
 #include "controls.h"
 #include "nonclient.h"
 #include "winpos.h"
-#include "dce.h"
 #include "message.h"
 #include "wine/unicode.h"
 #include "wine/winuser16.h"
@@ -201,7 +200,6 @@ static void DEFWND_SetRedraw( HWND hwnd, WPARAM wParam )
 	if( !bVisible )
 	{
             WIN_SetStyle( hwnd, wndPtr->dwStyle | WS_VISIBLE );
-            DCE_InvalidateDCE( hwnd, &wndPtr->rectWindow );
 	}
     }
     else if( bVisible )
@@ -210,7 +208,6 @@ static void DEFWND_SetRedraw( HWND hwnd, WPARAM wParam )
 	else wParam = RDW_ALLCHILDREN | RDW_VALIDATE;
 
         RedrawWindow( hwnd, NULL, 0, wParam );
-        DCE_InvalidateDCE( hwnd, &wndPtr->rectWindow );
         WIN_SetStyle( hwnd, wndPtr->dwStyle & ~WS_VISIBLE );
     }
     WIN_ReleaseWndPtr( wndPtr );

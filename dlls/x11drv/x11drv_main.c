@@ -59,7 +59,6 @@
 #include "wine/winbase16.h"
 #include "winreg.h"
 
-#include "win.h"
 #include "x11drv.h"
 #include "xvidmode.h"
 #include "xrandr.h"

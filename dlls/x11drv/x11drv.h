@@ -40,7 +40,8 @@ typedef int Status;
 
 #include "windef.h"
 #include "winbase.h"
-#include "win.h"
+#include "wingdi.h"
+#include "winuser.h"
 #include "ddrawi.h"
 #include "thread.h"
 
@@ -508,9 +509,11 @@ extern int X11DRV_ProcessTabletEvent(HWND hwnd, XEvent *event);
 /* x11drv private window data */
 struct x11drv_win_data
 {
+    HWND    hwnd;           /* hwnd that this private data belongs to */
     Window  whole_window;   /* X window for the complete window */
     Window  client_window;  /* X window for the client area */
     Window  icon_window;    /* X window for the icon */
+    RECT    window_rect;    /* USER window rectangle relative to parent */
     RECT    whole_rect;     /* X window rectangle for the whole window relative to parent */
     RECT    client_rect;    /* client area relative to whole window */
     XIC     xic;            /* X input context */
@@ -518,28 +521,16 @@ struct x11drv_win_data
     HBITMAP hWMIconMask;
 };
 
-typedef struct x11drv_win_data X11DRV_WND_DATA;
-
+extern struct x11drv_win_data *X11DRV_get_win_data( HWND hwnd );
 extern Window X11DRV_get_client_window( HWND hwnd );
 extern Window X11DRV_get_whole_window( HWND hwnd );
 extern BOOL X11DRV_is_window_rect_mapped( const RECT *rect );
 extern XIC X11DRV_get_ic( HWND hwnd );
 
-inline static Window get_client_window( WND *wnd )
+inline static BOOL is_window_top_level( HWND hwnd )
 {
-    struct x11drv_win_data *data = wnd->pDriverData;
-    return data->client_window;
-}
-
-inline static Window get_whole_window( WND *wnd )
-{
-    struct x11drv_win_data *data = wnd->pDriverData;
-    return data->whole_window;
-}
-
-inline static BOOL is_window_top_level( WND *win )
-{
-    return (root_window == DefaultRootWindow(gdi_display) && win->parent == GetDesktopWindow());
+    return (root_window == DefaultRootWindow(gdi_display) &&
+            GetAncestor( hwnd, GA_PARENT ) == GetDesktopWindow());
 }
 
 extern void X11DRV_SetFocus( HWND hwnd );
@@ -550,17 +541,19 @@ typedef int (*x11drv_error_callback)( Display *display, XErrorEvent *event, void
 extern void X11DRV_expect_error( Display *display, x11drv_error_callback callback, void *arg );
 extern int X11DRV_check_error(void);
 extern void X11DRV_register_window( Display *display, HWND hwnd, struct x11drv_win_data *data );
-extern void X11DRV_set_iconic_state( WND *win );
-extern void X11DRV_window_to_X_rect( WND *win, RECT *rect );
-extern void X11DRV_X_to_window_rect( WND *win, RECT *rect );
+extern void X11DRV_set_iconic_state( HWND hwnd );
+extern void X11DRV_window_to_X_rect( HWND hwnd, RECT *rect );
+extern void X11DRV_X_to_window_rect( HWND hwnd, RECT *rect );
 extern void X11DRV_create_desktop_thread(void);
 extern Window X11DRV_create_desktop( XVisualInfo *desktop_vi, const char *geometry );
-extern void X11DRV_sync_window_style( Display *display, WND *win );
-extern int X11DRV_sync_whole_window_position( Display *display, WND *win, int zorder );
-extern int X11DRV_sync_client_window_position( Display *display, WND *win );
+extern void X11DRV_sync_window_style( Display *display, struct x11drv_win_data *data );
+extern int X11DRV_sync_whole_window_position( Display *display, struct x11drv_win_data *data,
+                                              int zorder );
+extern int X11DRV_sync_client_window_position( Display *display, struct x11drv_win_data *data,
+                                               const RECT *new_client_rect );
 extern BOOL X11DRV_set_window_pos( HWND hwnd, HWND insert_after, const RECT *rectWindow,
                                    const RECT *rectClient, UINT swp_flags, UINT wvr_flags );
-extern void X11DRV_set_wm_hints( Display *display, WND *win );
+extern void X11DRV_set_wm_hints( Display *display, struct x11drv_win_data *data );
 
 extern void X11DRV_handle_desktop_resize(unsigned int width, unsigned int height);
 extern void X11DRV_Settings_AddDepthModes(void);

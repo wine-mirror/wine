@@ -32,6 +32,7 @@
 #include "winbase.h"
 #include "wine/winuser16.h"
 
+#include "win.h"
 #include "x11drv.h"
 #include "wine/debug.h"
 
@@ -69,19 +70,15 @@ static BYTE *pKeyStateTable;
  */
 static void get_coords( HWND *hwnd, Window window, int x, int y, POINT *pt )
 {
-    struct x11drv_win_data *data;
-    WND *win;
+    struct x11drv_win_data *data = X11DRV_get_win_data( *hwnd );
 
-    if (!(win = WIN_GetPtr( *hwnd )) || win == WND_OTHER_PROCESS) return;
-    data = win->pDriverData;
+    if (!data) return;
 
     if (window == data->whole_window)
     {
         x -= data->client_rect.left;
         y -= data->client_rect.top;
     }
-    WIN_ReleasePtr( win );
-
     pt->x = x;
     pt->y = y;
     if (*hwnd != GetDesktopWindow())

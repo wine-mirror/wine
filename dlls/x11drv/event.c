@@ -1051,17 +1051,18 @@ static void EVENT_DropFromOffiX( HWND hWnd, XClientMessageEvent *event )
     } 			u;
     int			x, y;
     BOOL	        bAccept;
-    Window		w_aux_root, w_aux_child;
+    Window		win, w_aux_root, w_aux_child;
     WND*                pWnd;
     HWND		hScope = hWnd;
 
-    pWnd = WIN_FindWndPtr(hWnd);
-
+    win = X11DRV_get_whole_window(hWnd);
     wine_tsx11_lock();
-    XQueryPointer( event->display, get_whole_window(pWnd), &w_aux_root, &w_aux_child,
+    XQueryPointer( event->display, win, &w_aux_root, &w_aux_child,
                    &x, &y, (int *) &u.pt_aux.x, (int *) &u.pt_aux.y,
                    (unsigned int*)&aux_long);
     wine_tsx11_unlock();
+
+    pWnd = WIN_FindWndPtr(hWnd);
 
     /* find out drop point and drop window */
     if( x < 0 || y < 0 ||

@@ -78,7 +78,6 @@
 #include "winbase.h"
 #include "winreg.h"
 #include "wine/wingdi16.h"
-#include "win.h"
 #include "x11drv.h"
 #include "wine/debug.h"
 #include "wine/unicode.h"

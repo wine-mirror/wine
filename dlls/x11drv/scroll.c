@@ -31,7 +31,6 @@
 #include "winuser.h"
 
 #include "x11drv.h"
-#include "win.h"
 #include "wine/debug.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(scroll);
