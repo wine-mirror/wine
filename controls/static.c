@@ -445,7 +445,9 @@ static void STATIC_PaintTextfn( WND *wndPtr, HDC hdc )
     {
         hBrush = SendMessageW( GetParent(wndPtr->hwndSelf), WM_CTLCOLORSTATIC,
                              hdc, wndPtr->hwndSelf );
-        if (!hBrush) hBrush = GetStockObject(WHITE_BRUSH);
+        if (!hBrush) /* did the app forget to call defwindowproc ? */
+            hBrush = DefWindowProcW(GetParent(wndPtr->hwndSelf), WM_CTLCOLORSTATIC,
+                                    hdc, wndPtr->hwndSelf);
         FillRect( hdc, &rc, hBrush );    
     }
     if (!IsWindowEnabled(wndPtr->hwndSelf))
