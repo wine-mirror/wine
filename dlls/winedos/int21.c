@@ -26,6 +26,10 @@
 #include "config.h"
 
 #include <stdarg.h>
+#include <stdio.h>
+#ifdef HAVE_UNISTD_H
+# include <unistd.h>
+#endif
 
 #include "windef.h"
 #include "winbase.h"
@@ -44,9 +48,15 @@
 #include "wine/exception.h"
 
 /*
- * FIXME: Delete this reference when all int21 code has been moved to winedos.
+ * Note:
+ * - Most of the file related functions are wrong. NT's kernel32
+ *   doesn't maintain a per drive current directory, while DOS does. 
+ *   We should in fact keep track in here of those per driver
+ *   directories, and use this infro while dealing with partial paths
+ *   (drive defined, but only relative paths). This could even be
+ *   created as an array of CDS (there should be an entry for that in
+ *   the LOL)
  */
-extern void WINAPI INT_Int21Handler( CONTEXT86 *context );
 
 /*
  * Forward declarations.
@@ -161,13 +171,32 @@ struct XFCB {
 #include "poppack.h"
 
 
+/* Many calls translate a drive argument like this:
+   drive number (00h = default, 01h = A:, etc)
+   */
+/******************************************************************
+ *		INT21_DriveName
+ *
+ * Many calls translate a drive argument like this:
+ * drive number (00h = default, 01h = A:, etc)
+ */
+static const char *INT21_DriveName(int drive)
+{
+    if (drive > 0) 
+    {
+        if (drive <= 26) return wine_dbg_sprintf("%c:", 'A' + drive - 1);
+        else return wine_dbg_sprintf( "<Bad drive: %d>", drive);
+    }
+    return "default";
+}
+
 /***********************************************************************
  *           INT21_GetCurrentDrive
  *
  * Return current drive using scheme (0=A:, 1=B:, 2=C:, ...) or
  * MAX_DOS_DRIVES on error.
  */
-static BYTE INT21_GetCurrentDrive()
+static BYTE INT21_GetCurrentDrive(void)
 {
     WCHAR current_directory[MAX_PATH];
 
@@ -2092,6 +2121,51 @@ static void INT21_GetPSP( CONTEXT86 *context )
         SET_BX( context, DOSVM_psp );
 }
 
+static void CreateBPB(int drive, BYTE *data, BOOL16 limited)
+/* limited == TRUE is used with INT 0x21/0x440d */
+{
+    /* FIXME: we're forcing some values without checking that those are valid */
+    if (drive > 1) 
+    {
+        setword(data, 512);
+        data[2] = 2;
+        setword(&data[3], 0);
+        data[5] = 2;
+        setword(&data[6], 240);
+        setword(&data[8], 64000);
+        data[0x0a] = 0xf8;
+        setword(&data[0x0b], 40);
+        setword(&data[0x0d], 56);
+        setword(&data[0x0f], 2);
+        setword(&data[0x11], 0);
+        if (!limited) 
+        {
+            setword(&data[0x1f], 800);
+            data[0x21] = 5;
+            setword(&data[0x22], 1);
+        }
+    }
+    else
+    { /* 1.44mb */
+        setword(data, 512);
+        data[2] = 2;
+        setword(&data[3], 0);
+        data[5] = 2;
+        setword(&data[6], 240);
+        setword(&data[8], 2880);
+        data[0x0a] = 0xf8;
+        setword(&data[0x0b], 6);
+        setword(&data[0x0d], 18);
+        setword(&data[0x0f], 2);
+        setword(&data[0x11], 0);
+        if (!limited) 
+        {
+            setword(&data[0x1f], 80);
+            data[0x21] = 7;
+            setword(&data[0x22], 2);
+        }
+    }
+}
 
 /***********************************************************************
  *           INT21_Ioctl_Block
@@ -2176,7 +2250,25 @@ static void INT21_Ioctl_Block( CONTEXT86 *context )
             break;
 
         case 0x0860: /* get device parameters */
-            INT_Int21Handler( context );
+            /* FIXME: we're faking some values here */
+            /* used by w4wgrp's winfile */
+            memset(dataptr, 0, 0x20); /* DOS 6.22 uses 0x20 bytes */
+            dataptr[0] = 0x04;
+            dataptr[6] = 0; /* media type */
+            if (drive > 1)
+            {
+                dataptr[1] = 0x05; /* fixed disk */
+                setword(&dataptr[2], 0x01); /* non removable */
+                setword(&dataptr[4], 0x300); /* # of cylinders */
+            }
+            else
+            {
+                dataptr[1] = 0x07; /* block dev, floppy */
+                setword(&dataptr[2], 0x02); /* removable */
+                setword(&dataptr[4], 80); /* # of cylinders */
+            }
+            CreateBPB(drive, &dataptr[7], TRUE);
+            RESET_CFLAG(context);
             break;
 
         case 0x0861: /* read logical device track */
@@ -2198,7 +2290,17 @@ static void INT21_Ioctl_Block( CONTEXT86 *context )
             break;
 
         case 0x0866: /* get volume serial number */
-            INT_Int21Handler( context );
+            {
+                WCHAR	label[12],fsname[9];
+                DWORD	serial;
+
+                drivespec[0] += drive;
+                GetVolumeInformationW(drivespec, label, 12, &serial, NULL, NULL, fsname, 9);
+                *(WORD*)dataptr	= 0;
+                memcpy(dataptr+2,&serial,4);
+                WideCharToMultiByte(CP_OEMCP, 0, label, 11, dataptr + 6, 11, NULL, NULL);
+                WideCharToMultiByte(CP_OEMCP, 0, fsname, 8, dataptr + 17, 8, NULL, NULL);
+            }
             break;
 
         case 0x086a: /* unlock logical volume */
@@ -2207,11 +2309,16 @@ static void INT21_Ioctl_Block( CONTEXT86 *context )
             break;
 
         case 0x086f: /* get drive map information */
-            INT_Int21Handler( context );
+            memset(dataptr+1, '\0', dataptr[0]-1);
+            dataptr[1] = dataptr[0];
+            dataptr[2] = 0x07; /* protected mode driver; no eject; no notification */
+            dataptr[3] = 0xFF; /* no physical drive */
             break;
 
         case 0x0872:
-            INT_Int21Handler( context );
+            /* Trail on error implementation */
+            SET_AX( context, drivetype == DRIVE_UNKNOWN ? 0x0f : 0x01 );
+            SET_CFLAG(context);	/* Seems to be set all the time */
             break;
 
         default:
@@ -2227,7 +2334,19 @@ static void INT21_Ioctl_Block( CONTEXT86 *context )
         break;
 
     case 0x0f: /* SET LOGICAL DRIVE MAP */
-        INT_Int21Handler( context );
+        {
+            WCHAR dev[3], tgt[4];
+
+            TRACE("IOCTL - SET LOGICAL DRIVE MAP for drive %s\n",
+		  INT21_DriveName( BL_reg(context)));
+            dev[0] = 'A' + drive; dev[1] = ':'; dev[2] = 0;
+            tgt[0] = 'A' + drive + 1; dev[1] = ':'; dev[2] = '\\'; dev[3] = 0;
+            if (!DefineDosDeviceW(DDD_RAW_TARGET_PATH, dev, tgt))
+	    {
+		SET_CFLAG(context);
+		SET_AX( context, 0x000F );  /* invalid drive */
+	    }
+        }
         break;
 
     case 0x11: /* QUERY GENERIC IOCTL CAPABILITY */
@@ -2530,6 +2649,20 @@ static BOOL INT21_Fat32( CONTEXT86 *context )
     return TRUE;
 }
 
+static void INT21_ConvertFindDataWtoA(WIN32_FIND_DATAA *dataA,
+                                      const WIN32_FIND_DATAW *dataW)
+{
+    dataA->dwFileAttributes = dataW->dwFileAttributes;
+    dataA->ftCreationTime   = dataW->ftCreationTime;
+    dataA->ftLastAccessTime = dataW->ftLastAccessTime;
+    dataA->ftLastWriteTime  = dataW->ftLastWriteTime;
+    dataA->nFileSizeHigh    = dataW->nFileSizeHigh;
+    dataA->nFileSizeLow     = dataW->nFileSizeLow;
+    WideCharToMultiByte( CP_OEMCP, 0, dataW->cFileName, -1,
+                         dataA->cFileName, sizeof(dataA->cFileName), NULL, NULL );
+    WideCharToMultiByte( CP_OEMCP, 0, dataW->cAlternateFileName, -1,
+                         dataA->cAlternateFileName, sizeof(dataA->cAlternateFileName), NULL, NULL );
+}
 
 /***********************************************************************
  *           INT21_LongFilename
@@ -2539,6 +2672,8 @@ static BOOL INT21_Fat32( CONTEXT86 *context )
 static void INT21_LongFilename( CONTEXT86 *context )
 {
     BOOL bSetDOSExtendedError = FALSE;
+    WCHAR pathW[MAX_PATH];
+    char* pathA;
 
     if (HIBYTE(HIWORD(GetVersion16())) < 0x07)
     {
@@ -2560,17 +2695,11 @@ static void INT21_LongFilename( CONTEXT86 *context )
         break;
 
     case 0x3a: /* LONG FILENAME - REMOVE DIRECTORY */
-        {
-            WCHAR dirW[MAX_PATH];
-            char *dirA = CTX_SEG_OFF_TO_LIN(context,
-                                            context->SegDs, context->Edx);
+        pathA = CTX_SEG_OFF_TO_LIN(context, context->SegDs, context->Edx);
 
-            TRACE( "LONG FILENAME - REMOVE DIRECTORY %s\n", dirA );
-            MultiByteToWideChar(CP_OEMCP, 0, dirA, -1, dirW, MAX_PATH);
-
-            if (!RemoveDirectoryW( dirW ))
-                bSetDOSExtendedError = TRUE;
-        }
+        TRACE( "LONG FILENAME - REMOVE DIRECTORY %s\n", pathA);
+        MultiByteToWideChar(CP_OEMCP, 0, pathA, -1, pathW, MAX_PATH);
+        if (!RemoveDirectoryW( pathW )) bSetDOSExtendedError = TRUE;
         break;
 
     case 0x3b: /* LONG FILENAME - CHANGE DIRECTORY */
@@ -2579,17 +2708,12 @@ static void INT21_LongFilename( CONTEXT86 *context )
         break;
 
     case 0x41: /* LONG FILENAME - DELETE FILE */
-        {
-            WCHAR fileW[MAX_PATH];
-            char *fileA = CTX_SEG_OFF_TO_LIN(context, 
-                                             context->SegDs, context->Edx);
+        pathA = CTX_SEG_OFF_TO_LIN(context, context->SegDs, context->Edx);
 
-            TRACE( "LONG FILENAME - DELETE FILE %s\n", fileA );
-            MultiByteToWideChar(CP_OEMCP, 0, fileA, -1, fileW, MAX_PATH);
+        TRACE( "LONG FILENAME - DELETE FILE %s\n", pathA );
+        MultiByteToWideChar(CP_OEMCP, 0, pathA, -1, pathW, MAX_PATH);
 
-            if (!DeleteFileW( fileW ))
-                bSetDOSExtendedError = TRUE;
-        }
+        if (!DeleteFileW( pathW )) bSetDOSExtendedError = TRUE;
         break;
 
     case 0x43: /* LONG FILENAME - EXTENDED GET/SET FILE ATTRIBUTES */
@@ -2603,8 +2727,63 @@ static void INT21_LongFilename( CONTEXT86 *context )
         break;
 
     case 0x4e: /* LONG FILENAME - FIND FIRST MATCHING FILE */
+        {
+            HANDLE              handle;
+            HGLOBAL16           h16;
+            WIN32_FIND_DATAW    dataW;
+            WIN32_FIND_DATAA*   dataA;
+
+            pathA = CTX_SEG_OFF_TO_LIN(context, context->SegDs,context->Edx);
+            TRACE(" LONG FILENAME - FIND FIRST MATCHING FILE for %s\n", pathA);
+
+            MultiByteToWideChar(CP_OEMCP, 0, pathA, -1, pathW, MAX_PATH);
+            handle = FindFirstFileW(pathW, &dataW);
+            
+            dataA = (WIN32_FIND_DATAA *)CTX_SEG_OFF_TO_LIN(context, context->SegEs,
+                                                           context->Edi);
+            if (handle != INVALID_HANDLE_VALUE && 
+                (h16 = GlobalAlloc16(GMEM_MOVEABLE, sizeof(handle))))
+            {
+                HANDLE* ptr = GlobalLock16( h16 );
+                *ptr = handle;
+                GlobalUnlock16( h16 );
+                SET_AX( context, h16 );
+                INT21_ConvertFindDataWtoA(dataA, &dataW);
+            }
+            else
+            {           
+                if (handle != INVALID_HANDLE_VALUE) FindClose(handle);
+                SET_AX( context, INVALID_HANDLE_VALUE16);
+                bSetDOSExtendedError = TRUE;
+            }
+        }
+        break;
+
     case 0x4f: /* LONG FILENAME - FIND NEXT MATCHING FILE */
-        INT_Int21Handler( context );
+        {
+            HGLOBAL16           h16 = BX_reg(context);
+            HANDLE*             ptr;
+            WIN32_FIND_DATAW    dataW;
+            WIN32_FIND_DATAA*   dataA;
+
+            TRACE("LONG FILENAME - FIND NEXT MATCHING FILE for handle %d\n",
+                  BX_reg(context));
+
+            dataA = (WIN32_FIND_DATAA *)CTX_SEG_OFF_TO_LIN(context, context->SegEs,
+                                                           context->Edi);
+
+            if (h16 != INVALID_HANDLE_VALUE16 && (ptr = GlobalLock16( h16 )))
+            {
+                if (!FindNextFileW(*ptr, &dataW)) bSetDOSExtendedError = TRUE;
+                else INT21_ConvertFindDataWtoA(dataA, &dataW);
+                GlobalUnlock16( h16 );
+            }
+            else
+            {
+                SetLastError( ERROR_INVALID_HANDLE );
+                bSetDOSExtendedError = TRUE;
+            }
+        }
         break;
 
     case 0x56: /* LONG FILENAME - RENAME FILE */
@@ -2613,7 +2792,44 @@ static void INT21_LongFilename( CONTEXT86 *context )
         break;
 
     case 0x60: /* LONG FILENAME - CONVERT PATH */
-        INT_Int21Handler( context );
+        {
+            WCHAR   res[MAX_PATH];
+
+            switch (CL_reg(context))
+            {
+            case 0x01:  /* Get short filename or path */
+                MultiByteToWideChar(CP_OEMCP, 0, CTX_SEG_OFF_TO_LIN(context, context->SegDs, context->Esi), -1, pathW, MAX_PATH);
+                if (!GetShortPathNameW(pathW, res, 67))
+                    bSetDOSExtendedError = TRUE;
+                else
+                {
+                    SET_AX( context, 0 );
+                    WideCharToMultiByte(CP_OEMCP, 0, res, -1, 
+                                        CTX_SEG_OFF_TO_LIN(context, context->SegEs, context->Edi), 
+                                        67, NULL, NULL);
+                }
+                break;
+	    
+            case 0x02:  /* Get canonical long filename or path */
+                MultiByteToWideChar(CP_OEMCP, 0, CTX_SEG_OFF_TO_LIN(context, context->SegDs, context->Esi), -1, pathW, MAX_PATH);
+                if (!GetFullPathNameW(pathW, 128, res, NULL))
+                    bSetDOSExtendedError = TRUE;
+                else
+                {
+                    SET_AX( context, 0 );
+                    WideCharToMultiByte(CP_OEMCP, 0, res, -1, 
+                                        CTX_SEG_OFF_TO_LIN(context, context->SegEs, context->Edi), 
+                                        128, NULL, NULL);
+                }
+                break;
+            default:
+                FIXME("Unimplemented long file name function:\n");
+                INT_BARF( context, 0x21 );
+                SET_CFLAG(context);
+                SET_AL( context, 0 );
+                break;
+            }
+        }
         break;
 
     case 0x6c: /* LONG FILENAME - CREATE OR OPEN FILE */
@@ -2623,10 +2839,52 @@ static void INT21_LongFilename( CONTEXT86 *context )
         break;
 
     case 0xa0: /* LONG FILENAME - GET VOLUME INFORMATION */
-    case 0xa1: /* LONG FILENAME - "FindClose" - TERMINATE DIRECTORY SEARCH */
-        INT_Int21Handler( context );
+        {
+            DWORD filename_len, flags;
+            WCHAR dstW[8];
+
+            pathA = CTX_SEG_OFF_TO_LIN(context, context->SegDs,context->Edx);
+
+            TRACE("LONG FILENAME - GET VOLUME INFORMATION for drive having root dir '%s'.\n", pathA);
+            SET_AX( context, 0 );
+            MultiByteToWideChar(CP_OEMCP, 0, pathA, -1, pathW, MAX_PATH);
+            if (!GetVolumeInformationW( pathW, NULL, 0, NULL, &filename_len,
+                                        &flags, dstW, 8 ))
+            {
+                INT_BARF( context, 0x21 );
+                SET_CFLAG(context);
+                break;
+            }
+            SET_BX( context, flags | 0x4000 ); /* support for LFN functions */
+            SET_CX( context, filename_len );
+            SET_DX( context, MAX_PATH ); /* FIXME: which len if DRIVE_SHORT_NAMES ? */
+            WideCharToMultiByte(CP_OEMCP, 0, dstW, -1, 
+                                CTX_SEG_OFF_TO_LIN(context, context->SegEs, context->Edi), 
+                                8, NULL, NULL);
+        }
         break;
 
+    case 0xa1: /* LONG FILENAME - "FindClose" - TERMINATE DIRECTORY SEARCH */
+        {
+            HGLOBAL16 h16 = BX_reg(context);
+            HANDLE* ptr;
+
+            TRACE("LONG FILENAME - FINDCLOSE for handle %d\n",
+                  BX_reg(context));
+            if (h16 != INVALID_HANDLE_VALUE16 && (ptr = GlobalLock16( h16 )))
+            {
+                if (!FindClose( *ptr )) bSetDOSExtendedError = TRUE;
+                GlobalUnlock16( h16 );
+                GlobalFree16( h16 );
+            }
+            else
+            {
+                SetLastError( ERROR_INVALID_HANDLE );
+                bSetDOSExtendedError = TRUE;
+            }
+        }
+        break;
+          
     case 0xa6: /* LONG FILENAME - GET FILE INFO BY HANDLE */
         {
             HANDLE handle = DosFileHandleToWin32Handle(BX_reg(context));
@@ -2692,7 +2950,11 @@ static void INT21_LongFilename( CONTEXT86 *context )
     case 0xa9: /* LONG FILENAME - SERVER CREATE OR OPEN FILE */
     case 0xaa: /* LONG FILENAME - SUBST */
     default:
+        FIXME("Unimplemented long file name function:\n");
         INT_BARF( context, 0x21 );
+        SET_CFLAG(context);
+        SET_AL( context, 0 );
+        break;
     }
 
     if (bSetDOSExtendedError)
@@ -2727,6 +2989,134 @@ static BOOL INT21_RenameFile( CONTEXT86 *context )
     return MoveFileW( fromW, toW );
 }
 
+
+/***********************************************************************
+ *           INT21_NetworkFunc
+ *
+ * Handler for:
+ * - function 0x5e
+ */
+static BOOL INT21_NetworkFunc (CONTEXT86 *context)
+{
+    switch (AL_reg(context)) 
+    {
+    case 0x00: /* Get machine name. */
+        {
+            WCHAR dstW[MAX_COMPUTERNAME_LENGTH + 1];
+            DWORD s = sizeof(dstW) / sizeof(WCHAR);
+            int len;
+
+            char *dst = CTX_SEG_OFF_TO_LIN (context,context->SegDs,context->Edx);
+            TRACE("getting machine name to %p\n", dst);
+            if (!GetComputerNameW(dstW, &s) ||
+                !WideCharToMultiByte(CP_OEMCP, 0, dstW, -1, dst, 16, NULL, NULL))
+            {
+                WARN("failed!\n");
+                SetLastError( ER_NoNetwork );
+                return TRUE;
+            }
+            for (len = strlen(dst); len < 15; len++) dst[len] = ' ';
+            dst[15] = 0;
+            SET_CH( context, 1 ); /* Valid */
+            SET_CL( context, 1 ); /* NETbios number??? */
+            TRACE("returning %s\n", debugstr_an(dst, 16));
+            return FALSE;
+        }
+
+    default:
+        SetLastError( ER_NoNetwork );
+        return TRUE;
+    }
+}
+
+/******************************************************************
+ *		INT21_GetDiskSerialNumber
+ *
+ */
+static int INT21_GetDiskSerialNumber( CONTEXT86 *context )
+{
+    BYTE *dataptr = CTX_SEG_OFF_TO_LIN(context, context->SegDs, context->Edx);
+    WCHAR path[] = {'A',':',0}, label[11];
+    DWORD serial;
+
+    path[0] += INT21_MapDrive(BL_reg(context));
+    if (!GetVolumeInformationW( path, label, 11, &serial, NULL, NULL, NULL, 0))
+    {
+        SetLastError( ERROR_INVALID_DRIVE );
+        return 0;
+    }
+
+    *(WORD *)dataptr = 0;
+    memcpy(dataptr + 2, &serial, sizeof(DWORD));
+    WideCharToMultiByte(CP_OEMCP, 0, label, 11, dataptr + 6, 11, NULL, NULL);
+    strncpy(dataptr + 17, "FAT16   ", 8);
+    return 1;
+}
+
+
+/******************************************************************
+ *		INT21_SetDiskSerialNumber
+ *
+ */
+static int INT21_SetDiskSerialNumber( CONTEXT86 *context )
+{
+#if 0
+    BYTE *dataptr = CTX_SEG_OFF_TO_LIN(context, context->SegDs, context->Edx);
+    int drive = INT21_MapDrive(BL_reg(context));
+
+    if (!is_valid_drive(drive))
+    {
+        SetLastError( ERROR_INVALID_DRIVE );
+        return 0;
+    }
+
+    DRIVE_SetSerialNumber( drive, *(DWORD *)(dataptr + 2) );
+    return 1;
+#else
+    FIXME("Setting drive serial number is no longer supported\n");
+    SetLastError( ERROR_NOT_SUPPORTED );
+    return 0;
+#endif
+}
+
+
+/******************************************************************
+ *		INT21_GetFreeDiskSpace
+ *
+ */
+static int INT21_GetFreeDiskSpace( CONTEXT86 *context )
+{
+    DWORD cluster_sectors, sector_bytes, free_clusters, total_clusters;
+    WCHAR root[] = {'A',':','\\',0};
+
+    root[0] += INT21_MapDrive(BL_reg(context));
+    if (!GetDiskFreeSpaceW( root, &cluster_sectors, &sector_bytes,
+                            &free_clusters, &total_clusters )) return 0;
+    SET_AX( context, cluster_sectors );
+    SET_BX( context, free_clusters );
+    SET_CX( context, sector_bytes );
+    SET_DX( context, total_clusters );
+    return 1;
+}
+
+/******************************************************************
+ *		INT21_GetDriveAllocInfo
+ *
+ */
+static int INT21_GetDriveAllocInfo( CONTEXT86 *context, int drive )
+{
+    INT21_DPB  *dpb;
+
+    if (!INT21_FillDrivePB( drive )) return 0;
+    dpb = &(INT21_GetHeapPointer()->misc_dpb_list[drive]);
+    SET_AL( context, dpb->cluster_sectors + 1 );
+    SET_CX( context, dpb->sector_bytes );
+    SET_DX( context, dpb->num_clusters1 );
+
+    context->SegDs = INT21_GetHeapSelector( context );
+    SET_BX( context, offsetof( INT21_HEAP, misc_dpb_list[drive].media_ID ) );
+    return 1;
+}
 
 /***********************************************************************
  *           INT21_GetExtendedError
@@ -2843,6 +3233,453 @@ static void INT21_GetExtendedError( CONTEXT86 *context )
     SET_CH( context, locus );
 }
 
+static BOOL INT21_CreateTempFile( CONTEXT86 *context )
+{
+    static int counter = 0;
+    char *name = CTX_SEG_OFF_TO_LIN(context,  context->SegDs, context->Edx );
+    char *p = name + strlen(name);
+
+    /* despite what Ralf Brown says, some programs seem to call without
+     * ending backslash (DOS accepts that, so we accept it too) */
+    if ((p == name) || (p[-1] != '\\')) *p++ = '\\';
+
+    for (;;)
+    {
+        sprintf( p, "wine%04x.%03d", (int)getpid(), counter );
+        counter = (counter + 1) % 1000;
+
+        SET_AX( context, 
+                Win32HandleToDosFileHandle( 
+                    CreateFileA( name, GENERIC_READ | GENERIC_WRITE,
+                                 FILE_SHARE_READ | FILE_SHARE_WRITE, NULL,
+                                 CREATE_NEW, 0, 0 ) ) );
+        if (AX_reg(context) != HFILE_ERROR16)
+        {
+            TRACE("created %s\n", name );
+            return TRUE;
+        }
+        if (GetLastError() != ERROR_FILE_EXISTS) return FALSE;
+    }
+}
+
+/***********************************************************************
+ *           DOSFS_ToDosFCBFormat
+ *
+ * Convert a file name to DOS FCB format (8+3 chars, padded with blanks),
+ * expanding wild cards and converting to upper-case in the process.
+ * File name can be terminated by '\0', '\\' or '/'.
+ * Return FALSE if the name is not a valid DOS name.
+ * 'buffer' must be at least 12 characters long.
+ */
+/* Chars we don't want to see in DOS file names */
+#define INVALID_DOS_CHARS  "*?<>|\"+=,;[] \345"
+static BOOL INT21_ToDosFCBFormat( LPCWSTR name, LPWSTR buffer )
+{
+    static const char invalid_chars[] = INVALID_DOS_CHARS;
+    LPCWSTR p = name;
+    int i;
+
+    /* Check for "." and ".." */
+    if (*p == '.')
+    {
+        p++;
+        buffer[0] = '.';
+        for(i = 1; i < 11; i++) buffer[i] = ' ';
+        buffer[11] = 0;
+        if (*p == '.')
+        {
+            buffer[1] = '.';
+            p++;
+        }
+        return (!*p || (*p == '/') || (*p == '\\'));
+    }
+
+    for (i = 0; i < 8; i++)
+    {
+        switch(*p)
+        {
+        case '\0':
+        case '\\':
+        case '/':
+        case '.':
+            buffer[i] = ' ';
+            break;
+        case '?':
+            p++;
+            /* fall through */
+        case '*':
+            buffer[i] = '?';
+            break;
+        default:
+            if (*p < 256 && strchr( invalid_chars, (char)*p )) return FALSE;
+            buffer[i] = toupperW(*p);
+            p++;
+            break;
+        }
+    }
+
+    if (*p == '*')
+    {
+        /* Skip all chars after wildcard up to first dot */
+        while (*p && (*p != '/') && (*p != '\\') && (*p != '.')) p++;
+    }
+    else
+    {
+        /* Check if name too long */
+        if (*p && (*p != '/') && (*p != '\\') && (*p != '.')) return FALSE;
+    }
+    if (*p == '.') p++;  /* Skip dot */
+
+    for (i = 8; i < 11; i++)
+    {
+        switch(*p)
+        {
+        case '\0':
+        case '\\':
+        case '/':
+            buffer[i] = ' ';
+            break;
+        case '.':
+            return FALSE;  /* Second extension not allowed */
+        case '?':
+            p++;
+            /* fall through */
+        case '*':
+            buffer[i] = '?';
+            break;
+        default:
+            if (*p < 256 && strchr( invalid_chars, (char)*p )) return FALSE;
+            buffer[i] = toupperW(*p);
+            p++;
+            break;
+        }
+    }
+    buffer[11] = '\0';
+
+    /* at most 3 character of the extension are processed
+     * is something behind this ?
+     */
+    while (*p == '*' || *p == ' ') p++; /* skip wildcards and spaces */
+    return IS_END_OF_NAME(*p);
+}
+
+static HANDLE       INT21_FindHandle;
+static const WCHAR *INT21_FindPath; /* will point to current dta->fullPath search */
+
+/******************************************************************
+ *		INT21_FindFirst
+ */
+static int INT21_FindFirst( CONTEXT86 *context )
+{
+    WCHAR *p;
+    const char *path;
+    FINDFILE_DTA *dta = (FINDFILE_DTA *)INT21_GetCurrentDTA(context);
+    WCHAR maskW[12], pathW[MAX_PATH];
+    DWORD attr;
+
+    path = (const char *)CTX_SEG_OFF_TO_LIN(context, context->SegDs, context->Edx);
+    MultiByteToWideChar(CP_OEMCP, 0, path, -1, pathW, MAX_PATH);
+
+    dta->fullPath = HeapAlloc( GetProcessHeap(), 0, MAX_PATH * sizeof(WCHAR) );
+    p = strrchrW(pathW, '/');
+    if (p) *p = '\0';
+    GetLongPathNameW(pathW, dta->fullPath, MAX_PATH);
+    if (p) *p = '/';
+    attr = GetFileAttributesW(dta->fullPath);
+    if (attr == 0xffffffff || !(attr & FILE_ATTRIBUTE_DIRECTORY))
+    {
+        SET_AX( context, GetLastError() );
+        SET_CFLAG(context);
+        return 0;
+    }
+
+    /* Note: terminating NULL in dta->mask overwrites dta->search_attr
+     *       (doesn't matter as it is set below anyway)
+     */
+    if (!INT21_ToDosFCBFormat( p, maskW ))
+    {
+        HeapFree( GetProcessHeap(), 0, dta->fullPath );
+        dta->fullPath = NULL;
+        SetLastError( ERROR_FILE_NOT_FOUND );
+        SET_AX( context, ERROR_FILE_NOT_FOUND );
+        SET_CFLAG(context);
+        return 0;
+    }
+    WideCharToMultiByte(CP_OEMCP, 0, maskW, 12, dta->mask, sizeof(dta->mask), NULL, NULL);
+    /* we must have a fully qualified file name in dta->fullPath
+     * (we could have a UNC path, but this would lead to some errors later on)
+     */
+    dta->drive = toupperW(dta->fullPath[0]) - 'A';
+    dta->count = 0;
+    dta->search_attr = CL_reg(context);
+    return 1;
+}
+
+/******************************************************************
+ *		match_short
+ *
+ * Check is a short path name (DTA unicode) matches a mask (FCB ansi)
+ */
+static BOOL match_short(LPCWSTR shortW, LPCSTR maskA)
+{
+    WCHAR       mask[12];
+    int         i, j;
+
+    MultiByteToWideChar(CP_OEMCP, 0, maskA, 12, mask, 12);
+
+    for (i = j = 0; i < 8; i++)
+    {
+        switch (mask[i])
+        {
+        case '?':
+            if (shortW[j] == '\0' || shortW[j] == '.') return FALSE;
+            j++;
+            break;
+        case ' ': if (shortW[j] != '.') return FALSE; break;
+        default: if (shortW[j++] != mask[i]) return FALSE; break;
+        }
+    }
+    for (i = 8; i < 11; i++)
+    {
+        switch (mask[i])
+        {
+        case '?': if (shortW[j++] == '\0') return FALSE; break;
+        case ' ': if (shortW[j] != '\0') return FALSE; break;
+        default: if (shortW[j++] != mask[i]) return FALSE; break;
+        }
+    }
+    return TRUE;
+}
+
+static unsigned INT21_FindHelper(LPCWSTR fullPath, unsigned drive, unsigned count, 
+                                 LPCSTR mask, unsigned search_attr, 
+                                 WIN32_FIND_DATAW* entry)
+{
+    unsigned ncalls;
+
+    if ((search_attr & ~(FA_UNUSED | FA_ARCHIVE | FA_RDONLY)) == FA_LABEL)
+    {
+        WCHAR path[] = {' ',':',0};
+
+        if (count) return 0;
+        path[0] = drive + 'A';
+        if (!GetVolumeInformationW(path, entry->cAlternateFileName, 13, NULL, NULL, NULL, NULL, 0)) return 0;
+        RtlSecondsSince1970ToTime( (time_t)0, (LARGE_INTEGER *)&entry->ftCreationTime );
+        RtlSecondsSince1970ToTime( (time_t)0, (LARGE_INTEGER *)&entry->ftLastAccessTime );
+        RtlSecondsSince1970ToTime( (time_t)0, (LARGE_INTEGER *)&entry->ftLastWriteTime );
+        entry->dwFileAttributes = FILE_ATTRIBUTE_LABEL;
+        entry->nFileSizeHigh = entry->nFileSizeLow = 0;
+        TRACE("returning %s as label\n", debugstr_w(entry->cAlternateFileName));
+        return 1;
+    }
+
+
+    if (!INT21_FindHandle || INT21_FindPath != fullPath || count == 0)
+    {
+        if (INT21_FindHandle) FindClose(INT21_FindHandle);
+        INT21_FindHandle = FindFirstFileW(fullPath, entry);
+        if (INT21_FindHandle == INVALID_HANDLE_VALUE)
+        {
+            INT21_FindHandle = 0;
+            return 0;
+        }
+        INT21_FindPath = fullPath;
+        /* we need to resync search */
+        ncalls = count;
+    }
+    else ncalls = 1;
+
+    while (ncalls-- != 0)
+    {
+        if (!FindNextFileW(INT21_FindHandle, entry))
+        {
+            FindClose(INT21_FindHandle); INT21_FindHandle = 0;
+            return 0;
+        }
+    }
+    while (count < 0xffff)
+    {
+        count++;
+        /* Check the file attributes, and path */
+        if (!(entry->dwFileAttributes & ~search_attr) &&
+            match_short(entry->cAlternateFileName, mask))
+        {
+            return count;
+        }
+        if (!FindNextFileW(INT21_FindHandle, entry))
+        {
+            FindClose(INT21_FindHandle); INT21_FindHandle = 0;
+            return 0;
+        }
+    }
+    WARN("Too many directory entries in %s\n", debugstr_w(fullPath) );
+    return 0;
+}
+
+/******************************************************************
+ *		INT21_FindNext
+ */
+static int INT21_FindNext( CONTEXT86 *context )
+{
+    FINDFILE_DTA *dta = (FINDFILE_DTA *)INT21_GetCurrentDTA(context);
+    DWORD attr = dta->search_attr | FA_UNUSED | FA_ARCHIVE | FA_RDONLY;
+    WIN32_FIND_DATAW entry;
+    int n;
+
+    if (!dta->fullPath) return 0;
+
+    n = INT21_FindHelper(dta->fullPath, dta->drive, dta->count, 
+                         dta->mask, attr, &entry);
+    if (n)
+    {
+        dta->fileattr = entry.dwFileAttributes;
+        dta->filesize = entry.nFileSizeLow;
+        FileTimeToDosDateTime( &entry.ftLastWriteTime, &dta->filedate, &dta->filetime );
+        WideCharToMultiByte(CP_OEMCP, 0, entry.cAlternateFileName, -1, 
+                            dta->filename, 13, NULL, NULL);
+        if (!memchr(dta->mask,'?',11))
+        {
+            /* wildcardless search, release resources in case no findnext will
+             * be issued, and as a workaround in case file creation messes up
+             * findnext, as sometimes happens with pkunzip
+             */
+            HeapFree( GetProcessHeap(), 0, dta->fullPath );
+            INT21_FindPath = dta->fullPath = NULL;
+        }
+        dta->count += n;
+        return 1;
+    }
+    HeapFree( GetProcessHeap(), 0, dta->fullPath );
+    INT21_FindPath = dta->fullPath = NULL;
+    return 0;
+}
+
+/* microsoft's programmers should be shot for using CP/M style int21
+   calls in Windows for Workgroup's winfile.exe */
+
+/******************************************************************
+ *		INT21_FindFirstFCB
+ *
+ */
+static int INT21_FindFirstFCB( CONTEXT86 *context )
+{
+    BYTE *fcb = (BYTE *)CTX_SEG_OFF_TO_LIN(context, context->SegDs, context->Edx);
+    FINDFILE_FCB *pFCB;
+    int drive;
+    WCHAR p[] = {' ',':',};
+
+    if (*fcb == 0xff) pFCB = (FINDFILE_FCB *)(fcb + 7);
+    else pFCB = (FINDFILE_FCB *)fcb;
+    drive = INT21_MapDrive( pFCB->drive );
+    if (drive == MAX_DOS_DRIVES) return 0;
+
+    p[0] = 'A' + drive;
+    pFCB->fullPath = HeapAlloc(GetProcessHeap(), 0, MAX_PATH * sizeof(WCHAR));
+    if (!pFCB->fullPath) return 0;
+    GetLongPathNameW(p, pFCB->fullPath, MAX_PATH);
+    pFCB->count = 0;
+    return 1;
+}
+
+/******************************************************************
+ *		INT21_FindNextFCB
+ *
+ */
+static int INT21_FindNextFCB( CONTEXT86 *context )
+{
+    BYTE *fcb = (BYTE *)CTX_SEG_OFF_TO_LIN(context, context->SegDs, context->Edx);
+    FINDFILE_FCB *pFCB;
+    DOS_DIRENTRY_LAYOUT *pResult = (DOS_DIRENTRY_LAYOUT *)INT21_GetCurrentDTA(context);
+    WIN32_FIND_DATAW entry;
+    BYTE attr;
+    int n;
+    WCHAR nameW[12];
+
+    if (*fcb == 0xff) /* extended FCB ? */
+    {
+        attr = fcb[6];
+        pFCB = (FINDFILE_FCB *)(fcb + 7);
+    }
+    else
+    {
+        attr = 0;
+        pFCB = (FINDFILE_FCB *)fcb;
+    }
+
+    if (!pFCB->fullPath) return 0;
+    n = INT21_FindHelper(pFCB->fullPath, INT21_MapDrive( pFCB->drive ),
+                         pFCB->count, pFCB->filename, attr, &entry);
+    if (!n)
+    {
+        HeapFree( GetProcessHeap(), 0, pFCB->fullPath );
+        INT21_FindPath = pFCB->fullPath = NULL;
+        return 0;
+    }
+    pFCB->count += n;
+
+    if (*fcb == 0xff)
+    {
+        /* place extended FCB header before pResult if called with extended FCB */
+	*(BYTE *)pResult = 0xff;
+	(BYTE *)pResult +=6; /* leave reserved field behind */
+	*(BYTE *)pResult = entry.dwFileAttributes;
+	((BYTE *)pResult)++;
+    }
+    *(BYTE *)pResult = INT21_MapDrive( pFCB->drive ); /* DOS_DIRENTRY_LAYOUT after current drive number */
+    ((BYTE *)pResult)++;
+    pResult->fileattr = entry.dwFileAttributes;
+    pResult->cluster  = 0;  /* what else? */
+    pResult->filesize = entry.nFileSizeLow;
+    memset( pResult->reserved, 0, sizeof(pResult->reserved) );
+    FileTimeToDosDateTime( &entry.ftLastWriteTime,
+                           &pResult->filedate, &pResult->filetime );
+
+    /* Convert file name to FCB format */
+    INT21_ToDosFCBFormat( entry.cAlternateFileName, nameW );
+    WideCharToMultiByte(CP_OEMCP, 0, nameW, 11, pResult->filename, 11, NULL, NULL);
+    return 1;
+}
+
+
+/******************************************************************
+ *		INT21_ParseFileNameIntoFCB
+ *
+ */
+static void INT21_ParseFileNameIntoFCB( CONTEXT86 *context )
+{
+    char *filename =
+        CTX_SEG_OFF_TO_LIN(context, context->SegDs, context->Esi );
+    char *fcb =
+        CTX_SEG_OFF_TO_LIN(context, context->SegEs, context->Edi );
+    char *s;
+    WCHAR *buffer;
+    WCHAR fcbW[12];
+    INT buffer_len, len;
+
+    SET_AL( context, 0xff ); /* failed */
+
+    TRACE("filename: '%s'\n", filename);
+
+    s = filename;
+    while (*s && (*s != ' ') && (*s != '\r') && (*s != '\n'))
+        s++;
+    len = filename - s;
+
+    buffer_len = MultiByteToWideChar(CP_OEMCP, 0, filename, len, NULL, 0);
+    buffer = HeapAlloc( GetProcessHeap(), 0, (buffer_len + 1) * sizeof(WCHAR));
+    len = MultiByteToWideChar(CP_OEMCP, 0, filename, len, buffer, buffer_len);
+    buffer[len] = 0;
+    INT21_ToDosFCBFormat(buffer, fcbW);
+    HeapFree(GetProcessHeap(), 0, buffer);
+    WideCharToMultiByte(CP_OEMCP, 0, fcbW, 12, fcb + 1, 12, NULL, NULL);
+    *fcb = 0;
+    TRACE("FCB: '%s'\n", fcb + 1);
+
+    SET_AL( context, ((strchr(filename, '*')) || (strchr(filename, '$'))) != 0 );
+
+    /* point DS:SI to first unparsed character */
+    SET_SI( context, context->Esi + (int)s - (int)filename );
+}
 
 /***********************************************************************
  *           DOSVM_Int21Handler
@@ -3061,11 +3898,20 @@ void WINAPI DOSVM_Int21Handler( CONTEXT86 *context )
         break;
 
     case 0x11: /* FIND FIRST MATCHING FILE USING FCB */
+	TRACE("FIND FIRST MATCHING FILE USING FCB %p\n",
+	      CTX_SEG_OFF_TO_LIN(context, context->SegDs, context->Edx));
+        if (!INT21_FindFirstFCB(context))
+        {
+            SET_AL( context, 0xff );
+            break;
+        }
+        /* else fall through */
+
     case 0x12: /* FIND NEXT MATCHING FILE USING FCB */
-        INT_Int21Handler( context );
+        SET_AL( context, INT21_FindNextFCB(context) ? 0x00 : 0xff );
         break;
 
-    case 0x13: /* DELETE FILE USING FCB */
+     case 0x13: /* DELETE FILE USING FCB */
         INT_BARF( context, 0x21 );
         break;
 
@@ -3101,8 +3947,13 @@ void WINAPI DOSVM_Int21Handler( CONTEXT86 *context )
         break;
 
     case 0x1b: /* GET ALLOCATION INFORMATION FOR DEFAULT DRIVE */
+        if (!INT21_GetDriveAllocInfo(context, 0))
+            SET_AX( context, 0xffff );
+        break;
+
     case 0x1c: /* GET ALLOCATION INFORMATION FOR SPECIFIC DRIVE */
-        INT_Int21Handler( context );
+        if (!INT21_GetDriveAllocInfo(context, DL_reg(context)))
+            SET_AX( context, 0xffff );
         break;
 
     case 0x1d: /* NULL FUNCTION FOR CP/M COMPATIBILITY */
@@ -3169,7 +4020,7 @@ void WINAPI DOSVM_Int21Handler( CONTEXT86 *context )
         break;
 
     case 0x29: /* PARSE FILENAME INTO FCB */
-        INT_Int21Handler( context );
+        INT21_ParseFileNameIntoFCB(context);
         break;
 
     case 0x2a: /* GET SYSTEM DATE */
@@ -3356,7 +4207,9 @@ void WINAPI DOSVM_Int21Handler( CONTEXT86 *context )
         break;
 
     case 0x36: /* GET FREE DISK SPACE */
-        INT_Int21Handler( context );
+	TRACE("GET FREE DISK SPACE FOR DRIVE %s\n",
+	      INT21_DriveName( DL_reg(context) ));
+        if (!INT21_GetFreeDiskSpace(context)) SET_AX( context, 0xffff );
         break;
 
     case 0x37: /* SWITCHAR */
@@ -3608,6 +4461,7 @@ void WINAPI DOSVM_Int21Handler( CONTEXT86 *context )
     case 0x46: /* "DUP2", "FORCEDUP" - FORCE DUPLICATE FILE HANDLE */
         TRACE( "FORCEDUP - FORCE DUPLICATE FILE HANDLE %d to %d\n",
                BX_reg(context), CX_reg(context) );
+
         if (FILE_Dup2( BX_reg(context), CX_reg(context) ) == HFILE_ERROR16)
             bSetDOSExtendedError = TRUE;
         else
@@ -3754,8 +4608,20 @@ void WINAPI DOSVM_Int21Handler( CONTEXT86 *context )
         break;
 
     case 0x4e: /* "FINDFIRST" - FIND FIRST MATCHING FILE */
+        TRACE("FINDFIRST mask 0x%04x spec %s\n",CX_reg(context),
+	      (LPCSTR)CTX_SEG_OFF_TO_LIN(context,  context->SegDs, context->Edx));
+        if (!INT21_FindFirst(context)) break;
+        /* fall through */
+
     case 0x4f: /* "FINDNEXT" - FIND NEXT MATCHING FILE */
-        INT_Int21Handler( context );
+        TRACE("FINDNEXT\n");
+        if (!INT21_FindNext(context))
+        {
+            SetLastError( ERROR_NO_MORE_FILES );
+            SET_AX( context, ERROR_NO_MORE_FILES );
+            SET_CFLAG(context);
+        }
+        else SET_AX( context, 0 );  /* OK */
         break;
 
     case 0x50: /* SET CURRENT PROCESS ID (SET PSP ADDRESS) */
@@ -3834,7 +4700,8 @@ void WINAPI DOSVM_Int21Handler( CONTEXT86 *context )
         break;
 
     case 0x5a: /* CREATE TEMPORARY FILE */
-        INT_Int21Handler( context );
+        TRACE("CREATE TEMPORARY FILE\n");
+        bSetDOSExtendedError = !INT21_CreateTempFile(context);
         break;
 
     case 0x5b: /* CREATE NEW FILE */ 
@@ -3881,9 +4748,38 @@ void WINAPI DOSVM_Int21Handler( CONTEXT86 *context )
         break;
 
     case 0x5e: /* NETWORK 5E */
+        bSetDOSExtendedError = INT21_NetworkFunc( context);
+        break;
+
     case 0x5f: /* NETWORK 5F */
+        /* FIXME: supporting this would need to 1:
+         * - implement per drive current directory (as kernel32 doesn't)
+         * - assign enabled/disabled flag on a per drive basis
+         */
+        /* network software not installed */
+        TRACE("NETWORK function AX=%04x not implemented\n",AX_reg(context));
+        SetLastError( ER_NoNetwork );
+        bSetDOSExtendedError = TRUE;
+        break;
+
     case 0x60: /* "TRUENAME" - CANONICALIZE FILENAME OR PATH */
-        INT_Int21Handler( context );
+        {
+            WCHAR       pathW[MAX_PATH], res[MAX_PATH];
+            /* FIXME: likely to be broken */
+
+            TRACE("TRUENAME %s\n",
+                  (LPCSTR)CTX_SEG_OFF_TO_LIN(context, context->SegDs,context->Esi));
+            MultiByteToWideChar(CP_OEMCP, 0, CTX_SEG_OFF_TO_LIN(context, context->SegDs, context->Esi), -1, pathW, MAX_PATH);
+            if (!GetFullPathNameW( pathW, 128, res, NULL ))
+		bSetDOSExtendedError = TRUE;
+            else
+            {
+                SET_AX( context, 0 );
+                WideCharToMultiByte(CP_OEMCP, 0, res, -1, 
+                                    CTX_SEG_OFF_TO_LIN(context, context->SegEs, context->Edi), 
+                                    128, NULL, NULL);
+            }
+        }
         break;
 
     case 0x61: /* UNUSED */
@@ -3942,7 +4838,22 @@ void WINAPI DOSVM_Int21Handler( CONTEXT86 *context )
         break;
 
     case 0x69: /* DISK SERIAL NUMBER */
-        INT_Int21Handler( context );
+        switch (AL_reg(context))
+        {
+        case 0x00:
+	    TRACE("GET DISK SERIAL NUMBER for drive %s\n",
+		  INT21_DriveName(BL_reg(context)));
+            if (!INT21_GetDiskSerialNumber(context)) bSetDOSExtendedError = TRUE;
+            else SET_AX( context, 0 );
+            break;
+
+        case 0x01:
+	    TRACE("SET DISK SERIAL NUMBER for drive %s\n",
+		  INT21_DriveName(BL_reg(context)));
+            if (!INT21_SetDiskSerialNumber(context)) bSetDOSExtendedError = TRUE;
+            else SET_AX( context, 1 );
+            break;
+        }
         break;
 
     case 0x6a: /* COMMIT FILE */

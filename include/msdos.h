@@ -44,7 +44,7 @@ typedef struct
     BYTE   search_attr;  /* 0c search attributes */
     WORD   count;        /* 0d entry count within directory */
     WORD   cluster;      /* 0f cluster of parent directory */
-    char  *unixPath;     /* 11 unix path (was: reserved) */
+    WCHAR *fullPath;     /* 11 full path (was: reserved) */
     BYTE   fileattr;     /* 15 file attributes */
     WORD   filetime;     /* 16 file time */
     WORD   filedate;     /* 18 file date */
@@ -58,7 +58,7 @@ typedef struct
     BYTE   drive;                /* 00 drive letter */
     char   filename[11];         /* 01 filename 8+3 format */
     int    count;                /* 0c entry count (was: reserved) */
-    char  *unixPath;             /* 10 unix path (was: reserved) */
+    WCHAR *fullPath;             /* 10 full path (was: reserved) */
 } FINDFILE_FCB;
 
 /* DOS directory entry for FindFirstFCB/FindNextFCB */

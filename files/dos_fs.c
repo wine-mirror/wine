@@ -53,7 +53,6 @@
 #include "wine/winbase16.h"
 #include "drive.h"
 #include "file.h"
-#include "heap.h"
 #include "msdos.h"
 #include "winternl.h"
 #include "wine/server.h"
@@ -143,8 +142,6 @@ typedef struct
 {
     char *path; /* unix path */
     LPWSTR long_mask;
-    LPWSTR short_mask;
-    BYTE  attr;
     int   drive;
     int   cur_pos;
     CRITICAL_SECTION cs;
@@ -329,20 +326,6 @@ static void DOSFS_ToDosDTAFormat( LPCWSTR name, LPWSTR buffer )
     while (p[-1] == ' ') p--;
     if (p[-1] == '.') p--;
     *p = '\0';
-}
-
-
-/***********************************************************************
- *           DOSFS_MatchShort
- *
- * Check a DOS file name against a mask (both in FCB format).
- */
-static int DOSFS_MatchShort( LPCWSTR mask, LPCWSTR name )
-{
-    int i;
-    for (i = 11; i > 0; i--, mask++, name++)
-        if ((*mask != '?') && (*mask != *name)) return 0;
-    return 1;
 }
 
 
@@ -1777,34 +1760,13 @@ static BOOL get_show_dir_symlinks_option(void)
  */
 static int DOSFS_FindNextEx( FIND_FIRST_INFO *info, WIN32_FIND_DATAW *entry )
 {
-    DWORD attr = info->attr | FA_UNUSED | FA_ARCHIVE | FA_RDONLY;
     UINT flags = DRIVE_GetFlags( info->drive );
     char *p, buffer[MAX_PATHNAME_LEN];
     const char *drive_path;
     int drive_root;
     LPCWSTR long_name, short_name;
     BY_HANDLE_FILE_INFORMATION fileinfo;
-    WCHAR dos_name[13];
     BOOL is_symlink;
-
-    if ((info->attr & ~(FA_UNUSED | FA_ARCHIVE | FA_RDONLY)) == FA_LABEL)
-    {
-        if (info->cur_pos) return 0;
-        entry->dwFileAttributes  = FILE_ATTRIBUTE_LABEL;
-        RtlSecondsSince1970ToTime( (time_t)0, (LARGE_INTEGER *)&entry->ftCreationTime );
-        RtlSecondsSince1970ToTime( (time_t)0, (LARGE_INTEGER *)&entry->ftLastAccessTime );
-        RtlSecondsSince1970ToTime( (time_t)0, (LARGE_INTEGER *)&entry->ftLastWriteTime );
-        entry->nFileSizeHigh     = 0;
-        entry->nFileSizeLow      = 0;
-        entry->dwReserved0       = 0;
-        entry->dwReserved1       = 0;
-        DOSFS_ToDosDTAFormat( DRIVE_GetLabel( info->drive ), entry->cFileName );
-        strcpyW( entry->cAlternateFileName, entry->cFileName );
-        info->cur_pos++;
-        TRACE("returning %s (%s) as label\n",
-               debugstr_w(entry->cFileName), debugstr_w(entry->cAlternateFileName));
-        return 1;
-    }
 
     drive_path = info->path + strlen(DRIVE_GetRoot( info->drive ));
     while ((*drive_path == '/') || (*drive_path == '\\')) drive_path++;
@@ -1831,19 +1793,6 @@ static int DOSFS_FindNextEx( FIND_FIRST_INFO *info, WIN32_FIND_DATAW *entry )
                                   flags & DRIVE_CASE_SENSITIVE )) continue;
         }
 
-        /* Check the short mask */
-
-        if (info->short_mask)
-        {
-            if (!short_name)
-            {
-                DOSFS_Hash( long_name, dos_name, TRUE,
-                            !(flags & DRIVE_CASE_SENSITIVE) );
-                short_name = dos_name;
-            }
-            if (!DOSFS_MatchShort( info->short_mask, short_name )) continue;
-        }
-
         /* Check the file attributes */
         WideCharToMultiByte(CP_UNIXCP, 0, long_name, -1,
                             p, sizeof(buffer) - (int)(p - buffer), NULL, NULL);
@@ -1859,8 +1808,6 @@ static int DOSFS_FindNextEx( FIND_FIRST_INFO *info, WIN32_FIND_DATAW *entry )
                 show_dir_symlinks = get_show_dir_symlinks_option();
             if (!show_dir_symlinks) continue;
         }
-
-        if (fileinfo.dwFileAttributes & ~attr) continue;
 
         /* We now have a matching entry; fill the result and return */
 
@@ -1885,94 +1832,6 @@ static int DOSFS_FindNextEx( FIND_FIRST_INFO *info, WIN32_FIND_DATAW *entry )
         return 1;
     }
     return 0;  /* End of directory */
-}
-
-/***********************************************************************
- *           DOSFS_FindNext
- *
- * Find the next matching file. Return the number of entries read to find
- * the matching one, or 0 if no more entries.
- * 'short_mask' is the 8.3 mask (in FCB format), 'long_mask' is the long
- * file name mask. Either or both can be NULL.
- *
- * NOTE: This is supposed to be only called by the int21 emulation
- *       routines, and so assumes that the Win16Mutex is held to
- *       protect the static directory cache.
- */
-int DOSFS_FindNext( const char *path, const char *short_mask,
-                    const char *long_mask, int drive, BYTE attr,
-                    int skip, WIN32_FIND_DATAA *entry )
-{
-    static FIND_FIRST_INFO info;
-    LPCWSTR short_name, long_name;
-    int count;
-    UNICODE_STRING short_maskW, long_maskW;
-    WIN32_FIND_DATAW entryW;
-
-    TRACE("(%s, %s, %s, %x, %x, %x, %p)\n", debugstr_a(path),
-          debugstr_a(short_mask), debugstr_a(long_mask), drive, attr, skip,
-          entry);
-
-    RtlCreateUnicodeStringFromAsciiz(&short_maskW, short_mask);
-    RtlCreateUnicodeStringFromAsciiz(&long_maskW, long_mask);
-
-    /* Check the cached directory */
-    if (!(info.u.dos_dir && info.path == path && !strcmpW(info.short_mask, short_maskW.Buffer)
-                   && !strcmpW(info.long_mask, long_maskW.Buffer) && info.drive == drive
-                   && info.attr == attr && info.cur_pos <= skip))
-    {
-        /* Not in the cache, open it anew */
-        if (info.u.dos_dir) DOSFS_CloseDir( info.u.dos_dir );
-
-        info.path = (LPSTR)path;
-        RtlFreeHeap(GetProcessHeap(), 0, info.long_mask);
-        RtlFreeHeap(GetProcessHeap(), 0, info.short_mask);
-        info.long_mask = long_maskW.Buffer;
-        info.short_mask = short_maskW.Buffer;
-        info.attr = attr;
-        info.drive = drive;
-        info.cur_pos = 0;
-        info.u.dos_dir = DOSFS_OpenDir( info.path );
-    }
-    else
-    {
-        RtlFreeUnicodeString(&short_maskW);
-        RtlFreeUnicodeString(&long_maskW);
-    }
-
-    /* Skip to desired position */
-    while (info.cur_pos < skip)
-        if (info.u.dos_dir && DOSFS_ReadDir( info.u.dos_dir, &long_name, &short_name ))
-            info.cur_pos++;
-        else
-            break;
-
-    if (info.u.dos_dir && info.cur_pos == skip && DOSFS_FindNextEx( &info, &entryW ))
-    {
-        WideCharToMultiByte(CP_ACP, 0, entryW.cFileName, -1,
-                            entry->cFileName, sizeof(entry->cFileName), NULL, NULL);
-        WideCharToMultiByte(CP_ACP, 0, entryW.cAlternateFileName, -1,
-                            entry->cAlternateFileName, sizeof(entry->cAlternateFileName), NULL, NULL);
-        count = info.cur_pos - skip;
-
-        entry->dwFileAttributes = entryW.dwFileAttributes;
-        entry->nFileSizeHigh    = entryW.nFileSizeHigh;
-        entry->nFileSizeLow     = entryW.nFileSizeLow;
-        entry->ftCreationTime   = entryW.ftCreationTime;
-        entry->ftLastAccessTime = entryW.ftLastAccessTime;
-        entry->ftLastWriteTime  = entryW.ftLastWriteTime;
-
-    }
-    else
-        count = 0;
-
-    if (!count)
-    {
-        if (info.u.dos_dir) DOSFS_CloseDir( info.u.dos_dir );
-        memset( &info, '\0', sizeof(info) );
-    }
-
-    return count;
 }
 
 /*************************************************************************
@@ -2048,8 +1907,6 @@ HANDLE WINAPI FindFirstFileExW(
             info->long_mask = HeapAlloc( GetProcessHeap(), 0, long_mask_len * sizeof(WCHAR) );
             MultiByteToWideChar(CP_UNIXCP, 0, p, -1, info->long_mask, long_mask_len);
 
-            info->short_mask = NULL;
-            info->attr = 0xff;
             info->drive = full_name.drive;
             info->cur_pos = 0;
 
@@ -2468,14 +2325,4 @@ DWORD WINAPI QueryDosDeviceW(LPCWSTR devname,LPWSTR target,DWORD bufsize)
         target[ret-1] = 0;
     }
     return ret;
-}
-
-
-/***********************************************************************
- *           DefineDosDeviceA       (KERNEL32.@)
- */
-BOOL WINAPI DefineDosDeviceA(DWORD flags,LPCSTR devname,LPCSTR targetpath) {
-	FIXME("(0x%08lx,%s,%s),stub!\n",flags,devname,targetpath);
-	SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
-	return FALSE;
 }

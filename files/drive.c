@@ -1283,21 +1283,54 @@ int DRIVE_Enable( int drive  )
 
 
 /***********************************************************************
- *           DRIVE_SetLogicalMapping
+ *           DefineDosDeviceA       (KERNEL32.@)
  */
-int DRIVE_SetLogicalMapping ( int existing_drive, int new_drive )
+BOOL WINAPI DefineDosDeviceA(DWORD flags,LPCSTR devname,LPCSTR targetpath)
 {
- /* If new_drive is already valid, do nothing and return 0
-    otherwise, copy DOSDrives[existing_drive] to DOSDrives[new_drive] */
+    UNICODE_STRING d, t;
+    BOOL           ret;
 
+    if (!RtlCreateUnicodeStringFromAsciiz(&d, devname))
+    {
+        SetLastError(ERROR_NOT_ENOUGH_MEMORY);
+        return FALSE;
+    }
+    if (!RtlCreateUnicodeStringFromAsciiz(&t, targetpath))
+    {
+        RtlFreeUnicodeString(&d);
+        SetLastError(ERROR_NOT_ENOUGH_MEMORY);
+        return FALSE;
+    }
+    ret = DefineDosDeviceW(flags, d.Buffer, t.Buffer);
+    RtlFreeUnicodeString(&d);
+    RtlFreeUnicodeString(&t);
+    return ret;
+}
+
+
+/***********************************************************************
+ *           DefineDosDeviceA       (KERNEL32.@)
+ */
+BOOL WINAPI DefineDosDeviceW(DWORD flags,LPCWSTR devname,LPCWSTR targetpath) 
+{
     DOSDRIVE *old, *new;
 
-    old = DOSDrives + existing_drive;
-    new = DOSDrives + new_drive;
+    /* this is a temporary hack for int21 support. better implementation has to be done */
+    if (flags != DDD_RAW_TARGET_PATH ||
+        !(toupperW(devname[0]) >= 'A' && toupperW(devname[0]) <= 'Z') ||
+        devname[1] != ':' || devname[2] != 0 ||
+        !(toupperW(targetpath[0]) >= 'A' && toupperW(targetpath[0]) <= 'Z') ||
+        targetpath[1] != ':' || targetpath[2] != '\\' || targetpath[3] != 0)
+    {
+        FIXME("(0x%08lx,%s,%s),stub!\n", flags, debugstr_w(devname), debugstr_w(targetpath));
+        SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
+        return FALSE;
+    }
 
-    if ((existing_drive < 0) || (existing_drive >= MAX_DOS_DRIVES) ||
-        !old->root ||
-	(new_drive < 0) || (new_drive >= MAX_DOS_DRIVES))
+    old = DOSDrives + devname[0] - 'A';
+    new = DOSDrives + targetpath[0] - 'A';
+
+    if (!old->root)
     {
         SetLastError( ERROR_INVALID_DRIVE );
         return 0;
@@ -1306,7 +1339,7 @@ int DRIVE_SetLogicalMapping ( int existing_drive, int new_drive )
     if ( new->root )
     {
         TRACE("Can't map drive %c: to already existing drive %c:\n",
-              'A' + existing_drive, 'A' + new_drive );
+              devname[0], targetpath[0] );
 	/* it is already mapped there, so return success */
 	if (!strcmp(old->root,new->root))
 	    return 1;
@@ -1327,7 +1360,7 @@ int DRIVE_SetLogicalMapping ( int existing_drive, int new_drive )
     new->ino = old->ino;
 
     TRACE("Drive %c: is now equal to drive %c:\n",
-          'A' + new_drive, 'A' + existing_drive );
+          targetpath[0], devname[0] );
 
     return 1;
 }
@@ -2126,8 +2159,8 @@ BOOL WINAPI SetVolumeLabelA(LPCSTR root, LPCSTR volname)
 /***********************************************************************
  *           GetVolumeNameForVolumeMountPointW   (KERNEL32.@)
  */
-DWORD WINAPI GetVolumeNameForVolumeMountPointW(LPWSTR str, DWORD a, DWORD b)
+BOOL WINAPI GetVolumeNameForVolumeMountPointW(LPCWSTR str, LPWSTR dst, DWORD size)
 {
-    FIXME("(%s, %lx, %lx): stub\n", debugstr_w(str), a, b);
+    FIXME("(%s, %p, %lx): stub\n", debugstr_w(str), dst, size);
     return 0;
 }

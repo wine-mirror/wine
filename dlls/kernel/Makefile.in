@@ -26,7 +26,6 @@ C_SRCS = \
 	$(TOPOBJDIR)/misc/options.c \
 	$(TOPOBJDIR)/misc/registry.c \
 	$(TOPOBJDIR)/msdos/dpmi.c \
-	$(TOPOBJDIR)/msdos/int21.c \
 	atom.c \
 	change.c \
 	comm.c \

@@ -221,7 +221,7 @@
 @ stdcall DebugActiveProcess(long)
 @ stdcall DebugBreak()
 @ stdcall DefineDosDeviceA(long str str)
-@ stub DefineDosDeviceW
+@ stdcall DefineDosDeviceW(long wstr wstr)
 @ stub DelayLoadFailureHook
 @ stdcall DeleteAtom(long)
 @ stdcall DeleteCriticalSection(ptr) ntdll.RtlDeleteCriticalSection
@@ -1150,7 +1150,6 @@
 @ cdecl DOSMEM_ResizeBlock(ptr long long)
 @ cdecl DRIVE_OpenDevice(long long)
 @ cdecl FILE_Dup2(long long)
-@ stdcall INT_Int21Handler(ptr)
 @ cdecl LOCAL_Alloc(long long long)
 @ cdecl LOCAL_Compact(long long long)
 @ cdecl LOCAL_CountFree(long)

@@ -97,9 +97,6 @@ extern BOOL DOSFS_FindUnixName( const DOS_FULL_NAME *path, LPCWSTR name, char *l
                                 INT long_len, LPWSTR short_buf, BOOL ignore_case );
 extern BOOL DOSFS_GetFullName( LPCWSTR name, BOOL check_last,
                                  DOS_FULL_NAME *full );
-extern int DOSFS_FindNext( const char *path, const char *short_mask,
-                           const char *long_mask, int drive, BYTE attr,
-                           int skip, WIN32_FIND_DATAA *entry );
 
 /* win32/device.c */
 extern HANDLE DEVICE_Open( LPCWSTR filename, DWORD access, LPSECURITY_ATTRIBUTES sa );

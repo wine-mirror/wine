@@ -1090,6 +1090,13 @@ BOOL WINAPI GetBinaryTypeA( LPCSTR lpApplicationName, LPDWORD lpBinaryType );
 BOOL WINAPI GetBinaryTypeW( LPCWSTR lpApplicationName, LPDWORD lpBinaryType );
 #define GetBinaryType WINELIB_NAME_AW(GetBinaryType)
 
+/* flags for DefineDosDevice */
+#define DDD_RAW_TARGET_PATH         0x00000001
+#define DDD_REMOVE_DEFINITION       0x00000002
+#define DDD_EXACT_MATCH_ON_REMOVE   0x00000004
+#define DDD_NO_BROADCAST_SYSTEM     0x00000008
+#define DDD_LUID_BROADCAST_DRIVE    0x00000010
+
 BOOL        WINAPI AddAccessAllowedAce(PACL,DWORD,DWORD,PSID);
 PVOID       WINAPI AddVectoredExceptionHandler(ULONG,PVECTORED_EXCEPTION_HANDLER);
 BOOL        WINAPI AttachThreadInput(DWORD,DWORD,BOOL);
@@ -1182,10 +1189,16 @@ BOOL        WINAPI DebugActiveProcessStop(DWORD);
 void        WINAPI DebugBreak(void);
 BOOL        WINAPI DebugBreakProcess(HANDLE);
 BOOL        WINAPI DebugSetProcessKillOnExit(BOOL);
+BOOL        WINAPI DefineDosDeviceA(DWORD,LPCSTR,LPCSTR);
+BOOL        WINAPI DefineDosDeviceW(DWORD,LPCWSTR,LPCWSTR);
+#define     DefineDosDevice WINELIB_NAME_AW(DefineDosDevice)
 BOOL        WINAPI DeleteAce(PACL,DWORD);
 void        WINAPI DeleteFiber(LPVOID);
 BOOL        WINAPI DeleteTimerQueueEx(HANDLE,HANDLE);
 BOOL        WINAPI DeleteTimerQueueTimer(HANDLE,HANDLE,HANDLE);
+BOOL        WINAPI DeleteVolumeMountPointA(LPCSTR);
+BOOL        WINAPI DeleteVolumeMountPointW(LPCWSTR);
+#define     DeleteVolumeMountPoint WINELIB_NAME_AW(DeleteVolumeMountPoint)
 BOOL        WINAPI DeregisterEventSource(HANDLE);
 BOOL        WINAPI DeviceIoControl(HANDLE,DWORD,LPVOID,DWORD,LPVOID,DWORD,LPDWORD,LPOVERLAPPED);
 BOOL        WINAPI DisableThreadLibraryCalls(HMODULE);
@@ -1224,6 +1237,20 @@ BOOL        WINAPI FindCloseChangeNotification(HANDLE);
 HRSRC       WINAPI FindResourceExA(HMODULE,LPCSTR,LPCSTR,WORD);
 HRSRC       WINAPI FindResourceExW(HMODULE,LPCWSTR,LPCWSTR,WORD);
 #define     FindResourceEx WINELIB_NAME_AW(FindResourceEx)
+HANDLE      WINAPI FindFirstVolumeA(LPSTR,DWORD);
+HANDLE      WINAPI FindFirstVolumeW(LPWSTR,DWORD);
+#define     FindFirstVolume WINELIB_NAME_AW(FindFirstVolume)
+HANDLE      WINAPI FindFirstVolumeMountPointA(LPCSTR,LPSTR,DWORD);
+HANDLE      WINAPI FindFirstVolumeMountPointW(LPCWSTR,LPWSTR,DWORD);
+#define     FindFirstVolumeMountPoint WINELIB_NAME_AW(FindFirstVolumeMountPoint)
+BOOL        WINAPI FindNextVolumeA(HANDLE,LPSTR,DWORD);
+BOOL        WINAPI FindNextVolumeW(HANDLE,LPWSTR,DWORD);
+#define     FindNextVolume WINELIB_NAME_AW(FindNextVolume)
+BOOL        WINAPI FindNextVolumeMountPointA(HANDLE,LPSTR,DWORD);
+BOOL        WINAPI FindNextVolumeMountPointW(HANDLE,LPWSTR,DWORD);
+#define     FindNextVolumeMountPoint WINELIB_NAME_AW(FindNextVolumeMountPoint)
+BOOL        WINAPI FindVolumeClose(HANDLE);
+BOOL        WINAPI FindVolumeMountPointClose(HANDLE);
 BOOL        WINAPI FlushFileBuffers(HANDLE);
 BOOL        WINAPI FlushViewOfFile(LPCVOID,SIZE_T);
 DWORD       WINAPI FormatMessageA(DWORD,LPCVOID,DWORD,DWORD,LPSTR,DWORD,va_list*);
@@ -1323,6 +1350,15 @@ BOOL        WINAPI GetTokenInformation(HANDLE,TOKEN_INFORMATION_CLASS,LPVOID,DWO
 BOOL        WINAPI GetUserNameA(LPSTR,LPDWORD);
 BOOL        WINAPI GetUserNameW(LPWSTR,LPDWORD);
 #define     GetUserName WINELIB_NAME_AW(GetUserName)
+BOOL        WINAPI GetVolumeNameForVolumeMountPointA(LPCSTR,LPSTR,DWORD);
+BOOL        WINAPI GetVolumeNameForVolumeMountPointW(LPCWSTR,LPWSTR,DWORD);
+#define     GetVolumeNameForVolumeMountPoint WINELIB_NAME_AW(GetVolumeNameForVolumeMountPoint)
+BOOL        WINAPI GetVolumePathNameA(LPCSTR,LPSTR,DWORD);
+BOOL        WINAPI GetVolumePathNameW(LPCWSTR,LPWSTR,DWORD);
+#define     GetVolumePathName WINELIB_NAME_AW(GetVolumePathName)
+BOOL        WINAPI GetVolumePathNamesForVolumeNameA(LPCSTR,LPSTR,DWORD,PDWORD);
+BOOL        WINAPI GetVolumePathNamesForVolumeNameW(LPCWSTR,LPWSTR,DWORD,PDWORD);
+#define     GetVolumePathNamesForVolumeName WINELIB_NAME_AW(GetVolumePathNamesForVolumeName)
 VOID        WINAPI GlobalMemoryStatus(LPMEMORYSTATUS);
 LPVOID      WINAPI HeapAlloc(HANDLE,DWORD,SIZE_T);
 SIZE_T      WINAPI HeapCompact(HANDLE,DWORD);
@@ -1473,6 +1509,9 @@ BOOL        WINAPI SetThreadPriority(HANDLE,INT);
 BOOL        WINAPI SetThreadPriorityBoost(HANDLE,BOOL);
 BOOL        WINAPI SetThreadToken(PHANDLE,HANDLE);
 BOOL        WINAPI SetTimeZoneInformation(const LPTIME_ZONE_INFORMATION);
+BOOL        WINAPI SetVolumeMountPointA(LPCSTR,LPCSTR);
+BOOL        WINAPI SetVolumeMountPointW(LPCSTR,LPCSTR);
+#define     SetVolumeMountPoint WINELIB_NAME_AW(SetVolumeMountPoint)
 BOOL        WINAPI SetWaitableTimer(HANDLE,const LARGE_INTEGER*,LONG,PTIMERAPCROUTINE,LPVOID,BOOL);
 BOOL        WINAPI SetupComm(HANDLE,DWORD,DWORD);
 DWORD       WINAPI SignalObjectAndWait(HANDLE,HANDLE,DWORD,BOOL);
