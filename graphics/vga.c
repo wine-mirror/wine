@@ -82,7 +82,7 @@ int VGA_SetMode(unsigned Xres,unsigned Yres,unsigned Depth)
         }
         vga_refresh=0;
         /* poll every 20ms (50fps should provide adequate responsiveness) */
-        VGA_InstallTimer(20000);
+        VGA_InstallTimer(20);
     }
     return 0;
 }
@@ -160,7 +160,7 @@ int VGA_SetAlphaMode(unsigned Xres,unsigned Yres)
     if (lpddraw) VGA_Exit();
 
     /* the xterm is slow, so refresh only every 200ms (5fps) */
-    VGA_InstallTimer(200000);
+    VGA_InstallTimer(200);
 
     siz.X = Xres;
     siz.Y = Yres;

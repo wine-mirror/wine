@@ -201,7 +201,6 @@ HANDLE SERVICE_AddTimer( LONG rate,
     handle = CreateWaitableTimerA( NULL, FALSE, NULL );
     if (!handle) return INVALID_HANDLE_VALUE;
 
-    rate = (rate + 500) / 1000;  /* us -> ms */
     if (!rate) rate = 1;
     when.s.LowPart = when.s.HighPart = 0;
     if (!SetWaitableTimer( handle, &when, rate, NULL, NULL, FALSE ))

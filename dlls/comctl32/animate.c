@@ -242,7 +242,7 @@ static LRESULT ANIMATE_Play(HWND hWnd, WPARAM wParam, LPARAM lParam)
     } else {
 	TRACE("Using the service thread\n");
 	/* time is in µs */
-	infoPtr->hService = SERVICE_AddTimer(infoPtr->mah.dwMicroSecPerFrame, 
+	infoPtr->hService = SERVICE_AddTimer(infoPtr->mah.dwMicroSecPerFrame / 1000, 
 					     ANIMATE_ServiceCallback, (DWORD)infoPtr);
     }
 	

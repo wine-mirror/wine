@@ -150,7 +150,7 @@ static	LPWINE_MM_IDATA	MULTIMEDIA_MMTimeStart(void)
 	iData->mmSysTimeMS = GetTickCount();
 	iData->lpTimerList = NULL;
 	/* 10ms seems a reasonable value ?? */
-	iData->hMMTimer = SERVICE_AddTimer(10*1000L, TIME_MMSysTimeCallback, (DWORD)iData);
+	iData->hMMTimer = SERVICE_AddTimer(10, TIME_MMSysTimeCallback, (DWORD)iData);
     }
 
     return iData;

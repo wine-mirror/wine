@@ -57,7 +57,7 @@ static void CALLBACK SYSTEM_TimerTick( ULONG_PTR arg )
 static void SYSTEM_StartTicks(void)
 {
     if ( SYS_Service == INVALID_HANDLE_VALUE )
-        SYS_Service = SERVICE_AddTimer( SYS_TIMER_RATE, SYSTEM_TimerTick, 0L );
+        SYS_Service = SERVICE_AddTimer( (SYS_TIMER_RATE+500)/1000, SYSTEM_TimerTick, 0L );
 }
 
 

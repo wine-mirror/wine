@@ -167,7 +167,7 @@ BOOL X11DRV_EVENT_Init(void)
     if ( Options.synchronous ) 
         TSXSynchronize( display, True );
     else
-        SERVICE_AddTimer( 200000L, EVENT_Flush, 0 );
+        SERVICE_AddTimer( 200, EVENT_Flush, 0 );
 
     return TRUE;
 }
