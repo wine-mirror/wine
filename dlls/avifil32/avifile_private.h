@@ -32,8 +32,14 @@
 #define DIBWIDTHBYTES(bi) WIDTHBYTES((bi).biWidth * (bi).biBitCount)
 #endif
 
+#ifndef DIBPTR
+#define DIBPTR(lp)      ((LPBYTE)(lp) + (lp)->biSize + \
+                         (lp)->biClrUsed * sizeof(RGBQUAD))
+#endif
+
 #define IDS_WAVESTREAMFORMAT 0x0100
 #define IDS_WAVEFILETYPE     0x0101
+#define IDS_ALLFILES         0x0185
 #define IDS_VIDEO            0x0189
 #define IDS_AUDIO            0x0190
 #define IDS_AVISTREAMFORMAT  0x0191

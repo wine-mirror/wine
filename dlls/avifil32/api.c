@@ -691,7 +691,7 @@ HRESULT WINAPI AVIMakeCompressedStream(PAVISTREAM *ppsCompressed,
     if (FAILED(hr))
       return hr;
 
-    wsprintfA(szRegKey, "AVIFile\\Compressors\\%4.4s", (char*)&asiw.fccHandler);
+    wsprintfA(szRegKey, "AVIFile\\Compressors\\%4.4s", (char*)&asiw.fccType);
     if (RegQueryValueA(HKEY_CLASSES_ROOT, szRegKey, szValue, &size) != ERROR_SUCCESS)
       return AVIERR_UNSUPPORTED;
     if (AVIFILE_CLSIDFromString(szValue, &clsidHandler) != S_OK)
@@ -850,7 +850,10 @@ LONG WINAPI AVIStreamTimeToSample(PAVISTREAM pstream, LONG lTime)
  */
 HRESULT WINAPI AVIBuildFilterA(LPSTR szFilter, LONG cbFilter, BOOL fSaving)
 {
-  FIXME("(%p,%ld,%d): stub\n", szFilter, cbFilter, fSaving);
+  LPWSTR  wszFilter;
+  HRESULT hr;
+
+  TRACE("(%p,%ld,%d)\n", szFilter, cbFilter, fSaving);
 
   /* check parameters */
   if (szFilter == NULL)
@@ -861,7 +864,19 @@ HRESULT WINAPI AVIBuildFilterA(LPSTR szFilter, LONG cbFilter, BOOL fSaving)
   szFilter[0] = 0;
   szFilter[1] = 0;
 
-  return AVIERR_UNSUPPORTED;
+  wszFilter = (LPWSTR)GlobalAllocPtr(GHND, cbFilter);
+  if (wszFilter == NULL)
+    return AVIERR_MEMORY;
+
+  hr = AVIBuildFilterW(wszFilter, cbFilter, fSaving);
+  if (SUCCEEDED(hr)) {
+    WideCharToMultiByte(CP_ACP, 0, wszFilter, cbFilter,
+			szFilter, cbFilter, NULL, NULL);
+  }
+
+  GlobalFreePtr(wszFilter);
+
+  return hr;
 }
 
 /***********************************************************************
@@ -869,7 +884,10 @@ HRESULT WINAPI AVIBuildFilterA(LPSTR szFilter, LONG cbFilter, BOOL fSaving)
  */
 HRESULT WINAPI AVIBuildFilterW(LPWSTR szFilter, LONG cbFilter, BOOL fSaving)
 {
-  FIXME("(%p,%ld,%d): stub\n", szFilter, cbFilter, fSaving);
+  WCHAR  szAllFiles[40];
+  LONG   size;
+
+  FIXME("(%p,%ld,%d): partial stub\n", szFilter, cbFilter, fSaving);
 
   /* check parameters */
   if (szFilter == NULL)
@@ -877,10 +895,35 @@ HRESULT WINAPI AVIBuildFilterW(LPWSTR szFilter, LONG cbFilter, BOOL fSaving)
   if (cbFilter < 2)
     return AVIERR_BADSIZE;
 
-  szFilter[0] = 0;
-  szFilter[1] = 0;
+  /* FIXME:
+   *
+   * 1. iterate over HKEY_CLASSES_ROOT\\AVIFile\\Extensions and collect
+   *    extensions and CLSID's
+   * 2. iterate over collected CLSID's and copy it's description and it's
+   *    extensions to szFilter if it fits
+   *
+   * First filter is named "All multimedia files" and it's ilter is a
+   * collection of all possible extensions except "*.*".
+   */
 
-  return AVIERR_UNSUPPORTED;
+  /* add "All files" "*.*" filter if enough space left */
+  size = LoadStringW(AVIFILE_hModule, IDS_ALLFILES,
+		     szAllFiles, sizeof(szAllFiles));
+  if (cbFilter > size) {
+    int i;
+
+    /* replace '@' with \000 to seperate description of filter */
+    for (i = 0; i < size && szAllFiles[i] != 0; i++) {
+      if (szAllFiles[i] == '@') {
+	szAllFiles[i] = 0;
+	break;
+      }
+    }
+      
+    memcpy(szFilter, szAllFiles, size);
+  }
+
+  return AVIERR_OK;
 }
 
 /***********************************************************************

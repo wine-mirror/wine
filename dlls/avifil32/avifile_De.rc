@@ -22,6 +22,7 @@ STRINGTABLE DISCARDABLE
 {
   IDS_WAVESTREAMFORMAT	"Waveform: %s"
   IDS_WAVEFILETYPE	"Waveform"
+  IDS_ALLFILES		"Alle Dateien (*.*)@*.*"
   IDS_VIDEO		"Video"
   IDS_AUDIO		"Audio"
   IDS_AVISTREAMFORMAT	"%s %s #%d"
