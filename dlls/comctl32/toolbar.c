@@ -1164,6 +1164,9 @@ TOOLBAR_CalcStrings (HWND hwnd, LPSIZE lpSize)
     lpSize->cx = 0;
     lpSize->cy = 0;
 
+    if(infoPtr->nMaxTextRows == 0)
+        return;
+
     hdc = GetDC (hwnd);
     hOldFont = SelectObject (hdc, infoPtr->hFont);
 
@@ -1415,13 +1418,13 @@ TOOLBAR_CalcToolbar (HWND hwnd)
             else
                 infoPtr->nButtonHeight = sizeString.cy + 6;
         }
-        else if (infoPtr->nButtonHeight < infoPtr->nBitmapHeight + 6)
+        else
 	    infoPtr->nButtonHeight = infoPtr->nBitmapHeight + 6;
 
         if (sizeString.cx > infoPtr->nBitmapWidth)
 	    infoPtr->nButtonWidth = sizeString.cx + 6;
-        else if (infoPtr->nButtonWidth < infoPtr->nBitmapWidth + 6)
-	    infoPtr->nButtonWidth = infoPtr->nBitmapWidth + 6;
+        else
+            infoPtr->nButtonWidth = infoPtr->nBitmapWidth + 6;
     }
 
     if ( infoPtr->cxMin >= 0 && infoPtr->nButtonWidth < infoPtr->cxMin )
@@ -1528,7 +1531,7 @@ TOOLBAR_CalcToolbar (HWND hwnd)
             else
 	      cx = infoPtr->nButtonWidth;
 
-	    if (hasDropDownArrows && (btnPtr->fsStyle & BTNS_DROPDOWN))
+	    if ((hasDropDownArrows && (btnPtr->fsStyle & BTNS_DROPDOWN)) || (btnPtr->fsStyle & BTNS_WHOLEDROPDOWN))
 	      cx += DDARROW_WIDTH;
 	}
 	if (btnPtr->fsState & TBSTATE_WRAP )
@@ -4458,6 +4461,7 @@ TOOLBAR_SetMaxTextRows (HWND hwnd, WPARAM wParam, LPARAM lParam)
 
     infoPtr->nMaxTextRows = (INT)wParam;
 
+    TOOLBAR_CalcToolbar(hwnd);
     return TRUE;
 }
 
