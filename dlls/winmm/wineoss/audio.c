@@ -83,6 +83,14 @@ DEFAULT_DEBUG_CHANNEL(wave);
 #define WINE_WM_CLOSING		(WM_USER + 4)
 #define WINE_WM_HEADER		(WM_USER + 5)
 
+#define WINE_WM_FIRST WINE_WM_PAUSING
+#define WINE_WM_LAST WINE_WM_HEADER
+
+typedef struct {
+    int msg;
+    DWORD param;
+} WWO_MSG;
+
 typedef struct {
     int				unixdev;
     volatile int		state;			/* one of the WINE_WS_ manifest constants */
@@ -105,6 +113,12 @@ typedef struct {
     HANDLE			hThread;
     DWORD			dwThreadID;
     HANDLE			hEvent;
+#define WWO_RING_BUFFER_SIZE	30
+    WWO_MSG			messages[WWO_RING_BUFFER_SIZE];
+    int				msg_tosave;
+    int				msg_toget;
+    HANDLE			msg_event;
+    CRITICAL_SECTION		msg_crst;
     WAVEOUTCAPSA		caps;
 
     /* DirectSound stuff */
@@ -135,7 +149,7 @@ static WINE_WAVEIN	WInDev    [MAX_WAVEINDRV ];
 static DWORD wodDsCreate(UINT wDevID, PIDSDRIVER* drv);
 
 /*======================================================================*
- *                  Low level WAVE implemantation			*
+ *                  Low level WAVE implementation			*
  *======================================================================*/
 
 LONG OSS_WaveInit(void)
@@ -366,13 +380,13 @@ static DWORD OSS_NotifyClient(UINT wDevID, WORD wMsg, DWORD dwParam1,
 }
 
 /*======================================================================*
- *                  Low level WAVE OUT implemantation			*
+ *                  Low level WAVE OUT implementation			*
  *======================================================================*/
 
 /**************************************************************************
  * 				wodPlayer_WriteFragments	[internal]
  *
- * wodPlayer helper. Writes as many fragments it can to unixdev.
+ * wodPlayer helper. Writes as many fragments as it can to unixdev.
  * Returns TRUE in case of buffer underrun.
  */
 static	BOOL	wodPlayer_WriteFragments(WINE_WAVEOUT* wwo)
@@ -399,7 +413,7 @@ static	BOOL	wodPlayer_WriteFragments(WINE_WAVEOUT* wwo)
 		wwo->dwLastFragDone &&  	/* first fragment has been played */
 		info.fragments + 2 > info.fragstotal) {   /* done with all waveOutWrite()' fragments */
 		/* FIXME: should do better handling here */
-		TRACE("Oooch, buffer underrun !\n");
+		WARN("Oooch, buffer underrun !\n");
 		return TRUE; /* force resetting of waveOut device */
 	    }
 	    return FALSE;	/* wait a bit */
@@ -443,7 +457,7 @@ static	BOOL	wodPlayer_WriteFragments(WINE_WAVEOUT* wwo)
 		    } else {
 			/* last one played */
 			if (wwo->lpLoopPtr != lpWaveHdr && (lpWaveHdr->dwFlags & WHDR_BEGINLOOP)) {
-			    FIXME("Correctly handled case ? (ending loop buffer also starts a new loop\n");
+			    FIXME("Correctly handled case ? (ending loop buffer also starts a new loop)\n");
 			    /* shall we consider the END flag for the closing loop or for
 			     * the opening one or for both ???
 			     * code assumes for closing loop only
@@ -480,6 +494,49 @@ static	BOOL	wodPlayer_WriteFragments(WINE_WAVEOUT* wwo)
 	    }
 	}
     }
+}
+
+
+int wodPlayer_Message(WINE_WAVEOUT *wwo, int msg, DWORD param)
+{
+    EnterCriticalSection(&wwo->msg_crst);
+    if ((wwo->msg_tosave == wwo->msg_toget) /* buffer overflow ? */
+    &&  (wwo->messages[wwo->msg_toget].msg))
+    {
+	ERR("buffer overflow !?\n");
+        LeaveCriticalSection(&wwo->msg_crst);
+	return 0;
+    }
+
+    wwo->messages[wwo->msg_tosave].msg = msg;
+    wwo->messages[wwo->msg_tosave].param = param;
+    wwo->msg_tosave++;
+    if (wwo->msg_tosave > WWO_RING_BUFFER_SIZE-1)
+	wwo->msg_tosave = 0;
+    LeaveCriticalSection(&wwo->msg_crst);
+    /* signal a new message */
+    SetEvent(wwo->msg_event);
+    return 1;
+}
+
+int wodPlayer_RetrieveMessage(WINE_WAVEOUT *wwo, int *msg, DWORD *param)
+{
+    EnterCriticalSection(&wwo->msg_crst);
+
+    if (wwo->msg_toget == wwo->msg_tosave) /* buffer empty ? */
+    {
+        LeaveCriticalSection(&wwo->msg_crst);
+	return 0;
+    }
+	
+    *msg = wwo->messages[wwo->msg_toget].msg;
+    wwo->messages[wwo->msg_toget].msg = 0;
+    *param = wwo->messages[wwo->msg_toget].param;
+    wwo->msg_toget++;
+    if (wwo->msg_toget > WWO_RING_BUFFER_SIZE-1)
+	wwo->msg_toget = 0;
+    LeaveCriticalSection(&wwo->msg_crst);
+    return 1;
 }
 
 /**************************************************************************
@@ -556,9 +613,10 @@ static	DWORD	CALLBACK	wodPlayer(LPVOID pmt)
     WINE_WAVEOUT*	wwo = (WINE_WAVEOUT*)&WOutDev[uDevID];
     WAVEHDR*		lpWaveHdr;
     DWORD		dwSleepTime;
-    MSG			msg;
+    int			msg;
+    DWORD		param;
+    DWORD		tc;
 
-    PeekMessageA(&msg, 0, 0, 0, 0);
     wwo->state = WINE_WS_STOPPED;
 
     wwo->dwLastFragDone = 0;
@@ -570,23 +628,36 @@ static	DWORD	CALLBACK	wodPlayer(LPVOID pmt)
     TRACE("imhere[0]\n");
     SetEvent(wwo->hEvent);
 
-    /* make sleep time to be # of ms to output a fragment */
-    dwSleepTime = (wwo->dwFragmentSize * 1000) / wwo->format.wf.nAvgBytesPerSec;
-
     for (;;) {
-	/* wait for dwSleepTime or an event in thread's queue */
-	/* FIXME: could improve wait time depending on queue state,
-	 * ie, number of queued fragments
-	 */
+	/* wait for dwSleepTime or an event in thread's queue
+	 * FIXME:
+	 * - is wait time calculation optimal ?
+	 * - these 100 ms parts should be changed, but Eric reports
+	 *   that the wodPlayer thread might lock up if we use INFINITE
+	 *   (strange !), so I better don't change that now... */
+	if (wwo->state != WINE_WS_PLAYING)
+	    dwSleepTime = 100;
+	else
+	{
+	    tc = GetTickCount();
+	    if (tc < wwo->dwLastFragDone)
+	    {
+		/* calculate sleep time depending on when the last fragment
+		   will be played */
+	        dwSleepTime = (wwo->dwLastFragDone - tc)*7/10;
+		if (dwSleepTime > 100)
+		    dwSleepTime = 100;
+	    }
+	    else
+	        dwSleepTime = 0;
+	}
+
 	TRACE("imhere[1]\n");
-	MsgWaitForMultipleObjects(0, NULL, FALSE, 
-				  (wwo->state == WINE_WS_PLAYING) ? 
-				     2 * dwSleepTime : /*INFINITE*/100, 
-				  QS_POSTMESSAGE);
+	if (dwSleepTime)
+	WaitForSingleObject(wwo->msg_event, dwSleepTime);
 	TRACE("imhere[2] (q=%p p=%p)\n", wwo->lpQueuePtr, wwo->lpPlayPtr);
-	wodPlayer_Notify(wwo, uDevID, FALSE);
-	while (PeekMessageA(&msg, 0, 0, 0, PM_REMOVE)) {
-	    switch (msg.message) {
+	while (wodPlayer_RetrieveMessage(wwo, &msg, &param)) {
+	    switch (msg) {
 	    case WINE_WM_PAUSING:
 		wodPlayer_Reset(wwo, uDevID, FALSE);
 		wwo->state = WINE_WS_PAUSED;
@@ -597,7 +668,7 @@ static	DWORD	CALLBACK	wodPlayer(LPVOID pmt)
 		SetEvent(wwo->hEvent);
 		break;
 	    case WINE_WM_HEADER:
-		lpWaveHdr = (LPWAVEHDR)msg.lParam;
+		lpWaveHdr = (LPWAVEHDR)param;
 		
 		/* insert buffer at the end of queue */
 		{
@@ -622,7 +693,7 @@ static	DWORD	CALLBACK	wodPlayer(LPVOID pmt)
 		ExitThread(0);
 		/* shouldn't go here */
 	    default:
-		FIXME("unknown message %d\n", msg.message);
+		FIXME("unknown message %d\n", msg);
 		break;
 	    }
 	}
@@ -729,13 +800,13 @@ static DWORD wodOpen(WORD wDevID, LPWAVEOPENDESC lpDesc, DWORD dwFlags)
     
     if (dwFlags & WAVE_DIRECTSOUND) {
 	/* with DirectSound, fragments are irrelevant, but a large buffer isn't...
-	 * so let's choose a full 64KB for DirectSound */
+	 * so let's choose a full 64KB (32 * 2^11) for DirectSound */
 	audio_fragment = 0x0020000B;
     } else {
 	/* shockwave player uses only 4 1k-fragments at a rate of 22050 bytes/sec
 	 * thus leading to 46ms per fragment, and a turnaround time of 185ms
 	 */
-	/* 2^10=1024 bytes per fragment, 16 fragments max */
+	/* 16 fragments max, 2^10=1024 bytes per fragment */
 	audio_fragment = 0x000F000A;
     }
     sample_rate = wwo->format.wf.nSamplesPerSec;
@@ -768,6 +839,12 @@ static DWORD wodOpen(WORD wDevID, LPWAVEOPENDESC lpDesc, DWORD dwFlags)
 	return MMSYSERR_NOTENABLED;
     }
     wwo->dwFragmentSize = fragment_size;
+
+    wwo->msg_toget = 0;
+    wwo->msg_tosave = 0;
+    wwo->msg_event = CreateEventA(NULL, FALSE, FALSE, NULL);
+    memset(wwo->messages, 0, sizeof(WWO_MSG)*WWO_RING_BUFFER_SIZE);
+    InitializeCriticalSection(&wwo->msg_crst);
 
     if (!(dwFlags & WAVE_DIRECTSOUND)) {
 	wwo->hEvent = CreateEventA(NULL, FALSE, FALSE, NULL);
@@ -818,7 +895,7 @@ static DWORD wodClose(WORD wDevID)
     } else {
 	TRACE("imhere[3-close]\n");
 	if (wwo->hEvent != INVALID_HANDLE_VALUE) {
-	    PostThreadMessageA(wwo->dwThreadID, WINE_WM_CLOSING, 0, 0);
+	    wodPlayer_Message(wwo, WINE_WM_CLOSING, 0);
 	    WaitForSingleObject(wwo->hEvent, INFINITE);
 	    CloseHandle(wwo->hEvent);
 	}
@@ -863,7 +940,7 @@ static DWORD wodWrite(WORD wDevID, LPWAVEHDR lpWaveHdr, DWORD dwSize)
     lpWaveHdr->lpNext = 0;
 
     TRACE("imhere[3-HEADER]\n");
-    PostThreadMessageA(WOutDev[wDevID].dwThreadID, WINE_WM_HEADER, 0, (DWORD)lpWaveHdr);
+    wodPlayer_Message(&WOutDev[wDevID], WINE_WM_HEADER, (DWORD)lpWaveHdr);
 
     return MMSYSERR_NOERROR;
 }
@@ -922,7 +999,7 @@ static DWORD wodPause(WORD wDevID)
     }
     
     TRACE("imhere[3-PAUSING]\n");
-    PostThreadMessageA(WOutDev[wDevID].dwThreadID, WINE_WM_PAUSING, 0, 0);
+    wodPlayer_Message(&WOutDev[wDevID], WINE_WM_PAUSING, 0);
     WaitForSingleObject(WOutDev[wDevID].hEvent, INFINITE);
     
     return MMSYSERR_NOERROR;
@@ -942,7 +1019,7 @@ static DWORD wodRestart(WORD wDevID)
     
     if (WOutDev[wDevID].state == WINE_WS_PAUSED) {
 	TRACE("imhere[3-RESTARTING]\n");
-	PostThreadMessageA(WOutDev[wDevID].dwThreadID, WINE_WM_RESTARTING, 0, 0);
+	wodPlayer_Message(&WOutDev[wDevID], WINE_WM_RESTARTING, 0);
 	WaitForSingleObject(WOutDev[wDevID].hEvent, INFINITE);
     }
     
@@ -970,7 +1047,7 @@ static DWORD wodReset(WORD wDevID)
     }
     
     TRACE("imhere[3-RESET]\n");
-    PostThreadMessageA(WOutDev[wDevID].dwThreadID, WINE_WM_RESETTING, 0, 0);
+    wodPlayer_Message(&WOutDev[wDevID], WINE_WM_RESETTING, 0);
     WaitForSingleObject(WOutDev[wDevID].hEvent, INFINITE);
     
     return MMSYSERR_NOERROR;
@@ -1558,7 +1635,7 @@ static DWORD wodDsCreate(UINT wDevID, PIDSDRIVER* drv)
 }
 
 /*======================================================================*
- *                  Low level WAVE IN implemantation			*
+ *                  Low level WAVE IN implementation			*
  *======================================================================*/
 
 /**************************************************************************
@@ -1640,7 +1717,7 @@ static	DWORD	CALLBACK	widRecorder(LPVOID pmt)
 	MsgWaitForMultipleObjects(0, NULL, FALSE, dwSleepTime, QS_POSTMESSAGE);
 	TRACE("imhere[2] (q=%p)\n", wwi->lpQueuePtr);
 
-	while (PeekMessageA(&msg, 0, 0, 0, PM_REMOVE)) {
+	while (PeekMessageA(&msg, 0, WINE_WM_FIRST, WINE_WM_LAST, PM_REMOVE)) {
 	    switch (msg.message) {
 	    case WINE_WM_PAUSING:
 		wwi->state = WINE_WS_PAUSED;
