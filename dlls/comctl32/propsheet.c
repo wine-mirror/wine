@@ -1080,44 +1080,48 @@ static int PROPSHEET_CreatePage(HWND hwndParent,
  */
 static BOOL PROPSHEET_ShowPage(HWND hwndDlg, int index, PropSheetInfo * psInfo)
 {
-  PSHNOTIFY psn;
-  HWND hwndTabCtrl;
-
   if (index == psInfo->active_page)
-  {
-     if (GetTopWindow(hwndDlg) != psInfo->proppage[index].hwndPage)
+    {
+      if (GetTopWindow(hwndDlg) != psInfo->proppage[index].hwndPage)
           SetWindowPos(psInfo->proppage[index].hwndPage, HWND_TOP, 0, 0, 0, 0, SWP_NOSIZE | SWP_NOMOVE);
-     return TRUE;
-  }
-
-  /* Synchronize current selection with tab control */
-  hwndTabCtrl = GetDlgItem(hwndDlg, IDC_TABCONTROL);
-  SendMessageA(hwndTabCtrl, TCM_SETCURSEL, index, 0);
+    return TRUE;
+    }
 
   if (psInfo->proppage[index].hwndPage == 0)
   {
      LPCPROPSHEETPAGEA ppshpage;
+     PSHNOTIFY psn;
 
      ppshpage = (LPCPROPSHEETPAGEA)psInfo->proppage[index].hpage;
      PROPSHEET_CreatePage(hwndDlg, index, psInfo, ppshpage);
+
+     psn.hdr.hwndFrom = hwndDlg;
+     psn.hdr.code     = PSN_SETACTIVE;
+     psn.hdr.idFrom   = 0;
+     psn.lParam       = 0;
+
+     /* Send the notification before showing the page. */
+     SendMessageA(psInfo->proppage[index].hwndPage,
+                  WM_NOTIFY, 0, (LPARAM) &psn);
+
+     /*
+      * TODO: check return value. 
+      */
   }
-
-  psn.hdr.hwndFrom = hwndDlg;
-  psn.hdr.code     = PSN_SETACTIVE;
-  psn.hdr.idFrom   = 0;
-  psn.lParam       = 0;
-
-  /* Send the notification before showing the page. */
-  SendMessageA(psInfo->proppage[index].hwndPage, WM_NOTIFY, 0, (LPARAM) &psn);
-
-  /*
-   * TODO: check return value. 
-   */
 
   if (psInfo->active_page != -1)
      ShowWindow(psInfo->proppage[psInfo->active_page].hwndPage, SW_HIDE);
 
   ShowWindow(psInfo->proppage[index].hwndPage, SW_SHOW);
+
+  if (!(psInfo->ppshheader->dwFlags & PSH_WIZARD))
+  {
+     HWND hwndTabCtrl;
+
+     /* Synchronize current selection with tab control */
+     hwndTabCtrl = GetDlgItem(hwndDlg, IDC_TABCONTROL);
+     SendMessageA(hwndTabCtrl, TCM_SETCURSEL, index, 0);
+  }
 
   psInfo->active_page = index;
   psInfo->activeValid = TRUE;
@@ -1515,6 +1519,27 @@ static BOOL PROPSHEET_SetCurSel(HWND hwndDlg,
   }
 
   hwndPage = psInfo->proppage[index].hwndPage;
+
+  /*
+   * Notify the new page if it's already created.
+   * If not it will get created and notified in PROPSHEET_ShowPage.
+   */
+  if (hwndPage)
+  {
+    int result;
+    PSHNOTIFY psn;
+
+    psn.hdr.code     = PSN_SETACTIVE;
+    psn.hdr.hwndFrom = hwndDlg;
+    psn.hdr.idFrom   = 0;
+    psn.lParam       = 0;
+
+    result = SendMessageA(hwndPage, WM_NOTIFY, 0, (LPARAM) &psn);
+
+    /*
+     * TODO: check return value. 
+     */
+  }
 
   /*
    * Display the new page.
@@ -2110,7 +2135,8 @@ PROPSHEET_DialogProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
  
       PROPSHEET_SetCurSel(hwnd, idx, psInfo->proppage[idx].hpage);
 
-      SendMessageA(hwndTabCtrl, TCM_SETCURSEL, psInfo->active_page, 0);
+      if (!(psInfo->ppshheader->dwFlags & PSH_WIZARD))
+        SendMessageA(hwndTabCtrl, TCM_SETCURSEL, psInfo->active_page, 0);
 
       if (!HIWORD(psInfo->ppshheader->pszCaption) &&
               psInfo->ppshheader->hInstance)
