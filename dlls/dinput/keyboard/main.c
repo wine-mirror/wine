@@ -20,6 +20,8 @@
  */
 
 #include "config.h"
+#include "wine/port.h"
+
 #include <string.h>
 #ifdef HAVE_SYS_ERRNO_H
 # include <sys/errno.h>

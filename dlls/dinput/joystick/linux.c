@@ -20,6 +20,7 @@
  */
 
 #include "config.h"
+#include "wine/port.h"
 
 #ifdef HAVE_LINUX_22_JOYSTICK_API
 
