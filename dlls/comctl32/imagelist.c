@@ -2243,7 +2243,7 @@ ImageList_Replace (HIMAGELIST himl, INT i, HBITMAP hbmImage,
         return FALSE;
     }
     
-    if ((i >= himl->cCurImage) || (i < 0)) {
+    if ((i >= himl->cMaxImage) || (i < 0)) {
         ERR("Invalid image index!\n");
         return FALSE;
     }
@@ -2315,7 +2315,7 @@ ImageList_ReplaceIcon (HIMAGELIST himl, INT i, HICON hIcon)
 
     if (himl == NULL)
 	return -1;
-    if ((i >= himl->cCurImage) || (i < -1))
+    if ((i >= himl->cMaxImage) || (i < -1))
 	return -1;
 
     hBestFitIcon = CopyImage(
@@ -2508,7 +2508,7 @@ ImageList_SetIconSize (HIMAGELIST himl, INT cx, INT cy)
     if (!himl)
 	return FALSE;
 
-    /* remove all images*/
+    /* remove all images */
     himl->cMaxImage = himl->cInitial + himl->cGrow;
     himl->cCurImage = 0;
     himl->cx        = cx;
