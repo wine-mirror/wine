@@ -891,6 +891,7 @@ HRESULT  WINAPI  IDirect3D8Impl_CreateDevice               (LPDIRECT3D8 iface,
     HWND whichHWND;
     int num;
     XVisualInfo template;
+    HDC hDc;
 
     ICOM_THIS(IDirect3D8Impl,iface);
     TRACE("(%p)->(Adptr:%d, DevType: %x, FocusHwnd: %p, BehFlags: %lx, PresParms: %p, RetDevInt: %p)\n", This, Adapter, DeviceType,
@@ -925,96 +926,47 @@ HRESULT  WINAPI  IDirect3D8Impl_CreateDevice               (LPDIRECT3D8 iface,
     object->adapterNo = Adapter;
     object->devType = DeviceType;
 
-    /* Initialize openGl */
-    {
-        HDC hDc;
-	/*int dblBuf[] = {GLX_STENCIL_SIZE,8,GLX_RGBA,GLX_DEPTH_SIZE,16,GLX_DOUBLEBUFFER,None};*/
-        int dblBuf[] = {GLX_RGBA, 
-			GLX_STENCIL_SIZE, 8, /*  2 */
-			GLX_DEPTH_SIZE,  16, /*  4 */
-			GLX_DOUBLEBUFFER, None};
-        /* FIXME: Handle stencil appropriately via EnableAutoDepthStencil / AutoDepthStencilFormat */
+    /* Initialize openGl - Note the visual is chosen as the window is created and the glcontext cannot
+         use different properties after that point in time. FIXME: How to handle when requested format 
+         doesnt match actual visual? Cannot choose one here - code removed as it ONLY works if the one 
+         it chooses is identical to the one already being used!                                        */
+    /* FIXME: Handle stencil appropriately via EnableAutoDepthStencil / AutoDepthStencilFormat */
 
-        /* Which hwnd are we using? */
-/*      if (pPresentationParameters->Windowed) { */
-           whichHWND = pPresentationParameters->hDeviceWindow;
-           if (!whichHWND) {
-               whichHWND = hFocusWindow;
-           }
-	   object->win_handle = whichHWND;
-           object->win     = (Window)GetPropA( whichHWND, "__wine_x11_client_window" );
-/*
- *      } else {
- *           whichHWND       = (HWND) GetDesktopWindow();
- *           object->win     = (Window)GetPropA(whichHWND, "__wine_x11_whole_window" );
- *	   root_window
- *        }
- */
-
-        hDc = GetDC(whichHWND);
-        object->display = get_display(hDc);
-
-
-	TRACE("(%p)->(DepthStencil:(%u,%s), BackBufferFormat:(%u,%s))\n", This, 
-	      pPresentationParameters->AutoDepthStencilFormat, debug_d3dformat(pPresentationParameters->AutoDepthStencilFormat),
-	      pPresentationParameters->BackBufferFormat, debug_d3dformat(pPresentationParameters->BackBufferFormat));
-
-	
-#if 0
-	if (TRUE == pPresentationParameters->EnableAutoDepthStencil) {
-	  switch (pPresentationParameters->AutoDepthStencilFormat) {
-	  case D3DFMT_D16_LOCKABLE: dblBuf[2] =  8; dblBuf[4] = 16; break;
-	  case D3DFMT_D16:          dblBuf[2] =  8; dblBuf[4] = 16; break;
-	  case D3DFMT_D15S1:        dblBuf[2] =  1; dblBuf[4] = 16; break;
-	  case D3DFMT_D24X4S4:      dblBuf[2] =  4; dblBuf[4] = 24; break;
-	  case D3DFMT_D24S8:        dblBuf[2] =  8; dblBuf[4] = 24; break;
-	  case D3DFMT_D24X8:        dblBuf[2] =  8; dblBuf[4] = 24; break;
-	  case D3DFMT_D32:          dblBuf[2] =  8; dblBuf[4] = 32; break;
-	  default:                  dblBuf[2] =  8; dblBuf[4] = 16; break;
-	  }
-	}
-	
-	switch (pPresentationParameters->BackBufferFormat) {
-	case D3DFMT_R3G3B2:   dblBuf[6] = 3; dblBuf[8] = 3; dblBuf[10] = 2; dblBuf[12] = 0; break;
-	case D3DFMT_R5G6B5:   dblBuf[6] = 5; dblBuf[8] = 6; dblBuf[10] = 5; dblBuf[12] = 0; break;
-	case D3DFMT_X1R5G5B5: dblBuf[6] = 5; dblBuf[8] = 5; dblBuf[10] = 5; dblBuf[12] = 0; break;
-	case D3DFMT_A1R5G5B5: dblBuf[6] = 5; dblBuf[8] = 5; dblBuf[10] = 5; dblBuf[12] = 1; break;
-	case D3DFMT_X4R4G4B4: dblBuf[6] = 4; dblBuf[8] = 4; dblBuf[10] = 4; dblBuf[12] = 0; break;
-	case D3DFMT_R8G8B8:   dblBuf[6] = 8; dblBuf[8] = 8; dblBuf[10] = 8; dblBuf[12] = 0; break;
-	case D3DFMT_X8R8G8B8: dblBuf[6] = 8; dblBuf[8] = 8; dblBuf[10] = 8; dblBuf[12] = 0; break;
-	case D3DFMT_A8R8G8B8: dblBuf[6] = 8; dblBuf[8] = 8; dblBuf[10] = 8; dblBuf[12] = 8; break;
-	default:              dblBuf[6] = 5; dblBuf[8] = 6; dblBuf[10] = 5; dblBuf[12] = 0; break;
-	}
-#endif
-
-        ENTER_GL();
-	object->visInfo = glXChooseVisual(object->display, DefaultScreen(object->display), dblBuf);
-	if (NULL == object->visInfo) {
-	  FIXME("cannot choose needed glxVisual with Stencil Buffer\n"); 
-
-	  /**
-	   * second try using wine initialized visual ...
-	   * must be fixed reworking wine-glx init
-	   */
-	  template.visualid = (VisualID)GetPropA(GetDesktopWindow(), "__wine_x11_visual_id");
-	  object->visInfo = XGetVisualInfo(object->display, VisualIDMask, &template, &num);
-	  if (NULL == object->visInfo) {
-	    ERR("cannot really get XVisual\n"); 
-	    LEAVE_GL();
-	    return D3DERR_NOTAVAILABLE;
-	  }
-	}
-        object->glCtx = glXCreateContext(object->display, object->visInfo, NULL, GL_TRUE);
-	if (NULL == object->glCtx) {
-	  ERR("cannot create glxContext\n"); 
-	  LEAVE_GL();
-	  return D3DERR_NOTAVAILABLE;
-	}
-	LEAVE_GL();
-
-        ReleaseDC(whichHWND, hDc);
+    /* Which hwnd are we using? */
+    whichHWND = pPresentationParameters->hDeviceWindow;
+    if (!whichHWND) {
+        whichHWND = hFocusWindow;
     }
+    object->win_handle = whichHWND;
+    object->win     = (Window)GetPropA( whichHWND, "__wine_x11_client_window" );
 
+    hDc = GetDC(whichHWND);
+    object->display = get_display(hDc);
+
+    TRACE("(%p)->(DepthStencil:(%u,%s), BackBufferFormat:(%u,%s))\n", This, 
+          pPresentationParameters->AutoDepthStencilFormat, debug_d3dformat(pPresentationParameters->AutoDepthStencilFormat),
+          pPresentationParameters->BackBufferFormat, debug_d3dformat(pPresentationParameters->BackBufferFormat));
+
+    ENTER_GL();
+
+    /* Create a context based off the properties of the existing visual */
+    template.visualid = (VisualID)GetPropA(GetDesktopWindow(), "__wine_x11_visual_id");
+    object->visInfo = XGetVisualInfo(object->display, VisualIDMask, &template, &num);
+    if (NULL == object->visInfo) {
+        ERR("cannot really get XVisual\n"); 
+        LEAVE_GL();
+        return D3DERR_NOTAVAILABLE;
+     }
+    object->glCtx = glXCreateContext(object->display, object->visInfo, NULL, GL_TRUE);
+    if (NULL == object->glCtx) {
+      ERR("cannot create glxContext\n"); 
+      LEAVE_GL();
+      return D3DERR_NOTAVAILABLE;
+     }
+    LEAVE_GL();
+
+    ReleaseDC(whichHWND, hDc);
+    
     if (object->glCtx == NULL) {
         ERR("Error in context creation !\n");
         return D3DERR_INVALIDCALL;
