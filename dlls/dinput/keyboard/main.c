@@ -281,6 +281,8 @@ static HRESULT WINAPI SysKeyboardAImpl_GetDeviceState(
     if (len != 256)
       return DIERR_INVALIDPARAM;
 
+    MsgWaitForMultipleObjectsEx(0, NULL, 0, 0, 0);
+
     memcpy(ptr, DInputKeyState, 256);
     return DI_OK;
 }
@@ -304,6 +306,8 @@ static HRESULT WINAPI SysKeyboardAImpl_GetDeviceData(
 
         if (dodsize < sizeof(*dod))
           return DIERR_INVALIDPARAM;
+
+        MsgWaitForMultipleObjectsEx(0, NULL, 0, 0, 0);
 
         EnterCriticalSection(&(This->crit));
 
