@@ -2033,7 +2033,6 @@ void WINAPI DOS3Call( CONTEXT86 *context )
     	break;
 
     case 0x65:{/* GET EXTENDED COUNTRY INFORMATION */
-    	extern WORD WINE_LanguageId;
 	BYTE    *dataptr=CTX_SEG_OFF_TO_LIN(context, ES_reg(context),EDI_reg(context));
 	TRACE("GET EXTENDED COUNTRY INFORMATION code page %d country %d\n",
 	      BX_reg(context), DX_reg(context));
@@ -2042,7 +2041,7 @@ void WINAPI DOS3Call( CONTEXT86 *context )
 	    TRACE("\tget general internationalization info\n");
 	    dataptr[0] = 0x1;
 	    *(WORD*)(dataptr+1) = 41;
-	    *(WORD*)(dataptr+3) = WINE_LanguageId;
+	    *(WORD*)(dataptr+3) = GetSystemDefaultLangID();
 	    *(WORD*)(dataptr+5) = CodePage;
 	    *(DWORD*)(dataptr+0x19) = 0; /* FIXME: ptr to case map routine */
 	    break;

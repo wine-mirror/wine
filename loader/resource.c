@@ -36,8 +36,6 @@
 DEFAULT_DEBUG_CHANNEL(resource);
 DECLARE_DEBUG_CHANNEL(accel);
 
-extern WORD WINE_LanguageId;
-
 #define HRSRC_MAP_BLOCKSIZE 16
 
 typedef struct _HRSRC_ELEM
@@ -449,7 +447,7 @@ HRSRC16 WINAPI FindResource16( HMODULE16 hModule, SEGPTR name, SEGPTR type )
     LPCSTR typeStr = HIWORD(type)? PTR_SEG_TO_LIN(type) : (LPCSTR)type;
 
     return RES_FindResource( hModule, typeStr, nameStr, 
-                             WINE_LanguageId, FALSE, TRUE );
+                             GetSystemDefaultLangID(), FALSE, TRUE );
 }
 
 /**********************************************************************
@@ -458,7 +456,7 @@ HRSRC16 WINAPI FindResource16( HMODULE16 hModule, SEGPTR name, SEGPTR type )
 HANDLE WINAPI FindResourceA( HMODULE hModule, LPCSTR name, LPCSTR type )
 {
     return RES_FindResource( hModule, type, name, 
-                             WINE_LanguageId, FALSE, FALSE );
+                             GetSystemDefaultLangID(), FALSE, FALSE );
 }
 
 /**********************************************************************
@@ -487,7 +485,7 @@ HRSRC WINAPI FindResourceExW( HMODULE hModule,
 HRSRC WINAPI FindResourceW(HINSTANCE hModule, LPCWSTR name, LPCWSTR type)
 {
     return RES_FindResource( hModule, (LPCSTR)type, (LPCSTR)name, 
-                             WINE_LanguageId, TRUE, FALSE );
+                             GetSystemDefaultLangID(), TRUE, FALSE );
 }
 
 /**********************************************************************
