@@ -634,3 +634,6 @@ rsrc	user32
 801 stdcall SetMenuInfo(long ptr)SetMenuInfo
 802 stdcall GetProcessDefaultLayout(ptr) GetProcessDefaultLayout
 803 stdcall SetProcessDefaultLayout(long) SetProcessDefaultLayout
+804 stdcall RegisterDeviceNotificationA(long ptr long) RegisterDeviceNotificationA
+805 stub    RegisterDeviceNotificationW
+806 stub    UnregisterDeviceNotification

@@ -682,3 +682,15 @@ void WINAPI RegisterSystemThread(DWORD flags, DWORD reserved)
 {
 	FIXME_(win32)("(%08lx, %08lx)\n", flags, reserved);
 }
+
+/***********************************************************************
+ *	RegisterDeviceNotification	(USER32.477)
+ */
+HDEVNOTIFY WINAPI RegisterDeviceNotificationA(
+	HANDLE hnd, LPVOID notifyfilter, DWORD flags
+) {
+	FIXME_(win32)("(hwnd=%08x, filter=%p,flags=0x%08lx), STUB!\n",
+		hnd,notifyfilter,flags
+	);
+	return 0;
+}

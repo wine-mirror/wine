@@ -2984,6 +2984,13 @@ typedef struct
 #define NF_QUERY	    3
 #define NF_REQUERY	    4
 
+/* RegisterDeviceNotification stuff */
+typedef  PVOID           HDEVNOTIFY;
+typedef  HDEVNOTIFY     *PHDEVNOTIFY;
+
+#define DEVICE_NOTIFY_WINDOW_HANDLE     0x00000000
+
+
 #include "poppack.h"
 #define     EnumTaskWindows(handle,proc,lparam) \
             EnumThreadWindows(handle,proc,lparam)
@@ -3053,6 +3060,9 @@ BOOL      WINAPI PostThreadMessageA(DWORD, UINT, WPARAM, LPARAM);
 BOOL      WINAPI PostThreadMessageW(DWORD, UINT, WPARAM, LPARAM);
 #define     PostThreadMessage WINELIB_NAME_AW(PostThreadMessage)
 BOOL        WINAPI RegisterHotKey(HWND,INT,UINT,UINT);
+HDEVNOTIFY  WINAPI RegisterDeviceNotificationA(HANDLE,LPVOID,DWORD);
+HDEVNOTIFY  WINAPI RegisterDeviceNotificationW(HANDLE,LPVOID,DWORD);
+#define     RegisterDeviceNotification WINELIB_NAME_AW(RegisterDeviceNotification)
 UINT      WINAPI ReuseDDElParam(UINT,UINT,UINT,UINT,UINT);
 BOOL        WINAPI SendMessageCallbackA(HWND,UINT,WPARAM,LPARAM,FARPROC,DWORD);
 BOOL        WINAPI SendMessageCallbackW(HWND,UINT,WPARAM,LPARAM,FARPROC,DWORD);
@@ -3074,6 +3084,7 @@ INT         WINAPI ToUnicode(UINT,UINT,PBYTE,LPWSTR,int,UINT);
 BOOL      WINAPI TrackPopupMenuEx(HMENU,UINT,INT,INT,HWND,
                                     LPTPMPARAMS);
 UINT      WINAPI UnpackDDElParam(UINT,UINT,UINT*,UINT*);
+BOOL        WINAPI UnregisterDeviceNotification(HDEVNOTIFY);
 BOOL        WINAPI UnregisterHotKey(HWND,INT);
 DWORD       WINAPI WaitForInputIdle(HANDLE,DWORD);
 VOID        WINAPI keybd_event(BYTE,BYTE,DWORD,DWORD);
