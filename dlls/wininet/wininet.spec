@@ -1,6 +1,6 @@
 @ stdcall InternetInitializeAutoProxyDll(long)
 @ stub ShowCertificate
-@ stdcall CommitUrlCacheEntryA(str str long long long str long str str)
+@ stdcall CommitUrlCacheEntryA(str str double double long str long str str)
 @ stub CommitUrlCacheEntryW
 @ stub CreateUrlCacheContainerA
 @ stub CreateUrlCacheContainerW
@@ -11,7 +11,7 @@
 @ stub DeleteUrlCacheContainerA
 @ stub DeleteUrlCacheContainerW
 @ stdcall DeleteUrlCacheEntry(str)
-@ stdcall DeleteUrlCacheGroup(long long ptr)
+@ stdcall DeleteUrlCacheGroup(double long ptr) DeleteUrlCacheGroup
 @ stdcall DllInstall(long ptr) WININET_DllInstall
 @ stub FindCloseUrlCache
 @ stub FindFirstUrlCacheContainerA
@@ -153,7 +153,7 @@
 @ stub RunOnceUrlCache
 @ stub SetUrlCacheConfigInfoA
 @ stub SetUrlCacheConfigInfoW
-@ stdcall SetUrlCacheEntryGroup(str long long ptr long ptr)
+@ stdcall SetUrlCacheEntryGroup(str long double ptr long ptr)
 @ stub SetUrlCacheEntryInfoA
 @ stub SetUrlCacheEntryInfoW
 @ stub SetUrlCacheHeaderData

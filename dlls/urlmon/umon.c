@@ -897,7 +897,7 @@ HRESULT WINAPI CoInternetGetSession(DWORD dwSessionMode, /*IInternetSession*/voi
  *    INET_E_QUERYOPTIONUNKNOWN	invalid option
  *
  */
-HRESULT CoInternetQueryInfo(LPCWSTR pwzUrl, QUERYOPTION QueryOption,
+HRESULT WINAPI CoInternetQueryInfo(LPCWSTR pwzUrl, QUERYOPTION QueryOption,
   DWORD dwQueryFlags, LPVOID pvBuffer, DWORD cbBuffer, DWORD * pcbBuffer,
   DWORD dwReserved)
 {

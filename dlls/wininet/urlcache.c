@@ -95,7 +95,7 @@ BOOL WINAPI SetUrlCacheEntryGroup(LPCSTR lpszUrlName, DWORD dwFlags,
 BOOL WINAPI CommitUrlCacheEntryA(LPCSTR lpszUrl, LPCSTR lpszLocalName,
     FILETIME ExpireTime, FILETIME lastModified, DWORD cacheEntryType,
     LPBYTE lpHeaderInfo, DWORD headerSize, LPCSTR fileExtension,
-    DWORD originalUrl)
+    LPCSTR originalUrl)
 {
     FIXME("stub\n");
     return FALSE;
