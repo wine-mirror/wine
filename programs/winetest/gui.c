@@ -417,6 +417,7 @@ report (enum report_type t, ...)
         funcs = quiet_funcs;
         return 0;
     default:
+        break;
     }
 
     if (!funcs) {
