@@ -473,6 +473,15 @@ static int ExtractFromEXEDLL(const char *szFileName, int nIndex, const char *szX
     return 0;
 }
 
+/* get the Unix file name for a given path, allocating the string */
+inline static char *get_unix_file_name( const char *dos )
+{
+    char buffer[MAX_PATH];
+
+    if (!wine_get_unix_file_name( dos, buffer, sizeof(buffer) )) return NULL;
+    return heap_strdup( buffer );
+}
+
 static int ExtractFromICO(const char *szFileName, const char *szXPMFileName)
 {
     FILE *fICOFile;
@@ -482,8 +491,10 @@ static int ExtractFromICO(const char *szFileName, const char *szXPMFileName)
     int nIndex = 0;
     void *pIcon;
     int i;
+    char *filename;
 
-    if (!(fICOFile = fopen(szFileName, "r")))
+    filename = get_unix_file_name(szFileName);
+    if (!(fICOFile = fopen(filename, "r")))
         goto error1;
 
     if (fread(&iconDir, sizeof (ICONDIR), 1, fICOFile) != 1)
@@ -525,16 +536,8 @@ static int ExtractFromICO(const char *szFileName, const char *szXPMFileName)
  error2:
     fclose(fICOFile);
  error1:
+    HeapFree(GetProcessHeap(), 0, filename);
     return 0;
-}
-
-/* get the Unix file name for a given path, allocating the string */
-inline static char *get_unix_file_name( const char *dos )
-{
-    char buffer[MAX_PATH];
-
-    if (!wine_get_unix_file_name( dos, buffer, sizeof(buffer) )) return NULL;
-    return heap_strdup( buffer );
 }
 
 static BOOL create_default_icon( const char *filename )
@@ -997,7 +1000,8 @@ HRESULT WINAPI IShellLink_Constructor (
 
 	TRACE("(%p)->()\n",sl);
 
-	if (IsEqualIID(riid, &IID_IShellLinkA))
+	if (IsEqualIID(riid, &IID_IUnknown) ||
+	    IsEqualIID(riid, &IID_IShellLinkA))
 	    *ppv = sl;
 	else if (IsEqualIID(riid, &IID_IShellLinkW))
 	    *ppv = &(sl->lpvtblw);
