@@ -1,7 +1,7 @@
   <chapter id="winelib-introduction">
     <title id="introduction.title">Winelib Introduction</title>
 
-    <sect1>
+    <sect1 id="winelib-whatis">
       <title>What is Winelib?</title>
 
       <para>

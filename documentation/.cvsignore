@@ -10,7 +10,6 @@ DBTOHTML_OUTPUT_DIR*
 Makefile
 wine-devel
 wine-doc
-wine-doc.rtf
 wine-faq
 wine-user
 wine.man

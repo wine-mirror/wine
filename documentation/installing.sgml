@@ -23,7 +23,7 @@
       to avoid this problem is recommended.
     </para>
 
-    <sect1>
+    <sect1 id="installing-package">
       <title>Installing or uninstalling Wine packages</title>
 
       <para>
@@ -121,7 +121,7 @@ Password:
       </sect2>
     </sect1>
 
-    <sect1>
+    <sect1 id="installing-source">
       <title>Installing or uninstalling a Wine source code tree</title>
 
       <para>

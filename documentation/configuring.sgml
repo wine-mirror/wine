@@ -3319,7 +3319,7 @@ ipplus.exe &lt;-&gt; (TWAIN INTERFACE) &lt;-&gt; (TWAIN DATA SOURCE.ASPI) -&gt; 
       <sect2>
         <title>NOTES/BUGS</title>
         <para>
-          The biggest drwback is that it only works under Linux at the moment.
+          The biggest drawback is that it only works under Linux at the moment.
         </para>
         <para>
           The ASPI code has only been tested with:

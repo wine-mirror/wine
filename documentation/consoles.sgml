@@ -144,7 +144,7 @@
       </para>
     </sect1>
 
-    <sect1>
+    <sect1 id="wine-console-creation">
       <title>Console creation</title>
       
       <para>

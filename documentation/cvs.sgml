@@ -5,7 +5,7 @@
     to update both!
     -->
 
-    <sect1>
+    <sect1 id="cvs-whatis">
       <title>What is CVS?</title>
 
       <para>
@@ -31,7 +31,7 @@
       </para>
     </sect1>
 
-    <sect1>
+    <sect1 id="cvs-installation-check">
       <title>CVS installation check</title>
       <para>
         First you need to make sure that you have <command>cvs</command>
@@ -51,7 +51,7 @@
       </para>
     </sect1>
 
-    <sect1>
+    <sect1 id="cvs-configuring">
       <title>Configuring Wine-specific CVS settings</title>
 
       <para>
@@ -103,7 +103,7 @@ checkout -P
 
     </sect1>
 
-    <sect1>
+    <sect1 id="cvs-downloading-wine">
       <title>Downloading the Wine CVS tree</title>
 
       <para>
@@ -220,7 +220,7 @@ CVSROOT=:pserver:&lt;Username&gt;@&lt;CVS Server&gt;:&lt;Server root&gt;
       </para>
     </sect1>
 
-    <sect1>
+    <sect1 id="cvs-other-modules">
       <title>Other modules available via CVS from WineHQ</title>
 
       <para>
@@ -247,7 +247,7 @@ CVSROOT=:pserver:&lt;Username&gt;@&lt;CVS Server&gt;:&lt;Server root&gt;
       </itemizedlist>
     </sect1>
 
-    <sect1>
+    <sect1 id="cvs-converting">
       <title>Converting a Wine FTP download to a CVS tree</title>
 
       <para>
@@ -305,7 +305,7 @@ cvs update -PAd
       </para>
     </sect1>
 
-    <sect1>
+    <sect1 id="cvs-cvsweb">
       <title>WineHQ cvsweb access</title>
 
       <para>

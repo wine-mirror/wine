@@ -161,7 +161,7 @@ Options:
       </para>
     </sect1>
 
-    <sect1>
+    <sect1 id="explorer-like-wine">
       <title>Explorer-like graphical Wine environments</title>
 
       <para>
