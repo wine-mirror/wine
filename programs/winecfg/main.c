@@ -205,8 +205,13 @@ WinMain (HINSTANCE hInstance, HINSTANCE hPrev, LPSTR szCmdLine, int nShow)
 {
 
     /* Until winecfg is fully functional, warn users that it is incomplete and doesn't do anything */
-    WINE_FIXME("The winecfg tool is not yet complete, and does not actually alter your configuration.\n");
-    WINE_FIXME("If you want to alter the way Wine works, look in the ~/.wine/config file for more information.\n");
+    if (!getenv("WINECFG_NOWARN")) {
+        WINE_FIXME("The winecfg tool is not yet complete, and does not actually alter your configuration.\n");
+        WINE_FIXME("If you want to alter the way Wine works, look in the ~/.wine/config file for more information.\n");
+        MessageBoxA(NULL, "The winecfg tool is not yet complete, and does not actually alter your configuration\n\n"
+                    "If you want to alter the way Wine works, look in the ~/.wine/config file for more information.",
+                    "", MB_OK | MB_ICONEXCLAMATION);
+    }
 
     if (initialize() != 0) {
 	WINE_ERR("initialization failed, aborting\n");
@@ -215,7 +220,7 @@ WinMain (HINSTANCE hInstance, HINSTANCE hPrev, LPSTR szCmdLine, int nShow)
 
     /* is the user running as root? */
     if(getuid() == 0)
-        MessageBox(NULL, "It is not advisable to run wine as root.  Doing so may compromise the security of your computer.  Please run wine as a normal user.", "Warning", MB_OK);
+        MessageBox(NULL, "It is not advisable to run wine as root.  Doing so may compromise the security of your computer.  Please run wine as a normal user.", "", MB_OK);
     
     /*
      * The next 3 lines should be all that is needed
