@@ -1387,7 +1387,6 @@ WINE_CONFIG_EXTRA_DIR(files)
 WINE_CONFIG_EXTRA_DIR(graphics)
 WINE_CONFIG_EXTRA_DIR(graphics/x11drv)
 WINE_CONFIG_EXTRA_DIR(include/wine)
-WINE_CONFIG_EXTRA_DIR(loader)
 WINE_CONFIG_EXTRA_DIR(memory)
 WINE_CONFIG_EXTRA_DIR(misc)
 WINE_CONFIG_EXTRA_DIR(msdos)
@@ -1568,7 +1567,7 @@ libs/unicode/Makefile
 libs/uuid/Makefile
 libs/wine/Makefile
 libs/wpp/Makefile
-miscemu/Makefile
+loader/Makefile
 programs/Makefile
 programs/avitools/Makefile
 programs/clock/Makefile

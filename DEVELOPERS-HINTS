@@ -169,7 +169,7 @@ Support programs, libraries, etc:
 	libs/uuid/		- Windows-compatible UUID numbers
 	libs/wine/		- Wine bootstrap library
 	libs/wpp/		- C preprocessor
-	miscemu/		- the main Wine program
+	loader/			- the main Wine loader
 	server/			- the Wine server
 	tools/			- relay code builder, resource compiler, etc.
 
@@ -181,7 +181,6 @@ Note: these directories will ultimately get moved into their
 respective dlls.
 
 	files/			- KERNEL file I/O
-	loader/			- KERNEL loader code
 	memory/			- KERNEL memory management
 	misc/			- KERNEL shell, registry, winsock, etc.
 	msdos/			- KERNEL DOS support

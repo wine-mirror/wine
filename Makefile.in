@@ -32,7 +32,7 @@ SUBDIRS = \
 	documentation \
 	include \
 	libs \
-	miscemu \
+	loader \
 	programs \
 	server \
 	tools
@@ -40,7 +40,7 @@ SUBDIRS = \
 # Sub-directories to install for install-lib
 INSTALLLIBSUBDIRS = \
 	documentation \
-	miscemu \
+	loader \
 	programs \
 	server
 
@@ -105,13 +105,13 @@ uninstall:: $(INSTALLBOTHSUBDIRS:%=%/__uninstall__)
 
 all: $(SUBDIRS)
 dlls: libs tools
-miscemu server: libs tools
+loader server: libs tools
 programs: dlls libs tools
 tools: libs
 
 dlls/__install-lib__ dlls/__install-dev__: libs tools
 libs/__install-lib__ libs/__install-dev__: libs
-miscemu/__install__ server/__install__: libs tools
+loader/__install__ server/__install__: libs tools
 programs/__install__: libs tools dlls/__install-lib__
 tools/__install__: tools
 

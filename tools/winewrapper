@@ -70,7 +70,7 @@ else
 fi
 WINEDLLPATH="$topdir/dlls:$topdir/programs"
 WINESERVER="$topdir/server/wineserver"
-WINELOADER="$topdir/miscemu/wine"
+WINELOADER="$topdir/loader/wine"
 export LD_LIBRARY_PATH WINEDLLPATH WINESERVER WINELOADER
 
 # any local settings ?

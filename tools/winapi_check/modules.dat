@@ -199,25 +199,17 @@ dlls/iphlpapi
 
 dlls/kernel
 files
-loader/ne
-loader
 memory
 misc
 msdos
-scheduler
-win32
 
 % dlls/kernel/kernel32.spec
 
 dlls/kernel
 files
-loader/ne
-loader
 memory
 msdos
 misc
-scheduler
-win32
 
 % dlls/mapi32/mapi32.spec
 
@@ -263,8 +255,6 @@ misc
 % dlls/kernel/toolhelp.spec
 
 dlls/kernel
-loader/ne
-loader
 memory
 
 % dlls/kernel/win87em.spec
@@ -342,8 +332,6 @@ dlls/netapi32
 % dlls/ntdll/ntdll.spec
 
 dlls/ntdll
-misc
-scheduler
 
 % dlls/odbc32/odbc32.spec
 
@@ -534,7 +522,6 @@ windows
 controls
 dlls/user
 dlls/user/dde
-loader
 objects
 windows
 
