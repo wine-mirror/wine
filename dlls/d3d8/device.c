@@ -387,14 +387,20 @@ void DrawPrimitiveI(LPDIRECT3DDEVICE8 iface,
                             if (TRUE == useVertexShaderFunction) {
 			      /* Nothing to do */
                             } else { 
-                                if (This->isMultiTexture) {
-#if defined(GL_VERSION_1_3)
-                                    glMultiTexCoord2f(GL_TEXTURE0 + textureNo, s, t);
-#else
-                                    glMultiTexCoord2fARB(GL_TEXTURE0_ARB + textureNo, s, t);
-#endif
+                                if (This->UpdateStateBlock->texture_state[textureNo][D3DTSS_TEXCOORDINDEX] > 7) {
+                                    VTRACE("Skip tex coords, as being system generated\n");
                                 } else {
-                                    glTexCoord2f(s, t);
+
+                                    if (This->isMultiTexture) {
+#if defined(GL_VERSION_1_3)
+                                        glMultiTexCoord2f(GL_TEXTURE0 + textureNo, s, t);
+#else
+                                        glMultiTexCoord2fARB(GL_TEXTURE0_ARB + textureNo, s, t);
+#endif
+                                    } else {
+                                        glTexCoord2f(s, t);
+                                    }
+
                                 }
                             }
                             break;
@@ -411,15 +417,18 @@ void DrawPrimitiveI(LPDIRECT3DDEVICE8 iface,
                             if (TRUE == useVertexShaderFunction) {
 			      /* Nothing to do */
                             } else {
-                                if (This->isMultiTexture) {
-#if defined(GL_VERSION_1_3)
-                                    glMultiTexCoord3f(GL_TEXTURE0 + textureNo, s, t, r);
-#else
-                                    glMultiTexCoord3fARB(GL_TEXTURE0_ARB + textureNo, s, t, r);
-#endif
-
+                                if (This->UpdateStateBlock->texture_state[textureNo][D3DTSS_TEXCOORDINDEX] > 7) {
+                                    VTRACE("Skip tex coords, as being system generated\n");
                                 } else {
-                                    glTexCoord3f(s, t, r);
+                                    if (This->isMultiTexture) {
+#if defined(GL_VERSION_1_3)
+                                        glMultiTexCoord3f(GL_TEXTURE0 + textureNo, s, t, r);
+#else
+                                        glMultiTexCoord3fARB(GL_TEXTURE0_ARB + textureNo, s, t, r);
+#endif
+                                    } else {
+                                        glTexCoord3f(s, t, r);
+                                    }
                                 }
                             }
                             break;
@@ -511,16 +520,20 @@ void DrawPrimitiveI(LPDIRECT3DDEVICE8 iface,
                                 s = vertex_shader->output.oT[textureNo].x;
                                 t = vertex_shader->output.oT[textureNo].y;
                                 VTRACE(("tex:%d, s,t=%f,%f\n", textureNo, s, t));
-                                if (This->isMultiTexture) {
-#if defined(GL_VERSION_1_3)
-                                    glMultiTexCoord2f(GL_TEXTURE0 + textureNo, s, t);
-#else
-                                    glMultiTexCoord2fARB(GL_TEXTURE0_ARB + textureNo, s, t);
-#endif
-                                    /*checkGLcall("glMultiTexCoord2fARB");*/
+                                if (This->UpdateStateBlock->texture_state[textureNo][D3DTSS_TEXCOORDINDEX] > 7) {
+                                    VTRACE("Skip tex coords, as being system generated\n");
                                 } else {
-                                    glTexCoord2f(s, t);
-                                    /*checkGLcall("gTexCoord2f");*/
+                                    if (This->isMultiTexture) {
+#if defined(GL_VERSION_1_3)
+                                        glMultiTexCoord2f(GL_TEXTURE0 + textureNo, s, t);
+#else
+                                        glMultiTexCoord2fARB(GL_TEXTURE0_ARB + textureNo, s, t);
+#endif
+                                        /*checkGLcall("glMultiTexCoord2fARB");*/
+                                    } else {
+                                        glTexCoord2f(s, t);
+                                        /*checkGLcall("gTexCoord2f");*/
+                                    }
                                 }
                                 break;
 
@@ -530,16 +543,20 @@ void DrawPrimitiveI(LPDIRECT3DDEVICE8 iface,
                                 t = vertex_shader->output.oT[textureNo].y;
                                 r = vertex_shader->output.oT[textureNo].z;
                                 VTRACE(("tex:%d, s,t,r=%f,%f,%f\n", textureNo, s, t, r));
-                                if (This->isMultiTexture) {
-#if defined(GL_VERSION_1_3)
-                                    glMultiTexCoord3f(GL_TEXTURE0 + textureNo, s, t, r); 
-#else
-                                    glMultiTexCoord3fARB(GL_TEXTURE0_ARB + textureNo, s, t, r); 
-#endif
-                                    /*checkGLcall("glMultiTexCoord2fARB");*/
+                                if (This->UpdateStateBlock->texture_state[textureNo][D3DTSS_TEXCOORDINDEX] > 7) {
+                                    VTRACE("Skip tex coords, as being system generated\n");
                                 } else {
-                                    glTexCoord3f(s, t, r);
-                                    /*checkGLcall("gTexCoord3f");*/
+                                    if (This->isMultiTexture) {
+#if defined(GL_VERSION_1_3)
+                                        glMultiTexCoord3f(GL_TEXTURE0 + textureNo, s, t, r); 
+#else
+                                        glMultiTexCoord3fARB(GL_TEXTURE0_ARB + textureNo, s, t, r); 
+#endif
+                                        /*checkGLcall("glMultiTexCoord2fARB");*/
+                                    } else {
+                                        glTexCoord3f(s, t, r);
+                                        /*checkGLcall("gTexCoord3f");*/
+                                    }
                                 }
                                 break;
 
@@ -735,16 +752,24 @@ void DrawPrimitiveI(LPDIRECT3DDEVICE8 iface,
                     enableTexture = TRUE;
                     switch (IDirect3DBaseTexture8Impl_GetType((LPDIRECT3DBASETEXTURE8) This->StateBlock->textures[textureNo])) {
                     case D3DRTYPE_TEXTURE:
-                        glTexCoordPointer(2, GL_FLOAT, skip, curPos);
-                        checkGLcall("glTexCoordPointer(2, ...)");
+                        if (This->UpdateStateBlock->texture_state[textureNo][D3DTSS_TEXCOORDINDEX] > 7) {
+                            VTRACE("Skip tex coords, as being system generated\n");
+                        } else {
+                            glTexCoordPointer(2, GL_FLOAT, skip, curPos);
+                            checkGLcall("glTexCoordPointer(2, ...)");
+                        }
                         curPos += 2*sizeof(float);
                         glEnableClientState(GL_TEXTURE_COORD_ARRAY);
                         checkGLcall("glEnableClientState(GL_TEXTURE_COORD_ARRAY);");
                         break;
 
                     case D3DRTYPE_VOLUMETEXTURE:
-                        glTexCoordPointer(3, GL_FLOAT, skip, curPos);
-                        checkGLcall("glTexCoordPointer(3, ...)");
+                        if (This->UpdateStateBlock->texture_state[textureNo][D3DTSS_TEXCOORDINDEX] > 7) {
+                            VTRACE("Skip tex coords, as being system generated\n");
+                        } else {
+                            glTexCoordPointer(3, GL_FLOAT, skip, curPos);
+                            checkGLcall("glTexCoordPointer(3, ...)");
+                        }
                         curPos += 3*sizeof(float);
                         glEnableClientState(GL_TEXTURE_COORD_ARRAY);
                         checkGLcall("glEnableClientState(GL_TEXTURE_COORD_ARRAY);");
@@ -1701,6 +1726,7 @@ HRESULT  WINAPI  IDirect3DDevice8Impl_SetTransform(LPDIRECT3DDEVICE8 iface, D3DT
     int k;
     float f;
     BOOL viewChanged = TRUE;
+    int  Stage;
 
     /* Most of this routine, comments included copied from ddraw tree initially: */
     TRACE("(%p) : State=%d\n", This, d3dts);
@@ -1762,8 +1788,6 @@ HRESULT  WINAPI  IDirect3DDevice8Impl_SetTransform(LPDIRECT3DDEVICE8 iface, D3DT
       case D3DTS_TEXTURE6:
       case D3DTS_TEXTURE7:
         conv_mat(lpmatrix, &This->StateBlock->transforms[d3dts]);
-        FIXME("Unhandled transform state for TEXTURE%d!!!\n", d3dts - D3DTS_TEXTURE0);
-        FIXME("must use glMatrixMode(GL_TEXTURE) before texturing\n");
         break;
 
       default:
@@ -1827,7 +1851,57 @@ HRESULT  WINAPI  IDirect3DDevice8Impl_SetTransform(LPDIRECT3DDEVICE8 iface, D3DT
                checkGLcall("glClipPlane");
            }
 
+           /* Reapply texture transforms as based off modelview when applied */
+           for (Stage=0; Stage<This->TextureUnits; Stage++) {
+
+               /* Now apply texture transforms if not applying to the dummy textures */
+   #if defined(GL_VERSION_1_3)
+               glActiveTexture(GL_TEXTURE0 + Stage);
+   #else 
+               glActiveTextureARB(GL_TEXTURE0_ARB + Stage);
+   #endif
+               checkGLcall("glActiveTexture(GL_TEXTURE0 + Stage);");
+
+               glMatrixMode(GL_TEXTURE);
+               if (This->StateBlock->textureDimensions[Stage] == GL_TEXTURE_1D) {
+                  glLoadIdentity();
+               } else {
+                  D3DMATRIX fred;
+                  conv_mat(&This->StateBlock->transforms[D3DTS_TEXTURE0+Stage], &fred);
+                  glLoadMatrixf((float *) &This->StateBlock->transforms[D3DTS_TEXTURE0+Stage].u.m[0][0]);
+               }
+               checkGLcall("Load matrix for texture");
+           }
+           glMatrixMode(GL_MODELVIEW);  /* Always leave in model view */
        }
+    } else if (d3dts >= D3DTS_TEXTURE0 && d3dts <= D3DTS_TEXTURE7) {
+        /* Now apply texture transforms if not applying to the dummy textures */
+        Stage = d3dts-D3DTS_TEXTURE0;
+
+        if (memcmp(&This->lastTexTrans[Stage], &This->StateBlock->transforms[D3DTS_TEXTURE0+Stage].u.m[0][0], sizeof(D3DMATRIX))) {
+           memcpy(&This->lastTexTrans[Stage], &This->StateBlock->transforms[D3DTS_TEXTURE0+Stage].u.m[0][0], sizeof(D3DMATRIX));
+
+#if defined(GL_VERSION_1_3)
+           glActiveTexture(GL_TEXTURE0 + Stage);
+#else
+           glActiveTextureARB(GL_TEXTURE0_ARB + Stage);
+#endif
+           checkGLcall("glActiveTexture(GL_TEXTURE0 + Stage)");
+
+           glMatrixMode(GL_TEXTURE);
+           if (This->StateBlock->textureDimensions[Stage] == GL_TEXTURE_1D) {
+              glLoadIdentity();
+           } else {
+              D3DMATRIX fred;
+              conv_mat(&This->StateBlock->transforms[D3DTS_TEXTURE0+Stage], &fred);
+              glLoadMatrixf((float *) &This->StateBlock->transforms[D3DTS_TEXTURE0+Stage].u.m[0][0]);
+           }
+           checkGLcall("Load matrix for texture");
+           glMatrixMode(GL_MODELVIEW);  /* Always leave in model view */
+        } else {
+            TRACE("Skipping texture transform as already correct\n");
+        }
+
     } else {
         TRACE("Skipping view setup as view already correct\n");
     }
@@ -3042,7 +3116,7 @@ HRESULT  WINAPI  IDirect3DDevice8Impl_SetTexture(LPDIRECT3DDEVICE8 iface, DWORD 
           IDirect3DTexture8Impl *pTexture2 = (IDirect3DTexture8Impl *) pTexture;
           int i;
 
-          if (oldTxt == pTexture && pTexture2->Dirty == FALSE) {
+          if ((void *)oldTxt == (void *)pTexture2 && pTexture2->Dirty == FALSE) {
               TRACE("Skipping setting texture as old == new\n");
               reapplyStates = FALSE;
           } else {
@@ -3541,12 +3615,53 @@ HRESULT  WINAPI  IDirect3DDevice8Impl_SetTextureStageState(LPDIRECT3DDEVICE8 ifa
         }
         break;
 
+    case D3DTSS_TEXCOORDINDEX         :
+        /* CameraSpacePosition means use the vertex position, transformed to camera space, 
+           as the input texture coordinates for this stage's texture transformation. This 
+           equates roughly to EYE_LINEAR                                                  */
+        if (Value & D3DTSS_TCI_CAMERASPACEPOSITION) {
+            float s_plane[] = { 1.0, 0.0, 0.0, 0.0 };
+            float t_plane[] = { 0.0, 1.0, 0.0, 0.0 };
+            float r_plane[] = { 0.0, 0.0, 1.0, 0.0 };
+            float q_plane[] = { 0.0, 0.0, 0.0, 1.0 };
+            TRACE("D3DTSS_TCI_CAMERASPACEPOSITION - Set eye plane\n");
+
+            glMatrixMode(GL_MODELVIEW);
+            glPushMatrix();
+            glLoadIdentity();
+            glTexGenfv(GL_S, GL_EYE_PLANE, s_plane);
+            glTexGenfv(GL_T, GL_EYE_PLANE, t_plane);
+            glTexGenfv(GL_R, GL_EYE_PLANE, r_plane);
+            glTexGenfv(GL_Q, GL_EYE_PLANE, q_plane);
+            glPopMatrix();
+
+            TRACE("D3DTSS_TCI_CAMERASPACEPOSITION - Set GL_TEXTURE_GEN_x and GL_x, GL_TEXTURE_GEN_MODE, GL_EYE_LINEAR\n");
+            glEnable(GL_TEXTURE_GEN_S);
+            checkGLcall("glEnable(GL_TEXTURE_GEN_S);");
+            glTexGeni(GL_S, GL_TEXTURE_GEN_MODE, GL_EYE_LINEAR);
+            checkGLcall("glTexGeni(GL_S, GL_TEXTURE_GEN_MODE, GL_EYE_LINEAR)");
+            glEnable(GL_TEXTURE_GEN_T);
+            checkGLcall("glEnable(GL_TEXTURE_GEN_T);");
+            glTexGeni(GL_T, GL_TEXTURE_GEN_MODE, GL_EYE_LINEAR);
+            checkGLcall("glTexGeni(GL_T, GL_TEXTURE_GEN_MODE, GL_EYE_LINEAR)");
+            glEnable(GL_TEXTURE_GEN_R);
+            checkGLcall("glEnable(GL_TEXTURE_GEN_R);");
+            glTexGeni(GL_R, GL_TEXTURE_GEN_MODE, GL_EYE_LINEAR);
+            checkGLcall("glTexGeni(GL_R, GL_TEXTURE_GEN_MODE, GL_EYE_LINEAR)");
+        }
+
+        /* Todo: */
+        if (Value && Value != D3DTSS_TCI_CAMERASPACEPOSITION) {
+            /* ? disable GL_TEXTURE_GEN_n ? */
+            FIXME("Unhandled D3DTSS_TEXCOORDINDEX %lx\n", Value);
+        }
+        break;
+
         /* Unhandled */
     case D3DTSS_BUMPENVMAT00          :
     case D3DTSS_BUMPENVMAT01          :
     case D3DTSS_BUMPENVMAT10          :
     case D3DTSS_BUMPENVMAT11          :
-    case D3DTSS_TEXCOORDINDEX         :
     case D3DTSS_MIPMAPLODBIAS         :
     case D3DTSS_MAXMIPLEVEL           :
     case D3DTSS_MAXANISOTROPY         :

@@ -262,6 +262,7 @@ struct IDirect3DDevice8Impl
     D3DMATRIX                     lastProj;
     D3DMATRIX                     lastView;
     D3DMATRIX                     lastWorld0;
+    D3DMATRIX                     lastTexTrans[8];
 
 
     /* OpenGL related */
