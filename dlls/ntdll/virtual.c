@@ -1129,26 +1129,25 @@ NTSTATUS WINAPI NtFreeVirtualMemory( HANDLE process, PVOID *addr_ptr, ULONG *siz
         return STATUS_SUCCESS;
     }
 
-    if ((type != MEM_DECOMMIT) && (type != MEM_RELEASE))
-    {
-        WARN("called with wrong free type flags (%08lx) !\n", type);
-        return STATUS_INVALID_PARAMETER;
-    }
-
-    /* Free the pages */
-
     if (type == MEM_RELEASE)
     {
+        /* Free the pages */
+
         if (size || (base != view->base)) return STATUS_INVALID_PARAMETER;
         VIRTUAL_DeleteView( view );
     }
-    else
+    else if (type == MEM_DECOMMIT)
     {
         /* Decommit the pages by remapping zero-pages instead */
 
         if (wine_anon_mmap( (LPVOID)base, size, VIRTUAL_GetUnixProt(0), MAP_FIXED ) != (LPVOID)base)
             ERR( "Could not remap pages, expect trouble\n" );
         if (!VIRTUAL_SetProt( view, base, size, 0 )) return STATUS_ACCESS_DENIED;  /* FIXME */
+    }
+    else
+    {
+        WARN("called with wrong free type flags (%08lx) !\n", type);
+        return STATUS_INVALID_PARAMETER;
     }
 
     *addr_ptr = base;
