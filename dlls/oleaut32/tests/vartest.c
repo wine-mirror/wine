@@ -3,20 +3,6 @@
  *
  * Copyright 1998 Jean-Claude Cote
  *
- * The purpose of this program is validate the implementation
- * of the APIs related to VARIANTs. The validation is done
- * by comparing the results given by the Windows implementation
- * versus the Wine implementation.
- *
- * This program tests the creation/coercion/destruction of VARIANTs.
- *
- * The program does not currently test any API that takes
- * arguments of type: IDispatch, IUnknown, DECIMAL, CURRENCY.
- *
- * Since the purpose of this program is to compare the results
- * from Windows and Wine it is written so that with a simple
- * define it can be compiled either in Windows or Linux.
- *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
  * License as published by the Free Software Foundation; either
@@ -32,27 +18,11 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  *
  * NOTES
- *	 - The Variant structure in Windows has a non-named union. This means
- *	 the member of the union are accessible simply by doing
- *	 pVariant->pfltVal. With gcc it is not possible to have non-named
- *	 union so it has been named 'u'.  So it's members are accessible
- *	 using this name like so pVariant->u.pfltVal.  So if this program is
- *	 compiled in Windows the references to 'u' will need to be take out
- *       of this file.
- *
- *	 - Also the printf is a little different so the format specifiers may
- *	 need to be tweaked if this file is compile in Windows.
- *	 Printf is also different in that it continues printing numbers
- *	 even after there is no more significative digits left to print.  These
- *	 number are garbage and in windows they are set to zero but not
- *	 on Linux.
- *
- *	 - The VarDateFromStr is not implemented yet.
- *
- *	 - The date and floating point format may not be the exact same
- *	 format has the one inwindows depending on what the Internatinal
- *       setting are in windows.
- *
+ * - Does not test IDispatch, IUnknown, IRecordInfo, DECIMAL, CY, I8/UI8
+ * - VarDateFromStr is not implemented yet.
+ * - The date and floating point format may not be the exact same
+ *   format has the one inwindows depending on what the Internatinal
+ *   setting are in windows.
  */
 
 #include <stdarg.h>
@@ -75,6 +45,7 @@
 #include "wtypes.h"
 #include "oleauto.h"
 
+static HMODULE hOleaut32;
 
 static HRESULT (WINAPI *pVarBstrFromI1)(CHAR,LCID,ULONG,BSTR*)=NULL;
 
@@ -99,6 +70,17 @@ static HRESULT (WINAPI *pVarUI4FromDate)(DATE,ULONG*)=NULL;
 static HRESULT (WINAPI *pVarUI4FromI2)(short,ULONG*)=NULL;
 static HRESULT (WINAPI *pVarUI4FromR8)(double,ULONG*)=NULL;
 static HRESULT (WINAPI *pVarUI4FromStr)(OLECHAR*,LCID,ULONG,ULONG*)=NULL;
+
+static HRESULT (WINAPI *pVarUdateFromDate)(DATE,ULONG,UDATE*);
+static HRESULT (WINAPI *pVarDateFromUdate)(UDATE*,ULONG,DATE*);
+static INT (WINAPI *pSystemTimeToVariantTime)(LPSYSTEMTIME,double*);
+static INT (WINAPI *pVariantTimeToSystemTime)(double,LPSYSTEMTIME);
+static INT (WINAPI *pDosDateTimeToVariantTime)(USHORT,USHORT,double*);
+static INT (WINAPI *pVariantTimeToDosDateTime)(double,USHORT*,USHORT *);
+
+/* Get a conversion function ptr, return if function not available */
+#define CHECKPTR(func) p##func = (void*)GetProcAddress(hOleaut32, #func); \
+  if (!p##func) { trace("function " # func " not available, not testing it\n"); return; }
 
 /* When comparing floating point values we cannot expect an exact match
  * because the rounding errors depend on the exact algorithm.
@@ -3351,11 +3333,204 @@ static void test_VarNumFromParseNum(void)
   SETRGB(0, 1); CONVERT(1,0,0,1,0,0, VTBIT_CY|VTBIT_DECIMAL); EXPECT_CY(1);
 }
 
+#define DT2UD(dt,flags,r,d,m,y,h,mn,s,ms,dw,dy) \
+  memset(&ud, 0, sizeof(ud)); \
+  res = pVarUdateFromDate(dt, flags, &ud); \
+  ok(r == res && (FAILED(r) || (ud.st.wYear == y && ud.st.wMonth == m && ud.st.wDay == d && \
+     ud.st.wHour == h && ud.st.wMinute == mn && ud.st.wSecond == s && \
+     ud.st.wMilliseconds == ms && ud.st.wDayOfWeek == dw && ud.wDayOfYear == dy)), \
+     "%.16g expected %lx, %d,%d,%d,%d,%d,%d,%d  %d %d, got %lx, %d,%d,%d,%d,%d,%d,%d  %d %d\n", \
+     dt, r, d, m, y, h, mn, s, ms, dw, dy, res, ud.st.wDay, ud.st.wMonth, \
+     ud.st.wYear, ud.st.wHour, ud.st.wMinute, ud.st.wSecond, \
+     ud.st.wMilliseconds, ud.st.wDayOfWeek, ud.wDayOfYear)
+
+static void test_VarUdateFromDate(void)
+{
+  UDATE ud;
+  HRESULT res;
+
+  CHECKPTR(VarUdateFromDate);
+  DT2UD(29221.0,0,S_OK,1,1,1980,0,0,0,0,2,1);        /* 1 Jan 1980 */
+  DT2UD(29222.0,0,S_OK,2,1,1980,0,0,0,0,3,2);        /* 2 Jan 1980 */
+  DT2UD(33238.0,0,S_OK,31,12,1990,0,0,0,0,1,365);    /* 31 Dec 1990 */
+  DT2UD(0.0,0,S_OK,30,12,1899,0,0,0,0,6,364);        /* 30 Dec 1899 - VT_DATE 0.0 */
+  DT2UD(-657434.0,0,S_OK,1,1,100,0,0,0,0,5,1);       /* 1 Jan 100 - Min */
+  DT2UD(-657435.0,0,E_INVALIDARG,0,0,0,0,0,0,0,0,0); /* < 1 Jan 100 => err */
+  DT2UD(2958465.0,0,S_OK,31,12,9999,0,0,0,0,5,365);  /* 31 Dec 9999 - Max */
+  DT2UD(2958466.0,0,E_INVALIDARG,0,0,0,0,0,0,0,0,0); /* > 31 Dec 9999 => err  */
+
+  /* VAR_VALIDDATE doesn't prevent upper and lower bounds being checked */
+  DT2UD(-657435.0,VAR_VALIDDATE,E_INVALIDARG,0,0,0,0,0,0,0,0,0);
+  DT2UD(2958466.0,VAR_VALIDDATE,E_INVALIDARG,0,0,0,0,0,0,0,0,0);
+
+  /* Times */
+  DT2UD(29221.25,0,S_OK,1,1,1980,6,0,0,0,2,1);           /* 6 AM */
+  DT2UD(29221.33333333,0,S_OK,1,1,1980,8,0,0,0,2,1);     /* 8 AM */
+  DT2UD(29221.5,0,S_OK,1,1,1980,12,0,0,0,2,1);           /* 12 AM */
+  DT2UD(29221.9888884444,0,S_OK,1,1,1980,23,44,0,0,2,1); /* 11:44 PM */
+  DT2UD(29221.7508765432,0,S_OK,1,1,1980,18,1,16,0,2,1); /* 6:18:02 PM */
+
+}
+
+#define UD2T(d,m,y,h,mn,s,ms,dw,dy,flags,r,dt) \
+  ud.st.wYear = y; ud.st.wMonth = m; ud.st.wDay = d; ud.st.wHour = h; \
+  ud.st.wMinute = mn; ud.st.wSecond = s; ud.st.wMilliseconds = ms; \
+  ud.st.wDayOfWeek = dw; ud.wDayOfYear = dy; \
+  res = pVarDateFromUdate(&ud, flags, &out); \
+  ok(r == res && (FAILED(r) || fabs(out-dt) < 1.0e-11), \
+     "expected %lx, %.16g, got %lx, %.16g\n", r, dt, res, out)
+
+static void test_VarDateFromUdate(void)
+{
+  UDATE ud;
+  double out;
+  HRESULT res;
+
+  CHECKPTR(VarDateFromUdate);
+  UD2T(1,1,1980,0,0,0,0,2,1,0,S_OK,29221.0);      /* 1 Jan 1980 */
+  UD2T(2,1,1980,0,0,0,0,3,2,0,S_OK,29222.0);      /* 2 Jan 1980 */
+  UD2T(31,12,1990,0,0,0,0,0,0,0,S_OK,33238.0);    /* 31 Dec 1990 */
+  UD2T(31,12,90,0,0,0,0,0,0,0,S_OK,33238.0);      /* year < 100 is 1900+year! */
+  UD2T(30,12,1899,0,0,0,0,6,364,0,S_OK,0.0);      /* 30 Dec 1899 - VT_DATE 0.0 */
+  UD2T(1,1,100,0,0,0,0,0,0,0,S_OK,-657434.0);     /* 1 Jan 100 - Min */
+  UD2T(31,12,9999,0,0,0,0,0,0,0,S_OK,2958465.0);  /* 31 Dec 9999 - Max */
+  UD2T(1,1,10000,0,0,0,0,0,0,0,E_INVALIDARG,0.0); /* > 31 Dec 9999 => err  */
+
+  UD2T(1,1,1980,18,1,16,0,2,1,0,S_OK,29221.75087962963); /* 6:18:02 PM */
+
+  UD2T(0,1,1980,0,0,0,0,2,1,0,S_OK,29220.0);      /* Rolls back to 31 Dec 1899 */
+  UD2T(1,13,1980,0,0,0,0,2,1,0,S_OK,29587.0);     /* Rolls fwd to 1/1/1981 */
+}
+
+#define ST2DT(d,m,y,h,mn,s,ms,r,dt) \
+  st.wYear = y; st.wMonth = m; st.wDay = d; st.wHour = h; st.wMinute = mn; \
+  st.wSecond = s; st.wMilliseconds = ms; st.wDayOfWeek = 0; \
+  res = pSystemTimeToVariantTime(&st, &out); \
+  ok(r == res && (!r || fabs(out-dt) < 1.0e-11), \
+     "expected %d, %.16g, got %d, %.16g\n", r, dt, res, out)
+
+static void test_SystemTimeToVariantTime(void)
+{
+  SYSTEMTIME st;
+  double out;
+  int res;
+
+  CHECKPTR(SystemTimeToVariantTime);
+  ST2DT(1,1,1980,0,0,0,0,TRUE,29221.0);
+  ST2DT(2,1,1980,0,0,0,0,TRUE,29222.0);
+  ST2DT(0,1,1980,0,0,0,0,TRUE,29220.0);   /* Rolls back to 31 Dec 1899 */
+  ST2DT(1,13,1980,0,0,0,0,FALSE,29587.0); /* Fails on invalid month */
+  ST2DT(31,12,90,0,0,0,0,TRUE,33238.0);   /* year < 100 is 1900+year! */
+}
+
+#define DT2ST(dt,r,d,m,y,h,mn,s,ms) \
+  memset(&st, 0, sizeof(st)); \
+  res = pVariantTimeToSystemTime(dt, &st); \
+  ok(r == res && (!r || (st.wYear == y && st.wMonth == m && st.wDay == d && \
+     st.wHour == h && st.wMinute == mn && st.wSecond == s && \
+     st.wMilliseconds == ms)), \
+     "%.16g expected %d, %d,%d,%d,%d,%d,%d,%d, got %d, %d,%d,%d,%d,%d,%d,%d\n", \
+     dt, r, d, m, y, h, mn, s, ms, res, st.wDay, st.wMonth, st.wYear, \
+     st.wHour, st.wMinute, st.wSecond, st.wMilliseconds)
+
+static void test_VariantTimeToSystemTime(void)
+{
+  SYSTEMTIME st;
+  int res;
+
+  CHECKPTR(VariantTimeToSystemTime);
+  DT2ST(29221.0,1,1,1,1980,0,0,0,0);
+  DT2ST(29222.0,1,2,1,1980,0,0,0,0);
+}
+
+#define MKDOSDATE(d,m,y) ((d & 0x1f) | ((m & 0xf) << 5) | (((y-1980) & 0x7f) << 9))
+#define MKDOSTIME(h,m,s) (((s>>1) & 0x1f) | ((m & 0x3f) << 5) | ((h & 0x1f) << 11))
+
+#define DOS2DT(d,m,y,h,mn,s,r,dt) out = 0.0; \
+  dosDate = MKDOSDATE(d,m,y); \
+  dosTime = MKDOSTIME(h,mn,s); \
+  res = pDosDateTimeToVariantTime(dosDate, dosTime, &out); \
+  ok(r == res && (!r || fabs(out-dt) < 1.0e-11), \
+     "expected %d, %.16g, got %d, %.16g\n", r, dt, res, out)
+
+static void test_DosDateTimeToVariantTime(void)
+{
+  USHORT dosDate, dosTime;
+  double out;
+  INT res;
+
+  CHECKPTR(DosDateTimeToVariantTime);
+
+  /* Date */
+  DOS2DT(1,1,1980,0,0,0,1,29221.0); /* 1/1/1980 */
+  DOS2DT(31,12,2099,0,0,0,1,73050.0); /* 31/12/2099 */
+  /* Dates are limited to the dos date max of 31/12/2099 */
+  DOS2DT(31,12,2100,0,0,0,0,0.0); /* 31/12/2100 */
+  /* Days and months of 0 cause date to roll back 1 day or month */
+  DOS2DT(0,1,1980,0,0,0,1,29220.0); /* 0 Day => 31/12/1979 */
+  DOS2DT(1,0,1980,0,0,0,1,29190.0); /* 0 Mth =>  1/12/1979 */
+  DOS2DT(0,0,1980,0,0,0,1,29189.0); /* 0 D/M => 30/11/1979 */
+  /* Days > days in the month cause date to roll forward 1 month */
+  DOS2DT(29,2,1981,0,0,0,1,29646.0); /* 29/2/1981 -> 3/1/1980 */
+  DOS2DT(30,2,1981,0,0,0,1,29647.0); /* 30/2/1981 -> 4/1/1980 */
+  /* Takes leap years into account when rolling forward */
+  DOS2DT(29,2,1980,0,0,0,1,29280.0); /* 2/29/1980 */
+  /* Months > 12 cause an error */
+  DOS2DT(2,13,1980,0,0,0,0,0.0);
+
+  /* Time */
+  DOS2DT(1,1,1980,0,0,29,1,29221.00032407407); /* 1/1/1980 12:00:28 AM */
+  DOS2DT(1,1,1980,0,0,31,1,29221.00034722222); /* 1/1/1980 12:00:30 AM */
+  DOS2DT(1,1,1980,0,59,0,1,29221.04097222222); /* 1/1/1980 12:59:00 AM */
+  DOS2DT(1,1,1980,0,60,0,0,0.0);               /* Invalid seconds */
+  DOS2DT(1,1,1980,23,0,0,1,29221.95833333333); /* 1/1/1980 11:00:00 PM */
+  DOS2DT(1,1,1980,24,0,0,0,0.0);               /* Invalid hours */
+}
+
+#define DT2DOS(dt,r,d,m,y,h,mn,s) dosTime = dosDate = 0; \
+  expDosDate = MKDOSDATE(d,m,y); \
+  expDosTime = MKDOSTIME(h,mn,s); \
+  res = pVariantTimeToDosDateTime(dt, &dosDate, &dosTime); \
+  ok(r == res && (!r || (dosTime == expDosTime && dosDate == expDosDate)), \
+     "%g: expected %d,%d(%d/%d/%d),%d(%d:%d:%d) got %d,%d(%d/%d/%d),%d(%d:%d:%d)\n", \
+     dt, r, expDosDate, expDosDate & 0x1f, (expDosDate >> 5) & 0xf, 1980 + (expDosDate >> 9), \
+     expDosTime, expDosTime >> 11, (expDosTime >> 5) & 0x3f, (expDosTime & 0x1f), \
+     res, dosDate, dosDate & 0x1f, (dosDate >> 5) & 0xf, 1980 + (dosDate >> 9), \
+     dosTime, dosTime >> 11, (dosTime >> 5) & 0x3f, (dosTime & 0x1f))
+
+static void test_VariantTimeToDosDateTime(void)
+{
+  USHORT dosDate, dosTime, expDosDate, expDosTime;
+  INT res;
+
+  CHECKPTR(VariantTimeToDosDateTime);
+
+  /* Date */
+  DT2DOS(29221.0,1,1,1,1980,0,0,0);   /* 1/1/1980 */
+  DT2DOS(73050.0,1,31,12,2099,0,0,0); /* 31/12/2099 */
+  DT2DOS(29220.0,0,0,0,0,0,0,0);      /* 31/12/1979 - out of range */
+  DT2DOS(73415.0,0,0,0,0,0,0,0);      /* 31/12/2100 - out of range */
+
+  /* Time */
+  DT2DOS(29221.00032407407,1,1,1,1980,0,0,29); /* 1/1/1980 12:00:28 AM */
+  DT2DOS(29221.00034722222,1,1,1,1980,0,0,31); /* 1/1/1980 12:00:30 AM */
+  DT2DOS(29221.04097222222,1,1,1,1980,0,59,0); /* 1/1/1980 12:59:00 AM */
+  DT2DOS(29221.95833333333,1,1,1,1980,23,0,0); /* 1/1/1980 11:00:00 PM */
+}
+
 START_TEST(vartest)
 {
+  hOleaut32 = LoadLibraryA("oleaut32.dll");
+
   test_variant();
   test_VariantInit();
   test_VariantClear();
   test_VarParseNumFromStr();
   test_VarNumFromParseNum();
+  test_VarUdateFromDate();
+  test_VarDateFromUdate();
+  test_SystemTimeToVariantTime();
+  test_VariantTimeToSystemTime();
+  test_DosDateTimeToVariantTime();
+  test_VariantTimeToDosDateTime();
 }
