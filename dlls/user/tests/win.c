@@ -1305,6 +1305,17 @@ static void test_SetFocus(HWND hwnd)
     SetFocus(child);
     ok( GetFocus() == child, "Failed to set focus to invisible child %p\n", child );
     ok( !(GetWindowLong(child,GWL_STYLE) & WS_VISIBLE), "Child %p is visible\n", child );
+    ShowWindow(child, SW_SHOW);
+    ok( GetWindowLong(child,GWL_STYLE) & WS_VISIBLE, "Child %p is not visible\n", child );
+    ok( GetFocus() == child, "Focus no longer on child %p\n", child );
+    ShowWindow(child, SW_HIDE);
+    ok( !(GetWindowLong(child,GWL_STYLE) & WS_VISIBLE), "Child %p is visible\n", child );
+    ok( GetFocus() == hwnd, "Focus should be on parent %p, not %p\n", hwnd, GetFocus() );
+    ShowWindow(child, SW_SHOW);
+    SetFocus(child);
+    ok( GetFocus() == child, "Focus should be on child %p\n", child );
+    SetWindowPos(child,0,0,0,0,0,SWP_NOZORDER|SWP_NOMOVE|SWP_NOSIZE|SWP_HIDEWINDOW);
+    ok( GetFocus() == child, "Focus should still be on child %p\n", child );
     DestroyWindow( child );
 }
 
