@@ -22,6 +22,25 @@ import "objidl.idl";
 import "oaidl.idl";
 
 
+/*
+ * Windows SDK braindamage alert
+ *
+ * PID_DICTIONARY and PID_CODEPAGE are defined by msidefs.h too
+ * PID_SECURITY is defined in msidefs.h with a different value!
+ * So these need to be undefined first.
+ */
+cpp_quote("#ifdef PID_DICTIONARY");
+cpp_quote("#undef PID_DICTIONARY");
+cpp_quote("#endif");
+
+cpp_quote("#ifdef PID_CODEPAGE");
+cpp_quote("#undef PID_CODEPAGE");
+cpp_quote("#endif");
+
+cpp_quote("#ifdef PID_SECURITY");
+cpp_quote("#undef PID_SECURITY");
+cpp_quote("#endif");
+
 /******************** Property Storage ********************/
 
 interface IEnumSTATPROPSTG;
