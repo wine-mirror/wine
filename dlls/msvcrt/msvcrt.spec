@@ -347,9 +347,9 @@ debug_channels (msvcrt)
 @ cdecl _mbclen(ptr) _mbclen
 @ stub _mbctohira #(long)
 @ stub _mbctokata #(long)
-@ stub _mbctolower #(long)
+@ cdecl _mbctolower(long) _mbctolower
 @ stub _mbctombb #(long)
-@ stub _mbctoupper #(long)
+@ cdecl _mbctoupper(long) _mbctoupper
 @ stub _mbctype
 @ stub _mbsbtype #(ptr long)
 @ cdecl _mbscat(str str) strcat
@@ -667,7 +667,7 @@ debug_channels (msvcrt)
 @ cdecl log10(double) log10
 @ cdecl longjmp(long long) MSVCRT_longjmp
 @ cdecl malloc(long) MSVCRT_malloc
-@ stub mblen #(str long)
+@ cdecl mblen(ptr long) MSVCRT_mblen
 @ forward -noimport mbstowcs ntdll.mbstowcs
 @ cdecl mbtowc(wstr str long) MSVCRT_mbtowc
 @ cdecl memchr(ptr long long) memchr
@@ -683,8 +683,8 @@ debug_channels (msvcrt)
 @ cdecl putc(long ptr) MSVCRT_putc
 @ cdecl putchar(long) MSVCRT_putchar
 @ cdecl puts(str) MSVCRT_puts
-@ stub putwc #(long ptr)
-@ stub putwchar #(long)
+@ cdecl putwc(long ptr) MSVCRT_fputwc
+@ cdecl putwchar(long) _fputwchar
 @ cdecl qsort(ptr long long ptr) qsort
 @ stub raise #(long)
 @ cdecl rand() MSVCRT_rand

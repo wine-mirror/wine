@@ -28,9 +28,6 @@ typedef unsigned int MSVCRT(size_t);
 extern "C" {
 #endif
 
-unsigned char* _mbschr(const unsigned char*,unsigned int);
-unsigned char* _mbsncat(unsigned char*,const unsigned char*,MSVCRT(size_t));
-unsigned char* _mbstok(unsigned char*,unsigned char*);
 void*       _memccpy(void*,const void*,int,MSVCRT(size_t));
 int         _memicmp(const void*,const void*,MSVCRT(size_t));
 int         _strcmpi(const char*,const char*);

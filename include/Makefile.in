@@ -61,6 +61,8 @@ INSTALLED_INCLUDES = \
 	msvcrt/io.h \
 	msvcrt/locale.h \
 	msvcrt/malloc.h \
+	msvcrt/mbctype.h \
+	msvcrt/mbstring.h \
 	msvcrt/process.h \
 	msvcrt/search.h \
 	msvcrt/stddef.h \
