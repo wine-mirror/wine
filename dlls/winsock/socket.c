@@ -2620,7 +2620,7 @@ int WINAPI WS_setsockopt(SOCKET s, int level, int optname,
                    is null?? */
                 optval = (char*)&linger;
                 optlen = sizeof(struct linger);
-            } else if (optlen < sizeof(int)){
+            } else if (optval && optlen < sizeof(int)){
                 woptval= *((INT16 *) optval);
                 optval= (char*) &woptval;
                 optlen=sizeof(int);
