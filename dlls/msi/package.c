@@ -719,12 +719,12 @@ UINT WINAPI MsiGetPropertyA(MSIHANDLE hInstall, LPCSTR szName, LPSTR szValueBuf,
     if (NULL == szName) {
       return ERROR_INVALID_PARAMETER;
     }
-
-    TRACE("%lu %s %lu\n", hInstall, debugstr_a(szName), *pchValueBuf);
-
     if (NULL != szValueBuf && NULL == pchValueBuf) {
       return ERROR_INVALID_PARAMETER;
     }
+
+    TRACE("%lu %s %lu\n", hInstall, debugstr_a(szName), *pchValueBuf);
+
     if( szName )
     {
         UINT len = MultiByteToWideChar( CP_ACP, 0, szName, -1, NULL, 0 );

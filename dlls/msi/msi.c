@@ -35,6 +35,7 @@
 #include "wincrypt.h"
 #include "wine/unicode.h"
 #include "objbase.h"
+#include "winver.h"
 
 #include "initguid.h"
 
@@ -1330,6 +1331,103 @@ INSTALLSTATE WINAPI MsiQueryFeatureStateW(LPCWSTR szProduct, LPCWSTR szFeature)
 {
     FIXME("STUB: (%s %s)\n", debugstr_w(szProduct), debugstr_w(szFeature));
     return INSTALLSTATE_UNKNOWN;
+}
+
+UINT WINAPI MsiGetFileVersionA(LPCSTR szFilePath, LPSTR lpVersionBuf, DWORD* pcchVersionBuf, LPSTR lpLangBuf, DWORD* pcchLangBuf)
+{
+    UINT len;
+    UINT ret;
+    LPWSTR szwFilePath = NULL;
+    LPWSTR lpwVersionBuff = NULL;
+    LPWSTR lpwLangBuff = NULL;
+    
+    if(szFilePath) {
+        len = MultiByteToWideChar( CP_ACP, 0, szFilePath, -1, NULL, 0 );
+        szwFilePath = HeapAlloc( GetProcessHeap(), 0, len*sizeof(WCHAR) );
+        if( !szwFilePath)
+            return ERROR_OUTOFMEMORY;
+        MultiByteToWideChar( CP_ACP, 0, szFilePath, -1, szwFilePath, len );
+    }
+    
+    if(lpVersionBuf && pcchVersionBuf && *pcchVersionBuf) {
+        lpwVersionBuff = HeapAlloc(GetProcessHeap(), 0, *pcchVersionBuf * sizeof(WCHAR));
+        if( !lpwVersionBuff)
+            return ERROR_OUTOFMEMORY;
+    }
+
+    if(lpLangBuf && pcchLangBuf && *pcchLangBuf) {
+        lpwLangBuff = HeapAlloc(GetProcessHeap(), 0, *pcchVersionBuf * sizeof(WCHAR));
+        if( !lpwLangBuff)
+            return ERROR_OUTOFMEMORY;
+    }
+        
+    ret = MsiGetFileVersionW(szwFilePath, lpwVersionBuff, pcchVersionBuf, lpwLangBuff, pcchLangBuf);
+    
+    if(lpwVersionBuff)
+        WideCharToMultiByte(CP_ACP, 0, lpwVersionBuff, -1, lpVersionBuf, *pcchVersionBuf, NULL, NULL);
+    if(lpwLangBuff)
+        WideCharToMultiByte(CP_ACP, 0, lpwLangBuff, -1, lpLangBuf, *pcchLangBuf, NULL, NULL);
+    
+    if(szwFilePath) HeapFree(GetProcessHeap(), 0, szwFilePath);
+    if(lpwVersionBuff) HeapFree(GetProcessHeap(), 0, lpwVersionBuff);
+    if(lpwLangBuff) HeapFree(GetProcessHeap(), 0, lpwLangBuff);
+    
+    return ret;
+}
+
+UINT WINAPI MsiGetFileVersionW(LPCWSTR szFilePath, LPWSTR lpVersionBuf, DWORD* pcchVersionBuf, LPWSTR lpLangBuf, DWORD* pcchLangBuf)
+{
+    static const WCHAR szVersionResource[] = {'\\',0};
+    static const WCHAR szVersionFormat[] = {'%','d','.','%','d','.','%','d','.','%','d',0};
+    static const WCHAR szLangFormat[] = {'%','d',0};
+    UINT ret = 0;
+    DWORD dwVerLen;
+    LPVOID lpVer = NULL;
+    VS_FIXEDFILEINFO *ffi;
+    UINT puLen;
+    WCHAR tmp[32];
+
+    TRACE("(%s,%p,%ld,%p,%ld)\n", debugstr_w(szFilePath),
+          lpVersionBuf, pcchVersionBuf?*pcchVersionBuf:0,
+          lpLangBuf, pcchLangBuf?*pcchLangBuf:0);
+
+    dwVerLen = GetFileVersionInfoSizeW(szFilePath, NULL);
+    if(!dwVerLen)
+        return GetLastError();
+
+    lpVer = HeapAlloc(GetProcessHeap(), 0, dwVerLen);
+    if(!lpVer) {
+        ret = ERROR_OUTOFMEMORY;
+        goto end;
+    }
+
+    if(!GetFileVersionInfoW(szFilePath, 0, dwVerLen, lpVer)) {
+        ret = GetLastError();
+        goto end;
+    }
+    if(lpVersionBuf && pcchVersionBuf && *pcchVersionBuf) {
+        if(VerQueryValueW(lpVer, szVersionResource, (LPVOID*)&ffi, &puLen) && puLen > 0) {
+            wsprintfW(tmp, szVersionFormat, HIWORD(ffi->dwFileVersionMS), LOWORD(ffi->dwFileVersionMS), HIWORD(ffi->dwFileVersionLS), LOWORD(ffi->dwFileVersionLS));
+            lstrcpynW(lpVersionBuf, tmp, *pcchVersionBuf);
+            *pcchVersionBuf = strlenW(lpVersionBuf);
+        }
+        else {
+            *lpVersionBuf = 0;
+            *pcchVersionBuf = 0;
+        }
+    }
+
+    if(lpLangBuf && pcchLangBuf && *pcchLangBuf) {
+        DWORD lang = GetUserDefaultLangID();
+        FIXME("Retrieve language from file\n");
+        wsprintfW(tmp, szLangFormat, lang);
+        lstrcpynW(lpLangBuf, tmp, *pcchLangBuf);
+        *pcchLangBuf = strlenW(lpLangBuf);
+    }
+
+end:
+    if(lpVer) HeapFree(GetProcessHeap(), 0, lpVer);
+    return ret;
 }
 
 

@@ -246,6 +246,10 @@ INSTALLSTATE WINAPI MsiQueryFeatureStateA(LPCSTR szProduct, LPCSTR szFeature);
 INSTALLSTATE WINAPI MsiQueryFeatureStateW(LPCWSTR szProduct, LPCWSTR szFeature);
 #define MsiQueryFeatureState WINELIB_NAME_AW(MsiQueryFeatureState)
 
+UINT WINAPI MsiGetFileVersionA(LPCSTR szFilePath, LPSTR lpVersionBuf, DWORD* pcchVersionBuf, LPSTR lpLangBuf, DWORD* pcchLangBuf);
+UINT WINAPI MsiGetFileVersionW(LPCWSTR szFilePath, LPWSTR lpVersionBuf, DWORD* pcchVersionBuf, LPWSTR lpLangBuf, DWORD* pcchLangBuf);
+#define MsiGetFileVersion WINELIB_NAME_AW(MsiGetFileVersion)
+
 /**
  * Non Unicode
  */
