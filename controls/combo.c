@@ -1395,18 +1395,6 @@ static LRESULT COMBO_Command( LPHEADCOMBO lphc, WPARAM wParam, HWND hWnd )
 		TRACE("[%04x]: lbox selection change [%04x]\n", 
 			     CB_HWND(lphc), lphc->wState );
 
-		/* do not roll up if selection is being tracked 
-		 * by arrowkeys in the dropdown listbox */
-
-                if( (lphc->dwStyle & CBS_SIMPLE) ||
-                    ((lphc->wState & CBF_DROPPED) && !(lphc->wState & CBF_NOROLLUP)) )
-                {
-                   CBRollUp( lphc, (HIWORD(wParam) == LBN_SELCHANGE), TRUE );
-                }
-		else lphc->wState &= ~CBF_NOROLLUP;
-
-		CB_NOTIFY( lphc, CBN_SELCHANGE );
-
 		if( HIWORD(wParam) == LBN_SELCHANGE)
 		{
 		   if( lphc->wState & CBF_EDIT )
@@ -1420,6 +1408,18 @@ static LRESULT COMBO_Command( LPHEADCOMBO lphc, WPARAM wParam, HWND hWnd )
 		   else
 		       InvalidateRect(CB_HWND(lphc), &lphc->textRect, TRUE);
 		}
+
+		/* do not roll up if selection is being tracked 
+		 * by arrowkeys in the dropdown listbox */
+
+                if( (lphc->dwStyle & CBS_SIMPLE) ||
+                    ((lphc->wState & CBF_DROPPED) && !(lphc->wState & CBF_NOROLLUP)) )
+                {
+                   CBRollUp( lphc, (HIWORD(wParam) == LBN_SELCHANGE), TRUE );
+                }
+		else lphc->wState &= ~CBF_NOROLLUP;
+
+		CB_NOTIFY( lphc, CBN_SELCHANGE );
 
 		/* fall through */
 
