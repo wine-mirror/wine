@@ -1628,16 +1628,18 @@ static void X11DRV_DIB_SetImageBits_1( int lines, const BYTE *srcbits,
             XPutPixel( bmpImage, x++, h, colors[(srcval >> 1) & 1] );
             XPutPixel( bmpImage, x++, h, colors[ srcval       & 1] );
         }
-        srcval=*srcbyte;
-        switch (dstwidth & 7)
-        {
-        case 7: XPutPixel(bmpImage, x++, h, colors[srcval >> 7]); srcval<<=1;
-        case 6: XPutPixel(bmpImage, x++, h, colors[srcval >> 7]); srcval<<=1;
-        case 5: XPutPixel(bmpImage, x++, h, colors[srcval >> 7]); srcval<<=1;
-        case 4: XPutPixel(bmpImage, x++, h, colors[srcval >> 7]); srcval<<=1;
-        case 3: XPutPixel(bmpImage, x++, h, colors[srcval >> 7]); srcval<<=1;
-        case 2: XPutPixel(bmpImage, x++, h, colors[srcval >> 7]); srcval<<=1;
-        case 1: XPutPixel(bmpImage, x++, h, colors[srcval >> 7]);
+        if (dstwidth % 8){
+            srcval=*srcbyte;
+            switch (dstwidth & 7)
+            {
+            case 7: XPutPixel(bmpImage, x++, h, colors[srcval >> 7]); srcval<<=1;
+            case 6: XPutPixel(bmpImage, x++, h, colors[srcval >> 7]); srcval<<=1;
+            case 5: XPutPixel(bmpImage, x++, h, colors[srcval >> 7]); srcval<<=1;
+            case 4: XPutPixel(bmpImage, x++, h, colors[srcval >> 7]); srcval<<=1;
+            case 3: XPutPixel(bmpImage, x++, h, colors[srcval >> 7]); srcval<<=1;
+            case 2: XPutPixel(bmpImage, x++, h, colors[srcval >> 7]); srcval<<=1;
+            case 1: XPutPixel(bmpImage, x++, h, colors[srcval >> 7]);
+            }
         }
         srcbits += linebytes;
     }
