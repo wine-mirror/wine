@@ -195,6 +195,8 @@ static HRESULT WINAPI ClientIdentity_QueryInterface(IInternalUnknown * iface, RE
     FIXME("interface not found %s\n", debugstr_guid(riid));
 
     /* FIXME: call IRemUnknown::RemQueryInterface */
+
+    *ppv = NULL;
     return E_NOINTERFACE;
 }
 
@@ -283,13 +285,18 @@ static void ifproxy_disconnect(struct ifproxy * This)
 
 static void ifproxy_destroy(struct ifproxy * This)
 {
+    TRACE("%p\n", This);
+
     /* release public references to this object so that the stub can know
      * when to destroy itself */
     ifproxy_release_public_refs(This);
 
     list_remove(&This->entry);
 
-    if (This->proxy) IRpcProxyBuffer_Release(This->proxy);
+    /* note: we don't call Release for This->proxy because its lifetime is
+     * controlled by the return value from ClientIdentity_Release, which this
+     * function is always called from */
+
     HeapFree(GetProcessHeap(), 0, This);
 }
 
@@ -312,7 +319,7 @@ static HRESULT proxy_manager_construct(APARTMENT * apt, OXID oxid, OID oid, IRpc
     This->oxid = oxid;
     This->oid = oid;
 
-    This->refs = 0; /* will be incremented on creation of first proxy */
+    This->refs = 1;
 
     This->chan = channel; /* FIXME: we should take the binding strings and construct the channel in this function */
 
@@ -349,7 +356,13 @@ static HRESULT proxy_manager_create_ifproxy(struct proxy_manager * This, IPID ip
         hr = IPSFactoryBuffer_CreateProxy(psfb, (IUnknown *)&This->lpVtbl, riid,
                                           &ifproxy->proxy, &ifproxy->iface);
         IPSFactoryBuffer_Release(psfb);
+        if (hr != S_OK)
+            ERR("Could not create proxy for interface %s, error 0x%08lx\n",
+                debugstr_guid(riid), hr);
     }
+    else
+        ERR("Could not get IPSFactoryBuffer for interface %s, error 0x%08lx\n",
+            debugstr_guid(riid), hr);
 
     if (hr == S_OK)
         hr = IRpcProxyBuffer_Connect(ifproxy->proxy, This->chan);
@@ -365,6 +378,8 @@ static HRESULT proxy_manager_create_ifproxy(struct proxy_manager * This, IPID ip
         LeaveCriticalSection(&This->cs);
 
         *iif_out = ifproxy;
+        TRACE("ifproxy %p created for IPID %s, interface %s with %lu public refs\n",
+              ifproxy, debugstr_guid(&ipid), debugstr_guid(riid), cPublicRefs);
     }
     else
         ifproxy_destroy(ifproxy);
@@ -440,7 +455,7 @@ static void proxy_manager_destroy(struct proxy_manager * This)
     }
 
     /* destroy all of the interface proxies */
-    while (!(cursor = list_head(&This->interfaces)))
+    while ((cursor = list_head(&This->interfaces)))
     {
         struct ifproxy * ifproxy = LIST_ENTRY(cursor, struct ifproxy, entry);
         ifproxy_destroy(ifproxy);
@@ -453,6 +468,9 @@ static void proxy_manager_destroy(struct proxy_manager * This)
     HeapFree(GetProcessHeap(), 0, This);
 }
 
+/* finds the proxy manager corresponding to a given OXID and OID that has
+ * been unmarshaled in the specified apartment. The caller must release the
+ * reference to the proxy_manager when the object is no longer used. */
 static BOOL find_proxy_manager(APARTMENT * apt, OXID oxid, OID oid, struct proxy_manager ** proxy_found)
 {
     BOOL found = FALSE;
@@ -465,6 +483,7 @@ static BOOL find_proxy_manager(APARTMENT * apt, OXID oxid, OID oid, struct proxy
         if ((oxid == proxy->oxid) && (oid == proxy->oid))
         {
             *proxy_found = proxy;
+            ClientIdentity_AddRef((IInternalUnknown *)&proxy->lpVtbl);
             found = TRUE;
             break;
         }
@@ -616,8 +635,7 @@ StdMarshalImpl_UnmarshalInterface(LPMARSHAL iface, IStream *pStm, REFIID riid, v
   wine_marshal_id       mid;
   ULONG			res;
   HRESULT		hres;
-  IRpcChannelBuffer	*chanbuf;
-  struct proxy_manager *proxy_manager;
+  struct proxy_manager *proxy_manager = NULL;
   APARTMENT *apt = COM_CurrentApt();
   APARTMENT *stub_apt;
   ULONG cPublicRefs = 1;
@@ -683,25 +701,45 @@ StdMarshalImpl_UnmarshalInterface(LPMARSHAL iface, IStream *pStm, REFIID riid, v
 
   if (!find_proxy_manager(apt, mid.oxid, mid.oid, &proxy_manager))
   {
+    IRpcChannelBuffer *chanbuf;
     hres = PIPE_GetNewPipeBuf(&mid,&chanbuf);
     if (hres == S_OK)
       hres = proxy_manager_construct(apt, mid.oxid, mid.oid, chanbuf, &proxy_manager);
   }
 
-  if (hres == S_OK)
-  {
-    struct ifproxy * ifproxy;
-    hres = proxy_manager_find_ifproxy(proxy_manager, riid, &ifproxy);
     if (hres == S_OK)
-      IUnknown_AddRef((IUnknown *)ifproxy->iface);
-    else if (hres == E_NOINTERFACE)
-      hres = proxy_manager_create_ifproxy(proxy_manager, mid.ipid, riid, cPublicRefs, &ifproxy);
+    {
+        /* the IUnknown interface is special because it does not have an
+         * ifproxy associated with it. we simply return the controlling
+         * IUnknown of the proxy manager. */
+        if (IsEqualIID(riid, &IID_IUnknown))
+        {
+            ClientIdentity_AddRef((IInternalUnknown*)&proxy_manager->lpVtbl);
+            *ppv = (LPVOID)(&proxy_manager->lpVtbl);
+        }
+        else
+        {
+            struct ifproxy * ifproxy;
+            hres = proxy_manager_find_ifproxy(proxy_manager, riid, &ifproxy);
+            if (hres == E_NOINTERFACE)
+                hres = proxy_manager_create_ifproxy(proxy_manager, mid.ipid, 
+                                                    riid, cPublicRefs, &ifproxy);
 
-    if (hres == S_OK)
-      *ppv = ifproxy->iface; /* AddRef'd above */
-  }
+            if (hres == S_OK)
+            {
+                /* FIXME: push this AddRef inside proxy_manager_find_ifproxy/create_ifproxy? */
+                ClientIdentity_AddRef((IInternalUnknown*)&proxy_manager->lpVtbl);
+                *ppv = ifproxy->iface;
+            }
+        }
+    }
 
-  return hres;
+    if (proxy_manager) ClientIdentity_Release((IInternalUnknown*)&proxy_manager->lpVtbl);
+
+    if (hres) WARN("Failed with error 0x%08lx\n", hres);
+    else TRACE("Successfully created proxy %p\n", *ppv);
+
+    return hres;
 }
 
 static HRESULT WINAPI

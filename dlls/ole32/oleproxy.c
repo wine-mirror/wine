@@ -175,6 +175,7 @@ CFStub_Invoke(
 	    return hres;
 	}
 	hres = CoMarshalInterface(pStm,&iid,ppv,0,NULL,0);
+	IUnknown_Release((IUnknown*)ppv);
 	if (hres) {
 	    FIXME("CoMarshalInterface failed, %lx!\n",hres);
 	    msg->cbBuffer = 0;
@@ -443,13 +444,11 @@ CFProxy_Construct(IUnknown *pUnkOuter, LPVOID *ppv,LPVOID *ppProxy) {
 
     cf->lpvtbl_cf	= &cfproxyvt;
     cf->lpvtbl_proxy	= &pspbvtbl;
-    /* 1 reference for the proxy... */
+    /* only one reference for the proxy buffer */
     cf->ref		= 1;
     cf->outer_unknown = pUnkOuter;
     *ppv		= &(cf->lpvtbl_cf);
     *ppProxy		= &(cf->lpvtbl_proxy);
-    /* ...and 1 for the object */
-    IUnknown_AddRef((IUnknown *)*ppv);
     return S_OK;
 }
 

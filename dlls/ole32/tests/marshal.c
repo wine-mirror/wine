@@ -51,6 +51,45 @@ static void UnlockModule()
 }
 
 
+static HRESULT WINAPI Test_IUnknown_QueryInterface(
+    LPUNKNOWN iface,
+    REFIID riid,
+    LPVOID *ppvObj)
+{
+    if (ppvObj == NULL) return E_POINTER;
+
+    if (IsEqualGUID(riid, &IID_IUnknown))
+    {
+        *ppvObj = (LPVOID)iface;
+        IUnknown_AddRef(iface);
+        return S_OK;
+    }
+
+    return E_NOINTERFACE;
+}
+
+static ULONG WINAPI Test_IUnknown_AddRef(LPUNKNOWN iface)
+{
+    LockModule();
+    return 2; /* non-heap-based object */
+}
+
+static ULONG WINAPI Test_IUnknown_Release(LPUNKNOWN iface)
+{
+    UnlockModule();
+    return 1; /* non-heap-based object */
+}
+
+static IUnknownVtbl TestUnknown_Vtbl =
+{
+    Test_IUnknown_QueryInterface,
+    Test_IUnknown_AddRef,
+    Test_IUnknown_Release,
+};
+
+static IUnknown Test_Unknown = { &TestUnknown_Vtbl };
+
+
 static HRESULT WINAPI Test_IClassFactory_QueryInterface(
     LPCLASSFACTORY iface,
     REFIID riid,
@@ -87,7 +126,8 @@ static HRESULT WINAPI Test_IClassFactory_CreateInstance(
     REFIID riid,
     LPVOID *ppvObj)
 {
-    return CLASS_E_CLASSNOTAVAILABLE;
+    if (pUnkOuter) return CLASS_E_NOAGGREGATION;
+    return IUnknown_QueryInterface((IUnknown*)&Test_Unknown, riid, ppvObj);
 }
 
 static HRESULT WINAPI Test_IClassFactory_LockServer(
@@ -582,12 +622,12 @@ static DWORD CALLBACK bad_thread_proc(LPVOID p)
 {
     IClassFactory * cf = (IClassFactory *)p;
     HRESULT hr;
-    IUnknown * dummy;
+    IUnknown * proxy = NULL;
 
     CoInitializeEx(NULL, COINIT_MULTITHREADED);
     
-    hr = IClassFactory_CreateInstance(cf, NULL, &IID_IUnknown, (LPVOID*)&dummy);
-
+    hr = IClassFactory_CreateInstance(cf, NULL, &IID_IUnknown, (LPVOID*)&proxy);
+    if (proxy) IUnknown_Release(proxy);
     todo_wine {
     ok(hr == RPC_E_WRONG_THREAD,
         "COM should have failed with RPC_E_WRONG_THREAD on using proxy from wrong apartment, but instead returned 0x%08lx\n",
@@ -726,7 +766,7 @@ static void test_message_filter()
     IStream *pStream = NULL;
     IClassFactory *cf = NULL;
     DWORD tid;
-    IUnknown *dummy;
+    IUnknown *proxy = NULL;
     IMessageFilter *prev_filter = NULL;
     HANDLE thread;
 
@@ -740,20 +780,24 @@ static void test_message_filter()
 
     IStream_Seek(pStream, ullZero, STREAM_SEEK_SET, NULL);
     hr = CoUnmarshalInterface(pStream, &IID_IClassFactory, (void **)&cf);
-    ok_ole_success(hr, CoReleaseMarshalData);
+    ok_ole_success(hr, CoUnmarshalInterface);
     IStream_Release(pStream);
 
     ok_more_than_one_lock();
 
-    hr = IClassFactory_CreateInstance(cf, NULL, &IID_IUnknown, (LPVOID*)&dummy);
+    hr = IClassFactory_CreateInstance(cf, NULL, &IID_IUnknown, (LPVOID*)&proxy);
     todo_wine { ok(hr == RPC_E_CALL_REJECTED, "Call should have returned RPC_E_CALL_REJECTED, but return 0x%08lx instead\n", hr); }
+    if (proxy) IUnknown_Release(proxy);
+    proxy = NULL;
 
     hr = CoRegisterMessageFilter(&MessageFilter, &prev_filter);
     ok_ole_success(hr, CoRegisterMessageFilter);
     if (prev_filter) IMessageFilter_Release(prev_filter);
 
-    hr = IClassFactory_CreateInstance(cf, NULL, &IID_IUnknown, (LPVOID*)&dummy);
-    ok(hr == CLASS_E_CLASSNOTAVAILABLE, "Call didn't wasn't accepted. hr = 0x%08lx\n", hr);
+    hr = IClassFactory_CreateInstance(cf, NULL, &IID_IUnknown, (LPVOID*)&proxy);
+    ok_ole_success(hr, IClassFactory_CreateInstance);
+
+    IUnknown_Release(proxy);
 
     IClassFactory_Release(cf);
 
