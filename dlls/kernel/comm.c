@@ -105,7 +105,7 @@ BOOL WINAPI COMM_BuildOldCommDCB(LPCSTR device, LPDCB lpdcb)
 	if (!*(device+4))
 		return FALSE;
 
-	if (*(device+4) != ':')
+	if ((*(device+4) != ':') && (*(device+4) != ' '))
 		return FALSE;
 	
 	strcpy(temp,device+5);
@@ -165,7 +165,10 @@ BOOL WINAPI COMM_BuildOldCommDCB(LPCSTR device, LPDCB lpdcb)
 		break;			
 	case 'O':
 		lpdcb->Parity = ODDPARITY;
-		break;			
+		break;		
+        case 'S':
+                lpdcb->Parity = SPACEPARITY;
+                break;	
 	default:
 		WARN("Unknown parity `%c'!\n", *ptr);
 		return FALSE;
@@ -260,7 +263,7 @@ BOOL WINAPI BuildCommDCBAndTimeoutsA(
 			ERR("BUG! COM0 can't exist!\n");
 			return FALSE;
 		}
-		if (*(device+4)!=':')
+		if ((*(device+4)!=':') && (*(device+4)!=' '))
 			return FALSE;
 		temp=(LPSTR)(device+5);
 	} else
@@ -311,6 +314,9 @@ BOOL WINAPI BuildCommDCBAndTimeoutsA(
 			case 'M':case 'm':
 				lpdcb->Parity	= MARKPARITY;
 				break;
+                        case 'S':case 's':
+                                lpdcb->Parity   = SPACEPARITY;
+                                break;
 			}
 			flag=1;
 		}
