@@ -973,6 +973,7 @@ debug_channels (comm debugstr dll int resource stress thunk toolhelp win32)
 @ stdcall LoadModule16(str long) LoadModule16
 @ stdcall LoadResource16(long long) LoadResource16
 @ stdcall LockResource16(long) LockResource16
+@ stdcall SizeofResource16(long long) SizeofResource16
 @ stdcall WinExec16(str long) WinExec16
 @ stdcall GlobalFlags16(long) GlobalFlags16
 @ stdcall GlobalReAlloc16(long long long) GlobalReAlloc16

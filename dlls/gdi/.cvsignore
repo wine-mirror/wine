@@ -3,3 +3,5 @@
 Makefile
 printdrv.glue.c
 thunk.glue.c
+version.res
+version16.res

@@ -260,6 +260,160 @@ void ConvertVersionInfo32To16( VS_VERSION_INFO_STRUCT32 *info32,
                 info16->wLength, info16, child16 );
 }
 
+/***********************************************************************
+ *           VERSION_GetFileVersionInfo_PE             [internal]
+ *
+ *    NOTE: returns size of the PE VERSION resource.
+ *    FIXME: handle is not used.
+ */
+static DWORD WINAPI VERSION_GetFileVersionInfo_PE( LPCSTR filename, LPDWORD handle,
+                                    DWORD datasize, LPVOID data )
+{
+    VS_FIXEDFILEINFO *vffi;
+    DWORD len;
+    BYTE *buf;
+    HMODULE hModule;
+    HRSRC hRsrc;
+    HGLOBAL hMem;
+    BOOL do_free_library = FALSE;
+
+    TRACE("(%s,%p)\n", debugstr_a(filename), handle );
+
+    hModule = GetModuleHandleA(filename);
+    if(!hModule)
+    {
+	hModule = LoadLibraryExA(filename, 0, LOAD_LIBRARY_AS_DATAFILE);
+	do_free_library = TRUE;
+    }
+    if(!hModule)
+    {
+	WARN("Could not load %s\n", debugstr_a(filename));
+	return 0;
+    }
+    hRsrc = FindResourceW(hModule,
+			  MAKEINTRESOURCEW(VS_VERSION_INFO),
+			  MAKEINTRESOURCEW(VS_FILE_INFO));
+    if(!hRsrc)
+    {
+	WARN("Could not find VS_VERSION_INFO in %s\n", debugstr_a(filename));
+	if(do_free_library) FreeLibrary(hModule);
+	return 0;
+    }
+    len = SizeofResource(hModule, hRsrc);
+    hMem = LoadResource(hModule, hRsrc);
+    if(!hMem)
+    {
+	WARN("Could not load VS_VERSION_INFO from %s\n", debugstr_a(filename));
+	if(do_free_library) FreeLibrary(hModule);
+	return 0;
+    }
+    buf = LockResource(hMem);
+
+    vffi = (VS_FIXEDFILEINFO *)VersionInfo32_Value( (VS_VERSION_INFO_STRUCT32 *)buf );
+
+    if ( vffi->dwSignature != VS_FFI_SIGNATURE )
+    {
+        WARN("vffi->dwSignature is 0x%08lx, but not 0x%08lx!\n",
+                   vffi->dwSignature, VS_FFI_SIGNATURE );
+        len = 0;
+	goto END;
+    }
+
+    if ( TRACE_ON(ver) )
+        print_vffi_debug( vffi );
+
+    if(data)
+    {
+	if(datasize >= len)
+	    memcpy(data, buf, len);
+	else
+	    len = 0;
+    }
+END:
+    FreeResource(hMem);
+    if(do_free_library) FreeLibrary(hModule);
+
+    return len;
+}
+
+/***********************************************************************
+ *           VERSION_GetFileVersionInfo_16             [internal]
+ *
+ *    NOTE: returns size of the 16-bit VERSION resource.
+ *    FIXME: handle is not used.
+ */
+static DWORD WINAPI VERSION_GetFileVersionInfo_16( LPCSTR filename, LPDWORD handle,
+                                    DWORD datasize, LPVOID data )
+{
+    VS_FIXEDFILEINFO *vffi;
+    DWORD len;
+    BYTE *buf;
+    HMODULE16 hModule;
+    HRSRC16 hRsrc;
+    HGLOBAL16 hMem;
+    BOOL do_free_library = FALSE;
+
+    TRACE("(%s,%p)\n", debugstr_a(filename), handle );
+
+    hModule = GetModuleHandle16(filename);
+    if(hModule < 32)
+    {
+	hModule = LoadLibrary16(filename);
+	do_free_library = TRUE;
+    }
+    if(hModule < 32)
+    {
+	WARN("Could not load %s\n", debugstr_a(filename));
+	return 0;
+    }
+    hRsrc = FindResource16(hModule,
+			  MAKEINTRESOURCEA(VS_VERSION_INFO),
+			  MAKEINTRESOURCEA(VS_FILE_INFO));
+    if(!hRsrc)
+    {
+	WARN("Could not find VS_VERSION_INFO in %s\n", debugstr_a(filename));
+	if(do_free_library) FreeLibrary16(hModule);
+	return 0;
+    }
+    len = SizeofResource16(hModule, hRsrc);
+    hMem = LoadResource16(hModule, hRsrc);
+    if(!hMem)
+    {
+	WARN("Could not load VS_VERSION_INFO from %s\n", debugstr_a(filename));
+	if(do_free_library) FreeLibrary16(hModule);
+	return 0;
+    }
+    buf = LockResource16(hMem);
+
+    if(!VersionInfoIs16(buf))
+	goto END;
+
+    vffi = (VS_FIXEDFILEINFO *)VersionInfo16_Value( (VS_VERSION_INFO_STRUCT16 *)buf );
+
+    if ( vffi->dwSignature != VS_FFI_SIGNATURE )
+    {
+        WARN("vffi->dwSignature is 0x%08lx, but not 0x%08lx!\n",
+                   vffi->dwSignature, VS_FFI_SIGNATURE );
+        len = 0;
+	goto END;
+    }
+
+    if ( TRACE_ON(ver) )
+        print_vffi_debug( vffi );
+
+    if(data)
+    {
+	if(datasize >= len)
+	    memcpy(data, buf, len);
+	else
+	    len = 0;
+    }
+END:
+    FreeResource16(hMem);
+    if(do_free_library) FreeLibrary16(hModule);
+
+    return len;
+}
 
 /***********************************************************************
  *           GetFileVersionInfoSizeA         [VERSION.2]
@@ -271,6 +425,11 @@ DWORD WINAPI GetFileVersionInfoSizeA( LPCSTR filename, LPDWORD handle )
     BYTE buf[144];
 
     TRACE("(%s,%p)\n", debugstr_a(filename), handle );
+
+    len = VERSION_GetFileVersionInfo_PE(filename, handle, 0, NULL);
+    if(len) return len;
+    len = VERSION_GetFileVersionInfo_16(filename, handle, 0, NULL);
+    if(len) return len;
 
     len = GetFileResourceSize16( filename,
                                  MAKEINTRESOURCEA(VS_FILE_INFO),
@@ -329,11 +488,16 @@ DWORD WINAPI GetFileVersionInfoA( LPCSTR filename, DWORD handle,
     TRACE("(%s,%ld,size=%ld,data=%p)\n",
                 debugstr_a(filename), handle, datasize, data );
 
+    if(VERSION_GetFileVersionInfo_PE(filename, &handle, datasize, data))
+	goto DO_CONVERT;
+    if(VERSION_GetFileVersionInfo_16(filename, &handle, datasize, data))
+	goto DO_CONVERT;
+
     if ( !GetFileResource16( filename, MAKEINTRESOURCEA(VS_FILE_INFO),
                                        MAKEINTRESOURCEA(VS_VERSION_INFO),
                                        handle, datasize, data ) )
         return FALSE;
-
+DO_CONVERT:
     if (    datasize >= sizeof(VS_VERSION_INFO_STRUCT16)
          && datasize >= ((VS_VERSION_INFO_STRUCT16 *)data)->wLength  
          && !VersionInfoIs16( data ) )
@@ -361,6 +525,11 @@ DWORD WINAPI GetFileVersionInfoW( LPCWSTR filename, DWORD handle,
     TRACE("(%s,%ld,size=%ld,data=%p)\n",
                 debugstr_w(filename), handle, datasize, data );
 
+    if(VERSION_GetFileVersionInfo_PE(fn, &handle, datasize, data))
+	goto END;
+    if(VERSION_GetFileVersionInfo_16(fn, &handle, datasize, data))
+	goto END;
+
     if ( !GetFileResource16( fn, MAKEINTRESOURCEA(VS_FILE_INFO),
                                  MAKEINTRESOURCEA(VS_VERSION_INFO),
                                  handle, datasize, data ) )
@@ -373,7 +542,7 @@ DWORD WINAPI GetFileVersionInfoW( LPCWSTR filename, DWORD handle,
         ERR("Cannot access NE resource in %s\n", debugstr_a(fn) );
         retv =  FALSE;
     }
-
+END:
     HeapFree( GetProcessHeap(), 0, fn );
     return retv;
 }

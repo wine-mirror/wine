@@ -2,3 +2,4 @@
 Makefile
 kernel.res
 utthunk.glue.c
+version16.res

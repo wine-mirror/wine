@@ -3,6 +3,7 @@ type	win16
 heap	65520
 file	user.exe
 owner	user32
+rsrc	resources/version16.res
 
 1   pascal16 MessageBox(word str str word) MessageBox16
 2   stub OldExitWindows

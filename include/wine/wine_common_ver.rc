@@ -1,0 +1,47 @@
+#include "winver.h"
+
+#ifndef WINE_FILEVERSION
+#define WINE_FILEVERSION 1,0,0,0
+#endif
+
+#ifndef WINE_FILEVERSION_STR
+#define WINE_FILEVERSION_STR "1.0"
+#endif
+
+#ifndef WINE_FILEDESCRIPTION_STR
+#define WINE_FILEDESCRIPTION_STR "Wine core dll"
+#endif
+
+#ifndef WINE_FILENAME_STR
+#define WINE_FILENAME_STR ""
+#endif
+
+VS_VERSION_INFO VERSIONINFO
+FILEVERSION    WINE_FILEVERSION
+PRODUCTVERSION 1,0,0,0
+FILEFLAGSMASK  0
+FILEFLAGS      0
+FILEOS         VOS_UNKNOWN
+FILETYPE       VFT_DLL
+FILESUBTYPE    VFT2_UNKNOWN
+{
+    BLOCK "StringFileInfo"
+    {
+	BLOCK "040904E4" /* LANG_ENGLISH/SUBLANG_DEFAULT, CP 1252 */
+	{
+	    VALUE "CompanyName", "Wine Team"
+	    VALUE "FileDescription", WINE_FILEDESCRIPTION_STR
+	    VALUE "FileVersion", WINE_FILEVERSION_STR
+	    VALUE "InternalName", WINE_FILENAME_STR
+	    VALUE "LegalCopyright", "Copyright (c) 1993-2001 the Wine project authors " \
+				    "(see the file AUTHORS for a complete list)"
+	    VALUE "OriginalFilename", WINE_FILENAME_STR
+	    VALUE "ProductName", "Wine"
+	    VALUE "ProductVersion", "1.0"
+	}
+    }
+    BLOCK "VarFileInfo"
+    {
+	VALUE "Translation", 0x0409, 0x04E4 /* LANG_ENGLISH/SUBLANG_DEFAULT, CP 1252 */
+    }
+}

@@ -1,3 +1,5 @@
 #include "locale_rc.rc"
 
 #include "messages/winerr_enu.mc.rc"
+
+#include "version.rc"

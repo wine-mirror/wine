@@ -1,6 +1,7 @@
 name    gdi32
 type    win32
 init    MAIN_GdiInit
+rsrc    version.res
 
 import	advapi32.dll
 import	kernel32.dll

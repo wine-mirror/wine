@@ -14,6 +14,10 @@ C_SRCS = \
 	thunk.c \
 	wing.c
 
+RC_SRCS= \
+	version.rc \
+	version16.rc
+
 GLUE = printdrv.c thunk.c
 
 EXTRA_OBJS = \
@@ -34,6 +38,13 @@ SUBDIRS = \
 
 $(EXTRA_OBJS): dummy
 	@cd `dirname $@` && $(MAKE) `basename $@`
+
+# Special rules for 16-bit resource files
+
+version16.res: version16.rc
+	$(LDPATH) $(WRC) $(DIVINCL) -o $@ -w16 -m -r $(SRCDIR)/version16.rc
+
+gdi.spec.c: version16.res
 
 ### Dependencies:
 

@@ -3,6 +3,7 @@ type	win16
 heap	65488  # 65536 - 16 (instance data) - 32 (stock objects)
 file	gdi.exe
 owner	gdi32
+rsrc	version16.res
 
 1   pascal   SetBkColor(word long) SetBkColor16
 2   pascal16 SetBkMode(word word) SetBkMode16

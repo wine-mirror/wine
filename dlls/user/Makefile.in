@@ -26,7 +26,8 @@ C_SRCS = \
 RC_SRCS = \
 	resources/display.rc \
 	resources/mouse.rc \
-	resources/user32.rc
+	resources/user32.rc \
+	resources/version16.rc
 
 GLUE = thunk.c
 
@@ -54,8 +55,13 @@ resources/display.res: resources/display.rc
 resources/mouse.res: resources/mouse.rc
 	$(LDPATH) $(WRC) $(DIVINCL) -o $@ -w16 -m -r $(SRCDIR)/resources/mouse.rc
 
+resources/version16.res: resources/version16.rc
+	$(LDPATH) $(WRC) $(DIVINCL) -o $@ -w16 -m -r $(SRCDIR)/resources/version16.rc
+
 display.spec.c: resources/display.res
 
 mouse.spec.c: resources/mouse.res
+
+user.spec.c: resources/version16.res
 
 ### Dependencies:
