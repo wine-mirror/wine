@@ -166,7 +166,7 @@ type	win32
 163 stdcall CoInitializeEx(ptr long) CoInitializeEx
 164 stub CoInitializeSecurity       # stdcall (ptr long ptr ptr long long ptr long ptr) return 0,ERR_NOTIMPLEMENTED
 165 stdcall CoCreateInstanceEx(ptr ptr long ptr long ptr) CoCreateInstanceEx
-166 stub PropVariantClear
+166 stdcall PropVariantClear(ptr) PropVariantClear
 167 stub CoCopyProxy                # stdcall (ptr ptr) return 0,ERR_NOTIMPLEMENTED
 168 stub CoGetCallContext           # stdcall (ptr ptr) return 0,ERR_NOTIMPLEMENTED
 169 stub CoGetInstanceFromFile      # stdcall (ptr ptr ptr long wstr long ptr) return 0,ERR_NOTIMPLEMENTED
@@ -195,7 +195,7 @@ type	win32
 192 stub CreateErrorInfo
 193 stub CreateObjrefMoniker
 194 stub DllRegisterServer
-195 stub FreePropVariantArray
+195 stdcall FreePropVariantArray(long ptr) FreePropVariantArray
 196 stub GetErrorInfo
 197 stub HACCEL_UserFree
 198 stub HACCEL_UserMarshal
@@ -246,7 +246,7 @@ type	win32
 243 stub OleCreateLinkToFileEx
 244 stub PropSysAllocString
 245 stub PropSysFreeString
-246 stub PropVariantCopy
+246 stdcall PropVariantCopy(ptr ptr) PropVariantCopy
 247 stub SNB_UserFree
 248 stub SNB_UserMarshal
 249 stub SNB_UserSize
@@ -255,7 +255,7 @@ type	win32
 252 stub STGMEDIUM_UserMarshal
 253 stub STGMEDIUM_UserSize
 254 stub STGMEDIUM_UserUnmarshal
-255 stub SetErrorInfo
+255 stdcall SetErrorInfo(long ptr) SetErrorInfo
 256 stub StgCreateStorageEx
 257 stub StgGetIFillLockBytesOnFile
 258 stub StgGetIFillLockBytesOnILockBytes

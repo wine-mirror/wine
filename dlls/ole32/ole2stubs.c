@@ -224,3 +224,46 @@ HRESULT     WINAPI OleRegEnumFormatEtc (
     return S_OK;
 }
 
+#include "oleauto.h"
+/***********************************************************************
+ *           SetErrorInfo			    [OLE32.255]
+ */
+HRESULT WINAPI SetErrorInfo(DWORD dwReserved, IErrorInfo* perrinfo)
+{
+	FIXME("(%ld, %p): stub:\n", dwReserved, perrinfo);
+
+	return S_OK;
+}
+
+/***********************************************************************
+ *           PropVariantClear			    [OLE32.166]
+ */
+HRESULT WINAPI PropVariantClear(/*PROPVARIANT* */void* pvar)
+{
+	FIXME("(%p): stub:\n", pvar);
+
+	*(LPWORD)pvar = 0;
+	/* sets at least the vt field to VT_EMPTY */
+	return S_OK;
+}
+
+/***********************************************************************
+ *           PropVariantCopy			    [OLE32.246]
+ */
+HRESULT WINAPI PropVariantCopy(/*PROPVARIANT* */void* pvarDest,
+				 /*const PROPVARIANT* */ void* pvarSrc)
+{
+	FIXME("(%p, %p): stub:\n", pvarDest, pvarSrc);
+
+	return S_OK;
+}
+
+/***********************************************************************
+ *           FreePropVariantArray			    [OLE32.195]
+ */
+HRESULT WINAPI FreePropVariantArray(ULONG cVariants, /*PROPVARIANT* */void* rgvars)
+{
+	FIXME("(%lu, %p): stub:\n", cVariants, rgvars);
+
+	return S_OK;
+}
