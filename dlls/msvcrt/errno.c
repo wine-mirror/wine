@@ -135,3 +135,32 @@ void MSVCRT_perror(const char* str)
 {
   _cprintf("%s: %s\n",str,MSVCRT_strerror(msvcrt_get_thread_data()->errno));
 }
+
+/******************************************************************************
+ *		_set_error_mode (MSVCRT.@)
+ *
+ * Set the error mode, which describes where the C run-time writes error
+ * messages.
+ *
+ * PARAMS
+ *   mode - the new error mode
+ *
+ * RETURNS
+ *   The old error mode.
+ *
+ * TODO
+ *  This function does not have a proper implementation; the error mode is
+ *  never used.
+ */
+int _set_error_mode(int mode)
+{
+  static int current_mode = _OUT_TO_DEFAULT;
+
+  const int old = current_mode;
+  if ( _REPORT_ERRMODE != mode ) {
+    current_mode = mode;
+    FIXME("dummy implementation (old mode: %d, new mode: %d)\n",
+          old, mode);
+  }
+  return old;
+}
