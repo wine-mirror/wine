@@ -68,7 +68,7 @@ static int running_under_wine ()
 
 static int running_on_visible_desktop ()
 {
-    return (GetWindowLongA (GetDesktopWindow (), GWL_STYLE) & WS_VISIBLE) != 0;
+    return IsWindowVisible( GetDesktopWindow() );
 }
 
 void print_version ()
