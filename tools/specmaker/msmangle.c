@@ -101,7 +101,7 @@ int symbol_demangle (parsed_symbol *sym)
     case 'P': function_name = strdup ("operator_greaterthanequal"); break;
     case 'Q': function_name = strdup ("operator_comma"); break;
     case 'R': function_name = strdup ("operator_functioncall"); break;
-    case 'S': function_name = strdup ("operator_compliment"); break;
+    case 'S': function_name = strdup ("operator_complement"); break;
     case 'T': function_name = strdup ("operator_xor"); break;
     case 'U': function_name = strdup ("operator_logicalor"); break;
     case 'V': function_name = strdup ("operator_logicaland"); break;
