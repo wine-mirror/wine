@@ -29,7 +29,7 @@ WINE_DECLARE_DEBUG_CHANNEL(dmfile);
 HRESULT WINAPI IDirectMusicAudioPathImpl_IUnknown_QueryInterface (LPUNKNOWN iface, REFIID riid, LPVOID *ppobj) {
 	ICOM_THIS_MULTI(IDirectMusicAudioPathImpl, UnknownVtbl, iface);
 	TRACE("(%p, %s, %p)\n", This, debugstr_dmguid(riid), ppobj);
-	
+
 	if (IsEqualIID (riid, &IID_IUnknown)) {
 		*ppobj = (LPVOID)&This->UnknownVtbl;
 		IDirectMusicAudioPathImpl_IUnknown_AddRef ((LPUNKNOWN)&This->UnknownVtbl);
@@ -95,7 +95,7 @@ HRESULT WINAPI IDirectMusicAudioPathImpl_IDirectMusicAudioPath_GetObjectInPath (
 	ICOM_THIS_MULTI(IDirectMusicAudioPathImpl, AudioPathVtbl, iface);
 
 	FIXME("(%p, %ld, %ld, %ld, %s, %d, %s, %p): stub\n", This, dwPChannel, dwStage, dwBuffer, debugstr_dmguid(guidObject), dwIndex, debugstr_dmguid(iidInterface), ppObject);
-
+	    
 	switch (dwStage) {
 	case DMUS_PATH_BUFFER:
 	  {
