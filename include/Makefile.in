@@ -103,6 +103,8 @@ WINDOWS_INCLUDES = \
 	lmbrowsr.h \
 	lmcons.h \
 	lmerr.h \
+	lmserver.h \
+	lmshare.h \
 	lmstats.h \
 	lmwksta.h \
 	lzexpand.h \
