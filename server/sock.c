@@ -93,7 +93,7 @@ static void sock_destroy( struct object *obj );
 
 static int sock_get_poll_events( struct fd *fd );
 static void sock_poll_event( struct fd *fd, int event );
-static int sock_get_info( struct fd *fd, int *flags );
+static int sock_get_info( struct fd *fd );
 static void sock_queue_async( struct fd *fd, void *ptr, unsigned int status, int type, int count );
 
 static int sock_get_error( int err );
@@ -475,19 +475,19 @@ static int sock_get_poll_events( struct fd *fd )
     return ev;
 }
 
-static int sock_get_info( struct fd *fd, int *flags )
+static int sock_get_info( struct fd *fd )
 {
+    int flags = FD_FLAG_AVAILABLE;
     struct sock *sock = get_fd_user( fd );
     assert ( sock->obj.ops == &sock_ops );
 
-    *flags = FD_FLAG_AVAILABLE;
-    if (sock->flags & WSA_FLAG_OVERLAPPED) *flags |= FD_FLAG_OVERLAPPED;
+    if (sock->flags & WSA_FLAG_OVERLAPPED) flags |= FD_FLAG_OVERLAPPED;
     if ( sock->type != SOCK_STREAM || sock->state & FD_WINE_CONNECTED )
     {
-        if ( !(sock->state & FD_READ  ) ) *flags |= FD_FLAG_RECV_SHUTDOWN;
-        if ( !(sock->state & FD_WRITE ) ) *flags |= FD_FLAG_SEND_SHUTDOWN;
+        if ( !(sock->state & FD_READ  ) ) flags |= FD_FLAG_RECV_SHUTDOWN;
+        if ( !(sock->state & FD_WRITE ) ) flags |= FD_FLAG_SEND_SHUTDOWN;
     }
-    return FD_TYPE_SOCKET;
+    return flags;
 }
 
 static void sock_queue_async(struct fd *fd, void *ptr, unsigned int status, int type, int count)

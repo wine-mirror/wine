@@ -408,7 +408,7 @@ NTSTATUS WINAPI NtReadFile(HANDLE hFile, HANDLE hEvent,
           hFile,hEvent,apc,apc_user,io_status,buffer,length,offset,key);
 
     io_status->Information = 0;
-    io_status->u.Status = wine_server_handle_to_fd( hFile, GENERIC_READ, &unix_handle, NULL, &flags );
+    io_status->u.Status = wine_server_handle_to_fd( hFile, GENERIC_READ, &unix_handle, &flags );
     if (io_status->u.Status) return io_status->u.Status;
 
     if (flags & FD_FLAG_RECV_SHUTDOWN)
@@ -604,7 +604,7 @@ NTSTATUS WINAPI NtWriteFile(HANDLE hFile, HANDLE hEvent,
           hFile,hEvent,apc,apc_user,io_status,buffer,length,offset,key);
 
     io_status->Information = 0;
-    io_status->u.Status = wine_server_handle_to_fd( hFile, GENERIC_WRITE, &unix_handle, NULL, &flags );
+    io_status->u.Status = wine_server_handle_to_fd( hFile, GENERIC_WRITE, &unix_handle, &flags );
     if (io_status->u.Status) return io_status->u.Status;
 
     if (flags & FD_FLAG_SEND_SHUTDOWN)
@@ -872,7 +872,7 @@ NTSTATUS WINAPI NtQueryInformationFile( HANDLE hFile, PIO_STATUS_BLOCK io,
     if (len < info_sizes[class])
         return io->u.Status = STATUS_INFO_LENGTH_MISMATCH;
 
-    if ((io->u.Status = wine_server_handle_to_fd( hFile, 0, &fd, NULL, NULL )))
+    if ((io->u.Status = wine_server_handle_to_fd( hFile, 0, &fd, NULL )))
         return io->u.Status;
 
     switch (class)
@@ -1027,7 +1027,7 @@ NTSTATUS WINAPI NtSetInformationFile(HANDLE handle, PIO_STATUS_BLOCK io,
 
     TRACE("(%p,%p,%p,0x%08lx,0x%08x)\n", handle, io, ptr, len, class);
 
-    if ((io->u.Status = wine_server_handle_to_fd( handle, 0, &fd, NULL, NULL )))
+    if ((io->u.Status = wine_server_handle_to_fd( handle, 0, &fd, NULL )))
         return io->u.Status;
 
     io->u.Status = STATUS_SUCCESS;
@@ -1230,7 +1230,7 @@ NTSTATUS WINAPI NtQueryVolumeInformationFile( HANDLE handle, PIO_STATUS_BLOCK io
     int fd;
     struct stat st;
 
-    if ((io->u.Status = wine_server_handle_to_fd( handle, 0, &fd, NULL, NULL )) != STATUS_SUCCESS)
+    if ((io->u.Status = wine_server_handle_to_fd( handle, 0, &fd, NULL )) != STATUS_SUCCESS)
         return io->u.Status;
 
     io->u.Status = STATUS_NOT_IMPLEMENTED;

@@ -110,7 +110,7 @@ static int get_comm_fd( HANDLE handle, DWORD access )
 {
     int fd, ret;
 
-    ret = wine_server_handle_to_fd( handle, access, &fd, NULL, NULL );
+    ret = wine_server_handle_to_fd( handle, access, &fd, NULL );
     if (ret) SetLastError( RtlNtStatusToDosError(ret) );
     return fd;
 }

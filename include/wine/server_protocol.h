@@ -792,14 +792,7 @@ struct get_handle_fd_reply
 {
     struct reply_header __header;
     int          fd;
-    int          type;
     int          flags;
-};
-enum fd_type
-{
-    FD_TYPE_INVALID,
-    FD_TYPE_DEFAULT,
-    FD_TYPE_SOCKET
 };
 #define FD_FLAG_OVERLAPPED         0x01
 #define FD_FLAG_TIMEOUT            0x02
@@ -3649,6 +3642,6 @@ union generic_reply
     struct set_global_windows_reply set_global_windows_reply;
 };
 
-#define SERVER_PROTOCOL_VERSION 148
+#define SERVER_PROTOCOL_VERSION 149
 
 #endif /* __WINE_WINE_SERVER_PROTOCOL_H */

@@ -1068,7 +1068,7 @@ BOOL WINAPI PeekNamedPipe( HANDLE hPipe, LPVOID lpvBuffer, DWORD cbBuffer,
 #ifdef FIONREAD
     int avail=0, fd, ret, flags;
 
-    ret = wine_server_handle_to_fd( hPipe, GENERIC_READ, &fd, NULL, &flags );
+    ret = wine_server_handle_to_fd( hPipe, GENERIC_READ, &fd, &flags );
     if (ret)
     {
         SetLastError( RtlNtStatusToDosError(ret) );

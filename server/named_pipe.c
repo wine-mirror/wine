@@ -125,7 +125,7 @@ static const struct object_ops named_pipe_ops =
 
 /* common to clients and servers */
 static int pipe_end_get_poll_events( struct fd *fd );
-static int pipe_end_get_info( struct fd *fd, int *flags );
+static int pipe_end_get_info( struct fd *fd );
 
 /* server end functions */
 static void pipe_server_dump( struct object *obj, int verbose );
@@ -476,10 +476,9 @@ static int pipe_client_flush( struct fd *fd, struct event **event )
     return 0;
 }
 
-static int pipe_end_get_info( struct fd *fd, int *flags )
+static int pipe_end_get_info( struct fd *fd )
 {
-    *flags = 0;
-    return FD_TYPE_DEFAULT;
+    return 0;
 }
 
 static struct named_pipe *create_named_pipe( const WCHAR *name, size_t len )

@@ -460,14 +460,12 @@ int wine_server_fd_to_handle( int fd, unsigned int access, int inherit, obj_hand
  *     handle  [I] Wine file handle.
  *     access  [I] Win32 file access rights requested.
  *     unix_fd [O] Address where Unix file descriptor will be stored.
- *     type    [O] Address where the file type will be stored. Optional.
  *     flags   [O] Address where the Unix flags associated with file will be stored. Optional.
  *
  * RETURNS
  *     NTSTATUS code
  */
-int wine_server_handle_to_fd( obj_handle_t handle, unsigned int access, int *unix_fd,
-                              enum fd_type *type, int *flags )
+int wine_server_handle_to_fd( obj_handle_t handle, unsigned int access, int *unix_fd, int *flags )
 {
     obj_handle_t fd_handle;
     int ret, fd = -1;
@@ -480,7 +478,6 @@ int wine_server_handle_to_fd( obj_handle_t handle, unsigned int access, int *uni
             req->handle = handle;
             req->access = access;
             if (!(ret = wine_server_call( req ))) fd = reply->fd;
-            if (type) *type = reply->type;
             if (flags) *flags = reply->flags;
         }
         SERVER_END_REQ;

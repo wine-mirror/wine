@@ -69,7 +69,7 @@ static void file_destroy( struct object *obj );
 static int file_get_poll_events( struct fd *fd );
 static void file_poll_event( struct fd *fd, int event );
 static int file_flush( struct fd *fd, struct event **event );
-static int file_get_info( struct fd *fd, int *flags );
+static int file_get_info( struct fd *fd );
 static void file_queue_async( struct fd *fd, void *ptr, unsigned int status, int type, int count );
 
 static const struct object_ops file_ops =
@@ -258,13 +258,12 @@ static int file_flush( struct fd *fd, struct event **event )
     return ret;
 }
 
-static int file_get_info( struct fd *fd, int *flags )
+static int file_get_info( struct fd *fd )
 {
     struct file *file = get_fd_user( fd );
 
-    *flags = 0;
-    if (is_overlapped( file )) *flags |= FD_FLAG_OVERLAPPED;
-    return FD_TYPE_DEFAULT;
+    if (is_overlapped( file )) return FD_FLAG_OVERLAPPED;
+    else return 0;
 }
 
 static void file_queue_async(struct fd *fd, void *ptr, unsigned int status, int type, int count)

@@ -1117,11 +1117,10 @@ int no_flush( struct fd *fd, struct event **event )
 }
 
 /* default get_file_info() routine */
-int no_get_file_info( struct fd *fd, int *flags )
+int no_get_file_info( struct fd *fd )
 {
     set_error( STATUS_OBJECT_TYPE_MISMATCH );
-    *flags = 0;
-    return FD_TYPE_INVALID;
+    return 0;
 }
 
 /* default queue_async() routine */
@@ -1168,7 +1167,6 @@ DECL_HANDLER(get_handle_fd)
     struct fd *fd;
 
     reply->fd = -1;
-    reply->type = FD_TYPE_INVALID;
 
     if ((fd = get_handle_fd_obj( current->process, req->handle, req->access )))
     {
@@ -1179,7 +1177,7 @@ DECL_HANDLER(get_handle_fd)
             assert( fd->unix_fd != -1 );
             send_client_fd( current->process, fd->unix_fd, req->handle );
         }
-        reply->type = fd->fd_ops->get_file_info( fd, &reply->flags );
+        reply->flags = fd->fd_ops->get_file_info( fd );
         release_object( fd );
     }
 }

@@ -1925,7 +1925,7 @@ NTSTATUS CDROM_DeviceIoControl(HANDLE hDevice,
 
     piosb->Information = 0;
 
-    if ((status = wine_server_handle_to_fd( hDevice, 0, &fd, NULL, NULL ))) goto error;
+    if ((status = wine_server_handle_to_fd( hDevice, 0, &fd, NULL ))) goto error;
     if ((status = CDROM_Open(fd, &dev)))
     {
         wine_server_release_fd( hDevice, fd );

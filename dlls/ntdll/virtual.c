@@ -1638,7 +1638,7 @@ NTSTATUS WINAPI NtMapViewOfSection( HANDLE handle, HANDLE process, PVOID *addr_p
     SERVER_END_REQ;
     if (res) return res;
 
-    if ((res = wine_server_handle_to_fd( handle, 0, &unix_handle, NULL, NULL ))) return res;
+    if ((res = wine_server_handle_to_fd( handle, 0, &unix_handle, NULL ))) return res;
 
     if (NtQueryVolumeInformationFile( handle, &io, &device_info, sizeof(device_info),
                                       FileFsDeviceInformation ) == STATUS_SUCCESS)
@@ -1651,7 +1651,7 @@ NTSTATUS WINAPI NtMapViewOfSection( HANDLE handle, HANDLE process, PVOID *addr_p
             int shared_fd;
 
             if ((res = wine_server_handle_to_fd( shared_file, GENERIC_READ, &shared_fd,
-                                                 NULL, NULL ))) goto done;
+                                                 NULL ))) goto done;
             res = map_image( handle, unix_handle, base, size_low, header_size,
                              shared_fd, removable, addr_ptr );
             wine_server_release_fd( shared_file, shared_fd );

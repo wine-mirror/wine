@@ -908,7 +908,7 @@ static HANDLE INT21_OpenMagicDevice( LPCWSTR name, DWORD access )
         struct stat st;
 
         if (!(handle = INT21_CreateMagicDeviceHandle( magic_devices[i].name ))) return 0;
-        wine_server_handle_to_fd( handle, 0, &fd, NULL, NULL );
+        wine_server_handle_to_fd( handle, 0, &fd, NULL );
         fstat( fd, &st );
         wine_server_release_fd( handle, fd );
         magic_devices[i].dev = st.st_dev;
@@ -2684,7 +2684,7 @@ static void INT21_Ioctl_Char( CONTEXT86 *context )
     int status, i, fd;
     HANDLE handle = DosFileHandleToWin32Handle(BX_reg(context));
 
-    status = wine_server_handle_to_fd( handle, 0, &fd, NULL, NULL );
+    status = wine_server_handle_to_fd( handle, 0, &fd, NULL );
     if (status)
     {
         SET_AX( context, RtlNtStatusToDosError(status) );

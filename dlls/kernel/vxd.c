@@ -135,7 +135,7 @@ static DeviceIoProc get_vxd_proc( HANDLE handle )
     DeviceIoProc ret = NULL;
     int status, i, fd;
 
-    status = wine_server_handle_to_fd( handle, 0, &fd, NULL, NULL );
+    status = wine_server_handle_to_fd( handle, 0, &fd, NULL );
     if (status)
     {
         SetLastError( RtlNtStatusToDosError(status) );
@@ -236,7 +236,7 @@ HANDLE VXD_Open( LPCWSTR filenameW, DWORD access, SECURITY_ATTRIBUTES *sa )
                 FreeLibrary( module );
                 goto done;
             }
-            wine_server_handle_to_fd( handle, 0, &fd, NULL, NULL );
+            wine_server_handle_to_fd( handle, 0, &fd, NULL );
             if (fstat( fd, &st ) != -1)
             {
                 vxd_modules[i].dev = st.st_dev;

@@ -890,7 +890,6 @@ static void dump_get_handle_fd_request( const struct get_handle_fd_request *req 
 static void dump_get_handle_fd_reply( const struct get_handle_fd_reply *req )
 {
     fprintf( stderr, " fd=%d,", req->fd );
-    fprintf( stderr, " type=%d,", req->type );
     fprintf( stderr, " flags=%d", req->flags );
 }
 

@@ -866,7 +866,7 @@ BOOL WINAPI SetFilePointerEx( HANDLE hFile, LARGE_INTEGER distance,
         return ret;
     }
 
-    if (!(status = wine_server_handle_to_fd( hFile, 0, &fd, NULL, NULL )))
+    if (!(status = wine_server_handle_to_fd( hFile, 0, &fd, NULL )))
     {
         off_t pos, res;
 

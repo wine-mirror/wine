@@ -674,8 +674,7 @@ NTSTATUS WINAPI NtQueryDirectoryFile( HANDLE handle, HANDLE event,
         return io->u.Status = STATUS_NOT_IMPLEMENTED;
     }
 
-    if ((io->u.Status = wine_server_handle_to_fd( handle, GENERIC_READ,
-                                                  &fd, NULL, NULL )) != STATUS_SUCCESS)
+    if ((io->u.Status = wine_server_handle_to_fd( handle, GENERIC_READ, &fd, NULL )) != STATUS_SUCCESS)
         return io->u.Status;
 
     io->Information = 0;

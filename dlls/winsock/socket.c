@@ -315,7 +315,7 @@ inline static unsigned int set_error( unsigned int err )
 inline static int get_sock_fd( SOCKET s, DWORD access, int *flags )
 {
     int fd;
-    if (set_error( wine_server_handle_to_fd( SOCKET2HANDLE(s), access, &fd, NULL, flags ) ))
+    if (set_error( wine_server_handle_to_fd( SOCKET2HANDLE(s), access, &fd, flags ) ))
         return -1;
     return fd;
 }

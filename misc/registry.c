@@ -1706,7 +1706,7 @@ static void init_cdrom_registry( HANDLE handle )
 #ifdef HDIO_GET_DMA
     {
         int fd, dma;
-        if (!wine_server_handle_to_fd( handle, 0, &fd, NULL, NULL ))
+        if (!wine_server_handle_to_fd( handle, 0, &fd, NULL ))
         {
             if (ioctl(fd,HDIO_GET_DMA, &dma) != -1) value = dma;
             wine_server_release_fd( handle, fd );
