@@ -255,8 +255,8 @@ void X11DRV_DIB_CopyDIBSection(DC *dcSrc, DC *dcDst,
 			       DWORD xSrc, DWORD ySrc,   
 			       DWORD xDest, DWORD yDest, 
 			       DWORD width, DWORD height);
-
-extern INT X11DRV_DCICommand(INT cbInput, LPVOID lpInData, LPVOID lpOutData);
+struct _DCICMD;
+extern INT X11DRV_DCICommand(INT cbInput, const struct _DCICMD *lpCmd, LPVOID lpOutData);
 
 /**************************************************************************
  * X11 GDI driver

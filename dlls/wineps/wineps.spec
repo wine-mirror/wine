@@ -23,8 +23,8 @@ debug_channels (psdrv)
 @ cdecl EndDoc(ptr) PSDRV_EndDoc
 @ cdecl EndPage(ptr) PSDRV_EndPage
 @ cdecl EnumDeviceFonts(long ptr ptr long) PSDRV_EnumDeviceFonts
-@ cdecl Escape(ptr long long long long) PSDRV_Escape
 @ cdecl ExtDeviceMode(ptr long ptr ptr ptr ptr ptr long) PSDRV_ExtDeviceMode
+@ cdecl ExtEscape(ptr long long ptr long ptr) PSDRV_ExtEscape
 @ cdecl ExtTextOut(ptr long long long ptr ptr long ptr) PSDRV_ExtTextOut
 @ cdecl GetCharWidth(ptr long long ptr) PSDRV_GetCharWidth
 @ cdecl GetDeviceCaps(ptr long) PSDRV_GetDeviceCaps

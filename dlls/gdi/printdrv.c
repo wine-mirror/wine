@@ -67,10 +67,12 @@ INT16 WINAPI StartDoc16( HDC16 hdc, const DOCINFO16 *lpdoc )
  * and the output data (which is used as a second input parameter).pointing at
  * the whole docinfo structure.  This seems to be an undocumented feature of
  * the STARTDOC Escape. 
+ *
+ * Note: we now do it the other way, with the STARTDOC Escape calling StartDoc.
  */
 INT WINAPI StartDocA(HDC hdc, const DOCINFOA* doc)
 {
-    INT ret;
+    INT ret = 0;
     DC *dc = DC_GetDCPtr( hdc );
 
     TRACE("DocName = '%s' Output = '%s' Datatype = '%s'\n",
@@ -78,11 +80,7 @@ INT WINAPI StartDocA(HDC hdc, const DOCINFOA* doc)
 
     if(!dc) return SP_ERROR;
 
-    if(dc->funcs->pStartDoc)
-        ret = dc->funcs->pStartDoc( dc, doc );
-    else
-        ret = Escape(hdc, STARTDOC, strlen(doc->lpszDocName),
-		      doc->lpszDocName, (LPVOID)doc);
+    if (dc->funcs->pStartDoc) ret = dc->funcs->pStartDoc( dc, doc );
     GDI_ReleaseObj( hdc );
     return ret;
 }
@@ -132,14 +130,11 @@ INT16 WINAPI EndDoc16(HDC16 hdc)
  */
 INT WINAPI EndDoc(HDC hdc)
 {
-    INT ret;
+    INT ret = 0;
     DC *dc = DC_GetDCPtr( hdc );
     if(!dc) return SP_ERROR;
 
-    if(dc->funcs->pEndDoc)
-        ret = dc->funcs->pEndDoc( dc );
-    else
-        ret = Escape(hdc, ENDDOC, 0, 0, 0);
+    if (dc->funcs->pEndDoc) ret = dc->funcs->pEndDoc( dc );
     GDI_ReleaseObj( hdc );
     return ret;
 }
@@ -186,14 +181,11 @@ INT16 WINAPI EndPage16( HDC16 hdc )
  */
 INT WINAPI EndPage(HDC hdc)
 {
-    INT ret;
+    INT ret = 0;
     DC *dc = DC_GetDCPtr( hdc );
     if(!dc) return SP_ERROR;
 
-    if(dc->funcs->pEndPage)
-        ret = dc->funcs->pEndPage( dc );
-    else
-        ret = Escape(hdc, NEWFRAME, 0, 0, 0);
+    if (dc->funcs->pEndPage) ret = dc->funcs->pEndPage( dc );
     GDI_ReleaseObj( hdc );
     if (!QueryAbort16( hdc, 0 ))
     {
@@ -216,14 +208,11 @@ INT16 WINAPI AbortDoc16(HDC16 hdc)
  */
 INT WINAPI AbortDoc(HDC hdc)
 {
-    INT ret;
+    INT ret = 0;
     DC *dc = DC_GetDCPtr( hdc );
     if(!dc) return SP_ERROR;
 
-    if(dc->funcs->pAbortDoc)
-        ret = dc->funcs->pAbortDoc( dc );
-    else
-        ret = Escape(hdc, ABORTDOC, 0, 0, 0);
+    if (dc->funcs->pAbortDoc) ret = dc->funcs->pAbortDoc( dc );
     GDI_ReleaseObj( hdc );
     return ret;
 }

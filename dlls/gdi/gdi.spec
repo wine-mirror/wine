@@ -47,7 +47,7 @@ rsrc	version16.res
                         s_word s_word long) StretchBlt16
 36  pascal16 Polygon (word ptr word) Polygon16
 37  pascal16 Polyline (word ptr word) Polyline16
-38  pascal   Escape(word word word segptr segptr) Escape16
+38  pascal   Escape(word word word segptr ptr) Escape16
 39  pascal16 RestoreDC(word s_word) RestoreDC16
 40  pascal16 FillRgn(word word word) FillRgn16
 41  pascal16 FrameRgn(word word word word word) FrameRgn16

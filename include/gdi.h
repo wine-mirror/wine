@@ -148,10 +148,9 @@ typedef struct tagDC_FUNCS
     INT      (*pEndPage)(DC*);
     BOOL     (*pEndPath)(DC*);
     BOOL     (*pEnumDeviceFonts)(HDC,LPLOGFONTW,DEVICEFONTENUMPROC,LPARAM);
-    INT      (*pEscape)(DC*,INT,INT,SEGPTR,SEGPTR);
     INT      (*pExcludeClipRect)(DC*,INT,INT,INT,INT);
-    INT      (*pExtDeviceMode)(LPSTR,HWND,LPDEVMODEA,LPSTR,LPSTR,LPDEVMODEA,
-			       LPSTR,DWORD); 
+    INT      (*pExtDeviceMode)(LPSTR,HWND,LPDEVMODEA,LPSTR,LPSTR,LPDEVMODEA,LPSTR,DWORD);
+    INT      (*pExtEscape)(DC*,INT,INT,LPCVOID,INT,LPVOID);
     BOOL     (*pExtFloodFill)(DC*,INT,INT,COLORREF,UINT);
     BOOL     (*pExtTextOut)(DC*,INT,INT,UINT,const RECT*,LPCWSTR,UINT,
 			    const INT*);

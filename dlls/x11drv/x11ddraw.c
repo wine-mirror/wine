@@ -287,10 +287,8 @@ static void X11DRV_DDHAL_SetInfo(void)
   (ddraw_fns->lpSetInfo)(&hal_info, FALSE);
 }
 
-INT X11DRV_DCICommand(INT cbInput, LPVOID lpInData, LPVOID lpOutData)
+INT X11DRV_DCICommand(INT cbInput, const DCICMD *lpCmd, LPVOID lpOutData)
 {
-  LPDCICMD lpCmd = (LPDCICMD)lpInData;
-
   TRACE("(%d,(%ld,%ld,%ld),%p)\n", cbInput, lpCmd->dwCommand,
 	lpCmd->dwParam1, lpCmd->dwParam2, lpOutData);
 

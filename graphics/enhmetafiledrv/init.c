@@ -40,9 +40,9 @@ static const DC_FUNCTIONS EMFDRV_Funcs =
     NULL,                            /* pEndPage */
     EMFDRV_EndPath,                  /* pEndPath */
     NULL,                            /* pEnumDeviceFonts */
-    NULL,                            /* pEscape */
     EMFDRV_ExcludeClipRect,          /* pExcludeClipRect */
     NULL,                            /* pExtDeviceMode */
+    NULL,                            /* pExtEscape */
     EMFDRV_ExtFloodFill,             /* pExtFloodFill */
     NULL,                            /* pExtTextOut */
     EMFDRV_FillPath,                 /* pFillPath */

@@ -41,9 +41,9 @@ static const DC_FUNCTIONS MFDRV_Funcs =
     NULL,                            /* pEndPage */
     MFDRV_EndPath,                   /* pEndPath */
     NULL,                            /* pEnumDeviceFonts */
-    NULL,                            /* pEscape */
     MFDRV_ExcludeClipRect,           /* pExcludeClipRect */
     NULL,                            /* pExtDeviceMode */
+    NULL,                            /* pExtEscape */
     MFDRV_ExtFloodFill,              /* pExtFloodFill */
     MFDRV_ExtTextOut,                /* pExtTextOut */
     MFDRV_FillPath,                  /* pFillPath */

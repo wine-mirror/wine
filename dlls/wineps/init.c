@@ -254,6 +254,79 @@ BOOL PSDRV_DeleteDC( DC *dc )
 
 
 /***********************************************************************
+ *           get_phys_page_size
+ *
+ * Helper function to compute PHYSICALWIDTH and PHYSICALHEIGHT dev caps.
+ */
+static void get_phys_page_size( const PSDRV_PDEVICE *pdev, POINT *p )
+{
+    p->x = p->y = 0;
+
+    if ((pdev->Devmode->dmPublic.dmFields & DM_PAPERSIZE) != 0 &&
+        pdev->Devmode->dmPublic.u1.s1.dmPaperSize != 0)
+    {
+        PAGESIZE *page = pdev->pi->ppd->PageSizes;
+
+        while (page != NULL)
+        {
+            if (page->WinPage == pdev->Devmode->dmPublic.u1.s1.dmPaperSize)
+                break;
+            page = page->next;
+        }
+
+        if (page == NULL)
+        {
+            ERR("No entry for papersize %u in PPD file for '%s'\n",
+                pdev->Devmode->dmPublic.u1.s1.dmPaperSize,
+                pdev->pi->FriendlyName);
+            return;
+        }
+
+        TRACE("Found '%s' for paper size %u\n", page->FullName,
+              pdev->Devmode->dmPublic.u1.s1.dmPaperSize);
+
+        p->x = page->PaperDimension->x * pdev->logPixelsX / 72;
+        p->y = page->PaperDimension->y * pdev->logPixelsY / 72;
+
+        TRACE("%fx%f PostScript points = %lix%li device units\n",
+              page->PaperDimension->x, page->PaperDimension->y,
+              p->x, p->y);
+    }
+
+    /* These are in tenths of a millimeter */
+    if ((pdev->Devmode->dmPublic.dmFields & DM_PAPERWIDTH) != 0 &&
+        pdev->Devmode->dmPublic.u1.s1.dmPaperWidth != 0)
+    {
+        p->x = (pdev->Devmode->dmPublic.u1.s1.dmPaperWidth *
+                pdev->logPixelsX) / 254;
+        TRACE("dmPaperWidth = %li device units\n", p->x);
+    }
+
+    if ((pdev->Devmode->dmPublic.dmFields & DM_PAPERLENGTH) != 0 &&
+        pdev->Devmode->dmPublic.u1.s1.dmPaperLength != 0)
+    {
+        p->y = (pdev->Devmode->dmPublic.u1.s1.dmPaperLength *
+                pdev->logPixelsY) / 254;
+        TRACE("dmPaperLength = %li device units\n", p->y);
+    }
+
+    if (p->x == 0 || p->y == 0)
+    {
+        ERR("Paper size not properly set for '%s'\n", pdev->pi->FriendlyName);
+        return;
+    }
+
+    if ((pdev->Devmode->dmPublic.dmFields & DM_ORIENTATION) != 0 &&
+        pdev->Devmode->dmPublic.u1.s1.dmOrientation == DMORIENT_LANDSCAPE)
+    {
+        INT temp = p->y;
+        p->y = p->x;
+        p->x = temp;
+    }
+}
+
+
+/***********************************************************************
  *           GetDeviceCaps    (WINEPS.@)
  */
 INT PSDRV_GetDeviceCaps( DC *dc, INT cap )
@@ -326,23 +399,15 @@ INT PSDRV_GetDeviceCaps( DC *dc, INT cap )
     case COLORRES:
         return 0;
     case PHYSICALWIDTH:
-        if (Escape(dc->hSelf, GETPHYSPAGESIZE, 0, NULL, &pt) > 0) return pt.x;
-        return 0;
+        get_phys_page_size( physDev, &pt );
+        return pt.x;
     case PHYSICALHEIGHT:
-        if (Escape(dc->hSelf, GETPHYSPAGESIZE, 0, NULL, &pt) > 0) return pt.y;
-        return 0;
+        get_phys_page_size( physDev, &pt );
+        return pt.y;
     case PHYSICALOFFSETX:
-        if(Escape(dc->hSelf, GETPRINTINGOFFSET, 0, NULL, &pt) > 0) return pt.x;
-        return 0;
     case PHYSICALOFFSETY:
-        if (Escape(dc->hSelf, GETPRINTINGOFFSET, 0, NULL, &pt) > 0) return pt.y;
-        return 0;
     case SCALINGFACTORX:
-        if (Escape(dc->hSelf, GETSCALINGFACTOR, 0, NULL, &pt) > 0) return pt.x;
-        return 0;
     case SCALINGFACTORY:
-        if (Escape(dc->hSelf, GETSCALINGFACTOR, 0, NULL, &pt) > 0) return pt.y;
-        return 0;
     case VREFRESH:
     case DESKTOPVERTRES:
     case DESKTOPHORZRES:

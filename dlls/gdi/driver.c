@@ -69,9 +69,9 @@ static struct graphics_driver *create_driver( HMODULE module )
     GET_FUNC(EndPage);
     GET_FUNC(EndPath);
     GET_FUNC(EnumDeviceFonts);
-    GET_FUNC(Escape);
     GET_FUNC(ExcludeClipRect);
     GET_FUNC(ExtDeviceMode);
+    GET_FUNC(ExtEscape);
     GET_FUNC(ExtFloodFill);
     GET_FUNC(ExtTextOut);
     GET_FUNC(FillPath);

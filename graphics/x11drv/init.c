@@ -263,42 +263,32 @@ INT X11DRV_GetDeviceCaps( DC *dc, INT cap )
 
 
 /**********************************************************************
- *           X11DRV_Escape
+ *           ExtEscape  (X11DRV.@)
  */
-INT X11DRV_Escape( DC *dc, INT nEscape, INT cbInput, SEGPTR lpInData, SEGPTR lpOutData )
+INT X11DRV_ExtEscape( DC *dc, INT escape, INT in_count, LPCVOID in_data,
+                      INT out_count, LPVOID out_data )
 {
-    switch( nEscape )
+    switch(escape)
     {
-	case QUERYESCSUPPORT:
-	     if( lpInData )
-	     {
-		 LPINT16 lpEscape = MapSL(lpInData);
-		 switch (*lpEscape)
-		 {
-		     case DCICOMMAND:
-			 return DD_HAL_VERSION;
-		 }
-	     }
-	     break;
+    case QUERYESCSUPPORT:
+        if (in_data)
+        {
+            switch (*(INT *)in_data)
+            {
+            case DCICOMMAND:
+                return DD_HAL_VERSION;
+            }
+        }
+        break;
 
-	case GETSCALINGFACTOR:
-	     if( lpOutData )
-	     {
-		 LPPOINT16 lppt = MapSL(lpOutData);
-		 lppt->x = lppt->y = 0;	/* no device scaling */
-		 return 1;
-	     }
-	     break;
-
-	case DCICOMMAND:
-	     if( lpInData )
-	     {
-		 LPDCICMD lpCmd = MapSL(lpInData);
-		 if (lpCmd->dwVersion != DD_VERSION) break;
-		 return X11DRV_DCICommand(cbInput, lpCmd, MapSL(lpOutData));
-	     }
-	     break;
-
+    case DCICOMMAND:
+        if (in_data)
+        {
+            const DCICMD *lpCmd = in_data;
+            if (lpCmd->dwVersion != DD_VERSION) break;
+            return X11DRV_DCICommand(in_count, lpCmd, out_data);
+        }
+        break;
     }
     return 0;
 }

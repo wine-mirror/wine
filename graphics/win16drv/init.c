@@ -40,8 +40,8 @@ LPDRAWMODE 	win16drv_DrawModeP;
 static BOOL WIN16DRV_CreateDC( DC *dc, LPCSTR driver, LPCSTR device,
                                  LPCSTR output, const DEVMODEA* initData );
 static INT WIN16DRV_GetDeviceCaps( DC *dc, INT cap );
-static INT WIN16DRV_Escape( DC *dc, INT nEscape, INT cbInput, 
-                              SEGPTR lpInData, SEGPTR lpOutData );
+static INT WIN16DRV_ExtEscape( DC *dc, INT escape, INT in_count, LPCVOID in_data,
+                               INT out_count, LPVOID out_data );
 
 static const DC_FUNCTIONS WIN16DRV_Funcs =
 {
@@ -68,9 +68,9 @@ static const DC_FUNCTIONS WIN16DRV_Funcs =
     NULL,                            /* pEndPage */
     NULL,                            /* pEndPath */
     WIN16DRV_EnumDeviceFonts,        /* pEnumDeviceFonts */
-    WIN16DRV_Escape,                 /* pEscape */
     NULL,                            /* pExcludeClipRect */
     WIN16DRV_ExtDeviceMode,          /* pExtDeviceMode */
+    WIN16DRV_ExtEscape,              /* pExtEscape */
     NULL,                            /* pExtFloodFill */
     WIN16DRV_ExtTextOut,             /* pExtTextOut */
     NULL,                            /* pFillPath */
@@ -319,12 +319,13 @@ static INT WIN16DRV_GetDeviceCaps( DC *dc, INT cap )
 }
 
 
-/* 
- * Escape (GDI.38)
+/***********************************************************************
+ *           WIN16DRV_ExtEscape
  */
-static INT WIN16DRV_Escape( DC *dc, INT nEscape, INT cbInput, 
-                              SEGPTR lpInData, SEGPTR lpOutData )
+static INT WIN16DRV_ExtEscape( DC *dc, INT escape, INT in_count, LPCVOID in_data,
+                               INT out_count, LPVOID out_data )
 {
+#if 0
     WIN16DRV_PDEVICE *physDev = (WIN16DRV_PDEVICE *)dc->physDev;
     int nRet = 0;
 
@@ -414,6 +415,10 @@ static INT WIN16DRV_Escape( DC *dc, INT nEscape, INT cbInput,
     else
 	WARN("Escape(nEscape = %04x) - ???\n", nEscape);      
     return nRet;
+#endif
+    /* FIXME: should convert args to SEGPTR and redo all the above */
+    FIXME("temporarily broken, please fix\n");
+    return 0;
 }
 
 

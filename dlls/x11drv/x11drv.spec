@@ -26,8 +26,8 @@ debug_channels (bitblt bitmap clipboard cursor dinput event font gdi graphics
 @ cdecl DescribePixelFormat(ptr long long ptr) X11DRV_DescribePixelFormat
 @ cdecl Ellipse(ptr long long long long) X11DRV_Ellipse
 @ cdecl EnumDeviceFonts(long ptr ptr long) X11DRV_EnumDeviceFonts
-@ cdecl Escape(ptr long long long long) X11DRV_Escape
 @ cdecl ExtFloodFill(ptr long long long long) X11DRV_ExtFloodFill
+@ cdecl ExtEscape(ptr long long ptr long ptr) X11DRV_ExtEscape
 @ cdecl ExtTextOut(ptr long long long ptr ptr long ptr) X11DRV_ExtTextOut
 @ cdecl GetCharWidth(ptr long long ptr) X11DRV_GetCharWidth
 @ cdecl GetDCOrgEx(ptr ptr) X11DRV_GetDCOrgEx
