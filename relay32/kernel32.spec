@@ -354,7 +354,7 @@ import  ntdll.dll
 336 stdcall GetHandleInformation(long ptr) GetHandleInformation
 337 stub GetLSCallbackTarget
 338 stub GetLSCallbackTemplate
-339 stdcall GetLargestConsoleWindowSize(long) GetLargestConsoleWindowSize
+339 stdcall GetLargestConsoleWindowSize(long) WIN32_GetLargestConsoleWindowSize
 340 stdcall GetLastError() GetLastError
 341 stdcall GetLocalTime(ptr) GetLocalTime
 342 stdcall GetLocaleInfoA(long long ptr long) GetLocaleInfoA

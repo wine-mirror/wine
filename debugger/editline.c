@@ -30,6 +30,7 @@
 #include <string.h>
 
 #include "windef.h"
+#include "wincon.h"
 #include "debugger.h"
 
 /*
@@ -247,8 +248,8 @@ static void
 TTYinfo(void)
 {
    COORD	c = GetLargestConsoleWindowSize(GetStdHandle(STD_INPUT_HANDLE));
-   TTYwidth = c.x;
-   TTYrows = c.y;
+   TTYwidth = c.X;
+   TTYrows = c.Y;
 }
 
 

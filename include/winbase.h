@@ -11,12 +11,6 @@
 extern "C" {
 #endif
 
-typedef struct tagCOORD {
-    INT16 x;
-    INT16 y;
-} COORD, *LPCOORD;
-
-
   /* Windows Exit Procedure flag values */
 #define	WEP_FREE_DLL        0
 #define	WEP_SYSTEM_EXIT     1
@@ -1301,7 +1295,6 @@ DWORD       WINAPI GetFullPathNameA(LPCSTR,DWORD,LPSTR,LPSTR*);
 DWORD       WINAPI GetFullPathNameW(LPCWSTR,DWORD,LPWSTR,LPWSTR*);
 #define     GetFullPathName WINELIB_NAME_AW(GetFullPathName)
 BOOL      WINAPI GetHandleInformation(HANDLE,LPDWORD);
-COORD       WINAPI GetLargestConsoleWindowSize(HANDLE);
 DWORD       WINAPI GetLengthSid(PSID);
 VOID        WINAPI GetLocalTime(LPSYSTEMTIME);
 DWORD       WINAPI GetLogicalDrives(void);
@@ -1425,9 +1418,6 @@ BOOL      WINAPI QueryPerformanceCounter(PLARGE_INTEGER);
 BOOL      WINAPI ReadConsoleA(HANDLE,LPVOID,DWORD,LPDWORD,LPVOID);
 BOOL      WINAPI ReadConsoleW(HANDLE,LPVOID,DWORD,LPDWORD,LPVOID);
 #define     ReadConsole WINELIB_NAME_AW(ReadConsole)
-BOOL      WINAPI ReadConsoleOutputCharacterA(HANDLE,LPSTR,DWORD,
-						 COORD,LPDWORD);
-#define     ReadConsoleOutputCharacter WINELIB_NAME_AW(ReadConsoleOutputCharacter)
 BOOL        WINAPI ReadEventLogA(HANDLE,DWORD,DWORD,LPVOID,DWORD,DWORD *,DWORD *);
 BOOL        WINAPI ReadEventLogW(HANDLE,DWORD,DWORD,LPVOID,DWORD,DWORD *,DWORD *);
 #define     ReadEventLog WINELIB_NAME_AW(ReadEventLog)
@@ -1450,7 +1440,6 @@ BOOL      WINAPI SetCommMask(INT,DWORD);
 BOOL      WINAPI SetComputerNameA(LPCSTR);
 BOOL      WINAPI SetComputerNameW(LPCWSTR);
 #define     SetComputerName WINELIB_NAME_AW(SetComputerName)
-BOOL      WINAPI SetConsoleCursorPosition(HANDLE,COORD);
 BOOL      WINAPI SetConsoleMode(HANDLE,DWORD);
 BOOL      WINAPI SetConsoleTitleA(LPCSTR);
 BOOL      WINAPI SetConsoleTitleW(LPCWSTR);

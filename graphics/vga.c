@@ -162,8 +162,8 @@ int VGA_SetAlphaMode(unsigned Xres,unsigned Yres)
     /* the xterm is slow, so refresh only every 200ms (5fps) */
     VGA_InstallTimer(200000);
 
-    siz.x = Xres;
-    siz.y = Yres;
+    siz.X = Xres;
+    siz.Y = Yres;
     SetConsoleScreenBufferSize(VGA_AlphaConsole(),siz);
     return 0;
 }
@@ -172,16 +172,16 @@ void VGA_GetAlphaMode(unsigned*Xres,unsigned*Yres)
 {
     CONSOLE_SCREEN_BUFFER_INFO info;
     GetConsoleScreenBufferInfo(VGA_AlphaConsole(),&info);
-    if (Xres) *Xres=info.dwSize.x;
-    if (Yres) *Yres=info.dwSize.y;
+    if (Xres) *Xres=info.dwSize.X;
+    if (Yres) *Yres=info.dwSize.Y;
 }
 
 void VGA_SetCursorPos(unsigned X,unsigned Y)
 {
     COORD pos;
     
-    pos.x = X;
-    pos.y = Y;
+    pos.X = X;
+    pos.Y = Y;
     SetConsoleCursorPosition(VGA_AlphaConsole(),pos);
 }
 
@@ -189,8 +189,8 @@ void VGA_GetCursorPos(unsigned*X,unsigned*Y)
 {
     CONSOLE_SCREEN_BUFFER_INFO info;
     GetConsoleScreenBufferInfo(VGA_AlphaConsole(),&info);
-    if (X) *X=info.dwCursorPosition.x;
-    if (Y) *Y=info.dwCursorPosition.y;
+    if (X) *X=info.dwCursorPosition.X;
+    if (Y) *Y=info.dwCursorPosition.Y;
 }
 
 /*** CONTROL ***/
@@ -225,8 +225,8 @@ void CALLBACK VGA_Poll( ULONG_PTR arg )
 
           VGA_GetAlphaMode(&Width,&Height);
           dat = DOSMEM_MapDosToLinear(0xb8000);
-          siz.x = 80; siz.y = 1;
-          off.x = 0; off.y = 0;
+          siz.X = 80; siz.Y = 1;
+          off.X = 0; off.Y = 0;
           /* copy from virtual VGA frame buffer to console */
           for (Y=0; Y<Height; Y++) {
               dest.Top=Y; dest.Bottom=Y;

@@ -1,8 +1,6 @@
 #ifndef __WINE_WINCON_H
 #define __WINE_WINCON_H
 
-#include "winbase.h" /* for COORD */ 
-
 #define CTRL_C_EVENT 0
 #define CTRL_BREAK_EVENT 1
 #define CTRL_CLOSE_EVENT 2
@@ -38,20 +36,18 @@ typedef struct _CONSOLE_CURSOR_INFO {
     BOOL	bVisible; /* Visibility of cursor */
 } CONSOLE_CURSOR_INFO, *LPCONSOLE_CURSOR_INFO;
 
-/*
 typedef struct tagCOORD
 {
-    INT16 x;
-    INT16 y;
-} COORD,*LPCOORD;
-*/
+    SHORT X;
+    SHORT Y;
+} COORD, *LPCOORD;
 
 typedef struct tagSMALL_RECT
 {
-    INT16 Left;
-    INT16 Top;
-    INT16 Right;
-    INT16 Bottom;
+    SHORT Left;
+    SHORT Top;
+    SHORT Right;
+    SHORT Bottom;
 } SMALL_RECT,*LPSMALL_RECT;
 
 typedef struct tagCONSOLE_SCREEN_BUFFER_INFO
@@ -141,6 +137,12 @@ typedef struct tagINPUT_RECORD
 #define MENU_EVENT			0x08
 #define FOCUS_EVENT 			0x10
 
+COORD       WINAPI GetLargestConsoleWindowSize(HANDLE);
+BOOL        WINAPI ReadConsoleOutputCharacterA(HANDLE,LPSTR,DWORD,COORD,LPDWORD);
+BOOL        WINAPI ReadConsoleOutputCharacterW(HANDLE,LPWSTR,DWORD,COORD,LPDWORD);
+#define     ReadConsoleOutputCharacter WINELIB_NAME_AW(ReadConsoleOutputCharacter)
+BOOL        WINAPI SetConsoleCursorPosition(HANDLE,COORD);
+
 BOOL WINAPI WriteConsoleOutputA( HANDLE hConsoleOutput, LPCHAR_INFO lpBuffer, COORD dwBufferSize, COORD dwBufferCoord, LPSMALL_RECT lpWriteRegion);
 BOOL WINAPI WriteConsoleOutputW( HANDLE hConsoleOutput, LPCHAR_INFO lpBuffer, COORD dwBufferSize, COORD dwBufferCoord, LPSMALL_RECT lpWriteRegion);
 #define WriteConsoleOutput WINELIB_NAME_AW(WriteConsoleOutput)
@@ -171,7 +173,6 @@ BOOL WINAPI ReadConsoleInputW(HANDLE hConsoleInput,
 
 BOOL WINAPI GetConsoleScreenBufferInfo(HANDLE hConsoleOutput,
 					   LPCONSOLE_SCREEN_BUFFER_INFO lpConsoleScreenBufferInfo);
-BOOL WINAPI SetConsoleCursorPosition(HANDLE hConsoleOutput, COORD dwCursorPosition);
 BOOL WINAPI SetConsoleScreenBufferSize(HANDLE hConsoleOutput,
 					   COORD dwSize);
 

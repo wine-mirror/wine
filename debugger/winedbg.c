@@ -12,6 +12,7 @@
 
 #include "thread.h"
 #include "process.h"
+#include "wincon.h"
 #include "wingdi.h"
 #include "winuser.h"
 
@@ -575,7 +576,7 @@ int DEBUG_main(int argc, char** argv)
 	COORD		pos;
 	
 	/* This is a hack: it forces creation of an xterm, not done by default */
-	pos.x = 0; pos.y = 1;
+	pos.X = 0; pos.Y = 1;
 	SetConsoleCursorPosition(GetStdHandle(STD_OUTPUT_HANDLE), pos);
     }
 

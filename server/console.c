@@ -25,6 +25,7 @@
 #include <unistd.h>
 
 #include "winnt.h"
+#include "winbase.h"
 #include "wincon.h"
 
 #include "handle.h"

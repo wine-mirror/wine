@@ -208,8 +208,8 @@ CONSOLE_string_to_IR( HANDLE hConsoleInput,unsigned char *buf,int len) {
 		 */
 		if (k<len-3) {
 		    ir.EventType			= MOUSE_EVENT;
-		    ir.Event.MouseEvent.dwMousePosition.x = buf[k+2]-'!';
-		    ir.Event.MouseEvent.dwMousePosition.y = buf[k+3]-'!';
+		    ir.Event.MouseEvent.dwMousePosition.X = buf[k+2]-'!';
+		    ir.Event.MouseEvent.dwMousePosition.Y = buf[k+3]-'!';
 		    if (buf[k+1]=='#')
 			ir.Event.MouseEvent.dwButtonState = 0;
 		    else
@@ -408,17 +408,17 @@ HANDLE WINAPI CreateConsoleScreenBuffer( DWORD dwDesiredAccess,
 BOOL WINAPI GetConsoleScreenBufferInfo( HANDLE hConsoleOutput,
                                           LPCONSOLE_SCREEN_BUFFER_INFO csbi )
 {
-    csbi->dwSize.x = 80;
-    csbi->dwSize.y = 24;
-    csbi->dwCursorPosition.x = 0;
-    csbi->dwCursorPosition.y = 0;
+    csbi->dwSize.X = 80;
+    csbi->dwSize.Y = 24;
+    csbi->dwCursorPosition.X = 0;
+    csbi->dwCursorPosition.Y = 0;
     csbi->wAttributes = 0;
     csbi->srWindow.Left	= 0;
     csbi->srWindow.Right	= 79;
     csbi->srWindow.Top	= 0;
     csbi->srWindow.Bottom	= 23;
-    csbi->dwMaximumWindowSize.x = 80;
-    csbi->dwMaximumWindowSize.y = 24;
+    csbi->dwMaximumWindowSize.X = 80;
+    csbi->dwMaximumWindowSize.Y = 24;
     return TRUE;
 }
 
@@ -444,9 +444,16 @@ BOOL WINAPI SetConsoleActiveScreenBuffer(
 COORD WINAPI GetLargestConsoleWindowSize( HANDLE hConsoleOutput )
 {
     COORD c;
-    c.x = 80;
-    c.y = 24;
+    c.X = 80;
+    c.Y = 24;
     return c;
+}
+
+/* gcc doesn't return structures the same way as dwords */
+DWORD WINAPI WIN32_GetLargestConsoleWindowSize( HANDLE hConsoleOutput )
+{
+    COORD c = GetLargestConsoleWindowSize( hConsoleOutput );
+    return *(DWORD *)&c;
 }
 
 /***********************************************************************
@@ -747,8 +754,8 @@ BOOL WINAPI WriteConsoleOutputA( HANDLE hConsoleOutput,
     };
     CONSOLE_make_complex(hConsoleOutput);
     buffer = HeapAlloc(GetProcessHeap(),0,curbufsize);
-    offbase = (dwBufferCoord.y - 1) * dwBufferSize.x +
-              (dwBufferCoord.x - lpWriteRegion->Left);
+    offbase = (dwBufferCoord.Y - 1) * dwBufferSize.X +
+              (dwBufferCoord.X - lpWriteRegion->Left);
 
     TRACE("orig rect top = %d, bottom=%d, left=%d, right=%d\n",
     	lpWriteRegion->Top,
@@ -762,9 +769,9 @@ BOOL WINAPI WriteConsoleOutputA( HANDLE hConsoleOutput,
 
     /* Step 1. Make (Bottom,Right) offset of intersection with
        Screen Buffer                                              */
-    lpWriteRegion->Bottom = min(lpWriteRegion->Bottom, csbi.dwSize.y-1) - 
+    lpWriteRegion->Bottom = min(lpWriteRegion->Bottom, csbi.dwSize.Y-1) - 
                                 lpWriteRegion->Top;
-    lpWriteRegion->Right = min(lpWriteRegion->Right, csbi.dwSize.x-1) -
+    lpWriteRegion->Right = min(lpWriteRegion->Right, csbi.dwSize.X-1) -
                                 lpWriteRegion->Left;
 
     /* Step 2. If either offset is negative, then no action 
@@ -788,10 +795,10 @@ BOOL WINAPI WriteConsoleOutputA( HANDLE hConsoleOutput,
     }
 
     /* Step 3. Intersect with source rectangle                    */
-    lpWriteRegion->Bottom = lpWriteRegion->Top - dwBufferCoord.y +
-             min(lpWriteRegion->Bottom + dwBufferCoord.y, dwBufferSize.y-1);
-    lpWriteRegion->Right = lpWriteRegion->Left - dwBufferCoord.x +
-             min(lpWriteRegion->Right + dwBufferCoord.x, dwBufferSize.x-1);
+    lpWriteRegion->Bottom = lpWriteRegion->Top - dwBufferCoord.Y +
+             min(lpWriteRegion->Bottom + dwBufferCoord.Y, dwBufferSize.Y-1);
+    lpWriteRegion->Right = lpWriteRegion->Left - dwBufferCoord.X +
+             min(lpWriteRegion->Right + dwBufferCoord.X, dwBufferSize.X-1);
 
     TRACE("clipped rect top = %d, bottom=%d, left=%d,right=%d\n",
     	lpWriteRegion->Top,
@@ -816,7 +823,7 @@ BOOL WINAPI WriteConsoleOutputA( HANDLE hConsoleOutput,
 
     /* Now do the real processing and move the characters    */
     for (i=lpWriteRegion->Top;i<=lpWriteRegion->Bottom;i++) {
-        offbase += dwBufferSize.x;
+        offbase += dwBufferSize.X;
     	sprintf(sbuf,"%c[%d;%dH",27,i+1,lpWriteRegion->Left+1);
 	SADD(sbuf);
 	for (j=lpWriteRegion->Left;j<=lpWriteRegion->Right;j++) {
@@ -1136,17 +1143,17 @@ BOOL WINAPI SetConsoleCursorPosition( HANDLE hcon, COORD pos )
     DWORD	xlen;
 
     /* make console complex only if we change lines, not just in the line */
-    if (pos.y)
+    if (pos.Y)
     	CONSOLE_make_complex(hcon);
 
-    TRACE("%d (%dx%d)\n", hcon, pos.x , pos.y );
+    TRACE("%d (%dx%d)\n", hcon, pos.X , pos.Y );
     /* x are columns, y rows */
-    if (pos.y) 
+    if (pos.Y) 
     	/* full screen cursor absolute positioning */
-	sprintf(xbuf,"%c[%d;%dH", 0x1B, pos.y+1, pos.x+1);
+	sprintf(xbuf,"%c[%d;%dH", 0x1B, pos.Y+1, pos.X+1);
     else
     	/* relative cursor positioning in line (\r to go to 0) */
-	sprintf(xbuf,"\r%c[%dC", 0x1B, pos.x);
+	sprintf(xbuf,"\r%c[%dC", 0x1B, pos.X);
     /* FIXME: store internal if we start using own console buffers */
     WriteFile(hcon,xbuf,strlen(xbuf),&xlen,NULL);
     return TRUE;
@@ -1293,7 +1300,7 @@ BOOL WINAPI SetConsoleTextAttribute(HANDLE hConsoleOutput,WORD wAttr)
 BOOL WINAPI SetConsoleScreenBufferSize( HANDLE hConsoleOutput, 
                                           COORD dwSize )
 {
-    FIXME("(%d,%dx%d): stub\n",hConsoleOutput,dwSize.x,dwSize.y);
+    FIXME("(%d,%dx%d): stub\n",hConsoleOutput,dwSize.X,dwSize.Y);
     return TRUE;
 }
 
@@ -1383,7 +1390,7 @@ BOOL WINAPI FillConsoleOutputAttribute( HANDLE hConsoleOutput,
               LPDWORD lpNumAttrsWritten)
 {
     FIXME("(%d,%d,%ld,%dx%d,%p): stub\n", hConsoleOutput,
-          wAttribute,nLength,dwCoord.x,dwCoord.y,lpNumAttrsWritten);
+          wAttribute,nLength,dwCoord.X,dwCoord.Y,lpNumAttrsWritten);
     *lpNumAttrsWritten = nLength;
     return TRUE;
 }
@@ -1398,7 +1405,7 @@ BOOL WINAPI ReadConsoleOutputCharacterA(HANDLE hConsoleOutput,
 	      LPSTR lpstr, DWORD dword, COORD coord, LPDWORD lpdword)
 {
     FIXME("(%d,%p,%ld,%dx%d,%p): stub\n", hConsoleOutput,lpstr,
-	  dword,coord.x,coord.y,lpdword);
+	  dword,coord.X,coord.Y,lpdword);
     SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
     return FALSE;
 }
@@ -1415,7 +1422,7 @@ BOOL WINAPI ScrollConsoleScreenBufferA( HANDLE hConsoleOutput,
               COORD dwDestOrigin, LPCHAR_INFO lpFill)
 {
     FIXME("(%d,%p,%p,%dx%d,%p): stub\n", hConsoleOutput,lpScrollRect,
-	  lpClipRect,dwDestOrigin.x,dwDestOrigin.y,lpFill);
+	  lpClipRect,dwDestOrigin.X,dwDestOrigin.Y,lpFill);
     SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
     return FALSE;
 }
