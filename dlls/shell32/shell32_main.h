@@ -100,6 +100,7 @@ HRESULT WINAPI IDropTargetHelper_Constructor (IUnknown * pUnkOuter, REFIID riid,
 LPENUMIDLIST	IEnumIDList_Constructor(LPCSTR,DWORD,DWORD);
 
 LPEXTRACTICONA	IExtractIconA_Constructor(LPITEMIDLIST);
+LPEXTRACTICONW	IExtractIconW_Constructor(LPITEMIDLIST);
 HRESULT		CreateStreamOnFile (LPCSTR pszFilename, IStream ** ppstm);
 
 /* FIXME: rename the functions when the shell32.dll has it's own exports namespace */

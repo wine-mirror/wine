@@ -408,6 +408,11 @@ static HRESULT WINAPI ISF_Desktop_fnGetUIObjectOf (IShellFolder2 * iface,
 	    pObj = (LPUNKNOWN) IExtractIconA_Constructor (pidl);
 	    SHFree (pidl);
 	    hr = S_OK;
+	} else if (IsEqualIID (riid, &IID_IExtractIconW) && (cidl == 1)) {
+	    pidl = ILCombine (This->pidlRoot, apidl[0]);
+	    pObj = (LPUNKNOWN) IExtractIconW_Constructor (pidl);
+	    SHFree (pidl);
+	    hr = S_OK;
 	} else if (IsEqualIID (riid, &IID_IDropTarget) && (cidl >= 1)) {
 	    hr = IShellFolder_QueryInterface (iface, &IID_IDropTarget, (LPVOID *) & pObj);
 	} else {
