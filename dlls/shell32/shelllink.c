@@ -991,7 +991,6 @@ HRESULT WINAPI IShellLink_Constructor (
 	    return E_NOINTERFACE;
 	}
 
-	shell32_ObjCount++;
 	return S_OK;
 }
 
@@ -1042,7 +1041,6 @@ static ULONG WINAPI IShellLinkA_fnAddRef(IShellLinkA * iface)
 
 	TRACE("(%p)->(count=%lu)\n",This,This->ref);
 
-	shell32_ObjCount++;
 	return ++(This->ref);
 }
 /******************************************************************************
@@ -1054,7 +1052,6 @@ static ULONG WINAPI IShellLinkA_fnRelease(IShellLinkA * iface)
 
 	TRACE("(%p)->(count=%lu)\n",This,This->ref);
 
-	shell32_ObjCount--;
 	if (!--(This->ref))
 	{ TRACE("-- destroying IShellLink(%p)\n",This);
 

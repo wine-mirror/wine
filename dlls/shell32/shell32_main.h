@@ -24,7 +24,7 @@
 
 #include "commctrl.h"
 #include "docobj.h"
-
+#include "undocshell.h"
 #include "wine/obj_shellfolder.h"
 #include "wine/obj_dataobject.h"
 #include "wine/obj_contextmenu.h"
@@ -38,7 +38,6 @@
 */
 extern HMODULE	huser32;
 extern HINSTANCE shell32_hInstance;
-extern LONG	  shell32_ObjCount;
 extern HIMAGELIST	ShellSmallIconList;
 extern HIMAGELIST	ShellBigIconList;
 extern HDPA		sic_hdpa;
@@ -98,6 +97,7 @@ LPSHELLVIEW	IShellView_Constructor(LPSHELLFOLDER);
 HRESULT WINAPI IFSFolder_Constructor(IUnknown * pUnkOuter, REFIID riid, LPVOID * ppv);
 HRESULT WINAPI IShellLink_Constructor(IUnknown * pUnkOuter, REFIID riid, LPVOID * ppv);
 HRESULT WINAPI ISF_Desktop_Constructor(IUnknown * pUnkOuter, REFIID riid, LPVOID * ppv);
+HRESULT WINAPI ISF_MyComputer_Constructor(IUnknown * pUnkOuter, REFIID riid, LPVOID * ppv);
 
 /* kind of enumidlist */
 #define EIDL_DESK	0
@@ -193,6 +193,24 @@ inline static BOOL SHELL_OsIsUnicode(void)
 {
     /* if high-bit of version is 0, we are emulating NT */
     return !(GetVersion() & 0x80000000);
+}
+
+#define __SHFreeAndNil(ptr) \
+	{\
+	  SHFree(*ptr); \
+	  *ptr = NULL; \
+	};
+inline static void __SHCloneStrA(char ** target,const char * source)
+{
+	*target = SHAlloc(strlen(source)+1); \
+	strcpy(*target, source); \
+}
+
+inline static void __SHCloneStrWtoA(char ** target, const WCHAR * source)
+{
+	int len = WideCharToMultiByte(CP_ACP, 0, source, -1, NULL, 0, NULL, NULL);
+	*target = SHAlloc(len);
+	WideCharToMultiByte(CP_ACP, 0, source, -1, *target, len, NULL, NULL);
 }
 
 #endif

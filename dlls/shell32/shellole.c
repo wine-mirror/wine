@@ -37,6 +37,7 @@
 #include "wine/debug.h"
 #include "shlwapi.h"
 #include "winuser.h"
+#include "debughlp.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(shell);
 
@@ -57,10 +58,11 @@ IClassFactory * IDefClF_fnConstructor(LPFNCREATEINSTANCE lpfnCI, PLONG pcRefDll,
 struct {
 	REFIID			riid;
 	LPFNCREATEINSTANCE	lpfnCI;
-} InterfaceTable[4] = {
-	{&CLSID_ShellFSFolder, &IFSFolder_Constructor},
-	{&CLSID_ShellDesktop, &ISF_Desktop_Constructor},
-	{&CLSID_ShellLink, &IShellLink_Constructor},
+} InterfaceTable[5] = {
+	{&CLSID_ShellFSFolder,	&IFSFolder_Constructor},
+	{&CLSID_MyComputer,	&ISF_MyComputer_Constructor},
+	{&CLSID_ShellDesktop,	&ISF_Desktop_Constructor},
+	{&CLSID_ShellLink,	&IShellLink_Constructor},
 	{NULL,NULL}
 };
 
@@ -137,6 +139,9 @@ LRESULT WINAPI SHCoCreateInstance(
 	BOOLEAN bLoadWithoutCOM = FALSE;
 	IClassFactory * pcf = NULL;
 
+	if(!ppv) return E_POINTER;
+	*ppv=NULL;
+
 	/* if the clsid is a string, convert it */
 	if (!clsid)
 	{
@@ -145,8 +150,8 @@ LRESULT WINAPI SHCoCreateInstance(
 	  myclsid = &iid;
 	}
 
-	TRACE("(%p,\n\tCLSID:\t%s, unk:%p\n\tIID:\t%s,%p)\n",
-		aclsid,debugstr_guid(myclsid),pUnkOuter,debugstr_guid(refiid),ppv);
+	TRACE("(%p,%s,unk:%p,%s,%p)\n",
+		aclsid,shdebugstr_guid(myclsid),pUnkOuter,shdebugstr_guid(refiid),ppv);
 
 	/* we look up the dll path in the registry */
         __SHGUIDToStringW(myclsid, sClassID);
@@ -173,11 +178,9 @@ LRESULT WINAPI SHCoCreateInstance(
 	TRACE("WithoutCom=%u FromShell=%u\n", bLoadWithoutCOM, bLoadFromShell32);
 
 	/* now we create a instance */
-	*ppv=NULL;
-
 	if (bLoadFromShell32) {
 	    if (! SUCCEEDED(SHELL32_DllGetClassObject(myclsid, &IID_IClassFactory,(LPVOID*)&pcf))) {
-	        ERR("LoadFromShell failed for CLSID=%s\n", debugstr_guid(myclsid));
+	        ERR("LoadFromShell failed for CLSID=%s\n", shdebugstr_guid(myclsid));
 	    }
 	} else if (bLoadWithoutCOM) {
 
@@ -215,8 +218,8 @@ LRESULT WINAPI SHCoCreateInstance(
 end:
 	if(hres!=S_OK)
 	{
-	  ERR("failed (0x%08lx) to create \n\tCLSID:\t%s\n\tIID:\t%s\n",
-              hres, debugstr_guid(myclsid), debugstr_guid(refiid));
+	  ERR("failed (0x%08lx) to create CLSID:%s IID:%s\n",
+              hres, shdebugstr_guid(myclsid), shdebugstr_guid(refiid));
 	  ERR("class not found in registry\n");
 	}
 
@@ -233,7 +236,7 @@ HRESULT WINAPI SHELL32_DllGetClassObject(REFCLSID rclsid, REFIID iid, LPVOID *pp
 	IClassFactory * pcf = NULL;
 	int i;
 
-	TRACE("\n\tCLSID:\t%s,\n\tIID:\t%s\n",debugstr_guid(rclsid),debugstr_guid(iid));
+	TRACE("CLSID:%s,IID:%s\n",shdebugstr_guid(rclsid),shdebugstr_guid(iid));
 
 	if (!ppv) return E_INVALIDARG;
 	*ppv = NULL;
@@ -242,12 +245,12 @@ HRESULT WINAPI SHELL32_DllGetClassObject(REFCLSID rclsid, REFIID iid, LPVOID *pp
 	for(i=0;InterfaceTable[i].riid;i++) {
 	    if(IsEqualIID(InterfaceTable[i].riid, rclsid)) {
 	        TRACE("index[%u]\n", i);
-	        pcf = IDefClF_fnConstructor(InterfaceTable[i].lpfnCI, &shell32_ObjCount, NULL);
+	        pcf = IDefClF_fnConstructor(InterfaceTable[i].lpfnCI, NULL, NULL);
 	    }
 	}
 
         if (!pcf) {
-	    FIXME("failed for CLSID=%s\n", debugstr_guid(rclsid));
+	    FIXME("failed for CLSID=%s\n", shdebugstr_guid(rclsid));
 	    return CLASS_E_CLASSNOTAVAILABLE;
 	}
 
@@ -307,8 +310,7 @@ IMalloc * ShellTaskAllocator = NULL;
  */
 static HRESULT WINAPI IShellMalloc_fnQueryInterface(LPMALLOC iface, REFIID refiid, LPVOID *obj)
 {
-	TRACE("(%s,%p)\n",debugstr_guid(refiid),obj);
-
+	TRACE("(%s,%p)\n",shdebugstr_guid(refiid),obj);
 	if (IsEqualIID(refiid, &IID_IUnknown) || IsEqualIID(refiid, &IID_IMalloc)) {
 		*obj = (LPMALLOC) &Shell_Malloc;
 		return S_OK;
@@ -458,7 +460,6 @@ LPVOID WINAPI SHAlloc(DWORD len)
 	if (!ShellTaskAllocator) SHGetMalloc(&ppv);
 
 	ret = (LPVOID) IMalloc_Alloc(ShellTaskAllocator, len);
-	if(ret) ZeroMemory(ret, len); /*FIXME*/
 	TRACE("%lu bytes at %p\n",len, ret);
 	return (LPVOID)ret;
 }
@@ -484,7 +485,7 @@ void WINAPI SHFree(LPVOID pv)
 DWORD WINAPI SHGetDesktopFolder(IShellFolder **psf)
 {
 	HRESULT	hres = S_OK;
-	TRACE("%p->(%p)\n",psf,*psf);
+	TRACE("\n");
 
 	if(!psf) return E_INVALIDARG;
 	*psf = NULL;
@@ -493,7 +494,6 @@ DWORD WINAPI SHGetDesktopFolder(IShellFolder **psf)
 	TRACE("-- %p->(%p)\n",psf, *psf);
 	return hres;
 }
-
 /**************************************************************************
  * Default ClassFactory Implementation
  *
@@ -534,7 +534,7 @@ IClassFactory * IDefClF_fnConstructor(LPFNCREATEINSTANCE lpfnCI, PLONG pcRefDll,
 	if (pcRefDll) InterlockedIncrement(pcRefDll);
 	lpclf->riidInst = riidInst;
 
-	TRACE("(%p)\n\tIID:\t%s\n",lpclf, debugstr_guid(riidInst));
+	TRACE("(%p)%s\n",lpclf, shdebugstr_guid(riidInst));
 	return (LPCLASSFACTORY)lpclf;
 }
 /**************************************************************************
@@ -545,7 +545,7 @@ static HRESULT WINAPI IDefClF_fnQueryInterface(
 {
 	ICOM_THIS(IDefClFImpl,iface);
 
-	TRACE("(%p)->(\n\tIID:\t%s)\n",This,debugstr_guid(riid));
+	TRACE("(%p)->(%s)\n",This,shdebugstr_guid(riid));
 
 	*ppvObj = NULL;
 
@@ -594,7 +594,7 @@ static HRESULT WINAPI IDefClF_fnCreateInstance(
 {
 	ICOM_THIS(IDefClFImpl,iface);
 
-	TRACE("%p->(%p,\n\tIID:\t%s,%p)\n",This,pUnkOuter,debugstr_guid(riid),ppvObject);
+	TRACE("%p->(%p,%s,%p)\n",This,pUnkOuter,shdebugstr_guid(riid),ppvObject);
 
 	*ppvObject = NULL;
 
@@ -605,7 +605,7 @@ static HRESULT WINAPI IDefClF_fnCreateInstance(
 	  return This->lpfnCI(pUnkOuter, riid, ppvObject);
 	}
 
-	ERR("unknown IID requested\n\tIID:\t%s\n",debugstr_guid(riid));
+	ERR("unknown IID requested %s\n",shdebugstr_guid(riid));
 	return E_NOINTERFACE;
 }
 /******************************************************************************
@@ -640,8 +640,8 @@ HRESULT WINAPI SHCreateDefClassObject(
 {
 	IClassFactory * pcf;
 
-	TRACE("\n\tIID:\t%s %p %p %p \n\tIIDIns:\t%s\n",
-              debugstr_guid(riid), ppv, lpfnCI, pcRefDll, debugstr_guid(riidInst));
+	TRACE("%s %p %p %p %s\n",
+              shdebugstr_guid(riid), ppv, lpfnCI, pcRefDll, shdebugstr_guid(riidInst));
 
 	if (! IsEqualCLSID(riid, &IID_IClassFactory) ) return E_NOINTERFACE;
 	if (! (pcf = IDefClF_fnConstructor(lpfnCI, pcRefDll, riidInst))) return E_OUTOFMEMORY;

@@ -127,10 +127,6 @@ REFIID _dbg_ILGetGUIDPointer(LPCITEMIDLIST pidl)
 	    case PT_SPECIAL:
 	    case PT_MYCOMP:
 	      return (REFIID) &(pdata->u.mycomp.guid);
-
-	    default:
-		TRACE("Unknown pidl type 0x%04x\n", pdata->type);
-		break;
 	  }
 	}
 	return NULL;
@@ -169,10 +165,6 @@ DWORD _dbg_ILSimpleGetText (LPCITEMIDLIST pidl, LPSTR szOut, UINT uOutSize)
                  riid->Data4[4], riid->Data4[5], riid->Data4[6], riid->Data4[7] );
 	  dwReturn = strlen (szTemp);
 	}
-	else
-	{
-	  ERR("-- no text\n");
-	}
 	return dwReturn;
 }
 
@@ -209,7 +201,7 @@ void pdump (LPCITEMIDLIST pidl)
 	      else if( PT_VALUE == type)
 	        dwAttrib = pData->u.file.uFileAttribs;
 
-	      MESSAGE ("-- pidl=%p size=%u type=%lx attr=0x%08lx name=%s (%s,%s)\n",
+	      MESSAGE ("[%p] size=%04u type=%lx attr=0x%08lx name=\"%s\" (%s,%s)\n",
 	               pidltemp, pidltemp->mkid.cb,type,dwAttrib,szName,debugstr_a(szLongName), debugstr_a(szShortName));
 
 	      pidltemp = _dbg_ILGetNext(pidltemp);
@@ -267,7 +259,7 @@ BOOL pcheck (LPCITEMIDLIST pidl)
 		  szTemp[i+BYTES_PRINTED*3]  =  (c>=0x20 && c <=0x80) ? c : '.';
 		}
 		szTemp[BYTES_PRINTED*4] = 0x00;
-		ERR("unknown IDLIST type size=%u type=%lx\n%s\n",pidltemp->mkid.cb,type, szTemp);
+		ERR("unknown IDLIST %p [%p] size=%u type=%lx\n%s\n",pidl, pidltemp, pidltemp->mkid.cb,type, szTemp);
 		ret = FALSE;
 	      }
 	    }
@@ -277,14 +269,16 @@ BOOL pcheck (LPCITEMIDLIST pidl)
 	return ret;
 }
 
-static char shdebugstr_buf[100];
-
+static char shdebugstr_buf1[100];
+static char shdebugstr_buf2[100];
+static char * shdebugstr_buf = shdebugstr_buf1;
 
 static struct {
 	REFIID	riid;
 	char 	*name;
 } InterfaceDesc[] = {
 	{&IID_IUnknown,			"IID_IUnknown"},
+	{&IID_IClassFactory,		"IID_IClassFactory"},
 	{&IID_IShellView,		"IID_IShellView"},
 	{&IID_IOleCommandTarget,	"IID_IOleCommandTarget"},
 	{&IID_IDropTarget,		"IID_IDropTarget"},
@@ -308,6 +302,8 @@ const char * shdebugstr_guid( const struct _GUID *id )
 	int i;
 	char* name = NULL;
 	char clsidbuf[100];
+
+	shdebugstr_buf = (shdebugstr_buf == shdebugstr_buf1) ? shdebugstr_buf2 : shdebugstr_buf1;
 
 	if (!id) {
 	  strcpy (shdebugstr_buf, "(null)");

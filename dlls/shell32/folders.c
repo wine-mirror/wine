@@ -69,7 +69,6 @@ IExtractIconA* IExtractIconA_Constructor(LPCITEMIDLIST pidl)
 	pdump(pidl);
 
 	TRACE("(%p)\n",ei);
-	shell32_ObjCount++;
 	return (IExtractIconA *)ei;
 }
 /**************************************************************************
@@ -111,8 +110,6 @@ static ULONG WINAPI IExtractIconA_fnAddRef(IExtractIconA * iface)
 
 	TRACE("(%p)->(count=%lu)\n",This, This->ref );
 
-	shell32_ObjCount++;
-
 	return ++(This->ref);
 }
 /**************************************************************************
@@ -123,8 +120,6 @@ static ULONG WINAPI IExtractIconA_fnRelease(IExtractIconA * iface)
 	ICOM_THIS(IExtractIconAImpl,iface);
 
 	TRACE("(%p)->()\n",This);
-
-	shell32_ObjCount--;
 
 	if (!--(This->ref))
 	{ TRACE(" destroying IExtractIcon(%p)\n",This);
@@ -340,4 +335,3 @@ static struct ICOM_VTABLE(IPersistFile) pfvt =
 	(void *) 0xdeadbeef /* IEIPersistFile_fnSaveCompleted */,
 	(void *) 0xdeadbeef /* IEIPersistFile_fnGetCurFile */
 };
-

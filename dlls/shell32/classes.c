@@ -30,7 +30,7 @@
 #include "shell32_main.h"
 #include "shlguid.h"
 #include "shresdef.h"
-#include "wine/obj_queryassociations.h"
+#include "shlwapi.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(shell);
 
@@ -62,36 +62,24 @@ BOOL HCR_MapTypeToValue ( LPCSTR szExtension, LPSTR szFileType, DWORD len, BOOL 
 
 	RegCloseKey(hkey);
 
-	TRACE("-- %s\n", szFileType );
+	TRACE("--UE;
+} %s\n", szFileType );
 
 	return TRUE;
 }
 BOOL HCR_GetExecuteCommand ( LPCSTR szClass, LPCSTR szVerb, LPSTR szDest, DWORD len )
 {
-	HKEY	hkey;
 	char	sTemp[MAX_PATH];
-	DWORD	dwType;
-	BOOL	ret = FALSE;
 
 	TRACE("%s %s\n",szClass, szVerb );
 
-	sprintf(sTemp, "%s\\shell\\%s\\command",szClass, szVerb);
+	snprintf(sTemp, MAX_PATH, "%s\\shell\\%s\\command",szClass, szVerb);
 
-	if (!RegOpenKeyExA(HKEY_CLASSES_ROOT,sTemp,0,0x02000000,&hkey))
-	{
-	  if (!RegQueryValueExA(hkey, NULL, 0, &dwType, szDest, &len))
-	  {
-	    if (dwType == REG_EXPAND_SZ)
-	    {
-	      ExpandEnvironmentStringsA(szDest, sTemp, MAX_PATH);
-	      strcpy(szDest, sTemp);
-	    }
-	    ret = TRUE;
-	  }
-	  RegCloseKey(hkey);
+	if (ERROR_SUCCESS == SHGetValueA(HKEY_CLASSES_ROOT, sTemp, NULL, NULL, szDest, &len)) {
+	    TRACE("-- %s\n", debugstr_a(szDest) );
+	    return TRUE;
 	}
-	TRACE("-- %s\n", szDest );
-	return ret;
+	return FALSE;
 }
 /***************************************************************************************
 *	HCR_GetDefaultIcon	[internal]
@@ -243,7 +231,6 @@ IQueryAssociations* IQueryAssociations_Constructor(void)
 	ICOM_VTBL(ei) = &qavt;
 
 	TRACE("(%p)\n",ei);
-	shell32_ObjCount++;
 	return (IQueryAssociations *)ei;
 }
 /**************************************************************************
@@ -288,8 +275,6 @@ static ULONG WINAPI IQueryAssociations_fnAddRef(IQueryAssociations * iface)
 
 	TRACE("(%p)->(count=%lu)\n",This, This->ref );
 
-	shell32_ObjCount++;
-
 	return ++(This->ref);
 }
 /**************************************************************************
@@ -300,8 +285,6 @@ static ULONG WINAPI IQueryAssociations_fnRelease(IQueryAssociations * iface)
 	ICOM_THIS(IQueryAssociationsImpl,iface);
 
 	TRACE("(%p)->()\n",This);
-
-	shell32_ObjCount--;
 
 	if (!--(This->ref))
 	{

@@ -14,6 +14,11 @@
  * You should have received a copy of the GNU Lesser General Public
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+ *
+ * FIXME:
+ *  - view with root unequal desktop
+ *  - many memory leaks
+ *  - show only filesystem objects
  */
 
 #include <stdlib.h>
@@ -52,7 +57,7 @@ static void InitializeTreeView(HWND hwndParent, LPCITEMIDLIST root)
 
 	/* so far, this method doesn't work (still missing the upper level), keep the old way */
 #if 0
-	if (root == NULL) {
+	if (_ILIsDesktop (root)) {
 	   hr = SHGetDesktopFolder(&lpsf);
 	} else {
 	   IShellFolder *	lpsfdesktop;

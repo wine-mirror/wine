@@ -84,8 +84,6 @@ LPENUMFORMATETC IEnumFORMATETC_Constructor(UINT cfmt, const FORMATETC afmt[])
 	  {
 	    memcpy(ef->pFmt, afmt, size);
 	  }
-
-	  shell32_ObjCount++;
 	}
 
 	TRACE("(%p)->(%u,%p)\n",ef, cfmt, afmt);
@@ -123,7 +121,6 @@ static ULONG WINAPI IEnumFORMATETC_fnAddRef(LPENUMFORMATETC iface)
 {
 	ICOM_THIS(IEnumFORMATETCImpl,iface);
 	TRACE("(%p)->(count=%lu)\n",This, This->ref);
-	shell32_ObjCount++;
 	return ++(This->ref);
 }
 
@@ -131,8 +128,6 @@ static ULONG WINAPI IEnumFORMATETC_fnRelease(LPENUMFORMATETC iface)
 {
 	ICOM_THIS(IEnumFORMATETCImpl,iface);
 	TRACE("(%p)->()\n",This);
-
-	shell32_ObjCount--;
 
 	if (!--(This->ref))
 	{
@@ -246,8 +241,6 @@ LPDATAOBJECT IDataObject_Constructor(HWND hwndOwner, LPITEMIDLIST pMyPidl, LPITE
 	  InitFormatEtc(dto->pFormatEtc[0], dto->cfShellIDList, TYMED_HGLOBAL);
 	  InitFormatEtc(dto->pFormatEtc[1], CF_HDROP, TYMED_HGLOBAL);
 	  InitFormatEtc(dto->pFormatEtc[2], dto->cfFileName, TYMED_HGLOBAL);
-
-	  shell32_ObjCount++;
 	}
 
 	TRACE("(%p)->(apidl=%p cidl=%u)\n",dto, apidl, cidl);
@@ -289,10 +282,7 @@ static HRESULT WINAPI IDataObject_fnQueryInterface(LPDATAOBJECT iface, REFIID ri
 static ULONG WINAPI IDataObject_fnAddRef(LPDATAOBJECT iface)
 {
 	ICOM_THIS(IDataObjectImpl,iface);
-
 	TRACE("(%p)->(count=%lu)\n",This, This->ref);
-
-	shell32_ObjCount++;
 	return ++(This->ref);
 }
 
@@ -304,12 +294,11 @@ static ULONG WINAPI IDataObject_fnRelease(LPDATAOBJECT iface)
 	ICOM_THIS(IDataObjectImpl,iface);
 	TRACE("(%p)->()\n",This);
 
-	shell32_ObjCount--;
-
 	if (!--(This->ref))
 	{
 	  TRACE(" destroying IDataObject(%p)\n",This);
 	  _ILFreeaPidl(This->apidl, This->cidl);
+	  ILFree(This->pidl),
 	  HeapFree(GetProcessHeap(),0,This);
 	  return 0;
 	}
@@ -454,4 +443,3 @@ static struct ICOM_VTABLE(IDataObject) dtovt =
 	IDataObject_fnDUnadvise,
 	IDataObject_fnEnumDAdvise
 };
-

@@ -169,7 +169,6 @@ IShellView * IShellView_Constructor( IShellFolder * pFolder)
 	IShellFolder_QueryInterface(sv->pSFParent, &IID_IShellFolder2, (LPVOID*)&sv->pSF2Parent);
 
 	TRACE("(%p)->(%p)\n",sv, pFolder);
-	shell32_ObjCount++;
 	return (IShellView *) sv;
 }
 
@@ -1502,7 +1501,6 @@ static ULONG WINAPI IShellView_fnAddRef(IShellView * iface)
 
 	TRACE("(%p)->(count=%lu)\n",This,This->ref);
 
-	shell32_ObjCount++;
 	return ++(This->ref);
 }
 /**********************************************************
@@ -1513,8 +1511,6 @@ static ULONG WINAPI IShellView_fnRelease(IShellView * iface)
 	ICOM_THIS(IShellViewImpl, iface);
 
 	TRACE("(%p)->()\n",This);
-
-	shell32_ObjCount--;
 
 	if (!--(This->ref))
 	{
@@ -1528,9 +1524,6 @@ static ULONG WINAPI IShellView_fnRelease(IShellView * iface)
 
 	  if (This->apidl)
 	    SHFree(This->apidl);
-
-	  if (This->pCommDlgBrowser)
-	    ICommDlgBrowser_Release(This->pCommDlgBrowser);
 
 	  HeapFree(GetProcessHeap(),0,This);
 	  return 0;
@@ -1733,7 +1726,9 @@ static HRESULT WINAPI IShellView_fnDestroyViewWindow(IShellView * iface)
 	}
 
 	DestroyWindow(This->hWnd);
-	IShellBrowser_Release(This->pShellBrowser);
+	if(This->pShellBrowser) IShellBrowser_Release(This->pShellBrowser);
+	if(This->pCommDlgBrowser) ICommDlgBrowser_Release(This->pCommDlgBrowser);
+
 
 	return S_OK;
 }
@@ -2272,4 +2267,3 @@ static struct ICOM_VTABLE(IViewObject) vovt =
 	ISVViewObject_SetAdvise,
 	ISVViewObject_GetAdvise
 };
-

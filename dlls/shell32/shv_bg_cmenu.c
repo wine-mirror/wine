@@ -61,7 +61,6 @@ IContextMenu *ISvBgCm_Constructor(IShellFolder*	pSFParent)
 	if(pSFParent) IShellFolder_AddRef(pSFParent);
 
 	TRACE("(%p)->()\n",cm);
-	shell32_ObjCount++;
 	return (IContextMenu*)cm;
 }
 
@@ -108,7 +107,6 @@ static ULONG WINAPI ISVBgCm_fnAddRef(IContextMenu *iface)
 
 	TRACE("(%p)->(count=%lu)\n",This, This->ref);
 
-	shell32_ObjCount++;
 	return ++(This->ref);
 }
 
@@ -131,8 +129,6 @@ static ULONG WINAPI ISVBgCm_fnRelease(IContextMenu *iface)
 	  HeapFree(GetProcessHeap(),0,This);
 	  return 0;
 	}
-
-	shell32_ObjCount--;
 
 	return This->ref;
 }
@@ -428,4 +424,3 @@ static struct ICOM_VTABLE(IContextMenu) cmvt =
 	ISVBgCm_fnHandleMenuMsg,
 	(void *) 0xdeadbabe	/* just paranoia (IContextMenu3) */
 };
-

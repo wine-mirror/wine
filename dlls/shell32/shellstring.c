@@ -47,7 +47,12 @@ WINE_DEFAULT_DEBUG_CHANNEL(shell);
 
 HRESULT WINAPI StrRetToStrNA (LPVOID dest, DWORD len, LPSTRRET src, const ITEMIDLIST *pidl)
 {
-	TRACE("dest=0x%p len=0x%lx strret=0x%p pidl=%p stub\n",dest,len,src,pidl);
+	TRACE("dest=0x%p len=0x%lx strret=%p(%s) pidl=%p\n",
+	    dest,len,src,
+	    (src->uType == STRRET_WSTR) ? "STRRET_WSTR" :
+	    (src->uType == STRRET_CSTR) ? "STRRET_CSTR" :
+	    (src->uType == STRRET_OFFSET) ? "STRRET_OFFSET" : "STRRET_???",
+	    pidl);
 
 	switch (src->uType)
 	{
@@ -66,21 +71,23 @@ HRESULT WINAPI StrRetToStrNA (LPVOID dest, DWORD len, LPSTRRET src, const ITEMID
 
 	  default:
 	    FIXME("unknown type!\n");
-	    if (len)
-	    {
-	      *(LPSTR)dest = '\0';
-	    }
+	    if (len) *(LPSTR)dest = '\0';
 	    return(FALSE);
 	}
+	TRACE("-- %s\n", debugstr_a(dest) );
 	return S_OK;
 }
 
 /************************************************************************/
 
-HRESULT WINAPI StrRetToStrNW (LPVOID dest1, DWORD len, LPSTRRET src, const ITEMIDLIST *pidl)
+HRESULT WINAPI StrRetToStrNW (LPVOID dest, DWORD len, LPSTRRET src, const ITEMIDLIST *pidl)
 {
-    LPWSTR dest = (LPWSTR) dest1;
-	TRACE("dest=0x%p len=0x%lx strret=0x%p pidl=%p stub\n",dest,len,src,pidl);
+	TRACE("dest=0x%p len=0x%lx strret=%p(%s) pidl=%p\n",
+	    dest,len,src,
+	    (src->uType == STRRET_WSTR) ? "STRRET_WSTR" :
+	    (src->uType == STRRET_CSTR) ? "STRRET_CSTR" :
+	    (src->uType == STRRET_OFFSET) ? "STRRET_OFFSET" : "STRRET_???",
+	    pidl);
 
 	switch (src->uType)
 	{
@@ -90,24 +97,18 @@ HRESULT WINAPI StrRetToStrNW (LPVOID dest1, DWORD len, LPSTRRET src, const ITEMI
 	    break;
 
 	  case STRRET_CSTR:
-              if (!MultiByteToWideChar( CP_ACP, 0, src->u.cStr, -1, dest, len ) && len)
-                  dest[len-1] = 0;
+            if (!MultiByteToWideChar( CP_ACP, 0, src->u.cStr, -1, dest, len ) && len)
+                  ((LPWSTR)dest)[len-1] = 0;
 	    break;
 
 	  case STRRET_OFFSET:
-	    if (pidl)
-	    {
-              if (!MultiByteToWideChar( CP_ACP, 0, ((LPCSTR)&pidl->mkid)+src->u.uOffset, -1,
-                                        dest, len ) && len)
-                  dest[len-1] = 0;
-	    }
+            if (!MultiByteToWideChar( CP_ACP, 0, ((LPCSTR)&pidl->mkid)+src->u.uOffset, -1, dest, len ) && len)
+                  ((LPWSTR)dest)[len-1] = 0;
 	    break;
 
 	  default:
 	    FIXME("unknown type!\n");
-	    if (len)
-	    { *(LPSTR)dest = '\0';
-	    }
+	    if (len) *(LPWSTR)dest = '\0';
 	    return(FALSE);
 	}
 	return S_OK;

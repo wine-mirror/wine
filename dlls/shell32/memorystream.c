@@ -96,8 +96,6 @@ HRESULT CreateStreamOnFile (LPCSTR pszFilename, IStream ** ppstm)
 	fstr->ref = 1;
 	fstr->dwLength = GetFileSize (hFile, NULL);
 
-	shell32_ObjCount++;
-
 	if (!(fstr->hMapping = CreateFileMappingA(hFile,NULL,PAGE_READONLY|SEC_COMMIT,0,0,NULL)))
 	{
 	  WARN("failed to create filemap.\n");
@@ -158,7 +156,6 @@ static ULONG WINAPI IStream_fnAddRef(IStream *iface)
 
 	TRACE("(%p)->(count=%lu)\n",This, This->ref);
 
-	shell32_ObjCount++;
 	return ++(This->ref);
 }
 
@@ -170,8 +167,6 @@ static ULONG WINAPI IStream_fnRelease(IStream *iface)
 	ICOM_THIS(ISHFileStream, iface);
 
 	TRACE("(%p)->()\n",This);
-
-	shell32_ObjCount--;
 
 	if (!--(This->ref))
 	{ TRACE(" destroying SHFileStream (%p)\n",This);

@@ -563,12 +563,15 @@ LPITEMIDLIST WINAPI ILGetNext(LPITEMIDLIST pidl)
 {
 	WORD len;
 
+	TRACE("%p\n", pidl);
+
 	if(pidl)
 	{
 	  len =  pidl->mkid.cb;
 	  if (len)
 	  {
 	    pidl = (LPITEMIDLIST) (((LPBYTE)pidl)+len);
+	    TRACE("-- %p\n", pidl);
 	    return pidl;
 	  }
 	}
@@ -907,40 +910,28 @@ HRESULT WINAPI SHGetDataFromIDListW(LPSHELLFOLDER psf, LPCITEMIDLIST pidl, int n
  * FIXME
  *  fnGetDisplayNameOf can return different types of OLEString
  */
-BOOL WINAPI SHGetPathFromIDListA (LPCITEMIDLIST pidl,LPSTR pszPath)
-{	STRRET str;
+BOOL WINAPI SHGetPathFromIDListA (LPCITEMIDLIST pidl, LPSTR pszPath)
+{
+	HRESULT hr;
+	STRRET str;
 	LPSHELLFOLDER shellfolder;
 
 	TRACE_(shell)("(pidl=%p,%p)\n",pidl,pszPath);
+	pdump(pidl);
 
 	if (!pidl) return FALSE;
 
-	pdump(pidl);
-
-	if(_ILIsDesktop(pidl))
-	{
-	   SHGetSpecialFolderPathA(0, pszPath, CSIDL_DESKTOPDIRECTORY, FALSE);
-	}
-	else if (_ILIsSpecialFolder(ILFindLastID(pidl)))
-	{
-	  /* we are somewhere in a special folder */
-	  return FALSE;
-	}
-	else
-	{
-	  if (SHGetDesktopFolder(&shellfolder)==S_OK)
-	  {
-	    if(!SUCCEEDED(IShellFolder_GetDisplayNameOf(shellfolder,pidl,SHGDN_FORPARSING,&str))) {
-	      IShellFolder_Release(shellfolder);
-	      return FALSE;
+	hr = SHGetDesktopFolder(&shellfolder);
+	if (SUCCEEDED (hr)) {
+	    hr = IShellFolder_GetDisplayNameOf(shellfolder,pidl,SHGDN_FORPARSING,&str);
+	    if(SUCCEEDED(hr)) {
+	        StrRetToStrNA (pszPath, MAX_PATH, &str, pidl);
 	    }
-	    StrRetToStrNA (pszPath, MAX_PATH, &str, pidl);
 	    IShellFolder_Release(shellfolder);
-	  }
 	}
-	TRACE_(shell)("-- (%s)\n",pszPath);
 
-	return TRUE;
+	TRACE_(shell)("-- %s, 0x%08lx\n",pszPath, hr);
+	return SUCCEEDED(hr);
 }
 /*************************************************************************
  * SHGetPathFromIDListW 			[SHELL32.@]
@@ -1287,7 +1278,7 @@ DWORD _ILGetDrive(LPCITEMIDLIST pidl,LPSTR pOut, UINT uSize)
  */
 BOOL _ILIsDesktop(LPCITEMIDLIST pidl)
 {	TRACE("(%p)\n",pidl);
-	return ( !pidl || (pidl && pidl->mkid.cb == 0x00) );
+	return pidl && pidl->mkid.cb  ? 0 : 1;
 }
 
 BOOL _ILIsMyComputer(LPCITEMIDLIST pidl)
@@ -1562,12 +1553,18 @@ BOOL _ILGetFileDate (LPCITEMIDLIST pidl, LPSTR pOut, UINT uOutSize)
 {
 	FILETIME ft,lft;
 	SYSTEMTIME time;
+	BOOL ret;
 
-	if (! _ILGetFileDateTime( pidl, &ft )) return FALSE;
+	if (_ILGetFileDateTime( pidl, &ft )) {
+	    FileTimeToLocalFileTime(&ft, &lft);
+	    FileTimeToSystemTime (&lft, &time);
+	    ret = GetDateFormatA(LOCALE_USER_DEFAULT,DATE_SHORTDATE,&time, NULL,  pOut, uOutSize);
+	} else {
+	    pOut[0] = '\0';
+	    ret = FALSE;
+	}
+	return ret;
 
-	FileTimeToLocalFileTime(&ft, &lft);
-	FileTimeToSystemTime (&lft, &time);
-	return GetDateFormatA(LOCALE_USER_DEFAULT,DATE_SHORTDATE,&time, NULL,  pOut, uOutSize);
 }
 
 /*************************************************************************

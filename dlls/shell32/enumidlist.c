@@ -317,9 +317,9 @@ IEnumIDList * IEnumIDList_Constructor(
 	IEnumIDListImpl*	lpeidl;
 	BOOL			ret = FALSE;
 
-	lpeidl = (IEnumIDListImpl*)HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(IEnumIDListImpl));
+	TRACE("()->(%s flags=0x%08lx kind=0x%08lx)\n",debugstr_a(lpszPath),dwFlags, dwKind);
 
-	TRACE("(%p)->(%s flags=0x%08lx kind=0x%08lx)\n",lpeidl,debugstr_a(lpszPath),dwFlags, dwKind);
+	lpeidl = (IEnumIDListImpl*)HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(IEnumIDListImpl));
 
 	if (lpeidl)
 	{
@@ -341,17 +341,10 @@ IEnumIDList * IEnumIDList_Constructor(
 	      break;
 	  }
 
-	  if(ret)
-	  {
-	    shell32_ObjCount++;
-	  }
-	  else
-	  {
-	    if (lpeidl)
-	    {
-	      HeapFree(GetProcessHeap(),0,lpeidl);
+	    if(!ret) {
+	        HeapFree(GetProcessHeap(),0,lpeidl);
+	        lpeidl = NULL;
 	    }
-	  }
 	}
 
 	TRACE("-- (%p)->()\n",lpeidl);
@@ -397,10 +390,7 @@ static ULONG WINAPI IEnumIDList_fnAddRef(
 	IEnumIDList * iface)
 {
 	ICOM_THIS(IEnumIDListImpl,iface);
-
 	TRACE("(%p)->(%lu)\n",This,This->ref);
-
-	shell32_ObjCount++;
 	return ++(This->ref);
 }
 /******************************************************************************
@@ -413,10 +403,8 @@ static ULONG WINAPI IEnumIDList_fnRelease(
 
 	TRACE("(%p)->(%lu)\n",This,This->ref);
 
-	shell32_ObjCount--;
-
-	if (!--(This->ref))
-	{ TRACE(" destroying IEnumIDList(%p)\n",This);
+	if (!--(This->ref)) {
+	  TRACE(" destroying IEnumIDList(%p)\n",This);
 	  DeleteList((IEnumIDList*)This);
 	  HeapFree(GetProcessHeap(),0,This);
 	  return 0;

@@ -98,7 +98,6 @@ IContextMenu *ISvItemCm_Constructor(LPSHELLFOLDER pSFParent, LPCITEMIDLIST pidl,
 
 	TRACE("(%p)->()\n",cm);
 
-	shell32_ObjCount++;
 	return (IContextMenu*)cm;
 }
 
@@ -145,7 +144,6 @@ static ULONG WINAPI ISvItemCm_fnAddRef(IContextMenu *iface)
 
 	TRACE("(%p)->(count=%lu)\n",This, This->ref);
 
-	shell32_ObjCount++;
 	return ++(This->ref);
 }
 
@@ -157,8 +155,6 @@ static ULONG WINAPI ISvItemCm_fnRelease(IContextMenu *iface)
 	ICOM_THIS(ItemCmImpl, iface);
 
 	TRACE("(%p)->()\n",This);
-
-	shell32_ObjCount--;
 
 	if (!--(This->ref))
 	{

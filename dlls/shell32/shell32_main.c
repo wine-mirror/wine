@@ -215,7 +215,7 @@ DWORD WINAPI SHGetFileInfoA(LPCSTR path,DWORD dwFileAttributes,
 	IExtractIconA * pei = NULL;
 	LPITEMIDLIST	pidlLast = NULL, pidl = NULL;
 	HRESULT hr = S_OK;
-    BOOL IconNotYetLoaded=TRUE;
+	BOOL IconNotYetLoaded=TRUE;
 
 	TRACE("(%s fattr=0x%lx sfi=%p(attr=0x%08lx) size=0x%x flags=0x%x)\n",
 	  (flags & SHGFI_PIDL)? "pidl" : path, dwFileAttributes, psfi, psfi->dwAttributes, sizeofpsfi, flags);
@@ -289,25 +289,20 @@ DWORD WINAPI SHGetFileInfoA(LPCSTR path,DWORD dwFileAttributes,
 
 	/* translate the path into a pidl only when SHGFI_USEFILEATTRIBUTES in not specified
 	   the pidl functions fail on not existing file names */
-	if (flags & SHGFI_PIDL)
-	{
-	  pidl = (LPCITEMIDLIST) path;
-	  if (!pidl )
-	  {
-	    ERR("pidl is null!\n");
-	    return FALSE;
-	  }
-	}
-	else if (!(flags & SHGFI_USEFILEATTRIBUTES))
-	{
-	  hr = SHILCreateFromPathA ( path, &pidl, &dwAttributes);
-	  /* note: the attributes in ISF::ParseDisplayName are not implemented */
+
+	if (flags & SHGFI_PIDL) {
+	    pidl = ILClone((LPCITEMIDLIST)path);
+	} else if (!(flags & SHGFI_USEFILEATTRIBUTES)) {
+	    hr = SHILCreateFromPathA(path, &pidl, &dwAttributes);
 	}
 
 	/* get the parent shellfolder */
-	if (pidl)
-	{
-	  hr = SHBindToParent( pidl, &IID_IShellFolder, (LPVOID*)&psfParent, &pidlLast);
+	if (pidl) {
+	    hr = SHBindToParent( pidl, &IID_IShellFolder, (LPVOID*)&psfParent, &pidlLast);
+	    ILFree(pidl);
+	} else {
+	    ERR("pidl is null!\n");
+	    return FALSE;
 	}
 
 	/* get the attributes of the child */
@@ -928,7 +923,6 @@ INT     (WINAPI *pEnumMRUListA) (HANDLE hList, INT nItemPos, LPVOID lpBuffer, DW
 
 static HINSTANCE	hComctl32;
 
-LONG		shell32_ObjCount = 0;
 HINSTANCE	shell32_hInstance = 0;
 HIMAGELIST	ShellSmallIconList = 0;
 HIMAGELIST	ShellBigIconList = 0;
@@ -995,15 +989,8 @@ BOOL WINAPI Shell32LibMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID fImpLoad)
 
 	  case DLL_PROCESS_DETACH:
 	      shell32_hInstance = 0;
-
 	      SIC_Destroy();
 	      FreeChangeNotifications();
-
-	      /* this one is here to check if AddRef/Release is balanced */
-	      if (shell32_ObjCount)
-	      {
-	        WARN("leaving with %lu objects left (memory leak)\n", shell32_ObjCount);
-	      }
               break;
 	}
 	return TRUE;
