@@ -25,7 +25,7 @@ DEFAULT_DEBUG_CHANNEL(message);
 
 static const char * const MessageTypeNames[SPY_MAX_MSGNUM + 1] =
 {
-    "wm_null",			/* 0x00 */
+    "WM_NULL",			/* 0x00 */
     "WM_CREATE",	
     "WM_DESTROY",    
     "WM_MOVE",
@@ -151,72 +151,72 @@ static const char * const MessageTypeNames[SPY_MAX_MSGNUM + 1] =
     NULL, NULL, NULL, NULL, NULL, NULL,
 
     /* 0x00B0 - Win32 Edit controls */
-    "EM_GETSEL32",              /* 0x00b0 */
-    "EM_SETSEL32",              /* 0x00b1 */
-    "EM_GETRECT32",             /* 0x00b2 */
-    "EM_SETRECT32",             /* 0x00b3 */
-    "EM_SETRECTNP32",           /* 0x00b4 */
-    "EM_SCROLL32",              /* 0x00b5 */
-    "EM_LINESCROLL32",          /* 0x00b6 */
-    "EM_SCROLLCARET32",         /* 0x00b7 */
-    "EM_GETMODIFY32",           /* 0x00b8 */
-    "EM_SETMODIFY32",           /* 0x00b9 */
-    "EM_GETLINECOUNT32",        /* 0x00ba */
-    "EM_LINEINDEX32",           /* 0x00bb */
-    "EM_SETHANDLE32",           /* 0x00bc */
-    "EM_GETHANDLE32",           /* 0x00bd */
-    "EM_GETTHUMB32",            /* 0x00be */
+    "EM_GETSEL",                /* 0x00b0 */
+    "EM_SETSEL",                /* 0x00b1 */
+    "EM_GETRECT",               /* 0x00b2 */
+    "EM_SETRECT",               /* 0x00b3 */
+    "EM_SETRECTNP",             /* 0x00b4 */
+    "EM_SCROLL",                /* 0x00b5 */
+    "EM_LINESCROLL",            /* 0x00b6 */
+    "EM_SCROLLCARET",           /* 0x00b7 */
+    "EM_GETMODIFY",             /* 0x00b8 */
+    "EM_SETMODIFY",             /* 0x00b9 */
+    "EM_GETLINECOUNT",          /* 0x00ba */
+    "EM_LINEINDEX",             /* 0x00bb */
+    "EM_SETHANDLE",             /* 0x00bc */
+    "EM_GETHANDLE",             /* 0x00bd */
+    "EM_GETTHUMB",              /* 0x00be */
     NULL,                       /* 0x00bf */
 
     NULL,                       /* 0x00c0 */
-    "EM_LINELENGTH32",          /* 0x00c1 */
-    "EM_REPLACESEL32",          /* 0x00c2 */
+    "EM_LINELENGTH",            /* 0x00c1 */
+    "EM_REPLACESEL",            /* 0x00c2 */
     NULL,                       /* 0x00c3 */
-    "EM_GETLINE32",             /* 0x00c4 */
-    "EM_LIMITTEXT32",           /* 0x00c5 */
-    "EM_CANUNDO32",             /* 0x00c6 */
-    "EM_UNDO32",                /* 0x00c7 */
-    "EM_FMTLINES32",            /* 0x00c8 */
-    "EM_LINEFROMCHAR32",        /* 0x00c9 */
+    "EM_GETLINE",               /* 0x00c4 */
+    "EM_LIMITTEXT",             /* 0x00c5 */
+    "EM_CANUNDO",               /* 0x00c6 */
+    "EM_UNDO",                  /* 0x00c7 */
+    "EM_FMTLINES",              /* 0x00c8 */
+    "EM_LINEFROMCHAR",          /* 0x00c9 */
     NULL,                       /* 0x00ca */
-    "EM_SETTABSTOPS32",         /* 0x00cb */
-    "EM_SETPASSWORDCHAR32",     /* 0x00cc */
-    "EM_EMPTYUNDOBUFFER32",     /* 0x00cd */
-    "EM_GETFIRSTVISIBLELINE32", /* 0x00ce */
-    "EM_SETREADONLY32",         /* 0x00cf */
+    "EM_SETTABSTOPS",           /* 0x00cb */
+    "EM_SETPASSWORDCHAR",       /* 0x00cc */
+    "EM_EMPTYUNDOBUFFER",       /* 0x00cd */
+    "EM_GETFIRSTVISIBLELINE",   /* 0x00ce */
+    "EM_SETREADONLY",           /* 0x00cf */
 
-    "EM_SETWORDBREAKPROC32",    /* 0x00d0 */
-    "EM_GETWORDBREAKPROC32",    /* 0x00d1 */
-    "EM_GETPASSWORDCHAR32",     /* 0x00d2 */
-    "EM_SETMARGINS32",          /* 0x00d3 */
-    "EM_GETMARGINS32",          /* 0x00d4 */
-    "EM_GETLIMITTEXT32",        /* 0x00d5 */
-    "EM_POSFROMCHAR32",         /* 0x00d6 */
-    "EM_CHARFROMPOS32",         /* 0x00d7 */
+    "EM_SETWORDBREAKPROC",      /* 0x00d0 */
+    "EM_GETWORDBREAKPROC",      /* 0x00d1 */
+    "EM_GETPASSWORDCHAR",       /* 0x00d2 */
+    "EM_SETMARGINS",            /* 0x00d3 */
+    "EM_GETMARGINS",            /* 0x00d4 */
+    "EM_GETLIMITTEXT",          /* 0x00d5 */
+    "EM_POSFROMCHAR",           /* 0x00d6 */
+    "EM_CHARFROMPOS",           /* 0x00d7 */
     NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
 
     /* 0x00E0 - Win32 Scrollbars */
-    "SBM_SETPOS32",             /* 0x00e0 */
-    "SBM_GETPOS32",             /* 0x00e1 */
-    "SBM_SETRANGE32",           /* 0x00e2 */
-    "SBM_GETRANGE32",           /* 0x00e3 */
-    "SBM_ENABLE_ARROWS32",      /* 0x00e4 */
+    "SBM_SETPOS",               /* 0x00e0 */
+    "SBM_GETPOS",               /* 0x00e1 */
+    "SBM_SETRANGE",             /* 0x00e2 */
+    "SBM_GETRANGE",             /* 0x00e3 */
+    "SBM_ENABLE_ARROWS",        /* 0x00e4 */
     NULL,
-    "SBM_SETRANGEREDRAW32",     /* 0x00e6 */
+    "SBM_SETRANGEREDRAW",       /* 0x00e6 */
     NULL, NULL,
-    "SBM_SETSCROLLINFO32",      /* 0x00e9 */
-    "SBM_GETSCROLLINFO32",      /* 0x00ea */
+    "SBM_SETSCROLLINFO",        /* 0x00e9 */
+    "SBM_GETSCROLLINFO",        /* 0x00ea */
     NULL, NULL, NULL, NULL, NULL,
 
     /* 0x00F0 - Win32 Buttons */
-    "BM_GETCHECK32",            /* 0x00f0 */
-    "BM_SETCHECK32",            /* 0x00f1 */
-    "BM_GETSTATE32",            /* 0x00f2 */
-    "BM_SETSTATE32",            /* 0x00f3 */
-    "BM_SETSTYLE32",            /* 0x00f4 */
-    "BM_CLICK32",               /* 0x00f5 */
-    "BM_GETIMAGE32",            /* 0x00f6 */
-    "BM_SETIMAGE32",            /* 0x00f7 */
+    "BM_GETCHECK",              /* 0x00f0 */
+    "BM_SETCHECK",              /* 0x00f1 */
+    "BM_GETSTATE",              /* 0x00f2 */
+    "BM_SETSTATE",              /* 0x00f3 */
+    "BM_SETSTYLE",              /* 0x00f4 */
+    "BM_CLICK",                 /* 0x00f5 */
+    "BM_GETIMAGE",              /* 0x00f6 */
+    "BM_SETIMAGE",              /* 0x00f7 */
     NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
 
     "WM_KEYDOWN",		/* 0x0100 */
@@ -266,98 +266,98 @@ static const char * const MessageTypeNames[SPY_MAX_MSGNUM + 1] =
     NULL, NULL, NULL, NULL, NULL, NULL, NULL,
 
     /* 0x0140 - Win32 Comboboxes */
-    "CB_GETEDITSEL32",          /* 0x0140 */
-    "CB_LIMITTEXT32",           /* 0x0141 */
-    "CB_SETEDITSEL32",          /* 0x0142 */
-    "CB_ADDSTRING32",           /* 0x0143 */
-    "CB_DELETESTRING32",        /* 0x0144 */
-    "CB_DIR32",                 /* 0x0145 */
-    "CB_GETCOUNT32",            /* 0x0146 */
-    "CB_GETCURSEL32",           /* 0x0147 */
-    "CB_GETLBTEXT32",           /* 0x0148 */
-    "CB_GETLBTEXTLEN32",        /* 0x0149 */
-    "CB_INSERTSTRING32",        /* 0x014a */
-    "CB_RESETCONTENT32",        /* 0x014b */
-    "CB_FINDSTRING32",          /* 0x014c */
-    "CB_SELECTSTRING32",        /* 0x014d */
-    "CB_SETCURSEL32",           /* 0x014e */
-    "CB_SHOWDROPDOWN32",        /* 0x014f */
+    "CB_GETEDITSEL",            /* 0x0140 */
+    "CB_LIMITTEXT",             /* 0x0141 */
+    "CB_SETEDITSEL",            /* 0x0142 */
+    "CB_ADDSTRING",             /* 0x0143 */
+    "CB_DELETESTRING",          /* 0x0144 */
+    "CB_DIR",                   /* 0x0145 */
+    "CB_GETCOUNT",              /* 0x0146 */
+    "CB_GETCURSEL",             /* 0x0147 */
+    "CB_GETLBTEXT",             /* 0x0148 */
+    "CB_GETLBTEXTLEN",          /* 0x0149 */
+    "CB_INSERTSTRING",          /* 0x014a */
+    "CB_RESETCONTENT",          /* 0x014b */
+    "CB_FINDSTRING",            /* 0x014c */
+    "CB_SELECTSTRING",          /* 0x014d */
+    "CB_SETCURSEL",             /* 0x014e */
+    "CB_SHOWDROPDOWN",          /* 0x014f */
 
-    "CB_GETITEMDATA32",         /* 0x0150 */
-    "CB_SETITEMDATA32",         /* 0x0151 */
-    "CB_GETDROPPEDCONTROLRECT32",/* 0x0152 */
-    "CB_SETITEMHEIGHT32",       /* 0x0153 */
-    "CB_GETITEMHEIGHT32",       /* 0x0154 */
-    "CB_SETEXTENDEDUI32",       /* 0x0155 */
-    "CB_GETEXTENDEDUI32",       /* 0x0156 */
-    "CB_GETDROPPEDSTATE32",     /* 0x0157 */
-    "CB_FINDSTRINGEXACT32",     /* 0x0158 */
-    "CB_SETLOCALE32",           /* 0x0159 */
-    "CB_GETLOCALE32",           /* 0x015a */
-    "CB_GETTOPINDEX32",         /* 0x015b */
-    "CB_SETTOPINDEX32",         /* 0x015c */
-    "CB_GETHORIZONTALEXTENT32", /* 0x015d */
-    "CB_SETHORIZONTALEXTENT32", /* 0x015e */
-    "CB_GETDROPPEDWIDTH32",     /* 0x015f */
+    "CB_GETITEMDATA",           /* 0x0150 */
+    "CB_SETITEMDATA",           /* 0x0151 */
+    "CB_GETDROPPEDCONTROLRECT", /* 0x0152 */
+    "CB_SETITEMHEIGHT",         /* 0x0153 */
+    "CB_GETITEMHEIGHT",         /* 0x0154 */
+    "CB_SETEXTENDEDUI",         /* 0x0155 */
+    "CB_GETEXTENDEDUI",         /* 0x0156 */
+    "CB_GETDROPPEDSTATE",       /* 0x0157 */
+    "CB_FINDSTRINGEXACT",       /* 0x0158 */
+    "CB_SETLOCALE",             /* 0x0159 */
+    "CB_GETLOCALE",             /* 0x015a */
+    "CB_GETTOPINDEX",           /* 0x015b */
+    "CB_SETTOPINDEX",           /* 0x015c */
+    "CB_GETHORIZONTALEXTENT",   /* 0x015d */
+    "CB_SETHORIZONTALEXTENT",   /* 0x015e */
+    "CB_GETDROPPEDWIDTH",       /* 0x015f */
 
-    "CB_SETDROPPEDWIDTH32",     /* 0x0160 */
-    "CB_INITSTORAGE32",         /* 0x0161 */
+    "CB_SETDROPPEDWIDTH",       /* 0x0160 */
+    "CB_INITSTORAGE",           /* 0x0161 */
     NULL, NULL, NULL, NULL, NULL, NULL,
     NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
 
     /* 0x0170 - Win32 Static controls */
-    "STM_SETICON32",		/* 0x0170 */
-    "STM_GETICON32",		/* 0x0171 */
-    "STM_SETIMAGE32",		/* 0x0172 */
-    "STM_GETIMAGE32",		/* 0x0173 */
-    NULL, NULL, NULL, NULL, 
+    "STM_SETICON",              /* 0x0170 */
+    "STM_GETICON",              /* 0x0171 */
+    "STM_SETIMAGE",             /* 0x0172 */
+    "STM_GETIMAGE",             /* 0x0173 */
+    NULL, NULL, NULL, NULL,
     NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
 
     /* 0x0180 - Win32 Listboxes */
-    "LB_ADDSTRING32",           /* 0x0180 */
-    "LB_INSERTSTRING32",        /* 0x0181 */
-    "LB_DELETESTRING32",        /* 0x0182 */
-    "LB_SELITEMRANGEEX32",      /* 0x0183 */
-    "LB_RESETCONTENT32",        /* 0x0184 */
-    "LB_SETSEL32",              /* 0x0185 */
-    "LB_SETCURSEL32",           /* 0x0186 */
-    "LB_GETSEL32",              /* 0x0187 */
-    "LB_GETCURSEL32",           /* 0x0188 */
-    "LB_GETTEXT32",             /* 0x0189 */
-    "LB_GETTEXTLEN32",          /* 0x018a */
-    "LB_GETCOUNT32",            /* 0x018b */
-    "LB_SELECTSTRING32",        /* 0x018c */
-    "LB_DIR32",                 /* 0x018d */
-    "LB_GETTOPINDEX32",         /* 0x018e */
-    "LB_FINDSTRING32",          /* 0x018f */
+    "LB_ADDSTRING",             /* 0x0180 */
+    "LB_INSERTSTRING",          /* 0x0181 */
+    "LB_DELETESTRING",          /* 0x0182 */
+    "LB_SELITEMRANGEEX",        /* 0x0183 */
+    "LB_RESETCONTENT",          /* 0x0184 */
+    "LB_SETSEL",                /* 0x0185 */
+    "LB_SETCURSEL",             /* 0x0186 */
+    "LB_GETSEL",                /* 0x0187 */
+    "LB_GETCURSEL",             /* 0x0188 */
+    "LB_GETTEXT",               /* 0x0189 */
+    "LB_GETTEXTLEN",            /* 0x018a */
+    "LB_GETCOUNT",              /* 0x018b */
+    "LB_SELECTSTRING",          /* 0x018c */
+    "LB_DIR",                   /* 0x018d */
+    "LB_GETTOPINDEX",           /* 0x018e */
+    "LB_FINDSTRING",            /* 0x018f */
 
-    "LB_GETSELCOUNT32",         /* 0x0190 */
-    "LB_GETSELITEMS32",         /* 0x0191 */
-    "LB_SETTABSTOPS32",         /* 0x0192 */
-    "LB_GETHORIZONTALEXTENT32", /* 0x0193 */
-    "LB_SETHORIZONTALEXTENT32", /* 0x0194 */
-    "LB_SETCOLUMNWIDTH32",      /* 0x0195 */
-    "LB_ADDFILE32",             /* 0x0196 */
-    "LB_SETTOPINDEX32",         /* 0x0197 */
-    "LB_GETITEMRECT32",         /* 0x0198 */
-    "LB_GETITEMDATA32",         /* 0x0199 */
-    "LB_SETITEMDATA32",         /* 0x019a */
-    "LB_SELITEMRANGE32",        /* 0x019b */
-    "LB_SETANCHORINDEX32",      /* 0x019c */
-    "LB_GETANCHORINDEX32",      /* 0x019d */
-    "LB_SETCARETINDEX32",       /* 0x019e */
-    "LB_GETCARETINDEX32",       /* 0x019f */
+    "LB_GETSELCOUNT",           /* 0x0190 */
+    "LB_GETSELITEMS",           /* 0x0191 */
+    "LB_SETTABSTOPS",           /* 0x0192 */
+    "LB_GETHORIZONTALEXTENT",   /* 0x0193 */
+    "LB_SETHORIZONTALEXTENT",   /* 0x0194 */
+    "LB_SETCOLUMNWIDTH",        /* 0x0195 */
+    "LB_ADDFILE",               /* 0x0196 */
+    "LB_SETTOPINDEX",           /* 0x0197 */
+    "LB_GETITEMRECT",           /* 0x0198 */
+    "LB_GETITEMDATA",           /* 0x0199 */
+    "LB_SETITEMDATA",           /* 0x019a */
+    "LB_SELITEMRANGE",          /* 0x019b */
+    "LB_SETANCHORINDEX",        /* 0x019c */
+    "LB_GETANCHORINDEX",        /* 0x019d */
+    "LB_SETCARETINDEX",         /* 0x019e */
+    "LB_GETCARETINDEX",         /* 0x019f */
 
-    "LB_SETITEMHEIGHT32",       /* 0x01a0 */
-    "LB_GETITEMHEIGHT32",       /* 0x01a1 */
-    "LB_FINDSTRINGEXACT32",     /* 0x01a2 */
-    "LB_CARETON32",             /* 0x01a3 */
-    "LB_CARETOFF32",            /* 0x01a4 */
-    "LB_SETLOCALE32",           /* 0x01a5 */
-    "LB_GETLOCALE32",           /* 0x01a6 */
-    "LB_SETCOUNT32",            /* 0x01a7 */
-    "LB_INITSTORAGE32",         /* 0x01a8 */
-    "LB_ITEMFROMPOINT32",       /* 0x01a9 */
+    "LB_SETITEMHEIGHT",         /* 0x01a0 */
+    "LB_GETITEMHEIGHT",         /* 0x01a1 */
+    "LB_FINDSTRINGEXACT",       /* 0x01a2 */
+    "LB_CARETON",               /* 0x01a3 */
+    "LB_CARETOFF",              /* 0x01a4 */
+    "LB_SETLOCALE",             /* 0x01a5 */
+    "LB_GETLOCALE",             /* 0x01a6 */
+    "LB_SETCOUNT",              /* 0x01a7 */
+    "LB_INITSTORAGE",           /* 0x01a8 */
+    "LB_ITEMFROMPOINT",         /* 0x01a9 */
     NULL, NULL, NULL, NULL, NULL, NULL,
 
     /* 0x01B0 */
