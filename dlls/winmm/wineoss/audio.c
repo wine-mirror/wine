@@ -646,7 +646,9 @@ static BOOL OSS_WaveInInit(OSS_DEVICE* ossdev)
     int f,c,r;
     TRACE("(%p) %s\n", ossdev, ossdev->dev_name);
 
-    if (OSS_OpenDevice(ossdev, O_RDONLY, NULL, 0,-1,-1,-1) != 0) return FALSE;
+    if (OSS_OpenDevice(ossdev, O_RDONLY, NULL, 0,-1,-1,-1) != 0)
+	return FALSE;
+
     ioctl(ossdev->fd, SNDCTL_DSP_RESET, 0);
 
 #ifdef SOUND_MIXER_INFO
@@ -2245,7 +2247,11 @@ static HRESULT WINAPI IDsDriverBufferImpl_Stop(PIDSDRIVERBUFFER iface)
      * so we need to somehow signal to our DirectSound implementation
      * that it should completely recreate this HW buffer...
      * this unexpected error code should do the trick... */
-    return DSERR_BUFFERLOST;
+    /* FIXME: ...unless we are doing full duplex, then its not nice to close the device */
+    if (WOutDev[This->drv->wDevID].ossdev->open_count == 1)
+	return DSERR_BUFFERLOST;
+
+    return DS_OK;
 }
 
 static ICOM_VTABLE(IDsDriverBuffer) dsdbvt =
@@ -2833,16 +2839,24 @@ static DWORD widOpen(WORD wDevID, LPWAVEOPENDESC lpDesc, DWORD dwFlags)
 	    audio_fragment = 0x01000008;
     } else {
 	TRACE("doesn't have DirectSoundCapture driver\n");
-        /* This is actually hand tuned to work so that my SB Live:
-         * - does not skip
-         * - does not buffer too much
-         * when sending with the Shoutcast winamp plugin
-         */
-        /* 15 fragments max, 2^10 = 1024 bytes per fragment */
+	if (wwi->ossdev->open_count > 0) {
+	    TRACE("Using output device audio_fragment\n");
+	    /* FIXME: This may not be optimal for capture but it allows us 
+	     * to do hardware playback without hardware capture. */
+	    audio_fragment = wwi->ossdev->audio_fragment;
+	} else {
+            /* This is actually hand tuned to work so that my SB Live:
+             * - does not skip
+             * - does not buffer too much
+             * when sending with the Shoutcast winamp plugin
+             */
+            /* 15 fragments max, 2^10 = 1024 bytes per fragment */
         audio_fragment = 0x000F000A;
+	}
     }
 
-    TRACE("using %d %d byte fragments\n", audio_fragment >> 16, 1 << (audio_fragment & 0xffff));
+    TRACE("using %d %d byte fragments\n", audio_fragment >> 16,
+	1 << (audio_fragment & 0xffff));
 
     ret = OSS_OpenDevice(wwi->ossdev, O_RDONLY, &audio_fragment,
                          1,
@@ -2873,7 +2887,8 @@ static DWORD widOpen(WORD wDevID, LPWAVEOPENDESC lpDesc, DWORD dwFlags)
 
     ioctl(wwi->ossdev->fd, SNDCTL_DSP_GETBLKSIZE, &fragment_size);
     if (fragment_size == -1) {
-	WARN("ioctl(%s, SNDCTL_DSP_GETBLKSIZE) failed (%s)\n", wwi->ossdev->dev_name, strerror(errno));
+	WARN("ioctl(%s, SNDCTL_DSP_GETBLKSIZE) failed (%s)\n",
+	    wwi->ossdev->dev_name, strerror(errno));
         OSS_CloseDevice(wwi->ossdev);
 	wwi->state = WINE_WS_CLOSED;
 	return MMSYSERR_NOTENABLED;
