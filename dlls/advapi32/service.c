@@ -44,9 +44,13 @@ static const WCHAR  szServiceDispEventNameFmtW[] = {'A','D','V','A','P','I','_',
                                                     'D','I','S','P','_','%','s',0};
 static const WCHAR  szServiceMutexNameFmtW[] = {'A','D','V','A','P','I','_',
                                                 'M','U','X','_','%','s',0};
+static const WCHAR  szServiceAckEventNameFmtW[] = {'A','D','V','A','P','I','_',
+                                                   'A','C','K','_','%','s',0};
 
 struct SEB              /* service environment block */
 {                       /*   resides in service's shared memory object */
+    DWORD control_code;      /* service control code */
+    DWORD dispatcher_error;  /* set by dispatcher if it fails to invoke control handler */
     SERVICE_STATUS status;
     DWORD argc;
     /* variable part of SEB contains service arguments */
@@ -329,6 +333,8 @@ struct service_thread_data
     struct SEB *seb;
     HANDLE thread_handle;
     HANDLE mutex;            /* provides serialization of control request */
+    HANDLE ack_event;        /* control handler completion acknowledgement */
+    LPHANDLER_FUNCTION ctrl_handler;
 };
 
 static DWORD WINAPI service_thread( LPVOID arg )
@@ -348,6 +354,7 @@ static DWORD WINAPI service_thread( LPVOID arg )
 static void dispose_service_thread_data( struct service_thread_data* thread_data )
 {
     if( thread_data->mutex ) CloseHandle( thread_data->mutex );
+    if( thread_data->ack_event ) CloseHandle( thread_data->ack_event );
     if( thread_data->argv ) HeapFree( GetProcessHeap(), 0, thread_data->argv );
     if( thread_data->seb ) UnmapViewOfFile( thread_data->seb );
     if( thread_data->hServiceShmem ) CloseHandle( thread_data->hServiceShmem );
@@ -434,6 +441,18 @@ start_new_service( LPSERVICE_MAIN_FUNCTIONW service_main, BOOL ascii )
         goto error;
     }
 
+    /* create service event */
+    snprintfW( object_name, MAX_PATH, szServiceAckEventNameFmtW, thread_data->service_name );
+    thread_data->ack_event = CreateEventW( NULL, FALSE, FALSE, object_name );
+    if( NULL == thread_data->ack_event )
+        goto error;
+
+    if( ERROR_ALREADY_EXISTS == GetLastError() )
+    {
+        SetLastError( ERROR_SERVICE_ALREADY_RUNNING );
+        goto error;
+    }
+
     /* create service thread in suspended state
      * to avoid race while caller handles return value */
     thread_data->service_main = service_main;
@@ -466,6 +485,7 @@ static BOOL service_ctrl_dispatcher( LPSERVICE_TABLE_ENTRYW servent, BOOL ascii 
     /* create dispatcher event object */
     /* FIXME: object_name should be based on executable image path because
      * this object is common for all services in the process */
+    /* But what if own and shared services have the same executable? */
     snprintfW( object_name, MAX_PATH, szServiceDispEventNameFmtW, service->service_name );
     dispatcher_event = CreateEventW( NULL, FALSE, FALSE, object_name );
     if( NULL == dispatcher_event )
@@ -502,7 +522,19 @@ static BOOL service_ctrl_dispatcher( LPSERVICE_TABLE_ENTRYW servent, BOOL ascii 
             break;
         }
 
-        /* FIXME: look for control requests */
+        /* look for control requests */
+        if( service->seb->control_code )
+        {
+            if( NULL == service->ctrl_handler )
+                service->seb->dispatcher_error = ERROR_SERVICE_CANNOT_ACCEPT_CTRL;
+            else
+            {
+                service->ctrl_handler( service->seb->control_code );
+                service->seb->dispatcher_error = 0;
+            }
+            service->seb->control_code = 0;
+            SetEvent( service->ack_event );
+        }
 
         /* FIXME: if shared service, check SCM lock object;
          * if exists, a new service should be started */
@@ -601,8 +633,14 @@ BOOL WINAPI UnlockServiceDatabase (LPVOID ScLock)
 SERVICE_STATUS_HANDLE WINAPI
 RegisterServiceCtrlHandlerA( LPCSTR lpServiceName,
                              LPHANDLER_FUNCTION lpfHandler )
-{	FIXME("%s %p\n", lpServiceName, lpfHandler);
-	return 0xcacacafe;
+{
+    UNICODE_STRING lpServiceNameW;
+    SERVICE_STATUS_HANDLE ret;
+
+    RtlCreateUnicodeStringFromAsciiz (&lpServiceNameW,lpServiceName);
+    ret = RegisterServiceCtrlHandlerW( lpServiceNameW.Buffer, lpfHandler );
+    RtlFreeUnicodeString(&lpServiceNameW);
+    return ret;
 }
 
 /******************************************************************************
@@ -615,8 +653,11 @@ RegisterServiceCtrlHandlerA( LPCSTR lpServiceName,
 SERVICE_STATUS_HANDLE WINAPI
 RegisterServiceCtrlHandlerW( LPCWSTR lpServiceName,
                              LPHANDLER_FUNCTION lpfHandler )
-{	FIXME("%s %p\n", debugstr_w(lpServiceName), lpfHandler);
-	return 0xcacacafe;
+{
+    /* FIXME: find service thread data by service name */
+
+    service->ctrl_handler = lpfHandler;
+    return 0xcacacafe;
 }
 
 /******************************************************************************
@@ -738,14 +779,94 @@ error:
  * RETURNS
  *   Success: TRUE.
  *   Failure: FALSE.
+ *
+ * BUGS
+ *   Unlike M$' implementation, control requests are not serialized and may be
+ *   processed asynchronously.
  */
 BOOL WINAPI ControlService( SC_HANDLE hService, DWORD dwControl,
                             LPSERVICE_STATUS lpServiceStatus )
 {
-    FIXME("(%p,%ld,%p): stub\n",hService,dwControl,lpServiceStatus);
-    return TRUE;
-}
+    struct sc_handle *hsvc = hService;
+    WCHAR object_name[ MAX_PATH ];
+    HANDLE mutex = NULL, shmem = NULL;
+    HANDLE disp_event = NULL, ack_event = NULL;
+    struct SEB *seb = NULL;
+    DWORD  r;
+    BOOL ret = FALSE, mutex_owned = FALSE;
 
+    /* open and hold mutex */
+    snprintfW( object_name, MAX_PATH, szServiceMutexNameFmtW, hsvc->u.service.name );
+    mutex = OpenMutexW( MUTEX_ALL_ACCESS, FALSE, object_name );
+    if( NULL == mutex )
+    {
+        SetLastError( ERROR_SERVICE_NOT_ACTIVE );
+        return FALSE;
+    }
+
+    r = WaitForSingleObject( mutex, 30000 );
+    if( WAIT_FAILED == r )
+        goto done;
+
+    if( WAIT_TIMEOUT == r )
+    {
+        SetLastError( ERROR_SERVICE_REQUEST_TIMEOUT );
+        goto done;
+    }
+    mutex_owned = TRUE;
+
+    /* open event objects */
+    snprintfW( object_name, MAX_PATH, szServiceDispEventNameFmtW, hsvc->u.service.name );
+    disp_event = OpenEventW( EVENT_ALL_ACCESS, FALSE, object_name );
+    if( NULL == disp_event )
+        goto done;
+
+    snprintfW( object_name, MAX_PATH, szServiceAckEventNameFmtW, hsvc->u.service.name );
+    ack_event = OpenEventW( EVENT_ALL_ACCESS, FALSE, object_name );
+    if( NULL == ack_event )
+        goto done;
+
+    /* get service environment block */
+    seb = open_seb_shmem( hsvc->u.service.name, &shmem );
+    if( NULL == seb )
+        goto done;
+
+    /* send request */
+    /* FIXME: check dwControl against controls accepted */
+    seb->control_code = dwControl;
+    SetEvent( disp_event );
+
+    /* wait for acknowledgement */
+    r = WaitForSingleObject( ack_event, 30000 );
+    if( WAIT_FAILED == r )
+        goto done;
+
+    if( WAIT_TIMEOUT == r )
+    {
+        SetLastError( ERROR_SERVICE_REQUEST_TIMEOUT );
+        goto done;
+    }
+
+    if( seb->dispatcher_error )
+    {
+        SetLastError( seb->dispatcher_error );
+        goto done;
+    }
+
+    /* get status */
+    if( lpServiceStatus )
+        memcpy( lpServiceStatus, &seb->status, sizeof(SERVICE_STATUS) );
+    ret = TRUE;
+
+done:
+    if( seb ) UnmapViewOfFile( seb );
+    if( shmem ) CloseHandle( shmem );
+    if( ack_event ) CloseHandle( ack_event );
+    if( disp_event ) CloseHandle( disp_event );
+    if( mutex_owned ) ReleaseMutex( mutex );
+    if( mutex ) CloseHandle( mutex );
+    return ret;
+}
 
 /******************************************************************************
  * CloseServiceHandle [ADVAPI32.@]
