@@ -721,7 +721,7 @@ UINT WINAPI SHMapPIDLToSystemImageListIndex(LPSHELLFOLDER sh, LPITEMIDLIST pidl,
 {
 	UINT	Index;
 
-	WARN(shell,"(SF=%p,pidl=%p,%p)\n",sh,pidl,index);
+	WARN(shell,"(SF=%p,pidl=%p,%p)\n",sh,pidl,pIndex);
 	pdump(pidl);
 	
 	if (pIndex)
