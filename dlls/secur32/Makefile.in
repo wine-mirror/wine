@@ -1,0 +1,15 @@
+TOPSRCDIR = @top_srcdir@
+TOPOBJDIR = ../..
+SRCDIR    = @srcdir@
+VPATH     = @srcdir@
+MODULE    = secur32.dll
+IMPORTS   = user32 advapi32 kernel32 ntdll
+
+C_SRCS = \
+	secur32.c \
+	thunks.c \
+	wrapper.c
+
+@MAKE_DLL_RULES@
+
+### Dependencies:

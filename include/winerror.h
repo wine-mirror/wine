@@ -1535,6 +1535,7 @@
 
 #define NOERROR                                            _HRESULT_TYPEDEF_(0L)
 #define S_OK                                               _HRESULT_TYPEDEF_(0L)
+#define SEC_E_OK                                           _HRESULT_TYPEDEF_(0L)
 #define S_FALSE                                            _HRESULT_TYPEDEF_(1L)
 
 #define E_PENDING                                          _HRESULT_TYPEDEF_(0x8000000AL)

@@ -97,6 +97,7 @@ BASEDIRS = \
 	richedit \
 	rpcrt4 \
 	rsabase \
+	secur32 \
 	serialui \
 	setupapi \
 	shdocvw \
@@ -313,6 +314,7 @@ SYMLINKS = \
 	riched32.dll$(DLLEXT) \
 	rpcrt4.dll$(DLLEXT) \
 	rsabase.dll$(DLLEXT) \
+	secur32.dll$(DLLEXT) \
 	serialui.dll$(DLLEXT) \
 	setupapi.dll$(DLLEXT) \
 	shdocvw.dll$(DLLEXT) \
@@ -694,6 +696,9 @@ rpcrt4.dll$(DLLEXT): rpcrt4/rpcrt4.dll$(DLLEXT)
 rsabase.dll$(DLLEXT): rsabase/rsabase.dll$(DLLEXT)
 	$(RM) $@ && $(LN_S) rsabase/rsabase.dll$(DLLEXT) $@
 
+secur32.dll$(DLLEXT): secur32/secur32.dll$(DLLEXT)
+	$(RM) $@ && $(LN_S) secur32/secur32.dll$(DLLEXT) $@
+
 serialui.dll$(DLLEXT): serialui/serialui.dll$(DLLEXT)
 	$(RM) $@ && $(LN_S) serialui/serialui.dll$(DLLEXT) $@
 
@@ -956,6 +961,7 @@ IMPORT_LIBS = \
 	libriched32 \
 	librpcrt4 \
 	librsabase \
+	libsecur32 \
 	libserialui \
 	libsetupapi \
 	libshdocvw \
@@ -1394,6 +1400,11 @@ librsabase.def: rsabase/rsabase.spec.def
 librsabase.a: rsabase/rsabase.spec.def
 	$(DLLTOOL) -k -l $@ -d rsabase/rsabase.spec.def
 
+libsecur32.def: secur32/secur32.spec.def
+	$(RM) $@ && $(LN_S) secur32/secur32.spec.def $@
+libsecur32.a: secur32/secur32.spec.def
+	$(DLLTOOL) -k -l $@ -d secur32/secur32.spec.def
+
 libserialui.def: serialui/serialui.spec.def
 	$(RM) $@ && $(LN_S) serialui/serialui.spec.def $@
 libserialui.a: serialui/serialui.spec.def
@@ -1634,6 +1645,7 @@ rasapi32/rasapi32.spec.def: $(WINEBUILD)
 richedit/riched32.spec.def: $(WINEBUILD)
 rpcrt4/rpcrt4.spec.def: $(WINEBUILD)
 rsabase/rsabase.spec.def: $(WINEBUILD)
+secur32/secur32.spec.def: $(WINEBUILD)
 serialui/serialui.spec.def: $(WINEBUILD)
 setupapi/setupapi.spec.def: $(WINEBUILD)
 shdocvw/shdocvw.spec.def: $(WINEBUILD)
@@ -1767,6 +1779,7 @@ rasapi32/rasapi32.dll$(DLLEXT): rasapi32
 richedit/riched32.dll$(DLLEXT): richedit
 rpcrt4/rpcrt4.dll$(DLLEXT): rpcrt4
 rsabase/rsabase.dll$(DLLEXT): rsabase
+secur32/secur32.dll$(DLLEXT): secur32
 serialui/serialui.dll$(DLLEXT): serialui
 setupapi/setupapi.dll$(DLLEXT): setupapi
 shdocvw/shdocvw.dll$(DLLEXT): shdocvw
