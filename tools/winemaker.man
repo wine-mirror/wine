@@ -13,15 +13,11 @@ winemaker \- generate a build infrastructure for compiling Windows programs on U
 ]
 .br
   [
-.IR               "--lower-include " "| " "--nolower-include "
+.IR               "--lower-include " "| " "--nolower-include " ] [ " "--mfc " "| " "--nomfc "
 ]
 .br
   [
 .IR               "--guiexe " "| " "--windows " "| " "--cuiexe " "| " "--console " "| " "--dll " "| " "--nodlls "
-]
-.br
-  [
-.IR               "--wrap " "| " "--nowrap " "] [ " "--mfc " "| " "--nomfc "
 ]
 .br
   [
@@ -33,7 +29,7 @@ winemaker \- generate a build infrastructure for compiling Windows programs on U
 ]
 .br
   [
-.IR               "--generated-files " "] [ " "--nogenerated-files " "] [ " "--nogenerated-specs "
+.IR               "--generated-files " "] [ " "--nogenerated-files " "] 
 ]
 
 .SH DESCRIPTION
@@ -129,20 +125,9 @@ The standard set of libraries is: advapi32.dll, comdlg32.dll, gdi32.dll,
 kernel32.dll, odbc32.dll, ole32.dll, oleaut32.dll, shell32.dll, user32.dll,
 winspool.drv.
 .TP
-.I --wrap
-Specifies that executable targets should be built as libraries and a small
-executable wrapper generated for them. This technique is sometimes required
-to solve initialization problems occurring on the application startup.
-.TP
-.I --nowrap
-Specifies that no wrapper should be generated for executable targets. This is
-the default.
-.TP
 .I --mfc
-Specifies that the targets are MFC based. In such a case winemaker generates a
-configure script with MFC specific options, modifies the include and
-library paths accordingly, links the target with the MFC library and
-generates wrappers for these targets that are executables.
+Specifies that the targets are MFC based. In such a case winemaker the include 
+and library paths accordingly, and links the target with the MFC library.
 .TP
 .I --nomfc
 Specifies that targets are not MFC-based. This option disables use of MFC libraries
@@ -173,17 +158,10 @@ target specific options.
 Specifies that there is only one target, and that it is called "name".
 .TP
 .I --generated-files
-Tells winemaker to generate the build infrastructure files, i.e. the spec
-files, the wrapper files, the Makefile.in files, the Make.rules.in file, the
-configure.in file and the configure script. This is the default.
+Tells winemaker to generate the build the Makefile. This is the default.
 .TP
 .I --nogenerated-files
-Tells winemaker not to generate any of the above files.
-.TP
-.I --nogenerated-specs
-Tells winemaker not to generate the spec files when generating files.  This is
-particularly useful when using winemaker to generate a build environment and
-you already have a spec file.
+Tells winemaker not to generate the Makefile.
 
 .SH EXAMPLES
 .PP
@@ -239,9 +217,6 @@ or console), which libraries it is linked with, and which functions it
 exports (for libraries). We could then restore all these settings for the
 corresponding Winelib target. The problem is that we should have such a tool
 available under the Wine license first.
-.PP
-The wrapper code should be generic, i.e. you should be able to have just one
-wrapper and specify which library to load using an option.
 .PP
 Furthermore it is not very good at finding the library containing the
 executable: it must either be in the current directory or in the
