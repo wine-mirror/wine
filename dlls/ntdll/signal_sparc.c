@@ -24,6 +24,7 @@
 
 DEFAULT_DEBUG_CHANNEL(seh);
 
+static sigset_t all_sigs;
 
 /*
  * FIXME:  All this works only on Solaris for now
@@ -325,6 +326,17 @@ static int set_handler( int sig, void (*func)() )
 }
 
 
+/***********************************************************************
+ *           SIGNAL_Unblock
+ *
+ * Unblock signals. Called from EXC_RtlRaiseException.
+ */
+void SIGNAL_Unblock( void )
+{
+    sigprocmask( SIG_UNBLOCK, &all_sigs, NULL );
+}
+
+
 /**********************************************************************
  *		SIGNAL_Init
  */
@@ -334,6 +346,8 @@ BOOL SIGNAL_Init(void)
     signal( SIGPIPE, SIG_IGN );
     /* automatic child reaping to avoid zombies */
     signal( SIGCHLD, SIG_IGN );
+
+    sigfillset( &all_sigs );
 
     if (set_handler( SIGINT,  (void (*)())int_handler  ) == -1) goto error;
     if (set_handler( SIGFPE,  (void (*)())fpe_handler  ) == -1) goto error;

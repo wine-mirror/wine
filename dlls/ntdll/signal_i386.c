@@ -346,6 +346,8 @@ typedef struct
 
 DEFAULT_DEBUG_CHANNEL(seh);
 
+static sigset_t all_sigs;
+
 
 /***********************************************************************
  *           get_trap_code
@@ -617,6 +619,17 @@ static inline DWORD get_fpu_code( const CONTEXT *context )
 }
 
 
+/***********************************************************************
+ *           SIGNAL_Unblock
+ *
+ * Unblock signals. Called from EXC_RtlRaiseException.
+ */
+void SIGNAL_Unblock( void )
+{
+    sigprocmask( SIG_UNBLOCK, &all_sigs, NULL );
+}
+
+
 /**********************************************************************
  *		do_segv
  *
@@ -840,8 +853,9 @@ static int set_handler( int sig, int have_sigaltstack, void (*func)() )
     {
         struct kernel_sigaction sig_act;
         sig_act.ksa_handler = func;
-        sig_act.ksa_flags   = SA_RESTART | SA_NOMASK;
-        sig_act.ksa_mask    = 0;
+        sig_act.ksa_flags   = SA_RESTART;
+        sig_act.ksa_mask    = (1 << (SIGINT-1)) |
+                              (1 << (SIGALRM-1));
         /* point to the top of the stack */
         sig_act.ksa_restorer = (char *)NtCurrentTeb()->signal_stack + SIGNAL_STACK_SIZE;
         return wine_sigaction( sig, &sig_act, NULL );
@@ -849,9 +863,11 @@ static int set_handler( int sig, int have_sigaltstack, void (*func)() )
 #endif  /* linux */
     sig_act.sa_handler = func;
     sigemptyset( &sig_act.sa_mask );
+    sigaddset( &sig_act.sa_mask, SIGINT );
+    sigaddset( &sig_act.sa_mask, SIGALRM );
 
 #ifdef linux
-    sig_act.sa_flags = SA_RESTART | SA_NOMASK;
+    sig_act.sa_flags = SA_RESTART;
 #elif defined (__svr4__) || defined(_SCO_DS)
     sig_act.sa_flags = SA_SIGINFO | SA_RESTART;
 #else
@@ -887,7 +903,9 @@ BOOL SIGNAL_Init(void)
 #endif  /* linux */
     }
 #endif  /* HAVE_SIGALTSTACK */
-    
+
+    sigfillset( &all_sigs );
+
     /* automatic child reaping to avoid zombies */
     signal( SIGCHLD, SIG_IGN );
 

@@ -37,6 +37,8 @@ typedef struct
 # error You must define GET_IP for this CPU
 #endif
 
+extern void SIGNAL_Unblock(void);
+
 void WINAPI EXC_RtlRaiseException( PEXCEPTION_RECORD, PCONTEXT );
 void WINAPI EXC_RtlUnwind( PEXCEPTION_FRAME, LPVOID, 
                            PEXCEPTION_RECORD, DWORD, PCONTEXT );
@@ -173,6 +175,8 @@ void WINAPI EXC_RtlRaiseException( EXCEPTION_RECORD *rec, CONTEXT *context )
     TRACE( "code=%lx flags=%lx\n", rec->ExceptionCode, rec->ExceptionFlags );
 
     if (send_debug_event( rec, TRUE, context ) == DBG_CONTINUE) return;  /* continue execution */
+
+    SIGNAL_Unblock(); /* we may be in a signal handler, and exception handlers may jump out */
 
     frame = NtCurrentTeb()->except;
     nested_frame = NULL;
