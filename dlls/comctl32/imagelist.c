@@ -76,28 +76,32 @@ static HBITMAP  hbmBackBuffer = 0;
  *     This function can NOT be used to reduce the number of images.
  */
 static VOID
-IMAGELIST_InternalExpandBitmaps (HIMAGELIST himl, INT nImageCount)
+IMAGELIST_InternalExpandBitmaps (HIMAGELIST himl, INT nImageCount, INT cx, INT cy)
 {
     HDC     hdcImageList, hdcBitmap;
     HBITMAP hbmNewBitmap;
     INT     nNewWidth, nNewCount;
 
-    TRACE("Create expanded bitmaps!\n");
+    if ((himl->cCurImage + nImageCount < himl->cMaxImage)
+        && (himl->cy >= cy))
+	return;
 
+    if (cy == 0) cy = himl->cy;
     nNewCount = himl->cCurImage + nImageCount + himl->cGrow;
     nNewWidth = nNewCount * himl->cx;
 
+    TRACE("Create expanded bitmaps : himl=%p x=%d y=%d count=%d\n", himl, nNewWidth, cy, nNewCount);
     hdcImageList = CreateCompatibleDC (0);
     hdcBitmap = CreateCompatibleDC (0);
 
     hbmNewBitmap =
-        CreateBitmap (nNewWidth, himl->cy, 1, himl->uBitsPixel, NULL);
+        CreateBitmap (nNewWidth, cy, 1, himl->uBitsPixel, NULL);
     if (hbmNewBitmap == 0)
-        ERR("creating new image bitmap!\n");
+        ERR("creating new image bitmap (x=%d y=%d)!\n", nNewWidth, cy);
 
     SelectObject (hdcImageList, himl->hbmImage);
     SelectObject (hdcBitmap, hbmNewBitmap);
-    BitBlt (hdcBitmap, 0, 0, himl->cCurImage * himl->cx, himl->cy,
+    BitBlt (hdcBitmap, 0, 0, himl->cCurImage * himl->cx, cy,
               hdcImageList, 0, 0, SRCCOPY);
 
     DeleteObject (himl->hbmImage);
@@ -105,14 +109,14 @@ IMAGELIST_InternalExpandBitmaps (HIMAGELIST himl, INT nImageCount)
 
     if (himl->hbmMask) {
         hbmNewBitmap = 
-            CreateBitmap (nNewWidth, himl->cy, 1, 1, NULL);
+            CreateBitmap (nNewWidth, cy, 1, 1, NULL);
 
         if (hbmNewBitmap == 0)
-            ERR("creating new mask bitmap!");
+            ERR("creating new mask bitmap!\n");
 
         SelectObject (hdcImageList, himl->hbmMask);
         SelectObject (hdcBitmap, hbmNewBitmap);
-        BitBlt (hdcBitmap, 0, 0, himl->cCurImage * himl->cx, himl->cy,
+        BitBlt (hdcBitmap, 0, 0, himl->cCurImage * himl->cx, cy,
                   hdcImageList, 0, 0, SRCCOPY);
         DeleteObject (himl->hbmMask);
         himl->hbmMask = hbmNewBitmap;
@@ -449,14 +453,14 @@ ImageList_Add (HIMAGELIST himl,	HBITMAP hbmImage, HBITMAP hbmMask)
     BITMAP  bmp;
     HBITMAP hOldBitmapImage, hOldBitmap;
 
+    TRACE("himl=%p hbmimage=%x hbmmask=%x\n", himl, hbmImage, hbmMask);
     if (!himl || !hbmImage)
         return -1;
 
     GetObjectA (hbmImage, sizeof(BITMAP), (LPVOID)&bmp);
     nImageCount = bmp.bmWidth / himl->cx;
 
-    if (himl->cCurImage + nImageCount >= himl->cMaxImage)
-        IMAGELIST_InternalExpandBitmaps (himl, nImageCount);
+    IMAGELIST_InternalExpandBitmaps (himl, nImageCount, bmp.bmWidth, bmp.bmHeight);
 
     nStartX = himl->cCurImage * himl->cx;
 
@@ -468,7 +472,7 @@ ImageList_Add (HIMAGELIST himl,	HBITMAP hbmImage, HBITMAP hbmMask)
 
     /* Copy result to the imagelist
     */
-    BitBlt (hdcImage, nStartX, 0, bmp.bmWidth, himl->cy,
+    BitBlt (hdcImage, nStartX, 0, bmp.bmWidth, bmp.bmHeight,
         hdcBitmap, 0, 0, SRCCOPY);
 
     if(himl->hbmMask)
@@ -481,7 +485,7 @@ ImageList_Add (HIMAGELIST himl,	HBITMAP hbmImage, HBITMAP hbmMask)
         hOldBitmapTemp = (HBITMAP) SelectObject(hdcTemp, hbmMask);
 
         BitBlt (hdcMask, 
-            nStartX, 0, bmp.bmWidth, himl->cy,
+            nStartX, 0, bmp.bmWidth, bmp.bmHeight,
             hdcTemp, 
             0, 0, 
             SRCCOPY);
@@ -492,7 +496,7 @@ ImageList_Add (HIMAGELIST himl,	HBITMAP hbmImage, HBITMAP hbmMask)
         /* Remove the background from the image
         */
         BitBlt (hdcImage, 
-            nStartX, 0, bmp.bmWidth, himl->cy,
+            nStartX, 0, bmp.bmWidth, bmp.bmHeight,
             hdcMask, 
             nStartX, 0, 
             0x220326); /* NOTSRCAND */
@@ -560,6 +564,7 @@ ImageList_AddMasked (HIMAGELIST himl, HBITMAP hBitmap, COLORREF clrMask)
     HBITMAP hMaskBitmap=0;
     COLORREF bkColor;
 
+    TRACE("himl=%p hbitmap=%x clrmask=%lx\n", himl, hBitmap, clrMask);
     if (himl == NULL)
         return -1;
 
@@ -568,10 +573,7 @@ ImageList_AddMasked (HIMAGELIST himl, HBITMAP hBitmap, COLORREF clrMask)
 
     nImageCount = bmp.bmWidth / himl->cx;
 
-    if (himl->cCurImage + nImageCount >= himl->cMaxImage)
-    {
-        IMAGELIST_InternalExpandBitmaps (himl, nImageCount);
-    }
+    IMAGELIST_InternalExpandBitmaps (himl, nImageCount, bmp.bmWidth, bmp.bmHeight);
 
     nIndex = himl->cCurImage;
     himl->cCurImage += nImageCount;
@@ -594,7 +596,7 @@ ImageList_AddMasked (HIMAGELIST himl, HBITMAP hBitmap, COLORREF clrMask)
             Create a temp Mask so we can remove the background of
             the Image (Windows does this even if there is no mask)
         */
-        hMaskBitmap = CreateBitmap(bmp.bmWidth, himl->cy, 1, 1, NULL);
+        hMaskBitmap = CreateBitmap(bmp.bmWidth, bmp.bmHeight, 1, 1, NULL);
         hOldBitmapMask = SelectObject(hdcMask, hMaskBitmap);
         nMaskXOffset = 0;
     }
@@ -603,7 +605,7 @@ ImageList_AddMasked (HIMAGELIST himl, HBITMAP hBitmap, COLORREF clrMask)
         GetPixel (hdcBitmap, 0, 0);
     SetBkColor (hdcBitmap, bkColor);
     BitBlt (hdcMask, 
-        nMaskXOffset, 0, bmp.bmWidth, himl->cy,
+        nMaskXOffset, 0, bmp.bmWidth, bmp.bmHeight,
         hdcBitmap, 0, 0, 
         SRCCOPY);
 
@@ -620,14 +622,14 @@ ImageList_AddMasked (HIMAGELIST himl, HBITMAP hBitmap, COLORREF clrMask)
         This is here in case some apps really on this bug
     */
     BitBlt(hdcBitmap, 
-        0, 0, bmp.bmWidth, himl->cy,
+        0, 0, bmp.bmWidth, bmp.bmHeight,
         hdcMask, 
         nMaskXOffset, 0, 
         0x220326); /* NOTSRCAND */
     /* Copy result to the imagelist
     */
     BitBlt (hdcImage, 
-        nIndex * himl->cx, 0, bmp.bmWidth, himl->cy,
+        nIndex * himl->cx, 0, bmp.bmWidth, bmp.bmHeight,
         hdcBitmap, 
         0, 0, 
         SRCCOPY);
@@ -931,6 +933,7 @@ ImageList_Create (INT cx, INT cy, UINT flags,
     himl->hbrBlend50 = CreatePatternBrush (hbmTemp);
     DeleteObject (hbmTemp);
 
+    TRACE("created imagelist %p\n", himl);
     return himl;
 }
 
@@ -2337,7 +2340,7 @@ ImageList_ReplaceIcon (HIMAGELIST himl, INT i, HICON hIcon)
 
     if (i == -1) {
         if (himl->cCurImage + 1 >= himl->cMaxImage)
-            IMAGELIST_InternalExpandBitmaps (himl, 1);
+            IMAGELIST_InternalExpandBitmaps (himl, 1, 0, 0);
 
         nIndex = himl->cCurImage;
         himl->cCurImage++;

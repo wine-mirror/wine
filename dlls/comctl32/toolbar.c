@@ -1017,6 +1017,7 @@ TOOLBAR_AddBitmap (HWND hwnd, WPARAM wParam, LPARAM lParam)
     INT nIndex = 0, nButtons, nCount;
     HBITMAP hbmLoad;
 
+    TRACE("hwnd=%x wParam=%x lParam=%lx\n", hwnd, wParam, lParam);
     if (!lpAddBmp)
 	return -1;
 
@@ -1482,7 +1483,7 @@ TOOLBAR_AutoSize (HWND hwnd)
     INT  cx, cy;
     UINT uPosFlags = SWP_NOZORDER;
 
-    TRACE("resize forced!\n");
+    TRACE("resize forced, style=%lx!\n", dwStyle);
 
     parent = GetParent (hwnd);
     GetClientRect(parent, &parent_rect);
@@ -2612,13 +2613,20 @@ TOOLBAR_SetBitmapSize (HWND hwnd, WPARAM wParam, LPARAM lParam)
     if ((LOWORD(lParam) <= 0) || (HIWORD(lParam)<=0))
 	return FALSE;
 
-    /* Bitmap size can only be set before adding any button to the toolbar
-       according to the documentation.  */
-    if( infoPtr->nNumButtons != 0 )
-        return FALSE;
+    if (infoPtr->nNumButtons > 0)
+        WARN("%d buttons, undoc increase to bitmap size : %d-%d -> %d-%d\n",
+             infoPtr->nNumButtons,
+             infoPtr->nBitmapWidth, infoPtr->nBitmapHeight,
+             LOWORD(lParam), HIWORD(lParam));
 
     infoPtr->nBitmapWidth = (INT)LOWORD(lParam);
     infoPtr->nBitmapHeight = (INT)HIWORD(lParam);
+
+    /* uses image list internals directly */
+    if (infoPtr->himlDef) {
+        infoPtr->himlDef->cx = infoPtr->nBitmapWidth;
+        infoPtr->himlDef->cy = infoPtr->nBitmapHeight;
+    }
 
     return TRUE;
 }
