@@ -398,7 +398,7 @@ BOOL16 WINAPI GetVersionEx16(OSVERSIONINFO16 *v)
     WINDOWS_VERSION ver = VERSION_GetVersion();
     if (v->dwOSVersionInfoSize != sizeof(OSVERSIONINFO16))
     {
-        WARN("wrong OSVERSIONINFO size from app");
+        WARN("wrong OSVERSIONINFO size from app\n");
         SetLastError(ERROR_INSUFFICIENT_BUFFER);
         return FALSE;
     }
@@ -419,7 +419,7 @@ BOOL WINAPI GetVersionExA(OSVERSIONINFOA *v)
     WINDOWS_VERSION ver = VERSION_GetVersion();
     if (v->dwOSVersionInfoSize != sizeof(OSVERSIONINFOA))
     {
-        WARN("wrong OSVERSIONINFO size from app (got: %ld, expected: %d)",
+        WARN("wrong OSVERSIONINFO size from app (got: %ld, expected: %d)\n",
                         v->dwOSVersionInfoSize, sizeof(OSVERSIONINFOA));
         SetLastError(ERROR_INSUFFICIENT_BUFFER);
         return FALSE;
@@ -442,7 +442,7 @@ BOOL WINAPI GetVersionExW(OSVERSIONINFOW *v)
 
     if (v->dwOSVersionInfoSize!=sizeof(OSVERSIONINFOW))
     {
-        WARN("wrong OSVERSIONINFO size from app (got: %ld, expected: %d)",
+        WARN("wrong OSVERSIONINFO size from app (got: %ld, expected: %d)\n",
 			v->dwOSVersionInfoSize, sizeof(OSVERSIONINFOW));
         SetLastError(ERROR_INSUFFICIENT_BUFFER);
         return FALSE;
