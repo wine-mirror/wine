@@ -36,6 +36,7 @@
 #include "wine/winbase16.h"
 #include "wine/winuser16.h"
 #include "ntstatus.h"
+#include "winioctl.h"
 #include "thread.h"
 #include "module.h"
 #include "kernel_private.h"
@@ -305,13 +306,14 @@ static BOOL find_exe_file( const WCHAR *name, WCHAR *buffer, int buflen, HANDLE 
  */
 static HMODULE load_pe_exe( const WCHAR *name, HANDLE file )
 {
+    IO_STATUS_BLOCK io;
+    FILE_FS_DEVICE_INFORMATION device_info;
     IMAGE_NT_HEADERS *nt;
     HANDLE mapping;
     void *module;
     OBJECT_ATTRIBUTES attr;
     LARGE_INTEGER size;
     DWORD len = 0;
-    UINT drive_type;
 
     attr.Length                   = sizeof(attr);
     attr.RootDirectory            = 0;
@@ -342,12 +344,15 @@ static HMODULE load_pe_exe( const WCHAR *name, HANDLE file )
                     debugstr_w(name), nt->OptionalHeader.AddressOfEntryPoint );
     }
 
-    drive_type = GetDriveTypeW( name );
-    /* don't keep the file handle open on removable media */
-    if (drive_type == DRIVE_REMOVABLE || drive_type == DRIVE_CDROM)
+    if (NtQueryVolumeInformationFile( file, &io, &device_info, sizeof(device_info),
+                                      FileFsDeviceInformation ) == STATUS_SUCCESS)
     {
-        CloseHandle( main_exe_file );
-        main_exe_file = 0;
+        /* don't keep the file handle open on removable media */
+        if (device_info.Characteristics & FILE_REMOVABLE_MEDIA)
+        {
+            CloseHandle( main_exe_file );
+            main_exe_file = 0;
+        }
     }
 
     return module;
