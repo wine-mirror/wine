@@ -225,16 +225,21 @@ NC_AdjustRectInner95 (LPRECT16 rect, DWORD style, DWORD exStyle)
  *     lpRect [I]
  *     uFlags [I]
  *
+ * RETURNS
+ *     Success:
+ *     Failure:
  */
 
 BOOL16 WINAPI
-DrawCaption16 (HWND16 hwnd, HDC16 hdc, const RECT16 *lpRect, UINT16 uFlags)
+DrawCaption16 (HWND16 hwnd, HDC16 hdc, const RECT16 *rect, UINT16 uFlags)
 {
-    FIXME (nonclient, " stub!\n");
+    RECT32 rect32;
 
-//    return DrawCaptionTemp32A (hwnd, hdc, lpRect, 0, 0, NULL, uFlags & 0x1F);
+    if (rect)
+	CONV_RECT16TO32 (rect, &rect32);
 
-    return 0;
+    return (BOOL16)DrawCaptionTemp32A (hwnd, hdc, rect ? &rect32 : NULL,
+				       0, 0, NULL, uFlags & 0x1F);
 }
 
 
@@ -247,6 +252,9 @@ DrawCaption16 (HWND16 hwnd, HDC16 hdc, const RECT16 *lpRect, UINT16 uFlags)
  *     lpRect [I]
  *     uFlags [I]
  *
+ * RETURNS
+ *     Success:
+ *     Failure:
  */
 
 BOOL32 WINAPI
@@ -259,23 +267,35 @@ DrawCaption32 (HWND32 hwnd, HDC32 hdc, const RECT32 *lpRect, UINT32 uFlags)
 /***********************************************************************
  * DrawCaptionTemp16 [USER.657]
  *
+ * PARAMS
+ *
+ * RETURNS
+ *     Success:
+ *     Failure:
  */
 
 BOOL16 WINAPI
 DrawCaptionTemp16 (HWND16 hwnd, HDC16 hdc, const RECT16 *rect, HFONT16 hFont,
 		   HICON16 hIcon, LPCSTR str, UINT16 uFlags)
 {
-    FIXME (nonclient, " stub!\n");
+    RECT32 rect32;
 
-//    return DrawCaptionTemp32A (hwnd, hdc, lpRect, 0, 0, NULL, uFlags & 0x1F);
+    if (rect)
+	CONV_RECT16TO32(rect,&rect32);
 
-    return 0;
+    return (BOOL16)DrawCaptionTemp32A (hwnd, hdc, rect?&rect32:NULL, hFont,
+				       hIcon, str, uFlags & 0x1F);
 }
 
 
 /***********************************************************************
  * DrawCaptionTemp32A [USER32.599]
  *
+ * PARAMS
+ *
+ * RETURNS
+ *     Success:
+ *     Failure:
  */
 
 BOOL32 WINAPI
@@ -384,6 +404,11 @@ DrawCaptionTemp32A (HWND32 hwnd, HDC32 hdc, const RECT32 *rect, HFONT32 hFont,
 /***********************************************************************
  * DrawCaptionTemp32W [USER32.602]
  *
+ * PARAMS
+ *
+ * RETURNS
+ *     Success:
+ *     Failure:
  */
 
 BOOL32 WINAPI
@@ -987,11 +1012,9 @@ NC_DrawSysButton95 (HWND32 hwnd, HDC32 hdc, BOOL32 down)
 	    hIcon = wndPtr->class->hIconSm;
 	else if (wndPtr->class->hIcon)
 	    hIcon = wndPtr->class->hIcon;
-//	else
-//	    hIcon = LoadIcon32A (0, IDI_APPLICATION);
 
 	if (hIcon)
-	    DrawIconEx32 (hdc, rect.left + 2, rect.top + 1, hIcon,
+	    DrawIconEx32 (hdc, rect.left + 2, rect.top + 2, hIcon,
 			  sysMetrics[SM_CXSMICON],
 			  sysMetrics[SM_CYSMICON],
 			  0, 0, DI_NORMAL);
@@ -1396,10 +1419,10 @@ static void NC_DrawCaption( HDC32 hdc, RECT32 *rect, HWND32 hwnd,
  *
  *   NC_DrawCaption95(
  *      HDC32  hdc,
- *      RECT32  *rect,
- *      HWND32  hwnd,
+ *      RECT32 *rect,
+ *      HWND32 hwnd,
  *      DWORD  style,
- *      BOOL32  active )
+ *      BOOL32 active )
  *
  *   Draw the window caption for Win95 style windows.
  *   The correct pen for the window frame must be selected in the DC.
@@ -1660,8 +1683,8 @@ void  NC_DoNCPaint95(
 		r.bottom = rect.top + sysMetrics[SM_CYCAPTION];
 		rect.top += sysMetrics[SM_CYCAPTION];
 	    }
-            NC_DrawCaption95( hdc, &r, hwnd, wndPtr->dwStyle,
-                              wndPtr->dwExStyle,active );
+            NC_DrawCaption95 (hdc, &r, hwnd, wndPtr->dwStyle,
+                              wndPtr->dwExStyle, active);
         }
     }
 
