@@ -443,6 +443,41 @@ static LRESULT WINAPI main_window_procA(HWND hwnd, UINT msg, WPARAM wparam, LPAR
 	    SetWindowLongA(hwnd, GWL_USERDATA, 0x20031021);
 	    break;
 	}
+	case WM_WINDOWPOSCHANGING:
+	{
+	    BOOL is_win9x = GetWindowLongW(hwnd, GWL_WNDPROC) == 0;
+	    WINDOWPOS *winpos = (WINDOWPOS *)lparam;
+	    trace("main: WM_WINDOWPOSCHANGING\n");
+	    trace("%p after %p, x %d, y %d, cx %d, cy %d flags %08x\n",
+		   winpos->hwnd, winpos->hwndInsertAfter,
+		   winpos->x, winpos->y, winpos->cx, winpos->cy, winpos->flags);
+	    if (!(winpos->flags & SWP_NOMOVE))
+	    {
+		ok(winpos->x >= -32768 && winpos->x <= 32767, "bad winpos->x %d\n", winpos->x);
+		ok(winpos->y >= -32768 && winpos->y <= 32767, "bad winpos->y %d\n", winpos->y);
+	    }
+	    /* Win9x does not fixup cx/xy for WM_WINDOWPOSCHANGING */
+	    if (!(winpos->flags & SWP_NOSIZE) && !is_win9x)
+	    {
+		ok(winpos->cx >= 0 && winpos->cx <= 32767, "bad winpos->cx %d\n", winpos->cx);
+		ok(winpos->cy >= 0 && winpos->cy <= 32767, "bad winpos->cy %d\n", winpos->cy);
+	    }
+	    break;
+	}
+	case WM_WINDOWPOSCHANGED:
+	{
+	    WINDOWPOS *winpos = (WINDOWPOS *)lparam;
+	    trace("main: WM_WINDOWPOSCHANGED\n");
+	    trace("%p after %p, x %d, y %d, cx %d, cy %d flags %08x\n",
+		   winpos->hwnd, winpos->hwndInsertAfter,
+		   winpos->x, winpos->y, winpos->cx, winpos->cy, winpos->flags);
+	    ok(winpos->x >= -32768 && winpos->x <= 32767, "bad winpos->x %d\n", winpos->x);
+	    ok(winpos->y >= -32768 && winpos->y <= 32767, "bad winpos->y %d\n", winpos->y);
+
+	    ok(winpos->cx >= 0 && winpos->cx <= 32767, "bad winpos->cx %d\n", winpos->cx);
+	    ok(winpos->cy >= 0 && winpos->cy <= 32767, "bad winpos->cy %d\n", winpos->cy);
+	    break;
+	}
 	case WM_NCCREATE:
 	{
 	    BOOL got_getminmaxinfo = GetWindowLongA(hwnd, GWL_USERDATA) == 0x20031021;
@@ -1131,6 +1166,15 @@ static void test_icons(void)
     ok( res == icon2, "wrong big icon after set %p/%p\n", res, icon2 );
 }
 
+static void test_SetWindowPos(HWND hwnd)
+{
+    SetWindowPos(hwnd, 0, -32769, -40000, -32769, -90000, SWP_NOMOVE);
+    SetWindowPos(hwnd, 0, 32768, 40000, 32768, 40000, SWP_NOMOVE);
+
+    SetWindowPos(hwnd, 0, -32769, -40000, -32769, -90000, SWP_NOSIZE);
+    SetWindowPos(hwnd, 0, 32768, 40000, 32768, 40000, SWP_NOSIZE);
+}
+
 START_TEST(win)
 {
     pGetAncestor = (void *)GetProcAddress( GetModuleHandleA("user32.dll"), "GetAncestor" );
@@ -1158,6 +1202,7 @@ START_TEST(win)
 
     test_mdi();
     test_icons();
+    test_SetWindowPos(hwndMain);
 
     UnhookWindowsHookEx(hhook);
 }

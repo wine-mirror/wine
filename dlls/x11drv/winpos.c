@@ -720,15 +720,23 @@ static BOOL fixup_flags( WINDOWPOS *winpos )
     }
     winpos->hwnd = wndPtr->hwndSelf;  /* make it a full handle */
 
+    /* Finally make sure that all coordinates are valid */
+    if (winpos->x < -32768) winpos->x = -32768;
+    else if (winpos->x > 32767) winpos->x = 32767;
+    if (winpos->y < -32768) winpos->y = -32768;
+    else if (winpos->y > 32767) winpos->y = 32767;
+
+    if (winpos->cx < 0) winpos->cx = 0;
+    else if (winpos->cx > 32767) winpos->cx = 32767;
+    if (winpos->cy < 0) winpos->cy = 0;
+    else if (winpos->cy > 32767) winpos->cy = 32767;
+
     if (wndPtr->dwStyle & WS_VISIBLE) winpos->flags &= ~SWP_SHOWWINDOW;
     else
     {
         winpos->flags &= ~SWP_HIDEWINDOW;
         if (!(winpos->flags & SWP_SHOWWINDOW)) winpos->flags |= SWP_NOREDRAW;
     }
-
-    if (winpos->cx < 0) winpos->cx = 0;
-    if (winpos->cy < 0) winpos->cy = 0;
 
     if ((wndPtr->rectWindow.right - wndPtr->rectWindow.left == winpos->cx) &&
         (wndPtr->rectWindow.bottom - wndPtr->rectWindow.top == winpos->cy))
@@ -913,6 +921,22 @@ BOOL X11DRV_SetWindowPos( WINDOWPOS *winpos )
 
     /* Check window handle */
     if (winpos->hwnd == GetDesktopWindow()) return FALSE;
+
+    /* First make sure that coordinates are valid for WM_WINDOWPOSCHANGING */
+    if (!(winpos->flags & SWP_NOMOVE))
+    {
+        if (winpos->x < -32768) winpos->x = -32768;
+        else if (winpos->x > 32767) winpos->x = 32767;
+        if (winpos->y < -32768) winpos->y = -32768;
+        else if (winpos->y > 32767) winpos->y = 32767;
+    }
+    if (!(winpos->flags & SWP_NOSIZE))
+    {
+        if (winpos->cx < 0) winpos->cx = 0;
+        else if (winpos->cx > 32767) winpos->cx = 32767;
+        if (winpos->cy < 0) winpos->cy = 0;
+        else if (winpos->cy > 32767) winpos->cy = 32767;
+    }
 
     if (!SWP_DoWinPosChanging( winpos, &newWindowRect, &newClientRect )) return FALSE;
 
