@@ -147,7 +147,22 @@ DWORD	VFWAPIV	ICDrawBegin32(
 }
 
 HANDLE32 /* HDRAWDIB */ WINAPI
-DrawDibOpen32() {
+DrawDibOpen32( void ) {
 	FIXME(mmsys,"stub!\n");
+	return 0;
+}
+HWND32 VFWAPIV MCIWndCreate32 (HWND32 hwndParent, HINSTANCE32 hInstance,
+                      DWORD dwStyle,LPVOID szFile)
+{	FIXME(mmsys,"%x %x %lx %p\n",hwndParent, hInstance, dwStyle, szFile);
+	return 0;
+}
+HWND32 VFWAPIV MCIWndCreate32A(HWND32 hwndParent, HINSTANCE32 hInstance,
+                      DWORD dwStyle,LPCSTR szFile)
+{	FIXME(mmsys,"%x %x %lx %s\n",hwndParent, hInstance, dwStyle, szFile);
+	return 0;
+}
+HWND32 VFWAPIV MCIWndCreate32W(HWND32 hwndParent, HINSTANCE32 hInstance,
+                      DWORD dwStyle,LPCWSTR szFile)
+{	FIXME(mmsys,"%x %x %lx %s\n",hwndParent, hInstance, dwStyle, debugstr_w(szFile));
 	return 0;
 }

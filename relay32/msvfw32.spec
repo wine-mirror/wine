@@ -43,9 +43,9 @@ type	win32
  41 stub    ICSeqCompressFrame
  42 stub    ICSeqCompressFrameEnd
  43 stub    ICSeqCompressFrameStart
- 44 stub    MCIWndCreate
- 45 stub    MCIWndCreateA
- 46 stub    MCIWndCreateW
+ 44 stdcall MCIWndCreate (long long long ptr) MCIWndCreate32
+ 45 stdcall MCIWndCreateA (long long long str) MCIWndCreate32A
+ 46 stdcall MCIWndCreateW (long long long wstr) MCIWndCreate32W
  47 stub    MCIWndRegisterClass
  48 stub    StretchDIB
  49 stub    ls_ThunkData32
