@@ -821,7 +821,7 @@ BOOL WINAPI ReplyMessage( LRESULT result )
     LeaveCriticalSection(&senderQ->cSection);
 
     /* switch directly to sending task (16 bit thread only) */
-    if (THREAD_IsWin16( THREAD_Current() ))
+    if ( THREAD_IsWin16( THREAD_Current() ) && THREAD_IsWin16( senderQ->thdb ) )
         DirectedYield16( senderQ->thdb->teb.htask16 );
 
     ret = TRUE;
