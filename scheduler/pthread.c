@@ -31,6 +31,7 @@ struct _pthread_cleanup_buffer;
 #include <assert.h>
 #include <errno.h>
 #include <stdlib.h>
+#include <setjmp.h>
 #ifdef HAVE_UNISTD_H
 # include <unistd.h>
 #endif
@@ -55,6 +56,8 @@ struct _pthread_cleanup_buffer;
 #include <pthread.h>
 #include <signal.h>
 
+#define P_OUTPUT(stuff) write(2,stuff,strlen(stuff))
+
 #define PSTR(str) __ASM_NAME(#str)
 
 /* adapt as necessary (a construct like this is used in glibc sources) */
@@ -62,10 +65,76 @@ struct _pthread_cleanup_buffer;
  asm(".globl " PSTR(alias) "\n" \
      "\t.set " PSTR(alias) "," PSTR(orig))
 
+#define FIRST_KEY 0
+#define MAX_KEYS 16 /* libc6 doesn't use that many, but... */
+#define MAX_TSD  16
+
+struct fork_block;
+
+struct pthread_descr_struct
+{
+    char        dummy[256];
+    const void *key_data[MAX_KEYS];  /* for normal pthread keys */
+    const void *tsd_data[MAX_TSD];   /* for libc internal tsd variables */
+};
+
+typedef struct pthread_descr_struct *pthread_descr;
+
+struct pthread_functions
+{
+  pid_t (*ptr_pthread_fork) (struct fork_block *);
+  int (*ptr_pthread_attr_destroy) (pthread_attr_t *);
+  int (*ptr___pthread_attr_init_2_0) (pthread_attr_t *);
+  int (*ptr___pthread_attr_init_2_1) (pthread_attr_t *);
+  int (*ptr_pthread_attr_getdetachstate) (const pthread_attr_t *, int *);
+  int (*ptr_pthread_attr_setdetachstate) (pthread_attr_t *, int);
+  int (*ptr_pthread_attr_getinheritsched) (const pthread_attr_t *, int *);
+  int (*ptr_pthread_attr_setinheritsched) (pthread_attr_t *, int);
+  int (*ptr_pthread_attr_getschedparam) (const pthread_attr_t *, struct sched_param *);
+  int (*ptr_pthread_attr_setschedparam) (pthread_attr_t *, const struct sched_param *);
+  int (*ptr_pthread_attr_getschedpolicy) (const pthread_attr_t *, int *);
+  int (*ptr_pthread_attr_setschedpolicy) (pthread_attr_t *, int);
+  int (*ptr_pthread_attr_getscope) (const pthread_attr_t *, int *);
+  int (*ptr_pthread_attr_setscope) (pthread_attr_t *, int);
+  int (*ptr_pthread_condattr_destroy) (pthread_condattr_t *);
+  int (*ptr_pthread_condattr_init) (pthread_condattr_t *);
+  int (*ptr___pthread_cond_broadcast) (pthread_cond_t *);
+  int (*ptr___pthread_cond_destroy) (pthread_cond_t *);
+  int (*ptr___pthread_cond_init) (pthread_cond_t *, const pthread_condattr_t *);
+  int (*ptr___pthread_cond_signal) (pthread_cond_t *);
+  int (*ptr___pthread_cond_wait) (pthread_cond_t *, pthread_mutex_t *);
+  int (*ptr_pthread_equal) (pthread_t, pthread_t);
+  void (*ptr___pthread_exit) (void *);
+  int (*ptr_pthread_getschedparam) (pthread_t, int *, struct sched_param *);
+  int (*ptr_pthread_setschedparam) (pthread_t, int, const struct sched_param *);
+  int (*ptr_pthread_mutex_destroy) (pthread_mutex_t *);
+  int (*ptr_pthread_mutex_init) (pthread_mutex_t *, const pthread_mutexattr_t *);
+  int (*ptr_pthread_mutex_lock) (pthread_mutex_t *);
+  int (*ptr_pthread_mutex_trylock) (pthread_mutex_t *);
+  int (*ptr_pthread_mutex_unlock) (pthread_mutex_t *);
+  pthread_t (*ptr_pthread_self) (void);
+  int (*ptr_pthread_setcancelstate) (int, int *);
+  int (*ptr_pthread_setcanceltype) (int, int *);
+  void (*ptr_pthread_do_exit) (void *retval, char *currentframe);
+  void (*ptr_pthread_cleanup_upto) (jmp_buf target, char *targetframe);
+  pthread_descr (*ptr_pthread_thread_self) (void);
+  int (*ptr_pthread_internal_tsd_set) (int key, const void *pointer);
+  void * (*ptr_pthread_internal_tsd_get) (int key);
+  void ** __attribute__ ((__const__)) (*ptr_pthread_internal_tsd_address) (int key);
+  int (*ptr_pthread_sigaction) (int sig, const struct sigaction * act, struct sigaction *oact);
+  int (*ptr_pthread_sigwait) (const sigset_t *set, int *sig);
+  int (*ptr_pthread_raise) (int sig);
+};
+
+static struct pthread_functions wine_pthread_functions;
+static struct pthread_descr_struct initial_descr;
 static int init_done;
 
 static pid_t (*libc_fork)(void);
 static int (*libc_sigaction)(int signum, const struct sigaction *act, struct sigaction *oldact);
+static int (*libc_uselocale)(int set);
+static int *(*libc_pthread_init)( const struct pthread_functions *funcs );
+static int *libc_multiple_threads;
 
 void PTHREAD_init_done(void)
 {
@@ -74,6 +143,32 @@ void PTHREAD_init_done(void)
     if (!libc_sigaction) libc_sigaction = dlsym( RTLD_NEXT, "sigaction" );
 }
 
+void PTHREAD_init_thread(void)
+{
+    static int first = 1;
+
+    if (first)
+    {
+        first = 0;
+        NtCurrentTeb()->pthread_data = &initial_descr;
+        libc_uselocale = dlsym( RTLD_NEXT, "uselocale" );
+        libc_pthread_init = dlsym( RTLD_NEXT, "__libc_pthread_init" );
+        if (libc_pthread_init) libc_multiple_threads = libc_pthread_init( &wine_pthread_functions );
+    }
+    else
+    {
+        struct pthread_descr_struct *descr = calloc( 1, sizeof(*descr) );
+        NtCurrentTeb()->pthread_data = descr;
+        if (libc_multiple_threads) *libc_multiple_threads = 1;
+    }
+    if (libc_uselocale) libc_uselocale( -1 /*LC_GLOBAL_LOCALE*/ );
+}
+
+/* redefine this to prevent libpthread from overriding our function pointers */
+int *__libc_pthread_init( const struct pthread_functions *funcs )
+{
+    return libc_multiple_threads;
+}
 
 /* NOTE: This is a truly extremely incredibly ugly hack!
  * But it does seem to work... */
@@ -83,7 +178,11 @@ void PTHREAD_init_done(void)
  * (never checks what's in it)
  * also: assume that static initializer sets pointer to NULL
  */
-typedef struct {
+typedef struct
+{
+#ifdef __GLIBC__
+  int reserved;
+#endif
   CRITICAL_SECTION *critsect;
 } *wine_mutex;
 
@@ -97,16 +196,17 @@ typedef struct _wine_cleanup {
   void *arg;
 } *wine_cleanup;
 
-typedef const void *key_data;
-
-#define FIRST_KEY 0
-#define MAX_KEYS 16 /* libc6 doesn't use that many, but... */
-
-#define P_OUTPUT(stuff) write(2,stuff,strlen(stuff))
-
 void __pthread_initialize(void)
 {
 }
+
+pthread_descr __pthread_thread_self(void)
+{
+    struct pthread_descr_struct *descr = NtCurrentTeb()->pthread_data;
+    if (!descr) return &initial_descr;
+    return descr;
+}
+strong_alias(__pthread_thread_self, pthread_thread_self);
 
 struct pthread_thread_init {
 	 void* (*start_routine)(void*);
@@ -348,6 +448,7 @@ int __pthread_mutex_destroy(pthread_mutex_t *mutex)
   }
   RtlDeleteCriticalSection(((wine_mutex)mutex)->critsect);
   HeapFree(GetProcessHeap(), 0, ((wine_mutex)mutex)->critsect);
+  ((wine_mutex)mutex)->critsect = NULL;
   return 0;
 }
 strong_alias(__pthread_mutex_destroy, pthread_mutex_destroy);
@@ -413,23 +514,39 @@ strong_alias(__pthread_key_delete, pthread_key_delete);
 
 int __pthread_setspecific(pthread_key_t key, const void *pointer)
 {
-  TEB *teb = NtCurrentTeb();
-  if (!teb->pthread_data) {
-    teb->pthread_data = calloc(MAX_KEYS,sizeof(key_data));
-  }
-  ((key_data*)(teb->pthread_data))[key] = pointer;
-  return 0;
+    pthread_descr descr = __pthread_thread_self();
+    descr->key_data[key] = pointer;
+    return 0;
 }
 strong_alias(__pthread_setspecific, pthread_setspecific);
 
 void *__pthread_getspecific(pthread_key_t key)
 {
-  TEB *teb = NtCurrentTeb();
-  if (!teb) return NULL;
-  if (!teb->pthread_data) return NULL;
-  return (void *)(((key_data*)(teb->pthread_data))[key]);
+    pthread_descr descr = __pthread_thread_self();
+    return (void *)descr->key_data[key];
 }
 strong_alias(__pthread_getspecific, pthread_getspecific);
+
+/* these are not exported, they are only used in the pthread_functions structure */
+
+static int pthread_internal_tsd_set( int key, const void *pointer )
+{
+    pthread_descr descr = __pthread_thread_self();
+    descr->tsd_data[key] = pointer;
+    return 0;
+}
+
+static void *pthread_internal_tsd_get( int key )
+{
+    pthread_descr descr = __pthread_thread_self();
+    return (void *)descr->tsd_data[key];
+}
+
+static void ** __attribute__((const)) pthread_internal_tsd_address( int key )
+{
+    pthread_descr descr = __pthread_thread_self();
+    return (void **)&descr->tsd_data[key];
+}
 
 
 /***** "EXCEPTION" FRAMES *****/
@@ -456,45 +573,55 @@ void _pthread_cleanup_pop_restore(struct _pthread_cleanup_buffer *buffer, int ex
   _pthread_cleanup_pop(buffer, execute);
 }
 
+void __pthread_cleanup_upto(jmp_buf target, char *frame)
+{
+    /* FIXME */
+}
 
 /***** CONDITIONS *****/
 /* not implemented right now */
 
-int pthread_cond_init(pthread_cond_t *cond, const pthread_condattr_t *cond_attr)
+int __pthread_cond_init(pthread_cond_t *cond, const pthread_condattr_t *cond_attr)
 {
   P_OUTPUT("FIXME:pthread_cond_init\n");
   return 0;
 }
+strong_alias(__pthread_cond_init, pthread_cond_init);
 
-int pthread_cond_destroy(pthread_cond_t *cond)
+int __pthread_cond_destroy(pthread_cond_t *cond)
 {
   P_OUTPUT("FIXME:pthread_cond_destroy\n");
   return 0;
 }
+strong_alias(__pthread_cond_destroy, pthread_cond_destroy);
 
-int pthread_cond_signal(pthread_cond_t *cond)
+int __pthread_cond_signal(pthread_cond_t *cond)
 {
   P_OUTPUT("FIXME:pthread_cond_signal\n");
   return 0;
 }
+strong_alias(__pthread_cond_signal, pthread_cond_signal);
 
-int pthread_cond_broadcast(pthread_cond_t *cond)
+int __pthread_cond_broadcast(pthread_cond_t *cond)
 {
   P_OUTPUT("FIXME:pthread_cond_broadcast\n");
   return 0;
 }
+strong_alias(__pthread_cond_broadcast, pthread_cond_broadcast);
 
-int pthread_cond_wait(pthread_cond_t *cond, pthread_mutex_t *mutex)
+int __pthread_cond_wait(pthread_cond_t *cond, pthread_mutex_t *mutex)
 {
   P_OUTPUT("FIXME:pthread_cond_wait\n");
   return 0;
 }
+strong_alias(__pthread_cond_wait, pthread_cond_wait);
 
-int pthread_cond_timedwait(pthread_cond_t *cond, pthread_mutex_t *mutex, const struct timespec *abstime)
+int __pthread_cond_timedwait(pthread_cond_t *cond, pthread_mutex_t *mutex, const struct timespec *abstime)
 {
   P_OUTPUT("FIXME:pthread_cond_timedwait\n");
   return 0;
 }
+strong_alias(__pthread_cond_timedwait, pthread_cond_timedwait);
 
 /**** CONDITION ATTRIBUTES *****/
 /* not implemented right now */
@@ -638,11 +765,17 @@ int pthread_equal(pthread_t thread1, pthread_t thread2)
   return (DWORD)thread1 == (DWORD)thread2;
 }
 
-void pthread_exit(void *retval)
+void __pthread_do_exit(void *retval, char *currentframe)
 {
   /* FIXME: pthread cleanup */
   ExitThread((DWORD)retval);
 }
+
+void __pthread_exit(void *retval)
+{
+    __pthread_do_exit( retval, NULL );
+}
+strong_alias(__pthread_exit, pthread_exit);
 
 int pthread_setcanceltype(int type, int *oldtype)
 {
@@ -662,6 +795,52 @@ int sigaction(int signum, const struct sigaction *act, struct sigaction *oldact)
     }
     return libc_sigaction(signum, act, oldact);
 }
+
+static struct pthread_functions wine_pthread_functions =
+{
+    NULL,                          /* ptr_pthread_fork */
+    NULL, /* FIXME */              /* ptr_pthread_attr_destroy */
+    NULL, /* FIXME */              /* ptr___pthread_attr_init_2_0 */
+    NULL, /* FIXME */              /* ptr___pthread_attr_init_2_1 */
+    NULL, /* FIXME */              /* ptr_pthread_attr_getdetachstate */
+    NULL, /* FIXME */              /* ptr_pthread_attr_setdetachstate */
+    NULL, /* FIXME */              /* ptr_pthread_attr_getinheritsched */
+    NULL, /* FIXME */              /* ptr_pthread_attr_setinheritsched */
+    NULL, /* FIXME */              /* ptr_pthread_attr_getschedparam */
+    pthread_attr_setschedparam,    /* ptr_pthread_attr_setschedparam */
+    NULL, /* FIXME */              /* ptr_pthread_attr_getschedpolicy) (const pthread_attr_t *, int *); */
+    NULL, /* FIXME */              /* ptr_pthread_attr_setschedpolicy) (pthread_attr_t *, int); */
+    NULL, /* FIXME */              /* ptr_pthread_attr_getscope) (const pthread_attr_t *, int *); */
+    NULL, /* FIXME */              /* ptr_pthread_attr_setscope) (pthread_attr_t *, int); */
+    pthread_condattr_destroy,      /* ptr_pthread_condattr_destroy */
+    pthread_condattr_init,         /* ptr_pthread_condattr_init */
+    __pthread_cond_broadcast,      /* ptr___pthread_cond_broadcast */
+    __pthread_cond_destroy,        /* ptr___pthread_cond_destroy */
+    __pthread_cond_init,           /* ptr___pthread_cond_init */
+    __pthread_cond_signal,         /* ptr___pthread_cond_signal */
+    __pthread_cond_wait,           /* ptr___pthread_cond_wait */
+    pthread_equal,                 /* ptr_pthread_equal */
+    __pthread_exit,                /* ptr___pthread_exit */
+    NULL, /* FIXME */              /* ptr_pthread_getschedparam */
+    NULL, /* FIXME */              /* ptr_pthread_setschedparam */
+    __pthread_mutex_destroy,       /* ptr_pthread_mutex_destroy */
+    __pthread_mutex_init,          /* ptr_pthread_mutex_init */
+    __pthread_mutex_lock,          /* ptr_pthread_mutex_lock */
+    __pthread_mutex_trylock,       /* ptr_pthread_mutex_trylock */
+    __pthread_mutex_unlock,        /* ptr_pthread_mutex_unlock */
+    pthread_self,                  /* ptr_pthread_self */
+    NULL, /* FIXME */              /* ptr_pthread_setcancelstate */
+    pthread_setcanceltype,         /* ptr_pthread_setcanceltype */
+    __pthread_do_exit,             /* ptr_pthread_do_exit */
+    __pthread_cleanup_upto,        /* ptr_pthread_cleanup_upto */
+    __pthread_thread_self,         /* ptr_pthread_thread_self */
+    pthread_internal_tsd_set,      /* ptr_pthread_internal_tsd_set */
+    pthread_internal_tsd_get,      /* ptr_pthread_internal_tsd_get */
+    pthread_internal_tsd_address,  /* ptr_pthread_internal_tsd_address */
+    NULL,                          /* ptr_pthread_sigaction */
+    NULL,                          /* ptr_pthread_sigwait */
+    NULL                           /* ptr_pthread_raise */
+};
 
 #else /* __GLIBC__ || __FREEBSD__ */
 

@@ -73,6 +73,8 @@ struct thread_cleanup_info
 static char temp_stacks[NB_TEMP_STACKS][TEMP_STACK_SIZE];
 static LONG next_temp_stack;  /* next temp stack to use */
 
+extern void PTHREAD_init_thread(void);
+
 /***********************************************************************
  *           SYSDEPS_SetCurThread
  *
@@ -102,6 +104,8 @@ void SYSDEPS_SetCurThread( TEB *teb )
 
 #ifdef HAVE_NPTL
     teb->pthread_data = (void *)pthread_self();
+#else
+    PTHREAD_init_thread();
 #endif
 }
 
