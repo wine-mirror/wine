@@ -723,13 +723,17 @@ HINSTANCE WINAPI WinExec( LPCSTR lpCmdLine, UINT nCmdShow )
     PROCESS_INFORMATION info;
     STARTUPINFOA startup;
     HINSTANCE hInstance;
+    char *cmdline;
 
     memset( &startup, 0, sizeof(startup) );
     startup.cb = sizeof(startup);
     startup.dwFlags = STARTF_USESHOWWINDOW;
     startup.wShowWindow = nCmdShow;
 
-    if (CreateProcessA( NULL, (LPSTR)lpCmdLine, NULL, NULL, FALSE,
+    /* cmdline needs to be writeable for CreateProcess */
+    if (!(cmdline = HEAP_strdupA( GetProcessHeap(), 0, lpCmdLine ))) return 0;
+
+    if (CreateProcessA( NULL, cmdline, NULL, NULL, FALSE,
                         0, NULL, NULL, &startup, &info ))
     {
         /* Give 30 seconds to the app to come up */
@@ -745,7 +749,7 @@ HINSTANCE WINAPI WinExec( LPCSTR lpCmdLine, UINT nCmdShow )
         FIXME("Strange error set by CreateProcess: %d\n", hInstance );
         hInstance = 11;
     }
-
+    HeapFree( GetProcessHeap(), 0, cmdline );
     return hInstance;
 }
 

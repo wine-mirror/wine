@@ -152,7 +152,7 @@ extern void PROCESS_InitWine( int argc, char *argv[] ) WINE_NORETURN;
 extern void PROCESS_InitWinelib( int argc, char *argv[] ) WINE_NORETURN;
 extern PDB *PROCESS_IdToPDB( DWORD id );
 extern void PROCESS_CallUserSignalProc( UINT uCode, HMODULE hModule );
-extern BOOL PROCESS_Create( HFILE hFile, LPCSTR filename, LPCSTR cmd_line, LPCSTR env, 
+extern BOOL PROCESS_Create( HFILE hFile, LPCSTR filename, LPSTR cmd_line, LPCSTR env, 
                             LPSECURITY_ATTRIBUTES psa, LPSECURITY_ATTRIBUTES tsa,
                             BOOL inherit, DWORD flags,
                             STARTUPINFOA *startup, PROCESS_INFORMATION *info );

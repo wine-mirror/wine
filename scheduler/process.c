@@ -674,7 +674,7 @@ static void exec_wine_binary( char **argv, char **envp )
  *
  * Fork and exec a new Unix process, checking for errors.
  */
-static int fork_and_exec( const char *filename, const char *cmdline, const char *env )
+static int fork_and_exec( const char *filename, char *cmdline, const char *env )
 {
     int fd[2];
     int pid, err;
@@ -687,7 +687,7 @@ static int fork_and_exec( const char *filename, const char *cmdline, const char 
     fcntl( fd[1], F_SETFD, 1 );  /* set close on exec */
     if (!(pid = fork()))  /* child */
     {
-        char **argv = build_argv( (char *)cmdline, filename ? 0 : 2 );
+        char **argv = build_argv( cmdline, filename ? 0 : 2 );
         char **envp = build_envp( env );
         close( fd[0] );
         if (argv && envp)
@@ -722,7 +722,7 @@ static int fork_and_exec( const char *filename, const char *cmdline, const char 
  * file, and we exec a new copy of wine to load it; otherwise we
  * simply exec the specified filename as a Unix process.
  */
-BOOL PROCESS_Create( HFILE hFile, LPCSTR filename, LPCSTR cmd_line, LPCSTR env, 
+BOOL PROCESS_Create( HFILE hFile, LPCSTR filename, LPSTR cmd_line, LPCSTR env, 
                      LPSECURITY_ATTRIBUTES psa, LPSECURITY_ATTRIBUTES tsa,
                      BOOL inherit, DWORD flags, LPSTARTUPINFOA startup,
                      LPPROCESS_INFORMATION info )
