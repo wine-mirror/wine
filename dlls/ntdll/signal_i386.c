@@ -636,7 +636,6 @@ static void do_segv( CONTEXT *context, int trap_code, void *cr2, int err_code )
 #ifdef CR2_sig
         rec.NumberParameters = 2;
         rec.ExceptionInformation[0] = (err_code & 2) != 0;
-        rec.ExceptionInformation[0] = 0;
         rec.ExceptionInformation[1] = (DWORD)cr2;
 #endif /* CR2_sig */
         rec.ExceptionCode = page_fault_code;
