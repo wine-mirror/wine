@@ -152,24 +152,26 @@ int dbch_trackbar = 140;
 int dbch_treeview = 141;
 int dbch_ttydrv = 142;
 int dbch_tweak = 143;
-int dbch_updown = 144;
-int dbch_ver = 145;
-int dbch_virtual = 146;
-int dbch_vxd = 147;
-int dbch_wave = 148;
-int dbch_win = 149;
-int dbch_win16drv = 150;
-int dbch_win32 = 151;
-int dbch_wing = 152;
-int dbch_winsock = 153;
-int dbch_winspool = 154;
-int dbch_wnet = 155;
-int dbch_x11 = 156;
-int dbch_x11drv = 157;
+int dbch_typelib = 144;
+int dbch_updown = 145;
+int dbch_ver = 146;
+int dbch_virtual = 147;
+int dbch_vxd = 148;
+int dbch_wave = 149;
+int dbch_win = 150;
+int dbch_win16drv = 151;
+int dbch_win32 = 152;
+int dbch_wing = 153;
+int dbch_winsock = 154;
+int dbch_winspool = 155;
+int dbch_wnet = 156;
+int dbch_x11 = 157;
+int dbch_x11drv = 158;
 
-#define DEBUG_CHANNEL_COUNT 158
+#define DEBUG_CHANNEL_COUNT 159
 
 char __debug_msg_enabled[DEBUG_CHANNEL_COUNT][DEBUG_CLASS_COUNT] = {
+{1, 1, 0, 0},
 {1, 1, 0, 0},
 {1, 1, 0, 0},
 {1, 1, 0, 0},
@@ -475,6 +477,7 @@ const char * const debug_ch_name[DEBUG_CHANNEL_COUNT] = {
 "treeview",
 "ttydrv",
 "tweak",
+"typelib",
 "updown",
 "ver",
 "virtual",

@@ -143,7 +143,7 @@ type win32
 183 stub LoadTypeLibEx
 184 stub SystemTimeToVariantTime
 185 stub VariantTimeToSystemTime
-186 stub UnRegisterTypeLib
+186 stdcall UnRegisterTypeLib (ptr long long long long) UnRegisterTypeLib
 190 stub VarDecFromUI1
 191 stub VarDecFromI2
 192 stub VarDecFromI4

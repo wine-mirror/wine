@@ -199,6 +199,8 @@ typedef DISPID MEMBERID;
 #define DISPID_DESTRUCTOR ( -7 )
 #define DISPID_COLLECT  ( -8 )
 
+#define MEMBERID_NIL DISPID_UNKNOWN
+
 typedef struct  tagDISPPARAMS
 {
   VARIANTARG* rgvarg;
@@ -237,6 +239,15 @@ typedef struct tagPARAMDESC
 	LPPARAMDESCEX pparamdescex;
 	USHORT wParamFlags;
 } PARAMDESC;
+
+#define PARAMFLAG_NONE      	(0x00)
+#define PARAMFLAG_FIN           (0x01)
+#define PARAMFLAG_FOUT          (0x02)
+#define PARAMFLAG_FLCID     	(0x04)
+#define PARAMFLAG_FRETVAL       (0x08)
+#define PARAMFLAG_FOPT          (0x10)
+#define PARAMFLAG_FHASDEFAULT   (0x20)
+
 
 typedef struct tagTYPEDESC
 {
@@ -284,7 +295,7 @@ typedef struct tagTYPEATTR
 	WORD cVars;
 	WORD cImplTypes;
 	WORD cbSizeVft;
-	WORD cAlignment;
+	WORD cbAlignment;
 	WORD wTypeFlags;
 	WORD wMajorVerNum;
 	WORD wMinorVerNum;
@@ -322,7 +333,7 @@ typedef struct tagFUNCDESC
 	SCODE *lprgscode;
 	ELEMDESC *lprgelemdescParam;
 	FUNCKIND funckind;
-	INVOKEKIND invKind;
+	INVOKEKIND invkind;
 	CALLCONV callconv;
 	SHORT cParams;
 	SHORT cParamsOpt;
@@ -498,6 +509,19 @@ enum VARENUM {
  * DISP_E_ARRAYISLOCKED : The variant contains an array that is locked.
  */
 
+
+typedef struct  tagCUSTDATAITEM {
+    GUID guid;
+    VARIANTARG varValue;
+} CUSTDATAITEM, *LPCUSTDATAITEM;
+
+typedef struct  tagCUSTDATA {
+    INT cCustData;
+    LPCUSTDATAITEM prgCustData; /* count cCustdata */
+} CUSTDATA, *LPCUSTDATA;
+
+
+
 /*****************************************************************************
  * IDispatch interface
  */
@@ -536,8 +560,9 @@ ICOM_DEFINE(IDispatch,IUnknown)
 	ICOM_METHOD2(HRESULT,GetFuncDesc, UINT,index, FUNCDESC**,ppFuncDesc) \
 	ICOM_METHOD2(HRESULT,GetVarDesc, UINT,index, VARDESC**,ppVarDesc) \
 	ICOM_METHOD4(HRESULT,GetNames, MEMBERID,memid, BSTR*,rgBstrNames, UINT,cMaxNames, UINT*,pcNames) \
-	ICOM_METHOD2(HRESULT,GetRefTypeOfImplType, UINT,index, INT*,pImplTypeFlags) \
-	ICOM_METHOD2(HRESULT,GetImplTypeFlags, UINT,index, INT*,pImplTypeFlags) \
+	ICOM_METHOD2(HRESULT,GetRefTypeOfImplType, UINT,index, HREFTYPE*,\
+		pRefType) \
+	ICOM_METHOD2(HRESULT,GetImplTypeFlags, UINT,index, INT*,pImplTypeFlags)\
 	ICOM_METHOD3(HRESULT,GetIDsOfNames, LPOLESTR*,rgszNames, UINT,cNames, MEMBERID*,pMemId) \
 	ICOM_METHOD7(HRESULT,Invoke, PVOID,pvInstance, MEMBERID,memid, WORD,wFlags, DISPPARAMS*,pDispParams, VARIANT*,pVarResult, EXCEPINFO*,pExcepInfo, UINT*,puArgErr) \
 	ICOM_METHOD5(HRESULT,GetDocumentation, MEMBERID,memid, BSTR*,pBstrName, BSTR*,pBstrDocString, DWORD*,pdwHelpContext, BSTR*,pBstrHelpFile) \
@@ -549,7 +574,38 @@ ICOM_DEFINE(IDispatch,IUnknown)
 	ICOM_METHOD2(HRESULT,GetContainingTypeLib, ITypeLib**,ppTLib, UINT*,pIndex) \
 	ICOM_METHOD1(HRESULT,ReleaseTypeAttr, TYPEATTR*,pTypeAttr) \
 	ICOM_METHOD1(HRESULT,ReleaseFuncDesc, FUNCDESC*,pFuncDesc) \
-	ICOM_METHOD1(HRESULT,ReleaseVarDesc, VARDESC*,pVarDesc) 
+	ICOM_METHOD1(HRESULT,ReleaseVarDesc, VARDESC*,pVarDesc)\
+\
+\
+	/* itypeinfo2 methods */\
+	ICOM_METHOD1(HRESULT, GetTypeKind, TYPEKIND*, pTypeKind) \
+	ICOM_METHOD1(HRESULT, GetTypeFlags, UINT*, pTypeFlags) \
+	ICOM_METHOD3(HRESULT, GetFuncIndexOfMemId, MEMBERID, memid, INVOKEKIND,\
+		invKind, UINT*, pFuncIndex) \
+	ICOM_METHOD2(HRESULT, GetVarIndexOfMemId, MEMBERID, memid, UINT*, \
+		pVarIndex) \
+	ICOM_METHOD2(HRESULT, GetCustData, REFGUID, guid, VARIANT*, pVarVal) \
+	ICOM_METHOD3(HRESULT, GetFuncCustData, UINT, index, REFGUID, guid,\
+		VARIANT*, pVarVal) \
+	ICOM_METHOD4(HRESULT, GetParamCustData, UINT, indexFunc, UINT,\
+		indexParam, REFGUID, guid, VARIANT*, pVarVal) \
+	ICOM_METHOD3(HRESULT, GetVarCustData, UINT, index, REFGUID, guid,\
+		VARIANT*, pVarVal) \
+	ICOM_METHOD3(HRESULT, GetImplTypeCustData, UINT, index, REFGUID, guid,\
+		VARIANT*, pVarVal) \
+	ICOM_METHOD5(HRESULT, GetDocumentation2, MEMBERID, memid, LCID, lcid,\
+		BSTR*, pbstrHelpString, INT*, pdwHelpStringContext,\
+		BSTR*, pbstrHelpStringDll) \
+	ICOM_METHOD1(HRESULT, GetAllCustData, CUSTDATA*, pCustData) \
+	ICOM_METHOD2(HRESULT, GetAllFuncCustData, UINT, index, CUSTDATA*,\
+		pCustData)\
+	ICOM_METHOD3(HRESULT, GetAllParamCustData, UINT, indexFunc, UINT,\
+		indexParam, CUSTDATA*, pCustData) \
+	ICOM_METHOD2(HRESULT, GetAllVarCustData, UINT, index, CUSTDATA*,\
+		pCustData) \
+	ICOM_METHOD2(HRESULT, GetAllImplTypeCustData, UINT, index, CUSTDATA*,\
+		pCustData)
+	
 #define ITypeInfo_IMETHODS \
 	IUnknown_IMETHODS \
 	ITypeInfo_METHODS
@@ -562,12 +618,12 @@ ICOM_DEFINE(ITypeInfo,IUnknown)
 #define ITypeInfo_AddRef(p)                     ICOM_CALL (AddRef,p)
 #define ITypeInfo_Release(p)                    ICOM_CALL (Release,p)
 /*** ITypeInfo methods ***/
-#define ITypeInfo_GetTypeAttr(p,a,b)            ICOM_CALL2(GetTypeAttr,p,a,b)
+#define ITypeInfo_GetTypeAttr(p,a)              ICOM_CALL1(GetTypeAttr,p,a)
 #define ITypeInfo_GetTypeComp(p,a)              ICOM_CALL1(GetTypeComp,p,a)
 #define ITypeInfo_GetFuncDesc(p,a,b)            ICOM_CALL2(GetFuncDesc,p,a,b)
 #define ITypeInfo_GetVarDesc(p,a,b)             ICOM_CALL2(GetVarDesc,p,a,b)
 #define ITypeInfo_GetNames(p,a,b,c,d)           ICOM_CALL4(GetNames,p,a,b,c,d)
-#define ITypeInfo_GetRefTypeOfImplType(p,a,b)   ICOM_CALL2(GetRefTypeOfImplType,p,a)
+#define ITypeInfo_GetRefTypeOfImplType(p,a,b)   ICOM_CALL2(GetRefTypeOfImplType,p,a,b)
 #define ITypeInfo_GetImplTypeFlags(p,a,b)       ICOM_CALL2(GetImplTypeFlags,p,a,b)
 #define ITypeInfo_GetIDsOfNames(p,a,b,c)        ICOM_CALL3(GetImplTypeFlags,p,a,b,c)
 #define ITypeInfo_Invoke(p,a,b,c,d,e,f,g)       ICOM_CALL7(Invoke,p,a,b,c,d,e,f,g)
@@ -589,7 +645,7 @@ ICOM_DEFINE(ITypeInfo,IUnknown)
  */
 #define ICOM_INTERFACE ITypeLib
 #define ITypeLib_METHODS \
-	ICOM_METHOD (HRESULT,GetTypeInfoCount) \
+	ICOM_METHOD (UINT,GetTypeInfoCount) \
 	ICOM_METHOD2(HRESULT,GetTypeInfo, UINT,index, ITypeInfo**,ppTInfo) \
 	ICOM_METHOD2(HRESULT,GetTypeInfoType, UINT,index, TYPEKIND*,pTKind) \
 	ICOM_METHOD2(HRESULT,GetTypeInfoOfGuid, REFGUID,guid, ITypeInfo**,ppTinfo) \
@@ -598,7 +654,16 @@ ICOM_DEFINE(ITypeInfo,IUnknown)
 	ICOM_METHOD5(HRESULT,GetDocumentation, INT,index, BSTR*,pBstrName, BSTR*,pBstrDocString, DWORD*,pdwHelpContext, BSTR*,pBstrHelpFile) \
 	ICOM_METHOD3(HRESULT,IsName, LPOLESTR,szNameBuf, ULONG,lHashVal, BOOL*,bfName) \
 	ICOM_METHOD5(HRESULT,FindName, LPOLESTR,szNameBuf, ULONG,lHashVal, ITypeInfo**,ppTInfo, MEMBERID*,rgMemId, USHORT*,pcFound) \
-	ICOM_METHOD1(HRESULT,ReleaseTLibAttr, TLIBATTR*,pTLibAttr) 
+	ICOM_METHOD1(VOID,ReleaseTLibAttr, TLIBATTR*,pTLibAttr)\
+\
+	ICOM_METHOD2(HRESULT,GetCustData, REFGUID,guid, VARIANT*, pVarVal)\
+	ICOM_METHOD2(HRESULT, GetLibStatistics, UINT *,pcUniqueNames, \
+			UINT*, pcchUniqueNames) \
+	ICOM_METHOD5(HRESULT, GetDocumentation2, INT, index, LCID, lcid,\
+		BSTR*, pbstrHelpString, INT*, pdwHelpStringContext,\
+		BSTR*, pbstrHelpStringDll)\
+	ICOM_METHOD1(HRESULT, GetAllCustData, CUSTDATA *, pCustData)
+	
 #define ITypeLib_IMETHODS \
 	IUnknown_IMETHODS \
 	ITypeLib_METHODS
