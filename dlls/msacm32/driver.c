@@ -228,7 +228,7 @@ MMRESULT WINAPI acmDriverOpen(PHACMDRIVER phad, HACMDRIVERID hadid, DWORD fdwOpe
 {
     PWINE_ACMDRIVERID padid;
 
-    TRACE("(%p, %x, %08lu\n", phad, hadid, fdwOpen);
+    TRACE("(%p, %x, %08lu)\n", phad, hadid, fdwOpen);
 
     if (!phad)
 	return MMSYSERR_INVALPARAM;
@@ -242,7 +242,7 @@ MMRESULT WINAPI acmDriverOpen(PHACMDRIVER phad, HACMDRIVERID hadid, DWORD fdwOpe
     
     if (padid->pACMDriver) {
 	/* FIXME: Is it allowed? */
-	ERR("Can't open driver twice\n");
+	ERR("Can't open driver '%s' twice\n", padid->pszDriverAlias);
 	return MMSYSERR_ERROR;
     }
     
