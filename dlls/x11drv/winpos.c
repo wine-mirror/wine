@@ -894,20 +894,20 @@ BOOL X11DRV_SetWindowPos( WINDOWPOS *winpos )
     UINT wvrFlags = 0;
     BOOL bChangePos;
 
-    TRACE( "hwnd %p, swp (%i,%i)-(%i,%i) flags %08x\n",
-           winpos->hwnd, winpos->x, winpos->y,
-           winpos->x + winpos->cx, winpos->y + winpos->cy, winpos->flags);
+    TRACE( "hwnd %p, after %p, swp %d,%d %dx%d flags %08x\n",
+           winpos->hwnd, winpos->hwndInsertAfter, winpos->x, winpos->y,
+           winpos->cx, winpos->cy, winpos->flags);
 
     bChangePos = !(winpos->flags & SWP_WINE_NOHOSTMOVE);
     winpos->flags &= ~SWP_WINE_NOHOSTMOVE;
 
-    /* Fix redundant flags */
-    if (!fixup_flags( winpos )) return FALSE;
-
     /* Check window handle */
     if (winpos->hwnd == GetDesktopWindow()) return FALSE;
 
-    SWP_DoWinPosChanging( winpos, &newWindowRect, &newClientRect );
+    if (!SWP_DoWinPosChanging( winpos, &newWindowRect, &newClientRect )) return FALSE;
+
+    /* Fix redundant flags */
+    if (!fixup_flags( winpos )) return FALSE;
 
     if (!(wndPtr = WIN_FindWndPtr( winpos->hwnd ))) return FALSE;
 
