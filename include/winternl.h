@@ -18,8 +18,8 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
-#ifndef __WINE_WINTERNAL_H
-#define __WINE_WINTERNAL_H
+#ifndef __WINE_WINTERNL_H
+#define __WINE_WINTERNL_H
 
 #include <windef.h>
 
@@ -1748,4 +1748,4 @@ static inline PLIST_ENTRY RemoveTailList(PLIST_ENTRY le)
 } /* extern "C" */
 #endif /* defined(__cplusplus) */
 
-#endif  /* __WINE_WINTERNAL_H */
+#endif  /* __WINE_WINTERNL_H */

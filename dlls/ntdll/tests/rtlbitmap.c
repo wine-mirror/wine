@@ -23,6 +23,8 @@
 
 #include "ntdll_test.h"
 
+#ifdef __WINE_WINTERNL_H
+
 /* Function ptrs for ordinal calls */
 static HMODULE hntdll = 0;
 static VOID (WINAPI *pRtlInitializeBitMap)(PRTL_BITMAP,LPBYTE,ULONG);
@@ -608,9 +610,11 @@ static void test_RtlFindClearRuns()
   }
 
 }
+#endif
 
 START_TEST(rtlbitmap)
 {
+#ifdef __WINE_WINTERNL_H
   InitFunctionPtrs();
 
   if (pRtlInitializeBitMap)
@@ -632,4 +636,5 @@ START_TEST(rtlbitmap)
     test_RtlFindSetRuns();
     test_RtlFindClearRuns();
   }
+#endif
 }
