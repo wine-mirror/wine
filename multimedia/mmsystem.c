@@ -21,6 +21,7 @@
 
 #include "winbase.h"
 #include "wine/winbase16.h"
+#include "wownt32.h"
 #include "heap.h"
 #include "user.h"
 #include "driver.h"
@@ -5043,7 +5044,7 @@ void WINAPI WINE_mmThreadEntryPoint(DWORD _pmt)
 	/* it's not a WOW call back proc, but since the proc signature is the
 	 * same, why bother creating a new entry in Callbacks table ?
 	 */
-	Callbacks->CallWOWCallbackProc(lpMMThd->fpThread, lpMMThd->dwThreadPmt);
+	WOWCallback16((DWORD)lpMMThd->fpThread, lpMMThd->dwThreadPmt);
     }
     lpMMThd->dwStatus = 0x30;
     TRACE("[30-%08x]\n", lpMMThd->hThread);

@@ -35,8 +35,8 @@
 #include <assert.h>
 #include "windef.h"
 #include "wine/winbase16.h"
-#include "wine/winestring.h"
 #include "winerror.h"
+#include "wownt32.h"
 #include "ole.h"
 #include "ole2ver.h"
 #include "debugtools.h"
@@ -47,6 +47,7 @@
 
 #include "wine/obj_base.h"
 #include "wine/obj_misc.h"
+#include "wine/obj_storage.h"
 #include "wine/obj_clientserver.h"
 
 #include "ifs.h"
@@ -792,11 +793,11 @@ HRESULT WINAPI StringFromCLSID16(
      * everything we need.
      */
     if (!WOWCallback16Ex(
-    	(FARPROC16)((ICOM_VTABLE(IMalloc16)*)PTR_SEG_TO_LIN(
+    	(DWORD)((ICOM_VTABLE(IMalloc16)*)PTR_SEG_TO_LIN(
 		((LPMALLOC16)PTR_SEG_TO_LIN(mllc))->lpvtbl)
 	)->fnAlloc,
 	WCB16_CDECL,
-	2,
+	2*sizeof(DWORD),
 	(LPVOID)args,
 	(LPDWORD)idstr
     )) {
