@@ -88,7 +88,7 @@ static Window PrimarySelectionOwner = None;    /* The window which owns the prim
 static Window ClipboardSelectionOwner = None;  /* The window which owns the clipboard selection */
 static unsigned long cSelectionTargets = 0;    /* Number of target formats reported by TARGETS selection */
 static Atom selectionCacheSrc = XA_PRIMARY;    /* The selection source from which the clipboard cache was filled */
-static HANDLE selectionClearEvent = NULL;      /* Synchronization object used to block until server is started */
+static HANDLE selectionClearEvent = 0;/* Synchronization object used to block until server is started */
 
 /*
  * Dynamic pointer arrays to manage destruction of Pixmap resources
@@ -309,7 +309,7 @@ BOOL X11DRV_CLIPBOARD_LaunchServer()
 
         /* Release the event */
         CloseHandle(selectionClearEvent);
-        selectionClearEvent = NULL;
+        selectionClearEvent = 0;
     }
 
     WIN_RestoreWndsLock(iWndsLocks);
@@ -327,7 +327,7 @@ BOOL X11DRV_CLIPBOARD_LaunchServer()
  */
 int X11DRV_CLIPBOARD_CacheDataFormats( Atom SelectionName )
 {
-    HWND           hWnd = NULL;
+    HWND           hWnd = 0;
     HWND           hWndClipWindow = GetOpenClipboardWindow();
     WND*           wnd = NULL;
     XEvent         xe;
@@ -337,7 +337,7 @@ int X11DRV_CLIPBOARD_CacheDataFormats( Atom SelectionName )
     unsigned long  remain;
     Atom*	   targetList=NULL;
     Window         w;
-    Window         ownerSelection = NULL;
+    Window         ownerSelection = 0;
         
     /*
      * Empty the clipboard cache 
@@ -577,7 +577,7 @@ static BOOL X11DRV_CLIPBOARD_ReadSelection(UINT wFormat, Window w, Atom prop, At
     {
       /* Get the first pixmap handle passed to us */
       Pixmap *pPixmap = (Pixmap *)val;
-      HANDLE hTargetImage = NULL;  /* Handle to store the converted bitmap or DIB */
+      HANDLE hTargetImage = 0;  /* Handle to store the converted bitmap or DIB */
       
       if (aformat != 32 || nitems < 1 || atype != XA_PIXMAP
           || (wFormat != CF_BITMAP && wFormat != CF_DIB))
@@ -1193,7 +1193,7 @@ END:
   
          TRACE("\tLost the selection! Emptying the clipboard...\n");
       
-         OpenClipboard(NULL);
+         OpenClipboard( 0 );
          selectionAcquired = (S_PRIMARY | S_CLIPBOARD);
          EmptyClipboard();
          
@@ -1239,7 +1239,7 @@ void X11DRV_CLIPBOARD_FreeResources( Atom property )
      */
     int i;
     Pixmap pixmap;
-    Atom cacheProp = NULL;
+    Atom cacheProp = 0;
     for( i = 0; ; i++ )
     {
         if ( !(cacheProp = ((Atom)DPA_GetPtr(PropDPA, i))) )

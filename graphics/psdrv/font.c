@@ -302,7 +302,7 @@ BOOL PSDRV_EnumDeviceFonts( DC* dc, LPLOGFONT16 plf,
 	if(family) {
 	    for(afmle = family->afmlist; afmle; afmle = afmle->next) {
 	        TRACE("Got '%s'\n", afmle->afm->FontName);
-		if( (b = (*proc)( (LPENUMLOGFONT16)&lf, &tm, 
+		if( (b = (*proc)( &lf, &tm, 
 			PSDRV_GetFontMetric( dc, afmle->afm, &tm, &lf, 200 ),
 				  lp )) )
 		     bRet = b;
@@ -315,7 +315,7 @@ BOOL PSDRV_EnumDeviceFonts( DC* dc, LPLOGFONT16 plf,
         for(family = physDev->pi->Fonts; family; family = family->next) {
 	    afmle = family->afmlist;
 	    TRACE("Got '%s'\n", afmle->afm->FontName);
-	    if( (b = (*proc)( (LPENUMLOGFONT16)&lf, &tm, 
+	    if( (b = (*proc)( &lf, &tm, 
 		   PSDRV_GetFontMetric( dc, afmle->afm, &tm, &lf, 200 ), 
 			      lp )) )
 	        bRet = b;

@@ -17,6 +17,7 @@
 #include "commctrl.h"
 #include "tab.h"
 #include "debugtools.h"
+#include "cache.h"
 
 DEFAULT_DEBUG_CHANNEL(tab)
 

@@ -320,7 +320,7 @@ HANDLE WINAPI OpenDesktopA( LPCSTR lpszDesktop, DWORD dwFlags,
           fInherit,dwDesiredAccess);
 
     SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
-    return NULL;
+    return 0;
 }
 
 

@@ -1270,7 +1270,7 @@ static HRESULT WINAPI IDirectPlayLobbyAImpl_RunApplication
   PROCESS_INFORMATION newProcessInfo;
   LPSTR appName;
 
-  TRACE( "(%p)->(0x%08lx,%p,%p,%p)\n", This, dwFlags, lpdwAppID, lpConn, hReceiveEvent );
+  TRACE( "(%p)->(0x%08lx,%p,%p,%x)\n", This, dwFlags, lpdwAppID, lpConn, hReceiveEvent );
 
   if( dwFlags != 0 )
   {
@@ -1367,7 +1367,7 @@ static HRESULT WINAPI IDirectPlayLobbyWImpl_RunApplication
   HANDLE hReceiveEvent )
 {
   ICOM_THIS(IDirectPlayLobbyWImpl,iface);
-  FIXME( "(%p)->(0x%08lx,%p,%p,%p):stub\n", This, dwFlags, lpdwAppID, lpConn, hReceiveEvent );
+  FIXME( "(%p)->(0x%08lx,%p,%p,%p):stub\n", This, dwFlags, lpdwAppID, lpConn, (void *)hReceiveEvent );
   return DPERR_OUTOFMEMORY;
 }
 

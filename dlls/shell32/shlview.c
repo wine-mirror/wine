@@ -1318,9 +1318,9 @@ static HRESULT WINAPI IShellView_fnContextSensitiveHelp(IShellView * iface,BOOL 
 */
 static HRESULT WINAPI IShellView_fnTranslateAccelerator(IShellView * iface,LPMSG lpmsg)
 {
+#if 0
 	ICOM_THIS(IShellViewImpl, iface);
 
-#if 0
 	FIXME("(%p)->(%p: hwnd=%x msg=%x lp=%lx wp=%x) stub\n",This,lpmsg, lpmsg->hwnd, lpmsg->message, lpmsg->lParam, lpmsg->wParam);
 #endif
 	

@@ -108,6 +108,7 @@ static void EVENT_UnmapNotify( HWND pWnd, XUnmapEvent *event );
 #ifdef HAVE_LIBXXSHM
 static void EVENT_ShmCompletion( XShmCompletionEvent *event );
 static int ShmCompletionType;
+extern int XShmGetEventBase( Display * );/* Missing prototype for function in libXext. */
 #endif
 
 /* Usable only with OLVWM - compile option perhaps?
@@ -1026,7 +1027,7 @@ END:
 static Atom EVENT_SelectionRequest_PIXMAP( Window requestor, Atom target, Atom rprop )
 {
     HANDLE hClipData = 0;
-    Pixmap pixmap = NULL;
+    Pixmap pixmap = 0;
     UINT   wFormat;
     char * itemFmtName;
     int xRc;
