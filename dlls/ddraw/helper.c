@@ -351,6 +351,7 @@ void DDRAW_dump_surface_desc(const DDSURFACEDESC2 *lpddsd)
             ME(DDSD_LINEARSIZE, DDRAW_dump_DWORD, u1.dwLinearSize),
             ME(DDSD_BACKBUFFERCOUNT, DDRAW_dump_DWORD, dwBackBufferCount),
             ME(DDSD_MIPMAPCOUNT, DDRAW_dump_DWORD, u2.dwMipMapCount),
+	    ME(DDSD_ZBUFFERBITDEPTH, DDRAW_dump_DWORD, u2.dwMipMapCount), /* This is for 'old-style' D3D */
             ME(DDSD_REFRESHRATE, DDRAW_dump_DWORD, u2.dwRefreshRate),
             ME(DDSD_ALPHABITDEPTH, DDRAW_dump_DWORD, dwAlphaBitDepth),
             ME(DDSD_LPSURFACE, DDRAW_dump_PTR, lpSurface),

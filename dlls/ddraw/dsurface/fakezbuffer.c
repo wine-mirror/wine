@@ -48,12 +48,34 @@ WINE_DEFAULT_DEBUG_CHANNEL(ddraw);
 
 static ICOM_VTABLE(IDirectDrawSurface7) FakeZBuffer_IDirectDrawSurface7_VTable;
 
+#ifdef HAVE_OPENGL
+static void zbuffer_lock_update(IDirectDrawSurfaceImpl* This, LPCRECT pRect, DWORD dwFlags)
+{
+    /* Note that this does not do anything for now... At least it's not needed for Grim Fandango :-) */
+}
+
+static void zbuffer_unlock_update(IDirectDrawSurfaceImpl* This, LPCRECT pRect)
+{
+    ((FakeZBuffer_DirectDrawSurfaceImpl *) This->private)->in_memory = TRUE;
+}
+
+static BOOLEAN zbuffer_get_dirty_status(IDirectDrawSurfaceImpl* This, LPCRECT pRect)
+{
+    if (((FakeZBuffer_DirectDrawSurfaceImpl *) This->private)->in_memory == TRUE) {
+	((FakeZBuffer_DirectDrawSurfaceImpl *) This->private)->in_memory = FALSE;
+	return TRUE;
+    }
+    return FALSE;
+}
+#endif
+
 HRESULT FakeZBuffer_DirectDrawSurface_Construct(IDirectDrawSurfaceImpl *This,
 						IDirectDrawImpl *pDD,
 						const DDSURFACEDESC2 *pDDSD)
 {
     HRESULT hr;
-
+    BYTE zdepth = 16; /* Default value.. Should use the one from GL */
+    
     assert(pDDSD->ddsCaps.dwCaps & DDSCAPS_ZBUFFER);
 
     hr = Main_DirectDrawSurface_Construct(This, pDD, pDDSD);
@@ -65,6 +87,33 @@ HRESULT FakeZBuffer_DirectDrawSurface_Construct(IDirectDrawSurfaceImpl *This,
     This->final_release = FakeZBuffer_DirectDrawSurface_final_release;
     This->duplicate_surface = FakeZBuffer_DirectDrawSurface_duplicate_surface;
 
+#ifdef HAVE_OPENGL     
+    if (opengl_initialized) {
+	This->lock_update = zbuffer_lock_update;
+	This->unlock_update = zbuffer_unlock_update;
+	This->get_dirty_status = zbuffer_get_dirty_status;
+    }
+#endif
+	
+    
+    /* Beginning of some D3D hacks :-) */
+    if (This->surface_desc.dwFlags & DDSD_ZBUFFERBITDEPTH) {
+	zdepth = This->surface_desc.u2.dwMipMapCount; /* This is where the Z buffer depth is stored in 'old' versions */
+    }
+    
+    if ((This->surface_desc.dwFlags & DDSD_PIXELFORMAT) == 0) {
+	This->surface_desc.dwFlags |= DDSD_PIXELFORMAT;
+	This->surface_desc.u4.ddpfPixelFormat.dwSize = sizeof(This->surface_desc.u4.ddpfPixelFormat);
+	This->surface_desc.u4.ddpfPixelFormat.dwFlags = DDPF_ZBUFFER;
+	This->surface_desc.u4.ddpfPixelFormat.u1.dwZBufferBitDepth = zdepth;
+    }
+    if ((This->surface_desc.dwFlags & DDSD_PITCH) == 0) {
+	This->surface_desc.dwFlags |= DDSD_PITCH;
+	This->surface_desc.u1.lPitch = ((zdepth + 7) / 8) * This->surface_desc.dwWidth;
+    }
+    This->surface_desc.lpSurface = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY,
+					     This->surface_desc.u1.lPitch * This->surface_desc.dwHeight);
+    
     return DD_OK;
 }
 

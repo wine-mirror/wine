@@ -1096,6 +1096,54 @@ GL_IDirect3DDeviceImpl_1_CreateExecuteBuffer(LPDIRECT3DDEVICE iface,
     return ret_value;
 }
 
+static void flush_zbuffer_to_GL(IDirect3DDeviceImpl *d3d_dev, LPCRECT pRect, IDirectDrawSurfaceImpl *surf) {
+    static BOOLEAN first = TRUE;
+    IDirect3DDeviceGLImpl* gl_d3d_dev = (IDirect3DDeviceGLImpl*) d3d_dev;
+    int row;
+    GLenum type;
+    
+    if (first == TRUE) {
+	MESSAGE("Warning : application does direct locking of ZBuffer - expect slowdowns on many GL implementations :-)\n");
+	first = FALSE;
+    }
+    
+    TRACE("flushing ZBuffer back to GL\n");
+    
+    if (gl_d3d_dev->transform_state != GL_TRANSFORM_ORTHO) {
+	gl_d3d_dev->transform_state = GL_TRANSFORM_ORTHO;
+	d3ddevice_set_ortho(d3d_dev);
+    }
+    
+    glMatrixMode(GL_MODELVIEW);
+    glLoadIdentity();
+
+    if (gl_d3d_dev->depth_test == 0) glEnable(GL_DEPTH_TEST);
+    if (d3d_dev->state_block.render_state[D3DRENDERSTATE_ZFUNC - 1] != D3DCMP_ALWAYS) glDepthFunc(GL_ALWAYS);
+    glColorMask(GL_FALSE, GL_FALSE, GL_FALSE, GL_FALSE); 
+
+    /* This loop here is to prevent using PixelZoom that may be unoptimized for the 1.0 / -1.0 case
+       in some drivers...
+    */
+    switch (surf->surface_desc.u4.ddpfPixelFormat.u1.dwZBufferBitDepth) {
+        case 16: type = GL_UNSIGNED_SHORT; break;
+	case 32: type = GL_UNSIGNED_INT; break;
+	default: FIXME("Unhandled ZBuffer format !\n"); goto restore_state;
+    }
+	
+    for (row = 0; row < surf->surface_desc.dwHeight; row++) {
+	/* glRasterPos3d(0.0, row + 1.0, 0.5); */
+	glRasterPos2i(0, row + 1);
+	glDrawPixels(surf->surface_desc.dwWidth, 1, GL_DEPTH_COMPONENT, type,
+		     ((unsigned char *) surf->surface_desc.lpSurface) + (row * surf->surface_desc.u1.lPitch));
+    }
+
+  restore_state:
+    glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
+    if (d3d_dev->state_block.render_state[D3DRENDERSTATE_ZFUNC - 1] != D3DCMP_ALWAYS)
+	glDepthFunc(convert_D3D_compare_to_GL(d3d_dev->state_block.render_state[D3DRENDERSTATE_ZFUNC - 1]));
+    if (gl_d3d_dev->depth_test == 0) glDisable(GL_DEPTH_TEST);
+}
+
 /* These are the various handler used in the generic path */
 inline static void handle_xyz(D3DVALUE *coords) {
     glVertex3fv(coords);
@@ -1251,8 +1299,26 @@ static void draw_primitive_strided(IDirect3DDeviceImpl *This,
     if (glThis->state[WINE_GL_BUFFER_BACK] == SURFACE_MEMORY_DIRTY) {
         This->flush_to_framebuffer(This, &(glThis->lock_rect[WINE_GL_BUFFER_BACK]), glThis->lock_surf[WINE_GL_BUFFER_BACK]);
     }
-
     glThis->state[WINE_GL_BUFFER_BACK] = SURFACE_GL;
+
+    if (This->current_zbuffer == NULL) {
+	/* Search for an attached ZBuffer */
+	static const DDSCAPS2 zbuf_caps = { DDSCAPS_ZBUFFER, 0, 0, 0 };
+	LPDIRECTDRAWSURFACE7 zbuf;
+	HRESULT hr;
+	
+	hr = IDirectDrawSurface7_GetAttachedSurface(ICOM_INTERFACE(This->surface, IDirectDrawSurface7),
+						    (DDSCAPS2 *) &zbuf_caps, &zbuf);
+	if (!FAILED(hr)) {
+	    This->current_zbuffer = ICOM_OBJECT(IDirectDrawSurfaceImpl, IDirectDrawSurface7, zbuf);
+	    IDirectDrawSurface7_Release(zbuf);
+	}
+    }
+    if (This->current_zbuffer != NULL) {
+	if (This->current_zbuffer->get_dirty_status(This->current_zbuffer, NULL)) {
+	    flush_zbuffer_to_GL(This, NULL, This->current_zbuffer);
+	}
+    }
     
     /* Just a hack for now.. Will have to find better algorithm :-/ */
     if ((d3dvtVertexType & D3DFVF_POSITION_MASK) != D3DFVF_XYZ) {
@@ -1270,7 +1336,6 @@ static void draw_primitive_strided(IDirect3DDeviceImpl *This,
 	glThis->current_active_tex_unit = GL_TEXTURE0_WINE;
     }
 
-    
     draw_primitive_handle_GL_state(This,
 				   (d3dvtVertexType & D3DFVF_POSITION_MASK) != D3DFVF_XYZ,
 				   vertex_lighted);
@@ -3160,11 +3225,11 @@ d3ddevice_set_ortho(IDirect3DDeviceImpl *This)
        to OpenGL screen coordinates (ie the upper left corner is not the same).
        For Z, the mystery is what should it be mapped to ? Ie should the resulting range be between
        -1.0 and 1.0 (as the X and Y coordinates) or between 0.0 and 1.0 ? */
-    trans_mat[ 0] = 2.0 / width;  trans_mat[ 4] = 0.0;  trans_mat[ 8] = 0.0; trans_mat[12] = -1.0;
-    trans_mat[ 1] = 0.0; trans_mat[ 5] = -2.0 / height; trans_mat[ 9] = 0.0; trans_mat[13] =  1.0;
-    trans_mat[ 2] = 0.0; trans_mat[ 6] = 0.0; trans_mat[10] = 1.0;           trans_mat[14] = -1.0;
-    trans_mat[ 3] = 0.0; trans_mat[ 7] = 0.0; trans_mat[11] = 0.0;           trans_mat[15] =  1.0;
-
+    trans_mat[ 0] = 2.0 / width;  trans_mat[ 4] = 0.0;           trans_mat[ 8] = 0.0;    trans_mat[12] = -1.0;
+    trans_mat[ 1] = 0.0;          trans_mat[ 5] = -2.0 / height; trans_mat[ 9] = 0.0;    trans_mat[13] =  1.0;
+    trans_mat[ 2] = 0.0;          trans_mat[ 6] = 0.0;           trans_mat[10] = 2.0;    trans_mat[14] = -1.0;
+    trans_mat[ 3] = 0.0;          trans_mat[ 7] = 0.0;           trans_mat[11] = 0.0;    trans_mat[15] =  1.0;
+    
     ENTER_GL();
     glMatrixMode(GL_MODELVIEW);
     glLoadIdentity();
@@ -3874,6 +3939,7 @@ static void fill_opengl_primcaps(D3DPRIMCAPS *pc)
 static void fill_caps(void)
 {
     GLint max_clip_planes;
+    GLint depth_bits;
     
     /* Fill first all the fields with default values which will be overriden later on with
        correct ones from the GL code
@@ -3886,7 +3952,6 @@ static void fill_caps(void)
     fill_opengl_primcaps(&(opengl_device_caps.dpcLineCaps));
     fill_opengl_primcaps(&(opengl_device_caps.dpcTriCaps));
     opengl_device_caps.dwDeviceRenderBitDepth  = DDBD_16|DDBD_24|DDBD_32;
-    opengl_device_caps.dwDeviceZBufferBitDepth = DDBD_16|DDBD_24|DDBD_32;
     opengl_device_caps.dwMinTextureWidth  = 1;
     opengl_device_caps.dwMinTextureHeight = 1;
     opengl_device_caps.dwMaxTextureWidth  = 1024;
@@ -3937,6 +4002,15 @@ static void fill_caps(void)
     glGetIntegerv(GL_MAX_CLIP_PLANES, &max_clip_planes);
     opengl_device_caps.wMaxUserClipPlanes = max_clip_planes;
     TRACE(": max clipping planes = %d\n", opengl_device_caps.wMaxUserClipPlanes);
+
+    glGetIntegerv(GL_DEPTH_BITS, &depth_bits);
+    TRACE(": Z bits = %d\n", depth_bits);
+    switch (depth_bits) {
+        case 16: opengl_device_caps.dwDeviceZBufferBitDepth = DDBD_16; break;
+        case 24: opengl_device_caps.dwDeviceZBufferBitDepth = DDBD_24; break;
+	case 32: opengl_device_caps.dwDeviceZBufferBitDepth = DDBD_32; break;
+	default: opengl_device_caps.dwDeviceZBufferBitDepth = DDBD_16|DDBD_24|DDBD_32; break;
+    }
 }
 
 BOOL

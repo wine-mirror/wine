@@ -81,6 +81,7 @@
 #define glColor3f pglColor3f
 #define glColor3ub pglColor3ub
 #define glColor4ub pglColor4ub
+#define glColorMask pglColorMask
 #define glCopyPixels pglCopyPixels
 #define glCopyTexSubImage2D pglCopyTexSubImage2D
 #define glColorMaterial pglColorMaterial
@@ -119,11 +120,13 @@
 #define glMultMatrixf pglMultMatrixf
 #define glNormal3f pglNormal3f
 #define glNormal3fv pglNormal3fv
+#define glOrtho pglOrtho
 #define glPixelStorei pglPixelStorei
 #define glPolygonMode pglPolygonMode
 #define glPolygonOffset pglPolygonOffset
 #define glPopMatrix pglPopMatrix
 #define glPushMatrix pglPushMatrix
+#define glRasterPos2i pglRasterPos2i
 #define glRasterPos3d pglRasterPos3d
 #define glReadBuffer pglReadBuffer
 #define glReadPixels pglReadPixels

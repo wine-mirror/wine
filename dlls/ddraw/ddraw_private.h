@@ -322,6 +322,7 @@ struct IDirectDrawSurfaceImpl
     LPVOID tex_private;
     void (*lock_update_prev)(IDirectDrawSurfaceImpl* This, LPCRECT pRect, DWORD dwFlags);
     void (*unlock_update_prev)(IDirectDrawSurfaceImpl* This, LPCRECT pRect);
+    BOOLEAN (*get_dirty_status)(IDirectDrawSurfaceImpl* This, LPCRECT pRect);
 };
 
 /*****************************************************************************

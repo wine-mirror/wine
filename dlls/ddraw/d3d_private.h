@@ -204,7 +204,8 @@ struct IDirect3DDeviceImpl
     D3DVIEWPORT7 active_viewport;
 
     IDirectDrawSurfaceImpl *current_texture[MAX_TEXTURES];
-
+    IDirectDrawSurfaceImpl *current_zbuffer;
+    
     /* Current transformation matrices */
     D3DMATRIX *world_mat;
     D3DMATRIX *view_mat;

@@ -19,14 +19,9 @@
 #ifndef DDRAW_DSURFACE_FAKEZBUFFER_H_INCLUDED
 #define DDRAW_DSURFACE_FAKEZBUFFER_H_INCLUDED
 
-struct FakeZBuffer_DirectDrawSurfaceImpl_Part
-{
-  int dummy;
-};
-
 typedef struct
 {
-    struct FakeZBuffer_DirectDrawSurfaceImpl_Part fakezbuffer;
+    BOOLEAN in_memory;
 } FakeZBuffer_DirectDrawSurfaceImpl;
 
 HRESULT
