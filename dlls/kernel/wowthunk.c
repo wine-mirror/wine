@@ -238,9 +238,6 @@ HANDLE WINAPI K32WOWHandle32( WORD handle, WOW_HANDLE_TYPE type )
  */
 WORD WINAPI K32WOWHandle16( HANDLE handle, WOW_HANDLE_TYPE type )
 {
-    if ( HIWORD(handle ) )
-        ERR( "handle %p of type %d has non-zero HIWORD\n", handle, type );
-
     switch ( type )
     {
     case WOW_TYPE_HWND:
@@ -256,6 +253,8 @@ WORD WINAPI K32WOWHandle16( HANDLE handle, WOW_HANDLE_TYPE type )
     case WOW_TYPE_HPEN:
     case WOW_TYPE_HACCEL:
     case WOW_TYPE_FULLHWND:
+    	if ( HIWORD(handle ) )
+        	ERR( "handle %p of type %d has non-zero HIWORD\n", handle, type );
         return LOWORD(handle);
 
     case WOW_TYPE_HMETAFILE:
