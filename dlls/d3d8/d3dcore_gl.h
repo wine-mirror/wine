@@ -594,6 +594,15 @@ typedef void (APIENTRY * PGLFNGETCOMBINERSTAGEPARAMETERFVNVPROC) (GLenum stage, 
 #define GL_SIGNED_HILO8_NV                0x885F
 #define GL_FORCE_BLUE_TO_ONE_NV           0x8860
 #endif
+/* GL_ATI_texture_env_combine3 */
+#ifndef GL_ATI_texture_env_combine3
+#define GL_ATI_texture_env_combine3 1
+#define GL_MODULATE_ADD_ATI               0x8744
+#define GL_MODULATE_SIGNED_ADD_ATI        0x8745
+#define GL_MODULATE_SUBTRACT_ATI          0x8746
+/* #define ONE */
+/* #define ZERO */
+#endif
 
 /*******
  * OpenGL Official Version 
