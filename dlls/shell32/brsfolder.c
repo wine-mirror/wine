@@ -109,7 +109,7 @@ static void FillTreeView(LPSHELLFOLDER lpsf, LPITEMIDLIST  pidl, HTREEITEM hPare
 	char		szBuff[256];
 	HWND32		hwnd=GetParent32(hwndTreeView);
 
-	TRACE(shell, "%p %p %x\n",lpsf, pidl, hParent);
+	TRACE(shell, "%p %p %x\n",lpsf, pidl, (INT32)hParent);
 	
 	SetCapture32(GetParent32(hwndTreeView));
 	SetCursor32(LoadCursor32A(0, IDC_WAIT32A));
@@ -149,7 +149,7 @@ static void FillTreeView(LPSHELLFOLDER lpsf, LPITEMIDLIST  pidl, HTREEITEM hPare
 	        tvins.hInsertAfter = hPrev;
 	        tvins.hParent      = hParent;
 
-	        hPrev = TreeView_InsertItem32A (hwndTreeView, &tvins);
+	        hPrev = (HTREEITEM)TreeView_InsertItem32A (hwndTreeView, &tvins);
 
 	      }
 	    }
