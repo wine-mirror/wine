@@ -251,7 +251,8 @@ HGLOBALStreamImpl* HGLOBALStreamImpl_Construct(
      */
     if (newStream->supportHandle == NULL)
     {
-      newStream->supportHandle = GlobalAlloc(GMEM_MOVEABLE | GMEM_NODISCARD, 0);
+      newStream->supportHandle = GlobalAlloc(GMEM_MOVEABLE | GMEM_NODISCARD |
+					     GMEM_SHARE, 0);
     }
     
     /*
