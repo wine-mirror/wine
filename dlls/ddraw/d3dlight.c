@@ -49,17 +49,17 @@ static void update(IDirect3DLightImpl* This) {
     
     TRACE("Activating DIRECTIONAL\n");
     TRACE("  direction : %f %f %f\n",
-	  This->light.dvDirection.x.x,
-	  This->light.dvDirection.y.y,
-	  This->light.dvDirection.z.z);
+	  This->light.dvDirection.u1.x,
+	  This->light.dvDirection.u2.y,
+	  This->light.dvDirection.u3.z);
     _dump_colorvalue(" color    ", This->light.dcvColor);
 
     glLightfv(dlpriv->light_num, GL_AMBIENT, (float *) zero_value);
     glLightfv(dlpriv->light_num, GL_DIFFUSE, (float *) &(This->light.dcvColor));
 
-    direction[0] = -This->light.dvDirection.x.x;
-    direction[1] = -This->light.dvDirection.y.y;
-    direction[2] = -This->light.dvDirection.z.z;
+    direction[0] = -This->light.dvDirection.u1.x;
+    direction[1] = -This->light.dvDirection.u2.y;
+    direction[2] = -This->light.dvDirection.u3.z;
     direction[3] = 0.0; /* This is a directional light */
 
     glLightfv(dlpriv->light_num, GL_POSITION, (float *) direction);

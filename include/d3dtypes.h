@@ -69,54 +69,86 @@ typedef struct _D3DCOLORVALUE {
         union {
                 D3DVALUE r;
                 D3DVALUE dvR;
-        } r;
+        } DUMMYUNIONNAME1;
         union {
                 D3DVALUE g;
                 D3DVALUE dvG;
-        } g;
+        } DUMMYUNIONNAME2;
         union {
                 D3DVALUE b;
                 D3DVALUE dvB;
-        } b;
+        } DUMMYUNIONNAME3;
         union {
                 D3DVALUE a;
                 D3DVALUE dvA;
-        } a;
+        } DUMMYUNIONNAME4;
 } D3DCOLORVALUE,*LPD3DCOLORVALUE;
 
 typedef struct _D3DRECT {
   union {
     LONG x1;
     LONG lX1;
-  } x1;
+  } DUMMYUNIONNAME1;
   union {
     LONG y1;
     LONG lY1;
-  } y1;
+  } DUMMYUNIONNAME2;
   union {
     LONG x2;
     LONG lX2;
-  } x2;
+  } DUMMYUNIONNAME3;
   union {
     LONG y2;
     LONG lY2;
-  } y2;
+  } DUMMYUNIONNAME4;
 } D3DRECT, *LPD3DRECT;
 
 typedef struct _D3DVECTOR {
   union {
         D3DVALUE        x;
     D3DVALUE dvX;
-  } x;
+  } DUMMYUNIONNAME1;
   union {
         D3DVALUE        y;
     D3DVALUE dvY;
-  } y;
+  } DUMMYUNIONNAME2;
   union {
         D3DVALUE        z;
     D3DVALUE dvZ;
-  } z;
-  /* the C++ variant has operator overloads etc. too */
+  } DUMMYUNIONNAME3;
+#if defined(__cplusplus) && defined(D3D_OVERLOADS)
+  /* the definitions for these methods are in d3dvec.inl */
+public:
+  /*** constructors ***/
+  _D3DVECTOR() {}
+  _D3DVECTOR(D3DVALUE f);
+  _D3DVECTOR(D3DVALUE _x, D3DVALUE _y, D3DVALUE _z);
+  _D3DVECTOR(const D3DVALUE f[3]);
+
+  /*** assignment operators ***/
+  _D3DVECTOR& operator += (const _D3DVECTOR& v);
+  _D3DVECTOR& operator -= (const _D3DVECTOR& v);
+  _D3DVECTOR& operator *= (const _D3DVECTOR& v);
+  _D3DVECTOR& operator /= (const _D3DVECTOR& v);
+  _D3DVECTOR& operator *= (D3DVALUE s);
+  _D3DVECTOR& operator /= (D3DVALUE s);
+
+  /*** binary operators ***/
+  friend _D3DVECTOR operator + (const _D3DVECTOR& v1, const _D3DVECTOR& v2);
+  friend _D3DVECTOR operator - (const _D3DVECTOR& v1, const _D3DVECTOR& v2);
+
+  friend _D3DVECTOR operator * (const _D3DVECTOR& v, D3DVALUE s);
+  friend _D3DVECTOR operator * (D3DVALUE s, const _D3DVECTOR& v);
+  friend _D3DVECTOR operator / (const _D3DVECTOR& v, D3DVALUE s);
+
+  friend D3DVALUE SquareMagnitude(const _D3DVECTOR& v);
+  friend D3DVALUE Magnitude(const _D3DVECTOR& v);
+
+  friend _D3DVECTOR Normalize(const _D3DVECTOR& v);
+
+  friend D3DVALUE DotProduct(const _D3DVECTOR& v1, const _D3DVECTOR& v2);
+  friend _D3DVECTOR CrossProduct(const _D3DVECTOR& v1, const _D3DVECTOR& v2);
+#endif
 } D3DVECTOR,*LPD3DVECTOR;
 
 typedef struct _D3DHVERTEX {
@@ -249,6 +281,10 @@ typedef struct {
   D3DVALUE        _41, _42, _43, _44;
   /* FIXME: Some C++ stuff here */
 } D3DMATRIX, *LPD3DMATRIX;
+
+#if defined(__cplusplus) && defined(D3D_OVERLOADS)
+#include "d3dvec.inl"
+#endif
 
 typedef struct _D3DVIEWPORT {
   DWORD       dwSize;
@@ -421,23 +457,23 @@ typedef struct _D3DMATERIAL7 {
   union {
     D3DCOLORVALUE   diffuse;
     D3DCOLORVALUE   dcvDiffuse;
-  }a;
+  } DUMMYUNIONNAME;
   union {
     D3DCOLORVALUE   ambient;
     D3DCOLORVALUE   dcvAmbient;
-  }b;
+  } DUMMYUNIONNAME1;
   union {
     D3DCOLORVALUE   specular;
     D3DCOLORVALUE   dcvSpecular;
-  }c;
+  } DUMMYUNIONNAME2;
   union {
     D3DCOLORVALUE   emissive;
     D3DCOLORVALUE   dcvEmissive;
-  }d;
+  } DUMMYUNIONNAME3;
   union {
     D3DVALUE        power;
     D3DVALUE        dvPower;
-  }e;
+  } DUMMYUNIONNAME4;
 } D3DMATERIAL7, *LPD3DMATERIAL7;
 
 typedef enum {

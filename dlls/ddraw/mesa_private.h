@@ -103,7 +103,7 @@ typedef struct mesa_d3dd_private {
 
 #define _dump_colorvalue(s,v)               \
     TRACE(" " s " : %f %f %f %f\n",           \
-	    (v).r.r, (v).g.g, (v).b.b, (v).a.a);
+	    (v).u1.r, (v).u2.g, (v).u3.b, (v).u4.a);
 
 /* Common functions defined in d3dcommon.c */
 void set_render_state(D3DRENDERSTATETYPE dwRenderStateType,
