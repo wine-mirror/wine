@@ -367,6 +367,40 @@ BOOL WINAPI GetFileSizeEx( HANDLE hFile, PLARGE_INTEGER lpFileSize )
 }
 
 
+/***********************************************************************
+ *              SetFileTime   (KERNEL32.@)
+ */
+BOOL WINAPI SetFileTime( HANDLE hFile, const FILETIME *ctime,
+                         const FILETIME *atime, const FILETIME *mtime )
+{
+    FILE_BASIC_INFORMATION info;
+    IO_STATUS_BLOCK io;
+    NTSTATUS status;
+
+    memset( &info, 0, sizeof(info) );
+    if (ctime)
+    {
+        info.CreationTime.u.HighPart = ctime->dwHighDateTime;
+        info.CreationTime.u.LowPart  = ctime->dwLowDateTime;
+    }
+    if (atime)
+    {
+        info.LastAccessTime.u.HighPart = atime->dwHighDateTime;
+        info.LastAccessTime.u.LowPart  = atime->dwLowDateTime;
+    }
+    if (mtime)
+    {
+        info.LastWriteTime.u.HighPart = mtime->dwHighDateTime;
+        info.LastWriteTime.u.LowPart  = mtime->dwLowDateTime;
+    }
+
+    status = NtSetInformationFile( hFile, &io, &info, sizeof(info), FileBasicInformation );
+    if (status == STATUS_SUCCESS) return TRUE;
+    SetLastError( RtlNtStatusToDosError(status) );
+    return FALSE;
+}
+
+
 /**************************************************************************
  *           LockFile   (KERNEL32.@)
  */
@@ -915,6 +949,135 @@ BOOL WINAPI FindNextFileA( HANDLE handle, WIN32_FIND_DATAA *data )
                          data->cAlternateFileName,
                          sizeof(data->cAlternateFileName), NULL, NULL );
     return TRUE;
+}
+
+
+/**************************************************************************
+ *           GetFileAttributesW   (KERNEL32.@)
+ */
+DWORD WINAPI GetFileAttributesW( LPCWSTR name )
+{
+    FILE_BASIC_INFORMATION info;
+    UNICODE_STRING nt_name;
+    OBJECT_ATTRIBUTES attr;
+    NTSTATUS status;
+
+    if (!RtlDosPathNameToNtPathName_U( name, &nt_name, NULL, NULL ))
+    {
+        SetLastError( ERROR_PATH_NOT_FOUND );
+        return INVALID_FILE_ATTRIBUTES;
+    }
+
+    attr.Length = sizeof(attr);
+    attr.RootDirectory = 0;
+    attr.Attributes = OBJ_CASE_INSENSITIVE;
+    attr.ObjectName = &nt_name;
+    attr.SecurityDescriptor = NULL;
+    attr.SecurityQualityOfService = NULL;
+
+    status = NtQueryAttributesFile( &attr, &info );
+    RtlFreeUnicodeString( &nt_name );
+
+    if (status == STATUS_SUCCESS) return info.FileAttributes;
+
+    /* NtQueryAttributesFile fails on devices, but GetFileAttributesW succeeds */
+    if (RtlIsDosDeviceName_U( name )) return FILE_ATTRIBUTE_ARCHIVE;
+
+    SetLastError( RtlNtStatusToDosError(status) );
+    return INVALID_FILE_ATTRIBUTES;
+}
+
+
+/**************************************************************************
+ *           GetFileAttributesA   (KERNEL32.@)
+ */
+DWORD WINAPI GetFileAttributesA( LPCSTR name )
+{
+    UNICODE_STRING nameW;
+    DWORD ret = INVALID_FILE_ATTRIBUTES;
+
+    if (!name)
+    {
+        SetLastError( ERROR_INVALID_PARAMETER );
+        return INVALID_FILE_ATTRIBUTES;
+    }
+
+    if (RtlCreateUnicodeStringFromAsciiz(&nameW, name))
+    {
+        ret = GetFileAttributesW(nameW.Buffer);
+        RtlFreeUnicodeString(&nameW);
+    }
+    else
+        SetLastError(ERROR_NOT_ENOUGH_MEMORY);
+    return ret;
+}
+
+
+/**************************************************************************
+ *              SetFileAttributesW	(KERNEL32.@)
+ */
+BOOL WINAPI SetFileAttributesW( LPCWSTR name, DWORD attributes )
+{
+    UNICODE_STRING nt_name;
+    OBJECT_ATTRIBUTES attr;
+    IO_STATUS_BLOCK io;
+    NTSTATUS status;
+    HANDLE handle;
+
+    if (!RtlDosPathNameToNtPathName_U( name, &nt_name, NULL, NULL ))
+    {
+        SetLastError( ERROR_PATH_NOT_FOUND );
+        return FALSE;
+    }
+
+    attr.Length = sizeof(attr);
+    attr.RootDirectory = 0;
+    attr.Attributes = OBJ_CASE_INSENSITIVE;
+    attr.ObjectName = &nt_name;
+    attr.SecurityDescriptor = NULL;
+    attr.SecurityQualityOfService = NULL;
+
+    status = NtOpenFile( &handle, 0, &attr, &io, 0, FILE_SYNCHRONOUS_IO_NONALERT );
+    RtlFreeUnicodeString( &nt_name );
+
+    if (status == STATUS_SUCCESS)
+    {
+        FILE_BASIC_INFORMATION info;
+
+        memset( &info, 0, sizeof(info) );
+        info.FileAttributes = attributes | FILE_ATTRIBUTE_NORMAL;  /* make sure it's not zero */
+        status = NtSetInformationFile( handle, &io, &info, sizeof(info), FileBasicInformation );
+        NtClose( handle );
+    }
+
+    if (status == STATUS_SUCCESS) return TRUE;
+    SetLastError( RtlNtStatusToDosError(status) );
+    return FALSE;
+}
+
+
+/**************************************************************************
+ *              SetFileAttributesA	(KERNEL32.@)
+ */
+BOOL WINAPI SetFileAttributesA( LPCSTR name, DWORD attributes )
+{
+    UNICODE_STRING filenameW;
+    BOOL ret = FALSE;
+
+    if (!name)
+    {
+        SetLastError( ERROR_INVALID_PARAMETER );
+        return FALSE;
+    }
+
+    if (RtlCreateUnicodeStringFromAsciiz(&filenameW, name))
+    {
+        ret = SetFileAttributesW(filenameW.Buffer, attributes);
+        RtlFreeUnicodeString(&filenameW);
+    }
+    else
+        SetLastError(ERROR_NOT_ENOUGH_MEMORY);
+    return ret;
 }
 
 

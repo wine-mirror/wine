@@ -110,10 +110,6 @@ static BOOL process_attach(void)
 {
     HMODULE16 hModule;
 
-    /* Get the umask */
-    FILE_umask = umask(0777);
-    umask( FILE_umask );
-
     /* Setup registry locale information */
     LOCALE_InitRegistry();
 

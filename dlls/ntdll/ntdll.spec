@@ -159,7 +159,7 @@
 @ stub NtPrivilegedServiceAuditAlarm
 @ stdcall NtProtectVirtualMemory(long ptr ptr long ptr)
 @ stdcall NtPulseEvent(long ptr)
-@ stub NtQueryAttributesFile
+@ stdcall NtQueryAttributesFile(ptr ptr)
 @ stdcall NtQueryDefaultLocale(long ptr)
 @ stdcall NtQueryDirectoryFile(long long  ptr ptr ptr ptr long long long ptr long)
 @ stdcall NtQueryDirectoryObject(long ptr long long long ptr ptr)
@@ -736,7 +736,7 @@
 @ stub ZwPrivilegedServiceAuditAlarm
 @ stdcall ZwProtectVirtualMemory(long ptr ptr long ptr) NtProtectVirtualMemory
 @ stdcall ZwPulseEvent(long ptr) NtPulseEvent
-@ stub ZwQueryAttributesFile
+@ stdcall ZwQueryAttributesFile(ptr ptr) NtQueryAttributesFile
 @ stdcall ZwQueryDefaultLocale(long ptr) NtQueryDefaultLocale
 @ stdcall ZwQueryDirectoryFile(long long  ptr ptr ptr ptr long long long ptr long)NtQueryDirectoryFile
 @ stdcall ZwQueryDirectoryObject(long ptr long long long ptr ptr) NtQueryDirectoryObject

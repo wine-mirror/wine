@@ -84,6 +84,7 @@ extern NTSTATUS CDROM_DeviceIoControl(HANDLE hDevice,
 
 /* file I/O */
 extern NTSTATUS FILE_GetNtStatus(void);
+extern BOOL DIR_is_hidden_file( const UNICODE_STRING *name );
 extern NTSTATUS DIR_nt_to_unix( const UNICODE_STRING *nameW, ANSI_STRING *unix_name_ret,
                                 int check_last, int check_case );
 

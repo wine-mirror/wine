@@ -36,7 +36,6 @@ typedef struct
 } DOS_FULL_NAME;
 
 /* files/file.c */
-extern mode_t FILE_umask;
 extern void FILE_SetDosError(void);
 extern BOOL FILE_Stat( LPCSTR unixName, BY_HANDLE_FILE_INFORMATION *info, BOOL *is_symlink );
 extern HANDLE FILE_CreateFile( LPCSTR filename, DWORD access, DWORD sharing,

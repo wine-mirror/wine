@@ -39,6 +39,12 @@
 #ifdef HAVE_SYS_PARAM_H
 # include <sys/param.h>
 #endif
+#ifdef HAVE_SYS_TIME_H
+# include <sys/time.h>
+#endif
+#ifdef HAVE_UTIME_H
+# include <utime.h>
+#endif
 #ifdef STATFS_DEFINED_BY_SYS_VFS
 # include <sys/vfs.h>
 #else
@@ -63,6 +69,11 @@
 #include "winioctl.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(ntdll);
+
+mode_t FILE_umask = 0;
+
+#define SECSPERDAY         86400
+#define SECS_1601_TO_1970  ((369 * 365 + 89) * (ULONGLONG)SECSPERDAY)
 
 /**************************************************************************
  *                 NtOpenFile				[NTDLL.@]
@@ -868,46 +879,143 @@ NTSTATUS WINAPI NtQueryInformationFile( HANDLE hFile, PIO_STATUS_BLOCK io,
  * Set information about an open file handle.
  *
  * PARAMS
- *  FileHandle           [I] Handle returned from ZwOpenFile() or ZwCreateFile()
- *  IoStatusBlock        [O] Receives information about the operation on return
- *  FileInformation      [I] Source for file information
- *  Length               [I] Size of FileInformation
- *  FileInformationClass [I] Type of file information to set
+ *  handle  [I] Handle returned from ZwOpenFile() or ZwCreateFile()
+ *  io      [O] Receives information about the operation on return
+ *  ptr     [I] Source for file information
+ *  len     [I] Size of FileInformation
+ *  class   [I] Type of file information to set
  *
  * RETURNS
- *  Success: 0. IoStatusBlock is updated.
+ *  Success: 0. io is updated.
  *  Failure: An NTSTATUS error code describing the error.
  */
-NTSTATUS WINAPI NtSetInformationFile(HANDLE hFile, PIO_STATUS_BLOCK io_status,
-                                     PVOID ptr, ULONG len,
-                                     FILE_INFORMATION_CLASS class)
+NTSTATUS WINAPI NtSetInformationFile(HANDLE handle, PIO_STATUS_BLOCK io,
+                                     PVOID ptr, ULONG len, FILE_INFORMATION_CLASS class)
 {
-    NTSTATUS    status = STATUS_INVALID_PARAMETER_3;
+    int fd;
 
-    TRACE("(%p,%p,%p,0x%08lx,0x%08x)\n", hFile, io_status, ptr, len, class);
+    TRACE("(%p,%p,%p,0x%08lx,0x%08x)\n", handle, io, ptr, len, class);
 
+    if ((io->u.Status = wine_server_handle_to_fd( handle, 0, &fd, NULL, NULL )))
+        return io->u.Status;
+
+    io->u.Status = STATUS_SUCCESS;
     switch (class)
     {
+    case FileBasicInformation:
+        if (len >= sizeof(FILE_BASIC_INFORMATION))
+        {
+            struct stat st;
+            const FILE_BASIC_INFORMATION *info = ptr;
+
+#ifdef HAVE_FUTIMES
+            if (info->LastAccessTime.QuadPart || info->LastWriteTime.QuadPart)
+            {
+                ULONGLONG sec, nsec;
+                struct timeval tv[2];
+
+                if (!info->LastAccessTime.QuadPart || !info->LastWriteTime.QuadPart)
+                {
+
+                    tv[0].tv_sec = tv[0].tv_usec = 0;
+                    tv[1].tv_sec = tv[1].tv_usec = 0;
+                    if (!fstat( fd, &st ))
+                    {
+                        tv[0].tv_sec = st.st_atime;
+                        tv[1].tv_sec = st.st_mtime;
+                    }
+                }
+                if (info->LastAccessTime.QuadPart)
+                {
+                    sec = RtlLargeIntegerDivide( info->LastAccessTime.QuadPart, 10000000, &nsec );
+                    tv[0].tv_sec = sec - SECS_1601_TO_1970;
+                    tv[0].tv_usec = (UINT)nsec / 10;
+                }
+                if (info->LastWriteTime.QuadPart)
+                {
+                    sec = RtlLargeIntegerDivide( info->LastWriteTime.QuadPart, 10000000, &nsec );
+                    tv[1].tv_sec = sec - SECS_1601_TO_1970;
+                    tv[1].tv_usec = (UINT)nsec / 10;
+                }
+                if (futimes( fd, tv ) == -1) io->u.Status = FILE_GetNtStatus();
+            }
+#endif  /* HAVE_FUTIMES */
+            if (io->u.Status == STATUS_SUCCESS && info->FileAttributes)
+            {
+                if (fstat( fd, &st ) == -1) io->u.Status = FILE_GetNtStatus();
+                else
+                {
+                    if (info->FileAttributes & FILE_ATTRIBUTE_READONLY)
+                    {
+                        st.st_mode &= ~0222; /* clear write permission bits */
+                    }
+                    else
+                    {
+                        /* add write permission only where we already have read permission */
+                        st.st_mode |= (0600 | ((st.st_mode & 044) >> 1)) & (~FILE_umask);
+                    }
+                    if (fchmod( fd, st.st_mode ) == -1) io->u.Status = FILE_GetNtStatus();
+                }
+            }
+        }
+        else io->u.Status = STATUS_INVALID_PARAMETER_3;
+        break;
+
     case FilePositionInformation:
         if (len >= sizeof(FILE_POSITION_INFORMATION))
         {
-            int fd;
-            FILE_POSITION_INFORMATION*  fpi = (FILE_POSITION_INFORMATION*)ptr;
+            const FILE_POSITION_INFORMATION *info = ptr;
 
-            if (!(status = wine_server_handle_to_fd( hFile, 0, &fd, NULL, NULL )))
-            {
-                if (lseek( fd, fpi->CurrentByteOffset.QuadPart, SEEK_SET ) == (off_t)-1)
-                    status = FILE_GetNtStatus();
-                wine_server_release_fd( hFile, fd );
-            }
+            if (lseek( fd, info->CurrentByteOffset.QuadPart, SEEK_SET ) == (off_t)-1)
+                io->u.Status = FILE_GetNtStatus();
         }
+        else io->u.Status = STATUS_INVALID_PARAMETER_3;
         break;
+
     default:
         FIXME("Unsupported class (%d)\n", class);
-        return STATUS_NOT_IMPLEMENTED;
+        io->u.Status = STATUS_NOT_IMPLEMENTED;
+        break;
     }
-    io_status->u.Status = status;
-    io_status->Information = 0;
+    wine_server_release_fd( handle, fd );
+    io->Information = 0;
+    return io->u.Status;
+}
+
+
+/******************************************************************************
+ *              NtQueryAttributesFile   (NTDLL.@)
+ *              ZwQueryAttributesFile   (NTDLL.@)
+ */
+NTSTATUS WINAPI NtQueryAttributesFile( const OBJECT_ATTRIBUTES *attr, FILE_BASIC_INFORMATION *info )
+{
+    ANSI_STRING unix_name;
+    NTSTATUS status;
+
+    if (!(status = DIR_nt_to_unix( attr->ObjectName, &unix_name,
+                                   TRUE, !(attr->Attributes & OBJ_CASE_INSENSITIVE) )))
+    {
+        struct stat st;
+
+        if (stat( unix_name.Buffer, &st ) == -1)
+            status = FILE_GetNtStatus();
+        else if (!S_ISREG(st.st_mode) && !S_ISDIR(st.st_mode))
+            status = STATUS_INVALID_INFO_CLASS;
+        else
+        {
+            if (S_ISDIR(st.st_mode)) info->FileAttributes = FILE_ATTRIBUTE_DIRECTORY;
+            else info->FileAttributes = FILE_ATTRIBUTE_ARCHIVE;
+            if (!(st.st_mode & S_IWUSR)) info->FileAttributes |= FILE_ATTRIBUTE_READONLY;
+            RtlSecondsSince1970ToTime( st.st_mtime, &info->CreationTime );
+            RtlSecondsSince1970ToTime( st.st_mtime, &info->LastWriteTime );
+            RtlSecondsSince1970ToTime( st.st_ctime, &info->ChangeTime );
+            RtlSecondsSince1970ToTime( st.st_atime, &info->LastAccessTime );
+            if (DIR_is_hidden_file( attr->ObjectName ))
+                info->FileAttributes |= FILE_ATTRIBUTE_HIDDEN;
+        }
+        RtlFreeAnsiString( &unix_name );
+    }
+    else WARN("%s not found (%lx)\n", debugstr_us(attr->ObjectName), status );
     return status;
 }
 

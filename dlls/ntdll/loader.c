@@ -2016,9 +2016,14 @@ void __wine_process_init( int argc, char *argv[] )
     ANSI_STRING func_name;
     void (* DECLSPEC_NORETURN init_func)();
     extern void __wine_dbg_ntdll_init(void);
+    extern mode_t FILE_umask;
 
     thread_init();
     __wine_dbg_ntdll_init();  /* hack: register debug channels early */
+
+    /* retrieve current umask */
+    FILE_umask = umask(0777);
+    umask( FILE_umask );
 
     /* setup the load callback and create ntdll modref */
     wine_dll_set_callback( load_builtin_callback );
