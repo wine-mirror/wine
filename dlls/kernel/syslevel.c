@@ -35,7 +35,7 @@
 #include "wine/library.h"
 #include "wine/debug.h"
 
-WINE_DEFAULT_DEBUG_CHANNEL(win32);
+WINE_DEFAULT_DEBUG_CHANNEL(syslevel);
 
 static SYSLEVEL Win16Mutex;
 static CRITICAL_SECTION_DEBUG critsect_debug =

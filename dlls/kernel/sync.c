@@ -52,7 +52,7 @@
 
 #include "wine/debug.h"
 
-WINE_DEFAULT_DEBUG_CHANNEL(win32);
+WINE_DEFAULT_DEBUG_CHANNEL(sync);
 
 /* check if current version is NT or Win95 */
 inline static int is_version_nt(void)

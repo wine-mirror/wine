@@ -27,7 +27,7 @@
 
 #include "wine/debug.h"
 
-WINE_DEFAULT_DEBUG_CHANNEL(win32);
+WINE_DEFAULT_DEBUG_CHANNEL(wintrust);
 
 /***********************************************************************
  *		WinVerifyTrust (WINTRUST.@)
