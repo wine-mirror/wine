@@ -271,6 +271,8 @@ $(MC_SRCS:.mc=.mc.rc): $(WMC)
 
 $(IDL_SRCS:.idl=.h): $(WIDL)
 
+$(RC_TLB:.idl=.tlb): $(WIDL)
+
 $(SUBDIRS): dummy
 	@cd $@ && $(MAKE)
 
