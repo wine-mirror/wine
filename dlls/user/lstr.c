@@ -112,7 +112,7 @@ SEGPTR WINAPI AnsiUpper16( SEGPTR strOrChar )
         CharUpperA( MapSL(strOrChar) );
         return strOrChar;
     }
-    else return toupper((char)strOrChar);
+    else return (SEGPTR)CharUpperA( (LPSTR)strOrChar );
 }
 
 
@@ -127,7 +127,7 @@ SEGPTR WINAPI AnsiLower16( SEGPTR strOrChar )
         CharLowerA( MapSL(strOrChar) );
         return strOrChar;
     }
-    else return tolower((char)strOrChar);
+    else return (SEGPTR)CharLowerA( (LPSTR)strOrChar );
 }
 
 
@@ -360,20 +360,19 @@ BOOL WINAPI OemToCharW( LPCSTR s, LPWSTR d )
 
 /***********************************************************************
  *           CharLowerA   (USER32.@)
- * FIXME: handle current locale
  */
-LPSTR WINAPI CharLowerA(LPSTR x)
+LPSTR WINAPI CharLowerA(LPSTR str)
 {
-    if (!HIWORD(x)) return (LPSTR)tolower((char)(int)x);
+    if (!HIWORD(str))
+    {
+        char ch = LOWORD(str);
+        CharLowerBuffA( &ch, 1 );
+        return (LPSTR)(UINT_PTR)(BYTE)ch;
+    }
 
     __TRY
     {
-        LPSTR s = x;
-        while (*s)
-        {
-            *s=tolower(*s);
-            s++;
-        }
+        CharLowerBuffA( str, strlen(str) );
     }
     __EXCEPT(page_fault)
     {
@@ -381,26 +380,25 @@ LPSTR WINAPI CharLowerA(LPSTR x)
         return NULL;
     }
     __ENDTRY
-    return x;
+    return str;
 }
 
 
 /***********************************************************************
  *           CharUpperA   (USER32.@)
- * FIXME: handle current locale
  */
-LPSTR WINAPI CharUpperA(LPSTR x)
+LPSTR WINAPI CharUpperA(LPSTR str)
 {
-    if (!HIWORD(x)) return (LPSTR)toupper((char)(int)x);
+    if (!HIWORD(str))
+    {
+        char ch = LOWORD(str);
+        CharUpperBuffA( &ch, 1 );
+        return (LPSTR)(UINT_PTR)(BYTE)ch;
+    }
 
     __TRY
     {
-        LPSTR s = x;
-        while (*s)
-        {
-            *s=toupper(*s);
-            s++;
-        }
+        CharUpperBuffA( str, strlen(str) );
     }
     __EXCEPT(page_fault)
     {
@@ -408,7 +406,7 @@ LPSTR WINAPI CharUpperA(LPSTR x)
         return NULL;
     }
     __ENDTRY
-    return x;
+    return str;
 }
 
 
@@ -438,20 +436,22 @@ LPWSTR WINAPI CharUpperW(LPWSTR x)
 DWORD WINAPI CharLowerBuffA( LPSTR str, DWORD len )
 {
     DWORD lenW;
-    WCHAR *strW;
+    WCHAR buffer[32];
+    WCHAR *strW = buffer;
+
     if (!str) return 0; /* YES */
 
     lenW = MultiByteToWideChar(CP_ACP, 0, str, len, NULL, 0);
-    strW = HeapAlloc(GetProcessHeap(), 0, lenW * sizeof(WCHAR));
-    if(strW)
+    if (lenW > sizeof(buffer)/sizeof(WCHAR))
     {
-	MultiByteToWideChar(CP_ACP, 0, str, len, strW, lenW);
-	CharLowerBuffW(strW, lenW);
-	len = WideCharToMultiByte(CP_ACP, 0, strW, lenW, str, len, NULL, NULL);
-	HeapFree(GetProcessHeap(), 0, strW);
-	return len;
+        strW = HeapAlloc(GetProcessHeap(), 0, lenW * sizeof(WCHAR));
+        if (!strW) return 0;
     }
-    return 0;
+    MultiByteToWideChar(CP_ACP, 0, str, len, strW, lenW);
+    CharLowerBuffW(strW, lenW);
+    len = WideCharToMultiByte(CP_ACP, 0, strW, lenW, str, len, NULL, NULL);
+    if (strW != buffer) HeapFree(GetProcessHeap(), 0, strW);
+    return len;
 }
 
 
@@ -473,20 +473,22 @@ DWORD WINAPI CharLowerBuffW( LPWSTR str, DWORD len )
 DWORD WINAPI CharUpperBuffA( LPSTR str, DWORD len )
 {
     DWORD lenW;
-    WCHAR *strW;
+    WCHAR buffer[32];
+    WCHAR *strW = buffer;
+
     if (!str) return 0; /* YES */
 
     lenW = MultiByteToWideChar(CP_ACP, 0, str, len, NULL, 0);
-    strW = HeapAlloc(GetProcessHeap(), 0, lenW * sizeof(WCHAR));
-    if(strW)
+    if (lenW > sizeof(buffer)/sizeof(WCHAR))
     {
-	MultiByteToWideChar(CP_ACP, 0, str, len, strW, lenW);
-	CharUpperBuffW(strW, lenW);
-	len = WideCharToMultiByte(CP_ACP, 0, strW, lenW, str, len, NULL, NULL);
-	HeapFree(GetProcessHeap(), 0, strW);
-	return len;
+        strW = HeapAlloc(GetProcessHeap(), 0, lenW * sizeof(WCHAR));
+        if (!strW) return 0;
     }
-    return 0;
+    MultiByteToWideChar(CP_ACP, 0, str, len, strW, lenW);
+    CharUpperBuffW(strW, lenW);
+    len = WideCharToMultiByte(CP_ACP, 0, strW, lenW, str, len, NULL, NULL);
+    if (strW != buffer) HeapFree(GetProcessHeap(), 0, strW);
+    return len;
 }
 
 
