@@ -499,9 +499,15 @@ static LRESULT DEFWND_DefWinProc( WND *wndPtr, UINT msg, WPARAM wParam,
 
     case WM_SETCURSOR:
 	if (wndPtr->dwStyle & WS_CHILD)
-	    if (pSendMessage(wndPtr->parent->hwndSelf, WM_SETCURSOR,
-                            wParam, lParam))
-		return TRUE;
+	{
+            /* with the exception of the border around a resizable wnd,
+             * give the parent first chance to set the cursor */
+            if ((LOWORD(lParam) < HTSIZEFIRST) || (LOWORD(lParam) > HTSIZELAST))
+            {
+                if (pSendMessage(wndPtr->parent->hwndSelf, WM_SETCURSOR, wParam, lParam))
+                    return TRUE;
+            }
+        }
 	return NC_HandleSetCursor( wndPtr->hwndSelf, wParam, lParam );
 
     case WM_SYSCOMMAND:
