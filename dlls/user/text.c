@@ -509,13 +509,14 @@ static BOOL TEXT_GrayString(HDC hdc, HBRUSH hb, GRAYSTRINGPROC fn, LPARAM lp, IN
     HBITMAP hbm, hbmsave;
     HBRUSH hbsave;
     HFONT hfsave;
-    HDC memdc = CreateCompatibleDC(hdc);
+    HDC memdc;
     int slen = len;
     BOOL retval = TRUE;
     COLORREF fg, bg;
 
     if(!hdc) return FALSE;
-    
+    if (!(memdc = CreateCompatibleDC(hdc))) return FALSE;
+
     if(len == 0)
     {
         if(unicode)
