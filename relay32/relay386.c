@@ -463,7 +463,7 @@ void WINAPI RELAY_DoCallFrom32Regs( CONTEXT86 *context )
 
     BYTE *relay_addr = *((BYTE **)context->Esp - 1);
     DEBUG_ENTRY_POINT *relay = (DEBUG_ENTRY_POINT *)(relay_addr - 5);
-    WORD nb_args = (relay->args & ~0x8000) / sizeof(int);
+    WORD nb_args = relay->args / sizeof(int);
 
     /* remove extra stuff from the stack */
     context->Eip = stack32_pop(context);
@@ -523,6 +523,26 @@ __ASM_GLOBAL_FUNC( RELAY_CallFrom32Regs,
                    "call " __ASM_NAME("__wine_call_from_32_regs") "\n\t"
                    ".long " __ASM_NAME("RELAY_DoCallFrom32Regs") ",0" );
 
+
+/* check whether the function at addr starts with a call to __wine_call_from_32_regs */
+static BOOL is_register_entry_point( const BYTE *addr )
+{
+    extern void __wine_call_from_32_regs();
+    int *offset;
+    void *ptr;
+
+    if (*addr != 0xe8) return FALSE;  /* not a call */
+    /* check if call target is __wine_call_from_32_regs */
+    offset = (int *)(addr + 1);
+    if (*offset == (char *)__wine_call_from_32_regs - (char *)(offset + 1)) return TRUE;
+    /* now check if call target is an import table jump to __wine_call_from_32_regs */
+    addr = (BYTE *)(offset + 1) + *offset;
+    if (addr[0] != 0xff || addr[1] != 0x25) return FALSE;  /* not an indirect jmp */
+    ptr = *(void **)(addr + 2);  /* get indirect jmp target address */
+    return (*(char **)ptr == (char *)__wine_call_from_32_regs);
+}
+
+
 /***********************************************************************
  *           RELAY_SetupDLL
  *
@@ -560,7 +580,7 @@ void RELAY_SetupDLL( const char *module )
         if (on)
         {
             debug->call = 0xe8;  /* call relative */
-            if (debug->args & 0x8000)  /* register func */
+            if (is_register_entry_point( debug->orig ))
                 debug->callfrom32 = (char *)RELAY_CallFrom32Regs - (char *)&debug->ret;
             else
                 debug->callfrom32 = (char *)RELAY_CallFrom32 - (char *)&debug->ret;

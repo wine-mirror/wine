@@ -271,23 +271,19 @@ static int output_exports( FILE *outfile, int nr_exports )
 
             name = odp->link_name;
             args = strlen(odp->u.func.arg_types) * sizeof(int);
-            if (odp->flags & FLAG_REGISTER)
-            {
-                name = make_internal_name( odp, "regs" );
-                args |= 0x8000;
-            }
+            if (odp->flags & FLAG_REGISTER) name = make_internal_name( odp, "regs" );
 
             switch(odp->type)
             {
             case TYPE_STDCALL:
                 fprintf( outfile, "    \"\\tjmp " __ASM_NAME("%s") "\\n\"\n", name );
-                fprintf( outfile, "    \"\\tret $0x%04x\\n\"\n", args );
+                fprintf( outfile, "    \"\\tret $%d\\n\"\n", args );
                 fprintf( outfile, "    \"\\t.long " __ASM_NAME("%s") ",0x%08x\\n\"\n", name, mask );
                 break;
             case TYPE_CDECL:
                 fprintf( outfile, "    \"\\tjmp " __ASM_NAME("%s") "\\n\"\n", name );
                 fprintf( outfile, "    \"\\tret\\n\"\n" );
-                fprintf( outfile, "    \"\\t.short 0x%04x\\n\"\n", args );
+                fprintf( outfile, "    \"\\t.short %d\\n\"\n", args );
                 fprintf( outfile, "    \"\\t.long " __ASM_NAME("%s") ",0x%08x\\n\"\n", name, mask );
                 break;
             default:
