@@ -301,13 +301,21 @@ Cursor X11DRV_GetCursor( Display *display, CURSORICONINFO *ptr )
             rscale = 1 << (16 - rbits);
             gscale = 1 << (16 - gbits);
             bscale = 1 << (16 - bbits);
-            fg.red   = rfg * rscale / fgBits;
-            fg.green = gfg * gscale / fgBits;
-            fg.blue  = bfg * bscale / fgBits;
+            if (fgBits)
+            {
+                fg.red   = rfg * rscale / fgBits;
+                fg.green = gfg * gscale / fgBits;
+                fg.blue  = bfg * bscale / fgBits;
+            }
+            else fg.red = fg.green = fg.blue = 0;
             bgBits = xmax * ymax - fgBits;
-            bg.red   = rbg * rscale / bgBits;
-            bg.green = gbg * gscale / bgBits;
-            bg.blue  = bbg * bscale / bgBits;
+            if (bgBits)
+            {
+                bg.red   = rbg * rscale / bgBits;
+                bg.green = gbg * gscale / bgBits;
+                bg.blue  = bbg * bscale / bgBits;
+            }
+            else bg.red = bg.green = bg.blue = 0;
             pixmapBits = XCreateBitmapFromData( display, root_window, pXorBits, xmax, ymax );
             if (!pixmapBits)
             {
