@@ -3989,7 +3989,7 @@ static void EDIT_WM_SetText(WND *wnd, EDITSTATE *es, LPCSTR text)
 {
 	EDIT_EM_SetSel(wnd, es, 0, -1, FALSE);
 	if (text) {
-		TRACE("\t'%s'\n", text);
+		TRACE("\t'%p'\n", text);
 		EDIT_EM_ReplaceSel(wnd, es, FALSE, text);
 	} else {
 		TRACE("\t<NULL>\n");
