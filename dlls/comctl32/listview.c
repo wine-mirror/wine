@@ -1938,7 +1938,7 @@ static BOOL LISTVIEW_SetItem(HWND hwnd, LPLVITEMA lpLVItem)
     if (lpLVItem->iSubItem == 0)
     {
       hdpaSubItems = (HDPA)DPA_GetPtr(infoPtr->hdpaItems, lpLVItem->iItem);
-      if (hdpaSubItems != NULL)
+      if (hdpaSubItems != NULL && hdpaSubItems != -1)
       {
         lpItem = (LISTVIEW_ITEM *)DPA_GetPtr(hdpaSubItems, lpLVItem->iSubItem);
         if (lpItem != NULL)
@@ -5085,7 +5085,7 @@ static LRESULT LISTVIEW_GetStringWidthA(HWND hwnd, LPCSTR lpszText)
   HDC hdc;
 
   ZeroMemory(&stringSize, sizeof(SIZE));
-  if (lpszText != NULL)
+  if (lpszText != NULL && lpszText != -1)
   {
     hFont = infoPtr->hFont ? infoPtr->hFont : infoPtr->hDefaultFont;
     hdc = GetDC(hwnd);
