@@ -2412,7 +2412,7 @@ else
 fi])
 if test -n "$WINE_ROOT"
 then
-  WINE_INCLUDE_ROOT="$WINE_ROOT/include";
+  WINE_INCLUDE_ROOT="$WINE_ROOT/include:$WINE_ROOT/include/wine";
   WINE_LIBRARY_ROOT="$WINE_ROOT";
   WINE_TOOL_PATH="$WINE_ROOT:$WINE_ROOT/bin:$WINE_ROOT/tools/wrc:$WINE_ROOT/tools/winebuild:$PATH";
 fi
@@ -2455,7 +2455,7 @@ fi
 
 if test -z "$WINE_INCLUDE_ROOT"
 then
-  WINE_INCLUDE_ROOT=":/usr/include/wine:/usr/local/include/wine:/opt/wine/include";
+  WINE_INCLUDE_ROOT=":/usr/include/wine:/usr/local/include/wine:/opt/wine/include:/opt/wine/include/wine";
 fi
 AC_PATH_HEADER(WINE_INCLUDE_ROOT,windef.h,[
   AC_MSG_ERROR([Could not find the Wine includes])
