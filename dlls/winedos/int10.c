@@ -840,9 +840,7 @@ void WINAPI DOSVM_PutChar(BYTE ascii)
 
   TRACE("char: 0x%02x\n", ascii);
 
-  // FIXME: Update VGA text buffers here...
-  WriteFile(GetStdHandle(STD_OUTPUT_HANDLE), &ascii, 1, NULL, NULL);
-
+  VGA_PutChar(ascii);
   VGA_GetCursorPos(&xpos, &ypos);
   BIOS_SetCursorPos(data, 0, xpos, ypos);
 }

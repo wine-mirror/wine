@@ -40,6 +40,8 @@ void VGA_GetAlphaMode(unsigned*Xres,unsigned*Yres);
 void VGA_SetCursorPos(unsigned X,unsigned Y);
 void VGA_GetCursorPos(unsigned*X,unsigned*Y);
 void VGA_WriteChars(unsigned X,unsigned Y,unsigned ch,int attr,int count);
+void VGA_PutChar(BYTE ascii);
+void VGA_SetTextAttribute(BYTE attr);
 
 /* control */
 void VGA_ioport_out(WORD port, BYTE val);

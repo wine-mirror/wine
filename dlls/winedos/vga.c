@@ -35,12 +35,15 @@ static IDirectDraw *lpddraw = NULL;
 static IDirectDrawSurface *lpddsurf;
 static IDirectDrawPalette *lpddpal;
 static DDSURFACEDESC sdesc;
-static LONG vga_polling,vga_refresh;
+static LONG vga_refresh;
 static HANDLE poll_timer;
 
 static int vga_width;
 static int vga_height;
 static int vga_depth;
+static BYTE vga_text_attr;
+
+static CRITICAL_SECTION vga_lock = CRITICAL_SECTION_INIT("VGA");
 
 typedef HRESULT (WINAPI *DirectDrawCreateProc)(LPGUID,LPDIRECTDRAW *,LPUNKNOWN);
 static DirectDrawCreateProc pDirectDrawCreate;
@@ -404,6 +407,9 @@ int VGA_SetAlphaMode(unsigned Xres,unsigned Yres)
 
     if (lpddraw) VGA_Exit();
 
+    /* FIXME: Where to initialize text attributes? */
+    VGA_SetTextAttribute(0xf);
+
     /* the xterm is slow, so refresh only every 200ms (5fps) */
     VGA_InstallTimer(200);
 
@@ -441,17 +447,109 @@ void VGA_GetCursorPos(unsigned*X,unsigned*Y)
 
 void VGA_WriteChars(unsigned X,unsigned Y,unsigned ch,int attr,int count)
 {
+    CHAR_INFO info;
+    COORD siz, off;
+    SMALL_RECT dest;
     unsigned XR, YR;
-    char*dat;
+    char *dat;
+
+    EnterCriticalSection(&vga_lock);
+
+    info.Char.AsciiChar = ch;
+    info.Attributes = (WORD)attr;
+    siz.X = 1;
+    siz.Y = 1;
+    off.X = 0;
+    off.Y = 0;
+    dest.Top=Y; 
+    dest.Bottom=Y;
 
     VGA_GetAlphaMode(&XR, &YR);
     dat = VGA_AlphaBuffer() + ((XR*Y + X) * 2);
-    /* FIXME: also call WriteConsoleOutputA, for better responsiveness */
     while (count--) {
+        dest.Left = X + count;
+       dest.Right = X + count;
+
         *dat++ = ch;
-        if (attr>=0) *dat = attr;
+        if (attr>=0) 
+         *dat = attr;
+       else
+         info.Attributes = *dat;
         dat++;
+
+       WriteConsoleOutputA(VGA_AlphaConsole(), &info, siz, off, &dest);
     }
+
+    LeaveCriticalSection(&vga_lock);
+}
+
+static void VGA_PutCharAt(BYTE ascii, unsigned x, unsigned y)
+{
+    unsigned width, height;
+    char *dat;
+
+    VGA_GetAlphaMode(&width, &height);
+    dat = VGA_AlphaBuffer() + ((width*y + x) * 2);
+    dat[0] = ascii;
+    dat[1] = vga_text_attr;
+}
+
+void VGA_PutChar(BYTE ascii)
+{
+    unsigned width, height, x, y, nx, ny;
+
+    EnterCriticalSection(&vga_lock);
+
+    VGA_GetAlphaMode(&width, &height);
+    VGA_GetCursorPos(&x, &y);
+  
+    switch(ascii) {
+    case '\b':
+        VGA_PutCharAt(' ', x, y);
+       x--;
+       break;
+
+    case '\t':
+       x += ((x + 8) & ~7) - x;
+       break;
+
+    case '\n':
+        y++;
+       x = 0;
+       break;
+  
+    case '\a':
+        break;
+
+    case '\r':
+        x = 0;
+       break;
+
+    default:
+        VGA_PutCharAt(ascii, x, y);
+       x++;
+    }
+
+    /*
+     * FIXME: add line wrapping and scrolling
+     */
+
+    WriteFile(VGA_AlphaConsole(), &ascii, 1, NULL, NULL);
+
+    /*
+     * The following is just a sanity check.
+     */
+    VGA_GetCursorPos(&nx, &ny);
+    if(nx != x || ny != y)
+      WARN("VGA emulator and text console have become unsynchronized.\n");
+
+    LeaveCriticalSection(&vga_lock);
+}
+
+void VGA_SetTextAttribute(BYTE attr)
+{
+    vga_text_attr = attr;
+    SetConsoleTextAttribute(VGA_AlphaConsole(), attr);
 }
 
 /*** CONTROL ***/
@@ -508,45 +606,49 @@ static void VGA_Poll_Graphics(void)
   VGA_Unlock();
 }
 
-
-static void CALLBACK VGA_Poll( LPVOID arg, DWORD low, DWORD high )
+static void VGA_Poll_Text(void)
 {
     char *dat;
     unsigned int Height,Width,Y,X;
+    CHAR_INFO ch[80];
+    COORD siz, off;
+    SMALL_RECT dest;
+    HANDLE con = VGA_AlphaConsole();
 
-    if (!InterlockedExchangeAdd(&vga_polling, 1)) {
-        /* FIXME: optimize by doing this only if the data has actually changed
-         *        (in a way similar to DIBSection, perhaps) */
-        if (lpddraw) {
-         VGA_Poll_Graphics();
-        } else {
-          /* text mode */
-          CHAR_INFO ch[80];
-          COORD siz, off;
-          SMALL_RECT dest;
-          HANDLE con = VGA_AlphaConsole();
-
-          VGA_GetAlphaMode(&Width,&Height);
-          dat = VGA_AlphaBuffer();
-          siz.X = 80; siz.Y = 1;
-          off.X = 0; off.Y = 0;
-          /* copy from virtual VGA frame buffer to console */
-          for (Y=0; Y<Height; Y++) {
-              dest.Top=Y; dest.Bottom=Y;
-              for (X=0; X<Width; X++) {
-                  ch[X].Char.AsciiChar = *dat++;
-		  /* WriteConsoleOutputA doesn't like "dead" chars */
-		  if (ch[X].Char.AsciiChar == '\0')
-		      ch[X].Char.AsciiChar = ' ';
-                  ch[X].Attributes = *dat++;
-              }
-              dest.Left=0; dest.Right=Width+1;
-              WriteConsoleOutputA(con, ch, siz, off, &dest);
-          }
-        }
-        vga_refresh=1;
+    VGA_GetAlphaMode(&Width,&Height);
+    dat = VGA_AlphaBuffer();
+    siz.X = 80; siz.Y = 1;
+    off.X = 0; off.Y = 0;
+    /* copy from virtual VGA frame buffer to console */
+    for (Y=0; Y<Height; Y++) {
+        dest.Top=Y; dest.Bottom=Y;
+       for (X=0; X<Width; X++) {
+           ch[X].Char.AsciiChar = *dat++;
+           /* WriteConsoleOutputA doesn't like "dead" chars */
+           if (ch[X].Char.AsciiChar == '\0')
+               ch[X].Char.AsciiChar = ' ';
+           ch[X].Attributes = *dat++;
+       }
+       dest.Left=0; dest.Right=Width+1;
+       WriteConsoleOutputA(con, ch, siz, off, &dest);
     }
-    InterlockedDecrement(&vga_polling);
+}
+
+static void CALLBACK VGA_Poll( LPVOID arg, DWORD low, DWORD high )
+{
+    if(!TryEnterCriticalSection(&vga_lock))
+        return;
+
+    /* FIXME: optimize by doing this only if the data has actually changed
+     *        (in a way similar to DIBSection, perhaps) */
+    if (lpddraw) {
+        VGA_Poll_Graphics();
+    } else {
+        VGA_Poll_Text();
+    }
+
+    vga_refresh=1;
+    LeaveCriticalSection(&vga_lock);
 }
 
 static BYTE palreg,palcnt;
