@@ -42,7 +42,6 @@
 #include "heap.h"
 #include "msdos.h"
 #include "ldt.h"
-#include "process.h"
 #include "task.h"
 #include "wincon.h"
 #include "debugtools.h"
@@ -57,6 +56,8 @@ DEFAULT_DEBUG_CHANNEL(file);
 
 /* Size of per-process table of DOS handles */
 #define DOS_TABLE_SIZE 256
+
+static HANDLE dos_handles[DOS_TABLE_SIZE];
 
 
 /***********************************************************************
@@ -990,19 +991,13 @@ HFILE WINAPI OpenFile( LPCSTR name, OFSTRUCT *ofs, UINT mode )
  * Allocates the default DOS handles for a process. Called either by
  * AllocDosHandle below or by the DOSVM stuff.
  */
-BOOL FILE_InitProcessDosHandles( void ) {
-	HANDLE *ptr;
-
-        if (!(ptr = HeapAlloc( GetProcessHeap(), HEAP_ZERO_MEMORY,
-                               sizeof(*ptr) * DOS_TABLE_SIZE )))
-            return FALSE;
-        PROCESS_Current()->dos_handles = ptr;
-        ptr[0] = GetStdHandle(STD_INPUT_HANDLE);
-        ptr[1] = GetStdHandle(STD_OUTPUT_HANDLE);
-        ptr[2] = GetStdHandle(STD_ERROR_HANDLE);
-        ptr[3] = GetStdHandle(STD_ERROR_HANDLE);
-        ptr[4] = GetStdHandle(STD_ERROR_HANDLE);
-	return TRUE;
+static void FILE_InitProcessDosHandles( void )
+{
+    dos_handles[0] = GetStdHandle(STD_INPUT_HANDLE);
+    dos_handles[1] = GetStdHandle(STD_OUTPUT_HANDLE);
+    dos_handles[2] = GetStdHandle(STD_ERROR_HANDLE);
+    dos_handles[3] = GetStdHandle(STD_ERROR_HANDLE);
+    dos_handles[4] = GetStdHandle(STD_ERROR_HANDLE);
 }
 
 /***********************************************************************
@@ -1014,25 +1009,17 @@ BOOL FILE_InitProcessDosHandles( void ) {
 HFILE16 FILE_AllocDosHandle( HANDLE handle )
 {
     int i;
-    HANDLE *ptr = PROCESS_Current()->dos_handles;
 
     if (!handle || (handle == INVALID_HANDLE_VALUE))
         return INVALID_HANDLE_VALUE16;
 
-    if (!ptr) {
-    	if (!FILE_InitProcessDosHandles())
-	    goto error;
-	ptr = PROCESS_Current()->dos_handles;
-    }
-
-    for (i = 0; i < DOS_TABLE_SIZE; i++, ptr++)
-        if (!*ptr)
+    for (i = 5; i < DOS_TABLE_SIZE; i++)
+        if (!dos_handles[i])
         {
-            *ptr = handle;
+            dos_handles[i] = handle;
             TRACE("Got %d for h32 %d\n", i, handle );
             return i;
         }
-error:
     CloseHandle( handle );
     SetLastError( ERROR_TOO_MANY_OPEN_FILES );
     return INVALID_HANDLE_VALUE16;
@@ -1046,13 +1033,13 @@ error:
  */
 HANDLE FILE_GetHandle( HFILE16 hfile )
 {
-    HANDLE *table = PROCESS_Current()->dos_handles;
-    if ((hfile >= DOS_TABLE_SIZE) || !table || !table[hfile])
+    if (hfile < 5 && !dos_handles[hfile]) FILE_InitProcessDosHandles();
+    if ((hfile >= DOS_TABLE_SIZE) || !dos_handles[hfile])
     {
         SetLastError( ERROR_INVALID_HANDLE );
         return INVALID_HANDLE_VALUE;
     }
-    return table[hfile];
+    return dos_handles[hfile];
 }
 
 
@@ -1063,11 +1050,11 @@ HANDLE FILE_GetHandle( HFILE16 hfile )
  */
 HFILE16 FILE_Dup2( HFILE16 hFile1, HFILE16 hFile2 )
 {
-    HANDLE *table = PROCESS_Current()->dos_handles;
     HANDLE new_handle;
 
-    if ((hFile1 >= DOS_TABLE_SIZE) || (hFile2 >= DOS_TABLE_SIZE) ||
-        !table || !table[hFile1])
+    if (hFile1 < 5 && !dos_handles[hFile1]) FILE_InitProcessDosHandles();
+
+    if ((hFile1 >= DOS_TABLE_SIZE) || (hFile2 >= DOS_TABLE_SIZE) || !dos_handles[hFile1])
     {
         SetLastError( ERROR_INVALID_HANDLE );
         return HFILE_ERROR16;
@@ -1078,12 +1065,12 @@ HFILE16 FILE_Dup2( HFILE16 hFile1, HFILE16 hFile2 )
         SetLastError( ERROR_INVALID_HANDLE );
         return HFILE_ERROR16;
     }
-    if (!DuplicateHandle( GetCurrentProcess(), table[hFile1],
+    if (!DuplicateHandle( GetCurrentProcess(), dos_handles[hFile1],
                           GetCurrentProcess(), &new_handle,
                           0, FALSE, DUPLICATE_SAME_ACCESS ))
         return HFILE_ERROR16;
-    if (table[hFile2]) CloseHandle( table[hFile2] );
-    table[hFile2] = new_handle;
+    if (dos_handles[hFile2]) CloseHandle( dos_handles[hFile2] );
+    dos_handles[hFile2] = new_handle;
     return hFile2;
 }
 
@@ -1093,22 +1080,20 @@ HFILE16 FILE_Dup2( HFILE16 hFile1, HFILE16 hFile2 )
  */
 HFILE16 WINAPI _lclose16( HFILE16 hFile )
 {
-    HANDLE *table = PROCESS_Current()->dos_handles;
-
     if (hFile < 5)
     {
         FIXME("stdio handle closed, need proper conversion\n" );
         SetLastError( ERROR_INVALID_HANDLE );
         return HFILE_ERROR16;
     }
-    if ((hFile >= DOS_TABLE_SIZE) || !table || !table[hFile])
+    if ((hFile >= DOS_TABLE_SIZE) || !dos_handles[hFile])
     {
         SetLastError( ERROR_INVALID_HANDLE );
         return HFILE_ERROR16;
     }
-    TRACE("%d (handle32=%d)\n", hFile, table[hFile] );
-    CloseHandle( table[hFile] );
-    table[hFile] = 0;
+    TRACE("%d (handle32=%d)\n", hFile, dos_handles[hFile] );
+    CloseHandle( dos_handles[hFile] );
+    dos_handles[hFile] = 0;
     return 0;
 }
 

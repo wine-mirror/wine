@@ -464,8 +464,6 @@ int DOSVM_Enter( CONTEXT86 *context )
     VM86.regs.eflags |= VIF_MASK;
  } else {
 /* initial setup */
-  /* allocate standard DOS handles */
-  FILE_InitProcessDosHandles(); 
   /* registers */
   memset(&VM86,0,sizeof(VM86));
   VM86.regs.cs=lpDosTask->init_cs;

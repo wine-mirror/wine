@@ -46,7 +46,6 @@ extern LPVOID FILE_dommap( int unix_handle, LPVOID start,
                            int prot, int flags );
 extern int FILE_munmap( LPVOID start, DWORD size_high, DWORD size_low );
 extern HFILE16 FILE_AllocDosHandle( HANDLE handle );
-extern BOOL FILE_InitProcessDosHandles( void );
 extern HANDLE FILE_GetHandle( HFILE16 hfile );
 
 /* files/directory.c */
