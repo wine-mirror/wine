@@ -811,10 +811,15 @@ int  PROFILE_EnumerateWineIniSection(
 
 		/* Ignore blank entries -- these shouldn't exist, but let's
 		   be extra careful */
-		if(scankey->name[0]) {
-		    cbfn(scankey->name, scankey->value, userptr);
-		    ++calls;
-		}
+		if (!scankey->name[0]) continue;
+                if (!scankey->value) cbfn(scankey->name, NULL, userptr);
+                else
+                {
+                    char value[1024];
+                    PROFILE_CopyEntry(value, scankey->value, sizeof(value), TRUE);
+		    cbfn(scankey->name, value, userptr);
+                }
+                ++calls;
 	    }
 	
 	    break;
