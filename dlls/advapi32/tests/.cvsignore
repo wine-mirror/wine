@@ -1,3 +1,4 @@
 Makefile
+crypt.ok
 registry.ok
 testlist.c
