@@ -166,7 +166,7 @@ extern QMSG* QUEUE_FindMsg( MESSAGEQUEUE * msgQueue, HWND hwnd,
 extern void QUEUE_RemoveMsg( MESSAGEQUEUE * msgQueue, QMSG *qmsg );
 extern SMSG *QUEUE_RemoveSMSG( MESSAGEQUEUE *queue, int list, SMSG *smsg );
 extern BOOL QUEUE_AddSMSG( MESSAGEQUEUE *queue, int list, SMSG *smsg );
-extern void hardware_event( WORD message, WORD wParam, LONG lParam,
+extern void hardware_event( UINT message, WPARAM wParam, LPARAM lParam,
 			    int xPos, int yPos, DWORD time, DWORD extraInfo );
 
 extern HQUEUE16 WINAPI InitThreadInput16( WORD unknown, WORD flags );

@@ -1162,7 +1162,7 @@ static void QUEUE_WakeSomeone( UINT message )
  * Add an event to the system message queue.
  * Note: the position is relative to the desktop window.
  */
-void hardware_event( WORD message, WORD wParam, LONG lParam,
+void hardware_event( UINT message, WPARAM wParam, LPARAM lParam,
 		     int xPos, int yPos, DWORD time, DWORD extraInfo )
 {
     MSG *msg;
