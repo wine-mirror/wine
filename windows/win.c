@@ -615,7 +615,7 @@ BOOL WIN_CreateDesktopWindow(void)
     cs.lpszName       = NULL;
     cs.lpszClass      = DESKTOP_CLASS_ATOM;
 
-    if (!USER_Driver.pCreateWindow( hwndDesktop, &cs )) return FALSE;
+    if (!USER_Driver.pCreateWindow( hwndDesktop, &cs, FALSE )) return FALSE;
 
     pWndDesktop->flags |= WIN_NEEDS_ERASEBKGND;
     return TRUE;
@@ -704,6 +704,7 @@ static HWND WIN_CreateWindowEx( CREATESTRUCTA *cs, ATOM classAtom,
     DWORD clsStyle;
     WNDPROC winproc;
     DCE *dce;
+    BOOL unicode = (type == WIN_PROC_32W);
 
     TRACE("%s %s %08lx %08lx %d,%d %dx%d %04x %04x %08x %p\n",
           (type == WIN_PROC_32W) ? debugres_w((LPWSTR)cs->lpszName) : debugres_a(cs->lpszName), 
@@ -894,7 +895,7 @@ static HWND WIN_CreateWindowEx( CREATESTRUCTA *cs, ATOM classAtom,
     }
     else wndPtr->wIDmenu = (UINT)cs->hMenu;
 
-    if (!USER_Driver.pCreateWindow( wndPtr->hwndSelf, cs ))
+    if (!USER_Driver.pCreateWindow( wndPtr->hwndSelf, cs, unicode))
     {
         WARN("aborted by WM_xxCREATE!\n");
         WIN_ReleaseWndPtr(WIN_DestroyWindow( wndPtr ));

@@ -769,7 +769,7 @@ BOOL X11DRV_DestroyWindow( HWND hwnd )
 /**********************************************************************
  *		CreateWindow   (X11DRV.@)
  */
-BOOL X11DRV_CreateWindow( HWND hwnd, CREATESTRUCTA *cs )
+BOOL X11DRV_CreateWindow( HWND hwnd, CREATESTRUCTA *cs, BOOL unicode )
 {
     Display *display = thread_display();
     WND *wndPtr;
@@ -788,7 +788,7 @@ BOOL X11DRV_CreateWindow( HWND hwnd, CREATESTRUCTA *cs )
     wndPtr->flags |= WIN_NATIVE;
     WIN_ReleaseWndPtr( wndPtr );
 
-    if (IsWindowUnicode( hwnd ))
+    if (unicode)
         ret = SendMessageW( hwnd, WM_NCCREATE, 0, (LPARAM)cs );
     else
         ret = SendMessageA( hwnd, WM_NCCREATE, 0, (LPARAM)cs );
@@ -830,7 +830,7 @@ BOOL X11DRV_CreateWindow( HWND hwnd, CREATESTRUCTA *cs )
     X11DRV_register_window( display, hwnd, data );
     WIN_ReleaseWndPtr( wndPtr );
 
-    if (IsWindowUnicode( hwnd ))
+    if (unicode)
         ret = (SendMessageW( hwnd, WM_CREATE, 0, (LPARAM)cs ) != -1);
     else
         ret = (SendMessageA( hwnd, WM_CREATE, 0, (LPARAM)cs ) != -1);

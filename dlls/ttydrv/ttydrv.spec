@@ -27,7 +27,7 @@ debug_channels (ttydrv)
 @ cdecl GetScreenSaveTimeout() TTYDRV_GetScreenSaveTimeout
 @ cdecl SetScreenSaveTimeout(long) TTYDRV_SetScreenSaveTimeout
 @ cdecl LoadOEMResource(long long) TTYDRV_LoadOEMResource
-@ cdecl CreateWindow(long ptr) TTYDRV_CreateWindow
+@ cdecl CreateWindow(long ptr long) TTYDRV_CreateWindow
 @ cdecl DestroyWindow(long) TTYDRV_DestroyWindow
 @ cdecl GetDC(long long long long) TTYDRV_GetDC
 @ cdecl SetWindowPos(ptr) TTYDRV_SetWindowPos

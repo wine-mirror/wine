@@ -30,7 +30,7 @@ WND_DRIVER TTYDRV_WND_Driver =
 /**********************************************************************
  *		CreateWindow   (TTYDRV.@)
  */
-BOOL TTYDRV_CreateWindow( HWND hwnd, CREATESTRUCTA *cs )
+BOOL TTYDRV_CreateWindow( HWND hwnd, CREATESTRUCTA *cs, BOOL unicode )
 {
     BOOL ret;
 
@@ -65,7 +65,7 @@ BOOL TTYDRV_CreateWindow( HWND hwnd, CREATESTRUCTA *cs )
     FIXME("(%x): stub\n", hwnd);
 #endif /* defined(WINE_CURSES) */
 
-    if (IsWindowUnicode( hwnd ))
+    if (unicode)
     {
         ret = SendMessageW( hwnd, WM_NCCREATE, 0, (LPARAM)cs );
         if (ret) ret = (SendMessageW( hwnd, WM_CREATE, 0, (LPARAM)cs ) != -1);

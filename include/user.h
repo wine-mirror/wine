@@ -69,7 +69,7 @@ typedef struct tagUSER_DRIVER {
     void   (*pResetSelectionOwner)(struct tagWND *, BOOL);
 
     /* windowing functions */
-    BOOL   (*pCreateWindow)(HWND,CREATESTRUCTA*);
+    BOOL   (*pCreateWindow)(HWND,CREATESTRUCTA*,BOOL);
     BOOL   (*pDestroyWindow)(HWND);
     BOOL   (*pGetDC)(HWND,HDC,HRGN,DWORD);
     BOOL   (*pEnableWindow)(HWND,BOOL);
