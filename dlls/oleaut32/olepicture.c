@@ -402,9 +402,7 @@ static ULONG WINAPI OLEPictureImpl_AddRef(
 {
   OLEPictureImpl *This = (OLEPictureImpl *)iface;
   TRACE("(%p)->(ref=%ld)\n", This, This->ref);
-  This->ref++;
-
-  return This->ref;
+  return InterlockedIncrement(&This->ref);
 }
 
 /************************************************************************
@@ -416,24 +414,20 @@ static ULONG WINAPI OLEPictureImpl_Release(
       IPicture* iface)
 {
   OLEPictureImpl *This = (OLEPictureImpl *)iface;
+  ULONG ret;
   TRACE("(%p)->(ref=%ld)\n", This, This->ref);
 
   /*
    * Decrease the reference count on this object.
    */
-  This->ref--;
+  ret = InterlockedDecrement(&This->ref);
 
   /*
    * If the reference count goes down to 0, perform suicide.
    */
-  if (This->ref==0)
-  {
-    OLEPictureImpl_Destroy(This);
+  if (ret==0) OLEPictureImpl_Destroy(This);
 
-    return 0;
-  }
-
-  return This->ref;
+  return ret;
 }
 
 
@@ -1691,13 +1685,13 @@ SPCF_QueryInterface(LPCLASSFACTORY iface,REFIID riid,LPVOID *ppobj) {
 static ULONG WINAPI
 SPCF_AddRef(LPCLASSFACTORY iface) {
 	IClassFactoryImpl *This = (IClassFactoryImpl *)iface;
-	return ++(This->ref);
+	return InterlockedIncrement(&This->ref);
 }
 
 static ULONG WINAPI SPCF_Release(LPCLASSFACTORY iface) {
 	IClassFactoryImpl *This = (IClassFactoryImpl *)iface;
 	/* static class, won't be  freed */
-	return --(This->ref);
+	return InterlockedDecrement(&This->ref);
 }
 
 static HRESULT WINAPI SPCF_CreateInstance(

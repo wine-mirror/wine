@@ -529,9 +529,7 @@ ULONG WINAPI OLEFontImpl_AddRef(
 {
   OLEFontImpl *this = (OLEFontImpl *)iface;
   TRACE("(%p)->(ref=%ld)\n", this, this->ref);
-  this->ref++;
-
-  return this->ref;
+  return InterlockedIncrement(&this->ref);
 }
 
 /************************************************************************
@@ -543,24 +541,20 @@ ULONG WINAPI OLEFontImpl_Release(
       IFont* iface)
 {
   OLEFontImpl *this = (OLEFontImpl *)iface;
+  ULONG ret;
   TRACE("(%p)->(ref=%ld)\n", this, this->ref);
 
   /*
    * Decrease the reference count on this object.
    */
-  this->ref--;
+  ret = InterlockedDecrement(&this->ref);
 
   /*
    * If the reference count goes down to 0, perform suicide.
    */
-  if (this->ref==0)
-  {
-    OLEFontImpl_Destroy(this);
+  if (ret==0) OLEFontImpl_Destroy(this);
 
-    return 0;
-  }
-
-  return this->ref;
+  return ret;
 }
 
 /************************************************************************
@@ -2087,13 +2081,13 @@ SFCF_QueryInterface(LPCLASSFACTORY iface,REFIID riid,LPVOID *ppobj) {
 static ULONG WINAPI
 SFCF_AddRef(LPCLASSFACTORY iface) {
 	IClassFactoryImpl *This = (IClassFactoryImpl *)iface;
-	return ++(This->ref);
+	return InterlockedIncrement(&This->ref);
 }
 
 static ULONG WINAPI SFCF_Release(LPCLASSFACTORY iface) {
 	IClassFactoryImpl *This = (IClassFactoryImpl *)iface;
 	/* static class, won't be  freed */
-	return --(This->ref);
+	return InterlockedDecrement(&This->ref);
 }
 
 static HRESULT WINAPI SFCF_CreateInstance(
