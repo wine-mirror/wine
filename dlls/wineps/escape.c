@@ -79,6 +79,8 @@ INT PSDRV_Escape( DC *dc, INT nEscape, INT cbInput,
 	    case SETCHARSET:
 	    case EXT_DEVICE_CAPS:
 	    case SET_BOUNDS:
+            case PASSTHROUGH:
+            case POSTSCRIPT_PASSTHROUGH:
 	        return TRUE;
 
 	    default:
@@ -245,6 +247,17 @@ INT PSDRV_Escape( DC *dc, INT nEscape, INT cbInput,
 		  r->right, r->bottom);
 	    return 0;
 	}
+
+    case PASSTHROUGH:
+    case POSTSCRIPT_PASSTHROUGH:
+        {
+            /* Write directly to spool file, bypassing normal PS driver
+             * processing that is done along with writing PostScript code
+             * to the spool.
+             */
+            return WriteSpool16(physDev->job.hJob, ((char *)lpInData) + 2,
+                                cbInput);
+        }
 
     default:
         FIXME("Unimplemented code 0x%x\n", nEscape);
