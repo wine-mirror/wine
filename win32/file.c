@@ -95,6 +95,7 @@ BOOL32 WINAPI SetFileAttributes32A(LPCSTR lpFileName, DWORD attributes)
 	      lpFileName,attributes);
     if (-1==chmod(full_name.long_name,buf.st_mode))
     {
+        MSG("Wine ERROR: Couldn't set file attributes for existing file \"%s\". Check permissions !\n", full_name.long_name);
         SetLastError(ErrnoToLastError(errno));
         return FALSE;
     }
