@@ -598,6 +598,29 @@ static INT PROFILE_GetSection( PROFILESECTION *section, LPCSTR section_name,
 }
 
 
+static INT PROFILE_GetSectionNames( LPSTR buffer, UINT len )
+{
+    LPSTR buf = buffer;
+    WORD l, cursize = 0;
+    PROFILESECTION *section;
+
+    for (section = CurProfile->section; section; section = section->next)
+	if (section->name) {
+	    l = strlen(section->name);
+	    cursize += l+1;
+	    if (cursize > len+1)
+		return len-2;
+
+	    strcpy(buf, section->name);
+	    buf += l+1;
+	}
+
+    *buf=0;
+    buf++;
+    return buf-buffer;
+}
+
+
 /***********************************************************************
  *           PROFILE_GetString
  *
@@ -618,8 +641,11 @@ static INT PROFILE_GetString( LPCSTR section, LPCSTR key_name,
                          section, key_name, def_val, buffer );
         return strlen( buffer );
     }
-    return PROFILE_GetSection(CurProfile->section, section, buffer, len,
+    if (section && section[0])
+        return PROFILE_GetSection(CurProfile->section, section, buffer, len,
 				FALSE, FALSE);
+    /* undocumented; both section and key_name are NULL */
+    return PROFILE_GetSectionNames(buffer, len);
 }
 
 
@@ -1351,34 +1377,12 @@ BOOL WINAPI WriteProfileSectionW( LPCWSTR section, LPCWSTR keys_n_values)
 WORD WINAPI GetPrivateProfileSectionNames16( LPSTR buffer, WORD size,
                                              LPCSTR filename )
 {
-    char *buf;
-    int l,cursize;
-    PROFILESECTION *section;
-    BOOL	ret = FALSE;
+    WORD ret = 0;
 
     EnterCriticalSection( &PROFILE_CritSect );
 
-    if (PROFILE_Open( filename )) {
-        buf = buffer;
-	cursize = 0;
-	section = CurProfile->section;
-	for ( ; section; section = section->next) 
-	    if (section->name) {
-	        l = strlen (section->name);
-		cursize += l+1;
-        	if (cursize > size+1) {
-		    LeaveCriticalSection( &PROFILE_CritSect );
-		    return size-2;
-		}
-		strcpy (buf,section->name);
-		buf += l;
-		*buf = 0;
-		buf++;
-	    }
-	buf++;
-	*buf=0;
-	ret = buf-buffer;
-    }
+    if (PROFILE_Open( filename ))
+	ret = PROFILE_GetSectionNames(buffer, size);
 
     LeaveCriticalSection( &PROFILE_CritSect );
 
