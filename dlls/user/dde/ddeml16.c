@@ -101,7 +101,7 @@ HDDEDATA	WDML_InvokeCallback16(PFNCALLBACK pfn, UINT uType, UINT uFmt,
                                       HCONV hConv, HSZ hsz1, HSZ hsz2,
                                       HDDEDATA hdata, DWORD dwData1, DWORD dwData2)
 {
-    DWORD               d1;
+    DWORD               d1 = 0;
     HDDEDATA            ret;
     CONVCONTEXT16       cc16;
 
@@ -109,8 +109,12 @@ HDDEDATA	WDML_InvokeCallback16(PFNCALLBACK pfn, UINT uType, UINT uFmt,
     {
     case XTYP_CONNECT:
     case XTYP_WILDCONNECT:
-        map3216_conv_context(&cc16, (const CONVCONTEXT*)dwData1);
-        d1 = MapLS(&cc16);
+        if (dwData1)
+        {
+            map3216_conv_context(&cc16, (const CONVCONTEXT*)dwData1);
+            d1 = MapLS(&cc16);
+        }
+        else
         break;
     default:
         d1 = dwData1;
@@ -122,7 +126,7 @@ HDDEDATA	WDML_InvokeCallback16(PFNCALLBACK pfn, UINT uType, UINT uFmt,
     {
     case XTYP_CONNECT:
     case XTYP_WILDCONNECT:
-        UnMapLS(d1);
+        if (d1 != 0) UnMapLS(d1);
         break;
     }
     return ret;
