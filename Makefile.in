@@ -104,7 +104,7 @@ install::
 
 # Dependencies between directories
 
-all: dlls library miscemu ole programs server tools tsx11 unicode
+all: $(SUBDIRS)
 dlls: library ole tools tsx11 unicode
 server: library tools unicode
 miscemu programs: dlls library ole tools tsx11 unicode

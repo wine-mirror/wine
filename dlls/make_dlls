@@ -253,7 +253,7 @@ printf NEWMAKE "LINKABLE_DLLS = %s\n\n", join( " ", keys %linkable_dlls );
 
 foreach my $mod (keys %linkable_dlls)
 {
-    printf NEWMAKE "lib%s.\$(LIBEXT): %s\n", $mod, $directories{$mod};
+    printf NEWMAKE "lib%s.\$(LIBEXT): %s/%s\$(DLLEXT)\n", $mod, $directories{$mod}, $mod;
     printf NEWMAKE "\t\$(RM) \$@ && \$(LN_S) %s/%s\$(DLLEXT) \$@\n\n", $directories{$mod}, $mod;
 }
 

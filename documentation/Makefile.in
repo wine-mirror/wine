@@ -51,9 +51,17 @@ BOOK_TARGETS = \
 	$(BOOKNAME).pdf \
 	$(BOOKNAME).ps
 
-all: $(MAN_TARGETS) $(BOOK_TARGETS)
+all: $(MAN_TARGETS)
 
 @MAKE_RULES@
+
+everything: $(MAN_TARGETS) $(BOOK_TARGETS)
+doc: $(BOOK_TARGETS)
+html: $(BOOKNAME)/index.html
+pdf: $(BOOKNAME).pdf
+ps: $(BOOKNAME).ps
+
+.PHONY: everything doc html pdf ps
 
 $(BOOKNAME)/index.html: $(BOOK_SRCS)
 	$(DB2HTML) $(BOOKNAME).sgml

@@ -195,7 +195,7 @@ http://home.nexgo.de/andi.mohr/download/decorrupt_explorer
 Some documentation (various Wine Guides etc.) can be found in the
 documentation/ directory (apart from also being available on WineHQ).
 
-If you want to process the SGML files in there, then you can run "make"
+If you want to process the SGML files in there, then you can run "make doc"
 in the documentation/ directory.
 Doing so requires the sgml tools package (for db2html, db2ps, db2pdf) named:
 Debian:		docbook-utils

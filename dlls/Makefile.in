@@ -726,6 +726,7 @@ urlmon/__install__: urlmon.dll$(DLLEXT)
 user/__install__: user32.dll$(DLLEXT)
 version/__install__: version.dll$(DLLEXT)
 win32s/__install__: w32skrnl.dll$(DLLEXT)
+winmm/winealsa/__install__: winealsa.drv$(DLLEXT)
 winmm/winearts/__install__: winearts.drv$(DLLEXT)
 winedos/__install__: winedos.dll$(DLLEXT)
 msacm/winemp3/__install__: winemp3.acm$(DLLEXT)
@@ -855,16 +856,16 @@ x11drv:   user32.dll$(DLLEXT) gdi32.dll$(DLLEXT) advapi32.dll$(DLLEXT) kernel32.
 
 LINKABLE_DLLS = ntdll.dll gdi32.dll user32.dll kernel32.dll
 
-libntdll.dll.$(LIBEXT): ntdll
+libntdll.dll.$(LIBEXT): ntdll/ntdll.dll$(DLLEXT)
 	$(RM) $@ && $(LN_S) ntdll/ntdll.dll$(DLLEXT) $@
 
-libgdi32.dll.$(LIBEXT): gdi
+libgdi32.dll.$(LIBEXT): gdi/gdi32.dll$(DLLEXT)
 	$(RM) $@ && $(LN_S) gdi/gdi32.dll$(DLLEXT) $@
 
-libuser32.dll.$(LIBEXT): user
+libuser32.dll.$(LIBEXT): user/user32.dll$(DLLEXT)
 	$(RM) $@ && $(LN_S) user/user32.dll$(DLLEXT) $@
 
-libkernel32.dll.$(LIBEXT): kernel
+libkernel32.dll.$(LIBEXT): kernel/kernel32.dll$(DLLEXT)
 	$(RM) $@ && $(LN_S) kernel/kernel32.dll$(DLLEXT) $@
 
 uninstall::
