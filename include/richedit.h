@@ -604,6 +604,19 @@ typedef struct _gettextex {
 #define PFA_RIGHT             0x00000002
 #define PFA_CENTER            0x00000003
 #define PFA_JUSTIFY           0x00000004
+#define PFA_FULL_INTERWORD    0x00000004
+#define PFA_FULL_INTERLETTER  0x00000005
+
+/* paragraph effects */
+#define PFE_RTLPARA           0x00000001
+#define PFE_KEEP              0x00000002
+#define PFE_KEEPNEXT          0x00000004
+#define PFE_PAGEBREAKBEFORE   0x00000008
+#define PFE_NOLINENUMBER      0x00000010
+#define PFE_NOWIDOWCONTROL    0x00000020
+#define PFE_DONOTHYPHEN       0x00000040
+#define PFE_SIDEBYSIDE        0x00000080
+#define PFE_TABLE             0x00004000
 
 /* streaming flags */
 #define SFF_PWD               0x00000800
