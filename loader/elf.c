@@ -19,6 +19,7 @@
 #include "snoop.h"
 #include "process.h"
 #include "heap.h"
+#include "file.h"
 #include "module.h"
 #include "debugtools.h"
 #include "winerror.h"
@@ -133,7 +134,7 @@ WINE_MODREF *ELF_LoadLibraryExA( LPCSTR libname, DWORD flags)
 	s = strchr(x,'.');
 	if (s) {
             while (s) {
-		if (!strcasecmp(s,".dll")) {
+		if (!FILE_strcasecmp(s,".dll")) {
                     strcpy(s+1,UNIX_DLL_ENDING);
                     break;
 		}

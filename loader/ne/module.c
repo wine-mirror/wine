@@ -252,8 +252,8 @@ WORD NE_GetOrdinal( HMODULE16 hModule, const char *name )
       /* Now copy and uppercase the string */
 
     strcpy( buffer, name );
-    _strupr( buffer );
-    len = strlen( buffer );
+    for (cpnt = buffer; *cpnt; cpnt++) *cpnt = FILE_toupper(*cpnt);
+    len = cpnt - buffer;
 
       /* First search the resident names */
 
@@ -1466,8 +1466,7 @@ HMODULE16 WINAPI GetModuleHandle16( LPCSTR name )
     /* If uppercased 'name' matches exactly the module name of a module:
      * Return its handle
      */
-    for (s = tmpstr; *s; s++)
-    	*s = toupper(*s);
+    for (s = tmpstr; *s; s++) *s = FILE_toupper(*s);
 
     for (hModule = hFirstModule; hModule ; hModule = pModule->next)
     {
@@ -1482,7 +1481,7 @@ HMODULE16 WINAPI GetModuleHandle16( LPCSTR name )
 	 * 'i' compare is just a quickfix until the loader handles that
 	 * correctly. -MM 990705
 	 */
-        if ((*name_table == len) && !strncasecmp(tmpstr, name_table+1, len))
+        if ((*name_table == len) && !FILE_strncasecmp(tmpstr, name_table+1, len))
             return hModule;
     }
 
@@ -1521,7 +1520,7 @@ HMODULE16 WINAPI GetModuleHandle16( LPCSTR name )
 	    loadedfn--;
 	}
 	/* case insensitive compare ... */
-	if (!strcasecmp(loadedfn, s))
+	if (!FILE_strcasecmp(loadedfn, s))
 	    return hModule;
     }
 
@@ -1529,7 +1528,7 @@ HMODULE16 WINAPI GetModuleHandle16( LPCSTR name )
      * matches the base filename of the module filename of some 32-bit module:
      * Return the corresponding 16-bit dummy module handle. 
      */
-    if (len >= 4 && !strcasecmp(name+len-4, ".EXE"))
+    if (len >= 4 && !FILE_strcasecmp(name+len-4, ".EXE"))
     {
         HMODULE hModule = GetModuleHandleA( name );
         if ( hModule )
@@ -1596,10 +1595,9 @@ static HMODULE16 NE_GetModuleByFilename( LPCSTR name )
 	    loadedfn--;
 	}
 	/* case insensitive compare ... */
-	if (!strcasecmp(loadedfn, s))
+	if (!FILE_strcasecmp(loadedfn, s))
 	    return hModule;
     }
-
     /* If basename (without ext) matches the module name of a module:
      * Return its handle.
      */
@@ -1614,7 +1612,7 @@ static HMODULE16 NE_GetModuleByFilename( LPCSTR name )
         if (pModule->flags & NE_FFLAGS_WIN32) continue;
 
         name_table = (BYTE *)pModule + pModule->name_table;
-        if ((*name_table == len) && !strncasecmp(s, name_table+1, len))
+        if ((*name_table == len) && !FILE_strncasecmp(s, name_table+1, len))
             return hModule;
     }
 

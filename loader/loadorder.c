@@ -13,6 +13,7 @@
 #include "options.h"
 #include "loadorder.h"
 #include "heap.h"
+#include "file.h"
 #include "module.h"
 #include "elfdll.h"
 #include "debugtools.h"
@@ -98,7 +99,8 @@ static const struct tagDllPair {
  */
 static int cmp_sort_func(const void *s1, const void *s2)
 {
-	return strcasecmp(((module_loadorder_t *)s1)->modulename, ((module_loadorder_t *)s2)->modulename);
+    return FILE_strcasecmp(((module_loadorder_t *)s1)->modulename,
+                           ((module_loadorder_t *)s2)->modulename);
 }
 
 
@@ -262,7 +264,8 @@ static BOOL AddLoadOrderSet(char *key, char *order, BOOL override)
 		char *ext = strrchr(cptr, '.');
 		if(ext)
 		{
-			if(strlen(ext) == 4 && (!strcasecmp(ext, ".dll") || !strcasecmp(ext, ".exe")))
+			if(strlen(ext) == 4 &&
+                           (!FILE_strcasecmp(ext, ".dll") || !FILE_strcasecmp(ext, ".exe")))
 				MESSAGE("Warning: Loadorder override '%s' contains an extension and might not be found during lookup\n", cptr);
 		}
 
@@ -504,7 +507,7 @@ module_loadorder_t *MODULE_GetLoadOrder(const char *path, BOOL win32 )
 
 	/* Strip path information for 16 bit modules or if the module 
 	   resides in the system directory */
-	if ( !win32 || !strncasecmp ( sysdir, path, strlen (sysdir) ) )
+	if ( !win32 || !FILE_strncasecmp ( sysdir, path, strlen (sysdir) ) )
 	{
 	
 	    cptr = strrchr(path, '\\');
@@ -532,7 +535,7 @@ module_loadorder_t *MODULE_GetLoadOrder(const char *path, BOOL win32 )
 	}
 
 	strcpy(fname, name);
-	if(len >= 4 && (!strcasecmp(fname+len-4, ".dll") || !strcasecmp(fname+len-4, ".exe")))
+	if(len >= 4 && (!FILE_strcasecmp(fname+len-4, ".dll") || !FILE_strcasecmp(fname+len-4, ".exe")))
 		fname[len-4] = '\0';
 
 	lo.modulename = fname;

@@ -86,161 +86,35 @@ static void FILE_ConvertOFMode( INT mode, DWORD *access, DWORD *sharing )
 }
 
 
-#if 0
 /***********************************************************************
- *              FILE_ShareDeny
+ *              FILE_strcasecmp
  *
- * PARAMS
- *       oldmode[I] mode how file was first opened
- *       mode[I] mode how the file should get opened
- * RETURNS
- *      TRUE: deny open
- *      FALSE: allow open
- *
- * Look what we have to do with the given SHARE modes
- *
- * Ralph Brown's interrupt list gives following explication, I guess
- * the same holds for Windows, DENY ALL should be OF_SHARE_COMPAT
- *
- * FIXME: Validate this function
-========from Ralph Brown's list =========
-(Table 0750)
-Values of DOS file sharing behavior:
-          |     Second and subsequent Opens
- First    |Compat  Deny   Deny   Deny   Deny
- Open     |        All    Write  Read   None
-          |R W RW R W RW R W RW R W RW R W RW
- - - - - -| - - - - - - - - - - - - - - - - -
- Compat R |Y Y Y  N N N  1 N N  N N N  1 N N
-        W |Y Y Y  N N N  N N N  N N N  N N N
-        RW|Y Y Y  N N N  N N N  N N N  N N N
- - - - - -|
- Deny   R |C C C  N N N  N N N  N N N  N N N
- All    W |C C C  N N N  N N N  N N N  N N N
-        RW|C C C  N N N  N N N  N N N  N N N
- - - - - -|
- Deny   R |2 C C  N N N  Y N N  N N N  Y N N
- Write  W |C C C  N N N  N N N  Y N N  Y N N
-        RW|C C C  N N N  N N N  N N N  Y N N
- - - - - -|
- Deny   R |C C C  N N N  N Y N  N N N  N Y N
- Read   W |C C C  N N N  N N N  N Y N  N Y N
-        RW|C C C  N N N  N N N  N N N  N Y N
- - - - - -|
- Deny   R |2 C C  N N N  Y Y Y  N N N  Y Y Y
- None   W |C C C  N N N  N N N  Y Y Y  Y Y Y
-        RW|C C C  N N N  N N N  N N N  Y Y Y
-Legend: Y = open succeeds, N = open fails with error code 05h
-        C = open fails, INT 24 generated
-        1 = open succeeds if file read-only, else fails with error code
-        2 = open succeeds if file read-only, else fails with INT 24      
-========end of description from Ralph Brown's List =====
-	For every "Y" in the table we return FALSE
-	For every "N" we set the DOS_ERROR and return TRUE 
-	For all	other cases we barf,set the DOS_ERROR and return TRUE
-
+ * locale-independent case conversion for file I/O
  */
-static BOOL FILE_ShareDeny( int mode, int oldmode)
+int FILE_strcasecmp( const char *str1, const char *str2 )
 {
-  int oldsharemode = oldmode & 0x70;
-  int sharemode    =    mode & 0x70;
-  int oldopenmode  = oldmode & 3;
-  int openmode     =    mode & 3;
-  
-  switch (oldsharemode)
+    for (;;)
     {
-    case OF_SHARE_COMPAT:
-      if (sharemode == OF_SHARE_COMPAT) return FALSE;
-      if (openmode  == OF_READ) goto test_ro_err05;
-      goto fail_error05;
-    case OF_SHARE_EXCLUSIVE:
-      if (sharemode == OF_SHARE_COMPAT) goto fail_int24;
-      goto fail_error05;
-    case OF_SHARE_DENY_WRITE:
-      if (openmode  != OF_READ)
-	{
-	  if (sharemode == OF_SHARE_COMPAT) goto fail_int24;
-	  goto fail_error05;
-	}
-      switch (sharemode)
-	{
-	case OF_SHARE_COMPAT:
-	  if (oldopenmode == OF_READ) goto test_ro_int24;
-	  goto fail_int24;
-	case OF_SHARE_DENY_NONE: 
-	  return FALSE;
-	case OF_SHARE_DENY_WRITE:
-	  if (oldopenmode == OF_READ) return FALSE;
-	case OF_SHARE_DENY_READ:
-	  if (oldopenmode == OF_WRITE) return FALSE;
-	case OF_SHARE_EXCLUSIVE:
-	default:
-	  goto fail_error05;
-	}
-      break;
-    case OF_SHARE_DENY_READ:
-      if (openmode  != OF_WRITE)
-	{
-	  if (sharemode == OF_SHARE_COMPAT) goto fail_int24;
-	  goto fail_error05;
-	}
-      switch (sharemode)
-	{
-	case OF_SHARE_COMPAT:
-	  goto fail_int24;
-	case OF_SHARE_DENY_NONE: 
-	  return FALSE;
-	case OF_SHARE_DENY_WRITE:
-	  if (oldopenmode == OF_READ) return FALSE;
-	case OF_SHARE_DENY_READ:
-	  if (oldopenmode == OF_WRITE) return FALSE;
-	case OF_SHARE_EXCLUSIVE:
-	default:
-	  goto fail_error05;
-	}
-      break;
-    case OF_SHARE_DENY_NONE:
-      switch (sharemode)
-	{
-	case OF_SHARE_COMPAT:
-	  goto fail_int24;
-	case OF_SHARE_DENY_NONE: 
-	  return FALSE;
-	case OF_SHARE_DENY_WRITE:
-	  if (oldopenmode == OF_READ) return FALSE;
-	case OF_SHARE_DENY_READ:
-	  if (oldopenmode == OF_WRITE) return FALSE;
-	case OF_SHARE_EXCLUSIVE:
-	default:
-	  goto fail_error05;
-	}
-    default:
-      ERR("unknown mode\n");
+        int ret = FILE_toupper(*str1) - FILE_toupper(*str2);
+        if (ret || !*str1) return ret;
+        str1++;
+        str2++;
     }
-  ERR("shouldn't happen\n");
-  ERR("Please report to bon@elektron.ikp.physik.tu-darmstadt.de\n");
-  return TRUE;
-  
-test_ro_int24:
-  if (oldmode == OF_READ)
-    return FALSE;
-  /* Fall through */
-fail_int24:
-  FIXME("generate INT24 missing\n");
-  /* Is this the right error? */
-  SetLastError( ERROR_ACCESS_DENIED );
-  return TRUE;
-  
-test_ro_err05:
-  if (oldmode == OF_READ)
-    return FALSE;
-  /* fall through */
-fail_error05:
-  TRACE("Access Denied, oldmode 0x%02x mode 0x%02x\n",oldmode,mode);
-  SetLastError( ERROR_ACCESS_DENIED );
-  return TRUE;
 }
-#endif
+
+
+/***********************************************************************
+ *              FILE_strncasecmp
+ *
+ * locale-independent case conversion for file I/O
+ */
+int FILE_strncasecmp( const char *str1, const char *str2, int len )
+{
+    int ret = 0;
+    for ( ; len > 0; len--, str1++, str2++)
+        if ((ret = FILE_toupper(*str1) - FILE_toupper(*str2)) || !*str1) break;
+    return ret;
+}
 
 
 /***********************************************************************

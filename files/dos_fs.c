@@ -79,7 +79,7 @@ static const DOS_DEVICE DOSFS_Devices[] =
 };
 
 #define GET_DRIVE(path) \
-    (((path)[1] == ':') ? toupper((path)[0]) - 'A' : DOSFS_CurDrive)
+    (((path)[1] == ':') ? FILE_toupper((path)[0]) - 'A' : DOSFS_CurDrive)
 
 /* Directory info for DOSFS_ReadDir */
 typedef struct
@@ -196,7 +196,7 @@ BOOL DOSFS_ToDosFCBFormat( LPCSTR name, LPSTR buffer )
             break;
         default:
             if (strchr( invalid_chars, *p )) return FALSE;
-            buffer[i] = toupper(*p);
+            buffer[i] = FILE_toupper(*p);
             p++;
             break;
         }
@@ -233,7 +233,7 @@ BOOL DOSFS_ToDosFCBFormat( LPCSTR name, LPSTR buffer )
             break;
         default:
             if (strchr( invalid_chars, *p )) return FALSE;
-            buffer[i] = toupper(*p);
+            buffer[i] = FILE_toupper(*p);
             p++;
             break;
         }
@@ -318,7 +318,7 @@ static int DOSFS_MatchLong( const char *mask, const char *name,
 
             /* skip to the next match after the joker(s) */
             if (case_sensitive) while (*name && (*name != *mask)) name++;
-            else while (*name && (toupper(*name) != toupper(*mask))) name++;
+            else while (*name && (FILE_toupper(*name) != FILE_toupper(*mask))) name++;
 
             if (!*name) break;
             next_to_retry = name;
@@ -332,7 +332,7 @@ static int DOSFS_MatchLong( const char *mask, const char *name,
             }
             else
             {
-                if (toupper(*mask) != toupper(*name)) mismatch = 1;
+                if (FILE_toupper(*mask) != FILE_toupper(*name)) mismatch = 1;
             }
             if (!mismatch)
             {
@@ -500,13 +500,13 @@ static void DOSFS_Hash( LPCSTR name, LPSTR buffer, BOOL dir_format,
         /* Simply copy the name, converting to uppercase */
 
         for (dst = buffer; !IS_END_OF_NAME(*name) && (*name != '.'); name++)
-            *dst++ = toupper(*name);
+            *dst++ = FILE_toupper(*name);
         if (*name == '.')
         {
             if (dir_format) dst = buffer + 8;
             else *dst++ = '.';
             for (name++; !IS_END_OF_NAME(*name); name++)
-                *dst++ = toupper(*name);
+                *dst++ = FILE_toupper(*name);
         }
         if (!dir_format) *dst = '\0';
         return;
@@ -518,8 +518,8 @@ static void DOSFS_Hash( LPCSTR name, LPSTR buffer, BOOL dir_format,
     if (ignore_case)
     {
         for (p = name, hash = 0xbeef; !IS_END_OF_NAME(p[1]); p++)
-            hash = (hash<<3) ^ (hash>>5) ^ tolower(*p) ^ (tolower(p[1]) << 8);
-        hash = (hash<<3) ^ (hash>>5) ^ tolower(*p); /* Last character*/
+            hash = (hash<<3) ^ (hash>>5) ^ FILE_tolower(*p) ^ (FILE_tolower(p[1]) << 8);
+        hash = (hash<<3) ^ (hash>>5) ^ FILE_tolower(*p); /* Last character*/
     }
     else
     {
@@ -538,7 +538,7 @@ static void DOSFS_Hash( LPCSTR name, LPSTR buffer, BOOL dir_format,
     for (i = 4, p = name, dst = buffer; i > 0; i--, p++)
     {
         if (IS_END_OF_NAME(*p) || (p == ext)) break;
-        *dst++ = strchr( invalid_chars, *p ) ? '_' : toupper(*p);
+        *dst++ = strchr( invalid_chars, *p ) ? '_' : FILE_toupper(*p);
     }
     /* Pad to 5 chars with '~' */
     while (i-- >= 0) *dst++ = '~';
@@ -553,7 +553,7 @@ static void DOSFS_Hash( LPCSTR name, LPSTR buffer, BOOL dir_format,
     {
         if (!dir_format) *dst++ = '.';
         for (i = 3, ext++; (i > 0) && !IS_END_OF_NAME(*ext); i--, ext++)
-            *dst++ = strchr( invalid_chars, *ext ) ? '_' : toupper(*ext);
+            *dst++ = strchr( invalid_chars, *ext ) ? '_' : FILE_toupper(*ext);
     }
     if (!dir_format) *dst = '\0';
 }
@@ -608,7 +608,7 @@ BOOL DOSFS_FindUnixName( LPCSTR path, LPCSTR name, LPSTR long_buf,
             }
             else
             {
-                if (!strncasecmp( long_name, name, len )) break;
+                if (!FILE_strncasecmp( long_name, name, len )) break;
             }
         }
         if (dos_name[0])
@@ -659,7 +659,7 @@ const DOS_DEVICE *DOSFS_GetDevice( const char *name )
     for (i = 0; i < sizeof(DOSFS_Devices)/sizeof(DOSFS_Devices[0]); i++)
     {
         const char *dev = DOSFS_Devices[i].name;
-        if (!strncasecmp( dev, name, strlen(dev) ))
+        if (!FILE_strncasecmp( dev, name, strlen(dev) ))
         {
             p = name + strlen( dev );
             if (!*p || (*p == '.')) return &DOSFS_Devices[i];
@@ -744,7 +744,7 @@ HFILE DOSFS_OpenDevice( const char *name, DWORD access )
     for (i = 0; i < sizeof(DOSFS_Devices)/sizeof(DOSFS_Devices[0]); i++)
     {
         const char *dev = DOSFS_Devices[i].name;
-        if (!strncasecmp( dev, name, strlen(dev) ))
+        if (!FILE_strncasecmp( dev, name, strlen(dev) ))
         {
             p = name + strlen( dev );
             if (!*p || (*p == '.')) {
@@ -802,7 +802,7 @@ static int DOSFS_GetPathDrive( const char **name )
 
     if (*p && (p[1] == ':'))
     {
-        drive = toupper(*p) - 'A';
+        drive = FILE_toupper(*p) - 'A';
         *name += 2;
     }
     else if (*p == '/') /* Absolute Unix path? */
@@ -925,11 +925,11 @@ BOOL DOSFS_GetFullName( LPCSTR name, BOOL check_last, DOS_FULL_NAME *full )
                    (p_s < full->short_name + sizeof(full->short_name) - 1) &&
                    (p_l < full->long_name + sizeof(full->long_name) - 1))
             {
-                *p_s++ = tolower(*name);
+                *p_s++ = FILE_tolower(*name);
                 /* If the drive is case-sensitive we want to create new */
                 /* files in lower-case otherwise we can't reopen them   */
                 /* under the same short name. */
-	    	if (flags & DRIVE_CASE_SENSITIVE) *p_l++ = tolower(*name);
+	    	if (flags & DRIVE_CASE_SENSITIVE) *p_l++ = FILE_tolower(*name);
 		else *p_l++ = *name;
                 name++;
             }
@@ -1197,7 +1197,7 @@ static DWORD DOSFS_DoGetFullPathName( LPCSTR name, DWORD len, LPSTR result,
       /*absolute path given */
       {
 	lstrcpynA(full_name.short_name,name,MAX_PATHNAME_LEN);
-	drive = (int)toupper(name[0]) - 'A';
+	drive = (int)FILE_toupper(name[0]) - 'A';
       }
     else
       {
@@ -1211,7 +1211,7 @@ static DWORD DOSFS_DoGetFullPathName( LPCSTR name, DWORD len, LPSTR result,
 	    return 0;
 	  }
 	/* find path that drive letter substitutes*/
-	drive = (int)toupper(full_name.short_name[0]) -0x41;
+	drive = (int)FILE_toupper(full_name.short_name[0]) -0x41;
 	root= DRIVE_GetRoot(drive);
 	if (!root)
 	  {
@@ -1279,7 +1279,7 @@ static DWORD DOSFS_DoGetFullPathName( LPCSTR name, DWORD len, LPSTR result,
 	memmove(p+1,p+3,strlen(p+3)+1);
       }
     if (!(DRIVE_GetFlags(drive) & DRIVE_CASE_PRESERVING))
-      _strupr( full_name.short_name );
+        for (p = full_name.short_name; *p; p++) *p = FILE_toupper(*p);
     namelen=strlen(full_name.short_name);
     if (!strcmp(full_name.short_name+namelen-3,"\\.."))
 	{
@@ -1596,7 +1596,7 @@ HANDLE WINAPI FindFirstFileExA(
           info->short_mask = NULL;
           info->attr = 0xff;
           if (lpFileName[0] && (lpFileName[1] == ':'))
-              info->drive = toupper(*lpFileName) - 'A';
+              info->drive = FILE_toupper(*lpFileName) - 'A';
           else info->drive = DRIVE_GetCurrentDrive();
           info->cur_pos = 0;
 
@@ -2256,7 +2256,7 @@ HANDLE16 WINAPI FindFirstFile16( LPCSTR path, WIN32_FIND_DATAA *data )
         *(info->long_mask++) = '\0';
     info->short_mask = NULL;
     info->attr = 0xff;
-    if (path[0] && (path[1] == ':')) info->drive = toupper(*path) - 'A';
+    if (path[0] && (path[1] == ':')) info->drive = FILE_toupper(*path) - 'A';
     else info->drive = DRIVE_GetCurrentDrive();
     info->cur_pos = 0;
 

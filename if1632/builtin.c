@@ -13,6 +13,7 @@
 #include "builtin16.h"
 #include "global.h"
 #include "heap.h"
+#include "file.h"
 #include "module.h"
 #include "miscemu.h"
 #include "stackframe.h"
@@ -127,7 +128,7 @@ HMODULE16 BUILTIN_LoadModule( LPCSTR name )
         const BUILTIN16_DESCRIPTOR *descr = builtin_dlls[i];
         NE_MODULE *pModule = (NE_MODULE *)descr->module_start;
         OFSTRUCT *pOfs = (OFSTRUCT *)((LPBYTE)pModule + pModule->fileinfo);
-        if (!strcasecmp( pOfs->szPathName, dllname ))
+        if (!FILE_strcasecmp( pOfs->szPathName, dllname ))
             return BUILTIN_DoLoadModule16( descr );
     }
 
@@ -138,7 +139,7 @@ HMODULE16 BUILTIN_LoadModule( LPCSTR name )
             const BUILTIN16_DESCRIPTOR *descr = builtin_dlls[i];
             NE_MODULE *pModule = (NE_MODULE *)descr->module_start;
             OFSTRUCT *pOfs = (OFSTRUCT *)((LPBYTE)pModule + pModule->fileinfo);
-            if (!strcasecmp( pOfs->szPathName, dllname ))
+            if (!FILE_strcasecmp( pOfs->szPathName, dllname ))
                 return BUILTIN_DoLoadModule16( descr );
         }
         ERR( "loaded .so but dll %s still not found\n", dllname );

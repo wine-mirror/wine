@@ -30,8 +30,21 @@ typedef struct
     int flags;
 } DOS_DEVICE;
 
+/* locale-independent case conversion */
+inline static char FILE_tolower( char c )
+{
+    if (c >= 'A' && c <= 'Z') c += 32;
+    return c;
+}
+inline static char FILE_toupper( char c )
+{
+    if (c >= 'a' && c <= 'z') c -= 32;
+    return c;
+}
 
 /* files/file.c */
+extern int FILE_strcasecmp( const char *str1, const char *str2 );
+extern int FILE_strncasecmp( const char *str1, const char *str2, int len );
 extern void FILE_SetDosError(void);
 extern HFILE FILE_DupUnixHandle( int fd, DWORD access );
 extern int FILE_GetUnixHandle( HANDLE handle, DWORD access );

@@ -14,6 +14,7 @@
 #include "wine/winbase16.h"
 #include "winerror.h"
 #include "heap.h"
+#include "file.h"
 #include "process.h"
 #include "selectors.h"
 #include "debugtools.h"
@@ -433,13 +434,13 @@ WINE_MODREF *MODULE_FindModule(
 
     for ( wm = PROCESS_Current()->modref_list; wm; wm = wm->next )
     {
-        if ( !strcasecmp( dllname, wm->modname ) )
+        if ( !FILE_strcasecmp( dllname, wm->modname ) )
             break;
-        if ( !strcasecmp( dllname, wm->filename ) )
+        if ( !FILE_strcasecmp( dllname, wm->filename ) )
             break;
-        if ( !strcasecmp( dllname, wm->short_modname ) )
+        if ( !FILE_strcasecmp( dllname, wm->short_modname ) )
             break;
-        if ( !strcasecmp( dllname, wm->short_filename ) )
+        if ( !FILE_strcasecmp( dllname, wm->short_filename ) )
             break;
     }
 
@@ -631,13 +632,13 @@ static BOOL MODULE_GetBinaryType( HANDLE hfile, LPCSTR filename, LPDWORD lpBinar
     ptr = strrchr( filename, '.' );
     if ( ptr && !strchr( ptr, '\\' ) && !strchr( ptr, '/' ) )
     {
-        if ( !strcasecmp( ptr, ".COM" ) )
+        if ( !FILE_strcasecmp( ptr, ".COM" ) )
         {
             *lpBinaryType = SCS_DOS_BINARY;
             return TRUE;
         }
 
-        if ( !strcasecmp( ptr, ".PIF" ) )
+        if ( !FILE_strcasecmp( ptr, ".PIF" ) )
         {
             *lpBinaryType = SCS_PIF_BINARY;
             return TRUE;
@@ -1304,7 +1305,7 @@ WINE_MODREF *MODULE_LoadLibraryExA( LPCSTR libname, HFILE hfile, DWORD flags )
 	       if the library name does not contain a path and can not be found, assume the 
 	       system directory is meant */
 	    
-	    if ( ! strncasecmp ( filename, libname, strlen ( filename ) ))
+	    if ( ! FILE_strncasecmp ( filename, libname, strlen ( filename ) ))
 	        strcpy ( filename, libname );
 	    else
 	    {
