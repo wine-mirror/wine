@@ -380,7 +380,7 @@ static void comm_waitwrite(struct DosDeviceStruct *ptr)
  */
 BOOL16 WINAPI BuildCommDCB16(LPCSTR device, LPDCB16 lpdcb)
 {
-	/* "COM1:9600,n,8,1"	*/
+	/* "COM1:96,n,8,1"	*/
 	/*  012345		*/
 	int port;
 	char *ptr, temp[256];
@@ -417,7 +417,41 @@ BOOL16 WINAPI BuildCommDCB16(LPCSTR device, LPDCB16 lpdcb)
 		if (COM[port].baudrate > 0)
 			lpdcb->BaudRate = COM[port].baudrate;
 		else
-			lpdcb->BaudRate = atoi(ptr);
+		{
+			int rate;
+		        /* DOS/Windows only compares the first two numbers
+			 * and assigns an appropriate baud rate.
+			 * You can supply 961324245, it still returns 9600 ! */
+			if (strlen(ptr) < 2)
+			{
+			    WARN("Unknown baudrate string '%s' !\n", ptr);
+			    return -1; /* error: less than 2 chars */
+			}
+			ptr[2] = '\0';
+			rate = atoi(ptr);
+
+			switch (rate) {
+				case 11:
+				case 30:
+				case 60:
+					rate *= 10;
+					break;
+				case 12:
+				case 24:
+				case 48:
+				case 96:
+					rate *= 100;
+					break;
+				case 19:
+					rate = 19200;
+					break;
+				default:
+					WARN("Unknown baudrate indicator %d !\n", rate);
+					return -1;
+			}
+			
+		        lpdcb->BaudRate = rate;
+		}
         	TRACE("baudrate (%d)\n", lpdcb->BaudRate);
 
 		ptr = strtok(NULL, ", ");
