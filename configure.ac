@@ -95,15 +95,6 @@ AC_CHECK_LIB(xpg4,_xpg4_setrunelocale)
 dnl Check for -lmmap for OS/2
 AC_CHECK_LIB(mmap,mmap)
 
-dnl Check for openpty
-UTILLIBS=""
-AC_SUBST(UTILLIBS)
-AC_CHECK_FUNCS(openpty,,
-	[AC_CHECK_LIB(util,openpty,
-		[AC_DEFINE(HAVE_OPENPTY)
-		UTILLIBS="-lutil"]
-	)])
-
 DLLIBS=""
 AC_SUBST(DLLIBS)
 AC_CHECK_HEADERS(dlfcn.h,
@@ -880,7 +871,6 @@ AC_CHECK_FUNCS(\
 	getpagesize \
 	getprotobyname \
 	getprotobynumber \
-	getrlimit \
 	getservbyport \
 	getsockopt \
 	inet_network \
@@ -978,10 +968,7 @@ dnl **** Check for types ****
 
 AC_C_CONST
 AC_C_INLINE
-AC_TYPE_MODE_T
-AC_TYPE_OFF_T
-AC_TYPE_PID_T
-AC_TYPE_SIZE_T
+AC_CHECK_TYPES([mode_t, off_t, pid_t, size_t, ssize_t])
 AC_CHECK_SIZEOF(long long,0)
 
 AC_CACHE_CHECK([whether linux/input.h is for real],

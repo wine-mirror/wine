@@ -125,9 +125,6 @@
 /* Define to 1 if you have the `getprotobynumber' function. */
 #undef HAVE_GETPROTOBYNUMBER
 
-/* Define to 1 if you have the `getrlimit' function. */
-#undef HAVE_GETRLIMIT
-
 /* Define to 1 if you have the `getservbyport' function. */
 #undef HAVE_GETSERVBYPORT
 
@@ -275,6 +272,9 @@
 /* Define to 1 if you have the `mmap' function. */
 #undef HAVE_MMAP
 
+/* Define to 1 if the system has the type `mode_t'. */
+#undef HAVE_MODE_T
+
 /* Define if struct msghdr contains msg_accrights */
 #undef HAVE_MSGHDR_ACCRIGHTS
 
@@ -299,11 +299,11 @@
 /* Define to 1 if you have the <net/if.h> header file. */
 #undef HAVE_NET_IF_H
 
+/* Define to 1 if the system has the type `off_t'. */
+#undef HAVE_OFF_T
+
 /* Define if OpenGL is present on the system */
 #undef HAVE_OPENGL
-
-/* Define to 1 if you have the `openpty' function. */
-#undef HAVE_OPENPTY
 
 /* Define if you have the Open Sound system */
 #undef HAVE_OSS
@@ -313,6 +313,9 @@
 
 /* Define to 1 if you have the `pclose' function. */
 #undef HAVE_PCLOSE
+
+/* Define to 1 if the system has the type `pid_t'. */
+#undef HAVE_PID_T
 
 /* Define to 1 if you have the `popen' function. */
 #undef HAVE_POPEN
@@ -356,6 +359,9 @@
 /* Define to 1 if you have the `sigaltstack' function. */
 #undef HAVE_SIGALTSTACK
 
+/* Define to 1 if the system has the type `size_t'. */
+#undef HAVE_SIZE_T
+
 /* Define if struct sockaddr contains sa_len */
 #undef HAVE_SOCKADDR_SA_LEN
 
@@ -367,6 +373,9 @@
 
 /* Define to 1 if you have the <soundcard.h> header file. */
 #undef HAVE_SOUNDCARD_H
+
+/* Define to 1 if the system has the type `ssize_t'. */
+#undef HAVE_SSIZE_T
 
 /* Define to 1 if you have the `statfs' function. */
 #undef HAVE_STATFS
@@ -641,15 +650,3 @@
 /* Define as `__inline' if that's what the C compiler calls it, or to nothing
    if it is not supported. */
 #undef inline
-
-/* Define to `int' if <sys/types.h> does not define. */
-#undef mode_t
-
-/* Define to `long' if <sys/types.h> does not define. */
-#undef off_t
-
-/* Define to `int' if <sys/types.h> does not define. */
-#undef pid_t
-
-/* Define to `unsigned' if <sys/types.h> does not define. */
-#undef size_t

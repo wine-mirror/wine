@@ -1,6 +1,5 @@
 /*
  * Server-side objects
- * These are the server equivalent of K32OBJ
  *
  * Copyright (C) 1998 Alexandre Julliard
  *
@@ -18,6 +17,9 @@
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
+
+#include "config.h"
+#include "wine/port.h"
 
 #include <assert.h>
 #include <limits.h>

@@ -31,6 +31,9 @@
  *
  */ 
 
+#include "config.h"
+#include "wine/port.h"
+
 #include <string.h>
 #include <assert.h>
 #include "winnls.h"

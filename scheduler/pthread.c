@@ -22,6 +22,8 @@
  */
 
 #include "config.h"
+#include "wine/port.h"
+
 #define _GNU_SOURCE /* we may need to override some GNU extensions */
 
 #include <assert.h>

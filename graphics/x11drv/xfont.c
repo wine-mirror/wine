@@ -22,6 +22,7 @@
  */
 
 #include "config.h"
+#include "wine/port.h"
 
 #include <X11/Xatom.h>
 

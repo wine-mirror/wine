@@ -32,6 +32,7 @@
 
 #include "winbase.h"
 #include "wine/debug.h"
+#include "wine/library.h"
 
 #include "sql.h"
 #include "sqltypes.h"

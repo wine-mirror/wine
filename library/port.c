@@ -210,56 +210,6 @@ int strncasecmp( const char *str1, const char *str2, size_t n )
 #endif /* HAVE_STRNCASECMP */
 
 /***********************************************************************
- *		openpty
- * NOTE
- *   It looks like the openpty that comes with glibc in RedHat 5.0
- *   is buggy (second call returns what looks like a dup of 0 and 1
- *   instead of a new pty), this is a generic replacement.
- *
- * FIXME
- *   We should have a autoconf check for this.
- */
-#ifndef HAVE_OPENPTY
-int openpty(int *master, int *slave, char *name, struct termios *term, struct winsize *winsize)
-{
-    const char *ptr1, *ptr2;
-    char pts_name[512];
-
-    strcpy (pts_name, "/dev/ptyXY");
-
-    for (ptr1 = "pqrstuvwxyzPQRST"; *ptr1 != 0; ptr1++) {
-        pts_name[8] = *ptr1;
-        for (ptr2 = "0123456789abcdef"; *ptr2 != 0; ptr2++) {
-            pts_name[9] = *ptr2;
-
-            if ((*master = open(pts_name, O_RDWR)) < 0) {
-                if (errno == ENOENT)
-                    return -1;
-                else
-                    continue;
-            }
-            pts_name[5] = 't';
-            if ((*slave = open(pts_name, O_RDWR)) < 0) {
-                pts_name[5] = 'p';
-		close (*master);
-                continue;
-            }
-
-            if (term != NULL)
-                tcsetattr(*slave, TCSANOW, term);
-            if (winsize != NULL)
-                ioctl(*slave, TIOCSWINSZ, winsize);
-            if (name != NULL)
-                strcpy(name, pts_name);
-            return *slave;
-        }
-    }
-    errno = EMFILE;
-    return -1;
-}
-#endif  /* HAVE_OPENPTY */
-
-/***********************************************************************
  *		getnetbyaddr
  */
 #ifndef HAVE_GETNETBYADDR
@@ -435,17 +385,6 @@ ssize_t pwrite( int fd, const void *buf, size_t count, off_t offset )
     return ret;
 }
 #endif /* HAVE_PWRITE */
-
-
-/***********************************************************************
- *		getrlimit
- */
-#ifndef HAVE_GETRLIMIT
-int getrlimit (int resource, struct rlimit *rlim)
-{
-    return -1; /* FAIL */
-}
-#endif /* HAVE_GETRLIMIT */
 
 
 #if defined(__svr4__) || defined(__NetBSD__)

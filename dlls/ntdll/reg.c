@@ -25,6 +25,9 @@
   *	HKEY_CLASSES		\\REGISTRY\\MACHINE\\SOFTWARE\\CLASSES
  */
 
+#include "config.h"
+#include "wine/port.h"
+
 #include <string.h>
 #include "wine/debug.h"
 #include "winreg.h"

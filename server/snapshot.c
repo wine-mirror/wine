@@ -20,6 +20,9 @@
  * FIXME: heap snapshots not implemented
  */
 
+#include "config.h"
+#include "wine/port.h"
+
 #include <assert.h>
 #include <stdio.h>
 #include <stdlib.h>
