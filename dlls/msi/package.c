@@ -378,9 +378,17 @@ UINT MSI_OpenPackageW(LPCWSTR szPackage, MSIPACKAGE **pPackage)
 
     TRACE("%s %p\n",debugstr_w(szPackage), pPackage);
 
-    rc = MSI_OpenDatabaseW(szPackage, MSIDBOPEN_READONLY, &db);
-    if (rc != ERROR_SUCCESS)
-        return ERROR_FUNCTION_FAILED;
+    if (szPackage[0] == '#')
+    {
+        INT handle = atoiW(&szPackage[1]);
+        db = msihandle2msiinfo( handle , MSIHANDLETYPE_DATABASE);
+    }
+    else
+    {
+        rc = MSI_OpenDatabaseW(szPackage, MSIDBOPEN_READONLY, &db);
+        if (rc != ERROR_SUCCESS)
+            return ERROR_FUNCTION_FAILED;
+    }
 
     package = alloc_msiobject( MSIHANDLETYPE_PACKAGE, sizeof (MSIPACKAGE),
                                MSI_FreePackage );
