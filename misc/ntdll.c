@@ -254,7 +254,8 @@ LPBYTE WINAPI RtlSubAuthorityCountSid(LPSID lpsid)
  *                 RtlCopySid				[NTDLL.302]
  */
 DWORD WINAPI RtlCopySid(DWORD len,LPSID to,LPSID from)
-{
+{	if (!from)
+		return 0;
 	if (len<(from->SubAuthorityCount*4+8))
 		return STATUS_BUFFER_TOO_SMALL;
 	memmove(to,from,from->SubAuthorityCount*4+8);
