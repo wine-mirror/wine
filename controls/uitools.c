@@ -21,42 +21,42 @@ static const WORD wPattern_AA55[8] = { 0xaaaa, 0x5555, 0xaaaa, 0x5555,
  * UITOOLS_DrawDiagEdge()
  * UITOOLS_DrawRectEdge()
  */
-static const char LTInnerNormal[] = {
+static const signed char LTInnerNormal[] = {
     -1,           -1,                 -1,                 -1,
     -1,           COLOR_BTNHIGHLIGHT, COLOR_BTNHIGHLIGHT, -1,
     -1,           COLOR_3DDKSHADOW,   COLOR_3DDKSHADOW,   -1,
     -1,           -1,                 -1,                 -1
 };
 
-static const char LTOuterNormal[] = {
+static const signed char LTOuterNormal[] = {
     -1,                 COLOR_3DLIGHT,     COLOR_BTNSHADOW, -1,
     COLOR_BTNHIGHLIGHT, COLOR_3DLIGHT,     COLOR_BTNSHADOW, -1,
     COLOR_3DDKSHADOW,   COLOR_3DLIGHT,     COLOR_BTNSHADOW, -1,
     -1,                 COLOR_3DLIGHT,     COLOR_BTNSHADOW, -1
 };
 
-static const char RBInnerNormal[] = {
+static const signed char RBInnerNormal[] = {
     -1,           -1,                -1,              -1,
     -1,           COLOR_BTNSHADOW,   COLOR_BTNSHADOW, -1,
     -1,           COLOR_3DLIGHT,     COLOR_3DLIGHT,   -1,
     -1,           -1,                -1,              -1
 };
 
-static const char RBOuterNormal[] = {
+static const signed char RBOuterNormal[] = {
     -1,              COLOR_3DDKSHADOW,  COLOR_BTNHIGHLIGHT, -1,
     COLOR_BTNSHADOW, COLOR_3DDKSHADOW,  COLOR_BTNHIGHLIGHT, -1,
     COLOR_3DLIGHT,   COLOR_3DDKSHADOW,  COLOR_BTNHIGHLIGHT, -1,
     -1,              COLOR_3DDKSHADOW,  COLOR_BTNHIGHLIGHT, -1
 };
 
-static const char LTInnerSoft[] = {
+static const signed char LTInnerSoft[] = {
     -1,                  -1,                -1,              -1,
     -1,                  COLOR_3DLIGHT,     COLOR_3DLIGHT,   -1,
     -1,                  COLOR_BTNSHADOW,   COLOR_BTNSHADOW, -1,
     -1,                  -1,                -1,              -1
 };
 
-static const char LTOuterSoft[] = {
+static const signed char LTOuterSoft[] = {
     -1,              COLOR_BTNHIGHLIGHT, COLOR_3DDKSHADOW, -1,
     COLOR_3DLIGHT,   COLOR_BTNHIGHLIGHT, COLOR_3DDKSHADOW, -1,
     COLOR_BTNSHADOW, COLOR_BTNHIGHLIGHT, COLOR_3DDKSHADOW, -1,
@@ -66,28 +66,28 @@ static const char LTOuterSoft[] = {
 #define RBInnerSoft RBInnerNormal   /* These are the same */
 #define RBOuterSoft RBOuterNormal
 
-static const char LTRBOuterMono[] = {
+static const signed char LTRBOuterMono[] = {
     -1,           COLOR_WINDOWFRAME, COLOR_WINDOWFRAME, COLOR_WINDOWFRAME,
     COLOR_WINDOW, COLOR_WINDOWFRAME, COLOR_WINDOWFRAME, COLOR_WINDOWFRAME,
     COLOR_WINDOW, COLOR_WINDOWFRAME, COLOR_WINDOWFRAME, COLOR_WINDOWFRAME,
     COLOR_WINDOW, COLOR_WINDOWFRAME, COLOR_WINDOWFRAME, COLOR_WINDOWFRAME,
 };
 
-static const char LTRBInnerMono[] = {
+static const signed char LTRBInnerMono[] = {
     -1, -1,           -1,           -1,
     -1, COLOR_WINDOW, COLOR_WINDOW, COLOR_WINDOW,
     -1, COLOR_WINDOW, COLOR_WINDOW, COLOR_WINDOW,
     -1, COLOR_WINDOW, COLOR_WINDOW, COLOR_WINDOW,
 };
 
-static const char LTRBOuterFlat[] = {
+static const signed char LTRBOuterFlat[] = {
     -1,                COLOR_BTNSHADOW, COLOR_BTNSHADOW, COLOR_BTNSHADOW,
     COLOR_WINDOWFRAME, COLOR_BTNSHADOW, COLOR_BTNSHADOW, COLOR_BTNSHADOW,
     COLOR_WINDOWFRAME, COLOR_BTNSHADOW, COLOR_BTNSHADOW, COLOR_BTNSHADOW,
     COLOR_WINDOWFRAME, COLOR_BTNSHADOW, COLOR_BTNSHADOW, COLOR_BTNSHADOW,
 };
 
-static const char LTRBInnerFlat[] = {
+static const signed char LTRBInnerFlat[] = {
     -1, -1,              -1,              -1,
     -1, COLOR_WINDOWFRAME, COLOR_WINDOWFRAME, COLOR_WINDOWFRAME,
     -1, COLOR_WINDOWFRAME, COLOR_WINDOWFRAME, COLOR_WINDOWFRAME,
@@ -107,7 +107,7 @@ static BOOL UITOOLS95_DrawDiagEdge(HDC hdc, LPRECT rc,
 				     UINT uType, UINT uFlags)
 {
     POINT Points[4];
-    char InnerI, OuterI;
+    signed char InnerI, OuterI;
     HPEN InnerPen, OuterPen;
     POINT SavePoint;
     HPEN SavePen;
@@ -419,8 +419,8 @@ static BOOL UITOOLS95_DrawDiagEdge(HDC hdc, LPRECT rc,
 static BOOL UITOOLS95_DrawRectEdge(HDC hdc, LPRECT rc, 
 				     UINT uType, UINT uFlags)
 {
-    char LTInnerI, LTOuterI;
-    char RBInnerI, RBOuterI;
+    signed char LTInnerI, LTOuterI;
+    signed char RBInnerI, RBOuterI;
     HPEN LTInnerPen, LTOuterPen;
     HPEN RBInnerPen, RBOuterPen;
     RECT InnerRect = *rc;
