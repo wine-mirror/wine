@@ -1,7 +1,7 @@
 /*
  * Wine Conformance Test EXE
  *
- * Copyright 2003 Jakob Eriksson   (for Solid Form Sweden AB)
+ * Copyright 2003, 2004 Jakob Eriksson   (for Solid Form Sweden AB)
  * Copyright 2003 Dimitrie O. Paun
  * Copyright 2003 Ferenc Wagner
  *
@@ -66,6 +66,11 @@ static int running_under_wine ()
     return (GetProcAddress(module, "wine_server_call") != NULL);
 }
 
+static int running_on_visible_desktop ()
+{
+    return GetWindowLongA (GetDesktopWindow (), GWL_STYLE) & WS_VISIBLE;
+}
+
 void print_version ()
 {
     OSVERSIONINFOEX ver;
@@ -80,6 +85,7 @@ void print_version ()
     }
 
     xprintf ("    bRunningUnderWine=%d\n", running_under_wine ());
+    xprintf ("    bRunningOnVisibleDesktop=%d\n", running_on_visible_desktop ());
     xprintf ("    dwMajorVersion=%ld\n    dwMinorVersion=%ld\n"
              "    dwBuildNumber=%ld\n    PlatformId=%ld\n    szCSDVersion=%s\n",
              ver.dwMajorVersion, ver.dwMinorVersion, ver.dwBuildNumber,
