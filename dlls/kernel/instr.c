@@ -25,6 +25,7 @@
 #include "winbase.h"
 #include "wingdi.h"
 #include "wine/winuser16.h"
+#include "excpt.h"
 #include "module.h"
 #include "miscemu.h"
 #include "selectors.h"
@@ -392,17 +393,16 @@ static void INSTR_outport( WORD port, int size, DWORD val, CONTEXT86 *context )
  *           INSTR_EmulateInstruction
  *
  * Emulate a privileged instruction.
- * Returns exception code, or 0 if emulation successful.
+ * Returns exception continuation status.
  */
-DWORD INSTR_EmulateInstruction( CONTEXT86 *context )
+DWORD INSTR_EmulateInstruction( EXCEPTION_RECORD *rec, CONTEXT86 *context )
 {
     int prefix, segprefix, prefixlen, len, repX, long_op, long_addr;
     BYTE *instr;
-    DWORD ret = EXCEPTION_PRIV_INSTRUCTION;
 
     long_op = long_addr = (!ISV86(context) && IS_SELECTOR_32BIT(context->SegCs));
     instr = make_ptr( context, context->SegCs, context->Eip, TRUE );
-    if (!instr) return ret;
+    if (!instr) return ExceptionContinueSearch;
 
     /* First handle any possible prefix */
 
@@ -476,7 +476,7 @@ DWORD INSTR_EmulateInstruction( CONTEXT86 *context )
                     }
                     add_stack(context, long_op ? 4 : 2);
                     context->Eip += prefixlen + 1;
-                    return 0;
+                    return ExceptionContinueExecution;
                 }
             }
             break;  /* Unable to emulate it */
@@ -491,7 +491,7 @@ DWORD INSTR_EmulateInstruction( CONTEXT86 *context )
 			ERR("mov eax,cr0 at 0x%08lx, EAX=0x%08lx\n",
                             context->Eip,context->Eax );
                         context->Eip += prefixlen+3;
-			return 0;
+			return ExceptionContinueExecution;
 		default:
 			break; /*fallthrough to bad instruction handling */
 		}
@@ -514,12 +514,12 @@ DWORD INSTR_EmulateInstruction( CONTEXT86 *context )
                     ERR("mov cr4,eax at 0x%08lx\n",context->Eip);
                     context->Eax = 0;
                     context->Eip += prefixlen+3;
-		    return 0;
+		    return ExceptionContinueExecution;
 		case 0xc0: /* mov cr0, eax */
                     ERR("mov cr0,eax at 0x%08lx\n",context->Eip);
                     context->Eax = 0x10; /* FIXME: set more bits ? */
                     context->Eip += prefixlen+3;
-		    return 0;
+		    return ExceptionContinueExecution;
 		default: /* fallthrough to illegal instruction */
 		    break;
 		}
@@ -533,7 +533,7 @@ DWORD INSTR_EmulateInstruction( CONTEXT86 *context )
                         context->SegFs = seg;
                         add_stack(context, long_op ? 4 : 2);
                         context->Eip += prefixlen + 2;
-                        return 0;
+                        return ExceptionContinueExecution;
                     }
                 }
                 break;
@@ -545,7 +545,7 @@ DWORD INSTR_EmulateInstruction( CONTEXT86 *context )
                         context->SegGs = seg;
                         add_stack(context, long_op ? 4 : 2);
                         context->Eip += prefixlen + 2;
-                        return 0;
+                        return ExceptionContinueExecution;
                     }
                 }
                 break;
@@ -556,7 +556,7 @@ DWORD INSTR_EmulateInstruction( CONTEXT86 *context )
                                       long_addr, segprefix, &len ))
                 {
                     context->Eip += prefixlen + len;
-                    return 0;
+                    return ExceptionContinueExecution;
                 }
                 break;
             }
@@ -629,7 +629,7 @@ DWORD INSTR_EmulateInstruction( CONTEXT86 *context )
 		}
               context->Eip += prefixlen + 1;
 	    }
-            return 0;
+            return ExceptionContinueExecution;
 
         case 0x8e: /* mov XX,segment_reg */
             {
@@ -647,25 +647,25 @@ DWORD INSTR_EmulateInstruction( CONTEXT86 *context )
                 case 0:
                     context->SegEs = seg;
                     context->Eip += prefixlen + len + 1;
-                    return 0;
+                    return ExceptionContinueExecution;
                 case 1:  /* cs */
                     break;
                 case 2:
                     context->SegSs = seg;
                     context->Eip += prefixlen + len + 1;
-                    return 0;
+                    return ExceptionContinueExecution;
                 case 3:
                     context->SegDs = seg;
                     context->Eip += prefixlen + len + 1;
-                    return 0;
+                    return ExceptionContinueExecution;
                 case 4:
                     context->SegFs = seg;
                     context->Eip += prefixlen + len + 1;
-                    return 0;
+                    return ExceptionContinueExecution;
                 case 5:
                     context->SegGs = seg;
                     context->Eip += prefixlen + len + 1;
-                    return 0;
+                    return ExceptionContinueExecution;
                 case 6:  /* unused */
                 case 7:  /* unused */
                     break;
@@ -679,7 +679,7 @@ DWORD INSTR_EmulateInstruction( CONTEXT86 *context )
                                   long_addr, segprefix, &len ))
             {
                 context->Eip += prefixlen + len;
-                return 0;
+                return ExceptionContinueExecution;
             }
             break;  /* Unable to emulate it */
 
@@ -692,7 +692,7 @@ DWORD INSTR_EmulateInstruction( CONTEXT86 *context )
             {
                 context->Eip += prefixlen + 2;
                 Dosvm.EmulateInterruptPM( context, instr[1] );
-                return 0;
+                return ExceptionContinueExecution;
             }
             break;  /* Unable to emulate it */
 
@@ -713,12 +713,12 @@ DWORD INSTR_EmulateInstruction( CONTEXT86 *context )
                 SET_LOWORD(context->EFlags,*stack);
                 add_stack(context, 3*sizeof(WORD));  /* Pop the return address and flags */
             }
-            return 0;
+            return ExceptionContinueExecution;
 
         case 0xe4: /* inb al,XX */
             SET_LOBYTE(context->Eax,INSTR_inport( instr[1], 1, context ));
             context->Eip += prefixlen + 2;
-            return 0;
+            return ExceptionContinueExecution;
 
         case 0xe5: /* in (e)ax,XX */
             if (long_op)
@@ -726,12 +726,12 @@ DWORD INSTR_EmulateInstruction( CONTEXT86 *context )
             else
                 SET_LOWORD(context->Eax, INSTR_inport( instr[1], 2, context ));
             context->Eip += prefixlen + 2;
-            return 0;
+            return ExceptionContinueExecution;
 
         case 0xe6: /* outb XX,al */
             INSTR_outport( instr[1], 1, LOBYTE(context->Eax), context );
             context->Eip += prefixlen + 2;
-            return 0;
+            return ExceptionContinueExecution;
 
         case 0xe7: /* out XX,(e)ax */
             if (long_op)
@@ -739,12 +739,12 @@ DWORD INSTR_EmulateInstruction( CONTEXT86 *context )
             else
                 INSTR_outport( instr[1], 2, LOWORD(context->Eax), context );
             context->Eip += prefixlen + 2;
-            return 0;
+            return ExceptionContinueExecution;
 
         case 0xec: /* inb al,dx */
             SET_LOBYTE(context->Eax, INSTR_inport( LOWORD(context->Edx), 1, context ) );
             context->Eip += prefixlen + 1;
-            return 0;
+            return ExceptionContinueExecution;
 
         case 0xed: /* in (e)ax,dx */
             if (long_op)
@@ -752,12 +752,12 @@ DWORD INSTR_EmulateInstruction( CONTEXT86 *context )
             else
                 SET_LOWORD(context->Eax, INSTR_inport( LOWORD(context->Edx), 2, context ));
             context->Eip += prefixlen + 1;
-            return 0;
+            return ExceptionContinueExecution;
 
         case 0xee: /* outb dx,al */
             INSTR_outport( LOWORD(context->Edx), 1, LOBYTE(context->Eax), context );
             context->Eip += prefixlen + 1;
-            return 0;
+            return ExceptionContinueExecution;
 
         case 0xef: /* out dx,(e)ax */
             if (long_op)
@@ -765,12 +765,12 @@ DWORD INSTR_EmulateInstruction( CONTEXT86 *context )
             else
                 INSTR_outport( LOWORD(context->Edx), 2, LOWORD(context->Eax), context );
             context->Eip += prefixlen + 1;
-            return 0;
+            return ExceptionContinueExecution;
 
         case 0xfa: /* cli */
             NtCurrentTeb()->dpmi_vif = 0;
             context->Eip += prefixlen + 1;
-            return 0;
+            return ExceptionContinueExecution;
 
         case 0xfb: /* sti */
             NtCurrentTeb()->dpmi_vif = 1;
@@ -778,11 +778,12 @@ DWORD INSTR_EmulateInstruction( CONTEXT86 *context )
             if (NtCurrentTeb()->vm86_pending)
             {
                 NtCurrentTeb()->vm86_pending = 0;
-                return EXCEPTION_VM86_STI;
+                rec->ExceptionCode = EXCEPTION_VM86_STI;
+                return ExceptionContinueSearch;
             }
-            return 0;
+            return ExceptionContinueExecution;
     }
-    return ret;  /* Unable to emulate it */
+    return ExceptionContinueSearch;  /* Unable to emulate it */
 }
 
 #endif  /* __i386__ */

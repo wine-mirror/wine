@@ -105,7 +105,7 @@ extern LPVOID DOSMEM_MapDosToLinear(UINT); /* linear DOS to Wine */
 extern UINT DOSMEM_MapLinearToDos(LPVOID); /* linear Wine to DOS */
 
 /* memory/instr.c */
-extern DWORD INSTR_EmulateInstruction( CONTEXT86 *context );
+extern DWORD INSTR_EmulateInstruction( EXCEPTION_RECORD *rec, CONTEXT86 *context );
 
 /* msdos/ioports.c */
 extern DWORD IO_inport( int port, int count );

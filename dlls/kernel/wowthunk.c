@@ -180,8 +180,9 @@ static DWORD call16_handler( EXCEPTION_RECORD *record, EXCEPTION_REGISTRATION_RE
         else
         {
             SEGPTR gpHandler;
+            DWORD ret = INSTR_EmulateInstruction( record, context );
 
-            if (!INSTR_EmulateInstruction( context )) return ExceptionContinueExecution;
+            if (ret != ExceptionContinueSearch) return ret;
 
             /* check for Win16 __GP handler */
             if ((gpHandler = HasGPHandler16( MAKESEGPTR( context->SegCs, context->Eip ) )))
@@ -204,6 +205,28 @@ static DWORD call16_handler( EXCEPTION_RECORD *record, EXCEPTION_REGISTRATION_RE
     }
     return ExceptionContinueSearch;
 }
+
+
+/*************************************************************
+ *            vm86_handler
+ *
+ * Handler for exceptions occurring in vm86 code.
+ */
+static DWORD vm86_handler( EXCEPTION_RECORD *record, EXCEPTION_REGISTRATION_RECORD *frame,
+                           CONTEXT *context, EXCEPTION_REGISTRATION_RECORD **pdispatcher )
+{
+    if (record->ExceptionFlags & (EH_UNWINDING | EH_EXIT_UNWIND))
+        return ExceptionContinueSearch;
+
+    if (record->ExceptionCode == EXCEPTION_ACCESS_VIOLATION ||
+        record->ExceptionCode == EXCEPTION_PRIV_INSTRUCTION)
+    {
+        return INSTR_EmulateInstruction( record, context );
+    }
+
+    return ExceptionContinueSearch;
+}
+
 
 #else  /* __i386__ */
 
@@ -470,22 +493,33 @@ BOOL WINAPI K32WOWCallback16Ex( DWORD vpfn16, DWORD dwFlags,
             SYSLEVEL_CheckNotLevel( 2 );
         }
 
-        /* push return address */
-        if (dwFlags & WCB16_REGS_LONG)
+        if (ISV86(context))
         {
-            *((DWORD *)stack - 1) = HIWORD(call16_ret_addr);
-            *((DWORD *)stack - 2) = LOWORD(call16_ret_addr);
-            cbArgs += 2 * sizeof(DWORD);
+            EXCEPTION_REGISTRATION_RECORD frame;
+            frame.Handler = vm86_handler;
+            __wine_push_frame( &frame );
+            __wine_enter_vm86( context );
+            __wine_pop_frame( &frame );
         }
         else
         {
-            *((SEGPTR *)stack - 1) = call16_ret_addr;
-            cbArgs += sizeof(SEGPTR);
-        }
+            /* push return address */
+            if (dwFlags & WCB16_REGS_LONG)
+            {
+                *((DWORD *)stack - 1) = HIWORD(call16_ret_addr);
+                *((DWORD *)stack - 2) = LOWORD(call16_ret_addr);
+                cbArgs += 2 * sizeof(DWORD);
+            }
+            else
+            {
+                *((SEGPTR *)stack - 1) = call16_ret_addr;
+                cbArgs += sizeof(SEGPTR);
+            }
 
-        _EnterWin16Lock();
-        wine_call_to_16_regs( context, cbArgs, call16_handler );
-        _LeaveWin16Lock();
+            _EnterWin16Lock();
+            wine_call_to_16_regs( context, cbArgs, call16_handler );
+            _LeaveWin16Lock();
+        }
 
         if (TRACE_ON(relay))
         {

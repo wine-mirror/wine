@@ -43,6 +43,7 @@
 #include "winbase.h"
 #include "wingdi.h"
 #include "winuser.h"
+#include "wownt32.h"
 #include "winnt.h"
 #include "wincon.h"
 
@@ -583,8 +584,8 @@ int WINAPI DOSVM_Enter( CONTEXT86 *context )
 
   __TRY
   {
-    __wine_enter_vm86( context );
-    TRACE_(module)( "vm86 returned: %s\n", strerror(errno) );
+      WOWCallback16Ex( 0, WCB16_REGS, 0, NULL, (DWORD *)context );
+      TRACE_(module)( "vm86 returned: %s\n", strerror(errno) );
   }
   __EXCEPT(exception_handler)
   {
