@@ -557,7 +557,8 @@ static void wave_out_test_device(int device)
 
 static void wave_out_tests()
 {
-    WAVEOUTCAPS caps;
+    WAVEOUTCAPSA capsA;
+    WAVEOUTCAPSW capsW;
     WAVEFORMATEX format;
     HWAVEOUT wout;
     MMRESULT rc;
@@ -566,17 +567,29 @@ static void wave_out_tests()
     ndev=waveOutGetNumDevs();
     trace("found %d WaveOut devices\n",ndev);
 
-    rc=waveOutGetDevCapsA(ndev+1,&caps,sizeof(caps));
+    rc=waveOutGetDevCapsA(ndev+1,&capsA,sizeof(capsA));
     ok(rc==MMSYSERR_BADDEVICEID,
        "waveOutGetDevCapsA: MMSYSERR_BADDEVICEID expected, got %s\n",mmsys_error(rc));
 
-    rc=waveOutGetDevCapsA(WAVE_MAPPER,&caps,sizeof(caps));
+    rc=waveOutGetDevCapsW(ndev+1,&capsW,sizeof(capsW));
+    ok(rc==MMSYSERR_BADDEVICEID,
+       "waveOutGetDevCapsW: MMSYSERR_BADDEVICEID expected, got %s\n",mmsys_error(rc));
+
+    rc=waveOutGetDevCapsA(WAVE_MAPPER,&capsA,sizeof(capsA));
     if (ndev>0)
         ok(rc==MMSYSERR_NOERROR,
            "waveOutGetDevCapsA: MMSYSERR_NOERROR expected, got %s\n",mmsys_error(rc));
     else
         ok(rc==MMSYSERR_BADDEVICEID || rc==MMSYSERR_NODRIVER,
            "waveOutGetDevCapsA: MMSYSERR_BADDEVICEID or MMSYSERR_NODRIVER expected, got %s\n",mmsys_error(rc));
+
+    rc=waveOutGetDevCapsW(WAVE_MAPPER,&capsW,sizeof(capsW));
+    if (ndev>0)
+        ok(rc==MMSYSERR_NOERROR,
+           "waveOutGetDevCapsW: MMSYSERR_NOERROR expected, got %s\n",mmsys_error(rc));
+    else
+        ok(rc==MMSYSERR_BADDEVICEID || rc==MMSYSERR_NODRIVER,
+           "waveOutGetDevCapsW: MMSYSERR_BADDEVICEID or MMSYSERR_NODRIVER expected, got %s\n",mmsys_error(rc));
 
     format.wFormatTag=WAVE_FORMAT_PCM;
     format.nChannels=2;
