@@ -926,6 +926,8 @@ START_TEST(dsound)
 {
     CoInitialize(NULL);
 
+    trace("DLL Version: %s\n", get_file_version("dsound.dll"));
+
     IDirectSound_tests();
     dsound_tests();
 

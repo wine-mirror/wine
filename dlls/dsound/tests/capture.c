@@ -541,6 +541,9 @@ START_TEST(capture)
         trace("dsound.dll not found\n");
         return;
     }
+
+    trace("DLL Version: %s\n", get_file_version("dsound.dll"));
+
     pDirectSoundCaptureCreate=(void*)GetProcAddress(hDsound,"DirectSoundCaptureCreate");
     pDirectSoundCaptureEnumerateA=(void*)GetProcAddress(hDsound,"DirectSoundCaptureEnumerateA");
     if (!pDirectSoundCaptureCreate || !pDirectSoundCaptureEnumerateA)

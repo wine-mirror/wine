@@ -1133,6 +1133,8 @@ START_TEST(ds3d8)
         return;
     }
 
+    trace("DLL Version: %s\n", get_file_version("dsound.dll"));
+
     pDirectSoundCreate8 = (void*)GetProcAddress(hDsound, "DirectSoundCreate8");
     if (!pDirectSoundCreate8) {
         trace("ds3d8 test skipped\n");

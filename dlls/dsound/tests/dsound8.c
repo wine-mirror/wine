@@ -28,6 +28,7 @@
 #define NONAMELESSSTRUCT
 #define NONAMELESSUNION
 #include <windows.h>
+#include <stdio.h>
 
 #include "wine/test.h"
 #include "dsound.h"
@@ -785,6 +786,39 @@ static void dsound8_tests()
     ok(rc==DS_OK,"DirectSoundEnumerateA() failed: %s\n",DXGetErrorString8(rc));
 }
 
+const char * get_file_version(const char * file_name)
+{
+    static char version[32];
+    DWORD size;
+    DWORD handle;
+
+    size = GetFileVersionInfoSizeA("dsound.dll", &handle);
+    if (size) {
+        char * data = HeapAlloc(GetProcessHeap(), 0, size);
+        if (data) {
+            if (GetFileVersionInfoA("dsound.dll", handle, size, data)) {
+                VS_FIXEDFILEINFO *pFixedVersionInfo;
+                UINT len;
+                if (VerQueryValueA(data, "\\", (LPLPVOID)&pFixedVersionInfo, &len)) {
+                    sprintf(version, "%ld.%ld.%ld.%ld",
+                            pFixedVersionInfo->dwFileVersionMS >> 16,
+                            pFixedVersionInfo->dwFileVersionMS & 0xffff,
+                            pFixedVersionInfo->dwFileVersionLS >> 16,
+                            pFixedVersionInfo->dwFileVersionLS & 0xffff);
+                } else
+                    sprintf(version, "not available");
+            } else
+                sprintf(version, "failed");
+
+            HeapFree(GetProcessHeap(), 0, data);
+        } else
+            sprintf(version, "failed");
+    } else
+        sprintf(version, "not available");
+
+    return version;
+}
+
 START_TEST(dsound8)
 {
     HMODULE hDsound;
@@ -796,6 +830,8 @@ START_TEST(dsound8)
         trace("dsound.dll not found\n");
         return;
     }
+
+    trace("DLL Version: %s\n", get_file_version("dsound.dll"));
 
     pDirectSoundCreate8 = (void*)GetProcAddress(hDsound, "DirectSoundCreate8");
     if (!pDirectSoundCreate8) {

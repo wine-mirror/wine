@@ -1232,6 +1232,8 @@ START_TEST(ds3d)
 {
     CoInitialize(NULL);
 
+    trace("DLL Version: %s\n", get_file_version("dsound.dll"));
+
     ds3d_tests();
 
     CoUninitialize();

@@ -435,7 +435,9 @@ START_TEST(propset)
         trace("dsound.dll not found\n");
         return;
     }
-                                                                                
+
+    trace("DLL Version: %s\n", get_file_version("dsound.dll"));
+
     pDirectSoundCreate8 = (void*)GetProcAddress(hDsound, "DirectSoundCreate8");
     pDirectSoundCaptureCreate=(void*)GetProcAddress(hDsound,"DirectSoundCaptureCreate");
     pDirectSoundCaptureCreate8=(void*)GetProcAddress(hDsound,"DirectSoundCaptureCreate8");
