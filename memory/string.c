@@ -638,7 +638,7 @@ BOOL WINAPI OemToCharW( LPCSTR s, LPWSTR d )
  
 INT WINAPI WideCharToLocal(
     LPSTR pLocal, 
-		LPWSTR pWide, 
+		LPCWSTR pWide, 
 		INT dwChars)
 { *pLocal = 0;
   TRACE("(%p, %s, %i)\n",	pLocal, debugstr_w(pWide),dwChars);
@@ -654,7 +654,7 @@ INT WINAPI WideCharToLocal(
  */
 INT WINAPI LocalToWideChar(
     LPWSTR pWide, 
-		LPSTR pLocal, 
+		LPCSTR pLocal, 
 		INT dwChars)
 { *pWide = 0;
   TRACE("(%p, %s, %i)\n",pWide,	pLocal, dwChars);

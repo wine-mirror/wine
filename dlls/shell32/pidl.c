@@ -302,7 +302,7 @@ HRESULT WINAPI SHILCreateFromPathW (LPCWSTR path, LPITEMIDLIST * ppidl, DWORD * 
 
 	if (SUCCEEDED (SHGetDesktopFolder(&sf)))
 	{
-	  ret = IShellFolder_ParseDisplayName(sf,0, NULL, path, &pchEaten, ppidl, attributes);
+	  ret = IShellFolder_ParseDisplayName(sf,0, NULL, (LPWSTR) path, &pchEaten, ppidl, attributes);
 	  IShellFolder_Release(sf);
 	}
 	return ret;

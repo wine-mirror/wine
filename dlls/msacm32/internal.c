@@ -4,6 +4,8 @@
  *      Copyright 1998  Patrik Stridvall
  */
 
+#include <string.h>
+
 #include "winbase.h"
 #include "winuser.h"
 #include "winerror.h"
