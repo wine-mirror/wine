@@ -1168,6 +1168,7 @@ BOOL WINAPI RemoveWindowSubclass(HWND hWnd, SUBCLASSPROC pfnSubclass, UINT_PTR u
       else
          SetWindowLongA (hWnd, GWL_WNDPROC, (LONG)stack->origproc);
       HeapFree (GetProcessHeap (), 0, stack);
+      RemovePropA( hWnd, COMCTL32_aSubclass );
       return TRUE;
    }
  
@@ -1254,6 +1255,7 @@ LRESULT WINAPI DefSubclassProc (HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lPar
       else
          SetWindowLongA (hWnd, GWL_WNDPROC, (LONG)stack->origproc);
       HeapFree (GetProcessHeap (), 0, stack);
+      RemovePropA( hWnd, COMCTL32_aSubclass );
       return TRUE;
    }
 
