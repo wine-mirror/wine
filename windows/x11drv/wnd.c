@@ -79,7 +79,6 @@ BOOL32 X11DRV_WND_CreateDesktopWindow(WND *wndPtr, CLASS *classPtr, BOOL32 bUnic
 	dndSelection = TSXInternAtom( display, "DndSelection" , False );
 
     wndPtr->window = rootWindow;
-    wndPtr->expose_event = NULL;
     X11DRV_WND_RegisterWindow( wndPtr );
 
     return TRUE;
@@ -160,12 +159,6 @@ BOOL32 X11DRV_WND_CreateWindow(WND *wndPtr, CLASS *classPtr, CREATESTRUCT32A *cs
  */
 BOOL32 X11DRV_WND_DestroyWindow(WND *pWnd)
 {
-   if (pWnd->expose_event) 
-     {
-       free( pWnd->expose_event );
-       pWnd->expose_event = NULL;
-     }
-
    if (pWnd->window)
      {
        XEvent xe;

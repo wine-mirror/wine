@@ -562,7 +562,6 @@ static HWND32 WIN_CreateWindowEx( CREATESTRUCT32A *cs, ATOM classAtom,
     wndPtr->pHScroll       = NULL;
     wndPtr->pProp          = NULL;
     wndPtr->userdata       = 0;
-    wndPtr->expose_event   = NULL;
     wndPtr->hSysMenu       = (wndPtr->dwStyle & WS_SYSMENU)
 			     ? MENU_GetSysMenu( hwnd, 0 ) : 0;
 

@@ -87,7 +87,6 @@ typedef struct tagWND
     HMENU16        hSysMenu;      /* window's copy of System Menu */
     DWORD          userdata;      /* User private data */
     struct _WND_DRIVER *pDriver;  /* Window driver */
-    XExposeEvent  *expose_event;  /* Deferred expose event */
     DWORD          wExtra[1];     /* Window extra bytes */
 } WND;
 

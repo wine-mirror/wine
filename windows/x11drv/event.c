@@ -96,7 +96,7 @@ static void EVENT_ButtonRelease( WND *pWnd, XButtonEvent *event );
 static void EVENT_MotionNotify( WND *pWnd, XMotionEvent *event );
 static void EVENT_FocusIn( WND *pWnd, XFocusChangeEvent *event );
 static void EVENT_FocusOut( WND *pWnd, XFocusChangeEvent *event );
-static int  EVENT_Expose( WND *pWnd, XExposeEvent *event );
+static void EVENT_Expose( WND *pWnd, XExposeEvent *event );
 static void EVENT_GraphicsExpose( WND *pWnd, XGraphicsExposeEvent *event );
 static void EVENT_ConfigureNotify( WND *pWnd, XConfigureEvent *event );
 static void EVENT_SelectionRequest( WND *pWnd, XSelectionRequestEvent *event);
@@ -397,34 +397,7 @@ static void EVENT_ProcessEvent( XEvent *event )
       
     case Expose:
       if (!pWnd) return;
-      if (EVENT_Expose( pWnd, (XExposeEvent *)event )) {
-	/* need to process ConfigureNotify first */
-	XEvent new_event;
-	
-	/* attempt to find and process the ConfigureNotify event now */
-	if (TSXCheckTypedWindowEvent(display,((XAnyEvent *)event)->window,
-				     ConfigureNotify, &new_event)) {
-	  EVENT_ProcessEvent( &new_event );
-	  if (!EVENT_Expose( pWnd, (XExposeEvent *)event ))
-	    break;
-	}
-	
-	/* no luck at this time, defer Expose event for later */
-	/* use "type" for an event counter, it is never rechecked */
-	if (!pWnd->expose_event) {
-	  pWnd->expose_event = malloc( sizeof(XExposeEvent) );
-	  pWnd->expose_event[0] = *(XExposeEvent *)event;
-	  pWnd->expose_event[0].type = 1;
-	} else {
-	  int i;
-	  
-	  i = ++pWnd->expose_event[0].type;
-	  pWnd->expose_event = realloc( pWnd->expose_event,
-					i * sizeof(XExposeEvent) );
-	  pWnd->expose_event[i-1] = *(XExposeEvent *)event;
-	  FIXME(x11, "Try and combine Expose events? %d queued.\n", i);
-	}
-      }
+      EVENT_Expose( pWnd, (XExposeEvent *)event );
       break;
       
     case GraphicsExpose:
@@ -435,17 +408,6 @@ static void EVENT_ProcessEvent( XEvent *event )
     case ConfigureNotify:
       if (!pWnd) return;
       EVENT_ConfigureNotify( pWnd, (XConfigureEvent*)event );
-      if (pWnd->expose_event) {
-	/* process deferred Expose event(s) */
-	int i;
-	
-	for (i=0; i<pWnd->expose_event[0].type; i++) {
-	  if(EVENT_Expose( pWnd, &pWnd->expose_event[i] ))
-	    ERR(x11, "Unprocessed expose event discarded\n");
-	}
-	free( pWnd->expose_event );
-	pWnd->expose_event = NULL;
-      }
       break;
 
     case SelectionRequest:
@@ -646,23 +608,9 @@ BOOL32 X11DRV_EVENT_QueryPointer(DWORD *posX, DWORD *posY, DWORD *state)
 /***********************************************************************
  *           EVENT_Expose
  */
-static int EVENT_Expose( WND *pWnd, XExposeEvent *event )
+static void EVENT_Expose( WND *pWnd, XExposeEvent *event )
 {
   RECT32 rect;
-  int x, y;
-  unsigned int width, height;
-  
-  /* When scrolling, many (fvwm2-based) window managers send the Expose
-   * event before sending the ConfigureNotify event, and we don't like
-   * that, so before processing the Expose event, we check whether the
-   * geometry has changed, and if so, we defer the Expose event until
-   * we get the ConfigureNotify event.  -Ove Kåven */
-  EVENT_GetGeometry( event->window, &x, &y, &width, &height );
-  
-  if ( x != pWnd->rectWindow.left || y != pWnd->rectWindow.top ||
-       (width != pWnd->rectWindow.right - pWnd->rectWindow.left) ||
-       (height != pWnd->rectWindow.bottom - pWnd->rectWindow.top))
-    return 1; /* tell EVENT_ProcessEvent() to defer it */
 
   /* Make position relative to client area instead of window */
   rect.left   = event->x - (pWnd->rectClient.left - pWnd->rectWindow.left);
@@ -673,7 +621,6 @@ static int EVENT_Expose( WND *pWnd, XExposeEvent *event )
   PAINT_RedrawWindow( pWnd->hwndSelf, &rect, 0,
 		      RDW_INVALIDATE | RDW_FRAME | RDW_ALLCHILDREN | RDW_ERASE |
 		      (event->count ? 0 : RDW_ERASENOW), 0 );
-  return 0;
 }
 
 
