@@ -546,21 +546,21 @@ static BOOL WINPROC_TestLBForStr ( HWND hwnd )
  * Return value is -1 on error, 0 if OK, 1 if an UnmapMsg call is needed.
  *
  * FIXME:
- *  WM_CHAR, WM_CHARTOITEM, WM_DEADCHAR, WM_MENUCHAR, WM_SYSCHAR, WM_SYSDEADCHAR
+ *  WM_CHARTOITEM, WM_MENUCHAR
  *
  * FIXME:
  *  WM_GETTEXT/WM_SETTEXT and static control with SS_ICON style:
  *  the first four bytes are the handle of the icon 
  *  when the WM_SETTEXT message has been used to set the icon
  */
-INT WINPROC_MapMsg32ATo32W( HWND hwnd, UINT msg, WPARAM wParam, LPARAM *plparam )
+INT WINPROC_MapMsg32ATo32W( HWND hwnd, UINT msg, WPARAM *pwparam, LPARAM *plparam )
 {
     switch(msg)
     {
     case WM_GETTEXT:
         {
             LPARAM *ptr = (LPARAM *)HeapAlloc( GetProcessHeap(), 0,
-                                     wParam * sizeof(WCHAR) + sizeof(LPARAM) );
+                                     *pwparam * sizeof(WCHAR) + sizeof(LPARAM) );
             if (!ptr) return -1;
             *ptr++ = *plparam;  /* Store previous lParam */
             *plparam = (LPARAM)ptr;
@@ -662,6 +662,18 @@ INT WINPROC_MapMsg32ATo32W( HWND hwnd, UINT msg, WPARAM wParam, LPARAM *plparam 
           *plparam = (LPARAM)ptr;
 	}
         return 1;
+
+    case WM_CHAR:
+    case WM_DEADCHAR:
+    case WM_SYSCHAR:
+    case WM_SYSDEADCHAR:
+        {
+            char ch = *pwparam;
+            WCHAR wch;
+            MultiByteToWideChar(CP_ACP, 0, &ch, 1, &wch, 1);
+            *pwparam = wch;
+        }
+        return 0;
 
     case WM_ASKCBFORMATNAME:
     case WM_DEVMODECHANGE:
@@ -783,13 +795,14 @@ void WINPROC_UnmapMsg32ATo32W( HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam
  * Map a message from Unicode to Ansi.
  * Return value is -1 on error, 0 if OK, 1 if an UnmapMsg call is needed.
  */
-INT WINPROC_MapMsg32WTo32A( HWND hwnd, UINT msg, WPARAM wParam, LPARAM *plparam )
-{   switch(msg)
+INT WINPROC_MapMsg32WTo32A( HWND hwnd, UINT msg, WPARAM *pwparam, LPARAM *plparam )
+{
+    switch(msg)
     {
     case WM_GETTEXT:
         {
             LPARAM *ptr = (LPARAM *)HeapAlloc( GetProcessHeap(), 0,
-                                               wParam + sizeof(LPARAM) );
+                                               *pwparam + sizeof(LPARAM) );
             if (!ptr) return -1;
             *ptr++ = *plparam;  /* Store previous lParam */
             *plparam = (LPARAM)ptr;
@@ -886,6 +899,18 @@ INT WINPROC_MapMsg32WTo32A( HWND hwnd, UINT msg, WPARAM wParam, LPARAM *plparam 
           *plparam = (LPARAM)ptr;
 	}
         return 1;
+
+    case WM_CHAR:
+    case WM_DEADCHAR:
+    case WM_SYSCHAR:
+    case WM_SYSDEADCHAR:
+        {
+            WCHAR wch = *pwparam;
+            char ch;
+            WideCharToMultiByte( CP_ACP, 0, &wch, 1, &ch, 1, NULL, NULL );
+            *pwparam = ch;
+        }
+        return 0;
 
     case WM_ASKCBFORMATNAME:
     case WM_DEVMODECHANGE:
@@ -1380,7 +1405,7 @@ INT WINPROC_MapMsg16To32W( HWND16 hwnd, UINT16 msg16, WPARAM16 wParam16, UINT *p
     case WM_GETTEXT:
     case WM_SETTEXT:
         *plparam = (LPARAM)PTR_SEG_TO_LIN(*plparam);
-        return WINPROC_MapMsg32ATo32W( hwnd, *pmsg32, *pwparam32, plparam );
+        return WINPROC_MapMsg32ATo32W( hwnd, *pmsg32, pwparam32, plparam );
     case WM_NCCREATE:
     case WM_CREATE:
         {
@@ -1444,6 +1469,19 @@ INT WINPROC_MapMsg16To32W( HWND16 hwnd, UINT16 msg16, WPARAM16 wParam16, UINT *p
             return 1;
         }
         else return 0;
+
+    case WM_CHAR:
+    case WM_DEADCHAR:
+    case WM_SYSCHAR:
+    case WM_SYSDEADCHAR:
+        {
+            char ch = wParam16;
+            WCHAR wch;
+            MultiByteToWideChar( CP_ACP, 0, &ch, 1, &wch, 1);
+            *pwparam32 = wch;
+        }
+        return 0;
+
     default:  /* No Unicode translation needed */
         return WINPROC_MapMsg16To32A( msg16, wParam16, pmsg32,
                                       pwparam32, plparam );
@@ -2219,6 +2257,19 @@ INT WINPROC_MapMsg32WTo16( HWND hwnd, UINT msg32, WPARAM wParam32,
             *plparam   = (LPARAM)SEGPTR_GET(str);
         }
         return 1;
+
+    case WM_CHAR:
+    case WM_DEADCHAR:
+    case WM_SYSCHAR:
+    case WM_SYSDEADCHAR:
+        {
+            WCHAR wch = wParam32;
+            char ch;
+            WideCharToMultiByte( CP_ACP, 0, &wch, 1, &ch, 1, NULL, NULL);
+            *pwparam16 = ch;
+        }
+        return 0;
+
     default:  /* No Unicode translation needed (?) */
         return WINPROC_MapMsg32ATo16( hwnd, msg32, wParam32, pmsg16,
                                       pwparam16, plparam );
@@ -2271,7 +2322,7 @@ static LRESULT WINPROC_CallProc32ATo32W( WNDPROC func, HWND hwnd,
 {
     LRESULT result;
 
-    if (WINPROC_MapMsg32ATo32W( hwnd, msg, wParam, &lParam ) == -1) return 0;
+    if (WINPROC_MapMsg32ATo32W( hwnd, msg, &wParam, &lParam ) == -1) return 0;
     result = WINPROC_CallWndProc( func, hwnd, msg, wParam, lParam );
     WINPROC_UnmapMsg32ATo32W( hwnd, msg, wParam, lParam );
     return result;
@@ -2289,7 +2340,7 @@ static LRESULT WINPROC_CallProc32WTo32A( WNDPROC func, HWND hwnd,
 {
     LRESULT result;
 
-    if (WINPROC_MapMsg32WTo32A( hwnd, msg, wParam, &lParam ) == -1) return 0;
+    if (WINPROC_MapMsg32WTo32A( hwnd, msg, &wParam, &lParam ) == -1) return 0;
     result = WINPROC_CallWndProc( func, hwnd, msg, wParam, lParam );
     WINPROC_UnmapMsg32WTo32A( hwnd, msg, wParam, lParam );
     return result;

@@ -1083,7 +1083,7 @@ static BOOL MSG_ConvertMsg( MSG *msg, int srcType, int dstType )
         }
 
     case MAKELONG( QMSG_WIN32A, QMSG_WIN32W ):
-        switch ( WINPROC_MapMsg32ATo32W( msg->hwnd, msg->message, msg->wParam, &msg->lParam ) )
+        switch ( WINPROC_MapMsg32ATo32W( msg->hwnd, msg->message, &msg->wParam, &msg->lParam ) )
         {
         case 0:
             return TRUE;
@@ -1095,7 +1095,7 @@ static BOOL MSG_ConvertMsg( MSG *msg, int srcType, int dstType )
         }
 
     case MAKELONG( QMSG_WIN32W, QMSG_WIN32A ):
-        switch ( WINPROC_MapMsg32WTo32A( msg->hwnd, msg->message, msg->wParam, &msg->lParam ) )
+        switch ( WINPROC_MapMsg32WTo32A( msg->hwnd, msg->message, &msg->wParam, &msg->lParam ) )
         {
         case 0:
             return TRUE;
@@ -1185,7 +1185,8 @@ static BOOL MSG_PeekMessage( int type, LPMSG msg, HWND hwnd,
             MSG tmpMsg = qmsg->msg;
             if ( !MSG_ConvertMsg( &tmpMsg, qmsg->type, type ) )
             {
-                ERR( "Message of wrong type contains pointer parameters. Skipped!\n ");
+                ERR( "Message %s of wrong type contains pointer parameters. Skipped!\n",
+		    SPY_GetMsgName(tmpMsg.message));
                 QUEUE_RemoveMsg( msgQueue, qmsg );
                 goto retry;
             }

@@ -48,9 +48,9 @@ extern BOOL WINPROC_SetProc( HWINDOWPROC *pFirst, WNDPROC16 func,
 extern void WINPROC_FreeProc( HWINDOWPROC proc, WINDOWPROCUSER user );
 extern WINDOWPROCTYPE WINPROC_GetProcType( HWINDOWPROC proc );
 
-extern INT WINPROC_MapMsg32ATo32W( HWND hwnd, UINT msg, WPARAM wParam,
+extern INT WINPROC_MapMsg32ATo32W( HWND hwnd, UINT msg, WPARAM *pwparam,
                                      LPARAM *plparam );
-extern INT WINPROC_MapMsg32WTo32A( HWND hwnd, UINT msg, WPARAM wParam,
+extern INT WINPROC_MapMsg32WTo32A( HWND hwnd, UINT msg, WPARAM *pwparam,
                                      LPARAM *plparam );
 extern INT WINPROC_MapMsg16To32A( UINT16 msg16, WPARAM16 wParam16,
                                     UINT *pmsg32, WPARAM *pwparam32,
