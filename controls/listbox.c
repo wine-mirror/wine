@@ -297,7 +297,8 @@ static void LISTBOX_UpdatePage( WND *wnd, LB_DESCR *descr )
 {
     INT page_size;
 
-    if ((page_size = descr->height / descr->item_height) < 1) page_size = 1;
+    if ((descr->item_height == 0) || (page_size = descr->height / descr->item_height) < 1) 
+                       page_size = 1;
     if (page_size == descr->page_size) return;
     descr->page_size = page_size;
     if (descr->style & LBS_MULTICOLUMN)
