@@ -1,6 +1,6 @@
-@ stub A_SHAFinal
-@ stub A_SHAInit
-@ stub A_SHAUpdate
+@ stdcall A_SHAFinal(ptr ptr)
+@ stdcall A_SHAInit(ptr)
+@ stdcall A_SHAUpdate(ptr ptr long)
 @ stdcall AbortSystemShutdownA(ptr)
 @ stdcall AbortSystemShutdownW(ptr)
 @ stdcall AccessCheck(ptr long long ptr ptr ptr ptr ptr)
