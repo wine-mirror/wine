@@ -936,7 +936,7 @@ static BOOL PROPSHEET_AdjustButtons(HWND hwndParent, PropSheetInfo* psInfo)
   y = rcSheet.bottom - (padding.y + buttonHeight);
 
   /*
-   * Position OK button.
+   * Position OK button and make it default.
    */
   hwndButton = GetDlgItem(hwndParent, IDOK);
 
@@ -944,6 +944,9 @@ static BOOL PROPSHEET_AdjustButtons(HWND hwndParent, PropSheetInfo* psInfo)
 
   SetWindowPos(hwndButton, 0, x, y, 0, 0,
                SWP_NOSIZE | SWP_NOZORDER | SWP_NOACTIVATE);
+
+  SendMessageA(hwndParent, DM_SETDEFID, IDOK, 0);
+
 
   /*
    * Position Cancel button.
