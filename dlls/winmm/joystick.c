@@ -34,20 +34,22 @@ typedef struct tagWINE_JOYSTICK {
     UINT	wTimer;
     DWORD	threshold;
     BOOL	bChanged;
+    HDRVR	hDriver;
 } WINE_JOYSTICK;
 
 static	WINE_JOYSTICK	JOY_Sticks[MAXJOYSTICK];
-static	HDRVR		JOY_Driver;
 
 /**************************************************************************
  * 				JOY_LoadDriver		[internal]
  */
-static	BOOL JOY_LoadDriver(void)
+static	BOOL JOY_LoadDriver(DWORD dwJoyID)
 {
-    if (JOY_Driver)
+    if (dwJoyID >= MAXJOYSTICK)
+	return FALSE;
+    if (JOY_Sticks[dwJoyID].hDriver)
 	return TRUE;
 
-    return JOY_Driver = OpenDriverA("joystick.drv", 0, 0);
+    return JOY_Sticks[dwJoyID].hDriver = OpenDriverA("joystick.drv", 0, dwJoyID);
 }
 
 /**************************************************************************
@@ -98,9 +100,15 @@ static	void	CALLBACK	JOY_Timer(HWND hWnd, UINT wMsg, UINT wTimer, DWORD dwTime)
  */
 UINT WINAPI joyGetNumDevs(void)
 {
-    if (!JOY_LoadDriver())	return MMSYSERR_NODRIVER;
+    UINT	ret = 0;
+    int		i;
 
-    return SendDriverMessage(JOY_Driver, JDD_GETNUMDEVS, 0L, 0L);
+    for (i = 0; i < MAXJOYSTICK; i++) {
+	if (JOY_LoadDriver(i)) {
+	    ret += SendDriverMessage(JOY_Sticks[i].hDriver, JDD_GETNUMDEVS, 0L, 0L);
+	}
+    }
+    return ret;
 }
 
 /**************************************************************************
@@ -117,12 +125,12 @@ UINT16 WINAPI joyGetNumDevs16(void)
 MMRESULT WINAPI joyGetDevCapsA(UINT wID, LPJOYCAPSA lpCaps, UINT wSize)
 {
     if (wID >= MAXJOYSTICK)	return JOYERR_PARMS;
-    if (!JOY_LoadDriver())	return MMSYSERR_NODRIVER;
+    if (!JOY_LoadDriver(wID))	return MMSYSERR_NODRIVER;
 
     lpCaps->wPeriodMin = JOY_PERIOD_MIN; /* FIXME */
     lpCaps->wPeriodMax = JOY_PERIOD_MAX; /* FIXME (same as MS Joystick Driver) */
 
-    return SendDriverMessage(JOY_Driver, JDD_GETDEVCAPS, (DWORD)lpCaps, wSize);
+    return SendDriverMessage(JOY_Sticks[wID].hDriver, JDD_GETDEVCAPS, (DWORD)lpCaps, wSize);
 }   
 
 /**************************************************************************
@@ -213,7 +221,7 @@ MMRESULT WINAPI joyGetPosEx(UINT wID, LPJOYINFOEX lpInfo)
     TRACE("(%d, %p);\n", wID, lpInfo);
     
     if (wID >= MAXJOYSTICK)	return JOYERR_PARMS;
-    if (!JOY_LoadDriver())	return MMSYSERR_NODRIVER;
+    if (!JOY_LoadDriver(wID))	return MMSYSERR_NODRIVER;
     
     lpInfo->dwXpos = 0;
     lpInfo->dwYpos = 0;
@@ -227,7 +235,7 @@ MMRESULT WINAPI joyGetPosEx(UINT wID, LPJOYINFOEX lpInfo)
     lpInfo->dwReserved1 = 0;
     lpInfo->dwReserved2 = 0;
 
-    return SendDriverMessage(JOY_Driver, JDD_GETPOSEX, (DWORD)lpInfo, 0L);
+    return SendDriverMessage(JOY_Sticks[wID].hDriver, JDD_GETPOSEX, (DWORD)lpInfo, 0L);
 }
 
 /**************************************************************************
@@ -246,14 +254,14 @@ MMRESULT WINAPI joyGetPos(UINT wID, LPJOYINFO lpInfo)
     TRACE("(%d, %p);\n", wID, lpInfo);
     
     if (wID >= MAXJOYSTICK)	return JOYERR_PARMS;
-    if (!JOY_LoadDriver())	return MMSYSERR_NODRIVER;
+    if (!JOY_LoadDriver(wID))	return MMSYSERR_NODRIVER;
     
     lpInfo->wXpos = 0;
     lpInfo->wYpos = 0;
     lpInfo->wZpos = 0;
     lpInfo->wButtons = 0;
 
-    return SendDriverMessage(JOY_Driver, JDD_GETPOS, (DWORD)lpInfo, 0L);
+    return SendDriverMessage(JOY_Sticks[wID].hDriver, JDD_GETPOS, (DWORD)lpInfo, 0L);
 }
 
 /**************************************************************************
@@ -309,7 +317,7 @@ MMRESULT WINAPI joyReleaseCapture(UINT wID)
     TRACE("(%04X);\n", wID);
 
     if (wID >= MAXJOYSTICK)		return JOYERR_PARMS;
-    if (!JOY_LoadDriver())		return MMSYSERR_NODRIVER;
+    if (!JOY_LoadDriver(wID))		return MMSYSERR_NODRIVER;
     if (!JOY_Sticks[wID].hCapture)	return JOYERR_NOCANDO;
 
     KillTimer(JOY_Sticks[wID].hCapture, JOY_Sticks[wID].wTimer);
@@ -336,7 +344,7 @@ MMRESULT WINAPI joySetCapture(HWND hWnd, UINT wID, UINT wPeriod, BOOL bChanged)
 
     if (wID >= MAXJOYSTICK || hWnd == 0) return JOYERR_PARMS;
     if (wPeriod<JOY_PERIOD_MIN || wPeriod>JOY_PERIOD_MAX) return JOYERR_PARMS;
-    if (!JOY_LoadDriver()) return MMSYSERR_NODRIVER;
+    if (!JOY_LoadDriver(wID)) return MMSYSERR_NODRIVER;
 
     if (JOY_Sticks[wID].hCapture || !IsWindow(hWnd))
 	return JOYERR_NOCANDO; /* FIXME: what should be returned ? */

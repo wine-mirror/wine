@@ -49,19 +49,40 @@ DEFAULT_DEBUG_CHANNEL(joystick);
 
 #define MAXJOYSTICK	(JOYSTICKID2 + 1)
 
-static	struct dummy_struct* JSTCK_Dummy = NULL;
+typedef struct tagWINE_JSTCK {
+    int		joyIntf;
+    int		in_use;
+} WINE_JSTCK;
+
+static	WINE_JSTCK	JSTCK_Data[MAXJOYSTICK];
+
+/**************************************************************************
+ * 				JSTCK_drvGet			[internal]	
+ */
+static	WINE_JSTCK*	JSTCK_drvGet(DWORD dwDevID)
+{
+    int	p;
+
+    if ((dwDevID - (DWORD)JSTCK_Data) % sizeof(JSTCK_Data[0]) != 0)
+	return NULL;
+    p = (dwDevID - (DWORD)JSTCK_Data) / sizeof(JSTCK_Data[0]);
+    if (p < 0 || p >= MAXJOYSTICK || !((WINE_JSTCK*)dwDevID)->in_use)
+	return NULL;
+
+    return (WINE_JSTCK*)dwDevID;
+}
 
 /**************************************************************************
  * 				JSTCK_drvOpen			[internal]	
  */
-static	DWORD	JSTCK_drvOpen(LPSTR str)
+static	DWORD	JSTCK_drvOpen(LPSTR str, DWORD dwIntf)
 {
-    if (JSTCK_Dummy)
+    if (dwIntf >= MAXJOYSTICK || JSTCK_Data[dwIntf].in_use)
 	return 0;
-    
-    /* I know, this is ugly, but who cares... */
-    JSTCK_Dummy = (struct dummy_struct*)1;
-    return 1;
+
+    JSTCK_Data[dwIntf].joyIntf = dwIntf;
+    JSTCK_Data[dwIntf].in_use = 1;
+    return (DWORD)&JSTCK_Data[dwIntf];
 }
 
 /**************************************************************************
@@ -69,11 +90,12 @@ static	DWORD	JSTCK_drvOpen(LPSTR str)
  */
 static	DWORD	JSTCK_drvClose(DWORD dwDevID)
 {
-    if (JSTCK_Dummy) {
-	JSTCK_Dummy = NULL;
-	return 1;
-    }
-    return 0;
+    WINE_JSTCK*	jstck = JSTCK_drvGet(dwDevID);
+
+    if (jstck == NULL)
+	return 0;
+    jstck->in_use = 0;
+    return 1;
 }
 
 struct js_status
@@ -86,14 +108,12 @@ struct js_status
 /**************************************************************************
  *                              JSTCK_OpenDevice           [internal]
  */
-static	int	JSTCK_OpenDevice(WORD wID)
+static	int	JSTCK_OpenDevice(WINE_JSTCK* jstick)
 {
     char	buf[20];
     int		flags;
-    
-    if (wID >= MAXJOYSTICK) return -1;
 
-    sprintf(buf, JOYDEV, wID);
+    sprintf(buf, JOYDEV, jstick->joyIntf);
 #ifdef HAVE_LINUX_22_JOYSTICK_API
     flags = O_RDONLY | O_NONBLOCK;
 #else
@@ -107,6 +127,7 @@ static	int	JSTCK_OpenDevice(WORD wID)
  */
 static	LONG	JSTCK_GetDevCaps(DWORD dwDevID, LPJOYCAPSA lpCaps, DWORD dwSize)
 {
+    WINE_JSTCK*	jstck;
 #ifdef HAVE_LINUX_22_JOYSTICK_API
     int		dev;
     char	nrOfAxes;
@@ -115,11 +136,12 @@ static	LONG	JSTCK_GetDevCaps(DWORD dwDevID, LPJOYCAPSA lpCaps, DWORD dwSize)
     int		driverVersion;
 #endif
 
-    if (dwDevID >= MAXJOYSTICK) return MMSYSERR_NODRIVER;
+    if ((jstck = JSTCK_drvGet(dwDevID)) == NULL)
+	return MMSYSERR_NODRIVER;
 
 #ifdef HAVE_LINUX_22_JOYSTICK_API
     
-    if ((dev = JSTCK_OpenDevice(dwDevID)) < 0) return JOYERR_PARMS;
+    if ((dev = JSTCK_OpenDevice(jstck)) < 0) return JOYERR_PARMS;
     ioctl(dev, JSIOCGAXES, &nrOfAxes);
     ioctl(dev, JSIOCGBUTTONS, &nrOfButtons);
     ioctl(dev, JSIOCGVERSION, &driverVersion);
@@ -200,6 +222,7 @@ static	LONG	JSTCK_GetDevCaps(DWORD dwDevID, LPJOYCAPSA lpCaps, DWORD dwSize)
  */
 static LONG	JSTCK_GetPosEx(DWORD dwDevID, LPJOYINFOEX lpInfo)
 {
+    WINE_JSTCK*		jstck;
     int			dev;
 #ifdef HAVE_LINUX_22_JOYSTICK_API
     struct js_event 	ev;
@@ -208,7 +231,10 @@ static LONG	JSTCK_GetPosEx(DWORD dwDevID, LPJOYINFOEX lpInfo)
     int    		dev_stat;
 #endif
     
-    if ((dev = JSTCK_OpenDevice(dwDevID)) < 0) return JOYERR_PARMS;
+    if ((jstck = JSTCK_drvGet(dwDevID)) == NULL)
+	return MMSYSERR_NODRIVER;
+
+    if ((dev = JSTCK_OpenDevice(jstck)) < 0) return JOYERR_PARMS;
 
 #ifdef HAVE_LINUX_22_JOYSTICK_API
     /* After opening the device it's state can be
@@ -312,7 +338,7 @@ static LONG	JSTCK_GetPos(DWORD dwDevID, LPJOYINFO lpInfo)
  * 				JSTCK_DriverProc		[internal]
  */
 LONG CALLBACK	JSTCK_DriverProc(DWORD dwDevID, HDRVR hDriv, DWORD wMsg, 
-				  DWORD dwParam1, DWORD dwParam2)
+				 DWORD dwParam1, DWORD dwParam2)
 {
     /* EPP     TRACE("(%08lX, %04X, %08lX, %08lX, %08lX)\n",  */
     /* EPP 	  dwDevID, hDriv, wMsg, dwParam1, dwParam2); */
@@ -320,7 +346,7 @@ LONG CALLBACK	JSTCK_DriverProc(DWORD dwDevID, HDRVR hDriv, DWORD wMsg,
     switch(wMsg) {
     case DRV_LOAD:		return 1;
     case DRV_FREE:		return 1;
-    case DRV_OPEN:		return JSTCK_drvOpen((LPSTR)dwParam1);
+    case DRV_OPEN:		return JSTCK_drvOpen((LPSTR)dwParam1, dwParam2);
     case DRV_CLOSE:		return JSTCK_drvClose(dwDevID);
     case DRV_ENABLE:		return 1;
     case DRV_DISABLE:		return 1;
@@ -329,7 +355,7 @@ LONG CALLBACK	JSTCK_DriverProc(DWORD dwDevID, HDRVR hDriv, DWORD wMsg,
     case DRV_INSTALL:		return DRVCNF_RESTART;
     case DRV_REMOVE:		return DRVCNF_RESTART;
 
-    case JDD_GETNUMDEVS:	return MAXJOYSTICK;
+    case JDD_GETNUMDEVS:	return 1;
     case JDD_GETDEVCAPS:	return JSTCK_GetDevCaps(dwDevID, (LPJOYCAPSA)dwParam1, dwParam2);
     case JDD_GETPOS:		return JSTCK_GetPos(dwDevID, (LPJOYINFO)dwParam1);
     case JDD_SETCALIBRATION:	
@@ -346,7 +372,7 @@ LONG CALLBACK	JSTCK_DriverProc(DWORD dwDevID, HDRVR hDriv, DWORD wMsg,
  * 				JSTCK_DriverProc		[internal]
  */
 LONG CALLBACK	JSTCK_DriverProc(DWORD dwDevID, HDRVR hDriv, DWORD wMsg, 
-				  DWORD dwParam1, DWORD dwParam2)
+				 DWORD dwParam1, DWORD dwParam2)
 {
     /* EPP     TRACE("(%08lX, %04X, %08lX, %08lX, %08lX)\n",  */
     /* EPP 	  dwDevID, hDriv, wMsg, dwParam1, dwParam2); */
