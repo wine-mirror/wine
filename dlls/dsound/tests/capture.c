@@ -435,7 +435,7 @@ static BOOL WINAPI dscenum_callback(LPGUID lpGuid, LPCSTR lpcstrDescription,
         if (winetest_interactive)
 	    trace("  Testing the capture buffer at %s\n", format_string(&wfx));
 	rc=IDirectSoundCapture_CreateCaptureBuffer(dsco,&bufdesc,&dscbo,NULL);
-	ok((rc==DS_OK)&&(dscbo!=NULL),
+	ok(((rc==DS_OK)&&(dscbo!=NULL))||(rc==DSERR_BADFORMAT)||(rc==DSERR_ALLOCATED),
            "IDirectSoundCapture_CreateCaptureBuffer() failed to create a "
            "capture buffer: %s\n",DXGetErrorString8(rc));
 	if (rc==DS_OK) {
@@ -443,7 +443,14 @@ static BOOL WINAPI dscenum_callback(LPGUID lpGuid, LPCSTR lpcstrDescription,
 	    ref=IDirectSoundCaptureBuffer_Release(dscbo);
 	    ok(ref==0,"IDirectSoundCaptureBuffer_Release() has %d references, "
                "should have 0\n",ref);
-	}
+	} else if (rc==DSERR_BADFORMAT) {
+            ok(!(dsccaps.dwFormats & formats[f][3]),
+               "IDirectSoundCapture_CreateCaptureBuffer() failed to create a "
+               "capture buffer: format listed as supported but using it failed\n"); 
+            if (!(dsccaps.dwFormats & formats[f][3])) 
+                trace("  Format not supported: %s\n", format_string(&wfx));
+        } else if (rc==DSERR_ALLOCATED)
+            trace("  Already In Use\n");
     }
 
     /* try a non PCM format */
