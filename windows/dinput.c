@@ -125,6 +125,9 @@ struct SysMouseAImpl
         int				acquired;
         HANDLE				hEvent;
 	CRITICAL_SECTION		crit;
+
+	/* This is for mouse reporting. */
+	struct DIMOUSESTATE             m_state;
 };
 
 static int evsequence=0;
@@ -858,9 +861,14 @@ static void WINAPI dinput_mouse_event( DWORD dwFlags, DWORD dx, DWORD dy,
     xtime = wme->time;
     extra = (DWORD)wme->hWnd;
     
-    assert( dwFlags & MOUSEEVENTF_ABSOLUTE );
-    posX = (dx * GetSystemMetrics(SM_CXSCREEN)) >> 16;
-    posY = (dy * GetSystemMetrics(SM_CYSCREEN)) >> 16;
+    if ((dwFlags & MOUSEEVENTF_MOVE) &&
+	(dwFlags & MOUSEEVENTF_ABSOLUTE)) {
+      posX = (dx * GetSystemMetrics(SM_CXSCREEN)) >> 16;
+      posY = (dy * GetSystemMetrics(SM_CYSCREEN)) >> 16;
+    } else {
+      posX = This->prevX;
+      posY = This->prevY;
+    }
   } else {
     ERR("Mouse event not supported...\n");
     LeaveCriticalSection(&(This->crit));
@@ -902,43 +910,59 @@ static void WINAPI dinput_mouse_event( DWORD dwFlags, DWORD dx, DWORD dy,
       DPRINTF(" LD ");
 
     GEN_EVENT(DIMOFS_BUTTON0, 0xFF, xtime, evsequence++);
+    This->m_state.rgbButtons[0] = 0xFF;
   }
   if ( dwFlags & MOUSEEVENTF_LEFTUP ) {
     if (TRACE_ON(dinput))
       DPRINTF(" LU ");
 
     GEN_EVENT(DIMOFS_BUTTON0, 0x00, xtime, evsequence++);
+    This->m_state.rgbButtons[0] = 0x00;
   }
   if ( dwFlags & MOUSEEVENTF_RIGHTDOWN ) {
     if (TRACE_ON(dinput))
       DPRINTF(" RD ");
 
     GEN_EVENT(DIMOFS_BUTTON1, 0xFF, xtime, evsequence++);
+    This->m_state.rgbButtons[1] = 0xFF;
   }
   if ( dwFlags & MOUSEEVENTF_RIGHTUP ) {
     if (TRACE_ON(dinput))
       DPRINTF(" RU ");
 
     GEN_EVENT(DIMOFS_BUTTON1, 0x00, xtime, evsequence++);
+    This->m_state.rgbButtons[1] = 0x00;
   }
   if ( dwFlags & MOUSEEVENTF_MIDDLEDOWN ) {
     if (TRACE_ON(dinput))
       DPRINTF(" MD ");
 
     GEN_EVENT(DIMOFS_BUTTON2, 0xFF, xtime, evsequence++);
+    This->m_state.rgbButtons[2] = 0xFF;
   }
   if ( dwFlags & MOUSEEVENTF_MIDDLEUP ) {
     if (TRACE_ON(dinput))
       DPRINTF(" MU ");
 
     GEN_EVENT(DIMOFS_BUTTON2, 0x00, xtime, evsequence++);
+    This->m_state.rgbButtons[2] = 0x00;
   }
   if (TRACE_ON(dinput))
     DPRINTF("\n");
-
+  
   This->prevX = posX;
   This->prevY = posY;
+
+  if (This->absolute) {
+    This->m_state.lX = posX;
+    This->m_state.lY = posY;
+  } else {
+    This->m_state.lX = posX - This->win_centerX;
+    This->m_state.lY = posY - This->win_centerY;
+  }
+  
   LeaveCriticalSection(&(This->crit));
+
 }
 
 
@@ -960,6 +984,15 @@ static HRESULT WINAPI SysMouseAImpl_Acquire(LPDIRECTINPUTDEVICE2A iface)
     
     /* Store (in a global variable) the current lock */
     current_lock = (IDirectInputDevice2A*)This;
+
+    /* Init the mouse state */
+    This->m_state.lX = PosX;
+    This->m_state.lY = PosY;
+    This->m_state.lZ = 0;
+    This->m_state.rgbButtons[0] = (MouseButtonsStates[0] ? 0xFF : 0x00);
+    This->m_state.rgbButtons[1] = (MouseButtonsStates[1] ? 0xFF : 0x00);
+    This->m_state.rgbButtons[2] = (MouseButtonsStates[2] ? 0xFF : 0x00);
+    This->m_state.rgbButtons[3] = 0x00;
     
     /* Install our own mouse event handler */
     MOUSE_Enable(dinput_mouse_event);
@@ -1015,33 +1048,18 @@ static HRESULT WINAPI SysMouseAImpl_GetDeviceState(
   ICOM_THIS(SysMouseAImpl,iface);
   struct DIMOUSESTATE *mstate = (struct DIMOUSESTATE *) ptr;
   
+  EnterCriticalSection(&(This->crit));
   TRACE("(this=%p,0x%08lx,%p): \n",This,len,ptr);
   
   /* Check if the buffer is big enough */
   if (len < sizeof(struct DIMOUSESTATE)) {
     FIXME("unsupported state structure.");
+    LeaveCriticalSection(&(This->crit));
     return DIERR_INVALIDPARAM;
   }
-  
-  TRACE("(X:%ld - Y:%ld)\n", PosX, PosY);
 
-  /* Fill the mouse state structure */
-  if (This->absolute) {
-    mstate->lX = PosX;
-    mstate->lY = PosY;
-  } else {
-    mstate->lX = PosX - This->win_centerX;
-    mstate->lY = PosY - This->win_centerY;
-
-    if ((mstate->lX != 0) || (mstate->lY != 0))
-      This->need_warp = 1;
-  }
-  mstate->lZ = 0;
-  /* WARNING : this supposes that DInput takes into account the 'SwapButton' option */
-  mstate->rgbButtons[0] = (MouseButtonsStates[0] ? 0xFF : 0x00);
-  mstate->rgbButtons[1] = (MouseButtonsStates[1] ? 0xFF : 0x00);
-  mstate->rgbButtons[2] = (MouseButtonsStates[2] ? 0xFF : 0x00);
-  mstate->rgbButtons[3] = 0x00;
+  /* Copy the current mouse state */
+  *mstate = This->m_state;
   
   /* Check if we need to do a mouse warping */
   if (This->need_warp) {
@@ -1055,6 +1073,8 @@ static HRESULT WINAPI SysMouseAImpl_GetDeviceState(
 
     This->need_warp = 0;
   }
+
+  LeaveCriticalSection(&(This->crit));
   
   TRACE("(X: %ld - Y: %ld   L: %02x M: %02x R: %02x)\n",
 	mstate->lX, mstate->lY,
