@@ -64,7 +64,7 @@ static void     release_memory(void)
 
 /* ---------------- simplistic tool to encode/decode strings (to hide \ " ' and such) */
 
-static char*    encodeA(const char* str)
+static const char* encodeA(const char* str)
 {
     char*       ptr;
     size_t      len,i;
@@ -78,7 +78,7 @@ static char*    encodeA(const char* str)
     return ptr;
 }
 
-static char*    encodeW(const WCHAR* str)
+static const char* encodeW(const WCHAR* str)
 {
     char*       ptr;
     size_t      len,i;
@@ -286,7 +286,7 @@ static void     doChild(const char* file, const char* option)
         {
             lstrcpynW(env_var, ptrW, MAX_LISTED_ENV_VAR - 1);
             env_var[MAX_LISTED_ENV_VAR - 1] = '\0';
-            childPrintf(hFile, "env%d=%s\n", i, encodeW(ptrW));
+            childPrintf(hFile, "env%d=%s\n", i, encodeW(env_var));
             i++;
             ptrW += lstrlenW(ptrW) + 1;
         }
