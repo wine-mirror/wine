@@ -105,6 +105,16 @@ typedef struct _CERT_CONTEXT {
 } CERT_CONTEXT, *PCERT_CONTEXT;
 typedef const CERT_CONTEXT *PCCERT_CONTEXT;
 
+typedef struct _VTableProvStruc {
+    DWORD    Version;
+    FARPROC  pFuncVerifyImage;
+    FARPROC  pFuncReturnhWnd;
+    DWORD    dwProvType;
+    BYTE    *pbContextInfo;
+    DWORD    cbContextInfo;
+    LPSTR    pszProvName;
+} VTableProvStruc, *PVTableProvStruc;
+
 /* Algorithm IDs */
 
 #define GET_ALG_CLASS(x)                (x & (7 << 13))
