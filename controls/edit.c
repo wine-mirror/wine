@@ -3780,7 +3780,11 @@ static LRESULT EDIT_WM_Create(EDITSTATE *es, LPCWSTR name)
        }
        /* force scroll info update */
        EDIT_UpdateScrollInfo(es);
-       return 0;
+       /* The rule seems to return 1 here for success */
+       /* Power Builder masked edit controls will crash  */
+       /* if not. */
+       /* FIXME: is that in all cases so ? */
+       return 1;
 }
 
 
