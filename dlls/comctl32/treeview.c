@@ -3063,6 +3063,7 @@ TREEVIEW_Sort(TREEVIEW_INFO *infoPtr, BOOL fRecurse, HTREEITEM parent,
 	                break;
 	        }
 
+                if (!item) item = parent->firstChild;
                 TREEVIEW_SetFirstVisible(infoPtr, item, FALSE);
 	    }
 
@@ -5185,6 +5186,9 @@ static LRESULT WINAPI
 TREEVIEW_WindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
     TREEVIEW_INFO *infoPtr = TREEVIEW_GetInfoPtr(hwnd);
+
+    TRACE("hwnd %p msg %04x wp=%08x lp=%08lx\n", hwnd, uMsg, wParam, lParam);
+
     if (infoPtr) TREEVIEW_VerifyTree(infoPtr);
     else
     {
