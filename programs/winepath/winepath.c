@@ -153,7 +153,7 @@ int main(int argc, char *argv[])
     {
         *path='\0';
         if (outputformats & LONGFORMAT) {
-            GetLongPathNameA(argv[i], path, sizeof(path));
+            GetFullPathNameA(argv[i], sizeof(path), path, NULL);
             printf("%s\n", path);
         }
         if (outputformats & SHORTFORMAT) {
