@@ -48,7 +48,7 @@
 #include <wtypes.h>
 #include <winerror.h>
 
-#define PIPENAME "\\\\.\\PiPe\\tests_" __FILE__
+#define PIPENAME "\\\\.\\PiPe\\tests_pipe.c"
 
 #define NB_SERVER_LOOPS 8
 
