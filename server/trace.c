@@ -542,8 +542,8 @@ static void dump_get_thread_info_reply( const struct get_thread_info_reply *req 
     fprintf( stderr, " exit_code=%d,", req->exit_code );
     fprintf( stderr, " priority=%d,", req->priority );
     fprintf( stderr, " affinity=%d,", req->affinity );
-    fprintf( stderr, " creation_time=%ld,", req->creation_time );
-    fprintf( stderr, " exit_time=%ld", req->exit_time );
+    fprintf( stderr, " creation_time=%ld,", (long)req->creation_time );
+    fprintf( stderr, " exit_time=%ld", (long)req->exit_time );
 }
 
 static void dump_set_thread_info_request( const struct set_thread_info_request *req )
@@ -870,8 +870,8 @@ static void dump_truncate_file_request( const struct truncate_file_request *req 
 static void dump_set_file_time_request( const struct set_file_time_request *req )
 {
     fprintf( stderr, " handle=%p,", req->handle );
-    fprintf( stderr, " access_time=%ld,", req->access_time );
-    fprintf( stderr, " write_time=%ld", req->write_time );
+    fprintf( stderr, " access_time=%ld,", (long)req->access_time );
+    fprintf( stderr, " write_time=%ld", (long)req->write_time );
 }
 
 static void dump_flush_file_request( const struct flush_file_request *req )
@@ -893,9 +893,9 @@ static void dump_get_file_info_reply( const struct get_file_info_reply *req )
 {
     fprintf( stderr, " type=%d,", req->type );
     fprintf( stderr, " attr=%d,", req->attr );
-    fprintf( stderr, " access_time=%ld,", req->access_time );
-    fprintf( stderr, " write_time=%ld,", req->write_time );
-    fprintf( stderr, " change_time=%ld,", req->change_time );
+    fprintf( stderr, " access_time=%ld,", (long)req->access_time );
+    fprintf( stderr, " write_time=%ld,", (long)req->write_time );
+    fprintf( stderr, " change_time=%ld,", (long)req->change_time );
     fprintf( stderr, " size_high=%d,", req->size_high );
     fprintf( stderr, " size_low=%d,", req->size_low );
     fprintf( stderr, " alloc_high=%d,", req->alloc_high );
@@ -1507,7 +1507,7 @@ static void dump_create_key_request( const struct create_key_request *req )
     fprintf( stderr, " parent=%p,", req->parent );
     fprintf( stderr, " access=%08x,", req->access );
     fprintf( stderr, " options=%08x,", req->options );
-    fprintf( stderr, " modif=%ld,", req->modif );
+    fprintf( stderr, " modif=%ld,", (long)req->modif );
     fprintf( stderr, " namelen=%d,", req->namelen );
     fprintf( stderr, " name=" );
     dump_varargs_unicode_str( min(cur_size,req->namelen) );
@@ -1555,7 +1555,7 @@ static void dump_enum_key_reply( const struct enum_key_reply *req )
     fprintf( stderr, " values=%d,", req->values );
     fprintf( stderr, " max_value=%d,", req->max_value );
     fprintf( stderr, " max_data=%d,", req->max_data );
-    fprintf( stderr, " modif=%ld,", req->modif );
+    fprintf( stderr, " modif=%ld,", (long)req->modif );
     fprintf( stderr, " total=%d,", req->total );
     fprintf( stderr, " namelen=%d,", req->namelen );
     fprintf( stderr, " name=" );

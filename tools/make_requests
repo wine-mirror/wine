@@ -269,6 +269,9 @@ sub DO_DUMP_FUNC
                 push @trace_lines, "    fprintf( stderr, \" $var=$formats{$type}";
                 push @trace_lines, "," if ($#_ > 0);
                 push @trace_lines, "\", ";
+                # In the case of time_t we need to cast the parameter to
+                # long to match the associated "%ld" printf modifier.
+                push @trace_lines, "(long)" if( $type eq "time_t" );
                 push @trace_lines, "req->$var );\n";
             }
 	}

@@ -265,7 +265,7 @@ static void save_subkeys( const struct key *key, const struct key *base, FILE *f
     {
         fprintf( f, "\n[" );
         if (key != base) dump_path( key, base, f );
-        fprintf( f, "] %ld\n", key->modif );
+        fprintf( f, "] %ld\n", (long)key->modif );
         for (i = 0; i <= key->last_value; i++) dump_value( &key->values[i], f );
     }
     for (i = 0; i <= key->last_subkey; i++) save_subkeys( key->subkeys[i], base, f );
