@@ -174,7 +174,9 @@ extern char *optarg;
 extern int optind;
 extern int opterr;
 extern int optopt;
+struct option;
 
+#ifndef HAVE_STRUCT_OPTION_NAME
 struct option
 {
     const char *name;
@@ -182,6 +184,7 @@ struct option
     int *flag;
     int val;
 };
+#endif
 
 extern int getopt_long (int ___argc, char *const *___argv,
                         const char *__shortopts,

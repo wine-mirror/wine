@@ -473,6 +473,9 @@
 /* Define to 1 if `msg_accrights' is member of `struct msghdr'. */
 #undef HAVE_STRUCT_MSGHDR_MSG_ACCRIGHTS
 
+/* Define to 1 if `name' is member of `struct option'. */
+#undef HAVE_STRUCT_OPTION_NAME
+
 /* Define to 1 if `sa_len' is member of `struct sockaddr'. */
 #undef HAVE_STRUCT_SOCKADDR_SA_LEN
 

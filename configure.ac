@@ -1282,6 +1282,12 @@ AC_CHECK_MEMBERS([struct msghdr.msg_accrights, struct sockaddr.sa_len, struct so
 dnl Check for siginfo_t members
 AC_CHECK_MEMBERS([siginfo_t.si_fd],,,[#include <signal.h>])
 
+dnl Check for struct option
+AC_CHECK_MEMBERS([struct option.name],,,
+[#ifdef HAVE_GETOPT_H
+#include <getopt.h>
+#endif])
+
 dnl *** check for the need to define platform-specific symbols
 
 case $host_cpu in
