@@ -19,6 +19,7 @@
  */
 
 #include <stdio.h>
+#include <stdlib.h>
 
 extern void wine_init( int argc, char *argv[], char *error, int error_size );
 
