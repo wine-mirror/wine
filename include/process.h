@@ -162,8 +162,6 @@ extern PDB *PROCESS_Create( struct _NE_MODULE *pModule,
                             BOOL inherit,
                             STARTUPINFOA *startup, PROCESS_INFORMATION *info );
 extern void PROCESS_FreePDB( PDB *pdb );
-extern void PROCESS_SuspendOtherThreads(void);
-extern void PROCESS_ResumeOtherThreads(void);
 
 #endif  /* __WINE_PROCESS_H */
 
