@@ -645,7 +645,8 @@ static NTSTATUS map_image( HANDLE hmapping, int fd, char *base, DWORD total_size
                 UINT_PTR end = base + ROUND_SIZE( imports->VirtualAddress, imports->Size );
                 if (end > sec->VirtualAddress + size) end = sec->VirtualAddress + size;
                 if (end > base) VIRTUAL_mmap( shared_fd, ptr + base, end - base,
-                                              pos, 0, PROT_READ|PROT_WRITE|PROT_EXEC,
+                                              pos + (base - sec->VirtualAddress), 0,
+                                              PROT_READ|PROT_WRITE|PROT_EXEC,
                                               MAP_PRIVATE|MAP_FIXED, NULL );
             }
             pos += size;
@@ -1245,7 +1246,7 @@ NTSTATUS WINAPI NtQueryVirtualMemory( HANDLE process, LPCVOID addr,
     info->BaseAddress    = (LPVOID)base;
     info->AllocationBase = (LPVOID)alloc_base;
     info->RegionSize     = size - (base - alloc_base);
-    *res_len = sizeof(*info);
+    if (res_len) *res_len = sizeof(*info);
     return STATUS_SUCCESS;
 }
 
