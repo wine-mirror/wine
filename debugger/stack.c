@@ -189,7 +189,8 @@ static void DEBUG_DoBackTrace(int noisy)
     nframe = 1;
     if (frames) DBG_free( frames );
     frames = (struct bt_info *) DBG_alloc( sizeof(struct bt_info) );
-    fprintf(stderr,"%s%d ",(curr_frame == 0 ? "=>" : "  "), frameno);
+    if (noisy)
+      fprintf(stderr,"%s%d ",(curr_frame == 0 ? "=>" : "  "), frameno);
 
     if (IS_SELECTOR_SYSTEM(ss)) ss = 0;
     if (IS_SELECTOR_SYSTEM(cs)) cs = 0;
@@ -232,6 +233,10 @@ static void DEBUG_DoBackTrace(int noisy)
       sw_addr.seg = ss;
       sw_addr.off = cur_switch;
     }
+    if (DEBUG_IsBadReadPtr(&sw_addr,1)) {
+      sw_addr.seg = (DWORD)-1;
+      sw_addr.off = (DWORD)-1;
+    }
 
     for (ok = TRUE; ok;) {
       if ((frames[frameno].ss == sw_addr.seg) &&
@@ -268,6 +273,10 @@ static void DEBUG_DoBackTrace(int noisy)
           sw_addr.off = OFFSETOF(cur_switch);
 
           is16 = TRUE;
+        }
+        if (DEBUG_IsBadReadPtr(&sw_addr,1)) {
+          sw_addr.seg = (DWORD)-1;
+          sw_addr.off = (DWORD)-1;
         }
       } else {
         /* ordinary stack frame */
