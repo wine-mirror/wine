@@ -1081,6 +1081,10 @@ LONG WINAPI AVIStreamLength(PAVISTREAM iface);
 LONG WINAPI AVIStreamSampleToTime(PAVISTREAM pstream, LONG lSample);
 LONG WINAPI AVIStreamTimeToSample(PAVISTREAM pstream, LONG lTime);
 
+#define AVIFileClose(pavi) \
+    AVIFileRelease(pavi)
+#define AVIStreamClose(pavi) \
+    AVIStreamRelease(pavi);
 #define AVIStreamEnd(pavi) \
     (AVIStreamStart(pavi) + AVIStreamLength(pavi))
 #define AVIStreamEndTime(pavi) \
