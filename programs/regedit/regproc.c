@@ -1133,8 +1133,10 @@ void REGPROC_resize_char_buffer(CHAR **buffer, DWORD *len, DWORD required_len)
     if (required_len > *len)
     {
         *len = required_len;
-        *buffer = HeapReAlloc(GetProcessHeap(), 0, *buffer,
-                              *len * sizeof(**buffer));
+        if (!*buffer)
+            *buffer = HeapAlloc(GetProcessHeap(), 0, *len * sizeof(**buffer));
+	else
+            *buffer = HeapReAlloc(GetProcessHeap(), 0, *buffer, *len * sizeof(**buffer));
         CHECK_ENOUGH_MEMORY(*buffer);
     }
 }
@@ -1214,7 +1216,8 @@ void export_hkey(FILE *file, HKEY key,
     if (max_val_size > *val_size)
     {
         *val_size = max_val_size;
-        *val_buf = HeapReAlloc(GetProcessHeap(), 0, *val_buf, *val_size);
+	if (!*val_buf) *val_buf = HeapAlloc(GetProcessHeap(), 0, *val_size);
+        else *val_buf = HeapReAlloc(GetProcessHeap(), 0, *val_buf, *val_size);
         CHECK_ENOUGH_MEMORY(val_buf);
     }
 
