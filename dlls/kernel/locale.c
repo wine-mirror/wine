@@ -1305,6 +1305,17 @@ BOOL WINAPI GetCPInfo( UINT codepage, LPCPINFO cpinfo )
 
     if (!table)
     {
+        switch(codepage)
+        {
+            case CP_UTF7:
+            case CP_UTF8:
+                cpinfo->DefaultChar[0] = 0x3f;
+                cpinfo->DefaultChar[1] = 0;
+                cpinfo->LeadByte[0] = cpinfo->LeadByte[1] = 0;
+                cpinfo->MaxCharSize = (codepage == CP_UTF7) ? 5 : 4;
+                return TRUE;
+        }
+
         SetLastError( ERROR_INVALID_PARAMETER );
         return FALSE;
     }
@@ -1342,14 +1353,14 @@ BOOL WINAPI GetCPInfo( UINT codepage, LPCPINFO cpinfo )
  */
 BOOL WINAPI GetCPInfoExA( UINT codepage, DWORD dwFlags, LPCPINFOEXA cpinfo )
 {
-    const union cptable *table = get_codepage_table( codepage );
+    CPINFOEXW cpinfoW;
 
-    if (!GetCPInfo( codepage, (LPCPINFO)cpinfo ))
+    if (!GetCPInfoExW( codepage, dwFlags, &cpinfoW ))
       return FALSE;
 
-    cpinfo->CodePage = table->info.codepage;
-    cpinfo->UnicodeDefaultChar = table->info.def_unicode_char;
-    strcpy(cpinfo->CodePageName, table->info.name);
+    /* the layout is the same except for CodePageName */
+    memcpy(cpinfo, &cpinfoW, sizeof(CPINFOEXA));
+    WideCharToMultiByte(CP_ACP, 0, cpinfoW.CodePageName, -1, cpinfo->CodePageName, sizeof(cpinfo->CodePageName), NULL, NULL);
     return TRUE;
 }
 
@@ -1360,15 +1371,42 @@ BOOL WINAPI GetCPInfoExA( UINT codepage, DWORD dwFlags, LPCPINFOEXA cpinfo )
  */
 BOOL WINAPI GetCPInfoExW( UINT codepage, DWORD dwFlags, LPCPINFOEXW cpinfo )
 {
-    const union cptable *table = get_codepage_table( codepage );
-
     if (!GetCPInfo( codepage, (LPCPINFO)cpinfo ))
       return FALSE;
 
-    cpinfo->CodePage = table->info.codepage;
-    cpinfo->UnicodeDefaultChar = table->info.def_unicode_char;
-    MultiByteToWideChar( CP_ACP, 0, table->info.name, -1, cpinfo->CodePageName,
-                         sizeof(cpinfo->CodePageName)/sizeof(WCHAR));
+    switch(codepage)
+    {
+        case CP_UTF7:
+        {
+            static const WCHAR utf7[] = {'U','n','i','c','o','d','e',' ','(','U','T','F','-','7',')',0};
+
+            cpinfo->CodePage = CP_UTF7;
+            cpinfo->UnicodeDefaultChar = 0x3f;
+            strcpyW(cpinfo->CodePageName, utf7);
+            break;
+        }
+
+        case CP_UTF8:
+        {
+            static const WCHAR utf8[] = {'U','n','i','c','o','d','e',' ','(','U','T','F','-','8',')',0};
+
+            cpinfo->CodePage = CP_UTF8;
+            cpinfo->UnicodeDefaultChar = 0x3f;
+            strcpyW(cpinfo->CodePageName, utf8);
+            break;
+        }
+
+        default:
+        {
+            const union cptable *table = get_codepage_table( codepage );
+
+            cpinfo->CodePage = table->info.codepage;
+            cpinfo->UnicodeDefaultChar = table->info.def_unicode_char;
+            MultiByteToWideChar( CP_ACP, 0, table->info.name, -1, cpinfo->CodePageName,
+                                 sizeof(cpinfo->CodePageName)/sizeof(WCHAR));
+            break;
+        }
+    }
     return TRUE;
 }
 
