@@ -2821,43 +2821,7 @@ BOOL WINAPI MoveFileExA( LPCSTR fn1, LPCSTR fn2, DWORD flag )
  */
 BOOL WINAPI MoveFileW( LPCWSTR fn1, LPCWSTR fn2 )
 {
-    DOS_FULL_NAME full_name1, full_name2;
-    struct stat fstat;
-
-    if (!fn1 || !fn2)
-    {
-        SetLastError(ERROR_INVALID_PARAMETER);
-        return FALSE;
-    }
-
-    TRACE("(%s,%s)\n", debugstr_w(fn1), debugstr_w(fn2) );
-
-    if (!DOSFS_GetFullName( fn1, TRUE, &full_name1 )) return FALSE;
-    if (DOSFS_GetFullName( fn2, TRUE, &full_name2 ))  {
-      /* The new name must not already exist */
-      SetLastError(ERROR_ALREADY_EXISTS);
-      return FALSE;
-    }
-    if (!DOSFS_GetFullName( fn2, FALSE, &full_name2 )) return FALSE;
-
-    if (full_name1.drive == full_name2.drive) /* move */
-        return MoveFileExW( fn1, fn2, MOVEFILE_COPY_ALLOWED );
-
-    /* copy */
-    if (stat( full_name1.long_name, &fstat ))
-    {
-        WARN("Invalid source file %s\n",
-             full_name1.long_name);
-        FILE_SetDosError();
-        return FALSE;
-    }
-    if (S_ISDIR(fstat.st_mode)) {
-        /* No Move for directories across file systems */
-        /* FIXME: Use right error code */
-        SetLastError( ERROR_GEN_FAILURE );
-        return FALSE;
-    }
-    return CopyFileW(fn1, fn2, TRUE); /*fail, if exist */
+    return MoveFileExW( fn1, fn2, MOVEFILE_COPY_ALLOWED );
 }
 
 
@@ -2866,23 +2830,7 @@ BOOL WINAPI MoveFileW( LPCWSTR fn1, LPCWSTR fn2 )
  */
 BOOL WINAPI MoveFileA( LPCSTR fn1, LPCSTR fn2 )
 {
-    UNICODE_STRING fn1W, fn2W;
-    BOOL ret;
-
-    if (!fn1 || !fn2)
-    {
-        SetLastError(ERROR_INVALID_PARAMETER);
-        return FALSE;
-    }
-
-    RtlCreateUnicodeStringFromAsciiz(&fn1W, fn1);
-    RtlCreateUnicodeStringFromAsciiz(&fn2W, fn2);
-
-    ret = MoveFileW( fn1W.Buffer, fn2W.Buffer );
-
-    RtlFreeUnicodeString(&fn1W);
-    RtlFreeUnicodeString(&fn2W);
-    return ret;
+    return MoveFileExA( fn1, fn2, MOVEFILE_COPY_ALLOWED );
 }
 
 
