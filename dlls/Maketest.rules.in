@@ -57,7 +57,7 @@ checklink:: $(MODULE).so $(SUBDIRS:%=%/__checklink__)
 
 check test:: $(TESTRESULTS) $(SUBDIRS:%=%/__test__)
 
-$(TESTRESULTS): $(MODULE)$(DLLEXT)
+$(TESTRESULTS): $(MODULE)$(DLLEXT) $(TOPOBJDIR)/dlls/$(TESTDLL)$(DLLEXT)
 
 $(TESTMAIN):
 	cd $(TOPOBJDIR)/programs/winetest && $(MAKE) wtmain.o
