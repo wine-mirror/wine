@@ -455,35 +455,39 @@ void test_buffer(LPDIRECTSOUND dso, LPDIRECTSOUNDBUFFER dsbo,
             rc=IDirectSound3DListener_GetAllParameters(listener,&listener_param);
             ok(rc==DS_OK,"IDirectSound3dListener_GetAllParameters failed 0x%lx\n",rc);
             if (move_listener)
+            {
                 listener_param.vPosition.x = -5.0;
-            else
-                listener_param.vPosition.x = 0.0;
-            listener_param.vPosition.y = 0.0;
-            listener_param.vPosition.z = 0.0;
-            rc=IDirectSound3DListener_SetPosition(listener,listener_param.vPosition.x,listener_param.vPosition.y,listener_param.vPosition.z,DS3D_IMMEDIATE);
+                listener_param.vVelocity.x = 10.0/duration;
+            }
+            rc=IDirectSound3DListener_SetAllParameters(listener,&listener_param,DS3D_IMMEDIATE);
             ok(rc==DS_OK,"IDirectSound3dListener_SetPosition failed 0x%lx\n",rc);
         }
         if (buffer3d) {
             if (move_sound)
-                buffer_param.vPosition.x = 5.0;
-            else
-                buffer_param.vPosition.x = 0.0;
-            buffer_param.vPosition.y = 0.0;
-            buffer_param.vPosition.z = 0.0;
-            rc=IDirectSound3DBuffer_SetPosition(buffer,buffer_param.vPosition.x,buffer_param.vPosition.y,buffer_param.vPosition.z,DS3D_IMMEDIATE);
+            {
+                buffer_param.vPosition.x = 100.0;
+                buffer_param.vVelocity.x = -200.0/duration;
+            }
+            buffer_param.flMinDistance = 10;
+            rc=IDirectSound3DBuffer_SetAllParameters(buffer,&buffer_param,DS3D_IMMEDIATE);
             ok(rc==DS_OK,"IDirectSound3dBuffer_SetPosition failed 0x%lx\n",rc);
         }
 
         start_time=GetTickCount();
         while (buffer_service(&state)) {
             WaitForSingleObject(GetCurrentProcess(),TIME_SLICE);
+            now=GetTickCount();
             if (listener && move_listener) {
-                listener_param.vPosition.x += 0.5;
+                listener_param.vPosition.x = -5.0+10.0*(now-start_time)/1000/duration;
+                if (winetest_debug>2)
+                    trace("listener position=%g\n",listener_param.vPosition.x);
                 rc=IDirectSound3DListener_SetPosition(listener,listener_param.vPosition.x,listener_param.vPosition.y,listener_param.vPosition.z,DS3D_IMMEDIATE);
                 ok(rc==DS_OK,"IDirectSound3dListener_SetPosition failed 0x%lx\n",rc);
             }
             if (buffer3d && move_sound) {
-                buffer_param.vPosition.x -= 0.5;
+                buffer_param.vPosition.x = 100-200.0*(now-start_time)/1000/duration;
+                if (winetest_debug>2)
+                    trace("sound position=%g\n",buffer_param.vPosition.x);
                 rc=IDirectSound3DBuffer_SetPosition(buffer,buffer_param.vPosition.x,buffer_param.vPosition.y,buffer_param.vPosition.z,DS3D_IMMEDIATE);
                 ok(rc==DS_OK,"IDirectSound3dBuffer_SetPosition failed 0x%lx\n",rc);
             }
