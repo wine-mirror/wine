@@ -84,6 +84,21 @@ DECL_WINELIB_TYPE_AW(WINSTAENUMPROC)
 
 typedef HANDLE HDWP;
 
+#define UOI_FLAGS       1
+#define UOI_NAME        2
+#define UOI_TYPE        3
+#define UOI_USER_SID    4
+
+#define WSF_VISIBLE     1
+#define DF_ALLOWOTHERACCOUNTHOOK  1
+
+typedef struct tagUSEROBJECTFLAGS {
+    BOOL fInherit;
+    BOOL fReserved;
+    DWORD dwFlags;
+} USEROBJECTFLAGS, *PUSEROBJECTFLAGS;
+
+
 /* flags for FILTERKEYS dwFlags field */
 #define FKF_AVAILABLE       0x00000002
 #define FKF_CLICKON         0x00000040
