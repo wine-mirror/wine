@@ -759,18 +759,6 @@ static BOOL NE_LoadDLLs( NE_MODULE *pModule )
 
             if ((hDLL = MODULE_LoadModule16( buffer, TRUE )) < 32)
             {
-		/* append ".dll" if no other extension */
-		if (!strchr(buffer,'.'))
- 		    strcpy( buffer + *pstr, ".dll" );
-
-		/* Retry to get the handle to see whether it was loaded */ 
-		if ((*pModRef = GetModuleHandle16( buffer )))
-			goto was_loaded;
-
-                hDLL = MODULE_LoadModule16( buffer, TRUE );
-            }
-            if (hDLL < 32)
-            {
                 /* FIXME: cleanup what was done */
 
                 MSG( "Could not load '%s' required by '%.*s', error=%d\n",
@@ -784,7 +772,7 @@ static BOOL NE_LoadDLLs( NE_MODULE *pModule )
         else  /* Increment the reference count of the DLL */
         {
             NE_MODULE *pOldDLL;
-was_loaded:
+
 	    pOldDLL = NE_GetPtr( *pModRef );
             if (pOldDLL) pOldDLL->count++;
         }
@@ -859,7 +847,14 @@ HINSTANCE16 NE_LoadModule( LPCSTR name, BOOL implicit )
 
     if ((hFile = OpenFile16( name, &ofs, OF_READ )) == HFILE_ERROR16)
     {
-        return 2;  /* File not found */
+        char	buffer[260];
+
+	/* 4 == strlen(".dll") */
+	strncpy(buffer, name, sizeof(buffer) - 1 - 4);
+	strcat(buffer, ".dll");
+	if ((hFile = OpenFile16( buffer, &ofs, OF_READ )) == HFILE_ERROR16) {
+	    return 2;  /* File not found */
+	}
     }
 
     hInstance = NE_LoadFileModule( hFile, &ofs, implicit );
