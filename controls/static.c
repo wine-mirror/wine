@@ -259,7 +259,7 @@ static LRESULT StaticWndProc_common( HWND hwnd, UINT uMsg, WPARAM wParam,
         break;
 
     case WM_ENABLE:
-        InvalidateRect(hwnd, NULL, FALSE);
+        InvalidateRect(hwnd, NULL, TRUE);
         break;
 
     case WM_SYSCOLORCHANGE:
@@ -328,26 +328,15 @@ static LRESULT StaticWndProc_common( HWND hwnd, UINT uMsg, WPARAM wParam,
 		    lResult = DefWindowProcA( hwnd, WM_SETTEXT, wParam, lParam );
 	    }
 	    if(uMsg == WM_SETTEXT)
-		InvalidateRect(hwnd, NULL, FALSE);
+		InvalidateRect(hwnd, NULL, TRUE);
 	}
         return 1; /* success. FIXME: check text length */
 
     case WM_SETFONT:
         if ((style == SS_ICON) || (style == SS_BITMAP)) return 0;
         SetWindowLongA( hwnd, HFONT_GWL_OFFSET, wParam );
-        if (!LOWORD(lParam)) break;  /* don't refresh */
-	switch (style) {
-	case SS_LEFT:
-	case SS_CENTER:
-	case SS_RIGHT:
-	case SS_SIMPLE:
-	case SS_LEFTNOWORDWRAP:
-            STATIC_TryPaintFcn( hwnd, full_style );
-	    break;
-	default:
-            InvalidateRect( hwnd, NULL, FALSE );
-            break;
-	}
+        if (LOWORD(lParam))
+            InvalidateRect( hwnd, NULL, TRUE );
         break;
 
     case WM_GETFONT:
@@ -379,13 +368,13 @@ static LRESULT StaticWndProc_common( HWND hwnd, UINT uMsg, WPARAM wParam,
 	    FIXME("STM_SETIMAGE: Unhandled type %x\n", wParam);
 	    break;
 	}
-        InvalidateRect( hwnd, NULL, FALSE );
+        InvalidateRect( hwnd, NULL, TRUE );
 	break;
 
     case STM_SETICON16:
     case STM_SETICON:
         lResult = STATIC_SetIcon( hwnd, (HICON)wParam, style );
-        InvalidateRect( hwnd, NULL, FALSE );
+        InvalidateRect( hwnd, NULL, TRUE );
         break;
 
     default:
