@@ -724,3 +724,102 @@ BOOL WINAPI DisconnectNamedPipe(HANDLE hPipe)
     return ret;
 }
 
+/***********************************************************************
+ *           TransactNamedPipe   (KERNEL32.@)
+ */
+BOOL WINAPI TransactNamedPipe(
+    HANDLE hPipe, LPVOID lpInput, DWORD dwInputSize, LPVOID lpOutput,
+    DWORD dwOutputSize, LPDWORD lpBytesRead, LPOVERLAPPED lpOverlapped)
+{
+    FIXME("%d %p %ld %p %ld %p %p\n",
+          hPipe, lpInput, dwInputSize, lpOutput,
+          dwOutputSize, lpBytesRead, lpOverlapped);
+    if(lpBytesRead)
+        *lpBytesRead=0;
+    return FALSE;
+}
+
+/***********************************************************************
+ *           GetNamedPipeInfo   (KERNEL32.@)
+ */
+BOOL WINAPI GetNamedPipeInfo(
+    HANDLE hNamedPipe, LPDWORD lpFlags, LPDWORD lpOutputBufferSize,
+    LPDWORD lpInputBufferSize, LPDWORD lpMaxInstances)
+{
+    FIXME("%d %p %p %p %p\n", hNamedPipe, lpFlags, 
+          lpOutputBufferSize, lpInputBufferSize, lpMaxInstances);
+    return FALSE;
+}
+
+/***********************************************************************
+ *           GetNamedPipeHandleStateA  (KERNEL32.@)
+ */
+BOOL WINAPI GetNamedPipeHandleStateA(
+    HANDLE hNamedPipe, LPDWORD lpState, LPDWORD lpCurInstances,
+    LPDWORD lpMaxCollectionCount, LPDWORD lpCollectDataTimeout,
+    LPSTR lpUsername, DWORD nUsernameMaxSize)
+{
+    FIXME("%d %p %p %p %p %p %ld\n",
+          hNamedPipe, lpState, lpCurInstances,
+          lpMaxCollectionCount, lpCollectDataTimeout,
+          lpUsername, nUsernameMaxSize);
+         
+    return FALSE;
+}
+
+/***********************************************************************
+ *           GetNamedPipeHandleStateW  (KERNEL32.@)
+ */
+BOOL WINAPI GetNamedPipeHandleStateW(
+    HANDLE hNamedPipe, LPDWORD lpState, LPDWORD lpCurInstances,
+    LPDWORD lpMaxCollectionCount, LPDWORD lpCollectDataTimeout,
+    LPWSTR lpUsername, DWORD nUsernameMaxSize)
+{
+    FIXME("%d %p %p %p %p %p %ld\n",
+          hNamedPipe, lpState, lpCurInstances,
+          lpMaxCollectionCount, lpCollectDataTimeout,
+          lpUsername, nUsernameMaxSize);
+         
+    return FALSE;
+}
+
+/***********************************************************************
+ *           SetNamedPipeHandleState  (KERNEL32.@)
+ */
+BOOL WINAPI SetNamedPipeHandleState(
+    HANDLE hNamedPipe, LPDWORD lpMode, LPDWORD lpMaxCollectionCount,
+    LPDWORD lpCollectDataTimeout)
+{
+    FIXME("%d %p %p %p\n",
+          hNamedPipe, lpMode, lpMaxCollectionCount, lpCollectDataTimeout);
+    return FALSE;
+}
+
+/***********************************************************************
+ *           CallNamedPipeA  (KERNEL32.@)
+ */
+BOOL WINAPI CallNamedPipeA(
+    LPCSTR lpNamedPipeName, LPVOID lpInput, DWORD lpInputSize,
+    LPVOID lpOutput, DWORD lpOutputSize,
+    LPDWORD lpBytesRead, DWORD nTimeout)
+{
+    FIXME("%s %p %ld %p %ld %p %ld\n",
+           debugstr_a(lpNamedPipeName), lpInput, lpInputSize,
+           lpOutput, lpOutputSize, lpBytesRead, nTimeout);
+    return FALSE;
+}
+
+/***********************************************************************
+ *           CallNamedPipeW  (KERNEL32.@)
+ */
+BOOL WINAPI CallNamedPipeW(
+    LPCWSTR lpNamedPipeName, LPVOID lpInput, DWORD lpInputSize,
+    LPVOID lpOutput, DWORD lpOutputSize,
+    LPDWORD lpBytesRead, DWORD nTimeout)
+{
+    FIXME("%s %p %ld %p %ld %p %ld\n",
+           debugstr_w(lpNamedPipeName), lpInput, lpInputSize,
+           lpOutput, lpOutputSize, lpBytesRead, nTimeout);
+    return FALSE;
+}
+

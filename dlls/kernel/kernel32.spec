@@ -158,8 +158,8 @@ debug_channels (comm debugstr dll int resource stress thunk toolhelp win32)
 @ stdcall BuildCommDCBAndTimeoutsA(str ptr ptr) BuildCommDCBAndTimeoutsA
 @ stdcall BuildCommDCBAndTimeoutsW(wstr ptr ptr) BuildCommDCBAndTimeoutsW
 @ stdcall BuildCommDCBW(wstr ptr) BuildCommDCBW
-@ stub CallNamedPipeA
-@ stub CallNamedPipeW
+@ stdcall CallNamedPipeA(str ptr long ptr long ptr long) CallNamedPipeA
+@ stdcall CallNamedPipeW(wstr ptr long ptr long ptr long) CallNamedPipeW
 @ stub Callback12
 @ stub Callback16
 @ stub Callback20
@@ -393,9 +393,9 @@ debug_channels (comm debugstr dll int resource stress thunk toolhelp win32)
 @ stdcall GetModuleFileNameW(long ptr long) GetModuleFileNameW
 @ stdcall GetModuleHandleA(str) GetModuleHandleA
 @ stdcall GetModuleHandleW(wstr) GetModuleHandleW
-@ stub GetNamedPipeHandleStateA
-@ stub GetNamedPipeHandleStateW
-@ stub GetNamedPipeInfo
+@ stdcall GetNamedPipeHandleStateA(long ptr ptr ptr ptr str long) GetNamedPipeHandleStateA
+@ stdcall GetNamedPipeHandleStateW(long ptr ptr ptr ptr wstr long) GetNamedPipeHandleStateW
+@ stdcall GetNamedPipeInfo(long ptr ptr ptr ptr) GetNamedPipeInfo
 @ stdcall GetNumberFormatA(long long str ptr ptr long) GetNumberFormatA
 @ stdcall GetNumberFormatW(long long wstr ptr ptr long) GetNumberFormatW
 @ stdcall GetNumberOfConsoleInputEvents(long ptr) GetNumberOfConsoleInputEvents
@@ -702,7 +702,7 @@ debug_channels (comm debugstr dll int resource stress thunk toolhelp win32)
 @ stdcall SetLocaleInfoA(long long str) SetLocaleInfoA
 @ stub SetLocaleInfoW
 @ stub SetMailslotInfo
-@ stub SetNamedPipeHandleState
+@ stdcall SetNamedPipeHandleState(long ptr ptr ptr) SetNamedPipeHandleState
 @ stdcall SetPriorityClass(long long) SetPriorityClass
 @ stdcall SetProcessShutdownParameters(long long) SetProcessShutdownParameters
 @ stdcall SetProcessWorkingSetSize(long long long) SetProcessWorkingSetSize
@@ -739,7 +739,7 @@ debug_channels (comm debugstr dll int resource stress thunk toolhelp win32)
 @ stdcall TlsGetValue(long) TlsGetValue
 @ stdcall TlsSetValue(long ptr) TlsSetValue
 @ stub Toolhelp32ReadProcessMemory
-@ stub TransactNamedPipe
+@ stdcall TransactNamedPipe(long ptr long ptr long ptr ptr) TransactNamedPipe
 @ stdcall TransmitCommChar(long long) TransmitCommChar
 @ stdcall UTRegister(long str str str ptr ptr ptr) UTRegister
 @ stdcall UTUnRegister(long) UTUnRegister
