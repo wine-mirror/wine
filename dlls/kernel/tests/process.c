@@ -21,9 +21,10 @@
 #include <assert.h>
 #include <stdio.h>
 #include <stdlib.h>
+
+#include "wine/test.h"
 #include "winbase.h"
 #include "winuser.h"
-#include "wine/test.h"
 
 static char     base[MAX_PATH];
 static char     selfname[MAX_PATH];

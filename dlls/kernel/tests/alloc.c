@@ -18,9 +18,9 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
+#include "wine/test.h"
 #include "winbase.h"
 #include "winerror.h"
-#include "wine/test.h"
 
 /* Currently Wine doesn't have macros for LocalDiscard and GlobalDiscard
    so I am disableing the checks for them.  These macros are equivalent

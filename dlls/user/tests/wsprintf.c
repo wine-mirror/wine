@@ -21,9 +21,10 @@
 #include <stdlib.h>
 #include <string.h>
 #include <stdio.h>
+
+#include "wine/test.h"
 #include "winbase.h"
 #include "winuser.h"
-#include "wine/test.h"
 
 static BOOL wsprintfATest (void)
 {

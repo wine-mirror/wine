@@ -23,10 +23,9 @@
 
 #include "wine/test.h"
 #include "winbase.h"
+#include "winerror.h"
 #include "winreg.h"
 #include "winuser.h"
-#include "wine/obj_base.h"
-#include "wine/obj_storage.h"
 #include "shlwapi.h"
 
 static char * sTestpath1 = "%SYSTEMROOT%\\subdir1";

@@ -623,45 +623,53 @@ static void do_test( test_setup *test )
 /************* Array containing the tests to run **********/
 
 #define STD_STREAM_SOCKET \
-            sock_type:   SOCK_STREAM, \
-            sock_prot:   0, \
-            inet_addr:   "127.0.0.1", \
-            inet_port:   9374
+            SOCK_STREAM, \
+            0, \
+            "127.0.0.1", \
+            9374
 
 static test_setup tests [NUM_TESTS] =
 {
     /* Test 0: synchronous client and server */
     {
-        general: {
+        {
             STD_STREAM_SOCKET,
-            chunk_size: 2048,
-            n_chunks:  16,
-            n_clients: 2
+            2048,
+            16,
+            2
         },
-        srv: simple_server,
-        srv_params: {
-            buflen:      64
+        simple_server,
+        {
+            NULL,
+            0,
+            64
         },
-        clt: simple_client,
-        clt_params: {
-            buflen:      128
+        simple_client,
+        {
+            NULL,
+            0,
+            128
         }
     },
     /* Test 1: event-driven client, synchronous server */
     {
-        general: {
+        {
             STD_STREAM_SOCKET,
-            chunk_size: 2048,
-            n_chunks:  16,
-            n_clients: 2
+            2048,
+            16,
+            2
         },
-        srv: simple_server,
-        srv_params: {
-            buflen:      64
+        simple_server,
+        {
+            NULL,
+            0,
+            64
         },
-        clt: event_client,
-        clt_params: {
-            buflen:      128
+        event_client,
+        {
+            NULL,
+            0,
+            128
         }
     }
 };

@@ -19,13 +19,12 @@
  *
  */
 
-#include "winbase.h"
-#include "winerror.h"
-#include "wine/test.h"
-
-
 #include <stdlib.h>
 #include <time.h>
+
+#include "wine/test.h"
+#include "winbase.h"
+#include "winerror.h"
 
 
 LPCSTR filename = "testfile.xxx";

@@ -18,6 +18,9 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
+/* Define _WIN32_WINNT to get SetThreadIdealProcessor on Windows */
+#define _WIN32_WINNT 0x0500
+
 #include "wine/test.h"
 #include <winbase.h>
 #include <winnt.h>
@@ -45,7 +48,7 @@
     #include "wine/exception.h"
   #endif
 #endif
-typedef HANDLE WINAPI (*OPENTHREADPTR)(DWORD,BOOL,DWORD);
+typedef HANDLE (WINAPI *OPENTHREADPTR)(DWORD,BOOL,DWORD);
 OPENTHREADPTR OpenThreadPtr;
 HANDLE WINAPI OpenThreadDefault(DWORD dwDesiredAccess,
                          BOOL bInheritHandle,

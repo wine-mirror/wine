@@ -57,22 +57,21 @@
 
 #include <stdio.h>
 #include <stdlib.h>
-#include <winbase.h>
-#include <winuser.h>
-#include <wingdi.h>
-#include <winnls.h>
-#include <winerror.h>
-#include <winnt.h>
-
-#include <oleauto.h>
-
 #include <math.h>
 #include <float.h>
 #include <time.h>
 
-#include <windef.h>
-
 #include "wine/test.h"
+#include "winbase.h"
+#include "winuser.h"
+#include "wingdi.h"
+#include "winnls.h"
+#include "winerror.h"
+#include "winnt.h"
+
+#include "wtypes.h"
+#include "oleauto.h"
+
 
 #define MAX_BUFFER  1024
 

@@ -20,11 +20,12 @@
 #include <assert.h>
 #include <stdlib.h>
 #include <stdio.h>
+
+#include "wine/test.h"
 #include "winbase.h"
 #include "winreg.h"
 #include "wingdi.h"
 #include "winuser.h"
-#include "wine/test.h"
 
 #define NUMCLASSWORDS 4
 
