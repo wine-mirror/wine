@@ -48,7 +48,7 @@ duplicateData(SAFEARRAY *psa, SAFEARRAY **ppsaOut);
    A size of zero is defined for the unsupported types.  */
 
 #define VARTYPE_NOT_SUPPORTED 0
-static ULONG VARTYPE_SIZE[43] =
+const static ULONG VARTYPE_SIZE[] =
 {
   /* this is taken from wtypes.h.  Only [S]es are supported by the SafeArray */
 VARTYPE_NOT_SUPPORTED,	/* VT_EMPTY    [V]   [P]    nothing			*/
@@ -66,6 +66,7 @@ VARTYPE_NOT_SUPPORTED,	/* VT_NULL     [V]   [P]    SQL style Nul	*/
 24,                     /* VT_VARIANT  [V][T][P][S] VARIANT *	*/
 4,	                    /* VT_UNKNOWN  [V][T]   [S] IUnknown * */
 16,	                    /* VT_DECIMAL  [V][T]   [S] 16 byte fixed point	*/
+VARTYPE_NOT_SUPPORTED,                         /* no VARTYPE here..... */
 VARTYPE_NOT_SUPPORTED,	/* VT_I1          [T]       signed char	*/
 1,	                    /* VT_UI1      [V][T][P][S] unsigned char			*/
 VARTYPE_NOT_SUPPORTED,	/* VT_UI2         [T][P]    unsigned short	*/
@@ -95,6 +96,9 @@ VARTYPE_NOT_SUPPORTED,	/* VT_VECTOR         [P]    simple counted array		*/
 VARTYPE_NOT_SUPPORTED,	/* VT_ARRAY    [V]          SAFEARRAY*			*/
 VARTYPE_NOT_SUPPORTED 	/* VT_BYREF    [V]          void* for local use	*/
 };
+
+const static int LAST_VARTYPE = sizeof(VARTYPE_SIZE)/sizeof(ULONG);
+
 
 /*************************************************************************
  * Allocate the appropriate amount of memory for the SafeArray descriptor
@@ -157,7 +161,8 @@ SAFEARRAY* WINAPI SafeArrayCreate(
   USHORT    cDim;
 
   /* Validate supported VARTYPE */
-  if ( VARTYPE_SIZE[vt] == VARTYPE_NOT_SUPPORTED ) 
+  if ( (vt >= LAST_VARTYPE) ||
+       ( VARTYPE_SIZE[vt] == VARTYPE_NOT_SUPPORTED ) )
     return NULL;
 
   /* Allocate memory for the array descriptor */
@@ -180,6 +185,7 @@ SAFEARRAY* WINAPI SafeArrayCreate(
   /* allocate memory for the data... */ 
   if( FAILED( hRes = SafeArrayAllocData(psa))) {
     SafeArrayDestroyDescriptor(psa); 
+    ERR(ole,"() : Failed to allocate the Safe Array data\n");
     return NULL;
   }
 
@@ -356,8 +362,8 @@ HRESULT WINAPI SafeArrayGetUBound(
   if(nDim > psa->cDims) 
     return DISP_E_BADINDEX;
 
-  *plUbound = psa->rgsabound[nDim].lLbound + 
-              psa->rgsabound[nDim].cElements - 1;
+  *plUbound = psa->rgsabound[nDim-1].lLbound + 
+              psa->rgsabound[nDim-1].cElements - 1;
 
   return S_OK;
 }
@@ -376,7 +382,7 @@ HRESULT WINAPI SafeArrayGetLBound(
   if(nDim > psa->cDims) 
     return DISP_E_BADINDEX;
 
-  *plLbound = psa->rgsabound[nDim].lLbound;
+  *plLbound = psa->rgsabound[nDim-1].lLbound;
   return S_OK;
 }
 
@@ -661,7 +667,8 @@ SAFEARRAY* WINAPI SafeArrayCreateVector(
   SAFEARRAY *psa;
 
   /* Validate supported VARTYPE */
-  if ( VARTYPE_SIZE[vt] == VARTYPE_NOT_SUPPORTED ) 
+  if ( (vt >= LAST_VARTYPE) ||
+       ( VARTYPE_SIZE[vt] == VARTYPE_NOT_SUPPORTED ) )
     return NULL;
 
   /* Allocate memory for the array descriptor and data contiguously  */
@@ -758,7 +765,7 @@ static BOOL validArg(
   /* size of the descriptor + data when created with CreateVector */
   fullSize = sizeof(*psa) + (psa->cbElements * psa->rgsabound[0].cElements);
 
-  return((psaSize == descSize) | (psaSize == fullSize));
+  return((psaSize >= descSize) || (psaSize >= fullSize));
 }
 
 /************************************************************************ 
