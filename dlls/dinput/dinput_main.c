@@ -1251,6 +1251,7 @@ static void WINAPI dinput_mouse_event( DWORD dwFlags, DWORD dx, DWORD dy,
 	      (posX == This->win_centerX) && (posX == This->win_centerX)) {
 	    /* Warp has been done... */
 	    This->need_warp = WARP_DONE;
+	    LeaveCriticalSection(&(This->crit));
 	    return;
 	  }
 	      	  
