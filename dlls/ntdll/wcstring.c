@@ -277,13 +277,13 @@ INT __cdecl NTDLL_mbstowcs( LPWSTR dst, LPCSTR src, INT n )
  *                  wcstol  (NTDLL.@)
  * Like strtol, but for wide character strings.
  */
-INT __cdecl NTDLL_wcstol(LPWSTR s,LPWSTR *end,INT base)
+INT __cdecl NTDLL_wcstol(LPCWSTR s,LPWSTR *end,INT base)
 {
     LPSTR sA = HEAP_strdupWtoA(GetProcessHeap(),0,s),endA;
     INT	ret = strtol(sA,&endA,base);
 
     HeapFree(GetProcessHeap(),0,sA);
-    if (end) *end = s+(endA-sA); /* pointer magic checked. */
+    if (end) *end = ((LPWSTR)s)+(endA-sA); /* pointer magic checked. */
     return ret;
 }
 
