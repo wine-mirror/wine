@@ -2042,10 +2042,14 @@ typedef PVOID *LPMENUTEMPLATE;
 #define BN_CLICKED             0
 #define BN_PAINT               1
 #define BN_HILITE              2
+#define BN_PUSHED              BN_HILITE
 #define BN_UNHILITE            3
+#define BN_UNPUSHED            BN_UNHILITE
 #define BN_DISABLE             4
 #define BN_DOUBLECLICKED       5
 #define BN_DBLCLK              BN_DOUBLECLICKED
+#define BN_SETFOCUS            6
+#define BN_KILLFOCUS           7
 
 /* Button states */
 #define BST_UNCHECKED        0x0000
