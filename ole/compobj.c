@@ -1137,6 +1137,11 @@ HRESULT WINAPI CoRegisterClassObject(
   IUnknown_AddRef(newClass->classObject);
 
   firstRegisteredClass = newClass;
+
+  /*
+   * Assign the out parameter (cookie)
+   */
+  *lpdwRegister = newClass->dwCookie;
     
   /*
    * We're successfyl Yippee!
