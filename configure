@@ -15636,8 +15636,6 @@ esac
 
           ac_config_commands="$ac_config_commands dlls/gdi/mfdrv"
 
-          ac_config_commands="$ac_config_commands dlls/gdi/win16drv"
-
           ac_config_commands="$ac_config_commands dlls/kernel/messages"
 
           ac_config_commands="$ac_config_commands dlls/user/dde"
@@ -16402,7 +16400,6 @@ do
   "dlls/dinput/mouse" ) CONFIG_COMMANDS="$CONFIG_COMMANDS dlls/dinput/mouse" ;;
   "dlls/gdi/enhmfdrv" ) CONFIG_COMMANDS="$CONFIG_COMMANDS dlls/gdi/enhmfdrv" ;;
   "dlls/gdi/mfdrv" ) CONFIG_COMMANDS="$CONFIG_COMMANDS dlls/gdi/mfdrv" ;;
-  "dlls/gdi/win16drv" ) CONFIG_COMMANDS="$CONFIG_COMMANDS dlls/gdi/win16drv" ;;
   "dlls/kernel/messages" ) CONFIG_COMMANDS="$CONFIG_COMMANDS dlls/kernel/messages" ;;
   "dlls/user/dde" ) CONFIG_COMMANDS="$CONFIG_COMMANDS dlls/user/dde" ;;
   "dlls/user/resources" ) CONFIG_COMMANDS="$CONFIG_COMMANDS dlls/user/resources" ;;
@@ -17120,8 +17117,6 @@ echo "$as_me: creating dlls/dinput/mouse" >&6;} && mkdir "dlls/dinput/mouse") ;;
 echo "$as_me: creating dlls/gdi/enhmfdrv" >&6;} && mkdir "dlls/gdi/enhmfdrv") ;;
     dlls/gdi/mfdrv ) test -d "dlls/gdi/mfdrv" || ({ echo "$as_me:$LINENO: creating dlls/gdi/mfdrv" >&5
 echo "$as_me: creating dlls/gdi/mfdrv" >&6;} && mkdir "dlls/gdi/mfdrv") ;;
-    dlls/gdi/win16drv ) test -d "dlls/gdi/win16drv" || ({ echo "$as_me:$LINENO: creating dlls/gdi/win16drv" >&5
-echo "$as_me: creating dlls/gdi/win16drv" >&6;} && mkdir "dlls/gdi/win16drv") ;;
     dlls/kernel/messages ) test -d "dlls/kernel/messages" || ({ echo "$as_me:$LINENO: creating dlls/kernel/messages" >&5
 echo "$as_me: creating dlls/kernel/messages" >&6;} && mkdir "dlls/kernel/messages") ;;
     dlls/user/dde ) test -d "dlls/user/dde" || ({ echo "$as_me:$LINENO: creating dlls/user/dde" >&5

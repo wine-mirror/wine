@@ -70,8 +70,7 @@ EXTRASUBDIRS = \
 	$(TOPOBJDIR)/graphics \
 	$(TOPOBJDIR)/objects \
 	enhmfdrv \
-	mfdrv \
-	win16drv
+	mfdrv
 
 @MAKE_DLL_RULES@
 
