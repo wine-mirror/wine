@@ -1462,12 +1462,36 @@ BOOL WINAPI ChangeServiceConfigA( SC_HANDLE hService, DWORD dwServiceType,
   LPCSTR lpLoadOrderGroup, LPDWORD lpdwTagId, LPCSTR lpDependencies,
   LPCSTR lpServiceStartName, LPCSTR lpPassword, LPCSTR lpDisplayName)
 {
-    FIXME("%p %ld %ld %ld %s %s %p %p %s %s %s\n",
+    LPWSTR wBinaryPathName, wLoadOrderGroup, wDependencies;
+    LPWSTR wServiceStartName, wPassword, wDisplayName;
+    BOOL r;
+
+    TRACE("%p %ld %ld %ld %s %s %p %p %s %s %s\n",
           hService, dwServiceType, dwStartType, dwErrorControl, 
           debugstr_a(lpBinaryPathName), debugstr_a(lpLoadOrderGroup),
           lpdwTagId, lpDependencies, debugstr_a(lpServiceStartName),
           debugstr_a(lpPassword), debugstr_a(lpDisplayName) );
-    return TRUE;
+
+    wBinaryPathName = SERV_dup( lpBinaryPathName );
+    wLoadOrderGroup = SERV_dup( lpLoadOrderGroup );
+    wDependencies = SERV_dupmulti( lpDependencies );
+    wServiceStartName = SERV_dup( lpServiceStartName );
+    wPassword = SERV_dup( lpPassword );
+    wDisplayName = SERV_dup( lpDisplayName );
+
+    r = ChangeServiceConfigW( hService, dwServiceType,
+            dwStartType, dwErrorControl, wBinaryPathName,
+            wLoadOrderGroup, lpdwTagId, wDependencies,
+            wServiceStartName, wPassword, wDisplayName);
+
+    SERV_free( wBinaryPathName );
+    SERV_free( wLoadOrderGroup );
+    SERV_free( wDependencies );
+    SERV_free( wServiceStartName );
+    SERV_free( wPassword );
+    SERV_free( wDisplayName );
+
+    return r;
 }
 
 /******************************************************************************
