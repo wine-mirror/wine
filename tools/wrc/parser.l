@@ -456,7 +456,7 @@ L\"			{
 <yylstr>\\x[0-9a-fA-F]{1,3} {  yyerror("Invalid hex escape sequence '%s'", yytext); }
 
 <yylstr>\\[0-9]+	yyerror("Bad escape sequence");
-<yylstr>\\\n{ws}*	;	/* backslash at EOL continues string after leading whitespace on next line */
+<yylstr>\\\n{ws}*	line_number++; char_number = 1; /* backslash at EOL continues string after leading whitespace on next line */
 <yylstr>\\a		addwchar('\a');
 <yylstr>\\b		addwchar('\b');
 <yylstr>\\f		addwchar('\f');
@@ -464,8 +464,8 @@ L\"			{
 <yylstr>\\r		addwchar('\r');
 <yylstr>\\t		addwchar('\t');
 <yylstr>\\v		addwchar('\v');
-<yylstr>\\(\n|.)	addwchar(yytext[1]);
-<yylstr>\\\r\n		addwchar(yytext[2]);
+<yylstr>\\.		addwchar(yytext[1]);
+<yylstr>\\\r\n		addwchar(yytext[2]); line_number++; char_number = 1;
 <yylstr>\"\"		addwchar('\"');		/* "bla""bla"  -> "bla\"bla" */
 <yylstr>\\\"\"		addwchar('\"');		/* "bla\""bla" -> "bla\"bla" */
 <yylstr>\"{ws}+\"	;			/* "bla" "bla" -> "blabla" */
@@ -501,7 +501,7 @@ L\"			{
 <yystr>\\x[0-9a-fA-F]	{  yyerror("Invalid hex escape sequence '%s'", yytext); }
 
 <yystr>\\[0-9]+		yyerror("Bad escape sequence");
-<yystr>\\\n{ws}*	;	/* backslash at EOL continues string after leading whitespace on next line */
+<yystr>\\\n{ws}*	line_number++; char_number = 1; /* backslash at EOL continues string after leading whitespace on next line */
 <yystr>\\a		addcchar('\a');
 <yystr>\\b		addcchar('\b');
 <yystr>\\f		addcchar('\f');
@@ -509,8 +509,8 @@ L\"			{
 <yystr>\\r		addcchar('\r');
 <yystr>\\t		addcchar('\t');
 <yystr>\\v		addcchar('\v');
-<yystr>\\(\n|.)		addcchar(yytext[1]);
-<yystr>\\\r\n		addcchar(yytext[2]);
+<yystr>\\.		addcchar(yytext[1]);
+<yystr>\\\r\n		addcchar(yytext[2]); line_number++; char_number = 1;
 <yystr>[^\\\n\"]+	{
 				char *yptr = yytext;
 				while(*yptr)
