@@ -1,4 +1,4 @@
-/* Definition for OSS drivers : wine multimedia sub system */
+/* Definition for OSS drivers : wine multimedia system */
 
 #if defined(HAVE_SYS_SOUNDCARD_H)
 # include <sys/soundcard.h>
@@ -17,6 +17,5 @@
 #else
 #define IOCTL(a,b,c)		(c = ioctl(a,b,c))
 #endif
-
 
 

@@ -1,2 +1,4 @@
 Makefile
 winmm.s
+lolvldrv.glue.c
+mmsystem.glue.c

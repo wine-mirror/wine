@@ -11,6 +11,7 @@ C_SRCS = \
 	dplay.c \
 	dsound.c \
 	joystick.c \
+	lolvldrv.c \
 	mci.c \
 	mcianim.c \
 	mciavi.c \
@@ -23,7 +24,11 @@ C_SRCS = \
 	mmaux.c \
 	mmio.c \
 	mmsystem.c \
+	oss.c \
 	time.c
+
+GLUE =  lolvldrv.c \
+	mmsystem.c
 
 RC_SRCS= \
 	winmm.rc
