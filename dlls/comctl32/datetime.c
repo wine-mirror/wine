@@ -814,10 +814,11 @@ DATETIME_Size (DATETIME_INFO *infoPtr, WORD flags, INT width, INT height)
 
     TRACE("Height=%ld, Width=%ld\n", infoPtr->rcClient.bottom, infoPtr->rcClient.right);
 
-    /* use DrawEdge to adjust the size of rcEdge to get rcDraw */
     memcpy((&infoPtr->rcDraw), (&infoPtr->rcClient), sizeof(infoPtr->rcDraw));
 
-    DrawEdge(NULL, &(infoPtr->rcDraw), EDGE_SUNKEN, BF_RECT | BF_ADJUST);
+    /* subract the size of the edge drawn by DrawEdge */
+    InflateRect(&infoPtr->rcDraw, -GetSystemMetrics(SM_CXEDGE),
+                -GetSystemMetrics(SM_CYEDGE));
 
     /* set the size of the button that drops the calendar down */
     /* FIXME: account for style that allows button on left side */
