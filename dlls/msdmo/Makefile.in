@@ -7,7 +7,10 @@ MODULE    = msdmo
 LDDLLFLAGS = @LDDLLFLAGS@
 SYMBOLFILE = $(MODULE).tmp.o
 
-C_SRCS = msdmo_main.c
+C_SRCS = \
+	dmoreg.c \
+	dmort.c \
+	msdmo_main.c
 
 @MAKE_DLL_RULES@
 
