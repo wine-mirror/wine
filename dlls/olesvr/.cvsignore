@@ -1,4 +1,6 @@
 Makefile
 olesvr.spec.c
+olesvr32.dll
 olesvr32.dll.dbg.c
 olesvr32.spec.c
+olesvr32.spec.def

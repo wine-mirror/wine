@@ -1,3 +1,5 @@
 Makefile
+twain_32.dll
 twain_32.dll.dbg.c
 twain_32.spec.c
+twain_32.spec.def

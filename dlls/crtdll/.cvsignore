@@ -1,3 +1,5 @@
 Makefile
+crtdll.dll
 crtdll.dll.dbg.c
 crtdll.spec.c
+crtdll.spec.def

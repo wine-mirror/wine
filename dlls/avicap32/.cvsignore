@@ -1,3 +1,5 @@
 Makefile
+avicap32.dll
 avicap32.dll.dbg.c
 avicap32.spec.c
+avicap32.spec.def

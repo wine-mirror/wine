@@ -1,4 +1,6 @@
 Makefile
+comctl32.dll
 comctl32.dll.dbg.c
 comctl32.spec.c
+comctl32.spec.def
 rsrc.res

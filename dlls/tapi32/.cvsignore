@@ -1,3 +1,5 @@
 Makefile
+tapi32.dll
 tapi32.dll.dbg.c
 tapi32.spec.c
+tapi32.spec.def
