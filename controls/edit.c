@@ -4415,6 +4415,7 @@ static LRESULT EDIT_WM_MouseMove(HWND hwnd, EDITSTATE *es, INT x, INT y)
 	es->region_posy = (prey < y) ? -1 : ((prey > y) ? 1 : 0);
 	e = EDIT_CharFromPos(hwnd, es, x, y, &after_wrap);
 	EDIT_EM_SetSel(hwnd, es, es->selection_start, e, after_wrap);
+	EDIT_SetCaretPos(hwnd,es,es->selection_end,es->flags & EF_AFTER_WRAP);
 	return 0;
 }
 
