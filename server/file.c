@@ -27,7 +27,7 @@ struct file
 };
 
 static void file_dump( struct object *obj, int verbose );
-static void file_add_queue( struct object *obj, struct wait_queue_entry *entry );
+static int file_add_queue( struct object *obj, struct wait_queue_entry *entry );
 static void file_remove_queue( struct object *obj, struct wait_queue_entry *entry );
 static int file_signaled( struct object *obj, struct thread *thread );
 static int file_get_read_fd( struct object *obj );
@@ -90,13 +90,20 @@ static void file_dump( struct object *obj, int verbose )
     printf( "File fd=%d\n", file->fd );
 }
 
-static void file_add_queue( struct object *obj, struct wait_queue_entry *entry )
+static int file_add_queue( struct object *obj, struct wait_queue_entry *entry )
 {
     struct file *file = (struct file *)obj;
     assert( obj->ops == &file_ops );
     if (!obj->head)  /* first on the queue */
-        add_select_user( file->fd, READ_EVENT | WRITE_EVENT, &select_ops, file );
+    {
+        if (!add_select_user( file->fd, READ_EVENT | WRITE_EVENT, &select_ops, file ))
+        {
+            SET_ERROR( ERROR_OUTOFMEMORY );
+            return 0;
+        }
+    }
     add_queue( obj, entry );
+    return 1;
 }
 
 static void file_remove_queue( struct object *obj, struct wait_queue_entry *entry )
@@ -195,17 +202,16 @@ void file_set_error(void)
     }
 }
 
-int file_get_unix_handle( int handle, unsigned int access )
+struct file *get_file_obj( struct process *process, int handle,
+                           unsigned int access )
 {
-    struct file *file;
-    int unix_handle;
+    return (struct file *)get_handle_obj( current->process, handle,
+                                          access, &file_ops );
+}
 
-    if (!(file = (struct file *)get_handle_obj( current->process, handle,
-                                                access, &file_ops )))
-        return -1;
-    unix_handle = dup( file->fd );
-    release_object( file );
-    return unix_handle;
+int file_get_mmap_fd( struct file *file )
+{
+    return dup( file->fd );
 }
 
 int set_file_pointer( int handle, int *low, int *high, int whence )
@@ -220,8 +226,7 @@ int set_file_pointer( int handle, int *low, int *high, int whence )
         return 0;
     }
 
-    if (!(file = (struct file *)get_handle_obj( current->process, handle,
-                                                0, &file_ops )))
+    if (!(file = get_file_obj( current->process, handle, 0 )))
         return 0;
     if ((result = lseek( file->fd, *low, whence )) == -1)
     {
@@ -243,8 +248,7 @@ int truncate_file( int handle )
     struct file *file;
     int result;
 
-    if (!(file = (struct file *)get_handle_obj( current->process, handle,
-                                                GENERIC_WRITE, &file_ops )))
+    if (!(file = get_file_obj( current->process, handle, GENERIC_WRITE )))
         return 0;
     if (((result = lseek( file->fd, 0, SEEK_CUR )) == -1) ||
         (ftruncate( file->fd, result ) == -1))
@@ -263,8 +267,7 @@ int get_file_info( int handle, struct get_file_info_reply *reply )
     struct file *file;
     struct stat st;
 
-    if (!(file = (struct file *)get_handle_obj( current->process, handle,
-                                                0, &file_ops )))
+    if (!(file = get_file_obj( current->process, handle, 0 )))
         return 0;
     if (fstat( file->fd, &st ) == -1)
     {

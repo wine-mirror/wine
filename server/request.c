@@ -382,6 +382,9 @@ DECL_HANDLER(open_named_obj)
     case OPEN_SEMAPHORE:
         reply.handle = open_semaphore( req->access, req->inherit, name );
         break;
+    case OPEN_MAPPING:
+        reply.handle = open_mapping( req->access, req->inherit, name );
+        break;
     default:
         fatal_protocol_error( "open_named_obj: invalid type %d\n", req->type );
     }
@@ -407,13 +410,6 @@ DECL_HANDLER(create_file)
     }
  done:
     send_reply( current, -1, 1, &reply, sizeof(reply) );
-}
-
-/* get a Unix handle to a file */
-DECL_HANDLER(get_unix_handle)
-{
-    int handle = file_get_unix_handle( req->handle, req->access );
-    send_reply( current, handle, 0 );
 }
 
 /* get a Unix fd to read from a file */
@@ -552,3 +548,30 @@ DECL_HANDLER(create_change_notification)
     send_reply( current, -1, 1, &reply, sizeof(reply) );
 }
 
+/* create a file mapping */
+DECL_HANDLER(create_mapping)
+{
+    struct object *obj;
+    struct create_mapping_reply reply = { -1 };
+    char *name = (char *)data;
+    if (!len) name = NULL;
+    else CHECK_STRING( "create_mapping", name, len );
+
+    if ((obj = create_mapping( req->size_high, req->size_low,
+                               req->protect, req->handle, name )))
+    {
+        int access = FILE_MAP_ALL_ACCESS;
+        if (!(req->protect & VPROT_WRITE)) access &= ~FILE_MAP_WRITE;
+        reply.handle = alloc_handle( current->process, obj, access, 0 );
+        release_object( obj );
+    }
+    send_reply( current, -1, 1, &reply, sizeof(reply) );
+}
+
+/* get a mapping information */
+DECL_HANDLER(get_mapping_info)
+{
+    struct get_mapping_info_reply reply;
+    int map_fd = get_mapping_info( req->handle, &reply );
+    send_reply( current, map_fd, 1, &reply, sizeof(reply) );
+}

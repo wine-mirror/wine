@@ -30,7 +30,7 @@ struct console
 };
 
 static void console_dump( struct object *obj, int verbose );
-static void console_add_queue( struct object *obj, struct wait_queue_entry *entry );
+static int console_add_queue( struct object *obj, struct wait_queue_entry *entry );
 static void console_remove_queue( struct object *obj, struct wait_queue_entry *entry );
 static int console_signaled( struct object *obj, struct thread *thread );
 static int console_get_read_fd( struct object *obj );
@@ -124,15 +124,22 @@ static void console_dump( struct object *obj, int verbose )
             console->is_read ? "input" : "output", console->fd );
 }
 
-static void console_add_queue( struct object *obj, struct wait_queue_entry *entry )
+static int console_add_queue( struct object *obj, struct wait_queue_entry *entry )
 {
     struct console *console = (struct console *)obj;
     assert( obj->ops == &console_ops );
     if (!obj->head)  /* first on the queue */
-        add_select_user( console->fd,
-                         console->is_read ? READ_EVENT : WRITE_EVENT,
-                         &select_ops, console );
+    {
+        if (!add_select_user( console->fd,
+                              console->is_read ? READ_EVENT : WRITE_EVENT,
+                              &select_ops, console ))
+        {
+            SET_ERROR( ERROR_OUTOFMEMORY );
+            return 0;
+        }
+    }
     add_queue( obj, entry );
+    return 1;
 }
 
 static void console_remove_queue( struct object *obj, struct wait_queue_entry *entry )

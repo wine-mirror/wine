@@ -8,331 +8,354 @@
 
 static int dump_new_thread_request( struct new_thread_request *req, int len )
 {
-    printf( " pid=%p", req->pid );
+    fprintf( stderr, " pid=%p", req->pid );
     return (int)sizeof(*req);
 }
 
 static int dump_new_thread_reply( struct new_thread_reply *req, int len )
 {
-    printf( " tid=%p,", req->tid );
-    printf( " thandle=%d,", req->thandle );
-    printf( " pid=%p,", req->pid );
-    printf( " phandle=%d", req->phandle );
+    fprintf( stderr, " tid=%p,", req->tid );
+    fprintf( stderr, " thandle=%d,", req->thandle );
+    fprintf( stderr, " pid=%p,", req->pid );
+    fprintf( stderr, " phandle=%d", req->phandle );
     return (int)sizeof(*req);
 }
 
 static int dump_set_debug_request( struct set_debug_request *req, int len )
 {
-    printf( " level=%d", req->level );
+    fprintf( stderr, " level=%d", req->level );
     return (int)sizeof(*req);
 }
 
 static int dump_init_thread_request( struct init_thread_request *req, int len )
 {
-    printf( " unix_pid=%d,", req->unix_pid );
-    printf( " cmd_line=\"%.*s\"", len - (int)sizeof(*req), (char *)(req+1) );
+    fprintf( stderr, " unix_pid=%d,", req->unix_pid );
+    fprintf( stderr, " cmd_line=\"%.*s\"", len - (int)sizeof(*req), (char *)(req+1) );
     return len;
 }
 
 static int dump_terminate_process_request( struct terminate_process_request *req, int len )
 {
-    printf( " handle=%d,", req->handle );
-    printf( " exit_code=%d", req->exit_code );
+    fprintf( stderr, " handle=%d,", req->handle );
+    fprintf( stderr, " exit_code=%d", req->exit_code );
     return (int)sizeof(*req);
 }
 
 static int dump_terminate_thread_request( struct terminate_thread_request *req, int len )
 {
-    printf( " handle=%d,", req->handle );
-    printf( " exit_code=%d", req->exit_code );
+    fprintf( stderr, " handle=%d,", req->handle );
+    fprintf( stderr, " exit_code=%d", req->exit_code );
     return (int)sizeof(*req);
 }
 
 static int dump_get_process_info_request( struct get_process_info_request *req, int len )
 {
-    printf( " handle=%d", req->handle );
+    fprintf( stderr, " handle=%d", req->handle );
     return (int)sizeof(*req);
 }
 
 static int dump_get_process_info_reply( struct get_process_info_reply *req, int len )
 {
-    printf( " pid=%p,", req->pid );
-    printf( " exit_code=%d", req->exit_code );
+    fprintf( stderr, " pid=%p,", req->pid );
+    fprintf( stderr, " exit_code=%d", req->exit_code );
     return (int)sizeof(*req);
 }
 
 static int dump_get_thread_info_request( struct get_thread_info_request *req, int len )
 {
-    printf( " handle=%d", req->handle );
+    fprintf( stderr, " handle=%d", req->handle );
     return (int)sizeof(*req);
 }
 
 static int dump_get_thread_info_reply( struct get_thread_info_reply *req, int len )
 {
-    printf( " pid=%p,", req->pid );
-    printf( " exit_code=%d", req->exit_code );
+    fprintf( stderr, " pid=%p,", req->pid );
+    fprintf( stderr, " exit_code=%d", req->exit_code );
     return (int)sizeof(*req);
 }
 
 static int dump_close_handle_request( struct close_handle_request *req, int len )
 {
-    printf( " handle=%d", req->handle );
+    fprintf( stderr, " handle=%d", req->handle );
     return (int)sizeof(*req);
 }
 
 static int dump_dup_handle_request( struct dup_handle_request *req, int len )
 {
-    printf( " src_process=%d,", req->src_process );
-    printf( " src_handle=%d,", req->src_handle );
-    printf( " dst_process=%d,", req->dst_process );
-    printf( " dst_handle=%d,", req->dst_handle );
-    printf( " access=%08x,", req->access );
-    printf( " inherit=%d,", req->inherit );
-    printf( " options=%d", req->options );
+    fprintf( stderr, " src_process=%d,", req->src_process );
+    fprintf( stderr, " src_handle=%d,", req->src_handle );
+    fprintf( stderr, " dst_process=%d,", req->dst_process );
+    fprintf( stderr, " dst_handle=%d,", req->dst_handle );
+    fprintf( stderr, " access=%08x,", req->access );
+    fprintf( stderr, " inherit=%d,", req->inherit );
+    fprintf( stderr, " options=%d", req->options );
     return (int)sizeof(*req);
 }
 
 static int dump_dup_handle_reply( struct dup_handle_reply *req, int len )
 {
-    printf( " handle=%d", req->handle );
+    fprintf( stderr, " handle=%d", req->handle );
     return (int)sizeof(*req);
 }
 
 static int dump_open_process_request( struct open_process_request *req, int len )
 {
-    printf( " pid=%p,", req->pid );
-    printf( " access=%08x,", req->access );
-    printf( " inherit=%d", req->inherit );
+    fprintf( stderr, " pid=%p,", req->pid );
+    fprintf( stderr, " access=%08x,", req->access );
+    fprintf( stderr, " inherit=%d", req->inherit );
     return (int)sizeof(*req);
 }
 
 static int dump_open_process_reply( struct open_process_reply *req, int len )
 {
-    printf( " handle=%d", req->handle );
+    fprintf( stderr, " handle=%d", req->handle );
     return (int)sizeof(*req);
 }
 
 static int dump_select_request( struct select_request *req, int len )
 {
-    printf( " count=%d,", req->count );
-    printf( " flags=%d,", req->flags );
-    printf( " timeout=%d", req->timeout );
+    fprintf( stderr, " count=%d,", req->count );
+    fprintf( stderr, " flags=%d,", req->flags );
+    fprintf( stderr, " timeout=%d", req->timeout );
     return (int)sizeof(*req);
 }
 
 static int dump_select_reply( struct select_reply *req, int len )
 {
-    printf( " signaled=%d", req->signaled );
+    fprintf( stderr, " signaled=%d", req->signaled );
     return (int)sizeof(*req);
 }
 
 static int dump_create_event_request( struct create_event_request *req, int len )
 {
-    printf( " manual_reset=%d,", req->manual_reset );
-    printf( " initial_state=%d,", req->initial_state );
-    printf( " inherit=%d,", req->inherit );
-    printf( " name=\"%.*s\"", len - (int)sizeof(*req), (char *)(req+1) );
+    fprintf( stderr, " manual_reset=%d,", req->manual_reset );
+    fprintf( stderr, " initial_state=%d,", req->initial_state );
+    fprintf( stderr, " inherit=%d,", req->inherit );
+    fprintf( stderr, " name=\"%.*s\"", len - (int)sizeof(*req), (char *)(req+1) );
     return len;
 }
 
 static int dump_create_event_reply( struct create_event_reply *req, int len )
 {
-    printf( " handle=%d", req->handle );
+    fprintf( stderr, " handle=%d", req->handle );
     return (int)sizeof(*req);
 }
 
 static int dump_event_op_request( struct event_op_request *req, int len )
 {
-    printf( " handle=%d,", req->handle );
-    printf( " op=%d", req->op );
+    fprintf( stderr, " handle=%d,", req->handle );
+    fprintf( stderr, " op=%d", req->op );
     return (int)sizeof(*req);
 }
 
 static int dump_create_mutex_request( struct create_mutex_request *req, int len )
 {
-    printf( " owned=%d,", req->owned );
-    printf( " inherit=%d,", req->inherit );
-    printf( " name=\"%.*s\"", len - (int)sizeof(*req), (char *)(req+1) );
+    fprintf( stderr, " owned=%d,", req->owned );
+    fprintf( stderr, " inherit=%d,", req->inherit );
+    fprintf( stderr, " name=\"%.*s\"", len - (int)sizeof(*req), (char *)(req+1) );
     return len;
 }
 
 static int dump_create_mutex_reply( struct create_mutex_reply *req, int len )
 {
-    printf( " handle=%d", req->handle );
+    fprintf( stderr, " handle=%d", req->handle );
     return (int)sizeof(*req);
 }
 
 static int dump_release_mutex_request( struct release_mutex_request *req, int len )
 {
-    printf( " handle=%d", req->handle );
+    fprintf( stderr, " handle=%d", req->handle );
     return (int)sizeof(*req);
 }
 
 static int dump_create_semaphore_request( struct create_semaphore_request *req, int len )
 {
-    printf( " initial=%08x,", req->initial );
-    printf( " max=%08x,", req->max );
-    printf( " inherit=%d,", req->inherit );
-    printf( " name=\"%.*s\"", len - (int)sizeof(*req), (char *)(req+1) );
+    fprintf( stderr, " initial=%08x,", req->initial );
+    fprintf( stderr, " max=%08x,", req->max );
+    fprintf( stderr, " inherit=%d,", req->inherit );
+    fprintf( stderr, " name=\"%.*s\"", len - (int)sizeof(*req), (char *)(req+1) );
     return len;
 }
 
 static int dump_create_semaphore_reply( struct create_semaphore_reply *req, int len )
 {
-    printf( " handle=%d", req->handle );
+    fprintf( stderr, " handle=%d", req->handle );
     return (int)sizeof(*req);
 }
 
 static int dump_release_semaphore_request( struct release_semaphore_request *req, int len )
 {
-    printf( " handle=%d,", req->handle );
-    printf( " count=%08x", req->count );
+    fprintf( stderr, " handle=%d,", req->handle );
+    fprintf( stderr, " count=%08x", req->count );
     return (int)sizeof(*req);
 }
 
 static int dump_release_semaphore_reply( struct release_semaphore_reply *req, int len )
 {
-    printf( " prev_count=%08x", req->prev_count );
+    fprintf( stderr, " prev_count=%08x", req->prev_count );
     return (int)sizeof(*req);
 }
 
 static int dump_open_named_obj_request( struct open_named_obj_request *req, int len )
 {
-    printf( " type=%d,", req->type );
-    printf( " access=%08x,", req->access );
-    printf( " inherit=%d,", req->inherit );
-    printf( " name=\"%.*s\"", len - (int)sizeof(*req), (char *)(req+1) );
+    fprintf( stderr, " type=%d,", req->type );
+    fprintf( stderr, " access=%08x,", req->access );
+    fprintf( stderr, " inherit=%d,", req->inherit );
+    fprintf( stderr, " name=\"%.*s\"", len - (int)sizeof(*req), (char *)(req+1) );
     return len;
 }
 
 static int dump_open_named_obj_reply( struct open_named_obj_reply *req, int len )
 {
-    printf( " handle=%d", req->handle );
+    fprintf( stderr, " handle=%d", req->handle );
     return (int)sizeof(*req);
 }
 
 static int dump_create_file_request( struct create_file_request *req, int len )
 {
-    printf( " access=%08x,", req->access );
-    printf( " inherit=%d", req->inherit );
+    fprintf( stderr, " access=%08x,", req->access );
+    fprintf( stderr, " inherit=%d", req->inherit );
     return (int)sizeof(*req);
 }
 
 static int dump_create_file_reply( struct create_file_reply *req, int len )
 {
-    printf( " handle=%d", req->handle );
-    return (int)sizeof(*req);
-}
-
-static int dump_get_unix_handle_request( struct get_unix_handle_request *req, int len )
-{
-    printf( " handle=%d,", req->handle );
-    printf( " access=%08x", req->access );
+    fprintf( stderr, " handle=%d", req->handle );
     return (int)sizeof(*req);
 }
 
 static int dump_get_read_fd_request( struct get_read_fd_request *req, int len )
 {
-    printf( " handle=%d", req->handle );
+    fprintf( stderr, " handle=%d", req->handle );
     return (int)sizeof(*req);
 }
 
 static int dump_get_write_fd_request( struct get_write_fd_request *req, int len )
 {
-    printf( " handle=%d", req->handle );
+    fprintf( stderr, " handle=%d", req->handle );
     return (int)sizeof(*req);
 }
 
 static int dump_set_file_pointer_request( struct set_file_pointer_request *req, int len )
 {
-    printf( " handle=%d,", req->handle );
-    printf( " low=%d,", req->low );
-    printf( " high=%d,", req->high );
-    printf( " whence=%d", req->whence );
+    fprintf( stderr, " handle=%d,", req->handle );
+    fprintf( stderr, " low=%d,", req->low );
+    fprintf( stderr, " high=%d,", req->high );
+    fprintf( stderr, " whence=%d", req->whence );
     return (int)sizeof(*req);
 }
 
 static int dump_set_file_pointer_reply( struct set_file_pointer_reply *req, int len )
 {
-    printf( " low=%d,", req->low );
-    printf( " high=%d", req->high );
+    fprintf( stderr, " low=%d,", req->low );
+    fprintf( stderr, " high=%d", req->high );
     return (int)sizeof(*req);
 }
 
 static int dump_truncate_file_request( struct truncate_file_request *req, int len )
 {
-    printf( " handle=%d", req->handle );
+    fprintf( stderr, " handle=%d", req->handle );
     return (int)sizeof(*req);
 }
 
 static int dump_flush_file_request( struct flush_file_request *req, int len )
 {
-    printf( " handle=%d", req->handle );
+    fprintf( stderr, " handle=%d", req->handle );
     return (int)sizeof(*req);
 }
 
 static int dump_get_file_info_request( struct get_file_info_request *req, int len )
 {
-    printf( " handle=%d", req->handle );
+    fprintf( stderr, " handle=%d", req->handle );
     return (int)sizeof(*req);
 }
 
 static int dump_get_file_info_reply( struct get_file_info_reply *req, int len )
 {
-    printf( " attr=%d,", req->attr );
-    printf( " access_time=%ld,", req->access_time );
-    printf( " write_time=%ld,", req->write_time );
-    printf( " size_high=%d,", req->size_high );
-    printf( " size_low=%d,", req->size_low );
-    printf( " links=%d,", req->links );
-    printf( " index_high=%d,", req->index_high );
-    printf( " index_low=%d,", req->index_low );
-    printf( " serial=%08x", req->serial );
+    fprintf( stderr, " attr=%d,", req->attr );
+    fprintf( stderr, " access_time=%ld,", req->access_time );
+    fprintf( stderr, " write_time=%ld,", req->write_time );
+    fprintf( stderr, " size_high=%d,", req->size_high );
+    fprintf( stderr, " size_low=%d,", req->size_low );
+    fprintf( stderr, " links=%d,", req->links );
+    fprintf( stderr, " index_high=%d,", req->index_high );
+    fprintf( stderr, " index_low=%d,", req->index_low );
+    fprintf( stderr, " serial=%08x", req->serial );
     return (int)sizeof(*req);
 }
 
 static int dump_create_pipe_request( struct create_pipe_request *req, int len )
 {
-    printf( " inherit=%d", req->inherit );
+    fprintf( stderr, " inherit=%d", req->inherit );
     return (int)sizeof(*req);
 }
 
 static int dump_create_pipe_reply( struct create_pipe_reply *req, int len )
 {
-    printf( " handle_read=%d,", req->handle_read );
-    printf( " handle_write=%d", req->handle_write );
+    fprintf( stderr, " handle_read=%d,", req->handle_read );
+    fprintf( stderr, " handle_write=%d", req->handle_write );
     return (int)sizeof(*req);
 }
 
 static int dump_create_console_request( struct create_console_request *req, int len )
 {
-    printf( " inherit=%d", req->inherit );
+    fprintf( stderr, " inherit=%d", req->inherit );
     return (int)sizeof(*req);
 }
 
 static int dump_create_console_reply( struct create_console_reply *req, int len )
 {
-    printf( " handle_read=%d,", req->handle_read );
-    printf( " handle_write=%d", req->handle_write );
+    fprintf( stderr, " handle_read=%d,", req->handle_read );
+    fprintf( stderr, " handle_write=%d", req->handle_write );
     return (int)sizeof(*req);
 }
 
 static int dump_set_console_fd_request( struct set_console_fd_request *req, int len )
 {
-    printf( " handle=%d", req->handle );
+    fprintf( stderr, " handle=%d", req->handle );
     return (int)sizeof(*req);
 }
 
 static int dump_create_change_notification_request( struct create_change_notification_request *req, int len )
 {
-    printf( " subtree=%d,", req->subtree );
-    printf( " filter=%d", req->filter );
+    fprintf( stderr, " subtree=%d,", req->subtree );
+    fprintf( stderr, " filter=%d", req->filter );
     return (int)sizeof(*req);
 }
 
 static int dump_create_change_notification_reply( struct create_change_notification_reply *req, int len )
 {
-    printf( " handle=%d", req->handle );
+    fprintf( stderr, " handle=%d", req->handle );
+    return (int)sizeof(*req);
+}
+
+static int dump_create_mapping_request( struct create_mapping_request *req, int len )
+{
+    fprintf( stderr, " size_high=%d,", req->size_high );
+    fprintf( stderr, " size_low=%d,", req->size_low );
+    fprintf( stderr, " protect=%d,", req->protect );
+    fprintf( stderr, " handle=%d,", req->handle );
+    fprintf( stderr, " name=\"%.*s\"", len - (int)sizeof(*req), (char *)(req+1) );
+    return len;
+}
+
+static int dump_create_mapping_reply( struct create_mapping_reply *req, int len )
+{
+    fprintf( stderr, " handle=%d", req->handle );
+    return (int)sizeof(*req);
+}
+
+static int dump_get_mapping_info_request( struct get_mapping_info_request *req, int len )
+{
+    fprintf( stderr, " handle=%d", req->handle );
+    return (int)sizeof(*req);
+}
+
+static int dump_get_mapping_info_reply( struct get_mapping_info_reply *req, int len )
+{
+    fprintf( stderr, " size_high=%d,", req->size_high );
+    fprintf( stderr, " size_low=%d,", req->size_low );
+    fprintf( stderr, " protect=%d", req->protect );
     return (int)sizeof(*req);
 }
 
@@ -382,8 +405,6 @@ static const struct dumper dumpers[REQ_NB_REQUESTS] =
       (void(*)())dump_open_named_obj_reply },
     { (int(*)(void *,int))dump_create_file_request,
       (void(*)())dump_create_file_reply },
-    { (int(*)(void *,int))dump_get_unix_handle_request,
-      (void(*)())0 },
     { (int(*)(void *,int))dump_get_read_fd_request,
       (void(*)())0 },
     { (int(*)(void *,int))dump_get_write_fd_request,
@@ -404,6 +425,10 @@ static const struct dumper dumpers[REQ_NB_REQUESTS] =
       (void(*)())0 },
     { (int(*)(void *,int))dump_create_change_notification_request,
       (void(*)())dump_create_change_notification_reply },
+    { (int(*)(void *,int))dump_create_mapping_request,
+      (void(*)())dump_create_mapping_reply },
+    { (int(*)(void *,int))dump_get_mapping_info_request,
+      (void(*)())dump_get_mapping_info_reply },
 };
 
 static const char * const req_names[REQ_NB_REQUESTS] =
@@ -427,7 +452,6 @@ static const char * const req_names[REQ_NB_REQUESTS] =
     "release_semaphore",
     "open_named_obj",
     "create_file",
-    "get_unix_handle",
     "get_read_fd",
     "get_write_fd",
     "set_file_pointer",
@@ -438,43 +462,45 @@ static const char * const req_names[REQ_NB_REQUESTS] =
     "create_console",
     "set_console_fd",
     "create_change_notification",
+    "create_mapping",
+    "get_mapping_info",
 };
 
 void trace_request( enum request req, void *data, int len, int fd )
 {
     int size;
     current->last_req = req;
-    printf( "%08x: %s(", (unsigned int)current, req_names[req] );
+    fprintf( stderr, "%08x: %s(", (unsigned int)current, req_names[req] );
     size = dumpers[req].dump_req( data, len );
     if ((len -= size) > 0)
     {
         unsigned char *ptr = (unsigned char *)data + size;
-        while (len--) printf( ", %02x", *ptr++ );
+        while (len--) fprintf( stderr, ", %02x", *ptr++ );
     }
-    if (fd != -1) printf( " ) fd=%d\n", fd );
-    else printf( " )\n" );
+    if (fd != -1) fprintf( stderr, " ) fd=%d\n", fd );
+    else fprintf( stderr, " )\n" );
 }
 
 void trace_timeout(void)
 {
-    printf( "%08x: *timeout*\n", (unsigned int)current );
+    fprintf( stderr, "%08x: *timeout*\n", (unsigned int)current );
 }
 
 void trace_kill( int exit_code )
 {
-    printf( "%08x: *killed* exit_code=%d\n",
-            (unsigned int)current, exit_code );
+    fprintf( stderr,"%08x: *killed* exit_code=%d\n",
+             (unsigned int)current, exit_code );
 }
 
 void trace_reply( struct thread *thread, int type, int pass_fd,
                   struct iovec *vec, int veclen )
 {
     if (!thread) return;
-    printf( "%08x: %s() = %d",
-            (unsigned int)thread, req_names[thread->last_req], type );
+    fprintf( stderr, "%08x: %s() = %d",
+             (unsigned int)thread, req_names[thread->last_req], type );
     if (veclen)
     {
-	printf( " {" );
+	fprintf( stderr, " {" );
 	if (dumpers[thread->last_req].dump_reply)
 	{
 	    dumpers[thread->last_req].dump_reply( vec->iov_base );
@@ -485,10 +511,10 @@ void trace_reply( struct thread *thread, int type, int pass_fd,
 	{
 	    unsigned char *ptr = vec->iov_base;
 	    int len = vec->iov_len;
-	    while (len--) printf( ", %02x", *ptr++ );
+	    while (len--) fprintf( stderr, ", %02x", *ptr++ );
 	}
-	printf( " }" );
+	fprintf( stderr, " }" );
     }
-    if (pass_fd != -1) printf( " fd=%d\n", pass_fd );
-    else printf( "\n" );
+    if (pass_fd != -1) fprintf( stderr, " fd=%d\n", pass_fd );
+    else fprintf( stderr, "\n" );
 }

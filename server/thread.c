@@ -199,7 +199,7 @@ int send_reply( struct thread *thread, int pass_fd, int n,
 }
 
 /* add a thread to an object wait queue; return 1 if OK, 0 on error */
-void add_queue( struct object *obj, struct wait_queue_entry *entry )
+int add_queue( struct object *obj, struct wait_queue_entry *entry )
 {
     grab_object( obj );
     entry->obj    = obj;
@@ -208,6 +208,7 @@ void add_queue( struct object *obj, struct wait_queue_entry *entry )
     if (obj->tail) obj->tail->next = entry;
     else obj->head = entry;
     obj->tail = entry;
+    return 1;
 }
 
 /* remove a thread from an object wait queue */
@@ -278,7 +279,12 @@ static int wait_on( struct thread *thread, int count,
             return 0;
         }
         entry->thread = thread;
-        obj->ops->add_queue( obj, entry );
+        if (!obj->ops->add_queue( obj, entry ))
+        {
+            wait->count = i - 1;
+            end_wait( thread );
+            return 0;
+        }
         release_object( obj );
     }
     return 1;

@@ -162,9 +162,8 @@ struct select_reply
     int          signaled;     /* signaled handle */
 };
 #define SELECT_ALL       1
-#define SELECT_MSG       2
-#define SELECT_ALERTABLE 4
-#define SELECT_TIMEOUT   8
+#define SELECT_ALERTABLE 2
+#define SELECT_TIMEOUT   4
 
 
 /* Create an event */
@@ -243,7 +242,7 @@ struct open_named_obj_request
     int          inherit;       /* inherit flag */
     char         name[0];       /* object name */
 };
-enum open_named_obj { OPEN_EVENT, OPEN_MUTEX, OPEN_SEMAPHORE };
+enum open_named_obj { OPEN_EVENT, OPEN_MUTEX, OPEN_SEMAPHORE, OPEN_MAPPING };
 
 struct open_named_obj_reply
 {
@@ -260,14 +259,6 @@ struct create_file_request
 struct create_file_reply
 {
     int          handle;        /* handle to the file */
-};
-
-
-/* Get a Unix handle to a file */
-struct get_unix_handle_request
-{
-    int          handle;        /* handle to the file */
-    unsigned int access;        /* desired access */
 };
 
 
@@ -364,7 +355,7 @@ struct set_console_fd_request
 };
 
 
-/* Create a console */
+/* Create a change notification */
 struct create_change_notification_request
 {
     int          subtree;       /* watch all the subtree */
@@ -376,6 +367,42 @@ struct create_change_notification_reply
 };
 
 
+/* Create a file mapping */
+struct create_mapping_request
+{
+    int          size_high;     /* mapping size */
+    int          size_low;      /* mapping size */
+    int          protect;       /* protection flags (see below) */
+    int          handle;        /* file handle */
+    char         name[0];       /* object name */
+};
+struct create_mapping_reply
+{
+    int          handle;        /* handle to the mapping */
+};
+/* protection flags */
+#define VPROT_READ       0x01
+#define VPROT_WRITE      0x02
+#define VPROT_EXEC       0x04
+#define VPROT_WRITECOPY  0x08
+#define VPROT_GUARD      0x10
+#define VPROT_NOCACHE    0x20
+#define VPROT_COMMITTED  0x40
+
+
+/* Get information about a file mapping */
+struct get_mapping_info_request
+{
+    int          handle;        /* handle to the mapping */
+};
+struct get_mapping_info_reply
+{
+    int          size_high;     /* mapping size */
+    int          size_low;      /* mapping size */
+    int          protect;       /* protection flags */
+};
+
+
 /* client-side functions */
 
 #ifndef __WINE_SERVER__
@@ -383,14 +410,11 @@ struct create_change_notification_reply
 #include "server/request.h"
 
 /* client communication functions */
-#define CHECK_LEN(len,wanted) \
-  if ((len) == (wanted)) ; \
-  else CLIENT_ProtocolError( __FUNCTION__ ": len %d != %d\n", (len), (wanted) );
-extern void CLIENT_ProtocolError( const char *err, ... );
 extern void CLIENT_SendRequest( enum request req, int pass_fd,
                                 int n, ... /* arg_1, len_1, etc. */ );
 extern unsigned int CLIENT_WaitReply( int *len, int *passed_fd,
                                       int n, ... /* arg_1, len_1, etc. */ );
+extern unsigned int CLIENT_WaitSimpleReply( void *reply, int len, int *passed_fd );
 
 struct _THDB;
 extern int CLIENT_NewThread( struct _THDB *thdb, int *thandle, int *phandle );
@@ -399,8 +423,6 @@ extern int CLIENT_InitThread(void);
 extern int CLIENT_CloseHandle( int handle );
 extern int CLIENT_DuplicateHandle( int src_process, int src_handle, int dst_process,
                                    int dst_handle, DWORD access, BOOL32 inherit, DWORD options );
-extern int CLIENT_GetThreadInfo( int handle, struct get_thread_info_reply *reply );
-extern int CLIENT_GetProcessInfo( int handle, struct get_process_info_reply *reply );
 extern int CLIENT_OpenProcess( void *pid, DWORD access, BOOL32 inherit );
 extern int CLIENT_Select( int count, int *handles, int flags, int timeout );
 #endif  /* __WINE_SERVER__ */

@@ -25,10 +25,10 @@ int main( int argc, char *argv[] )
 
     debug_level = 1;
 
-    if (debug_level) printf( "Server: starting (pid=%d)\n", getpid() );
+    if (debug_level) fprintf( stderr, "Server: starting (pid=%d)\n", getpid() );
     server_init( fd );
     select_loop();
-    if (debug_level) printf( "Server: exiting (pid=%d)\n", getpid() );
+    if (debug_level) fprintf( stderr, "Server: exiting (pid=%d)\n", getpid() );
     exit(0);
 
  error:    

@@ -30,7 +30,7 @@ struct pipe
 };
 
 static void pipe_dump( struct object *obj, int verbose );
-static void pipe_add_queue( struct object *obj, struct wait_queue_entry *entry );
+static int pipe_add_queue( struct object *obj, struct wait_queue_entry *entry );
 static void pipe_remove_queue( struct object *obj, struct wait_queue_entry *entry );
 static int pipe_signaled( struct object *obj, struct thread *thread );
 static int pipe_get_read_fd( struct object *obj );
@@ -101,15 +101,22 @@ static void pipe_dump( struct object *obj, int verbose )
             (pipe->side == READ_SIDE) ? "read" : "write", pipe->fd );
 }
 
-static void pipe_add_queue( struct object *obj, struct wait_queue_entry *entry )
+static int pipe_add_queue( struct object *obj, struct wait_queue_entry *entry )
 {
     struct pipe *pipe = (struct pipe *)obj;
     assert( obj->ops == &pipe_ops );
     if (!obj->head)  /* first on the queue */
-        add_select_user( pipe->fd,
-                         (pipe->side == READ_SIDE) ? READ_EVENT : WRITE_EVENT,
-                         &select_ops, pipe );
+    {
+        if (!add_select_user( pipe->fd,
+                              (pipe->side == READ_SIDE) ? READ_EVENT : WRITE_EVENT,
+                              &select_ops, pipe ))
+        {
+            SET_ERROR( ERROR_OUTOFMEMORY );
+            return 0;
+        }
+    }
     add_queue( obj, entry );
+    return 1;
 }
 
 static void pipe_remove_queue( struct object *obj, struct wait_queue_entry *entry )

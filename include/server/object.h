@@ -20,6 +20,7 @@
 struct object;
 struct object_name;
 struct thread;
+struct file;
 struct wait_queue_entry;
 
 struct object_ops
@@ -27,7 +28,7 @@ struct object_ops
     /* dump the object (for debugging) */
     void (*dump)(struct object *,int);
     /* add a thread to the object wait queue */
-    void (*add_queue)(struct object *,struct wait_queue_entry *);
+    int  (*add_queue)(struct object *,struct wait_queue_entry *);
     /* remove a thread from the object wait queue */
     void (*remove_queue)(struct object *,struct wait_queue_entry *);
     /* is object signaled? */
@@ -63,6 +64,7 @@ extern int init_object( struct object *obj, const struct object_ops *ops,
 extern struct object *grab_object( void *obj );
 extern void release_object( void *obj );
 extern struct object *find_object( const char *name );
+extern int no_add_queue( struct object *obj, struct wait_queue_entry *entry );
 extern int no_satisfied( struct object *obj, struct thread *thread );
 extern int no_read_fd( struct object *obj );
 extern int no_write_fd( struct object *obj );
@@ -171,7 +173,9 @@ extern int release_semaphore( int handle, unsigned int count, unsigned int *prev
 /* file functions */
 
 extern struct object *create_file( int fd );
-extern int file_get_unix_handle( int handle, unsigned int access );
+extern struct file *get_file_obj( struct process *process, int handle,
+                                  unsigned int access );
+extern int file_get_mmap_fd( struct file *file );
 extern int set_file_pointer( int handle, int *low, int *high, int whence );
 extern int truncate_file( int handle );
 extern int get_file_info( int handle, struct get_file_info_reply *reply );
@@ -192,6 +196,13 @@ extern int set_console_fd( int handle, int fd );
 /* change notification functions */
 
 extern struct object *create_change_notification( int subtree, int filter );
+
+
+/* file mapping functions */
+extern struct object *create_mapping( int size_high, int size_low, int protect,
+                                      int handle, const char *name );
+extern int open_mapping( unsigned int access, int inherit, const char *name );
+extern int get_mapping_info( int handle, struct get_mapping_info_reply *reply );
 
 
 extern int debug_level;

@@ -147,6 +147,12 @@ struct object *find_object( const char *name )
 
 /* functions for unimplemented object operations */
 
+int no_add_queue( struct object *obj, struct wait_queue_entry *entry )
+{
+    SET_ERROR( ERROR_INVALID_HANDLE );
+    return 0;
+}
+
 int no_satisfied( struct object *obj, struct thread *thread )
 {
     return 0;  /* not abandoned */
