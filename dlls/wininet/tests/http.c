@@ -90,12 +90,16 @@ void winapi_test(int flags)
     ok((hi != 0x0),"InternetOpen Failed");
     trace("InternetOpenA -->\n");
 
+    if (hi == 0x0) goto abort;
+
     InternetSetStatusCallback(hi,&callback);
 
     trace("InternetConnectA <--\n");
     hic=InternetConnectA(hi,"www.winehq.com",0x0,0x0,0x0,0x3,0x0,0xdeadbeef);
     ok((hic != 0x0),"InternetConnect Failed");
     trace("InternetConnectA -->\n");
+
+    if (hic == 0x0) goto abort;
 
     types = (char*)malloc(100);
     strcpy(types,"*");
@@ -104,9 +108,19 @@ void winapi_test(int flags)
     hor = HttpOpenRequestA(hic, "GET",
                           "/about/",
                           0x0,0x0,(const char**)&types,0x00400800,0xdeadbead);
-
-    ok((hor != 0x0),"HttpOpenRequest Failed");
+    if (hor == 0x0 && GetLastError() == 12007 /* ERROR_INTERNET_NAME_NOT_RESOLVED */) {
+        /*
+         * If the internet name can't be resolved we are probably behind
+         * a firewall or in some other way not directly connected to the
+         * Internet. Not enough reason to fail the test. Just ignore and
+         * abort.
+         */
+    } else  {
+        ok((hor != 0x0),"HttpOpenRequest Failed");
+    }
     trace("HttpOpenRequestA -->\n");
+
+    if (hor == 0x0) goto abort;
 
     trace("HttpSendRequestA -->\n");
     rc = HttpSendRequestA(hor, "", 0xffffffff,0x0,0x0);
@@ -170,12 +184,21 @@ void winapi_test(int flags)
             HeapFree(GetProcessHeap(),0,buffer);
         }
     }
-    rc = InternetCloseHandle(hi);
-    ok ((rc != 0), "InternetCloseHandle failed");
-    rc = InternetCloseHandle(hor);
-    ok ((rc != 0), "InternetCloseHandle failed");
-    if (flags)
-        Sleep(100);
+abort:
+    if (hor != 0x0) {
+        rc = InternetCloseHandle(hor);
+        ok ((rc != 0), "InternetCloseHandle of handle opened by HttpOpenRequestA failed");
+    }
+    if (hor != 0x0) {
+        rc = InternetCloseHandle(hic);
+        ok ((rc != 0), "InternetCloseHandle of handle opened by InternetConnectA failed");
+    }
+    if (hi != 0x0) {
+      rc = InternetCloseHandle(hi);
+      ok ((rc != 0), "InternetCloseHandle of handle opened by InternetOpenA failed");
+      if (flags)
+          Sleep(100);
+    }
 }
 
 
