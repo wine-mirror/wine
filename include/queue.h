@@ -152,7 +152,7 @@ extern MESSAGEQUEUE *QUEUE_GetSysQueue(void);
 extern void QUEUE_SetWakeBit( MESSAGEQUEUE *queue, WORD bit );
 extern void QUEUE_ClearWakeBit( MESSAGEQUEUE *queue, WORD bit );
 extern void QUEUE_ReceiveMessage( MESSAGEQUEUE *queue );
-extern void QUEUE_WaitBits( WORD bits );
+extern int QUEUE_WaitBits( WORD bits, DWORD timeout );
 extern void QUEUE_IncPaintCount( HQUEUE16 hQueue );
 extern void QUEUE_DecPaintCount( HQUEUE16 hQueue );
 extern void QUEUE_IncTimerCount( HQUEUE16 hQueue );

@@ -612,21 +612,6 @@ MESSAGEQUEUE *QUEUE_GetSysQueue(void)
 
 
 /***********************************************************************
- *           QUEUE_Wait
- */
-static void QUEUE_Wait( DWORD wait_mask )
-{
-    if ( THREAD_IsWin16( THREAD_Current() ) )
-        WaitEvent16( 0 );
-    else
-    {
-        TRACE(msg, "current task is 32-bit, calling SYNC_DoWait\n");
-        MsgWaitForMultipleObjects( 0, NULL, FALSE, INFINITE, wait_mask );
-    }
-}
-
-
-/***********************************************************************
  *           QUEUE_SetWakeBit
  *
  * See "Windows Internals", p.449
@@ -669,23 +654,31 @@ void QUEUE_ClearWakeBit( MESSAGEQUEUE *queue, WORD bit )
  *           QUEUE_WaitBits
  *
  * See "Windows Internals", p.447
+ *
+ * return values:
+ *    0 if exit with timeout
+ *    1 otherwise
  */
-void QUEUE_WaitBits( WORD bits )
+int QUEUE_WaitBits( WORD bits, DWORD timeout )
 {
     MESSAGEQUEUE *queue;
+    DWORD curTime = 0;
 
     TRACE(msg,"q %04x waiting for %04x\n", GetFastQueue16(), bits);
 
+    if ( THREAD_IsWin16( THREAD_Current() ) && (timeout != INFINITE) )
+        curTime = GetTickCount();
+
+    if (!(queue = (MESSAGEQUEUE *)QUEUE_Lock( GetFastQueue16() ))) return 0;
+    
     for (;;)
     {
-        if (!(queue = (MESSAGEQUEUE *)QUEUE_Lock( GetFastQueue16() ))) return;
-
         if (queue->changeBits & bits)
         {
             /* One of the bits is set; we can return */
             queue->wakeMask = 0;
             QUEUE_Unlock( queue );
-            return;
+            return 1;
         }
         if (queue->wakeBits & QS_SENDMESSAGE)
         {
@@ -693,23 +686,39 @@ void QUEUE_WaitBits( WORD bits )
 
 	    queue->wakeMask = 0;
             QUEUE_ReceiveMessage( queue );
-            QUEUE_Unlock( queue );
 	    continue;				/* nested sm crux */
         }
 
         queue->wakeMask = bits | QS_SENDMESSAGE;
         if(queue->changeBits & bits)
         {
-            QUEUE_Unlock( queue );
             continue;
         }
 	
 	TRACE(msg,"%04x) wakeMask is %04x, waiting\n", queue->self, queue->wakeMask);
 
-        QUEUE_Wait( queue->wakeMask );
+        if ( !THREAD_IsWin16( THREAD_Current() ) )
+        {
+            /* win32 thread, use WaitForMultipleObjects */
+            MsgWaitForMultipleObjects( 0, NULL, FALSE, timeout, queue->wakeMask );
+        }
+        else
+        {
+            if ( timeout == INFINITE )
+                WaitEvent16( 0 );  /* win 16 thread, use WaitEvent */
+            else
+            {
+                /* check for timeout, then give control to other tasks */
+                if (GetTickCount() - curTime > timeout)
+                {
 
         QUEUE_Unlock( queue );
+                    return 0;   /* exit with timeout */
+                }
+                Yield16();
+            }
     }
+}
 }
 
 
@@ -919,54 +928,11 @@ void QUEUE_ReceiveMessage( MESSAGEQUEUE *queue )
     }
     else WARN(sendmsg, "\trcm: bad hWnd\n");
 
-    /* sometimes when we got early reply, the receiver is in charge of
-     freeing up memory associated with smsg */
-    /* when there is an early reply the sender will not release smsg
-     before SMSG_RECEIVED is set */
-    if ( smsg->flags & SMSG_EARLY_REPLY )
-    {
-        /* remove smsg from the waiting list */
-        QUEUE_RemoveSMSG( queue, SM_WAITING_LIST, smsg );
-
-        /* make thread safe when accessing SMSG_SENT_REPLY and
-         SMSG_RECEIVER_CLEANS_UP. Those fleags are used by both thread,
-         the sender and receiver, to find out which thread should released
-         smsg structure. The critical section of the sender queue is used. */
-
-        senderQ = (MESSAGEQUEUE*)QUEUE_Lock( smsg->hSrcQueue );
-
-        /* synchronize with the sender */
-        if (senderQ)
-            EnterCriticalSection( &senderQ->cSection );
-      
-        /* tell the sender we're all done with smsg structure */
-        smsg->flags |= SMSG_RECEIVED;
-
-        /* sender will set SMSG_RECEIVER_CLEANS_UP if it wants the
-         receiver to clean up smsg, it could only happens when there is
-         an early reply */
-        if ( smsg->flags & SMSG_RECEIVER_CLEANS )
-        {
-            TRACE( sendmsg,"Receiver cleans up!\n" );
-            HeapFree( SystemHeap, 0, smsg );
-        }
-
-        /* release lock */
-        if (senderQ)
-        {
-            LeaveCriticalSection( &senderQ->cSection );
-      QUEUE_Unlock( senderQ );
-        }
-    }
-    else
-    {
-        /* no early reply, so do it now */
     
         /* set SMSG_SENDING_REPLY flag to tell ReplyMessage16, it's not
          an early reply */
         smsg->flags |= SMSG_SENDING_REPLY;
         ReplyMessage( result );
-  }  
 
     TRACE( sendmsg,"done! \n" );
 }
