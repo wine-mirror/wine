@@ -40,12 +40,6 @@ enum run_state
     TERMINATED  /* terminated */
 };
 
-struct apc_queue
-{
-    struct thread_apc *head;
-    struct thread_apc *tail;
-};
-
 /* descriptor for fds currently in flight from client to server */
 struct inflight_fd
 {
@@ -68,8 +62,8 @@ struct thread
     struct debug_event    *debug_event;   /* debug event being sent to debugger */
     struct msg_queue      *queue;         /* message queue */
     struct thread_wait    *wait;          /* current wait condition if sleeping */
-    struct apc_queue       system_apc;    /* queue of system async procedure calls */
-    struct apc_queue       user_apc;      /* queue of user async procedure calls */
+    struct list            system_apc;    /* queue of system async procedure calls */
+    struct list            user_apc;      /* queue of user async procedure calls */
     struct inflight_fd     inflight[MAX_INFLIGHT_FDS];  /* fds currently in flight */
     unsigned int           error;         /* current error code */
     union generic_request  req;           /* current request */

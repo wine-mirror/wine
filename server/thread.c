@@ -62,8 +62,7 @@ struct thread_wait
 
 struct thread_apc
 {
-    struct thread_apc  *next;     /* queue linked list */
-    struct thread_apc  *prev;
+    struct list         entry;    /* queue linked list */
     struct object      *owner;    /* object that queued this apc */
     void               *func;     /* function to call in client */
     enum apc_type       type;     /* type of apc function */
@@ -121,10 +120,6 @@ inline static void init_thread_structure( struct thread *thread )
     thread->debug_event     = NULL;
     thread->queue           = NULL;
     thread->wait            = NULL;
-    thread->system_apc.head = NULL;
-    thread->system_apc.tail = NULL;
-    thread->user_apc.head   = NULL;
-    thread->user_apc.tail   = NULL;
     thread->error           = 0;
     thread->req_data        = NULL;
     thread->req_toread      = 0;
@@ -143,6 +138,9 @@ inline static void init_thread_structure( struct thread *thread )
     thread->suspend         = 0;
     thread->creation_time   = time(NULL);
     thread->exit_time       = 0;
+
+    list_init( &thread->system_apc );
+    list_init( &thread->user_apc );
 
     for (i = 0; i < MAX_INFLIGHT_FDS; i++)
         thread->inflight[i].server = thread->inflight[i].client = -1;
@@ -451,8 +449,8 @@ static int check_wait( struct thread *thread )
     }
 
  other_checks:
-    if ((wait->flags & SELECT_INTERRUPTIBLE) && thread->system_apc.head) return STATUS_USER_APC;
-    if ((wait->flags & SELECT_ALERTABLE) && thread->user_apc.head) return STATUS_USER_APC;
+    if ((wait->flags & SELECT_INTERRUPTIBLE) && !list_empty(&thread->system_apc)) return STATUS_USER_APC;
+    if ((wait->flags & SELECT_ALERTABLE) && !list_empty(&thread->user_apc)) return STATUS_USER_APC;
     if (wait->flags & SELECT_TIMEOUT)
     {
         struct timeval now;
@@ -588,28 +586,22 @@ int thread_queue_apc( struct thread *thread, struct object *owner, void *func,
                       enum apc_type type, int system, void *arg1, void *arg2, void *arg3 )
 {
     struct thread_apc *apc;
-    struct apc_queue *queue = system ? &thread->system_apc : &thread->user_apc;
+    struct list *queue = system ? &thread->system_apc : &thread->user_apc;
 
     /* cancel a possible previous APC with the same owner */
     if (owner) thread_cancel_apc( thread, owner, system );
     if (thread->state == TERMINATED) return 0;
 
     if (!(apc = mem_alloc( sizeof(*apc) ))) return 0;
-    apc->prev   = queue->tail;
-    apc->next   = NULL;
     apc->owner  = owner;
     apc->func   = func;
     apc->type   = type;
     apc->arg1   = arg1;
     apc->arg2   = arg2;
     apc->arg3   = arg3;
-    queue->tail = apc;
-    if (!apc->prev)  /* first one */
-    {
-        queue->head = apc;
+    list_add_tail( queue, &apc->entry );
+    if (!list_prev( queue, &apc->entry ))  /* first one */
         wake_thread( thread );
-    }
-    else apc->prev->next = apc;
 
     return 1;
 }
@@ -618,14 +610,11 @@ int thread_queue_apc( struct thread *thread, struct object *owner, void *func,
 void thread_cancel_apc( struct thread *thread, struct object *owner, int system )
 {
     struct thread_apc *apc;
-    struct apc_queue *queue = system ? &thread->system_apc : &thread->user_apc;
-    for (apc = queue->head; apc; apc = apc->next)
+    struct list *queue = system ? &thread->system_apc : &thread->user_apc;
+    LIST_FOR_EACH_ENTRY( apc, queue, struct thread_apc, entry )
     {
         if (apc->owner != owner) continue;
-        if (apc->next) apc->next->prev = apc->prev;
-        else queue->tail = apc->prev;
-        if (apc->prev) apc->prev->next = apc->next;
-        else queue->head = apc->next;
+        list_remove( &apc->entry );
         free( apc );
         return;
     }
@@ -634,15 +623,14 @@ void thread_cancel_apc( struct thread *thread, struct object *owner, int system 
 /* remove the head apc from the queue; the returned pointer must be freed by the caller */
 static struct thread_apc *thread_dequeue_apc( struct thread *thread, int system_only )
 {
-    struct thread_apc *apc;
-    struct apc_queue *queue = &thread->system_apc;
+    struct thread_apc *apc = NULL;
+    struct list *ptr = list_head( &thread->system_apc );
 
-    if (!queue->head && !system_only) queue = &thread->user_apc;
-    if ((apc = queue->head))
+    if (!ptr && !system_only) ptr = list_head( &thread->user_apc );
+    if (ptr)
     {
-        if (apc->next) apc->next->prev = NULL;
-        else queue->tail = NULL;
-        queue->head = apc->next;
+        apc = LIST_ENTRY( ptr, struct thread_apc, entry );
+        list_remove( ptr );
     }
     return apc;
 }
