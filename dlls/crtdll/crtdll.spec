@@ -1,6 +1,6 @@
 # C RunTime DLL. All functions use cdecl!
-name	crtdll
-type	win32
+name    crtdll
+type    win32
 init    CRTDLL_Init
 
 import kernel32.dll
@@ -150,16 +150,16 @@ debug_channels (crtdll)
 @ stub _ismbbalpha
 @ stub _ismbbgraph
 @ stub _ismbbkalnum
-@ stub _ismbbkana
+@ cdecl _ismbbkana(long) CRTDLL__ismbbkana
 @ stub _ismbbkpunct
-@ stub _ismbblead
+@ cdecl _ismbblead(long) CRTDLL__ismbblead
 @ stub _ismbbprint
 @ stub _ismbbpunct
-@ stub _ismbbtrail
+@ cdecl _ismbbtrail(long) CRTDLL__ismbbtrail
 @ stub _ismbcalpha
 @ stub _ismbcdigit
-@ stub _ismbchira
-@ stub _ismbckata
+@ cdecl _ismbchira(long) CRTDLL__ismbchira
+@ cdecl _ismbckata(long) CRTDLL__ismbckata
 @ stub _ismbcl0
 @ stub _ismbcl1
 @ stub _ismbcl2
@@ -169,11 +169,10 @@ debug_channels (crtdll)
 @ stub _ismbcspace
 @ stub _ismbcsymbol
 @ stub _ismbcupper
-@ stub _ismbslead
-@ stub _ismbstrail
+@ cdecl _ismbslead(ptr ptr) CRTDLL__ismbslead
+@ cdecl _ismbstrail(ptr ptr) CRTDLL__ismbstrail
 @ cdecl _isnan(double) CRTDLL__isnan
 @ forward _itoa ntdll._itoa
-@ cdecl _itow(long str long) CRTDLL__itow
 @ cdecl _j0(double) j0
 @ cdecl _j1(double) j1
 @ cdecl _jn(long double) jn
@@ -188,28 +187,27 @@ debug_channels (crtdll)
 @ cdecl _lsearch(ptr ptr long long ptr) CRTDLL__lsearch
 @ cdecl _lseek(long long long) CRTDLL__lseek
 @ forward _ltoa ntdll._ltoa
-@ cdecl _ltow(long str long) CRTDLL__ltow
 @ cdecl _makepath (ptr str str str str) CRTDLL__makepath
 @ cdecl _matherr(ptr) CRTDLL__matherr
-@ stub _mbbtombc
+@ cdecl _mbbtombc(long) CRTDLL__mbbtombc
 @ stub _mbbtype
-@ cdecl _mbccpy (str str) CRTDLL__mbccpy
+@ cdecl _mbccpy (str str) strcpy
 @ stub _mbcjistojms
 @ stub _mbcjmstojis
-@ stub _mbclen
+@ cdecl _mbclen(long) CRTDLL__mbclen
 @ stub _mbctohira
 @ stub _mbctokata
 @ stub _mbctolower
 @ stub _mbctombb
 @ stub _mbctoupper
-@ stub _mbctype
+@ extern _mbctype CRTDLL_mbctype
 @ stub _mbsbtype
 @ cdecl _mbscat(str str) strcat
-@ stub _mbschr
-@ stub _mbscmp
+@ cdecl _mbschr(str long) CRTDLL__mbschr
+@ cdecl _mbscmp(str str) CRTDLL__mbscmp
 @ cdecl _mbscpy(ptr str) strcpy
 @ stub _mbscspn
-@ stub _mbsdec
+@ cdecl _mbsdec(str str) CRTDLL__mbsdec
 @ cdecl _mbsdup(str) CRTDLL__strdup
 @ cdecl _mbsicmp(str str) CRTDLL__mbsicmp
 @ cdecl _mbsinc(str) CRTDLL__mbsinc
@@ -221,23 +219,23 @@ debug_channels (crtdll)
 @ stub _mbsnbcpy
 @ stub _mbsnbicmp
 @ stub _mbsnbset
-@ stub _mbsncat
-@ stub _mbsnccnt
-@ stub _mbsncmp
-@ stub _mbsncpy
-@ stub _mbsnextc
-@ stub _mbsnicmp
-@ stub _mbsninc
-@ stub _mbsnset
+@ cdecl _mbsncat(str str long) CRTDLL__mbsncat
+@ cdecl _mbsnccnt(str long) CRTDLL__mbsnccnt
+@ cdecl _mbsncmp(str str long) CRTDLL__mbsncmp
+@ cdecl _mbsncpy(str str long) CRTDLL__mbsncpy
+@ cdecl _mbsnextc(str) CRTDLL__mbsnextc
+@ cdecl _mbsnicmp(str str long) CRTDLL__mbsncmp
+@ cdecl _mbsninc(str long) CRTDLL__mbsninc
+@ cdecl _mbsnset(str long long) CRTDLL__mbsnset
 @ stub _mbspbrk
 @ cdecl _mbsrchr(str long) CRTDLL__mbsrchr
 @ stub _mbsrev
-@ stub _mbsset
+@ cdecl _mbsset(str long) CRTDLL__mbsset
 @ stub _mbsspn
 @ stub _mbsspnp
-@ stub _mbsstr
+@ cdecl _mbsstr(str str) strstr
 @ stub _mbstok
-@ stub _mbstrlen
+@ cdecl _mbstrlen(str) CRTDLL__mbstrlen
 @ stub _mbsupr
 @ cdecl _memccpy(ptr ptr long long) memccpy
 @ forward _memicmp ntdll._memicmp
@@ -534,3 +532,5 @@ debug_channels (crtdll)
 @ cdecl wctomb(ptr long) CRTDLL_wctomb
 @ stub wprintf
 @ stub wscanf
+#@ cdecl _itow(long str long) CRTDLL__itow
+#@ cdecl _ltow(long str long) CRTDLL__ltow

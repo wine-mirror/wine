@@ -80,7 +80,10 @@ INT __cdecl CRTDLL__abnormal_termination(VOID)
  */
 VOID __cdecl CRTDLL__amsg_exit(INT err)
 {
-  CRTDLL_fprintf(CRTDLL_stderr,"\nrun-time error:\nError Code %d\n",err);
+  /* FIXME: Should be a popup for msvcrt gui executables, and should have
+   * text for the error number.
+   */
+  CRTDLL_fprintf(CRTDLL_stderr,"\nruntime error R60%d\n",err);
   CRTDLL__exit(255);
 }
 

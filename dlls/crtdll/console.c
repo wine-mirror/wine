@@ -306,8 +306,8 @@ INT __cdecl CRTDLL__kbhit(VOID)
   {
     /* FIXME: There has to be a faster way than this in Win32.. */
     INPUT_RECORD *ir;
-    DWORD count = 0;
-    int retVal = 0, i;
+    DWORD count = 0, i;
+    int retVal = 0;
 
     GetNumberOfConsoleInputEvents(__CRTDLL_console_in, &count);
     if (!count)
@@ -316,19 +316,17 @@ INT __cdecl CRTDLL__kbhit(VOID)
     if (!(ir = CRTDLL_malloc(count * sizeof(INPUT_RECORD))))
       return 0;
 
-    if (!PeekConsoleInputA(__CRTDLL_console_in, ir, count, &count))
-      return 0;
-
-    for(i = 0; i < count - 1; i++)
-    {
-      if (ir[i].EventType == KEY_EVENT &&
-          ir[i].Event.KeyEvent.bKeyDown &&
-          ir[i].Event.KeyEvent.uChar.AsciiChar)
+    if (PeekConsoleInputA(__CRTDLL_console_in, ir, count, &count))
+      for(i = 0; i < count - 1; i++)
       {
-        retVal = 1;
-        break;
+        if (ir[i].EventType == KEY_EVENT &&
+            ir[i].Event.KeyEvent.bKeyDown &&
+            ir[i].Event.KeyEvent.uChar.AsciiChar)
+        {
+          retVal = 1;
+          break;
+        }
       }
-    }
     CRTDLL_free(ir);
     return retVal;
   }

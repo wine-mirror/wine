@@ -325,8 +325,8 @@ LPSTR  __cdecl CRTDLL_gets( LPSTR buf );
 INT    __cdecl CRTDLL_fclose( CRTDLL_FILE* file );
 INT    __cdecl CTRDLL__creat( LPCSTR path, INT flags );
 INT    __cdecl CRTDLL__eof( INT fd );
-LONG   __cdecl CRTDLL__tell(INT fd);
-INT    __cdecl CRTDLL__umask(INT umask);
+LONG   __cdecl CRTDLL__tell( INT fd );
+INT    __cdecl CRTDLL__umask( INT umask );
 INT    __cdecl CRTDLL__utime( LPCSTR path, struct _utimbuf *t );
 INT    __cdecl CRTDLL__unlink( LPCSTR pathname );
 INT    __cdecl CRTDLL_scanf( LPCSTR format, ... );
@@ -350,7 +350,7 @@ VOID   __cdecl CRTDLL__local_unwind2( PEXCEPTION_FRAME endframe, DWORD nr );
 INT    __cdecl CRTDLL__setjmp( LPDWORD *jmpbuf );
 VOID   __cdecl CRTDLL_srand( DWORD seed );
 INT    __cdecl CRTDLL__getw( CRTDLL_FILE* file );
-INT    __cdecl CRTDLL__isatty(INT fd);
+INT    __cdecl CRTDLL__isatty( INT fd );
 VOID   __cdecl CRTDLL__beep( UINT freq, UINT duration );
 INT    __cdecl CRTDLL_rand( VOID );
 UINT   __cdecl CRTDLL__rotl( UINT x,INT shift );
@@ -359,13 +359,12 @@ DWORD  __cdecl CRTDLL__lrotl( DWORD x,INT shift );
 DWORD  __cdecl CRTDLL__lrotr( DWORD x,INT shift );
 DWORD  __cdecl CRTDLL__rotr( UINT x,INT shift );
 double __cdecl CRTDLL__scalb( double x, LONG y );
-INT    __cdecl CRTDLL__mbsicmp( unsigned char *x,unsigned char *y );
 INT    __cdecl CRTDLL_vswprintf( LPWSTR buffer, LPCWSTR spec, va_list args );
 VOID   __cdecl CRTDLL_longjmp( jmp_buf env, int val );
 LPSTR  __cdecl CRTDLL_setlocale( INT category,LPCSTR locale );
 INT    __cdecl CRTDLL__isctype( INT c, UINT type );
 LPSTR  __cdecl CRTDLL__fullpath( LPSTR buf, LPCSTR name, INT size );
-VOID   __cdecl CRTDLL__splitpath(LPCSTR inpath, LPSTR drv, LPSTR dir,
+VOID   __cdecl CRTDLL__splitpath( LPCSTR inpath, LPSTR drv, LPSTR dir,
                                  LPSTR fname, LPSTR ext );
 INT    __cdecl CRTDLL__matherr( struct _exception *e );
 VOID   __cdecl CRTDLL__makepath( LPSTR path, LPCSTR drive,
@@ -396,7 +395,6 @@ INT    __cdecl CRTDLL_isupper( INT c);
 INT    __cdecl CRTDLL_isxdigit( INT c );
 INT    __cdecl CRTDLL_isleadbyte( UCHAR c );
 double __cdecl CRTDLL_ldexp( double x, LONG y );
-LPSTR  __cdecl CRTDLL__mbsrchr( LPSTR s,CHAR x );
 VOID   __cdecl CRTDLL___dllonexit ( VOID );
 VOID   __cdecl CRTDLL__mbccpy( LPSTR dest, LPSTR src );
 INT    __cdecl CRTDLL___isascii( INT c );
@@ -485,6 +483,30 @@ LPWSTR __cdecl CRTDLL__wcsset( LPWSTR str, WCHAR c );
 DWORD  __cdecl CRTDLL_wcscoll( LPCWSTR str1, LPCWSTR str2 );
 LPWSTR __cdecl CRTDLL_wcspbrk( LPCWSTR str, LPCWSTR accept );
 INT    __cdecl CRTDLL_wctomb( LPSTR dst, WCHAR ch );
+LPSTR  __cdecl CRTDLL__mbsdec( LPCSTR start, LPCSTR cur );
+LPSTR  __cdecl CRTDLL__mbsninc( LPCSTR str, INT num );
+INT    __cdecl CRTDLL__mbscmp( LPCSTR str, LPCSTR cmp );
+INT    __cdecl CRTDLL__mbsicmp( LPCSTR str, LPCSTR cmp );
+INT    __cdecl CRTDLL__mbsncmp( LPCSTR str, LPCSTR cmp, UINT len );
+INT    __cdecl CRTDLL__mbsnicmp( LPCSTR str, LPCSTR cmp, UINT len );
+LPSTR  __cdecl CRTDLL__mbsrchr( LPCSTR s,CHAR x );
+USHORT __cdecl CRTDLL__mbbtombc( USHORT c );
+INT    __cdecl CRTDLL__mbclen( LPCSTR str );
+INT    __cdecl CRTDLL__ismbbkana( UINT c );
+INT    __cdecl CRTDLL__ismbckata( UINT c );
+INT    __cdecl CRTDLL__ismbchira( UINT c );
+INT    __cdecl CRTDLL__ismbblead( UINT c );
+INT    __cdecl CRTDLL__ismbslead( LPCSTR start, LPCSTR str);
+INT    __cdecl CRTDLL__ismbbtrail( UINT c );
+INT    __cdecl CRTDLL__ismbstrail( LPCSTR start, LPCSTR str );
+LPSTR  __cdecl CRTDLL__mbsset( LPSTR str, UINT c );
+LPSTR  __cdecl CRTDLL__mbsnset( LPSTR str, UINT c, UINT len );
+INT    __cdecl CRTDLL__mbstrlen( LPCSTR str );
+UINT   __cdecl CRTDLL__mbsnextc( LPCSTR str );
+LPSTR  __cdecl CRTDLL__mbsncpy( LPSTR dst, LPCSTR src, UINT len );
+LPSTR  __cdecl CRTDLL__mbschr( LPCSTR str, UINT c );
+UINT   __cdecl CRTDLL__mbsnccnt( LPCSTR str, UINT len );
+LPSTR  __cdecl CRTDLL__mbsncat( LPSTR dst, LPCSTR src, UINT len );
 
 /* wcstring.c */
 INT    __cdecl CRTDLL_iswalnum( WCHAR wc );
@@ -519,9 +541,11 @@ VOID   __CRTDLL_init_console(VOID);
 VOID   __CRTDLL_free_console(VOID);
 
 extern WORD CRTDLL_ctype [257];
+extern UCHAR CRTDLL_mbctype[257];
 extern WORD __CRTDLL_current_ctype[257];
 extern WORD* CRTDLL_pctype_dll;
 extern INT CRTDLL__mb_cur_max_dll;
 extern LCID __CRTDLL_current_lc_all_lcid;
+extern UINT __CRTDLL_current_lc_all_cp;
 
 #endif /* __WINE_CRTDLL_H */

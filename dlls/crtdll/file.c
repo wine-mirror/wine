@@ -888,9 +888,9 @@ INT __cdecl CRTDLL__putw(INT val, CRTDLL_FILE* file)
  */
 INT __cdecl CRTDLL__rmtmp(void)
 {
-  int num_removed = 0, i = 3;
+  int num_removed = 0, i;
 
-  while(i < __CRTDLL_fdend)
+  for (i = 3; i < __CRTDLL_fdend; i++)
     if (__CRTDLL_tempfiles[i])
     {
       CRTDLL__close(i);
@@ -1281,7 +1281,7 @@ WCHAR __cdecl CRTDLL_fputwc( WCHAR wc, CRTDLL_FILE* file)
  */
 INT __cdecl CRTDLL_fputs( LPCSTR s, CRTDLL_FILE* file )
 {
-  return CRTDLL_fwrite(s,strlen(s),1,file);
+  return CRTDLL_fwrite(s,strlen(s),1,file) == 1 ? 0 : CRTDLL_EOF;
 }
 
 

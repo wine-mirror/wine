@@ -9,6 +9,7 @@ CHAR
 DWORD
 HANDLE
 INT
+USHORT
 LONG
 ULONG
 UINT
@@ -17,7 +18,6 @@ UCHAR
 clock_t
 size_t
 time_t
-unsigned char
 
 %long # --forbidden
 
@@ -28,13 +28,12 @@ unsigned long
 %longlong
  
 LONGLONG
+ULONGLONG
 
 %ptr
 
 CHAR *
 CRTDLL_FILE *
-CRTDLL_fpos_t *
-LPCSTR *
 LPCVOID
 LPDWORD
 LPDWORD *
@@ -42,12 +41,12 @@ LPINT
 LPUINT
 LPSTR *
 LPSTR **
+LPCSTR *
 LPVOID
 PCONTEXT
 PEXCEPTION_FRAME
 PEXCEPTION_FRAME *
 PEXCEPTION_RECORD
-PINT
 VOID *
 WCHAR *
 _INITTERMFUN *
@@ -60,6 +59,7 @@ time_t *
 struct _heapinfo *
 struct _utimbuf *
 struct _exception *
+CRTDLL_fpos_t *
 diskfree_t *
 unsigned char *
 va_list

@@ -36,14 +36,11 @@
  * a table for a supported Wine locale, mail it to me and
  * I will add the needed support (jon_p_griffiths@yahoo.com).
  */
-
 #include "crtdll.h"
-
+#include "winnt.h"
 #include <string.h>
 #include <stdlib.h>
 #include <stdio.h>
-
-#include "winnt.h"
 
 DEFAULT_DEBUG_CHANNEL(crtdll);
 
@@ -55,6 +52,7 @@ DEFAULT_DEBUG_CHANNEL(crtdll);
  */
 char __CRTDLL_current_lc_all[MAX_LOCALE_LENGTH];
 LCID __CRTDLL_current_lc_all_lcid;
+UINT __CRTDLL_current_lc_all_cp;
 
 /* Friendly country strings & iso codes for synonym support.
  * Based on MS documentation for setlocale().
@@ -80,7 +78,7 @@ static const char* _country_synonyms[] =
 /* INTERNAL: Map a synonym to an ISO code */
 static void remap_synonym(char *name)
 {
-  int i;
+  size_t i;
   for (i = 0; i < sizeof(_country_synonyms)/sizeof(char*); i += 2 )
   {
     if (!strcasecmp(_country_synonyms[i],name))
@@ -271,6 +269,7 @@ static void __CRTDLL_set_ctype(UINT codepage, LCID lcid)
     unsigned char *traverse = (unsigned char *)cp.LeadByte;
 
     memset(__CRTDLL_current_ctype, 0, sizeof(CRTDLL_ctype));
+    __CRTDLL_current_lc_all_cp = codepage;
 
     /* Switch ctype macros to MBCS if needed */
     CRTDLL__mb_cur_max_dll = cp.MaxCharSize;
@@ -330,29 +329,28 @@ LPSTR __cdecl CRTDLL_setlocale(INT category, LPCSTR locale)
   /* Default Locale: Special case handling */
   if (!strlen(locale) || ((toupper(locale[0]) == 'C') && !locale[1]))
   {
-    if ((toupper(__CRTDLL_current_lc_all[0]) != 'C')
-        || __CRTDLL_current_lc_all[1])
-    {
-      __CRTDLL_current_lc_all[0] = 'C';
-      __CRTDLL_current_lc_all[1] = 0;
-      switch (category) {
-      case CRTDLL_LC_ALL:
-        lc_all = 1; /* Fall through all cases ... */
-      case CRTDLL_LC_COLLATE:
-        if (!lc_all) break;
-      case CRTDLL_LC_CTYPE:
-        /* Restore C locale ctype info */
-        CRTDLL__mb_cur_max_dll = 1;
-        memcpy(__CRTDLL_current_ctype, CRTDLL_ctype, sizeof(CRTDLL_ctype));
-        if (!lc_all) break;
-      case CRTDLL_LC_MONETARY:
-        if (!lc_all) break;
-      case CRTDLL_LC_NUMERIC:
-        if (!lc_all) break;
-      case CRTDLL_LC_TIME:
-      }
-      return __CRTDLL_current_lc_all;
+    __CRTDLL_current_lc_all[0] = 'C';
+    __CRTDLL_current_lc_all[1] = '\0';
+    __CRTDLL_current_lc_all_cp = GetACP();
+
+    switch (category) {
+    case CRTDLL_LC_ALL:
+      lc_all = 1; /* Fall through all cases ... */
+    case CRTDLL_LC_COLLATE:
+      if (!lc_all) break;
+    case CRTDLL_LC_CTYPE:
+      /* Restore C locale ctype info */
+      CRTDLL__mb_cur_max_dll = 1;
+      memcpy(__CRTDLL_current_ctype, CRTDLL_ctype, sizeof(CRTDLL_ctype));
+      memset(CRTDLL_mbctype, 0, sizeof(CRTDLL_mbctype));
+      if (!lc_all) break;
+    case CRTDLL_LC_MONETARY:
+      if (!lc_all) break;
+    case CRTDLL_LC_NUMERIC:
+      if (!lc_all) break;
+    case CRTDLL_LC_TIME:
     }
+    return __CRTDLL_current_lc_all;
   }
 
   /* Get locale elements */

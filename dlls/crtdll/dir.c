@@ -177,8 +177,7 @@ INT __cdecl CRTDLL__findnext(DWORD hand, find_t * ft)
 
   if (!FindNextFileA(hand, &find_data))
   {
-    SetLastError(ERROR_INVALID_DRIVE);
-    __CRTDLL__set_errno(GetLastError());
+    CRTDLL_errno = ENOENT;
     return -1;
   }
 

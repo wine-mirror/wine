@@ -67,7 +67,7 @@ UINT CRTDLL_osminor_dll;      /* CRTDLL.242 */
 UINT CRTDLL_osmode_dll;       /* CRTDLL.243 */
 UINT CRTDLL_osver_dll;        /* CRTDLL.244 */
 UINT CRTDLL_osversion_dll;    /* CRTDLL.245 */
-LONG CRTDLL_timezone_dll = 1; /* CRTDLL.245 */
+LONG CRTDLL_timezone_dll = 0; /* CRTDLL.304 */
 UINT CRTDLL_winmajor_dll;     /* CRTDLL.329 */
 UINT CRTDLL_winminor_dll;     /* CRTDLL.330 */
 UINT CRTDLL_winver_dll;       /* CRTDLL.331 */
@@ -840,7 +840,7 @@ LPSTR __cdecl CRTDLL__fullpath(LPSTR absPath, LPCSTR relPath, INT size)
   fln_fix(res);
 
   len = strlen(res);
-  if (len >= MAX_PATH || len >= size)
+  if (len >= MAX_PATH || len >= (size_t)size)
     return NULL; /* FIXME: errno? */
 
   if (!absPath)
@@ -1724,7 +1724,7 @@ INT __cdecl  CRTDLL__isnan(double d)
  */
 VOID __cdecl CRTDLL__purecall(VOID)
 {
-  CRTDLL__amsg_exit( 6025 );
+  CRTDLL__amsg_exit( 25 );
 }
 
 
@@ -1771,11 +1771,11 @@ div_t __cdecl CRTDLL_div(INT x, INT y)
  * 	[i386] Windows binary compatible - returns the struct in eax/edx.
  */
 #ifdef __i386__
-LONGLONG __cdecl CRTDLL_ldiv(LONG x, LONG y)
+ULONGLONG __cdecl CRTDLL_ldiv(LONG x, LONG y)
 {
-  LONGLONG retVal;
+  ULONGLONG retVal;
   ldiv_t ldt = ldiv(x,y);
-  retVal = ((LONGLONG)ldt.rem << 32) | ldt.quot;
+  retVal = ((ULONGLONG)ldt.rem << 32) | (ULONG)ldt.quot;
   return retVal;
 }
 #endif /* defined(__i386__) */
