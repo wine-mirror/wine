@@ -2680,13 +2680,13 @@ typedef struct tagTVKEYDOWN
 #define TreeView_GetItemA(hwnd, pitem) \
  (BOOL)SNDMSGA((hwnd), TVM_GETITEMA, 0, (LPARAM) (TVITEMA *)(pitem))
 #define TreeView_GetItemW(hwnd, pitem) \
- (BOOL)SNDMSGW((hwnd), TVM_GETITEMA, 0, (LPARAM) (TVITEMA *)(pitem))
+ (BOOL)SNDMSGW((hwnd), TVM_GETITEMW, 0, (LPARAM) (TVITEMW *)(pitem))
 #define TreeView_GetItem WINELIB_NAME_AW(TreeView_GetItem)
 
 #define TreeView_SetItemA(hwnd, pitem) \
  (BOOL)SNDMSGA((hwnd), TVM_SETITEMA, 0, (LPARAM)(const TVITEMA *)(pitem))
 #define TreeView_SetItemW(hwnd, pitem) \
- (BOOL)SNDMSGW((hwnd), TVM_SETITEMA, 0, (LPARAM)(const TVITEMA *)(pitem))
+ (BOOL)SNDMSGW((hwnd), TVM_SETITEMW, 0, (LPARAM)(const TVITEMW *)(pitem))
 #define TreeView_SetItem WINELIB_NAME_AW(TreeView_SetItem)
 
 #define TreeView_EditLabel(hwnd, hitem) \
@@ -3944,19 +3944,19 @@ static const WCHAR WC_TABCONTROLW[] = { 'S','y','s',
 #define TabCtrl_GetItemCount(hwnd) \
     (int)SNDMSGA((hwnd), TCM_GETITEMCOUNT, 0, 0L)
 #define TabCtrl_GetItemA(hwnd, iItem, pitem) \
-    (BOOL)SNDMSGA((hwnd), TCM_GETITEM, (WPARAM)(int)iItem, (LPARAM)(TC_ITEM *)(pitem))
+    (BOOL)SNDMSGA((hwnd), TCM_GETITEMA, (WPARAM)(int)iItem, (LPARAM)(TCITEMA *)(pitem))
 #define TabCtrl_GetItemW(hwnd, iItem, pitem) \
-    (BOOL)SNDMSGW((hwnd), TCM_GETITEM, (WPARAM)(int)iItem, (LPARAM)(TC_ITEM *)(pitem))
+    (BOOL)SNDMSGW((hwnd), TCM_GETITEMW, (WPARAM)(int)iItem, (LPARAM)(TCITEMW *)(pitem))
 #define TabCtrl_GetItem WINELIB_NAME_AW(TabCtrl_GetItem)
 #define TabCtrl_SetItemA(hwnd, iItem, pitem) \
-    (BOOL)SNDMSGA((hwnd), TCM_SETITEM, (WPARAM)(int)iItem, (LPARAM)(TC_ITEM *)(pitem))
+    (BOOL)SNDMSGA((hwnd), TCM_SETITEMA, (WPARAM)(int)iItem, (LPARAM)(TCITEMA *)(pitem))
 #define TabCtrl_SetItemW(hwnd, iItem, pitem) \
-    (BOOL)SNDMSGW((hwnd), TCM_SETITEM, (WPARAM)(int)iItem, (LPARAM)(TC_ITEM *)(pitem))
+    (BOOL)SNDMSGW((hwnd), TCM_SETITEMW, (WPARAM)(int)iItem, (LPARAM)(TCITEMW *)(pitem))
 #define TabCtrl_SetItem WINELIB_NAME_AW(TabCtrl_SetItem)
 #define TabCtrl_InsertItemA(hwnd, iItem, pitem)   \
-    (int)SNDMSGA((hwnd), TCM_INSERTITEM, (WPARAM)(int)iItem, (LPARAM)(const TC_ITEM *)(pitem))
+    (int)SNDMSGA((hwnd), TCM_INSERTITEMA, (WPARAM)(int)iItem, (LPARAM)(const TCITEMA *)(pitem))
 #define TabCtrl_InsertItemW(hwnd, iItem, pitem)   \
-    (int)SNDMSGW((hwnd), TCM_INSERTITEM, (WPARAM)(int)iItem, (LPARAM)(const TC_ITEM *)(pitem))
+    (int)SNDMSGW((hwnd), TCM_INSERTITEMW, (WPARAM)(int)iItem, (LPARAM)(const TCITEMW *)(pitem))
 #define TabCtrl_InsertItem WINELIB_NAME_AW(TabCtrl_InsertItem)
 #define TabCtrl_DeleteItem(hwnd, i) \
     (BOOL)SNDMSGA((hwnd), TCM_DELETEITEM, (WPARAM)(int)(i), 0L)
@@ -4742,11 +4742,11 @@ DECL_WINELIB_TYPE_AW(LPNMDATETIMEFORMATQUERY)
   (DWORD)SNDMSGA (hdp, DTM_GETRANGE, 0, (LPARAM)(rgst))
 #define DateTime_SetRange(hdp, gd, rgst) \
    (BOOL)SNDMSGA (hdp, DTM_SETRANGE, (WPARAM)(gd), (LPARAM)(rgst))
-#define DateTime_SetFormat WINELIB_NAME_AW(DateTime_SetFormat)
 #define DateTime_SetFormatA(hdp, sz)  \
-  (BOOL)SNDMSGA (hdp, DTM_SETFORMAT, 0, (LPARAM)(sz))
+  (BOOL)SNDMSGA (hdp, DTM_SETFORMATA, 0, (LPARAM)(sz))
 #define DateTime_SetFormatW(hdp, sz)  \
-  (BOOL)SNDMSGW (hdp, DTM_SETFORMAT, 0, (LPARAM)(sz))
+  (BOOL)SNDMSGW (hdp, DTM_SETFORMATW, 0, (LPARAM)(sz))
+#define DateTime_SetFormat WINELIB_NAME_AW(DateTime_SetFormat)
 #define DateTime_GetMonthCalColor(hdp, iColor) \
   SNDMSGA (hdp, DTM_GETMCCOLOR, iColor, 0)
 #define DateTime_GetMonthCal(hdp)  \
