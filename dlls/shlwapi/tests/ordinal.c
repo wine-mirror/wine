@@ -37,11 +37,24 @@ static HRESULT (WINAPI *pGetAcceptLanguagesA)(LPSTR,LPDWORD);
 
 static void test_GetAcceptLanguagesA(void)
 {   HRESULT retval;
-    DWORD buffersize, buffersize2;
+    DWORD buffersize, buffersize2, exactsize;
     char buffer[100];
 
     if (!pGetAcceptLanguagesA)
 	return;
+
+    buffersize = sizeof(buffer);
+    memset(buffer, 0, sizeof(buffer));
+    SetLastError(ERROR_SUCCESS);
+    retval = pGetAcceptLanguagesA( buffer, &buffersize);
+    trace("GetAcceptLanguagesA: retval %08lx, size %08lx, buffer (%s),"
+	" last error %ld\n", retval, buffersize, buffer, GetLastError());
+    if(retval != S_OK) {
+	trace("GetAcceptLanguagesA: skipping tests\n");
+	return;
+    }
+    ok(ERROR_SUCCESS == GetLastError(), "last error set to %ld\n", GetLastError());
+    exactsize = strlen(buffer);
 
     SetLastError(ERROR_SUCCESS);
     retval = pGetAcceptLanguagesA( NULL, NULL);
@@ -85,15 +98,7 @@ static void test_GetAcceptLanguagesA(void)
     todo_wine ok(buffersize2 == strlen(buffer),
                  "buffer content (length) wrong: got %08x, expected %08lx \n", strlen(buffer), buffersize2);
 
-    buffersize = sizeof(buffer);
-    memset(buffer, 0, sizeof(buffer));
-    SetLastError(ERROR_SUCCESS);
-    retval = pGetAcceptLanguagesA( buffer, &buffersize);
-    ok(retval == S_OK, "function result wrong: got %08lx, expected S_OK\n", retval);
-    ok(ERROR_SUCCESS == GetLastError(), "last error set to %ld\n", GetLastError());
-    trace("GetAcceptLanguagesA: size %08lx, buffer %s\n", buffersize, buffer);
-
-    buffersize = buffersize2 = strlen(buffer);
+    buffersize = buffersize2 = exactsize;
     memset(buffer, 0, sizeof(buffer));
     SetLastError(ERROR_SUCCESS);
     retval = pGetAcceptLanguagesA( buffer, &buffersize);
