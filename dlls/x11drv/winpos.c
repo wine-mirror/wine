@@ -417,7 +417,7 @@ BOOL X11DRV_GetDC( HWND hwnd, HDC hdc, HRGN hrgn, DWORD flags )
     if (top != hwnd)
     {
         escape.drawable_org.x = escape.drawable_org.y = 0;
-        if (flags & DCX_WINDOW)
+        if (flags & (DCX_WINDOW|DCX_PARENTCLIP))
         {
             escape.org.x = win->rectWindow.left - win->rectClient.left;
             escape.org.y = win->rectWindow.top - win->rectClient.top;
