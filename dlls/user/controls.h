@@ -113,9 +113,6 @@ typedef struct
    INT            editHeight;     /* explicitly */
 } HEADCOMBO,*LPHEADCOMBO;
 
-/* Note, that CBS_DROPDOWNLIST style is actually (CBS_SIMPLE | CBS_DROPDOWN) */
-#define CB_GETTYPE( lphc )    ((lphc)->dwStyle & (CBS_DROPDOWNLIST))
-
 extern BOOL COMBO_FlipListbox( LPHEADCOMBO, BOOL, BOOL );
 
 /* Dialog info structure */

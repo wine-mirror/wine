@@ -29,9 +29,7 @@
  * TODO:
  *    - GetListBoxInfo()
  *    - LB_GETLISTBOXINFO
- *    - LBS_COMBOBOX
  *    - LBS_NODATA
- *    - LBS_STANDARD
  *    - LB_SETLOCALE: some FIXMEs remain
  *    - LBS_USETABSTOPS: some FIXMEs remain
  */
@@ -56,7 +54,6 @@
 #include "win.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(listbox);
-WINE_DECLARE_DEBUG_CHANNEL(combo);
 
 /* Items array granularity */
 #define LB_ARRAY_GRANULARITY 16
@@ -137,8 +134,6 @@ typedef enum
 
 static TIMER_DIRECTION LISTBOX_Timer = LB_TIMER_NONE;
 
-static LRESULT WINAPI ComboLBWndProcA( HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam );
-static LRESULT WINAPI ComboLBWndProcW( HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam );
 static LRESULT WINAPI ListBoxWndProcA( HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam );
 static LRESULT WINAPI ListBoxWndProcW( HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam );
 
@@ -166,8 +161,8 @@ const struct builtin_class_descr COMBOLBOX_builtin_class =
 {
     "ComboLBox",          /* name */
     CS_DBLCLKS | CS_SAVEBITS,  /* style */
-    ComboLBWndProcA,      /* procA */
-    ComboLBWndProcW,      /* procW */
+    ListBoxWndProcA,      /* procA */
+    ListBoxWndProcW,      /* procW */
     sizeof(LB_DESCR *),   /* extra */
     IDC_ARROW,            /* cursor */
     0                     /* brush */
@@ -2494,7 +2489,7 @@ static BOOL LISTBOX_Create( HWND hwnd, LPHEADCOMBO lphc )
 
     if( lphc )
     {
-        TRACE_(combo)("[%p]: resetting owner %p -> %p\n", hwnd, descr->owner, lphc->self );
+        TRACE("[%p]: resetting owner %p -> %p\n", hwnd, descr->owner, lphc->self );
         descr->owner = lphc->self;
     }
 
@@ -2553,23 +2548,29 @@ static LRESULT WINAPI ListBoxWndProc_common( HWND hwnd, UINT msg,
 {
     LRESULT ret;
     LB_DESCR *descr;
+    LPHEADCOMBO lphc = 0;
 
-    if (!(descr = (LB_DESCR *)GetWindowLongA( hwnd, 0 )))
+    if (!IsWindow(hwnd)) return 0;
+
+    if (!(descr = (LB_DESCR *)GetWindowLongW( hwnd, 0 )))
     {
         if (msg == WM_CREATE)
         {
-            if (!LISTBOX_Create( hwnd, NULL ))
-                return -1;
-            TRACE("creating wnd=%p descr=%lx\n", hwnd, GetWindowLongA( hwnd, 0 ) );
+	    CREATESTRUCTW *lpcs = (CREATESTRUCTW *)lParam;
+	    if (lpcs->style & LBS_COMBOBOX) lphc = (LPHEADCOMBO)lpcs->lpCreateParams;
+            if (!LISTBOX_Create( hwnd, lphc )) return -1;
+            TRACE("creating wnd=%p descr=%lx\n", hwnd, GetWindowLongW( hwnd, 0 ) );
             return 0;
         }
         /* Ignore all other messages before we get a WM_CREATE */
         return unicode ? DefWindowProcW( hwnd, msg, wParam, lParam ) :
                          DefWindowProcA( hwnd, msg, wParam, lParam );
     }
+    if (descr->style & LBS_COMBOBOX) lphc = descr->lphc;
 
     TRACE("[%p]: msg %s wp %08x lp %08lx\n",
           hwnd, SPY_GetMsgName(msg, hwnd), wParam, lParam );
+
     switch(msg)
     {
     case LB_RESETCONTENT16:
@@ -2864,7 +2865,9 @@ static LRESULT WINAPI ListBoxWndProc_common( HWND hwnd, UINT msg,
     case LB_SETCURSEL:
         if (IS_MULTISELECT(descr)) return LB_ERR;
         LISTBOX_SetCaretIndex( hwnd, descr, wParam, TRUE );
-        return LISTBOX_SetSelection( hwnd, descr, wParam, TRUE, FALSE );
+        ret = LISTBOX_SetSelection( hwnd, descr, wParam, TRUE, FALSE );
+	if (lphc && ret != LB_ERR) ret = descr->selected_item;
+	return ret;
 
     case LB_GETSELCOUNT16:
     case LB_GETSELCOUNT:
@@ -3028,21 +3031,88 @@ static LRESULT WINAPI ListBoxWndProc_common( HWND hwnd, UINT msg,
             return DefWindowProcW( hwnd, msg, wParam, lParam );
         return LISTBOX_HandleMouseWheel( hwnd, descr, wParam );
     case WM_LBUTTONDOWN:
+	if (lphc)
+            return LISTBOX_HandleLButtonDownCombo(hwnd, descr, msg, wParam,
+                                                  (INT16)LOWORD(lParam),
+                                                  (INT16)HIWORD(lParam) );
         return LISTBOX_HandleLButtonDown( hwnd, descr, wParam,
                                           (INT16)LOWORD(lParam),
                                           (INT16)HIWORD(lParam) );
     case WM_LBUTTONDBLCLK:
+	if (lphc)
+            return LISTBOX_HandleLButtonDownCombo(hwnd, descr, msg, wParam,
+                                                  (INT16)LOWORD(lParam),
+                                                  (INT16)HIWORD(lParam) );
         if (descr->style & LBS_NOTIFY)
             SEND_NOTIFICATION( hwnd, descr, LBN_DBLCLK );
         return 0;
     case WM_MOUSEMOVE:
-        if (GetCapture() == hwnd)
+        if ( lphc && ((lphc->dwStyle & CBS_DROPDOWNLIST) != CBS_SIMPLE) )
+        {
+            BOOL    captured = descr->captured;
+            POINT   mousePos;
+            RECT    clientRect;
+
+            mousePos.x = (INT16)LOWORD(lParam);
+            mousePos.y = (INT16)HIWORD(lParam);
+
+            /*
+             * If we are in a dropdown combobox, we simulate that
+             * the mouse is captured to show the tracking of the item.
+             */
+            if (GetClientRect(hwnd, &clientRect) && PtInRect( &clientRect, mousePos ))
+                descr->captured = TRUE;
+
+            LISTBOX_HandleMouseMove( hwnd, descr, mousePos.x, mousePos.y);
+
+            descr->captured = captured;
+        } 
+        else if (GetCapture() == hwnd)
+        {
             LISTBOX_HandleMouseMove( hwnd, descr, (INT16)LOWORD(lParam),
                                      (INT16)HIWORD(lParam) );
+        }
         return 0;
     case WM_LBUTTONUP:
+	if (lphc)
+	{
+            POINT mousePos;
+            RECT  clientRect;
+
+            /*
+             * If the mouse button "up" is not in the listbox,
+             * we make sure there is no selection by re-selecting the
+             * item that was selected when the listbox was made visible.
+             */
+            mousePos.x = (INT16)LOWORD(lParam);
+            mousePos.y = (INT16)HIWORD(lParam);
+
+            GetClientRect(hwnd, &clientRect);
+
+            /*
+             * When the user clicks outside the combobox and the focus
+             * is lost, the owning combobox will send a fake buttonup with
+             * 0xFFFFFFF as the mouse location, we must also revert the
+             * selection to the original selection.
+             */
+            if ( (lParam == (LPARAM)-1) || (!PtInRect( &clientRect, mousePos )) )
+                LISTBOX_MoveCaret( hwnd, descr, lphc->droppedIndex, FALSE );
+        }
         return LISTBOX_HandleLButtonUp( hwnd, descr );
     case WM_KEYDOWN:
+        if( lphc && (lphc->dwStyle & CBS_DROPDOWNLIST) != CBS_SIMPLE )
+        {
+            /* for some reason Windows makes it possible to
+             * show/hide ComboLBox by sending it WM_KEYDOWNs */
+
+            if( (!(lphc->wState & CBF_EUI) && wParam == VK_F4) ||
+                ( (lphc->wState & CBF_EUI) && !(lphc->wState & CBF_DROPPED)
+                  && (wParam == VK_DOWN || wParam == VK_UP)) )
+            {
+                COMBO_FlipListbox( lphc, FALSE, FALSE );
+                return 0;
+            }
+        }
         return LISTBOX_HandleKeyDown( hwnd, descr, wParam );
     case WM_CHAR:
     {
@@ -3075,30 +3145,34 @@ static LRESULT WINAPI ListBoxWndProc_common( HWND hwnd, UINT msg,
         }
         return 1;
     case WM_DROPFILES:
-        if( !descr->lphc )
-            return unicode ? SendMessageW( descr->owner, msg, wParam, lParam ) :
-                             SendMessageA( descr->owner, msg, wParam, lParam );
+        if( lphc ) return 0;
+        return unicode ? SendMessageW( descr->owner, msg, wParam, lParam ) :
+                         SendMessageA( descr->owner, msg, wParam, lParam );
+
+    case WM_NCDESTROY:
+        if( lphc && (lphc->dwStyle & CBS_DROPDOWNLIST) != CBS_SIMPLE )
+            lphc->hWndLBox = 0;
         break;
+
+    case WM_NCACTIVATE:
+        if (lphc) return 0;
+	break;
 
     default:
         if ((msg >= WM_USER) && (msg < 0xc000))
             WARN("[%p]: unknown msg %04x wp %08x lp %08lx\n",
                  hwnd, msg, wParam, lParam );
-        return unicode ? DefWindowProcW( hwnd, msg, wParam, lParam ) :
-                         DefWindowProcA( hwnd, msg, wParam, lParam );
     }
-    return 0;
+
+    return unicode ? DefWindowProcW( hwnd, msg, wParam, lParam ) :
+                     DefWindowProcA( hwnd, msg, wParam, lParam );
 }
 
 /***********************************************************************
  *           ListBoxWndProcA
- *
- * This is just a wrapper for the real wndproc, it only does window locking
- * and unlocking.
  */
 static LRESULT WINAPI ListBoxWndProcA( HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam )
 {
-    if (!IsWindow(hwnd)) return 0;
     return ListBoxWndProc_common( hwnd, msg, wParam, lParam, FALSE );
 }
 
@@ -3107,171 +3181,5 @@ static LRESULT WINAPI ListBoxWndProcA( HWND hwnd, UINT msg, WPARAM wParam, LPARA
  */
 static LRESULT WINAPI ListBoxWndProcW( HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam )
 {
-    if (!IsWindow(hwnd)) return 0;
     return ListBoxWndProc_common( hwnd, msg, wParam, lParam, TRUE );
-}
-
-/***********************************************************************
- *           ComboLBWndProc_common
- *
- * The real combo listbox wndproc
- */
-static LRESULT WINAPI ComboLBWndProc_common( HWND hwnd, UINT msg,
-                                             WPARAM wParam, LPARAM lParam, BOOL unicode )
-{
-    LRESULT lRet = 0;
-    LB_DESCR *descr;
-    LPHEADCOMBO lphc;
-
-    if (!(descr = (LB_DESCR *)GetWindowLongA( hwnd, 0 )))
-    {
-        if (msg == WM_CREATE)
-        {
-            CREATESTRUCTA *lpcs = (CREATESTRUCTA *)lParam;
-            TRACE_(combo)("\tpassed parent handle = %p\n",lpcs->lpCreateParams);
-            lphc = (LPHEADCOMBO)(lpcs->lpCreateParams);
-            return LISTBOX_Create( hwnd, lphc );
-        }
-        /* Ignore all other messages before we get a WM_CREATE */
-        return unicode ? DefWindowProcW( hwnd, msg, wParam, lParam ) :
-                         DefWindowProcA( hwnd, msg, wParam, lParam );
-    }
-
-    TRACE_(combo)("[%p]: msg %s wp %08x lp %08lx\n",
-                  hwnd, SPY_GetMsgName(msg, hwnd), wParam, lParam );
-
-    if ((lphc = descr->lphc) != NULL)
-    {
-        switch( msg )
-        {
-        case WM_MOUSEMOVE:
-            if ( (CB_GETTYPE(lphc) != CBS_SIMPLE) )
-            {
-                POINT   mousePos;
-                BOOL    captured;
-                RECT    clientRect;
-
-                mousePos.x = (INT16)LOWORD(lParam);
-                mousePos.y = (INT16)HIWORD(lParam);
-
-                /*
-                 * If we are in a dropdown combobox, we simulate that
-                 * the mouse is captured to show the tracking of the item.
-                 */
-                GetClientRect(hwnd, &clientRect);
-
-                if (PtInRect( &clientRect, mousePos ))
-                {
-                    captured = descr->captured;
-                    descr->captured = TRUE;
-
-                    LISTBOX_HandleMouseMove( hwnd, descr,
-                                             mousePos.x, mousePos.y);
-
-                    descr->captured = captured;
-
-                }
-                else
-                {
-                    LISTBOX_HandleMouseMove( hwnd, descr,
-                                             mousePos.x, mousePos.y);
-                }
-
-                return 0;
-
-            }
-            break;
-
-        case WM_LBUTTONUP:
-            {
-                POINT mousePos;
-                RECT  clientRect;
-
-                /*
-                 * If the mouse button "up" is not in the listbox,
-                 * we make sure there is no selection by re-selecting the
-                 * item that was selected when the listbox was made visible.
-                 */
-                mousePos.x = (INT16)LOWORD(lParam);
-                mousePos.y = (INT16)HIWORD(lParam);
-
-                GetClientRect(hwnd, &clientRect);
-
-                /*
-                 * When the user clicks outside the combobox and the focus
-                 * is lost, the owning combobox will send a fake buttonup with
-                 * 0xFFFFFFF as the mouse location, we must also revert the
-                 * selection to the original selection.
-                 */
-                if ( (lParam == (LPARAM)-1) ||
-                     (!PtInRect( &clientRect, mousePos )) )
-                {
-                    LISTBOX_MoveCaret( hwnd, descr, lphc->droppedIndex, FALSE );
-                }
-            }
-            return LISTBOX_HandleLButtonUp( hwnd, descr );
-        case WM_LBUTTONDBLCLK:
-        case WM_LBUTTONDOWN:
-            return LISTBOX_HandleLButtonDownCombo(hwnd, descr, msg, wParam,
-                                                  (INT16)LOWORD(lParam),
-                                                  (INT16)HIWORD(lParam) );
-        case WM_NCACTIVATE:
-            return FALSE;
-        case WM_KEYDOWN:
-            if( CB_GETTYPE(lphc) != CBS_SIMPLE )
-            {
-                /* for some reason(?) Windows makes it possible to
-                 * show/hide ComboLBox by sending it WM_KEYDOWNs */
-
-                if( (!(lphc->wState & CBF_EUI) && wParam == VK_F4) ||
-                    ( (lphc->wState & CBF_EUI) && !(lphc->wState & CBF_DROPPED)
-                      && (wParam == VK_DOWN || wParam == VK_UP)) )
-                {
-                    COMBO_FlipListbox( lphc, FALSE, FALSE );
-                    return 0;
-                }
-            }
-            return LISTBOX_HandleKeyDown( hwnd, descr, wParam );
-
-        case LB_SETCURSEL16:
-        case LB_SETCURSEL:
-            lRet = unicode ? ListBoxWndProcW( hwnd, msg, wParam, lParam ) :
-                ListBoxWndProcA( hwnd, msg, wParam, lParam );
-            lRet =(lRet == LB_ERR) ? lRet : descr->selected_item;
-            return lRet;
-        case WM_NCDESTROY:
-            if( CB_GETTYPE(lphc) != CBS_SIMPLE )
-                lphc->hWndLBox = 0;
-            break;
-        }
-    }
-
-    /* default handling: call listbox wnd proc */
-    lRet = unicode ? ListBoxWndProcW( hwnd, msg, wParam, lParam ) :
-                     ListBoxWndProcA( hwnd, msg, wParam, lParam );
-
-    TRACE_(combo)("\t default on msg [%04x]\n", (UINT16)msg );
-
-    return lRet;
-}
-
-/***********************************************************************
- *           ComboLBWndProcA
- *
- *  NOTE: in Windows, winproc address of the ComboLBox is the same
- *	  as that of the Listbox.
- */
-LRESULT WINAPI ComboLBWndProcA( HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam )
-{
-    if (!IsWindow(hwnd)) return 0;
-    return ComboLBWndProc_common( hwnd, msg, wParam, lParam, FALSE );
-}
-
-/***********************************************************************
- *           ComboLBWndProcW
- */
-LRESULT WINAPI ComboLBWndProcW( HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam )
-{
-    if (!IsWindow(hwnd)) return 0;
-    return ComboLBWndProc_common( hwnd, msg, wParam, lParam, TRUE );
 }

@@ -70,6 +70,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(combo);
 #define CB_OWNERDRAWN( lphc ) ((lphc)->dwStyle & (CBS_OWNERDRAWFIXED | CBS_OWNERDRAWVARIABLE))
 #define CB_HASSTRINGS( lphc ) ((lphc)->dwStyle & CBS_HASSTRINGS)
 #define CB_HWND( lphc )       ((lphc)->self)
+#define CB_GETTYPE( lphc )    ((lphc)->dwStyle & (CBS_DROPDOWNLIST))
 
 #define ISWIN31 (LOWORD(GetVersion()) == 0x0a03)
 
@@ -566,7 +567,7 @@ static LRESULT COMBO_Create( HWND hwnd, LPHEADCOMBO lphc, HWND hwndParent, LONG 
 
       /* create listbox popup */
 
-      lbeStyle = (LBS_NOTIFY | WS_BORDER | WS_CLIPSIBLINGS | WS_CHILD) |
+      lbeStyle = (LBS_NOTIFY | LBS_COMBOBOX | WS_BORDER | WS_CLIPSIBLINGS | WS_CHILD) |
                  (style & (WS_VSCROLL | CBS_OWNERDRAWFIXED | CBS_OWNERDRAWVARIABLE));
 
       if( lphc->dwStyle & CBS_SORT )

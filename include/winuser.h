@@ -2164,6 +2164,7 @@ typedef const SCROLLINFO *LPCSCROLLINFO;
 #define LBS_DISABLENOSCROLL      0x1000
 #define LBS_NODATA               0x2000
 #define LBS_NOSEL                0x4000
+#define LBS_COMBOBOX             0x8000
 #define LBS_STANDARD  (LBS_NOTIFY | LBS_SORT | WS_VSCROLL | WS_BORDER)
 
 /* Listbox messages */
