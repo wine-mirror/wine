@@ -110,8 +110,8 @@ inline static void wine_server_set_reply( void *req_ptr, void *ptr, unsigned int
 
 
 /* non-exported functions */
-extern void server_protocol_error( const char *err, ... ) WINE_NORETURN;
-extern void server_protocol_perror( const char *err ) WINE_NORETURN;
+extern void DECLSPEC_NORETURN server_protocol_error( const char *err, ... );
+extern void DECLSPEC_NORETURN server_protocol_perror( const char *err );
 extern void CLIENT_InitServer(void);
 extern void CLIENT_InitThread(void);
 extern void CLIENT_BootDone( int debug_level );

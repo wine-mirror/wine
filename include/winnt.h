@@ -130,11 +130,9 @@
 #ifdef __GNUC__
 #define WINE_PACKED   __attribute__((packed))
 #define WINE_UNUSED   __attribute__((unused))
-#define WINE_NORETURN __attribute__((noreturn))
 #else
 #define WINE_PACKED    /* nothing */
 #define WINE_UNUSED    /* nothing */
-#define WINE_NORETURN  /* nothing */
 #endif
 
 #if defined(_MSC_VER) && (defined(_M_IX86) || defined(_M_IA64) || defined(_M_AMD64)) && !defined(MIDL_PASS)
@@ -146,6 +144,8 @@
 #ifndef DECLSPEC_NORETURN
 # if (_MSVC_VER >= 1200) && !defined(MIDL_PASS)
 #  define DECLSPEC_NORETURN __declspec(noreturn)
+# elif defined(__GNUC__)
+#  define DECLSPEC_NORETURN __attribute__((noreturn))
 # else
 #  define DECLSPEC_NORETURN
 # endif
@@ -153,7 +153,9 @@
 
 #ifndef DECLSPEC_ALIGN
 # if (_MSC_VER >= 1300) && !defined(MIDL_PASS)
-#  define DECLSPEC_ALIGN(x)   __declspec(align(x))
+#  define DECLSPEC_ALIGN(x) __declspec(align(x))
+# elif defined(__GNUC__)
+#  define DECLSPEC_ALIGN(x) __attribute__((aligned(x)))
 # else
 #  define DECLSPEC_ALIGN(x)
 # endif
@@ -165,7 +167,7 @@
 
 #ifndef DECLSPEC_UUID
 # if (_MSC_VER >= 1100) && defined (__cplusplus)
-#  define DECLSPEC_UUID(x)    __declspec(uuid(x))
+#  define DECLSPEC_UUID(x) __declspec(uuid(x))
 # else
 #  define DECLSPEC_UUID(x)
 # endif
@@ -173,7 +175,7 @@
 
 #ifndef DECLSPEC_NOVTABLE
 # if (_MSC_VER >= 1100) && defined(__cplusplus)
-#  define DECLSPEC_NOVTABLE   __declspec(novtable)
+#  define DECLSPEC_NOVTABLE __declspec(novtable)
 # else
 #  define DECLSPEC_NOVTABLE
 # endif
@@ -181,7 +183,7 @@
 
 #ifndef DECLSPEC_SELECTANY
 #if (_MSC_VER >= 1100)
-#define DECLSPEC_SELECTANY  __declspec(selectany)
+#define DECLSPEC_SELECTANY __declspec(selectany)
 #else
 #define DECLSPEC_SELECTANY
 #endif
@@ -197,7 +199,7 @@
 
 #ifndef DECLSPEC_ADDRSAFE
 # if (_MSC_VER >= 1200) && (defined(_M_ALPHA) || defined(_M_AXP64))
-#  define DECLSPEC_ADDRSAFE  __declspec(address_safe)
+#  define DECLSPEC_ADDRSAFE __declspec(address_safe)
 # else
 #  define DECLSPEC_ADDRSAFE
 # endif
@@ -206,14 +208,19 @@
 #ifndef FORCEINLINE
 # if (_MSC_VER >= 1200)
 #  define FORCEINLINE __forceinline
+# elif defined(__GNUC__) && ((__GNUC__ > 3) || ((__GNUC__ == 3) && (__GNUC_MINOR__ >= 2)))
+#  define FORCEINLINE __attribute__((always_inline))
 # else
-#  define FORCEINLINE __inline
+#  define FORCEINLINE inline
 # endif
 #endif
 
 #ifndef DECLSPEC_DEPRECATED
 # if (_MSC_VER >= 1300) && !defined(MIDL_PASS)
-#  define DECLSPEC_DEPRECATED   __declspec(deprecated)
+#  define DECLSPEC_DEPRECATED __declspec(deprecated)
+#  define DEPRECATE_SUPPORTED
+# elif defined(__GNUC__) && ((__GNUC__ > 3) || ((__GNUC__ == 3) && (__GNUC_MINOR__ >= 2)))
+#  define DECLSPEC_DEPRECATED __attribute__((deprecated))
 #  define DEPRECATE_SUPPORTED
 # else
 #  define DECLSPEC_DEPRECATED

@@ -45,7 +45,7 @@ const char *full_argv0;  /* the full path of argv[0] (if known) */
 
 static char *inherit_str;  /* options to pass to child processes */
 
-static void out_of_memory(void) WINE_NORETURN;
+static void DECLSPEC_NORETURN out_of_memory(void);
 static void out_of_memory(void)
 {
     MESSAGE( "Virtual memory exhausted\n" );

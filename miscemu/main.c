@@ -35,8 +35,9 @@ static BOOL (WINAPI *pGetMessageA)(LPMSG,HWND,UINT,UINT);
 static BOOL (WINAPI *pTranslateMessage)(const MSG*);
 static LONG (WINAPI *pDispatchMessageA)(const MSG*);
 
-extern void PROCESS_InitWine( int argc, char *argv[], LPSTR win16_exe_name,
-                              HANDLE *win16_exe_file ) WINE_NORETURN;
+extern void DECLSPEC_NORETURN PROCESS_InitWine(
+	int argc, char *argv[], LPSTR win16_exe_name,
+	HANDLE *win16_exe_file );
 extern HINSTANCE16 NE_StartMain( LPCSTR name, HANDLE file );
 
 /***********************************************************************

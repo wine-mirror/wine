@@ -145,9 +145,9 @@ extern TEB *THREAD_IdToTEB( DWORD id );
 /* scheduler/sysdeps.c */
 extern int SYSDEPS_SpawnThread( TEB *teb );
 extern void SYSDEPS_SetCurThread( TEB *teb );
-extern void SYSDEPS_ExitThread( int status ) WINE_NORETURN;
-extern void SYSDEPS_AbortThread( int status ) WINE_NORETURN;
-extern void SYSDEPS_SwitchToThreadStack( void (*func)(void) ) WINE_NORETURN;
+extern void DECLSPEC_NORETURN SYSDEPS_ExitThread( int status );
+extern void DECLSPEC_NORETURN SYSDEPS_AbortThread( int status );
+extern void DECLSPEC_NORETURN SYSDEPS_SwitchToThreadStack( void (*func)(void) );
 
 /* signal handling */
 extern BOOL SIGNAL_Init(void);

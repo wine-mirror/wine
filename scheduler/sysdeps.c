@@ -233,7 +233,7 @@ int SYSDEPS_SpawnThread( TEB *teb )
 /***********************************************************************
  *           SYSDEPS_CallOnStack
  */
-void SYSDEPS_CallOnStack( void (*func)(LPVOID), LPVOID arg ) WINE_NORETURN;
+void DECLSPEC_NORETURN SYSDEPS_CallOnStack( void (*func)(LPVOID), LPVOID arg );
 #ifdef __i386__
 #ifdef __GNUC__
 __ASM_GLOBAL_FUNC( SYSDEPS_CallOnStack,
