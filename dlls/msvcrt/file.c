@@ -994,7 +994,19 @@ int MSVCRT__fstati64(int fd, struct MSVCRT__stati64* buf)
     msvcrt_set_errno(ERROR_INVALID_PARAMETER);
     return -1;
   }
-  FIXME(":dwFileAttributes = %ld, mode set to 0\n",hfi.dwFileAttributes);
+  dw = GetFileType(hand);
+  buf->st_mode = S_IREAD;
+  if (!(hfi.dwFileAttributes & FILE_ATTRIBUTE_READONLY))
+    buf->st_mode |= S_IWRITE;
+  /* interestingly, Windows never seems to set S_IFDIR */
+  if (dw == FILE_TYPE_CHAR)
+    buf->st_mode |= S_IFCHR;
+  else if (dw == FILE_TYPE_PIPE)
+    buf->st_mode |= S_IFIFO;
+  else
+    buf->st_mode |= S_IFREG;
+  TRACE(":dwFileAttributes = 0x%lx, mode set to 0x%x\n",hfi.dwFileAttributes,
+   buf->st_mode);
   buf->st_nlink = hfi.nNumberOfLinks;
   buf->st_size  = ((__int64)hfi.nFileSizeHigh << 32) + hfi.nFileSizeLow;
   RtlTimeToSecondsSince1970((LARGE_INTEGER *)&hfi.ftLastAccessTime, &dw);
