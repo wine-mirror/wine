@@ -197,4 +197,10 @@ WINE REGISTRY Version 2
 "ClearAllSelections" = "0"
 "PersistentSelection" = "1"
 
+; List of all directories directly contain .AFM files
+[afmdirs]
+"1" = "/usr/share/ghostscript/fonts"
+"2" = "/usr/share/a2ps/afm"
+"3" = "/usr/share/enscript"
+"4" = "/usr/X11R6/lib/X11/fonts/Type1"
 # </wineconf>
