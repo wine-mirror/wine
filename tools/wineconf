@@ -321,11 +321,11 @@ sub ReadAutoexecBat {
 	}
 	foreach my $command (@::DOScommand) {
 	    $command =~ s%[^/]+$%%;
-	    $::DOSexecdir{$command}++;
+	    $::DOSexecdir{&ToDos($command)}++;
 	}
 	print "path=" . 
 	    join(";", 
-		 grep(s%/$%%, 
+		 grep(s%\\$%%, 
 		      sort {$::DOSexecdir{$b} <=> $::DOSexecdir{$a}}
 		      (keys %::DOSexecdir))) . "\n";
     }
