@@ -60,6 +60,7 @@ static const char psprolog[] =
 "  for\n"
 "} bind def\n"
 "/B {pop pop pop pop} def\n"
+"/N {newpath} def\n"
 "/havetype42gdir {version cvi 2015 ge} bind def\n";
 
 static const char psbeginsetup[] =
@@ -195,6 +196,8 @@ static const char psarrayput[] =
 static const char psarraydef[] =
 "/%s %d array def\n";
 
+static const char psenddocument[] =
+"\n%%EndDocument\n";
 
 DWORD PSDRV_WriteSpool(PSDRV_PDEVICE *physDev, LPCSTR lpData, DWORD cch)
 {
@@ -203,6 +206,11 @@ DWORD PSDRV_WriteSpool(PSDRV_PDEVICE *physDev, LPCSTR lpData, DWORD cch)
     if(physDev->job.quiet) {
         TRACE("ignoring output\n");
 	return 0;
+    }
+
+    if(physDev->job.in_passthrough) { /* Was in PASSTHROUGH mode */
+        WriteSpool16( physDev->job.hJob, (LPSTR)psenddocument, sizeof(psenddocument)-1 );
+        physDev->job.in_passthrough = physDev->job.had_passthrough_rect = FALSE;
     }
 
     if(physDev->job.OutOfPage) { /* Will get here after NEWFRAME Escape */

@@ -31,6 +31,9 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(psdrv);
 
+static const char psbegindocument[] =
+"%%BeginDocument: Wine passthrough\n";
+
 /**********************************************************************
  *           ExtEscape  (WINEPS.@)
  */
@@ -214,6 +217,10 @@ INT PSDRV_ExtEscape( PSDRV_PDEVICE *physDev, INT nEscape, INT cbInput, LPCVOID i
              * length of the string, rather than 2 more.  So we'll use the WORD at
              * in_data[0] instead.
              */
+            if(!physDev->job.in_passthrough) {
+                WriteSpool16(physDev->job.hJob, (LPSTR)psbegindocument, sizeof(psbegindocument)-1);
+                physDev->job.in_passthrough = TRUE;
+            }
             return WriteSpool16(physDev->job.hJob,((char*)in_data)+2,*(WORD*)in_data);
         }
 
@@ -373,7 +380,9 @@ INT PSDRV_StartDoc( PSDRV_PDEVICE *physDev, const DOCINFOA *doc )
     physDev->job.banding = FALSE;
     physDev->job.OutOfPage = TRUE;
     physDev->job.PageNo = 0;
-
+    physDev->job.quiet = FALSE;
+    physDev->job.in_passthrough = FALSE;
+    physDev->job.had_passthrough_rect = FALSE;
     if(doc->lpszDocName) {
         physDev->job.DocName = HeapAlloc(GetProcessHeap(), 0, strlen(doc->lpszDocName)+1);
         strcpy(physDev->job.DocName, doc->lpszDocName);

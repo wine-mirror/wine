@@ -124,11 +124,14 @@ BOOL PSDRV_Rectangle( PSDRV_PDEVICE *physDev, INT left, INT top, INT right, INT 
     rect.bottom = bottom;
     LPtoDP( physDev->hdc, (POINT *)&rect, 2 );
 
-    /* HACK to get inserted eps files printing from Office 2k */
-    if(GetROP2(physDev->hdc) == R2_NOP) {
+    /* Windows does something truely hacky here.  If we're in passthrough mode
+       and our rop is R2_NOP, then we output the string below.  This is used in
+       Office 2k when inserting eps files */
+    if(physDev->job.in_passthrough && !physDev->job.had_passthrough_rect && GetROP2(physDev->hdc) == R2_NOP) {
       char buf[256];
-      sprintf(buf, "%ld %ld %ld %ld B\n", rect.right - rect.left, rect.bottom - rect.top, rect.left, rect.top);
-      PSDRV_WriteSpool(physDev, buf, strlen(buf));
+      sprintf(buf, "N %ld %ld %ld %ld B\n", rect.right - rect.left, rect.bottom - rect.top, rect.left, rect.top);
+      WriteSpool16(physDev->job.hJob, buf, strlen(buf));
+      physDev->job.had_passthrough_rect = TRUE;
       return TRUE;
     }
 
