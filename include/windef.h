@@ -11,13 +11,14 @@
 # undef UNICODE
 #endif  /* __WINE__ */
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-
 #define WINVER 0x0500
 
 #include "winnt.h"
+
+
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 
 /* Macros to map Winelib names to the correct implementation name */
