@@ -18,6 +18,7 @@ C_SRCS = \
 	oleobj.c \
 	olesvr.c \
 	parsedt.c \
+	safearray.c \
 	storage.c \
 	typelib.c \
 	variant.c

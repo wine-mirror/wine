@@ -15,19 +15,19 @@ type win32
 12 stdcall VariantChangeType(ptr ptr) VariantChangeType32
 13 stub VariantTimeToDosDateTime
 14 stub DosDateTimeToVariantTime
-15 stub SafeArrayCreate
-16 stub SafeArrayDestroy
-17 stub SafeArrayGetDim
-18 stub SafeArrayGetElemsize
-19 stub SafeArrayGetUBound
-20 stub SafeArrayGetLBound
-21 stub SafeArrayLock
-22 stub SafeArrayUnlock
-23 stub SafeArrayAccessData
-24 stub SafeArrayUnaccessData
-25 stub SafeArrayGetElement
-26 stub SafeArrayPutElement
-27 stub SafeArrayCopy
+15 stdcall SafeArrayCreate(long long ptr) SafeArrayCreate32
+16 stdcall SafeArrayDestroy(ptr) SafeArrayDestroy32
+17 stdcall SafeArrayGetDim(ptr) SafeArrayGetDim32
+18 stdcall SafeArrayGetElemsize(ptr) SafeArrayGetElemsize32
+19 stdcall SafeArrayGetUBound(ptr long long) SafeArrayGetUBound32
+20 stdcall SafeArrayGetLBound(ptr long long) SafeArrayGetLBound32
+21 stdcall SafeArrayLock(ptr) SafeArrayLock32
+22 stdcall SafeArrayUnlock(ptr) SafeArrayUnlock32
+23 stdcall SafeArrayAccessData(ptr ptr) SafeArrayAccessData32
+24 stdcall SafeArrayUnaccessData(ptr) SafeArrayUnaccessData32
+25 stdcall SafeArrayGetElement(ptr ptr ptr) SafeArrayGetElement32
+26 stdcall SafeArrayPutElement(ptr ptr ptr) SafeArrayPutElement32
+27 stdcall SafeArrayCopy(ptr ptr) SafeArrayCopy32
 28 stub DispGetParam
 29 stub DispGetIDsOfNames
 30 stub DispInvoke
@@ -36,11 +36,11 @@ type win32
 33 stub RegisterActiveObject
 34 stub RevokeActiveObject
 35 stub GetActiveObject
-36 stub SafeArrayAllocDescriptor
-37 stub SafeArrayAllocData
-38 stub SafeArrayDestroyDescriptor
-39 stub SafeArrayDestroyData
-40 stub SafeArrayRedim
+36 stdcall SafeArrayAllocDescriptor(long ptr) SafeArrayAllocDescriptor32
+37 stdcall SafeArrayAllocData(ptr) SafeArrayAllocData32
+38 stdcall SafeArrayDestroyDescriptor(ptr) SafeArrayDestroyDescriptor32
+39 stdcall SafeArrayDestroyData(ptr) SafeArrayDestroyData32
+40 stdcall SafeArrayRedim(ptr ptr) SafeArrayRedim32
 41 stub OACreateTypeLib2
 46 stub VarParseNumFromStr
 47 stub VarNumFromParseNum

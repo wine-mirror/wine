@@ -26,6 +26,125 @@ int WINAPI SysStringLen32(BSTR32);
 typedef void ITypeLib;
 typedef ITypeLib * LPTYPELIB;
 
+/*****************************************************************
+ *  SafeArray defines and structs 
+ */
+
+#define FADF_AUTO       ( 0x1 )
+#define FADF_STATIC     ( 0x2 )
+#define FADF_EMBEDDED   ( 0x4 )
+#define FADF_FIXEDSIZE  ( 0x10 )
+#define FADF_BSTR       ( 0x100 )
+#define FADF_UNKNOWN    ( 0x200 )
+#define FADF_DISPATCH   ( 0x400 )
+#define FADF_VARIANT    ( 0x800 )
+#define FADF_RESERVED   ( 0xf0e8 )
+
+typedef struct  tagSAFEARRAYBOUND
+{
+  ULONG cElements;                  /* Number of elements in dimension */
+  LONG  lLbound;                    /* Lower bound of dimension */
+} SAFEARRAYBOUND;
+
+typedef struct  tagSAFEARRAY
+{
+  USHORT          cDims;            /* Count of array dimension */
+  USHORT          fFeatures;        /* Flags describing the array */
+  ULONG           cbElements;       /* Size of each element */
+  ULONG           cLocks;           /* Number of lock on array */
+  PVOID           pvData;           /* Pointer to data valid when cLocks > 0 */
+  SAFEARRAYBOUND  rgsabound[ 1 ];   /* One bound for each dimension */
+} SAFEARRAY;
+
+
+/*****************************************************************
+ *  SafeArray API
+ */
+
+HRESULT WINAPI
+SafeArrayAllocDescriptor32(UINT32 cDims, SAFEARRAY **ppsaOut);
+#define SafeArrayAllocDescriptor WINELIB_NAME(SafeArrayAllocDescriptor)
+
+HRESULT WINAPI 
+SafeArrayAllocData32(SAFEARRAY *psa);
+#define SafeArrayAllocData WINELIB_NAME(SafeArrayAllocData)
+
+SAFEARRAY* WINAPI 
+SafeArrayCreate32(VARTYPE vt, UINT32 cDims, SAFEARRAYBOUND *rgsabound);
+#define SafeArrayCreate WINELIB_NAME(SafeArrayCreate)
+
+HRESULT WINAPI 
+SafeArrayDestroyDescriptor32(SAFEARRAY *psa);
+#define SafeArrayDestroyDescriptor WINELIB_NAME(SafeArrayDestroyDescriptor)
+
+HRESULT WINAPI 
+SafeArrayPutElement32(SAFEARRAY *psa, LONG *rgIndices, void *pv);
+#define SafeArrayPutElement WINELIB_NAME(SafeArrayPutElement)
+
+HRESULT WINAPI 
+SafeArrayGetElement32(SAFEARRAY *psa, LONG *rgIndices, void *pv);
+#define SafeArrayGetElement WINELIB_NAME(SafeArrayGetElement)
+
+HRESULT WINAPI 
+SafeArrayLock32(SAFEARRAY *psa);
+#define SafeArrayLock WINELIB_NAME(SafeArrayLock)
+
+HRESULT WINAPI 
+SafeArrayUnlock32(SAFEARRAY *psa);
+#define SafeArrayUnlock WINELIB_NAME(SafeArrayUnlock)
+
+HRESULT WINAPI 
+SafeArrayGetUBound32(SAFEARRAY *psa, UINT32 nDim, LONG *plUbound);
+#define SafeArrayGetUBound WINELIB_NAME(SafeArrayGetUBound)
+
+HRESULT WINAPI 
+SafeArrayGetLBound32(SAFEARRAY *psa, UINT32 nDim, LONG *plLbound);
+#define SafeArrayGetLBound WINELIB_NAME(SafeArrayGetLBound)
+
+UINT32  WINAPI 
+SafeArrayGetDim32(SAFEARRAY *psa);
+#define SafeArrayGetDim WINELIB_NAME(SafeArrayGetDim)
+
+UINT32  WINAPI 
+SafeArrayGetElemsize32(SAFEARRAY *psa);
+#define SafeArrayGetElemsize WINELIB_NAME(SafeArrayGetElemsize)
+
+HRESULT WINAPI 
+SafeArrayAccessData32(SAFEARRAY *psa, void **ppvData);
+#define SafeArrayAccessData WINELIB_NAME(SafeArrayAccessData)
+
+HRESULT WINAPI 
+SafeArrayUnaccessData32(SAFEARRAY *psa);
+#define SafeArrayUnaccessData WINELIB_NAME(SafeArrayUnaccessData)
+
+HRESULT WINAPI 
+SafeArrayPtrOfIndex32(SAFEARRAY *psa, LONG *rgIndices, void **ppvData);
+#define SafeArrayPtrOfIndex WINELIB_NAME(SafeArrayPtrOfIndex)
+
+HRESULT WINAPI 
+SafeArrayCopyData32(SAFEARRAY *psaSource, SAFEARRAY **psaTarget);
+#define SafeArrayCopyData WINELIB_NAME(SafeArrayCopyData)
+
+HRESULT WINAPI 
+SafeArrayDestroyData32(SAFEARRAY *psa);
+#define SafeArrayDestroyData WINELIB_NAME(SafeArrayDestroyData)
+
+HRESULT WINAPI 
+SafeArrayDestroy32(SAFEARRAY *psa);
+#define SafeArrayDestroy WINELIB_NAME(SafeArrayDestroy)
+
+HRESULT WINAPI 
+SafeArrayCopy32(SAFEARRAY *psa, SAFEARRAY **ppsaOut);
+#define SafeArrayCopy WINELIB_NAME(SafeArrayCopy)
+
+SAFEARRAY* WINAPI
+SafeArrayCreateVector32(VARTYPE vt, LONG lLbound, ULONG cElements);
+#define SafeArrayCreateVector WINELIB_NAME(SafeArrayCreateVector)
+
+HRESULT WINAPI 
+SafeArrayRedim32(SAFEARRAY *psa, SAFEARRAYBOUND *psaboundNew);
+#define SafeArrayRedim WINELIB_NAME(SafeArrayRedim)
+
 
 /*
  * Data types for Variants.

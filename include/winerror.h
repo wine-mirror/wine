@@ -152,6 +152,9 @@ extern int WIN32_LastError;
 #define DISP_E_BADVARTYPE   0x80020008L
 #define DISP_E_OVERFLOW     0x8002000AL
 #define DISP_E_TYPEMISMATCH 0x80020005L
+#define DISP_E_ARRAYISLOCKED  0x8002000D
+#define DISP_E_BADINDEX       0x8002000B
+
 
 
 /* Drag and Drop */
