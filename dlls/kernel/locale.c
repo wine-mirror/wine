@@ -471,9 +471,7 @@ static LCID init_default_lcid( UINT *unix_cp )
     LCID ret = 0;
 
     if ((lang = getenv( "LC_ALL" )) ||
-        (lang = getenv( "LC_CTYPE" )) ||
         (lang = getenv( "LANGUAGE" )) ||
-        (lang = getenv( "LC_MESSAGES" )) ||
         (lang = getenv( "LANG" )))
     {
         if (!strcmp(lang,"POSIX") || !strcmp(lang,"C")) goto done;
