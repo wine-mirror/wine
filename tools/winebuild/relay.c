@@ -92,7 +92,7 @@ static void BuildCallFrom16Core( FILE *outfile, int reg_func, int thunk, int sho
     char *name = thunk? "thunk" : reg_func? "regs" : short_ret? "word" : "long";
 
     /* Function header */
-    fprintf( outfile, "\n\t.align 4\n" );
+    fprintf( outfile, "\n\t.align %d\n", get_alignment(4) );
 #ifdef USE_STABS
     fprintf( outfile, ".stabs \"__wine_call_from_16_%s:F1\",36,0,0," PREFIX "__wine_call_from_16_%s\n", name, name);
 #endif
@@ -448,7 +448,7 @@ static void BuildCallTo16Core( FILE *outfile, int short_ret, int reg_func )
                  short_ret? "word" : "long";
 
     /* Function header */
-    fprintf( outfile, "\n\t.align 4\n" );
+    fprintf( outfile, "\n\t.align %d\n", get_alignment(4) );
 #ifdef USE_STABS
     fprintf( outfile, ".stabs \"wine_call_to_16_%s:F1\",36,0,0," PREFIX "wine_call_to_16_%s\n", 
 	     name, name);
@@ -725,7 +725,7 @@ static void BuildRet16Func( FILE *outfile )
 
     /* Declare the return address and data selector variables */
 
-    fprintf( outfile, "\n\t.align 4\n" );
+    fprintf( outfile, "\n\t.align %d\n", get_alignment(4) );
     fprintf( outfile, "\t.globl " PREFIX "CallTo16_DataSelector\n" );
     fprintf( outfile, PREFIX "CallTo16_DataSelector:\t.long 0\n" );
     fprintf( outfile, "\t.globl " PREFIX "CallTo16_RetAddr\n" );
@@ -830,7 +830,7 @@ static void BuildCallTo32CBClient( FILE *outfile, BOOL isEx )
 
     /* Function header */
 
-    fprintf( outfile, "\n\t.align 4\n" );
+    fprintf( outfile, "\n\t.align %d\n", get_alignment(4) );
 #ifdef USE_STABS
     fprintf( outfile, ".stabs \"CALL32_%s:F1\",36,0,0," PREFIX "CALL32_%s\n",
                       name, name );
@@ -1019,7 +1019,7 @@ static void BuildCallFrom32Regs( FILE *outfile )
 
     /* Function header */
 
-    fprintf( outfile, "\n\t.align 4\n" );
+    fprintf( outfile, "\n\t.align %d\n", get_alignment(4) );
 #ifdef USE_STABS
     fprintf( outfile, ".stabs \"CALL32_Regs:F1\",36,0,0," PREFIX "CALL32_Regs\n" );
 #endif

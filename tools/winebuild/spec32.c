@@ -117,7 +117,7 @@ static int output_exports( FILE *outfile, int nr_exports )
     if (!nr_exports) return 0;
 
     fprintf( outfile, "asm(\".data\\n\"\n" );
-    fprintf( outfile, "    \"\\t.align 4\\n\"\n" );
+    fprintf( outfile, "    \"\\t.align %d\\n\"\n", get_alignment(4) );
     fprintf( outfile, "    \"" PREFIX "__wine_spec_exports:\\n\"\n" );
 
     /* export directory header */
@@ -194,7 +194,7 @@ static int output_exports( FILE *outfile, int nr_exports )
 
         /* output the function names */
 
-        fprintf( outfile, "    \"\\t.text\\n\"\n" );
+        fprintf( outfile, "    \"\\t.text 1\\n\"\n" );
         fprintf( outfile, "    \"__wine_spec_exp_names:\\n\"\n" );
         for (i = 0; i < nb_names; i++)
             fprintf( outfile, "    \"\\t" STRING " \\\"%s\\\"\\n\"\n", Names[i]->name );
@@ -226,7 +226,7 @@ static int output_exports( FILE *outfile, int nr_exports )
             if (odp && odp->type == TYPE_FORWARD)
                 fprintf( outfile, "    \"\\t" STRING " \\\"%s\\\"\\n\"\n", odp->link_name );
         }
-        fprintf( outfile, "    \"\\t.align 4\\n\"\n" );
+        fprintf( outfile, "    \"\\t.align %d\\n\"\n", get_alignment(4) );
         total_size += (fwd_size + 3) & ~3;
     }
 
@@ -402,12 +402,13 @@ static void output_register_funcs( FILE *outfile )
         if (odp->type != TYPE_REGISTER) continue;
         name = make_internal_name( odp, "regs" );
         fprintf( outfile,
-                 "asm(\".align 4\\n\\t\"\n"
+                 "asm(\".align %d\\n\\t\"\n"
                  "    \"" __ASM_FUNC("%s") "\\n\\t\"\n"
                  "    \"" PREFIX "%s:\\n\\t\"\n"
                  "    \"call " PREFIX "CALL32_Regs\\n\\t\"\n"
                  "    \".long " PREFIX "%s\\n\\t\"\n"
                  "    \".byte %d,%d\");\n",
+                 get_alignment(4),
                  name, name, odp->link_name,
                  4 * strlen(odp->u.func.arg_types), 4 * strlen(odp->u.func.arg_types) );
     }
@@ -448,7 +449,7 @@ void BuildSpec32File( FILE *outfile )
 
     fprintf( outfile, "extern char pe_header[];\n" );
     fprintf( outfile, "asm(\".section .text\\n\\t\"\n" );
-    fprintf( outfile, "    \".align %ld\\n\"\n", page_size );
+    fprintf( outfile, "    \".align %d\\n\"\n", get_alignment(page_size) );
     fprintf( outfile, "    \"pe_header:\\t.fill %ld,1,0\\n\\t\");\n", page_size );
 
     fprintf( outfile, "static const char dllname[] = \"%s\";\n\n", DLLName );
@@ -691,6 +692,18 @@ void BuildSpec32File( FILE *outfile )
         fprintf( outfile, "asm(\"\\t.section\t.fini ,\\\"ax\\\"\\n\"\n" );
         fprintf( outfile, "    \"\\tcall " PREFIX "__wine_spec_%s_fini\\n\"\n", DLLName );
         fprintf( outfile, "    \"\\tnop\\n\"\n" );
+        fprintf( outfile, "    \"\\t.previous\\n\");\n" );
+    }
+#elif defined(__PPC__)
+    fprintf( outfile, "asm(\"\\t.section\t.init ,\\\"ax\\\"\\n\"\n" );
+    fprintf( outfile, "    \"\\tbl " PREFIX "__wine_spec_%s_init\\n\"\n",
+             DLLName );
+    fprintf( outfile, "    \"\\t.previous\\n\");\n" );
+    if (nr_debug)
+    {
+        fprintf( outfile, "asm(\"\\t.section\t.fini ,\\\"ax\\\"\\n\"\n" );
+        fprintf( outfile, "    \"\\tbl " PREFIX "__wine_spec_%s_fini\\n\"\n",
+                 DLLName );
         fprintf( outfile, "    \"\\t.previous\\n\");\n" );
     }
 #else

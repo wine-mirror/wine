@@ -133,6 +133,8 @@ extern void fatal_perror( const char *msg, ... );
 extern void warning( const char *msg, ... );
 extern void dump_bytes( FILE *outfile, const unsigned char *data, int len,
                         const char *label, int constant );
+extern int get_alignment(int alignBoundary);
+
 extern void add_import_dll( const char *name, int delay );
 extern void add_ignore_symbol( const char *name );
 extern int resolve_imports( FILE *outfile );

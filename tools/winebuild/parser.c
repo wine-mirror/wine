@@ -591,8 +591,13 @@ SPEC_TYPE ParseTopLevel( FILE *file )
                 name = GetToken(0);
                 if (!strcmp(name, "delay"))
                 {
+
                     name = GetToken(0);
+#ifndef __PPC__
                     delay = 1;
+#else
+		    warning( "The 'delay' option is not yet supported on the PPC. 'delay' will be ignored.\n");
+#endif /* __PPC__ */
                 }
                 else fatal_error( "Unknown option '%s' for import directive\n", name );
             }

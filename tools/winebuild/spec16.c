@@ -800,6 +800,10 @@ void BuildSpec16File( FILE *outfile )
     fprintf( outfile, "    \"\\tcall " PREFIX "__wine_spec_%s_init\\n\"\n", DLLName );
     fprintf( outfile, "    \"\\tnop\\n\"\n" );
     fprintf( outfile, "    \"\\t.previous\\n\");\n" );
+#elif defined(__PPC__)
+    fprintf( outfile, "asm(\"\\t.section\t.init ,\\\"ax\\\"\\n\"\n" );
+    fprintf( outfile, "    \"\\tbl " PREFIX "__wine_spec_%s_init\\n\"\n", DLLName );
+    fprintf( outfile, "    \"\\t.previous\\n\");\n" );
 #else
 #error You need to define the DLL constructor for your architecture
 #endif

@@ -397,7 +397,7 @@ static int output_immediate_imports( FILE *outfile )
 
     fprintf( outfile, "#ifndef __GNUC__\nstatic void __asm__dummy_import(void) {\n#endif\n\n" );
     pos = 20 * (nb_imm + 1);  /* offset of imports.data from start of imports */
-    fprintf( outfile, "asm(\".data\\n\\t.align 8\\n\"\n" );
+    fprintf( outfile, "asm(\".data\\n\\t.align %d\\n\"\n", get_alignment(8) );
     for (i = 0; i < nb_imports; i++)
     {
         if (dll_imports[i]->delay) continue;
@@ -436,6 +436,27 @@ static int output_immediate_imports( FILE *outfile )
                 fprintf( outfile, "ld [%%g1+%%o7], %%g1\\n\\t" );
                 fprintf( outfile, "jmp %%g1\\n\\trestore\\n" );
             }
+
+#elif defined(__PPC__)
+            fprintf(outfile, "\taddi 1, 1, -0x4\\n\"\n");
+            fprintf(outfile, "\t\"\\tstw 9, 0(1)\\n\"\n");
+            fprintf(outfile, "\t\"\\taddi 1, 1, -0x4\\n\"\n");
+            fprintf(outfile, "\t\"\\tstw 8, 0(1)\\n\"\n");
+            fprintf(outfile, "\t\"\\taddi 1, 1, -0x4\\n\"\n");
+            fprintf(outfile, "\t\"\\tstw 7, 0(1)\\n\"\n");
+
+            fprintf(outfile, "\t\"\\tlis 9,imports+%d@ha\\n\"\n", pos);
+            fprintf(outfile, "\t\"\\tla 8,imports+%d@l(9)\\n\"\n", pos);
+            fprintf(outfile, "\t\"\\tlwz 7, 0(8)\\n\"\n");
+            fprintf(outfile, "\t\"\\tmtctr 7\\n\"\n");
+
+            fprintf(outfile, "\t\"\\tlwz 7, 0(1)\\n\"\n");
+            fprintf(outfile, "\t\"\\taddi 1, 1, 0x4\\n\"\n");
+            fprintf(outfile, "\t\"\\tlwz 8, 0(1)\\n\"\n");
+            fprintf(outfile, "\t\"\\taddi 1, 1, 0x4\\n\"\n");
+            fprintf(outfile, "\t\"\\tlwz 9, 0(1)\\n\"\n");
+            fprintf(outfile, "\t\"\\taddi 1, 1, 0x4\\n\"\n");
+            fprintf(outfile, "\t\"\\tbctr\\n");
 #else
 #error You need to define import thunks for your architecture!
 #endif
@@ -563,7 +584,7 @@ static int output_delayed_imports( FILE *outfile )
     fprintf( outfile, "static void __asm__dummy_delay_import(void) {\n" );
     fprintf( outfile, "#endif\n" );
 
-    fprintf( outfile, "asm(\".align 8\\n\"\n" );
+    fprintf( outfile, "asm(\".align %d\\n\"\n", get_alignment(8) );
     fprintf( outfile, "    \"\\t" __ASM_FUNC("__wine_delay_load_asm") "\\n\"\n" );
     fprintf( outfile, "    \"" PREFIX "__wine_delay_load_asm:\\n\"\n" );
 #if defined(__i386__)
@@ -575,6 +596,8 @@ static int output_delayed_imports( FILE *outfile )
     fprintf( outfile, "    \"\\tcall __wine_delay_load\\n\"\n" );
     fprintf( outfile, "    \"\\tmov %%g1, %%o0\\n\"\n" );
     fprintf( outfile, "    \"\\tjmp %%o0\\n\\trestore\\n\"\n" );
+#elif defined(__PPC__)
+    fprintf(outfile, "#error: DELAYED IMPORTS NOT SUPPORTED ON PPC!!!\n");
 #else
 #error You need to defined delayed import thunks for your architecture!
 #endif
@@ -594,6 +617,8 @@ static int output_delayed_imports( FILE *outfile )
 #elif defined(__sparc__)
             fprintf( outfile, "    \"\\tset %d, %%g1\\n\"\n", (idx << 16) | j );
             fprintf( outfile, "    \"\\tb,a __wine_delay_load_asm\\n\"\n" );
+#elif defined(__PPC__)
+            fprintf(outfile, "#error: DELAYED IMPORTS NOT SUPPORTED ON PPC!!!\n");
 #else
 #error You need to defined delayed import thunks for your architecture!
 #endif
@@ -601,7 +626,7 @@ static int output_delayed_imports( FILE *outfile )
         idx++;
     }
 
-    fprintf( outfile, "\n    \".data\\n\\t.align 8\\n\"\n" );
+    fprintf( outfile, "\n    \".data\\n\\t.align %d\\n\"\n", get_alignment(8) );
     pos = nb_delayed * 32;
     for (i = 0; i < nb_imports; i++)
     {
@@ -636,8 +661,11 @@ static int output_delayed_imports( FILE *outfile )
                 fprintf( outfile, "ld [%%g1+%%o7], %%g1\\n\\t" );
                 fprintf( outfile, "jmp %%g1\\n\\trestore\\n" );
             }
+
+#elif defined(__PPC__)
+            fprintf(outfile, "#error: DELAYED IMPORTS NOT SUPPORTED ON PPC!!!\n");
 #else
-#error You need to define import thunks for your architecture!
+#error You need to define delayed import thunks for your architecture!
 #endif
             fprintf( outfile, "\"\n" );
         }
