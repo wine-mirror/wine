@@ -438,7 +438,7 @@ static LRESULT ANIMATE_Play(HWND hWnd, WPARAM wParam, LPARAM lParam)
         DWORD threadID;
 
 	TRACE("Using an animation thread\n");
-        infoPtr->hThread = CreateThread(0,0,ANIMATE_AnimationThread,(LPVOID)infoPtr,0,0 &threadID);
+        infoPtr->hThread = CreateThread(0,0,ANIMATE_AnimationThread,(LPVOID)infoPtr, 0, &threadID);
         if(!infoPtr->hThread)
         {
            ERR("Could not create animation thread!\n");
