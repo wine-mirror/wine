@@ -69,6 +69,9 @@ typedef struct
    int			nToFrame;
    int			nLoop;
    int			currFrame;
+   /* Background frame info*/
+   HBITMAP	    bkgFrameb;
+   LPDWORD		bkColor;
 } ANIMATE_INFO;
 
 #define ANIMATE_GetInfoPtr(hWnd) ((ANIMATE_INFO *)GetWindowLongA(hWnd, 0))
@@ -110,6 +113,8 @@ static BOOL ANIMATE_LoadResA(ANIMATE_INFO *infoPtr, HINSTANCE hInst, LPSTR lpNam
 	GlobalFree((HGLOBAL)lpAvi);
 	return FALSE;
     }
+
+    infoPtr->bkgFrameb=(HBITMAP)NULL;
     
     return TRUE;
 }
@@ -154,6 +159,11 @@ static void ANIMATE_Free(ANIMATE_INFO *infoPtr)
     if (infoPtr->hMMio) {
 	ANIMATE_DoStop(infoPtr);
 	infoPtr->fnmmioClose(infoPtr->hMMio, 0);
+    if (infoPtr->bkgFrameb) {
+ 	    DeleteObject(infoPtr->bkgFrameb);
+        infoPtr->bkgFrameb=(HBITMAP)NULL;
+        infoPtr->bkColor=NULL;
+	}
 	if (infoPtr->hRes) {
  	    FreeResource(infoPtr->hRes);
 	    infoPtr->hRes = 0;
@@ -190,16 +200,104 @@ static LRESULT ANIMATE_PaintFrame(ANIMATE_INFO* infoPtr, HDC hDC)
 {
     if (!hDC || !infoPtr->inbih)
 	return TRUE;
-    if (infoPtr->hic)
-	StretchDIBits(hDC, 0, 0, infoPtr->outbih->biWidth, infoPtr->outbih->biHeight, 
-		      0, 0, infoPtr->outbih->biWidth, infoPtr->outbih->biHeight, 
-		      infoPtr->outdata, (LPBITMAPINFO)infoPtr->outbih, DIB_RGB_COLORS, 
+    if (infoPtr->hic){
+        if (GetWindowLongA(infoPtr->hWnd, GWL_STYLE) & ACS_TRANSPARENT){
+            FIXME("TRANSPARENCY NOT SUPPORTED(NOT TESTED) FOR COMPRESSED IMAGE\n");
+        }
+	StretchDIBits(hDC, 0, 0, infoPtr->outbih->biWidth, infoPtr->outbih->biHeight,
+		      0, 0, infoPtr->outbih->biWidth, infoPtr->outbih->biHeight,
+		      infoPtr->outdata, (LPBITMAPINFO)infoPtr->outbih, DIB_RGB_COLORS,
+              SRCCOPY);
+    }
+    else{
+        if (GetWindowLongA(infoPtr->hWnd, GWL_STYLE) & ACS_TRANSPARENT){
+            HBITMAP hbmMem, hbmMem2,hbmMem3;
+            HDC hdcSrc, hdcMask, hdcMem;
+
+    	    hdcSrc = CreateCompatibleDC(hDC);
+            hdcMask = CreateCompatibleDC(hDC);
+            hdcMem = CreateCompatibleDC(hDC);
+
+            /* create a Black and white bitmap */
+            hbmMem = CreateCompatibleBitmap( hDC,infoPtr->inbih->biWidth,infoPtr->inbih->biHeight);
+            hbmMem2 = CreateBitmap(infoPtr->inbih->biWidth, infoPtr->inbih->biHeight, 1, 1, NULL);
+            hbmMem3 = CreateCompatibleBitmap( hDC,infoPtr->inbih->biWidth,infoPtr->inbih->biHeight);
+
+            SelectObject( hdcSrc, hbmMem);
+
+            StretchDIBits(hdcSrc, 0, 0, infoPtr->inbih->biWidth, infoPtr->inbih->biHeight,
+		      0, 0, infoPtr->inbih->biWidth, infoPtr->inbih->biHeight,
+		      infoPtr->indata, (LPBITMAPINFO)infoPtr->inbih, DIB_RGB_COLORS,
 		      SRCCOPY);
-    else
-	StretchDIBits(hDC, 0, 0, infoPtr->inbih->biWidth, infoPtr->inbih->biHeight, 
-		      0, 0, infoPtr->inbih->biWidth, infoPtr->inbih->biHeight, 
-		      infoPtr->indata, (LPBITMAPINFO)infoPtr->inbih, DIB_RGB_COLORS, 
+
+            if (infoPtr->bkgFrameb==(HBITMAP)NULL)
+            {
+                infoPtr->bkgFrameb = CreateCompatibleBitmap( hDC,infoPtr->inbih->biWidth,infoPtr->inbih->biHeight);
+                SelectObject( hdcMem, infoPtr->bkgFrameb);
+                BitBlt(hdcMem, 0, 0, infoPtr->inbih->biWidth, infoPtr->inbih->biHeight, hDC, 0, 0, SRCCOPY);
+                /* Get the transparent color from the first frame*/
+                if (infoPtr->inbih->biBitCount<=8)
+                    infoPtr->bkColor = (LPVOID)((LPSTR)infoPtr->inbih + (WORD)(((LPBITMAPINFO)infoPtr->inbih)->bmiHeader.biSize));
+                else
+                    infoPtr->bkColor = (LPVOID)GetPixel(hdcSrc, 0, 0);
+
+            }
+            /* Need the copy of the original destination HDC*/
+            SelectObject( hdcSrc, infoPtr->bkgFrameb);
+            SelectObject( hdcMem, hbmMem3);
+            BitBlt(hdcMem, 0, 0, infoPtr->inbih->biWidth, infoPtr->inbih->biHeight, hdcSrc, 0, 0, SRCCOPY);
+
+            SelectObject( hdcSrc, hbmMem);
+            SelectObject( hdcMask, hbmMem2);
+
+            /*Windows converts a color source into monochrome when the destination is
+            monochrome. In this situation, all pixels in the color bitmap that are the same color
+            as the background color become 1s, and all the other pixels are converted to 0s. */
+
+            if (infoPtr->inbih->biBitCount<=8)
+                SetBkColor(hdcSrc, infoPtr->bkColor[(((BYTE*)infoPtr->indata)[0])]);
+            else{ /* has not been tested with more then 8 bpp */
+                FIXME("Has not been test with more than 8bpp, errors are possible\n");
+                SetBkColor(hdcSrc, (COLORREF)infoPtr->bkColor);
+            }
+
+            BitBlt(hdcMask, 0, 0, infoPtr->inbih->biWidth, infoPtr->inbih->biHeight, hdcSrc, 0, 0, SRCCOPY);
+
+            /*During a blt operation with a color destination, a monochrome source bitmap
+            (and/or a brush when applicable) is converted to color on the fly before the
+            actual ROP is carried out on the bits. The 0 (black) pixels in the monochrome
+            bitmap are converted to the destination's text (foreground) color, and the 1
+            (white) pixels are converted to the background color. */
+
+            SetBkColor(hdcSrc, RGB(0,0,0));          // 1s --> black (0x000000)
+            SetTextColor(hdcSrc, RGB(255,255,255));  // 0s --> white (0xFFFFFF)
+
+            BitBlt(hdcSrc, 0, 0, infoPtr->inbih->biWidth, infoPtr->inbih->biHeight, hdcMask, 0, 0, SRCAND);
+
+            SetBkColor(hdcMem, RGB(255,255,255));  // 0s --> white (0xFFFFFF)
+            SetTextColor(hdcMem, RGB(0,0,0));          // 1s --> black (0x000000)
+
+            BitBlt(hdcMem, 0, 0, infoPtr->inbih->biWidth, infoPtr->inbih->biHeight, hdcMask, 0, 0, SRCAND);
+
+            BitBlt(hdcMem, 0, 0, infoPtr->inbih->biWidth, infoPtr->inbih->biHeight, hdcSrc, 0, 0, SRCPAINT);
+
+            BitBlt(hDC, 0, 0, infoPtr->inbih->biWidth, infoPtr->inbih->biHeight, hdcMem, 0, 0, SRCCOPY);
+
+            DeleteDC(hdcMem);
+            DeleteDC(hdcSrc);
+            DeleteDC(hdcMask);
+            DeleteObject(hbmMem);
+            DeleteObject(hbmMem2);
+            DeleteObject(hbmMem3);
+
+        }
+        else{
+            StretchDIBits(hDC, 0, 0, infoPtr->inbih->biWidth, infoPtr->inbih->biHeight,
+		      0, 0, infoPtr->inbih->biWidth, infoPtr->inbih->biHeight,
+		      infoPtr->indata, (LPBITMAPINFO)infoPtr->inbih, DIB_RGB_COLORS,
 		      SRCCOPY);
+         }
+    }
 
     return TRUE;
 }
