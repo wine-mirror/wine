@@ -1092,22 +1092,23 @@ NTSTATUS WINAPI NtSetInformationFile(HANDLE handle, PIO_STATUS_BLOCK io,
     case FileEndOfFileInformation:
         if (len >= sizeof(FILE_END_OF_FILE_INFORMATION))
         {
+            struct stat st;
             const FILE_END_OF_FILE_INFORMATION *info = ptr;
 
-            if (info->EndOfFile.QuadPart > lseek( fd, 0, SEEK_END ))
+            /* first try normal truncate */
+            if (ftruncate( fd, (off_t)info->EndOfFile.QuadPart ) != -1) break;
+
+            /* now check for the need to extend the file */
+            if (fstat( fd, &st ) != -1 && (off_t)info->EndOfFile.QuadPart > st.st_size)
             {
                 static const char zero;
 
                 /* extend the file one byte beyond the requested size and then truncate it */
                 /* this should work around ftruncate implementations that can't extend files */
-                if (pwrite( fd, &zero, 1, (off_t)info->EndOfFile.QuadPart ) == -1)
-                {
-                    io->u.Status = FILE_GetNtStatus();
-                    break;
-                }
+                if (pwrite( fd, &zero, 1, (off_t)info->EndOfFile.QuadPart ) != -1 &&
+                    ftruncate( fd, (off_t)info->EndOfFile.QuadPart ) != -1) break;
             }
-            if (ftruncate( fd, (off_t)info->EndOfFile.QuadPart ) == -1)
-                io->u.Status = FILE_GetNtStatus();
+            io->u.Status = FILE_GetNtStatus();
         }
         else io->u.Status = STATUS_INVALID_PARAMETER_3;
         break;
