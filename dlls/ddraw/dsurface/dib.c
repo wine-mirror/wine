@@ -413,8 +413,13 @@ DIB_DirectDrawSurface_Blt(LPDIRECTDRAWSURFACE7 iface, LPRECT rdst,
 
     /* The easy case : the source-less blits.... */
     if (src == NULL) {
-        RECT full_rect = { 0, 0, ddesc.dwHeight, ddesc.dwWidth };
+        RECT full_rect;
         RECT temp_rect; /* No idea if intersect rect can be the same as one of the source rect */
+
+	full_rect.left   = 0;
+	full_rect.top    = 0;
+	full_rect.right  = ddesc.dwWidth;
+	full_rect.bottom = ddesc.dwHeight;
         IntersectRect(&temp_rect, &full_rect, &xdst);
         xdst = temp_rect;
     } else {

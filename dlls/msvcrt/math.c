@@ -292,7 +292,7 @@ double _CItanh(void)
 
 /* The above cannot be called on non x86 platforms, stub them for linking */
 
-#define IX86_ONLY(func) double MSVCRT_##func(void) { return 0.0; }
+#define IX86_ONLY(func) double func(void) { return 0.0; }
 
 IX86_ONLY(_CIacos)
 IX86_ONLY(_CIasin)

@@ -381,7 +381,7 @@ HRESULT SHELL32_CompareIDs (IShellFolder * iface, LPARAM lParam, LPCITEMIDLIST p
       nextpidl2;
     IShellFolder *psf;
 
-    // test for empty pidls
+    /* test for empty pidls */
     BOOL isEmpty1 = _ILIsDesktop (pidl1);
     BOOL isEmpty2 = _ILIsDesktop (pidl2);
 
@@ -392,26 +392,26 @@ HRESULT SHELL32_CompareIDs (IShellFolder * iface, LPARAM lParam, LPCITEMIDLIST p
     if (isEmpty2)
 	return 1;
 
-    // test for different types. Sort order is the PT_* constant */
+    /* test for different types. Sort order is the PT_* constant */
     type1 = _ILGetDataPointer (pidl1)->type;
     type2 = _ILGetDataPointer (pidl2)->type;
     if (type1 != type2)
 	return (type1 - type2);
 
-    // test for name of pidl
+    /* test for name of pidl */
     _ILSimpleGetText (pidl1, szTemp1, MAX_PATH);
     _ILSimpleGetText (pidl2, szTemp2, MAX_PATH);
     nReturn = strcasecmp (szTemp1, szTemp2);
     if (nReturn != 0)
 	return nReturn;
 
-    // test of complex pidls
+    /* test of complex pidls */
     firstpidl = ILCloneFirst (pidl1);
     nextpidl1 = ILGetNext (pidl1);
     nextpidl2 = ILGetNext (pidl2);
 
-    // optimizing: test special cases and bind not deeper
-    // the deeper shellfolder would do the same
+    /* optimizing: test special cases and bind not deeper */
+    /* the deeper shellfolder would do the same */
     isEmpty1 = _ILIsDesktop (nextpidl1);
     isEmpty2 = _ILIsDesktop (nextpidl2);
 
@@ -421,7 +421,7 @@ HRESULT SHELL32_CompareIDs (IShellFolder * iface, LPARAM lParam, LPCITEMIDLIST p
 	nReturn = -1;
     } else if (isEmpty2) {
     	nReturn = 1;
-    // optimizing end
+    /* optimizing end */
     } else if (SUCCEEDED (IShellFolder_BindToObject (iface, firstpidl, NULL, &IID_IShellFolder, (LPVOID *) & psf))) {
 	nReturn = IShellFolder_CompareIDs (psf, lParam, nextpidl1, nextpidl2);
 	IShellFolder_Release (psf);

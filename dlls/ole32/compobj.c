@@ -73,7 +73,7 @@ static void COM_ExternalLockFreeList();
  */
 
 typedef struct {
-	unsigned char		threadingModell;	// we use the COINIT flags
+        unsigned char		threadingModell;	/* we use the COINIT flags */
         unsigned long		threadID;
 	long			AppartmentLockCount;
 } OleAppartmentData;

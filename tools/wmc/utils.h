@@ -31,6 +31,10 @@ void *xmalloc(size_t);
 void *xrealloc(void *, size_t);
 char *xstrdup(const char *str);
 
+#ifndef __GNUC__
+#define __attribute__(X)
+#endif
+
 int yyerror(const char *s, ...) __attribute__((format (printf, 1, 2)));
 int xyyerror(const char *s, ...) __attribute__((format (printf, 1, 2)));
 int yywarning(const char *s, ...) __attribute__((format (printf, 1, 2)));

@@ -36,7 +36,7 @@ typedef struct _func_t func_t;
   type *l_prev;
 
 #define LINK(x,y) do { x->l_next = y; if (y) y->l_prev = x; } while (0)
-#define LINK_LAST(x,y) do { if (y) { typeof(x) _c = x; while (_c->l_next) _c = _c->l_next; LINK(_c, y); } } while (0)
+#define LINK_LAST(x,y) do { if (y) { attr_t *_c = x; while (_c->l_next) _c = _c->l_next; LINK(_c, y); } } while (0)
 #define LINK_SAFE(x,y) do { if (x) LINK_LAST(x,y); else { x = y; } } while (0)
 
 #define INIT_LINK(x) do { x->l_next = NULL; x->l_prev = NULL; } while (0)

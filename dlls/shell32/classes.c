@@ -65,8 +65,7 @@ BOOL HCR_MapTypeToValue ( LPCSTR szExtension, LPSTR szFileType, DWORD len, BOOL 
 
 	RegCloseKey(hkey);
 
-	TRACE("--UE;
-} %s\n", szFileType );
+	TRACE("--UE;\n} %s\n", szFileType );
 
 	return TRUE;
 }
