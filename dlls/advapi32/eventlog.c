@@ -88,7 +88,7 @@ BOOL WINAPI CloseEventLog ( HANDLE hEventLog )
  */
 BOOL WINAPI DeregisterEventSource( HANDLE hEventLog )
 {
-    FIXME("(%d): stub\n",hEventLog);
+    FIXME("(%p): stub\n",hEventLog);
     return TRUE;
 }
 

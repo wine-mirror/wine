@@ -42,7 +42,7 @@ EnumServicesStatusA( SC_HANDLE hSCManager, DWORD dwServiceType,
                      DWORD dwServiceState, LPENUM_SERVICE_STATUSA lpServices,
                      DWORD cbBufSize, LPDWORD pcbBytesNeeded,
                      LPDWORD lpServicesReturned, LPDWORD lpResumeHandle )
-{	FIXME("%x type=%lx state=%lx %p %lx %p %p %p\n", hSCManager,
+{	FIXME("%p type=%lx state=%lx %p %lx %p %p %p\n", hSCManager,
 		dwServiceType, dwServiceState, lpServices, cbBufSize,
 		pcbBytesNeeded, lpServicesReturned,  lpResumeHandle);
 	SetLastError (ERROR_ACCESS_DENIED);
@@ -57,7 +57,7 @@ EnumServicesStatusW( SC_HANDLE hSCManager, DWORD dwServiceType,
                      DWORD dwServiceState, LPENUM_SERVICE_STATUSW lpServices,
                      DWORD cbBufSize, LPDWORD pcbBytesNeeded,
                      LPDWORD lpServicesReturned, LPDWORD lpResumeHandle )
-{	FIXME("%x type=%lx state=%lx %p %lx %p %p %p\n", hSCManager,
+{	FIXME("%p type=%lx state=%lx %p %lx %p %p %p\n", hSCManager,
 		dwServiceType, dwServiceState, lpServices, cbBufSize,
 		pcbBytesNeeded, lpServicesReturned,  lpResumeHandle);
 	SetLastError (ERROR_ACCESS_DENIED);
@@ -261,7 +261,7 @@ OpenSCManagerW( LPCWSTR lpMachineName, LPCWSTR lpDatabaseName,
     if (r!=ERROR_SUCCESS)
         return 0;
 
-    TRACE("returning %x\n",hKey);
+    TRACE("returning %p\n",hKey);
 
     return hKey;
 }
@@ -297,7 +297,7 @@ BOOL WINAPI
 ControlService( SC_HANDLE hService, DWORD dwControl,
                 LPSERVICE_STATUS lpServiceStatus )
 {
-    FIXME("(%d,%ld,%p): stub\n",hService,dwControl,lpServiceStatus);
+    FIXME("(%p,%ld,%p): stub\n",hService,dwControl,lpServiceStatus);
     return TRUE;
 }
 
@@ -314,7 +314,7 @@ ControlService( SC_HANDLE hService, DWORD dwControl,
 BOOL WINAPI
 CloseServiceHandle( SC_HANDLE hSCObject )
 {
-    TRACE("(%x)\n", hSCObject);
+    TRACE("(%p)\n", hSCObject);
 
     RegCloseKey(hSCObject);
 
@@ -364,7 +364,7 @@ OpenServiceW(SC_HANDLE hSCManager, LPCWSTR lpServiceName,
     HKEY hKey;
     long r;
 
-    TRACE("(%d,%p,%ld)\n",hSCManager, lpServiceName,
+    TRACE("(%p,%p,%ld)\n",hSCManager, lpServiceName,
           dwDesiredAccess);
 
     MultiByteToWideChar( CP_ACP, 0, str, -1, lpServiceKey, sizeof(lpServiceKey)/sizeof(WCHAR) );
@@ -377,7 +377,7 @@ OpenServiceW(SC_HANDLE hSCManager, LPCWSTR lpServiceName,
     if (r!=ERROR_SUCCESS)
         return 0;
 
-    TRACE("returning %x\n",hKey);
+    TRACE("returning %p\n",hKey);
 
     return hKey;
 }
@@ -394,7 +394,7 @@ CreateServiceW( SC_HANDLE hSCManager, LPCWSTR lpServiceName,
                   LPCWSTR lpDependencies, LPCWSTR lpServiceStartName,
                   LPCWSTR lpPassword )
 {
-    FIXME("(%u,%s,%s,...)\n", hSCManager, debugstr_w(lpServiceName), debugstr_w(lpDisplayName));
+    FIXME("(%p,%s,%s,...)\n", hSCManager, debugstr_w(lpServiceName), debugstr_w(lpDisplayName));
     return 0;
 }
 
@@ -415,7 +415,7 @@ CreateServiceA( SC_HANDLE hSCManager, LPCSTR lpServiceName,
     LONG r;
     DWORD dp;
 
-    TRACE("(%u,%s,%s,...)\n", hSCManager, debugstr_a(lpServiceName), debugstr_a(lpDisplayName));
+    TRACE("(%p,%s,%s,...)\n", hSCManager, debugstr_a(lpServiceName), debugstr_a(lpDisplayName));
 
     r = RegCreateKeyExA(hSCManager, lpServiceName, 0, NULL,
                        REG_OPTION_NON_VOLATILE, dwDesiredAccess, NULL, &hKey, &dp);
@@ -507,7 +507,7 @@ CreateServiceA( SC_HANDLE hSCManager, LPCSTR lpServiceName,
 BOOL WINAPI
 DeleteService( SC_HANDLE hService )
 {
-    FIXME("(%d): stub\n",hService);
+    FIXME("(%p): stub\n",hService);
     return TRUE;
 }
 
@@ -523,7 +523,7 @@ StartServiceA( SC_HANDLE hService, DWORD dwNumServiceArgs,
     LPWSTR *lpwstr=NULL;
     int i;
 
-    TRACE("(%d,%ld,%p)\n",hService,dwNumServiceArgs,lpServiceArgVectors);
+    TRACE("(%p,%ld,%p)\n",hService,dwNumServiceArgs,lpServiceArgVectors);
 
     if(dwNumServiceArgs)
         lpwstr = (LPWSTR*) HeapAlloc( GetProcessHeap(), 0,
@@ -584,7 +584,7 @@ StartServiceW( SC_HANDLE hService, DWORD dwNumServiceArgs,
     PROCESS_INFORMATION procinfo;
     STARTUPINFOA startupinfo;
 
-    TRACE("(%d,%ld,%p)\n",hService,dwNumServiceArgs,
+    TRACE("(%p,%ld,%p)\n",hService,dwNumServiceArgs,
           lpServiceArgVectors);
 
     size = sizeof str;
@@ -678,7 +678,7 @@ QueryServiceStatus( SC_HANDLE hService, LPSERVICE_STATUS lpservicestatus )
     LONG r;
     DWORD type, val, size;
 
-    FIXME("(%x,%p) partial\n",hService,lpservicestatus);
+    FIXME("(%p,%p) partial\n",hService,lpservicestatus);
 
     /* read the service type from the registry */
     size = sizeof val;

@@ -44,7 +44,7 @@ static void dumpLsaAttributes( PLSA_OBJECT_ATTRIBUTES oa )
 {
 	if (oa)
 	{
-	  TRACE("\n\tlength=%lu, rootdir=0x%08x, objectname=%s\n\tattr=0x%08lx, sid=%p qos=%p\n",
+	  TRACE("\n\tlength=%lu, rootdir=%p, objectname=%s\n\tattr=0x%08lx, sid=%p qos=%p\n",
 		oa->Length, oa->RootDirectory,
 		oa->ObjectName?debugstr_w(oa->ObjectName->Buffer):"null",
      		oa->Attributes, oa->SecurityDescriptor, oa->SecurityQualityOfService);
@@ -157,7 +157,7 @@ BOOL WINAPI
 CheckTokenMembership( HANDLE TokenHandle, PSID SidToCheck,
                       PBOOL IsMember )
 {
-  FIXME("(0x%08x %p %p) stub!\n", TokenHandle, SidToCheck, IsMember);
+  FIXME("(%p %p %p) stub!\n", TokenHandle, SidToCheck, IsMember);
 
   *IsMember = TRUE;
   return(TRUE);
@@ -178,7 +178,7 @@ BOOL WINAPI
 GetTokenInformation( HANDLE token, TOKEN_INFORMATION_CLASS tokeninfoclass,
 		     LPVOID tokeninfo, DWORD tokeninfolength, LPDWORD retlen )
 {
-    TRACE("(%x, %s, %p, %ld, %p): \n",
+    TRACE("(%p, %s, %p, %ld, %p): \n",
           token,
           (tokeninfoclass == TokenUser) ? "TokenUser" :
           (tokeninfoclass == TokenGroups) ? "TokenGroups" :
@@ -214,7 +214,7 @@ BOOL WINAPI
 SetTokenInformation( HANDLE token, TOKEN_INFORMATION_CLASS tokeninfoclass,
 		     LPVOID tokeninfo, DWORD tokeninfolength )
 {
-    FIXME("(%x, %s, %p, %ld): stub\n",
+    FIXME("(%p, %s, %p, %ld): stub\n",
           token,
           (tokeninfoclass == TokenUser) ? "TokenUser" :
           (tokeninfoclass == TokenGroups) ? "TokenGroups" :
@@ -251,7 +251,7 @@ SetTokenInformation( HANDLE token, TOKEN_INFORMATION_CLASS tokeninfoclass,
 
 BOOL WINAPI SetThreadToken(PHANDLE thread, HANDLE token)
 {
-    FIXME("(%p, %x): stub (NT impl. only)\n", thread, token);
+    FIXME("(%p, %p): stub (NT impl. only)\n", thread, token);
 
     SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
 
@@ -1011,7 +1011,7 @@ ImpersonateSelf(SECURITY_IMPERSONATION_LEVEL ImpersonationLevel)
  */
 BOOL WINAPI ImpersonateLoggedOnUser(HANDLE hToken)
 {
-    FIXME("(%08x):stub returning FALSE\n", hToken);
+    FIXME("(%p):stub returning FALSE\n", hToken);
     return FALSE;
 }
 
@@ -1088,7 +1088,7 @@ BOOL WINAPI GetAce(PACL pAcl,DWORD dwAceIndex,LPVOID *pAce )
  */
 BOOL WINAPI PrivilegeCheck( HANDLE ClientToken, PPRIVILEGE_SET RequiredPrivileges, LPBOOL pfResult)
 {
-	FIXME("stub %d %p %p\n", ClientToken, RequiredPrivileges, pfResult);
+	FIXME("stub %p %p %p\n", ClientToken, RequiredPrivileges, pfResult);
 	if (pfResult)
 		*pfResult=TRUE;
         return TRUE;
