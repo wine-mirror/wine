@@ -146,7 +146,7 @@ DWORD WINAPI SHCLSIDFromStringAW (LPVOID clsid, CLSID *id)
 DWORD WINAPI SHGetMalloc(LPMALLOC *lpmal) 
 {
 	TRACE("(%p)\n", lpmal);
-	return CoGetMalloc(0,lpmal);
+	return CoGetMalloc(MEMCTX_TASK, lpmal);
 }
 
 /*************************************************************************
