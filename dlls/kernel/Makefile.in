@@ -43,6 +43,7 @@ CTESTS = \
 	tests/alloc.c \
 	tests/directory.c \
 	tests/path.c \
+	tests/process.c \
 	tests/thread.c
 
 PLTESTS = \

@@ -3,5 +3,6 @@ atom.ok
 directory.ok
 kernel32_test.spec.c
 path.ok
+process.ok
 testlist.c
 thread.ok
