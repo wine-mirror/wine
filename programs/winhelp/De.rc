@@ -2,6 +2,7 @@
  * Help Viewer
  *
  * Copyright 1996 Ulrich Schmid
+ * Copyright 2002 Sylvain Petreolle <spetreolle@yahoo.fr>
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -18,45 +19,51 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
-/* This file is not yet complete !! */
-
-#define LANGUAGE_ID                  De
-#define LANGUAGE_NUMBER              2
-
 /* Menu */
 
-#define MENU_FILE                    "&Datei"
-#define MENU_FILE_OPEN               "Ö&ffnen..."
-#define MENU_FILE_PRINT              "Thema &drucken"
-#define MENU_FILE_PRINTER_SETUP      "Drucker&einrichtung..."
-#define MENU_FILE_EXIT               "&Beenden"
-
-#define MENU_EDIT                    "&Bearbeiten"
-#define MENU_EDIT_COPY_DIALOG        "&Kopieren..."
-#define MENU_EDIT_ANNOTATE           "&Anmerken..."
-
-#define MENU_BOOKMARK                "&Lesezeichen"
-#define MENU_BOOKMARK_DEFINE         "&Definieren..."
-
-#define MENU_HELP                    "&Hilfe"
-#define MENU_HELP_ON_HELP            "&Hilfe benutzen"
-#define MENU_HELP_ON_TOP             "Immer im &Vordergrund"
-#define MENU_HELP_INFO               "Inf&o..."
-#define MENU_HELP_ABOUT_WINE         "&Über WINE"
+MAIN_MENU MENU LANGUAGE LANG_GERMAN, SUBLANG_NEUTRAL
+{
+ POPUP "&Datei" {
+  MENUITEM "Ö&ffnen...", 0x101
+  MENUITEM SEPARATOR   
+  MENUITEM "Thema &drucken", 0x104
+  MENUITEM "Drucker&einrichtung...", 0x106
+   MENUITEM SEPARATOR   
+  MENUITEM "&Beenden", 0x108
+ }
+ POPUP "&Bearbeiten" {
+   MENUITEM "&Kopieren...", 0x10A
+   MENUITEM SEPARATOR   
+   MENUITEM "&Anmerken...", 0x10C
+ }
+ POPUP "&Lesezeichen" {
+   MENUITEM "&Definieren...", 0x10E
+ }
+ POPUP "&Hilfe" {
+   MENUITEM "&Hilfe benutzen", 0x110
+   MENUITEM "Immer im &Vordergrund", 0x111
+   MENUITEM SEPARATOR   
+   MENUITEM "&Info...", 0x113
+#ifdef WINELIB
+   MENUITEM "&Über WINE", 0x114
+#endif
+ }
+}
 
 /* Strings */
 
-#define STRING_WINE_HELP             "WINE Hilfe"
-#define STRING_ERROR                 "FEHLER"
-#define STRING_WARNING               "ACHTUNG"
-#define STRING_INFO                  "Information"
-#define STRING_NOT_IMPLEMENTED       "Nicht implementiert"
-#define STRING_HLPFILE_ERROR_s       "Fehler beim Lesen der Hilfe-Datei `%s'"
-#define STRING_CONTENTS              "&Inhalt"
-#define STRING_SEARCH                "&Suchen"
-#define STRING_BACK                  "&Zurück"
-#define STRING_HISTORY               "&Bisher"
-#define STRING_ALL_FILES             "Alle Dateien (*.*)"
-#define STRING_HELP_FILES_HLP        "Hilfe-Dateien (*.hlp)"
-
-#include "Xx.rc"
+STRINGTABLE DISCARDABLE LANGUAGE LANG_GERMAN, SUBLANG_NEUTRAL
+{
+WINE_HELP, 		"WINE Hilfe"
+WHERROR, 		"FEHLER"
+WARNING,  		"ACHTUNG"
+INFO,  			"Information"
+NOT_IMPLEMENTED, 	"Nicht implementiert"
+HLPFILE_ERROR_s, 	"Fehler beim Lesen der Hilfe-Datei `%s'"
+CONTENTS, 		"&Inhalt"
+SEARCH, 		"&Suchen"
+BACK, 			"&Zurück"
+HISTORY, 		"&Bisher"
+ALL_FILES, 		"Alle Dateien (*.*)"
+HELP_FILES_HLP, 	"Hilfe-Dateien (*.hlp)"
+}

@@ -2,7 +2,8 @@
  * Help Viewer
  *
  * Copyright 1996 Ulrich Schmid
- *
+ * Copyright 2002 Sylvain Petreolle <spetreolle@yahoo.fr>
+
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
  * License as published by the Free Software Foundation; either
@@ -33,6 +34,7 @@
 
 #include "hlpfile.h"
 #include "macro.h"
+#include "winhelp_res.h"
 
 typedef struct tagHelpLinePart
 {
@@ -122,48 +124,7 @@ extern CHAR SHADOW_WIN_CLASS_NAME[];
 extern CHAR STRING_BUTTON[];
 extern CHAR STRING_MENU_Xx[];
 extern CHAR STRING_DIALOG_TEST[];
-
-#define STRINGID(id) (0x##id + Globals.wStringTableOffset)
-
-#else /* RC_INVOKED */
-
-#define STRINGID(id) id
-
 #endif
-
-/* Stringtable index */
-#define IDS_LANGUAGE_ID      STRINGID(00)
-#define IDS_WINE_HELP        STRINGID(01)
-#define IDS_ERROR            STRINGID(02)
-#define IDS_WARNING          STRINGID(03)
-#define IDS_INFO             STRINGID(04)
-#define IDS_NOT_IMPLEMENTED  STRINGID(05)
-#define IDS_HLPFILE_ERROR_s  STRINGID(06)
-#define IDS_CONTENTS         STRINGID(07)
-#define IDS_SEARCH           STRINGID(08)
-#define IDS_BACK             STRINGID(09)
-#define IDS_HISTORY          STRINGID(0a)
-#define IDS_ALL_FILES        STRINGID(0b)
-#define IDS_HELP_FILES_HLP   STRINGID(0c)
-
-/* Menu `File' */
-#define WH_OPEN             11
-#define WH_PRINT            12
-#define WH_PRINTER_SETUP    13
-#define WH_EXIT             14
-
-/* Menu `Edit' */
-#define WH_COPY_DIALOG      21
-#define WH_ANNOTATE         22
-
-/* Menu `Bookmark' */
-#define WH_BOOKMARK_DEFINE  31
-
-/* Menu `Help' */
-#define WH_HELP_ON_HELP     41
-#define WH_HELP_ON_TOP      42
-#define WH_ABOUT            43
-#define WH_ABOUT_WINE       44
 
 /* Buttons */
 #define WH_FIRST_BUTTON     500

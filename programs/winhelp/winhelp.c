@@ -2,6 +2,7 @@
  * Help Viewer
  *
  * Copyright 1996 Ulrich Schmid <uschmid@mail.hh.provi.de>
+ * Copyright 2002 Sylvain Petreolle <spetreolle@yahoo.fr>
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -23,6 +24,7 @@
 #include "winbase.h"
 #include "windowsx.h"
 #include "winhelp.h"
+#include "winhelp_res.h"
 
 static BOOL    WINHELP_RegisterWinClasses();
 static LRESULT CALLBACK WINHELP_MainWndProc(HWND, UINT, WPARAM, LPARAM);
@@ -50,11 +52,8 @@ static BOOL MacroTest = FALSE;
 
 int PASCAL WinMain (HINSTANCE hInstance, HINSTANCE prev, LPSTR cmdline, int show)
 {
-  LPCSTR opt_lang = "En";
-  CHAR   lang[3];
   MSG    msg;
   LONG   lHash = 0;
-  INT    langnum;
 
   Globals.hInstance = hInstance;
 
@@ -88,33 +87,6 @@ int PASCAL WinMain (HINSTANCE hInstance, HINSTANCE prev, LPSTR cmdline, int show
 	  break;
 	}
     }
-
-  /* Find language specific string table */
-  for (langnum = 0; langnum <= MAX_LANGUAGE_NUMBER; langnum++)
-    {
-      Globals.wStringTableOffset = langnum * 0x100;
-      if (LoadString(hInstance, IDS_LANGUAGE_ID, lang, sizeof(lang)) &&
-	  !lstrcmp(opt_lang, lang))
-	break;
-    }
-  if (langnum > MAX_LANGUAGE_NUMBER)
-    {
-      /* Find fallback language */
-      for (langnum = 0; langnum <= MAX_LANGUAGE_NUMBER; langnum++)
-	{
-	  Globals.wStringTableOffset = langnum * 0x100;
-	  if (LoadString(hInstance, IDS_LANGUAGE_ID, lang, sizeof(lang)))
-	    break;
-	}
-      if (langnum > MAX_LANGUAGE_NUMBER)
-	{
-	MessageBox(0, "No language found", "FATAL ERROR", MB_OK);
-	return(1);
-	}
-    }
-
-  /* Change Resource names */
-  lstrcpyn(STRING_MENU_Xx + lstrlen(STRING_MENU_Xx) - 2, lang, 3);
 
   /* Create primary window */
   WINHELP_RegisterWinClasses();
@@ -215,7 +187,7 @@ VOID WINHELP_CreateHelpWindow(LPCSTR lpszFile, LONG lHash, LPCSTR lpszWindow,
 	  page = lHash ? HLPFILE_PageByHash(szFile_hlp, lHash) : HLPFILE_Contents(szFile_hlp);
 	  if (!page)
 	    {
-	      WINHELP_MessageBoxIDS_s(IDS_HLPFILE_ERROR_s, lpszFile, IDS_ERROR, MB_OK);
+	      WINHELP_MessageBoxIDS_s(HLPFILE_ERROR_s, lpszFile, WHERROR, MB_OK);
 	      if (Globals.win_list) return;
 	    }
 	}
@@ -271,10 +243,10 @@ VOID WINHELP_CreateHelpWindow(LPCSTR lpszFile, LONG lHash, LPCSTR lpszWindow,
     MACRO_CreateButton("BTN_TEST", "&Test", "MacroTest");
   if (bPrimary && page)
     {
-      LoadString(Globals.hInstance, IDS_CONTENTS, szContents, sizeof(szContents));
-      LoadString(Globals.hInstance, IDS_SEARCH,   szSearch,   sizeof(szSearch));
-      LoadString(Globals.hInstance, IDS_BACK,     szBack,     sizeof(szBack));
-      LoadString(Globals.hInstance, IDS_HISTORY,  szHistory,  sizeof(szHistory));
+      LoadString(Globals.hInstance, 0x126, szContents, sizeof(szContents));
+      LoadString(Globals.hInstance, 0x127,   szSearch,   sizeof(szSearch));
+      LoadString(Globals.hInstance, 0x128,     szBack,     sizeof(szBack));
+      LoadString(Globals.hInstance, 0x129,  szHistory,  sizeof(szHistory));
       MACRO_CreateButton("BTN_CONTENTS", szContents, "Contents()");
       MACRO_CreateButton("BTN_SEARCH",   szSearch,   "Search()");
       MACRO_CreateButton("BTN_BACK",     szBack,     "Back()");
@@ -322,12 +294,12 @@ VOID WINHELP_CreateHelpWindow(LPCSTR lpszFile, LONG lHash, LPCSTR lpszWindow,
 	}
 
   /* Create main Window */
-  if (!page) LoadString(Globals.hInstance, IDS_WINE_HELP, szCaption, sizeof(szCaption));
+  if (!page) LoadString(Globals.hInstance, 0x120, szCaption, sizeof(szCaption));
   hWnd = CreateWindow (bPopup ? TEXT_WIN_CLASS_NAME : MAIN_WIN_CLASS_NAME,
 		       page ? page->file->lpszTitle : szCaption,
 		       bPopup ? WS_POPUPWINDOW | WS_BORDER : WS_OVERLAPPEDWINDOW,
 		       origin.x, origin.y, size.cx, size.cy,
-		       0, bPrimary ? LoadMenu(Globals.hInstance, STRING_MENU_Xx) : 0,
+		       0, bPrimary ? LoadMenu(Globals.hInstance, MAIN_MENU) : 0,
 		       Globals.hInstance, win);
 
   ShowWindow (hWnd, nCmdShow);
@@ -393,26 +365,26 @@ static LRESULT CALLBACK WINHELP_MainWndProc (HWND hWnd, UINT msg, WPARAM wParam,
       switch (wParam)
 	{
 	  /* Menu FILE */
-	case WH_OPEN:            MACRO_FileOpen();       break;
-	case WH_PRINT:           MACRO_Print();          break;
-	case WH_PRINTER_SETUP:   MACRO_PrinterSetup();   break;
-	case WH_EXIT:            MACRO_Exit();           break;
+	case 0x101:			MACRO_FileOpen();       break;
+	case 0x104:			MACRO_Print();          break;
+	case 0x106:			MACRO_PrinterSetup();   break;
+	case 0x108:			MACRO_Exit();           break;
 
 	  /* Menu EDIT */
-	case WH_COPY_DIALOG:     MACRO_CopyDialog();     break;
-	case WH_ANNOTATE:        MACRO_Annotate();       break;
+	case 0x10A:     	MACRO_CopyDialog();     break;
+	case 0x10C:        	MACRO_Annotate();       break;
 
 	  /* Menu Bookmark */
-	case WH_BOOKMARK_DEFINE: MACRO_BookmarkDefine(); break;
+	case 0x10E:			MACRO_BookmarkDefine(); break;
 
 	  /* Menu Help */
-	case WH_HELP_ON_HELP:    MACRO_HelpOn();         break;
-	case WH_HELP_ON_TOP:     MACRO_HelpOnTop();      break;
+	case 0x110:			MACRO_HelpOn();         break;
+	case 0x111:			MACRO_HelpOnTop();      break;
 
 	  /* Menu Info */
-	case WH_ABOUT:           MACRO_About();          break;
+	case 0x113:			MACRO_About();          break;
 
-	case WH_ABOUT_WINE: 
+	case 0x114: 
 	  ShellAbout(hWnd, "WINE", "Help", 0);
 	  break;
 
@@ -423,7 +395,7 @@ static LRESULT CALLBACK WINHELP_MainWndProc (HWND hWnd, UINT msg, WPARAM wParam,
 	  if (button)
 	    MACRO_ExecuteMacro(button->lpszMacro);
 	  else
-	    WINHELP_MessageBoxIDS(IDS_NOT_IMPLEMENTED, IDS_ERROR, MB_OK);
+	    WINHELP_MessageBoxIDS(0x124, 0x121, MB_OK);
 	  break;
 	}
       break;

@@ -3,6 +3,7 @@
  *
  * Copyright 1996 Ulrich Schmid
  * Finnish language by Jussi Tirkkonen <jt@modeemi.cs.tut.fi>
+ * Copyright 2002 Sylvain Petreolle <spetreolle@yahoo.fr>
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -19,45 +20,51 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
-/* This file is not yet complete !! */
-
-#define LANGUAGE_ID                  Fi
-#define LANGUAGE_NUMBER              5
-
 /* Menu */
 
-#define MENU_FILE                    "&Tiedosto"
-#define MENU_FILE_OPEN               "&Avaa..."
-#define MENU_FILE_PRINT              "&Tulosta"
-#define MENU_FILE_PRINTER_SETUP      "&Kirjoittimen asetukset..."
-#define MENU_FILE_EXIT               "&Lopeta"
-
-#define MENU_EDIT                    "&Muokkaa"
-#define MENU_EDIT_COPY_DIALOG        "&Kopioi..."
-#define MENU_EDIT_ANNOTATE           "&Huomautus..."
-
-#define MENU_BOOKMARK                "&Kirjanmerkki"
-#define MENU_BOOKMARK_DEFINE         "&Aseta..."
-
-#define MENU_HELP                    "&Ohje"
-#define MENU_HELP_ON_HELP            "&Ohjeen käyttö"
-#define MENU_HELP_ON_TOP             "&Aina päällimmäisenä"
-#define MENU_HELP_INFO               "T&ietoja..."
-#define MENU_HELP_ABOUT_WINE         "&Tietoja WINEstä"
+MAIN_MENU MENU LANGUAGE LANG_FINNISH, SUBLANG_NEUTRAL
+{
+ POPUP "&Tiedosto" {
+  MENUITEM "&Avaa...", 0x101
+  MENUITEM SEPARATOR   
+  MENUITEM "&Tulosta", 0x104
+  MENUITEM "&Kirjoittimen asetukset...", 0x106
+   MENUITEM SEPARATOR   
+  MENUITEM "&Lopeta", 0x108
+ }
+ POPUP "&Muokkaa" {
+   MENUITEM "&Kopioi...", 0x10A
+   MENUITEM SEPARATOR   
+   MENUITEM "&Huomautus...", 0x10C
+ }
+ POPUP "&Kirjanmerkki" {
+   MENUITEM "&Aseta...", 0x10E
+ }
+ POPUP "&Ohje" {
+   MENUITEM "&Ohjeen käyttö", 0x110
+   MENUITEM "&Aina päällimmäisenä", 0x111
+   MENUITEM SEPARATOR   
+   MENUITEM "T&ietoja...", 0x113
+#ifdef WINELIB
+   MENUITEM "&Tietoja WINEstä", 0x114
+#endif
+ }
+}
 
 /* Strings */
 
-#define STRING_WINE_HELP             "WINE Ohje"
-#define STRING_ERROR                 "VIRHE"
-#define STRING_WARNING               "VAROITUS"
-#define STRING_INFO                  "Tietoja"
-#define STRING_NOT_IMPLEMENTED       "Ei käytettävissä"
-#define STRING_HLPFILE_ERROR_s       "Virhe luettaessa ohjetiedostoa `%s'" 
-#define STRING_CONTENTS              "&Sisällys"
-#define STRING_SEARCH                "&Etsi"
-#define STRING_BACK                  "&Takaisin"
-#define STRING_HISTORY               "&Luetut"
-#define STRING_ALL_FILES             "Kaikki tiedostot (*.*)"
-#define STRING_HELP_FILES_HLP        "Ohjetiedostot (*.hlp)"
-
-#include "Xx.rc"
+STRINGTABLE DISCARDABLE LANGUAGE LANG_FINNISH, SUBLANG_NEUTRAL
+{
+WINE_HELP, 		"WINE Ohje"
+WHERROR, 		"VIRHE"
+WARNING,  		"VAROITUS"
+INFO,  			"Tietoja"
+NOT_IMPLEMENTED, 	"Ei käytettävissä"
+HLPFILE_ERROR_s, 	"Virhe luettaessa ohjetiedostoa `%s'"
+CONTENTS, 		"&Sisällys"
+SEARCH, 		"&Etsi"
+BACK, 			"&Takaisin"
+HISTORY, 		"&Luetut"
+ALL_FILES, 		"Kaikki tiedostot (*.*)"
+HELP_FILES_HLP, 	"Ohjetiedostot (*.hlp)"
+}

@@ -2,6 +2,7 @@
  * Help Viewer
  *
  * Copyright 1996 Ulrich Schmid
+ * Copyright 2002 Sylvain Petreolle <spetreolle@yahoo.fr>
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -18,45 +19,51 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
-/* This file is not yet complete !! */
-
-#define LANGUAGE_ID                  Hu
-#define LANGUAGE_NUMBER              7
-
 /* Menu */
 
-#define MENU_FILE                    "&File"
-#define MENU_FILE_OPEN               "&Megnyitás..."
-#define MENU_FILE_PRINT              "&Nyomtatás"
-#define MENU_FILE_PRINTER_SETUP      "Nyomtató &beállítás..."
-#define MENU_FILE_EXIT               "&Kilépés"
-
-#define MENU_EDIT                    "&Szerkesztés"
-#define MENU_EDIT_COPY_DIALOG        "&Másolás..."
-#define MENU_EDIT_ANNOTATE           "&Annotate..."
-
-#define MENU_BOOKMARK                "&Könyvjelzõ"
-#define MENU_BOOKMARK_DEFINE         "&Definiálás..."
-
-#define MENU_HELP                    "&Segítség"
-#define MENU_HELP_ON_HELP            "Segítség &a segítségrõl"
-#define MENU_HELP_ON_TOP             "Mindig &legfelül"
-#define MENU_HELP_INFO               "&Információ..."
-#define MENU_HELP_ABOUT_WINE         "&A WINE-ról"
+MAIN_MENU MENU LANGUAGE LANG_HUNGARIAN, SUBLANG_NEUTRAL
+{
+ POPUP "&File" {
+  MENUITEM "&Megnyitás...", 0x101
+  MENUITEM SEPARATOR   
+  MENUITEM "&Nyomtatás", 0x104
+  MENUITEM "Nyomtató &beállítás...", 0x106
+   MENUITEM SEPARATOR   
+  MENUITEM "&Kilépés", 0x108
+ }
+ POPUP "&Szerkesztés" {
+   MENUITEM "&Másolás...", 0x10A
+   MENUITEM SEPARATOR   
+   MENUITEM "&Annotate...", 0x10C
+ }
+ POPUP "&Könyvjelzõ" {
+   MENUITEM "&Definiálás...", 0x10E
+ }
+ POPUP "&Segítség" {
+   MENUITEM "Segítség &a segítségrõl", 0x110
+   MENUITEM "Mindig &legfelül", 0x111
+   MENUITEM SEPARATOR   
+   MENUITEM "&Információ...", 0x113
+#ifdef WINELIB
+   MENUITEM "&&A WINE-ról", 0x114
+#endif
+ }
+}
 
 /* Strings */
 
-#define STRING_WINE_HELP             "WINE segítség"
-#define STRING_ERROR                 "HIBA"
-#define STRING_WARNING               "FIGYELMEZTETÉS"
-#define STRING_INFO                  "Információ"
-#define STRING_NOT_IMPLEMENTED       "Nincs implementálva"
-#define STRING_HLPFILE_ERROR_s       "Hiba a `%s' file olvasásakor"
-#define STRING_CONTENTS              "&Tartalom"
-#define STRING_SEARCH                "&Keresés"
-#define STRING_BACK                  "&Vissza"
-#define STRING_HISTORY               "&History"
-#define STRING_ALL_FILES             "Minden file (*.*)"
-#define STRING_HELP_FILES_HLP        "Segítség file-ok (*.hlp)"
-
-#include "Xx.rc"
+STRINGTABLE DISCARDABLE LANGUAGE LANG_HUNGARIAN, SUBLANG_NEUTRAL
+{
+WINE_HELP, 		"WINE segítség"
+WHERROR, 		"HIBA"
+WARNING,  		"FIGYELMEZTETÉS"
+INFO,  			"Információ"
+NOT_IMPLEMENTED, 	"Nincs implementálva"
+HLPFILE_ERROR_s, 	"Hiba a `%s' file olvasásakor"
+CONTENTS, 		"&Tartalom"
+SEARCH, 		"&Keresés"
+BACK, 			"&Vissza"
+HISTORY, 		"&History"
+ALL_FILES, 		"Minden file (*.*)"
+HELP_FILES_HLP, 	"Segítség file-ok (*.hlp)"
+}

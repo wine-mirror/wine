@@ -263,17 +263,19 @@ VOID MACRO_FileOpen(VOID)
   CHAR szzFilter[2 * MAX_STRING_LEN + 100];
   LPSTR p = szzFilter;
 
-  LoadString(Globals.hInstance, IDS_HELP_FILES_HLP, p, MAX_STRING_LEN);
+  LoadString(Globals.hInstance, 0X12B, p, MAX_STRING_LEN);
   p += strlen(p) + 1;
   lstrcpy(p, "*.hlp");
   p += strlen(p) + 1;
-  LoadString(Globals.hInstance, IDS_ALL_FILES, p, MAX_STRING_LEN);
+  LoadString(Globals.hInstance, 0x12A, p, MAX_STRING_LEN);
   p += strlen(p) + 1;
   lstrcpy(p, "*.*");
   p += strlen(p) + 1;
   *p = '\0';
 
-  GetWindowsDirectory(szDir, sizeof(szDir));
+  GetCurrentDirectory(sizeof(szDir), szDir);
+
+  szPath[0]='\0';
 
   openfilename.lStructSize       = 0;
   openfilename.hwndOwner         = Globals.active_win->hMainWnd;
@@ -281,7 +283,7 @@ VOID MACRO_FileOpen(VOID)
   openfilename.lpstrFilter       = szzFilter;
   openfilename.lpstrCustomFilter = 0;
   openfilename.nMaxCustFilter    = 0;
-  openfilename.nFilterIndex      = 0;
+  openfilename.nFilterIndex      = 1;
   openfilename.lpstrFile         = szPath;
   openfilename.nMaxFile          = sizeof(szPath);
   openfilename.lpstrFileTitle    = 0;

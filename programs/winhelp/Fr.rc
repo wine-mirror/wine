@@ -2,7 +2,7 @@
  * Help Viewer
  *
  * Copyright 1996 Ulrich Schmid
- * French language by Pablo Saratxaga <srtxg@f2219.n293.z2.fidonet.org>
+ * Copyright 2002 Sylvain Petreolle <spetreolle@yahoo.fr>
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -19,51 +19,51 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
-/* This file is not yet complete !! */
-/* Alors peut-être ceci aidera (so maybe this will help) :) */
-/* #include ../progman/Fr.rc */
-
-#define LANGUAGE_ID                  Fr
-#define LANGUAGE_NUMBER              4
-
 /* Menu */
 
-#define MENU_FILE                    "&Fichier"
-#define MENU_FILE_OPEN               "O&uvrir..."
-#define MENU_FILE_PRINT              "&Imprimer la rubrique"
-#define MENU_FILE_PRINTER_SETUP      "&Configuration de l'impression..."
-#define MENU_FILE_EXIT               "&Quitter"
-
-#define MENU_EDIT                    "&Edition"
-#define MENU_EDIT_COPY_DIALOG        "&Copier..."
-#define MENU_EDIT_ANNOTATE           "&Annotation..."
-
-#define MENU_BOOKMARK                "&Signet"
-#define MENU_BOOKMARK_DEFINE         "&Définir..."
-
-#define MENU_HELP                    "&?"
-#define MENU_HELP_ON_HELP            "&Utiliser l'aide"
-#define MENU_HELP_ON_TOP             "&Toujours visible"
-#define MENU_HELP_INFO               "&Info..."
-#define MENU_HELP_ABOUT_WINE         "&A propos de WINE"
-
-/*
-	Configuration de l'imprimante
-*/
+MAIN_MENU MENU LANGUAGE LANG_FRENCH, SUBLANG_NEUTRAL
+{
+ POPUP "&Fichier" {
+  MENUITEM "&Ouvrir", 0x101
+  MENUITEM SEPARATOR   
+  MENUITEM "Im&primer", 0x104
+  MENUITEM "&Configuration de l'imprimante...", 0x106
+   MENUITEM SEPARATOR   
+  MENUITEM "&Quitter", 0x108
+ }
+ POPUP "&Edition" {
+   MENUITEM "&Copier...", 0x10A
+   MENUITEM SEPARATOR   
+   MENUITEM "&Annotation...", 0x10C
+ }
+ POPUP "&Signet" {
+   MENUITEM "&Définir...", 0x10E
+ }
+ POPUP "&?" {
+   MENUITEM "&Utiliser l'aide", 0x110
+   MENUITEM "&Toujours visible", 0x111
+   MENUITEM SEPARATOR   
+   MENUITEM "&Info...", 0x113
+#ifdef WINELIB
+   MENUITEM "&A propos de WINE", 0x114
+#endif
+ }
+}
 
 /* Strings */
 
-#define STRING_WINE_HELP             "Aide de WINE"
-#define STRING_ERROR                 "ERREUR"
-#define STRING_WARNING               "WARNING"
-#define STRING_INFO                  "Information"
-#define STRING_NOT_IMPLEMENTED       "Non implementé"
-#define STRING_HLPFILE_ERROR_s       "Une erreur est survenue en lisant le fichier d'aide `%s'"
-#define STRING_CONTENTS              "&Index"
-#define STRING_SEARCH                "&Rechercher"
-#define STRING_BACK                  "&Précédent"
-#define STRING_HISTORY               "&Historique"
-#define STRING_ALL_FILES             "Tout fichier (*.*)"
-#define STRING_HELP_FILES_HLP        "Fichiers d'aide (*.hlp)"
-
-#include "Xx.rc"
+STRINGTABLE DISCARDABLE LANGUAGE LANG_FRENCH, SUBLANG_NEUTRAL
+{
+WINE_HELP, 		"Aide de WINE"
+WHERROR, 		"ERREUR"
+WARNING,  		"ATTENTION"
+INFO,  			"Information"
+NOT_IMPLEMENTED, 	"Non implementé"
+HLPFILE_ERROR_s, 	"Une erreur est survenue en lisant le fichier d'aide `%s'"
+CONTENTS, 		"&Index"
+SEARCH, 		"&Rechercher"
+BACK, 			"&Précédent"
+HISTORY, 		"&Historique"
+ALL_FILES, 		"Tout fichier (*.*)"
+HELP_FILES_HLP, 	"Fichiers d'aide (*.hlp)"
+}

@@ -1,0 +1,14 @@
+#define MAIN_MENU		0x10F
+#define WINE_HELP		0x120
+#define WHERROR			0x121
+#define WARNING  		0x122
+#define INFO  			0x123
+#define NOT_IMPLEMENTED 	0x124
+#define HLPFILE_ERROR_s 	0x125
+#define CONTENTS 		0x126
+#define SEARCH	 		0x127
+#define BACK 			0x128
+#define HISTORY 		0x129
+#define ALL_FILES 		0x12A
+#define HELP_FILES_HLP	 	0x12B
+#define DIALOG_TEST		0x12C

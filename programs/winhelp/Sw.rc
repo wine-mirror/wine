@@ -3,6 +3,7 @@
  *
  * Copyright 1996 Ulrich Schmid
  * Swedish language by Karl Backström <karl_b@geocities.com>
+ * Copyright 2002 Sylvain Petreolle <spetreolle@yahoo.fr>
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -19,45 +20,51 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
-/* This file is not yet complete !! */
-
-#define LANGUAGE_ID                  Sw
-#define LANGUAGE_NUMBER              1d
-
 /* Menu */
 
-#define MENU_FILE                    "&Arkiv"
-#define MENU_FILE_OPEN               "&Öppna..."
-#define MENU_FILE_PRINT              "&Skriv ut"
-#define MENU_FILE_PRINTER_SETUP      "Skrivar &inställningar..."
-#define MENU_FILE_EXIT               "&Avsluta"
-
-#define MENU_EDIT                    "&Redigera"
-#define MENU_EDIT_COPY_DIALOG        "&Kopiera..."
-#define MENU_EDIT_ANNOTATE           "&Markera..."
-
-#define MENU_BOOKMARK                "&Bokmärke"
-#define MENU_BOOKMARK_DEFINE         "&Defingera..."
-
-#define MENU_HELP                    "&Hjälp"
-#define MENU_HELP_ON_HELP            "Användningen &av hjälp"
-#define MENU_HELP_ON_TOP             "Alltid &överst"
-#define MENU_HELP_INFO               "&Information..."
-#define MENU_HELP_ABOUT_WINE         "&Om WINE"
+MAIN_MENU MENU LANGUAGE LANG_SWEDISH, SUBLANG_NEUTRAL
+{
+ POPUP "&Arkiv" {
+  MENUITEM "&Öppna...", 0x101
+  MENUITEM SEPARATOR   
+  MENUITEM "&Skriv ut", 0x104
+  MENUITEM "Skrivar &inställningar...", 0x106
+   MENUITEM SEPARATOR   
+  MENUITEM "&Avsluta", 0x108
+ }
+ POPUP "&Redigera" {
+   MENUITEM "&Kopiera...", 0x10A
+   MENUITEM SEPARATOR   
+   MENUITEM "&Markera...", 0x10C
+ }
+ POPUP "&Bokmärke" {
+   MENUITEM "&Defingera...", 0x10E
+ }
+ POPUP "&Hjälp" {
+   MENUITEM "Användningen &av hjälp", 0x110
+   MENUITEM "Alltid &överst", 0x111
+   MENUITEM SEPARATOR   
+   MENUITEM "&Information...", 0x113
+#ifdef WINELIB
+   MENUITEM "&Om WINE", 0x114
+#endif
+ }
+}
 
 /* Strings */
 
-#define STRING_WINE_HELP             "WINE Hjälp"
-#define STRING_ERROR                 "FEL"
-#define STRING_WARNING               "VARNING"
-#define STRING_INFO                  "Information"
-#define STRING_NOT_IMPLEMENTED       "Ej implementererat"
-#define STRING_HLPFILE_ERROR_s       "FEL vid läsning av hjälp filen `%s'"
-#define STRING_CONTENTS              "&Innehåll"
-#define STRING_SEARCH                "&Sök"
-#define STRING_BACK                  "&Tillbaka"
-#define STRING_HISTORY               "&Översikt"
-#define STRING_ALL_FILES             "Alla filer (*.*)"
-#define STRING_HELP_FILES_HLP        "Hjälp filer (*.hlp)"
-
-#include "Xx.rc"
+STRINGTABLE DISCARDABLE LANGUAGE LANG_SWEDISH, SUBLANG_NEUTRAL
+{
+WINE_HELP, 		"WINE Hjälp"
+WHERROR, 		"FEL"
+WARNING,  		"VARNING"
+INFO,  			"Information"
+NOT_IMPLEMENTED, 	"Ej implementererat"
+HLPFILE_ERROR_s, 	"FEL vid läsning av hjälp filen `%s'"
+CONTENTS, 		"&Innehåll"
+SEARCH, 		"&Sök"
+BACK, 			"&Tillbaka"
+HISTORY, 		"&Översikt"
+ALL_FILES, 		"Alla filer (*.*))"
+HELP_FILES_HLP, 	"Hjälp filer (*.hlp)"
+}

@@ -18,7 +18,8 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
-/* This file is not yet complete !! */
+/* This file is not yet complete !! 
+   Must be rewritten for use of NLS */
 
 #define LANGUAGE_ID                  Sk
 #define LANGUAGE_NUMBER              10

@@ -30,8 +30,6 @@ CHAR SHADOW_WIN_CLASS_NAME[]     = "WHShadow";
 CHAR STRING_BUTTON[]             = "BUTTON";
 
 /* Resource names */
-/* Xx will be overwritten with En, ... */
-CHAR STRING_MENU_Xx[]        = "MENU_Xx";
 CHAR STRING_DIALOG_TEST[]    = "DIALOG_TEST";
 
 /* Local Variables:    */

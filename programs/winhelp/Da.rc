@@ -2,6 +2,7 @@
  * Help Viewer
  *
  * Copyright 1997 Henrik Olsen
+ * Copyright 2002 Sylvain Petreolle <spetreolle@yahoo.fr>
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -18,45 +19,51 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
-/* This file is not yet complete !! */
-
-#define LANGUAGE_ID                  Da
-#define LANGUAGE_NUMBER              6
-
 /* Menu */
 
-#define MENU_FILE                    "&Filer"
-#define MENU_FILE_OPEN               "Å&bn..."
-#define MENU_FILE_PRINT              "&Udskriv emne"
-#define MENU_FILE_PRINTER_SETUP      "&Indstil printer"
-#define MENU_FILE_EXIT               "&Afslut"
-
-#define MENU_EDIT                    "&Rediger"
-#define MENU_EDIT_COPY_DIALOG        "K&opier..."
-#define MENU_EDIT_ANNOTATE           "&Anmærk..."
-
-#define MENU_BOOKMARK                "Bog&mærke"
-#define MENU_BOOKMARK_DEFINE         "&Definer..."
-
-#define MENU_HELP                    "&Hjælp"
-#define MENU_HELP_ON_HELP            "&Brug af Hjælp"
-#define MENU_HELP_ON_TOP             "Altid &øverst"
-#define MENU_HELP_INFO               "&Info..."
-#define MENU_HELP_ABOUT_WINE         "Om &WINE"
+MAIN_MENU MENU LANGUAGE LANG_DANISH, SUBLANG_NEUTRAL
+{
+ POPUP "&Filer" {
+  MENUITEM "Å&bn...", 0x101
+  MENUITEM SEPARATOR   
+  MENUITEM "&Udskriv emne", 0x104
+  MENUITEM "&Indstil printer", 0x106
+   MENUITEM SEPARATOR   
+  MENUITEM "&Afslut", 0x108
+ }
+ POPUP "&Rediger" {
+   MENUITEM "K&opier...", 0x10A
+   MENUITEM SEPARATOR   
+   MENUITEM "&Anmærk...", 0x10C
+ }
+ POPUP "Bog&mærke" {
+   MENUITEM "&Definer...", 0x10E
+ }
+ POPUP "&Hjælp" {
+   MENUITEM "&Brug af Hjælp", 0x110
+   MENUITEM "Altid &øverst", 0x111
+   MENUITEM SEPARATOR   
+   MENUITEM "&Info...", 0x113
+#ifdef WINELIB
+   MENUITEM "Om &WINE", 0x114
+#endif
+ }
+}
 
 /* Strings */
 
-#define STRING_WINE_HELP             "WINE Hjælp"
-#define STRING_ERROR                 "FEJL"
-#define STRING_WARNING               "ADVARSEL"
-#define STRING_INFO                  "Information"
-#define STRING_NOT_IMPLEMENTED       "Ikke implementeret"
-#define STRING_HLPFILE_ERROR_s       "Fejl ved læsning af filen `%s'"
-#define STRING_CONTENTS              "&Indhold"
-#define STRING_SEARCH                "&Søg"
-#define STRING_BACK                  "&Tilbage"
-#define STRING_HISTORY               "&Oversigt"
-#define STRING_ALL_FILES             "Alle filer (*.*)"
-#define STRING_HELP_FILES_HLP        "Hjælpe filer (*.hlp)"
-
-#include "Xx.rc"
+STRINGTABLE DISCARDABLE LANGUAGE LANG_DANISH, SUBLANG_NEUTRAL
+{
+WINE_HELP, 		"WINE Hjælp"
+WHERROR, 		"FEJL"
+WARNING,  		"ADVARSEL"
+INFO,  			"Information"
+NOT_IMPLEMENTED, 	"Ikke implementeret"
+HLPFILE_ERROR_s, 	"Fejl ved læsning af filen `%s'"
+CONTENTS, 		"&Indhold"
+SEARCH, 		"&Søg"
+BACK, 			"&Tilbage"
+HISTORY, 		"&Oversigt"
+ALL_FILES, 		"Alle filer (*.*)"
+HELP_FILES_HLP, 	"Hjælpe filer (*.hlp)"
+}
