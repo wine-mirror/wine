@@ -350,6 +350,7 @@ libx11drv.@LIBEXT@: x11drv/libx11drv.@LIBEXT@
 
 avifil32/libavifil32.so: libmsvfw32.so libwinmm.so
 commdlg/libcomdlg32.so: libwinspool.drv.so
+dinput/libdinput.so: libuser32.so
 ddraw/libddraw.so: libx11drv.so
 dplayx/libdplayx.so: libole32.so
 msvideo/libmsvfw32.so: libwinmm.so
