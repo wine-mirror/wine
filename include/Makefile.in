@@ -130,6 +130,7 @@ INSTALLED_INCLUDES = \
 	sqltypes.h \
 	storage.h \
 	tapi.h \
+	tchar.h \
 	tlhelp32.h \
 	unknwn.h \
 	urlmon.h \
