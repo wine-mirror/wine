@@ -269,6 +269,14 @@ int get_thread_single_step( struct thread *thread )
     return (context.Msr & MSR_SE) != 0;
 }
 
+/* send a signal to a specific thread */
+int tkill( int pid, int sig )
+{
+    /* FIXME: should do something here */
+    errno = ENOSYS;
+    return -1;
+}
+
 /* retrieve the current context of a thread */
 DECL_HANDLER(get_thread_context)
 {

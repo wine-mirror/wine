@@ -301,6 +301,7 @@ struct init_thread_request
 {
     struct request_header __header;
     int          unix_pid;
+    int          unix_tid;
     void*        teb;
     void*        entry;
     int          reply_fd;
@@ -3556,6 +3557,6 @@ union generic_reply
     struct get_next_hook_reply get_next_hook_reply;
 };
 
-#define SERVER_PROTOCOL_VERSION 101
+#define SERVER_PROTOCOL_VERSION 102
 
 #endif /* __WINE_WINE_SERVER_PROTOCOL_H */

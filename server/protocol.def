@@ -279,6 +279,7 @@ typedef struct
 /* Initialize a thread; called from the child after fork()/clone() */
 @REQ(init_thread)
     int          unix_pid;     /* Unix pid of new thread */
+    int          unix_tid;     /* Unix tid of new thread */
     void*        teb;          /* TEB of new thread (in thread address space) */
     void*        entry;        /* thread entry point (in thread address space) */
     int          reply_fd;     /* fd for reply pipe */

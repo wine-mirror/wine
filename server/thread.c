@@ -109,6 +109,7 @@ inline static void init_thread_structure( struct thread *thread )
     int i;
 
     thread->unix_pid        = -1;  /* not known yet */
+    thread->unix_tid        = -1;  /* not known yet */
     thread->context         = NULL;
     thread->teb             = NULL;
     thread->mutex           = NULL;
@@ -253,8 +254,8 @@ static void dump_thread( struct object *obj, int verbose )
     struct thread *thread = (struct thread *)obj;
     assert( obj->ops == &thread_ops );
 
-    fprintf( stderr, "Thread id=%04x unix pid=%d teb=%p state=%d\n",
-             thread->id, thread->unix_pid, thread->teb, thread->state );
+    fprintf( stderr, "Thread id=%04x unix pid=%d unix tid=%d teb=%p state=%d\n",
+             thread->id, thread->unix_pid, thread->unix_tid, thread->teb, thread->state );
 }
 
 static int thread_signaled( struct object *obj, struct thread *thread )
@@ -283,9 +284,11 @@ struct thread *get_thread_from_handle( obj_handle_t handle, unsigned int access 
 /* find a thread from a Unix pid */
 struct thread *get_thread_from_pid( int pid )
 {
-    struct thread *t = first_thread;
-    while (t && (t->unix_pid != pid)) t = t->next;
-    return t;
+    struct thread *t;
+
+    for (t = first_thread; t; t = t->next) if (t->unix_tid == pid) return t;
+    for (t = first_thread; t; t = t->next) if (t->unix_pid == pid) return t;
+    return NULL;
 }
 
 /* set all information about a thread */
@@ -845,6 +848,7 @@ DECL_HANDLER(init_thread)
     if (!current->reply_fd || !current->wait_fd) return;
 
     current->unix_pid = req->unix_pid;
+    current->unix_tid = req->unix_tid;
     current->teb      = req->teb;
 
     if (current->suspend + current->process->suspend > 0) stop_thread( current );

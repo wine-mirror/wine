@@ -459,6 +459,7 @@ static void dump_init_process_done_reply( const struct init_process_done_reply *
 static void dump_init_thread_request( const struct init_thread_request *req )
 {
     fprintf( stderr, " unix_pid=%d,", req->unix_pid );
+    fprintf( stderr, " unix_tid=%d,", req->unix_tid );
     fprintf( stderr, " teb=%p,", req->teb );
     fprintf( stderr, " entry=%p,", req->entry );
     fprintf( stderr, " reply_fd=%d,", req->reply_fd );

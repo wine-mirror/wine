@@ -101,7 +101,9 @@ struct kernel_user_regs_struct
 /* retrieve a debug register */
 static inline int get_debug_reg( int pid, int num, DWORD *data )
 {
-    int res = ptrace( PTRACE_PEEKUSER, pid, DR_OFFSET(num), 0 );
+    int res;
+    errno = 0;
+    res = ptrace( PTRACE_PEEKUSER, pid, DR_OFFSET(num), 0 );
     if ((res == -1) && errno)
     {
         file_set_error();
@@ -546,6 +548,26 @@ int get_thread_single_step( struct thread *thread )
     if (thread->context) return 0;  /* don't single-step inside exception event */
     get_thread_context( thread, CONTEXT_CONTROL, &context );
     return (context.EFlags & 0x100) != 0;
+}
+
+/* send a signal to a specific thread */
+int tkill( int pid, int sig )
+{
+#ifdef __linux__
+    int ret;
+    __asm__( "pushl %%ebx\n\t"
+             "movl %2,%%ebx\n\t"
+             "int $0x80\n\t"
+             "popl %%ebx\n\t"
+             : "=a" (ret)
+             : "0" (238) /*SYS_tkill*/, "r" (pid), "c" (sig) );
+    if (ret > 0) return ret;
+    errno = -ret;
+    return -1;
+#else
+    errno = ENOSYS;
+    return -1;
+#endif
 }
 
 /* retrieve the current context of a thread */

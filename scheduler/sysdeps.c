@@ -178,7 +178,7 @@ int SYSDEPS_SpawnThread( TEB *teb )
 {
 #ifdef HAVE_CLONE
     if (clone( (int (*)(void *))SYSDEPS_StartThread, teb->stack_top,
-               CLONE_VM | CLONE_FS | CLONE_FILES | SIGCHLD, teb ) < 0)
+               CLONE_VM | CLONE_FS | CLONE_FILES, teb ) < 0)
         return -1;
     return 0;
 #elif defined(HAVE_RFORK)

@@ -66,6 +66,10 @@
 inline static int ptrace(int req, ...) { errno = EPERM; return -1; /*FAIL*/ }
 #endif  /* HAVE_SYS_PTRACE_H */
 
+#ifndef __WALL
+#define __WALL 0
+#endif
+
 static const int use_ptrace = 1;  /* set to 0 to disable ptrace */
 
 /* handle a status returned by wait4 */
@@ -90,6 +94,7 @@ static int handle_child_status( struct thread *thread, int pid, int status, int 
     {
         thread->attached = 0;
         thread->unix_pid = -1;
+        thread->unix_tid = -1;
         if (debug_level)
         {
             if (WIFSIGNALED(status))
@@ -110,7 +115,7 @@ void sigchld_handler()
 
     for (;;)
     {
-        if (!(pid = wait4( -1, &status, WUNTRACED | WNOHANG, NULL ))) break;
+        if (!(pid = wait4( -1, &status, WUNTRACED | WNOHANG | __WALL, NULL ))) break;
         if (pid != -1) handle_child_status( get_thread_from_pid(pid), pid, status, -1 );
         else break;
     }
@@ -123,11 +128,12 @@ static void wait4_thread( struct thread *thread, int signal )
 
     do
     {
-        if ((res = wait4( get_ptrace_pid(thread), &status, WUNTRACED, NULL )) == -1)
+        if ((res = wait4( get_ptrace_pid(thread), &status, WUNTRACED | __WALL, NULL )) == -1)
         {
             if (errno == ECHILD)  /* must have died */
             {
                 thread->unix_pid = -1;
+                thread->unix_tid = -1;
                 thread->attached = 0;
             }
             else perror( "wait4" );
@@ -140,6 +146,7 @@ static void wait4_thread( struct thread *thread, int signal )
 /* return the Unix pid to use in ptrace calls for a given thread */
 int get_ptrace_pid( struct thread *thread )
 {
+    if (thread->unix_tid != -1) return thread->unix_tid;
     return thread->unix_pid;
 }
 
@@ -150,10 +157,13 @@ int send_thread_signal( struct thread *thread, int sig )
 
     if (thread->unix_pid != -1)
     {
-        ret = kill( thread->unix_pid, sig );
+        if (thread->unix_tid != -1) ret = tkill( thread->unix_tid, sig );
+        else ret = kill( thread->unix_pid, sig );
+
         if (ret == -1 && errno == ESRCH) /* thread got killed */
         {
             thread->unix_pid = -1;
+            thread->unix_tid = -1;
             thread->attached = 0;
         }
     }
@@ -167,7 +177,7 @@ static int attach_thread( struct thread *thread )
     if (!use_ptrace) return 0;
     if (ptrace( PTRACE_ATTACH, get_ptrace_pid(thread), 0, 0 ) == -1)
     {
-        if (errno == ESRCH) thread->unix_pid = -1;  /* thread got killed */
+        if (errno == ESRCH) thread->unix_pid = thread->unix_tid = -1;  /* thread got killed */
         return 0;
     }
     if (debug_level) fprintf( stderr, "%04x: *attached*\n", thread->id );
