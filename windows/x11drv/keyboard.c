@@ -270,6 +270,16 @@ static const char main_key_RU[MAIN_LEN][4] =
  "zZÑñ","xXŞş","cCÓó","vVÍí","bBÉé","nNÔô","mMØø",",<Ââ",".>Àà","/?"
 };
 
+/*** Russian keyboard layout (phantom key version) */
+static const char main_key_RU_phantom[MAIN_LEN][4] =
+{
+ "`~","1!","2@","3#","4$","5%","6^","7&","8*","9(","0)","-_","=+",
+ "qQÊê","wWÃã","eEÕõ","rRËë","tTÅå","yYÎî","uUÇç","iIÛû","oOİı","pPÚú","[{Èè","]}ßÿ",
+ "aAÆæ","sSÙù","dD×÷","fFÁá","gGĞğ","hHÒò","jJÏï","kKÌì","lLÄä",";:Öö","'\"Üü","\\|",
+ "zZÑñ","xXŞş","cCÓó","vVÍí","bBÉé","nNÔô","mMØø",",<Ââ",".>Àà","/?",
+ "<>" /* the phantom key */
+};
+
 /*** Russian keyboard layout KOI8-R */
 static const char main_key_RU_koi8r[MAIN_LEN][4] =
 {
@@ -474,6 +484,7 @@ static const struct {
  {"United States International keyboard layout", 28591, &main_key_US_intl, &main_key_scan_qwerty, &main_key_vkey_qwerty},
  {"Finnish keyboard layout", 28591, &main_key_FI, &main_key_scan_qwerty, &main_key_vkey_qwerty},
  {"Russian keyboard layout", 20866, &main_key_RU, &main_key_scan_qwerty, &main_key_vkey_qwerty},
+ {"Russian keyboard layout (phantom key version)", 20866, &main_key_RU_phantom, &main_key_scan_qwerty, &main_key_vkey_qwerty},
  {"Russian keyboard layout KOI8-R", 20866, &main_key_RU_koi8r, &main_key_scan_qwerty, &main_key_vkey_qwerty},
  {"Ukrainian keyboard layout KOI8-U", 20866, &main_key_UA, &main_key_scan_qwerty, &main_key_vkey_qwerty},
  {"Spanish keyboard layout", 28591, &main_key_ES, &main_key_scan_qwerty, &main_key_vkey_qwerty},
