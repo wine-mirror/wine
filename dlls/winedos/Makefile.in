@@ -48,6 +48,7 @@ C_SRCS = \
 	module.c \
 	relay.c \
 	soundblaster.c \
+	timer.c \
 	vga.c \
 	vxd.c \
 	xms.c

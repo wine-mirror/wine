@@ -374,6 +374,8 @@ DWORD WINAPI DOSVM_Loop( HANDLE hThread )
                           SetEvent( (HANDLE)msg.wParam );
                       }
                       break;
+                  default:
+                      DispatchMessageA(&msg);
                   }
               }
           }
@@ -423,13 +425,6 @@ static WINE_EXCEPTION_FILTER(exception_handler)
     IF_SET(context);
     EnterCriticalSection(&qcrit);
     sig_sent++;
-    while (NtCurrentTeb()->alarms) {
-      DOSVM_QueueEvent(0,DOS_PRIORITY_REALTIME,NULL,NULL);
-      /* hmm, instead of relying on this signal counter, we should
-       * probably check how many ticks have *really* passed, probably using
-       * QueryPerformanceCounter() or something like that */
-      InterlockedDecrement(&(NtCurrentTeb()->alarms));
-    }
     TRACE_(int)("context=%p\n", context);
     TRACE_(int)("cs:ip=%04lx:%04lx, ss:sp=%04lx:%04lx\n", context->SegCs, context->Eip, context->SegSs, context->Esp);
     if (!ISV86(context)) {
@@ -493,40 +488,6 @@ void WINAPI DOSVM_PIC_ioport_out( WORD port, BYTE val)
     }
 }
 
-/***********************************************************************
- *		SetTimer (WINEDOS.@)
- */
-void WINAPI DOSVM_SetTimer( UINT ticks )
-{
-  struct itimerval tim;
-
-  if (dosvm_pid) {
-    /* the PC clocks ticks at 1193180 Hz */
-    tim.it_interval.tv_sec=0;
-    tim.it_interval.tv_usec=MulDiv(ticks,1000000,1193180);
-    /* sanity check */
-    if (!tim.it_interval.tv_usec) tim.it_interval.tv_usec=1;
-    /* first tick value */
-    tim.it_value = tim.it_interval;
-    TRACE_(int)("setting timer tick delay to %ld us\n", tim.it_interval.tv_usec);
-    setitimer(ITIMER_REAL, &tim, NULL);
-  }
-}
-
-/***********************************************************************
- *		GetTimer (WINEDOS.@)
- */
-UINT WINAPI DOSVM_GetTimer( void )
-{
-  struct itimerval tim;
-
-  if (dosvm_pid) {
-    getitimer(ITIMER_REAL, &tim);
-    return MulDiv(tim.it_value.tv_usec,1193180,1000000);
-  }
-  return 0;
-}
-
 #else /* !MZ_SUPPORTED */
 
 /***********************************************************************
@@ -547,16 +508,6 @@ void WINAPI DOSVM_Wait( CONTEXT86 *waitctx ) { }
  *		OutPIC (WINEDOS.@)
  */
 void WINAPI DOSVM_PIC_ioport_out( WORD port, BYTE val) {}
-
-/***********************************************************************
- *		SetTimer (WINEDOS.@)
- */
-void WINAPI DOSVM_SetTimer( UINT ticks ) {}
-
-/***********************************************************************
- *		GetTimer (WINEDOS.@)
- */
-UINT WINAPI DOSVM_GetTimer( void ) { return 0; }
 
 /***********************************************************************
  *		QueueEvent (WINEDOS.@)
