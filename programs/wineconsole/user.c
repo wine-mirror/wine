@@ -439,11 +439,11 @@ HFONT WCUSER_CopyFont(struct config_data* config, HWND hWnd, const LOGFONT* lf)
     GetCharWidth32(hDC, tm.tmFirstChar, tm.tmFirstChar, &w);
     for (i = tm.tmFirstChar + 1; i <= tm.tmLastChar; i += sizeof(buf) / sizeof(buf[0]))
     {
-        int j, l;
+        int j, k;
 
-        l = min(tm.tmLastChar - i, sizeof(buf) / sizeof(buf[0]) - 1);
-        GetCharWidth32(hDC, i, i + l, buf);
-        for (j = 0; j <= l; j++)
+        k = min(tm.tmLastChar - i, sizeof(buf) / sizeof(buf[0]) - 1);
+        GetCharWidth32(hDC, i, i + k, buf);
+        for (j = 0; j <= k; j++)
         {
             if (buf[j] != w)
             {
