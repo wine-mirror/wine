@@ -21,9 +21,13 @@
 #ifdef HAVE_SYS_ERRNO_H
 # include <sys/errno.h>
 #endif
+
+#ifdef HAVE_CORRECT_LINUXINPUT_H
+
 #ifdef HAVE_LINUX_INPUT_H
 # include <linux/input.h>
 #endif
+
 
 #define EVDEVPREFIX	"/dev/input/event"
 
@@ -883,3 +887,5 @@ static ICOM_VTABLE(IDirectInputDevice7A) Joystick7Avt =
 #undef XCAST
 
 #endif  /* HAVE_LINUX_INPUT_H */
+
+#endif

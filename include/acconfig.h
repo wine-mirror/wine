@@ -116,3 +116,6 @@
 
 /* Define if Linux-style gethostbyname_r and gethostbyaddr_r are available */
 #undef HAVE_LINUX_GETHOSTBYNAME_R_6
+
+/* Define if we have linux/input.h AND it contains the INPUT event API */
+#undef HAVE_CORRECT_LINUXINPUT_H
