@@ -426,7 +426,13 @@ static UINT SWP_DoNCCalcSize( WINDOWPOS* pWinpos, const RECT* pNewWindowRect, RE
         TRACE( "(%ld,%ld)-(%ld,%ld)\n", params.rgrc[0].left, params.rgrc[0].top,
                params.rgrc[0].right, params.rgrc[0].bottom );
 
-        /* If the application send back garbage, ignore it */
+        /* If the application sends back garbage, ignore it */
+
+        if (params.rgrc[0].left < pNewWindowRect->left) params.rgrc[0].left = pNewWindowRect->left;
+        if (params.rgrc[0].top < pNewWindowRect->top) params.rgrc[0].top = pNewWindowRect->top;
+        if (params.rgrc[0].right > pNewWindowRect->right) params.rgrc[0].right = pNewWindowRect->right;
+        if (params.rgrc[0].bottom > pNewWindowRect->bottom) params.rgrc[0].bottom = pNewWindowRect->bottom;
+
         if (params.rgrc[0].left <= params.rgrc[0].right &&
             params.rgrc[0].top <= params.rgrc[0].bottom)
             *pNewClientRect = params.rgrc[0];

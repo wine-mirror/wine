@@ -560,8 +560,11 @@ static LRESULT COMBO_Create( HWND hwnd, LPHEADCOMBO lphc, HWND hwndParent, LONG 
 	if( CB_GETTYPE(lphc) == CBS_DROPDOWN )
 	  lphc->droppedRect.left += COMBO_EDITBUTTONSPACE();
 
-	ClientToScreen(hwnd, (LPPOINT)&lphc->droppedRect);
-	ClientToScreen(hwnd, (LPPOINT)&lphc->droppedRect.right);
+        if (lphc->droppedRect.bottom < lphc->droppedRect.top)
+            lphc->droppedRect.bottom = lphc->droppedRect.top;
+        if (lphc->droppedRect.right < lphc->droppedRect.left)
+            lphc->droppedRect.right = lphc->droppedRect.left;
+        MapWindowPoints( hwnd, 0, (LPPOINT)&lphc->droppedRect, 2 );
       }
 
       /* create listbox popup */
