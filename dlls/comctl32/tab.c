@@ -192,7 +192,7 @@ TAB_LButtonUp (HWND hwnd, WPARAM wParam, LPARAM lParam)
     pt.y = (INT)HIWORD(lParam);
 
 	newItem=TAB_InternalHitTest (infoPtr,pt,&dummy);
-	if (!newItem) return 0;
+
 	TRACE(tab, "On Tab, item %d\n", newItem);
 		
 	if (infoPtr->iSelected != newItem) {
@@ -296,8 +296,8 @@ TAB_DrawItem (HWND hwnd, HDC hdc, INT iItem)
     TAB_ITEM *pti = &infoPtr->items[iItem];
     RECT r;
     INT oldBkMode,cx,cy;
-HBRUSH hbr = CreateSolidBrush(RGB(255,255,255));
-  //HBRUSH hbr = CreateSolidBrush (COLOR_BACKGROUND);
+
+    HBRUSH hbr = CreateSolidBrush(GetSysColor(COLOR_BACKGROUND));
    
     HPEN	hwPen  = GetSysColorPen (COLOR_3DHILIGHT);
     HPEN	hbPen  = GetSysColorPen (COLOR_BTNSHADOW);
@@ -660,9 +660,14 @@ static LRESULT
 TAB_Size (HWND hwnd, WPARAM wParam, LPARAM lParam)
 
 {
+  HDC hdc;
+/* I'm not really sure what the following code was meant to do.
+   This is what it is doing:
+   When WM_SIZE is sent with SIZE_RESTORED, the control
+   gets positioned in the top left corner.
+
   RECT parent_rect;
   HWND parent;
-  HDC hdc;
   UINT uPosFlags,cx,cy;
 
   uPosFlags=0;
@@ -676,9 +681,9 @@ TAB_Size (HWND hwnd, WPARAM wParam, LPARAM lParam)
 
   	SetWindowPos (hwnd, 0, parent_rect.left, parent_rect.top,
             cx, cy, uPosFlags | SWP_NOZORDER);
-	} else {
+	} else {*/
     FIXME (tab,"WM_SIZE flag %x %lx not handled\n", wParam, lParam);
-  } 
+/*  } */
 
   TAB_SetItemBounds (hwnd);
   hdc = GetDC (hwnd);
@@ -703,6 +708,7 @@ TAB_Create (HWND hwnd, WPARAM wParam, LPARAM lParam)
     infoPtr->hcurArrow = LoadCursorA (0, IDC_ARROWA);
     infoPtr->iSelected = -1;  
 	infoPtr->hwndToolTip=0;
+    infoPtr->DoRedraw = TRUE;
   
     TRACE(tab, "Created tab control, hwnd [%04x]\n", hwnd); 
     if (GetWindowLongA(hwnd, GWL_STYLE) & TCS_TOOLTIPS) {
