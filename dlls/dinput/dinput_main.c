@@ -658,23 +658,3 @@ HRESULT WINAPI DINPUT_DllGetClassObject(REFCLSID rclsid, REFIID riid,
     FIXME("(%p,%p,%p): no interface found.\n", debugstr_guid(rclsid), debugstr_guid(riid), ppv);
     return CLASS_E_CLASSNOTAVAILABLE;
 }
-
-/***********************************************************************
- *		DllRegisterServer (DINPUT.@)
- */
-HRESULT WINAPI DINPUT_DllRegisterServer(void)
-{
-    FIXME("(void): stub\n");
-
-    return S_OK;
-}
-
-/***********************************************************************
- *		DllUnregisterServer (DINPUT.@)
- */
-HRESULT WINAPI DINPUT_DllUnregisterServer(void)
-{
-    FIXME("(void): stub\n");
-
-    return S_OK;
-}
