@@ -5,6 +5,7 @@
 # ALTNAMES     : alternate names for this dll (optional)
 # EXTRALIBS    : extra libraries to link in (optional)
 # SPEC_SRCS16  : interface definition files for 16-bit dlls (optional)
+# DLLMODE      : (optional) subsystem mode (for native dlls)
 #
 # plus all variables required by the global Make.rules.in
 #
@@ -26,7 +27,7 @@ all: $(MODULE)$(DLLEXT) $(SUBDIRS)
 # Rules for .so files
 
 $(MAINSPEC).c: $(MAINSPEC) $(RC_SRCS:.rc=.res) $(ALL_OBJS) $(IMPORTLIBS) $(WINEBUILD)
-	$(WINEBUILD) $(DEFS) $(DLLFLAGS) -o $@ --spec $(SRCDIR)/$(MAINSPEC) $(RC_SRCS:.rc=.res) $(ALL_OBJS) -L$(DLLDIR) $(DELAYIMPORTS:%=-d%) $(IMPORTS:%=-l%)
+	$(WINEBUILD) $(DEFS) $(DLLFLAGS) -o $@ --spec $(SRCDIR)/$(MAINSPEC) $(DLLMODE:%=--mode %) $(RC_SRCS:.rc=.res) $(ALL_OBJS) -L$(DLLDIR) $(DELAYIMPORTS:%=-d%) $(IMPORTS:%=-l%)
 
 $(MODULE).so: $(MAINSPEC).o $(ALL_OBJS) Makefile.in
 	$(LDDLL) $(MAINSPEC).o $(ALL_OBJS) -o $@ -L$(DLLDIR) $(ALL_LIBS) -lc
