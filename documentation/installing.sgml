@@ -86,23 +86,29 @@
         </para>
       </sect2>
       <sect2>
-        <title>Red Hat (RPM) Linux</title>
+        <title>Linux Red Hat, Mandrake, Suse and other distributions using RPM</title>
 
         <para>
-	  Switch to the directory you downloaded the RPM package file to.
+	  Most distributions provide a graphical tool for installing
+	  RPM packages, you can use it by simply clicking (Or double clicking,
+	  depending on your system settings) on the RPM. If you don't have a
+	  graphical RPM manager installed, using a shell, switch to the
+	  directory where you downloaded the RPM package file to.
 	  Once there, type this one command as root, adapting the
 	  package file name as required:
         </para>
   <screen>
-  <prompt># </><userinput>rpm -ivh wine-<replaceable>20020605-2.i386</>.rpm</>
+  <prompt># </><userinput>rpm -ivh wine-<replaceable>20031212.i386</>.rpm</>
   </screen>
         <para>
           You may also want to install the
           <systemitem>wine-devel</systemitem> package.
         </para>
 	<para>
-	  Uninstalling an installed Wine RPM package can be done by
-	  running:
+	  If you've installed wine graphically, you can uninstall it
+	  using your graphical RPM manager (Gnorpm, Kpackage, Yast,
+	  Mandrake Control Center and so on), alternatively, uninstalling
+	  a installed Wine RPM package can be done from a shell, by running:
 	</para>
   <screen>
   <prompt># </><userinput>rpm -qa|grep -i wine</>
