@@ -38,8 +38,9 @@ extern void *wine_dlopen( const char *filename, int flag, char *error, int error
 extern void *wine_dlsym( void *handle, const char *symbol, char *error, int errorsize );
 extern int wine_dlclose( void *handle, char *error, int errorsize );
 extern void wine_dll_set_callback( load_dll_callback_t load );
-extern void *wine_dll_load( const char *filename, char *error, int errorsize );
-extern void *wine_dll_load_main_exe( const char *name, char *error, int errorsize, int test_only );
+extern void *wine_dll_load( const char *filename, char *error, int errorsize, int *file_exists );
+extern void *wine_dll_load_main_exe( const char *name, char *error, int errorsize,
+                                     int test_only, int *file_exists );
 extern void wine_dll_unload( void *handle );
 
 extern int __wine_main_argc;

@@ -45,37 +45,6 @@ WINE_DECLARE_DEBUG_CHANNEL(relay);
 static HMODULE main_module;
 static NTSTATUS last_status; /* use to gather all errors in callback */
 
-/***********************************************************************
- *           BUILTIN32_dlopen
- *
- * The loader critical section must be locked while calling this function
- */
-NTSTATUS BUILTIN32_dlopen( const char *name, void** handle)
-{
-    char error[256];
-
-    last_status = STATUS_SUCCESS;
-    /* load_library will modify last_status. Note also that load_library can be
-     * called several times, if the .so file we're loading has dependencies.
-     * last_status will gather all the errors we may get while loading all these
-     * libraries
-     */
-    if (!(*handle = wine_dll_load( name, error, sizeof(error) )))
-    {
-        if (strstr(error, "cannot open") || strstr(error, "open failed") ||
-            (strstr(error, "Shared object") && strstr(error, "not found"))) {
-	    /* The file does not exist -> WARN() */
-            WARN("cannot open .so lib for builtin %s: %s\n", name, error);
-            last_status = STATUS_NO_SUCH_FILE;
-        } else {
-	    /* ERR() for all other errors (missing functions, ...) */
-            ERR("failed to load .so lib for builtin %s: %s\n", name, error );
-            last_status = STATUS_PROCEDURE_NOT_FOUND;
-	}
-    }
-    return last_status;
-}
-
 
 /***********************************************************************
  *           load_library
@@ -151,10 +120,10 @@ static void load_library( void *base, const char *filename )
  */
 NTSTATUS BUILTIN32_LoadLibraryExA(LPCSTR path, DWORD flags, WINE_MODREF** pwm)
 {
-    char dllname[20], *p;
+    char error[256], dllname[20], *p;
+    int file_exists;
     LPCSTR name;
     void *handle;
-    NTSTATUS nts;
 
     /* Fix the name in case we have a full path and extension */
     name = path;
@@ -168,8 +137,25 @@ NTSTATUS BUILTIN32_LoadLibraryExA(LPCSTR path, DWORD flags, WINE_MODREF** pwm)
     if (!p) strcat( dllname, ".dll" );
     for (p = dllname; *p; p++) *p = FILE_tolower(*p);
 
-    if ((nts = BUILTIN32_dlopen( dllname, &handle )) != STATUS_SUCCESS)
-        return nts;
+    last_status = STATUS_SUCCESS;
+    /* load_library will modify last_status. Note also that load_library can be
+     * called several times, if the .so file we're loading has dependencies.
+     * last_status will gather all the errors we may get while loading all these
+     * libraries
+     */
+    if (!(handle = wine_dll_load( dllname, error, sizeof(error), &file_exists )))
+    {
+        if (!file_exists)
+        {
+            /* The file does not exist -> WARN() */
+            WARN("cannot open .so lib for builtin %s: %s\n", name, error);
+            return STATUS_NO_SUCH_FILE;
+        }
+        /* ERR() for all other errors (missing functions, ...) */
+        ERR("failed to load .so lib for builtin %s: %s\n", name, error );
+        return STATUS_PROCEDURE_NOT_FOUND;
+    }
+    if (last_status != STATUS_SUCCESS) return last_status;
 
     if (!((*pwm) = MODULE_FindModule( path ))) *pwm = MODULE_FindModule( dllname );
     if (!*pwm)

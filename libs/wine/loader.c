@@ -126,7 +126,8 @@ inline static int file_exists( const char *name )
 
 /* open a library for a given dll, searching in the dll path
  * 'name' must be the Windows dll name (e.g. "kernel32.dll") */
-static void *dlopen_dll( const char *name, char *error, int errorsize, int test_only )
+static void *dlopen_dll( const char *name, char *error, int errorsize,
+                         int test_only, int *exists )
 {
     int i, namelen = strlen(name);
     char *buffer, *p;
@@ -141,21 +142,15 @@ static void *dlopen_dll( const char *name, char *error, int errorsize, int test_
     *p++ = '/';
     memcpy( p, name, namelen );
     strcpy( p + namelen, ".so" );
+    *exists = 0;
 
     for (i = 0; i < nb_dll_paths; i++)
     {
         int len = strlen(dll_paths[i]);
         p = buffer + dll_path_maxlen - len;
         memcpy( p, dll_paths[i], len );
-        if (test_only)  /* just test for file existence */
-        {
-            if ((ret = (void *)file_exists( p ))) break;
-        }
-        else
-        {
-            if ((ret = wine_dlopen( p, RTLD_NOW, error, errorsize ))) break;
-            if (file_exists( p )) break; /* exists but cannot be loaded, return the error */
-        }
+        if (!test_only && (ret = wine_dlopen( p, RTLD_NOW, error, errorsize ))) break;
+        if ((*exists = file_exists( p ))) break; /* exists but cannot be loaded, return the error */
     }
     free( buffer );
     return ret;
@@ -367,7 +362,7 @@ void wine_dll_set_callback( load_dll_callback_t load )
  *
  * Load a builtin dll.
  */
-void *wine_dll_load( const char *filename, char *error, int errorsize )
+void *wine_dll_load( const char *filename, char *error, int errorsize, int *file_exists )
 {
     int i;
 
@@ -384,10 +379,11 @@ void *wine_dll_load( const char *filename, char *error, int errorsize )
             const IMAGE_NT_HEADERS *nt = builtin_dlls[i].nt;
             builtin_dlls[i].nt = NULL;
             load_dll_callback( map_dll(nt), builtin_dlls[i].filename );
+            *file_exists = 1;
             return (void *)1;
         }
     }
-    return dlopen_dll( filename, error, errorsize, 0 );
+    return dlopen_dll( filename, error, errorsize, 0, file_exists );
 }
 
 
@@ -408,9 +404,10 @@ void wine_dll_unload( void *handle )
  *
  * Try to load the .so for the main exe.
  */
-void *wine_dll_load_main_exe( const char *name, char *error, int errorsize, int test_only )
+void *wine_dll_load_main_exe( const char *name, char *error, int errorsize,
+                              int test_only, int *file_exists )
 {
-    return dlopen_dll( name, error, errorsize, test_only );
+    return dlopen_dll( name, error, errorsize, test_only, file_exists );
 }
 
 
@@ -421,10 +418,11 @@ void *wine_dll_load_main_exe( const char *name, char *error, int errorsize, int 
  */
 void wine_init( int argc, char *argv[], char *error, int error_size )
 {
+    int file_exists;
     void *ntdll;
     void (*init_func)(int, char **);
 
-    if (!(ntdll = dlopen_dll( "ntdll.dll", error, error_size, 0 ))) return;
+    if (!(ntdll = dlopen_dll( "ntdll.dll", error, error_size, 0, &file_exists ))) return;
     if (!(init_func = wine_dlsym( ntdll, "__wine_process_init", error, error_size ))) return;
     init_func( argc, argv );
 }

@@ -146,7 +146,8 @@ inline static const char *get_basename( const char *name )
  *
  * Open an exe file for a builtin exe.
  */
-static void *open_builtin_exe_file( const char *name, char *error, int error_size, int test_only )
+static void *open_builtin_exe_file( const char *name, char *error, int error_size,
+                                    int test_only, int *file_exists )
 {
     char exename[MAX_PATH], *p;
     const char *basename = get_basename(name);
@@ -154,7 +155,7 @@ static void *open_builtin_exe_file( const char *name, char *error, int error_siz
     if (strlen(basename) >= sizeof(exename)) return NULL;
     strcpy( exename, basename );
     for (p = exename; *p; p++) *p = FILE_tolower(*p);
-    return wine_dll_load_main_exe( exename, error, error_size, test_only );
+    return wine_dll_load_main_exe( exename, error, error_size, test_only, file_exists );
 }
 
 
@@ -169,7 +170,7 @@ static HANDLE open_exe_file( const char *name )
     enum loadorder_type loadorder[LOADORDER_NTYPES];
     char buffer[MAX_PATH];
     HANDLE handle;
-    int i;
+    int i, file_exists;
 
     TRACE("looking for %s\n", debugstr_a(name) );
 
@@ -195,7 +196,8 @@ static HANDLE open_exe_file( const char *name )
             break;
         case LOADORDER_BI:
             TRACE( "Trying built-in exe %s\n", debugstr_a(name) );
-            if (open_builtin_exe_file( name, NULL, 0, 1 ))
+            open_builtin_exe_file( name, NULL, 0, 1, &file_exists );
+            if (file_exists)
             {
                 if (handle != INVALID_HANDLE_VALUE) CloseHandle(handle);
                 return 0;
@@ -223,7 +225,7 @@ static HANDLE open_exe_file( const char *name )
 static BOOL find_exe_file( const char *name, char *buffer, int buflen, HANDLE *handle )
 {
     enum loadorder_type loadorder[LOADORDER_NTYPES];
-    int i;
+    int i, file_exists;
 
     TRACE("looking for %s\n", debugstr_a(name) );
 
@@ -258,7 +260,8 @@ static BOOL find_exe_file( const char *name, char *buffer, int buflen, HANDLE *h
             break;
         case LOADORDER_BI:
             TRACE( "Trying built-in exe %s\n", debugstr_a(buffer) );
-            if (open_builtin_exe_file( buffer, NULL, 0, 1 ))
+            open_builtin_exe_file( buffer, NULL, 0, 1, &file_exists );
+            if (file_exists)
             {
                 *handle = 0;
                 return TRUE;
@@ -473,6 +476,7 @@ void __wine_process_init( int argc, char *argv[] )
 {
     char error[1024], *p;
     DWORD stack_size = 0;
+    int file_exists;
 
     /* Initialize everything */
     if (!process_init( argv )) exit(1);
@@ -501,7 +505,7 @@ void __wine_process_init( int argc, char *argv[] )
     if (!main_exe_file)  /* no file handle -> Winelib app */
     {
         TRACE( "starting Winelib app %s\n", debugstr_a(main_exe_name) );
-        if (open_builtin_exe_file( main_exe_name, error, sizeof(error), 0 ))
+        if (open_builtin_exe_file( main_exe_name, error, sizeof(error), 0, &file_exists ))
             goto found;
         MESSAGE( "%s: cannot open builtin library for '%s': %s\n", argv0, main_exe_name, error );
         ExitProcess(1);
@@ -533,7 +537,7 @@ void __wine_process_init( int argc, char *argv[] )
         main_exe_file = 0;
         argv--;
         argv[0] = "winevdm.exe";
-        if (open_builtin_exe_file( "winevdm.exe", error, sizeof(error), 0 ))
+        if (open_builtin_exe_file( "winevdm.exe", error, sizeof(error), 0, &file_exists ))
             goto found;
         MESSAGE( "%s: trying to run '%s', cannot open builtin library for 'winevdm.exe': %s\n",
                  argv0, main_exe_name, error );

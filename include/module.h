@@ -229,7 +229,6 @@ extern void MODULE_AddLoadOrderOption( const char *option );
 /* relay32/builtin.c */
 extern NTSTATUS BUILTIN32_LoadLibraryExA(LPCSTR name, DWORD flags, WINE_MODREF**);
 extern HMODULE BUILTIN32_LoadExeModule( HMODULE main );
-extern NTSTATUS BUILTIN32_dlopen( const char *name, void** handle );
 
 /* if1632/builtin.c */
 extern HMODULE16 BUILTIN_LoadModule( LPCSTR name );

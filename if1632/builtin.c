@@ -184,7 +184,8 @@ BOOL BUILTIN_IsPresent( LPCSTR name )
 HMODULE16 BUILTIN_LoadModule( LPCSTR name )
 {
     const BUILTIN16_DESCRIPTOR *descr;
-    char dllname[20], *p;
+    char error[256], dllname[20], *p;
+    int file_exists;
     void *handle;
 
     /* Fix the name in case we have a full path and extension */
@@ -202,14 +203,18 @@ HMODULE16 BUILTIN_LoadModule( LPCSTR name )
     if ((descr = find_dll_descr( dllname )))
         return BUILTIN_DoLoadModule16( descr );
 
-    if (BUILTIN32_dlopen( dllname, &handle ) == STATUS_SUCCESS)
+    if ((handle = wine_dll_load( dllname, error, sizeof(error), &file_exists )))
     {
         if ((descr = find_dll_descr( dllname )))
             return BUILTIN_DoLoadModule16( descr );
 
         ERR( "loaded .so but dll %s still not found\n", dllname );
     }
-
+    else
+    {
+        if (!file_exists) WARN("cannot open .so lib for 16-bit builtin %s: %s\n", name, error);
+        else ERR("failed to load .so lib for 16-bit builtin %s: %s\n", name, error );
+    }
     return (HMODULE16)2;
 }
 
