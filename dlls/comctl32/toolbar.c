@@ -3367,13 +3367,26 @@ TOOLBAR_SetHotItem (HWND hwnd, WPARAM wParam)
 {
     TOOLBAR_INFO *infoPtr = TOOLBAR_GetInfoPtr(hwnd);
     INT nOldHotItem = infoPtr->nHotItem;
+    TBUTTON_INFO *btnPtr;
 
     if (GetWindowLongA (hwnd, GWL_STYLE) & TBSTYLE_FLAT)
     {
-	infoPtr->nHotItem = (INT)wParam;
 
-	/* FIXME: What else must be done ??? */
-
+    	infoPtr->nHotItem = (INT)wParam;
+        if (wParam >=0)
+        {
+            btnPtr = &infoPtr->buttons[(INT)wParam];
+            btnPtr->bHot = TRUE;
+	        InvalidateRect (hwnd, &btnPtr->rect,
+                    TOOLBAR_HasText(infoPtr, btnPtr));
+        }
+        if (nOldHotItem>=0)
+        {
+            btnPtr = &infoPtr->buttons[nOldHotItem];
+            btnPtr->bHot = FALSE;
+	        InvalidateRect (hwnd, &btnPtr->rect,
+                    TOOLBAR_HasText(infoPtr, btnPtr));
+        }
     }
 
     if (nOldHotItem < 0)
