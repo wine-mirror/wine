@@ -390,10 +390,15 @@ void *GDI_GetObjPtr( HGDIOBJ handle, WORD magic )
     if (handle & 2)  /* GDI heap handle */
     {
         ptr = (GDIOBJHDR *)LOCAL_Lock( GDI_HeapSel, handle );
-        if (ptr && (magic != MAGIC_DONTCARE) && (GDIMAGIC(ptr->wMagic) != magic))
+        if (ptr)
         {
-            LOCAL_Unlock( GDI_HeapSel, handle );
-            ptr = NULL;
+            if (((magic != MAGIC_DONTCARE) && (GDIMAGIC(ptr->wMagic) != magic)) ||
+                (GDIMAGIC(ptr->wMagic) < FIRST_MAGIC) ||
+                (GDIMAGIC(ptr->wMagic) > LAST_MAGIC))
+            {
+                LOCAL_Unlock( GDI_HeapSel, handle );
+                ptr = NULL;
+            }
         }
     }
     else  /* large heap handle */
