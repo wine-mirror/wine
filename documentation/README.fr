@@ -33,19 +33,19 @@ Pour compiler et exécuter Wine, vous devez avoir un des systèmes
 d'exploitation qui suit :
 
 	Linux version 2.0.36 ou supérieur
-	FreeBSD 4.x or FreeBSD 5-CURRENT
+	FreeBSD 4.x or FreeBSD 5-CURRENT ou supérieur
 	Solaris x86 2.5 ou supérieur
 	NetBSD-current
 
+Étant donné que Wine nécessite une implémentation des "threads" au niveau du
+noyau, seuls les systèmes d'exploitation mentionnés ci-haut sont supportés.
+D'autres systèmes d'exploitation qui implémentent les "threads" noyau peuvent
+être supportés dans le futur.
+
 Information Linux :
-  Bien que les versions Linux 2.0.x fonctionneront en général, certaines
-  caractéristiques (surtout le partage LDT) nécessaires pour faire
-  fonctionner les "threads" Win32 n'étaient implémentés avant les kernels 2.2.
-  Si vous avez constamment des plantages dû aux "threads", vous devriez
-  considérer de vous mettre à jour au noyau 2.2. Aussi certains bogues ont été
-  fixés et de nouvelles fonctionnalités ont été ajoutées aux dernières versions
-  du noyau 2.0.x, ainsi si vous avez un noyau Linux très ancien, mettez-le à
-  jour au moins au dernier 2.0.x.
+  Bien que Linux 2.2.x devrait encore fontionner et que Linux 2.0.x pourrait
+  encore marcher (des versions plus anciennes de 2.0.x avaient des plantages
+  dû aux "threads"), il est préférable d'avoir un noyau récent tel que 2.4.x.
 
 Information FreeBSD :
   Assurez-vous d'avoir les options USER_LDT, SYSVSHM, SYSVSEM, and SYSVMSG
@@ -64,7 +64,7 @@ Information NetBSD :
   Assurez-vous d'avoir les options USER_LDT, SYSVSHM, SYSVSEM, and SYSVMSG
   enclanchées dans votre noyau.
 
-Information des système de fichier :
+Systèmes de fichier supportés :
   Wine devrait fonctionner sur la plupart des systèmes de fichier. Cependant
   Wine s'arrêtera au démarrage si umsdos est utilisé pour le répertoire /tmp.
   Quelques problèmes de compatibilité ont aussi été rapportés sur
@@ -75,19 +75,11 @@ Information des système de fichier :
   avez des fichier NTFS, copiez les vers une localisation accessible en
   écriture.
 
-Wine a besoin de "threads" du niveau noyau. Actuellement, seul Linux version
-2.0 ou supérieur, FreeBSD 4.x ou supérieur, Solaris x86 version 2.5 ou supérieur
-et NetBSD-current sont supportés. D'autres systèmes d'exploitations qui
-implémentent les "threads" noyau peuvent être supportés dans le futur.
-
+Configuration requise de base :
 Vous avez besoin d'avoir les fichiers "include" de X11 installés
 (appelés xlib6g-dev pour Debian et XFree86-devel pour RedHat).
-Pour utiliser le support de Wine pour des applications multi-threads
-vos librairies X doivent être réentrantes, ce qui est probalblement la
-configuration par défaut à l'heure actuelle. Si vous possédez libc6 (glibc2)
-ou que vous compilez les librairies X vous-même, elles ont probablement été
-compilées avec l'option réentrant enclanchée.
 
+Configuration requise des outils de compilation :
 Sur les système x86, gcc >= 2.7.2 est nécessaire. Les versions inférieures à
 la 2.7.2.3 peuvent créer des ennuis losrque certains fichiers sont compilés
 avec l'optimisation, souvent dû à des problèmes de gestion d'en-tête de fichier.
@@ -99,6 +91,10 @@ inconnue.
 Vous aurez également besoin de flex version 2.5 ou supérieure et yacc.
 Bison fonctionnera en replacement de yacc. Si vous utilisez RedHat ou Debian,
 installez les paquets flex et bison.
+
+Librairies optionnelles :
+  Si vous voulez un support d'impression à l'aide de CUPS, SVP installez à la
+  fois les packages cups et cups-devel.
 
 Pour le traitement automatique des scripts de la série de tests, vous aurez
 également besoin des en-têtes de développement de libperl (package libperl-dev
@@ -159,7 +155,8 @@ N'oubliez pas d'ajouter des entrées de registre virtuelle en applicant
 winedefault.reg avec programs/regedit/. Voyez le répertoire documentation/ pour
 les détails.
 
-Naviguez sur http://www.winehq.com/support/ pour plus d'astuce de configuration.
+Naviguez dans la section Support à http://www.winehq.com/ pour plus d'astuces
+de configuration.
 
 En cas d'erreur de chargement de librairie (par exemple
 "Error while loading shared libraries: libntdll.so"), assurez vous d'ajouter
@@ -182,13 +179,16 @@ l'exécutable ou seulement le nom de fichier.
 
 Pour exécuter Solitaire par exemple :
 
-	wine sol		   (en utilisant le chemin d'accès pour
-				    localiser le fichier)
-	wine sol.exe
+	wine sol		   (en utilisant le chemin d'accès spécifié
+	wine sol.exe			dans le fichier "config" pour localiser
+					le fichier)
 
-	wine c:\\windows\\sol.exe  (en utilisant un nom de fichier DOS)
+	wine c:\\windows\\sol.exe  (en utilisant la syntaxe de fichiers DOS)
 
-	wine /usr/windows/sol.exe  (en utilisant un nom de fichier Unix)
+	wine /usr/windows/sol.exe  (en utilisant la syntaxe de fichiers Unix)
+
+	wine -- sol.exe /parametre1 -parametre2 parametre3
+			(en appelant le programme avec des paramètres)
 
 Note: le chemin du fichier sera également additionné au chemin par défaut
       lorsque le nom entier est écrit sur la ligne de commande.
@@ -236,7 +236,7 @@ FAQ:	La Foire Aux Questions de Wine est localisée à :
 Usenet:	Vous pouvez parler des problèmes ou résolutions en relation avec Wine
 	ou optenir de l'aide sur comp.emulators.ms-windows.wine.
 
-Bugs:	Rapportez les bogues à Wine Bugzilla à http://bugs.winehq.com/.
+Bugs:	Rapportez les bogues à Wine Bugzilla à http://bugs.winehq.com
 	SVP cherchez tout d'abord dans la base de donnée de bugzilla
 	pour contrôler que le problème n'est pas déjà découvert avant
 	de poster un rapport de bogue. Vous pouvez également rapporter
@@ -249,11 +249,11 @@ IRC:	L'aide en ligne est disponible sur le cannal #WineHQ sur
 
 CVS:	L'arbre de développement actuel de Wine est disponible au travers
 	de CVS.
-	Allez sur http://www.winehq.com/development/ pour plus d'informations
+	Allez sur http://www.winehq.com/cvs pour plus d'informations
 
 Mailing lists:
 	Il existe de multiples mailing lists pour les développeurs de Wine;
-	repportez-vous à http://www.winehq.com/development/#ml pour de plus
+	repportez-vous à http://www.winehq.com/forums pour de plus
 	amples informations.
 
 Si vous ajoutez quelquechose ou fixez un bogue, envoyez un patch (dans le
