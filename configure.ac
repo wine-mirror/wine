@@ -495,7 +495,10 @@ fi
 dnl **** Check for IPX (currently Linux only) ****
 AC_CACHE_CHECK([for GNU style IPX support], ac_cv_c_ipx_gnu,
  AC_TRY_COMPILE(
-   [#include <sys/socket.h>
+   [#include <sys/types.h>
+    #ifdef HAVE_SYS_SOCKET_H
+    # include <sys/socket.h>
+    #endif
     #include <netipx/ipx.h>],
    [((struct sockaddr_ipx *)0)->sipx_family == AF_IPX],
    [ac_cv_c_ipx_gnu="yes"],
@@ -510,7 +513,10 @@ if test "$ac_cv_c_ipx_gnu" = "no"
 then
  AC_CACHE_CHECK([for linux style IPX support], ac_cv_c_ipx_linux,
   AC_TRY_COMPILE(
-    [#include <sys/socket.h>
+    [#include <sys/types.h>
+     #ifdef HAVE_SYS_SOCKET_H
+     # include <sys/socket.h>
+     #endif
      #include <asm/types.h>
      #include <linux/ipx.h>],
     [((struct sockaddr_ipx *)0)->sipx_family == AF_IPX],
@@ -1034,20 +1040,20 @@ AC_HEADER_STAT()
 dnl **** Checks for headers that depend on other ones ****
 
 AC_CHECK_HEADERS(sys/mount.h sys/user.h,,,
-    [#if HAVE_SYS_TYPES_H
-     # include <sys/types.h>
+    [#include <sys/types.h>
+     #if HAVE_SYS_PARAM_H
+     # include <sys/param.h>
      #endif])
 
 AC_CHECK_HEADERS(net/if.h,,,
-    [#if HAVE_SYS_TYPES_H
-     # include <sys/types.h>
-     #endif
+    [#include <sys/types.h>
      #if HAVE_SYS_SOCKET_H
      # include <sys/socket.h>
      #endif])
 
 AC_CHECK_HEADERS(netinet/ip.h,,,
-    [#if HAVE_SYS_SOCKET_H
+    [#include <sys/types.h>
+     #if HAVE_SYS_SOCKET_H
      # include <sys/socket.h>
      #endif
      #if HAVE_NETINET_IN_SYSTM_H
@@ -1055,7 +1061,8 @@ AC_CHECK_HEADERS(netinet/ip.h,,,
      #endif])
 
 AC_CHECK_HEADERS(resolv.h,,,
-    [#if HAVE_SYS_SOCKET_H
+    [#include <sys/types.h>
+     #if HAVE_SYS_SOCKET_H
      # include <sys/socket.h>
      #endif])
 
@@ -1250,20 +1257,28 @@ WINE_CHECK_STRUCT_MEMBER(statfs,f_bavail,
 dnl Check for file descriptor passing with msg_accrights
 WINE_CHECK_STRUCT_MEMBER(msghdr,msg_accrights,
 [#include <sys/types.h>
-#include <sys/socket.h>],
+#ifdef HAVE_SYS_SOCKET_H
+# include <sys/socket.h>
+#endif],
     [AC_DEFINE(HAVE_MSGHDR_ACCRIGHTS, 1, [Define if struct msghdr contains msg_accrights])])
 
 dnl Check for the sa_len member in struct sockaddr
 WINE_CHECK_STRUCT_MEMBER(sockaddr,sa_len,
 [#include <sys/types.h>
-#include <sys/socket.h>],
+#ifdef HAVE_SYS_SOCKET_H
+# include <sys/socket.h>
+#endif],
     [AC_DEFINE(HAVE_SOCKADDR_SA_LEN, 1, [Define if struct sockaddr contains sa_len])])
 
 dnl Check for the sun_len member in struct sockaddr_un
 WINE_CHECK_STRUCT_MEMBER(sockaddr_un,sun_len,
 [#include <sys/types.h>
-#include <sys/socket.h>
-#include <sys/un.h>],
+#ifdef HAVE_SYS_SOCKET_H
+# include <sys/socket.h>
+#endif
+#ifdef HAVE_SYS_UN_H
+# include <sys/un.h>
+#endif],
     [AC_DEFINE(HAVE_SOCKADDR_SUN_LEN, 1, [Define if struct sockaddr_un contains sun_len])])
 
 dnl *** check for the need to define __i386__

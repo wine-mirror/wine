@@ -8731,7 +8731,10 @@ else
   cat >conftest.$ac_ext <<_ACEOF
 #line $LINENO "configure"
 #include "confdefs.h"
-#include <sys/socket.h>
+#include <sys/types.h>
+    #ifdef HAVE_SYS_SOCKET_H
+    # include <sys/socket.h>
+    #endif
     #include <netipx/ipx.h>
 int
 main ()
@@ -8783,7 +8786,10 @@ else
   cat >conftest.$ac_ext <<_ACEOF
 #line $LINENO "configure"
 #include "confdefs.h"
-#include <sys/socket.h>
+#include <sys/types.h>
+     #ifdef HAVE_SYS_SOCKET_H
+     # include <sys/socket.h>
+     #endif
      #include <asm/types.h>
      #include <linux/ipx.h>
 int
@@ -11896,8 +11902,9 @@ else
   cat >conftest.$ac_ext <<_ACEOF
 #line $LINENO "configure"
 #include "confdefs.h"
-#if HAVE_SYS_TYPES_H
-     # include <sys/types.h>
+#include <sys/types.h>
+     #if HAVE_SYS_PARAM_H
+     # include <sys/param.h>
      #endif
 
 #include <$ac_header>
@@ -11946,9 +11953,7 @@ else
   cat >conftest.$ac_ext <<_ACEOF
 #line $LINENO "configure"
 #include "confdefs.h"
-#if HAVE_SYS_TYPES_H
-     # include <sys/types.h>
-     #endif
+#include <sys/types.h>
      #if HAVE_SYS_SOCKET_H
      # include <sys/socket.h>
      #endif
@@ -11999,7 +12004,8 @@ else
   cat >conftest.$ac_ext <<_ACEOF
 #line $LINENO "configure"
 #include "confdefs.h"
-#if HAVE_SYS_SOCKET_H
+#include <sys/types.h>
+     #if HAVE_SYS_SOCKET_H
      # include <sys/socket.h>
      #endif
      #if HAVE_NETINET_IN_SYSTM_H
@@ -12052,7 +12058,8 @@ else
   cat >conftest.$ac_ext <<_ACEOF
 #line $LINENO "configure"
 #include "confdefs.h"
-#if HAVE_SYS_SOCKET_H
+#include <sys/types.h>
+     #if HAVE_SYS_SOCKET_H
      # include <sys/socket.h>
      #endif
 
@@ -13311,7 +13318,9 @@ else
 #line $LINENO "configure"
 #include "confdefs.h"
 #include <sys/types.h>
-#include <sys/socket.h>
+#ifdef HAVE_SYS_SOCKET_H
+# include <sys/socket.h>
+#endif
 int
 main ()
 {
@@ -13361,7 +13370,9 @@ else
 #line $LINENO "configure"
 #include "confdefs.h"
 #include <sys/types.h>
-#include <sys/socket.h>
+#ifdef HAVE_SYS_SOCKET_H
+# include <sys/socket.h>
+#endif
 int
 main ()
 {
@@ -13411,8 +13422,12 @@ else
 #line $LINENO "configure"
 #include "confdefs.h"
 #include <sys/types.h>
-#include <sys/socket.h>
-#include <sys/un.h>
+#ifdef HAVE_SYS_SOCKET_H
+# include <sys/socket.h>
+#endif
+#ifdef HAVE_SYS_UN_H
+# include <sys/un.h>
+#endif
 int
 main ()
 {
