@@ -1,5 +1,7 @@
 /*
- * Copyright 2000 Mike McCormack
+ * MPR dll resources
+ *
+ * Copyright (C) 2004 Henning Gerhardt
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -16,17 +18,9 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
-#include "windef.h"
-#include "winbase.h"
-#include "winuser.h"
-#include "serialui.h"
+LANGUAGE LANG_GERMAN, SUBLANG_DEFAULT
 
-#include "De.rc"
-#include "En.rc"
-#include "Es.rc"
-#include "Fr.rc"
-#include "It.rc"
-#include "Ja.rc"
-#include "Nl.rc"
-#include "Pt.rc"
-#include "Ru.rc"
+STRINGTABLE DISCARDABLE
+{
+    IDS_ENTIRENETWORK "Gesamtes Netzwerk"
+}

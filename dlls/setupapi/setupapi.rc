@@ -24,6 +24,7 @@
 #include "winnls.h"
 #include "setupapi_private.h"
 
+#include "De.rc"
 #include "En.rc"
 #include "Es.rc"
 #include "Fr.rc"
