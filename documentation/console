@@ -16,14 +16,14 @@ write function pointer, which then finally calls write.
 
 [this paragraph is now out of date]
 If the command line console is to be inheirited or
-a process inherits it's parents console (-- can that happen???),
+a process inherits its parent's console (-- can that happen???),
 the console is created at process init time via PROCESS_InheritConsole.
 The 0, 1, and 2 file descriptors are duped to be the
 STD_*_HANDLES in this case.  Also in this case a flag is set
 to indicate that the console comes from the parent process or
 command line.
 
-If a process doesn't have a console at all, it's 
+If a process doesn't have a console at all, its 
 pdb->console is set to NULL.  This helps indicate when
 it is possible to create a new console (via AllocConsole).
 
