@@ -2790,9 +2790,8 @@ static INT MENU_TrackMenu( HMENU hmenu, UINT wFlags, INT x, INT y,
     /* Reset the variable for hiding menu */
     menu->bTimeToHide = FALSE;
     
-    /* Return 1 if executedMenuId != -1.
-       The return value is only used by TrackPopupMenu */
-    return ((executedMenuId != -1) ? 1 : 0);
+    /* The return value is only used by TrackPopupMenu */
+    return ((executedMenuId != -1) ? executedMenuId : 0);
 }
 
 /***********************************************************************
