@@ -277,7 +277,7 @@ static INT16 wvsnprintf16( LPSTR buffer, UINT16 maxlen, LPCSTR spec,
 {
     WPRINTF_FORMAT format;
     LPSTR p = buffer;
-    UINT i, len;
+    UINT i, len, sign;
     CHAR number[20];
     WPRINTF_DATA cur_arg;
     SEGPTR seg_str;
@@ -318,6 +318,7 @@ static INT16 wvsnprintf16( LPSTR buffer, UINT16 maxlen, LPCSTR spec,
             continue;
         }
         len = WPRINTF_GetLen( &format, &cur_arg, number, maxlen - 1 );
+        sign = 0;
         if (!(format.flags & WPRINTF_LEFTALIGN))
             for (i = format.precision; i < format.width; i++, maxlen--)
                 *p++ = ' ';
@@ -346,9 +347,16 @@ static INT16 wvsnprintf16( LPSTR buffer, UINT16 maxlen, LPCSTR spec,
             }
             /* fall through */
         case WPR_SIGNED:
+            /* Transfer the sign now, just in case it will be zero-padded*/
+            if (number[0] == '-')
+            {
+                *p++ = '-';
+                sign = 1;
+            }
+            /* fall through */
         case WPR_UNSIGNED:
             for (i = len; i < format.precision; i++, maxlen--) *p++ = '0';
-            if (len) memcpy( p, number, len );
+            if (len > sign) memcpy( p, number + sign, len - sign );
             p += len;
             break;
         case WPR_UNKNOWN:
@@ -371,7 +379,7 @@ INT WINAPI wvsnprintfA( LPSTR buffer, UINT maxlen, LPCSTR spec, va_list args )
 {
     WPRINTF_FORMAT format;
     LPSTR p = buffer;
-    UINT i, len;
+    UINT i, len, sign;
     CHAR number[20];
     WPRINTF_DATA argData;
 
@@ -409,6 +417,7 @@ INT WINAPI wvsnprintfA( LPSTR buffer, UINT maxlen, LPCSTR spec, va_list args )
         }
 
         len = WPRINTF_GetLen( &format, &argData, number, maxlen - 1 );
+        sign = 0;
         if (!(format.flags & WPRINTF_LEFTALIGN))
             for (i = format.precision; i < format.width; i++, maxlen--)
                 *p++ = ' ';
@@ -440,10 +449,17 @@ INT WINAPI wvsnprintfA( LPSTR buffer, UINT maxlen, LPCSTR spec, va_list args )
             }
             /* fall through */
         case WPR_SIGNED:
+            /* Transfer the sign now, just in case it will be zero-padded*/
+            if (number[0] == '-')
+            {
+                *p++ = '-';
+                sign = 1;
+            }
+            /* fall through */
         case WPR_UNSIGNED:
             for (i = len; i < format.precision; i++, maxlen--) *p++ = '0';
-            memcpy( p, number, len );
-            p += len;
+            memcpy( p, number + sign, len - sign  );
+            p += len - sign;
             break;
         case WPR_UNKNOWN:
             continue;
@@ -466,7 +482,7 @@ INT WINAPI wvsnprintfW( LPWSTR buffer, UINT maxlen, LPCWSTR spec, va_list args )
 {
     WPRINTF_FORMAT format;
     LPWSTR p = buffer;
-    UINT i, len;
+    UINT i, len, sign;
     CHAR number[20];
     WPRINTF_DATA argData;
 
@@ -504,6 +520,7 @@ INT WINAPI wvsnprintfW( LPWSTR buffer, UINT maxlen, LPCWSTR spec, va_list args )
         }
 
         len = WPRINTF_GetLen( &format, &argData, number, maxlen - 1 );
+        sign = 0;
         if (!(format.flags & WPRINTF_LEFTALIGN))
             for (i = format.precision; i < format.width; i++, maxlen--)
                 *p++ = ' ';
@@ -535,9 +552,16 @@ INT WINAPI wvsnprintfW( LPWSTR buffer, UINT maxlen, LPCWSTR spec, va_list args )
             }
             /* fall through */
         case WPR_SIGNED:
+            /* Transfer the sign now, just in case it will be zero-padded*/
+            if (number[0] == '-')
+            {
+                *p++ = '-';
+                sign = 1;
+            }
+            /* fall through */
         case WPR_UNSIGNED:
             for (i = len; i < format.precision; i++, maxlen--) *p++ = '0';
-            for (i = 0; i < len; i++) *p++ = (WCHAR)number[i];
+            for (i = sign; i < len; i++) *p++ = (WCHAR)number[i];
             break;
         case WPR_UNKNOWN:
             continue;
