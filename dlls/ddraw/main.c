@@ -254,6 +254,7 @@ HRESULT WINAPI DirectDrawCreate(
     WNDCLASSA	wc;
     HRESULT	ret = 0;
     int		i,drvindex=0;
+    GUID	zeroGUID;
 
     struct ddraw_driver	*ddd = NULL;
 
@@ -261,9 +262,11 @@ HRESULT WINAPI DirectDrawCreate(
 
     TRACE("(%s,%p,%p)\n",debugstr_guid(lpGUID),ilplpDD,pUnkOuter);
 
+    memset(&zeroGUID,0,sizeof(zeroGUID));
     while (1) {
 	ddd = NULL;
 	if ( ( !lpGUID ) ||
+	     ( IsEqualGUID( &zeroGUID,  lpGUID ) ) ||
 	     ( IsEqualGUID( &IID_IDirectDraw,  lpGUID ) ) ||
 	     ( IsEqualGUID( &IID_IDirectDraw2, lpGUID ) ) ||
 	     ( IsEqualGUID( &IID_IDirectDraw4, lpGUID ) )
