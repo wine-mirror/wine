@@ -1200,31 +1200,21 @@ HRESULT WINAPI CoGetClassObject(REFCLSID rclsid, DWORD dwClsContext,
     }
 
     if ((CLSCTX_INPROC_SERVER|CLSCTX_INPROC_HANDLER) & dwClsContext) {
-        HKEY CLSIDkey,key;
-	WCHAR valname[]={	'I','n','p','r','o','c',
-				'S','e','r','v','e','r','3','2',0};
+        HKEY key;
+	char buf[200];
 
-        /* lookup CLSID in registry key HKCR/CLSID */
-        hres = RegOpenKeyExA(HKEY_CLASSES_ROOT, "CLSID", 0, 
-			       KEY_READ, &CLSIDkey);
+	sprintf(buf,"CLSID\\%s\\InprocServer32",xclsid);
+        hres = RegOpenKeyExA(HKEY_CLASSES_ROOT, buf, 0, KEY_READ, &key);
 
-	if (hres != ERROR_SUCCESS)
-	        return REGDB_E_READREGDB;
-        hres = RegOpenKeyExA(CLSIDkey,xclsid,0,KEY_QUERY_VALUE,&key);
 	if (hres != ERROR_SUCCESS) {
-	    RegCloseKey(CLSIDkey);
 	    return REGDB_E_CLASSNOTREG;
 	}
+
 	memset(dllName,0,sizeof(dllName));
-	hres = RegQueryValueW(key, valname, dllName, &dllNameLen);
-	if (hres) {
-		ERR("RegQueryValue of %s failed with hres %lx\n",debugstr_w(dllName),hres);
+	hres= RegQueryValueExW(key,NULL,NULL,NULL,(LPBYTE)dllName,&dllNameLen);
+	if (hres)
 		return REGDB_E_CLASSNOTREG; /* FIXME: check retval */
-	}
 	RegCloseKey(key);
-	RegCloseKey(CLSIDkey);
-	if (hres != ERROR_SUCCESS)
-	        return REGDB_E_READREGDB;
 	TRACE("found InprocServer32 dll %s\n", debugstr_w(dllName));
 
 	/* open dll, call DllGetClassObject */
