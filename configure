@@ -15821,6 +15821,7 @@ done
 
 
 
+
 for ac_header in \
 	arpa/inet.h \
 	arpa/nameser.h \
@@ -15839,6 +15840,7 @@ for ac_header in \
 	linux/cdrom.h \
 	linux/hdreg.h \
 	linux/input.h \
+	linux/ioctl.h \
 	linux/joystick.h \
 	linux/major.h \
 	linux/param.h \

@@ -29,10 +29,13 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <fcntl.h>
+#include <errno.h>
 #ifdef HAVE_SYS_IOCTL_H
 # include <sys/ioctl.h>
 #endif
-#include <errno.h>
+#ifdef HAVE_LINUX_IOCTL_H
+# include <linux/ioctl.h>
+#endif
 #include <linux/ppdev.h>
 
 #include "winerror.h"

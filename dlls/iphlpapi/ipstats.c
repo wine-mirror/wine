@@ -53,38 +53,18 @@
 #include "ifenum.h"
 #include "ipstats.h"
 
-#ifndef TCPS_ESTABLISHED
-# define TCPS_ESTABLISHED TCP_ESTABLISHED
-#endif
-#ifndef TCPS_SYN_SENT
-# define TCPS_SYN_SENT TCP_SYN_SENT
-#endif
-#ifndef TCPS_SYN_RECEIVED
-# define TCPS_SYN_RECEIVED TCP_SYN_RECV
-#endif
-#ifndef TCPS_FIN_WAIT_1
-# define TCPS_FIN_WAIT_1 TCP_FIN_WAIT1
-#endif
-#ifndef TCPS_FIN_WAIT_2
-# define TCPS_FIN_WAIT_2 TCP_FIN_WAIT2
-#endif
-#ifndef TCPS_TIME_WAIT
-# define TCPS_TIME_WAIT TCP_TIME_WAIT
-#endif
-#ifndef TCPS_CLOSED
-# define TCPS_CLOSED TCP_CLOSE
-#endif
-#ifndef TCPS_CLOSE_WAIT
-# define TCPS_CLOSE_WAIT TCP_CLOSE_WAIT
-#endif
-#ifndef TCPS_LAST_ACK
-# define TCPS_LAST_ACK TCP_LAST_ACK
-#endif
-#ifndef TCPS_LISTEN
-# define TCPS_LISTEN TCP_LISTEN
-#endif
-#ifndef TCPS_CLOSING
-# define TCPS_CLOSING TCP_CLOSING
+#ifdef linux
+#define TCPS_ESTABLISHED  1
+#define TCPS_SYN_SENT     2
+#define TCPS_SYN_RECEIVED 3
+#define TCPS_FIN_WAIT_1   4
+#define TCPS_FIN_WAIT_2   5
+#define TCPS_TIME_WAIT    6
+#define TCPS_CLOSED       7
+#define TCPS_CLOSE_WAIT   8
+#define TCPS_LAST_ACK     9
+#define TCPS_LISTEN      10
+#define TCPS_CLOSING     11
 #endif
 
 DWORD getInterfaceStatsByName(const char *name, PMIB_IFROW entry)

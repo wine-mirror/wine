@@ -308,6 +308,9 @@
 /* Define to 1 if you have the <linux/input.h> header file. */
 #undef HAVE_LINUX_INPUT_H
 
+/* Define to 1 if you have the <linux/ioctl.h> header file. */
+#undef HAVE_LINUX_IOCTL_H
+
 /* Define to 1 if you have the <linux/joystick.h> header file. */
 #undef HAVE_LINUX_JOYSTICK_H
 

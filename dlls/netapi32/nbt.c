@@ -68,9 +68,9 @@
 #include "config.h"
 #include <stdarg.h>
 
+#include "winsock2.h"
 #include "windef.h"
 #include "winbase.h"
-#include "winsock2.h"
 #include "wine/debug.h"
 #include "winreg.h"
 #include "iphlpapi.h"

@@ -42,6 +42,9 @@
 #ifdef HAVE_SYS_ERRNO_H
 # include <sys/errno.h>
 #endif
+#ifdef HAVE_LINUX_IOCTL_H
+# include <linux/ioctl.h>
+#endif
 #ifdef HAVE_LINUX_JOYSTICK_H
 # include <linux/joystick.h>
 #endif

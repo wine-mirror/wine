@@ -79,7 +79,7 @@ static struct list change_list = LIST_INIT(change_list);
 
 static void adjust_changes( int fd, unsigned int filter )
 {
-#ifdef F_NOTIFY
+#if defined(F_SETSIG) && defined(F_NOTIFY)
     unsigned int val;
     if ( 0 > fcntl( fd, F_SETSIG, SIGIO) )
         return;

@@ -1078,6 +1078,7 @@ AC_CHECK_HEADERS(\
 	linux/cdrom.h \
 	linux/hdreg.h \
 	linux/input.h \
+	linux/ioctl.h \
 	linux/joystick.h \
 	linux/major.h \
 	linux/param.h \

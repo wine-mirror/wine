@@ -146,7 +146,7 @@ void vshader_lit(D3DSHADERVECTOR* d, D3DSHADERVECTOR* s0) {
 
 void vshader_logp(D3DSHADERVECTOR* d, D3DSHADERVECTOR* s0) {
   float tmp_f = fabsf(s0->w); 
-  d->x = d->y = d->z = d->w = (0.0f != tmp_f) ? logf(tmp_f) / logf(2.0f) : -HUGE;
+  d->x = d->y = d->z = d->w = (0.0f != tmp_f) ? logf(tmp_f) / logf(2.0f) : -HUGE_VAL;
   VSTRACE(("executing logp: s0=(%f, %f, %f, %f) => d=(%f, %f, %f, %f)\n",
 	         s0->x, s0->y, s0->z, s0->w, d->x, d->y, d->z, d->w));
 }
@@ -201,14 +201,14 @@ void vshader_nop(void) {
 }
 
 void vshader_rcp(D3DSHADERVECTOR* d, D3DSHADERVECTOR* s0) {
-  d->x = d->y = d->z = d->w = (0.0f == s0->w) ? HUGE : 1.0f / s0->w;
+  d->x = d->y = d->z = d->w = (0.0f == s0->w) ? HUGE_VAL : 1.0f / s0->w;
   VSTRACE(("executing rcp: s0=(%f, %f, %f, %f) => d=(%f, %f, %f, %f)\n",
 	  s0->x, s0->y, s0->z, s0->w, d->x, d->y, d->z, d->w));
 }
 
 void vshader_rsq(D3DSHADERVECTOR* d, D3DSHADERVECTOR* s0) {
   float tmp_f = fabsf(s0->w);
-  d->x = d->y = d->z = d->w = (0.0f == tmp_f) ? HUGE : ((1.0f != tmp_f) ? 1.0f / sqrtf(tmp_f) : 1.0f);
+  d->x = d->y = d->z = d->w = (0.0f == tmp_f) ? HUGE_VAL : ((1.0f != tmp_f) ? 1.0f / sqrtf(tmp_f) : 1.0f);
   VSTRACE(("executing rsq: s0=(%f, %f, %f, %f) => d=(%f, %f, %f, %f)\n",
 	  s0->x, s0->y, s0->z, s0->w, d->x, d->y, d->z, d->w));
 }
@@ -252,7 +252,7 @@ void vshader_exp(D3DSHADERVECTOR* d, D3DSHADERVECTOR* s0) {
 
 void vshader_log(D3DSHADERVECTOR* d, D3DSHADERVECTOR* s0) {
   float tmp_f = fabsf(s0->w); 
-  d->x = d->y = d->z = d->w = (0.0f != tmp_f) ? logf(tmp_f) / logf(2.0f) : -HUGE;
+  d->x = d->y = d->z = d->w = (0.0f != tmp_f) ? logf(tmp_f) / logf(2.0f) : -HUGE_VAL;
   VSTRACE(("executing log: s0=(%f, %f, %f, %f) => d=(%f, %f, %f, %f)\n",
 	  s0->x, s0->y, s0->z, s0->w, d->x, d->y, d->z, d->w));
 }
