@@ -8,6 +8,7 @@
 #include <fcntl.h>
 #include <errno.h>
 #include <stdlib.h>
+#include <stdio.h>
 #ifdef HAVE_SYS_FILE_H
 # include <sys/file.h>
 #endif
@@ -32,7 +33,6 @@
 #include "miscemu.h"
 #include "task.h"
 #include "debugtools.h"
-#include "console.h"
 
 DEFAULT_DEBUG_CHANNEL(int21);
 #if defined(__svr4__) || defined(_SCO_DS)

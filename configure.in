@@ -363,13 +363,23 @@ else
 fi
 
 dnl **** Check which curses lib to use ***
+CURSESLIBS=""
 if test "$CURSES" = "yes"
 then
     AC_CHECK_HEADERS(ncurses.h,
-        AC_CHECK_LIB(ncurses,waddch),
-        [AC_CHECK_HEADERS(curses.h,[AC_CHECK_LIB(curses,waddch)])])
+        AC_CHECK_LIB(ncurses,waddch,
+            [AC_DEFINE(HAVE_LIBNCURSES, 1, [Define if you have the ncurses library (-lncurses)])
+             CURSESLIBS="-lncurses"],
+             [AC_CHECK_HEADERS(curses.h,
+                 [AC_CHECK_LIB(curses,waddch,
+                     [AC_DEFINE(HAVE_LIBCURSES, 1, [Define if you have the curses library (-lcurses)])
+                      CURSESLIBS="-lcurses"])])]))
+    saved_libs="$LIBS"
+    LIBS="$CURSESLIBS $LIBS"
     AC_CHECK_FUNCS(getbkgd resizeterm)
+    LIBS="$saved_libs"
 fi
+AC_SUBST(CURSESLIBS)
 
 CUPSLIBS=""
 dnl **** Check for CUPS ****
