@@ -1398,6 +1398,9 @@ BOOL WINAPI ShellExecuteExA (LPSHELLEXECUTEINFOA sei)
 
     sei->hInstApp = seiW.hInstApp;
 
+    if (sei->fMask & SEE_MASK_NOCLOSEPROCESS)
+        sei->hProcess = seiW.hProcess;
+
     if (wVerb) SHFree(wVerb);
     if (wFile) SHFree(wFile);
     if (wParameters) SHFree(wParameters);
