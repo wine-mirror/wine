@@ -773,7 +773,7 @@ static HICON CURSORICON_CreateFromResource( HMODULE16 hModule, HGLOBAL16 hObj, L
                                          bmi->bmiHeader.biBitCount ) * abs( bmi->bmiHeader.biHeight ) / 2;
 
 		pInfo->bmiHeader.biBitCount = 1;
-	        if (pInfo->bmiHeader.biSize == sizeof(BITMAPINFOHEADER))
+	        if (pInfo->bmiHeader.biSize != sizeof(BITMAPCOREHEADER))
 	        {
 	            RGBQUAD *rgb = pInfo->bmiColors;
 
@@ -2010,28 +2010,44 @@ static void DIB_FixColorsToLoadflags(BITMAPINFO * bmi, UINT loadflags, BYTE pix)
   COLORREF c_W, c_S, c_F, c_L, c_C;
   int incr,i;
   RGBQUAD *ptr;
+  int bitmap_type;
+  LONG width;
+  LONG height;
+  WORD bpp;
+  DWORD compr;
 
-  if (bmi->bmiHeader.biBitCount > 8) return;
-  if (bmi->bmiHeader.biSize == sizeof(BITMAPINFOHEADER)) incr = 4;
-  else if (bmi->bmiHeader.biSize == sizeof(BITMAPCOREHEADER)) incr = 3;
-  else {
-    WARN_(resource)("Wrong bitmap header size!\n");
-    return;
+  if (((bitmap_type = DIB_GetBitmapInfo((BITMAPINFOHEADER*) bmi, &width, &height, &bpp, &compr)) == -1))
+  {
+      WARN_(resource)("Invalid bitmap\n");
+      return;
   }
-  colors = bmi->bmiHeader.biClrUsed;
-  if (!colors && (bmi->bmiHeader.biBitCount <= 8))
-    colors = 1 << bmi->bmiHeader.biBitCount;
+
+  if (bpp > 8) return;
+  
+  if (bitmap_type == 0) /* BITMAPCOREHEADER */
+  {
+      incr = 3;
+      colors = 1 << bpp;
+  }
+  else
+  {
+      incr = 4;
+      colors = bmi->bmiHeader.biClrUsed;
+      if (!colors && (bpp <= 8)) colors = 1 << bpp;
+  }
+  
   c_W = GetSysColor(COLOR_WINDOW);
   c_S = GetSysColor(COLOR_3DSHADOW);
   c_F = GetSysColor(COLOR_3DFACE);
   c_L = GetSysColor(COLOR_3DLIGHT);
+  
   if (loadflags & LR_LOADTRANSPARENT) {
-    switch (bmi->bmiHeader.biBitCount) {
+    switch (bpp) {
       case 1: pix = pix >> 7; break;
       case 4: pix = pix >> 4; break;
       case 8: break;
       default:
-        WARN_(resource)("(%d): Unsupported depth\n", bmi->bmiHeader.biBitCount);
+        WARN_(resource)("(%d): Unsupported depth\n", bpp);
 	return;
     }
     if (pix >= colors) {
