@@ -1589,7 +1589,7 @@ FARPROC THUNK_AllocLSThunklet( SEGPTR target, DWORD relay,
                                           THUNKLET_TYPE_LS );
     if (!thunk)
     {
-        TDB *pTask = TASK_GetPtr( owner );
+        TDB *pTask = GlobalLock16( owner );
 
         if (!ThunkletHeap) THUNK_Init();
         if ( !(thunk = HeapAlloc( ThunkletHeap, 0, sizeof(THUNKLET) )) )
@@ -1623,7 +1623,7 @@ SEGPTR THUNK_AllocSLThunklet( FARPROC target, DWORD relay,
                                           THUNKLET_TYPE_SL );
     if (!thunk)
     {
-        TDB *pTask = TASK_GetPtr( owner );
+        TDB *pTask = GlobalLock16( owner );
 
         if (!ThunkletHeap) THUNK_Init();
         if ( !(thunk = HeapAlloc( ThunkletHeap, 0, sizeof(THUNKLET) )) )

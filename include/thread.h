@@ -149,7 +149,6 @@ typedef struct _TEB
 /* scheduler/thread.c */
 extern void THREAD_Init(void);
 extern TEB *THREAD_InitStack( TEB *teb, DWORD stack_size );
-extern TEB *THREAD_IdToTEB( DWORD id );
 
 /* scheduler/sysdeps.c */
 extern int SYSDEPS_SpawnThread( void (*func)(TEB *), TEB *teb );

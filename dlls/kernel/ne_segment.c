@@ -34,6 +34,7 @@
 #include <string.h>
 
 #include "wine/winbase16.h"
+#include "wownt32.h"
 #include "wine/library.h"
 #include "global.h"
 #include "task.h"
@@ -82,10 +83,6 @@ struct relocation_entry_s
 
 static void NE_FixupSegmentPrologs(NE_MODULE *pModule, WORD segnum);
 
-/* ### start build ### */
-extern WORD CALLBACK NE_CallTo16_word_ww(FARPROC16,WORD,WORD);
-extern WORD CALLBACK NE_CallTo16_word_www(FARPROC16,WORD,WORD,WORD);
-/* ### stop build ### */
 
 /***********************************************************************
  *           NE_GetRelocAddrName
@@ -158,6 +155,8 @@ BOOL NE_LoadSegment( NE_MODULE *pModule, WORD segnum )
         DWORD oldstack;
         HANDLE hFile32;
         HFILE16 hFile16;
+        WORD args[3];
+        DWORD ret;
 
  	selfloadheader = MapSL( MAKESEGPTR(SEL(pSegTable->hSeg),0) );
  	oldstack = NtCurrentTeb()->cur_stack;
@@ -169,8 +168,11 @@ BOOL NE_LoadSegment( NE_MODULE *pModule, WORD segnum )
         DuplicateHandle( GetCurrentProcess(), hf, GetCurrentProcess(), &hFile32,
                          0, FALSE, DUPLICATE_SAME_ACCESS );
         hFile16 = Win32HandleToDosFileHandle( hFile32 );
- 	pSeg->hSeg = NE_CallTo16_word_www( selfloadheader->LoadAppSeg,
-                                           pModule->self, hFile16, segnum );
+        args[2] = pModule->self;
+        args[1] = hFile16;
+        args[0] = segnum;
+        WOWCallback16Ex( (DWORD)selfloadheader->LoadAppSeg, WCB16_PASCAL, sizeof(args), args, &ret );
+        pSeg->hSeg = LOWORD(ret);
 	TRACE_(dll)("Ret CallLoadAppSegProc: hSeg = 0x%04x\n", pSeg->hSeg);
         _lclose16( hFile16 );
  	NtCurrentTeb()->cur_stack = oldstack;
@@ -450,6 +452,7 @@ BOOL NE_LoadAllSegments( NE_MODULE *pModule )
         SELFLOADHEADER *selfloadheader;
         HMODULE16 mod = GetModuleHandle16("KERNEL");
         DWORD oldstack;
+        WORD args[2];
 
         TRACE_(module)("%.*s is a self-loading module!\n",
 		     *((BYTE*)pModule + pModule->name_table),
@@ -470,7 +473,9 @@ BOOL NE_LoadAllSegments( NE_MODULE *pModule )
         hFile16 = Win32HandleToDosFileHandle( hf );
         TRACE_(dll)("CallBootAppProc(hModule=0x%04x,hf=0x%04x)\n",
               pModule->self,hFile16);
-        NE_CallTo16_word_ww(selfloadheader->BootApp, pModule->self,hFile16);
+        args[1] = pModule->self;
+        args[0] = hFile16;
+        WOWCallback16Ex( (DWORD)selfloadheader->BootApp, WCB16_PASCAL, sizeof(args), args, NULL );
 	TRACE_(dll)("Return from CallBootAppProc\n");
         _lclose16(hFile16);
         NtCurrentTeb()->cur_stack = oldstack;

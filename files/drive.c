@@ -428,7 +428,7 @@ int DRIVE_IsValid( int drive )
  */
 int DRIVE_GetCurrentDrive(void)
 {
-    TDB *pTask = TASK_GetCurrent();
+    TDB *pTask = GlobalLock16(GetCurrentTask());
     if (pTask && (pTask->curdrive & 0x80)) return pTask->curdrive & ~0x80;
     return DRIVE_CurDrive;
 }
@@ -439,7 +439,7 @@ int DRIVE_GetCurrentDrive(void)
  */
 int DRIVE_SetCurrentDrive( int drive )
 {
-    TDB *pTask = TASK_GetCurrent();
+    TDB *pTask = GlobalLock16(GetCurrentTask());
     if (!DRIVE_IsValid( drive ))
     {
         SetLastError( ERROR_INVALID_DRIVE );
@@ -619,7 +619,7 @@ const char * DRIVE_GetRoot( int drive )
  */
 LPCWSTR DRIVE_GetDosCwd( int drive )
 {
-    TDB *pTask = TASK_GetCurrent();
+    TDB *pTask = GlobalLock16(GetCurrentTask());
     if (!DRIVE_IsValid( drive )) return NULL;
 
     /* Check if we need to change the directory to the new task. */
@@ -643,7 +643,7 @@ LPCWSTR DRIVE_GetDosCwd( int drive )
  */
 const char * DRIVE_GetUnixCwd( int drive )
 {
-    TDB *pTask = TASK_GetCurrent();
+    TDB *pTask = GlobalLock16(GetCurrentTask());
     if (!DRIVE_IsValid( drive )) return NULL;
 
     /* Check if we need to change the directory to the new task. */
@@ -1234,7 +1234,7 @@ int DRIVE_Chdir( int drive, LPCWSTR path )
     WCHAR buffer[MAX_PATHNAME_LEN];
     LPSTR unix_cwd;
     BY_HANDLE_FILE_INFORMATION info;
-    TDB *pTask = TASK_GetCurrent();
+    TDB *pTask = GlobalLock16(GetCurrentTask());
 
     buffer[0] = 'A' + drive;
     buffer[1] = ':';

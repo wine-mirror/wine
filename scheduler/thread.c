@@ -35,7 +35,6 @@
 #endif
 #include "wine/winbase16.h"
 #include "thread.h"
-#include "task.h"
 #include "module.h"
 #include "winerror.h"
 #include "selectors.h"
@@ -52,39 +51,6 @@ WINE_DECLARE_DEBUG_CHANNEL(relay);
 static TEB initial_teb;
 
 extern struct _PDB current_process;
-
-/***********************************************************************
- *           THREAD_IdToTEB
- *
- * Convert a thread id to a TEB, making sure it is valid.
- */
-TEB *THREAD_IdToTEB( DWORD id )
-{
-    TEB *ret = NULL;
-
-    if (!id || id == GetCurrentThreadId()) return NtCurrentTeb();
-
-    SERVER_START_REQ( get_thread_info )
-    {
-        req->handle = 0;
-        req->tid_in = id;
-        if (!wine_server_call( req )) ret = reply->teb;
-    }
-    SERVER_END_REQ;
-
-    if (!ret)
-    {
-        /* Allow task handles to be used; convert to main thread */
-        if ( IsTask16( id ) )
-        {
-            TDB *pTask = TASK_GetPtr( id );
-            if (pTask) return pTask->teb;
-        }
-        SetLastError( ERROR_INVALID_PARAMETER );
-    }
-    return ret;
-}
-
 
 /***********************************************************************
  *           THREAD_InitTEB
@@ -341,7 +307,6 @@ void WINAPI ExitThread( DWORD code ) /* [in] Exit code for this thread */
     else
     {
         LdrShutdownThread();
-        if (!(NtCurrentTeb()->tibflags & TEBF_WIN32)) TASK_ExitTask();
         SYSDEPS_ExitThread( code );
     }
 }

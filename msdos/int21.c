@@ -148,7 +148,7 @@ static BOOL INT21_CreateHeap(void)
 
 static BYTE *GetCurrentDTA( CONTEXT86 *context )
 {
-    TDB *pTask = TASK_GetCurrent();
+    TDB *pTask = GlobalLock16(GetCurrentTask());
 
     /* FIXME: This assumes DTA was set correctly! */
     return (BYTE *)CTX_SEG_OFF_TO_LIN( context, SELECTOROF(pTask->dta),

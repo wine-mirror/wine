@@ -163,10 +163,8 @@ extern void TASK_CreateMainTask(void);
 extern HTASK16 TASK_SpawnTask( struct _NE_MODULE *pModule, WORD cmdShow,
                                LPCSTR cmdline, BYTE len, HANDLE *hThread );
 extern void TASK_ExitTask(void);
-extern HTASK16 TASK_GetNextTask( HTASK16 hTask );
-extern TDB *TASK_GetPtr( HTASK16 hTask );
+extern HTASK16 TASK_GetTaskFromThread( DWORD thread );
 extern TDB *TASK_GetCurrent(void);
 extern void TASK_InstallTHHook( THHOOK *pNewThook );
-extern void TASK_CallTaskSignalProc( UINT16 uCode, HANDLE16 hTaskOrModule );
 
 #endif /* __WINE_TASK_H */

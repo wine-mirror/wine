@@ -782,27 +782,6 @@ VOID WINAPI FreeLibraryAndExitThread(HINSTANCE hLibModule, DWORD dwExitCode)
 }
 
 /***********************************************************************
- *           PrivateLoadLibrary       (KERNEL32.@)
- *
- * FIXME: rough guesswork, don't know what "Private" means
- */
-HINSTANCE16 WINAPI PrivateLoadLibrary(LPCSTR libname)
-{
-    return LoadLibrary16(libname);
-}
-
-/***********************************************************************
- *           PrivateFreeLibrary       (KERNEL32.@)
- *
- * FIXME: rough guesswork, don't know what "Private" means
- */
-void WINAPI PrivateFreeLibrary(HINSTANCE16 handle)
-{
-    FreeLibrary16(handle);
-}
-
-
-/***********************************************************************
  *           GetProcAddress   		(KERNEL32.@)
  */
 FARPROC WINAPI GetProcAddress( HMODULE hModule, LPCSTR function )

@@ -97,6 +97,7 @@ static void thread_detach(void)
     /* free the 16-bit stack */
     K32WOWGlobalFree16( NtCurrentTeb()->stack_sel );
     NtCurrentTeb()->cur_stack = 0;
+    if (!(NtCurrentTeb()->tibflags & TEBF_WIN32)) TASK_ExitTask();
 }
 
 

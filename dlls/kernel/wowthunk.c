@@ -235,7 +235,7 @@ HANDLE WINAPI K32WOWHandle32( WORD handle, WOW_HANDLE_TYPE type )
         return (HANDLE)(ULONG_PTR)handle;
 
     case WOW_TYPE_HTASK:
-        return (HANDLE)TASK_GetPtr(handle)->teb->tid;
+        return (HANDLE)((TDB *)GlobalLock16(handle))->teb->tid;
 
     case WOW_TYPE_FULLHWND:
         FIXME( "conversion of full window handles not supported yet\n" );
@@ -276,7 +276,7 @@ WORD WINAPI K32WOWHandle16( HANDLE handle, WOW_HANDLE_TYPE type )
         return LOWORD(handle);
 
     case WOW_TYPE_HTASK:
-        return THREAD_IdToTEB((DWORD)handle)->htask16;
+        return TASK_GetTaskFromThread( (DWORD)handle );
 
     default:
         ERR( "handle %p of unknown type %d\n", handle, type );

@@ -21,7 +21,6 @@ C_SRCS = \
 	$(TOPOBJDIR)/loader/pe_image.c \
 	$(TOPOBJDIR)/loader/task.c \
 	$(TOPOBJDIR)/loader/ne/module.c \
-	$(TOPOBJDIR)/loader/ne/segment.c \
 	$(TOPOBJDIR)/memory/codepage.c \
 	$(TOPOBJDIR)/memory/environ.c \
 	$(TOPOBJDIR)/memory/global.c \
@@ -89,7 +88,7 @@ ASM_SRCS = \
 	relay16.s \
 	relay32.s
 
-EXTRA_OBJS = $(ASM_SRCS:.s=.o) $(MODULE).glue.o
+EXTRA_OBJS = $(ASM_SRCS:.s=.o)
 
 SUBDIRS = tests
 
