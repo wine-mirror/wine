@@ -2098,7 +2098,8 @@ BOOL WINAPI GetCommProperties(
  * The DLL should be loaded when the COMM port is opened, and closed
  * when the COMM port is closed. - MJM 20 June 2000
  ***********************************************************************/
-static CHAR lpszSerialUI[] = "serialui.dll";
+static WCHAR lpszSerialUI[] = { 
+   's','e','r','i','a','l','u','i','.','d','l','l',0 };
 
 
 /***********************************************************************
@@ -2129,7 +2130,7 @@ BOOL WINAPI CommConfigDialogA(
 
     TRACE("(%p %p %p)\n",lpszDevice, hWnd, lpCommConfig);
 
-    hConfigModule = LoadLibraryA(lpszSerialUI);
+    hConfigModule = LoadLibraryW(lpszSerialUI);
     if(!hConfigModule)
         return FALSE;
 
@@ -2140,7 +2141,7 @@ BOOL WINAPI CommConfigDialogA(
 
     r = lpfnCommDialog(lpszDevice,hWnd,lpCommConfig);
 
-    /* UnloadLibrary(hConfigModule); */
+    FreeLibrary(hConfigModule);
 
     return r;
 }
@@ -2236,29 +2237,26 @@ BOOL WINAPI SetCommConfig(
  *
  *  True if the device was found and the defaults set, false otherwise
  */
-BOOL WINAPI SetDefaultCommConfigA(
-    LPCSTR       lpszDevice,   /* [in] The ascii name of the device targeted for configuration. */
+BOOL WINAPI SetDefaultCommConfigW(
+    LPCWSTR       lpszDevice,  /* [in] The ascii name of the device targeted for configuration. */
     LPCOMMCONFIG lpCommConfig, /* [in] The default configuration for the device. */
     DWORD        dwSize)       /* [in] The number of bytes in the configuration structure. */
 {
     FARPROC lpfnSetDefaultCommConfig;
     HMODULE hConfigModule;
-    BOOL r;
+    BOOL r = FALSE;
 
     TRACE("(%p %p %lx)\n",lpszDevice, lpCommConfig, dwSize);
 
-    hConfigModule = LoadLibraryA(lpszSerialUI);
+    hConfigModule = LoadLibraryW(lpszSerialUI);
     if(!hConfigModule)
-        return FALSE;
+        return r;
 
-    lpfnSetDefaultCommConfig = GetProcAddress(hConfigModule, (LPCSTR)4L);
+    lpfnSetDefaultCommConfig = GetProcAddress(hConfigModule, "drvSetDefaultCommConfigW");
+    if (lpfnSetDefaultCommConfig)
+        r = lpfnSetDefaultCommConfig(lpszDevice, lpCommConfig, dwSize);
 
-    if(! lpfnSetDefaultCommConfig)
-	return TRUE;
-
-    r = lpfnSetDefaultCommConfig(lpszDevice, lpCommConfig, dwSize);
-
-    /* UnloadLibrary(hConfigModule); */
+    FreeLibrary(hConfigModule);
 
     return r;
 }
@@ -2273,21 +2271,26 @@ BOOL WINAPI SetDefaultCommConfigA(
  * RETURNS
  *
  */
-BOOL WINAPI SetDefaultCommConfigW(
-    LPCWSTR      lpszDevice,   /* [in] The unicode name of the device targeted for configuration. */
+BOOL WINAPI SetDefaultCommConfigA(
+    LPCSTR      lpszDevice,    /* [in] The unicode name of the device targeted for configuration. */
     LPCOMMCONFIG lpCommConfig, /* [in] The default configuration for the device. */
     DWORD        dwSize)       /* [in] The number of bytes in the configuration structure. */
 {
     BOOL r;
-    LPSTR lpDeviceA;
+    LPWSTR lpDeviceW = NULL;
+    DWORD len;
 
-    TRACE("(%s %p %lx)\n",debugstr_w(lpszDevice),lpCommConfig,dwSize);
+    TRACE("(%s %p %lx)\n",debugstr_a(lpszDevice),lpCommConfig,dwSize);
 
-    lpDeviceA = HEAP_strdupWtoA( GetProcessHeap(), 0, lpszDevice );
-    if(lpDeviceA)
-        return FALSE;
-    r = SetDefaultCommConfigA(lpDeviceA,lpCommConfig,dwSize);
-    HeapFree( GetProcessHeap(), 0, lpDeviceA );
+    if (lpszDevice)
+    {
+        len = MultiByteToWideChar( CP_ACP, 0, lpszDevice, -1, NULL, 0 );
+        lpDeviceW = HeapAlloc( GetProcessHeap(), 0, len*sizeof(WCHAR) );
+        MultiByteToWideChar( CP_ACP, 0, lpszDevice, -1, lpDeviceW, len );
+    }
+    r = SetDefaultCommConfigW(lpDeviceW,lpCommConfig,dwSize);
+    if (lpDeviceW) 
+        HeapFree( GetProcessHeap(), 0, lpDeviceW );
     return r;
 }
 

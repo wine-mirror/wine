@@ -4,6 +4,7 @@ SRCDIR    = @srcdir@
 VPATH     = @srcdir@
 MODULE    = serialui.dll
 IMPORTS   = user32 advapi32 kernel32
+EXTRALIBS = $(LIBUNICODE)
 
 C_SRCS = \
 	confdlg.c

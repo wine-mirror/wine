@@ -1,4 +1,7 @@
-2 stdcall EnumPropPages(ptr ptr ptr) SERIALUI_EnumPropPages
-3 stdcall drvCommConfigDialog(ptr long ptr) SERIALUI_CommConfigDialog
-4 stdcall drvSetDefaultCommConfig(str ptr long) SERIALUI_SetDefaultCommConfig
-5 stdcall drvGetDefaultCommConfig(str ptr ptr) SERIALUI_GetDefaultCommConfig
+1 stdcall EnumPropPages(ptr ptr ptr)
+2 stdcall drvCommConfigDialogW(ptr long ptr)
+3 stdcall drvCommConfigDialogA(ptr long ptr)
+4 stdcall drvSetDefaultCommConfigW(wstr ptr long)
+5 stdcall drvSetDefaultCommConfigA(str ptr long)
+6 stdcall drvGetDefaultCommConfigW(wstr ptr ptr)
+7 stdcall drvGetDefaultCommConfigA(str ptr ptr)
