@@ -3,7 +3,7 @@
  * Sample Wine Driver for MCI wave forms
  *
  * Copyright 	1994 Martin Ayotte
- *		1999 Eric Pouech
+ *		1999,2000 Eric Pouech
  *              2000 Francois Jacques
  */
 
@@ -26,6 +26,7 @@ typedef struct {
     BOOL			fShareable;	/* TRUE if first open was shareable */
     HMMIO			hFile;		/* mmio file handle open as Element */
     MCI_WAVE_OPEN_PARMSA 	openParms;
+    WAVEFORMATEX		wfxRef;
     LPWAVEFORMATEX		lpWaveFormat;
     BOOL			fInput;		/* FALSE = Output, TRUE = Input */
     volatile WORD		dwStatus;	/* one from MCI_MODE_xxxx */
@@ -127,6 +128,15 @@ static	DWORD	WAVE_drvOpen(LPSTR str, LPMCI_OPEN_DRIVER_PARMSA modp)
     mciSetDriverData(wmw->wDevID, (DWORD)wmw);
     modp->wCustomCommandTable = MCI_NO_COMMAND_TABLE;
     modp->wType = MCI_DEVTYPE_WAVEFORM_AUDIO;
+
+    wmw->wfxRef.wFormatTag     	= WAVE_FORMAT_PCM; 
+    wmw->wfxRef.nChannels       = 1;      /* MONO */
+    wmw->wfxRef.nSamplesPerSec  = 11025;
+    wmw->wfxRef.nAvgBytesPerSec = 11025;
+    wmw->wfxRef.nBlockAlign     = 1; 
+    wmw->wfxRef.wBitsPerSample  = 8;
+    wmw->wfxRef.cbSize          = 0;      /* don't care */
+
     return modp->wDeviceID;
 }
 
@@ -277,23 +287,20 @@ static DWORD WAVE_mciCreateRIFFSkeleton(WINE_MCIWAVE* wmw)
 
    if (!lpWaveFormat)
    {
-	TRACE("allocating waveformat with default waveformat 11khz/8bit/mono \n");
-
+       /* FIXME: for non PCM formats, the size of the waveFormat has to be
+	* gotten
+	*/
 	lpWaveFormat = wmw->lpWaveFormat = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*lpWaveFormat));
 
-	lpWaveFormat->wFormatTag      = WAVE_FORMAT_PCM; 
-	lpWaveFormat->nChannels       = 1;      /* MONO */
-	lpWaveFormat->nSamplesPerSec  = 11025;
-	lpWaveFormat->nAvgBytesPerSec = 11025;
-	lpWaveFormat->nBlockAlign     = 1; 
-	lpWaveFormat->wBitsPerSample  = 8;
-	lpWaveFormat->cbSize          = 0;      /* don't care */
+	memcpy(lpWaveFormat, &wmw->wfxRef, sizeof(wmw->wfxRef));
    }
 
    if (MMSYSERR_NOERROR != mmioCreateChunk(hmmio, &ckWaveFormat, 0))
 	goto err;
 
    /* only the first 16 bytes are serialized */
+   /* wrong... for non PCM, the whole waveFormat is stored
+    */
    if (-1 == mmioWrite(hmmio, (HPCSTR) lpWaveFormat, 16)) 	
 	goto err; 		
 
@@ -942,6 +949,9 @@ static DWORD WAVE_mciRecord(UINT wDevID, DWORD dwFlags, LPMCI_RECORD_PARMS lpPar
     {
   	    /* new RIFF file */
 	    dwRet = WAVE_mciCreateRIFFSkeleton(wmw);
+    } else 
+    {
+	FIXME("Should descend into data chunk. Please report.\n");
     }
   
     end = 0xFFFFFFFF;
@@ -1023,8 +1033,12 @@ static DWORD WAVE_mciRecord(UINT wDevID, DWORD dwFlags, LPMCI_RECORD_PARMS lpPar
     while ( wmw->dwRemaining > 0 && wmw->dwStatus != MCI_MODE_STOP && wmw->dwStatus != MCI_MODE_NOT_READY) {
 	WAVE_mciRecordWaitDone(wmw);  
     }
+
+    /* needed so that the callback above won't add again the buffers returned by the reset */
+    wmw->dwStatus = MCI_MODE_STOP;
    
     waveInReset(wmw->hWave);
+
     waveInUnprepareHeader(wmw->hWave, &waveHdr[0], sizeof(WAVEHDR));
     waveInUnprepareHeader(wmw->hWave, &waveHdr[1], sizeof(WAVEHDR));
 
@@ -1038,6 +1052,11 @@ cleanUp:
 	wmw->hWave = 0;
     }
     CloseHandle(wmw->hEvent);
+
+    /* need to update the size of the data chunk */
+    if (mmioAscend(wmw->hFile, &wmw->ckWaveData, 0) != MMSYSERR_NOERROR) {
+	TRACE("failed on ascend\n");
+    }
 
     if (lpParms && (dwFlags & MCI_NOTIFY)) {
 	mciDriverNotify((HWND)LOWORD(lpParms->dwCallback), 
@@ -1201,18 +1220,30 @@ static DWORD WAVE_mciSet(UINT wDevID, DWORD dwFlags, LPMCI_SET_PARMS lpParms)
 	TRACE("MCI_WAVE_SET_ANYINPUT !\n");
     if (dwFlags & MCI_WAVE_SET_ANYOUTPUT) 
 	TRACE("MCI_WAVE_SET_ANYOUTPUT !\n");
-    if (dwFlags & MCI_WAVE_SET_AVGBYTESPERSEC) 
-	TRACE("MCI_WAVE_SET_AVGBYTESPERSEC !\n");
-    if (dwFlags & MCI_WAVE_SET_BITSPERSAMPLE) 
-	TRACE("MCI_WAVE_SET_BITSPERSAMPLE !\n");
-    if (dwFlags & MCI_WAVE_SET_BLOCKALIGN) 
-	TRACE("MCI_WAVE_SET_BLOCKALIGN !\n");
-    if (dwFlags & MCI_WAVE_SET_CHANNELS) 
-	TRACE("MCI_WAVE_SET_CHANNELS !\n");
-    if (dwFlags & MCI_WAVE_SET_FORMATTAG) 
-	TRACE("MCI_WAVE_SET_FORMATTAG !\n");
-    if (dwFlags & MCI_WAVE_SET_SAMPLESPERSEC) 
-	TRACE("MCI_WAVE_SET_SAMPLESPERSEC !\n");
+    if (dwFlags & MCI_WAVE_SET_AVGBYTESPERSEC) {
+	wmw->wfxRef.nAvgBytesPerSec = ((LPMCI_WAVE_SET_PARMS)lpParms)->nAvgBytesPerSec;
+	TRACE("MCI_WAVE_SET_AVGBYTESPERSEC = %ld\n", wmw->wfxRef.nAvgBytesPerSec);
+    }
+    if (dwFlags & MCI_WAVE_SET_BITSPERSAMPLE) {
+	wmw->wfxRef.wBitsPerSample = ((LPMCI_WAVE_SET_PARMS)lpParms)->wBitsPerSample;
+	TRACE("MCI_WAVE_SET_BITSPERSAMPLE = %d\n", wmw->wfxRef.wBitsPerSample);
+    }
+    if (dwFlags & MCI_WAVE_SET_BLOCKALIGN) {
+	wmw->wfxRef.nBlockAlign = ((LPMCI_WAVE_SET_PARMS)lpParms)->nBlockAlign;
+	TRACE("MCI_WAVE_SET_BLOCKALIGN = %d\n", wmw->wfxRef.nBlockAlign);
+    }
+    if (dwFlags & MCI_WAVE_SET_CHANNELS) {
+	wmw->wfxRef.nChannels = ((LPMCI_WAVE_SET_PARMS)lpParms)->nChannels;
+	TRACE("MCI_WAVE_SET_CHANNELS = %d\n", wmw->wfxRef.nChannels);
+    }
+    if (dwFlags & MCI_WAVE_SET_FORMATTAG) { 
+	wmw->wfxRef.wFormatTag = ((LPMCI_WAVE_SET_PARMS)lpParms)->wFormatTag;
+	TRACE("MCI_WAVE_SET_FORMATTAG = %d\n", wmw->wfxRef.wFormatTag);
+    }
+    if (dwFlags & MCI_WAVE_SET_SAMPLESPERSEC) {
+	wmw->wfxRef.nSamplesPerSec = ((LPMCI_WAVE_SET_PARMS)lpParms)->nSamplesPerSec;
+	TRACE("MCI_WAVE_SET_SAMPLESPERSEC = %ld\n", wmw->wfxRef.nSamplesPerSec);
+    }
     return 0;
 }
 
@@ -1223,7 +1254,7 @@ static DWORD WAVE_mciSave(UINT wDevID, DWORD dwFlags, LPMCI_SAVE_PARMS lpParms)
 {
     WINE_MCIWAVE*	wmw = WAVE_mciGetOpenDev(wDevID);
     DWORD		ret = MCIERR_FILE_NOT_SAVED, tmpRet; 
-    WPARAM           wparam = MCI_NOTIFY_FAILURE;
+    WPARAM           	wparam = MCI_NOTIFY_FAILURE;
 
     TRACE("%d, %08lX, %p);\n", wDevID, dwFlags, lpParms);
     if (lpParms == NULL)	return MCIERR_NULL_PARAMETER_BLOCK;
