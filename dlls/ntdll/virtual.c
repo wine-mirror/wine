@@ -912,7 +912,8 @@ static void *unaligned_mmap( void *addr, size_t length, unsigned int prot,
                              "popl %%ebx"
                              : "=a" (ret)
                              : "0" (90), /* SYS_mmap */
-                               "g" (&args) );
+                               "g" (&args)
+                             : "memory" );
         if (ret < 0 && ret > -4096)
         {
             errno = -ret;
