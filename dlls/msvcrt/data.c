@@ -286,7 +286,7 @@ void msvcrt_free_args(void)
 {
   /* FIXME: more things to free */
   if (MSVCRT___initenv) HeapFree(GetProcessHeap(), 0,MSVCRT___initenv);
-  if (MSVCRT__environ) HeapFree(GetProcessHeap(), 0,MSVCRT__environ);
+  if (MSVCRT___winitenv) HeapFree(GetProcessHeap(), 0,MSVCRT___winitenv);
   if (MSVCRT__environ) HeapFree(GetProcessHeap(), 0,MSVCRT__environ);
   if (MSVCRT__wenviron) HeapFree(GetProcessHeap(), 0,MSVCRT__wenviron);
 }
@@ -300,7 +300,7 @@ void __getmainargs(int *argc, char** *argv, char** *envp,
   TRACE("(%p,%p,%p,%d,%p).\n", argc, argv, envp, expand_wildcards, new_mode);
   *argc = MSVCRT___argc;
   *argv = MSVCRT___argv;
-  *envp = MSVCRT__environ;
+  *envp = MSVCRT___initenv;
   if (new_mode)
     MSVCRT__set_new_mode( *new_mode );
 }
@@ -314,7 +314,7 @@ void __wgetmainargs(int *argc, WCHAR** *wargv, WCHAR** *wenvp,
   TRACE("(%p,%p,%p,%d,%p).\n", argc, wargv, wenvp, expand_wildcards, new_mode);
   *argc = MSVCRT___argc;
   *wargv = MSVCRT___wargv;
-  *wenvp = MSVCRT__wenviron;
+  *wenvp = MSVCRT___winitenv;
   if (new_mode)
     MSVCRT__set_new_mode( *new_mode );
 }
