@@ -80,6 +80,7 @@ void print_version ()
 	    report (R_FATAL, "Can't get OS version.");
     }
 
+    xprintf ("    bRunningUnderWine=%d\n", running_under_wine ());
     xprintf ("    dwMajorVersion=%ld\n    dwMinorVersion=%ld\n"
              "    dwBuildNumber=%ld\n    PlatformId=%ld\n    szCSDVersion=%s\n",
              ver.dwMajorVersion, ver.dwMinorVersion, ver.dwBuildNumber,
@@ -91,8 +92,6 @@ void print_version ()
              "    wSuiteMask=%d\n    wProductType=%d\n    wReserved=%d\n",
              ver.wServicePackMajor, ver.wServicePackMinor, ver.wSuiteMask,
              ver.wProductType, ver.wReserved);
-
-    xprintf ("    bRunningUnderWine=%d\n", running_under_wine ());
 }
 
 static inline int is_dot_dir(const char* x)
@@ -443,6 +442,7 @@ run_tests (char *logname, const char *tag, const char *url)
     xprintf ("Tests from build %s\n", build_tag);
     xprintf ("Archive: %s\n", url?url:"");
     xprintf ("Tag: %s\n", tag?tag:"");
+    xprintf ("Build info:\n");
     xprintf ("Operating system version:\n");
     print_version ();
     xprintf ("Test output:\n" );
