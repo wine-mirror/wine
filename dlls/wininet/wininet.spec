@@ -69,15 +69,15 @@ init    WININET_LibMain
 @ stub GopherGetLocatorTypeW
 @ stub GopherOpenFileA
 @ stub GopherOpenFileW
-@ stub HttpAddRequestHeadersA
+@ stdcall HttpAddRequestHeadersA(ptr str long long) HttpAddRequestHeadersA
 @ stub HttpAddRequestHeadersW
 @ stub HttpEndRequestA
 @ stub HttpEndRequestW
-@ stub HttpOpenRequestA
+@ stdcall HttpOpenRequestA(ptr str str str str ptr long long) HttpOpenRequestA
 @ stub HttpOpenRequestW
-@ stub HttpQueryInfoA
+@ stdcall HttpQueryInfoA(ptr long ptr ptr ptr) HttpQueryInfoA
 @ stub HttpQueryInfoW
-@ stub HttpSendRequestA
+@ stdcall HttpSendRequestA(ptr str long ptr long) HttpSendRequestA
 @ stub HttpSendRequestExA
 @ stub HttpSendRequestExW
 @ stub HttpSendRequestW
@@ -120,7 +120,7 @@ init    WININET_LibMain
 @ stub InternetOpenUrlW
 @ stub InternetOpenW
 @ stub InternetQueryDataAvailable
-@ stub InternetQueryOptionA
+@ stdcall InternetQueryOptionA(ptr long ptr ptr) InternetQueryOptionA
 @ stub InternetQueryOptionW
 @ stdcall InternetReadFile(ptr ptr long ptr) InternetReadFile  
 @ stub InternetReadFileExA

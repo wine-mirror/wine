@@ -8,6 +8,7 @@ SOVERSION = 1.0
 SPEC_SRCS = wininet.spec
 
 C_SRCS = \
+	http.c \
 	internet.c \
 	ftp.c \
 	utility.c \

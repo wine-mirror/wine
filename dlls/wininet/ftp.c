@@ -21,10 +21,13 @@
 #include <sys/stat.h>
 #include <unistd.h>
 
-#include "windows.h"
+#include "winbase.h"
+#include "wingdi.h"
+#include "winuser.h"
 #include "wininet.h"
 #include "winerror.h"
 #include "winsock.h"
+#include "heap.h"
 
 #include "debugtools.h"
 #include "internet.h"
@@ -35,7 +38,6 @@ DEFAULT_DEBUG_CHANNEL(wininet);
 #define DATA_PACKET_SIZE 	0x2000
 #define szCRLF 			"\r\n"
 #define MAX_BACKLOG 		5
-#define RESPONSE_TIMEOUT        30
 
 typedef enum {
   /* FTP commands with arguments. */
@@ -103,7 +105,6 @@ BOOL FTP_ParsePermission(LPCSTR lpszPermission, LPFILEPROPERTIESA lpfp);
 BOOL FTP_ParseDirectory(LPWININETFTPSESSIONA lpwfs, INT nSocket, LPFILEPROPERTIESA *lpafp, LPDWORD dwfp);
 HINTERNET FTP_ReceiveFileList(LPWININETFTPSESSIONA lpwfs, INT nSocket, 
 	LPWIN32_FIND_DATAA lpFindFileData, DWORD dwContext);
-LPSTR FTP_GetNextLine(INT nSocket, LPSTR lpszBuffer, LPDWORD dwBuffer);
 DWORD FTP_SetResponseError(DWORD dwResponse);
 
 /***********************************************************************
@@ -135,8 +136,8 @@ BOOL WINAPI FtpPutFileA(HINTERNET hConnect, LPCSTR lpszLocalFile,
 
 	workRequest.asyncall = FTPPUTFILEA;
 	workRequest.HFTPSESSION = (DWORD)hConnect;
-	workRequest.LPSZLOCALFILE = (DWORD)strdup(lpszLocalFile);
-	workRequest.LPSZNEWREMOTEFILE = (DWORD)strdup(lpszNewRemoteFile);
+	workRequest.LPSZLOCALFILE = (DWORD)HEAP_strdupA(GetProcessHeap(),0,lpszLocalFile);
+	workRequest.LPSZNEWREMOTEFILE = (DWORD)HEAP_strdupA(GetProcessHeap(),0,lpszNewRemoteFile);
 	workRequest.DWFLAGS = dwFlags;
 	workRequest.DWCONTEXT = dwContext;
 
@@ -250,7 +251,7 @@ BOOL WINAPI FtpSetCurrentDirectoryA(HINTERNET hConnect, LPCSTR lpszDirectory)
 
         workRequest.asyncall = FTPSETCURRENTDIRECTORYA;
 	workRequest.HFTPSESSION = (DWORD)hConnect;
-        workRequest.LPSZDIRECTORY = (DWORD)strdup(lpszDirectory);
+        workRequest.LPSZDIRECTORY = (DWORD)HEAP_strdupA(GetProcessHeap(),0,lpszDirectory);
 
 	return INTERNET_AsyncCall(&workRequest);
     }
@@ -347,7 +348,7 @@ BOOL WINAPI FtpCreateDirectoryA(HINTERNET hConnect, LPCSTR lpszDirectory)
 
         workRequest.asyncall = FTPCREATEDIRECTORYA;  
 	workRequest.HFTPSESSION = (DWORD)hConnect;
-	workRequest.LPSZDIRECTORY = (DWORD)strdup(lpszDirectory);
+	workRequest.LPSZDIRECTORY = (DWORD)HEAP_strdupA(GetProcessHeap(),0,lpszDirectory);
 
 	return INTERNET_AsyncCall(&workRequest);
     }
@@ -443,7 +444,7 @@ INTERNETAPI HINTERNET WINAPI FtpFindFirstFileA(HINTERNET hConnect,
 
         workRequest.asyncall = FTPFINDFIRSTFILEA;
 	workRequest.HFTPSESSION = (DWORD)hConnect;
-	workRequest.LPSZSEARCHFILE = (DWORD)strdup(lpszSearchFile);
+	workRequest.LPSZSEARCHFILE = (DWORD)HEAP_strdupA(GetProcessHeap(),0,lpszSearchFile);
 	workRequest.LPFINDFILEDATA = (DWORD)lpFindFileData;
 	workRequest.DWFLAGS = dwFlags;
 	workRequest.DWCONTEXT= dwContext;
@@ -706,7 +707,7 @@ INTERNETAPI HINTERNET WINAPI FtpOpenFileA(HINTERNET hFtpSession,
 
         workRequest.asyncall = FTPOPENFILEA;
 	workRequest.HFTPSESSION = (DWORD)hFtpSession;
-	workRequest.LPSZFILENAME = (DWORD)strdup(lpszFileName);
+	workRequest.LPSZFILENAME = (DWORD)HEAP_strdupA(GetProcessHeap(),0,lpszFileName);
 	workRequest.FDWACCESS = fdwAccess;
 	workRequest.DWFLAGS = dwFlags;
 	workRequest.DWCONTEXT = dwContext;
@@ -827,8 +828,8 @@ BOOL WINAPI FtpGetFileA(HINTERNET hInternet, LPCSTR lpszRemoteFile, LPCSTR lpszN
 
         workRequest.asyncall = FTPGETFILEA;
 	workRequest.HFTPSESSION = (DWORD)hInternet;
-	workRequest.LPSZREMOTEFILE = (DWORD)strdup(lpszRemoteFile);
-	workRequest.LPSZNEWFILE = (DWORD)strdup(lpszNewFile);
+	workRequest.LPSZREMOTEFILE = (DWORD)HEAP_strdupA(GetProcessHeap(),0,lpszRemoteFile);
+	workRequest.LPSZNEWFILE = (DWORD)HEAP_strdupA(GetProcessHeap(),0,lpszNewFile);
 	workRequest.DWLOCALFLAGSATTRIBUTE  = dwLocalFlagsAttribute;
 	workRequest.FFAILIFEXISTS = (DWORD)fFailIfExists;
 	workRequest.DWFLAGS = dwInternetFlags;
@@ -954,7 +955,7 @@ BOOL WINAPI FtpDeleteFileA(HINTERNET hFtpSession, LPCSTR lpszFileName)
 
         workRequest.asyncall = FTPRENAMEFILEA;
 	workRequest.HFTPSESSION = (DWORD)hFtpSession;
-	workRequest.LPSZFILENAME = (DWORD)strdup(lpszFileName);
+	workRequest.LPSZFILENAME = (DWORD)HEAP_strdupA(GetProcessHeap(),0,lpszFileName);
 
 	return INTERNET_AsyncCall(&workRequest);
     }
@@ -1048,7 +1049,7 @@ BOOL WINAPI FtpRemoveDirectoryA(HINTERNET hFtpSession, LPCSTR lpszDirectory)
 
         workRequest.asyncall = FTPREMOVEDIRECTORYA;
 	workRequest.HFTPSESSION = (DWORD)hFtpSession;
-	workRequest.LPSZDIRECTORY = (DWORD)strdup(lpszDirectory);
+	workRequest.LPSZDIRECTORY = (DWORD)HEAP_strdupA(GetProcessHeap(),0,lpszDirectory);
 
 	return INTERNET_AsyncCall(&workRequest);
     }
@@ -1143,8 +1144,8 @@ BOOL WINAPI FtpRenameFileA(HINTERNET hFtpSession, LPCSTR lpszSrc, LPCSTR lpszDes
 
         workRequest.asyncall = FTPRENAMEFILEA;
 	workRequest.HFTPSESSION = (DWORD)hFtpSession;
-	workRequest.LPSZSRCFILE = (DWORD)strdup(lpszSrc);
-	workRequest.LPSZDESTFILE = (DWORD)strdup(lpszDest);
+	workRequest.LPSZSRCFILE = (DWORD)HEAP_strdupA(GetProcessHeap(),0,lpszSrc);
+	workRequest.LPSZDESTFILE = (DWORD)HEAP_strdupA(GetProcessHeap(),0,lpszDest);
 
 	return INTERNET_AsyncCall(&workRequest);
     }
@@ -1309,13 +1310,13 @@ HINTERNET FTP_Connect(HINTERNET hInternet, LPCSTR lpszServerName,
 
         if (NULL == lpszUserName)
         {
-            lpwfs->lpszUserName = strdup("anonymous");
-            lpwfs->lpszPassword = strdup("user@server");
+            lpwfs->lpszUserName = HEAP_strdupA(GetProcessHeap(),0,"anonymous");
+            lpwfs->lpszPassword = HEAP_strdupA(GetProcessHeap(),0,"user@server");
         }
         else
         {
-            lpwfs->lpszUserName = strdup(lpszUserName);
-            lpwfs->lpszPassword = strdup(lpszPassword);
+            lpwfs->lpszUserName = HEAP_strdupA(GetProcessHeap(),0,lpszUserName);
+            lpwfs->lpszPassword = HEAP_strdupA(GetProcessHeap(),0,lpszPassword);
         }
 
         if (FTP_ConnectToHost(lpwfs))
@@ -1481,7 +1482,7 @@ INT FTP_ReceiveResponse(INT nSocket, LPSTR lpszResponse, DWORD dwResponse,
     while(1)
     {
 	nRecv = dwResponse;
-	if (!FTP_GetNextLine(nSocket, lpszResponse, &nRecv))
+	if (!INTERNET_GetNextLine(nSocket, lpszResponse, &nRecv))
 	    goto lerror;
 
         if (nRecv >= 3 && lpszResponse[3] != '-')
@@ -2177,7 +2178,7 @@ BOOL FTP_ParseDirectory(LPWININETFTPSESSIONA lpwfs, INT nSocket, LPFILEPROPERTIE
         goto lend;
     }
 
-    while ((pszLine = FTP_GetNextLine(nSocket, INTERNET_GetResponseBuffer(), &nBufLen)) != NULL)
+    while ((pszLine = INTERNET_GetNextLine(nSocket, INTERNET_GetResponseBuffer(), &nBufLen)) != NULL)
     {
         if (sizeFilePropArray <= indexFilePropArray)
         {
@@ -2272,7 +2273,7 @@ BOOL FTP_ParseDirectory(LPWININETFTPSESSIONA lpwfs, INT nSocket, LPFILEPROPERTIE
         pszToken = strtok(NULL, " \t");
         if(pszToken != NULL)
         {
-            curFileProp->lpszName = strdup(pszToken);
+            curFileProp->lpszName = HEAP_strdupA(GetProcessHeap(),0,pszToken);
             TRACE(": %s\n", curFileProp->lpszName);
         }
 
@@ -2367,71 +2368,6 @@ BOOL FTP_ParsePermission(LPCSTR lpszPermission, LPFILEPROPERTIESA lpfp)
 
     lpfp->permissions = nPermission;
     return bSuccess;
-}
-
-
-/***********************************************************************
- *           FTP_GetNextLine  (internal)
- *
- * Parse next line in directory string listing
- *
- * RETURNS
- *   Pointer to begining of next line
- *   NULL on failure
- *
- */
-
-LPSTR FTP_GetNextLine(INT nSocket, LPSTR lpszBuffer, LPDWORD dwBuffer)
-{
-    struct timeval tv;
-    fd_set infd;
-    BOOL bSuccess = FALSE;
-    INT nRecv = 0;
-
-    TRACE("\n");
-
-    while (nRecv < *dwBuffer)
-    {
-        FD_ZERO(&infd);
-        FD_SET(nSocket, &infd);
-        tv.tv_sec=RESPONSE_TIMEOUT;
-        tv.tv_usec=0;
-
-        if (select(nSocket+1,&infd,NULL,NULL,&tv))
-        {
-            if (recv(nSocket, &lpszBuffer[nRecv], 1, 0) <= 0)
-            {
-                INTERNET_SetLastError(ERROR_FTP_TRANSFER_IN_PROGRESS);
-                goto lend;
-            }
-
-            if (lpszBuffer[nRecv] == '\n')
-	    {
-		bSuccess = TRUE;
-                break;
-	    }
-            if (lpszBuffer[nRecv] != '\r')
-                nRecv++;
-        }
-	else
-	{
-            INTERNET_SetLastError(ERROR_INTERNET_TIMEOUT);
-            goto lend;
-        }
-    }
-
-lend:
-    if (bSuccess)
-    {
-        lpszBuffer[nRecv] = '\0';
-	*dwBuffer = nRecv - 1;
-        TRACE(":%d %s\n", nRecv, lpszBuffer);
-        return lpszBuffer;
-    }
-    else
-    {
-        return NULL;
-    }
 }
 
 

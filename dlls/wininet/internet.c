@@ -15,12 +15,15 @@
 # include <sys/socket.h>
 #endif
 #include <stdlib.h>
+#include <ctype.h>
 
 #include "windows.h"
 #include "wininet.h"
 #include "debugtools.h"
 #include "winerror.h"
 #include "winsock.h"
+#include "tchar.h"
+#include "heap.h"
 
 #include "internet.h"
 
@@ -28,6 +31,7 @@ DEFAULT_DEBUG_CHANNEL(wininet);
 
 #define MAX_IDLE_WORKER 1000*60*1
 #define MAX_WORKER_THREADS 10
+#define RESPONSE_TIMEOUT        30
 
 #define GET_HWININET_FROM_LPWININETFINDNEXT(lpwh) \
 (LPWININETAPPINFOA)(((LPWININETFTPSESSIONA)(lpwh->hdr.lpwhparent))->hdr.lpwhparent)
@@ -38,7 +42,7 @@ typedef struct
     CHAR   response[MAX_REPLY_LEN];
 } WITHREADERROR, *LPWITHREADERROR;
 
-INTERNET_SCHEME GetInternetScheme(LPSTR lpszScheme);
+INTERNET_SCHEME GetInternetScheme(LPCSTR lpszScheme, INT nMaxCmp);
 BOOL WINAPI INTERNET_FindNextFileA(HINTERNET hFind, LPVOID lpvFindData);
 VOID INTERNET_ExecuteWork();
 
@@ -97,7 +101,11 @@ WININET_LibMain (HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
 
         case DLL_THREAD_DETACH:
 	    if (g_dwTlsErrIndex != TLS_OUT_OF_INDEXES)
-	        HeapFree(GetProcessHeap(), 0, TlsGetValue(g_dwTlsErrIndex));
+			{
+				LPVOID lpwite = TlsGetValue(g_dwTlsErrIndex);
+				if (lpwite)
+                   HeapFree(GetProcessHeap(), 0, lpwite);
+			}
 	    break;
 
         case DLL_PROCESS_DETACH:
@@ -112,7 +120,6 @@ WININET_LibMain (HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
 
 	    CloseHandle(hQuitEvent);
 	    CloseHandle(hWorkEvent);
-
 	    DeleteCriticalSection(&csQueue);
             break;
     }
@@ -152,11 +159,11 @@ INTERNETAPI HINTERNET WINAPI InternetOpenA(LPCSTR lpszAgent,
         lpwai->hdr.lpwhparent = NULL;
         lpwai->hdr.dwFlags = dwFlags;
         if (NULL != lpszAgent)
-            lpwai->lpszAgent = strdup(lpszAgent);
+            lpwai->lpszAgent = HEAP_strdupA(GetProcessHeap(),0,lpszAgent);
         if (NULL != lpszProxy)
-            lpwai->lpszProxy = strdup(lpszProxy);
+            lpwai->lpszProxy = HEAP_strdupA(GetProcessHeap(),0,lpszProxy);
         if (NULL != lpszProxyBypass)
-            lpwai->lpszProxyBypass = strdup(lpszProxyBypass);
+            lpwai->lpszProxyBypass = HEAP_strdupA(GetProcessHeap(),0,lpszProxyBypass);
         lpwai->dwAccessType = dwAccessType;
     }
 
@@ -242,6 +249,8 @@ INTERNETAPI HINTERNET WINAPI InternetConnectA(HINTERNET hInternet,
             break;
 
         case INTERNET_SERVICE_HTTP:
+	    rc = HTTP_Connect(hInternet, lpszServerName, nServerPort,
+            lpszUserName, lpszPassword, dwFlags, dwContext);
             break;
 
         case INTERNET_SERVICE_GOPHER:
@@ -363,9 +372,33 @@ lend:
 
 
 /***********************************************************************
+ *           INTERNET_CloseHandle (internal)
+ *
+ * Close internet handle
+ *
+ * RETURNS
+ *    Void
+ *
+ */
+VOID INTERNET_CloseHandle(LPWININETAPPINFOA lpwai)
+{
+    if (lpwai->lpszAgent)
+        HeapFree(GetProcessHeap(), 0, lpwai->lpszAgent);
+
+    if (lpwai->lpszProxy)
+        HeapFree(GetProcessHeap(), 0, lpwai->lpszProxy);
+
+    if (lpwai->lpszProxyBypass)
+        HeapFree(GetProcessHeap(), 0, lpwai->lpszProxyBypass);
+
+    HeapFree(GetProcessHeap(), 0, lpwai);
+}
+
+
+/***********************************************************************
  *           InternetCloseHandle (WININET.89)
  *
- * Continues a file search from a previous call to FindFirstFile
+ * Generic close handle function
  *
  * RETURNS
  *    TRUE on success
@@ -387,9 +420,17 @@ BOOL WINAPI InternetCloseHandle(HINTERNET hInternet)
     switch (lpwh->htype)
     {
         case WH_HINIT:
+            INTERNET_CloseHandle((LPWININETAPPINFOA) lpwh);
+            break; 
+
         case WH_HHTTPSESSION:
+	    HTTP_CloseHTTPSessionHandle((LPWININETHTTPSESSIONA) lpwh);
+	    break;
+
         case WH_HHTTPREQ:
+            HTTP_CloseHTTPRequestHandle((LPWININETHTTPREQA) lpwh);
             break;
+
         case WH_HFTPSESSION:
             retval = FTP_CloseSessionHandle((LPWININETFTPSESSIONA) lpwh);
             break;
@@ -407,9 +448,45 @@ BOOL WINAPI InternetCloseHandle(HINTERNET hInternet)
 
 
 /***********************************************************************
+ *           SetUrlComponentValue (Internal)
+ *
+ * Helper function for InternetCrackUrlA
+ *
+ * RETURNS
+ *    TRUE on success
+ *    FALSE on failure
+ *
+ */
+BOOL SetUrlComponentValue(LPSTR* lppszComponent, LPDWORD dwComponentLen, LPCSTR lpszStart, INT len)
+{
+    TRACE("%s (%d)\n", lpszStart, len);
+
+    if (*dwComponentLen != 0)
+    {
+	if (*lppszComponent == NULL)
+	{
+            *lppszComponent = lpszStart;
+	    *dwComponentLen = len;
+	}
+	else
+	{
+            INT ncpylen = min((*dwComponentLen)-1, len);
+            strncpy(*lppszComponent, lpszStart, ncpylen);
+            (*lppszComponent)[ncpylen] = '\0';
+	    *dwComponentLen = ncpylen;
+	}
+    }
+
+    return TRUE;
+}
+
+
+/***********************************************************************
  *           InternetCrackUrlA (WININET.95)
  *
  * Break up URL into its components
+ *
+ * TODO: Hadnle dwFlags
  *
  * RETURNS
  *    TRUE on success
@@ -424,165 +501,162 @@ BOOL WINAPI InternetCrackUrlA(LPCSTR lpszUrl, DWORD dwUrlLength, DWORD dwFlags,
    * <protocol>:[//<net_loc>][/path][;<params>][?<query>][#<fragment>]
    *
    */
-    char* szScheme   = NULL;
-    char* szUser     = NULL;
-    char* szPass     = NULL;
-    char* szHost     = NULL;
-    char* szUrlPath  = NULL;
-    char* szParam    = NULL;
-    char* szNetLoc   = NULL;
-    int   nPort      = 80;
-    int   nSchemeLen = 0;
-    int   nUserLen   = 0;
-    int   nPassLen   = 0;
-    int   nHostLen   = 0;
-    int   nUrlLen    = 0;
-
-    /* Find out if the URI is absolute... */
+    LPSTR lpszParam    = NULL;
     BOOL  bIsAbsolute = FALSE;
-    char  cAlphanum;
-    char* ap = (char*)lpszUrl;
-    char* cp = NULL;
+    LPSTR lpszap = (char*)lpszUrl;
+    LPSTR lpszcp = NULL;
 
     TRACE("\n");
-    while( (cAlphanum = *ap) != '\0' )
+
+    /* Determine if the URI is absolute. */
+    while (*lpszap != '\0')
     {
-        if( ((cAlphanum >= 'a') && (cAlphanum <= 'z')) ||
-            ((cAlphanum >= 'A') && (cAlphanum <= 'Z')) ||
-            ((cAlphanum >= '0') && (cAlphanum <= '9')) )
+        if (isalnum(*lpszap))
         {
-            ap++;
+            lpszap++;
             continue;
         }
-        if( (cAlphanum == ':') && (ap - lpszUrl >= 2) )
+        if ((*lpszap == ':') && (lpszap - lpszUrl >= 2))
         {
             bIsAbsolute = TRUE;
-            cp = ap;
-            break;
+            lpszcp = lpszap;
         }
+	else
+	{
+	    lpszcp = lpszUrl; /* Relative url */
+        }
+
         break;
     }
 
-    /* Absolute URI...
-       FIXME!!!! This should work on relative urls too!*/
-    if( bIsAbsolute )
+    /* Parse <params> */
+    lpszParam = strpbrk(lpszap, ";?");
+    if (lpszParam != NULL)
     {
-        /* Get scheme first... */
-        nSchemeLen = cp - lpszUrl;
-        szScheme   = strdup( lpszUrl );
-        szScheme[ nSchemeLen ] = '\0';
-
-        /* Eat ':' in protocol... */
-        cp++;
-
-        /* Parse <params>... */
-        szParam = strpbrk( lpszUrl, ";" );
-        if( szParam != NULL )
+        if (!SetUrlComponentValue(&lpUrlComponents->lpszExtraInfo, 
+	     &lpUrlComponents->dwExtraInfoLength, lpszParam+1, strlen(lpszParam+1)))
         {
-            char* sParam;
-            /* Eat ';' in Params... */
-            szParam++;
-            sParam    = strdup( szParam );
-            *szParam = '\0';
+	    return FALSE;
+        }
         }
 
-        /* Skip over slashes...*/
-        if( *cp == '/' )
+    if (bIsAbsolute) /* Parse <protocol>:[//<net_loc>] */
         {
-            cp++;
-            if( *cp == '/' )
+	LPSTR lpszNetLoc;
+
+        /* Get scheme first. */
+        lpUrlComponents->nScheme = GetInternetScheme(lpszUrl, lpszcp - lpszUrl);
+        if (!SetUrlComponentValue(&lpUrlComponents->lpszScheme, 
+		    &lpUrlComponents->dwSchemeLength, lpszUrl, lpszcp - lpszUrl))
+	    return FALSE;
+
+        /* Eat ':' in protocol. */
+        lpszcp++;
+
+        /* Skip over slashes. */
+        if (*lpszcp == '/')
+        {
+            lpszcp++;
+            if (*lpszcp == '/')
             {
-                cp++;
-                if( *cp == '/' )
-                    cp++;
+                lpszcp++;
+                if (*lpszcp == '/')
+                    lpszcp++;
             }
         }
 
-        /* Parse the <net-loc>...*/
-        if( GetInternetScheme( szScheme ) == INTERNET_SCHEME_FILE )
+        lpszNetLoc = strpbrk(lpszcp, "/");
+	if (lpszParam)
         {
-            szUrlPath = strdup( cp );
-            nUrlLen   = strlen( szUrlPath );
-            if( nUrlLen >= 2 && szUrlPath[ 1 ] == '|' )
-                szUrlPath[ 1 ] = ':';
-        }
+	    if (lpszNetLoc)
+               lpszNetLoc = min(lpszNetLoc, lpszParam);
         else
+               lpszNetLoc = lpszParam;
+        }
+        else if (!lpszNetLoc)
+            lpszNetLoc = lpszcp + strlen(lpszcp);
+
+        /* Parse net-loc */
+        if (lpszNetLoc)
         {
-            size_t nNetLocLen;
-            szUrlPath = strpbrk(cp, "/");
-            if( szUrlPath != NULL )
-                nUrlLen = strlen( szUrlPath );
+	    LPSTR lpszHost;
+	    LPSTR lpszPort;
 
-            /* Find the end of our net-loc... */
-            nNetLocLen = strcspn( cp, "/" );
-            szNetLoc   = strdup( cp );
-            szNetLoc[ nNetLocLen ] = '\0';
-            if( szNetLoc != NULL )
-            {
-                char* lpszPort;
-                int   nPortLen;
                 /* [<user>[<:password>]@]<host>[:<port>] */
-                /* First find the user and password if they exist...*/
+            /* First find the user and password if they exist */
 			
-                szHost = strchr( szNetLoc, '@' );
-                if( szHost == NULL )
+            lpszHost = strchr(lpszcp, '@');
+            if (lpszHost == NULL || lpszHost > lpszNetLoc)
                 {
-                    /* username and password not specified... */
-                    szHost   = szNetLoc;
-                    nHostLen = nNetLocLen;
+                /* username and password not specified. */
+		SetUrlComponentValue(&lpUrlComponents->lpszUserName, 
+			&lpUrlComponents->dwUserNameLength, NULL, 0);
+		SetUrlComponentValue(&lpUrlComponents->lpszPassword, 
+			&lpUrlComponents->dwPasswordLength, NULL, 0);
                 }
-                else
+            else /* Parse out username and password */
                 {
-                    int   nUserPassLen = nNetLocLen - nHostLen - 1;
-		    char* szUserPass         = strdup( szNetLoc );
-		    /* Get username and/or password... */
-		    /* Eat '@' in domain... */
-                    ++szHost;
-                    nHostLen = strlen( szHost );
+		LPSTR lpszUser = lpszcp;
+		LPSTR lpszPasswd = lpszHost;
 
-                    szUserPass[ nUserPassLen ] = '\0';
-                    if( szUserPass != NULL )
-                    {
-		        szPass = strpbrk( szUserPass, ":" );
-                        if( szPass != NULL )
+		while (lpszcp < lpszHost)
                         {
-                            /* Eat ':' in UserPass... */
-                            ++szPass;
-                            nPassLen = strlen( szPass );
-                            nUserLen = nUserPassLen - nPassLen - 1;
-                            szUser   = strdup( szUserPass );
-                            szUser[ nUserLen ] = '\0';
-                        }
-                        else
-                        {
-                            /* password not specified... */
-                            szUser = strdup( szUserPass );
-                            nUserLen = strlen( szUser );
-                        }
+		   if (*lpszcp == ':')
+		       lpszPasswd = lpszcp;
+
+		   lpszcp++;
                     }        
+		    
+		SetUrlComponentValue(&lpUrlComponents->lpszUserName, 
+			&lpUrlComponents->dwUserNameLength, lpszUser, lpszPasswd - lpszUser);
+
+		SetUrlComponentValue(&lpUrlComponents->lpszPassword, 
+			&lpUrlComponents->dwPasswordLength, 
+			lpszPasswd == lpszHost ? NULL : ++lpszPasswd, 
+			lpszHost - lpszPasswd);
+
+		lpszcp++; /* Advance to beginning of host */
                 }
 
-                /* <host><:port>...*/
-                /* Then get the port if it exists... */
-                lpszPort = strpbrk( szHost, ":" );
-                nPortLen = 0;
-                if( lpszPort != NULL )
-                {
-                    char* szPort = lpszPort + 1;
-		    if( szPort != NULL )
+            /* Parse <host><:port> */
+
+	    lpszHost = lpszcp;
+	    lpszPort = lpszNetLoc;
+
+	    while (lpszcp < lpszNetLoc)
 		    {
-                        nPortLen = strlen( szPort );
-                        nPort    = atoi( szPort );
-                    }
-                    *lpszPort = '\0';
-                    nHostLen = strlen(szHost);
+		if (*lpszcp == ':')
+                    lpszPort = lpszcp;
+
+		lpszcp++;
                 }
+
+            SetUrlComponentValue(&lpUrlComponents->lpszHostName, 
+               &lpUrlComponents->dwHostNameLength, lpszHost, lpszPort - lpszHost);
+
+	    if (lpszPort != lpszNetLoc)
+                lpUrlComponents->nPort = atoi(++lpszPort);
             }
         }
+
+    /* Here lpszcp points to:
+     *
+     * <protocol>:[//<net_loc>][/path][;<params>][?<query>][#<fragment>]
+     *                          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+     */
+    if (lpszcp != 0 && *lpszcp != '\0' && (!lpszParam || lpszcp < lpszParam))
+    {
+        if (!SetUrlComponentValue(&lpUrlComponents->lpszUrlPath, 
+         &lpUrlComponents->dwUrlPathLength, lpszcp, 
+	 lpszParam ? lpszParam - lpszcp : strlen(lpszcp)))
+         return FALSE;
     }
-    /* Relative URI... */
     else
-        return FALSE;
+    {
+        lpUrlComponents->dwUrlPathLength = 0;
+    }
+
+    TRACE("%s: host(%s) path(%s)\n", lpszUrl, lpUrlComponents->lpszHostName, lpUrlComponents->lpszUrlPath);
 
     return TRUE;
 }
@@ -758,6 +832,60 @@ BOOL WINAPI InternetReadFile(HINTERNET hFile, LPVOID lpBuffer,
 
 
 /***********************************************************************
+ *           InternetQueryOptionA
+ *
+ * Queries an options on the specified handle
+ *
+ * RETURNS
+ *    TRUE  on success
+ *    FALSE on failure
+ *
+ */
+BOOL WINAPI InternetQueryOptionA(HINTERNET hInternet, DWORD dwOption, 
+	LPVOID lpBuffer, LPDWORD lpdwBufferLength)
+{
+    LPWININETHANDLEHEADER lpwhh;
+    BOOL bSuccess = FALSE;
+
+    TRACE("0x%08lx\n", dwOption);
+
+    if (NULL == hInternet)
+    {
+        INTERNET_SetLastError(ERROR_INTERNET_INCORRECT_HANDLE_TYPE);
+	return FALSE;
+    }
+
+    lpwhh = (LPWININETHANDLEHEADER) hInternet;
+
+    switch (dwOption)
+    {
+       case INTERNET_OPTION_HANDLE_TYPE:
+       {
+         ULONG type = lpwhh->htype;
+	 TRACE("INTERNET_OPTION_HANDLE_TYPE: %ld\n", type);
+
+         if (*lpdwBufferLength < sizeof(ULONG))
+             INTERNET_SetLastError(ERROR_INSUFFICIENT_BUFFER);
+	 else
+	 {
+	     memcpy(lpBuffer, &type, sizeof(ULONG));
+             *lpdwBufferLength = sizeof(ULONG);
+             bSuccess = TRUE;
+         }
+
+         break;
+       }
+
+       default:
+         FIXME("Stub!");
+         break;
+    }
+
+    return bSuccess;
+}
+
+
+/***********************************************************************
  *           GetInternetScheme (internal)
  *
  * Get scheme of url
@@ -767,31 +895,24 @@ BOOL WINAPI InternetReadFile(HINTERNET hFile, LPVOID lpBuffer,
  *    INTERNET_SCHEME_UNKNOWN on failure
  *
  */
-INTERNET_SCHEME GetInternetScheme(LPSTR lpszScheme)
+INTERNET_SCHEME GetInternetScheme(LPCSTR lpszScheme, INT nMaxCmp)
 {
     if(lpszScheme==NULL)
         return INTERNET_SCHEME_UNKNOWN;
 
-    if( (strcmp("ftp", lpszScheme) == 0) ||
-        (strcmp("FTP", lpszScheme) == 0) )
+    if (!_strnicmp("ftp", lpszScheme, nMaxCmp))
         return INTERNET_SCHEME_FTP;
-    else if( (strcmp("gopher", lpszScheme) == 0) ||
-        (strcmp("GOPHER", lpszScheme) == 0) )
+    else if (!_strnicmp("gopher", lpszScheme, nMaxCmp))
         return INTERNET_SCHEME_GOPHER;
-    else if( (strcmp("http", lpszScheme) == 0) ||
-        (strcmp("HTTP", lpszScheme) == 0) )
+    else if (!_strnicmp("http", lpszScheme, nMaxCmp))
         return INTERNET_SCHEME_HTTP;
-    else if( (strcmp("https", lpszScheme) == 0) ||
-        (strcmp("HTTPS", lpszScheme) == 0) )
+    else if (!_strnicmp("https", lpszScheme, nMaxCmp))
         return INTERNET_SCHEME_HTTPS;
-    else if( (strcmp("file", lpszScheme) == 0) ||
-        (strcmp("FILE", lpszScheme) == 0) )
+    else if (!_strnicmp("file", lpszScheme, nMaxCmp))
         return INTERNET_SCHEME_FILE;
-    else if( (strcmp("news", lpszScheme) == 0) ||
-        (strcmp("NEWS", lpszScheme) == 0) )
+    else if (!_strnicmp("news", lpszScheme, nMaxCmp))
         return INTERNET_SCHEME_NEWS;
-    else if( (strcmp("mailto", lpszScheme) == 0) ||
-        (strcmp("MAILTO", lpszScheme) == 0) )
+    else if (!_strnicmp("mailto", lpszScheme, nMaxCmp))
         return INTERNET_SCHEME_MAILTO;
     else
         return INTERNET_SCHEME_UNKNOWN;
@@ -1111,6 +1232,31 @@ VOID INTERNET_ExecuteWork()
 		INTERNET_FindNextFileA((HINTERNET)workRequest.HFTPSESSION,
                     (LPWIN32_FIND_DATAA)workRequest.LPFINDFILEDATA);
 		break;
+
+            case HTTPSENDREQUESTA:
+               HTTP_HttpSendRequestA((HINTERNET)workRequest.HFTPSESSION, 
+                       (LPCSTR)workRequest.LPSZHEADER,
+                       workRequest.DWHEADERLENGTH,     
+                       (LPVOID)workRequest.LPOPTIONAL, 
+                       workRequest.DWOPTIONALLENGTH);
+               HeapFree(GetProcessHeap(), 0, (LPVOID)workRequest.LPSZHEADER);
+               break;
+
+            case HTTPOPENREQUESTA:
+               HTTP_HttpOpenRequestA((HINTERNET)workRequest.HFTPSESSION, 
+                       (LPCSTR)workRequest.LPSZVERB,
+                       (LPCSTR)workRequest.LPSZOBJECTNAME,     
+                       (LPCSTR)workRequest.LPSZVERSION, 
+                       (LPCSTR)workRequest.LPSZREFERRER, 
+                       (LPCSTR*)workRequest.LPSZACCEPTTYPES, 
+                       workRequest.DWFLAGS,
+                       workRequest.DWCONTEXT);
+               HeapFree(GetProcessHeap(), 0, (LPVOID)workRequest.LPSZVERB);
+               HeapFree(GetProcessHeap(), 0, (LPVOID)workRequest.LPSZOBJECTNAME);
+               HeapFree(GetProcessHeap(), 0, (LPVOID)workRequest.LPSZVERSION);
+               HeapFree(GetProcessHeap(), 0, (LPVOID)workRequest.LPSZREFERRER);
+                break;
+
 	}
     }
 }
@@ -1127,3 +1273,69 @@ LPSTR INTERNET_GetResponseBuffer()
     LPWITHREADERROR lpwite = (LPWITHREADERROR)TlsGetValue(g_dwTlsErrIndex);
     return lpwite->response;
 }
+
+
+/***********************************************************************
+ *           INTERNET_GetNextLine  (internal)
+ *
+ * Parse next line in directory string listing
+ *
+ * RETURNS
+ *   Pointer to begining of next line
+ *   NULL on failure
+ *
+ */
+
+LPSTR INTERNET_GetNextLine(INT nSocket, LPSTR lpszBuffer, LPDWORD dwBuffer)
+{
+    struct timeval tv;
+    fd_set infd;
+    BOOL bSuccess = FALSE;
+    INT nRecv = 0;
+
+    TRACE("\n");
+
+    FD_ZERO(&infd);
+    FD_SET(nSocket, &infd);
+    tv.tv_sec=RESPONSE_TIMEOUT;
+    tv.tv_usec=0;
+
+    while (nRecv < *dwBuffer)
+    {
+        if (select(nSocket+1,&infd,NULL,NULL,&tv) > 0)
+        {
+            if (recv(nSocket, &lpszBuffer[nRecv], 1, 0) <= 0)
+            {
+                INTERNET_SetLastError(ERROR_FTP_TRANSFER_IN_PROGRESS);
+                goto lend;
+            }
+
+            if (lpszBuffer[nRecv] == '\n')
+	    {
+		bSuccess = TRUE;
+                break;
+	    }
+            if (lpszBuffer[nRecv] != '\r')
+                nRecv++;
+        }
+	else
+	{
+            INTERNET_SetLastError(ERROR_INTERNET_TIMEOUT);
+            goto lend;
+}
+    }
+
+lend:
+    if (bSuccess)
+    {
+        lpszBuffer[nRecv] = '\0';
+	*dwBuffer = nRecv - 1;
+        TRACE(":%d %s\n", nRecv, lpszBuffer);
+        return lpszBuffer;
+    }
+    else
+    {
+        return NULL;
+    }
+}
+

@@ -111,10 +111,12 @@ time_t ConvertTimeString(LPCSTR asctime)
 BOOL GetAddress(LPCSTR lpszServerName, INTERNET_PORT nServerPort,
 	struct hostent **phe, struct sockaddr_in *psa)
 {
+    TRACE("%s\n", lpszServerName);
+
     *phe = gethostbyname(lpszServerName);
     if (NULL == *phe)
     {
-        TRACE("Failed to get hostname %s\n", lpszServerName);
+        TRACE("Failed to get hostname: (%s)\n", lpszServerName);
         return FALSE;
     }
 

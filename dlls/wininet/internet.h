@@ -3,13 +3,13 @@
 
 typedef enum
 {
-    WH_HINIT,
-    WH_HFTPSESSION,
-    WH_HGOPHERSESSION,
-    WH_HHTTPSESSION,
-    WH_HHTTPREQ,
-    WH_HFILE,
-    WH_HFINDNEXT,
+    WH_HINIT = INTERNET_HANDLE_TYPE_INTERNET,
+    WH_HFTPSESSION = INTERNET_HANDLE_TYPE_CONNECT_FTP,
+    WH_HGOPHERSESSION = INTERNET_HANDLE_TYPE_CONNECT_GOPHER,
+    WH_HHTTPSESSION = INTERNET_HANDLE_TYPE_CONNECT_HTTP,
+    WH_HFILE = INTERNET_HANDLE_TYPE_FTP_FILE,
+    WH_HFINDNEXT = INTERNET_HANDLE_TYPE_FTP_FIND,
+    WH_HHTTPREQ = INTERNET_HANDLE_TYPE_HTTP_REQUEST,
 } WH_TYPE;
 
 typedef struct _WININETHANDLEHEADER
@@ -43,20 +43,29 @@ typedef struct
     struct hostent *phostent;
 } WININETHTTPSESSIONA, *LPWININETHTTPSESSIONA;
 
+#define HDR_ISREQUEST		0x0001
+#define HDR_COMMADELIMITED	0x0002
+#define HDR_SEMIDELIMITED	0x0004
+
+typedef struct
+{
+    LPSTR lpszField;
+    LPSTR lpszValue;
+    WORD wFlags;
+    WORD wCount;
+} HTTPHEADERA, *LPHTTPHEADERA;
+
 
 typedef struct
 {
     WININETHANDLEHEADER hdr;
     LPSTR lpszPath;
-    LPSTR lpszReferrer;
-    LPSTR lpszAcceptTypes;
     LPSTR lpszVerb;
     LPSTR lpszHostName;
-    LPSTR lpszRedirect;
-    int	nSocketFD;
-    int	statusCode;
-    int	contentLength;
-    time_t  nSystemTime;
+    INT	nSocketFD;
+    HTTPHEADERA StdHeaders[HTTP_QUERY_MAX+1];
+    HTTPHEADERA *pCustHeaders;
+    INT nCustHeaders;
 } WININETHTTPREQA, *LPWININETHTTPREQA;
 
 
@@ -111,6 +120,8 @@ typedef enum
     FTPREMOVEDIRECTORYA,
     FTPRENAMEFILEA,
     INTERNETFINDNEXTA,
+    HTTPSENDREQUESTA,
+    HTTPOPENREQUESTA,
 } ASYNC_FUNC;
 
 typedef struct WORKREQ
@@ -126,6 +137,8 @@ typedef struct WORKREQ
 #define LPSZSRCFILE       param2
 #define LPSZDIRECTORY     param2
 #define LPSZSEARCHFILE    param2
+#define LPSZHEADER        param2
+#define LPSZVERB          param2
 
     DWORD param3;
 #define LPSZNEWREMOTEFILE param3
@@ -134,18 +147,27 @@ typedef struct WORKREQ
 #define LPDWDIRECTORY     param3
 #define FDWACCESS         param3
 #define LPSZDESTFILE      param3
+#define DWHEADERLENGTH    param3
+#define LPSZOBJECTNAME    param3
 
     DWORD param4;
 #define DWFLAGS           param4
+#define LPOPTIONAL        param4
 
     DWORD param5;
 #define DWCONTEXT         param5
+#define DWOPTIONALLENGTH  param5
 
     DWORD param6;
-#define FFAILIFEXISTS     param4
+#define FFAILIFEXISTS     param6
+#define LPSZVERSION       param6
 
     DWORD param7;
 #define DWLOCALFLAGSATTRIBUTE param7
+#define LPSZREFERRER          param7
+
+    DWORD param8;
+#define LPSZACCEPTTYPES       param8
 
     struct WORKREQ *next;
     struct WORKREQ *prev;
@@ -159,6 +181,10 @@ HINTERNET FTP_Connect(HINTERNET hInterent, LPCSTR lpszServerName,
 	INTERNET_PORT nServerPort, LPCSTR lpszUserName,
 	LPCSTR lpszPassword, DWORD dwFlags, DWORD dwContext);
 
+HINTERNET HTTP_Connect(HINTERNET hInterent, LPCSTR lpszServerName, 
+	INTERNET_PORT nServerPort, LPCSTR lpszUserName,
+	LPCSTR lpszPassword, DWORD dwFlags, DWORD dwContext);
+
 BOOL GetAddress(LPCSTR lpszServerName, INTERNET_PORT nServerPort,
 	struct hostent **phe, struct sockaddr_in *psa);
 
@@ -168,6 +194,7 @@ void INTERNET_SetLastError(DWORD dwError);
 DWORD INTERNET_GetLastError();
 BOOL INTERNET_AsyncCall(LPWORKREQUEST lpWorkRequest);
 LPSTR INTERNET_GetResponseBuffer();
+LPSTR INTERNET_GetNextLine(INT nSocket, LPSTR lpszBuffer, LPDWORD dwBuffer);
 
 BOOL FTP_CloseSessionHandle(LPWININETFTPSESSIONA lpwfs);
 BOOL FTP_CloseFindNextHandle(LPWININETFINDNEXTA lpwfn);
@@ -188,6 +215,15 @@ HINTERNET FTP_FtpOpenFileA(HINTERNET hFtpSession, LPCSTR lpszFileName,
 BOOLAPI FTP_FtpGetFileA(HINTERNET hInternet, LPCSTR lpszRemoteFile, LPCSTR lpszNewFile,
 	BOOL fFailIfExists, DWORD dwLocalFlagsAttribute, DWORD dwInternetFlags,
 	DWORD dwContext);
+
+BOOLAPI HTTP_HttpSendRequestA(HINTERNET hHttpRequest, LPCSTR lpszHeaders,
+	DWORD dwHeaderLength, LPVOID lpOptional ,DWORD dwOptionalLength);
+INTERNETAPI HINTERNET WINAPI HTTP_HttpOpenRequestA(HINTERNET hHttpSession,
+	LPCSTR lpszVerb, LPCSTR lpszObjectName, LPCSTR lpszVersion,
+	LPCSTR lpszReferrer , LPCSTR *lpszAcceptTypes, 
+	DWORD dwFlags, DWORD dwContext);
+void HTTP_CloseHTTPSessionHandle(LPWININETHTTPSESSIONA lpwhs);
+void HTTP_CloseHTTPRequestHandle(LPWININETHTTPREQA lpwhr);
 
 
 #define MAX_REPLY_LEN	 	0x5B4
