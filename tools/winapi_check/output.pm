@@ -94,7 +94,7 @@ sub write {
 
 
     $self->hide_progress;
-    print STDERR $message;
+    print $message;
     $self->show_progress;
 }
 
