@@ -72,7 +72,7 @@ HKEY FindRegRoot(HWND hwndTV, HTREEITEM hItem, LPTSTR keyPath, int* pPathLen, in
             hKey = (HKEY)item.lParam;
             item.mask = TVIF_TEXT;
             item.hItem = hItem;
-/*            item.pszText = &keyPath[*pPathLen]; */
+            /*            item.pszText = &keyPath[*pPathLen]; */
             item.pszText = keyPath;
             item.cchTextMax = max;
             if (TreeView_GetItem(hwndTV, &item)) {
@@ -150,7 +150,7 @@ static BOOL InitTreeViewImageLists(HWND hwndTV)
 
     /* Create the image list.  */
     if ((himl = ImageList_Create(CX_BITMAP, CY_BITMAP,
-        FALSE, NUM_BITMAPS, 0)) == NULL)
+                                 FALSE, NUM_BITMAPS, 0)) == NULL)
         return FALSE;
 
     /* Add the open file, closed file, and document bitmaps.  */
@@ -213,7 +213,7 @@ BOOL OnTreeExpanding(HWND hwndTV, NMTREEVIEW* pnmtv)
                 if (errCode == ERROR_SUCCESS) {
                     TCHAR SubName[MAX_NAME_LEN];
                     DWORD cSubName = MAX_NAME_LEN;
-/*                    if (RegEnumKeyEx(hKey, 0, SubName, &cSubName, NULL, NULL, NULL, NULL) == ERROR_SUCCESS) { */
+                    /*                    if (RegEnumKeyEx(hKey, 0, SubName, &cSubName, NULL, NULL, NULL, NULL) == ERROR_SUCCESS) { */
                     while (RegEnumKeyEx(hKey, dwCount, SubName, &cSubName, NULL, NULL, NULL, NULL) == ERROR_SUCCESS) {
                         ++dwCount;
                     }
@@ -223,10 +223,9 @@ BOOL OnTreeExpanding(HWND hwndTV, NMTREEVIEW* pnmtv)
                 cName = MAX_NAME_LEN;
                 ++dwIndex;
             }
-	        /*ShowWindow(hwndTV, SW_SHOWNOACTIVATE); */
+            /*ShowWindow(hwndTV, SW_SHOWNOACTIVATE); */
             RegCloseKey(hNewKey);
         }
-    } else {
     }
     expanding = FALSE;
     return TRUE;
@@ -246,9 +245,9 @@ HWND CreateTreeView(HWND hwndParent, LPTSTR pHostName, int id)
     /* Get the dimensions of the parent window's client area, and create the tree view control.  */
     GetClientRect(hwndParent, &rcClient);
     hwndTV = CreateWindowEx(WS_EX_CLIENTEDGE, WC_TREEVIEW, _T("Tree View"),
-        WS_VISIBLE | WS_CHILD | TVS_HASLINES | TVS_HASBUTTONS | TVS_LINESATROOT,
-        0, 0, rcClient.right, rcClient.bottom,
-        hwndParent, (HMENU)id, hInst, NULL);
+                            WS_VISIBLE | WS_CHILD | TVS_HASLINES | TVS_HASBUTTONS | TVS_LINESATROOT,
+                            0, 0, rcClient.right, rcClient.bottom,
+                            hwndParent, (HMENU)id, hInst, NULL);
     /* Initialize the image list, and add items to the control.  */
     if (!InitTreeViewImageLists(hwndTV) || !InitTreeViewItems(hwndTV, pHostName)) {
         DestroyWindow(hwndTV);

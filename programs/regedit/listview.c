@@ -61,30 +61,28 @@ static void AddEntryToList(HWND hwndLV, LPTSTR Name, DWORD dwValType, void* ValB
         item.pszText = LPSTR_TEXTCALLBACK;
     item.iImage = 0;
     item.lParam = (LPARAM)dwValType;
-/*    item.lParam = (LPARAM)ValBuf; */
+    /*    item.lParam = (LPARAM)ValBuf; */
 #if (_WIN32_IE >= 0x0300)
     item.iIndent = 0;
 #endif
 
     index = ListView_InsertItem(hwndLV, &item);
     if (index != -1) {
-/*        LPTSTR pszText = NULL; */
+        /*        LPTSTR pszText = NULL; */
         LPTSTR pszText = _T("value");
         switch (dwValType) {
         case REG_SZ:
         case REG_EXPAND_SZ:
             ListView_SetItemText(hwndLV, index, 2, ValBuf);
             break;
-        case REG_DWORD:
-            {
+        case REG_DWORD: {
                 TCHAR buf[64];
                 wsprintf(buf, _T("0x%08X (%d)"), *(DWORD*)ValBuf, *(DWORD*)ValBuf);
                 ListView_SetItemText(hwndLV, index, 2, buf);
             }
-/*            lpsRes = convertHexToDWORDStr(lpbData, dwLen); */
+            /*            lpsRes = convertHexToDWORDStr(lpbData, dwLen); */
             break;
-        case REG_BINARY:
-            {
+        case REG_BINARY: {
                 unsigned int i;
                 LPBYTE pData = (LPBYTE)ValBuf;
                 LPTSTR strBinary = HeapAlloc(GetProcessHeap(), 0, dwCount * sizeof(TCHAR) * 3 + 1);
@@ -96,7 +94,7 @@ static void AddEntryToList(HWND hwndLV, LPTSTR Name, DWORD dwValType, void* ValB
             }
             break;
         default:
-/*            lpsRes = convertHexToHexCSV(lpbData, dwLen); */
+            /*            lpsRes = convertHexToHexCSV(lpbData, dwLen); */
             ListView_SetItemText(hwndLV, index, 2, pszText);
             break;
         }
@@ -153,9 +151,9 @@ static void OnGetDispInfo(NMLVDISPINFO* plvdi)
         case REG_DWORD:
             plvdi->item.pszText = _T("REG_DWORD");
             break;
-/*        case REG_DWORD_LITTLE_ENDIAN: */
-/*            plvdi->item.pszText = _T("REG_DWORD_LITTLE_ENDIAN"); */
-/*            break; */
+            /*        case REG_DWORD_LITTLE_ENDIAN: */
+            /*            plvdi->item.pszText = _T("REG_DWORD_LITTLE_ENDIAN"); */
+            /*            break; */
         case REG_DWORD_BIG_ENDIAN:
             plvdi->item.pszText = _T("REG_DWORD_BIG_ENDIAN");
             break;
@@ -199,97 +197,93 @@ static int CALLBACK CompareFunc(LPARAM lParam1, LPARAM lParam2, LPARAM lParamSor
 #endif
 
 static void ListViewPopUpMenu(HWND hWnd, POINT pt)
-{
-}
+{}
 
 static BOOL _CmdWndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 {
-	switch (LOWORD(wParam)) {
-/*    case ID_FILE_OPEN: */
-/*        break; */
-	default:
+    switch (LOWORD(wParam)) {
+        /*    case ID_FILE_OPEN: */
+        /*        break; */
+    default:
         return FALSE;
-	}
-	return TRUE;
+    }
+    return TRUE;
 }
 
 static LRESULT CALLBACK ListWndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 {
-	switch (message) {
-	case WM_COMMAND:
+    switch (message) {
+    case WM_COMMAND:
         if (!_CmdWndProc(hWnd, message, wParam, lParam)) {
             return CallWindowProc(g_orgListWndProc, hWnd, message, wParam, lParam);
         }
-		break;
+        break;
     case WM_NOTIFY:
         switch (((LPNMHDR)lParam)->code) {
         case LVN_GETDISPINFO:
             OnGetDispInfo((NMLVDISPINFO*)lParam);
             break;
-        case NM_DBLCLK:
-            {
-            NMITEMACTIVATE* nmitem = (LPNMITEMACTIVATE)lParam;
-            LVHITTESTINFO info;
+        case NM_DBLCLK: {
+                NMITEMACTIVATE* nmitem = (LPNMITEMACTIVATE)lParam;
+                LVHITTESTINFO info;
 
-            if (nmitem->hdr.hwndFrom != hWnd) break;
-/*            if (nmitem->hdr.idFrom != IDW_LISTVIEW) break;  */
-/*            if (nmitem->hdr.code != ???) break;  */
+                if (nmitem->hdr.hwndFrom != hWnd) break;
+                /*            if (nmitem->hdr.idFrom != IDW_LISTVIEW) break;  */
+                /*            if (nmitem->hdr.code != ???) break;  */
 #ifdef _MSC_VER
-            switch (nmitem->uKeyFlags) {
-            case LVKF_ALT:     /*  The ALT key is pressed.   */
-                /* properties dialog box ? */
-                break;
-            case LVKF_CONTROL: /*  The CTRL key is pressed. */
-                /* run dialog box for providing parameters... */
-                break;
-            case LVKF_SHIFT:   /*  The SHIFT key is pressed.    */
-                break;
-            }
-#endif
-            info.pt.x = nmitem->ptAction.x;
-            info.pt.y = nmitem->ptAction.y;
-            if (ListView_HitTest(hWnd, &info) != -1) {
-                LVITEM item;
-                item.mask = LVIF_PARAM;
-                item.iItem = info.iItem;
-                if (ListView_GetItem(hWnd, &item)) {
+                switch (nmitem->uKeyFlags) {
+                case LVKF_ALT:     /*  The ALT key is pressed.   */
+                    /* properties dialog box ? */
+                    break;
+                case LVKF_CONTROL: /*  The CTRL key is pressed. */
+                    /* run dialog box for providing parameters... */
+                    break;
+                case LVKF_SHIFT:   /*  The SHIFT key is pressed.    */
+                    break;
                 }
-            }
+#endif
+                info.pt.x = nmitem->ptAction.x;
+                info.pt.y = nmitem->ptAction.y;
+                if (ListView_HitTest(hWnd, &info) != -1) {
+                    LVITEM item;
+                    item.mask = LVIF_PARAM;
+                    item.iItem = info.iItem;
+                    if (ListView_GetItem(hWnd, &item)) {}
+                }
             }
             break;
 
-        case NM_RCLICK:
-            {
-            int idx;
-            LV_HITTESTINFO lvH;
-            NM_LISTVIEW* pNm = (NM_LISTVIEW*)lParam;
-            lvH.pt.x = pNm->ptAction.x;
-            lvH.pt.y = pNm->ptAction.y;
-            idx = ListView_HitTest(hWnd, &lvH);
-            if (idx != -1) {
-                POINT pt;
-                GetCursorPos(&pt);
-                ListViewPopUpMenu(hWnd, pt);
-                return idx;
-            }
+        case NM_RCLICK: {
+                int idx;
+                LV_HITTESTINFO lvH;
+                NM_LISTVIEW* pNm = (NM_LISTVIEW*)lParam;
+                lvH.pt.x = pNm->ptAction.x;
+                lvH.pt.y = pNm->ptAction.y;
+                idx = ListView_HitTest(hWnd, &lvH);
+                if (idx != -1) {
+                    POINT pt;
+                    GetCursorPos(&pt);
+                    ListViewPopUpMenu(hWnd, pt);
+                    return idx;
+                }
             }
             break;
 
         default:
             return CallWindowProc(g_orgListWndProc, hWnd, message, wParam, lParam);
         }
-		break;
-	case WM_KEYDOWN:
-		if (wParam == VK_TAB) {
-			/*TODO: SetFocus(Globals.hDriveBar) */
-			/*SetFocus(child->nFocusPanel? child->left.hWnd: child->right.hWnd); */
-		}
+        break;
+    case WM_KEYDOWN:
+        if (wParam == VK_TAB) {
+            /*TODO: SetFocus(Globals.hDriveBar) */
+            /*SetFocus(child->nFocusPanel? child->left.hWnd: child->right.hWnd); */
+        }
         /* fall thru... */
     default:
         return CallWindowProc(g_orgListWndProc, hWnd, message, wParam, lParam);
         break;
-	}
-	return 0;
+    }
+    return 0;
 }
 
 
@@ -301,21 +295,21 @@ HWND CreateListView(HWND hwndParent, int id)
     /* Get the dimensions of the parent window's client area, and create the list view control.  */
     GetClientRect(hwndParent, &rcClient);
     hwndLV = CreateWindowEx(WS_EX_CLIENTEDGE, WC_LISTVIEW, _T("List View"),
-        WS_VISIBLE | WS_CHILD | LVS_REPORT,
-        0, 0, rcClient.right, rcClient.bottom,
-        hwndParent, (HMENU)id, hInst, NULL);
+                            WS_VISIBLE | WS_CHILD | LVS_REPORT,
+                            0, 0, rcClient.right, rcClient.bottom,
+                            hwndParent, (HMENU)id, hInst, NULL);
     ListView_SetExtendedListViewStyle(hwndLV,  LVS_EX_FULLROWSELECT);
 
     /* Initialize the image list, and add items to the control.  */
-/*
-    if (!InitListViewImageLists(hwndLV) ||
-            !InitListViewItems(hwndLV, szName)) {
-        DestroyWindow(hwndLV);
-        return FALSE;
-    }
- */
+    /*
+        if (!InitListViewImageLists(hwndLV) ||
+                !InitListViewItems(hwndLV, szName)) {
+            DestroyWindow(hwndLV);
+            return FALSE;
+        }
+     */
     CreateListColumns(hwndLV);
-	g_orgListWndProc = SubclassWindow(hwndLV, ListWndProc);
+    g_orgListWndProc = SubclassWindow(hwndLV, ListWndProc);
     return hwndLV;
 }
 
@@ -336,9 +330,9 @@ BOOL RefreshListView(HWND hwndLV, HKEY hKey, LPTSTR keyPath)
             ShowWindow(hwndLV, SW_HIDE);
             /* get size information and resize the buffers if necessary */
             errCode = RegQueryInfoKey(hNewKey, NULL, NULL, NULL, NULL,
-                        &max_sub_key_len, NULL, &val_count, &max_val_name_len, &max_val_size, NULL, NULL);
+                                      &max_sub_key_len, NULL, &val_count, &max_val_name_len, &max_val_size, NULL, NULL);
 
-#define BUF_HEAD_SPACE 2 /* TODO: check why this is required with ROS ??? */
+            #define BUF_HEAD_SPACE 2 /* TODO: check why this is required with ROS ??? */
 
             if (errCode == ERROR_SUCCESS) {
                 TCHAR* ValName = HeapAlloc(GetProcessHeap(), 0, ++max_val_name_len * sizeof(TCHAR) + BUF_HEAD_SPACE);
@@ -347,10 +341,10 @@ BOOL RefreshListView(HWND hwndLV, HKEY hKey, LPTSTR keyPath)
                 DWORD dwValSize = max_val_size;
                 DWORD dwIndex = 0L;
                 DWORD dwValType;
-/*                if (RegQueryValueEx(hNewKey, NULL, NULL, &dwValType, ValBuf, &dwValSize) == ERROR_SUCCESS) { */
-/*                    AddEntryToList(hwndLV, _T("(Default)"), dwValType, ValBuf, dwValSize); */
-/*                } */
-/*                dwValSize = max_val_size; */
+                /*                if (RegQueryValueEx(hNewKey, NULL, NULL, &dwValType, ValBuf, &dwValSize) == ERROR_SUCCESS) { */
+                /*                    AddEntryToList(hwndLV, _T("(Default)"), dwValType, ValBuf, dwValSize); */
+                /*                } */
+                /*                dwValSize = max_val_size; */
                 while (RegEnumValue(hNewKey, dwIndex, ValName, &dwValNameLen, NULL, &dwValType, ValBuf, &dwValSize) == ERROR_SUCCESS) {
                     ValBuf[dwValSize] = 0;
                     AddEntryToList(hwndLV, ValName, dwValType, ValBuf, dwValSize);
@@ -363,7 +357,7 @@ BOOL RefreshListView(HWND hwndLV, HKEY hKey, LPTSTR keyPath)
                 HeapFree(GetProcessHeap(), 0, ValName);
             }
             /*ListView_SortItemsEx(hwndLV, CompareFunc, hwndLV); */
-/*            SendMessage(hwndLV, LVM_SORTITEMSEX, (WPARAM)CompareFunc, (LPARAM)hwndLV); */
+            /*            SendMessage(hwndLV, LVM_SORTITEMSEX, (WPARAM)CompareFunc, (LPARAM)hwndLV); */
             ShowWindow(hwndLV, SW_SHOW);
             RegCloseKey(hNewKey);
         }

@@ -29,7 +29,7 @@
 #define LIST_WINDOW     2003
 
 #define MAX_LOADSTRING  100
-#define	SPLIT_WIDTH		5
+#define	SPLIT_WIDTH	5
 #define MAX_NAME_LEN    500
 
 #define COUNT_OF(a) (sizeof(a)/sizeof(a[0]))
@@ -37,23 +37,23 @@
 /******************************************************************************/
 
 enum OPTION_FLAGS {
-    OPTIONS_AUTO_REFRESH               = 0x01,
-    OPTIONS_READ_ONLY_MODE             = 0x02,
-    OPTIONS_CONFIRM_ON_DELETE          = 0x04,
-    OPTIONS_SAVE_ON_EXIT          	   = 0x08,
+    OPTIONS_AUTO_REFRESH            	   = 0x01,
+    OPTIONS_READ_ONLY_MODE          	   = 0x02,
+    OPTIONS_CONFIRM_ON_DELETE       	   = 0x04,
+    OPTIONS_SAVE_ON_EXIT         	   = 0x08,
     OPTIONS_DISPLAY_BINARY_DATA    	   = 0x10,
     OPTIONS_VIEW_TREE_ONLY       	   = 0x20,
     OPTIONS_VIEW_DATA_ONLY      	   = 0x40,
 };
 
 typedef struct {
-	HWND	hWnd;
+    HWND    hWnd;
     HWND    hTreeWnd;
     HWND    hListWnd;
     int     nFocusPanel;      /* 0: left  1: right */
-	int		nSplitPos;
-	WINDOWPLACEMENT pos;
-	TCHAR	szPath[MAX_PATH];
+    int	    nSplitPos;
+    WINDOWPLACEMENT pos;
+    TCHAR   szPath[MAX_PATH];
 } ChildWnd;
 extern ChildWnd* pChildWnd;
 

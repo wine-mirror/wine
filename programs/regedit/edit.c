@@ -47,10 +47,10 @@ void error(HWND hwnd, INT resId, ...)
     hInstance = GetModuleHandle(0);
 
     if (!LoadString(hInstance, IDS_ERROR, title, COUNT_OF(title)))
-	lstrcpy(title, "Error");
+        lstrcpy(title, "Error");
 
     if (!LoadString(hInstance, resId, errfmt, COUNT_OF(errfmt)))
-	lstrcpy(errfmt, "Unknown error string!");
+        lstrcpy(errfmt, "Unknown error string!");
 
     va_start(ap, resId);
     _vsntprintf(errstr, COUNT_OF(errstr), errfmt, ap);
@@ -66,27 +66,27 @@ INT_PTR CALLBACK modify_string_dlgproc(HWND hwndDlg, UINT uMsg, WPARAM wParam, L
     int len;
 
     switch(uMsg) {
-	case WM_INITDIALOG:
-	    SetDlgItemText(hwndDlg, IDC_VALUE_NAME, editValueName);
-	    SetDlgItemText(hwndDlg, IDC_VALUE_DATA, stringValueData);
-	    return TRUE;
-        case WM_COMMAND: 
-            switch (LOWORD(wParam)) { 
-                case IDOK:
-		    if ((hwndValue = GetDlgItem(hwndDlg, IDC_VALUE_DATA))) {
-		        if ((len = GetWindowTextLength(hwndValue))) {
-			    if ((valueData = HeapReAlloc(GetProcessHeap(), 0, stringValueData, (len + 1) * sizeof(TCHAR)))) {
-				stringValueData = valueData;
-				if (!GetWindowText(hwndValue, stringValueData, len + 1))
-				    *stringValueData = 0;
-			    }
-			}
-		    }
-                    /* Fall through */
-                case IDCANCEL: 
-                    EndDialog(hwndDlg, wParam); 
-                    return TRUE; 
-            } 
+    case WM_INITDIALOG:
+        SetDlgItemText(hwndDlg, IDC_VALUE_NAME, editValueName);
+        SetDlgItemText(hwndDlg, IDC_VALUE_DATA, stringValueData);
+        return TRUE;
+    case WM_COMMAND:
+        switch (LOWORD(wParam)) {
+        case IDOK:
+            if ((hwndValue = GetDlgItem(hwndDlg, IDC_VALUE_DATA))) {
+                if ((len = GetWindowTextLength(hwndValue))) {
+                    if ((valueData = HeapReAlloc(GetProcessHeap(), 0, stringValueData, (len + 1) * sizeof(TCHAR)))) {
+                        stringValueData = valueData;
+                        if (!GetWindowText(hwndValue, stringValueData, len + 1))
+                            *stringValueData = 0;
+                    }
+                }
+            }
+            /* Fall through */
+        case IDCANCEL:
+            EndDialog(hwndDlg, wParam);
+            return TRUE;
+        }
     }
     return FALSE;
 }
@@ -104,28 +104,28 @@ BOOL ModifyValue(HWND hwnd, HKEY hKey, LPTSTR valueName)
 
     lRet = RegQueryValueEx(hKey, valueName, 0, &type, 0, &valueDataLen);
     if (lRet != ERROR_SUCCESS) {
-	error(hwnd, IDS_BAD_VALUE, valueName);
-	goto done;
+        error(hwnd, IDS_BAD_VALUE, valueName);
+        goto done;
     }
 
     if ( (type == REG_SZ) || (type == REG_EXPAND_SZ) ) {
-	if (!(stringValueData = HeapAlloc(GetProcessHeap(), 0, valueDataLen))) {
-	    error(hwnd, IDS_TOO_BIG_VALUE, valueDataLen);
-	    goto done;
-	}
+        if (!(stringValueData = HeapAlloc(GetProcessHeap(), 0, valueDataLen))) {
+            error(hwnd, IDS_TOO_BIG_VALUE, valueDataLen);
+            goto done;
+        }
         lRet = RegQueryValueEx(hKey, valueName, 0, 0, stringValueData, &valueDataLen);
-	if (lRet != ERROR_SUCCESS) {
-	    error(hwnd, IDS_BAD_VALUE, valueName);
-	    goto done;
-	}
-	if (DialogBox(0, MAKEINTRESOURCE(IDD_EDIT_STRING), hwnd, modify_string_dlgproc) == IDOK) {
-	    lRet = RegSetValueEx(hKey, valueName, 0, type, stringValueData, lstrlen(stringValueData) + 1);
-	    if (lRet == ERROR_SUCCESS) result = TRUE;
-	}
+        if (lRet != ERROR_SUCCESS) {
+            error(hwnd, IDS_BAD_VALUE, valueName);
+            goto done;
+        }
+        if (DialogBox(0, MAKEINTRESOURCE(IDD_EDIT_STRING), hwnd, modify_string_dlgproc) == IDOK) {
+            lRet = RegSetValueEx(hKey, valueName, 0, type, stringValueData, lstrlen(stringValueData) + 1);
+            if (lRet == ERROR_SUCCESS) result = TRUE;
+        }
     } else if ( type == REG_DWORD ) {
-	MessageBox(hwnd, "Can't edit dwords for now", "Error", MB_OK | MB_ICONERROR);
+        MessageBox(hwnd, "Can't edit dwords for now", "Error", MB_OK | MB_ICONERROR);
     } else {
-	error(hwnd, IDS_UNSUPPORTED_TYPE, type);
+        error(hwnd, IDS_UNSUPPORTED_TYPE, type);
     }
 
 done:
