@@ -219,11 +219,11 @@ C:\                Root directory of primary disk drive
           <para>
             Use <filename>tools/wineinstall</filename> to compile Wine
             and install the default registry. Or if you prefer to do
-            it yourself, compile <filename>programs/regapi</filename>,
+            it yourself, compile <filename>programs/regedit</filename>,
             and run:
           </para>
 	  <screen>
-		<userinput>programs/regapi/regapi setValue &lt; winedefault.reg</userinput>
+		<userinput>programs/regedit/regedit &lt; winedefault.reg</userinput>
 	  </screen>
         </listitem>
         <listitem>

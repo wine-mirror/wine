@@ -142,7 +142,7 @@ The file documentation/samples/config contains an example configuration file
 which has to be adapted and copied to the location mentioned above.
 
 Don't forget to add vital registry entries by applying winedefault.reg
-with programs/regapi/. See documentation/ directory for details.
+with programs/regedit/. See documentation/ directory for details.
 
 See http://www.winehq.com/support/ for further configuration hints.
 

@@ -619,7 +619,7 @@ sub Check_Registry {
   }
   else
   {
-    Do_PrintResult($is_critical, "entry \"SHAREDMEMLOCATION\" not found in system.reg registry file", "file winedefault.reg, the most basic wine registry environment, doesn't seem to have been applied using regapi");
+    Do_PrintResult($is_critical, "entry \"SHAREDMEMLOCATION\" not found in system.reg registry file", "file winedefault.reg, the most basic wine registry environment, doesn't seem to have been applied using regedit");
   }
   @entries = ();
 

@@ -156,7 +156,7 @@ configuration qui doit être adapté et copié vers la localisation mentionnée
 ci-dessus.
 
 N'oubliez pas d'ajouter des entrées de registre virtuelle en applicant
-winedefault.reg avec programs/regapi/. Voyez le répertoire documentation/ pour
+winedefault.reg avec programs/regedit/. Voyez le répertoire documentation/ pour
 les détails.
 
 Naviguez sur http://www.winehq.com/support/ pour plus d'astuce de configuration.

@@ -240,8 +240,8 @@ ln -sf /usr/local/etc/wine.userreg wine.userreg
         installed for you if you use the
         <filename>tools/wineinstall</filename> script in the Wine source,
 	but if you want to install it manually, you can do so by using the
-        <command>regapi</command> tool to be found in the
-	<filename>programs/regapi/</filename>
+        <command>regedit</command> tool to be found in the
+	<filename>programs/regedit/</filename>
 	directory in Wine source.
       </para>
     </sect2>
