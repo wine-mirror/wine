@@ -381,7 +381,7 @@ static BOOL32 DateToTm( DATE dateIn, LCID lcid, struct tm* pTm )
 			/* Set the tm_yday value.
 			 * Note: The day is must be converted from [1-366] to [0-365]
 			 */
-			//pTm->tm_yday = nDay - 1;
+			/*pTm->tm_yday = nDay - 1;*/
 			/* find which mount this day corresponds to.
 			 */
 			if( nDay <= 31 )
