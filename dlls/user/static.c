@@ -134,7 +134,7 @@ static HICON STATIC_SetIcon( HWND hwnd, HICON hicon, DWORD style )
     	return 0;
     }
     prevIcon = (HICON)SetWindowLongPtrW( hwnd, HICON_GWL_OFFSET, (LONG_PTR)hicon );
-    if (hicon)
+    if (hicon && !(style & SS_CENTERIMAGE))
     {
         SetWindowPos( hwnd, 0, 0, 0, info->nWidth, info->nHeight,
                         SWP_NOACTIVATE | SWP_NOMOVE | SWP_NOZORDER );
@@ -158,7 +158,7 @@ static HBITMAP STATIC_SetBitmap( HWND hwnd, HBITMAP hBitmap, DWORD style )
     	return 0;
     }
     hOldBitmap = (HBITMAP)SetWindowLongPtrW( hwnd, HICON_GWL_OFFSET, (LONG_PTR)hBitmap );
-    if (hBitmap)
+    if (hBitmap && !(style & SS_CENTERIMAGE))
     {
         BITMAP bm;
         GetObjectW(hBitmap, sizeof(bm), &bm);
@@ -322,7 +322,7 @@ static LRESULT StaticWndProc_common( HWND hwnd, UINT uMsg, WPARAM wParam,
 	    else
 		hIcon = STATIC_LoadIconA(hwnd, (LPCSTR)lParam);
             /* FIXME : should we also return the previous hIcon here ??? */
-            STATIC_SetIcon(hwnd, hIcon, style);
+            STATIC_SetIcon(hwnd, hIcon, full_style);
 	    break;
 	}
         case SS_BITMAP:
@@ -332,7 +332,7 @@ static LRESULT StaticWndProc_common( HWND hwnd, UINT uMsg, WPARAM wParam,
 		hBitmap = STATIC_LoadBitmapW(hwnd, (LPCWSTR)lParam);
 	    else
 		hBitmap = STATIC_LoadBitmapA(hwnd, (LPCSTR)lParam);
-            STATIC_SetBitmap(hwnd, hBitmap, style);
+            STATIC_SetBitmap(hwnd, hBitmap, full_style);
 	    break;
 	}
 	case SS_LEFT:
@@ -406,7 +406,7 @@ static LRESULT StaticWndProc_common( HWND hwnd, UINT uMsg, WPARAM wParam,
     case STM_SETIMAGE:
         switch(wParam) {
 	case IMAGE_BITMAP:
-	    lResult = (LRESULT)STATIC_SetBitmap( hwnd, (HBITMAP)lParam, style );
+	    lResult = (LRESULT)STATIC_SetBitmap( hwnd, (HBITMAP)lParam, full_style );
 	    break;
 	case IMAGE_CURSOR:
 	    FIXME("STM_SETIMAGE: Unhandled type IMAGE_CURSOR\n");
@@ -415,7 +415,7 @@ static LRESULT StaticWndProc_common( HWND hwnd, UINT uMsg, WPARAM wParam,
 	    FIXME("STM_SETIMAGE: Unhandled type IMAGE_ENHMETAFILE\n");
 	    break;
 	case IMAGE_ICON:
-	    lResult = (LRESULT)STATIC_SetIcon( hwnd, (HICON)lParam, style );
+	    lResult = (LRESULT)STATIC_SetIcon( hwnd, (HICON)lParam, full_style );
 	    break;
 	default:
 	    FIXME("STM_SETIMAGE: Unhandled type %x\n", wParam);
@@ -426,7 +426,7 @@ static LRESULT StaticWndProc_common( HWND hwnd, UINT uMsg, WPARAM wParam,
 
     case STM_SETICON16:
     case STM_SETICON:
-        lResult = (LRESULT)STATIC_SetIcon( hwnd, (HICON)wParam, style );
+        lResult = (LRESULT)STATIC_SetIcon( hwnd, (HICON)wParam, full_style );
         InvalidateRect( hwnd, NULL, TRUE );
         break;
 
@@ -513,6 +513,8 @@ static void STATIC_PaintTextfn( HWND hwnd, HDC hdc, DWORD style )
 
     if (style & SS_NOPREFIX)
 	wFormat |= DT_NOPREFIX;
+    if (style & SS_CENTERIMAGE)
+	wFormat |= DT_VCENTER;
 
     if ((hFont = (HFONT)GetWindowLongPtrW( hwnd, HFONT_GWL_OFFSET ))) SelectObject( hdc, hFont );
 
@@ -579,13 +581,26 @@ static void STATIC_PaintIconfn( HWND hwnd, HDC hdc, DWORD style )
     RECT rc;
     HBRUSH hbrush;
     HICON hIcon;
+    INT x, y;
 
     GetClientRect( hwnd, &rc );
     hbrush = (HBRUSH)SendMessageW( GetParent(hwnd), WM_CTLCOLORSTATIC,
 				   (WPARAM)hdc, (LPARAM)hwnd );
     FillRect( hdc, &rc, hbrush );
-    if ((hIcon = (HICON)GetWindowLongPtrW( hwnd, HICON_GWL_OFFSET )))
-        DrawIcon( hdc, rc.left, rc.top, hIcon );
+    hIcon = (HICON)GetWindowLongPtrW( hwnd, HICON_GWL_OFFSET );
+    if (style & SS_CENTERIMAGE)
+    {
+        CURSORICONINFO *info = hIcon ? (CURSORICONINFO *)GlobalLock16(HICON_16(hIcon)) : NULL;
+        x = (rc.right - rc.left)/2 - (info ? info->nWidth/2 : 0);
+        y = (rc.bottom - rc.top)/2 - (info ? info->nHeight/2 : 0);
+    }
+    else
+    {
+        x = rc.left;
+        y = rc.top;
+    }
+    if (hIcon)
+        DrawIcon( hdc, x, y, hIcon );
 }
 
 static void STATIC_PaintBitmapfn(HWND hwnd, HDC hdc, DWORD style )
@@ -599,13 +614,26 @@ static void STATIC_PaintBitmapfn(HWND hwnd, HDC hdc, DWORD style )
 
     if ((hBitmap = (HBITMAP)GetWindowLongPtrW( hwnd, HICON_GWL_OFFSET )))
     {
+        INT x, y;
         BITMAP bm;
 
         if(GetObjectType(hBitmap) != OBJ_BITMAP) return;
         if (!(hMemDC = CreateCompatibleDC( hdc ))) return;
 	GetObjectW(hBitmap, sizeof(bm), &bm);
 	oldbitmap = SelectObject(hMemDC, hBitmap);
-	BitBlt(hdc, 0, 0, bm.bmWidth, bm.bmHeight, hMemDC, 0, 0,
+        if (style & SS_CENTERIMAGE)
+        {
+            RECT rcClient;
+            GetClientRect(hwnd, &rcClient);
+            x = (rcClient.right - rcClient.left)/2 - bm.bmWidth/2;
+            y = (rcClient.bottom - rcClient.top)/2 - bm.bmHeight/2;
+        }
+        else
+        {
+            x = 0;
+            y = 0;
+        }
+        BitBlt(hdc, x, y, bm.bmWidth, bm.bmHeight, hMemDC, 0, 0,
 	       SRCCOPY);
 	SelectObject(hMemDC, oldbitmap);
 	DeleteDC(hMemDC);
