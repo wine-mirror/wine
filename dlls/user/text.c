@@ -135,12 +135,31 @@ static void TEXT_Ellipsify (HDC hdc, WCHAR *str, unsigned int max_len,
                             int *len_before, int *len_ellip)
 {
     unsigned int len_ellipsis;
+    unsigned int lo, mid, hi;
 
     len_ellipsis = strlenW (ELLIPSISW);
     if (len_ellipsis > max_len) len_ellipsis = max_len;
     if (*len_str > max_len - len_ellipsis)
         *len_str = max_len - len_ellipsis;
 
+    /* First do a quick binary search to get an upper bound for *len_str. */
+    if (*len_str > 0 &&
+        GetTextExtentExPointW(hdc, str, *len_str, width, NULL, NULL, size) &&
+        size->cx > width)
+    {
+        for (lo = 0, hi = *len_str; lo < hi; )
+        {
+            mid = (lo + hi) / 2;
+            if (!GetTextExtentExPointW(hdc, str, mid, width, NULL, NULL, size))
+                break;
+            if (size->cx > width)
+                hi = mid;
+            else
+                lo = mid + 1;
+        }
+        *len_str = hi;
+    }
+    /* Now this should take only a couple iterations at most. */
     for ( ; ; )
     {
         strncpyW (str + *len_str, ELLIPSISW, len_ellipsis);
