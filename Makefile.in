@@ -124,6 +124,11 @@ DOCSUBDIRS = documentation
 
 INCSUBDIRS = include
 
+PROGRAMS = \
+	loader/dos/dosmod \
+	server/wineserver \
+	windows/x11drv/wineclipsrv
+
 # Sub-directories to run make into
 BUILDSUBDIRS = \
 	$(TOOLSUBDIRS) \
@@ -232,7 +237,7 @@ EMUOBJS = \
 
 EXTRA_OBJS = $(LIBOBJS) $(X11OBJS)
 
-all: Makefile Make.rules server $(MAIN_TARGET)
+all: Makefile Make.rules $(PROGRAMS) $(MAIN_TARGET)
 	@echo "Wine build complete."
 
 LIBLINTS = $(LIBOBJS:.o=.ln) 
@@ -287,7 +292,7 @@ uninstall::
 	cd $(libdir) && $(RM) $(LIB_TARGET) libwine.a libwine.so wine.sym
 	cd $(bindir) && $(RM) wine wineserver wineclipsrv dosmod
 
-$(X11OBJS) $(EMUOBJS) $(LIBOBJS): $(TOOLSUBDIRS) dummy
+$(X11OBJS) $(EMUOBJS) $(LIBOBJS) $(PROGRAMS): $(TOOLSUBDIRS) dummy
 	@cd `dirname $@` && $(MAKE) `basename $@`
 
 $(BUILDSUBDIRS): dummy
