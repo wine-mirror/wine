@@ -82,7 +82,7 @@ void WINAPI INT_Int2fHandler( CONTEXT86 *context )
                 DI_reg(context) = 0x0000;
                 break;
             case 0x08:
-                FIXME("No real-mode handler for errors yet! (bye!)");
+                FIXME("No real-mode handler for errors yet! (bye!)\n");
                 break;
             default:
                 INT_BARF(context, 0x2f);

@@ -508,7 +508,7 @@ INT16 WINAPI OpenComm16(LPCSTR device,UINT16 cbInQueue,UINT16 cbOutQueue)
 			  /* not enough memory */
 			  tcsetattr(COM[port].fd,TCSANOW,&m_stat[port]);
 			  close(COM[port].fd);
-			  ERR("out of memory");
+			  ERR("out of memory\n");
 			  return IE_MEMORY;
 			}
 

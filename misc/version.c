@@ -63,7 +63,7 @@ static VERSION_DATA VersionData[NB_WINDOWS_VERSIONS] =
     },
     /* WIN98 */
     {
-	0x07005F03,	/* FIXME: need DOS value from real Win98 */
+	0x070A5F03,
 	0xC0000A04,
 	{
 	    sizeof(OSVERSIONINFOA), 4, 10, 0x40A07CE,

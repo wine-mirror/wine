@@ -245,7 +245,7 @@ extern void ASPI_DOS_HandleInt(CONTEXT86 *context);
 /* NOTE: Interrupts might get called from three modes: real mode, 16-bit, and 
  *        (via DeviceIoControl) 32-bit. For automatic conversion of pointer 
  *       parameters, interrupt handlers should use CTX_SEG_OFF_TO_LIN with
- *       the contents of a segement register as second and the contents of
+ *       the contents of a segment register as second and the contents of
  *       a *32-bit* general register as third parameter, e.g.
  *          CTX_SEG_OFF_TO_LIN( context, DS_reg(context), EDX_reg(context) )
  *       This will generate a linear pointer in all three cases:

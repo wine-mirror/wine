@@ -3016,7 +3016,7 @@ TREEVIEW_Expand (HWND hwnd, WPARAM wParam, LPARAM lParam)
         if (! wineItem) 
         { 
           ERR(
-            "Catastropic situation, cannot retreive item #%d\n",
+            "Catastrophic situation, cannot retrieve item #%d\n",
             expand);
           return FALSE;
         }

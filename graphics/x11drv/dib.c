@@ -2602,7 +2602,7 @@ int X11DRV_DIB_SetImageBits( const X11DRV_DIB_IMAGEBITS_DESCR *descr )
 				 descr->infoWidth, lines, 32, 0 );
 	bmpImage->data = calloc( lines, bmpImage->bytes_per_line );
         if(bmpImage->data == NULL) {
-            ERR("Out of memory!");
+            ERR("Out of memory!\n");
             XDestroyImage( bmpImage );
             return lines;
         }
@@ -2705,7 +2705,7 @@ int X11DRV_DIB_GetImageBits( const X11DRV_DIB_IMAGEBITS_DESCR *descr )
 				 descr->infoWidth, lines, 32, 0 );
 	bmpImage->data = calloc( lines, bmpImage->bytes_per_line );
         if(bmpImage->data == NULL) {
-            ERR("Out of memory!");
+            ERR("Out of memory!\n");
             XDestroyImage( bmpImage );
             return lines;
         }                                                                           }
