@@ -3,10 +3,12 @@
  */
 
 #include <stdlib.h>
+#include "windows.h"
 #include "miscemu.h"
 #include "msdos.h"
 #include "drive.h"
 #include "debugtools.h"
+#include "options.h"
 
 /**********************************************************************
  *	    INT_Int11Handler
@@ -52,9 +54,16 @@ void WINAPI INT_Int11Handler( CONTEXT86 *context )
 	
     for (x=0; x!=MAX_PORTS; x++)
     {
-	if (COM[x].devicename)
+        char temp[16],name[16];
+
+        wsprintfA(name,"COM%d",x+1);
+        PROFILE_GetWineIniString("serialports",name,"*",temp,sizeof temp);
+        if(strcmp(temp,"*"))
 	    serialports++;
-	if (LPT[x].devicename)
+
+        wsprintfA(name,"LPT%d",x+1);
+        PROFILE_GetWineIniString("parallelports",name,"*",temp,sizeof temp);
+        if(strcmp(temp,"*"))
 	    parallelports++;
     }
     if (serialports > 7)		/* 3 bits -- maximum value = 7 */
