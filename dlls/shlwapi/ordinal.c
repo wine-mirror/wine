@@ -540,6 +540,8 @@ HRESULT WINAPI GetAcceptLanguagesA(
 	HKEY mykey;
 	LCID mylcid;
 
+        if (!langbuf || !buflen || !*buflen) return E_FAIL;
+
 	mystrlen = (*buflen > 6) ? *buflen : 6;
 	mystr = (CHAR*)HeapAlloc(GetProcessHeap(),
 				 HEAP_ZERO_MEMORY, mystrlen);
@@ -590,6 +592,8 @@ HRESULT WINAPI GetAcceptLanguagesW(
 	DWORD mystrlen, mytype;
 	HKEY mykey;
 	LCID mylcid;
+
+        if (!langbuf || !buflen || !*buflen) return E_FAIL;
 
 	mystrlen = (*buflen > 6) ? *buflen : 6;
 	mystr = (CHAR*)HeapAlloc(GetProcessHeap(),

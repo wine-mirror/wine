@@ -33,7 +33,77 @@
 /* Function ptrs for ordinal calls */
 static HMODULE hShlwapi;
 static int (WINAPI *pSHSearchMapInt)(const int*,const int*,int,int);
+static HRESULT (WINAPI *pGetAcceptLanguagesA)(LPSTR,LPDWORD);
 
+static void test_GetAcceptLanguagesA(void)
+{   HRESULT retval;
+    DWORD buffersize, buffersize2;
+    char buffer[100];
+
+    if (!pGetAcceptLanguagesA)
+	return;
+
+    SetLastError(ERROR_SUCCESS);
+    retval = pGetAcceptLanguagesA( NULL, NULL);
+    ok(retval == E_FAIL,
+       "function result wrong: got %08lx; expected E_FAIL\n", retval);
+    ok(ERROR_SUCCESS == GetLastError(), "last error set to %ld\n", GetLastError());
+
+    buffersize = sizeof(buffer);
+    SetLastError(ERROR_SUCCESS);
+    retval = pGetAcceptLanguagesA( NULL, &buffersize);
+    ok(retval == E_FAIL,
+       "function result wrong: got %08lx; expected E_FAIL\n", retval);
+    ok(buffersize == sizeof(buffer),
+       "buffersize was changed (2nd parameter; not on Win2k)\n");
+    ok(ERROR_SUCCESS == GetLastError(), "last error set to %ld\n", GetLastError());
+
+    SetLastError(ERROR_SUCCESS);
+    retval = pGetAcceptLanguagesA( buffer, NULL);
+    ok(retval == E_FAIL,
+       "function result wrong: got %08lx; expected E_FAIL\n", retval);
+    ok(ERROR_SUCCESS == GetLastError(), "last error set to %ld\n", GetLastError());
+
+    buffersize = 0;
+    memset(buffer, 0, sizeof(buffer));
+    SetLastError(ERROR_SUCCESS);
+    retval = pGetAcceptLanguagesA( buffer, &buffersize);
+    ok(retval == E_FAIL,
+       "function result wrong: got %08lx; expected E_FAIL\n", retval);
+    ok(buffersize == 0,
+       "buffersize wrong(changed) got %08lx; expected 0 (2nd parameter; not on Win2k)\n", buffersize);
+    ok(ERROR_SUCCESS == GetLastError(), "last error set to %ld\n", GetLastError());
+
+    buffersize = buffersize2 = 1;
+    memset(buffer, 0, sizeof(buffer));
+    retval = pGetAcceptLanguagesA( buffer, &buffersize);
+    todo_wine ok(retval == E_INVALIDARG, "function result wrong: got %08lx; expected E_INVALIDARG\n", retval);
+    todo_wine ok(buffersize == 0,
+                 "buffersize wrong: got %08lx, expected 0 (2nd parameter;Win2k)\n", buffersize);
+    todo_wine ok(ERROR_INSUFFICIENT_BUFFER == GetLastError(),
+                 "last error wrong: got %08lx; expected ERROR_INSUFFICIENT_BUFFER\n", GetLastError());
+    todo_wine ok(buffersize2 == strlen(buffer),
+                 "buffer content (length) wrong: got %08x, expected %08lx \n", strlen(buffer), buffersize2);
+
+    buffersize = sizeof(buffer);
+    memset(buffer, 0, sizeof(buffer));
+    SetLastError(ERROR_SUCCESS);
+    retval = pGetAcceptLanguagesA( buffer, &buffersize);
+    ok(retval == S_OK, "function result wrong: got %08lx, expected S_OK\n", retval);
+    ok(ERROR_SUCCESS == GetLastError(), "last error set to %ld\n", GetLastError());
+
+    buffersize = buffersize2 = strlen(buffer);
+    memset(buffer, 0, sizeof(buffer));
+    SetLastError(ERROR_SUCCESS);
+    retval = pGetAcceptLanguagesA( buffer, &buffersize);
+    todo_wine ok(retval == E_INVALIDARG, "function result wrong: got %08lx; expected E_INVALIDARG\n", retval);
+    todo_wine ok(buffersize == 0,
+                 "buffersize wrong: got %08lx, expected 0 (2nd parameter;Win2k)\n", buffersize);
+    todo_wine ok(ERROR_INSUFFICIENT_BUFFER == GetLastError(),
+                 "last error wrong: got %08lx; expected ERROR_INSUFFICIENT_BUFFER\n", GetLastError());
+    ok(buffersize2 == strlen(buffer),
+       "buffer content (length) wrong: got %08x, expected %08lx \n", strlen(buffer), buffersize2);
+}
 
 static void test_SHSearchMapInt(void)
 {
@@ -84,8 +154,10 @@ START_TEST(ordinal)
   if (!hShlwapi)
     return;
 
+  pGetAcceptLanguagesA = (void*)GetProcAddress(hShlwapi, (LPSTR)14);
   pSHSearchMapInt = (void*)GetProcAddress(hShlwapi, (LPSTR)198);
 
+  test_GetAcceptLanguagesA();
   test_SHSearchMapInt();
   FreeLibrary(hShlwapi);
 }
