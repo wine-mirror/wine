@@ -12,7 +12,15 @@ A sample configuration file is available as
 .I documentation/samples/config
 in the Wine source distribution.
 .SH CONFIGURATION FILE FORMAT
-All entries are grouped in sections; a section begins with the line
+The config file needs to start with the header line
+.br
+.I WINE REGISTRY Version 2
+.br
+to be recognized by
+.B Wine.
+.PP
+All entries (excepting the header) are grouped in sections; a section
+begins with the line
 .br
 .I [section name]
 .br
@@ -42,40 +50,6 @@ the backslashes.
 In case of e.g. C:\\WINDOWS, with drive C: being configured as
 /home/user/wine_c, the /home/user/wine_c/WINDOWS directory would be used for
 this.
-.PP
-.I format: """system""=""<directory>"""
-.br
-default: "C:\\\\WINDOWS\\\\System"
-.br
-Used to specify where Wine is supposed to have its Windows system directory
-(again, essential part of Windows environment); make sure to double the backslashes.
-Given a setting of C:\\WINDOWS\\System (the standard setting on Windows)
-and a C: drive again at /home/user/wine_c, the /home/user/wine_c/WINDOWS/System
-directory would be used for this.
-.PP
-.I format: """temp""=""<directory>"""
-.br
-default: "C:\\\\TEMP"
-.br
-Used to specify a directory where Windows applications can store
-temporary files. E.g. with a C: drive at /home/user/wine_c, this would be
-the /home/user/wine_c/TEMP directory.
-.PP
-.I format: """profile""=""<directory>"""
-.br
-default: nothing
-.br
-Used to specify a directory where Windows stores special folders and
-the user-registry files (user.dat or ntuser.dat).  Mapped to
-environment variable %USERPROFILE%.  Set this value when running with
-a native NT or a native win95 directory with per-user settings.
-.PP
-.I format: """path""=""<directories separated by semi-colons>"""
-.br
-default: "C:\\\\WINDOWS;C:\\\\WINDOWS\\\\SYSTEM"
-.br
-Used to specify the path which will be used to find executables and
-dlls. Make sure to double the backslashes.
 .PP
 .I format: """GraphicsDriver""=""<x11drv|ttydrv>"""
 .br
