@@ -93,6 +93,7 @@ static const char * const event_names[] =
 static void CALLBACK EVENT_Flush( ULONG_PTR arg );
 static void CALLBACK EVENT_ProcessAllEvents( ULONG_PTR arg );
 static void EVENT_ProcessEvent( XEvent *event );
+BOOL X11DRV_CheckFocus(void);
 
   /* Event handlers */
 static void EVENT_Key( HWND hWnd, XKeyEvent *event );
@@ -853,13 +854,19 @@ static void EVENT_FocusOut( HWND hWnd, XFocusChangeEvent *event )
 	{
 	    SendMessageA( hWnd, WM_CANCELMODE, 0, 0 );
 
-            /* Abey : 6-Oct-99. Check again if the focus out window is the
-               Foreground window, because in most cases the messages sent
-               above must have already changed the foreground window, in which
-               case we don't have to change the foreground window to 0 */
 
-            if (hWnd == GetForegroundWindow())
-                SetForegroundWindow( 0 );
+            /* don't reset the foreground window, if the window who's 
+               getting the focus is a Wine window */
+            if (!X11DRV_CheckFocus())
+            {
+                /* Abey : 6-Oct-99. Check again if the focus out window is the
+                   Foreground window, because in most cases the messages sent
+                   above must have already changed the foreground window, in which
+                   case we don't have to change the foreground window to 0 */
+
+                if (hWnd == GetForegroundWindow())
+                    SetForegroundWindow( 0 );
+            }
 	}
 }
 
