@@ -45,8 +45,6 @@ DEFINE_GUID(GUID_NULL,0,0,0,0,0,0,0,0,0,0,0);
 
 #include "shlguid.h"
 #include "shlobj.h"
-#include "wine/obj_dragdrophelper.h"
-
 #include "comcat.h"
 #include "urlmon.h"
 

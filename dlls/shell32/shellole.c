@@ -38,7 +38,6 @@
 #include "shlwapi.h"
 #include "winuser.h"
 #include "debughlp.h"
-#include "wine/obj_dragdrophelper.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(shell);
 

@@ -66,6 +66,7 @@ BOOL WINAPI SHGetPathFromIDListW (LPCITEMIDLIST pidl,LPWSTR pszPath);
 #include <wine/obj_extracticon.h>
 #include <wine/obj_commdlgbrowser.h>
 #include <wine/obj_dockingwindowframe.h>
+#include <wine/obj_dragdrophelper.h>
 
 /*****************************************************************************
  * Predeclare interfaces

@@ -30,8 +30,8 @@
 #include "objbase.h"
 #include "ole2.h"
 #include "shlguid.h"
+#include "shlobj.h"
 
-#include "wine/obj_dragdrophelper.h"
 #include "wine/debug.h"
 #include "debughlp.h"
 
