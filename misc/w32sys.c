@@ -27,7 +27,7 @@ WORD WINAPI GetWin32sInfo16(
 /***********************************************************************
  *            GetW32SysVersion16  (W32SYS.5)
  */
-void WINAPI GetW32SysVersion16(void)
+WORD WINAPI GetW32SysVersion16(void)
 {
     return 0x100;
 }
