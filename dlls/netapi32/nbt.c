@@ -662,9 +662,13 @@ static UCHAR NetBTInternalFindName(NetBTAdapter *adapter, PNCB ncb,
                     }
                     if (ret == NRC_GOODRET && *cacheEntry == NULL)
                     {
-                        ret = NetBTNameWaitLoop(adapter, fd, ncb,
-                         adapter->ipr.dwBCastAddr, TRUE, gBCastQueryTimeout,
-                         gBCastQueries, &newEntry);
+                        DWORD bcastAddr =
+                         adapter->ipr.dwAddr & adapter->ipr.dwMask;
+
+                        if (adapter->ipr.dwBCastAddr)
+                            bcastAddr |= ~adapter->ipr.dwMask;
+                        ret = NetBTNameWaitLoop(adapter, fd, ncb, bcastAddr,
+                         TRUE, gBCastQueryTimeout, gBCastQueries, &newEntry);
                         if (ret == NRC_GOODRET && newEntry)
                         {
                             ret = NetBTStoreCacheEntry(&adapter->nameCache,
@@ -1433,11 +1437,11 @@ void NetBTInit(void)
 
     /* Try to open the Win9x NetBT configuration key */
     ret = RegOpenKeyExA(HKEY_LOCAL_MACHINE,
-     "\\SYSTEM\\CurrentControlSet\\Services\\VxD\\MSTCP", 0, KEY_READ, &hKey);
+     "SYSTEM\\CurrentControlSet\\Services\\VxD\\MSTCP", 0, KEY_READ, &hKey);
     /* If that fails, try the WinNT NetBT configuration key */
     if (ret != ERROR_SUCCESS)
         ret = RegOpenKeyExA(HKEY_LOCAL_MACHINE,
-         "\\SYSTEM\\CurrentControlSet\\Services\\NetBT\\Parameters", 0,
+         "SYSTEM\\CurrentControlSet\\Services\\NetBT\\Parameters", 0,
          KEY_READ, &hKey);
     if (ret == ERROR_SUCCESS)
     {
@@ -1494,7 +1498,7 @@ void NetBTInit(void)
      * same place.  Just do a global WINS configuration instead.
      */
     if (RegOpenKeyExA(HKEY_LOCAL_MACHINE,
-     "\\Software\\Wine\\Wine\\Config\\Network", 0, KEY_READ, &hKey)
+     "Software\\Wine\\Wine\\Config\\Network", 0, KEY_READ, &hKey)
      == ERROR_SUCCESS)
     {
         static const char *nsValueNames[] = { "WinsServer", "BackupWinsServer" };
