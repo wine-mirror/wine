@@ -273,12 +273,13 @@ static void SetStyle(IShellViewImpl * This, DWORD dwAdd, DWORD dwRemove)
 * - creates the list view window
 */
 static BOOL ShellView_CreateList (IShellViewImpl * This)
-{	DWORD dwStyle;
+{	DWORD dwStyle, dwExStyle;
 
 	TRACE("%p\n",This);
 
 	dwStyle = WS_TABSTOP | WS_VISIBLE | WS_CHILDWINDOW | WS_CLIPSIBLINGS | WS_CLIPCHILDREN |
 		  LVS_SHAREIMAGELISTS | LVS_EDITLABELS | LVS_ALIGNLEFT | LVS_AUTOARRANGE;
+        dwExStyle = WS_EX_CLIENTEDGE;
 
 	switch (This->FolderSettings.ViewMode)
 	{
@@ -290,10 +291,13 @@ static BOOL ShellView_CreateList (IShellViewImpl * This)
 	}
 
 	if (This->FolderSettings.fFlags & FWF_AUTOARRANGE)	dwStyle |= LVS_AUTOARRANGE;
-	/*if (This->FolderSettings.fFlags && FWF_DESKTOP); used from explorer*/
+	if (This->FolderSettings.fFlags & FWF_DESKTOP)
+	  This->FolderSettings.fFlags |= FWF_NOCLIENTEDGE | FWF_NOSCROLL;
 	if (This->FolderSettings.fFlags & FWF_SINGLESEL)	dwStyle |= LVS_SINGLESEL;
+	if (This->FolderSettings.fFlags & FWF_NOCLIENTEDGE)
+	  dwExStyle &= ~WS_EX_CLIENTEDGE;
 
-	This->hWndList=CreateWindowExA( WS_EX_CLIENTEDGE,
+	This->hWndList=CreateWindowExA( dwExStyle,
 					WC_LISTVIEWA,
 					NULL,
 					dwStyle,
@@ -1448,6 +1452,12 @@ static LRESULT CALLBACK ShellView_WndProc(HWND hWnd, UINT uMessage, WPARAM wPara
 				}
 				SHChangeNotifyDeregister(pThis->hNotify);
 	                        break;
+
+	  case WM_ERASEBKGND:
+	    if ((pThis->FolderSettings.fFlags & FWF_DESKTOP) ||
+	        (pThis->FolderSettings.fFlags & FWF_TRANSPARENT))
+	      return 1;
+	    break;
 	}
 
 	return DefWindowProcA (hWnd, uMessage, wParam, lParam);

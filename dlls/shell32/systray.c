@@ -169,7 +169,7 @@ BOOL SYSTRAY_RegisterClass(void)
   wc.hInstance     = 0;
   wc.hIcon         = 0;
   wc.hCursor       = LoadCursorA(0, (LPSTR)IDC_ARROW);
-  wc.hbrBackground = (HBRUSH)(COLOR_WINDOW);
+  wc.hbrBackground = (HBRUSH)(COLOR_WINDOW + 1);
   wc.lpszMenuName  = NULL;
   wc.lpszClassName = "WineSystray";
 

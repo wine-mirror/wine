@@ -882,8 +882,6 @@ DWORD WINAPI SHRestricted (RESTRICTIONS policy)
  */
 BOOL WINAPI SHInitRestricted(LPCVOID unused, LPCVOID inpRegKey)
 {
-	LPPOLICYDATA p;
-
 	TRACE("(%p, %p)\n", unused, inpRegKey);
 
 	/* first check - if input is non-NULL and points to the secret
@@ -907,10 +905,5 @@ BOOL WINAPI SHInitRestricted(LPCVOID unused, LPCVOID inpRegKey)
 	  }
 	}
 
-	/* check passed, init all policy cache entries with SHELL_NO_POLICY */
-	for (p = sh32_policy_table; p->policy; p++)
-	{
-	  p->cache = SHELL_NO_POLICY;
-	}
-	return SHELL_NO_POLICY;
+	return TRUE;
 }

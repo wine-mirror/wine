@@ -1002,7 +1002,6 @@ BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID fImpLoad)
 	    SIC_Initialize();
 	    SYSTRAY_Init();
 	    InitChangeNotifications();
-	    SHInitRestricted(NULL, NULL);
 	    break;
 
 	  case DLL_PROCESS_DETACH:
