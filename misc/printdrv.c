@@ -1304,4 +1304,23 @@ BOOL WINAPI AddPrinterDriverW(LPWSTR printerName,DWORD level,
 }
 
 
+/*****************************************************************************
+ *          PrinterProperties  [WINSPOOL.201]
+ *
+ *     Displays a dialog to set the properties of the printer.
+ *
+ * RETURNS 
+ *     nonzero on succes or zero on faillure
+ *
+ * BUGS
+ *	   implemented as stub only
+ */
+BOOL WINAPI PrinterProperties(HWND hWnd,      /* handle to parent window */
+                              HANDLE hPrinter /* handle to printer object */
+){
+    FIXME(print, "(%d,%d): stub\n", hWnd, hPrinter);
+    SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
+    return FALSE;
+}
+
 

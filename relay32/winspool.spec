@@ -101,7 +101,7 @@ type	win32
 198 stub PlayGdiScriptOnPrinterIC
 199 stub PrinterMessageBoxA
 200 stub PrinterMessageBoxW
-201 stub PrinterProperties
+201 stdcall PrinterProperties(long long) PrinterProperties
 202 stdcall ReadPrinter(long ptr long ptr) ReadPrinter
 203 stdcall ResetPrinterA(long ptr) ResetPrinterA
 204 stdcall ResetPrinterW(long ptr) ResetPrinterW
