@@ -13,9 +13,7 @@
 #include "winerror.h"
 #include "debugtools.h"
 
-DEFAULT_DEBUG_CHANNEL(avifile)
-DECLARE_DEBUG_CHANNEL(msvideo)
-DECLARE_DEBUG_CHANNEL(relay)
+DEFAULT_DEBUG_CHANNEL(avifile);
 
 static HRESULT WINAPI IAVIFile_fnQueryInterface(IAVIFile* iface,REFIID refiid,LPVOID *obj);
 static ULONG WINAPI IAVIFile_fnAddRef(IAVIFile* iface);
@@ -116,7 +114,7 @@ typedef struct IAVIFileImpl {
 static HRESULT WINAPI IAVIFile_fnQueryInterface(IAVIFile* iface,REFIID refiid,LPVOID *obj) {
 	ICOM_THIS(IAVIFileImpl,iface);
 
-	TRACE_(relay)("(%p)->QueryInterface(%s,%p)\n",This,debugstr_guid(refiid),obj);
+	TRACE("(%p)->QueryInterface(%s,%p)\n",This,debugstr_guid(refiid),obj);
 	if (	!memcmp(&IID_IUnknown,refiid,sizeof(IID_IUnknown)) ||
 		!memcmp(&IID_IAVIFile,refiid,sizeof(IID_IAVIFile))
 	) {
@@ -129,14 +127,14 @@ static HRESULT WINAPI IAVIFile_fnQueryInterface(IAVIFile* iface,REFIID refiid,LP
 static ULONG WINAPI IAVIFile_fnAddRef(IAVIFile* iface) {
 	ICOM_THIS(IAVIFileImpl,iface);
 	
-	FIXME_(relay)("(%p)->AddRef()\n",iface);
+	FIXME("(%p)->AddRef()\n",iface);
 	return ++(This->ref);
 }
 
 static ULONG WINAPI IAVIFile_fnRelease(IAVIFile* iface) {
 	ICOM_THIS(IAVIFileImpl,iface);
 	
-	FIXME_(relay)("(%p)->Release()\n",iface);
+	FIXME("(%p)->Release()\n",iface);
 	if (!--(This->ref)) {
 		HeapFree(GetProcessHeap(),0,iface);
 		return 0;
@@ -220,7 +218,7 @@ HRESULT WINAPI AVIFileOpenA(
 static HRESULT WINAPI IAVIStream_fnQueryInterface(IAVIStream*iface,REFIID refiid,LPVOID *obj) {
 	ICOM_THIS(IAVIStreamImpl,iface);
 
-	TRACE_(relay)("(%p)->QueryInterface(%s,%p)\n",This,debugstr_guid(refiid),obj);
+	TRACE("(%p)->QueryInterface(%s,%p)\n",This,debugstr_guid(refiid),obj);
 	if (	!memcmp(&IID_IUnknown,refiid,sizeof(IID_IUnknown)) ||
 		!memcmp(&IID_IAVIStream,refiid,sizeof(IID_IAVIStream))
 	) {
@@ -234,14 +232,14 @@ static HRESULT WINAPI IAVIStream_fnQueryInterface(IAVIStream*iface,REFIID refiid
 static ULONG WINAPI IAVIStream_fnAddRef(IAVIStream*iface) {
 	ICOM_THIS(IAVIStreamImpl,iface);
 	
-	FIXME_(relay)("(%p)->AddRef()\n",iface);
+	FIXME("(%p)->AddRef()\n",iface);
 	return ++(This->ref);
 }
 
 static ULONG WINAPI IAVIStream_fnRelease(IAVIStream* iface) {
 	ICOM_THIS(IAVIStreamImpl,iface);
 	
-	FIXME_(relay)("(%p)->Release()\n",iface);
+	FIXME("(%p)->Release()\n",iface);
 	if (!--(This->ref)) {
 		HeapFree(GetProcessHeap(),0,This);
 		return 0;
@@ -500,7 +498,7 @@ ULONG WINAPI AVIStreamRelease(PAVISTREAM iface) {
 }
 
 PGETFRAME WINAPI AVIStreamGetFrameOpen(PAVISTREAM iface,LPBITMAPINFOHEADER bmi) {
-	FIXME_(msvideo)("(%p)->(%p),stub!\n",iface,bmi);
+	FIXME("(%p)->(%p),stub!\n",iface,bmi);
 	return NULL;
 }
 

@@ -12,8 +12,7 @@
 #include "debugtools.h"
 #include "winversion.h"
 
-DEFAULT_DEBUG_CHANNEL(advapi)
-DECLARE_DEBUG_CHANNEL(security)
+DEFAULT_DEBUG_CHANNEL(advapi);
 
 #define CallWin32ToNt(func) \
 	{ NTSTATUS ret; \
@@ -572,7 +571,7 @@ LookupAccountSidA(
 {
 	char * ac = "Administrator";
 	char * dm = "DOMAIN";
-	FIXME_(security)("(%s,sid=%p,%p,%p(%lu),%p,%p(%lu),%p): semi-stub\n",
+	FIXME("(%s,sid=%p,%p,%p(%lu),%p,%p(%lu),%p): semi-stub\n",
 	      debugstr_a(system),sid,
 	      account,accountSize,accountSize?*accountSize:0,
 	      domain,domainSize,domainSize?*domainSize:0,
@@ -614,7 +613,7 @@ LookupAccountSidW(
 {
 	char * ac = "Administrator";
 	char * dm = "DOMAIN";
-	FIXME_(security)("(%s,sid=%p,%p,%p(%lu),%p,%p(%lu),%p): semi-stub\n",
+	FIXME("(%s,sid=%p,%p,%p(%lu),%p,%p(%lu),%p): semi-stub\n",
 	      debugstr_w(system),sid,
 	      account,accountSize,accountSize?*accountSize:0,
 	      domain,domainSize,domainSize?*domainSize:0,

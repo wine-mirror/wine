@@ -122,7 +122,6 @@ char dbch_region[] = "\003region";
 char dbch_relay[] = "\003relay";
 char dbch_resource[] = "\003resource";
 char dbch_scroll[] = "\003scroll";
-char dbch_security[] = "\003security";
 char dbch_segment[] = "\003segment";
 char dbch_seh[] = "\003seh";
 char dbch_selector[] = "\003selector";
@@ -171,7 +170,7 @@ char dbch_wnet[] = "\003wnet";
 char dbch_x11[] = "\003x11";
 char dbch_x11drv[] = "\003x11drv";
 
-#define DEBUG_CHANNEL_COUNT 164
+#define DEBUG_CHANNEL_COUNT 163
 
 static char * const debug_channels[DEBUG_CHANNEL_COUNT] = {
     dbch_accel,
@@ -290,7 +289,6 @@ static char * const debug_channels[DEBUG_CHANNEL_COUNT] = {
     dbch_relay,
     dbch_resource,
     dbch_scroll,
-    dbch_security,
     dbch_segment,
     dbch_seh,
     dbch_selector,
