@@ -27,9 +27,6 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(ttydrv);
 
-/**********************************************************************/
-
-const DC_FUNCTIONS *TTYDRV_DC_Funcs = NULL;  /* hack */
 
 /**********************************************************************
  *	     TTYDRV_GDI_Initialize
@@ -51,8 +48,6 @@ BOOL TTYDRV_DC_CreateDC(DC *dc, LPCSTR driver, LPCSTR device,
     dc, debugstr_a(driver), debugstr_a(device), 
     debugstr_a(output), initData);
 
-  if (!TTYDRV_DC_Funcs) TTYDRV_DC_Funcs = dc->funcs;  /* hack */
-
   dc->physDev = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY,
 			  sizeof(TTYDRV_PDEVICE));  
   if(!dc->physDev) {
@@ -67,8 +62,6 @@ BOOL TTYDRV_DC_CreateDC(DC *dc, LPCSTR driver, LPCSTR device,
     physDev->window = NULL;
     physDev->cellWidth = 1;
     physDev->cellHeight = 1;
-
-    TTYDRV_DC_CreateBitmap(dc->hBitmap);
   } else {
     physDev->window = root_window;
     physDev->cellWidth = cell_width;

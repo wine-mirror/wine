@@ -4872,10 +4872,6 @@ INT X11DRV_SetDIBits( X11DRV_PDEVICE *physDev, HBITMAP hbitmap, UINT startscan,
        default: break;
   }
 
-  /* HACK for now */
-  if(!bmp->physBitmap)
-    X11DRV_CreateBitmap(hbitmap);
-
   descr.bits      = bits;
   descr.image     = NULL;
   descr.palentry  = NULL;
@@ -4974,11 +4970,6 @@ INT X11DRV_GetDIBits( X11DRV_PDEVICE *physDev, HBITMAP hbitmap, UINT startscan, 
           descr.bMask = (descr.compression == BI_BITFIELDS) ?  *((DWORD *)info->bmiColors + 2) : 0x0000ff;
           break;
   }
-
-  /* Hack for now */
-  if(!bmp->physBitmap)
-    X11DRV_CreateBitmap(hbitmap);
-
 
   descr.physDev   = physDev;
   descr.palentry  = palette->logpalette.palPalEntry;
@@ -5744,13 +5735,7 @@ HBITMAP X11DRV_DIB_CreateDIBSection(
       if (res)
 	{
 	  bmp = (BITMAPOBJ *) GDI_GetObjPtr(res, BITMAP_MAGIC);
-	  if (bmp)
-	    {
-	      bmp->dib = (DIBSECTION *) dib;
-	      /* HACK for now */
-	      if(!bmp->physBitmap)
-		X11DRV_CreateBitmap(res); 
-	    }
+	  if (bmp) bmp->dib = (DIBSECTION *) dib;
 	}
     }
   

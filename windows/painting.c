@@ -25,7 +25,7 @@
 #include "wine/winuser16.h"
 #include "wine/unicode.h"
 #include "wine/server.h"
-#include "region.h"
+#include "gdi.h"
 #include "user.h"
 #include "win.h"
 #include "queue.h"

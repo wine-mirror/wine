@@ -38,6 +38,20 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(palette);
 
+static INT PALETTE_GetObject( HGDIOBJ handle, void *obj, INT count, LPVOID buffer );
+static BOOL PALETTE_UnrealizeObject( HGDIOBJ handle, void *obj );
+static BOOL PALETTE_DeleteObject( HGDIOBJ handle, void *obj );
+
+static const struct gdi_obj_funcs palette_funcs =
+{
+    NULL,                     /* pSelectObject */
+    PALETTE_GetObject,        /* pGetObject16 */
+    PALETTE_GetObject,        /* pGetObjectA */
+    PALETTE_GetObject,        /* pGetObjectW */
+    PALETTE_UnrealizeObject,  /* pUnrealizeObject */
+    PALETTE_DeleteObject      /* pDeleteObject */
+};
+
 PALETTE_DRIVER *PALETTE_Driver = NULL;
 
 /* Pointers to USER implementation of SelectPalette/RealizePalette */
@@ -47,8 +61,8 @@ FARPROC pfnRealizePalette = NULL;
 
 static UINT SystemPaletteUse = SYSPAL_STATIC;  /* currently not considered */
 
-static HPALETTE16 hPrimaryPalette = 0; /* used for WM_PALETTECHANGED */
-static HPALETTE16 hLastRealizedPalette = 0; /* UnrealizeObject() needs it */
+static HPALETTE hPrimaryPalette = 0; /* used for WM_PALETTECHANGED */
+static HPALETTE hLastRealizedPalette = 0; /* UnrealizeObject() needs it */
 
 
 /***********************************************************************
@@ -132,7 +146,7 @@ HPALETTE WINAPI CreatePalette(
     size = sizeof(LOGPALETTE) + (palette->palNumEntries - 1) * sizeof(PALETTEENTRY);
 
     if (!(palettePtr = GDI_AllocObject( size + sizeof(int*) +sizeof(GDIOBJHDR),
-                                        PALETTE_MAGIC, &hpalette ))) return 0;
+                                        PALETTE_MAGIC, &hpalette, &palette_funcs ))) return 0;
     memcpy( &palettePtr->logpalette, palette, size );
     PALETTE_ValidateFlags(palettePtr->logpalette.palPalEntry, 
 			  palettePtr->logpalette.palNumEntries);
@@ -658,8 +672,10 @@ COLORREF WINAPI GetNearestColor(
 /***********************************************************************
  *           PALETTE_GetObject
  */
-int PALETTE_GetObject( PALETTEOBJ * palette, int count, LPSTR buffer )
+static INT PALETTE_GetObject( HGDIOBJ handle, void *obj, INT count, LPVOID buffer )
 {
+    PALETTEOBJ *palette = obj;
+
     if (count > sizeof(WORD)) count = sizeof(WORD);
     memcpy( buffer, &palette->logpalette.palNumEntries, count );
     return count;
@@ -669,14 +685,16 @@ int PALETTE_GetObject( PALETTEOBJ * palette, int count, LPSTR buffer )
 /***********************************************************************
  *           PALETTE_UnrealizeObject
  */
-BOOL PALETTE_UnrealizeObject( HPALETTE16 hpalette, PALETTEOBJ *palette )
+static BOOL PALETTE_UnrealizeObject( HGDIOBJ handle, void *obj )
 {
+    PALETTEOBJ *palette = obj;
+
     if (palette->mapping)
     {
         HeapFree( GetProcessHeap(), 0, palette->mapping );
         palette->mapping = NULL;
     }
-    if (hLastRealizedPalette == hpalette) hLastRealizedPalette = 0;
+    if (hLastRealizedPalette == handle) hLastRealizedPalette = 0;
     return TRUE;
 }
 
@@ -684,11 +702,13 @@ BOOL PALETTE_UnrealizeObject( HPALETTE16 hpalette, PALETTEOBJ *palette )
 /***********************************************************************
  *           PALETTE_DeleteObject
  */
-BOOL PALETTE_DeleteObject( HPALETTE16 hpalette, PALETTEOBJ *palette )
+static BOOL PALETTE_DeleteObject( HGDIOBJ handle, void *obj )
 {
+    PALETTEOBJ *palette = obj;
+
     HeapFree( GetProcessHeap(), 0, palette->mapping );
-    if (hLastRealizedPalette == hpalette) hLastRealizedPalette = 0;
-    return GDI_FreeObject( hpalette, palette );
+    if (hLastRealizedPalette == handle) hLastRealizedPalette = 0;
+    return GDI_FreeObject( handle, obj );
 }
 
 

@@ -5,15 +5,13 @@ init	TTYDRV_Init
 
 @ cdecl Arc(ptr long long long long long long long long) TTYDRV_DC_Arc
 @ cdecl BitBlt(ptr long long long long ptr long long long) TTYDRV_DC_BitBlt
-@ cdecl BitmapBits(long ptr long long) TTYDRV_DC_BitmapBits
 @ cdecl Chord(ptr long long long long long long long long) TTYDRV_DC_Chord
-@ cdecl CreateBitmap(long) TTYDRV_DC_CreateBitmap
 @ cdecl CreateDC(ptr str str str ptr) TTYDRV_DC_CreateDC
 @ cdecl DeleteDC(ptr) TTYDRV_DC_DeleteDC
-@ cdecl DeleteObject(long) TTYDRV_DC_DeleteObject
 @ cdecl Ellipse(ptr long long long long) TTYDRV_DC_Ellipse
 @ cdecl ExtFloodFill(ptr long long long long) TTYDRV_DC_ExtFloodFill
 @ cdecl ExtTextOut(ptr long long long ptr ptr long ptr) TTYDRV_DC_ExtTextOut
+@ cdecl GetBitmapBits(long ptr long) TTYDRV_GetBitmapBits
 @ cdecl GetCharWidth(ptr long long ptr) TTYDRV_DC_GetCharWidth
 @ cdecl GetDeviceCaps(ptr long) TTYDRV_GetDeviceCaps
 @ cdecl GetPixel(ptr long long) TTYDRV_DC_GetPixel
@@ -29,8 +27,8 @@ init	TTYDRV_Init
 @ cdecl Polyline(ptr ptr long) TTYDRV_DC_Polyline
 @ cdecl Rectangle(ptr long long long long) TTYDRV_DC_Rectangle
 @ cdecl RoundRect(ptr long long long long long long) TTYDRV_DC_RoundRect
-@ cdecl SelectBitmap(ptr long) TTYDRV_SelectBitmap
 @ cdecl SelectFont(ptr long) TTYDRV_SelectFont
+@ cdecl SetBitmapBits(long ptr long) TTYDRV_SetBitmapBits
 @ cdecl SetDIBitsToDevice(ptr long long long long long long long long ptr ptr long) TTYDRV_DC_SetDIBitsToDevice
 @ cdecl SetPixel(ptr long long long) TTYDRV_DC_SetPixel
 @ cdecl StretchBlt(ptr long long long long ptr long long long long long) TTYDRV_DC_StretchBlt

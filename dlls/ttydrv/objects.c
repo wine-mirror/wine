@@ -27,11 +27,6 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(ttydrv);
 
-/**********************************************************************/
-
-extern BOOL TTYDRV_DC_BITMAP_DeleteObject(HBITMAP hbitmap, BITMAPOBJ *bitmap);
-
-
 /***********************************************************************
  *		SelectFont   (TTYDRV.@)
  */
@@ -40,35 +35,4 @@ HFONT TTYDRV_SelectFont(TTYDRV_PDEVICE *physDev, HFONT hfont)
   TRACE("(%x, 0x%04x)\n", physDev->hdc, hfont);
 
   return TRUE; /* Use device font */
-}
-
-/***********************************************************************
- *           TTYDRV_DC_DeleteObject
- */
-BOOL TTYDRV_DC_DeleteObject(HGDIOBJ handle)
-{
-  GDIOBJHDR *ptr = GDI_GetObjPtr(handle, MAGIC_DONTCARE);
-  BOOL result;
-  
-  if(!ptr) return FALSE;
-     
-  switch(GDIMAGIC(ptr->wMagic))
-  {
-    case BITMAP_MAGIC:
-      result = TTYDRV_DC_BITMAP_DeleteObject(handle, (BITMAPOBJ *) ptr);
-      break;
-    case BRUSH_MAGIC:
-    case FONT_MAGIC:
-    case PEN_MAGIC:
-    case REGION_MAGIC:
-      result = TRUE;
-      break;
-    default:
-      ERR("handle (0x%04x) has unknown magic (0x%04x)\n", handle, GDIMAGIC(ptr->wMagic));
-      result = FALSE;
-  }
-
-  GDI_ReleaseObj(handle);
-
-  return result;
 }

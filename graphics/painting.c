@@ -28,7 +28,6 @@
 #include "winerror.h"
 #include "gdi.h"
 #include "bitmap.h"
-#include "region.h"
 #include "path.h"
 #include "wine/debug.h"
 

@@ -105,7 +105,7 @@ static int MF_AddHandle(HANDLETABLE16 *ht, WORD htlen, HGDIOBJ16 hobj)
 HMETAFILE MF_Create_HMETAFILE(METAHEADER *mh)
 {
     HMETAFILE hmf = 0;
-    METAFILEOBJ *metaObj = GDI_AllocObject( sizeof(METAFILEOBJ), METAFILE_MAGIC, &hmf );
+    METAFILEOBJ *metaObj = GDI_AllocObject( sizeof(METAFILEOBJ), METAFILE_MAGIC, &hmf, NULL );
     if (metaObj)
     {
     metaObj->mh = mh;

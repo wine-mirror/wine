@@ -24,15 +24,33 @@
 
 #include "windef.h"
 #include "wingdi.h"
-
 #include "wine/wingdi16.h"
-#include "pen.h"
-
+#include "gdi.h"
 #include "wine/debug.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(gdi);
 
+  /* GDI logical pen object */
+typedef struct
+{
+    GDIOBJHDR   header;
+    LOGPEN    logpen;
+} PENOBJ;
 
+
+static HGDIOBJ PEN_SelectObject( HGDIOBJ handle, void *obj, HDC hdc );
+static INT PEN_GetObject16( HGDIOBJ handle, void *obj, INT count, LPVOID buffer );
+static INT PEN_GetObject( HGDIOBJ handle, void *obj, INT count, LPVOID buffer );
+
+static const struct gdi_obj_funcs pen_funcs =
+{
+    PEN_SelectObject,  /* pSelectObject */
+    PEN_GetObject16,   /* pGetObject16 */
+    PEN_GetObject,     /* pGetObjectA */
+    PEN_GetObject,     /* pGetObjectW */
+    NULL,              /* pUnrealizeObject */
+    GDI_FreeObject     /* pDeleteObject */
+};
 
 /***********************************************************************
  *           CreatePen    (GDI.61)
@@ -79,7 +97,7 @@ HPEN16 WINAPI CreatePenIndirect16( const LOGPEN16 * pen )
     HPEN hpen;
 
     if (pen->lopnStyle > PS_INSIDEFRAME) return 0;
-    if (!(penPtr = GDI_AllocObject( sizeof(PENOBJ), PEN_MAGIC, &hpen ))) return 0;
+    if (!(penPtr = GDI_AllocObject( sizeof(PENOBJ), PEN_MAGIC, &hpen, &pen_funcs ))) return 0;
     penPtr->logpen.lopnStyle = pen->lopnStyle;
     penPtr->logpen.lopnColor = pen->lopnColor;
     CONV_POINT16TO32( &pen->lopnWidth, &penPtr->logpen.lopnWidth );
@@ -96,7 +114,7 @@ HPEN WINAPI CreatePenIndirect( const LOGPEN * pen )
     PENOBJ * penPtr;
     HPEN hpen;
 
-    if (!(penPtr = GDI_AllocObject( sizeof(PENOBJ), PEN_MAGIC, &hpen ))) return 0;
+    if (!(penPtr = GDI_AllocObject( sizeof(PENOBJ), PEN_MAGIC, &hpen, &pen_funcs ))) return 0;
     penPtr->logpen.lopnStyle = pen->lopnStyle;
     penPtr->logpen.lopnWidth = pen->lopnWidth;
     penPtr->logpen.lopnColor = pen->lopnColor;
@@ -123,7 +141,7 @@ HPEN WINAPI ExtCreatePen( DWORD style, DWORD width,
 	if (brush->lbHatch)
 	    FIXME("Hatches not implemented\n");
 
-    if (!(penPtr = GDI_AllocObject( sizeof(PENOBJ), PEN_MAGIC, &hpen ))) return 0;
+    if (!(penPtr = GDI_AllocObject( sizeof(PENOBJ), PEN_MAGIC, &hpen, &pen_funcs ))) return 0;
     penPtr->logpen.lopnStyle = style & ~PS_TYPE_MASK; 
     
     /* PS_USERSTYLE workaround */   
@@ -139,12 +157,33 @@ HPEN WINAPI ExtCreatePen( DWORD style, DWORD width,
     return hpen;
 }
 
+
+/***********************************************************************
+ *           PEN_SelectObject
+ */
+static HGDIOBJ PEN_SelectObject( HGDIOBJ handle, void *obj, HDC hdc )
+{
+    HGDIOBJ ret;
+    DC *dc = DC_GetDCPtr( hdc );
+
+    if (!dc) return 0;
+    ret = dc->hPen;
+    if (dc->funcs->pSelectPen) handle = dc->funcs->pSelectPen( dc->physDev, handle );
+    if (handle) dc->hPen = handle;
+    else ret = 0;
+    GDI_ReleaseObj( hdc );
+    return ret;
+}
+
+
 /***********************************************************************
  *           PEN_GetObject16
  */
-INT16 PEN_GetObject16( PENOBJ * pen, INT16 count, LPSTR buffer )
+static INT PEN_GetObject16( HGDIOBJ handle, void *obj, INT count, LPVOID buffer )
 {
+    PENOBJ *pen = obj;
     LOGPEN16 logpen;
+
     logpen.lopnStyle = pen->logpen.lopnStyle;
     logpen.lopnColor = pen->logpen.lopnColor;
     CONV_POINT32TO16( &pen->logpen.lopnWidth, &logpen.lopnWidth );
@@ -157,10 +196,11 @@ INT16 PEN_GetObject16( PENOBJ * pen, INT16 count, LPSTR buffer )
 /***********************************************************************
  *           PEN_GetObject
  */
-INT PEN_GetObject( PENOBJ * pen, INT count, LPSTR buffer )
+static INT PEN_GetObject( HGDIOBJ handle, void *obj, INT count, LPVOID buffer )
 {
+    PENOBJ *pen = obj;
+
     if (count > sizeof(pen->logpen)) count = sizeof(pen->logpen);
     memcpy( buffer, &pen->logpen, count );
     return count;
 }
-

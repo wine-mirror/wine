@@ -31,12 +31,9 @@
 #include "wine/winbase16.h"
 
 #include "bitmap.h"
-#include "brush.h"
 #include "font.h"
 #include "local.h"
 #include "palette.h"
-#include "pen.h"
-#include "region.h"
 #include "wine/debug.h"
 #include "gdi.h"
 
@@ -59,8 +56,8 @@ static const LOGBRUSH LtGrayBrush = { BS_SOLID, RGB(192,192,192), 0 };
 static const LOGBRUSH GrayBrush   = { BS_SOLID, RGB(128,128,128), 0 };
 
 /* This is BS_HATCHED, for 1 bitperpixel. This makes the spray work in pbrush */
-/* NB_HATCH_STYLES is an index into HatchBrushes */
-static const LOGBRUSH DkGrayBrush = { BS_HATCHED, RGB(0,0,0), NB_HATCH_STYLES };
+/* See HatchBrushes in x11drv for the HS_DIAGCROSS+1 hack */
+static const LOGBRUSH DkGrayBrush = { BS_HATCHED, RGB(0,0,0), (HS_DIAGCROSS+1) };
 
 static const LOGPEN WhitePen = { PS_SOLID, { 0, 0 }, RGB(255,255,255) };
 static const LOGPEN BlackPen = { PS_SOLID, { 0, 0 }, RGB(0,0,0) };
@@ -676,7 +673,7 @@ inline static GDIOBJHDR *alloc_large_heap( WORD size, HGDIOBJ *handle )
 /***********************************************************************
  *           GDI_AllocObject
  */
-void *GDI_AllocObject( WORD size, WORD magic, HGDIOBJ *handle )
+void *GDI_AllocObject( WORD size, WORD magic, HGDIOBJ *handle, const struct gdi_obj_funcs *funcs )
 {
     GDIOBJHDR *obj;
 
@@ -704,6 +701,7 @@ void *GDI_AllocObject( WORD size, WORD magic, HGDIOBJ *handle )
     obj->hNext   = 0;
     obj->wMagic  = magic|OBJECT_NOSYSTEM;
     obj->dwCount = 0;
+    obj->funcs   = funcs;
 
     TRACE_SEC( *handle, "enter" );
     return obj;
@@ -746,6 +744,7 @@ BOOL GDI_FreeObject( HGDIOBJ handle, void *ptr )
     GDIOBJHDR *object = ptr;
 
     object->wMagic = 0;  /* Mark it as invalid */
+    object->funcs  = NULL;
     if (handle & 2)  /* GDI heap handle */
     {
         LOCAL_Unlock( GDI_HeapSel, handle );
@@ -838,17 +837,6 @@ void GDI_CheckNotLock(void)
 
 
 /***********************************************************************
- *           FONT_DeleteObject
- *
- */
-static BOOL FONT_DeleteObject(HGDIOBJ hfont, FONTOBJ *fontobj)
-{
-    WineEngDestroyFontInstance( hfont );
-    return GDI_FreeObject( hfont, fontobj );
-}
-
-
-/***********************************************************************
  *           DeleteObject    (GDI.69)
  *           SysDeleteObject (GDI.605)
  */
@@ -890,23 +878,11 @@ BOOL WINAPI DeleteObject( HGDIOBJ obj )
 
       /* Delete object */
 
-    switch(GDIMAGIC(header->wMagic))
-    {
-      case PEN_MAGIC:     return GDI_FreeObject( obj, header );
-      case BRUSH_MAGIC:   return BRUSH_DeleteObject( obj, (BRUSHOBJ*)header );
-      case FONT_MAGIC:    return FONT_DeleteObject( obj, (FONTOBJ*)header );
-      case PALETTE_MAGIC: return PALETTE_DeleteObject(obj,(PALETTEOBJ*)header);
-      case BITMAP_MAGIC:  return BITMAP_DeleteObject( obj, (BITMAPOBJ*)header);
-      case REGION_MAGIC:  return REGION_DeleteObject( obj, (struct _RGNOBJ*)header );
-      case DC_MAGIC:
-          GDI_ReleaseObj( obj );
-          return DeleteDC(obj);
-      case 0 :
-        WARN("Already deleted\n");
-        break;
-      default:
-        WARN("Unknown magic number (%04x)\n",GDIMAGIC(header->wMagic));
-    }
+    if (header->funcs &&
+        header->funcs->pDeleteObject &&
+        header->funcs->pDeleteObject( obj, header ))
+        return TRUE;
+
     GDI_ReleaseObj( obj );
     return FALSE;
 }
@@ -944,25 +920,12 @@ INT16 WINAPI GetObject16( HANDLE16 handle, INT16 count, LPVOID buffer )
     if (!count) return 0;
 
     if (!(ptr = GDI_GetObjPtr( handle, MAGIC_DONTCARE ))) return 0;
-    
-    switch(GDIMAGIC(ptr->wMagic))
-      {
-      case PEN_MAGIC:
-	result = PEN_GetObject16( (PENOBJ *)ptr, count, buffer );
-	break;
-      case BRUSH_MAGIC: 
-	result = BRUSH_GetObject16( (BRUSHOBJ *)ptr, count, buffer );
-	break;
-      case BITMAP_MAGIC: 
-	result = BITMAP_GetObject16( (BITMAPOBJ *)ptr, count, buffer );
-	break;
-      case FONT_MAGIC:
-	result = FONT_GetObject16( (FONTOBJ *)ptr, count, buffer );
-	break;
-      case PALETTE_MAGIC:
-	result = PALETTE_GetObject( (PALETTEOBJ *)ptr, count, buffer );
-	break;
-      }
+
+    if (ptr->funcs && ptr->funcs->pGetObject16)
+        result = ptr->funcs->pGetObject16( handle, ptr, count, buffer );
+    else
+        SetLastError( ERROR_INVALID_HANDLE );
+
     GDI_ReleaseObj( handle );
     return result;
 }
@@ -980,39 +943,11 @@ INT WINAPI GetObjectA( HANDLE handle, INT count, LPVOID buffer )
 
     if (!(ptr = GDI_GetObjPtr( handle, MAGIC_DONTCARE ))) return 0;
 
-    switch(GDIMAGIC(ptr->wMagic))
-    {
-      case PEN_MAGIC:
-	  result = PEN_GetObject( (PENOBJ *)ptr, count, buffer );
-	  break;
-      case BRUSH_MAGIC: 
-	  result = BRUSH_GetObject( (BRUSHOBJ *)ptr, count, buffer );
-	  break;
-      case BITMAP_MAGIC: 
-	  result = BITMAP_GetObject( (BITMAPOBJ *)ptr, count, buffer );
-	  break;
-      case FONT_MAGIC:
-	  result = FONT_GetObjectA( (FONTOBJ *)ptr, count, buffer );
-	  break;
-      case PALETTE_MAGIC:
-	  result = PALETTE_GetObject( (PALETTEOBJ *)ptr, count, buffer );
-	  break;
+    if (ptr->funcs && ptr->funcs->pGetObjectA)
+        result = ptr->funcs->pGetObjectA( handle, ptr, count, buffer );
+    else
+        SetLastError( ERROR_INVALID_HANDLE );
 
-      case REGION_MAGIC:
-      case DC_MAGIC:
-      case DISABLED_DC_MAGIC:
-      case META_DC_MAGIC:
-      case METAFILE_MAGIC:
-      case METAFILE_DC_MAGIC:
-      case ENHMETAFILE_MAGIC:
-      case ENHMETAFILE_DC_MAGIC:
-          FIXME("Magic %04x not implemented\n", GDIMAGIC(ptr->wMagic) );
-          break;
-
-      default:
-          ERR("Invalid GDI Magic %04x\n", GDIMAGIC(ptr->wMagic));
-          break;
-    }
     GDI_ReleaseObj( handle );
     return result;
 }
@@ -1029,27 +964,11 @@ INT WINAPI GetObjectW( HANDLE handle, INT count, LPVOID buffer )
 
     if (!(ptr = GDI_GetObjPtr( handle, MAGIC_DONTCARE ))) return 0;
 
-    switch(GDIMAGIC(ptr->wMagic))
-    {
-      case PEN_MAGIC:
-	  result = PEN_GetObject( (PENOBJ *)ptr, count, buffer );
-	  break;
-      case BRUSH_MAGIC: 
-	  result = BRUSH_GetObject( (BRUSHOBJ *)ptr, count, buffer );
-	  break;
-      case BITMAP_MAGIC: 
-	  result = BITMAP_GetObject( (BITMAPOBJ *)ptr, count, buffer );
-	  break;
-      case FONT_MAGIC:
-	  result = FONT_GetObjectW( (FONTOBJ *)ptr, count, buffer );
-	  break;
-      case PALETTE_MAGIC:
-	  result = PALETTE_GetObject( (PALETTEOBJ *)ptr, count, buffer );
-	  break;
-      default:
-          FIXME("Magic %04x not implemented\n", GDIMAGIC(ptr->wMagic) );
-          break;
-    }
+    if (ptr->funcs && ptr->funcs->pGetObjectW)
+        result = ptr->funcs->pGetObjectW( handle, ptr, count, buffer );
+    else
+        SetLastError( ERROR_INVALID_HANDLE );
+
     GDI_ReleaseObj( handle );
     return result;
 }
@@ -1136,86 +1055,6 @@ HANDLE WINAPI GetCurrentObject(HDC hdc,UINT type)
     }
     return ret;
 }
-/***********************************************************************
- *           FONT_SelectObject
- *
- * If the driver supports vector fonts we create a gdi font first and
- * then call the driver to give it a chance to supply its own device
- * font.  If the driver wants to do this it returns TRUE and we can
- * delete the gdi font, if the driver wants to use the gdi font it
- * should return FALSE, to signal an error return GDI_ERROR.  For
- * drivers that don't support vector fonts they must supply their own
- * font.
- */
-static HGDIOBJ FONT_SelectObject(DC *dc, HGDIOBJ hFont)
-{
-    HGDIOBJ ret = FALSE;
-
-    if(dc->hFont != hFont || dc->gdiFont == NULL) {
-	if(GetDeviceCaps(dc->hSelf, TEXTCAPS) & TC_VA_ABLE)
-	    dc->gdiFont = WineEngCreateFontInstance(dc, hFont);
-    }
-
-    if(dc->funcs->pSelectFont)
-        ret = dc->funcs->pSelectFont(dc->physDev, hFont);
-
-    if(ret && dc->gdiFont) {
-	dc->gdiFont = 0;
-    }
-
-    if(ret == GDI_ERROR)
-        ret = FALSE; /* SelectObject returns FALSE on error */
-    else {
-        ret = dc->hFont;
-	dc->hFont = hFont;
-    }
-
-    return ret;
-}
-
-
-/***********************************************************************
- *           select_bitmap
- */
-static HGDIOBJ select_bitmap( DC *dc, HBITMAP handle )
-{
-    BITMAPOBJ *bitmap;
-    HGDIOBJ ret = handle;
-
-    if (!(dc->flags & DC_MEMORY)) return 0;
-    if (handle == dc->hBitmap) return handle;  /* nothing to do */
-    if (!(bitmap = GDI_GetObjPtr( handle, BITMAP_MAGIC ))) return 0;
-
-    if (bitmap->header.dwCount && (handle != GetStockObject(DEFAULT_BITMAP)))
-    {
-        WARN( "Bitmap already selected in another DC\n" );
-        GDI_ReleaseObj( handle );
-        return 0;
-    }
-
-    if (dc->funcs->pSelectBitmap) ret = dc->funcs->pSelectBitmap( dc->physDev, handle );
-
-    if (ret)
-    {
-        dc->hBitmap            = ret;
-        dc->totalExtent.left   = 0;
-        dc->totalExtent.top    = 0;
-        dc->totalExtent.right  = bitmap->bitmap.bmWidth;
-        dc->totalExtent.bottom = bitmap->bitmap.bmHeight;
-        dc->flags &= ~DC_DIRTY;
-        SetRectRgn( dc->hVisRgn, 0, 0, bitmap->bitmap.bmWidth, bitmap->bitmap.bmHeight);
-        CLIPPING_UpdateGCRegion( dc );
-
-        if (dc->bitsPerPixel != bitmap->bitmap.bmBitsPixel)
-        {
-            /* depth changed, reinitialize the DC */
-            dc->bitsPerPixel = bitmap->bitmap.bmBitsPixel;
-            DC_InitDC( dc );
-        }
-    }
-    GDI_ReleaseObj( handle );
-    return ret;
-}
 
 
 /***********************************************************************
@@ -1233,45 +1072,21 @@ HGDIOBJ16 WINAPI SelectObject16( HDC16 hdc, HGDIOBJ16 handle )
 HGDIOBJ WINAPI SelectObject( HDC hdc, HGDIOBJ handle )
 {
     HGDIOBJ ret = 0;
-    DC * dc = DC_GetDCPtr( hdc );
-    if (!dc) return 0;
+    GDIOBJHDR *header = GDI_GetObjPtr( handle, MAGIC_DONTCARE );
+    if (!header) return 0;
+
     TRACE("hdc=%04x %04x\n", hdc, handle );
 
-    /* Fonts get a rather different treatment so we'll handle them
-       separately */
-    switch(GetObjectType( handle ))
+    if (header->funcs && header->funcs->pSelectObject)
     {
-    case OBJ_BITMAP:
-        ret = dc->hBitmap;
-        handle = select_bitmap( dc, handle );
-        if (!handle) ret = 0;
-        break;
-    case OBJ_BRUSH:
-        ret = dc->hBrush;
-        if (dc->funcs->pSelectBrush) handle = dc->funcs->pSelectBrush( dc->physDev, handle );
-        if (handle) dc->hBrush = handle;
-        else ret = 0;
-        break;
-    case OBJ_PEN:
-        ret = dc->hPen;
-        if (dc->funcs->pSelectPen) handle = dc->funcs->pSelectPen( dc->physDev, handle );
-        if (handle) dc->hPen = handle;
-        else ret = 0;
-        break;
-    case OBJ_FONT:
-        ret = FONT_SelectObject(dc, handle);
-        break;
-    case OBJ_REGION:
-        GDI_ReleaseObj( hdc );
-        return (HGDIOBJ)SelectClipRgn( hdc, handle );
+        ret = header->funcs->pSelectObject( handle, header, hdc );
+        if (ret && ret != handle && (INT)ret > COMPLEXREGION)
+        {
+            inc_ref_count( handle );
+            dec_ref_count( ret );
+        }
     }
-    GDI_ReleaseObj( hdc );
-
-    if (ret && ret != handle)
-    {
-        inc_ref_count( handle );
-        dec_ref_count( ret );
-    }
+    GDI_ReleaseObj( handle );
     return ret;
 }
 
@@ -1300,16 +1115,9 @@ BOOL WINAPI UnrealizeObject( HGDIOBJ obj )
 
       /* Unrealize object */
 
-    switch(GDIMAGIC(header->wMagic))
-    {
-    case PALETTE_MAGIC: 
-        result = PALETTE_UnrealizeObject( obj, (PALETTEOBJ *)header );
-	break;
+    if (header->funcs && header->funcs->pUnrealizeObject)
+        result = header->funcs->pUnrealizeObject( obj, header );
 
-    case BRUSH_MAGIC:
-        /* Windows resets the brush origin. We don't need to. */
-        break;
-    }
     GDI_ReleaseObj( obj );
     return result;
 }

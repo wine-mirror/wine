@@ -5,20 +5,20 @@ init	X11DRV_Init
 
 @ cdecl Arc(ptr long long long long long long long long) X11DRV_Arc
 @ cdecl BitBlt(ptr long long long long ptr long long long) X11DRV_BitBlt
-@ cdecl BitmapBits(long ptr long long) X11DRV_BitmapBits
 @ cdecl ChoosePixelFormat(ptr ptr) X11DRV_ChoosePixelFormat
 @ cdecl Chord(ptr long long long long long long long long) X11DRV_Chord
-@ cdecl CreateBitmap(long) X11DRV_CreateBitmap
+@ cdecl CreateBitmap(ptr long) X11DRV_CreateBitmap
 @ cdecl CreateDC(ptr str str str ptr) X11DRV_CreateDC
 @ cdecl CreateDIBSection(ptr ptr long ptr long long long) X11DRV_DIB_CreateDIBSection
+@ cdecl DeleteBitmap(long) X11DRV_DeleteBitmap
 @ cdecl DeleteDC(ptr) X11DRV_DeleteDC
-@ cdecl DeleteObject(long) X11DRV_DeleteObject
 @ cdecl DescribePixelFormat(ptr long long ptr) X11DRV_DescribePixelFormat
 @ cdecl Ellipse(ptr long long long long) X11DRV_Ellipse
 @ cdecl EnumDeviceFonts(ptr ptr ptr long) X11DRV_EnumDeviceFonts
 @ cdecl ExtEscape(ptr long long ptr long ptr) X11DRV_ExtEscape
 @ cdecl ExtFloodFill(ptr long long long long) X11DRV_ExtFloodFill
 @ cdecl ExtTextOut(ptr long long long ptr ptr long ptr) X11DRV_ExtTextOut
+@ cdecl GetBitmapBits(long ptr long) X11DRV_GetBitmapBits
 @ cdecl GetCharWidth(ptr long long ptr) X11DRV_GetCharWidth
 @ cdecl GetDCOrgEx(ptr ptr) X11DRV_GetDCOrgEx
 @ cdecl GetDIBColorTable(ptr long long ptr) X11DRV_GetDIBColorTable
@@ -43,6 +43,7 @@ init	X11DRV_Init
 @ cdecl SelectBrush(ptr long) X11DRV_SelectBrush
 @ cdecl SelectFont(ptr long) X11DRV_SelectFont
 @ cdecl SelectPen(ptr long) X11DRV_SelectPen
+@ cdecl SetBitmapBits(long ptr long) X11DRV_SetBitmapBits
 @ cdecl SetBkColor(ptr long) X11DRV_SetBkColor
 @ cdecl SetDIBColorTable(ptr long long ptr) X11DRV_SetDIBColorTable
 @ cdecl SetDIBits(ptr long long long ptr ptr long) X11DRV_SetDIBits

@@ -70,9 +70,6 @@ typedef struct {
 #define FONTCACHE 	32	/* dynamic font cache size */
 
 extern BOOL FONT_Init( UINT16* pTextCaps );
-extern INT16  FONT_GetObject16( FONTOBJ * font, INT16 count, LPSTR buffer );
-extern INT  FONT_GetObjectA( FONTOBJ * font, INT count, LPSTR buffer );
-extern INT  FONT_GetObjectW( FONTOBJ * font, INT count, LPSTR buffer );
 extern void FONT_LogFontATo16( const LOGFONTA* font32, LPLOGFONT16 font16 );
 extern void FONT_LogFontWTo16( const LOGFONTW* font32, LPLOGFONT16 font16 );
 extern void FONT_LogFont16ToA( const LOGFONT16* font16, LPLOGFONTA font32 );

@@ -22,7 +22,6 @@
 
 #include <string.h>
 
-#include "bitmap.h"
 #include "gdi.h"
 #include "ttydrv.h"
 #include "winbase.h"
@@ -30,147 +29,24 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(ttydrv);
 
-/**********************************************************************/
-
-extern const DC_FUNCTIONS *TTYDRV_DC_Funcs;  /* hack */
-
-static LONG TTYDRV_DC_GetBitmapBits(BITMAPOBJ *bitmap, void *bits, LONG count);
-static LONG TTYDRV_DC_SetBitmapBits(BITMAPOBJ *bitmap, void *bits, LONG count);
 
 /***********************************************************************
- *		TTYDRV_DC_AllocBitmap
+ *           GetBitmapBits   (TTYDRV.@)
  */
-TTYDRV_PHYSBITMAP *TTYDRV_DC_AllocBitmap(BITMAPOBJ *bitmap)
+LONG TTYDRV_GetBitmapBits(HBITMAP hbitmap, void *bits, LONG count)
 {
-  TTYDRV_PHYSBITMAP *physBitmap;
-  
-  if(!(physBitmap = HeapAlloc(GetProcessHeap(), 0, sizeof(TTYDRV_PHYSBITMAP)))) {
-    ERR("Can't alloc TTYDRV_PHYSBITMAP\n");
-    return NULL;
-  }
-
-  bitmap->physBitmap = physBitmap;
-  bitmap->funcs = TTYDRV_DC_Funcs;
-
-  return physBitmap;
+    FIXME("(%x, %p, %ld): stub\n", hbitmap, bits, count);
+    memset(bits, 0, count);
+    return count;
 }
 
 /***********************************************************************
- *           TTYDRV_DC_BitmapBits
+ *           SetBitmapBits   (TTYDRV.@)
  */
-LONG TTYDRV_DC_BitmapBits(HBITMAP hbitmap, void *bits, LONG count, WORD flags)
+LONG TTYDRV_SetBitmapBits(HBITMAP hbitmap, const void *bits, LONG count)
 {
-  BITMAPOBJ *bitmap;
-  LONG result;
-
-  if(!(bitmap = (BITMAPOBJ *) GDI_GetObjPtr(hbitmap, BITMAP_MAGIC)))
-    return FALSE;
-  
-  if(flags == DDB_GET)
-    result = TTYDRV_DC_GetBitmapBits(bitmap, bits, count);
-  else if(flags == DDB_SET)
-    result = TTYDRV_DC_SetBitmapBits(bitmap, bits, count);
-  else {
-    ERR("Unknown flags value %d\n", flags);
-    result = 0;
-  }
-  
-  GDI_ReleaseObj(hbitmap);
-  return result;
-}
-
-/***********************************************************************
- *		TTYDRV_DC_CreateBitmap
- */
-BOOL TTYDRV_DC_CreateBitmap(HBITMAP hbitmap)
-{
-  TTYDRV_PHYSBITMAP *physBitmap;
-  BITMAPOBJ *bitmap;
-
-  TRACE("(0x%04x)\n", hbitmap);
-
-  if(!(bitmap = (BITMAPOBJ *) GDI_GetObjPtr(hbitmap, BITMAP_MAGIC)))
-    return FALSE;
-  
-  if(!(physBitmap = TTYDRV_DC_AllocBitmap(bitmap))) {
-    GDI_ReleaseObj(hbitmap);
-    return FALSE;
-  }
- 
-  /* Set bitmap bits */
-  if(bitmap->bitmap.bmBits) { 
-    TTYDRV_DC_BitmapBits(hbitmap, bitmap->bitmap.bmBits,
-			 bitmap->bitmap.bmHeight * bitmap->bitmap.bmWidthBytes,
-			 DDB_SET );
-  }
-
-  GDI_ReleaseObj(hbitmap);
-  
-  return TRUE;
-}
-
-/***********************************************************************
- *		TTYDRV_DC_BITMAP_DeleteObject
- */
-BOOL TTYDRV_DC_BITMAP_DeleteObject(HBITMAP hbitmap, BITMAPOBJ *bitmap)
-{
-  TRACE("(0x%04x, %p)\n", hbitmap, bitmap);
-
-  HeapFree(GetProcessHeap(), 0, bitmap->physBitmap);
-  bitmap->physBitmap = NULL;
-  bitmap->funcs = NULL;
-
-  return TRUE;
-}
-
-/***********************************************************************
- *		TTYDRV_DC_GetBitmapBits
- */
-static LONG TTYDRV_DC_GetBitmapBits(BITMAPOBJ *bitmap, void *bits, LONG count)
-{
-  FIXME("(%p, %p, %ld): stub\n", bitmap, bits, count);
-
-  memset(bits, 0, count);
-
-  return count;
-}
-
-/***********************************************************************
- *		SelectBitmap   (TTYDRV.@)
- */
-HBITMAP TTYDRV_SelectBitmap(TTYDRV_PDEVICE *physDev, HBITMAP hbitmap)
-{
-  DC *dc = physDev->dc;
-  BITMAPOBJ *bitmap;
-
-  TRACE("(%p, 0x%04x)\n", dc, hbitmap);
-
-  if (!(bitmap = GDI_GetObjPtr( hbitmap, BITMAP_MAGIC ))) return 0;
-  /* Assure that the bitmap device dependent */
-  if(!bitmap->physBitmap && !TTYDRV_DC_CreateBitmap(hbitmap))
-  {
-      GDI_ReleaseObj( hbitmap );
-      return 0;
-  }
-
-  if(bitmap->funcs != dc->funcs) {
-    ERR("Trying to select a non-TTY DDB into a TTY DC\n");
-    GDI_ReleaseObj( hbitmap );
-    return 0;
-  }
-
-  GDI_ReleaseObj( hbitmap );
-  return hbitmap;
-}
-
-/***********************************************************************
- *		TTYDRV_DC_SetBitmapBits
- */
-static LONG TTYDRV_DC_SetBitmapBits(BITMAPOBJ *bitmap, void *bits, LONG count)
-{
-  FIXME("(%p, %p, %ld): semistub\n", bitmap, bits, count);
-
-  return count;
+    FIXME("(%x, %p, %ld): stub\n", hbitmap, bits, count);
+    return count;
 }
 
 /***********************************************************************

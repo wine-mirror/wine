@@ -53,7 +53,7 @@ void MAPPING_FixIsotropic( DC * dc )
  */
 BOOL16 WINAPI DPtoLP16( HDC16 hdc, LPPOINT16 points, INT16 count )
 {
-    DC * dc = (DC *) GDI_GetObjPtr( hdc, DC_MAGIC );
+    DC * dc = DC_GetDCPtr( hdc );
     if (!dc) return FALSE;
 
     while (count--)
@@ -72,7 +72,7 @@ BOOL16 WINAPI DPtoLP16( HDC16 hdc, LPPOINT16 points, INT16 count )
  */
 BOOL WINAPI DPtoLP( HDC hdc, LPPOINT points, INT count )
 {
-    DC * dc = (DC *) GDI_GetObjPtr( hdc, DC_MAGIC );
+    DC * dc = DC_GetDCPtr( hdc );
     if (!dc) return FALSE;
 
     while (count--)
@@ -91,7 +91,7 @@ BOOL WINAPI DPtoLP( HDC hdc, LPPOINT points, INT count )
  */
 BOOL16 WINAPI LPtoDP16( HDC16 hdc, LPPOINT16 points, INT16 count )
 {
-    DC * dc = (DC *) GDI_GetObjPtr( hdc, DC_MAGIC );
+    DC * dc = DC_GetDCPtr( hdc );
     if (!dc) return FALSE;
 
     while (count--)
@@ -110,7 +110,7 @@ BOOL16 WINAPI LPtoDP16( HDC16 hdc, LPPOINT16 points, INT16 count )
  */
 BOOL WINAPI LPtoDP( HDC hdc, LPPOINT points, INT count )
 {
-    DC * dc = (DC *) GDI_GetObjPtr( hdc, DC_MAGIC );
+    DC * dc = DC_GetDCPtr( hdc );
     if (!dc) return FALSE;
 
     while (count--)

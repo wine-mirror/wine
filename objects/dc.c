@@ -37,6 +37,18 @@ WINE_DEFAULT_DEBUG_CHANNEL(dc);
 extern WORD CALLBACK GDI_CallTo16_word_wwll(FARPROC16,WORD,WORD,LONG,LONG);
 /* ### stop build ### */
 
+static BOOL DC_DeleteObject( HGDIOBJ handle, void *obj );
+
+static const struct gdi_obj_funcs dc_funcs =
+{
+    NULL,             /* pSelectObject */
+    NULL,             /* pGetObject16 */
+    NULL,             /* pGetObjectA */
+    NULL,             /* pGetObjectW */
+    NULL,             /* pUnrealizeObject */
+    DC_DeleteObject   /* pDeleteObject */
+};
+
 /***********************************************************************
  *           DC_AllocDC
  */
@@ -45,7 +57,7 @@ DC *DC_AllocDC( const DC_FUNCTIONS *funcs )
     HDC hdc;
     DC *dc;
 
-    if (!(dc = GDI_AllocObject( sizeof(*dc), DC_MAGIC, &hdc ))) return NULL;
+    if (!(dc = GDI_AllocObject( sizeof(*dc), DC_MAGIC, &hdc, &dc_funcs ))) return NULL;
 
     dc->hSelf               = hdc;
     dc->funcs               = funcs;
@@ -162,6 +174,17 @@ DC *DC_GetDCUpdate( HDC hdc )
     return dc;
 }
 
+
+/***********************************************************************
+ *           DC_DeleteObject
+ */
+static BOOL DC_DeleteObject( HGDIOBJ handle, void *obj )
+{
+    GDI_ReleaseObj( handle );
+    return DeleteDC( handle );
+}
+
+
 /***********************************************************************
  *           DC_InitDC
  *
@@ -254,7 +277,7 @@ HDC16 WINAPI GetDCState16( HDC16 hdc )
     HGDIOBJ handle;
     
     if (!(dc = DC_GetDCPtr( hdc ))) return 0;
-    if (!(newdc = GDI_AllocObject( sizeof(DC), DC_MAGIC, &handle )))
+    if (!(newdc = GDI_AllocObject( sizeof(DC), DC_MAGIC, &handle, &dc_funcs )))
     {
       GDI_ReleaseObj( hdc );
       return 0;
@@ -347,7 +370,7 @@ void WINAPI SetDCState16( HDC16 hdc, HDC16 hdcs )
     DC *dc, *dcs;
 
     if (!(dc = DC_GetDCUpdate( hdc ))) return;
-    if (!(dcs = GDI_GetObjPtr( hdcs, DC_MAGIC )))
+    if (!(dcs = DC_GetDCPtr( hdcs )))
     {
       GDI_ReleaseObj( hdc );
       return;
@@ -461,7 +484,7 @@ INT WINAPI SaveDC( HDC hdc )
       GDI_ReleaseObj( hdc );
       return 0;
     }
-    dcs = GDI_GetObjPtr( hdcs, DC_MAGIC );
+    dcs = DC_GetDCPtr( hdcs );
 
     /* Copy path. The reason why path saving / restoring is in SaveDC/
      * RestoreDC and not in GetDCState/SetDCState is that the ...DCState
@@ -531,7 +554,7 @@ BOOL WINAPI RestoreDC( HDC hdc, INT level )
     while (dc->saveLevel >= level)
     {
 	HDC16 hdcs = dc->header.hNext;
-	if (!(dcs = GDI_GetObjPtr( hdcs, DC_MAGIC )))
+	if (!(dcs = DC_GetDCPtr( hdcs )))
 	{
 	  GDI_ReleaseObj( hdc );
 	  return FALSE;
@@ -779,7 +802,7 @@ BOOL WINAPI DeleteDC( HDC hdc )
     {
 	DC * dcs;
 	HDC16 hdcs = dc->header.hNext;
-	if (!(dcs = GDI_GetObjPtr( hdcs, DC_MAGIC ))) break;
+	if (!(dcs = DC_GetDCPtr( hdcs ))) break;
 	dc->header.hNext = dcs->header.hNext;
 	dc->saveLevel--;
         if (dcs->hClipRgn) DeleteObject( dcs->hClipRgn );

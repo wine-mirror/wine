@@ -37,15 +37,14 @@ static const DC_FUNCTIONS EMFDRV_Funcs =
     NULL,                            /* pArcTo */
     EMFDRV_BeginPath,                /* pBeginPath */
     NULL,                            /* pBitBlt */
-    NULL,                            /* pBitmapBits */
     NULL,                            /* pChoosePixelFormat */
     EMFDRV_Chord,                    /* pChord */
     EMFDRV_CloseFigure,              /* pCloseFigure */
     NULL,                            /* pCreateBitmap */
     NULL,                            /* pCreateDC */
     NULL,                            /* pCreateDIBSection */
+    NULL,                            /* pDeleteBitmap */
     NULL,                            /* pDeleteDC */
-    NULL,                            /* pDeleteObject */
     NULL,                            /* pDescribePixelFormat */
     NULL,                            /* pDeviceCapabilities */
     EMFDRV_Ellipse,                  /* pEllipse */
@@ -63,6 +62,7 @@ static const DC_FUNCTIONS EMFDRV_Funcs =
     EMFDRV_FillRgn,                  /* pFillRgn */
     EMFDRV_FlattenPath,              /* pFlattenPath */
     EMFDRV_FrameRgn,                 /* pFrameRgn */
+    NULL,                            /* pGetBitmapBits */
     NULL,                            /* pGetCharWidth */
     NULL,                            /* pGetDCOrgEx */
     NULL,                            /* pGetDIBColorTable */
@@ -105,6 +105,7 @@ static const DC_FUNCTIONS EMFDRV_Funcs =
     EMFDRV_SelectFont,               /* pSelectFont */
     NULL,                            /* pSelectPalette */
     EMFDRV_SelectPen,                /* pSelectPen */
+    NULL,                            /* pSetBitmapBits */
     EMFDRV_SetBkColor,               /* pSetBkColor */
     EMFDRV_SetBkMode,                /* pSetBkMode */
     NULL,                            /* pSetDIBColorTable */

@@ -264,15 +264,29 @@ INT WINAPI SetDIBits( HDC hdc, HBITMAP hbitmap, UINT startscan,
 		      UINT coloruse )
 {
     DC *dc;
+    BITMAPOBJ *bitmap;
     INT result = 0;
 
-    /* Check parameters */
-    if (!(dc = DC_GetDCUpdate( hdc ))) return 0;
+    if (!(bitmap = GDI_GetObjPtr( hbitmap, BITMAP_MAGIC ))) return 0;
 
-    if (dc->funcs->pSetDIBits)
-        result = dc->funcs->pSetDIBits(dc->physDev, hbitmap, startscan, lines, bits, info, coloruse);
+    if (!(dc = DC_GetDCUpdate( hdc )))
+    {
+        if (coloruse == DIB_RGB_COLORS) FIXME( "shouldn't require a DC for DIB_RGB_COLORS\n" );
+        GDI_ReleaseObj( hbitmap );
+        return 0;
+    }
 
+    if (!bitmap->funcs && !BITMAP_SetOwnerDC( hbitmap, dc )) goto done;
+
+    if (bitmap->funcs && bitmap->funcs->pSetDIBits)
+        result = bitmap->funcs->pSetDIBits( dc->physDev, hbitmap, startscan, lines,
+                                            bits, info, coloruse );
+    else
+        result = lines;
+
+ done:
     GDI_ReleaseObj( hdc );
+    GDI_ReleaseObj( hbitmap );
     return result;
 }
 
@@ -721,14 +735,18 @@ INT WINAPI GetDIBits(
             }
         }
         /* Otherwise, get bits from the XImage */
-        else if (!dc->funcs->pGetDIBits ||
-                 !dc->funcs->pGetDIBits(dc->physDev, hbitmap, startscan, lines, bits, info, coloruse))
+        else
         {
-	    GDI_ReleaseObj( hdc );
-	    GDI_ReleaseObj( hbitmap );
-
-	    return 0;
-	}
+            if (!bmp->funcs && !BITMAP_SetOwnerDC( hbitmap, dc )) lines = 0;
+            else
+            {
+                if (bmp->funcs && bmp->funcs->pGetDIBits)
+                    lines = bmp->funcs->pGetDIBits( dc->physDev, hbitmap, startscan,
+                                                    lines, bits, info, coloruse );
+                else
+                    lines = 0;  /* FIXME: should copy from bmp->bitmap.bmBits */
+            }
+        }
     }
     else if( info->bmiHeader.biSize >= sizeof(BITMAPINFOHEADER) ) 
     {
@@ -790,6 +808,7 @@ HBITMAP WINAPI CreateDIBitmap( HDC hdc, const BITMAPINFOHEADER *header,
     int height;
     WORD bpp;
     WORD compr;
+    DC *dc;
 
     if (DIB_GetBitmapInfo( header, &width, &height, &bpp, &compr ) == -1) return 0;
     if (height < 0) height = -height;
@@ -862,15 +881,24 @@ HBITMAP WINAPI CreateDIBitmap( HDC hdc, const BITMAPINFOHEADER *header,
 
     /* Now create the bitmap */
 
+    if (!(dc = DC_GetDCPtr( hdc ))) return 0;
+
     if (fColor)
         handle = CreateBitmap( width, height, GetDeviceCaps( hdc, PLANES ),
                                GetDeviceCaps( hdc, BITSPIXEL ), NULL );
     else handle = CreateBitmap( width, height, 1, 1, NULL );
 
-    if (!handle) return 0;
+    if (handle)
+    {
+        if (init == CBM_INIT) SetDIBits( hdc, handle, 0, height, bits, data, coloruse );
+        else if (!BITMAP_SetOwnerDC( handle, dc ))
+        {
+            DeleteObject( handle );
+            handle = 0;
+        }
+    }
 
-    if (init == CBM_INIT)
-        SetDIBits( hdc, handle, 0, height, bits, data, coloruse );
+    GDI_ReleaseObj( hdc );
     return handle;
 }
 

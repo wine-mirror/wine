@@ -32,6 +32,22 @@
 WINE_DEFAULT_DEBUG_CHANNEL(font);
 WINE_DECLARE_DEBUG_CHANNEL(gdi);
 
+static HGDIOBJ FONT_SelectObject( HGDIOBJ handle, void *obj, HDC hdc );
+static INT FONT_GetObject16( HGDIOBJ handle, void *obj, INT count, LPVOID buffer );
+static INT FONT_GetObjectA( HGDIOBJ handle, void *obj, INT count, LPVOID buffer );
+static INT FONT_GetObjectW( HGDIOBJ handle, void *obj, INT count, LPVOID buffer );
+static BOOL FONT_DeleteObject( HGDIOBJ handle, void *obj );
+
+static const struct gdi_obj_funcs font_funcs =
+{
+    FONT_SelectObject,  /* pSelectObject */
+    FONT_GetObject16,   /* pGetObject16 */
+    FONT_GetObjectA,    /* pGetObjectA */
+    FONT_GetObjectW,    /* pGetObjectW */
+    NULL,               /* pUnrealizeObject */
+    FONT_DeleteObject   /* pDeleteObject */
+};
+
 #define ENUM_UNICODE	0x00000001
 #define ENUM_CALLED     0x00000002
 
@@ -472,7 +488,7 @@ HFONT WINAPI CreateFontIndirectW( const LOGFONTW *plf )
     if (plf)
     {
         FONTOBJ* fontPtr;
-	if ((fontPtr = GDI_AllocObject( sizeof(FONTOBJ), FONT_MAGIC, &hFont )))
+	if ((fontPtr = GDI_AllocObject( sizeof(FONTOBJ), FONT_MAGIC, &hFont, &font_funcs )))
 	{
 	    memcpy( &fontPtr->logfont, plf, sizeof(LOGFONTW) );
 
@@ -601,10 +617,51 @@ HFONT WINAPI CreateFontW( INT height, INT width, INT esc,
 
 
 /***********************************************************************
+ *           FONT_SelectObject
+ *
+ * If the driver supports vector fonts we create a gdi font first and
+ * then call the driver to give it a chance to supply its own device
+ * font.  If the driver wants to do this it returns TRUE and we can
+ * delete the gdi font, if the driver wants to use the gdi font it
+ * should return FALSE, to signal an error return GDI_ERROR.  For
+ * drivers that don't support vector fonts they must supply their own
+ * font.
+ */
+static HGDIOBJ FONT_SelectObject( HGDIOBJ handle, void *obj, HDC hdc )
+{
+    HGDIOBJ ret = 0;
+    DC *dc = DC_GetDCPtr( hdc );
+
+    if (!dc) return 0;
+
+    if (dc->hFont != handle || dc->gdiFont == NULL)
+    {
+        if(GetDeviceCaps(dc->hSelf, TEXTCAPS) & TC_VA_ABLE)
+            dc->gdiFont = WineEngCreateFontInstance(dc, handle);
+    }
+
+    if (dc->funcs->pSelectFont) ret = dc->funcs->pSelectFont( dc->physDev, handle );
+
+    if (ret && dc->gdiFont) dc->gdiFont = 0;
+
+    if (ret == GDI_ERROR)
+        ret = 0; /* SelectObject returns 0 on error */
+    else
+    {
+        ret = dc->hFont;
+        dc->hFont = handle;
+    }
+    GDI_ReleaseObj( hdc );
+    return ret;
+}
+
+
+/***********************************************************************
  *           FONT_GetObject16
  */
-INT16 FONT_GetObject16( FONTOBJ * font, INT16 count, LPSTR buffer )
+static INT FONT_GetObject16( HGDIOBJ handle, void *obj, INT count, LPVOID buffer )
 {
+    FONTOBJ *font = obj;
     LOGFONT16 lf16;
 
     FONT_LogFontWTo16( &font->logfont, &lf16 );
@@ -617,8 +674,9 @@ INT16 FONT_GetObject16( FONTOBJ * font, INT16 count, LPSTR buffer )
 /***********************************************************************
  *           FONT_GetObjectA
  */
-INT FONT_GetObjectA( FONTOBJ *font, INT count, LPSTR buffer )
+static INT FONT_GetObjectA( HGDIOBJ handle, void *obj, INT count, LPVOID buffer )
 {
+    FONTOBJ *font = obj;
     LOGFONTA lfA;
 
     FONT_LogFontWToA( &font->logfont, &lfA );
@@ -627,14 +685,26 @@ INT FONT_GetObjectA( FONTOBJ *font, INT count, LPSTR buffer )
     memcpy( buffer, &lfA, count );
     return count;
 }
+
 /***********************************************************************
  *           FONT_GetObjectW
  */
-INT FONT_GetObjectW( FONTOBJ *font, INT count, LPSTR buffer )
+static INT FONT_GetObjectW( HGDIOBJ handle, void *obj, INT count, LPVOID buffer )
 {
+    FONTOBJ *font = obj;
     if (count > sizeof(LOGFONTW)) count = sizeof(LOGFONTW);
     memcpy( buffer, &font->logfont, count );
     return count;
+}
+
+
+/***********************************************************************
+ *           FONT_DeleteObject
+ */
+static BOOL FONT_DeleteObject( HGDIOBJ handle, void *obj )
+{
+    WineEngDestroyFontInstance( handle );
+    return GDI_FreeObject( handle, obj );
 }
 
 

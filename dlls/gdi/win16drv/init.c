@@ -65,15 +65,14 @@ static const DC_FUNCTIONS WIN16DRV_Funcs =
     NULL,                            /* pArcTo */
     NULL,                            /* pBeginPath */
     NULL,                            /* pBitBlt */
-    NULL,                            /* pBitmapBits */
     NULL,                            /* pChoosePixelFormat */
     NULL,                            /* pChord */
     NULL,                            /* pCloseFigure */
     NULL,                            /* pCreateBitmap */
     WIN16DRV_CreateDC,               /* pCreateDC */
     NULL,                            /* pCreateDIBSection */
+    NULL,                            /* pDeleteBitmap */
     NULL,                            /* pDeleteDC */
-    NULL,                            /* pDeleteObject */
     NULL,                            /* pDescribePixelFormat */
     WIN16DRV_DeviceCapabilities,     /* pDeviceCapabilities */
     WIN16DRV_Ellipse,                /* pEllipse */
@@ -91,6 +90,7 @@ static const DC_FUNCTIONS WIN16DRV_Funcs =
     NULL,                            /* pFillRgn */
     NULL,                            /* pFlattenPath */
     NULL,                            /* pFrameRgn */
+    NULL,                            /* pGetBitmapBits */
     WIN16DRV_GetCharWidth,           /* pGetCharWidth */
     NULL,                            /* pGetDCOrgEx */
     NULL,                            /* pGetDIBColorTable */
@@ -133,6 +133,7 @@ static const DC_FUNCTIONS WIN16DRV_Funcs =
     WIN16DRV_SelectFont,             /* pSelectFont */
     NULL,                            /* pSelectPalette */
     WIN16DRV_SelectPen,              /* pSelectPen */
+    NULL,                            /* pSetBitmapBits */
     NULL,                            /* pSetBkColor */
     NULL,                            /* pSetBkMode */
     NULL,                            /* pSetDIBColorTable */

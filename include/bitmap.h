@@ -23,13 +23,6 @@
 
 #include "gdi.h"
 
-/* Flags used for BitmapBits. We only use the first two at the moment */
-
-#define DDB_SET			1
-#define DDB_GET			2
-#define DDB_COPY		4
-#define DDB_SETWITHFILLER	8
-
 /* DIB Section sync state */
 enum { DIB_Status_None, DIB_Status_InSync, DIB_Status_GdiMod, DIB_Status_AppMod, DIB_Status_AuxMod };
 
@@ -47,11 +40,9 @@ typedef struct tagBITMAPOBJ
 } BITMAPOBJ;
 
   /* objects/bitmap.c */
-extern INT16   BITMAP_GetObject16( BITMAPOBJ * bmp, INT16 count, LPVOID buffer );
-extern INT   BITMAP_GetObject( BITMAPOBJ * bmp, INT count, LPVOID buffer );
-extern BOOL  BITMAP_DeleteObject( HBITMAP16 hbitmap, BITMAPOBJ * bitmap );
 extern INT   BITMAP_GetWidthBytes( INT width, INT depth );
 extern HBITMAP BITMAP_CopyBitmap( HBITMAP hbitmap );
+extern BOOL BITMAP_SetOwnerDC( HBITMAP hbitmap, DC *dc );
 
   /* objects/dib.c */
 extern int DIB_GetDIBWidthBytes( int width, int depth );

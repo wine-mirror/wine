@@ -46,7 +46,6 @@ PALETTE_DRIVER X11DRV_PALETTE_Driver =
 
 Display *gdi_display;  /* display to use for all GDI functions */
 
-
 /* a few dynamic device caps */
 static int log_pixels_x;  /* pixels per logical inch in x direction */
 static int log_pixels_y;  /* pixels per logical inch in y direction */
@@ -116,21 +115,11 @@ BOOL X11DRV_CreateDC( DC *dc, LPCSTR driver, LPCSTR device,
 
     if (dc->flags & DC_MEMORY)
     {
-        BITMAPOBJ *bmp = (BITMAPOBJ *) GDI_GetObjPtr( dc->hBitmap, BITMAP_MAGIC );
-	if (!bmp) 
-	{
-	    HeapFree( GetProcessHeap(), 0, physDev );
-	    return FALSE;
-        }
-        if (!bmp->physBitmap) X11DRV_CreateBitmap( dc->hBitmap );
-        physDev->drawable  = (Pixmap)bmp->physBitmap;
-        physDev->gc        = TSXCreateGC( gdi_display, physDev->drawable, 0, NULL );
-        GDI_ReleaseObj( dc->hBitmap );
+        physDev->drawable  = BITMAP_stock_pixmap;
     }
     else
     {
         physDev->drawable  = root_window;
-        physDev->gc        = TSXCreateGC( gdi_display, physDev->drawable, 0, NULL );
         dc->bitsPerPixel   = screen_depth;
     }
 
@@ -138,6 +127,7 @@ BOOL X11DRV_CreateDC( DC *dc, LPCSTR driver, LPCSTR device,
     physDev->used_visuals = 0;
 
     wine_tsx11_lock();
+    physDev->gc = XCreateGC( gdi_display, physDev->drawable, 0, NULL );
     XSetGraphicsExposures( gdi_display, physDev->gc, False );
     XSetSubwindowMode( gdi_display, physDev->gc, IncludeInferiors );
     XFlush( gdi_display );

@@ -97,6 +97,7 @@ typedef struct
 
   /* GCs used for B&W and color bitmap operations */
 extern GC BITMAP_monoGC, BITMAP_colorGC;
+extern Pixmap BITMAP_stock_pixmap;   /* pixmap for the default stock bitmap */
 
 #define BITMAP_GC(bmp) \
   (((bmp)->bitmap.bmBitsPixel == 1) ? BITMAP_monoGC : BITMAP_colorGC)
@@ -110,6 +111,7 @@ extern BOOL X11DRV_BitBlt( X11DRV_PDEVICE *physDevDst, INT xDst, INT yDst,
                              INT xSrc, INT ySrc, DWORD rop );
 extern BOOL X11DRV_EnumDeviceFonts( X11DRV_PDEVICE *physDev, LPLOGFONTW plf,
 				    DEVICEFONTENUMPROC dfeproc, LPARAM lp );
+extern LONG X11DRV_GetBitmapBits( HBITMAP hbitmap, void *bits, LONG count );
 extern BOOL X11DRV_GetCharWidth( X11DRV_PDEVICE *physDev, UINT firstChar,
                                    UINT lastChar, LPINT buffer );
 extern BOOL X11DRV_GetDCOrgEx( X11DRV_PDEVICE *physDev, LPPOINT lpp );
@@ -157,20 +159,13 @@ extern BOOL X11DRV_ExtFloodFill( X11DRV_PDEVICE *physDev, INT x, INT y,
 extern BOOL X11DRV_ExtTextOut( X11DRV_PDEVICE *physDev, INT x, INT y,
 				 UINT flags, const RECT *lprect,
 				 LPCWSTR str, UINT count, const INT *lpDx );
-extern BOOL X11DRV_CreateBitmap( HBITMAP hbitmap );
-extern BOOL X11DRV_DeleteObject( HGDIOBJ handle );
-extern LONG X11DRV_BitmapBits( HBITMAP hbitmap, void *bits, LONG count,
-			       WORD flags );
+extern LONG X11DRV_SetBitmapBits( HBITMAP hbitmap, const void *bits, LONG count );
 extern INT X11DRV_SetDIBitsToDevice( X11DRV_PDEVICE *physDev, INT xDest,
 				       INT yDest, DWORD cx, DWORD cy,
 				       INT xSrc, INT ySrc,
 				       UINT startscan, UINT lines,
 				       LPCVOID bits, const BITMAPINFO *info,
 				       UINT coloruse );
-extern INT X11DRV_DeviceBitmapBits( X11DRV_PDEVICE *physDev, HBITMAP hbitmap,
-				      WORD fGet, UINT startscan,
-				      UINT lines, LPSTR bits,
-				      LPBITMAPINFO info, UINT coloruse );
 extern BOOL X11DRV_GetDeviceGammaRamp( X11DRV_PDEVICE *physDev, LPVOID ramp );
 extern BOOL X11DRV_SetDeviceGammaRamp( X11DRV_PDEVICE *physDev, LPVOID ramp );
 
@@ -187,7 +182,6 @@ extern BOOL X11DRV_SwapBuffers(X11DRV_PDEVICE *physDev);
 
 extern BOOL X11DRV_BITMAP_Init(void);
 extern void X11DRV_FONT_Init( int *log_pixels_x, int *log_pixels_y );
-extern BOOL X11DRV_BITMAP_DeleteObject( HBITMAP hbitmap );
 
 struct tagBITMAPOBJ;
 extern XImage *X11DRV_BITMAP_GetXImage( const struct tagBITMAPOBJ *bmp );

@@ -184,14 +184,7 @@ static BOOL BRUSH_SelectPatternBrush( X11DRV_PDEVICE *physDev, HBITMAP hbitmap )
     BITMAPOBJ * bmp = (BITMAPOBJ *) GDI_GetObjPtr( hbitmap, BITMAP_MAGIC );
     if (!bmp) return FALSE;
 
-   if(!bmp->physBitmap)
-        if(!X11DRV_CreateBitmap(hbitmap))
-	    goto done;
-
-    if(bmp->funcs != dc->funcs) {
-        WARN("Trying to select non-X11 DDB into an X11 dc\n");
-	goto done;
-    }
+    if(!bmp->physBitmap) goto done;
 
     if ((dc->bitsPerPixel == 1) && (bmp->bitmap.bmBitsPixel != 1))
     {
@@ -269,7 +262,7 @@ HBRUSH X11DRV_SelectBrush( X11DRV_PDEVICE *physDev, HBRUSH hbrush )
 	
       case BS_PATTERN:
 	TRACE("BS_PATTERN\n");
-	BRUSH_SelectPatternBrush( physDev, (HBRUSH16)logbrush.lbHatch );
+	if (!BRUSH_SelectPatternBrush( physDev, (HBITMAP)logbrush.lbHatch )) return 0;
 	break;
 
       case BS_DIBPATTERN:

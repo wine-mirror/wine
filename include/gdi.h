@@ -52,11 +52,22 @@
 
 #define GDIMAGIC(magic) ((magic) & ~(OBJECT_PRIVATE|OBJECT_NOSYSTEM))
 
+struct gdi_obj_funcs
+{
+    HGDIOBJ (*pSelectObject)( HGDIOBJ handle, void *obj, HDC hdc );
+    INT     (*pGetObject16)( HGDIOBJ handle, void *obj, INT count, LPVOID buffer );
+    INT     (*pGetObjectA)( HGDIOBJ handle, void *obj, INT count, LPVOID buffer );
+    INT     (*pGetObjectW)( HGDIOBJ handle, void *obj, INT count, LPVOID buffer );
+    BOOL    (*pUnrealizeObject)( HGDIOBJ handle, void *obj );
+    BOOL    (*pDeleteObject)( HGDIOBJ handle, void *obj );
+};
+
 typedef struct tagGDIOBJHDR
 {
     HANDLE16    hNext;
     WORD        wMagic;
     DWORD       dwCount;
+    const struct gdi_obj_funcs *funcs;
 } GDIOBJHDR;
 
 
@@ -147,15 +158,14 @@ typedef struct tagDC_FUNCS
     BOOL     (*pArcTo)(PHYSDEV,INT,INT,INT,INT,INT,INT,INT,INT);
     BOOL     (*pBeginPath)(PHYSDEV);
     BOOL     (*pBitBlt)(PHYSDEV,INT,INT,INT,INT,PHYSDEV,INT,INT,DWORD);
-    LONG     (*pBitmapBits)(HBITMAP,void*,LONG,WORD);
     INT      (*pChoosePixelFormat)(PHYSDEV,const PIXELFORMATDESCRIPTOR *);
     BOOL     (*pChord)(PHYSDEV,INT,INT,INT,INT,INT,INT,INT,INT);
     BOOL     (*pCloseFigure)(PHYSDEV);
-    BOOL     (*pCreateBitmap)(HBITMAP);
+    BOOL     (*pCreateBitmap)(PHYSDEV,HBITMAP);
     BOOL     (*pCreateDC)(DC *,LPCSTR,LPCSTR,LPCSTR,const DEVMODEA*);
     HBITMAP  (*pCreateDIBSection)(PHYSDEV,BITMAPINFO *,UINT,LPVOID *,HANDLE,DWORD,DWORD);
+    BOOL     (*pDeleteBitmap)(HBITMAP);
     BOOL     (*pDeleteDC)(PHYSDEV);
-    BOOL     (*pDeleteObject)(HGDIOBJ);
     INT      (*pDescribePixelFormat)(PHYSDEV,INT,UINT,PIXELFORMATDESCRIPTOR *);
     DWORD    (*pDeviceCapabilities)(LPSTR,LPCSTR,LPCSTR,WORD,LPSTR,LPDEVMODEA);
     BOOL     (*pEllipse)(PHYSDEV,INT,INT,INT,INT);
@@ -173,6 +183,7 @@ typedef struct tagDC_FUNCS
     BOOL     (*pFillRgn)(PHYSDEV,HRGN,HBRUSH);
     BOOL     (*pFlattenPath)(PHYSDEV);
     BOOL     (*pFrameRgn)(PHYSDEV,HRGN,HBRUSH,INT,INT);
+    LONG     (*pGetBitmapBits)(HBITMAP,void*,LONG);
     BOOL     (*pGetCharWidth)(PHYSDEV,UINT,UINT,LPINT);
     BOOL     (*pGetDCOrgEx)(PHYSDEV,LPPOINT);
     UINT     (*pGetDIBColorTable)(PHYSDEV,UINT,UINT,RGBQUAD*);
@@ -215,6 +226,7 @@ typedef struct tagDC_FUNCS
     HFONT    (*pSelectFont)(PHYSDEV,HFONT);
     HPALETTE (*pSelectPalette)(PHYSDEV,HPALETTE,BOOL);
     HPEN     (*pSelectPen)(PHYSDEV,HPEN);
+    LONG     (*pSetBitmapBits)(HBITMAP,const void*,LONG);
     COLORREF (*pSetBkColor)(PHYSDEV,COLORREF);
     INT      (*pSetBkMode)(PHYSDEV,INT);
     UINT     (*pSetDIBColorTable)(PHYSDEV,UINT,UINT,const RGBQUAD*);
@@ -560,7 +572,7 @@ static inline INT INTERNAL_YDSTOWS(DC *dc, INT height)
   /* GDI local heap */
 
 extern BOOL GDI_Init(void);
-extern void *GDI_AllocObject( WORD, WORD, HGDIOBJ * );
+extern void *GDI_AllocObject( WORD, WORD, HGDIOBJ *, const struct gdi_obj_funcs *funcs );
 extern void *GDI_ReallocObject( WORD, HGDIOBJ, void *obj );
 extern BOOL GDI_FreeObject( HGDIOBJ, void *obj );
 extern void *GDI_GetObjPtr( HGDIOBJ, WORD );
@@ -585,6 +597,10 @@ extern void CLIPPING_UpdateGCRegion( DC * dc );
 
 /* objects/enhmetafile.c */
 extern HENHMETAFILE EMF_Create_HENHMETAFILE(ENHMETAHEADER *emh, BOOL on_disk );
+
+/* region.c */
+extern HRGN REGION_CropRgn( HRGN hDst, HRGN hSrc, const RECT *lpRect, const POINT *lpPt );
+extern BOOL REGION_FrameRgn( HRGN dest, HRGN src, INT x, INT y );
 
 #define WINE_GGO_GRAY16_BITMAP 0x7f
 

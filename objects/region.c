@@ -98,9 +98,8 @@ SOFTWARE.
 #include <string.h>
 #include "windef.h"
 #include "wingdi.h"
-#include "wine/debug.h"
-#include "region.h"
 #include "gdi.h"
+#include "wine/debug.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(region);
 
@@ -112,12 +111,25 @@ typedef struct {
 } WINEREGION;
 
   /* GDI logical region object */
-typedef struct _RGNOBJ
+typedef struct
 {
     GDIOBJHDR   header;
     WINEREGION  *rgn;
 } RGNOBJ;
 
+
+static HGDIOBJ REGION_SelectObject( HGDIOBJ handle, void *obj, HDC hdc );
+static BOOL REGION_DeleteObject( HGDIOBJ handle, void *obj );
+
+static const struct gdi_obj_funcs region_funcs =
+{
+    REGION_SelectObject,  /* pSelectObject */
+    NULL,                 /* pGetObject16 */
+    NULL,                 /* pGetObjectA */
+    NULL,                 /* pGetObjectW */
+    NULL,                 /* pUnrealizeObject */
+    REGION_DeleteObject   /* pDeleteObject */
+};
 
 /*  1 if two RECTs overlap.
  *  0 if two RECTs do not overlap.
@@ -501,7 +513,7 @@ static HRGN REGION_CreateRegion( INT n )
     HRGN hrgn;
     RGNOBJ *obj;
 
-    if(!(obj = GDI_AllocObject( sizeof(RGNOBJ), REGION_MAGIC, &hrgn ))) return 0;
+    if(!(obj = GDI_AllocObject( sizeof(RGNOBJ), REGION_MAGIC, &hrgn, &region_funcs ))) return 0;
     if(!(obj->rgn = REGION_AllocWineRegion(n))) {
         GDI_FreeObject( hrgn, obj );
         return 0;
@@ -510,7 +522,6 @@ static HRGN REGION_CreateRegion( INT n )
     return hrgn;
 }
 
-
 /***********************************************************************
  *           REGION_DestroyWineRegion
  */
@@ -518,18 +529,27 @@ static void REGION_DestroyWineRegion( WINEREGION* pReg )
 {
     HeapFree( GetProcessHeap(), 0, pReg->rects );
     HeapFree( GetProcessHeap(), 0, pReg );
-    return;
 }
 
 /***********************************************************************
  *           REGION_DeleteObject
  */
-BOOL REGION_DeleteObject( HRGN hrgn, RGNOBJ * obj )
+static BOOL REGION_DeleteObject( HGDIOBJ handle, void *obj )
 {
-    TRACE(" %04x\n", hrgn );
+    RGNOBJ *rgn = obj;
 
-    REGION_DestroyWineRegion( obj->rgn );
-    return GDI_FreeObject( hrgn, obj );
+    TRACE(" %04x\n", handle );
+
+    REGION_DestroyWineRegion( rgn->rgn );
+    return GDI_FreeObject( handle, obj );
+}
+
+/***********************************************************************
+ *           REGION_SelectObject
+ */
+static HGDIOBJ REGION_SelectObject( HGDIOBJ handle, void *obj, HDC hdc )
+{
+    return (HGDIOBJ)SelectClipRgn( hdc, handle );
 }
 
 /***********************************************************************
@@ -3151,7 +3171,8 @@ HRGN REGION_CropRgn( HRGN hDst, HRGN hSrc, const RECT *lpRect, const POINT *lpPt
 	    }
 	    else if( hDst == 0 )
 	    {
-		if (!(objDst = GDI_AllocObject( sizeof(RGNOBJ), REGION_MAGIC, &hDst )))
+		if (!(objDst = GDI_AllocObject( sizeof(RGNOBJ), REGION_MAGIC,
+                                                &hDst, &region_funcs )))
 		{
 fail:
 		    if( rgnDst->rects )

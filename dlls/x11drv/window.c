@@ -275,9 +275,6 @@ static void set_icon_hints( Display *display, WND *wndPtr, XWMHints *hints )
 
         GetIconInfo(hIcon, &ii);
 
-        X11DRV_CreateBitmap(ii.hbmMask);
-        X11DRV_CreateBitmap(ii.hbmColor);
-
         GetObjectA(ii.hbmMask, sizeof(bmMask), &bmMask);
         rcMask.top    = 0;
         rcMask.left   = 0;
@@ -287,6 +284,7 @@ static void set_icon_hints( Display *display, WND *wndPtr, XWMHints *hints )
         hDC = CreateCompatibleDC(0);
         hbmOrig = SelectObject(hDC, ii.hbmMask);
         InvertRect(hDC, &rcMask);
+        SelectObject(hDC, ii.hbmColor);  /* force the color bitmap to x11drv mode too */
         SelectObject(hDC, hbmOrig);
         DeleteDC(hDC);
 

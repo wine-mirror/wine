@@ -38,15 +38,14 @@ static const DC_FUNCTIONS MFDRV_Funcs =
     NULL,                            /* pArcTo */
     MFDRV_BeginPath,                 /* pBeginPath */
     MFDRV_BitBlt,                    /* pBitBlt */
-    NULL,                            /* pBitmapBits */
     NULL,                            /* pChoosePixelFormat */
     MFDRV_Chord,                     /* pChord */
     MFDRV_CloseFigure,               /* pCloseFigure */
     NULL,                            /* pCreateBitmap */
     NULL,                            /* pCreateDC */
     NULL,                            /* pCreateDIBSection */
+    NULL,                            /* pDeleteBitmap */
     NULL,                            /* pDeleteDC */
-    NULL,                            /* pDeleteObject */
     NULL,                            /* pDescribePixelFormat */
     NULL,                            /* pDeviceCapabilities */
     MFDRV_Ellipse,                   /* pEllipse */
@@ -64,6 +63,7 @@ static const DC_FUNCTIONS MFDRV_Funcs =
     MFDRV_FillRgn,                   /* pFillRgn */
     MFDRV_FlattenPath,               /* pFlattenPath */
     MFDRV_FrameRgn,                  /* pFrameRgn */
+    NULL,                            /* pGetBitmapBits */
     NULL,                            /* pGetCharWidth */
     NULL,                            /* pGetDCOrgEx */
     NULL,                            /* pGetDIBColorTable */
@@ -106,6 +106,7 @@ static const DC_FUNCTIONS MFDRV_Funcs =
     MFDRV_SelectFont,                /* pSelectFont */
     NULL,                            /* pSelectPalette */
     MFDRV_SelectPen,                 /* pSelectPen */
+    NULL,                            /* pSetBitmapBits */
     MFDRV_SetBkColor,                /* pSetBkColor */
     MFDRV_SetBkMode,                 /* pSetBkMode */
     NULL,                            /* pSetDIBColorTable */

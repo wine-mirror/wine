@@ -67,10 +67,6 @@ typedef struct {
   int cellHeight;
 } TTYDRV_PDEVICE;
 
-typedef struct {
-  int dummy; /* FIXME: Remove later */
-} TTYDRV_PHYSBITMAP;
-
 extern BOOL TTYDRV_GDI_Initialize(void);
 
 /* TTY GDI bitmap driver */
@@ -78,14 +74,10 @@ extern BOOL TTYDRV_GDI_Initialize(void);
 extern HBITMAP TTYDRV_BITMAP_CreateDIBSection(TTYDRV_PDEVICE *physDev, BITMAPINFO *bmi, UINT usage, LPVOID *bits, HANDLE section, DWORD offset);
 extern void TTYDRV_BITMAP_DeleteDIBSection(struct tagBITMAPOBJ *bmp);
 
-extern BOOL TTYDRV_DC_CreateBitmap(HBITMAP hbitmap);
-
 extern BOOL TTYDRV_DC_Arc(TTYDRV_PDEVICE *physDev, INT left, INT top, INT right, INT bottom, INT xstart, INT ystart, INT xend, INT yend);
 extern LONG TTYDRV_DC_BitmapBits(HBITMAP hbitmap, void *bits, LONG count, WORD flags);
-extern BOOL TTYDRV_DC_CreateBitmap(HBITMAP hbitmap);
 extern BOOL TTYDRV_DC_CreateDC(DC *dc, LPCSTR driver, LPCSTR device, LPCSTR output, const DEVMODEA *initData);
 extern BOOL TTYDRV_DC_DeleteDC(TTYDRV_PDEVICE *physDev);
-extern BOOL TTYDRV_DC_DeleteObject(HGDIOBJ handle);
 extern BOOL TTYDRV_DC_BitBlt(TTYDRV_PDEVICE *physDevDst, INT xDst, INT yDst, INT width, INT height, TTYDRV_PDEVICE *physDevSrc, INT xSrc, INT ySrc, DWORD rop);
 extern BOOL TTYDRV_DC_Chord(TTYDRV_PDEVICE *physDev, INT left, INT top, INT right, INT bottom, INT xstart, INT ystart, INT xend, INT yend);
 extern BOOL TTYDRV_DC_Ellipse(TTYDRV_PDEVICE *physDev, INT left, INT top, INT right, INT bottom);

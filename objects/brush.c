@@ -24,14 +24,35 @@
 
 #include "winbase.h"
 #include "wingdi.h"
-
 #include "wine/wingdi16.h"
 #include "bitmap.h"
-#include "brush.h"
-
 #include "wine/debug.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(gdi);
+
+/* GDI logical brush object */
+typedef struct
+{
+    GDIOBJHDR header;
+    LOGBRUSH  logbrush;
+} BRUSHOBJ;
+
+#define NB_HATCH_STYLES  6
+
+static HGDIOBJ BRUSH_SelectObject( HGDIOBJ handle, void *obj, HDC hdc );
+static INT BRUSH_GetObject16( HGDIOBJ handle, void *obj, INT count, LPVOID buffer );
+static INT BRUSH_GetObject( HGDIOBJ handle, void *obj, INT count, LPVOID buffer );
+static BOOL BRUSH_DeleteObject( HGDIOBJ handle, void *obj );
+
+static const struct gdi_obj_funcs brush_funcs =
+{
+    BRUSH_SelectObject,  /* pSelectObject */
+    BRUSH_GetObject16,   /* pGetObject16 */
+    BRUSH_GetObject,     /* pGetObjectA */
+    BRUSH_GetObject,     /* pGetObjectW */
+    NULL,                /* pUnrealizeObject */
+    BRUSH_DeleteObject   /* pDeleteObject */
+};
 
 static HGLOBAL16 dib_copy(BITMAPINFO *info, UINT coloruse)
 {
@@ -128,7 +149,8 @@ HBRUSH16 WINAPI CreateBrushIndirect16( const LOGBRUSH16 * brush )
     BRUSHOBJ * brushPtr;
     HBRUSH hbrush;
 
-    if (!(brushPtr = GDI_AllocObject( sizeof(BRUSHOBJ), BRUSH_MAGIC, &hbrush ))) return 0;
+    if (!(brushPtr = GDI_AllocObject( sizeof(BRUSHOBJ), BRUSH_MAGIC, &hbrush, &brush_funcs )))
+        return 0;
     brushPtr->logbrush.lbStyle = brush->lbStyle;
     brushPtr->logbrush.lbColor = brush->lbColor;
     brushPtr->logbrush.lbHatch = brush->lbHatch;
@@ -158,7 +180,8 @@ HBRUSH WINAPI CreateBrushIndirect( const LOGBRUSH * brush )
     BOOL success;
     BRUSHOBJ * brushPtr;
     HBRUSH hbrush;
-    if (!(brushPtr = GDI_AllocObject( sizeof(BRUSHOBJ), BRUSH_MAGIC, &hbrush ))) return 0;
+    if (!(brushPtr = GDI_AllocObject( sizeof(BRUSHOBJ), BRUSH_MAGIC, &hbrush, &brush_funcs )))
+        return 0;
     brushPtr->logbrush.lbStyle = brush->lbStyle;
     brushPtr->logbrush.lbColor = brush->lbColor;
     brushPtr->logbrush.lbHatch = brush->lbHatch;
@@ -218,7 +241,7 @@ HBRUSH WINAPI CreatePatternBrush( HBITMAP hbitmap )
     TRACE("%04x\n", hbitmap );
 
     logbrush.lbHatch = hbitmap;
-        return CreateBrushIndirect( &logbrush );
+    return CreateBrushIndirect( &logbrush );
 }
 
 
@@ -236,7 +259,7 @@ HBRUSH16 WINAPI CreateDIBPatternBrush16( HGLOBAL16 hbitmap, UINT16 coloruse )
     logbrush.lbHatch = hbitmap;
 
     return CreateBrushIndirect16( &logbrush );
-    }
+}
 
 
 /***********************************************************************
@@ -374,10 +397,35 @@ BOOL WINAPI FixBrushOrgEx( HDC hdc, INT x, INT y, LPPOINT oldorg )
 
 
 /***********************************************************************
+ *           BRUSH_SelectObject
+ */
+static HGDIOBJ BRUSH_SelectObject( HGDIOBJ handle, void *obj, HDC hdc )
+{
+    BRUSHOBJ *brush = obj;
+    HGDIOBJ ret;
+    DC *dc = DC_GetDCPtr( hdc );
+
+    if (!dc) return 0;
+
+    if (brush->logbrush.lbStyle == BS_PATTERN)
+        BITMAP_SetOwnerDC( (HBITMAP)brush->logbrush.lbHatch, dc );
+
+    ret = dc->hBrush;
+    if (dc->funcs->pSelectBrush) handle = dc->funcs->pSelectBrush( dc->physDev, handle );
+    if (handle) dc->hBrush = handle;
+    else ret = 0;
+    GDI_ReleaseObj( hdc );
+    return ret;
+}
+
+
+/***********************************************************************
  *           BRUSH_DeleteObject
  */
-BOOL BRUSH_DeleteObject( HBRUSH16 hbrush, BRUSHOBJ * brush )
+static BOOL BRUSH_DeleteObject( HGDIOBJ handle, void *obj )
 {
+    BRUSHOBJ *brush = obj;
+
     switch(brush->logbrush.lbStyle)
     {
       case BS_PATTERN:
@@ -387,15 +435,16 @@ BOOL BRUSH_DeleteObject( HBRUSH16 hbrush, BRUSHOBJ * brush )
 	  GlobalFree16( (HGLOBAL16)brush->logbrush.lbHatch );
 	  break;
     }
-    return GDI_FreeObject( hbrush, brush );
+    return GDI_FreeObject( handle, obj );
 }
 
 
 /***********************************************************************
  *           BRUSH_GetObject16
  */
-INT16 BRUSH_GetObject16( BRUSHOBJ * brush, INT16 count, LPSTR buffer )
+static INT BRUSH_GetObject16( HGDIOBJ handle, void *obj, INT count, LPVOID buffer )
 {
+    BRUSHOBJ *brush = obj;
     LOGBRUSH16 logbrush;
 
     logbrush.lbStyle = brush->logbrush.lbStyle;
@@ -410,8 +459,10 @@ INT16 BRUSH_GetObject16( BRUSHOBJ * brush, INT16 count, LPSTR buffer )
 /***********************************************************************
  *           BRUSH_GetObject
  */
-INT BRUSH_GetObject( BRUSHOBJ * brush, INT count, LPSTR buffer )
+static INT BRUSH_GetObject( HGDIOBJ handle, void *obj, INT count, LPVOID buffer )
 {
+    BRUSHOBJ *brush = obj;
+
     if (count > sizeof(brush->logbrush)) count = sizeof(brush->logbrush);
     memcpy( buffer, &brush->logbrush, count );
     return count;
