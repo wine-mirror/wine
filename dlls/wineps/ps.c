@@ -31,13 +31,12 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(psdrv);
 
-static char psheader[] = /* title llx lly urx ury orientation */
+static char psheader[] = /* title llx lly urx ury */
 "%%!PS-Adobe-3.0\n"
 "%%%%Creator: Wine PostScript Driver\n"
 "%%%%Title: %s\n"
 "%%%%BoundingBox: %d %d %d %d\n"
 "%%%%Pages: (atend)\n"
-"%%%%Orientation: %s\n"
 "%%%%EndComments\n";
 
 static char psbeginprolog[] =
@@ -231,15 +230,15 @@ INT PSDRV_WriteFeature(HANDLE16 hJob, char *feature, char *value,
 
 INT PSDRV_WriteHeader( PSDRV_PDEVICE *physDev, LPCSTR title )
 {
-    char *buf, *orient;
+    char *buf;
     INPUTSLOT *slot;
     PAGESIZE *page;
     int llx, lly, urx, ury;
 
-    TRACE("'%s'\n", title);
+    TRACE("'%s'\n", debugstr_a(title));
 
     buf = (char *)HeapAlloc( PSDRV_Heap, 0, sizeof(psheader) +
-			     strlen(title) + 30 );
+			     (title ? strlen(title) : 0) + 30 );
     if(!buf) {
         WARN("HeapAlloc failed\n");
         return 0;
@@ -251,16 +250,9 @@ INT PSDRV_WriteHeader( PSDRV_PDEVICE *physDev, LPCSTR title )
     lly = physDev->ImageableArea.bottom * 72.0 / physDev->logPixelsY;
     urx = physDev->ImageableArea.right * 72.0 / physDev->logPixelsX;
     ury = physDev->ImageableArea.top * 72.0 / physDev->logPixelsY;
-
-    if(physDev->Devmode->dmPublic.u1.s1.dmOrientation == DMORIENT_LANDSCAPE) {
-	orient = "Landscape";
-    } else {
-	orient = "Portrait";
-    }
-
     /* FIXME should do something better with BBox */
 
-    sprintf(buf, psheader, title, llx, lly, urx, ury, orient);
+    sprintf(buf, psheader, title ? title : "", llx, lly, urx, ury);
 
     if( WriteSpool16( physDev->job.hJob, buf, strlen(buf) ) !=
 	                                             strlen(buf) ) {
@@ -668,12 +660,14 @@ BOOL PSDRV_WriteBytes(PSDRV_PDEVICE *physDev, const BYTE *bytes, int number)
     ptr = buf;
 
     for(i = 0; i < number; i++) {
-        sprintf(ptr, "%02x%c", bytes[i],
-		((i & 0xf) == 0xf) || (i == number - 1) ? '\n' : ' ');
-	ptr += 3;
+        sprintf(ptr, "%02x", bytes[i]);
+        ptr += 2;
+        if(((i & 0xf) == 0xf) || (i == number - 1)) {
+            strcpy(ptr, "\n");
+            ptr++;
+        }
     }
-    PSDRV_WriteSpool(physDev, buf, number * 3);
-
+    PSDRV_WriteSpool(physDev, buf, ptr - buf);
     HeapFree(PSDRV_Heap, 0, buf);
     return TRUE;
 }
@@ -697,11 +691,14 @@ BOOL PSDRV_WriteDIBits16(PSDRV_PDEVICE *physDev, const WORD *words, int number)
 	g = g << 3 | g >> 2;
 	b = words[i] & 0x1f;
 	b = b << 3 | b >> 2;
-        sprintf(ptr, "%02x%02x%02x%c", r, g, b,
-		((i & 0x7) == 0x7) || (i == number - 1) ? '\n' : ' ');
-	ptr += 7;
+        sprintf(ptr, "%02x%02x%02x", r, g, b);
+	ptr += 6;
+        if(((i & 0x7) == 0x7) || (i == number - 1)) {
+            strcpy(ptr, "\n");
+            ptr++;
+        }
     }
-    PSDRV_WriteSpool(physDev, buf, number * 7);
+    PSDRV_WriteSpool(physDev, buf, ptr - buf);
 
     HeapFree(PSDRV_Heap, 0, buf);
     return TRUE;
@@ -716,12 +713,15 @@ BOOL PSDRV_WriteDIBits24(PSDRV_PDEVICE *physDev, const BYTE *bits, int number)
     ptr = buf;
 
     for(i = 0; i < number; i++) {
-        sprintf(ptr, "%02x%02x%02x%c", bits[i * 3 + 2], bits[i * 3 + 1],
-		bits[i * 3],
-		((i & 0x7) == 0x7) || (i == number - 1) ? '\n' : ' ');
-	ptr += 7;
+        sprintf(ptr, "%02x%02x%02x", bits[i * 3 + 2], bits[i * 3 + 1],
+		bits[i * 3]);
+	ptr += 6;
+        if(((i & 0x7) == 0x7) || (i == number - 1)) {
+            strcpy(ptr, "\n");
+            ptr++;
+        }
     }
-    PSDRV_WriteSpool(physDev, buf, number * 7);
+    PSDRV_WriteSpool(physDev, buf, ptr - buf);
 
     HeapFree(PSDRV_Heap, 0, buf);
     return TRUE;
@@ -736,12 +736,15 @@ BOOL PSDRV_WriteDIBits32(PSDRV_PDEVICE *physDev, const BYTE *bits, int number)
     ptr = buf;
 
     for(i = 0; i < number; i++) {
-        sprintf(ptr, "%02x%02x%02x%c", bits[i * 4 + 2], bits[i * 4 + 1],
-		bits[i * 4],
-		((i & 0x7) == 0x7) || (i == number - 1) ? '\n' : ' ');
-	ptr += 7;
+        sprintf(ptr, "%02x%02x%02x", bits[i * 4 + 2], bits[i * 4 + 1],
+		bits[i * 4]);
+	ptr += 6;
+        if(((i & 0x7) == 0x7) || (i == number - 1)) {
+            strcpy(ptr, "\n");
+            ptr++;
+        }
     }
-    PSDRV_WriteSpool(physDev, buf, number * 7);
+    PSDRV_WriteSpool(physDev, buf, ptr - buf);
 
     HeapFree(PSDRV_Heap, 0, buf);
     return TRUE;
