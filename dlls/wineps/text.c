@@ -203,6 +203,7 @@ static BOOL PSDRV_Text(DC *dc, INT x, INT y, LPCWSTR str, UINT count,
         /* Do the underline */
 
         if (physDev->font.tm.tmUnderlined) {
+            PSDRV_WriteNewPath(dc); /* will be closed by WriteRectangle */
             if (escapement != 0)  /* rotated text */
             {
                 PSDRV_WriteGSave(dc);  /* save the graphics state */
@@ -227,7 +228,7 @@ static BOOL PSDRV_Text(DC *dc, INT x, INT y, LPCWSTR str, UINT count,
 
         if (physDev->font.tm.tmStruckOut) {
             pos = -physDev->font.tm.tmAscent / 2;
-
+            PSDRV_WriteNewPath(dc); /* will be closed by WriteRectangle */
             if (escapement != 0)  /* rotated text */
             {
                 PSDRV_WriteGSave(dc);  /* save the graphics state */
