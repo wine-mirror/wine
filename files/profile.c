@@ -555,9 +555,10 @@ static INT32 PROFILE_GetSection( PROFILESECTION *section, LPCSTR section_name,
         if (section->name && !strcasecmp( section->name, section_name ))
         {
             UINT32 oldlen = len;
-            for (key = section->key; key && *(key->name); key = key->next)
+            for (key = section->key; key; key = key->next)
             {
                 if (len <= 2) break;
+                if (!*key->name) continue;  /* Skip empty lines */
                 if (IS_ENTRY_COMMENT(key->name)) continue;  /* Skip comments */
                 PROFILE_CopyEntry( buffer, key->name, len - 1, handle_env );
                 len -= strlen(buffer) + 1;
