@@ -1023,6 +1023,9 @@ static void SCROLL_HandleScrollEvent( HWND hwnd, INT nBar, UINT msg, POINT pt)
             SCROLL_TrackingWin = hwnd;
             SCROLL_TrackingBar = nBar;
             SCROLL_TrackingPos = trackThumbPos + lastMousePos - lastClickPos;
+            SCROLL_TrackingVal = SCROLL_GetThumbVal( infoPtr, &rect,
+                                                        vertical,
+                                                        SCROLL_TrackingPos );
 	    if (!SCROLL_MovingThumb)
 		SCROLL_DrawMovingThumb(hdc, &rect, vertical, arrowSize, thumbSize);
         }
