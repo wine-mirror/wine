@@ -10,7 +10,26 @@ SPEC_SRCS = x11drv.spec
 C_SRCS = \
 	x11drv_main.c
 
+EXTRA_OBJS = \
+	$(TOPOBJDIR)/graphics/x11drv/x11drv.o \
+	$(TOPOBJDIR)/tsx11/tsx11.o \
+	$(TOPOBJDIR)/windows/x11drv/x11drv.o
+
+SUBDIRS = \
+	$(TOPOBJDIR)/graphics/x11drv \
+	$(TOPOBJDIR)/tsx11 \
+	$(TOPOBJDIR)/windows/x11drv
+
 @MAKE_DLL_RULES@
+
+$(EXTRA_OBJS): $(TOOLSUBDIRS) dummy
+	@cd `dirname $@` && $(MAKE) `basename $@`
+
+depend::
+	for i in $(SUBDIRS); do (cd $$i && $(MAKE) depend) || exit 1; done
+
+clean::
+	for i in $(SUBDIRS); do (cd $$i && $(MAKE) clean) || exit 1; done
 
 ### Dependencies:
 

@@ -10,7 +10,24 @@ SPEC_SRCS = ttydrv.spec
 C_SRCS = \
 	ttydrv_main.c
 
+EXTRA_OBJS = \
+	$(TOPOBJDIR)/graphics/ttydrv/ttydrv.o \
+	$(TOPOBJDIR)/windows/ttydrv/ttydrv.o
+
+SUBDIRS = \
+	$(TOPOBJDIR)/graphics/ttydrv \
+	$(TOPOBJDIR)/windows/ttydrv
+
 @MAKE_DLL_RULES@
+
+$(EXTRA_OBJS): $(TOOLSUBDIRS) dummy
+	@cd `dirname $@` && $(MAKE) `basename $@`
+
+depend::
+	for i in $(SUBDIRS); do (cd $$i && $(MAKE) depend) || exit 1; done
+
+clean::
+	for i in $(SUBDIRS); do (cd $$i && $(MAKE) clean) || exit 1; done
 
 ### Dependencies:
 

@@ -41,7 +41,6 @@ LIBSUBDIRS = \
 	graphics/enhmetafiledrv \
 	graphics/metafiledrv \
 	graphics/psdrv \
-	graphics/ttydrv \
 	graphics/win16drv \
 	if1632 \
 	library \
@@ -57,13 +56,7 @@ LIBSUBDIRS = \
 	resources \
 	scheduler \
 	win32 \
-	windows \
-	windows/ttydrv
-
-X11SUBDIRS = \
-	graphics/x11drv \
-	tsx11 \
-	windows/x11drv
+	windows
 
 EMUSUBDIRS = \
 	miscemu \
@@ -84,20 +77,19 @@ PROGRAMS = \
 BUILDSUBDIRS = \
 	$(TOOLSUBDIRS) \
 	$(LIBSUBDIRS) \
-	$(X11SUBDIRS) \
 	$(DLLDIR) \
 	$(EMUSUBDIRS) \
 	$(PROGSUBDIRS) \
 	$(DOCSUBDIRS)
 
 # Sub-directories to run make depend into
-DEPENDSUBDIRS = $(LIBSUBDIRS) $(X11SUBDIRS) $(DLLDIR) $(EMUSUBDIRS) $(DOCSUBDIRS)
+DEPENDSUBDIRS = $(LIBSUBDIRS) $(DLLDIR) $(EMUSUBDIRS) $(DOCSUBDIRS)
 
 # Sub-directories to run make install into
 INSTALLSUBDIRS = $(DLLDIR) $(DOCSUBDIRS) $(INCSUBDIRS)
 
 # Sub-directories to run make lint into
-LINTSUBDIRS = $(LIBSUBDIRS) $(X11SUBDIRS) $(DLLDIR) $(EMUSUBDIRS) $(DOCSUBDIRS)
+LINTSUBDIRS = $(LIBSUBDIRS) $(DLLDIR) $(EMUSUBDIRS) $(DOCSUBDIRS)
 
 # Extra sub-directories to clean
 CLEANSUBDIRS = dlls include include/bitmaps include/wine
@@ -116,7 +108,6 @@ LIBOBJS = \
 	graphics/enhmetafiledrv/enhmetafiledrv.o \
 	graphics/metafiledrv/metafiledrv.o \
 	graphics/psdrv/psdrv.o \
-	graphics/ttydrv/ttydrv.o \
 	graphics/win16drv/win16drv.o \
 	if1632/if1632.o \
 	loader/loader.o \
@@ -131,20 +122,14 @@ LIBOBJS = \
 	resources/resources.o \
 	scheduler/scheduler.o \
 	win32/win32.o \
-	windows/windows.o \
-	windows/ttydrv/ttydrv.o
-
-X11OBJS = \
-	graphics/x11drv/x11drv.o \
-	tsx11/tsx11.o \
-	windows/x11drv/x11drv.o
+	windows/windows.o
 
 EMUOBJS = \
 	miscemu/miscemu.o
 
 DLLOBJS = $(DLLS:%=dlls/lib%.@LIBEXT@)
 
-EXTRA_OBJS = $(LIBOBJS) $(X11OBJS)
+EXTRA_OBJS = $(LIBOBJS)
 
 EMU_TARGET = @EMU_TARGET@
 
@@ -152,7 +137,6 @@ all: Make.rules $(PROGRAMS) $(EMU_TARGET)
 	@echo "Wine build complete."
 
 LIBLINTS = $(LIBOBJS:.o=.ln) 
-X11LINTS = $(X11OBJS:.o=.ln)
 EMULINTS = $(EMUOBJS:.o=.ln)
 
 lint:: llib-lwine.ln $(EMULINTS)
@@ -172,8 +156,8 @@ wine wine.sym: lib$(MODULE).$(LIBEXT) $(DLLOBJS) $(EMUOBJS)
 	$(CC) -o wine $(EMUOBJS) $(DLL_LINK) $(LDOPTIONS) $(X_LIBS) $(XLIB) $(LIBS)
 	nm -n wine | grep -v _compiled >wine.sym
 
-llib-lwine.ln : $(LIBLINTS) $(X11LINTS)
-	$(LINT) $(ALLLINTFLAGS) -owine $(LIBLINTS) $(X11LINTS)
+llib-lwine.ln : $(LIBLINTS)
+	$(LINT) $(ALLLINTFLAGS) -owine $(LIBLINTS)
 
 install_so: lib$(MODULE).so.$(SOVERSION)
 	[ -d $(libdir) ] || $(MKDIR) $(libdir)
@@ -214,14 +198,14 @@ lib$(MODULE).a: $(OBJS) Makefile.in Make.rules.in
 checklink::
 	$(CC) -o checklink $(TOPSRCDIR)/library/checklink.c -L. -lwine $(LDOPTIONS) $(X_LIBS) $(XLIB) $(LIBS) && $(RM) checklink
 
-$(X11OBJS) $(EMUOBJS) $(LIBOBJS) $(DLLOBJS) $(PROGRAMS): $(TOOLSUBDIRS) dummy
+$(EMUOBJS) $(LIBOBJS) $(DLLOBJS) $(PROGRAMS): $(TOOLSUBDIRS) dummy
 	@cd `dirname $@` && $(MAKE) `basename $@`
 
 $(BUILDSUBDIRS): dummy
 	@cd $@ && $(MAKE)
 
-$(LIBLINTS) $(X11LINTS) $(EMULINTS): dummy
-	@echo $@ | sed 's%\(.*\)\/[^\/]*%cd \1 \&\& make lint%' | sh
+$(LIBLINTS) $(EMULINTS): dummy
+	@cd `dirname $@` && $(MAKE) lint
 
 install_programs: dummy
 	@cd programs && $(MAKE) install
@@ -254,9 +238,9 @@ htmlpages:
 	for i in $(LIBSUBDIRS); do (cd $$i && $(MAKE) html); done
 
 clean::
-	for i in $(BUILDSUBDIRS); do (cd $$i; $(MAKE) clean) || exit 1; done
-	for i in $(CLEANSUBDIRS); do (cd $$i; $(RM) *.o \#*\# .#* *~ *% *.bak *.orig *.rej *.flc); done
-	$(RM) wine wine.sym libwine.so.1.0 TAGS .#*
+	for i in $(BUILDSUBDIRS); do (cd $$i && $(MAKE) clean) || exit 1; done
+	for i in $(CLEANSUBDIRS); do (cd $$i && $(RM) $(CLEAN_FILES)); done
+	$(RM) wine wine.sym libwine.so.1.0 TAGS
 
 distclean: clean
 	$(RM) config.* Make.rules dlls/Makedll.rules include/config.h documentation/wine.man documentation/wine.conf.man

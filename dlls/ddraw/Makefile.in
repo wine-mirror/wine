@@ -4,6 +4,7 @@ SRCDIR    = @srcdir@
 VPATH     = @srcdir@
 MODULE    = ddraw
 SOVERSION = 1.0
+IMPORTS   = x11drv
 
 SPEC_SRCS = ddraw.spec
 
