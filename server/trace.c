@@ -1455,6 +1455,27 @@ static void dump_set_serial_info_request( const struct set_serial_info_request *
     fprintf( stderr, " commerror=%08x", req->commerror );
 }
 
+static void dump_create_async_request( const struct create_async_request *req )
+{
+    fprintf( stderr, " file_handle=%d,", req->file_handle );
+    fprintf( stderr, " overlapped=%p,", req->overlapped );
+    fprintf( stderr, " buffer=%p,", req->buffer );
+    fprintf( stderr, " count=%d,", req->count );
+    fprintf( stderr, " func=%p,", req->func );
+    fprintf( stderr, " type=%d", req->type );
+}
+
+static void dump_create_async_reply( const struct create_async_request *req )
+{
+    fprintf( stderr, " ov_handle=%d", req->ov_handle );
+}
+
+static void dump_async_result_request( const struct async_result_request *req )
+{
+    fprintf( stderr, " ov_handle=%d,", req->ov_handle );
+    fprintf( stderr, " result=%d", req->result );
+}
+
 static const dump_func req_dumpers[REQ_NB_REQUESTS] = {
     (dump_func)dump_new_process_request,
     (dump_func)dump_wait_process_request,
@@ -1564,6 +1585,8 @@ static const dump_func req_dumpers[REQ_NB_REQUESTS] = {
     (dump_func)dump_create_serial_request,
     (dump_func)dump_get_serial_info_request,
     (dump_func)dump_set_serial_info_request,
+    (dump_func)dump_create_async_request,
+    (dump_func)dump_async_result_request,
 };
 
 static const dump_func reply_dumpers[REQ_NB_REQUESTS] = {
@@ -1674,6 +1697,8 @@ static const dump_func reply_dumpers[REQ_NB_REQUESTS] = {
     (dump_func)dump_wait_input_idle_reply,
     (dump_func)dump_create_serial_reply,
     (dump_func)dump_get_serial_info_reply,
+    (dump_func)0,
+    (dump_func)dump_create_async_reply,
     (dump_func)0,
 };
 
@@ -1786,6 +1811,8 @@ static const char * const req_names[REQ_NB_REQUESTS] = {
     "create_serial",
     "get_serial_info",
     "set_serial_info",
+    "create_async",
+    "async_result",
 };
 
 /* ### make_requests end ### */

@@ -182,6 +182,77 @@ static int serial_get_info( struct object *obj, struct get_file_info_request *re
     return 1;
 }
 
+/* these functions are for interaction with asynchronous i/o objects */
+int serial_async_setup(struct object *obj, struct async *ov)
+{
+    struct serial *serial = (struct serial *)obj;
+    int timeout;
+
+    if(obj->ops != &serial_ops)
+        return 0;
+
+    switch(async_type(ov))
+    {
+    case ASYNC_TYPE_READ:
+        timeout = serial->readconst + serial->readmult*async_count(ov);
+        async_add_timeout(ov, timeout);
+        async_set_eventmask(ov,EV_RXCHAR);
+        break;
+    case ASYNC_TYPE_WRITE:
+        timeout = serial->writeconst + serial->writemult*async_count(ov);
+        async_add_timeout(ov, timeout);
+        async_set_eventmask(ov,EV_TXEMPTY);
+        break;
+    case ASYNC_TYPE_WAIT:
+        async_set_eventmask(ov,serial->eventmask);
+        break;
+    }
+
+    return 1;
+}
+
+int serial_async_get_poll_events( struct async *ov )
+{
+    int events=0,mask;
+
+    switch(async_type(ov))
+    {
+    case ASYNC_TYPE_READ:
+        events |= POLLIN;
+        break;
+    case ASYNC_TYPE_WRITE:
+        events |= POLLOUT;
+        break;
+    case ASYNC_TYPE_WAIT:
+    /* 
+     * FIXME: here is the spot to implement other WaitCommEvent flags
+     */
+        mask = async_get_eventmask(ov);
+        if(mask&EV_RXCHAR)
+            events |= POLLIN;
+        if(mask&EV_TXEMPTY)
+            events |= POLLOUT;
+        break;
+    }
+    return events;
+}
+
+/* receive a select event, and output a windows event */
+int serial_async_poll_event(struct object *obj, int event)
+{
+    int r=0;
+
+    /* 
+     * FIXME: here is the spot to implement other WaitCommEvent flags
+     */
+    if(event & POLLIN)
+        r |= EV_RXCHAR;
+    if(event & POLLOUT)
+        r |= EV_TXEMPTY;
+
+    return r;
+}
+
 /* create a serial */
 DECL_HANDLER(create_serial)
 {

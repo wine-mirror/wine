@@ -46,6 +46,9 @@ static void call_apcs(void)
         {
         case APC_NONE:
             return;  /* no more APCs */
+        case APC_ASYNC:
+            proc( &args[0] );
+            break;
         case APC_USER:
             proc( args[0] );
             break;

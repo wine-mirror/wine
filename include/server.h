@@ -356,7 +356,7 @@ struct get_apc_request
     OUT int          type;         /* function type */
     OUT VARARG(args,ptrs);         /* function arguments */
 };
-enum apc_type { APC_NONE, APC_USER, APC_TIMER };
+enum apc_type { APC_NONE, APC_USER, APC_TIMER, APC_ASYNC };
 
 
 /* Close a handle for the current process */
@@ -1332,6 +1332,32 @@ struct set_serial_info_request
 #define SERIALINFO_SET_MASK      0x02
 #define SERIALINFO_SET_ERROR     0x04
 
+struct create_async_request
+{
+    REQUEST_HEADER;                /* request header */
+    IN  int          file_handle;  /* handle to comm port */
+    IN  void*        overlapped;
+    IN  void*        buffer;
+    IN  int          count;
+    IN  void*        func;
+    IN  int          type;
+    OUT int          ov_handle;
+};
+#define ASYNC_TYPE_READ  0x01
+#define ASYNC_TYPE_WRITE 0x02
+#define ASYNC_TYPE_WAIT  0x03
+
+/*
+ * Used by service thread to tell the server that the current
+ * operation has completed
+ */
+struct async_result_request
+{
+    REQUEST_HEADER;                /* request header */
+    IN  int          ov_handle;
+    IN  int          result;       /* NT status code */
+};
+
 /* Everything below this line is generated automatically by tools/make_requests */
 /* ### make_requests begin ### */
 
@@ -1445,6 +1471,8 @@ enum request
     REQ_CREATE_SERIAL,
     REQ_GET_SERIAL_INFO,
     REQ_SET_SERIAL_INFO,
+    REQ_CREATE_ASYNC,
+    REQ_ASYNC_RESULT,
     REQ_NB_REQUESTS
 };
 
@@ -1560,9 +1588,11 @@ union generic_request
     struct create_serial_request create_serial;
     struct get_serial_info_request get_serial_info;
     struct set_serial_info_request set_serial_info;
+    struct create_async_request create_async;
+    struct async_result_request async_result;
 };
 
-#define SERVER_PROTOCOL_VERSION 26
+#define SERVER_PROTOCOL_VERSION 27
 
 /* ### make_requests end ### */
 /* Everything above this line is generated automatically by tools/make_requests */
