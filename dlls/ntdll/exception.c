@@ -66,8 +66,8 @@ DEBUGHOOK EXC_GetDebugEventHook(void)
  *
  * Handler for exceptions happening inside a handler.
  */
-static DWORD CALLBACK EXC_RaiseHandler( EXCEPTION_RECORD *rec, EXCEPTION_FRAME *frame,
-                                        CONTEXT *context, EXCEPTION_FRAME **dispatcher )
+static DWORD EXC_RaiseHandler( EXCEPTION_RECORD *rec, EXCEPTION_FRAME *frame,
+                               CONTEXT *context, EXCEPTION_FRAME **dispatcher )
 {
     if (rec->ExceptionFlags & (EH_UNWINDING | EH_EXIT_UNWIND))
         return ExceptionContinueSearch;
@@ -82,8 +82,8 @@ static DWORD CALLBACK EXC_RaiseHandler( EXCEPTION_RECORD *rec, EXCEPTION_FRAME *
  *
  * Handler for exceptions happening inside an unwind handler.
  */
-static DWORD CALLBACK EXC_UnwindHandler( EXCEPTION_RECORD *rec, EXCEPTION_FRAME *frame,
-                                         CONTEXT *context, EXCEPTION_FRAME **dispatcher )
+static DWORD EXC_UnwindHandler( EXCEPTION_RECORD *rec, EXCEPTION_FRAME *frame,
+                                CONTEXT *context, EXCEPTION_FRAME **dispatcher )
 {
     if (!(rec->ExceptionFlags & (EH_UNWINDING | EH_EXIT_UNWIND)))
         return ExceptionContinueSearch;

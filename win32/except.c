@@ -110,8 +110,8 @@ LPTOP_LEVEL_EXCEPTION_FILTER WINAPI SetUnhandledExceptionFilter(
  *
  * Exception handler for exception blocks declared in Wine code.
  */
-DWORD WINAPI WINE_exception_handler( EXCEPTION_RECORD *record, EXCEPTION_FRAME *frame,
-                                     CONTEXT *context, LPVOID pdispatcher )
+DWORD WINE_exception_handler( EXCEPTION_RECORD *record, EXCEPTION_FRAME *frame,
+                              CONTEXT *context, LPVOID pdispatcher )
 {
     __WINE_FRAME *wine_frame = (__WINE_FRAME *)frame;
 
@@ -150,8 +150,8 @@ DWORD WINAPI WINE_exception_handler( EXCEPTION_RECORD *record, EXCEPTION_FRAME *
  *
  * Exception handler for try/finally blocks declared in Wine code.
  */
-DWORD WINAPI WINE_finally_handler( EXCEPTION_RECORD *record, EXCEPTION_FRAME *frame,
-                                   CONTEXT *context, LPVOID pdispatcher )
+DWORD WINE_finally_handler( EXCEPTION_RECORD *record, EXCEPTION_FRAME *frame,
+                            CONTEXT *context, LPVOID pdispatcher )
 {
     __WINE_FRAME *wine_frame = (__WINE_FRAME *)frame;
 

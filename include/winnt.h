@@ -708,8 +708,8 @@ typedef struct _EXCEPTION_POINTERS
 
 struct __EXCEPTION_FRAME;
 
-typedef DWORD (CALLBACK *PEXCEPTION_HANDLER)(PEXCEPTION_RECORD,struct __EXCEPTION_FRAME*,
-                                             PCONTEXT,struct __EXCEPTION_FRAME **);
+typedef DWORD (*PEXCEPTION_HANDLER)(PEXCEPTION_RECORD,struct __EXCEPTION_FRAME*,
+                                    PCONTEXT,struct __EXCEPTION_FRAME **);
 
 typedef struct __EXCEPTION_FRAME
 {

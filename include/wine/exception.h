@@ -128,10 +128,10 @@ typedef struct __tagWINE_FRAME
     const struct __tagWINE_FRAME *ExceptionRecord;
 } __WINE_FRAME;
 
-extern DWORD WINAPI WINE_exception_handler( PEXCEPTION_RECORD record, EXCEPTION_FRAME *frame,
-                                            CONTEXT *context, LPVOID pdispatcher );
-extern DWORD WINAPI WINE_finally_handler( PEXCEPTION_RECORD record, EXCEPTION_FRAME *frame,
-                                          CONTEXT *context, LPVOID pdispatcher );
+extern DWORD WINE_exception_handler( PEXCEPTION_RECORD record, EXCEPTION_FRAME *frame,
+                                     CONTEXT *context, LPVOID pdispatcher );
+extern DWORD WINE_finally_handler( PEXCEPTION_RECORD record, EXCEPTION_FRAME *frame,
+                                   CONTEXT *context, LPVOID pdispatcher );
 
 #endif /* USE_COMPILER_EXCEPTIONS */
 
