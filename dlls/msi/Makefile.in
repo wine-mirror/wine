@@ -15,6 +15,7 @@ C_SRCS = \
 	order.c \
 	record.c \
 	select.c \
+	string.c \
 	suminfo.c \
 	table.c \
 	tokenize.c \

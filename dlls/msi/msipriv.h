@@ -38,28 +38,13 @@
 struct tagMSITABLE;
 typedef struct tagMSITABLE MSITABLE;
 
-typedef struct pool_data_tag
-{
-    USHORT *data;
-    UINT size;
-} pool_data;
-
-typedef struct string_data_tag
-{
-    CHAR *data;
-    UINT size;
-} string_data;
-
-typedef struct string_table_tag
-{
-    pool_data   pool;
-    string_data info;
-} string_table;
+struct string_table;
+typedef struct string_table string_table;
 
 typedef struct tagMSIDATABASE
 {
     IStorage *storage;
-    string_table strings;
+    string_table *strings;
     LPWSTR mode;
     MSITABLE *first_table, *last_table;
 } MSIDATABASE;
@@ -167,10 +152,15 @@ extern void free_table( MSIDATABASE *db, MSITABLE *table );
 extern void free_cached_tables( MSIDATABASE *db );
 extern UINT find_cached_table(MSIDATABASE *db, LPCWSTR name, MSITABLE **table);
 extern UINT get_table(MSIDATABASE *db, LPCWSTR name, MSITABLE **table);
-extern UINT dump_string_table(MSIDATABASE *db);
-extern UINT load_string_table( MSIDATABASE *db, string_table *pst);
+extern UINT load_string_table( MSIDATABASE *db );
+
+/* string table functions */
+extern BOOL msi_addstring( string_table *st, UINT string_no, CHAR *data, UINT len, UINT refcount );
 extern UINT msi_id2string( string_table *st, UINT string_no, LPWSTR buffer, UINT *sz );
 extern LPWSTR MSI_makestring( MSIDATABASE *db, UINT stringid);
+extern UINT msi_string2id( string_table *st, LPCWSTR buffer, UINT *id );
+extern string_table *msi_init_stringtable( int entries );
+extern VOID msi_destroy_stringtable( string_table *st );
 
 UINT VIEW_find_column( MSIVIEW *view, LPWSTR name, UINT *n );
 

@@ -246,7 +246,7 @@ UINT WINAPI MsiOpenDatabaseW(
     }
     db->storage = stg;
     db->mode = szMode;
-    ret = load_string_table( db, &db->strings);
+    ret = load_string_table( db );
     if( ret != ERROR_SUCCESS )
         goto end;
 

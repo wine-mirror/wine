@@ -49,8 +49,6 @@ struct tagMSITABLE
     USHORT *data;
     UINT size;
     UINT ref_count;
-    /* MSICOLUMNINFO *columns; */
-    /* UINT num_cols; */
     struct tagMSITABLE *next;
     struct tagMSITABLE *prev;
     WCHAR name[1];
@@ -332,34 +330,21 @@ UINT get_table(MSIDATABASE *db, LPCWSTR name, MSITABLE **ptable)
     return ERROR_SUCCESS;
 }
 
-UINT dump_string_table(MSIDATABASE *db)
-{
-    DWORD i, count, offset, len;
-    string_table *st = &db->strings;
-
-    MESSAGE("%d,%d bytes\n",st->pool.size,st->info.size);
-
-    count = st->pool.size/4;
-
-    offset = 0;
-    for(i=0; i<count; i++)
-    {
-        len = st->pool.data[i*2];
-        MESSAGE("[%2ld] = %s\n",i, debugstr_an(st->info.data+offset,len));
-        offset += len;
-    }
-
-    return ERROR_SUCCESS;
-}
-
-UINT load_string_table( MSIDATABASE *db, string_table *pst)
+UINT load_string_table( MSIDATABASE *db )
 {
     MSITABLE *pool = NULL, *info = NULL;
     UINT r, ret = ERROR_FUNCTION_FAILED;
+    DWORD i, count, offset, len;
     const WCHAR szStringData[] = { 
         '_','S','t','r','i','n','g','D','a','t','a',0 };
     const WCHAR szStringPool[] = { 
         '_','S','t','r','i','n','g','P','o','o','l',0 };
+
+    if( db->strings )
+    {
+        msi_destroy_stringtable( db->strings );
+        db->strings = NULL;
+    }
 
     r = get_table( db, szStringPool, &pool );
     if( r != ERROR_SUCCESS)
@@ -368,12 +353,18 @@ UINT load_string_table( MSIDATABASE *db, string_table *pst)
     if( r != ERROR_SUCCESS)
         goto end;
 
-    pst->pool.size = pool->size;
-    pst->pool.data = pool->data;
-    pst->info.size = info->size;
-    pst->info.data = (CHAR *)info->data;
+    count = pool->size/4;
+    db->strings = msi_init_stringtable( count );
 
-    TRACE("Loaded %d,%d bytes\n",pst->pool.size,pst->info.size);
+    offset = 0;
+    for( i=0; i<count; i++ )
+    {
+        len = pool->data[i*2];
+        msi_addstring( db->strings, i, (LPSTR)info->data+offset, len, pool->data[i*2+1] );
+        offset += len;
+    }
+
+    TRACE("Loaded %ld strings\n", count);
 
     ret = ERROR_SUCCESS;
 
@@ -384,78 +375,6 @@ end:
         release_table( db, pool );
 
     return ret;
-}
-
-UINT msi_id2string( string_table *st, UINT string_no, LPWSTR buffer, UINT *sz )
-{
-    DWORD i, count, offset, len;
-
-    count = st->pool.size/4;
-    TRACE("Finding string %d of %ld\n", string_no, count);
-    if(string_no >= count)
-        return ERROR_FUNCTION_FAILED;
-
-    offset = 0;
-    for(i=0; i<string_no; i++)
-    {
-        len = st->pool.data[i*2];
-        offset += len;
-    }
-
-    len = st->pool.data[i*2];
-
-    if( !buffer )
-    {
-        *sz = len;
-        return ERROR_SUCCESS;
-    }
-
-    if( (offset+len) > st->info.size )
-        return ERROR_FUNCTION_FAILED;
-
-    len = MultiByteToWideChar(CP_ACP,0,&st->info.data[offset],len,buffer,*sz-1); 
-    buffer[len] = 0;
-    *sz = len+1;
-
-    return ERROR_SUCCESS;
-}
-
-static UINT msi_string2id( string_table *st, LPCWSTR buffer, UINT *id )
-{
-    DWORD i, count, offset, len, sz;
-    UINT r = ERROR_INVALID_PARAMETER;
-    LPSTR str;
-
-    count = st->pool.size/4;
-    TRACE("Finding string %s in %ld strings\n", debugstr_w(buffer), count);
-
-    sz = WideCharToMultiByte( CP_ACP, 0, buffer, -1, NULL, 0, NULL, NULL );
-    if( sz <= 0 )
-        return r;
-    str = HeapAlloc( GetProcessHeap(), 0, sz );
-    if( !str )
-        return ERROR_NOT_ENOUGH_MEMORY;
-    WideCharToMultiByte( CP_ACP, 0, buffer, -1, str, sz, NULL, NULL );
-
-    offset = 0;
-    sz--;  /* nul terminated */
-    for(i=0; i<count; i++)
-    {
-        len = st->pool.data[i*2];
-        if ( ( sz == len ) && !memcmp( str, st->info.data+offset, sz ) )
-        {
-            TRACE("%ld <- %s\n",i,debugstr_an(st->info.data+offset, len) );
-            *id = i;
-            r = ERROR_SUCCESS;
-            break;
-        }
-        offset += len;
-    }
-
-    if( str )
-        HeapFree( GetProcessHeap(), 0, str );
-
-    return r;
 }
 
 static LPWSTR strdupW( LPCWSTR str )
@@ -537,14 +456,14 @@ LPWSTR MSI_makestring( MSIDATABASE *db, UINT stringid)
     UINT sz=0, r;
     LPWSTR str;
 
-    r = msi_id2string( &db->strings, stringid, NULL, &sz );
+    r = msi_id2string( db->strings, stringid, NULL, &sz );
     if( r != ERROR_SUCCESS )
         return NULL;
     sz ++; /* space for NUL char */
     str = HeapAlloc( GetProcessHeap(), 0, sz*sizeof (WCHAR));
     if( !str )
         return str;
-    r = msi_id2string( &db->strings, stringid, str, &sz );
+    r = msi_id2string( db->strings, stringid, str, &sz );
     if( r == ERROR_SUCCESS )
         return str;
     HeapFree(  GetProcessHeap(), 0, str );
@@ -571,7 +490,7 @@ UINT get_tablecolumns( MSIDATABASE *db,
     }
 
     /* convert table and column names to IDs from the string table */
-    r = msi_string2id( &db->strings, szTableName, &table_id );
+    r = msi_string2id( db->strings, szTableName, &table_id );
     if( r != ERROR_SUCCESS )
     {
         release_table( db, table );
@@ -634,7 +553,7 @@ BOOL TABLE_Exists( MSIDATABASE *db, LPWSTR name )
     if( !lstrcmpW( name, szColumns ) )
         return TRUE;
 
-    r = msi_string2id( &db->strings, name, &table_id );
+    r = msi_string2id( db->strings, name, &table_id );
     if( r != ERROR_SUCCESS )
     {
         ERR("Couldn't find id for %s\n", debugstr_w(name));
