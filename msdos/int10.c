@@ -684,12 +684,12 @@ else {
     case 0x4f: /* Get SuperVGA INFORMATION */
         {
           BYTE *p =
-               CTX_SEG_OFF_TO_LIN(context, ES_reg(context), DI_reg(context));
-          BOOL16 vesa20 = (*(DWORD *)p == "VBE2");
+               CTX_SEG_OFF_TO_LIN(context, ES_reg(context), EDI_reg(context));
+          /* BOOL16 vesa20 = (*(DWORD *)p == *(DWORD *)"VBE2"); */
   
           TRACE(int10, "Get SuperVGA information\n");
           AH_reg(context) = 0;
-          *(WORD *)p = "VESA";
+          *(DWORD *)p = *(DWORD *)"VESA";
           *(WORD *)(p+0x04) = 0x0200; /* VESA 2.0 */
           *(DWORD *)(p+0x06) = NULL;   /* pointer to OEM name */
           *(DWORD *)(p+0x0a) = 0xfffffffd; /* capabilities flags :-) */
