@@ -530,6 +530,6 @@ EOF
 <!-- Keep this comment at the end of the file
 Local variables:
 mode: sgml
-sgml-parent-document:("wine-doc.sgml" "set" "book" "part" "chapter" "")
+sgml-parent-document:("wine-devel.sgml" "set" "book" "part" "chapter" "")
 End:
 -->

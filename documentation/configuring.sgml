@@ -3434,6 +3434,6 @@ export LIB_ODBC_DRIVER_MANAGER=/usr/lib/libodbc.so.1.0.0
 <!-- Keep this comment at the end of the file
 Local variables:
 mode: sgml
-sgml-parent-document:("wine-doc.sgml" "set" "book" "chapter" "")
+sgml-parent-document:("wine-user.sgml" "set" "book" "chapter" "")
 End:
 -->

@@ -38,12 +38,6 @@ echo "./db2html-winehq wine-faq.sgml"
 tar czf winedoc-html.tgz wine-user wine-devel winelib-user wine-faq
 cp winedoc-html.tgz "$WWWDIR"
 
-## Create one-book HTML tarball
-echo "./db2html-winehq wine-doc.sgml"
-./db2html-winehq wine-doc.sgml
-tar czf wine-set-html.tgz wine-doc
-cp wine-set-html.tgz "$WWWDIR"
-
 ## Create PostScript tarball
 echo "db2ps -d ./print.dsl wine-user.sgml"
 db2ps -d ./print.dsl wine-user.sgml > /dev/null 2>&1

@@ -1080,11 +1080,8 @@ BOOL WINAPI PathRelativePathToA(
                   single unit, you can place them all inside a set.
                   This is useful when you want to bundle up
                   documentation in alternate ways.  We do this with
-                  the Wine documentation, using a <sgmltag
-                  class="starttag">set</sgmltag> to put everything
-                  into a single directory (see
-                  <filename>documentation/wine-doc.sgml</filename>),
-                  and a <sgmltag class="starttag">book</sgmltag> to
+                  the Wine documentation, using 
+                  <sgmltag class="starttag">book</sgmltag> to
                   put each Wine guide into a separate directory (see
                   <filename>documentation/wine-devel.sgml</filename>,
                   etc.).
@@ -1737,6 +1734,6 @@ BOOL WINAPI PathRelativePathToA(
 <!-- Keep this comment at the end of the file
 Local variables:
 mode: sgml
-sgml-parent-document:("wine-doc.sgml" "set" "book" "part" "chapter" "")
+sgml-parent-document:("wine-devel.sgml" "set" "book" "part" "chapter" "")
 End:
 -->

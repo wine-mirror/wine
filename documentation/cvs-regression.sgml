@@ -156,6 +156,6 @@ cvs -d $CVSROOT update -D "2002-06-01 15:17:25 CST"
   <!-- Keep this comment at the end of the file
   Local variables:
   mode: sgml
-  sgml-parent-document:("wine-doc.sgml" "set" "book" "part" "chapter" "")
+  sgml-parent-document:("wine-devel.sgml" "set" "book" "part" "chapter" "")
   End:
   -->

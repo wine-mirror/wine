@@ -391,6 +391,6 @@ printf("Processor architecture=%d\n",si ANONS .wProcessorArchitecture);
 <!-- Keep this comment at the end of the file
 Local variables:
 mode: sgml
-sgml-parent-document:("wine-doc.sgml" "book" "chapter" "")
+sgml-parent-document:("winelib-user.sgml" "book" "chapter" "")
 End:
 -->

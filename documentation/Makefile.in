@@ -3,7 +3,6 @@ TOPOBJDIR = ..
 SRCDIR    = @srcdir@
 VPATH     = @srcdir@
 MODULE    = none
-BOOKNAME  = wine-doc
 DB2HTML   = @DB2HTML@
 DB2PDF    = @DB2PDF@
 DB2PS     = @DB2PS@
@@ -83,10 +82,7 @@ html: $(ALLBOOKS:%=%/index.html)
 pdf: $(ALLBOOKS:%=%.pdf)
 ps: $(ALLBOOKS:%=%.ps)
 
-# this is the all-in-one book, not built by default
-wine-doc: wine-doc/index.html wine-doc.pdf wine-doc.ps
-
-.PHONY: everything doc html pdf ps wine-doc dist
+.PHONY: everything doc html pdf ps dist
 
 .SUFFIXES: .sgml /index.html .pdf .ps
 
@@ -103,7 +99,6 @@ wine-devel.pdf wine-devel.ps wine-devel/index.html: $(WINE_DEVEL_SRCS)
 wine-faq.pdf wine-faq.ps wine-faq/index.html: $(WINE_FAQ_SRCS)
 wine-user.pdf wine-user.ps wine-user/index.html: $(WINE_USER_SRCS)
 winelib-user.pdf winelib-user.ps winelib-user/index.html: $(WINELIB_USER_SRCS)
-wine-doc.pdf wine-doc.ps wine-doc/index.html: $(WINE_DOC_SRCS)
 
 wine.man: wine.man.in
 	sed -e 's,@bindir\@,$(bindir),g' -e 's,@dlldir\@,$(dlldir),g' -e 's,@PACKAGE_STRING\@,@PACKAGE_STRING@,g' $(SRCDIR)/wine.man.in >$@ || $(RM) $@
@@ -139,6 +134,6 @@ install-api-man::
 
 clean::
 	$(RM) *.aux *.dvi *.out *.pdf *.ps *.tex *.log wine-doc-*.tar.gz $(MAN_TARGETS)
-	$(RM) -r wine-doc $(ALLBOOKS) html api-guide man$(api_manext) *.junk DBTOHTML_OUTPUT_DIR*
+	$(RM) -r $(ALLBOOKS) html api-guide man$(api_manext) *.junk DBTOHTML_OUTPUT_DIR*
 
 ### Dependencies:
