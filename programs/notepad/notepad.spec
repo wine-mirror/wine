@@ -3,3 +3,4 @@ mode	guiexe
 type	win32
 init	WinMain
 rsrc	notepad
+import	comdlg32.dll
