@@ -216,7 +216,6 @@ install::
 # anything extra the user may have put there.
 uninstall::
 	cd $(includedir) && $(RM) $(INSTALLED_INCLUDES)
-	-rmdir $(includedir)/wine/msvcrt/sys $(includedir)/wine/msvcrt
-	-rmdir $(includedir)/wine $(includedir)
+	-rmdir $(includedir)/msvcrt/sys $(includedir)/msvcrt $(includedir)/wine $(includedir)
 
 ### Dependencies:
