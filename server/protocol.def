@@ -1442,11 +1442,15 @@ enum char_info_mode
     int          period;        /* timer period in ms */
     void*        callback;      /* callback function */
     void*        arg;           /* callback argument */
+@REPLY
+    int          signaled;      /* was the timer signaled before this call ? */
 @END
 
 /* Cancel a waitable timer */
 @REQ(cancel_timer)
     obj_handle_t handle;        /* handle to the timer */
+@REPLY
+     int         signaled;      /* was the timer signaled before this calltime ? */
 @END
 
 

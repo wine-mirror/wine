@@ -69,52 +69,6 @@ typedef struct LpcMessage
 } LPCMESSAGE, *PLPCMESSAGE;
 
 /*
- *	Timer object
- */
-
-/**************************************************************************
- *		NtCreateTimer				[NTDLL.@]
- *		ZwCreateTimer				[NTDLL.@]
- */
-NTSTATUS WINAPI NtCreateTimer(
-	OUT PHANDLE TimerHandle,
-	IN ACCESS_MASK DesiredAccess,
-	IN POBJECT_ATTRIBUTES ObjectAttributes OPTIONAL,
-	IN TIMER_TYPE TimerType)
-{
-	FIXME("(%p,0x%08lx,%p,0x%08x) stub\n",
-	TimerHandle,DesiredAccess,ObjectAttributes, TimerType);
-	dump_ObjectAttributes(ObjectAttributes);
-	return 0;
-}
-/**************************************************************************
- *		NtSetTimer				[NTDLL.@]
- *		ZwSetTimer				[NTDLL.@]
- */
-NTSTATUS WINAPI NtSetTimer(
-	IN HANDLE TimerHandle,
-	IN PLARGE_INTEGER DueTime,
-	IN PTIMERAPCROUTINE TimerApcRoutine,
-	IN PVOID TimerContext,
-	IN BOOLEAN WakeTimer,
-	IN ULONG Period OPTIONAL,
-	OUT PBOOLEAN PreviousState OPTIONAL)
-{
-	FIXME("(%p,%p,%p,%p,%08x,0x%08lx,%p) stub\n",
-	TimerHandle,DueTime,TimerApcRoutine,TimerContext,WakeTimer,Period,PreviousState);
-	return 0;
-}
-
-/******************************************************************************
- * NtQueryTimerResolution [NTDLL.@]
- */
-NTSTATUS WINAPI NtQueryTimerResolution(DWORD x1,DWORD x2,DWORD x3)
-{
-	FIXME("(0x%08lx,0x%08lx,0x%08lx), stub!\n",x1,x2,x3);
-	return 1;
-}
-
-/*
  *	Process object
  */
 

@@ -68,7 +68,7 @@
 @ stdcall NtAllocateVirtualMemory(long ptr ptr ptr long long)
 @ stub NtCallbackReturn
 @ stub NtCancelIoFile
-@ stub NtCancelTimer
+@ stdcall NtCancelTimer(long ptr)
 @ stdcall NtClearEvent(long)
 @ stdcall NtClose(long)
 @ stub NtCloseObjectAuditAlarm
@@ -144,7 +144,7 @@
 @ stdcall NtOpenSymbolicLinkObject (long long long)
 @ stdcall NtOpenThread(ptr long ptr ptr)
 @ stdcall NtOpenThreadToken(long long long long)
-@ stub NtOpenTimer
+@ stdcall NtOpenTimer(ptr long ptr)
 @ stub NtPlugPlayControl
 @ stub NtPrivilegeCheck
 @ stub NtPrivilegeObjectAuditAlarm
@@ -231,7 +231,7 @@
 @ stub NtSetSystemPowerState
 @ stdcall NtSetSystemTime(ptr ptr)
 @ stdcall NtSetTimer(long ptr ptr ptr long long ptr)
-@ stub NtSetTimerResolution
+@ stdcall NtSetTimerResolution(long long ptr)
 @ stdcall NtSetValueKey(long long long long long long)
 @ stdcall NtSetVolumeInformationFile(long ptr ptr long long)
 @ stub NtShutdownSystem
@@ -599,7 +599,7 @@
 @ stdcall ZwAllocateVirtualMemory(long ptr ptr ptr long long) NtAllocateVirtualMemory
 @ stub ZwCallbackReturn
 @ stub ZwCancelIoFile
-@ stub ZwCancelTimer
+@ stdcall ZwCancelTimer(long ptr) NtCancelTimer
 @ stdcall ZwClearEvent(long) NtClearEvent
 @ stdcall ZwClose(long) NtClose
 @ stub ZwCloseObjectAuditAlarm
@@ -674,7 +674,7 @@
 @ stdcall ZwOpenSymbolicLinkObject (long long long) NtOpenSymbolicLinkObject
 @ stdcall ZwOpenThread(ptr long ptr ptr) NtOpenThread
 @ stdcall ZwOpenThreadToken(long long long long) NtOpenThreadToken
-@ stub ZwOpenTimer
+@ stdcall ZwOpenTimer(ptr long ptr) NtOpenTimer
 @ stub ZwPlugPlayControl
 @ stub ZwPrivilegeCheck
 @ stub ZwPrivilegeObjectAuditAlarm
@@ -758,7 +758,7 @@
 @ stub ZwSetSystemPowerState
 @ stdcall ZwSetSystemTime(ptr ptr) NtSetSystemTime
 @ stdcall ZwSetTimer(long ptr ptr ptr long long ptr) NtSetTimer
-@ stub ZwSetTimerResolution
+@ stdcall ZwSetTimerResolution(long long) NtSetTimerResolution
 @ stdcall ZwSetValueKey(long long long long long long) NtSetValueKey
 @ stdcall ZwSetVolumeInformationFile(long ptr ptr long long) NtSetVolumeInformationFile
 @ stub ZwShutdownSystem

@@ -115,8 +115,10 @@ static void timer_callback( void *private )
 }
 
 /* cancel a running timer */
-static void cancel_timer( struct timer *timer )
+static int cancel_timer( struct timer *timer )
 {
+    int signaled = timer->signaled;
+
     if (timer->timeout)
     {
         remove_timeout_user( timer->timeout );
@@ -128,13 +130,14 @@ static void cancel_timer( struct timer *timer )
         release_object( timer->thread );
         timer->thread = NULL;
     }
+    return signaled;
 }
 
 /* set the timer expiration and period */
-static void set_timer( struct timer *timer, const abs_time_t *expire, int period,
-                       void *callback, void *arg )
+static int set_timer( struct timer *timer, const abs_time_t *expire, int period,
+                      void *callback, void *arg )
 {
-    cancel_timer( timer );
+    int signaled = cancel_timer( timer );
     if (timer->manual)
     {
         period = 0;  /* period doesn't make any sense for a manual timer */
@@ -156,6 +159,7 @@ static void set_timer( struct timer *timer, const abs_time_t *expire, int period
     timer->arg          = arg;
     if (callback) timer->thread = (struct thread *)grab_object( current );
     timer->timeout = add_timeout_user( &timer->when, timer_callback, timer );
+    return signaled;
 }
 
 static void timer_dump( struct object *obj, int verbose )
@@ -220,7 +224,7 @@ DECL_HANDLER(set_timer)
     if ((timer = (struct timer *)get_handle_obj( current->process, req->handle,
                                                  TIMER_MODIFY_STATE, &timer_ops )))
     {
-        set_timer( timer, &req->expire, req->period, req->callback, req->arg );
+        reply->signaled = set_timer( timer, &req->expire, req->period, req->callback, req->arg );
         release_object( timer );
     }
 }
@@ -233,7 +237,7 @@ DECL_HANDLER(cancel_timer)
     if ((timer = (struct timer *)get_handle_obj( current->process, req->handle,
                                                  TIMER_MODIFY_STATE, &timer_ops )))
     {
-        cancel_timer( timer );
+        reply->signaled = cancel_timer( timer );
         release_object( timer );
     }
 }

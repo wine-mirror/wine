@@ -1687,9 +1687,19 @@ static void dump_set_timer_request( const struct set_timer_request *req )
     fprintf( stderr, " arg=%p", req->arg );
 }
 
+static void dump_set_timer_reply( const struct set_timer_reply *req )
+{
+    fprintf( stderr, " signaled=%d", req->signaled );
+}
+
 static void dump_cancel_timer_request( const struct cancel_timer_request *req )
 {
     fprintf( stderr, " handle=%p", req->handle );
+}
+
+static void dump_cancel_timer_reply( const struct cancel_timer_reply *req )
+{
+    fprintf( stderr, " signaled=%d", req->signaled );
 }
 
 static void dump_get_thread_context_request( const struct get_thread_context_request *req )
@@ -2737,8 +2747,8 @@ static const dump_func reply_dumpers[REQ_NB_REQUESTS] = {
     (dump_func)0,
     (dump_func)dump_create_timer_reply,
     (dump_func)dump_open_timer_reply,
-    (dump_func)0,
-    (dump_func)0,
+    (dump_func)dump_set_timer_reply,
+    (dump_func)dump_cancel_timer_reply,
     (dump_func)dump_get_thread_context_reply,
     (dump_func)0,
     (dump_func)dump_get_selector_entry_reply,

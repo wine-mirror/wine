@@ -59,24 +59,26 @@ HANDLE WINAPI CreateWaitableTimerA( SECURITY_ATTRIBUTES *sa, BOOL manual, LPCSTR
  */
 HANDLE WINAPI CreateWaitableTimerW( SECURITY_ATTRIBUTES *sa, BOOL manual, LPCWSTR name )
 {
-    HANDLE ret;
-    DWORD len = name ? strlenW(name) : 0;
-    if (len >= MAX_PATH)
+    HANDLE              handle;
+    NTSTATUS            status;
+    UNICODE_STRING      us;
+    DWORD               attr = 0;
+    OBJECT_ATTRIBUTES   oa;
+
+    if (name) RtlInitUnicodeString(&us, name);
+    if (sa && (sa->nLength >= sizeof(*sa)) && sa->bInheritHandle)
+        attr |= OBJ_INHERIT;
+    InitializeObjectAttributes(&oa, name ? &us : NULL, attr, 
+                               NULL /* FIXME */, NULL /* FIXME */);
+    status = NtCreateTimer(&handle, TIMER_ALL_ACCESS, &oa, 
+                           manual ? NotificationTimer : SynchronizationTimer);
+    
+    if (status != STATUS_SUCCESS)
     {
-        SetLastError( ERROR_FILENAME_EXCED_RANGE );
-        return 0;
+        SetLastError( RtlNtStatusToDosError(status) );
+        return NULL;
     }
-    SERVER_START_REQ( create_timer )
-    {
-        req->manual  = manual;
-        req->inherit = (sa && (sa->nLength>=sizeof(*sa)) && sa->bInheritHandle);
-        wine_server_add_data( req, name, len * sizeof(WCHAR) );
-        SetLastError(0);
-        wine_server_call_err( req );
-        ret = reply->handle;
-    }
-    SERVER_END_REQ;
-    return ret;
+    return handle;
 }
 
 
@@ -103,23 +105,23 @@ HANDLE WINAPI OpenWaitableTimerA( DWORD access, BOOL inherit, LPCSTR name )
  */
 HANDLE WINAPI OpenWaitableTimerW( DWORD access, BOOL inherit, LPCWSTR name )
 {
-    HANDLE ret;
-    DWORD len = name ? strlenW(name) : 0;
-    if (len >= MAX_PATH)
+    NTSTATUS            status;
+    ULONG               attr = 0;
+    UNICODE_STRING      us;
+    HANDLE              handle;
+    OBJECT_ATTRIBUTES   oa;
+
+    if (inherit) attr |= OBJ_INHERIT;
+
+    if (name) RtlInitUnicodeString(&us, name);
+    InitializeObjectAttributes(&oa, name ? &us : NULL, attr, NULL /* FIXME */, NULL /* FIXME */);
+    status = NtOpenTimer(&handle, access, &oa);
+    if (status != STATUS_SUCCESS)
     {
-        SetLastError( ERROR_FILENAME_EXCED_RANGE );
-        return 0;
+        SetLastError( RtlNtStatusToDosError(status) );
+        return NULL;
     }
-    SERVER_START_REQ( open_timer )
-    {
-        req->access  = access;
-        req->inherit = inherit;
-        wine_server_add_data( req, name, len * sizeof(WCHAR) );
-        wine_server_call_err( req );
-        ret = reply->handle;
-    }
-    SERVER_END_REQ;
-    return ret;
+    return handle;
 }
 
 
@@ -129,27 +131,15 @@ HANDLE WINAPI OpenWaitableTimerW( DWORD access, BOOL inherit, LPCWSTR name )
 BOOL WINAPI SetWaitableTimer( HANDLE handle, const LARGE_INTEGER *when, LONG period,
                               PTIMERAPCROUTINE callback, LPVOID arg, BOOL resume )
 {
-    BOOL ret;
-
-    SERVER_START_REQ( set_timer )
+    NTSTATUS status;
+    
+    status = NtSetTimer(handle, when, callback, arg, resume, period, NULL);
+    if (status != STATUS_SUCCESS)
     {
-        if (!when->s.LowPart && !when->s.HighPart)
-        {
-            /* special case to start timeout on now+period without too many calculations */
-            req->expire.sec  = 0;
-            req->expire.usec = 0;
-        }
-        else NTDLL_get_server_timeout( &req->expire, when );
-
-        req->handle   = handle;
-        req->period   = period;
-        req->callback = callback;
-        req->arg      = arg;
-        if (resume) SetLastError( ERROR_NOT_SUPPORTED ); /* set error but can still succeed */
-        ret = !wine_server_call_err( req );
+        SetLastError( RtlNtStatusToDosError(status) );
+        if (status != STATUS_TIMER_RESUME_IGNORED) return FALSE;
     }
-    SERVER_END_REQ;
-    return ret;
+    return TRUE;
 }
 
 
@@ -158,21 +148,22 @@ BOOL WINAPI SetWaitableTimer( HANDLE handle, const LARGE_INTEGER *when, LONG per
  */
 BOOL WINAPI CancelWaitableTimer( HANDLE handle )
 {
-    BOOL ret;
-    SERVER_START_REQ( cancel_timer )
+    NTSTATUS status;
+
+    status = NtCancelTimer(handle, NULL);
+    if (status != STATUS_SUCCESS)
     {
-        req->handle = handle;
-        ret = !wine_server_call_err( req );
+        SetLastError( RtlNtStatusToDosError(status) );
+        return FALSE;
     }
-    SERVER_END_REQ;
-    return ret;
+    return TRUE;
 }
 
 
 /***********************************************************************
  *           CreateTimerQueue  (KERNEL32.@)
  */
-HANDLE WINAPI CreateTimerQueue()
+HANDLE WINAPI CreateTimerQueue(void)
 {
     FIXME("stub\n");
     SetLastError(ERROR_CALL_NOT_IMPLEMENTED);

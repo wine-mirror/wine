@@ -1,8 +1,10 @@
 /*
  *	Process synchronisation
  *
- * Copyright 1997 Alexandre Julliard
+ * Copyright 1996, 1997, 1998 Marcus Meissner
+ * Copyright 1997, 1999 Alexandre Julliard
  * Copyright 1999, 2000 Juergen Schmied
+ * Copyright 2003 Eric Pouech
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -279,6 +281,150 @@ NTSTATUS WINAPI NtQueryEvent (
 {
 	FIXME("(%p)\n", EventHandle);
 	return STATUS_SUCCESS;
+}
+
+
+/*
+ *	Timers
+ */
+
+/**************************************************************************
+ *		NtCreateTimer				[NTDLL.@]
+ *		ZwCreateTimer				[NTDLL.@]
+ */
+NTSTATUS WINAPI NtCreateTimer(OUT HANDLE *handle,
+                              IN ACCESS_MASK access,
+                              IN const OBJECT_ATTRIBUTES *oa OPTIONAL,
+                              IN TIMER_TYPE timer_type)
+{
+    NTSTATUS    status;
+
+    if (timer_type != NotificationTimer && timer_type != SynchronizationTimer)
+        return STATUS_INVALID_PARAMETER;
+
+    SERVER_START_REQ( create_timer )
+    {
+        req->manual  = (timer_type == NotificationTimer) ? TRUE : FALSE;
+        req->inherit = oa && (oa->Attributes & OBJ_INHERIT);
+        if (oa && oa->ObjectName->Length)
+            wine_server_add_data( req, oa->ObjectName->Buffer, oa->ObjectName->Length );
+        status = wine_server_call( req );
+        *handle = reply->handle;
+    }
+    SERVER_END_REQ;
+    return status;
+
+}
+
+/**************************************************************************
+ *		NtOpenTimer				[NTDLL.@]
+ *		ZwOpenTimer				[NTDLL.@]
+ */
+NTSTATUS WINAPI NtOpenTimer(OUT PHANDLE handle,
+                            IN ACCESS_MASK access,
+                            IN const OBJECT_ATTRIBUTES* oa )
+{
+    NTSTATUS status;
+
+    if (oa && oa->Length >= MAX_PATH * sizeof(WCHAR))
+        return STATUS_NAME_TOO_LONG;
+
+    SERVER_START_REQ( open_timer )
+    {
+        req->access  = access;
+        req->inherit = oa && (oa->Attributes & OBJ_INHERIT);
+        if (oa && oa->ObjectName->Length)
+            wine_server_add_data( req, oa->ObjectName->Buffer, oa->ObjectName->Length );
+        status = wine_server_call( req );
+        *handle = reply->handle;
+    }
+    SERVER_END_REQ;
+    return status;
+}
+
+/**************************************************************************
+ *		NtSetTimer				[NTDLL.@]
+ *		ZwSetTimer				[NTDLL.@]
+ */
+NTSTATUS WINAPI NtSetTimer(IN HANDLE handle,
+                           IN const LARGE_INTEGER* when,
+                           IN PTIMERAPCROUTINE callback,
+                           IN PVOID callback_arg,
+                           IN BOOLEAN resume,
+                           IN ULONG period OPTIONAL,
+                           OUT PBOOLEAN state OPTIONAL)
+{
+    NTSTATUS    status = STATUS_SUCCESS;
+
+    TRACE("(%p,%p,%p,%p,%08x,0x%08lx,%p) stub\n",
+          handle, when, callback, callback_arg, resume, period, state);
+
+    SERVER_START_REQ( set_timer )
+    {
+        if (!when->s.LowPart && !when->s.HighPart)
+        {
+            /* special case to start timeout on now+period without too many calculations */
+            req->expire.sec  = 0;
+            req->expire.usec = 0;
+        }
+        else NTDLL_get_server_timeout( &req->expire, when );
+
+        req->handle   = handle;
+        req->period   = period;
+        req->callback = callback;
+        req->arg      = callback_arg;
+        status = wine_server_call( req );
+        if (state) *state = reply->signaled;
+    }
+    SERVER_END_REQ;
+
+    /* set error but can still succeed */
+    if (resume && status == STATUS_SUCCESS) return STATUS_TIMER_RESUME_IGNORED;
+    return status;
+}
+
+/**************************************************************************
+ *		NtCancelTimer				[NTDLL.@]
+ *		ZwCancelTimer				[NTDLL.@]
+ */
+NTSTATUS WINAPI NtCancelTimer(IN HANDLE handle, OUT BOOLEAN* state)
+{
+    NTSTATUS    status;
+
+    SERVER_START_REQ( cancel_timer )
+    {
+        req->handle = handle;
+        status = wine_server_call( req );
+        if (state) *state = reply->signaled;
+    }
+    SERVER_END_REQ;
+    return status;
+}
+
+/******************************************************************************
+ * NtQueryTimerResolution [NTDLL.@]
+ */
+NTSTATUS WINAPI NtQueryTimerResolution(OUT ULONG* min_resolution,
+                                       OUT ULONG* max_resolution,
+                                       OUT ULONG* current_resolution)
+{
+    FIXME("(%p,%p,%p), stub!\n",
+          min_resolution, max_resolution, current_resolution);
+
+    return STATUS_NOT_IMPLEMENTED;
+}
+
+/******************************************************************************
+ * NtSetTimerResolution [NTDLL.@]
+ */
+NTSTATUS WINAPI NtSetTimerResolution(IN ULONG resolution,
+                                     IN BOOLEAN set_resolution,
+                                     OUT ULONG* current_resolution )
+{
+    FIXME("(%lu,%u,%p), stub!\n",
+          resolution, set_resolution, current_resolution);
+
+    return STATUS_NOT_IMPLEMENTED;
 }
 
 
