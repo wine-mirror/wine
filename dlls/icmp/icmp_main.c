@@ -182,6 +182,9 @@ HANDLE WINAPI IcmpCreateFile(VOID)
 }
 
 
+/***********************************************************************
+ *		IcmpCloseHandle
+ */
 BOOL WINAPI IcmpCloseHandle(HANDLE  IcmpHandle)
 {
     icmp_t* icp=(icmp_t*)IcmpHandle;

@@ -7,12 +7,16 @@
  * Noureddine Jemmali
  */
 
+#include "config.h"
+
 #include <errno.h>
 #include <netdb.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <sys/socket.h>
+#ifdef HAVE_SYS_SOCKET_H
+# include <sys/socket.h>
+#endif
 #include <sys/stat.h>
 #include <sys/types.h>
 #include <unistd.h>
@@ -112,7 +116,7 @@ DWORD FTP_SetResponseError(DWORD dwResponse);
  *    FALSE on failure
  *
  */
-BOOLAPI FtpPutFileA(HINTERNET hConnect, LPCSTR lpszLocalFile,
+BOOL WINAPI FtpPutFileA(HINTERNET hConnect, LPCSTR lpszLocalFile,
     LPCSTR lpszNewRemoteFile, DWORD dwFlags, DWORD dwContext)
 {
     LPWININETFTPSESSIONA lpwfs = (LPWININETFTPSESSIONA) hConnect;
@@ -155,7 +159,7 @@ BOOLAPI FtpPutFileA(HINTERNET hConnect, LPCSTR lpszLocalFile,
  *    FALSE on failure
  *
  */
-BOOLAPI FTP_FtpPutFileA(HINTERNET hConnect, LPCSTR lpszLocalFile,
+BOOL WINAPI FTP_FtpPutFileA(HINTERNET hConnect, LPCSTR lpszLocalFile,
     LPCSTR lpszNewRemoteFile, DWORD dwFlags, DWORD dwContext)
 {
     HANDLE hFile = (HANDLE)NULL;
@@ -226,7 +230,7 @@ lend:
  *    FALSE on failure
  *
  */
-BOOLAPI FtpSetCurrentDirectoryA(HINTERNET hConnect, LPCSTR lpszDirectory)
+BOOL WINAPI FtpSetCurrentDirectoryA(HINTERNET hConnect, LPCSTR lpszDirectory)
 {
     LPWININETFTPSESSIONA lpwfs = (LPWININETFTPSESSIONA) hConnect;
     LPWININETAPPINFOA hIC = NULL;
@@ -267,7 +271,7 @@ BOOLAPI FtpSetCurrentDirectoryA(HINTERNET hConnect, LPCSTR lpszDirectory)
  *    FALSE on failure
  *
  */
-BOOLAPI FTP_FtpSetCurrentDirectoryA(HINTERNET hConnect, LPCSTR lpszDirectory)
+BOOL WINAPI FTP_FtpSetCurrentDirectoryA(HINTERNET hConnect, LPCSTR lpszDirectory)
 {
     INT nResCode;
     LPWININETFTPSESSIONA lpwfs = (LPWININETFTPSESSIONA) hConnect;
@@ -325,7 +329,7 @@ lend:
  *    FALSE on failure
  *
  */
-BOOLAPI FtpCreateDirectoryA(HINTERNET hConnect, LPCSTR lpszDirectory)
+BOOL WINAPI FtpCreateDirectoryA(HINTERNET hConnect, LPCSTR lpszDirectory)
 {
     LPWININETFTPSESSIONA lpwfs = (LPWININETFTPSESSIONA) hConnect;
     LPWININETAPPINFOA hIC = NULL;
@@ -364,7 +368,7 @@ BOOLAPI FtpCreateDirectoryA(HINTERNET hConnect, LPCSTR lpszDirectory)
  *    FALSE on failure
  *
  */
-BOOLAPI FTP_FtpCreateDirectoryA(HINTERNET hConnect, LPCSTR lpszDirectory)
+BOOL WINAPI FTP_FtpCreateDirectoryA(HINTERNET hConnect, LPCSTR lpszDirectory)
 {
     INT nResCode;
     BOOL bSuccess = FALSE;
@@ -558,7 +562,7 @@ lend:
  *    FALSE on failure
  *
  */
-BOOLAPI FtpGetCurrentDirectoryA(HINTERNET hFtpSession, LPSTR lpszCurrentDirectory, 
+BOOL WINAPI FtpGetCurrentDirectoryA(HINTERNET hFtpSession, LPSTR lpszCurrentDirectory, 
 	LPDWORD lpdwCurrentDirectory)
 {
     LPWININETFTPSESSIONA lpwfs = (LPWININETFTPSESSIONA) hFtpSession;
@@ -602,7 +606,7 @@ BOOLAPI FtpGetCurrentDirectoryA(HINTERNET hFtpSession, LPSTR lpszCurrentDirector
  *    FALSE on failure
  *
  */
-BOOLAPI FTP_FtpGetCurrentDirectoryA(HINTERNET hFtpSession, LPSTR lpszCurrentDirectory, 
+BOOL WINAPI FTP_FtpGetCurrentDirectoryA(HINTERNET hFtpSession, LPSTR lpszCurrentDirectory, 
 	LPDWORD lpdwCurrentDirectory)
 {
     INT nResCode;
@@ -803,7 +807,7 @@ HINTERNET FTP_FtpOpenFileA(HINTERNET hFtpSession,
  *    FALSE on failure
  *
  */
-BOOLAPI FtpGetFileA(HINTERNET hInternet, LPCSTR lpszRemoteFile, LPCSTR lpszNewFile,
+BOOL WINAPI FtpGetFileA(HINTERNET hInternet, LPCSTR lpszRemoteFile, LPCSTR lpszNewFile,
 	BOOL fFailIfExists, DWORD dwLocalFlagsAttribute, DWORD dwInternetFlags,
 	DWORD dwContext)
 {
@@ -850,7 +854,7 @@ BOOLAPI FtpGetFileA(HINTERNET hInternet, LPCSTR lpszRemoteFile, LPCSTR lpszNewFi
  *    FALSE on failure
  *
  */
-BOOLAPI FTP_FtpGetFileA(HINTERNET hInternet, LPCSTR lpszRemoteFile, LPCSTR lpszNewFile,
+BOOL WINAPI FTP_FtpGetFileA(HINTERNET hInternet, LPCSTR lpszRemoteFile, LPCSTR lpszNewFile,
 	BOOL fFailIfExists, DWORD dwLocalFlagsAttribute, DWORD dwInternetFlags,
 	DWORD dwContext)
 {
@@ -932,7 +936,7 @@ lend:
  *    FALSE on failure
  *
  */
-BOOLAPI FtpDeleteFileA(HINTERNET hFtpSession, LPCSTR lpszFileName)
+BOOL WINAPI FtpDeleteFileA(HINTERNET hFtpSession, LPCSTR lpszFileName)
 {
     LPWININETFTPSESSIONA lpwfs = (LPWININETFTPSESSIONA) hFtpSession;
     LPWININETAPPINFOA hIC = NULL;
@@ -1026,7 +1030,7 @@ lend:
  *    FALSE on failure
  *
  */
-BOOLAPI FtpRemoveDirectoryA(HINTERNET hFtpSession, LPCSTR lpszDirectory)
+BOOL WINAPI FtpRemoveDirectoryA(HINTERNET hFtpSession, LPCSTR lpszDirectory)
 {
     LPWININETFTPSESSIONA lpwfs = (LPWININETFTPSESSIONA) hFtpSession;
     LPWININETAPPINFOA hIC = NULL;
@@ -1121,7 +1125,7 @@ lend:
  *    FALSE on failure
  *
  */
-BOOLAPI FtpRenameFileA(HINTERNET hFtpSession, LPCSTR lpszSrc, LPCSTR lpszDest)
+BOOL WINAPI FtpRenameFileA(HINTERNET hFtpSession, LPCSTR lpszSrc, LPCSTR lpszDest)
 {
     LPWININETFTPSESSIONA lpwfs = (LPWININETFTPSESSIONA) hFtpSession;
     LPWININETAPPINFOA hIC = NULL;
@@ -1254,7 +1258,7 @@ HINTERNET FTP_Connect(HINTERNET hInternet, LPCSTR lpszServerName,
 
     if (hIC->lpfnStatusCB)
         hIC->lpfnStatusCB(hInternet, dwContext, INTERNET_STATUS_RESOLVING_NAME,
-            lpszServerName, strlen(lpszServerName));
+            (LPSTR) lpszServerName, strlen(lpszServerName));
 
     if (!GetAddress(lpszServerName, nServerPort, &phe, &socketAddr))
     {
@@ -1264,7 +1268,7 @@ HINTERNET FTP_Connect(HINTERNET hInternet, LPCSTR lpszServerName,
 
     if (hIC->lpfnStatusCB)
         hIC->lpfnStatusCB(hInternet, dwContext, INTERNET_STATUS_NAME_RESOLVED,
-            lpszServerName, strlen(lpszServerName));
+            (LPSTR) lpszServerName, strlen(lpszServerName));
 
     if (INVALID_SOCKET == (nsocket = socket(AF_INET,SOCK_STREAM,0)))
     {
@@ -1633,7 +1637,7 @@ lend:
 BOOL FTP_InitListenSocket(LPWININETFTPSESSIONA lpwfs)
 {
     BOOL bSuccess = FALSE;
-    socklen_t namelen = sizeof(struct sockaddr_in);
+    size_t namelen = sizeof(struct sockaddr_in);
 
     TRACE("\n");
 
@@ -1647,7 +1651,7 @@ BOOL FTP_InitListenSocket(LPWININETFTPSESSIONA lpwfs)
     lpwfs->lstnSocketAddress.sin_family = AF_INET;
     lpwfs->lstnSocketAddress.sin_port = htons((u_short) 0);
     lpwfs->lstnSocketAddress.sin_addr.s_addr = htonl(INADDR_ANY); 
-    if (SOCKET_ERROR == bind(lpwfs->lstnSocket,&lpwfs->lstnSocketAddress, sizeof(struct sockaddr_in)))
+    if (SOCKET_ERROR == bind(lpwfs->lstnSocket,(struct sockaddr *) &lpwfs->lstnSocketAddress, sizeof(struct sockaddr_in)))
     {
         TRACE("Unable to bind socket\n");
         goto lend;
@@ -1659,7 +1663,7 @@ BOOL FTP_InitListenSocket(LPWININETFTPSESSIONA lpwfs)
         goto lend;
     }
 
-    if (SOCKET_ERROR != getsockname(lpwfs->lstnSocket, &lpwfs->lstnSocketAddress, &namelen))
+    if (SOCKET_ERROR != getsockname(lpwfs->lstnSocket, (struct sockaddr *) &lpwfs->lstnSocketAddress, &namelen))
         bSuccess = TRUE;
 
 lend:
@@ -1768,10 +1772,10 @@ lend:
 BOOL FTP_InitDataSocket(LPWININETFTPSESSIONA lpwfs, LPINT nDataSocket)
 {
     struct sockaddr_in saddr;
-    socklen_t addrlen = sizeof(struct sockaddr);
+    size_t addrlen = sizeof(struct sockaddr);
 
     TRACE("\n");
-    *nDataSocket = accept(lpwfs->lstnSocket, &saddr, &addrlen);
+    *nDataSocket = accept(lpwfs->lstnSocket, (struct sockaddr *) &saddr, &addrlen);
     close(lpwfs->lstnSocket);
     lpwfs->lstnSocket = INVALID_SOCKET;
 

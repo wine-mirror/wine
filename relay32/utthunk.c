@@ -52,6 +52,8 @@ typedef struct _UTINFO
 
 } UTINFO;
 
+typedef DWORD (CALLBACK *UTGLUEPROC)( LPVOID lpBuff, DWORD dwUserDefined );
+
 BOOL WINAPI UTRegister( HMODULE hModule, LPSTR lpsz16BITDLL, 
                         LPSTR lpszInitName, LPSTR lpszProcName,
                         FARPROC *ppfn32Thunk, FARPROC pfnUT32CallBack, 
@@ -63,8 +65,8 @@ VOID WINAPI UTUnRegister( HMODULE hModule );
 /****************************************************************************
  *		UTGlue16     (WPROCS.*)
  */
-DWORD WINAPI UTGlue16( LPVOID lpBuff, DWORD dwUserDefined, SEGPTR translationList[], 
-                       DWORD (CALLBACK *target)( LPVOID lpBuff, DWORD dwUserDefined ) )
+DWORD WINAPI UTGlue16( LPVOID lpBuff, DWORD dwUserDefined, SEGPTR *translationList,
+		       UTGLUEPROC target )
 {
     INT i;
 

@@ -7,9 +7,13 @@
  *
  */
 
+#include "config.h"
+
 #include <string.h>
 #include <sys/types.h>
-#include <sys/socket.h>
+#ifdef HAVE_SYS_SOCKET_H
+# include <sys/socket.h>
+#endif
 #include <stdlib.h>
 
 #include "windows.h"
@@ -35,7 +39,7 @@ typedef struct
 } WITHREADERROR, *LPWITHREADERROR;
 
 INTERNET_SCHEME GetInternetScheme(LPSTR lpszScheme);
-BOOLAPI INTERNET_FindNextFileA(HINTERNET hFind, LPVOID lpvFindData);
+BOOL WINAPI INTERNET_FindNextFileA(HINTERNET hFind, LPVOID lpvFindData);
 VOID INTERNET_ExecuteWork();
 
 DWORD g_dwTlsErrIndex = TLS_OUT_OF_INDEXES;
@@ -170,7 +174,7 @@ INTERNETAPI HINTERNET WINAPI InternetOpenA(LPCSTR lpszAgent,
  *    FALSE on failure
  *
  */
-BOOLAPI InternetGetLastResponseInfoA(LPDWORD lpdwError,
+BOOL WINAPI InternetGetLastResponseInfoA(LPDWORD lpdwError,
     LPSTR lpszBuffer, LPDWORD lpdwBufferLength)
 {
     LPWITHREADERROR lpwite = (LPWITHREADERROR)TlsGetValue(g_dwTlsErrIndex);
@@ -240,7 +244,7 @@ INTERNETAPI HINTERNET WINAPI InternetConnectA(HINTERNET hInternet,
  *    FALSE on failure
  *
  */
-BOOLAPI InternetFindNextFileA(HINTERNET hFind, LPVOID lpvFindData)
+BOOL WINAPI InternetFindNextFileA(HINTERNET hFind, LPVOID lpvFindData)
 {
     LPWININETAPPINFOA hIC = NULL;
     LPWININETFINDNEXTA lpwh = (LPWININETFINDNEXTA) hFind;
@@ -280,7 +284,7 @@ BOOLAPI InternetFindNextFileA(HINTERNET hFind, LPVOID lpvFindData)
  *    FALSE on failure
  *
  */
-BOOLAPI INTERNET_FindNextFileA(HINTERNET hFind, LPVOID lpvFindData)
+BOOL WINAPI INTERNET_FindNextFileA(HINTERNET hFind, LPVOID lpvFindData)
 {
     BOOL bSuccess = TRUE;
     LPWININETAPPINFOA hIC = NULL;
@@ -350,7 +354,7 @@ lend:
  *    FALSE on failure
  *
  */
-BOOLAPI InternetCloseHandle(HINTERNET hInternet)
+BOOL WINAPI InternetCloseHandle(HINTERNET hInternet)
 {
     BOOL retval = FALSE;
     LPWININETHANDLEHEADER lpwh = (LPWININETHANDLEHEADER) hInternet;
@@ -394,7 +398,7 @@ BOOLAPI InternetCloseHandle(HINTERNET hInternet)
  *    FALSE on failure
  *
  */
-BOOLAPI InternetCrackUrlA(LPCSTR lpszUrl, DWORD dwUrlLength, DWORD dwFlags, 
+BOOL WINAPI InternetCrackUrlA(LPCSTR lpszUrl, DWORD dwUrlLength, DWORD dwFlags, 
 		LPURL_COMPONENTSA lpUrlComponents)
 {
   /*
@@ -593,7 +597,7 @@ INTERNETAPI DWORD WINAPI InternetAttemptConnect(DWORD dwReserved)
  *    FALSE on failure
  *
  */
-BOOLAPI InternetCanonicalizeUrlA(LPCSTR lpszUrl, LPSTR lpszBuffer,
+BOOL WINAPI InternetCanonicalizeUrlA(LPCSTR lpszUrl, LPSTR lpszBuffer,
 	LPDWORD lpdwBufferLength, DWORD dwFlags)
 {
     BOOL bSuccess = FALSE;
@@ -649,7 +653,7 @@ INTERNETAPI INTERNET_STATUS_CALLBACK WINAPI InternetSetStatusCallback(
  *    FALSE on failure
  *
  */
-BOOLAPI InternetWriteFile(HINTERNET hFile, LPCVOID lpBuffer ,
+BOOL WINAPI InternetWriteFile(HINTERNET hFile, LPCVOID lpBuffer ,
 	DWORD dwNumOfBytesToWrite, LPDWORD lpdwNumOfBytesWritten)
 {
     BOOL retval = FALSE;
@@ -697,7 +701,7 @@ BOOLAPI InternetWriteFile(HINTERNET hFile, LPCVOID lpBuffer ,
  *    FALSE on failure
  *
  */
-BOOLAPI InternetReadFile(HINTERNET hFile, LPVOID lpBuffer, 
+BOOL WINAPI InternetReadFile(HINTERNET hFile, LPVOID lpBuffer, 
 	DWORD dwNumOfBytesToRead, LPDWORD dwNumOfBytesRead)
 {
     BOOL retval = FALSE;

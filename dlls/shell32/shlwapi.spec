@@ -239,7 +239,7 @@ type win32
 @ stdcall PathMatchSpecW  (str str) PathMatchSpecW
 @ stub    PathParseIconLocationA
 @ stub    PathParseIconLocationW
-@ stdcall PathQuoteSpacesA (ptr) PathQuoteSpacesW
+@ stdcall PathQuoteSpacesA (ptr) PathQuoteSpacesA
 @ stdcall PathQuoteSpacesW (ptr) PathQuoteSpacesW
 @ stub    PathRelativePathToA
 @ stub    PathRelativePathToW

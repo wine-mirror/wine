@@ -244,6 +244,9 @@ static LRESULT WINAPI DDWndProc(HWND hwnd,UINT msg,WPARAM wParam,LPARAM lParam)
     return DefWindowProcA(hwnd,msg,wParam,lParam);
 }
 
+/***********************************************************************
+ *		DirectDrawCreate
+ */
 HRESULT WINAPI DirectDrawCreate(
 	LPGUID lpGUID, LPDIRECTDRAW *lplpDD, LPUNKNOWN pUnkOuter
 ) {

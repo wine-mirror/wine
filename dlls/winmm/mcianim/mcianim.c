@@ -38,9 +38,9 @@ typedef struct {
 /*-----------------------------------------------------------------------*/
 
 /**************************************************************************
- * 				ANIM_drvOpen			[internal]	
+ * 				MCIANIM_drvOpen			[internal]	
  */
-static	DWORD	ANIM_drvOpen(LPSTR str, LPMCI_OPEN_DRIVER_PARMSA modp)
+static	DWORD	MCIANIM_drvOpen(LPSTR str, LPMCI_OPEN_DRIVER_PARMSA modp)
 {
     WINE_MCIANIM*	wma = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(WINE_MCIANIM));
 
@@ -55,9 +55,9 @@ static	DWORD	ANIM_drvOpen(LPSTR str, LPMCI_OPEN_DRIVER_PARMSA modp)
 }
 
 /**************************************************************************
- * 				ANIM_drvClose		[internal]	
+ * 				MCIANIM_drvClose		[internal]	
  */
-static	DWORD	ANIM_drvClose(DWORD dwDevID)
+static	DWORD	MCIANIM_drvClose(DWORD dwDevID)
 {
     WINE_MCIANIM*  wma = (WINE_MCIANIM*)mciGetDriverData(dwDevID);
 
@@ -69,9 +69,9 @@ static	DWORD	ANIM_drvClose(DWORD dwDevID)
 }
 
 /**************************************************************************
- * 				ANIM_mciGetOpenDrv		[internal]	
+ * 				MCIANIM_mciGetOpenDrv		[internal]	
  */
-static WINE_MCIANIM*  ANIM_mciGetOpenDrv(UINT16 wDevID)
+static WINE_MCIANIM*  MCIANIM_mciGetOpenDrv(UINT16 wDevID)
 {
     WINE_MCIANIM*	wma = (WINE_MCIANIM*)mciGetDriverData(wDevID);
     
@@ -83,9 +83,9 @@ static WINE_MCIANIM*  ANIM_mciGetOpenDrv(UINT16 wDevID)
 }
 
 /**************************************************************************
- * 				ANIM_mciOpen			[internal]
+ * 				MCIANIM_mciOpen			[internal]
  */
-static DWORD ANIM_mciOpen(UINT16 wDevID, DWORD dwFlags, LPMCI_OPEN_PARMSA lpOpenParms)
+static DWORD MCIANIM_mciOpen(UINT16 wDevID, DWORD dwFlags, LPMCI_OPEN_PARMSA lpOpenParms)
 {
     DWORD		dwDeviceID;
     WINE_MCIANIM*	wma = (WINE_MCIANIM*)mciGetDriverData(wDevID);
@@ -144,11 +144,11 @@ static DWORD ANIM_mciOpen(UINT16 wDevID, DWORD dwFlags, LPMCI_OPEN_PARMSA lpOpen
 }
 
 /**************************************************************************
- * 				ANIM_mciClose		[internal]
+ * 				MCIANIM_mciClose		[internal]
  */
-static DWORD ANIM_mciClose(UINT16 wDevID, DWORD dwParam, LPMCI_GENERIC_PARMS lpParms)
+static DWORD MCIANIM_mciClose(UINT16 wDevID, DWORD dwParam, LPMCI_GENERIC_PARMS lpParms)
 {
-    WINE_MCIANIM*	wma = ANIM_mciGetOpenDrv(wDevID);
+    WINE_MCIANIM*	wma = MCIANIM_mciGetOpenDrv(wDevID);
     
     TRACE("(%u, %08lX, %p);\n", wDevID, dwParam, lpParms);
     
@@ -161,12 +161,12 @@ static DWORD ANIM_mciClose(UINT16 wDevID, DWORD dwParam, LPMCI_GENERIC_PARMS lpP
 }
 
 /**************************************************************************
- * 				ANIM_mciGetDevCaps	[internal]
+ * 				MCIANIM_mciGetDevCaps	[internal]
  */
-static DWORD ANIM_mciGetDevCaps(UINT16 wDevID, DWORD dwFlags, 
+static DWORD MCIANIM_mciGetDevCaps(UINT16 wDevID, DWORD dwFlags, 
 				LPMCI_GETDEVCAPS_PARMS lpParms)
 {
-    WINE_MCIANIM*	wma = ANIM_mciGetOpenDrv(wDevID);
+    WINE_MCIANIM*	wma = MCIANIM_mciGetOpenDrv(wDevID);
     DWORD		ret;
 
     TRACE("(%u, %08lX, %p);\n", wDevID, dwFlags, lpParms);
@@ -228,9 +228,9 @@ static DWORD ANIM_mciGetDevCaps(UINT16 wDevID, DWORD dwFlags,
 
 
 /**************************************************************************
- * 				ANIM_CalcTime			[internal]
+ * 				MCIANIM_CalcTime			[internal]
  */
-static DWORD ANIM_CalcTime(WINE_MCIANIM* wma, DWORD dwFormatType, DWORD dwFrame, LPDWORD lpRet)
+static DWORD MCIANIM_CalcTime(WINE_MCIANIM* wma, DWORD dwFormatType, DWORD dwFrame, LPDWORD lpRet)
 {
     DWORD	dwTime = 0;
     UINT16	wTrack;
@@ -279,9 +279,9 @@ static DWORD ANIM_CalcTime(WINE_MCIANIM* wma, DWORD dwFormatType, DWORD dwFrame,
 
 
 /**************************************************************************
- * 				ANIM_CalcFrame			[internal]
+ * 				MCIANIM_CalcFrame			[internal]
  */
-static DWORD ANIM_CalcFrame(WINE_MCIANIM* wma, DWORD dwFormatType, DWORD dwTime)
+static DWORD MCIANIM_CalcFrame(WINE_MCIANIM* wma, DWORD dwFormatType, DWORD dwTime)
 {
     DWORD	dwFrame = 0;
     UINT16	wTrack;
@@ -321,11 +321,11 @@ static DWORD ANIM_CalcFrame(WINE_MCIANIM* wma, DWORD dwFormatType, DWORD dwTime)
 }
 
 /**************************************************************************
- * 				ANIM_mciInfo			[internal]
+ * 				MCIANIM_mciInfo			[internal]
  */
-static DWORD ANIM_mciInfo(UINT16 wDevID, DWORD dwFlags, LPMCI_INFO_PARMS16 lpParms)
+static DWORD MCIANIM_mciInfo(UINT16 wDevID, DWORD dwFlags, LPMCI_INFO_PARMS16 lpParms)
 {
-    WINE_MCIANIM*	wma = ANIM_mciGetOpenDrv(wDevID);
+    WINE_MCIANIM*	wma = MCIANIM_mciGetOpenDrv(wDevID);
     LPSTR		str = 0;
     DWORD		ret = 0;
     
@@ -368,11 +368,11 @@ static DWORD ANIM_mciInfo(UINT16 wDevID, DWORD dwFlags, LPMCI_INFO_PARMS16 lpPar
 }
 
 /**************************************************************************
- * 				ANIM_mciStatus		[internal]
+ * 				MCIANIM_mciStatus		[internal]
  */
-static DWORD ANIM_mciStatus(UINT16 wDevID, DWORD dwFlags, LPMCI_STATUS_PARMS lpParms)
+static DWORD MCIANIM_mciStatus(UINT16 wDevID, DWORD dwFlags, LPMCI_STATUS_PARMS lpParms)
 {
-    WINE_MCIANIM*	wma = ANIM_mciGetOpenDrv(wDevID);
+    WINE_MCIANIM*	wma = MCIANIM_mciGetOpenDrv(wDevID);
     DWORD		ret;
 
     TRACE("(%u, %08lX, %p);\n", wDevID, dwFlags, lpParms);
@@ -401,7 +401,7 @@ static DWORD ANIM_mciStatus(UINT16 wDevID, DWORD dwFlags, LPMCI_STATUS_PARMS lpP
 	    }
 	    else
 		lpParms->dwReturn = wma->dwTotalLen;
-	    lpParms->dwReturn = ANIM_CalcTime(wma, wma->dwTimeFormat, lpParms->dwReturn, &ret);
+	    lpParms->dwReturn = MCIANIM_CalcTime(wma, wma->dwTimeFormat, lpParms->dwReturn, &ret);
 	    TRACE("LENGTH=%lu !\n", lpParms->dwReturn);
 	    break;
 	case MCI_STATUS_MODE:
@@ -430,7 +430,7 @@ static DWORD ANIM_mciStatus(UINT16 wDevID, DWORD dwFlags, LPMCI_STATUS_PARMS lpP
 		lpParms->dwReturn = wma->lpdwTrackPos[lpParms->dwTrack - 1];
 		TRACE("get MCI_TRACK #%lu !\n", lpParms->dwTrack);
 	    }
-	    lpParms->dwReturn = ANIM_CalcTime(wma, wma->dwTimeFormat, lpParms->dwReturn, &ret);
+	    lpParms->dwReturn = MCIANIM_CalcTime(wma, wma->dwTimeFormat, lpParms->dwReturn, &ret);
 	    TRACE("MCI_STATUS_POSITION=%08lX !\n", lpParms->dwReturn);
 	    break;
 	case MCI_STATUS_READY:
@@ -457,11 +457,11 @@ static DWORD ANIM_mciStatus(UINT16 wDevID, DWORD dwFlags, LPMCI_STATUS_PARMS lpP
 
 
 /**************************************************************************
- * 				ANIM_mciPlay			[internal]
+ * 				MCIANIM_mciPlay			[internal]
  */
-static DWORD ANIM_mciPlay(UINT16 wDevID, DWORD dwFlags, LPMCI_PLAY_PARMS lpParms)
+static DWORD MCIANIM_mciPlay(UINT16 wDevID, DWORD dwFlags, LPMCI_PLAY_PARMS lpParms)
 {
-    WINE_MCIANIM*	wma = ANIM_mciGetOpenDrv(wDevID);
+    WINE_MCIANIM*	wma = MCIANIM_mciGetOpenDrv(wDevID);
     int 	start, end;
     
     TRACE("(%u, %08lX, %p);\n", wDevID, dwFlags, lpParms);
@@ -472,11 +472,11 @@ static DWORD ANIM_mciPlay(UINT16 wDevID, DWORD dwFlags, LPMCI_PLAY_PARMS lpParms
     start = 0; 		end = wma->dwTotalLen;
     wma->nCurTrack = 1;
     if (dwFlags & MCI_FROM) {
-	start = ANIM_CalcFrame(wma, wma->dwTimeFormat, lpParms->dwFrom); 
+	start = MCIANIM_CalcFrame(wma, wma->dwTimeFormat, lpParms->dwFrom); 
         TRACE("MCI_FROM=%08lX -> %u \n", lpParms->dwFrom, start);
     }
     if (dwFlags & MCI_TO) {
-	end = ANIM_CalcFrame(wma, wma->dwTimeFormat, lpParms->dwTo);
+	end = MCIANIM_CalcFrame(wma, wma->dwTimeFormat, lpParms->dwTo);
 	TRACE("MCI_TO=%08lX -> %u \n", lpParms->dwTo, end);
     }
     wma->mode = MCI_MODE_PLAY;
@@ -490,11 +490,11 @@ static DWORD ANIM_mciPlay(UINT16 wDevID, DWORD dwFlags, LPMCI_PLAY_PARMS lpParms
 }
 
 /**************************************************************************
- * 				ANIM_mciStop			[internal]
+ * 				MCIANIM_mciStop			[internal]
  */
-static DWORD ANIM_mciStop(UINT16 wDevID, DWORD dwFlags, LPMCI_GENERIC_PARMS lpParms)
+static DWORD MCIANIM_mciStop(UINT16 wDevID, DWORD dwFlags, LPMCI_GENERIC_PARMS lpParms)
 {
-    WINE_MCIANIM*	wma = ANIM_mciGetOpenDrv(wDevID);
+    WINE_MCIANIM*	wma = MCIANIM_mciGetOpenDrv(wDevID);
     
     TRACE("(%u, %08lX, %p);\n", wDevID, dwFlags, lpParms);
     
@@ -512,11 +512,11 @@ static DWORD ANIM_mciStop(UINT16 wDevID, DWORD dwFlags, LPMCI_GENERIC_PARMS lpPa
 }
 
 /**************************************************************************
- * 				ANIM_mciPause		[internal]
+ * 				MCIANIM_mciPause		[internal]
  */
-static DWORD ANIM_mciPause(UINT16 wDevID, DWORD dwFlags, LPMCI_GENERIC_PARMS lpParms)
+static DWORD MCIANIM_mciPause(UINT16 wDevID, DWORD dwFlags, LPMCI_GENERIC_PARMS lpParms)
 {
-    WINE_MCIANIM*	wma = ANIM_mciGetOpenDrv(wDevID);
+    WINE_MCIANIM*	wma = MCIANIM_mciGetOpenDrv(wDevID);
     
     TRACE("(%u, %08lX, %p);\n", wDevID, dwFlags, lpParms);
     if (lpParms == NULL) return MCIERR_INTERNAL;
@@ -531,11 +531,11 @@ static DWORD ANIM_mciPause(UINT16 wDevID, DWORD dwFlags, LPMCI_GENERIC_PARMS lpP
 }
 
 /**************************************************************************
- * 				ANIM_mciResume		[internal]
+ * 				MCIANIM_mciResume		[internal]
  */
-static DWORD ANIM_mciResume(UINT16 wDevID, DWORD dwFlags, LPMCI_GENERIC_PARMS lpParms)
+static DWORD MCIANIM_mciResume(UINT16 wDevID, DWORD dwFlags, LPMCI_GENERIC_PARMS lpParms)
 {
-    WINE_MCIANIM*	wma = ANIM_mciGetOpenDrv(wDevID);
+    WINE_MCIANIM*	wma = MCIANIM_mciGetOpenDrv(wDevID);
     
     TRACE("(%u, %08lX, %p);\n", wDevID, dwFlags, lpParms);
     if (lpParms == NULL) return MCIERR_INTERNAL;
@@ -550,11 +550,11 @@ static DWORD ANIM_mciResume(UINT16 wDevID, DWORD dwFlags, LPMCI_GENERIC_PARMS lp
 }
 
 /**************************************************************************
- * 				ANIM_mciSeek			[internal]
+ * 				MCIANIM_mciSeek			[internal]
  */
-static DWORD ANIM_mciSeek(UINT16 wDevID, DWORD dwFlags, LPMCI_SEEK_PARMS lpParms)
+static DWORD MCIANIM_mciSeek(UINT16 wDevID, DWORD dwFlags, LPMCI_SEEK_PARMS lpParms)
 {
-    WINE_MCIANIM*	wma = ANIM_mciGetOpenDrv(wDevID);
+    WINE_MCIANIM*	wma = MCIANIM_mciGetOpenDrv(wDevID);
     DWORD	dwRet;
     MCI_PLAY_PARMS PlayParms;
     
@@ -573,9 +573,9 @@ static DWORD ANIM_mciSeek(UINT16 wDevID, DWORD dwFlags, LPMCI_SEEK_PARMS lpParms
 	PlayParms.dwFrom = lpParms->dwTo;
 	break;
     }
-    dwRet = ANIM_mciPlay(wDevID, MCI_WAIT | MCI_FROM, &PlayParms);
+    dwRet = MCIANIM_mciPlay(wDevID, MCI_WAIT | MCI_FROM, &PlayParms);
     if (dwRet != 0) return dwRet;
-    dwRet = ANIM_mciStop(wDevID, MCI_WAIT, (LPMCI_GENERIC_PARMS)&PlayParms);
+    dwRet = MCIANIM_mciStop(wDevID, MCI_WAIT, (LPMCI_GENERIC_PARMS)&PlayParms);
     if (dwFlags & MCI_NOTIFY) {
 	TRACE("MCI_NOTIFY_SUCCESSFUL %08lX !\n", lpParms->dwCallback);
 
@@ -587,11 +587,11 @@ static DWORD ANIM_mciSeek(UINT16 wDevID, DWORD dwFlags, LPMCI_SEEK_PARMS lpParms
 
 
 /**************************************************************************
- * 				ANIM_mciSet			[internal]
+ * 				MCIANIM_mciSet			[internal]
  */
-static DWORD ANIM_mciSet(UINT16 wDevID, DWORD dwFlags, LPMCI_SET_PARMS lpParms)
+static DWORD MCIANIM_mciSet(UINT16 wDevID, DWORD dwFlags, LPMCI_SET_PARMS lpParms)
 {
-    WINE_MCIANIM*	wma = ANIM_mciGetOpenDrv(wDevID);
+    WINE_MCIANIM*	wma = MCIANIM_mciGetOpenDrv(wDevID);
     
     TRACE("(%u, %08lX, %p);\n", wDevID, dwFlags, lpParms);
 
@@ -630,16 +630,16 @@ static DWORD ANIM_mciSet(UINT16 wDevID, DWORD dwFlags, LPMCI_SET_PARMS lpParms)
 }
 
 /**************************************************************************
- * 				ANIM_DriverProc			[sample driver]
+ * 				MCIANIM_DriverProc	[sample driver]
  */
-LONG 	CALLBACK	MCIANIM_DriverProc(DWORD dwDevID, HDRVR hDriv, DWORD wMsg, 
-					   DWORD dwParam1, DWORD dwParam2)
+LONG WINAPI MCIANIM_DriverProc(DWORD dwDevID, HDRVR hDriv, DWORD wMsg, 
+			       DWORD dwParam1, DWORD dwParam2)
 {
     switch (wMsg) {
     case DRV_LOAD:		return 1;
     case DRV_FREE:		return 1; 
-    case DRV_OPEN:		return ANIM_drvOpen((LPSTR)dwParam1, (LPMCI_OPEN_DRIVER_PARMSA)dwParam2);
-    case DRV_CLOSE:		return ANIM_drvClose(dwDevID);
+    case DRV_OPEN:		return MCIANIM_drvOpen((LPSTR)dwParam1, (LPMCI_OPEN_DRIVER_PARMSA)dwParam2);
+    case DRV_CLOSE:		return MCIANIM_drvClose(dwDevID);
     case DRV_ENABLE:		return 1;
     case DRV_DISABLE:		return 1;
     case DRV_QUERYCONFIGURE:	return 1;
@@ -647,17 +647,17 @@ LONG 	CALLBACK	MCIANIM_DriverProc(DWORD dwDevID, HDRVR hDriv, DWORD wMsg,
     case DRV_INSTALL:		return DRVCNF_RESTART;
     case DRV_REMOVE:		return DRVCNF_RESTART;
 	
-    case MCI_OPEN_DRIVER:	return ANIM_mciOpen(dwDevID, dwParam1, (LPMCI_OPEN_PARMSA)dwParam2); 
-    case MCI_CLOSE_DRIVER:	return ANIM_mciClose(dwDevID, dwParam1, (LPMCI_GENERIC_PARMS)dwParam2);
-    case MCI_GETDEVCAPS:	return ANIM_mciGetDevCaps(dwDevID, dwParam1, (LPMCI_GETDEVCAPS_PARMS)dwParam2);
-    case MCI_INFO:		return ANIM_mciInfo(dwDevID, dwParam1, (LPMCI_INFO_PARMS16)dwParam2);
-    case MCI_STATUS:		return ANIM_mciStatus(dwDevID, dwParam1, (LPMCI_STATUS_PARMS)dwParam2);
-    case MCI_SET:		return ANIM_mciSet(dwDevID, dwParam1, (LPMCI_SET_PARMS)dwParam2);
-    case MCI_PLAY:		return ANIM_mciPlay(dwDevID, dwParam1, (LPMCI_PLAY_PARMS)dwParam2);
-    case MCI_STOP:		return ANIM_mciStop(dwDevID, dwParam1, (LPMCI_GENERIC_PARMS)dwParam2);
-    case MCI_PAUSE:		return ANIM_mciPause(dwDevID, dwParam1, (LPMCI_GENERIC_PARMS)dwParam2);
-    case MCI_RESUME:		return ANIM_mciResume(dwDevID, dwParam1, (LPMCI_GENERIC_PARMS)dwParam2);
-    case MCI_SEEK:		return ANIM_mciSeek(dwDevID, dwParam1, (LPMCI_SEEK_PARMS)dwParam2);
+    case MCI_OPEN_DRIVER:	return MCIANIM_mciOpen(dwDevID, dwParam1, (LPMCI_OPEN_PARMSA)dwParam2); 
+    case MCI_CLOSE_DRIVER:	return MCIANIM_mciClose(dwDevID, dwParam1, (LPMCI_GENERIC_PARMS)dwParam2);
+    case MCI_GETDEVCAPS:	return MCIANIM_mciGetDevCaps(dwDevID, dwParam1, (LPMCI_GETDEVCAPS_PARMS)dwParam2);
+    case MCI_INFO:		return MCIANIM_mciInfo(dwDevID, dwParam1, (LPMCI_INFO_PARMS16)dwParam2);
+    case MCI_STATUS:		return MCIANIM_mciStatus(dwDevID, dwParam1, (LPMCI_STATUS_PARMS)dwParam2);
+    case MCI_SET:		return MCIANIM_mciSet(dwDevID, dwParam1, (LPMCI_SET_PARMS)dwParam2);
+    case MCI_PLAY:		return MCIANIM_mciPlay(dwDevID, dwParam1, (LPMCI_PLAY_PARMS)dwParam2);
+    case MCI_STOP:		return MCIANIM_mciStop(dwDevID, dwParam1, (LPMCI_GENERIC_PARMS)dwParam2);
+    case MCI_PAUSE:		return MCIANIM_mciPause(dwDevID, dwParam1, (LPMCI_GENERIC_PARMS)dwParam2);
+    case MCI_RESUME:		return MCIANIM_mciResume(dwDevID, dwParam1, (LPMCI_GENERIC_PARMS)dwParam2);
+    case MCI_SEEK:		return MCIANIM_mciSeek(dwDevID, dwParam1, (LPMCI_SEEK_PARMS)dwParam2);
     case MCI_LOAD:		
     case MCI_SAVE:		
     case MCI_FREEZE:		

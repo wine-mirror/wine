@@ -9,6 +9,7 @@
 #include "color.h"
 #include "debugtools.h"
 #include "palette.h"
+#include "winbase.h"
 #include "ttydrv.h"
 
 DEFAULT_DEBUG_CHANNEL(ttydrv)

@@ -112,5 +112,6 @@ static void __asm__dummy_dll_init(void) {
     asm("\t.section .init ,\"ax\"\n"
 	        "\tcall X11_register\n"
 		    "\t.previous\n");
+}
 #endif /* defined(__GNUC__) */
 static void X11_register(void) { ddraw_register_driver(&x11_driver); }

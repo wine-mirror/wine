@@ -78,6 +78,9 @@ void WIN87_Init( CONTEXT86 *context )
     WIN87_ClearCtrlWord(context);
 }
 
+/***********************************************************************
+ *		WIN87_fpmath
+ */
 void WINAPI WIN87_fpmath( CONTEXT86 *context )
 {
     TRACE("(cs:eip=%x:%lx es=%x bx=%04x ax=%04x dx==%04x)\n",

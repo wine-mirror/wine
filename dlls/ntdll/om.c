@@ -353,7 +353,7 @@ NTSTATUS WINAPI NtQuerySymbolicLinkObject(
  */
 NTSTATUS WINAPI NtAllocateUuids(LPDWORD lpdwCount, LPDWORD *p2, LPDWORD *p3)
 {
-	FIXME("(%p[%d],%p,%p), stub.\n", lpdwCount,
+	FIXME("(%p[%ld],%p,%p), stub.\n", lpdwCount,
 					 lpdwCount ? *lpdwCount : 0,
 					 p2, p3);
 	return 0;

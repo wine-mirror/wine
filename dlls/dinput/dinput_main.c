@@ -480,7 +480,7 @@ static DataFormat *create_DataFormat(DIDATAFORMAT *wine_format, DIDATAFORMAT *as
 }
 
 /******************************************************************************
- *	DirectInputCreate32A
+ *	DirectInputCreateA
  */
 HRESULT WINAPI DirectInputCreateA(HINSTANCE hinst, DWORD dwVersion, LPDIRECTINPUTA *ppDI, LPUNKNOWN punkOuter)
 {
