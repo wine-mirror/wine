@@ -561,20 +561,20 @@ typedef struct {
 DECL_WINELIB_TYPE_AW(MIDIINCAPS)
 DECL_WINELIB_TYPE_AW(LPMIDIINCAPS)
 
-typedef struct {
+typedef struct midihdr16_tag {
     LPSTR	lpData;		/* pointer to locked data block */
     DWORD	dwBufferLength;	/* length of data in data block */
     DWORD	dwBytesRecorded;/* used for input only */
     DWORD	dwUser;		/* for client's use */
     DWORD	dwFlags;	/* assorted flags (see defines) */
-    struct midihdr_tag *lpNext;	/* reserved for driver */
+    struct midihdr16_tag *lpNext;	/* reserved for driver */
     DWORD	reserved;	/* reserved for driver */
 } MIDIHDR16, *LPMIDIHDR16;
 
 /* It seems that Win32 has a slightly different structure than Win 16.
  * sigh....
  */
-typedef struct {
+typedef struct midihdr_tag {
     LPSTR	lpData;		/* pointer to locked data block */
     DWORD	dwBufferLength;	/* length of data in data block */
     DWORD	dwBytesRecorded;/* used for input only */

@@ -2202,14 +2202,13 @@ UINT16 WINAPI midiOutPrepareHeader16(HMIDIOUT16 hMidiOut,
 				     UINT16 uSize)
 {
     LPWINE_MLD		wmld;
-    LPMIDIHDR16		lpMidiOutHdr = PTR_SEG_TO_LIN(lpsegMidiOutHdr);
 
     TRACE("(%04X, %p, %d)\n", hMidiOut, lpsegMidiOutHdr, uSize);
 
     if ((wmld = MMDRV_Get(hMidiOut, MMDRV_MIDIOUT, FALSE)) == NULL) 
 	return MMSYSERR_INVALHANDLE;
 
-    return MMDRV_Message(wmld, MODM_PREPARE, (DWORD)lpMidiOutHdr, uSize, FALSE);
+    return MMDRV_Message(wmld, MODM_PREPARE, (DWORD)lpsegMidiOutHdr, uSize, FALSE);
 }
 
 /**************************************************************************
