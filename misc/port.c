@@ -32,6 +32,9 @@
 #ifdef HAVE_PTY_H
 # include <pty.h>
 #endif
+#ifdef HAVE_LIBUTIL_H
+# include <libutil.h>
+#endif
 
 #include "wine/port.h"
 

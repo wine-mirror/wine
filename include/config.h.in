@@ -293,6 +293,9 @@
 /* Define if you have the <libio.h> header file.  */
 #undef HAVE_LIBIO_H
 
+/* Define if you have the <libutil.h> header file.  */
+#undef HAVE_LIBUTIL_H
+
 /* Define if you have the <link.h> header file.  */
 #undef HAVE_LINK_H
 

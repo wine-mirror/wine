@@ -694,6 +694,7 @@ AC_CHECK_HEADERS(\
 	elf.h \
 	float.h \
 	libio.h \
+	libutil.h \
 	link.h \
 	linux/cdrom.h \
 	linux/joystick.h \
