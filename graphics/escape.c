@@ -70,7 +70,7 @@ INT16 WINAPI Escape16( HDC16 hdc, INT16 escape, INT16 in_count,
     case GETPRINTINGOFFSET:
     case GETSCALINGFACTOR:
     {
-        POINT16 *ptr = MapSL(in_data);
+        POINT16 *ptr = out_data;
         POINT pt32;
         ret = Escape( hdc, escape, 0, NULL, &pt32 );
         ptr->x = pt32.x;
@@ -135,7 +135,7 @@ INT16 WINAPI Escape16( HDC16 hdc, INT16 escape, INT16 in_count,
     case NEXTBAND:
     {
         RECT rc;
-        RECT16 *rc16 = MapSL(in_data);
+        RECT16 *rc16 = out_data;
         ret = Escape( hdc, escape, 0, NULL, &rc );
         rc16->left   = rc.left;
         rc16->top    = rc.top;
