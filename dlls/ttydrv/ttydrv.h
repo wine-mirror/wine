@@ -88,7 +88,7 @@ extern BOOL TTYDRV_DC_GetCharWidth(struct tagDC *dc, UINT firstChar, UINT lastCh
 extern COLORREF TTYDRV_DC_GetPixel(struct tagDC *dc, INT x, INT y);
 
 extern BOOL TTYDRV_DC_GetTextExtentPoint(struct tagDC *dc, LPCWSTR str, INT count, LPSIZE size);
-extern BOOL TTYDRV_DC_GetTextMetrics(struct tagDC *dc, TEXTMETRICA *metrics);
+extern BOOL TTYDRV_DC_GetTextMetrics(struct tagDC *dc, TEXTMETRICW *metrics);
 extern BOOL TTYDRV_DC_LineTo(struct tagDC *dc, INT x, INT y);
 extern BOOL TTYDRV_DC_PaintRgn(struct tagDC *dc, HRGN hrgn);
 extern BOOL TTYDRV_DC_PatBlt(struct tagDC *dc, INT left, INT top, INT width, INT height, DWORD rop);

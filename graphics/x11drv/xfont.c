@@ -3176,15 +3176,16 @@ BOOL X11DRV_EnumDeviceFonts( HDC hdc, LPLOGFONTW plf,
 /***********************************************************************
  *           X11DRV_GetTextMetrics
  */
-BOOL X11DRV_GetTextMetrics(DC *dc, TEXTMETRICA *metrics)
+BOOL X11DRV_GetTextMetrics(DC *dc, TEXTMETRICW *metrics)
 {
     X11DRV_PDEVICE *physDev = (X11DRV_PDEVICE *)dc->physDev;
+    TEXTMETRICA tmA;
 
     if( CHECK_PFONT(physDev->font) )
     {
 	fontObject* pfo = __PFONT(physDev->font);
-	X11DRV_cptable[pfo->fi->cptable].pGetTextMetricsA( pfo, metrics );
-
+	X11DRV_cptable[pfo->fi->cptable].pGetTextMetricsA( pfo, &tmA );
+	FONT_TextMetricAToW(&tmA, metrics);
 	return TRUE;
     }
     return FALSE;

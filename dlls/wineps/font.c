@@ -166,7 +166,7 @@ HFONT16 PSDRV_FONT_SelectObject( DC * dc, HFONT16 hfont,
 /***********************************************************************
  *           PSDRV_GetTextMetrics
  */
-BOOL PSDRV_GetTextMetrics(DC *dc, TEXTMETRICA *metrics)
+BOOL PSDRV_GetTextMetrics(DC *dc, TEXTMETRICW *metrics)
 {
     PSDRV_PDEVICE *physDev = (PSDRV_PDEVICE *)dc->physDev;
 

@@ -202,7 +202,7 @@ typedef struct tagDC_FUNCS
     COLORREF (*pGetPixel)(DC*,INT,INT);
     INT      (*pGetPixelFormat)(DC*);
     BOOL     (*pGetTextExtentPoint)(DC*,LPCWSTR,INT,LPSIZE);
-    BOOL     (*pGetTextMetrics)(DC*,TEXTMETRICA*);
+    BOOL     (*pGetTextMetrics)(DC*,TEXTMETRICW*);
     INT      (*pIntersectClipRect)(DC*,INT,INT,INT,INT);
     BOOL     (*pInvertRgn)(DC*,HRGN);    
     BOOL     (*pLineTo)(DC*,INT,INT);

@@ -99,7 +99,7 @@ extern BOOL X11DRV_GetCharWidth( struct tagDC *dc, UINT firstChar,
 extern BOOL X11DRV_GetDCOrgEx( struct tagDC *dc, LPPOINT lpp );
 extern BOOL X11DRV_GetTextExtentPoint( struct tagDC *dc, LPCWSTR str,
                                          INT count, LPSIZE size );
-extern BOOL X11DRV_GetTextMetrics(struct tagDC *dc, TEXTMETRICA *metrics);
+extern BOOL X11DRV_GetTextMetrics(struct tagDC *dc, TEXTMETRICW *metrics);
 extern BOOL X11DRV_PatBlt( struct tagDC *dc, INT left, INT top,
                              INT width, INT height, DWORD rop );
 extern VOID   X11DRV_SetDeviceClipping(struct tagDC *dc);

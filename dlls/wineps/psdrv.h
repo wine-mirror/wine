@@ -192,13 +192,13 @@ typedef struct {
 } PSCOLOR;
 
 typedef struct {
-    AFM			*afm;
-    TEXTMETRICA	tm;
-    INT		size;
-    float		scale;
-    INT		escapement;
-    PSCOLOR		color;
-    BOOL		set;		/* Have we done a setfont yet */
+    AFM                 *afm;
+    TEXTMETRICW         tm;
+    INT                 size;
+    float               scale;
+    INT                 escapement;
+    PSCOLOR             color;
+    BOOL                set;		/* Have we done a setfont yet */
 } PSFONT;
 
 typedef struct {
@@ -339,7 +339,7 @@ extern BOOL PSDRV_GetCharWidth( DC *dc, UINT firstChar, UINT lastChar,
 				  LPINT buffer );
 extern BOOL PSDRV_GetTextExtentPoint( DC *dc, LPCWSTR str, INT count,
 					LPSIZE size );
-extern BOOL PSDRV_GetTextMetrics( DC *dc, TEXTMETRICA *metrics );
+extern BOOL PSDRV_GetTextMetrics( DC *dc, TEXTMETRICW *metrics );
 extern BOOL PSDRV_LineTo( DC *dc, INT x, INT y );
 extern BOOL PSDRV_PatBlt( DC *dc, INT x, INT y, INT width, INT height, DWORD
 			  dwRop);

@@ -442,7 +442,7 @@ BOOL TTYDRV_DC_GetTextExtentPoint(DC *dc, LPCWSTR str, INT count,
 /***********************************************************************
  *		TTYDRV_DC_GetTextMetrics
  */
-BOOL TTYDRV_DC_GetTextMetrics(DC *dc, LPTEXTMETRICA lptm)
+BOOL TTYDRV_DC_GetTextMetrics(DC *dc, LPTEXTMETRICW lptm)
 {
   TTYDRV_PDEVICE *physDev = (TTYDRV_PDEVICE *) dc->physDev;
 

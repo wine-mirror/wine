@@ -50,13 +50,13 @@ BOOL WIN16DRV_GetTextExtentPoint( DC *dc, LPCWSTR wstr, INT count,
 /***********************************************************************
  *           WIN16DRV_GetTextMetrics
  */
-BOOL WIN16DRV_GetTextMetrics( DC *dc, TEXTMETRICA *metrics )
+BOOL WIN16DRV_GetTextMetrics( DC *dc, TEXTMETRICW *metrics )
 {
     WIN16DRV_PDEVICE *physDev = (WIN16DRV_PDEVICE *)dc->physDev;
 
     TRACE("%04x \n", dc->hSelf);
 
-    FONT_TextMetric16ToA( &physDev->tm, metrics );
+    FONT_TextMetric16ToW( &physDev->tm, metrics );
 
     TRACE(
 	  "H %ld, A %ld, D %ld, Int %ld, Ext %ld, AW %ld, MW %ld, W %ld\n",

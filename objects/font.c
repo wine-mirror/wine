@@ -1173,10 +1173,10 @@ done:
  */
 BOOL16 WINAPI GetTextMetrics16( HDC16 hdc, TEXTMETRIC16 *metrics )
 {
-    TEXTMETRICA tm32;
+    TEXTMETRICW tm32;
 
-    if (!GetTextMetricsA( (HDC)hdc, &tm32 )) return FALSE;
-    FONT_TextMetricATo16( &tm32, metrics );
+    if (!GetTextMetricsW( (HDC)hdc, &tm32 )) return FALSE;
+    FONT_TextMetricWTo16( &tm32, metrics );
     return TRUE;
 }
 
@@ -1185,7 +1185,19 @@ BOOL16 WINAPI GetTextMetrics16( HDC16 hdc, TEXTMETRIC16 *metrics )
  *           GetTextMetricsA    (GDI32.@)
  */
 BOOL WINAPI GetTextMetricsA( HDC hdc, TEXTMETRICA *metrics )
-    {
+{
+    TEXTMETRICW tm32;
+
+    if (!GetTextMetricsW( hdc, &tm32 )) return FALSE;
+    FONT_TextMetricWToA( &tm32, metrics );
+    return TRUE;
+}
+
+/***********************************************************************
+ *           GetTextMetricsW    (GDI32.@)
+ */
+BOOL WINAPI GetTextMetricsW( HDC hdc, TEXTMETRICW *metrics )
+{
     BOOL ret = FALSE;
     DC * dc = DC_GetDCPtr( hdc );
     if (!dc) return FALSE;
@@ -1213,10 +1225,10 @@ BOOL WINAPI GetTextMetricsA( HDC hdc, TEXTMETRICA *metrics )
         ret = TRUE;
 
     TRACE("text metrics:\n"
-          "    Weight = %03li\t FirstChar = %03i\t AveCharWidth = %li\n"
-          "    Italic = % 3i\t LastChar = %03i\t\t MaxCharWidth = %li\n"
-          "    UnderLined = %01i\t DefaultChar = %03i\t Overhang = %li\n"
-          "    StruckOut = %01i\t BreakChar = %03i\t CharSet = %i\n"
+          "    Weight = %03li\t FirstChar = %i\t AveCharWidth = %li\n"
+          "    Italic = % 3i\t LastChar = %i\t\t MaxCharWidth = %li\n"
+          "    UnderLined = %01i\t DefaultChar = %i\t Overhang = %li\n"
+          "    StruckOut = %01i\t BreakChar = %i\t CharSet = %i\n"
           "    PitchAndFamily = %02x\n"
           "    --------------------\n"
           "    InternalLeading = %li\n"
@@ -1235,18 +1247,6 @@ BOOL WINAPI GetTextMetricsA( HDC hdc, TEXTMETRICA *metrics )
     }
     GDI_ReleaseObj( hdc );
     return ret;
-}
-
-
-/***********************************************************************
- *           GetTextMetricsW    (GDI32.@)
- */
-BOOL WINAPI GetTextMetricsW( HDC hdc, TEXTMETRICW *metrics )
-{
-    TEXTMETRICA tm;
-    if (!GetTextMetricsA( (HDC16)hdc, &tm )) return FALSE;
-    FONT_TextMetricAToW( &tm, metrics );
-    return TRUE;
 }
 
 
