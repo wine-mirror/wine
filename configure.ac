@@ -360,6 +360,30 @@ AC_CHECK_LIB(cups,cupsGetPPD,
 )
 AC_SUBST(CUPSLIBS)
 
+dnl **** Check for SANE ****
+AC_CHECK_PROG(sane_devel,sane-config,sane-config,no)
+if test "$sane_devel" = "no"
+then
+    SANELIBS=""
+    SANEINCL=""
+else
+    SANELIBS="`$sane_devel --libs`"
+    SANEINCL="`$sane_devel --cflags`"
+    ac_save_CPPFLAGS="$CPPFLAGS"
+    ac_save_LIBS="$LIBS"
+    CPPFLAGS="$CPPFLAGS $SANEINCL"
+    LIBS="$LIBS $SANELIBS"
+    AC_CHECK_HEADER(sane/sane.h,[
+	    AC_CHECK_LIB(sane,sane_open,[AC_DEFINE(HAVE_SANE, 1, [Define if we have SANE development environment])],
+	    SANELIBS=""
+	    ])
+    )
+    LIBS="$ac_save_LIBS"
+    CPPFLAGS="$ac_save_CPPFLAGS"
+fi
+AC_SUBST(SANELIBS)
+AC_SUBST(SANEINCL)
+
 dnl **** Check for FreeType 2 ****
 AC_CHECK_LIB(freetype,FT_Init_FreeType,ft_lib=yes,ft_lib=no,$X_LIBS)
 if test "$ft_lib" = "no"
@@ -1330,6 +1354,7 @@ dlls/shlwapi/Makefile
 dlls/sti/Makefile
 dlls/tapi32/Makefile
 dlls/ttydrv/Makefile
+dlls/twain/Makefile
 dlls/url/Makefile
 dlls/urlmon/Makefile
 dlls/user/Makefile

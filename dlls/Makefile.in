@@ -69,6 +69,7 @@ SUBDIRS = \
 	sti \
 	tapi32 \
 	ttydrv \
+	twain \
 	url \
 	urlmon \
 	user \
@@ -195,6 +196,7 @@ all: \
 	tapi32.dll$(DLLEXT) \
 	toolhelp.dll$(DLLEXT) \
 	ttydrv.dll$(DLLEXT) \
+	twain_32.dll$(DLLEXT) \
 	typelib.dll$(DLLEXT) \
 	url.dll$(DLLEXT) \
 	urlmon.dll$(DLLEXT) \
@@ -425,6 +427,9 @@ tapi32.dll$(DLLEXT): tapi32/tapi32.dll$(DLLEXT)
 
 ttydrv.dll$(DLLEXT): ttydrv/ttydrv.dll$(DLLEXT)
 	$(RM) $@ && $(LN_S) ttydrv/ttydrv.dll$(DLLEXT) $@
+
+twain_32.dll$(DLLEXT): twain/twain_32.dll$(DLLEXT)
+	$(RM) $@ && $(LN_S) twain/twain_32.dll$(DLLEXT) $@
 
 url.dll$(DLLEXT): url/url.dll$(DLLEXT)
 	$(RM) $@ && $(LN_S) url/url.dll$(DLLEXT) $@
@@ -689,6 +694,10 @@ ttydrv/ttydrv.dll$(DLLEXT): dummy user32.dll$(DLLEXT) gdi32.dll$(DLLEXT) \
   kernel32.dll$(DLLEXT) ntdll.dll$(DLLEXT) libuser32.dll.$(LIBEXT) libgdi32.dll.$(LIBEXT) \
   libkernel32.dll.$(LIBEXT) libntdll.dll.$(LIBEXT)
 	@cd ttydrv && $(MAKE) ttydrv.dll$(DLLEXT)
+
+twain/twain_32.dll$(DLLEXT): dummy user32.dll$(DLLEXT) gdi32.dll$(DLLEXT) \
+  kernel32.dll$(DLLEXT) ntdll.dll$(DLLEXT)
+	@cd twain && $(MAKE) twain_32.dll$(DLLEXT)
 
 url/url.dll$(DLLEXT): dummy ntdll.dll$(DLLEXT)
 	@cd url && $(MAKE) url.dll$(DLLEXT)
