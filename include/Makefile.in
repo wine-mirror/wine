@@ -7,8 +7,15 @@ MODULE	  = none
 IDL_SRCS = \
 	oaidl.idl \
 	objidl.idl \
+	strmif.idl \
 	unknwn.idl \
 	wtypes.idl
+
+IDL_INCLUDES = \
+	axcore.idl \
+	axextend.idl \
+	devenum.idl \
+	dyngraph.idl
 
 WINDOWS_INCLUDES = \
 	accctrl.h \
@@ -188,6 +195,7 @@ WINDOWS_INCLUDES = \
 	wshisotp.h \
 	wsipx.h \
 	zmouse.h \
+	$(IDL_INCLUDES) \
 	$(IDL_SRCS) \
 	$(IDL_SRCS:.idl=.h)
 

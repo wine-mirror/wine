@@ -505,7 +505,7 @@ static HRESULT WINAPI Mediaseeking_CheckCapabilities(IMediaSeeking *iface,
 }
 
 static HRESULT WINAPI Mediaseeking_IsFormatSupported(IMediaSeeking *iface,
-						     GUID *pFormat) {
+						     const GUID *pFormat) {
     ICOM_THIS_MULTI(IFilterGraphImpl, IMediaSeeking_vtbl, iface);
 
     TRACE("(%p/%p)->(%p): stub !!!\n", This, iface, pFormat);
@@ -532,7 +532,7 @@ static HRESULT WINAPI Mediaseeking_GetTimeFormat(IMediaSeeking *iface,
 }
 
 static HRESULT WINAPI Mediaseeking_IsUsingTimeFormat(IMediaSeeking *iface,
-						     GUID *pFormat) {
+						     const GUID *pFormat) {
     ICOM_THIS_MULTI(IFilterGraphImpl, IMediaSeeking_vtbl, iface);
 
     TRACE("(%p/%p)->(%p): stub !!!\n", This, iface, pFormat);
@@ -541,7 +541,7 @@ static HRESULT WINAPI Mediaseeking_IsUsingTimeFormat(IMediaSeeking *iface,
 }
 
 static HRESULT WINAPI Mediaseeking_SetTimeFormat(IMediaSeeking *iface,
-						 GUID *pFormat) {
+						 const GUID *pFormat) {
     ICOM_THIS_MULTI(IFilterGraphImpl, IMediaSeeking_vtbl, iface);
 
     TRACE("(%p/%p)->(%p): stub !!!\n", This, iface, pFormat);
@@ -578,9 +578,9 @@ static HRESULT WINAPI Mediaseeking_GetCurrentPosition(IMediaSeeking *iface,
 
 static HRESULT WINAPI Mediaseeking_ConvertTimeFormat(IMediaSeeking *iface,
 						     LONGLONG *pTarget,
-						     GUID *pTargetFormat,
+						     const GUID *pTargetFormat,
 						     LONGLONG Source,
-						     GUID *pSourceFormat) {
+						     const GUID *pSourceFormat) {
     ICOM_THIS_MULTI(IFilterGraphImpl, IMediaSeeking_vtbl, iface);
 
     TRACE("(%p/%p)->(%p, %p, %lld, %p): stub !!!\n", This, iface, pTarget, pTargetFormat, Source, pSourceFormat);
