@@ -72,6 +72,7 @@
 #define XMD_H
 #define UINT8 JPEG_UINT8
 #define UINT16 JPEG_UINT16
+#undef FAR
 #ifdef HAVE_JPEGLIB_H
 # include <jpeglib.h>
 #endif
