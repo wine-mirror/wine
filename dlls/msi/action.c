@@ -107,6 +107,8 @@ static const WCHAR cszTargetDir[] = {'T','A','R','G','E','T','D','I','R',0};
 static const WCHAR cszTempFolder[]= {'T','e','m','p','F','o','l','d','e','r',0};
 static const WCHAR cszDatabase[]={'D','A','T','A','B','A','S','E',0};
 static const WCHAR c_collen[] = {'C',':','\\',0};
+static const WCHAR szProductCode[]=
+{'P','r','o','d','u','c','t','C','o','d','e',0};
  
 static const WCHAR cszbs[]={'\\',0};
 
@@ -800,6 +802,18 @@ static LPWSTR build_directory_name(DWORD count, ...)
             strcatW(dir, cszbs);
     }
     return dir;
+}
+
+static BOOL ACTION_VerifyComponentForAction(MSIPACKAGE* package, INT index, 
+                                            INSTALLSTATE check )
+{
+    if (package->components[index].Installed == check)
+        return FALSE;
+
+    if (package->components[index].ActionRequest == check)
+        return TRUE;
+    else
+        return FALSE;
 }
 
 
@@ -1534,7 +1548,7 @@ static int load_component(MSIPACKAGE* package, MSIRECORD * row)
     sz = 96;       
     MSI_RecordGetStringW(row,6,package->components[index].KeyPath,&sz);
 
-    package->components[index].Installed = INSTALLSTATE_ABSENT;
+    package->components[index].Installed = INSTALLSTATE_UNKNOWN;
     package->components[index].Action = INSTALLSTATE_UNKNOWN;
     package->components[index].ActionRequest = INSTALLSTATE_UNKNOWN;
 
@@ -1599,7 +1613,7 @@ static void load_feature(MSIPACKAGE* package, MSIRECORD * row)
 
     package->features[index].Attributes= MSI_RecordGetInteger(row,8);
 
-    package->features[index].Installed = INSTALLSTATE_ABSENT;
+    package->features[index].Installed = INSTALLSTATE_UNKNOWN;
     package->features[index].Action = INSTALLSTATE_UNKNOWN;
     package->features[index].ActionRequest = INSTALLSTATE_UNKNOWN;
 
@@ -2069,6 +2083,46 @@ LPWSTR resolve_folder(MSIPACKAGE *package, LPCWSTR name, BOOL source,
     return path;
 }
 
+/* scan for and update current install states */
+void ACTION_UpdateInstallStates(MSIPACKAGE *package)
+{
+    int i;
+    LPWSTR productcode;
+
+    productcode = load_dynamic_property(package,szProductCode,NULL);
+
+    for (i = 0; i < package->loaded_components; i++)
+    {
+        INSTALLSTATE res;
+        res = MsiGetComponentPathW(productcode, 
+                        package->components[i].ComponentId , NULL, NULL);
+        if (res < 0)
+            res = INSTALLSTATE_ABSENT;
+        package->components[i].Installed = res;
+    }
+
+    for (i = 0; i < package->loaded_features; i++)
+    {
+        INSTALLSTATE res = -10;
+        int j;
+        for (j = 0; j < package->features[i].ComponentCount; j++)
+        {
+            MSICOMPONENT* component = &package->components[package->features[i].
+                                                           Components[j]];
+            if (res == -10)
+                res = component->Installed;
+            else
+            {
+                if (res == component->Installed)
+                    continue;
+
+                if (res != component->Installed)
+                        res = INSTALLSTATE_INCOMPLETE;
+            }
+        }
+    }
+}
+
 /* update compoennt state based on a feature change */
 void ACTION_UpdateComponentStates(MSIPACKAGE *package, LPCWSTR szFeature)
 {
@@ -2120,49 +2174,24 @@ void ACTION_UpdateComponentStates(MSIPACKAGE *package, LPCWSTR szFeature)
     } 
 }
 
-static UINT SetFeatureStates(MSIPACKAGE *package)
+static BOOL process_state_property (MSIPACKAGE* package, LPCWSTR property, 
+                                    INSTALLSTATE state)
 {
-    LPWSTR level;
-    INT install_level;
-    DWORD i;
-    INT j;
-    LPWSTR override = NULL;
     static const WCHAR all[]={'A','L','L',0};
-    static const WCHAR szlevel[] = {
-        'I','N','S','T','A','L','L','L','E','V','E','L',0};
-    static const WCHAR szAddLocal[] = {
-        'A','D','D','L','O','C','A','L',0};
+    LPWSTR override = NULL;
+    INT i;
+    BOOL rc = FALSE;
 
-    /* I do not know if this is where it should happen.. but */
-
-    TRACE("Checking Install Level\n");
-
-    level = load_dynamic_property(package,szlevel,NULL);
-    if (level)
-    {
-        install_level = atoiW(level);
-        HeapFree(GetProcessHeap(), 0, level);
-    }
-    else
-        install_level = 1;
-
-    /* ok hereis the rub
-     * ADDLOCAL and its friend OVERRIDE INSTALLLEVLE
-     * I have confirmed this if ADDLOCALis stated then the INSTALLLEVEL is
-     * itnored for all the features. seems strange, epsecially since it is not
-     * documented anywhere, but it is how it works. 
-     */
-    
-    override = load_dynamic_property(package,szAddLocal,NULL);
-  
+    override = load_dynamic_property(package, property, NULL);
     if (override)
     {
+        rc = TRUE;
         for(i = 0; i < package->loaded_features; i++)
         {
             if (strcmpiW(override,all)==0)
             {
-                package->features[i].ActionRequest= INSTALLSTATE_LOCAL;
-                package->features[i].Action = INSTALLSTATE_LOCAL;
+                package->features[i].ActionRequest= state;
+                package->features[i].Action = state;
             }
             else
             {
@@ -2176,8 +2205,8 @@ static UINT SetFeatureStates(MSIPACKAGE *package)
                         || (!ptr2 &&
                         strcmpW(ptr,package->features[i].Feature)==0))
                     {
-                        package->features[i].ActionRequest= INSTALLSTATE_LOCAL;
-                        package->features[i].Action = INSTALLSTATE_LOCAL;
+                        package->features[i].ActionRequest= state;
+                        package->features[i].Action = state;
                         break;
                     }
                     if (ptr2)
@@ -2192,16 +2221,72 @@ static UINT SetFeatureStates(MSIPACKAGE *package)
         }
         HeapFree(GetProcessHeap(),0,override);
     } 
+
+    return rc;
+}
+
+static UINT SetFeatureStates(MSIPACKAGE *package)
+{
+    LPWSTR level;
+    INT install_level;
+    DWORD i;
+    INT j;
+    static const WCHAR szlevel[] = {
+        'I','N','S','T','A','L','L','L','E','V','E','L',0};
+    static const WCHAR szAddLocal[] = {
+        'A','D','D','L','O','C','A','L',0};
+    static const WCHAR szRemove[] = {
+        'R','E','M','O','V','E',0};
+    BOOL override = FALSE;
+
+    /* I do not know if this is where it should happen.. but */
+
+    TRACE("Checking Install Level\n");
+
+    level = load_dynamic_property(package,szlevel,NULL);
+    if (level)
+    {
+        install_level = atoiW(level);
+        HeapFree(GetProcessHeap(), 0, level);
+    }
     else
+        install_level = 1;
+
+    /* ok hereis the _real_ rub
+     * all these activation/deactiontion things happen in order and things later
+     * on the list override things earlier on the list.
+     * 1) INSTALLLEVEL processing
+     * 2) ADDLOCAL
+     * 3) REMOVE
+     * 4) ADDSOURCE
+     * 5) ADDDEFAULT
+     * 6) REINSTALL
+     * 7) COMPADDLOCAL
+     * 8) COMPADDSOURCE
+     * 9) FILEADDLOCAL
+     * 10) FILEADDSOURCE
+     * 11) FILEADDDEFAULT
+     * I have confirmed this if ADDLOCALis stated then the INSTALLLEVEL is
+     * itnored for all the features. seems strange, epsecially since it is not
+     * documented anywhere, but it is how it works. 
+     *
+     * I am still ignoring alot of these. But that is ok for now, ADDLOCAL and
+     * REMOVE are the big ones, since we dont handle administrative installs yet
+     * anyway.
+     */
+    override |= process_state_property(package,szAddLocal,INSTALLSTATE_LOCAL);
+    override |= process_state_property(package,szRemove,INSTALLSTATE_ABSENT);
+
+    if (!override)
     {
         for(i = 0; i < package->loaded_features; i++)
         {
-            BOOL feature_state= ((package->features[i].Level > 0) &&
+            BOOL feature_state = ((package->features[i].Level > 0) &&
                              (package->features[i].Level <= install_level));
 
             if (feature_state)
             {
-                package->features[i].ActionRequest= INSTALLSTATE_LOCAL;
+                package->features[i].ActionRequest = INSTALLSTATE_LOCAL;
                 package->features[i].Action = INSTALLSTATE_LOCAL;
             }
         }
@@ -2225,15 +2310,24 @@ static UINT SetFeatureStates(MSIPACKAGE *package)
 
             if (!component->Enabled)
             {
-                component->Action = INSTALLSTATE_ABSENT;
-                component->ActionRequest = INSTALLSTATE_ABSENT;
+                component->Action = INSTALLSTATE_UNKNOWN;
+                component->ActionRequest = INSTALLSTATE_UNKNOWN;
             }
             else
             {
                 if (feature->Action == INSTALLSTATE_LOCAL)
+                {
                     component->Action = INSTALLSTATE_LOCAL;
-                if (feature->ActionRequest == INSTALLSTATE_LOCAL)
                     component->ActionRequest = INSTALLSTATE_LOCAL;
+                }
+                else if (feature->ActionRequest == INSTALLSTATE_ABSENT)
+                {
+                    if (component->Action == INSTALLSTATE_UNKNOWN)
+                    {
+                        component->Action = INSTALLSTATE_ABSENT;
+                        component->ActionRequest = INSTALLSTATE_ABSENT;
+                    }
+                }
             }
         }
     } 
@@ -2481,8 +2575,9 @@ static UINT ACTION_CostFinalize(MSIPACKAGE *package)
     else
         HeapFree(GetProcessHeap(),0,level);
 
-    return SetFeatureStates(package);
+    ACTION_UpdateInstallStates(package);
 
+    return SetFeatureStates(package);
 }
 
 /*
@@ -2867,8 +2962,9 @@ static UINT ACTION_InstallFiles(MSIPACKAGE *package)
         if (file->Temporary)
             continue;
 
-        if (package->components[file->ComponentIndex].ActionRequest != 
-             INSTALLSTATE_LOCAL)
+
+        if (!ACTION_VerifyComponentForAction(package, file->ComponentIndex, 
+                                       INSTALLSTATE_LOCAL))
         {
             ui_progress(package,2,file->FileSize,0,0);
             TRACE("File %s is not scheduled for install\n",
@@ -3038,8 +3134,9 @@ static UINT ACTION_DuplicateFiles(MSIPACKAGE *package)
         }
 
         component_index = get_loaded_component(package,component);
-        if (package->components[component_index].ActionRequest != 
-             INSTALLSTATE_LOCAL)
+
+        if (!ACTION_VerifyComponentForAction(package, component_index, 
+                                       INSTALLSTATE_LOCAL))
         {
             TRACE("Skipping copy due to disabled component\n");
 
@@ -3280,8 +3377,8 @@ static UINT ACTION_WriteRegistryValues(MSIPACKAGE *package)
         component = load_dynamic_stringW(row, 6);
         component_index = get_loaded_component(package,component);
 
-        if (package->components[component_index].ActionRequest != 
-             INSTALLSTATE_LOCAL)
+        if (!ACTION_VerifyComponentForAction(package, component_index, 
+                                       INSTALLSTATE_LOCAL))
         {
             TRACE("Skipping write due to disabled component\n");
             msiobj_release(&row->hdr);
@@ -3609,8 +3706,6 @@ static UINT ACTION_ProcessComponents(MSIPACKAGE *package)
     UINT rc;
     DWORD i;
     HKEY hkey=0,hkey2=0;
-    static const WCHAR szProductCode[]=
-         {'P','r','o','d','u','c','t','C','o','d','e',0};
 
     if (!package)
         return ERROR_INVALID_HANDLE;
@@ -3719,7 +3814,8 @@ static UINT ACTION_RegisterTypeLibraries(MSIPACKAGE *package)
             continue;
         }
 
-        if (package->components[index].ActionRequest != INSTALLSTATE_LOCAL)
+        if (!ACTION_VerifyComponentForAction(package, index,
+                                INSTALLSTATE_LOCAL))
         {
             TRACE("Skipping typelib reg due to disabled component\n");
             msiobj_release(&row->hdr);
@@ -3973,7 +4069,8 @@ static UINT ACTION_RegisterClassInfo(MSIPACKAGE *package)
             continue;
         }
 
-        if (package->components[index].ActionRequest != INSTALLSTATE_LOCAL)
+        if (!ACTION_VerifyComponentForAction(package, index,
+                                INSTALLSTATE_LOCAL))
         {
             TRACE("Skipping class reg due to disabled component\n");
             msiobj_release(&row->hdr);
@@ -4392,8 +4489,6 @@ static UINT build_icon_path(MSIPACKAGE *package, LPCWSTR icon_name,
 
     static const WCHAR szInstaller[] = 
         {'I','n','s','t','a','l','l','e','r','\\',0};
-    static const WCHAR szProductCode[] =
-        {'P','r','o','d','u','c','t','C','o','d','e',0};
     static const WCHAR szFolder[] =
         {'W','i','n','d','o','w','s','F','o','l','d','e','r',0};
 
@@ -4475,7 +4570,8 @@ static UINT ACTION_CreateShortcuts(MSIPACKAGE *package)
             continue;
         }
 
-        if (package->components[index].ActionRequest != INSTALLSTATE_LOCAL)
+        if (!ACTION_VerifyComponentForAction(package, index,
+                                INSTALLSTATE_LOCAL))
         {
             TRACE("Skipping shortcut creation due to disabled component\n");
             msiobj_release(&row->hdr);
@@ -4630,8 +4726,6 @@ static UINT ACTION_PublishProduct(MSIPACKAGE *package)
     LPWSTR productcode;
     HKEY hkey=0;
     HKEY hukey=0;
-    static const WCHAR szProductCode[]=
-         {'P','r','o','d','u','c','t','C','o','d','e',0};
     static const WCHAR szProductName[] = {
          'P','r','o','d','u','c','t','N','a','m','e',0};
     static const WCHAR szPackageCode[] = {
@@ -4824,8 +4918,8 @@ static UINT ACTION_WriteIniValues(MSIPACKAGE *package)
         component_index = get_loaded_component(package,component);
         HeapFree(GetProcessHeap(),0,component);
 
-        if (package->components[component_index].ActionRequest != 
-             INSTALLSTATE_LOCAL)
+        if (!ACTION_VerifyComponentForAction(package, component_index,
+                                INSTALLSTATE_LOCAL))
         {
             TRACE("Skipping ini file due to disabled component\n");
             msiobj_release(&row->hdr);
@@ -5008,8 +5102,6 @@ static UINT ACTION_PublishFeatures(MSIPACKAGE *package)
     DWORD i;
     HKEY hkey=0;
     HKEY hukey=0;
-    static const WCHAR szProductCode[]=
-         {'P','r','o','d','u','c','t','C','o','d','e',0};
     
     if (!package)
         return ERROR_INVALID_HANDLE;
@@ -5081,8 +5173,6 @@ end:
 
 static UINT ACTION_RegisterProduct(MSIPACKAGE *package)
 {
-    static const WCHAR szProductCode[]=
-         {'P','r','o','d','u','c','t','C','o','d','e',0};
     HKEY hkey=0;
     LPWSTR buffer;
     LPWSTR productcode;
@@ -5285,8 +5375,6 @@ static UINT ACTION_ForceReboot(MSIPACKAGE *package)
     WCHAR  squished_pc[100];
     INT rc;
     DWORD size;
-    static const WCHAR szProductCode[]=
-         {'P','r','o','d','u','c','t','C','o','d','e',0};
     static const WCHAR szLUS[] = {
          'L','a','s','t','U','s','e','d','S','o','u','r','c','e',0};
     static const WCHAR szSourceList[] = {
@@ -5409,7 +5497,8 @@ static UINT ACTION_RegisterExtensionInfo(MSIPACKAGE *package)
             continue;
         }
 
-        if (package->components[index].ActionRequest != INSTALLSTATE_LOCAL)
+        if (!ACTION_VerifyComponentForAction(package, index,
+                                INSTALLSTATE_LOCAL))
         {
             TRACE("Skipping extension reg due to disabled component\n");
             msiobj_release(&row->hdr);
@@ -5562,8 +5651,6 @@ end:
 
 static UINT ACTION_RegisterUser(MSIPACKAGE *package)
 {
-    static const WCHAR szProductCode[]=
-         {'P','r','o','d','u','c','t','C','o','d','e',0};
     static const WCHAR szProductID[]=
          {'P','r','o','d','u','c','t','I','D',0};
     HKEY hkey=0;
