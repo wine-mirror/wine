@@ -5,12 +5,10 @@
 #ifndef __WINE_WINE_MMSYSTEM16_H
 #define __WINE_WINE_MMSYSTEM16_H
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-
 #include "windef.h"
 #include "wine/windef16.h"
+
+#include "pshpack1.h"
 
 typedef UINT16	MMVERSION16;
 typedef UINT16	MCIDEVICEID16;
@@ -565,5 +563,7 @@ typedef struct {
     LPCSTR	lpfilename;
     RECT16	rc;
 } MCI_OVLY_LOAD_PARMS16, *LPMCI_OVLY_LOAD_PARMS16;
+
+#include "poppack.h"
 
 #endif  /* __WINE_WINE_MMSYSTEM16_H */
