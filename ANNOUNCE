@@ -1,16 +1,15 @@
-This is release 20000614 of Wine, a free implementation of Windows on
+This is release 20000716 of Wine, a free implementation of Windows on
 Unix.  This is still a developers only release.  There are many bugs
 and unimplemented features.  Most applications still do not work
 correctly.
 
-Patches should be submitted to "julliard@lrc.epfl.ch".  Please don't
+Patches should be submitted to "julliard@winehq.com".  Please don't
 forget to include a ChangeLog entry.
 
-WHAT'S NEW with Wine-20000614: (see ChangeLog for details)
-	- Address space separation
-	- Message compiler
-	- Beginnings of multiple codepages support
-	- The usual common controls fixes and improvements
+WHAT'S NEW with Wine-20000716: (see ChangeLog for details)
+	- DirectSound restructured and improved.
+	- More builtin dlls (ws2_32, setupapi, rpcrt4, serialui).
+	- Several internationalisation improvements
 	- Lots of bug fixes.
 
 See the README file in the distribution for installation instructions.
@@ -19,10 +18,10 @@ Because of lags created by using mirror, this message may reach you before
 the release is available at the ftp sites.  The sources will be available
 from the following locations:
 
-  ftp://metalab.unc.edu/pub/Linux/ALPHA/wine/development/Wine-20000614.tar.gz
-  ftp://tsx-11.mit.edu/pub/linux/ALPHA/Wine/development/Wine-20000614.tar.gz
-  ftp://ftp.infomagic.com/pub/mirrors/linux/sunsite/ALPHA/wine/development/Wine-20000614.tar.gz
-  ftp://orcus.progsoc.uts.edu.au/pub/Wine/development/Wine-20000614.tar.gz
+  ftp://metalab.unc.edu/pub/Linux/ALPHA/wine/development/Wine-20000716.tar.gz
+  ftp://tsx-11.mit.edu/pub/linux/ALPHA/Wine/development/Wine-20000716.tar.gz
+  ftp://ftp.infomagic.com/pub/mirrors/linux/sunsite/ALPHA/wine/development/Wine-20000716.tar.gz
+  ftp://orcus.progsoc.uts.edu.au/pub/Wine/development/Wine-20000716.tar.gz
 
 It should also be available from any site that mirrors tsx-11 or sunsite.
 
@@ -41,4 +40,4 @@ AUTHORS in the distribution for the complete list.
 
 --
 Alexandre Julliard
-julliard@lrc.epfl.ch
+julliard@winehq.com
