@@ -46,6 +46,7 @@ LIBSUBDIRS = \
 	dlls/wnaspi32 \
 	files \
 	graphics \
+	graphics/enhmetafiledrv \
 	graphics/metafiledrv \
 	graphics/psdrv \
 	graphics/ttydrv \
@@ -120,6 +121,7 @@ LIBOBJS = \
 	dlls/wnaspi32/wnaspi32.o \
 	files/files.o \
 	graphics/graphics.o \
+	graphics/enhmetafiledrv/enhmetafiledrv.o \
 	graphics/metafiledrv/metafiledrv.o \
 	graphics/psdrv/psdrv.o \
 	graphics/ttydrv/ttydrv.o \

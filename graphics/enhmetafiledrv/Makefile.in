@@ -1,0 +1,19 @@
+DEFS      = @DLLFLAGS@ -D__WINE__
+TOPSRCDIR = @top_srcdir@
+TOPOBJDIR = ../..
+SRCDIR    = @srcdir@
+VPATH     = @srcdir@
+MODULE    = enhmetafiledrv
+
+C_SRCS = \
+	dc.c \
+	graphics.c \
+	init.c \
+	mapping.c \
+	objects.c 
+
+all: $(MODULE).o
+
+@MAKE_RULES@
+
+### Dependencies:

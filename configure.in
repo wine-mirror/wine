@@ -731,6 +731,7 @@ dlls/wnaspi32/Makefile
 documentation/Makefile
 files/Makefile
 graphics/Makefile
+graphics/enhmetafiledrv/Makefile
 graphics/metafiledrv/Makefile
 graphics/psdrv/Makefile
 graphics/ttydrv/Makefile
