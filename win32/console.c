@@ -680,7 +680,7 @@ BOOL32 WINAPI AllocConsole(VOID)
         }
 
         req.output = 0;
-        req.access = GENERIC_READ | GENERIC_WRITE;
+        req.access = GENERIC_READ | GENERIC_WRITE | SYNCHRONIZE;
         req.inherit = FALSE;
         CLIENT_SendRequest( REQ_OPEN_CONSOLE, -1, 1, &req, sizeof(req) );
         if (CLIENT_WaitSimpleReply( &reply, sizeof(reply), NULL ) != ERROR_SUCCESS)
