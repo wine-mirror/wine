@@ -480,6 +480,10 @@ dlls/winaspi
 
 dlls/winedos
 
+% dlls/winedos/winedos16.spec
+
+dlls/winedos
+
 % dlls/wineps/wineps.spec
 
 dlls/wineps
