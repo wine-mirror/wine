@@ -28,6 +28,14 @@ extern "C" {
 #include "prsht.h"
 #include "pshpack1.h"
 
+#ifndef SNDMSG
+#ifdef __cplusplus
+#define SNDMSG ::SendMessage
+#else   /* __cplusplus */
+#define SNDMSG SendMessage
+#endif  /* __cplusplus */
+#endif  /* SNDMSG */
+
 #define OFN_READONLY                 0x00000001
 #define OFN_OVERWRITEPROMPT          0x00000002
 #define OFN_HIDEREADONLY             0x00000004
