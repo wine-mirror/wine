@@ -69,7 +69,7 @@ static void gen_proxy(type_t *iface, func_t *cur, int idx)
   fprintf(proxy, " CALLBACK %s_", iface->name);
   write_name(proxy, def);
   fprintf(proxy, "_Proxy(\n");
-  write_args(proxy, cur->args, iface->name, 1);
+  write_args(proxy, cur->args, iface->name, 1, TRUE);
   fprintf(proxy, ")\n");
   fprintf(proxy, "{\n");
   /* local variables */

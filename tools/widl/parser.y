@@ -243,6 +243,17 @@ arg:	  attributes type pident array		{ $$ = $3;
 	| type pident array			{ $$ = $2;
 						  set_type($$, $1, $3);
 						}
+	| attributes type pident '(' m_args ')'	{ $$ = $3;
+						  $$->ptr_level--;
+						  set_type($$, $2, NULL);
+						  $$->attrs = $1;
+						  $$->args = $5;
+						}
+	| type pident '(' m_args ')'		{ $$ = $2;
+						  $$->ptr_level--;
+						  set_type($$, $1, NULL);
+						  $$->args = $4;
+						}
 	;
 
 array:						{ $$ = NULL; }

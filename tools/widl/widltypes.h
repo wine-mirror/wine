@@ -146,6 +146,7 @@ struct _var_t {
   int ptr_level;
   expr_t *array;
   type_t *type;
+  var_t *args;  /* for function pointers */
   char *tname;
   attr_t *attrs;
   expr_t *eval;

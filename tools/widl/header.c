@@ -446,8 +446,19 @@ static void write_icom_method_def(type_t *iface)
       fprintf(header, ")(%s", arg ? "THIS_ " : "THIS" );
       while (arg) {
 	write_type(header, arg->type, arg, arg->tname);
-	fprintf(header, " ");
-	write_name(header,arg);
+        if (arg->args)
+        {
+          fprintf(header, " (STDMETHODCALLTYPE *");
+          write_name(header,arg);
+          fprintf( header,")(");
+          write_args(header, arg->args, NULL, 0, FALSE);
+          fprintf(header,")");
+        }
+        else
+        {
+          fprintf(header, " ");
+          write_name(header,arg);
+        }
 	write_array(header, arg->array, 0);
 	arg = PREV_LINK(arg);
 	if (arg) fprintf(header, ", ");
@@ -503,35 +514,53 @@ static int write_method_macro(type_t *iface, char *name)
   return idx;
 }
 
-void write_args(FILE *h, var_t *arg, char *name, int method)
+void write_args(FILE *h, var_t *arg, char *name, int method, int do_indent)
 {
   int count = 0;
   if (arg) {
     while (NEXT_LINK(arg))
       arg = NEXT_LINK(arg);
   }
-  if (h == header) {
-    indentation++;
-    indent(0);
-  } else fprintf(h, "    ");
+  if (do_indent)
+  {
+      if (h == header) {
+          indentation++;
+          indent(0);
+      } else fprintf(h, "    ");
+  }
   if (method == 1) {
     fprintf(h, "%s* This", name);
     count++;
   }
   while (arg) {
     if (count) {
-      fprintf(h, ",\n");
-      if (h == header) indent(0);
-      else fprintf(h, "    ");
+        if (do_indent)
+        {
+            fprintf(h, ",\n");
+            if (h == header) indent(0);
+            else fprintf(h, "    ");
+        }
+        else fprintf(h, ",");
     }
     write_type(h, arg->type, arg, arg->tname);
-    fprintf(h, " ");
-    write_name(h, arg);
+    if (arg->args)
+    {
+      fprintf(h, " (STDMETHODCALLTYPE *");
+      write_name(h,arg);
+      fprintf(h, ")(");
+      write_args(h, arg->args, NULL, 0, FALSE);
+      fprintf(h, ")");
+    }
+    else
+    {
+      fprintf(h, " ");
+      write_name(h, arg);
+    }
     write_array(h, arg->array, 0);
     arg = PREV_LINK(arg);
     count++;
   }
-  if (h == header) indentation--;
+  if (do_indent && h == header) indentation--;
 }
 
 static void write_cpp_method_def(type_t *iface)
@@ -549,7 +578,7 @@ static void write_cpp_method_def(type_t *iface)
       fprintf(header, " STDMETHODCALLTYPE ");
       write_name(header, def);
       fprintf(header, "(\n");
-      write_args(header, cur->args, iface->name, 2);
+      write_args(header, cur->args, iface->name, 2, TRUE);
       fprintf(header, ") = 0;\n");
       fprintf(header, "\n");
     }
@@ -575,7 +604,7 @@ static void do_write_c_method_def(type_t *iface, char *name)
       fprintf(header, " (STDMETHODCALLTYPE *");
       write_name(header, def);
       fprintf(header, ")(\n");
-      write_args(header, cur->args, name, 1);
+      write_args(header, cur->args, name, 1, TRUE);
       fprintf(header, ");\n");
       fprintf(header, "\n");
     }
@@ -603,7 +632,7 @@ static void write_method_proto(type_t *iface)
       fprintf(header, " CALLBACK %s_", iface->name);
       write_name(header, def);
       fprintf(header, "_Proxy(\n");
-      write_args(header, cur->args, iface->name, 1);
+      write_args(header, cur->args, iface->name, 1, TRUE);
       fprintf(header, ");\n");
       /* stub prototype */
       fprintf(header, "void __RPC_STUB %s_", iface->name);
@@ -625,14 +654,14 @@ static void write_method_proto(type_t *iface)
         fprintf(header, " CALLBACK %s_", iface->name);
         write_name(header, mdef);
         fprintf(header, "_Proxy(\n");
-        write_args(header, m->args, iface->name, 1);
+        write_args(header, m->args, iface->name, 1, TRUE);
         fprintf(header, ");\n");
         /* stub prototype - use remotable prototype */
         write_type(header, def->type, def, def->tname);
         fprintf(header, " __RPC_STUB %s_", iface->name);
         write_name(header, mdef);
         fprintf(header, "_Stub(\n");
-        write_args(header, cur->args, iface->name, 1);
+        write_args(header, cur->args, iface->name, 1, TRUE);
         fprintf(header, ");\n");
       }
       else {
@@ -655,7 +684,7 @@ static void write_function_proto(type_t *iface)
     fprintf(header, " ");
     write_name(header, def);
     fprintf(header, "(\n");
-    write_args(header, cur->args, iface->name, 0);
+    write_args(header, cur->args, iface->name, 0, TRUE);
     fprintf(header, ");\n");
 
     cur = PREV_LINK(cur);
