@@ -47,8 +47,8 @@
 43  stub     WSAGetServiceClassInfoW
 44  stub     WSAGetServiceClassNameByClassIdA
 45  stub     WSAGetServiceClassNameByClassIdW
-46  stub     WSAHtonl
-47  stub     WSAHtons
+46  stdcall  WSAHtonl(long long ptr)
+47  stdcall  WSAHtons(long long ptr)
 48  stdcall  WSAInstallServiceClassA(ptr)
 49  stdcall  WSAInstallServiceClassW(ptr)
 50  stdcall  WSAIoctl(long long ptr long ptr long ptr ptr ptr)
@@ -59,7 +59,7 @@
 55  stdcall  getservbyname(str str) WS_getservbyname
 56  stdcall  getservbyport(long str) WS_getservbyport
 57  stdcall  gethostname(ptr long) WS_gethostname
-58  stub     WSAJoinLeaf
+58  stdcall  WSAJoinLeaf(long ptr long ptr ptr ptr ptr long)
 59  stub     WSALookupServiceBeginA
 60  stub     WSALookupServiceBeginW
 61  stub     WSALookupServiceEnd

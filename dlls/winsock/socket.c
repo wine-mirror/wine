@@ -1582,6 +1582,24 @@ u_short WINAPI WS_htons(u_short hostshort)
     return htons(hostshort);
 }
 
+/***********************************************************************
+ *		WSAHtonl		(WS2_32.46)
+ */
+int WINAPI WSAHtonl(SOCKET s, u_long hostlong, ulong *lpnetlong)
+{
+    FIXME("stub.\n");
+    return INVALID_SOCKET;
+}
+
+/***********************************************************************
+ *		WSAHtons		(WS2_32.47)
+ */
+int WINAPI WSAHtons(SOCKET s, u_short hostshort, ushort *lpnetshort)
+{
+    FIXME("stub.\n");
+    return INVALID_SOCKET;
+}
+
 
 /***********************************************************************
  *		inet_addr		(WINSOCK.10)
@@ -2833,6 +2851,23 @@ SOCKET WINAPI WSASocketA(int af, int type, int protocol,
     return INVALID_SOCKET;
 }
 
+/***********************************************************************
+ *      WSAJoinLeaf          (WS2_32.58)
+ *
+ */
+SOCKET WINAPI WSAJoinLeaf(
+        SOCKET s,
+        const struct WS_sockaddr *addr,
+        int addrlen,
+        LPWSABUF lpCallerData,
+        LPWSABUF lpCalleeData,
+        LPQOS lpSQOS,
+        LPQOS lpGQOS,
+        DWORD dwFlags)
+{
+    FIXME("stub.\n");
+    return INVALID_SOCKET;
+}
 
 /***********************************************************************
  *      __WSAFDIsSet			(WS2_32.151)
