@@ -711,65 +711,58 @@ void TASK_Reschedule(void)
 void WINAPI InitTask16( CONTEXT86 *context )
 {
     TDB *pTask;
-    NE_MODULE *pModule;
-    SEGTABLEENTRY *pSegTable;
     INSTANCEDATA *pinstance;
-    LONG stacklow, stackhi;
+    SEGPTR ptr;
 
-    if (context) EAX_reg(context) = 0;
+    EAX_reg(context) = 0;
     if (!(pTask = (TDB *)GlobalLock16( GetCurrentTask() ))) return;
-    if (!(pModule = NE_GetPtr( pTask->hModule ))) return;
+
+    /* Note: we need to trust that BX/CX contain the stack/heap sizes, 
+       as some apps, notably Visual Basic apps, *modify* the heap/stack
+       size of the instance data segment before calling InitTask() */
+
+    /* Initialize the INSTANCEDATA structure */
+    pinstance = (INSTANCEDATA *)PTR_SEG_OFF_TO_LIN(CURRENT_DS, 0);
+    pinstance->stackmin    = OFFSETOF( pTask->teb->cur_stack );
+    pinstance->stackbottom = pinstance->stackmin; /* yup, that's right. Confused me too. */
+    pinstance->stacktop    = ( pinstance->stackmin > BX_reg(context)? 
+                               pinstance->stackmin - BX_reg(context) : 0 ) + 150; 
+
+    /* Initialize the local heap */
+    if ( CX_reg(context) )
+        LocalInit16( pTask->hInstance, 0, CX_reg(context) );
 
     /* Initialize implicitly loaded DLLs */
     NE_InitializeDLLs( pTask->hModule );
 
-    if (context)
-    {
-        /* Registers on return are:
-         * ax     1 if OK, 0 on error
-         * cx     stack limit in bytes
-         * dx     cmdShow parameter
-         * si     instance handle of the previous instance
-         * di     instance handle of the new task
-         * es:bx  pointer to command-line inside PSP
-         *
-         * 0 (=%bp) is pushed on the stack
-         */
-        SEGPTR ptr = STACK16_PUSH( pTask->teb, sizeof(WORD) );
-        *(WORD *)PTR_SEG_TO_LIN(ptr) = 0;
-        SP_reg(context) -= 2;
+    /* Registers on return are:
+     * ax     1 if OK, 0 on error
+     * cx     stack limit in bytes
+     * dx     cmdShow parameter
+     * si     instance handle of the previous instance
+     * di     instance handle of the new task
+     * es:bx  pointer to command-line inside PSP
+     *
+     * 0 (=%bp) is pushed on the stack
+     */
+    ptr = STACK16_PUSH( pTask->teb, sizeof(WORD) );
+    *(WORD *)PTR_SEG_TO_LIN(ptr) = 0;
+    SP_reg(context) -= 2;
 
-        EAX_reg(context) = 1;
+    EAX_reg(context) = 1;
         
-	if (!pTask->pdb.cmdLine[0]) EBX_reg(context) = 0x80;
-	else
-        {
-            LPBYTE p = &pTask->pdb.cmdLine[1];
-            while ((*p == ' ') || (*p == '\t')) p++;
-            EBX_reg(context) = 0x80 + (p - pTask->pdb.cmdLine);
-        }
-        ECX_reg(context) = pModule->stack_size;
-        EDX_reg(context) = pTask->nCmdShow;
-        ESI_reg(context) = (DWORD)pTask->hPrevInstance;
-        EDI_reg(context) = (DWORD)pTask->hInstance;
-        ES_reg (context) = (WORD)pTask->hPDB;
-    }
-
-    /* Initialize the local heap */
-    if ( pModule->heap_size )
+    if (!pTask->pdb.cmdLine[0]) EBX_reg(context) = 0x80;
+    else
     {
-        LocalInit16( pTask->hInstance, 0, pModule->heap_size );
-    }    
-
-    /* Initialize the INSTANCEDATA structure */
-    pSegTable = NE_SEG_TABLE( pModule );
-    stacklow = pSegTable[pModule->ss - 1].minsize;
-    stackhi  = stacklow + pModule->stack_size;
-    if (stackhi > 0xffff) stackhi = 0xffff;
-    pinstance = (INSTANCEDATA *)PTR_SEG_OFF_TO_LIN(CURRENT_DS, 0);
-    pinstance->stackbottom = stackhi; /* yup, that's right. Confused me too. */
-    pinstance->stacktop    = stacklow; 
-    pinstance->stackmin    = OFFSETOF( pTask->teb->cur_stack );
+        LPBYTE p = &pTask->pdb.cmdLine[1];
+        while ((*p == ' ') || (*p == '\t')) p++;
+        EBX_reg(context) = 0x80 + (p - pTask->pdb.cmdLine);
+    }
+    ECX_reg(context) = pinstance->stacktop;
+    EDX_reg(context) = pTask->nCmdShow;
+    ESI_reg(context) = (DWORD)pTask->hPrevInstance;
+    EDI_reg(context) = (DWORD)pTask->hInstance;
+    ES_reg (context) = (WORD)pTask->hPDB;
 }
 
 
