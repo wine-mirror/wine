@@ -392,10 +392,19 @@ static DWORD OSS_OpenDevice(OSS_DEVICE* ossdev, unsigned req_access,
                             int sample_rate, int stereo, int fmt)
 {
     DWORD       ret;
+    DWORD open_access;
     TRACE("(%p,%u,%p,%d,%d,%d,%x)\n",ossdev,req_access,frag,strict_format,sample_rate,stereo,fmt);
 
     if (ossdev->full_duplex && (req_access == O_RDONLY || req_access == O_WRONLY))
-        req_access = O_RDWR;
+    {
+        TRACE("Opening RDWR because full_duplex=%d and req_access=%d\n",
+              ossdev->full_duplex,req_access);
+        open_access = O_RDWR;
+    }
+    else
+    {
+        open_access=req_access;
+    }
 
     /* FIXME: this should be protected, and it also contains a race with OSS_CloseDevice */
     if (ossdev->open_count == 0)
@@ -406,15 +415,28 @@ static DWORD OSS_OpenDevice(OSS_DEVICE* ossdev, unsigned req_access,
         ossdev->sample_rate = sample_rate;
         ossdev->stereo = stereo;
         ossdev->format = fmt;
-        ossdev->open_access = req_access;
+        ossdev->open_access = open_access;
         ossdev->owner_tid = GetCurrentThreadId();
 
         if ((ret = OSS_RawOpenDevice(ossdev,strict_format)) != MMSYSERR_NOERROR) return ret;
+        if (ossdev->full_duplex && ossdev->bTriggerSupport &&
+            (req_access == O_RDONLY || req_access == O_WRONLY))
+        {
+            int enable;
+            if (req_access == O_WRONLY)
+                ossdev->bInputEnabled=0;
+            else
+                ossdev->bOutputEnabled=0;
+            enable = getEnables(ossdev);
+            TRACE("Calling SNDCTL_DSP_SETTRIGGER with %x\n",enable);
+            if (ioctl(ossdev->fd, SNDCTL_DSP_SETTRIGGER, &enable) < 0)
+                ERR("ioctl(%s, SNDCTL_DSP_SETTRIGGER, %d) failed (%s)\n",ossdev->dev_name, enable, strerror(errno));
+        }
     }
     else
     {
         /* check we really open with the same parameters */
-        if (ossdev->open_access != req_access)
+        if (ossdev->open_access != open_access)
         {
             ERR("FullDuplex: Mismatch in access. Your sound device is not full duplex capable.\n");
             return WAVERR_BADFORMAT;
@@ -445,6 +467,19 @@ static DWORD OSS_OpenDevice(OSS_DEVICE* ossdev, unsigned req_access,
         {
             WARN("Another thread is trying to access audio...\n");
             return MMSYSERR_ERROR;
+        }
+        if (ossdev->full_duplex && ossdev->bTriggerSupport &&
+            (req_access == O_RDONLY || req_access == O_WRONLY))
+        {
+            int enable;
+            if (req_access == O_WRONLY)
+                ossdev->bOutputEnabled=1;
+            else
+                ossdev->bInputEnabled=1;
+            enable = getEnables(ossdev);
+            TRACE("Calling SNDCTL_DSP_SETTRIGGER with %x\n",enable);
+            if (ioctl(ossdev->fd, SNDCTL_DSP_SETTRIGGER, &enable) < 0)
+                ERR("ioctl(%s, SNDCTL_DSP_SETTRIGGER, %d) failed (%s)\n",ossdev->dev_name, enable, strerror(errno));
         }
     }
 
