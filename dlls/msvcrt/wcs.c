@@ -177,10 +177,7 @@ int _vsnwprintf(WCHAR *str, unsigned int len,
       }
       if (*iter == (WCHAR)L'h' ||
           *iter == (WCHAR)L'l')
-      {
           *fmta++ = *iter++;
-          *fmta++ = *iter++;
-      }
 
       switch (*iter)
       {
