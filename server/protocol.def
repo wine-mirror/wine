@@ -347,10 +347,12 @@ typedef struct
     obj_handle_t handle;        /* thread handle */
     thread_id_t  tid_in;        /* thread id (optional) */
 @REPLY
+    process_id_t pid;           /* server process id */
     thread_id_t  tid;           /* server thread id */
     void*        teb;           /* thread teb pointer */
     int          exit_code;     /* thread exit code */
     int          priority;      /* thread priority level */
+    int          affinity;      /* thread affinity mask */
     time_t       creation_time; /* thread creation time */
     time_t       exit_time;     /* thread exit time */
 @END

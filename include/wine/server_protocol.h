@@ -398,10 +398,12 @@ struct get_thread_info_request
 struct get_thread_info_reply
 {
     struct reply_header __header;
+    process_id_t pid;
     thread_id_t  tid;
     void*        teb;
     int          exit_code;
     int          priority;
+    int          affinity;
     time_t       creation_time;
     time_t       exit_time;
 };
@@ -3618,6 +3620,6 @@ union generic_reply
     struct set_clipboard_info_reply set_clipboard_info_reply;
 };
 
-#define SERVER_PROTOCOL_VERSION 113
+#define SERVER_PROTOCOL_VERSION 114
 
 #endif /* __WINE_WINE_SERVER_PROTOCOL_H */

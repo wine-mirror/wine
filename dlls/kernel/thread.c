@@ -129,15 +129,16 @@ DWORD WINAPI ResumeThread( HANDLE hthread ) /* [in] Identifies thread to restart
 INT WINAPI GetThreadPriority(
     HANDLE hthread) /* [in] Handle to thread */
 {
-    INT ret = THREAD_PRIORITY_ERROR_RETURN;
-    SERVER_START_REQ( get_thread_info )
+    THREAD_BASIC_INFORMATION info;
+    NTSTATUS status = NtQueryInformationThread( hthread, ThreadBasicInformation,
+                                                &info, sizeof(info), NULL );
+
+    if (status)
     {
-        req->handle = hthread;
-        req->tid_in = 0;
-        if (!wine_server_call_err( req )) ret = reply->priority;
+        SetLastError( RtlNtStatusToDosError(status) );
+        return THREAD_PRIORITY_ERROR_RETURN;
     }
-    SERVER_END_REQ;
-    return ret;
+    return info.Priority;
 }
 
 

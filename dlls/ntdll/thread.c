@@ -20,6 +20,9 @@
 
 #include "winternl.h"
 #include "wine/server.h"
+#include "wine/debug.h"
+
+WINE_DEFAULT_DEBUG_CHANNEL(thread);
 
 
 /***********************************************************************
@@ -168,4 +171,65 @@ NTSTATUS WINAPI NtGetContextThread( HANDLE handle, CONTEXT *context )
     }
     SERVER_END_REQ;
     return ret;
+}
+
+
+/******************************************************************************
+ *              NtQueryInformationThread  (NTDLL.@)
+ *              ZwQueryInformationThread  (NTDLL.@)
+ */
+NTSTATUS WINAPI NtQueryInformationThread( HANDLE handle, THREADINFOCLASS class,
+                                          void *data, ULONG length, ULONG *ret_len )
+{
+    NTSTATUS status;
+
+    switch(class)
+    {
+    case ThreadBasicInformation:
+        {
+            THREAD_BASIC_INFORMATION info;
+
+            SERVER_START_REQ( get_thread_info )
+            {
+                req->handle = handle;
+                req->tid_in = 0;
+                if (!(status = wine_server_call( req )))
+                {
+                    info.ExitStatus             = reply->exit_code;
+                    info.TebBaseAddress         = reply->teb;
+                    info.ClientId.UniqueProcess = (HANDLE)reply->pid;
+                    info.ClientId.UniqueThread  = (HANDLE)reply->tid;
+                    info.AffinityMask           = reply->affinity;
+                    info.Priority               = reply->priority;
+                    info.BasePriority           = reply->priority;  /* FIXME */
+                }
+            }
+            SERVER_END_REQ;
+            if (status == STATUS_SUCCESS)
+            {
+                if (data) memcpy( data, &info, min( length, sizeof(info) ));
+                if (ret_len) *ret_len = min( length, sizeof(info) );
+            }
+        }
+        return status;
+    case ThreadTimes:
+    case ThreadPriority:
+    case ThreadBasePriority:
+    case ThreadAffinityMask:
+    case ThreadImpersonationToken:
+    case ThreadDescriptorTableEntry:
+    case ThreadEnableAlignmentFaultFixup:
+    case ThreadEventPair_Reusable:
+    case ThreadQuerySetWin32StartAddress:
+    case ThreadZeroTlsCell:
+    case ThreadPerformanceCount:
+    case ThreadAmILastThread:
+    case ThreadIdealProcessor:
+    case ThreadPriorityBoost:
+    case ThreadSetTlsArrayAddress:
+    case ThreadIsIoPending:
+    default:
+        FIXME( "info class %d not supported yet\n", class );
+        return STATUS_NOT_IMPLEMENTED;
+    }
 }

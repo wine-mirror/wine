@@ -389,6 +389,17 @@ typedef enum _THREADINFOCLASS {
     MaxThreadInfoClass
 } THREADINFOCLASS;
 
+typedef struct _THREAD_BASIC_INFORMATION
+{
+    NTSTATUS  ExitStatus;
+    PVOID     TebBaseAddress;
+    CLIENT_ID ClientId;
+    ULONG     AffinityMask;
+    LONG      Priority;
+    LONG      BasePriority;
+} THREAD_BASIC_INFORMATION, *PTHREAD_BASIC_INFORMATION;
+
+
 typedef enum _WINSTATIONINFOCLASS {
     WinStationInformation = 8
 } WINSTATIONINFOCLASS;

@@ -164,24 +164,6 @@ NTSTATUS WINAPI NtSetInformationProcess(
  */
 
 /******************************************************************************
-*  NtQueryInformationThread		[NTDLL.@]
-*  ZwQueryInformationThread		[NTDLL.@]
-*
-*/
-NTSTATUS WINAPI NtQueryInformationThread(
-	IN HANDLE ThreadHandle,
-	IN THREADINFOCLASS ThreadInformationClass,
-	OUT PVOID ThreadInformation,
-	IN ULONG ThreadInformationLength,
-	OUT PULONG ReturnLength)
-{
-	FIXME("(%p,0x%08x,%p,0x%08lx,%p),stub!\n",
-		ThreadHandle, ThreadInformationClass, ThreadInformation,
-		ThreadInformationLength, ReturnLength);
-	return 0;
-}
-
-/******************************************************************************
  *  NtSetInformationThread		[NTDLL.@]
  *  ZwSetInformationThread		[NTDLL.@]
  */

@@ -536,10 +536,12 @@ static void dump_get_thread_info_request( const struct get_thread_info_request *
 
 static void dump_get_thread_info_reply( const struct get_thread_info_reply *req )
 {
+    fprintf( stderr, " pid=%04x,", req->pid );
     fprintf( stderr, " tid=%04x,", req->tid );
     fprintf( stderr, " teb=%p,", req->teb );
     fprintf( stderr, " exit_code=%d,", req->exit_code );
     fprintf( stderr, " priority=%d,", req->priority );
+    fprintf( stderr, " affinity=%d,", req->affinity );
     fprintf( stderr, " creation_time=%ld,", req->creation_time );
     fprintf( stderr, " exit_time=%ld", req->exit_time );
 }

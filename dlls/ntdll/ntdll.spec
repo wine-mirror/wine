@@ -154,14 +154,14 @@
 @ stub NtQueryAttributesFile
 @ stdcall NtQueryDefaultLocale(long ptr)
 @ stdcall NtQueryDirectoryFile(long long  ptr ptr ptr ptr long long long ptr long)
-@ stdcall NtQueryDirectoryObject(long long long long long long long)
+@ stdcall NtQueryDirectoryObject(long ptr long long long ptr ptr)
 @ stub NtQueryEaFile
 @ stdcall NtQueryEvent(long long ptr long ptr)
-@ stdcall NtQueryInformationFile(long long long long long)
+@ stdcall NtQueryInformationFile(long ptr ptr long long)
 @ stub NtQueryInformationPort
-@ stdcall NtQueryInformationProcess(long long long long long)
-@ stdcall NtQueryInformationThread (long long long long long)
-@ stdcall NtQueryInformationToken (long long long long long)
+@ stdcall NtQueryInformationProcess(long long ptr long ptr)
+@ stdcall NtQueryInformationThread(long long ptr long ptr)
+@ stdcall NtQueryInformationToken(long long ptr long ptr)
 @ stub NtQueryIntervalProfile
 @ stub NtQueryIoCompletion
 @ stdcall NtQueryKey (long long ptr long ptr)
@@ -686,14 +686,14 @@
 @ stub ZwQueryAttributesFile
 @ stdcall ZwQueryDefaultLocale(long ptr) NtQueryDefaultLocale
 @ stdcall ZwQueryDirectoryFile(long long  ptr ptr ptr ptr long long long ptr long)NtQueryDirectoryFile
-@ stdcall ZwQueryDirectoryObject(long long long long long long long) NtQueryDirectoryObject
+@ stdcall ZwQueryDirectoryObject(long ptr long long long ptr ptr) NtQueryDirectoryObject
 @ stub ZwQueryEaFile
 @ stdcall ZwQueryEvent(long long ptr long ptr) NtQueryEvent
-@ stdcall ZwQueryInformationFile(long long long long long) NtQueryInformationFile
+@ stdcall ZwQueryInformationFile(long ptr ptr long long) NtQueryInformationFile
 @ stub ZwQueryInformationPort
-@ stdcall ZwQueryInformationProcess(long long long long long) NtQueryInformationProcess
-@ stdcall ZwQueryInformationThread(long long long long long) NtQueryInformationThread
-@ stdcall ZwQueryInformationToken(long long long long long) NtQueryInformationToken
+@ stdcall ZwQueryInformationProcess(long long ptr long ptr) NtQueryInformationProcess
+@ stdcall ZwQueryInformationThread(long long ptr long ptr) NtQueryInformationThread
+@ stdcall ZwQueryInformationToken(long long ptr long ptr) NtQueryInformationToken
 @ stub ZwQueryIntervalProfile
 @ stub ZwQueryIoCompletion
 @ stdcall ZwQueryKey(long long ptr long ptr) NtQueryKey

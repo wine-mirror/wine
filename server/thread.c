@@ -904,10 +904,12 @@ DECL_HANDLER(get_thread_info)
 
     if (thread)
     {
+        reply->pid            = get_process_id( thread->process );
         reply->tid            = get_thread_id( thread );
         reply->teb            = thread->teb;
         reply->exit_code      = (thread->state == TERMINATED) ? thread->exit_code : STILL_ACTIVE;
         reply->priority       = thread->priority;
+        reply->affinity       = thread->affinity;
         reply->creation_time  = thread->creation_time;
         reply->exit_time      = thread->exit_time;
 
