@@ -790,7 +790,10 @@ HDC WINAPI ResetDCW( HDC hdc, const DEVMODEW *devmode )
  */
 INT16 WINAPI GetDeviceCaps16( HDC16 hdc, INT16 cap )
 {
-    return GetDeviceCaps( hdc, cap );
+    INT16 ret = GetDeviceCaps( hdc, cap );
+    /* some apps don't expect -1 and think it's a B&W screen */
+    if ((cap == NUMCOLORS) && (ret == -1)) ret = 2048;
+    return ret;
 }
 
 
