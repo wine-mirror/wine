@@ -547,7 +547,6 @@ then
   if [ ! -w ~/.wine ]
   then
     mkdir ~/.wine
-    mkdir ~/.wine/dosdevices
   fi
   cp $TMPCONF $LCONF > /dev/null
 else
@@ -599,13 +598,17 @@ then {
   fi
   echo "Preparing to install default Wine registry entries..."
 
-  # Make sure we are on a Windows drive
-  ln -s /mnt/fd0 ~/.wine/dosdevices/a:
-  ln -s $CROOT ~/.wine/dosdevices/c:
-  ln -s /cdrom ~/.wine/dosdevices/d:
-  ln -s /tmp ~/.wine/dosdevices/e:
-  ln -s ~ ~/.wine/dosdevices/f:
-  ln -s / ~/.wine/dosdevices/z:
+  # Check if dosdevices exists and create it if necessary
+  if [ ! -d ~/.wine/dosdevices ]
+  then
+    mkdir ~/.wine/dosdevices
+    ln -s /mnt/fd0 ~/.wine/dosdevices/a:
+    ln -s $CROOT ~/.wine/dosdevices/c:
+    ln -s /cdrom ~/.wine/dosdevices/d:
+    ln -s /tmp ~/.wine/dosdevices/e:
+    ln -s ~ ~/.wine/dosdevices/f:
+    ln -s / ~/.wine/dosdevices/z:
+  fi
 
   echo "Installing default Wine registry entries..."
   echo
