@@ -1528,8 +1528,15 @@ BOOL FILEDLG95_OnOpen(HWND hwnd)
 	    /* only add "." in case a default extension does exist */
 	    if (*fodInfos->ofnInfos->lpstrDefExt != '\0')
 	    {
+		int PathLength;
+		PathLength = strlen(lpstrPathAndFile);
+		
 	        strcat(lpstrPathAndFile, ".");
 	        strcat(lpstrPathAndFile, fodInfos->ofnInfos->lpstrDefExt);
+		
+		/* if file does not exist try without extension */
+		if (!PathFileExistsA(lpstrPathAndFile)) 
+		  lpstrPathAndFile[PathLength] = '\0';
 	    }
 	  }
 	}
