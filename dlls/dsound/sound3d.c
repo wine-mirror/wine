@@ -218,7 +218,16 @@ static HRESULT WINAPI IDirectSound3DBufferImpl_SetAllParameters(
 	LPCDS3DBUFFER lpcDs3dBuffer,
 	DWORD dwApply)
 {
-	FIXME("stub\n");
+	ICOM_THIS(IDirectSound3DBufferImpl,iface);
+	TRACE("setting: all parameters; dwApply = %ld\n", dwApply);
+	This->ds3db = *lpcDs3dBuffer;
+	if (dwApply == DS3D_IMMEDIATE)
+	{
+		FIXME("nothing happens yet...\n");
+		/* TRACE("recalculating...\n"); */
+		/* place function for recalculation here */
+	}
+	FIXME("DS3D_DEFERRED flag not supported yet\n");
 	return DS_OK;
 }
 
@@ -228,7 +237,17 @@ static HRESULT WINAPI IDirectSound3DBufferImpl_SetConeAngles(
 	DWORD dwOutsideConeAngle,
 	DWORD dwApply)
 {
-	FIXME("stub\n");
+	ICOM_THIS(IDirectSound3DBufferImpl,iface);
+	TRACE("setting: Inside Cone Angle = %ld; Outside Cone Angle = %ld; dwApply = %ld\n", dwInsideConeAngle, dwOutsideConeAngle, dwApply);
+	This->ds3db.dwInsideConeAngle = dwInsideConeAngle;
+	This->ds3db.dwOutsideConeAngle = dwOutsideConeAngle;
+	if (dwApply == DS3D_IMMEDIATE)
+	{
+		FIXME("nothing happens yet...\n");
+		/* TRACE("recalculating...\n"); */
+		/* place function for recalculation here */
+	}
+	FIXME("DS3D_DEFERRED flag not supported yet\n");
 	return DS_OK;
 }
 
@@ -237,7 +256,18 @@ static HRESULT WINAPI IDirectSound3DBufferImpl_SetConeOrientation(
 	D3DVALUE x, D3DVALUE y, D3DVALUE z,
 	DWORD dwApply)
 {
-	FIXME("stub\n");
+	ICOM_THIS(IDirectSound3DBufferImpl,iface);
+	TRACE("setting: Cone Orientation vector = (%f,%f,%f); dwApply = %ld\n", x, y, z, dwApply);
+	This->ds3db.vConeOrientation.u1.x = x;
+	This->ds3db.vConeOrientation.u2.y = y;
+	This->ds3db.vConeOrientation.u3.z = z;
+	if (dwApply == DS3D_IMMEDIATE)
+	{
+		FIXME("nothing happens yet...\n");
+		/* TRACE("recalculating...\n"); */
+		/* place function for recalculation here */
+	}
+	FIXME("DS3D_DEFERRED flag not supported yet\n");
 	return DS_OK;
 }
 
@@ -246,7 +276,16 @@ static HRESULT WINAPI IDirectSound3DBufferImpl_SetConeOutsideVolume(
 	LONG lConeOutsideVolume,
 	DWORD dwApply)
 {
-	FIXME("stub\n");
+	ICOM_THIS(IDirectSound3DBufferImpl,iface);
+	TRACE("setting: ConeOutsideVolume = %ld; dwApply = %ld\n", lConeOutsideVolume, dwApply);
+	This->ds3db.lConeOutsideVolume = lConeOutsideVolume;
+	if (dwApply == DS3D_IMMEDIATE)
+	{
+		FIXME("nothing happens yet...\n");
+		/* TRACE("recalculating...\n"); */
+		/* place function for recalculation here */
+	}
+	FIXME("DS3D_DEFERRED flag not supported yet\n");
 	return DS_OK;
 }
 
@@ -255,7 +294,16 @@ static HRESULT WINAPI IDirectSound3DBufferImpl_SetMaxDistance(
 	D3DVALUE fMaxDistance,
 	DWORD dwApply)
 {
-	FIXME("stub\n");
+	ICOM_THIS(IDirectSound3DBufferImpl,iface);
+	TRACE("setting: MaxDistance = %f; dwApply = %ld\n", fMaxDistance, dwApply);
+	This->ds3db.flMaxDistance = fMaxDistance;
+	if (dwApply == DS3D_IMMEDIATE)
+	{
+		FIXME("nothing happens yet...\n");
+		/* TRACE("recalculating...\n"); */
+		/* place function for recalculation here */
+	}
+	FIXME("DS3D_DEFERRED flag not supported yet\n");
 	return DS_OK;
 }
 
@@ -264,7 +312,16 @@ static HRESULT WINAPI IDirectSound3DBufferImpl_SetMinDistance(
 	D3DVALUE fMinDistance,
 	DWORD dwApply)
 {
-	FIXME("stub\n");
+	ICOM_THIS(IDirectSound3DBufferImpl,iface);
+	TRACE("setting: MinDistance = %f; dwApply = %ld\n", fMinDistance, dwApply);
+	This->ds3db.flMinDistance = fMinDistance;
+	if (dwApply == DS3D_IMMEDIATE)
+	{
+		FIXME("nothing happens yet...\n");
+		/* TRACE("recalculating...\n"); */
+		/* place function for recalculation here */
+	}
+	FIXME("DS3D_DEFERRED flag not supported yet\n");
 	return DS_OK;
 }
 
@@ -274,8 +331,15 @@ static HRESULT WINAPI IDirectSound3DBufferImpl_SetMode(
 	DWORD dwApply)
 {
 	ICOM_THIS(IDirectSound3DBufferImpl,iface);
-	TRACE("mode = %lx\n", dwMode);
+	TRACE("setting: Mode = %ld; dwApply = %ld\n", dwMode, dwApply);
 	This->ds3db.dwMode = dwMode;
+	if (dwApply == DS3D_IMMEDIATE)
+	{
+		FIXME("nothing happens yet...\n");
+		/* TRACE("recalculating...\n"); */
+		/* place function for recalculation here */
+	}
+	FIXME("DS3D_DEFERRED flag not supported yet\n");
 	return DS_OK;
 }
 
@@ -284,7 +348,18 @@ static HRESULT WINAPI IDirectSound3DBufferImpl_SetPosition(
 	D3DVALUE x, D3DVALUE y, D3DVALUE z,
 	DWORD dwApply)
 {
-	FIXME("stub\n");
+	ICOM_THIS(IDirectSound3DBufferImpl,iface);
+	TRACE("setting: Position vector = (%f,%f,%f); dwApply = %ld\n", x, y, z, dwApply);
+	This->ds3db.vPosition.u1.x = x;
+	This->ds3db.vPosition.u2.y = y;
+	This->ds3db.vPosition.u3.z = z;
+	if (dwApply == DS3D_IMMEDIATE)
+	{
+		FIXME("nothing happens yet...\n");
+		/* TRACE("recalculating...\n"); */
+		/* place function for recalculation here */
+	}
+	FIXME("DS3D_DEFERRED flag not supported yet\n");
 	return DS_OK;
 }
 
@@ -293,7 +368,18 @@ static HRESULT WINAPI IDirectSound3DBufferImpl_SetVelocity(
 	D3DVALUE x, D3DVALUE y, D3DVALUE z,
 	DWORD dwApply)
 {
-	FIXME("stub\n");
+	ICOM_THIS(IDirectSound3DBufferImpl,iface);
+	TRACE("setting: Velocity vector = (%f,%f,%f); dwApply = %ld\n", x, y, z, dwApply);
+	This->ds3db.vVelocity.u1.x = x;
+	This->ds3db.vVelocity.u2.y = y;
+	This->ds3db.vVelocity.u3.z = z;
+	if (dwApply == DS3D_IMMEDIATE)
+	{
+		FIXME("nothing happens yet...\n");
+		/* TRACE("recalculating...\n"); */
+		/* place function for recalculation here */
+	}
+	FIXME("DS3D_DEFERRED flag not supported yet\n");
 	return DS_OK;
 }
 
