@@ -731,6 +731,7 @@ typedef void (CALLBACK *LPTIMECALLBACK)(UINT uTimerID, UINT uMessage, DWORD dwUs
 #define TIME_CALLBACK_FUNCTION		0x0000	/* callback is function */
 #define TIME_CALLBACK_EVENT_SET		0x0010	/* callback is event - use SetEvent */
 #define TIME_CALLBACK_EVENT_PULSE 	0x0020	/* callback is event - use PulseEvent */
+#define TIME_KILL_SYNCHRONOUS           0x0100
 
 typedef struct {
     UINT	wPeriodMin;
