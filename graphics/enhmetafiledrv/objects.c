@@ -244,7 +244,7 @@ static HPEN EMFDRV_PEN_SelectObject(DC *dc, HPEN hPen )
 {
     EMRSELECTOBJECT emr;
     DWORD index;
-    HFONT hOldPen;
+    HPEN hOldPen;
 
     /* If the object is a stock pen object, do not need to create it.
      * See definitions in  wingdi.h for range of stock pens.

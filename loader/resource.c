@@ -325,7 +325,7 @@ HRSRC16 WINAPI FindResource16( HMODULE16 hModule, LPCSTR name, LPCSTR type )
 /**********************************************************************
  *	    FindResourceA    (KERNEL32.128)
  */
-HANDLE WINAPI FindResourceA( HMODULE hModule, LPCSTR name, LPCSTR type )
+HRSRC WINAPI FindResourceA( HMODULE hModule, LPCSTR name, LPCSTR type )
 {
     return RES_FindResource( hModule, type, name, 
                     MAKELANGID(LANG_NEUTRAL, SUBLANG_NEUTRAL), FALSE, FALSE );
@@ -334,7 +334,7 @@ HANDLE WINAPI FindResourceA( HMODULE hModule, LPCSTR name, LPCSTR type )
 /**********************************************************************
  *	    FindResourceExA  (KERNEL32.129)
  */
-HANDLE WINAPI FindResourceExA( HMODULE hModule, 
+HRSRC WINAPI FindResourceExA( HMODULE hModule, 
                                LPCSTR type, LPCSTR name, WORD lang )
 {
     return RES_FindResource( hModule, type, name, 

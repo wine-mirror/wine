@@ -28,7 +28,7 @@ DEFAULT_DEBUG_CHANNEL(file);
 HANDLE WINAPI FindFirstChangeNotificationA( LPCSTR lpPathName, BOOL bWatchSubtree,
                                             DWORD dwNotifyFilter ) 
 {
-    HANDLE ret = -1;
+    HANDLE ret = INVALID_HANDLE_VALUE;
 
     FIXME("this is not supported yet (non-trivial).\n");
 

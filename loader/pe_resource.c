@@ -251,7 +251,7 @@ HRSRC PE_FindResourceW( HMODULE hmod, LPCWSTR name, LPCWSTR type )
 /**********************************************************************
  *	    PE_LoadResource
  */
-HANDLE PE_LoadResource( HMODULE hmod, HANDLE hRsrc )
+HGLOBAL PE_LoadResource( HMODULE hmod, HRSRC hRsrc )
 {
     if (!hRsrc) return 0;
     return (HANDLE)(hmod + ((PIMAGE_RESOURCE_DATA_ENTRY)hRsrc)->OffsetToData);
@@ -261,7 +261,7 @@ HANDLE PE_LoadResource( HMODULE hmod, HANDLE hRsrc )
 /**********************************************************************
  *	    PE_SizeofResource
  */
-DWORD PE_SizeofResource( HANDLE hRsrc )
+DWORD PE_SizeofResource( HRSRC hRsrc )
 {
     if (!hRsrc) return 0;
     return ((PIMAGE_RESOURCE_DATA_ENTRY)hRsrc)->Size;
