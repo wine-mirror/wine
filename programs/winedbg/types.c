@@ -36,7 +36,7 @@
 #define NR_TYPE_HASH 521
 
 int		  DEBUG_nchar;
-static int	  DEBUG_maxchar = 1024;
+static const int  DEBUG_maxchar = 1024;
 
 struct en_values
 {
@@ -890,20 +890,14 @@ DEBUG_Print( const DBG_VALUE *value, int count, char format, int level )
           switch (value->cookie)
           {
           case DV_TARGET:
-              clen = DEBUG_PrintStringA(DBG_CHN_MESG, &value->addr, clen);
+              DEBUG_nchar += DEBUG_PrintStringA(DBG_CHN_MESG, &value->addr, clen);
               break;
           case DV_HOST:
               DEBUG_OutputA(DBG_CHN_MESG, pnt, clen);
               break;
           default: assert(0);
           }
-          DEBUG_nchar += clen;
-          if (clen != len)
-          {
-              DEBUG_Printf(DBG_CHN_MESG, "...\"");
-              goto leave;
-          }
-          DEBUG_nchar += DEBUG_Printf(DBG_CHN_MESG, "\"");
+          DEBUG_nchar += DEBUG_Printf(DBG_CHN_MESG, (len > clen) ? "...\"" : "\"");
           break;
         }
       val1 = *value;
@@ -943,7 +937,6 @@ leave:
     {
       DEBUG_nchar += DEBUG_Printf(DBG_CHN_MESG, "\n");
     }
-  return;
 }
 
 static void DEBUG_DumpAType(struct datatype* dt, BOOL deep)

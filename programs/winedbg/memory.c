@@ -336,6 +336,8 @@ void DEBUG_ExamineMemory( const DBG_VALUE *_value, int count, char format )
 	}
 }
 
+#define CHARBUFSIZE 16
+
 /******************************************************************
  *		DEBUG_PrintStringA
  *
@@ -346,38 +348,43 @@ void DEBUG_ExamineMemory( const DBG_VALUE *_value, int count, char format )
 int  DEBUG_PrintStringA(int chnl, const DBG_ADDR* address, int len)
 {
     char*       lin = (void*)DEBUG_ToLinear(address);
-    char        ach[16+1];
-    int         i, l;
+    char        ch[CHARBUFSIZE+1];
+    int         written = 0;
 
     if (len == -1) len = 32767; /* should be big enough */
 
-    for (i = len; i > 0; i -= l)
+    while (written < len)
     {
-        l = min(sizeof(ach) - 1, i);
-        DEBUG_READ_MEM_VERBOSE(lin, ach, l);
-	ach[l] = '\0';  /* protect from displaying junk */
-        l = strlen(ach);
-        DEBUG_OutputA(chnl, ach, l);
-        if (l < sizeof(ach) - 1) break;
-        lin += l;
+        int to_write = min(CHARBUFSIZE, len - written );
+        if (!DEBUG_READ_MEM_VERBOSE(lin, ch, to_write)) break;
+        ch[to_write] = '\0';  /* protect from displaying junk */
+        to_write = lstrlenA(ch);
+        DEBUG_OutputA(chnl, ch, to_write);
+        lin += to_write;
+        written += to_write;
+        if (to_write < CHARBUFSIZE) break;
     }
-    return len - i; /* number of actually written chars */
+    return written; /* number of actually written chars */
 }
 
 int  DEBUG_PrintStringW(int chnl, const DBG_ADDR* address, int len)
 {
     char*       lin = (void*)DEBUG_ToLinear(address);
-    WCHAR       wch;
-    int         ret = 0;
+    WCHAR       ch[CHARBUFSIZE+1];
+    int         written = 0;
 
     if (len == -1) len = 32767; /* should be big enough */
-    while (len--)
+
+    while  (written < len)
     {
-        if (!DEBUG_READ_MEM_VERBOSE(lin, &wch, sizeof(wch)) || !wch)
-            break;
-        lin += sizeof(wch);
-        DEBUG_OutputW(chnl, &wch, 1);
-        ret++;
+        int to_write = min(CHARBUFSIZE, len - written );
+        if (!DEBUG_READ_MEM_VERBOSE(lin, ch, to_write * sizeof(WCHAR))) break;
+        ch[to_write] = 0;  /* protect from displaying junk */
+        to_write = lstrlenW(ch);
+        DEBUG_OutputW(chnl, ch, to_write);
+        lin += to_write;
+        written += to_write;
+        if (to_write < CHARBUFSIZE) break;
     }
-    return ret;
+    return written; /* number of actually written chars */
 }
