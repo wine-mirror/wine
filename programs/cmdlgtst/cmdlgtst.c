@@ -654,7 +654,7 @@ BOOL CALLBACK mwcd_FileSetup(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 		{IDOK, 0},
 	};
 
-	return mwcd_Setup(hWnd, uMsg, wParam, lParam, flagTable, &pd.Flags);
+	return mwcd_Setup(hWnd, uMsg, wParam, lParam, flagTable, &ofn.Flags);
 }
 
 BOOL CALLBACK mwcd_About(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
@@ -702,7 +702,7 @@ void mwc_PrintSetup(HWND hWnd)
 
 void mwc_FileSetup(HWND hWnd)
 {
-	int r = DialogBox(g_hInstance, "File_Flags_Dialog", hWnd, (DLGPROC) mwcd_PrintSetup);
+	int r = DialogBox(g_hInstance, "File_Flags_Dialog", hWnd, (DLGPROC) mwcd_FileSetup);
 	if(r < 0) { MessageBox(hWnd, "Failure opening File_Flags_Dialog box", "Error", MB_ICONASTERISK|MB_OK); }
 }
 
