@@ -1665,12 +1665,13 @@ static DWORD wodPlayer_FeedDSP(WINE_WAVEOUT* wwo)
 
     /* input queue empty and output buffer with less than one fragment to play
      * actually some cards do not play the fragment before the last if this one is partially feed
-     * so we need to test for full the availability of 2 fragments
+     * so we need to test for full the availability of 2 fragments ; the DSP_POST ioctl
+     * will let the card know to play out the rest of the fragments
      */
     if (!wwo->lpPlayPtr && wwo->dwBufferSize < availInQ + 2 * wwo->dwFragmentSize &&
         !wwo->bNeedPost) {
-	TRACE("Run out of wavehdr:s...\n");
-        return INFINITE;
+	TRACE("Run out of wavehdr's, requesting a POST...\n");
+        wwo->bNeedPost = TRUE;
     }
 
     /* no more room... no need to try to feed */
