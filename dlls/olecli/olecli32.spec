@@ -2,7 +2,6 @@ name olecli32
 type win32
 
 import ole32.dll
-import olesvr32.dll
 import gdi32.dll
 import kernel32.dll
 import ntdll.dll
