@@ -936,25 +936,29 @@ BOOL WINAPI DefineDosDeviceW( DWORD flags, LPCWSTR devname, LPCWSTR targetpath )
     BOOL ret = FALSE;
     char *path = NULL, *target, *p;
 
-    if (!(flags & DDD_RAW_TARGET_PATH))
+    if (!(flags & DDD_REMOVE_DEFINITION))
     {
-        FIXME( "(0x%08lx,%s,%s) DDD_RAW_TARGET_PATH flag not set, not supported yet\n",
-               flags, debugstr_w(devname), debugstr_w(targetpath) );
-        SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
-        return FALSE;
-    }
+        if (!(flags & DDD_RAW_TARGET_PATH))
+        {
+            FIXME( "(0x%08lx,%s,%s) DDD_RAW_TARGET_PATH flag not set, not supported yet\n",
+                   flags, debugstr_w(devname), debugstr_w(targetpath) );
+            SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
+            return FALSE;
+        }
 
-    len = WideCharToMultiByte( CP_UNIXCP, 0, targetpath, -1, NULL, 0, NULL, NULL );
-    if ((target = HeapAlloc( GetProcessHeap(), 0, len )))
-    {
-        WideCharToMultiByte( CP_UNIXCP, 0, targetpath, -1, target, len, NULL, NULL );
-        for (p = target; *p; p++) if (*p == '\\') *p = '/';
+        len = WideCharToMultiByte( CP_UNIXCP, 0, targetpath, -1, NULL, 0, NULL, NULL );
+        if ((target = HeapAlloc( GetProcessHeap(), 0, len )))
+        {
+            WideCharToMultiByte( CP_UNIXCP, 0, targetpath, -1, target, len, NULL, NULL );
+            for (p = target; *p; p++) if (*p == '\\') *p = '/';
+        }
+        else
+        {
+            SetLastError( ERROR_NOT_ENOUGH_MEMORY );
+            return FALSE;
+        }
     }
-    else
-    {
-        SetLastError( ERROR_NOT_ENOUGH_MEMORY );
-        return FALSE;
-    }
+    else target = NULL;
 
     /* first check for a DOS device */
 
@@ -974,13 +978,22 @@ BOOL WINAPI DefineDosDeviceW( DWORD flags, LPCWSTR devname, LPCWSTR targetpath )
 
     if (path)
     {
-        TRACE( "creating symlink %s -> %s\n", path, target );
-        unlink( path );
-        if (!symlink( target, path )) ret = TRUE;
-        else FILE_SetDosError();
+        if (target)
+        {
+            TRACE( "creating symlink %s -> %s\n", path, target );
+            unlink( path );
+            if (!symlink( target, path )) ret = TRUE;
+            else FILE_SetDosError();
+        }
+        else
+        {
+            TRACE( "removing symlink %s\n", path );
+            if (!unlink( path )) ret = TRUE;
+            else FILE_SetDosError();
+        }
         HeapFree( GetProcessHeap(), 0, path );
     }
-    HeapFree( GetProcessHeap(), 0, target );
+    if (target) HeapFree( GetProcessHeap(), 0, target );
     return ret;
 }
 
