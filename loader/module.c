@@ -635,15 +635,14 @@ enum binary_type MODULE_GetBinaryType( HANDLE hfile )
          */
         if (!memcmp( magic, "PE\0\0", 4 ))
         {
-            IMAGE_NT_HEADERS nt;
+            IMAGE_FILE_HEADER FileHeader;
 
-            if (SetFilePointer( hfile, header.mz.e_lfanew, NULL, SEEK_SET ) != -1 &&
-                ReadFile( hfile, &nt, sizeof(nt), &len, NULL ) && len == sizeof(nt))
+            if (ReadFile( hfile, &FileHeader, sizeof(FileHeader), &len, NULL ) && len == sizeof(FileHeader))
             {
-                if (nt.FileHeader.Characteristics & IMAGE_FILE_DLL) return BINARY_PE_DLL;
+                if (FileHeader.Characteristics & IMAGE_FILE_DLL) return BINARY_PE_DLL;
                 return BINARY_PE_EXE;
             }
-            return BINARY_UNKNOWN;
+            return BINARY_DOS;
         }
 
         if (!memcmp( magic, "NE", 2 ))
@@ -666,7 +665,7 @@ enum binary_type MODULE_GetBinaryType( HANDLE hfile )
                 }
             }
             /* Couldn't read header, so abort. */
-            return BINARY_UNKNOWN;
+            return BINARY_DOS;
         }
 
         /* Unknown extended header, but this file is nonetheless DOS-executable. */

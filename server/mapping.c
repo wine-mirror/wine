@@ -211,8 +211,13 @@ static int get_image_params( struct mapping *mapping )
     if (read( fd, &dos, sizeof(dos) ) != sizeof(dos)) goto error;
     if (dos.e_magic != IMAGE_DOS_SIGNATURE) goto error;
     if (lseek( fd, dos.e_lfanew, SEEK_SET ) == -1) goto error;
-    if (read( fd, &nt, sizeof(nt) ) != sizeof(nt)) goto error;
+
+    if (read( fd, &nt.Signature, sizeof(nt.Signature) ) != sizeof(nt.Signature)) goto error;
     if (nt.Signature != IMAGE_NT_SIGNATURE) goto error;
+    if (read( fd, &nt.FileHeader, sizeof(nt.FileHeader) ) != sizeof(nt.FileHeader)) goto error;
+    /* zero out Optional header in the case it's not present or partial */
+    memset(&nt.OptionalHeader, 0, sizeof(nt.OptionalHeader));
+    if (read( fd, &nt.OptionalHeader, nt.FileHeader.SizeOfOptionalHeader) != nt.FileHeader.SizeOfOptionalHeader) goto error;
 
     /* load the section headers */
 
