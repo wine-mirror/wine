@@ -110,6 +110,9 @@ static void load_library( void *base, const char *filename )
     }
     TRACE( "loaded %s %p %x\n", filename, wm, module );
     wm->refCount++;  /* we don't support freeing builtin dlls (FIXME)*/
+
+    /* setup relay debugging entry points */
+    if (TRACE_ON(relay)) RELAY_SetupDLL( (void *)module );
 }
 
 
