@@ -3,10 +3,11 @@ TOPOBJDIR = ../../..
 SRCDIR    = @srcdir@
 VPATH     = @srcdir@
 TESTDLL   = gdi32.dll
-IMPORTS   = gdi32
+IMPORTS   = user32 gdi32
 
 CTESTS = \
-	generated.c
+	generated.c \
+	metafile.c
 
 @MAKE_TEST_RULES@
 
