@@ -525,7 +525,15 @@ BOOL16 WINAPI THUNK_SetDCHook( HDC16 hdc, FARPROC16 proc, DWORD dwHookData )
     THUNK *thunk, *oldThunk;
 
     if (!defDCHookProc)  /* Get DCHook Win16 entry point */
-        defDCHookProc = NE_GetEntryPoint( GetModuleHandle16("USER"), 362 );
+    {
+        HMODULE16 hModule = GetModuleHandle16( "USER" );
+        NE_MODULE *pModule = NE_GetPtr( hModule );
+
+        if ( pModule && (pModule->flags & NE_FFLAGS_BUILTIN) )
+            defDCHookProc = NE_GetEntryPoint( hModule, 362 );
+        else
+            defDCHookProc = (FARPROC16)-1;
+    }
 
     if (proc != defDCHookProc)
     {
@@ -553,8 +561,11 @@ DWORD WINAPI THUNK_GetDCHook( HDC16 hdc, FARPROC16 *phookProc )
     {
         if (thunk == (THUNK *)DCHook16)
         {
+	    /* Note: we can only get here when running built-in USER */
+
             if (!defDCHookProc)  /* Get DCHook Win16 entry point */
                 defDCHookProc = NE_GetEntryPoint(GetModuleHandle16("USER"),362);
+
             *phookProc = defDCHookProc;
         }
         else *phookProc = thunk->proc;
