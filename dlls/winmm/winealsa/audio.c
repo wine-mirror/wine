@@ -3424,7 +3424,7 @@ static DWORD widStart(WORD wDevID, LPWAVEHDR lpWaveHdr, DWORD dwSize)
     TRACE("(%u, %p, %08lX);\n", wDevID, lpWaveHdr, dwSize);
 
     /* first, do the sanity checks... */
-    if (wDevID >= MAX_WAVEINDRV || WInDev[wDevID].p_handle == NULL) {
+    if (wDevID >= MAX_WAVEINDRV || WInDev[wDevID].handle == NULL) {
         WARN("bad dev ID !\n");
 	return MMSYSERR_BADDEVICEID;
     }
