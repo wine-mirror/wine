@@ -375,6 +375,7 @@ NTSTATUS WINAPI NtReadFile(HANDLE hFile, HANDLE hEvent,
     if (flags & (FD_FLAG_OVERLAPPED|FD_FLAG_TIMEOUT))
     {
         async_fileio*   ovp;
+        NTSTATUS ret;
 
         if (unix_handle < 0) return STATUS_INVALID_HANDLE;
 
@@ -397,12 +398,9 @@ NTSTATUS WINAPI NtReadFile(HANDLE hFile, HANDLE hEvent,
         ovp->fd_type = type;
 
         io_status->Information = 0;
-        io_status->u.Status = register_new_async(&ovp->async);
-        if (io_status->u.Status == STATUS_PENDING && hEvent)
-        {
-            finish_async(&ovp->async);
-            close(unix_handle);
-        }
+        ret = register_new_async(&ovp->async);
+        if (ret != STATUS_SUCCESS)
+            return ret;
         return io_status->u.Status;
     }
     switch (type)
@@ -531,6 +529,7 @@ NTSTATUS WINAPI NtWriteFile(HANDLE hFile, HANDLE hEvent,
     if (flags & (FD_FLAG_OVERLAPPED|FD_FLAG_TIMEOUT))
     {
         async_fileio*   ovp;
+        NTSTATUS ret;
 
         if (unix_handle < 0) return STATUS_INVALID_HANDLE;
 
@@ -553,12 +552,9 @@ NTSTATUS WINAPI NtWriteFile(HANDLE hFile, HANDLE hEvent,
         ovp->fd_type = type;
 
         io_status->Information = 0;
-        io_status->u.Status = register_new_async(&ovp->async);
-        if (io_status->u.Status == STATUS_PENDING && hEvent)
-        {
-            finish_async(&ovp->async);
-            close(unix_handle);
-        }
+        ret = register_new_async(&ovp->async);
+        if (ret != STATUS_SUCCESS)
+            return ret;
         return io_status->u.Status;
     }
     switch (type)
