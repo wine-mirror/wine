@@ -30,7 +30,7 @@
  *   -- Support CustonDraw options for _WIN32_IE >= 0x560 (see NMLVCUSTOMDRAW docs)
  *
  * Notifications:
- *   LISTVIEW_Notify : most notifications from children (editbox and header)
+ *   LISTVIEW_Notify : most notifications from editbox
  *
  * Data structure:
  *   LISTVIEW_SetItemCount : not completed for non OWNERDATA
@@ -1059,6 +1059,22 @@ static inline LRESULT CallWindowProcT(WNDPROC proc, HWND hwnd, UINT uMsg,
 
 /******** Internal API functions ************************************/
 
+static inline COLUMN_INFO * LISTVIEW_GetColumnInfo(LISTVIEW_INFO *infoPtr, INT nSubItem)
+{
+    assert (nSubItem >= 0 && nSubItem < infoPtr->hdpaColumns->nItemCount);
+    return (COLUMN_INFO *)DPA_GetPtr(infoPtr->hdpaColumns, nSubItem);
+}
+	
+static inline void LISTVIEW_GetHeaderRect(LISTVIEW_INFO *infoPtr, INT nSubItem, RECT *lprc)
+{
+    *lprc = LISTVIEW_GetColumnInfo(infoPtr, nSubItem)->rcHeader;
+}
+	
+static inline BOOL LISTVIEW_GetItemW(LISTVIEW_INFO *infoPtr, LPLVITEMW lpLVItem)
+{
+    return LISTVIEW_GetItemT(infoPtr, lpLVItem, TRUE);
+}
+
 /* The Invalidate* are macros, so we preserve the caller location */
 #define LISTVIEW_InvalidateRect(infoPtr, rect) while(infoPtr->bRedraw) { \
     TRACE(" invalidating rect=%s\n", debugrect(rect)); \
@@ -1088,21 +1104,15 @@ static inline LRESULT CallWindowProcT(WNDPROC proc, HWND hwnd, UINT uMsg,
 #define LISTVIEW_InvalidateList(infoPtr)\
     LISTVIEW_InvalidateRect(infoPtr, NULL)
 
-
-static inline COLUMN_INFO * LISTVIEW_GetColumnInfo(LISTVIEW_INFO *infoPtr, INT nSubItem)
-{
-    assert (nSubItem >= 0 && nSubItem < infoPtr->hdpaColumns->nItemCount);
-    return (COLUMN_INFO *)DPA_GetPtr(infoPtr->hdpaColumns, nSubItem);
-}
 	
-static inline void LISTVIEW_GetHeaderRect(LISTVIEW_INFO *infoPtr, INT nSubItem, RECT *lprc)
+static inline void LISTVIEW_InvalidateColumn(LISTVIEW_INFO *infoPtr, INT nColumn)
 {
-    *lprc = LISTVIEW_GetColumnInfo(infoPtr, nSubItem)->rcHeader;
-}
-	
-static inline BOOL LISTVIEW_GetItemW(LISTVIEW_INFO *infoPtr, LPLVITEMW lpLVItem)
-{
-    return LISTVIEW_GetItemT(infoPtr, lpLVItem, TRUE);
+    RECT rcCol;
+    
+    LISTVIEW_GetHeaderRect(infoPtr, nColumn, &rcCol);
+    rcCol.top = infoPtr->rcList.top;
+    rcCol.bottom = infoPtr->rcList.bottom;
+    LISTVIEW_InvalidateRect(infoPtr, &rcCol);
 }
 
 /***
@@ -4602,24 +4612,15 @@ static LRESULT LISTVIEW_GetCountPerPage(LISTVIEW_INFO *infoPtr)
  *   SUCCESS : image list handle
  *   FAILURE : NULL
  */
-static LRESULT LISTVIEW_GetImageList(LISTVIEW_INFO *infoPtr, INT nImageList)
+static HIMAGELIST LISTVIEW_GetImageList(LISTVIEW_INFO *infoPtr, INT nImageList)
 {
-  HIMAGELIST himl = NULL;
-
-  switch (nImageList)
-  {
-  case LVSIL_NORMAL:
-    himl = infoPtr->himlNormal;
-    break;
-  case LVSIL_SMALL:
-    himl = infoPtr->himlSmall;
-    break;
-  case LVSIL_STATE:
-    himl = infoPtr->himlState;
-    break;
-  }
-
-  return (LRESULT)himl;
+    switch (nImageList)
+    {
+    case LVSIL_NORMAL: return infoPtr->himlNormal;
+    case LVSIL_SMALL: return infoPtr->himlSmall;
+    case LVSIL_STATE: return infoPtr->himlState;
+    }
+    return NULL;
 }
 
 /* LISTVIEW_GetISearchString */
@@ -6040,8 +6041,18 @@ static LRESULT LISTVIEW_SetColumnT(LISTVIEW_INFO *infoPtr, INT nColumn,
     bResult = SendMessageW(infoPtr->hwndHeader, isW ? HDM_SETITEMW : HDM_SETITEMA, (WPARAM)nColumn, (LPARAM)&hdi);
     if (!bResult) return FALSE;
 
-    if (lpColumn->mask & LVCF_FMT) 
-	LISTVIEW_GetColumnInfo(infoPtr, nColumn)->fmt = lpColumn->fmt;
+    if (lpColumn->mask & LVCF_FMT)
+    {
+	COLUMN_INFO *lpColumnInfo = LISTVIEW_GetColumnInfo(infoPtr, nColumn);
+	int oldFmt = lpColumnInfo->fmt;
+	
+	lpColumnInfo->fmt = lpColumn->fmt;
+	if ((oldFmt ^ lpColumn->fmt) & (LVCFMT_JUSTIFYMASK | LVCFMT_IMAGE))
+	{
+	    UINT uView = infoPtr->dwStyle & LVS_TYPEMASK;
+	    if (uView == LVS_REPORT) LISTVIEW_InvalidateColumn(infoPtr, nColumn);
+	}
+    }
 
     return TRUE;
 }
@@ -7540,7 +7551,7 @@ static LRESULT LISTVIEW_NCDestroy(LISTVIEW_INFO *infoPtr)
 
 /***
  * DESCRIPTION:
- * Handles notifications from children.
+ * Handles notifications from header.
  *
  * PARAMETER(S):
  * [I] infoPtr : valid pointer to the listview structure
@@ -7550,54 +7561,59 @@ static LRESULT LISTVIEW_NCDestroy(LISTVIEW_INFO *infoPtr)
  * RETURN:
  * Zero
  */
-static LRESULT LISTVIEW_Notify(LISTVIEW_INFO *infoPtr, INT nCtrlId, LPNMHDR lpnmh)
+static LRESULT LISTVIEW_HeaderNotification(LISTVIEW_INFO *infoPtr, LPNMHEADERW lpnmh)
 {
     UINT uView =  infoPtr->dwStyle & LVS_TYPEMASK;
     
-    TRACE("(nCtrlId=%d, lpnmh=%p)\n", nCtrlId, lpnmh);
+    TRACE("(lpnmh=%p)\n", lpnmh);
 
-    /* handle notification from header control */
-    if (lpnmh->hwndFrom == infoPtr->hwndHeader)
-    {
-	LPNMHEADERW lphnm = (LPNMHEADERW)lpnmh;
-	
-	if (lpnmh->code == HDN_TRACKW       || lpnmh->code == HDN_TRACKA ||
-	    lpnmh->code == HDN_ITEMCHANGEDW || lpnmh->code == HDN_ITEMCHANGEDA)
+    if (!lpnmh || lpnmh->iItem < 0 || lpnmh->iItem >= infoPtr->hdpaColumns->nItemCount) return 0;
+    
+    switch (lpnmh->hdr.code)
+    {    
+	case HDN_TRACKW:
+	case HDN_TRACKA:
+	case HDN_ITEMCHANGEDW:
+	case HDN_ITEMCHANGEDA:
 	{
 	    COLUMN_INFO *lpColumnInfo;
-	    RECT rcCol;
-	    INT dx;
+	    INT dx, cxy;
 
-	    if (lphnm->iItem < 0 || lphnm->iItem >= infoPtr->hdpaColumns->nItemCount) return 0;
-	    if (!lphnm->pitem || !(lphnm->pitem->mask & HDI_WIDTH)) return 0;
-
-	    lpColumnInfo = LISTVIEW_GetColumnInfo(infoPtr, lphnm->iItem);
+	    if (!lpnmh->pitem || !(lpnmh->pitem->mask & HDI_WIDTH))
+	    {
+    		HDITEMW hdi;
+    
+		hdi.mask = HDI_WIDTH;
+    		if (!Header_GetItemW(infoPtr->hwndHeader, lpnmh->iItem, (LPARAM)&hdi)) return 0;
+		cxy = hdi.cxy;
+	    }
+	    else
+		cxy = lpnmh->pitem->cxy;
 	    
 	    /* determine how much we change since the last know position */
-	    dx = lphnm->pitem->cxy - (lpColumnInfo->rcHeader.right - lpColumnInfo->rcHeader.left);
-	    
-	    /* ajust the column being tracked */
-	    lpColumnInfo->rcHeader.right += dx;
-	    
-	    /* compute the rectangle for the tracked column */
-	    rcCol.left = lpColumnInfo->rcHeader.left;
-	    rcCol.top = infoPtr->rcList.top;
-	    rcCol.right = lpColumnInfo->rcHeader.right;
-	    rcCol.bottom = infoPtr->rcList.bottom;
-	   
-	    LISTVIEW_ScrollColumns(infoPtr, lphnm->iItem + 1, dx);
-	    if (uView == LVS_REPORT) LISTVIEW_InvalidateRect(infoPtr, &rcCol);
+	    lpColumnInfo = LISTVIEW_GetColumnInfo(infoPtr, lpnmh->iItem);
+	    dx = cxy - (lpColumnInfo->rcHeader.right - lpColumnInfo->rcHeader.left);
+	    if (dx != 0)
+	    {
+		lpColumnInfo->rcHeader.right += dx;
+		LISTVIEW_ScrollColumns(infoPtr, lpnmh->iItem + 1, dx);
+		if (uView == LVS_REPORT) LISTVIEW_InvalidateColumn(infoPtr, lpnmh->iItem);
+	    }
 	}
-	else if(lpnmh->code ==  HDN_ITEMCLICKW || lpnmh->code ==  HDN_ITEMCLICKA)
+	break;
+
+	case HDN_ITEMCLICKW:
+	case HDN_ITEMCLICKA:
 	{
             /* Handle sorting by Header Column */
             NMLISTVIEW nmlv;
 
             ZeroMemory(&nmlv, sizeof(NMLISTVIEW));
             nmlv.iItem = -1;
-            nmlv.iSubItem = lphnm->iItem;
+            nmlv.iSubItem = lpnmh->iItem;
             notify_listview(infoPtr, LVN_COLUMNCLICK, &nmlv);
         }
+	break;
     }
 
     return 0;
@@ -8195,7 +8211,7 @@ LISTVIEW_WindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
     return infoPtr->dwHoverTime;
 
   case LVM_GETIMAGELIST:
-    return LISTVIEW_GetImageList(infoPtr, (INT)wParam);
+    return (LRESULT)LISTVIEW_GetImageList(infoPtr, (INT)wParam);
 
   /* case LVN_GETINSERTMARK: */
 
@@ -8498,7 +8514,9 @@ LISTVIEW_WindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
     return LISTVIEW_NCDestroy(infoPtr);
 
   case WM_NOTIFY:
-    return LISTVIEW_Notify(infoPtr, (INT)wParam, (LPNMHDR)lParam);
+    if (lParam && ((LPNMHDR)lParam)->hwndFrom == infoPtr->hwndHeader)
+        return LISTVIEW_HeaderNotification(infoPtr, (LPNMHEADERW)lParam);
+    else return 0;
 
   case WM_NOTIFYFORMAT:
     return LISTVIEW_NotifyFormat(infoPtr, (HWND)wParam, (INT)lParam);
