@@ -25,19 +25,7 @@ DEFINE_OLEGUID(IID_IRootStorage,0x12,0,0);
 DEFINE_OLEGUID(IID_IMessageFilter,0x16,0,0);
 DEFINE_OLEGUID(IID_IStdMarshalInfo,0x18,0,0);
 
-#define THIS LPUNKNOWN this
-typedef struct IUnknown *LPUNKNOWN,IUnknown;
-typedef struct {
-	STDMETHOD(QueryInterface) (THIS_ REFIID riid,LPVOID FAR* ppvObj) PURE;
-	STDMETHOD_(ULONG,AddRef) (THIS) PURE;
-	STDMETHOD_(ULONG,Release) (THIS) PURE;
-} *LPUNKNOWN_VTABLE,IUnknown_VTable;
-
-struct IUnknown {
-	LPUNKNOWN_VTABLE	lpvtbl;
-	DWORD			ref;
-};
-#undef THIS
+#include "objbase.h"
 
 #define THIS LPCLASSFACTORY this
 typedef struct IClassFactory *LPCLASSFACTORY,IClassFactory;

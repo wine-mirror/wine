@@ -20,14 +20,19 @@
 #include "module.h"
 #include "debug.h"
 
-/*
- * IUnknown
- */
+/* --- IUnknown implementation */
+
+typedef struct _IUnknown {
+        /* IUnknown fields */
+        ICOM_VTABLE(IUnknown)*  lpvtbl;
+        DWORD                   ref;
+} _IUnknown;
 
 /******************************************************************************
  *		IUnknown_AddRef	[VTABLE:IUNKNOWN.1]
  */
-static ULONG WINAPI IUnknown_AddRef(LPUNKNOWN this) { 
+static ULONG WINAPI IUnknown_fnAddRef(LPUNKNOWN iface) { 
+	ICOM_THIS(IUnknown,iface);
 	TRACE(relay,"(%p)->AddRef()\n",this);
 	return ++(this->ref);
 }
@@ -35,7 +40,8 @@ static ULONG WINAPI IUnknown_AddRef(LPUNKNOWN this) {
 /******************************************************************************
  * IUnknown_Release [VTABLE:IUNKNOWN.2]
  */
-static ULONG WINAPI IUnknown_Release(LPUNKNOWN this) {
+static ULONG WINAPI IUnknown_fnRelease(LPUNKNOWN iface) {
+	ICOM_THIS(IUnknown,iface);
 	TRACE(relay,"(%p)->Release()\n",this);
 	if (!--(this->ref)) {
 		HeapFree(GetProcessHeap(),0,this);
@@ -47,7 +53,8 @@ static ULONG WINAPI IUnknown_Release(LPUNKNOWN this) {
 /******************************************************************************
  * IUnknown_QueryInterface [VTABLE:IUNKNOWN.0]
  */
-static HRESULT WINAPI IUnknown_QueryInterface(LPUNKNOWN this,REFIID refiid,LPVOID *obj) {
+static HRESULT WINAPI IUnknown_fnQueryInterface(LPUNKNOWN iface,REFIID refiid,LPVOID *obj) {
+	ICOM_THIS(IUnknown,iface);
 	char	xrefiid[50];
 
 	WINE_StringFromCLSID((LPCLSID)refiid,xrefiid);
@@ -60,10 +67,10 @@ static HRESULT WINAPI IUnknown_QueryInterface(LPUNKNOWN this,REFIID refiid,LPVOI
 	return OLE_E_ENUM_NOMORE; 
 }
 
-static IUnknown_VTable uvt = {
-	IUnknown_QueryInterface,
-	IUnknown_AddRef,
-	IUnknown_Release
+static ICOM_VTABLE(IUnknown) uvt = {
+	IUnknown_fnQueryInterface,
+	IUnknown_fnAddRef,
+	IUnknown_fnRelease
 };
 
 /******************************************************************************
@@ -71,12 +78,12 @@ static IUnknown_VTable uvt = {
  */
 LPUNKNOWN
 IUnknown_Constructor() {
-	LPUNKNOWN	unk;
+	_IUnknown*	unk;
 
-	unk = (LPUNKNOWN)HeapAlloc(GetProcessHeap(),0,sizeof(IUnknown));
+	unk = (_IUnknown*)HeapAlloc(GetProcessHeap(),0,sizeof(IUnknown));
 	unk->lpvtbl	= &uvt;
 	unk->ref	= 1;
-	return unk;
+	return (LPUNKNOWN)unk;
 }
 
 /*

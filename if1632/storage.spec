@@ -20,19 +20,19 @@ type	win16
 # as 16->32 relays. They use the cdecl calling convention.
 
 # IStorage
-500 cdecl IStorage16_QueryInterface(ptr ptr ptr) IStorage16_QueryInterface
-501 cdecl IStorage16_AddRef(ptr) IStorage16_AddRef
-502 cdecl IStorage16_Release(ptr) IStorage16_Release
-#503 cdecl IStorage16_CreateStream(ptr str long long long ptr) IStorage16_CreateStream
+500 cdecl IStorage16_QueryInterface(ptr ptr ptr) IStorage16_fnQueryInterface
+501 cdecl IStorage16_AddRef(ptr) IStorage16_fnAddRef
+502 cdecl IStorage16_Release(ptr) IStorage16_fnRelease
+#503 cdecl IStorage16_CreateStream(ptr str long long long ptr) IStorage16_fnCreateStream
 503 stub  IStorage16_CreateStream
 
-504 cdecl IStorage16_OpenStream(ptr str ptr long long ptr) IStorage16_OpenStream
-#505 cdecl IStorage16_CreateStorage(ptr str long long long ptr) IStorage16_CreateStorage
+504 cdecl IStorage16_OpenStream(ptr str ptr long long ptr) IStorage16_fnOpenStream
+#505 cdecl IStorage16_CreateStorage(ptr str long long long ptr) IStorage16_fnCreateStorage
 505 stub  IStorage16_CreateStorage
-506 cdecl IStorage16_OpenStorage(ptr str ptr long ptr long ptr) IStorage16_OpenStorage
-507 cdecl IStorage16_CopyTo(ptr long ptr ptr ptr) IStorage16_CopyTo
+506 cdecl IStorage16_OpenStorage(ptr str ptr long ptr long ptr) IStorage16_fnOpenStorage
+507 cdecl IStorage16_CopyTo(ptr long ptr ptr ptr) IStorage16_fnCopyTo
 508 stub  IStorage16_MoveElementTo
-509 cdecl IStorage16_Commit(ptr long) IStorage16_Commit
+509 cdecl IStorage16_Commit(ptr long) IStorage16_fnCommit
 510 stub  IStorage16_Revert
 511 stub  IStorage16_EnumElements
 512 stub  IStorage16_DestroyElement
@@ -40,16 +40,16 @@ type	win16
 514 stub  IStorage16_SetElementTimes
 515 stub  IStorage16_SetClass
 516 stub  IStorage16_SetStateBits
-517 cdecl IStorage16_Stat(ptr ptr long) IStorage16_Stat
+517 cdecl IStorage16_Stat(ptr ptr long) IStorage16_fnStat
 
 # IStream
-518 cdecl IStream16_QueryInterface(ptr ptr ptr) IStream16_QueryInterface
-519 cdecl IStream16_AddRef(ptr) IStream16_AddRef
-520 cdecl IStream16_Release(ptr) IStream16_Release
-521 cdecl IStream16_Read(ptr ptr long ptr) IStream16_Read
-#522 cdecl IStream16_Write(ptr ptr long ptr) IStream16_Write
+518 cdecl IStream16_QueryInterface(ptr ptr ptr) IStream16_fnQueryInterface
+519 cdecl IStream16_AddRef(ptr) IStream16_fnAddRef
+520 cdecl IStream16_Release(ptr) IStream16_fnRelease
+521 cdecl IStream16_Read(ptr ptr long ptr) IStream16_fnRead
+#522 cdecl IStream16_Write(ptr ptr long ptr) IStream16_fnWrite
 522 stub  IStream16_Write
-523 cdecl IStream16_Seek(ptr long long long ptr) IStream16_Seek
+523 cdecl IStream16_Seek(ptr long long long ptr) IStream16_fnSeek
 524 stub  IStream16_SetSize
 525 stub  IStream16_CopyTo
 526 stub  IStream16_Commit
