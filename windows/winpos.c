@@ -12,6 +12,7 @@
 #include "event.h"
 #include "hook.h"
 #include "message.h"
+#include "queue.h"
 #include "stackframe.h"
 #include "winpos.h"
 #include "nonclient.h"
@@ -632,12 +633,8 @@ BOOL SetWindowPlacement( HWND hwnd, WINDOWPLACEMENT *wndpl )
 BOOL ACTIVATEAPP_callback(HWND hWnd, LPARAM lParam)
 {
     ACTIVATESTRUCT  *lpActStruct = (ACTIVATESTRUCT*)lParam;
-    WND             *wndPtr = WIN_FindWndPtr( hWnd );
-
-    if( !wndPtr || hWnd == GetDesktopWindow()) return 1;
  
-    if( MSG_GetQueueTask(wndPtr->hmemTaskQ) != lpActStruct->hTaskSendTo ) 
-	return 1;
+    if (GetWindowTask(hWnd) != lpActStruct->hTaskSendTo) return 1;
 
     SendMessage( hWnd, WM_ACTIVATEAPP, lpActStruct->wFlag,
 		(LPARAM)((lpActStruct->hWindowTask)?lpActStruct->hWindowTask:0));
@@ -742,10 +739,10 @@ BOOL WINPOS_SetActiveWindow( HWND hWnd, BOOL fMouse, BOOL fChangeFocus )
     /* send WM_ACTIVATEAPP if necessary */
     if (hActiveQ != wndPtr->hmemTaskQ)
     {
-	HTASK hT = MSG_GetQueueTask( hActiveQ );
+	HTASK hT = QUEUE_GetQueueTask( hActiveQ );
 
 	actStruct.wFlag = 0;                  /* deactivate */
-	actStruct.hWindowTask = MSG_GetQueueTask(wndPtr->hmemTaskQ);
+	actStruct.hWindowTask = QUEUE_GetQueueTask(wndPtr->hmemTaskQ);
 	actStruct.hTaskSendTo = hT;
 
 	/* send WM_ACTIVATEAPP to top-level windows
@@ -755,7 +752,7 @@ BOOL WINPOS_SetActiveWindow( HWND hWnd, BOOL fMouse, BOOL fChangeFocus )
 
 	actStruct.wFlag = 1;                  /* activate */
 	actStruct.hWindowTask = hT;
-	actStruct.hTaskSendTo = MSG_GetQueueTask( wndPtr->hmemTaskQ );
+	actStruct.hTaskSendTo = QUEUE_GetQueueTask( wndPtr->hmemTaskQ );
 
 	EnumWindows( enumCallback , (LPARAM)&actStruct );
 

@@ -1,4 +1,67 @@
 ----------------------------------------------------------------------
+Wed Mar 13 19:46:50 1996  Alexandre Julliard  <julliard@lrc.epfl.ch>
+
+	* [controls/edit.c]
+	Removed calls to memmove (not portable).
+
+	* [debugger/dbg.y] [debugger/debug.l]
+	Prefixed all token with 't' to avoid conflicts with type
+	definitions.
+	Added 'walk queue', 'walk class' and 'info class' commands.
+
+	* [debugger/info.c]
+	Moved queue and window information functions to windows/queue.c
+	and windows/win.c respectively.
+
+	* [loader/signal.c]
+	Added SIGHUP handling to force entry into built-in debugger.
+	Cleaned up a bit.
+
+	* [misc/spy.c]
+	General cleanup and performance improvements.
+
+	* [windows/class.c]
+	Added CLASS_DumpClass() and CLASS_WalkClasses() functions for
+	debugger.
+
+	* [windows/event.c]
+	Pressing Ctrl-Alt-Return forces an entry into the debugger. Not
+	sure if this key combination is a good choice...
+
+	* [windows/message.c] [windows/queue.c] (New file)
+	Moved message queue handling functions to windows/queue.c.
+
+Tue Mar 12 14:55:16 1996  Onno Hovers  <onno@stack.urc.tue.nl>
+
+	* [if1632/except.S] [include/except.h] [win32/except.c] (New files)
+	Implemented Win32 exception functions: RaiseException(),
+ 	RtlUnwind(), SetUnhandledExceptionFilter() and
+	UnhandledExceptionFilter().
+
+Mon Mar 11 19:23:29 1996  Albrecht Kleine  <kleine@ak.sax.de>
+
+	* [controls/listbox.c] [include/listbox.h]
+	Special handling for COMBOLBOX styles introduced via extension of
+ 	HEADLIST structure: lphl->dwStyle.
+
+Mon Mar 11 13:31:06 1996  Greg Kreider <kreider@natlab.research.philips.com>
+
+	* [controls/combo.c]
+	Any mouse movement within a small distance (defined by CBLMM_EDGE)
+	of the top or bottom edge causes the window to scroll.  Also moved 
+	some assignments so the routine works correctly.
+
+	* [controls/listbox.c]
+	Changing selection in ListBoxSetCurSel now updates PrevFocused.
+	Added to LBSetFont and CreateListBoxStruct a fake hdc that tests 
+	and sets the standard text height.
+
+Sun Mar 10 08:39:23 1996  Alex Korobka <alex@phm30.pharm.sunysb.edu>
+
+	* [windows/dce.c]
+	Fixed memory leak in DCE_ClipWindows().
+
+----------------------------------------------------------------------
 Fri Mar  8 19:07:18 1996  Alexandre Julliard  <julliard@lrc.epfl.ch>
 
 	* [configure.in]
@@ -68,6 +131,11 @@ Mon Mar  4 23:22:40 1996  Jim Peterson <jspeter@birch.ee.vt.edu>
 
 	* [include/wintypes.h]
 	Added "#define __export".
+
+	* [objects/bitblt.c]
+	Put in a few hacks to make bitblt-ing work when upside-down and/or
+	mirrored.  BITBLT_StretchImage should really be checked over
+	thoroughly.
 
 	* [programs/progman/main.c]
 	Added "#include <resource.h>" for definition of HAVE_WINE_CONSTRUCTOR.

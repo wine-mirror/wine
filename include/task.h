@@ -73,7 +73,7 @@ typedef struct
     WORD    version;                    /* Expected Windows version */
     HANDLE  hInstance;                  /* Instance handle for this task */
     HMODULE hModule;                    /* Module handle */
-    HANDLE  hQueue;                     /* Selector of task message queue */
+    HQUEUE  hQueue;                     /* Selector of task message queue */
     HTASK   hParent;                    /* Selector of TDB of parent task */
     WORD    signal_flags;               /* Flags related to signal handler */
     DWORD   sighandler WINE_PACKED;     /* Signal handler */

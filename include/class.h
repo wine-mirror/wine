@@ -31,9 +31,10 @@ typedef struct tagCLASS
 #pragma pack(4)
 #endif
 
-
-HCLASS CLASS_FindClassByName( SEGPTR name, HINSTANCE hinstance, CLASS **ptr );
-CLASS * CLASS_FindClassPtr( HCLASS hclass );
-
+extern void CLASS_DumpClass( HCLASS hClass );
+extern void CLASS_WalkClasses(void);
+extern HCLASS CLASS_FindClassByName( SEGPTR name, HINSTANCE hinstance,
+                                     CLASS **ptr );
+extern CLASS * CLASS_FindClassPtr( HCLASS hclass );
 
 #endif  /* CLASS_H */

@@ -7,6 +7,7 @@ C_SRCS = \
 	console.c \
 	environment.c \
 	error.c \
+	except.c \
 	file.c \
 	gdi32.c \
 	heap.c \

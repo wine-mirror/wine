@@ -23,6 +23,72 @@ static HCLASS firstClass = 0;
 
 
 /***********************************************************************
+ *           CLASS_DumpClass
+ *
+ * Dump the content of a class structure to stderr.
+ */
+void CLASS_DumpClass( HCLASS hClass )
+{
+    CLASS *ptr;
+    char className[80];
+    int i;
+
+    if (!(ptr = CLASS_FindClassPtr( hClass )))
+    {
+        fprintf( stderr, "%04x is not a class handle\n", hClass );
+        return;
+    }
+    GlobalGetAtomName( ptr->atomName, className, sizeof(className) );
+
+    fprintf( stderr, "Class %04x:\n", hClass );
+    fprintf( stderr,
+             "next=%04x  name=%04x '%s'  style=%04x  wndProc=%08lx\n"
+             "inst=%04x  hdce=%04x  icon=%04x  cursor=%04x  bkgnd=%04x\n"
+             "clsExtra=%d  winExtra=%d  #windows=%d\n",
+             ptr->hNext, ptr->atomName, className, ptr->wc.style,
+             (DWORD)ptr->wc.lpfnWndProc, ptr->wc.hInstance, ptr->hdce,
+             ptr->wc.hIcon, ptr->wc.hCursor, ptr->wc.hbrBackground,
+             ptr->wc.cbClsExtra, ptr->wc.cbWndExtra, ptr->cWindows );
+    if (ptr->wc.cbClsExtra)
+    {
+        fprintf( stderr, "extra bytes:" );
+        for (i = 0; i < ptr->wc.cbClsExtra; i++)
+            fprintf( stderr, " %02x", *((BYTE *)ptr->wExtra+i) );
+        fprintf( stderr, "\n" );
+    }
+    fprintf( stderr, "\n" );
+}
+
+
+/***********************************************************************
+ *           CLASS_WalkClasses
+ *
+ * Walk the class list and print each class on stderr.
+ */
+void CLASS_WalkClasses(void)
+{
+    HCLASS hClass = firstClass;
+    CLASS *ptr;
+    char className[80];
+
+    fprintf( stderr, "Class  Name                Style WndProc\n" );
+    while (hClass)
+    {
+        if (!(ptr = CLASS_FindClassPtr( hClass )))
+        {
+            fprintf( stderr, "*** Bad class %04x in list\n", hClass );
+            return;
+        }
+        GlobalGetAtomName( ptr->atomName, className, sizeof(className) );
+        fprintf( stderr, "%04x  %-20.20s %04x %08lx\n",
+                 hClass, className, ptr->wc.style, (DWORD)ptr->wc.lpfnWndProc);
+        hClass = ptr->hNext;
+    }
+    fprintf( stderr, "\n" );
+}
+
+
+/***********************************************************************
  *           CLASS_FindClassByName
  *
  * Return a handle and a pointer to the class.

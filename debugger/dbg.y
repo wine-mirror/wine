@@ -9,7 +9,10 @@
 #include <stdio.h>
 #include <signal.h>
 #include <unistd.h>
-#include "windows.h"
+#include "class.h"
+#include "options.h"
+#include "queue.h"
+#include "win.h"
 #include "debugger.h"
 
 extern FILE * yyin;
@@ -33,15 +36,15 @@ int yyerror(char *);
     int              integer;
 }
 
-%token CONT STEP LIST NEXT QUIT HELP BACKTRACE INFO STACK SEGMENTS REGS
-%token ENABLE DISABLE BREAK DELETE SET MODE PRINT EXAM DEFINE ABORT WALK
-%token WND QUEUE 
-%token NO_SYMBOL EOL
-%token SYMBOLFILE
+%token tCONT tSTEP tLIST tNEXT tQUIT tHELP tBACKTRACE tINFO tWALK
+%token tENABLE tDISABLE tBREAK tDELETE tSET tMODE tPRINT tEXAM tDEFINE tABORT
+%token tCLASS tSTACK tSEGMENTS tREGS tWND tQUEUE 
+%token tNO_SYMBOL tEOL
+%token tSYMBOLFILE
 
-%token <string> IDENTIFIER
-%token <integer> NUM FORMAT
-%token <reg> REG
+%token <string> tIDENTIFIER
+%token <integer> tNUM tFORMAT
+%token <reg> tREG
 
 /* %left ',' */
 /* %left '=' OP_OR_EQUAL OP_XOR_EQUAL OP_AND_EQUAL OP_SHL_EQUAL \
@@ -66,127 +69,135 @@ int yyerror(char *);
 
 %%
 
- input:   line			{ issue_prompt(); }
-	| input line		{ issue_prompt(); }
+input: line                    { issue_prompt(); }
+    | input line               { issue_prompt(); }
 
- line:  command 
-	| EOL
-	| error	EOL	       { yyerrok; }
+line: command 
+    | tEOL
+    | error tEOL               { yyerrok; }
 
- command: QUIT EOL             { exit(0); }
-	| HELP EOL             { DEBUG_Help(); }
-	| CONT EOL             { dbg_exec_mode = EXEC_CONT; return 0; }
-	| STEP EOL             { dbg_exec_mode = EXEC_STEP_INSTR; return 0; }
-	| NEXT EOL             { dbg_exec_mode = EXEC_STEP_OVER; return 0; }
-	| LIST EOL	       { DEBUG_List( NULL, 15 ); }
-	| LIST addr EOL	       { DEBUG_List( &$2, 15 ); }
-	| ABORT	EOL            { kill(getpid(), SIGABRT); }
-	| SYMBOLFILE IDENTIFIER EOL  { DEBUG_ReadSymbolTable( $2 ); }
-	| DEFINE IDENTIFIER addr EOL { DEBUG_AddSymbol( $2, &$3 ); }
-	| MODE NUM EOL	       { mode_command($2); }
-	| ENABLE NUM EOL       { DEBUG_EnableBreakpoint( $2, TRUE ); }
-	| DISABLE NUM EOL      { DEBUG_EnableBreakpoint( $2, FALSE ); }
-	| BREAK '*' addr EOL   { DEBUG_AddBreakpoint( &$3 ); }
-	| BREAK symbol EOL     { DEBUG_AddBreakpoint( &$2 ); }
-	| BREAK EOL	       { DBG_ADDR addr = { CS_reg(DEBUG_context),
-						     EIP_reg(DEBUG_context) };
-				 DEBUG_AddBreakpoint( &addr );
-			       }
-	| DELETE BREAK NUM EOL { DEBUG_DelBreakpoint( $3 ); }
-	| BACKTRACE EOL	       { DEBUG_BackTrace(); }
-	| WALK WND EOL	       { DEBUG_InitWalk(); DEBUG_WndWalk( NULL ); }
-	| WALK WND NUM EOL     { DEBUG_InitWalk(); DEBUG_WndWalk( $3 ); }
-	| infocmd
-	| x_command
-	| print_command
-	| deposit_command
+command:
+      tQUIT tEOL               { exit(0); }
+    | tHELP tEOL               { DEBUG_Help(); }
+    | tCONT tEOL               { dbg_exec_mode = EXEC_CONT; return 0; }
+    | tSTEP tEOL               { dbg_exec_mode = EXEC_STEP_INSTR; return 0; }
+    | tNEXT tEOL               { dbg_exec_mode = EXEC_STEP_OVER; return 0; }
+    | tLIST tEOL               { DEBUG_List( NULL, 15 ); }
+    | tLIST addr tEOL          { DEBUG_List( &$2, 15 ); }
+    | tABORT tEOL              { kill(getpid(), SIGABRT); }
+    | tSYMBOLFILE tIDENTIFIER tEOL  { DEBUG_ReadSymbolTable( $2 ); }
+    | tDEFINE tIDENTIFIER addr tEOL { DEBUG_AddSymbol( $2, &$3 ); }
+    | tMODE tNUM tEOL          { mode_command($2); }
+    | tENABLE tNUM tEOL        { DEBUG_EnableBreakpoint( $2, TRUE ); }
+    | tDISABLE tNUM tEOL       { DEBUG_EnableBreakpoint( $2, FALSE ); }
+    | tDELETE tBREAK tNUM tEOL { DEBUG_DelBreakpoint( $3 ); }
+    | tBACKTRACE tEOL	       { DEBUG_BackTrace(); }
+    | set_command
+    | x_command
+    | print_command
+    | break_command
+    | info_command
+    | walk_command
 
-deposit_command:
-	SET REG '=' expr EOL	      { DEBUG_SetRegister( $2, $4 ); }
-	| SET '*' addr '=' expr	EOL   { DEBUG_WriteMemory( &$3, $5 ); }
-	| SET IDENTIFIER '=' addr EOL { if (!DEBUG_SetSymbolValue( $2, &$4 ))
-				         {
-					   fprintf( stderr,
-						 "Symbol %s not found\n", $2 );
-					   YYERROR;
-				         }
-				       }
-
+set_command:
+      tSET tREG '=' expr tEOL	     { DEBUG_SetRegister( $2, $4 ); }
+    | tSET '*' addr '=' expr tEOL    { DEBUG_WriteMemory( &$3, $5 ); }
+    | tSET tIDENTIFIER '=' addr tEOL { if (!DEBUG_SetSymbolValue( $2, &$4 ))
+                                       {
+                                           fprintf( stderr,
+                                                 "Symbol %s not found\n", $2 );
+                                           YYERROR;
+                                       }
+                                     }
 
 x_command:
-	  EXAM addr EOL         { DEBUG_ExamineMemory( &$2, 1, 'x'); }
-	| EXAM FORMAT addr EOL  { DEBUG_ExamineMemory( &$3, $2>>8, $2&0xff ); }
+      tEXAM addr tEOL          { DEBUG_ExamineMemory( &$2, 1, 'x'); }
+    | tEXAM tFORMAT addr tEOL  { DEBUG_ExamineMemory( &$3, $2>>8, $2&0xff ); }
 
- print_command:
-	  PRINT addr EOL        { DEBUG_Print( &$2, 1, 'x' ); }
-	| PRINT FORMAT addr EOL { DEBUG_Print( &$3, $2 >> 8, $2 & 0xff ); }
+print_command:
+      tPRINT addr tEOL         { DEBUG_Print( &$2, 1, 'x' ); }
+    | tPRINT tFORMAT addr tEOL { DEBUG_Print( &$3, $2 >> 8, $2 & 0xff ); }
 
- symbol: IDENTIFIER   { if (!DEBUG_GetSymbolValue( $1, &$$ ))
+break_command:
+      tBREAK '*' addr tEOL     { DEBUG_AddBreakpoint( &$3 ); }
+    | tBREAK symbol tEOL       { DEBUG_AddBreakpoint( &$2 ); }
+    | tBREAK tEOL              { DBG_ADDR addr = { CS_reg(DEBUG_context),
+                                                   EIP_reg(DEBUG_context) };
+                                 DEBUG_AddBreakpoint( &addr );
+                               }
+
+info_command:
+      tINFO tBREAK tEOL         { DEBUG_InfoBreakpoints(); }
+    | tINFO tCLASS expr tEOL    { CLASS_DumpClass( $3 ); }
+    | tINFO tQUEUE expr tEOL    { QUEUE_DumpQueue( $3 ); }
+    | tINFO tREGS tEOL          { DEBUG_InfoRegisters(); }
+    | tINFO tSEGMENTS expr tEOL { LDT_Print( SELECTOR_TO_ENTRY($3), 1 ); }
+    | tINFO tSEGMENTS tEOL      { LDT_Print( 0, -1 ); }
+    | tINFO tSTACK tEOL         { DEBUG_InfoStack(); }
+    | tINFO tWND expr tEOL      { WIN_DumpWindow( $3 ); } 
+
+walk_command:
+      tWALK tCLASS tEOL         { CLASS_WalkClasses(); }
+    | tWALK tQUEUE tEOL         { QUEUE_WalkQueues(); }
+    | tWALK tWND tEOL           { WIN_WalkWindows( 0, 0 ); }
+    | tWALK tWND tNUM tEOL      { WIN_WalkWindows( $3, 0 ); }
+
+symbol: tIDENTIFIER   { if (!DEBUG_GetSymbolValue( $1, &$$ ))
 			{
 			   fprintf( stderr, "Symbol %s not found\n", $1 );
 			   YYERROR;
 			}
 		      } 
 
- addr: expr				{ $$.seg = 0xffffffff; $$.off = $1; }
-       | segaddr			{ $$ = $1; }
+addr:
+      expr                       { $$.seg = 0xffffffff; $$.off = $1; }
+    | segaddr                    { $$ = $1; }
 
- segaddr: expr ':' expr			{ $$.seg = $1; $$.off = $3; }
-       | symbol				{ $$ = $1; }
+segaddr:
+      expr ':' expr              { $$.seg = $1; $$.off = $3; }
+    | symbol                     { $$ = $1; }
 
- expr:	NUM				{ $$ = $1;	}
-	| REG				{ $$ = DEBUG_GetRegister($1); }
-	| expr OP_LOR expr		{ $$ = $1 || $3; }
-	| expr OP_LAND expr		{ $$ = $1 && $3; }
-	| expr '|' expr			{ $$ = $1 | $3; }
-	| expr '&' expr			{ $$ = $1 & $3; }
-	| expr '^' expr			{ $$ = $1 ^ $3; }
-	| expr OP_EQ expr		{ $$ = $1 == $3; }
-	| expr '>' expr			{ $$ = $1 > $3; }
-	| expr '<' expr			{ $$ = $1 < $3; }
-	| expr OP_GE expr		{ $$ = $1 >= $3; }
-	| expr OP_LE expr		{ $$ = $1 <= $3; }
-	| expr OP_NE expr		{ $$ = $1 != $3; }
-	| expr OP_SHL expr		{ $$ = (unsigned)$1 << $3; }
-	| expr OP_SHR expr		{ $$ = (unsigned)$1 >> $3; }
-	| expr '+' expr			{ $$ = $1 + $3; }
-	| expr '-' expr			{ $$ = $1 - $3; }
-	| expr '*' expr			{ $$ = $1 * $3; }
-	| expr '/' expr
-	  { if ($3) 
-	      if ($3 == -1 && $1 == 0x80000000l)
-		yyerror ("Division overflow");
-	      else
-		$$ = $1 / $3;
-	    else
-	      yyerror ("Division by zero"); }
-	| expr '%' expr
-	  { if ($3) 
-	      if ($3 == -1 && $1 == 0x80000000l)
-		$$ = 0; /* A sensible result in this case.  */
-	      else
-		$$ = $1 % $3;
-	    else
-	      yyerror ("Division by zero"); }
-	| '-' expr %prec OP_SIGN	{ $$ = -$2; }
-	| '+' expr %prec OP_SIGN	{ $$ = $2; }
-	| '!' expr			{ $$ = !$2; }
-	| '~' expr			{ $$ = ~$2; }
-	| '(' expr ')'			{ $$ = $2; }
+expr:
+      tNUM                       { $$ = $1; }
+    | tREG                       { $$ = DEBUG_GetRegister($1); }
+    | expr OP_LOR expr           { $$ = $1 || $3; }
+    | expr OP_LAND expr          { $$ = $1 && $3; }
+    | expr '|' expr              { $$ = $1 | $3; }
+    | expr '&' expr              { $$ = $1 & $3; }
+    | expr '^' expr              { $$ = $1 ^ $3; }
+    | expr OP_EQ expr            { $$ = $1 == $3; }
+    | expr '>' expr              { $$ = $1 > $3; }
+    | expr '<' expr              { $$ = $1 < $3; }
+    | expr OP_GE expr            { $$ = $1 >= $3; }
+    | expr OP_LE expr            { $$ = $1 <= $3; }
+    | expr OP_NE expr            { $$ = $1 != $3; }
+    | expr OP_SHL expr           { $$ = (unsigned)$1 << $3; }
+    | expr OP_SHR expr           { $$ = (unsigned)$1 >> $3; }
+    | expr '+' expr              { $$ = $1 + $3; }
+    | expr '-' expr              { $$ = $1 - $3; }
+    | expr '*' expr              { $$ = $1 * $3; }
+    | expr '/' expr              { if ($3) 
+                                       if ($3 == -1 && $1 == 0x80000000l)
+                                           yyerror ("Division overflow");
+                                       else $$ = $1 / $3;
+                                   else yyerror ("Division by zero");
+                                 }
+    | expr '%' expr              { if ($3) 
+                                       if ($3 == -1 && $1 == 0x80000000l)
+                                           $$ = 0; /* A sensible result in this case.  */
+                                       else $$ = $1 % $3;
+                                   else yyerror ("Division by zero");
+                                 }
+    | '-' expr %prec OP_SIGN     { $$ = -$2; }
+    | '+' expr %prec OP_SIGN     { $$ = $2; }
+    | '!' expr                   { $$ = !$2; }
+    | '~' expr                   { $$ = ~$2; }
+    | '(' expr ')'               { $$ = $2; }
 /* For parser technical reasons we can't use "addr" here.  */
-	| '*' expr %prec OP_DEREF	{ DBG_ADDR addr = { 0xffffffff, $2 };
-					  $$ = DEBUG_ReadMemory( &addr ); }
-	| '*' segaddr %prec OP_DEREF	{ $$ = DEBUG_ReadMemory( &$2 ); }
+    | '*' expr %prec OP_DEREF    { DBG_ADDR addr = { 0xffffffff, $2 };
+                                   $$ = DEBUG_ReadMemory( &addr ); }
+    | '*' segaddr %prec OP_DEREF { $$ = DEBUG_ReadMemory( &$2 ); }
 	
- infocmd: INFO REGS EOL	          { DEBUG_InfoRegisters(); }
-	| INFO STACK EOL          { DEBUG_InfoStack(); }
-	| INFO BREAK EOL          { DEBUG_InfoBreakpoints(); }
-	| INFO SEGMENTS EOL	  { LDT_Print( 0, -1 ); }
-	| INFO SEGMENTS expr EOL  { LDT_Print( SELECTOR_TO_ENTRY($3), 1 ); }
-	| INFO WND expr EOL       { DEBUG_WndDump( $3 ); } 
-	| INFO QUEUE expr EOL     { DEBUG_QueueDump( $3 ); }
-
-
 %%
 
 void 

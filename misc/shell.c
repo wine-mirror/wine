@@ -194,8 +194,8 @@ _LoadKey(HKEY hKey,char *from)
 
 	f=fopen(from,"r");
 	if (f==NULL) {
-		perror("fopen-registry-read");
-		return;
+            dprintf_reg(stddeb,"fopen-registry-read");
+            return;
 	}
 	switch ((DWORD)hKey) {
 	case HKEY_CLASSES_ROOT:

@@ -13,7 +13,7 @@ id	2
 12  pascal16 KillTimer(word word) KillTimer
 13  pascal   GetTickCount() GetTickCount
 14  pascal   GetTimerResolution() GetTimerResolution
-15  pascal   GetCurrentTime() GetTickCount
+15  pascal   GetCurrentTime() GetCurrentTime
 16  pascal16 ClipCursor(ptr) ClipCursor
 17  pascal16 GetCursorPos(ptr) GetCursorPos
 18  pascal16 SetCapture(word) SetCapture

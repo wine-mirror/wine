@@ -15,7 +15,7 @@
  */
 
 #include "hook.h"
-#include "message.h"
+#include "queue.h"
 #include "user.h"
 #include "stddebug.h"
 #include "debug.h"

@@ -1757,7 +1757,7 @@ static void EDIT_InsertText(HWND hwnd, char *str, int len)
 {
     int plen;
     EDITSTATE *es = EDIT_GetEditState(hwnd);
-    char *text = EDIT_HeapLock(hwnd, es->hText);
+    char *p, *text = EDIT_HeapLock(hwnd, es->hText);
     
     plen = strlen(text) + len;
     if (plen + 1 > es->textlen)
@@ -1767,7 +1767,7 @@ static void EDIT_InsertText(HWND hwnd, char *str, int len)
       text = EDIT_HeapLock(hwnd, es->hText);
       es->textlen = plen + 1;
     }
-    memmove(CurrChar + len, CurrChar, strlen(CurrChar) + 1);
+    for (p = CurrChar + strlen(CurrChar); p >= CurrChar; p--) p[len] = *p;
     memcpy(CurrChar, str, len);
 
     EDIT_BuildTextPointers(hwnd);
@@ -1834,7 +1834,7 @@ static void EDIT_KeyTyped(HWND hwnd, short ch)
 {
     EDITSTATE *es = EDIT_GetEditState(hwnd);
     char *text = EDIT_HeapLock(hwnd, es->hText);
-    char *currchar;
+    char *currchar, *p;
     RECT rc;
     BOOL FullPaint = FALSE;
 
@@ -1890,14 +1890,14 @@ static void EDIT_KeyTyped(HWND hwnd, short ch)
     /* make space for new character and put char in buffer */
     if (ch == '\n')
     {
-	memmove(currchar + 2, currchar, strlen(currchar) + 1);
+        for (p = currchar + strlen(currchar); p >= currchar; p--) p[2] = p[0];
 	*currchar = '\r';
 	*(currchar + 1) = '\n';
 	EDIT_ModTextPointers(hwnd, es->CurrLine + 1, 2);
     }
     else
     {
-	memmove(currchar + 1, currchar, strlen(currchar) + 1);
+        for (p = currchar + strlen(currchar); p >= currchar; p--) p[1] = p[0];
 	*currchar = ch;
 	EDIT_ModTextPointers(hwnd, es->CurrLine + 1, 1);
     }

@@ -32,6 +32,9 @@
   * I hope no programs rely on the implementation of combos.
   */
 
+#define CBLMM_EDGE   4    /* distance inside box which is same as moving mouse
+			     outside box, to trigger scrolling of CBL */
+
 static HBITMAP hComboBit = 0;
 static WORD CBitHeight, CBitWidth;
 
@@ -470,6 +473,8 @@ static LRESULT CBSetCurSel(HWND hwnd, WPARAM wParam, LPARAM lParam)
 
   wRet = ListBoxSetCurSel(lphl, wParam);
 
+  dprintf_combo(stddeb,"CBSetCurSel: hwnd "NPFMT" wp %x lp %lx wRet %d\n",
+		hwnd,wParam,lParam,wRet);
 /*  SetScrollPos(hwnd, SB_VERT, lphl->FirstVisible, TRUE);*/
   InvalidateRect(hwnd, NULL, TRUE);
 
@@ -877,37 +882,41 @@ static LRESULT CBLLButtonUp( HWND hwnd, WPARAM wParam, LPARAM lParam )
 static LRESULT CBLMouseMove( HWND hwnd, WPARAM wParam, LPARAM lParam )
 {
   LPHEADLIST lphl = CLBoxGetListHeader(hwnd);
-  int  y;
+  short y;
   WORD wRet;
-  RECT rect, rectsel;   /* XXX Broken */
+  RECT rect, rectsel;
 
+  y = SHIWORD(lParam);
+  wRet = ListBoxFindMouse(lphl, LOWORD(lParam), HIWORD(lParam));
+  ListBoxGetItemRect(lphl, wRet, &rectsel);
+  GetClientRect(hwnd, &rect);
+
+  dprintf_combo(stddeb,"CBLMouseMove: hwnd "NPFMT" wp %x lp %lx  y %d  if %d wret %d %d,%d-%d,%d\n",
+hwnd,wParam,lParam,y,lphl->ItemFocused,wRet,rectsel.left,rectsel.top,rectsel.right,rectsel.bottom);
+  
   if ((wParam & MK_LBUTTON) != 0) {
-    y = SHIWORD(lParam);
-    if (y < 0) {
+    if (y < CBLMM_EDGE) {
       if (lphl->FirstVisible > 0) {
 	lphl->FirstVisible--;
 	SetScrollPos(hwnd, SB_VERT, lphl->FirstVisible, TRUE);
+	ListBoxSetCurSel(lphl, wRet);
 	InvalidateRect(hwnd, NULL, TRUE);
 	return 0;
       }
     }
-    GetClientRect(hwnd, &rect);
-    if (y >= rect.bottom) {
+    else if (y >= (rect.bottom-CBLMM_EDGE)) {
       if (lphl->FirstVisible < ListMaxFirstVisible(lphl)) {
 	lphl->FirstVisible++;
 	SetScrollPos(hwnd, SB_VERT, lphl->FirstVisible, TRUE);
+	ListBoxSetCurSel(lphl, wRet);
 	InvalidateRect(hwnd, NULL, TRUE);
 	return 0;
       }
     }
-    if ((y > 0) && (y < (rect.bottom - 4))) {
-      if ((y < rectsel.top) || (y > rectsel.bottom)) {
-	wRet = ListBoxFindMouse(lphl, LOWORD(lParam), HIWORD(lParam));
-	if (wRet == lphl->ItemFocused) return 0;
-	ListBoxSetCurSel(lphl, wRet);
-	ListBoxGetItemRect(lphl, wRet, &rectsel);
-	InvalidateRect(hwnd, NULL, TRUE);
-      }
+    else {
+      if ((short) wRet == lphl->ItemFocused) return 0;
+      ListBoxSetCurSel(lphl, wRet);
+      InvalidateRect(hwnd, NULL, TRUE);
     }
   }
 

@@ -22,7 +22,7 @@ static char Copyright[] = "Copyright  Robert J. Amstadt, 1993";
 #include "dialog.h"
 #include "directory.h"
 #include "drive.h"
-#include "message.h"
+#include "queue.h"
 #include "syscolor.h"
 #include "sysmetrics.h"
 #include "gdi.h"
@@ -54,7 +54,8 @@ int MAIN_Init(void)
     /* Load the configuration file */
     if (!PROFILE_LoadWineIni()) return 0;
 
-    SpyInit();
+    /* Initialize message spying */
+    if (!SPY_Init()) return 0;
 
 #ifndef WINELIB
       /* Initialize relay code */
@@ -120,7 +121,10 @@ int MAIN_Init(void)
 
       /* Create system message queue */
     queueSize = GetProfileInt( "windows", "TypeAhead", 120 );
-    if (!MSG_CreateSysMsgQueue( queueSize )) return 0;
+    if (!QUEUE_CreateSysMsgQueue( queueSize )) return 0;
+
+    /* Set double click time */
+    SetDoubleClickTime( GetProfileInt( "windows", "DoubleClickSpeed", 452 ) );
 
     return 1;
 }

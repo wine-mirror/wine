@@ -19,195 +19,19 @@
 #include "winpos.h"
 #include "atom.h"
 #include "dde.h"
+#include "queue.h"
 #include "stddebug.h"
 /* #define DEBUG_MSG */
 #include "debug.h"
 
 #define HWND_BROADCAST  ((HWND)0xffff)
-#define MAX_QUEUE_SIZE   120  /* Max. size of a message queue */
-
 
 extern BOOL TIMER_CheckTimer( LONG *next, MSG *msg,
 			      HWND hwnd, BOOL remove );  /* timer.c */
 
 DWORD MSG_WineStartTicks;  /* Ticks at Wine startup */
 
-/* ------- Internal Queues ------ */
-
-static HANDLE hmemSysMsgQueue = 0;
-static MESSAGEQUEUE *sysMsgQueue = NULL;
-static HANDLE hFirstQueue = 0;
-
-/* ------- Miscellaneous ------ */
-static int doubleClickSpeed = 452;
-
-
-/***********************************************************************
- *           MSG_CreateMsgQueue
- *
- * Creates a message queue. Doesn't link it into queue list!
- */
-static HANDLE MSG_CreateMsgQueue( int size )
-{
-    HANDLE hQueue;
-    MESSAGEQUEUE * msgQueue;
-    int queueSize;
-
-    queueSize = sizeof(MESSAGEQUEUE) + size * sizeof(QMSG);
-    if (!(hQueue = GlobalAlloc( GMEM_FIXED | GMEM_ZEROINIT, queueSize )))
-        return 0;
-    msgQueue = (MESSAGEQUEUE *) GlobalLock( hQueue );
-    msgQueue->msgSize = sizeof(QMSG);
-    msgQueue->queueSize = size;
-    msgQueue->wWinVersion = 0;  /* FIXME? */
-    GlobalUnlock( hQueue );
-    return hQueue;
-}
-
-
-/***********************************************************************
- *	     MSG_DeleteMsgQueue
- *
- * Unlinks and deletes a message queue.
- */
-BOOL MSG_DeleteMsgQueue( HANDLE hQueue )
-{
-    MESSAGEQUEUE * msgQueue = (MESSAGEQUEUE*)GlobalLock(hQueue);
-    HANDLE *pPrev;
-
-    if (!hQueue || !msgQueue)
-    {
-	dprintf_msg(stddeb,"DeleteMsgQueue: invalid argument.\n");
-	return 0;
-    }
-
-    pPrev = &hFirstQueue;
-    while (*pPrev && (*pPrev != hQueue))
-    {
-        MESSAGEQUEUE *msgQ = (MESSAGEQUEUE*)GlobalLock(*pPrev);
-        pPrev = &msgQ->next;
-    }
-    if (*pPrev) *pPrev = msgQueue->next;
-    GlobalFree( hQueue );
-    return 1;
-}
-
-
-/***********************************************************************
- *           MSG_CreateSysMsgQueue
- *
- * Create the system message queue, and set the double-click speed.
- * Must be called only once.
- */
-BOOL MSG_CreateSysMsgQueue( int size )
-{
-    if (size > MAX_QUEUE_SIZE) size = MAX_QUEUE_SIZE;
-    else if (size <= 0) size = 1;
-    if (!(hmemSysMsgQueue = MSG_CreateMsgQueue( size ))) return FALSE;
-    sysMsgQueue = (MESSAGEQUEUE *) GlobalLock( hmemSysMsgQueue );
-    doubleClickSpeed = GetProfileInt( "windows", "DoubleClickSpeed", 452 );
-    return TRUE;
-}
-
-
-/***********************************************************************
- *           MSG_AddMsg
- *
- * Add a message to the queue. Return FALSE if queue is full.
- */
-static int MSG_AddMsg( HANDLE hQueue, MSG * msg, DWORD extraInfo )
-{
-    int pos;
-    MESSAGEQUEUE *msgQueue;
-
-    if (!(msgQueue = (MESSAGEQUEUE *)GlobalLock( hQueue ))) return FALSE;
-    pos = msgQueue->nextFreeMessage;
-
-      /* Check if queue is full */
-    if ((pos == msgQueue->nextMessage) && (msgQueue->msgCount > 0)) {
-		fprintf(stderr,"MSG_AddMsg // queue is full !\n");
-		return FALSE;
-		}
-
-      /* Store message */
-    msgQueue->messages[pos].msg = *msg;
-    msgQueue->messages[pos].extraInfo = extraInfo;
-    if (pos < msgQueue->queueSize-1) pos++;
-    else pos = 0;
-    msgQueue->nextFreeMessage = pos;
-    msgQueue->msgCount++;
-    msgQueue->status |= QS_POSTMESSAGE;
-    msgQueue->tempStatus |= QS_POSTMESSAGE;
-    return TRUE;
-}
-
-
-/***********************************************************************
- *           MSG_FindMsg
- *
- * Find a message matching the given parameters. Return -1 if none available.
- */
-static int MSG_FindMsg(MESSAGEQUEUE * msgQueue, HWND hwnd, int first, int last)
-{
-    int i, pos = msgQueue->nextMessage;
-
-    dprintf_msg(stddeb,"MSG_FindMsg: hwnd=0x"NPFMT"\n\n", hwnd );
-
-    if (!msgQueue->msgCount) return -1;
-    if (!hwnd && !first && !last) return pos;
-        
-    for (i = 0; i < msgQueue->msgCount; i++)
-    {
-	MSG * msg = &msgQueue->messages[pos].msg;
-
-	if (!hwnd || (msg->hwnd == hwnd))
-	{
-	    if (!first && !last) return pos;
-	    if ((msg->message >= first) && (msg->message <= last)) return pos;
-	}
-	if (pos < msgQueue->queueSize-1) pos++;
-	else pos = 0;
-    }
-    return -1;
-}
-
-
-/***********************************************************************
- *           MSG_RemoveMsg
- *
- * Remove a message from the queue (pos must be a valid position).
- */
-static void MSG_RemoveMsg( MESSAGEQUEUE * msgQueue, int pos )
-{
-    if (pos >= msgQueue->nextMessage)
-    {
-	for ( ; pos > msgQueue->nextMessage; pos--)
-	    msgQueue->messages[pos] = msgQueue->messages[pos-1];
-	msgQueue->nextMessage++;
-	if (msgQueue->nextMessage >= msgQueue->queueSize)
-	    msgQueue->nextMessage = 0;
-    }
-    else
-    {
-	for ( ; pos < msgQueue->nextFreeMessage; pos++)
-	    msgQueue->messages[pos] = msgQueue->messages[pos+1];
-	if (msgQueue->nextFreeMessage) msgQueue->nextFreeMessage--;
-	else msgQueue->nextFreeMessage = msgQueue->queueSize-1;
-    }
-    msgQueue->msgCount--;
-    if (!msgQueue->msgCount) msgQueue->status &= ~QS_POSTMESSAGE;
-    msgQueue->tempStatus = 0;
-}
-
-/***********************************************************************
- *	     MSG_GetQueueTask
- */
-HTASK MSG_GetQueueTask( HANDLE hQueue )
-{
-    MESSAGEQUEUE *msgQ = GlobalLock( hQueue );
-
-    return (msgQ) ? msgQ->hTask : 0 ;
-}
+static WORD doubleClickSpeed = 452;
 
 /***********************************************************************
  *           MSG_TranslateMouseMsg
@@ -372,6 +196,7 @@ static BOOL MSG_TranslateKeyboardMsg( MSG *msg, BOOL remove )
 static BOOL MSG_PeekHardwareMsg( MSG *msg, HWND hwnd, WORD first, WORD last,
                                  BOOL remove )
 {
+    MESSAGEQUEUE *sysMsgQueue = QUEUE_GetSysQueue();
     int i, pos = sysMsgQueue->nextMessage;
 
     for (i = 0; i < sysMsgQueue->msgCount; i++, pos++)
@@ -410,7 +235,7 @@ static BOOL MSG_PeekHardwareMsg( MSG *msg, HWND hwnd, WORD first, WORD last,
             MSG tmpMsg = *msg; /* FIXME */
             HOOK_CallHooks( WH_JOURNALRECORD, HC_ACTION,
                             0, (LPARAM)MAKE_SEGPTR(&tmpMsg) );
-            MSG_RemoveMsg( sysMsgQueue, pos );
+            QUEUE_RemoveMsg( sysMsgQueue, pos );
         }
         return TRUE;
     }
@@ -419,135 +244,23 @@ static BOOL MSG_PeekHardwareMsg( MSG *msg, HWND hwnd, WORD first, WORD last,
 
 
 /**********************************************************************
- *		SetDoubleClickTime  (USER.20)
+ *           SetDoubleClickTime   (USER.20)
  */
 void SetDoubleClickTime( WORD interval )
 {
-    if (interval == 0)
-	doubleClickSpeed = 500;
-    else
-	doubleClickSpeed = interval;
+    doubleClickSpeed = interval ? interval : 500;
 }		
 
 
 /**********************************************************************
- *		GetDoubleClickTime  (USER.21)
+ *           GetDoubleClickTime   (USER.21)
  */
 WORD GetDoubleClickTime()
 {
-	return (WORD)doubleClickSpeed;
+    return doubleClickSpeed;
 }		
 
 
-/***********************************************************************
- *           MSG_IncPaintCount
- */
-void MSG_IncPaintCount( HANDLE hQueue )
-{
-    MESSAGEQUEUE *queue;
-
-    if (!(queue = (MESSAGEQUEUE *)GlobalLock( hQueue ))) return;
-    queue->wPaintCount++;
-    queue->status |= QS_PAINT;
-    queue->tempStatus |= QS_PAINT;    
-}
-
-
-/***********************************************************************
- *           MSG_DecPaintCount
- */
-void MSG_DecPaintCount( HANDLE hQueue )
-{
-    MESSAGEQUEUE *queue;
-
-    if (!(queue = (MESSAGEQUEUE *)GlobalLock( hQueue ))) return;
-    queue->wPaintCount--;
-    if (!queue->wPaintCount) queue->status &= ~QS_PAINT;
-}
-
-
-/***********************************************************************
- *           MSG_IncTimerCount
- */
-void MSG_IncTimerCount( HANDLE hQueue )
-{
-    MESSAGEQUEUE *queue;
-
-    if (!(queue = (MESSAGEQUEUE *)GlobalLock( hQueue ))) return;
-    queue->wTimerCount++;
-    queue->status |= QS_TIMER;
-    queue->tempStatus |= QS_TIMER;
-}
-
-
-/***********************************************************************
- *           MSG_DecTimerCount
- */
-void MSG_DecTimerCount( HANDLE hQueue )
-{
-    MESSAGEQUEUE *queue;
-
-    if (!(queue = (MESSAGEQUEUE *)GlobalLock( hQueue ))) return;
-    queue->wTimerCount--;
-    if (!queue->wTimerCount) queue->status &= ~QS_TIMER;
-}
-
-
-/***********************************************************************
- *           hardware_event
- *
- * Add an event to the system message queue.
- * Note: the position is relative to the desktop window.
- */
-void hardware_event( WORD message, WORD wParam, LONG lParam,
-		     int xPos, int yPos, DWORD time, DWORD extraInfo )
-{
-    MSG *msg;
-    int pos;
-  
-    if (!sysMsgQueue) return;
-    pos = sysMsgQueue->nextFreeMessage;
-
-      /* Merge with previous event if possible */
-
-    if ((message == WM_MOUSEMOVE) && sysMsgQueue->msgCount)
-    {
-        if (pos > 0) pos--;
-        else pos = sysMsgQueue->queueSize - 1;
-	msg = &sysMsgQueue->messages[pos].msg;
-	if ((msg->message == message) && (msg->wParam == wParam))
-            sysMsgQueue->msgCount--;  /* Merge events */
-        else
-            pos = sysMsgQueue->nextFreeMessage;  /* Don't merge */
-    }
-
-      /* Check if queue is full */
-
-    if ((pos == sysMsgQueue->nextMessage) && sysMsgQueue->msgCount)
-    {
-        /* Queue is full, beep (but not on every mouse motion...) */
-        if (message != WM_MOUSEMOVE) MessageBeep(0);
-        return;
-    }
-
-      /* Store message */
-
-    msg = &sysMsgQueue->messages[pos].msg;
-    msg->hwnd    = 0;
-    msg->message = message;
-    msg->wParam  = wParam;
-    msg->lParam  = lParam;
-    msg->time    = time;
-    msg->pt.x    = xPos & 0xffff;
-    msg->pt.y    = yPos & 0xffff;
-    sysMsgQueue->messages[pos].extraInfo = extraInfo;
-    if (pos < sysMsgQueue->queueSize - 1) pos++;
-    else pos = 0;
-    sysMsgQueue->nextFreeMessage = pos;
-    sysMsgQueue->msgCount++;
-}
-
-		    
 /***********************************************************************
  *           MSG_GetHardwareMessage
  *
@@ -560,104 +273,20 @@ BOOL MSG_GetHardwareMessage( LPMSG msg )
 {
     int pos;
     XEvent event;
+    MESSAGEQUEUE *sysMsgQueue = QUEUE_GetSysQueue();
 
     while(1)
     {    
-	if ((pos = MSG_FindMsg( sysMsgQueue, 0, 0, 0 )) != -1)
+	if ((pos = QUEUE_FindMsg( sysMsgQueue, 0, 0, 0 )) != -1)
 	{
 	    *msg = sysMsgQueue->messages[pos].msg;
-	    MSG_RemoveMsg( sysMsgQueue, pos );
+	    QUEUE_RemoveMsg( sysMsgQueue, pos );
 	    break;
 	}
 	XNextEvent( display, &event );
 	EVENT_ProcessEvent( &event );
     }
     return TRUE;
-}
-
-
-/***********************************************************************
- *           SetMessageQueue  (USER.266)
- */
-BOOL SetMessageQueue( int size )
-{
-    HANDLE hQueue, hNewQueue;
-    MESSAGEQUEUE *queuePtr;
-
-    if ((size > MAX_QUEUE_SIZE) || (size <= 0)) return TRUE;
-
-    if( !(hNewQueue = MSG_CreateMsgQueue( size ))) 
-    {
-	dprintf_msg(stddeb,"SetMessageQueue: failed!\n");
-	return FALSE;
-    }
-
-    /* Free the old message queue */
-    if ((hQueue = GetTaskQueue(0)) != 0) MSG_DeleteMsgQueue( hQueue );
-
-    /* Link new queue into list */
-    queuePtr = (MESSAGEQUEUE *)GlobalLock( hNewQueue );
-    queuePtr->hTask = GetCurrentTask();
-    queuePtr->next  = hFirstQueue;
-    hFirstQueue = hNewQueue;
-
-    SetTaskQueue( 0, hNewQueue );
-    return TRUE;
-}
-
-
-/***********************************************************************
- *           GetWindowTask  (USER.224)
- */
-HTASK GetWindowTask( HWND hwnd )
-{
-    WND *wndPtr = WIN_FindWndPtr( hwnd );
-    MESSAGEQUEUE *queuePtr;
-
-    if (!wndPtr) return 0;
-    queuePtr = (MESSAGEQUEUE *)GlobalLock( wndPtr->hmemTaskQ );
-    if (!queuePtr) return 0;
-    return queuePtr->hTask;
-}
-
-
-/***********************************************************************
- *           PostQuitMessage   (USER.6)
- */
-void PostQuitMessage( int exitCode )
-{
-    MESSAGEQUEUE *queue;
-
-    if (!(queue = (MESSAGEQUEUE *)GlobalLock( GetTaskQueue(0) ))) return;
-    queue->wPostQMsg = TRUE;
-    queue->wExitCode = exitCode;
-}
-
-
-/***********************************************************************
- *           GetQueueStatus   (USER.334)
- */
-DWORD GetQueueStatus( UINT flags )
-{
-    MESSAGEQUEUE *queue;
-    DWORD ret;
-
-    if (!(queue = (MESSAGEQUEUE *)GlobalLock( GetTaskQueue(0) ))) return 0;
-    ret = MAKELONG( queue->tempStatus, queue->status );
-    queue->tempStatus = 0;
-    return ret & MAKELONG( flags, flags );
-}
-
-
-/***********************************************************************
- *           GetInputState   (USER.335)
- */
-BOOL GetInputState()
-{
-    MESSAGEQUEUE *queue;
-
-    if (!(queue = (MESSAGEQUEUE *)GlobalLock( GetTaskQueue(0) ))) return FALSE;
-    return queue->status & (QS_KEY | QS_MOUSEBUTTON);
 }
 
 
@@ -796,7 +425,7 @@ static BOOL MSG_PeekMessage( LPMSG msg, HWND hwnd, WORD first, WORD last,
 	}
     
 	  /* Now find a normal message */
-	pos = MSG_FindMsg( msgQueue, hwnd, first, last );
+	pos = QUEUE_FindMsg( msgQueue, hwnd, first, last );
 	if (pos != -1)
 	{
 	    QMSG *qmsg = &msgQueue->messages[pos];
@@ -805,7 +434,7 @@ static BOOL MSG_PeekMessage( LPMSG msg, HWND hwnd, WORD first, WORD last,
 	    msgQueue->GetMessagePosVal       = *(DWORD *)&msg->pt;
 	    msgQueue->GetMessageExtraInfoVal = qmsg->extraInfo;
 
-	    if (flags & PM_REMOVE) MSG_RemoveMsg( msgQueue, pos );
+	    if (flags & PM_REMOVE) QUEUE_RemoveMsg( msgQueue, pos );
 	    break;
 	}
 
@@ -966,7 +595,7 @@ BOOL PostMessage( HWND hwnd, WORD message, WORD wParam, LONG lParam )
     wndPtr = WIN_FindWndPtr( hwnd );
     if (!wndPtr || !wndPtr->hmemTaskQ) return FALSE;
 
-    return MSG_AddMsg( wndPtr->hmemTaskQ, &msg, 0 );
+    return QUEUE_AddMsg( wndPtr->hmemTaskQ, &msg, 0 );
 }
 
 /***********************************************************************
@@ -985,7 +614,7 @@ BOOL PostAppMessage( HTASK hTask, WORD message, WORD wParam, LONG lParam )
     msg.pt.x    = 0;
     msg.pt.y    = 0;
 
-    return MSG_AddMsg( GetTaskQueue(hTask), &msg, 0 );
+    return QUEUE_AddMsg( GetTaskQueue(hTask), &msg, 0 );
 }
 
 
@@ -1028,17 +657,17 @@ LRESULT SendMessage( HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam )
         return TRUE;
     }
 
-    EnterSpyMessage(SPY_SENDMESSAGE, hwnd, msg, wParam, lParam);
+    SPY_EnterMessage( SPY_SENDMESSAGE, hwnd, msg, wParam, lParam );
 
     HOOK_CallHooks( WH_CALLWNDPROC, HC_ACTION, 1, (LPARAM)MAKE_SEGPTR(&msgstruct) );
     if (!(wndPtr = WIN_FindWndPtr( hwnd ))) 
     {
-        ExitSpyMessage(SPY_RESULT_INVALIDHWND,hwnd,msg,0);
+        SPY_ExitMessage( SPY_RESULT_INVALIDHWND, hwnd, msg, 0 );
         return 0;
     }
     ret = CallWindowProc( wndPtr->lpfnWndProc, msgstruct.hWnd, msgstruct.wMsg,
                           msgstruct.wParam, msgstruct.lParam );
-    ExitSpyMessage(SPY_RESULT_OK,hwnd,msg,ret);
+    SPY_ExitMessage( SPY_RESULT_OK, hwnd, msg, ret );
     return ret;
 }
 
@@ -1059,7 +688,7 @@ void WaitMessage( void )
     if (!(queue = (MESSAGEQUEUE *)GlobalLock( GetTaskQueue(0) ))) return;
     if ((queue->wPostQMsg) || 
         (queue->status & (QS_SENDMESSAGE | QS_PAINT)) ||
-        (queue->msgCount) || (sysMsgQueue->msgCount) )
+        (queue->msgCount) || (QUEUE_GetSysQueue()->msgCount) )
         return;
     if ((queue->status & QS_TIMER) && 
         TIMER_CheckTimer( &nextExp, &msg, 0, FALSE))
@@ -1095,8 +724,8 @@ LONG DispatchMessage( const MSG* msg )
     LONG retval;
     int painting;
     
-    EnterSpyMessage( SPY_DISPATCHMESSAGE, msg->hwnd, msg->message,
-                     msg->wParam, msg->lParam );
+    SPY_EnterMessage( SPY_DISPATCHMESSAGE, msg->hwnd, msg->message,
+                      msg->wParam, msg->lParam );
 
       /* Process timer messages */
     if ((msg->message == WM_TIMER) || (msg->message == WM_SYSTIMER))
@@ -1135,42 +764,6 @@ LONG DispatchMessage( const MSG* msg )
 
 
 /***********************************************************************
- *           GetMessagePos   (USER.119)
- */
-DWORD GetMessagePos(void)
-{
-    MESSAGEQUEUE *queue;
-
-    if (!(queue = (MESSAGEQUEUE *)GlobalLock( GetTaskQueue(0) ))) return 0;
-    return queue->GetMessagePosVal;
-}
-
-
-/***********************************************************************
- *           GetMessageTime   (USER.120)
- */
-LONG GetMessageTime(void)
-{
-    MESSAGEQUEUE *queue;
-
-    if (!(queue = (MESSAGEQUEUE *)GlobalLock( GetTaskQueue(0) ))) return 0;
-    return queue->GetMessageTimeVal;
-}
-
-
-/***********************************************************************
- *           GetMessageExtraInfo   (USER.288)
- */
-LONG GetMessageExtraInfo(void)
-{
-    MESSAGEQUEUE *queue;
-
-    if (!(queue = (MESSAGEQUEUE *)GlobalLock( GetTaskQueue(0) ))) return 0;
-    return queue->GetMessageExtraInfoVal;
-}
-
-
-/***********************************************************************
  *           RegisterWindowMessage   (USER.118)
  */
 WORD RegisterWindowMessage( SEGPTR str )
@@ -1190,13 +783,17 @@ DWORD GetTickCount(void)
     return ((t.tv_sec * 1000) + (t.tv_usec / 1000)) - MSG_WineStartTicks;
 }
 
+
 /***********************************************************************
- *           GetCurrentTime  (effectively identical to GetTickCount)
+ *           GetCurrentTime    (USER.15)
+ *
+ * (effectively identical to GetTickCount)
  */
 DWORD GetCurrentTime(void)
 {
-  return GetTickCount();
+    return GetTickCount();
 }
+
 
 /***********************************************************************
  *			InSendMessage	(USER.192

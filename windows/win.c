@@ -15,8 +15,8 @@
 #include "sysmetrics.h"
 #include "cursoricon.h"
 #include "event.h"
-#include "message.h"
 #include "nonclient.h"
+#include "queue.h"
 #include "winpos.h"
 #include "color.h"
 #include "shm_main_blk.h"
@@ -48,6 +48,97 @@ WND * WIN_FindWndPtr( HWND hwnd )
     ptr = (WND *) USER_HEAP_LIN_ADDR( hwnd );
     if (ptr->dwMagic != WND_MAGIC) return NULL;
     return ptr;
+}
+
+
+/***********************************************************************
+ *           WIN_DumpWindow
+ *
+ * Dump the content of a window structure to stderr.
+ */
+void WIN_DumpWindow( HWND hwnd )
+{
+    CLASS *classPtr;
+    WND *ptr;
+    char className[80];
+    int i;
+
+    if (!(ptr = WIN_FindWndPtr( hwnd )))
+    {
+        fprintf( stderr, "%04x is not a window handle\n", hwnd );
+        return;
+    }
+
+    if (!GetClassName( hwnd, className, sizeof(className ) ))
+        strcpy( className, "#NULL#" );
+
+    fprintf( stderr, "Window %04x:\n", hwnd );
+    fprintf( stderr,
+             "next=%04x  child=%04x  parent=%04x  owner=%04x  class=%04x '%s'\n"
+             "inst=%04x  taskQ=%04x  updRgn=%04x  active=%04x hdce=%04x  idmenu=%04x\n"
+             "style=%08lx  exstyle=%08lx  wndproc=%08lx  text=%04x '%s'\n"
+             "client=%d,%d-%d,%d  window=%d,%d-%d,%d  iconpos=%d,%d  maxpos=%d,%d\n"
+             "sysmenu=%04x  flags=%04x  props=%04x  vscroll=%04x  hscroll=%04x\n",
+             ptr->hwndNext, ptr->hwndChild, ptr->hwndParent, ptr->hwndOwner,
+             ptr->hClass, className, ptr->hInstance, ptr->hmemTaskQ,
+             ptr->hrgnUpdate, ptr->hwndLastActive, ptr->hdce, ptr->wIDmenu,
+             ptr->dwStyle, ptr->dwExStyle, (DWORD)ptr->lpfnWndProc, ptr->hText,
+             ptr->hText ? (char*)USER_HEAP_LIN_ADDR(ptr->hText) : "",
+             ptr->rectClient.left, ptr->rectClient.top, ptr->rectClient.right,
+             ptr->rectClient.bottom, ptr->rectWindow.left, ptr->rectWindow.top,
+             ptr->rectWindow.right, ptr->rectWindow.bottom, ptr->ptIconPos.x,
+             ptr->ptIconPos.y, ptr->ptMaxPos.x, ptr->ptMaxPos.y, ptr->hSysMenu,
+             ptr->flags, ptr->hProp, ptr->hVScroll, ptr->hHScroll );
+
+    if ((classPtr = CLASS_FindClassPtr( ptr->hClass )) &&
+        classPtr->wc.cbWndExtra)
+    {
+        fprintf( stderr, "extra bytes:" );
+        for (i = 0; i < classPtr->wc.cbWndExtra; i++)
+            fprintf( stderr, " %02x", *((BYTE*)ptr->wExtra+i) );
+        fprintf( stderr, "\n" );
+    }
+    fprintf( stderr, "\n" );
+}
+
+
+/***********************************************************************
+ *           WIN_WalkWindows
+ *
+ * Walk the windows tree and print each window on stderr.
+ */
+void WIN_WalkWindows( HWND hwnd, int indent )
+{
+    WND *ptr;
+    CLASS *classPtr;
+    char className[80];
+
+    if (!hwnd) hwnd = hwndDesktop;
+    if (!indent)  /* first time around */
+        fprintf( stderr, "%-16.16s %-8.8s %-6.6s %-17.17s %-8.8s %s\n",
+                 "hwnd", " wndPtr", "queue", "Class Name", " Style", " WndProc");
+
+    while (hwnd)
+    {
+        fprintf( stderr, "%*s%04x%*s", indent, "", hwnd, 13-indent, "" );
+        if (!(ptr = WIN_FindWndPtr( hwnd )))
+        {
+            fprintf( stderr, "*** Invalid window handle\n" );
+            return;
+        }
+        
+        if (!(classPtr = CLASS_FindClassPtr( ptr->hClass ))) strcpy( className, "#NULL#" );
+        else GlobalGetAtomName( classPtr->atomName, className, sizeof(className) );
+        
+        fprintf( stderr, "%08lx %-6.4x %-17.17s %08x %04x:%04x\n",
+                 (DWORD)ptr, ptr->hmemTaskQ, className,
+                 (unsigned) ptr->dwStyle,
+                 HIWORD(ptr->lpfnWndProc),
+                 LOWORD(ptr->lpfnWndProc));
+        
+        if (ptr->hwndChild) WIN_WalkWindows( ptr->hwndChild, indent+1 );
+        hwnd = ptr->hwndNext;
+    }
 }
 
 
@@ -209,7 +300,7 @@ static void WIN_DestroyWindow( HWND hwnd )
     if ((wndPtr->hrgnUpdate) || (wndPtr->flags & WIN_INTERNAL_PAINT))
     {
         if (wndPtr->hrgnUpdate) DeleteObject( wndPtr->hrgnUpdate );
-        MSG_DecPaintCount( wndPtr->hmemTaskQ );
+        QUEUE_DecPaintCount( wndPtr->hmemTaskQ );
     }
     if (!(wndPtr->dwStyle & WS_CHILD))
     {

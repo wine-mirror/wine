@@ -46,7 +46,8 @@ C_SRCS = \
 ASM_SRCS = \
 	$(SPEC16_FILES) \
 	call16.S \
-	call32.S
+	call32.S \
+	except.S
 
 .SUFFIXES: .spec
 

@@ -22,8 +22,6 @@
 #if !defined(BSD4_4) || defined(linux) || defined(__FreeBSD__)
 char * cstack[4096];
 #endif
-struct sigaction segv_act;
-struct sigaction usr2_act;
 
 #ifdef linux
 extern void ___sig_restore();
@@ -56,27 +54,32 @@ static void win_fault(int signal, void *siginfo, ucontext_t *context)
 static void win_fault(int signal, int code, struct sigcontext *context)
 {
 #endif
-    if (signal != SIGTRAP)
+    if (signal == SIGTRAP)
+    {
+        /* If SIGTRAP not caused by breakpoint or single step 
+           don't jump into the debugger */
+        if (!(EFL_reg(context) & STEP_FLAG))
+        {
+            DBG_ADDR addr;
+            addr.seg = CS_reg(context);
+            addr.off = EIP_reg(context) - 1;
+            if (DEBUG_FindBreakpoint(&addr) == -1) return;
+        }
+    }
+    else if (signal != SIGHUP)
     {
         if (CS_reg(context) == WINE_CODE_SELECTOR)
         {
             fprintf(stderr, "Segmentation fault in Wine program (%x:%lx)."
-                            "  Please debug\n",
+                            "  Please debug.\n",
                             CS_reg(context), EIP_reg(context) );
         }
-        else if (INSTR_EmulateInstruction( context )) return;
-        fprintf( stderr,"In win_fault %x:%lx\n",
-                 CS_reg(context), EIP_reg(context) );
-    }
-
-      /* If SIGTRAP not caused by breakpoint or single step 
-         don't jump into the debugger */
-    if ((signal == SIGTRAP) && !(EFL_reg(context) & STEP_FLAG))
-    {
-        DBG_ADDR addr;
-        addr.seg = CS_reg(context);
-        addr.off = EIP_reg(context) - 1;
-        if (DEBUG_FindBreakpoint(&addr) == -1) return;
+        else
+        {
+            if (INSTR_EmulateInstruction( context )) return;
+            fprintf( stderr, "Segmentation fault in Windows program %x:%lx.\n",
+                     CS_reg(context), EIP_reg(context) );
+        }
     }
 
     XUngrabPointer(display, CurrentTime);
@@ -85,131 +88,104 @@ static void win_fault(int signal, int code, struct sigcontext *context)
     wine_debug( signal, context );  /* Enter our debugger */
 }
 
+
+/**********************************************************************
+ *		SIGNAL_SetHandler
+ */
+static void SIGNAL_SetHandler( int sig, void (*func)() )
+{
+    int ret;
+    struct sigaction sig_act;
+
+#ifdef linux
+    sig_act.sa_handler = func;
+    /* Point to the top of the stack, minus 4 just in case, and make
+       it aligned  */
+    sig_act.sa_restorer = 
+        (void (*)()) (((unsigned int)(cstack) + sizeof(cstack) - 4) & ~3);
+    ret = wine_sigaction( sig, &sig_act, NULL );
+#endif  /* linux */
+
+#if defined(__NetBSD__) || defined(__FreeBSD__)
+    sig_act.sa_handler = func;
+    sig_act.sa_flags = SA_ONSTACK;
+    sig_act.sa_mask = sig_mask;
+    ret = sigaction( sig, &sig_act, NULL );
+#endif  /* __FreeBSD__ || __NetBSD__ */
+
+#if defined (__svr4__)
+    sig_act.sa_handler = func;
+    sig_act.sa_flags = SA_ONSTACK | SA_SIGINFO;
+    sig_act.sa_mask = sig_mask;
+    ret = sigaction( sig, &sig_act, NULL );
+#endif  /* __svr4__ */
+
+    if (ret < 0)
+    {
+        perror( "sigaction" );
+        exit(1);
+    }
+}
+
+
+/**********************************************************************
+ *		init_wine_signals
+ */
 void init_wine_signals(void)
 {
-        extern void stop_wait(int a);
-#ifdef linux
-	segv_act.sa_handler = (__sighandler_t) win_fault;
-	/* Point to the top of the stack, minus 4 just in case, and make
-	   it aligned  */
-	segv_act.sa_restorer = 
-	    (void (*)()) (((unsigned int)(cstack) + sizeof(cstack) - 4) & ~3);
-	/* Point to the top of the stack, minus 4 just in case, and make
-	   it aligned  */
-	wine_sigaction(SIGSEGV, &segv_act, NULL);
-	wine_sigaction(SIGILL, &segv_act, NULL);
-	wine_sigaction(SIGFPE, &segv_act, NULL);
-#ifdef SIGBUS
-	wine_sigaction(SIGBUS, &segv_act, NULL);
-#endif
-	wine_sigaction(SIGTRAP, &segv_act, NULL); /* For breakpoints */
-#ifdef CONFIG_IPC
-	usr2_act.sa_restorer= segv_act.sa_restorer;
-	usr2_act.sa_handler = (__sighandler_t) stop_wait;
-	wine_sigaction(SIGUSR2, &usr2_act, NULL);
-#endif  /* CONFIG_IPC */
-#endif  /* linux */
+    extern void stop_wait(int a);
+
 #if defined(__NetBSD__) || defined(__FreeBSD__)
-        sigset_t sig_mask;
-        struct sigaltstack ss;
+    sigset_t sig_mask;
+    struct sigaltstack ss;
         
 #if !defined (__FreeBSD__) 
-        if ((ss.ss_base = malloc(MINSIGSTKSZ)) == NULL) {
+    if ((ss.ss_base = malloc(MINSIGSTKSZ)) == NULL) {
 #else
-        if ((ss.ss_sp = malloc(MINSIGSTKSZ)) == NULL) {
+    if ((ss.ss_sp = malloc(MINSIGSTKSZ)) == NULL) {
 #endif
-	        fprintf(stderr, "Unable to allocate signal stack (%d bytes)\n",
-		        MINSIGSTKSZ);
-		exit(1);
-	}
-	ss.ss_size = MINSIGSTKSZ;
-        ss.ss_flags = 0;
-        if (sigaltstack(&ss, NULL) < 0) {
-                perror("sigstack");
-                exit(1);
-        }
-        sigemptyset(&sig_mask);
-        segv_act.sa_handler = (void (*)) win_fault;
-	segv_act.sa_flags = SA_ONSTACK;
-        segv_act.sa_mask = sig_mask;
-	if (sigaction(SIGBUS, &segv_act, NULL) < 0) {
-                perror("sigaction: SIGBUS");
-                exit(1);
-        }
-        segv_act.sa_handler = (void (*)) win_fault;
-	segv_act.sa_flags = SA_ONSTACK;
-        segv_act.sa_mask = sig_mask;
-	if (sigaction(SIGSEGV, &segv_act, NULL) < 0) {
-                perror("sigaction: SIGSEGV");
-                exit(1);
-        }
-        segv_act.sa_handler = (void (*)) win_fault; /* For breakpoints */
-	segv_act.sa_flags = SA_ONSTACK;
-        segv_act.sa_mask = sig_mask;
-	if (sigaction(SIGTRAP, &segv_act, NULL) < 0) {
-                perror("sigaction: SIGTRAP");
-                exit(1);
-        }
-#ifdef CONFIG_IPC
-        usr2_act.sa_handler = (void (*)) stop_wait; /* For breakpoints */
-	usr2_act.sa_flags = SA_ONSTACK;
-        usr2_act.sa_mask = sig_mask;
-	if (sigaction(SIGUSR2, &usr2_act, NULL) < 0) {
-                perror("sigaction: SIGUSR2");
-                exit(1);
-        }
-#endif  /* CONFIG_IPC */
+        fprintf(stderr, "Unable to allocate signal stack (%d bytes)\n",
+                MINSIGSTKSZ);
+        exit(1);
+    }
+    ss.ss_size = MINSIGSTKSZ;
+    ss.ss_flags = 0;
+    if (sigaltstack(&ss, NULL) < 0) {
+        perror("sigstack");
+        exit(1);
+    }
+    sigemptyset(&sig_mask);
 #endif  /* __FreeBSD__ || __NetBSD__ */
-#if defined (__svr4__)
-        sigset_t sig_mask;
-        struct sigaltstack ss;
-        
-        if ((ss.ss_sp = malloc(SIGSTKSZ) ) == NULL) {
-            fprintf(stderr, "Unable to allocate signal stack (%d bytes)\n",
-                    SIGSTKSZ);
-            exit(1);
-	}
-        ss.ss_size = SIGSTKSZ;
-        ss.ss_flags = 0;
-        if (sigaltstack(&ss, NULL) < 0) {
-            perror("sigstack");
-            exit(1);
-        }
-        sigemptyset(&sig_mask);
-        segv_act.sa_handler = (void (*)) win_fault;
-	segv_act.sa_flags = SA_ONSTACK | SA_SIGINFO;
-        segv_act.sa_mask = sig_mask;
-	if (sigaction(SIGBUS, &segv_act, NULL) < 0) {
-            perror("sigaction: SIGBUS");
-            exit(1);
-        }
-        segv_act.sa_handler = (void (*)) win_fault;
-	segv_act.sa_flags = SA_ONSTACK | SA_SIGINFO;
-        segv_act.sa_mask = sig_mask;
-	if (sigaction(SIGSEGV, &segv_act, NULL) < 0) {
-            perror("sigaction: SIGSEGV");
-            exit(1);
-        }
-        
 
-        segv_act.sa_handler = (void (*)) win_fault; /* For breakpoints */
-	segv_act.sa_flags = SA_ONSTACK | SA_SIGINFO;
-        segv_act.sa_mask = sig_mask;
-	if (sigaction(SIGTRAP, &segv_act, NULL) < 0) {
-            perror("sigaction: SIGTRAP");
-            exit(1);
-        }
-#ifdef CONFIG_IPC
-        usr2_act.sa_handler = (void (*)) stop_wait; /* For breakpoints */
-	usr2_act.sa_flags = SA_ONSTACK | SA_SIGINFO;
-        usr2_act.sa_mask = sig_mask;
-	if (sigaction(SIGUSR2, &usr2_act, NULL) < 0) {
-            perror("sigaction: SIGUSR2");
-            exit(1);
-        }
-#endif  /* CONFIG_IPC */
+#if defined (__svr4__)
+    sigset_t sig_mask;
+    struct sigaltstack ss;
         
+    if ((ss.ss_sp = malloc(SIGSTKSZ) ) == NULL) {
+        fprintf(stderr, "Unable to allocate signal stack (%d bytes)\n",
+                SIGSTKSZ);
+        exit(1);
+    }
+    ss.ss_size = SIGSTKSZ;
+    ss.ss_flags = 0;
+    if (sigaltstack(&ss, NULL) < 0) {
+        perror("sigstack");
+        exit(1);
+    }
+    sigemptyset(&sig_mask);
 #endif  /* __svr4__ */
+
+    SIGNAL_SetHandler( SIGSEGV, (void (*)())win_fault );
+    SIGNAL_SetHandler( SIGILL,  (void (*)())win_fault );
+    SIGNAL_SetHandler( SIGFPE,  (void (*)())win_fault );
+    SIGNAL_SetHandler( SIGTRAP, (void (*)())win_fault ); /* For debugger */
+    SIGNAL_SetHandler( SIGHUP,  (void (*)())win_fault ); /* For forced break */
+#ifdef SIGBUS
+    SIGNAL_SetHandler( SIGBUS,  (void (*)())win_fault );
+#endif
+#ifdef CONFIG_IPC
+    SIGNAL_SetHandler( SIGUSR2, (void (*)())stop_wait ); /* For IPC */
+#endif
 }
 
 #endif /* ifndef WINELIB */

@@ -21,6 +21,7 @@ C_SRCS = \
 	nonclient.c \
 	painting.c \
 	property.c \
+	queue.c \
 	scroll.c \
 	syscolor.c \
 	sysmetrics.c \

@@ -1,4 +1,5 @@
-/* SPY.C
+/*
+ * Message spying routines
  *
  * Copyright 1994, Bob Amstadt
  *           1995, Alex Korobka  
@@ -6,16 +7,18 @@
 
 #include <stdlib.h>
 #include <stdio.h>
-#include <X11/Xlib.h>
-#include <X11/Xresource.h>
 #include <string.h>
 #include "windows.h"
+#include "module.h"
 #include "options.h"
 #include "stddebug.h"
 #include "debug.h"
 #include "spy.h"
 
-const char *MessageTypeNames[SPY_MAX_MSGNUM + 1] =
+#define SPY_MAX_MSGNUM   WM_USER
+#define SPY_INDENT_UNIT  4  /* 4 spaces */
+
+static const char *MessageTypeNames[SPY_MAX_MSGNUM + 1] =
 {
     "WM_NULL",			/* 0x00 */
     "WM_CREATE",	
@@ -75,10 +78,12 @@ const char *MessageTypeNames[SPY_MAX_MSGNUM + 1] =
     "WM_QUERYDRAGICON",
     "WM_QUERYSAVESTATE",
     "WM_COMPAREITEM", 
-    "WM_TESTING", NULL, 
+    "WM_TESTING",
+    NULL, 
     "WM_OTHERWINDOWCREATED", 
     "WM_OTHERWINDOWDESTROYED", 
-    "WM_ACTIVATESHELLWINDOW", NULL,
+    "WM_ACTIVATESHELLWINDOW",
+    NULL,
 
     NULL, 		        /* 0x40 */
     "WM_COMPACTING", NULL, NULL, 
@@ -391,164 +396,121 @@ const char *MessageTypeNames[SPY_MAX_MSGNUM + 1] =
     "WM_USER"
 };
 
-static BOOL  	SpyFilters [SPY_MAX_MSGNUM+1];
-static BOOL 	SpyIncludes[SPY_MAX_MSGNUM+1];
 
-static int      iSpyMessageIndentLevel  = 0;
-       char     lpstrSpyMessageIndent[SPY_MAX_INDENTLEVEL]; /* referenced in debugger/info.c */
-static char    *lpstrSpyMessageFromWine = "Wine";
-static char     lpstrSpyMessageFromTask[10]; 
-static char    *lpstrSpyMessageFromSelf = "self";
-static char    *lpstrSpyMessageFrom     =  NULL;
+static BOOL SPY_Exclude[SPY_MAX_MSGNUM+1] = { FALSE, };
+static int SPY_IndentLevel  = 0;
 
+#define SPY_EXCLUDE(msg) \
+    (SPY_Exclude[(msg) > SPY_MAX_MSGNUM ? SPY_MAX_MSGNUM : (msg)])
 
-/**********************************************************************
- *			      EnterSpyMessage
+/***********************************************************************
+ *           SPY_GetMsgName
  */
-void EnterSpyMessage(int iFlag, HWND hWnd, WORD msg, WORD wParam, LONG lParam)
+static const char *SPY_GetMsgName( UINT msg )
 {
-  HTASK	hTask     = GetWindowTask(hWnd);
-  WORD 	wCheckMsg = (msg > WM_USER)? WM_USER: msg;
+    static char buffer[20];
 
-  if( !SpyIncludes[wCheckMsg] || SpyFilters[wCheckMsg]) return;
-
-  /* each SPY_SENDMESSAGE must be complemented by call to ExitSpyMessage */
-  switch(iFlag)
-   {
-	case SPY_DISPATCHMESSAGE:
-		    if(msg <= WM_USER)
-		      {
-		       if(MessageTypeNames[msg])
-		          dprintf_message(stddeb,"("NPFMT") message [%04x] %s dispatched  wp=%04x lp=%08lx\n",
-		                          hWnd, msg, MessageTypeNames[msg], wParam, lParam);
-		       else
-		          dprintf_message(stddeb,"("NPFMT") message [%04x] dispatched  wp=%04x lp=%08lx\n",
-		                          hWnd, msg, wParam, lParam);
-		      }
-		    else
-		          dprintf_message(stddeb,"("NPFMT") message [%04x] WM_USER+%04d dispatched  wp=%04x lp=%08lx\n",
-		                          hWnd, msg, msg-WM_USER ,wParam ,lParam);
-		    break;
-	case SPY_SENDMESSAGE:
-		    if(hTask == GetCurrentTask())
- 		      lpstrSpyMessageFrom = lpstrSpyMessageFromSelf;
-		    else if(hTask == NULL)
-  		      	   lpstrSpyMessageFrom = lpstrSpyMessageFromWine;
-  		    	 else
-  				{
-  				   sprintf(lpstrSpyMessageFromTask, "task "NPFMT, hTask);	
-  				   lpstrSpyMessageFrom = lpstrSpyMessageFromTask;
-  				}
-		     
-	            if(msg <= WM_USER)
-	                {
-	                  if(MessageTypeNames[msg])
-			      dprintf_message(stddeb,"%s("NPFMT") message [%04x] %s sent from %s wp=%04x lp=%08lx\n",
-                                   	      lpstrSpyMessageIndent,
-                                   	      hWnd, msg, MessageTypeNames[msg],
-                                   	      lpstrSpyMessageFrom,
-                                   	      wParam, lParam);
-	                  else
-	                      dprintf_message(stddeb,"%s("NPFMT") message [%04x] sent from %s wp=%04x lp=%08lx\n",
-                                   	      lpstrSpyMessageIndent,
-                                   	      hWnd, msg,
-                                   	      lpstrSpyMessageFrom,
-                                   	      wParam, lParam);
-          		}
-        	    else
-             		  dprintf_message(stddeb,"%s("NPFMT") message [%04x] WM_USER+%04x sent from %s wp=%04x lp=%08lx\n",
-                               		  lpstrSpyMessageIndent,
-                               		  hWnd, msg, msg-WM_USER,
-                               		  lpstrSpyMessageFrom,
-                             		  wParam, lParam);
-
-	            if(SPY_MAX_INDENTLEVEL > iSpyMessageIndentLevel ) 
-		    	{
-			  iSpyMessageIndentLevel++;
-			  lpstrSpyMessageIndent[iSpyMessageIndentLevel]='\0';
-			  lpstrSpyMessageIndent[iSpyMessageIndentLevel-1]  ='\t';
-		      	}
-		    break;   
-	case SPY_DEFWNDPROC:
-		    if(msg <= WM_USER)
-		        if(MessageTypeNames[msg])
-		           dprintf_message(stddeb, "%s("NPFMT") DefWindowProc: %s [%04x]  wp=%04x lp=%08lx\n",
-		                           lpstrSpyMessageIndent,
-		                           hWnd, MessageTypeNames[msg], msg, wParam, lParam );
-		        else
-		           dprintf_message(stddeb, "%s("NPFMT") DefWindowProc: [%04x]  wp=%04x lp=%08lx\n",
-		                           lpstrSpyMessageIndent,
-		                           hWnd, msg, wParam, lParam );
-		    else
-		        dprintf_message(stddeb, "%s("NPFMT") DefWindowProc: WM_USER+%d [%04x] wp=%04x lp=%08lx\n",
-		                        lpstrSpyMessageIndent,
-		                        hWnd, msg - WM_USER, msg, wParam, lParam );
-		    break;
-	default:		    
-   }  
-
+    if (msg <= SPY_MAX_MSGNUM)
+    {
+        if (!MessageTypeNames[msg]) return "???";
+        return MessageTypeNames[msg];
+    }
+    sprintf( buffer, "WM_USER+%04x\n", msg - WM_USER );
+    return buffer;
 }
 
-/**********************************************************************
- *			      ExitSpyMessage
+
+/***********************************************************************
+ *           SPY_EnterMessage
  */
-void ExitSpyMessage(int iFlag, HWND hWnd, WORD msg, LONG lReturn)
+void SPY_EnterMessage( int iFlag, HWND hWnd, UINT msg,
+                       WPARAM wParam, LPARAM lParam )
 {
-  WORD wCheckMsg = (msg > WM_USER)? WM_USER: msg;
+    if (!debugging_message || SPY_EXCLUDE(msg)) return;
 
-  if( !SpyIncludes[wCheckMsg] || SpyFilters[wCheckMsg]) return;
-
-  if( iSpyMessageIndentLevel )
+    /* each SPY_SENDMESSAGE must be complemented by call to ExitSpyMessage */
+    switch(iFlag)
     {
-      iSpyMessageIndentLevel--;
-      lpstrSpyMessageIndent[iSpyMessageIndentLevel]='\0';
-    }
+    case SPY_DISPATCHMESSAGE:
+        dprintf_message(stddeb,"("NPFMT") message [%04x] %s dispatched  wp=%04x lp=%08lx\n",
+                        hWnd, msg, SPY_GetMsgName( msg ),
+                        wParam, lParam);
+        break;
 
-  switch(iFlag)
+    case SPY_SENDMESSAGE:
+        {
+            char taskName[30];
+            HTASK hTask = GetWindowTask(hWnd);
+            if (hTask == GetCurrentTask()) strcpy( taskName, "self" );
+            else if (!hTask) strcpy( taskName, "Wine" );
+            else sprintf( taskName, "task "NPFMT" %s",
+                          hTask, MODULE_GetModuleName( GetExePtr(hTask) ) );
+
+            dprintf_message(stddeb,"%*s("NPFMT") message [%04x] %s sent from %s wp=%04x lp=%08lx\n",
+                            SPY_IndentLevel, "", hWnd, msg,
+                            SPY_GetMsgName( msg ), taskName, wParam, lParam );
+            SPY_IndentLevel += SPY_INDENT_UNIT;
+        }
+        break;   
+
+    case SPY_DEFWNDPROC:
+        dprintf_message(stddeb, "%*s("NPFMT") DefWindowProc: %s [%04x]  wp=%04x lp=%08lx\n",
+                        SPY_IndentLevel, "", hWnd, SPY_GetMsgName( msg ),
+                        msg, wParam, lParam );
+        break;
+    }  
+}
+
+
+/***********************************************************************
+ *           SPY_ExitMessage
+ */
+void SPY_ExitMessage( int iFlag, HWND hWnd, UINT msg, LRESULT lReturn )
+{
+    if (!debugging_message || SPY_EXCLUDE(msg)) return;
+    if (SPY_IndentLevel) SPY_IndentLevel -= SPY_INDENT_UNIT;
+
+    switch(iFlag)
     {
-	case SPY_RESULT_INVALIDHWND: 
-		dprintf_message(stddeb,"%s("NPFMT") message [%04x] HAS INVALID HWND\n",
-                                lpstrSpyMessageIndent, hWnd, msg);
-	        break;
-	case SPY_RESULT_OK:
-		dprintf_message(stddeb,"%s("NPFMT") message [%04x] returned %08lx\n",
-	                        lpstrSpyMessageIndent, hWnd, msg, lReturn);
-		break;
-	default:
+    case SPY_RESULT_INVALIDHWND: 
+        dprintf_message(stddeb,"%*s("NPFMT") message [%04x] %s HAS INVALID HWND\n",
+                        SPY_IndentLevel, "", hWnd, msg,
+                        SPY_GetMsgName( msg ) );
+        break;
+    case SPY_RESULT_OK:
+        dprintf_message(stddeb,"%*s("NPFMT") message [%04x] %s returned %08lx\n",
+                        SPY_IndentLevel, "", hWnd, msg,
+                        SPY_GetMsgName( msg ), lReturn );
+        break;
     }
 }
 
-/**********************************************************************
- *					SpyInit
+
+/***********************************************************************
+ *           SPY_Init
  */
-void SpyInit(void)
+int SPY_Init(void)
 {
-    int      i;
-    char     lpstrBuffer[512];
+    int i;
+    char buffer[512];
 
-    for(i=0; i <= SPY_MAX_MSGNUM; i++) SpyFilters[i] = SpyIncludes[i] = FALSE;
+    PROFILE_GetWineIniString( "Spy", "Include", "", buffer, sizeof(buffer) );
+    if (buffer[0] && strcmp( buffer, "INCLUDEALL" ))
+    {
+        dprintf_message( stddeb, "SpyInit: Include=%s\n", buffer );
+        for (i = 0; i <= SPY_MAX_MSGNUM; i++)
+            SPY_Exclude[i] = (MessageTypeNames[i] && !strstr(buffer,MessageTypeNames[i]));
+    }
 
-    PROFILE_GetWineIniString( "spy", "Exclude", "",
-                              lpstrBuffer, sizeof(lpstrBuffer) );
-    dprintf_message(stddeb,"SpyInit: Exclude=%s\n",lpstrBuffer);
-    if( *lpstrBuffer != 0 )
-      if(strstr(lpstrBuffer,"EXCLUDEALL"))
-	for(i=0; i <= SPY_MAX_MSGNUM; i++) SpyFilters[i] = TRUE;
-      else
-        for(i=0; i <= SPY_MAX_MSGNUM; i++)
-	    if(MessageTypeNames[i])
-	       if(strstr(lpstrBuffer,MessageTypeNames[i])) SpyFilters[i] = TRUE; 
-
-    PROFILE_GetWineIniString( "spy", "Include", "INCLUDEALL",
-                              lpstrBuffer, sizeof(lpstrBuffer) );
-    dprintf_message(stddeb,"SpyInit: Include=%s\n",lpstrBuffer);
-    if( *lpstrBuffer != 0 )
-      if(strstr(lpstrBuffer,"INCLUDEALL"))
-        for(i=0; i <= SPY_MAX_MSGNUM; i++) SpyIncludes[i] = TRUE;
-      else 
-        for(i=0; i <= SPY_MAX_MSGNUM; i++)
-            if(MessageTypeNames[i])
-               if(strstr(lpstrBuffer,MessageTypeNames[i])) SpyIncludes[i] = TRUE;
-
+    PROFILE_GetWineIniString( "Spy", "Exclude", "", buffer, sizeof(buffer) );
+    if (buffer[0])
+    {
+        dprintf_message( stddeb, "SpyInit: Exclude=%s\n", buffer );
+        if (!strcmp( buffer, "EXCLUDEALL" ))
+            for (i = 0; i <= SPY_MAX_MSGNUM; i++) SPY_Exclude[i] = TRUE;
+        else
+            for (i = 0; i <= SPY_MAX_MSGNUM; i++)
+                SPY_Exclude[i] = (MessageTypeNames[i] && strstr(buffer,MessageTypeNames[i]));
+    }
+    return 1;
 }
-

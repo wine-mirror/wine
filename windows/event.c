@@ -6,8 +6,11 @@
  */
 
 #include <ctype.h>
+#include <signal.h>
 #include <stdlib.h>
 #include <stdio.h>
+#include <unistd.h>
+#include <X11/keysym.h>
 #include <X11/Xlib.h>
 #include <X11/Xresource.h>
 #include <X11/Xutil.h>
@@ -16,9 +19,9 @@
 #include "windows.h"
 #include "win.h"
 #include "class.h"
-#include "message.h"
 #include "clipboard.h"
 #include "options.h"
+#include "queue.h"
 #include "winpos.h"
 #include "registers.h"
 #include "stackframe.h"
@@ -305,6 +308,11 @@ static void EVENT_key( XKeyEvent *event )
     dprintf_key(stddeb,"WM_KEY??? : keysym=%lX, count=%u / %X / '%s'\n", 
 	   keysym, count, Str[0], Str);
 
+    /* Ctrl-Alt-Return enters the debugger */
+    if ((keysym == XK_Return) && (event->type == KeyPress) &&
+        (event->state & ControlMask) && (event->state & Mod1Mask))
+        kill( getpid(), SIGHUP );
+
     xkey = LOWORD(keysym);
     key_type = HIBYTE(xkey);
     key = LOBYTE(xkey);
@@ -348,7 +356,7 @@ static void EVENT_key( XKeyEvent *event )
 	    KeyStateTable[vkey] ^= 0x80;
 	KeyStateTable[vkey] |= 0x01;
 	keylp.lp1.count = 1;
-	keylp.lp1.code = LOBYTE(event->keycode);
+	keylp.lp1.code = LOBYTE(event->keycode) - 8;
 	keylp.lp1.extended = (extended ? 1 : 0);
 	keylp.lp1.context = (event->state & Mod1Mask ? 1 : 0);
 	keylp.lp1.previous = (KeyDown ? 0 : 1);
@@ -379,7 +387,7 @@ static void EVENT_key( XKeyEvent *event )
 	if (vkey == VK_MENU) ALTKeyState = FALSE;
 	KeyStateTable[vkey] &= 0xf0;
 	keylp.lp1.count = 1;
-	keylp.lp1.code = LOBYTE(event->keycode);
+	keylp.lp1.code = LOBYTE(event->keycode) - 8;
 	keylp.lp1.extended = (extended ? 1 : 0);
 	keylp.lp1.context = (event->state & Mod1Mask ? 1 : 0);
 	keylp.lp1.previous = 1;

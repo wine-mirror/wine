@@ -78,6 +78,7 @@ static void ListBoxInitialize(LPHEADLIST lphl)
 void CreateListBoxStruct(HWND hwnd, WORD CtlType, LONG styles, HWND parent)
 {
   LPHEADLIST lphl;
+  HDC         hdc;
 
   lphl = (LPHEADLIST)xmalloc(sizeof(HEADLIST));
   SetWindowLong(hwnd, 0, (LONG)lphl);
@@ -89,10 +90,26 @@ void CreateListBoxStruct(HWND hwnd, WORD CtlType, LONG styles, HWND parent)
   lphl->TabStops       = NULL;
   lphl->hFont          = GetStockObject(SYSTEM_FONT);
   lphl->hSelf          = hwnd;  
+  if (CtlType==ODT_COMBOBOX)              /* use the "faked" style for COMBOLBOX */
+                                          /* LBS_SORT instead CBS_SORT e.g.      */
+    lphl->dwStyle   = MAKELONG(LOWORD(styles),HIWORD(GetWindowLong(hwnd,GWL_STYLE)));
+  else
+    lphl->dwStyle   = GetWindowLong(hwnd,GWL_STYLE); /* use original style dword */
   lphl->hParent        = parent;
   lphl->StdItemHeight  = 15; /* FIXME: should get the font height */
   lphl->OwnerDrawn     = styles & (LBS_OWNERDRAWFIXED | LBS_OWNERDRAWVARIABLE);
   lphl->HasStrings     = (styles & LBS_HASSTRINGS) || !lphl->OwnerDrawn;
+
+  /* create dummy hdc to set text height */
+  if ((hdc = GetDC(0)))
+  {
+      TEXTMETRIC tm;
+      GetTextMetrics( hdc, &tm );
+      lphl->StdItemHeight = tm.tmHeight;
+      dprintf_listbox(stddeb,"CreateListBoxStruct:  font height %d\n",
+                      lphl->StdItemHeight);
+      ReleaseDC( 0, hdc );
+  }
 
   if (lphl->OwnerDrawn) {
     LISTSTRUCT dummyls;
@@ -143,9 +160,7 @@ static LPHEADLIST ListBoxGetStorageHeader(HWND hwnd)
    has the LBS_NOTIFY style */
 void ListBoxSendNotification(LPHEADLIST lphl, WORD code)
 {
-  DWORD dwStyle = GetWindowLong(lphl->hSelf,GWL_STYLE);
-
-  if (dwStyle & LBS_NOTIFY)
+  if (lphl->dwStyle & LBS_NOTIFY)
 #ifdef WINELIB32
     SendMessage(lphl->hParent, WM_COMMAND,
 		MAKEWPARAM(lphl->CtlID,code), (LPARAM)lphl->hSelf);
@@ -223,8 +238,6 @@ LPLISTSTRUCT ListBoxGetItem(LPHEADLIST lphl, UINT uIndex)
 void ListBoxDrawItem (HWND hwnd, LPHEADLIST lphl, HDC hdc, LPLISTSTRUCT lpls, 
 		      RECT *rect, WORD itemAction, WORD itemState)
 {
-  LONG dwStyle = GetWindowLong(hwnd,GWL_STYLE);
-
   if (lphl->OwnerDrawn) {
     DRAWITEMSTRUCT   *dis = USER_HEAP_LIN_ADDR(lphl->hDrawItemStruct);
 
@@ -251,7 +264,7 @@ void ListBoxDrawItem (HWND hwnd, LPHEADLIST lphl, HDC hdc, LPLISTSTRUCT lpls,
 	FillRect(hdc, rect, GetStockObject(BLACK_BRUSH));
       }
 
-      if (dwStyle & LBS_USETABSTOPS) {
+      if (lphl->dwStyle & LBS_USETABSTOPS) {
 	TabbedTextOut(hdc, rect->left + 5, rect->top + 2, 
 		      (char *)lpls->itemText, strlen((char *)lpls->itemText), 
 		      lphl->iNumStops, lphl->TabStops, 0);
@@ -311,7 +324,7 @@ void ListBoxAskMeasure(LPHEADLIST lphl, LPLISTSTRUCT lpls)
   lpmeasure->itemHeight = lphl->StdItemHeight;
   SendMessage(lphl->hParent, WM_MEASUREITEM, 0, (LPARAM)USER_HEAP_SEG_ADDR(hTemp));
 
-  if (GetWindowLong(lphl->hSelf,GWL_STYLE) & LBS_OWNERDRAWFIXED) {
+  if (lphl->dwStyle & LBS_OWNERDRAWFIXED) {
     lphl->StdItemHeight = lpmeasure->itemHeight;
     lphl->needMeasure = FALSE;
   }
@@ -405,10 +418,9 @@ int ListBoxInsertString(LPHEADLIST lphl, UINT uIndex, LPCSTR newstr)
 
 int ListBoxAddString(LPHEADLIST lphl, LPCSTR newstr)
 {
-    LONG dwStyle = GetWindowLong(lphl->hSelf,GWL_STYLE);
     UINT pos = (UINT) -1;
     
-    if (lphl->HasStrings && (dwStyle & LBS_SORT)) {
+    if (lphl->HasStrings && (lphl->dwStyle & LBS_SORT)) {
 	LPLISTSTRUCT lpls = lphl->lpFirst;
 	for (pos = 0; lpls != NULL; lpls = lpls->lpNext, pos++)
 	    if (strcmp(lpls->itemText, newstr) >= 0)
@@ -503,7 +515,6 @@ int ListBoxFindString(LPHEADLIST lphl, UINT nFirst, SEGPTR MatchStr)
   UINT	       Count;
   UINT         First = nFirst + 1;
   LPSTR        lpMatchStr = (LPSTR)MatchStr;
-  LONG	       dwStyle = GetWindowLong(lphl->hSelf,GWL_STYLE);
 
   if (First > lphl->ItemsCount) return LB_ERR;
 
@@ -514,7 +525,7 @@ int ListBoxFindString(LPHEADLIST lphl, UINT nFirst, SEGPTR MatchStr)
   while(lpls != NULL) {
     if (lphl->HasStrings) {
       if (strstr(lpls->itemText, lpMatchStr) == lpls->itemText) return Count;
-    } else if (dwStyle & LBS_SORT) {
+    } else if (lphl->dwStyle & LBS_SORT) {
       /* XXX Do a compare item */
     }
     else
@@ -531,7 +542,7 @@ int ListBoxFindString(LPHEADLIST lphl, UINT nFirst, SEGPTR MatchStr)
   while (Count < First) {
     if (lphl->HasStrings) {
       if (strstr(lpls->itemText, lpMatchStr) == lpls->itemText) return Count;
-    } else if (dwStyle & LBS_SORT) {
+    } else if (lphl->dwStyle & LBS_SORT) {
       /* XXX Do a compare item */
     } else {
       if (lpls->mis.itemData == (DWORD)lpMatchStr) return Count;
@@ -572,13 +583,13 @@ int ListBoxResetContent(LPHEADLIST lphl)
 int ListBoxSetCurSel(LPHEADLIST lphl, WORD wIndex)
 {
   LPLISTSTRUCT lpls;
-  DWORD	       dwStyle = GetWindowWord(lphl->hSelf,GWL_STYLE);
 
   /* use ListBoxSetSel instead */
-  if (dwStyle & (LBS_MULTIPLESEL | LBS_EXTENDEDSEL) ) return 0;
+  if (lphl->dwStyle & (LBS_MULTIPLESEL | LBS_EXTENDEDSEL) ) return 0;
 
   /* unselect previous item */
   if (lphl->ItemFocused != -1) {
+    lphl->PrevFocused = lphl->ItemFocused;
     lpls = ListBoxGetItem(lphl, lphl->ItemFocused);
     if (lpls == 0) return LB_ERR;
     lpls->itemState = 0;
@@ -602,8 +613,7 @@ int ListBoxSetSel(LPHEADLIST lphl, WORD wIndex, WORD state)
   LPLISTSTRUCT  lpls;
   int           n = 0;
 
-  if (!(GetWindowLong(lphl->hSelf,GWL_STYLE) & 
-       (LBS_MULTIPLESEL | LBS_EXTENDEDSEL)  )) 
+  if (!(lphl->dwStyle &  (LBS_MULTIPLESEL | LBS_EXTENDEDSEL)  )) 
         return LB_ERR;
 
   if (wIndex == (UINT)-1) {
@@ -715,7 +725,7 @@ int ListBoxSetItemHeight(LPHEADLIST lphl, WORD wIndex, long height)
 {
   LPLISTSTRUCT lpls;
 
-  if (!(GetWindowLong(lphl->hSelf,GWL_STYLE) & LBS_OWNERDRAWVARIABLE)) {
+  if (!(lphl->dwStyle & LBS_OWNERDRAWVARIABLE)) {
     lphl->StdItemHeight = (short)height;
     return 0;
   }
@@ -747,7 +757,7 @@ int ListBoxFindNextMatch(LPHEADLIST lphl, WORD wChar)
   for(; lpls != NULL; lpls = lpls->lpNext, count++) {
     if (*lpls->itemText != (char)wChar) 
       break;
-    if (count > lphl->ItemFocused)
+    if ((short) count > lphl->ItemFocused)
       return count;
   }
   return first;
@@ -775,6 +785,7 @@ static LONG LBCreate(HWND hwnd, WORD wParam, LONG lParam)
 
   return 0;
 }
+
 
 /***********************************************************************
  *           LBDestroy
@@ -905,7 +916,6 @@ static LONG LBLButtonDown(HWND hwnd, WORD wParam, LONG lParam)
   WORD       wRet;
   int        y,n;
   RECT       rectsel;
-  LONG	     dwStyle = GetWindowLong(lphl->hSelf,GWL_STYLE);
   POINT      tmpPOINT;
   tmpPOINT.x = LOWORD(lParam); tmpPOINT.y = HIWORD(lParam);
 
@@ -918,12 +928,12 @@ static LONG LBLButtonDown(HWND hwnd, WORD wParam, LONG lParam)
 
   if (y == -1) return 0;
 
-  if (dwStyle & LBS_NOTIFY && y!= LB_ERR )
+  if (lphl->dwStyle & LBS_NOTIFY && y!= LB_ERR )
      if( SendMessage(lphl->hParent, WM_LBTRACKPOINT, y, lParam) )
          return 0;
 
 
-  switch( dwStyle & (LBS_MULTIPLESEL | LBS_EXTENDEDSEL) )
+  switch( lphl->dwStyle & (LBS_MULTIPLESEL | LBS_EXTENDEDSEL) )
    {
         case LBS_MULTIPLESEL:
                 lphl->ItemFocused = y;
@@ -960,7 +970,7 @@ static LONG LBLButtonDown(HWND hwnd, WORD wParam, LONG lParam)
    }
 
  /* invalidate changed items */
- if( dwStyle & LBS_MULTIPLESEL || y!=lphl->PrevFocused )
+ if( lphl->dwStyle & LBS_MULTIPLESEL || y!=lphl->PrevFocused )
    {
      ListBoxGetItemRect(lphl, y, &rectsel);
      InvalidateRect(hwnd, &rectsel, TRUE);
@@ -1021,7 +1031,6 @@ static LONG LBMouseMove(HWND hwnd, WORD wParam, LONG lParam)
   LPHEADLIST lphl = ListBoxGetStorageHeader(hwnd);
   int  y,redraw_prev = 0;
   int  iRet;
-  LONG  dwStyle = GetWindowLong(lphl->hSelf,GWL_STYLE);
   RECT rect, rectsel;   /* XXX Broken */
 
   dprintf_listbox(stddeb,"LBMouseMove %d %d\n",SLOWORD(lParam),SHIWORD(lParam));
@@ -1050,10 +1059,10 @@ static LONG LBMouseMove(HWND hwnd, WORD wParam, LONG lParam)
         if (iRet == lphl->ItemFocused || iRet == -1)  {
 	  return 0;
 	}
-	if (dwStyle & LBS_MULTIPLESEL) {
+	if (lphl->dwStyle & LBS_MULTIPLESEL) {
           lphl->ItemFocused = iRet;
 	  ListBoxSendNotification(lphl, LBN_SELCHANGE);
-        } else if ( dwStyle & LBS_EXTENDEDSEL )
+        } else if ( lphl->dwStyle & LBS_EXTENDEDSEL )
                   {
                      /* Fixme: extended selection mode */
                      ListBoxSetSel( lphl, lphl->ItemFocused, 0);
@@ -1089,7 +1098,6 @@ static LONG LBMouseMove(HWND hwnd, WORD wParam, LONG lParam)
 static LONG LBKeyDown(HWND hwnd, WORD wParam, LONG lParam)
 {
   LPHEADLIST lphl = ListBoxGetStorageHeader(hwnd);
-  LONG       dwStyle = GetWindowLong(lphl->hSelf,GWL_STYLE);
   WORD       newFocused = 0xFFFF;
   RECT	     rect;
 
@@ -1104,7 +1112,7 @@ static LONG LBKeyDown(HWND hwnd, WORD wParam, LONG lParam)
 	case VK_DOWN:
 	case VK_PRIOR:
 	case VK_NEXT:
-	     if ( dwStyle & LBS_WANTKEYBOARDINPUT )
+	     if ( lphl->dwStyle & LBS_WANTKEYBOARDINPUT )
 	        {
 		  newFocused = (WORD)(INT)SendMessage(lphl->hParent,WM_VKEYTOITEM,
 					              wParam,MAKELPARAM(lphl->ItemFocused,hwnd));
@@ -1124,7 +1132,7 @@ static LONG LBKeyDown(HWND hwnd, WORD wParam, LONG lParam)
                           newFocused = lphl->ItemsCount - 1;
                           break;
                         case VK_LEFT:
-  			  if (dwStyle & LBS_MULTICOLUMN) {
+  			  if (lphl->dwStyle & LBS_MULTICOLUMN) {
                             if (newFocused >= lphl->ItemsPerColumn) {
                                 newFocused -= lphl->ItemsPerColumn;
                             } else {
@@ -1136,7 +1144,7 @@ static LONG LBKeyDown(HWND hwnd, WORD wParam, LONG lParam)
                           if (newFocused > 0) newFocused--;
                           break;
                         case VK_RIGHT:
-                          if (dwStyle & LBS_MULTICOLUMN) 
+                          if (lphl->dwStyle & LBS_MULTICOLUMN) 
                              newFocused += lphl->ItemsPerColumn;
                           break;
                         case VK_DOWN:
@@ -1157,7 +1165,7 @@ static LONG LBKeyDown(HWND hwnd, WORD wParam, LONG lParam)
 		}
 	     break;   
 	case VK_SPACE:
-             if (dwStyle & LBS_MULTIPLESEL)
+             if (lphl->dwStyle & LBS_MULTIPLESEL)
                 {
                  WORD wRet = ListBoxGetSel(lphl, lphl->ItemFocused);
                  ListBoxSetSel(lphl, lphl->ItemFocused, !wRet);
@@ -1174,7 +1182,7 @@ static LONG LBKeyDown(HWND hwnd, WORD wParam, LONG lParam)
   if (newFocused >= lphl->ItemsCount)
     newFocused = lphl->ItemsCount - 1;
   
-  if (!(dwStyle & LBS_MULTIPLESEL)) 
+  if (!(lphl->dwStyle & LBS_MULTIPLESEL)) 
      {
         ListBoxSetCurSel(lphl, newFocused);
 	ListBoxSendNotification(lphl, LBN_SELCHANGE);
@@ -1182,7 +1190,7 @@ static LONG LBKeyDown(HWND hwnd, WORD wParam, LONG lParam)
 
   lphl->ItemFocused = newFocused;
 
-  if( ListBoxScrollToFocus(lphl) || (dwStyle & 
+  if( ListBoxScrollToFocus(lphl) || (lphl->dwStyle & 
                           (LBS_MULTIPLESEL | LBS_EXTENDEDSEL)) )
   InvalidateRect(hwnd, NULL, TRUE);
   else
@@ -1206,10 +1214,9 @@ static LONG LBKeyDown(HWND hwnd, WORD wParam, LONG lParam)
 static LONG LBChar(HWND hwnd, WORD wParam, LONG lParam)
 {
   LPHEADLIST lphl = ListBoxGetStorageHeader(hwnd);
-  LONG	     dwStyle = GetWindowLong(lphl->hSelf,GWL_STYLE);
   WORD       newFocused = 0xFFFF;
 
-  if ( (dwStyle & LBS_WANTKEYBOARDINPUT) && !(lphl->HasStrings))
+  if ( (lphl->dwStyle & LBS_WANTKEYBOARDINPUT) && !(lphl->HasStrings))
        {
         newFocused = (WORD)(INT)SendMessage(lphl->hParent,WM_CHARTOITEM,
                                             wParam,MAKELPARAM(lphl->ItemFocused,hwnd));
@@ -1224,7 +1231,7 @@ static LONG LBChar(HWND hwnd, WORD wParam, LONG lParam)
   if (newFocused >= lphl->ItemsCount)
     newFocused = lphl->ItemsCount - 1;
 
-  if (!(dwStyle & LBS_MULTIPLESEL)) 
+  if (!(lphl->dwStyle & LBS_MULTIPLESEL)) 
      {
     ListBoxSetCurSel(lphl, newFocused);
 	ListBoxSendNotification(lphl, LBN_SELCHANGE);
@@ -1259,11 +1266,25 @@ static LONG LBSetRedraw(HWND hwnd, WORD wParam, LONG lParam)
 static LONG LBSetFont(HWND hwnd, WPARAM wParam, LPARAM lParam)
 {
   LPHEADLIST  lphl = ListBoxGetStorageHeader(hwnd);
+  HDC hdc;
 
   if (wParam == 0)
     lphl->hFont = GetStockObject(SYSTEM_FONT);
   else
     lphl->hFont = (HFONT) wParam;
+
+  /* a new font means possible new text height */
+  /* does this mean the height of each entry must be separately changed? */
+  /* or are we guaranteed to get a LBSetFont before the first insert/add? */
+  if ((hdc = GetDC(0)))
+  {
+      TEXTMETRIC tm;
+      GetTextMetrics( hdc, &tm );
+      lphl->StdItemHeight = tm.tmHeight;
+      dprintf_listbox(stddeb,"LBSetFont:  new font %d with height %d",
+                      lphl->hFont, lphl->StdItemHeight);
+      ReleaseDC( 0, hdc );
+  }
 
   return 0;
 }
@@ -1274,7 +1295,6 @@ static LONG LBSetFont(HWND hwnd, WPARAM wParam, LPARAM lParam)
 static LONG LBPaint(HWND hwnd, WORD wParam, LONG lParam)
 {
   LPHEADLIST   lphl = ListBoxGetStorageHeader(hwnd);
-  LONG	       dwStyle = GetWindowLong(lphl->hSelf,GWL_STYLE);
   LPLISTSTRUCT lpls;
   PAINTSTRUCT  ps;
   HBRUSH       hBrush;
@@ -1311,7 +1331,7 @@ static LONG LBPaint(HWND hwnd, WORD wParam, LONG lParam)
   FillRect(hdc, &rect, hBrush);
 
   maxwidth = rect.right;
-  if (dwStyle & LBS_MULTICOLUMN) {
+  if (lphl->dwStyle & LBS_MULTICOLUMN) {
     rect.right = lphl->ColumnsWidth;
   }
   lpls = lphl->lpFirst;
@@ -1326,7 +1346,7 @@ static LONG LBPaint(HWND hwnd, WORD wParam, LONG lParam)
       height = lpls->mis.itemHeight;
 
       if (top > rect.bottom) {
-	if (dwStyle & LBS_MULTICOLUMN) {
+	if (lphl->dwStyle & LBS_MULTICOLUMN) {
 	  lphl->ItemsPerColumn = MAX(lphl->ItemsPerColumn, ipc);
 	  ipc = 0;
 	  top = 0;
@@ -1345,7 +1365,7 @@ static LONG LBPaint(HWND hwnd, WORD wParam, LONG lParam)
 
       if( IntersectRect(&scratchRect,&paintRect,&lpls->itemRect) )
        {
-        dprintf_listbox(stddeb,"drawing item: %ld %d %ld %d %d\n",(LONG)rect.left,top,
+        dprintf_listbox(stddeb,"LBPaint: drawing item: %ld %d %ld %d %d\n",(LONG)rect.left,top,
                             (LONG)rect.right,top+height,lpls->itemState);
 
         if (lphl->OwnerDrawn && (lphl->ItemFocused == i) && GetFocus() == hwnd)
@@ -1380,13 +1400,9 @@ static LONG LBPaint(HWND hwnd, WORD wParam, LONG lParam)
 static LONG LBSetFocus(HWND hwnd, WORD wParam, LONG lParam)
 {
   LPHEADLIST lphl = ListBoxGetStorageHeader(hwnd);
-  LONG       dwStyle;
 
   dprintf_listbox(stddeb,"ListBox WM_SETFOCUS for "NPFMT"\n",hwnd);
-
-  dwStyle = GetWindowLong(lphl->hSelf,GWL_STYLE);
-
-  if(!(dwStyle & LBS_MULTIPLESEL) )
+  if(!(lphl->dwStyle & LBS_MULTIPLESEL) )
        if( lphl->ItemsCount && lphl->ItemFocused != -1)
          {
            HDC          hDC = GetDC(hwnd);
@@ -1412,13 +1428,9 @@ static LONG LBSetFocus(HWND hwnd, WORD wParam, LONG lParam)
 static LONG LBKillFocus(HWND hwnd, WORD wParam, LONG lParam)
 {
   LPHEADLIST lphl = ListBoxGetStorageHeader(hwnd);
-  LONG       dwStyle;
 
   dprintf_listbox(stddeb,"ListBox WM_KILLFOCUS for "NPFMT"\n",hwnd);
-
-  dwStyle = GetWindowLong(lphl->hSelf,GWL_STYLE);
-
-  if (!(dwStyle & LBS_MULTIPLESEL))
+  if (!(lphl->dwStyle & LBS_MULTIPLESEL))
      {
        if( lphl->ItemsCount )
            if( lphl->ItemFocused != -1 )
@@ -1626,8 +1638,7 @@ static LONG LBGetSelCount(HWND hwnd, WORD wParam, LONG lParam)
   int          cnt = 0;
   int          items = 0;
 
-  if (!(GetWindowLong(lphl->hSelf,GWL_STYLE) & 
-       (LBS_MULTIPLESEL | LBS_EXTENDEDSEL)  )) 
+  if (!(lphl->dwStyle & (LBS_MULTIPLESEL | LBS_EXTENDEDSEL)  )) 
 	 return LB_ERR;
 
   for( lpls = lphl->lpFirst;
@@ -1652,8 +1663,7 @@ static LONG LBGetSelItems(HWND hwnd, WORD wParam, LONG lParam)
   int cnt, idx;
   int *lpItems = PTR_SEG_TO_LIN(lParam);
 
-  if (!(GetWindowLong(lphl->hSelf,GWL_STYLE) & 
-       (LBS_MULTIPLESEL | LBS_EXTENDEDSEL)  )) 
+  if (!(lphl->dwStyle & (LBS_MULTIPLESEL | LBS_EXTENDEDSEL)  )) 
         return LB_ERR;
 
   if (wParam == 0) return 0;
@@ -1715,8 +1725,7 @@ static LONG LBSelectString(HWND hwnd, WORD wParam, LONG lParam)
 
   if( iRet != LB_ERR)
     {
-      if( GetWindowLong(hwnd, GWL_STYLE) &
-         (LBS_MULTIPLESEL | LBS_EXTENDEDSEL) )
+      if( lphl->dwStyle & (LBS_MULTIPLESEL | LBS_EXTENDEDSEL) )
          ListBoxSetSel(lphl,iRet,TRUE);
       else
          ListBoxSetCurSel(lphl,iRet);
@@ -1739,8 +1748,7 @@ static LONG LBSelItemRange(HWND hwnd, WORD wParam, LONG lParam)
   WORD         last = HIWORD(lParam);
   BOOL         select = wParam;
 
-  if (!(GetWindowLong(lphl->hSelf,GWL_STYLE) & 
-       (LBS_MULTIPLESEL | LBS_EXTENDEDSEL)  )) 
+  if (!(lphl->dwStyle & (LBS_MULTIPLESEL | LBS_EXTENDEDSEL)  )) 
         return LB_ERR;
 
   if (first >= lphl->ItemsCount ||
@@ -1770,8 +1778,7 @@ static LONG LBSetCaretIndex(HWND hwnd, WORD wParam, LONG lParam)
   LPHEADLIST   lphl = ListBoxGetStorageHeader(hwnd);
   int          i;
 
-  if (!(GetWindowLong(lphl->hSelf,GWL_STYLE) & 
-       (LBS_MULTIPLESEL | LBS_EXTENDEDSEL) )) return 0;
+  if (!(lphl->dwStyle & (LBS_MULTIPLESEL | LBS_EXTENDEDSEL) )) return 0;
 
   dprintf_listbox(stddeb,"LBSetCaretIndex: hwnd "NPFMT" n=%i\n",hwnd,wParam);  
 
@@ -1886,7 +1893,7 @@ static LONG LBSetSel(HWND hwnd, WORD wParam, LONG lParam)
       InvalidateRect(hwnd, NULL, TRUE);
   else if( iRet != LB_ERR )
       {
-        if( GetWindowLong(hwnd,GWL_STYLE) & LBS_EXTENDEDSEL &&
+        if( lphl->dwStyle & LBS_EXTENDEDSEL &&
             lphl->ItemFocused != LOWORD(lParam) )
           {
             ListBoxGetItemRect(lphl, lphl->ItemFocused , &rect);

@@ -5,7 +5,7 @@
  */
 
 #include "windows.h"
-#include "message.h"
+#include "queue.h"
 #include "stddebug.h"
 /* #define DEBUG_TIMER */
 #include "debug.h"
@@ -173,7 +173,7 @@ static WORD TIMER_SetTimer( HWND hwnd, WORD id, WORD timeout,
     dprintf_timer(stddeb, "Timer added: %p, "NPFMT", %04x, %04x, %08lx\n", 
 		  pTimer, pTimer->hwnd, pTimer->msg, pTimer->id, (DWORD)pTimer->proc);
     TIMER_InsertTimer( pTimer );
-    MSG_IncTimerCount( GetTaskQueue(0) );
+    QUEUE_IncTimerCount( GetTaskQueue(0) );
     if (!id)
 	return TRUE;
     else
@@ -207,7 +207,7 @@ static BOOL TIMER_KillTimer( HWND hwnd, WORD id, BOOL sys )
     pTimer->timeout = 0;
     pTimer->proc    = 0;
     TIMER_RemoveTimer( pTimer );
-    MSG_DecTimerCount( GetTaskQueue(0) );
+    QUEUE_DecTimerCount( GetTaskQueue(0) );
     return TRUE;
 }
 

@@ -7,7 +7,7 @@ id	7
 4   pascal16 ToAscii(word word ptr ptr word) ToAscii
 5   pascal16 AnsiToOem(ptr ptr) AnsiToOem
 6   pascal16 OemToAnsi(ptr ptr) OemToAnsi
-#7	pascal	SetSpeed
+7   return   SetSpeed 2 65535
 #100	pascal	ScreenSwitchEnable
 #126	pascal	GetTableSeg
 #127	pascal	NewTable

@@ -35,7 +35,7 @@ IDENTIFIER [_a-zA-Z\.~][_a-zA-Z0-9\.~]*
 
 %%
 
-\n		{ syntax_error = 0; return EOL; } /*Indicates end of command*/
+\n		{ syntax_error = 0; return tEOL; } /*Indicates end of command*/
 
 "||"		{ return OP_LOR; }
 "&&"		{ return OP_LAND; }
@@ -47,77 +47,76 @@ IDENTIFIER [_a-zA-Z\.~][_a-zA-Z0-9\.~]*
 ">>"		{ return OP_SHR; }
 [-+<=>|&^()*/%:!~]	{ return *yytext; }
 
-"0x"{HEXDIGIT}+      { sscanf(yytext, "%x", &yylval.integer); return NUM; }
-{DIGIT}+             { sscanf(yytext, "%d", &yylval.integer); return NUM; }
+"0x"{HEXDIGIT}+      { sscanf(yytext, "%x", &yylval.integer); return tNUM; }
+{DIGIT}+             { sscanf(yytext, "%d", &yylval.integer); return tNUM; }
 
 "/"{DIGIT}+{FORMAT}  { char * last;
                        yylval.integer = strtol( yytext+1, &last, NULL );
                        yylval.integer = (yylval.integer << 8) | *last;
-                       return FORMAT; }
-"/"{FORMAT}          { yylval.integer = (1 << 8) | yytext[1]; return FORMAT; }
+                       return tFORMAT; }
+"/"{FORMAT}          { yylval.integer = (1 << 8) | yytext[1]; return tFORMAT; }
 
-$pc     { yylval.reg = REG_EIP; return REG; }
-$flags  { yylval.reg = REG_EFL; return REG; }
-$eip    { yylval.reg = REG_EIP; return REG; }
-$ip     { yylval.reg = REG_IP;  return REG; }
-$esp    { yylval.reg = REG_ESP; return REG; }
-$sp     { yylval.reg = REG_SP;  return REG; }
-$eax    { yylval.reg = REG_EAX; return REG; }
-$ebx    { yylval.reg = REG_EBX; return REG; }
-$ecx    { yylval.reg = REG_ECX; return REG; }
-$edx    { yylval.reg = REG_EDX; return REG; }
-$esi    { yylval.reg = REG_ESI; return REG; }
-$edi    { yylval.reg = REG_EDI; return REG; }
-$ebp    { yylval.reg = REG_EBP; return REG; }
-$ax     { yylval.reg = REG_AX;  return REG; }
-$bx     { yylval.reg = REG_BX;  return REG; }
-$cx     { yylval.reg = REG_CX;  return REG; }
-$dx     { yylval.reg = REG_DX;  return REG; }
-$si     { yylval.reg = REG_SI;  return REG; }
-$di     { yylval.reg = REG_DI;  return REG; }
-$bp     { yylval.reg = REG_BP;  return REG; }
-$es     { yylval.reg = REG_ES;  return REG; }
-$ds     { yylval.reg = REG_DS;  return REG; }
-$cs     { yylval.reg = REG_CS;  return REG; }
-$ss     { yylval.reg = REG_SS;  return REG; }
+$pc     { yylval.reg = REG_EIP; return tREG; }
+$flags  { yylval.reg = REG_EFL; return tREG; }
+$eip    { yylval.reg = REG_EIP; return tREG; }
+$ip     { yylval.reg = REG_IP;  return tREG; }
+$esp    { yylval.reg = REG_ESP; return tREG; }
+$sp     { yylval.reg = REG_SP;  return tREG; }
+$eax    { yylval.reg = REG_EAX; return tREG; }
+$ebx    { yylval.reg = REG_EBX; return tREG; }
+$ecx    { yylval.reg = REG_ECX; return tREG; }
+$edx    { yylval.reg = REG_EDX; return tREG; }
+$esi    { yylval.reg = REG_ESI; return tREG; }
+$edi    { yylval.reg = REG_EDI; return tREG; }
+$ebp    { yylval.reg = REG_EBP; return tREG; }
+$ax     { yylval.reg = REG_AX;  return tREG; }
+$bx     { yylval.reg = REG_BX;  return tREG; }
+$cx     { yylval.reg = REG_CX;  return tREG; }
+$dx     { yylval.reg = REG_DX;  return tREG; }
+$si     { yylval.reg = REG_SI;  return tREG; }
+$di     { yylval.reg = REG_DI;  return tREG; }
+$bp     { yylval.reg = REG_BP;  return tREG; }
+$es     { yylval.reg = REG_ES;  return tREG; }
+$ds     { yylval.reg = REG_DS;  return tREG; }
+$cs     { yylval.reg = REG_CS;  return tREG; }
+$ss     { yylval.reg = REG_SS;  return tREG; }
 
-info|inf|in			{ return INFO; }
-show|sho|sh			{ return INFO; }
-list|lis|li|l			{ return LIST; }
-segments|segment|segm|seg|se	{ return SEGMENTS; }
-break|brea|bre|br|b		{ return BREAK; }
-enable|enabl|enab|ena		{ return ENABLE;}
-disable|disabl|disab|disa|dis	{ return DISABLE; }
-delete|delet|dele|del		{ return DELETE; }
-quit|qui|qu|q			{ return QUIT; }
-walk|w				{ return WALK; }
-queue|queu|que			{ return QUEUE; }
-window|windo|wind|win|wnd	{ return WND; }
-x				{ return EXAM; }
+info|inf|in			{ return tINFO; }
+show|sho|sh			{ return tINFO; }
+list|lis|li|l			{ return tLIST; }
+break|brea|bre|br|b		{ return tBREAK; }
+enable|enabl|enab|ena		{ return tENABLE;}
+disable|disabl|disab|disa|dis	{ return tDISABLE; }
+delete|delet|dele|del		{ return tDELETE; }
+quit|qui|qu|q			{ return tQUIT; }
+set|se				{ return tSET; }
+walk|w				{ return tWALK; }
+x				{ return tEXAM; }
 
-help|hel|he|"?"			{ return HELP; }
+class|clas|cla                  { return tCLASS; }
+queue|queu|que			{ return tQUEUE; }
+registers|regs|reg|re		{ return tREGS; }
+segments|segment|segm|seg|se	{ return tSEGMENTS; }
+stack|stac|sta|st     		{ return tSTACK; }
+window|windo|wind|win|wnd	{ return tWND; }
 
-set|se				{ return SET; }
+help|hel|he|"?"			{ return tHELP; }
 
-bt				{ return BACKTRACE; }
+backtrace|bt			{ return tBACKTRACE; }
 
-cont|con|co|c   		{ return CONT; }
-step|ste|st|s   		{ return STEP; }
-next|nex|ne|n   		{ return NEXT; }
+cont|con|co|c   		{ return tCONT; }
+step|ste|st|s   		{ return tSTEP; }
+next|nex|ne|n   		{ return tNEXT; }
 
-symbolfile|symbolfil|symbolfi|symbolf|symbol|symbo|symb { return SYMBOLFILE; }
+symbolfile|symbolfil|symbolfi|symbolf|symbol|symbo|symb { return tSYMBOLFILE; }
 
-define|defin|defi|def|de        { return DEFINE; }
-abort|abor|abo         	        { return ABORT; }
-print|prin|pri|pr|p		{ return PRINT; }
+define|defin|defi|def|de        { return tDEFINE; }
+abort|abor|abo         	        { return tABORT; }
+print|prin|pri|pr|p		{ return tPRINT; }
 
-mode				{ return MODE; }
+mode				{ return tMODE; }
 
-registers|regs|reg|re		{ return REGS; }
-
-stack|stac|sta|st     		{ return STACK; }
-
-{IDENTIFIER}	{ yylval.string = make_symbol(yytext); return IDENTIFIER; }
+{IDENTIFIER}	{ yylval.string = make_symbol(yytext); return tIDENTIFIER; }
 
 [ \t]+        /* Eat up whitespace */
 

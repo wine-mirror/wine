@@ -8,7 +8,7 @@
 #include <X11/Xlib.h>
 
 #include "win.h"
-#include "message.h"
+#include "queue.h"
 #include "gdi.h"
 #include "stddebug.h"
 /* #define DEBUG_WIN */
@@ -32,7 +32,7 @@ HDC BeginPaint( HWND hwnd, LPPAINTSTRUCT lps )
 	if (!(hrgnUpdate = CreateRectRgn( 0, 0, 0, 0 ))) return 0;
 
     if (wndPtr->hrgnUpdate || (wndPtr->flags & WIN_INTERNAL_PAINT))
-	MSG_DecPaintCount( wndPtr->hmemTaskQ );
+	QUEUE_DecPaintCount( wndPtr->hmemTaskQ );
 
     wndPtr->hrgnUpdate = 0;
     wndPtr->flags &= ~(WIN_NEEDS_BEGINPAINT | WIN_INTERNAL_PAINT);
@@ -168,7 +168,7 @@ BOOL RedrawWindow( HWND hwnd, LPRECT rectUpdate, HRGN hrgnUpdate, UINT flags )
         else  /* No update region yet */
         {
             if (!(wndPtr->flags & WIN_INTERNAL_PAINT))
-                MSG_IncPaintCount( wndPtr->hmemTaskQ );
+                QUEUE_IncPaintCount( wndPtr->hmemTaskQ );
             if (hrgnUpdate)
             {
                 wndPtr->hrgnUpdate = CreateRectRgn( 0, 0, 0, 0 );
@@ -206,7 +206,7 @@ BOOL RedrawWindow( HWND hwnd, LPRECT rectUpdate, HRGN hrgnUpdate, UINT flags )
             }
             if (!wndPtr->hrgnUpdate)  /* No more update region */
 		if (!(wndPtr->flags & WIN_INTERNAL_PAINT))
-		    MSG_DecPaintCount( wndPtr->hmemTaskQ );
+		    QUEUE_DecPaintCount( wndPtr->hmemTaskQ );
         }
         if (flags & RDW_NOFRAME) wndPtr->flags &= ~WIN_NEEDS_NCPAINT;
 	if (flags & RDW_NOERASE) wndPtr->flags &= ~WIN_NEEDS_ERASEBKGND;
@@ -217,13 +217,13 @@ BOOL RedrawWindow( HWND hwnd, LPRECT rectUpdate, HRGN hrgnUpdate, UINT flags )
     if (flags & RDW_INTERNALPAINT)
     {
 	if (!wndPtr->hrgnUpdate && !(wndPtr->flags & WIN_INTERNAL_PAINT))
-	    MSG_IncPaintCount( wndPtr->hmemTaskQ );
+	    QUEUE_IncPaintCount( wndPtr->hmemTaskQ );
 	wndPtr->flags |= WIN_INTERNAL_PAINT;	    
     }
     else if (flags & RDW_NOINTERNALPAINT)
     {
 	if (!wndPtr->hrgnUpdate && (wndPtr->flags & WIN_INTERNAL_PAINT))
-	    MSG_DecPaintCount( wndPtr->hmemTaskQ );
+	    QUEUE_DecPaintCount( wndPtr->hmemTaskQ );
 	wndPtr->flags &= ~WIN_INTERNAL_PAINT;
     }
 

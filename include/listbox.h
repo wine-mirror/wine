@@ -25,6 +25,7 @@ typedef struct {
         WORD    CtlID;
 	LPLISTSTRUCT lpFirst;
 	HWND	hSelf;
+	DWORD   dwStyle;      /* added for COMBOLBOX style faking */
 	HWND    hParent;
 	HFONT   hFont;
 	BOOL    bRedrawFlag;

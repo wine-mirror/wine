@@ -215,7 +215,6 @@ void DEBUG_LoadEntryPoints(void)
     unsigned int address;
     BOOL ok;
 
-    fprintf( stderr, "Adding symbols from loaded modules\n" );
     for (ok = ModuleFirst(&entry); ok; ok = ModuleNext(&entry))
     {
         if (!(pModule = (NE_MODULE *)GlobalLock( entry.hModule ))) continue;

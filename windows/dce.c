@@ -152,7 +152,7 @@ static HRGN DCE_ClipWindows( HWND hwndStart, HWND hwndEnd,
     if (!hwndStart) return hrgn;
     if (!(hrgnNew = CreateRectRgn( 0, 0, 0, 0 )))
     {
-        if (hrgn) DeleteObject( hrgn );
+        DeleteObject( hrgn );
         return 0;
     }
     for (; hwndStart != hwndEnd; hwndStart = wndPtr->hwndNext)
@@ -165,10 +165,10 @@ static HRGN DCE_ClipWindows( HWND hwndStart, HWND hwndEnd,
                     wndPtr->rectWindow.bottom + yoffset );
         if (!CombineRgn( hrgn, hrgn, hrgnNew, RGN_DIFF )) break;
     }
+    DeleteObject( hrgnNew );
     if (hwndStart != hwndEnd)  /* something went wrong */
     {
-        DeleteObject( hrgnNew );
-        if (hrgn) DeleteObject( hrgn );
+        DeleteObject( hrgn );
         return 0;
     }
     return hrgn;

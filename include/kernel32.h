@@ -10,6 +10,7 @@
 int KERN32_Init(void);
 void SetLastError(DWORD error);
 DWORD ErrnoToLastError(int errno_num);
+void ExitProcess(DWORD exitcode);
 
 /* Code page information.
  */

@@ -2222,6 +2222,14 @@ typedef struct
 typedef COMPAREITEMSTRUCT NEAR* PCOMPAREITEMSTRUCT;
 typedef COMPAREITEMSTRUCT FAR* LPCOMPAREITEMSTRUCT;
 
+/* WM_KEYUP/DOWN/CHAR HIWORD(lParam) flags */
+#define KF_EXTENDED         0x0100
+#define KF_DLGMODE          0x0800
+#define KF_MENUMODE         0x1000
+#define KF_ALTDOWN          0x2000
+#define KF_REPEAT           0x4000
+#define KF_UP               0x8000
+
 /* Virtual key codes */
 #define VK_LBUTTON          0x01
 #define VK_RBUTTON          0x02
@@ -2947,7 +2955,7 @@ WORD       GetSystemPaletteUse(HDC);
 VOID       GetSystemTime(LPSYSTEMTIME); /* Win32 */
 DWORD      GetTabbedTextExtent(HDC,LPSTR,int,int,LPINT);
 HINSTANCE  GetTaskDS(void);
-HGLOBAL    GetTaskQueue(HTASK);
+HQUEUE     GetTaskQueue(HTASK);
 BYTE       GetTempDrive(BYTE);
 INT        GetTempFileName(BYTE,LPCSTR,UINT,LPSTR);
 WORD       GetTextAlign(HDC);
@@ -3122,7 +3130,7 @@ BOOL       Polygon(HDC,LPPOINT,int);
 BOOL       Polyline(HDC,LPPOINT,int);
 BOOL       PostAppMessage(HANDLE,WORD,WORD,LONG);
 BOOL       PostMessage(HWND,WORD,WORD,LONG);
-void       PostQuitMessage(int);
+void       PostQuitMessage(INT);
 WORD       PrestoChangoSelector(WORD,WORD);
 void       ProfClear(void);
 void       ProfFinish(void);
@@ -3244,7 +3252,7 @@ void       SetSysColors(int,LPINT,COLORREF*);
 HWND       SetSysModalWindow(HWND);
 WORD       SetSystemPaletteUse(HDC,WORD);
 WORD       SetSystemTimer(HWND,WORD,WORD,FARPROC);
-HGLOBAL    SetTaskQueue(HTASK,HGLOBAL);
+HQUEUE     SetTaskQueue(HTASK,HQUEUE);
 WORD       SetTextAlign(HDC,WORD);
 short      SetTextCharacterExtra(HDC,short);
 DWORD      SetTextColor(HDC,DWORD);

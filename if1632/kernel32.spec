@@ -445,7 +445,7 @@ base	1
 0440 stub ResumeThread
 0441 stub RtlFillMemory
 0442 stub RtlMoveMemory
-0443 stub RtlUnwind
+0443    stdcall RtlUnwind(ptr long ptr long) RtlUnwind
 0444 stub RtlZeroMemory
 0445 stub ScrollConsoleScreenBufferA
 0446 stub ScrollConsoleScreenBufferW
@@ -518,7 +518,7 @@ base	1
 0513 stub SetThreadLocale
 0514 stub SetThreadPriority
 0515 stub SetTimeZoneInformation
-0516 stub SetUnhandledExceptionFilter
+0516    stdcall SetUnhandledExceptionFilter(ptr) SetUnhandledExceptionFilter
 0517 stub SetVDMCurrentDirectories
 0518 stub SetVolumeLabelA
 0519 stub SetVolumeLabelW
@@ -539,7 +539,7 @@ base	1
 0534 stub TransactNamedPipe
 0535 stub TransmitCommChar
 0536 stub TrimVirtualBuffer
-0537 stub UnhandledExceptionFilter
+0537    stdcall UnhandledExceptionFilter(ptr) UnhandledExceptionFilter
 0538 stub UnlockFile
 0539 stub UnlockFileEx
 0540 stub UnmapViewOfFile

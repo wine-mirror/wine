@@ -54,7 +54,7 @@ LRESULT DefWindowProc( HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam )
     int len;
     WND * wndPtr = WIN_FindWndPtr( hwnd );
 
-    EnterSpyMessage(SPY_DEFWNDPROC,hwnd,msg,wParam,lParam);
+    SPY_EnterMessage( SPY_DEFWNDPROC, hwnd, msg, wParam, lParam );
 
     switch(msg)
     {

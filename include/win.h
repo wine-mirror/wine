@@ -75,6 +75,8 @@ typedef struct tagWND
 
   /* Window functions */
 extern WND *WIN_FindWndPtr( HWND hwnd );
+extern void WIN_DumpWindow( HWND hwnd );
+extern void WIN_WalkWindows( HWND hwnd, int indent );
 extern Window WIN_GetXWindow( HWND hwnd );
 extern BOOL WIN_UnlinkWindow( HWND hwnd );
 extern BOOL WIN_LinkWindow( HWND hwnd, HWND hwndInsertAfter );

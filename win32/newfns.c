@@ -16,19 +16,6 @@ at a later date. */
 #include "debug.h"
 
 /***********************************************************************
- *           RaiseException		(KERNEL32.??)
- *
- * Stub function - does not allow exceptions to be caught yet
- */
-WINAPI VOID RaiseException(DWORD dwExceptionCode,
-		    DWORD dwExceptionFlags,
-		    DWORD cArguments,
-		    const DWORD * lpArguments)
-{
-    ExitProcess(dwExceptionCode); /* what status should be used here ? */
-}
-
-/***********************************************************************
  *           GetProcAddress		(KERNEL32.257)
  *
  */

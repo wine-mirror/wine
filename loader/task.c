@@ -16,11 +16,11 @@
 #include "debugger.h"
 #include "global.h"
 #include "instance.h"
-#include "message.h"
 #include "miscemu.h"
 #include "module.h"
 #include "neexe.h"
 #include "options.h"
+#include "queue.h"
 #include "selectors.h"
 #include "toolhelp.h"
 #include "stddebug.h"
@@ -583,7 +583,7 @@ static void TASK_DeleteTask( HTASK hTask )
 
     /* Free the message queue */
 
-    MSG_DeleteMsgQueue( pTask->hQueue );
+    QUEUE_DeleteMsgQueue( pTask->hQueue );
 
     /* Free the selector aliases */
 
@@ -988,9 +988,9 @@ HANDLE GetCodeHandle( FARPROC proc )
 /***********************************************************************
  *           SetTaskQueue  (KERNEL.34)
  */
-HGLOBAL SetTaskQueue( HANDLE hTask, HGLOBAL hQueue )
+HQUEUE SetTaskQueue( HANDLE hTask, HQUEUE hQueue )
 {
-    HGLOBAL hPrev;
+    HQUEUE hPrev;
     TDB *pTask;
 
     if (!hTask) hTask = hCurrentTask;
@@ -1004,7 +1004,7 @@ HGLOBAL SetTaskQueue( HANDLE hTask, HGLOBAL hQueue )
 /***********************************************************************
  *           GetTaskQueue  (KERNEL.35)
  */
-HGLOBAL GetTaskQueue( HANDLE hTask )
+HQUEUE GetTaskQueue( HANDLE hTask )
 {
     TDB *pTask;
 

@@ -1,14 +1,15 @@
 /*
-static char RCSId[] = "$Id: user.c,v 1.2 1993/07/04 04:04:21 root Exp root $";
-static char Copyright[] = "Copyright  Robert J. Amstadt, 1993";
-*/
+ * Misc. USER functions
+ *
+ * Copyright 1993 Robert J. Amstadt
+ */
+
 #include <stdio.h>
 #include <stdlib.h>
 #include "windows.h"
 #include "gdi.h"
 #include "user.h"
 #include "win.h"
-#include "message.h"
 #include "toolhelp.h"
 
 #define USER_HEAP_SIZE          0x10000
@@ -64,26 +65,6 @@ BOOL SystemHeapInfo( SYSHEAPINFO *pHeapInfo )
 
 
 /***********************************************************************
- *           TimerCount   (TOOLHELP.80)
- */
-BOOL TimerCount( TIMERINFO *pTimerInfo )
-{
-        /* FIXME
-         * In standard mode, dwmsSinceStart = dwmsThisVM 
-         *
-         * I tested this, under Windows in enhanced mode, and
-         * if you never switch VM (ie start/stop DOS) these
-         * values should be the same as well. 
-         *
-         * Also, Wine should adjust for the hardware timer
-         * to reduce the amount of error to ~1ms. 
-         * I can't be bothered, can you?
-         */
-        pTimerInfo->dwmsSinceStart = pTimerInfo->dwmsThisVM = GetTickCount();
-        return TRUE;
-}
-
-/***********************************************************************
  *           USER_HeapInit
  */
 BOOL USER_HeapInit(void)
@@ -94,6 +75,27 @@ BOOL USER_HeapInit(void)
     return TRUE;
 }
 #endif
+
+
+/***********************************************************************
+ *           TimerCount   (TOOLHELP.80)
+ */
+BOOL TimerCount( TIMERINFO *pTimerInfo )
+{
+    /* FIXME
+     * In standard mode, dwmsSinceStart = dwmsThisVM 
+     *
+     * I tested this, under Windows in enhanced mode, and
+     * if you never switch VM (ie start/stop DOS) these
+     * values should be the same as well. 
+     *
+     * Also, Wine should adjust for the hardware timer
+     * to reduce the amount of error to ~1ms. 
+     * I can't be bothered, can you?
+     */
+    pTimerInfo->dwmsSinceStart = pTimerInfo->dwmsThisVM = GetTickCount();
+    return TRUE;
+}
 
 
 /**********************************************************************
