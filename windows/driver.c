@@ -105,7 +105,7 @@ static	LPWINE_DRIVER	DRIVER_FindFromHDrvr16(HDRVR16 hDrvr)
  */
 static	LPWINE_DRIVER	DRIVER_FindFromHDrvr(HDRVR hDrvr)
 {    
-    if (!IsBadWritePtr((void*)hDrvr, sizeof(DWORD)) && 
+    if (!IsBadWritePtr((void*)hDrvr, sizeof(WINE_DRIVER)) && 
 	((LPWINE_DRIVER)hDrvr)->dwMagic == WINE_DI_MAGIC) {
 	return (LPWINE_DRIVER)hDrvr;
     }
@@ -335,7 +335,7 @@ int	DRIVER_MapMsg32To16(WORD wMsg, DWORD* lParam1, DWORD* lParam2)
 	/* lParam1 is a handle to a window (or not used), lParam2 is a pointer to DRVCONFIGINFO */
 	if (*lParam2) {
             LPDRVCONFIGINFO16	dci16 = (LPDRVCONFIGINFO16)SEGPTR_ALLOC(sizeof(DRVCONFIGINFO16));
-            LPDRVCONFIGINFO	dci32 = (LPDRVCONFIGINFO)lParam2;
+            LPDRVCONFIGINFO	dci32 = (LPDRVCONFIGINFO)(*lParam2);
 	    
 	    if (dci16) {
 		LPSTR	str1, str2;
@@ -898,6 +898,7 @@ HMODULE16 WINAPI GetDriverModuleHandle16(HDRVR16 hDrvr)
 	(lpDrv->dwFlags & WINE_DI_TYPE_MASK) == WINE_DI_TYPE_16) {
 	hModule = lpDrv->d.d16.hModule;
     }
+    TRACE(driver, "=> %d\n", hModule);
     return hModule;
 }
 
@@ -924,6 +925,7 @@ HMODULE WINAPI GetDriverModuleHandle(HDRVR hDrvr)
     if (lpDrv != NULL && (lpDrv->dwFlags & WINE_DI_TYPE_MASK) == WINE_DI_TYPE_32) {
 	hModule = lpDrv->d.d32.hModule;
     }
+    TRACE(driver, "=> %d\n", hModule);
     return hModule;
 }
 
