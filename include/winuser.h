@@ -367,6 +367,9 @@ typedef struct
 #define KLF_REORDER        0x00000008
 #define KLF_REPLACELANG    0x00000010
 #define KLF_NOTELLSHELL    0x00000080
+#define KLF_SETFORPROCESS  0x00000100
+#define KLF_SHIFTLOCK      0x00010000
+#define KLF_RESET          0x40000000
 
 #define KL_NAMELENGTH      9
 
