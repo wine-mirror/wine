@@ -257,32 +257,6 @@ foreach my $mod (sort keys %directories)
 }
 
 ################################################################
-# output the linkable dlls special links
-
-print NEWMAKE <<EOF;
-
-\# Special targets for dlls that we need to link to
-
-libntdll.dll.\$(LIBEXT): ntdll/ntdll.dll\$(DLLEXT)
-	\$(RM) \$@ && \$(LN_S) ntdll/ntdll.dll\$(DLLEXT) \$@
-
-all: libntdll.dll.\$(LIBEXT)
-
-uninstall::
-	\$(RM) \$(libdir)/libntdll.dll.\$(LIBEXT)
-
-install install-lib:: \$(INSTALLSUBDIRS:%=%/__install__)
-	cd \$(libdir) && \$(RM) libntdll.dll.\$(LIBEXT) && \\
-	if [ "\$(dlldir)" = "\$(libdir)/wine" ]; \\
-	then \\
-	  \$(LN_S) wine/ntdll.dll\$(DLLEXT) libntdll.dll.\$(LIBEXT); \\
-	else \\
-	  \$(LN_S) \$(dlldir)/ntdll.dll\$(DLLEXT) libntdll.dll.\$(LIBEXT); \\
-	fi
-
-EOF
-
-################################################################
 # makefile trailer
 
 print NEWMAKE <<EOF;
@@ -310,6 +284,8 @@ doc-sgml: \$(SUBDIRS:%=%/__doc_sgml__)
 install install-dev:: \$(IMPORT_LIBS:%=%.\$(IMPLIBEXT))
 	\$(MKINSTALLDIRS) \$(dlldir)
 	for f in \$(IMPORT_LIBS:%=%.\$(IMPLIBEXT)); do \$(INSTALL_DATA) \$\$f \$(dlldir)/\$\$f; done
+
+install install-lib:: \$(INSTALLSUBDIRS:%=%/__install__)
 
 uninstall::
 	\$(RM) \$(IMPORT_LIBS:%=\$(dlldir)/%.\$(IMPLIBEXT))
