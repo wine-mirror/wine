@@ -52,12 +52,6 @@ WINELIB_USER_SRCS = \
 WINE_FAQ_SRCS = \
 	faq.sgml
 
-WINE_DOC_SRCS = \
-	$(WINELIB_USER_SRCS) \
-	$(WINE_DEVEL_SRCS) \
-	$(WINE_FAQ_SRCS) \
-	$(WINE_USER_SRCS)
-
 MAN_TARGETS = wine.man
 
 ALLBOOKS = \
@@ -66,17 +60,12 @@ ALLBOOKS = \
 	wine-user \
 	winelib-user
 
-BOOKS_TARGETS = \
-	$(ALLBOOKS:%=%/index.html) \
-	$(ALLBOOKS:%=%.pdf) \
-	$(ALLBOOKS:%=%.ps)
-
 all: $(MAN_TARGETS)
 
 @MAKE_RULES@
 
-everything: $(MAN_TARGETS) $(BOOKS_TARGETS)
-doc: $(BOOKS_TARGETS)
+everything: $(MAN_TARGETS) doc
+doc: html pdf ps
 html: $(ALLBOOKS:%=%/index.html)
 pdf: $(ALLBOOKS:%=%.pdf)
 ps: $(ALLBOOKS:%=%.ps)
