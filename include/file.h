@@ -77,7 +77,8 @@ extern BOOL FILE_Stat( LPCSTR unixName, BY_HANDLE_FILE_INFORMATION *info );
 extern HFILE16 FILE_Dup2( HFILE16 hFile1, HFILE16 hFile2 );
 extern HANDLE FILE_CreateFile( LPCSTR filename, DWORD access, DWORD sharing,
                                LPSECURITY_ATTRIBUTES sa, DWORD creation,
-                               DWORD attributes, HANDLE template, BOOL fail_read_only );
+                               DWORD attributes, HANDLE template, BOOL fail_read_only,
+                               UINT drive_type );
 extern HANDLE FILE_CreateDevice( int client_id, DWORD access, LPSECURITY_ATTRIBUTES sa );
 
 extern LONG WINAPI WIN16_hread(HFILE16,SEGPTR,LONG);

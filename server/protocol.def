@@ -523,6 +523,7 @@ enum event_op { PULSE_EVENT, SET_EVENT, RESET_EVENT };
     unsigned int sharing;       /* sharing flags */
     int          create;        /* file create action */
     unsigned int attrs;         /* file attributes for creation */
+    int          drive_type;    /* type of drive the file is on */
     VARARG(filename,string);    /* file name */
 @REPLY
     handle_t     handle;        /* handle to the file */
@@ -825,6 +826,7 @@ enum event_op { PULSE_EVENT, SET_EVENT, RESET_EVENT };
     void*        base;          /* default base addr (for VPROT_IMAGE mapping) */
     handle_t     shared_file;   /* shared mapping file handle */
     int          shared_size;   /* shared mapping size */
+    int          drive_type;    /* type of drive the file is on */
 @END
 
 

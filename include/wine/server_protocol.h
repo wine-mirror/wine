@@ -566,6 +566,7 @@ struct create_file_request
     unsigned int sharing;
     int          create;
     unsigned int attrs;
+    int          drive_type;
     /* VARARG(filename,string); */
     handle_t     handle;
 };
@@ -907,6 +908,7 @@ struct get_mapping_info_request
     void*        base;
     handle_t     shared_file;
     int          shared_size;
+    int          drive_type;
 };
 
 
@@ -2054,6 +2056,6 @@ union generic_request
     struct get_window_properties_request get_window_properties;
 };
 
-#define SERVER_PROTOCOL_VERSION 61
+#define SERVER_PROTOCOL_VERSION 62
 
 #endif /* __WINE_WINE_SERVER_PROTOCOL_H */

@@ -766,7 +766,7 @@ HANDLE DOSFS_OpenDevice( const char *name, DWORD access, DWORD attributes, LPSEC
 		if (!strcmp(DOSFS_Devices[i].name,"NUL"))
                     return FILE_CreateFile( "/dev/null", access,
                                             FILE_SHARE_READ|FILE_SHARE_WRITE, sa,
-                                            OPEN_EXISTING, 0, 0, TRUE );
+                                            OPEN_EXISTING, 0, 0, TRUE, DRIVE_UNKNOWN );
 		if (!strcmp(DOSFS_Devices[i].name,"CON")) {
 			HANDLE to_dup;
 			switch (access & (GENERIC_READ|GENERIC_WRITE)) {

@@ -380,6 +380,7 @@ DECL_HANDLER(get_mapping_info)
         req->base        = mapping->base;
         req->shared_file = 0;
         req->shared_size = mapping->shared_size;
+        req->drive_type  = get_file_drive_type( mapping->file );
         if (mapping->shared_file)
             req->shared_file = alloc_handle( current->process, mapping->shared_file,
                                              GENERIC_READ|GENERIC_WRITE, 0 );

@@ -38,6 +38,7 @@ struct file
     unsigned int        access;     /* file access (GENERIC_READ/WRITE) */
     unsigned int        flags;      /* flags (FILE_FLAG_*) */
     unsigned int        sharing;    /* file sharing mode */
+    int                 drive_type; /* type of drive the file is on */
 };
 
 #define NAME_HASH_SIZE 37
@@ -103,23 +104,25 @@ static int check_sharing( const char *name, int hash, unsigned int access,
 /* create a file from a file descriptor */
 /* if the function fails the fd is closed */
 static struct file *create_file_for_fd( int fd, unsigned int access, unsigned int sharing,
-                                        unsigned int attrs )
+                                        unsigned int attrs, int drive_type )
 {
     struct file *file;
     if ((file = alloc_object( &file_ops, fd )))
     {
-        file->name    = NULL;
-        file->next    = NULL;
-        file->access  = access;
-        file->flags   = attrs;
-        file->sharing = sharing;
+        file->name       = NULL;
+        file->next       = NULL;
+        file->access     = access;
+        file->flags      = attrs;
+        file->sharing    = sharing;
+        file->drive_type = drive_type;
     }
     return file;
 }
 
 
 static struct file *create_file( const char *nameptr, size_t len, unsigned int access,
-                                 unsigned int sharing, int create, unsigned int attrs )
+                                 unsigned int sharing, int create, unsigned int attrs,
+                                 int drive_type )
 {
     struct file *file;
     int hash, flags;
@@ -169,7 +172,7 @@ static struct file *create_file( const char *nameptr, size_t len, unsigned int a
         goto error;
     }
 
-    if (!(file = create_file_for_fd( fd, access, sharing, attrs )))
+    if (!(file = create_file_for_fd( fd, access, sharing, attrs, drive_type )))
     {
         free( name );
         return NULL;
@@ -191,6 +194,12 @@ static struct file *create_file( const char *nameptr, size_t len, unsigned int a
 int is_same_file( struct file *file1, struct file *file2 )
 {
     return !strcmp( file1->name, file2->name );
+}
+
+/* get the type of drive the file is on */
+int get_file_drive_type( struct file *file )
+{
+    return file->drive_type;
 }
 
 /* Create an anonymous Unix file */
@@ -223,7 +232,7 @@ struct file *create_temp_file( int access )
     int fd;
 
     if ((fd = create_anonymous_file()) == -1) return NULL;
-    return create_file_for_fd( fd, access, 0, 0 );
+    return create_file_for_fd( fd, access, 0, 0, DRIVE_FIXED );
 }
 
 static void file_dump( struct object *obj, int verbose )
@@ -463,7 +472,7 @@ DECL_HANDLER(create_file)
 
     req->handle = 0;
     if ((file = create_file( get_req_data(req), get_req_data_size(req), req->access,
-                             req->sharing, req->create, req->attrs )))
+                             req->sharing, req->create, req->attrs, req->drive_type )))
     {
         req->handle = alloc_handle( current->process, file, req->access, req->inherit );
         release_object( file );
@@ -482,7 +491,8 @@ DECL_HANDLER(alloc_file_handle)
         set_error( STATUS_INVALID_HANDLE );
         return;
     }
-    if ((file = create_file_for_fd( fd, req->access, FILE_SHARE_READ | FILE_SHARE_WRITE, 0 )))
+    if ((file = create_file_for_fd( fd, req->access, FILE_SHARE_READ | FILE_SHARE_WRITE,
+                                    0, DRIVE_UNKNOWN )))
     {
         req->handle = alloc_handle( current->process, file, req->access, 0 );
         release_object( file );

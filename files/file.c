@@ -281,7 +281,8 @@ static HANDLE FILE_OpenConsole( BOOL output, DWORD access, LPSECURITY_ATTRIBUTES
  */
 HANDLE FILE_CreateFile( LPCSTR filename, DWORD access, DWORD sharing,
                         LPSECURITY_ATTRIBUTES sa, DWORD creation,
-                        DWORD attributes, HANDLE template, BOOL fail_read_only )
+                        DWORD attributes, HANDLE template, BOOL fail_read_only,
+                        UINT drive_type )
 {
     DWORD err;
     HANDLE ret;
@@ -297,11 +298,12 @@ HANDLE FILE_CreateFile( LPCSTR filename, DWORD access, DWORD sharing,
  restart:
     SERVER_START_VAR_REQ( create_file, len )
     {
-        req->access  = access;
-        req->inherit = (sa && (sa->nLength>=sizeof(*sa)) && sa->bInheritHandle);
-        req->sharing = sharing;
-        req->create  = creation;
-        req->attrs   = attributes;
+        req->access     = access;
+        req->inherit    = (sa && (sa->nLength>=sizeof(*sa)) && sa->bInheritHandle);
+        req->sharing    = sharing;
+        req->create     = creation;
+        req->attrs      = attributes;
+        req->drive_type = drive_type;
         memcpy( server_data_ptr(req), filename, len );
         SetLastError(0);
         err = SERVER_CALL();
@@ -509,7 +511,8 @@ HANDLE WINAPI CreateFileA( LPCSTR filename, DWORD access, DWORD sharing,
 
     ret = FILE_CreateFile( full_name.long_name, access, sharing,
                            sa, creation, attributes, template,
-                           DRIVE_GetFlags(full_name.drive) & DRIVE_FAIL_READ_ONLY );
+                           DRIVE_GetFlags(full_name.drive) & DRIVE_FAIL_READ_ONLY,
+                           GetDriveTypeA( full_name.short_name ) );
  done:
     if (!ret) ret = INVALID_HANDLE_VALUE;
     return ret;
@@ -977,7 +980,8 @@ found:
 
     hFileRet = FILE_CreateFile( full_name.long_name, access, sharing,
                                 NULL, OPEN_EXISTING, 0, 0,
-                                DRIVE_GetFlags(full_name.drive) & DRIVE_FAIL_READ_ONLY );
+                                DRIVE_GetFlags(full_name.drive) & DRIVE_FAIL_READ_ONLY,
+                                GetDriveTypeA( full_name.short_name ) );
     if (!hFileRet) goto not_found;
 
     GetFileTime( hFileRet, NULL, NULL, &filetime );
