@@ -1045,25 +1045,29 @@ NTSTATUS wine_nt_to_unix_file_name( const UNICODE_STRING *nameW, ANSI_STRING *un
 
     if ((pos = get_dos_prefix_len( nameW )))
     {
+        BOOLEAN is_unc = FALSE;
+
         name += pos;
         name_len -= pos;
 
         /* check for UNC prefix */
         if (name_len > 4 && !memicmpW( name, uncW, 4 ))
         {
-            FIXME( "UNC name %s not supported\n", debugstr_us(nameW) );
-            return STATUS_OBJECT_NAME_NOT_FOUND;
+            name += 3;
+            name_len -= 3;
+            is_unc = TRUE;
         }
-
-        /* check for a drive letter with path */
-        if (name_len < 3 || !isalphaW(name[0]) || name[1] != ':' || !IS_SEPARATOR(name[2]))
+        else
         {
-            /* not a drive with path, try other DOS devices */
-            return get_dos_device( name, name_len, unix_name_ret );
+            /* check for a drive letter with path */
+            if (name_len < 3 || !isalphaW(name[0]) || name[1] != ':' || !IS_SEPARATOR(name[2]))
+            {
+                /* not a drive with path, try other DOS devices */
+                return get_dos_device( name, name_len, unix_name_ret );
+            }
+            name += 2;  /* skip drive letter */
+            name_len -= 2;
         }
-
-        name += 2;  /* skip drive letter */
-        name_len -= 2;
 
         /* check for invalid characters */
         for (p = name; p < name + name_len; p++)
@@ -1071,13 +1075,23 @@ NTSTATUS wine_nt_to_unix_file_name( const UNICODE_STRING *nameW, ANSI_STRING *un
 
         unix_len = ntdll_wcstoumbs( 0, name, name_len, NULL, 0, NULL, NULL );
         unix_len += MAX_DIR_ENTRY_LEN + 3;
-        unix_len += strlen(config_dir) + sizeof("/dosdevices/a:");
+        unix_len += strlen(config_dir) + sizeof("/dosdevices/") + 3;
         if (!(unix_name = RtlAllocateHeap( GetProcessHeap(), 0, unix_len )))
             return STATUS_NO_MEMORY;
         strcpy( unix_name, config_dir );
-        strcat( unix_name, "/dosdevices/a:" );
+        strcat( unix_name, "/dosdevices/" );
         pos = strlen(unix_name);
-        unix_name[pos - 2] = tolowerW( name[-2] );
+        if (is_unc)
+        {
+            strcpy( unix_name + pos, "unc" );
+            pos += 3;
+        }
+        else
+        {
+            unix_name[pos++] = tolowerW( name[-2] );
+            unix_name[pos++] = ':';
+            unix_name[pos] = 0;
+        }
     }
     else  /* no DOS prefix, assume NT native name, map directly to Unix */
     {
