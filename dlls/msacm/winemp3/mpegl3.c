@@ -30,7 +30,7 @@
 #include "mmsystem.h"
 #include "mmreg.h"
 #include "msacm.h"
-#include "../msacmdrv.h"
+#include "msacmdrv.h"
 #include "mpg123.h"
 #include "mpglib.h"
 

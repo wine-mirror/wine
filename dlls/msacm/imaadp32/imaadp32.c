@@ -30,7 +30,7 @@
 #include "mmsystem.h"
 #include "mmreg.h"
 #include "msacm.h"
-#include "../msacmdrv.h"
+#include "msacmdrv.h"
 #include "wine/debug.h"
 
 /* see http://www.pcisys.net/~melanson/codecs/adpcm.txt for the details */

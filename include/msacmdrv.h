@@ -25,7 +25,6 @@
 
 #include "windef.h"
 #include "winbase.h"
-#include "wine/windef16.h"
 #include "mmsystem.h"
 #include "mmreg.h"
 #include "msacm.h"
@@ -95,33 +94,6 @@ typedef struct _ACMDRVOPENDESCW
   DWORD   dnDevNode;
 } ACMDRVOPENDESCW, *PACMDRVOPENDESCW;
 
-typedef struct _ACMDRVOPENDESC16
-{
-  DWORD  cbStruct;
-  FOURCC fccType;
-  FOURCC fccComp;
-  DWORD  dwVersion;
-  DWORD  dwFlags;
-  DWORD  dwError;
-  LPCSTR pszSectionName;
-  LPCSTR pszAliasName;
-  DWORD  dnDevNode;
-} ACMDRVOPENDESC16, *NPACMDRVOPENDESC16, *LPACMDRVOPENDESC16;
-
-typedef struct _ACMDRVSTREAMINSTANCE16
-{
-  DWORD            cbStruct;
-  LPWAVEFORMATEX   pwfxSrc;
-  LPWAVEFORMATEX   pwfxDst;
-  LPWAVEFILTER     pwfltr;
-  DWORD            dwCallback;
-  DWORD            dwInstance;
-  DWORD            fdwOpen;
-  DWORD            fdwDriver;
-  DWORD            dwDriver;
-  HACMSTREAM16     has;
-} ACMDRVSTREAMINSTANCE16, *NPACMDRVSTREAMINSTANCE16, *LPACMDRVSTREAMINSTANCE16;
-
 typedef struct _ACMDRVSTREAMINSTANCE
 {
   DWORD           cbStruct;
@@ -135,34 +107,6 @@ typedef struct _ACMDRVSTREAMINSTANCE
   DWORD           dwDriver;
   HACMSTREAM    has;
 } ACMDRVSTREAMINSTANCE, *PACMDRVSTREAMINSTANCE;
-
-typedef struct _ACMDRVSTREAMHEADER16 *LPACMDRVSTREAMHEADER16;
-typedef struct _ACMDRVSTREAMHEADER16 {
-  DWORD  cbStruct;
-  DWORD  fdwStatus;
-  DWORD  dwUser;
-  LPBYTE pbSrc;
-  DWORD  cbSrcLength;
-  DWORD  cbSrcLengthUsed;
-  DWORD  dwSrcUser;
-  LPBYTE pbDst;
-  DWORD  cbDstLength;
-  DWORD  cbDstLengthUsed;
-  DWORD  dwDstUser;
-
-  DWORD fdwConvert;
-  LPACMDRVSTREAMHEADER16 *padshNext;
-  DWORD fdwDriver;
-  DWORD dwDriver;
-
-  /* Internal fields for ACM */
-  DWORD  fdwPrepared;
-  DWORD  dwPrepared;
-  LPBYTE pbPreparedSrc;
-  DWORD  cbPreparedSrcLength;
-  LPBYTE pbPreparedDst;
-  DWORD  cbPreparedDstLength;
-} ACMDRVSTREAMHEADER16, *NPACMDRVSTREAMHEADER16;
 
 typedef struct _ACMDRVSTREAMHEADER *PACMDRVSTREAMHEADER;
 typedef struct _ACMDRVSTREAMHEADER {
@@ -198,18 +142,7 @@ typedef struct _ACMDRVSTREAMSIZE
   DWORD fdwSize;
   DWORD cbSrcLength;
   DWORD cbDstLength;
-} ACMDRVSTREAMSIZE16, *NPACMDRVSTREAMSIZE16, *LPACMDRVSTREAMSIZE16,
-  ACMDRVSTREAMSIZE, *PACMDRVSTREAMSIZE;
-
-typedef struct _ACMDRVFORMATSUGGEST16
-{
-  DWORD            cbStruct;
-  DWORD            fdwSuggest;
-  LPWAVEFORMATEX   pwfxSrc;
-  DWORD            cbwfxSrc;
-  LPWAVEFORMATEX   pwfxDst;
-  DWORD            cbwfxDst;
-} ACMDRVFORMATSUGGEST16, *NPACMDRVFORMATSUGGEST, *LPACMDRVFORMATSUGGEST;
+} ACMDRVSTREAMSIZE, *PACMDRVSTREAMSIZE;
 
 typedef struct _ACMDRVFORMATSUGGEST
 {

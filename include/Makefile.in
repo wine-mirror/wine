@@ -119,6 +119,7 @@ WINDOWS_INCLUDES = \
 	mmsystem.h \
 	msacm.h \
 	msacmdlg.h \
+	msacmdrv.h \
 	msi.h \
 	msiquery.h \
 	mssip.h \

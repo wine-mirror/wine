@@ -30,7 +30,7 @@
 #include "mmsystem.h"
 #include "mmreg.h"
 #include "msacm.h"
-#include "../msacmdrv.h"
+#include "msacmdrv.h"
 #include "wine/debug.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(g711);
