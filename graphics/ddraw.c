@@ -4332,7 +4332,10 @@ HRESULT WINAPI Xlib_DirectDrawCreate( LPDIRECTDRAW *lplpDD, LPUNKNOWN pUnkOuter)
 
 	/* At DirectDraw creation, the depth is the default depth */
 	depth = DefaultDepthOfScreen(X11DRV_GetXScreen());
-	_common_depth_to_pixelformat(depth, &((*ilplpDD)->d.directdraw_pixelformat), &((*ilplpDD)->d.screen_pixelformat), NULL);
+	_common_depth_to_pixelformat(depth,
+				     &((*ilplpDD)->d.directdraw_pixelformat),
+				     &((*ilplpDD)->d.screen_pixelformat),
+				     &((*ilplpDD)->d.pixmap_depth));
 	(*ilplpDD)->d.height = MONITOR_GetHeight(&MONITOR_PrimaryMonitor);
 	(*ilplpDD)->d.width = MONITOR_GetWidth(&MONITOR_PrimaryMonitor);
 
