@@ -262,7 +262,7 @@ TAB_InsertItem (WND *wndPtr, WPARAM32 wParam, LPARAM lParam)
 	/* post insert copy */
 	if (iItem < infoPtr->uNumItem - 1) {
 	    memcpy (&infoPtr->items[iItem+1], &oldItems[iItem],
-		    (infoPtr->uNumItem - iItem) * sizeof(TAB_ITEM));
+		    (infoPtr->uNumItem - iItem - 1) * sizeof(TAB_ITEM));
 
 	}
 	

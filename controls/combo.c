@@ -425,7 +425,7 @@ static void CBPaintText(LPHEADCOMBO lphc, HDC32 hdc)
 
    if( lphc->wState & CBF_EDIT )
    {
-	if( CB_HASSTRINGS(lphc) ) SetWindowText32A( lphc->hWndEdit, pText );
+	if( CB_HASSTRINGS(lphc) ) SetWindowText32A( lphc->hWndEdit, pText ? pText : "" );
 	if( lphc->wState & CBF_FOCUSED ) 
 	    SendMessage32A( lphc->hWndEdit, EM_SETSEL32, 0, (LPARAM)(-1));
    }
@@ -491,7 +491,7 @@ static void CBPaintText(LPHEADCOMBO lphc, HDC32 hdc)
 	    {
 		ExtTextOut32A( hDC, rect.left + 1, rect.top + 1,
                                ETO_OPAQUE | ETO_CLIPPED, &rect,
-                               (pText) ? pText : "" , size, NULL );
+                               pText ? pText : "" , size, NULL );
 		if(lphc->wState & CBF_FOCUSED && !(lphc->wState & CBF_DROPPED))
 		    DrawFocusRect32( hDC, &rect );
 	    }
@@ -504,7 +504,8 @@ static void CBPaintText(LPHEADCOMBO lphc, HDC32 hdc)
 	    }
 	}
    }
-   HeapFree( GetProcessHeap(), 0, pText );
+   if (pText)
+	HeapFree( GetProcessHeap(), 0, pText );
 }
 
 /***********************************************************************

@@ -1001,6 +1001,11 @@ BOOL32 WINAPI HeapFree(
     flags &= HEAP_NO_SERIALIZE;
     flags |= heapPtr->flags;
     if (!(flags & HEAP_NO_SERIALIZE)) HeapLock( heap );
+    if (!ptr)
+    {
+	WARN(heap, "(%08x,%08lx,%08lx): asked to free NULL\n",
+                   heap, flags, (DWORD)ptr );
+    }
     if (!ptr || !HeapValidate( heap, HEAP_NO_SERIALIZE, ptr ))
     {
         if (!(flags & HEAP_NO_SERIALIZE)) HeapUnlock( heap );
