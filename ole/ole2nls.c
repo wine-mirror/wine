@@ -2104,8 +2104,11 @@ INT WINAPI LCMapStringA(
                                         NORM_IGNORECASE     | \
                                         NORM_IGNORENONSPACE | \
                                         SORT_STRINGSORT     | \
-                                        NORM_IGNOREWIDTH)
-
+                                        NORM_IGNOREWIDTH    | \
+                                        NORM_IGNOREKANATYPE)
+  /* FIXME: as long as we don't support Kanakana nor Hirigana 
+   * characters, we can support NORM_IGNOREKANATYPE
+   */
   if (mapflags & ~LCMAPSTRINGA_SUPPORTED_FLAGS)
   {
     FIXME_(string)("(0x%04lx,0x%08lx,%p,%d,%p,%d): "
