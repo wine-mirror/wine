@@ -553,11 +553,12 @@ DECL_HANDLER(get_window_children)
     len = min( get_reply_max_size(), total * sizeof(user_handle_t) );
     if (len && ((data = set_reply_data_size( len ))))
     {
-        for (ptr = parent->first_child; ptr && len; ptr = ptr->next, len -= sizeof(*data))
+        for (ptr = parent->first_child; ptr && len; ptr = ptr->next)
         {
             if (req->atom && ptr->atom != req->atom) continue;
             if (req->tid && get_thread_id(ptr->thread) != req->tid) continue;
             *data++ = ptr->handle;
+            len -= sizeof(*data);
         }
     }
 }
