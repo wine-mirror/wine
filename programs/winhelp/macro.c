@@ -27,6 +27,18 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(winhelp);
 
+/*******      helper functions     *******/
+WINHELP_BUTTON**        MACRO_LookupButton(WINHELP_WINDOW* win, LPCSTR name)
+{
+    WINHELP_BUTTON**    b;
+
+    for (b = &win->first_button; *b; b = &(*b)->next)
+        if (!lstrcmpi(name, (*b)->lpszID)) break;
+    return b;
+}
+
+/******* real macro implementation *******/
+
 void MACRO_About(void)
 {
     WINE_FIXME("About()\n");
@@ -78,14 +90,49 @@ void MACRO_BrowseButtons(void)
     MACRO_CreateButton("BTN_NEXT", "&>>", "Next()");
 }
 
-void MACRO_ChangeButtonBinding(LPCSTR str1, LPCSTR str2)
+void MACRO_ChangeButtonBinding(LPCSTR id, LPCSTR macro)
 {
-    WINE_FIXME("ChangeButtonBinding(\"%s\", \"%s\")\n", str1, str2);
+    WINHELP_WINDOW*     win = Globals.active_win;
+    WINHELP_BUTTON*     button;
+    WINHELP_BUTTON**    b;
+    LONG                size;
+    LPSTR               ptr;
+
+    b = MACRO_LookupButton(win, id);
+    if (!*b) {WINE_FIXME("Couldn't find button '%s'\n", id); return;}
+
+    size = sizeof(WINHELP_BUTTON) + lstrlen(id) + 
+        lstrlen((*b)->lpszName) + lstrlen(macro) + 3;
+
+    button = HeapAlloc(GetProcessHeap(), 0, size);
+    if (!button) return;
+
+    button->next  = (*b)->next;
+    button->hWnd  = (*b)->hWnd;
+    button->wParam = (*b)->wParam;
+
+    ptr = (char*)button + sizeof(WINHELP_BUTTON);
+
+    lstrcpy(ptr, (LPSTR) id);
+    button->lpszID = ptr;
+    ptr += lstrlen(id) + 1;
+
+    lstrcpy(ptr, (LPSTR) (*b)->lpszName);
+    button->lpszName = ptr;
+    ptr += lstrlen((*b)->lpszName) + 1;
+
+    lstrcpy(ptr, (LPSTR) macro);
+    button->lpszMacro = ptr;
+
+    *b = button;
+
+    SendMessage(win->hMainWnd, WM_USER, 0, 0);
 }
 
-void MACRO_ChangeEnable(LPCSTR str1, LPCSTR str2)
+void MACRO_ChangeEnable(LPCSTR id, LPCSTR macro)
 {
-    WINE_FIXME("ChangeEnable(\"%s\", \"%s\")\n", str1, str2);
+    MACRO_ChangeButtonBinding(id, macro);
+    MACRO_EnableButton(id);
 }
 
 void MACRO_ChangeItemBinding(LPCSTR str1, LPCSTR str2)
@@ -193,9 +240,14 @@ void MACRO_DestroyButton(LPCSTR str)
     WINE_FIXME("DestroyButton(\"%s\")\n", str);
 }
 
-void MACRO_DisableButton(LPCSTR str)
+void MACRO_DisableButton(LPCSTR id)
 {
-    WINE_FIXME("DisableButton(\"%s\")\n", str);
+    WINHELP_BUTTON**    b;
+
+    b = MACRO_LookupButton(Globals.active_win, id);
+    if (!*b) {WINE_FIXME("Couldn't find button '%s'\n", id); return;}
+
+    EnableWindow((*b)->hWnd, FALSE);
 }
 
 void MACRO_DisableItem(LPCSTR str)
@@ -203,9 +255,14 @@ void MACRO_DisableItem(LPCSTR str)
     WINE_FIXME("DisableItem(\"%s\")\n", str);
 }
 
-void MACRO_EnableButton(LPCSTR str)
+void MACRO_EnableButton(LPCSTR id)
 {
-    WINE_FIXME("EnableButton(\"%s\")\n", str);
+    WINHELP_BUTTON**    b;
+
+    b = MACRO_LookupButton(Globals.active_win, id);
+    if (!*b) {WINE_FIXME("Couldn't find button '%s'\n", id); return;}
+
+    EnableWindow((*b)->hWnd, TRUE);
 }
 
 void MACRO_EnableItem(LPCSTR str)
@@ -251,8 +308,7 @@ void MACRO_ExtInsertMenu(LPCSTR str1, LPCSTR str2, LPCSTR str3, LONG u1, LONG u2
 
 BOOL MACRO_FileExist(LPCSTR str)
 {
-    WINE_FIXME("FileExist(\"%s\")\n", str);
-    return TRUE;
+    return GetFileAttributes(str) != 0xFFFFFFFF;
 }
 
 void MACRO_FileOpen(void)
