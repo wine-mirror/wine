@@ -88,7 +88,7 @@ extern BOOL DIEnumDevicesCallbackAtoW(LPCDIDEVICEOBJECTINSTANCEA, LPVOID);
 /* Various debug tools */
 extern void _dump_cooperativelevel_DI(DWORD dwFlags) ;
 extern void _dump_EnumObjects_flags(DWORD dwFlags) ;
-extern void _dump_DIPROPHEADER(DIPROPHEADER *diph) ;
+extern void _dump_DIPROPHEADER(LPCDIPROPHEADER diph) ;
 extern void _dump_OBJECTINSTANCEA(DIDEVICEOBJECTINSTANCEA *ddoi) ;
 extern void _dump_OBJECTINSTANCEW(DIDEVICEOBJECTINSTANCEW *ddoi) ;
 extern void _dump_DIDATAFORMAT(const DIDATAFORMAT *df) ;

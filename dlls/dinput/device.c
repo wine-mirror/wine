@@ -108,7 +108,7 @@ void _dump_EnumObjects_flags(DWORD dwFlags) {
     }
 }
 
-void _dump_DIPROPHEADER(DIPROPHEADER *diph) {
+void _dump_DIPROPHEADER(LPCDIPROPHEADER diph) {
     if (TRACE_ON(dinput)) {
 	DPRINTF("  - dwObj = 0x%08lx\n", diph->dwObj);
 	DPRINTF("  - dwHow = %s\n",
