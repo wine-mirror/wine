@@ -90,22 +90,22 @@ static void test_GetAcceptLanguagesA(void)
     buffersize = buffersize2 = 1;
     memset(buffer, 0, sizeof(buffer));
     retval = pGetAcceptLanguagesA( buffer, &buffersize);
-    todo_wine ok(retval == E_INVALIDARG, "function result wrong: got %08lx; expected E_INVALIDARG\n", retval);
-    todo_wine ok(buffersize == 0,
+    ok(retval == E_INVALIDARG, "function result wrong: got %08lx; expected E_INVALIDARG\n", retval);
+    ok(buffersize == 0,
                  "buffersize wrong: got %08lx, expected 0 (2nd parameter;Win2k)\n", buffersize);
-    todo_wine ok(ERROR_INSUFFICIENT_BUFFER == GetLastError(),
+    ok(ERROR_INSUFFICIENT_BUFFER == GetLastError(),
                  "last error wrong: got %08lx; expected ERROR_INSUFFICIENT_BUFFER\n", GetLastError());
-    todo_wine ok(buffersize2 == strlen(buffer),
+    ok(buffersize2 == strlen(buffer),
                  "buffer content (length) wrong: got %08x, expected %08lx \n", strlen(buffer), buffersize2);
 
     buffersize = buffersize2 = exactsize;
     memset(buffer, 0, sizeof(buffer));
     SetLastError(ERROR_SUCCESS);
     retval = pGetAcceptLanguagesA( buffer, &buffersize);
-    todo_wine ok(retval == E_INVALIDARG, "function result wrong: got %08lx; expected E_INVALIDARG\n", retval);
-    todo_wine ok(buffersize == 0,
+    ok(retval == E_INVALIDARG, "function result wrong: got %08lx; expected E_INVALIDARG\n", retval);
+    ok(buffersize == 0,
                  "buffersize wrong: got %08lx, expected 0 (2nd parameter;Win2k)\n", buffersize);
-    todo_wine ok(ERROR_INSUFFICIENT_BUFFER == GetLastError(),
+    ok(ERROR_INSUFFICIENT_BUFFER == GetLastError(),
                  "last error wrong: got %08lx; expected ERROR_INSUFFICIENT_BUFFER\n", GetLastError());
     ok(buffersize2 == strlen(buffer),
        "buffer content (length) wrong: got %08x, expected %08lx \n", strlen(buffer), buffersize2);
