@@ -48,13 +48,13 @@ BEGIN
     CONTROL "Created", IDC_SB, STATUSCLASSNAME, 0, 0,0,0,0
 END
 
-IDD_ABOUT DIALOG 0, 0, 150, 55
+IDD_ABOUT DIALOG 0, 0, 150, 60
 STYLE WS_POPUP
 CAPTION "About Wine Test Shell"
 BEGIN
-    CTEXT "This program extracts and runs a\r\nseries of tests which check Wine's\r\nconformance to Microsoft Windows.",
+    CTEXT "This program extracts and runs a series of tests which check Wine's conformance to the Windows API.",
         IDC_STATIC, 10, 5, 130, 30
-    DEFPUSHBUTTON "Close", IDCANCEL, 55, 35, 40, 14
+    DEFPUSHBUTTON "Close", IDCANCEL, 55, 40, 40, 14
 END
 
 /* BINRES wine.ico */
