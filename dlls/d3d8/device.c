@@ -385,6 +385,7 @@ SHORT bytesPerPixel(D3DFORMAT fmt) {
     case D3DFMT_X8R8G8B8:         retVal = 4; break;
     case D3DFMT_R8G8B8:           retVal = 3; break;
     case D3DFMT_R5G6B5:           retVal = 2; break;
+    case D3DFMT_A1R5G5B5:         retVal = 2; break;
     default:
         FIXME("Unhandled fmt %d\n", fmt);
         retVal = 4;
@@ -404,6 +405,7 @@ GLint fmt2glintFmt(D3DFORMAT fmt) {
     case D3DFMT_X8R8G8B8:         retVal = GL_RGB8; break;
     case D3DFMT_R8G8B8:           retVal = GL_RGB8; break;
     case D3DFMT_R5G6B5:           retVal = GL_RGB5; break; /* fixme: internal format 6 for g? */
+    case D3DFMT_A1R5G5B5:         retVal = GL_RGB5_A1; break;
     default:
         FIXME("Unhandled fmt %d\n", fmt);
         retVal = 4;
@@ -420,6 +422,7 @@ GLenum fmt2glFmt(D3DFORMAT fmt) {
     case D3DFMT_X8R8G8B8:         retVal = GL_BGRA; break;
     case D3DFMT_R8G8B8:           retVal = GL_BGR; break;
     case D3DFMT_R5G6B5:           retVal = GL_BGR; break;
+    case D3DFMT_A1R5G5B5:         retVal = GL_BGRA; break;
     default:
         FIXME("Unhandled fmt %d\n", fmt);
         retVal = 4;
@@ -436,6 +439,7 @@ DWORD fmt2glType(D3DFORMAT fmt) {
     case D3DFMT_X8R8G8B8:         retVal = GL_UNSIGNED_BYTE; break;
     case D3DFMT_R5G6B5:           retVal = GL_UNSIGNED_SHORT_5_6_5_REV; break;
     case D3DFMT_R8G8B8:           retVal = GL_UNSIGNED_BYTE; break;
+    case D3DFMT_A1R5G5B5:         retVal = GL_UNSIGNED_SHORT_1_5_5_5_REV; break;
     default:
         FIXME("Unhandled fmt %d\n", fmt);
         retVal = 4;
@@ -1000,7 +1004,35 @@ HRESULT  WINAPI  IDirect3DDevice8Impl_CopyRects(LPDIRECT3DDEVICE8 iface, IDirect
         memcpy(dst->allocatedMemory, src->allocatedMemory, src->myDesc.Size);
 
     } else {
-        FIXME("(%p) : stub\n", This);
+        int i;
+        int bytesPerPixel = ((IDirect3DSurface8Impl *)pSourceSurface)->bytesPerPixel;
+        int pitchFrom     = ((IDirect3DSurface8Impl *)pSourceSurface)->myDesc.Width * bytesPerPixel;
+        int pitchTo       = ((IDirect3DSurface8Impl *)pDestinationSurface)->myDesc.Width * bytesPerPixel;
+
+        void *copyfrom = ((IDirect3DSurface8Impl *)pSourceSurface)->allocatedMemory;
+        void *copyto   = ((IDirect3DSurface8Impl *)pDestinationSurface)->allocatedMemory;
+
+        /* Copy rect by rect */
+        for (i=0; i<cRects; i++) {
+            CONST RECT *r = &pSourceRectsArray[i];
+            CONST POINT *p = &pDestPointsArray[i];
+            void *from;
+            void *to;
+            int   copyperline   = (r->right - r->left) * bytesPerPixel;
+            int j;
+
+            TRACE("Copying rect %d (%d,%d),(%d,%d) -> (%ld,%ld)\n", i, r->left, r->top, 
+                  r->right, r->bottom, p->x, p->y);
+
+            /* Find where to start */
+            from = copyfrom + (r->top * pitchFrom) + (r->left * bytesPerPixel);
+            to   = copyto   + (p->y * pitchFrom) + (p->x * bytesPerPixel);
+
+            /* Copy line by line */
+            for (j=0; j<(r->bottom - r->top); j++) {
+               memcpy(to + (j*pitchTo), from + (j*pitchFrom), copyperline);
+            }
+        }
     }
     return D3D_OK;
 }
