@@ -111,7 +111,7 @@ debug_channels (animate comboex commctrl datetime header hotkey imagelist ipaddr
  91 stdcall _TrackMouseEvent(ptr) _TrackMouseEvent
 
 151 stdcall CreateMRUListA(ptr) CreateMRUListA
-152 stdcall FreeMRUList(ptr) FreeMRUListA
+152 stdcall FreeMRUList(long) FreeMRUList
 153 stdcall AddMRUStringA(long str) AddMRUStringA
 154 stdcall EnumMRUListA(long long ptr long) EnumMRUListA 
 155 stdcall FindMRUStringA(long str ptr) FindMRUStringA
@@ -191,11 +191,11 @@ debug_channels (animate comboex commctrl datetime header hotkey imagelist ipaddr
 389 stub @
 390 stub @
 
-400 stub CreateMRUListW@4
-401 stub AddMRUStringW@8
-402 stub FindMRUStringW@12
-403 stub EnumMRUListW@16
-404 stub CreateMRUListLazyW@16
+400 stdcall CreateMRUListW(ptr) CreateMRUListW
+401 stdcall AddMRUStringW(long wstr) AddMRUStringW
+402 stdcall FindMRUStringW(long wstr ptr) FindMRUStringW
+403 stdcall EnumMRUListW(long long ptr long) EnumMRUListW
+404 stdcall CreateMRUListLazyW(ptr long long long) CreateMRUListLazyW
 
 410 stdcall @(long long long long) COMCTL32_410
 411 stdcall @(long long long) COMCTL32_411
