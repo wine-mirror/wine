@@ -183,17 +183,17 @@ init	RPCRT4_LibMain
 @ stdcall UuidToStringA(ptr ptr) UuidToStringA
 @ stdcall UuidToStringW(ptr ptr) UuidToStringW
 
-@ stub CStdStubBuffer_QueryInterface
-@ stub CStdStubBuffer_AddRef
-@ stub CStdStubBuffer_Connect
-@ stub CStdStubBuffer_Disconnect
-@ stub CStdStubBuffer_Invoke
-@ stub CStdStubBuffer_IsIIDSupported
-@ stub CStdStubBuffer_CountRefs
-@ stub CStdStubBuffer_DebugServerQueryInterface
-@ stub CStdStubBuffer_DebugServerRelease
+@ stdcall CStdStubBuffer_QueryInterface(ptr ptr) CStdStubBuffer_QueryInterface
+@ stdcall CStdStubBuffer_AddRef(ptr) CStdStubBuffer_AddRef
+@ stdcall CStdStubBuffer_Connect(ptr ptr) CStdStubBuffer_Connect
+@ stdcall CStdStubBuffer_Disconnect(ptr) CStdStubBuffer_Disconnect
+@ stdcall CStdStubBuffer_Invoke(ptr ptr ptr) CStdStubBuffer_Invoke
+@ stdcall CStdStubBuffer_IsIIDSupported(ptr ptr) CStdStubBuffer_IsIIDSupported
+@ stdcall CStdStubBuffer_CountRefs(ptr) CStdStubBuffer_CountRefs
+@ stdcall CStdStubBuffer_DebugServerQueryInterface(ptr ptr) CStdStubBuffer_DebugServerQueryInterface
+@ stdcall CStdStubBuffer_DebugServerRelease(ptr ptr) CStdStubBuffer_DebugServerRelease
+@ stdcall NdrCStdStubBuffer_Release(ptr ptr)  NdrCStdStubBuffer_Release
 @ stub NdrCStdStubBuffer2_Release
-@ stub NdrCStdStubBuffer_Release
 
 @ stdcall IUnknown_QueryInterface_Proxy(ptr ptr ptr) IUnknown_QueryInterface_Proxy
 @ stdcall IUnknown_AddRef_Proxy(ptr) IUnknown_AddRef_Proxy
