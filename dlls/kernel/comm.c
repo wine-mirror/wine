@@ -156,134 +156,349 @@ static int COMM_WhackModem(int fd, unsigned int andy, unsigned int orrie)
 }
 
 /***********************************************************************
+ *           COMM_Parse*   (Internal)
+ *
+ *  The following COMM_Parse* functions are used by the BuildCommDCB
+ *  functions to help parse the various parts of the device control string.
+ */
+static LPCSTR COMM_ParseStart(LPCSTR ptr)
+{
+	/* The device control string may optionally start with "COMx" followed
+	   by an optional ':' and spaces. */
+	if(!strncasecmp(ptr, "COM", 3))
+	{
+		ptr += 3;
+
+		/* Allow any com port above 0 as Win 9x does (NT only allows
+		   values for com ports which are actually present) */
+		if(*ptr < '1' || *ptr > '9')
+			return NULL;
+		
+		/* Advance pointer past port number */
+		while(*ptr >= '0' && *ptr <= '9') ptr++;
+		
+		/* The com port number must be followed by a ':' or ' ' */
+		if(*ptr != ':' && *ptr != ' ')
+			return NULL;
+
+		/* Advance pointer to beginning of next parameter */
+		while(*ptr == ' ') ptr++;
+		if(*ptr == ':')
+		{
+			ptr++;
+			while(*ptr == ' ') ptr++;
+		}
+	}
+	/* The device control string must not start with a space. */
+	else if(*ptr == ' ')
+		return NULL;
+	
+	return ptr;
+}
+ 
+static LPCSTR COMM_ParseNumber(LPCSTR ptr, LPDWORD lpnumber)
+{
+	if(*ptr < '0' || *ptr > '9') return NULL;
+	if(!sscanf(ptr, "%ld", lpnumber)) return NULL;
+	while(*ptr >= '0' && *ptr <= '9') ptr++;
+	return ptr;
+}
+
+static LPCSTR COMM_ParseParity(LPCSTR ptr, LPBYTE lpparity)
+{
+	/* Contrary to what you might expect, Windows only sets the Parity
+	   member of DCB and not fParity even when parity is specified in the
+	   device control string */
+
+	switch(toupper(*ptr++))
+	{
+	case 'E':
+		*lpparity = EVENPARITY;
+		break;
+	case 'M':
+		*lpparity = MARKPARITY;
+		break;
+	case 'N':
+		*lpparity = NOPARITY;
+		break;
+	case 'O':
+		*lpparity = ODDPARITY;
+		break;
+	case 'S':
+		*lpparity = SPACEPARITY;
+		break;
+	default:
+		return NULL;
+	}
+
+	return ptr;
+}
+
+static LPCSTR COMM_ParseByteSize(LPCSTR ptr, LPBYTE lpbytesize)
+{
+	DWORD temp;
+
+	if(!(ptr = COMM_ParseNumber(ptr, &temp)))
+		return NULL;
+
+	if(temp >= 5 && temp <= 8)
+	{
+		*lpbytesize = temp;
+		return ptr;
+	}
+	else
+		return NULL;
+}
+
+static LPCSTR COMM_ParseStopBits(LPCSTR ptr, LPBYTE lpstopbits)
+{
+	DWORD temp;
+
+	if(!strncmp("1.5", ptr, 3))
+	{
+		ptr += 3;
+		*lpstopbits = ONE5STOPBITS;
+	}
+	else
+	{
+		if(!(ptr = COMM_ParseNumber(ptr, &temp)))
+			return NULL;
+
+		if(temp == 1)
+			*lpstopbits = ONESTOPBIT;
+		else if(temp == 2)
+			*lpstopbits = TWOSTOPBITS;
+		else
+			return NULL;
+	}
+	
+	return ptr;
+}
+
+static LPCSTR COMM_ParseOnOff(LPCSTR ptr, LPDWORD lponoff)
+{
+	if(!strncasecmp("on", ptr, 2))
+	{
+		ptr += 2;
+		*lponoff = 1;
+	}
+	else if(!strncasecmp("off", ptr, 3))
+	{
+		ptr += 3;
+		*lponoff = 0;
+	}
+	else
+		return NULL;
+
+	return ptr;
+}
+
+/***********************************************************************
  *           COMM_BuildOldCommDCB   (Internal)
  *
- *  Build a DCB using the old style settings string eg: "COMx:96,n,8,1"
- *  We ignore the COM port index, since we can support more than 4 ports.
+ *  Build a DCB using the old style settings string eg: "96,n,8,1"
  */
-BOOL WINAPI COMM_BuildOldCommDCB(LPCSTR device, LPDCB lpdcb)
+static BOOL COMM_BuildOldCommDCB(LPCSTR device, LPDCB lpdcb)
 {
-	/* "COM1:96,n,8,1"	*/
-	/*  012345		*/
-	char *ptr, temp[256], last;
-	int rate;
+	char last = 0;
 
-	TRACE("(%s), ptr %p\n", device, lpdcb);
-
-        /* Some applications call this function with "9600,n,8,1"
-         * not sending the "COM1:" parameter at left of string */
-        if (!strncasecmp(device,"COM",3))
-        {
-            if (!device[3]) return FALSE;
-            if (device[4] != ':' && device[4] != ' ') return FALSE;
-            strcpy(temp,device+5);
-        }
-        else strcpy(temp,device);
-
-	last=temp[strlen(temp)-1];
-	ptr = strtok(temp, ", ");
-
-        /* DOS/Windows only compares the first two numbers
-	 * and assigns an appropriate baud rate.
-	 * You can supply 961324245, it still returns 9600 ! */
-	if (strlen(ptr) < 2)
+	if(!(device = COMM_ParseNumber(device, &lpdcb->BaudRate)))
+		return FALSE;
+	
+	switch(lpdcb->BaudRate)
 	{
-		WARN("Unknown baudrate string '%s' !\n", ptr);
-		return FALSE; /* error: less than 2 chars */
-	}
-	ptr[2] = '\0';
-	rate = atoi(ptr);
-
-	switch (rate) {
 	case 11:
 	case 30:
 	case 60:
-		rate *= 10;
+		lpdcb->BaudRate *= 10;
 		break;
 	case 12:
 	case 24:
 	case 48:
 	case 96:
-		rate *= 100;
+		lpdcb->BaudRate *= 100;
 		break;
 	case 19:
-		rate = 19200;
+		lpdcb->BaudRate = 19200;
+		break;
+	}
+
+	while(*device == ' ') device++;
+	if(*device++ != ',') return FALSE;
+	while(*device == ' ') device++;
+
+	if(!(device = COMM_ParseParity(device, &lpdcb->Parity)))
+		return FALSE;
+
+	while(*device == ' ') device++;
+	if(*device++ != ',') return FALSE;
+	while(*device == ' ') device++;
+		
+	if(!(device = COMM_ParseByteSize(device, &lpdcb->ByteSize)))
+		return FALSE;
+
+	while(*device == ' ') device++;
+	if(*device++ != ',') return FALSE;
+	while(*device == ' ') device++;
+
+	if(!(device = COMM_ParseStopBits(device, &lpdcb->StopBits)))
+		return FALSE;
+
+	/* The last parameter for flow control is optional. */
+	while(*device == ' ') device++;
+	if(*device == ',')
+	{
+		device++;
+		while(*device == ' ') device++;
+		if(*device) last = toupper(*device++);
+		while(*device == ' ') device++;
+	}
+		
+	switch(last)
+	{
+	case 0:
+		lpdcb->fInX = FALSE;
+		lpdcb->fOutX = FALSE;
+		lpdcb->fOutxCtsFlow = FALSE;
+		lpdcb->fOutxDsrFlow = FALSE;
+		lpdcb->fDtrControl = DTR_CONTROL_ENABLE;
+		lpdcb->fRtsControl = RTS_CONTROL_ENABLE;
+		break;
+	case 'X':
+		lpdcb->fInX = TRUE;
+		lpdcb->fOutX = TRUE;
+		lpdcb->fOutxCtsFlow = FALSE;
+		lpdcb->fOutxDsrFlow = FALSE;
+		lpdcb->fDtrControl = DTR_CONTROL_ENABLE;
+		lpdcb->fRtsControl = RTS_CONTROL_ENABLE;
+		break;
+	case 'P':
+		lpdcb->fInX = FALSE;
+		lpdcb->fOutX = FALSE;
+		lpdcb->fOutxCtsFlow = TRUE;
+		lpdcb->fOutxDsrFlow = TRUE;
+		lpdcb->fDtrControl = DTR_CONTROL_HANDSHAKE;
+		lpdcb->fRtsControl = RTS_CONTROL_HANDSHAKE;
 		break;
 	default:
-		WARN("Unknown baudrate indicator %d !\n", rate);
 		return FALSE;
 	}
 
-        lpdcb->BaudRate = rate;
-	TRACE("baudrate (%ld)\n", lpdcb->BaudRate);
+	/* This should be the end of the string. */
+	if(*device) return FALSE;
+	
+	return TRUE;
+}
 
-	ptr = strtok(NULL, ", ");
-	if (islower(*ptr))
-		*ptr = toupper(*ptr);
+/***********************************************************************
+ *           COMM_BuildNewCommDCB   (Internal)
+ *
+ *  Build a DCB using the new style settings string.
+ *   eg: "baud=9600 parity=n data=8 stop=1 xon=on to=on"
+ */
+static BOOL COMM_BuildNewCommDCB(LPCSTR device, LPDCB lpdcb, LPCOMMTIMEOUTS lptimeouts)
+{
+	DWORD temp;
+	BOOL baud = FALSE, stop = FALSE;
 
-       	TRACE("parity (%c)\n", *ptr);
-	lpdcb->fParity = TRUE;
-	switch (*ptr) {
-	case 'N':
-		lpdcb->Parity = NOPARITY;
-		lpdcb->fParity = FALSE;
-		break;
-	case 'E':
-		lpdcb->Parity = EVENPARITY;
-		break;
-	case 'M':
-		lpdcb->Parity = MARKPARITY;
-		break;
-	case 'O':
-		lpdcb->Parity = ODDPARITY;
-		break;
-        case 'S':
-                lpdcb->Parity = SPACEPARITY;
-                break;
-	default:
-		WARN("Unknown parity `%c'!\n", *ptr);
-		return FALSE;
+	while(*device)
+	{
+		while(*device == ' ') device++;
+
+		if(!strncasecmp("baud=", device, 5))
+		{
+			baud = TRUE;
+			
+			if(!(device = COMM_ParseNumber(device + 5, &lpdcb->BaudRate)))
+				return FALSE;
+		}
+		else if(!strncasecmp("parity=", device, 7))
+		{
+			if(!(device = COMM_ParseParity(device + 7, &lpdcb->Parity)))
+				return FALSE;
+		}
+		else if(!strncasecmp("data=", device, 5))
+		{
+			if(!(device = COMM_ParseByteSize(device + 5, &lpdcb->ByteSize)))
+				return FALSE;
+		}
+		else if(!strncasecmp("stop=", device, 5))
+		{
+			stop = TRUE;
+			
+			if(!(device = COMM_ParseStopBits(device + 5, &lpdcb->StopBits)))
+				return FALSE;
+		}
+		else if(!strncasecmp("to=", device, 3))
+		{
+			if(!(device = COMM_ParseOnOff(device + 3, &temp)))
+				return FALSE;
+
+			lptimeouts->ReadIntervalTimeout = 0;
+			lptimeouts->ReadTotalTimeoutMultiplier = 0;
+			lptimeouts->ReadTotalTimeoutConstant = 0;
+			lptimeouts->WriteTotalTimeoutMultiplier = 0;
+			lptimeouts->WriteTotalTimeoutConstant = temp ? 60000 : 0;
+		}
+		else if(!strncasecmp("xon=", device, 4))
+		{
+			if(!(device = COMM_ParseOnOff(device + 4, &temp)))
+				return FALSE;
+
+			lpdcb->fOutX = temp;
+			lpdcb->fInX = temp;
+		}
+		else if(!strncasecmp("odsr=", device, 5))
+		{
+			if(!(device = COMM_ParseOnOff(device + 5, &temp)))
+				return FALSE;
+
+			lpdcb->fOutxDsrFlow = temp;
+		}
+		else if(!strncasecmp("octs=", device, 5))
+		{
+			if(!(device = COMM_ParseOnOff(device + 5, &temp)))
+				return FALSE;
+
+			lpdcb->fOutxCtsFlow = temp;
+		}
+		else if(!strncasecmp("dtr=", device, 4))
+		{
+			if(!(device = COMM_ParseOnOff(device + 4, &temp)))
+				return FALSE;
+
+			lpdcb->fDtrControl = temp;
+		}
+		else if(!strncasecmp("rts=", device, 4))
+		{
+			if(!(device = COMM_ParseOnOff(device + 4, &temp)))
+				return FALSE;
+
+			lpdcb->fRtsControl = temp;
+		}
+		else if(!strncasecmp("idsr=", device, 5))
+		{
+			if(!(device = COMM_ParseOnOff(device + 5, &temp)))
+				return FALSE;
+
+			lpdcb->fDsrSensitivity = temp;
+		}
+		else
+			return FALSE;
+
+		/* After the above parsing, the next character (if not the end of
+		   the string) should be a space */
+		if(*device && *device != ' ')
+			return FALSE;
 	}
 
-	ptr = strtok(NULL, ", ");
-       	TRACE("charsize (%c)\n", *ptr);
-	lpdcb->ByteSize = *ptr - '0';
-
-	ptr = strtok(NULL, ", ");
-       	TRACE("stopbits (%c)\n", *ptr);
-	switch (*ptr) {
-	case '1':
-		lpdcb->StopBits = ONESTOPBIT;
-		break;
-	case '2':
-		lpdcb->StopBits = TWOSTOPBITS;
-		break;
-	default:
-		WARN("Unknown # of stopbits `%c'!\n", *ptr);
-		return FALSE;
-	}
-
-	if (last == 'x') {
-		lpdcb->fInX		= TRUE;
-		lpdcb->fOutX		= TRUE;
-		lpdcb->fOutxCtsFlow	= FALSE;
-		lpdcb->fOutxDsrFlow	= FALSE;
-		lpdcb->fDtrControl	= DTR_CONTROL_ENABLE;
-		lpdcb->fRtsControl	= RTS_CONTROL_ENABLE;
-	} else if (last=='p') {
-		lpdcb->fInX		= FALSE;
-		lpdcb->fOutX		= FALSE;
-		lpdcb->fOutxCtsFlow	= TRUE;
-		lpdcb->fOutxDsrFlow	= FALSE;
-		lpdcb->fDtrControl	= DTR_CONTROL_ENABLE;
-		lpdcb->fRtsControl	= RTS_CONTROL_HANDSHAKE;
-	} else {
-		lpdcb->fInX		= FALSE;
-		lpdcb->fOutX		= FALSE;
-		lpdcb->fOutxCtsFlow	= FALSE;
-		lpdcb->fOutxDsrFlow	= FALSE;
-		lpdcb->fDtrControl	= DTR_CONTROL_ENABLE;
-		lpdcb->fRtsControl	= RTS_CONTROL_ENABLE;
+	/* If stop bits were not specified, a default is always supplied. */
+	if(!stop)
+	{
+		if(baud && lpdcb->BaudRate == 110)
+			lpdcb->StopBits = TWOSTOPBITS;
+		else
+			lpdcb->StopBits = ONESTOPBIT;
 	}
 
 	return TRUE;
@@ -321,83 +536,45 @@ BOOL WINAPI BuildCommDCBA(
 BOOL WINAPI BuildCommDCBAndTimeoutsA(
     LPCSTR         device,     /* [in] The ascii device control string. */
     LPDCB          lpdcb,      /* [out] The device control block to be updated. */
-    LPCOMMTIMEOUTS lptimeouts) /* [in] The timeouts to use if asked to set them by the control string. */
+    LPCOMMTIMEOUTS lptimeouts) /* [in] The COMMTIMEOUTS structure to be updated. */
 {
-	int	port;
-	char	*ptr,*temp;
-
+	DCB dcb;
+	COMMTIMEOUTS timeouts;
+	BOOL result;
+	LPCSTR ptr = device;
+	
 	TRACE("(%s,%p,%p)\n",device,lpdcb,lptimeouts);
 
-	if (!strncasecmp(device,"COM",3)) {
-		port=device[3]-'0';
-		if (port--==0) {
-			ERR("BUG! COM0 can't exist!\n");
-			return FALSE;
-		}
-		if ((*(device+4)!=':') && (*(device+4)!=' '))
-			return FALSE;
-		temp=(LPSTR)(device+5);
-	} else
-		temp=(LPSTR)device;
+	/* Set DCBlength. (Windows NT does not do this, but 9x does) */
+	lpdcb->DCBlength = sizeof(DCB);
 
-	memset(lpdcb,0,sizeof (DCB));
-	lpdcb->DCBlength	= sizeof(DCB);
-	if (strchr(temp,',')) {	/* old style */
+	/* Make a copy of the original data structures to work with since if
+	   if there is an error in the device control string the originals
+	   should not be modified (except possibly DCBlength) */
+	memcpy(&dcb, lpdcb, sizeof(DCB));
+	if(lptimeouts) memcpy(&timeouts, lptimeouts, sizeof(COMMTIMEOUTS));
 
-		return COMM_BuildOldCommDCB(device,lpdcb);
+	ptr = COMM_ParseStart(ptr);
+
+	if(ptr == NULL)
+		result = FALSE;
+	else if(strchr(ptr, ','))
+		result = COMM_BuildOldCommDCB(ptr, &dcb);
+	else
+		result = COMM_BuildNewCommDCB(ptr, &dcb, &timeouts);
+
+	if(result)
+	{
+		memcpy(lpdcb, &dcb, sizeof(DCB));
+		if(lptimeouts) memcpy(lptimeouts, &timeouts, sizeof(COMMTIMEOUTS));
+		return TRUE;
 	}
-	ptr=strtok(temp," ");
-	while (ptr) {
-		DWORD	flag,x;
-
-		flag=0;
-		if (!strncasecmp("baud=",ptr,5)) {
-			if (!sscanf(ptr+5,"%ld",&x))
-				WARN("Couldn't parse %s\n",ptr);
-			lpdcb->BaudRate = x;
-			flag=1;
-		}
-		if (!strncasecmp("stop=",ptr,5)) {
-			if (!sscanf(ptr+5,"%ld",&x))
-				WARN("Couldn't parse %s\n",ptr);
-			lpdcb->StopBits = x;
-			flag=1;
-		}
-		if (!strncasecmp("data=",ptr,5)) {
-			if (!sscanf(ptr+5,"%ld",&x))
-				WARN("Couldn't parse %s\n",ptr);
-			lpdcb->ByteSize = x;
-			flag=1;
-		}
-		if (!strncasecmp("parity=",ptr,7)) {
-			lpdcb->fParity	= TRUE;
-			switch (ptr[7]) {
-			case 'N':case 'n':
-				lpdcb->fParity	= FALSE;
-				lpdcb->Parity	= NOPARITY;
-				break;
-			case 'E':case 'e':
-				lpdcb->Parity	= EVENPARITY;
-				break;
-			case 'O':case 'o':
-				lpdcb->Parity	= ODDPARITY;
-				break;
-			case 'M':case 'm':
-				lpdcb->Parity	= MARKPARITY;
-				break;
-                        case 'S':case 's':
-                                lpdcb->Parity   = SPACEPARITY;
-                                break;
-			}
-			flag=1;
-		}
-		if (!flag)
-			ERR("Unhandled specifier '%s', please report.\n",ptr);
-		ptr=strtok(NULL," ");
-	}
-	if (lpdcb->BaudRate==110)
-		lpdcb->StopBits = 2;
-	return TRUE;
+	else
+	{
+		WARN("Invalid device control string: %s\n", device);
+		SetLastError(ERROR_INVALID_PARAMETER);
+		return FALSE;
+	}	
 }
 
 /**************************************************************************
@@ -414,7 +591,7 @@ BOOL WINAPI BuildCommDCBAndTimeoutsA(
 BOOL WINAPI BuildCommDCBAndTimeoutsW(
     LPCWSTR        devid,      /* [in] The unicode device control string. */
     LPDCB          lpdcb,      /* [out] The device control block to be updated. */
-    LPCOMMTIMEOUTS lptimeouts) /* [in] The timeouts to use if asked to set them by the control string. */
+    LPCOMMTIMEOUTS lptimeouts) /* [in] The COMMTIMEOUTS structure to be updated. */
 {
 	BOOL ret = FALSE;
 	LPSTR	devidA;

@@ -970,6 +970,7 @@ typedef struct tagDCB
     char ErrorChar;
     char EofChar;
     char EvtChar;
+    WORD wReserved1;
 } DCB, *LPDCB;
 
 typedef struct tagCOMMCONFIG {
