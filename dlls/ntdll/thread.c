@@ -85,7 +85,7 @@ static inline void free_teb( TEB *teb )
     ULONG size = 0;
     void *addr = teb;
 
-    NtFreeVirtualMemory( GetCurrentProcess(), &addr, &size, MEM_RELEASE );
+    NtFreeVirtualMemory( NtCurrentProcess(), &addr, &size, MEM_RELEASE );
     wine_ldt_free_fs( teb->teb_sel );
     munmap( teb, SIGNAL_STACK_SIZE + sizeof(TEB) );
 }
@@ -143,7 +143,7 @@ void thread_init(void)
 
     /* create a memory view for the TEB */
     addr = teb;
-    NtAllocateVirtualMemory( GetCurrentProcess(), &addr, 0, &size,
+    NtAllocateVirtualMemory( NtCurrentProcess(), &addr, 0, &size,
                              MEM_SYSTEM, PAGE_EXECUTE_READWRITE );
 
     /* create the process heap */
@@ -181,7 +181,7 @@ static void start_thread( struct wine_pthread_thread_info *info )
     /* allocate a memory view for the stack */
     size = info->stack_size;
     teb->DeallocationStack = info->stack_base;
-    NtAllocateVirtualMemory( GetCurrentProcess(), &teb->DeallocationStack, 0,
+    NtAllocateVirtualMemory( NtCurrentProcess(), &teb->DeallocationStack, 0,
                              &size, MEM_SYSTEM, PAGE_EXECUTE_READWRITE );
     /* limit is lower than base since the stack grows down */
     teb->Tib.StackBase  = (char *)info->stack_base + info->stack_size;
@@ -189,7 +189,7 @@ static void start_thread( struct wine_pthread_thread_info *info )
 
     /* setup the guard page */
     size = 1;
-    NtProtectVirtualMemory( GetCurrentProcess(), &teb->DeallocationStack, &size,
+    NtProtectVirtualMemory( NtCurrentProcess(), &teb->DeallocationStack, &size,
                             PAGE_EXECUTE_READWRITE | PAGE_GUARD, NULL );
     RtlFreeHeap( GetProcessHeap(), 0, info );
 
@@ -266,7 +266,7 @@ NTSTATUS WINAPI RtlCreateUserThread( HANDLE process, const SECURITY_DESCRIPTOR *
     teb->htask16     = NtCurrentTeb()->htask16;
 
     info->pthread_info.teb_base = teb;
-    NtAllocateVirtualMemory( GetCurrentProcess(), &info->pthread_info.teb_base, 0, &size,
+    NtAllocateVirtualMemory( NtCurrentProcess(), &info->pthread_info.teb_base, 0, &size,
                              MEM_SYSTEM, PAGE_EXECUTE_READWRITE );
     info->pthread_info.teb_size = size;
     info->pthread_info.teb_sel  = teb->teb_sel;

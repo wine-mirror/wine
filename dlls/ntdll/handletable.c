@@ -82,7 +82,7 @@ NTSTATUS WINAPI RtlDestroyHandleTable(RTL_HANDLE_TABLE * HandleTable)
 
     /* native version only releases committed memory, but we also release reserved */
     return NtFreeVirtualMemory(
-        GetCurrentProcess(),
+        NtCurrentProcess(),
         &HandleTable->FirstHandle,
         &Size,
         MEM_RELEASE);
@@ -111,7 +111,7 @@ static NTSTATUS RtlpAllocateSomeHandles(RTL_HANDLE_TABLE * HandleTable)
         /* reserve memory for the handles, but don't commit it yet because we
          * probably won't use most of it and it will use up physical memory */
         status = NtAllocateVirtualMemory(
-            GetCurrentProcess(),
+            NtCurrentProcess(),
             &FirstHandleAddr,
             0,
             &MaxSize,
@@ -134,7 +134,7 @@ static NTSTATUS RtlpAllocateSomeHandles(RTL_HANDLE_TABLE * HandleTable)
             return STATUS_NO_MEMORY; /* the handle table is completely full */
 
         status = NtAllocateVirtualMemory(
-            GetCurrentProcess(),
+            NtCurrentProcess(),
             &NextAvailAddr,
             0,
             &CommitSize,

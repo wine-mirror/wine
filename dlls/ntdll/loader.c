@@ -215,7 +215,7 @@ static void *allocate_stub( const char *dll, const char *name )
     if (!stubs)
     {
         ULONG size = MAX_SIZE;
-        if (NtAllocateVirtualMemory( GetCurrentProcess(), (void **)&stubs, 0, &size,
+        if (NtAllocateVirtualMemory( NtCurrentProcess(), (void **)&stubs, 0, &size,
                                      MEM_COMMIT, PAGE_EXECUTE_WRITECOPY ) != STATUS_SUCCESS)
             return (void *)0xdeadbeef;
     }
@@ -491,7 +491,7 @@ static WINE_MODREF *import_dll( HMODULE module, const IMAGE_IMPORT_DESCRIPTOR *d
     while (import_list[protect_size].u1.Ordinal) protect_size++;
     protect_base = thunk_list;
     protect_size *= sizeof(*thunk_list);
-    NtProtectVirtualMemory( GetCurrentProcess(), &protect_base,
+    NtProtectVirtualMemory( NtCurrentProcess(), &protect_base,
                             &protect_size, PAGE_WRITECOPY, &protect_old );
 
     imp_mod = wmImp->ldr.BaseAddress;
@@ -561,7 +561,7 @@ static WINE_MODREF *import_dll( HMODULE module, const IMAGE_IMPORT_DESCRIPTOR *d
 
 done:
     /* restore old protection of the import address table */
-    NtProtectVirtualMemory( GetCurrentProcess(), &protect_base, &protect_size, protect_old, NULL );
+    NtProtectVirtualMemory( NtCurrentProcess(), &protect_base, &protect_size, protect_old, NULL );
     return wmImp;
 }
 
@@ -1229,7 +1229,7 @@ static void load_builtin_callback( void *module, const char *filename )
     }
     wm->ldr.Flags |= LDR_WINE_INTERNAL;
     addr = module;
-    NtAllocateVirtualMemory( GetCurrentProcess(), &addr, 0, &nt->OptionalHeader.SizeOfImage,
+    NtAllocateVirtualMemory( NtCurrentProcess(), &addr, 0, &nt->OptionalHeader.SizeOfImage,
                              MEM_SYSTEM | MEM_IMAGE, PAGE_EXECUTE_WRITECOPY );
 
     /* fixup imports */
@@ -1299,7 +1299,7 @@ static NTSTATUS load_native_dll( LPCWSTR load_path, LPCWSTR name, HANDLE file,
     if (status != STATUS_SUCCESS) return status;
 
     module = NULL;
-    status = NtMapViewOfSection( mapping, GetCurrentProcess(),
+    status = NtMapViewOfSection( mapping, NtCurrentProcess(),
                                  &module, 0, 0, &size, &len, ViewShare, 0, PAGE_READONLY );
     NtClose( mapping );
     if (status != STATUS_SUCCESS) return status;
@@ -1802,7 +1802,7 @@ static void MODULE_FlushModrefs(void)
         }
         SERVER_END_REQ;
 
-        NtUnmapViewOfSection( GetCurrentProcess(), mod->BaseAddress );
+        NtUnmapViewOfSection( NtCurrentProcess(), mod->BaseAddress );
         if (wm->ldr.Flags & LDR_WINE_INTERNAL) wine_dll_unload( wm->ldr.SectionHandle );
         if (cached_modref == wm) cached_modref = NULL;
         RtlFreeUnicodeString( &mod->FullDllName );

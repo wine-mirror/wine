@@ -1044,8 +1044,8 @@ static NTSTATUS map_image( HANDLE hmapping, int fd, char *base, DWORD total_size
 
  done:
     if (!removable)  /* don't keep handle open on removable media */
-        NtDuplicateObject( GetCurrentProcess(), hmapping,
-                           GetCurrentProcess(), &view->mapping,
+        NtDuplicateObject( NtCurrentProcess(), hmapping,
+                           NtCurrentProcess(), &view->mapping,
                            0, 0, DUPLICATE_SAME_ACCESS );
 
     RtlLeaveCriticalSection( &csVirtual );
@@ -1069,7 +1069,7 @@ BOOL is_current_process( HANDLE handle )
 {
     BOOL ret = FALSE;
 
-    if (handle == GetCurrentProcess()) return TRUE;
+    if (handle == NtCurrentProcess()) return TRUE;
     SERVER_START_REQ( get_process_info )
     {
         req->handle = handle;
@@ -1777,8 +1777,8 @@ NTSTATUS WINAPI NtMapViewOfSection( HANDLE handle, HANDLE process, PVOID *addr_p
     if (res == STATUS_SUCCESS)
     {
         if (!removable)  /* don't keep handle open on removable media */
-            NtDuplicateObject( GetCurrentProcess(), handle,
-                               GetCurrentProcess(), &view->mapping,
+            NtDuplicateObject( NtCurrentProcess(), handle,
+                               NtCurrentProcess(), &view->mapping,
                                0, 0, DUPLICATE_SAME_ACCESS );
 
         *addr_ptr = view->base;

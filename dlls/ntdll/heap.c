@@ -338,7 +338,7 @@ static inline BOOL HEAP_Commit( SUBHEAP *subheap, void *ptr )
     if (size <= subheap->commitSize) return TRUE;
     size -= subheap->commitSize;
     ptr = (char *)subheap + subheap->commitSize;
-    if (NtAllocateVirtualMemory( GetCurrentProcess(), &ptr, 0,
+    if (NtAllocateVirtualMemory( NtCurrentProcess(), &ptr, 0,
                                  &size, MEM_COMMIT, PAGE_EXECUTE_READWRITE))
     {
         WARN("Could not commit %08lx bytes at %p for heap %p\n",
@@ -367,7 +367,7 @@ static inline BOOL HEAP_Decommit( SUBHEAP *subheap, void *ptr )
     decommit_size = subheap->commitSize - size;
     addr = (char *)subheap + size;
 
-    if (NtFreeVirtualMemory( GetCurrentProcess(), &addr, &decommit_size, MEM_DECOMMIT ))
+    if (NtFreeVirtualMemory( NtCurrentProcess(), &addr, &decommit_size, MEM_DECOMMIT ))
     {
         WARN("Could not decommit %08lx bytes at %08lx for heap %p\n",
                  decommit_size, (DWORD)((char *)subheap + size), subheap->heap );
@@ -477,7 +477,7 @@ static void HEAP_MakeInUseBlockFree( SUBHEAP *subheap, ARENA_INUSE *pArena )
         if (pPrev) pPrev->next = subheap->next;
         /* Free the memory */
         subheap->magic = 0;
-        NtFreeVirtualMemory( GetCurrentProcess(), (void **)&subheap, &size, MEM_RELEASE );
+        NtFreeVirtualMemory( NtCurrentProcess(), (void **)&subheap, &size, MEM_RELEASE );
         return;
     }
 
@@ -524,7 +524,7 @@ static BOOL HEAP_InitSubHeap( HEAP *heap, LPVOID address, DWORD flags,
 
     if (flags & HEAP_SHARED)
         commitSize = totalSize;  /* always commit everything in a shared heap */
-    if (NtAllocateVirtualMemory( GetCurrentProcess(), &address, 0,
+    if (NtAllocateVirtualMemory( NtCurrentProcess(), &address, 0,
                                  &commitSize, MEM_COMMIT, PAGE_EXECUTE_READWRITE))
     {
         WARN("Could not commit %08lx bytes for sub-heap %p\n", commitSize, address );
@@ -579,7 +579,7 @@ static BOOL HEAP_InitSubHeap( HEAP *heap, LPVOID address, DWORD flags,
             HANDLE sem = heap->critSection.LockSemaphore;
             if (!sem) NtCreateSemaphore( &sem, SEMAPHORE_ALL_ACCESS, NULL, 0, 1 );
 
-            NtDuplicateObject( GetCurrentProcess(), sem, GetCurrentProcess(), &sem, 0, 0,
+            NtDuplicateObject( NtCurrentProcess(), sem, NtCurrentProcess(), &sem, 0, 0,
                                DUP_HANDLE_MAKE_GLOBAL | DUP_HANDLE_SAME_ACCESS | DUP_HANDLE_CLOSE_SOURCE );
             heap->critSection.LockSemaphore = sem;
         }
@@ -613,7 +613,7 @@ static SUBHEAP *HEAP_CreateSubHeap( HEAP *heap, void *base, DWORD flags,
     if (!address)
     {
         /* allocate the memory block */
-        if (NtAllocateVirtualMemory( GetCurrentProcess(), &address, 0, &totalSize,
+        if (NtAllocateVirtualMemory( NtCurrentProcess(), &address, 0, &totalSize,
                                      MEM_RESERVE, PAGE_EXECUTE_READWRITE ))
         {
             WARN("Could not allocate %08lx bytes\n", totalSize );
@@ -627,7 +627,7 @@ static SUBHEAP *HEAP_CreateSubHeap( HEAP *heap, void *base, DWORD flags,
                            address, flags, commitSize, totalSize ))
     {
         ULONG size = 0;
-        if (!base) NtFreeVirtualMemory( GetCurrentProcess(), &address, &size, MEM_RELEASE );
+        if (!base) NtFreeVirtualMemory( NtCurrentProcess(), &address, &size, MEM_RELEASE );
         return NULL;
     }
 
@@ -1066,7 +1066,7 @@ HANDLE WINAPI RtlDestroyHeap( HANDLE heap )
         SUBHEAP *next = subheap->next;
         ULONG size = 0;
         void *addr = subheap;
-        NtFreeVirtualMemory( GetCurrentProcess(), &addr, &size, MEM_RELEASE );
+        NtFreeVirtualMemory( NtCurrentProcess(), &addr, &size, MEM_RELEASE );
         subheap = next;
     }
     return 0;
