@@ -488,6 +488,12 @@ UINT	MMDRV_PhysicalFeatures(LPWINE_MLD mld, UINT uMsg, DWORD dwParam1,
     case DRV_QUERYDSOUNDIFACE: /* Wine-specific: Retrieve DirectSound interface */
 	return MMDRV_Message(mld, uMsg, dwParam1, dwParam2, TRUE);
 
+    case DRV_QUERYDSOUNDDESC: /* Wine-specific: Retrieve DirectSound driver description*/
+	return MMDRV_Message(mld, uMsg, dwParam1, dwParam2, TRUE);
+
+    case DRV_QUERYDSOUNDGUID: /* Wine-specific: Retrieve DirectSound driver GUID */
+	return MMDRV_Message(mld, uMsg, dwParam1, dwParam2, TRUE);
+
     default:
 	WARN("Unknown call %04x\n", uMsg);
 	return MMSYSERR_INVALPARAM;

@@ -116,23 +116,8 @@ int ds_hel_queue = DS_HEL_QUEUE;
 int ds_snd_queue_max = DS_SND_QUEUE_MAX;
 int ds_snd_queue_min = DS_SND_QUEUE_MIN;
 int ds_hw_accel = DS_HW_ACCEL_FULL;
-
-/*
- * Call the callback provided to DirectSoundEnumerateA.
- */
-
-inline static void enumerate_devices(LPDSENUMCALLBACKA lpDSEnumCallback,
-                                    LPVOID lpContext)
-{
-    if (lpDSEnumCallback != NULL) {
-	TRACE("calling lpDSEnumCallback(%s,\"WINE DirectSound\",\"sound\",%p)\n",
-	    debugstr_guid(&DSDEVID_DefaultPlayback),lpContext);
-
-	lpDSEnumCallback((LPGUID)&DSDEVID_DefaultPlayback,
-                         "WINE DirectSound", "sound", lpContext);
-    }
-}
-
+int ds_default_playback = 0;
+int ds_default_capture = 0;
 
 /*
  * Get a config key from either the app-specific or the default config
@@ -211,6 +196,12 @@ void setup_dsound_options(void)
 	    ds_hw_accel = DS_HW_ACCEL_EMULATION;
     }
 
+    if (!get_config_key( hkey, appkey, "DefaultPlayback", buffer, MAX_PATH ))
+	    ds_default_playback = atoi(buffer);
+
+    if (!get_config_key( hkey, appkey, "DefaultCapture", buffer, MAX_PATH ))
+	    ds_default_capture = atoi(buffer);
+
     if (appkey) RegCloseKey( appkey );
     RegCloseKey( hkey );
 
@@ -231,8 +222,54 @@ void setup_dsound_options(void)
 	    ds_hw_accel==DS_HW_ACCEL_BASIC ? "Basic" :
 	    ds_hw_accel==DS_HW_ACCEL_EMULATION ? "Emulation" :
 	    "Unknown");
+    if (ds_default_playback != 0)
+	WARN("ds_default_playback = %d (default=0)\n",ds_default_playback);
+    if (ds_default_capture != 0)
+	WARN("ds_default_capture = %d (default=0)\n",ds_default_playback);
 }
 
+
+
+/***************************************************************************
+ * GetDeviceId	[DSOUND.2]
+ *
+ * Retrieves unique identifier of default device specified
+ *
+ * RETURNS
+ *    Success: DS_OK
+ *    Failure: DSERR_INVALIDPARAM
+ */
+HRESULT WINAPI GetDeviceID(LPCGUID pGuidSrc, LPGUID pGuidDest)
+{
+    if ( ( pGuidSrc == NULL) || (pGuidDest == NULL) ) {
+	WARN("invalid parameter\n");
+	return DSERR_INVALIDPARAM;
+    }
+
+    if ( IsEqualGUID( &DSDEVID_DefaultPlayback, pGuidSrc ) ||
+    	IsEqualGUID( &DSDEVID_DefaultVoicePlayback, pGuidSrc ) ) {
+	GUID guid;
+	int err = mmErr(waveOutMessage((HWAVEOUT)ds_default_playback,DRV_QUERYDSOUNDGUID,(DWORD)&guid,0));
+	if (err == DS_OK) {
+	    memcpy(pGuidDest, &guid, sizeof(GUID));
+	    return DS_OK;
+	}
+    }
+
+    if ( IsEqualGUID( &DSDEVID_DefaultCapture, pGuidSrc ) ||
+    	IsEqualGUID( &DSDEVID_DefaultVoiceCapture, pGuidSrc ) ) {
+	GUID guid;
+	int err = mmErr(waveInMessage((HWAVEIN)ds_default_capture,DRV_QUERYDSOUNDGUID,(DWORD)&guid,0));
+	if (err == DS_OK) {
+	    memcpy(pGuidDest, &guid, sizeof(GUID));
+	    return DS_OK;
+	}
+    }
+
+    memcpy(pGuidDest, pGuidSrc, sizeof(GUID));
+
+    return DS_OK;
+}
 
 
 /***************************************************************************
@@ -245,25 +282,56 @@ void setup_dsound_options(void)
  *    Failure: DSERR_INVALIDPARAM
  */
 HRESULT WINAPI DirectSoundEnumerateA(
-	LPDSENUMCALLBACKA lpDSEnumCallback,
-	LPVOID lpContext)
+    LPDSENUMCALLBACKA lpDSEnumCallback,
+    LPVOID lpContext)
 {
-        WAVEOUTCAPSA wcaps;
-        unsigned devs, wod;
+    unsigned devs, wod;
+    DSDRIVERDESC desc;
+    GUID guid;
+    int err;
 
-	TRACE("lpDSEnumCallback = %p, lpContext = %p\n",
-		lpDSEnumCallback, lpContext);
+    TRACE("lpDSEnumCallback = %p, lpContext = %p\n",
+	lpDSEnumCallback, lpContext);
 
-        devs = waveOutGetNumDevs();
-        for (wod = 0; wod < devs; ++wod) {
-                waveOutGetDevCapsA(wod, &wcaps, sizeof(wcaps));
-                if (wcaps.dwSupport & WAVECAPS_DIRECTSOUND) {
-                        TRACE("- Device %u supports DirectSound\n", wod);
-                        enumerate_devices(lpDSEnumCallback, lpContext);
-                        return DS_OK;
-                }
-        }
-	return DS_OK;
+    if (lpDSEnumCallback == NULL) {
+	WARN("invalid parameter\n");
+	return DSERR_INVALIDPARAM;
+    }
+
+    devs = waveOutGetNumDevs();
+    if (devs > 0) {
+	if (GetDeviceID(&DSDEVID_DefaultPlayback, &guid) == DS_OK) {
+	    GUID temp;
+	    for (wod = 0; wod < devs; ++wod) {
+		err = mmErr(waveOutMessage((HWAVEOUT)wod,DRV_QUERYDSOUNDGUID,(DWORD)&temp,0));
+		if (err == DS_OK) {
+		    if (IsEqualGUID( &guid, &temp ) ) {
+			err = mmErr(waveOutMessage((HWAVEOUT)wod,DRV_QUERYDSOUNDDESC,(DWORD)&desc,0));
+			if (err == DS_OK) {
+			    TRACE("calling lpDSEnumCallback(%s,\"%s\",\"%s\",%p)\n",
+				debugstr_guid(&DSDEVID_DefaultPlayback),"Primary Sound Driver",desc.szDrvName,lpContext);
+			    if (lpDSEnumCallback((LPGUID)&DSDEVID_DefaultPlayback, "Primary Sound Driver", desc.szDrvName, lpContext) == FALSE)
+				return DS_OK;
+			}
+		    }
+		}
+	    }
+	}
+    }
+
+    for (wod = 0; wod < devs; ++wod) {
+	err = mmErr(waveOutMessage((HWAVEOUT)wod,DRV_QUERYDSOUNDDESC,(DWORD)&desc,0));
+	if (err == DS_OK) {
+	    err = mmErr(waveOutMessage((HWAVEOUT)wod,DRV_QUERYDSOUNDGUID,(DWORD)&guid,0));
+	    if (err == DS_OK) {
+		TRACE("calling lpDSEnumCallback(%s,\"%s\",\"%s\",%p)\n",
+		    debugstr_guid(&guid),desc.szDesc,desc.szDrvName,lpContext);
+		if (lpDSEnumCallback(&guid, desc.szDesc, desc.szDrvName, lpContext) == FALSE)
+		    return DS_OK;
+	    }
+	}
+    }
+    return DS_OK;
 }
 
 /***************************************************************************
@@ -588,36 +656,62 @@ static ICOM_VTABLE(IDirectSound8) dsvt =
 /*******************************************************************************
  *		DirectSoundCreate (DSOUND.1)
  */
-HRESULT WINAPI DirectSoundCreate8(REFGUID lpGUID,LPDIRECTSOUND8 *ppDS,IUnknown *pUnkOuter )
+HRESULT WINAPI DirectSoundCreate8(LPCGUID lpcGUID,LPDIRECTSOUND8 *ppDS,IUnknown *pUnkOuter )
 {
 	IDirectSoundImpl** ippDS=(IDirectSoundImpl**)ppDS;
 	PIDSDRIVER drv = NULL;
 	unsigned wod, wodn;
-	HRESULT err = DS_OK;
-
-	if (lpGUID)
-		TRACE("(%p,%p,%p)\n",lpGUID,ippDS,pUnkOuter);
-	else
-		TRACE("DirectSoundCreate (%p)\n", ippDS);
+	HRESULT err = DSERR_INVALIDPARAM;
+	GUID devGuid;
+	TRACE("(%p,%p,%p)\n",lpcGUID,ippDS,pUnkOuter);
 
 	if (ippDS == NULL)
 		return DSERR_INVALIDPARAM;
 
-	if (dsound) {
-		IDirectSound_AddRef((LPDIRECTSOUND)dsound);
-		*ippDS = dsound;
-		return DS_OK;
-	}
-
         /* Get dsound configuration */
         setup_dsound_options();
+
+	/* Default device? */
+	if ( !lpcGUID || IsEqualGUID(lpcGUID, &GUID_NULL) )
+		lpcGUID = &DSDEVID_DefaultPlayback;
+
+	if (GetDeviceID(lpcGUID, &devGuid) != DS_OK) {
+		WARN("invalid parameter\n");
+		return DSERR_INVALIDPARAM;
+	}
+
+	if (dsound && IsEqualGUID(&devGuid, &dsound->guid) ) {
+		ERR("dsound already opened\n");
+		if (IsEqualGUID(&devGuid, &dsound->guid) ) {
+			IDirectSound_AddRef((LPDIRECTSOUND)dsound);
+			*ippDS = dsound;
+			return DS_OK;
+		} else {
+			ERR("different dsound already opened\n");
+		}
+	}
 
 	/* Enumerate WINMM audio devices and find the one we want */
 	wodn = waveOutGetNumDevs();
 	if (!wodn) return DSERR_NODRIVER;
 
-	/* FIXME: How do we find the GUID of an audio device? */
-	wod = 0;  /* start at the first audio device */
+	for (wod=0; wod<wodn; wod++) {
+		GUID guid;
+		err = mmErr(waveOutMessage((HWAVEOUT)wod,DRV_QUERYDSOUNDGUID,(DWORD)(&guid),0));
+		if (err != DS_OK) {
+			WARN("waveOutMessage failed; err=%lx\n",err);
+			return err;
+		}
+		if (IsEqualGUID( &devGuid, &guid) ) {
+			err = DS_OK;
+			break;
+		}
+	}
+
+	if (err != DS_OK) {
+		WARN("invalid parameter\n");
+		return DSERR_INVALIDPARAM;
+	}
 
 	/* DRV_QUERYDSOUNDIFACE is a "Wine extension" to get the DSound interface */
 	waveOutMessage((HWAVEOUT)wod, DRV_QUERYDSOUNDIFACE, (DWORD)&drv, 0);
@@ -648,6 +742,7 @@ HRESULT WINAPI DirectSoundCreate8(REFGUID lpGUID,LPDIRECTSOUND8 *ppDS,IUnknown *
 	(*ippDS)->listener	= NULL;
 
 	(*ippDS)->prebuf	= ds_snd_queue_max;
+	(*ippDS)->guid		= devGuid;
 
 	/* Get driver description */
 	if (drv) {

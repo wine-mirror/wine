@@ -84,7 +84,7 @@ static ULONG WINAPI IDirectSoundNotifyImpl_Release(LPDIRECTSOUNDNOTIFY iface) {
 		if (This->dsb)
 			IDirectSoundBuffer8_Release((LPDIRECTSOUNDBUFFER8)This->dsb);
 		else if (This->dscb)
-			IDirectSoundCaptureBuffer_Release((LPDIRECTSOUNDCAPTUREBUFFER8)This->dscb);
+			IDirectSoundCaptureBuffer8_Release((LPDIRECTSOUNDCAPTUREBUFFER8)This->dscb);
 		HeapFree(GetProcessHeap(),0,This);
 		return 0;
 	}
@@ -543,6 +543,8 @@ static HRESULT WINAPI IDirectSoundBufferImpl_Lock(
 	assert(audiobytes1!=audiobytes2);
 	assert(lplpaudioptr1!=lplpaudioptr2);
 
+	EnterCriticalSection(&(This->lock));
+
 	if ((writebytes == This->buflen) &&
 	    ((This->state == STATE_STARTING) ||
 	     (This->state == STATE_PLAYING)))
@@ -601,6 +603,8 @@ static HRESULT WINAPI IDirectSoundBufferImpl_Lock(
 			}
 		}
 	}
+
+	LeaveCriticalSection(&(This->lock));
 	return DS_OK;
 }
 

@@ -20,8 +20,6 @@
  */
 /*
  * TODO:
- *	Fix Enumerate for multiple sound devices.
- *	Handle device GUIDs properly.
  *	Implement DirectSoundFullDuplex support.
  *	Implement FX support.
  */
@@ -97,6 +95,7 @@ DirectSoundCaptureCreate8(
     LPDIRECTSOUNDCAPTURE* lplpDSC,
     LPUNKNOWN pUnkOuter )
 {
+    IDirectSoundCaptureImpl** ippDSC=(IDirectSoundCaptureImpl**)lplpDSC;
     TRACE("(%s,%p,%p)\n", debugstr_guid(lpcGUID), lplpDSC, pUnkOuter);
 
     if ( pUnkOuter ) {
@@ -110,43 +109,33 @@ DirectSoundCaptureCreate8(
     }
 
     /* Default device? */
-    if ( !lpcGUID || IsEqualGUID(lpcGUID, &GUID_NULL) ||
-        IsEqualGUID(lpcGUID, &DSDEVID_DefaultCapture) ||
-        IsEqualGUID(lpcGUID, &DSDEVID_DefaultVoiceCapture) ) {
-        IDirectSoundCaptureImpl** ippDSC=(IDirectSoundCaptureImpl**)lplpDSC;
+    if ( !lpcGUID || IsEqualGUID(lpcGUID, &GUID_NULL) ) 
+	lpcGUID = &DSDEVID_DefaultCapture;
 
-        *ippDSC = (IDirectSoundCaptureImpl*)HeapAlloc(GetProcessHeap(),
-            HEAP_ZERO_MEMORY, sizeof(IDirectSoundCaptureImpl));
+    *ippDSC = (IDirectSoundCaptureImpl*)HeapAlloc(GetProcessHeap(),
+        HEAP_ZERO_MEMORY, sizeof(IDirectSoundCaptureImpl));
 
-        if (*ippDSC == NULL) {
-            TRACE("couldn't allocate memory\n");
-            return DSERR_OUTOFMEMORY;
-        }
-        else
-        {
-            ICOM_THIS(IDirectSoundCaptureImpl, *ippDSC);
-
-            This->ref = 1;
-            This->state = STATE_STOPPED;
-
-            if (lpcGUID)
-                This->guid = *lpcGUID;
-            else
-                This->guid = GUID_NULL;
-
-            InitializeCriticalSection( &(This->lock) );
-
-            ICOM_VTBL(This) = &dscvt;
-            dsound_capture = This;
-
-            return IDirectSoundCaptureImpl_Initialize( (LPDIRECTSOUNDCAPTURE)This, lpcGUID );
-        }
+    if (*ippDSC == NULL) {
+        TRACE("couldn't allocate memory\n");
+        return DSERR_OUTOFMEMORY;
     }
+    else
+    {
+        ICOM_THIS(IDirectSoundCaptureImpl, *ippDSC);
 
-    FIXME( "Unknown GUID %s\n", debugstr_guid(lpcGUID) );
-    *lplpDSC = NULL;
+        This->ref = 1;
+        This->state = STATE_STOPPED;
 
-    return DSERR_OUTOFMEMORY;
+        InitializeCriticalSection( &(This->lock) );
+
+        ICOM_VTBL(This) = &dscvt;
+        dsound_capture = This;
+
+        if (GetDeviceID(lpcGUID, &This->guid) == DS_OK)
+            return IDirectSoundCaptureImpl_Initialize( (LPDIRECTSOUNDCAPTURE)This, &This->guid);
+    }
+    WARN("invalid GUID\n");
+    return DSERR_INVALIDPARAM;
 }
 
 /***************************************************************************
@@ -163,8 +152,10 @@ DirectSoundCaptureEnumerateA(
     LPDSENUMCALLBACKA lpDSEnumCallback,
     LPVOID lpContext)
 {
-    WAVEINCAPSA wcaps;
     unsigned devs, wid;
+    DSDRIVERDESC desc;
+    GUID guid;
+    int err;
 
     TRACE("(%p,%p)\n", lpDSEnumCallback, lpContext );
 
@@ -174,15 +165,37 @@ DirectSoundCaptureEnumerateA(
     }
 
     devs = waveInGetNumDevs();
+    if (devs > 0) {
+	if (GetDeviceID(&DSDEVID_DefaultCapture, &guid) == DS_OK) {
+	    GUID temp;
+    	    for (wid = 0; wid < devs; ++wid) {
+		err = mmErr(waveInMessage((HWAVEIN)wid,DRV_QUERYDSOUNDGUID,(DWORD)&temp,0));
+		if (err == DS_OK) {
+		    if (IsEqualGUID( &guid, &temp ) ) {
+			err = mmErr(waveInMessage((HWAVEIN)wid,DRV_QUERYDSOUNDDESC,(DWORD)&desc,0));
+	    		if (err == DS_OK) {
+			    TRACE("calling lpDSEnumCallback(%s,\"%s\",\"%s\",%p)\n",
+		    		debugstr_guid(&DSDEVID_DefaultCapture),"Primary Sound Capture Driver",desc.szDrvName,lpContext);
+			    if (lpDSEnumCallback((LPGUID)&DSDEVID_DefaultCapture, "Primary Sound Capture Driver", desc.szDrvName, lpContext) == FALSE)
+				return DS_OK;
+			}
+		    }
+		}
+	    }
+	}
+    }
+
     for (wid = 0; wid < devs; ++wid) {
-        waveInGetDevCapsA(wid, &wcaps, sizeof(wcaps));
-        if (lpDSEnumCallback) {
-	    TRACE("calling lpDSEnumCallback(%s,\"WINE DirectSound\",\"%s\",%p)\n",
-		debugstr_guid(&DSDEVID_DefaultCapture),wcaps.szPname,lpContext);
-            lpDSEnumCallback((LPGUID)&DSDEVID_DefaultCapture, "WINE DirectSound",
-                wcaps.szPname ,lpContext);
-            return DS_OK;
-        }
+	err = mmErr(waveInMessage((HWAVEIN)wid,DRV_QUERYDSOUNDDESC,(DWORD)&desc,0));
+	if (err == DS_OK) {
+	    err = mmErr(waveInMessage((HWAVEIN)wid,DRV_QUERYDSOUNDGUID,(DWORD)&guid,0));
+	    if (err == DS_OK) {
+		TRACE("calling lpDSEnumCallback(%s,\"%s\",\"%s\",%p)\n",
+		    debugstr_guid(&guid),desc.szDesc,desc.szDrvName,lpContext);
+		if (lpDSEnumCallback(&guid, desc.szDesc, desc.szDrvName, lpContext) == FALSE)
+		    return DS_OK;
+	    }
+	} 
     }
 
     return DS_OK;
@@ -202,9 +215,12 @@ DirectSoundCaptureEnumerateW(
     LPDSENUMCALLBACKW lpDSEnumCallback,
     LPVOID lpContext)
 {
-    WAVEINCAPSW wcaps;
     unsigned devs, wid;
-    WCHAR desc[MAXPNAMELEN];
+    DSDRIVERDESC desc;
+    GUID guid;
+    int err;
+    WCHAR wDesc[MAXPNAMELEN];
+    WCHAR wName[MAXPNAMELEN];
 
     TRACE("(%p,%p)\n", lpDSEnumCallback, lpContext );
 
@@ -214,14 +230,45 @@ DirectSoundCaptureEnumerateW(
     }
 
     devs = waveInGetNumDevs();
+    if (devs > 0) {
+	if (GetDeviceID(&DSDEVID_DefaultCapture, &guid) == DS_OK) {
+	    GUID temp;
+    	    for (wid = 0; wid < devs; ++wid) {
+		err = mmErr(waveInMessage((HWAVEIN)wid,DRV_QUERYDSOUNDGUID,(DWORD)&temp,0));
+		if (err == DS_OK) {
+		    if (IsEqualGUID( &guid, &temp ) ) {
+			err = mmErr(waveInMessage((HWAVEIN)wid,DRV_QUERYDSOUNDDESC,(DWORD)&desc,0));
+	    		if (err == DS_OK) {
+			    TRACE("calling lpDSEnumCallback(%s,\"%s\",\"%s\",%p)\n",
+		    		debugstr_guid(&DSDEVID_DefaultCapture),"Primary Sound Capture Driver",desc.szDrvName,lpContext);
+			    MultiByteToWideChar( CP_ACP, 0, "Primary Sound Capture Driver", -1, 
+			        wDesc, sizeof(wDesc)/sizeof(WCHAR) );
+			    MultiByteToWideChar( CP_ACP, 0, desc.szDrvName, -1, 
+		    	        wName, sizeof(wName)/sizeof(WCHAR) );
+			    if (lpDSEnumCallback((LPGUID)&DSDEVID_DefaultCapture, wDesc, wName, lpContext) == FALSE)
+				return DS_OK;
+			}
+		    }
+		}
+	    }
+	}
+    }
+
     for (wid = 0; wid < devs; ++wid) {
-        waveInGetDevCapsW(wid, &wcaps, sizeof(wcaps));
-        if (lpDSEnumCallback) {
-            MultiByteToWideChar( CP_ACP, 0, "WINE Sound Capture Driver", -1, 
-                desc, sizeof(desc)/sizeof(WCHAR) );
-            lpDSEnumCallback((LPGUID)&DSDEVID_DefaultCapture, desc, wcaps.szPname ,lpContext);
-            return DS_OK;
-        }
+	err = mmErr(waveInMessage((HWAVEIN)wid,DRV_QUERYDSOUNDDESC,(DWORD)&desc,0));
+	if (err == DS_OK) {
+	    err = mmErr(waveInMessage((HWAVEIN)wid,DRV_QUERYDSOUNDGUID,(DWORD)&guid,0));
+	    if (err == DS_OK) {
+		TRACE("calling lpDSEnumCallback(%s,\"%s\",\"%s\",%p)\n",
+		    debugstr_guid(&DSDEVID_DefaultCapture),desc.szDesc,desc.szDrvName,lpContext);
+		MultiByteToWideChar( CP_ACP, 0, desc.szDesc, -1, 
+		    wDesc, sizeof(wDesc)/sizeof(WCHAR) );
+		MultiByteToWideChar( CP_ACP, 0, desc.szDrvName, -1, 
+		    wName, sizeof(wName)/sizeof(WCHAR) );
+		if (lpDSEnumCallback((LPGUID)&DSDEVID_DefaultCapture, wDesc, wName, lpContext) == FALSE)
+		    return DS_OK;
+	    }
+	} 
     }
 
     return DS_OK;
@@ -402,7 +449,7 @@ IDirectSoundCaptureImpl_Initialize(
     LPDIRECTSOUNDCAPTURE iface,
     LPCGUID lpcGUID )
 {
-    HRESULT err = DS_OK;
+    HRESULT err = DSERR_INVALIDPARAM;
     unsigned wid, widn;
     ICOM_THIS(IDirectSoundCaptureImpl,iface);
     TRACE("(%p)\n", This);
@@ -427,8 +474,24 @@ IDirectSoundCaptureImpl_Initialize(
     /* Get dsound configuration */
     setup_dsound_options();
 
-    /* FIXME: should enumerate WINMM audio devices and find the one we want */
-    wid = 0;
+    /* enumerate WINMM audio devices and find the one we want */
+    for (wid=0; wid<widn; wid++) {
+	GUID guid;
+	err = mmErr(waveInMessage((HWAVEIN)wid,DRV_QUERYDSOUNDGUID,(DWORD)(&guid),0));
+	if (err != DS_OK) {
+	    WARN("waveInMessage failed; err=%lx\n",err);
+	    return err;
+	}
+    	if (IsEqualGUID( lpcGUID, &guid) ) {
+	    err = DS_OK;
+	    break;
+	}
+    }
+
+    if (err != DS_OK) {
+	WARN("invalid parameter\n");
+	return DSERR_INVALIDPARAM;
+    }
 
     err = mmErr(waveInMessage((HWAVEIN)wid,DRV_QUERYDSOUNDIFACE,(DWORD)&(This->driver),0));
     if ( (err != DS_OK) && (err != DSERR_UNSUPPORTED) ) {
@@ -443,9 +506,6 @@ IDirectSoundCaptureImpl_Initialize(
 
     /* Get driver description */
     if (This->driver) {
-	ERR("You have a sound card that is Direct Sound Capture capable but the driver is not finished. You can add a line to the wine config file in [dsound]: \"HardwareAcceleration\" = \"Emulation\" to force emulation mode.\n");
-	/* FIXME: remove this return to test driver */
-	return DSERR_NODRIVER;
         TRACE("using DirectSound driver\n");
         err = IDsCaptureDriver_GetDriverDesc(This->driver, &(This->drvdesc));
 	if (err != DS_OK) {
@@ -484,11 +544,9 @@ IDirectSoundCaptureImpl_Initialize(
                 strncpy(This->drvdesc.szDrvName, wic.szPname, 
                     sizeof(This->drvdesc.szDrvName)); 
 
+                This->drvcaps.dwFlags |= DSCCAPS_EMULDRIVER;
                 This->drvcaps.dwFormats = wic.dwFormats;
                 This->drvcaps.dwChannels = wic.wChannels;
-    
-                if (ds_emuldriver)
-                    This->drvcaps.dwFlags |= DSCCAPS_EMULDRIVER;
             }
         }
     }
@@ -656,7 +714,7 @@ IDirectSoundCaptureBufferImpl_QueryInterface(
 	return NO_ERROR;
     }
 
-    FIXME("(%p,%s,%p)\n", This, debugstr_guid(riid), ppobj);
+    FIXME("(%p,%s,%p) unsupported GUID\n", This, debugstr_guid(riid), ppobj);
 
     return E_FAIL;
 }
@@ -1226,7 +1284,7 @@ DirectSoundFullDuplexCreate8(
     }
 
     *ippDSFD = (IDirectSoundFullDuplexImpl*)HeapAlloc(GetProcessHeap(),
-            HEAP_ZERO_MEMORY, sizeof(IDirectSoundFullDuplexImpl));
+	HEAP_ZERO_MEMORY, sizeof(IDirectSoundFullDuplexImpl));
 
     if (*ippDSFD == NULL) {
 	TRACE("couldn't allocate memory\n");

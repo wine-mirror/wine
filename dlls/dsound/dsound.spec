@@ -6,7 +6,7 @@
 6 stdcall DirectSoundCaptureCreate(ptr ptr ptr) DirectSoundCaptureCreate8
 7 stdcall DirectSoundCaptureEnumerateA(ptr ptr) DirectSoundCaptureEnumerateA
 8 stdcall DirectSoundCaptureEnumerateW(ptr ptr) DirectSoundCaptureEnumerateW
-9 stub GetDeviceID
+9 stdcall GetDeviceID(ptr ptr) GetDeviceID
 10 stub DirectSoundFullDuplexCreate
 11 stdcall DirectSoundCreate8(ptr ptr ptr) DirectSoundCreate8
 12 stdcall DirectSoundCaptureCreate8(ptr ptr ptr) DirectSoundCaptureCreate8

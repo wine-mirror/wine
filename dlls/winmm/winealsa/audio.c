@@ -149,13 +149,16 @@ typedef struct {
     ALSA_MSG_RING		msgRing;
 
     /* DirectSound stuff */
-
+    DSDRIVERDESC                ds_desc;
+    GUID                        ds_guid;
 } WINE_WAVEOUT;
 
 static WINE_WAVEOUT	WOutDev   [MAX_WAVEOUTDRV];
 static DWORD            ALSA_WodNumDevs;
 
 static DWORD wodDsCreate(UINT wDevID, PIDSDRIVER* drv);
+static DWORD wodDsDesc(UINT wDevID, PDSDRIVERDESC desc);
+static DWORD wodDsGuid(UINT wDevID, LPGUID pGuid);
 
 /* These strings used only for tracing */
 #if 0
@@ -412,6 +415,9 @@ LONG ALSA_WaveInit(void)
     wwo->caps.vDriverVersion = 0x0100;
     wwo->caps.dwFormats = 0x00000000;
     wwo->caps.dwSupport = WAVECAPS_VOLUME;
+    strcpy(wwo->ds_desc.szDesc, "WineALSA DirectSound Driver");
+    strcpy(wwo->ds_desc.szDrvName, "winealsa.drv");
+    wwo->ds_guid = DSDEVID_DefaultPlayback;
 
     if (!wine_dlopen("libasound.so.2", RTLD_LAZY|RTLD_GLOBAL, NULL, 0))
     {
@@ -1572,7 +1578,10 @@ DWORD WINAPI ALSA_wodMessage(UINT wDevID, UINT wMsg, DWORD dwUser,
     case WODM_SETVOLUME:	return wodSetVolume	(wDevID, dwParam1);
     case WODM_RESTART:		return wodRestart	(wDevID);
     case WODM_RESET:		return wodReset		(wDevID);
-    case DRV_QUERYDSOUNDIFACE:	return wodDsCreate(wDevID, (PIDSDRIVER*)dwParam1);
+    case DRV_QUERYDSOUNDIFACE:	return wodDsCreate	(wDevID, (PIDSDRIVER*)dwParam1);
+    case DRV_QUERYDSOUNDDESC:	return wodDsDesc	(wDevID, (PDSDRIVERDESC)dwParam1);
+    case DRV_QUERYDSOUNDGUID:	return wodDsGuid	(wDevID, (LPGUID)dwParam1);
+
     default:
 	FIXME("unknown message %d!\n", wMsg);
     }
@@ -1947,10 +1956,9 @@ static HRESULT WINAPI IDsDriverImpl_GetDriverDesc(PIDSDRIVER iface, PDSDRIVERDES
 {
     ICOM_THIS(IDsDriverImpl,iface);
     TRACE("(%p,%p)\n",iface,pDesc);
+    memcpy(pDesc, &(WOutDev[This->wDevID].ds_desc), sizeof(DSDRIVERDESC));
     pDesc->dwFlags = DSDDESC_DOMMSYSTEMOPEN | DSDDESC_DOMMSYSTEMSETFORMAT |
 	DSDDESC_USESYSTEMMEMORY;
-    strcpy(pDesc->szDesc, "WineALSA DirectSound Driver");
-    strcpy(pDesc->szDrvName, "winealsa.drv");
     pDesc->dnDevNode		= WOutDev[This->wDevID].waveDesc.dnDevNode;
     pDesc->wVxdId		= 0;
     pDesc->wReserved		= 0;
@@ -2094,6 +2102,22 @@ static DWORD wodDsCreate(UINT wDevID, PIDSDRIVER* drv)
     (*idrv)->primary	= NULL;
     return MMSYSERR_NOERROR;
 }
+
+static DWORD wodDsDesc(UINT wDevID, PDSDRIVERDESC desc)
+{
+    memcpy(desc, &(WOutDev[wDevID].ds_desc), sizeof(DSDRIVERDESC));
+    return MMSYSERR_NOERROR;
+}
+
+static DWORD wodDsGuid(UINT wDevID, LPGUID pGuid)
+{
+    TRACE("(%d,%p)\n",wDevID,pGuid);
+
+    memcpy(pGuid, &(WOutDev[wDevID].ds_guid), sizeof(GUID));
+
+    return MMSYSERR_NOERROR;
+}
+
 #endif
 
 #ifndef HAVE_ALSA

@@ -38,6 +38,8 @@ extern int ds_hel_queue;
 extern int ds_snd_queue_max;
 extern int ds_snd_queue_min;
 extern int ds_hw_accel;
+extern int ds_default_playback;
+extern int ds_default_capture;
 
 /*****************************************************************************
  * Predeclare the interface implementation structures
@@ -62,6 +64,7 @@ struct IDirectSoundImpl
     ICOM_VFIELD(IDirectSound8);
     DWORD                      ref;
     /* IDirectSoundImpl fields */
+    GUID                        guid;
     PIDSDRIVER                  driver;
     DSDRIVERDESC                drvdesc;
     DSDRIVERCAPS                drvcaps;

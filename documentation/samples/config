@@ -267,6 +267,16 @@ WINE REGISTRY Version 2
 ;"SndQueueMax" = "28"
 ;; Min number of fragments to prebuffer
 ;"SndQueueMin" = "12"
+;; Forces emulation mode (using wave api)
+;"HardwareAcceleration" = "Emulation"
+;; Sets default playback device (0 - number of devices - 1)
+;"DefaultPlayback" = "0"	; use first device (/dev/dsp)
+;"DefaultPlayback" = "1" 	; use second device (/dev/dsp1)
+;"DefaultPlayback" = "2" 	; use third device (/dev/dsp2)
+;; Sets default capture device (0 - number of devices - 1)
+;"DefaultCapture" = "0"		; use first device (/dev/dsp)
+;"DefaultCapture" = "1"		; use second device (/dev/dsp1)
+;"DefaultCapture" = "2"		; use third device (/dev/dsp2)
 
 [Network]
 ;; Use the DNS (Unix) host name always as NetBIOS "ComputerName" (boolean, default "Y").

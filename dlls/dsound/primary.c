@@ -184,7 +184,8 @@ HRESULT DSOUND_PrimaryDestroy(IDirectSoundImpl *This)
 {
 	DSOUND_PrimaryClose(This);
 	if (This->hwbuf) {
-		IDsDriverBuffer_Release(This->hwbuf);
+		if (IDsDriverBuffer_Release(This->hwbuf) == 0)
+			This->hwbuf = 0;
 	} else {
 		unsigned c;
 		for (c=0; c<DS_HEL_FRAGS; c++) {

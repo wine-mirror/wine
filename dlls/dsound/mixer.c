@@ -983,7 +983,9 @@ void CALLBACK DSOUND_timer(UINT timerID, UINT msg, DWORD dwUser, DWORD dw1, DWOR
 void CALLBACK DSOUND_callback(HWAVEOUT hwo, UINT msg, DWORD dwUser, DWORD dw1, DWORD dw2)
 {
         IDirectSoundImpl* This = (IDirectSoundImpl*)dwUser;
-	TRACE("entering at %ld, msg=%08x\n", GetTickCount(), msg);
+	TRACE("entering at %ld, msg=%08x(%s)\n", GetTickCount(), msg, 
+		msg==MM_WOM_DONE ? "MM_WOM_DONE" : msg==MM_WOM_CLOSE ? "MM_WOM_CLOSE" : 
+		msg==MM_WOM_OPEN ? "MM_WOM_OPEN" : "UNKNOWN");
 	if (msg == MM_WOM_DONE) {
 		DWORD inq, mixq, fraglen, buflen, pwplay, playpos, mixpos;
 		if (This->pwqueue == (DWORD)-1) {
