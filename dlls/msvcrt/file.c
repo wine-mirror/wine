@@ -2107,7 +2107,7 @@ int MSVCRT_wscanf(const WCHAR *format, ...)
 int MSVCRT_rename(const char *oldpath,const char *newpath)
 {
   TRACE(":from %s to %s\n",oldpath,newpath);
-  if (MoveFileExA(oldpath, newpath, MOVEFILE_REPLACE_EXISTING))
+  if (MoveFileExA(oldpath, newpath, MOVEFILE_COPY_ALLOWED))
     return 0;
   TRACE(":failed (%ld)\n",GetLastError());
   MSVCRT__set_errno(GetLastError());
@@ -2120,7 +2120,7 @@ int MSVCRT_rename(const char *oldpath,const char *newpath)
 int _wrename(const WCHAR *oldpath,const WCHAR *newpath)
 {
   TRACE(":from %s to %s\n",debugstr_w(oldpath),debugstr_w(newpath));
-  if (MoveFileExW(oldpath, newpath, MOVEFILE_REPLACE_EXISTING))
+  if (MoveFileExW(oldpath, newpath, MOVEFILE_COPY_ALLOWED))
     return 0;
   TRACE(":failed (%ld)\n",GetLastError());
   MSVCRT__set_errno(GetLastError());
