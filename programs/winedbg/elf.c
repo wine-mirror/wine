@@ -345,18 +345,12 @@ static enum DbgInfoLoad DEBUG_ProcessElfFile(HANDLE hProcess,
     for (i = 0; i < ehptr->e_phnum; i++)
     {
 	if (ppnt[i].p_type != PT_LOAD) continue;
-	if (elf_info->size < ppnt[i].p_vaddr - delta + ppnt[i].p_memsz)
-	    elf_info->size = ppnt[i].p_vaddr - delta + ppnt[i].p_memsz;
+        elf_info->size += (ppnt[i].p_align <= 1) ? ppnt[i].p_memsz :
+            (ppnt[i].p_memsz + ppnt[i].p_align - 1) & ~(ppnt[i].p_align - 1);
     }
 
     for (i = 0; i < ehptr->e_shnum; i++)
     {
-	if (strcmp(shstrtab + spnt[i].sh_name, ".bss") == 0 &&
-	    spnt[i].sh_type == SHT_NOBITS)
-        {
-	    if (elf_info->size < spnt[i].sh_addr - delta + spnt[i].sh_size)
-		elf_info->size = spnt[i].sh_addr - delta + spnt[i].sh_size;
-	}
 	if (strcmp(shstrtab + spnt[i].sh_name, ".dynamic") == 0 &&
 	    spnt[i].sh_type == SHT_DYNAMIC)
         {

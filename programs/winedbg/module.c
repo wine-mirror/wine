@@ -361,8 +361,8 @@ static int	DEBUG_ModuleCompare(const void* p1, const void* p2)
 static inline BOOL DEBUG_IsContainer(const DBG_MODULE* wmod_cntnr,
 				     const DBG_MODULE* wmod_child)
 {
-    return wmod_cntnr->load_addr < wmod_child->load_addr &&
-	(DWORD)wmod_cntnr->load_addr + wmod_cntnr->size >
+    return wmod_cntnr->load_addr <= wmod_child->load_addr &&
+	(DWORD)wmod_cntnr->load_addr + wmod_cntnr->size >=
 	(DWORD)wmod_child->load_addr + wmod_child->size;
 }
 
