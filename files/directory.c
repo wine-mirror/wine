@@ -642,8 +642,8 @@ DWORD WINAPI SearchPathA( LPCSTR path, LPCSTR name, LPCSTR ext, DWORD buflen,
         for (p = buffer; *p; p++) if (*p == '/') *p = '\\';
         if (lastpart) *lastpart = strrchr( buffer, '\\' ) + 1;
     }
-    TRACE(dosfs, "Returning %d\n", (*res ? strlen(res) + 2 : 3));
-    return *res ? strlen(res) + 2 : 3;
+    TRACE(dosfs, "Returning %d\n", strlen(res) + 3 );
+    return strlen(res) + 3;
 }
 
 
@@ -680,7 +680,7 @@ DWORD WINAPI SearchPathW( LPCWSTR path, LPCWSTR name, LPCWSTR ext,
                 if (*p == '\\') *lastpart = p + 1;
         }
     }
-    return *res ? strlen(res) + 2 : 3;
+    return strlen(res) + 3;
 }
 
 
