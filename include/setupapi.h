@@ -26,9 +26,9 @@ typedef struct _INFCONTEXT
    UINT  Line;
 } INFCONTEXT, *PINFCONTEXT;
 
-typedef UINT (CALLBACK* PSP_FILE_CALLBACK_A)( PVOID Context, UINT Notification,
+typedef UINT CALLBACK (*PSP_FILE_CALLBACK_A)( PVOID Context, UINT Notification,
                                               UINT Param1, UINT Param2 );
-typedef UINT (CALLBACK* PSP_FILE_CALLBACK_W)( PVOID Context, UINT Notification,
+typedef UINT CALLBACK (*PSP_FILE_CALLBACK_W)( PVOID Context, UINT Notification,
                                               UINT Param1, UINT Param2 );
 #define PSP_FILE_CALLBACK WINELIB_NAME_AW(PSP_FILE_CALLBACK_)
 

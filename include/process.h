@@ -8,7 +8,7 @@
 #define _INC_PROCESS
 
 typedef void (*LPBEGINTHREAD)(LPVOID);
-typedef UINT (WINAPI *LPBEGINTHREADEX)(LPVOID);
+typedef UINT WINAPI (*LPBEGINTHREADEX)(LPVOID);
 
 ULONG _beginthread(LPBEGINTHREAD,UINT,LPVOID);
 void  _endthread(void);

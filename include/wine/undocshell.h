@@ -641,7 +641,7 @@ BOOL WINAPI PathFindOnPathAW(LPVOID sFile, LPCVOID sOtherDirs);
  */
 
 /* SHCreateShellFolderViewEx callback function */
-typedef HRESULT (CALLBACK* LPFNSFVCALLBACK)(
+typedef HRESULT CALLBACK (*LPFNSFVCALLBACK)(
 	DWORD dwUser,
 	LPSHELLFOLDER pshf,
 	HWND hWnd,

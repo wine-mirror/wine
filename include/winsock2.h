@@ -196,8 +196,7 @@ typedef struct _OVERLAPPED *  LPWSAOVERLAPPED;
 typedef HANDLE WSAEVENT;
 typedef unsigned int   GROUP;
 
-typedef void 
-(CALLBACK * LPWSAOVERLAPPED_COMPLETION_ROUTINE)
+typedef void CALLBACK (*LPWSAOVERLAPPED_COMPLETION_ROUTINE)
 (
      DWORD dwError,
      DWORD cbTransferred,

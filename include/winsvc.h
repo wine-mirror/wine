@@ -136,7 +136,7 @@ DECL_WINELIB_TYPE_AW(LPENUM_SERVICE_STATUS)
 
 /* Service control handler function prototype */
 
-typedef VOID (WINAPI *LPHANDLER_FUNCTION)(DWORD);
+typedef VOID WINAPI (*LPHANDLER_FUNCTION)(DWORD);
 
 /* API function prototypes */
 

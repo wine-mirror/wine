@@ -680,7 +680,7 @@ inline static LRESULT VFWAPI ICDrawSuggestFormat(HIC hic, LPBITMAPINFOHEADER lpb
     ICSendMessage(hic, ICM_DRAW_RENDERBUFFER, 0, 0)
 
 inline static LRESULT VFWAPI ICSetStatusProc(HIC hic, DWORD dwFlags, LRESULT lParam,
-					     LONG (CALLBACK *fpfnStatus)(LPARAM, UINT, LONG))
+					     LONG CALLBACK (*fpfnStatus)(LPARAM, UINT, LONG))
 {
     ICSETSTATUSPROC ic;
 
