@@ -1134,7 +1134,7 @@ GetNumberFormatW_Error:
 
     dwState |= NF_DIGITS_OUT;
     dwCurrentGroupCount++;
-    if (szSrc >= lpszValue && dwCurrentGroupCount == dwGroupCount)
+    if (szSrc >= lpszValue && dwCurrentGroupCount == dwGroupCount && *szSrc != '-')
     {
       LPWSTR lpszGrp = lpFormat->lpThousandSep + strlenW(lpFormat->lpThousandSep) - 1;
 

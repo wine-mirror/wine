@@ -660,6 +660,10 @@ static void test_GetNumberFormatA()
   ret = GetNumberFormatA(lcid, NUO, input, NULL, buffer, COUNTOF(buffer));
   EXPECT_VALID; EXPECT_LENA; EXPECT_EQA;
 
+  STRINGSA("-353","-353.00"); /* test for off by one error in grouping */
+  ret = GetNumberFormatA(lcid, NUO, input, NULL, buffer, COUNTOF(buffer));
+  EXPECT_VALID; EXPECT_LENA; EXPECT_EQA;
+
   STRINGSA("2353.1","2,353.10"); /* Valid real number */
   ret = GetNumberFormatA(lcid, NUO, input, NULL, buffer, COUNTOF(buffer));
   EXPECT_VALID; EXPECT_LENA; EXPECT_EQA;
