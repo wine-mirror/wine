@@ -757,7 +757,7 @@ typedef struct
     BYTE      tmStruckOut;
     BYTE      tmPitchAndFamily;
     BYTE      tmCharSet;
-} TEXTMETRICA, *LPTEXTMETRICA;
+} TEXTMETRICA, *LPTEXTMETRICA, *PTEXTMETRICA;
 
 typedef struct
 {
@@ -781,9 +781,10 @@ typedef struct
     BYTE      tmStruckOut;
     BYTE      tmPitchAndFamily;
     BYTE      tmCharSet;
-} TEXTMETRICW, *LPTEXTMETRICW;
+} TEXTMETRICW, *LPTEXTMETRICW, *PTEXTMETRICW;
 
 DECL_WINELIB_TYPE_AW(TEXTMETRIC)
+DECL_WINELIB_TYPE_AW(PTEXTMETRIC)
 DECL_WINELIB_TYPE_AW(LPTEXTMETRIC)
 
 
