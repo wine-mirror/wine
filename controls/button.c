@@ -803,9 +803,9 @@ static void CB_Paint( HWND hwnd, HDC hDC, UINT action )
 
     if ((hFont = get_button_font( hwnd ))) SelectObject( hDC, hFont );
 
-    hBrush = SendMessageW( GetParent(hwnd), WM_CTLCOLORBTN, hDC, (LPARAM)hwnd );
+    hBrush = SendMessageW( GetParent(hwnd), WM_CTLCOLORSTATIC, hDC, (LPARAM)hwnd );
     if (!hBrush) /* did the app forget to call defwindowproc ? */
-        hBrush = DefWindowProcW( GetParent(hwnd), WM_CTLCOLORBTN, hDC, (LPARAM)hwnd );
+        hBrush = DefWindowProcW( GetParent(hwnd), WM_CTLCOLORSTATIC, hDC, (LPARAM)hwnd );
 
     if (style & BS_LEFTTEXT) 
     {
