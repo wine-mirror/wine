@@ -857,12 +857,12 @@ static int output_delayed_imports( FILE *outfile )
             {
                 /* Hmpf.  Stupid sparc assembler always interprets global variable
                    names as GOT offsets, so we have to do it the long way ... */
-                fprintf( outfile, "save %%sp, -96, %%sp\\n" );
-                fprintf( outfile, "0:\\tcall 1f\\n\\tnop\\n" );
-                fprintf( outfile, "1:\\tsethi %%hi(delay_imports+%d-0b), %%g1\\n\\t", pos );
-                fprintf( outfile, "or %%g1, %%lo(delay_imports+%d-0b), %%g1\\n\\t", pos );
-                fprintf( outfile, "ld [%%g1+%%o7], %%g1\\n\\t" );
-                fprintf( outfile, "jmp %%g1\\n\\trestore\\n" );
+                fprintf( outfile, "\"save %%sp, -96, %%sp\\n\"" );
+                fprintf( outfile, "\"0:\\tcall 1f\\n\\tnop\\n\"" );
+                fprintf( outfile, "\"1:\\tsethi %%hi(delay_imports+%d-0b), %%g1\\n\\t\"", pos );
+                fprintf( outfile, "\"or %%g1, %%lo(delay_imports+%d-0b), %%g1\\n\\t\"", pos );
+                fprintf( outfile, "\"ld [%%g1+%%o7], %%g1\\n\\t\"" );
+                fprintf( outfile, "\"jmp %%g1\\n\\trestore\\n\"" );
             }
 
 #elif defined(__PPC__)
