@@ -787,6 +787,7 @@ static void set_vm86_pend( CONTEXT *context )
 {
     EXCEPTION_RECORD rec;
     TEB *teb = NtCurrentTeb();
+    struct vm86plus_struct *vm86 = (struct vm86plus_struct*)(teb->vm86_ptr);
 
     rec.ExceptionCode           = EXCEPTION_VM86_STI;
     rec.ExceptionFlags          = EXCEPTION_CONTINUABLE;
@@ -802,6 +803,7 @@ static void set_vm86_pend( CONTEXT *context )
         /* seems so, also set flag in signal context */
         if (context->EFlags & VIP_MASK) return;
         context->EFlags |= VIP_MASK;
+        vm86->regs.eflags |= VIP_MASK; /* no exception recursion */
         if (context->EFlags & VIF_MASK) {
             /* VIF is set, throw exception */
             teb->vm86_pending = 0;
@@ -809,10 +811,9 @@ static void set_vm86_pend( CONTEXT *context )
             EXC_RtlRaiseException( &rec, context );
         }
     }
-    else if (teb->vm86_ptr)
+    else if (vm86)
     {
         /* not in VM86, but possibly setting up for it */
-        struct vm86plus_struct *vm86 = (struct vm86plus_struct*)(teb->vm86_ptr);
         if (vm86->regs.eflags & VIP_MASK) return;
         vm86->regs.eflags |= VIP_MASK;
         if (vm86->regs.eflags & VIF_MASK) {
