@@ -187,16 +187,7 @@ static void cleanup_thread( struct thread *thread )
     if (thread->request_fd != -1) close( thread->request_fd );
     if (thread->reply_fd != -1) close( thread->reply_fd );
     if (thread->wait_fd != -1) close( thread->wait_fd );
-    if (thread->queue)
-    {
-        if (thread->process->queue == thread->queue)
-        {
-            release_object( thread->process->queue );
-            thread->process->queue = NULL;
-        }
-        release_object( thread->queue );
-        thread->queue = NULL;
-    }
+    free_msg_queue( thread );
     destroy_thread_windows( thread );
     for (i = 0; i < MAX_INFLIGHT_FDS; i++)
     {
@@ -795,7 +786,6 @@ DECL_HANDLER(new_thread)
             return;
         }
         kill_thread( thread, 1 );
-        request_fd = -1;
     }
 }
 

@@ -163,6 +163,27 @@ static struct msg_queue *create_msg_queue( struct thread *thread )
     return queue;
 }
 
+/* free the message queue of a thread at thread exit */
+void free_msg_queue( struct thread *thread )
+{
+    struct process *process = thread->process;
+
+    if (!thread->queue) return;
+    if (process->queue == thread->queue)  /* is it the process main queue? */
+    {
+        release_object( process->queue );
+        process->queue = NULL;
+        if (process->idle_event)
+        {
+            set_event( process->idle_event );
+            release_object( process->idle_event );
+            process->idle_event = NULL;
+        }
+    }
+    release_object( thread->queue );
+    thread->queue = NULL;
+}
+
 /* check the queue status */
 inline static int is_signaled( struct msg_queue *queue )
 {
