@@ -1123,3 +1123,31 @@ HKEY WINAPI SetupDiOpenClassRegKeyExW(
 
     return hClassKey;
 }
+
+/***********************************************************************
+ *		SetupDiOpenDeviceInterfaceA (SETUPAPI.@)
+ */
+BOOL WINAPI SetupDiOpenDeviceInterfaceW(
+       HDEVINFO DeviceInfoSet,
+       PCWSTR DevicePath,
+       DWORD OpenFlags,
+       PSP_DEVICE_INTERFACE_DATA DeviceInterfaceData)
+{
+    FIXME("%p %s %08lx %p\n",
+        DeviceInfoSet, debugstr_w(DevicePath), OpenFlags, DeviceInterfaceData);
+    return FALSE;
+}
+
+/***********************************************************************
+ *		SetupDiOpenDeviceInterfaceA (SETUPAPI.@)
+ */
+BOOL WINAPI SetupDiOpenDeviceInterfaceA(
+       HDEVINFO DeviceInfoSet,
+       PCSTR DevicePath,
+       DWORD OpenFlags,
+       PSP_DEVICE_INTERFACE_DATA DeviceInterfaceData)
+{
+    FIXME("%p %s %08lx %p\n", DeviceInfoSet,
+        debugstr_a(DevicePath), OpenFlags, DeviceInterfaceData);
+    return FALSE;
+}

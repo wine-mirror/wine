@@ -359,9 +359,9 @@
 @ stub SetupDiOpenDevRegKey
 @ stub SetupDiOpenDeviceInfoA
 @ stub SetupDiOpenDeviceInfoW
-@ stub SetupDiOpenDeviceInterfaceA
+@ stdcall SetupDiOpenDeviceInterfaceA(ptr str long ptr)
 @ stub SetupDiOpenDeviceInterfaceRegKey
-@ stub SetupDiOpenDeviceInterfaceW
+@ stdcall SetupDiOpenDeviceInterfaceW(ptr wstr long ptr)
 @ stub SetupDiRegisterDeviceInfo
 @ stub SetupDiRemoveDevice
 @ stub SetupDiRemoveDeviceInterface
