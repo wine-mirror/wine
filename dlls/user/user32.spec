@@ -12,6 +12,8 @@ init	UserClientDllInitialize
 @ stdcall BeginPaint(long ptr) BeginPaint
 @ stdcall BringWindowToTop(long) BringWindowToTop
 @ stdcall BroadcastSystemMessage(long ptr long long long) BroadcastSystemMessage
+@ stdcall BroadcastSystemMessageA(long ptr long long long) BroadcastSystemMessage
+@ stub BroadcastSystemMessageW
 @ stdcall CalcChildScroll(long long) CalcChildScroll
 @ stdcall CallMsgFilter(ptr long) CallMsgFilterA
 @ stdcall CallMsgFilterA(ptr long) CallMsgFilterA
