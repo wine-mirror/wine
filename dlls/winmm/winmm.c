@@ -1,7 +1,7 @@
 /* -*- tab-width: 8; c-basic-offset: 4 -*- */
 
 /*
- * MMSYTEM functions
+ * WINMM functions
  *
  * Copyright 1993      Martin Ayotte
  *           1998-2002 Eric Pouech
@@ -32,10 +32,7 @@
 
 #include "mmsystem.h"
 #include "winbase.h"
-#include "wingdi.h"
-
-#include "winuser.h"
-#include "wine/winuser16.h" /* FIXME: should be removed */
+#include "wine/winuser16.h" /* FIXME: should be removed, only used for UserYield16 */
 #include "heap.h"
 #include "winternl.h"
 #include "winemm.h"
@@ -43,30 +40,6 @@
 #include "wine/debug.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(winmm);
-
-/* ========================================================================
- *           T I M E   C O N V E R S I O N   F U N C T I O N S
- * ========================================================================*/
-
-/* FIXME: should be in mmsystem.c */
-
-void MMSYSTEM_MMTIME32to16(LPMMTIME16 mmt16, const MMTIME* mmt32)
-{
-    mmt16->wType = mmt32->wType;
-    /* layout of rest is the same for 32/16,
-     * Note: mmt16->u is 2 bytes smaller than mmt32->u, which has padding
-     */
-    memcpy(&(mmt16->u), &(mmt32->u), sizeof(mmt16->u));
-}
-
-void MMSYSTEM_MMTIME16to32(LPMMTIME mmt32, const MMTIME16* mmt16)
-{
-    mmt32->wType = mmt16->wType;
-    /* layout of rest is the same for 32/16,
-     * Note: mmt16->u is 2 bytes smaller than mmt32->u, which has padding
-     */
-    memcpy(&(mmt32->u), &(mmt16->u), sizeof(mmt16->u));
-}
 
 /* ========================================================================
  *                   G L O B A L   S E T T I N G S
@@ -256,8 +229,8 @@ UINT WINAPI mixerGetDevCapsW(UINT devid, LPMIXERCAPSW mixcaps, UINT size)
     return ret;
 }
 
-UINT  MMSYSTEM_mixerOpen(LPHMIXER lphMix, UINT uDeviceID, DWORD dwCallback,
-                         DWORD dwInstance, DWORD fdwOpen, BOOL bFrom32)
+UINT  MIXER_Open(LPHMIXER lphMix, UINT uDeviceID, DWORD dwCallback,
+                 DWORD dwInstance, DWORD fdwOpen, BOOL bFrom32)
 {
     HMIXER		hMix;
     LPWINE_MLD		wmld;
@@ -293,8 +266,7 @@ UINT  MMSYSTEM_mixerOpen(LPHMIXER lphMix, UINT uDeviceID, DWORD dwCallback,
 UINT WINAPI mixerOpen(LPHMIXER lphMix, UINT uDeviceID, DWORD dwCallback,
 		      DWORD dwInstance, DWORD fdwOpen)
 {
-    return MMSYSTEM_mixerOpen(lphMix, uDeviceID,
-			      dwCallback, dwInstance, fdwOpen, TRUE);
+    return MIXER_Open(lphMix, uDeviceID, dwCallback, dwInstance, fdwOpen, TRUE);
 }
 
 /**************************************************************************
@@ -1058,8 +1030,8 @@ static	LPWINE_MIDI	MIDI_OutAlloc(HMIDIOUT* lphMidiOut, LPDWORD lpdwCallback,
     return lpwm;
 }
 
-UINT MMSYSTEM_midiOutOpen(HMIDIOUT* lphMidiOut, UINT uDeviceID, DWORD dwCallback,
-			  DWORD dwInstance, DWORD dwFlags, BOOL bFrom32)
+UINT MIDI_OutOpen(HMIDIOUT* lphMidiOut, UINT uDeviceID, DWORD dwCallback,
+                  DWORD dwInstance, DWORD dwFlags, BOOL bFrom32)
 {
     HMIDIOUT		hMidiOut;
     LPWINE_MIDI		lpwm;
@@ -1078,8 +1050,7 @@ UINT MMSYSTEM_midiOutOpen(HMIDIOUT* lphMidiOut, UINT uDeviceID, DWORD dwCallback
 
     lpwm->mld.uDeviceID = uDeviceID;
 
-    dwRet = MMDRV_Open((LPWINE_MLD)lpwm, MODM_OPEN, (DWORD)&lpwm->mod,
-		       dwFlags);
+    dwRet = MMDRV_Open((LPWINE_MLD)lpwm, MODM_OPEN, (DWORD)&lpwm->mod, dwFlags);
 
     if (dwRet != MMSYSERR_NOERROR) {
 	MMDRV_Free(hMidiOut, (LPWINE_MLD)lpwm);
@@ -1098,8 +1069,7 @@ UINT MMSYSTEM_midiOutOpen(HMIDIOUT* lphMidiOut, UINT uDeviceID, DWORD dwCallback
 UINT WINAPI midiOutOpen(HMIDIOUT* lphMidiOut, UINT uDeviceID,
 			DWORD dwCallback, DWORD dwInstance, DWORD dwFlags)
 {
-    return MMSYSTEM_midiOutOpen(lphMidiOut, uDeviceID, dwCallback,
-				dwInstance, dwFlags, TRUE);
+    return MIDI_OutOpen(lphMidiOut, uDeviceID, dwCallback, dwInstance, dwFlags, TRUE);
 }
 
 /**************************************************************************
@@ -1365,8 +1335,8 @@ UINT WINAPI midiInGetErrorTextA(UINT uError, LPSTR lpText, UINT uSize)
     return MIDI_GetErrorText(uError, lpText, uSize);
 }
 
-UINT MMSYSTEM_midiInOpen(HMIDIIN* lphMidiIn, UINT uDeviceID, DWORD dwCallback,
-                         DWORD dwInstance, DWORD dwFlags, BOOL bFrom32)
+UINT MIDI_InOpen(HMIDIIN* lphMidiIn, UINT uDeviceID, DWORD dwCallback,
+                 DWORD dwInstance, DWORD dwFlags, BOOL bFrom32)
 {
     HMIDIIN		hMidiIn;
     LPWINE_MIDI		lpwm;
@@ -1406,8 +1376,7 @@ UINT MMSYSTEM_midiInOpen(HMIDIIN* lphMidiIn, UINT uDeviceID, DWORD dwCallback,
 UINT WINAPI midiInOpen(HMIDIIN* lphMidiIn, UINT uDeviceID,
 		       DWORD dwCallback, DWORD dwInstance, DWORD dwFlags)
 {
-    return MMSYSTEM_midiInOpen(lphMidiIn, uDeviceID, dwCallback,
-			       dwInstance, dwFlags, TRUE);
+    return MIDI_InOpen(lphMidiIn, uDeviceID, dwCallback, dwInstance, dwFlags, TRUE);
 }
 
 /**************************************************************************
@@ -1907,9 +1876,9 @@ MMRESULT WINAPI midiStreamClose(HMIDISTRM hMidiStrm)
 /**************************************************************************
  * 				MMSYSTEM_MidiStream_Open	[internal]
  */
-MMRESULT MMSYSTEM_MidiStream_Open(HMIDISTRM* lphMidiStrm, LPUINT lpuDeviceID,
-                                  DWORD cMidi, DWORD dwCallback,
-                                  DWORD dwInstance, DWORD fdwOpen, BOOL bFrom32)
+MMRESULT MIDI_StreamOpen(HMIDISTRM* lphMidiStrm, LPUINT lpuDeviceID, DWORD cMidi,
+                         DWORD dwCallback, DWORD dwInstance, DWORD fdwOpen, 
+                         BOOL bFrom32)
 {
     WINE_MIDIStream*	lpMidiStrm;
     MMRESULT		ret;
@@ -1980,8 +1949,8 @@ MMRESULT WINAPI midiStreamOpen(HMIDISTRM* lphMidiStrm, LPUINT lpuDeviceID,
 			       DWORD cMidi, DWORD dwCallback,
 			       DWORD dwInstance, DWORD fdwOpen)
 {
-    return MMSYSTEM_MidiStream_Open(lphMidiStrm, lpuDeviceID, cMidi, dwCallback,
-				    dwInstance, fdwOpen, TRUE);
+    return MIDI_StreamOpen(lphMidiStrm, lpuDeviceID, cMidi, dwCallback,
+                           dwInstance, fdwOpen, TRUE);
 }
 
 /**************************************************************************
@@ -2161,9 +2130,9 @@ MMRESULT WINAPI midiStreamStop(HMIDISTRM hMidiStrm)
     return ret;
 }
 
-UINT MMSYSTEM_waveOpen(HANDLE* lphndl, UINT uDeviceID, UINT uType,
-                       const LPWAVEFORMATEX lpFormat, DWORD dwCallback, 
-                       DWORD dwInstance, DWORD dwFlags, BOOL bFrom32)
+UINT WAVE_Open(HANDLE* lphndl, UINT uDeviceID, UINT uType, 
+               const LPWAVEFORMATEX lpFormat, DWORD dwCallback, 
+               DWORD dwInstance, DWORD dwFlags, BOOL bFrom32)
 {
     HANDLE		handle;
     LPWINE_MLD		wmld;
@@ -2193,6 +2162,8 @@ UINT MMSYSTEM_waveOpen(HANDLE* lphndl, UINT uDeviceID, UINT uType,
     wod.dwCallback = dwCallback;
     wod.dwInstance = dwInstance;
     wod.dnDevNode = 0L;
+
+    TRACE("cb=%08lx\n", wod.dwCallback);
 
     for (;;) {
         if (dwFlags & WAVE_MAPPED) {
@@ -2334,8 +2305,8 @@ UINT WINAPI waveOutOpen(HWAVEOUT* lphWaveOut, UINT uDeviceID,
 			const LPWAVEFORMATEX lpFormat, DWORD dwCallback,
 			DWORD dwInstance, DWORD dwFlags)
 {
-    return MMSYSTEM_waveOpen(lphWaveOut, uDeviceID, MMDRV_WAVEOUT, lpFormat,
-                             dwCallback, dwInstance, dwFlags, TRUE);
+    return WAVE_Open(lphWaveOut, uDeviceID, MMDRV_WAVEOUT, lpFormat,
+                     dwCallback, dwInstance, dwFlags, TRUE);
 }
 
 /**************************************************************************
@@ -2683,8 +2654,8 @@ UINT WINAPI waveInOpen(HWAVEIN* lphWaveIn, UINT uDeviceID,
 		       const LPWAVEFORMATEX lpFormat, DWORD dwCallback,
 		       DWORD dwInstance, DWORD dwFlags)
 {
-    return MMSYSTEM_waveOpen(lphWaveIn, uDeviceID, MMDRV_WAVEIN, lpFormat,
-                             dwCallback, dwInstance, dwFlags, TRUE);
+    return WAVE_Open(lphWaveIn, uDeviceID, MMDRV_WAVEIN, lpFormat,
+                     dwCallback, dwInstance, dwFlags, TRUE);
 }
 
 /**************************************************************************

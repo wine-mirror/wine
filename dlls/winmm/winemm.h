@@ -259,21 +259,18 @@ DWORD		MCI_SendCommandFrom16(UINT wDevID, UINT16 wMsg, DWORD dwParam1, DWORD dwP
 
 BOOL            WINMM_CheckForMMSystem(void);
 
-void 		MMSYSTEM_MMTIME16to32(LPMMTIME mmt32, const MMTIME16* mmt16);
-void 		MMSYSTEM_MMTIME32to16(LPMMTIME16 mmt16, const MMTIME* mmt32);
-
-UINT            MMSYSTEM_mixerOpen(LPHMIXER lphMix, UINT uDeviceID, DWORD dwCallback,
-                                   DWORD dwInstance, DWORD fdwOpen, BOOL bFrom32);
-UINT            MMSYSTEM_midiOutOpen(HMIDIOUT* lphMidiOut, UINT uDeviceID, DWORD dwCallback,
-                                     DWORD dwInstance, DWORD dwFlags, BOOL bFrom32);
-UINT            MMSYSTEM_midiInOpen(HMIDIIN* lphMidiIn, UINT uDeviceID, DWORD dwCallback,
-                                    DWORD dwInstance, DWORD dwFlags, BOOL bFrom32);
-MMRESULT        MMSYSTEM_MidiStream_Open(HMIDISTRM* lphMidiStrm, LPUINT lpuDeviceID,
-                                         DWORD cMidi, DWORD dwCallback,
-                                         DWORD dwInstance, DWORD fdwOpen, BOOL bFrom32);
-UINT            MMSYSTEM_waveOpen(HANDLE* lphndl, UINT uDeviceID, UINT uType,
-                                  const LPWAVEFORMATEX lpFormat, DWORD dwCallback, 
-                                  DWORD dwInstance, DWORD dwFlags, BOOL bFrom32);
+UINT            MIXER_Open(LPHMIXER lphMix, UINT uDeviceID, DWORD dwCallback,
+                           DWORD dwInstance, DWORD fdwOpen, BOOL bFrom32);
+UINT            MIDI_OutOpen(HMIDIOUT* lphMidiOut, UINT uDeviceID, DWORD dwCallback,
+                             DWORD dwInstance, DWORD dwFlags, BOOL bFrom32);
+UINT            MIDI_InOpen(HMIDIIN* lphMidiIn, UINT uDeviceID, DWORD dwCallback,
+                            DWORD dwInstance, DWORD dwFlags, BOOL bFrom32);
+MMRESULT        MIDI_StreamOpen(HMIDISTRM* lphMidiStrm, LPUINT lpuDeviceID,
+                                DWORD cMidi, DWORD dwCallback,
+                                DWORD dwInstance, DWORD fdwOpen, BOOL bFrom32);
+UINT            WAVE_Open(HANDLE* lphndl, UINT uDeviceID, UINT uType,
+                          const LPWAVEFORMATEX lpFormat, DWORD dwCallback, 
+                          DWORD dwInstance, DWORD dwFlags, BOOL bFrom32);
 
 HMMIO           MMIO_Open(LPSTR szFileName, MMIOINFO* refmminfo,
                           DWORD dwOpenFlags, enum mmioProcType type);
@@ -282,8 +279,6 @@ LPMMIOPROC      MMIO_InstallIOProc(FOURCC fccIOProc, LPMMIOPROC pIOProc,
 LRESULT         MMIO_SendMessage(HMMIO hmmio, UINT uMessage, LPARAM lParam1, 
                                  LPARAM lParam2, enum mmioProcType type);
 LPWINE_MMIO     MMIO_Get(HMMIO h);
-
-BOOL            MULTIMEDIA_PlaySound(const void* pszSound, HMODULE hmod, DWORD fdwSound, BOOL bUnicode);
 
 WORD            TIME_SetEventInternal(UINT wDelay, UINT wResol,
                                       FARPROC16 lpFunc, DWORD dwUser, UINT wFlags);
@@ -308,8 +303,10 @@ extern  LRESULT         (*pFnCallMMDrvFunc16)(FARPROC16,WORD,WORD,LONG,LONG,LONG
 extern  unsigned        (*pFnLoadMMDrvFunc16)(LPCSTR,LPWINE_DRIVER, LPWINE_MM_DRIVER);
 extern  LRESULT         (*pFnMmioCallback16)(SEGPTR,LPMMIOINFO,UINT,LPARAM,LPARAM);
 
-/* mmsystem only functions */
+/* mmsystem (16 bit files) only functions */
 void            MMDRV_Init16(void);
+void 		MMSYSTEM_MMTIME16to32(LPMMTIME mmt32, const MMTIME16* mmt16);
+void 		MMSYSTEM_MMTIME32to16(LPMMTIME16 mmt16, const MMTIME* mmt32);
 
 /* HANDLE16 -> HANDLE conversions */
 #define HDRVR_32(h16)		((HDRVR)(ULONG_PTR)(h16))

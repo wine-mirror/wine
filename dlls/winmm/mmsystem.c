@@ -230,8 +230,7 @@ UINT16 WINAPI mixerOpen16(LPHMIXER16 lphmix, UINT16 uDeviceID, DWORD dwCallback,
     HMIXER	hmix;
     UINT	ret;
 
-    ret = MMSYSTEM_mixerOpen(&hmix, uDeviceID,
-			     dwCallback, dwInstance, fdwOpen, FALSE);
+    ret = MIXER_Open(&hmix, uDeviceID, dwCallback, dwInstance, fdwOpen, FALSE);
     if (lphmix) *lphmix = HMIXER_16(hmix);
     return ret;
 }
@@ -715,8 +714,7 @@ UINT16 WINAPI midiOutOpen16(HMIDIOUT16* lphMidiOut, UINT16 uDeviceID,
     HMIDIOUT	hmo;
     UINT	ret;
 
-    ret = MMSYSTEM_midiOutOpen(&hmo, uDeviceID, dwCallback, dwInstance,
-			       dwFlags, FALSE);
+    ret = MIDI_OutOpen(&hmo, uDeviceID, dwCallback, dwInstance, dwFlags, FALSE);
 
     if (lphMidiOut != NULL) *lphMidiOut = HMIDIOUT_16(hmo);
     return ret;
@@ -931,8 +929,7 @@ UINT16 WINAPI midiInOpen16(HMIDIIN16* lphMidiIn, UINT16 uDeviceID,
     HMIDIIN	xhmid;
     UINT 	ret;
 
-    ret = MMSYSTEM_midiInOpen(&xhmid, uDeviceID, dwCallback, dwInstance,
-			      dwFlags, FALSE);
+    ret = MIDI_InOpen(&xhmid, uDeviceID, dwCallback, dwInstance, dwFlags, FALSE);
 
     if (lphMidiIn) *lphMidiIn = HMIDIIN_16(xhmid);
     return ret;
@@ -1099,8 +1096,8 @@ MMRESULT16 WINAPI midiStreamOpen16(HMIDISTRM16* phMidiStrm, LPUINT16 devid,
     if (!phMidiStrm || !devid)
 	return MMSYSERR_INVALPARAM;
     devid32 = *devid;
-    ret = MMSYSTEM_MidiStream_Open(&hMidiStrm32, &devid32, cMidi, dwCallback,
-				   dwInstance, fdwOpen, FALSE);
+    ret = MIDI_StreamOpen(&hMidiStrm32, &devid32, cMidi, dwCallback,
+                          dwInstance, fdwOpen, FALSE);
     *phMidiStrm = HMIDISTRM_16(hMidiStrm32);
     *devid = devid32;
     return ret;
@@ -1225,8 +1222,8 @@ UINT16 WINAPI waveOutOpen16(HWAVEOUT16* lphWaveOut, UINT16 uDeviceID,
      * however, we need to promote correctly the wave mapper id
      * (0xFFFFFFFF and not 0x0000FFFF)
      */
-    ret = MMSYSTEM_waveOpen(&hWaveOut, (uDeviceID == (UINT16)-1) ? (UINT)-1 : uDeviceID,
-                            MMDRV_WAVEOUT, lpFormat, dwCallback, dwInstance, dwFlags, FALSE);
+    ret = WAVE_Open(&hWaveOut, (uDeviceID == (UINT16)-1) ? (UINT)-1 : uDeviceID,
+                    MMDRV_WAVEOUT, lpFormat, dwCallback, dwInstance, dwFlags, FALSE);
 
     if (lphWaveOut != NULL) *lphWaveOut = HWAVEOUT_16(hWaveOut);
     return ret;
@@ -1519,8 +1516,8 @@ UINT16 WINAPI waveInOpen16(HWAVEIN16* lphWaveIn, UINT16 uDeviceID,
      * however, we need to promote correctly the wave mapper id
      * (0xFFFFFFFF and not 0x0000FFFF)
      */
-    ret = MMSYSTEM_waveOpen(&hWaveIn, (uDeviceID == (UINT16)-1) ? (UINT)-1 : uDeviceID,
-			    MMDRV_WAVEIN, lpFormat, dwCallback, dwInstance, dwFlags, FALSE);
+    ret = WAVE_Open(&hWaveIn, (uDeviceID == (UINT16)-1) ? (UINT)-1 : uDeviceID,
+                    MMDRV_WAVEIN, lpFormat, dwCallback, dwInstance, dwFlags, FALSE);
 
     if (lphWaveIn != NULL) *lphWaveIn = HWAVEIN_16(hWaveIn);
     return ret;
@@ -2433,6 +2430,34 @@ LRESULT WINAPI DriverProc16(DWORD dwDevID, HDRVR16 hDrv, WORD wMsg,
  * #                     TIME                        #
  * ###################################################
  */
+
+/******************************************************************
+ *		MMSYSTEM_MMTIME32to16
+ *
+ *
+ */
+void MMSYSTEM_MMTIME32to16(LPMMTIME16 mmt16, const MMTIME* mmt32)
+{
+    mmt16->wType = mmt32->wType;
+    /* layout of rest is the same for 32/16,
+     * Note: mmt16->u is 2 bytes smaller than mmt32->u, which has padding
+     */
+    memcpy(&(mmt16->u), &(mmt32->u), sizeof(mmt16->u));
+}
+
+/******************************************************************
+ *		MMSYSTEM_MMTIME16to32
+ *
+ *
+ */
+void MMSYSTEM_MMTIME16to32(LPMMTIME mmt32, const MMTIME16* mmt16)
+{
+    mmt32->wType = mmt16->wType;
+    /* layout of rest is the same for 32/16,
+     * Note: mmt16->u is 2 bytes smaller than mmt32->u, which has padding
+     */
+    memcpy(&(mmt32->u), &(mmt16->u), sizeof(mmt16->u));
+}
 
 /**************************************************************************
  * 				timeGetSystemTime	[MMSYSTEM.601]

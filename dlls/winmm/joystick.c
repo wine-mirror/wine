@@ -40,7 +40,6 @@
 #include "wingdi.h"
 #include "winuser.h"
 
-#include "wine/mmsystem16.h"
 #include "winemm.h"
 
 #include "wine/debug.h"

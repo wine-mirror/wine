@@ -15,19 +15,19 @@ C_SRCS = \
 	joystick.c \
 	lolvldrv.c \
 	mci.c \
-	message16.c \
 	mmio.c \
 	playsound.c \
 	time.c \
 	winmm.c
 
 C_SRCS16 = \
+	message16.c \
 	mmsystem.c \
 	sound16.c
 
 RC_SRCS = winmm_res.rc
 
-EXTRA_OBJS = $(MODULE).glue.o
+EXTRA_OBJS16 = $(MODULE).glue.o
 
 @MAKE_DLL_RULES@
 
