@@ -18,6 +18,89 @@
 
 DEFAULT_DEBUG_CHANNEL(text);
 
+/***********************************************************************
+ *           IsLegalDBCSChar for cp932/936/949/950
+ */
+static inline
+int IsLegalDBCSChar_cp932( BYTE lead, BYTE trail )
+{
+    return ( ( ( lead >= (BYTE)0x81 && lead <= (BYTE)0x9f ) ||
+	       ( lead >= (BYTE)0xe0 && lead <= (BYTE)0xfc ) ) &&
+	     ( ( trail >= (BYTE)0x40 && trail <= (BYTE)0x7e ) ||
+	       ( trail >= (BYTE)0x80 && trail <= (BYTE)0xfc ) ) );
+}
+
+static inline
+int IsLegalDBCSChar_cp936( BYTE lead, BYTE trail )
+{
+    return ( ( lead >= (BYTE)0x81 && lead <= (BYTE)0xfe ) &&
+	     ( trail >= (BYTE)0x40 && trail <= (BYTE)0xfe ) );
+}
+
+static inline
+int IsLegalDBCSChar_cp949( BYTE lead, BYTE trail )
+{
+    return ( ( lead >= (BYTE)0x81 && lead <= (BYTE)0xfe ) &&
+	     ( trail >= (BYTE)0x41 && trail <= (BYTE)0xfe ) );
+}
+
+static inline
+int IsLegalDBCSChar_euckr( BYTE lead, BYTE trail )
+{
+    return ( ( lead >= (BYTE)0xa1 && lead <= (BYTE)0xfe ) &&
+	     ( trail >= (BYTE)0xa1 && trail <= (BYTE)0xfe ) );
+}
+
+static inline
+int IsLegalDBCSChar_cp950( BYTE lead, BYTE trail )
+{
+    return (   ( lead >= (BYTE)0x81 && lead <= (BYTE)0xfe ) &&
+	     ( ( trail >= (BYTE)0x40 && trail <= (BYTE)0x7e ) ||
+	       ( trail >= (BYTE)0xa1 && trail <= (BYTE)0xfe ) ) );
+}
+
+/***********************************************************************
+ *           DBCSCharToXChar2b for cp932/949
+ */
+
+static inline
+void DBCSCharToXChar2b_cp932( XChar2b* pch, BYTE lead, BYTE trail )
+{
+    unsigned int  high, low;
+
+    high = (unsigned int)lead;
+    low = (unsigned int)trail;
+
+    if ( high <= 0x9f )
+	high = (high<<1) - 0xe0;
+    else
+	high = (high<<1) - 0x160;
+    if ( low < 0x9f )
+    {
+	high --;
+	if ( low < 0x7f )
+	    low -= 0x1f;
+	else
+	    low -= 0x20;
+    }
+    else
+    {
+	low -= 0x7e;
+    }
+
+    pch->byte1 = (unsigned char)high;
+    pch->byte2 = (unsigned char)low;
+}
+
+static inline
+void DBCSCharToXChar2b_euckr( XChar2b* pch, BYTE lead, BYTE trail )
+{
+    pch->byte1 = lead & (BYTE)0x7f;
+    pch->byte2 = trail & (BYTE)0x7f;
+}
+
+
+
 
 static WORD X11DRV_enum_subfont_charset_normal( UINT index )
 {
@@ -114,7 +197,6 @@ static XChar2b* X11DRV_unicode_to_char2b_cp932( fontObject* pfo,
     BYTE *str;
     BYTE *str_src;
     UINT i;
-    UINT codepage = pfo->fi->codepage;
     char ch = pfo->fs->default_char;
 
     if (!(str2b = HeapAlloc( GetProcessHeap(), 0, count * sizeof(XChar2b) )))
@@ -124,39 +206,17 @@ static XChar2b* X11DRV_unicode_to_char2b_cp932( fontObject* pfo,
 	HeapFree( GetProcessHeap(), 0, str2b );
 	return NULL;
     }
-    WideCharToMultiByte( codepage, 0, lpwstr, count, str, count*2, &ch, NULL );
+
+    /* handle jisx0212.1990... */
+    WideCharToMultiByte( 932, 0, lpwstr, count, str, count*2, &ch, NULL );
 
     str_src = str;
     str2b_dst = str2b;
     for (i = 0; i < count; i++, str_src++, str2b_dst++)
     {
-	if ( ( *str_src >= (BYTE)0x80 && *str_src <= (BYTE)0x9f ) ||
-	     ( *str_src >= (BYTE)0xe0 && *str_src <= (BYTE)0xfc ) )
+	if ( IsLegalDBCSChar_cp932( *str_src, *(str_src+1) ) )
 	{
-	    unsigned int  high, low;
-
-	    high = (unsigned int)*str_src;
-	    low = (unsigned int)*(str_src+1);
-
-	    if ( high <= 0x9f )
-		high = (high<<1) - 0xe0;
-	    else
-		high = (high<<1) - 0x160;
-	    if ( low < 0x9f )
-	    {
-		high --;
-		if ( low < 0x7f )
-		    low -= 0x1f;
-		else
-		    low -= 0x20;
-	    }
-	    else
-	    {
-		low -= 0x7e;
-	    }
-
-	    str2b_dst->byte1 = (unsigned char)high;
-	    str2b_dst->byte2 = (unsigned char)low;
+	    DBCSCharToXChar2b_cp932( str2b_dst, *str_src, *(str_src+1) );
 	    str_src++;
 	}
 	else
@@ -179,7 +239,6 @@ static XChar2b* X11DRV_unicode_to_char2b_cp936( fontObject* pfo,
     return NULL;
 }
 
-
 static XChar2b* X11DRV_unicode_to_char2b_cp949( fontObject* pfo,
                                                 LPCWSTR lpwstr, UINT count )
 {
@@ -188,7 +247,6 @@ static XChar2b* X11DRV_unicode_to_char2b_cp949( fontObject* pfo,
     BYTE *str;
     BYTE *str_src;
     UINT i;
-    UINT codepage = pfo->fi->codepage;
     char ch = pfo->fs->default_char;
 
     if (!(str2b = HeapAlloc( GetProcessHeap(), 0, count * sizeof(XChar2b) )))
@@ -198,16 +256,24 @@ static XChar2b* X11DRV_unicode_to_char2b_cp949( fontObject* pfo,
 	HeapFree( GetProcessHeap(), 0, str2b );
 	return NULL;
     }
-    WideCharToMultiByte( codepage, 0, lpwstr, count, str, count*2, &ch, NULL );
+    WideCharToMultiByte( 949, 0, lpwstr, count, str, count*2, &ch, NULL );
 
     str_src = str;
     str2b_dst = str2b;
     for (i = 0; i < count; i++, str_src++, str2b_dst++)
     {
-	if ( (*str_src) & (BYTE)0x80 )
+	if ( IsLegalDBCSChar_cp949( *str_src, *(str_src+1) ) )
 	{
-	    str2b_dst->byte1 = (*str_src) & 0x7f;
-	    str2b_dst->byte2 = (*(str_src+1)) & 0x7f;
+	    if ( IsLegalDBCSChar_euckr( *str_src, *(str_src+1) ) )
+	    {
+		DBCSCharToXChar2b_euckr( str2b_dst, *str_src, *(str_src+1) );
+	    }
+	    else
+	    {
+		/* FIXME */
+		str2b_dst->byte1 = 0;
+		str2b_dst->byte2 = 0;
+	    }
 	    str_src++;
 	}
 	else
