@@ -237,6 +237,15 @@ DWORD VERSION_GetLinkedDllVersion(PDB *pdb)
 /**********************************************************************
  *         VERSION_GetVersion
  *
+ * WARNING !!!
+ * Don't call this function too early during the Wine init,
+ * as pdb->exe_modref (required by VERSION_GetImageVersion()) might still
+ * be NULL in such cases, which causes the winver to ALWAYS be detected
+ * as WIN31.
+ * And as we cache the winver once it has been determined, this is bad.
+ * This can happen much easier than you might think, as this function
+ * is called by EVERY GetVersion*() API !
+ *
  * Some version data:
  * linker/OS/image/subsys	Name			Intended for
  *
@@ -331,7 +340,8 @@ BOOL16 WINAPI GetVersionEx16(OSVERSIONINFO16 *v)
     WINDOWS_VERSION ver = VERSION_GetVersion();
     if (v->dwOSVersionInfoSize != sizeof(OSVERSIONINFO16))
     {
-        WARN("wrong OSVERSIONINFO size from app");
+        WARN("wrong OSVERSIONINFO size from app (got: %ld, expected: %d)",
+                        v->dwOSVersionInfoSize, sizeof(OSVERSIONINFO16));
         SetLastError(ERROR_INSUFFICIENT_BUFFER);
         return FALSE;
     }
@@ -352,7 +362,8 @@ BOOL WINAPI GetVersionExA(OSVERSIONINFOA *v)
     WINDOWS_VERSION ver = VERSION_GetVersion();
     if (v->dwOSVersionInfoSize != sizeof(OSVERSIONINFOA))
     {
-        WARN("wrong OSVERSIONINFO size from app");
+        WARN("wrong OSVERSIONINFO size from app (got: %ld, expected: %d)",
+                        v->dwOSVersionInfoSize, sizeof(OSVERSIONINFOA));
         SetLastError(ERROR_INSUFFICIENT_BUFFER);
         return FALSE;
     }
@@ -374,7 +385,8 @@ BOOL WINAPI GetVersionExW(OSVERSIONINFOW *v)
 
     if (v->dwOSVersionInfoSize!=sizeof(OSVERSIONINFOW))
     {
-        WARN("wrong OSVERSIONINFO size from app");
+        WARN("wrong OSVERSIONINFO size from app (got: %ld, expected: %d)",
+			v->dwOSVersionInfoSize, sizeof(OSVERSIONINFOW));
         SetLastError(ERROR_INSUFFICIENT_BUFFER);
         return FALSE;
     }
