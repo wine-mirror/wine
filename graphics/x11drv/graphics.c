@@ -222,14 +222,6 @@ BOOL X11DRV_SetupGCForPen( X11DRV_PDEVICE *physDev )
     }
     val.background = physDev->backgroundPixel;
     val.fill_style = FillSolid;
-    if ((physDev->pen.width <= 1) &&
-        (physDev->pen.style != PS_SOLID) &&
-        (physDev->pen.style != PS_INSIDEFRAME))
-    {
-        TSXSetDashes( gdi_display, physDev->gc, 0, physDev->pen.dashes, physDev->pen.dash_len );
-        val.line_style = (GetBkMode(physDev->hdc) == OPAQUE) ? LineDoubleDash : LineOnOffDash;
-    }
-    else val.line_style = LineSolid;
     val.line_width = physDev->pen.width;
     if (val.line_width <= 1) {
 	val.cap_style = CapNotLast;
@@ -259,9 +251,20 @@ BOOL X11DRV_SetupGCForPen( X11DRV_PDEVICE *physDev )
     default:
 	val.join_style = JoinRound;
     }
-    TSXChangeGC( gdi_display, physDev->gc,
+    wine_tsx11_lock();
+    if ((physDev->pen.width <= 1) &&
+        (physDev->pen.style != PS_SOLID) &&
+        (physDev->pen.style != PS_INSIDEFRAME))
+    {
+        XSetDashes( gdi_display, physDev->gc, 0, physDev->pen.dashes, physDev->pen.dash_len );
+        val.line_style = (GetBkMode(physDev->hdc) == OPAQUE) ? LineDoubleDash : LineOnOffDash;
+    }
+    else val.line_style = LineSolid;
+
+    XChangeGC( gdi_display, physDev->gc,
 	       GCFunction | GCForeground | GCBackground | GCLineWidth |
 	       GCLineStyle | GCCapStyle | GCJoinStyle | GCFillStyle, &val );
+    wine_tsx11_unlock();
     return TRUE;
 }
 
@@ -286,9 +289,11 @@ BOOL X11DRV_SetupGCForText( X11DRV_PDEVICE *physDev )
 	val.fill_style = FillSolid;
 	val.font       = xfs->fid;
 
-	TSXChangeGC( gdi_display, physDev->gc,
+        wine_tsx11_lock();
+        XChangeGC( gdi_display, physDev->gc,
 		   GCFunction | GCForeground | GCBackground | GCFillStyle |
 		   GCFont, &val );
+        wine_tsx11_unlock();
 	return TRUE;
     }
     WARN("Physical font failure\n" );
@@ -312,9 +317,11 @@ X11DRV_LineTo( X11DRV_PDEVICE *physDev, INT x, INT y )
         pt[1].y = y;
         LPtoDP( physDev->hdc, pt, 2 );
 
-	TSXDrawLine(gdi_display, physDev->drawable, physDev->gc,
-                    physDev->org.x + pt[0].x, physDev->org.y + pt[0].y,
-                    physDev->org.x + pt[1].x, physDev->org.y + pt[1].y );
+        wine_tsx11_lock();
+        XDrawLine(gdi_display, physDev->drawable, physDev->gc,
+                  physDev->org.x + pt[0].x, physDev->org.y + pt[0].y,
+                  physDev->org.x + pt[1].x, physDev->org.y + pt[1].y );
+        wine_tsx11_unlock();
 
 	/* Update the DIBSection from the pixmap */
 	X11DRV_UnlockDIBSection(physDev, TRUE);
@@ -404,19 +411,23 @@ X11DRV_DrawArc( X11DRV_PDEVICE *physDev, INT left, INT top, INT right,
       /* Fill arc with brush if Chord() or Pie() */
 
     if ((lines > 0) && X11DRV_SetupGCForBrush( physDev )) {
-        TSXSetArcMode( gdi_display, physDev->gc, (lines==1) ? ArcChord : ArcPieSlice);
-        TSXFillArc( gdi_display, physDev->drawable, physDev->gc,
-                    physDev->org.x + rc.left, physDev->org.y + rc.top,
-                    rc.right-rc.left-1, rc.bottom-rc.top-1, istart_angle, idiff_angle );
+        wine_tsx11_lock();
+        XSetArcMode( gdi_display, physDev->gc, (lines==1) ? ArcChord : ArcPieSlice);
+        XFillArc( gdi_display, physDev->drawable, physDev->gc,
+                  physDev->org.x + rc.left, physDev->org.y + rc.top,
+                  rc.right-rc.left-1, rc.bottom-rc.top-1, istart_angle, idiff_angle );
+        wine_tsx11_unlock();
 	update = TRUE;
     }
 
       /* Draw arc and lines */
 
-    if (X11DRV_SetupGCForPen( physDev )){
-        TSXDrawArc( gdi_display, physDev->drawable, physDev->gc,
-                    physDev->org.x + rc.left, physDev->org.y + rc.top,
-                    rc.right-rc.left-1, rc.bottom-rc.top-1, istart_angle, idiff_angle );
+    if (X11DRV_SetupGCForPen( physDev ))
+    {
+        wine_tsx11_lock();
+        XDrawArc( gdi_display, physDev->drawable, physDev->gc,
+                  physDev->org.x + rc.left, physDev->org.y + rc.top,
+                  rc.right-rc.left-1, rc.bottom-rc.top-1, istart_angle, idiff_angle );
         if (lines) {
             /* use the truncated values */
             start_angle=(double)istart_angle*PI/64./180.;
@@ -470,9 +481,10 @@ X11DRV_DrawArc( X11DRV_PDEVICE *physDev, INT left, INT top, INT right,
                 }
                 lines++;
 	    }
-            TSXDrawLines( gdi_display, physDev->drawable, physDev->gc,
-                          points, lines+1, CoordModeOrigin );
+            XDrawLines( gdi_display, physDev->drawable, physDev->gc,
+                        points, lines+1, CoordModeOrigin );
         }
+        wine_tsx11_unlock();
 	update = TRUE;
     }
 
@@ -558,16 +570,20 @@ X11DRV_Ellipse( X11DRV_PDEVICE *physDev, INT left, INT top, INT right, INT botto
 
     if (X11DRV_SetupGCForBrush( physDev ))
     {
-        TSXFillArc( gdi_display, physDev->drawable, physDev->gc,
-                    physDev->org.x + rc.left, physDev->org.y + rc.top,
-                    rc.right-rc.left-1, rc.bottom-rc.top-1, 0, 360*64 );
+        wine_tsx11_lock();
+        XFillArc( gdi_display, physDev->drawable, physDev->gc,
+                  physDev->org.x + rc.left, physDev->org.y + rc.top,
+                  rc.right-rc.left-1, rc.bottom-rc.top-1, 0, 360*64 );
+        wine_tsx11_unlock();
 	update = TRUE;
     }
     if (X11DRV_SetupGCForPen( physDev ))
     {
-        TSXDrawArc( gdi_display, physDev->drawable, physDev->gc,
-                    physDev->org.x + rc.left, physDev->org.y + rc.top,
-                    rc.right-rc.left-1, rc.bottom-rc.top-1, 0, 360*64 );
+        wine_tsx11_lock();
+        XDrawArc( gdi_display, physDev->drawable, physDev->gc,
+                  physDev->org.x + rc.left, physDev->org.y + rc.top,
+                  rc.right-rc.left-1, rc.bottom-rc.top-1, 0, 360*64 );
+        wine_tsx11_unlock();
 	update = TRUE;
     }
 
@@ -997,14 +1013,12 @@ X11DRV_Polyline( X11DRV_PDEVICE *physDev, const POINT* pt, INT count )
 
     if (X11DRV_SetupGCForPen ( physDev ))
     {
-	/* Update the pixmap from the DIB section */
-	X11DRV_LockDIBSection(physDev, DIB_Status_GdiMod, FALSE);
-
-        TSXDrawLines( gdi_display, physDev->drawable, physDev->gc,
-                      points, count, CoordModeOrigin );
-
-	/* Update the DIBSection from the pixmap */
-    	X11DRV_UnlockDIBSection(physDev, TRUE);
+        X11DRV_LockDIBSection(physDev, DIB_Status_GdiMod, FALSE);
+        wine_tsx11_lock();
+        XDrawLines( gdi_display, physDev->drawable, physDev->gc,
+                    points, count, CoordModeOrigin );
+        wine_tsx11_unlock();
+        X11DRV_UnlockDIBSection(physDev, TRUE);
     }
 
     HeapFree( GetProcessHeap(), 0, points );
@@ -1107,8 +1121,10 @@ X11DRV_PolyPolygon( X11DRV_PDEVICE *physDev, const POINT* pt, const INT* counts,
 		pt++;
 	    }
 	    points[j] = points[0];
-            TSXDrawLines( gdi_display, physDev->drawable, physDev->gc,
-                          points, j + 1, CoordModeOrigin );
+            wine_tsx11_lock();
+            XDrawLines( gdi_display, physDev->drawable, physDev->gc,
+                        points, j + 1, CoordModeOrigin );
+            wine_tsx11_unlock();
 	}
 
 	/* Update the DIBSection of the dc's bitmap */
@@ -1150,8 +1166,10 @@ X11DRV_PolyPolyline( X11DRV_PDEVICE *physDev, const POINT* pt, const DWORD* coun
                 points[j].y = physDev->org.y + tmp.y;
                 pt++;
             }
-            TSXDrawLines( gdi_display, physDev->drawable, physDev->gc,
-			  points, j, CoordModeOrigin );
+            wine_tsx11_lock();
+            XDrawLines( gdi_display, physDev->drawable, physDev->gc,
+                        points, j, CoordModeOrigin );
+            wine_tsx11_unlock();
         }
 
 	/* Update the DIBSection of the dc's bitmap */

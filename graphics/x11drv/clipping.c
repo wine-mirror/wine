@@ -117,8 +117,10 @@ void X11DRV_SetDeviceClipping( X11DRV_PDEVICE *physDev, HRGN hrgn )
     RGNDATA *data;
 
     if (!(data = X11DRV_GetRegionData( hrgn, 0 ))) return;
-    TSXSetClipRectangles( gdi_display, physDev->gc, physDev->org.x, physDev->org.y,
-                          (XRectangle *)data->Buffer, data->rdh.nCount, YXBanded );
+    wine_tsx11_lock();
+    XSetClipRectangles( gdi_display, physDev->gc, physDev->org.x, physDev->org.y,
+                        (XRectangle *)data->Buffer, data->rdh.nCount, YXBanded );
+    wine_tsx11_unlock();
     HeapFree( GetProcessHeap(), 0, data );
 }
 
@@ -142,7 +144,9 @@ void X11DRV_SetDrawable( HDC hdc, Drawable drawable, int mode, const POINT *org,
         physDev->org = *org;
         physDev->drawable = drawable;
         physDev->drawable_org = *drawable_org;
-        TSXSetSubwindowMode( gdi_display, physDev->gc, mode );
+        wine_tsx11_lock();
+        XSetSubwindowMode( gdi_display, physDev->gc, mode );
+        wine_tsx11_unlock();
         GDI_ReleaseObj( hdc );
     }
 }

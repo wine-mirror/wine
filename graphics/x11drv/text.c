@@ -139,10 +139,12 @@ X11DRV_ExtTextOut( X11DRV_PDEVICE *physDev, INT x, INT y, UINT flags,
     {
         X11DRV_LockDIBSection( physDev, DIB_Status_GdiMod, FALSE );
         dibUpdateFlag = TRUE;
-        TSXSetForeground( gdi_display, physDev->gc, physDev->backgroundPixel );
-        TSXFillRectangle( gdi_display, physDev->drawable, physDev->gc,
-                          physDev->org.x + rect.left, physDev->org.y + rect.top,
-                          rect.right-rect.left, rect.bottom-rect.top );
+        wine_tsx11_lock();
+        XSetForeground( gdi_display, physDev->gc, physDev->backgroundPixel );
+        XFillRectangle( gdi_display, physDev->drawable, physDev->gc,
+                        physDev->org.x + rect.left, physDev->org.y + rect.top,
+                        rect.right-rect.left, rect.bottom-rect.top );
+        wine_tsx11_unlock();
     }
     if (!count) goto END;  /* Nothing more to do */
 
@@ -245,10 +247,12 @@ X11DRV_ExtTextOut( X11DRV_PDEVICE *physDev, INT x, INT y, UINT flags,
                 (y - ascent < rect.top) ||
                 (y + descent >= rect.bottom))
             {
-                TSXSetForeground( gdi_display, physDev->gc, physDev->backgroundPixel );
-                TSXFillRectangle( gdi_display, physDev->drawable, physDev->gc,
-                                  physDev->org.x + x, physDev->org.y + y - ascent,
-                                  width, ascent + descent );
+                wine_tsx11_lock();
+                XSetForeground( gdi_display, physDev->gc, physDev->backgroundPixel );
+                XFillRectangle( gdi_display, physDev->drawable, physDev->gc,
+                                physDev->org.x + x, physDev->org.y + y - ascent,
+                                width, ascent + descent );
+                wine_tsx11_unlock();
             }
         }
     }
@@ -257,7 +261,9 @@ X11DRV_ExtTextOut( X11DRV_PDEVICE *physDev, INT x, INT y, UINT flags,
     if (!(str2b = X11DRV_cptable[pfo->fi->cptable].punicode_to_char2b( pfo, wstr, count )))
         goto FAIL;
 
-    TSXSetForeground( gdi_display, physDev->gc, physDev->textPixel );
+    wine_tsx11_lock();
+    XSetForeground( gdi_display, physDev->gc, physDev->textPixel );
+    wine_tsx11_unlock();
     if(!rotated)
     {
       if (!dc->charExtra && !dc->breakExtra && !lpDx)
@@ -378,34 +384,36 @@ X11DRV_ExtTextOut( X11DRV_PDEVICE *physDev, INT x, INT y, UINT flags,
 
       /* Draw underline and strike-out if needed */
 
+    wine_tsx11_lock();
     if (lfUnderline)
     {
 	long linePos, lineWidth;
 
-	if (!TSXGetFontProperty( font, XA_UNDERLINE_POSITION, &linePos ))
+	if (!XGetFontProperty( font, XA_UNDERLINE_POSITION, &linePos ))
 	    linePos = descent - 1;
-	if (!TSXGetFontProperty( font, XA_UNDERLINE_THICKNESS, &lineWidth ))
+	if (!XGetFontProperty( font, XA_UNDERLINE_THICKNESS, &lineWidth ))
 	    lineWidth = 0;
 	else if (lineWidth == 1) lineWidth = 0;
-	TSXSetLineAttributes( gdi_display, physDev->gc, lineWidth,
-			      LineSolid, CapRound, JoinBevel );
-        TSXDrawLine( gdi_display, physDev->drawable, physDev->gc,
-		     physDev->org.x + x, physDev->org.y + y + linePos,
-		     physDev->org.x + x + width, physDev->org.y + y + linePos );
+        XSetLineAttributes( gdi_display, physDev->gc, lineWidth,
+                            LineSolid, CapRound, JoinBevel );
+        XDrawLine( gdi_display, physDev->drawable, physDev->gc,
+                   physDev->org.x + x, physDev->org.y + y + linePos,
+                   physDev->org.x + x + width, physDev->org.y + y + linePos );
     }
     if (lfStrikeOut)
     {
 	long lineAscent, lineDescent;
-	if (!TSXGetFontProperty( font, XA_STRIKEOUT_ASCENT, &lineAscent ))
+	if (!XGetFontProperty( font, XA_STRIKEOUT_ASCENT, &lineAscent ))
 	    lineAscent = ascent / 2;
-	if (!TSXGetFontProperty( font, XA_STRIKEOUT_DESCENT, &lineDescent ))
+	if (!XGetFontProperty( font, XA_STRIKEOUT_DESCENT, &lineDescent ))
 	    lineDescent = -lineAscent * 2 / 3;
-	TSXSetLineAttributes( gdi_display, physDev->gc, lineAscent + lineDescent,
-			    LineSolid, CapRound, JoinBevel );
-	TSXDrawLine( gdi_display, physDev->drawable, physDev->gc,
-                     physDev->org.x + x, physDev->org.y + y - lineAscent,
-                     physDev->org.x + x + width, physDev->org.y + y - lineAscent );
+        XSetLineAttributes( gdi_display, physDev->gc, lineAscent + lineDescent,
+                            LineSolid, CapRound, JoinBevel );
+        XDrawLine( gdi_display, physDev->drawable, physDev->gc,
+                   physDev->org.x + x, physDev->org.y + y - lineAscent,
+                   physDev->org.x + x + width, physDev->org.y + y - lineAscent );
     }
+    wine_tsx11_unlock();
 
     if (flags & ETO_CLIPPED) RestoreVisRgn16( HDC_16(dc->hSelf) );
     goto END;

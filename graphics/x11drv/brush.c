@@ -235,8 +235,10 @@ HBRUSH X11DRV_SelectBrush( X11DRV_PDEVICE *physDev, HBRUSH hbrush )
 
     if (physDev->brush.pixmap)
     {
-	TSXFreePixmap( gdi_display, physDev->brush.pixmap );
-	physDev->brush.pixmap = 0;
+        wine_tsx11_lock();
+        XFreePixmap( gdi_display, physDev->brush.pixmap );
+        wine_tsx11_unlock();
+        physDev->brush.pixmap = 0;
     }
     physDev->brush.style = logbrush.lbStyle;
     if (hbrush == GetStockObject( DC_BRUSH ))

@@ -409,19 +409,27 @@ static void X11DRV_DrawString_normal( fontObject* pfo, Display* pdisp,
                                       Drawable d, GC gc, int x, int y,
                                       XChar2b* pstr, int count )
 {
-    TSXDrawString16( pdisp, d, gc, x, y, pstr, count );
+    wine_tsx11_lock();
+    XDrawString16( pdisp, d, gc, x, y, pstr, count );
+    wine_tsx11_unlock();
 }
 
 static int X11DRV_TextWidth_normal( fontObject* pfo, XChar2b* pstr, int count )
 {
-    return TSXTextWidth16( pfo->fs, pstr, count );
+    int ret;
+    wine_tsx11_lock();
+    ret = XTextWidth16( pfo->fs, pstr, count );
+    wine_tsx11_unlock();
+    return ret;
 }
 
 static void X11DRV_DrawText_normal( fontObject* pfo, Display* pdisp, Drawable d,
                                     GC gc, int x, int y, XTextItem16* pitems,
                                     int count )
 {
-    TSXDrawText16( pdisp, d, gc, x, y, pitems, count );
+    wine_tsx11_lock();
+    XDrawText16( pdisp, d, gc, x, y, pitems, count );
+    wine_tsx11_unlock();
 }
 
 static void X11DRV_TextExtents_normal( fontObject* pfo, XChar2b* pstr, int count,
@@ -430,7 +438,9 @@ static void X11DRV_TextExtents_normal( fontObject* pfo, XChar2b* pstr, int count
 {
     XCharStruct info;
 
-    TSXTextExtents16( pfo->fs, pstr, count, pdir, pascent, pdescent, &info );
+    wine_tsx11_lock();
+    XTextExtents16( pfo->fs, pstr, count, pdir, pascent, pdescent, &info );
+    wine_tsx11_unlock();
     *pwidth = info.width;
 }
 
@@ -519,13 +529,14 @@ int X11DRV_TextWidth_dbcs_2fonts( fontObject* pfo, XChar2b* pstr, int count )
     if ( pfos[0] == NULL ) pfos[0] = pfo;
 
     width = 0;
+    wine_tsx11_lock();
     for ( i = 0; i < count; i++ )
     {
 	curfont = ( pstr->byte1 != 0 ) ? 1 : 0;
-	width += TSXTextWidth16( pfos[curfont]->fs, pstr, 1 );
+	width += XTextWidth16( pfos[curfont]->fs, pstr, 1 );
 	pstr ++;
     }
-
+    wine_tsx11_unlock();
     return width;
 }
 
@@ -576,7 +587,9 @@ void X11DRV_DrawText_dbcs_2fonts( fontObject* pfo, Display* pdisp, Drawable d,
 	pti->nchars = pstr - pti->chars;
 	pitems ++; pti ++;
     }
-    TSXDrawText16( pdisp, d, gc, x, y, ptibuf, pti - ptibuf );
+    wine_tsx11_lock();
+    XDrawText16( pdisp, d, gc, x, y, ptibuf, pti - ptibuf );
+    wine_tsx11_unlock();
     HeapFree( GetProcessHeap(), 0, ptibuf );
 }
 
@@ -598,18 +611,18 @@ void X11DRV_TextExtents_dbcs_2fonts( fontObject* pfo, XChar2b* pstr, int count,
     width = 0;
     *pascent = 0;
     *pdescent = 0;
+    wine_tsx11_lock();
     for ( i = 0; i < count; i++ )
     {
 	curfont = ( pstr->byte1 != 0 ) ? 1 : 0;
-	TSXTextExtents16( pfos[curfont]->fs, pstr, 1, pdir,
-			  &ascent, &descent, &info );
+	XTextExtents16( pfos[curfont]->fs, pstr, 1, pdir, &ascent, &descent, &info );
 	if ( *pascent < ascent ) *pascent = ascent;
 	if ( *pdescent < descent ) *pdescent = descent;
 	width += info.width;
 
 	pstr ++;
     }
-
+    wine_tsx11_unlock();
     *pwidth = width;
 }
 

@@ -4825,7 +4825,9 @@ INT X11DRV_SetDIBitsToDevice( X11DRV_PDEVICE *physDev, INT xDest, INT yDest, DWO
     if (!cx || !cy) return lines;
 
     X11DRV_SetupGCForText( physDev );  /* To have the correct colors */
-    TSXSetFunction(gdi_display, physDev->gc, X11DRV_XROPfunction[dc->ROPmode-1]);
+    wine_tsx11_lock();
+    XSetFunction(gdi_display, physDev->gc, X11DRV_XROPfunction[dc->ROPmode-1]);
+    wine_tsx11_unlock();
 
     switch (descr.infoBpp)
     {

@@ -1004,8 +1004,9 @@ BOOL X11DRV_XRender_ExtTextOut( X11DRV_PDEVICE *physDev, INT x, INT y, UINT flag
     xgcval.function = GXcopy;
     xgcval.background = physDev->backgroundPixel;
     xgcval.fill_style = FillSolid;
-    TSXChangeGC( gdi_display, physDev->gc,
-		 GCFunction | GCBackground | GCFillStyle, &xgcval );
+    wine_tsx11_lock();
+    XChangeGC( gdi_display, physDev->gc, GCFunction | GCBackground | GCFillStyle, &xgcval );
+    wine_tsx11_unlock();
 
     X11DRV_LockDIBSection( physDev, DIB_Status_GdiMod, FALSE );
 
@@ -1023,10 +1024,12 @@ BOOL X11DRV_XRender_ExtTextOut( X11DRV_PDEVICE *physDev, INT x, INT y, UINT flag
     }
 
     if(flags & ETO_OPAQUE) {
-        TSXSetForeground( gdi_display, physDev->gc, backgroundPixel );
-	TSXFillRectangle( gdi_display, physDev->drawable, physDev->gc,
-			  physDev->org.x + rc.left, physDev->org.y + rc.top,
-			  rc.right - rc.left, rc.bottom - rc.top );
+        wine_tsx11_lock();
+        XSetForeground( gdi_display, physDev->gc, backgroundPixel );
+        XFillRectangle( gdi_display, physDev->drawable, physDev->gc,
+                        physDev->org.x + rc.left, physDev->org.y + rc.top,
+                        rc.right - rc.left, rc.bottom - rc.top );
+        wine_tsx11_unlock();
     }
 
     if(count == 0) {
@@ -1159,10 +1162,12 @@ BOOL X11DRV_XRender_ExtTextOut( X11DRV_PDEVICE *physDev, INT x, INT y, UINT flag
         if(!((flags & ETO_CLIPPED) && (flags & ETO_OPAQUE))) {
 	    if(!(flags & ETO_OPAQUE) || x < rc.left || x + width >= rc.right ||
 	       y - tm.tmAscent < rc.top || y + tm.tmDescent >= rc.bottom) {
-	        TSXSetForeground( gdi_display, physDev->gc, backgroundPixel );
-		TSXFillRectangle( gdi_display, physDev->drawable, physDev->gc,
-				  physDev->org.x + x, physDev->org.y + y - tm.tmAscent,
-				  width, tm.tmAscent + tm.tmDescent );
+                wine_tsx11_lock();
+                XSetForeground( gdi_display, physDev->gc, backgroundPixel );
+                XFillRectangle( gdi_display, physDev->drawable, physDev->gc,
+                                physDev->org.x + x, physDev->org.y + y - tm.tmAscent,
+                                width, tm.tmAscent + tm.tmDescent );
+                wine_tsx11_unlock();
 	    }
 	}
     }

@@ -333,6 +333,7 @@ static BOOL X11DRV_PALETTE_BuildPrivateMap( const PALETTEENTRY *sys_pal_template
 
       /* Allocate system palette colors */
 
+    wine_tsx11_lock();
     for( i=0; i < palette_size; i++ )
     {
        if( i < NB_RESERVED_COLORS/2 )
@@ -355,7 +356,7 @@ static BOOL X11DRV_PALETTE_BuildPrivateMap( const PALETTEENTRY *sys_pal_template
 
        color.flags = DoRed | DoGreen | DoBlue;
        color.pixel = i;
-       TSXStoreColor(gdi_display, X11DRV_PALETTE_PaletteXColormap, &color);
+       XStoreColor(gdi_display, X11DRV_PALETTE_PaletteXColormap, &color);
 
        /* Set EGA mapping if color is from the first or last eight */
 
@@ -364,6 +365,7 @@ static BOOL X11DRV_PALETTE_BuildPrivateMap( const PALETTEENTRY *sys_pal_template
        else if (i >= palette_size - 8 )
            X11DRV_PALETTE_mapEGAPixel[i - (palette_size - 16)] = color.pixel;
     }
+    wine_tsx11_unlock();
 
     X11DRV_PALETTE_XPixelToPalette = X11DRV_PALETTE_PaletteToXPixel = NULL;
 
@@ -1138,7 +1140,9 @@ static UINT X11DRV_PALETTE_SetMapping( PALETTEOBJ* palPtr, UINT uStart, UINT uNu
                     color.green = palPtr->logpalette.palPalEntry[uStart].peGreen << 8;
                     color.blue = palPtr->logpalette.palPalEntry[uStart].peBlue << 8;
                     color.flags = DoRed | DoGreen | DoBlue;
-                    TSXStoreColor(gdi_display, X11DRV_PALETTE_PaletteXColormap, &color);
+                    wine_tsx11_lock();
+                    XStoreColor(gdi_display, X11DRV_PALETTE_PaletteXColormap, &color);
+                    wine_tsx11_unlock();
 
                     COLOR_sysPal[index] = palPtr->logpalette.palPalEntry[uStart];
                     COLOR_sysPal[index].peFlags = flag;

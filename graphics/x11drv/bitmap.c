@@ -425,8 +425,10 @@ BOOL X11DRV_DeleteBitmap( HBITMAP hbitmap )
     BITMAPOBJ *bmp = (BITMAPOBJ *) GDI_GetObjPtr( hbitmap, BITMAP_MAGIC );
     if (bmp)
     {
-        if (bmp->physBitmap) TSXFreePixmap( gdi_display, (Pixmap)bmp->physBitmap );
+        wine_tsx11_lock();
+        if (bmp->physBitmap) XFreePixmap( gdi_display, (Pixmap)bmp->physBitmap );
         bmp->physBitmap = NULL;
+        wine_tsx11_unlock();
         if (bmp->dib) X11DRV_DIB_DeleteDIBSection( bmp );
         GDI_ReleaseObj( hbitmap );
     }
@@ -450,9 +452,11 @@ HBITMAP X11DRV_BITMAP_CreateBitmapHeaderFromPixmap(Pixmap pixmap)
     unsigned int depth, width, height;
 
     /* Get the Pixmap dimensions and bit depth */
-    if ( 0 == TSXGetGeometry(gdi_display, pixmap, &root, &x, &y, &width, &height,
-                             &border_width, &depth) )
-        goto END;
+    wine_tsx11_lock();
+    if (!XGetGeometry(gdi_display, pixmap, &root, &x, &y, &width, &height,
+                      &border_width, &depth)) depth = 0;
+    wine_tsx11_unlock();
+    if (!depth) goto END;
 
     TRACE("\tPixmap properties: width=%d, height=%d, depth=%d\n",
           width, height, depth);
