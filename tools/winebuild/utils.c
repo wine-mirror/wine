@@ -176,18 +176,19 @@ void dump_bytes( FILE *outfile, const unsigned char *data, int len,
 FILE *open_input_file( const char *srcdir, const char *name )
 {
     char *fullname;
-    FILE *file;
+    FILE *file = fopen( name, "r" );
 
-    if (srcdir)
+    if (!file && srcdir)
     {
         fullname = xmalloc( strlen(srcdir) + strlen(name) + 2 );
         strcpy( fullname, srcdir );
         strcat( fullname, "/" );
         strcat( fullname, name );
+        file = fopen( fullname, "r" );
     }
     else fullname = xstrdup( name );
 
-    if (!(file = fopen( fullname, "r" ))) fatal_error( "Cannot open file '%s'\n", fullname );
+    if (!file) fatal_error( "Cannot open file '%s'\n", fullname );
     input_file_name = fullname;
     current_line = 1;
     return file;
