@@ -106,6 +106,7 @@ inline static int contains_path( LPCWSTR name )
 inline static int is_special_env_var( const char *var )
 {
     return (!strncmp( var, "PATH=", sizeof("PATH=")-1 ) ||
+            !strncmp( var, "HOME=", sizeof("HOME=")-1 ) ||
             !strncmp( var, "TEMP=", sizeof("TEMP=")-1 ) ||
             !strncmp( var, "TMP=", sizeof("TMP=")-1 ));
 }
@@ -690,13 +691,12 @@ static void usage(void)
 static RTL_USER_PROCESS_PARAMETERS *init_user_process_params( size_t info_size )
 {
     void *ptr;
-    DWORD size;
-    NTSTATUS status;
+    DWORD size, env_size;
     RTL_USER_PROCESS_PARAMETERS *params;
 
     size = info_size;
-    if ((status = NtAllocateVirtualMemory( NtCurrentProcess(), &ptr, NULL, &size,
-                                           MEM_COMMIT, PAGE_READWRITE )) != STATUS_SUCCESS)
+    if (NtAllocateVirtualMemory( NtCurrentProcess(), &ptr, NULL, &size,
+                                 MEM_COMMIT, PAGE_READWRITE ) != STATUS_SUCCESS)
         return NULL;
 
     SERVER_START_REQ( get_startup_info )
@@ -708,8 +708,8 @@ static RTL_USER_PROCESS_PARAMETERS *init_user_process_params( size_t info_size )
     SERVER_END_REQ;
 
     params = ptr;
-    params->Size = info_size;
     params->AllocationSize = size;
+    if (params->Size > info_size) params->Size = info_size;
 
     /* make sure the strings are valid */
     fix_unicode_string( &params->CurrentDirectory.DosPath, (char *)info_size );
@@ -720,6 +720,15 @@ static RTL_USER_PROCESS_PARAMETERS *init_user_process_params( size_t info_size )
     fix_unicode_string( &params->Desktop, (char *)info_size );
     fix_unicode_string( &params->ShellInfo, (char *)info_size );
     fix_unicode_string( &params->RuntimeInfo, (char *)info_size );
+
+    /* environment needs to be a separate memory block */
+    env_size = info_size - params->Size;
+    if (!env_size) env_size = 1;
+    if (NtAllocateVirtualMemory( NtCurrentProcess(), &ptr, NULL, &env_size,
+                                 MEM_COMMIT, PAGE_READWRITE ) != STATUS_SUCCESS)
+        return NULL;
+    memcpy( ptr, (char *)params + params->Size, info_size - params->Size );
+    params->Environment = ptr;
 
     return RtlNormalizeProcessParams( params );
 }
@@ -929,28 +938,30 @@ static BOOL process_init(void)
 
     LOCALE_Init();
 
-    /* Copy the parent environment */
-    if (!build_initial_environment( __wine_main_environ )) return FALSE;
-
-    /* Create device symlinks */
-    VOLUME_CreateDevices();
-
-    init_current_directory( &params->CurrentDirectory );
-
-    /* registry initialisation */
-    SHELL_LoadRegistry();
-
-    /* global boot finished, the rest is process-local */
-    SERVER_START_REQ( boot_done )
+    if (!info_size)
     {
-        req->debug_level = TRACE_ON(server);
-        wine_server_call( req );
-    }
-    SERVER_END_REQ;
+        /* Copy the parent environment */
+        if (!build_initial_environment( __wine_main_environ )) return FALSE;
 
-    if (!info_size) set_registry_environment();
+        /* Create device symlinks */
+        VOLUME_CreateDevices();
+
+        /* registry initialisation */
+        SHELL_LoadRegistry();
+
+        /* global boot finished, the rest is process-local */
+        SERVER_START_REQ( boot_done )
+        {
+            req->debug_level = TRACE_ON(server);
+            wine_server_call( req );
+        }
+        SERVER_END_REQ;
+
+        set_registry_environment();
+    }
 
     init_windows_dirs();
+    init_current_directory( &params->CurrentDirectory );
 
     return TRUE;
 }
@@ -1260,7 +1271,7 @@ static char *alloc_env_string( const char *name, const char *value )
  *
  * Build the environment of a new child process.
  */
-static char **build_envp( const WCHAR *envW, char *extra_env )
+static char **build_envp( const WCHAR *envW )
 {
     const WCHAR *end;
     char **envp;
@@ -1273,30 +1284,26 @@ static char **build_envp( const WCHAR *envW, char *extra_env )
     if (!(env = malloc( length ))) return NULL;
     WideCharToMultiByte( CP_UNIXCP, 0, envW, end - envW, env, length, NULL, NULL );
 
-    if (extra_env) for (p = extra_env; *p; p += strlen(p) + 1) count++;
     count += 4;
 
     if ((envp = malloc( count * sizeof(*envp) )))
     {
         char **envptr = envp;
 
-        /* first the extra strings */
-        if (extra_env)
-            for (p = extra_env; *p; p += strlen(p) + 1) *envptr++ = alloc_env_string( "", p );
-        /* then put PATH, TEMP, TMP, HOME and WINEPREFIX from the unix env */
+        /* some variables must not be modified, so we get them directly from the unix env */
         if ((p = getenv("PATH"))) *envptr++ = alloc_env_string( "PATH=", p );
         if ((p = getenv("TEMP"))) *envptr++ = alloc_env_string( "TEMP=", p );
         if ((p = getenv("TMP")))  *envptr++ = alloc_env_string( "TMP=", p );
         if ((p = getenv("HOME"))) *envptr++ = alloc_env_string( "HOME=", p );
-        if ((p = getenv("WINEPREFIX"))) *envptr++ = alloc_env_string( "WINEPREFIX=", p );
         /* now put the Windows environment strings */
         for (p = env; *p; p += strlen(p) + 1)
         {
+            if (*p == '=') continue;  /* skip drive curdirs, this crashes some unix apps */
+            if (!strncmp( p, "WINEPRELOADRESERVE=", sizeof("WINEPRELOADRESERVE=")-1 )) continue;
             if (is_special_env_var( p ))  /* prefix it with "WINE" */
                 *envptr++ = alloc_env_string( "WINE", p );
-            else if (strncmp( p, "HOME=", 5 ) &&
-                     strncmp( p, "WINEPRELOADRESERVE=", 19 ) &&
-                     strncmp( p, "WINEPREFIX=", 11 )) *envptr++ = p;
+            else
+                *envptr++ = p;
         }
         *envptr = 0;
     }
@@ -1326,7 +1333,7 @@ static int fork_and_exec( const char *filename, const WCHAR *cmdline,
     if (!(pid = fork()))  /* child */
     {
         char **argv = build_argv( cmdline, 0 );
-        char **envp = build_envp( env, NULL );
+        char **envp = build_envp( env );
         close( fd[0] );
 
         /* Reset signals that we previously set to SIG_IGN */
@@ -1356,7 +1363,8 @@ static int fork_and_exec( const char *filename, const WCHAR *cmdline,
  *           create_user_params
  */
 static RTL_USER_PROCESS_PARAMETERS *create_user_params( LPCWSTR filename, LPCWSTR cmdline,
-                                                        LPCWSTR cur_dir, const STARTUPINFOW *startup )
+                                                        LPCWSTR cur_dir, LPWSTR env,
+                                                        const STARTUPINFOW *startup )
 {
     RTL_USER_PROCESS_PARAMETERS *params;
     UNICODE_STRING image_str, cmdline_str, curdir_str, desktop, title;
@@ -1376,7 +1384,7 @@ static RTL_USER_PROCESS_PARAMETERS *create_user_params( LPCWSTR filename, LPCWST
 
     status = RtlCreateProcessParameters( &params, &image_str, NULL,
                                          cur_dir ? &curdir_str : NULL,
-                                         &cmdline_str, NULL,
+                                         &cmdline_str, env,
                                          startup->lpTitle ? &title : NULL,
                                          startup->lpDesktop ? &desktop : NULL,
                                          NULL, NULL );
@@ -1386,7 +1394,6 @@ static RTL_USER_PROCESS_PARAMETERS *create_user_params( LPCWSTR filename, LPCWST
         return NULL;
     }
 
-    params->Environment     = NULL;  /* we pass it through the Unix environment */
     params->hStdInput       = startup->hStdInput;
     params->hStdOutput      = startup->hStdOutput;
     params->hStdError       = startup->hStdError;
@@ -1417,6 +1424,7 @@ static BOOL create_process( HANDLE hFile, LPCWSTR filename, LPWSTR cmd_line, LPW
 {
     BOOL ret, success = FALSE;
     HANDLE process_info;
+    WCHAR *env_end;
     RTL_USER_PROCESS_PARAMETERS *params;
     int startfd[2];
     int execfd[2];
@@ -1425,10 +1433,16 @@ static BOOL create_process( HANDLE hFile, LPCWSTR filename, LPWSTR cmd_line, LPW
     char dummy = 0;
     char preloader_reserve[64];
 
-    if (!env) env = GetEnvironmentStringsW();
+    if (!env) RtlAcquirePebLock();
 
-    if (!(params = create_user_params( filename, cmd_line, cur_dir, startup )))
+    if (!(params = create_user_params( filename, cmd_line, cur_dir, env, startup )))
+    {
+        if (!env) RtlReleasePebLock();
         return FALSE;
+    }
+    env_end = params->Environment;
+    while (*env_end) env_end += strlenW(env_end) + 1;
+    env_end++;
 
     sprintf( preloader_reserve, "WINEPRELOADRESERVE=%lx-%lx%c",
              (unsigned long)res_start, (unsigned long)res_end, 0 );
@@ -1437,12 +1451,14 @@ static BOOL create_process( HANDLE hFile, LPCWSTR filename, LPWSTR cmd_line, LPW
 
     if (pipe( startfd ) == -1)
     {
+        if (!env) RtlReleasePebLock();
         SetLastError( ERROR_TOO_MANY_OPEN_FILES );
         RtlDestroyProcessParameters( params );
         return FALSE;
     }
     if (pipe( execfd ) == -1)
     {
+        if (!env) RtlReleasePebLock();
         SetLastError( ERROR_TOO_MANY_OPEN_FILES );
         close( startfd[0] );
         close( startfd[1] );
@@ -1456,7 +1472,6 @@ static BOOL create_process( HANDLE hFile, LPCWSTR filename, LPWSTR cmd_line, LPW
     if (!(pid = fork()))  /* child */
     {
         char **argv = build_argv( cmd_line, 1 );
-        char **envp = build_envp( env, preloader_reserve );
 
         close( startfd[1] );
         close( execfd[0] );
@@ -1469,15 +1484,16 @@ static BOOL create_process( HANDLE hFile, LPCWSTR filename, LPWSTR cmd_line, LPW
         signal( SIGPIPE, SIG_DFL );
         signal( SIGCHLD, SIG_DFL );
 
+        putenv( preloader_reserve );
         if (unixdir) chdir(unixdir);
 
-        if (argv && envp)
+        if (argv)
         {
             /* first, try for a WINELOADER environment variable */
             const char *loader = getenv("WINELOADER");
-            if (loader) wine_exec_wine_binary( loader, argv, envp, TRUE );
+            if (loader) wine_exec_wine_binary( loader, argv, NULL, TRUE );
             /* now use the standard search strategy */
-            wine_exec_wine_binary( NULL, argv, envp, TRUE );
+            wine_exec_wine_binary( NULL, argv, NULL, TRUE );
         }
         err = errno;
         write( execfd[1], &err, sizeof(err) );
@@ -1490,6 +1506,7 @@ static BOOL create_process( HANDLE hFile, LPCWSTR filename, LPWSTR cmd_line, LPW
     close( execfd[1] );
     if (pid == -1)
     {
+        if (!env) RtlReleasePebLock();
         close( startfd[1] );
         close( execfd[0] );
         FILE_SetDosError();
@@ -1533,11 +1550,13 @@ static BOOL create_process( HANDLE hFile, LPCWSTR filename, LPWSTR cmd_line, LPW
         }
 
         wine_server_add_data( req, params, params->Size );
+        wine_server_add_data( req, params->Environment, (env_end-params->Environment)*sizeof(WCHAR) );
         ret = !wine_server_call_err( req );
         process_info = reply->info;
     }
     SERVER_END_REQ;
 
+    if (!env) RtlReleasePebLock();
     RtlDestroyProcessParameters( params );
     if (!ret)
     {

@@ -423,6 +423,9 @@ static void dump_new_process_request( const struct new_process_request *req )
     fprintf( stderr, " hstderr=%p,", req->hstderr );
     fprintf( stderr, " info=" );
     dump_varargs_startup_info( cur_size );
+    fputc( ',', stderr );
+    fprintf( stderr, " env=" );
+    dump_varargs_unicode_str( cur_size );
 }
 
 static void dump_new_process_reply( const struct new_process_reply *req )
@@ -489,6 +492,9 @@ static void dump_get_startup_info_reply( const struct get_startup_info_reply *re
 {
     fprintf( stderr, " info=" );
     dump_varargs_startup_info( cur_size );
+    fputc( ',', stderr );
+    fprintf( stderr, " env=" );
+    dump_varargs_unicode_str( cur_size );
 }
 
 static void dump_init_process_done_request( const struct init_process_done_request *req )

@@ -191,6 +191,7 @@ typedef struct
     obj_handle_t hstdout;      /* handle for stdout */
     obj_handle_t hstderr;      /* handle for stderr */
     VARARG(info,startup_info); /* startup information */
+    VARARG(env,unicode_str);   /* environment for new process */
 @REPLY
     obj_handle_t info;         /* new process info handle */
 @END
@@ -246,6 +247,7 @@ typedef struct
 @REQ(get_startup_info)
 @REPLY
     VARARG(info,startup_info); /* startup information */
+    VARARG(env,unicode_str);   /* environment */
 @END
 
 
