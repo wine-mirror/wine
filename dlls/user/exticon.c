@@ -6,6 +6,7 @@
  * it needs a serious test for compliance with the native API 
  */
 #include <string.h>
+#include <stdlib.h>	/* abs() */
 #include <sys/types.h>
 #include <unistd.h>
 #include "winbase.h"
@@ -61,7 +62,7 @@ static void dumpIcoDir ( LPicoICONDIR entry )
 /*************************************************************************
  *				USER32_GetResourceTable
  */
-static DWORD USER32_GetResourceTable(LPBYTE peimage, LPBYTE *retptr)
+static DWORD USER32_GetResourceTable(LPBYTE peimage,DWORD pesize,LPBYTE *retptr)
 {
 	IMAGE_DOS_HEADER	* mz_header;
 
@@ -81,7 +82,9 @@ static DWORD USER32_GetResourceTable(LPBYTE peimage, LPBYTE *retptr)
 	  else
 	    return 0; /* failed */
 	}
-	
+	if (mz_header->e_lfanew >= pesize) {
+	    return 0; /* failed, happens with PKZIP DOS Exes for instance. */
+	}
 	if (*((DWORD*)(peimage + mz_header->e_lfanew)) == IMAGE_NT_SIGNATURE )
 	  return IMAGE_NT_SIGNATURE;
 
@@ -194,11 +197,13 @@ static HRESULT ICO_ExtractIconExW(
 	LPBYTE		peimage;
 	HANDLE		fmapping;
 	ULONG		uSize;
+	DWORD		fsizeh,fsizel;
 	
 	TRACE("(file %s,start %d,extract %d\n", debugstr_w(lpszExeFileName), nIconIndex, nIcons);
 
 	hFile = CreateFileW( lpszExeFileName, GENERIC_READ, FILE_SHARE_READ, NULL, OPEN_EXISTING, 0, -1 );
 	if (hFile == INVALID_HANDLE_VALUE) return hRet;
+	fsizel = GetFileSize(hFile,&fsizeh);
 
 	/* Map the file */
 	fmapping = CreateFileMappingA( hFile, NULL, PAGE_READONLY | SEC_COMMIT, 0, 0, NULL );
@@ -217,7 +222,7 @@ static HRESULT ICO_ExtractIconExW(
 	}
         CloseHandle( fmapping );
 
-	sig = USER32_GetResourceTable(peimage,&pData);
+	sig = USER32_GetResourceTable(peimage,fsizel,&pData);
 
 /* ico file */
 	if( sig==IMAGE_OS2_SIGNATURE || sig==1 ) /* .ICO file */
@@ -320,6 +325,14 @@ static HRESULT ICO_ExtractIconExW(
 	  {
 	    if (pe_sections[i].Characteristics & IMAGE_SCN_CNT_UNINITIALIZED_DATA)
 	      continue;
+	    if (fsizel < pe_sections[i].PointerToRawData+pe_sections[i].SizeOfRawData) {
+	      FIXME("File %s too short (section is at %ld bytes, real size is %ld)\n",
+		      debugstr_w(lpszExeFileName),
+		      pe_sections[i].PointerToRawData+pe_sections[i].SizeOfRawData,
+		      fsizel
+	      );
+	      goto end;
+	    }
 	    /* FIXME: doesn't work when the resources are not in a seperate section */
 	    if (pe_sections[i].VirtualAddress == pe_header->OptionalHeader.DataDirectory[IMAGE_DIRECTORY_ENTRY_RESOURCE].VirtualAddress) 
 	    {
@@ -409,12 +422,17 @@ static HRESULT ICO_ExtractIconExW(
 	        continue;
 	      if (igdataent->OffsetToData+igdataent->Size > pe_sections[j].VirtualAddress+pe_sections[j].SizeOfRawData)
 		continue;
+
+	      if (igdataent->OffsetToData-pe_sections[j].VirtualAddress+pe_sections[j].PointerToRawData+igdataent->Size > fsizel) {
+		  FIXME("overflow in PE lookup (%s has len %ld, have offset %ld), short file?\n",debugstr_w(lpszExeFileName),fsizel,igdataent->OffsetToData-pe_sections[j].VirtualAddress+pe_sections[j].PointerToRawData+igdataent->Size);
+		  goto end; /* failure */
+	      }
 	      igdata = peimage+(igdataent->OffsetToData-pe_sections[j].VirtualAddress+pe_sections[j].PointerToRawData);
 	    }
 
 	    if (!igdata) 
 	    {
-	      WARN("no matching real address for icongroup!\n");
+	      FIXME("no matching real address for icongroup!\n");
 	      goto end;	/* failure */
 	    }
 	    RetPtr[i] = (HICON)LookupIconIdFromDirectoryEx(igdata, TRUE, cxDesired, cyDesired, LR_DEFAULTCOLOR);
@@ -482,23 +500,16 @@ HRESULT WINAPI PrivateExtractIconsW (
 	DWORD y )	/* 0x80 maybe LR_* constant */
 {
 	DWORD ret;
-	TRACE("%s 0x%08x 0x%08lx 0x%08lx %p 0x%08lx 0x%08x 0x%08lx stub\n",
+	TRACE("%s 0x%08x 0x%08lx 0x%08lx %p 0x%08lx 0x%08x 0x%08lx\n",
 	debugstr_w(lpwstrFile),nIndex, sizeX ,sizeY ,phicon,w,nIcons,y );
-
 
 	if ((nIcons == 2) && HIWORD(sizeX) && HIWORD(sizeY))
 	{
 	  ret = ICO_ExtractIconExW(lpwstrFile, phicon, nIndex, 1, sizeX & 0xffff, sizeY & 0xffff );
 	  if (!SUCCEEDED(ret)) return ret;
 	  ret = ICO_ExtractIconExW(lpwstrFile, phicon+1, nIndex, 1, (sizeX>>16) & 0xffff, (sizeY>>16) & 0xffff );
-	}
-	else
-	{
+	} else
 	  ret = ICO_ExtractIconExW(lpwstrFile, phicon, nIndex, nIcons, sizeX & 0xffff, sizeY & 0xffff );
-	}
-	
-	FIXME_(icon)("hicon=%08x ret=0x%08lx\n", *phicon, ret);
-	
 	return ret;
 }
 
@@ -519,13 +530,10 @@ HRESULT WINAPI PrivateExtractIconsA (
 	DWORD ret;
 	LPWSTR lpwstrFile = HEAP_strdupAtoW(GetProcessHeap(), 0, lpstrFile);
 	
-	FIXME_(icon)("%s 0x%08x 0x%08lx 0x%08lx %p 0x%08lx 0x%08x 0x%08lx stub\n",
-	lpstrFile, nIndex, sizeX, sizeY, phicon, w, nIcons, y );
+	ret = PrivateExtractIconsW(
+		lpwstrFile, nIndex, sizeX, sizeY, phicon, w, nIcons, y
+	);
 
-	ret = PrivateExtractIconsW(lpwstrFile, nIndex, sizeX, sizeY, phicon, w, nIcons, y);
-
-	FIXME_(icon)("hicon=%08x ret=0x%08lx\n", *phicon, ret);
-	
 	HeapFree(GetProcessHeap(), 0, lpwstrFile);
 	return ret;
 }
