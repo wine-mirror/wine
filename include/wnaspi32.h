@@ -93,4 +93,6 @@ union SRB {
 
 typedef union SRB SRB;
 
+#pragma pack(4)
+
 #endif

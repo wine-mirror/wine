@@ -97,4 +97,6 @@ union SRB16 {
 
 typedef union SRB16 SRB16;
 
+#pragma pack(4)
+
 #endif

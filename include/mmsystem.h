@@ -2837,8 +2837,6 @@ BOOL16		WINAPI	DriverCallback16(DWORD dwCallBack, UINT16 uFlags, HANDLE16 hDev,
 					 WORD wMsg, DWORD dwUser, DWORD dwParam1, DWORD dwParam2);
 DWORD		WINAPI	auxMessage(WORD wDevID, WORD wMsg, DWORD dwUser, 
 				   DWORD dwParam1, DWORD dwParam2);
-
-#pragma pack(4)
 DWORD		WINAPI	mixMessage(WORD wDevID, WORD wMsg, DWORD dwUser, 
 				   DWORD dwParam1, DWORD dwParam2);
 DWORD		WINAPI	midMessage(WORD wDevID, WORD wMsg, DWORD dwUser, 

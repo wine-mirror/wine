@@ -3,8 +3,6 @@
 
 #include "winnt.h"
 
-#pragma pack(1)
-
 #define CTL_CODE( DeviceType, Function, Method, Access ) (                 \
     (DWORD)((DeviceType) << 16) | ((Access) << 14) | ((Function) << 2) | (Method) \
 )
@@ -248,7 +246,7 @@ typedef struct tagMID {
     BYTE  midVolLabel[11];
     BYTE  midFileSysType[8];
 } MID, *PMID;
-#pragma pack()
+#pragma pack(4)
 
 /* End VWIN32 information */
 

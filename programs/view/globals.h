@@ -32,4 +32,4 @@ typedef struct
 
 #define APMHEADER_KEY	0x9AC6CDD7l
 
-
+#pragma pack(4)

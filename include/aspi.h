@@ -115,4 +115,6 @@ struct ASPI_DEVICE_INFO {
 typedef struct ASPI_DEVICE_INFO ASPI_DEVICE_INFO;
 static ASPI_DEVICE_INFO *ASPI_open_devices = NULL;
 
+#pragma pack(4)
+
 #endif

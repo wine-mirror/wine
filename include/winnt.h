@@ -378,7 +378,7 @@ typedef enum _TOKEN_INFORMATION_CLASS {
 #ifndef _SECURITY_DEFINED
 #define _SECURITY_DEFINED
 
-#pragma pack (1)
+#pragma pack(1)
 
 typedef struct {
     BYTE Value[6];
@@ -783,5 +783,7 @@ typedef enum tagSID_NAME_USE {
 #define GROUP_SECURITY_INFORMATION  0x00000002
 #define DACL_SECURITY_INFORMATION   0x00000004
 #define SACL_SECURITY_INFORMATION   0x00000008
+
+#pragma pack(4)
 
 #endif  /* __WINE_WINNT_H */
