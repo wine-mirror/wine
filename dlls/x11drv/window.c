@@ -39,7 +39,6 @@
 #include "win.h"
 #include "winpos.h"
 #include "dce.h"
-#include "hook.h"
 #include "mwm.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(x11drv);
@@ -854,6 +853,7 @@ BOOL X11DRV_CreateWindow( HWND hwnd, CREATESTRUCTA *cs, BOOL unicode )
     WND *wndPtr;
     struct x11drv_win_data *data;
     RECT rect;
+    CBT_CREATEWNDA cbtc;
     BOOL ret = FALSE;
 
     if (cs->cx > 65535)
@@ -897,28 +897,15 @@ BOOL X11DRV_CreateWindow( HWND hwnd, CREATESTRUCTA *cs, BOOL unicode )
 
     /* Call the WH_CBT hook */
 
-    hwndLinkAfter = ((cs->style & (WS_CHILD|WS_MAXIMIZE)) == WS_CHILD)
- ? HWND_BOTTOM : HWND_TOP;
+    hwndLinkAfter = ((cs->style & (WS_CHILD|WS_MAXIMIZE)) == WS_CHILD) ? HWND_BOTTOM : HWND_TOP;
 
-    if (HOOK_IsHooked( WH_CBT ))
+    cbtc.lpcs = cs;
+    cbtc.hwndInsertAfter = hwndLinkAfter;
+    if (HOOK_CallHooks( WH_CBT, HCBT_CREATEWND, (WPARAM)hwnd, (LPARAM)&cbtc, unicode ))
     {
-	CBT_CREATEWNDA cbtc;
-        LRESULT lret;
-
-	cbtc.lpcs = cs;
-	cbtc.hwndInsertAfter = hwndLinkAfter;
-        lret = (unicode) ? HOOK_CallHooksW(WH_CBT, HCBT_CREATEWND,
-                                                       (WPARAM)hwnd, (LPARAM)&cbtc)
-                        : HOOK_CallHooksA(WH_CBT, HCBT_CREATEWND,
-                                                       (WPARAM)hwnd, (LPARAM)&cbtc);
-        if (lret)
-	{
-	    TRACE("CBT-hook returned !0\n");
-            goto failed;
-	}
+        TRACE("CBT-hook returned !0\n");
+        goto failed;
     }
-
-
 
     /* Send the WM_GETMINMAXINFO message and fix the size if needed */
     if ((cs->style & WS_THICKFRAME) || !(cs->style & (WS_POPUP | WS_CHILD)))

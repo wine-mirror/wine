@@ -35,7 +35,6 @@
 #include "dce.h"
 #include "controls.h"
 #include "cursoricon.h"
-#include "hook.h"
 #include "message.h"
 #include "queue.h"
 #include "winpos.h"
@@ -1188,7 +1187,7 @@ static HWND WIN_CreateWindowEx( CREATESTRUCTA *cs, ATOM classAtom,
     /* Call WH_SHELL hook */
 
     if (!(GetWindowLongW( hwnd, GWL_STYLE ) & WS_CHILD) && !GetWindow( hwnd, GW_OWNER ))
-        HOOK_CallHooksA( WH_SHELL, HSHELL_WINDOWCREATED, (WPARAM)hwnd, 0 );
+        HOOK_CallHooks( WH_SHELL, HSHELL_WINDOWCREATED, (WPARAM)hwnd, 0, TRUE );
 
     TRACE("created window %04x\n", hwnd);
     return hwnd;
@@ -1457,7 +1456,7 @@ BOOL WINAPI DestroyWindow( HWND hwnd )
 
       /* Call hooks */
 
-    if( HOOK_CallHooksA( WH_CBT, HCBT_DESTROYWND, (WPARAM)hwnd, 0L) ) return FALSE;
+    if (HOOK_CallHooks( WH_CBT, HCBT_DESTROYWND, (WPARAM)hwnd, 0, TRUE )) return FALSE;
 
     is_child = (GetWindowLongW( hwnd, GWL_STYLE ) & WS_CHILD) != 0;
 
@@ -1468,7 +1467,7 @@ BOOL WINAPI DestroyWindow( HWND hwnd )
     }
     else if (!GetWindow( hwnd, GW_OWNER ))
     {
-        HOOK_CallHooksA( WH_SHELL, HSHELL_WINDOWDESTROYED, (WPARAM)hwnd, 0L );
+        HOOK_CallHooks( WH_SHELL, HSHELL_WINDOWDESTROYED, (WPARAM)hwnd, 0L, TRUE );
         /* FIXME: clean up palette - see "Internals" p.352 */
     }
 

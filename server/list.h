@@ -52,6 +52,34 @@ inline static void list_remove( struct list *elem )
     elem->prev->next = elem->next;
 }
 
+/* get the next element */
+inline static struct list *list_next( struct list *list, struct list *elem )
+{
+    struct list *ret = elem->next;
+    if (elem->next == list) ret = NULL;
+    return ret;
+}
+
+/* get the previous element */
+inline static struct list *list_prev( struct list *list, struct list *elem )
+{
+    struct list *ret = elem->prev;
+    if (elem->prev == list) ret = NULL;
+    return ret;
+}
+
+/* get the first element */
+inline static struct list *list_head( struct list *list )
+{
+    return list_next( list, list );
+}
+
+/* get the last element */
+inline static struct list *list_tail( struct list *list )
+{
+    return list_prev( list, list );
+}
+
 /* initialize a list */
 inline static void list_init( struct list *list )
 {

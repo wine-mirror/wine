@@ -24,7 +24,6 @@
 #include "winuser.h"
 #include "winerror.h"
 #include "win.h"
-#include "hook.h"
 #include "message.h"
 #include "user.h"
 #include "wine/server.h"
@@ -74,6 +73,7 @@ static BOOL set_active_window( HWND hwnd, HWND *prev, BOOL mouse, BOOL focus )
     HWND previous = GetActiveWindow();
     BOOL ret;
     DWORD old_thread, new_thread;
+    CBTACTIVATESTRUCT cbt;
 
     if (previous == hwnd)
     {
@@ -82,13 +82,9 @@ static BOOL set_active_window( HWND hwnd, HWND *prev, BOOL mouse, BOOL focus )
     }
 
     /* call CBT hook chain */
-    if (HOOK_IsHooked( WH_CBT ))
-    {
-        CBTACTIVATESTRUCT cbt;
-        cbt.fMouse     = mouse;
-        cbt.hWndActive = previous;
-        if (HOOK_CallHooksW( WH_CBT, HCBT_ACTIVATE, (WPARAM)hwnd, (LPARAM)&cbt )) return FALSE;
-    }
+    cbt.fMouse     = mouse;
+    cbt.hWndActive = previous;
+    if (HOOK_CallHooks( WH_CBT, HCBT_ACTIVATE, (WPARAM)hwnd, (LPARAM)&cbt, TRUE )) return FALSE;
 
     if (IsWindow(previous))
     {
@@ -265,7 +261,7 @@ HWND WINAPI SetFocus( HWND hwnd )
         }
 
         /* call hooks */
-        if (HOOK_CallHooksW( WH_CBT, HCBT_SETFOCUS, (WPARAM)hwnd, (LPARAM)previous )) return 0;
+        if (HOOK_CallHooks( WH_CBT, HCBT_SETFOCUS, (WPARAM)hwnd, (LPARAM)previous, TRUE )) return 0;
 
         /* activate hwndTop if needed. */
         if (hwndTop != GetActiveWindow())
@@ -277,8 +273,7 @@ HWND WINAPI SetFocus( HWND hwnd )
     else /* NULL hwnd passed in */
     {
         if (!previous) return 0;  /* nothing to do */
-        if( HOOK_CallHooksW( WH_CBT, HCBT_SETFOCUS, 0, (LPARAM)previous ) )
-            return 0;
+        if (HOOK_CallHooks( WH_CBT, HCBT_SETFOCUS, 0, (LPARAM)previous, TRUE )) return 0;
     }
 
     /* change focus and send messages */

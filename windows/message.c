@@ -36,7 +36,6 @@
 #include "wine/server.h"
 #include "win.h"
 #include "heap.h"
-#include "hook.h"
 #include "input.h"
 #include "spy.h"
 #include "winpos.h"
@@ -230,6 +229,8 @@ static void MSG_SendParentNotify( HWND hwnd, WORD event, WORD idChild, POINT pt 
 }
 
 
+#if 0  /* this is broken for now, will require proper support in the server */
+
 /***********************************************************************
  *          MSG_JournalPlayBackMsg
  *
@@ -242,9 +243,7 @@ void MSG_JournalPlayBackMsg(void)
     LRESULT wtime;
     int keyDown,i;
 
-    if (!HOOK_IsHooked( WH_JOURNALPLAYBACK )) return;
-
-    wtime=HOOK_CallHooksA( WH_JOURNALPLAYBACK, HC_GETNEXT, 0, (LPARAM)&tmpMsg );
+    wtime=HOOK_CallHooks( WH_JOURNALPLAYBACK, HC_GETNEXT, 0, (LPARAM)&tmpMsg, TRUE );
     /*  TRACE(msg,"Playback wait time =%ld\n",wtime); */
     if (wtime<=0)
     {
@@ -316,15 +315,14 @@ void MSG_JournalPlayBackMsg(void)
             msg.pt.y = tmpMsg.paramH;
             queue_hardware_message( &msg, 0, MSG_HARDWARE_RAW );
         }
-        HOOK_CallHooksA( WH_JOURNALPLAYBACK, HC_SKIP, 0, (LPARAM)&tmpMsg);
+        HOOK_CallHooks( WH_JOURNALPLAYBACK, HC_SKIP, 0, (LPARAM)&tmpMsg, TRUE );
     }
     else
     {
-        if( tmpMsg.message == WM_QUEUESYNC )
-            if (HOOK_IsHooked( WH_CBT ))
-                HOOK_CallHooksA( WH_CBT, HCBT_QS, 0, 0L);
+        if( tmpMsg.message == WM_QUEUESYNC ) HOOK_CallHooks( WH_CBT, HCBT_QS, 0, 0, TRUE );
     }
 }
+#endif
 
 
 /***********************************************************************
@@ -334,6 +332,8 @@ void MSG_JournalPlayBackMsg(void)
  */
 static BOOL process_raw_keyboard_message( MSG *msg, ULONG_PTR extra_info )
 {
+    EVENTMSG event;
+
     if (!(msg->hwnd = GetFocus()))
     {
         /* Send the message to the active window instead,  */
@@ -342,18 +342,13 @@ static BOOL process_raw_keyboard_message( MSG *msg, ULONG_PTR extra_info )
         if (msg->message < WM_SYSKEYDOWN) msg->message += WM_SYSKEYDOWN - WM_KEYDOWN;
     }
 
-    if (HOOK_IsHooked( WH_JOURNALRECORD ))
-    {
-        EVENTMSG event;
-
-        event.message = msg->message;
-        event.hwnd    = msg->hwnd;
-        event.time    = msg->time;
-        event.paramL  = (msg->wParam & 0xFF) | (HIWORD(msg->lParam) << 8);
-        event.paramH  = msg->lParam & 0x7FFF;
-        if (HIWORD(msg->lParam) & 0x0100) event.paramH |= 0x8000; /* special_key - bit */
-        HOOK_CallHooksA( WH_JOURNALRECORD, HC_ACTION, 0, (LPARAM)&event );
-    }
+    event.message = msg->message;
+    event.hwnd    = msg->hwnd;
+    event.time    = msg->time;
+    event.paramL  = (msg->wParam & 0xFF) | (HIWORD(msg->lParam) << 8);
+    event.paramH  = msg->lParam & 0x7FFF;
+    if (HIWORD(msg->lParam) & 0x0100) event.paramH |= 0x8000; /* special_key - bit */
+    HOOK_CallHooks( WH_JOURNALRECORD, HC_ACTION, 0, (LPARAM)&event, TRUE );
 
     /* if we are going to throw away the message, update the queue state now */
     if (!msg->hwnd) update_queue_key_state( msg->message, msg->wParam, msg->lParam );
@@ -390,11 +385,11 @@ static BOOL process_cooked_keyboard_message( MSG *msg, BOOL remove )
         }
     }
 
-    if (HOOK_CallHooksA( WH_KEYBOARD, remove ? HC_ACTION : HC_NOREMOVE,
-                         LOWORD(msg->wParam), msg->lParam ))
+    if (HOOK_CallHooks( WH_KEYBOARD, remove ? HC_ACTION : HC_NOREMOVE,
+                        LOWORD(msg->wParam), msg->lParam, TRUE ))
     {
         /* skip this message */
-        HOOK_CallHooksA( WH_CBT, HCBT_KEYSKIPPED, LOWORD(msg->wParam), msg->lParam );
+        HOOK_CallHooks( WH_CBT, HCBT_KEYSKIPPED, LOWORD(msg->wParam), msg->lParam, TRUE );
         return FALSE;
     }
     return TRUE;
@@ -412,6 +407,7 @@ static BOOL process_raw_mouse_message( MSG *msg, ULONG_PTR extra_info )
 
     POINT pt;
     INT hittest;
+    EVENTMSG event;
     GUITHREADINFO info;
 
     /* find the window to dispatch this mouse message to */
@@ -429,16 +425,12 @@ static BOOL process_raw_mouse_message( MSG *msg, ULONG_PTR extra_info )
             msg->hwnd = GetDesktopWindow();
     }
 
-    if (HOOK_IsHooked( WH_JOURNALRECORD ))
-    {
-        EVENTMSG event;
-        event.message = msg->message;
-        event.time    = msg->time;
-        event.hwnd    = msg->hwnd;
-        event.paramL  = msg->pt.x;
-        event.paramH  = msg->pt.y;
-        HOOK_CallHooksA( WH_JOURNALRECORD, HC_ACTION, 0, (LPARAM)&event );
-    }
+    event.message = msg->message;
+    event.time    = msg->time;
+    event.hwnd    = msg->hwnd;
+    event.paramL  = msg->pt.x;
+    event.paramH  = msg->pt.y;
+    HOOK_CallHooks( WH_JOURNALRECORD, HC_ACTION, 0, (LPARAM)&event, TRUE );
 
     /* translate double clicks */
 
@@ -495,6 +487,7 @@ static BOOL process_raw_mouse_message( MSG *msg, ULONG_PTR extra_info )
  */
 static BOOL process_cooked_mouse_message( MSG *msg, ULONG_PTR extra_info, BOOL remove )
 {
+    MOUSEHOOKSTRUCT hook;
     INT hittest = HTCLIENT;
     UINT raw_message = msg->message;
     BOOL eatMsg;
@@ -513,23 +506,19 @@ static BOOL process_cooked_mouse_message( MSG *msg, ULONG_PTR extra_info, BOOL r
 
     if (remove) update_queue_key_state( raw_message, 0, 0 );
 
-    if (HOOK_IsHooked( WH_MOUSE ))
+    hook.pt           = msg->pt;
+    hook.hwnd         = msg->hwnd;
+    hook.wHitTestCode = hittest;
+    hook.dwExtraInfo  = extra_info;
+    if (HOOK_CallHooks( WH_MOUSE, remove ? HC_ACTION : HC_NOREMOVE,
+                        msg->message, (LPARAM)&hook, TRUE ))
     {
-        MOUSEHOOKSTRUCT hook;
         hook.pt           = msg->pt;
         hook.hwnd         = msg->hwnd;
         hook.wHitTestCode = hittest;
         hook.dwExtraInfo  = extra_info;
-        if (HOOK_CallHooksA( WH_MOUSE, remove ? HC_ACTION : HC_NOREMOVE,
-                             msg->message, (LPARAM)&hook ))
-        {
-            hook.pt           = msg->pt;
-            hook.hwnd         = msg->hwnd;
-            hook.wHitTestCode = hittest;
-            hook.dwExtraInfo  = extra_info;
-            HOOK_CallHooksA( WH_CBT, HCBT_CLICKSKIPPED, msg->message, (LPARAM)&hook );
-            return FALSE;
-        }
+        HOOK_CallHooks( WH_CBT, HCBT_CLICKSKIPPED, msg->message, (LPARAM)&hook, TRUE );
+        return FALSE;
     }
 
     if ((hittest == HTERROR) || (hittest == HTNOWHERE))

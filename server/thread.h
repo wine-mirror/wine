@@ -33,6 +33,7 @@ struct debug_ctx;
 struct debug_event;
 struct startup_info;
 struct msg_queue;
+struct hook_table;
 
 enum run_state
 {
@@ -66,6 +67,7 @@ struct thread
     struct debug_ctx      *debug_ctx;     /* debugger context if this thread is a debugger */
     struct debug_event    *debug_event;   /* debug event being sent to debugger */
     struct msg_queue      *queue;         /* message queue */
+    struct hook_table     *hooks;         /* hooks table */
     struct startup_info   *info;          /* startup info for child process */
     struct thread_wait    *wait;          /* current wait condition if sleeping */
     struct apc_queue       system_apc;    /* queue of system async procedure calls */

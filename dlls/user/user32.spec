@@ -686,9 +686,7 @@ init	UserClientDllInitialize
 @ cdecl CLIPBOARD_LookupFormat(long) CLIPBOARD_LookupFormat
 @ cdecl CLIPBOARD_ReleaseOwner() CLIPBOARD_ReleaseOwner
 @ cdecl DCE_InvalidateDCE(long ptr) DCE_InvalidateDCE
-@ cdecl HOOK_CallHooksA(long long long long) HOOK_CallHooksA
-@ cdecl HOOK_CallHooksW(long long long long) HOOK_CallHooksW
-@ cdecl HOOK_IsHooked(long) HOOK_IsHooked
+@ cdecl HOOK_CallHooks(long long long long) HOOK_CallHooks
 @ cdecl NC_GetInsideRect(long ptr) NC_GetInsideRect
 @ cdecl NC_HandleNCHitTest(long long long) NC_HandleNCHitTest
 @ cdecl NC_HandleSetCursor(long long long) NC_HandleSetCursor

@@ -29,7 +29,6 @@
 #include "queue.h"
 #include "win.h"
 #include "user.h"
-#include "hook.h"
 #include "thread.h"
 #include "wine/debug.h"
 #include "wine/server.h"

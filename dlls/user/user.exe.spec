@@ -121,7 +121,7 @@ rsrc	resources/version16.res
 120 pascal   GetMessageTime() GetMessageTime
 121 pascal   SetWindowsHook(s_word segptr) SetWindowsHook16
 122 pascal   CallWindowProc(segptr word word word long) CallWindowProc16
-123 pascal16 CallMsgFilter(segptr s_word) CallMsgFilter16
+123 pascal16 CallMsgFilter(ptr s_word) CallMsgFilter16
 124 pascal16 UpdateWindow(word) UpdateWindow16
 125 pascal16 InvalidateRect(word ptr word) InvalidateRect16
 126 pascal16 InvalidateRgn(word word word) InvalidateRgn16
@@ -531,7 +531,7 @@ rsrc	resources/version16.res
 821 pascal16 TranslateMessage32(ptr word) TranslateMessage32_16
 #821 stub IsDialogMessage32		# FIXME: two ordinal 821???
 822 pascal   DispatchMessage32(ptr word) DispatchMessage32_16
-823 pascal16 CallMsgFilter32(segptr word word) CallMsgFilter32_16
+823 pascal16 CallMsgFilter32(ptr word word) CallMsgFilter32_16
 825 stub PostMessage32
 826 stub PostThreadMessage32
 827 pascal16 MessageBoxIndirect(ptr) MessageBoxIndirect16

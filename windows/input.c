@@ -37,7 +37,6 @@
 #include "wine/winuser16.h"
 #include "wine/server.h"
 #include "win.h"
-#include "hook.h"
 #include "input.h"
 #include "message.h"
 #include "queue.h"
@@ -181,7 +180,7 @@ static void queue_kbd_event( const KEYBDINPUT *ki, UINT injected_flags )
     hook.flags       = (keylp.lp2 >> 24) | injected_flags;
     hook.time        = ki->time;
     hook.dwExtraInfo = ki->dwExtraInfo;
-    if (!HOOK_CallHooksW( WH_KEYBOARD_LL, HC_ACTION, message, (LPARAM)&hook ))
+    if (!HOOK_CallHooks( WH_KEYBOARD_LL, HC_ACTION, message, (LPARAM)&hook, TRUE ))
         queue_raw_hardware_message( message, ki->wVk, keylp.lp2,
                                     PosX, PosY, ki->time, ki->dwExtraInfo );
 }
@@ -201,7 +200,7 @@ static void queue_raw_mouse_message( UINT message, UINT flags, INT x, INT y, con
     hook.time        = mi->time;
     hook.dwExtraInfo = mi->dwExtraInfo;
 
-    if (!HOOK_CallHooksW( WH_MOUSE_LL, HC_ACTION, message, (LPARAM)&hook ))
+    if (!HOOK_CallHooks( WH_MOUSE_LL, HC_ACTION, message, (LPARAM)&hook, TRUE ))
         queue_raw_hardware_message( message, MAKEWPARAM( get_key_state(), mi->mouseData ),
                                     0, x, y, mi->time, mi->dwExtraInfo );
 }

@@ -30,7 +30,6 @@
 #include "win.h"
 #include "controls.h"
 #include "cursoricon.h"
-#include "hook.h"
 #include "message.h"
 #include "miscemu.h"
 #include "sysmetrics.h"
@@ -140,7 +139,7 @@ void USER_CheckNotLock(void)
  */
 static void USER_ModuleUnload( HMODULE16 hModule )
 {
-    HOOK_FreeModuleHooks( hModule );
+    /* HOOK_FreeModuleHooks( hModule ); */
     CLASS_FreeModuleClasses( hModule );
     CURSORICON_FreeModuleIcons( hModule );
 }

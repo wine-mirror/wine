@@ -2004,3 +2004,50 @@ enum message_type
 #define SET_CARET_POS        0x01  /* set the caret position from x,y */
 #define SET_CARET_HIDE       0x02  /* increment the caret hide count */
 #define SET_CARET_STATE      0x04  /* set the caret on/off state */
+
+
+/* Set a window hook */
+@REQ(set_hook)
+    int            id;             /* id of the hook */
+    thread_id_t    tid;            /* id of thread to set the hook into */
+    void*          proc;           /* hook procedure */
+    int            unicode;        /* is it a unicode hook? */
+@REPLY
+    user_handle_t  handle;         /* handle to the hook */
+@END
+
+
+/* Remove a window hook */
+@REQ(remove_hook)
+    user_handle_t  handle;         /* handle to the hook */
+    int            id;             /* id of the hook if handle is 0 */
+    void*          proc;           /* hook procedure if handle is 0 */
+@END
+
+
+/* Start calling a hook chain */
+@REQ(start_hook_chain)
+    int            id;             /* id of the hook */
+@REPLY
+    user_handle_t  handle;         /* handle to the next hook */
+    void*          proc;           /* hook procedure */
+    int            unicode;        /* is it a unicode hook? */
+@END
+
+
+/* Finished calling a hook chain */
+@REQ(finish_hook_chain)
+    int            id;             /* id of the hook */
+@END
+
+
+/* Get the next hook to call */
+@REQ(get_next_hook)
+    user_handle_t  handle;         /* handle to the current hook */
+@REPLY
+    user_handle_t  next;           /* handle to the next hook */
+    int            id;             /* id of the next hook */
+    void*          proc;           /* next hook procedure */
+    int            prev_unicode;   /* was the previous a unicode hook? */
+    int            next_unicode;   /* is the next a unicode hook? */
+@END

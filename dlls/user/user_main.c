@@ -31,7 +31,6 @@
 #include "cursoricon.h"
 #include "global.h"
 #include "input.h"
-#include "hook.h"
 #include "message.h"
 #include "queue.h"
 #include "spy.h"
@@ -294,7 +293,6 @@ static void thread_detach(void)
     if (hQueue)
     {
         TIMER_RemoveThreadTimers();
-        HOOK_FreeQueueHooks();
         WIN_DestroyThreadWindows( GetDesktopWindow() );
         QUEUE_DeleteMsgQueue();
     }
@@ -309,7 +307,7 @@ static void thread_detach(void)
         if (GetModuleUsage16( hModule ) <= 1)
         {
             /* ModuleUnload() in "Internals" */
-            HOOK_FreeModuleHooks( hModule );
+            /* HOOK_FreeModuleHooks( hModule ); */
             CLASS_FreeModuleClasses( hModule );
             CURSORICON_FreeModuleIcons( hModule );
         }

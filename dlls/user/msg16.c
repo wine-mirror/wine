@@ -21,7 +21,6 @@
 #include "wine/winuser16.h"
 #include "wownt32.h"
 #include "winerror.h"
-#include "hook.h"
 #include "message.h"
 #include "spy.h"
 #include "thread.h"
@@ -38,6 +37,8 @@ DWORD USER16_AlertableWait = 0;
 LRESULT WINAPI SendMessage16( HWND16 hwnd16, UINT16 msg, WPARAM16 wparam, LPARAM lparam )
 {
     LRESULT result;
+    UINT msg32;
+    WPARAM wparam32;
     HWND hwnd = WIN_Handle32( hwnd16 );
 
     if (hwnd != HWND_BROADCAST && WIN_IsCurrentThread(hwnd))
@@ -48,24 +49,20 @@ LRESULT WINAPI SendMessage16( HWND16 hwnd16, UINT16 msg, WPARAM16 wparam, LPARAM
         /* first the WH_CALLWNDPROC hook */
         if (HOOK_IsHooked( WH_CALLWNDPROC ))
         {
-            CWPSTRUCT16 cwp;
-            SEGPTR seg_cwp;
+            LPARAM lparam32 = lparam;
 
-            cwp.hwnd    = hwnd16;
-            cwp.message = msg;
-            cwp.wParam  = wparam;
-            cwp.lParam  = lparam;
-            seg_cwp = MapLS( &cwp );
-            HOOK_CallHooks16( WH_CALLWNDPROC, HC_ACTION, 1, seg_cwp );
-            UnMapLS( seg_cwp );
-            if (cwp.hwnd != hwnd16)
+            if (WINPROC_MapMsg16To32A( hwnd, msg, wparam, &msg32, &wparam32, &lparam32 ) != -1)
             {
-                hwnd16 = cwp.hwnd;
-                hwnd = WIN_Handle32( hwnd16 );
+                CWPSTRUCT cwp;
+
+                cwp.hwnd    = hwnd;
+                cwp.message = msg32;
+                cwp.wParam  = wparam32;
+                cwp.lParam  = lparam32;
+                HOOK_CallHooks( WH_CALLWNDPROC, HC_ACTION, 1, (LPARAM)&cwp, FALSE );
+                WINPROC_UnmapMsg16To32A( hwnd, msg32, wparam32, lparam32, 0 );
+                /* FIXME: should reflect changes back into the message we send */
             }
-            msg    = cwp.message;
-            wparam = cwp.wParam;
-            lparam = cwp.lParam;
         }
 
         if (!(winproc = (WNDPROC16)GetWindowLong16( hwnd16, GWL_WNDPROC ))) return 0;
@@ -76,9 +73,6 @@ LRESULT WINAPI SendMessage16( HWND16 hwnd16, UINT16 msg, WPARAM16 wparam, LPARAM
     }
     else  /* map to 32-bit unicode for inter-thread/process message */
     {
-        UINT msg32;
-        WPARAM wparam32;
-
         if (WINPROC_MapMsg16To32W( hwnd, msg, wparam, &msg32, &wparam32, &lparam ) == -1)
             return 0;
         result = WINPROC_UnmapMsg16To32W( hwnd, msg32, wparam32, lparam,

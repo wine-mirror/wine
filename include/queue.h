@@ -27,9 +27,8 @@
 #include "winuser.h"
 #include "thread.h"
 
-#define WH_NB_HOOKS (WH_MAXHOOK-WH_MINHOOK+1)
-
 struct received_message_info;
+struct hook16_queue_info;
 
 /* Message queue */
 typedef struct tagMESSAGEQUEUE
@@ -37,7 +36,9 @@ typedef struct tagMESSAGEQUEUE
   HQUEUE16  self;                   /* Handle to self (was: reserved) */
   HANDLE    server_queue;           /* Handle to server-side queue */
   DWORD     recursion_count;        /* Counter to prevent infinite SendMessage recursion */
+  HHOOK     hook;                   /* Current hook */
   struct received_message_info *receive_info; /* Info about message being currently received */
+  struct hook16_queue_info *hook16_info;      /* Opaque pointer for 16-bit hook support */
 
   DWORD     magic;                  /* magic number should be QUEUE_MAGIC */
   DWORD     lockCount;              /* reference counter */
@@ -48,9 +49,6 @@ typedef struct tagMESSAGEQUEUE
 
   HCURSOR   cursor;                 /* current cursor */
   INT       cursor_count;           /* cursor show count */
-
-  HANDLE16  hCurHook;               /* Current hook */
-  HANDLE16  hooks[WH_NB_HOOKS];     /* Task hooks list */
 } MESSAGEQUEUE;
 
 

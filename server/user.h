@@ -29,7 +29,8 @@ struct msg_queue;
 
 enum user_object
 {
-    USER_WINDOW = 1
+    USER_WINDOW = 1,
+    USER_HOOK
 };
 
 /* user handles functions */

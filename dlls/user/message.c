@@ -32,7 +32,6 @@
 #include "queue.h"
 #include "input.h"
 #include "message.h"
-#include "hook.h"
 #include "spy.h"
 #include "user.h"
 #include "win.h"
@@ -1339,10 +1338,13 @@ static BOOL unpack_dde_message( HWND hwnd, UINT message, WPARAM *wparam, LPARAM 
  *
  * Call a window procedure and the corresponding hooks.
  */
-static LRESULT call_window_proc( HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam, BOOL unicode )
+static LRESULT call_window_proc( HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam,
+                                 BOOL unicode, BOOL same_thread )
 {
     LRESULT result = 0;
     WNDPROC winproc;
+    CWPSTRUCT cwp;
+    CWPRETSTRUCT cwpret;
     MESSAGEQUEUE *queue = QUEUE_Current();
 
     if (queue->recursion_count > MAX_SENDMSG_RECURSION) return 0;
@@ -1355,20 +1357,12 @@ static LRESULT call_window_proc( HWND hwnd, UINT msg, WPARAM wparam, LPARAM lpar
     }
 
     /* first the WH_CALLWNDPROC hook */
-    if (HOOK_IsHooked( WH_CALLWNDPROC ))
-    {
-        CWPSTRUCT cwp;
-        cwp.lParam  = lparam;
-        cwp.wParam  = wparam;
-        cwp.message = msg;
-        cwp.hwnd    = WIN_GetFullHandle( hwnd );
-        if (unicode) HOOK_CallHooksW( WH_CALLWNDPROC, HC_ACTION, 1, (LPARAM)&cwp );
-        else HOOK_CallHooksA( WH_CALLWNDPROC, HC_ACTION, 1, (LPARAM)&cwp );
-        lparam = cwp.lParam;
-        wparam = cwp.wParam;
-        msg    = cwp.message;
-        hwnd   = cwp.hwnd;
-    }
+    hwnd = WIN_GetFullHandle( hwnd );
+    cwp.lParam  = lparam;
+    cwp.wParam  = wparam;
+    cwp.message = msg;
+    cwp.hwnd    = hwnd;
+    HOOK_CallHooks( WH_CALLWNDPROC, HC_ACTION, same_thread, (LPARAM)&cwp, unicode );
 
     /* now call the window procedure */
     if (unicode)
@@ -1383,17 +1377,12 @@ static LRESULT call_window_proc( HWND hwnd, UINT msg, WPARAM wparam, LPARAM lpar
     }
 
     /* and finally the WH_CALLWNDPROCRET hook */
-    if (HOOK_IsHooked( WH_CALLWNDPROCRET ))
-    {
-        CWPRETSTRUCT cwp;
-        cwp.lResult = result;
-        cwp.lParam  = lparam;
-        cwp.wParam  = wparam;
-        cwp.message = msg;
-        cwp.hwnd    = WIN_GetFullHandle( hwnd );
-        if (unicode) HOOK_CallHooksW( WH_CALLWNDPROCRET, HC_ACTION, 1, (LPARAM)&cwp );
-        else HOOK_CallHooksA( WH_CALLWNDPROCRET, HC_ACTION, 1, (LPARAM)&cwp );
-    }
+    cwpret.lResult = result;
+    cwpret.lParam  = lparam;
+    cwpret.wParam  = wparam;
+    cwpret.message = msg;
+    cwpret.hwnd    = hwnd;
+    HOOK_CallHooks( WH_CALLWNDPROCRET, HC_ACTION, same_thread, (LPARAM)&cwpret, unicode );
  done:
     queue->recursion_count--;
     return result;
@@ -1521,7 +1510,7 @@ BOOL MSG_peek_message( MSG *msg, HWND hwnd, UINT first, UINT last, int flags )
         old_info = queue->receive_info;
         queue->receive_info = &info;
         result = call_window_proc( info.msg.hwnd, info.msg.message, info.msg.wParam,
-                                   info.msg.lParam, (info.type != MSG_ASCII) );
+                                   info.msg.lParam, (info.type != MSG_ASCII), FALSE );
         reply_message( &info, result, TRUE );
         queue->receive_info = old_info;
     next:
@@ -1745,7 +1734,7 @@ LRESULT WINAPI SendMessageTimeoutW( HWND hwnd, UINT msg, WPARAM wparam, LPARAM l
 
     if (dest_tid == GetCurrentThreadId())
     {
-        result = call_window_proc( hwnd, msg, wparam, lparam, TRUE );
+        result = call_window_proc( hwnd, msg, wparam, lparam, TRUE, TRUE );
         ret = 1;
     }
     else
@@ -1793,7 +1782,7 @@ LRESULT WINAPI SendMessageTimeoutA( HWND hwnd, UINT msg, WPARAM wparam, LPARAM l
 
     if (dest_tid == GetCurrentThreadId())
     {
-        result = call_window_proc( hwnd, msg, wparam, lparam, FALSE );
+        result = call_window_proc( hwnd, msg, wparam, lparam, FALSE, TRUE );
         ret = 1;
     }
     else if (dest_pid == GetCurrentProcessId())
@@ -1884,7 +1873,7 @@ BOOL WINAPI SendNotifyMessageW( HWND hwnd, UINT msg, WPARAM wparam, LPARAM lpara
 
     if (dest_tid == GetCurrentThreadId())
     {
-        call_window_proc( hwnd, msg, wparam, lparam, TRUE );
+        call_window_proc( hwnd, msg, wparam, lparam, TRUE, TRUE );
         return TRUE;
     }
     return send_inter_thread_message( dest_tid, &info, &result );
@@ -1938,7 +1927,7 @@ BOOL WINAPI SendMessageCallbackW( HWND hwnd, UINT msg, WPARAM wparam, LPARAM lpa
 
     if (dest_tid == GetCurrentThreadId())
     {
-        result = call_window_proc( hwnd, msg, wparam, lparam, TRUE );
+        result = call_window_proc( hwnd, msg, wparam, lparam, TRUE, TRUE );
         callback( hwnd, msg, data, result );
         return TRUE;
     }
@@ -2085,9 +2074,6 @@ BOOL WINAPI PeekMessageW( MSG *msg_out, HWND hwnd, UINT first, UINT last, UINT f
     if (!MSG_peek_message( &msg, hwnd, first, last,
                            (flags & PM_REMOVE) ? GET_MSG_REMOVE : 0 ))
     {
-        /* FIXME: should be done before checking for hw events */
-        MSG_JournalPlayBackMsg();
-
         if (!(flags & PM_NOYIELD))
         {
             DWORD count;
@@ -2119,7 +2105,7 @@ BOOL WINAPI PeekMessageW( MSG *msg_out, HWND hwnd, UINT first, UINT last, UINT f
         msg.pt.y = HIWORD( queue->GetMessagePosVal );
     }
 
-    HOOK_CallHooksW( WH_GETMESSAGE, HC_ACTION, flags & PM_REMOVE, (LPARAM)&msg );
+    HOOK_CallHooks( WH_GETMESSAGE, HC_ACTION, flags & PM_REMOVE, (LPARAM)&msg, TRUE );
 
     /* copy back our internal safe copy of message data to msg_out.
      * msg_out is a variable from the *program*, so it can't be used

@@ -29,7 +29,6 @@
 #include "controls.h"
 #include "cursoricon.h"
 #include "winpos.h"
-#include "hook.h"
 #include "nonclient.h"
 #include "wine/debug.h"
 #include "shellapi.h"

@@ -26,7 +26,6 @@
 #include "winpos.h"
 #include "wownt32.h"
 #include "wine/debug.h"
-#include "hook.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(ttydrv);
 
@@ -44,6 +43,7 @@ BOOL TTYDRV_CreateWindow( HWND hwnd, CREATESTRUCTA *cs, BOOL unicode )
 {
     BOOL ret;
     HWND hwndLinkAfter;
+    CBT_CREATEWNDA cbtc;
 
 #ifdef WINE_CURSES
     WND *wndPtr = WIN_GetPtr( hwnd );
@@ -81,22 +81,12 @@ BOOL TTYDRV_CreateWindow( HWND hwnd, CREATESTRUCTA *cs, BOOL unicode )
     hwndLinkAfter = ((cs->style & (WS_CHILD|WS_MAXIMIZE)) == WS_CHILD)
  ? HWND_BOTTOM : HWND_TOP;
 
-    if (HOOK_IsHooked( WH_CBT ))
+    cbtc.lpcs = cs;
+    cbtc.hwndInsertAfter = hwndLinkAfter;
+    if (HOOK_CallHooks( WH_CBT, HCBT_CREATEWND, (WPARAM)hwnd, (LPARAM)&cbtc, unicode ))
     {
-	CBT_CREATEWNDA cbtc;
-        LRESULT lret;
-
-	cbtc.lpcs = cs;
-	cbtc.hwndInsertAfter = hwndLinkAfter;
-        lret = (unicode) ? HOOK_CallHooksW(WH_CBT, HCBT_CREATEWND,
-                                                       (WPARAM)hwnd, (LPARAM)&cbtc)
-                        : HOOK_CallHooksA(WH_CBT, HCBT_CREATEWND,
-                                                       (WPARAM)hwnd, (LPARAM)&cbtc);
-        if (lret)
-	{
-	    TRACE("CBT-hook returned !0\n");
-            return FALSE;
-	}
+        TRACE("CBT-hook returned !0\n");
+        return FALSE;
     }
 
     if (unicode)

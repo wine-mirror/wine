@@ -18,6 +18,7 @@ C_SRCS = \
 	event.c \
 	file.c \
 	handle.c \
+	hook.c \
 	main.c \
 	mapping.c \
 	mutex.c \

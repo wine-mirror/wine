@@ -2282,6 +2282,57 @@ static void dump_set_caret_info_reply( const struct set_caret_info_reply *req )
     fprintf( stderr, " old_state=%d", req->old_state );
 }
 
+static void dump_set_hook_request( const struct set_hook_request *req )
+{
+    fprintf( stderr, " id=%d,", req->id );
+    fprintf( stderr, " tid=%08x,", req->tid );
+    fprintf( stderr, " proc=%p,", req->proc );
+    fprintf( stderr, " unicode=%d", req->unicode );
+}
+
+static void dump_set_hook_reply( const struct set_hook_reply *req )
+{
+    fprintf( stderr, " handle=%p", req->handle );
+}
+
+static void dump_remove_hook_request( const struct remove_hook_request *req )
+{
+    fprintf( stderr, " handle=%p,", req->handle );
+    fprintf( stderr, " id=%d,", req->id );
+    fprintf( stderr, " proc=%p", req->proc );
+}
+
+static void dump_start_hook_chain_request( const struct start_hook_chain_request *req )
+{
+    fprintf( stderr, " id=%d", req->id );
+}
+
+static void dump_start_hook_chain_reply( const struct start_hook_chain_reply *req )
+{
+    fprintf( stderr, " handle=%p,", req->handle );
+    fprintf( stderr, " proc=%p,", req->proc );
+    fprintf( stderr, " unicode=%d", req->unicode );
+}
+
+static void dump_finish_hook_chain_request( const struct finish_hook_chain_request *req )
+{
+    fprintf( stderr, " id=%d", req->id );
+}
+
+static void dump_get_next_hook_request( const struct get_next_hook_request *req )
+{
+    fprintf( stderr, " handle=%p", req->handle );
+}
+
+static void dump_get_next_hook_reply( const struct get_next_hook_reply *req )
+{
+    fprintf( stderr, " next=%p,", req->next );
+    fprintf( stderr, " id=%d,", req->id );
+    fprintf( stderr, " proc=%p,", req->proc );
+    fprintf( stderr, " prev_unicode=%d,", req->prev_unicode );
+    fprintf( stderr, " next_unicode=%d", req->next_unicode );
+}
+
 static const dump_func req_dumpers[REQ_NB_REQUESTS] = {
     (dump_func)dump_new_process_request,
     (dump_func)dump_get_new_process_info_request,
@@ -2447,6 +2498,11 @@ static const dump_func req_dumpers[REQ_NB_REQUESTS] = {
     (dump_func)dump_set_capture_window_request,
     (dump_func)dump_set_caret_window_request,
     (dump_func)dump_set_caret_info_request,
+    (dump_func)dump_set_hook_request,
+    (dump_func)dump_remove_hook_request,
+    (dump_func)dump_start_hook_chain_request,
+    (dump_func)dump_finish_hook_chain_request,
+    (dump_func)dump_get_next_hook_request,
 };
 
 static const dump_func reply_dumpers[REQ_NB_REQUESTS] = {
@@ -2614,6 +2670,11 @@ static const dump_func reply_dumpers[REQ_NB_REQUESTS] = {
     (dump_func)dump_set_capture_window_reply,
     (dump_func)dump_set_caret_window_reply,
     (dump_func)dump_set_caret_info_reply,
+    (dump_func)dump_set_hook_reply,
+    (dump_func)0,
+    (dump_func)dump_start_hook_chain_reply,
+    (dump_func)0,
+    (dump_func)dump_get_next_hook_reply,
 };
 
 static const char * const req_names[REQ_NB_REQUESTS] = {
@@ -2781,6 +2842,11 @@ static const char * const req_names[REQ_NB_REQUESTS] = {
     "set_capture_window",
     "set_caret_window",
     "set_caret_info",
+    "set_hook",
+    "remove_hook",
+    "start_hook_chain",
+    "finish_hook_chain",
+    "get_next_hook",
 };
 
 /* ### make_requests end ### */

@@ -137,6 +137,10 @@ extern WINE_LOOK TWEAK_WineLook;
 /* gray brush cache */
 extern HBRUSH CACHE_GetPattern55AABrush(void);
 
+/* hook.c */
+extern LRESULT HOOK_CallHooks( INT id, INT code, WPARAM wparam, LPARAM lparam, BOOL unicode );
+extern BOOL HOOK_IsHooked( INT id );
+
 /* syscolor.c */
 extern HPEN SYSCOLOR_GetPen( INT index );
 

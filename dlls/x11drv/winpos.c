@@ -33,7 +33,6 @@
 #include "winerror.h"
 
 #include "x11drv.h"
-#include "hook.h"
 #include "win.h"
 #include "winpos.h"
 #include "dce.h"
@@ -1122,7 +1121,7 @@ UINT WINPOS_MinMaximize( HWND hwnd, UINT cmd, LPRECT rect )
     wpl.length = sizeof(wpl);
     GetWindowPlacement( hwnd, &wpl );
 
-    if (HOOK_CallHooksA( WH_CBT, HCBT_MINMAX, (WPARAM)hwnd, cmd ))
+    if (HOOK_CallHooks( WH_CBT, HCBT_MINMAX, (WPARAM)hwnd, cmd, TRUE ))
         return SWP_NOSIZE | SWP_NOMOVE;
 
     if (IsIconic( hwnd ))
@@ -2094,7 +2093,8 @@ void X11DRV_SysCommandSizeMove( HWND hwnd, WPARAM wParam )
     }
     wine_tsx11_unlock();
 
-    if (HOOK_CallHooksA( WH_CBT, HCBT_MOVESIZE, (WPARAM)hwnd, (LPARAM)&sizingRect )) moved = FALSE;
+    if (HOOK_CallHooks( WH_CBT, HCBT_MOVESIZE, (WPARAM)hwnd, (LPARAM)&sizingRect, TRUE ))
+        moved = FALSE;
 
     SendMessageA( hwnd, WM_EXITSIZEMOVE, 0, 0 );
     SendMessageA( hwnd, WM_SETVISIBLE, !IsIconic(hwnd), 0L);
