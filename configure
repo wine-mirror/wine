@@ -582,7 +582,7 @@ fi
 # Check whether --enable-lib or --disable-lib was given.
 if test "${enable_lib+set}" = set; then
   enableval="$enable_lib"
-  if test "$enableval" = "no"; then ALT_LINK="\$(LIBOBJS)"; LIB_TARGET=""; fi
+  if test "$enableval" = "no"; then ALT_LINK="\$(LIBOBJS) \$(X11OBJS)"; LIB_TARGET=""; fi
 fi
 
 
