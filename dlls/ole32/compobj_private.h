@@ -190,7 +190,7 @@ BOOL stub_manager_notify_unmarshal(struct stub_manager *m, const IPID *ipid);
 BOOL stub_manager_is_table_marshaled(struct stub_manager *m, const IPID *ipid);
 HRESULT register_ifstub(APARTMENT *apt, STDOBJREF *stdobjref, REFIID riid, IUnknown *obj, MSHLFLAGS mshlflags);
 HRESULT ipid_to_stub_manager(const IPID *ipid, APARTMENT **stub_apt, struct stub_manager **stubmgr_ret);
-IRpcStubBuffer *ipid_to_stubbuffer(const IPID *ipid);
+IRpcStubBuffer *ipid_to_apt_and_stubbuffer(const IPID *ipid, APARTMENT **stub_apt);
 HRESULT start_apartment_remote_unknown(void);
 
 IRpcStubBuffer *mid_to_stubbuffer(wine_marshal_id *mid);
@@ -199,6 +199,7 @@ void start_apartment_listener_thread(void);
 
 extern HRESULT PIPE_GetNewPipeBuf(wine_marshal_id *mid, IRpcChannelBuffer **pipebuf);
 void RPC_StartLocalServer(REFCLSID clsid, IStream *stream);
+HRESULT RPC_ExecuteCall(RPCOLEMESSAGE *msg, IRpcStubBuffer *stub);
 
 /* This function initialize the Running Object Table */
 HRESULT WINAPI RunningObjectTableImpl_Initialize(void);
@@ -214,6 +215,9 @@ APARTMENT *COM_ApartmentFromOXID(OXID oxid, BOOL ref);
 APARTMENT *COM_ApartmentFromTID(DWORD tid);
 DWORD COM_ApartmentAddRef(struct apartment *apt);
 DWORD COM_ApartmentRelease(struct apartment *apt);
+
+/* messages used by the apartment window (not compatible with native) */
+#define DM_EXECUTERPC   (WM_USER + 0) /* WPARAM = (RPCOLEMESSAGE *), LPARAM = (IRpcStubBuffer *) */
 
 /*
  * Per-thread values are stored in the TEB on offset 0xF80,

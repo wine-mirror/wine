@@ -321,24 +321,27 @@ HRESULT ipid_to_stub_manager(const IPID *ipid, APARTMENT **stub_apt, struct stub
     return S_OK;
 }
 
-IRpcStubBuffer *ipid_to_stubbuffer(const IPID *ipid)
+/* gets the apartment and IRpcStubBuffer from an object. the caller must
+ * release the references to both objects */
+IRpcStubBuffer *ipid_to_apt_and_stubbuffer(const IPID *ipid, APARTMENT **stub_apt)
 {
     IRpcStubBuffer *ret = NULL;
-    APARTMENT *apt;
     struct stub_manager *stubmgr;
     struct ifstub *ifstub;
     HRESULT hr;
 
-    hr = ipid_to_stub_manager(ipid, &apt, &stubmgr);
+    *stub_apt = NULL;
+
+    hr = ipid_to_stub_manager(ipid, stub_apt, &stubmgr);
     if (hr != S_OK) return NULL;
 
     ifstub = stub_manager_ipid_to_ifstub(stubmgr, ipid);
     if (ifstub)
         ret = ifstub->stubbuffer;
 
-    stub_manager_int_release(stubmgr);
+    if (ret) IRpcStubBuffer_AddRef(ret);
 
-    COM_ApartmentRelease(apt);
+    stub_manager_int_release(stubmgr);
 
     return ret;
 }

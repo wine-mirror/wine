@@ -273,25 +273,48 @@ PipeBuf_GetBuffer(LPRPCCHANNELBUFFER iface,RPCOLEMESSAGE* msg,REFIID riid)
     return S_OK;
 }
 
+HRESULT RPC_ExecuteCall(RPCOLEMESSAGE *msg, IRpcStubBuffer *stub)
+{
+    return IRpcStubBuffer_Invoke(stub, msg, NULL);
+}
+
 static HRESULT
 COM_InvokeAndRpcSend(struct rpc *req) {
     IRpcStubBuffer     *stub;
+    APARTMENT          *apt;
     RPCOLEMESSAGE	msg;
     HRESULT		hres;
     DWORD		reqtype;
 
-    if (!(stub = ipid_to_stubbuffer(&(req->reqh.ipid))))
-        /* ipid_to_stubbuffer will already have logged the error */
-        return RPC_E_DISCONNECTED;
-
-    IUnknown_AddRef(stub);
+    memset(&msg, 0, sizeof(msg));
     msg.Buffer		= req->Buffer;
     msg.iMethod		= req->reqh.iMethod;
     msg.cbBuffer	= req->reqh.cbBuffer;
     msg.dataRepresentation = NDR_LOCAL_DATA_REPRESENTATION;
     req->state		= REQSTATE_INVOKING;
-    req->resph.retval	= IRpcStubBuffer_Invoke(stub,&msg,NULL);
-    IUnknown_Release(stub);
+
+    stub = ipid_to_apt_and_stubbuffer(&req->reqh.ipid, &apt);
+    if (!apt)
+        /* ipid_to_apt_and_stubbuffer will already have logged the error */
+        return RPC_E_DISCONNECTED;
+    if (!stub)
+    {
+        /* ipid_to_apt_and_stubbuffer will already have logged the error */
+        COM_ApartmentRelease(apt);
+        return RPC_E_DISCONNECTED;
+    }
+
+    /* Note: this is the important difference between STAs and MTAs - we
+     * always execute RPCs to STAs in the thread that originally created the
+     * apartment (i.e. the one that pumps messages to the window) */
+    if (apt->model & COINIT_APARTMENTTHREADED)
+        req->resph.retval = SendMessageW(apt->win, DM_EXECUTERPC, (WPARAM)&msg, (LPARAM)stub);
+    else
+        req->resph.retval = RPC_ExecuteCall(&msg, stub);
+
+    COM_ApartmentRelease(apt);
+    IRpcStubBuffer_Release(stub);
+
     req->Buffer		= msg.Buffer;
     req->resph.cbBuffer	= msg.cbBuffer;
     reqtype 		= REQTYPE_RESPONSE;
