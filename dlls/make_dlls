@@ -27,7 +27,6 @@ my $makefiles = `find . -name Makefile.in -print`;
 my %imports = ();
 my %directories = ();
 my %altnames = ();
-my %linked_dlls = ();
 
 # list of special dlls that can be switched on or off by configure
 my %special_dlls =
@@ -74,12 +73,6 @@ foreach my $i (split(/\s/,$makefiles))
         {
             my @list = map { /\./ ? $_ : $_ . ".dll"; } split(/\s/,$2);
             push @{$imports{$module}}, @list;
-            next;
-        }
-        if (/^LDIMPORTS\s*=\s*(.*)/)
-        {
-            my @list = map { /\./ ? $_ : $_ . ".dll"; } split(/\s/,$1);
-            $linked_dlls{$module} = \@list;
             next;
         }
     }
@@ -266,48 +259,28 @@ foreach my $mod (sort keys %directories)
 ################################################################
 # output the linkable dlls special links
 
-my %linkable_dlls = ();
-foreach my $mod (keys %imports)
-{
-    foreach my $i (@{$linked_dlls{$mod}}) { $linkable_dlls{$i} = 1; }
-}
-
-print NEWMAKE "\n# Special targets for dlls that we need to link to\n\n";
-printf NEWMAKE "LINKABLE_DLLS = %s\n\n", join( " ", keys %linkable_dlls );
-
-foreach my $mod (keys %linkable_dlls)
-{
-    printf NEWMAKE "lib%s.\$(LIBEXT): %s/%s\$(DLLEXT)\n", $mod, $directories{$mod}, $mod;
-    printf NEWMAKE "\t\$(RM) \$@ && \$(LN_S) %s/%s\$(DLLEXT) \$@\n\n", $directories{$mod}, $mod;
-}
-
-foreach my $mod (keys %imports)
-{
-    my $deps = "";
-    foreach my $i (@{$linked_dlls{$mod}}) { $deps .= " lib$i.\$(LIBEXT)"; }
-    if ($deps) { printf NEWMAKE "%s %s/__install__:%s\n", $directories{$mod}, $directories{$mod}, $deps; }
-}
-
 print NEWMAKE <<EOF;
 
+\# Special targets for dlls that we need to link to
+
+libntdll.dll.\$(LIBEXT): ntdll/ntdll.dll\$(DLLEXT)
+	\$(RM) \$@ && \$(LN_S) ntdll/ntdll.dll\$(DLLEXT) \$@
+
+all: libntdll.dll.\$(LIBEXT)
+
 uninstall::
-	\$(RM) \$(LINKABLE_DLLS:%=\$(libdir)/lib%.\$(LIBEXT))
+	\$(RM) \$(libdir)/libntdll.dll.\$(LIBEXT)
 
 install install-lib:: \$(INSTALLSUBDIRS:%=%/__install__)
-	\$(RM) \$(LINKABLE_DLLS:%=\$(libdir)/lib%.\$(LIBEXT))
-	cd \$(libdir) && if [ "\$(dlldir)" = "\$(libdir)/wine" ]; \\
+	cd \$(libdir) && \$(RM) libntdll.dll.\$(LIBEXT) && \\
+	if [ "\$(dlldir)" = "\$(libdir)/wine" ]; \\
 	then \\
+	  \$(LN_S) wine/ntdll.dll\$(DLLEXT) libntdll.dll.\$(LIBEXT); \\
+	else \\
+	  \$(LN_S) \$(dlldir)/ntdll.dll\$(DLLEXT) libntdll.dll.\$(LIBEXT); \\
+	fi
+
 EOF
-foreach my $mod (keys %linkable_dlls)
-{
-    printf NEWMAKE "\t  \$(LN_S) wine/%s\$(DLLEXT) lib%s.\$(LIBEXT); \\\n", $mod, $mod;
-}
-print NEWMAKE "\telse \\\n";
-foreach my $mod (keys %linkable_dlls)
-{
-    printf NEWMAKE "\t  \$(LN_S) \$(dlldir)/%s\$(DLLEXT) lib%s.\$(LIBEXT); \\\n", $mod, $mod;
-}
-print NEWMAKE "\tfi\n\n";
 
 ################################################################
 # makefile trailer

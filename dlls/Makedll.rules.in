@@ -29,7 +29,7 @@ $(MAINSPEC).c: $(MAINSPEC) $(RC_SRCS:.rc=.res) $(SYMBOLFILE) $(IMPORTLIBS) $(WIN
 	$(WINEBUILD) $(DEFS) $(DLLFLAGS) -o $@ --spec $(SRCDIR)/$(MAINSPEC) $(RC_SRCS:.rc=.res) $(SYMBOLFILE) $(DLLMAIN:%=--entry %) -L$(DLLDIR) $(DELAYIMPORTS:%=-d%) $(IMPORTS:%=-l%)
 
 $(MODULE).so: $(MAINSPEC).o $(ALL_OBJS) Makefile.in
-	$(LDSHARED) $(LDDLLFLAGS) $(MAINSPEC).o $(ALL_OBJS) -o $@ -L$(DLLDIR) $(LDIMPORTS:%=-l%) $(ALL_LIBS) -lc
+	$(LDSHARED) $(LDDLLFLAGS) $(MAINSPEC).o $(ALL_OBJS) -o $@ $(ALL_LIBS) -lc
 
 $(MODULE).tmp.o: $(ALL_OBJS) Makefile.in
 	$(LDCOMBINE) $(ALL_OBJS) -o $@
@@ -51,7 +51,7 @@ CHECKLINK_RPATH = dlls libs/unicode libs/wine
 $(WIN16_FILES:%=__checklink16__%): checklink16
 
 checklink16:: $(MAINSPEC).o $(OBJS) $(MODULE).dbg.o dummy
-	$(CC) -o checklink $(CHECKLINK_RPATH:%=-Wl,-rpath,$(TOPOBJDIR)/%) $(TOPSRCDIR)/dlls/checklink.c $(MAINSPEC).o $(OBJS) $(MODULE).dbg.o -L$(DLLDIR) $(LDIMPORTS:%=-l%) $(ALL_LIBS) && $(RM) checklink
+	$(CC) -o checklink $(CHECKLINK_RPATH:%=-Wl,-rpath,$(TOPOBJDIR)/%) $(TOPSRCDIR)/dlls/checklink.c $(MAINSPEC).o $(OBJS) $(MODULE).dbg.o $(ALL_LIBS) && $(RM) checklink
 
 checklink:: $(WIN16_FILES:%=__checklink16__%)
 
