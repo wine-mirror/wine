@@ -774,7 +774,7 @@ static BOOL PROFILE_Open( LPCWSTR filename )
 
     for(i=0;i<N_CACHED_PROFILES;i++)
     {
-       if ((MRUProfile[i]->filename && !strcmpW( buffer, MRUProfile[i]->filename )))
+       if ((MRUProfile[i]->filename && !strcmpiW( buffer, MRUProfile[i]->filename )))
        {
           TRACE("MRU Filename: %s, new filename: %s\n", debugstr_w(MRUProfile[i]->filename), debugstr_w(buffer));
           if(i)
