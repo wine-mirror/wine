@@ -986,6 +986,7 @@ sub postprocess_targets()
 	@$wrapper[$T_INIT]=get_default_init(@$target[$T_TYPE]);
 	@$wrapper[$T_FLAGS]=$TF_WRAPPER | (@$target[$T_FLAGS] & $TF_MFC);
 	@$wrapper[$T_DLLS]=[ "kernel32.dll", "ntdll.dll", "user32.dll" ];
+	push @{@$wrapper[$T_LIBRARIES]}, "dl";
 	push @{@$wrapper[$T_SOURCES_C]},"@$wrapper[$T_NAME]_wrapper.c";
 
 	my $index=bsearch(@$target[$T_SOURCES_C],"@$wrapper[$T_NAME]_wrapper.c");
@@ -1624,7 +1625,7 @@ sub generate_spec_file($$$)
 
   # Don't forget to export the 'Main' function for wrapped executables,
   # except for MFC ones!
-  if (@$target[$T_FLAGS] == $TF_WRAP) {
+  if ((@$target[$T_FLAGS]&($TF_WRAP|$TF_WRAPPER|$TF_MFC)) == $TF_WRAP) {
     if (@$target[$T_TYPE] == $TT_GUIEXE) {
       print FILEO "\n@ stdcall @$target[$T_INIT](long long ptr long) @$target[$T_INIT]\n";
     } elsif (@$target[$T_TYPE] == $TT_CUIEXE) {
@@ -1830,7 +1831,11 @@ sub generate_project_files($)
       } elsif (@$target[$T_FLAGS] & $TF_WRAPPER) {
 	$basename.="_wrapper";
       }
-      generate_list("${canon}_SPEC_SRCS",1,[ "$basename.exe.spec" ]);
+      if (@$target[$T_TYPE] != $TT_DLL) {
+        generate_list("${canon}_SPEC_SRCS",1,[ "$basename.exe.spec" ]);
+      } else {
+        generate_list("${canon}_SPEC_SRCS",1,[ "$basename.spec" ]);
+      }
       generate_list("${canon}_DLL_PATH",1,@$target[$T_DLL_PATH]);
       generate_list("${canon}_DLLS",1,@$target[$T_DLLS]);
       generate_list("${canon}_LIBRARY_PATH",1,@$target[$T_LIBRARY_PATH]);
@@ -3154,6 +3159,8 @@ exec wine "$appname" "$@"
  * This is either CUIEXE for a console based application or
  * GUIEXE for a regular windows application.
  */
+#define GUIEXE 0
+#define CUIEXE 1
 #define      APP_TYPE      ##WINEMAKER_APP_TYPE##
 
 /**
@@ -3198,11 +3205,11 @@ typedef int WINAPI (*MainFunc)(int argc, char** argv, char** envp);
 int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance,
                    PSTR szCmdLine, int iCmdShow)
 #else
-int WINAPI Main(int argc, char** argv, char** envp)
+int WINAPI main(int argc, char** argv, char** envp)
 #endif
 {
     void* appLibrary;
-    HINSTANCE hApp,hMFC,hMain;
+    HINSTANCE hApp = 0, hMFC = 0, hMain = 0;
     void* appMain;
     char* libName;
     int retcode;
@@ -3272,7 +3279,7 @@ int WINAPI Main(int argc, char** argv, char** envp)
     }
 
     /* Get the address of the application's entry point */
-    appMain=(WinMainFunc*)GetProcAddress(hMain, appInit);
+    appMain=GetProcAddress(hMain, appInit);
     if (appMain==NULL) {
         char format[]="Could not get the address of %s (%d)";
         char* msg;
