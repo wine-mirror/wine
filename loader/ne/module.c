@@ -965,6 +965,7 @@ static HINSTANCE16 MODULE_LoadModule16( LPCSTR libname, BOOL implicit, BOOL lib_
 
 		if(hinst >= 32)
 		{
+                        TRACE_(loaddll)("Loaded module '%s' : %s\n", libname, filetype);
 			if(!implicit)
 			{
 				HMODULE16 hModule;
@@ -987,8 +988,6 @@ static HINSTANCE16 MODULE_LoadModule16( LPCSTR libname, BOOL implicit, BOOL lib_
 				}
 
 				TRACE("Loaded module '%s' at 0x%04x.\n", libname, hinst);
-                                if (!TRACE_ON(module))
-                                    TRACE_(loaddll)("Loaded module '%s' : %s\n", libname, filetype);
 
 				/*
 				 * Call initialization routines for all loaded DLLs. Note that
