@@ -3,7 +3,7 @@
 # Copyright 2000 Francois Gouget for CodeWeavers
 # fgouget@codeweavers.com
 #
-my $version="0.5.3";
+my $version="0.5.4";
 
 use Cwd;
 use File::Basename;
@@ -48,6 +48,10 @@ my $OPT_ASK_SKIP=-1;
 
 
 # General options
+
+##
+# This is the directory in which winemaker will operate.
+my $opt_work_dir;
 
 ##
 # Make a backup of the files
@@ -1872,6 +1876,9 @@ sub generate_global_files
       }
     }
   }
+  if (!defined $a_source_file) {
+    $a_source_file="Makefile.in";
+  }
 
   generate_configure("configure.in",$a_source_file);
   unlink("configure");
@@ -1944,6 +1951,7 @@ $opt_backup=1;
 $opt_lower=$OPT_LOWER_UPPERCASE;
 $opt_lower_include=1;
 
+# $opt_work_dir=<undefined>
 # $opt_single_target=<undefined>
 $opt_target_type=$TT_GUIEXE;
 $opt_flags=0;
@@ -2027,16 +2035,32 @@ while (@ARGV>0) {
   # Catch errors
   } else {
     if ($arg ne "--help" and $arg ne "-h" and $arg ne "-?") {
-      print STDERR "Unknown option: $arg\n";
+      if (!defined $opt_work_dir) {
+        $opt_work_dir=$arg;
+      } else {
+        print STDERR "error: the work directory, \"$arg\", has already been specified (was \"$opt_work_dir\")\n";
+        $usage=1;
+        last;
+      }
+    } else {
+      $usage=1;
+      last;
     }
-    $usage=1;
-    last;
   }
 }
 
 if ($opt_no_banner == 0 or defined $usage) {
    print "Winemaker $version\n";
    print "Copyright 2000 Francois Gouget <fgouget\@codeweavers.com> for CodeWeavers\n";
+}
+
+if (!defined $opt_work_dir) {
+  print STDERR "error: you must specify the directory containing the sources to be converted\n";
+  $usage=1;
+} elsif (!chdir $opt_work_dir) {
+  print STDERR "error: could not chdir to the work directory\n";
+  print STDERR "       $!\n";
+  $usage=1;
 }
 
 if (defined $usage) {
@@ -2048,6 +2072,7 @@ if (defined $usage) {
   print STDERR "                 [-Dmacro[=defn]] [-Idir] [-Ldir] [-idll] [-llibrary]\n";
   print STDERR "                 [--interactive] [--single-target name]\n";
   print STDERR "                 [--generated-files|--nogenerated-files]\n";
+  print STDERR "                 work_directory\n";
   exit (2);
 }
 
