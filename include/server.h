@@ -895,6 +895,7 @@ struct query_key_info_request
     OUT int          max_value;    /* longest value name */
     OUT int          max_data;     /* longest value data */
     OUT time_t       modif;        /* last modification time */
+    OUT path_t       name;         /* key name */
     OUT WCHAR        class[1];     /* class name */
 };
 

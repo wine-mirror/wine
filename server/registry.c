@@ -138,16 +138,15 @@ static inline char to_hex( char ch )
 }
 
 /* dump the full path of a key */
-static void dump_path( struct key *key, FILE *f )
+static void dump_path( struct key *key, struct key *base, FILE *f )
 {
-    if (key->parent) dump_path( key->parent, f );
-    else if (key->name) fprintf( f, "?????" );
-
-    if (key->name)
+    if (key->parent && key != base)
     {
+        dump_path( key->parent, base, f );
         fprintf( f, "\\\\" );
-        dump_strW( key->name, strlenW(key->name), f, "[]" );
     }
+
+    if (key->name) dump_strW( key->name, strlenW(key->name), f, "[]" );
     else  /* root key */
     {
         int i;
@@ -210,7 +209,7 @@ static void dump_value( struct key_value *value, FILE *f )
 }
 
 /* save a registry and all its subkeys to a text file */
-static void save_subkeys( struct key *key, FILE *f )
+static void save_subkeys( struct key *key, struct key *base, FILE *f )
 {
     int i;
 
@@ -220,17 +219,17 @@ static void save_subkeys( struct key *key, FILE *f )
     if ((key->level >= saving_level) && ((key->last_value >= 0) || (key->last_subkey == -1)))
     {
         fprintf( f, "\n[" );
-        dump_path( key, f );
+        dump_path( key, base, f );
         fprintf( f, "] %ld\n", key->modif );
         for (i = 0; i <= key->last_value; i++) dump_value( &key->values[i], f );
     }
-    for (i = 0; i <= key->last_subkey; i++) save_subkeys( key->subkeys[i], f );
+    for (i = 0; i <= key->last_subkey; i++) save_subkeys( key->subkeys[i], base, f );
 }
 
 static void dump_operation( struct key *key, struct key_value *value, const char *op )
 {
     fprintf( stderr, "%s key ", op );
-    if (key) dump_path( key, stderr );
+    if (key) dump_path( key, NULL, stderr );
     else fprintf( stderr, "ERROR" );
     if (value)
     {
@@ -245,7 +244,7 @@ static void key_dump( struct object *obj, int verbose )
     struct key *key = (struct key *)obj;
     assert( obj->ops == &key_ops );
     fprintf( stderr, "Key flags=%x ", key->flags );
-    dump_path( key, stderr );
+    dump_path( key, NULL, stderr );
     fprintf( stderr, "\n" );
 }
 
@@ -575,6 +574,7 @@ static void query_key( struct key *key, struct query_key_info_request *req )
     req->max_value  = max_value;
     req->max_data   = max_data;
     req->modif      = key->modif;
+    strcpyW( req->name, key->name);
     if (key->class) strcpyW( req->class, key->class );  /* FIXME: length */
     else req->class[0] = 0;
     if (debug_level > 1) dump_operation( key, NULL, "Query" );
@@ -807,6 +807,20 @@ static struct key *create_root_key( int hkey )
 
     switch(hkey)
     {
+    /* the two real root-keys */
+    case HKEY_LOCAL_MACHINE:
+        {
+	    static const WCHAR name[] = { 'M','A','C','H','I','N','E',0 };
+            key = alloc_key( name, time(NULL) );
+	}
+	break;
+    case HKEY_USERS:
+        {
+	    static const WCHAR name[] = { 'U','S','E','R',0 };
+            key = alloc_key( name, time(NULL) );
+	}
+	break;
+    /* special subkeys */
     case HKEY_CLASSES_ROOT:
         {
             static const WCHAR name[] =
@@ -818,12 +832,32 @@ static struct key *create_root_key( int hkey )
             release_object( root );
         }
         break;
-    case HKEY_CURRENT_USER: /* FIXME: should be HKEY_USERS\\the_current_user_SID */
-    case HKEY_LOCAL_MACHINE:
-    case HKEY_USERS:
+    case HKEY_CURRENT_CONFIG:
+        {
+	    static const WCHAR name[] = {
+		'S','Y','S','T','E','M','\\',
+		'C','U','R','R','E','N','T','C','O','N','T','R','O','L','S','E','T','\\',
+		'H','A','R','D','W','A','R','E','P','R','O','F','I','L','E','S','\\',
+		'C','U','R','R','E','N','T',0};
+            struct key *root = get_hkey_obj( HKEY_LOCAL_MACHINE, 0 );
+            if (!root) return NULL;
+            key = create_key( root, name, sizeof(name), NULL, 0, time(NULL), &dummy );
+            release_object( root );
+	}
+	break;
+    case HKEY_CURRENT_USER:
+        {
+            /* FIXME: should be HKEY_USERS\\the_current_user_SID */
+            static const WCHAR name[] = { '.','D','e','f','a','u','l','t',0 };
+            struct key *root = get_hkey_obj( HKEY_USERS, 0 );
+            if (!root) return NULL;
+            key = create_key( root, name, sizeof(name), NULL, 0, time(NULL), &dummy );
+            release_object( root );
+        }
+        break;
+    /* dynamically generated keys */
     case HKEY_PERFORMANCE_DATA:
     case HKEY_DYN_DATA:
-    case HKEY_CURRENT_CONFIG:
         key = alloc_key( NULL, time(NULL) );
         break;
     default:
@@ -1297,7 +1331,7 @@ static void save_registry( struct key *key, int handle )
         if (f)
         {
             fprintf( f, "WINE REGISTRY Version %d\n", saving_version );
-            if (saving_version == 2) save_subkeys( key, f );
+            if (saving_version == 2) save_subkeys( key, key, f );
             else
             {
                 update_level( key );

@@ -923,6 +923,9 @@ static void dump_query_key_info_reply( struct query_key_info_request *req )
     fprintf( stderr, " max_value=%d,", req->max_value );
     fprintf( stderr, " max_data=%d,", req->max_data );
     fprintf( stderr, " modif=%ld,", req->modif );
+    fprintf( stderr, " name=" );
+    dump_unicode_string( req->name );
+    fprintf( stderr, "," );
     fprintf( stderr, " class=" );
     dump_unicode_string( req->class );
 }

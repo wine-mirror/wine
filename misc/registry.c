@@ -659,78 +659,7 @@ static void _wine_loadreg( HKEY hkey, char *fn )
     fclose(F);
 }
 
-/******************************************************************************
- * _flush_registry [Internal]
- * 
- * This function allow to flush section of the internal registry.  It is mainly
- * implements to fix a problem with the global HKU and the local HKU.
- * Those two files are read to build the HKU\.Default branch to finaly copy
- * this branch onto HKCU hive, once this is done, if we keep the HKU hive as is, 
- * all the global HKU are saved onto the user's personal version of HKU hive.
- * which is bad...
- */
 
-static void _flush_registry( HKEY hkey )
-{
-    WCHAR name[MAX_PATH];
-
-    for (;;)
-    {
-        HKEY subkey;
-        /* FIXME: we assume that deleting a key will move the other ones up, */
-        /* so that we can always use index 0 until there are no more keys    */
-        if (RegEnumKeyW( hkey, 0, name, sizeof(name) ) != ERROR_SUCCESS) break;
-        if (RegOpenKeyW( hkey, name, &subkey ) != ERROR_SUCCESS) break;
-        _flush_registry( subkey );
-        if (RegDeleteKeyW( subkey, NULL ) != ERROR_SUCCESS) break;
-        RegCloseKey( subkey );
-    }
-}
-
-
-/******************************************************************************
- * _copy_registry [Internal]
- */
-static void _copy_registry( HKEY from, HKEY to )
-{
-    int index;
-    HKEY subkey;
-    FILETIME ft;
-    DWORD type, name_len, len;
-    static WCHAR name[MAX_PATH];
-    static BYTE data[2048];
-
-    /* copy values */
-    index = 0;
-    for (;;)
-    {
-        len = sizeof(data);
-        name_len = sizeof(name);
-        if (RegEnumValueW( from, index++, name, &name_len,
-                           NULL, &type, data, &len ) != ERROR_SUCCESS) break;
-        RegSetValueExW( to, name, 0, type, data, len );
-    }
-
-    /* copy subkeys */
-    index = 0;
-    for (;;)
-    {
-        name_len = sizeof(name);
-        if (RegEnumKeyExW( from, index++, name, &name_len,
-                           NULL, NULL, 0, &ft ) != ERROR_SUCCESS)
-            break;
-        if (RegOpenKeyW( from, name, &subkey ) == ERROR_SUCCESS)
-        {
-            HKEY newsub;
-            if (RegCreateKeyW( to, name, &newsub ) == ERROR_SUCCESS)
-            {
-                _copy_registry( subkey, newsub );
-                RegCloseKey( newsub );
-            }
-            RegCloseKey( subkey );
-        }
-    }
-}
 /* NT REGISTRY LOADER */
 
 #ifdef HAVE_SYS_MMAN_H
@@ -1762,42 +1691,8 @@ void SHELL_LoadRegistry( void )
          _wine_loadreg( HKEY_LOCAL_MACHINE, fn );
        }
       free (fn);
-    }
-  
-  /* 
-   * Obtain the handle of the HKU\.Default key.
-   * in order to copy HKU\.Default\* onto HKEY_CURRENT_USER 
-   */
-  if (RegCreateKeyA(HKEY_USERS,".Default",&hkey) != ERROR_SUCCESS)
-      WARN("Could not create global user default key\n");
-  else
-    _copy_registry( hkey, HKEY_CURRENT_USER );
-  RegCloseKey(hkey);
-
-  /* 
-   * Since HKU is built from the global HKU and the local user HKU file we must
-   * flush the HKU tree we have built at this point otherwise the part brought
-   * in from the global HKU is saved into the local HKU.  To avoid this 
-   * useless dupplication of HKU keys we reread the local HKU key.
-   */
-
-  /* Allways flush the HKU hive and reload it only with user's personal HKU */
-  _flush_registry( HKEY_USERS ); 
-
-  /* Reload user's local HKU hive */
-  if (home && PROFILE_GetWineIniBool ("registry","LoadHomeRegistryFiles",1))
-  {
-      fn=(char*)xmalloc( strlen(home) + strlen(WINE_PREFIX)
-                         + strlen(SAVE_LOCAL_USERS_DEFAULT) + 2);
-      
-      strcpy(fn,home);
-      strcat(fn,WINE_PREFIX"/"SAVE_LOCAL_USERS_DEFAULT);
-
-      _wine_loadreg( HKEY_USERS, fn );
-
-      free(fn);
   }
-
+  
   /* 
    * Make sure the update mode is there
    */
