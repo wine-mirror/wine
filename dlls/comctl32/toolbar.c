@@ -1120,7 +1120,8 @@ TOOLBAR_MeasureString(TOOLBAR_INFO *infoPtr, TBUTTON_INFO *btnPtr,
     lpSize->cx = 0;
     lpSize->cy = 0;
 
-    if (!(btnPtr->fsState & TBSTATE_HIDDEN) &&
+    if (infoPtr->nMaxTextRows > 0 &&
+        !(btnPtr->fsState & TBSTATE_HIDDEN) &&
         (!(infoPtr->dwExStyle & TBSTYLE_EX_MIXEDBUTTONS) ||
         (btnPtr->fsStyle & BTNS_SHOWTEXT)) )
     {
