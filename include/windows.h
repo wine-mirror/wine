@@ -3410,6 +3410,12 @@ typedef struct
 #define WM_CPL_LAUNCH       (WM_USER + 1000)
 #define WM_CPL_LAUNCHED     (WM_USER + 1001)
 
+/* WM_NOTIFYFORMAT commands and return values */
+#define NFR_ANSI	    1
+#define NFR_UNICODE	    2
+#define NF_QUERY	    3
+#define NF_REQUERY	    4
+
   /* Key status flags for mouse events */
 #define MK_LBUTTON	    0x0001
 #define MK_RBUTTON	    0x0002
