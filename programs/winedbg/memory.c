@@ -598,9 +598,11 @@ BOOL memory_disasm_one_insn(ADDRESS* addr)
 }
 
 void memory_disassemble(const struct dbg_lvalue* xstart, 
-                        const struct dbg_lvalue* xend, int offset)
+                        const struct dbg_lvalue* xend, int instruction_count)
 {
     static ADDRESS last = {0,0,0};
+    int stop = 0;
+    int i;
 
     if (!xstart && !xend) 
     {
@@ -613,7 +615,10 @@ void memory_disassemble(const struct dbg_lvalue* xstart,
             last.Mode = AddrModeFlat;
             last.Offset = types_extract_as_integer(xstart);
         }
-        if (xend) offset = types_extract_as_integer(xend) - last.Offset + 1;
+        if (xend) 
+            stop = types_extract_as_integer(xend);
     }
-    while (offset-- > 0 && memory_disasm_one_insn(&last));
+    for (i = 0; (instruction_count == 0 || i < instruction_count)  &&
+                (stop == 0 || last.Offset <= stop); i++)
+        memory_disasm_one_insn(&last);
 }

@@ -314,7 +314,7 @@ extern BOOL             memory_get_current_stack(ADDRESS* address);
 extern BOOL             memory_get_current_frame(ADDRESS* address);
 extern BOOL             memory_get_string(HANDLE hp, void* addr, BOOL in_debuggee, BOOL unicode, char* buffer, int size);
 extern BOOL             memory_get_string_indirect(HANDLE hp, void* addr, BOOL unicode, char* buffer, int size);
-extern void             memory_disassemble(const struct dbg_lvalue*, const struct dbg_lvalue*, int offset);
+extern void             memory_disassemble(const struct dbg_lvalue*, const struct dbg_lvalue*, int instruction_count);
 extern BOOL             memory_disasm_one_insn(ADDRESS* addr);
 extern void             print_bare_address(const ADDRESS* addr);
 extern void             print_address(const ADDRESS* addr, BOOLEAN with_line);
