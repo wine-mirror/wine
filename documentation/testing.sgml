@@ -65,7 +65,7 @@
               When a test fails, one immediately knows what was the expected
               behavior and which APIs are involved. Thus regressions caught
               this way should be detected earlier, because it is easy to run
-              all tests on a regular basis, and easier to fix because of the
+              all tests on a regular basis, and be easier to fix because of the
               reduced diagnosis work.
             </para>
           </listitem>
@@ -118,7 +118,8 @@
         set its contents, possibly check length restrictions, and verify the
         results using WM_GETTEXT. Similarly one could create a listbox and
         check the effect of LB_DELETESTRING on the list's number of items,
-        selected items list, highlighted item, etc.
+        selected items list, highlighted item, etc. For concrete examples,
+        see <filename>dlls/user/tests/win.c</> and the related tests.
       </para>
       <para>
         However, undocumented behavior should not be tested for unless there
@@ -167,11 +168,12 @@
         following:
 <screen>
 <prompt>$ </>../../../tools/runtest -q -M kernel32.dll -p kernel32_test.exe.so thread.c
-<prompt>$ </>../../../tools/runtest -p kernel32_test.exe.so thread.c
+<prompt>$ </>../../../tools/runtest -P wine -p kernel32_test.exe.so thread.c
 thread.c: 86 tests executed, 5 marked as todo, 0 failures.
 </screen>
-        The '-P wine' options defines the platform that is currently being
-        tested. Remove the '-q' option if you want the testing framework
+        The '-P wine' option defines the platform that is currently being
+        tested and is used in conjunction with the 'todo' statements (see
+        below). Remove the '-q' option if you want the testing framework
         to report statistics about the number of successful and failed tests.
         Run <command>runtest -h</> for more details.
       </para>
@@ -189,8 +191,15 @@ thread.c: 86 tests executed, 5 marked as todo, 0 failures.
         <sect3>
           <title>Debian GNU/Linux</title>
           <para>
-            On Debian all you need to do is type <command>apt-get install
-            mingw32</>.
+            On Debian do <command>apt-get install mingw32</>.
+          </para>
+          <para>
+            The standard MinGW libraries will probably be incomplete, causing
+            'undefined symbol' errors. So get the latest
+            <ulink url="http://mirzam.it.vu.nl/mingw/">mingw-w32api RPM</>
+            and use <command>alien</> to either convert it to a .tar.gz file
+            from which to extract just the relevant files, or to convert it
+            to a Debian package that you will install.
           </para>
         </sect3>
         <sect3>
@@ -241,11 +250,15 @@ thread.c: 86 tests executed, 5 marked as todo, 0 failures.
       <sect2>
         <title>Using pre-compiled binaries</title>
         <para>
-          Unfortunately there are no pre-compiled binaries yet. However if
-          send an email to the Wine development list you can probably get
-          someone to send them to you, and maybe motivate some kind soul to
-          put in place a mechanism for publishing such binaries on a regular
-          basis.
+          The simplest solution is to download the
+          <ulink url="http://www.astro.gla.ac.uk/users/paulm/WRT/CrossBuilt/winetest-latest.exe">latest
+          version of winetest</>. This executable contains all the Wine
+          conformance tests, runs them and reports the results.
+        </para>
+        <para>
+          You can also get the older versions from
+          <ulink url="http://www.astro.gla.ac.uk/users/paulm/WRT/CrossBuilt/">Paul
+          Millar's website</>.
         </para>
       </sect2>
       <sect2>
@@ -322,7 +335,7 @@ thread.c: 86 tests executed, 5 marked as todo, 0 failures.
             method. So to run the kernel 'path' tests you would do:
 <screen>
 <prompt>C:\&gt;</>cd dlls\kernel\tests\Output\Win32_MSVC_Headers
-<prompt>C:\dlls\kernel\tests\Output\Win32_MSVC_Headers&gt;</>kernel32_test path
+<prompt>C:\wine\dlls\kernel\tests\Output\Win32_MSVC_Headers&gt;</> kernel32_test path
 </screen>
           </para></listitem>
         </itemizedlist>
@@ -386,8 +399,8 @@ START_TEST(paths)
         You can use <function>trace</> to print informational messages. Note
         that these messages will only be printed if 'runtest -v' is being used.
 <screen>
-  trace("testing GlobalAddAtomA");
-  trace("foo=%d",foo);
+  trace("testing GlobalAddAtomA\n");
+  trace("foo=%d\n",foo);
 </screen>
       </para>
       <para>
@@ -395,8 +408,8 @@ START_TEST(paths)
         they behaved as expected:
 <screen>
   ATOM atom = GlobalAddAtomA( "foobar" );
-  ok( GlobalFindAtomA( "foobar" ) == atom, "could not find atom foobar" );
-  ok( GlobalFindAtomA( "FOOBAR" ) == atom, "could not find atom FOOBAR" );
+  ok( GlobalFindAtomA( "foobar" ) == atom, "could not find atom foobar\n" );
+  ok( GlobalFindAtomA( "FOOBAR" ) == atom, "could not find atom FOOBAR\n" );
 </screen>
         The first parameter of <function>ok</> is an expression which must
         evaluate to true if the test was successful. The next parameter is a
@@ -431,7 +444,7 @@ START_TEST(paths)
         of a bad error message:
 <screen>
     ok(GetThreadPriorityBoost(curthread,&amp;disabled)!=0,
-       "GetThreadPriorityBoost Failed");
+       "GetThreadPriorityBoost Failed\n");
 </screen>
         This will yield:
 <screen>
@@ -451,7 +464,7 @@ thread.c:123: Test failed: GetThreadPriorityBoost Failed
     BOOL rc;
 ...
     rc=GetThreadPriorityBoost(curthread,&amp;disabled);
-    ok(rc!=0 && disabled==0,"rc=%d error=%ld disabled=%d",
+    ok(rc!=0 && disabled==0,"rc=%d error=%ld disabled=%d\n",
        rc,GetLastError(),disabled);
 </screen>
         This will yield:
@@ -485,7 +498,7 @@ thread.c:123: Test failed: rc=0 error=120 disabled=0
         for some tests you may want to define a macro such as the following:
 <screen>
 #define eq(received, expected, label, type) \
-        ok((received) == (expected), "%s: got " type " instead of " type, (label),(received),(expected))
+        ok((received) == (expected), "%s: got " type " instead of " type "\n", (label),(received),(expected))
 
 ...
 
@@ -512,7 +525,7 @@ thread.c:123: Test failed: rc=0 error=120 disabled=0
 <screen>
 todo_wine {
     SetLastError( 0xdeadbeef );
-    ok( GlobalAddAtomA(0) == 0 && GetLastError() == 0xdeadbeef, "failed to add atom 0" );
+    ok( GlobalAddAtomA(0) == 0 && GetLastError() == 0xdeadbeef, "failed to add atom 0\n" );
 }
 </screen>
         On Windows the above check would be performed normally, but on Wine it
@@ -567,7 +580,7 @@ ok ( GetLastError() == WIN9X_ERROR || GetLastError() == NT_ERROR, ...);
 
 
 <!-- FIXME: Strategies for testing threads, testing network stuff,
- file handling, eq macro... -->
+ file handling... -->
 
   </chapter>
 
