@@ -27,7 +27,7 @@
 
 #include <sys/time.h>
 #include "wine/server_protocol.h"
-#include "list.h"
+#include "wine/list.h"
 
 #define DEBUG_OBJECTS
 

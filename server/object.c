@@ -31,7 +31,6 @@
 #include "file.h"
 #include "thread.h"
 #include "unicode.h"
-#include "list.h"
 
 
 struct object_name

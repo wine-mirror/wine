@@ -33,7 +33,6 @@
 #include "handle.h"
 #include "thread.h"
 #include "request.h"
-#include "list.h"
 
 struct change
 {
