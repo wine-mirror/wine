@@ -3,6 +3,7 @@
  *
  *	Copyright 1995	Martin von Loewis
  *      Copyright 1998  David Lee Lambert
+ *      Copyright 2000  Julio César Gázquez
  */
 
 #include <string.h>
@@ -3145,18 +3146,271 @@ BOOL WINAPI EnumTimeFormatsW(
   return FALSE;
 }
 
+
 /**************************************************************************
  *              GetNumberFormat32A	(KERNEL32.355)
  */
 INT WINAPI GetNumberFormatA(LCID locale, DWORD dwflags,
-			       LPCSTR lpvalue,   const NUMBERFMTA * lpFormat,
-			       LPSTR lpNumberStr, int cchNumber)
+                               LPCSTR lpValue,   const NUMBERFMTA * lpFormat,
+                               LPSTR lpNumberStr, int cchNumber)
 {
- FIXME_(file)("%s: stub, no reformating done\n",lpvalue);
+	LCID thislocale;
+	UINT thisnumdigits;
+    UINT thisleadingzero;
+    UINT thisgrouping[8]={ -1 };
+    LPCSTR thisdecimalsep;
+    LPCSTR thisthousandsep;
+    UINT thisnegativeorder;
 
- lstrcpynA( lpNumberStr, lpvalue, cchNumber );
- return cchNumber? lstrlenA( lpNumberStr ) : 0;
+
+	LPSTR sptr;
+	LPSTR dptr;
+	char roundbuffer[24]; /* Should be enough */
+	char *gptr;
+	int i,j;
+	int dotflag=0,negflag=0;
+	char misc_buf[8], negative_buf[4], decimal_buf[4], thousand_buf[4];
+	char digits_buf[11];
+	int intsize=0,decsize=0,totalsize,lastgroup, leadingzeros=0;
+	int negsignsize,decimalsepsize,thousandsepsize;
+
+/* Default setting stuff - partially borrowed from GetFormatedDate */
+	if (!locale) {
+		locale = LOCALE_SYSTEM_DEFAULT;
+	}
+
+	if (locale == LOCALE_SYSTEM_DEFAULT) {
+		thislocale = GetSystemDefaultLCID();
+	} else if (locale == LOCALE_USER_DEFAULT) {
+		thislocale = GetUserDefaultLCID();
+	} else {
+		thislocale = locale;
+	}
+/* Partial implementation: things like native digits are not considered */
+	if (lpFormat == NULL) {
+
+	GetLocaleInfoA(thislocale, LOCALE_IDIGITS,
+					misc_buf, sizeof(misc_buf));
+	thisnumdigits = atoi(misc_buf);
+
+	GetLocaleInfoA(thislocale, LOCALE_ILZERO,
+					misc_buf, sizeof(misc_buf));
+     thisleadingzero = atoi(misc_buf);
+
+     GetLocaleInfoA(thislocale, LOCALE_SGROUPING,
+					misc_buf, sizeof(misc_buf));
+
+/* About grouping mechanism:
+   I parse the string and pour the group size values along the 
+   thisgrouping[] array, starting by element 1. Then I convert these
+   values to indexes for insertion into the integer part.
+   thisgrouping[0]==-1, therefore I ensure index correctness without
+   need for range checking and related stuff.
+   The only drawback is the 7 separators limit, hopefully that means
+   it will fail with numbers bigger than 10^21 if using groups of three
+   as usual. */
+
+
+	for (i=1,gptr=misc_buf;*gptr!='\0';i++) {
+		/* In control panel, groups up 9 digits long are allowed. If there is any way to use larger groups,
+		   then the next line must be replaced with the following code:
+		   thisgrouping[i] = atoi(gptr);
+		   for (;*gptr!=';' && *gptr!='\0';gptr++) ; */
+	
+		thisgrouping[i] = *(gptr++)-'0';
+     	
+		if (*gptr==';')
+	  		gptr++;
+	}
+
+    /* Take care for repeating group size */
+	if (thisgrouping[i-1]==0) {
+		for (j=i-1;j<8;j++)
+			thisgrouping[j]=thisgrouping[i-2];
+		lastgroup=7;
+	} else
+		lastgroup=i-1;
+
+	for (i=2;i<=lastgroup;i++)
+		thisgrouping[i]+=thisgrouping[i-1];
+
+	GetLocaleInfoA(thislocale, LOCALE_SDECIMAL,
+					decimal_buf, sizeof(decimal_buf));
+	thisdecimalsep  = decimal_buf;
+
+	GetLocaleInfoA(thislocale, LOCALE_STHOUSAND,
+					thousand_buf, sizeof(thousand_buf));
+	thisthousandsep  = thousand_buf;
+
+	GetLocaleInfoA(thislocale, LOCALE_INEGNUMBER,
+					misc_buf, sizeof(misc_buf));
+	thisnegativeorder = atoi(misc_buf); 
+
+	} else {
+
+		thisnumdigits = lpFormat->NumDigits;
+		thisleadingzero = lpFormat->LeadingZero;
+		
+		thisgrouping[1] = lpFormat->Grouping;	
+		for (i=2;i<8;i++)
+			thisgrouping[i]=thisgrouping[i-1]+lpFormat->Grouping;
+		lastgroup=7;
+		
+		thisdecimalsep = lpFormat->lpDecimalSep;
+		thisthousandsep = lpFormat->lpThousandSep;
+		thisnegativeorder = lpFormat->NegativeOrder;
+
+    }
+
+	GetLocaleInfoA(thislocale, LOCALE_SNATIVEDIGITS,
+					digits_buf, sizeof(digits_buf));
+
+	GetLocaleInfoA(thislocale, LOCALE_SNEGATIVESIGN,
+					negative_buf, sizeof(negative_buf));
+
+	negsignsize=strlen(negative_buf);
+	decimalsepsize=strlen(thisdecimalsep);
+	thousandsepsize=strlen(thisthousandsep);
+
+	/* Size calculation */
+	sptr=lpValue;
+	if (*sptr=='-') {
+		negflag=1;
+		sptr++;
+	}
+	for (; *sptr=='0'; sptr++) leadingzeros++; /* Ignore leading zeros */
+	for (; *sptr!='\0'; sptr++) {
+		if (!dotflag && *sptr=='.') {
+			dotflag=1;
+		} else if (*sptr<'0' || *sptr>'9') {
+			SetLastError(ERROR_INVALID_PARAMETER);
+			return 0;
+		} else {
+			if (dotflag) {
+				decsize++;
+			} else {
+       			intsize++;
+			}
+    	}
+	}
+
+
+/* Take care of eventual rounding. Only, if I need to do it, then I write
+   the rounded lpValue copy into roundbuffer, and create the formatted
+   string from the proper source. This is smarter than copying it always
+   The buffer includes an extra leading zero, as the number can carry and
+   get and extra one. If it doesn't, the zero is ignored as any other
+   useless leading zero
+*/
+
+	if (decsize>0 && decsize>thisnumdigits) {
+		sptr-=(decsize-thisnumdigits);
+               		
+		if (*sptr>='5') {
+			strcpy(roundbuffer+1,lpValue);
+			if (negflag) {
+				*roundbuffer='-';
+				*(roundbuffer+1)='0';
+			} else
+				*roundbuffer='0';
+				sptr=roundbuffer+(sptr-lpValue);  // +1-1
+				
+				while ( (++*sptr) > '9') {
+					*(sptr--)='0';
+					if (*sptr=='.') sptr--;
+				}
+				if ((negflag ? *(roundbuffer+leadingzeros+1) : *(roundbuffer+leadingzeros))  == '1')
+					intsize++;	
+					sptr=roundbuffer;
+				} else
+					sptr=lpValue;
+			} else
+				sptr=lpValue;
+
+	totalsize=intsize;
+
+	if (intsize==0 && (decsize==0 || thisleadingzero))
+		totalsize++;
+
+	if (negflag)
+		totalsize+= thisnegativeorder == 1 || thisnegativeorder == 3 ? negsignsize
+			: thisnegativeorder == 2 || thisnegativeorder == 4 ? negsignsize+1 : 2 ;
+
+	/* Look for the first grouping to be done */
+	for (j=lastgroup;thisgrouping[j]>=intsize && j>0;j--) ;
+
+  
+	totalsize+=thousandsepsize * j;
+	if (thisnumdigits>0)
+		totalsize+=decimalsepsize+thisnumdigits;
+
+	if (cchNumber==0) /* if cchNumber is zero, just return size needed */
+		return totalsize+1;
+	else
+		if (cchNumber<totalsize+1)  { /* +1 = Null terminator (right?) */
+			SetLastError(ERROR_INSUFFICIENT_BUFFER);
+			return 0;
+		} else {
+
+
+			/* Formatting stuff starts here */
+
+			dptr=lpNumberStr;
+
+			if (negflag) {
+				if (thisnegativeorder==0)
+					*dptr++='(';
+				else if (thisnegativeorder<=2) {
+					strcpy(dptr,negative_buf);
+					dptr+=negsignsize;
+					if (thisnegativeorder==2)
+						*dptr++=' ';
+				}
+				sptr++;
+			}
+
+			for (i=1;*sptr=='0' ;i++, sptr++) ; /* Ignore leading zeros from source*/
+				if (intsize==0 && (decsize==0 || thisleadingzero)) // Insert one leading zero into destination if required
+					*(dptr++)=digits_buf[0];
+				for (i=1;i<=intsize;i++) {
+
+					*(dptr++)=digits_buf[*(sptr++)-'0'];
+					
+					/* Insert a group separator if we just reached the end of a group */
+					if (i==intsize-thisgrouping[j]) {
+						strcpy(dptr,thisthousandsep);
+						dptr+=thousandsepsize;
+						j--;
+					}
+				}
+
+				if (decsize>0)
+					sptr++;
+				if (thisnumdigits>0) {
+					strcpy(dptr,decimal_buf);
+					dptr+=decimalsepsize;
+					for (i=0;i<thisnumdigits;i++)
+						*(dptr++)=*sptr !='\0' ? digits_buf[*(sptr++)-'0'] : digits_buf[0];
+				}
+
+				if (negflag) {
+					if (thisnegativeorder==0)
+						*dptr++=')';
+					else if (thisnegativeorder>=3) {
+						if (thisnegativeorder==4)
+							*dptr++=' ';      	
+							strcpy(dptr,negative_buf);
+							dptr+=negsignsize;
+							sptr++;
+					}
+				}
+
+				*dptr='\0';
+
+		}
+    return totalsize+1;
 }
+
 /**************************************************************************
  *              GetNumberFormat32W	(KERNEL32.xxx)
  */
