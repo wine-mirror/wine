@@ -272,6 +272,10 @@ int sigsetjmp( sigjmp_buf buf, int savesigs );
 void siglongjmp( sigjmp_buf buf, int val );
 #endif /* HAVE_SIGSETJMP */
 
+#ifndef HAVE_STATVFS
+int statvfs( const char *path, struct statvfs *buf );
+#endif
+
 #ifndef HAVE_STRNCASECMP
 # ifndef HAVE__STRNICMP
 int strncasecmp(const char *str1, const char *str2, size_t n);
@@ -391,7 +395,7 @@ extern long interlocked_xchg_add( long *dest, long incr );
 #define pread                   __WINE_NOT_PORTABLE(pread)
 #define pwrite                  __WINE_NOT_PORTABLE(pwrite)
 #define spawnvp                 __WINE_NOT_PORTABLE(spawnvp)
-#define statfs                  __WINE_NOT_PORTABLE(statfs)
+#define statvfs                 __WINE_NOT_PORTABLE(statvfs)
 #define strcasecmp              __WINE_NOT_PORTABLE(strcasecmp)
 #define strerror                __WINE_NOT_PORTABLE(strerror)
 #define strncasecmp             __WINE_NOT_PORTABLE(strncasecmp)
