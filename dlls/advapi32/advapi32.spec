@@ -20,8 +20,8 @@
 @ stdcall BackupEventLogW (long wstr)
 @ stdcall BuildTrusteeWithSidA(ptr ptr)
 @ stdcall BuildTrusteeWithSidW(ptr ptr)
-@ stub ChangeServiceConfigA
-@ stub ChangeServiceConfigW
+@ stdcall ChangeServiceConfigA(long long long long wstr str ptr str str str str)
+@ stdcall ChangeServiceConfigW(long long long long wstr wstr ptr wstr wstr wstr wstr)
 @ stdcall ClearEventLogA (long str)
 @ stdcall ClearEventLogW (long wstr)
 @ stdcall CloseEventLog (long)
@@ -182,8 +182,8 @@
 @ stdcall PrivilegeCheck(ptr ptr ptr)
 @ stub PrivilegedServiceAuditAlarmA
 @ stub PrivilegedServiceAuditAlarmW
-@ stub QueryServiceConfigA
-@ stub QueryServiceConfigW
+@ stdcall QueryServiceConfigA(long ptr long ptr)
+@ stdcall QueryServiceConfigW(long ptr long ptr)
 @ stub QueryServiceLockStatusA
 @ stub QueryServiceLockStatusW
 @ stub QueryServiceObjectSecurity

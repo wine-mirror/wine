@@ -273,7 +273,10 @@ SC_HANDLE WINAPI
 OpenSCManagerW( LPCWSTR lpMachineName, LPCWSTR lpDatabaseName,
                   DWORD dwDesiredAccess )
 {
-    HKEY hKey;
+    const WCHAR szKey[] = { 'S','y','s','t','e','m','\\',
+      'C','u','r','r','e','n','t','C','o','n','t','r','o','l','S','e','t','\\',
+      'S','e','r','v','i','c','e','s','\\',0 };
+    HKEY hReg, hKey = NULL;
     LONG r;
 
     TRACE("(%s,%s,0x%08lx)\n", debugstr_w(lpMachineName),
@@ -285,11 +288,14 @@ OpenSCManagerW( LPCWSTR lpMachineName, LPCWSTR lpDatabaseName,
      * docs, but what if it isn't?
      */
 
-    r = RegConnectRegistryW(lpMachineName,HKEY_LOCAL_MACHINE,&hKey);
-    if (r!=ERROR_SUCCESS)
-        return 0;
+    r = RegConnectRegistryW(lpMachineName,HKEY_LOCAL_MACHINE,&hReg);
+    if (r==ERROR_SUCCESS)
+    {
+        r = RegOpenKeyExW(hReg, szKey, 0, dwDesiredAccess, &hKey );
+        RegCloseKey( hReg );
+    }
 
-    TRACE("returning %p\n",hKey);
+    TRACE("returning %p\n", hKey);
 
     return hKey;
 }
@@ -387,21 +393,14 @@ SC_HANDLE WINAPI
 OpenServiceW(SC_HANDLE hSCManager, LPCWSTR lpServiceName,
                DWORD dwDesiredAccess)
 {
-    const char *str = "System\\CurrentControlSet\\Services\\";
-    WCHAR lpServiceKey[80]; /* FIXME: this should be dynamically allocated */
     HKEY hKey;
     long r;
 
     TRACE("(%p,%p,%ld)\n",hSCManager, lpServiceName,
           dwDesiredAccess);
 
-    MultiByteToWideChar( CP_ACP, 0, str, -1, lpServiceKey, sizeof(lpServiceKey)/sizeof(WCHAR) );
-    strcatW(lpServiceKey,lpServiceName);
-
-    TRACE("Opening reg key %s\n", debugstr_w(lpServiceKey));
-
     /* FIXME: dwDesiredAccess may need some processing */
-    r = RegOpenKeyExW(hSCManager, lpServiceKey, 0, dwDesiredAccess, &hKey );
+    r = RegOpenKeyExW(hSCManager, lpServiceName, 0, dwDesiredAccess, &hKey );
     if (r!=ERROR_SUCCESS)
         return 0;
 
@@ -422,30 +421,21 @@ CreateServiceW( SC_HANDLE hSCManager, LPCWSTR lpServiceName,
                   LPCWSTR lpDependencies, LPCWSTR lpServiceStartName,
                   LPCWSTR lpPassword )
 {
-    FIXME("(%p,%s,%s,...)\n", hSCManager, debugstr_w(lpServiceName), debugstr_w(lpDisplayName));
-    return 0;
-}
-
-
-/******************************************************************************
- * CreateServiceA [ADVAPI32.@]
- */
-SC_HANDLE WINAPI
-CreateServiceA( SC_HANDLE hSCManager, LPCSTR lpServiceName,
-                  LPCSTR lpDisplayName, DWORD dwDesiredAccess,
-                  DWORD dwServiceType, DWORD dwStartType,
-                  DWORD dwErrorControl, LPCSTR lpBinaryPathName,
-                  LPCSTR lpLoadOrderGroup, LPDWORD lpdwTagId,
-                  LPCSTR lpDependencies, LPCSTR lpServiceStartName,
-                  LPCSTR lpPassword )
-{
     HKEY hKey;
     LONG r;
     DWORD dp;
+    const WCHAR szDisplayName[] = { 'D','i','s','p','l','a','y','N','a','m','e', 0 };
+    const WCHAR szType[] = {'T','y','p','e',0};
+    const WCHAR szStart[] = {'S','t','a','r','t',0};
+    const WCHAR szError[] = {'E','r','r','o','r','C','o','n','t','r','o','l', 0};
+    const WCHAR szImagePath[] = {'I','m','a','g','e','P','a','t','h',0};
+    const WCHAR szGroup[] = {'G','r','o','u','p',0};
+    const WCHAR szDependencies[] = { 'D','e','p','e','n','d','e','n','c','i','e','s',0};
 
-    TRACE("(%p,%s,%s,...)\n", hSCManager, debugstr_a(lpServiceName), debugstr_a(lpDisplayName));
+    FIXME("%p %s %s\n", hSCManager, 
+          debugstr_w(lpServiceName), debugstr_w(lpDisplayName));
 
-    r = RegCreateKeyExA(hSCManager, lpServiceName, 0, NULL,
+    r = RegCreateKeyExW(hSCManager, lpServiceName, 0, NULL,
                        REG_OPTION_NON_VOLATILE, dwDesiredAccess, NULL, &hKey, &dp);
     if (r!=ERROR_SUCCESS)
         return 0;
@@ -454,44 +444,40 @@ CreateServiceA( SC_HANDLE hSCManager, LPCSTR lpServiceName,
 
     if(lpDisplayName)
     {
-        r = RegSetValueExA(hKey, "DisplayName", 0, REG_SZ, lpDisplayName, strlen(lpDisplayName) );
+        r = RegSetValueExW(hKey, szDisplayName, 0, REG_SZ, (LPBYTE)lpDisplayName,
+                           (strlenW(lpDisplayName)+1)*sizeof(WCHAR) );
         if (r!=ERROR_SUCCESS)
             return 0;
     }
 
-    r = RegSetValueExA(hKey, "Type", 0, REG_DWORD, (LPVOID)&dwServiceType, sizeof (DWORD) );
+    r = RegSetValueExW(hKey, szType, 0, REG_DWORD, (LPVOID)&dwServiceType, sizeof (DWORD) );
     if (r!=ERROR_SUCCESS)
         return 0;
 
-    r = RegSetValueExA(hKey, "Start", 0, REG_DWORD, (LPVOID)&dwStartType, sizeof (DWORD) );
+    r = RegSetValueExW(hKey, szStart, 0, REG_DWORD, (LPVOID)&dwStartType, sizeof (DWORD) );
     if (r!=ERROR_SUCCESS)
         return 0;
 
-    r = RegSetValueExA(hKey, "ErrorControl", 0, REG_DWORD,
+    r = RegSetValueExW(hKey, szError, 0, REG_DWORD,
                            (LPVOID)&dwErrorControl, sizeof (DWORD) );
     if (r!=ERROR_SUCCESS)
         return 0;
 
     if(lpBinaryPathName)
     {
-        r = RegSetValueExA(hKey, "ImagePath", 0, REG_SZ,
-                           lpBinaryPathName,strlen(lpBinaryPathName)+1 );
+        r = RegSetValueExW(hKey, szImagePath, 0, REG_SZ, (LPBYTE)lpBinaryPathName,
+                           (strlenW(lpBinaryPathName)+1)*sizeof(WCHAR) );
         if (r!=ERROR_SUCCESS)
             return 0;
     }
 
     if(lpLoadOrderGroup)
     {
-        r = RegSetValueExA(hKey, "Group", 0, REG_SZ,
-                           lpLoadOrderGroup, strlen(lpLoadOrderGroup)+1 );
+        r = RegSetValueExW(hKey, szGroup, 0, REG_SZ, (LPBYTE)lpLoadOrderGroup,
+                           (strlenW(lpLoadOrderGroup)+1)*sizeof(WCHAR) );
         if (r!=ERROR_SUCCESS)
             return 0;
     }
-
-    r = RegSetValueExA(hKey, "ErrorControl", 0, REG_DWORD,
-                       (LPVOID)&dwErrorControl, sizeof (DWORD) );
-    if (r!=ERROR_SUCCESS)
-        return 0;
 
     if(lpDependencies)
     {
@@ -499,12 +485,11 @@ CreateServiceA( SC_HANDLE hSCManager, LPCSTR lpServiceName,
 
         /* determine the length of a double null terminated multi string */
         do {
-            len += (strlen(&lpDependencies[len])+1);
+            len += (strlenW(&lpDependencies[len])+1);
         } while (lpDependencies[len++]);
 
-        /* FIXME: this should be unicode */
-        r = RegSetValueExA(hKey, "Dependencies", 0, REG_MULTI_SZ,
-                           lpDependencies, len );
+        r = RegSetValueExW(hKey, szDependencies, 0, REG_MULTI_SZ,
+                           (LPBYTE)lpDependencies, len );
         if (r!=ERROR_SUCCESS)
             return 0;
     }
@@ -520,6 +505,85 @@ CreateServiceA( SC_HANDLE hSCManager, LPCSTR lpServiceName,
     }
 
     return hKey;
+}
+
+
+static inline LPWSTR SERV_dup( LPCSTR str )
+{
+    UINT len;
+    LPWSTR wstr;
+
+    if( !str )
+        return NULL;
+    len = MultiByteToWideChar( CP_ACP, 0, str, -1, NULL, 0 );
+    wstr = HeapAlloc( GetProcessHeap(), 0, len*sizeof (WCHAR) );
+    MultiByteToWideChar( CP_ACP, 0, str, -1, wstr, len );
+    return wstr;
+}
+
+static inline LPWSTR SERV_dupmulti( LPCSTR str )
+{
+    UINT len = 0, n = 0;
+    LPWSTR wstr;
+
+    do {
+        len += MultiByteToWideChar( CP_ACP, 0, &str[n], -1, NULL, 0 );
+        n += (strlen( &str[n] ) + 1);
+    } while (str[n]);
+    len++;
+    n++;
+    
+    wstr = HeapAlloc( GetProcessHeap(), 0, len*sizeof (WCHAR) );
+    MultiByteToWideChar( CP_ACP, 0, str, n, wstr, len );
+    return wstr;
+}
+
+static inline VOID SERV_free( LPWSTR wstr )
+{
+    HeapFree( GetProcessHeap(), 0, wstr );
+}
+
+/******************************************************************************
+ * CreateServiceA [ADVAPI32.@]
+ */
+SC_HANDLE WINAPI
+CreateServiceA( SC_HANDLE hSCManager, LPCSTR lpServiceName,
+                  LPCSTR lpDisplayName, DWORD dwDesiredAccess,
+                  DWORD dwServiceType, DWORD dwStartType,
+                  DWORD dwErrorControl, LPCSTR lpBinaryPathName,
+                  LPCSTR lpLoadOrderGroup, LPDWORD lpdwTagId,
+                  LPCSTR lpDependencies, LPCSTR lpServiceStartName,
+                  LPCSTR lpPassword )
+{
+    LPWSTR lpServiceNameW, lpDisplayNameW, lpBinaryPathNameW,
+        lpLoadOrderGroupW, lpDependenciesW, lpServiceStartNameW, lpPasswordW;
+    SC_HANDLE r;
+
+    TRACE("%p %s %s\n", hSCManager,
+          debugstr_a(lpServiceName), debugstr_a(lpDisplayName));
+
+    lpServiceNameW = SERV_dup( lpServiceName );
+    lpDisplayNameW = SERV_dup( lpDisplayName );
+    lpBinaryPathNameW = SERV_dup( lpBinaryPathName );
+    lpLoadOrderGroupW = SERV_dup( lpLoadOrderGroup );
+    lpDependenciesW = SERV_dupmulti( lpDependencies );
+    lpServiceStartNameW = SERV_dup( lpServiceStartName );
+    lpPasswordW = SERV_dup( lpPassword );
+
+    r = CreateServiceW( hSCManager, lpServiceNameW, lpDisplayNameW,
+            dwDesiredAccess, dwServiceType, dwStartType, dwErrorControl,
+            lpBinaryPathNameW, lpLoadOrderGroupW, lpdwTagId,
+            lpDependenciesW, lpServiceStartNameW, lpPasswordW );
+
+    SERV_free( lpServiceNameW );
+    SERV_free( lpDisplayNameW );
+    SERV_free( lpBinaryPathNameW );
+    SERV_free( lpLoadOrderGroupW );
+    SERV_free( lpDependenciesW );
+    SERV_free( lpServiceStartNameW );
+    SERV_free( lpPasswordW );
+
+    return r;
 }
 
 
@@ -747,4 +811,168 @@ BOOL WINAPI QueryServiceStatusEx(SC_HANDLE hService, SC_STATUS_TYPE InfoLevel,
     FIXME("stub\n");
     SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
     return FALSE;
+}
+
+/******************************************************************************
+ * QueryServiceConfigA [ADVAPI32.@]
+ */
+BOOL WINAPI 
+QueryServiceConfigA( SC_HANDLE hService,
+                     LPQUERY_SERVICE_CONFIGA lpServiceConfig,
+                     DWORD cbBufSize, LPDWORD pcbBytesNeeded)
+{
+    FIXME("%p %p %ld %p\n", hService, lpServiceConfig,
+           cbBufSize, pcbBytesNeeded);
+    return FALSE;
+}
+
+/******************************************************************************
+ * QueryServiceConfigW [ADVAPI32.@]
+ */
+BOOL WINAPI 
+QueryServiceConfigW( SC_HANDLE hService,
+                     LPQUERY_SERVICE_CONFIGW lpServiceConfig,
+                     DWORD cbBufSize, LPDWORD pcbBytesNeeded)
+{
+    const WCHAR szDisplayName[] = {
+        'D','i','s','p','l','a','y','N','a','m','e', 0 };
+    const WCHAR szType[] = {'T','y','p','e',0};
+    const WCHAR szStart[] = {'S','t','a','r','t',0};
+    const WCHAR szError[] = {
+        'E','r','r','o','r','C','o','n','t','r','o','l', 0};
+    const WCHAR szImagePath[] = {'I','m','a','g','e','P','a','t','h',0};
+    const WCHAR szGroup[] = {'G','r','o','u','p',0};
+    const WCHAR szDependencies[] = { 
+        'D','e','p','e','n','d','e','n','c','i','e','s',0};
+    LONG r;
+    DWORD type, val, sz, total, n;
+    LPBYTE p;
+
+    TRACE("%p %p %ld %p\n", hService, lpServiceConfig,
+           cbBufSize, pcbBytesNeeded);
+
+    /* calculate the size required first */
+    total = sizeof (QUERY_SERVICE_CONFIGW);
+
+    sz = 0;
+    r = RegQueryValueExW( hService, szImagePath, 0, &type, NULL, &sz );
+    if( ( r == ERROR_SUCCESS ) && ( type == REG_SZ ) )
+        total += sz;
+
+    sz = 0;
+    r = RegQueryValueExW( hService, szGroup, 0, &type, NULL, &sz );
+    if( ( r == ERROR_SUCCESS ) && ( type == REG_SZ ) )
+        total += sz;
+
+    sz = 0;
+    r = RegQueryValueExW( hService, szDependencies, 0, &type, NULL, &sz );
+    if( ( r == ERROR_SUCCESS ) && ( type == REG_MULTI_SZ ) )
+        total += sz;
+
+    sz = 0;
+    r = RegQueryValueExW( hService, szStart, 0, &type, NULL, &sz );
+    if( ( r == ERROR_SUCCESS ) && ( type == REG_SZ ) )
+        total += sz;
+
+    sz = 0;
+    r = RegQueryValueExW( hService, szDisplayName, 0, &type, NULL, &sz );
+    if( ( r == ERROR_SUCCESS ) && ( type == REG_SZ ) )
+        total += sz;
+
+    /* if there's not enough memory, return an error */
+    if( total > *pcbBytesNeeded )
+    {
+        *pcbBytesNeeded = total;
+        SetLastError( ERROR_INSUFFICIENT_BUFFER );
+        return FALSE;
+    }
+
+    *pcbBytesNeeded = total;
+    ZeroMemory( lpServiceConfig, total );
+
+    sz = sizeof val;
+    r = RegQueryValueExW( hService, szType, 0, &type, (LPBYTE)&val, &sz );
+    if( ( r == ERROR_SUCCESS ) || ( type == REG_DWORD ) )
+        lpServiceConfig->dwServiceType = val;
+
+    sz = sizeof val;
+    r = RegQueryValueExW( hService, szStart, 0, &type, (LPBYTE)&val, &sz );
+    if( ( r == ERROR_SUCCESS ) || ( type == REG_DWORD ) )
+        lpServiceConfig->dwStartType = val;
+
+    sz = sizeof val;
+    r = RegQueryValueExW( hService, szError, 0, &type, (LPBYTE)&val, &sz );
+    if( ( r == ERROR_SUCCESS ) || ( type == REG_DWORD ) )
+        lpServiceConfig->dwErrorControl = val;
+
+    /* now do the strings */
+    p = (LPBYTE) &lpServiceConfig[1];
+    n = total - sizeof (QUERY_SERVICE_CONFIGW);
+
+    sz = n;
+    r = RegQueryValueExW( hService, szImagePath, 0, &type, p, &sz );
+    if( ( r == ERROR_SUCCESS ) || ( type == REG_SZ ) )
+    {
+        lpServiceConfig->lpBinaryPathName = (LPWSTR) p;
+        p += sz;
+        n -= sz;
+    }
+
+    sz = n;
+    r = RegQueryValueExW( hService, szGroup, 0, &type, p, &sz );
+    if( ( r == ERROR_SUCCESS ) || ( type == REG_SZ ) )
+    {
+        lpServiceConfig->lpLoadOrderGroup = (LPWSTR) p;
+        p += sz;
+        n -= sz;
+    }
+
+    sz = n;
+    r = RegQueryValueExW( hService, szDependencies, 0, &type, p, &sz );
+    if( ( r == ERROR_SUCCESS ) || ( type == REG_SZ ) )
+    {
+        lpServiceConfig->lpDependencies = (LPWSTR) p;
+        p += sz;
+        n -= sz;
+    }
+
+    if( n < 0 )
+        ERR("Buffer overflow!\n");
+
+    TRACE("Image path = %s\n", debugstr_w(lpServiceConfig->lpBinaryPathName) );
+    TRACE("Group      = %s\n", debugstr_w(lpServiceConfig->lpLoadOrderGroup) );
+
+    return TRUE;
+}
+
+/******************************************************************************
+ * ChangeServiceConfigW  [ADVAPI32.@]
+ */
+BOOL WINAPI ChangeServiceConfigW( SC_HANDLE hService, DWORD dwServiceType,
+  DWORD dwStartType, DWORD dwErrorControl, LPCWSTR lpBinaryPathName,
+  LPCWSTR lpLoadOrderGroup, LPDWORD lpdwTagId, LPCWSTR lpDependencies,
+  LPCWSTR lpServiceStartName, LPCWSTR lpPassword, LPCWSTR lpDisplayName)
+{
+    FIXME("%p %ld %ld %ld %s %s %p %p %s %s %s\n",
+          hService, dwServiceType, dwStartType, dwErrorControl, 
+          debugstr_w(lpBinaryPathName), debugstr_w(lpLoadOrderGroup),
+          lpdwTagId, lpDependencies, debugstr_w(lpServiceStartName),
+          debugstr_w(lpPassword), debugstr_w(lpDisplayName) );
+    return TRUE;
+}
+
+/******************************************************************************
+ * ChangeServiceConfigA  [ADVAPI32.@]
+ */
+BOOL WINAPI ChangeServiceConfigA( SC_HANDLE hService, DWORD dwServiceType,
+  DWORD dwStartType, DWORD dwErrorControl, LPCSTR lpBinaryPathName,
+  LPCSTR lpLoadOrderGroup, LPDWORD lpdwTagId, LPCSTR lpDependencies,
+  LPCSTR lpServiceStartName, LPCSTR lpPassword, LPCSTR lpDisplayName)
+{
+    FIXME("%p %ld %ld %ld %s %s %p %p %s %s %s\n",
+          hService, dwServiceType, dwStartType, dwErrorControl, 
+          debugstr_a(lpBinaryPathName), debugstr_a(lpLoadOrderGroup),
+          lpdwTagId, lpDependencies, debugstr_a(lpServiceStartName),
+          debugstr_a(lpPassword), debugstr_a(lpDisplayName) );
+    return TRUE;
 }

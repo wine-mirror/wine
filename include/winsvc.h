@@ -154,6 +154,30 @@ typedef struct _ENUM_SERVICE_STATUSW {
 DECL_WINELIB_TYPE_AW(ENUM_SERVICE_STATUS)
 DECL_WINELIB_TYPE_AW(LPENUM_SERVICE_STATUS)
 
+typedef struct _QUERY_SERVICE_CONFIGA {
+    DWORD   dwServiceType;
+    DWORD   dwStartType;
+    DWORD   dwErrorControl;
+    LPSTR   lpBinaryPathName;
+    LPSTR   lpLoadOrderGroup;
+    DWORD   dwTagId;
+    LPSTR   lpDependencies;
+    LPSTR   lpServiceStartName;
+    LPSTR   lpDisplayName;
+} QUERY_SERVICE_CONFIGA, *LPQUERY_SERVICE_CONFIGA;
+
+typedef struct _QUERY_SERVICE_CONFIGW {
+    DWORD   dwServiceType;
+    DWORD   dwStartType;
+    DWORD   dwErrorControl;
+    LPWSTR  lpBinaryPathName;
+    LPWSTR  lpLoadOrderGroup;
+    DWORD   dwTagId;
+    LPWSTR  lpDependencies;
+    LPWSTR  lpServiceStartName;
+    LPWSTR  lpDisplayName;
+} QUERY_SERVICE_CONFIGW, *LPQUERY_SERVICE_CONFIGW;
+
 /* Service control handler function prototype */
 
 typedef VOID (WINAPI *LPHANDLER_FUNCTION)(DWORD);
@@ -191,6 +215,10 @@ BOOL        WINAPI StartServiceCtrlDispatcherW(LPSERVICE_TABLE_ENTRYW);
 #define     StartServiceCtrlDispatcher WINELIB_NAME_AW(StartServiceCtrlDispatcher)
 BOOL        WINAPI QueryServiceStatus(SC_HANDLE,LPSERVICE_STATUS);
 BOOL        WINAPI QueryServiceStatusEx(SC_HANDLE,SC_STATUS_TYPE,LPBYTE,DWORD,LPDWORD);
+BOOL        WINAPI QueryServiceConfigA(SC_HANDLE,LPQUERY_SERVICE_CONFIGA,DWORD,LPDWORD);
+BOOL        WINAPI QueryServiceConfigW(SC_HANDLE,LPQUERY_SERVICE_CONFIGW,DWORD,LPDWORD);
+#define     QueryServiceConfig WINELIB_NAME_AW(QueryServiceConfig)
+
 #ifdef __cplusplus
 } /* extern "C" */
 #endif /* defined(__cplusplus) */
