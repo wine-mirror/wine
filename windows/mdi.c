@@ -32,7 +32,7 @@
 static HBITMAP16 hBmpClose   = 0;
 static HBITMAP16 hBmpRestore = 0;
 
-DWORD SCROLL_SetNCSbState(WND*,int,int,int,int,int,int);
+INT32 SCROLL_SetNCSbState(WND*,int,int,int,int,int,int);
 
 /* ----------------- declarations ----------------- */
 static void MDI_UpdateFrameText(WND *, HWND32, BOOL32, LPCSTR);
@@ -259,7 +259,7 @@ static LRESULT MDIRefreshMenu( HWND32 hwnd, HMENU32 hmenuFrame,
     TRACE(mdi, "%04x %04x %04x\n",
                 hwnd, hmenuFrame, hmenuWindow);
 
-    FIXME(mdi,"partial function stub\n");
+    FIXME(mdi,"partially function stub");
 
     return oldFrameMenu;
 }
@@ -1598,6 +1598,7 @@ BOOL16 WINAPI TranslateMDISysAccel16( HWND16 hwndClient, LPMSG16 msg )
  */
 void WINAPI CalcChildScroll( HWND16 hwnd, WORD scroll )
 {
+    SCROLLINFO info;
     RECT32 childRect, clientRect;
     INT32  vmin, vmax, hmin, hmax, vpos, hpos;
     WND *pWnd, *Wnd;
@@ -1617,9 +1618,6 @@ void WINAPI CalcChildScroll( HWND16 hwnd, WORD scroll )
     } 
     UnionRect32( &childRect, &clientRect, &childRect );
 
-    /* jump through the hoops to prevent excessive flashing 
-     */
-
     hmin = childRect.left; hmax = childRect.right - clientRect.right;
     hpos = clientRect.left - childRect.left;
     vmin = childRect.top; vmax = childRect.bottom - clientRect.bottom;
@@ -1630,14 +1628,14 @@ void WINAPI CalcChildScroll( HWND16 hwnd, WORD scroll )
 	case SB_HORZ:
 			vpos = hpos; vmin = hmin; vmax = hmax;
 	case SB_VERT:
-			SetScrollPos32(hwnd, scroll, vpos, FALSE);
-			SetScrollRange32(hwnd, scroll, vmin, vmax, TRUE);
+			info.cbSize = sizeof(info);
+			info.nMax = vmax; info.nMin = vmin; info.nPos = vpos;
+			info.fMask = SIF_POS | SIF_RANGE;
+			SetScrollInfo32(hwnd, scroll, &info, TRUE);
 			break;
 	case SB_BOTH:
 			SCROLL_SetNCSbState( Wnd, vmin, vmax, vpos,
 						  hmin, hmax, hpos);
-			SetWindowPos32(hwnd, 0, 0, 0, 0, 0, SWP_NOSIZE | SWP_NOMOVE
-                                       | SWP_NOACTIVATE | SWP_NOZORDER | SWP_FRAMECHANGED );
     }    
 }
 

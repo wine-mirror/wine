@@ -1559,9 +1559,9 @@ void NC_DoNCPaint( WND* wndPtr, HRGN32 clip, BOOL32 suppress_menupaint )
       /* Draw the scroll-bars */
 
     if (wndPtr->dwStyle & WS_VSCROLL)
-        SCROLL_DrawScrollBar( hwnd, hdc, SB_VERT, TRUE );
+        SCROLL_DrawScrollBar( hwnd, hdc, SB_VERT, TRUE, TRUE );
     if (wndPtr->dwStyle & WS_HSCROLL)
-        SCROLL_DrawScrollBar( hwnd, hdc, SB_HORZ, TRUE );
+        SCROLL_DrawScrollBar( hwnd, hdc, SB_HORZ, TRUE, TRUE );
 
       /* Draw the "size-box" */
 
@@ -1689,9 +1689,9 @@ void  NC_DoNCPaint95(
     /* Draw the scroll-bars */
 
     if (wndPtr->dwStyle & WS_VSCROLL)
-        SCROLL_DrawScrollBar( hwnd, hdc, SB_VERT, TRUE );
+        SCROLL_DrawScrollBar( hwnd, hdc, SB_VERT, TRUE, TRUE );
     if (wndPtr->dwStyle & WS_HSCROLL)
-        SCROLL_DrawScrollBar( hwnd, hdc, SB_HORZ, TRUE );
+        SCROLL_DrawScrollBar( hwnd, hdc, SB_HORZ, TRUE, TRUE );
 
     /* Draw the "size-box" */
     if ((wndPtr->dwStyle & WS_VSCROLL) && (wndPtr->dwStyle & WS_HSCROLL))
