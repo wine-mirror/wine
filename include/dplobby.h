@@ -424,6 +424,9 @@ ICOM_DEFINE(IDirectPlayLobby3,IDirectPlayLobby2)
 #define IDirectPlayLobby_UnregisterApplication(p,a,b)       ICOM_CALL2(UnregisterApplication,p,a,b)
 #define IDirectPlayLobby_WaitForConnectionSettings(p,a)     ICOM_CALL1(WaitForConnectionSettings,p,a)
 
+/* Used for WaitForConnectionSettings */
+#define DPLWAIT_CANCEL                  0x00000001
+
 #ifdef __cplusplus
 } /* extern "C" */
 #endif /* defined(__cplusplus) */

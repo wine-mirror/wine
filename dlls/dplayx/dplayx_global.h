@@ -4,17 +4,30 @@
 
 #include "dplay.h"
 
-void DPLAYX_ConstructData(void);
-void DPLAYX_DestructData(void);
+BOOL DPLAYX_ConstructData(void);
+BOOL DPLAYX_DestructData(void);
 
-HRESULT DPLAYX_GetConnectionSettingsA ( DWORD dwAppID, LPVOID lpData, LPDWORD lpdwDataSize );
-HRESULT DPLAYX_GetConnectionSettingsW ( DWORD dwAppID, LPVOID lpData, LPDWORD lpdwDataSize );
+HRESULT DPLAYX_GetConnectionSettingsA ( DWORD dwAppID, 
+                                        LPVOID lpData, 
+                                        LPDWORD lpdwDataSize,
+                                        LPBOOL  lpbSendHaveReadMessage );
+HRESULT DPLAYX_GetConnectionSettingsW ( DWORD dwAppID, 
+                                        LPVOID lpData,
+                                        LPDWORD lpdwDataSize, 
+                                        LPBOOL  lpbSendHaveReadMessage );
 
-HRESULT DPLAYX_SetConnectionSettingsA ( DWORD dwFlags, DWORD dwAppID, LPDPLCONNECTION lpConn );
-HRESULT DPLAYX_SetConnectionSettingsW ( DWORD dwFlags, DWORD dwAppID, LPDPLCONNECTION lpConn );
+HRESULT DPLAYX_SetConnectionSettingsA ( DWORD dwFlags, 
+                                        DWORD dwAppID, 
+                                        LPDPLCONNECTION lpConn );
+HRESULT DPLAYX_SetConnectionSettingsW ( DWORD dwFlags, 
+                                        DWORD dwAppID, 
+                                        LPDPLCONNECTION lpConn );
 
 BOOL DPLAYX_CreateLobbyApplication( DWORD dwAppID, HANDLE hReceiveEvent );
 BOOL DPLAYX_DestroyLobbyApplication( DWORD dwAppID );
+
+BOOL DPLAYX_WaitForConnectionSettings( BOOL bWait );
+BOOL DPLAYX_AnyLobbiesWaitingForConnSettings(void);
 
 LPDPSESSIONDESC2 DPLAYX_CopyAndAllocateLocalSession( UINT* index );
 BOOL DPLAYX_CopyLocalSession( UINT* index, LPDPSESSIONDESC2 lpsd );

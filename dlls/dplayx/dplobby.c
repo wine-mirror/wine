@@ -16,9 +16,19 @@
 #include "dplobby.h"
 #include "dpinit.h"
 #include "dplayx_global.h"
+#include "dplayx_messages.h"
 
 DEFAULT_DEBUG_CHANNEL(dplay)
 
+/*****************************************************************************
+ * Predeclare the interface implementation structures
+ */
+typedef struct IDirectPlayLobbyImpl  IDirectPlayLobbyAImpl;
+typedef struct IDirectPlayLobbyImpl  IDirectPlayLobbyWImpl;
+typedef struct IDirectPlayLobby2Impl IDirectPlayLobby2AImpl;
+typedef struct IDirectPlayLobby2Impl IDirectPlayLobby2WImpl;
+typedef struct IDirectPlayLobby3Impl IDirectPlayLobby3AImpl;
+typedef struct IDirectPlayLobby3Impl IDirectPlayLobby3WImpl;
 
 /* Forward declarations for this module helper methods */
 HRESULT DPL_CreateCompoundAddress ( LPCDPCOMPOUNDADDRESSELEMENT lpElements, DWORD dwElementCount,
@@ -32,16 +42,11 @@ HRESULT DPL_CreateAddress( REFGUID guidSP, REFGUID guidDataType, LPCVOID lpData,
 static HRESULT DPL_EnumAddress( LPDPENUMADDRESSCALLBACK lpEnumAddressCallback, LPCVOID lpAddress,
                                 DWORD dwAddressSize, LPVOID lpContext );
 
+static HRESULT WINAPI DPL_ConnectEx( IDirectPlayLobbyAImpl* This, 
+                                     DWORD dwFlags, REFIID riid, 
+                                     LPVOID* lplpDP, IUnknown* pUnk );
 
-/*****************************************************************************
- * Predeclare the interface implementation structures
- */
-typedef struct IDirectPlayLobbyImpl  IDirectPlayLobbyAImpl;
-typedef struct IDirectPlayLobbyImpl  IDirectPlayLobbyWImpl;
-typedef struct IDirectPlayLobby2Impl IDirectPlayLobby2AImpl;
-typedef struct IDirectPlayLobby2Impl IDirectPlayLobby2WImpl;
-typedef struct IDirectPlayLobby3Impl IDirectPlayLobby3AImpl;
-typedef struct IDirectPlayLobby3Impl IDirectPlayLobby3WImpl;
+
 
 /*****************************************************************************
  * IDirectPlayLobby {1,2,3} implementation structure
@@ -65,7 +70,7 @@ typedef struct tagDirectPlayLobbyIUnknownData
 
 typedef struct tagDirectPlayLobbyData
 {
-  HKEY hkCallbackKeyHack;
+  HKEY  hkCallbackKeyHack;
 } DirectPlayLobbyData;
 
 typedef struct tagDirectPlayLobby2Data
@@ -565,11 +570,7 @@ static ULONG WINAPI IDirectPlayLobbyImpl_AddRef
   ULONG refCount;
   ICOM_THIS(IDirectPlayLobbyWImpl,iface);
 
-  EnterCriticalSection( &This->unk->DPL_lock );
-  {
-    refCount = ++(This->unk->ref);
-  }
-  LeaveCriticalSection( &This->unk->DPL_lock );
+  refCount = InterlockedIncrement( &This->unk->ref );
 
   TRACE("ref count incremented to %lu for %p\n", refCount, This );
 
@@ -585,14 +586,9 @@ static ULONG WINAPI IDirectPlayLobbyAImpl_Release
 ( LPDIRECTPLAYLOBBYA iface )
 {
   ULONG refCount;
-
   ICOM_THIS(IDirectPlayLobbyAImpl,iface);
 
-  EnterCriticalSection( &This->unk->DPL_lock );
-  {
-    refCount = --(This->unk->ref);
-  }
-  LeaveCriticalSection( &This->unk->DPL_lock );
+  refCount = InterlockedDecrement( &This->unk->ref );
 
   TRACE("ref count decremeneted to %lu for %p\n", refCount, This );
 
@@ -618,20 +614,19 @@ static ULONG WINAPI IDirectPlayLobbyAImpl_Release
  * Returns a IDirectPlay interface.
  *
  */
-static HRESULT WINAPI IDirectPlayLobbyAImpl_Connect
-( LPDIRECTPLAYLOBBYA iface,
-  DWORD dwFlags,
-  LPDIRECTPLAY2A* lplpDP,
+static HRESULT WINAPI DPL_ConnectEx
+( IDirectPlayLobbyAImpl* This, 
+  DWORD     dwFlags,
+  REFIID    riid, 
+  LPVOID*   lplpDP,
   IUnknown* pUnk)
 {
-  ICOM_THIS(IDirectPlayLobbyAImpl,iface);
+  HRESULT         hr;
+  DWORD           dwOpenFlags = 0;
+  DWORD           dwConnSize = 0;
+  LPDPLCONNECTION lpConn;
 
-  LPDIRECTPLAY2A      lpDirectPlay2A;
-  /* LPDIRECTPLAY3A      lpDirectPlay3A; */
-  /* LPDIRECTPLAYLOBBY2A lpDirectPlayLobby2A; */
-  HRESULT             rc;
-
-  FIXME("(%p)->(0x%08lx,%p,%p): stub\n", This, dwFlags, lplpDP, pUnk );
+  FIXME("(%p)->(0x%08lx,%p,%p): semi stub\n", This, dwFlags, lplpDP, pUnk );
 
   if( dwFlags || pUnk )
   {
@@ -639,27 +634,66 @@ static HRESULT WINAPI IDirectPlayLobbyAImpl_Connect
   }
 
   /* Create the DirectPlay interface */
-  if( ( rc = directPlay_QueryInterface( &IID_IDirectPlay2A, (LPVOID*)lplpDP ) ) != DP_OK )
+  if( ( hr = directPlay_QueryInterface( riid, lplpDP ) ) != DP_OK )
   {
-     ERR("error creating Direct Play 2A interface. Return Code = 0x%lx.\n", rc );
-     return rc;
+     ERR( "error creating interface for %s:%s.\n", 
+          debugstr_guid( riid ), DPLAYX_HresultToString( hr ) );
+     return hr;
   }
-
-  lpDirectPlay2A = *lplpDP;
 
   /* - Need to call IDirectPlay::EnumConnections with the service provider to get that good information
    * - Need to call CreateAddress to create the lpConnection param for IDirectPlay::InitializeConnection
    * - Call IDirectPlay::InitializeConnection
    * - Call IDirectPlay::Open 
    */
-#if 0
-  IDirectPlayLobby_EnumAddress( iface, RunApplicationA_Callback, 
-                                lpConn->lpAddress, lpConn->dwAddressSize, NULL );
-#endif
 
+  /* FIXME: Is it safe/correct to use appID of 0? */
+  hr = IDirectPlayLobby_GetConnectionSettings( (LPDIRECTPLAYLOBBY)This, 
+                                               0, NULL, &dwConnSize ); 
+  if( hr != DPERR_BUFFERTOOSMALL )
+  {
+    return hr;
+  }
+ 
+  lpConn = HeapAlloc( GetProcessHeap(), HEAP_ZERO_MEMORY, dwConnSize );
 
-  return DP_OK;
+  if( lpConn == NULL )
+  {
+    return DPERR_NOMEMORY;
+  }
 
+  /* FIXME: Is it safe/correct to use appID of 0? */
+  hr = IDirectPlayLobby_GetConnectionSettings( (LPDIRECTPLAYLOBBY)This, 
+                                               0, lpConn, &dwConnSize );
+  if( FAILED( hr ) )
+  {
+    return hr;
+  }
+
+  /* Setup flags to pass into DirectPlay::Open */
+  if( dwFlags & DPCONNECT_RETURNSTATUS )
+  {
+    dwOpenFlags |= DPOPEN_RETURNSTATUS;
+  }
+  dwOpenFlags |= lpConn->dwFlags;
+
+  hr = IDirectPlayX_Open( (*(LPDIRECTPLAY2*)lplpDP), lpConn->lpSessionDesc, 
+                          dwOpenFlags );
+
+  HeapFree( GetProcessHeap(), 0, lpConn );
+
+  return hr;
+}
+
+static HRESULT WINAPI IDirectPlayLobbyAImpl_Connect
+( LPDIRECTPLAYLOBBYA iface,
+  DWORD dwFlags,
+  LPDIRECTPLAY2A* lplpDP,
+  IUnknown* pUnk)
+{
+  ICOM_THIS(IDirectPlayLobbyAImpl,iface);
+  return DPL_ConnectEx( This, dwFlags, &IID_IDirectPlay2A, 
+                        (LPVOID)lplpDP, pUnk );
 }
 
 static HRESULT WINAPI IDirectPlayLobbyWImpl_Connect
@@ -668,29 +702,9 @@ static HRESULT WINAPI IDirectPlayLobbyWImpl_Connect
   LPDIRECTPLAY2* lplpDP,
   IUnknown* pUnk)
 {
-  ICOM_THIS(IDirectPlayLobbyWImpl,iface);
-  LPDIRECTPLAY2* directPlay2W;
-  HRESULT        createRC;
-
-  FIXME("(%p)->(0x%08lx,%p,%p): stub\n", This, dwFlags, lplpDP, pUnk );
-
-  if( dwFlags || pUnk )
-  {
-     return DPERR_INVALIDPARAMS;
-  }
-
-  /* Create the DirectPlay interface */
-  if( ( createRC = directPlay_QueryInterface( &IID_IDirectPlay2, (LPVOID*)lplpDP ) ) != DP_OK )
-  {
-     ERR("error creating Direct Play 2W interface. Return Code = 0x%lx.\n", createRC );
-     return createRC;
-  } 
-
-  /* This should invoke IDirectPlay3::InitializeConnection IDirectPlay3::Open */  
-  directPlay2W = lplpDP; 
- 
-  return DP_OK;
-
+  ICOM_THIS(IDirectPlayLobbyAImpl,iface); /* Yes cast to A */
+  return DPL_ConnectEx( This, dwFlags, &IID_IDirectPlay2, 
+                        (LPVOID)lplpDP, pUnk );
 }
 
 /********************************************************************
@@ -1099,14 +1113,24 @@ static HRESULT WINAPI IDirectPlayLobbyAImpl_GetConnectionSettings
 {
   ICOM_THIS(IDirectPlayLobbyAImpl,iface);
   HRESULT hr; 
+  BOOL    bSendHaveReadSettingsMessage = FALSE;
 
   TRACE("(%p)->(0x%08lx,%p,%p)\n", This, dwAppID, lpData, lpdwDataSize );
 
   EnterCriticalSection( &This->unk->DPL_lock );
 
-  hr = DPLAYX_GetConnectionSettingsA( dwAppID, lpData, lpdwDataSize );
+  hr = DPLAYX_GetConnectionSettingsA( dwAppID, 
+                                      lpData, 
+                                      lpdwDataSize,
+                                      &bSendHaveReadSettingsMessage
+                                    );
 
   LeaveCriticalSection( &This->unk->DPL_lock );
+
+  if( bSendHaveReadSettingsMessage )
+  {
+    FIXME( "Send a DPSYS_CONNECTIONSETTINGSREAD message\n" );
+  }
 
   return hr;
 }
@@ -1119,14 +1143,24 @@ static HRESULT WINAPI IDirectPlayLobbyWImpl_GetConnectionSettings
 {
   ICOM_THIS(IDirectPlayLobbyWImpl,iface);
   HRESULT hr;
+  BOOL    bSendHaveReadSettingsMessage = FALSE;
 
   TRACE("(%p)->(0x%08lx,%p,%p)\n", This, dwAppID, lpData, lpdwDataSize );
  
   EnterCriticalSection( &This->unk->DPL_lock );
 
-  hr = DPLAYX_GetConnectionSettingsW( dwAppID, lpData, lpdwDataSize );
+  hr = DPLAYX_GetConnectionSettingsW( dwAppID, 
+                                      lpData, 
+                                      lpdwDataSize,
+                                      &bSendHaveReadSettingsMessage
+                                    );
 
   LeaveCriticalSection( &This->unk->DPL_lock );
+
+  if( bSendHaveReadSettingsMessage )
+  {
+    FIXME( "Send a DPSYS_CONNECTIONSETTINGSREAD message\n" );
+  }
 
   return hr;
 }
@@ -1274,12 +1308,18 @@ static HRESULT WINAPI IDirectPlayLobbyAImpl_RunApplication
   STARTUPINFOA startupInfo;
   PROCESS_INFORMATION newProcessInfo;
   LPSTR appName;
+  DWORD dwSuspendCount;
 
   TRACE( "(%p)->(0x%08lx,%p,%p,%x)\n", This, dwFlags, lpdwAppID, lpConn, hReceiveEvent );
 
   if( dwFlags != 0 )
   {
     return DPERR_INVALIDPARAMS;
+  }
+
+  if( DPLAYX_AnyLobbiesWaitingForConnSettings() )
+  {
+    FIXME( "Waiting lobby not being handled correctly\n" );
   }
 
   EnterCriticalSection( &This->unk->DPL_lock );
@@ -1326,7 +1366,7 @@ static HRESULT WINAPI IDirectPlayLobbyAImpl_RunApplication
                      )
     )
   {
-    FIXME( "Failed to create process for app %s\n", appName );
+    ERR( "Failed to create process for app %s\n", appName );
 
     HeapFree( GetProcessHeap(), 0, appName );
     HeapFree( GetProcessHeap(), 0, enumData.lpszCommandLine );
@@ -1342,24 +1382,34 @@ static HRESULT WINAPI IDirectPlayLobbyAImpl_RunApplication
   /* Reserve this global application id! */
   if( !DPLAYX_CreateLobbyApplication( newProcessInfo.dwProcessId, hReceiveEvent ) )
   {
-    ERR( "Unable to create global application data\n" );
+    ERR( "Unable to create global application data for 0x%08lx\n",
+           newProcessInfo.dwProcessId );
   }
 
   hr = IDirectPlayLobby_SetConnectionSettings( iface, 0, newProcessInfo.dwProcessId, lpConn );
  
   if( hr != DP_OK )
   {
-    FIXME( "SetConnectionSettings failure %s\n", DPLAYX_HresultToString( hr ) );
+    ERR( "SetConnectionSettings failure %s\n", DPLAYX_HresultToString( hr ) );
     return hr;
   }
 
   /* Everything seems to have been set correctly, update the dwAppID */
   *lpdwAppID = newProcessInfo.dwProcessId;
 
-  /* Unsuspend the process */ 
-  ResumeThread( newProcessInfo.dwThreadId );
+  if( hReceiveEvent )
+  {
+    FIXME( "Need to store msg thread id\n" );
+    CreateMessageReceptionThread( hReceiveEvent );
+  } 
 
   LeaveCriticalSection( &This->unk->DPL_lock );
+
+  /* Unsuspend the process - should return the prev suspension count */ 
+  if( ( dwSuspendCount = ResumeThread( newProcessInfo.hThread ) ) != 1 )
+  {
+    ERR( "ResumeThread failed with 0x%08lx\n", dwSuspendCount );
+  }
 
   return DP_OK;
 }
@@ -1425,6 +1475,17 @@ static HRESULT WINAPI IDirectPlayLobbyWImpl_SetConnectionSettings
 
   hr = DPLAYX_SetConnectionSettingsW( dwFlags, dwAppID, lpConn );
 
+  /* FIXME: Don't think that this is supposed to fail, but the docuementation
+            is somewhat sketchy. I'll try creating a lobby application
+            for this... */
+  if( hr == DPERR_NOTLOBBIED )
+  {
+    FIXME( "Unlobbied app setting connections. Is this correct behavior?\n" );
+    dwAppID = GetCurrentProcessId();
+    DPLAYX_CreateLobbyApplication( dwAppID, 0 );
+    hr = DPLAYX_SetConnectionSettingsW( dwFlags, dwAppID, lpConn );
+  }
+
   LeaveCriticalSection( &This->unk->DPL_lock );
 
   return hr;
@@ -1444,6 +1505,17 @@ static HRESULT WINAPI IDirectPlayLobbyAImpl_SetConnectionSettings
   EnterCriticalSection( &This->unk->DPL_lock );
 
   hr = DPLAYX_SetConnectionSettingsA( dwFlags, dwAppID, lpConn );
+
+  /* FIXME: Don't think that this is supposed to fail, but the docuementation
+            is somewhat sketchy. I'll try creating a lobby application
+            for this... */
+  if( hr == DPERR_NOTLOBBIED )
+  {
+    FIXME( "Unlobbied app setting connections. Is this correct behavior?\n" );
+    dwAppID = GetCurrentProcessId();
+    DPLAYX_CreateLobbyApplication( dwAppID, 0 );
+    hr = DPLAYX_SetConnectionSettingsA( dwFlags, dwAppID, lpConn );
+  }
 
   LeaveCriticalSection( &This->unk->DPL_lock );
 
@@ -1477,12 +1549,6 @@ static HRESULT WINAPI IDirectPlayLobbyWImpl_SetLobbyMessageEvent
 
 
 /* DPL 2 methods */
-
-/********************************************************************
- *
- * Registers an event that will be set when a lobby message is received.
- *
- */
 static HRESULT WINAPI IDirectPlayLobby2WImpl_CreateCompoundAddress
 ( LPDIRECTPLAYLOBBY2 iface,
   LPCDPCOMPOUNDADDRESSELEMENT lpElements,
@@ -1680,17 +1746,19 @@ HRESULT DPL_CreateCompoundAddress
 /* DPL 3 methods */
 
 static HRESULT WINAPI IDirectPlayLobby3WImpl_ConnectEx
-( LPDIRECTPLAYLOBBY3 iface, DWORD dwFlags, REFIID riid, LPVOID* lplpDP, IUnknown* pUnk )
+( LPDIRECTPLAYLOBBY3 iface, DWORD dwFlags, REFIID riid, 
+  LPVOID* lplpDP, IUnknown* pUnk )
 {
-  FIXME(":stub\n");
-  return DP_OK;
+  ICOM_THIS( IDirectPlayLobbyAImpl, iface );
+  return DPL_ConnectEx( This, dwFlags, riid, lplpDP, pUnk );
 }
 
 static HRESULT WINAPI IDirectPlayLobby3AImpl_ConnectEx
-( LPDIRECTPLAYLOBBY3A iface, DWORD dwFlags, REFIID riid, LPVOID* lplpDP, IUnknown* pUnk )
+( LPDIRECTPLAYLOBBY3A iface, DWORD dwFlags, REFIID riid, 
+  LPVOID* lplpDP, IUnknown* pUnk )
 {
-  FIXME(":stub\n");
-  return DP_OK;
+  ICOM_THIS( IDirectPlayLobbyAImpl, iface );
+  return DPL_ConnectEx( This, dwFlags, riid, lplpDP, pUnk );
 }
 
 static HRESULT WINAPI IDirectPlayLobby3WImpl_RegisterApplication
@@ -1724,15 +1792,35 @@ static HRESULT WINAPI IDirectPlayLobby3AImpl_UnregisterApplication
 static HRESULT WINAPI IDirectPlayLobby3WImpl_WaitForConnectionSettings
 ( LPDIRECTPLAYLOBBY3 iface, DWORD dwFlags )
 {
-  FIXME(":stub\n");
-  return DP_OK;
+  HRESULT hr         = DP_OK;
+  BOOL    bStartWait = (dwFlags & DPLWAIT_CANCEL) ? FALSE : TRUE;
+
+  TRACE( "(%p)->(0x%08lx)\n", iface, dwFlags );
+
+  if( DPLAYX_WaitForConnectionSettings( bStartWait ) )
+  {
+    /* FIXME: What is the correct error return code? */
+    hr = DPERR_NOTLOBBIED; 
+  }
+
+  return hr;
 }
 
 static HRESULT WINAPI IDirectPlayLobby3AImpl_WaitForConnectionSettings
 ( LPDIRECTPLAYLOBBY3A iface, DWORD dwFlags )
 {
-  FIXME(":stub\n");
-  return DP_OK;
+  HRESULT hr         = DP_OK;
+  BOOL    bStartWait = (dwFlags & DPLWAIT_CANCEL) ? FALSE : TRUE;
+
+  TRACE( "(%p)->(0x%08lx)\n", iface, dwFlags );
+
+  if( DPLAYX_WaitForConnectionSettings( bStartWait ) )
+  {
+    /* FIXME: What is the correct error return code? */
+    hr = DPERR_NOTLOBBIED;
+  }
+
+  return hr;
 }
 
 

@@ -9,20 +9,40 @@ reasonably thourough description of what's going on.
 Associated DirectX user header files are include/dplay.h, include/dplobby.h.
 
 Implementation of the DPLAY and DPLAYX dlls are both in the dlls/dplayx
-directory.
+directory. Here's a brief description of the function of each of the files in that
+directory:
 
 dplay.c: Implementation of all the direct play object interfaces.
+
 dplobby.c: Implementation of all the direct play lobby interfaces.
+
 dpclassfactory.c: Implementation of the COM class factory which can create either
                   direct play lobby or direct play lobby interfaces.
+
+dpinit.h: Header file so that dpclassfactory.c can access dplay and dplobby query 
+          functions. Shouldn't be included by anything else.
+
+dplayx_global.h,
 dplayx_global.c: Implementation of all things which are associated with dplay on
                  the computer - ie shared resources and such. Methods in this
-                 compilation unit should not call anything out side this unit.
+                 compilation unit should not call anything out side this unit
+                 excepting base windows services and an interface to start the
+                 messaging thread.
+
+name_server.h,
 name_server.c: Implementation of all things which are associated with the name
                server functionality
+
 dplayx_main.c: LibMain executed for loading and unloading the dll. This will make
                the call to dplayx_global.c to request initialization and destruction
                of any global data.
+
+dplayx_queue.h: Linked list implementation for dplay/dplobby. Based off of the BSD
+                version found in <sys/queue.h>
+
+dplayx_messages.h,
+dplayx_messages.c: Messaging interface required for both DirectPlay and 
+                   DirectPlayLobby.
 
 Presently the architectural relationship between this files is a little shakey, but
 isn't so sufficiently bad that it needs fixing yet.
@@ -31,6 +51,12 @@ I think I can safely say that any application which requires direct play
 or direct play lobby will not work at this point. Priority will be to get
 examples from the sdk running. Once they're at least partially working, I can
 get down to trying to get some of the games working.
+
+However, now that address separation is a reality, all binary samples provided 
+in the sdk can be used. I have had success spawning processes and one
+directx7 example will allow creation of an app and allow another to join it.
+Unfortunately, there isn't much for it to be able to do give the state of
+inter lobby messaging.
 
 A small issue will be the fact that DirectX 6.1(ie. DirectPlay4) introduces a layer of functionality
 inside the DP objects which provide guaranteed protocol delivery. This is
@@ -59,7 +85,7 @@ TODO:
   - (done) Fix wine dplay.h and dplobby.h header files to allow apps to create the ansi versions
   - (started) Port some WineLib test programs using sdk programs (both C and C++ progs)  
   - (done) Implement a lib main for the dplayx dll (required for RunApplication, etc.)
-  - Figure out how to share the global memory correctly
+  - (done)Figure out how to share the global memory correctly
   - Ensure that all dll stubs are present and the ordinals are correct
   - (started) Implementation of functionality
   - Addition of DirectX 7.0 functionality for direct play (try to catch that moving train)
@@ -75,6 +101,19 @@ TODO:
   - Handles need to be correctly reference counted
   - Need to check if we need to deallocate any list objects when destroying 
     dplay interface
+  - RunApplication process spawning needs to have correct syncronization.
+  - Need to get inter lobby messages working.
+
+ENHANCEMENTS:
+  - Improve footprint and realtime blocking by setting up a seperate data share
+    between lobby application and client since there can be multiple apps per 
+    client.
+  - Handle everything in UNICODE (as server does) and do conversions for ANSI 
+    interfaces. Should cut down on dplayx code base and maintanability (marginally)
+    and could be used to improve efficiency of dialog with the server (it wouldn't
+    have to do ANSI<->UNICODE transformations).
+
+
 
 Programs to make work:
   - lserver.exe (from sdk)
@@ -91,8 +130,7 @@ Next API to implement on a per SDK program basis:
   - ?
 
   dplaunch.exe
-  - IDirectPlayLobbyAImpl_RunApplication
-    (need address space separation or else rebuild all sdk examples)
+  - Just needs final process startup messages to be exchanged correctly!
 
   lserver.exe
   - IDirectPlayLobby2WImpl_Connect 

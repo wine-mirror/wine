@@ -6,12 +6,14 @@ MODULE    = dplayx
 SOVERSION = 1.0
 IMPORTS   = ole32
 
-C_SRCS = dplay.c \
-         dplobby.c \
-         dpclassfactory.c \
-         dplayx_main.c \
-         dplayx_global.c \
-         name_server.c
+C_SRCS = \
+	dpclassfactory.c \
+	dplay.c \
+	dplayx_global.c \
+	dplayx_main.c \
+	dplayx_messages.c \
+	dplobby.c \
+	name_server.c
 
 @MAKE_DLL_RULES@
 

@@ -1,7 +1,7 @@
 /* 
  * DPLAYX.DLL LibMain
  *
- * Copyright 1999 - Peter Hunnisett 
+ * Copyright 1999,2000 - Peter Hunnisett 
  *
  * contact <hunnise@nortelnetworks.com>
  */
@@ -17,21 +17,18 @@ static DWORD DPLAYX_dwProcessesAttached = 0;
 BOOL WINAPI DPLAYX_LibMain( HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved )
 {
 
-  TRACE( "(%p,0x%08lx,%p) & 0x%08lx\n", hinstDLL, fdwReason, lpvReserved, DPLAYX_dwProcessesAttached );
+  TRACE( "(%u,0x%08lx,%p) & 0x%08lx\n", hinstDLL, fdwReason, lpvReserved, DPLAYX_dwProcessesAttached );
 
   switch ( fdwReason ) 
   {
     case DLL_PROCESS_ATTACH:
     {
 
-      if ( DPLAYX_dwProcessesAttached == 0 )
+      if ( DPLAYX_dwProcessesAttached++ == 0 )
       {
         /* First instance perform construction of global processor data */ 
-        TRACE( "DPLAYX_dwProcessesAttached = 0x%08lx\n", DPLAYX_dwProcessesAttached );
-        DPLAYX_ConstructData();
+        return DPLAYX_ConstructData();
       } 
-
-      DPLAYX_dwProcessesAttached++;
 
       break;
     }
@@ -39,12 +36,10 @@ BOOL WINAPI DPLAYX_LibMain( HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReser
     case DLL_PROCESS_DETACH:
     {
 
-      DPLAYX_dwProcessesAttached--;
-     
-      if ( DPLAYX_dwProcessesAttached == 0 )
+      if ( --DPLAYX_dwProcessesAttached == 0 )
       {
-        /* Last instance perform destruction of global processor data */
-        DPLAYX_DestructData(); 
+        /* Last instance performs destruction of global processor data */
+        return DPLAYX_DestructData(); 
       }
  
       break;

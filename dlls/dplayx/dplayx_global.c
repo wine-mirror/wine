@@ -14,54 +14,167 @@
 #include "debugtools.h"
 #include "winbase.h"
 #include "winerror.h"
-#include "heap.h"  /* Really shouldn't be using those HEAP_strdupA interfaces should I? */
 
 #include "dplayx_global.h"
+#include "dplayx_messages.h" /* For CreateMessageReceptionThread only */
 
 DEFAULT_DEBUG_CHANNEL(dplay);
 
 /* FIXME: Need to do all that fun other dll referencing type of stuff */
-/* FIXME: Need to allocate a giant static area */
 
 /* Static data for all processes */
-static LPSTR lpszDplayxSemaName = "WINE_DPLAYX_SM";
+static LPCSTR lpszDplayxSemaName = "WINE_DPLAYX_SM";
 static HANDLE hDplayxSema;
 
+static LPCSTR lpszDplayxFileMapping = "WINE_DPLAYX_FM";
+static HANDLE hDplayxSharedMem;
+
+static LPVOID lpSharedStaticData = NULL;
 
 
-#define DPLAYX_AquireSemaphore()  TRACE( "Waiting for DPLAYX sema\n" ); \
-                                  WaitForSingleObject( hDplayxSema, INFINITE ); TRACE( "Through wait\n" )
+#define DPLAYX_AquireSemaphore()  TRACE( "Waiting for DPLAYX semaphore\n" ); \
+                                  WaitForSingleObject( hDplayxSema, INFINITE );\
+                                  TRACE( "Through wait\n" )
+
 #define DPLAYX_ReleaseSemaphore() ReleaseSemaphore( hDplayxSema, 1, NULL ); \
-                                  TRACE( "DPLAYX Sema released\n" ); /* FIXME: Is this correct? */
+                                  TRACE( "DPLAYX Semaphore released\n" ) /* FIXME: Is this correct? */
 
 
 /* HACK for simple global data right now */ 
-enum { numSupportedLobbies = 32, numSupportedSessions = 32 };
-typedef struct tagDirectPlayLobbyData
+#define dwStaticSharedSize (128 * 1024) /* FIXME: Way too much */
+#define dwDynamicSharedSize (128 * 1024) /* FIXME: Enough? */
+#define dwTotalSharedSize  (dwStaticSharedSize + dwDynamicSharedSize)
+
+
+/* FIXME: Is there no easier way? */
+
+/* Pretend the entire dynamic area is carved up into 512 byte blocks.
+ * Each block has 4 bytes which are 0 unless used */
+#define dwBlockSize 512
+#define dwMaxBlock  (dwDynamicSharedSize/dwBlockSize)
+DWORD dwBlockOn  = 0;
+
+typedef struct 
 {
-  /* Just a DPLCONNECTION struct */
-  DWORD           dwConnFlags;
-  DPSESSIONDESC2  sessionDesc;
-  DPNAME          playerName;
-  GUID            guidSP;
-  LPVOID          lpAddress;
-  DWORD           dwAddressSize;
+  DWORD used;
+  DWORD data[dwBlockSize-sizeof(DWORD)];
+} DPLAYX_MEM_SLICE;
+
+DPLAYX_MEM_SLICE* lpMemArea;
+
+void DPLAYX_PrivHeapFree( LPVOID addr );
+void DPLAYX_PrivHeapFree( LPVOID addr )
+{
+  LPVOID lpAddrStart;
+  DWORD dwBlockUsed;
+
+  /* Handle getting passed a NULL */
+  if( addr == NULL )
+  {
+    return;
+  } 
+
+  lpAddrStart = addr - sizeof(DWORD); /* Find block header */
+  dwBlockUsed =  ((BYTE*)lpAddrStart - (BYTE*)lpMemArea)/dwBlockSize;
+  
+  lpMemArea[ dwBlockUsed ].used = 0;
+}
+
+LPVOID DPLAYX_PrivHeapAlloc( DWORD flags, DWORD size );
+LPVOID DPLAYX_PrivHeapAlloc( DWORD flags, DWORD size )
+{
+  LPVOID lpvArea = NULL;
+  UINT   uBlockUsed;
+
+  if( size > (dwBlockSize - sizeof(DWORD)) )
+  {
+    FIXME( "Size exceeded. Request of 0x%08lx\n", size );
+    size = dwBlockSize - sizeof(DWORD);
+  } 
+
+  /* Find blank area */
+  uBlockUsed = 0; 
+  while( ( lpMemArea[ uBlockUsed ].used != 0 ) && ( uBlockUsed <= dwMaxBlock ) ) { uBlockUsed++; } 
+
+  if( uBlockUsed <= dwMaxBlock )
+  {
+    /* Set the area used */
+    lpMemArea[ uBlockUsed ].used = 1;
+    lpvArea = &(lpMemArea[ uBlockUsed ].data);
+  }
+  else
+  {
+    ERR( "No free block found\n" );
+    return NULL;
+  }
+  
+  if( flags & HEAP_ZERO_MEMORY )
+  {
+    ZeroMemory( lpvArea, size );
+  }
+
+  return lpvArea;
+}
+
+LPSTR DPLAYX_strdupA( DWORD flags, LPCSTR str );
+LPSTR DPLAYX_strdupA( DWORD flags, LPCSTR str )
+{
+  LPSTR p = DPLAYX_PrivHeapAlloc( flags, strlen(str) + 1 );
+  if(p) {
+    strcpy( p, str );
+  }
+  return p;
+}
+
+LPWSTR DPLAYX_strdupW( DWORD flags, LPCWSTR str );
+LPWSTR DPLAYX_strdupW( DWORD flags, LPCWSTR str )
+{                   
+  INT len = lstrlenW(str) + 1;
+  LPWSTR p = DPLAYX_PrivHeapAlloc( flags, len * sizeof(WCHAR) );
+  if(p) {
+    lstrcpyW( p, str );
+  }
+  return p;
+}
+
+
+enum { numSupportedLobbies = 32, numSupportedSessions = 32 };
+typedef struct tagDPLAYX_LOBBYDATA
+{
+  /* Points to lpConn + block of contiguous extra memory for dynamic parts
+   * of the struct directly following 
+   */
+  LPDPLCONNECTION lpConn;
 
   /* Information for dplobby interfaces */
   DWORD           dwAppID;
   HANDLE          hReceiveEvent;
   DWORD           dwAppLaunchedFromID;
 
-} DirectPlayLobbyData, *lpDirectPlayLobbyData;
+  /* Should this lobby app send messages to creator at important life
+   * stages
+   */
+  BOOL bInformOnConnect;     /* FIXME: Not used yet */
+  BOOL bInformOnSettingRead;
+  BOOL bInformOnAppDeath;    /* FIXME: Not used yet */
 
-static DirectPlayLobbyData lobbyData[ numSupportedLobbies ];
+  BOOL bWaitForConnectionSettings;
 
-/* Hack for now */
-static DPSESSIONDESC2 sessionData[ numSupportedSessions ];
+} DPLAYX_LOBBYDATA, *LPDPLAYX_LOBBYDATA;
+
+static DPLAYX_LOBBYDATA* lobbyData = NULL;
+/* static DPLAYX_LOBBYDATA lobbyData[ numSupportedLobbies ]; */
+
+static DPSESSIONDESC2* sessionData = NULL; 
+/* static DPSESSIONDESC2* sessionData[ numSupportedSessions ]; */
 
 /* Function prototypes */
-BOOL  DPLAYX_IsAppIdLobbied( DWORD dwAppId, lpDirectPlayLobbyData* dplData );
-void DPLAYX_InitializeLobbyDataEntry( lpDirectPlayLobbyData lpData );
+DWORD DPLAYX_SizeOfLobbyDataA( LPDPLCONNECTION lpDplData );
+DWORD DPLAYX_SizeOfLobbyDataW( LPDPLCONNECTION lpDplData );
+void DPLAYX_CopyConnStructA( LPDPLCONNECTION dest, LPDPLCONNECTION src );
+void DPLAYX_CopyConnStructW( LPDPLCONNECTION dest, LPDPLCONNECTION src );
+BOOL DPLAYX_IsAppIdLobbied( DWORD dwAppId, LPDPLAYX_LOBBYDATA* dplData );
+void DPLAYX_InitializeLobbyDataEntry( LPDPLAYX_LOBBYDATA lpData );
 BOOL DPLAYX_CopyIntoSessionDesc2A( LPDPSESSIONDESC2  lpSessionDest,
                                    LPCDPSESSIONDESC2 lpSessionSrc );
 
@@ -71,51 +184,153 @@ BOOL DPLAYX_CopyIntoSessionDesc2A( LPDPSESSIONDESC2  lpSessionDest,
  * Called to initialize the global data. This will only be used on the 
  * loading of the dll 
  ***************************************************************************/ 
-void DPLAYX_ConstructData(void)
+BOOL DPLAYX_ConstructData(void)
 {
-  UINT i;
+  SECURITY_ATTRIBUTES s_attrib;
+  BOOL                bInitializeSharedMemory = FALSE;
+  LPVOID              lpDesiredMemoryMapStart = (LPVOID)0x50000000;
 
   TRACE( "DPLAYX dll loaded - construct called\n" );
 
-  /* Create a semahopre to block access to DPLAYX global data structs 
-     It starts unblocked, and allows up to 65000 users blocked on it. Seems reasonable
-     for the time being */
-  hDplayxSema = CreateSemaphoreA( NULL, 1, 65000, lpszDplayxSemaName ); 
+  /* Create a semaphore to block access to DPLAYX global data structs */
 
-  if( !hDplayxSema )
+  s_attrib.bInheritHandle       = TRUE;
+  s_attrib.lpSecurityDescriptor = NULL;
+  s_attrib.nLength              = sizeof(s_attrib);
+
+  hDplayxSema = CreateSemaphoreA( &s_attrib, 1, 1, lpszDplayxSemaName ); 
+
+  /* First instance creates the semaphore. Others just use it */
+  if( GetLastError() == ERROR_SUCCESS )
   {
-    /* Really don't have any choice but to continue... */
-    ERR( "Semaphore creation error 0x%08lx\n", GetLastError() );
+    TRACE( "Semaphore %u created\n", hDplayxSema );
+
+    /* The semaphore creator will also build the shared memory */
+    bInitializeSharedMemory = TRUE;
+  }
+  else if ( GetLastError() == ERROR_ALREADY_EXISTS )
+  {
+    TRACE( "Found semaphore handle %u\n", hDplayxSema );
+  }
+  else
+  {
+    ERR( ": semaphore error 0x%08lx\n", GetLastError() );
+    return FALSE;
   }
 
-  /* Set all lobbies to be "empty" */ 
-  for( i=0; i < numSupportedLobbies; i++ )
+  SetLastError( ERROR_SUCCESS );
+
+  DPLAYX_AquireSemaphore();
+ 
+  hDplayxSharedMem = CreateFileMappingA( INVALID_HANDLE_VALUE,
+                                         &s_attrib,
+                                         PAGE_READWRITE | SEC_COMMIT,
+                                         0, 
+                                         dwTotalSharedSize,
+                                         lpszDplayxFileMapping ); 
+
+  if( GetLastError() == ERROR_SUCCESS )
   {
-    DPLAYX_InitializeLobbyDataEntry( &lobbyData[ i ] );
+    TRACE( "File mapped %u created\n", hDplayxSharedMem );
+  }
+  else if ( GetLastError() == ERROR_ALREADY_EXISTS )
+  {
+    TRACE( "Found FileMapping handle %u\n", hDplayxSharedMem );
+  }
+  else
+  {
+    ERR( ": unable to create shared memory 0x%08lx\n", GetLastError() );
+    return FALSE;
   }
 
-  /* Set all sessions to be "empty" */
-  for( i=0; i < numSupportedSessions; i++ )
+  lpSharedStaticData = MapViewOfFileEx( hDplayxSharedMem, 
+                                        FILE_MAP_WRITE, 
+                                        0, 0, 0, lpDesiredMemoryMapStart );
+
+  if( lpSharedStaticData == NULL )
   {
-    sessionData[i].dwSize = 0;
+    ERR( ": unable to map static data into process memory space: 0x%08lx\n", 
+         GetLastError() );
+    return FALSE;
+  }
+  else
+  {
+    if( lpDesiredMemoryMapStart == lpSharedStaticData )
+    {
+      TRACE( "File mapped to %p\n", lpSharedStaticData );
+    }
+    else
+    {
+      /* Presently the shared data structures use pointers. If the
+       * files are no mapped into the same area, the pointers will no
+       * longer make any sense :(
+       * FIXME: In the future make the shared data structures have some
+       *        sort of fixup to make them independent between data spaces.
+       *        This will also require a rework of the session data stuff.
+       */
+      ERR( "File mapped to %p (not %p). Expect failure\n",
+            lpSharedStaticData, lpDesiredMemoryMapStart );
+    }
   }
 
+  /* Dynamic area starts just after the static area */
+  lpMemArea = (LPVOID)((BYTE*)lpSharedStaticData + dwStaticSharedSize);
+
+  /* FIXME: Crude hack */
+  lobbyData   = (DPLAYX_LOBBYDATA*)lpSharedStaticData;
+  sessionData = (DPSESSIONDESC2*)((BYTE*)lpSharedStaticData + (dwStaticSharedSize/2));
+
+  /* Initialize shared data segments. */
+  if( bInitializeSharedMemory )
+  {
+    UINT i;
+
+    TRACE( "Initializing shared memory\n" );
+
+    /* Set all lobbies to be "empty" */ 
+    for( i=0; i < numSupportedLobbies; i++ )
+    {
+      DPLAYX_InitializeLobbyDataEntry( &lobbyData[ i ] );
+    }
+
+    /* Set all sessions to be "empty" */
+    for( i=0; i < numSupportedSessions; i++ )
+    {
+      sessionData[i].dwSize = 0;
+    }
+
+    /* Zero out the dynmaic area */
+    ZeroMemory( lpMemArea, dwDynamicSharedSize );
+
+    /* Just for fun sync the whole data area */
+    FlushViewOfFile( lpSharedStaticData, dwTotalSharedSize );
+  }
+  
+  DPLAYX_ReleaseSemaphore();
+
+  return TRUE;
 }
 
 /*************************************************************************** 
  * Called to destroy all global data. This will only be used on the 
  * unloading of the dll 
  ***************************************************************************/ 
-void DPLAYX_DestructData(void)
+BOOL DPLAYX_DestructData(void)
 {
   TRACE( "DPLAYX dll unloaded - destruct called\n" );
 
-  /* delete the semaphore */
+  /* Delete the semaphore */
   CloseHandle( hDplayxSema );
+ 
+  /* Delete shared memory file mapping */
+  UnmapViewOfFile( lpSharedStaticData );
+  CloseHandle( hDplayxSharedMem );
+
+  return FALSE;
 }
 
 
-void DPLAYX_InitializeLobbyDataEntry( lpDirectPlayLobbyData lpData )
+void DPLAYX_InitializeLobbyDataEntry( LPDPLAYX_LOBBYDATA lpData )
 {
   ZeroMemory( lpData, sizeof( *lpData ) );
 
@@ -127,9 +342,9 @@ void DPLAYX_InitializeLobbyDataEntry( lpDirectPlayLobbyData lpData )
  * TRUE/FALSE with a pointer to it's data returned. Pointer data is
  * is only valid if TRUE is returned.
  */
-BOOL  DPLAYX_IsAppIdLobbied( DWORD dwAppID, lpDirectPlayLobbyData* lplpDplData )
+BOOL DPLAYX_IsAppIdLobbied( DWORD dwAppID, LPDPLAYX_LOBBYDATA* lplpDplData )
 {
-  INT i;
+  UINT i;
 
   *lplpDplData = NULL;
 
@@ -144,6 +359,7 @@ BOOL  DPLAYX_IsAppIdLobbied( DWORD dwAppID, lpDirectPlayLobbyData* lplpDplData )
     if( lobbyData[ i ].dwAppID == dwAppID )
     {
       /* This process is lobbied */ 
+      TRACE( "Found 0x%08lx @ %u\n", dwAppID, i );
       *lplpDplData = &lobbyData[ i ];
       return TRUE;
     }
@@ -171,14 +387,23 @@ BOOL DPLAYX_CreateLobbyApplication( DWORD dwAppID, HANDLE hReceiveEvent )
     if( lobbyData[ i ].dwAppID == 0 )
     {
       /* This process is now lobbied */
-      lobbyData[ i ].dwAppID             = dwAppID;
-      lobbyData[ i ].hReceiveEvent       = hReceiveEvent;
-      lobbyData[ i ].dwAppLaunchedFromID = GetCurrentProcessId();
+      TRACE( "Setting lobbyData[%u] for (0x%08lx,%u,0x%08lx)\n",
+              i, dwAppID, hReceiveEvent, GetCurrentProcessId() );
+
+      lobbyData[ i ].dwAppID              = dwAppID;
+      lobbyData[ i ].hReceiveEvent        = hReceiveEvent;
+      lobbyData[ i ].dwAppLaunchedFromID  = GetCurrentProcessId();
+
+      lobbyData[ i ].bInformOnConnect     = TRUE;
+      lobbyData[ i ].bInformOnSettingRead = TRUE;
+      lobbyData[ i ].bInformOnAppDeath    = TRUE;
 
       DPLAYX_ReleaseSemaphore();
       return TRUE;
     }
   }
+
+  ERR( "No empty lobbies\n" );
 
   DPLAYX_ReleaseSemaphore();
   return FALSE;
@@ -196,7 +421,9 @@ BOOL DPLAYX_DestroyLobbyApplication( DWORD dwAppID )
   {
     if( lobbyData[ i ].dwAppID == dwAppID )
     {
+      /* FIXME: Should free up anything unused. Tisk tisk :0 */
       /* Mark this entry unused */
+      TRACE( "Marking lobbyData[%u] unused\n", i );
       DPLAYX_InitializeLobbyDataEntry( &lobbyData[ i ] );
 
       DPLAYX_ReleaseSemaphore();
@@ -212,20 +439,11 @@ BOOL DPLAYX_DestroyLobbyApplication( DWORD dwAppID )
 HRESULT DPLAYX_GetConnectionSettingsA
 ( DWORD dwAppID,
   LPVOID lpData,
-  LPDWORD lpdwDataSize )
+  LPDWORD lpdwDataSize,
+  LPBOOL  lpbSendHaveReadMessage )
 {
-  lpDirectPlayLobbyData lpDplData;
-  LPDPLCONNECTION lpDplConnection;
-
-  /* Verify buffer size */
-  if ( ( lpData == NULL ) ||
-       ( *lpdwDataSize < sizeof( DPLCONNECTION ) )
-     )
-  {
-    *lpdwDataSize = sizeof( DPLCONNECTION );
-
-    return DPERR_BUFFERTOOSMALL;
-  }
+  LPDPLAYX_LOBBYDATA lpDplData;
+  DWORD              dwRequiredDataSize = 0;
 
   DPLAYX_AquireSemaphore();
 
@@ -237,80 +455,109 @@ HRESULT DPLAYX_GetConnectionSettingsA
     return DPERR_NOTLOBBIED;
   }
 
-  /* Copy the information */
-  lpDplConnection = (LPDPLCONNECTION)lpData;
+  dwRequiredDataSize = DPLAYX_SizeOfLobbyDataA( lpDplData->lpConn );
 
-  /* Copy everything we've got into here */
-  /* Need to actually store the stuff here. Check if we've already allocated each field first. */
-  lpDplConnection->dwSize = sizeof( DPLCONNECTION );
-  lpDplConnection->dwFlags = lpDplData->dwConnFlags;
-
-  /* Copy LPDPSESSIONDESC2 struct */
-  lpDplConnection->lpSessionDesc = HeapAlloc( GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof( lpDplData->sessionDesc ) );
-  memcpy( lpDplConnection->lpSessionDesc, &lpDplData->sessionDesc, sizeof( lpDplData->sessionDesc ) );
-
-  if( lpDplData->sessionDesc.sess.lpszSessionNameA )
+  /* Do they want to know the required buffer size or is the provided buffer
+   * big enough? 
+   */
+  if ( ( lpData == NULL ) ||
+       ( *lpdwDataSize < dwRequiredDataSize )
+     )
   {
-    lpDplConnection->lpSessionDesc->sess.lpszSessionNameA =
-      HEAP_strdupA( GetProcessHeap(), HEAP_ZERO_MEMORY, lpDplData->sessionDesc.sess.lpszSessionNameA );
+    DPLAYX_ReleaseSemaphore();
+
+    *lpdwDataSize = DPLAYX_SizeOfLobbyDataA( lpDplData->lpConn );
+
+    return DPERR_BUFFERTOOSMALL;
   }
 
-  if( lpDplData->sessionDesc.pass.lpszPasswordA )
-  {
-    lpDplConnection->lpSessionDesc->pass.lpszPasswordA =
-      HEAP_strdupA( GetProcessHeap(), HEAP_ZERO_MEMORY, lpDplData->sessionDesc.pass.lpszPasswordA );
-  }
+  /* They have gotten the information */
+  *lpbSendHaveReadMessage = lpDplData->bInformOnSettingRead;
+  lpDplData->bInformOnSettingRead = FALSE;
 
-  lpDplConnection->lpSessionDesc->dwReserved1 = lpDplData->sessionDesc.dwReserved1;
-  lpDplConnection->lpSessionDesc->dwReserved2 = lpDplData->sessionDesc.dwReserved2;
-
-  /* Copy DPNAME struct - seems to be optional - check for existance first */
-  lpDplConnection->lpPlayerName = HeapAlloc( GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof( lpDplData->playerName ) );
-  memcpy( lpDplConnection->lpPlayerName, &(lpDplData->playerName), sizeof( lpDplData->playerName ) );
-
-  if( lpDplData->playerName.psn.lpszShortNameA )
-  {
-    lpDplConnection->lpPlayerName->psn.lpszShortNameA =
-      HEAP_strdupA( GetProcessHeap(), HEAP_ZERO_MEMORY, lpDplData->playerName.psn.lpszShortNameA );
-  }
-
-  if( lpDplData->playerName.pln.lpszLongNameA )
-  {
-    lpDplConnection->lpPlayerName->pln.lpszLongNameA =
-      HEAP_strdupA( GetProcessHeap(), HEAP_ZERO_MEMORY, lpDplData->playerName.pln.lpszLongNameA );
-  }
-
-  memcpy( &lpDplConnection->guidSP, &lpDplData->guidSP, sizeof( lpDplData->guidSP ) );
-
-  lpDplConnection->lpAddress = HeapAlloc( GetProcessHeap(), HEAP_ZERO_MEMORY, lpDplData->dwAddressSize );
-  memcpy( lpDplConnection->lpAddress, lpDplData->lpAddress, lpDplData->dwAddressSize );
-
-  lpDplConnection->dwAddressSize = lpDplData->dwAddressSize;
-
-  /* FIXME: Send a message - or only the first time? */
+  DPLAYX_CopyConnStructA( (LPDPLCONNECTION)lpData, lpDplData->lpConn );
 
   DPLAYX_ReleaseSemaphore();
 
   return DP_OK;
 }
 
+/* Assumption: Enough contiguous space was allocated at dest */
+void DPLAYX_CopyConnStructA( LPDPLCONNECTION dest, LPDPLCONNECTION src )
+{
+  BYTE*              lpStartOfFreeSpace;
+
+  memcpy( dest, src, sizeof( DPLCONNECTION ) );
+
+  lpStartOfFreeSpace = ((BYTE*)dest) + sizeof( DPLCONNECTION );
+
+  /* Copy the LPDPSESSIONDESC2 structure if it exists */
+  if( src->lpSessionDesc )
+  {
+    dest->lpSessionDesc = (LPDPSESSIONDESC2)lpStartOfFreeSpace;
+    lpStartOfFreeSpace += sizeof( DPSESSIONDESC2 );
+    memcpy( dest->lpSessionDesc, src->lpSessionDesc, sizeof( DPSESSIONDESC2 ) );
+
+    /* Session names may or may not exist */
+    if( src->lpSessionDesc->sess.lpszSessionNameA )
+    {
+      lstrcpyA( (LPSTR)lpStartOfFreeSpace, src->lpSessionDesc->sess.lpszSessionNameA );
+      dest->lpSessionDesc->sess.lpszSessionNameA = (LPSTR)lpStartOfFreeSpace;
+      lpStartOfFreeSpace +=  
+        lstrlenA( (LPSTR)dest->lpSessionDesc->sess.lpszSessionName ) + 1;
+    }
+
+    if( src->lpSessionDesc->pass.lpszPasswordA )
+    {
+      lstrcpyA( (LPSTR)lpStartOfFreeSpace, src->lpSessionDesc->pass.lpszPasswordA );
+      dest->lpSessionDesc->pass.lpszPasswordA = (LPSTR)lpStartOfFreeSpace;
+      lpStartOfFreeSpace += 
+        lstrlenA( (LPSTR)dest->lpSessionDesc->pass.lpszPasswordA ) + 1;
+    }
+  }
+
+  /* DPNAME structure is optional */
+  if( src->lpPlayerName )
+  {
+    dest->lpPlayerName = (LPDPNAME)lpStartOfFreeSpace;
+    lpStartOfFreeSpace += sizeof( DPNAME );
+    memcpy( dest->lpPlayerName, src->lpPlayerName, sizeof( DPNAME ) );
+
+    if( src->lpPlayerName->psn.lpszShortNameA )
+    {
+      lstrcpyA( (LPSTR)lpStartOfFreeSpace, src->lpPlayerName->psn.lpszShortNameA );
+      dest->lpPlayerName->psn.lpszShortNameA = (LPSTR)lpStartOfFreeSpace;
+      lpStartOfFreeSpace +=  
+        lstrlenA( (LPSTR)dest->lpPlayerName->psn.lpszShortNameA ) + 1;
+    }
+
+    if( src->lpPlayerName->pln.lpszLongNameA )
+    {
+      lstrcpyA( (LPSTR)lpStartOfFreeSpace, src->lpPlayerName->pln.lpszLongNameA );
+      dest->lpPlayerName->pln.lpszLongNameA = (LPSTR)lpStartOfFreeSpace;
+      lpStartOfFreeSpace +=  
+        lstrlenA( (LPSTR)dest->lpPlayerName->pln.lpszLongName ) + 1 ;
+    }
+
+  }
+
+  /* Copy address if it exists */
+  if( src->lpAddress )
+  {
+    dest->lpAddress = (LPVOID)lpStartOfFreeSpace;
+    memcpy( lpStartOfFreeSpace, src->lpAddress, src->dwAddressSize );
+    /* No need to advance lpStartOfFreeSpace as there is no more "dynamic" data */
+  }
+}
+
 HRESULT DPLAYX_GetConnectionSettingsW
 ( DWORD dwAppID,
   LPVOID lpData,
-  LPDWORD lpdwDataSize )
+  LPDWORD lpdwDataSize,
+  LPBOOL  lpbSendHaveReadMessage )
 {
-  lpDirectPlayLobbyData lpDplData;
-  LPDPLCONNECTION lpDplConnection;
-
-  /* Verify buffer size */
-  if ( ( lpData == NULL ) ||
-       ( *lpdwDataSize < sizeof( DPLCONNECTION ) )
-     )
-  {
-    *lpdwDataSize = sizeof( DPLCONNECTION );
-
-    return DPERR_BUFFERTOOSMALL;
-  }
+  LPDPLAYX_LOBBYDATA lpDplData;
+  DWORD              dwRequiredDataSize = 0;
 
   DPLAYX_AquireSemaphore();
 
@@ -320,70 +567,112 @@ HRESULT DPLAYX_GetConnectionSettingsW
     return DPERR_NOTLOBBIED;
   }
 
-  /* Copy the information */
-  lpDplConnection = (LPDPLCONNECTION)lpData;
+  dwRequiredDataSize = DPLAYX_SizeOfLobbyDataW( lpDplData->lpConn );
 
-  /* Copy everything we've got into here */
-  /* Need to actually store the stuff here. Check if we've already allocated each field first. */
-  lpDplConnection->dwSize = sizeof( DPLCONNECTION );
-  lpDplConnection->dwFlags = lpDplData->dwConnFlags;
-
-  /* Copy LPDPSESSIONDESC2 struct */
-  lpDplConnection->lpSessionDesc = HeapAlloc( GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof( lpDplData->sessionDesc ) );
-  memcpy( lpDplConnection->lpSessionDesc, &lpDplData->sessionDesc, sizeof( lpDplData->sessionDesc ) );
-
-  if( lpDplData->sessionDesc.sess.lpszSessionName )
+  /* Do they want to know the required buffer size or is the provided buffer
+   * big enough? 
+   */
+  if ( ( lpData == NULL ) ||
+       ( *lpdwDataSize < dwRequiredDataSize )
+     )
   {
-    lpDplConnection->lpSessionDesc->sess.lpszSessionName =
-      HEAP_strdupW( GetProcessHeap(), HEAP_ZERO_MEMORY, lpDplData->sessionDesc.sess.lpszSessionName );
+    DPLAYX_ReleaseSemaphore();
+
+    *lpdwDataSize = DPLAYX_SizeOfLobbyDataW( lpDplData->lpConn );
+
+    return DPERR_BUFFERTOOSMALL;
   }
 
-  if( lpDplData->sessionDesc.pass.lpszPassword )
-  {
-    lpDplConnection->lpSessionDesc->pass.lpszPassword =
-      HEAP_strdupW( GetProcessHeap(), HEAP_ZERO_MEMORY, lpDplData->sessionDesc.pass.lpszPassword );
-  }
+  /* They have gotten the information */
+  *lpbSendHaveReadMessage = lpDplData->bInformOnSettingRead;
+  lpDplData->bInformOnSettingRead = FALSE;
 
-  lpDplConnection->lpSessionDesc->dwReserved1 = lpDplData->sessionDesc.dwReserved1;
-  lpDplConnection->lpSessionDesc->dwReserved2 = lpDplData->sessionDesc.dwReserved2;
-
-  /* Copy DPNAME struct - seems to be optional - check for existance first */
-  lpDplConnection->lpPlayerName = HeapAlloc( GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof( lpDplData->playerName ) );
-  memcpy( lpDplConnection->lpPlayerName, &(lpDplData->playerName), sizeof( lpDplData->playerName ) );
-
-  if( lpDplData->playerName.psn.lpszShortName )
-  {
-    lpDplConnection->lpPlayerName->psn.lpszShortName =
-      HEAP_strdupW( GetProcessHeap(), HEAP_ZERO_MEMORY, lpDplData->playerName.psn.lpszShortName );
-  }
-
-  if( lpDplData->playerName.pln.lpszLongName )
-  {
-    lpDplConnection->lpPlayerName->pln.lpszLongName =
-      HEAP_strdupW( GetProcessHeap(), HEAP_ZERO_MEMORY, lpDplData->playerName.pln.lpszLongName );
-  }
-
-  memcpy( &lpDplConnection->guidSP, &lpDplData->guidSP, sizeof( lpDplData->guidSP ) );
-
-  lpDplConnection->lpAddress = HeapAlloc( GetProcessHeap(), HEAP_ZERO_MEMORY, lpDplData->dwAddressSize );
-  memcpy( lpDplConnection->lpAddress, lpDplData->lpAddress, lpDplData->dwAddressSize );
-
-  lpDplConnection->dwAddressSize = lpDplData->dwAddressSize;
-
-  /* FIXME: Send a message - or only the first time? */
+  DPLAYX_CopyConnStructW( (LPDPLCONNECTION)lpData, lpDplData->lpConn );
 
   DPLAYX_ReleaseSemaphore();
 
   return DP_OK;
 }
 
+/* Assumption: Enough contiguous space was allocated at dest */
+void DPLAYX_CopyConnStructW( LPDPLCONNECTION dest, LPDPLCONNECTION src )
+{
+  BYTE*              lpStartOfFreeSpace;
 
+  memcpy( dest, src, sizeof( DPLCONNECTION ) );
+
+  lpStartOfFreeSpace = ( (BYTE*)dest) + sizeof( DPLCONNECTION );
+
+  /* Copy the LPDPSESSIONDESC2 structure if it exists */
+  if( src->lpSessionDesc )
+  {
+    dest->lpSessionDesc = (LPDPSESSIONDESC2)lpStartOfFreeSpace;
+    lpStartOfFreeSpace += sizeof( DPSESSIONDESC2 );
+    memcpy( dest->lpSessionDesc, src->lpSessionDesc, sizeof( DPSESSIONDESC2 ) ); 
+
+    /* Session names may or may not exist */
+    if( src->lpSessionDesc->sess.lpszSessionName )
+    {
+      lstrcpyW( (LPWSTR)lpStartOfFreeSpace, dest->lpSessionDesc->sess.lpszSessionName );
+      src->lpSessionDesc->sess.lpszSessionName = (LPWSTR)lpStartOfFreeSpace;
+      lpStartOfFreeSpace +=  sizeof(WCHAR) *
+        ( lstrlenW( (LPWSTR)dest->lpSessionDesc->sess.lpszSessionName ) + 1 );
+    }
+
+    if( src->lpSessionDesc->pass.lpszPassword )
+    {
+      lstrcpyW( (LPWSTR)lpStartOfFreeSpace, src->lpSessionDesc->pass.lpszPassword );
+      dest->lpSessionDesc->pass.lpszPassword = (LPWSTR)lpStartOfFreeSpace;
+      lpStartOfFreeSpace +=  sizeof(WCHAR) *
+        ( lstrlenW( (LPWSTR)dest->lpSessionDesc->pass.lpszPassword ) + 1 );
+    }
+  }
+
+  /* DPNAME structure is optional */
+  if( src->lpPlayerName )
+  {
+    dest->lpPlayerName = (LPDPNAME)lpStartOfFreeSpace;
+    lpStartOfFreeSpace += sizeof( DPNAME );
+    memcpy( dest->lpPlayerName, src->lpPlayerName, sizeof( DPNAME ) );
+   
+    if( src->lpPlayerName->psn.lpszShortName )
+    {
+      lstrcpyW( (LPWSTR)lpStartOfFreeSpace, src->lpPlayerName->psn.lpszShortName );
+      dest->lpPlayerName->psn.lpszShortName = (LPWSTR)lpStartOfFreeSpace;
+      lpStartOfFreeSpace +=  sizeof(WCHAR) *
+        ( lstrlenW( (LPWSTR)dest->lpPlayerName->psn.lpszShortName ) + 1 );
+    }
+
+    if( src->lpPlayerName->pln.lpszLongName )
+    {
+      lstrcpyW( (LPWSTR)lpStartOfFreeSpace, src->lpPlayerName->pln.lpszLongName );
+      dest->lpPlayerName->pln.lpszLongName = (LPWSTR)lpStartOfFreeSpace;
+      lpStartOfFreeSpace +=  sizeof(WCHAR) *
+        ( lstrlenW( (LPWSTR)dest->lpPlayerName->pln.lpszLongName ) + 1 );
+    }
+
+  }
+
+  /* Copy address if it exists */
+  if( src->lpAddress )
+  {
+    dest->lpAddress = (LPVOID)lpStartOfFreeSpace;
+    memcpy( lpStartOfFreeSpace, src->lpAddress, src->dwAddressSize );  
+    /* No need to advance lpStartOfFreeSpace as there is no more "dynamic" data */
+  }
+
+}
+
+/* Store the structure into the shared data structre. Ensure that allocs for
+ * variable length strings come from the shared data structure.
+ * FIXME: We need to free information as well 
+ */
 HRESULT DPLAYX_SetConnectionSettingsA
 ( DWORD dwFlags,
   DWORD dwAppID,
   LPDPLCONNECTION lpConn )
 {
-  lpDirectPlayLobbyData lpDplData;
+  LPDPLAYX_LOBBYDATA lpDplData;
 
   /* Paramater check */
   if( dwFlags || !lpConn )
@@ -401,35 +690,15 @@ HRESULT DPLAYX_SetConnectionSettingsA
     return DPERR_INVALIDPARAMS;
   }
 
-  if( dwAppID == 0 )
-  {
-    dwAppID = GetCurrentProcessId();
-  }
-
   DPLAYX_AquireSemaphore();
 
   if ( ! DPLAYX_IsAppIdLobbied( dwAppID, &lpDplData ) )
   {
-    /* FIXME: Create a new entry for this dwAppID? */
     DPLAYX_ReleaseSemaphore();
 
-    return DPERR_GENERIC;
+    return DPERR_NOTLOBBIED;
   }
 
-  /* Store information */
-  if(  lpConn->dwSize != sizeof(DPLCONNECTION) )
-  {
-    DPLAYX_ReleaseSemaphore();
-
-    ERR(": old/new DPLCONNECTION type? Size=%lu vs. expected=%u bytes\n",
-         lpConn->dwSize, sizeof( DPLCONNECTION ) );
-
-    return DPERR_INVALIDPARAMS;
-  }
-
-  /* Need to investigate the lpConn->lpSessionDesc to figure out
-   * what type of session we need to join/create.
-   */
   if(  (!lpConn->lpSessionDesc ) ||
        ( lpConn->lpSessionDesc->dwSize != sizeof( DPSESSIONDESC2 ) )
     )
@@ -442,61 +711,32 @@ HRESULT DPLAYX_SetConnectionSettingsA
     return DPERR_INVALIDPARAMS;
   }
 
-  /* FIXME: How do I store this stuff so that it can be read by all processes? Static area? What about strings? Ewww...large global shared */ 
+  /* Free the existing memory */
+  DPLAYX_PrivHeapFree( lpDplData->lpConn );
 
-  /* Need to actually store the stuff here. Check if we've already allocated each field first. */
-  lpDplData->dwConnFlags = lpConn->dwFlags;
+  lpDplData->lpConn = DPLAYX_PrivHeapAlloc( HEAP_ZERO_MEMORY, 
+                                            DPLAYX_SizeOfLobbyDataA( lpConn ) );
 
-  /* Copy LPDPSESSIONDESC2 struct - this is required */
-  memcpy( &lpDplData->sessionDesc, lpConn->lpSessionDesc, sizeof( *(lpConn->lpSessionDesc) ) );
+  DPLAYX_CopyConnStructA( lpDplData->lpConn, lpConn );
 
-  /* FIXME: Can this just be shorted? Does it handle the NULL case correctly? */
-  if( lpConn->lpSessionDesc->sess.lpszSessionNameA )
-    lpDplData->sessionDesc.sess.lpszSessionNameA = HEAP_strdupA( GetProcessHeap(), HEAP_ZERO_MEMORY, lpConn->lpSessionDesc->sess.lpszSessionNameA );
-  else
-    lpDplData->sessionDesc.sess.lpszSessionNameA = NULL;
-
-  if( lpConn->lpSessionDesc->pass.lpszPasswordA )
-    lpDplData->sessionDesc.pass.lpszPasswordA = HEAP_strdupA( GetProcessHeap(), HEAP_ZERO_MEMORY, lpConn->lpSessionDesc->pass.lpszPasswordA );
-  else
-    lpDplData->sessionDesc.pass.lpszPasswordA = NULL;
-
-  lpDplData->sessionDesc.dwReserved1 = lpConn->lpSessionDesc->dwReserved1;
-  lpDplData->sessionDesc.dwReserved2 = lpConn->lpSessionDesc->dwReserved2;
-
-  /* Copy DPNAME struct - seems to be optional - check for existance first */
-  if( lpConn->lpPlayerName )
-  {
-     memcpy( &lpDplData->playerName, lpConn->lpPlayerName, sizeof( *lpConn->lpPlayerName ) );
-
-     if( lpConn->lpPlayerName->psn.lpszShortNameA )
-       lpDplData->playerName.psn.lpszShortNameA = HEAP_strdupA( GetProcessHeap(), HEAP_ZERO_MEMORY, lpConn->lpPlayerName->psn.lpszShortNameA );
-
-     if( lpConn->lpPlayerName->pln.lpszLongNameA )
-       lpDplData->playerName.pln.lpszLongNameA = HEAP_strdupA( GetProcessHeap(), HEAP_ZERO_MEMORY, lpConn->lpPlayerName->pln.lpszLongNameA );
-
-  }
-
-  memcpy( &lpDplData->guidSP, &lpConn->guidSP, sizeof( lpConn->guidSP ) );
-
-  lpDplData->lpAddress = HeapAlloc( GetProcessHeap(), HEAP_ZERO_MEMORY, lpConn->dwAddressSize );
-  memcpy( lpDplData->lpAddress, lpConn->lpAddress, lpConn->dwAddressSize );
-
-  lpDplData->dwAddressSize = lpConn->dwAddressSize;
-
-  /* FIXME: Send a message - I think */
 
   DPLAYX_ReleaseSemaphore();
+
+  /* FIXME: Send a message - I think */
 
   return DP_OK;
 }
 
+/* Store the structure into the shared data structre. Ensure that allocs for
+ * variable length strings come from the shared data structure.
+ * FIXME: We need to free information as well 
+ */
 HRESULT DPLAYX_SetConnectionSettingsW
 ( DWORD dwFlags,
   DWORD dwAppID,
   LPDPLCONNECTION lpConn )
 {
-  lpDirectPlayLobbyData lpDplData;
+  LPDPLAYX_LOBBYDATA lpDplData;
 
   /* Paramater check */
   if( dwFlags || !lpConn )
@@ -514,88 +754,135 @@ HRESULT DPLAYX_SetConnectionSettingsW
     return DPERR_INVALIDPARAMS;
   }
 
-  if( dwAppID == 0 )
-  {
-    dwAppID = GetCurrentProcessId();
-  }
-
   DPLAYX_AquireSemaphore();
 
   if ( ! DPLAYX_IsAppIdLobbied( dwAppID, &lpDplData ) )
   {
     DPLAYX_ReleaseSemaphore();
+
     return DPERR_NOTLOBBIED;
   }
 
-  /* Need to investigate the lpConn->lpSessionDesc to figure out
-   * what type of session we need to join/create.
-   */
-  if(  (!lpConn->lpSessionDesc ) ||
-       ( lpConn->lpSessionDesc->dwSize != sizeof( DPSESSIONDESC2 ) )
-    )
-  {
-    DPLAYX_ReleaseSemaphore();
+  /* Free the existing memory */
+  DPLAYX_PrivHeapFree( lpDplData->lpConn );
 
-    ERR("DPSESSIONDESC passed in? Size=%lu vs. expected=%u bytes\n",
-         lpConn->lpSessionDesc->dwSize, sizeof( DPSESSIONDESC2 ) );
+  lpDplData->lpConn = DPLAYX_PrivHeapAlloc( HEAP_ZERO_MEMORY,
+                                            DPLAYX_SizeOfLobbyDataW( lpConn ) );
 
-    return DPERR_INVALIDPARAMS;
-  }
+  DPLAYX_CopyConnStructW( lpDplData->lpConn, lpConn );
 
-  /* FIXME: How do I store this stuff so that it can be read by all processes? Static area? What about strings? Ewww...large global shared */ 
-
-  /* Need to actually store the stuff here. Check if we've already allocated each field first. */
-  lpDplData->dwConnFlags = lpConn->dwFlags;
-
-  /* Copy LPDPSESSIONDESC2 struct - this is required */
-  memcpy( &lpDplData->sessionDesc, lpConn->lpSessionDesc, sizeof( *(lpConn->lpSessionDesc) ) );
-
-  /* FIXME: Can this just be shorted? Does it handle the NULL case correctly? */
-  if( lpConn->lpSessionDesc->sess.lpszSessionName )
-    lpDplData->sessionDesc.sess.lpszSessionName = HEAP_strdupW( GetProcessHeap(), HEAP_ZERO_MEMORY, lpConn->lpSessionDesc->sess.lpszSessionName );
-  else
-    lpDplData->sessionDesc.sess.lpszSessionName = NULL;
-
-  if( lpConn->lpSessionDesc->pass.lpszPassword )
-    lpDplData->sessionDesc.pass.lpszPassword = HEAP_strdupW( GetProcessHeap(), HEAP_ZERO_MEMORY, lpConn->lpSessionDesc->pass.lpszPassword );
-  else
-    lpDplData->sessionDesc.pass.lpszPassword = NULL;
-
-  lpDplData->sessionDesc.dwReserved1 = lpConn->lpSessionDesc->dwReserved1;
-  lpDplData->sessionDesc.dwReserved2 = lpConn->lpSessionDesc->dwReserved2;
-
-  /* Copy DPNAME struct - seems to be optional - check for existance first */
-  if( lpConn->lpPlayerName )
-  {
-     memcpy( &lpDplData->playerName, lpConn->lpPlayerName, sizeof( *lpConn->lpPlayerName ) );
-
-     if( lpConn->lpPlayerName->psn.lpszShortName )
-       lpDplData->playerName.psn.lpszShortName = HEAP_strdupW( GetProcessHeap(), HEAP_ZERO_MEMORY, lpConn->lpPlayerName->psn.lpszShortName );
-
-     if( lpConn->lpPlayerName->pln.lpszLongName )
-       lpDplData->playerName.pln.lpszLongName = HEAP_strdupW( GetProcessHeap(), HEAP_ZERO_MEMORY, lpConn->lpPlayerName->pln.lpszLongName );
-
-  }
-
-  memcpy( &lpDplData->guidSP, &lpConn->guidSP, sizeof( lpConn->guidSP ) );
-
-  lpDplData->lpAddress = HeapAlloc( GetProcessHeap(), HEAP_ZERO_MEMORY, lpConn->dwAddressSize );
-  memcpy( lpDplData->lpAddress, lpConn->lpAddress, lpConn->dwAddressSize );
-
-  lpDplData->dwAddressSize = lpConn->dwAddressSize;
-
-  /* FIXME: Send a message - I think */
 
   DPLAYX_ReleaseSemaphore();
+
+  /* FIXME: Send a message - I think */
 
   return DP_OK;
 }
 
+DWORD DPLAYX_SizeOfLobbyDataA( LPDPLCONNECTION lpConn )
+{
+  DWORD dwTotalSize = sizeof( DPLCONNECTION );
+
+  /* Just a safety check */
+  if( lpConn == NULL )
+  {
+    ERR( "lpConn is NULL\n" );
+    return 0;
+  }
+
+  if( lpConn->lpSessionDesc != NULL )
+  {
+    dwTotalSize += sizeof( DPSESSIONDESC2 );
+
+    if( lpConn->lpSessionDesc->sess.lpszSessionNameA )
+    {
+      dwTotalSize += lstrlenA( lpConn->lpSessionDesc->sess.lpszSessionNameA ) + 1;
+    }
+ 
+    if( lpConn->lpSessionDesc->pass.lpszPasswordA )
+    {
+      dwTotalSize += lstrlenA( lpConn->lpSessionDesc->pass.lpszPasswordA ) + 1;
+    }
+  }
+
+  if( lpConn->lpPlayerName != NULL )
+  {
+    dwTotalSize += sizeof( DPNAME );
+
+    if( lpConn->lpPlayerName->psn.lpszShortNameA )
+    {
+      dwTotalSize += lstrlenA( lpConn->lpPlayerName->psn.lpszShortNameA ) + 1;
+    }
+
+    if( lpConn->lpPlayerName->pln.lpszLongNameA )
+    {
+      dwTotalSize += lstrlenA( lpConn->lpPlayerName->pln.lpszLongNameA ) + 1;
+    }
+
+  }
+
+  dwTotalSize += lpConn->dwAddressSize;
+
+  return dwTotalSize;
+}
+
+DWORD DPLAYX_SizeOfLobbyDataW( LPDPLCONNECTION lpConn )
+{
+  DWORD dwTotalSize = sizeof( DPLCONNECTION );
+
+  /* Just a safety check */
+  if( lpConn == NULL )
+  {
+    ERR( "lpConn is NULL\n" );
+    return 0;
+  }
+
+  if( lpConn->lpSessionDesc != NULL )
+  {
+    dwTotalSize += sizeof( DPSESSIONDESC2 );
+
+    if( lpConn->lpSessionDesc->sess.lpszSessionName )
+    {
+      dwTotalSize += sizeof( WCHAR ) *
+        ( lstrlenW( lpConn->lpSessionDesc->sess.lpszSessionName ) + 1 );
+    }
+
+    if( lpConn->lpSessionDesc->pass.lpszPassword )
+    {
+      dwTotalSize += sizeof( WCHAR ) *
+        ( lstrlenW( lpConn->lpSessionDesc->pass.lpszPassword ) + 1 );
+    }
+  }
+
+  if( lpConn->lpPlayerName != NULL )
+  {
+    dwTotalSize += sizeof( DPNAME );
+
+    if( lpConn->lpPlayerName->psn.lpszShortName )
+    {
+      dwTotalSize += sizeof( WCHAR ) *
+        ( lstrlenW( lpConn->lpPlayerName->psn.lpszShortName ) + 1 );
+    }
+
+    if( lpConn->lpPlayerName->pln.lpszLongName )
+    {
+      dwTotalSize += sizeof( WCHAR ) *
+        ( lstrlenW( lpConn->lpPlayerName->pln.lpszLongName ) + 1 );
+    }
+
+  }
+
+  dwTotalSize += lpConn->dwAddressSize;
+
+  return dwTotalSize;
+}
+
+
+
 LPDPSESSIONDESC2 DPLAYX_CopyAndAllocateSessionDesc2A( LPCDPSESSIONDESC2 lpSessionSrc )
 {
-   LPDPSESSIONDESC2 lpSessionDest = (LPDPSESSIONDESC2) HeapAlloc( GetProcessHeap(),
-                                                    HEAP_ZERO_MEMORY, 
-                                                    sizeof( *lpSessionSrc ) );
+   LPDPSESSIONDESC2 lpSessionDest = 
+     (LPDPSESSIONDESC2)DPLAYX_PrivHeapAlloc( HEAP_ZERO_MEMORY, sizeof( *lpSessionSrc ) );
    DPLAYX_CopyIntoSessionDesc2A( lpSessionDest, lpSessionSrc );
 
    return lpSessionDest;
@@ -610,12 +897,12 @@ BOOL DPLAYX_CopyIntoSessionDesc2A( LPDPSESSIONDESC2  lpSessionDest,
   if( lpSessionSrc->sess.lpszSessionNameA )
   {
     lpSessionDest->sess.lpszSessionNameA =
-      HEAP_strdupA( GetProcessHeap(), HEAP_ZERO_MEMORY, lpSessionSrc->sess.lpszSessionNameA );
+      DPLAYX_strdupA( HEAP_ZERO_MEMORY, lpSessionSrc->sess.lpszSessionNameA );
   }
   if( lpSessionSrc->pass.lpszPasswordA )
   {
     lpSessionDest->pass.lpszPasswordA =
-      HEAP_strdupA( GetProcessHeap(), HEAP_ZERO_MEMORY, lpSessionSrc->pass.lpszPasswordA );
+      DPLAYX_strdupA( HEAP_ZERO_MEMORY, lpSessionSrc->pass.lpszPasswordA );
   }
 
   return TRUE;
@@ -657,8 +944,6 @@ void DPLAYX_SetLocalSession( LPCDPSESSIONDESC2 lpsd )
 {
   UINT i;
 
-  FIXME( ": stub\n" );
-
   /* FIXME: Is this an error if it exists already? */
  
   /* Crude/wrong implementation for now. Just always add to first empty spot */
@@ -673,6 +958,49 @@ void DPLAYX_SetLocalSession( LPCDPSESSIONDESC2 lpsd )
   }
 
 }
+
+BOOL DPLAYX_WaitForConnectionSettings( BOOL bWait )
+{
+  LPDPLAYX_LOBBYDATA lpLobbyData;
+
+  DPLAYX_AquireSemaphore();
+  
+  if( !DPLAYX_IsAppIdLobbied( 0, &lpLobbyData ) )
+  {
+    DPLAYX_ReleaseSemaphore();
+    return FALSE;
+  }
+
+  lpLobbyData->bWaitForConnectionSettings = bWait;
+
+  DPLAYX_ReleaseSemaphore();
+
+  return TRUE;
+}
+
+BOOL DPLAYX_AnyLobbiesWaitingForConnSettings(void)
+{
+  UINT i;
+  BOOL bFound = FALSE;
+
+  DPLAYX_AquireSemaphore();
+
+  for( i=0; i < numSupportedLobbies; i++ )
+  {
+    if( ( lobbyData[ i ].dwAppID != 0 ) &&            /* lobby initialized */
+        ( lobbyData[ i ].bWaitForConnectionSettings ) /* Waiting */
+      )
+    { 
+      bFound = TRUE;
+      break; 
+    }
+  }
+
+  DPLAYX_ReleaseSemaphore();
+
+  return bFound;
+}
+
 
 /* NOTE: This is potentially not thread safe. You are not guaranteed to end up 
          with the correct string printed in the case where the HRESULT is not
