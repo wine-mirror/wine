@@ -184,8 +184,6 @@ symlinks.so: \$(SYMLINKS_SO)
 
 symlinks: \$(BUILDSUBDIRS)
 
-implib: \$(ALL_IMPORT_LIBS)
-
 EOF
 
 ################################################################
@@ -239,6 +237,7 @@ foreach my $mod (sort keys %implib_dirs)
     printf NEWMAKE " \\\n\t%s", $mod;
 }
 print NEWMAKE "\n\n";
+print NEWMAKE "implib: \$(ALL_IMPORT_LIBS)\n\n";
 
 foreach my $mod (sort @implibs)
 {

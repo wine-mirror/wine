@@ -375,8 +375,6 @@ symlinks.so: $(SYMLINKS_SO)
 
 symlinks: $(BUILDSUBDIRS)
 
-implib: $(ALL_IMPORT_LIBS)
-
 
 # Map symlink name to the corresponding library
 
@@ -1026,6 +1024,8 @@ ALL_IMPORT_LIBS = \
 	libdxerr9.a \
 	libdxguid.a \
 	libuuid.a
+
+implib: $(ALL_IMPORT_LIBS)
 
 libadvapi32.def: advapi32/advapi32.spec.def
 	$(RM) $@ && $(LN_S) advapi32/advapi32.spec.def $@
