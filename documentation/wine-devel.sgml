@@ -12,6 +12,7 @@
 <!entity opengl SYSTEM "opengl.sgml">
 <!entity ddraw SYSTEM "ddraw.sgml">
 <!entity multimedia SYSTEM "multimedia.sgml">
+<!entity threading SYSTEM "threading.sgml">
 
 <!entity implementation SYSTEM "implementation.sgml">
 <!entity porting SYSTEM "porting.sgml">
@@ -54,6 +55,10 @@
       <author>
 	<firstname>Albert</firstname>
 	<surname>den Haan</surname>
+      </author>
+      <author>
+        <firstname>Mike</firstname>
+        <surname>Hearn</surname>
       </author>
       <author>
 	<firstname>Ove</firstname>
@@ -125,6 +130,7 @@
     &opengl;
     &ddraw;
     &multimedia;
+    &threading;
   </part>
 
   <part id="part-three">

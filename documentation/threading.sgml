@@ -1,0 +1,266 @@
+<chapter id="threading">
+  <title>Multi-threading in Wine</title>
+  
+  <para>
+    This section will assume you understand the basics of multithreading. If not there are plenty of
+    good tutorials available on the net to get you started.
+  </para>
+
+  <para>
+    Threading in Wine is somewhat complex due to several factors. The first is the advanced level of
+    multithreading support provided by Windows - there are far more threading related constructs available
+    in Win32 than the Linux equivalent (pthreads). The second is the need to be able to map Win32 threads
+    to native Linux threads which provides us with benefits like having the kernel schedule them without
+    our intervention. While it's possible to implement threading entirely without kernel support, doing so
+    is not desirable on most platforms that Wine runs on.
+  </para>
+
+  <sect1>
+    <title> Threading support in Win32 </title>
+
+    <para>
+      Win32 is an unusually thread friendly API. Not only is in entirely thread safe, but it provides
+      many different facilities to working with threads. These range from the basics such as starting
+      and stopping threads, to the extremely complex such as injecting threads into other processes and
+      COM inter-thread marshalling.
+    </para>
+
+    <para>
+      One of the primary challenges of writing Wine code therefore is ensuring that all our DLLs are
+      thread safe, free of race conditions and so on. This isn't simple - don't be afraid to ask if
+      you aren't sure whether a piece of code is thread safe or not!
+    </para>
+
+    <para>
+      Win32 provides many different ways you can make your code thread safe however the most common
+      are the <emphasis>critical section</emphasis> and the <emphasis>interlocked functions</emphasis>.
+      Critical sections are a type of mutex designed to protect a geographic area of code. If you don't
+      want multiple threads running in a piece of code at once, you can protect them with calls to
+      EnterCriticalSection and LeaveCriticalSection. The first call to EnterCriticalSection by a thread
+      will lock the section and continue without stopping. If another thread calls it then it will block
+      until the original thread calls LeaveCriticalSection again.
+    </para>
+
+    <para>
+      It is therefore vitally important that if you use critical sections to make some code thread-safe,
+      that you check every possible codepath out of the code to ensure that any held sections are left.
+      Code like this:
+    </para>
+
+    <programlisting> if (res != ERROR_SUCCESS) return res;  </programlisting>
+
+    <para>
+      is extremely suspect in a function that also contains a call to EnterCriticalSection. Be careful.
+    </para>
+
+    <para>
+      If a thread blocks while waiting for another thread to leave a critical section, you will
+      see an error from the RtlpWaitForCriticalSection function, along with a note of which
+      thread is holding the lock. This only appears after a certain timeout, normally a few
+      seconds. It's possible the thread holding the lock is just being really slow which is why
+      Wine won't terminate the app like a non-checked build of Windows would, but the most
+      common cause is that for some reason a thread forgot to call LeaveCriticalSection, or died
+      while holding the lock (perhaps because it was in turn waiting for another lock). This
+      doesn't just happen in Wine code: a deadlock while waiting for a critical section could
+      be due to a bug in the app triggered by a slight difference in the emulation.
+    </para>
+    
+    <para>
+      Another popular mechanism available is the use of functions like InterlockedIncrement and
+      InterlockedExchange. These make use of native CPU abilities to execute a single
+      instruction while ensuring any other processors on the system cannot access memory, and
+      allow you to do common operations like add/remove/check a variable in thread-safe code
+      without holding a mutex. These are useful for reference counting especially in
+      free-threaded (thread safe) COM objects.
+    </para>
+
+    <para>
+      Finally, the usage of TLS slots are also popular. TLS stands for thread-local storage, and is
+      a set of slots scoped local to a thread which you can store pointers in. Look on MSDN for the
+      TlsAlloc function to learn more about the Win32 implementation of this. Essentially, the
+      contents of a given slot will be different in each thread, so you can use this to store data
+      that is only meaningful in the context of a single thread. On recent versions of Linux the
+      __thread keyword provides a convenient interface to this functionality - a more portable API
+      is exposed in the pthread library. However, these facilities is not used by Wine, rather, we
+      implement Win32 TLS entirely ourselves.
+    </para>
+  </sect1>
+
+  <sect1>
+    <title> SysLevels </title>
+
+    <para>
+      SysLevels are an undocumented Windows-internal thread-safety system. They are basically
+      critical sections which must be taken in a particular order. The mechanism is generic but
+      there are always three syslevels: level 1 is the Win16 mutex, level 2 is the USER mutex
+      and level 3 is the GDI mutex.
+    </para>
+
+    <para>
+      When entering a syslevel, the code (in dlls/kernel/syslevel.c) will check that a
+      higher syslevel is not already held and produce an error if so. This is because it's not
+      legal to enter level 2 while holding level 3 - first, you must leave level 3.
+    </para>
+
+    <para>
+      Throughout the code you may see calls to _ConfirmSysLevel() and _CheckNotSysLevel(). These
+      functions are essentially assertions about the syslevel states and can be used to check
+      that the rules have not been accidentally violated. In particular, _CheckNotSysLevel()
+      will break (probably into the debugger) if the check fails. If this happens the solution
+      is to get a backtrace and find out, by reading the source of the wine functions called
+      along the way, how Wine got into the invalid state.
+    </para>
+    
+  </sect1>
+
+  <sect1>
+    <title> POSIX threading vs kernel threading </title>
+
+    <para>
+      Wine runs in one of two modes: either pthreads (posix threading) or kthreads (kernel
+      threading). This section explains the differences between them. The one that is used is
+      automatically selected on startup by a small test program which then execs the correct
+      binary, either wine-kthread or wine-pthread. On NPTL-enabled systems pthreads will be
+      used, and on older non-NPTL systems kthreads is selected.
+    </para>
+
+    <para>
+      Let's start with a bit of history. Back in the dark ages when Wines threading support was
+      first implemented a problem was faced - Windows had much more capable threading APIs than
+      Linux did. This presented a problem - Wine works either by reimplementing an API entirely
+      or by mapping it onto the underlying systems equivalent. How could Win32 threading be
+      implemented using a library which did not have all the neeed features? The answer, of
+      course, was that it couldn't be.
+    </para>
+
+    <para>
+      On Linux the pthreads interface is used to start, stop and control threads. The pthreads
+      library in turn is based on top of so-called "kernel threads" which are created using the
+      clone(2) syscall. Pthreads provides a nicer (more portable) interface to this
+      functionality and also provides APIs for controlling mutexes. There is a
+      <ulink url="http://www.llnl.gov/computing/tutorials/pthreads/">
+        good tutorial on pthreads </ulink> available if you want to learn more.
+    </para>
+
+    <para>
+      As pthreads did not provide the necessary semantics to implement Win32 threading, the
+      decision was made to implement Win32 threading on top of the underlying kernel threads by
+      using syscalls like clone directly. This provided maximum flexibility and allowed a
+      correct implementation but caused some bad side effects. Most notably, all the userland
+      Linux APIs assumed that the user was utilising the pthreads library. Some only enabled
+      thread safety when they detected that pthreads was in use - this is true of glibc, for
+      instance. Worse, pthreads and pure kernel threads had strange interactions when run in
+      the same process yet some libraries used by Wine used pthreads internally. Throw in
+      source code porting using WineLib - where you have both UNIX and Win32 code in the same
+      process - and chaos was the result.
+    </para>
+
+    <para>
+      The solution was simple yet ingenius: Wine would provide its own implementation of the pthread
+      library <emphasis>inside</emphasis> its own binary. Due to the semantics of ELF symbol
+      scoping, this would cause Wines own implementations to override any implementation loaded
+      later on (like the real libpthread.so). Therefore, any calls to the pthread APIs in
+      external libraries would be linked to Wines instead of the systems pthreads library, and
+      Wine implemented pthreads by using the standard Windows threading APIs it in turn
+      implemented itself.
+    </para>
+
+    <para>
+      As a result, libraries that only became thread-safe in the presence of a loaded pthreads
+      implementation would now do so, and any external code that used pthreads would actually
+      end up creating Win32 threads that Wine was aware of and controlled. This worked quite
+      nicely for a long time, even though it required doing some extremely un-kosher things like
+      overriding internal libc structures and functions. That is, it worked until NPTL was
+      developed at which point the underlying thread implementation on Linux changed
+      dramatically.
+    </para>
+
+    <para>
+      The fake pthread implementation can be found in loader/kthread.c, which is used to
+      produce to wine-kthread binary. In contrast, loader/pthread.c produces the wine-pthread
+      binary which is used on newer NPTL systems.
+    </para>
+
+    <para>
+      NPTL is a new threading subsystem for Linux that hugely improves its performance and
+      flexibility. By allowing threads to become much more scalable and adding new pthread
+      APIs, NPTL made Linux competitive with Windows in the multi-threaded world. Unfortunately
+      it also broke many assumptions made by Wine (as well as other applications such as the
+      Sun JVM and RealPlayer) in the process.
+    </para>
+
+    <para>
+      There was, however, some good news. NPTL made Linux threading powerful enough
+      that Win32 threads could now be implemented on top of pthreads like any other normal
+      application. There would no longer be problems with mixing win32-kthreads and pthreads
+      created by external libraries, and no need to override glibc internals. As you can see
+      from the relative sizes of the loader/kthread.c and loader/pthread.c files, the
+      difference in code complexity is considerable. NPTL also made several other semantic
+      changes to things such as signal delivery so changes were required in many different
+      places in Wine.
+    </para>
+
+    <para>
+      On non-Linux systems the threading interface is typically not powerful enough to
+      replicate the semantics Win32 applications expect and so kthreads with the
+      pthread overrides are used.
+    </para>
+  </sect1>
+
+  <sect1>
+    <title> The Win32 thread environment </title>
+
+    <para>
+      All Win32 code, whether from a native EXE/DLL or in Wine itself, expects certain constructs to
+      be present in its environment. This section explores what those constructs are and how Wine
+      sets them up. The lack of this environment is one thing that makes it hard to use Wine code
+      directly from standard Linux applications - in order to interact with Win32 code a thread
+      must first be "adopted" by Wine.
+    </para>
+
+    <para>
+      The first thing Win32 code requires is the <emphasis>TEB</emphasis> or "Thread Environment
+      Block". This is an internal (undocumented) Windows structure associated with every thread
+      which stores a variety of things such as TLS slots, a pointer to the threads message queue,
+      the last error code and so on. You can see the definition of the TEB in include/thread.h, or
+      at least what we know of it so far. Being internal and subject to change, the layout of the
+      TEB has had to be reverse engineered from scratch.
+    </para>
+
+    <para>
+      A pointer to the TEB is stored in the %fs register and can be accessed using NtCurrentTeb()
+      from within Wine code. %fs actually stores a selector, and setting it therefore requires
+      modifying the processes local descriptor table (LDT) - the code to do this is in lib/wine/ldt.c.
+    </para>
+
+    <para>
+      The TEB is required by nearly all Win32 code run in the Wine environment, as any wineserver
+      RPC will use it, which in turn implies that any code which could possibly block (for instance
+      by using a critical section) needs it. The TEB also holds the SEH exception handler chain as
+      the first element, so if when disassembling you see code like this:
+    </para>
+
+    <programlisting> movl %esp, %fs:0 </programlisting>
+
+    <para>
+      ... then you are seeing the program set up an SEH handler frame. All threads must have at
+      least one SEH entry, which normally points to the backstop handler which is ultimately
+      responsible for popping up the all-too-familiar "This program has performed an illegal
+      operation and will be terminated" message. On Wine we just drop straight into the debugger.
+      A full description of SEH is out of the scope of this section, however there are some good
+      articles in MSJ if you are interested.
+    </para>
+
+    <para>
+      All Win32-aware threads must have a wineserver connection. Many different APIs
+      require the ability to communicate with the wineserver. In turn, the wineserver must be aware
+      of Win32 threads in order to be able to accurately report information to other parts of the
+      program and do things like route inter-thread messages, dispatch APCs (asynchronous procedure
+      calls) and so on. Therefore a part of thread initialization is initializing the thread
+      serverside. The result is not only correct information in the server, but a set of file
+      descriptors the thread can use to communicate with the server - the request fd, reply fd and
+      wait fd (used for blocking).
+    </para>
+    
+  </sect1>
+</chapter>
