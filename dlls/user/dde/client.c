@@ -694,6 +694,9 @@ static WDML_QUEUE_STATE WDML_HandleExecuteReply(WDML_CONV* pConv, MSG* msg, WDML
     WDML_ExtractAck(uiLo, &ddeAck);
     pXAct->hDdeData = (HDDEDATA)(UINT_PTR)ddeAck.fAck;
 
+    TRACE("hDdeData = %p\n", pXAct->hDdeData);
+    pConv->instance->lastError = (pXAct->hDdeData != 0) ? DMLERR_NO_ERROR : DMLERR_NOTPROCESSED;
+
     return WDML_QS_HANDLED;
 }
 
