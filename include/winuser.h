@@ -602,27 +602,30 @@ typedef struct
 
 #define DC_HASDEFID         0x534b
 
-/* Owner draw control types */
+/* Bit flags for DRAWITEMSTRUCT.CtlType */
 #define ODT_MENU        1
 #define ODT_LISTBOX     2
 #define ODT_COMBOBOX    3
 #define ODT_BUTTON      4
 #define ODT_STATIC      5
 
-/* Owner draw actions */
-#define ODA_DRAWENTIRE  0x0001
-#define ODA_SELECT      0x0002
-#define ODA_FOCUS       0x0004
+/* Bit flags for DRAWITEMSTRUCT.itemAction */
+#define ODA_DRAWENTIRE 0x1
+#define ODA_SELECT     0x2
+#define ODA_FOCUS      0x4
 
-/* Owner draw state */
-#define ODS_SELECTED    0x0001
-#define ODS_GRAYED      0x0002
-#define ODS_DISABLED    0x0004
-#define ODS_CHECKED     0x0008
-#define ODS_FOCUS       0x0010
-#define ODS_COMBOBOXEDIT 0x1000
-#define ODS_HOTLIGHT    0x0040
-#define ODS_INACTIVE    0x0080
+/* Bit flags for DRAWITEMSTRUCT.itemState */
+#define ODS_SELECTED     0x0001 /* Selected */
+#define ODS_GRAYED       0x0002 /* Grayed (Menus only) */
+#define ODS_DISABLED     0x0004 /* Disabled */
+#define ODS_CHECKED      0x0008 /* Checked (Menus only) */
+#define ODS_FOCUS        0x0010 /* Has focus */
+#define ODS_DEFAULT      0x0020 /* Default */
+#define ODS_HOTLIGHT     0x0040 /* Highlighted when under mouse */
+#define ODS_INACTIVE     0x0080 /* Inactive */
+#define ODS_NOACCEL      0x0100 /* No keyboard accelerator */
+#define ODS_NOFOCUSRECT  0x0200 /* No focus rectangle */
+#define ODS_COMBOBOXEDIT 0x1000 /* Edit of a combo box */
 
 /* Edit control styles */
 #define ES_LEFT         0x00000000
@@ -3208,17 +3211,19 @@ typedef struct {
 #define	DSS_MONO	0x0080
 #define	DSS_RIGHT	0x8000
 
-typedef struct
+/* Sent as the lParam of a WM_DRAWITEM message to instruct how an
+ * owner drawn control is to be drawn */
+typedef struct tagDRAWITEMSTRUCT
 {
-    UINT      CtlType;
-    UINT      CtlID;
-    UINT      itemID;
-    UINT      itemAction;
-    UINT      itemState;
-    HWND      hwndItem;
-    HDC       hDC;
-    RECT      rcItem;
-    ULONG_PTR itemData;
+    UINT      CtlType;    /* Type of control (ODT_* flags from "winuser.h") */
+    UINT      CtlID;      /* Control ID */
+    UINT      itemID;     /* Menu item ID */
+    UINT      itemAction; /* Action to perform (ODA_* flags from "winuser.h") */
+    UINT      itemState;  /* Item state (ODS_* flags from "winuser.h") */
+    HWND      hwndItem;   /* Control window */
+    HDC       hDC;        /* Device context to draw to */
+    RECT      rcItem;     /* Position of the control in hDC */
+    ULONG_PTR itemData;   /* Extra data added by the application, if any */
 } DRAWITEMSTRUCT, *PDRAWITEMSTRUCT, *LPDRAWITEMSTRUCT;
 
 
