@@ -93,6 +93,9 @@ static struct sc_handle* alloc_sc_handle( SC_HANDLE_TYPE htype )
 
 static void free_sc_handle( struct sc_handle* handle )
 {
+    if( NULL == handle )
+        return;
+
     switch( handle->htype )
     {
         case SC_HTYPE_MANAGER:
