@@ -748,7 +748,7 @@ HEADER_InsertItemA (HWND hwnd, WPARAM wParam, LPARAM lParam)
             /* post insert copy */
             if (nItem < infoPtr->uNumItem - 1) {
                 memcpy (&infoPtr->items[nItem+1], &oldItems[nItem],
-                        (infoPtr->uNumItem - nItem) * sizeof(HEADER_ITEM));
+                        (infoPtr->uNumItem - nItem - 1) * sizeof(HEADER_ITEM));
             }
         }
     
