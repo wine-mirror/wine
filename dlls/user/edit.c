@@ -4696,6 +4696,7 @@ static void EDIT_WM_SetText(EDITSTATE *es, LPCWSTR text, BOOL unicode)
         EDIT_NOTIFY_PARENT(es, EN_UPDATE, "EN_UPDATE");
     }
     EDIT_EM_ScrollCaret(es);
+    EDIT_UpdateScrollInfo(es);    
 }
 
 
