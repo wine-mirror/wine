@@ -238,7 +238,9 @@ static DWORD bytes_to_mmtime(LPMMTIME lpTime, DWORD position,
         TRACE("TIME_MS=%lu\n", lpTime->u.ms);
         break;
     case TIME_SMPTE:
+        lpTime->u.smpte.fps = 30;
         position = position / (format->wBitsPerSample / 8 * format->wf.nChannels);
+        position += (format->wf.nSamplesPerSec / lpTime->u.smpte.fps) - 1; /* round up */
         lpTime->u.smpte.sec = position / format->wf.nSamplesPerSec;
         position -= lpTime->u.smpte.sec * format->wf.nSamplesPerSec;
         lpTime->u.smpte.min = lpTime->u.smpte.sec / 60;
@@ -247,12 +249,6 @@ static DWORD bytes_to_mmtime(LPMMTIME lpTime, DWORD position,
         lpTime->u.smpte.min -= 60 * lpTime->u.smpte.hour;
         lpTime->u.smpte.fps = 30;
         lpTime->u.smpte.frame = position * lpTime->u.smpte.fps / format->wf.nSamplesPerSec;
-        position -= lpTime->u.smpte.frame * format->wf.nSamplesPerSec / lpTime->u.smpte.fps;
-        if (position != 0)
-        {
-            /* Round up */
-            lpTime->u.smpte.frame++;
-        }
         TRACE("TIME_SMPTE=%02u:%02u:%02u:%02u\n",
               lpTime->u.smpte.hour, lpTime->u.smpte.min,
               lpTime->u.smpte.sec, lpTime->u.smpte.frame);
