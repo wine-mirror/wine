@@ -85,9 +85,14 @@ PAPI_VERSION WINAPI ImagehlpApiVersionEx(PAPI_VERSION AppVersion)
  */
 BOOL WINAPI MakeSureDirectoryPathExists(LPCSTR DirPath)
 {
-  FIXME("(%s): stub\n", debugstr_a(DirPath));
-  SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
-  return FALSE;
+    if (CreateDirectoryA(DirPath,NULL))
+        return TRUE;
+    if (GetLastError() == ERROR_ALREADY_EXISTS)
+    {
+        SetLastError(ERROR_SUCCESS);
+        return TRUE;
+    }
+    return FALSE;
 }
 
 /***********************************************************************
