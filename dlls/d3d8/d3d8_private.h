@@ -1095,9 +1095,10 @@ struct  IDirect3DStateBlockImpl {
   SAVEDSTATES               Changed;
   SAVEDSTATES               Set;
   
-  /* ClipPlane */
+  /* Clipping */
   double                    clipplane[MAX_CLIPPLANES][4];
-  
+  D3DCLIPSTATUS8            clip_status;
+
   /* Stream Source */
   UINT                      stream_stride[MAX_STREAMS];
   IDirect3DVertexBuffer8   *stream_source[MAX_STREAMS];

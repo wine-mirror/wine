@@ -330,7 +330,8 @@ UINT     WINAPI  IDirect3DDevice8Impl_GetAvailableTextureMem(LPDIRECT3DDEVICE8 i
 
 HRESULT  WINAPI  IDirect3DDevice8Impl_ResourceManagerDiscardBytes(LPDIRECT3DDEVICE8 iface, DWORD Bytes) {
     ICOM_THIS(IDirect3DDevice8Impl,iface);
-    FIXME("(%p) : stub\n", This);    return D3D_OK;
+    FIXME("(%p) : stub\n", This);    
+    return D3D_OK;
 }
 HRESULT  WINAPI  IDirect3DDevice8Impl_GetDirect3D(LPDIRECT3DDEVICE8 iface, IDirect3D8** ppD3D8) {
     ICOM_THIS(IDirect3DDevice8Impl,iface);
@@ -480,7 +481,8 @@ HRESULT  WINAPI  IDirect3DDevice8Impl_CreateAdditionalSwapChain(LPDIRECT3DDEVICE
 }
 HRESULT  WINAPI  IDirect3DDevice8Impl_Reset(LPDIRECT3DDEVICE8 iface, D3DPRESENT_PARAMETERS* pPresentationParameters) {
     ICOM_THIS(IDirect3DDevice8Impl,iface);
-    FIXME("(%p) : stub\n", This);    return D3D_OK;
+    FIXME("(%p) : stub\n", This);    
+    return D3D_OK;
 }
 HRESULT  WINAPI  IDirect3DDevice8Impl_Present(LPDIRECT3DDEVICE8 iface, 
 					      CONST RECT* pSourceRect, CONST RECT* pDestRect, 
@@ -2492,6 +2494,15 @@ HRESULT  WINAPI  IDirect3DDevice8Impl_SetRenderState(LPDIRECT3DDEVICE8 iface, D3
             if (disable & D3DCLIPPLANE3) { glDisable(GL_CLIP_PLANE3); checkGLcall("glDisable(clip plane 3)"); }
             if (disable & D3DCLIPPLANE4) { glDisable(GL_CLIP_PLANE4); checkGLcall("glDisable(clip plane 4)"); }
             if (disable & D3DCLIPPLANE5) { glDisable(GL_CLIP_PLANE5); checkGLcall("glDisable(clip plane 5)"); }
+
+	    /** update clipping status */
+	    if (enable) {
+	      This->StateBlock->clip_status.ClipUnion = 0;
+	      This->StateBlock->clip_status.ClipIntersection = 0xFFFFFFFF;
+	    } else {
+	      This->StateBlock->clip_status.ClipUnion = 0;
+	      This->StateBlock->clip_status.ClipIntersection = 0;
+	    }
         }
         break;
 
@@ -3000,9 +3011,34 @@ HRESULT  WINAPI  IDirect3DDevice8Impl_SetRenderState(LPDIRECT3DDEVICE8 iface, D3
       }
       break;
 
-        /* Unhandled yet...! */
     case D3DRS_LASTPIXEL                 :
+      {
+	if (Value) {
+	  TRACE("Last Pixel Drawing Enabled\n");  
+	} else {
+	  FIXME("Last Pixel Drawing Disabled, not handled yet\n");  
+	}
+      }
+      break;
+
+    case D3DRS_SOFTWAREVERTEXPROCESSING  :
+      {
+	if (Value) {
+	  TRACE("Software Processing Enabled\n");  
+	} else {
+	  TRACE("Software Processing Disabled\n");  
+	}
+      }
+      break;
+
+      /** not supported */
     case D3DRS_ZVISIBLE                  :
+      {
+	LEAVE_GL();
+	return D3DERR_INVALIDCALL;
+      }
+
+        /* Unhandled yet...! */
     case D3DRS_EDGEANTIALIAS             :
     case D3DRS_WRAP0                     :
     case D3DRS_WRAP1                     :
@@ -3012,7 +3048,6 @@ HRESULT  WINAPI  IDirect3DDevice8Impl_SetRenderState(LPDIRECT3DDEVICE8 iface, D3
     case D3DRS_WRAP5                     :
     case D3DRS_WRAP6                     :
     case D3DRS_WRAP7                     :
-    case D3DRS_SOFTWAREVERTEXPROCESSING  :
     case D3DRS_POINTSPRITEENABLE         :
     case D3DRS_MULTISAMPLEANTIALIAS      :
     case D3DRS_MULTISAMPLEMASK           :
@@ -3022,7 +3057,7 @@ HRESULT  WINAPI  IDirect3DDevice8Impl_SetRenderState(LPDIRECT3DDEVICE8 iface, D3
     case D3DRS_POSITIONORDER             :
     case D3DRS_NORMALORDER               :
         /*Put back later: FIXME("(%p)->(%d,%ld) not handled yet\n", This, State, Value); */
-        TRACE("(%p)->(%d,%ld) not handled yet\n", This, State, Value);
+        FIXME("(%p)->(%d,%ld) not handled yet\n", This, State, Value);
         break;
     default:
         FIXME("(%p)->(%d,%ld) unrecognized\n", This, State, Value);
@@ -3097,11 +3132,23 @@ HRESULT  WINAPI  IDirect3DDevice8Impl_CreateStateBlock(LPDIRECT3DDEVICE8 iface, 
 
 HRESULT  WINAPI  IDirect3DDevice8Impl_SetClipStatus(LPDIRECT3DDEVICE8 iface, CONST D3DCLIPSTATUS8* pClipStatus) {
     ICOM_THIS(IDirect3DDevice8Impl,iface);
-    FIXME("(%p) : stub\n", This);    return D3D_OK;
+    FIXME("(%p) : stub\n", This);
+    if (NULL == pClipStatus) {
+      return D3DERR_INVALIDCALL;
+    }
+    This->UpdateStateBlock->clip_status.ClipUnion = pClipStatus->ClipUnion;
+    This->UpdateStateBlock->clip_status.ClipIntersection = pClipStatus->ClipIntersection;
+    return D3D_OK;
 }
 HRESULT  WINAPI  IDirect3DDevice8Impl_GetClipStatus(LPDIRECT3DDEVICE8 iface, D3DCLIPSTATUS8* pClipStatus) {
     ICOM_THIS(IDirect3DDevice8Impl,iface);
-    FIXME("(%p) : stub\n", This);    return D3D_OK;
+    FIXME("(%p) : stub\n", This);    
+    if (NULL == pClipStatus) {
+      return D3DERR_INVALIDCALL;
+    }
+    pClipStatus->ClipUnion = This->UpdateStateBlock->clip_status.ClipUnion;
+    pClipStatus->ClipIntersection = This->UpdateStateBlock->clip_status.ClipIntersection;
+    return D3D_OK;
 }
 HRESULT  WINAPI  IDirect3DDevice8Impl_GetTexture(LPDIRECT3DDEVICE8 iface, DWORD Stage,IDirect3DBaseTexture8** ppTexture) {
     ICOM_THIS(IDirect3DDevice8Impl,iface);

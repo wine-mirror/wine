@@ -178,6 +178,10 @@ HRESULT WINAPI IDirect3DDeviceImpl_InitStartupStateBlock(IDirect3DDevice8Impl* T
     IDirect3DDevice8Impl_SetRenderState(iface, D3DRS_POSITIONORDER, D3DORDER_CUBIC);
     IDirect3DDevice8Impl_SetRenderState(iface, D3DRS_NORMALORDER, D3DORDER_LINEAR);
 
+    /** clipping status */
+    This->StateBlock->clip_status.ClipUnion = 0;
+    This->StateBlock->clip_status.ClipIntersection = 0xFFFFFFFF;
+	
     /* Texture Stage States - Put directly into state block, we will call function below */
     for (i = 0; i < GL_LIMITS(textures); i++) {
         memcpy(&This->StateBlock->transforms[D3DTS_TEXTURE0 + i], &idmatrix, sizeof(idmatrix));
@@ -487,7 +491,7 @@ HRESULT  WINAPI  IDirect3DDeviceImpl_ApplyStateBlock(IDirect3DDevice8Impl* This,
         for (i=0; i<MAX_STREAMS; i++) {
             if (pSB->Set.stream_source[i] && pSB->Changed.stream_source[i])
                 IDirect3DDevice8Impl_SetStreamSource(iface, i, pSB->stream_source[i], pSB->stream_stride[i]);
-        }
+        }  
 
         for (i = 0; i < GL_LIMITS(clipplanes); i++) {
             if (pSB->Set.clipplane[i] && pSB->Changed.clipplane[i]) {

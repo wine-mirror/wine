@@ -591,10 +591,12 @@ HRESULT WINAPI IDirect3DSurface8Impl_LoadTexture(LPDIRECT3DSURFACE8 iface, GLenu
       FIXME("Using DXT1/3/5 without advertized support\n");
     }
   } else {
-    TRACE("Calling glTexImage2D %x i=%d, intfmt=%x, w=%d, h=%d,0=%d, glFmt=%x, glType=%x, Mem=%p\n",
+
+    TRACE("Calling glTexImage2D %x i=%d, d3dfmt=%s, intfmt=%x, w=%d, h=%d,0=%d, glFmt=%x, glType=%x, Mem=%p\n",
 	  gl_target, 
 	  gl_level, 
-	  D3DFmt2GLIntFmt(This->Device, This->myDesc.Format),
+	  debug_d3dformat(This->myDesc.Format),
+	  D3DFmt2GLIntFmt(This->Device, This->myDesc.Format), 
 	  This->myDesc.Width, 
 	  This->myDesc.Height, 
 	  0, 
@@ -623,9 +625,16 @@ HRESULT WINAPI IDirect3DSurface8Impl_LoadTexture(LPDIRECT3DSURFACE8 iface, GLenu
       char buffer[4096];
       ++gen;
       if ((gen % 10) == 0) {
-	snprintf(buffer, sizeof(buffer), "/tmp/surface%u_level%u_%u.ppm", gl_target, gl_level, gen);
+	snprintf(buffer, sizeof(buffer), "/tmp/surface%p_type%u_level%u_%u.ppm", This, gl_target, gl_level, gen);
 	IDirect3DSurface8Impl_SaveSnapshot((LPDIRECT3DSURFACE8) This, buffer);
       }
+      /*
+       * debugging crash code
+      if (gen == 250) {
+	void** test = NULL;
+	*test = 0;
+      }
+      */
     }
 #endif
   }

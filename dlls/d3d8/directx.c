@@ -264,6 +264,10 @@ HRESULT  WINAPI  IDirect3D8Impl_GetAdapterIdentifier       (LPDIRECT3D8 iface,
     return D3D_OK;
 }
 
+
+/*#define DEBUG_SINGLE_MODE*/
+#undef DEBUG_SINGLE_MODE
+
 UINT     WINAPI  IDirect3D8Impl_GetAdapterModeCount        (LPDIRECT3D8 iface,
                                                             UINT Adapter) {
     ICOM_THIS(IDirect3D8Impl,iface);
@@ -275,12 +279,16 @@ UINT     WINAPI  IDirect3D8Impl_GetAdapterModeCount        (LPDIRECT3D8 iface,
     }
 
     if (Adapter == 0) { /* Display */
-        DEVMODEW DevModeW;
         int i = 0;
-
+#if !defined( DEBUG_SINGLE_MODE )
+        DEVMODEW DevModeW;
         while (EnumDisplaySettingsExW(NULL, i, &DevModeW, 0)) {
             i++;
         }
+#else
+        i = 1;
+#endif
+
         TRACE_(d3d_caps)("(%p}->(Adapter: %d) => %d\n", This, Adapter, i);
         return i;
     } else {
@@ -296,13 +304,16 @@ HRESULT  WINAPI  IDirect3D8Impl_EnumAdapterModes           (LPDIRECT3D8 iface,
 
     TRACE_(d3d_caps)("(%p}->(Adapter:%d, mode:%d, pMode:%p)\n", This, Adapter, Mode, pMode);
 
-    if (Adapter >= IDirect3D8Impl_GetAdapterCount(iface)) {
+    if (NULL == pMode || 
+	Adapter >= IDirect3D8Impl_GetAdapterCount(iface) ||
+	Mode >= IDirect3D8Impl_GetAdapterModeCount(iface, Adapter)) {
         return D3DERR_INVALIDCALL;
     }
 
     if (Adapter == 0) { /* Display */
-        HDC hdc;
         int bpp = 0;
+#if !defined( DEBUG_SINGLE_MODE )
+        HDC hdc;
         DEVMODEW DevModeW;
 
         if (EnumDisplaySettingsExW(NULL, Mode, &DevModeW, 0)) 
@@ -332,8 +343,16 @@ HRESULT  WINAPI  IDirect3D8Impl_EnumAdapterModes           (LPDIRECT3D8 iface,
         case 24: /* pMode->Format = D3DFMT_R5G6B5;   break;*/ /* Make 24bit appear as 32 bit */
         case 32: pMode->Format = D3DFMT_A8R8G8B8; break;
         default: pMode->Format = D3DFMT_UNKNOWN;
-        }
-        TRACE_(d3d_caps)("W %d H %d rr %d fmt (%x,%s) bpp %u\n", pMode->Width, pMode->Height, pMode->RefreshRate, pMode->Format, debug_d3dformat(pMode->Format), bpp);
+	}
+#else
+       if (Mode > 0) return D3DERR_INVALIDCALL;
+       pMode->Width        = 800;
+       pMode->Height       = 600;
+       pMode->RefreshRate  = D3DADAPTER_DEFAULT;
+       pMode->Format       = D3DFMT_A8R8G8B8;
+       bpp = 32;
+#endif
+       TRACE_(d3d_caps)("W %d H %d rr %d fmt (%x,%s) bpp %u\n", pMode->Width, pMode->Height, pMode->RefreshRate, pMode->Format, debug_d3dformat(pMode->Format), bpp);
 
     } else {
         FIXME_(d3d_caps)("Adapter not primary display\n");
@@ -347,7 +366,8 @@ HRESULT  WINAPI  IDirect3D8Impl_GetAdapterDisplayMode      (LPDIRECT3D8 iface,
     ICOM_THIS(IDirect3D8Impl,iface);
     TRACE_(d3d_caps)("(%p}->(Adapter: %d, pMode: %p)\n", This, Adapter, pMode);
 
-    if (Adapter >= IDirect3D8Impl_GetAdapterCount(iface)) {
+    if (NULL == pMode || 
+	Adapter >= IDirect3D8Impl_GetAdapterCount(iface)) {
         return D3DERR_INVALIDCALL;
     }
 
@@ -393,6 +413,11 @@ HRESULT  WINAPI  IDirect3D8Impl_CheckDeviceType            (LPDIRECT3D8 iface,
           DisplayFormat, debug_d3dformat(DisplayFormat),
 	  BackBufferFormat, debug_d3dformat(BackBufferFormat),
 	  Windowed);
+
+    if (Adapter >= IDirect3D8Impl_GetAdapterCount(iface)) {
+        return D3DERR_INVALIDCALL;
+    }
+
     /*
     switch (DisplayFormat) {
     case D3DFMT_A8R8G8B8:
@@ -401,7 +426,13 @@ HRESULT  WINAPI  IDirect3D8Impl_CheckDeviceType            (LPDIRECT3D8 iface,
       break;
     }
     */
-
+    switch (DisplayFormat) {
+      /*case D3DFMT_R5G6B5:*/
+    case D3DFMT_R3G3B2:
+      return D3DERR_NOTAVAILABLE;
+    default:
+      break;
+    }
     return D3D_OK;
 }
 
@@ -409,7 +440,7 @@ HRESULT  WINAPI  IDirect3D8Impl_CheckDeviceFormat          (LPDIRECT3D8 iface,
                                                             UINT Adapter, D3DDEVTYPE DeviceType, D3DFORMAT AdapterFormat,
                                                             DWORD Usage, D3DRESOURCETYPE RType, D3DFORMAT CheckFormat) {
     ICOM_THIS(IDirect3D8Impl,iface);
-    TRACE_(d3d_caps)("(%p)->(Adptr:%d, DevType:(%u,%s), AdptFmt:(%u,%s), Use:(%lu,%s), ResTyp:(%x,%s), CheckFmt:(%u,%s))\n", 
+    TRACE_(d3d_caps)("(%p)->(Adptr:%d, DevType:(%u,%s), AdptFmt:(%u,%s), Use:(%lu,%s), ResTyp:(%x,%s), CheckFmt:(%u,%s)) ", 
           This, 
 	  Adapter, 
 	  DeviceType, debug_d3ddevicetype(DeviceType), 
@@ -418,37 +449,79 @@ HRESULT  WINAPI  IDirect3D8Impl_CheckDeviceFormat          (LPDIRECT3D8 iface,
 	  RType, debug_d3dressourcetype(RType), 
 	  CheckFormat, debug_d3dformat(CheckFormat));
 
+    if (Adapter >= IDirect3D8Impl_GetAdapterCount(iface)) {
+        return D3DERR_INVALIDCALL;
+    }
+
     if (GL_SUPPORT(EXT_TEXTURE_COMPRESSION_S3TC)) {
         switch (CheckFormat) {
         case D3DFMT_DXT1:
         case D3DFMT_DXT3:
         case D3DFMT_DXT5:
-            return D3D_OK;
+	  TRACE_(d3d_caps)("[OK]\n");
+	  return D3D_OK;
         default:
             break; /* Avoid compiler warnings */
         }
     }
 
     switch (CheckFormat) {
-    case D3DFMT_UYVY:
-    case D3DFMT_YUY2:
+    /*****
+     * check supported using GL_SUPPORT 
+     */
     case D3DFMT_DXT1:
     case D3DFMT_DXT2:
     case D3DFMT_DXT3:
     case D3DFMT_DXT4:
-    case D3DFMT_DXT5:
-    case D3DFMT_X8L8V8U8:
-    case D3DFMT_L6V5U5:
-    /*case D3DFMT_V8U8:*/
-    case D3DFMT_L8:
+    case D3DFMT_DXT5: 
+
+    /*****
+     *  supported 
+     */
+      /*case D3DFMT_R5G6B5: */
+      /*case D3DFMT_X1R5G5B5:*/
+      /*case D3DFMT_A1R5G5B5: */
+      /*case D3DFMT_A4R4G4B4:*/
+
+    /*****
+     * unsupported 
+     */
+
+      /* color buffer */
+      /*case D3DFMT_X8R8G8B8:*/
+    case D3DFMT_A8R3G3B2:
+
+      /* Paletted */
     case D3DFMT_P8:
     case D3DFMT_A8P8:
+
+      /* Luminance */
+    case D3DFMT_L8:
+    case D3DFMT_A8L8:
+    case D3DFMT_A4L4:
+
+      /* Bump */
+      /*case D3DFMT_V8U8:*/
+      /*case D3DFMT_V16U16:*/
+    case D3DFMT_L6V5U5:
+    case D3DFMT_X8L8V8U8:
+    case D3DFMT_Q8W8V8U8:
+    case D3DFMT_W11V11U10:
+
+    /****
+     * currently hard to support 
+     */
+    case D3DFMT_UYVY:
+    case D3DFMT_YUY2:
+
       /* Since we do not support these formats right now, don't pretend to. */
+      TRACE_(d3d_caps)("[FAILED]\n");
       return D3DERR_NOTAVAILABLE;
     default:
       break;
     }
 
+    TRACE_(d3d_caps)("[OK]\n");
     return D3D_OK;
 }
 
@@ -464,6 +537,10 @@ HRESULT  WINAPI  IDirect3D8Impl_CheckDeviceMultiSampleType(LPDIRECT3D8 iface,
 	  Windowed, 
 	  MultiSampleType);
   
+    if (Adapter >= IDirect3D8Impl_GetAdapterCount(iface)) {
+        return D3DERR_INVALIDCALL;
+    }
+
     if (D3DMULTISAMPLE_NONE == MultiSampleType)
       return D3D_OK;
     return D3DERR_NOTAVAILABLE;
@@ -480,6 +557,10 @@ HRESULT  WINAPI  IDirect3D8Impl_CheckDepthStencilMatch(LPDIRECT3D8 iface,
           AdapterFormat, debug_d3dformat(AdapterFormat),
 	  RenderTargetFormat, debug_d3dformat(RenderTargetFormat), 
 	  DepthStencilFormat, debug_d3dformat(DepthStencilFormat));
+
+    if (Adapter >= IDirect3D8Impl_GetAdapterCount(iface)) {
+        return D3DERR_INVALIDCALL;
+    }
 
 #if 0
     switch (DepthStencilFormat) {
@@ -507,6 +588,10 @@ HRESULT  WINAPI  IDirect3D8Impl_GetDeviceCaps(LPDIRECT3D8 iface, UINT Adapter, D
     ICOM_THIS(IDirect3D8Impl,iface);
 
     TRACE_(d3d_caps)("(%p)->(Adptr:%d, DevType: %x, pCaps: %p)\n", This, Adapter, DeviceType, pCaps);
+
+    if (Adapter >= IDirect3D8Impl_GetAdapterCount(iface)) {
+        return D3DERR_INVALIDCALL;
+    }
 
     /* Note: GL seems to trap if GetDeviceCaps is called before any HWND's created
        ie there is no GL Context - Get a default rendering context to enable the 
@@ -780,6 +865,11 @@ HRESULT  WINAPI  IDirect3D8Impl_GetDeviceCaps(LPDIRECT3D8 iface, UINT Adapter, D
 HMONITOR WINAPI  IDirect3D8Impl_GetAdapterMonitor(LPDIRECT3D8 iface, UINT Adapter) {
     ICOM_THIS(IDirect3D8Impl,iface);
     FIXME_(d3d_caps)("(%p)->(Adptr:%d)\n", This, Adapter);
+
+    if (Adapter >= IDirect3D8Impl_GetAdapterCount(iface)) {
+        return NULL;
+    }
+
     return D3D_OK;
 }
 
@@ -800,9 +890,9 @@ static void IDirect3D8Impl_FillGLCaps(LPDIRECT3D8 iface, Display* display) {
     TRACE_(d3d_caps)("(%p, %p)\n", This, display);
 
     if (NULL != display) {
-      test = glXQueryVersion(NULL, &major, &minor);
+      test = glXQueryVersion(display, &major, &minor);
       This->gl_info.glx_version = ((major & 0x0000FFFF) << 16) | (minor & 0x0000FFFF);
-      gl_string = glXGetClientString(NULL, GLX_VENDOR);
+      gl_string = glXGetClientString(display, GLX_VENDOR);
     } else {
       gl_string = glGetString(GL_VENDOR);
     }
@@ -1108,6 +1198,10 @@ HRESULT  WINAPI  IDirect3D8Impl_CreateDevice               (LPDIRECT3D8 iface,
     ICOM_THIS(IDirect3D8Impl,iface);
     TRACE("(%p)->(Adptr:%d, DevType: %x, FocusHwnd: %p, BehFlags: %lx, PresParms: %p, RetDevInt: %p)\n", This, Adapter, DeviceType,
           hFocusWindow, BehaviourFlags, pPresentationParameters, ppReturnedDeviceInterface);
+
+    if (Adapter >= IDirect3D8Impl_GetAdapterCount(iface)) {
+        return D3DERR_INVALIDCALL;
+    }
 
     /* Allocate the storage for the device */
     object = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(IDirect3DDevice8Impl));
