@@ -1,3 +1,5 @@
+LIBRARY libwine.dll
+
 EXPORTS
     __wine_dbg_register
     __wine_dbg_unregister
@@ -27,7 +29,6 @@ EXPORTS
     wine_dll_unload
     wine_dlopen
     wine_dlsym
-    wine_errno_location
     wine_get_config_dir
     wine_get_cs
     wine_get_ds
@@ -37,7 +38,6 @@ EXPORTS
     wine_get_server_dir
     wine_get_ss
     wine_get_user_name
-    wine_h_errno_location
     wine_ldt_alloc_entries
     wine_ldt_alloc_fs
     wine_ldt_copy
