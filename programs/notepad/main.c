@@ -148,8 +148,8 @@ int PASCAL WinMain (HANDLE hInstance, HANDLE prev, LPSTR cmdline, int show)
 
     /* Setup Globals */
 
-    lstrcpy(Globals.lpszIniFile, "notepad.ini");
-    lstrcpy(Globals.lpszIcoFile, "notepad.ico");
+    Globals.lpszIniFile = "notepad.ini";
+    Globals.lpszIcoFile = "notepad.ico";
 
     Globals.hInstance       = hInstance;
 
