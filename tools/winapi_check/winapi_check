@@ -92,32 +92,48 @@ if(!defined($options)) {
     exit;
 }
 
+sub file_absolutize {
+    local $_ = shift;
+
+    $_ = file_normalize($_);
+    if(!s%^$wine_dir/%%) {
+	$_ = "$current_dir/$_";
+    }
+    s%^\./%%;
+
+    return $_;
+}
+
+sub file_normalize {
+    local $_ = shift;
+
+    foreach my $dir (split(m%/%, $current_dir)) {
+	s%^(\.\./)*\.\./$dir/%%;
+	if(defined($1)) {
+	    $_ = "$1$_";
+	}
+    }
+
+    return $_;
+}
+
 sub file_type {
-    my $file = shift;
+    local $_ = shift;
 
-    my $file_dir = $file;
-    if(!($file_dir =~ s/^(.*?)\/[^\/]*$/$1/)) {
-	$file_dir = ".";
-    }
-    
-    $file_dir =~ s/^$wine_dir\///;
+    $_ = file_absolutize($_);
 
-    if($file_dir =~ /^(libtest|programs|rc|server|tests|tools)/ || 
-       $file =~ /dbgmain\.c$/ ||
-       $file =~ /wineclipsrv\.c$/) # FIXME: Kludge
-    {
-	return "application";
-    } elsif($file_dir =~ /^(debugger|miscemu)/) {
-	return "emulator";
-    } else {
-	return "library";
-    }
+    m%^(?:libtest|rc|server|tests|tools)/% && return "";
+    m%^(?:programs|debugger|miscemu)/% && return "wineapp";
+    m%^(?:library|tsx11|unicode)/% && return "library";
+    m%^windows/x11drv/wineclipsrv.c% && return "application";
+
+    return "winelib";
 }
 
 sub file_skip {
     local $_ = shift;
 
-    s%^\./%%;
+    $_ = file_absolutize($_);
 
     m%^(?:libtest|programs|rc|server|tests|tools)/% && return 1;
     m%^(?:debugger|miscemu|tsx11|unicode)/% && return 1;
@@ -344,8 +360,8 @@ foreach my $file (@c_files) {
 	    $win16api->found_internal_function($internal_name) if $options->win16;
 	    $win32api->found_internal_function($internal_name) if $options->win32;
 	}
-	
-	if($file_type ne "application") {
+
+	if($file_type eq "winelib") {
 	    my $module16 = $win16api->function_internal_module($internal_name);
 	    my $module32 = $win32api->function_internal_module($internal_name);
 

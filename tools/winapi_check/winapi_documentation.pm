@@ -95,39 +95,37 @@ sub check_documentation {
 
     if($options->documentation_ordinal) {
 	if(defined($module16)) {
-	    my $ordinal16 = $win16api->function_internal_ordinal($internal_name);
+	    my @modules16 = split(/\s*\&\s*/, $module16);
+	    my @ordinals16 = split(/\s*\&\s*/, $win16api->function_internal_ordinal($internal_name));
 
-	    if(!defined($ordinal16)) {
-		$output->write("function have no ordinal\n");
-	    } else {
-		my @uc_modules16 = split(/\s*\&\s*/, uc($module16));
-		foreach my $uc_module16 (@uc_modules16) {
-		    if($documentation !~ /\b$uc_module16\.\Q$ordinal16\E/) {
-			$output->write("documentation: wrong or missing ordinal " .
-				       "expected ($uc_module16.$ordinal16) \\\n$documentation\n");
-		    }
+	    my $module16;
+	    my $ordinal16;
+	    while(defined($module16 = shift @modules16) && defined($ordinal16 = shift @ordinals16)) {
+		if($documentation !~ /\b\U$module16\E\.\Q$ordinal16\E/) {
+		    $output->write("documentation: wrong or missing ordinal " .
+				   "expected (\U$module16\E.$ordinal16) \\\n$documentation\n");
 		}
 	    }
 	}
-	if(defined($module32)) {
-	    my $ordinal32 = $win32api->function_internal_ordinal($internal_name);
 
-	    if(!defined($ordinal32)) {
-		$output->write("function have no ordinal\n");
-	    } else {
-		my @uc_modules32 = split(/\s*\&\s*/, uc($module32));
-		foreach my $uc_module32 (@uc_modules32) {
-		    if($documentation !~ /\b$uc_module32\.\Q$ordinal32\E/) {
-			$output->write("documentation: wrong or missing ordinal " .
-						   "expected ($uc_module32.$ordinal32) \\\n$documentation\n");
-		    }
+	if(defined($module32)) {
+	    my @modules32 = split(/\s*\&\s*/, $module32);
+	    my @ordinals32 = split(/\s*\&\s*/, $win32api->function_internal_ordinal($internal_name));
+
+	    my $module32;
+	    my $ordinal32;
+	    while(defined($module32 = shift @modules32) && defined($ordinal32 = shift @ordinals32)) {
+		if($documentation !~ /\b\U$module32\E\.\Q$ordinal32\E/) {
+		    $output->write("documentation: wrong or missing ordinal " .
+				   "expected (\U$module32\E.$ordinal32) \\\n$documentation\n");
 		}
 	    }
 	}
     }
 
+    # FIXME: Not correct
     if($options->documentation_pedantic) {
-	my $ordinal = $win16api->function_internal_ordinal($internal_name);
+	my $ordinal = (split(/\s*\&\s*/, $win16api->function_internal_ordinal($internal_name)))[0];
 	if(defined($ordinal) && $documentation !~ /^ \*\s+(?:\@|\w+)(?:\s+[\(\[]\w+\.(?:\@|\d+)[\)\]])+/m) {
 	    $output->write("documentation: pedantic check failed \\\n$documentation\n");
 	}

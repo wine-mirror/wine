@@ -18,7 +18,7 @@ sub new {
     my $path = shift;
 
     my @files = map {
-	s/^.\/(.*)$/$1/;
+	s%^\./%%;
 	$_; 
     } split(/\n/, `find $path -name \\*.api`);
   
@@ -212,8 +212,8 @@ sub read_all_spec_files {
     my $win32api = shift;
 
     my @files = map {
-	s/^$wine_dir\/(.*)$/$1/;
-	if(&$file_type($_) eq "library") {
+	s%^\./%%;
+	if(&$file_type($_) eq "winelib") {
 	    $_;
 	} else {
 	    ();
@@ -244,6 +244,7 @@ sub parse_spec_file {
     my $module_files = \%{$self->{MODULE_FILES}};
 
     my $file = shift;
+    $file =~ s%^\./%%;
 
     my %ordinals;
     my $type;
@@ -289,26 +290,26 @@ sub parse_spec_file {
 	    $$function_external_name{$internal_name} = $external_name;
 	    $$function_internal_arguments{$internal_name} = $arguments;
 	    $$function_external_arguments{$external_name} = $arguments;
-	    $$function_internal_ordinal{$internal_name} = $ordinal;
-	    $$function_external_ordinal{$external_name} = $ordinal;
+	    if(!$$function_internal_ordinal{$internal_name}) {
+		$$function_internal_ordinal{$internal_name} = $ordinal;
+	    } else {
+		$$function_internal_ordinal{$internal_name} .= " & $ordinal";
+	    }
+	    if(!$$function_external_ordinal{$external_name}) {
+		$$function_external_ordinal{$external_name} = $ordinal;
+	    } else {
+		$$function_external_ordinal{$external_name} .= " & $ordinal";
+	    }
 	    $$function_internal_calling_convention{$internal_name} = $calling_convention;
 	    $$function_external_calling_convention{$external_name} = $calling_convention;
 	    if(!$$function_internal_module{$internal_name}) {
 		$$function_internal_module{$internal_name} = "$module";
-	    } elsif($$function_internal_module{$internal_name} !~ /$module/) {
-		if(0) {
-		    $$output->write("$file: $external_name: the internal function ($internal_name) " . 
-				    "already belongs to a module ($$function_internal_module{$internal_name})\n");
-		}
+	    } else { # if($$function_internal_module{$internal_name} !~ /$module/) {
 		$$function_internal_module{$internal_name} .= " & $module";
 	    }
 	    if(!$$function_external_module{$external_name}) {
 		$$function_external_module{$external_name} = "$module";
-	    } elsif($$function_external_module{$external_name} !~ /$module/) {
-		if(0) {
-		    $$output->write("$file: $internal_name: the external function ($external_name) " . 
-				    "already belongs to a module ($$function_external_module{$external_name})\n");
-		}
+	    } else { # if($$function_external_module{$external_name} !~ /$module/) {
 		$$function_external_module{$external_name} .= " & $module";
 	    }
 
@@ -361,16 +362,24 @@ sub parse_spec_file {
 
 	    # FIXME: Internal name existing more than once not handled properly
 	    $$function_stub{$internal_name} = 1;
-	    $$function_internal_ordinal{$internal_name} = $ordinal;
-	    $$function_external_ordinal{$external_name} = $ordinal;
+	    if(!$$function_internal_ordinal{$internal_name}) {
+		$$function_internal_ordinal{$internal_name} = $ordinal;
+	    } else {
+		$$function_internal_ordinal{$internal_name} .= " & $ordinal";
+	    }
+	    if(!$$function_external_ordinal{$external_name}) {
+		$$function_external_ordinal{$external_name} = $ordinal;
+	    } else {
+		$$function_external_ordinal{$external_name} .= " & $ordinal";
+	    }
 	    if(!$$function_internal_module{$internal_name}) {
 		$$function_internal_module{$internal_name} = "$module";
-	    } elsif($$function_internal_module{$internal_name} !~ /$module/) {
+	    } else { # if($$function_internal_module{$internal_name} !~ /$module/) {
 		$$function_internal_module{$internal_name} .= " & $module";
 	    }
 	    if(!$$function_external_module{$external_name}) {
 		$$function_external_module{$external_name} = "$module";
-	    } elsif($$function_external_module{$external_name} !~ /$module/) {
+	    } else { # if($$function_external_module{$external_name} !~ /$module/) {
 		$$function_external_module{$external_name} .= " & $module";
 	    }
 	} elsif(/^(\d+|@)\s+forward(?:\s+(?:-noimport|-norelay|-i386|-ret64))?\s+(\S+)\s+(\S+)\.(\S+)$/) {

@@ -9,9 +9,9 @@ require Exporter;
 
 @ISA = qw(Exporter);
 @EXPORT = qw(
-    &file_type
+    &file_type &files_filter
     &file_skip &files_skip 
-    &file_normalize
+    &file_absolutize &file_normalize
     &get_spec_files
     &translate_calling_convention16 &translate_calling_convention32
 );
@@ -22,32 +22,35 @@ require Exporter;
 use vars qw($current_dir $wine_dir $winapi_dir $winapi_check_dir);
 
 sub file_type {
-    my $file = shift;
+    local $_ = shift;
 
-    my $file_dir = $file;
-    if(!($file_dir =~ s/^(.*?)\/[^\/]*$/$1/)) {
-	$file_dir = ".";
+    $_ = file_absolutize($_);
+
+    m%^(?:libtest|rc|server|tests|tools)/% && return "";
+    m%^(?:programs|debugger|miscemu)/% && return "wineapp";
+    m%^(?:library|tsx11|unicode)/% && return "library";
+    m%^windows/x11drv/wineclipsrv.c% && return "application";
+
+    return "winelib";
+}
+
+sub files_filter {
+    my $type = shift;
+
+    my @files;
+    foreach my $file (@_) {
+	if(file_type($file) eq $type) {
+	    push @files, $file;
+	}
     }
 
-    $file_dir =~ s/^$wine_dir\///;
-
-    if($file_dir =~ /^(libtest|programs|rc|server|tests|tools)/ || 
-       $file =~ /dbgmain\.c$/ ||
-       $file =~ /wineclipsrv\.c$/) # FIXME: Kludge
-    {
-	return "application";
-    } elsif($file_dir =~ /^(debugger|miscemu)/) {
-	return "emulator";
-    } else {
-	return "library";
-    }
+    return @files;
 }
 
 sub file_skip {
     local $_ = shift;
 
-    $_ = "$current_dir/$_";
-    s%^\./%%;
+    $_ = file_absolutize($_);
 
     m%^(?:libtest|programs|rc|server|tests|tools)/% && return 1;
     m%^(?:debugger|miscemu|tsx11|server|unicode)/% && return 1;
@@ -69,6 +72,18 @@ sub files_skip {
     return @files;
 }
 
+sub file_absolutize {
+    local $_ = shift;
+
+    $_ = file_normalize($_);
+    if(!s%^$wine_dir/%%) {
+	$_ = "$current_dir/$_";
+    }
+    s%^\./%%;
+
+    return $_;
+}
+
 sub file_normalize {
     local $_ = shift;
 
@@ -86,8 +101,9 @@ sub get_spec_files {
     output->progress("$wine_dir: searching for *.spec");
 
     my @spec_files = map {
-	s/^$wine_dir\/(.*)$/$1/;
-	if(file_type($_) eq "library") {
+	s%^\./%%;
+	s%^$wine_dir/%%;
+	if(file_type($_) eq "winelib") {
 	    $_;
 	} else {
 	    ();

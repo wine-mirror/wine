@@ -79,6 +79,10 @@ UINT *
 WORD *
 YIELDPROC
 
+%ptr --forbidden
+
+LPMMIOPROC16
+
 %str
 
 LPCSTR

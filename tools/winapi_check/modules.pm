@@ -24,7 +24,7 @@ sub new {
 
     my @all_spec_files = map {
 	s/^.\/(.*)$/$1/;
-	if(&$file_type($_) eq "library") {
+	if(&$file_type($_) eq "winelib") {
 	    $_;
 	} else {
 	    ();
