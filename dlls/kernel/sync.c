@@ -1062,6 +1062,7 @@ HANDLE WINAPI CreateNamedPipeW( LPCWSTR name, DWORD dwOpenMode,
         req->outsize = nOutBufferSize;
         req->insize = nInBufferSize;
         req->timeout = nDefaultTimeOut;
+        req->inherit = (attr && (attr->nLength>=sizeof(*attr)) && attr->bInheritHandle);
         wine_server_add_data( req, name, len * sizeof(WCHAR) );
         SetLastError(0);
         if (!wine_server_call_err( req )) ret = reply->handle;

@@ -2414,6 +2414,7 @@ struct create_named_pipe_request
     unsigned int   outsize;
     unsigned int   insize;
     unsigned int   timeout;
+    int            inherit;
     /* VARARG(name,unicode_str); */
 };
 struct create_named_pipe_reply
@@ -3762,6 +3763,6 @@ union generic_reply
     struct set_global_windows_reply set_global_windows_reply;
 };
 
-#define SERVER_PROTOCOL_VERSION 131
+#define SERVER_PROTOCOL_VERSION 132
 
 #endif /* __WINE_WINE_SERVER_PROTOCOL_H */

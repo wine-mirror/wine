@@ -1705,6 +1705,7 @@ enum message_type
     unsigned int   outsize;
     unsigned int   insize;
     unsigned int   timeout;
+    int            inherit;      /* inherit flag */
     VARARG(name,unicode_str);    /* pipe name */
 @REPLY
     obj_handle_t   handle;       /* handle to the pipe */

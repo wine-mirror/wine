@@ -2005,6 +2005,7 @@ static void dump_create_named_pipe_request( const struct create_named_pipe_reque
     fprintf( stderr, " outsize=%08x,", req->outsize );
     fprintf( stderr, " insize=%08x,", req->insize );
     fprintf( stderr, " timeout=%08x,", req->timeout );
+    fprintf( stderr, " inherit=%d,", req->inherit );
     fprintf( stderr, " name=" );
     dump_varargs_unicode_str( cur_size );
 }

@@ -629,7 +629,7 @@ DECL_HANDLER(create_named_pipe)
     {
         server->state = ps_idle_server;
         reply->handle = alloc_handle( current->process, server,
-                                      GENERIC_READ|GENERIC_WRITE, 0 );
+                                      GENERIC_READ|GENERIC_WRITE, req->inherit );
         server->pipe->instances++;
         release_object( server );
     }
