@@ -518,13 +518,6 @@ static HRESULT Coerce(VARIANTARG* pd, LCID lcid, USHORT wFlags, VARIANTARG* ps, 
     break;
 
   case VT_RECORD:
-    switch (vtFrom)
-    {
-    case VT_EMPTY:
-        V_UNION(pd,brecVal).pvRecord = NULL;
-        V_UNION(pd,brecVal).pRecInfo = NULL;
-        return S_OK;
-    }
     break;
 
   }
