@@ -432,7 +432,8 @@ PRINTERINFO *PSDRV_FindPrinterInfo(LPCSTR name)
     const AFM *afm;
     HANDLE hPrinter;
     const char *ppd = NULL;
-    char ppdFileName[256];
+    DWORD ppdType;
+    char* ppdFileName = NULL;
     HKEY hkey;
 
     TRACE("'%s'\n", name);
@@ -478,15 +479,16 @@ PRINTERINFO *PSDRV_FindPrinterInfo(LPCSTR name)
 	ERR ("OpenPrinterA failed with code %li\n", GetLastError ());
 	goto cleanup;
     }
-    
-    ppdFileName[0]='\0';
-    
+
 #ifdef HAVE_CUPS
     {
 	ppd = cupsGetPPD(name);
 
 	if (ppd) {
-	    strncpy(ppdFileName, ppd, sizeof(ppdFileName));
+	    needed=strlen(ppd)+1;
+	    ppdFileName=HeapAlloc(PSDRV_Heap, 0, needed);
+	    memcpy(ppdFileName, ppd, needed);
+	    ppdType=REG_SZ;
 	    res = ERROR_SUCCESS;
 	    /* we should unlink() that file later */
 	} else {
@@ -496,41 +498,59 @@ PRINTERINFO *PSDRV_FindPrinterInfo(LPCSTR name)
     }
 #endif
 
-    if (!ppdFileName[0]) {
-        res = GetPrinterDataA (hPrinter, "PPD File", NULL, ppdFileName,
-	    	sizeof(ppdFileName), &needed);
+    if (!ppdFileName) {
+        res = GetPrinterDataA(hPrinter, "PPD File", NULL, NULL, 0, &needed);
+        if ((res==ERROR_SUCCESS) || (res==ERROR_MORE_DATA)) {
+            ppdFileName=HeapAlloc(PSDRV_Heap, 0, needed);
+            res = GetPrinterDataA(hPrinter, "PPD File", &ppdType, ppdFileName, needed, &needed);
+        }
     }
     /* Look for a ppd file for this printer in the config file.
-     * First look for the names of the printer, then for 'generic'
+     * First look under that printer's name, and then under 'generic'
      */
     if((res != ERROR_SUCCESS) && !RegOpenKeyA(HKEY_LOCAL_MACHINE, "Software\\Wine\\Wine\\Config\\ppd", &hkey))
     {
-	DWORD count = sizeof(ppdFileName);
-	ppdFileName[0] = 0;
-	if(RegQueryValueExA(hkey, name, 0, &type, ppdFileName, &count) != ERROR_SUCCESS)
-	    RegQueryValueExA(hkey, "generic", 0, &type, ppdFileName, &count);
-	RegCloseKey(hkey);
+        const char* value_name;
+
+        if (RegQueryValueExA(hkey, name, 0, NULL, NULL, &needed) == ERROR_SUCCESS) {
+            value_name=name;
+        } else if (RegQueryValueExA(hkey, "generic", 0, NULL, NULL, &needed) == ERROR_SUCCESS) {
+            value_name="generic";
+        } else {
+            value_name=NULL;
+        }
+        if (value_name) {
+            ppdFileName=HeapAlloc(PSDRV_Heap, 0, needed);
+            RegQueryValueExA(hkey, value_name, 0, &ppdType, ppdFileName, &needed);
+        }
+        RegCloseKey(hkey);
     }
 
-    if(!ppdFileName[0])
-	res = ERROR_FILE_NOT_FOUND;
-    else 
-	res = ERROR_SUCCESS;
+    if (!ppdFileName) {
+        res = ERROR_FILE_NOT_FOUND;
+        ERR ("Error %li getting PPD file name for printer '%s'\n", res, name);
+        goto closeprinter;
+    } else {
+        res = ERROR_SUCCESS;
+        if (ppdType==REG_EXPAND_SZ) {
+            char* tmp;
 
-    if (res != ERROR_SUCCESS) {
-	ERR ("Error %li getting PPD file name for printer '%s'\n", res, name);
-	goto closeprinter;
+            /* Expand environment variable references */
+            needed=ExpandEnvironmentStringsA(ppdFileName,NULL,0);
+            tmp=HeapAlloc(PSDRV_Heap, 0, needed);
+            ExpandEnvironmentStringsA(ppdFileName,tmp,needed);
+            HeapFree(PSDRV_Heap, 0, ppdFileName);
+            ppdFileName=tmp;
+        }
     }
-    
-    ppdFileName[sizeof(ppdFileName) - 1] = '\0';
-    
+
     pi->ppd = PSDRV_ParsePPD(ppdFileName);
     if(!pi->ppd) {
 	MESSAGE("Couldn't find PPD file '%s', expect a crash now!\n",
 	    ppdFileName);
 	goto closeprinter;
     }
-    
+
     /*
      *	This is a hack.  The default paper size should be read in as part of
      *	the Devmode structure, but Wine doesn't currently provide a convenient
@@ -601,6 +621,8 @@ PRINTERINFO *PSDRV_FindPrinterInfo(LPCSTR name)
 closeprinter:
     ClosePrinter(hPrinter);
 cleanup:
+    if (ppdFileName)
+        HeapFree(PSDRV_Heap, 0, ppdFileName);
     if (pi->FontSubTable)
     	HeapFree(PSDRV_Heap, 0, pi->FontSubTable);
     if (pi->FriendlyName)
