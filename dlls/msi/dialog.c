@@ -319,7 +319,7 @@ static UINT msi_dialog_scrolltext_control( msi_dialog *dialog, MSIRECORD *rec )
 
     TRACE("%p %p\n", dialog, rec);
 
-    msi_dialog_add_control( dialog, rec, szEdit,
+    msi_dialog_add_control( dialog, rec, szEdit, WS_BORDER |
                  ES_MULTILINE | WS_VSCROLL | ES_READONLY | ES_AUTOVSCROLL );
 
     return ERROR_SUCCESS;
@@ -350,7 +350,7 @@ static UINT msi_dialog_edit_control( msi_dialog *dialog, MSIRECORD *rec )
     LPCWSTR prop;
     LPWSTR val;
 
-    control = msi_dialog_add_control( dialog, rec, szEdit, 0 );
+    control = msi_dialog_add_control( dialog, rec, szEdit, WS_BORDER );
     control->handler = msi_dialog_edit_handler;
     prop = MSI_RecordGetString( rec, 9 );
     if( prop )
@@ -358,6 +358,21 @@ static UINT msi_dialog_edit_control( msi_dialog *dialog, MSIRECORD *rec )
     val = load_dynamic_property( dialog->package, control->property, NULL );
     SetWindowTextW( control->hwnd, val );
     HeapFree( GetProcessHeap(), 0, val );
+    return ERROR_SUCCESS;
+}
+
+static UINT msi_dialog_pathedit_control( msi_dialog *dialog, MSIRECORD *rec )
+{
+    FIXME("not implemented properly\n");
+    return msi_dialog_edit_control( dialog, rec );
+}
+
+static UINT msi_dialog_radiogroup_control( msi_dialog *dialog, MSIRECORD *rec )
+{
+    LPCWSTR name;
+
+    name = MSI_RecordGetString( rec, 2 );
+    FIXME("Radio group %s\n", debugstr_w( name ) );
     return ERROR_SUCCESS;
 }
 
@@ -371,6 +386,9 @@ static const WCHAR szScrollableText[] = {
 static const WCHAR szComboBox[] = { 'C','o','m','b','o','B','o','x',0 };
 static const WCHAR szEdit[] = { 'E','d','i','t',0 };
 static const WCHAR szMaskedEdit[] = { 'M','a','s','k','e','d','E','d','i','t',0 };
+static const WCHAR szPathEdit[] = { 'P','a','t','h','E','d','i','t',0 };
+static const WCHAR szRadioButtonGroup[] = { 
+    'R','a','d','i','o','B','u','t','t','o','n','G','r','o','u','p',0 };
 
 struct control_handler msi_dialog_handler[] =
 {
@@ -383,6 +401,8 @@ struct control_handler msi_dialog_handler[] =
     { szComboBox, msi_dialog_combo_control },
     { szEdit, msi_dialog_edit_control },
     { szMaskedEdit, msi_dialog_edit_control },
+    { szPathEdit, msi_dialog_pathedit_control },
+    { szRadioButtonGroup, msi_dialog_radiogroup_control },
 };
 
 #define NUM_CONTROL_TYPES (sizeof msi_dialog_handler/sizeof msi_dialog_handler[0])
