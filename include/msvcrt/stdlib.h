@@ -203,7 +203,7 @@ MSVCRT(wchar_t)*_i64tow(__int64,MSVCRT(wchar_t)*,int);
 MSVCRT(wchar_t)*_ltow(long,MSVCRT(wchar_t)*,int);
 MSVCRT(wchar_t)*_ui64tow(unsigned __int64,MSVCRT(wchar_t)*,int);
 MSVCRT(wchar_t)*_ultow(unsigned long,MSVCRT(wchar_t)*,int);
-MSVCRT(wchar_t)*_wfullpath(MSVCRT(wchar_t)*,const MSVCRT(wchar_t)*,size_t);
+MSVCRT(wchar_t)*_wfullpath(MSVCRT(wchar_t)*,const MSVCRT(wchar_t)*,MSVCRT(size_t));
 MSVCRT(wchar_t)*_wgetenv(const MSVCRT(wchar_t)*);
 void            _wmakepath(MSVCRT(wchar_t)*,const MSVCRT(wchar_t)*,const MSVCRT(wchar_t)*,const MSVCRT(wchar_t)*,const MSVCRT(wchar_t)*);
 void            _wperror(const MSVCRT(wchar_t)*);

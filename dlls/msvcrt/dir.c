@@ -587,7 +587,7 @@ static void wmsvcrt_fln_fix(MSVCRT_wchar_t *path)
 /*********************************************************************
  *		_wfullpath (MSVCRT.@)
  */
-MSVCRT_wchar_t *_wfullpath(MSVCRT_wchar_t * absPath, const MSVCRT_wchar_t* relPath, unsigned int size)
+MSVCRT_wchar_t *_wfullpath(MSVCRT_wchar_t * absPath, const MSVCRT_wchar_t* relPath, MSVCRT_size_t size)
 {
   MSVCRT_wchar_t drive[5],dir[MAX_PATH],file[MAX_PATH],ext[MAX_PATH];
   MSVCRT_wchar_t res[MAX_PATH];
