@@ -924,6 +924,16 @@ static LRESULT LISTBOX_Paint( WND *wnd, LB_DESCR *descr, HDC hdc )
         rect.right += descr->horz_pos;
     }
 
+    if (IS_OWNERDRAW(descr))
+    {
+        RECT r;
+        HRGN hrgn;
+        GetClientRect(wnd->hwndSelf, &r);
+        hrgn = CreateRectRgnIndirect(&r);
+        SelectClipRgn( hdc, hrgn);
+        DeleteObject( hrgn );
+    }
+
     if (descr->font) oldFont = SelectObject( hdc, descr->font );
     hbrush = SendMessageA( descr->owner, WM_CTLCOLORLISTBOX,
                              hdc, (LPARAM)wnd->hwndSelf );
