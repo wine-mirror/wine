@@ -442,6 +442,7 @@ void WINAPI OemToAnsiBuff16( LPCSTR s, LPSTR d, UINT16 len )
  */
 BOOL WINAPI CharToOemA( LPCSTR s, LPSTR d )
 {
+    if ( !s || !d ) return TRUE;
     return CharToOemBuffA( s, d, strlen( s ) + 1 );
 }
 
@@ -469,6 +470,7 @@ BOOL WINAPI CharToOemBuffA( LPCSTR s, LPSTR d, DWORD len )
  */
 BOOL WINAPI CharToOemBuffW( LPCWSTR s, LPSTR d, DWORD len )
 {
+   if ( !s || !d ) return TRUE;
     WideCharToMultiByte( CP_OEMCP, 0, s, len, d, len, NULL, NULL );
     return TRUE;
 }
