@@ -1036,7 +1036,6 @@ struct alloc_console_request
     unsigned int access;
     int          inherit;
     process_id_t pid;
-    obj_handle_t wait_event;
 };
 struct alloc_console_reply
 {
@@ -3583,6 +3582,6 @@ union generic_reply
     struct get_next_hook_reply get_next_hook_reply;
 };
 
-#define SERVER_PROTOCOL_VERSION 110
+#define SERVER_PROTOCOL_VERSION 111
 
 #endif /* __WINE_WINE_SERVER_PROTOCOL_H */

@@ -203,7 +203,7 @@ static struct console_input_events *create_console_input_events(void)
     return evt;
 }
 
-static struct object *create_console_input( struct thread* renderer, struct object* wait_obj )
+static struct object *create_console_input( struct thread* renderer )
 {
     struct console_input *console_input;
 
@@ -222,7 +222,7 @@ static struct object *create_console_input( struct thread* renderer, struct obje
     console_input->history_index = 0;
     console_input->history_mode  = 0;
     console_input->edition_mode  = 0;
-    console_input->wait_obj      = wait_obj;
+    console_input->event         = create_event( NULL, 0, 1, 0 );
 
     if (!console_input->history || !console_input->evt)
     {
@@ -514,9 +514,8 @@ static int write_console_input( struct console_input* console, int count,
             else i++;
         }
     }
+    if (!console->recnum && count) set_event( console->event );
     console->recnum += count;
-    /* wake up all waiters */
-    wake_up( &console->obj, 0 );
     return count;
 }
 
@@ -555,6 +554,7 @@ static int read_console_input( obj_handle_t handle, int count, int flush )
         {
             free( console->records );
             console->records = NULL;
+            reset_event( console->event );
         }
     }
     release_object( console );
@@ -943,7 +943,7 @@ static void console_input_destroy( struct object *obj )
 
     release_object( console_in->evt );
     console_in->evt = NULL;
-    release_object( console_in->wait_obj );
+    release_object( console_in->event );
 
     for (i = 0; i < console_in->history_size; i++)
 	if (console_in->history[i]) free( console_in->history[i] );
@@ -1209,7 +1209,6 @@ DECL_HANDLER(alloc_console)
     struct process *process;
     struct process *renderer = current->process;
     struct console_input *console;
-    struct object *wait_event;
 
     process = (req->pid) ? get_process_from_id( req->pid ) :
               (struct process *)grab_object( renderer->parent );
@@ -1222,13 +1221,7 @@ DECL_HANDLER(alloc_console)
         set_error( STATUS_ACCESS_DENIED );
         goto the_end;
     }
-    wait_event = get_handle_obj( renderer, req->wait_event, 0, NULL);
-    if (!wait_event)
-    {
-        set_error( STATUS_INVALID_PARAMETER );
-        goto the_end;
-    }
-    if ((console = (struct console_input*)create_console_input( current, wait_event )))
+    if ((console = (struct console_input*)create_console_input( current )))
     {
         if ((in = alloc_handle( renderer, console, req->access, req->inherit )))
         {
@@ -1531,8 +1524,8 @@ DECL_HANDLER(get_console_wait_event)
 
     if (console)
     {
-        reply->handle = alloc_handle( current->process, console->wait_obj, 
-                                      SEMAPHORE_ALL_ACCESS, FALSE);
+        reply->handle = alloc_handle( current->process, console->event, 
+                                      EVENT_ALL_ACCESS, FALSE);
         release_object( console );
     }
     else set_error( STATUS_INVALID_PARAMETER );

@@ -191,7 +191,7 @@ BOOL WINAPI WriteConsoleInputW( HANDLE handle, const INPUT_RECORD *buffer,
                                 DWORD count, LPDWORD written )
 {
     BOOL ret;
-    DWORD w;
+
     TRACE("(%p,%p,%ld,%p)\n", handle, buffer, count, written);
 
     if (written) *written = 0;
@@ -199,14 +199,11 @@ BOOL WINAPI WriteConsoleInputW( HANDLE handle, const INPUT_RECORD *buffer,
     {
         req->handle = console_handle_unmap(handle);
         wine_server_add_data( req, buffer, count * sizeof(INPUT_RECORD) );
-        if ((ret = !wine_server_call_err( req ))) w = reply->written;
+        if ((ret = !wine_server_call_err( req )) && written)
+            *written = reply->written;
     }
     SERVER_END_REQ;
-    if (ret)
-    {
-        ReleaseSemaphore( GetConsoleInputWaitHandle(), w, NULL );
-        if (written) *written = w;
-    }
+
     return ret;
 }
 

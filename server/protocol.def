@@ -775,7 +775,6 @@ enum fd_type
     unsigned int access;        /* wanted access rights */
     int          inherit;       /* inherit flag */
     process_id_t pid;           /* pid of process which shall be attached to the console */
-    obj_handle_t wait_event;    /* semaphore for number of active input events */
 @REPLY
     obj_handle_t handle_in;     /* handle to console input */
     obj_handle_t event;         /* handle to renderer events change notification */

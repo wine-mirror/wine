@@ -997,8 +997,7 @@ static void dump_alloc_console_request( const struct alloc_console_request *req 
 {
     fprintf( stderr, " access=%08x,", req->access );
     fprintf( stderr, " inherit=%d,", req->inherit );
-    fprintf( stderr, " pid=%04x,", req->pid );
-    fprintf( stderr, " wait_event=%p", req->wait_event );
+    fprintf( stderr, " pid=%04x", req->pid );
 }
 
 static void dump_alloc_console_reply( const struct alloc_console_reply *req )
