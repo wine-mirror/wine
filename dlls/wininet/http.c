@@ -648,13 +648,13 @@ HINTERNET WINAPI HTTP_HttpOpenRequestA(HINTERNET hHttpSession,
         HeapFree(GetProcessHeap(), 0, agent_header);
     }
 
-    lpszUrl = HeapAlloc(GetProcessHeap(), 0, strlen(lpwhr->lpszHostName) + 1 + 7);
+    lpszUrl = HeapAlloc(GetProcessHeap(), 0, strlen(lpwhr->lpszHostName) + 1 + strlen("http://"));
     sprintf(lpszUrl, "http://%s", lpwhr->lpszHostName);
     if (InternetGetCookieA(lpszUrl, NULL, NULL, &nCookieSize))
     {
         int cnt = 0;
 
-        lpszCookies = HeapAlloc(GetProcessHeap(), 0, nCookieSize + 1 + 8);
+        lpszCookies = HeapAlloc(GetProcessHeap(), 0, nCookieSize + strlen("Cookie: ") + strlen("\r\n") + 1);
 
         cnt += sprintf(lpszCookies, "Cookie: ");
         InternetGetCookieA(lpszUrl, NULL, lpszCookies + cnt, &nCookieSize);
@@ -1437,6 +1437,8 @@ BOOL WINAPI HTTP_HttpSendRequestA(HINTERNET hHttpRequest, LPCSTR lpszHeaders,
         if (lpOptional)
         {
             requestStringLen += dwOptionalLength;
+        } else {
+            requestStringLen += 2;
         }
 
         /* Allocate string to hold entire request */
