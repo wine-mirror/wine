@@ -53,7 +53,6 @@ static INT RTFInfoOffset = 0;
                      , \
                      hwnd, (UINT)wParam, (UINT)lParam)
 
-LPVOID* WINAPI CreateIRichEditOle();
 VOID RICHEDIT_InitEditControlInfo(void);
 
 /***********************************************************************
