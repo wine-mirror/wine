@@ -513,6 +513,7 @@ static LPVOID map_image( HANDLE hmapping, int fd, char *base, DWORD total_size,
 
     /* zero-map the whole range */
 
+    if (base < (char *)0x110000) base = 0;  /* make sure the DOS area remains free */
     if ((ptr = wine_anon_mmap( base, total_size,
                              PROT_READ | PROT_WRITE | PROT_EXEC, 0 )) == (char *)-1)
     {
