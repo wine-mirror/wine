@@ -2102,6 +2102,77 @@ diff -u the_backup_file_you_made dlls/x11drv/keyboard.c > layout.diff
       </para>
     </sect1>
 
+    <sect1 id="odbc">
+      <title>Using ODBC</title>
+      <para>
+        This section describes how ODBC works within Wine and how to configure
+        it to do what you want (if it can do what you want).
+      </para>
+      <para>
+        The ODBC system within wine, as with the printing system, is designed
+        to hook across to the Unix system at a high level.  Rather than 
+        ensuring that all the windows code works under wine it uses a suitable
+        Unix ODBC provider, such as UnixODBC.  Thus if you configure Wine to 
+        use the builtin odbc32.dll that wine dll will interface to your 
+        Unix ODBC package and let that do the work, whereas if you configure 
+        Wine to use the native odbc32.dll it will try to use the native
+        ODBC32 drivers etc.
+      </para>
+      <sect2>
+        <title>Using a Unix ODBC system with Wine</title>
+        <para>
+          The first step in using a Unix ODBC system with Wine is, of course,
+          to get the Unix ODBC system working itself.  This may involve 
+          downloading code or rpms etc.  There are several Unix ODBC systems
+          available; the one the author is used to is unixODBC (with the
+          IBM DB2 driver). Typically such systems will include a tool, such 
+          as isql, which will allow you to access the data from the command
+          line so that you can check that the system is working.
+        </para>
+        <para>
+          The next step is to hook the Unix ODBC library to the wine builtin 
+          odbc32 dll.  The builtin odbc32 (currently) looks to the
+          environmental variable <emphasis>LIB_ODBC_DRIVER_MANAGER</emphasis>
+          for the name of the odbc library.  For example in the author's
+          .bashrc file is the line:
+        </para>
+        <programlisting>
+export LIB_ODBC_DRIVER_MANAGER=/usr/lib/libodbc.so.1.0.0
+        </programlisting>
+        <para>
+          If that environmental variable is not set then it looks for a 
+          library called libodbc.so and so you can add a symbolic link to
+          equate that to your own library.  For example as root you could
+          run the commands:
+        </para>
+        <programlisting>
+ln -s libodbc.so.1.0.0 /usr/lib/libodbc.so
+/sbin/ldconfig
+        </programlisting>
+        <para>
+          The last step in configuring this is to ensure that Wine is set up
+          to run the builtin version of odbc32.dll, by modifying the DLL
+          configuration.  This builtin dll merely acts as a stub between the
+          calling code and the Unix ODBC library.
+        </para>
+        <para>
+          If you have any problems then you can use the debugmsg channel
+          odbc32 to trace what is happening.  One word of warning.  Some
+          programs actually cheat a little and bypass the odbc library.  For
+          example the Crystal Reports engine goes to the registry to check on
+          the DSN.  The fix for this is documented at unixODBC's site where 
+          there is a section on using unixODBC with Wine.
+        </para>
+      </sect2>
+      <sect2>
+        <title>Using Windows ODBC drivers</title>
+        <para>
+          Does anyone actually have any experience of this and anything to 
+          add?
+        </para>
+      </sect2>
+    </sect1>
+
   </chapter>
 
 <!-- Keep this comment at the end of the file
