@@ -464,11 +464,18 @@ static unsigned WCCURSES_FillSimpleChar(INPUT_RECORD* ir, unsigned real_inchar)
 
     switch (real_inchar)
     {
-    case 127: inchar = '\b'; break;
-    case  10: inchar = '\r'; real_inchar = 27; /* so that we don't think key is ctrl- something */ break;
+    case   9: inchar = real_inchar;
+              real_inchar = 27; /* so that we don't think key is ctrl- something */ 	
+	      break;
+    case  10: inchar = '\r'; 
+              real_inchar = 27; /* Fixme: so that we don't think key is ctrl- something */ 
+	      break;
+    case 127: inchar = '\b'; 
+	      break;
     case  27:
-        /* we assume that ESC & and the second character are atomically generated
-         * otherwise, we'll have a race here
+        /* we assume that ESC & and the second character are atomically
+         * generated otherwise, we'll have a race here. FIXME: This gives 1 sec. delay
+         * because curses looks for a second character.
          */
         if ((inchar = wgetch(stdscr)) != ERR)
         {
@@ -692,7 +699,14 @@ static unsigned WCCURSES_FillCode(struct inner_data* data, INPUT_RECORD* ir, int
     case KEY_B2:
     case KEY_C1:
     case KEY_C3:
-    case KEY_BTAB:
+        goto notFound;
+    case KEY_BTAB:      /* shift tab */
+        numEvent = WCCURSES_FillSimpleChar(ir, 0x9);
+	ir[0].Event.KeyEvent.dwControlKeyState |= SHIFT_PRESSED;
+	ir[1].Event.KeyEvent.dwControlKeyState |= SHIFT_PRESSED;	
+	if (numEvent != 2) WINE_ERR("FillsimpleChar has changed");
+	break;
+
     case KEY_BEG:
     case KEY_CANCEL:
     case KEY_CLOSE:
