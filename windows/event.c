@@ -12,6 +12,7 @@ static char Copyright[] = "Copyright  Alexandre Julliard, 1993";
 
 #include "windows.h"
 #include "win.h"
+#include "class.h"
 
 
 #define NB_BUTTONS      3     /* Windows can handle 3 buttons */
@@ -175,7 +176,15 @@ static void EVENT_mouse_button( Widget w, int hwnd, XButtonEvent *event,
     {  /* Check if double-click */
 	prevTime = lastClickTime[buttonNum];
 	lastClickTime[buttonNum] = event->time;
-	type = (event->time - prevTime < DBLCLICK_TIME) ? 2 : 0;
+	if (event->time - prevTime < DBLCLICK_TIME)
+	{
+	    WND * wndPtr;
+	    CLASS * classPtr;
+	    if (!(wndPtr = WIN_FindWndPtr( hwnd ))) return;
+	    if (!(classPtr = CLASS_FindClassPtr( wndPtr->hClass ))) return;
+	    type = (classPtr->wc.style & CS_DBLCLKS) ? 2 : 0;
+	}
+	else type = 0;
     }	
     
     msg.hwnd    = hwnd;
@@ -237,7 +246,6 @@ HWND SetCapture(HWND wnd)
 		       ButtonPressMask | ButtonReleaseMask | ButtonMotionMask,
 		       GrabModeAsync, GrabModeSync, None, None, CurrentTime);
 
-    GlobalUnlock(wnd);
     if (rv == GrabSuccess)
     {
 	captureWnd = wnd;
@@ -263,6 +271,5 @@ void ReleaseCapture()
     
     XtUngrabPointer(wnd_p->winWidget, CurrentTime);
 
-    GlobalUnlock(captureWnd);
     captureWnd = 0;
 }

@@ -1,7 +1,7 @@
 CFLAGS=$(COPTS) $(DEBUGOPTS) -I$(INCLUDE_DIR)
 
 OBJS=class.o dc.o dce.o event.o message.o win.o timer.o graphics.o \
-    	clipping.o mapping.o painting.o keyboard.o utility.o
+    	clipping.o mapping.o painting.o keyboard.o utility.o syscolor.o
 
 default: windows.o
 

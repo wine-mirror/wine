@@ -606,6 +606,8 @@ main(int argc, char **argv)
 
     fprintf(fp, "\t.globl _%s_Dispatch\n", UpperDLLName);
     fprintf(fp, "_%s_Dispatch:\n", UpperDLLName);
+    fprintf(fp, "\tandl\t$0x0000ffff,%%esp\n");
+    fprintf(fp, "\tandl\t$0x0000ffff,%%ebp\n");
     fprintf(fp, "\torl\t$0x%08x,%%eax\n", DLLId << 16);
     fprintf(fp, "\tjmp\t_CallTo32\n\n");
 
@@ -617,8 +619,10 @@ main(int argc, char **argv)
 	if (!odp->valid)
 	{
 	    fprintf(fp, "_%s_Ordinal_%d:\n", UpperDLLName, i);
+#ifdef BOB_SAYS_NO
 	    fprintf(fp, "\tandl\t$0x0000ffff,%%esp\n");
 	    fprintf(fp, "\tandl\t$0x0000ffff,%%ebp\n");
+#endif
 	    fprintf(fp, "\tmovl\t$%d,%%eax\n", i);
 	    fprintf(fp, "\tpushw\t$0\n");
 	    fprintf(fp, "\tjmp\t_%s_Dispatch\n\n", UpperDLLName);
@@ -684,8 +688,10 @@ main(int argc, char **argv)
 
 	      case FUNCTYPE_PASCAL:
 		fprintf(fp, "_%s_Ordinal_%d:\n", UpperDLLName, i);
+#ifdef BOB_SAYS_NO
 		fprintf(fp, "\tandl\t$0x0000ffff,%%esp\n");
 		fprintf(fp, "\tandl\t$0x0000ffff,%%ebp\n");
+#endif
 		fprintf(fp, "\tmovl\t$%d,%%eax\n", i);
 		fprintf(fp, "\tpushw\t$%d\n", fdp->arg_16_size);
 		fprintf(fp, "\tjmp\t_%s_Dispatch\n\n", UpperDLLName);
@@ -694,8 +700,10 @@ main(int argc, char **argv)
 	      case FUNCTYPE_C:
 	      default:
 		fprintf(fp, "_%s_Ordinal_%d:\n", UpperDLLName, i);
+#ifdef BOB_SAYS_NO
 		fprintf(fp, "\tandl\t$0x0000ffff,%%esp\n");
 		fprintf(fp, "\tandl\t$0x0000ffff,%%ebp\n");
+#endif
 		fprintf(fp, "\tmovl\t$%d,%%eax\n", i);
 		fprintf(fp, "\tpushw\t$0\n");
 		fprintf(fp, "\tjmp\t_%s_Dispatch\n\n", UpperDLLName);

@@ -32,9 +32,11 @@ typedef struct tagWND
     HWND         hwndLastActive; /* Last active popup hwnd */
     FARPROC      lpfnWndProc;    /* Window procedure */
     DWORD        dwStyle;        /* Window style (from CreateWindow) */
-    HANDLE       hDCE;           /* Window DC Entry (if CS_OWNDC) */
+    DWORD        dwExStyle;      /* Extended style (from CreateWindowEx) */
+    HDC          hdc;            /* Window DC (if CS_OWNDC) */
     HMENU        hmenuSystem;    /* System menu */
     WORD         wIDmenu;        /* ID or hmenu (from CreateWindow) */
+    HANDLE       hText;          /* Handle of window text */
     WORD         flags;          /* Misc. flags */
     Widget       shellWidget;    /* For top-level windows */
     Widget       winWidget;      /* For all windows */
@@ -47,10 +49,9 @@ typedef struct tagWND
 #define WIN_ERASE_UPDATERGN       1   /* Update region needs erasing */
 
 
- /* The caller must GlobalUnlock the pointer returned 
-  * by this function (except when NULL).
-  */
+  /* Window functions */
 WND * WIN_FindWndPtr( HWND hwnd );
+HWND WIN_FindWinToRepaint( HWND hwnd );
 
 
 #endif  /* WIN_H */

@@ -1,0 +1,15 @@
+NAME                    Hyperoid
+DESCRIPTION             'Hyperoid Copyright (C) 1990,91 Hutchins Software'
+EXETYPE                 WINDOWS
+STUB                    'WINSTUB.EXE'
+STACKSIZE               4096
+HEAPSIZE                32768
+DATA                    MOVEABLE MULTIPLE
+CODE                    LOADONCALL MOVEABLE DISCARDABLE
+SEGMENTS
+	HYPEROID            LOADONCALL MOVEABLE DISCARDABLE
+	ROIDSUPP            LOADONCALL MOVEABLE DISCARDABLE
+
+EXPORTS
+	HyperoidWndProc     @1
+	HyperoidAboutDlg    @2

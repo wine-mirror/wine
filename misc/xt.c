@@ -19,6 +19,7 @@ static char Copyright[] = "Copyright  Alexandre Julliard, 1993";
 #include "win.h"
 #include "class.h"
 #include "gdi.h"
+#include "user.h"
 
 #ifdef __NetBSD__
 #define HZ 100
@@ -56,6 +57,8 @@ LONG DefWindowProc( HWND hwnd, WORD msg, WORD wParam, LONG lParam )
 {
     WND * wndPtr;
     CLASS * classPtr;
+    LPSTR textPtr;
+    int len;
     
 #ifdef DEBUG_MESSAGE
     printf( "DefWindowProc: %d %d %d %08x\n", hwnd, msg, wParam, lParam );
@@ -89,6 +92,41 @@ LONG DefWindowProc( HWND hwnd, WORD msg, WORD wParam, LONG lParam )
 	    GlobalUnlock( hwnd );
 	    return 0;
 	}
+
+    case WM_GETTEXT:
+	{
+	    if (wParam)
+	    {
+		wndPtr = WIN_FindWndPtr(hwnd);
+		if (wndPtr->hText)
+		{
+		    textPtr = (LPSTR)USER_HEAP_ADDR(wndPtr->hText);
+		    if ((int)wParam > (len = strlen(textPtr)))
+		    {
+			strcpy((LPSTR)lParam, textPtr);
+			GlobalUnlock(hwnd);
+			return (DWORD)len;
+		    }
+		}
+		((LPSTR)lParam)[0] = NULL;
+	    }
+	    GlobalUnlock(hwnd);
+	    return (0L);
+	}
+
+    case WM_GETTEXTLENGTH:
+	{
+	    wndPtr = WIN_FindWndPtr(hwnd);
+	    if (wndPtr->hText)
+	    {
+		textPtr = (LPSTR)USER_HEAP_ADDR(wndPtr->hText);
+		len = strlen(textPtr);
+		GlobalUnlock(hwnd);
+		return (DWORD)len;
+	    }
+	    GlobalUnlock(hwnd);
+	    return (0L);
+	}
     }
     return 0;
 }
@@ -108,7 +146,7 @@ int MessageBox( HWND hwnd, LPSTR str, LPSTR title, WORD type )
 
 void MessageBeep( WORD i )
 {
-    printf( "MessageBeep: %d\n", i );
+    XBell(XT_display, 100);
 }
 
 WORD RegisterWindowMessage( LPSTR str )
@@ -123,7 +161,7 @@ WORD RegisterWindowMessage( LPSTR str )
 DWORD GetTickCount()
 {
     struct tms dummy;
-    return times(&dummy) / (1000 / HZ);
+    return (times(&dummy) * 1000) / HZ;
 }
 
 

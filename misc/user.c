@@ -39,6 +39,9 @@ USER_InitApp(int hInstance)
 {
       /* GDI initialisation */
     if (!GDI_Init()) return 0;
+
+      /* Initialize system colors */
+    SYSCOLOR_Init();
     
       /* Create USER heap */
     if (!USER_HeapInit()) return 0;

@@ -1,0 +1,59 @@
+//
+// HYPEROID.RC - orbiter resources
+//
+
+#include <windows.h>
+#include "hyperoid.h"
+
+IDI_HYPEROID ICON "hyperoid.ico"
+IDI_PANIC ICON "panic.ico"
+
+STRINGTABLE
+{
+	IDS_NAME, "Hyperoid"
+	IDM_NEW, "New Game&!"
+	IDM_ABOUT, "&About..."
+}
+
+//
+// About box
+//
+
+IDD_ABOUT DIALOG LOADONCALL MOVEABLE DISCARDABLE 30, 30, 150, 120
+CAPTION "About"
+STYLE WS_BORDER | WS_CAPTION | WS_DLGFRAME | WS_SYSMENU | WS_VISIBLE | DS_MODALFRAME | WS_POPUP
+{
+	CTEXT           "Hyperoid",                         -1, 0, 10, 150, 8
+	CTEXT           "The classic game",                 -1, 0, 20, 150, 8
+	CTEXT           "Version 1.1",                      -1, 0, 30, 150, 8
+	CTEXT           "Copyright © 1991 Hutchins Software", -1, 0, 45, 150, 8
+	CTEXT           "This program is freeware",         -1, 0, 55, 150, 8
+	CTEXT           "Author: Edward Hutchins",          -1, 0, 65, 150, 8
+	CTEXT           "eah1@cec1.wustl.edu",              -1, 0, 75, 150, 8
+	CTEXT           "",                                 IDD_A_HISCORE, 0, 85, 150, 8
+	ICON            IDI_HYPEROID,                       -1, 10, 16, 0, 0
+	DEFPUSHBUTTON   "Ok!", IDOK,                        20, 100, 40, 12
+	CONTROL         "&Help", IDD_A_HELP,                "button", BS_PUSHBUTTON | WS_TABSTOP | WS_CHILD, 90, 100, 40, 12
+}
+
+//
+// bitmaps
+//
+
+IDB_blank   BITMAP DISCARDABLE  "blank.bmp"
+IDB_bomb    BITMAP DISCARDABLE  "bomb.bmp"
+IDB_level   BITMAP DISCARDABLE  "level.bmp"
+IDB_life    BITMAP DISCARDABLE  "life.bmp"
+IDB_num0    BITMAP DISCARDABLE  "num0.bmp"
+IDB_num1    BITMAP DISCARDABLE  "num1.bmp"
+IDB_num2    BITMAP DISCARDABLE  "num2.bmp"
+IDB_num3    BITMAP DISCARDABLE  "num3.bmp"
+IDB_num4    BITMAP DISCARDABLE  "num4.bmp"
+IDB_num5    BITMAP DISCARDABLE  "num5.bmp"
+IDB_num6    BITMAP DISCARDABLE  "num6.bmp"
+IDB_num7    BITMAP DISCARDABLE  "num7.bmp"
+IDB_num8    BITMAP DISCARDABLE  "num8.bmp"
+IDB_num9    BITMAP DISCARDABLE  "num9.bmp"
+IDB_plus    BITMAP DISCARDABLE  "plus.bmp"
+IDB_score   BITMAP DISCARDABLE  "score.bmp"
+IDB_shield  BITMAP DISCARDABLE  "shield.bmp"

@@ -141,7 +141,7 @@ MENU_SelectionCallback(Widget w, XtPointer client_data, XtPointer call_data)
     menu = MENU_FindMenuBar(this_item);
     if (menu != NULL)
     {
-	wndPtr = (WND *) GlobalLock(menu->ownerWnd);
+	wndPtr = WIN_FindWndPtr(menu->ownerWnd);
 	if (wndPtr == NULL)
 	    return;
 
@@ -152,8 +152,6 @@ MENU_SelectionCallback(Widget w, XtPointer client_data, XtPointer call_data)
 	
 	CallWindowProc(wndPtr->lpfnWndProc, menu->ownerWnd, WM_COMMAND,
 		       this_item->item_id, 0);
-	
-	GlobalUnlock(menu->ownerWnd);
     }
 }
 

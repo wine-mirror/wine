@@ -350,15 +350,9 @@ BOOL PostMessage( HWND hwnd, WORD message, WORD wParam, LONG lParam )
  */
 LONG SendMessage( HWND hwnd, WORD msg, WORD wParam, LONG lParam )
 {
-    LONG retval = 0;
     WND * wndPtr = WIN_FindWndPtr( hwnd );
-    if (wndPtr)
-    {
-	retval = CallWindowProc( wndPtr->lpfnWndProc, hwnd, msg, 
-				 wParam, lParam );
-	GlobalUnlock( hwnd );
-    }
-    return retval;
+    if (!wndPtr) return 0;
+    return CallWindowProc( wndPtr->lpfnWndProc, hwnd, msg, wParam, lParam );
 }
 
 
@@ -386,7 +380,6 @@ BOOL TranslateMessage( LPMSG msg )
  */
 LONG DispatchMessage( LPMSG msg )
 {
-    LONG retval = 0;
     WND * wndPtr = WIN_FindWndPtr( msg->hwnd );
 
 #ifdef DEBUG_MSG
@@ -394,13 +387,9 @@ LONG DispatchMessage( LPMSG msg )
 	    msg->hwnd, msg->message, msg->wParam, msg->lParam, 
 	    msg->time, msg->pt.x, msg->pt.y );
 #endif
-    if (wndPtr) 
-    {
-	retval = CallWindowProc(wndPtr->lpfnWndProc, msg->hwnd, msg->message,
-				msg->wParam, msg->lParam );
-	GlobalUnlock( msg->hwnd );
-    }
-    return retval;
+    if (!wndPtr)  return 0;
+    return CallWindowProc( wndPtr->lpfnWndProc, msg->hwnd, msg->message,
+			   msg->wParam, msg->lParam );
 }
 
 

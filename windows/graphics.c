@@ -226,6 +226,34 @@ void InvertRect( HDC hdc, LPRECT rect )
 
 
 /***********************************************************************
+ *           FrameRect    (USER.83)
+ */
+int FrameRect( HDC hdc, LPRECT rect, HBRUSH hbrush )
+{
+    HBRUSH prevBrush;
+    int left, top, right, bottom;
+
+    DC * dc = (DC *) GDI_GetObjPtr( hdc, DC_MAGIC );
+    if (!dc) return FALSE;
+
+    if ((rect->right <= rect->left) || (rect->bottom <= rect->top)) return 0;
+    if (!(prevBrush = SelectObject( hdc, hbrush ))) return 0;
+    
+    left   = XLPTODP( dc, rect->left );
+    top    = YLPTODP( dc, rect->top );
+    right  = XLPTODP( dc, rect->right );
+    bottom = YLPTODP( dc, rect->bottom );
+    
+    if (DC_SetupGCForBrush( dc ))
+	XDrawRectangle( XT_display, dc->u.x.drawable, dc->u.x.gc,
+		        left, top, right-left-1, bottom-top-1 );
+	    
+    SelectObject( hdc, prevBrush );
+    return 1;
+}
+
+
+/***********************************************************************
  *           SetPixel    (GDI.31)
  */
 COLORREF SetPixel( HDC hdc, short x, short y, COLORREF color )
@@ -242,6 +270,7 @@ COLORREF SetPixel( HDC hdc, short x, short y, COLORREF color )
     GetPaletteEntries( dc->w.hPalette, pixel, 1, &entry );
     
     XSetForeground( XT_display, dc->u.x.gc, pixel );
+    XSetFunction( XT_display, dc->u.x.gc, GXcopy );
     XDrawPoint( XT_display, dc->u.x.drawable, dc->u.x.gc, x, y );
 
     return RGB( entry.peRed, entry.peGreen, entry.peBlue );

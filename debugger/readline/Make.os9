@@ -1,0 +1,19 @@
+##  $Revision: 1.2 $
+##
+##  OS-9 makefile for editline library.
+##
+
+.SUFFIXES:
+
+RFILES	= editline.r complete.r sysos9.r
+
+%.r:		%.c
+	cc68 -r -Dstrchr=index -Dstrrchr=rindex -DNEED_STRDUP -DSYS_OS9 $*.c
+
+testit:		testit.r editline.lib
+	cc68 -f=testit testit.r -l=editline.lib
+
+$(RFILES):	$(RFILES:%.r=%.c)
+
+editline.lib:	$(RFILES)
+	cat $(RFILES) >$@

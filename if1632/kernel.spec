@@ -32,11 +32,19 @@ length	415
 50  pascal GetProcAddress(word ptr) GetProcAddress(1 2)
 51  pascal MakeProcInstance(ptr word) CALLBACK_MakeProcInstance(1 2)
 52  pascal FreeProcInstance(ptr) FreeProcInstance(1)
+59  pascal WriteProfileString(ptr ptr ptr) WriteProfileString(1 2 3)
+60  pascal FindResource(word ptr ptr) FindResource(1 2 3)
+61  pascal LoadResource(word word) LoadResource(1 2)
+62  pascal LockResource(word) LockResource(1)
+63  pascal FreeResource(word) FreeResource(1)
 74  pascal OpenFile(ptr ptr word) KERNEL_OpenFile(1 2 3)
 81  pascal _lclose(word) KERNEL__lclose(1)
 82  pascal _lread(word ptr word) KERNEL__lread(1 2 3)
 85  pascal _lopen(ptr word) KERNEL__lopen(1 2)
 86  pascal _lwrite(word ptr word) KERNEL__lwrite(1 2 3)
+88  pascal lstrcpy(ptr ptr) lstrcpy(1 2)
+89  pascal lstrcat(ptr ptr) lstrcat(1 2)
+90  pascal lstrlen(ptr) lstrcpy(1)
 91  register InitTask(word word word word word
 		      word word word word word) 
 	     KERNEL_InitTask()
@@ -51,6 +59,8 @@ length	415
 	   GetPrivateProfileInt(1 2 3 4)
 128 pascal GetPrivateProfileString(ptr ptr ptr ptr s_word ptr)
 	   GetPrivateProfileString(1 2 3 4 5 6)
+129 pascal WritePrivateProfileString(ptr ptr ptr ptr)
+	   WritePrivateProfileString(1 2 3 4)
 131 pascal GetDOSEnvironment() GetDOSEnvironment()
 132 return GetWinFlags 0 0x413
 154 return GlobalNotify 4 0
@@ -66,3 +76,4 @@ length	415
 57  pascal GetProfileInt(ptr ptr word) GetProfileInt(1 2 3)
 58  pascal GetProfileString(ptr ptr ptr ptr word) GetProfileString(1 2 3 4 5)
 199 pascal SetHandleCount(word) SetHandleCount(1)
+353 pascal lstrcpyn(ptr ptr word) lstrcpyn(1 2 3)

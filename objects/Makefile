@@ -1,7 +1,7 @@
 CFLAGS=$(COPTS) $(DEBUGOPTS) -I$(INCLUDE_DIR)
 
 OBJS=bitmap.o brush.o font.o gdiobj.o palette.o pen.o dib.o region.o \
-	text.o dcvalues.o clipping.o bitblt.o linedda.o
+	text.o dcvalues.o clipping.o bitblt.o linedda.o color.o
 
 default: objects.o
 

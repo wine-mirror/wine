@@ -17,7 +17,7 @@ typedef struct tagCLASS
     HCLASS       hNext;         /* Next class */
     WORD         wMagic;        /* Magic number (must be CLASS_MAGIC) */
     ATOM         atomName;      /* Name of the class */
-    HANDLE       hDCE;          /* Class DC Entry (if CS_CLASSDC) */
+    HDC          hdc;           /* Class DC (if CS_CLASSDC) */
     WORD         cWindows;      /* Count of existing windows of this class */
     WNDCLASS     wc __attribute__ ((packed));  /* Class information */
     WORD         wExtra[1];     /* Class extra bytes */

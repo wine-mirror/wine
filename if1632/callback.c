@@ -135,17 +135,22 @@ void FreeProcInstance(FARPROC func)
 LONG CallWindowProc( FARPROC func, HWND hwnd, WORD message,
 		     WORD wParam, LONG lParam )
 {
-    if ((unsigned int)func & 0xffff0000)
+    if (Is16bitAddress(func))
     {	
 	PushOn16( CALLBACK_SIZE_WORD, hwnd );
 	PushOn16( CALLBACK_SIZE_WORD, message );
 	PushOn16( CALLBACK_SIZE_WORD, wParam );
 	PushOn16( CALLBACK_SIZE_LONG, lParam );
+
+	printf("%8.8x(%4.4x, %4.4x, %4.4x, %8.8x)\n", func, hwnd, message, wParam, lParam);
+
 	return CallTo16((unsigned int) func, 
 			FindDataSegmentForCode((unsigned long) func));   
     }
     else
-	return WIDGETS_Call32WndProc( func, hwnd, message, wParam, lParam );
+    {
+	return (*func)(hwnd, message, wParam, lParam);
+    }
 }
 
 /**********************************************************************
@@ -153,9 +158,16 @@ LONG CallWindowProc( FARPROC func, HWND hwnd, WORD message,
  */
 void CallLineDDAProc(FARPROC func, short xPos, short yPos, long lParam)
 {
-    PushOn16( CALLBACK_SIZE_WORD, xPos );
-    PushOn16( CALLBACK_SIZE_WORD, yPos );
-    PushOn16( CALLBACK_SIZE_LONG, lParam );
-    CallTo16((unsigned int) func, 
-	     FindDataSegmentForCode((unsigned long) func));   
+    if (Is16bitAddress(func))
+    {
+	PushOn16( CALLBACK_SIZE_WORD, xPos );
+	PushOn16( CALLBACK_SIZE_WORD, yPos );
+	PushOn16( CALLBACK_SIZE_LONG, lParam );
+	CallTo16((unsigned int) func, 
+		 FindDataSegmentForCode((unsigned long) func));   
+    }
+    else
+    {
+	(*func)(xPos, yPos, lParam);
+    }
 }

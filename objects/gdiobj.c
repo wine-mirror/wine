@@ -150,13 +150,14 @@ BOOL GDI_Init()
 
       /* Create GDI heap */
 
-    s = GetNextSegment( 0, 0x10000 );
+    s = (struct segment_descriptor_s *)GetNextSegment( 0, 0x10000 );
     if (s == NULL) return FALSE;
     HEAP_Init( &GDI_Heap, s->base_addr, GDI_HEAP_SIZE );
     free(s);
 
       /* Create default palette */
 
+    COLOR_Init();
     PALETTE_Init();
     StockObjects[DEFAULT_PALETTE] = PALETTE_systemPalette;
 

@@ -47,7 +47,7 @@ unsigned short PSPSelector;
 unsigned char ran_out = 0;
 unsigned short SelectorOwners[MAX_SELECTORS];
 
-static int next_unused_selector = 8;
+static int next_unused_selector = FIRST_SELECTOR;
 extern void KERNEL_Ordinal_102();
 extern void UNIXLIB_Ordinal_0();
 

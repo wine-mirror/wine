@@ -107,11 +107,6 @@ DLLRelay(unsigned int func_num, unsigned int seg_off)
 	    IF1632_Saved16_ss  == 0x0097)
 	    printf("ACK!!\n");
 
-#if 0
-	IF1632_Saved16_esp &= 0x0000ffff;
-	IF1632_Saved16_ebp &= 0x0000ffff;
-#endif
-
 #ifdef DEBUG_STACK
 	stack_p = (unsigned short *) seg_off;
 	for (i = 0; i < 24; i++, stack_p++)

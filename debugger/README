@@ -1,0 +1,17 @@
+
+	This is the core of the Wine debugger.  Many pieces have been
+shamelessly stolen - the reverse assember was stolen from gdb more or
+less intact.  It turns out that there are two variables that are set
+differently if you are reverse assembling 16 bit code, and on the
+whole it seems to work.  There may be bugs for all I know.
+
+	As far as non-linux systems are concerned, I simply ripped off
+the linux configuration files from gdb.  Other systems may be close
+enough for these to work properly, but some tweaking may be required.
+
+	I apologize for the non-portability of this, but I wrote the
+whole thing in about 4 hours, most of the time spent debugging a
+stupid mistake in the parser.
+
+-Eric
+

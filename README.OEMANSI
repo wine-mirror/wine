@@ -1,0 +1,29 @@
+
+In this directory you might find my implemantation of the Windows
+String.  The patch lstr.patch includes whats needed for the following
+functions:
+lstrcat,lstrcmp,lstrcmpi,lstrcpy,lstrcpyn,lstrlen,AnsiUpper,AnsiLower,
+IsCharAlpha,IsCharAlphanumeric,IsCharUpper,IsCharLower,AnsiUpperBuff,
+AnsiLowerBuff,AnsiNext,AnsiPrev. Simply apply the patch to Wine.0.4.1
+and remake.
+
+
+Also there should be the files oem2ansi.trl and ansi2oem.trl that
+define how to translate between ansi and oem codepage 861 I believe
+they call it. These files where created by the Windows program
+oemansi.exe which is also included. To get the oem<->ansi translations
+right for your part of the world just run oemansi under Windows not
+Wine and oemansi will create oem2ansi and ansi2oem for your locale
+that is if your Windows/Dos is set up correctly. Move the .trl files
+into the directory from where you run wine. If Wine does not find the
+*.trl in the current directory AnsiToOem and OemToAnsi will be
+passive.
+
+Shortcomings/Bugs: 
+Some functions depend upon libc functions like toupper, tolower and
+isalpha that, as far as I know, are totally without support for NLS
+and ISO 8859-1.  Default Ansi<->OEM translations when *.trl files are
+not found are missing.
+
+
+NOTE: Please don't run oemansi.exe under wine.

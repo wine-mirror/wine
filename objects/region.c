@@ -539,17 +539,20 @@ int CombineRgn( HRGN hDest, HRGN hSrc1, HRGN hSrc2, short mode )
       case RGN_AND:
 	res = IntersectRect( &region->box, &src1Obj->region.box,
 			     &src2Obj->region.box );
+	region->type = COMPLEXREGION;
 	break;
 
       case RGN_OR:
       case RGN_XOR:
 	res = UnionRect( &region->box, &src1Obj->region.box,
 			 &src2Obj->region.box );
+	region->type = COMPLEXREGION;
 	break;
 
       case RGN_DIFF:
 	res = SubtractRect( &region->box, &src1Obj->region.box,
 			    &src2Obj->region.box );
+	region->type = COMPLEXREGION;
 	break;
 
       case RGN_COPY:
@@ -582,7 +585,7 @@ int CombineRgn( HRGN hDest, HRGN hSrc1, HRGN hSrc2, short mode )
 	  REGION_CopyIntersection( region, &src1Obj->region );
 	  XSetFunction( XT_display, regionGC, GXand );
 	  REGION_CopyIntersection( region, &src2Obj->region );
-	  return COMPLEXREGION;
+	  break;
 
       case RGN_OR:
       case RGN_XOR:
@@ -592,7 +595,7 @@ int CombineRgn( HRGN hDest, HRGN hSrc1, HRGN hSrc2, short mode )
 	  XSetFunction( XT_display, regionGC, (mode == RGN_OR) ? GXor : GXxor);
 	  REGION_CopyIntersection( region, &src1Obj->region );
 	  REGION_CopyIntersection( region, &src2Obj->region );
-	  return COMPLEXREGION;
+	  break;
 	  
       case RGN_DIFF:
 	  XSetFunction( XT_display, regionGC, GXclear );
@@ -602,13 +605,13 @@ int CombineRgn( HRGN hDest, HRGN hSrc1, HRGN hSrc2, short mode )
 	  REGION_CopyIntersection( region, &src1Obj->region );
 	  XSetFunction( XT_display, regionGC, GXandInverted );
 	  REGION_CopyIntersection( region, &src2Obj->region );
-	  return COMPLEXREGION;
+	  break;
 	  
       case RGN_COPY:
 	  XSetFunction( XT_display, regionGC, GXcopy );
 	  XCopyArea( XT_display, src1Obj->region.pixmap, region->pixmap,
 		     regionGC, 0, 0, width, height, 0, 0 );
-	  return region->type;
+	  break;
     }
-    return ERROR;
+    return region->type;
 }

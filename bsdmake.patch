@@ -1,147 +1,124 @@
-*** ./windows/Makefile.orig	Fri Sep  3 16:37:58 1993
---- ./windows/Makefile	Thu Sep  9 22:56:21 1993
-***************
-*** 14,19 ****
-  depend:
-  	$(CC) $(CFLAGS) -M *.c > .depend
-  
-! ifeq (.depend,$(wildcard .depend))
-! include .depend
-! endif
---- 14,19 ----
-  depend:
-  	$(CC) $(CFLAGS) -M *.c > .depend
-  
-! .if exists(.depend)
-! .include ".depend"
-! .endif
-*** ./tools/Makefile.orig	Tue Jul 20 18:40:18 1993
---- ./tools/Makefile	Thu Sep  9 22:56:21 1993
-***************
-*** 12,17 ****
-  #
-  # Dependency lists
-  #
-! ifeq (.depend,$(wildcard .depend))
-! include .depend
-! endif
---- 12,21 ----
-  #
-  # Dependency lists
-  #
-! .if exists(.depend)
-! .include ".depend"
-! .endif
-! 
-! #ifeq (.depend,$(wildcard .depend))
-! #include .depend
-! #endif
-*** ./objects/Makefile.orig	Fri Sep  3 16:39:20 1993
---- ./objects/Makefile	Thu Sep  9 22:56:23 1993
-***************
-*** 14,19 ****
-  depend:
-  	$(CC) $(CFLAGS) -M *.c > .depend
-  
-! ifeq (.depend,$(wildcard .depend))
-! include .depend
-! endif
---- 14,19 ----
-  depend:
-  	$(CC) $(CFLAGS) -M *.c > .depend
-  
-! .if exists(.depend)
-! .include ".depend"
-! .endif
-*** ./misc/Makefile.orig	Thu Sep  9 11:16:49 1993
---- ./misc/Makefile	Thu Sep  9 22:56:23 1993
-***************
-*** 13,18 ****
-  depend:
-  	$(CC) $(CFLAGS) -M *.c > .depend
-  
-! ifeq (.depend,$(wildcard .depend))
-! include .depend
-! endif
---- 13,18 ----
-  depend:
-  	$(CC) $(CFLAGS) -M *.c > .depend
-  
-! .if exists(.depend)
-! .include ".depend"
-! .endif
-*** ./memory/Makefile.orig	Tue Jul 20 18:43:02 1993
---- ./memory/Makefile	Thu Sep  9 22:56:34 1993
-***************
-*** 13,18 ****
-  depend:
-  	$(CC) $(CFLAGS) -M *.c > .depend
-  
-! ifeq (.depend,$(wildcard .depend))
-! include .depend
-! endif
---- 13,18 ----
-  depend:
-  	$(CC) $(CFLAGS) -M *.c > .depend
-  
-! .if exists(.depend)
-! .include ".depend"
-! .endif
-*** ./loader/Makefile.orig	Mon Aug 30 20:44:18 1993
---- ./loader/Makefile	Thu Sep  9 22:56:36 1993
-***************
-*** 13,18 ****
-  depend:
-  	$(CC) $(CFLAGS) -M *.c > .depend
-  
-! ifeq (.depend,$(wildcard .depend))
-! include .depend
-! endif
---- 13,18 ----
-  depend:
-  	$(CC) $(CFLAGS) -M *.c > .depend
-  
-! .if exists(.depend)
-! .include ".depend"
-! .endif
-*** ./if1632/Makefile.orig	Thu Sep  9 11:15:58 1993
---- ./if1632/Makefile	Thu Sep  9 22:56:38 1993
-***************
-*** 42,50 ****
-  depend:
-  	$(CC) $(CFLAGS) -M *.c > .depend
-  
-! ifeq (.depend,$(wildcard .depend))
-! include .depend
-! endif
-  
-  
-  
---- 42,50 ----
-  depend:
-  	$(CC) $(CFLAGS) -M *.c > .depend
-  
-! .if exists(.depend)
-! .include ".depend"
-! .endif
-  
-  
-  
-*** ./controls/Makefile.orig	Mon Aug 30 19:40:39 1993
---- ./controls/Makefile	Thu Sep  9 22:56:43 1993
-***************
-*** 14,19 ****
-  depend:
-  	$(CC) $(CFLAGS) -M *.c > .depend
-  
-! ifeq (.depend,$(wildcard .depend))
-! include .depend
-! endif
---- 14,20 ----
-  depend:
-  	$(CC) $(CFLAGS) -M *.c > .depend
-  
-! .if exists(.depend)
-! .include ".depend"
-! .endif
-! 
+diff -ruN ../Backup//Makefile ./Makefile
+--- ../Backup//Makefile	Tue Sep 14 09:47:00 1993
++++ ./Makefile	Thu Sep 16 09:59:52 1993
+@@ -7,7 +7,7 @@
+ ######################################################################
+ # These definitions are for the top level
+ TARGET=wine
+-LIBS=-L. -L/usr/X386/lib -lXext -lXaw -lXt -lXmu -lX11 -lm
++LIBS=-L. -L/usr/X386/lib -lXext -lXaw -lXt -lXmu -lX11 -lm -li386
+ OBJS=if1632/if1632.o controls/controls.o loader/loader.o \
+ 	memory/memory.o misc/misc.o objects/objects.o windows/windows.o
+ SUBDIRS=if1632 controls loader memory misc objects windows
+diff -ruN ../Backup//controls/Makefile ./controls/Makefile
+--- ../Backup//controls/Makefile	Sat Sep 11 22:13:44 1993
++++ ./controls/Makefile	Thu Sep 16 10:00:24 1993
+@@ -14,6 +14,7 @@
+ depend:
+ 	$(CC) $(CFLAGS) -M *.c > .depend
+ 
+-ifeq (.depend,$(wildcard .depend))
+-include .depend
+-endif
++.if exists(.depend)
++.include ".depend"
++.endif
++
+diff -ruN ../Backup//if1632/Makefile ./if1632/Makefile
+--- ../Backup//if1632/Makefile	Tue Sep 14 08:56:17 1993
++++ ./if1632/Makefile	Thu Sep 16 10:00:24 1993
+@@ -45,9 +45,9 @@
+ depend:
+ 	$(CC) $(CFLAGS) -M *.c > .depend
+ 
+-ifeq (.depend,$(wildcard .depend))
+-include .depend
+-endif
++.if exists(.depend)
++.include ".depend"
++.endif
+ 
+ 
+ 
+diff -ruN ../Backup//loader/Makefile ./loader/Makefile
+--- ../Backup//loader/Makefile	Sat Sep 11 21:42:05 1993
++++ ./loader/Makefile	Thu Sep 16 10:00:24 1993
+@@ -13,6 +13,6 @@
+ depend:
+ 	$(CC) $(CFLAGS) -M *.c > .depend
+ 
+-ifeq (.depend,$(wildcard .depend))
+-include .depend
+-endif
++.if exists(.depend)
++.include ".depend"
++.endif
+diff -ruN ../Backup//memory/Makefile ./memory/Makefile
+--- ../Backup//memory/Makefile	Sat Sep 11 21:42:05 1993
++++ ./memory/Makefile	Thu Sep 16 10:00:24 1993
+@@ -13,6 +13,6 @@
+ depend:
+ 	$(CC) $(CFLAGS) -M *.c > .depend
+ 
+-ifeq (.depend,$(wildcard .depend))
+-include .depend
+-endif
++.if exists(.depend)
++.include ".depend"
++.endif
+diff -ruN ../Backup//misc/Makefile ./misc/Makefile
+--- ../Backup//misc/Makefile	Tue Sep 14 09:17:00 1993
++++ ./misc/Makefile	Thu Sep 16 10:00:24 1993
+@@ -14,6 +14,6 @@
+ depend:
+ 	$(CC) $(CFLAGS) -M *.c > .depend
+ 
+-ifeq (.depend,$(wildcard .depend))
+-include .depend
+-endif
++.if exists(.depend)
++.include ".depend"
++.endif
+diff -ruN ../Backup//objects/Makefile ./objects/Makefile
+--- ../Backup//objects/Makefile	Tue Sep 14 13:59:04 1993
++++ ./objects/Makefile	Thu Sep 16 10:00:24 1993
+@@ -14,6 +14,6 @@
+ depend:
+ 	$(CC) $(CFLAGS) -M *.c > .depend
+ 
+-ifeq (.depend,$(wildcard .depend))
+-include .depend
+-endif
++.if exists(.depend)
++.include ".depend"
++.endif
+diff -ruN ../Backup//tools/Makefile ./tools/Makefile
+--- ../Backup//tools/Makefile	Tue Sep 14 09:46:40 1993
++++ ./tools/Makefile	Thu Sep 16 10:00:24 1993
+@@ -14,6 +14,10 @@
+ #
+ # Dependency lists
+ #
+-ifeq (.depend,$(wildcard .depend))
+-include .depend
+-endif
++.if exists(.depend)
++.include ".depend"
++.endif
++
++#ifeq (.depend,$(wildcard .depend))
++#include .depend
++#endif
+diff -ruN ../Backup//windows/Makefile ./windows/Makefile
+--- ../Backup//windows/Makefile	Tue Sep 14 08:39:45 1993
++++ ./windows/Makefile	Thu Sep 16 10:00:24 1993
+@@ -14,6 +14,6 @@
+ depend:
+ 	$(CC) $(CFLAGS) -M *.c > .depend
+ 
+-ifeq (.depend,$(wildcard .depend))
+-include .depend
+-endif
++.if exists(.depend)
++.include ".depend"
++.endif

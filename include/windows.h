@@ -105,7 +105,7 @@ typedef struct {
 #define GCW_STYLE           (-26)
 #define GCW_ATOM            (-32)
 
-
+  /* Windows */
 
 typedef struct {
     void *    lpCreateParams;
@@ -122,6 +122,17 @@ typedef struct {
     DWORD     dwExStyle __attribute__ ((packed));
 } CREATESTRUCT, *LPCREATESTRUCT;
 
+  /* Offsets for GetWindowLong() and GetWindowWord() */
+#define GWL_EXSTYLE         (-20)
+#define GWL_STYLE           (-16)
+#define GWW_ID              (-12)
+#define GWW_HWNDPARENT      (-8)
+#define GWW_HINSTANCE       (-6)
+#define GWL_WNDPROC         (-4)
+#define DWL_MSGRESULT	    0
+#define DWL_DLGPROC	    4
+#define DWL_USER	    8
+
 
 typedef struct { short x, y; } POINT;
 typedef POINT *PPOINT;
@@ -134,6 +145,7 @@ typedef struct
     short cy;
 } SIZE, *LPSIZE;
 
+#define MAKEPOINT(l) (*((POINT *)&(l)))
 
 typedef struct tagMSG
 {
@@ -1452,7 +1464,7 @@ Fc(void,InvalidateRgn,HWND,a,HRGN,b,BOOL,c)
 Fc(void,OemToAnsiBuff,LPSTR,a,LPSTR,b,int,c)
 Fc(void,OffsetRect,LPRECT,a,short,b,short,c)
 Fc(void,SetDlgItemText,HWND,a,int,b,LPSTR,c)
-Fc(void,SetSysColors,int,a,LPINT,b,LONG*,c)
+Fc(void,SetSysColors,int,a,LPINT,b,COLORREF*,c)
 Fc(void,ShowScrollBar,HWND,a,WORD,b,BOOL,c)
 Fc(void,SwitchStackTo,WORD,a,WORD,b,WORD,c)
 Fd(BOOL,AppendMenu,HMENU,a,WORD,b,WORD,c,LPSTR,d)

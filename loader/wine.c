@@ -63,8 +63,38 @@ myerror(const char *s)
     exit(1);
 }
 
+/**********************************************************************
+ *					GetFilenameFromInstance
+ */
+char *
+GetFilenameFromInstance(unsigned short instance)
+{
+    register struct w_files *w = wine_files;
 
-/* Load one NE format executable into memory */
+    while (w && w->hinstance != instance)
+	w = w->next;
+    
+    if (w)
+	return w->filename;
+    else
+	return NULL;
+}
+
+struct w_files *
+GetFileInfo(unsigned short instance)
+{
+    register struct w_files *w = wine_files;
+
+    while (w && w->hinstance != instance)
+	w = w->next;
+    
+    return w;
+}
+
+/**********************************************************************
+ *					LoadImage
+ * Load one NE format executable into memory
+ */
 LoadImage(char * filename,  char * modulename)
 {
     unsigned int read_size;
@@ -143,6 +173,9 @@ LoadImage(char * filename,  char * modulename)
     if (read(wpnt->fd, wpnt->seg_table, read_size) != read_size)
 	myerror("Unable to read segment table header from file");
     wpnt->selector_table = CreateSelectors(wpnt);
+    wpnt->hinstance 
+	= wpnt->
+	    selector_table[wine_files->ne_header->auto_data_seg-1].selector;
 
     /* Get the lookup  table.  This is used for looking up the addresses
        of functions that are exported */

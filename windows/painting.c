@@ -44,7 +44,6 @@ HDC BeginPaint( HWND hwnd, LPPAINTSTRUCT lps )
     if (!(wndPtr->flags & WIN_ERASE_UPDATERGN)) lps->fErase = TRUE;
     else lps->fErase = !SendMessage( hwnd, WM_ERASEBKGND, lps->hdc, 0 );
 
-    GlobalUnlock( hwnd );
     return lps->hdc;
 }
 
@@ -71,7 +70,6 @@ void FillWindow( HWND hwndParent, HWND hwnd, HDC hdc, HBRUSH hbrush )
     rect.right  = wndPtr->rectClient.right - wndPtr->rectClient.left;
     rect.bottom = wndPtr->rectClient.bottom - wndPtr->rectClient.top;
     PaintRect( hwndParent, hwnd, hdc, hbrush, &rect );
-    GlobalUnlock( hwnd );
 }
 
 

@@ -3,14 +3,15 @@
 DEBUGOPTS=
 COPTS=-O2 -m486
 INCLUDE_DIR=include
+LDFLAGS=
 
 ######################################################################
 # These definitions are for the top level
 TARGET=wine
 LIBS=-L. -L/usr/X386/lib -lXext -lXaw -lXt -lXmu -lX11 -lm
 OBJS=if1632/if1632.o controls/controls.o loader/loader.o \
-	memory/memory.o misc/misc.o objects/objects.o windows/windows.o
-SUBDIRS=if1632 controls loader memory misc objects windows
+	memory/memory.o misc/misc.o objects/objects.o windows/windows.o debugger/debugger.o
+SUBDIRS=if1632 controls loader memory misc objects windows debugger
 
 all: $(TARGET)
 

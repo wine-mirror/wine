@@ -1,3 +1,116 @@
+Tue Sep 28 19:59:21 1993  David Metcalfe
+
+	* [windows/win.c]
+	Implemented support for windows with no borders.  Added
+ 	GetParent(), GetDlgCtrlID(), GetWindowText() and
+	GetWindowTextLength() functions.
+
+	* [misc/xt.c]
+	Added processing of WM_GETTEXT and WM_GETTEXTLENGTH messages
+	to DefWindowProc and Implemented MessageBeep().
+
+	* [windows/syscolor.c]
+	Added preliminary system color support.
+
+	* [controls/button1.c]
+	Mods to new button control and integration with Wine.
+
+Tue Sep 28 19:59:21 1993  Johannes Ruscheinski
+
+	* [controls/button1.c]
+	New button control using GDI functions.
+	
+Tue Sep 28 19:59:21 1993  Eric Youngdale
+
+	* [debugger/*]
+	Added debugging capabilities to Wine
+
+Sat Sep 25 13:22:50 1993  Alexandre Julliard  (julliard@di.epfl.ch)
+
+	* [objects/region.c]
+	Bug fix
+
+Fri Sep 24 07:35:11 1993  Bob Amstadt  (bob at pooh)
+
+	* [tools/build.c]
+	Changed the entry point code to reduce the standard entry
+	point size from 22 bytes to 10 bytes.  This leaves about
+	4000 free entry points instead of the 800 in version 0.4.2.
+
+	* [loader/resource.c]
+	Rewrote functions to allow loading of resources from any
+	DLL.
+
+	* [loader/wine.c] [include/wine.h]
+	Added functions GetFilenameFromInstance() and GetFileInfo()
+	to search for a loaded file based on its instance handle.
+	Added a field in struct w_files to make searching by an instance
+	handle faster.
+
+Tue Sep 21 09:57:01 1993  miguel@roxanne.nuclecu.unam.mx (Miguel de Icaza)
+
+	* [misc/profile.c]
+	Implementation of .INI file handling
+
+Mon Sep 20 10:54:32 1993  David Metcalfe
+
+	* [misc/profile.c.old]
+	Implementation of .INI file handling
+
+Mon Sep 20 10:54:32 1993  John Brezak
+
+	* [controls/WinButton.c]
+	Bug fix with call to XtVaSetValues.
+
+Mon Sep 20 10:54:32 1993  Alexandre Julliard
+
+	* [windows/win.c]
+	Quick patch to get colormaps to work with button widget.
+
+Mon Sep 20 02:42:54 1993    (yngvi@hafro.is)
+
+	* misc/keyboard.c: 
+	Ifdefed out some bogus Ansi<->Oem conversion functions
+
+	* misc/lstr.c: 
+	New file with string functions like lstr* IsChar* *Ansi* 
+
+Wed Sep 15 20:35:10 1993  John Brezak
+
+	* [loader/signal.c]
+	Additional changes to support NetBSD.
+
+Wed Sep 15 22:19:22 1993  Martin Ayotte
+
+	* [windows/graphics.c]
+	Added FrameRect function
+
+Tue Sep 14 13:54:45 1993  Alexandre Julliard
+
+	* [objects/color.c] [objects/palette.c]
+	Preliminary support for private color map.
+
+	* [windows/class.c]
+	Implemented CS_CLASSDC style.
+
+	* [windows/dce.c]
+	Moved DCEs to USER heap.
+	Implemented class and window DCs.
+
+	* [windows/event.c]
+	Implemented CS_DBLCLKS style.
+
+	* [windows/graphics.c]
+	Bug fix in SetPixel().
+
+	* [windows/win.c]	
+	Implemented CS_OWNDC style.
+	Implemented Get/SetWindowLong().
+
+	* [controls/menu.c] [windows/class.c] [windows/clipping.c] 
+	  [windows/dce.c] [windows/message.c] [windows/win.c]	
+	Moved windows from global heap to USER heap.
+
 Mon Sep 13 05:00:11 1993  Eric Youngdale
 
 	* [Makefile] [if1632/relay.c] [include/dlls.h] [selector.c]

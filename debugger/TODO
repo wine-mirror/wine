@@ -1,0 +1,30 @@
+This is a list of things that theoretically should be possible in some
+way or another.  No commitment to actually do these, but these sound
+possible to me right now.   In no particular order.  If someone else
+wants to dig in, feel free.
+
+1) Some kind of crude display capability.  Not too hard, I guess.
+	Just keep a list of addresses, counts and formats that we
+	want displayed each time we enter the debugger.
+
+2) Some kind of single step capability.
+	I am not sure - I think you just set a flag
+	in AFLAGS, and you get an interrupt back again.
+	The signal type would proabably be different, however,
+	but Wine could easily be patched to accept this one as well.
+	The main problem with this is that gdb normally runs in a
+	separate process so it is easy to single step second process.
+	Here we are all part of the same process.  Perhaps we could look
+	ahead to the end of the instruction and set another breakpoint?
+
+3) Some kind of breakpoint capability.
+	Requires single step.  When we restart, we
+	remove the breakpoint, single step one instruction
+	replace the breakpoint, and then continue.
+
+4) Some kind of watchpoint capability.  Pretty easy once we have a
+	single step capability, but we end up running the program
+	really slowly one instruction at a time.
+
+5) Some kind of .wdbinit file.
+

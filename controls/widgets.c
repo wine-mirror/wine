@@ -10,8 +10,7 @@ static char Copyright[] = "Copyright  Alexandre Julliard, 1993";
 #include "win.h"
 
 
-static LONG WIDGETS_ButtonWndProc( HWND hwnd, WORD message,
-				   WORD wParam, LONG lParam );
+LONG ButtonWndProc( HWND hwnd, WORD message, WORD wParam, LONG lParam );
 static LONG WIDGETS_StaticWndProc( HWND hwnd, WORD message,
 				   WORD wParam, LONG lParam );
 
@@ -19,8 +18,8 @@ static LONG WIDGETS_StaticWndProc( HWND hwnd, WORD message,
 
 static WNDCLASS WIDGETS_BuiltinClasses[NB_BUILTIN_CLASSES] =
 {
-    { 0, WIDGETS_ButtonWndProc, 0, 0, 0, 0, 0, 0, NULL, "BUTTON" },
-    { 0, WIDGETS_StaticWndProc, 0, 0, 0, 0, 0, 0, NULL, "STATIC" }
+    { 0, (LONG(*)())ButtonWndProc, 0, 0, 0, 0, 0, 0, NULL, "BUTTON" },
+    { 0, (LONG(*)())WIDGETS_StaticWndProc, 0, 0, 0, 0, 0, 0, NULL, "STATIC" }
 };
 
 static FARPROC WndProc32[NB_BUILTIN_CLASSES];
@@ -38,8 +37,6 @@ BOOL WIDGETS_Init()
         
     for (i = 0; i < NB_BUILTIN_CLASSES; i++, pClass++)
     {
-	WndProc32[i] = pClass->lpfnWndProc;
-	pClass->lpfnWndProc = (FARPROC) i+1;
 	if (!RegisterClass(pClass)) return FALSE;
     }
     return TRUE;
@@ -57,39 +54,6 @@ LONG WIDGETS_Call32WndProc( FARPROC func, HWND hwnd, WORD message,
     unsigned int i = (unsigned int) func;
     if (!i || (i > NB_BUILTIN_CLASSES)) return 0;    
     return (*WndProc32[i-1])( hwnd, message, wParam, lParam );
-}
-
-
-/***********************************************************************
- *           WIDGETS_ButtonWndProc
- */
-static LONG WIDGETS_ButtonWndProc( HWND hwnd, WORD message,
-				   WORD wParam, LONG lParam )
-{    
-    switch(message)
-    {
-    case WM_CREATE:
-	return 0;
-	
-    case WM_PAINT:
-    {
-	PAINTSTRUCT ps;
-	BeginPaint( hwnd, &ps );
-	EndPaint( hwnd, &ps );
-	return 0;
-    }
-
-    case WM_COMMAND:
-    {
-	WND  *wndParent;
-	wndParent = WIN_FindWndPtr(hwnd);
-	CallWindowProc(wndParent->lpfnWndProc, hwnd, message, wParam, lParam);
-	return 0;
-    }
-	
-    default:
-	return DefWindowProc( hwnd, message, wParam, lParam );
-    }
 }
 
 

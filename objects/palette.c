@@ -21,32 +21,9 @@ static char Copyright[] = "Copyright  Alexandre Julliard, 1993";
 extern Display * XT_display;
 extern Screen * XT_screen;
 
-
-#define NB_RESERVED_COLORS  17
-static char * ReservedColors[NB_RESERVED_COLORS] =
-{
-    "black",
-    "gray25",
-    "gray50",
-    "gray75",
-    "white",
-    "red1",
-    "red4",
-    "green1",
-    "green4",
-    "blue1",
-    "blue4",
-    "cyan1",
-    "cyan4",
-    "magenta1",
-    "magenta4",
-    "yellow1",
-    "yellow4"
-};
+extern Colormap COLOR_WinColormap;
 
 GDIOBJHDR * PALETTE_systemPalette;
-
-static int SysColorPixels[NB_RESERVED_COLORS];
 
 
 /***********************************************************************
@@ -54,32 +31,32 @@ static int SysColorPixels[NB_RESERVED_COLORS];
  */
 BOOL PALETTE_Init()
 {
-    int i, size, pixel;
-    XColor serverColor, exactColor;
+    int i, size;
+    XColor color;
+    Colormap map;
     HPALETTE hpalette;
     LOGPALETTE * palPtr;
 
-    size = DefaultVisual(XT_display,DefaultScreen(XT_display))->map_entries;
+    size = DefaultVisual( XT_display, DefaultScreen(XT_display) )->map_entries;
     palPtr = malloc( sizeof(LOGPALETTE) + (size-1)*sizeof(PALETTEENTRY) );
     if (!palPtr) return FALSE;
     palPtr->palVersion = 0x300;
     palPtr->palNumEntries = size;
     memset( palPtr->palPalEntry, 0xff, size*sizeof(PALETTEENTRY) );
-    
-    for (i = 0; i < NB_RESERVED_COLORS; i++)
+
+    if ((map = COLOR_WinColormap) == CopyFromParent)
+	map = DefaultColormapOfScreen( XT_screen );
+
+    for (i = 0; i < size; i++)
     {
-	if (XAllocNamedColor( XT_display,
-			      DefaultColormapOfScreen( XT_screen ),
-			      ReservedColors[i], 
-			      &serverColor, &exactColor ))
-	{
-	    pixel = serverColor.pixel;
-	    palPtr->palPalEntry[pixel].peRed   = serverColor.red >> 8;
-	    palPtr->palPalEntry[pixel].peGreen = serverColor.green >> 8;
-	    palPtr->palPalEntry[pixel].peBlue  = serverColor.blue >> 8;
-	    palPtr->palPalEntry[pixel].peFlags = 0;
-	}
+	color.pixel = i;
+	XQueryColor( XT_display, map, &color );
+	palPtr->palPalEntry[i].peRed   = color.red >> 8;
+	palPtr->palPalEntry[i].peGreen = color.green >> 8;
+	palPtr->palPalEntry[i].peBlue  = color.blue >> 8;
+	palPtr->palPalEntry[i].peFlags = 0;	
     }
+
     hpalette = CreatePalette( palPtr );
     PALETTE_systemPalette = (GDIOBJHDR *) GDI_HEAP_ADDR( hpalette );
     free( palPtr );
@@ -158,10 +135,18 @@ WORD GetNearestPaletteIndex( HPALETTE hpalette, COLORREF color )
     
     palPtr = (PALETTEOBJ *) GDI_GetObjPtr( hpalette, PALETTE_MAGIC );
     if (!palPtr) return 0;
+
+    if (COLOR_WinColormap && (hpalette == STOCK_DEFAULT_PALETTE))
+    {
+	if ((color & 0xffffff) == 0) return 0;  /* Entry 0 is black */
+	if ((color & 0xffffff) == 0xffffff)     /* Max entry is white */
+	    return palPtr->logpalette.palNumEntries - 1;
+    }
     
     r = GetRValue(color);
     g = GetGValue(color);
     b = GetBValue(color);
+
     entry = palPtr->logpalette.palPalEntry;
     for (i = 0, minDist = MAXINT; i < palPtr->logpalette.palNumEntries; i++)
     {

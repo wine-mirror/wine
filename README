@@ -7,14 +7,13 @@ INSTALLATION:
 Linux:
 
     Uncompress and untar this archive into the directory of your
-choice.  This release requires a Linux version 0.99 pl12 kernel with
-ALPHA-pl13-diffs.
+choice.  This release requires a Linux version 0.99 pl13 kernel
+or above.
 
 NetBSD:
 
     If you use BSD make rather than GNU make, you must apply the patches
-in the file "bsdmake.patch".  This release requires NetBSD 0.9 with
-additional patches.
+in the file "bsdmake.patch".  This release requires NetBSD-current.
 
 All:
 
@@ -27,6 +26,24 @@ Grab a copy of Windows sol.exe (Solitaire) and run it with the command:
 
 Have a nice game of solitaire, but be careful.  Emulation isn't perfect.
 So, occassionally it will crash.
+
+WHAT'S NEW with version 0.4.3: (see ChangeLog for details)
+	- Bug fixes
+	- Resource loading now able to load DLL resources
+	- Button control now based on GDI calls
+	- Preliminary system color support
+	- Miscellaneous window functions
+	- Limited debugging facility (sometimes hangs)
+
+WHAT'S NEW with version 0.4.2: (see ChangeLog for details)
+	- Bug fixes
+	- 32-bit callback functions allowed
+	- .INI file handling
+	- lstr* functions and ANSI<->OEM conversion functions.
+
+WHAT'S NEW with version 0.4.1: (see ChangeLog for details)
+	- Bug fixes
+	- Memory usage changes.
 
 WHAT'S NEW with version 0.4.0: (see ChangeLog for details)
 	- Wine now compiles and runs under NetBSD.  Patches are

@@ -25,6 +25,8 @@
 #include <string.h>
 #include <limits.h>
 
+#define OPEN_MAX 256
+
 /***************************************************************************
  This structure stores the infomation needed for a single DOS drive
  ***************************************************************************/

@@ -7,8 +7,10 @@
 static char Copyright[] = "Copyright  Alexandre Julliard, 1993";
 
 #include "dce.h"
+#include "class.h"
 #include "win.h"
 #include "gdi.h"
+#include "user.h"
 
 
 #define NB_DCE    5  /* Number of DCEs created at startup */
@@ -31,14 +33,13 @@ void DCE_Init()
         
     for (i = 0; i < NB_DCE; i++)
     {
-	handle = GlobalAlloc( GMEM_MOVEABLE, sizeof(DCE) );
+	handle = USER_HEAP_ALLOC( GMEM_MOVEABLE, sizeof(DCE) );
 	if (!handle) return;
-	dce = (DCE *) GlobalLock( handle );
+	dce = (DCE *) USER_HEAP_ADDR( handle );
 	dce->hdc = CreateDC( "DISPLAY", NULL, NULL, NULL );
 	if (!dce->hdc)
 	{
-	    GlobalUnlock( handle );
-	    GlobalFree( handle );
+	    USER_HEAP_FREE( handle );
 	    return;
 	}
 	dce->hwndCurrent = 0;
@@ -49,7 +50,6 @@ void DCE_Init()
 	dce->hNext = firstDCE;
 	firstDCE = handle;
 	if (!defaultDCstate) defaultDCstate = GetDCState( dce->hdc );
-	GlobalUnlock( handle );
     }
 }
 
@@ -59,58 +59,54 @@ void DCE_Init()
  */
 HDC GetDC( HWND hwnd )
 {
-    HANDLE hdce, next;
-    HDC hdc;
+    HANDLE hdce;
+    HDC hdc = 0;
     DCE * dce;
     DC * dc;
     WND * wndPtr = NULL;
+    CLASS * classPtr;
     
     if (hwnd)
     {
-	wndPtr = WIN_FindWndPtr( hwnd );
-	if (!wndPtr) return 0;
+	if (!(wndPtr = WIN_FindWndPtr( hwnd ))) return 0;
+	if (!(classPtr = CLASS_FindClassPtr( wndPtr->hClass ))) return 0;
+	if (wndPtr->hdc) hdc = wndPtr->hdc;
+	else if (classPtr->hdc) hdc = classPtr->hdc;
     }
         
-    for (hdce = firstDCE; (hdce); hdce = next)
+    if (!hdc)
     {
-	dce = (DCE *) GlobalLock( hdce );
-	if (!dce) return 0;
-	if (!dce->inUse) break;
-	next = dce->hNext;
-	GlobalUnlock( hdce );
-    }
-
-    if (!hdce)
-    {
-	if (hwnd) GlobalUnlock( hwnd );
-	return 0;
+	for (hdce = firstDCE; (hdce); hdce = dce->hNext)
+	{
+	    dce = (DCE *) USER_HEAP_ADDR( hdce );
+	    if (!dce) return 0;
+	    if (!dce->inUse) break;
+	}
+	if (!hdce) return 0;
+	dce->hwndCurrent = hwnd;
+	dce->inUse       = TRUE;
+	hdc = dce->hdc;
     }
     
       /* Initialize DC */
     
-    dc = (DC *) GDI_GetObjPtr( dce->hdc, DC_MAGIC );
-    if (!dc)
-    {
-	if (hwnd) GlobalUnlock( hwnd );
-	return 0;
-    }
+    if (!(dc = (DC *) GDI_GetObjPtr( dce->hdc, DC_MAGIC ))) return 0;
+
     if (wndPtr)
     {
 	dc->u.x.drawable = XtWindow( wndPtr->winWidget );
     	dc->u.x.widget   = wndPtr->winWidget;
+	if (wndPtr->dwStyle & WS_CLIPCHILDREN)
+	    XSetSubwindowMode( XT_display, dc->u.x.gc, ClipByChildren );
+	else XSetSubwindowMode( XT_display, dc->u.x.gc, IncludeInferiors);
     }
     else
     {
 	dc->u.x.drawable = DefaultRootWindow( XT_display );
 	dc->u.x.widget   = 0;
+	XSetSubwindowMode( XT_display, dc->u.x.gc, IncludeInferiors );    
     }   
-    SetDCState( dce->hdc, defaultDCstate );
 
-    dce->hwndCurrent = hwnd;
-    dce->inUse       = TRUE;
-    hdc = dce->hdc;
-    GlobalUnlock( hdce );
-    if (hwnd) GlobalUnlock( hwnd );
 #ifdef DEBUG_WIN
     printf( "GetDC(%d): returning %d\n", hwnd, hdc );
 #endif
@@ -126,6 +122,7 @@ int ReleaseDC( HWND hwnd, HDC hdc )
     HANDLE hdce, next;
     DCE * dce;
     WND * wndPtr = NULL;
+    CLASS * classPtr;
     
 #ifdef DEBUG_WIN
     printf( "ReleaseDC: %d %d\n", hwnd, hdc );
@@ -133,25 +130,22 @@ int ReleaseDC( HWND hwnd, HDC hdc )
         
     if (hwnd)
     {
-	wndPtr = WIN_FindWndPtr( hwnd );
-	if (!wndPtr) return 0;
+	if (!(wndPtr = WIN_FindWndPtr( hwnd ))) return 0;
+	if (wndPtr->hdc && (wndPtr->hdc == hdc)) return 1;
+	if (!(classPtr = CLASS_FindClassPtr( wndPtr->hClass ))) return 0;
+	if (classPtr->hdc && (classPtr->hdc == hdc)) return 1;
     }
 
-    for (hdce = firstDCE; (hdce); hdce = next)
+    for (hdce = firstDCE; (hdce); hdce = dce->hNext)
     {
-	dce = (DCE *) GlobalLock( hdce );
-	if (!dce) return 0;
+	if (!(dce = (DCE *) USER_HEAP_ADDR( hdce ))) return 0;
 	if (dce->inUse && (dce->hdc == hdc)) break;
-	next = dce->hNext;
-	GlobalUnlock( hdce );
     }
 
-    if (hdce) 
+    if (hdce)
     {
+	SetDCState( dce->hdc, defaultDCstate );
 	dce->inUse = FALSE;
-    	GlobalUnlock( hdce );
-    }
-
-    if (hwnd) GlobalUnlock( hwnd );
+    }    
     return (hdce != 0);
 }

@@ -32,4 +32,11 @@ struct segment_descriptor_s
 #define GLOBAL_FLAGS_EXECUTEONLY	0x00020000
 #define GLOBAL_FLAGS_READONLY		0x00020000
 
+#define FIRST_SELECTOR	8
+
+static __inline__ int Is16bitAddress(void *address)
+{
+    return ((int) address >= (((FIRST_SELECTOR << 3) | 0x0007) << 16));
+}
+
 #endif /* SEGMEM_H */

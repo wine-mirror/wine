@@ -3,12 +3,47 @@ static char Copyright[] = "Copyright  Robert J. Amstadt, 1993";
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <fcntl.h>
+#include <unistd.h>
 #include "prototypes.h"
 #include "neexe.h"
 #include "windows.h"
 #include "gdi.h"
+#include "wine.h"
 
 #define MIN(a,b)	((a) < (b) ? (a) : (b))
+
+static int ResourceFd = -1;
+static HANDLE ResourceInst = 0;
+static struct w_files *ResourceFileInfo = NULL;
+
+
+/**********************************************************************
+ *					OpenResourceFile
+ */
+int
+OpenResourceFile(HANDLE instance)
+{
+    struct w_files *w;
+    
+    if (ResourceInst == instance)
+	return ResourceFd;
+    
+    w = GetFileInfo(instance);
+    if (w == NULL)
+	return -1;
+    
+    if (ResourceFd >= 0)
+	close(ResourceFd);
+    
+    ResourceInst = instance;
+    ResourceFileInfo = w;
+    ResourceFd = open(w->filename, O_RDONLY);
+    
+    return ResourceFd;
+}
 
 /**********************************************************************
  *					ConvertCoreBitmap
@@ -88,17 +123,19 @@ FindResourceByNumber(struct resource_nameinfo_s *result_p,
     struct resource_nameinfo_s nameinfo;
     unsigned short size_shift;
     int i;
+    off_t rtoff;
 
     /*
      * Move to beginning of resource table.
      */
-    lseek(CurrentNEFile, (CurrentMZHeader->ne_offset +
-			  CurrentNEHeader->resource_tab_offset), SEEK_SET);
+    rtoff = (ResourceFileInfo->mz_header->ne_offset +
+	     ResourceFileInfo->ne_header->resource_tab_offset);
+    lseek(ResourceFd, rtoff, SEEK_SET);
     
     /*
      * Read block size.
      */
-    if (read(CurrentNEFile, &size_shift, sizeof(size_shift)) != 
+    if (read(ResourceFd, &size_shift, sizeof(size_shift)) != 
 	sizeof(size_shift))
     {
 	return -1;
@@ -110,7 +147,7 @@ FindResourceByNumber(struct resource_nameinfo_s *result_p,
     typeinfo.type_id = 0xffff;
     while (typeinfo.type_id != 0)
     {
-	if (read(CurrentNEFile, &typeinfo, sizeof(typeinfo)) !=
+	if (read(ResourceFd, &typeinfo, sizeof(typeinfo)) !=
 	    sizeof(typeinfo))
 	{
 	    return -1;
@@ -119,7 +156,7 @@ FindResourceByNumber(struct resource_nameinfo_s *result_p,
 	{
 	    for (i = 0; i < typeinfo.count; i++)
 	    {
-		if (read(CurrentNEFile, &nameinfo, sizeof(nameinfo)) != 
+		if (read(ResourceFd, &nameinfo, sizeof(nameinfo)) != 
 		    sizeof(nameinfo))
 		{
 		    return -1;
@@ -159,17 +196,19 @@ FindResourceByName(struct resource_nameinfo_s *result_p,
     unsigned char nbytes;
     char name[256];
     int i;
+    off_t rtoff;
 
     /*
      * Move to beginning of resource table.
      */
-    lseek(CurrentNEFile, (CurrentMZHeader->ne_offset +
-			  CurrentNEHeader->resource_tab_offset), SEEK_SET);
+    rtoff = (ResourceFileInfo->mz_header->ne_offset +
+	     ResourceFileInfo->ne_header->resource_tab_offset);
+    lseek(ResourceFd, rtoff, SEEK_SET);
     
     /*
      * Read block size.
      */
-    if (read(CurrentNEFile, &size_shift, sizeof(size_shift)) != 
+    if (read(ResourceFd, &size_shift, sizeof(size_shift)) != 
 	sizeof(size_shift))
     {
 	return -1;
@@ -181,7 +220,7 @@ FindResourceByName(struct resource_nameinfo_s *result_p,
     typeinfo.type_id = 0xffff;
     while (typeinfo.type_id != 0)
     {
-	if (read(CurrentNEFile, &typeinfo, sizeof(typeinfo)) !=
+	if (read(ResourceFd, &typeinfo, sizeof(typeinfo)) !=
 	    sizeof(typeinfo))
 	{
 	    return -1;
@@ -190,7 +229,7 @@ FindResourceByName(struct resource_nameinfo_s *result_p,
 	{
 	    for (i = 0; i < typeinfo.count; i++)
 	    {
-		if (read(CurrentNEFile, &nameinfo, sizeof(nameinfo)) != 
+		if (read(ResourceFd, &nameinfo, sizeof(nameinfo)) != 
 		    sizeof(nameinfo))
 		{
 		    return -1;
@@ -199,14 +238,12 @@ FindResourceByName(struct resource_nameinfo_s *result_p,
 		if (nameinfo.id & 0x8000)
 		    continue;
 		
-		old_pos = lseek(CurrentNEFile, 0, SEEK_CUR);
-		new_pos = (CurrentMZHeader->ne_offset +
-			   CurrentNEHeader->resource_tab_offset +
-			   nameinfo.id);
-		lseek(CurrentNEFile, new_pos, SEEK_SET);
-		read(CurrentNEFile, &nbytes, 1);
-		read(CurrentNEFile, name, nbytes);
-		lseek(CurrentNEFile, old_pos, SEEK_SET);
+		old_pos = lseek(ResourceFd, 0, SEEK_CUR);
+		new_pos = rtoff + nameinfo.id;
+		lseek(ResourceFd, new_pos, SEEK_SET);
+		read(ResourceFd, &nbytes, 1);
+		read(ResourceFd, name, nbytes);
+		lseek(ResourceFd, old_pos, SEEK_SET);
 		name[nbytes] = '\0';
 
 		if (strcasecmp(name, resource_name) == 0)
@@ -219,53 +256,6 @@ FindResourceByName(struct resource_nameinfo_s *result_p,
     }
     
     return -1;
-}
-
-/**********************************************************************
- *					LoadString
- */
-int
-LoadString(HANDLE instance, WORD resource_id, LPSTR buffer, int buflen)
-{
-    struct resource_nameinfo_s nameinfo;
-    unsigned short target_id;
-    unsigned char string_length;
-    int size_shift;
-    int string_num;
-    int i;
-
-#ifdef DEBUG_RESOURCE
-    printf("LoadString: instance = %04x, id = %d, "
-	   "buffer = %08x, length = %d\n",
-	   instance, resource_id, buffer, buflen);
-#endif
-    
-    /*
-     * Find string entry.
-     */
-    target_id = (resource_id >> 4) + 0x8001;
-    string_num = resource_id & 0x000f;
-
-    size_shift = FindResourceByNumber(&nameinfo, NE_RSCTYPE_STRING, target_id);
-    if (size_shift == -1)
-	return 0;
-    
-    lseek(CurrentNEFile, (int) nameinfo.offset << size_shift, SEEK_SET);
-
-    for (i = 0; i < string_num; i++)
-    {
-	read(CurrentNEFile, &string_length, 1);
-	lseek(CurrentNEFile, string_length, SEEK_CUR);
-    }
-			
-    read(CurrentNEFile, &string_length, 1);
-    i = MIN(string_length, buflen - 1);
-    read(CurrentNEFile, buffer, i);
-    buffer[i] = '\0';
-#ifdef DEBUG_RESOURCE
-    printf("            '%s'\n", buffer);
-#endif
-    return i;
 }
 
 /**********************************************************************
@@ -297,6 +287,43 @@ LoadAccelerators(HANDLE instance, LPSTR lpTableName)
   fprintf(stderr,"LoadAccelerators: (%d),%d\n",instance,lpTableName);
     return 0;
 }
+
+/**********************************************************************
+ *				FindResource	[KERNEL.60]
+ */
+HANDLE FindResource(HANDLE instance, LPSTR resource_name, LPSTR type_name)
+{
+    fprintf(stderr,"FindResource: (%d),%d\n",instance, resource_name, type_name);
+    return 0;
+}
+
+/**********************************************************************
+ *				LoadResource	[KERNEL.61]
+ */
+HANDLE LoadResource(HANDLE instance, HANDLE hResInfo)
+{
+    fprintf(stderr,"LoadResource: (%d),%d\n",instance, hResInfo);
+    return ;
+}
+
+/**********************************************************************
+ *				LockResource	[KERNEL.62]
+ */
+LPSTR LockResource(HANDLE hResData)
+{
+    fprintf(stderr,"LockResource: %d\n", hResData);
+    return ;
+}
+
+/**********************************************************************
+ *				FreeResource	[KERNEL.63]
+ */
+BOOL FreeResource(HANDLE hResData)
+{
+    fprintf(stderr,"FreeResource: %d\n", hResData);
+    return ;
+}
+
 
 /**********************************************************************
  *					RSC_LoadResource
@@ -317,10 +344,13 @@ RSC_LoadResource(int instance, char *rsc_name, int type, int *image_size_ret)
     {
 	return 0;
     }
+    else if (OpenResourceFile(instance) < 0)
+	return 0;
+    
     /*
      * Get resource by ordinal
      */
-    else if (((int) rsc_name & 0xffff0000) == 0)
+    if (((int) rsc_name & 0xffff0000) == 0)
     {
 	size_shift = FindResourceByNumber(&nameinfo, type,
 					  (int) rsc_name | 0x8000);
@@ -338,7 +368,7 @@ RSC_LoadResource(int instance, char *rsc_name, int type, int *image_size_ret)
     /*
      * Read resource.
      */
-    lseek(CurrentNEFile, ((int) nameinfo.offset << size_shift), SEEK_SET);
+    lseek(ResourceFd, ((int) nameinfo.offset << size_shift), SEEK_SET);
 
     image_size = nameinfo.length << size_shift;
     if (image_size_ret != NULL)
@@ -346,7 +376,7 @@ RSC_LoadResource(int instance, char *rsc_name, int type, int *image_size_ret)
     
     hmem = GlobalAlloc(GMEM_MOVEABLE, image_size);
     image = GlobalLock(hmem);
-    if (image == NULL || read(CurrentNEFile, image, image_size) != image_size)
+    if (image == NULL || read(ResourceFd, image, image_size) != image_size)
     {
 	GlobalFree(hmem);
 	return 0;
@@ -354,6 +384,46 @@ RSC_LoadResource(int instance, char *rsc_name, int type, int *image_size_ret)
 
     GlobalUnlock(hmem);
     return hmem;
+}
+
+/**********************************************************************
+ *					LoadString
+ */
+int
+LoadString(HANDLE instance, WORD resource_id, LPSTR buffer, int buflen)
+{
+    HANDLE hmem;
+    int rsc_size;
+    unsigned char *p;
+    int string_num;
+    int i;
+
+#ifdef DEBUG_RESOURCE
+    printf("LoadString: instance = %04x, id = %d, "
+	   "buffer = %08x, length = %d\n",
+	   instance, resource_id, buffer, buflen);
+#endif
+
+    hmem = RSC_LoadResource(instance, (char *) (resource_id >> 4),
+			    NE_RSCTYPE_STRING, &rsc_size);
+    if (hmem == 0)
+	return 0;
+    
+    p = GlobalLock(hmem);
+    string_num = resource_id & 0x000f;
+    for (i = 0; i < resource_id; i++)
+	p += *p;
+    
+    i = MIN(buflen - 1, *p);
+    memcpy(buffer, p + 1, i);
+    buffer[i] = '\0';
+
+    GlobalFree(hmem);
+
+#ifdef DEBUG_RESOURCE
+    printf("            '%s'\n", buffer);
+#endif
+    return i;
 }
 
 /**********************************************************************
@@ -403,3 +473,5 @@ LoadBitmap(HANDLE instance, LPSTR bmp_name)
     ReleaseDC( 0, hdc );
     return hbitmap;
 }
+
+

@@ -78,6 +78,8 @@ void OffsetRect( LPRECT rect, short x, short y )
  */
 void InflateRect( LPRECT rect, short x, short y )
 {
+    rect->left   -= x;
+    rect->top 	 -= y;
     rect->right  += x;
     rect->bottom += y;
 }

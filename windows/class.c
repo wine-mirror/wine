@@ -66,10 +66,13 @@ ATOM RegisterClass( LPWNDCLASS class )
     newClass->hNext      = firstClass;
     newClass->wMagic     = CLASS_MAGIC;
     newClass->atomName   = handle;  /* Should be an atom */
-    newClass->hDCE       = 0;  /* Should allocate a DCE if needed */
     newClass->cWindows   = 0;  
     newClass->wc         = *class;
-        
+
+    if (newClass->wc.style & CS_CLASSDC)
+	newClass->hdc = CreateDC( "DISPLAY", NULL, NULL, NULL );
+    else newClass->hdc = 0;
+
       /* Class name should also be set to zero. For now we need the
        * name because we don't have atoms.
        */
@@ -113,7 +116,10 @@ BOOL UnregisterClass( LPSTR className, HANDLE instance )
 	}
 	prevClassPtr->hNext = classPtr->hNext;
     }
-    
+
+      /* Delete the class */
+    if (classPtr->hdc) DeleteDC( classPtr->hdc );
+    if (classPtr->wc.hbrBackground) DeleteObject( classPtr->wc.hbrBackground );
     USER_HEAP_FREE( class );
     return TRUE;
 }
@@ -135,16 +141,13 @@ WORD SetClassWord( HWND hwnd, short offset, WORD newval )
 {
     CLASS * classPtr;
     WND * wndPtr;
-    WORD retval = 0;
+    WORD *ptr, retval = 0;
     
     if (!(wndPtr = WIN_FindWndPtr( hwnd ))) return 0;
-    if ((classPtr = CLASS_FindClassPtr( wndPtr->hClass )))
-    {
-	WORD * ptr = (WORD *)(((char *)classPtr->wExtra) + offset);
-	retval = *ptr;
-	*ptr = newval;
-    }
-    GlobalUnlock( hwnd );
+    if (!(classPtr = CLASS_FindClassPtr( wndPtr->hClass ))) return 0;
+    ptr = (WORD *)(((char *)classPtr->wExtra) + offset);
+    retval = *ptr;
+    *ptr = newval;
     return retval;
 }
 
@@ -156,13 +159,10 @@ LONG GetClassLong( HWND hwnd, short offset )
 {
     CLASS * classPtr;
     WND * wndPtr;
-    LONG retval = 0;
     
     if (!(wndPtr = WIN_FindWndPtr( hwnd ))) return 0;
-    if ((classPtr = CLASS_FindClassPtr( wndPtr->hClass )))
-	retval = *(LONG *)(((char *)classPtr->wExtra) + offset);
-    GlobalUnlock( hwnd );
-    return retval;
+    if (!(classPtr = CLASS_FindClassPtr( wndPtr->hClass ))) return 0;
+    return *(LONG *)(((char *)classPtr->wExtra) + offset);
 }
 
 
@@ -173,15 +173,12 @@ LONG SetClassLong( HWND hwnd, short offset, LONG newval )
 {
     CLASS * classPtr;
     WND * wndPtr;
-    LONG retval = 0;
+    LONG *ptr, retval = 0;
     
     if (!(wndPtr = WIN_FindWndPtr( hwnd ))) return 0;
-    if ((classPtr = CLASS_FindClassPtr( wndPtr->hClass )))
-    {
-	LONG * ptr = (LONG *)(((char *)classPtr->wExtra) + offset);
-	retval = *ptr;
-	*ptr = newval;
-    }
-    GlobalUnlock( hwnd );
+    if (!(classPtr = CLASS_FindClassPtr( wndPtr->hClass ))) return 0;
+    ptr = (LONG *)(((char *)classPtr->wExtra) + offset);
+    retval = *ptr;
+    *ptr = newval;
     return retval;
 }

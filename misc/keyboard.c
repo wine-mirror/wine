@@ -11,6 +11,8 @@ int ToAscii(WORD wVirtKey, WORD wScanCode, LPSTR lpKeyState,
   return -1;
 }
 
+#ifdef  BOGUS_ANSI_OEM
+
 int AnsiToOem(LPSTR lpAnsiStr, LPSTR lpOemStr)
 {
   printf("AnsiToOem (%s)\n",lpAnsiStr);
@@ -24,6 +26,8 @@ BOOL OemToAnsi(LPSTR lpOemStr, LPSTR lpAnsiStr)
   strcpy(lpAnsiStr,lpOemStr);  /* Probably not the right thing to do, but... */
   return -1;
 }
+
+#endif
 
 DWORD OemKeyScan(WORD wOemChar)
 {
@@ -84,6 +88,8 @@ int GetKeyNameText(LONG lParam, LPSTR lpBuffer, int nSize)
   return 0;
 }
 
+#ifdef  BOGUS_ANSI_OEM
+
 void AnsiToOemBuff(LPSTR lpAnsiStr, LPSTR lpOemStr, int nLength)
 {
   printf("AnsiToOemBuff(%s,<ptr>,%d)\n",lpAnsiStr,nLength);
@@ -96,6 +102,7 @@ void OemToAnsiBuff(LPSTR lpOemStr, LPSTR lpAnsiStr, int nLength)
   strncpy(lpAnsiStr,lpOemStr,nLength);  /* should translate... */
 }
 
+#endif
 
 
 

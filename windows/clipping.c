@@ -107,11 +107,8 @@ void ValidateRect( HWND hwnd, LPRECT rect )
  */
 BOOL GetUpdateRect( HWND hwnd, LPRECT rect, BOOL erase )
 {
-    BOOL retval;
     WND * wndPtr = WIN_FindWndPtr( hwnd );
     if (!wndPtr) return FALSE;
-
-    retval = (wndPtr->hrgnUpdate != 0);
 
     if (rect)
     {
@@ -127,8 +124,7 @@ BOOL GetUpdateRect( HWND hwnd, LPRECT rect, BOOL erase )
 	    }
 	}
     }
-    GlobalUnlock( hwnd );
-    return retval;
+    return (wndPtr->hrgnUpdate != 0);
 }
 
 
@@ -137,7 +133,6 @@ BOOL GetUpdateRect( HWND hwnd, LPRECT rect, BOOL erase )
  */
 int GetUpdateRgn( HWND hwnd, HRGN hrgn, BOOL erase )
 {
-    int retval;
     WND * wndPtr = WIN_FindWndPtr( hwnd );
     if (!wndPtr) return ERROR;
 
@@ -150,7 +145,5 @@ int GetUpdateRgn( HWND hwnd, HRGN hrgn, BOOL erase )
 	    ReleaseDC( hwnd, hdc );
 	}
     }
-    retval = CombineRgn( hrgn, wndPtr->hrgnUpdate, 0, RGN_COPY );
-    GlobalUnlock( hwnd );
-    return retval;    
+    return CombineRgn( hrgn, wndPtr->hrgnUpdate, 0, RGN_COPY );
 }

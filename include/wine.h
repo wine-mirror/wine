@@ -15,8 +15,12 @@ struct w_files{
   char * lookup_table;
   char * nrname_table;
   char * rname_table;
+  unsigned short hinstance;
 };
 
 extern struct  w_files * wine_files;
+
+extern char *GetFilenameFromInstance(unsigned short instance);
+extern struct w_files *GetFileInfo(unsigned short instance);
 
 #endif
