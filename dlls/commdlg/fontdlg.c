@@ -810,11 +810,9 @@ LRESULT CFn_WMDrawItem(HWND hDlg, WPARAM wParam, LPARAM lParam)
     BITMAP bm;
     COLORREF cr, oldText=0, oldBk=0;
     RECT rect;
-#if 0
     HDC hMemDC;
     int nFontType;
-    HBITMAP hBitmap; /* for later TT usage */
-#endif
+    HBITMAP objPrev; /* for TT usage */
     LPDRAWITEMSTRUCT lpdi = (LPDRAWITEMSTRUCT)lParam;
 
     if (lpdi->itemID == (UINT)-1)  /* got no items */
@@ -848,19 +846,16 @@ LRESULT CFn_WMDrawItem(HWND hDlg, WPARAM wParam, LPARAM lParam)
             GetObjectA( hBitmapTT, sizeof(bm), &bm );
             TextOutA(lpdi->hDC, lpdi->rcItem.left + bm.bmWidth + 10,
                      lpdi->rcItem.top, buffer, strlen(buffer));
-#if 0
             nFontType = SendMessageA(lpdi->hwndItem, CB_GETITEMDATA, lpdi->itemID,0L);
-            /* FIXME: draw bitmap if truetype usage */
-            if (nFontType&TRUETYPE_FONTTYPE)
+            if (nFontType & TRUETYPE_FONTTYPE)
             {
                 hMemDC = CreateCompatibleDC(lpdi->hDC);
-                hBitmap = SelectObject(hMemDC, hBitmapTT);
+                objPrev = SelectObject(hMemDC, hBitmapTT);
                 BitBlt(lpdi->hDC, lpdi->rcItem.left, lpdi->rcItem.top,
                        bm.bmWidth, bm.bmHeight, hMemDC, 0, 0, SRCCOPY);
-                SelectObject(hMemDC, hBitmap);
+                SelectObject(hMemDC, objPrev);
                 DeleteDC(hMemDC);
             }
-#endif
             break;
         case cmb2:
         case cmb3:
