@@ -116,24 +116,36 @@ DWORD WINAPI SHGetFileInfoA(LPCSTR path,DWORD dwFileAttributes,
 
 	if (flags & SHGFI_ATTRIBUTES)
 	{ if (flags & SHGFI_PIDL)
-	  { pData = _ILGetDataPointer((LPCITEMIDLIST)path);
-	    switch (pData->type)
-	    { case PT_DESKTOP:
-	        psfi->dwAttributes = SFGAO_HASSUBFOLDER | SFGAO_FOLDER | SFGAO_DROPTARGET | SFGAO_HASPROPSHEET | SFGAO_CANLINK;
-	      case PT_MYCOMP:
-	        psfi->dwAttributes = SFGAO_HASSUBFOLDER | SFGAO_FOLDER | SFGAO_FILESYSANCESTOR |
-	                             SFGAO_DROPTARGET | SFGAO_HASPROPSHEET | SFGAO_CANRENAME | SFGAO_CANLINK ;
-	      case PT_SPECIAL:
-	        psfi->dwAttributes = SFGAO_HASSUBFOLDER | SFGAO_FOLDER | SFGAO_CAPABILITYMASK;
-	      case PT_DRIVE:
-	        psfi->dwAttributes = SFGAO_HASSUBFOLDER | SFGAO_FILESYSTEM  | SFGAO_FOLDER | SFGAO_FILESYSANCESTOR |
-	                             SFGAO_DROPTARGET | SFGAO_HASPROPSHEET | SFGAO_CANLINK;
-	      case PT_FOLDER:
-	        psfi->dwAttributes = SFGAO_HASSUBFOLDER | SFGAO_FILESYSTEM | SFGAO_FOLDER | SFGAO_CAPABILITYMASK;
-	      case PT_VALUE:
-	        psfi->dwAttributes = SFGAO_FILESYSTEM | SFGAO_CAPABILITYMASK;
+	  {
+	    /*
+	     * We have to test for the desktop folder first because ILGetDataPointer returns
+	     * NULL on the desktop folder.
+	     */
+	    if (_ILIsDesktop((LPCITEMIDLIST)path))
+	    { psfi->dwAttributes = SFGAO_HASSUBFOLDER | SFGAO_FOLDER | SFGAO_DROPTARGET | SFGAO_HASPROPSHEET | SFGAO_CANLINK;
+	      ret = TRUE;
 	    }
-	    ret=TRUE;
+	    else
+	    { pData = _ILGetDataPointer((LPCITEMIDLIST)path);
+	      	
+	      switch (pData->type)
+	      { case PT_DESKTOP:
+		  psfi->dwAttributes = SFGAO_HASSUBFOLDER | SFGAO_FOLDER | SFGAO_DROPTARGET | SFGAO_HASPROPSHEET | SFGAO_CANLINK;
+	        case PT_MYCOMP:
+		  psfi->dwAttributes = SFGAO_HASSUBFOLDER | SFGAO_FOLDER | SFGAO_FILESYSANCESTOR |
+		     SFGAO_DROPTARGET | SFGAO_HASPROPSHEET | SFGAO_CANRENAME | SFGAO_CANLINK ;
+		case PT_SPECIAL:
+		  psfi->dwAttributes = SFGAO_HASSUBFOLDER | SFGAO_FOLDER | SFGAO_CAPABILITYMASK;
+		case PT_DRIVE:
+		  psfi->dwAttributes = SFGAO_HASSUBFOLDER | SFGAO_FILESYSTEM  | SFGAO_FOLDER | SFGAO_FILESYSANCESTOR |
+		    SFGAO_DROPTARGET | SFGAO_HASPROPSHEET | SFGAO_CANLINK;
+		case PT_FOLDER:
+		  psfi->dwAttributes = SFGAO_HASSUBFOLDER | SFGAO_FILESYSTEM | SFGAO_FOLDER | SFGAO_CAPABILITYMASK;
+		case PT_VALUE:
+		  psfi->dwAttributes = SFGAO_FILESYSTEM | SFGAO_CAPABILITYMASK;
+	      }
+	      ret=TRUE;
+	    }
 	  }
 	  else
 	  { if (! (flags & SHGFI_USEFILEATTRIBUTES))
