@@ -881,6 +881,19 @@ static inline BOOL iterator_empty(ITERATOR* i)
     return TRUE;
 }
 
+
+/***
+ * Create an iterator over a bunch of ranges.
+ * Please note that the iterator will take ownership of the ranges,
+ * and will free them upon destruction.
+ */
+static inline BOOL iterator_ranges(ITERATOR* i, RANGES ranges)
+{
+    iterator_empty(i);
+    i->ranges = ranges;
+    return TRUE;
+}
+
 /***
  * Creates an iterator over the items which intersect lprc.
  */
@@ -2192,15 +2205,58 @@ static RANGES ranges_create(int count)
 static void ranges_destroy(RANGES ranges)
 {
     if (!ranges) return;
-    DPA_Destroy(ranges->hdpa);
-    ranges->hdpa = NULL;
+    if (ranges->hdpa)
+    {
+	INT i;
+	
+	for(i = 0; i < ranges->hdpa->nItemCount; i++)
+	    COMCTL32_Free(DPA_GetPtr(ranges->hdpa, i));
+	DPA_Destroy(ranges->hdpa);
+    	ranges->hdpa = NULL;
+    }
     COMCTL32_Free(ranges);
+}
+
+static RANGES ranges_clone(RANGES ranges)
+{
+    RANGES clone;
+    INT i;
+	   
+    if (!ranges) return NULL; 
+    clone = ranges_create(ranges->hdpa->nItemCount);
+    if (!clone) return NULL;
+    
+    for (i = 0; i < ranges->hdpa->nItemCount; i++)
+    {
+        RANGE *newrng = (RANGE *)COMCTL32_Alloc(sizeof(RANGE));
+	if (!newrng)
+	{
+	    ranges_destroy(clone);
+	    return NULL;
+	}
+	*newrng = *((RANGE*)DPA_GetPtr(ranges->hdpa, i));
+	DPA_InsertPtr(clone->hdpa, i, newrng);
+    }
+    return clone;
+}
+
+static RANGES ranges_diff(RANGES ranges, RANGES sub)
+{
+    INT i;
+
+    if (!ranges || !sub) return ranges;
+    
+    for (i = 0; i < sub->hdpa->nItemCount; i++)
+	ranges_del(ranges, *((RANGE *)DPA_GetPtr(sub->hdpa, i)));
+
+    return ranges;
 }
 
 static void ranges_dump(RANGES ranges)
 {
     INT i;
 
+    if (!ranges) return;
     for (i = 0; i < ranges->hdpa->nItemCount; i++)
     	TRACE("   %s\n", debugrange(DPA_GetPtr(ranges->hdpa, i)));
 }
@@ -2210,6 +2266,7 @@ static inline BOOL ranges_contain(RANGES ranges, INT nItem)
     RANGE srchrng = { nItem, nItem + 1 };
 
     TRACE("(nItem=%d)\n", nItem);
+    if (!ranges) return FALSE;
     if (TRACE_ON(listview)) ranges_dump(ranges);
     return DPA_Search(ranges->hdpa, &srchrng, 0, ranges_cmp, 0, DPAS_SORTED) != -1;
 }
@@ -2218,6 +2275,7 @@ static INT ranges_itemcount(RANGES ranges)
 {
     INT i, count = 0;
     
+    if (!ranges) return 0;
     for (i = 0; i < ranges->hdpa->nItemCount; i++)
     {
 	RANGE *sel = DPA_GetPtr(ranges->hdpa, i);
@@ -2232,6 +2290,7 @@ static BOOL ranges_shift(RANGES ranges, INT nItem, INT delta, INT nUpper)
     RANGE srchrng = { nItem, nItem + 1 }, *chkrng;
     INT index;
 
+    if (!ranges) return FALSE;
     index = DPA_Search(ranges->hdpa, &srchrng, 0, ranges_cmp, 0, DPAS_SORTED | DPAS_INSERTAFTER);
     if (index == -1) return TRUE;
 
@@ -2252,6 +2311,7 @@ static BOOL ranges_add(RANGES ranges, RANGE range)
     INT index;
 
     TRACE("(%s)\n", debugrange(&range));
+    if (!ranges) return FALSE;
     if (TRACE_ON(listview)) ranges_dump(ranges);
 
     /* try find overlapping regions first */
@@ -2330,6 +2390,7 @@ static BOOL ranges_del(RANGES ranges, RANGE range)
     INT index;
 
     TRACE("(%s)\n", debugrange(&range));
+    if (!ranges) return FALSE;
     
     remrgn = range;
     do 
@@ -2391,43 +2452,47 @@ static BOOL ranges_del(RANGES ranges, RANGE range)
 *
 * Parameters(s):
 * [I] infoPtr : valid pointer to the listview structure
-* [I] nSkipItem : item to skip removing the selection
+* [I] toSkip : item range to skip removing the selection
 *
 * RETURNS:
 *   SUCCESS : TRUE
 *   FAILURE : TRUE
 */
-static LRESULT LISTVIEW_RemoveAllSelections(LISTVIEW_INFO *infoPtr, INT nSkipItem)
+static BOOL LISTVIEW_DeselectAllSkipItems(LISTVIEW_INFO *infoPtr, RANGES toSkip)
 {
     LVITEMW lvItem;
-    RANGE *sel;
-    INT i, pos;
-    HDPA clone;
-
-    if (infoPtr->bRemovingAllSelections) return TRUE;
-
-    infoPtr->bRemovingAllSelections = TRUE;
+    ITERATOR i;
 
     TRACE("()\n");
+    if (TRACE_ON(listview)) ranges_dump(toSkip);
 
     lvItem.state = 0;
     lvItem.stateMask = LVIS_SELECTED;
     
     /* need to clone the DPA because callbacks can change it */
-    clone = DPA_Clone(infoPtr->selectionRanges->hdpa, NULL);
-    for ( pos = 0; (sel = DPA_GetPtr(clone, pos)); pos++ )
-    {
-	for(i = sel->lower; i <= sel->upper; i++)
-        {
-	    if (i != nSkipItem)
-                LISTVIEW_SetItemState(infoPtr, i, &lvItem);
-        }
-    }
-    DPA_Destroy(clone);
-
-    infoPtr->bRemovingAllSelections = FALSE;
+    iterator_ranges(&i, ranges_diff(ranges_clone(infoPtr->selectionRanges), toSkip));
+    while(iterator_next(&i))
+	LISTVIEW_SetItemState(infoPtr, i.nItem, &lvItem);
+    /* note that the iterator destructor will free the cloned range */
+    iterator_destroy(&i);
 
     return TRUE;
+}
+
+static inline BOOL LISTVIEW_DeselectAllSkipItem(LISTVIEW_INFO *infoPtr, INT nItem)
+{
+    RANGES toSkip = ranges_create(1);
+    
+    if (!toSkip) return FALSE;
+    ranges_additem(toSkip, nItem);
+    LISTVIEW_DeselectAllSkipItems(infoPtr, toSkip);
+    ranges_destroy(toSkip);
+    return TRUE;
+}
+
+static inline BOOL LISTVIEW_DeselectAll(LISTVIEW_INFO *infoPtr)
+{
+    return LISTVIEW_DeselectAllSkipItem(infoPtr, -1);
 }
 
 /***
@@ -2578,34 +2643,35 @@ static void LISTVIEW_AddGroupSelection(LISTVIEW_INFO *infoPtr, INT nItem)
 static void LISTVIEW_SetGroupSelection(LISTVIEW_INFO *infoPtr, INT nItem)
 {
     UINT uView = infoPtr->dwStyle & LVS_TYPEMASK;
-    INT i;
+    RANGES selection;
     LVITEMW item;
-    POINT ptItem;
-    RECT rcSel;
+    ITERATOR i;
 
-    LISTVIEW_RemoveAllSelections(infoPtr, -1);
-    
+    if (!(selection = ranges_create(100))) return;
+
     item.state = LVIS_SELECTED; 
     item.stateMask = LVIS_SELECTED;
 
     if ((uView == LVS_LIST) || (uView == LVS_REPORT))
     {
-	INT nFirst, nLast;
-
 	if (infoPtr->nSelectionMark == -1)
-	    infoPtr->nSelectionMark = nFirst = nLast = nItem;
+	{
+	    infoPtr->nSelectionMark = nItem;
+	    ranges_additem(selection, nItem);
+	}
 	else
 	{
-	    nFirst = min(infoPtr->nSelectionMark, nItem);
-	    nLast = max(infoPtr->nSelectionMark, nItem);
+	    RANGE sel;
+	    
+	    sel.lower = min(infoPtr->nSelectionMark, nItem);
+	    sel.upper = max(infoPtr->nSelectionMark, nItem) + 1;
+	    ranges_add(selection, sel);
 	}
-	for (i = nFirst; i <= nLast; i++)
-	    LISTVIEW_SetItemState(infoPtr, i, &item);
     }
     else
     {
-	RECT rcItem, rcSelMark;
-	ITERATOR i;
+	RECT rcItem, rcSel, rcSelMark;
+	POINT ptItem;
 	
 	rcItem.left = LVIR_BOUNDS;
 	if (!LISTVIEW_GetItemRect(infoPtr, nItem, &rcItem)) return;
@@ -2616,12 +2682,18 @@ static void LISTVIEW_SetGroupSelection(LISTVIEW_INFO *infoPtr, INT nItem)
 	while(iterator_next(&i))
 	{
 	    LISTVIEW_GetItemPosition(infoPtr, i.nItem, &ptItem);
-	    if (PtInRect(&rcSel, ptItem)) 
-		LISTVIEW_SetItemState(infoPtr, i.nItem, &item);
+	    if (PtInRect(&rcSel, ptItem)) ranges_additem(selection, i.nItem);
 	}
 	iterator_destroy(&i);
     }
 
+    LISTVIEW_DeselectAllSkipItems(infoPtr, selection);
+    iterator_ranges(&i, selection);
+    while(iterator_next(&i))
+	LISTVIEW_SetItemState(infoPtr, i.nItem, &item);
+    /* this will also destroy the selection */
+    iterator_destroy(&i);
+    
     LISTVIEW_SetItemFocus(infoPtr, nItem);
 }
 
@@ -2642,7 +2714,7 @@ static void LISTVIEW_SetSelection(LISTVIEW_INFO *infoPtr, INT nItem)
 
     TRACE("nItem=%d\n", nItem);
     
-    LISTVIEW_RemoveAllSelections(infoPtr, nItem);
+    LISTVIEW_DeselectAllSkipItem(infoPtr, nItem);
 
     lvItem.state = LVIS_FOCUSED | LVIS_SELECTED;
     lvItem.stateMask = LVIS_FOCUSED | LVIS_SELECTED;
@@ -2833,7 +2905,7 @@ static BOOL set_owner_item(LISTVIEW_INFO *infoPtr, LPLVITEMW lpLVItem, BOOL isW,
     {
         if (lpLVItem->state & LVIS_SELECTED)
         {
-	    if (lStyle & LVS_SINGLESEL) LISTVIEW_RemoveAllSelections(infoPtr, lpLVItem->iItem);
+	    if (lStyle & LVS_SINGLESEL) LISTVIEW_DeselectAllSkipItem(infoPtr, lpLVItem->iItem);
 	    ranges_additem(infoPtr->selectionRanges, lpLVItem->iItem);
         }
         else
@@ -2934,7 +3006,7 @@ static BOOL set_main_item(LISTVIEW_INFO *infoPtr, LPLVITEMW lpLVItem, BOOL isW, 
 	lpItem->state |= (lpLVItem->state & lpLVItem->stateMask);
 	if (lpLVItem->state & lpLVItem->stateMask & ~infoPtr->uCallbackMask & LVIS_SELECTED)
 	{
-	    if (lStyle & LVS_SINGLESEL) LISTVIEW_RemoveAllSelections(infoPtr, lpLVItem->iItem);
+	    if (lStyle & LVS_SINGLESEL) LISTVIEW_DeselectAllSkipItem(infoPtr, lpLVItem->iItem);
 	    ranges_additem(infoPtr->selectionRanges, lpLVItem->iItem);
 	}
 	else if (lpLVItem->stateMask & LVIS_SELECTED)
@@ -3706,7 +3778,7 @@ static LRESULT LISTVIEW_DeleteAllItems(LISTVIEW_INFO *infoPtr)
 
   TRACE("()\n");
 
-  LISTVIEW_RemoveAllSelections(infoPtr, -1);
+  LISTVIEW_DeselectAll(infoPtr);
   infoPtr->nSelectionMark=-1;
   infoPtr->nFocusedItem=-1;
   SetRectEmpty(&infoPtr->rcFocus);
@@ -6495,7 +6567,7 @@ static BOOL LISTVIEW_SetItemCount(LISTVIEW_INFO *infoPtr, INT nItems, DWORD dwFl
               : "",
               (dwFlags & LVSICF_NOSCROLL) ? "LVSICF_NOSCROLL" : "");
 
-      LISTVIEW_RemoveAllSelections(infoPtr, -1);
+      LISTVIEW_DeselectAll(infoPtr);
 
       precount = infoPtr->nItemCount;
       topvisible = LISTVIEW_GetTopIndex(infoPtr) +
@@ -7520,7 +7592,7 @@ static LRESULT LISTVIEW_LButtonDown(LISTVIEW_INFO *infoPtr, WORD wKey, POINTS pt
   else
   {
     /* remove all selections */
-    LISTVIEW_RemoveAllSelections(infoPtr, -1);
+    LISTVIEW_DeselectAll(infoPtr);
   }
 
   return 0;
@@ -7786,7 +7858,7 @@ static LRESULT LISTVIEW_RButtonDown(LISTVIEW_INFO *infoPtr, WORD wKey, POINTS pt
     }
     else
     {
-	LISTVIEW_RemoveAllSelections(infoPtr, -1);
+	LISTVIEW_DeselectAll(infoPtr);
     }
 
     return 0;
