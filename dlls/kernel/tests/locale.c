@@ -719,6 +719,10 @@ char buffer1[BUFFER_SIZE], buffer2[BUFFER_SIZE];
 
 	ret = CompareStringA(lcid, NORM_IGNORECASE, buffer1, -1, buffer2, 0);
 	ok (ret == 3, "CompareStringA (st1=%s str2=%s) expected result=3, got %d", buffer1, buffer2, ret);
+
+	strcpy(buffer1, "Salut"); strcpy(buffer2, "saLuT");
+	ret = CompareStringA(lcid, NORM_IGNORECASE, buffer1, 5, buffer2, -1);
+	ok (ret == 2, "CompareStringA (st1=%s str2=%s) expected result=2, got %d", buffer1, buffer2, ret);
 }
 
 void test_LCMapStringA(void)

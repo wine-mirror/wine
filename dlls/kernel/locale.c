@@ -1154,6 +1154,7 @@ INT WINAPI LCMapStringA(LCID lcid, DWORD flags, LPCSTR src, INT srclen,
             goto map_string_exit;
         }
         ret = wine_get_sortkey(flags, srcW, srclenW, dst, dstlen);
+        goto map_string_exit;
     }
 
     if (flags & SORT_STRINGSORT)
@@ -1224,6 +1225,9 @@ INT WINAPI CompareStringA(LCID lcid, DWORD style,
         SetLastError(ERROR_INVALID_PARAMETER);
         return 0;
     }
+
+    if (len1 < 0) len1 = strlen(str1);
+    if (len2 < 0) len2 = strlen(str2);
 
     GetLocaleInfoW(lcid, LOCALE_IDEFAULTANSICODEPAGE | LOCALE_RETURN_NUMBER,
                    (WCHAR *)&locale_cp, (sizeof(locale_cp)/sizeof(WCHAR)));
