@@ -48,7 +48,7 @@ static int char2digit(char c, int base) {
 /* helper function for *wscanf.  Returns the value of character c in the
  * given base, or -1 if the given character is not a digit of the base.
  */
-static int wchar2digit(WCHAR c, int base) {
+static int wchar2digit(MSVCRT_wchar_t c, int base) {
     if ((c>=L'0') && (c<=L'9') && (c<=L'0'+base-1)) return (c-L'0');
     if (base<=10) return -1;
     if ((c>=L'A') && (c<=L'Z') && (c<=L'A'+base-11)) return (c-L'A'+10);

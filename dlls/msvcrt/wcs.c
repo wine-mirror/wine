@@ -35,17 +35,17 @@ WINE_DEFAULT_DEBUG_CHANNEL(msvcrt);
 
 
 /* INTERNAL: MSVCRT_malloc() based wstrndup */
-WCHAR* msvcrt_wstrndup(LPCWSTR buf, unsigned int size)
+MSVCRT_wchar_t* msvcrt_wstrndup(const MSVCRT_wchar_t *buf, unsigned int size)
 {
-  WCHAR* ret;
+  MSVCRT_wchar_t* ret;
   unsigned int len = strlenW(buf), max_len;
 
   max_len = size <= len? size : len + 1;
 
-  ret = MSVCRT_malloc(max_len * sizeof (WCHAR));
+  ret = MSVCRT_malloc(max_len * sizeof (MSVCRT_wchar_t));
   if (ret)
   {
-    memcpy(ret,buf,max_len * sizeof (WCHAR));
+    memcpy(ret,buf,max_len * sizeof (MSVCRT_wchar_t));
     ret[max_len] = 0;
   }
   return ret;
@@ -54,12 +54,12 @@ WCHAR* msvcrt_wstrndup(LPCWSTR buf, unsigned int size)
 /*********************************************************************
  *		_wcsdup (MSVCRT.@)
  */
-WCHAR* _wcsdup( const WCHAR* str )
+MSVCRT_wchar_t* _wcsdup( const MSVCRT_wchar_t* str )
 {
-  WCHAR* ret = NULL;
+  MSVCRT_wchar_t* ret = NULL;
   if (str)
   {
-    int size = (strlenW(str) + 1) * sizeof(WCHAR);
+    int size = (strlenW(str) + 1) * sizeof(MSVCRT_wchar_t);
     ret = MSVCRT_malloc( size );
     if (ret) memcpy( ret, str, size );
   }
@@ -69,7 +69,7 @@ WCHAR* _wcsdup( const WCHAR* str )
 /*********************************************************************
  *		_wcsicoll (MSVCRT.@)
  */
-INT _wcsicoll( const WCHAR* str1, const WCHAR* str2 )
+INT _wcsicoll( const MSVCRT_wchar_t* str1, const MSVCRT_wchar_t* str2 )
 {
   /* FIXME: handle collates */
   return strcmpiW( str1, str2 );
@@ -78,9 +78,9 @@ INT _wcsicoll( const WCHAR* str1, const WCHAR* str2 )
 /*********************************************************************
  *		_wcsnset (MSVCRT.@)
  */
-WCHAR* _wcsnset( WCHAR* str, WCHAR c, MSVCRT_size_t n )
+MSVCRT_wchar_t* _wcsnset( MSVCRT_wchar_t* str, MSVCRT_wchar_t c, MSVCRT_size_t n )
 {
-  WCHAR* ret = str;
+  MSVCRT_wchar_t* ret = str;
   while ((n-- > 0) && *str) *str++ = c;
   return ret;
 }
@@ -88,13 +88,13 @@ WCHAR* _wcsnset( WCHAR* str, WCHAR c, MSVCRT_size_t n )
 /*********************************************************************
  *		_wcsrev (MSVCRT.@)
  */
-WCHAR* _wcsrev( WCHAR* str )
+MSVCRT_wchar_t* _wcsrev( MSVCRT_wchar_t* str )
 {
-  WCHAR* ret = str;
-  WCHAR* end = str + strlenW(str) - 1;
+  MSVCRT_wchar_t* ret = str;
+  MSVCRT_wchar_t* end = str + strlenW(str) - 1;
   while (end > str)
   {
-    WCHAR t = *end;
+    MSVCRT_wchar_t t = *end;
     *end--  = *str;
     *str++  = t;
   }
@@ -104,9 +104,9 @@ WCHAR* _wcsrev( WCHAR* str )
 /*********************************************************************
  *		_wcsset (MSVCRT.@)
  */
-WCHAR* _wcsset( WCHAR* str, WCHAR c )
+MSVCRT_wchar_t* _wcsset( MSVCRT_wchar_t* str, MSVCRT_wchar_t c )
 {
-  WCHAR* ret = str;
+  MSVCRT_wchar_t* ret = str;
   while (*str) *str++ = c;
   return ret;
 }
@@ -114,37 +114,37 @@ WCHAR* _wcsset( WCHAR* str, WCHAR c )
 /*********************************************************************
  *		_vsnwprintf (MSVCRT.@)
  */
-int _vsnwprintf(WCHAR *str, unsigned int len,
-                              const WCHAR *format, va_list valist)
+int _vsnwprintf(MSVCRT_wchar_t *str, unsigned int len,
+                const MSVCRT_wchar_t *format, va_list valist)
 {
 /* If you fix a bug in this function, fix it in ntdll/wcstring.c also! */
   unsigned int written = 0;
-  const WCHAR *iter = format;
+  const MSVCRT_wchar_t *iter = format;
   char bufa[256], fmtbufa[64], *fmta;
 
   TRACE("(%d,%s)\n",len,debugstr_w(format));
 
   while (*iter)
   {
-    while (*iter && *iter != (WCHAR)L'%')
+    while (*iter && *iter != '%')
     {
      if (written++ >= len)
        return -1;
      *str++ = *iter++;
     }
-    if (*iter == (WCHAR)L'%')
+    if (*iter == '%')
     {
       fmta = fmtbufa;
       *fmta++ = *iter++;
-      while (*iter == (WCHAR)L'0' ||
-             *iter == (WCHAR)L'+' ||
-             *iter == (WCHAR)L'-' ||
-             *iter == (WCHAR)L' ' ||
-             *iter == (WCHAR)L'0' ||
-             *iter == (WCHAR)L'*' ||
-             *iter == (WCHAR)L'#')
+      while (*iter == '0' ||
+             *iter == '+' ||
+             *iter == '-' ||
+             *iter == ' ' ||
+             *iter == '0' ||
+             *iter == '*' ||
+             *iter == '#')
       {
-        if (*iter == (WCHAR)L'*')
+        if (*iter == '*')
         {
           char *buffiter = bufa;
           int fieldlen = va_arg(valist, int);
@@ -160,10 +160,10 @@ int _vsnwprintf(WCHAR *str, unsigned int len,
       while (isdigit(*iter))
         *fmta++ = *iter++;
 
-      if (*iter == (WCHAR)L'.')
+      if (*iter == '.')
       {
         *fmta++ = *iter++;
-        if (*iter == (WCHAR)L'*')
+        if (*iter == '*')
         {
           char *buffiter = bufa;
           int fieldlen = va_arg(valist, int);
@@ -175,17 +175,17 @@ int _vsnwprintf(WCHAR *str, unsigned int len,
           while (isdigit(*iter))
             *fmta++ = *iter++;
       }
-      if (*iter == (WCHAR)L'h' ||
-          *iter == (WCHAR)L'l')
+      if (*iter == 'h' ||
+          *iter == 'l')
           *fmta++ = *iter++;
 
       switch (*iter)
       {
-      case (WCHAR)L's':
+      case 's':
         {
-          static const WCHAR none[] = { '(', 'n', 'u', 'l', 'l', ')', 0 };
-          const WCHAR *wstr = va_arg(valist, const WCHAR *);
-          const WCHAR *striter = wstr ? wstr : none;
+          static const MSVCRT_wchar_t none[] = { '(', 'n', 'u', 'l', 'l', ')', 0 };
+          const MSVCRT_wchar_t *wstr = va_arg(valist, const MSVCRT_wchar_t *);
+          const MSVCRT_wchar_t *striter = wstr ? wstr : none;
           while (*striter)
           {
             if (written++ >= len)
@@ -196,10 +196,10 @@ int _vsnwprintf(WCHAR *str, unsigned int len,
           break;
         }
 
-      case (WCHAR)L'c':
+      case 'c':
         if (written++ >= len)
           return -1;
-        *str++ = (WCHAR)va_arg(valist, int);
+        *str++ = (MSVCRT_wchar_t)va_arg(valist, int);
         iter++;
         break;
 
@@ -208,13 +208,13 @@ int _vsnwprintf(WCHAR *str, unsigned int len,
           /* For non wc types, use system sprintf and append to wide char output */
           /* FIXME: for unrecognised types, should ignore % when printing */
           char *bufaiter = bufa;
-          if (*iter == (WCHAR)L'p')
+          if (*iter == 'p')
             sprintf(bufaiter, "%08lX", va_arg(valist, long));
           else
           {
             *fmta++ = *iter;
             *fmta = '\0';
-            if (*iter == (WCHAR)L'f')
+            if (*iter == 'f')
               sprintf(bufaiter, fmtbufa, va_arg(valist, double));
             else
               sprintf(bufaiter, fmtbufa, va_arg(valist, void *));
@@ -233,14 +233,14 @@ int _vsnwprintf(WCHAR *str, unsigned int len,
   }
   if (written >= len)
     return -1;
-  *str++ = (WCHAR)L'\0';
+  *str++ = 0;
   return (int)written;
 }
 
 /*********************************************************************
  *		vswprintf (MSVCRT.@)
  */
-int MSVCRT_vswprintf( WCHAR* str, const WCHAR* format, va_list args )
+int MSVCRT_vswprintf( MSVCRT_wchar_t* str, const MSVCRT_wchar_t* format, va_list args )
 {
   return _vsnwprintf( str, INT_MAX, format, args );
 }
@@ -248,7 +248,7 @@ int MSVCRT_vswprintf( WCHAR* str, const WCHAR* format, va_list args )
 /*********************************************************************
  *		wcscoll (MSVCRT.@)
  */
-int MSVCRT_wcscoll( const WCHAR* str1, const WCHAR* str2 )
+int MSVCRT_wcscoll( const MSVCRT_wchar_t* str1, const MSVCRT_wchar_t* str2 )
 {
   /* FIXME: handle collates */
   return strcmpW( str1, str2 );
@@ -257,12 +257,12 @@ int MSVCRT_wcscoll( const WCHAR* str1, const WCHAR* str2 )
 /*********************************************************************
  *		wcspbrk (MSVCRT.@)
  */
-WCHAR* MSVCRT_wcspbrk( const WCHAR* str, const WCHAR* accept )
+MSVCRT_wchar_t* MSVCRT_wcspbrk( const MSVCRT_wchar_t* str, const MSVCRT_wchar_t* accept )
 {
-  const WCHAR* p;
+  const MSVCRT_wchar_t* p;
   while (*str)
   {
-    for (p = accept; *p; p++) if (*p == *str) return (WCHAR*)str;
+    for (p = accept; *p; p++) if (*p == *str) return (MSVCRT_wchar_t*)str;
       str++;
   }
   return NULL;
@@ -271,7 +271,7 @@ WCHAR* MSVCRT_wcspbrk( const WCHAR* str, const WCHAR* accept )
 /*********************************************************************
  *		wctomb (MSVCRT.@)
  */
-INT MSVCRT_wctomb( char *dst, WCHAR ch )
+INT MSVCRT_wctomb( char *dst, MSVCRT_wchar_t ch )
 {
   return WideCharToMultiByte( CP_ACP, 0, &ch, 1, dst, 6, NULL, NULL );
 }
@@ -279,7 +279,7 @@ INT MSVCRT_wctomb( char *dst, WCHAR ch )
 /*********************************************************************
  *		iswalnum (MSVCRT.@)
  */
-INT MSVCRT_iswalnum( WCHAR wc )
+INT MSVCRT_iswalnum( MSVCRT_wchar_t wc )
 {
     return isalnumW( wc );
 }
@@ -287,7 +287,7 @@ INT MSVCRT_iswalnum( WCHAR wc )
 /*********************************************************************
  *		iswalpha (MSVCRT.@)
  */
-INT MSVCRT_iswalpha( WCHAR wc )
+INT MSVCRT_iswalpha( MSVCRT_wchar_t wc )
 {
     return isalphaW( wc );
 }
@@ -295,7 +295,7 @@ INT MSVCRT_iswalpha( WCHAR wc )
 /*********************************************************************
  *		iswcntrl (MSVCRT.@)
  */
-INT MSVCRT_iswcntrl( WCHAR wc )
+INT MSVCRT_iswcntrl( MSVCRT_wchar_t wc )
 {
     return iscntrlW( wc );
 }
@@ -303,7 +303,7 @@ INT MSVCRT_iswcntrl( WCHAR wc )
 /*********************************************************************
  *		iswdigit (MSVCRT.@)
  */
-INT MSVCRT_iswdigit( WCHAR wc )
+INT MSVCRT_iswdigit( MSVCRT_wchar_t wc )
 {
     return isdigitW( wc );
 }
@@ -311,7 +311,7 @@ INT MSVCRT_iswdigit( WCHAR wc )
 /*********************************************************************
  *		iswgraph (MSVCRT.@)
  */
-INT MSVCRT_iswgraph( WCHAR wc )
+INT MSVCRT_iswgraph( MSVCRT_wchar_t wc )
 {
     return isgraphW( wc );
 }
@@ -319,7 +319,7 @@ INT MSVCRT_iswgraph( WCHAR wc )
 /*********************************************************************
  *		iswlower (MSVCRT.@)
  */
-INT MSVCRT_iswlower( WCHAR wc )
+INT MSVCRT_iswlower( MSVCRT_wchar_t wc )
 {
     return islowerW( wc );
 }
@@ -327,7 +327,7 @@ INT MSVCRT_iswlower( WCHAR wc )
 /*********************************************************************
  *		iswprint (MSVCRT.@)
  */
-INT MSVCRT_iswprint( WCHAR wc )
+INT MSVCRT_iswprint( MSVCRT_wchar_t wc )
 {
     return isprintW( wc );
 }
@@ -335,7 +335,7 @@ INT MSVCRT_iswprint( WCHAR wc )
 /*********************************************************************
  *		iswpunct (MSVCRT.@)
  */
-INT MSVCRT_iswpunct( WCHAR wc )
+INT MSVCRT_iswpunct( MSVCRT_wchar_t wc )
 {
     return ispunctW( wc );
 }
@@ -343,7 +343,7 @@ INT MSVCRT_iswpunct( WCHAR wc )
 /*********************************************************************
  *		iswspace (MSVCRT.@)
  */
-INT MSVCRT_iswspace( WCHAR wc )
+INT MSVCRT_iswspace( MSVCRT_wchar_t wc )
 {
     return isspaceW( wc );
 }
@@ -351,7 +351,7 @@ INT MSVCRT_iswspace( WCHAR wc )
 /*********************************************************************
  *		iswupper (MSVCRT.@)
  */
-INT MSVCRT_iswupper( WCHAR wc )
+INT MSVCRT_iswupper( MSVCRT_wchar_t wc )
 {
     return isupperW( wc );
 }
@@ -359,7 +359,7 @@ INT MSVCRT_iswupper( WCHAR wc )
 /*********************************************************************
  *		iswxdigit (MSVCRT.@)
  */
-INT MSVCRT_iswxdigit( WCHAR wc )
+INT MSVCRT_iswxdigit( MSVCRT_wchar_t wc )
 {
     return isxdigitW( wc );
 }
@@ -367,7 +367,7 @@ INT MSVCRT_iswxdigit( WCHAR wc )
 /*********************************************************************
  *		_itow (MSVCRT.@)
  */
-WCHAR* _itow(int value,WCHAR* out,int base)
+MSVCRT_wchar_t* _itow(int value,MSVCRT_wchar_t* out,int base)
 {
   char buf[64];
   _itoa(value, buf, base);
@@ -378,11 +378,10 @@ WCHAR* _itow(int value,WCHAR* out,int base)
 /*********************************************************************
  *		_ltow (MSVCRT.@)
  */
-WCHAR* _ltow(long value,WCHAR* out,int base)
+MSVCRT_wchar_t* _ltow(long value,MSVCRT_wchar_t* out,int base)
 {
   char buf[128];
   _ltoa(value, buf, base);
   MultiByteToWideChar (CP_ACP, MB_PRECOMPOSED, buf, -1, out, 128);
   return out;
 }
-

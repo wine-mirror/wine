@@ -25,7 +25,7 @@
 
 #ifdef WIDE_SCANF
 #define _L_(x) L##x
-#define _CHAR_ WCHAR
+#define _CHAR_ MSVCRT_wchar_t
 #define _EOF_ MSVCRT_WEOF
 #define _ISSPACE_(c) MSVCRT_iswspace(c)
 #define _ISDIGIT_(c) MSVCRT_iswdigit(c)
@@ -52,7 +52,7 @@
 #define _GETC_(file) *file++
 #define _UNGETC_(nch, file) file--
 #ifdef WIDE_SCANF
-#define _FUNCTION_ MSVCRT_swscanf(const WCHAR *file, const WCHAR *format, ...)
+#define _FUNCTION_ MSVCRT_swscanf(const MSVCRT_wchar_t *file, const MSVCRT_wchar_t *format, ...)
 #else /* WIDE_SCANF */
 #define _FUNCTION_ MSVCRT_sscanf(const char *file, const char *format, ...)
 #endif /* WIDE_SCANF */
@@ -60,7 +60,7 @@
 #ifdef WIDE_SCANF
 #define _GETC_(file) MSVCRT_fgetwc(file)
 #define _UNGETC_(nch, file) MSVCRT_ungetwc(nch, file)
-#define _FUNCTION_ MSVCRT_fwscanf(MSVCRT_FILE* file, const WCHAR *format, ...)
+#define _FUNCTION_ MSVCRT_fwscanf(MSVCRT_FILE* file, const MSVCRT_wchar_t *format, ...)
 #else /* WIDE_SCANF */
 #define _GETC_(file) MSVCRT_fgetc(file)
 #define _UNGETC_(nch, file) MSVCRT_ungetc(nch, file)
@@ -369,10 +369,10 @@ int _FUNCTION_ {
                     if (!suppress) *sptr = 0;
                 }
                 break;
-	    widecharstring: { /* read a word into a WCHAR * */
-		    WCHAR*str =
-			suppress ? NULL : va_arg(ap, WCHAR*);
-                    WCHAR*sptr = str;
+	    widecharstring: { /* read a word into a wchar_t* */
+		    MSVCRT_wchar_t*str =
+			suppress ? NULL : va_arg(ap, MSVCRT_wchar_t*);
+                    MSVCRT_wchar_t*sptr = str;
                     /* skip initial whitespace */
                     while ((nch!=_EOF_) && _ISSPACE_(nch))
                         nch = _GETC_(file);
@@ -423,8 +423,8 @@ int _FUNCTION_ {
 	        }
 		break;
 	  widecharacter: {
-		    if (!suppress) { /* read single character into WCHAR */
-			WCHAR*c = va_arg(ap, WCHAR*);
+		    if (!suppress) { /* read single character into a wchar_t */
+			MSVCRT_wchar_t*c = va_arg(ap, MSVCRT_wchar_t*);
 #ifdef WIDE_SCANF
 			*c = nch;
 #else /* WIDE_SCANF */

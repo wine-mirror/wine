@@ -61,10 +61,10 @@ char *MSVCRT_getenv(const char *name)
 /*********************************************************************
  *		_wgetenv (MSVCRT.@)
  */
-WCHAR *_wgetenv(const WCHAR *name)
+MSVCRT_wchar_t *_wgetenv(const MSVCRT_wchar_t *name)
 {
-  WCHAR* environ = GetEnvironmentStringsW();
-  WCHAR* pp,*pos = NULL;
+  MSVCRT_wchar_t* environ = GetEnvironmentStringsW();
+  MSVCRT_wchar_t* pp,*pos = NULL;
   unsigned int length=strlenW(name);
 
   for (pp = environ; (*pp); pp = pp + strlenW(pp) + 1)
@@ -122,25 +122,25 @@ int _putenv(const char *str)
 /*********************************************************************
  *		_wputenv (MSVCRT.@)
  */
-int _wputenv(const WCHAR *str)
+int _wputenv(const MSVCRT_wchar_t *str)
 {
- WCHAR name[256], value[512];
- WCHAR *dst = name;
+ MSVCRT_wchar_t name[256], value[512];
+ MSVCRT_wchar_t *dst = name;
  int ret;
 
  TRACE("%s\n", debugstr_w(str));
 
  if (!str)
    return -1;
- while (*str && *str != (WCHAR)L'=')
+ while (*str && *str != '=')
   *dst++ = *str++;
  if (!*str++)
    return -1;
- *dst = (WCHAR)L'\0';
+ *dst = 0;
  dst = value;
  while (*str)
   *dst++ = *str++;
- *dst = (WCHAR)L'\0';
+ *dst = 0;
 
  ret = !SetEnvironmentVariableW(name, value[0] ? value : NULL);
  /* Update the __p__environ array only when already initialized */

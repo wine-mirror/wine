@@ -97,7 +97,7 @@ int _chdir(const char * newdir)
 /*********************************************************************
  *		_wchdir (MSVCRT.@)
  */
-int _wchdir(const WCHAR * newdir)
+int _wchdir(const MSVCRT_wchar_t * newdir)
 {
   if (!SetCurrentDirectoryW(newdir))
   {
@@ -160,7 +160,7 @@ long _findfirst(const char * fspec, struct _finddata_t* ft)
 /*********************************************************************
  *		_wfindfirst (MSVCRT.@)
  */
-long _wfindfirst(const WCHAR * fspec, struct _wfinddata_t* ft)
+long _wfindfirst(const MSVCRT_wchar_t * fspec, struct _wfinddata_t* ft)
 {
   WIN32_FIND_DATAW find_data;
   HANDLE hfind;
@@ -239,9 +239,9 @@ char* _getcwd(char * buf, int size)
 /*********************************************************************
  *		_wgetcwd (MSVCRT.@)
  */
-WCHAR* _wgetcwd(WCHAR * buf, int size)
+MSVCRT_wchar_t* _wgetcwd(MSVCRT_wchar_t * buf, int size)
 {
-  WCHAR dir[MAX_PATH];
+  MSVCRT_wchar_t dir[MAX_PATH];
   int dir_len = GetCurrentDirectoryW(MAX_PATH,dir);
 
   if (dir_len < 1)
@@ -316,9 +316,9 @@ char* _getdcwd(int drive, char * buf, int size)
 /*********************************************************************
  *		_wgetdcwd (MSVCRT.@)
  */
-WCHAR* _wgetdcwd(int drive, WCHAR * buf, int size)
+MSVCRT_wchar_t* _wgetdcwd(int drive, MSVCRT_wchar_t * buf, int size)
 {
-  static WCHAR* dummy;
+  static MSVCRT_wchar_t* dummy;
 
   TRACE(":drive %d(%c), size %d\n",drive, drive + 'A' - 1, size);
 
@@ -326,8 +326,8 @@ WCHAR* _wgetdcwd(int drive, WCHAR * buf, int size)
     return _wgetcwd(buf,size); /* current */
   else
   {
-    WCHAR dir[MAX_PATH];
-    WCHAR drivespec[4] = {'A', ':', '\\', 0};
+    MSVCRT_wchar_t dir[MAX_PATH];
+    MSVCRT_wchar_t drivespec[4] = {'A', ':', '\\', 0};
     int dir_len;
 
     drivespec[0] += drive - 1;
@@ -393,7 +393,7 @@ int _mkdir(const char * newdir)
 /*********************************************************************
  *		_wmkdir (MSVCRT.@)
  */
-int _wmkdir(const WCHAR* newdir)
+int _wmkdir(const MSVCRT_wchar_t* newdir)
 {
   if (CreateDirectoryW(newdir,NULL))
     return 0;
@@ -415,7 +415,7 @@ int _rmdir(const char * dir)
 /*********************************************************************
  *		_wrmdir (MSVCRT.@)
  */
-int _wrmdir(const WCHAR * dir)
+int _wrmdir(const MSVCRT_wchar_t * dir)
 {
   if (RemoveDirectoryW(dir))
     return 0;
@@ -426,45 +426,45 @@ int _wrmdir(const WCHAR * dir)
 /*********************************************************************
  *		_wsplitpath (MSVCRT.@)
  */
-void _wsplitpath(const WCHAR *inpath, WCHAR *drv, WCHAR *dir,
-                                WCHAR *fname, WCHAR *ext )
+void _wsplitpath(const MSVCRT_wchar_t *inpath, MSVCRT_wchar_t *drv, MSVCRT_wchar_t *dir,
+                 MSVCRT_wchar_t *fname, MSVCRT_wchar_t *ext )
 {
   /* Modified PD code from 'snippets' collection. */
-  WCHAR ch, *ptr, *p;
-  WCHAR pathbuff[MAX_PATH],*path=pathbuff;
+  MSVCRT_wchar_t ch, *ptr, *p;
+  MSVCRT_wchar_t pathbuff[MAX_PATH],*path=pathbuff;
 
   TRACE(":splitting path %s\n",debugstr_w(path));
   /* FIXME: Should be an strncpyW or something */
   strcpyW(pathbuff, inpath);
 
   /* convert slashes to backslashes for searching */
-  for (ptr = (WCHAR*)path; *ptr; ++ptr)
-    if (*ptr == (WCHAR)L'/')
-      *ptr = (WCHAR)L'\\';
+  for (ptr = (MSVCRT_wchar_t*)path; *ptr; ++ptr)
+    if (*ptr == '/')
+      *ptr = '\\';
 
   /* look for drive spec */
-  if ((ptr = strchrW(path, (WCHAR)L':')) != (WCHAR)L'\0')
+  if ((ptr = strchrW(path, ':')) != 0)
   {
     ++ptr;
     if (drv)
     {
       strncpyW(drv, path, ptr - path);
-      drv[ptr - path] = (WCHAR)L'\0';
+      drv[ptr - path] = 0;
     }
     path = ptr;
   }
   else if (drv)
-    *drv = (WCHAR)L'\0';
+    *drv = 0;
 
   /* find rightmost backslash or leftmost colon */
-  if ((ptr = strrchrW(path, (WCHAR)L'\\')) == NULL)
-    ptr = (strchrW(path, (WCHAR)L':'));
+  if ((ptr = strrchrW(path, '\\')) == NULL)
+    ptr = (strchrW(path, ':'));
 
   if (!ptr)
   {
-    ptr = (WCHAR *)path; /* no path */
+    ptr = (MSVCRT_wchar_t *)path; /* no path */
     if (dir)
-      *dir = (WCHAR)L'\0';
+      *dir = 0;
   }
   else
   {
@@ -472,25 +472,25 @@ void _wsplitpath(const WCHAR *inpath, WCHAR *drv, WCHAR *dir,
     if (dir)
     {
       ch = *ptr;
-      *ptr = (WCHAR)L'\0';
+      *ptr = 0;
       strcpyW(dir, path);
       *ptr = ch;
     }
   }
 
-  if ((p = strrchrW(ptr, (WCHAR)L'.')) == NULL)
+  if ((p = strrchrW(ptr, '.')) == NULL)
   {
     if (fname)
       strcpyW(fname, ptr);
     if (ext)
-      *ext = (WCHAR)L'\0';
+      *ext = 0;
   }
   else
   {
-    *p = (WCHAR)L'\0';
+    *p = 0;
     if (fname)
       strcpyW(fname, ptr);
-    *p = (WCHAR)L'.';
+    *p = '.';
     if (ext)
       strcpyW(ext, p);
   }
@@ -498,13 +498,13 @@ void _wsplitpath(const WCHAR *inpath, WCHAR *drv, WCHAR *dir,
   /* Fix pathological case - Win returns ':' as part of the
    * directory when no drive letter is given.
    */
-  if (drv && drv[0] == (WCHAR)L':')
+  if (drv && drv[0] == ':')
   {
-    *drv = (WCHAR)L'\0';
+    *drv = 0;
     if (dir)
     {
-      pathbuff[0] = (WCHAR)L':';
-      pathbuff[1] = (WCHAR)L'\0';
+      pathbuff[0] = ':';
+      pathbuff[1] = 0;
       strcatW(pathbuff,dir);
       strcpyW(dir, pathbuff);
     }
@@ -714,10 +714,10 @@ VOID _makepath(char * path, const char * drive,
 /*********************************************************************
  *		_wmakepath (MSVCRT.@)
  */
-VOID _wmakepath(WCHAR *path, const WCHAR *drive, const WCHAR *directory,
-		const WCHAR *filename, const WCHAR *extension)
+VOID _wmakepath(MSVCRT_wchar_t *path, const MSVCRT_wchar_t *drive, const MSVCRT_wchar_t *directory,
+		const MSVCRT_wchar_t *filename, const MSVCRT_wchar_t *extension)
 {
-    WCHAR ch;
+    MSVCRT_wchar_t ch;
     TRACE("%s %s %s %s\n", debugstr_w(drive), debugstr_w(directory),
 	  debugstr_w(filename), debugstr_w(extension));
 
@@ -737,7 +737,7 @@ VOID _wmakepath(WCHAR *path, const WCHAR *drive, const WCHAR *directory,
         ch = path[strlenW(path) - 1];
         if (ch != '/' && ch != '\\')
 	{
-	    static const WCHAR backslashW[] = {'\\',0};
+	    static const MSVCRT_wchar_t backslashW[] = {'\\',0};
             strcatW(path, backslashW);
 	}
     }
@@ -748,7 +748,7 @@ VOID _wmakepath(WCHAR *path, const WCHAR *drive, const WCHAR *directory,
         {
             if ( extension[0] != '.' )
 	    {
-		static const WCHAR dotW[] = {'.',0};
+		static const MSVCRT_wchar_t dotW[] = {'.',0};
                 strcatW(path, dotW);
 	    }
             strcatW(path, extension);

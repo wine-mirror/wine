@@ -218,7 +218,7 @@ int MSVCRT___toascii(int c)
  *		iswascii (MSVCRT.@)
  *
  */
-int MSVCRT_iswascii(WCHAR c)
+int MSVCRT_iswascii(MSVCRT_wchar_t c)
 {
   return ((unsigned)c < 0x80);
 }

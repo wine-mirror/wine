@@ -39,9 +39,9 @@ WINE_DEFAULT_DEBUG_CHANNEL(msvcrt);
 unsigned char MSVCRT_mbctype[257];
 int MSVCRT___mb_cur_max = 1;
 
-static WCHAR msvcrt_mbc_to_wc(unsigned int ch)
+static MSVCRT_wchar_t msvcrt_mbc_to_wc(unsigned int ch)
 {
-  WCHAR chW;
+  MSVCRT_wchar_t chW;
   char mbch[2];
   int n_chars;
 
@@ -527,7 +527,7 @@ unsigned char* _mbsrchr(const unsigned char* s, unsigned int x)
 /*********************************************************************
  *		mbtowc(MSVCRT.@)
  */
-int MSVCRT_mbtowc(WCHAR *dst, const char* str, MSVCRT_size_t n)
+int MSVCRT_mbtowc(MSVCRT_wchar_t *dst, const char* str, MSVCRT_size_t n)
 {
   if(n <= 0 || !str)
     return 0;
@@ -575,7 +575,7 @@ int _ismbbkana(unsigned int c)
  */
 int _ismbcdigit(unsigned int ch)
 {
-    WCHAR wch = msvcrt_mbc_to_wc( ch );
+    MSVCRT_wchar_t wch = msvcrt_mbc_to_wc( ch );
     return (get_char_typeW( wch ) & C1_DIGIT);
 }
 
@@ -584,7 +584,7 @@ int _ismbcdigit(unsigned int ch)
  */
 int _ismbcgraph(unsigned int ch)
 {
-    WCHAR wch = msvcrt_mbc_to_wc( ch );
+    MSVCRT_wchar_t wch = msvcrt_mbc_to_wc( ch );
     return (get_char_typeW( wch ) & (C1_UPPER | C1_LOWER | C1_DIGIT | C1_PUNCT | C1_ALPHA));
 }
 
@@ -593,7 +593,7 @@ int _ismbcgraph(unsigned int ch)
  */
 int _ismbcalpha(unsigned int ch)
 {
-    WCHAR wch = msvcrt_mbc_to_wc( ch );
+    MSVCRT_wchar_t wch = msvcrt_mbc_to_wc( ch );
     return (get_char_typeW( wch ) & C1_ALPHA);
 }
 
@@ -602,7 +602,7 @@ int _ismbcalpha(unsigned int ch)
  */
 int _ismbclower(unsigned int ch)
 {
-    WCHAR wch = msvcrt_mbc_to_wc( ch );
+    MSVCRT_wchar_t wch = msvcrt_mbc_to_wc( ch );
     return (get_char_typeW( wch ) & C1_UPPER);
 }
 
@@ -611,7 +611,7 @@ int _ismbclower(unsigned int ch)
  */
 int _ismbcupper(unsigned int ch)
 {
-    WCHAR wch = msvcrt_mbc_to_wc( ch );
+    MSVCRT_wchar_t wch = msvcrt_mbc_to_wc( ch );
     return (get_char_typeW( wch ) & C1_LOWER);
 }
 
@@ -620,7 +620,7 @@ int _ismbcupper(unsigned int ch)
  */
 int _ismbcsymbol(unsigned int ch)
 {
-    WCHAR wch = msvcrt_mbc_to_wc( ch );
+    MSVCRT_wchar_t wch = msvcrt_mbc_to_wc( ch );
     WORD ctype;
     if (!GetStringTypeW(CT_CTYPE3, &wch, 1, &ctype))
     {
@@ -635,7 +635,7 @@ int _ismbcsymbol(unsigned int ch)
  */
 int _ismbcalnum(unsigned int ch)
 {
-    WCHAR wch = msvcrt_mbc_to_wc( ch );
+    MSVCRT_wchar_t wch = msvcrt_mbc_to_wc( ch );
     return (get_char_typeW( wch ) & (C1_ALPHA | C1_DIGIT));
 }
 
@@ -644,7 +644,7 @@ int _ismbcalnum(unsigned int ch)
  */
 int _ismbcspace(unsigned int ch)
 {
-    WCHAR wch = msvcrt_mbc_to_wc( ch );
+    MSVCRT_wchar_t wch = msvcrt_mbc_to_wc( ch );
     return (get_char_typeW( wch ) & C1_SPACE);
 }
 
@@ -653,7 +653,7 @@ int _ismbcspace(unsigned int ch)
  */
 int _ismbcprint(unsigned int ch)
 {
-    WCHAR wch = msvcrt_mbc_to_wc( ch );
+    MSVCRT_wchar_t wch = msvcrt_mbc_to_wc( ch );
     return (get_char_typeW( wch ) & (C1_UPPER | C1_LOWER | C1_DIGIT | C1_PUNCT | C1_ALPHA | C1_SPACE));
 }
 
@@ -662,7 +662,7 @@ int _ismbcprint(unsigned int ch)
  */
 int _ismbcpunct(unsigned int ch)
 {
-    WCHAR wch = msvcrt_mbc_to_wc( ch );
+    MSVCRT_wchar_t wch = msvcrt_mbc_to_wc( ch );
     return (get_char_typeW( wch ) & C1_PUNCT);
 }
 

@@ -53,13 +53,13 @@ unsigned int MSVCRT___setlc_active;
 unsigned int MSVCRT___unguarded_readlc_active;
 double MSVCRT__HUGE;
 char **MSVCRT___argv;
-WCHAR **MSVCRT___wargv;
+MSVCRT_wchar_t **MSVCRT___wargv;
 char *MSVCRT__acmdln;
-WCHAR *MSVCRT__wcmdln;
+MSVCRT_wchar_t *MSVCRT__wcmdln;
 char **MSVCRT__environ = 0;
-WCHAR **MSVCRT__wenviron = 0;
+MSVCRT_wchar_t **MSVCRT__wenviron = 0;
 char **MSVCRT___initenv = 0;
-WCHAR **MSVCRT___winitenv = 0;
+MSVCRT_wchar_t **MSVCRT___winitenv = 0;
 int MSVCRT_timezone;
 int MSVCRT_app_type;
 
@@ -104,11 +104,11 @@ char ** msvcrt_SnapshotOfEnvironmentA(char **blk)
   return blk;
 }
 
-WCHAR ** msvcrt_SnapshotOfEnvironmentW(WCHAR **wblk)
+MSVCRT_wchar_t ** msvcrt_SnapshotOfEnvironmentW(MSVCRT_wchar_t **wblk)
 {
-  WCHAR* wenviron_strings = GetEnvironmentStringsW();
+  MSVCRT_wchar_t* wenviron_strings = GetEnvironmentStringsW();
   int count = 1, len = 1, i = 0; /* keep space for the trailing NULLS */
-  WCHAR *wptr;
+  MSVCRT_wchar_t *wptr;
 
   for (wptr = wenviron_strings; *wptr; wptr += strlenW(wptr) + 1)
   {
@@ -116,15 +116,15 @@ WCHAR ** msvcrt_SnapshotOfEnvironmentW(WCHAR **wblk)
     len += strlenW(wptr) + 1;
   }
   if (wblk)
-      wblk = HeapReAlloc( GetProcessHeap(), 0, wblk, count* sizeof(WCHAR*) + len * sizeof(WCHAR));
+      wblk = HeapReAlloc( GetProcessHeap(), 0, wblk, count* sizeof(MSVCRT_wchar_t*) + len * sizeof(MSVCRT_wchar_t));
   else
-    wblk = HeapAlloc(GetProcessHeap(), 0, count* sizeof(WCHAR*) + len * sizeof(WCHAR));
+    wblk = HeapAlloc(GetProcessHeap(), 0, count* sizeof(MSVCRT_wchar_t*) + len * sizeof(MSVCRT_wchar_t));
   if (wblk)
     {
       if (count)
 	{
-	  memcpy(&wblk[count],wenviron_strings,len * sizeof(WCHAR));
-	  for (wptr = (WCHAR*)&wblk[count]; *wptr; wptr += strlenW(wptr) + 1)
+	  memcpy(&wblk[count],wenviron_strings,len * sizeof(MSVCRT_wchar_t));
+	  for (wptr = (MSVCRT_wchar_t*)&wblk[count]; *wptr; wptr += strlenW(wptr) + 1)
 	    {
 	      wblk[i++] = wptr;
 	    }
@@ -180,7 +180,7 @@ char** __p__acmdln(void) { return &MSVCRT__acmdln; }
 /*********************************************************************
  *		__p__wcmdln (MSVCRT.@)
  */
-WCHAR** __p__wcmdln(void) { return &MSVCRT__wcmdln; }
+MSVCRT_wchar_t** __p__wcmdln(void) { return &MSVCRT__wcmdln; }
 
 /*********************************************************************
  *		__p___argv (MSVCRT.@)
@@ -190,7 +190,7 @@ char*** __p___argv(void) { return &MSVCRT___argv; }
 /*********************************************************************
  *		__p___wargv (MSVCRT.@)
  */
-WCHAR*** __p___wargv(void) { return &MSVCRT___wargv; }
+MSVCRT_wchar_t*** __p___wargv(void) { return &MSVCRT___wargv; }
 
 /*********************************************************************
  *		__p__environ (MSVCRT.@)
@@ -205,7 +205,7 @@ char*** __p__environ(void)
 /*********************************************************************
  *		__p__wenviron (MSVCRT.@)
  */
-WCHAR*** __p__wenviron(void)
+MSVCRT_wchar_t*** __p__wenviron(void)
 {
   if (!MSVCRT__wenviron)
     MSVCRT__wenviron = msvcrt_SnapshotOfEnvironmentW(NULL);
@@ -220,7 +220,7 @@ char*** __p___initenv(void) { return &MSVCRT___initenv; }
 /*********************************************************************
  *		__p___winitenv (MSVCRT.@)
  */
-WCHAR*** __p___winitenv(void) { return &MSVCRT___winitenv; }
+MSVCRT_wchar_t*** __p___winitenv(void) { return &MSVCRT___winitenv; }
 
 /*********************************************************************
  *		__p__timezone (MSVCRT.@)
@@ -228,13 +228,13 @@ WCHAR*** __p___winitenv(void) { return &MSVCRT___winitenv; }
 int* __p__timezone(void) { return &MSVCRT_timezone; }
 
 /* INTERNAL: Create a wide string from an ascii string */
-static WCHAR *wstrdupa(const char *str)
+static MSVCRT_wchar_t *wstrdupa(const char *str)
 {
   const size_t len = strlen(str) + 1 ;
-  WCHAR *wstr = MSVCRT_malloc(len* sizeof (WCHAR));
+  MSVCRT_wchar_t *wstr = MSVCRT_malloc(len* sizeof (MSVCRT_wchar_t));
   if (!wstr)
     return NULL;
-   MultiByteToWideChar(CP_ACP, MB_PRECOMPOSED,str,len*sizeof(char),wstr,len* sizeof (WCHAR));
+   MultiByteToWideChar(CP_ACP, MB_PRECOMPOSED,str,len,wstr,len);
   return wstr;
 }
 
@@ -308,8 +308,8 @@ void __getmainargs(int *argc, char** *argv, char** *envp,
 /*********************************************************************
  *		__wgetmainargs (MSVCRT.@)
  */
-void __wgetmainargs(int *argc, WCHAR** *wargv, WCHAR** *wenvp,
-                                   int expand_wildcards, int *new_mode)
+void __wgetmainargs(int *argc, MSVCRT_wchar_t** *wargv, MSVCRT_wchar_t** *wenvp,
+                    int expand_wildcards, int *new_mode)
 {
   TRACE("(%p,%p,%p,%d,%p).\n", argc, wargv, wenvp, expand_wildcards, new_mode);
   *argc = MSVCRT___argc;

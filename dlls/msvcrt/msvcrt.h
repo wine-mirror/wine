@@ -28,6 +28,7 @@
 #include "winerror.h"
 #include "winnls.h"
 
+#include "msvcrt/string.h"
 #include "msvcrt/eh.h"
 
 /* TLS data */
@@ -50,15 +51,15 @@ extern int MSVCRT_current_lc_all_cp;
 void _purecall(void);
 void   MSVCRT__set_errno(int);
 char*  msvcrt_strndup(const char*,unsigned int);
-LPWSTR msvcrt_wstrndup(LPCWSTR, unsigned int);
+MSVCRT_wchar_t *msvcrt_wstrndup(const MSVCRT_wchar_t*, unsigned int);
 
 void MSVCRT__amsg_exit(int errnum);
 
 extern char **MSVCRT__environ;
-extern WCHAR **MSVCRT__wenviron;
+extern MSVCRT_wchar_t **MSVCRT__wenviron;
 
 extern char ** msvcrt_SnapshotOfEnvironmentA(char **);
-extern WCHAR ** msvcrt_SnapshotOfEnvironmentW(WCHAR **);
+extern MSVCRT_wchar_t ** msvcrt_SnapshotOfEnvironmentW(MSVCRT_wchar_t **);
 
 /* FIXME: This should be declared in new.h but it's not an extern "C" so
  * it would not be much use anyway. Even for Winelib applications.
