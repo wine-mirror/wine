@@ -46,4 +46,6 @@ HHOOK keyboard_hook;
 
 LRESULT CALLBACK KeyboardCallback( int code, WPARAM wparam, LPARAM lparam );
 
+extern HINSTANCE DINPUT_instance;
+
 #endif /* __WINE_DLLS_DINPUT_DINPUT_PRIVATE_H */

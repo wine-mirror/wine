@@ -50,11 +50,14 @@ static ICOM_VTABLE(IDirectInput8A) ddi8avt;
 static dinput_device * dinput_devices[MAX_WINE_DINPUT_DEVICES];
 static int nrof_dinput_devices = 0;
 
+HINSTANCE DINPUT_instance = NULL;
+
 BOOL WINAPI DllMain( HINSTANCE inst, DWORD reason, LPVOID reserv)
 {
     switch(reason)
     {
       case DLL_PROCESS_ATTACH:
+        DINPUT_instance = inst;
         keyboard_hook = SetWindowsHookExW( WH_KEYBOARD_LL, KeyboardCallback, inst, 0 );
         break;
       case DLL_PROCESS_DETACH:

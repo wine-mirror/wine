@@ -527,7 +527,7 @@ static HRESULT WINAPI SysMouseAImpl_Acquire(LPDIRECTINPUTDEVICE8A iface)
     /* Install our mouse hook */
     if (This->dwCoopLevel & DISCL_EXCLUSIVE)
       ShowCursor(FALSE); /* hide cursor */
-    This->hook = SetWindowsHookExW( WH_MOUSE_LL, dinput_mouse_hook, 0, 0 );
+    This->hook = SetWindowsHookExA( WH_MOUSE_LL, dinput_mouse_hook, DINPUT_instance, 0 );
 
     /* Get the window dimension and find the center */
     GetWindowRect(This->win, &rect);
