@@ -1841,9 +1841,9 @@ extern inline void WINAPI SetLastError( DWORD err )
 extern inline HANDLE WINAPI GetProcessHeap(void);
 extern inline HANDLE WINAPI GetProcessHeap(void)
 {
-    DWORD *pdb;
+    HANDLE *pdb;
     __asm__ __volatile__( ".byte 0x64\n\tmovl 0x30,%0" : "=r" (pdb) );
-    return pdb[0x18 / sizeof(DWORD)];  /* get dword at offset 0x18 in pdb */
+    return pdb[0x18 / sizeof(HANDLE)];  /* get dword at offset 0x18 in pdb */
 }
 
 #else  /* __i386__ && __GNUC__ */
