@@ -411,17 +411,22 @@ int set_file_time( int handle, time_t access_time, time_t write_time )
 
     if (!(file = get_file_obj( current->process, handle, GENERIC_WRITE )))
         return 0;
+    if (!access_time || !write_time)
+    {
+        struct stat st;
+        if (stat( file->name, &st ) == -1) goto error;
+        if (!access_time) access_time = st.st_atime;
+        if (!write_time) write_time = st.st_mtime;
+    }
     utimbuf.actime  = access_time;
     utimbuf.modtime = write_time;
-    if (utime( file->name, &utimbuf ) == -1)
-    {
-        file_set_error();
-        release_object( file );
-        return 0;
-    }
+    if (utime( file->name, &utimbuf ) == -1) goto error;
     release_object( file );
     return 1;
-    
+ error:
+    file_set_error();
+    release_object( file );
+    return 0;
 }
 
 int file_lock( struct file *file, int offset_high, int offset_low,
