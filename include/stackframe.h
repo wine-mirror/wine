@@ -85,6 +85,6 @@ typedef void *VA_LIST16;
 #define STACK32_POP(context) (*(*(DWORD **)&ESP_reg(context))++)
 
 /* Win32 register functions */
-#define REGS_ENTRYPOINT(name) void WINAPI __regs_##name( CONTEXT *context )
+#define REGS_FUNC(name) __regs_##name
 
 #endif /* __WINE_STACKFRAME_H */

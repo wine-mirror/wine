@@ -96,12 +96,10 @@ static void EXC_DefaultHandling( EXCEPTION_RECORD *rec, CONTEXT *context )
 }
 
 
-/*******************************************************************
- *         EXC_RaiseException
- *
- * Implementation of NtRaiseException.
+/***********************************************************************
+ *            RtlRaiseException  (NTDLL.464)
  */
-static void EXC_RaiseException( EXCEPTION_RECORD *rec, CONTEXT *context )
+void WINAPI REGS_FUNC(RtlRaiseException)( EXCEPTION_RECORD *rec, CONTEXT *context )
 {
     PEXCEPTION_FRAME frame, dispatch, nested_frame;
     EXCEPTION_RECORD newrec;
@@ -160,15 +158,16 @@ static void EXC_RaiseException( EXCEPTION_RECORD *rec, CONTEXT *context )
 
 
 /*******************************************************************
- *         EXC_RtlUnwind
- *
- * Implementation of RtlUnwind.
+ *         RtlUnwind  (KERNEL32.590) (NTDLL.518)
  */
-static void EXC_RtlUnwind( EXCEPTION_FRAME *pEndFrame, EXCEPTION_RECORD *pRecord,
-                           CONTEXT *context )
+void WINAPI REGS_FUNC(RtlUnwind)( PEXCEPTION_FRAME pEndFrame, LPVOID unusedEip, 
+                                  PEXCEPTION_RECORD pRecord, DWORD returnEax,
+                                  CONTEXT *context )
 {
     EXCEPTION_RECORD record, newrec;
     PEXCEPTION_FRAME frame, dispatch;
+
+    EAX_reg(context) = returnEax;
 
     /* build an exception record, if we do not have one */
     if (!pRecord)
@@ -235,65 +234,11 @@ static void EXC_RtlUnwind( EXCEPTION_FRAME *pEndFrame, EXCEPTION_RECORD *pRecord
  * Real prototype:
  *    DWORD WINAPI NtRaiseException( EXCEPTION_RECORD *rec, CONTEXT *ctx, BOOL first );
  */
-REGS_ENTRYPOINT(NtRaiseException)
+void WINAPI REGS_FUNC(NtRaiseException)( EXCEPTION_RECORD *rec, CONTEXT *ctx,
+                                         BOOL first, CONTEXT *context )
 {
-    DWORD ret;
-    EXCEPTION_RECORD *rec;
-    CONTEXT *ctx;
-    BOOL first;
-
-    ret   = STACK32_POP(context);  /* return addr */
-    rec   = (PEXCEPTION_RECORD)STACK32_POP(context);
-    ctx   = (PCONTEXT)STACK32_POP(context);
-    first = (BOOL)STACK32_POP(context);
-    STACK32_PUSH(context,ret);  /* restore return addr */
-
-    EXC_RaiseException( rec, ctx );
+    REGS_FUNC(RtlRaiseException)( rec, ctx );
     *context = *ctx;
-}
-
-
-/***********************************************************************
- *            RtlRaiseException  (NTDLL.464)
- *
- * Real prototype:
- *     void WINAPI RtlRaiseException(PEXCEPTION_RECORD pRecord)
- */
-REGS_ENTRYPOINT(RtlRaiseException)
-{
-    EXCEPTION_RECORD *rec;
-    DWORD ret;
-
-    ret = STACK32_POP(context);  /* return addr */
-    rec = (PEXCEPTION_RECORD)STACK32_POP(context);
-    STACK32_PUSH(context,ret);  /* restore return addr */
-
-    rec->ExceptionAddress = (LPVOID)EIP_reg(context);
-    EXC_RaiseException( rec, context );
-}
-
-
-/*******************************************************************
- *         RtlUnwind  (KERNEL32.590) (NTDLL.518)
- *
- * The real prototype is:
- * void WINAPI RtlUnwind( PEXCEPTION_FRAME pEndFrame, LPVOID unusedEip, 
- *                        PEXCEPTION_RECORD pRecord, DWORD returnEax );
- */
-REGS_ENTRYPOINT(RtlUnwind)
-{
-    PEXCEPTION_FRAME pEndFrame;
-    PEXCEPTION_RECORD pRecord;
-
-    /* get the arguments from the stack */
-    DWORD ret        = STACK32_POP(context);  /* return addr */
-    pEndFrame        = (PEXCEPTION_FRAME)STACK32_POP(context);
-    (void)STACK32_POP(context);  /* unused arg */
-    pRecord          = (PEXCEPTION_RECORD)STACK32_POP(context);
-    EAX_reg(context) = STACK32_POP(context);
-    STACK32_PUSH(context,ret);  /* restore return addr */
-
-    EXC_RtlUnwind( pEndFrame, pRecord, context );
 }
 
 

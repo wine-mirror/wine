@@ -1560,21 +1560,24 @@ HMODULE WINAPI MapHModuleSL(HMODULE16 hmod) {
 /***************************************************************************
  *		MapHInstLS			(KERNEL32.516)
  */
-REGS_ENTRYPOINT(MapHInstLS) {
+void WINAPI REGS_FUNC(MapHInstLS)( CONTEXT *context )
+{
 	EAX_reg(context) = MapHModuleLS(EAX_reg(context));
 }
 
 /***************************************************************************
  *		MapHInstSL			(KERNEL32.518)
  */
-REGS_ENTRYPOINT(MapHInstSL) {
+void WINAPI REGS_FUNC(MapHInstSL)( CONTEXT *context )
+{
 	EAX_reg(context) = MapHModuleSL(EAX_reg(context));
 }
 
 /***************************************************************************
  *		MapHInstLS_PN			(KERNEL32.517)
  */
-REGS_ENTRYPOINT(MapHInstLS_PN) {
+void WINAPI REGS_FUNC(MapHInstLS_PN)( CONTEXT *context )
+{
 	if (EAX_reg(context))
 	    EAX_reg(context) = MapHModuleLS(EAX_reg(context));
 }
@@ -1582,7 +1585,8 @@ REGS_ENTRYPOINT(MapHInstLS_PN) {
 /***************************************************************************
  *		MapHInstSL_PN			(KERNEL32.519)
  */
-REGS_ENTRYPOINT(MapHInstSL_PN) {
+void WINAPI REGS_FUNC(MapHInstSL_PN)( CONTEXT *context )
+{
 	if (EAX_reg(context))
 	    EAX_reg(context) = MapHModuleSL(EAX_reg(context));
 }

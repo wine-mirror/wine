@@ -248,11 +248,11 @@ UINT WINAPI ThunkConnect32(
  * 		QT_Thunk			(KERNEL32)
  *
  * The target address is in EDX.
- * The 16 bit arguments start at ESP+4.
- * The number of 16bit argumentbytes is EBP-ESP-0x44 (68 Byte thunksetup).
+ * The 16 bit arguments start at ESP.
+ * The number of 16bit argument bytes is EBP-ESP-0x40 (64 Byte thunksetup).
  * [ok]
  */
-REGS_ENTRYPOINT(QT_Thunk)
+void WINAPI REGS_FUNC(QT_Thunk)( CONTEXT *context )
 {
     CONTEXT context16;
     DWORD argsize;
@@ -265,10 +265,10 @@ REGS_ENTRYPOINT(QT_Thunk)
     EBP_reg(&context16) = OFFSETOF( thdb->cur_stack )
                            + (WORD)&((STACK16FRAME*)0)->bp;
 
-    argsize = EBP_reg(context)-ESP_reg(context)-0x44;
+    argsize = EBP_reg(context)-ESP_reg(context)-0x40;
 
     memcpy( ((LPBYTE)THREAD_STACK16(thdb))-argsize,
-            (LPBYTE)ESP_reg(context)+4, argsize );
+            (LPBYTE)ESP_reg(context), argsize );
 
     EAX_reg(context) = Callbacks->CallRegisterShortProc( &context16, argsize );
     EDX_reg(context) = HIWORD(EAX_reg(context));
@@ -316,15 +316,12 @@ REGS_ENTRYPOINT(QT_Thunk)
  *    ...    (unclear)
  *  (ebp-64)
  *
- *  ESP is EBP-68 on return.
+ *  ESP is EBP-64 after return.
  *         
  */
 
-REGS_ENTRYPOINT(FT_Prolog)
+void WINAPI REGS_FUNC(FT_Prolog)( CONTEXT *context )
 {
-    /* Pop return address to thunk code */
-    EIP_reg(context) = STACK32_POP(context);
-
     /* Build stack frame */
     STACK32_PUSH(context, EBP_reg(context));
     EBP_reg(context) = ESP_reg(context);
@@ -342,9 +339,6 @@ REGS_ENTRYPOINT(FT_Prolog)
 
     *(DWORD *)(EBP_reg(context) - 48) = EAX_reg(context);
     *(DWORD *)(EBP_reg(context) - 52) = EDX_reg(context);
-    
-    /* Push return address back onto stack */
-    STACK32_PUSH(context, EIP_reg(context));
 }
 
 /**********************************************************************
@@ -368,7 +362,7 @@ REGS_ENTRYPOINT(FT_Prolog)
  *        sufficient ...
  */
 
-REGS_ENTRYPOINT(FT_Thunk)
+void WINAPI REGS_FUNC(FT_Thunk)( CONTEXT *context )
 {
     DWORD mapESPrelative = *(DWORD *)(EBP_reg(context) - 20);
     DWORD callTarget     = *(DWORD *)(EBP_reg(context) - 52);
@@ -385,9 +379,9 @@ REGS_ENTRYPOINT(FT_Thunk)
     EBP_reg(&context16) = OFFSETOF( thdb->cur_stack )
                            + (WORD)&((STACK16FRAME*)0)->bp;
 
-    argsize  = EBP_reg(context)-ESP_reg(context)-0x44;
+    argsize  = EBP_reg(context)-ESP_reg(context)-0x40;
     newstack = ((LPBYTE)THREAD_STACK16(thdb))-argsize;
-    oldstack = (LPBYTE)ESP_reg(context)+4;
+    oldstack = (LPBYTE)ESP_reg(context);
 
     memcpy( newstack, oldstack, argsize );
 
@@ -435,25 +429,23 @@ static void FT_Exit(CONTEXT *context, int nPopArgs)
     EIP_reg(context) = STACK32_POP(context);
     /* Remove arguments */
     ESP_reg(context) += nPopArgs;
-    /* Push return address back onto stack */
-    STACK32_PUSH(context, EIP_reg(context));
 }
 
-REGS_ENTRYPOINT(FT_Exit0)  { FT_Exit(context,  0); }
-REGS_ENTRYPOINT(FT_Exit4)  { FT_Exit(context,  4); }
-REGS_ENTRYPOINT(FT_Exit8)  { FT_Exit(context,  8); }
-REGS_ENTRYPOINT(FT_Exit12) { FT_Exit(context, 12); }
-REGS_ENTRYPOINT(FT_Exit16) { FT_Exit(context, 16); }
-REGS_ENTRYPOINT(FT_Exit20) { FT_Exit(context, 20); }
-REGS_ENTRYPOINT(FT_Exit24) { FT_Exit(context, 24); }
-REGS_ENTRYPOINT(FT_Exit28) { FT_Exit(context, 28); }
-REGS_ENTRYPOINT(FT_Exit32) { FT_Exit(context, 32); }
-REGS_ENTRYPOINT(FT_Exit36) { FT_Exit(context, 36); }
-REGS_ENTRYPOINT(FT_Exit40) { FT_Exit(context, 40); }
-REGS_ENTRYPOINT(FT_Exit44) { FT_Exit(context, 44); }
-REGS_ENTRYPOINT(FT_Exit48) { FT_Exit(context, 48); }
-REGS_ENTRYPOINT(FT_Exit52) { FT_Exit(context, 52); }
-REGS_ENTRYPOINT(FT_Exit56) { FT_Exit(context, 56); }
+void WINAPI REGS_FUNC(FT_Exit0)(CONTEXT *context)  { FT_Exit(context,  0); }
+void WINAPI REGS_FUNC(FT_Exit4)(CONTEXT *context)  { FT_Exit(context,  4); }
+void WINAPI REGS_FUNC(FT_Exit8)(CONTEXT *context)  { FT_Exit(context,  8); }
+void WINAPI REGS_FUNC(FT_Exit12)(CONTEXT *context) { FT_Exit(context, 12); }
+void WINAPI REGS_FUNC(FT_Exit16)(CONTEXT *context) { FT_Exit(context, 16); }
+void WINAPI REGS_FUNC(FT_Exit20)(CONTEXT *context) { FT_Exit(context, 20); }
+void WINAPI REGS_FUNC(FT_Exit24)(CONTEXT *context) { FT_Exit(context, 24); }
+void WINAPI REGS_FUNC(FT_Exit28)(CONTEXT *context) { FT_Exit(context, 28); }
+void WINAPI REGS_FUNC(FT_Exit32)(CONTEXT *context) { FT_Exit(context, 32); }
+void WINAPI REGS_FUNC(FT_Exit36)(CONTEXT *context) { FT_Exit(context, 36); }
+void WINAPI REGS_FUNC(FT_Exit40)(CONTEXT *context) { FT_Exit(context, 40); }
+void WINAPI REGS_FUNC(FT_Exit44)(CONTEXT *context) { FT_Exit(context, 44); }
+void WINAPI REGS_FUNC(FT_Exit48)(CONTEXT *context) { FT_Exit(context, 48); }
+void WINAPI REGS_FUNC(FT_Exit52)(CONTEXT *context) { FT_Exit(context, 52); }
+void WINAPI REGS_FUNC(FT_Exit56)(CONTEXT *context) { FT_Exit(context, 56); }
 
 
 /**********************************************************************
@@ -560,7 +552,7 @@ DWORD WINAPI ThunkInitLS(
  *        (Those two values should be equal anyway ...?)
  * 
  */
-REGS_ENTRYPOINT(Common32ThkLS)
+void WINAPI REGS_FUNC(Common32ThkLS)( CONTEXT *context )
 {
     CONTEXT context16;
     DWORD argsize;
@@ -581,15 +573,12 @@ REGS_ENTRYPOINT(Common32ThkLS)
         argsize = 6 * 4;
 
     memcpy( ((LPBYTE)THREAD_STACK16(thdb))-argsize,
-            (LPBYTE)ESP_reg(context)+4, argsize );
+            (LPBYTE)ESP_reg(context), argsize );
 
     EAX_reg(context) = Callbacks->CallRegisterLongProc(&context16, argsize + 32);
 
     /* Clean up caller's stack frame */
-
-    EIP_reg(context) = STACK32_POP(context);
     ESP_reg(context) += argsize;
-    STACK32_PUSH(context, EIP_reg(context));
 }
 
 /***********************************************************************
@@ -619,7 +608,7 @@ REGS_ENTRYPOINT(Common32ThkLS)
  * (Note that this function seems only to be used for
  *  OLECLI32 -> OLECLI and OLESVR32 -> OLESVR thunking.)
  */
-REGS_ENTRYPOINT(OT_32ThkLSF)
+void WINAPI REGS_FUNC(OT_32ThkLSF)( CONTEXT *context )
 {
     CONTEXT context16;
     DWORD argsize;
@@ -632,14 +621,14 @@ REGS_ENTRYPOINT(OT_32ThkLSF)
     EBP_reg(&context16) = OFFSETOF( thdb->cur_stack )
                            + (WORD)&((STACK16FRAME*)0)->bp;
 
-    argsize = 2 * *(WORD *)(ESP_reg(context) + 4) + 2;
+    argsize = 2 * *(WORD *)ESP_reg(context) + 2;
 
     memcpy( ((LPBYTE)THREAD_STACK16(thdb))-argsize,
-            (LPBYTE)ESP_reg(context)+4, argsize );
+            (LPBYTE)ESP_reg(context), argsize );
 
     EAX_reg(context) = Callbacks->CallRegisterShortProc(&context16, argsize);
 
-    memcpy( (LPBYTE)ESP_reg(context)+4, 
+    memcpy( (LPBYTE)ESP_reg(context), 
             ((LPBYTE)THREAD_STACK16(thdb))-argsize, argsize );
 }
 
@@ -723,11 +712,12 @@ LPVOID WINAPI ThunkInitLSF(
  *                (this is where the FT_Prolog call stub gets written to)
  * 
  * Note: The two DWORD arguments get popped from the stack.
+ *       The first arg is popped by the relay code and stored in EIP_reg.
  *        
  */
-REGS_ENTRYPOINT(FT_PrologPrime)
+void WINAPI REGS_FUNC(FT_PrologPrime)( CONTEXT *context )
 {
-    DWORD  targetTableOffset = STACK32_POP(context);
+    DWORD  targetTableOffset = EIP_reg(context);
     LPBYTE relayCode = (LPBYTE)STACK32_POP(context);
     DWORD *targetTable = *(DWORD **)(relayCode+targetTableOffset);
     DWORD  targetNr = LOBYTE(ECX_reg(context));
@@ -737,7 +727,7 @@ REGS_ENTRYPOINT(FT_PrologPrime)
     /* We should actually call the relay code now, */
     /* but we skip it and go directly to FT_Prolog */
     EDX_reg(context) = targetTable[targetNr];
-    __regs_FT_Prolog(context);
+    REGS_FUNC(FT_Prolog)(context);
 }
 
 /***********************************************************************
@@ -751,7 +741,7 @@ REGS_ENTRYPOINT(FT_PrologPrime)
  *         EAX    start of relay code
  *      
  */
-REGS_ENTRYPOINT(QT_ThunkPrime)
+void WINAPI REGS_FUNC(QT_ThunkPrime)( CONTEXT *context )
 {
     DWORD  targetTableOffset = EDX_reg(context);
     LPBYTE relayCode = (LPBYTE)EAX_reg(context);
@@ -763,7 +753,7 @@ REGS_ENTRYPOINT(QT_ThunkPrime)
     /* We should actually call the relay code now, */
     /* but we skip it and go directly to QT_Thunk */
     EDX_reg(context) = targetTable[targetNr];
-    __regs_QT_Thunk(context);
+    REGS_FUNC(QT_Thunk)(context);
 }
 
 /***********************************************************************
@@ -877,15 +867,15 @@ DWORD WINAPIV SSCall(
 /**********************************************************************
  *           W32S_BackTo32                      (KERNEL32.51)
  */
-REGS_ENTRYPOINT(W32S_BackTo32)
+void WINAPI REGS_FUNC(W32S_BackTo32)( CONTEXT *context )
 {
     LPDWORD stack = (LPDWORD)ESP_reg( context );
-    FARPROC proc = (FARPROC) stack[0];
+    FARPROC proc = (FARPROC)EIP_reg(context);
 
-    EAX_reg( context ) = proc( stack[2], stack[3], stack[4], stack[5], stack[6],
-                               stack[7], stack[8], stack[9], stack[10], stack[11] );
+    EAX_reg( context ) = proc( stack[1], stack[2], stack[3], stack[4], stack[5],
+                               stack[6], stack[7], stack[8], stack[9], stack[10] );
 
-    EIP_reg( context ) = stack[1];
+    EIP_reg( context ) = STACK32_POP(context);
 }
 
 /**********************************************************************
@@ -1021,7 +1011,7 @@ HANDLE WINAPI WOWHandle32(
 /***********************************************************************
  *           K32Thk1632Prolog			(KERNEL32.492)
  */
-REGS_ENTRYPOINT(K32Thk1632Prolog)
+void WINAPI REGS_FUNC(K32Thk1632Prolog)( CONTEXT *context )
 {
    LPBYTE code = (LPBYTE)EIP_reg(context) - 5;
 
@@ -1054,7 +1044,7 @@ REGS_ENTRYPOINT(K32Thk1632Prolog)
 
       THDB *thdb = THREAD_Current();
       DWORD argSize = EBP_reg(context) - ESP_reg(context);
-      char *stack16 = (char *)ESP_reg(context);
+      char *stack16 = (char *)ESP_reg(context) - 4;
       char *stack32 = (char *)thdb->cur_stack - argSize;
       STACK16FRAME *frame16 = (STACK16FRAME *)stack16 - 1;
 
@@ -1068,7 +1058,7 @@ REGS_ENTRYPOINT(K32Thk1632Prolog)
       memcpy(stack32, stack16, argSize);
       thdb->cur_stack = PTR_SEG_OFF_TO_SEGPTR(stackSel, (DWORD)frame16 - stackBase);
 
-      ESP_reg(context) = (DWORD)stack32;
+      ESP_reg(context) = (DWORD)stack32 + 4;
       EBP_reg(context) = ESP_reg(context) + argSize;
 
       TRACE_(thunk)("after  SYSTHUNK hack: EBP: %08lx ESP: %08lx cur_stack: %08lx\n",
@@ -1081,7 +1071,7 @@ REGS_ENTRYPOINT(K32Thk1632Prolog)
 /***********************************************************************
  *           K32Thk1632Epilog			(KERNEL32.491)
  */
-REGS_ENTRYPOINT(K32Thk1632Epilog)
+void WINAPI REGS_FUNC(K32Thk1632Epilog)( CONTEXT *context )
 {
    LPBYTE code = (LPBYTE)EIP_reg(context) - 13;
 

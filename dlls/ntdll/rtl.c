@@ -374,11 +374,11 @@ BOOLEAN WINAPI RtlGetNtProductType(LPDWORD type)
  *                 NTDLL_alloca_probe				[NTDLL.861]
  * Glorified "enter xxxx".
  */
-REGS_ENTRYPOINT(NTDLL_chkstk)
+void WINAPI REGS_FUNC(NTDLL_chkstk)( CONTEXT *context )
 {
     ESP_reg(context) -= EAX_reg(context);
 }
-REGS_ENTRYPOINT(NTDLL_alloca_probe)
+void WINAPI REGS_FUNC(NTDLL_alloca_probe)( CONTEXT *context )
 {
     ESP_reg(context) -= EAX_reg(context);
 }

@@ -54,7 +54,7 @@ LPVOID WINAPI GetPK16SysVar(void)
 /**********************************************************************
  *           CommonUnimpStub    (KERNEL32.17)
  */
-REGS_ENTRYPOINT(CommonUnimpStub)
+void WINAPI REGS_FUNC(CommonUnimpStub)( CONTEXT *context )
 {
     if (EAX_reg(context))
         MESSAGE( "*** Unimplemented Win32 API: %s\n", (LPSTR)EAX_reg(context) );
