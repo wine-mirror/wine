@@ -198,7 +198,7 @@ BOOL32 HANDLE_SetObjPtr( PDB32 *pdb, HANDLE32 handle, K32OBJ *ptr,
     BOOL32 ret = FALSE;
 
     SYSTEM_LOCK();
-    if ((handle > 0) && (handle <= pdb->handle_table->count))
+    if ((handle > 0) && (handle < pdb->handle_table->count))
     {
         HANDLE_ENTRY *entry = &pdb->handle_table->entries[handle];
         K32OBJ *old_ptr = entry->ptr;
@@ -222,7 +222,7 @@ static BOOL32 HANDLE_GetAccess( PDB32 *pdb, HANDLE32 handle, LPDWORD access )
     BOOL32 ret = FALSE;
 
     SYSTEM_LOCK();
-    if ((handle > 0) && (handle <= pdb->handle_table->count))
+    if ((handle > 0) && (handle < pdb->handle_table->count))
     {
         HANDLE_ENTRY *entry = &pdb->handle_table->entries[handle];
         if (entry->ptr)
@@ -246,7 +246,7 @@ static BOOL32 HANDLE_Close( PDB32 *pdb, HANDLE32 handle )
     K32OBJ *ptr;
 
     SYSTEM_LOCK();
-    if ((handle > 0) && (handle <= pdb->handle_table->count))
+    if ((handle > 0) && (handle < pdb->handle_table->count))
     {
         HANDLE_ENTRY *entry = &pdb->handle_table->entries[handle];
         if ((ptr = entry->ptr))
@@ -314,7 +314,7 @@ BOOL32 WINAPI GetHandleInformation( HANDLE32 handle, LPDWORD flags )
     PDB32 *pdb = PROCESS_Current();
 
     SYSTEM_LOCK();
-    if ((handle > 0) && (handle <= pdb->handle_table->count))
+    if ((handle > 0) && (handle < pdb->handle_table->count))
     {
         HANDLE_ENTRY *entry = &pdb->handle_table->entries[handle];
         if (entry->ptr)
@@ -341,7 +341,7 @@ BOOL32 WINAPI SetHandleInformation( HANDLE32 handle, DWORD mask, DWORD flags )
     mask  = (mask << RESERVED_SHIFT) & RESERVED_ALL;
     flags = (flags << RESERVED_SHIFT) & RESERVED_ALL;
     SYSTEM_LOCK();
-    if ((handle > 0) && (handle <= pdb->handle_table->count))
+    if ((handle > 0) && (handle < pdb->handle_table->count))
     {
         HANDLE_ENTRY *entry = &pdb->handle_table->entries[handle];
         if (entry->ptr)
