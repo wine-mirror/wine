@@ -472,7 +472,7 @@ BOOL cabinet_read_entries(struct cabinet *cab)
     }
 
     fol->cab[0]     = cab;
-    fol->offset[0]  = base_offset + (off_t) EndGetI32(buf+cffold_DataOffset);
+    fol->offset[0]  = base_offset + (cab_off_t) EndGetI32(buf+cffold_DataOffset);
     fol->num_blocks = EndGetI16(buf+cffold_NumBlocks);
     fol->comp_type  = EndGetI16(buf+cffold_CompType);
 
