@@ -760,7 +760,7 @@
 @ stub ZwSetSystemPowerState
 @ stdcall ZwSetSystemTime(ptr ptr) NtSetSystemTime
 @ stdcall ZwSetTimer(long ptr ptr ptr long long ptr) NtSetTimer
-@ stdcall ZwSetTimerResolution(long long) NtSetTimerResolution
+@ stdcall ZwSetTimerResolution(long long ptr) NtSetTimerResolution
 @ stdcall ZwSetValueKey(long long long long long long) NtSetValueKey
 @ stdcall ZwSetVolumeInformationFile(long ptr ptr long long) NtSetVolumeInformationFile
 @ stub ZwShutdownSystem
