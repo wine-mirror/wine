@@ -1244,7 +1244,7 @@ BOOL WINAPI GetStringTypeExW(LCID locale,DWORD dwInfoType,LPCWSTR src,
                                  INT cchSrc,LPWORD chartype)
 {
 	int	i;
-
+	UINT	ch;
 
 	if (cchSrc==-1)
 	  cchSrc=lstrlenW(src)+1;
@@ -1260,16 +1260,18 @@ BOOL WINAPI GetStringTypeExW(LCID locale,DWORD dwInfoType,LPCWSTR src,
 	}
 	for (i=0;i<cchSrc;i++) {
 		chartype[i] = 0;
-		if (isdigit(src[i])) chartype[i]|=C1_DIGIT;
-		if (isalpha(src[i])) chartype[i]|=C1_ALPHA;
-		if (islower(src[i])) chartype[i]|=C1_LOWER;
-		if (isupper(src[i])) chartype[i]|=C1_UPPER;
-		if (isspace(src[i])) chartype[i]|=C1_SPACE;
-		if (ispunct(src[i])) chartype[i]|=C1_PUNCT;
-		if (iscntrl(src[i])) chartype[i]|=C1_CNTRL;
+		ch = src[i];
+		if ( ch >= (UINT)0x100 ) continue;
+		if (isdigit(ch)) chartype[i]|=C1_DIGIT;
+		if (isalpha(ch)) chartype[i]|=C1_ALPHA;
+		if (islower(ch)) chartype[i]|=C1_LOWER;
+		if (isupper(ch)) chartype[i]|=C1_UPPER;
+		if (isspace(ch)) chartype[i]|=C1_SPACE;
+		if (ispunct(ch)) chartype[i]|=C1_PUNCT;
+		if (iscntrl(ch)) chartype[i]|=C1_CNTRL;
 /* FIXME: isblank() is a GNU extension */
-/*		if (isblank(src[i])) chartype[i]|=C1_BLANK; */
-                if ((src[i] == ' ') || (src[i] == '\t')) chartype[i]|=C1_BLANK;
+/*		if (isblank(ch)) chartype[i]|=C1_BLANK; */
+                if ((ch == ' ') || (ch == '\t')) chartype[i]|=C1_BLANK;
 		/* C1_XDIGIT */
 	}
 	return TRUE;
