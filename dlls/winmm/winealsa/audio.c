@@ -22,6 +22,9 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
+/* unless someone makes a wineserver kernel module, Unix pipes are faster than win32 events */
+#define USE_PIPE_SYNC
+
 #include "config.h"
 #include "wine/port.h"
 
@@ -97,6 +100,21 @@ enum win_wm_message {
     WINE_WM_UPDATE, WINE_WM_BREAKLOOP, WINE_WM_CLOSING, WINE_WM_STARTING, WINE_WM_STOPPING
 };
 
+#ifdef USE_PIPE_SYNC
+#define SIGNAL_OMR(omr) do { int x = 0; write((omr)->msg_pipe[1], &x, sizeof(x)); } while (0)
+#define CLEAR_OMR(omr) do { int x = 0; read((omr)->msg_pipe[0], &x, sizeof(x)); } while (0)
+#define RESET_OMR(omr) do { } while (0)
+#define WAIT_OMR(omr, sleep) \
+  do { struct pollfd pfd; pfd.fd = (omr)->msg_pipe[0]; \
+       pfd.events = POLLIN; poll(&pfd, 1, sleep); } while (0)
+#else
+#define SIGNAL_OMR(omr) do { SetEvent((omr)->msg_event); } while (0)
+#define CLEAR_OMR(omr) do { } while (0)
+#define RESET_OMR(omr) do { ResetEvent((omr)->msg_event); } while (0)
+#define WAIT_OMR(omr, sleep) \
+  do { WaitForSingleObject((omr)->msg_event, sleep); } while (0)
+#endif
+
 typedef struct {
     enum win_wm_message 	msg;	/* message identifier */
     DWORD	                param;  /* parameter for this message */
@@ -113,7 +131,11 @@ typedef struct {
     int                         ring_buffer_size;
     int				msg_tosave;
     int				msg_toget;
-    HANDLE			msg_event;
+#ifdef USE_PIPE_SYNC
+    int                         msg_pipe[2];
+#else
+    HANDLE                      msg_event;
+#endif
     CRITICAL_SECTION		msg_crst;
 } ALSA_MSG_RING;
 
@@ -685,7 +707,15 @@ static int ALSA_InitRingMessage(ALSA_MSG_RING* omr)
 {
     omr->msg_toget = 0;
     omr->msg_tosave = 0;
+#ifdef USE_PIPE_SYNC
+    if (pipe(omr->msg_pipe) < 0) {
+        omr->msg_pipe[0] = -1;
+        omr->msg_pipe[1] = -1;
+        ERR("could not create pipe, error=%s\n", strerror(errno));
+    }
+#else
     omr->msg_event = CreateEventA(NULL, FALSE, FALSE, NULL);
+#endif
     omr->ring_buffer_size = ALSA_RING_BUFFER_INCREMENT;
     omr->messages = HeapAlloc(GetProcessHeap(),HEAP_ZERO_MEMORY,omr->ring_buffer_size * sizeof(ALSA_MSG));
 
@@ -699,7 +729,12 @@ static int ALSA_InitRingMessage(ALSA_MSG_RING* omr)
  */
 static int ALSA_DestroyRingMessage(ALSA_MSG_RING* omr)
 {
+#ifdef USE_PIPE_SYNC
+    close(omr->msg_pipe[0]);
+    close(omr->msg_pipe[1]);
+#else
     CloseHandle(omr->msg_event);
+#endif
     HeapFree(GetProcessHeap(),0,omr->messages);
     DeleteCriticalSection(&omr->msg_crst);
     return 0;
@@ -762,7 +797,7 @@ static int ALSA_AddRingMessage(ALSA_MSG_RING* omr, enum win_wm_message msg, DWOR
     }
     LeaveCriticalSection(&omr->msg_crst);
     /* signal a new message */
-    SetEvent(omr->msg_event);
+    SIGNAL_OMR(omr);
     if (wait)
     {
         /* wait for playback/record thread to have processed the message */
@@ -793,6 +828,7 @@ static int ALSA_RetrieveRingMessage(ALSA_MSG_RING* omr,
     *param = omr->messages[omr->msg_toget].param;
     *hEvent = omr->messages[omr->msg_toget].hEvent;
     omr->msg_toget = (omr->msg_toget + 1) % omr->ring_buffer_size;
+    CLEAR_OMR(omr);
     LeaveCriticalSection(&omr->msg_crst);
     return 1;
 }
@@ -1100,7 +1136,7 @@ static	void	wodPlayer_Reset(WINE_WAVEOUT* wwo)
 
         wodNotifyClient(wwo, WOM_DONE, param, 0);
     }
-    ResetEvent(wwo->msgRing.msg_event);
+    RESET_OMR(&wwo->msgRing);
     LeaveCriticalSection(&wwo->msgRing.msg_crst);
 }
 
@@ -1223,7 +1259,7 @@ static	DWORD	CALLBACK	wodPlayer(LPVOID pmt)
          */
         dwSleepTime = min(dwNextFeedTime, dwNextNotifyTime);
         TRACE("waiting %lums (%lu,%lu)\n", dwSleepTime, dwNextFeedTime, dwNextNotifyTime);
-        WaitForSingleObject(wwo->msgRing.msg_event, dwSleepTime);
+        WAIT_OMR(&wwo->msgRing, dwSleepTime);
 	wodPlayer_ProcessMessages(wwo);
 	if (wwo->state == WINE_WS_PLAYING) {
 	    dwNextFeedTime = wodPlayer_FeedDSP(wwo);
@@ -2641,7 +2677,7 @@ static	DWORD	CALLBACK	widRecorder(LPVOID pmt)
             }
 	}
 
-        WaitForSingleObject(wwi->msgRing.msg_event, dwSleepTime);
+        WAIT_OMR(&wwi->msgRing, dwSleepTime);
 
 	while (ALSA_RetrieveRingMessage(&wwi->msgRing, &msg, &param, &ev))
 	{
