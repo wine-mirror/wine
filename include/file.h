@@ -35,7 +35,7 @@ extern void FILE_SetDosError(void);
 extern HFILE FILE_DupUnixHandle( int fd, DWORD access );
 extern BOOL FILE_Stat( LPCSTR unixName, BY_HANDLE_FILE_INFORMATION *info );
 extern HFILE16 FILE_Dup2( HFILE16 hFile1, HFILE16 hFile2 );
-extern HFILE FILE_CreateFile( LPCSTR filename, DWORD access, DWORD sharing,
+extern HANDLE FILE_CreateFile( LPCSTR filename, DWORD access, DWORD sharing,
                                 LPSECURITY_ATTRIBUTES sa, DWORD creation,
                                 DWORD attributes, HANDLE template );
 extern HFILE FILE_CreateDevice( int client_id, DWORD access,

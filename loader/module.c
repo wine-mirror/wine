@@ -1357,7 +1357,7 @@ DWORD WINAPI GetModuleFileNameW( HMODULE hModule, LPWSTR lpFileName,
 /***********************************************************************
  *           LoadLibraryExA   (KERNEL32)
  */
-HMODULE WINAPI LoadLibraryExA(LPCSTR libname, HFILE hfile, DWORD flags)
+HMODULE WINAPI LoadLibraryExA(LPCSTR libname, HANDLE hfile, DWORD flags)
 {
 	WINE_MODREF *wm;
 
@@ -1508,7 +1508,7 @@ HMODULE WINAPI LoadLibrary32_16( LPCSTR libname )
 /***********************************************************************
  *           LoadLibraryExW       (KERNEL32)
  */
-HMODULE WINAPI LoadLibraryExW(LPCWSTR libnameW,HFILE hfile,DWORD flags)
+HMODULE WINAPI LoadLibraryExW(LPCWSTR libnameW,HANDLE hfile,DWORD flags)
 {
     LPSTR libnameA = HEAP_strdupWtoA( GetProcessHeap(), 0, libnameW );
     HMODULE ret = LoadLibraryExA( libnameA , hfile, flags );

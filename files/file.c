@@ -327,7 +327,7 @@ HFILE FILE_DupUnixHandle( int fd, DWORD access )
  *
  * Implementation of CreateFile. Takes a Unix path name.
  */
-HFILE FILE_CreateFile( LPCSTR filename, DWORD access, DWORD sharing,
+HANDLE FILE_CreateFile( LPCSTR filename, DWORD access, DWORD sharing,
                          LPSECURITY_ATTRIBUTES sa, DWORD creation,
                          DWORD attributes, HANDLE template )
 {
@@ -402,7 +402,7 @@ HFILE FILE_CreateDevice( int client_id, DWORD access, LPSECURITY_ATTRIBUTES sa )
  * Doesn't support character devices, pipes, template files, or a
  * lot of the 'attributes' flags yet.
  */
-HFILE WINAPI CreateFileA( LPCSTR filename, DWORD access, DWORD sharing,
+HANDLE WINAPI CreateFileA( LPCSTR filename, DWORD access, DWORD sharing,
                               LPSECURITY_ATTRIBUTES sa, DWORD creation,
                               DWORD attributes, HANDLE template )
 {
@@ -486,12 +486,12 @@ HFILE WINAPI CreateFileA( LPCSTR filename, DWORD access, DWORD sharing,
 /*************************************************************************
  *              CreateFile32W              (KERNEL32.48)
  */
-HFILE WINAPI CreateFileW( LPCWSTR filename, DWORD access, DWORD sharing,
+HANDLE WINAPI CreateFileW( LPCWSTR filename, DWORD access, DWORD sharing,
                               LPSECURITY_ATTRIBUTES sa, DWORD creation,
                               DWORD attributes, HANDLE template)
 {
     LPSTR afn = HEAP_strdupWtoA( GetProcessHeap(), 0, filename );
-    HFILE res = CreateFileA( afn, access, sharing, sa, creation, attributes, template );
+    HANDLE res = CreateFileA( afn, access, sharing, sa, creation, attributes, template );
     HeapFree( GetProcessHeap(), 0, afn );
     return res;
 }
@@ -548,7 +548,7 @@ BOOL FILE_Stat( LPCSTR unixName, BY_HANDLE_FILE_INFORMATION *info )
 /***********************************************************************
  *             GetFileInformationByHandle   (KERNEL32.219)
  */
-DWORD WINAPI GetFileInformationByHandle( HFILE hFile,
+DWORD WINAPI GetFileInformationByHandle( HANDLE hFile,
                                          BY_HANDLE_FILE_INFORMATION *info )
 {
     struct get_file_info_request *req = get_req_buffer();
@@ -610,7 +610,7 @@ DWORD WINAPI GetFileAttributesW( LPCWSTR name )
 /***********************************************************************
  *           GetFileSize   (KERNEL32.220)
  */
-DWORD WINAPI GetFileSize( HFILE hFile, LPDWORD filesizehigh )
+DWORD WINAPI GetFileSize( HANDLE hFile, LPDWORD filesizehigh )
 {
     BY_HANDLE_FILE_INFORMATION info;
     if (!GetFileInformationByHandle( hFile, &info )) return 0;
@@ -622,7 +622,7 @@ DWORD WINAPI GetFileSize( HFILE hFile, LPDWORD filesizehigh )
 /***********************************************************************
  *           GetFileTime   (KERNEL32.221)
  */
-BOOL WINAPI GetFileTime( HFILE hFile, FILETIME *lpCreationTime,
+BOOL WINAPI GetFileTime( HANDLE hFile, FILETIME *lpCreationTime,
                            FILETIME *lpLastAccessTime,
                            FILETIME *lpLastWriteTime )
 {
@@ -1238,7 +1238,7 @@ HFILE WINAPI _lcreat( LPCSTR path, INT attr )
 /***********************************************************************
  *           SetFilePointer   (KERNEL32.492)
  */
-DWORD WINAPI SetFilePointer( HFILE hFile, LONG distance, LONG *highword,
+DWORD WINAPI SetFilePointer( HANDLE hFile, LONG distance, LONG *highword,
                              DWORD method )
 {
     struct set_file_pointer_request *req = get_req_buffer();
@@ -1445,7 +1445,7 @@ UINT WINAPI SetHandleCount( UINT count )
 /***********************************************************************
  *           FlushFileBuffers   (KERNEL32.133)
  */
-BOOL WINAPI FlushFileBuffers( HFILE hFile )
+BOOL WINAPI FlushFileBuffers( HANDLE hFile )
 {
     struct flush_file_request *req = get_req_buffer();
     req->handle = hFile;
@@ -1456,7 +1456,7 @@ BOOL WINAPI FlushFileBuffers( HFILE hFile )
 /**************************************************************************
  *           SetEndOfFile   (KERNEL32.483)
  */
-BOOL WINAPI SetEndOfFile( HFILE hFile )
+BOOL WINAPI SetEndOfFile( HANDLE hFile )
 {
     struct truncate_file_request *req = get_req_buffer();
     req->handle = hFile;
@@ -1610,7 +1610,7 @@ int FILE_munmap( LPVOID start, DWORD size_high, DWORD size_low )
 /***********************************************************************
  *           GetFileType   (KERNEL32.222)
  */
-DWORD WINAPI GetFileType( HFILE hFile )
+DWORD WINAPI GetFileType( HANDLE hFile )
 {
     struct get_file_info_request *req = get_req_buffer();
     req->handle = hFile;
@@ -1885,7 +1885,7 @@ BOOL WINAPI CopyFileExW(LPCWSTR            sourceFilename,
 /***********************************************************************
  *              SetFileTime   (KERNEL32.650)
  */
-BOOL WINAPI SetFileTime( HFILE hFile,
+BOOL WINAPI SetFileTime( HANDLE hFile,
                            const FILETIME *lpCreationTime,
                            const FILETIME *lpLastAccessTime,
                            const FILETIME *lpLastWriteTime )
@@ -1908,7 +1908,7 @@ BOOL WINAPI SetFileTime( HFILE hFile,
 /**************************************************************************
  *           LockFile   (KERNEL32.511)
  */
-BOOL WINAPI LockFile( HFILE hFile, DWORD dwFileOffsetLow, DWORD dwFileOffsetHigh,
+BOOL WINAPI LockFile( HANDLE hFile, DWORD dwFileOffsetLow, DWORD dwFileOffsetHigh,
                         DWORD nNumberOfBytesToLockLow, DWORD nNumberOfBytesToLockHigh )
 {
     struct lock_file_request *req = get_req_buffer();
@@ -1955,7 +1955,7 @@ BOOL WINAPI LockFileEx( HANDLE hFile, DWORD flags, DWORD reserved,
 /**************************************************************************
  *           UnlockFile   (KERNEL32.703)
  */
-BOOL WINAPI UnlockFile( HFILE hFile, DWORD dwFileOffsetLow, DWORD dwFileOffsetHigh,
+BOOL WINAPI UnlockFile( HANDLE hFile, DWORD dwFileOffsetLow, DWORD dwFileOffsetHigh,
                           DWORD nNumberOfBytesToUnlockLow, DWORD nNumberOfBytesToUnlockHigh )
 {
     struct unlock_file_request *req = get_req_buffer();
