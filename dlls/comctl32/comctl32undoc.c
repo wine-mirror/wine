@@ -2425,7 +2425,6 @@ COMCTL32_StrStrIA (LPCSTR lpStr1, LPCSTR lpStr2)
     return (NULL);
 }
 
-
 /**************************************************************************
  * StrToIntA [COMCTL32.357] Converts a string to a signed integer.
  */
@@ -2434,6 +2433,38 @@ INT WINAPI
 COMCTL32_StrToIntA (LPSTR lpString)
 {
     return atoi(lpString);
+}
+
+/**************************************************************************
+ * StrStrIW [COMCTL32.363]
+ */
+
+LPWSTR WINAPI
+COMCTL32_StrStrIW (LPCWSTR lpStr1, LPCWSTR lpStr2)
+{
+    INT len1, len2, i;
+    WCHAR  first;
+
+    if (*lpStr2 == 0)
+	return ((LPWSTR)lpStr1);
+    len1 = 0;
+    while (lpStr1[len1] != 0) ++len1;
+    len2 = 0;
+    while (lpStr2[len2] != 0) ++len2;
+    if (len2 == 0)
+	return ((LPWSTR)(lpStr1 + len1));
+    first = tolowerW (*lpStr2);
+    while (len1 >= len2) {
+	if (tolowerW (*lpStr1) == first) {
+	    for (i = 1; i < len2; ++i)
+		if (tolowerW (lpStr1[i]) != tolowerW(lpStr2[i]))
+		    break;
+	    if (i >= len2)
+		return ((LPWSTR)lpStr1);
+        }
+	++lpStr1; --len1;
+    }
+    return (NULL);
 }
 
 /**************************************************************************

@@ -74,7 +74,7 @@
 360 stdcall -noname StrCmpNW(wstr wstr long) COMCTL32_StrCmpNW
 361 stdcall -noname StrCmpNIW(wstr wstr long) COMCTL32_StrCmpNIW
 362 stdcall -noname StrStrW(wstr wstr) COMCTL32_StrStrW
-363 stub -noname StrStrIW
+363 stdcall -noname StrStrIW(wstr wstr) COMCTL32_StrStrIW
 364 stdcall -noname StrSpnW(wstr wstr) COMCTL32_StrSpnW
 365 stdcall -noname StrToIntW(wstr) COMCTL32_StrToIntW
 366 stub -noname StrChrIA
