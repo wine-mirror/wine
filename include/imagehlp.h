@@ -6,43 +6,12 @@
 #define __WINE_IMAGEHLP_H
 
 #include "toolhelp.h"
+#include "winnt.h"
 #include "wintypes.h"
 
 /***********************************************************************
  * Types
  */
-
-#define ANYSIZE_ARRAY 1 /* FIXME: Move to wintypes.h */
-
-typedef unsigned char UCHAR; /* FIXME: Move to wintypes.h */
-typedef UCHAR *PUCHAR;  /* FIXME: Move to wintypes.h */
-typedef CHAR *PCHAR;  /* FIXME: Move to wintypes.h */
-typedef unsigned char boolean; /* FIXME: Move to wintypes.h */
-typedef boolean BOOLEAN; /* FIXME: Move to wintypes.h */
-typedef void *PVOID; /* FIXME: Move to wintypes.h */
-typedef DWORD *PDWORD; /* FIXME: Move to wintypes.h */
-typedef BYTE *PBYTE; /* FIXME: Move to wintypes.h */
-typedef ULONG *PULONG; /* FIXME: Move to wintypes.h */
-typedef unsigned short USHORT; /* FIXME: Move to wintypes.h */
-typedef const void *PCVOID; /* FIXME: Move to wintypes.h */
-typedef UINT32 *PUINT32; /* FIXME: Move to wintypes.h */
-
-typedef struct _LIST_ENTRY32 {
-  struct _LIST_ENTRY32 *Flink;
-  struct _LIST_ENTRY32 *Blink;
-} LIST_ENTRY32, *PLIST_ENTRY32; /* FIXME: Move to wintypes.h */
-
-typedef struct _SINGLE_LIST_ENTRY32 {
-  struct _SINGLE_LIST_ENTRY32 *Next;
-} SINGLE_LIST_ENTRY32, *PSINGLE_LIST_ENTRY32; /* FIXME: Move to wintypes.h */
-
-/* FIXME: Move to wintypes.h */
-#define FIELD_OFFSET(type, field) \
-  ((LONG)(INT32)&(((type *)0)->field))
-
-/* FIXME: Move to wintypes.h */
-#define CONTAINING_RECORD(address, type, field) \
-  ((type *)((PCHAR)(address) - (PCHAR)(&((type *)0)->field)))
 
 typedef PVOID DIGEST_HANDLE32; 
 

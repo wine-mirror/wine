@@ -7,8 +7,31 @@
 #ifndef __WINE_WINNT_H
 #define __WINE_WINNT_H
 
-#include "wintypes.h"
 #include "windows.h"
+
+/* Defines */
+
+#define ANYSIZE_ARRAY 1
+
+#define FIELD_OFFSET(type, field) \
+  ((LONG)(INT32)&(((type *)0)->field))
+
+#define CONTAINING_RECORD(address, type, field) \
+  ((type *)((PCHAR)(address) - (PCHAR)(&((type *)0)->field)))
+
+/* Types */
+
+typedef BYTE     BOOLEAN;
+typedef BOOLEAN *PBOOLEAN;
+
+typedef struct _LIST_ENTRY32 {
+  struct _LIST_ENTRY32 *Flink;
+  struct _LIST_ENTRY32 *Blink;
+} LIST_ENTRY32, *PLIST_ENTRY32;
+
+typedef struct _SINGLE_LIST_ENTRY32 {
+  struct _SINGLE_LIST_ENTRY32 *Next;
+} SINGLE_LIST_ENTRY32, *PSINGLE_LIST_ENTRY32;
 
 /* Heap flags */
 

@@ -80,7 +80,9 @@ typedef unsigned long   DWORD;
 typedef unsigned long   ULONG;
 typedef unsigned char   BYTE;
 typedef long            LONG;
+typedef unsigned short  USHORT;
 typedef char            CHAR;
+typedef unsigned char   UCHAR;
 /* Some systems might have wchar_t, but we really need 16 bit characters */
 typedef unsigned short  WCHAR;
 typedef unsigned short  BOOL16;
@@ -109,7 +111,17 @@ typedef DWORD           LCTYPE;
 typedef float           FLOAT;
 
 /* Pointers types. These are the same for emulator and library. */
-
+/* winnt types */
+typedef void           *PVOID;
+typedef const void     *PCVOID;
+typedef CHAR           *PCHAR;
+typedef UCHAR          *PUCHAR;
+typedef BYTE           *PBYTE;
+typedef ULONG          *PULONG;
+typedef LONG           *PLONG;
+typedef DWORD          *PDWORD;
+typedef UINT32         *PUINT32;
+/* common win32 types */
 typedef CHAR           *LPSTR;
 typedef const CHAR     *LPCSTR;
 typedef WCHAR          *LPWSTR;
