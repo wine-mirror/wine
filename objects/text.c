@@ -91,7 +91,7 @@ LPWSTR FONT_mbtowc(HDC hdc, LPCSTR str, INT count, INT *plenW, UINT *pCP)
 	}
     }
 
-    TRACE("cp == %d\n", cp);
+    TRACE("charset %d => cp %d\n", charset, cp);
 
     if(count == -1) count = strlen(str);
     lenW = MultiByteToWideChar(cp, 0, str, count, NULL, 0);
