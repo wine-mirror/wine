@@ -137,6 +137,7 @@ static int CDROM_GetIdeInterface(int dev, int* iface, int* device)
             case IDE5_MAJOR: *iface = 5; break;
             case IDE6_MAJOR: *iface = 6; break;
             case IDE7_MAJOR: *iface = 7; break;
+            case SCSI_CDROM_MAJOR: *iface = 11; break;
             default:
                 FIXME("CD-ROM device with major ID %d not supported\n", major(st.st_rdev));
                 break;
