@@ -258,8 +258,8 @@ static void wave_out_tests()
     MMRESULT rc;
     UINT ndev,d,f;
     WCHAR * wname;
-    CHAR * name=NULL;
-    DWORD size;                                                                                 
+    CHAR * name;
+    DWORD size;
 
     ndev=waveOutGetNumDevs();
     trace("found %d WaveOut devices\n",ndev);
@@ -267,6 +267,10 @@ static void wave_out_tests()
     rc=waveOutGetDevCapsA(ndev+1,&caps,sizeof(caps));
     ok(rc==MMSYSERR_BADDEVICEID,
        "waveOutGetDevCapsA: MMSYSERR_BADDEVICEID expected, got %d\n",rc);
+
+    rc=waveOutGetDevCapsA(-1,&caps,sizeof(caps));
+    ok(rc==MMSYSERR_NOERROR,
+       "waveOutGetDevCapsA: MMSYSERR_NOERROR expected, got %d\n",rc);
 
     format.wFormatTag=WAVE_FORMAT_PCM;
     format.nChannels=2;
@@ -286,23 +290,32 @@ static void wave_out_tests()
         if (rc==MMSYSERR_BADDEVICEID)
             continue;
 
+        name=NULL;
         rc=waveOutMessage((HWAVEOUT)d, DRV_QUERYDEVICEINTERFACESIZE, (DWORD_PTR)&size, 0);
-        ok(rc==MMSYSERR_NOERROR, "waveOutMessage: failed to get interface size for device: %d rc=%d\n",d,rc);
+        ok(rc==MMSYSERR_NOERROR || rc==MMSYSERR_INVALPARAM || rc==MMSYSERR_NOTSUPPORTED,
+           "waveOutMessage: failed to get interface size for device: %d rc=%d\n",d,rc);
         if (rc==MMSYSERR_NOERROR) {
             wname = (WCHAR *)malloc(size);
             rc=waveOutMessage((HWAVEOUT)d, DRV_QUERYDEVICEINTERFACE, (DWORD_PTR)wname, size);
-            ok(rc==MMSYSERR_NOERROR,"waveOutMessage: failed to get interface name for device:: %d rc=%d\n",d,rc);
+            ok(rc==MMSYSERR_NOERROR,"waveOutMessage: failed to get interface name for device: %d rc=%d\n",d,rc);
+            ok(lstrlenW(wname)+1==size/sizeof(WCHAR),"got an incorrect size: %ld instead of %d\n",size,(lstrlenW(wname)+1)*sizeof(WCHAR));
             if (rc==MMSYSERR_NOERROR) {
                 name = malloc(size/sizeof(WCHAR));
                 WideCharToMultiByte(CP_ACP, 0, wname, size/sizeof(WCHAR), name, size/sizeof(WCHAR), NULL, NULL);
             }
+            free(wname);
+        }
+        else if (rc==MMSYSERR_NOTSUPPORTED)
+        {
+            name=strdup("not supported");
         }
 
         trace("  %d: \"%s\" (%s) %d.%d (%d:%d): channels=%d formats=%05lx support=%04lx\n",
-              d,caps.szPname,name,caps.vDriverVersion >> 8,
+              d,caps.szPname,(name?name:"failed"),caps.vDriverVersion >> 8,
               caps.vDriverVersion & 0xff,
               caps.wMid,caps.wPid,
               caps.wChannels,caps.dwFormats,caps.dwSupport);
+        free(name);
 
         for (f=0;f<NB_WIN_FORMATS;f++) {
             if (caps.dwFormats & win_formats[f][0]) {
@@ -312,43 +325,24 @@ static void wave_out_tests()
         }
 
         /* Try an invalid format to test error handling */
-        trace("Testing invalid 2MHz format\n");
+        trace("Testing invalid format\n");
         format.wFormatTag=WAVE_FORMAT_PCM;
         format.nChannels=2;
-        format.wBitsPerSample=16;
-        format.nSamplesPerSec=2000000; /* 2MHz! */
+        format.wBitsPerSample=11;
+        format.nSamplesPerSec=8000;
         format.nBlockAlign=format.nChannels*format.wBitsPerSample/8;
         format.nAvgBytesPerSec=format.nSamplesPerSec*format.nBlockAlign;
         format.cbSize=0;
         oformat=format;
         rc=waveOutOpen(&wout,d,&format,0,0,CALLBACK_NULL|WAVE_FORMAT_DIRECT);
-        ok(rc==WAVERR_BADFORMAT,
-           "waveOutOpen: opening the device at 2MHz should fail %d: rc=%d\n",d,rc);
+        ok(rc==WAVERR_BADFORMAT || rc==MMSYSERR_INVALFLAG,
+           "waveOutOpen: opening the device in 11 bits mode should fail %d: rc=%d\n",d,rc);
         if (rc==MMSYSERR_NOERROR) {
             trace("     got %ldx%2dx%d for %ldx%2dx%d\n",
                   format.nSamplesPerSec, format.wBitsPerSample,
                   format.nChannels,
                   oformat.nSamplesPerSec, oformat.wBitsPerSample,
                   oformat.nChannels);
-            waveOutClose(wout);
-        }
-
-        format.wFormatTag=WAVE_FORMAT_PCM;
-        format.nChannels=2;
-        format.wBitsPerSample=16;
-        format.nSamplesPerSec=2000000; /* 2MHz! */
-        format.nBlockAlign=format.nChannels*format.wBitsPerSample/8;
-        format.nAvgBytesPerSec=format.nSamplesPerSec*format.nBlockAlign;
-        format.cbSize=0;
-        rc=waveOutOpen(&wout,d,&format,0,0,CALLBACK_NULL|WAVE_FORMAT_DIRECT);
-        ok(rc==WAVERR_BADFORMAT || rc==MMSYSERR_INVALFLAG,
-           "waveOutOpen: opening the device at 2MHz should fail %d: rc=%d\n",d,rc);
-        if (rc==MMSYSERR_NOERROR) {
-            trace("     got %ldx%2dx%d for %dx%2dx%d\n",
-                  format.nSamplesPerSec, format.wBitsPerSample,
-                  format.nChannels,
-                  win_formats[f][1], win_formats[f][2],
-                  win_formats[f][3]);
             waveOutClose(wout);
         }
     }
@@ -465,8 +459,8 @@ static void wave_in_tests()
     MMRESULT rc;
     UINT ndev,d,f;
     WCHAR * wname;
-    CHAR * name=NULL;
-    DWORD size;                                                                                 
+    CHAR * name;
+    DWORD size;
 
     ndev=waveInGetNumDevs();
     trace("found %d WaveIn devices\n",ndev);
@@ -474,6 +468,10 @@ static void wave_in_tests()
     rc=waveInGetDevCapsA(ndev+1,&caps,sizeof(caps));
     ok(rc==MMSYSERR_BADDEVICEID,
        "waveInGetDevCapsA: MMSYSERR_BADDEVICEID expected, got %d(%s)\n",rc,wave_in_error(rc));
+
+    rc=waveInGetDevCapsA(-1,&caps,sizeof(caps));
+    ok(rc==MMSYSERR_NOERROR,
+       "waveInGetDevCapsA: MMSYSERR_NOERROR expected, got %d\n",rc);
 
     format.wFormatTag=WAVE_FORMAT_PCM;
     format.nChannels=2;
@@ -493,23 +491,32 @@ static void wave_in_tests()
         if (rc==MMSYSERR_BADDEVICEID)
             continue;
 
+        name=NULL;
         rc=waveInMessage((HWAVEIN)d, DRV_QUERYDEVICEINTERFACESIZE, (DWORD_PTR)&size, 0);
-        ok(rc==MMSYSERR_NOERROR, "waveInMessage: failed to get interface size for device: %d rc=%d(%s)\n",d,rc,wave_in_error(rc));
+        ok(rc==MMSYSERR_NOERROR || rc==MMSYSERR_INVALPARAM || rc==MMSYSERR_NOTSUPPORTED,
+           "waveInMessage: failed to get interface size for device: %d rc=%d(%s)\n",d,rc,wave_in_error(rc));
         if (rc==MMSYSERR_NOERROR) {
             wname = (WCHAR *)malloc(size);
             rc=waveInMessage((HWAVEIN)d, DRV_QUERYDEVICEINTERFACE, (DWORD_PTR)wname, size);
-            ok(rc==MMSYSERR_NOERROR,"waveInMessage: failed to get interface name for device:: %d rc=%d(%s)\n",d,rc,wave_in_error(rc));
+            ok(rc==MMSYSERR_NOERROR,"waveInMessage: failed to get interface name for device: %d rc=%d(%s)\n",d,rc,wave_in_error(rc));
+            ok(lstrlenW(wname)+1==size/sizeof(WCHAR),"got an incorrect size: %ld instead of %d\n",size,(lstrlenW(wname)+1)*sizeof(WCHAR));
             if (rc==MMSYSERR_NOERROR) {
                 name = malloc(size/sizeof(WCHAR));
                 WideCharToMultiByte(CP_ACP, 0, wname, size/sizeof(WCHAR), name, size/sizeof(WCHAR), NULL, NULL);
             }
+            free(wname);
+        }
+        else if (rc==MMSYSERR_NOTSUPPORTED)
+        {
+            name=strdup("not supported");
         }
 
         trace("  %d: \"%s\" (%s) %d.%d (%d:%d): channels=%d formats=%05lx\n",
-              d,caps.szPname,name,caps.vDriverVersion >> 8,
+              d,caps.szPname,(name?name:"failed"),caps.vDriverVersion >> 8,
               caps.vDriverVersion & 0xff,
               caps.wMid,caps.wPid,
               caps.wChannels,caps.dwFormats);
+        free(name);
 
         for (f=0;f<NB_WIN_FORMATS;f++) {
             if (caps.dwFormats & win_formats[f][0]) {
@@ -519,43 +526,24 @@ static void wave_in_tests()
         }
 
         /* Try an invalid format to test error handling */
-        trace("Testing invalid 2MHz format\n");
+        trace("Testing invalid format\n");
         format.wFormatTag=WAVE_FORMAT_PCM;
         format.nChannels=2;
-        format.wBitsPerSample=16;
-        format.nSamplesPerSec=2000000; /* 2MHz! */
+        format.wBitsPerSample=11;
+        format.nSamplesPerSec=8000;
         format.nBlockAlign=format.nChannels*format.wBitsPerSample/8;
         format.nAvgBytesPerSec=format.nSamplesPerSec*format.nBlockAlign;
         format.cbSize=0;
         oformat=format;
         rc=waveInOpen(&win,d,&format,0,0,CALLBACK_NULL|WAVE_FORMAT_DIRECT);
-        ok(rc==WAVERR_BADFORMAT,
-           "waveInOpen: opening the device at 2MHz should fail %d: rc=%d\n",d,rc);
+        ok(rc==WAVERR_BADFORMAT || rc==MMSYSERR_INVALFLAG,
+           "waveInOpen: opening the device in 11 bit mode should fail %d: rc=%d\n",d,rc);
         if (rc==MMSYSERR_NOERROR) {
             trace("     got %ldx%2dx%d for %ldx%2dx%d\n",
                   format.nSamplesPerSec, format.wBitsPerSample,
                   format.nChannels,
                   oformat.nSamplesPerSec, oformat.wBitsPerSample,
                   oformat.nChannels);
-            waveInClose(win);
-        }
-
-        format.wFormatTag=WAVE_FORMAT_PCM;
-        format.nChannels=2;
-        format.wBitsPerSample=16;
-        format.nSamplesPerSec=2000000; /* 2MHz! */
-        format.nBlockAlign=format.nChannels*format.wBitsPerSample/8;
-        format.nAvgBytesPerSec=format.nSamplesPerSec*format.nBlockAlign;
-        format.cbSize=0;
-        rc=waveInOpen(&win,d,&format,0,0,CALLBACK_NULL|WAVE_FORMAT_DIRECT);
-        ok(rc==WAVERR_BADFORMAT || rc==MMSYSERR_INVALFLAG,
-           "waveInOpen: opening the device at 2MHz should fail %d: rc=%d\n",d,rc);
-        if (rc==MMSYSERR_NOERROR) {
-            trace("     got %ldx%2dx%d for %dx%2dx%d\n",
-                  format.nSamplesPerSec, format.wBitsPerSample,
-                  format.nChannels,
-                  win_formats[f][1], win_formats[f][2],
-                  win_formats[f][3]);
             waveInClose(win);
         }
     }
