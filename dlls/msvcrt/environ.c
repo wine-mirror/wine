@@ -21,22 +21,23 @@ char *MSVCRT_getenv(const char *name)
 {
   char *environ = GetEnvironmentStringsA();
   char *pp,*pos = NULL;
-  unsigned int length;
+  unsigned int length=strlen(name);
 
   for (pp = environ; (*pp); pp = pp + strlen(pp) +1)
   {
-    pos =strchr(pp,'=');
-    if (pos)
-      length = pos -pp;
-    else
-      length = strlen(pp);
-    if (!strncmp(pp,name,length)) break;
+      pos =strchr(pp,'=');
+      if ((pos) && ((pos - pp) == length))
+      {
+          if (!strncmp(pp,name,length)) break;
+      }
   }
-  if ((pp)&& (pos))
+  if ((*pp)&& (pos))
   {
      pp = pos+1;
      TRACE("got %s\n",pp);
   }
+  else
+    pp = 0;
   FreeEnvironmentStringsA( environ );
   return pp;
 }
@@ -48,24 +49,26 @@ WCHAR *_wgetenv(const WCHAR *name)
 {
   WCHAR* environ = GetEnvironmentStringsW();
   WCHAR* pp,*pos = NULL;
-  unsigned int length;
+  unsigned int length=strlenW(name);
 
   for (pp = environ; (*pp); pp = pp + strlenW(pp) + 1)
   {
-    pos = strrchrW(pp,'=');
-    if (pos)
-      length = pos -pp;
-    else
-      length = strlenW(pp);
-    if (!strncmpW(pp,name,length)) break;
-  }
-  if ((pp)&& (pos))
-  {
-     pp = pos+1;
-     TRACE("got %s\n",debugstr_w(pp));
+      pos = strchrW(pp,'=');
+      if ((pos) && ((pos - pp) == length))
+      {
+          if (!strncmpW(pp,name,length))
+          {
+              pp = pos+1;
+              TRACE("got %s\n",debugstr_w(pp));
+              /* can't free pointer since we are returning it */
+              /* should probably use MSVCRT_wenviron instead */
+              FIXME( "memory leak\n" );
+              return pp;
+          }
+      }
   }
   FreeEnvironmentStringsW( environ );
-  return pp;
+  return NULL;
 }
 
 /*********************************************************************
