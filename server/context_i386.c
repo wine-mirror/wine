@@ -311,7 +311,7 @@ static void set_thread_context( struct thread *thread, unsigned int flags, CONTE
     file_set_error();
 }
 
-#elif defined(__FreeBSD__) || defined(__OpenBSD__)
+#elif defined(__FreeBSD__) || defined(__OpenBSD__) || defined(__NetBSD__)
 #include <machine/reg.h>
 
 /* retrieve a thread context */
