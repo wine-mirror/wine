@@ -43,7 +43,60 @@ WINE_DEFAULT_DEBUG_CHANNEL(nls);
 
 #define LOCALE_LOCALEINFOFLAGSMASK (LOCALE_NOUSEROVERRIDE|LOCALE_USE_CP_ACP|LOCALE_RETURN_NUMBER)
 
-extern void CODEPAGE_Init( UINT ansi, UINT oem, UINT mac, LCID lcid );
+extern void CODEPAGE_Init( UINT ansi_cp, UINT oem_cp, UINT mac_cp, UINT unix_cp, LCID lcid );
+
+/* Charset to codepage map, sorted by name. */
+static const struct charset_entry
+{
+    const char *charset_name;
+    UINT        codepage;
+} charset_names[] =
+{
+    { "CP1250", 1250 },
+    { "CP1251", 1251 },
+    { "CP1252", 1252 },
+    { "CP1253", 1253 },
+    { "CP1254", 1254 },
+    { "CP1255", 1255 },
+    { "CP1256", 1256 },
+    { "CP1257", 1257 },
+    { "CP1258", 1258 },
+    { "IBM037", 37 },
+    { "IBM1026", 1026 },
+    { "IBM424", 424 },
+    { "IBM437", 437 },
+    { "IBM500", 500 },
+    { "IBM850", 850 },
+    { "IBM852", 852 },
+    { "IBM855", 855 },
+    { "IBM857", 857 },
+    { "IBM860", 860 },
+    { "IBM861", 861 },
+    { "IBM862", 862 },
+    { "IBM863", 863 },
+    { "IBM864", 864 },
+    { "IBM865", 865 },
+    { "IBM866", 866 },
+    { "IBM869", 869 },
+    { "IBM874", 874 },
+    { "IBM875", 875 },
+    { "ISO-8859-1", 28591 },
+    { "ISO-8859-10", 28600 },
+    { "ISO-8859-13", 28603 },
+    { "ISO-8859-14", 28604 },
+    { "ISO-8859-15", 28605 },
+    { "ISO-8859-2", 28592 },
+    { "ISO-8859-3", 28593 },
+    { "ISO-8859-4", 28594 },
+    { "ISO-8859-5", 28595 },
+    { "ISO-8859-6", 28596 },
+    { "ISO-8859-7", 28597 },
+    { "ISO-8859-8", 28598 },
+    { "ISO-8859-9", 28599 },
+    { "KOI8-R", 20866 },
+    { "KOI8-U", 20866 },
+    { "UTF-8", CP_UTF8 }
+};
 
 #define NLS_MAX_LANGUAGES 20
 typedef struct {
@@ -334,9 +387,18 @@ END:
 
 
 /***********************************************************************
+ *              charset_cmp (internal)
+ */
+static int charset_cmp( const void *name, const void *entry )
+{
+    const struct charset_entry *charset = (struct charset_entry *)entry;
+    return strcasecmp( (char *)name, charset->charset_name );
+}
+
+/***********************************************************************
  *		init_default_lcid
  */
-static LCID init_default_lcid(void)
+static LCID init_default_lcid( UINT *unix_cp )
 {
     char buf[256];
     char *lang,*country,*charset,*dialect,*next;
@@ -359,6 +421,19 @@ static LCID init_default_lcid(void)
             country=strchr(lang,'_'); if (country) *country++='\0';
 
             ret = get_language_id(lang, country, charset, dialect);
+            if (ret && charset)
+            {
+                const struct charset_entry *entry;
+                entry = bsearch( charset, charset_names, sizeof(charset_names)/sizeof(charset_names[0]),
+                               sizeof(charset_names[0]), charset_cmp );
+                if (entry)
+                {
+                    *unix_cp = entry->codepage;
+                    TRACE("charset %s was mapped to cp %u\n", charset, *unix_cp);
+                }
+                else
+                    FIXME("charset %s was not recognized\n", charset);
+            }
 
             lang=next;
         } while (lang && !ret);
@@ -1316,20 +1391,23 @@ int WINAPI lstrcmpiW(LPCWSTR str1, LPCWSTR str2)
  */
 void LOCALE_Init(void)
 {
-    UINT ansi = 1252, oem = 437, mac = 10000;
-    LCID lcid = init_default_lcid();
+    UINT ansi_cp = 1252, oem_cp = 437, mac_cp = 10000, unix_cp = -1;
+    LCID lcid = init_default_lcid( &unix_cp );
 
     NtSetDefaultLocale( FALSE, lcid );
     NtSetDefaultLocale( TRUE, lcid );
 
     GetLocaleInfoW( lcid, LOCALE_IDEFAULTANSICODEPAGE | LOCALE_RETURN_NUMBER,
-                    (LPWSTR)&ansi, sizeof(ansi)/sizeof(WCHAR) );
+                    (LPWSTR)&ansi_cp, sizeof(ansi_cp)/sizeof(WCHAR) );
     GetLocaleInfoW( lcid, LOCALE_IDEFAULTMACCODEPAGE | LOCALE_RETURN_NUMBER,
-                    (LPWSTR)&mac, sizeof(mac)/sizeof(WCHAR) );
+                    (LPWSTR)&mac_cp, sizeof(mac_cp)/sizeof(WCHAR) );
     GetLocaleInfoW( lcid, LOCALE_IDEFAULTCODEPAGE | LOCALE_RETURN_NUMBER,
-                    (LPWSTR)&oem, sizeof(oem)/sizeof(WCHAR) );
+                    (LPWSTR)&oem_cp, sizeof(oem_cp)/sizeof(WCHAR) );
+    if (unix_cp == -1)
+        GetLocaleInfoW( lcid, LOCALE_IDEFAULTUNIXCODEPAGE | LOCALE_RETURN_NUMBER,
+                    (LPWSTR)&unix_cp, sizeof(unix_cp)/sizeof(WCHAR) );
 
-    CODEPAGE_Init( ansi, oem, mac, lcid );
+    CODEPAGE_Init( ansi_cp, oem_cp, mac_cp, unix_cp, lcid );
     update_registry( lcid );
 }
 

@@ -670,63 +670,62 @@ static const char main_key_vnc[MAIN_LEN][4] =
 /*** Layout table. Add your keyboard mappings to this list */
 static const struct {
     const char *comment;
-    const UINT layout_cp; /* Code page for this layout */
     const char (*key)[MAIN_LEN][4];
     const WORD (*scan)[MAIN_LEN]; /* scan codes mapping */
     const WORD (*vkey)[MAIN_LEN]; /* virtual key codes mapping */
 } main_key_tab[]={
- {"United States keyboard layout", 28591, &main_key_US, &main_key_scan_qwerty, &main_key_vkey_qwerty},
- {"United States keyboard layout (phantom key version)", 28591, &main_key_US_phantom, &main_key_scan_qwerty, &main_key_vkey_qwerty},
- {"United States keyboard layout (dvorak)", 28591, &main_key_US_dvorak, &main_key_scan_dvorak, &main_key_vkey_dvorak},
- {"British keyboard layout", 28605, &main_key_UK, &main_key_scan_qwerty, &main_key_vkey_qwerty},
- {"German keyboard layout", 28605, &main_key_DE, &main_key_scan_qwerty, &main_key_vkey_qwerty},
- {"German keyboard layout without dead keys", 28605, &main_key_DE_nodead, &main_key_scan_qwerty, &main_key_vkey_qwerty},
- {"German keyboard layout for logitech desktop pro", 28605, &main_key_DE_logitech,  &main_key_scan_qwerty, &main_key_vkey_qwerty},
- {"German keyboard layout without dead keys 105", 28605, &main_key_DE_nodead_105, &main_key_scan_qwerty, &main_key_vkey_qwerty},
- {"Swiss German keyboard layout", 28605, &main_key_SG, &main_key_scan_qwerty, &main_key_vkey_qwerty},
- {"Swedish keyboard layout", 28605, &main_key_SE, &main_key_scan_qwerty, &main_key_vkey_qwerty},
- {"Estonian keyboard layout", 28605, &main_key_ET, &main_key_scan_qwerty, &main_key_vkey_qwerty},
- {"Norwegian keyboard layout", 28605, &main_key_NO, &main_key_scan_qwerty, &main_key_vkey_qwerty},
- {"Danish keyboard layout", 28605, &main_key_DA, &main_key_scan_qwerty, &main_key_vkey_qwerty},
- {"French keyboard layout", 28605, &main_key_FR, &main_key_scan_qwerty, &main_key_vkey_azerty},
- {"Canadian French keyboard layout", 28591, &main_key_CF, &main_key_scan_qwerty, &main_key_vkey_qwerty},
- {"Belgian keyboard layout", 28605, &main_key_BE, &main_key_scan_qwerty, &main_key_vkey_azerty},
- {"Swiss French keyboard layout", 28605, &main_key_SF, &main_key_scan_qwerty, &main_key_vkey_qwerty},
- {"Portuguese keyboard layout", 28605, &main_key_PT, &main_key_scan_qwerty, &main_key_vkey_qwerty},
- {"Brazilian ABNT-2 keyboard layout", 28591, &main_key_PT_br, &main_key_scan_abnt_qwerty, &main_key_vkey_abnt_qwerty},
- {"Brazilian ABNT-2 keyboard layout ALT GR", 28591, &main_key_PT_br_alt_gr,&main_key_scan_abnt_qwerty, &main_key_vkey_abnt_qwerty},
- {"United States International keyboard layout", 28591, &main_key_US_intl, &main_key_scan_qwerty, &main_key_vkey_qwerty},
- {"Finnish keyboard layout", 28605, &main_key_FI, &main_key_scan_qwerty, &main_key_vkey_qwerty},
- {"Bulgarian bds keyboard layout", 1251, &main_key_BG_bds, &main_key_scan_qwerty, &main_key_vkey_qwerty},
- {"Bulgarian phonetic keyboard layout", 1251, &main_key_BG_phonetic, &main_key_scan_qwerty, &main_key_vkey_qwerty},
- {"Belarusian keyboard layout", 1251, &main_key_BY, &main_key_scan_qwerty, &main_key_vkey_qwerty},
- {"Russian keyboard layout", 20866, &main_key_RU, &main_key_scan_qwerty, &main_key_vkey_qwerty},
- {"Russian keyboard layout (phantom key version)", 20866, &main_key_RU_phantom, &main_key_scan_qwerty, &main_key_vkey_qwerty},
- {"Russian keyboard layout KOI8-R", 20866, &main_key_RU_koi8r, &main_key_scan_qwerty, &main_key_vkey_qwerty},
- {"Ukrainian keyboard layout KOI8-U", 20866, &main_key_UA, &main_key_scan_qwerty, &main_key_vkey_qwerty},
- {"Spanish keyboard layout", 28605, &main_key_ES, &main_key_scan_qwerty, &main_key_vkey_qwerty},
- {"Italian keyboard layout", 28605, &main_key_IT, &main_key_scan_qwerty, &main_key_vkey_qwerty},
- {"Icelandic keyboard layout", 28605, &main_key_IS, &main_key_scan_qwerty, &main_key_vkey_qwerty},
- {"Hungarian keyboard layout", 28592, &main_key_HU, &main_key_scan_qwerty, &main_key_vkey_qwerty},
- {"Polish (programmer's) keyboard layout", 28592, &main_key_PL, &main_key_scan_qwerty, &main_key_vkey_qwerty},
- {"Slovenian keyboard layout", 28592, &main_key_SI, &main_key_scan_qwerty, &main_key_vkey_qwerty},
- {"Croatian keyboard layout", 28592, &main_key_HR, &main_key_scan_qwerty, &main_key_vkey_qwerty},
- {"Croatian keyboard layout (specific)", 28592, &main_key_HR_jelly, &main_key_scan_qwerty, &main_key_vkey_qwerty},
- {"Japanese 106 keyboard layout", 932, &main_key_JA_jp106, &main_key_scan_qwerty, &main_key_vkey_qwerty},
- {"Japanese pc98x1 keyboard layout", 932, &main_key_JA_pc98x1, &main_key_scan_qwerty, &main_key_vkey_qwerty},
- {"Slovak keyboard layout", 28592, &main_key_SK, &main_key_scan_qwerty, &main_key_vkey_qwerty},
- {"Slovak and Czech keyboard layout without dead keys", 28592, &main_key_SK_prog, &main_key_scan_qwerty, &main_key_vkey_qwerty},
- {"Czech keyboard layout", 28592, &main_key_CS, &main_key_scan_qwerty, &main_key_vkey_qwerty},
- {"Czech keyboard layout cz", 28592, &main_key_CZ, &main_key_scan_qwerty, &main_key_vkey_qwerty},
- {"Czech keyboard layout cz_qwerty", 28592, &main_key_CZ_qwerty, &main_key_scan_qwerty, &main_key_vkey_qwerty},
- {"Latin American keyboard layout", 28591, &main_key_LA, &main_key_scan_qwerty, &main_key_vkey_qwerty},
- {"Lithuanian (Baltic) keyboard layout", 28603, &main_key_LT_B, &main_key_scan_qwerty, &main_key_vkey_qwerty},
- {"Turkish keyboard layout", 28599, &main_key_TK, &main_key_scan_qwerty, &main_key_vkey_qwerty},
- {"Israeli keyboard layout", 28598, &main_key_IL, &main_key_scan_qwerty, &main_key_vkey_qwerty},
- {"VNC keyboard layout", 28605, &main_key_vnc, &main_key_scan_vnc, &main_key_vkey_vnc},
- {"Greek keyboard layout", 28597, &main_key_EL, &main_key_scan_qwerty, &main_key_vkey_qwerty},
+ {"United States keyboard layout", &main_key_US, &main_key_scan_qwerty, &main_key_vkey_qwerty},
+ {"United States keyboard layout (phantom key version)", &main_key_US_phantom, &main_key_scan_qwerty, &main_key_vkey_qwerty},
+ {"United States keyboard layout (dvorak)", &main_key_US_dvorak, &main_key_scan_dvorak, &main_key_vkey_dvorak},
+ {"British keyboard layout", &main_key_UK, &main_key_scan_qwerty, &main_key_vkey_qwerty},
+ {"German keyboard layout", &main_key_DE, &main_key_scan_qwerty, &main_key_vkey_qwerty},
+ {"German keyboard layout without dead keys", &main_key_DE_nodead, &main_key_scan_qwerty, &main_key_vkey_qwerty},
+ {"German keyboard layout for logitech desktop pro", &main_key_DE_logitech,  &main_key_scan_qwerty, &main_key_vkey_qwerty},
+ {"German keyboard layout without dead keys 105", &main_key_DE_nodead_105, &main_key_scan_qwerty, &main_key_vkey_qwerty},
+ {"Swiss German keyboard layout", &main_key_SG, &main_key_scan_qwerty, &main_key_vkey_qwerty},
+ {"Swedish keyboard layout", &main_key_SE, &main_key_scan_qwerty, &main_key_vkey_qwerty},
+ {"Estonian keyboard layout", &main_key_ET, &main_key_scan_qwerty, &main_key_vkey_qwerty},
+ {"Norwegian keyboard layout", &main_key_NO, &main_key_scan_qwerty, &main_key_vkey_qwerty},
+ {"Danish keyboard layout", &main_key_DA, &main_key_scan_qwerty, &main_key_vkey_qwerty},
+ {"French keyboard layout", &main_key_FR, &main_key_scan_qwerty, &main_key_vkey_azerty},
+ {"Canadian French keyboard layout", &main_key_CF, &main_key_scan_qwerty, &main_key_vkey_qwerty},
+ {"Belgian keyboard layout", &main_key_BE, &main_key_scan_qwerty, &main_key_vkey_azerty},
+ {"Swiss French keyboard layout", &main_key_SF, &main_key_scan_qwerty, &main_key_vkey_qwerty},
+ {"Portuguese keyboard layout", &main_key_PT, &main_key_scan_qwerty, &main_key_vkey_qwerty},
+ {"Brazilian ABNT-2 keyboard layout", &main_key_PT_br, &main_key_scan_abnt_qwerty, &main_key_vkey_abnt_qwerty},
+ {"Brazilian ABNT-2 keyboard layout ALT GR", &main_key_PT_br_alt_gr,&main_key_scan_abnt_qwerty, &main_key_vkey_abnt_qwerty},
+ {"United States International keyboard layout", &main_key_US_intl, &main_key_scan_qwerty, &main_key_vkey_qwerty},
+ {"Finnish keyboard layout", &main_key_FI, &main_key_scan_qwerty, &main_key_vkey_qwerty},
+ {"Bulgarian bds keyboard layout", &main_key_BG_bds, &main_key_scan_qwerty, &main_key_vkey_qwerty},
+ {"Bulgarian phonetic keyboard layout", &main_key_BG_phonetic, &main_key_scan_qwerty, &main_key_vkey_qwerty},
+ {"Belarusian keyboard layout", &main_key_BY, &main_key_scan_qwerty, &main_key_vkey_qwerty},
+ {"Russian keyboard layout", &main_key_RU, &main_key_scan_qwerty, &main_key_vkey_qwerty},
+ {"Russian keyboard layout (phantom key version)", &main_key_RU_phantom, &main_key_scan_qwerty, &main_key_vkey_qwerty},
+ {"Russian keyboard layout KOI8-R", &main_key_RU_koi8r, &main_key_scan_qwerty, &main_key_vkey_qwerty},
+ {"Ukrainian keyboard layout KOI8-U", &main_key_UA, &main_key_scan_qwerty, &main_key_vkey_qwerty},
+ {"Spanish keyboard layout", &main_key_ES, &main_key_scan_qwerty, &main_key_vkey_qwerty},
+ {"Italian keyboard layout", &main_key_IT, &main_key_scan_qwerty, &main_key_vkey_qwerty},
+ {"Icelandic keyboard layout", &main_key_IS, &main_key_scan_qwerty, &main_key_vkey_qwerty},
+ {"Hungarian keyboard layout", &main_key_HU, &main_key_scan_qwerty, &main_key_vkey_qwerty},
+ {"Polish (programmer's) keyboard layout", &main_key_PL, &main_key_scan_qwerty, &main_key_vkey_qwerty},
+ {"Slovenian keyboard layout", &main_key_SI, &main_key_scan_qwerty, &main_key_vkey_qwerty},
+ {"Croatian keyboard layout", &main_key_HR, &main_key_scan_qwerty, &main_key_vkey_qwerty},
+ {"Croatian keyboard layout (specific)", &main_key_HR_jelly, &main_key_scan_qwerty, &main_key_vkey_qwerty},
+ {"Japanese 106 keyboard layout", &main_key_JA_jp106, &main_key_scan_qwerty, &main_key_vkey_qwerty},
+ {"Japanese pc98x1 keyboard layout", &main_key_JA_pc98x1, &main_key_scan_qwerty, &main_key_vkey_qwerty},
+ {"Slovak keyboard layout", &main_key_SK, &main_key_scan_qwerty, &main_key_vkey_qwerty},
+ {"Slovak and Czech keyboard layout without dead keys", &main_key_SK_prog, &main_key_scan_qwerty, &main_key_vkey_qwerty},
+ {"Czech keyboard layout", &main_key_CS, &main_key_scan_qwerty, &main_key_vkey_qwerty},
+ {"Czech keyboard layout cz", &main_key_CZ, &main_key_scan_qwerty, &main_key_vkey_qwerty},
+ {"Czech keyboard layout cz_qwerty", &main_key_CZ_qwerty, &main_key_scan_qwerty, &main_key_vkey_qwerty},
+ {"Latin American keyboard layout", &main_key_LA, &main_key_scan_qwerty, &main_key_vkey_qwerty},
+ {"Lithuanian (Baltic) keyboard layout", &main_key_LT_B, &main_key_scan_qwerty, &main_key_vkey_qwerty},
+ {"Turkish keyboard layout", &main_key_TK, &main_key_scan_qwerty, &main_key_vkey_qwerty},
+ {"Israeli keyboard layout", &main_key_IL, &main_key_scan_qwerty, &main_key_vkey_qwerty},
+ {"VNC keyboard layout", &main_key_vnc, &main_key_scan_vnc, &main_key_vkey_vnc},
+ {"Greek keyboard layout", &main_key_EL, &main_key_scan_qwerty, &main_key_vkey_qwerty},
 
- {NULL, 0, NULL, NULL, NULL} /* sentinel */
+ {NULL, NULL, NULL, NULL} /* sentinel */
 };
 static unsigned kbd_layout=0; /* index into above table of layouts */
 
@@ -1847,7 +1846,7 @@ INT X11DRV_ToUnicode(UINT virtKey, UINT scanCode, LPBYTE lpKeyState,
 	dead_char = KEYBOARD_MapDeadKeysym(keysym);
 	if (dead_char)
 	    {
-	    MultiByteToWideChar(main_key_tab[kbd_layout].layout_cp, 0, &dead_char, 1, bufW, bufW_size);
+	    MultiByteToWideChar(CP_UNIXCP, 0, &dead_char, 1, bufW, bufW_size);
 	    ret = -1;
 	    }
 	else
@@ -1906,9 +1905,8 @@ INT X11DRV_ToUnicode(UINT virtKey, UINT scanCode, LPBYTE lpKeyState,
 	/* perform translation to unicode */
 	if(ret)
 	{
-	    TRACE_(key)("Translating char 0x%02x from code page %d to unicode\n",
-		*(BYTE *)lpChar, main_key_tab[kbd_layout].layout_cp);
-	    ret = MultiByteToWideChar(main_key_tab[kbd_layout].layout_cp, 0, lpChar, ret, bufW, bufW_size);
+	    TRACE_(key)("Translating char 0x%02x to unicode\n", *(BYTE *)lpChar);
+	    ret = MultiByteToWideChar(CP_UNIXCP, 0, lpChar, ret, bufW, bufW_size);
 	}
     }
 

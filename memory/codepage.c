@@ -36,6 +36,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(string);
 static const union cptable *ansi_cptable;
 static const union cptable *oem_cptable;
 static const union cptable *mac_cptable;
+static const union cptable *unix_cptable;  /* NULL if UTF8 */
 static LCID default_lcid = MAKELCID( MAKELANGID(LANG_ENGLISH,SUBLANG_DEFAULT), SORT_DEFAULT );
 
 /* setup default codepage info before we can get at the locale stuff */
@@ -44,9 +45,11 @@ static void init_codepages(void)
     ansi_cptable = wine_cp_get_table( 1252 );
     oem_cptable  = wine_cp_get_table( 437 );
     mac_cptable  = wine_cp_get_table( 10000 );
+    unix_cptable  = wine_cp_get_table( 28591 );
     assert( ansi_cptable );
     assert( oem_cptable );
     assert( mac_cptable );
+    assert( unix_cptable );
 }
 
 /* find the table for a given codepage, handling CP_ACP etc. pseudo-codepages */
@@ -83,21 +86,27 @@ static const union cptable *get_codepage_table( unsigned int codepage )
 /* initialize default code pages from locale info */
 /* FIXME: should be done in init_codepages, but it can't right now */
 /* since it needs KERNEL32 to be loaded for the locale info. */
-void CODEPAGE_Init( UINT ansi, UINT oem, UINT mac, LCID lcid )
+void CODEPAGE_Init( UINT ansi_cp, UINT oem_cp, UINT mac_cp, UINT unix_cp, LCID lcid )
 {
-    extern void __wine_init_codepages( const union cptable *ansi, const union cptable *oem );
+    extern void __wine_init_codepages( const union cptable *ansi_cp, const union cptable *oem_cp );
     const union cptable *table;
 
     default_lcid = lcid;
     if (!ansi_cptable) init_codepages();  /* just in case */
 
-    if ((table = wine_cp_get_table( ansi ))) ansi_cptable = table;
-    if ((table = wine_cp_get_table( oem ))) oem_cptable = table;
-    if ((table = wine_cp_get_table( mac ))) mac_cptable = table;
+    if ((table = wine_cp_get_table( ansi_cp ))) ansi_cptable = table;
+    if ((table = wine_cp_get_table( oem_cp ))) oem_cptable = table;
+    if ((table = wine_cp_get_table( mac_cp ))) mac_cptable = table;
+    if (unix_cp == CP_UTF8)
+        unix_cptable = NULL;
+    else if ((table = wine_cp_get_table( unix_cp )))
+        unix_cptable = table;
+
     __wine_init_codepages( ansi_cptable, oem_cptable );
 
-    TRACE( "ansi=%03d oem=%03d mac=%03d\n", ansi_cptable->info.codepage,
-           oem_cptable->info.codepage, mac_cptable->info.codepage );
+    TRACE( "ansi=%03d oem=%03d mac=%03d unix=%03d\n",
+           ansi_cptable->info.codepage, oem_cptable->info.codepage,
+           mac_cptable->info.codepage, unix_cp );
 }
 
 /******************************************************************************
@@ -336,9 +345,16 @@ INT WINAPI MultiByteToWideChar( UINT page, DWORD flags, LPCSTR src, INT srclen,
     switch(page)
     {
     case CP_UTF7:
-        FIXME("UTF not supported\n");
+        FIXME("UTF-7 not supported\n");
         SetLastError( ERROR_CALL_NOT_IMPLEMENTED );
         return 0;
+    case CP_UNIXCP:
+        if (unix_cptable)
+        {
+            ret = wine_cp_mbstowcs( unix_cptable, flags, src, srclen, dst, dstlen );
+            break;
+        }
+        /* fall through */
     case CP_UTF8:
         ret = wine_utf8_mbstowcs( flags, src, srclen, dst, dstlen );
         break;
@@ -412,6 +428,14 @@ INT WINAPI WideCharToMultiByte( UINT page, DWORD flags, LPCWSTR src, INT srclen,
         FIXME("UTF-7 not supported\n");
         SetLastError( ERROR_CALL_NOT_IMPLEMENTED );
         return 0;
+    case CP_UNIXCP:
+        if (unix_cptable)
+        {
+            ret = wine_cp_wcstombs( unix_cptable, flags, src, srclen, dst, dstlen,
+                                    defchar, used ? &used_tmp : NULL );
+            break;
+        }
+        /* fall through */
     case CP_UTF8:
         ret = wine_utf8_wcstombs( src, srclen, dst, dstlen );
         break;

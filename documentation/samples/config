@@ -135,9 +135,6 @@ WINE REGISTRY Version 2
 ; Create the desktop window with a double-buffered visual
 ; (useful to play OpenGL games)
 "DesktopDoubleBuffered" = "N"
-; Code page used for captions in managed mode
-; 0 means default ANSI code page (CP_ACP == 0)
-"TextCP" = "0"
 ; Use this if you have more than one port for video on your setup
 ; (Wine uses for now the first 'input image' it finds).
 ;; "XVideoPort" = "43"

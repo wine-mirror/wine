@@ -68,7 +68,6 @@ typedef struct
     int    nTakeFocus;
     int    nDXGrab;
     int    nDoubleBuffered;
-    int    nTextCP;
     int    nXVideoPort;
     int    nSynchronous;
 } X11DRV_DESC;

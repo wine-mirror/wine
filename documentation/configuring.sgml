@@ -2851,18 +2851,6 @@ with the <literal>GraphicsDriver</literal> option in the
 	</para>
       </listitem>
     </varlistentry>
-    <varlistentry>
-      <term>TextCP</term>
-      <listitem>
-	<para>
-	Codepage to be used for rendering the text in X11
-	output. Some sample values would be 437 (USA, Canada),
-	850 (Europe), 852 (Central/Eastern Europe), 855
-	(Cyrillic). For additional suitable values, see e.g. the Linux
-	kernel's codepage configuration page.
-	</para>
-      </listitem>
-    </varlistentry>
   </variablelist>
 </sect3>
 </sect2>

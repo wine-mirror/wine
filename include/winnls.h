@@ -176,6 +176,8 @@ extern "C" {
 #define CP_UTF7					65000
 #define CP_UTF8					65001
 
+#define CP_UNIXCP                               65010  /* Wine extension */
+
 #define WC_DISCARDNS                0x00000010
 #define WC_SEPCHARS                 0x00000020
 #define WC_DEFAULTCHAR              0x00000040

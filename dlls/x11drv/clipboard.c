@@ -955,7 +955,6 @@ HANDLE X11DRV_CLIPBOARD_ImportXAString(LPBYTE lpdata, UINT cBytes)
     if ((lpstr = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, cBytes + inlcount + 1)))
     {
         UINT count;
-        UINT text_cp = CP_ACP;
 
         for (i = 0, inlcount = 0; i <= cBytes; i++)
         {
@@ -965,16 +964,13 @@ HANDLE X11DRV_CLIPBOARD_ImportXAString(LPBYTE lpdata, UINT cBytes)
             lpstr[inlcount++] = lpdata[i];
         }
 
-        GetLocaleInfoW(LOCALE_SYSTEM_DEFAULT, LOCALE_IDEFAULTUNIXCODEPAGE | 
-            LOCALE_RETURN_NUMBER, (WCHAR *)&text_cp, (sizeof(UINT)/sizeof(WCHAR)));
-
-	count = MultiByteToWideChar(text_cp, 0, lpstr, -1, NULL, 0);
+	count = MultiByteToWideChar(CP_UNIXCP, 0, lpstr, -1, NULL, 0);
 	hUnicodeText = GlobalAlloc(GMEM_MOVEABLE | GMEM_DDESHARE, count * sizeof(WCHAR));
 
 	if(hUnicodeText)
 	{
             WCHAR *textW = GlobalLock(hUnicodeText);
-            MultiByteToWideChar(text_cp, 0, lpstr, -1, textW, count);
+            MultiByteToWideChar(CP_UNIXCP, 0, lpstr, -1, textW, count);
             GlobalUnlock(hUnicodeText);
         }
 
@@ -1104,21 +1100,17 @@ HANDLE X11DRV_CLIPBOARD_ExportXAString(LPWINE_CLIPDATA lpData, LPDWORD lpBytes)
     UINT size;
     LPWSTR uni_text;
     LPSTR text, lpstr;
-    UINT text_cp = CP_ACP;
 
     *lpBytes = 0; /* Assume return has zero bytes */
 
-    GetLocaleInfoW(LOCALE_SYSTEM_DEFAULT, LOCALE_IDEFAULTUNIXCODEPAGE | 
-        LOCALE_RETURN_NUMBER, (WCHAR *)&text_cp, (sizeof(UINT)/sizeof(WCHAR)));
-
     uni_text = GlobalLock(lpData->hData32);
 
-    size = WideCharToMultiByte(text_cp, 0, uni_text, -1, NULL, 0, NULL, NULL);
+    size = WideCharToMultiByte(CP_UNIXCP, 0, uni_text, -1, NULL, 0, NULL, NULL);
 
     text = HeapAlloc(GetProcessHeap(), 0, size);
     if (!text)
        return None;
-    WideCharToMultiByte(text_cp, 0, uni_text, -1, text, size, NULL, NULL);
+    WideCharToMultiByte(CP_UNIXCP, 0, uni_text, -1, text, size, NULL, NULL);
 
     /* remove carriage returns */
 

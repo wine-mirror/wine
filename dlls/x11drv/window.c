@@ -794,36 +794,19 @@ BOOL X11DRV_SetWindowText( HWND hwnd, LPCWSTR text )
     UINT count;
     char *buffer;
     char *utf8_buffer;
-    static UINT text_cp = (UINT)-1;
     Window win;
     XTextProperty prop;
 
     if ((win = X11DRV_get_whole_window( hwnd )))
     {
-        if (text_cp == (UINT)-1)
-        {
-	    HKEY hkey;
-	    /* default value */
-	    text_cp = CP_ACP;
-	    if(!RegOpenKeyA(HKEY_LOCAL_MACHINE, "Software\\Wine\\Wine\\Config\\x11drv", &hkey))
-	    {
-		char buffer[20];
-		DWORD type, count = sizeof(buffer);
-		if(!RegQueryValueExA(hkey, "TextCP", 0, &type, buffer, &count))
-		    text_cp = atoi(buffer);
-		RegCloseKey(hkey);
-	    }
-            TRACE("text_cp = %u\n", text_cp);
-        }
-
         /* allocate new buffer for window text */
-        count = WideCharToMultiByte(text_cp, 0, text, -1, NULL, 0, NULL, NULL);
+        count = WideCharToMultiByte(CP_UNIXCP, 0, text, -1, NULL, 0, NULL, NULL);
         if (!(buffer = HeapAlloc( GetProcessHeap(), 0, count )))
         {
             ERR("Not enough memory for window text\n");
             return FALSE;
         }
-        WideCharToMultiByte(text_cp, 0, text, -1, buffer, count, NULL, NULL);
+        WideCharToMultiByte(CP_UNIXCP, 0, text, -1, buffer, count, NULL, NULL);
 
         count = WideCharToMultiByte(CP_UTF8, 0, text, strlenW(text), NULL, 0, NULL, NULL);
         if (!(utf8_buffer = HeapAlloc( GetProcessHeap(), 0, count )))

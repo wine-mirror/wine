@@ -214,7 +214,6 @@ int loadConfig (WINECFG_DESC* pCfg)
     pCfg->sX11Drv.nTakeFocus = 1;
     pCfg->sX11Drv.nDXGrab = 0;
     pCfg->sX11Drv.nDoubleBuffered = 0;
-    pCfg->sX11Drv.nTextCP = 0;
     pCfg->sX11Drv.nXVideoPort = 43;
     pCfg->sX11Drv.nSynchronous = 1;
     
