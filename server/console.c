@@ -439,7 +439,7 @@ DECL_HANDLER(open_console)
 /* set info about a console (output only) */
 DECL_HANDLER(set_console_info)
 {
-    size_t len = get_req_strlen( req->title );
+    size_t len = get_req_strlen( req, req->title );
     set_console_info( req->handle, req, req->title, len );
 }
 
@@ -447,13 +447,14 @@ DECL_HANDLER(set_console_info)
 DECL_HANDLER(get_console_info)
 {
     struct screen_buffer *console;
+    req->title[0] = 0;
     if ((console = (struct screen_buffer *)get_handle_obj( current->process, req->handle,
                                                            GENERIC_READ, &screen_buffer_ops )))
     {
         req->cursor_size    = console->cursor_size;
         req->cursor_visible = console->cursor_visible;
         req->pid            = console->pid;
-        strcpy( req->title, console->title ? console->title : "" );
+        if (console->title) strcpy( req->title, console->title );
         release_object( console );
     }
 }
@@ -496,7 +497,7 @@ DECL_HANDLER(set_console_mode)
 /* add input records to a console input queue */
 DECL_HANDLER(write_console_input)
 {
-    int max = get_req_size( req + 1, sizeof(INPUT_RECORD) );
+    int max = get_req_size( req, req + 1, sizeof(INPUT_RECORD) );
     int count = req->count;
 
     if (count > max) count = max;
@@ -506,7 +507,7 @@ DECL_HANDLER(write_console_input)
 /* fetch input records from a console input queue */
 DECL_HANDLER(read_console_input)
 {
-    int max = get_req_size( req + 1, sizeof(INPUT_RECORD) );
+    int max = get_req_size( req, req + 1, sizeof(INPUT_RECORD) );
     req->read = read_console_input( req->handle, req->count, (INPUT_RECORD *)(req + 1),
                                     max, req->flush );
 }

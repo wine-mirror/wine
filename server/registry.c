@@ -308,10 +308,10 @@ static WCHAR *get_path_token( const WCHAR *initpath, size_t maxlen )
 }
 
 /* duplicate a Unicode string from the request buffer */
-static WCHAR *req_strdupW( const WCHAR *str )
+static WCHAR *req_strdupW( const void *req, const WCHAR *str )
 {
     WCHAR *name;
-    size_t len = get_req_strlenW( str );
+    size_t len = get_req_strlenW( req, str );
     if ((name = mem_alloc( (len + 1) * sizeof(WCHAR) )) != NULL)
     {
         memcpy( name, str, len * sizeof(WCHAR) );
@@ -741,7 +741,6 @@ static void get_value( struct key *key, WCHAR *name, int *type, int *len, void *
     else
     {
         *type = -1;
-        *len = 0;
         set_error( STATUS_OBJECT_NAME_NOT_FOUND );
     }
 }
@@ -751,12 +750,7 @@ static void enum_value( struct key *key, int i, WCHAR *name, int *type, int *len
 {
     struct key_value *value;
 
-    if (i < 0 || i > key->last_value)
-    {
-        name[0] = 0;
-        *len = 0;
-        set_error( STATUS_NO_MORE_ENTRIES );
-    }
+    if (i < 0 || i > key->last_value) set_error( STATUS_NO_MORE_ENTRIES );
     else
     {
         value = &key->values[i];
@@ -1378,7 +1372,7 @@ DECL_HANDLER(create_key)
     req->hkey = -1;
     if ((parent = get_hkey_obj( req->parent, KEY_CREATE_SUB_KEY )))
     {
-        if ((class = req_strdupW( req->class )))
+        if ((class = req_strdupW( req, req->class )))
         {
             if ((key = create_key( parent, req->name, sizeof(req->name), class, req->options,
                                    req->modif, &req->created )))
@@ -1436,6 +1430,7 @@ DECL_HANDLER(enum_key)
 {
     struct key *key;
 
+    req->name[0] = req->class[0] = 0;
     if ((key = get_hkey_obj( req->hkey, KEY_ENUMERATE_SUB_KEYS )))
     {
         enum_key( key, req->index, req->name, req->class, &req->modif );
@@ -1448,6 +1443,7 @@ DECL_HANDLER(query_key_info)
 {
     struct key *key;
 
+    req->name[0] = req->class[0] = 0;
     if ((key = get_hkey_obj( req->hkey, KEY_QUERY_VALUE )))
     {
         query_key( key, req );
@@ -1459,7 +1455,7 @@ DECL_HANDLER(query_key_info)
 DECL_HANDLER(set_key_value)
 {
     struct key *key;
-    int max = get_req_size( req->data, sizeof(req->data[0]) );
+    int max = get_req_size( req, req->data, sizeof(req->data[0]) );
     int datalen = req->len;
     if (datalen > max)
     {
@@ -1478,6 +1474,7 @@ DECL_HANDLER(get_key_value)
 {
     struct key *key;
 
+    req->len = 0;
     if ((key = get_hkey_obj( req->hkey, KEY_QUERY_VALUE )))
     {
         get_value( key, copy_path( req->name ), &req->type, &req->len, req->data );
@@ -1490,6 +1487,8 @@ DECL_HANDLER(enum_key_value)
 {
     struct key *key;
 
+    req->len = 0;
+    req->name[0] = 0;
     if ((key = get_hkey_obj( req->hkey, KEY_QUERY_VALUE )))
     {
         enum_value( key, req->index, req->name, &req->type, &req->len, req->data );
@@ -1505,7 +1504,7 @@ DECL_HANDLER(delete_key_value)
 
     if ((key = get_hkey_obj( req->hkey, KEY_SET_VALUE )))
     {
-        if ((name = req_strdupW( req->name )))
+        if ((name = req_strdupW( req, req->name )))
         {
             delete_value( key, name );
             free( name );

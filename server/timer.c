@@ -164,7 +164,7 @@ static void timer_destroy( struct object *obj )
 /* create a timer */
 DECL_HANDLER(create_timer)
 {
-    size_t len = get_req_strlenW( req->name );
+    size_t len = get_req_strlenW( req, req->name );
     struct timer *timer;
 
     req->handle = -1;
@@ -178,7 +178,7 @@ DECL_HANDLER(create_timer)
 /* open a handle to a timer */
 DECL_HANDLER(open_timer)
 {
-    size_t len = get_req_strlenW( req->name );
+    size_t len = get_req_strlenW( req, req->name );
     req->handle = open_object( req->name, len, &timer_ops, req->access, req->inherit );
 }
 

@@ -139,7 +139,7 @@ static void mutex_destroy( struct object *obj )
 /* create a mutex */
 DECL_HANDLER(create_mutex)
 {
-    size_t len = get_req_strlenW( req->name );
+    size_t len = get_req_strlenW( req, req->name );
     struct mutex *mutex;
 
     req->handle = -1;
@@ -153,7 +153,7 @@ DECL_HANDLER(create_mutex)
 /* open a handle to a mutex */
 DECL_HANDLER(open_mutex)
 {
-    size_t len = get_req_strlenW( req->name );
+    size_t len = get_req_strlenW( req, req->name );
     req->handle = open_object( req->name, len, &mutex_ops, req->access, req->inherit );
 }
 

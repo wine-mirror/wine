@@ -277,5 +277,6 @@ DECL_HANDLER(find_atom)
 /* get global atom name */
 DECL_HANDLER(get_atom_name)
 {
+    req->name[0] = 0;
     req->count = get_atom_name( global_table, req->atom, req->name );
 }

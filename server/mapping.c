@@ -160,7 +160,7 @@ int get_page_size(void)
 /* create a file mapping */
 DECL_HANDLER(create_mapping)
 {
-    size_t len = get_req_strlenW( req->name );
+    size_t len = get_req_strlenW( req, req->name );
     struct object *obj;
 
     req->handle = -1;
@@ -177,7 +177,7 @@ DECL_HANDLER(create_mapping)
 /* open a handle to a mapping */
 DECL_HANDLER(open_mapping)
 {
-    size_t len = get_req_strlenW( req->name );
+    size_t len = get_req_strlenW( req, req->name );
     req->handle = open_object( req->name, len, &mapping_ops, req->access, req->inherit );
 }
 

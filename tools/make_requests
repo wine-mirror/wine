@@ -19,8 +19,8 @@
     "debug_event_t" => "&dump_debug_event_t",
     "CONTEXT"       => "&dump_context",
     "EXCEPTION_RECORD" => "&dump_exc_record",
-    "char[1]"       => "\\\"%s\\\"",
-    "WCHAR[1]"      => "&dump_unicode_string"
+    "char[1]"          => "&dump_string",
+    "WCHAR[1]"         => "&dump_unicode_string"
 );
 
 my @requests = ();
@@ -139,8 +139,8 @@ sub DO_DUMP_FUNC
             {
                 my $func = $1;
                 push @trace_lines, "    fprintf( stderr, \" $var=\" );\n";
-                if ($type =~ /[1]/) { push @trace_lines, "    $func( req->$var );\n"; }
-                else { push @trace_lines, "    $func( &req->$var );\n"; }
+                if ($type =~ /[1]/) { push @trace_lines, "    $func( req, req->$var );\n"; }
+                else { push @trace_lines, "    $func( req, &req->$var );\n"; }
                 push @trace_lines, "    fprintf( stderr, \",\" );\n" if ($#_ > 0);
             }
             else

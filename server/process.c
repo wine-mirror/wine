@@ -578,7 +578,7 @@ struct process_snapshot *process_snap( int *count )
 /* create a new process */
 DECL_HANDLER(new_process)
 {
-    size_t len = get_req_strlen( req->cmdline );
+    size_t len = get_req_strlen( req, req->cmdline );
     struct thread *thread;
     int sock[2];
 
@@ -722,7 +722,7 @@ DECL_HANDLER(read_process_memory)
     if ((process = get_process_from_handle( req->handle, PROCESS_VM_READ )))
     {
         read_process_memory( process, req->addr, req->len,
-                             get_req_size( req->data, sizeof(int) ), req->data );
+                             get_req_size( req, req->data, sizeof(int) ), req->data );
         release_object( process );
     }
 }
@@ -734,7 +734,8 @@ DECL_HANDLER(write_process_memory)
 
     if ((process = get_process_from_handle( req->handle, PROCESS_VM_WRITE )))
     {
-        write_process_memory( process, req->addr, req->len, get_req_size( req->data, sizeof(int) ),
+        write_process_memory( process, req->addr, req->len,
+                              get_req_size( req, req->data, sizeof(int) ),
                               req->first_mask, req->last_mask, req->data );
         release_object( process );
     }

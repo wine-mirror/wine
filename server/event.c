@@ -114,7 +114,7 @@ static int event_satisfied( struct object *obj, struct thread *thread )
 /* create an event */
 DECL_HANDLER(create_event)
 {
-    size_t len = get_req_strlenW( req->name );
+    size_t len = get_req_strlenW( req, req->name );
     struct event *event;
 
     req->handle = -1;
@@ -128,7 +128,7 @@ DECL_HANDLER(create_event)
 /* open a handle to an event */
 DECL_HANDLER(open_event)
 {
-    size_t len = get_req_strlenW( req->name );
+    size_t len = get_req_strlenW( req, req->name );
     req->handle = open_object( req->name, len, &event_ops, req->access, req->inherit );
 }
 

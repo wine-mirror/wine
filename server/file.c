@@ -450,7 +450,7 @@ static int file_unlock( struct file *file, int offset_high, int offset_low,
 /* create a file */
 DECL_HANDLER(create_file)
 {
-    size_t len = get_req_strlen( req->name );
+    size_t len = get_req_strlen( req, req->name );
     struct file *file;
 
     req->handle = -1;
