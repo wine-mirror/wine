@@ -96,13 +96,13 @@ static IRecordInfoImpl *IRecordInfoImpl_Construct()
 static ULONG CALLBACK IRecordInfoImpl_AddRef(IRecordInfo *iface)
 {
   IRecordInfoImpl* This=(IRecordInfoImpl*)iface;
-  return ++This->ref;
+  return InterlockedIncrement(&This->ref);
 }
 
 static ULONG CALLBACK IRecordInfoImpl_Release(IRecordInfo *iface)
 {
   IRecordInfoImpl* This=(IRecordInfoImpl*)iface;
-  return --This->ref;
+  return InterlockedDecrement(&This->ref);
 }
 
 static BOOL fail_GetSize; /* Whether to fail the GetSize call */

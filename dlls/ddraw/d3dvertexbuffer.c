@@ -73,21 +73,27 @@ ULONG WINAPI
 Main_IDirect3DVertexBufferImpl_7_1T_AddRef(LPDIRECT3DVERTEXBUFFER7 iface)
 {
     ICOM_THIS_FROM(IDirect3DVertexBufferImpl, IDirect3DVertexBuffer7, iface);
-    TRACE("(%p/%p)->() incrementing from %lu.\n", This, iface, This->ref);
-    return ++(This->ref);
+    ULONG ref = InterlockedIncrement(&This->ref);
+
+    TRACE("(%p/%p)->() incrementing from %lu.\n", This, iface, ref - 1);
+
+    return ref;
 }
 
 ULONG WINAPI
 Main_IDirect3DVertexBufferImpl_7_1T_Release(LPDIRECT3DVERTEXBUFFER7 iface)
 {
     ICOM_THIS_FROM(IDirect3DVertexBufferImpl, IDirect3DVertexBuffer7, iface);
-    TRACE("(%p/%p)->() decrementing from %lu.\n", This, iface, This->ref);
-    if (--(This->ref) == 0) {
+    ULONG ref = InterlockedDecrement(&This->ref);
+
+    TRACE("(%p/%p)->() decrementing from %lu.\n", This, iface, ref + 1);
+
+    if (ref == 0) {
         HeapFree(GetProcessHeap(), 0, This->vertices);
 	HeapFree(GetProcessHeap(), 0, This);
 	return 0;
     }
-    return This->ref;
+    return ref;
 }
 
 HRESULT WINAPI

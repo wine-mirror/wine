@@ -208,21 +208,26 @@ ULONG WINAPI
 Main_DirectDrawPalette_Release(LPDIRECTDRAWPALETTE iface)
 {
     IDirectDrawPaletteImpl *This = (IDirectDrawPaletteImpl *)iface;
-    TRACE("(%p)->() decrementing from %lu.\n", This, This->ref );
+    ULONG ref = InterlockedDecrement(&This->ref);
 
-    if (!--This->ref)
+    TRACE("(%p)->() decrementing from %lu.\n", This, ref + 1);
+
+    if (!ref)
     {
 	Main_DirectDrawPalette_Destroy(This);
 	return 0;
     }
 
-    return This->ref;
+    return ref;
 }
 
 ULONG WINAPI Main_DirectDrawPalette_AddRef(LPDIRECTDRAWPALETTE iface) {
     IDirectDrawPaletteImpl *This = (IDirectDrawPaletteImpl *)iface;
-    TRACE("(%p)->() incrementing from %lu.\n", This, This->ref );
-    return ++This->ref;
+    ULONG ref = InterlockedIncrement(&This->ref);
+
+    TRACE("(%p)->() incrementing from %lu.\n", This, ref - 1);
+
+    return ref;
 }
 
 HRESULT WINAPI

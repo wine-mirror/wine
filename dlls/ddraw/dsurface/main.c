@@ -125,10 +125,11 @@ void Main_DirectDrawSurface_ForceDestroy(IDirectDrawSurfaceImpl* This)
 ULONG WINAPI Main_DirectDrawSurface_Release(LPDIRECTDRAWSURFACE7 iface)
 {
     IDirectDrawSurfaceImpl *This = (IDirectDrawSurfaceImpl *)iface;
+    ULONG ref = InterlockedDecrement(&This->ref);
 
-    TRACE("(%p)->(): decreasing from %ld\n", This, This->ref);
+    TRACE("(%p)->(): decreasing from %ld\n", This, ref + 1);
     
-    if (--This->ref == 0)
+    if (ref == 0)
     {
 	if (This->aux_release)
 	    This->aux_release(This->aux_ctx, This->aux_data);
@@ -139,16 +140,17 @@ ULONG WINAPI Main_DirectDrawSurface_Release(LPDIRECTDRAWSURFACE7 iface)
 	return 0;
     }
 
-    return This->ref;
+    return ref;
 }
 
 ULONG WINAPI Main_DirectDrawSurface_AddRef(LPDIRECTDRAWSURFACE7 iface)
 {
     IDirectDrawSurfaceImpl *This = (IDirectDrawSurfaceImpl *)iface;
+    ULONG ref = InterlockedIncrement(&This->ref);
 
-    TRACE("(%p)->(): increasing from %ld\n", This, This->ref);
+    TRACE("(%p)->(): increasing from %ld\n", This, ref - 1);
     
-    return ++This->ref;
+    return ref;
 }
 
 HRESULT WINAPI
@@ -164,7 +166,7 @@ Main_DirectDrawSurface_QueryInterface(LPDIRECTDRAWSURFACE7 iface, REFIID riid,
 	|| IsEqualGUID(&IID_IDirectDrawSurface7, riid)
 	|| IsEqualGUID(&IID_IDirectDrawSurface4, riid))
     {
-	This->ref++;
+        InterlockedIncrement(&This->ref);
 	*ppObj = ICOM_INTERFACE(This, IDirectDrawSurface7);
 	return S_OK;
     }
@@ -172,13 +174,13 @@ Main_DirectDrawSurface_QueryInterface(LPDIRECTDRAWSURFACE7 iface, REFIID riid,
 	     || IsEqualGUID(&IID_IDirectDrawSurface2, riid)
 	     || IsEqualGUID(&IID_IDirectDrawSurface3, riid))
     {
-	This->ref++;
+        InterlockedIncrement(&This->ref);
 	*ppObj = ICOM_INTERFACE(This, IDirectDrawSurface3);
 	return S_OK;
     }
     else if (IsEqualGUID(&IID_IDirectDrawGammaControl, riid))
     {
-	This->ref++;
+        InterlockedIncrement(&This->ref);
 	*ppObj = ICOM_INTERFACE(This, IDirectDrawGammaControl);
 	return S_OK;
     }
@@ -199,7 +201,7 @@ Main_DirectDrawSurface_QueryInterface(LPDIRECTDRAWSURFACE7 iface, REFIID riid,
 	*ppObj = ICOM_INTERFACE(d3ddevimpl, IDirect3DDevice);
 	TRACE(" returning Direct3DDevice interface at %p.\n", *ppObj);
 	
-	This->ref++; /* No idea if this is correct.. Need to check using real Windows */
+	InterlockedIncrement(&This->ref); /* No idea if this is correct.. Need to check using real Windows */
 	return ret_value;
     }
     else if (IsEqualGUID( &IID_IDirect3DTexture, riid ) ||
@@ -230,7 +232,7 @@ Main_DirectDrawSurface_QueryInterface(LPDIRECTDRAWSURFACE7 iface, REFIID riid,
 	    *ppObj = ICOM_INTERFACE(This, IDirect3DTexture2);
 	    TRACE(" returning Direct3DTexture2 interface at %p.\n", *ppObj);
 	}
-	This->ref++;
+	InterlockedIncrement(&This->ref);
 	return ret_value;
     }
 #endif

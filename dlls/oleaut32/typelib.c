@@ -847,7 +847,7 @@ typedef struct tagITypeLibImpl
 {
     ITypeLib2Vtbl *lpVtbl;
     ITypeCompVtbl *lpVtblTypeComp;
-    UINT ref;
+    ULONG ref;
     TLIBATTR LibAttr;            /* guid,lcid,syskind,version,flags */
 
     /* strings can be stored in tlb as multibyte strings BUT they are *always*
@@ -958,7 +958,7 @@ typedef struct tagITypeInfoImpl
 {
     ITypeInfo2Vtbl *lpVtbl;
     ITypeCompVtbl  *lpVtblTypeComp;
-    UINT ref;
+    ULONG ref;
     TYPEATTR TypeAttr ;         /* _lots_ of type information. */
     ITypeLibImpl * pTypeLib;        /* back pointer to typelib */
     int index;                  /* index in this typelib; */
@@ -1276,7 +1276,7 @@ static void dump_DispParms(DISPPARAMS * pdp)
 
 static void dump_TypeInfo(ITypeInfoImpl * pty)
 {
-    TRACE("%p ref=%u\n", pty, pty->ref);
+    TRACE("%p ref=%lu\n", pty, pty->ref);
     TRACE("attr:%s\n", debugstr_guid(&(pty->TypeAttr.guid)));
     TRACE("kind:%s\n", typekind_desc[pty->TypeAttr.typekind]);
     TRACE("fct:%u var:%u impl:%u\n",
@@ -3434,10 +3434,11 @@ static HRESULT WINAPI ITypeLib2_fnQueryInterface(
 static ULONG WINAPI ITypeLib2_fnAddRef( ITypeLib2 *iface)
 {
     ITypeLibImpl *This = (ITypeLibImpl *)iface;
+    ULONG ref = InterlockedIncrement(&This->ref);
 
-    TRACE("(%p)->ref was %u\n",This, This->ref);
+    TRACE("(%p)->ref was %lu\n",This, ref - 1);
 
-    return ++(This->ref);
+    return ref;
 }
 
 /* ITypeLib::Release
@@ -3445,12 +3446,11 @@ static ULONG WINAPI ITypeLib2_fnAddRef( ITypeLib2 *iface)
 static ULONG WINAPI ITypeLib2_fnRelease( ITypeLib2 *iface)
 {
     ITypeLibImpl *This = (ITypeLibImpl *)iface;
+    ULONG ref = InterlockedDecrement(&This->ref);
 
-    --(This->ref);
+    TRACE("(%p)->(%lu)\n",This, ref);
 
-    TRACE("(%p)->(%u)\n",This, This->ref);
-
-    if (!This->ref)
+    if (!ref)
     {
       /* remove cache entry */
       TRACE("removing from cache list\n");
@@ -3493,7 +3493,7 @@ static ULONG WINAPI ITypeLib2_fnRelease( ITypeLib2 *iface)
       return 0;
     }
 
-    return This->ref;
+    return ref;
 }
 
 /* ITypeLib::GetTypeInfoCount
@@ -4110,12 +4110,12 @@ static HRESULT WINAPI ITypeInfo_fnQueryInterface(
 static ULONG WINAPI ITypeInfo_fnAddRef( ITypeInfo2 *iface)
 {
     ITypeInfoImpl *This = (ITypeInfoImpl *)iface;
+    ULONG ref = InterlockedIncrement(&This->ref);
 
-    ++(This->ref);
     ITypeLib2_AddRef((ITypeLib2*)This->pTypeLib);
 
-    TRACE("(%p)->ref is %u\n",This, This->ref);
-    return This->ref;
+    TRACE("(%p)->ref is %lu\n",This, ref);
+    return ref;
 }
 
 /* ITypeInfo::Release
@@ -4123,12 +4123,11 @@ static ULONG WINAPI ITypeInfo_fnAddRef( ITypeInfo2 *iface)
 static ULONG WINAPI ITypeInfo_fnRelease(ITypeInfo2 *iface)
 {
     ITypeInfoImpl *This = (ITypeInfoImpl *)iface;
+    ULONG ref = InterlockedDecrement(&This->ref);
 
-    --(This->ref);
+    TRACE("(%p)->(%lu)\n",This, ref);
 
-    TRACE("(%p)->(%u)\n",This, This->ref);
-
-    if (This->ref)   {
+    if (ref)   {
       /* We don't release ITypeLib when ref=0 becouse
          it means that funtion is called by ITypeLi2_Release */
       ITypeLib2_Release((ITypeLib2*)This->pTypeLib);
@@ -4156,7 +4155,7 @@ static ULONG WINAPI ITypeInfo_fnRelease(ITypeInfo2 *iface)
       HeapFree(GetProcessHeap(),0,This);
       return 0;
     }
-    return This->ref;
+    return ref;
 }
 
 /* ITypeInfo::GetTypeAttr

@@ -1142,10 +1142,11 @@ static HRESULT WINAPI ICreateTypeInfo2_fnQueryInterface(
 static ULONG WINAPI ICreateTypeInfo2_fnAddRef(ICreateTypeInfo2 *iface)
 {
     ICreateTypeInfo2Impl *This = (ICreateTypeInfo2Impl *)iface;
+    ULONG ref = InterlockedIncrement(&This->ref);
 
-    TRACE("(%p)->ref was %u\n",This, This->ref);
+    TRACE("(%p)->ref was %lu\n",This, ref - 1);
 
-    return ++(This->ref);
+    return ref;
 }
 
 /******************************************************************************
@@ -1156,12 +1157,11 @@ static ULONG WINAPI ICreateTypeInfo2_fnAddRef(ICreateTypeInfo2 *iface)
 static ULONG WINAPI ICreateTypeInfo2_fnRelease(ICreateTypeInfo2 *iface)
 {
     ICreateTypeInfo2Impl *This = (ICreateTypeInfo2Impl *)iface;
+    ULONG ref = InterlockedDecrement(&This->ref);
 
-    --(This->ref);
+    TRACE("(%p)->(%lu)\n",This, ref);
 
-    TRACE("(%p)->(%u)\n",This, This->ref);
-
-    if (!This->ref) {
+    if (!ref) {
 	if (This->typelib) {
 	    ICreateTypeLib2_fnRelease((ICreateTypeLib2 *)This->typelib);
 	    This->typelib = NULL;
@@ -1172,7 +1172,7 @@ static ULONG WINAPI ICreateTypeInfo2_fnRelease(ICreateTypeInfo2 *iface)
 	return 0;
     }
 
-    return This->ref;
+    return ref;
 }
 
 
@@ -3009,10 +3009,11 @@ static HRESULT WINAPI ICreateTypeLib2_fnQueryInterface(
 static ULONG WINAPI ICreateTypeLib2_fnAddRef(ICreateTypeLib2 *iface)
 {
     ICreateTypeLib2Impl *This = (ICreateTypeLib2Impl *)iface;
+    ULONG ref = InterlockedIncrement(&This->ref);
 
-    TRACE("(%p)->ref was %u\n",This, This->ref);
+    TRACE("(%p)->ref was %lu\n",This, ref - 1);
 
-    return ++(This->ref);
+    return ref;
 }
 
 /******************************************************************************
@@ -3023,12 +3024,11 @@ static ULONG WINAPI ICreateTypeLib2_fnAddRef(ICreateTypeLib2 *iface)
 static ULONG WINAPI ICreateTypeLib2_fnRelease(ICreateTypeLib2 *iface)
 {
     ICreateTypeLib2Impl *This = (ICreateTypeLib2Impl *)iface;
+    ULONG ref = InterlockedDecrement(&This->ref);
 
-    --(This->ref);
+    TRACE("(%p)->(%lu)\n",This, ref);
 
-    TRACE("(%p)->(%u)\n",This, This->ref);
-
-    if (!This->ref) {
+    if (!ref) {
 	int i;
 
 	for (i = 0; i < MSFT_SEG_MAX; i++) {
@@ -3050,7 +3050,7 @@ static ULONG WINAPI ICreateTypeLib2_fnRelease(ICreateTypeLib2 *iface)
 	return 0;
     }
 
-    return This->ref;
+    return ref;
 }
 
 

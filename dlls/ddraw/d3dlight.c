@@ -53,20 +53,26 @@ ULONG WINAPI
 Main_IDirect3DLightImpl_1_AddRef(LPDIRECT3DLIGHT iface)
 {
     ICOM_THIS_FROM(IDirect3DLightImpl, IDirect3DLight, iface);
-    TRACE("(%p/%p)->() incrementing from %lu.\n", This, iface, This->ref);
-    return ++(This->ref);
+    ULONG ref = InterlockedIncrement(&This->ref);
+
+    TRACE("(%p/%p)->() incrementing from %lu.\n", This, iface, ref - 1);
+
+    return ref;
 }
 
 ULONG WINAPI
 Main_IDirect3DLightImpl_1_Release(LPDIRECT3DLIGHT iface)
 {
     ICOM_THIS_FROM(IDirect3DLightImpl, IDirect3DLight, iface);
-    TRACE("(%p/%p)->() decrementing from %lu.\n", This, iface, This->ref);
-    if (!--(This->ref)) {
+    ULONG ref = InterlockedDecrement(&This->ref);
+
+    TRACE("(%p/%p)->() decrementing from %lu.\n", This, iface, ref + 1);
+
+    if (!ref) {
         HeapFree(GetProcessHeap(), 0, This);
 	return 0;
     }
-    return This->ref;
+    return ref;
 }
 
 HRESULT WINAPI
@@ -191,14 +197,16 @@ GL_IDirect3DLightImpl_1_Release(LPDIRECT3DLIGHT iface)
 {
     ICOM_THIS_FROM(IDirect3DLightImpl, IDirect3DLight, iface);
     IDirect3DLightGLImpl *glThis = (IDirect3DLightGLImpl *) This;
+    ULONG ref = InterlockedDecrement(&This->ref);
     
-    TRACE("(%p/%p)->() decrementing from %lu.\n", This, iface, This->ref);
-    if (!--(This->ref)) {
+    TRACE("(%p/%p)->() decrementing from %lu.\n", This, iface, ref + 1);
+
+    if (!ref) {
         ((IDirect3DGLImpl *) This->d3d->d3d_private)->light_released(This->d3d, glThis->light_num);
         HeapFree(GetProcessHeap(), 0, This);
 	return 0;
     }
-    return This->ref;
+    return ref;
 }
 
 #if !defined(__STRICT_ANSI__) && defined(__GNUC__)

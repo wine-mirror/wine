@@ -181,8 +181,11 @@ static ULONG WINAPI OleAdviseHolderImpl_AddRef(
   LPOLEADVISEHOLDER iface)
 {
   OleAdviseHolderImpl *This = (OleAdviseHolderImpl *)iface;
-  TRACE("(%p)->(ref=%ld)\n", This, This->ref);
-  return ++(This->ref);
+  ULONG ref = InterlockedIncrement(&This->ref);
+
+  TRACE("(%p)->(ref=%ld)\n", This, ref - 1);
+
+  return ref;
 }
 
 /******************************************************************************

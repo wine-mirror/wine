@@ -496,10 +496,11 @@ DDCF_QueryInterface(LPCLASSFACTORY iface,REFIID riid,LPVOID *ppobj)
 static ULONG WINAPI DDCF_AddRef(LPCLASSFACTORY iface)
 {
     IClassFactoryImpl *This = (IClassFactoryImpl *)iface;
+    ULONG ref = InterlockedIncrement(&This->ref);
 
-    TRACE("(%p)->() incrementing from %ld.\n", This, This->ref);
+    TRACE("(%p)->() incrementing from %ld.\n", This, ref - 1);
     
-    return InterlockedIncrement(&This->ref);
+    return ref;
 }
 
 static ULONG WINAPI DDCF_Release(LPCLASSFACTORY iface)

@@ -260,16 +260,22 @@ ULONG WINAPI
 Main_IDirect3DDeviceImpl_7_3T_2T_1T_AddRef(LPDIRECT3DDEVICE7 iface)
 {
     ICOM_THIS_FROM(IDirect3DDeviceImpl, IDirect3DDevice7, iface);
-    TRACE("(%p/%p)->() incrementing from %lu.\n", This, iface, This->ref);
-    return ++(This->ref);
+    ULONG ref = InterlockedIncrement(&This->ref);
+
+    TRACE("(%p/%p)->() incrementing from %lu.\n", This, iface, ref - 1);
+
+    return ref;
 }
 
 ULONG WINAPI
 Main_IDirect3DDeviceImpl_7_3T_2T_1T_Release(LPDIRECT3DDEVICE7 iface)
 {
     ICOM_THIS_FROM(IDirect3DDeviceImpl, IDirect3DDevice7, iface);
-    TRACE("(%p/%p)->() decrementing from %lu.\n", This, iface, This->ref);
-    if (!--(This->ref)) {
+    ULONG ref = InterlockedDecrement(&This->ref);
+
+    TRACE("(%p/%p)->() decrementing from %lu.\n", This, iface, ref + 1);
+
+    if (!ref) {
         int i;
 	/* Release texture associated with the device */
 	for (i = 0; i < MAX_TEXTURES; i++) {
@@ -280,7 +286,7 @@ Main_IDirect3DDeviceImpl_7_3T_2T_1T_Release(LPDIRECT3DDEVICE7 iface)
 	HeapFree(GetProcessHeap(), 0, This);
 	return 0;
     }
-    return This->ref;
+    return ref;
 }
 
 HRESULT WINAPI

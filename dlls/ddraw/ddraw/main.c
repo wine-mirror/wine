@@ -149,17 +149,18 @@ void Main_DirectDraw_final_release(IDirectDrawImpl* This)
 
 ULONG WINAPI Main_DirectDraw_AddRef(LPDIRECTDRAW7 iface) {
     IDirectDrawImpl *This = (IDirectDrawImpl *)iface;
-    TRACE("(%p)->() incrementing from %lu.\n", This, This->ref );
+    ULONG ref = InterlockedIncrement(&This->ref);
 
-    return ++This->ref;
+    TRACE("(%p)->() incrementing from %lu.\n", This, ref -1);
+
+    return ref;
 }
 
 ULONG WINAPI Main_DirectDraw_Release(LPDIRECTDRAW7 iface) {
-    ULONG ref;
     IDirectDrawImpl *This = (IDirectDrawImpl *)iface;
-    TRACE("(%p)->() decrementing from %lu.\n", This, This->ref );
+    ULONG ref = InterlockedDecrement(&This->ref);
 
-    ref = --This->ref;
+    TRACE("(%p)->() decrementing from %lu.\n", This, ref +1);
 
     if (ref == 0)
     {

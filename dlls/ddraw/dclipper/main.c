@@ -114,14 +114,16 @@ void Main_DirectDrawClipper_ForceDestroy(IDirectDrawClipperImpl* This)
 
 ULONG WINAPI Main_DirectDrawClipper_Release(LPDIRECTDRAWCLIPPER iface) {
     IDirectDrawClipperImpl *This = (IDirectDrawClipperImpl *)iface;
-    TRACE("(%p)->() decrementing from %lu.\n", This, This->ref );
+    ULONG ref = InterlockedDecrement(&This->ref);
 
-    if (--This->ref == 0)
+    TRACE("(%p)->() decrementing from %lu.\n", This, ref + 1);
+
+    if (ref == 0)
     {
 	Main_DirectDrawClipper_Destroy(This);
 	return 0;
     }
-    else return This->ref;
+    else return ref;
 }
 
 /***********************************************************************
@@ -211,7 +213,7 @@ HRESULT WINAPI Main_DirectDrawClipper_QueryInterface(
 	|| IsEqualGUID(&IID_IDirectDrawClipper, riid))
     {
 	*ppvObj = ICOM_INTERFACE(This, IDirectDrawClipper);
-	++This->ref;
+	InterlockedIncrement(&This->ref);
 	return S_OK;
     }
     else
@@ -223,8 +225,11 @@ HRESULT WINAPI Main_DirectDrawClipper_QueryInterface(
 ULONG WINAPI Main_DirectDrawClipper_AddRef( LPDIRECTDRAWCLIPPER iface )
 {
     IDirectDrawClipperImpl *This = (IDirectDrawClipperImpl *)iface;
-    TRACE("(%p)->() incrementing from %lu.\n", This, This->ref );
-    return ++This->ref;
+    ULONG ref = InterlockedIncrement(&This->ref);
+
+    TRACE("(%p)->() incrementing from %lu.\n", This, ref - 1);
+
+    return ref;
 }
 
 HRESULT WINAPI Main_DirectDrawClipper_GetHWnd(

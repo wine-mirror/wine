@@ -149,13 +149,13 @@ static ISupportErrorInfoVtbl	ISupportErrorInfoImpl_VTable;
  converts a objectpointer to This
  */
 #define _IErrorInfo_Offset ((int)(&(((ErrorInfoImpl*)0)->lpvtei)))
-#define _ICOM_THIS_From_IErrorInfo(class, name) class* This = (class*)(((char*)name)-_IErrorInfo_Offset);
+#define _ICOM_THIS_From_IErrorInfo(class, name) class* This = (class*)(((char*)name)-_IErrorInfo_Offset)
 
 #define _ICreateErrorInfo_Offset ((int)(&(((ErrorInfoImpl*)0)->lpvtcei)))
-#define _ICOM_THIS_From_ICreateErrorInfo(class, name) class* This = (class*)(((char*)name)-_ICreateErrorInfo_Offset);
+#define _ICOM_THIS_From_ICreateErrorInfo(class, name) class* This = (class*)(((char*)name)-_ICreateErrorInfo_Offset)
 
 #define _ISupportErrorInfo_Offset ((int)(&(((ErrorInfoImpl*)0)->lpvtsei)))
-#define _ICOM_THIS_From_ISupportErrorInfo(class, name) class* This = (class*)(((char*)name)-_ISupportErrorInfo_Offset);
+#define _ICOM_THIS_From_ISupportErrorInfo(class, name) class* This = (class*)(((char*)name)-_ISupportErrorInfo_Offset)
 
 /*
  converts This to a objectpointer
@@ -227,15 +227,17 @@ static ULONG WINAPI IErrorInfoImpl_Release(
 	IErrorInfo* iface)
 {
 	_ICOM_THIS_From_IErrorInfo(ErrorInfoImpl, iface);
-	TRACE("(%p)->(count=%lu)\n",This,This->ref);
+        ULONG ref = InterlockedDecrement(&This->ref);
 
-	if (!InterlockedDecrement(&This->ref))
+	TRACE("(%p)->(count=%lu)\n",This,ref+1);
+
+	if (!ref)
 	{
 	  TRACE("-- destroying IErrorInfo(%p)\n",This);
 	  HeapFree(GetProcessHeap(),0,This);
 	  return 0;
 	}
-	return This->ref;
+	return ref;
 }
 
 static HRESULT WINAPI IErrorInfoImpl_GetGUID(

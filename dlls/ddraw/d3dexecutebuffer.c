@@ -519,16 +519,22 @@ ULONG WINAPI
 Main_IDirect3DExecuteBufferImpl_1_AddRef(LPDIRECT3DEXECUTEBUFFER iface)
 {
     ICOM_THIS_FROM(IDirect3DExecuteBufferImpl, IDirect3DExecuteBuffer, iface);
-    FIXME("(%p/%p)->()incrementing from %lu.\n", This, iface, This->ref );
-    return ++(This->ref);
+    ULONG ref = InterlockedIncrement(&This->ref);
+
+    FIXME("(%p/%p)->()incrementing from %lu.\n", This, iface, ref - 1);
+
+    return ref;
 }
 
 ULONG WINAPI
 Main_IDirect3DExecuteBufferImpl_1_Release(LPDIRECT3DEXECUTEBUFFER iface)
 {
     ICOM_THIS_FROM(IDirect3DExecuteBufferImpl, IDirect3DExecuteBuffer, iface);
-    TRACE("(%p/%p)->()decrementing from %lu.\n", This, iface, This->ref);
-    if (!--(This->ref)) {
+    ULONG ref = InterlockedDecrement(&This->ref);
+
+    TRACE("(%p/%p)->()decrementing from %lu.\n", This, iface, ref + 1);
+
+    if (!ref) {
         if ((This->desc.lpData != NULL) && This->need_free)
 	    HeapFree(GetProcessHeap(),0,This->desc.lpData);
         HeapFree(GetProcessHeap(),0,This->vertex_data);
@@ -537,7 +543,7 @@ Main_IDirect3DExecuteBufferImpl_1_Release(LPDIRECT3DEXECUTEBUFFER iface)
 	return 0;
     }
 
-    return This->ref;
+    return ref;
 }
 
 HRESULT WINAPI
