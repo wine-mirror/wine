@@ -26,3 +26,19 @@ HRESULT WINAPI StiCreateInstance( HINSTANCE a, DWORD b, LPVOID c, LPVOID d)
 {
     return STG_E_UNIMPLEMENTEDFUNCTION;
 }
+
+/******************************************************************************
+ *           StiCreateInstanceA   (STI.@)
+ */
+HRESULT WINAPI StiCreateInstanceA( HINSTANCE a, DWORD b, LPVOID c, LPVOID d)
+{
+    return STG_E_UNIMPLEMENTEDFUNCTION;
+}
+
+/******************************************************************************
+ *           StiCreateInstanceW   (STI.@)
+ */
+HRESULT WINAPI StiCreateInstanceW( HINSTANCE a, DWORD b, LPVOID c, LPVOID d)
+{
+    return STG_E_UNIMPLEMENTEDFUNCTION;
+}

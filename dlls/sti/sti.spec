@@ -3,5 +3,5 @@
 @ stub DllRegisterServer
 @ stub DllUnregisterServer
 @ stdcall StiCreateInstance(ptr long ptr ptr) StiCreateInstance
-@ stub StiCreateInstanceA
-@ stub StiCreateInstanceW
+@ stdcall StiCreateInstanceA(ptr long ptr ptr) StiCreateInstanceA
+@ stdcall StiCreateInstanceW(ptr long ptr ptr) StiCreateInstanceW
