@@ -340,7 +340,7 @@ static HRESULT WINAPI IExtractIconA_fnGetIconLocation(
 	TRACE("(%p) (flags=%u %p %u %p %p)\n", This, uFlags, szIconFile, cchMax, piIndex, pwFlags);
 
 	ret = IExtractIconW_GetIconLocation(This, uFlags, lpwstrFile, cchMax, piIndex, pwFlags);
-	WideCharToMultiByte(CP_ACP, 0, lpwstrFile, cchMax, szIconFile, cchMax, NULL, NULL);
+	WideCharToMultiByte(CP_ACP, 0, lpwstrFile, -1, szIconFile, cchMax, NULL, NULL);
 	HeapFree(GetProcessHeap(), 0, lpwstrFile);
 
 	TRACE("-- %s %x\n", szIconFile, *piIndex);
