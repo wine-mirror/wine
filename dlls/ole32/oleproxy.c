@@ -435,7 +435,8 @@ CFProxy_Construct(LPVOID *ppv,LPVOID *ppProxy) {
 
     cf->lpvtbl_cf	= &cfproxyvt;
     cf->lpvtbl_proxy	= &pspbvtbl;
-    cf->ref		= 2; /* we return 2 references to the object! */
+    /* 1 reference for the proxy and 1 for the object */
+    cf->ref		= 2;
     *ppv		= &(cf->lpvtbl_cf);
     *ppProxy		= &(cf->lpvtbl_proxy);
     return S_OK;

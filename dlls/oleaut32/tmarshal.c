@@ -1409,6 +1409,7 @@ PSFacBuf_CreateProxy(
 	proxy->lpvtbl[i] = (DWORD)xasm;
     }
     proxy->lpvtbl2	= &tmproxyvtable;
+    /* 1 reference for the proxy and 1 for the object */
     proxy->ref		= 2;
     proxy->tinfo	= tinfo;
     memcpy(&proxy->iid,riid,sizeof(*riid));

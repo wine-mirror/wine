@@ -315,13 +315,20 @@ StdMarshalImpl_UnmarshalInterface(
     return hres;
   }
   hres = PIPE_GetNewPipeBuf(&mid,&chanbuf);
+  IPSFactoryBuffer_Release(psfacbuf);
   if (hres) {
     ERR("Failed to get an rpc channel buffer for %s\n",debugstr_guid(riid));
   } else {
+    /* Connect the channel buffer to the proxy and release the no longer
+     * needed proxy.
+     * NOTE: The proxy should have taken an extra reference because it also
+     * aggregates the object, so we can safely release our reference to it. */
     IRpcProxyBuffer_Connect(rpcproxy,chanbuf);
-    IRpcProxyBuffer_Release(rpcproxy); /* no need */
+    IRpcProxyBuffer_Release(rpcproxy);
+    /* IRpcProxyBuffer takes a reference on the channel buffer and
+     * we no longer need it, so release it */
+    IRpcChannelBuffer_Release(chanbuf);
   }
-  IPSFactoryBuffer_Release(psfacbuf);
   return hres;
 }
 
