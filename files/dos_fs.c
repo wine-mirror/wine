@@ -1535,8 +1535,7 @@ INT WINAPI MulDiv(
 	     INT nMultiplier,
 	     INT nDivisor)
 {
-#if SIZEOF_LONG_LONG >= 8
-    long long ret;
+    LONGLONG ret;
 
     if (!nDivisor) return -1;
 
@@ -1550,30 +1549,12 @@ INT WINAPI MulDiv(
     /* If the result is positive, we "add" to round. else, we subtract to round. */
     if ( ( (nMultiplicand <  0) && (nMultiplier <  0) ) ||
 	 ( (nMultiplicand >= 0) && (nMultiplier >= 0) ) )
-      ret = (((long long)nMultiplicand * nMultiplier) + (nDivisor/2)) / nDivisor;
+      ret = (((LONGLONG)nMultiplicand * nMultiplier) + (nDivisor/2)) / nDivisor;
     else
-      ret = (((long long)nMultiplicand * nMultiplier) - (nDivisor/2)) / nDivisor;
+      ret = (((LONGLONG)nMultiplicand * nMultiplier) - (nDivisor/2)) / nDivisor;
 
     if ((ret > 2147483647) || (ret < -2147483647)) return -1;
     return ret;
-#else
-    if (!nDivisor) return -1;
-
-    /* We want to deal with a positive divisor to simplify the logic. */
-    if (nDivisor < 0)
-    {
-      nMultiplicand = - nMultiplicand;
-      nDivisor = -nDivisor;
-    }
-
-    /* If the result is positive, we "add" to round. else, we subtract to round. */
-    if ( ( (nMultiplicand <  0) && (nMultiplier <  0) ) ||
-	 ( (nMultiplicand >= 0) && (nMultiplier >= 0) ) )
-      return ((nMultiplicand * nMultiplier) + (nDivisor/2)) / nDivisor;
-
-    return ((nMultiplicand * nMultiplier) - (nDivisor/2)) / nDivisor;
-
-#endif
 }
 
 
