@@ -1059,6 +1059,39 @@ static int ctl2_find_nth_reference(
     return offset;
 }
 
+/****************************************************************************
+ *	ctl2_find_typeinfo_from_offset
+ *
+ *  Finds an ITypeInfo given an offset into the TYPEINFO segment.
+ *
+ * RETURNS
+ *
+ *  Success: S_OK.
+ *  Failure: TYPE_E_ELEMENTNOTFOUND.
+ */
+static HRESULT ctl2_find_typeinfo_from_offset(
+	ICreateTypeLib2Impl *This, /* [I] The typelib to find the typeinfo in. */
+	int offset,                /* [I] The offset of the desired typeinfo. */
+	ITypeInfo **ppTinfo)       /* [I] The typeinfo found. */
+{
+    void *typeinfodata;
+    ICreateTypeInfo2Impl *typeinfo;
+
+    typeinfodata = &This->typelib_segment_data[MSFT_SEG_TYPEINFO][offset];
+
+    for (typeinfo = This->typeinfos; typeinfo; typeinfo = typeinfo->next_typeinfo) {
+	if (typeinfo->typeinfo == typeinfodata) {
+	    *ppTinfo = (ITypeInfo *)&typeinfo->lpVtblTypeInfo2;
+	    ITypeInfo2_AddRef(*ppTinfo);
+	    return S_OK;
+	}
+    }
+
+    ERR("Failed to find typeinfo, invariant varied.\n");
+
+    return TYPE_E_ELEMENTNOTFOUND;
+}
+
 /*================== ICreateTypeInfo2 Implementation ===================================*/
 
 /******************************************************************************
@@ -3424,11 +3457,15 @@ static HRESULT WINAPI ITypeLib2_fnGetTypeInfo(
         UINT index,
         ITypeInfo** ppTInfo)
 {
-/*     ICOM_THIS_From_ITypeLib2(ICreateTypeLib2Impl, iface); */
+    ICOM_THIS_From_ITypeLib2(ICreateTypeLib2Impl, iface);
 
-    FIXME("(%p,%d,%p), stub!\n", iface, index, ppTInfo);
+    TRACE("(%p,%d,%p)\n", iface, index, ppTInfo);
 
-    return E_OUTOFMEMORY;
+    if ((index < 0) || (index >= This->typelib_header.nrtypeinfos)) {
+	return TYPE_E_ELEMENTNOTFOUND;
+    }
+
+    return ctl2_find_typeinfo_from_offset(This, This->typelib_typeinfo_offsets[index], ppTInfo);
 }
 
 /******************************************************************************
@@ -3458,11 +3495,20 @@ static HRESULT WINAPI ITypeLib2_fnGetTypeInfoOfGuid(
         REFGUID guid,
         ITypeInfo** ppTinfo)
 {
-/*     ICOM_THIS_From_ITypeLib2(ICreateTypeLib2Impl, iface); */
+    ICOM_THIS_From_ITypeLib2(ICreateTypeLib2Impl, iface);
 
-    FIXME("(%p,%s,%p), stub!\n", iface, debugstr_guid(guid), ppTinfo);
+    int guidoffset;
+    int typeinfo;
 
-    return E_OUTOFMEMORY;
+    TRACE("(%p,%s,%p)\n", iface, debugstr_guid(guid), ppTinfo);
+
+    guidoffset = ctl2_find_guid(This, ctl2_hash_guid(guid), guid);
+    if (guidoffset == -1) return TYPE_E_ELEMENTNOTFOUND;
+
+    typeinfo = ((MSFT_GuidEntry *)&This->typelib_segment_data[MSFT_SEG_GUID][guidoffset])->hreftype;
+    if (typeinfo < 0) return TYPE_E_ELEMENTNOTFOUND;
+
+    return ctl2_find_typeinfo_from_offset(This, typeinfo, ppTinfo);
 }
 
 /******************************************************************************
