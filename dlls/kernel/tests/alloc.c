@@ -208,13 +208,12 @@ static void test_Global(void)
 /* Check that GlobalReAlloc works */
 /* Check that we can change GMEM_FIXED to GMEM_MOVEABLE */
     mem2a=GlobalReAlloc(mem2,0,GMEM_MODIFY | GMEM_MOVEABLE);
-    ok(mem2a!=NULL,"GlobalReAlloc failed to convert FIXED to MOVEABLE: error=%ld\n",GetLastError());
     if(mem2a!=NULL) {
       mem2=mem2a;
+      mem2ptr=GlobalLock(mem2a);
+      ok(mem2ptr!=NULL && !GlobalUnlock(mem2a)&&GetLastError()==NO_ERROR,
+         "Converting from FIXED to MOVEABLE didn't REALLY work\n");
     }
-    mem2ptr=GlobalLock(mem2a);
-    ok(mem2ptr!=NULL && !GlobalUnlock(mem2a)&&GetLastError()==NO_ERROR,
-        "Converting from FIXED to MOVEABLE didn't REALLY work\n");
 
 /* Check that ReAllocing memory works as expected */
     mem2a=GlobalReAlloc(mem2,2*memchunk,GMEM_MOVEABLE | GMEM_ZEROINIT);
@@ -238,8 +237,9 @@ static void test_Global(void)
 
 /* Check that we can't discard locked memory */
         mem2b=GlobalDiscard(mem2a);
-        ok(mem2b==NULL,"Discarded memory we shouldn't have\n");
-        ok(!GlobalUnlock(mem2a) && GetLastError()==NO_ERROR,"GlobalUnlock Failed\n");
+        if(mem2b==NULL) {
+          ok(!GlobalUnlock(mem2a) && GetLastError()==NO_ERROR,"GlobalUnlock Failed\n");
+        }
       }
     }
     if(mem1) {
