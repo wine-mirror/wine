@@ -1,3 +1,4 @@
+EXTRADEFS = -D_OLEAUT32_
 TOPSRCDIR = @top_srcdir@
 TOPOBJDIR = ../..
 SRCDIR    = @srcdir@
