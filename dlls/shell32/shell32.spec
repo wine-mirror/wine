@@ -84,8 +84,8 @@
   90 stub SHFindFiles
   91 stub SHFindComputer
   92 stdcall PathGetShortPath (ptr) PathGetShortPathAW
-  93 stub Win32CreateDirectory
-  94 stub Win32RemoveDirectory
+  93 stdcall Win32CreateDirectory(wstr ptr) Win32CreateDirectoryAW
+  94 stdcall Win32RemoveDirectory(wstr) Win32RemoveDirectoryAW
   95 stdcall SHLogILFromFSIL (ptr)
   96 stdcall StrRetToStrN (ptr long ptr ptr) StrRetToStrNAW
   97 stdcall SHWaitForFileToOpen (long long long)
@@ -410,6 +410,9 @@
 # version 5.00 (Win2K)
 # _WIN32_IE >= 0x0500
 #
+@ stdcall SHGetDiskFreeSpaceA(str ptr ptr ptr) kernel32.GetDiskFreeSpaceExA
+@ stdcall SHGetDiskFreeSpaceExA(str ptr ptr ptr) kernel32.GetDiskFreeSpaceExA
+@ stdcall SHGetDiskFreeSpaceExW(wstr ptr ptr ptr) kernel32.GetDiskFreeSpaceExW
 @ stdcall SHGetFolderPathA(long long long long ptr)
 @ stdcall SHGetFolderPathW(long long long long ptr)
 @ stdcall SHGetFolderLocation(long long long long ptr)

@@ -23,6 +23,7 @@
 #include "wine/port.h"
 
 #include <string.h>
+#include <ctype.h>
 
 #include "winreg.h"
 #include "shellapi.h"
@@ -35,104 +36,440 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(shell);
 
-BOOL SHELL_ConfirmDialog (int nKindOfDialog, LPCSTR szDir)
+#define IsAttribFile(x) (!(x == -1) && !(x & FILE_ATTRIBUTE_DIRECTORY))
+#define IsAttribDir(x)  (!(x == -1) && (x & FILE_ATTRIBUTE_DIRECTORY))
+
+#define IsDotDir(x)     ((x[0] == '.') && ((x[1] == 0) || ((x[1] == '.') && (x[2] == 0))))
+
+CHAR aWildcardFile[] = {'*','.','*',0};
+WCHAR wWildcardFile[] = {'*','.','*',0};
+WCHAR wWildcardChars[] = {'*','?',0};
+WCHAR wBackslash[] = {'\\',0};
+
+static BOOL SHNotifyCreateDirectoryA(LPCSTR path, LPSECURITY_ATTRIBUTES sec);
+static BOOL SHNotifyCreateDirectoryW(LPCWSTR path, LPSECURITY_ATTRIBUTES sec);
+static BOOL SHNotifyRemoveDirectoryA(LPCSTR path);
+static BOOL SHNotifyRemoveDirectoryW(LPCWSTR path);
+static BOOL SHNotifyDeleteFileA(LPCSTR path);
+static BOOL SHNotifyDeleteFileW(LPCWSTR path);
+static BOOL SHNotifyMoveFileW(LPCWSTR src, LPCWSTR dest);
+static BOOL SHNotifyCopyFileW(LPCWSTR src, LPCWSTR dest, BOOL bRenameIfExists);
+
+typedef struct
 {
-	char szCaption[255], szText[255], szBuffer[MAX_PATH + 256];
 	UINT caption_resource_id, text_resource_id;
+} SHELL_ConfirmIDstruc;
 
-	switch(nKindOfDialog) {
-
-	case ASK_DELETE_FILE:
-	  caption_resource_id	= IDS_DELETEITEM_CAPTION;
-	  text_resource_id	= IDS_DELETEITEM_TEXT;
-	  break;
-	case ASK_DELETE_FOLDER:
-	  caption_resource_id	= IDS_DELETEFOLDER_CAPTION;
-	  text_resource_id	= IDS_DELETEITEM_TEXT;
-	  break;
-	case ASK_DELETE_MULTIPLE_ITEM:
-	  caption_resource_id	= IDS_DELETEITEM_CAPTION;
-	  text_resource_id	= IDS_DELETEMULTIPLE_TEXT;
-	  break;
-	case ASK_OVERWRITE_FILE:
-	  caption_resource_id	= IDS_OVERWRITEFILE_CAPTION;
-	  text_resource_id	= IDS_OVERWRITEFILE_TEXT;
-	  break;
-	default:
-	  FIXME(" Unhandled nKindOfDialog %d stub\n", nKindOfDialog);
-	  return FALSE;
+static BOOL SHELL_ConfirmIDs(int nKindOfDialog, SHELL_ConfirmIDstruc *ids)
+{
+	switch (nKindOfDialog) {
+	  case ASK_DELETE_FILE:
+	    ids->caption_resource_id  = IDS_DELETEITEM_CAPTION;
+	    ids->text_resource_id  = IDS_DELETEITEM_TEXT;
+	    return TRUE;
+	  case ASK_DELETE_FOLDER:
+	    ids->caption_resource_id  = IDS_DELETEFOLDER_CAPTION;
+	    ids->text_resource_id  = IDS_DELETEITEM_TEXT;
+	    return TRUE;
+	  case ASK_DELETE_MULTIPLE_ITEM:
+	    ids->caption_resource_id  = IDS_DELETEITEM_CAPTION;
+	    ids->text_resource_id  = IDS_DELETEMULTIPLE_TEXT;
+	    return TRUE;
+	  case ASK_OVERWRITE_FILE:
+	    ids->caption_resource_id  = IDS_OVERWRITEFILE_CAPTION;
+	    ids->text_resource_id  = IDS_OVERWRITEFILE_TEXT;
+	    return TRUE;
+	  default:
+	    FIXME(" Unhandled nKindOfDialog %d stub\n", nKindOfDialog);
 	}
+	return FALSE;
+}
 
-	LoadStringA(shell32_hInstance, caption_resource_id, szCaption, sizeof(szCaption));
-	LoadStringA(shell32_hInstance, text_resource_id, szText, sizeof(szText));
+BOOL SHELL_ConfirmDialog(int nKindOfDialog, LPCSTR szDir)
+{
+	CHAR szCaption[255], szText[255], szBuffer[MAX_PATH + 256];
+	SHELL_ConfirmIDstruc ids;
 
-	FormatMessageA(FORMAT_MESSAGE_FROM_STRING | FORMAT_MESSAGE_ARGUMENT_ARRAY,
+	if (!SHELL_ConfirmIDs(nKindOfDialog, &ids))
+	  return FALSE;
+
+	LoadStringA(shell32_hInstance, ids.caption_resource_id, szCaption, sizeof(szCaption));
+	LoadStringA(shell32_hInstance, ids.text_resource_id, szText, sizeof(szText));
+
+	FormatMessageA(FORMAT_MESSAGE_FROM_STRING|FORMAT_MESSAGE_ARGUMENT_ARRAY,
 	               szText, 0, 0, szBuffer, sizeof(szBuffer), (va_list*)&szDir);
 
 	return (IDOK == MessageBoxA(GetActiveWindow(), szBuffer, szCaption, MB_OKCANCEL | MB_ICONEXCLAMATION));
 }
 
+BOOL SHELL_ConfirmDialogW(int nKindOfDialog, LPCWSTR szDir)
+{
+	WCHAR szCaption[255], szText[255], szBuffer[MAX_PATH + 256];
+	SHELL_ConfirmIDstruc ids;
+
+	if (!SHELL_ConfirmIDs(nKindOfDialog, &ids))
+	  return FALSE;
+
+	LoadStringW(shell32_hInstance, ids.caption_resource_id, szCaption, sizeof(szCaption));
+	LoadStringW(shell32_hInstance, ids.text_resource_id, szText, sizeof(szText));
+
+	FormatMessageW(FORMAT_MESSAGE_FROM_STRING|FORMAT_MESSAGE_ARGUMENT_ARRAY,
+	               szText, 0, 0, szBuffer, sizeof(szBuffer), (va_list*)&szDir);
+
+	return (IDOK == MessageBoxW(GetActiveWindow(), szBuffer, szCaption, MB_OKCANCEL | MB_ICONEXCLAMATION));
+}
+
 /**************************************************************************
- *	SHELL_DeleteDirectoryA()
+ * SHELL_DeleteDirectoryA()  [internal]
  *
  * like rm -r
  */
-
 BOOL SHELL_DeleteDirectoryA(LPCSTR pszDir, BOOL bShowUI)
 {
-	BOOL		ret = FALSE;
-	HANDLE		hFind;
+	BOOL    ret = TRUE;
+	HANDLE  hFind;
 	WIN32_FIND_DATAA wfd;
-	char		szTemp[MAX_PATH];
+	char    szTemp[MAX_PATH];
 
-	strcpy(szTemp, pszDir);
-	PathAddBackslashA(szTemp);
-	strcat(szTemp, "*.*");
-
-	if (bShowUI && !SHELL_ConfirmDialog(ASK_DELETE_FOLDER, pszDir))
+	/* Make sure the directory exists before eventually prompting the user */
+	PathCombineA(szTemp, pszDir, aWildcardFile);
+	hFind = FindFirstFileA(szTemp, &wfd);
+	if (hFind == INVALID_HANDLE_VALUE)
 	  return FALSE;
 
-	if(INVALID_HANDLE_VALUE != (hFind = FindFirstFileA(szTemp, &wfd)))
+	if (!bShowUI || SHELL_ConfirmDialog(ASK_DELETE_FOLDER, pszDir))
 	{
 	  do
 	  {
-	    if(strcasecmp(wfd.cFileName, ".") && strcasecmp(wfd.cFileName, ".."))
-	    {
-	      strcpy(szTemp, pszDir);
-	      PathAddBackslashA(szTemp);
-	      strcat(szTemp, wfd.cFileName);
-
-	      if(FILE_ATTRIBUTE_DIRECTORY & wfd.dwFileAttributes)
-	        SHELL_DeleteDirectoryA(szTemp, FALSE);
-	      else
-	        DeleteFileA(szTemp);
-	    }
-	  } while(FindNextFileA(hFind, &wfd));
-
-	  FindClose(hFind);
-	  ret = RemoveDirectoryA(pszDir);
+	    LPSTR lp = wfd.cAlternateFileName;
+	    if (!lp[0])
+	      lp = wfd.cFileName;
+	    if (IsDotDir(lp))
+	      continue;
+	    PathCombineA(szTemp, pszDir, lp);
+	    if (FILE_ATTRIBUTE_DIRECTORY & wfd.dwFileAttributes)
+	      ret = SHELL_DeleteDirectoryA(szTemp, FALSE);
+	    else
+	      ret = SHNotifyDeleteFileA(szTemp);
+	  } while (ret && FindNextFileA(hFind, &wfd));
 	}
+	FindClose(hFind);
+	if (ret)
+	  ret = SHNotifyRemoveDirectoryA(pszDir);
+	return ret;
+}
 
+BOOL SHELL_DeleteDirectoryW(LPCWSTR pszDir, BOOL bShowUI)
+{
+	BOOL    ret = TRUE;
+	HANDLE  hFind;
+	WIN32_FIND_DATAW wfd;
+	WCHAR   szTemp[MAX_PATH];
+
+	/* Make sure the directory exists before eventually prompting the user */
+	PathCombineW(szTemp, pszDir, wWildcardFile);
+	hFind = FindFirstFileW(szTemp, &wfd);
+	if (hFind == INVALID_HANDLE_VALUE)
+	  return FALSE;
+
+	if (!bShowUI || SHELL_ConfirmDialogW(ASK_DELETE_FOLDER, pszDir))
+	{
+	  do
+	  {
+	    LPWSTR lp = wfd.cAlternateFileName;
+	    if (!lp[0])
+	      lp = wfd.cFileName;
+	    if (IsDotDir(lp))
+	      continue;
+	    PathCombineW(szTemp, pszDir, lp);
+	    if (FILE_ATTRIBUTE_DIRECTORY & wfd.dwFileAttributes)
+	      ret = SHELL_DeleteDirectoryW(szTemp, FALSE);
+	    else
+	      ret = SHNotifyDeleteFileW(szTemp);
+	  } while (ret && FindNextFileW(hFind, &wfd));
+	}
+	FindClose(hFind);
+	if (ret)
+	  ret = SHNotifyRemoveDirectoryW(pszDir);
 	return ret;
 }
 
 /**************************************************************************
- *	SHELL_DeleteFileA()
+ *  SHELL_DeleteFileA()      [internal]
  */
-
 BOOL SHELL_DeleteFileA(LPCSTR pszFile, BOOL bShowUI)
 {
 	if (bShowUI && !SHELL_ConfirmDialog(ASK_DELETE_FILE, pszFile))
-		return FALSE;
+	  return FALSE;
 
-        return DeleteFileA(pszFile);
+	return SHNotifyDeleteFileA(pszFile);
+}
+
+BOOL SHELL_DeleteFileW(LPCWSTR pszFile, BOOL bShowUI)
+{
+	if (bShowUI && !SHELL_ConfirmDialogW(ASK_DELETE_FILE, pszFile))
+	  return FALSE;
+
+	return SHNotifyDeleteFileW(pszFile);
+}
+
+/**************************************************************************
+ * Win32CreateDirectory      [SHELL32.93]
+ *
+ * Creates a directory. Also triggers a change notify if one exists.
+ *
+ * PARAMS
+ *  path       [I]   path to directory to create
+ *
+ * RETURNS
+ *  TRUE if successful, FALSE otherwise
+ *
+ * NOTES:
+ *  Verified on Win98 / IE 5 (SHELL32 4.72, March 1999 build) to be ANSI.
+ *  This is Unicode on NT/2000
+ */
+
+static BOOL SHNotifyCreateDirectoryA(LPCSTR path, LPSECURITY_ATTRIBUTES sec)
+{
+	BOOL ret;
+	TRACE("(%s, %p)\n", debugstr_a(path), sec);
+
+	ret = CreateDirectoryA(path, sec);
+	if (ret)
+	{
+	  SHChangeNotify(SHCNE_MKDIR, SHCNF_PATHA, path, NULL);
+	}
+	return ret;
+}
+
+static BOOL SHNotifyCreateDirectoryW(LPCWSTR path, LPSECURITY_ATTRIBUTES sec)
+{
+	BOOL ret;
+	TRACE("(%s, %p)\n", debugstr_w(path), sec);
+
+	ret = CreateDirectoryW(path, sec);
+	if (ret)
+	{
+	  SHChangeNotify(SHCNE_MKDIR, SHCNF_PATHW, path, NULL);
+	}
+	return ret;
+}
+
+BOOL WINAPI Win32CreateDirectoryAW(LPCVOID path, LPSECURITY_ATTRIBUTES sec)
+{
+	if (SHELL_OsIsUnicode())
+	  return SHNotifyCreateDirectoryW(path, sec);
+	return SHNotifyCreateDirectoryA(path, sec);
+}
+
+/************************************************************************
+ * Win32RemoveDirectory      [SHELL32.94]
+ *
+ * Deletes a directory. Also triggers a change notify if one exists.
+ *
+ * PARAMS
+ *  path       [I]   path to directory to delete
+ *
+ * RETURNS
+ *  TRUE if successful, FALSE otherwise
+ *
+ * NOTES:
+ *  Verified on Win98 / IE 5 (SHELL32 4.72, March 1999 build) to be ANSI.
+ *  This is Unicode on NT/2000
+ */
+static BOOL SHNotifyRemoveDirectoryA(LPCSTR path)
+{
+	BOOL ret;
+	TRACE("(%s)\n", debugstr_a(path));
+
+	ret = RemoveDirectoryA(path);
+	if (!ret)
+	{
+	  /* Directory may be write protected */
+	  DWORD dwAttr = GetFileAttributesA(path);
+	  if (dwAttr != -1 && dwAttr & FILE_ATTRIBUTE_READONLY)
+	    if (SetFileAttributesA(path, dwAttr & ~FILE_ATTRIBUTE_READONLY))
+	      ret = RemoveDirectoryA(path);
+	}
+	if (ret)
+	  SHChangeNotify(SHCNE_RMDIR, SHCNF_PATHA, path, NULL);
+	return ret;
+}
+
+static BOOL SHNotifyRemoveDirectoryW(LPCWSTR path)
+{
+	BOOL ret;
+	TRACE("(%s)\n", debugstr_w(path));
+
+	ret = RemoveDirectoryW(path);
+	if (!ret)
+	{
+	  /* Directory may be write protected */
+	  DWORD dwAttr = GetFileAttributesW(path);
+	  if (dwAttr != -1 && dwAttr & FILE_ATTRIBUTE_READONLY)
+	    if (SetFileAttributesW(path, dwAttr & ~FILE_ATTRIBUTE_READONLY))
+	      ret = RemoveDirectoryW(path);
+	}
+	if (ret)
+	  SHChangeNotify(SHCNE_RMDIR, SHCNF_PATHW, path, NULL);
+	return ret;
+}
+
+BOOL WINAPI Win32RemoveDirectoryAW(LPCVOID path)
+{
+	if (SHELL_OsIsUnicode())
+	  return SHNotifyRemoveDirectoryW(path);
+	return SHNotifyRemoveDirectoryA(path);
+}
+
+/************************************************************************
+ * Win32DeleteFile           [SHELL32.164]
+ *
+ * Deletes a file. Also triggers a change notify if one exists.
+ *
+ * PARAMS
+ *  path       [I]   path to file to delete
+ *
+ * RETURNS
+ *  TRUE if successful, FALSE otherwise
+ *
+ * NOTES:
+ *  Verified on Win98 / IE 5 (SHELL32 4.72, March 1999 build) to be ANSI.
+ *  This is Unicode on NT/2000
+ */
+static BOOL SHNotifyDeleteFileA(LPCSTR path)
+{
+	BOOL ret;
+
+	TRACE("(%s)\n", debugstr_a(path));
+
+	ret = DeleteFileA(path);
+	if (!ret)
+	{
+	  /* File may be write protected or a system file */
+	  DWORD dwAttr = GetFileAttributesA(path);
+	  if ((dwAttr != -1) && (dwAttr & (FILE_ATTRIBUTE_READONLY | FILE_ATTRIBUTE_SYSTEM)))
+	    if (SetFileAttributesA(path, dwAttr & ~(FILE_ATTRIBUTE_READONLY | FILE_ATTRIBUTE_SYSTEM)))
+	      ret = DeleteFileA(path);
+	}
+	if (ret)
+	  SHChangeNotify(SHCNE_DELETE, SHCNF_PATHA, path, NULL);
+	return ret;
+}
+
+static BOOL SHNotifyDeleteFileW(LPCWSTR path)
+{
+	BOOL ret;
+
+	TRACE("(%s)\n", debugstr_w(path));
+
+	ret = DeleteFileW(path);
+	if (!ret)
+	{
+	  /* File may be write protected or a system file */
+	  DWORD dwAttr = GetFileAttributesW(path);
+	  if ((dwAttr != -1) && (dwAttr & (FILE_ATTRIBUTE_READONLY | FILE_ATTRIBUTE_SYSTEM)))
+	    if (SetFileAttributesW(path, dwAttr & ~(FILE_ATTRIBUTE_READONLY | FILE_ATTRIBUTE_SYSTEM)))
+	      ret = DeleteFileW(path);
+	}
+	if (ret)
+	  SHChangeNotify(SHCNE_DELETE, SHCNF_PATHW, path, NULL);
+	return ret;
+}
+
+DWORD WINAPI Win32DeleteFileAW(LPCVOID path)
+{
+	if (SHELL_OsIsUnicode())
+	  return SHNotifyDeleteFileW(path);
+	return SHNotifyDeleteFileA(path);
+}
+
+/************************************************************************
+ * SHNotifyMoveFile          [internal]
+ *
+ * Moves a file. Also triggers a change notify if one exists.
+ *
+ * PARAMS
+ *  src        [I]   path to source file to move
+ *  dest       [I]   path to target file to move to
+ *
+ * RETURNS
+ *  TRUE if successful, FALSE otherwise
+ */
+static BOOL SHNotifyMoveFileW(LPCWSTR src, LPCWSTR dest)
+{
+	BOOL ret;
+
+	TRACE("(%s %s)\n", debugstr_w(src), debugstr_w(dest));
+
+	ret = MoveFileW(src, dest);
+	if (!ret)
+	{
+	  /* Source file may be write protected or a system file */
+	  DWORD dwAttr = GetFileAttributesW(src);
+	  if ((dwAttr != -1) && (dwAttr & (FILE_ATTRIBUTE_READONLY | FILE_ATTRIBUTE_SYSTEM)))
+	    if (SetFileAttributesW(src, dwAttr & ~(FILE_ATTRIBUTE_READONLY | FILE_ATTRIBUTE_SYSTEM)))
+	      ret = MoveFileW(src, dest);
+	}
+	if (ret)
+	  SHChangeNotify(SHCNE_RENAMEITEM, SHCNF_PATHW, src, dest);
+	return ret;
+}
+
+/************************************************************************
+ * SHNotifyCopyFile          [internal]
+ *
+ * Copies a file. Also triggers a change notify if one exists.
+ *
+ * PARAMS
+ *  src        [I]   path to source file to move
+ *  dest       [I]   path to target file to move to
+ *  bRename    [I]   if TRUE, the target file will be renamed if a
+ *                   file with this name already exists
+ *
+ * RETURNS
+ *  TRUE if successful, FALSE otherwise
+ */
+static BOOL SHNotifyCopyFileW(LPCWSTR src, LPCWSTR dest, BOOL bRename)
+{
+	BOOL ret;
+
+	TRACE("(%s %s %s)\n", debugstr_w(src), debugstr_w(dest), bRename ? "renameIfExists" : "");
+
+	ret = CopyFileW(src, dest, TRUE);
+	if (!ret && bRename)
+	{
+	  /* Destination file probably exists */
+	  DWORD dwAttr = GetFileAttributesW(dest);
+	  if (dwAttr != -1)
+	  {
+	    FIXME("Rename on copy to existing file not implemented!");
+	  }
+	}
+	if (ret)
+	  SHChangeNotify(SHCNE_CREATE, SHCNF_PATHW, dest, NULL);
+	return ret;
 }
 
 /*************************************************************************
- * SHCreateDirectory                       [SHELL32.165]
+ * SHCreateDirectory         [SHELL32.165]
+ *
+ * Create a directory at the specified location
+ *
+ * PARAMS
+ *  hWnd       [I]   
+ *  path       [I]   path of directory to create 
+ *
+ * RETURNS
+ *  ERRROR_SUCCESS or one of the following values:
+ *  ERROR_BAD_PATHNAME if the path is relative
+ *  ERROR_FILE_EXISTS when a file with that name exists
+ *  ERROR_ALREADY_EXISTS when the directory already exists
+ *  ERROR_FILENAME_EXCED_RANGE if the filename was to long to process
  *
  * NOTES
  *  exported by ordinal
+ *  Win9x exports ANSI
  *  WinNT/2000 exports Unicode
  */
 DWORD WINAPI SHCreateDirectory(HWND hWnd, LPCVOID path)
@@ -143,69 +480,61 @@ DWORD WINAPI SHCreateDirectory(HWND hWnd, LPCVOID path)
 }
 
 /*************************************************************************
- * SHCreateDirectoryExA                     [SHELL32.@]
+ * SHCreateDirectoryExA      [SHELL32.@]
+ *
+ * Create a directory at the specified location
+ *
+ * PARAMS
+ *  hWnd       [I]   
+ *  path       [I]   path of directory to create 
+ *  sec        [I]   security attributes to use or NULL
+ *
+ * RETURNS
+ *  ERRROR_SUCCESS or one of the following values:
+ *  ERROR_BAD_PATHNAME if the path is relative
+ *  ERROR_FILE_EXISTS when a file with that name exists
+ *  ERROR_ALREADY_EXISTS when the directory already exists
+ *  ERROR_FILENAME_EXCED_RANGE if the filename was to long to process
  */
 DWORD WINAPI SHCreateDirectoryExA(HWND hWnd, LPCSTR path, LPSECURITY_ATTRIBUTES sec)
 {
-	DWORD ret;
-	TRACE("(%p, %s, %p)\n",hWnd, path, sec);
-	if ((ret = CreateDirectoryA(path, sec)))
-	{
-	  SHChangeNotify(SHCNE_MKDIR, SHCNF_PATHA, path, NULL);
-	}
-	else if (hWnd)
-	  FIXME("Semi-stub, non zero hWnd should be used as parent for error dialog!");
-	return ret;
+	WCHAR wPath[MAX_PATH];
+	TRACE("(%p, %s, %p)\n",hWnd, debugstr_a(path), sec);
+
+	MultiByteToWideChar(CP_ACP, 0, path, -1, wPath, MAX_PATH);
+	return SHCreateDirectoryExW(hWnd, wPath, sec);
 }
 
 /*************************************************************************
- * SHCreateDirectoryExW                     [SHELL32.@]
+ * SHCreateDirectoryExW      [SHELL32.@]
  */
 DWORD WINAPI SHCreateDirectoryExW(HWND hWnd, LPCWSTR path, LPSECURITY_ATTRIBUTES sec)
 {
-	DWORD ret;
+	DWORD ret = ERROR_SUCCESS;
 	TRACE("(%p, %s, %p)\n",hWnd, debugstr_w(path), sec);
-	if ((ret = CreateDirectoryW(path, sec)))
+
+	if (PathIsRelativeW(path))
 	{
-	  SHChangeNotify(SHCNE_MKDIR, SHCNF_PATHW, path, NULL);
+	  ret = ERROR_BAD_PATHNAME;
+	  SetLastError(ERROR_BAD_PATHNAME);
 	}
-	else if (hWnd)
-	  FIXME("Semi-stub, non zero hWnd should be used as parent for error dialog!");
+	else
+	{
+	  if (!SHNotifyCreateDirectoryW(path, sec))
+	  {
+	    ret = GetLastError();
+	    if (ret != ERROR_FILE_EXISTS &&
+	        ret != ERROR_ALREADY_EXISTS &&
+	        ret != ERROR_FILENAME_EXCED_RANGE)
+	    {
+	    /* handling network file names?
+	      lstrcpynW(pathName, path, MAX_PATH);
+	      lpStr = PathAddBackslashW(pathName);*/
+	      FIXME("Semi-stub, non zero hWnd should be used somehow?");
+	    }
+	  }
+	}
 	return ret;
-}
-
-/************************************************************************
- * Win32DeleteFile                         [SHELL32.164]
- *
- * Deletes a file. Also triggers a change notify if one exists.
- *
- * NOTES
- *  Verified on Win98 / IE 5 (SHELL32 4.72, March 1999 build) to be ANSI.
- *  This is Unicode on NT/2000
- */
-static BOOL Win32DeleteFileA(LPCSTR fName)
-{
-	TRACE("%p(%s)\n", fName, fName);
-
-	DeleteFileA(fName);
-	SHChangeNotify(SHCNE_DELETE, SHCNF_PATHA, fName, NULL);
-	return TRUE;
-}
-
-static BOOL Win32DeleteFileW(LPCWSTR fName)
-{
-	TRACE("%p(%s)\n", fName, debugstr_w(fName));
-
-	DeleteFileW(fName);
-	SHChangeNotify(SHCNE_DELETE, SHCNF_PATHW, fName, NULL);
-	return TRUE;
-}
-
-DWORD WINAPI Win32DeleteFileAW(LPCVOID fName)
-{
-	if (SHELL_OsIsUnicode())
-	  return Win32DeleteFileW(fName);
-	return Win32DeleteFileA(fName);
 }
 
 /**************************************************************************
