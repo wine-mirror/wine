@@ -1427,6 +1427,29 @@ static const USER_MSG comboex_array[] = {
           USM(CBEM_SETEXTENDEDSTYLE   ,0),
           {0,0,0} };
 
+static const USER_MSG propsht_array[] = {
+          USM(PSM_SETCURSEL           ,0),
+          USM(PSM_REMOVEPAGE          ,0),
+          USM(PSM_ADDPAGE             ,0),
+          USM(PSM_CHANGED             ,0),
+          USM(PSM_RESTARTWINDOWS      ,0),
+          USM(PSM_REBOOTSYSTEM        ,0),
+          USM(PSM_CANCELTOCLOSE       ,0),
+          USM(PSM_QUERYSIBLINGS       ,0),
+          USM(PSM_UNCHANGED           ,0),
+          USM(PSM_APPLY               ,0),
+          USM(PSM_SETTITLEA           ,0),
+          USM(PSM_SETWIZBUTTONS       ,0),
+          USM(PSM_PRESSBUTTON         ,0),
+          USM(PSM_SETCURSELID         ,0),
+          USM(PSM_SETFINISHTEXTA      ,0),
+          USM(PSM_GETTABCONTROL       ,0),
+          USM(PSM_ISDIALOGMESSAGE     ,0),
+          USM(PSM_GETCURRENTPAGEHWND  ,0),
+          USM(PSM_SETTITLEW           ,0),
+          USM(PSM_SETFINISHTEXTW      ,0),
+          {0,0,0} };
+
 #undef SZOF
 #undef USM
 
@@ -1434,6 +1457,7 @@ static CONTROL_CLASS  cc_array[] = {
     {WC_COMBOBOXEXW,    comboex_array, 0},
     {REBARCLASSNAMEW,   rebar_array,   0},
     {TOOLBARCLASSNAMEW, toolbar_array, 0},
+    {WC_PROPSHEETW,     propsht_array, 0},
     {0, 0, 0} };
 
 
@@ -1500,6 +1524,19 @@ static const SPY_NOTIFY spnfy_array[] = {
     SPNFY(LVN_GETDISPINFOW,      NMLVDISPINFOW),
     SPNFY(LVN_SETDISPINFOW,      NMLVDISPINFOW),
     SPNFY(LVN_ODFINDITEMW,       NMLVFINDITEMW),
+    /* PropertySheet  0U-200U  to  0U-299U  */
+    SPNFY(PSN_SETACTIVE,         PSHNOTIFY),
+    SPNFY(PSN_KILLACTIVE,        PSHNOTIFY),
+    SPNFY(PSN_APPLY,             PSHNOTIFY),
+    SPNFY(PSN_RESET,             PSHNOTIFY),
+    SPNFY(PSN_HELP,              PSHNOTIFY),
+    SPNFY(PSN_WIZBACK,           PSHNOTIFY),
+    SPNFY(PSN_WIZNEXT,           PSHNOTIFY),
+    SPNFY(PSN_WIZFINISH,         PSHNOTIFY),
+    SPNFY(PSN_QUERYCANCEL,       PSHNOTIFY),
+    SPNFY(PSN_GETOBJECT,         NMOBJECTNOTIFY),
+    /*    SPNFY(PSN_QUERYINITIALFOCUS, .PSHNOTIFY),         NIY      */
+    /*    SPNFY(PSN_TRANSLATEACCELERATOR, .PSHNOTIFY),      NIY      */
     /* Header         0U-300U  to  0U-399U  */
     SPNFY(HDN_ITEMCHANGINGA,     NMHDR),
     SPNFY(HDN_ITEMCHANGEDA,      NMHDR),
@@ -1900,6 +1937,61 @@ void SPY_DumpStructure (SPY_INSTANCE *sp_e, BOOL enter)
 {
     switch (sp_e->msgnum)
 	{
+	case LVM_INSERTITEMW:
+	case LVM_INSERTITEMA:
+	case LVM_SETITEMW:
+	case LVM_SETITEMA:
+	    if (!enter) break;
+	    /* fall through */
+	case LVM_GETITEMW:
+	case LVM_GETITEMA:
+	    {
+		LPLVITEMA item = (LPLVITEMA) sp_e->lParam;
+		if (item) {
+		    SPY_DumpMem ("LVITEM", (UINT*)item, sizeof(LVITEMA));
+		}
+		break;
+	    }
+	case LVM_GETITEMRECT:
+	case LVM_GETSUBITEMRECT:
+	    {
+		LPRECT rc = (LPRECT) sp_e->lParam;
+		if (rc) {
+		    TRACE("lParam rect (%d,%d)-(%d,%d)\n", 
+			  rc->left, rc->top, rc->right, rc->bottom);
+		}
+		break;
+	    }
+	case LVM_SETITEMPOSITION32:
+	    if (!enter) break;
+	    /* fall through */
+	case LVM_GETITEMPOSITION:
+	case LVM_GETORIGIN:
+	    {
+		LPPOINT point = (LPPOINT) sp_e->lParam;
+		if (point) {
+		    TRACE("lParam point x=%ld, y=%ld\n", point->x, point->y);
+		}
+		break;
+	    }
+	case SBM_SETRANGE:
+	    if (!enter && (sp_e->msgnum == SBM_SETRANGE)) break;
+	    TRACE("min=%d max=%d\n", (INT)sp_e->wParam, (INT)sp_e->lParam);
+	    break;
+	case SBM_GETRANGE:
+	    if ((enter && (sp_e->msgnum == SBM_GETRANGE)) ||
+		(!enter && (sp_e->msgnum == SBM_SETRANGE))) break;
+	    {
+		LPINT ptmin = (LPINT) sp_e->wParam;
+		LPINT ptmax = (LPINT) sp_e->lParam;
+		if (ptmin && ptmax) 
+		    TRACE("min=%d max=%d\n", *ptmin, *ptmax);
+		else if (ptmin)
+		    TRACE("min=%d max=n/a\n", *ptmin);
+		else if (ptmax)
+		    TRACE("min=n/a max=%d\n", *ptmax);
+		break;
+	    }
 	case WM_DRAWITEM:
 	    if (!enter) break;
 	    {   
