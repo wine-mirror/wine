@@ -2468,7 +2468,9 @@ typedef struct tagTCITEM {
 #define IPM_SETFOCUS		(WM_USER+104)
 #define IPM_ISBLANK		(WM_USER+105)
 
-#define IPN_FIELDCHANGED	(IPN_FIRST-0)
+#define IPN_FIRST               (0U-860U)
+#define IPN_LAST                (0U-879U)
+#define IPN_FIELDCHANGED    (IPN_FIRST-0)
 
 typedef struct tagNMIPADDRESS
 {
