@@ -42,6 +42,7 @@ HINSTANCE hInst;
 HWND hFrameWnd;
 HWND hStatusBar;
 HMENU hMenuFrame;
+HMENU hPopupMenus = 0;
 UINT nClipboardFormat;
 LPCTSTR strClipboardFormat = _T("TODO: SET CORRECT FORMAT");
 
@@ -104,6 +105,7 @@ BOOL InitInstance(HINSTANCE hInstance, int nCmdShow)
     hChildWndClass = hChildWndClass; /* warning eater */
 
     hMenuFrame = LoadMenu(hInstance, MAKEINTRESOURCE(IDR_REGEDIT_MENU));
+    hPopupMenus = LoadMenu(hInstance, MAKEINTRESOURCE(IDR_POPUP_MENUS));
 
     /* Initialize the Windows Common Controls DLL */
     InitCommonControls();

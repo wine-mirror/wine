@@ -41,6 +41,7 @@
 #define IDD_DIALOG2                     132
 #define IDB_CLOSED_FILE                 133
 #define IDB_ROOT                        134
+#define IDR_POPUP_MENUS                 137
 #define IDC_LICENSE_EDIT                1029
 #define ID_REGISTRY_EXIT                32770
 #define ID_FAVOURITES_ADDTOFAVOURITES   32772
@@ -114,6 +115,7 @@
 #define IDC_DWORD_DEC			32854
 #define IDS_NEWKEY			32860
 #define IDS_NEWVALUE			32861
+#define ID_EDIT_MODIFY_BIN		32870
 
 #define IDD_EDIT_STRING			2000
 #define IDC_VALUE_NAME			2001
