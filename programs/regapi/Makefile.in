@@ -1,0 +1,32 @@
+DEFS      = -DWINELIB
+TOPSRCDIR = @top_srcdir@
+TOPOBJDIR = ../..
+SRCDIR    = @srcdir@
+VPATH     = @srcdir@
+MODULE    = none
+PROGRAMS  = regapi
+ALL_LIBS  = $(WINELIB) $(X_LIBS) $(XLIB) $(LIBS)
+RCFLAGS   = -w32 -h
+WRCEXTRA  = -A -p $*
+
+C_SRCS = \
+	regapi.c
+
+all: $(PROGRAMS)
+
+depend::
+
+@MAKE_RULES@
+
+regapi: $(OBJS)
+	$(CC) -o regapi $(OBJS) $(LDOPTIONS) $(ALL_LIBS)
+
+install: dummy
+	$(INSTALL_PROGRAM) regapi $(bindir)/regapi
+
+uninstall: dummy
+	$(RM) $(bindir)/regapi
+
+dummy:
+
+### Dependencies:

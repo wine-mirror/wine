@@ -1,0 +1,89 @@
+
+Registry Command Line API Tool
+------------------------------
+
+  This progam is intended to fill a particular need.  I needed to make the 
+  wine registry look like it would have been if my application would have 
+  been installed by its installation program.  Since this was not possible I 
+  took the following approach.
+
+  1 - Use regedit to export my full Windows registry before I install my 
+      application.
+
+  2 - Use regedit to export my full Windows registry after I had install my 
+      application.
+
+  3 - Generate the differences between the two image.   What I obtain from the 
+      diff is what I need to apply to the wine registry.
+
+  Obvisouly the process is not that straight forward to solve, first, 
+  you don't get the diff between two Windows regedit exported .reg file by 
+  doing a simple diff.   What I had to do is a little more complex, but not 
+  that much...
+
+  (Assuming that the registry picture files are 
+  named ./before.reg and ./after.reg)
+
+  1 - Parse the before.reg and after.reg file into regFixer.pl, in order to 
+      obtain lines in the form [HKEY\Sub1\Sub2\...\Subn]"Value"="Data"  
+      (where "Data" can be prefixed by the type identifyer : hex:, hex(0000000?) 
+      or dword:)
+
+  2 - Generate the diff between the before.reg.fix and after.reg.fix 
+      into app.diff
+
+  Now we have a app.reg file that contain what has been done by installing the
+  application.  To this we extract the part's that we are interested in using 
+  grep (and fix it with sed) and put that into app.added by example 
+  ( let say we keep the added values only ).
+
+  At this point we know which registry entry to add to the wine registry.  It 
+  only remains to take the format we have and reset it into a format similar
+  to the one we get from regedit.
+
+  I say "similar" because there is a tiny difference between Windows regedit 
+  export format and the format actualy required by the tool.
+
+  The problem with this (and it is not a big one) is that regedit export long 
+  data streams onto many lines, and since I dont have tons of time I setup 
+  another Perl script (regRestorer.pl) that fixes this (this could easily 
+  be done in C obviously) (left as excercise ;-) ).  
+    
+  So, once you parsed app.added into regRestorer.pl you get a app.reg ready to 
+  process by regapi.
+
+  So, this package comes with a few pieces:
+
+  regFixer.pl     - Will convert the export of regedit 
+                    into something "diff-able"
+
+  regRestorer.pl  - Will convert "cleaned" diff file into 
+                    something "regapi-able"
+  
+  regSet          - Will do the procedure explained herein 
+                    for the added key only.
+
+  
+FAQ
+---
+
+  Quick Start Guide
+  -----------------
+  1 - Get a snapshot of your windows registry in before.reg, (regedit/export)
+  2 - Install you're application,
+  3 - Get a snapshot of your windows registry in after.reg.
+  4 - Invoke ./regSet.sh before.reg after.reg
+
+
+  Adding key I have in a regedit export file (nothing to diff with...)
+  ------------------------------------------
+  1 - Invoke ./regSet.sh /dev/null myRegistry.reg
+
+  regapi help
+  -----------
+  1 - regapi has some sort of "man page like" help in it, simply invoke it 
+      without any arguments.
+ 
+Hope this is of any use to you.
+
+Sylvain St-Germain. 

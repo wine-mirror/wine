@@ -5,6 +5,7 @@ SUBDIRS = \
 	control \
 	notepad \
 	progman \
+	regapi \
 	regtest \
 	view \
 	winhelp \

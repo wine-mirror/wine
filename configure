@@ -4643,6 +4643,7 @@ programs/avitools/Makefile
 programs/notepad/Makefile
 programs/progman/Makefile
 programs/regtest/Makefile
+programs/regapi/Makefile
 programs/view/Makefile
 programs/winhelp/Makefile
 programs/winver/Makefile
@@ -4806,6 +4807,7 @@ programs/avitools/Makefile
 programs/notepad/Makefile
 programs/progman/Makefile
 programs/regtest/Makefile
+programs/regapi/Makefile
 programs/view/Makefile
 programs/winhelp/Makefile
 programs/winver/Makefile
