@@ -158,6 +158,7 @@ typedef struct tagLISTVIEW_INFO
   WPARAM charCode;             /* Added */
   INT nSearchParamLength;      /* Added */
   WCHAR szSearchParam[ MAX_PATH ]; /* Added */
+  BOOL bIsDrawing;
 } LISTVIEW_INFO;
 
 /*
@@ -236,6 +237,7 @@ static INT LISTVIEW_GetItemHeight(HWND);
 static BOOL LISTVIEW_GetItemBoundBox(HWND, INT, LPRECT);
 static BOOL LISTVIEW_GetItemPosition(HWND, INT, LPPOINT);
 static LRESULT LISTVIEW_GetItemRect(HWND, INT, LPRECT);
+static LRESULT LISTVIEW_GetSubItemRect(HWND, INT, INT, INT, LPRECT);
 static INT LISTVIEW_GetItemWidth(HWND);
 static INT LISTVIEW_GetLabelWidth(HWND, INT);
 static LRESULT LISTVIEW_GetOrigin(HWND, LPPOINT);
@@ -2746,9 +2748,10 @@ static BOOL LISTVIEW_SetMainItemT(HWND hwnd, LPLVITEMW lpLVItem, BOOL isW)
       if ((itm.state & lpLVItem->stateMask) != 
           (lpLVItem->state & lpLVItem->stateMask))
       {
-        /* send LVN_ITEMCHANGING notification */
-        if (!listview_notify(hwnd, LVN_ITEMCHANGING, &nmlv))
-        {
+        /* 
+         * As per MSDN LVN_ITEMCHANGING notifications are _NOT_ sent
+         * by LVS_OWERNDATA list controls
+         */
           if (lpLVItem->stateMask & LVIS_FOCUSED)
           {
             if (lpLVItem->state & LVIS_FOCUSED)
@@ -2772,9 +2775,9 @@ static BOOL LISTVIEW_SetMainItemT(HWND hwnd, LPLVITEMW lpLVItem, BOOL isW)
 
 	  rcItem.left = LVIR_BOUNDS;
 	  LISTVIEW_GetItemRect(hwnd, lpLVItem->iItem, &rcItem);
+      if (!infoPtr->bIsDrawing)
 	  InvalidateRect(hwnd, &rcItem, TRUE);
         }
-      }
       return TRUE;
     }
     return FALSE;
@@ -2863,6 +2866,7 @@ static BOOL LISTVIEW_SetMainItemT(HWND hwnd, LPLVITEMW lpLVItem, BOOL isW)
           {
             rcItem.left = LVIR_BOUNDS;
 	    LISTVIEW_GetItemRect(hwnd, lpLVItem->iItem, &rcItem);
+           if (!infoPtr->bIsDrawing)
             InvalidateRect(hwnd, &rcItem, TRUE);
           }
         }
@@ -3910,6 +3914,7 @@ static VOID LISTVIEW_Refresh(HWND hwnd, HDC hdc)
   DWORD cdmode;
   RECT rect;
 
+  infoPtr->bIsDrawing = TRUE;
   LISTVIEW_DumpListview (infoPtr, __LINE__);
 
   GetClientRect(hwnd, &rect);
@@ -3945,6 +3950,8 @@ static VOID LISTVIEW_Refresh(HWND hwnd, HDC hdc)
  
   if (cdmode & CDRF_NOTIFYPOSTPAINT)
       LISTVIEW_SendCustomDrawNotify(hwnd, CDDS_POSTPAINT, hdc, rect);
+
+  infoPtr->bIsDrawing = FALSE;
 }
 
 
@@ -6050,6 +6057,42 @@ static LRESULT LISTVIEW_GetItemRect(HWND hwnd, INT nItem, LPRECT lprc)
   return bResult;
 }
 
+
+static LRESULT LISTVIEW_GetSubItemRect(HWND hwnd, INT nItem, INT nSubItem, INT
+flags, LPRECT lprc)
+{
+    UINT uView = GetWindowLongW(hwnd, GWL_STYLE) & LVS_TYPEMASK;
+    INT  count;
+
+    TRACE("(hwnd=%x, nItem=%d, nSubItem=%d lprc=%p)\n", hwnd, nItem, nSubItem, 
+            lprc);
+
+    if (!(uView & LVS_REPORT))
+        return FALSE;
+
+    if (flags & LVIR_ICON)
+    {
+        FIXME("Unimplemented LVIR_ICON\n");
+        return FALSE;
+    }
+    else
+    {
+        LISTVIEW_GetItemRect(hwnd,nItem,lprc);
+        count = 0;
+        while (count<(nSubItem-1))
+        {
+            lprc->left += LISTVIEW_GetColumnWidth(hwnd,count);
+            count ++;
+        }
+
+        lprc->right = LISTVIEW_GetColumnWidth(hwnd,(nSubItem-1)) +
+                            lprc->left;
+
+    }
+    return TRUE;    
+}
+
+
 /***
  * DESCRIPTION:
  * Retrieves the width of a label.
@@ -8000,6 +8043,7 @@ static LRESULT LISTVIEW_Create(HWND hwnd, LPCREATESTRUCTW lpcs)
   infoPtr->hwndEdit = 0;
   infoPtr->pedititem = NULL;
   infoPtr->nEditLabelItem = -1;
+  infoPtr->bIsDrawing = FALSE;
 
   /* get default font (icon title) */
   SystemParametersInfoW(SPI_GETICONTITLELOGFONT, 0, &logFont, 0);
@@ -9469,8 +9513,8 @@ static LRESULT WINAPI LISTVIEW_WindowProc(HWND hwnd, UINT uMsg, WPARAM wParam,
     return LISTVIEW_GetStringWidthT(hwnd, (LPCWSTR)lParam, TRUE);
     
   case LVM_GETSUBITEMRECT:
-    FIXME("LVM_GETSUBITEMRECT: unimplemented\n");
-    return FALSE;
+    return LISTVIEW_GetSubItemRect(hwnd, (UINT)wParam, ((LPRECT)lParam)->top,
+                                   ((LPRECT)lParam)->left, (LPRECT)lParam);
 
   case LVM_GETTEXTBKCOLOR:
     return LISTVIEW_GetTextBkColor(hwnd);
