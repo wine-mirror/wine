@@ -702,7 +702,6 @@ LONG ALSA_WaveInit(void)
     wwo->caps.vDriverVersion = 0x0100;
     wwo->caps.dwFormats = 0x00000000;
     wwo->caps.dwSupport = WAVECAPS_VOLUME;
-    strcpy(wwo->ds_desc.szDesc, "WineALSA DirectSound Driver");
     strcpy(wwo->ds_desc.szDrvname, "winealsa.drv");
 
     if (!wine_dlopen("libasound.so.2", RTLD_LAZY|RTLD_GLOBAL, NULL, 0))
@@ -735,6 +734,7 @@ LONG ALSA_WaveInit(void)
        snd_pcm_stream_name(snd_pcm_info_get_stream(info)),
        (snd_pcm_info_get_subclass(info) == SND_PCM_SUBCLASS_GENERIC_MIX ? "GENERIC MIX": "MULTI MIX"));
 
+    strcpy(wwo->ds_desc.szDesc, snd_pcm_info_get_name(info));
     EXIT_ON_ERROR( snd_pcm_hw_params_any(h, hw_params) , "pcm hw params" );
 #undef EXIT_ON_ERROR
 
@@ -816,7 +816,6 @@ LONG ALSA_WaveInit(void)
     wwi->caps.vDriverVersion = 0x0100;
     wwi->caps.dwFormats = 0x00000000;
     wwi->caps.dwSupport = WAVECAPS_VOLUME;
-    strcpy(wwi->ds_desc.szDesc, "WineALSA DirectSound Driver");
     strcpy(wwi->ds_desc.szDrvname, "winealsa.drv");
 
     snd_pcm_info_alloca(&info);
@@ -843,6 +842,7 @@ LONG ALSA_WaveInit(void)
        snd_pcm_stream_name(snd_pcm_info_get_stream(info)),
        (snd_pcm_info_get_subclass(info) == SND_PCM_SUBCLASS_GENERIC_MIX ? "GENERIC MIX": "MULTI MIX"));
 
+    strcpy(wwi->ds_desc.szDesc, snd_pcm_info_get_name(info));
     EXIT_ON_ERROR( snd_pcm_hw_params_any(h, hw_params) , "pcm hw params" );
 #undef EXIT_ON_ERROR
     err = snd_pcm_hw_params_get_rate_min(hw_params, &ratemin, &dir);
