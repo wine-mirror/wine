@@ -432,7 +432,7 @@ void  output_makefile (void)
   fprintf (makefile,
            "# Generated from %s by winedump.\nTOPSRCDIR = @top_srcdir@\n"
            "TOPOBJDIR = ../..\nSRCDIR    = @srcdir@\nVPATH     = @srcdir@\n"
-           "MODULE    = %s\n",globals.input_name, OUTPUT_DLL_NAME);
+           "MODULE    = %s.dll\n", globals.input_name, OUTPUT_DLL_NAME);
 
   fprintf (makefile, "IMPORTS   = user32 advapi32 kernel32 ntdll");
   if (globals.forward_dll)
@@ -480,7 +480,7 @@ void  output_install_script (void)
            "cd $1\n\nsed '/dlls\\/"
            "x11drv\\/Makefile/{G;s/$/dlls\\/%s\\/Makefile/;}' configure.ac"
            " >t.tmp\nmv -f t.tmp configure.ac\necho Patched configure.ac\n\n"
-           "sed '/all:/{G;s/$/\\^%s.dll$(DLLEXT) \\\\/;}'"
+           "sed '/^all:/{G;s/$/\\^%s.dll$(DLLEXT) \\\\/;}'"
            " dlls/Makefile.in| tr ^ \\\\t >t.tmp\n"
            "sed '/BASEDIRS =/{G;s/$/\\^%s \\\\/;}' t.tmp | tr ^ \\\\t >t.tmp2"
            "\nsed '/Map symlink name /{G;s/$/^\\$(RM) \\$\\@ \\&\\& \\$\\"
