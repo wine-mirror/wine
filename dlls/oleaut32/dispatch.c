@@ -28,7 +28,6 @@
 #include <ctype.h>
 
 #include "windef.h"
-#include "ole.h"
 #include "oleauto.h"
 #include "winerror.h"
 #include "winreg.h"         /* for HKEY_LOCAL_MACHINE */

@@ -71,7 +71,7 @@
 #ifndef NOGDI
 #include "winspool.h"
 #ifdef INC_OLE1
-#include "ole.h"
+/* #include "ole.h" */
 #else
 #include "ole2.h"
 #endif
@@ -97,22 +97,6 @@
 #ifndef NOIMM
 #include "imm.h"
 #endif /* !NOIMM */
-
-
-#if 0
-  Where does this belong? Nobody uses this stuff anyway.
-typedef struct {
-	BYTE i;  /* much more .... */
-} KANJISTRUCT;
-typedef KANJISTRUCT *LPKANJISTRUCT;
-typedef KANJISTRUCT *NPKANJISTRUCT;
-typedef KANJISTRUCT *PKANJISTRUCT;
-
-BOOL16      WINAPI CheckMenuRadioButton16(HMENU16,UINT16,UINT16,UINT16,BOOL16);
-BOOL      WINAPI CheckMenuRadioButton(HMENU,UINT,UINT,UINT,BOOL);
-WORD        WINAPI WOWHandle16(HANDLE,WOW_HANDLE_TYPE);
-
-#endif /* 0 */
 
 #endif  /* RC_INVOKED && !NOWINRES */
 #endif  /* __WINE_WINDOWS_H */
