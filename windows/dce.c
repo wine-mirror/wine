@@ -18,7 +18,6 @@
  */
 
 #include <assert.h>
-#include "desktop.h"
 #include "options.h"
 #include "dce.h"
 #include "class.h"
@@ -28,13 +27,14 @@
 #include "heap.h"
 #include "local.h"
 #include "module.h"
+#include "user.h"
 #include "debugtools.h"
 #include "windef.h"
 #include "wingdi.h"
 #include "wine/winbase16.h"
 #include "wine/winuser16.h"
 
-DEFAULT_DEBUG_CHANNEL(dc)
+DEFAULT_DEBUG_CHANNEL(dc);
 
 #define NB_DCE    5  /* Number of DCEs created at startup */
 
@@ -838,7 +838,7 @@ HDC WINAPI GetDCEx( HWND hwnd, HRGN hrgnClip, DWORD flags )
             WIN_ReleaseWndPtr(parentPtr);
         }
         else
-	    if ((hwnd == GetDesktopWindow()) && !DESKTOP_IsSingleWindow())
+	    if ((hwnd == GetDesktopWindow()) && !USER_Driver->pIsSingleWindow())
                  hrgnVisible = CreateRectRgn( 0, 0, GetSystemMetrics(SM_CXSCREEN), GetSystemMetrics(SM_CYSCREEN) );
 	    else 
             {

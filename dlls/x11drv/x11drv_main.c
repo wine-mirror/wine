@@ -7,7 +7,9 @@
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <X11/cursorfont.h>
 #include "ts_xlib.h"
+#include "ts_xutil.h"
 
 #include "winbase.h"
 
@@ -44,7 +46,14 @@ static USER_DRIVER user_driver =
     X11DRV_MOUSE_Init,
     X11DRV_MOUSE_SetCursor,
     X11DRV_MOUSE_MoveCursor,
-    X11DRV_MOUSE_EnableWarpPointer
+    X11DRV_MOUSE_EnableWarpPointer,
+    /* screen saver functions */
+    X11DRV_GetScreenSaveActive,
+    X11DRV_SetScreenSaveActive,
+    X11DRV_GetScreenSaveTimeout,
+    X11DRV_SetScreenSaveTimeout,
+    /* windowing functions */
+    X11DRV_IsSingleWindow
 };
 
 static XKeyboardState keyboard_state;
@@ -66,13 +75,84 @@ static int error_handler(Display *display, XErrorEvent *error_evt)
 
 
 /***********************************************************************
+ *		create_desktop
+ *
+ * Create the desktop window for the --desktop mode.
+ */
+static void create_desktop( const char *geometry )
+{
+    int x = 0, y = 0, flags;
+    unsigned int width = 640, height = 480;  /* Default size = 640x480 */
+    char *name = "Wine desktop";
+    XSizeHints *size_hints;
+    XWMHints   *wm_hints;
+    XClassHint *class_hints;
+    XSetWindowAttributes win_attr;
+    XTextProperty window_name;
+    Atom XA_WM_DELETE_WINDOW;
+
+    flags = TSXParseGeometry( geometry, &x, &y, &width, &height );
+    MONITOR_PrimaryMonitor.rect.right  = width;
+    MONITOR_PrimaryMonitor.rect.bottom = height;
+
+    /* Create window */
+  
+    win_attr.background_pixel = BlackPixel(display, 0);
+    win_attr.event_mask = ExposureMask | KeyPressMask | KeyReleaseMask |
+                          PointerMotionMask | ButtonPressMask |
+                          ButtonReleaseMask | EnterWindowMask;
+    win_attr.cursor = TSXCreateFontCursor( display, XC_top_left_arrow );
+
+    root_window = TSXCreateWindow( display, DefaultRootWindow(display),
+                                   x, y, width, height, 0,
+                                   CopyFromParent, InputOutput, CopyFromParent,
+                                   CWBackPixel | CWEventMask | CWCursor, &win_attr);
+  
+    /* Set window manager properties */
+
+    size_hints  = TSXAllocSizeHints();
+    wm_hints    = TSXAllocWMHints();
+    class_hints = TSXAllocClassHint();
+    if (!size_hints || !wm_hints || !class_hints)
+    {
+        MESSAGE("Not enough memory for window manager hints.\n" );
+        ExitProcess(1);
+    }
+    size_hints->min_width = size_hints->max_width = width;
+    size_hints->min_height = size_hints->max_height = height;
+    size_hints->flags = PMinSize | PMaxSize;
+    if (flags & (XValue | YValue)) size_hints->flags |= USPosition;
+    if (flags & (WidthValue | HeightValue)) size_hints->flags |= USSize;
+    else size_hints->flags |= PSize;
+
+    wm_hints->flags = InputHint | StateHint;
+    wm_hints->input = True;
+    wm_hints->initial_state = NormalState;
+    class_hints->res_name = (char *)argv0;
+    class_hints->res_class = "Wine";
+
+    TSXStringListToTextProperty( &name, 1, &window_name );
+    TSXSetWMProperties( display, root_window, &window_name, &window_name,
+                        Options.argv, Options.argc, size_hints, wm_hints, class_hints );
+    XA_WM_DELETE_WINDOW = TSXInternAtom( display, "WM_DELETE_WINDOW", False );
+    TSXSetWMProtocols( display, root_window, &XA_WM_DELETE_WINDOW, 1 );
+    TSXFree( size_hints );
+    TSXFree( wm_hints );
+    TSXFree( class_hints );
+
+    /* Map window */
+
+    TSXMapWindow( display, root_window );
+}
+
+
+/***********************************************************************
  *           X11DRV process initialisation routine
  */
 static void process_attach(void)
 {
     USER_Driver      = &user_driver;
     CLIPBOARD_Driver = &X11DRV_CLIPBOARD_Driver;
-    MONITOR_Driver   = &X11DRV_MONITOR_Driver;
     WND_Driver       = &X11DRV_WND_Driver;
 
     /* We need this before calling any Xlib function */
@@ -120,10 +200,18 @@ static void process_attach(void)
     TSXOpenIM(display,NULL,NULL,NULL);
 
     if (Options.synchronous) XSetErrorHandler( error_handler );
-    if (Options.desktopGeometry && Options.managed) Options.managed = FALSE;
 
-    /* initialize monitor */
-    X11DRV_MONITOR_Initialize( &MONITOR_PrimaryMonitor );
+    MONITOR_PrimaryMonitor.rect.left   = 0;
+    MONITOR_PrimaryMonitor.rect.top    = 0;
+    MONITOR_PrimaryMonitor.rect.right  = WidthOfScreen( screen );
+    MONITOR_PrimaryMonitor.rect.bottom = HeightOfScreen( screen );
+    MONITOR_PrimaryMonitor.depth       = screen_depth;
+
+    if (Options.desktopGeometry)
+    {
+        Options.managed = FALSE;
+        create_desktop( Options.desktopGeometry );
+    }
 
     /* initialize GDI */
     X11DRV_GDI_Initialize();
@@ -158,16 +246,12 @@ static void process_detach(void)
 
 #if 0  /* FIXME */
 
-    /* cleanup monitor */
-    X11DRV_MONITOR_Finalize( &MONITOR_PrimaryMonitor );
-
     /* close the display */
     XCloseDisplay( display );
     display = NULL;
 
     USER_Driver      = NULL;
     CLIPBOARD_Driver = NULL;
-    MONITOR_Driver   = NULL;
     WND_Driver       = NULL;
 #endif
 }
@@ -190,4 +274,59 @@ BOOL WINAPI X11DRV_Init( HINSTANCE hinst, DWORD reason, LPVOID reserved )
         break;
     }
     return TRUE;
+}
+
+/***********************************************************************
+ *              X11DRV_GetScreenSaveActive
+ *
+ * Returns the active status of the screen saver
+ */
+BOOL X11DRV_GetScreenSaveActive(void)
+{
+    int timeout, temp;
+    TSXGetScreenSaver(display, &timeout, &temp, &temp, &temp);
+    return timeout != NULL;
+}
+
+/***********************************************************************
+ *              X11DRV_SetScreenSaveActive
+ *
+ * Activate/Deactivate the screen saver
+ */
+void X11DRV_SetScreenSaveActive(BOOL bActivate)
+{
+    if(bActivate)
+        TSXActivateScreenSaver(display);
+    else
+        TSXResetScreenSaver(display);
+}
+
+/***********************************************************************
+ *              X11DRV_GetScreenSaveTimeout
+ *
+ * Return the screen saver timeout
+ */
+int X11DRV_GetScreenSaveTimeout(void)
+{
+    int timeout, temp;
+    TSXGetScreenSaver(display, &timeout, &temp, &temp, &temp);
+    return timeout;
+}
+
+/***********************************************************************
+ *              X11DRV_SetScreenSaveTimeout
+ *
+ * Set the screen saver timeout
+ */
+void X11DRV_SetScreenSaveTimeout(int nTimeout)
+{
+    TSXSetScreenSaver(display, nTimeout, 60, DefaultBlanking, DefaultExposures);
+}
+
+/***********************************************************************
+ *              X11DRV_IsSingleWindow
+ */
+BOOL X11DRV_IsSingleWindow(void)
+{
+    return (root_window != DefaultRootWindow(display));
 }

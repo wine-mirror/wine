@@ -28,20 +28,6 @@ WINDOW *TTYDRV_WND_GetCursesWindow(WND *wndPtr)
 }
 #endif /* defined(HAVE_LIBCURSES) */
 
-/***********************************************************************
- *              TTYDRV_WND_GetCursesRootWindow
- *
- * Return the Curses root window of the Curses window associated 
- * to a window.
- */
-#ifdef HAVE_LIBCURSES
-WINDOW *TTYDRV_WND_GetCursesRootWindow(WND *wndPtr)
-{
-  while(wndPtr->parent) wndPtr = wndPtr->parent;
-  return TTYDRV_DESKTOP_GetCursesRootWindow((struct tagDESKTOP *) wndPtr->wExtra);
-}
-#endif /* defined(HAVE_LIBCURSES) */
-
 /**********************************************************************
  *		TTYDRV_WND_Initialize
  */

@@ -7,11 +7,9 @@ MODULE    = ttydrv
 
 C_SRCS = \
 	clipboard.c \
-	desktop.c \
 	event.c \
 	init.c \
 	keyboard.c \
-	monitor.c \
 	mouse.c \
 	wnd.c
 

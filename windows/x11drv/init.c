@@ -26,20 +26,6 @@ CLIPBOARD_DRIVER X11DRV_CLIPBOARD_Driver =
   X11DRV_CLIPBOARD_ResetOwner
 };
 
-MONITOR_DRIVER X11DRV_MONITOR_Driver =
-{
-  X11DRV_MONITOR_Initialize,
-  X11DRV_MONITOR_Finalize,
-  X11DRV_MONITOR_IsSingleWindow,
-  X11DRV_MONITOR_GetWidth,
-  X11DRV_MONITOR_GetHeight,
-  X11DRV_MONITOR_GetDepth,
-  X11DRV_MONITOR_GetScreenSaveActive,
-  X11DRV_MONITOR_SetScreenSaveActive,
-  X11DRV_MONITOR_GetScreenSaveTimeout,
-  X11DRV_MONITOR_SetScreenSaveTimeout
-};
-
 WND_DRIVER X11DRV_WND_Driver =
 {
   X11DRV_WND_Initialize,

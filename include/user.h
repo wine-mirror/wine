@@ -60,6 +60,13 @@ typedef struct tagUSER_DRIVER {
     void   (*pSetCursor)(struct tagCURSORICONINFO *);
     void   (*pMoveCursor)(WORD, WORD);
     LONG   (*pEnableWarpPointer)(BOOL);
+    /* screen saver functions */
+    BOOL   (*pGetScreenSaveActive)(void);
+    void   (*pSetScreenSaveActive)(BOOL);
+    int    (*pGetScreenSaveTimeout)(void);
+    void   (*pSetScreenSaveTimeout)(int);
+    /* windowing functions */
+    BOOL   (*pIsSingleWindow)(void);
 } USER_DRIVER;
 
 extern USER_DRIVER *USER_Driver;

@@ -12,95 +12,9 @@
 
 /**********************************************************************/
 
-MONITOR_DRIVER *MONITOR_Driver;
-
-/**********************************************************************/
-
 #define xPRIMARY_MONITOR ((HMONITOR)0x12340042)
 
 MONITOR MONITOR_PrimaryMonitor;
-
-/***********************************************************************
- *              MONITOR_GetMonitor
- */
-#if 0
-static MONITOR *MONITOR_GetMonitor(HMONITOR hMonitor)
-{
-  if(hMonitor == xPRIMARY_MONITOR)
-    {
-      return &MONITOR_PrimaryMonitor;
-    }
-  else
-    {
-      return NULL;
-    }
-}
-#endif
-
-/***********************************************************************
- *              MONITOR_IsSingleWindow
- */
-BOOL MONITOR_IsSingleWindow(MONITOR *pMonitor)
-{
-  return MONITOR_Driver->pIsSingleWindow(pMonitor);
-}
-
-/***********************************************************************
- *              MONITOR_GetWidth
- */
-int MONITOR_GetWidth(MONITOR *pMonitor)
-{
-  return MONITOR_Driver->pGetWidth(pMonitor);
-}
-
-/***********************************************************************
- *              MONITOR_GetHeight
- */
-int MONITOR_GetHeight(MONITOR *pMonitor)
-{
-  return MONITOR_Driver->pGetHeight(pMonitor);
-}
-
-/***********************************************************************
- *              MONITOR_GetDepth
- */
-int MONITOR_GetDepth(MONITOR *pMonitor)
-{
-  return MONITOR_Driver->pGetDepth(pMonitor);
-}
-
-/***********************************************************************
- *              MONITOR_GetScreenSaveActive
- */
-BOOL MONITOR_GetScreenSaveActive(MONITOR *pMonitor)
-{
-  return MONITOR_Driver->pGetScreenSaveActive(pMonitor);
-}
-
-/***********************************************************************
- *              MONITOR_SetScreenSaveActive
- */
-void MONITOR_SetScreenSaveActive(MONITOR *pMonitor, BOOL bActivate)
-{
-  MONITOR_Driver->pSetScreenSaveActive(pMonitor, bActivate);
-}
-
-/***********************************************************************
- *              MONITOR_GetScreenSaveTimeout
- */
-int MONITOR_GetScreenSaveTimeout(MONITOR *pMonitor)
-{
-  return MONITOR_Driver->pGetScreenSaveTimeout(pMonitor);
-}
-
-/***********************************************************************
- *              MONITOR_SetScreenSaveTimeout
- */
-void MONITOR_SetScreenSaveTimeout(MONITOR *pMonitor, int nTimeout)
-{
-  MONITOR_Driver->pSetScreenSaveTimeout(pMonitor, nTimeout);
-}
-
 
 /**********************************************************************/
 
@@ -156,10 +70,7 @@ BOOL WINAPI GetMonitorInfoA(HMONITOR hMonitor, LPMONITORINFO lpMonitorInfo)
         (lpMonitorInfo->cbSize >= sizeof(MONITORINFO)) &&
         SystemParametersInfoA(SPI_GETWORKAREA, 0, &rcWork, 0))
     {
-        lpMonitorInfo->rcMonitor.left = 0;
-        lpMonitorInfo->rcMonitor.top  = 0;
-        lpMonitorInfo->rcMonitor.right  = GetSystemMetrics(SM_CXSCREEN);
-        lpMonitorInfo->rcMonitor.bottom = GetSystemMetrics(SM_CYSCREEN);
+        lpMonitorInfo->rcMonitor = MONITOR_PrimaryMonitor.rect;
         lpMonitorInfo->rcWork = rcWork;
         lpMonitorInfo->dwFlags = MONITORINFOF_PRIMARY;
 	
@@ -181,10 +92,7 @@ BOOL WINAPI GetMonitorInfoW(HMONITOR hMonitor, LPMONITORINFO lpMonitorInfo)
         (lpMonitorInfo->cbSize >= sizeof(MONITORINFO)) &&
         SystemParametersInfoW(SPI_GETWORKAREA, 0, &rcWork, 0))
     {
-        lpMonitorInfo->rcMonitor.left = 0;
-        lpMonitorInfo->rcMonitor.top  = 0;
-        lpMonitorInfo->rcMonitor.right  = GetSystemMetrics(SM_CXSCREEN);
-        lpMonitorInfo->rcMonitor.bottom = GetSystemMetrics(SM_CYSCREEN);
+        lpMonitorInfo->rcMonitor = MONITOR_PrimaryMonitor.rect;
         lpMonitorInfo->rcWork = rcWork;
         lpMonitorInfo->dwFlags = MONITORINFOF_PRIMARY;
 
@@ -203,15 +111,10 @@ BOOL WINAPI EnumDisplayMonitors(
         MONITORENUMPROC lpfnEnumProc,
         LPARAM          dwData)
 {
-    RECT rcLimit;
+    RECT rcLimit = MONITOR_PrimaryMonitor.rect;
 
     if (!lpfnEnumProc)
         return FALSE;
-
-    rcLimit.left   = 0;
-    rcLimit.top    = 0;
-    rcLimit.right  = GetSystemMetrics(SM_CXSCREEN);
-    rcLimit.bottom = GetSystemMetrics(SM_CYSCREEN);
 
     if (hdcOptionalForPainting)
     {

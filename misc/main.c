@@ -22,7 +22,6 @@
 #include "msdos.h"
 #include "color.h"
 #include "options.h"
-#include "desktop.h"
 #include "builtin32.h"
 #include "debugtools.h"
 #include "debugdefs.h"

@@ -10,7 +10,6 @@ C_SRCS = \
 	event.c \
 	init.c \
 	keyboard.c \
-	monitor.c \
 	mouse.c \
 	wnd.c
 

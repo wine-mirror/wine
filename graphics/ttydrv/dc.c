@@ -64,10 +64,10 @@ BOOL TTYDRV_DC_CreateDC(DC *dc, LPCSTR driver, LPCSTR device,
     GDI_HEAP_UNLOCK( dc->w.hBitmap );
   } else {
 #ifdef HAVE_LIBCURSES
-    physDev->window = TTYDRV_MONITOR_GetCursesRootWindow(&MONITOR_PrimaryMonitor);
+    physDev->window = TTYDRV_GetRootWindow();
 #endif /* defined(HAVE_LIBCURSES) */
-    physDev->cellWidth = TTYDRV_MONITOR_GetCellWidth(&MONITOR_PrimaryMonitor);
-    physDev->cellHeight = TTYDRV_MONITOR_GetCellHeight(&MONITOR_PrimaryMonitor);
+    physDev->cellWidth = TTYDRV_GetCellWidth();
+    physDev->cellHeight = TTYDRV_GetCellHeight();
     
     dc->w.bitsPerPixel = MONITOR_GetDepth(&MONITOR_PrimaryMonitor);
     

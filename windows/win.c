@@ -32,7 +32,6 @@
 #include "winerror.h"
 #include "mdi.h"
 #include "local.h"
-#include "desktop.h"
 #include "syslevel.h"
 #include "stackframe.h"
 #include "debugtools.h"
@@ -588,7 +587,6 @@ BOOL WIN_CreateDesktopWindow(void)
 {
     CLASS *class;
     HWND hwndDesktop;
-    DESKTOP *pDesktop;
 
     TRACE("Creating desktop window\n");
 
@@ -601,9 +599,6 @@ BOOL WIN_CreateDesktopWindow(void)
     hwndDesktop = USER_HEAP_ALLOC( sizeof(WND)+class->cbWndExtra );
     if (!hwndDesktop) return FALSE;
     pWndDesktop = (WND *) USER_HEAP_LIN_ADDR( hwndDesktop );
-
-    pDesktop = (DESKTOP *) pWndDesktop->wExtra;
-    pDesktop->pPrimaryMonitor = &MONITOR_PrimaryMonitor;
 
     pWndDesktop->pDriver = WND_Driver;
     pWndDesktop->pDriver->pInitialize(pWndDesktop);

@@ -13,8 +13,8 @@
 #include "winerror.h"
 
 #include "keyboard.h"
-#include "monitor.h"
 #include "tweak.h"
+#include "user.h"
 #include "desktop.h"
 #include "debugtools.h"
 
@@ -83,7 +83,7 @@ BOOL WINAPI SystemParametersInfoA( UINT uAction, UINT uParam,
 		break;
 
 	case SPI_GETSCREENSAVEACTIVE:	        
-	       if(MONITOR_GetScreenSaveActive(&MONITOR_PrimaryMonitor) || 
+	       if(USER_Driver->pGetScreenSaveActive() || 
 		  GetProfileIntA( "windows", "ScreenSaveActive", 1 ) == 1)
 	        	*(BOOL*)lpvParam = TRUE;
 		else
@@ -91,7 +91,7 @@ BOOL WINAPI SystemParametersInfoA( UINT uAction, UINT uParam,
 		break;
 
 	case SPI_GETSCREENSAVETIMEOUT:
-	        timeout = MONITOR_GetScreenSaveTimeout(&MONITOR_PrimaryMonitor);
+	        timeout = USER_Driver->pGetScreenSaveTimeout();
 		if(!timeout)
 			timeout = GetProfileIntA( "windows", "ScreenSaveTimeout", 300 );
 		*(INT *) lpvParam = timeout * 1000;
@@ -320,7 +320,7 @@ BOOL16 WINAPI SystemParametersInfo16( UINT16 uAction, UINT16 uParam,
 			break;
 
 		case SPI_GETSCREENSAVEACTIVE:
-		  if(MONITOR_GetScreenSaveActive(&MONITOR_PrimaryMonitor) ||
+		  if(USER_Driver->pGetScreenSaveActive() ||
 		     GetProfileIntA( "windows", "ScreenSaveActive", 1 ) == 1)
    		        *(BOOL16 *) lpvParam = TRUE;
                     else
@@ -328,7 +328,7 @@ BOOL16 WINAPI SystemParametersInfo16( UINT16 uAction, UINT16 uParam,
                     break;
 
 		case SPI_GETSCREENSAVETIMEOUT:
-			timeout = MONITOR_GetScreenSaveTimeout(&MONITOR_PrimaryMonitor);
+			timeout = USER_Driver->pGetScreenSaveTimeout();
 			if(!timeout)
 			    timeout = GetProfileIntA( "windows", "ScreenSaveTimeout", 300 );
 			*(INT16 *) lpvParam = timeout;
@@ -355,11 +355,11 @@ BOOL16 WINAPI SystemParametersInfo16( UINT16 uAction, UINT16 uParam,
 			break;
 
 		case SPI_SETSCREENSAVEACTIVE:
-			MONITOR_SetScreenSaveActive(&MONITOR_PrimaryMonitor, uParam);
+			USER_Driver->pSetScreenSaveActive(uParam);
 			break;
 
 		case SPI_SETSCREENSAVETIMEOUT:
-			MONITOR_SetScreenSaveTimeout(&MONITOR_PrimaryMonitor, uParam);
+			USER_Driver->pSetScreenSaveTimeout(uParam);
 			break;
 
 		case SPI_SETDESKWALLPAPER:

@@ -12,67 +12,10 @@
 #include "windef.h"
 #include "wingdi.h"
 #include "heap.h"
-#include "monitor.h"
+#include "user.h"
 #include "win.h"
 #include "wine/winuser16.h"
 
-
-/***********************************************************************
- *		DESKTOP_IsSingleWindow
- */
-BOOL DESKTOP_IsSingleWindow(void)
-{
-  BOOL retvalue;
-  DESKTOP *pDesktop = (DESKTOP *) WIN_GetDesktop()->wExtra;
-  retvalue = MONITOR_IsSingleWindow(pDesktop->pPrimaryMonitor);
-  WIN_ReleaseDesktop();
-  return retvalue;
-}
-
-/***********************************************************************
- *              DESKTOP_GetScreenWidth
- *
- * Return the width of the screen associated to the current desktop.
- */
-int DESKTOP_GetScreenWidth()
-{
-    int retvalue;
-  DESKTOP *pDesktop = (DESKTOP *) WIN_GetDesktop()->wExtra;
-    retvalue = MONITOR_GetWidth(pDesktop->pPrimaryMonitor);
-    WIN_ReleaseDesktop();
-    return retvalue;
-    
-}
-
-/***********************************************************************
- *              DESKTOP_GetScreenHeight
- *
- * Return the height of the screen associated to the current desktop.
- */
-int DESKTOP_GetScreenHeight()
-{
-    int retvalue;
-  DESKTOP *pDesktop = (DESKTOP *) WIN_GetDesktop()->wExtra;
-    retvalue = MONITOR_GetHeight(pDesktop->pPrimaryMonitor);
-    WIN_ReleaseDesktop();
-    return retvalue;
-    
-}
-
-/***********************************************************************
- *              DESKTOP_GetScreenDepth
- *
- * Return the depth of the screen associated to the current desktop.
- */
-int DESKTOP_GetScreenDepth()
-{
-    int retvalue;
-  DESKTOP *pDesktop = (DESKTOP *) WIN_GetDesktop()->wExtra;
-    retvalue = MONITOR_GetDepth(pDesktop->pPrimaryMonitor);
-    WIN_ReleaseDesktop();
-    return retvalue;
-
-}
 
 /***********************************************************************
  *           DESKTOP_LoadBitmap
@@ -216,7 +159,7 @@ static inline LRESULT WINAPI DesktopWndProc_locked( WND *wndPtr, UINT message,
         return  1;
 	
     case WM_ERASEBKGND:
-	if(!DESKTOP_IsSingleWindow())
+	if(!USER_Driver->pIsSingleWindow())
             return  1;
         return  DESKTOP_DoEraseBkgnd( hwnd, (HDC)wParam, desktopPtr );
 

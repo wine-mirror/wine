@@ -24,11 +24,11 @@
 #include "toolhelp.h"
 #include "message.h"
 #include "module.h"
+#include "monitor.h"
 #include "miscemu.h"
 #include "shell.h"
 #include "callback.h"
 #include "local.h"
-#include "desktop.h"
 #include "process.h"
 #include "debugtools.h"
 
@@ -395,9 +395,9 @@ LONG WINAPI ChangeDisplaySettingsA( LPDEVMODEA devmode, DWORD flags )
   MESSAGE("\tflags=");_dump_CDS_flags(flags);MESSAGE("\n");
   if (devmode==NULL)
     FIXME_(system)("   devmode=NULL (return to default mode)\n");
-  else if ( (devmode->dmBitsPerPel != DESKTOP_GetScreenDepth()) 
-	    || (devmode->dmPelsHeight != DESKTOP_GetScreenHeight())
-	    || (devmode->dmPelsWidth != DESKTOP_GetScreenWidth()) )
+  else if ( (devmode->dmBitsPerPel != MONITOR_GetDepth(&MONITOR_PrimaryMonitor)) 
+	    || (devmode->dmPelsHeight != MONITOR_GetHeight(&MONITOR_PrimaryMonitor))
+	    || (devmode->dmPelsWidth != MONITOR_GetWidth(&MONITOR_PrimaryMonitor)) )
 
   {
 
@@ -425,9 +425,9 @@ LONG WINAPI ChangeDisplaySettingsExA(
   MESSAGE("\tflags=");_dump_CDS_flags(flags);MESSAGE("\n");
   if (devmode==NULL)
     FIXME_(system)("   devmode=NULL (return to default mode)\n");
-  else if ( (devmode->dmBitsPerPel != DESKTOP_GetScreenDepth()) 
-	    || (devmode->dmPelsHeight != DESKTOP_GetScreenHeight())
-	    || (devmode->dmPelsWidth != DESKTOP_GetScreenWidth()) )
+  else if ( (devmode->dmBitsPerPel != MONITOR_GetDepth(&MONITOR_PrimaryMonitor)) 
+	    || (devmode->dmPelsHeight != MONITOR_GetHeight(&MONITOR_PrimaryMonitor))
+	    || (devmode->dmPelsWidth != MONITOR_GetWidth(&MONITOR_PrimaryMonitor)) )
 
   {
 
@@ -466,9 +466,9 @@ BOOL WINAPI EnumDisplaySettingsA(
 
 	TRACE_(system)("(%s,%ld,%p)\n",name,n,devmode);
 	if (n==0) {
-		devmode->dmBitsPerPel = DESKTOP_GetScreenDepth();
-		devmode->dmPelsHeight = DESKTOP_GetScreenHeight();
-		devmode->dmPelsWidth = DESKTOP_GetScreenWidth();
+		devmode->dmBitsPerPel = MONITOR_GetDepth(&MONITOR_PrimaryMonitor);
+		devmode->dmPelsHeight = MONITOR_GetHeight(&MONITOR_PrimaryMonitor);
+		devmode->dmPelsWidth  = MONITOR_GetWidth(&MONITOR_PrimaryMonitor);
 		return TRUE;
 	}
 	if ((n-1)<NRMODES*NRDEPTHS) {

@@ -114,6 +114,22 @@ extern BOOL TTYDRV_PALETTE_IsDark(int pixel);
  * TTY USER driver
  */
 
+extern int cell_width;
+extern int cell_height;
+static inline int TTYDRV_GetCellWidth(void)  { return cell_width; }
+static inline int TTYDRV_GetCellHeight(void) { return cell_height; }
+
+#ifdef HAVE_LIBCURSES
+extern WINDOW *root_window;
+static inline WINDOW *TTYDRV_GetRootWindow(void) { return root_window; }
+#endif /* defined(HAVE_LIBCURSES) */
+
+extern BOOL TTYDRV_GetScreenSaveActive(void);
+extern void TTYDRV_SetScreenSaveActive(BOOL bActivate);
+extern int TTYDRV_GetScreenSaveTimeout(void);
+extern void TTYDRV_SetScreenSaveTimeout(int nTimeout);
+extern BOOL TTYDRV_IsSingleWindow(void);
+
 /* TTY clipboard driver */
 
 extern struct tagCLIPBOARD_DRIVER TTYDRV_CLIPBOARD_Driver;
@@ -154,41 +170,6 @@ extern BOOL TTYDRV_KEYBOARD_GetDIData(BYTE *keystate, DWORD dodsize, struct DIDE
 extern void TTYDRV_KEYBOARD_GetKeyboardConfig(struct tagKEYBOARD_CONFIG *cfg);
 extern void TTYDRV_KEYBOARD_SetKeyboardConfig(struct tagKEYBOARD_CONFIG *cfg, DWORD mask);
 
-/* TTY monitor driver */
-
-extern struct tagMONITOR_DRIVER TTYDRV_MONITOR_Driver;
-
-typedef struct tagTTYDRV_MONITOR_DATA {
-#ifdef HAVE_LIBCURSES
-  WINDOW  *rootWindow;
-#endif /* defined(HAVE_LIBCURSES) */
-  int      cellWidth;
-  int      cellHeight;
-  int      width;
-  int      height;
-  int      depth;
-} TTYDRV_MONITOR_DATA;
-
-struct tagMONITOR;
-
-#ifdef HAVE_LIBCURSES
-extern WINDOW *TTYDRV_MONITOR_GetCursesRootWindow(struct tagMONITOR *pMonitor);
-#endif /* defined(HAVE_LIBCURSES) */
-
-extern INT TTYDRV_MONITOR_GetCellWidth(struct tagMONITOR *pMonitor);
-extern INT TTYDRV_MONITOR_GetCellHeight(struct tagMONITOR *pMonitor);
-
-extern void TTYDRV_MONITOR_Initialize(struct tagMONITOR *pMonitor);
-extern void  TTYDRV_MONITOR_Finalize(struct tagMONITOR *pMonitor);
-extern BOOL TTYDRV_MONITOR_IsSingleWindow(struct tagMONITOR *pMonitor);
-extern int TTYDRV_MONITOR_GetWidth(struct tagMONITOR *pMonitor);
-extern int TTYDRV_MONITOR_GetHeight(struct tagMONITOR *pMonitor);
-extern int TTYDRV_MONITOR_GetDepth(struct tagMONITOR *pMonitor);
-extern BOOL TTYDRV_MONITOR_GetScreenSaveActive(struct tagMONITOR *pMonitor);
-extern void TTYDRV_MONITOR_SetScreenSaveActive(struct tagMONITOR *pMonitor, BOOL bActivate);
-extern int TTYDRV_MONITOR_GetScreenSaveTimeout(struct tagMONITOR *pMonitor);
-extern void TTYDRV_MONITOR_SetScreenSaveTimeout(struct tagMONITOR *pMonitor, int nTimeout);
-
 /* TTY mouse driver */
 
 extern void TTYDRV_MOUSE_Init();
@@ -210,7 +191,6 @@ typedef struct tagTTYDRV_WND_DATA {
 
 #ifdef HAVE_LIBCURSES
 WINDOW *TTYDRV_WND_GetCursesWindow(struct tagWND *wndPtr);
-WINDOW *TTYDRV_WND_GetCursesRootWindow(struct tagWND *wndPtr);
 #endif /* defined(HAVE_LIBCURSES) */
 
 extern void TTYDRV_WND_Initialize(struct tagWND *wndPtr);

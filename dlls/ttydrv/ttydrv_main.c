@@ -12,6 +12,9 @@
 #include "ttydrv.h"
 #include "user.h"
 #include "win.h"
+#include "debugtools.h"
+
+DEFAULT_DEBUG_CHANNEL(ttydrv);
 
 static USER_DRIVER user_driver =
 {
@@ -36,8 +39,71 @@ static USER_DRIVER user_driver =
     TTYDRV_MOUSE_Init,
     TTYDRV_MOUSE_SetCursor,
     TTYDRV_MOUSE_MoveCursor,
-    TTYDRV_MOUSE_EnableWarpPointer
+    TTYDRV_MOUSE_EnableWarpPointer,
+    /* screen saver functions */
+    TTYDRV_GetScreenSaveActive,
+    TTYDRV_SetScreenSaveActive,
+    TTYDRV_GetScreenSaveTimeout,
+    TTYDRV_SetScreenSaveTimeout,
+    /* windowing functions */
+    TTYDRV_IsSingleWindow
 };
+
+int cell_width = 8;
+int cell_height = 8;
+#ifdef HAVE_LIBCURSES
+WINDOW *root_window;
+#endif /* defined(HAVE_LIBCURSES) */
+
+
+/***********************************************************************
+ *           TTYDRV process initialisation routine
+ */
+static void process_attach(void)
+{
+    int rows, cols;
+
+    USER_Driver      = &user_driver;
+    CLIPBOARD_Driver = &TTYDRV_CLIPBOARD_Driver;
+    WND_Driver       = &TTYDRV_WND_Driver;
+
+#ifdef HAVE_LIBCURSES
+    if ((root_window = initscr()))
+    {
+        werase(root_window);
+        wrefresh(root_window);
+    }
+    getmaxyx(root_window, rows, cols);
+#else /* defined(HAVE_LIBCURSES) */
+    rows = 60; /* FIXME: Hardcoded */
+    cols = 80; /* FIXME: Hardcoded */
+#endif /* defined(HAVE_LIBCURSES) */
+
+    MONITOR_PrimaryMonitor.rect.left   = 0;
+    MONITOR_PrimaryMonitor.rect.top    = 0;
+    MONITOR_PrimaryMonitor.rect.right  = cell_width * cols;
+    MONITOR_PrimaryMonitor.rect.bottom = cell_height * rows;
+    MONITOR_PrimaryMonitor.depth       = 1;
+
+    TTYDRV_GDI_Initialize();
+}
+
+
+/***********************************************************************
+ *           TTYDRV process termination routine
+ */
+static void process_detach(void)
+{
+    TTYDRV_GDI_Finalize();
+
+#ifdef HAVE_LIBCURSES
+    if (root_window) endwin();
+#endif /* defined(HAVE_LIBCURSES) */
+
+    USER_Driver      = NULL;
+    CLIPBOARD_Driver = NULL;
+    WND_Driver       = NULL;
+}
 
 
 /***********************************************************************
@@ -45,27 +111,66 @@ static USER_DRIVER user_driver =
  */
 BOOL WINAPI TTYDRV_Init( HINSTANCE hinst, DWORD reason, LPVOID reserved )
 {
+    static int process_count;
+
     switch(reason)
     {
     case DLL_PROCESS_ATTACH:
-        USER_Driver      = &user_driver;
-        CLIPBOARD_Driver = &TTYDRV_CLIPBOARD_Driver;
-        MONITOR_Driver   = &TTYDRV_MONITOR_Driver;
-        WND_Driver       = &TTYDRV_WND_Driver;
-
-        TTYDRV_MONITOR_Initialize( &MONITOR_PrimaryMonitor );
-        TTYDRV_GDI_Initialize();
+        if (!process_count++) process_attach();
         break;
 
     case DLL_PROCESS_DETACH:
-        TTYDRV_GDI_Finalize();
-        TTYDRV_MONITOR_Finalize( &MONITOR_PrimaryMonitor );
-
-        USER_Driver      = NULL;
-        CLIPBOARD_Driver = NULL;
-        MONITOR_Driver   = NULL;
-        WND_Driver       = NULL;
+        if (!--process_count) process_detach();
         break;
     }
+    return TRUE;
+}
+
+
+/***********************************************************************
+ *              TTYDRV_GetScreenSaveActive
+ *
+ * Returns the active status of the screen saver
+ */
+BOOL TTYDRV_GetScreenSaveActive(void)
+{
+    return FALSE;
+}
+
+/***********************************************************************
+ *              TTYDRV_SetScreenSaveActive
+ *
+ * Activate/Deactivate the screen saver
+ */
+void TTYDRV_SetScreenSaveActive(BOOL bActivate)
+{
+    FIXME("(%d): stub\n", bActivate);
+}
+
+/***********************************************************************
+ *              TTYDRV_GetScreenSaveTimeout
+ *
+ * Return the screen saver timeout
+ */
+int TTYDRV_GetScreenSaveTimeout(void)
+{
+    return 0;
+}
+
+/***********************************************************************
+ *              TTYDRV_SetScreenSaveTimeout
+ *
+ * Set the screen saver timeout
+ */
+void TTYDRV_SetScreenSaveTimeout(int nTimeout)
+{
+    FIXME("(%d): stub\n", nTimeout);
+}
+
+/***********************************************************************
+ *              TTYDRV_IsSingleWindow
+ */
+BOOL TTYDRV_IsSingleWindow(void)
+{
     return TRUE;
 }

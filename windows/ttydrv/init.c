@@ -22,20 +22,6 @@ CLIPBOARD_DRIVER TTYDRV_CLIPBOARD_Driver =
   TTYDRV_CLIPBOARD_ResetOwner
 };
 
-MONITOR_DRIVER TTYDRV_MONITOR_Driver =
-{
-  TTYDRV_MONITOR_Initialize,
-  TTYDRV_MONITOR_Finalize,
-  TTYDRV_MONITOR_IsSingleWindow,
-  TTYDRV_MONITOR_GetWidth,
-  TTYDRV_MONITOR_GetHeight,
-  TTYDRV_MONITOR_GetDepth,
-  TTYDRV_MONITOR_GetScreenSaveActive,
-  TTYDRV_MONITOR_SetScreenSaveActive,
-  TTYDRV_MONITOR_GetScreenSaveTimeout,
-  TTYDRV_MONITOR_SetScreenSaveTimeout
-};
-
 WND_DRIVER TTYDRV_WND_Driver =
 {
   TTYDRV_WND_Initialize,

@@ -321,6 +321,12 @@ static inline Visual *X11DRV_GetVisual(void)     { return visual; }
 static inline Window X11DRV_GetXRootWindow(void) { return root_window; }
 static inline int X11DRV_GetDepth(void)          { return screen_depth; }
 
+extern BOOL X11DRV_GetScreenSaveActive(void);
+extern void X11DRV_SetScreenSaveActive(BOOL bActivate);
+extern int X11DRV_GetScreenSaveTimeout(void);
+extern void X11DRV_SetScreenSaveTimeout(int nTimeout);
+extern BOOL X11DRV_IsSingleWindow(void);
+
 /* X11 clipboard driver */
 
 extern struct tagCLIPBOARD_DRIVER X11DRV_CLIPBOARD_Driver;
@@ -377,28 +383,6 @@ extern void X11DRV_KEYBOARD_GetKeyboardConfig(struct tagKEYBOARD_CONFIG *cfg);
 extern void X11DRV_KEYBOARD_SetKeyboardConfig(struct tagKEYBOARD_CONFIG *cfg, DWORD mask);
 
 extern void X11DRV_KEYBOARD_HandleEvent(struct tagWND *pWnd, XKeyEvent *event);
-
-/* X11 monitor driver */
-
-extern struct tagMONITOR_DRIVER X11DRV_MONITOR_Driver;
-
-typedef struct _X11DRV_MONITOR_DATA {
-  int      width;
-  int      height;
-} X11DRV_MONITOR_DATA;
-
-struct tagMONITOR;
-
-extern void X11DRV_MONITOR_Initialize(struct tagMONITOR *pMonitor);
-extern void X11DRV_MONITOR_Finalize(struct tagMONITOR *pMonitor);
-extern BOOL X11DRV_MONITOR_IsSingleWindow(struct tagMONITOR *pMonitor);
-extern int X11DRV_MONITOR_GetWidth(struct tagMONITOR *pMonitor);
-extern int X11DRV_MONITOR_GetHeight(struct tagMONITOR *pMonitor);
-extern int X11DRV_MONITOR_GetDepth(struct tagMONITOR *pMonitor);
-extern BOOL X11DRV_MONITOR_GetScreenSaveActive(struct tagMONITOR *pMonitor);
-extern void X11DRV_MONITOR_SetScreenSaveActive(struct tagMONITOR *pMonitor, BOOL bActivate);
-extern int X11DRV_MONITOR_GetScreenSaveTimeout(struct tagMONITOR *pMonitor);
-extern void X11DRV_MONITOR_SetScreenSaveTimeout(struct tagMONITOR *pMonitor, int nTimeout);
 
 /* X11 mouse driver */
 
