@@ -131,7 +131,15 @@ UINT WINAPI GetOEMCP(void)
  */
 BOOL WINAPI IsValidCodePage( UINT codepage )
 {
-    return cp_get_table( codepage ) != NULL;
+    switch(codepage) {
+    case CP_SYMBOL:
+        return FALSE;
+    case CP_UTF7:
+    case CP_UTF8:
+        return TRUE;
+    default:
+        return cp_get_table( codepage ) != NULL;
+    }
 }
 
 
@@ -393,7 +401,42 @@ BOOL WINAPI GetStringTypeW( DWORD type, LPCWSTR src, INT count, LPWORD chartype 
         while (count--) *chartype++ = get_char_typeW( *src++ ) >> 12;
         break;
     case CT_CTYPE3:
-        FIXME("CT_CTYPE3 not supported.\n");
+    {
+	WARN("CT_CTYPE3: semi-stub.\n");
+	while (count--)
+	{
+        int c = *src;
+	    WORD type1, type3 = 0; /* C3_NOTAPPLICABLE */
+
+	    type1 = get_char_typeW( *src++ ) & 0xfff;
+	    /* try to construct type3 from type1 */
+	    if(type1 & C1_SPACE) type3 |= C3_SYMBOL;
+	    if(type1 & C1_ALPHA) type3 |= C3_ALPHA;
+        if ((c>=0x30A0)&&(c<=0x30FF)) type3 |= C3_KATAKANA;
+        if ((c>=0x3040)&&(c<=0x309F)) type3 |= C3_HIRAGANA;
+        if ((c>=0x4E00)&&(c<=0x9FAF)) type3 |= C3_IDEOGRAPH;
+        if ((c>=0x0600)&&(c<=0x06FF)) type3 |= C3_KASHIDA;
+        if ((c>=0x3000)&&(c<=0x303F)) type3 |= C3_SYMBOL;
+
+        if ((c>=0xFF00)&&(c<=0xFF60)) type3 |= C3_FULLWIDTH;
+        if ((c>=0xFF00)&&(c<=0xFF20)) type3 |= C3_SYMBOL;
+        if ((c>=0xFF3B)&&(c<=0xFF40)) type3 |= C3_SYMBOL;
+        if ((c>=0xFF5B)&&(c<=0xFF60)) type3 |= C3_SYMBOL;
+        if ((c>=0xFF21)&&(c<=0xFF3A)) type3 |= C3_ALPHA;
+        if ((c>=0xFF41)&&(c<=0xFF5A)) type3 |= C3_ALPHA;
+        if ((c>=0xFFE0)&&(c<=0xFFE6)) type3 |= C3_FULLWIDTH;
+        if ((c>=0xFFE0)&&(c<=0xFFE6)) type3 |= C3_SYMBOL;
+
+        if ((c>=0xFF61)&&(c<=0xFFDC)) type3 |= C3_HALFWIDTH;
+        if ((c>=0xFF61)&&(c<=0xFF64)) type3 |= C3_SYMBOL;
+        if ((c>=0xFF65)&&(c<=0xFF9F)) type3 |= C3_KATAKANA;
+        if ((c>=0xFF65)&&(c<=0xFF9F)) type3 |= C3_ALPHA;
+        if ((c>=0xFFE8)&&(c<=0xFFEE)) type3 |= C3_HALFWIDTH;
+        if ((c>=0xFFE8)&&(c<=0xFFEE)) type3 |= C3_SYMBOL;
+	    *chartype++ = type3;
+	}
+	break;
+    }
     default:
         SetLastError( ERROR_INVALID_PARAMETER );
         return FALSE;
@@ -437,7 +480,12 @@ BOOL WINAPI GetStringTypeA(LCID locale, DWORD type, LPCSTR src, INT count, LPWOR
     if((srcW = HeapAlloc(GetProcessHeap(), 0, countW * sizeof(WCHAR))))
     {
 	MultiByteToWideChar(cp, 0, src, count, srcW, countW);
-	ret = GetStringTypeW(type, srcW, count, chartype);
+    /* 
+     * NOTE: the target buffer has 1 word for each CHARACTER in the source
+     * string, with multibyte characters there maybe be more bytes in count 
+     * than character space in the buffer!
+     */
+	ret = GetStringTypeW(type, srcW, countW, chartype);
 	HeapFree(GetProcessHeap(), 0, srcW);
     }
     return ret;
