@@ -252,7 +252,8 @@ VOID WINAPI SetSysColors16( INT16 nChanges, const INT16 *lpSysColor,
 
     /* Send WM_SYSCOLORCHANGE message to all windows */
 
-    SendMessageA( HWND_BROADCAST, WM_SYSCOLORCHANGE, 0, 0 );
+    SendMessageTimeoutW( HWND_BROADCAST, WM_SYSCOLORCHANGE, 0, 0,
+                         SMTO_ABORTIFHUNG, 2000, NULL );
 
     /* Repaint affected portions of all visible windows */
 
@@ -276,7 +277,8 @@ BOOL WINAPI SetSysColors( INT nChanges, const INT *lpSysColor,
 
     /* Send WM_SYSCOLORCHANGE message to all windows */
 
-    SendMessageA( HWND_BROADCAST, WM_SYSCOLORCHANGE, 0, 0 );
+    SendMessageTimeoutW( HWND_BROADCAST, WM_SYSCOLORCHANGE, 0, 0,
+                         SMTO_ABORTIFHUNG, 2000, NULL );
 
     /* Repaint affected portions of all visible windows */
 

@@ -182,7 +182,8 @@ HCONV WINAPI DdeConnect(DWORD idInst, HSZ hszService, HSZ hszTopic,
     LeaveCriticalSection(&WDML_CritSect);
 
     /* note: sent messages shall not use packing */
-    SendMessageA(HWND_BROADCAST, WM_DDE_INITIATE, (WPARAM)hwndClient, MAKELPARAM(aSrv, aTpc));
+    SendMessageTimeoutW( HWND_BROADCAST, WM_DDE_INITIATE, (WPARAM)hwndClient, MAKELPARAM(aSrv, aTpc),
+                         SMTO_ABORTIFHUNG, 2000, NULL );
 
     EnterCriticalSection(&WDML_CritSect);
 

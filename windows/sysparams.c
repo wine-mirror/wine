@@ -354,13 +354,16 @@ static HKEY get_volatile_regkey(void)
  */
 void SYSPARAMS_NotifyChange( UINT uiAction, UINT fWinIni )
 {
+    static const WCHAR emptyW[1];
+
     if (notify_change)
     {
         if (fWinIni & SPIF_UPDATEINIFILE)
         {
             if (fWinIni & (SPIF_SENDWININICHANGE | SPIF_SENDCHANGE))
-                SendMessageA(HWND_BROADCAST, WM_SETTINGCHANGE,
-                             uiAction, (LPARAM) "");
+                SendMessageTimeoutW(HWND_BROADCAST, WM_SETTINGCHANGE,
+                                    uiAction, (LPARAM) emptyW,
+                                    SMTO_ABORTIFHUNG, 2000, NULL );
         }
         else
         {

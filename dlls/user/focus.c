@@ -110,7 +110,8 @@ static BOOL set_active_window( HWND hwnd, HWND *prev, BOOL mouse, BOOL focus )
     {
         /* send palette messages */
         if (SendMessageW( hwnd, WM_QUERYNEWPALETTE, 0, 0 ))
-            SendMessageW( HWND_BROADCAST, WM_PALETTEISCHANGING, (WPARAM)hwnd, 0 );
+            SendMessageTimeoutW( HWND_BROADCAST, WM_PALETTEISCHANGING, (WPARAM)hwnd, 0,
+                                 SMTO_ABORTIFHUNG, 2000, NULL );
 
         if (!(GetWindowLongW( hwnd, GWL_EXSTYLE ) & WS_EX_MANAGED))
             SetWindowPos( hwnd, HWND_TOP, 0, 0, 0, 0, SWP_NOSIZE | SWP_NOMOVE | SWP_NOACTIVATE );

@@ -1467,7 +1467,8 @@ UINT WINAPI UserRealizePalette( HDC hDC )
     {
         /* send palette change notification */
         HWND hWnd = WindowFromDC( hDC );
-        if (hWnd) SendMessageA( HWND_BROADCAST, WM_PALETTECHANGED, (WPARAM)hWnd, 0L);
+        if (hWnd) SendMessageTimeoutW( HWND_BROADCAST, WM_PALETTECHANGED, (WPARAM)hWnd, 0,
+                                       SMTO_ABORTIFHUNG, 2000, NULL );
     }
     return realized;
 }
