@@ -409,6 +409,9 @@ typedef struct
 #define GHND                (GMEM_MOVEABLE | GMEM_ZEROINIT)
 #define GPTR                (GMEM_FIXED | GMEM_ZEROINIT)
 
+#define MAKEINTATOMA(atom)  ((LPCSTR)((ULONG_PTR)((WORD)(atom))))
+#define MAKEINTATOMW(atom)  ((LPCWSTR)((ULONG_PTR)((WORD)(atom))))
+#define MAKEINTATOM  WINELIB_NAME_AW(MAKEINTATOM)
 
 typedef struct tagMEMORYSTATUS
 {

@@ -1107,6 +1107,10 @@ typedef struct {
     DWORD   styleNew;
 } STYLESTRUCT, *LPSTYLESTRUCT;
 
+#define WC_DIALOGA MAKEINTATOMA(0x8002)
+#define WC_DIALOGW MAKEINTATOMW(0x8002)
+#define WC_DIALOG  WINELIB_NAME_AW(WC_DIALOG)
+
   /* Offsets for GetWindowLong() and GetWindowWord() */
 #define GWL_USERDATA        (-21)
 #define GWL_EXSTYLE         (-20)
@@ -3978,8 +3982,6 @@ HPEN        WINAPI GetSysColorPen(INT);
 INT         WINAPI wvsnprintfA(LPSTR,UINT,LPCSTR,va_list);
 INT         WINAPI wvsnprintfW(LPWSTR,UINT,LPCWSTR,va_list);
 #define     wvsnprintf WINELIB_NAME_AW(wvsnprintf)
-
-#define WC_DIALOG    (LPSTR)((DWORD)((WORD)( 0x8002)))
 
 #ifdef __cplusplus
 }

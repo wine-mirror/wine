@@ -11,11 +11,11 @@
 #include "winproc.h"
 
 /* Built-in class names (see _Undocumented_Windows_ p.418) */
-#define POPUPMENU_CLASS_ATOM MAKEINTATOM(32768)  /* PopupMenu */
-#define DESKTOP_CLASS_ATOM   MAKEINTATOM(32769)  /* Desktop */
-#define DIALOG_CLASS_ATOM    MAKEINTATOM(32770)  /* Dialog */
-#define WINSWITCH_CLASS_ATOM MAKEINTATOM(32771)  /* WinSwitch */
-#define ICONTITLE_CLASS_ATOM MAKEINTATOM(32772)  /* IconTitle */
+#define POPUPMENU_CLASS_ATOM MAKEINTATOMA(32768)  /* PopupMenu */
+#define DESKTOP_CLASS_ATOM   MAKEINTATOMA(32769)  /* Desktop */
+#define DIALOG_CLASS_ATOM    MAKEINTATOMA(32770)  /* Dialog */
+#define WINSWITCH_CLASS_ATOM MAKEINTATOMA(32771)  /* WinSwitch */
+#define ICONTITLE_CLASS_ATOM MAKEINTATOMA(32772)  /* IconTitle */
 
 /* Built-in class descriptor */
 struct builtin_class_descr

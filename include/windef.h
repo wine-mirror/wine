@@ -113,7 +113,6 @@ typedef INT     CALLBACK (*PROC)();
 #define MAKELPARAM(low,high)   ((LPARAM)MAKELONG(low,high))
 #define MAKEWPARAM(low,high)   ((WPARAM)MAKELONG(low,high))
 #define MAKELRESULT(low,high)  ((LRESULT)MAKELONG(low,high))
-#define MAKEINTATOM(atom)      ((LPCSTR)MAKELONG((atom),0))
 
 #define SELECTOROF(ptr)     (HIWORD(ptr))
 #define OFFSETOF(ptr)       (LOWORD(ptr))
