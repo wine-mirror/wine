@@ -433,7 +433,7 @@ void WINAPI SetDCState16( HDC16 hdc, HDC16 hdcs )
     SelectObject( hdc, dcs->hPen );
     SetBkColor( hdc, dcs->backgroundColor);
     SetTextColor( hdc, dcs->textColor);
-    GDISelectPalette16( hdc, dcs->hPalette, FALSE );
+    GDISelectPalette( hdc, dcs->hPalette, FALSE );
     GDI_ReleaseObj( hdcs );
     GDI_ReleaseObj( hdc );
 }

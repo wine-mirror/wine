@@ -53,8 +53,8 @@ static const struct gdi_obj_funcs palette_funcs =
 
 /* Pointers to USER implementation of SelectPalette/RealizePalette */
 /* they will be patched by USER on startup */
-FARPROC pfnSelectPalette = NULL;
-FARPROC pfnRealizePalette = NULL;
+HPALETTE (WINAPI *pfnSelectPalette)(HDC hdc, HPALETTE hpal, WORD bkgnd ) = NULL;
+UINT (WINAPI *pfnRealizePalette)(HDC hdc) = NULL;
 
 static UINT SystemPaletteUse = SYSPAL_STATIC;  /* currently not considered */
 
@@ -657,11 +657,11 @@ static BOOL PALETTE_DeleteObject( HGDIOBJ handle, void *obj )
 
 
 /***********************************************************************
- *           GDISelectPalette    (GDI.361)
+ *           GDISelectPalette    (Not a Windows API)
  */
-HPALETTE16 WINAPI GDISelectPalette16( HDC16 hdc, HPALETTE16 hpal, WORD wBkg)
+HPALETTE WINAPI GDISelectPalette( HDC hdc, HPALETTE hpal, WORD wBkg)
 {
-    HPALETTE16 prev;
+    HPALETTE prev;
     DC *dc;
 
     TRACE("%04x %04x\n", hdc, hpal );
@@ -681,9 +681,9 @@ HPALETTE16 WINAPI GDISelectPalette16( HDC16 hdc, HPALETTE16 hpal, WORD wBkg)
 
 
 /***********************************************************************
- *           GDIRealizePalette    (GDI.362)
+ *           GDIRealizePalette    (Not a Windows API)
  */
-UINT16 WINAPI GDIRealizePalette16( HDC16 hdc )
+UINT WINAPI GDIRealizePalette( HDC hdc )
 {
     UINT realized = 0;
     DC* dc = DC_GetDCPtr( hdc );
@@ -694,11 +694,10 @@ UINT16 WINAPI GDIRealizePalette16( HDC16 hdc )
 
     if( dc->hPalette == GetStockObject( DEFAULT_PALETTE ))
     {
-        GDI_ReleaseObj( hdc );
-        return RealizeDefaultPalette16( hdc );
+        if (dc->funcs->pRealizeDefaultPalette)
+            realized = dc->funcs->pRealizeDefaultPalette( dc->physDev );
     }
-
-    if(dc->hPalette != hLastRealizedPalette )
+    else if(dc->hPalette != hLastRealizedPalette )
     {
         if (dc->funcs->pRealizePalette)
             realized = dc->funcs->pRealizePalette( dc->physDev, dc->hPalette,
@@ -707,10 +706,10 @@ UINT16 WINAPI GDIRealizePalette16( HDC16 hdc )
         pLastRealizedDC = dc->funcs;
     }
     else TRACE("  skipping (hLastRealizedPalette = %04x)\n", hLastRealizedPalette);
-    GDI_ReleaseObj( hdc );
 
+    GDI_ReleaseObj( hdc );
     TRACE("   realized %i colors.\n", realized );
-    return (UINT16)realized;
+    return realized;
 }
 
 

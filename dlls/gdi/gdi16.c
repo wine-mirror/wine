@@ -21,6 +21,7 @@
 #include "winbase.h"
 #include "wingdi.h"
 #include "wine/wingdi16.h"
+#include "gdi.h"
 #include "wine/debug.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(gdi);
@@ -1590,6 +1591,24 @@ BOOL16 WINAPI ExtTextOut16( HDC16 hdc, INT16 x, INT16 y, UINT16 flags,
 HPALETTE16 WINAPI CreatePalette16( const LOGPALETTE* palette )
 {
     return HPALETTE_16( CreatePalette( palette ) );
+}
+
+
+/***********************************************************************
+ *           GDISelectPalette    (GDI.361)
+ */
+HPALETTE16 WINAPI GDISelectPalette16( HDC16 hdc, HPALETTE16 hpalette, WORD wBkg )
+{
+    return HPALETTE_16( GDISelectPalette( HDC_32(hdc), HPALETTE_32(hpalette), wBkg ));
+}
+
+
+/***********************************************************************
+ *           GDIRealizePalette    (GDI.362)
+ */
+UINT16 WINAPI GDIRealizePalette16( HDC16 hdc )
+{
+    return GDIRealizePalette( HDC_32(hdc) );
 }
 
 

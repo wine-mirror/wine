@@ -455,6 +455,10 @@ extern METAHEADER *MF_CreateMetaHeaderDisk(METAHEADER *mr, LPCSTR filename);
 /* region.c */
 extern BOOL REGION_FrameRgn( HRGN dest, HRGN src, INT x, INT y );
 
+/* palette.c */
+extern HPALETTE WINAPI GDISelectPalette( HDC hdc, HPALETTE hpal, WORD wBkg);
+extern UINT WINAPI GDIRealizePalette( HDC hdc );
+
 #define WINE_GGO_GRAY16_BITMAP 0x7f
 
 #endif  /* __WINE_GDI_H */
