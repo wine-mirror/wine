@@ -120,7 +120,7 @@ extern INT      EMFDRV_ScaleWindowExt( PHYSDEV dev, INT xNum, INT xDenom,
 extern HBITMAP  EMFDRV_SelectBitmap( PHYSDEV dev, HBITMAP handle );
 extern HBRUSH   EMFDRV_SelectBrush( PHYSDEV dev, HBRUSH handle );
 extern BOOL     EMFDRV_SelectClipPath( PHYSDEV dev, INT iMode );
-extern HFONT    EMFDRV_SelectFont( PHYSDEV dev, HFONT handle );
+extern HFONT    EMFDRV_SelectFont( PHYSDEV dev, HFONT handle, HANDLE gdiFont );
 extern HPEN     EMFDRV_SelectPen( PHYSDEV dev, HPEN handle );
 extern INT      EMFDRV_SetArcDirection( PHYSDEV dev, INT arcDirection );
 extern COLORREF EMFDRV_SetBkColor( PHYSDEV dev, COLORREF color );

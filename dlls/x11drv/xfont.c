@@ -42,7 +42,6 @@
 #include "winnls.h"
 #include "winreg.h"
 #include "x11font.h"
-#include "gdi.h"
 #include "wine/library.h"
 #include "wine/unicode.h"
 #include "wine/debug.h"
@@ -3255,7 +3254,7 @@ LPIFONTINFO16 XFONT_GetFontInfo( X_PHYSFONT pFont )
 /***********************************************************************
  *           SelectFont   (X11DRV.@)
  */
-HFONT X11DRV_SelectFont( X11DRV_PDEVICE *physDev, HFONT hfont )
+HFONT X11DRV_SelectFont( X11DRV_PDEVICE *physDev, HFONT hfont, HANDLE gdiFont )
 {
     LOGFONTW logfont;
     LOGFONT16 lf;
@@ -3264,10 +3263,11 @@ HFONT X11DRV_SelectFont( X11DRV_PDEVICE *physDev, HFONT hfont )
 
     if (!GetObjectW( hfont, sizeof(logfont), &logfont )) return HGDI_ERROR;
 
-    TRACE("dc->gdiFont = %p\n", physDev->dc->gdiFont);
+    TRACE("gdiFont = %p\n", gdiFont);
 
-    if(physDev->dc->gdiFont && using_client_side_fonts) {
+    if(gdiFont && using_client_side_fonts) {
         X11DRV_XRender_SelectFont(physDev, hfont);
+        physDev->has_gdi_font = TRUE;
 	return FALSE;
     }
 
@@ -3338,6 +3338,7 @@ HFONT X11DRV_SelectFont( X11DRV_PDEVICE *physDev, HFONT hfont )
 
     LeaveCriticalSection( &crtsc_fonts_X11 );
 
+    physDev->has_gdi_font = FALSE;
     return (HFONT)1; /* Use a device font */
 }
 
@@ -3355,7 +3356,7 @@ BOOL X11DRV_EnumDeviceFonts( X11DRV_PDEVICE *physDev, LPLOGFONTW plf,
     BOOL	  	b, bRet = 0;
 
     /* don't enumerate x11 fonts if we're using client side fonts */
-    if (physDev->dc->gdiFont) return FALSE;
+    if (physDev->has_gdi_font) return FALSE;
 
     if( plf->lfFaceName[0] )
     {

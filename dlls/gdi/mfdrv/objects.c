@@ -271,7 +271,7 @@ static UINT16 MFDRV_CreateFontIndirect(PHYSDEV dev, HFONT hFont, LOGFONT16 *logf
 /***********************************************************************
  *           MFDRV_SelectFont
  */
-HFONT MFDRV_SelectFont( PHYSDEV dev, HFONT hfont )
+HFONT MFDRV_SelectFont( PHYSDEV dev, HFONT hfont, HANDLE gdiFont )
 {
     METAFILEDRV_PDEVICE *physDev = (METAFILEDRV_PDEVICE *)dev;
     LOGFONT16 lf16;

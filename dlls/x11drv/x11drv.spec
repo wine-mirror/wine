@@ -42,7 +42,7 @@
 @ cdecl RoundRect(ptr long long long long long long) X11DRV_RoundRect
 @ cdecl SelectBitmap(ptr long) X11DRV_SelectBitmap
 @ cdecl SelectBrush(ptr long) X11DRV_SelectBrush
-@ cdecl SelectFont(ptr long) X11DRV_SelectFont
+@ cdecl SelectFont(ptr long long) X11DRV_SelectFont
 @ cdecl SelectPen(ptr long) X11DRV_SelectPen
 @ cdecl SetBitmapBits(long ptr long) X11DRV_SetBitmapBits
 @ cdecl SetBkColor(ptr long) X11DRV_SetBkColor

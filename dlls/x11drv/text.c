@@ -28,7 +28,6 @@
 #include "winbase.h"
 #include "winnls.h"
 #include "wownt32.h"
-#include "gdi.h"
 #include "x11font.h"
 #include "wine/debug.h"
 
@@ -61,7 +60,7 @@ X11DRV_ExtTextOut( X11DRV_PDEVICE *physDev, INT x, INT y, UINT flags,
     UINT align = GetTextAlign( physDev->hdc );
     INT charExtra = GetTextCharacterExtra( physDev->hdc );
 
-    if(physDev->dc->gdiFont)
+    if(physDev->has_gdi_font)
         return X11DRV_XRender_ExtTextOut(physDev, x, y, flags, lprect, wstr, count, lpDx, breakExtra);
 
     if (!X11DRV_SetupGCForText( physDev )) return TRUE;

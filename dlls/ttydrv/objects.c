@@ -28,7 +28,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(ttydrv);
 /***********************************************************************
  *		SelectFont   (TTYDRV.@)
  */
-HFONT TTYDRV_SelectFont(TTYDRV_PDEVICE *physDev, HFONT hfont)
+HFONT TTYDRV_SelectFont(TTYDRV_PDEVICE *physDev, HFONT hfont, HANDLE gdiFont)
 {
   TRACE("(%p, %p)\n", physDev->hdc, hfont);
 

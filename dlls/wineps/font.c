@@ -27,7 +27,6 @@
 #include "wingdi.h"
 #include "winspool.h"
 
-#include "gdi.h"
 #include "psdrv.h"
 #include "wine/debug.h"
 
@@ -36,7 +35,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(psdrv);
 /***********************************************************************
  *           SelectFont   (WINEPS.@)
  */
-HFONT PSDRV_SelectFont( PSDRV_PDEVICE *physDev, HFONT hfont )
+HFONT PSDRV_SelectFont( PSDRV_PDEVICE *physDev, HFONT hfont, HANDLE gdiFont )
 {
     LOGFONTW lf;
     BOOL subst = FALSE;
@@ -111,7 +110,7 @@ HFONT PSDRV_SelectFont( PSDRV_PDEVICE *physDev, HFONT hfont )
     physDev->font.escapement = lf.lfEscapement;
     physDev->font.set = FALSE;
 
-    if(physDev->dc->gdiFont && !subst) {
+    if(gdiFont && !subst) {
         if(PSDRV_SelectDownloadFont(physDev))
 	    return 0; /* use gdi font */
     }

@@ -492,7 +492,7 @@ static HGDIOBJ FONT_SelectObject( HGDIOBJ handle, void *obj, HDC hdc )
             dc->gdiFont = WineEngCreateFontInstance(dc, handle);
     }
 
-    if (dc->funcs->pSelectFont) ret = dc->funcs->pSelectFont( dc->physDev, handle );
+    if (dc->funcs->pSelectFont) ret = dc->funcs->pSelectFont( dc->physDev, handle, dc->gdiFont );
 
     if (ret && dc->gdiFont) dc->gdiFont = 0;
 

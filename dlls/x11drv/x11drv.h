@@ -95,6 +95,7 @@ typedef struct
     X_PHYSFONT    font;
     X_PHYSPEN     pen;
     X_PHYSBRUSH   brush;
+    BOOL          has_gdi_font; /* is current font a GDI font? */
     int           backgroundPixel;
     int           textPixel;
     int           depth;       /* bit depth of the DC */

@@ -257,7 +257,7 @@ static BOOL EMFDRV_CreateFontIndirect(PHYSDEV dev, HFONT hFont )
 /***********************************************************************
  *           EMFDRV_SelectFont
  */
-HFONT EMFDRV_SelectFont( PHYSDEV dev, HFONT hFont )
+HFONT EMFDRV_SelectFont( PHYSDEV dev, HFONT hFont, HANDLE gdiFont )
 {
     EMFDRV_PDEVICE *physDev = (EMFDRV_PDEVICE*)dev;
     EMRSELECTOBJECT emr;

@@ -26,7 +26,7 @@
 @ cdecl Polyline(ptr ptr long) TTYDRV_DC_Polyline
 @ cdecl Rectangle(ptr long long long long) TTYDRV_DC_Rectangle
 @ cdecl RoundRect(ptr long long long long long long) TTYDRV_DC_RoundRect
-@ cdecl SelectFont(ptr long) TTYDRV_SelectFont
+@ cdecl SelectFont(ptr long long) TTYDRV_SelectFont
 @ cdecl SetBitmapBits(long ptr long) TTYDRV_SetBitmapBits
 @ cdecl SetDCOrg(ptr long long) TTYDRV_SetDCOrg
 @ cdecl SetDIBitsToDevice(ptr long long long long long long long long ptr ptr long) TTYDRV_DC_SetDIBitsToDevice

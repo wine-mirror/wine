@@ -126,7 +126,7 @@ typedef struct tagDC_FUNCS
     HBITMAP  (*pSelectBitmap)(PHYSDEV,HBITMAP);
     HBRUSH   (*pSelectBrush)(PHYSDEV,HBRUSH);
     BOOL     (*pSelectClipPath)(PHYSDEV,INT);
-    HFONT    (*pSelectFont)(PHYSDEV,HFONT);
+    HFONT    (*pSelectFont)(PHYSDEV,HFONT,HANDLE);
     HPALETTE (*pSelectPalette)(PHYSDEV,HPALETTE,BOOL);
     HPEN     (*pSelectPen)(PHYSDEV,HPEN);
     INT      (*pSetArcDirection)(PHYSDEV,INT);
