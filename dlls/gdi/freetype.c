@@ -974,21 +974,22 @@ BOOL WineEngInit(void)
 	valuelen++; /* returned value doesn't include room for '\0' */
 	valueW = HeapAlloc(GetProcessHeap(), 0, valuelen * sizeof(WCHAR));
 	data = HeapAlloc(GetProcessHeap(), 0, datalen * sizeof(WCHAR));
-
-	dlen = datalen * sizeof(WCHAR);
-	vlen = valuelen;
-	while(RegEnumValueW(hkey, i++, valueW, &vlen, NULL, &type, data,
-			    &dlen) == ERROR_SUCCESS) {
-	    if(((LPWSTR)data)[0] && ((LPWSTR)data)[1] == ':')
-	        if(wine_get_unix_file_name((LPWSTR)data, unixname, sizeof(unixname)))
-		    AddFontFileToList(unixname, NULL, FALSE);
-
-	    /* reset dlen and vlen */
-	    dlen = datalen;
-	    vlen = valuelen;
-	}
-	HeapFree(GetProcessHeap(), 0, data);
-	HeapFree(GetProcessHeap(), 0, valueW);
+        if (valueW && data)
+        {
+            dlen = datalen * sizeof(WCHAR);
+            vlen = valuelen;
+            while(RegEnumValueW(hkey, i++, valueW, &vlen, NULL, &type, data,
+                                &dlen) == ERROR_SUCCESS) {
+                if(((LPWSTR)data)[0] && ((LPWSTR)data)[1] == ':')
+                    if(wine_get_unix_file_name((LPWSTR)data, unixname, sizeof(unixname)))
+                        AddFontFileToList(unixname, NULL, FALSE);
+                /* reset dlen and vlen */
+                dlen = datalen;
+                vlen = valuelen;
+            }
+        }
+	if (data) HeapFree(GetProcessHeap(), 0, data);
+	if (valueW) HeapFree(GetProcessHeap(), 0, valueW);
 	RegCloseKey(hkey);
     }
 
