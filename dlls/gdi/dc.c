@@ -80,6 +80,8 @@ DC *DC_AllocDC( const DC_FUNCTIONS *funcs, WORD magic )
     dc->flags               = 0;
     dc->layout              = 0;
     dc->hClipRgn            = 0;
+    dc->hMetaRgn            = 0;
+    dc->hMetaClipRgn        = 0;
     dc->hVisRgn             = 0;
     dc->hPen                = GetStockObject( BLACK_PEN );
     dc->hBrush              = GetStockObject( WHITE_BRUSH );
@@ -347,14 +349,21 @@ HDC WINAPI GetDCState( HDC hdc )
 
     /* Get/SetDCState() don't change hVisRgn field ("Undoc. Windows" p.559). */
 
-    newdc->hVisRgn = 0;
+    newdc->hVisRgn      = 0;
+    newdc->hClipRgn     = 0;
+    newdc->hMetaRgn     = 0;
+    newdc->hMetaClipRgn = 0;
     if (dc->hClipRgn)
     {
-	newdc->hClipRgn = CreateRectRgn( 0, 0, 0, 0 );
-	CombineRgn( newdc->hClipRgn, dc->hClipRgn, 0, RGN_COPY );
+        newdc->hClipRgn = CreateRectRgn( 0, 0, 0, 0 );
+        CombineRgn( newdc->hClipRgn, dc->hClipRgn, 0, RGN_COPY );
     }
-    else
-	newdc->hClipRgn = 0;
+    if (dc->hMetaRgn)
+    {
+        newdc->hMetaRgn = CreateRectRgn( 0, 0, 0, 0 );
+        CombineRgn( newdc->hMetaRgn, dc->hMetaRgn, 0, RGN_COPY );
+    }
+    /* don't bother recomputing hMetaClipRgn, we'll do that in SetDCState */
 
     if(dc->gdiFont) {
 	newdc->gdiFont = dc->gdiFont;
@@ -435,6 +444,16 @@ void WINAPI SetDCState( HDC hdc, HDC hdcs )
     {
         if (dc->hClipRgn) DeleteObject( dc->hClipRgn );
         dc->hClipRgn = 0;
+    }
+    if (dcs->hMetaRgn)
+    {
+        if (!dc->hMetaRgn) dc->hMetaRgn = CreateRectRgn( 0, 0, 0, 0 );
+        CombineRgn( dc->hMetaRgn, dcs->hMetaRgn, 0, RGN_COPY );
+    }
+    else
+    {
+        if (dc->hMetaRgn) DeleteObject( dc->hMetaRgn );
+        dc->hMetaRgn = 0;
     }
     CLIPPING_UpdateGCRegion( dc );
 
@@ -777,6 +796,8 @@ BOOL WINAPI DeleteDC( HDC hdc )
         dc->saved_dc = dcs->saved_dc;
         dc->saveLevel--;
         if (dcs->hClipRgn) DeleteObject( dcs->hClipRgn );
+        if (dcs->hMetaRgn) DeleteObject( dcs->hMetaRgn );
+        if (dcs->hMetaClipRgn) DeleteObject( dcs->hMetaClipRgn );
         if (dcs->hVisRgn) DeleteObject( dcs->hVisRgn );
         PATH_DestroyGdiPath(&dcs->path);
         GDI_FreeObject( hdcs, dcs );
@@ -801,6 +822,8 @@ BOOL WINAPI DeleteDC( HDC hdc )
         dc->saved_visrgn = next;
     }
     if (dc->hClipRgn) DeleteObject( dc->hClipRgn );
+    if (dc->hMetaRgn) DeleteObject( dc->hMetaRgn );
+    if (dc->hMetaClipRgn) DeleteObject( dc->hMetaClipRgn );
     if (dc->hVisRgn) DeleteObject( dc->hVisRgn );
     PATH_DestroyGdiPath(&dc->path);
 

@@ -229,8 +229,10 @@ typedef struct tagDC
 
     int           flags;
     DWORD         layout;
-    HRGN          hClipRgn;     /* Clip region (may be 0) */
-    HRGN          hVisRgn;      /* Visible region (must never be 0) */
+    HRGN          hClipRgn;      /* Clip region (may be 0) */
+    HRGN          hMetaRgn;      /* Meta region (may be 0) */
+    HRGN          hMetaClipRgn;  /* Intersection of meta and clip regions (may be 0) */
+    HRGN          hVisRgn;       /* Visible region (must never be 0) */
     HPEN          hPen;
     HBRUSH        hBrush;
     HFONT         hFont;
