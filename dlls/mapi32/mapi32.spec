@@ -34,8 +34,10 @@
 @ stub FBinFromHex@8
 @ stub FDecodeID@12
 @ stub FEqualNames@8
-@ stub FGetComponentPath
-# @ stub FGetComponentPath@20
+
+# This entry point is sometimes used to detect if the mapi dll came from Outlook
+# @ stub FGetComponentPath
+
 @ stub FPropCompareProp@12
 @ stub FPropContainsProp@12
 @ stub FPropExists@8
