@@ -100,22 +100,22 @@ static int fill_debug_event( struct thread *debugger, struct thread *thread,
 }
 
 /* free a debug event structure */
-static void free_event( struct debug_event *event )
+static void free_event( struct thread *debugger, struct debug_event *event )
 {
     switch(event->code)
     {
     case CREATE_THREAD_DEBUG_EVENT:
-        close_handle( event->thread->process, event->data.create_thread.handle );
+        close_handle( debugger->process, event->data.create_thread.handle );
         break;
     case CREATE_PROCESS_DEBUG_EVENT:
         if (event->data.create_process.file != -1)
-            close_handle( event->thread->process, event->data.create_process.file );
-        close_handle( event->thread->process, event->data.create_process.thread );
-        close_handle( event->thread->process, event->data.create_process.process );
+            close_handle( debugger->process, event->data.create_process.file );
+        close_handle( debugger->process, event->data.create_process.thread );
+        close_handle( debugger->process, event->data.create_process.process );
         break;
     case LOAD_DLL_DEBUG_EVENT:
         if (event->data.load_dll.handle != -1)
-            close_handle( event->thread->process, event->data.load_dll.handle );
+            close_handle( debugger->process, event->data.load_dll.handle );
         break;
     }
     event->thread->debug_event = NULL;
@@ -238,7 +238,7 @@ static int continue_debug_event( struct process *process, struct thread *thread,
         req->status = status;
         send_reply( thread );
     }
-    free_event( event );
+    free_event( current, event );
     resume_process( process );
     return 1;
 }
@@ -274,7 +274,7 @@ static struct debug_event *queue_debug_event( struct thread *debugger, struct th
         /* only exit events can replace others */
         assert( code == EXIT_THREAD_DEBUG_EVENT || code == EXIT_PROCESS_DEBUG_EVENT );
         if (!thread->debug_event->sent) unlink_event( debug_ctx, thread->debug_event );
-        free_event( thread->debug_event );
+        free_event( debugger, thread->debug_event );
     }
 
     link_event( debug_ctx, event );
@@ -368,7 +368,7 @@ void debug_exit_thread( struct thread *thread, int exit_code )
         while ((event = debug_ctx->event_head) != NULL)
         {
             unlink_event( debug_ctx, event );
-            free_event( event );
+            free_event( thread, event );
         }
         /* remove the timeout */
         if (debug_ctx->timeout) remove_timeout_user( debug_ctx->timeout );
