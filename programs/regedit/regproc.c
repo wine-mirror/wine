@@ -20,9 +20,6 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
-#include "config.h"
-#include "wine/port.h"
-
 #include <limits.h>
 #include <stdio.h>
 #include <windows.h>
@@ -1283,7 +1280,7 @@ void export_hkey(FILE *file, HKEY key,
                 CHAR buf[20];
                 int cur_pos;
 
-                if (value_type == REG_BINARY) 
+                if (value_type == REG_BINARY)
                 {
                     hex_prefix = "hex:";
                 } else {
@@ -1574,4 +1571,3 @@ CHAR *getAppName()
 {
     return app_name;
 }
-
