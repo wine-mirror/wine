@@ -184,8 +184,6 @@ extern void TASK_InstallTHHook( THHOOK *pNewThook );
 
 /* loadorder.c */
 extern void MODULE_GetLoadOrderW( enum loadorder_type plo[], const WCHAR *app_name,
-                                  const WCHAR *path, BOOL win32 );
-extern void MODULE_GetLoadOrderA( enum loadorder_type plo[], const WCHAR *app_name,
-                                  const char *path, BOOL win32 );
+                                  const WCHAR *path );
 
 #endif  /* __WINE_MODULE_H */

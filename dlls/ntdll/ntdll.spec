@@ -1080,7 +1080,6 @@
 #
 @ cdecl CDROM_InitRegistry(long long str)
 @ cdecl MODULE_DllThreadAttach(ptr)
-@ cdecl MODULE_GetLoadOrderA(ptr str str long)
-@ cdecl MODULE_GetLoadOrderW(ptr wstr wstr long)
+@ cdecl MODULE_GetLoadOrderW(ptr wstr wstr)
 @ cdecl VERSION_Init(wstr)
 @ cdecl VIRTUAL_SetFaultHandler(ptr ptr ptr)

@@ -510,7 +510,7 @@ BOOL MODULE_GetSystemDirectory( UNICODE_STRING *sysdir )
  * the specific dll. Otherwise the default load order is returned.
  */
 void MODULE_GetLoadOrderW( enum loadorder_type loadorder[], const WCHAR *app_name,
-                          const WCHAR *path, BOOL win32 )
+                          const WCHAR *path )
 {
     static const WCHAR DllOverridesW[] = {'M','a','c','h','i','n','e','\\',
                                           'S','o','f','t','w','a','r','e','\\',
@@ -520,8 +520,11 @@ void MODULE_GetLoadOrderW( enum loadorder_type loadorder[], const WCHAR *app_nam
                                           'D','l','l','O','v','e','r','r','i','d','e','s',0};
 
     static HKEY std_key = (HKEY)-1;  /* key to standard section, cached */
+    static UNICODE_STRING sysdir;
+
     HKEY app_key = 0;
     WCHAR *module, *basename;
+    UNICODE_STRING path_str;
     int len;
 
     if (!init_done) init_load_order();
@@ -531,21 +534,14 @@ void MODULE_GetLoadOrderW( enum loadorder_type loadorder[], const WCHAR *app_nam
     loadorder[0] = LOADORDER_INVALID;  /* in case something bad happens below */
 
     /* Strip path information if the module resides in the system directory
-     * (path is already stripped by caller for 16-bit modules)
      */
-    if (win32)
+    if (!sysdir.Buffer && !MODULE_GetSystemDirectory( &sysdir )) return;
+    RtlInitUnicodeString( &path_str, path );
+    if (RtlPrefixUnicodeString( &sysdir, &path_str, TRUE ))
     {
-        UNICODE_STRING path_str, sysdir;
-
-        if (!MODULE_GetSystemDirectory( &sysdir )) return;
-        RtlInitUnicodeString( &path_str, path );
-        if (RtlPrefixUnicodeString( &sysdir, &path_str, TRUE ))
-        {
-            const WCHAR *p = path + sysdir.Length / sizeof(WCHAR);
-            while (*p == '\\' || *p == '/') p++;
-            if (!strchrW( p, '\\' ) && !strchrW( p, '/' )) path = p;
-        }
-        RtlFreeUnicodeString( &sysdir );
+        const WCHAR *p = path + sysdir.Length / sizeof(WCHAR);
+        while (*p == '\\' || *p == '/') p++;
+        if (!strchrW( p, '\\' ) && !strchrW( p, '/' )) path = p;
     }
 
     if (!(len = strlenW(path))) return;
@@ -659,25 +655,4 @@ void MODULE_GetLoadOrderW( enum loadorder_type loadorder[], const WCHAR *app_nam
  done:
     if (app_key) NtClose( app_key );
     RtlFreeHeap( GetProcessHeap(), 0, module );
-}
-
-
-/***************************************************************************
- *	MODULE_GetLoadOrderA	(internal)
- *
- * Locate the loadorder of a module.
- * Any path is stripped from the path-argument and so are the extension
- * '.dll' and '.exe'. A lookup in the table can yield an override for
- * the specific dll. Otherwise the default load order is returned.
- *
- * FIXME: should be removed, everything should be Unicode.
- */
-void MODULE_GetLoadOrderA( enum loadorder_type loadorder[], const WCHAR *app_name,
-                           const char *path, BOOL win32 )
-{
-    UNICODE_STRING pathW;
-
-    RtlCreateUnicodeStringFromAsciiz( &pathW, path );
-    MODULE_GetLoadOrderW( loadorder, app_name, pathW.Buffer, win32 );
-    RtlFreeUnicodeString( &pathW );
 }

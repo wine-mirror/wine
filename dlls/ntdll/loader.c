@@ -1442,7 +1442,7 @@ static NTSTATUS load_dll( LPCWSTR load_path, LPCWSTR libname, DWORD flags, WINE_
     }
 
     main_exe = get_modref( NtCurrentTeb()->Peb->ImageBaseAddress );
-    MODULE_GetLoadOrderW( loadorder, main_exe->ldr.BaseDllName.Buffer, filename, TRUE);
+    MODULE_GetLoadOrderW( loadorder, main_exe->ldr.BaseDllName.Buffer, filename );
 
     nts = STATUS_DLL_NOT_FOUND;
     for (i = 0; i < LOADORDER_NTYPES; i++)

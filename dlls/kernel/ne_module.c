@@ -1212,6 +1212,7 @@ static HINSTANCE16 MODULE_LoadModule16( LPCSTR libname, BOOL implicit, BOOL lib_
     }
     else
     {
+        UNICODE_STRING pathW;
         WCHAR buffer[MAX_PATH], *p;
 
         if (!GetModuleFileNameW( 0, buffer, MAX_PATH )) p = NULL;
@@ -1220,7 +1221,9 @@ static HINSTANCE16 MODULE_LoadModule16( LPCSTR libname, BOOL implicit, BOOL lib_
             if ((p = strrchrW( buffer, '\\' ))) p++;
             else p = buffer;
         }
-        MODULE_GetLoadOrderA(loadorder, p, basename, FALSE);
+        RtlCreateUnicodeStringFromAsciiz( &pathW, basename );
+        MODULE_GetLoadOrderW( loadorder, p, pathW.Buffer );
+        RtlFreeUnicodeString( &pathW );
     }
 
     for(i = 0; i < LOADORDER_NTYPES; i++)

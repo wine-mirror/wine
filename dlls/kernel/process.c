@@ -182,7 +182,7 @@ static HANDLE open_exe_file( const WCHAR *name )
         name = buffer;
     }
 
-    MODULE_GetLoadOrderW( loadorder, NULL, name, TRUE );
+    MODULE_GetLoadOrderW( loadorder, NULL, name );
 
     for(i = 0; i < LOADORDER_NTYPES; i++)
     {
@@ -245,7 +245,7 @@ static BOOL find_exe_file( const WCHAR *name, WCHAR *buffer, int buflen, HANDLE 
         return FALSE;
     }
 
-    MODULE_GetLoadOrderW( loadorder, NULL, buffer, TRUE );
+    MODULE_GetLoadOrderW( loadorder, NULL, buffer );
 
     for(i = 0; i < LOADORDER_NTYPES; i++)
     {
