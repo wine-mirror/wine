@@ -371,26 +371,47 @@ BOOL WINAPI CryptAcquireContextA (HCRYPTPROV *phProv, LPCSTR pszContainer,
 	}
 
 	r = RegQueryValueExA(key, "Signature", NULL, &keytype, NULL, &len);
-	if ( r != ERROR_SUCCESS || keytype != REG_BINARY)
+	if ( r == ERROR_SUCCESS && keytype == REG_BINARY )
 	{
-		TRACE("error %ld reading size of 'Signature'\n", r );
-		RegCloseKey(key);
-		SetLastError(NTE_PROV_TYPE_ENTRY_BAD);
-		goto error;
+		if (!(signature = CRYPT_Alloc(len)))
+		{
+			RegCloseKey(key);
+			SetLastError(ERROR_NOT_ENOUGH_MEMORY);
+			goto error;
+		}
+		r = RegQueryValueExA(key, "Signature", NULL, NULL, signature, &len);
+		if ( r != ERROR_SUCCESS )
+		{
+			TRACE("error %ld reading 'Signature'\n", r );
+			RegCloseKey(key);
+			SetLastError(NTE_PROV_TYPE_ENTRY_BAD);
+			goto error;
+		}
 	}
-	if (!(signature = CRYPT_Alloc(len)))
+	else
 	{
-		RegCloseKey(key);
-		SetLastError(ERROR_NOT_ENOUGH_MEMORY);
-		goto error;
-	}
-	r = RegQueryValueExA(key, "Signature", NULL, NULL, signature, &len);
-	if ( r != ERROR_SUCCESS )
-	{
-		TRACE("error %ld reading 'Signature'\n", r );
-		RegCloseKey(key);
-		SetLastError(NTE_PROV_TYPE_ENTRY_BAD);
-		goto error;
+		r = RegQueryValueExA(key, "SigInFile", NULL, &keytype, NULL, &len);
+		if (r != ERROR_SUCCESS)
+		{
+			TRACE("error %ld reading size of 'SigInFile'\n", r );
+			RegCloseKey(key);
+			SetLastError(NTE_PROV_TYPE_ENTRY_BAD);
+			goto error;
+		}
+		else
+		{
+			/* FIXME: The presence of the SigInFile value indicates the
+			 * provider's signature is in its resources, so need to read it.
+			 * But since CRYPT_VerifyImage is stubbed, provide any old thing
+			 * for now.
+			 */
+			if (!(signature = CRYPT_Alloc(1)))
+			{
+				RegCloseKey(key);
+				SetLastError(ERROR_NOT_ENOUGH_MEMORY);
+				goto error;
+			}
+		}
 	}
 	RegCloseKey(key);
 	len = ExpandEnvironmentStringsA(temp, NULL, 0);
@@ -435,8 +456,6 @@ BOOL WINAPI CryptAcquireContextA (HCRYPTPROV *phProv, LPCSTR pszContainer,
 			CRYPT_Free(pProv->pFuncs);
 			CRYPT_Free(pProv);
 		} else {
-			pProv->pVTable->pszProvName = provname;
-			pProv->pVTable->dwProvType = dwProvType;
 			*phProv = (HCRYPTPROV)pProv;
 		}
 		return TRUE;
