@@ -23,8 +23,7 @@
 #include "config.h"
 
 #include <stdarg.h>
-
-#include "ts_xlib.h"
+#include <X11/Xlib.h>
 
 #include "windef.h"
 #include "winbase.h"

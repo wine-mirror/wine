@@ -20,14 +20,12 @@
 
 #include "config.h"
 
-#include <X11/Intrinsic.h>
-
-#include "ts_xlib.h"
-
 #include <assert.h>
 #include <stdarg.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <X11/Intrinsic.h>
+
 #include "windef.h"
 #include "winbase.h"
 #include "wingdi.h"

@@ -21,8 +21,6 @@
 #include "config.h"
 #include "wine/port.h"
 
-#include "ts_xlib.h"
-
 #include <stdlib.h>
 #include <string.h>
 

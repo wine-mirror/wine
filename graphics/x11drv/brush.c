@@ -20,9 +20,8 @@
 
 #include "config.h"
 
-#include "ts_xlib.h"
-
 #include <stdlib.h>
+
 #include "bitmap.h"
 #include "x11drv.h"
 #include "wine/debug.h"

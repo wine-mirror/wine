@@ -21,10 +21,10 @@
 #include "config.h"
 
 #include <string.h>
+#include <X11/Xlib.h>
 
 #define NONAMELESSUNION
 #define NONAMELESSSTRUCT
-#include "ts_xlib.h"
 #include "x11drv.h"
 #include "x11ddraw.h"
 #include "xvidmode.h"

@@ -43,7 +43,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(xrender);
 
 #ifdef HAVE_X11_EXTENSIONS_XRENDER_H
 
-#include "ts_xlib.h"
+#include <X11/Xlib.h>
 #include <X11/extensions/Xrender.h>
 
 static XRenderPictFormat *screen_format; /* format of screen */

@@ -25,12 +25,6 @@
 
 #include "config.h"
 
-#include <X11/Intrinsic.h>
-
-#include "ts_xlib.h"
-#include <X11/Xresource.h>
-#include <X11/Xutil.h>
-
 #include <math.h>
 #ifdef HAVE_FLOAT_H
 # include <float.h>
@@ -40,6 +34,7 @@
 #define PI M_PI
 #endif
 #include <string.h>
+#include <X11/Intrinsic.h>
 
 #include "x11drv.h"
 #include "x11font.h"

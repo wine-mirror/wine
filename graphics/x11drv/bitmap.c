@@ -21,8 +21,6 @@
 
 #include "config.h"
 
-#include "ts_xlib.h"
-
 #include <stdio.h>
 #include <stdlib.h>
 #include "gdi.h"

@@ -20,8 +20,7 @@
 
 #include "config.h"
 #include <X11/cursorfont.h>
-
-#include "ts_xlib.h"
+#include <X11/Xlib.h>
 
 #include "wine/winuser16.h"
 #include "win.h"

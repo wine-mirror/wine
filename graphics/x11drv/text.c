@@ -20,10 +20,6 @@
 
 #include "config.h"
 
-#include <X11/Xatom.h>
-
-#include "ts_xlib.h"
-
 #include <stdarg.h>
 #include <stdlib.h>
 #include <math.h>

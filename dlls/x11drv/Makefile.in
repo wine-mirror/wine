@@ -30,7 +30,6 @@ C_SRCS = \
 	mouse.c \
 	scroll.c \
 	settings.c \
-	ts_xlib.c \
 	window.c \
 	winpos.c \
 	x11ddraw.c \

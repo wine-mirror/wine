@@ -20,7 +20,7 @@
 
 #include "config.h"
 
-#include "ts_xlib.h"
+#include <X11/Xlib.h>
 #ifdef HAVE_LIBXXSHM
 #include <X11/extensions/XShm.h>
 # ifdef HAVE_SYS_SHM_H

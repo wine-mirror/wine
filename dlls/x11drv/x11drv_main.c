@@ -33,7 +33,7 @@
 # include <unistd.h>
 #endif
 #include <X11/cursorfont.h>
-#include "ts_xlib.h"
+#include <X11/Xlib.h>
 #ifdef HAVE_XKB
 #include <X11/XKBlib.h>
 #endif

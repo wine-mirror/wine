@@ -20,8 +20,6 @@
 
 #include "config.h"
 
-#include "ts_xlib.h"
-
 #include <math.h>
 #include <stdarg.h>
 
