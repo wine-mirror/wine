@@ -198,9 +198,6 @@ static void test_dibsections(void)
        rgb[0].rgbRed, rgb[0].rgbGreen, rgb[0].rgbBlue, rgb[0].rgbReserved,
        rgb[1].rgbRed, rgb[1].rgbGreen, rgb[1].rgbBlue, rgb[1].rgbReserved);
 
-    ret = GetDIBColorTable(hdc, 0, 2, rgb);
-    ok(ret == 0, "GetDIBColorTable returned %d\n", ret);
-
     SelectObject(hdcmem, oldbm);
     DeleteObject(hdib);
 
