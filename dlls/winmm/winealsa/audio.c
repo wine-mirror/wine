@@ -522,7 +522,7 @@ end:
  */
 LONG ALSA_WaveInit(void)
 {
-    snd_pcm_t*                  h = NULL;
+    snd_pcm_t*                  h;
     snd_pcm_info_t *            info;
     snd_pcm_hw_params_t *       hw_params;
     WINE_WAVEOUT*	        wwo;
@@ -555,6 +555,7 @@ LONG ALSA_WaveInit(void)
 
 #define EXIT_ON_ERROR(f,txt) do { int err; if ( (err = (f) ) < 0) { ERR(txt ": %s\n", snd_strerror(err)); if (h) snd_pcm_close(h); return -1; } } while(0)
 
+    h = NULL;
     ALSA_WodNumDevs = 0;
     EXIT_ON_ERROR( snd_pcm_open(&h, wwo->device, SND_PCM_STREAM_PLAYBACK, SND_PCM_NONBLOCK) , "open pcm" );
     if (!h) return -1;
@@ -661,6 +662,7 @@ LONG ALSA_WaveInit(void)
 
 #define EXIT_ON_ERROR(f,txt) do { int err; if ( (err = (f) ) < 0) { ERR(txt ": %s\n", snd_strerror(err)); if (h) snd_pcm_close(h); return -1; } } while(0)
 
+    h = NULL;
     ALSA_WidNumDevs = 0;
     EXIT_ON_ERROR( snd_pcm_open(&h, wwi->device, SND_PCM_STREAM_CAPTURE, SND_PCM_NONBLOCK) , "open pcm" );
     if (!h) return -1;
