@@ -1,6 +1,11 @@
 name	ntdll
 type	win32
 
+#note that the Zw... functions are alternate names for the 
+#Nt... functions.  (see www.sysinternals.com for details)
+#if you change a Nt.. function DON'T FORGET to change the
+#Zw one too.
+
 001 stub CsrAllocateCaptureBuffer
 002 stub CsrAllocateCapturePointer
 003 stub CsrAllocateMessagePointer
@@ -553,10 +558,10 @@ type	win32
 550 stub RtlxUnicodeStringToAnsiSize
 551 stub RtlxUnicodeStringToOemSize
 552 stub SaveEm87Context
-553 stub ZwAcceptConnectPort
+553 stdcall ZwAcceptConnectPort(long long long long long long) NtAcceptConnectPort
 554 stub ZwAccessCheck
 555 stub ZwAccessCheckAndAuditAlarm
-556 stub ZwAdjustGroupsToken
+556 stdcall ZwAdjustGroupsToken(long long long long long long) NtAdjustPrivilegesToken
 557 stub ZwAdjustPrivilegesToken
 558 stub ZwAlertResumeThread
 559 stub ZwAlertThread
@@ -569,36 +574,36 @@ type	win32
 566 stub ZwClearEvent
 567 stub ZwClose
 568 stub ZwCloseObjectAuditAlarm
-569 stub ZwCompleteConnectPort
+569 stdcall ZwCompleteConnectPort(long) NtCompleteConnectPort
 570 stdcall ZwConnectPort(long long long long long long long long) NtConnectPort
 571 stub ZwContinue
-572 stub ZwCreateDirectoryObject
-573 stub ZwCreateEvent
+572 stdcall ZwCreateDirectoryObject(long long long) NtCreateDirectoryObject
+573 stdcall ZwCreateEvent(long long long long long) NtCreateEvent
 574 stub ZwCreateEventPair
-575 stub ZwCreateFile
+575 stdcall ZwCreateFile(ptr long ptr ptr long long long ptr long long ptr) NtCreateFile
 576 stub ZwCreateIoCompletion
-577 stub ZwCreateKey
-578 stub ZwCreateMailslotFile
+577 stdcall ZwCreateKey(long long long long long long long) NtCreateKey
+578 stdcall ZwCreateMailslotFile(long long long long long long long long) NtCreateMailslotFile
 579 stub ZwCreateMutant
 580 stub ZwCreateNamedPipeFile
-581 stub ZwCreatePagingFile
-582 stub ZwCreatePort
+581 stdcall ZwCreatePagingFile(long long long long) NtCreatePagingFile
+582 stdcall ZwCreatePort(long long long long long) NtCreatePort
 583 stub ZwCreateProcess
 584 stub ZwCreateProfile
-585 stub ZwCreateSection
+585 stdcall ZwCreateSection(long long long long long long long) NtCreateSection
 586 stub ZwCreateSemaphore
 587 stub ZwCreateSymbolicLinkObject
 588 stub ZwCreateThread
-589 stub ZwCreateTimer
+589 stdcall ZwCreateTimer(long long long) NtCreateTimer
 590 stub ZwCreateToken
 591 stub ZwDelayExecution
 592 stub ZwDeleteFile
 593 stub ZwDeleteKey
 594 stub ZwDeleteValueKey
-595 stub ZwDeviceIoControlFile
+595 stdcall ZwDeviceIoControlFile(long long long long long long long long long long) NtDeviceIoControlFile
 596 stub ZwDisplayString
-597 stub ZwDuplicateObject
-598 stub ZwDuplicateToken
+597 stdcall ZwDuplicateObject(long long long long long long long) NtDuplicateObject
+598 stdcall ZwDuplicateToken(long long long long long long) NtDuplicateToken
 599 stub ZwEnumerateBus
 600 stub ZwEnumerateKey
 601 stub ZwEnumerateValueKey
@@ -609,37 +614,37 @@ type	win32
 606 stub ZwFlushVirtualMemory
 607 stub ZwFlushWriteBuffer
 608 stub ZwFreeVirtualMemory
-609 stub ZwFsControlFile
+609 stdcall ZwFsControlFile(long long long long long long long long long long) NtFsControlFile
 610 stub ZwGetContextThread
 611 stub ZwGetPlugPlayEvent
 612 stub ZwGetTickCount
 613 stub ZwImpersonateClientOfPort
 614 stub ZwImpersonateThread
 615 stub ZwInitializeRegistry
-616 stub ZwListenPort
+616 stdcall ZwListenPort(long long) NtListenPort
 617 stub ZwLoadDriver
 618 stub ZwLoadKey
 619 stub ZwLockFile
 620 stub ZwLockVirtualMemory
 621 stub ZwMakeTemporaryObject
-622 stub ZwMapViewOfSection
+622 stdcall ZwMapViewOfSection(long long long long long long long long long long) NtMapViewOfSection
 623 stub ZwNotifyChangeDirectoryFile
 624 stub ZwNotifyChangeKey
-625 stub ZwOpenDirectoryObject
-626 stub ZwOpenEvent
+625 stdcall ZwOpenDirectoryObject(long long long) NtOpenDirectoryObject
+626 stdcall ZwOpenEvent(long long long) NtOpenEvent
 627 stub ZwOpenEventPair
-628 stub ZwOpenFile
+628 stdcall ZwOpenFile(ptr long ptr ptr long long) NtOpenFile
 629 stub ZwOpenIoCompletion
-630 stub ZwOpenKey
+630 stdcall ZwOpenKey(ptr long ptr) NtOpenKey
 631 stub ZwOpenMutant
 632 stub ZwOpenObjectAuditAlarm
 633 stub ZwOpenProcess
-634 stub ZwOpenProcessToken
-635 stub ZwOpenSection
+634 stdcall ZwOpenProcessToken(long long long) NtOpenProcessToken
+635 stdcall ZwOpenSection(long long long) NtOpenSection
 636 stub ZwOpenSemaphore
 637 stub ZwOpenSymbolicLinkObject
 638 stub ZwOpenThread
-639 stub ZwOpenThreadToken
+639 stdcall ZwOpenThreadToken(long long long long) NtOpenThreadToken
 640 stub ZwOpenTimer
 641 stub ZwPlugPlayControl
 642 stub ZwPrivilegeCheck
@@ -650,27 +655,27 @@ type	win32
 647 stub ZwQueryAttributesFile
 648 stub ZwQueryDefaultLocale
 649 stub ZwQueryDirectoryFile
-650 stub ZwQueryDirectoryObject
+650 stdcall ZwQueryDirectoryObject(long long long long long long long) NtQueryDirectoryObject
 651 stub ZwQueryEaFile
 652 stub ZwQueryEvent
-653 stub ZwQueryInformationFile
+653 stdcall ZwQueryInformationFile(long long long long long) NtQueryInformationFile
 654 stub ZwQueryInformationPort
-655 stub ZwQueryInformationProcess
-656 stub ZwQueryInformationThread
-657 stub ZwQueryInformationToken
+655 stdcall ZwQueryInformationProcess(long long long long long) NtQueryInformationProcess
+656 stdcall ZwQueryInformationThread(long long long long long) NtQueryInformationThread
+657 stdcall ZwQueryInformationToken(long long long long long) NtQueryInformationToken
 658 stub ZwQueryIntervalProfile
 659 stub ZwQueryIoCompletion
 660 stub ZwQueryKey
 661 stub ZwQueryMutant
-662 stub ZwQueryObject
+662 stdcall ZwQueryObject(long long long long long) NtQueryObject
 663 stub ZwQueryPerformanceCounter
 664 stub ZwQuerySection
 665 stub ZwQuerySecurityObject
 666 stub ZwQuerySemaphore
 667 stub ZwQuerySymbolicLinkObject
 668 stub ZwQuerySystemEnvironmentValue
-669 stub ZwQuerySystemInformation
-670 stub ZwQuerySystemTime
+669 stdcall ZwQuerySystemInformation(long long long long) NtQuerySystemInformation
+670 stdcall ZwQuerySystemTime(ptr) GetSystemTimeAsFileTime
 671 stub ZwQueryTimer
 672 stub ZwQueryTimerResolution
 673 stub ZwQueryValueKey
@@ -678,40 +683,40 @@ type	win32
 675 stub ZwQueryVolumeInformationFile
 676 stub ZwRaiseException
 677 stub ZwRaiseHardError
-678 stub ZwReadFile
+678 stdcall ZwReadFile(long long long long long long long long long) NtReadFile
 679 stub ZwReadRequestData
 680 stub ZwReadVirtualMemory
 681 stub ZwRegisterNewDevice
-682 stub ZwRegisterThreadTerminatePort
+682 stdcall ZwRegisterThreadTerminatePort(long) NtRegisterThreadTerminatePort
 683 stub ZwReleaseMutant
 684 stub ZwReleaseProcessMutant
 685 stub ZwReleaseSemaphore
 686 stub ZwRemoveIoCompletion
 687 stub ZwReplaceKey
 688 stub ZwReplyPort
-689 stub ZwReplyWaitReceivePort
+689 stdcall ZwReplyWaitReceivePort(long long long long) NtReplyWaitReceivePort
 690 stub ZwReplyWaitReplyPort
 691 stub ZwRequestPort
 692 stdcall ZwRequestWaitReplyPort(long long long) NtRequestWaitReplyPort
 693 stub ZwResetEvent
 694 stub ZwRestoreKey
-695 stub ZwResumeThread
+695 stdcall ZwResumeThread(long long) NtResumeThread
 696 stub ZwSaveKey
 697 stub ZwSetContextThread
 698 stub ZwSetDefaultHardErrorPort
 699 stub ZwSetDefaultLocale
 700 stub ZwSetEaFile
-701 stub ZwSetEvent
+701 stdcall ZwSetEvent(long long) NtSetEvent
 702 stub ZwSetHighEventPair
 703 stub ZwSetHighWaitLowEventPair
 704 stub ZwSetHighWaitLowThread
-705 stub ZwSetInformationFile
+705 stdcall ZwSetInformationFile(long long long long long) NtSetInformationFile
 706 stub ZwSetInformationKey
 707 stub ZwSetInformationObject
-708 stub ZwSetInformationProcess
-709 stub ZwSetInformationThread
+708 stdcall ZwSetInformationProcess(long long long long) NtSetInformationProcess
+709 stdcall ZwSetInformationThread(long long long long) NtSetInformationThread
 710 stub ZwSetInformationToken
-711 stub ZwSetIntervalProfile
+711 stdcall ZwSetIntervalProfile(long long) NtSetIntervalProfile
 712 stub ZwSetIoCompletion
 713 stub ZwSetLdtEntries
 714 stub ZwSetLowEventPair
@@ -722,17 +727,17 @@ type	win32
 719 stub ZwSetSystemInformation
 720 stub ZwSetSystemPowerState
 721 stub ZwSetSystemTime
-722 stub ZwSetTimer
+722 stdcall ZwSetTimer(long long long long long long) NtSetTimer
 723 stub ZwSetTimerResolution
-724 stub ZwSetValueKey
-725 stub ZwSetVolumeInformationFile
+724 stdcall ZwSetValueKey(long long long long long long) NtSetValueKey
+725 stdcall ZwSetVolumeInformationFile(long long long long long) NtSetVolumeInformationFile
 726 stub ZwShutdownSystem
 727 stub ZwStartProfile
 728 stub ZwStopProfile
 729 stub ZwSuspendThread
 730 stub ZwSystemDebugControl
 731 stub ZwTerminateProcess
-732 stub ZwTerminateThread
+732 stdcall ZwTerminateThread(long long) NtTerminateThread
 733 stub ZwTestAlert
 734 stub ZwUnloadDriver
 735 stub ZwUnloadKey
@@ -743,7 +748,7 @@ type	win32
 740 stub ZwW32Call
 741 stub ZwWaitForMultipleObjects
 742 stub ZwWaitForProcessMutant
-743 stub ZwWaitForSingleObject
+743 stdcall ZwWaitForSingleObject(long long long) NtWaitForSingleObject
 744 stub ZwWaitHighEventPair
 745 stub ZwWaitLowEventPair
 746 stub ZwWriteFile
