@@ -196,8 +196,8 @@ void enum_stream_names( IStorage *stg )
         if( FAILED( r ) || !count )
             break;
         decode_streamname( stat.pwcsName, name );
-        ERR("stream %2ld -> %s %s\n", n, 
-            debugstr_w(stat.pwcsName), debugstr_w(name) );
+        TRACE("stream %2ld -> %s %s\n", n, 
+              debugstr_w(stat.pwcsName), debugstr_w(name) );
         n++;
     }
 
@@ -356,12 +356,12 @@ static UINT write_stream_data( IStorage *stg, LPCWSTR stname,
     encname = encode_streamname(TRUE, stname );
     r = IStorage_OpenStream( stg, encname, NULL, 
             STGM_WRITE | STGM_SHARE_EXCLUSIVE, 0, &stm);
-    HeapFree( GetProcessHeap(), 0, encname );
     if( FAILED(r) )
     {
         r = IStorage_CreateStream( stg, encname,
                 STGM_WRITE | STGM_SHARE_EXCLUSIVE, 0, 0, &stm);
     }
+    HeapFree( GetProcessHeap(), 0, encname );
     if( FAILED( r ) )
     {
         ERR("open stream failed r = %08lx\n",r);
