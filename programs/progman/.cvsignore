@@ -21,6 +21,7 @@ Sw.h
 Sw.s
 Va.h
 Va.s
+Wa.s
 accel.h
 accel.s
 progman

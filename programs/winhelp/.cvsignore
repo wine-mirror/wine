@@ -21,6 +21,7 @@ Sw.h
 Sw.s
 Va.h
 Va.s
+Wa.s
 hlp2sgml
 lex.yy.c
 winhelp
