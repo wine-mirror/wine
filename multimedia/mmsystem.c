@@ -585,6 +585,12 @@ UINT16 WINAPI mixerOpen16(LPHMIXER16 lphmix, UINT16 uDeviceID, DWORD dwCallback,
 	uDeviceID++;
     }
     lpmod->uDeviceID = uDeviceID;
+    
+    if (dwRet != MMSYSERR_NOERROR) {
+	USER_HEAP_FREE(hmix);
+	if (lphmix) *lphmix = 0;
+    }
+
     return dwRet;
 }
 
@@ -594,11 +600,15 @@ UINT16 WINAPI mixerOpen16(LPHMIXER16 lphmix, UINT16 uDeviceID, DWORD dwCallback,
 UINT WINAPI mixerClose(HMIXER hmix) 
 {
     LPMIXEROPENDESC	lpmod;
-    
+    DWORD		dwRet;    
+
     FIXME(mmsys,"(%04x): semi-stub?\n", hmix);
 
     lpmod = (LPMIXEROPENDESC)USER_HEAP_LIN_ADDR(hmix);
-    return mixMessage(lpmod->uDeviceID, MXDM_CLOSE, lpmod->dwInstance, 0L, 0L);
+    if (lpmod == NULL) return MMSYSERR_INVALHANDLE;
+    dwRet = mixMessage(lpmod->uDeviceID, MXDM_CLOSE, lpmod->dwInstance, 0L, 0L);
+    USER_HEAP_FREE(hmix);
+    return dwRet;
 }
 
 /**************************************************************************
@@ -1995,6 +2005,12 @@ UINT16 WINAPI midiOutOpen16(HMIDIOUT16* lphMidiOut, UINT16 uDeviceID,
 	TRACE(mmsys, "MIDI_MAPPER mode ! try next driver...\n");
     }
     lpDesc->wDevID = uDeviceID;
+    
+    if (dwRet != MMSYSERR_NOERROR) {
+	USER_HEAP_FREE(hMidiOut);
+	if (lphMidiOut) *lphMidiOut = 0;
+    }
+
     return dwRet;
 }
 
@@ -2012,12 +2028,15 @@ UINT WINAPI midiOutClose(HMIDIOUT hMidiOut)
 UINT16 WINAPI midiOutClose16(HMIDIOUT16 hMidiOut)
 {
     LPMIDIOPENDESC	lpDesc;
+    DWORD		dwRet;
 
     TRACE(mmsys, "(%04X)\n", hMidiOut);
 
     lpDesc = (LPMIDIOPENDESC) USER_HEAP_LIN_ADDR(hMidiOut);
     if (lpDesc == NULL) return MMSYSERR_INVALHANDLE;
-    return modMessage(lpDesc->wDevID, MODM_CLOSE, lpDesc->dwInstance, 0L, 0L);
+    dwRet = modMessage(lpDesc->wDevID, MODM_CLOSE, lpDesc->dwInstance, 0L, 0L);
+    USER_HEAP_FREE(hMidiOut);
+    return dwRet;
 }
 
 /**************************************************************************
@@ -2463,6 +2482,12 @@ UINT16 WINAPI midiInOpen16(HMIDIIN16* lphMidiIn, UINT16 uDeviceID,
 	TRACE(mmsys, "MIDI_MAPPER mode ! try next driver...\n");
     }
     lpDesc->wDevID = uDeviceID;
+    
+    if (dwRet != MMSYSERR_NOERROR) {
+	USER_HEAP_FREE(hMidiIn);
+	if (lphMidiIn) *lphMidiIn = 0;
+    }
+
     return dwRet;
 }
 
@@ -2480,10 +2505,14 @@ UINT WINAPI midiInClose(HMIDIIN hMidiIn)
 UINT16 WINAPI midiInClose16(HMIDIIN16 hMidiIn)
 {
     LPMIDIOPENDESC	lpDesc;
+    DWORD		dwRet;    
+
     TRACE(mmsys, "(%04X)\n", hMidiIn);
     lpDesc = (LPMIDIOPENDESC) USER_HEAP_LIN_ADDR(hMidiIn);
     if (lpDesc == NULL) return MMSYSERR_INVALHANDLE;
-    return midMessage(lpDesc->wDevID, MIDM_CLOSE, lpDesc->dwInstance, 0L, 0L);
+    dwRet = midMessage(lpDesc->wDevID, MIDM_CLOSE, lpDesc->dwInstance, 0L, 0L);
+    USER_HEAP_FREE(hMidiIn);
+    return dwRet;
 }
 
 /**************************************************************************
@@ -3318,13 +3347,13 @@ UINT WINAPI waveOutClose(HWAVEOUT hWaveOut)
 UINT16 WINAPI waveOutClose16(HWAVEOUT16 hWaveOut)
 {
     LPWAVEOPENDESC	lpDesc;
-    DWORD		dwRet = 0;
+    DWORD		dwRet;
     
     TRACE(mmsys, "(%04X)\n", hWaveOut);
 
     lpDesc = (LPWAVEOPENDESC) USER_HEAP_LIN_ADDR(hWaveOut);
     if (lpDesc == NULL) return MMSYSERR_INVALHANDLE;
-    dwRet =  wodMessage(lpDesc->uDeviceID, WODM_CLOSE, lpDesc->dwInstance, 0L, 0L);
+    dwRet = wodMessage(lpDesc->uDeviceID, WODM_CLOSE, lpDesc->dwInstance, 0L, 0L);
     USER_HEAP_FREE(hWaveOut);
     return dwRet;
 }
@@ -3863,6 +3892,11 @@ UINT16 WINAPI waveInOpen16(HWAVEIN16* lphWaveIn, UINT16 uDeviceID,
 	TRACE(mmsys, "End of WAVE_FORMAT_QUERY !\n");
 	dwRet = waveInClose16(hWaveIn);
     }
+    else if (dwRet != MMSYSERR_NOERROR) {
+	USER_HEAP_FREE(hWaveIn);
+	if (lphWaveIn) *lphWaveIn = 0;
+    }
+
     return dwRet;
 }
 
@@ -3880,11 +3914,14 @@ UINT WINAPI waveInClose(HWAVEIN hWaveIn)
 UINT16 WINAPI waveInClose16(HWAVEIN16 hWaveIn)
 {
     LPWAVEOPENDESC	lpDesc;
-    
+    DWORD 		dwRet;    
+
     TRACE(mmsys, "(%04X)\n", hWaveIn);
     lpDesc = (LPWAVEOPENDESC) USER_HEAP_LIN_ADDR(hWaveIn);
     if (lpDesc == NULL) return MMSYSERR_INVALHANDLE;
-    return widMessage(lpDesc->uDeviceID, WIDM_CLOSE, lpDesc->dwInstance, 0L, 0L);
+    dwRet = widMessage(lpDesc->uDeviceID, WIDM_CLOSE, lpDesc->dwInstance, 0L, 0L);
+    USER_HEAP_FREE(hWaveIn);
+    return dwRet;
 }
 
 /**************************************************************************
