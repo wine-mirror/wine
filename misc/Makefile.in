@@ -7,7 +7,6 @@ VPATH     = @srcdir@
 MODULE    = misc
 
 C_SRCS = \
-	cdrom.c \
 	cpu.c \
 	error.c \
 	main.c \

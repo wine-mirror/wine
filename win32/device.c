@@ -319,8 +319,7 @@ LPCSTR VMM_Service_Name[N_VMM_SERVICE] =
 
 
 
-HANDLE DEVICE_Open( LPCSTR filename, DWORD access,
-                      LPSECURITY_ATTRIBUTES sa )
+HANDLE DEVICE_Open( LPCSTR filename, DWORD access, LPSECURITY_ATTRIBUTES sa )
 {
     const struct VxDInfo *info;
 
@@ -333,21 +332,28 @@ HANDLE DEVICE_Open( LPCSTR filename, DWORD access,
     return 0;
 }
 
-static const struct VxDInfo *DEVICE_GetInfo( HANDLE handle )
+static DWORD DEVICE_GetClientID( HANDLE handle )
 {
-    const struct VxDInfo *info = NULL;
+    DWORD       ret = 0;
     SERVER_START_REQ( get_file_info )
     {
         req->handle = handle;
-        if (!wine_server_call( req ) &&
-            (reply->type == FILE_TYPE_UNKNOWN) &&
-            (reply->attr & 0x10000))
-        {
-            for (info = VxDList; info->name; info++)
-                if (info->id == LOWORD(reply->attr)) break;
-        }
+        if (!wine_server_call( req ) && (reply->type == FILE_TYPE_UNKNOWN))
+            ret = reply->attr;
     }
     SERVER_END_REQ;
+    return ret;
+}
+
+static const struct VxDInfo *DEVICE_GetInfo( DWORD clientID )
+{
+    const struct VxDInfo *info = NULL;
+    
+    if (clientID & 0x10000)
+    {
+        for (info = VxDList; info->name; info++)
+            if (info->id == LOWORD(clientID)) break;
+    }
     return info;
 }
 
@@ -366,13 +372,13 @@ BOOL WINAPI DeviceIoControl(HANDLE hDevice, DWORD dwIoControlCode,
 			      LPDWORD lpcbBytesReturned,
 			      LPOVERLAPPED lpOverlapped)
 {
-        const struct VxDInfo *info;
+        DWORD clientID;
 
         TRACE( "(%d,%ld,%p,%ld,%p,%ld,%p,%p)\n",
                hDevice,dwIoControlCode,lpvInBuffer,cbInBuffer,
                lpvOutBuffer,cbOutBuffer,lpcbBytesReturned,lpOverlapped	);
 
-	if (!(info = DEVICE_GetInfo( hDevice )))
+	if (!(clientID = DEVICE_GetClientID( hDevice )))
 	{
 		SetLastError( ERROR_INVALID_PARAMETER );
 		return FALSE;
@@ -381,7 +387,12 @@ BOOL WINAPI DeviceIoControl(HANDLE hDevice, DWORD dwIoControlCode,
 	/* Check if this is a user defined control code for a VxD */
 	if( HIWORD( dwIoControlCode ) == 0 )
 	{
-		if ( info->deviceio )
+                const struct VxDInfo *info;
+                if (!(info = DEVICE_GetInfo( clientID )))
+                {
+                        FIXME( "No device found for id %lx\n", clientID);
+                }
+                else if ( info->deviceio )
 		{
 			return info->deviceio( dwIoControlCode, 
                                         lpvInBuffer, cbInBuffer, 
@@ -400,7 +411,15 @@ BOOL WINAPI DeviceIoControl(HANDLE hDevice, DWORD dwIoControlCode,
 	}
 	else
 	{
-		switch( dwIoControlCode )
+                char str[3];
+
+                strcpy(str,  "A:");
+                str[0] += LOBYTE(clientID);
+                if (GetDriveTypeA(str) == DRIVE_CDROM)
+                    return CDROM_DeviceIoControl(clientID, hDevice, dwIoControlCode, lpvInBuffer, cbInBuffer,
+                                                 lpvOutBuffer, cbOutBuffer, lpcbBytesReturned,
+                                                 lpOverlapped);
+                else switch( dwIoControlCode )
 		{
 		case FSCTL_DELETE_REPARSE_POINT:
 		case FSCTL_DISMOUNT_VOLUME:
@@ -1135,7 +1154,7 @@ static BOOL DeviceIo_VWin32(DWORD dwIoControlCode,
     case VWIN32_DIOC_DOS_INT13:
     case VWIN32_DIOC_DOS_INT25:
     case VWIN32_DIOC_DOS_INT26:
-	case VWIN32_DIOC_DOS_DRIVEINFO:
+    case VWIN32_DIOC_DOS_DRIVEINFO:
     {
         CONTEXT86 cxt;
         DIOC_REGISTERS *pIn  = (DIOC_REGISTERS *)lpvInBuffer;
@@ -1160,7 +1179,7 @@ static BOOL DeviceIo_VWin32(DWORD dwIoControlCode,
         case VWIN32_DIOC_DOS_INT13: INT_Int13Handler( &cxt ); break;
         case VWIN32_DIOC_DOS_INT25: INT_Int25Handler( &cxt ); break;
         case VWIN32_DIOC_DOS_INT26: INT_Int26Handler( &cxt ); break;
-		case VWIN32_DIOC_DOS_DRIVEINFO:	DOS3Call( &cxt ); break; /* Call int 21h 730x */
+        case VWIN32_DIOC_DOS_DRIVEINFO:	DOS3Call( &cxt ); break; /* Call int 21h 730x */
         }
 
         CONTEXT_2_DIOCRegs( &cxt, pOut );

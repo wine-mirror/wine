@@ -115,4 +115,10 @@ extern int DOSFS_FindNext( const char *path, const char *short_mask,
 /* win32/device.c */
 extern HANDLE DEVICE_Open( LPCSTR filename, DWORD access, LPSECURITY_ATTRIBUTES sa );
 
+/* ntdll/cdrom.c.c */
+extern BOOL CDROM_DeviceIoControl(DWORD clientID, HANDLE hDevice, DWORD dwIoControlCode, 
+                                  LPVOID lpInBuffer, DWORD nInBufferSize, 
+                                  LPVOID lpOutBuffer, DWORD nOutBufferSize,
+                                  LPDWORD lpBytesReturned, LPOVERLAPPED lpOverlapped);
+
 #endif  /* __WINE_FILE_H */

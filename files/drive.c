@@ -44,7 +44,6 @@
 #include "wine/winbase16.h"   /* for GetCurrentTask */
 #include "winerror.h"
 #include "drive.h"
-#include "cdrom.h"
 #include "file.h"
 #include "heap.h"
 #include "msdos.h"
@@ -52,6 +51,9 @@
 #include "task.h"
 #include "debugtools.h"
 #include "wine/server.h"
+#include "winioctl.h"
+#include "ntddstor.h"
+#include "ntddcdrm.h"
 
 DEFAULT_DEBUG_CHANNEL(dosfs);
 DECLARE_DEBUG_CHANNEL(file);
@@ -459,6 +461,40 @@ const char * DRIVE_GetDevice( int drive )
     return (DRIVE_IsValid( drive )) ? DOSDrives[drive].device : NULL;
 }
 
+/******************************************************************
+ *		static WORD CDROM_Data_FindBestVoldesc
+ *
+ *
+ */
+static WORD CDROM_Data_FindBestVoldesc(int fd)
+{
+    BYTE cur_vd_type, max_vd_type = 0;
+    unsigned int offs, best_offs = 0, extra_offs = 0;
+    char sig[3];
+
+    for (offs = 0x8000; offs <= 0x9800; offs += 0x800)
+    {
+        /* if 'CDROM' occurs at position 8, this is a pre-iso9660 cd, and
+         * the volume label is displaced forward by 8
+         */
+        lseek(fd, offs + 11, SEEK_SET); /* check for non-ISO9660 signature */
+        read(fd, &sig, 3);
+        if ((sig[0] == 'R') && (sig[1] == 'O') && (sig[2]=='M'))
+        {
+            extra_offs = 8;
+        }
+        lseek(fd, offs + extra_offs, SEEK_SET);
+        read(fd, &cur_vd_type, 1);
+        if (cur_vd_type == 0xff) /* voldesc set terminator */
+            break;
+        if (cur_vd_type > max_vd_type)
+        {
+            max_vd_type = cur_vd_type;
+            best_offs = offs + extra_offs;
+        }
+    }
+    return best_offs;
+}
 
 /***********************************************************************
  *           DRIVE_ReadSuperblock
@@ -567,8 +603,103 @@ int DRIVE_WriteSuperblockEntry (int drive, off_t ofs, size_t len, char * buff)
     return close (fd);
 }
 
+/******************************************************************
+ *		static HANDLE   CDROM_Open
+ *
+ *
+ */
+static HANDLE   CDROM_Open(int drive)
+{
+    char       root[6];
 
+    strcpy(root, "\\\\.\\A:");
+    root[4] += drive;
 
+    return CreateFileA(root, GENERIC_READ, FILE_SHARE_READ, NULL, OPEN_EXISTING, 0, 0);
+}
+
+/**************************************************************************
+ *                              CDROM_Data_GetLabel             [internal]
+ */
+DWORD CDROM_Data_GetLabel(int drive, char *label)
+{
+#define LABEL_LEN       32+1
+    int dev = open(DOSDrives[drive].device, O_RDONLY|O_NONBLOCK);
+    WORD offs = CDROM_Data_FindBestVoldesc(dev);
+    WCHAR label_read[LABEL_LEN]; /* Unicode possible, too */
+    DWORD unicode_id = 0;
+ 
+    if (offs)
+    {
+        if ((lseek(dev, offs+0x58, SEEK_SET) == offs+0x58)
+        &&  (read(dev, &unicode_id, 3) == 3))
+        {
+            int ver = (unicode_id & 0xff0000) >> 16;
+ 
+            if ((lseek(dev, offs+0x28, SEEK_SET) != offs+0x28)
+            ||  (read(dev, &label_read, LABEL_LEN) != LABEL_LEN))
+                goto failure;
+ 
+            close(dev);
+            if ((LOWORD(unicode_id) == 0x2f25) /* Unicode ID */
+            &&  ((ver == 0x40) || (ver == 0x43) || (ver == 0x45)))
+            { /* yippee, unicode */
+                int i;
+                WORD ch;
+                for (i=0; i<LABEL_LEN;i++)
+                { /* Motorola -> Intel Unicode conversion :-\ */
+                     ch = label_read[i];
+                     label_read[i] = (ch << 8) | (ch >> 8);
+                }
+                WideCharToMultiByte( CP_ACP, 0, label_read, -1, label, 12, NULL, NULL );
+                label[11] = 0;
+            }
+            else
+            {
+                strncpy(label, (LPSTR)label_read, 11);
+                label[11] = '\0';
+            }
+            return 1;
+        }
+    }
+failure:
+    close(dev);
+    ERR("error reading label !\n");
+    return 0;
+}
+
+/**************************************************************************
+ *				CDROM_GetLabel			[internal]
+ */
+static DWORD CDROM_GetLabel(int drive, char *label)
+{
+    HANDLE              h = CDROM_Open(drive);
+    CDROM_DISK_DATA     cdd;
+    DWORD               br;
+    DWORD               ret = 1;
+
+    if (!h || !DeviceIoControl(h, IOCTL_CDROM_DISK_TYPE, NULL, 0, &cdd, sizeof(cdd), &br, 0))
+        return 0;
+
+    switch (cdd.DiskData & 0x03)
+    {
+    case CDROM_DISK_DATA_TRACK:
+        if (!CDROM_Data_GetLabel(drive, label))
+            ret = 0;
+    case CDROM_DISK_AUDIO_TRACK:
+        strcpy(label, "Audio CD   ");
+        break;
+    case CDROM_DISK_DATA_TRACK|CDROM_DISK_AUDIO_TRACK:
+        FIXME("Need to get the label of a mixed mode CD: not implemented yet !\n");
+        /* fall through */
+    case 0:
+        ret = 0;
+        break;
+    }
+    TRACE("CD: label is '%s'.\n", label);
+
+    return ret;
+}
 /***********************************************************************
  *           DRIVE_GetLabel
  */
@@ -605,6 +736,132 @@ const char * DRIVE_GetLabel( int drive )
 	DOSDrives[drive].label_read : DOSDrives[drive].label_conf;
 }
 
+#define CDFRAMES_PERSEC                 75
+#define CDFRAMES_PERMIN                 (CDFRAMES_PERSEC * 60)
+#define FRAME_OF_ADDR(a) ((a)[0] * CDFRAMES_PERMIN + (a)[1] * CDFRAMES_PERSEC + (a)[2])
+#define FRAME_OF_TOC(toc, idx)  FRAME_OF_ADDR((toc).TrackData[idx - (toc).FirstTrack].Address)
+
+/**************************************************************************
+ *                              CDROM_Audio_GetSerial           [internal]
+ */
+static DWORD CDROM_Audio_GetSerial(HANDLE h)
+{
+    unsigned long serial = 0;
+    int i;
+    WORD wMagic;
+    DWORD dwStart, dwEnd, br;
+    CDROM_TOC toc;
+
+    if (!DeviceIoControl(h, IOCTL_CDROM_READ_TOC, NULL, 0, &toc, sizeof(toc), &br, 0))
+        return 0;
+
+    /*
+     * wMagic collects the wFrames from track 1
+     * dwStart, dwEnd collect the beginning and end of the disc respectively, in
+     * frames.
+     * There it is collected for correcting the serial when there are less than
+     * 3 tracks.
+     */
+    wMagic = toc.TrackData[0].Address[2];
+    dwStart = FRAME_OF_TOC(toc, toc.FirstTrack);
+
+    for (i = 0; i <= toc.LastTrack - toc.FirstTrack; i++) {
+        serial += (toc.TrackData[i].Address[0] << 16) | 
+            (toc.TrackData[i].Address[1] << 8) | toc.TrackData[i].Address[2];
+    }
+    dwEnd = FRAME_OF_TOC(toc, toc.LastTrack + 1);
+ 
+    if (toc.LastTrack - toc.FirstTrack + 1 < 3)
+        serial += wMagic + (dwEnd - dwStart);
+
+    return serial;
+}
+
+/**************************************************************************
+ *                              CDROM_Data_GetSerial            [internal]
+ */
+static DWORD CDROM_Data_GetSerial(int drive)
+{
+    int dev = open(DOSDrives[drive].device, O_RDONLY|O_NONBLOCK);
+    WORD offs;
+    union {
+        unsigned long val;
+        unsigned char p[4];
+    } serial;
+    BYTE b0 = 0, b1 = 1, b2 = 2, b3 = 3;
+ 
+
+    if (dev == -1) return 0;
+    offs = CDROM_Data_FindBestVoldesc(dev);
+
+    serial.val = 0;
+    if (offs)
+    {
+        BYTE buf[2048];
+        OSVERSIONINFOA ovi;
+        int i;
+ 
+        lseek(dev, offs, SEEK_SET);
+        read(dev, buf, 2048);
+        /*
+         * OK, another braindead one... argh. Just believe it.
+         * Me$$ysoft chose to reverse the serial number in NT4/W2K.
+         * It's true and nobody will ever be able to change it.
+         */
+        ovi.dwOSVersionInfoSize = sizeof(OSVERSIONINFOA);
+        GetVersionExA(&ovi);
+        if ((ovi.dwPlatformId == VER_PLATFORM_WIN32_NT) &&  (ovi.dwMajorVersion >= 4))
+        {
+            b0 = 3; b1 = 2; b2 = 1; b3 = 0;
+        }
+        for (i = 0; i < 2048; i += 4)
+        {
+            /* DON'T optimize this into DWORD !! (breaks overflow) */
+            serial.p[b0] += buf[i+b0];
+            serial.p[b1] += buf[i+b1];
+            serial.p[b2] += buf[i+b2];
+            serial.p[b3] += buf[i+b3];
+        }
+    }
+    close(dev);
+    return serial.val;
+}
+        
+/**************************************************************************
+ *				CDROM_GetSerial			[internal]
+ */
+static DWORD CDROM_GetSerial(int drive)
+{
+    DWORD               serial = 0;
+    HANDLE              h = CDROM_Open(drive);
+    CDROM_DISK_DATA     cdd;
+    DWORD               br;
+
+    if (!h || ! !DeviceIoControl(h, IOCTL_CDROM_DISK_TYPE, NULL, 0, &cdd, sizeof(cdd), &br, 0))
+        return 0;
+
+    switch (cdd.DiskData & 0x03)
+    {
+    case CDROM_DISK_DATA_TRACK:
+        /* hopefully a data CD */
+        serial = CDROM_Data_GetSerial(drive);
+        break;
+    case CDROM_DISK_AUDIO_TRACK:
+        /* fall thru */
+    case CDROM_DISK_DATA_TRACK|CDROM_DISK_AUDIO_TRACK:
+        serial = CDROM_Audio_GetSerial(h);
+        break;
+    case 0:
+        break;
+    }
+    
+    if (serial)
+        TRACE("CD serial number is %04x-%04x.\n", HIWORD(serial), LOWORD(serial));
+
+    CloseHandle(h);
+
+    return serial;
+}
 
 /***********************************************************************
  *           DRIVE_GetSerialNumber
@@ -612,7 +869,7 @@ const char * DRIVE_GetLabel( int drive )
 DWORD DRIVE_GetSerialNumber( int drive )
 {
     DWORD serial = 0;
-char buff[DRIVE_SUPER];
+    char buff[DRIVE_SUPER];
 
     if (!DRIVE_IsValid( drive )) return 0;
     
@@ -938,7 +1195,7 @@ static UINT DRIVE_GetCurrentDirectory( UINT buflen, LPSTR buf )
     assert(s);
     ret = strlen(s) + 3; /* length of WHOLE current directory */
     if (ret >= buflen) return ret + 1;
-    lstrcpynA( buf, "A:\\", min( 4, buflen ) );
+    lstrcpynA( buf, "A:\\", min( 4u, buflen ) );
     if (buflen) buf[0] += DRIVE_GetCurrentDrive();
     if (buflen > 3) lstrcpynA( buf + 3, s, buflen - 3 );
     return ret;

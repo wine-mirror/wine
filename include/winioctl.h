@@ -150,7 +150,9 @@
 #define IOCTL_STORAGE_RESERVE            CTL_CODE(IOCTL_STORAGE_BASE, 0x0204, METHOD_BUFFERED, FILE_READ_ACCESS)
 #define IOCTL_STORAGE_RELEASE            CTL_CODE(IOCTL_STORAGE_BASE, 0x0205, METHOD_BUFFERED, FILE_READ_ACCESS)
 #define IOCTL_STORAGE_FIND_NEW_DEVICES   CTL_CODE(IOCTL_STORAGE_BASE, 0x0206, METHOD_BUFFERED, FILE_READ_ACCESS)
-
+#define IOCTL_STORAGE_EJECTION_CONTROL   CTL_CODE(IOCTL_STORAGE_BASE, 0x0250, METHOD_BUFFERED, FILE_ANY_ACCESS)
+#define IOCTL_STORAGE_MCN_CONTROL        CTL_CODE(IOCTL_STORAGE_BASE, 0x0251, METHOD_BUFFERED, FILE_ANY_ACCESS)
+ 
 #define IOCTL_STORAGE_GET_MEDIA_TYPES    CTL_CODE(IOCTL_STORAGE_BASE, 0x0300, METHOD_BUFFERED, FILE_ANY_ACCESS)
 #define IOCTL_STORAGE_GET_MEDIA_TYPES_EX CTL_CODE(IOCTL_STORAGE_BASE, 0x0301, METHOD_BUFFERED, FILE_ANY_ACCESS)
 
@@ -213,6 +215,81 @@
 #define PARTITION_LDM                   0x42      /* Logical Disk Manager partition */
 #define PARTITION_UNIX                  0x63      /* Unix */
 
+typedef enum _MEDIA_TYPE {
+    Unknown, F5_1Pt2_512, F3_1Pt44_512, F3_2Pt88_512, F3_20Pt8_512, F3_720_512, F5_360_512,
+    F5_320_512, F5_320_1024, F5_180_512, F5_160_512, RemovableMedia, FixedMedia, F3_120M_512,
+    F3_640_512, F5_640_512, F5_720_512, F3_1Pt2_512, F3_1Pt23_1024, F5_1Pt23_1024, F3_128Mb_512,
+    F3_230Mb_512, F8_256_128 
+} MEDIA_TYPE, *PMEDIA_TYPE;
+
+typedef struct _FORMAT_PARAMETERS {
+   MEDIA_TYPE           MediaType;
+   DWORD                StartCylinderNumber;
+   DWORD                EndCylinderNumber;
+   DWORD                StartHeadNumber;
+   DWORD                EndHeadNumber;
+} FORMAT_PARAMETERS, *PFORMAT_PARAMETERS;
+ 
+typedef WORD   BAD_TRACK_NUMBER;
+typedef WORD   *PBAD_TRACK_NUMBER;
+ 
+typedef struct _FORMAT_EX_PARAMETERS {
+   MEDIA_TYPE           MediaType;
+   DWORD                StartCylinderNumber;
+   DWORD                EndCylinderNumber;
+   DWORD                StartHeadNumber;
+   DWORD                EndHeadNumber;
+   WORD                 FormatGapLength;
+   WORD                 SectorsPerTrack;
+   WORD                 SectorNumber[1];
+} FORMAT_EX_PARAMETERS, *PFORMAT_EX_PARAMETERS;
+ 
+typedef struct _DISK_GEOMETRY {
+    LARGE_INTEGER       Cylinders;
+    MEDIA_TYPE          MediaType;
+    DWORD               TracksPerCylinder;
+    DWORD               SectorsPerTrack;
+    DWORD               BytesPerSector;
+} DISK_GEOMETRY, *PDISK_GEOMETRY;
+ 
+typedef struct _PARTITION_INFORMATION {
+    LARGE_INTEGER       StartingOffset;
+    LARGE_INTEGER       PartitionLength;
+    DWORD               HiddenSectors;
+    DWORD               PartitionNumber;
+    BYTE                PartitionType;
+    BOOLEAN             BootIndicator;
+    BOOLEAN             RecognizedPartition;
+    BOOLEAN             RewritePartition;
+} PARTITION_INFORMATION, *PPARTITION_INFORMATION;
+ 
+typedef struct _SET_PARTITION_INFORMATION {
+    BYTE                PartitionType;
+} SET_PARTITION_INFORMATION, *PSET_PARTITION_INFORMATION;
+ 
+typedef struct _DRIVE_LAYOUT_INFORMATION {
+    DWORD               PartitionCount;
+    DWORD               Signature;
+    PARTITION_INFORMATION PartitionEntry[1];
+} DRIVE_LAYOUT_INFORMATION, *PDRIVE_LAYOUT_INFORMATION;
+ 
+typedef struct _VERIFY_INFORMATION {
+    LARGE_INTEGER       StartingOffset;
+    DWORD               Length;
+} VERIFY_INFORMATION, *PVERIFY_INFORMATION;
+ 
+typedef struct _REASSIGN_BLOCKS {
+    WORD                Reserved;
+    WORD                Count;
+    DWORD               BlockNumber[1];
+} REASSIGN_BLOCKS, *PREASSIGN_BLOCKS;
+ 
+#if(_WIN32_WINNT >= 0x0400)
+typedef struct _DISK_CONTROLLER_NUMBER {
+    DWORD               ControllerNumber;
+    DWORD               DiskNumber;
+} DISK_CONTROLLER_NUMBER, *PDISK_CONTROLLER_NUMBER;
+#endif /* _WIN32_WINNT >= 0x0400 */
 
 /* Device Io Stuff - Most VxD support.
  * NOTE: All VxD messages seem to start with a hiword or 0

@@ -449,6 +449,11 @@ HANDLE WINAPI CreateFileA( LPCSTR filename, DWORD access, DWORD sharing,
             ret = FILE_OpenPipe(filename,access);
             goto done;
         }
+        else if (isalpha(filename[4]) && filename[5] == ':' && filename[6] == '\0')
+        {
+            ret = FILE_CreateDevice( (toupper(filename[4]) - 'A') | 0x20000, access, sa );
+            goto done;
+        }
         else if (!DOSFS_GetDevice( filename ))
         {
             ret = DEVICE_Open( filename+4, access, sa );

@@ -6,6 +6,7 @@ MODULE    = ntdll
 EXTRALIBS = $(LIBUNICODE)
 
 C_SRCS = \
+	cdrom.c \
 	critsection.c \
 	debugtools.c \
 	exception.c \
