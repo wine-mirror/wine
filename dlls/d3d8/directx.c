@@ -320,6 +320,15 @@ HRESULT  WINAPI  IDirect3D8Impl_CheckDeviceFormat          (LPDIRECT3D8 iface,
 	  RType, debug_d3dressourcetype(RType), 
 	  CheckFormat, debug_d3dformat(CheckFormat));
 
+    if (GL_SUPPORT(EXT_TEXTURE_COMPRESSION_S3TC)) {
+        switch (CheckFormat) {
+        case D3DFMT_DXT1:
+        case D3DFMT_DXT3:
+        case D3DFMT_DXT5:
+            return D3D_OK;
+        }
+    }
+
     switch (CheckFormat) {
     case D3DFMT_UYVY:
     case D3DFMT_YUY2:

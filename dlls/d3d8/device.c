@@ -2813,8 +2813,7 @@ HRESULT  WINAPI  IDirect3DDevice8Impl_SetTexture(LPDIRECT3DDEVICE8 iface, DWORD 
        /* If Alpha arg1 is texture then handle the special case when there changes between a
           texture and no texture - See comments in set_tex_op                                  */
        if ((This->StateBlock->texture_state[Stage][D3DTSS_ALPHAARG1] == D3DTA_TEXTURE) && 
-           ((oldTxt == NULL) && (pTexture != NULL)) || 
-           ((pTexture == NULL) && (oldTxt != NULL))) 
+           (((oldTxt == NULL) && (pTexture != NULL)) || ((pTexture == NULL) && (oldTxt != NULL))))
        {
            reapplyFlags |= REAPPLY_ALPHAOP;
        }
@@ -3096,6 +3095,7 @@ HRESULT  WINAPI  IDirect3DDevice8Impl_SetTextureStageState(LPDIRECT3DDEVICE8 ifa
 	      glDisable(GL_TEXTURE_GEN_S);
 	      glDisable(GL_TEXTURE_GEN_T);
 	      glDisable(GL_TEXTURE_GEN_R);
+              checkGLcall("glDisable(GL_TEXTURE_GEN_S,T,R)");
               break;
 
             case D3DTSS_TCI_CAMERASPACEPOSITION:

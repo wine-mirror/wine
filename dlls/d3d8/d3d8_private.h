@@ -249,6 +249,7 @@ struct IDirect3D8Impl
 
     /* IDirect3D8 fields */
     GL_Info                 gl_info;
+    IDirect3D8Impl         *direct3d8;
 };
 
 /* IUnknown: */

@@ -50,6 +50,7 @@ IDirect3D8* WINAPI Direct3DCreate8(UINT SDKVersion)
     IDirect3D8Impl *object = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(IDirect3D8Impl));
 
     object->lpVtbl = &Direct3D8_Vtbl;
+    object->direct3d8 = object;
     object->ref = 1;
 
     TRACE("SDKVersion = %x, Created Direct3D object at %p\n", SDKVersion, object);

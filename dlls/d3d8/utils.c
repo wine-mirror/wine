@@ -409,22 +409,8 @@ SHORT D3DFmtGetBpp(IDirect3DDevice8Impl* This, D3DFORMAT fmt) {
 }
 
 GLint D3DFmt2GLIntFmt(IDirect3DDevice8Impl* This, D3DFORMAT fmt) {
-    GLint retVal;
+    GLint retVal = 0;
 
-    switch (fmt) {
-    case D3DFMT_P8:               retVal = GL_COLOR_INDEX8_EXT; break;
-    case D3DFMT_A8P8:             retVal = GL_COLOR_INDEX8_EXT; break;
-
-    case D3DFMT_A4R4G4B4:         retVal = GL_RGBA4; break;
-    case D3DFMT_A8R8G8B8:         retVal = GL_RGBA8; break;
-    case D3DFMT_X8R8G8B8:         retVal = GL_RGB8; break;
-    case D3DFMT_R8G8B8:           retVal = GL_RGB8; break;
-    case D3DFMT_R5G6B5:           retVal = GL_RGB5; break; /* fixme: internal format 6 for g? */
-    case D3DFMT_A1R5G5B5:         retVal = GL_RGB5_A1; break;
-    default:
-        FIXME("Unhandled fmt(%u,%s)\n", fmt, debug_d3dformat(fmt));
-        retVal = GL_RGB8;
-    }
 #if defined(GL_EXT_texture_compression_s3tc)
     if (GL_SUPPORT(EXT_TEXTURE_COMPRESSION_S3TC)) {
       switch (fmt) {
@@ -437,6 +423,22 @@ GLint D3DFmt2GLIntFmt(IDirect3DDevice8Impl* This, D3DFORMAT fmt) {
       }
     }
 #endif
+    if (retVal == 0) {
+        switch (fmt) {
+        case D3DFMT_P8:               retVal = GL_COLOR_INDEX8_EXT; break;
+        case D3DFMT_A8P8:             retVal = GL_COLOR_INDEX8_EXT; break;
+
+        case D3DFMT_A4R4G4B4:         retVal = GL_RGBA4; break;
+        case D3DFMT_A8R8G8B8:         retVal = GL_RGBA8; break;
+        case D3DFMT_X8R8G8B8:         retVal = GL_RGB8; break;
+        case D3DFMT_R8G8B8:           retVal = GL_RGB8; break;
+        case D3DFMT_R5G6B5:           retVal = GL_RGB5; break; /* fixme: internal format 6 for g? */
+        case D3DFMT_A1R5G5B5:         retVal = GL_RGB5_A1; break;
+        default:
+            FIXME("Unhandled fmt(%u,%s)\n", fmt, debug_d3dformat(fmt));
+            retVal = GL_RGB8;
+        }
+    }
     TRACE("fmt2glintFmt for fmt(%u,%s) = %x\n", fmt, debug_d3dformat(fmt), retVal);
     return retVal;
 }
