@@ -118,7 +118,7 @@ WINE_MODREF *ELF_LoadLibraryExA( LPCSTR libname, DWORD flags)
         HMODULE		hmod;
 	char		*modname,*s,*t,*x;
 	LPVOID		*dlhandle;
-	char		error[256];
+    char      error[1024];
 
 	t = HeapAlloc( GetProcessHeap(), HEAP_ZERO_MEMORY,
                        strlen(libname) + strlen("lib.so") + 1 );
