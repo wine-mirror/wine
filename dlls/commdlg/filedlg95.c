@@ -1085,9 +1085,11 @@ static LRESULT FILEDLG95_InitUI(HWND hwnd)
  */
 BOOL FILEDLG95_OnOpen(HWND hwnd)
 {
-  char lpstrSpecifiedByUser[MAX_PATH] = "";
+  char lpstrSpecifiedByUser[MAX_PATH];
   FileOpenDlgInfos *fodInfos = (FileOpenDlgInfos *) GetPropA(hwnd,FileOpenDlgInfosStr);
   LPITEMIDLIST pidlSelection;
+
+  lpstrSpecifiedByUser[0]='\0';
 
   TRACE("\n");
 
@@ -1108,9 +1110,13 @@ BOOL FILEDLG95_OnOpen(HWND hwnd)
       LPITEMIDLIST browsePidl;
       LPSTR lpstrFileSpec;
       LPSTR lpstrTemp;
-      char lpstrPathSpec[MAX_PATH] = "";
-      char lpstrCurrentDir[MAX_PATH] = "";
-      char lpstrPathAndFile[MAX_PATH] = "";
+      char lpstrPathSpec[MAX_PATH];
+      char lpstrCurrentDir[MAX_PATH];
+      char lpstrPathAndFile[MAX_PATH];
+
+      lpstrPathSpec[0]	  = '\0';
+      lpstrCurrentDir[0]  = '\0';
+      lpstrPathAndFile[0] = '\0';
 
       /* Separate the file spec from the path spec 
 	 e.g.: 
@@ -1148,8 +1154,9 @@ BOOL FILEDLG95_OnOpen(HWND hwnd)
 	  case '.':
 	      {
        		  INT iSize;
-       		  char lpstrTmp2[MAX_PATH] = "";
+       		  char lpstrTmp2[MAX_PATH];
        		  LPSTR lpstrTmp = strrchr(lpstrCurrentDir,'\\');
+
        		  iSize = lpstrTmp - lpstrCurrentDir;
        		  strncpy(lpstrTmp2,lpstrCurrentDir,iSize + 1);
 		  if(strlen(lpstrSpecifiedByUser) <= 3)
@@ -1161,7 +1168,8 @@ BOOL FILEDLG95_OnOpen(HWND hwnd)
        	      break;
        	  default:
   {
-       		  char lpstrTmp[MAX_PATH] = "";
+       		  char lpstrTmp[MAX_PATH];
+
        		  if(strcmp(&lpstrCurrentDir[strlen(lpstrCurrentDir)-1],"\\"))
        		      strcat(lpstrCurrentDir,"\\");
        		  strcpy(lpstrTmp,lpstrCurrentDir);
@@ -1279,9 +1287,10 @@ BOOL FILEDLG95_OnOpen(HWND hwnd)
 	     {
 		 if (strchr(lpBuf, '.'))
 		     strcat(lpstrFileSpecTemp, (strchr(lpBuf, '.')) + 1);
+	     } else {
+		 if (strchr(lpBuf, '.'))
+		     strcat(lpstrFileSpecTemp, strchr(lpBuf, '.'));
 	     }
-	     else
-		 strcat(lpstrFileSpecTemp, strchr(lpBuf, '.'));
 	     browsePidl = GetPidlFromName(fodInfos->Shell.FOIShellFolder,
 		     lpstrFileSpecTemp);
 	     MemFree((void *)lpBuf);
