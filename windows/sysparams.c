@@ -72,7 +72,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(system);
 #define SPI_SETMOUSESCROLLLINES_IDX             29
 #define SPI_SETMENUSHOWDELAY_IDX                30
 
-#define SPI_WINE_IDX                            SPI_SETSCREENSAVERRUNNING_IDX
+#define SPI_WINE_IDX                            SPI_SETMENUSHOWDELAY_IDX
 
 /**
  * Names of the registry subkeys of HKEY_CURRENT_USER key and value names
