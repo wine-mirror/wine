@@ -2581,12 +2581,7 @@ struct WS_servent* WINAPI WS_getservbyname(const char *name, const char *proto)
     {
         retval = WS_dup_se(serv);
     }
-    else {
-        MESSAGE("service %s protocol %s not found; You might want to add "
-                "this to /etc/services\n", debugstr_a(name_str),
-                proto_str ? debugstr_a(proto_str):"*");
-        SetLastError(WSANO_DATA);
-    }
+    else SetLastError(WSANO_DATA);
     LeaveCriticalSection( &csWSgetXXXbyYYY );
     if (proto_str) HeapFree( GetProcessHeap(), 0, proto_str );
     HeapFree( GetProcessHeap(), 0, name_str );
@@ -2613,12 +2608,7 @@ struct WS_servent* WINAPI WS_getservbyport(int port, const char *proto)
     if( (serv = getservbyport(port, proto_str)) != NULL ) {
         retval = WS_dup_se(serv);
     }
-    else {
-        MESSAGE("service on port %lu protocol %s not found; You might want to add "
-                "this to /etc/services\n", (unsigned long)ntohl(port),
-                proto_str ? debugstr_a(proto_str) : "*");
-        SetLastError(WSANO_DATA);
-    }
+    else SetLastError(WSANO_DATA);
     LeaveCriticalSection( &csWSgetXXXbyYYY );
     if (proto_str) HeapFree( GetProcessHeap(), 0, proto_str );
 #endif
