@@ -13,6 +13,7 @@
 #include "user.h"
 #include "queue.h"
 #include "debug.h"
+#include "win.h"
 
 
 /**********************************************************************
@@ -22,7 +23,15 @@ static LRESULT WINAPI CALLBACK_CallWndProc( WNDPROC16 proc, HWND16 hwnd,
                                             UINT16 msg, WPARAM16 wParam,
                                             LPARAM lParam )
 {
-    return proc( hwnd, msg, wParam, lParam );
+    LRESULT retvalue;
+    int iWndsLocks;
+
+    /* To avoid any deadlocks, all the locks on the windows structures
+       must be suspended before the control is passed to the application */
+    iWndsLocks = WIN_SuspendWndsLock();
+    retvalue = proc( hwnd, msg, wParam, lParam );
+    WIN_RestoreWndsLock(iWndsLocks);
+    return retvalue;
 }
 
 

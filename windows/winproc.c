@@ -118,9 +118,17 @@ BOOL WINPROC_Init(void)
 static LRESULT WINPROC_CallWndProc( WNDPROC proc, HWND hwnd, UINT msg,
                                       WPARAM wParam, LPARAM lParam )
 {
+    LRESULT retvalue;
+    int iWndsLocks;
+    
     TRACE(relay, "(wndproc=%p,hwnd=%08x,msg=%s,wp=%08x,lp=%08lx)\n",
                    proc, hwnd, SPY_GetMsgName(msg), wParam, lParam );
-    return proc( hwnd, msg, wParam, lParam );
+    /* To avoid any deadlocks, all the locks on the windows structures
+       must be suspended before the control is passed to the application */
+    iWndsLocks = WIN_SuspendWndsLock();
+    retvalue = proc( hwnd, msg, wParam, lParam );
+    WIN_RestoreWndsLock(iWndsLocks);
+    return retvalue;
 }
 
 
@@ -2156,7 +2164,9 @@ LRESULT WINPROC_CallProc16To32W( HWND16 hwnd, UINT16 msg,
 
     if (WINPROC_MapMsg16To32W( hwnd, msg, wParam, &msg32, &wParam32, &lParam ) == -1)
         return 0;
+
     result = WINPROC_CallWndProc( func, hwnd, msg32, wParam32, lParam );
+    
     return WINPROC_UnmapMsg16To32W( hwnd, msg32, wParam32, lParam, result );
 }
 

@@ -227,7 +227,8 @@ static INT DCE_ReleaseDC( DCE* dce )
  */
 BOOL DCE_InvalidateDCE(WND* pWnd, const RECT* pRectUpdate)
 {
-    WND* wndScope = pWnd->parent;
+    WND* wndScope = WIN_LockWndPtr(pWnd->parent);
+    WND *pDesktop = WIN_GetDesktop();
     BOOL bRet = FALSE;
 
     if( wndScope )
@@ -260,10 +261,10 @@ BOOL DCE_InvalidateDCE(WND* pWnd, const RECT* pRectUpdate)
                         continue;
                     }
 
-		    if( !Options.desktopGeometry && wndCurrent == WIN_GetDesktop() )
+		    if( !Options.desktopGeometry && wndCurrent == pDesktop )
 		    {
 			/* don't bother with fake desktop */
-			WIN_ReleaseDesktop();
+                        WIN_ReleaseWndPtr(wndCurrent);
 			continue;
 		    }
 
@@ -306,6 +307,7 @@ BOOL DCE_InvalidateDCE(WND* pWnd, const RECT* pRectUpdate)
 				    bRet = TRUE;
 				}
 			    }
+                            WIN_ReleaseWndPtr(wnd);
 			    break;
 			}
 			xoffset += wnd->rectClient.left;
@@ -315,7 +317,9 @@ BOOL DCE_InvalidateDCE(WND* pWnd, const RECT* pRectUpdate)
                 WIN_ReleaseWndPtr(wndCurrent);
 	    }
 	} /* dce list */
+        WIN_ReleaseWndPtr(wndScope);
     }
+    WIN_ReleaseDesktop();
     return bRet;
 }
 

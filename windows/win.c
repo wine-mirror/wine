@@ -2766,9 +2766,19 @@ BOOL16 WINAPI EnumWindows16( WNDENUMPROC16 lpEnumFunc, LPARAM lParam )
 
     for (ppWnd = list; *ppWnd; ppWnd++)
     {
+        LRESULT lpEnumFuncRetval;
+        int iWndsLocks = 0;
         /* Make sure that the window still exists */
         if (!IsWindow((*ppWnd)->hwndSelf)) continue;
-        if (!lpEnumFunc( (*ppWnd)->hwndSelf, lParam )) break;
+
+        /* To avoid any deadlocks, all the locks on the windows
+           structures must be suspended before the control
+           is passed to the application */
+        iWndsLocks = WIN_SuspendWndsLock();
+        lpEnumFuncRetval = lpEnumFunc( (*ppWnd)->hwndSelf, lParam);
+        WIN_RestoreWndsLock(iWndsLocks);
+
+        if (!lpEnumFuncRetval) break;
     }
     WIN_ReleaseWinArray(list);
     WIN_ReleaseDesktop();
@@ -2806,10 +2816,20 @@ BOOL16 WINAPI EnumTaskWindows16( HTASK16 hTask, WNDENUMPROC16 func,
 
     for (ppWnd = list; *ppWnd; ppWnd++)
     {
+        LRESULT funcRetval;
+        int iWndsLocks = 0;
         /* Make sure that the window still exists */
         if (!IsWindow((*ppWnd)->hwndSelf)) continue;
         if (QUEUE_GetQueueTask((*ppWnd)->hmemTaskQ) != hTask) continue;
-        if (!func( (*ppWnd)->hwndSelf, lParam )) break;
+        
+        /* To avoid any deadlocks, all the locks on the windows
+           structures must be suspended before the control
+           is passed to the application */
+        iWndsLocks = WIN_SuspendWndsLock();
+        funcRetval = func( (*ppWnd)->hwndSelf, lParam );
+        WIN_RestoreWndsLock(iWndsLocks);
+        
+        if (!funcRetval) break;
     }
     WIN_ReleaseWinArray(list);
     WIN_ReleaseDesktop();
@@ -2841,11 +2861,20 @@ static BOOL16 WIN_EnumChildWindows( WND **ppWnd, WNDENUMPROC16 func,
 
     for ( ; *ppWnd; ppWnd++)
     {
+        int iWndsLocks = 0;
+
         /* Make sure that the window still exists */
         if (!IsWindow((*ppWnd)->hwndSelf)) continue;
         /* Build children list first */
         childList = WIN_BuildWinArray( *ppWnd, BWA_SKIPOWNED, NULL );
+        
+        /* To avoid any deadlocks, all the locks on the windows
+           structures must be suspended before the control
+           is passed to the application */
+        iWndsLocks = WIN_SuspendWndsLock();
         ret = func( (*ppWnd)->hwndSelf, lParam );
+        WIN_RestoreWndsLock(iWndsLocks);
+
         if (childList)
         {
             if (ret) ret = WIN_EnumChildWindows( childList, func, lParam );
