@@ -396,11 +396,11 @@ HRESULT  WINAPI  IDirect3DDevice8Impl_SetCursorProperties(LPDIRECT3DDEVICE8 ifac
     TRACE("(%p) : Spot Pos(%u,%u)\n", This, XHotSpot, YHotSpot);
 
     if (D3DFMT_A8R8G8B8 != pSur->myDesc.Format) {
-      ERR("(%p) : surface(%p) have a invalid format\n", This, pCursorBitmap);
+      ERR("(%p) : surface(%p) has an invalid format\n", This, pCursorBitmap);
       return D3DERR_INVALIDCALL;
     }
     if (32 != pSur->myDesc.Height || 32 != pSur->myDesc.Width) {
-      ERR("(%p) : surface(%p) have a invalid size\n", This, pCursorBitmap);
+      ERR("(%p) : surface(%p) has an invalid size\n", This, pCursorBitmap);
       return D3DERR_INVALIDCALL;
     }
 
@@ -1182,7 +1182,7 @@ HRESULT  WINAPI  IDirect3DDevice8Impl_GetFrontBuffer(LPDIRECT3DDEVICE8 iface, ID
     FIXME("(%p) : Should return whole screen, only returns GL context window in top left corner\n", This);
 
     if (D3DFMT_A8R8G8B8 != ((IDirect3DSurface8Impl*) pDestSurface)->myDesc.Format) {
-      ERR("(%p) : surface(%p) have a invalid format\n", This, pDestSurface);
+      ERR("(%p) : surface(%p) has an invalid format\n", This, pDestSurface);
       return D3DERR_INVALIDCALL;
     }
     

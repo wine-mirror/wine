@@ -1579,7 +1579,7 @@ static LPWSTR EDIT_GetPasswordPointer_SL(EDITSTATE *es)
  *
  *	Initially the edit control allocates a HLOCAL32 buffer 
  *	(32 bit linear memory handler).  However, 16 bit application
- *	might send a EM_GETHANDLE message and expect a HLOCAL16 (16 bit SEG:OFF
+ *	might send an EM_GETHANDLE message and expect a HLOCAL16 (16 bit SEG:OFF
  *	handler).  From that moment on we have to keep using this 16 bit memory
  *	handler, because it is supposed to be valid at all times after EM_GETHANDLE.
  *	What we do is create a HLOCAL16 buffer, copy the text, and do pointer

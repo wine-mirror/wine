@@ -304,7 +304,7 @@ static HRESULT IDirectMusicStyleTrack_IPersistStream_ParseStyleRef (LPPERSISTSTR
 	}
 	hr = IDirectMusicObject_QueryInterface(pObject, &IID_IDirectMusicStyle8, (LPVOID*)&pNewItem->pObject);
 	if (FAILED(hr)) {
-	  ERR(": Reference not a IDirectMusicStyle, exiting\n");
+	  ERR(": Reference not an IDirectMusicStyle, exiting\n");
 	  exit(-1);
 	  return hr;
 	}

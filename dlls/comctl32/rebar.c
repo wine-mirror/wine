@@ -2475,7 +2475,7 @@ REBAR_HandleLRDrag (REBAR_INFO *infoPtr, const POINT *ptsmove)
 	    if (imindBand == -1) imindBand = i;
 	    /* minimum size of each band is size of header plus            */
 	    /* size of minimum child plus offset of child from header plus */
-	    /* a one to separate each band.                                */
+	    /* one to separate each band.                                  */
 	    if (i < ihitBand)
 	        LHeaderSum += (band->lcx + SEP_WIDTH);
 	    else

@@ -849,7 +849,7 @@ void server_init_thread( int unix_pid, int unix_tid, void *entry_point )
     sig_act.sa_flags   = 0;
     sigemptyset( &sig_act.sa_mask );
 
-    /* ignore SIGPIPE so that we get a EPIPE error instead  */
+    /* ignore SIGPIPE so that we get an EPIPE error instead  */
     sigaction( SIGPIPE, &sig_act, NULL );
     /* automatic child reaping to avoid zombies */
 #ifdef SA_NOCLDWAIT

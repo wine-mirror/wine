@@ -215,7 +215,7 @@ static void fixup_imports( IMAGE_IMPORT_DESCRIPTOR *dir, DWORD size, void *base 
     int count = size / sizeof(void *);
     void **ptr = (void **)dir;
 
-    /* everything is either a pointer or a ordinal value below 0x10000 */
+    /* everything is either a pointer or an ordinal value below 0x10000 */
     while (count--)
     {
         if (*ptr >= (void *)0x10000) *ptr = (void *)((char *)*ptr - (char *)base);

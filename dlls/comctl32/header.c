@@ -83,7 +83,7 @@ typedef struct
     INT       iHotItem;		/* index of hot item (cursor is over this item) */
     INT       iMargin;          /* width of the margin that surrounds a bitmap */
 
-    HIMAGELIST  himl;		/* handle to a image list (may be 0) */
+    HIMAGELIST  himl;		/* handle to an image list (may be 0) */
     HEADER_ITEM *items;		/* pointer to array of HEADER_ITEM's */
     BOOL	bRectsValid;	/* validity flag for bounding rectangles */
 } HEADER_INFO;

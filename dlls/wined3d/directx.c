@@ -156,7 +156,7 @@ static void WineD3D_ReleaseFakeGLContext(WineD3D_Context* ctx) {
 HRESULT WINAPI IWineD3DImpl_QueryInterface(IWineD3D *iface,REFIID riid,LPVOID *ppobj)
 {
     IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *)iface;
-    /* FIXME: This needs to extend a IWineD3DBaseObject */
+    /* FIXME: This needs to extend an IWineD3DBaseObject */
     
     TRACE("(%p)->(%s,%p)\n",This,debugstr_guid(riid),ppobj);
     if (IsEqualGUID(riid, &IID_IUnknown)        

@@ -119,8 +119,8 @@ HRESULT WINAPI IDirect3DSurface9Impl_GetContainer(LPDIRECT3DSURFACE9 iface, REFI
 
     TRACE("(%p) Relay\n", This);
 
-    /* The container returned from IWineD3DSurface_GetContainer is either a IWineD3DDevice,
-       one of the subclasses of IWineD3DBaseTexture or a IWineD3DSwapChain  */
+    /* The container returned from IWineD3DSurface_GetContainer is either an IWineD3DDevice,
+       one of the subclasses of IWineD3DBaseTexture or an IWineD3DSwapChain  */
     /* Get the IUnknown container. */
     res = IWineD3DSurface_GetContainer(This->wineD3DSurface, &IID_IUnknown, (void **)&IWineContainer);    
     if (res == D3D_OK && IWineContainer != NULL) {

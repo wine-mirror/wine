@@ -632,7 +632,7 @@ static DWORD WINAPI midRecThread(LPVOID arg)
     while(!end_thread) {
 	TRACE("Thread loop\n");
 
-	/* Check if a event is present */
+	/* Check if an event is present */
 	if (poll(&pfd, 1, 250) <= 0)
 	    continue;
 	

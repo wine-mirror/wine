@@ -216,7 +216,7 @@ static BOOL WINAPI fetch_pe_module_info_cb(char* name, DWORD base, DWORD size,
 /******************************************************************
  *		fetch_elf_module_info_cb
  *
- * Callback for accumulating in dump_context a ELF modules set
+ * Callback for accumulating in dump_context an ELF modules set
  */
 static BOOL fetch_elf_module_info_cb(const char* name, unsigned long base, 
                                      void* user)

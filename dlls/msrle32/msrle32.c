@@ -762,7 +762,7 @@ LRESULT MSRLE32_CompressRLE8(CodecInfo *pi, LPBITMAPINFOHEADER lpbiIn, LPBYTE lp
 	  assert(jumpx != -1);
 
 	  if (pos < jumpx) {
-	    /* can only jump in positive direction -- do a EOL then jump */
+	    /* can only jump in positive direction -- do an EOL then jump */
 	    assert(jumpy > 0);
 
 	    jumpx = 0;

@@ -720,7 +720,7 @@ HRESULT WINAPI IShellBrowserImpl_ICommDlgBrowser_OnDefaultCommand(ICommDlgBrowse
 
     fodInfos = (FileOpenDlgInfos *) GetPropA(This->hwndOwner,FileOpenDlgInfosStr);
 
-    /* If the selected object is not a folder, send a IDOK command to parent window */
+    /* If the selected object is not a folder, send an IDOK command to parent window */
     if((pidl = GetPidlFromDataObject(fodInfos->Shell.FOIDataObject, 1)))
     {
         HRESULT hRes;

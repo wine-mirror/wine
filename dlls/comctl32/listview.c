@@ -1022,7 +1022,7 @@ static inline BOOL ranges_delitem(RANGES ranges, INT nItem)
  *       five versa, should leave the iterator at the same item:
  *           prev * n, next * n = next * n, prev * n
  *
- * The iterator has a notion of a out-of-order, special item,
+ * The iterator has a notion of an out-of-order, special item,
  * which sits at the start of the list. This is used in
  * LVS_ICON, and LVS_SMALLICON mode to handle the focused item,
  * which needs to be first, as it may overlap other items.

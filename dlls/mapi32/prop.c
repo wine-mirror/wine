@@ -789,7 +789,7 @@ SCODE WINAPI ScCountProps(INT iCount, LPSPropValue lpProps, ULONG *pcBytes)
  *  Failure: MAPI_E_INVALID_PARAMETER, if any parameter is invalid.
  *
  * NOTES
- *  The resulting property value array is stored in a contigous block starting at lpDst.
+ *  The resulting property value array is stored in a contiguous block starting at lpDst.
  */
 SCODE WINAPI ScCopyProps(int cValues, LPSPropValue lpProps, LPVOID lpDst, ULONG *lpCount)
 {
@@ -922,8 +922,8 @@ SCODE WINAPI ScCopyProps(int cValues, LPSPropValue lpProps, LPVOID lpDst, ULONG 
  *  between offsets and pointers. This does not work in native (it crashes),
  *  and cannot be made to work in Wine because the original interface design
  *  is deficient. The only use left for this function is to remap pointers
- *  in a contigous property array that has been copied with memcpy() to another
- *  memory location.
+ *  in a contiguous property array that has been copied with memcpy() to
+ *  another memory location.
  */
 SCODE WINAPI ScRelocProps(int cValues, LPSPropValue lpProps, LPVOID lpOld,
                           LPVOID lpNew, ULONG *lpCount)
@@ -949,7 +949,7 @@ SCODE WINAPI ScRelocProps(int cValues, LPSPropValue lpProps, LPVOID lpOld,
      * The code below would handle both cases except that the design of this
      * function makes it impossible to know when the pointers in lpProps are
      * valid. If both lpOld and lpNew are non-NULL, native reads the pointers
-     * after converting them, so we must do the same. Its seems this
+     * after converting them, so we must do the same. It seems this
      * functionality was never tested by MS.
      */
 
@@ -1086,7 +1086,7 @@ LPSPropValue WINAPI LpValFindProp(ULONG ulPropTag, ULONG cValues, LPSPropValue l
 /*************************************************************************
  * ScDupPropset@16 (MAPI32.174)
  *
- * Duplicate a property value array into a contigous block of memory.
+ * Duplicate a property value array into a contiguous block of memory.
  *
  * PARAMS
  *  cValues   [I] Number of properties in lpProps
@@ -1848,7 +1848,7 @@ IMAPIProp_fnSetProps(LPMAPIPROP iface, ULONG ulValues,
 /**************************************************************************
  *  IMAPIProp_DeleteProps {MAPI32}
  *
- * Delete one or more property values from a IMAPIProp objects.
+ * Delete one or more property values from an IMAPIProp object.
  *
  * PARAMS
  *  iface    [I] IMAPIProp object to remove property values from.

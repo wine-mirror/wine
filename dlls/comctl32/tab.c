@@ -82,7 +82,7 @@ typedef struct
   USHORT     uVItemPadding_s; /* Set amount of vertical padding, in pixels */
   HFONT      hFont;           /* handle to the current font */
   HCURSOR    hcurArrow;       /* handle to the current cursor */
-  HIMAGELIST himl;            /* handle to a image list (may be 0) */
+  HIMAGELIST himl;            /* handle to an image list (may be 0) */
   HWND       hwndToolTip;     /* handle to tab's tooltip */
   INT        leftmostVisible; /* Used for scrolling, this member contains
                                * the index of the first visible item */

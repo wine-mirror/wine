@@ -87,7 +87,7 @@ static IShellExecuteHookAVtbl vt_ShellExecuteHookA;
 
 
 /*
-  converts This to a interface pointer
+  converts This to an interface pointer
 */
 #define _IUnknown_(This)	   (IUnknown*)&(This->lpVtbl)
 #define _IShellFolder_(This)	   (IShellFolder*)&(This->lpVtbl)

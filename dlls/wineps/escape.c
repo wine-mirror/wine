@@ -431,7 +431,7 @@ INT PSDRV_EndDoc( PSDRV_PDEVICE *physDev )
     }
 
     if(!physDev->job.OutOfPage) {
-        WARN("Somebody forgot a EndPage\n");
+        WARN("Somebody forgot an EndPage\n");
 	PSDRV_EndPage( physDev );
     }
     PSDRV_WriteFooter( physDev );

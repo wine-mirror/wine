@@ -1220,7 +1220,7 @@ static void test_SPI_SETWORKAREA( void )               /*     47 */
     /* Modify the work area only minimally as this causes the icons that
      * fall outside it to be moved around thus requiring the user to
      * reposition them manually one by one.
-     * Changing the work area by just one pixel should make this occurence
+     * Changing the work area by just one pixel should make this occurrence
      * reasonably unlikely.
      */
     curr_val.left = old_area.left;

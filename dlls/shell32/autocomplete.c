@@ -83,7 +83,7 @@ static struct IAutoComplete2Vtbl ac2vt;
 #define _ICOM_THIS_From_IAutoComplete2(class, name) class* This = (class*)(((char*)name)-_IAutoComplete2_Offset);
 
 /*
-  converts This to a interface pointer
+  converts This to an interface pointer
 */
 #define _IUnknown_(This) (IUnknown*)&(This->lpVtbl)
 #define _IAutoComplete2_(This)  (IAutoComplete2*)&(This->lpvtblAutoComplete2) 

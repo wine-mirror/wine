@@ -180,7 +180,7 @@ static BOOL SHELL_ArgifyW(WCHAR* out, int len, const WCHAR* fmt, const WCHAR* lp
 
 	    default:
                 /*
-                 * Check if this is a env-variable here...
+                 * Check if this is an env-variable here...
                  */
 
                 /* Make sure that we have at least one more %.*/
@@ -195,7 +195,7 @@ static BOOL SHELL_ArgifyW(WCHAR* out, int len, const WCHAR* fmt, const WCHAR* lp
                         *tmpB++ = *fmt++;
                     *tmpB++ = 0;
 
-                    TRACE("Checking %s to be a env-var\n", debugstr_w(tmpBuffer));
+                    TRACE("Checking %s to be an env-var\n", debugstr_w(tmpBuffer));
 
                     envRet = GetEnvironmentVariableW(tmpBuffer, tmpEnvBuff, MAX_PATH);
                     if (envRet == 0 || envRet > MAX_PATH)

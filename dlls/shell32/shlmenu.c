@@ -647,7 +647,7 @@ LRESULT WINAPI FileMenu_DrawItem(
  * FileMenu_InitMenuPopup			[SHELL32.109]
  *
  * NOTES
- *  The filemenu is a ownerdrawn menu. Call this function responding to
+ *  The filemenu is an ownerdrawn menu. Call this function responding to
  *  WM_INITPOPUPMENU
  *
  */

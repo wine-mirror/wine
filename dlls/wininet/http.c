@@ -1890,7 +1890,7 @@ lerror:
         WININET_Release( &lpwhs->hdr );
 
 /*
- * a INTERNET_STATUS_REQUEST_COMPLETE is NOT sent here as per my tests on
+ * an INTERNET_STATUS_REQUEST_COMPLETE is NOT sent here as per my tests on
  * windows
  */
 

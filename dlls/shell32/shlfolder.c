@@ -304,7 +304,7 @@ HRESULT SHELL32_BindToChild (LPCITEMIDLIST pidlRoot,
  * - asks it for the displayname of [subpidl2][subpidl3]
  *
  * Is possible the pidl is a simple pidl. In this case it asks the
- * subfolder for the displayname of a empty pidl. The subfolder
+ * subfolder for the displayname of an empty pidl. The subfolder
  * returns the own displayname eg. "::{guid}". This is used for
  * virtual folders with the registry key WantsFORPARSING set.
  */

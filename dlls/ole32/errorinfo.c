@@ -145,7 +145,7 @@ static ICreateErrorInfoVtbl	ICreateErrorInfoImpl_VTable;
 static ISupportErrorInfoVtbl	ISupportErrorInfoImpl_VTable;
 
 /*
- converts a objectpointer to This
+ converts an object pointer to This
  */
 #define _IErrorInfo_Offset ((int)(&(((ErrorInfoImpl*)0)->lpvtei)))
 #define _ICOM_THIS_From_IErrorInfo(class, name) class* This = (class*)(((char*)name)-_IErrorInfo_Offset)
@@ -157,7 +157,7 @@ static ISupportErrorInfoVtbl	ISupportErrorInfoImpl_VTable;
 #define _ICOM_THIS_From_ISupportErrorInfo(class, name) class* This = (class*)(((char*)name)-_ISupportErrorInfo_Offset)
 
 /*
- converts This to a objectpointer
+ converts This to an object pointer
  */
 #define _IErrorInfo_(This)		(IErrorInfo*)&(This->lpvtei)
 #define _ICreateErrorInfo_(This)	(ICreateErrorInfo*)&(This->lpvtcei)

@@ -104,7 +104,7 @@ static struct ISFHelperVtbl shvt;
 #define _ICOM_THIS_From_ISFHelper(class, name) class* This = (class*)(((char*)name)-_ISFHelper_Offset);
 
 /*
-  converts This to a interface pointer
+  converts This to an interface pointer
 */
 #define _IUnknown_(This)        (IUnknown*)&(This->lpVtbl)
 #define _IShellFolder_(This)    (IShellFolder*)&(This->lpvtblShellFolder)

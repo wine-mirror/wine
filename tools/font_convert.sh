@@ -84,7 +84,7 @@ type -p $FC 1>/dev/null || { $Q echo "Can't execute $FC"; exit 1; }
 $Q echo -n "looking for bitmap fonts (\"$PAT\") in directory \"$WIND\"... ";
 FONTS=`find $WIND -iname "$PAT" 1>$TFILE 2>/dev/null`;
 if [ $? -ne 0 ]; then
-    $Q echo "$PAT is a invalid search expression"; exit 1;
+    $Q echo "$PAT is an invalid search expression"; exit 1;
 fi;
 i=0;
 

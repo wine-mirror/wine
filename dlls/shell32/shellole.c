@@ -162,14 +162,14 @@ HRESULT WINAPI SHCoCreateInstance(
 
 	TRACE("WithoutCom=%u FromShell=%u\n", bLoadWithoutCOM, bLoadFromShell32);
 
-	/* now we create a instance */
+	/* now we create an instance */
 	if (bLoadFromShell32) {
 	    if (! SUCCEEDED(SHELL32_DllGetClassObject(myclsid, &IID_IClassFactory,(LPVOID*)&pcf))) {
 	        ERR("LoadFromShell failed for CLSID=%s\n", shdebugstr_guid(myclsid));
 	    }
 	} else if (bLoadWithoutCOM) {
 
-	    /* load a external dll without ole32 */
+	    /* load an external dll without ole32 */
 	    HANDLE hLibrary;
 	    typedef HRESULT (CALLBACK *DllGetClassObjectFunc)(REFCLSID clsid, REFIID iid, LPVOID *ppv);
 	    DllGetClassObjectFunc DllGetClassObject;
@@ -190,7 +190,7 @@ HRESULT WINAPI SHCoCreateInstance(
 
 	} else {
 
-	    /* load a external dll in the usual way */
+	    /* load an external dll in the usual way */
 	    hres = CoCreateInstance(myclsid, pUnkOuter, CLSCTX_INPROC_SERVER, refiid, ppv);
 	    goto end;
 	}
@@ -493,9 +493,9 @@ HRESULT WINAPI SHGetDesktopFolder(IShellFolder **psf)
  * SHCreateDefClassObject
  *
  * NOTES
- *  helper function for dll's without a own classfactory
- *  a generic classfactory is returned
- *  when the CreateInstance of the cf is called the callback is executed
+ *  Helper function for dlls without their own classfactory.
+ *  A generic classfactory is returned.
+ *  When the CreateInstance of the cf is called the callback is executed.
  */
 
 typedef struct

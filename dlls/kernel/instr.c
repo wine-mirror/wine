@@ -361,7 +361,7 @@ static BOOL INSTR_EmulateLDS( CONTEXT86 *context, BYTE *instr, int long_op,
 /***********************************************************************
  *           INSTR_inport
  *
- * input on a I/O port
+ * input on an I/O port
  */
 static DWORD INSTR_inport( WORD port, int size, CONTEXT86 *context )
 {
@@ -395,7 +395,7 @@ static DWORD INSTR_inport( WORD port, int size, CONTEXT86 *context )
 /***********************************************************************
  *           INSTR_outport
  *
- * output on a I/O port
+ * output on an I/O port
  */
 static void INSTR_outport( WORD port, int size, DWORD val, CONTEXT86 *context )
 {

@@ -38,7 +38,7 @@
  *    -- take care of internationalization.
  *    -- keyboard handling.
  *    -- GetRange: At the moment, we copy ranges anyway, regardless of
- *                 infoPtr->rangeValid; a invalid range is simply filled 
+ *                 infoPtr->rangeValid; an invalid range is simply filled 
  *                 with zeros in SetRange.  Is this the right behavior?
  *    -- search for FIXME
  */

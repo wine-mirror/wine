@@ -240,7 +240,7 @@ void WINAPI IWineD3DDeviceImpl_SetupTextureStates(IWineD3DDevice *iface, DWORD S
 HRESULT WINAPI IWineD3DDeviceImpl_QueryInterface(IWineD3DDevice *iface,REFIID riid,LPVOID *ppobj)
 {
     IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *)iface;
-    /* FIXME: This needs to extend a IWineD3DBaseObject */
+    /* FIXME: This needs to extend an IWineD3DBaseObject */
     
     TRACE("(%p)->(%s,%p)\n",This,debugstr_guid(riid),ppobj);
     if (IsEqualGUID(riid, &IID_IUnknown)        
@@ -269,7 +269,7 @@ ULONG WINAPI IWineD3DDeviceImpl_Release(IWineD3DDevice *iface) {
 
     if (!refCount) {
         /* TODO: Clean up all the surfaces and textures! */
-        /* FIXME: Create targets and stablocks in d3d8 */        
+        /* FIXME: Create targets and state blocks in d3d8 */        
         if (((IWineD3DImpl *)This->wineD3D)->dxVersion > 8) { /*We don't create a state block in d3d8 yet*/
             /* NOTE: You must release the parent if the objects was created via a callback
             ** ***************************/
@@ -4264,18 +4264,18 @@ HRESULT WINAPI IWineD3DDeviceImpl_SetDepthStencilSurface(IWineD3DDevice *iface, 
 HRESULT  WINAPI  IWineD3DDeviceImpl_SetCursorProperties(IWineD3DDevice* iface, UINT XHotSpot,
                                                         UINT YHotSpot, IWineD3DSurface *pCursorBitmap) {
     IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *) iface;    
-    /* TODO: the use of Impl is depricated. */
+    /* TODO: the use of Impl is deprecated. */
     /* some basic validation checks */    
     IWineD3DSurfaceImpl * pSur = (IWineD3DSurfaceImpl *) pCursorBitmap;
 
     TRACE("(%p) : Spot Pos(%u,%u)\n", This, XHotSpot, YHotSpot);
 
     if (WINED3DFMT_A8R8G8B8 != pSur->currentDesc.Format) {
-      ERR("(%p) : surface(%p) have a invalid format\n", This, pCursorBitmap);
+      ERR("(%p) : surface(%p) has an invalid format\n", This, pCursorBitmap);
       return D3DERR_INVALIDCALL;
     }
     if (32 != pSur->currentDesc.Height || 32 != pSur->currentDesc.Width) {
-      ERR("(%p) : surface(%p) have a invalid size\n", This, pCursorBitmap);
+      ERR("(%p) : surface(%p) has an invalid size\n", This, pCursorBitmap);
       return D3DERR_INVALIDCALL;
     }
     /* TODO: make the cursor 'real' */

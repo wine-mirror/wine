@@ -2665,7 +2665,7 @@ DWORD WINAPI SHRestrictionLookup(
  *  Failure: An HRESULT error code.
  *
  * NOTES
- *   This QueryInterface asks the inner object for a interface. In case
+ *   This QueryInterface asks the inner object for an interface. In case
  *   of aggregation this request would be forwarded by the inner to the
  *   outer object. This function asks the inner object directly for the
  *   interface circumventing the forwarding to the outer object.

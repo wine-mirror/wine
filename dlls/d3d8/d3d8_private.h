@@ -1094,7 +1094,7 @@ struct  IDirect3DStateBlockImpl {
   /*IDirect3DStateBlock9Vtbl *lpVtbl;*/
   DWORD  ref;
 
-  /* The device, to be replaced by a IDirect3DDeviceImpl */
+  /* The device, to be replaced by an IDirect3DDeviceImpl */
   IDirect3DDevice8Impl* device;
 
   D3DSTATEBLOCKTYPE         blockType;
@@ -1183,7 +1183,7 @@ struct IDirect3DVertexShaderDeclarationImpl {
   /*IDirect3DVertexShaderDeclaration9Vtbl *lpVtbl;*/
   DWORD  ref;
 
-  /* The device, to be replaced by a IDirect3DDeviceImpl */
+  /* The device, to be replaced by an IDirect3DDeviceImpl */
   IDirect3DDevice8Impl* device;
 
   /** precomputed fvf if simple declaration */
@@ -1219,7 +1219,7 @@ struct IDirect3DVertexShaderImpl {
   /*IDirect3DVertexShader9Vtbl *lpVtbl;*/
   DWORD ref;
 
-  /* The device, to be replaced by a IDirect3DDeviceImpl */
+  /* The device, to be replaced by an IDirect3DDeviceImpl */
   IDirect3DDevice8Impl* device;
 
   DWORD* function;
@@ -1268,7 +1268,7 @@ struct IDirect3DPixelShaderImpl {
   /*IDirect3DPixelShader9Vtbl *lpVtbl;*/
   DWORD ref;
 
-  /* The device, to be replaced by a IDirect3DDeviceImpl */
+  /* The device, to be replaced by an IDirect3DDeviceImpl */
   IDirect3DDevice8Impl* device;
 
   DWORD* function;

@@ -296,7 +296,7 @@ static BOOL DP_CreateDirectPlay2( LPVOID lpDP )
   }
   This->dp2->lpSessionDesc->dwSize = sizeof( *This->dp2->lpSessionDesc );
 
-  /* We are a emulating a dp 6 implementation */
+  /* We are emulating a dp 6 implementation */
   This->dp2->spData.dwSPVersion = DPSP_MAJORVERSION;
 
   This->dp2->spData.lpCB = HeapAlloc( GetProcessHeap(), HEAP_ZERO_MEMORY,

@@ -473,7 +473,7 @@ static ULONG WINAPI DPL_Release
  * Connects an application to the session specified by the DPLCONNECTION
  * structure currently stored with the DirectPlayLobby object.
  *
- * Returns a IDirectPlay interface.
+ * Returns an IDirectPlay interface.
  *
  */
 static HRESULT WINAPI DPL_ConnectEx

@@ -1510,7 +1510,7 @@ if (res != ERROR_SUCCESS) return res;
 	  <title>Devices & volume management</title>
 	  <para>
 	    We've covered so far the ways file names are mapped into Unix
-	    pathes.  There's still need to cover it for devices.  As a regular
+	    paths.  There's still need to cover it for devices.  As a regular
 	    file, devices are manipulated in Windows with both read / write
 	    operations, but also control mechanisms (speed or parity of a serial
 	    line; volume name of a hard disk...).  Since, this is also supported
@@ -1691,10 +1691,10 @@ if (res != ERROR_SUCCESS) return res;
 	    old Win9x apps, still talking directly to VxD.  This is no longer
 	    supported on Windows NT, newest programs are less likely to make use
 	    of this feature, so we don't expect lots of development in this
-	    area, eventhough the framework is there and working.  Note also that
+	    area, even though the framework is there and working.  Note also that
 	    Wine doesn't provide support for native VxDs (as a game, report how
 	    many times this information is written in the documentation;  as an
-	    advanced exercice, find how many more occurences we need in order to
+	    advanced exercise, find how many more occurrences we need in order to
 	    stop questions whether it's possible or not).
 	  </para>
 	</sect3>
@@ -1766,7 +1766,7 @@ if (res != ERROR_SUCCESS) return res;
 	      <listitem>
 		<para>
 		  the second and third ones are closer to the NT scheme, albeit
-		  different to what NT does.  The <command>wineserver</command>
+		  different from what NT does.  The <command>wineserver</command>
 		  plays the role of the <filename>csrss.exe</filename> subsystem
 		  (all requests are sent to it), and are then dispatched to a
 		  dedicated wine process, called (surprise!)

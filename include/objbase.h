@@ -206,7 +206,7 @@
  *  - Then we predeclare our static virtual table variable, we will need its address in some
  *    methods to initialize the virtual table pointer of the returned interface objects.
  *  - Then we implement the interface methods. To match what has been declared in the header file
- *    they must take a pointer to a IDirect3D structure and we must cast it to an IDirect3DImpl so
+ *    they must take a pointer to an IDirect3D structure and we must cast it to an IDirect3DImpl so
  *    that we can manipulate the fields.
  *  - Finally we initialize the virtual table.
  */

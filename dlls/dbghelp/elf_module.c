@@ -127,7 +127,7 @@ struct thunk_area
 /******************************************************************
  *		elf_map_section
  *
- * Maps a single section into memory from a ELF file
+ * Maps a single section into memory from an ELF file
  */
 static const char* elf_map_section(struct elf_file_map* fmap, int sidx)
 {
@@ -162,7 +162,7 @@ static void elf_unmap_section(struct elf_file_map* fmap, int sidx)
 /******************************************************************
  *		elf_map_file
  *
- * Maps a ELF file into memory (and checks it's a real ELF file)
+ * Maps an ELF file into memory (and checks it's a real ELF file)
  */
 static BOOL elf_map_file(const char* filename, struct elf_file_map* fmap)
 {
@@ -222,7 +222,7 @@ static BOOL elf_map_file(const char* filename, struct elf_file_map* fmap)
 /******************************************************************
  *		elf_unmap_file
  *
- * Unmaps a ELF file from memory (previously mapped with elf_map_file)
+ * Unmaps an ELF file from memory (previously mapped with elf_map_file)
  */
 static void elf_unmap_file(struct elf_file_map* fmap)
 {

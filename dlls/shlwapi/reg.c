@@ -1305,7 +1305,7 @@ LONG WINAPI SHQueryInfoKeyW(HKEY hKey, LPDWORD pwSubKeys, LPDWORD pwSubKeyMax,
  *
  *       subcase-2: buffer is to small to hold the expanded string:
  *          the function return success (!!) and the result is truncated
- *	    *** This is clearly a error in the native implementation. ***
+ *	    *** This is clearly an error in the native implementation. ***
  *
  *     case-2: the unexpanded string is bigger than the expanded one
  *       The buffer must have enough space to hold the unexpanded

@@ -2427,7 +2427,7 @@ typedef struct tagEMF_PaletteCopy
 /***************************************************************
  * Find the EMR_EOF record and then use it to find the
  * palette entries for this enhanced metafile.
- * The lpData is actually a pointer to a EMF_PaletteCopy struct
+ * The lpData is actually a pointer to an EMF_PaletteCopy struct
  * which contains the max number of elements to copy and where
  * to copy them to.
  *

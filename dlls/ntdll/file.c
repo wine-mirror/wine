@@ -117,7 +117,7 @@ NTSTATUS WINAPI NtOpenFile( PHANDLE handle, ACCESS_MASK access,
  *	sharing      [I] Type of shared access the caller would like to the file
  *	disposition  [I] Specifies what to do, depending on whether the file already exists
  *	options      [I] Options for creating a new file
- *	ea_buffer    [I] Pointer to a extended attributes buffer
+ *	ea_buffer    [I] Pointer to an extended attributes buffer
  *	ea_length    [I] Length of ea_buffer
  *
  * RETURNS

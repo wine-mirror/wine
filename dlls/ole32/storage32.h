@@ -533,7 +533,7 @@ HRESULT WINAPI StorageInternalImpl_Revert(
 struct IEnumSTATSTGImpl
 {
   IEnumSTATSTGVtbl *lpVtbl;    /* Needs to be the first item in the struct
-				* since we want to cast this in a IEnumSTATSTG pointer */
+				* since we want to cast this in an IEnumSTATSTG pointer */
 
   ULONG		 ref;		        /* Reference count */
   StorageImpl* parentStorage;         /* Reference to the parent storage */
@@ -618,7 +618,7 @@ INT IEnumSTATSTGImpl_FindParentProperty(
 struct StgStreamImpl
 {
   IStreamVtbl *lpVtbl;  /* Needs to be the first item in the struct
-			 * since we want to cast this in a IStream pointer */
+			 * since we want to cast this to an IStream pointer */
 
   /*
    * Reference count

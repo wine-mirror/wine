@@ -358,7 +358,7 @@ static ICOM_VTABLE(IDirect3D) d3dvt = {
         <para>
           Then we implement the interface methods. To match what has
           been declared in the header file they must take a pointer to
-          a IDirect3D structure and we must cast it to an _IDirect3D
+          an IDirect3D structure and we must cast it to an _IDirect3D
           so that we can manipulate the fields. This is performed by
           the ICOM_THIS macro.
         </para>

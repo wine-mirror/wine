@@ -1625,25 +1625,25 @@ MSFT_DoFuncs(TLBContext*     pcx,
      * member information is stored in a data structure at offset
      * indicated by the memoffset field of the typeinfo structure
      * There are several distinctive parts.
-     * the first part starts with a field that holds the total length
+     * The first part starts with a field that holds the total length
      * of this (first) part excluding this field. Then follow the records,
      * for each member there is one record.
      *
-     * First entry is always the length of the record (including this
+     * The first entry is always the length of the record (including this
      * length word).
-     * Rest of the record depends on the type of the member. If there is
-     * a field indicating the member type (function variable intereface etc)
+     * The rest of the record depends on the type of the member. If there is
+     * a field indicating the member type (function, variable, interface, etc)
      * I have not found it yet. At this time we depend on the information
      * in the type info and the usual order how things are stored.
      *
-     * Second follows an array sized nrMEM*sizeof(INT) with a memeber id
+     * Second follows an array sized nrMEM*sizeof(INT) with a member id
      * for each member;
      *
-     * Third is a equal sized array with file offsets to the name entry
+     * Third is an equal sized array with file offsets to the name entry
      * of each member.
      *
-     * Forth and last (?) part is an array with offsets to the records in the
-     * first part of this file segment.
+     * The fourth and last (?) part is an array with offsets to the records
+     * in the first part of this file segment.
      */
 
     int infolen, nameoffset, reclength, nrattributes, i;

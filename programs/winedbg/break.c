@@ -899,7 +899,7 @@ void break_restart_execution(int count)
          */
         be_cpu->get_addr(dbg_curr_thread->handle, &dbg_context,
                          be_cpu_addr_stack, &addr);
-        /* FIXME: we assume stack grows as on a i386 */
+        /* FIXME: we assume stack grows as on an i386 */
         addr.Offset += 2 * sizeof(unsigned int);
         dbg_read_memory(memory_to_linear_addr(&addr),
                         &addr.Offset, sizeof(addr.Offset));

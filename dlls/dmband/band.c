@@ -384,7 +384,7 @@ static HRESULT IDirectMusicBandImpl_IPersistStream_ParseInstrument (LPPERSISTSTR
   IDirectMusicObject* pObject = NULL;
 
   if (pChunk->fccID != DMUS_FOURCC_INSTRUMENT_LIST) {
-    ERR_(dmfile)(": %s chunk should be a INSTRUMENT list\n", debugstr_fourcc (pChunk->fccID));
+    ERR_(dmfile)(": %s chunk should be an INSTRUMENT list\n", debugstr_fourcc (pChunk->fccID));
     return E_FAIL;
   }
 
@@ -482,7 +482,7 @@ static HRESULT IDirectMusicBandImpl_IPersistStream_ParseInstrumentsList (LPPERSI
   LARGE_INTEGER liMove; /* used when skipping chunks */
 
   if (pChunk->fccID != DMUS_FOURCC_INSTRUMENTS_LIST) {
-    ERR_(dmfile)(": %s chunk should be a INSTRUMENTS list\n", debugstr_fourcc (pChunk->fccID));
+    ERR_(dmfile)(": %s chunk should be an INSTRUMENTS list\n", debugstr_fourcc (pChunk->fccID));
     return E_FAIL;
   }  
 

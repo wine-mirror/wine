@@ -1535,7 +1535,7 @@ typedef struct _EXCEPTION_REGISTRATION_RECORD
 } EXCEPTION_REGISTRATION_RECORD;
 
 /*
- * function pointer to a exception filter
+ * function pointer to an exception filter
  */
 
 typedef LONG (CALLBACK *PVECTORED_EXCEPTION_HANDLER)(PEXCEPTION_POINTERS ExceptionInfo);

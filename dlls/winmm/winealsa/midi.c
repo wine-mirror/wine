@@ -293,7 +293,7 @@ static DWORD WINAPI midRecThread(LPVOID arg)
 	pfd = (struct pollfd *)HeapAlloc(GetProcessHeap(), 0, npfd * sizeof(struct pollfd));
 	snd_seq_poll_descriptors(midiSeq, pfd, npfd, POLLIN);
 
-	/* Check if a event is present */
+	/* Check if an event is present */
 	if (poll(pfd, npfd, 250) < 0) {
 	    HeapFree(GetProcessHeap(), 0, pfd);
 	    continue;

@@ -2406,7 +2406,7 @@ static BOOL FILEDLG95_FILETYPE_OnCommand(HWND hwnd, WORD wNotifyCode)
 /***********************************************************************
  *      FILEDLG95_FILETYPE_SearchExt
  *
- * searches for a extension in the filetype box
+ * searches for an extension in the filetype box
  */
 static int FILEDLG95_FILETYPE_SearchExt(HWND hwnd,LPCWSTR lpstrExt)
 {

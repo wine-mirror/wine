@@ -33,7 +33,7 @@ HRESULT WINAPI IWineD3DBaseTextureImpl_QueryInterface(IWineD3DBaseTexture *iface
 {
     IWineD3DBaseTextureImpl *This = (IWineD3DBaseTextureImpl *)iface;   
     TRACE("(%p)->(%s,%p)\n",This,debugstr_guid(riid),ppobj);        
-    /* FIXME: This needs to extend a IWineD3DBaseObject */        
+    /* FIXME: This needs to extend an IWineD3DBaseObject */        
     if (IsEqualGUID(riid, &IID_IUnknown)     
         || IsEqualGUID(riid, &IID_IWineD3DResource)   
         || IsEqualGUID(riid, &IID_IWineD3DBaseTexture)) {

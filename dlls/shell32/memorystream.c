@@ -1,12 +1,12 @@
 /*
- *	this class implements a pure IStream object
- *	and can be used for many purposes
+ *	This class implements a pure IStream object
+ *	and can be used for many purposes.
  *
- *	the main reason for implementing this was
+ *	The main reason for implementing this was
  *	a cleaner implementation of IShellLink which
- *	needs to be able to load lnk's from a IStream
+ *	needs to be able to load lnks from an IStream
  *	interface so it was obvious to capsule the file
- *	access in a IStream to.
+ *	access in an IStream to.
  *
  * Copyright 1999 Juergen Schmied
  * Copyright 2003 Mike McCormack for CodeWeavers

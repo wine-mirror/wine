@@ -392,7 +392,7 @@ BOOL WINAPI GetStandardColorSpaceProfileA( PCSTR machine, DWORD id, PSTR profile
  *  machine  [I]   Name of the machine for which to get the standard color space.
  *                 Must be NULL, which indicates the local machine.
  *  id       [I]   Id of a standard color space.
- *  profile  [O]   Buffer to recieve the profile filename.
+ *  profile  [O]   Buffer to receive the profile filename.
  *  size     [I/O] Size of the filename buffer in bytes.
  *
  * RETURNS
