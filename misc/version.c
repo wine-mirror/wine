@@ -358,18 +358,26 @@ DWORD VERSION_GetLinkedDllVersion(void)
  */
 static WINDOWS_VERSION VERSION_GetVersion(void)
 {
-        static WORD winver = 0xffff;
+    static WORD winver = 0xffff;
 
-	if (versionForced) /* user has overridden any sensible checks */
-	  return defaultWinVersion;
+    if (winver == 0xffff) /* to be determined */
+    {
+        WINDOWS_VERSION retver;
+	  
+        if (versionForced) /* user has overridden any sensible checks */
+	    winver = defaultWinVersion;
+	else
+	{
+	    retver = VERSION_GetLinkedDllVersion();
 
-	if (winver == 0xffff) /* to be determined */ {
-	  WINDOWS_VERSION retver = VERSION_GetLinkedDllVersion();
+	    /* cache determined value, but do not store in case of WIN31 */
+	    if (retver != WIN31) winver = retver;
 
-	  if (retver != WIN31) winver = retver;
-	  return retver;
+	    return retver;
 	}
-	return winver;
+    }
+
+    return winver;
 }
 
 
