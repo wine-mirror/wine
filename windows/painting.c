@@ -712,6 +712,8 @@ static HRGN RDW_Paint( WND* wndPtr, HRGN hrgn, UINT flags, UINT ex )
 
     if (flags & RDW_UPDATENOW)
     {
+        /* process pending events and messages before painting */
+        MsgWaitForMultipleObjects( 0, NULL, FALSE, 0, QS_ALLINPUT );
         if (wndPtr->hrgnUpdate) /* wm_painticon wparam is 1 */
             SendMessageW( hWnd, (bIcon) ? WM_PAINTICON : WM_PAINT, bIcon, 0 );
     }
