@@ -154,7 +154,7 @@ HFILE32 WINAPI CreateFile32A(LPCSTR filename, DWORD access, DWORD sharing,
         filename += 4;
 	if (!strncmp(filename, "UNC", 3))
 	{
-            FIXME(file, "UNC names not supported.\n");
+            FIXME(file, "UNC name (%s) not supported.\n",filename);
             SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
             return HFILE_ERROR32;
 	}	

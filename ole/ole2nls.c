@@ -2024,7 +2024,16 @@ INT32 WINAPI LCMapString32A(
   {
     FIXME(string,"(0x%04lx,0x%08lx,%p,%d,%p,%d): "
 	  "unimplemented flags: 0x%08lx\n",
-	  lcid,mapflags,srcstr,srclen,dststr,dstlen,mapflags);
+	  lcid,
+  	  mapflags&~(LCMAP_UPPERCASE | LCMAP_LOWERCASE | LCMAP_SORTKEY |
+		     NORM_IGNORECASE | NORM_IGNORENONSPACE | SORT_STRINGSORT |
+		     NORM_IGNOREWIDTH),
+	  srcstr,
+	  srclen,
+	  dststr,
+	  dstlen,
+	  mapflags
+     );
   }
 
   if ( !(mapflags & LCMAP_SORTKEY) )
