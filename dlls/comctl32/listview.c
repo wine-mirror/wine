@@ -946,7 +946,6 @@ static void LISTVIEW_UpdateScroll(LISTVIEW_INFO *infoPtr)
 
   if (lStyle & LVS_NOSCROLL) return;
 
-  ZeroMemory(&scrollInfo, sizeof(SCROLLINFO));
   scrollInfo.cbSize = sizeof(SCROLLINFO);
 
   if (uView == LVS_LIST)
@@ -958,7 +957,8 @@ static void LISTVIEW_UpdateScroll(LISTVIEW_INFO *infoPtr)
 
     TRACE("items=%d, perColumn=%d, perRow=%d\n",
 	  nNumOfItems, nCountPerColumn, nCountPerRow);
-    
+   
+    scrollInfo.nMin = 0; 
     scrollInfo.nMax = nNumOfItems / nCountPerColumn;
     if((nNumOfItems % nCountPerColumn) == 0)
         scrollInfo.nMax--;
@@ -987,15 +987,16 @@ static void LISTVIEW_UpdateScroll(LISTVIEW_INFO *infoPtr)
 
     /* update horizontal scrollbar */
     nListWidth = infoPtr->rcList.right - infoPtr->rcList.left;
-    if (GetScrollInfo(infoPtr->hwndSelf, SB_HORZ, &scrollInfo) == FALSE
+    scrollInfo.fMask = SIF_POS;
+    if (!GetScrollInfo(infoPtr->hwndSelf, SB_HORZ, &scrollInfo)
        || GETITEMCOUNT(infoPtr) == 0)
     {
       scrollInfo.nPos = 0;
     }
     scrollInfo.nMin = 0;
-    scrollInfo.fMask = SIF_RANGE | SIF_POS | SIF_PAGE  ;
-    scrollInfo.nPage = nListWidth;
     scrollInfo.nMax = max(infoPtr->nItemWidth, 0)-1;
+    scrollInfo.nPage = nListWidth;
+    scrollInfo.fMask = SIF_RANGE | SIF_POS | SIF_PAGE  ;
     test = (scrollInfo.nMin >= scrollInfo.nMax - max((INT)scrollInfo.nPage - 1, 0));
     TRACE("LVS_REPORT Horz. nMax=%d, nPage=%d, test=%d\n",
 	  scrollInfo.nMax, scrollInfo.nPage, test);
@@ -1019,13 +1020,13 @@ static void LISTVIEW_UpdateScroll(LISTVIEW_INFO *infoPtr)
 
       /* Update Horizontal Scrollbar */
       scrollInfo.fMask = SIF_POS;
-      if (GetScrollInfo(infoPtr->hwndSelf, SB_HORZ, &scrollInfo) == FALSE
+      if (!GetScrollInfo(infoPtr->hwndSelf, SB_HORZ, &scrollInfo)
         || GETITEMCOUNT(infoPtr) == 0)
       {
         scrollInfo.nPos = 0;
       }
-      scrollInfo.nMax = max(nViewWidth, 0)-1;
       scrollInfo.nMin = 0;
+      scrollInfo.nMax = max(nViewWidth, 0)-1;
       scrollInfo.nPage = nListWidth;
       scrollInfo.fMask = SIF_RANGE | SIF_POS | SIF_PAGE;
       TRACE("LVS_ICON/SMALLICON Horz.\n");
@@ -1034,13 +1035,13 @@ static void LISTVIEW_UpdateScroll(LISTVIEW_INFO *infoPtr)
       /* Update Vertical Scrollbar */
       nListHeight = infoPtr->rcList.bottom - infoPtr->rcList.top;
       scrollInfo.fMask = SIF_POS;
-      if (GetScrollInfo(infoPtr->hwndSelf, SB_VERT, &scrollInfo) == FALSE
+      if (!GetScrollInfo(infoPtr->hwndSelf, SB_VERT, &scrollInfo)
         || GETITEMCOUNT(infoPtr) == 0)
       {
         scrollInfo.nPos = 0;
       }
-      scrollInfo.nMax = max(nViewHeight,0)-1;
       scrollInfo.nMin = 0;
+      scrollInfo.nMax = max(nViewHeight,0)-1;
       scrollInfo.nPage = nListHeight;
       scrollInfo.fMask = SIF_RANGE | SIF_POS | SIF_PAGE;
       TRACE("LVS_ICON/SMALLICON Vert.\n");
@@ -2490,7 +2491,6 @@ static INT LISTVIEW_GetTopIndex(LISTVIEW_INFO *infoPtr)
     INT nItem = 0;
     SCROLLINFO scrollInfo;
 
-    ZeroMemory(&scrollInfo, sizeof(SCROLLINFO));
     scrollInfo.cbSize = sizeof(SCROLLINFO);
     scrollInfo.fMask = SIF_POS;
 
@@ -4007,7 +4007,6 @@ static BOOL LISTVIEW_EnsureVisible(LISTVIEW_INFO *infoPtr, INT nItem, BOOL bPart
   RECT rcItem;
   BOOL bRedraw = FALSE;
 
-  ZeroMemory(&scrollInfo, sizeof(SCROLLINFO));
   scrollInfo.cbSize = sizeof(SCROLLINFO);
   scrollInfo.fMask = SIF_POS;
 
@@ -4210,6 +4209,7 @@ static LRESULT LISTVIEW_FindItemW(LISTVIEW_INFO *infoPtr, INT nStart,
 
   if ((nItem >= -1) && (lpFindInfo != NULL))
   {
+    lvItem.mask = 0;
     if (lpFindInfo->flags & LVFI_PARAM)
     {
       lvItem.mask |= LVIF_PARAM;
@@ -4841,7 +4841,6 @@ static BOOL LISTVIEW_GetItemBoundBox(LISTVIEW_INFO *infoPtr, INT nItem, LPRECT l
       {
         SCROLLINFO scrollInfo;
         /* Adjust position by scrollbar offset */
-        ZeroMemory(&scrollInfo, sizeof(SCROLLINFO));
         scrollInfo.cbSize = sizeof(SCROLLINFO);
         scrollInfo.fMask = SIF_POS;
         GetScrollInfo(infoPtr->hwndSelf, SB_HORZ, &scrollInfo);
@@ -5805,7 +5804,6 @@ static BOOL LISTVIEW_GetOrigin(LISTVIEW_INFO *infoPtr, LPPOINT lpptOrigin)
 
     if (!lpptOrigin) return FALSE;
     
-    ZeroMemory(&scrollInfo, sizeof(SCROLLINFO));
     scrollInfo.cbSize = sizeof(SCROLLINFO);    
     scrollInfo.fMask = SIF_POS;
     
@@ -5876,22 +5874,23 @@ static LRESULT LISTVIEW_GetSelectedCount(LISTVIEW_INFO *infoPtr)
  */
 static LRESULT LISTVIEW_GetStringWidthT(LISTVIEW_INFO *infoPtr, LPCWSTR lpszText, BOOL isW)
 {
-  if (is_textT(lpszText, isW))
-  {
-    HFONT hFont = infoPtr->hFont ? infoPtr->hFont : infoPtr->hDefaultFont;
-    HDC hdc = GetDC(infoPtr->hwndSelf);
-    HFONT hOldFont = SelectObject(hdc, hFont);
     SIZE stringSize;
-    ZeroMemory(&stringSize, sizeof(SIZE));
-    if (isW)
-      GetTextExtentPointW(hdc, lpszText, lstrlenW(lpszText), &stringSize);
-    else
-      GetTextExtentPointA(hdc, (LPCSTR)lpszText, lstrlenA((LPCSTR)lpszText), &stringSize);
-    SelectObject(hdc, hOldFont);
-    ReleaseDC(infoPtr->hwndSelf, hdc);
+    
+    stringSize.cx = 0;    
+    if (is_textT(lpszText, isW))
+    {
+    	HFONT hFont = infoPtr->hFont ? infoPtr->hFont : infoPtr->hDefaultFont;
+    	HDC hdc = GetDC(infoPtr->hwndSelf);
+    	HFONT hOldFont = SelectObject(hdc, hFont);
+
+    	if (isW)
+  	    GetTextExtentPointW(hdc, lpszText, lstrlenW(lpszText), &stringSize);
+    	else
+  	    GetTextExtentPointA(hdc, (LPCSTR)lpszText, lstrlenA((LPCSTR)lpszText), &stringSize);
+    	SelectObject(hdc, hOldFont);
+    	ReleaseDC(infoPtr->hwndSelf, hdc);
+    }
     return stringSize.cx;
-  }
-  return 0;
 }
 
 /***
@@ -7627,7 +7626,6 @@ static LRESULT LISTVIEW_VScroll(LISTVIEW_INFO *infoPtr, INT nScrollCode,
 
     SendMessageW(infoPtr->hwndEdit, WM_KILLFOCUS, 0, 0);
 
-    ZeroMemory(&scrollInfo, sizeof(SCROLLINFO));
     scrollInfo.cbSize = sizeof(SCROLLINFO);
     scrollInfo.fMask = SIF_PAGE | SIF_POS | SIF_RANGE | SIF_TRACKPOS;
 
@@ -7731,7 +7729,6 @@ static LRESULT LISTVIEW_HScroll(LISTVIEW_INFO *infoPtr, INT nScrollCode,
 
     SendMessageW(infoPtr->hwndEdit, WM_KILLFOCUS, 0, 0);
 
-    ZeroMemory(&scrollInfo, sizeof(SCROLLINFO));
     scrollInfo.cbSize = sizeof(SCROLLINFO);
     scrollInfo.fMask = SIF_PAGE | SIF_POS | SIF_RANGE | SIF_TRACKPOS;
 
@@ -7817,9 +7814,8 @@ static LRESULT LISTVIEW_MouseWheel(LISTVIEW_INFO *infoPtr, INT wheelDelta)
     SystemParametersInfoW(SPI_GETWHEELSCROLLLINES,0, &pulScrollLines, 0);
     gcWheelDelta -= wheelDelta;
 
-    ZeroMemory(&scrollInfo, sizeof(SCROLLINFO));
     scrollInfo.cbSize = sizeof(SCROLLINFO);
-    scrollInfo.fMask = SIF_POS | SIF_RANGE;
+    scrollInfo.fMask = SIF_POS;
 
     switch(uView)
     {
