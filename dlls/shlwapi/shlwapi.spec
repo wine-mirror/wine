@@ -705,7 +705,7 @@
 @ stub    PathUnExpandEnvStringsW
 @ stdcall SHCopyKeyA(long str long long) SHCopyKeyA
 @ stdcall SHCopyKeyW(long wstr long long) SHCopyKeyW
-@ stub    SHAutoComplete
+@ stdcall SHAutoComplete(ptr long) SHAutoComplete
 @ stdcall SHCreateStreamOnFileA(str long ptr) SHCreateStreamOnFileA
 @ stdcall SHCreateStreamOnFileW(wstr long ptr) SHCreateStreamOnFileW
 @ stdcall SHCreateStreamOnFileEx(wstr long long long ptr ptr) SHCreateStreamOnFileEx

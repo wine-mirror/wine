@@ -2273,3 +2273,12 @@ HRESULT WINAPI UrlCreateFromPathW(LPCWSTR pszPath, LPWSTR pszUrl, LPDWORD pcchUr
 	StrCpyW(pszUrl, pszNewUrl);
 	return S_OK;
 }
+
+/*************************************************************************
+ *      SHAutoComplete  	[SHLWAPI.@]
+ */
+HRESULT WINAPI SHAutoComplete(HWND hwndEdit, DWORD dwFlags)
+{
+  FIXME("SHAutoComplete stub\n");
+  return S_FALSE;
+}
