@@ -21,7 +21,7 @@
 #define __WINE_EH_H
 #define __WINE_USE_MSVCRT
 
-#if !defined(__cplusplus) && !defined(__WINE__)
+#if !defined(__cplusplus) && !defined(USE_MSVCRT_PREFIX)
 #error "eh.h is meant only for C++ applications"
 #endif
 

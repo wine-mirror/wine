@@ -25,9 +25,7 @@
 
 #include "basetsd.h"
 #include "windef.h"
-#ifndef __WINE__
 #include "winerror.h"
-#endif
 
 #ifdef __cplusplus
 extern "C" {

@@ -192,8 +192,4 @@ static inline EXCEPTION_FRAME * WINE_UNUSED __wine_pop_frame( EXCEPTION_FRAME *f
 
 extern void __wine_enter_vm86( CONTEXT *context );
 
-#ifdef __WINE__
-extern void WINAPI EXC_RtlRaiseException( PEXCEPTION_RECORD, PCONTEXT );
-#endif
-
 #endif  /* __WINE_WINE_EXCEPTION_H */

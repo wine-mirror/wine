@@ -988,13 +988,7 @@ typedef struct _D3DADAPTER_IDENTIFIER8 {
     char            Driver[MAX_DEVICE_IDENTIFIER_STRING];
     char            Description[MAX_DEVICE_IDENTIFIER_STRING];
 
-#if defined(_WIN32) || defined(__WINE__)
-    LARGE_INTEGER   DriverVersion;            /* Defined for 32-bit components */
-#else
-    DWORD           DriverVersionLowPart;     /* Defined for 16-bit driver components */
-    DWORD           DriverVersionHighPart;
-#endif
-
+    LARGE_INTEGER   DriverVersion;
     DWORD           VendorId;
     DWORD           DeviceId;
     DWORD           SubSysId;

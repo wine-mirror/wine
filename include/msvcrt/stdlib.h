@@ -118,16 +118,7 @@ extern unsigned int*         __p__fmode(void);
 #define __mb_cur_max       (*__p___mb_cur_max())
 #define _doserrno          (*__doserrno())
 #define _fmode             (*_fmode)
-#elif !defined(__WINE__)
-#define MSVCRT___argc      (*__p___argc())
-#define MSVCRT___argv      (*__p___argv())
-#define MSVCRT___wargv     (*__p___wargv())
-#define MSVCRT__environ    (*__p__environ())
-#define MSVCRT__wenviron   (*__p__wenviron())
-#define MSVCRT___mb_cur_max (*__p___mb_cur_max())
-#define MSVCRT__doserrno   (*__doserrno())
-#define MSVCRT__fmode      (*_fmode())
-#endif /* USE_MSVCRT_PREFIX, __WINE__ */
+#endif /* USE_MSVCRT_PREFIX */
 
 
 extern int*           MSVCRT(_errno)(void);

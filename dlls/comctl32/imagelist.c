@@ -253,9 +253,8 @@ ImageList_Add (HIMAGELIST himl,	HBITMAP hbmImage, HBITMAP hbmMask)
  *     Success: index of the new image
  *     Failure: -1
  */
-
-INT WINAPI
-ImageList_AddIcon (HIMAGELIST himl, HICON hIcon)
+#undef ImageList_AddIcon
+INT WINAPI ImageList_AddIcon (HIMAGELIST himl, HICON hIcon)
 {
     return ImageList_ReplaceIcon (himl, -1, hIcon);
 }

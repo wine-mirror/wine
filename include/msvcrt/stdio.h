@@ -140,11 +140,7 @@ MSVCRT(FILE)*        MSVCRT(__p__iob)(void);
 #define stdin              (_iob+STDIN_FILENO)
 #define stdout             (_iob+STDOUT_FILENO)
 #define stderr             (_iob+STDERR_FILENO)
-#elif !defined(__WINE__)
-#define MSVCRT_stdin       (_iob+STDIN_FILENO)
-#define MSVCRT_stdout      (_iob+STDOUT_FILENO)
-#define MSVCRT_stderr      (_iob+STDERR_FILENO)
-#endif /* USE_MSVCRT_PREFIX, __WINE__ */
+#endif /* USE_MSVCRT_PREFIX */
 
 #ifndef MSVCRT_STDIO_DEFINED
 #define MSVCRT_STDIO_DEFINED

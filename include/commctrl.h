@@ -554,7 +554,6 @@ typedef struct _IMAGELISTDRAWPARAMS
 
 
 INT      WINAPI ImageList_Add(HIMAGELIST,HBITMAP,HBITMAP);
-INT      WINAPI ImageList_AddIcon (HIMAGELIST, HICON);
 INT      WINAPI ImageList_AddMasked(HIMAGELIST,HBITMAP,COLORREF);
 BOOL     WINAPI ImageList_BeginDrag(HIMAGELIST,INT,INT,INT);
 BOOL     WINAPI ImageList_Copy(HIMAGELIST,INT,HIMAGELIST,INT,INT);
@@ -599,9 +598,7 @@ BOOL     WINAPI ImageList_SetOverlayImage(HIMAGELIST,INT,INT);
 BOOL     WINAPI ImageList_Write(HIMAGELIST, LPSTREAM);
 #endif
 
-#ifndef __WINE__
 #define ImageList_AddIcon(himl,hicon) ImageList_ReplaceIcon(himl,-1,hicon)
-#endif
 #define ImageList_ExtractIcon(hi,himl,i) ImageList_GetIcon(himl,i,0)
 #define ImageList_LoadBitmap(hi,lpbmp,cx,cGrow,crMask) \
   ImageList_LoadImage(hi,lpbmp,cx,cGrow,crMask,IMAGE_BITMAP,0)

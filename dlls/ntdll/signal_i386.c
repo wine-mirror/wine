@@ -424,6 +424,7 @@ static wine_signal_handler handlers[256];
 
 static sigset_t all_sigs;
 
+extern void WINAPI EXC_RtlRaiseException( PEXCEPTION_RECORD, PCONTEXT );
 
 /***********************************************************************
  *           dispatch_signal
