@@ -2499,8 +2499,9 @@ BOOL32 WINAPI SetWindowPos32( HWND32 hwnd, HWND32 hwndInsertAfter,
 	    focus = curr = GetFocus32();
 	    while (curr) {
 		if (curr == hwnd) {
-		    SetFocus32( 0 );
-		    SetFocus32( focus );
+		    WND *pFocus = WIN_FindWndPtr( focus );
+		    if (pFocus)
+			pFocus->pDriver->pSetFocus(pFocus);
 		    break;
 		}
 		curr = GetParent32(curr);
