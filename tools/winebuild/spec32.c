@@ -209,7 +209,7 @@ static int output_exports( FILE *outfile, int nr_exports )
 
         /* output the function names */
 
-        fprintf( outfile, "    \"\\t.text 1\\n\"\n" );
+        fprintf( outfile, "    \"\\t.text\\n\"\n" );
         fprintf( outfile, "    \"__wine_spec_exp_names:\\n\"\n" );
         for (i = 0; i < nb_names; i++)
             fprintf( outfile, "    \"\\t" STRING " \\\"%s\\\"\\n\"\n", Names[i]->name );
