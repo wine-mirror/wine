@@ -1,0 +1,252 @@
+My tests show that Windows window management events behave like described
+in this file, at least under Win98.
+The (16/32) or (16) or (32) at the end shows whether the sequence has been
+confirmed for win16, win32, or both.
+
+Window Edge Styles (Win95/98 look):
+ WS_EX_DLGMODALFRAME: double border, WS_CAPTION allowed
+ WS_DLGFRAME: double border, WS_CAPTION not allowed (but possibly shown anyway)
+ WS_THICKFRAME: thick border
+ WS_BORDER (default for top-level windows): single black border
+ none (default for child windows): no border
+
+CreateWindow (for overlapped window, not initially visible) (16/32)
+Messages sent:
+ WM_GETMINMAXINFO
+ WM_NCCREATE
+ WM_NCCALCSIZE (wParam=0)
+ WM_CREATE
+
+ShowWindow (for overlapped window) (16/32)
+Messages sent:
+ WM_SHOWWINDOW (wParam=1)
+ WM_WINDOWPOSCHANGING (NOMOVE|NOSIZE|SHOWWINDOW)
+ WM_QUERYNEWPALETTE, if in 256-color mode
+ WM_WINDOWPOSCHANGING (NOMOVE|NOSIZE)
+ WM_ACTIVATEAPP (wParam=1)
+ WM_NCACTIVATE (wParam=1)
+  DefWindowProc:
+   WM_GETTEXT
+ WM_ACTIVATE (wParam=1)
+  DefWindowProc:
+   WM_SETFOCUS (wParam=0)
+ WM_NCPAINT (wParam=1)
+  DefWindowProc:
+   WM_GETTEXT
+ WM_ERASEBKGND
+ WM_WINDOWPOSCHANGED (NOMOVE|NOSIZE|NOZORDER|SHOWWINDOW)
+ WM_SIZE (NOT from DefWindowProc)
+ WM_MOVE (NOT from DefWindowProc)
+
+(WM_NCHITTEST and WM_SETCURSOR will tend to follow immediately after the
+ ShowWindow if the mouse is inside the window)
+
+DestroyWindow (for overlapped window) (32)
+Messages sent:
+ WM_WINDOWPOSCHANGING (wParam=0)
+ WM_WINDOWPOSCHANGED (wParam=0)
+ WM_NCACTIVATE (wParam=0)
+ WM_ACTIVATE (wParam=0)
+ WM_ACTIVATEAPP (wParam=0)
+ WM_KILLFOCUS (wParam=0)
+ WM_DESTROY
+ WM_NCDESTROY
+
+CreateWindow (for child window, not initially visible)
+Messages sent:
+ WM_NCCREATE
+ WM_NCCALCSIZE (wParam=0)
+ WM_CREATE
+ WM_SIZE
+ WM_MOVE
+ (to parent window) WM_PARENTNOTIFY (wParam=1)
+
+ShowWindow (for child window)
+Messages sent:
+ WM_SHOWWINDOW (wParam=1)
+ WM_WINDOWPOSCHANGING (wParam=0)
+ (to parent window) WM_ERASEBKGND
+ WM_WINDOWPOSCHANGED (wParam=0)
+
+DestroyWindow (for child window)
+Messages sent:
+ (to parent window) WM_PARENTNOTIFY (wParam=2)
+ WM_SHOWWINDOW (wParam=0)
+ WM_WINDOWPOSCHANGING (wParam=0)
+ (to parent window) WM_ERASEBKGND
+ WM_WINDOWPOSCHANGED (wParam=0)
+ WM_DESTROY
+ WM_NCDESTROY
+
+Moving the mouse:
+Messages sent:
+ WM_NCHITTEST
+ WM_SETCURSOR
+Messages posted:
+ WM_MOUSEMOVE, if WM_NCHITTEST returns HTCLIENT
+ WM_NCMOUSEMOVE, if WM_NCHITTEST returns somewhere in nonclient area (not HTNOWHERE)
+
+Moving by dragging the title bar (after WM_NCHITTEST and WM_SETCURSOR) (outline move):
+ WM_NCLBUTTONDOWN (wParam=2=HTCAPTION)
+  DefWindowProc:
+   WM_SYSCOMMAND (wParam=0xf012=SC_MOVE+2)
+    DefWindowProc:
+     WM_GETMINMAXINFO
+     WM_ENTERSIZEMOVE
+     WM_WINDOWPOSCHANGING
+     WM_WINDOWPOSCHANGED
+      DefWindowProc:
+       WM_MOVE
+     WM_EXITSIZEMOVE
+
+Sizing by dragging the thick borders (after WM_NCHITTEST and WM_SETCURSOR) (outline move):
+ WM_NCLBUTTONDOWN (wParam=0xd)
+  DefWindowProc:
+   WM_SYSCOMMAND (wParam=0xf004)
+    DefWindowProc:
+     WM_GETMINMAXINFO
+     WM_ENTERSIZEMOVE
+     WM_SIZING (wParam=4) (many times, probably one for each mouse movement)
+     WM_WINDOWPOSCHANGING
+      DefWindowProc:
+       WM_GETMINMAXINFO
+     WM_NCCALCSIZE (wParam=1)
+     WM_NCPAINT (wParam=1)
+      DefWindowProc:
+       WM_GETTEXT
+     WM_ERASEBKGND
+     WM_WINDOWPOSCHANGED
+      DefWindowProc:
+       WM_MOVE
+       WM_SIZE
+     WM_EXITSIZEMOVE
+
+Resizing child window with MoveWindow (32):
+ WM_WINDOWPOSCHANGING
+ WM_NCCALCSIZE (wParam=1)
+ WM_ERASEBKGND
+ WM_WINDOWPOSCHANGED
+  DefWindowProc:
+   WM_MOVE
+   WM_SIZE
+
+Clicking on inactive button:
+Messages sent:
+ WM_NCHITTEST
+ (to parent window) WM_PARENTNOTIFY (wParam=0x201=WM_LBUTTONDOWN)
+ WM_MOUSEACTIVATE
+  ButtonProc->DefWindowProc:
+   (to parent window) WM_MOUSEACTIVATE
+ WM_SETCURSOR
+  ButtonProc->DefWindowProc:
+   (to parent window) WM_SETCURSOR
+Messages posted:
+ WM_LBUTTONDOWN
+  (to parent window) WM_KILLFOCUS
+  WM_SETFOCUS
+   (to parent window) WM_CTLCOLORBTN
+  BM_SETSTATE32
+   (to parent window) WM_CTLCOLORBTN
+ WM_LBUTTONUP
+  BM_SETSTATE32
+   (to parent window) WM_CTLCOLORBTN
+  (to parent window) WM_COMMAND
+
+Reparenting a button (16/32):
+ WM_SHOWWINDOW (wParam=0)
+ WM_WINDOWPOSCHANGING (HIDEWINDOW|NOACTIVATE|NOMOVE|NOSIZE|NOZORDER)
+ (to parent window) WM_ERASEBKGND
+ WM_WINDOWPOSCHANGED (HIDEWINDOW|NOACTIVATE|NOMOVE|NOSIZE|NOZORDER)
+ WM_WINDOWPOSCHANGING (NOSIZE|NOZORDER)
+ WM_CHILDACTIVATE
+ WM_WINDOWPOSCHANGED (NOSIZE|NOREDRAW|NOZORDER)
+  DefWindowProc:
+   WM_MOVE
+ WM_SHOWWINDOW (wParam=1)
+The last child (button) reparented gets topmost for its new parent.
+
+Creation of a modal dialog (32):
+ (to parent window) WM_CANCELMODE
+ (to parent window) WM_KILLFOCUS
+ (to parent window) WM_ENABLE (wParam=0)
+ (window proc creation messages not tracked yet, because...)
+ (dlgproc) WM_SETFONT
+ (dlgproc) WM_INITDIALOG
+ (...the window proc message hook was installed here, IsVisible still FALSE)
+ (to parent window) WM_NCACTIVATE (wParam=0)
+  DefWindowProc:
+   WM_GETTEXT
+ (to parent window) WM_ACTIVATE (wParam=0)
+ WM_WINDOWPOSCHANGING
+ (to parent window) WM_WINDOWPOSCHANGING
+ WM_NCACTIVATE (wParam=1)
+ WM_ACTIVATE (wParam=1)
+ (setting focus)
+ WM_SHOWWINDOW (wParam=1)
+ WM_WINDOWPOSCHANGING
+ WM_NCPAINT
+  DefWindowProc:
+   WM_GETTEXT
+ WM_ERASEBKGND
+  DialogWindowProc(?):
+   WM_CTLCOLORDLG
+ WM_WINDOWPOSCHANGED
+ WM_PAINT
+ (bunch of WM_CTLCOLOR* for each control)
+ (to parent window) WM_PAINT
+ (to parent window) WM_ENTERIDLE (wParam=0)
+ (to parent window) WM_SETCURSOR
+
+Destruction of a modal dialog (32):
+ (inside dialog proc: EndDialog is called)
+  (to parent window) WM_ENABLE (wParam=1)
+  WM_SETFOCUS
+  WM_WINDOWPOSCHANGING
+  (to parent window) WM_NCPAINT
+   DefWindowProc:
+    WM_GETTEXT
+  (to parent window) WM_ERASEBKGND
+  WM_WINDOWPOSCHANGED
+  WM_NCACTIVATE (wParam=0)
+  WM_ACTIVATE (wParam=0)
+  WM_WINDOWPOSCHANGING
+  (to parent window) WM_WINDOWPOSCHANGING
+  (to parent window) WM_NCACTIVATE (wParam=1)
+   DefWindowProc:
+    WM_GETTEXT
+  (to parent window) WM_ACTIVATE (wParam=1)
+   (to dialog) WM_KILLFOCUS
+   (to parent window) WM_SETFOCUS
+ WM_DESTROY
+ WM_NCDESTROY
+
+Creation of a modal dialog that is resized inside WM_INITDIALOG (32):
+ (inside dialog proc, handling WM_INITDIALOG)
+  WM_WINDOWPOSCHANGING
+  WM_NCCALCSIZE
+  (to parent window) WM_NCACTIVATE (wParam=0)
+   DefWindowProc:
+    WM_GETTEXT
+  (to parent window) WM_ACTIVATE (wParam=0)
+  WM_WINDOWPOSCHANGING
+  (to parent window) WM_WINDOWPOSCHANGING
+  WM_NCACTIVATE (wParam=1)
+  WM_ACTIVATE (wParam=1)
+  WM_WINDOWPOSCHANGED
+   DefWindowProc:
+    WM_SIZE
+ (setting focus)
+ WM_SHOWWINDOW (wParam=1)
+ WM_WINDOWPOSCHANGING
+ WM_NCPAINT
+  DefWindowProc:
+   WM_GETTEXT
+ WM_ERASEBKGND
+  DialogWindowProc(?):
+   WM_CTLCOLORDLG
+ WM_WINDOWPOSCHANGED
+ WM_PAINT
+ (bunch of WM_CTLCOLOR* for each control)
+ (to parent window) WM_PAINT
+ (to parent window) WM_ENTERIDLE (wParam=0)
+ (to parent window) WM_SETCURSOR
