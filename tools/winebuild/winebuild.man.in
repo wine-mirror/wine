@@ -112,6 +112,10 @@ clears the whole list.
 .BI \-K\  flags
 Ignored for compatibility with the C compiler.
 .TP
+.BI \-k
+Remove the stdcall decorations from the symbol names in the
+generated .def file. Only meaningful in \fB--def\fR mode.
+.TP
 .BI \-L\  directory
 Append the specified directory to the list of directories that are
 searched for import libraries.

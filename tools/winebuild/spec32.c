@@ -891,17 +891,13 @@ void BuildDef32File(FILE *outfile)
             break;
         case TYPE_STDCALL:
         {
-#ifdef NEED_STDCALL_DECORATION
             int at_param = strlen(odp->u.func.arg_types) * sizeof(int);
-            fprintf(outfile, "@%d", at_param);
-#endif /* NEED_STDCALL_DECORATION */
+            if (!kill_at) fprintf(outfile, "@%d", at_param);
             /* try to reduce output */
             if(strcmp(name, odp->link_name))
             {
                 fprintf(outfile, "=%s", odp->link_name);
-#ifdef NEED_STDCALL_DECORATION
-                fprintf(outfile, "@%d", at_param);
-#endif /* NEED_STDCALL_DECORATION */
+                if (!kill_at) fprintf(outfile, "@%d", at_param);
             }
             break;
         }

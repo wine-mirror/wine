@@ -735,18 +735,6 @@ else
   AC_DEFINE([__ASM_NAME(name)], [name])
 fi
 
-dnl **** Check whether stdcall symbols need to be decorated ****
-
-AC_CACHE_CHECK([whether stdcall symbols need to be decorated], ac_cv_c_stdcall_decoration,
-    WINE_TRY_ASM_LINK(["\t.globl _ac_test@0\n_ac_test@0:\n\t.globl ac_test@0\nac_test@0:"],
-                      [extern void __attribute__((__stdcall__)) ac_test(void);],
-                      [ac_test()],
-                      ac_cv_c_stdcall_decoration="yes",ac_cv_c_stdcall_decoration="no"))
-if test "$ac_cv_c_stdcall_decoration" = "yes"
-then
-  AC_DEFINE(NEED_STDCALL_DECORATION, 1, [Define if stdcall symbols need to be decorated])
-fi
-
 dnl **** Check for .string in assembler ****
 
 AC_CACHE_CHECK([whether assembler accepts .string], ac_cv_c_asm_string,

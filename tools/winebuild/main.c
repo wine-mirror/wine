@@ -50,6 +50,7 @@ int nb_names = 0;
 int nb_debug_channels = 0;
 int nb_lib_paths = 0;
 int display_warnings = 0;
+int kill_at = 0;
 
 /* we only support relay debugging on i386 */
 #if defined(__i386__) && !defined(NO_TRACE_MSGS)
@@ -126,6 +127,7 @@ static void do_define( const char *arg );
 static void do_include( const char *arg );
 static void do_k_flags( const char *arg );
 static void do_ignore( const char *arg );
+static void do_kill_at(void);
 static void do_exe_mode( const char *arg );
 static void do_module( const char *arg );
 static void do_heap( const char *arg );
@@ -154,6 +156,7 @@ static const struct option_descr option_table[] =
     { "-I",        1, do_include, "-I dir           Ignored for C flags compatibility" },
     { "-K",        1, do_k_flags, "-K flags         Compiler flags (only -KPIC is supported)" },
     { "-i",        1, do_ignore,  "-i sym[,sym]     Ignore specified symbols when resolving imports" },
+    { "-k",        0, do_kill_at, "-k               Kill stdcall decorations in generated .def files" },
     { "-m",        1, do_exe_mode,"-m mode          Set the executable mode (cui|gui|cuiw|guiw)" },
     { "-M",        1, do_module,  "-M module        Set the name of the main (Win32) module for a Win16 dll" },
     { "-L",        1, do_lib,     "-L directory     Look for imports libraries in 'directory'" },
@@ -241,6 +244,11 @@ static void do_ignore( const char *arg )
         token = strtok( NULL, "," );
     }
     free( str );
+}
+
+static void do_kill_at(void)
+{
+    kill_at = 1;
 }
 
 static void do_heap( const char *arg )

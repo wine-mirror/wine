@@ -680,9 +680,6 @@
 /* Define if we have __va_copy */
 #undef HAVE___VA_COPY
 
-/* Define if stdcall symbols need to be decorated */
-#undef NEED_STDCALL_DECORATION
-
 /* Define to disable all debug messages. */
 #undef NO_DEBUG_MSGS
 
