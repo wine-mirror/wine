@@ -11,7 +11,7 @@
  *           INT_Int41Handler
  *
  */
-void WINAPI INT_Int41Handler( CONTEXT *context )
+void WINAPI INT_Int41Handler( CONTEXT86 *context )
 {
     if ( ISV86(context) )
     {

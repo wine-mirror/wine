@@ -628,6 +628,7 @@ BOOL WINAPI GetThreadSelectorEntry( HANDLE hthread, DWORD sel,
  */
 static void
 x_SMapLS_IP_EBP_x(CONTEXT *context,int argoff) {
+#ifdef __i386__
     DWORD	val,ptr; 
 
     val =*(DWORD*)(EBP_reg(context)+argoff);
@@ -639,6 +640,7 @@ x_SMapLS_IP_EBP_x(CONTEXT *context,int argoff) {
 	*(DWORD*)(EBP_reg(context)+argoff) = ptr;
     }
     EAX_reg(context) = ptr;
+#endif
 }
 
 void WINAPI REGS_FUNC(SMapLS_IP_EBP_8)(CONTEXT *context)  {x_SMapLS_IP_EBP_x(context,8);}
@@ -653,25 +655,31 @@ void WINAPI REGS_FUNC(SMapLS_IP_EBP_40)(CONTEXT *context) {x_SMapLS_IP_EBP_x(con
 
 void WINAPI REGS_FUNC(SMapLS)( CONTEXT *context )
 {
+#ifdef __i386__
     if (EAX_reg(context)>=0x10000) {
 	EAX_reg(context) = MapLS((LPVOID)EAX_reg(context));
 	EDX_reg(context) = EAX_reg(context);
     } else {
 	EDX_reg(context) = 0;
     }
+#endif
 }
 
 void WINAPI REGS_FUNC(SUnMapLS)( CONTEXT *context )
 {
+#ifdef __i386__
     if (EAX_reg(context)>=0x10000)
 	UnMapLS((SEGPTR)EAX_reg(context));
+#endif
 }
 
 static void
 x_SUnMapLS_IP_EBP_x(CONTEXT *context,int argoff) {
+#ifdef __i386__
 	if (*(DWORD*)(EBP_reg(context)+argoff))
 		UnMapLS(*(DWORD*)(EBP_reg(context)+argoff));
 	*(DWORD*)(EBP_reg(context)+argoff)=0;
+#endif
 }
 void WINAPI REGS_FUNC(SUnMapLS_IP_EBP_8)(CONTEXT *context)  { x_SUnMapLS_IP_EBP_x(context,8); }
 void WINAPI REGS_FUNC(SUnMapLS_IP_EBP_12)(CONTEXT *context) { x_SUnMapLS_IP_EBP_x(context,12); }
@@ -704,6 +712,7 @@ void WINAPI REGS_FUNC(SUnMapLS_IP_EBP_40)(CONTEXT *context) { x_SUnMapLS_IP_EBP_
 
 void WINAPI REGS_FUNC(AllocMappedBuffer)( CONTEXT *context )
 {
+#ifdef __i386__
     HGLOBAL handle = GlobalAlloc(0, EDI_reg(context) + 8);
     DWORD *buffer = (DWORD *)GlobalLock(handle);
     SEGPTR ptr = 0;
@@ -725,6 +734,7 @@ void WINAPI REGS_FUNC(AllocMappedBuffer)( CONTEXT *context )
         EAX_reg(context) = (DWORD) ptr;
         EDI_reg(context) = (DWORD)(buffer + 2);
     }
+#endif
 }
 
 /**********************************************************************
@@ -737,6 +747,7 @@ void WINAPI REGS_FUNC(AllocMappedBuffer)( CONTEXT *context )
 
 void WINAPI REGS_FUNC(FreeMappedBuffer)( CONTEXT *context )
 {
+#ifdef __i386__
     if (EDI_reg(context))
     {
         DWORD *buffer = (DWORD *)EDI_reg(context) - 2;
@@ -746,6 +757,7 @@ void WINAPI REGS_FUNC(FreeMappedBuffer)( CONTEXT *context )
         GlobalUnlock(buffer[0]);
         GlobalFree(buffer[0]);
     }
+#endif
 }
 
 /**********************************************************************

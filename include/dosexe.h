@@ -40,7 +40,7 @@ typedef struct _DOSTASK {
 
 typedef struct _DOSEVENT {
   int irq,priority;
-  void (*relay)(LPDOSTASK,PCONTEXT,void*);
+  void (*relay)(LPDOSTASK,CONTEXT86*,void*);
   void *data;
   struct _DOSEVENT *next;
 } DOSEVENT, *LPDOSEVENT;
@@ -68,9 +68,9 @@ extern BOOL MZ_CreateProcess( HFILE hFile, OFSTRUCT *ofs, LPCSTR cmdline, LPCSTR
                               BOOL inherit, DWORD flags, LPSTARTUPINFOA startup, 
                               LPPROCESS_INFORMATION info );
 extern LPDOSTASK MZ_Current( void );
-extern int DOSVM_Enter( PCONTEXT context );
+extern int DOSVM_Enter( CONTEXT86 *context );
 extern void DOSVM_Wait( int read_pipe, HANDLE hObject );
-extern void DOSVM_QueueEvent( int irq, int priority, void (*relay)(LPDOSTASK,PCONTEXT,void*), void *data );
+extern void DOSVM_QueueEvent( int irq, int priority, void (*relay)(LPDOSTASK,CONTEXT86*,void*), void *data );
 extern void DOSVM_PIC_ioport_out( WORD port, BYTE val );
 extern void DOSVM_SetTimer( unsigned ticks );
 extern unsigned DOSVM_GetTimer( void );

@@ -73,7 +73,7 @@ extern char **debug_relay_excludelist,**debug_relay_includelist;
  *           RELAY_DebugCallFrom16
  */
 void RELAY_DebugCallFrom16( int func_type, char *args,
-                            void *entry_point, CONTEXT *context )
+                            void *entry_point, CONTEXT86 *context )
 {
     STACK16FRAME *frame;
     WORD ordinal;
@@ -197,7 +197,7 @@ void RELAY_DebugCallFrom16( int func_type, char *args,
 /***********************************************************************
  *           RELAY_DebugCallFrom16Ret
  */
-void RELAY_DebugCallFrom16Ret( int func_type, int ret_val, CONTEXT *context)
+void RELAY_DebugCallFrom16Ret( int func_type, int ret_val, CONTEXT86 *context)
 {
     STACK16FRAME *frame;
     WORD ordinal;
@@ -269,7 +269,7 @@ void RELAY_DebugCallTo16( int* stack, int nb_args )
 
     if (nb_args == -1)  /* Register function */
     {
-        CONTEXT *context = (CONTEXT *)stack[0];
+        CONTEXT86 *context = (CONTEXT86 *)stack[0];
         WORD *stack16 = (WORD *)THREAD_STACK16(teb);
         DPRINTF("CallTo16(func=%04lx:%04x,ds=%04lx",
                 CS_reg(context), IP_reg(context), DS_reg(context) );
@@ -323,7 +323,7 @@ void RELAY_DebugCallTo16Ret( int ret_val )
  * Real prototype is:
  *   INT16 WINAPI Catch( LPCATCHBUF lpbuf );
  */
-void WINAPI Catch16( CONTEXT *context )
+void WINAPI Catch16( CONTEXT86 *context )
 {
     VA_LIST16 valist;
     SEGPTR buf;
@@ -370,7 +370,7 @@ void WINAPI Catch16( CONTEXT *context )
  * Real prototype is:
  *   INT16 WINAPI Throw( LPCATCHBUF lpbuf, INT16 retval );
  */
-void WINAPI Throw16( CONTEXT *context )
+void WINAPI Throw16( CONTEXT86 *context )
 {
     VA_LIST16 valist;
     SEGPTR buf;

@@ -14,7 +14,7 @@
  *
  * Handler for int 20h.
  */
-void WINAPI INT_Int20Handler( CONTEXT *context )
+void WINAPI INT_Int20Handler( CONTEXT86 *context )
 {
         ExitProcess( 0 );
 }

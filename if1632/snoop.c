@@ -22,8 +22,8 @@ DEFAULT_DEBUG_CHANNEL(snoop)
 
 #include "pshpack1.h"
 
-void WINAPI SNOOP16_Entry(CONTEXT *context);
-void WINAPI SNOOP16_Return(CONTEXT *context);
+void WINAPI SNOOP16_Entry(CONTEXT86 *context);
+void WINAPI SNOOP16_Return(CONTEXT86 *context);
 extern void CallFrom16_p_regs_();
 
 /* Generic callfrom16_p_regs function entry.
@@ -209,7 +209,7 @@ SNOOP16_GetProcAddress16(HMODULE16 hmod,DWORD ordinal,FARPROC16 origfun) {
 }
 
 #define CALLER1REF (*(DWORD*)(PTR_SEG_OFF_TO_LIN(SS_reg(context),SP_reg(context)+4)))
-void WINAPI SNOOP16_Entry(CONTEXT *context) {
+void WINAPI SNOOP16_Entry(CONTEXT86 *context) {
 	DWORD		ordinal=0;
 	DWORD		entry=(DWORD)PTR_SEG_OFF_TO_LIN(CS_reg(context),IP_reg(context))-5;
 	WORD		xcs = CS_reg(context);
@@ -276,7 +276,7 @@ void WINAPI SNOOP16_Entry(CONTEXT *context) {
 	DPRINTF(") ret=%04x:%04x\n",HIWORD(ret->origreturn),LOWORD(ret->origreturn));
 }
 
-void WINAPI SNOOP16_Return(CONTEXT *context) {
+void WINAPI SNOOP16_Return(CONTEXT86 *context) {
 	SNOOP16_RETURNENTRY	*ret = (SNOOP16_RETURNENTRY*)((char *) PTR_SEG_OFF_TO_LIN(CS_reg(context),IP_reg(context))-5);
 
 	/* We haven't found out the nrofargs yet. If we called a cdecl

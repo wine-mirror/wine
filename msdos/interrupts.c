@@ -68,7 +68,7 @@ void INT_SetRMHandler( BYTE intnum, FARPROC16 handler )
  *
  * Return the interrupt vector for a given interrupt.
  */
-FARPROC16 INT_CtxGetHandler( CONTEXT *context, BYTE intnum )
+FARPROC16 INT_CtxGetHandler( CONTEXT86 *context, BYTE intnum )
 {
     if (ISV86(context))
         return ((FARPROC16*)V86BASE(context))[intnum];
@@ -82,7 +82,7 @@ FARPROC16 INT_CtxGetHandler( CONTEXT *context, BYTE intnum )
  *
  * Set the interrupt handler for a given interrupt.
  */
-void INT_CtxSetHandler( CONTEXT *context, BYTE intnum, FARPROC16 handler )
+void INT_CtxSetHandler( CONTEXT86 *context, BYTE intnum, FARPROC16 handler )
 {
     if (ISV86(context)) {
         TRACE(int, "Set real mode interrupt vector %02x <- %04x:%04x\n",
@@ -98,7 +98,7 @@ void INT_CtxSetHandler( CONTEXT *context, BYTE intnum, FARPROC16 handler )
  *
  * Handle real mode interrupts
  */
-int INT_RealModeInterrupt( BYTE intnum, PCONTEXT context )
+int INT_RealModeInterrupt( BYTE intnum, CONTEXT86 *context )
 {
     /* we should really map to if1632/wprocs.spec, but not all
      * interrupt handlers are adapted to support real mode yet */

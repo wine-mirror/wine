@@ -56,7 +56,7 @@ static int color_palette[16];
  *      Added additional vga graphic support - 3/99
  */
 
-void WINAPI INT_Int10Handler( CONTEXT *context )
+void WINAPI INT_Int10Handler( CONTEXT86 *context )
 {
     static int registered_colors = FALSE;
 

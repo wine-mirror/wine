@@ -21,7 +21,7 @@ typedef struct {
  *
  * Handler for int 33h (MS MOUSE).
  */
-void WINAPI INT_Int33Handler( CONTEXT *context )
+void WINAPI INT_Int33Handler( CONTEXT86 *context )
 {
   MOUSESYSTEM *sys = (MOUSESYSTEM *)DOSVM_GetSystemData(0x33);
 
@@ -54,10 +54,10 @@ typedef struct {
   WORD mask,but,x,y,mx,my;
 } MCALLDATA;
 
-static void MouseRelay(LPDOSTASK lpDosTask,PCONTEXT context,void *mdata)
+static void MouseRelay(LPDOSTASK lpDosTask,CONTEXT86 *context,void *mdata)
 {
   MCALLDATA *data = (MCALLDATA *)mdata;
-  CONTEXT ctx = *context;
+  CONTEXT86 ctx = *context;
 
   AX_reg(&ctx) = data->mask;
   BX_reg(&ctx) = data->but;

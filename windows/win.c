@@ -2291,7 +2291,7 @@ BOOL16 WINAPI IsWindow16( HWND16 hwnd )
     return IsWindow( hwnd );
 }
 
-void WINAPI WIN16_IsWindow16( CONTEXT *context )
+void WINAPI WIN16_IsWindow16( CONTEXT86 *context )
 {
     WORD *stack = PTR_SEG_OFF_TO_LIN(SS_reg(context), SP_reg(context));
     HWND16 hwnd = (HWND16)stack[2];

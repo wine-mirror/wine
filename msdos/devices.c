@@ -100,10 +100,10 @@ DWORD DOS_LOLSeg;
 #define ALL_OFS (ALLDEV_OFS + REQ_SCRATCH)
 
 /* prototypes */
-static void WINAPI nul_strategy(CONTEXT*ctx);
-static void WINAPI nul_interrupt(CONTEXT*ctx);
-static void WINAPI con_strategy(CONTEXT*ctx);
-static void WINAPI con_interrupt(CONTEXT*ctx);
+static void WINAPI nul_strategy(CONTEXT86*ctx);
+static void WINAPI nul_interrupt(CONTEXT86*ctx);
+static void WINAPI con_strategy(CONTEXT86*ctx);
+static void WINAPI con_interrupt(CONTEXT86*ctx);
 
 /* the device headers */
 #define STRATEGY_OFS sizeof(DOS_DEVICE_HEADER)
@@ -128,7 +128,7 @@ static WINEDEV devs[]={
 #define nr_devs (sizeof(devs)/sizeof(WINEDEV))
 
 /* the device implementations */
-static void do_lret(CONTEXT*ctx)
+static void do_lret(CONTEXT86*ctx)
 {
   WORD *stack = CTX_SEG_OFF_TO_LIN(ctx, SS_reg(ctx), ESP_reg(ctx));
 
@@ -137,7 +137,7 @@ static void do_lret(CONTEXT*ctx)
   SP_reg(ctx) += 2*sizeof(WORD);
 }
 
-static void do_strategy(CONTEXT*ctx, int id, int extra)
+static void do_strategy(CONTEXT86*ctx, int id, int extra)
 {
   REQUEST_HEADER *hdr = CTX_SEG_OFF_TO_LIN(ctx, ES_reg(ctx), EBX_reg(ctx));
   void **hdr_ptr = DOSVM_GetSystemData(id);
@@ -159,12 +159,12 @@ static REQUEST_HEADER * get_hdr(int id, void**extra)
   return hdr_ptr ? *hdr_ptr : (void *)NULL;
 }
 
-static void WINAPI nul_strategy(CONTEXT*ctx)
+static void WINAPI nul_strategy(CONTEXT86*ctx)
 {
   do_strategy(ctx, SYSTEM_STRATEGY_NUL, 0);
 }
 
-static void WINAPI nul_interrupt(CONTEXT*ctx)
+static void WINAPI nul_interrupt(CONTEXT86*ctx)
 {
   REQUEST_HEADER *hdr = get_hdr(SYSTEM_STRATEGY_NUL, NULL);
   /* eat everything and recycle nothing */
@@ -184,12 +184,12 @@ static void WINAPI nul_interrupt(CONTEXT*ctx)
 
 #define CON_BUFFER 128
 
-static void WINAPI con_strategy(CONTEXT*ctx)
+static void WINAPI con_strategy(CONTEXT86*ctx)
 {
   do_strategy(ctx, SYSTEM_STRATEGY_CON, sizeof(int));
 }
 
-static void WINAPI con_interrupt(CONTEXT*ctx)
+static void WINAPI con_interrupt(CONTEXT86*ctx)
 {
   int *scan;
   REQUEST_HEADER *hdr = get_hdr(SYSTEM_STRATEGY_CON,(void **)&scan);
@@ -509,7 +509,7 @@ static void DOSDEV_DoReq(void*req, DWORD dev)
 {
   REQUEST_HEADER *hdr = (REQUEST_HEADER *)req;
   DOS_DEVICE_HEADER *dhdr;
-  CONTEXT ctx;
+  CONTEXT86 ctx;
   char *phdr;
 
   dhdr = DOSMEM_MapRealToLinear(dev);

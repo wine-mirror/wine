@@ -547,7 +547,7 @@ BOOL16 WINAPI GlobalUnlock16(
  * *all* registers, even AX/DX !
  *
  */
-void WINAPI GlobalChangeLockCount16( CONTEXT *context )
+void WINAPI GlobalChangeLockCount16( CONTEXT86 *context )
 {
     LPWORD args = PTR_SEG_OFF_TO_LIN( SS_reg( context ), SP_reg( context ) );
     HGLOBAL16 handle = (HGLOBAL16)args[3];

@@ -14,7 +14,7 @@ DEFAULT_DEBUG_CHANNEL(int19)
  *
  * Handler for int 19h (Reboot).
  */
-void WINAPI INT_Int19Handler( CONTEXT *context )
+void WINAPI INT_Int19Handler( CONTEXT86 *context )
 {
     WARN(int19, "Attempted Reboot\n");
 }

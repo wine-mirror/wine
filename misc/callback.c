@@ -40,7 +40,7 @@ static LRESULT WINAPI CALLBACK_CallWndProc( WNDPROC16 proc, HWND16 hwnd,
 /**********************************************************************
  *	     CALLBACK_CallRegisterProc
  */
-static LONG WINAPI CALLBACK_CallRegisterProc( CONTEXT *context, INT offset)
+static LONG WINAPI CALLBACK_CallRegisterProc( CONTEXT86 *context, INT offset)
 {
     ERR(relay, "Cannot call a register proc in Winelib\n" );
     assert( FALSE );

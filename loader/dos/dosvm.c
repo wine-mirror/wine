@@ -50,7 +50,7 @@ DECLARE_DEBUG_CHANNEL(relay)
 
 #undef TRY_PICRETURN
 
-static void do_exception( int signal, CONTEXT *context )
+static void do_exception( int signal, CONTEXT86 *context )
 {
     EXCEPTION_RECORD rec;
     extern void WINAPI REGS_FUNC(RtlRaiseException)( EXCEPTION_RECORD *rec,
@@ -108,7 +108,7 @@ static void DOSVM_Dump( LPDOSTASK lpDosTask, int fn, int sig,
  printf("\n");
 }
 
-static int DOSVM_Int( int vect, PCONTEXT context, LPDOSTASK lpDosTask )
+static int DOSVM_Int( int vect, CONTEXT86 *context, LPDOSTASK lpDosTask )
 {
  extern UINT16 DPMI_wrap_seg;
 
@@ -123,7 +123,7 @@ static int DOSVM_Int( int vect, PCONTEXT context, LPDOSTASK lpDosTask )
  return 0;
 }
 
-static void DOSVM_SimulateInt( int vect, PCONTEXT context, LPDOSTASK lpDosTask )
+static void DOSVM_SimulateInt( int vect, CONTEXT86 *context, LPDOSTASK lpDosTask )
 {
   FARPROC16 handler=INT_GetRMHandler(vect);
 
@@ -150,7 +150,7 @@ static void DOSVM_SimulateInt( int vect, PCONTEXT context, LPDOSTASK lpDosTask )
 #define SHOULD_PEND(x) \
   (x && ((!lpDosTask->current) || (x->priority < lpDosTask->current->priority)))
 
-static void DOSVM_SendQueuedEvent(PCONTEXT context, LPDOSTASK lpDosTask)
+static void DOSVM_SendQueuedEvent(CONTEXT86 *context, LPDOSTASK lpDosTask)
 {
   LPDOSEVENT event = lpDosTask->pending;
 
@@ -179,7 +179,7 @@ static void DOSVM_SendQueuedEvent(PCONTEXT context, LPDOSTASK lpDosTask)
   }
 }
 
-static void DOSVM_SendQueuedEvents(PCONTEXT context, LPDOSTASK lpDosTask)
+static void DOSVM_SendQueuedEvents(CONTEXT86 *context, LPDOSTASK lpDosTask)
 {
   /* we will send all queued events as long as interrupts are enabled,
    * but IRQ events will disable interrupts again */
@@ -187,7 +187,7 @@ static void DOSVM_SendQueuedEvents(PCONTEXT context, LPDOSTASK lpDosTask)
     DOSVM_SendQueuedEvent(context,lpDosTask);
 }
 
-void DOSVM_QueueEvent( int irq, int priority, void (*relay)(LPDOSTASK,PCONTEXT,void*), void *data)
+void DOSVM_QueueEvent( int irq, int priority, void (*relay)(LPDOSTASK,CONTEXT86*,void*), void *data)
 {
   LPDOSTASK lpDosTask = MZ_Current();
   LPDOSEVENT event, cur, prev;
@@ -233,7 +233,7 @@ static int DOSVM_Process( LPDOSTASK lpDosTask, int fn, int sig,
                           struct vm86plus_struct*VM86 )
 {
  SIGCONTEXT sigcontext;
- CONTEXT context;
+ CONTEXT86 context;
  int ret=0;
 
  if (VM86_TYPE(fn)==VM86_UNKNOWN) {
@@ -391,7 +391,7 @@ void DOSVM_Wait( int read_pipe, HANDLE hObject )
   } while (TRUE);
 }
 
-int DOSVM_Enter( PCONTEXT context )
+int DOSVM_Enter( CONTEXT86 *context )
 {
  LPDOSTASK lpDosTask = MZ_Current();
  struct vm86plus_struct VM86;
@@ -606,7 +606,7 @@ void* DOSVM_GetSystemData( int id )
 
 #else /* !MZ_SUPPORTED */
 
-int DOSVM_Enter( PCONTEXT context )
+int DOSVM_Enter( CONTEXT86 *context )
 {
  ERR_(module)("DOS realmode not supported on this architecture!\n");
  return -1;
@@ -618,6 +618,6 @@ void DOSVM_SetTimer( unsigned ticks ) {}
 unsigned DOSVM_GetTimer( void ) { return 0; }
 void DOSVM_SetSystemData( int id, void *data ) { free(data); }
 void* DOSVM_GetSystemData( int id ) { return NULL; }
-void DOSVM_QueueEvent( int irq, int priority, void (*relay)(LPDOSTASK,PCONTEXT,void*), void *data) {}
+void DOSVM_QueueEvent( int irq, int priority, void (*relay)(LPDOSTASK,CONTEXT86*,void*), void *data) {}
 
 #endif

@@ -292,7 +292,8 @@ UINT WINAPI ThunkConnect32(
  */
 void WINAPI REGS_FUNC(QT_Thunk)( CONTEXT *context )
 {
-    CONTEXT context16;
+#ifdef __i386__
+    CONTEXT86 context16;
     DWORD argsize;
 
     memcpy(&context16,context,sizeof(context16));
@@ -310,6 +311,7 @@ void WINAPI REGS_FUNC(QT_Thunk)( CONTEXT *context )
     EAX_reg(context) = Callbacks->CallRegisterShortProc( &context16, argsize );
     EDX_reg(context) = HIWORD(EAX_reg(context));
     EAX_reg(context) = LOWORD(EAX_reg(context));
+#endif
 }
 
 
@@ -359,6 +361,7 @@ void WINAPI REGS_FUNC(QT_Thunk)( CONTEXT *context )
 
 void WINAPI REGS_FUNC(FT_Prolog)( CONTEXT *context )
 {
+#ifdef __i386__
     /* Build stack frame */
     STACK32_PUSH(context, EBP_reg(context));
     EBP_reg(context) = ESP_reg(context);
@@ -376,6 +379,7 @@ void WINAPI REGS_FUNC(FT_Prolog)( CONTEXT *context )
 
     *(DWORD *)(EBP_reg(context) - 48) = EAX_reg(context);
     *(DWORD *)(EBP_reg(context) - 52) = EDX_reg(context);
+#endif
 }
 
 /**********************************************************************
@@ -401,10 +405,11 @@ void WINAPI REGS_FUNC(FT_Prolog)( CONTEXT *context )
 
 void WINAPI REGS_FUNC(FT_Thunk)( CONTEXT *context )
 {
+#ifdef __i386__
     DWORD mapESPrelative = *(DWORD *)(EBP_reg(context) - 20);
     DWORD callTarget     = *(DWORD *)(EBP_reg(context) - 52);
 
-    CONTEXT context16;
+    CONTEXT86 context16;
     DWORD i, argsize;
     LPBYTE newstack, oldstack;
 
@@ -436,6 +441,7 @@ void WINAPI REGS_FUNC(FT_Thunk)( CONTEXT *context )
 
     /* Copy modified buffers back to 32-bit stack */
     memcpy( oldstack, newstack, argsize );
+#endif
 }
 
 /**********************************************************************
@@ -452,6 +458,7 @@ void WINAPI REGS_FUNC(FT_Thunk)( CONTEXT *context )
 
 static void FT_Exit(CONTEXT *context, int nPopArgs)
 {
+#ifdef __i386__
     /* Return value is in EBX */
     EAX_reg(context) = EBX_reg(context);
 
@@ -468,6 +475,7 @@ static void FT_Exit(CONTEXT *context, int nPopArgs)
     EIP_reg(context) = STACK32_POP(context);
     /* Remove arguments */
     ESP_reg(context) += nPopArgs;
+#endif
 }
 
 void WINAPI REGS_FUNC(FT_Exit0)(CONTEXT *context)  { FT_Exit(context,  0); }
@@ -593,7 +601,8 @@ DWORD WINAPI ThunkInitLS(
  */
 void WINAPI REGS_FUNC(Common32ThkLS)( CONTEXT *context )
 {
-    CONTEXT context16;
+#ifdef __i386__
+    CONTEXT86 context16;
     DWORD argsize;
 
     memcpy(&context16,context,sizeof(context16));
@@ -617,6 +626,7 @@ void WINAPI REGS_FUNC(Common32ThkLS)( CONTEXT *context )
 
     /* Clean up caller's stack frame */
     ESP_reg(context) += argsize;
+#endif
 }
 
 /***********************************************************************
@@ -648,7 +658,8 @@ void WINAPI REGS_FUNC(Common32ThkLS)( CONTEXT *context )
  */
 void WINAPI REGS_FUNC(OT_32ThkLSF)( CONTEXT *context )
 {
-    CONTEXT context16;
+#ifdef __i386__
+    CONTEXT86 context16;
     DWORD argsize;
 
     memcpy(&context16,context,sizeof(context16));
@@ -667,6 +678,7 @@ void WINAPI REGS_FUNC(OT_32ThkLSF)( CONTEXT *context )
 
     memcpy( (LPBYTE)ESP_reg(context), 
             (LPBYTE)CURRENT_STACK16 - argsize, argsize );
+#endif
 }
 
 /***********************************************************************
@@ -753,6 +765,7 @@ LPVOID WINAPI ThunkInitLSF(
  */
 void WINAPI REGS_FUNC(FT_PrologPrime)( CONTEXT *context )
 {
+#ifdef __i386__
     DWORD  targetTableOffset;
     LPBYTE relayCode;
 
@@ -767,6 +780,7 @@ void WINAPI REGS_FUNC(FT_PrologPrime)( CONTEXT *context )
 
     /* Jump to the call stub just created */
     EIP_reg(context) = (DWORD)relayCode;
+#endif
 }
 
 /***********************************************************************
@@ -782,6 +796,7 @@ void WINAPI REGS_FUNC(FT_PrologPrime)( CONTEXT *context )
  */
 void WINAPI REGS_FUNC(QT_ThunkPrime)( CONTEXT *context )
 {
+#ifdef __i386__
     DWORD  targetTableOffset;
     LPBYTE relayCode;
 
@@ -796,6 +811,7 @@ void WINAPI REGS_FUNC(QT_ThunkPrime)( CONTEXT *context )
 
     /* Jump to the call stub just created */
     EIP_reg(context) = (DWORD)relayCode;
+#endif
 }
 
 /***********************************************************************
@@ -852,7 +868,7 @@ BOOL WINAPI SSOnBigStack()
  *
  * This must be a register routine as it has to preserve *all* registers.
  */
-void WINAPI SSConfirmSmallStack( CONTEXT *context )
+void WINAPI SSConfirmSmallStack( CONTEXT86 *context )
 {
     /* We are always on the small stack while in 16-bit code ... */
 }
@@ -923,6 +939,7 @@ DWORD WINAPIV SSCall(
  */
 void WINAPI REGS_FUNC(W32S_BackTo32)( CONTEXT *context )
 {
+#ifdef __i386__
     LPDWORD stack = (LPDWORD)ESP_reg( context );
     FARPROC proc = (FARPROC)EIP_reg(context);
 
@@ -930,6 +947,7 @@ void WINAPI REGS_FUNC(W32S_BackTo32)( CONTEXT *context )
                                stack[6], stack[7], stack[8], stack[9], stack[10] );
 
     EIP_reg( context ) = STACK32_POP(context);
+#endif
 }
 
 /**********************************************************************
@@ -1000,7 +1018,7 @@ FreeSLCallback(
  * 		GetTEBSelectorFS	(KERNEL.475)
  * 	Set the 16-bit %fs to the 32-bit %fs (current TEB selector)
  */
-VOID WINAPI GetTEBSelectorFS16( CONTEXT *context ) 
+VOID WINAPI GetTEBSelectorFS16( CONTEXT86 *context ) 
 {
     GET_FS( FS_reg(context) );
 }
@@ -1067,6 +1085,7 @@ HANDLE WINAPI WOWHandle32(
  */
 void WINAPI REGS_FUNC(K32Thk1632Prolog)( CONTEXT *context )
 {
+#ifdef __i386__
    LPBYTE code = (LPBYTE)EIP_reg(context) - 5;
 
    /* Arrrgh! SYSTHUNK.DLL just has to re-implement another method
@@ -1119,6 +1138,7 @@ void WINAPI REGS_FUNC(K32Thk1632Prolog)( CONTEXT *context )
    }
 
    SYSLEVEL_ReleaseWin16Lock();
+#endif
 }
 
 /***********************************************************************
@@ -1126,6 +1146,7 @@ void WINAPI REGS_FUNC(K32Thk1632Prolog)( CONTEXT *context )
  */
 void WINAPI REGS_FUNC(K32Thk1632Epilog)( CONTEXT *context )
 {
+#ifdef __i386__
    LPBYTE code = (LPBYTE)EIP_reg(context) - 13;
 
    SYSLEVEL_RestoreWin16Lock();
@@ -1153,6 +1174,7 @@ void WINAPI REGS_FUNC(K32Thk1632Epilog)( CONTEXT *context )
       TRACE_(thunk)("after  SYSTHUNK hack: EBP: %08lx ESP: %08lx cur_stack: %08lx\n",
                    EBP_reg(context), ESP_reg(context), NtCurrentTeb()->cur_stack);
    }
+#endif
 }
 
 /***********************************************************************

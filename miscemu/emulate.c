@@ -27,7 +27,7 @@ struct Win87EmInfoStruct
  */
 /* FIXME: Only skeletal implementation for now */
 
-void WINAPI WIN87_fpmath( CONTEXT *context )
+void WINAPI WIN87_fpmath( CONTEXT86 *context )
 {
     TRACE(int, "(cs:eip=%x:%lx es=%x bx=%04x ax=%04x dx==%04x)\n",
                  (WORD)CS_reg(context), EIP_reg(context),

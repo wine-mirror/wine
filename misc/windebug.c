@@ -16,7 +16,7 @@ DEFAULT_DEBUG_CHANNEL(dll)
  *           WinNotify       (WINDEBUG.3)
  *  written without _any_ docu
  */
-void WINAPI WinNotify16(CONTEXT *context)
+void WINAPI WinNotify16(CONTEXT86 *context)
 {
 	FIXME(dll, "(AX=%04x):stub.\n", AX_reg(context));
 	switch (AX_reg(context))

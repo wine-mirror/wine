@@ -623,7 +623,7 @@ static BOOL NE_InitDLL( TDB* pTask, NE_MODULE *pModule )
 {
     SEGTABLEENTRY *pSegTable;
     WORD hInst, ds, heap;
-    CONTEXT context;
+    CONTEXT86 context;
 
     pSegTable = NE_SEG_TABLE( pModule );
 
@@ -678,7 +678,7 @@ static void NE_CallDllEntryPoint( NE_MODULE *pModule, DWORD dwReason )
     WORD hInst, ds, heap;
     FARPROC16 entryPoint;
     WORD ordinal;
-    CONTEXT context;
+    CONTEXT86 context;
     LPBYTE stack = (LPBYTE)CURRENT_STACK16;
 
     if (!(pModule->flags & NE_FFLAGS_BUILTIN) && pModule->expected_version < 0x0400) return;

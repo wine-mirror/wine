@@ -12,7 +12,7 @@
  *
  * Handler for int 2ah (network).
  */
-void WINAPI INT_Int2aHandler( CONTEXT *context )
+void WINAPI INT_Int2aHandler( CONTEXT86 *context )
 {
     switch(AH_reg(context))
     {

@@ -30,8 +30,8 @@ DECLARE_DEBUG_CHANNEL(thunk)
 /* by the build program to generate the file if1632/callto16.S */
 
 /* ### start build ### */
-extern LONG CALLBACK CallTo16_sreg_(const CONTEXT *context, INT offset);
-extern LONG CALLBACK CallTo16_lreg_(const CONTEXT *context, INT offset);
+extern LONG CALLBACK CallTo16_sreg_(const CONTEXT86 *context, INT offset);
+extern LONG CALLBACK CallTo16_lreg_(const CONTEXT86 *context, INT offset);
 extern WORD CALLBACK CallTo16_word_     (FARPROC16);
 extern LONG CALLBACK CallTo16_long_     (FARPROC16);
 extern WORD CALLBACK CallTo16_word_w    (FARPROC16,WORD);
@@ -251,7 +251,7 @@ static LRESULT WINAPI THUNK_CallWndProc16( WNDPROC16 proc, HWND16 hwnd,
                                            UINT16 msg, WPARAM16 wParam,
                                            LPARAM lParam )
 {
-    CONTEXT context;
+    CONTEXT86 context;
     LRESULT ret;
     WORD *args;
     WND *wndPtr = WIN_FindWndPtr( hwnd );
@@ -700,7 +700,7 @@ static VOID WINAPI THUNK_CallMouseEventProc( FARPROC16 proc,
                                              DWORD dwFlags, DWORD dx, DWORD dy,
                                              DWORD cButtons, DWORD dwExtraInfo )
 {
-    CONTEXT context;
+    CONTEXT86 context;
 
     memset( &context, 0, sizeof(context) );
     CS_reg(&context)  = SELECTOROF( proc );
@@ -748,7 +748,7 @@ FARPROC16 WINAPI GetMouseEventProc16(void)
 /***********************************************************************
  *           WIN16_mouse_event   (USER.299)
  */
-void WINAPI WIN16_mouse_event( CONTEXT *context )
+void WINAPI WIN16_mouse_event( CONTEXT86 *context )
 {
     mouse_event( AX_reg(context), BX_reg(context), CX_reg(context),
                  DX_reg(context), MAKELONG(SI_reg(context), DI_reg(context)) );
@@ -762,7 +762,7 @@ static VOID WINAPI THUNK_CallKeybdEventProc( FARPROC16 proc,
                                              BYTE bVk, BYTE bScan,
                                              DWORD dwFlags, DWORD dwExtraInfo )
 {
-    CONTEXT context;
+    CONTEXT86 context;
 
     memset( &context, 0, sizeof(context) );
     CS_reg(&context)  = SELECTOROF( proc );
@@ -800,7 +800,7 @@ VOID WINAPI THUNK_KEYBOARD_Enable( FARPROC16 proc, LPBYTE lpKeyState )
 /***********************************************************************
  *           WIN16_keybd_event   (USER.289)
  */
-void WINAPI WIN16_keybd_event( CONTEXT *context )
+void WINAPI WIN16_keybd_event( CONTEXT86 *context )
 {
     DWORD dwFlags = 0;
     
@@ -817,7 +817,7 @@ void WINAPI WIN16_keybd_event( CONTEXT *context )
  */
 static void THUNK_CallSystemTimerProc( FARPROC16 proc, WORD timer )
 {
-    CONTEXT context;
+    CONTEXT86 context;
     memset( &context, '\0', sizeof(context) );
 
     CS_reg( &context ) = SELECTOROF( proc );
@@ -1004,7 +1004,7 @@ UINT WINAPI ThunkConnect16(
  *           C16ThkSL                           (KERNEL.630)
  */
 
-void WINAPI C16ThkSL(CONTEXT *context)
+void WINAPI C16ThkSL(CONTEXT86 *context)
 {
     extern void CallFrom16_t_long_(void);
     LPBYTE stub = PTR_SEG_TO_LIN(EAX_reg(context)), x = stub;
@@ -1047,7 +1047,7 @@ void WINAPI C16ThkSL(CONTEXT *context)
  *           C16ThkSL01                         (KERNEL.631)
  */
 
-void WINAPI C16ThkSL01(CONTEXT *context)
+void WINAPI C16ThkSL01(CONTEXT86 *context)
 {
     LPBYTE stub = PTR_SEG_TO_LIN(EAX_reg(context)), x = stub;
 
@@ -1508,7 +1508,7 @@ void WINAPI InitCBClient16( FARPROC glueLS )
 /***********************************************************************
  *     CBClientGlueSL                      (KERNEL.604)
  */
-void WINAPI CBClientGlueSL( CONTEXT *context )
+void WINAPI CBClientGlueSL( CONTEXT86 *context )
 {
     /* Create stack frame */
     SEGPTR stackSeg = STACK16_PUSH( NtCurrentTeb(), 12 );
@@ -1533,7 +1533,7 @@ void WINAPI CBClientGlueSL( CONTEXT *context )
 /***********************************************************************
  *     CBClientThunkSL                      (KERNEL.620)
  */
-void WINAPI CBClientThunkSL( CONTEXT *context )
+void WINAPI CBClientThunkSL( CONTEXT86 *context )
 {
     /* Call 32-bit relay code */
     extern DWORD WINAPI CALL32_CBClient( FARPROC proc, LPWORD args, DWORD *esi );
@@ -1547,7 +1547,7 @@ void WINAPI CBClientThunkSL( CONTEXT *context )
 /***********************************************************************
  *     CBClientThunkSLEx                    (KERNEL.621)
  */
-void WINAPI CBClientThunkSLEx( CONTEXT *context )
+void WINAPI CBClientThunkSLEx( CONTEXT86 *context )
 {
     /* Call 32-bit relay code */
     extern DWORD WINAPI CALL32_CBClientEx( FARPROC proc, LPWORD args, 

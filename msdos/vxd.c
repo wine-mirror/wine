@@ -40,7 +40,7 @@ static WORD VXD_WinVersion(void)
 /***********************************************************************
  *           VXD_VMM
  */
-void VXD_VMM ( CONTEXT *context )
+void VXD_VMM ( CONTEXT86 *context )
 {
     unsigned service = AX_reg(context);
 
@@ -67,7 +67,7 @@ void VXD_VMM ( CONTEXT *context )
 /***********************************************************************
  *           VXD_PageFile
  */
-void WINAPI VXD_PageFile( CONTEXT *context )
+void WINAPI VXD_PageFile( CONTEXT86 *context )
 {
     unsigned	service = AX_reg(context);
 
@@ -113,7 +113,7 @@ void WINAPI VXD_PageFile( CONTEXT *context )
 /***********************************************************************
  *           VXD_Reboot
  */
-void VXD_Reboot ( CONTEXT *context )
+void VXD_Reboot ( CONTEXT86 *context )
 {
     unsigned service = AX_reg(context);
 
@@ -134,7 +134,7 @@ void VXD_Reboot ( CONTEXT *context )
 /***********************************************************************
  *           VXD_VDD
  */
-void VXD_VDD ( CONTEXT *context )
+void VXD_VDD ( CONTEXT86 *context )
 {
     unsigned service = AX_reg(context);
 
@@ -155,7 +155,7 @@ void VXD_VDD ( CONTEXT *context )
 /***********************************************************************
  *           VXD_VMD
  */
-void VXD_VMD ( CONTEXT *context )
+void VXD_VMD ( CONTEXT86 *context )
 {
     unsigned service = AX_reg(context);
 
@@ -176,7 +176,7 @@ void VXD_VMD ( CONTEXT *context )
 /***********************************************************************
  *           VXD_Shell
  */
-void WINAPI VXD_Shell( CONTEXT *context )
+void WINAPI VXD_Shell( CONTEXT86 *context )
 {
     unsigned	service = DX_reg(context);
 
@@ -270,7 +270,7 @@ void WINAPI VXD_Shell( CONTEXT *context )
 /***********************************************************************
  *           VXD_Comm
  */
-void WINAPI VXD_Comm( CONTEXT *context )
+void WINAPI VXD_Comm( CONTEXT86 *context )
 {
     unsigned	service = AX_reg(context);
 
@@ -295,7 +295,7 @@ void WINAPI VXD_Comm( CONTEXT *context )
 /***********************************************************************
  *           VXD_Timer
  */
-void VXD_Timer( CONTEXT *context )
+void VXD_Timer( CONTEXT86 *context )
 {
     unsigned service = AX_reg(context);
 
@@ -331,7 +331,7 @@ void VXD_Timer( CONTEXT *context )
 static DWORD System_Time = 0;
 static WORD  System_Time_Selector = 0;
 static void  System_Time_Tick( WORD timer ) { System_Time += 55; }
-void VXD_TimerAPI ( CONTEXT *context )
+void VXD_TimerAPI ( CONTEXT86 *context )
 {
     unsigned service = AX_reg(context);
 
@@ -364,7 +364,7 @@ void VXD_TimerAPI ( CONTEXT *context )
 /***********************************************************************
  *           VXD_ConfigMG
  */
-void VXD_ConfigMG ( CONTEXT *context )
+void VXD_ConfigMG ( CONTEXT86 *context )
 {
     unsigned service = AX_reg(context);
 
@@ -385,7 +385,7 @@ void VXD_ConfigMG ( CONTEXT *context )
 /***********************************************************************
  *           VXD_Enable
  */
-void VXD_Enable ( CONTEXT *context )
+void VXD_Enable ( CONTEXT86 *context )
 {
     unsigned service = AX_reg(context);
 
@@ -406,7 +406,7 @@ void VXD_Enable ( CONTEXT *context )
 /***********************************************************************
  *           VXD_APM
  */
-void VXD_APM ( CONTEXT *context )
+void VXD_APM ( CONTEXT86 *context )
 {
     unsigned service = AX_reg(context);
 
@@ -479,7 +479,7 @@ void VXD_APM ( CONTEXT *context )
  * 
  */
 
-void VXD_Win32s( CONTEXT *context )
+void VXD_Win32s( CONTEXT86 *context )
 {
     switch (AX_reg(context))
     {

@@ -45,7 +45,7 @@ DWORD INT1A_GetTicksSinceMidnight(void)
  *     0x00 - 0x07 - date and time
  *     0x?? - 0x?? - Microsoft Real Time Compression Interface
  */ 
-void WINAPI INT_Int1aHandler( CONTEXT *context )
+void WINAPI INT_Int1aHandler( CONTEXT86 *context )
 {
     time_t ltime;
     DWORD ticks;

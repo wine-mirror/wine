@@ -109,9 +109,9 @@ extern FARPROC16 INT_GetPMHandler( BYTE intnum );
 extern void INT_SetPMHandler( BYTE intnum, FARPROC16 handler );
 extern FARPROC16 INT_GetRMHandler( BYTE intnum );
 extern void INT_SetRMHandler( BYTE intnum, FARPROC16 handler );
-extern FARPROC16 INT_CtxGetHandler( CONTEXT *context, BYTE intnum );
-extern void INT_CtxSetHandler( CONTEXT *context, BYTE intnum, FARPROC16 handler );
-extern int INT_RealModeInterrupt( BYTE intnum, PCONTEXT context );
+extern FARPROC16 INT_CtxGetHandler( CONTEXT86 *context, BYTE intnum );
+extern void INT_CtxSetHandler( CONTEXT86 *context, BYTE intnum, FARPROC16 handler );
+extern int INT_RealModeInterrupt( BYTE intnum, CONTEXT86 *context );
 
 /* msdos/ioports.c */
 extern void IO_port_init (void);
@@ -119,67 +119,67 @@ extern DWORD IO_inport( int port, int count );
 extern void IO_outport( int port, int count, DWORD value );
 
 /* msdos/int09.c */
-extern void WINAPI INT_Int09Handler(CONTEXT*);
+extern void WINAPI INT_Int09Handler(CONTEXT86*);
 extern void WINAPI INT_Int09SendScan(BYTE);
 extern BYTE WINAPI INT_Int09ReadScan(void);
 
 /* msdos/int10.c */
-extern void WINAPI INT_Int10Handler(CONTEXT*);
+extern void WINAPI INT_Int10Handler(CONTEXT86*);
 
 /* msdos/int11.c */
-extern void WINAPI INT_Int11Handler(CONTEXT*);
+extern void WINAPI INT_Int11Handler(CONTEXT86*);
 
 /* msdos/int12.c */
-extern void WINAPI INT_Int12Handler(CONTEXT*);
+extern void WINAPI INT_Int12Handler(CONTEXT86*);
 
 /* msdos/int13.c */
-extern void WINAPI INT_Int13Handler(CONTEXT*);
+extern void WINAPI INT_Int13Handler(CONTEXT86*);
 
 /* msdos/int15.c */
-extern void WINAPI INT_Int15Handler(CONTEXT*);
+extern void WINAPI INT_Int15Handler(CONTEXT86*);
 
 /* msdos/int16.c */
-extern void WINAPI INT_Int16Handler(CONTEXT*);
+extern void WINAPI INT_Int16Handler(CONTEXT86*);
 extern int WINAPI INT_Int16AddChar(BYTE ascii,BYTE scan);
 
 /* msdos/int17.c */
-extern void WINAPI INT_Int17Handler(CONTEXT*);
+extern void WINAPI INT_Int17Handler(CONTEXT86*);
 
 /* msdos/int19.c */
-extern void WINAPI INT_Int19Handler(CONTEXT*);
+extern void WINAPI INT_Int19Handler(CONTEXT86*);
 
 /* msdos/int1a.c */
 extern DWORD INT1A_GetTicksSinceMidnight(void);
-extern void WINAPI INT_Int1aHandler(CONTEXT*);
+extern void WINAPI INT_Int1aHandler(CONTEXT86*);
 
 /* msdos/int20.c */
-extern void WINAPI INT_Int20Handler(CONTEXT*);
+extern void WINAPI INT_Int20Handler(CONTEXT86*);
 
 /* msdos/int25.c */
-extern void WINAPI INT_Int25Handler(CONTEXT*);
+extern void WINAPI INT_Int25Handler(CONTEXT86*);
 
 /* msdos/int26.c */
-extern void WINAPI INT_Int26Handler(CONTEXT*);
+extern void WINAPI INT_Int26Handler(CONTEXT86*);
 
 /* msdos/int29.c */
-extern void WINAPI INT_Int29Handler(CONTEXT*);
+extern void WINAPI INT_Int29Handler(CONTEXT86*);
 
 /* msdos/int2f.c */
-extern void WINAPI INT_Int2fHandler(CONTEXT*);
+extern void WINAPI INT_Int2fHandler(CONTEXT86*);
 
 /* msdos/int33.c */
-extern void WINAPI INT_Int33Handler(CONTEXT*);
+extern void WINAPI INT_Int33Handler(CONTEXT86*);
 extern void WINAPI INT_Int33Message(UINT,WPARAM,LPARAM);
 
 /* msdos/dpmi.c */
-typedef void WINAPI (*RMCBPROC)(CONTEXT*);
-extern void WINAPI INT_Int31Handler(CONTEXT*);
+typedef void WINAPI (*RMCBPROC)(CONTEXT86*);
+extern void WINAPI INT_Int31Handler(CONTEXT86*);
 extern FARPROC16 WINAPI DPMI_AllocInternalRMCB(RMCBPROC);
 extern void WINAPI DPMI_FreeInternalRMCB(FARPROC16);
-extern int DPMI_CallRMProc(CONTEXT*,LPWORD,int,int);
+extern int DPMI_CallRMProc(CONTEXT86*,LPWORD,int,int);
 
 /* msdos/xms.c */
-extern void WINAPI XMS_Handler(CONTEXT*);
+extern void WINAPI XMS_Handler(CONTEXT86*);
 
 /* loader/signal.c */
 extern BOOL SIGNAL_Init(void);
@@ -187,7 +187,7 @@ extern void SIGNAL_SetHandler( int sig, void (*func)(), int flags );
 extern void SIGNAL_MaskAsyncEvents( BOOL flag );
 
 /* misc/aspi.c */
-extern void ASPI_DOS_HandleInt(CONTEXT *context);
+extern void ASPI_DOS_HandleInt(CONTEXT86 *context);
 
 /* NOTE: Interrupts might get called from three modes: real mode, 16-bit, and 
  *        (via DeviceIoControl) 32-bit. For automatic conversion of pointer 

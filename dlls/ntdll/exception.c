@@ -223,7 +223,9 @@ void WINAPI REGS_FUNC(RtlUnwind)( PEXCEPTION_FRAME pEndFrame, LPVOID unusedEip,
     EXCEPTION_RECORD record, newrec;
     PEXCEPTION_FRAME frame, dispatch;
 
+#ifdef __i386__
     EAX_reg(context) = returnEax;
+#endif
 
     /* build an exception record, if we do not have one */
     if (!pRecord)

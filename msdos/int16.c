@@ -27,7 +27,7 @@ DEFAULT_DEBUG_CHANNEL(int16)
  *    not currently listed here.
  */
 
-void WINAPI INT_Int16Handler( CONTEXT *context )
+void WINAPI INT_Int16Handler( CONTEXT86 *context )
 {
    switch AH_reg(context) {
 

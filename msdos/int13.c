@@ -23,7 +23,7 @@ DEFAULT_DEBUG_CHANNEL(int)
  *
  * Handler for int 13h (disk I/O).
  */
-void WINAPI INT_Int13Handler( CONTEXT *context )
+void WINAPI INT_Int13Handler( CONTEXT86 *context )
 {
     switch(AH_reg(context))
     {

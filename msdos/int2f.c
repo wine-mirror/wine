@@ -29,15 +29,15 @@ DEFAULT_DEBUG_CHANNEL(int)
 /* base WPROCS.DLL ordinal number for VxDs */
 #define VXD_BASE 400
 
-static void do_int2f_16( CONTEXT *context );
-static void MSCDEX_Handler( CONTEXT *context );
+static void do_int2f_16( CONTEXT86 *context );
+static void MSCDEX_Handler( CONTEXT86 *context );
 
 /**********************************************************************
  *	    INT_Int2fHandler
  *
  * Handler for int 2fh (multiplex).
  */
-void WINAPI INT_Int2fHandler( CONTEXT *context )
+void WINAPI INT_Int2fHandler( CONTEXT86 *context )
 {
     TRACE(int,"Subfunction 0x%X\n", AX_reg(context));
 
@@ -291,7 +291,7 @@ void WINAPI INT_Int2fHandler( CONTEXT *context )
 /**********************************************************************
  *	    do_int2f_16
  */
-static void do_int2f_16( CONTEXT *context )
+static void do_int2f_16( CONTEXT86 *context )
 {
     DWORD addr;
 
@@ -451,7 +451,7 @@ static	void	MSCDEX_StoreMSF(DWORD frame, BYTE* val)
     val[0] = frame - CDFRAMES_PERMIN * val[2] - CDFRAMES_PERSEC * val[1]; /* frames */
 }
 
-static void MSCDEX_Handler(CONTEXT* context)
+static void MSCDEX_Handler(CONTEXT86* context)
 {
     int 	drive, count;
     char*	p;

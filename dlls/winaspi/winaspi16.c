@@ -511,7 +511,7 @@ DWORD WINAPI GetASPIDLLVersion16()
 }
 
 
-void WINAPI ASPI_DOS_func(CONTEXT *context)
+void WINAPI ASPI_DOS_func(CONTEXT86 *context)
 {
 	WORD *stack = CTX_SEG_OFF_TO_LIN(context, SS_reg(context), ESP_reg(context));
 	DWORD ptrSRB = *(DWORD *)&stack[2];
@@ -526,7 +526,7 @@ void WINAPI ASPI_DOS_func(CONTEXT *context)
 
 
 /* returns the address of a real mode callback to ASPI_DOS_func() */
-void ASPI_DOS_HandleInt(CONTEXT *context)
+void ASPI_DOS_HandleInt(CONTEXT86 *context)
 {
 #ifdef linux
 	FARPROC16 *p = (FARPROC16 *)CTX_SEG_OFF_TO_LIN(context, DS_reg(context), EDX_reg(context));

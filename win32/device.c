@@ -717,9 +717,9 @@ struct win32apireq {
 	unsigned short  ar_pad;
 };
 
-static void win32apieq_2_CONTEXT(struct win32apireq *pIn,CONTEXT *pCxt)
+static void win32apieq_2_CONTEXT(struct win32apireq *pIn,CONTEXT86 *pCxt)
 {
-	memset(pCxt,0,sizeof(CONTEXT));
+	memset(pCxt,0,sizeof(*pCxt));
 
 	pCxt->ContextFlags=CONTEXT_INTEGER|CONTEXT_CONTROL;
 	pCxt->Eax = pIn->ar_eax;
@@ -737,7 +737,7 @@ static void win32apieq_2_CONTEXT(struct win32apireq *pIn,CONTEXT *pCxt)
 	/* FIXME: pIn->ar_pad ignored */
 }
 
-static void CONTEXT_2_win32apieq(CONTEXT *pCxt,struct win32apireq *pOut)
+static void CONTEXT_2_win32apieq(CONTEXT86 *pCxt,struct win32apireq *pOut)
 {
 	memset(pOut,0,sizeof(struct win32apireq));
 
@@ -773,7 +773,7 @@ static BOOL DeviceIo_IFSMgr(DWORD dwIoControlCode, LPVOID lpvInBuffer, DWORD cbI
     {
 	case IFS_IOCTL_21:
 	case IFS_IOCTL_2F:{
-		CONTEXT cxt;
+		CONTEXT86 cxt;
 		struct win32apireq *pIn=(struct win32apireq *) lpvInBuffer;
 		struct win32apireq *pOut=(struct win32apireq *) lpvOutBuffer;
 
@@ -822,9 +822,9 @@ static BOOL DeviceIo_IFSMgr(DWORD dwIoControlCode, LPVOID lpvInBuffer, DWORD cbI
  *           DeviceIo_VWin32
  */
 
-static void DIOCRegs_2_CONTEXT( DIOC_REGISTERS *pIn, CONTEXT *pCxt )
+static void DIOCRegs_2_CONTEXT( DIOC_REGISTERS *pIn, CONTEXT86 *pCxt )
 {
-    memset( pCxt, 0, sizeof(CONTEXT) );
+    memset( pCxt, 0, sizeof(*pCxt) );
     /* Note: segment registers == 0 means that CTX_SEG_OFF_TO_LIN
              will interpret 32-bit register contents as linear pointers */
 
@@ -840,7 +840,7 @@ static void DIOCRegs_2_CONTEXT( DIOC_REGISTERS *pIn, CONTEXT *pCxt )
     pCxt->EFlags = pIn->reg_Flags;
 }
 
-static void CONTEXT_2_DIOCRegs( CONTEXT *pCxt, DIOC_REGISTERS *pOut )
+static void CONTEXT_2_DIOCRegs( CONTEXT86 *pCxt, DIOC_REGISTERS *pOut )
 {
     memset( pOut, 0, sizeof(DIOC_REGISTERS) );
 
@@ -871,7 +871,7 @@ static BOOL DeviceIo_VWin32(DWORD dwIoControlCode,
     case VWIN32_DIOC_DOS_INT25:
     case VWIN32_DIOC_DOS_INT26:
     {
-        CONTEXT cxt;
+        CONTEXT86 cxt;
         DIOC_REGISTERS *pIn  = (DIOC_REGISTERS *)lpvInBuffer;
         DIOC_REGISTERS *pOut = (DIOC_REGISTERS *)lpvOutBuffer;
 

@@ -9,7 +9,7 @@
  *
  * Handler for int 12h (get memory size).
  */
-void WINAPI INT_Int12Handler( CONTEXT *context )
+void WINAPI INT_Int12Handler( CONTEXT86 *context )
 {
     AX_reg(context) = 640;
 }

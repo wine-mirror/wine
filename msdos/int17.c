@@ -17,7 +17,7 @@ DEFAULT_DEBUG_CHANNEL(int17)
  *
  * Handler for int 17h (printer - output character).
  */
-void WINAPI INT_Int17Handler( CONTEXT *context )
+void WINAPI INT_Int17Handler( CONTEXT86 *context )
 {
     switch( AH_reg(context) )
     {

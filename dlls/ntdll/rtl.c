@@ -376,11 +376,15 @@ BOOLEAN WINAPI RtlGetNtProductType(LPDWORD type)
  */
 void WINAPI REGS_FUNC(NTDLL_chkstk)( CONTEXT *context )
 {
+#ifdef __i386__
     ESP_reg(context) -= EAX_reg(context);
+#endif
 }
 void WINAPI REGS_FUNC(NTDLL_alloca_probe)( CONTEXT *context )
 {
+#ifdef __i386__
     ESP_reg(context) -= EAX_reg(context);
+#endif
 }
 
 /******************************************************************************

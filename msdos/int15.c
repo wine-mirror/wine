@@ -14,7 +14,7 @@ DEFAULT_DEBUG_CHANNEL(int)
  *
  * Handler for int 15h (old cassette interrupt).
  */
-void WINAPI INT_Int15Handler( CONTEXT *context )
+void WINAPI INT_Int15Handler( CONTEXT86 *context )
 {
     switch(AH_reg(context))
     {

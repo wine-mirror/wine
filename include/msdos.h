@@ -189,7 +189,7 @@ extern struct DosDeviceStruct LPT[MAX_PORTS];
 #define EL_Serial            0x04
 #define EL_Memory            0x05
 
-void WINAPI DOS3Call( CONTEXT *context );
+void WINAPI DOS3Call( CONTEXT86 *context );
 
 #define DOSCONF_MEM_HIGH        0x0001
 #define DOSCONF_MEM_UMB         0x0002

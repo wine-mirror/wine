@@ -1527,7 +1527,7 @@ HLOCAL16 WINAPI LocalAlloc16( UINT16 flags, WORD size )
 /***********************************************************************
  *           WIN16_LocalAlloc
  */
-void WINAPI WIN16_LocalAlloc( CONTEXT *context )
+void WINAPI WIN16_LocalAlloc( CONTEXT86 *context )
 {
     WORD *stack = PTR_SEG_OFF_TO_LIN(SS_reg(context), SP_reg(context));
     UINT16 flags = (UINT16)stack[3];

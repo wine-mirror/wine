@@ -20,8 +20,8 @@ extern int (*IF1632_CallLargeStack)( int (*func)(void), void *arg );
 
 typedef struct
 {
-    LONG (CALLBACK *CallRegisterShortProc)( CONTEXT *, INT );
-    LONG (CALLBACK *CallRegisterLongProc)( CONTEXT *, INT );
+    LONG (CALLBACK *CallRegisterShortProc)( CONTEXT86 *, INT );
+    LONG (CALLBACK *CallRegisterLongProc)( CONTEXT86 *, INT );
     VOID (CALLBACK *CallFrom16WndProc)(void);
     LRESULT (CALLBACK *CallWndProc)( WNDPROC16, HWND16, UINT16,
                                      WPARAM16, LPARAM );

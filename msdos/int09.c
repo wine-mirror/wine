@@ -21,7 +21,7 @@ typedef struct {
  *
  * Handler for int 09h.
  */
-void WINAPI INT_Int09Handler( CONTEXT *context )
+void WINAPI INT_Int09Handler( CONTEXT86 *context )
 {
   BYTE scan = INT_Int09ReadScan();
   UINT vkey = MapVirtualKeyA(scan&0x7f, 1);
@@ -38,7 +38,7 @@ void WINAPI INT_Int09Handler( CONTEXT *context )
   DOSVM_PIC_ioport_out(0x20, 0x20); /* send EOI */
 }
 
-static void KbdRelay( LPDOSTASK lpDosTask, PCONTEXT context, void *data )
+static void KbdRelay( LPDOSTASK lpDosTask, CONTEXT86 *context, void *data )
 {
   KBDSYSTEM *sys = (KBDSYSTEM *)DOSVM_GetSystemData(0x09);
 

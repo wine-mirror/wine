@@ -139,7 +139,7 @@ DPMI_xrealloc(LPVOID ptr,int newsize) {
 /**********************************************************************
  *	    INT_GetRealModeContext
  */
-static void INT_GetRealModeContext( REALMODECALL *call, CONTEXT *context )
+static void INT_GetRealModeContext( REALMODECALL *call, CONTEXT86 *context )
 {
     EAX_reg(context) = call->eax;
     EBX_reg(context) = call->ebx;
@@ -164,7 +164,7 @@ static void INT_GetRealModeContext( REALMODECALL *call, CONTEXT *context )
 /**********************************************************************
  *	    INT_SetRealModeContext
  */
-static void INT_SetRealModeContext( REALMODECALL *call, CONTEXT *context )
+static void INT_SetRealModeContext( REALMODECALL *call, CONTEXT86 *context )
 {
     call->eax = EAX_reg(context);
     call->ebx = EBX_reg(context);
@@ -190,7 +190,7 @@ static void INT_SetRealModeContext( REALMODECALL *call, CONTEXT *context )
  *
  * This routine does the hard work of calling a callback procedure.
  */
-static void DPMI_CallRMCBProc( CONTEXT *context, RMCB *rmcb, WORD flag )
+static void DPMI_CallRMCBProc( CONTEXT86 *context, RMCB *rmcb, WORD flag )
 {
     if (IS_SELECTOR_SYSTEM( rmcb->proc_sel )) {
         /* Wine-internal RMCB, call directly */
@@ -232,7 +232,7 @@ static void DPMI_CallRMCBProc( CONTEXT *context, RMCB *rmcb, WORD flag )
              : "ecx", "edx", "ebp" );
         } else {
             /* 16-bit DPMI client */
-            CONTEXT ctx = *context;
+            CONTEXT86 ctx = *context;
             CS_reg(&ctx) = rmcb->proc_sel;
             EIP_reg(&ctx) = rmcb->proc_ofs;
             DS_reg(&ctx) = ss;
@@ -257,7 +257,7 @@ static void DPMI_CallRMCBProc( CONTEXT *context, RMCB *rmcb, WORD flag )
  *
  * This routine does the hard work of calling a real mode procedure.
  */
-int DPMI_CallRMProc( CONTEXT *context, LPWORD stack, int args, int iret )
+int DPMI_CallRMProc( CONTEXT86 *context, LPWORD stack, int args, int iret )
 {
     LPWORD stack16;
 #ifndef MZ_SUPPORTED
@@ -401,9 +401,9 @@ callrmproc_again:
 /**********************************************************************
  *	    CallRMInt
  */
-static void CallRMInt( CONTEXT *context )
+static void CallRMInt( CONTEXT86 *context )
 {
-    CONTEXT realmode_ctx;
+    CONTEXT86 realmode_ctx;
     FARPROC16 rm_int = INT_GetRMHandler( BL_reg(context) );
     REALMODECALL *call = (REALMODECALL *)PTR_SEG_OFF_TO_LIN( ES_reg(context),
                                                           DI_reg(context) );
@@ -435,10 +435,10 @@ static void CallRMInt( CONTEXT *context )
 }
 
 
-static void CallRMProc( CONTEXT *context, int iret )
+static void CallRMProc( CONTEXT86 *context, int iret )
 {
     REALMODECALL *p = (REALMODECALL *)PTR_SEG_OFF_TO_LIN( ES_reg(context), DI_reg(context) );
-    CONTEXT context16;
+    CONTEXT86 context16;
 
     TRACE(int31, "RealModeCall: EAX=%08lx EBX=%08lx ECX=%08lx EDX=%08lx\n",
 	p->eax, p->ebx, p->ecx, p->edx);
@@ -506,7 +506,7 @@ static RMCB *DPMI_AllocRMCB( void )
 }
 
 
-static void AllocRMCB( CONTEXT *context )
+static void AllocRMCB( CONTEXT86 *context )
 {
     RMCB *NewRMCB = DPMI_AllocRMCB();
 
@@ -569,7 +569,7 @@ static int DPMI_FreeRMCB( DWORD address )
 }
 
 
-static void FreeRMCB( CONTEXT *context )
+static void FreeRMCB( CONTEXT86 *context )
 {
     FIXME(int31, "callback address: %04x:%04x\n",
           CX_reg(context), DX_reg(context));
@@ -590,11 +590,11 @@ void WINAPI DPMI_FreeInternalRMCB( FARPROC16 proc )
 #ifdef MZ_SUPPORTED
 /* (see loader/dos/module.c, function MZ_InitDPMI) */
 
-static void StartPM( CONTEXT *context, LPDOSTASK lpDosTask )
+static void StartPM( CONTEXT86 *context, LPDOSTASK lpDosTask )
 {
     char *base = DOSMEM_MemoryBase(0);
     UINT16 cs, ss, ds, es;
-    CONTEXT pm_ctx;
+    CONTEXT86 pm_ctx;
     DWORD psp_ofs = (DWORD)(lpDosTask->psp_seg<<4);
     PDB16 *psp = (PDB16 *)(base + psp_ofs);
     HANDLE16 env_seg = psp->environment;
@@ -647,7 +647,7 @@ static void StartPM( CONTEXT *context, LPDOSTASK lpDosTask )
 void WINAPI DPMI_RawModeSwitch( SIGCONTEXT *context )
 {
   LPDOSTASK lpDosTask = MZ_Current();
-  CONTEXT rm_ctx;
+  CONTEXT86 rm_ctx;
   int ret;
 
   if (!lpDosTask) {
@@ -722,7 +722,7 @@ void WINAPI DPMI_RawModeSwitch( SIGCONTEXT *context )
  * Handler for int 31h (DPMI).
  */
 
-void WINAPI INT_Int31Handler( CONTEXT *context )
+void WINAPI INT_Int31Handler( CONTEXT86 *context )
 {
     /*
      * Note: For Win32s processes, the whole linear address space is

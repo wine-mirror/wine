@@ -289,7 +289,7 @@ HANDLE WINAPI CreateThread( SECURITY_ATTRIBUTES *sa, DWORD stack,
 {
     int handle = -1;
     TEB *teb = THREAD_Create( PROCESS_Current(), flags, stack, TRUE, sa, &handle );
-    if (!teb) return INVALID_HANDLE_VALUE;
+    if (!teb) return 0;
     teb->flags      |= TEBF_WIN32;
     teb->entry_point = start;
     teb->entry_arg   = param;
@@ -297,7 +297,7 @@ HANDLE WINAPI CreateThread( SECURITY_ATTRIBUTES *sa, DWORD stack,
     if (SYSDEPS_SpawnThread( teb ) == -1)
     {
         CloseHandle( handle );
-        return INVALID_HANDLE_VALUE;
+        return 0;
     }
     if (id) *id = (DWORD)teb->tid;
     return handle;
@@ -504,6 +504,7 @@ BOOL WINAPI GetThreadContext(
     HANDLE handle,  /* [in]  Handle to thread with context */
     CONTEXT *context) /* [out] Address of context structure */
 {
+#ifdef __i386__
     WORD cs, ds;
 
     FIXME("returning dummy info\n" );
@@ -517,6 +518,7 @@ BOOL WINAPI GetThreadContext(
     context->SegGs   = ds;
     context->SegSs   = ds;
     context->SegFs   = ds;
+#endif
     return TRUE;
 }
 

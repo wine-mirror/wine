@@ -14,7 +14,7 @@
  *
  * Handler for int 3d (FLOATING POINT EMULATION - STANDALONE FWAIT).
  */
-void WINAPI INT_Int3dHandler(CONTEXT *context)
+void WINAPI INT_Int3dHandler(CONTEXT86 *context)
 {
     switch(AH_reg(context))
     {

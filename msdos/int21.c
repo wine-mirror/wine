@@ -102,7 +102,7 @@ static BOOL INT21_CreateHeap(void)
     return TRUE;
 }
 
-static BYTE *GetCurrentDTA( CONTEXT *context )
+static BYTE *GetCurrentDTA( CONTEXT86 *context )
 {
     TDB *pTask = (TDB *)GlobalLock16( GetCurrentTask() );
 
@@ -152,7 +152,7 @@ void CreateBPB(int drive, BYTE *data, BOOL16 limited)
 	}	
 }
 
-static int INT21_GetFreeDiskSpace( CONTEXT *context )
+static int INT21_GetFreeDiskSpace( CONTEXT86 *context )
 {
     DWORD cluster_sectors, sector_bytes, free_clusters, total_clusters;
     char root[] = "A:\\";
@@ -167,7 +167,7 @@ static int INT21_GetFreeDiskSpace( CONTEXT *context )
     return 1;
 }
 
-static int INT21_GetDriveAllocInfo( CONTEXT *context )
+static int INT21_GetDriveAllocInfo( CONTEXT86 *context )
 {
     if (!INT21_GetFreeDiskSpace( context )) return 0;
     if (!heap && !INT21_CreateHeap()) return 0;
@@ -177,7 +177,7 @@ static int INT21_GetDriveAllocInfo( CONTEXT *context )
     return 1;
 }
 
-static void GetDrivePB( CONTEXT *context, int drive )
+static void GetDrivePB( CONTEXT86 *context, int drive )
 {
         if(!DRIVE_IsValid(drive))
         {
@@ -220,7 +220,7 @@ static void GetDrivePB( CONTEXT *context, int drive )
 }
 
 
-static void ioctlGetDeviceInfo( CONTEXT *context )
+static void ioctlGetDeviceInfo( CONTEXT86 *context )
 {
     int curr_drive;
     const DOS_DEVICE *dev;
@@ -249,7 +249,7 @@ static void ioctlGetDeviceInfo( CONTEXT *context )
      */
 }
 
-static BOOL ioctlGenericBlkDevReq( CONTEXT *context )
+static BOOL ioctlGenericBlkDevReq( CONTEXT86 *context )
 {
 	BYTE *dataptr = CTX_SEG_OFF_TO_LIN(context, DS_reg(context), EDX_reg(context));
 	int drive = DOS_GET_DRIVE( BL_reg(context) );
@@ -356,7 +356,7 @@ static BOOL ioctlGenericBlkDevReq( CONTEXT *context )
 	return FALSE;
 }
 
-static void INT21_ParseFileNameIntoFCB( CONTEXT *context )
+static void INT21_ParseFileNameIntoFCB( CONTEXT86 *context )
 {
     char *filename =
         CTX_SEG_OFF_TO_LIN(context, DS_reg(context), ESI_reg(context) );
@@ -394,7 +394,7 @@ static void INT21_ParseFileNameIntoFCB( CONTEXT *context )
     SI_reg(context) += (int)s - (int)filename;
 }
 
-static void INT21_GetSystemDate( CONTEXT *context )
+static void INT21_GetSystemDate( CONTEXT86 *context )
 {
     SYSTEMTIME systime;
     GetLocalTime( &systime );
@@ -403,7 +403,7 @@ static void INT21_GetSystemDate( CONTEXT *context )
     AX_reg(context) = systime.wDayOfWeek;
 }
 
-static void INT21_GetSystemTime( CONTEXT *context )
+static void INT21_GetSystemTime( CONTEXT86 *context )
 {
     SYSTEMTIME systime;
     GetLocalTime( &systime );
@@ -427,7 +427,7 @@ char *INT21_DriveName(int drive)
       }
     return drivestring;
 }
-static BOOL INT21_CreateFile( CONTEXT *context )
+static BOOL INT21_CreateFile( CONTEXT86 *context )
 {
     AX_reg(context) = _lcreat16( CTX_SEG_OFF_TO_LIN(context, DS_reg(context),
                                           EDX_reg(context) ), CX_reg(context) );
@@ -443,7 +443,7 @@ static HFILE16 _lcreat16_uniq( LPCSTR path, INT attr )
                                              CREATE_NEW, attr, -1 ));
 }
 
-static void OpenExistingFile( CONTEXT *context )
+static void OpenExistingFile( CONTEXT86 *context )
 {
     AX_reg(context) = _lopen16( CTX_SEG_OFF_TO_LIN(context, DS_reg(context),EDX_reg(context)),
                                AL_reg(context) );
@@ -454,7 +454,7 @@ static void OpenExistingFile( CONTEXT *context )
     }
 }
 
-static BOOL INT21_ExtendedOpenCreateFile(CONTEXT *context )
+static BOOL INT21_ExtendedOpenCreateFile(CONTEXT86 *context )
 {
   BOOL bExtendedError = FALSE;
   BYTE action = DL_reg(context);
@@ -548,7 +548,7 @@ static BOOL INT21_ExtendedOpenCreateFile(CONTEXT *context )
 }
 
 
-static BOOL INT21_ChangeDir( CONTEXT *context )
+static BOOL INT21_ChangeDir( CONTEXT86 *context )
 {
     int drive;
     char *dirname = CTX_SEG_OFF_TO_LIN(context, DS_reg(context),EDX_reg(context));
@@ -564,7 +564,7 @@ static BOOL INT21_ChangeDir( CONTEXT *context )
 }
 
 
-static int INT21_FindFirst( CONTEXT *context )
+static int INT21_FindFirst( CONTEXT86 *context )
 {
     char *p;
     const char *path;
@@ -603,7 +603,7 @@ static int INT21_FindFirst( CONTEXT *context )
 }
 
 
-static int INT21_FindNext( CONTEXT *context )
+static int INT21_FindNext( CONTEXT86 *context )
 {
     FINDFILE_DTA *dta = (FINDFILE_DTA *)GetCurrentDTA(context);
     WIN32_FIND_DATAA entry;
@@ -641,7 +641,7 @@ static int INT21_FindNext( CONTEXT *context )
 }
 
 
-static BOOL INT21_CreateTempFile( CONTEXT *context )
+static BOOL INT21_CreateTempFile( CONTEXT86 *context )
 {
     static int counter = 0;
     char *name = CTX_SEG_OFF_TO_LIN(context,  DS_reg(context), EDX_reg(context) );
@@ -666,7 +666,7 @@ static BOOL INT21_CreateTempFile( CONTEXT *context )
 }
 
 
-static BOOL INT21_GetCurrentDirectory( CONTEXT *context ) 
+static BOOL INT21_GetCurrentDirectory( CONTEXT86 *context ) 
 {
     int drive = DOS_GET_DRIVE( DL_reg(context) );
     char *ptr = (char *)CTX_SEG_OFF_TO_LIN(context,  DS_reg(context), ESI_reg(context) );
@@ -682,7 +682,7 @@ static BOOL INT21_GetCurrentDirectory( CONTEXT *context )
 }
 
 
-static void INT21_GetDBCSLeadTable( CONTEXT *context )
+static void INT21_GetDBCSLeadTable( CONTEXT86 *context )
 {
     if (heap || INT21_CreateHeap())
     { /* return an empty table just as DOS 4.0+ does */
@@ -697,7 +697,7 @@ static void INT21_GetDBCSLeadTable( CONTEXT *context )
 }
 
 
-static int INT21_GetDiskSerialNumber( CONTEXT *context )
+static int INT21_GetDiskSerialNumber( CONTEXT86 *context )
 {
     BYTE *dataptr = CTX_SEG_OFF_TO_LIN(context, DS_reg(context), EDX_reg(context));
     int drive = DOS_GET_DRIVE( BL_reg(context) );
@@ -716,7 +716,7 @@ static int INT21_GetDiskSerialNumber( CONTEXT *context )
 }
 
 
-static int INT21_SetDiskSerialNumber( CONTEXT *context )
+static int INT21_SetDiskSerialNumber( CONTEXT86 *context )
 {
     BYTE *dataptr = CTX_SEG_OFF_TO_LIN(context, DS_reg(context), EDX_reg(context));
     int drive = DOS_GET_DRIVE( BL_reg(context) );
@@ -735,7 +735,7 @@ static int INT21_SetDiskSerialNumber( CONTEXT *context )
 /* microsoft's programmers should be shot for using CP/M style int21
    calls in Windows for Workgroup's winfile.exe */
 
-static int INT21_FindFirstFCB( CONTEXT *context )
+static int INT21_FindFirstFCB( CONTEXT86 *context )
 {
     BYTE *fcb = (BYTE *)CTX_SEG_OFF_TO_LIN(context, DS_reg(context), EDX_reg(context));
     FINDFILE_FCB *pFCB;
@@ -759,7 +759,7 @@ static int INT21_FindFirstFCB( CONTEXT *context )
 }
 
 
-static int INT21_FindNextFCB( CONTEXT *context )
+static int INT21_FindNextFCB( CONTEXT86 *context )
 {
     BYTE *fcb = (BYTE *)CTX_SEG_OFF_TO_LIN(context, DS_reg(context), EDX_reg(context));
     FINDFILE_FCB *pFCB;
@@ -828,19 +828,19 @@ static int INT21_FindNextFCB( CONTEXT *context )
 }
 
 
-static void DeleteFileFCB( CONTEXT *context )
+static void DeleteFileFCB( CONTEXT86 *context )
 {
     FIXME(int21, "(%p): stub\n", context);
 }
 
-static void RenameFileFCB( CONTEXT *context )
+static void RenameFileFCB( CONTEXT86 *context )
 {
     FIXME(int21, "(%p): stub\n", context);
 }
 
 
 
-static void fLock( CONTEXT * context )
+static void fLock( CONTEXT86 * context )
 {
 
     switch ( AX_reg(context) & 0xff )
@@ -878,7 +878,7 @@ static void fLock( CONTEXT * context )
 } 
 
 static BOOL
-INT21_networkfunc (CONTEXT *context)
+INT21_networkfunc (CONTEXT86 *context)
 {
      switch (AL_reg(context)) {
      case 0x00: /* Get machine name. */
@@ -940,7 +940,7 @@ static WORD INT21_GetCurrentPSP()
 /***********************************************************************
  *           INT21_GetExtendedError
  */
-static void INT21_GetExtendedError( CONTEXT *context )
+static void INT21_GetExtendedError( CONTEXT86 *context )
 {
     BYTE class, action, locus;
     WORD error = GetLastError();
@@ -1055,7 +1055,7 @@ static void INT21_GetExtendedError( CONTEXT *context )
 /***********************************************************************
  *           DOS3Call  (KERNEL.102)
  */
-void WINAPI DOS3Call( CONTEXT *context )
+void WINAPI DOS3Call( CONTEXT86 *context )
 {
     BOOL	bSetDOSExtendedError = FALSE;
 

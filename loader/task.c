@@ -231,7 +231,7 @@ void TASK_CallToStart(void)
     TDB *pTask = (TDB *)GlobalLock16( GetCurrentTask() );
     NE_MODULE *pModule = NE_GetPtr( pTask->hModule );
     SEGTABLEENTRY *pSegTable = NE_SEG_TABLE( pModule );
-    CONTEXT context;
+    CONTEXT86 context;
 
     /* Add task to 16-bit scheduler pool */
     TASK_Reschedule();
@@ -717,7 +717,7 @@ void TASK_Reschedule(void)
  *
  * Called by the application startup code.
  */
-void WINAPI InitTask16( CONTEXT *context )
+void WINAPI InitTask16( CONTEXT86 *context )
 {
     TDB *pTask;
     NE_MODULE *pModule;
@@ -1210,7 +1210,7 @@ void WINAPI SwitchStackTo16( WORD seg, WORD ptr, WORD top )
 /***********************************************************************
  *           SwitchStackBack   (KERNEL.109)
  */
-void WINAPI SwitchStackBack16( CONTEXT *context )
+void WINAPI SwitchStackBack16( CONTEXT86 *context )
 {
     STACK16FRAME *oldFrame, *newFrame;
     INSTANCEDATA *pData;
@@ -1254,7 +1254,7 @@ void WINAPI SwitchStackBack16( CONTEXT *context )
 /***********************************************************************
  *           GetTaskQueueDS  (KERNEL.118)
  */
-void WINAPI GetTaskQueueDS16( CONTEXT *context )
+void WINAPI GetTaskQueueDS16( CONTEXT86 *context )
 {
     DS_reg(context) = GlobalHandleToSel16( GetTaskQueue16(0) );
 }
@@ -1263,7 +1263,7 @@ void WINAPI GetTaskQueueDS16( CONTEXT *context )
 /***********************************************************************
  *           GetTaskQueueES  (KERNEL.119)
  */
-void WINAPI GetTaskQueueES16( CONTEXT *context )
+void WINAPI GetTaskQueueES16( CONTEXT86 *context )
 {
     ES_reg(context) = GlobalHandleToSel16( GetTaskQueue16(0) );
 }
@@ -1374,7 +1374,7 @@ HINSTANCE16 WINAPI GetTaskDS16(void)
 /***********************************************************************
  *           GetDummyModuleHandleDS   (KERNEL.602)
  */
-VOID WINAPI GetDummyModuleHandleDS16( CONTEXT *context )
+VOID WINAPI GetDummyModuleHandleDS16( CONTEXT86 *context )
 {
     TDB *pTask;
     WORD selector;
@@ -1513,7 +1513,7 @@ HMODULE16 WINAPI GetExePtr( HANDLE16 handle )
     return GetExePtrHelper( handle, &dummy );
 }
 
-void WINAPI WIN16_GetExePtr( CONTEXT *context )
+void WINAPI WIN16_GetExePtr( CONTEXT86 *context )
 {
     WORD *stack = PTR_SEG_OFF_TO_LIN(SS_reg(context), SP_reg(context));
     HANDLE16 handle = (HANDLE16)stack[2];

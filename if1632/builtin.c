@@ -321,7 +321,7 @@ LPCSTR BUILTIN_GetEntryPoint16( WORD cs, WORD ip, WORD *pOrd )
  *
  * Default interrupt handler.
  */
-void BUILTIN_DefaultIntHandler( CONTEXT *context )
+void BUILTIN_DefaultIntHandler( CONTEXT86 *context )
 {
     WORD ordinal;
     STACK16FRAME *frame = CURRENT_STACK16;

@@ -20,7 +20,7 @@ DEFAULT_DEBUG_CHANNEL(int)
  *
  * Handler for int 25h (absolute disk read).
  */
-void WINAPI INT_Int25Handler( CONTEXT *context )
+void WINAPI INT_Int25Handler( CONTEXT86 *context )
 {
     BYTE *dataptr = CTX_SEG_OFF_TO_LIN( context, DS_reg(context), EBX_reg(context) );
     DWORD begin, length;
