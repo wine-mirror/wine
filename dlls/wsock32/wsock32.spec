@@ -4,7 +4,7 @@
   4 stdcall connect(long ptr long) ws2_32.connect
   5 stdcall getpeername(long ptr ptr) ws2_32.getpeername
   6 stdcall getsockname(long ptr ptr) ws2_32.getsockname
-  7 stdcall getsockopt(long long long ptr ptr) ws2_32.getsockopt
+  7 stdcall getsockopt(long long long ptr ptr) WS1_getsockopt
   8 stdcall htonl(long) ws2_32.htonl
   9 stdcall htons(long) ws2_32.htons
  10 stdcall inet_addr(str) ws2_32.inet_addr
@@ -18,7 +18,7 @@
  18 stdcall select(long ptr ptr ptr ptr) ws2_32.select
  19 stdcall send(long ptr long long) ws2_32.send
  20 stdcall sendto(long ptr long long ptr long) ws2_32.sendto
- 21 stdcall setsockopt(long long long ptr long) ws2_32.setsockopt
+ 21 stdcall setsockopt(long long long ptr long) WS1_setsockopt
  22 stdcall shutdown(long long) ws2_32.shutdown
  23 stdcall socket(long long long) ws2_32.socket
  51 stdcall gethostbyaddr(ptr long long) ws2_32.gethostbyaddr

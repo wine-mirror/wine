@@ -72,4 +72,28 @@ typedef struct _INTERFACE_INFO
 #define WS_IFF_MULTICAST      0x00000010 /* multicast is supported */
 #endif /* USE_WS_PREFIX */
 
+#ifndef USE_WS_PREFIX
+#define IP_OPTIONS             1
+#define IP_HDRINCL             2
+#define IP_TOS                 3
+#define IP_TTL                 4
+#define IP_MULTICAST_IF        9
+#define IP_MULTICAST_TTL       10
+#define IP_MULTICAST_LOOP      11
+#define IP_ADD_MEMBERSHIP      12
+#define IP_DROP_MEMBERSHIP     13
+#define IP_DONTFRAGMENT        14
+#else
+#define WS_IP_OPTIONS          1
+#define WS_IP_HDRINCL          2
+#define WS_IP_TOS              3
+#define WS_IP_TTL              4
+#define WS_IP_MULTICAST_IF     9
+#define WS_IP_MULTICAST_TTL    10
+#define WS_IP_MULTICAST_LOOP   11
+#define WS_IP_ADD_MEMBERSHIP   12
+#define WS_IP_DROP_MEMBERSHIP  13
+#define WS_IP_DONTFRAGMENT     14
+#endif /* USE_WS_PREFIX */
+
 #endif /* __WS2TCPIP__ */

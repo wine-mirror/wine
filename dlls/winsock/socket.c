@@ -278,6 +278,34 @@ static int _px_tcp_ops[] = {
 	0
 };
 
+static const int _ws_ip_ops[] =
+{
+    WS_IP_MULTICAST_IF,
+    WS_IP_MULTICAST_TTL,
+    WS_IP_MULTICAST_LOOP,
+    WS_IP_ADD_MEMBERSHIP,
+    WS_IP_DROP_MEMBERSHIP,
+    WS_IP_OPTIONS,
+    WS_IP_HDRINCL,
+    WS_IP_TOS,
+    WS_IP_TTL,
+    0
+};
+
+static const int _px_ip_ops[] =
+{
+    IP_MULTICAST_IF,
+    IP_MULTICAST_TTL,
+    IP_MULTICAST_LOOP,
+    IP_ADD_MEMBERSHIP,
+    IP_DROP_MEMBERSHIP,
+    IP_OPTIONS,
+    IP_HDRINCL,
+    IP_TOS,
+    IP_TTL,
+    0
+};
+
 static DWORD opentype_tls_index = -1;  /* TLS index for SO_OPENTYPE flag */
 
 inline static DWORD NtStatusToWSAError ( const DWORD status )
@@ -482,6 +510,18 @@ static int convert_sockopt(INT *level, INT *optname)
 	}
         FIXME("Unknown IPPROTO_TCP optname 0x%x\n", *optname);
 	break;
+     case WS_IPPROTO_IP:
+        *level = IPPROTO_IP;
+	for(i=0; _ws_ip_ops[i]; i++) {
+	    if (_ws_ip_ops[i] == *optname ) break;
+	}
+	if( _ws_ip_ops[i] ) {
+	    *optname = _px_ip_ops[i];
+	    return 1;
+	}
+	FIXME("Unknown IPPROTO_IP optname 0x%x\n", *optname);
+	break;
+     default: FIXME("Unimplemented or unknown socket level\n");
   }
   return 0;
 }
@@ -1488,7 +1528,7 @@ int WINAPI WS_bind(SOCKET s, const struct WS_sockaddr* name, int namelen)
                 int on = 1;
                 /* The game GrandPrixLegends binds more than one time, but does
                  * not do a SO_REUSEADDR - Stevens says this is ok */
-                FIXME( "Setting WS_SO_REUSEADDR on socket before we binding it\n");
+                TRACE( "Setting WS_SO_REUSEADDR on socket before we bind it\n");
                 WS_setsockopt( s, WS_SOL_SOCKET, WS_SO_REUSEADDR, (char*)&on, sizeof(on) );
 
                 if (bind(fd, uaddr, uaddrlen) < 0)
@@ -2724,6 +2764,7 @@ int WINAPI WS_setsockopt(SOCKET s, int level, int optname,
             level = SOL_SOCKET;
         }else{
             if (!convert_sockopt(&level, &optname)) {
+	        ERR("Invalid level (%d) or optname (%d)\n", level, optname);
 		SetLastError(WSAENOPROTOOPT);
 		close(fd);
 		return SOCKET_ERROR;
@@ -2791,6 +2832,7 @@ int WINAPI WS_setsockopt(SOCKET s, int level, int optname,
 	    close(fd);
 	    return 0;
 	}
+	TRACE("Setting socket error, %d\n", wsaErrno());
 	SetLastError(wsaErrno());
 	close(fd);
     }

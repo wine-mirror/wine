@@ -40,6 +40,9 @@
 #define recv    linux_recv
 /* */
 
+#define setsockopt linux_setsockopt
+#define getsockopt linux_getsockopt
+
 #include "config.h"
 
 #include <errno.h>
@@ -85,9 +88,55 @@ extern int    WINAPI closesocket(SOCKET);
 extern int    WINAPI ioctlsocket(SOCKET,long,u_long*);
 /* */
 
+/* for the get/setsockopt forwarders */
+#undef setsockopt
+#undef getsockopt
+extern int WINAPI setsockopt(SOCKET s, INT level, INT optname ,char* optval, INT optlen);
+extern int WINAPI getsockopt(SOCKET s, INT level, INT optname ,char* optval, INT* optlen);
 
 WINE_DEFAULT_DEBUG_CHANNEL(winsock);
 
+/* internal remapper function for the IP_ constants */
+static INT _remap_optname(INT level, INT optname)
+{
+  TRACE("level=%d, optname=%d\n", level, optname);
+  if (level == WS_IPPROTO_IP) {
+    switch (optname) {       /***** from value *****/
+      case 2: return 9;      /* IP_MULTICAST_IF    */
+      case 3: return 10;     /* IP_MULTICAST_TTL   */
+      case 4: return 11;     /* IP_MULTICAST_LOOP  */
+      case 5: return 12;     /* IP_ADD_MEMBERSHIP  */
+      case 6: return 13;     /* IP_DROP_MEMBERSHIP */
+      case 7: return 4;      /* IP_TTL             */
+      case 8: return 3;      /* IP_TOS             */
+      case 9: return 14;     /* IP_DONTFRAGMENT    */
+      default: FIXME("Unknown optname %d, can't remap!\n", optname); return optname; 
+    }
+  } else {
+    /* don't need to do anything */
+    return optname;
+  }
+}
+
+/***********************************************************************
+ *		setsockopt		(WSOCK32.21)
+ *
+ * We have these forwarders because, for reasons unknown to us mere mortals,
+ * the values of the IP_ constants changed between winsock.h and winsock2.h.
+ * So, we need to remap them here.
+ */
+INT WINAPI WS1_setsockopt(SOCKET s, INT level, INT optname, char *optval, INT optlen)
+{
+  return setsockopt(s, level, _remap_optname(level, optname), optval, optlen);
+}
+
+/***********************************************************************
+ *		getsockopt		(WSOCK32.7)
+ */
+INT WINAPI WS1_getsockopt(SOCKET s, INT level, INT optname, char *optval, INT *optlen)
+{
+  return getsockopt(s, level, _remap_optname(level, optname), optval, optlen);
+}
 
 /***********************************************************************
  *		WsControl (WSOCK32.1001)

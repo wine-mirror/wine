@@ -669,6 +669,32 @@ typedef struct WS(WSAData)
 #define WS_TCP_NODELAY             1
 #endif
 
+/* IPPROTO_IP options */
+#ifndef __WINE_WINSOCK2__    /* WinSock2 has different values for the IP_ constants */
+# ifndef USE_WS_PREFIX
+#  define IP_OPTIONS             1
+#  define IP_MULTICAST_IF        2
+#  define IP_MULTICAST_TTL       3
+#  define IP_MULTICAST_LOOP      4
+#  define IP_ADD_MEMBERSHIP      5
+#  define IP_DROP_MEMBERSHIP     6
+#  define IP_TTL                 7
+#  define IP_TOS                 8
+#  define IP_DONTFRAGMENT        9
+# else
+#  define WS_IP_OPTIONS          1
+#  define WS_IP_MULTICAST_IF     2
+#  define WS_IP_MULTICAST_TTL    3
+#  define WS_IP_MULTICAST_LOOP   4
+#  define WS_IP_ADD_MEMBERSHIP   5
+#  define WS_IP_DROP_MEMBERSHIP  6
+#  define WS_IP_TTL              7
+#  define WS_IP_TOS              8
+#  define WS_IP_DONTFRAGMENT     9
+# endif
+#endif
+
+
 /*
  * Socket I/O flags (supported by spec 1.1)
  */
