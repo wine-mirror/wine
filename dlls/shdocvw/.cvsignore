@@ -1,5 +1,5 @@
 Makefile
 shdocvw.dll
 shdocvw.dll.dbg.c
+shdocvw.res
 shdocvw.spec.def
-version.res

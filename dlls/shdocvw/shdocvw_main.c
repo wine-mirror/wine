@@ -2,6 +2,7 @@
  * SHDOCVW - Internet Explorer Web Control
  *
  * Copyright 2001 John R. Sheets (for CodeWeavers)
+ * Copyright 2004 Mike McCormack (for CodeWeavers)
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -37,6 +38,7 @@
 
 #include "shdocvw.h"
 #include "uuids.h"
+#include "urlmon.h"
 
 #include "wine/unicode.h"
 #include "wine/debug.h"
@@ -45,8 +47,10 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(shdocvw);
 
-#define MOZILLA_ACTIVEX_MESSAGE "You need to install the Mozilla ActiveX control to\n" \
-                                "use Wine's builtin CLSID_WebBrowser from SHDOCVW.DLL"
+static const WCHAR szMozDlPath[] = {
+    'S','o','f','t','w','a','r','e','\\','W','i','n','e','\\',
+    's','h','d','o','c','v','w',0
+};
 
 DEFINE_GUID( CLSID_MozillaBrowser, 0x1339B54C,0x3453,0x11D2,0x93,0xB9,0x00,0x00,0x00,0x00,0x00,0x00);
 
@@ -128,26 +132,287 @@ HRESULT WINAPI SHDOCVW_DllCanUnloadNow(void)
     return S_FALSE;
 }
 
+/*************************************************************************
+ *              SHDOCVW_TryDownloadMozillaControl
+ */
+typedef struct _IBindStatusCallbackImpl {
+    IBindStatusCallbackVtbl *vtbl;
+    DWORD ref;
+    HWND hDialog;
+    BOOL *pbCancelled;
+} IBindStatusCallbackImpl;
 
+static HRESULT WINAPI
+dlQueryInterface( IBindStatusCallback* This, REFIID riid, void** ppvObject )
+{
+    if( IsEqualIID(riid, &IID_IUnknown) ||
+        IsEqualIID(riid, &IID_IBindStatusCallback))
+    {
+        IBindStatusCallback_AddRef( This );
+        *ppvObject = This;
+        return S_OK;
+    }
+    return E_NOINTERFACE;
+}
+
+static ULONG WINAPI dlAddRef( IBindStatusCallback* iface )
+{
+    IBindStatusCallbackImpl *This = (IBindStatusCallbackImpl *) iface;
+    return InterlockedIncrement( &This->ref );
+}
+
+static ULONG WINAPI dlRelease( IBindStatusCallback* iface )
+{
+    IBindStatusCallbackImpl *This = (IBindStatusCallbackImpl *) iface;
+    DWORD ref = InterlockedDecrement( &This->ref );
+    if( !ref )
+    {
+        DestroyWindow( This->hDialog );
+        HeapFree( GetProcessHeap(), 0, This );
+    }
+    return ref;
+}
+
+static HRESULT WINAPI
+dlOnStartBinding( IBindStatusCallback* iface, DWORD dwReserved, IBinding* pib)
+{
+    ERR("\n");
+    return S_OK;
+}
+
+static HRESULT WINAPI
+dlGetPriority( IBindStatusCallback* iface, LONG* pnPriority)
+{
+    ERR("\n");
+    return S_OK;
+}
+
+static HRESULT WINAPI
+dlOnLowResource( IBindStatusCallback* iface, DWORD reserved)
+{
+    ERR("\n");
+    return S_OK;
+}
+
+static HRESULT WINAPI
+dlOnProgress( IBindStatusCallback* iface, ULONG ulProgress,
+              ULONG ulProgressMax, ULONG ulStatusCode, LPCWSTR szStatusText)
+{
+    IBindStatusCallbackImpl *This = (IBindStatusCallbackImpl *) iface;
+    HWND hItem;
+    LONG r;
+
+    hItem = GetDlgItem( This->hDialog, 1000 );
+    if( hItem && ulProgressMax )
+        SendMessageW(hItem,PBM_SETPOS,(ulProgress*100)/ulProgressMax,0);
+
+    hItem = GetDlgItem(This->hDialog, 104);
+    if( hItem )
+        SendMessageW(hItem,WM_SETTEXT, 0, (LPARAM) szStatusText);
+
+    SetLastError(0);
+    r = GetWindowLongPtrW( This->hDialog, GWLP_USERDATA );
+    if( r || GetLastError() )
+    {
+        *This->pbCancelled = TRUE;
+        ERR("Cancelled\n");
+        return E_ABORT;
+    }
+
+    return S_OK;
+}
+
+static HRESULT WINAPI
+dlOnStopBinding( IBindStatusCallback* iface, HRESULT hresult, LPCWSTR szError)
+{
+    ERR("\n");
+    return S_OK;
+}
+
+static HRESULT WINAPI
+dlGetBindInfo( IBindStatusCallback* iface, DWORD* grfBINDF, BINDINFO* pbindinfo)
+{
+    ERR("\n");
+    return S_OK;
+}
+
+static HRESULT WINAPI
+dlOnDataAvailable( IBindStatusCallback* iface, DWORD grfBSCF,
+                   DWORD dwSize, FORMATETC* pformatetc, STGMEDIUM* pstgmed)
+{
+    ERR("\n");
+    return S_OK;
+}
+
+static HRESULT WINAPI
+dlOnObjectAvailable( IBindStatusCallback* iface, REFIID riid, IUnknown* punk)
+{
+    ERR("\n");
+    return S_OK;
+}
+
+struct IBindStatusCallbackVtbl dlVtbl =
+{
+    dlQueryInterface,
+    dlAddRef,
+    dlRelease,
+    dlOnStartBinding,
+    dlGetPriority,
+    dlOnLowResource,
+    dlOnProgress,
+    dlOnStopBinding,
+    dlGetBindInfo,
+    dlOnDataAvailable,
+    dlOnObjectAvailable
+};
+
+static IBindStatusCallback* create_dl(HWND dlg, BOOL *pbCancelled)
+{
+    IBindStatusCallbackImpl *This;
+
+    This = HeapAlloc( GetProcessHeap(), 0, sizeof *This );
+    This->vtbl = &dlVtbl;
+    This->ref = 1;
+    This->hDialog = dlg;
+    This->pbCancelled = pbCancelled;
+
+    return (IBindStatusCallback*) This;
+}
+
+static DWORD WINAPI ThreadFunc( LPVOID info )
+{
+    IBindStatusCallback *dl;
+    static const WCHAR szUrlVal[] = {'M','o','z','i','l','l','a','U','r','l',0};
+    WCHAR path[MAX_PATH], szUrl[MAX_PATH];
+    LPWSTR p;
+    STARTUPINFOW si;
+    PROCESS_INFORMATION pi;
+    HWND hDlg = info;
+    DWORD r, sz, type;
+    HKEY hkey;
+    BOOL bCancelled = FALSE;
+
+    /* find the name of the thing to download */
+    szUrl[0] = 0;
+    r = RegOpenKeyW( HKEY_LOCAL_MACHINE, szMozDlPath, &hkey );
+    if( r == ERROR_SUCCESS )
+    {
+        sz = MAX_PATH;
+        r = RegQueryValueExW( hkey, szUrlVal, NULL, &type, (LPBYTE)szUrl, &sz );
+        RegCloseKey( hkey );
+    }
+    if( r != ERROR_SUCCESS )
+        goto end;
+
+    /* built the path for the download */
+    p = strrchrW( szUrl, '/' );
+    if (!p)
+        goto end;
+    if (!GetTempPathW( MAX_PATH, path ))
+        goto end;
+    strcatW( path, p+1 );
+
+    /* download it */
+    dl = create_dl(info, &bCancelled);
+    r = URLDownloadToFileW( NULL, szUrl, path, 0, dl );
+    if( dl )
+        IBindStatusCallback_Release( dl );
+    if( (r != S_OK) || bCancelled )
+        goto end;
+
+    /* run it */
+    memset( &si, 0, sizeof si );
+    si.cb = sizeof si;
+    r = CreateProcessW( path, NULL, NULL, NULL, 0, 0, NULL, NULL, &si, &pi );
+    if( !r )
+        goto end;
+    WaitForSingleObject( pi.hProcess, INFINITE );
+
+end:
+    EndDialog( hDlg, 0 );
+    return 0;
+}
+
+static INT_PTR CALLBACK
+dlProc ( HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
+{
+    HANDLE hThread;
+    DWORD ThreadId;
+    HWND hItem;
+
+    switch (uMsg)
+    {
+    case WM_INITDIALOG:
+        SetWindowLongPtrW( hwndDlg, GWLP_USERDATA, 0 );
+        hItem = GetDlgItem(hwndDlg, 1000);
+        if( hItem )
+        {
+            SendMessageW(hItem,PBM_SETRANGE,0,MAKELPARAM(0,100));
+            SendMessageW(hItem,PBM_SETPOS,0,0);
+        }
+        hThread = CreateThread(NULL,0,ThreadFunc,hwndDlg,0,&ThreadId);
+        if (!hThread)
+            return FALSE;
+        return TRUE;
+    case WM_COMMAND:
+        if( wParam == IDCANCEL )
+            SetWindowLongPtrW( hwndDlg, GWLP_USERDATA, 1 );
+        return FALSE;
+    default:
+        return FALSE;
+    }
+}
+
+static BOOL SHDOCVW_TryDownloadMozillaControl()
+{
+    DWORD r;
+    WCHAR buf[0x100];
+    static const WCHAR szWine[] = { 'W','i','n','e',0 };
+    HANDLE hsem;
+
+    SetLastError( ERROR_SUCCESS );
+    hsem = CreateSemaphoreA( NULL, 0, 1, "mozctl_install_semaphore");
+    if( GetLastError() != ERROR_ALREADY_EXISTS )
+    {
+        LoadStringW( shdocvw_hinstance, 1001, buf, sizeof buf/sizeof(WCHAR) );
+        r = MessageBoxW(NULL, buf, szWine, MB_YESNO | MB_ICONQUESTION);
+        if( r != IDYES )
+            return FALSE;
+
+        DialogBoxW(shdocvw_hinstance, MAKEINTRESOURCEW(100), 0, dlProc);
+    }
+    else
+        WaitForSingleObject( hsem, INFINITE );
+    ReleaseSemaphore( hsem, 1, NULL );
+    CloseHandle( hsem );
+    
+    return TRUE;
+}
+ 
 static BOOL SHDOCVW_TryLoadMozillaControl()
 {
     WCHAR szPath[MAX_PATH];
+    BOOL bTried = FALSE;
 
     if( hMozCtl != (HMODULE)~0UL )
         return hMozCtl ? TRUE : FALSE;
 
-    if( !SHDOCVW_GetMozctlPath( szPath, sizeof szPath ) )
+    while( 1 )
     {
-        MESSAGE(MOZILLA_ACTIVEX_MESSAGE "\n");
-        MessageBoxA(NULL, MOZILLA_ACTIVEX_MESSAGE, "Wine", MB_OK | MB_ICONEXCLAMATION);
-        hMozCtl = 0;
-        return FALSE;
-    }
-    hMozCtl = LoadLibraryExW(szPath, NULL, LOAD_WITH_ALTERED_SEARCH_PATH);
-    if( !hMozCtl )
-    {
-        ERR("Can't load the Mozilla ActiveX control\n");
-        return FALSE;
+        if( SHDOCVW_GetMozctlPath( szPath, sizeof szPath ) )
+        {
+            hMozCtl = LoadLibraryExW(szPath, NULL, LOAD_WITH_ALTERED_SEARCH_PATH);
+            if( hMozCtl )
+                return TRUE;
+        }
+        if( bTried )
+        {
+            MESSAGE("You need to install the Mozilla ActiveX control to\n");
+            MESSAGE("use Wine's builtin CLSID_WebBrowser from SHDOCVW.DLL\n");
+            return FALSE;
+        }
+        SHDOCVW_TryDownloadMozillaControl();
+        bTried = TRUE;
     }
     return TRUE;
 }
