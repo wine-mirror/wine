@@ -133,6 +133,14 @@ struct wake_up_reply
     int   signaled;  /* wait result */
 };
 
+/* structure returned in the list of window properties */
+typedef struct
+{
+    atom_t         atom;     /* property atom */
+    short          string;   /* was atom a string originally? */
+    handle_t       handle;   /* handle stored in property */
+} property_data_t;
+
 /****************************************************************/
 /* Request declarations */
 
@@ -1468,4 +1476,39 @@ enum message_type
     user_handle_t  last_sibling;  /* last sibling in Z-order */
     user_handle_t  first_child;   /* first child */
     user_handle_t  last_child;    /* last child */
+@END
+
+
+/* Set a window property */
+@REQ(set_window_property)
+    user_handle_t  window;        /* handle to the window */
+    atom_t         atom;          /* property atom (high-word set if it was a string) */
+    int            string;        /* was atom a string originally? */
+    handle_t       handle;        /* handle to store */
+@END
+
+
+/* Remove a window property */
+@REQ(remove_window_property)
+    user_handle_t  window;        /* handle to the window */
+    atom_t         atom;          /* property atom */
+@REPLY
+    handle_t       handle;        /* handle stored in property */
+@END
+
+
+/* Get a window property */
+@REQ(get_window_property)
+    user_handle_t  window;        /* handle to the window */
+    atom_t         atom;          /* property atom */
+@REPLY
+    handle_t       handle;        /* handle stored in property */
+@END
+
+
+/* Get the list of properties of a window */
+@REQ(get_window_properties)
+    user_handle_t  window;        /* handle to the window */
+@REPLY
+    VARARG(props,properties);     /* list of properties */
 @END

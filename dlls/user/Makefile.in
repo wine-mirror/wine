@@ -23,6 +23,7 @@ C_SRCS = \
 	mouse.c \
 	msg16.c \
 	network.c \
+	property.c \
 	resource.c \
 	text.c \
 	thunk.c \

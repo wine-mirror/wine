@@ -549,7 +549,6 @@ static void WIN_DestroyWindow( HWND hwnd )
     /* free resources associated with the window */
 
     TIMER_RemoveWindowTimers( hwnd );
-    PROPERTY_RemoveWindowProps( hwnd );
 
     if (!(wndPtr = WIN_FindWndPtr( hwnd ))) return;
     wndPtr->hmemTaskQ = 0;
@@ -646,7 +645,6 @@ BOOL WIN_CreateDesktopWindow(void)
     pWndDesktop->dce               = NULL;
     pWndDesktop->pVScroll          = NULL;
     pWndDesktop->pHScroll          = NULL;
-    pWndDesktop->pProp             = NULL;
     pWndDesktop->wIDmenu           = 0;
     pWndDesktop->helpContext       = 0;
     pWndDesktop->flags             = 0;
@@ -859,7 +857,6 @@ static HWND WIN_CreateWindowEx( CREATESTRUCTA *cs, ATOM classAtom,
     wndPtr->flags          = (type == WIN_PROC_16) ? 0 : WIN_ISWIN32;
     wndPtr->pVScroll       = NULL;
     wndPtr->pHScroll       = NULL;
-    wndPtr->pProp          = NULL;
     wndPtr->userdata       = 0;
     wndPtr->hSysMenu       = (wndPtr->dwStyle & WS_SYSMENU)
 			     ? MENU_GetSysMenu( hwnd, 0 ) : 0;

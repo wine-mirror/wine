@@ -132,6 +132,14 @@ struct wake_up_reply
 };
 
 
+typedef struct
+{
+    atom_t         atom;
+    short          string;
+    handle_t       handle;
+} property_data_t;
+
+
 
 
 
@@ -1644,6 +1652,46 @@ struct get_window_tree_request
 };
 
 
+
+struct set_window_property_request
+{
+    struct request_header __header;
+    user_handle_t  window;
+    atom_t         atom;
+    int            string;
+    handle_t       handle;
+};
+
+
+
+struct remove_window_property_request
+{
+    struct request_header __header;
+    user_handle_t  window;
+    atom_t         atom;
+    handle_t       handle;
+};
+
+
+
+struct get_window_property_request
+{
+    struct request_header __header;
+    user_handle_t  window;
+    atom_t         atom;
+    handle_t       handle;
+};
+
+
+
+struct get_window_properties_request
+{
+    struct request_header __header;
+    user_handle_t  window;
+    /* VARARG(props,properties); */
+};
+
+
 enum request
 {
     REQ_new_process,
@@ -1775,6 +1823,10 @@ enum request
     REQ_get_window_parents,
     REQ_get_window_children,
     REQ_get_window_tree,
+    REQ_set_window_property,
+    REQ_remove_window_property,
+    REQ_get_window_property,
+    REQ_get_window_properties,
     REQ_NB_REQUESTS
 };
 
@@ -1911,8 +1963,12 @@ union generic_request
     struct get_window_parents_request get_window_parents;
     struct get_window_children_request get_window_children;
     struct get_window_tree_request get_window_tree;
+    struct set_window_property_request set_window_property;
+    struct remove_window_property_request remove_window_property;
+    struct get_window_property_request get_window_property;
+    struct get_window_properties_request get_window_properties;
 };
 
-#define SERVER_PROTOCOL_VERSION 58
+#define SERVER_PROTOCOL_VERSION 59
 
 #endif /* __WINE_WINE_SERVER_PROTOCOL_H */

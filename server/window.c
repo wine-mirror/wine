@@ -12,6 +12,22 @@
 #include "process.h"
 #include "user.h"
 
+/* a window property */
+struct property
+{
+    unsigned short type;     /* property type (see below) */
+    atom_t         atom;     /* property atom */
+    handle_t       handle;   /* property handle (user-defined storage) */
+};
+
+enum property_type
+{
+    PROP_TYPE_FREE,   /* free entry */
+    PROP_TYPE_STRING, /* atom that was originally a string */
+    PROP_TYPE_ATOM    /* plain atom */
+};
+
+
 struct window
 {
     struct window   *parent;          /* parent window */
@@ -23,7 +39,10 @@ struct window
     struct window   *prev;            /* prev window in Z-order */
     user_handle_t    handle;          /* full handle for this window */
     struct thread   *thread;          /* thread owning the window */
-    unsigned int     atom;            /* class atom */
+    atom_t           atom;            /* class atom */
+    int              prop_inuse;      /* number of in-use window properties */
+    int              prop_alloc;      /* number of allocated window properties */
+    struct property *properties;      /* window properties array */
 };
 
 static struct window *top_window;  /* top-level (desktop) window */
@@ -83,6 +102,118 @@ static void link_window( struct window *win, struct window *parent, struct windo
     }
 }
 
+/* set a window property */
+static void set_property( struct window *win, atom_t atom, handle_t handle,
+                          enum property_type type )
+{
+    int i, free = -1;
+    struct property *new_props;
+
+    /* check if it exists already */
+    for (i = 0; i < win->prop_inuse; i++)
+    {
+        if (win->properties[i].type == PROP_TYPE_FREE)
+        {
+            free = i;
+            continue;
+        }
+        if (win->properties[i].atom == atom)
+        {
+            win->properties[i].type = type;
+            win->properties[i].handle = handle;
+            return;
+        }
+    }
+
+    /* need to add an entry */
+    if (!grab_global_atom( atom )) return;
+    if (free == -1)
+    {
+        /* no free entry */
+        if (win->prop_inuse >= win->prop_alloc)
+        {
+            /* need to grow the array */
+            if (!(new_props = realloc( win->properties,
+                                       sizeof(*new_props) * (win->prop_alloc + 16) )))
+            {
+                set_error( STATUS_NO_MEMORY );
+                release_global_atom( atom );
+                return;
+            }
+            win->prop_alloc += 16;
+            win->properties = new_props;
+        }
+        free = win->prop_inuse++;
+    }
+    win->properties[free].atom   = atom;
+    win->properties[free].type   = type;
+    win->properties[free].handle = handle;
+}
+
+/* remove a window property */
+static handle_t remove_property( struct window *win, atom_t atom )
+{
+    int i;
+
+    for (i = 0; i < win->prop_inuse; i++)
+    {
+        if (win->properties[i].type == PROP_TYPE_FREE) continue;
+        if (win->properties[i].atom == atom)
+        {
+            release_global_atom( atom );
+            win->properties[i].type = PROP_TYPE_FREE;
+            return win->properties[i].handle;
+        }
+    }
+    /* FIXME: last error? */
+    return 0;
+}
+
+/* find a window property */
+static handle_t get_property( struct window *win, atom_t atom )
+{
+    int i;
+
+    for (i = 0; i < win->prop_inuse; i++)
+    {
+        if (win->properties[i].type == PROP_TYPE_FREE) continue;
+        if (win->properties[i].atom == atom) return win->properties[i].handle;
+    }
+    /* FIXME: last error? */
+    return 0;
+}
+
+/* destroy all properties of a window */
+inline static void destroy_properties( struct window *win )
+{
+    int i;
+
+    if (!win->properties) return;
+    for (i = 0; i < win->prop_inuse; i++)
+    {
+        if (win->properties[i].type == PROP_TYPE_FREE) continue;
+        release_global_atom( win->properties[i].atom );
+    }
+    free( win->properties );
+}
+
+/* enum all properties into the data array */
+static int enum_properties( struct window *win, property_data_t *data, int max )
+{
+    int i, count;
+
+    for (i = count = 0; i < win->prop_inuse && count < max; i++)
+    {
+        if (win->properties[i].type == PROP_TYPE_FREE) continue;
+        data->atom   = win->properties[i].atom;
+        data->string = (win->properties[i].type == PROP_TYPE_STRING);
+        data->handle = win->properties[i].handle;
+        data++;
+        count++;
+    }
+    return count;
+}
+
 /* destroy a window */
 static void destroy_window( struct window *win )
 {
@@ -104,14 +235,14 @@ static void destroy_window( struct window *win )
 
     if (win->thread->queue) queue_cleanup_window( win->thread, win->handle );
     free_user_handle( win->handle );
+    destroy_properties( win );
     unlink_window( win );
     memset( win, 0x55, sizeof(*win) );
     free( win );
 }
 
 /* create a new window structure (note: the window is not linked in the window tree) */
-static struct window *create_window( struct window *parent, struct window *owner,
-                                     unsigned int atom )
+static struct window *create_window( struct window *parent, struct window *owner, atom_t atom )
 {
     struct window *win = mem_alloc( sizeof(*win) );
     if (!win) return NULL;
@@ -128,6 +259,9 @@ static struct window *create_window( struct window *parent, struct window *owner
     win->first_unlinked = NULL;
     win->thread         = current;
     win->atom           = atom;
+    win->prop_inuse     = 0;
+    win->prop_alloc     = 0;
+    win->properties     = NULL;
 
     if (parent)  /* put it on parent unlinked list */
     {
@@ -339,4 +473,44 @@ DECL_HANDLER(get_window_tree)
     }
     req->first_child = win->first_child ? win->first_child->handle : 0;
     req->last_child  = win->last_child ? win->last_child->handle : 0;
+}
+
+
+/* set a window property */
+DECL_HANDLER(set_window_property)
+{
+    struct window *win = get_window( req->window );
+
+    if (win) set_property( win, req->atom, req->handle,
+                           req->string ? PROP_TYPE_STRING : PROP_TYPE_ATOM );
+}
+
+
+/* remove a window property */
+DECL_HANDLER(remove_window_property)
+{
+    struct window *win = get_window( req->window );
+    req->handle = 0;
+    if (win) req->handle = remove_property( win, req->atom );
+}
+
+
+/* get a window property */
+DECL_HANDLER(get_window_property)
+{
+    struct window *win = get_window( req->window );
+    req->handle = 0;
+    if (win) req->handle = get_property( win, req->atom );
+}
+
+
+/* get the list of properties of a window */
+DECL_HANDLER(get_window_properties)
+{
+    int count = 0;
+    property_data_t *data = get_req_data(req);
+    struct window *win = get_window( req->window );
+
+    if (win) count = enum_properties( win, data, get_req_data_size(req) / sizeof(*data) );
+    set_req_data_size( req, count * sizeof(*data) );
 }

@@ -194,6 +194,10 @@ DECL_HANDLER(get_window_info);
 DECL_HANDLER(get_window_parents);
 DECL_HANDLER(get_window_children);
 DECL_HANDLER(get_window_tree);
+DECL_HANDLER(set_window_property);
+DECL_HANDLER(remove_window_property);
+DECL_HANDLER(get_window_property);
+DECL_HANDLER(get_window_properties);
 
 #ifdef WANT_REQUEST_HANDLERS
 
@@ -329,6 +333,10 @@ static const req_handler req_handlers[REQ_NB_REQUESTS] =
     (req_handler)req_get_window_parents,
     (req_handler)req_get_window_children,
     (req_handler)req_get_window_tree,
+    (req_handler)req_set_window_property,
+    (req_handler)req_remove_window_property,
+    (req_handler)req_get_window_property,
+    (req_handler)req_get_window_properties,
 };
 #endif  /* WANT_REQUEST_HANDLERS */
 

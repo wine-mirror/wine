@@ -35,7 +35,6 @@ typedef struct tagWND
     LPWSTR        text;           /* Window text */
     void          *pVScroll;      /* Vertical scroll-bar info */
     void          *pHScroll;      /* Horizontal scroll-bar info */
-    void          *pProp;         /* Pointer to properties list */
     struct tagDCE *dce;           /* Window DCE (if CS_OWNDC or CS_CLASSDC) */
     HGLOBAL16      hmemTaskQ;     /* Task queue global memory handle */
     HRGN           hrgnUpdate;    /* Update region */
@@ -121,8 +120,6 @@ extern void CARET_GetRect(LPRECT lprc);  /* windows/caret.c */
 
 extern BOOL16 DRAG_QueryUpdate( HWND, SEGPTR, BOOL );
 extern HBRUSH DEFWND_ControlColor( HDC hDC, UINT ctlType );  /* windows/defwnd.c */
-
-extern void PROPERTY_RemoveWindowProps( HWND hwnd );  /* windows/property.c */
 
 /* Classes functions */
 struct tagCLASS;  /* opaque structure */

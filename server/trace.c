@@ -271,6 +271,23 @@ static size_t dump_varargs_input_records( const void *req )
     return get_size(req);
 }
 
+static size_t dump_varargs_properties( const void *req )
+{
+    const property_data_t *prop = get_data(req);
+    size_t len = get_size(req) / sizeof(*prop);
+
+    fputc( '{', stderr );
+    while (len > 0)
+    {
+        fprintf( stderr, "{atom=%04x,str=%d,handle=%08x}",
+                 prop->atom, prop->string, prop->handle );
+        prop++;
+        if (--len) fputc( ',', stderr );
+    }
+    fputc( '}', stderr );
+    return get_size(req);
+}
+
 typedef void (*dump_func)( const void *req );
 
 /* Everything below this line is generated automatically by tools/make_requests */
@@ -1743,6 +1760,47 @@ static void dump_get_window_tree_reply( const struct get_window_tree_request *re
     fprintf( stderr, " last_child=%08x", req->last_child );
 }
 
+static void dump_set_window_property_request( const struct set_window_property_request *req )
+{
+    fprintf( stderr, " window=%08x,", req->window );
+    fprintf( stderr, " atom=%04x,", req->atom );
+    fprintf( stderr, " string=%d,", req->string );
+    fprintf( stderr, " handle=%d", req->handle );
+}
+
+static void dump_remove_window_property_request( const struct remove_window_property_request *req )
+{
+    fprintf( stderr, " window=%08x,", req->window );
+    fprintf( stderr, " atom=%04x", req->atom );
+}
+
+static void dump_remove_window_property_reply( const struct remove_window_property_request *req )
+{
+    fprintf( stderr, " handle=%d", req->handle );
+}
+
+static void dump_get_window_property_request( const struct get_window_property_request *req )
+{
+    fprintf( stderr, " window=%08x,", req->window );
+    fprintf( stderr, " atom=%04x", req->atom );
+}
+
+static void dump_get_window_property_reply( const struct get_window_property_request *req )
+{
+    fprintf( stderr, " handle=%d", req->handle );
+}
+
+static void dump_get_window_properties_request( const struct get_window_properties_request *req )
+{
+    fprintf( stderr, " window=%08x", req->window );
+}
+
+static void dump_get_window_properties_reply( const struct get_window_properties_request *req )
+{
+    fprintf( stderr, " props=" );
+    cur_pos += dump_varargs_properties( req );
+}
+
 static const dump_func req_dumpers[REQ_NB_REQUESTS] = {
     (dump_func)dump_new_process_request,
     (dump_func)dump_get_new_process_info_request,
@@ -1873,6 +1931,10 @@ static const dump_func req_dumpers[REQ_NB_REQUESTS] = {
     (dump_func)dump_get_window_parents_request,
     (dump_func)dump_get_window_children_request,
     (dump_func)dump_get_window_tree_request,
+    (dump_func)dump_set_window_property_request,
+    (dump_func)dump_remove_window_property_request,
+    (dump_func)dump_get_window_property_request,
+    (dump_func)dump_get_window_properties_request,
 };
 
 static const dump_func reply_dumpers[REQ_NB_REQUESTS] = {
@@ -2005,6 +2067,10 @@ static const dump_func reply_dumpers[REQ_NB_REQUESTS] = {
     (dump_func)dump_get_window_parents_reply,
     (dump_func)dump_get_window_children_reply,
     (dump_func)dump_get_window_tree_reply,
+    (dump_func)0,
+    (dump_func)dump_remove_window_property_reply,
+    (dump_func)dump_get_window_property_reply,
+    (dump_func)dump_get_window_properties_reply,
 };
 
 static const char * const req_names[REQ_NB_REQUESTS] = {
@@ -2137,6 +2203,10 @@ static const char * const req_names[REQ_NB_REQUESTS] = {
     "get_window_parents",
     "get_window_children",
     "get_window_tree",
+    "set_window_property",
+    "remove_window_property",
+    "get_window_property",
+    "get_window_properties",
 };
 
 /* ### make_requests end ### */
