@@ -1142,26 +1142,37 @@ HGLOBAL WINAPI GlobalHandle(
 ) {
     HGLOBAL handle;
     HANDLE heap;
+    PGLOBAL32_INTERN  maybe_intern;
+    LPCVOID test;
 
     if (!pmem)
     {
        SetLastError( ERROR_INVALID_PARAMETER );
        return 0;
     }
-    heap = GLOBAL_GetHeap( POINTER_TO_HANDLE(pmem) );
 
-    if (!HEAP_IsInsideHeap( heap, 0, pmem )) goto error;
+/* note that if pmem is a pointer to a a block allocated by        */
+/* GlobalAlloc with GMEM_MOVEABLE then magic test in HeapValidate  */
+/* will fail.                                                      */
+    if (ISPOINTER(pmem)) {
+        heap = GLOBAL_GetHeap( (HGLOBAL)pmem );
+        if (HeapValidate( heap, 0, pmem ))
+            return (HGLOBAL)pmem;  /* valid fixed block */
     handle = POINTER_TO_HANDLE(pmem);
-    if (HEAP_IsInsideHeap( heap, 0, (LPCVOID)handle ))
-    {
-        if (HANDLE_TO_INTERN(handle)->Magic == MAGIC_GLOBAL_USED)
+    } else  
+        handle = (HGLOBAL)pmem;
+
+/* Now test handle either passed in or retrieved from pointer */
+    heap = GLOBAL_GetHeap( handle );
+    maybe_intern = HANDLE_TO_INTERN( handle );
+    if (maybe_intern->Magic == MAGIC_GLOBAL_USED) {
+        test = maybe_intern->Pointer;
+        if (HeapValidate( heap, 0, ((HGLOBAL *)test)-1 ) &&
+	                                      /* obj(-handle) valid arena? */
+            HeapValidate( heap, 0, maybe_intern ))  /* intern valid arena? */
             return handle;  /* valid moveable block */
     }
-    /* maybe FIXED block */
-    if (HeapValidate( heap, 0, pmem ))
-        return (HGLOBAL)pmem;  /* valid fixed block */
 
-error:
     SetLastError( ERROR_INVALID_HANDLE );
     return 0;
 }
@@ -1289,8 +1300,12 @@ HGLOBAL WINAPI GlobalFree(
       
       if(pintern->Magic==MAGIC_GLOBAL_USED)
       {	 
-	 if(pintern->LockCount!=0)
-	    SetLastError(ERROR_INVALID_HANDLE);
+
+/* WIN98 does not make this test. That is you can free a */
+/* block you have not unlocked. Go figure!!              */
+      /* if(pintern->LockCount!=0)  */
+      /*    SetLastError(ERROR_INVALID_HANDLE);  */
+
 	 if(pintern->Pointer)
 	    if(!HeapFree(heap, 0,
 	                 (char *)(pintern->Pointer)-sizeof(HGLOBAL)))

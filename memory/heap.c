@@ -53,6 +53,9 @@ typedef struct tagARENA_FREE
 #define ARENA_INUSE_FILLER     0x55
 #define ARENA_FREE_FILLER      0xaa
 
+#define QUIET                  1           /* Suppress messages  */
+#define NOISY                  0           /* Report all errors  */
+
 #define HEAP_NB_FREE_LISTS   4   /* Number of free lists */
 
 /* Max size of the blocks on the free lists */
@@ -100,6 +103,7 @@ typedef struct tagHEAP
 HANDLE SystemHeap = 0;
 HANDLE SegptrHeap = 0;
 
+static BOOL HEAP_IsRealArena( HANDLE heap, DWORD flags, LPCVOID block, BOOL quiet );
 
 #ifdef __GNUC__
 #define GET_EIP()    (__builtin_return_address(0))
@@ -204,7 +208,7 @@ static HEAP *HEAP_GetPtr(
         SetLastError( ERROR_INVALID_HANDLE );
         return NULL;
     }
-    if (TRACE_ON(heap) && !HeapValidate( heap, 0, NULL ))
+    if (TRACE_ON(heap) && !HEAP_IsRealArena( heap, 0, NULL, NOISY ))
     {
         HEAP_Dump( heapPtr );
         assert( FALSE );
@@ -737,15 +741,24 @@ static BOOL HEAP_ValidateFreeArena( SUBHEAP *subheap, ARENA_FREE *pArena )
 /***********************************************************************
  *           HEAP_ValidateInUseArena
  */
-static BOOL HEAP_ValidateInUseArena( SUBHEAP *subheap, ARENA_INUSE *pArena )
+static BOOL HEAP_ValidateInUseArena( SUBHEAP *subheap, ARENA_INUSE *pArena, BOOL quiet )
 {
     char *heapEnd = (char *)subheap + subheap->size;
 
     /* Check magic number */
     if (pArena->magic != ARENA_INUSE_MAGIC)
     {
+        if (quiet == NOISY) {
         ERR("Heap %08lx: invalid in-use arena magic for %08lx\n",
                  (DWORD)subheap->heap, (DWORD)pArena );
+            if (TRACE_ON(heap))
+               HEAP_Dump( subheap->heap );
+        }  else if (WARN_ON(heap)) {
+            WARN("Heap %08lx: invalid in-use arena magic for %08lx\n",
+                 (DWORD)subheap->heap, (DWORD)pArena );
+            if (TRACE_ON(heap))
+               HEAP_Dump( subheap->heap );
+        }
         return FALSE;
     }
     /* Check size flags */
@@ -871,6 +884,93 @@ SEGPTR HEAP_GetSegptr( HANDLE heap, DWORD flags, LPCVOID ptr )
 
     ret = PTR_SEG_OFF_TO_SEGPTR(subheap->selector, (DWORD)ptr-(DWORD)subheap);
     if (!(flags & HEAP_NO_SERIALIZE)) HeapUnlock( heap );
+    return ret;
+}
+
+/***********************************************************************
+ *           HEAP_IsRealArena  [Internal]
+ * Validates a block is a valid arena.
+ *
+ * RETURNS
+ *	TRUE: Success
+ *	FALSE: Failure
+ */
+static BOOL HEAP_IsRealArena(
+              HANDLE heap,   /* [in] Handle to the heap */
+              DWORD flags,   /* [in] Bit flags that control access during operation */
+              LPCVOID block, /* [in] Optional pointer to memory block to validate */
+              BOOL quiet     /* [in] Flag - if true, HEAP_ValidateInUseArena
+                              *             does not complain    */
+) {
+    SUBHEAP *subheap;
+    HEAP *heapPtr = (HEAP *)(heap);
+    BOOL ret = TRUE;
+
+    if (!heapPtr || (heapPtr->magic != HEAP_MAGIC))
+    {
+        ERR("Invalid heap %08x!\n", heap );
+        return FALSE;
+    }
+
+    flags &= HEAP_NO_SERIALIZE;
+    flags |= heapPtr->flags;
+    /* calling HeapLock may result in infinite recursion, so do the critsect directly */
+    if (!(flags & HEAP_NO_SERIALIZE))
+        EnterCriticalSection( &heapPtr->critSection );
+
+    if (block)
+    {
+        /* Only check this single memory block */
+
+        /* The following code is really HEAP_IsInsideHeap   *
+         * with serialization already done.                 */
+        if (!(subheap = HEAP_FindSubHeap( heapPtr, block )) ||
+            ((char *)block < (char *)subheap + subheap->headerSize
+                              + sizeof(ARENA_INUSE)))
+        {
+            if (quiet == NOISY) 
+                ERR("Heap %08lx: block %08lx is not inside heap\n",
+                     (DWORD)heap, (DWORD)block );
+            else if (WARN_ON(heap)) 
+                WARN("Heap %08lx: block %08lx is not inside heap\n",
+                     (DWORD)heap, (DWORD)block );
+            ret = FALSE;
+        } else
+            ret = HEAP_ValidateInUseArena( subheap, (ARENA_INUSE *)block - 1, quiet );
+
+        if (!(flags & HEAP_NO_SERIALIZE))
+            LeaveCriticalSection( &heapPtr->critSection );
+        return ret;
+    }
+
+    subheap = &heapPtr->subheap;
+    while (subheap && ret)
+    {
+        char *ptr = (char *)subheap + subheap->headerSize;
+        while (ptr < (char *)subheap + subheap->size)
+        {
+            if (*(DWORD *)ptr & ARENA_FLAG_FREE)
+            {
+                if (!HEAP_ValidateFreeArena( subheap, (ARENA_FREE *)ptr )) {
+                    ret = FALSE;
+                    break;
+                }
+                ptr += sizeof(ARENA_FREE) + (*(DWORD *)ptr & ARENA_SIZE_MASK);
+            }
+            else
+            {
+                if (!HEAP_ValidateInUseArena( subheap, (ARENA_INUSE *)ptr, NOISY )) {
+                    ret = FALSE;
+                    break;
+                }
+                ptr += sizeof(ARENA_INUSE) + (*(DWORD *)ptr & ARENA_SIZE_MASK);
+            }
+        }
+        subheap = subheap->next;
+    }
+
+    if (!(flags & HEAP_NO_SERIALIZE))
+	LeaveCriticalSection( &heapPtr->critSection );
     return ret;
 }
 
@@ -1023,7 +1123,7 @@ BOOL WINAPI HeapFree(
 	WARN("(%08x,%08lx,%08lx): asked to free NULL\n",
                    heap, flags, (DWORD)ptr );
     }
-    if (!ptr || !HeapValidate( heap, HEAP_NO_SERIALIZE, ptr ))
+    if (!ptr || !HEAP_IsRealArena( heap, HEAP_NO_SERIALIZE, ptr, QUIET ))
     {
         if (!(flags & HEAP_NO_SERIALIZE)) HeapUnlock( heap );
         SetLastError( ERROR_INVALID_PARAMETER );
@@ -1076,7 +1176,7 @@ LPVOID WINAPI HeapReAlloc(
     if (size < HEAP_MIN_BLOCK_SIZE) size = HEAP_MIN_BLOCK_SIZE;
 
     if (!(flags & HEAP_NO_SERIALIZE)) HeapLock( heap );
-    if (!HeapValidate( heap, HEAP_NO_SERIALIZE, ptr ))
+    if (!HEAP_IsRealArena( heap, HEAP_NO_SERIALIZE, ptr, QUIET ))
     {
         if (!(flags & HEAP_NO_SERIALIZE)) HeapUnlock( heap );
         SetLastError( ERROR_INVALID_PARAMETER );
@@ -1234,7 +1334,7 @@ DWORD WINAPI HeapSize(
     flags &= HEAP_NO_SERIALIZE;
     flags |= heapPtr->flags;
     if (!(flags & HEAP_NO_SERIALIZE)) HeapLock( heap );
-    if (!HeapValidate( heap, HEAP_NO_SERIALIZE, ptr ))
+    if (!HEAP_IsRealArena( heap, HEAP_NO_SERIALIZE, ptr, QUIET ))
     {
         SetLastError( ERROR_INVALID_PARAMETER );
         ret = 0xffffffff;
@@ -1268,67 +1368,8 @@ BOOL WINAPI HeapValidate(
               DWORD flags,   /* [in] Bit flags that control access during operation */
               LPCVOID block  /* [in] Optional pointer to memory block to validate */
 ) {
-    SUBHEAP *subheap;
-    HEAP *heapPtr = (HEAP *)(heap);
-    BOOL ret = TRUE;
 
-    if (!heapPtr || (heapPtr->magic != HEAP_MAGIC))
-    {
-        ERR("Invalid heap %08x!\n", heap );
-        return FALSE;
-    }
-
-    flags &= HEAP_NO_SERIALIZE;
-    flags |= heapPtr->flags;
-    /* calling HeapLock may result in infinite recursion, so do the critsect directly */
-    if (!(flags & HEAP_NO_SERIALIZE))
-        EnterCriticalSection( &heapPtr->critSection );
-    if (block)
-    {
-        /* Only check this single memory block */
-        if (!(subheap = HEAP_FindSubHeap( heapPtr, block )) ||
-            ((char *)block < (char *)subheap + subheap->headerSize
-                              + sizeof(ARENA_INUSE)))
-        {
-            ERR("Heap %08lx: block %08lx is not inside heap\n",
-                     (DWORD)heap, (DWORD)block );
-            ret = FALSE;
-        } else
-            ret = HEAP_ValidateInUseArena( subheap, (ARENA_INUSE *)block - 1 );
-
-        if (!(flags & HEAP_NO_SERIALIZE))
-            LeaveCriticalSection( &heapPtr->critSection );
-        return ret;
-    }
-
-    subheap = &heapPtr->subheap;
-    while (subheap && ret)
-    {
-        char *ptr = (char *)subheap + subheap->headerSize;
-        while (ptr < (char *)subheap + subheap->size)
-        {
-            if (*(DWORD *)ptr & ARENA_FLAG_FREE)
-            {
-                if (!HEAP_ValidateFreeArena( subheap, (ARENA_FREE *)ptr )) {
-                    ret = FALSE;
-                    break;
-                }
-                ptr += sizeof(ARENA_FREE) + (*(DWORD *)ptr & ARENA_SIZE_MASK);
-            }
-            else
-            {
-                if (!HEAP_ValidateInUseArena( subheap, (ARENA_INUSE *)ptr )) {
-                    ret = FALSE;
-                    break;
-                }
-                ptr += sizeof(ARENA_INUSE) + (*(DWORD *)ptr & ARENA_SIZE_MASK);
-            }
-        }
-        subheap = subheap->next;
-    }
-    if (!(flags & HEAP_NO_SERIALIZE))
-        LeaveCriticalSection( &heapPtr->critSection );
-    return ret;
+    return HEAP_IsRealArena( heap, flags, block, QUIET );
 }
 
 
