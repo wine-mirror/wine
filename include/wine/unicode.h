@@ -118,7 +118,7 @@ static inline int strcmpW( const WCHAR *str1, const WCHAR *str2 )
 
 static inline int strncmpW( const WCHAR *str1, const WCHAR *str2, int n )
 {
-    if (!n) return 0;
+    if (n <= 0) return 0;
     while ((--n > 0) && *str1 && (*str1 == *str2)) { str1++; str2++; }
     return *str1 - *str2;
 }
@@ -135,15 +135,22 @@ static inline WCHAR *strchrW( const WCHAR *str, WCHAR ch )
     return NULL;
 }
 
-static inline int strcmpiW( const WCHAR *str1, const WCHAR *str2 ) 
+static inline WCHAR *strlwrW( WCHAR *str )
 {
-    for (;;)
-    {
-        int ret = toupperW(*str1) - toupperW(*str2);
-        if (ret || !*str1) return ret;
-        str1++;
-        str2++;
-    }
+    WCHAR *ret = str;
+    while ((*str = tolowerW(*str))) str++;
+    return ret;
 }
+
+static inline WCHAR *struprW( WCHAR *str )
+{
+    WCHAR *ret = str;
+    while ((*str = toupperW(*str))) str++;
+    return ret;
+}
+
+extern int strcmpiW( const WCHAR *str1, const WCHAR *str2 );
+extern int strncmpiW( const WCHAR *str1, const WCHAR *str2, int n );
+extern WCHAR *strstrW( const WCHAR *str, const WCHAR *sub );
 
 #endif  /* __WINE_UNICODE_H */

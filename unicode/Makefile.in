@@ -65,6 +65,7 @@ C_SRCS = \
 	casemap.c \
 	cptable.c \
 	mbtowc.c \
+	string.c \
 	wctomb.c \
 	$(CODEPAGES:%=c_%.c)
 
