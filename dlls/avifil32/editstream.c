@@ -1012,7 +1012,7 @@ static HRESULT WINAPI IEditAVIStream_fnRead(IAVIStream*iface,LONG start,
       if (bytesread != NULL)
         *bytesread += readBytes;
       if (buffer != NULL) {
-        (LPBYTE)buffer += readBytes;
+        buffer = ((LPBYTE)buffer)+readBytes;
         buffersize     -= readBytes;
       }
       start   += count;

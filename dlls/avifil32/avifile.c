@@ -1115,7 +1115,7 @@ static HRESULT WINAPI IAVIStream_fnRead(IAVIStream *iface, LONG start,
 
       block++;
       offset = 0;
-      ((BYTE*)buffer) += size;
+      buffer = ((LPBYTE)buffer)+size;
       samples    -= size;
       buffersize -= size;
 
