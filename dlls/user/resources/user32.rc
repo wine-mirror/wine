@@ -45,3 +45,4 @@
 #include "resources/user32_Sv.rc"
 #include "resources/user32_Wa.rc"
 #include "resources/user32_Ja.rc"
+#include "resources/user32_Zh.rc"
