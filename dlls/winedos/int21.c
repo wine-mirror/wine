@@ -3096,6 +3096,12 @@ static void INT21_LongFilename( CONTEXT86 *context )
 
             switch (CL_reg(context))
             {
+            case 0x00:  /* "truename" - Canonicalize path */
+                /* 
+                 * FIXME: This is not 100% equal to 0x01 case, 
+                 *        if you fix this, fix int21 subfunction 0x60, too.
+                 */
+
             case 0x01:  /* Get short filename or path */
                 MultiByteToWideChar(CP_OEMCP, 0, CTX_SEG_OFF_TO_LIN(context, context->SegDs, context->Esi), -1, pathW, MAX_PATH);
                 if (!GetShortPathNameW(pathW, res, 67))
