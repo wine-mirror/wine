@@ -11,7 +11,7 @@
 #include "mouse.h"
 #include "debug.h"
 #include "debugtools.h"
-#include "desktop.h"
+#include "monitor.h"
 
 /**********************************************************************/
 
@@ -59,6 +59,8 @@ VOID WINAPI MOUSE_Disable(VOID)
 void MOUSE_SendEvent( DWORD mouseStatus, DWORD posX, DWORD posY, 
                       DWORD keyState, DWORD time, HWND32 hWnd )
 {
+    int width  = MONITOR_GetWidth (&MONITOR_PrimaryMonitor);
+    int height = MONITOR_GetHeight(&MONITOR_PrimaryMonitor);
     WINE_MOUSEEVENT wme;
 
     if ( !DefMouseEventProc ) return;
@@ -66,8 +68,8 @@ void MOUSE_SendEvent( DWORD mouseStatus, DWORD posX, DWORD posY,
     TRACE( event, "(%04lX,%ld,%ld)\n", mouseStatus, posX, posY );
 
     mouseStatus |= MOUSEEVENTF_ABSOLUTE;
-    posX = (((long)posX << 16) + DESKTOP_GetScreenWidth()-1)  / DESKTOP_GetScreenWidth();
-    posY = (((long)posY << 16) + DESKTOP_GetScreenHeight()-1) / DESKTOP_GetScreenHeight();
+    posX = (((long)posX << 16) + width-1)  / width;
+    posY = (((long)posY << 16) + height-1) / height;
 
     wme.magic    = WINE_MOUSEEVENT_MAGIC;
     wme.keyState = keyState;
