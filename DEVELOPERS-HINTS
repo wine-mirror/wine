@@ -11,158 +11,158 @@ there are also various tools, documentation, sample Winelib code, and
 code specific to the binary loader.  Note that several of the libraries
 listed here are "stubbed out", meaning they still need to be implemented.
 
-DLLs:
------
-	dlls/			- All the DLLs implemented by Wine
+DLLs (under dlls/):
+-------------------
 
-		advapi32/	- Crypto, systeminfo, security, eventlogging
-		avicap32/	- AVI capture window class
-		avifil32/	- COM object to play AVI files
-		cabinet/	- Cabinet file interface
-		capi2032/	- Wrapper library for CAPI4Linux access
-		cfgmgr32/	- Config manager
-		comcat/		- Component category manager
-		comctl32/	- Common controls
-		commdlg/	- Common dialog boxes (both 16 & 32 bit)
-		crtdll/		- Old C runtime library
-		crypt32/	- Cryptography
-		ctl3d/          - 3D Effects for Common GUI Components
-		d3d8/		- Direct3D (3D graphics)
-		d3d9/		- Direct3D (3D graphics)
-		d3dim/		- Direct3D Immediate Mode
-		d3dx8/		- Direct3D (3D graphics)
-		dciman32/	- DCI Manager (graphics)
-		ddraw/		- DirectDraw (graphics)
-		devenum/	- Device enumeration (part of DirectShow)
-		dinput/		- DirectInput (device input)
-		dinput8/	- DirectInput (device input)
-		dmband/		- DirectMusic
-		dmcompos/	- DirectMusic
-		dmime/		- DirectMusic
-		dmloader/	- DirectMusic
-		dmscript/	- DirectMusic
-		dmstyle/	- DirectMusic
-		dmsynth/	- DirectMusic
-		dmusic/		- DirectMusic
-		dmusic32/	- DirectMusic
-		dplay/		- DirectPlay (networking)
-		dplayx/		- DirectPlay (networking)
-		dpnhpast/	- DirectPlay NAT Helper
-		dsound/		- DirectSound (audio)
-		gdi/		- GDI (graphics)
-		gdi/enhmfdrv/	- Enhanced metafile driver
-		gdi/mfdrv/	- Metafile driver
-		glu32/		- OpenGL Utility library (graphics)
-		icmp/		- ICMP protocol (networking)
-		imagehlp/	- PE (Portable Executable) Image Helper lib
-		imm32/		- Input Method Manager
-		iphlpapi/       - IP Helper API
-		kernel/		- The Windows kernel
-		lzexpand/	- Lempel-Ziv compression/decompression
-		mapi32/		- Mail interface
-		mpr/		- Multi-Protocol Router (networking)
-		msacm/		- Audio Compression Manager (multimedia)
-		msdmo/		- DirectX Media Objects
-		msimg32/	- Gradient and transparency (graphics)
-		msisys/		- System information
-		msi/		- Microsoft Installer
-		msnet32/	- Network interface
-		msvcrt/		- C runtime library 
-		msvcrt20/	- C runtime library version 2.0
-		msvcrtd/	- C runtime library debugging
-		msvideo/	- 16 bit video manager
-		msvideo/msrle32/- Video codecs
-		mswsock/	- Misc networking
-		netapi32/	- Network interface
-		ntdll/		- NT implementation of kernel calls
-		odbc32/		- Open DataBase Connectivity driver manager
-		ole32/		- 32 bit OLE 2.0 libraries
-		oleaut32/	- 32 bit OLE 2.0 automation
-		olecli/		- 16 bit OLE client
-		oledlg/		- OLE 2.0 user interface support
-		olepro32/	- 32 bit OLE 2.0 automation
-		olesvr/		- 16 bit OLE server
-		opengl32/	- OpenGL implementation (graphics)
-		psapi/		- Process Status interface
-		qcap/		- DirectShow runtime
-		quartz/		- DirectShow runtime
-		rasapi32/	- Remote Access Server interface
-		richedit/	- Rich text editing control
-		rpcrt4/		- Remote Procedure Call runtime
-		serialui/	- Serial port property pages
-		setupapi/	- Setup interface
-		shdocvw/	- Shell document object and control
-		shfolder/	- Shell folder service
-		shell32/	- COM object implementing shell views
-		shlwapi/	- Shell Light-Weight interface
-		snmpapi/	- SNMP protocol interface (networking)
-		sti/		- Still Image service
-		tapi32/		- Telephone interface
-		ttydrv/		- TTY display driver (Wine specific)
-		twain/		- TWAIN Imaging device communications
-		url/		- Internet shortcut shell extension
-		urlmon/		- URL Moniker allows binding to a URL (like KIO/gnome-vfs)
-		user/		- Window management, standard controls, etc.
-		uxtheme/	- Theme library
-		version/	- File installation library
-		win32s/		- 32-bit function access for 16-bit systems
-		winaspi/	- 16 bit Advanced SCSI Peripheral Interface
-		winedos/	- DOS features and BIOS calls (interrupts) (wine specific)
-		wineps/		- Postscript driver (Wine specific)
-		wininet/	- Internet extensions
-		winmm/		- Multimedia (16 & 32 bit)
-		winmm/joystick/	- Joystick driver
-		winmm/mcianim/	- MCI animation driver
-		winmm/mciavi/	- MCI video driver
-		winmm/mcicda/	- MCI audio CD driver
-		winmm/mciseq/	- MCI MIDI driver
-		winmm/mciwave/	- MCI wave driver
-		winmm/midimap/	- MIDI mapper
-		winmm/wavemap/	- Audio mapper
-		winmm/winealsa/	- ALSA audio driver
-		winmm/winearts/	- aRts audio driver
-		winmm/wineaudioio/ - audioio audio driver
-		winmm/winejack/	- JACK audio server driver
-		winmm/winenas/	- NAS audio driver
-		winmm/wineoss/	- OSS audio driver
-		winnls/		- National Language Support
-		winsock/	- Sockets 2.0 (networking)
-		wsock32/	- Sockets 1.1 (networking)
-		wintab32/	- Tablet device interface
-		winspool/	- Printing & Print Spooler
-		wintrust/	- Trust verification interface
-		wow32/		- WOW subsystem
-		x11drv/		- X11 display driver (Wine specific)
+	advapi32/		- Crypto, systeminfo, security, eventlogging
+	avicap32/		- AVI capture window class
+	avifil32/		- COM object to play AVI files
+	cabinet/		- Cabinet file interface
+	capi2032/		- Wrapper library for CAPI4Linux access
+	cfgmgr32/		- Config manager
+	comcat/			- Component category manager
+	comctl32/		- Common controls
+	commdlg/		- Common dialog boxes (both 16 & 32 bit)
+	crtdll/			- Old C runtime library
+	crypt32/		- Cryptography
+	ctl3d/          	- 3D Effects for Common GUI Components
+	d3d8/			- Direct3D (3D graphics)
+	d3d9/			- Direct3D (3D graphics)
+	d3dim/			- Direct3D Immediate Mode
+	d3dx8/			- Direct3D (3D graphics)
+	dciman32/		- DCI Manager (graphics)
+	ddraw/			- DirectDraw (graphics)
+	devenum/		- Device enumeration (part of DirectShow)
+	dinput/			- DirectInput (device input)
+	dinput8/		- DirectInput (device input)
+	dmband/			- DirectMusic
+	dmcompos/		- DirectMusic
+	dmime/			- DirectMusic
+	dmloader/		- DirectMusic
+	dmscript/		- DirectMusic
+	dmstyle/		- DirectMusic
+	dmsynth/		- DirectMusic
+	dmusic/			- DirectMusic
+	dmusic32/		- DirectMusic
+	dplay/			- DirectPlay (networking)
+	dplayx/			- DirectPlay (networking)
+	dpnhpast/		- DirectPlay NAT Helper
+	dsound/			- DirectSound (audio)
+	gdi/			- GDI (graphics)
+	gdi/enhmfdrv/		- Enhanced metafile driver
+	gdi/mfdrv/		- Metafile driver
+	glu32/			- OpenGL Utility library (graphics)
+	icmp/			- ICMP protocol (networking)
+	imagehlp/		- PE (Portable Executable) Image Helper lib
+	imm32/			- Input Method Manager
+	iphlpapi/       	- IP Helper API
+	kernel/			- The Windows kernel
+	lzexpand/		- Lempel-Ziv compression/decompression
+	mapi32/			- Mail interface
+	mpr/			- Multi-Protocol Router (networking)
+	msacm/			- Audio Compression Manager (multimedia)
+	msdmo/			- DirectX Media Objects
+	msimg32/		- Gradient and transparency (graphics)
+	msisys/			- System information
+	msi/			- Microsoft Installer
+	msnet32/		- Network interface
+	msvcrt/			- C runtime library 
+	msvcrt20/		- C runtime library version 2.0
+	msvcrtd/		- C runtime library debugging
+	msvideo/		- 16 bit video manager
+	msvideo/msrle32/	- Video codecs
+	mswsock/		- Misc networking
+	netapi32/		- Network interface
+	ntdll/			- NT implementation of kernel calls
+	odbc32/			- Open DataBase Connectivity driver manager
+	ole32/			- 32 bit OLE 2.0 libraries
+	oleaut32/		- 32 bit OLE 2.0 automation
+	olecli/			- 16 bit OLE client
+	oledlg/			- OLE 2.0 user interface support
+	olepro32/		- 32 bit OLE 2.0 automation
+	olesvr/			- 16 bit OLE server
+	opengl32/		- OpenGL implementation (graphics)
+	psapi/			- Process Status interface
+	qcap/			- DirectShow runtime
+	quartz/			- DirectShow runtime
+	rasapi32/		- Remote Access Server interface
+	richedit/		- Rich text editing control
+	rpcrt4/			- Remote Procedure Call runtime
+	serialui/		- Serial port property pages
+	setupapi/		- Setup interface
+	shdocvw/		- Shell document object and control
+	shfolder/		- Shell folder service
+	shell32/		- COM object implementing shell views
+	shlwapi/		- Shell Light-Weight interface
+	snmpapi/		- SNMP protocol interface (networking)
+	sti/			- Still Image service
+	tapi32/			- Telephone interface
+	ttydrv/			- TTY display driver (Wine specific)
+	twain/			- TWAIN Imaging device communications
+	url/			- Internet shortcut shell extension
+	urlmon/			- URL Moniker allows binding to a URL (like KIO/gnome-vfs)
+	user/			- Window management, standard controls, etc.
+	uxtheme/		- Theme library
+	version/		- File installation library
+	win32s/			- 32-bit function access for 16-bit systems
+	winaspi/		- 16 bit Advanced SCSI Peripheral Interface
+	winedos/		- DOS features and BIOS calls (interrupts) (wine specific)
+	wineps/			- Postscript driver (Wine specific)
+	wininet/		- Internet extensions
+	winmm/			- Multimedia (16 & 32 bit)
+	winmm/joystick/		- Joystick driver
+	winmm/mcianim/		- MCI animation driver
+	winmm/mciavi/		- MCI video driver
+	winmm/mcicda/		- MCI audio CD driver
+	winmm/mciseq/		- MCI MIDI driver
+	winmm/mciwave/		- MCI wave driver
+	winmm/midimap/		- MIDI mapper
+	winmm/wavemap/		- Audio mapper
+	winmm/winealsa/		- ALSA audio driver
+	winmm/winearts/		- aRts audio driver
+	winmm/wineaudioio/ 	- audioio audio driver
+	winmm/winejack/		- JACK audio server driver
+	winmm/winenas/		- NAS audio driver
+	winmm/wineoss/		- OSS audio driver
+	winnls/			- National Language Support
+	winsock/		- Sockets 2.0 (networking)
+	wsock32/		- Sockets 1.1 (networking)
+	wintab32/		- Tablet device interface
+	winspool/		- Printing & Print Spooler
+	wintrust/		- Trust verification interface
+	wow32/			- WOW subsystem
+	x11drv/			- X11 display driver (Wine specific)
 
-Winelib programs:
------------------
+Winelib programs (under programs/):
+-----------------------------------
 
-	programs/		- All the Winelib programs
-
-		avitools/	- AVI information viewer and player
-		clock/		- Graphical clock
-		cmdlgtst/	- Common dialog tests
-		control/	- Control panel
-		expand/		- Decompress Lempel-Ziv compressed archive
-		notepad/	- Notepad with RichEdit functionality
-		osversioncheck/	- Check version of Windows being indicated
-		progman/	- Program manager
-		regapi/		- Command line Registry implementation
-		regedit/	- Registry editor
-		regsvr32/	- Register COM server
-		regtest/	- Registry testing program
-		rpcss/		- RPC services
-		rundll32/	- Execute DLL functions directly
-		uninstaller/	- Remove installed programs
-		view/		- Metafile viewer
-		wcmd/		- Command line interface
-		wineconsole/	- Console
-		winedbg/	- Debugger
-		winefile/	- File manager
-		winemine/	- Mine game
-		winepath/	- Translate between Wine and Unix paths
-		winhelp/	- Help viewer
-		winver/		- Windows Version Program
+	avitools/		- AVI information viewer and player
+	clock/			- Graphical clock
+	cmdlgtst/		- Common dialog tests
+	control/		- Control panel
+	expand/			- Decompress Lempel-Ziv compressed archive
+	notepad/		- Notepad with RichEdit functionality
+	progman/		- Program manager
+	regedit/		- Registry editor
+	regsvr32/		- Register COM server
+	rpcss/			- RPC services
+	rundll32/		- Execute DLL functions directly
+	start/			- Replacement for start.exe
+	uninstaller/		- Remove installed programs
+	view/			- Metafile viewer
+	wcmd/			- Command line interface
+	wineboot/		- Wine bootstrap process
+	winecfg/		- Wine configuration utility
+	wineconsole/		- Console
+	winedbg/		- Debugger
+	winefile/		- File manager
+	winemenubuilder/	- Helper program for building Unix menu entries
+	winemine/		- Mine game
+	winepath/		- Translate between Wine and Unix paths
+	winetest/		- Wine testing shell
+	winevdm/		- Wine virtual DOS machine
+	winhelp/		- Help viewer
+	winver/			- Windows Version Program
 
 
 Support programs, libraries, etc:
@@ -170,6 +170,8 @@ Support programs, libraries, etc:
 
 	documentation/		- some documentation
 	include/		- Windows standard includes
+	include/msvcrt		- MSVC compatible libc headers
+	include/wine		- Wine specific headers
 	libs/			- the Wine libraries
 	libs/port/		- portability library
 	libs/unicode/		- Unicode support shared
