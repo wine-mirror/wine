@@ -70,26 +70,155 @@ ULONG WINAPI IDirectPlay8ClientImpl_Release(PDIRECTPLAY8CLIENT iface) {
 
 /* IDirectPlay8Client Interface follow: */
 
-HRESULT WINAPI IDirectPlay8ClientImpl_Initialize(PDIRECTPLAY8CLIENT iface,  PVOID CONST pvUserContext, CONST PFNDPNMESSAGEHANDLER pfn, CONST DWORD dwFlags) { return DPN_OK; }
-HRESULT WINAPI IDirectPlay8ClientImpl_EnumServiceProviders(PDIRECTPLAY8CLIENT iface,  CONST GUID * CONST pguidServiceProvider, CONST GUID * CONST pguidApplication, DPN_SERVICE_PROVIDER_INFO * CONST pSPInfoBuffer, PDWORD CONST pcbEnumData, PDWORD CONST pcReturned, CONST DWORD dwFlags) { return DPN_OK; }
-HRESULT WINAPI IDirectPlay8ClientImpl_EnumHosts(PDIRECTPLAY8CLIENT iface,  PDPN_APPLICATION_DESC CONST pApplicationDesc,IDirectPlay8Address * CONST pAddrHost,IDirectPlay8Address * CONST pDeviceInfo, PVOID CONST pUserEnumData, CONST DWORD dwUserEnumDataSize, CONST DWORD dwEnumCount, CONST DWORD dwRetryInterval, CONST DWORD dwTimeOut, PVOID CONST pvUserContext, DPNHANDLE * CONST pAsyncHandle, CONST DWORD dwFlags) { return DPN_OK; }
-HRESULT WINAPI IDirectPlay8ClientImpl_CancelAsyncOperation(PDIRECTPLAY8CLIENT iface,  CONST DPNHANDLE hAsyncHandle, CONST DWORD dwFlags) { return DPN_OK; }
-HRESULT WINAPI IDirectPlay8ClientImpl_Connect(PDIRECTPLAY8CLIENT iface,  CONST DPN_APPLICATION_DESC * CONST pdnAppDesc,IDirectPlay8Address * CONST pHostAddr,IDirectPlay8Address * CONST pDeviceInfo, CONST DPN_SECURITY_DESC * CONST pdnSecurity, CONST DPN_SECURITY_CREDENTIALS * CONST pdnCredentials, CONST void * CONST pvUserConnectData, CONST DWORD dwUserConnectDataSize,void * CONST pvAsyncContext, DPNHANDLE * CONST phAsyncHandle, CONST DWORD dwFlags) { return DPN_OK; }
-HRESULT WINAPI IDirectPlay8ClientImpl_Send(PDIRECTPLAY8CLIENT iface,  CONST DPN_BUFFER_DESC * CONST prgBufferDesc, CONST DWORD cBufferDesc, CONST DWORD dwTimeOut, void * CONST pvAsyncContext, DPNHANDLE * CONST phAsyncHandle, CONST DWORD dwFlags) { return DPN_OK; }
-HRESULT WINAPI IDirectPlay8ClientImpl_GetSendQueueInfo(PDIRECTPLAY8CLIENT iface,  DWORD * CONST pdwNumMsgs, DWORD * CONST pdwNumBytes, CONST DWORD dwFlags) { return DPN_OK; }
-HRESULT WINAPI IDirectPlay8ClientImpl_GetApplicationDesc(PDIRECTPLAY8CLIENT iface,  DPN_APPLICATION_DESC * CONST pAppDescBuffer, DWORD * CONST pcbDataSize, CONST DWORD dwFlags) { return DPN_OK; }
-HRESULT WINAPI IDirectPlay8ClientImpl_SetClientInfo(PDIRECTPLAY8CLIENT iface,  CONST DPN_PLAYER_INFO * CONST pdpnPlayerInfo, PVOID CONST pvAsyncContext, DPNHANDLE * CONST phAsyncHandle, CONST DWORD dwFlags) { return DPN_OK; }
-HRESULT WINAPI IDirectPlay8ClientImpl_GetServerInfo(PDIRECTPLAY8CLIENT iface,  DPN_PLAYER_INFO * CONST pdpnPlayerInfo, DWORD * CONST pdwSize, CONST DWORD dwFlags) { return DPN_OK; }
-HRESULT WINAPI IDirectPlay8ClientImpl_GetServerAddress(PDIRECTPLAY8CLIENT iface,  IDirectPlay8Address ** CONST pAddress, CONST DWORD dwFlags) { return DPN_OK; }
-HRESULT WINAPI IDirectPlay8ClientImpl_Close(PDIRECTPLAY8CLIENT iface,  CONST DWORD dwFlags) { return DPN_OK; }
-HRESULT WINAPI IDirectPlay8ClientImpl_ReturnBuffer(PDIRECTPLAY8CLIENT iface,  CONST DPNHANDLE hBufferHandle, CONST DWORD dwFlags) { return DPN_OK; }
-HRESULT WINAPI IDirectPlay8ClientImpl_GetCaps(PDIRECTPLAY8CLIENT iface,  DPN_CAPS * CONST pdpCaps, CONST DWORD dwFlags) { return DPN_OK; }
-HRESULT WINAPI IDirectPlay8ClientImpl_SetCaps(PDIRECTPLAY8CLIENT iface,  CONST DPN_CAPS * CONST pdpCaps, CONST DWORD dwFlags) { return DPN_OK; }
-HRESULT WINAPI IDirectPlay8ClientImpl_SetSPCaps(PDIRECTPLAY8CLIENT iface,  CONST GUID * CONST pguidSP, CONST DPN_SP_CAPS * CONST pdpspCaps, CONST DWORD dwFlags ) { return DPN_OK; }
-HRESULT WINAPI IDirectPlay8ClientImpl_GetSPCaps(PDIRECTPLAY8CLIENT iface,  CONST GUID * CONST pguidSP, DPN_SP_CAPS * CONST pdpspCaps, CONST DWORD dwFlags) { return DPN_OK; }
-HRESULT WINAPI IDirectPlay8ClientImpl_GetConnectionInfo(PDIRECTPLAY8CLIENT iface,  DPN_CONNECTION_INFO * CONST pdpConnectionInfo, CONST DWORD dwFlags) { return DPN_OK; }
-HRESULT WINAPI IDirectPlay8ClientImpl_RegisterLobby(PDIRECTPLAY8CLIENT iface, CONST DPNHANDLE dpnHandle, struct IDirectPlay8LobbiedApplication * CONST pIDP8LobbiedApplication, CONST DWORD dwFlags) { return DPN_OK; }
+HRESULT WINAPI IDirectPlay8ClientImpl_Initialize(PDIRECTPLAY8CLIENT iface,  PVOID CONST pvUserContext, CONST PFNDPNMESSAGEHANDLER pfn, CONST DWORD dwFlags) { 
+  ICOM_THIS(IDirectPlay8ClientImpl,iface);
+  FIXME("(%p):(%p,%p,%lx): Stub\n", This, pvUserContext, pfn, dwFlags);
+  return DPN_OK; 
+}
 
+HRESULT WINAPI IDirectPlay8ClientImpl_EnumServiceProviders(PDIRECTPLAY8CLIENT iface, 
+							   CONST GUID * CONST pguidServiceProvider, 
+							   CONST GUID * CONST pguidApplication, 
+							   DPN_SERVICE_PROVIDER_INFO * CONST pSPInfoBuffer, 
+							   PDWORD CONST pcbEnumData, 
+							   PDWORD CONST pcReturned, 
+							   CONST DWORD dwFlags) { 
+  ICOM_THIS(IDirectPlay8ClientImpl,iface);
+  FIXME("(%p):(%lx): Stub\n", This, dwFlags);
+  return DPN_OK; 
+}
+
+HRESULT WINAPI IDirectPlay8ClientImpl_EnumHosts(PDIRECTPLAY8CLIENT iface, 
+						PDPN_APPLICATION_DESC CONST pApplicationDesc, 
+						IDirectPlay8Address * CONST pAddrHost, 
+						IDirectPlay8Address * CONST pDeviceInfo, 
+						PVOID CONST pUserEnumData, CONST DWORD dwUserEnumDataSize, CONST DWORD dwEnumCount, 
+						CONST DWORD dwRetryInterval, 
+						CONST DWORD dwTimeOut, 
+						PVOID CONST pvUserContext, 
+						DPNHANDLE * CONST pAsyncHandle, 
+						CONST DWORD dwFlags) { 
+  ICOM_THIS(IDirectPlay8ClientImpl,iface);
+  /*FIXME("(%p):(%p,%p,%p,%p,%lu,%lu,%lu,%lu): Stub\n", This, pApplicationDesc, pAddrHost, pDeviceInfo, pUserEnumData, dwUserEnumDataSize, dwEnumCount, dwRetryInterval, dwTimeOut);*/
+  FIXME("(%p):(%p,%p,%lx): Stub\n", This, pvUserContext, pAsyncHandle, dwFlags);
+  return DPN_OK; 
+}
+
+HRESULT WINAPI IDirectPlay8ClientImpl_CancelAsyncOperation(PDIRECTPLAY8CLIENT iface, CONST DPNHANDLE hAsyncHandle, CONST DWORD dwFlags) { 
+  ICOM_THIS(IDirectPlay8ClientImpl,iface);
+  FIXME("(%p):(%lu,%lx): Stub\n", This, hAsyncHandle, dwFlags);
+  return DPN_OK; 
+}
+
+HRESULT WINAPI IDirectPlay8ClientImpl_Connect(PDIRECTPLAY8CLIENT iface, 
+					      CONST DPN_APPLICATION_DESC * CONST pdnAppDesc,
+					      IDirectPlay8Address * CONST pHostAddr,
+					      IDirectPlay8Address * CONST pDeviceInfo, 
+					      CONST DPN_SECURITY_DESC * CONST pdnSecurity, 
+					      CONST DPN_SECURITY_CREDENTIALS * CONST pdnCredentials, 
+					      CONST void * CONST pvUserConnectData, 
+					      CONST DWORD dwUserConnectDataSize, 
+					      void * CONST pvAsyncContext, 
+					      DPNHANDLE * CONST phAsyncHandle, 
+					      CONST DWORD dwFlags) { 
+  ICOM_THIS(IDirectPlay8ClientImpl,iface);
+  FIXME("(%p):(%p,%p,%lx): Stub\n", This, pvAsyncContext, phAsyncHandle, dwFlags);
+  return DPN_OK; 
+}
+
+HRESULT WINAPI IDirectPlay8ClientImpl_Send(PDIRECTPLAY8CLIENT iface, 
+					   CONST DPN_BUFFER_DESC * CONST prgBufferDesc, 
+					   CONST DWORD cBufferDesc, 
+					   CONST DWORD dwTimeOut, 
+					   void * CONST pvAsyncContext, 
+					   DPNHANDLE * CONST phAsyncHandle, 
+					   CONST DWORD dwFlags) { 
+  ICOM_THIS(IDirectPlay8ClientImpl,iface);
+  FIXME("(%p):(%p,%p,%lx): Stub\n", This, pvAsyncContext, phAsyncHandle, dwFlags);
+  return DPN_OK; 
+}
+
+HRESULT WINAPI IDirectPlay8ClientImpl_GetSendQueueInfo(PDIRECTPLAY8CLIENT iface, DWORD * CONST pdwNumMsgs, DWORD * CONST pdwNumBytes, CONST DWORD dwFlags) {
+  ICOM_THIS(IDirectPlay8ClientImpl,iface);
+  FIXME("(%p):(%lx): Stub\n", This, dwFlags);
+  return DPN_OK; 
+}
+
+HRESULT WINAPI IDirectPlay8ClientImpl_GetApplicationDesc(PDIRECTPLAY8CLIENT iface, DPN_APPLICATION_DESC * CONST pAppDescBuffer, DWORD * CONST pcbDataSize, CONST DWORD dwFlags) { 
+  ICOM_THIS(IDirectPlay8ClientImpl,iface);
+  FIXME("(%p):(%lx): Stub\n", This, dwFlags);
+  return DPN_OK; 
+}
+
+HRESULT WINAPI IDirectPlay8ClientImpl_SetClientInfo(PDIRECTPLAY8CLIENT iface, 
+						    CONST DPN_PLAYER_INFO * CONST pdpnPlayerInfo, 
+						    PVOID CONST pvAsyncContext, 
+						    DPNHANDLE * CONST phAsyncHandle, 
+						    CONST DWORD dwFlags) { 
+  ICOM_THIS(IDirectPlay8ClientImpl,iface);
+  FIXME("(%p):(%p,%p,%lx): Stub\n", This, pvAsyncContext, phAsyncHandle, dwFlags);
+  return DPN_OK; 
+}
+
+HRESULT WINAPI IDirectPlay8ClientImpl_GetServerInfo(PDIRECTPLAY8CLIENT iface, DPN_PLAYER_INFO * CONST pdpnPlayerInfo, DWORD * CONST pdwSize, CONST DWORD dwFlags) { 
+  ICOM_THIS(IDirectPlay8ClientImpl,iface);
+  FIXME("(%p):(%lx): Stub\n", This, dwFlags);
+  return DPN_OK; 
+}
+
+HRESULT WINAPI IDirectPlay8ClientImpl_GetServerAddress(PDIRECTPLAY8CLIENT iface, IDirectPlay8Address ** CONST pAddress, CONST DWORD dwFlags) { 
+  ICOM_THIS(IDirectPlay8ClientImpl,iface);
+  FIXME("(%p):(%lx): Stub\n", This, dwFlags);
+  return DPN_OK; 
+}
+
+HRESULT WINAPI IDirectPlay8ClientImpl_Close(PDIRECTPLAY8CLIENT iface, CONST DWORD dwFlags) { 
+  ICOM_THIS(IDirectPlay8ClientImpl,iface);
+  FIXME("(%p):(%lx): Stub\n", This, dwFlags);
+  return DPN_OK; 
+}
+
+HRESULT WINAPI IDirectPlay8ClientImpl_ReturnBuffer(PDIRECTPLAY8CLIENT iface, CONST DPNHANDLE hBufferHandle, CONST DWORD dwFlags) { 
+  ICOM_THIS(IDirectPlay8ClientImpl,iface);
+  FIXME("(%p):(%lx): Stub\n", This, dwFlags);
+  return DPN_OK; 
+}
+
+HRESULT WINAPI IDirectPlay8ClientImpl_GetCaps(PDIRECTPLAY8CLIENT iface, DPN_CAPS * CONST pdpCaps, CONST DWORD dwFlags) { 
+  ICOM_THIS(IDirectPlay8ClientImpl,iface);
+  FIXME("(%p):(%lx): Stub\n", This, dwFlags);
+  return DPN_OK; 
+}
+
+HRESULT WINAPI IDirectPlay8ClientImpl_SetCaps(PDIRECTPLAY8CLIENT iface, CONST DPN_CAPS * CONST pdpCaps, CONST DWORD dwFlags) { 
+  ICOM_THIS(IDirectPlay8ClientImpl,iface);
+  FIXME("(%p):(%lx): Stub\n", This, dwFlags);
+  return DPN_OK; 
+}
+
+HRESULT WINAPI IDirectPlay8ClientImpl_SetSPCaps(PDIRECTPLAY8CLIENT iface, CONST GUID * CONST pguidSP, CONST DPN_SP_CAPS * CONST pdpspCaps, CONST DWORD dwFlags ) { 
+  ICOM_THIS(IDirectPlay8ClientImpl,iface);
+  FIXME("(%p):(%lx): Stub\n", This, dwFlags);
+  return DPN_OK; 
+}
+
+HRESULT WINAPI IDirectPlay8ClientImpl_GetSPCaps(PDIRECTPLAY8CLIENT iface, CONST GUID * CONST pguidSP, DPN_SP_CAPS * CONST pdpspCaps, CONST DWORD dwFlags) { 
+  ICOM_THIS(IDirectPlay8ClientImpl,iface);
+  FIXME("(%p):(%lx): Stub\n", This, dwFlags);
+  return DPN_OK; 
+}
+
+HRESULT WINAPI IDirectPlay8ClientImpl_GetConnectionInfo(PDIRECTPLAY8CLIENT iface, DPN_CONNECTION_INFO * CONST pdpConnectionInfo, CONST DWORD dwFlags) { 
+  ICOM_THIS(IDirectPlay8ClientImpl,iface);
+  FIXME("(%p):(%lx): Stub\n", This, dwFlags);
+  return DPN_OK; 
+}
+
+HRESULT WINAPI IDirectPlay8ClientImpl_RegisterLobby(PDIRECTPLAY8CLIENT iface, CONST DPNHANDLE dpnHandle, struct IDirectPlay8LobbiedApplication * CONST pIDP8LobbiedApplication, CONST DWORD dwFlags) { 
+  ICOM_THIS(IDirectPlay8ClientImpl,iface);
+  FIXME("(%p):(%lx): Stub\n", This, dwFlags);
+  return DPN_OK; 
+}
 
 ICOM_VTABLE(IDirectPlay8Client) DirectPlay8Client_Vtbl =
 {

@@ -99,6 +99,8 @@ struct IDirectPlay8AddressImpl
   ICOM_VFIELD(IDirectPlay8Address);
   DWORD         ref;
   /* IDirectPlay8Address fields */
+  GUID SP_guid;
+  WCHAR* url;
 };
 
 /* IUnknown: */
@@ -117,5 +119,26 @@ extern HRESULT DPNET_CreateDirectPlay8Client(LPCLASSFACTORY iface, LPUNKNOWN pun
 extern HRESULT DPNET_CreateDirectPlay8Server(LPCLASSFACTORY iface, LPUNKNOWN punkOuter, REFIID riid, LPVOID *ppobj);
 extern HRESULT DPNET_CreateDirectPlay8Peer(LPCLASSFACTORY iface, LPUNKNOWN punkOuter, REFIID riid, LPVOID *ppobj);
 extern HRESULT DPNET_CreateDirectPlay8Address(LPCLASSFACTORY iface, LPUNKNOWN punkOuter, REFIID riid, LPVOID *ppobj);
+
+/**
+ * debug
+ */
+extern const char *debugstr_SP(const GUID *id);
+
+/* used for generic dumping (copied from ddraw) */
+typedef struct {
+    DWORD val;
+    const char* name;
+} flag_info;
+
+typedef struct {
+    const GUID *guid;
+    const char* name;
+} guid_info;
+
+#define FE(x) { x, #x }	
+#define GE(x) { &x, #x }
+
+
 
 #endif
