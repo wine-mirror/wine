@@ -327,6 +327,7 @@ debug_channels (accel caret class clipboard combo comm cursor dc ddeml dialog
 @ stdcall GetWindowTextW(long ptr long) GetWindowTextW
 @ stdcall GetWindowThreadProcessId(long ptr) GetWindowThreadProcessId
 @ stdcall GetWindowWord(long long) GetWindowWord
+@ stdcall GetWindowInfo(long ptr) GetWindowInfo
 @ stdcall GrayStringA(long long ptr long long long long long long) GrayStringA
 @ stdcall GrayStringW(long long ptr long long long long long long) GrayStringW
 @ stdcall HideCaret(long) HideCaret

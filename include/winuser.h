@@ -3483,6 +3483,23 @@ typedef  HDEVNOTIFY     *PHDEVNOTIFY;
 
 #define DEVICE_NOTIFY_WINDOW_HANDLE     0x00000000
 
+/* used for GetWindowInfo() */
+
+#define WS_ACTIVECAPTION    0x0001
+
+typedef struct tagWINDOWINFO {
+    DWORD cbSize;
+    RECT  rcWindow;
+    RECT  rcClient;
+    DWORD dwStyle;
+    DWORD dwExStyle;
+    DWORD dwWindowStatus;
+    UINT  cxWindowBorders;
+    UINT  cyWindowBorders;
+    ATOM  atomWindowType;
+    WORD  wCreatorVersion;
+} WINDOWINFO, *PWINDOWINFO, *LPWINDOWINFO;
+
 #define     EnumTaskWindows(handle,proc,lparam) \
             EnumThreadWindows(handle,proc,lparam)
 #define     OemToAnsiA OemToCharA
@@ -3937,25 +3954,24 @@ BOOL        WINAPI GetUserObjectInformationW(HANDLE,INT,LPVOID,DWORD,LPDWORD);
 #define     GetUserObjectInformation WINELIB_NAME_AW(GetUserObjectInformation)
 HWND        WINAPI GetWindow(HWND,UINT);
 HDC         WINAPI GetWindowDC(HWND);
+BOOL        WINAPI GetWindowInfo(HWND, PWINDOWINFO);
 LONG        WINAPI GetWindowLongA(HWND,INT);
 LONG        WINAPI GetWindowLongW(HWND,INT);
 #define     GetWindowLong WINELIB_NAME_AW(GetWindowLong)
-BOOL      WINAPI GetWindowPlacement(HWND,LPWINDOWPLACEMENT);
-BOOL      WINAPI GetWindowRect(HWND,LPRECT);
-INT       WINAPI GetWindowRgn(HWND,HRGN);
+BOOL        WINAPI GetWindowPlacement(HWND,LPWINDOWPLACEMENT);
+BOOL        WINAPI GetWindowRect(HWND,LPRECT);
+INT         WINAPI GetWindowRgn(HWND,HRGN);
 HWINSTA     WINAPI GetProcessWindowStation(void);
 #define     GetWindowTask(hwnd) ((HTASK)GetWindowThreadProcessId(hwnd,NULL))
-INT       WINAPI GetWindowTextA(HWND,LPSTR,INT);
-INT       WINAPI GetWindowTextW(HWND,LPWSTR,INT);
+INT         WINAPI GetWindowTextA(HWND,LPSTR,INT);
+INT         WINAPI GetWindowTextW(HWND,LPWSTR,INT);
 #define     GetWindowText WINELIB_NAME_AW(GetWindowText)
-INT       WINAPI GetWindowTextLengthA(HWND);
-INT       WINAPI GetWindowTextLengthW(HWND);
+INT         WINAPI GetWindowTextLengthA(HWND);
+INT         WINAPI GetWindowTextLengthW(HWND);
 #define     GetWindowTextLength WINELIB_NAME_AW(GetWindowTextLength)
 WORD        WINAPI GetWindowWord(HWND,INT);
-BOOL      WINAPI GrayStringA(HDC,HBRUSH,GRAYSTRINGPROC,LPARAM,
-                                 INT,INT,INT,INT,INT);
-BOOL      WINAPI GrayStringW(HDC,HBRUSH,GRAYSTRINGPROC,LPARAM,
-                                 INT,INT,INT,INT,INT);
+BOOL        WINAPI GrayStringA(HDC,HBRUSH,GRAYSTRINGPROC,LPARAM,INT,INT,INT,INT,INT);
+BOOL        WINAPI GrayStringW(HDC,HBRUSH,GRAYSTRINGPROC,LPARAM,INT,INT,INT,INT,INT);
 #define     GrayString WINELIB_NAME_AW(GrayString)
 BOOL        WINAPI HideCaret(HWND);
 BOOL        WINAPI HiliteMenuItem(HWND,HMENU,UINT,UINT);

@@ -3340,3 +3340,55 @@ UINT WINAPI GetWindowModuleFileNameW( HWND hwnd, LPSTR lpszFileName, UINT cchFil
           hwnd, lpszFileName, cchFileNameMax);
     return 0;
 }
+
+/******************************************************************************
+ *              GetWindowInfo (USER32.@)
+ * hwnd: in
+ * pwi:  out.
+ * MS Documentation mentions that pwi->cbSize must be set to SIZEOF(WINDOWINFO)
+ *    this may be because this structure changed over time. If this is the
+ *    the case, then please: FIXME.
+ *    Using the structure described in MSDN for 98/ME/NT(4.0 SP3)/2000/XP.
+ */
+BOOL WINAPI GetWindowInfo( HWND hwnd, PWINDOWINFO pwi)
+{
+    WND *wndInfo = NULL;
+    if (!pwi) return FALSE;
+    if (pwi->cbSize != sizeof(WINDOWINFO))
+    {
+        FIXME("windowinfo->cbSize != sizeof(WINDOWINFO). Please report\n");
+        return FALSE;
+    }
+    wndInfo = WIN_GetPtr(hwnd);
+    if (!wndInfo) return FALSE;
+    if (wndInfo == WND_OTHER_PROCESS)
+    {
+        FIXME("window belong to other process\n");
+        return FALSE;
+    }
+
+    pwi->rcWindow = wndInfo->rectWindow;
+    pwi->rcClient = wndInfo->rectClient;
+    pwi->dwStyle = wndInfo->dwStyle;
+    pwi->dwExStyle = wndInfo->dwExStyle;
+    pwi->dwWindowStatus = ((GetActiveWindow() == hwnd) ? WS_ACTIVECAPTION : 0);
+                    /* if active WS_ACTIVECAPTION, else 0 */
+
+    pwi->cxWindowBorders = ((wndInfo->dwStyle & WS_BORDER) ?
+                    GetSystemMetrics(SM_CXBORDER) : 0);
+    pwi->cyWindowBorders = ((wndInfo->dwStyle & WS_BORDER) ?
+                    GetSystemMetrics(SM_CYBORDER) : 0);
+    /* above two: I'm presuming that borders widths are the same
+     * for each window - so long as its actually using a border.. */
+
+    pwi->atomWindowType = GetClassLongA( hwnd, GCW_ATOM );
+    pwi->wCreatorVersion = GetVersion();
+                    /* Docs say this should be the version that
+                     * CREATED the window. But eh?.. Isn't that just the
+                     * version we are running.. Unless ofcourse its some wacky
+                     * RPC stuff or something */
+
+    WIN_ReleasePtr(wndInfo);
+    return TRUE;
+}
+
