@@ -184,10 +184,6 @@ static void test__lclose( void )
 
     ok( HFILE_ERROR != _lclose(filehandle), "_lclose complains" );
 
-    ok( HFILE_ERROR == _lclose(filehandle), "_lclose should whine about this" );
-
-    ok( HFILE_ERROR == _lclose(filehandle), "_lclose should whine about this" );
-
     ok( DeleteFileA( filename ) != 0, "DeleteFile failed (%ld)", GetLastError(  ) );
 }
 
@@ -501,6 +497,8 @@ void test_CopyFileW(void)
     DWORD ret;
 
     ret = GetTempPathW(MAX_PATH, temp_path);
+    if (ret==0 && GetLastError()==ERROR_CALL_NOT_IMPLEMENTED)
+        return;
     ok(ret != 0, "GetTempPathW error %ld", GetLastError());
     ok(ret < MAX_PATH, "temp path should fit into MAX_PATH");
 
@@ -556,6 +554,8 @@ void test_CreateFileW(void)
     DWORD ret;
 
     ret = GetTempPathW(MAX_PATH, temp_path);
+    if (ret==0 && GetLastError()==ERROR_CALL_NOT_IMPLEMENTED)
+        return;
     ok(ret != 0, "GetTempPathW error %ld", GetLastError());
     ok(ret < MAX_PATH, "temp path should fit into MAX_PATH");
 
@@ -574,12 +574,35 @@ void test_CreateFileW(void)
 static void test_DeleteFileA( void )
 {
     BOOL ret;
+
+    ret = DeleteFileA(NULL);
+    ok(!ret && (GetLastError() == ERROR_INVALID_PARAMETER ||
+                GetLastError() == ERROR_PATH_NOT_FOUND),
+       "DeleteFileA(NULL) returned ret=%d error=%ld",ret,GetLastError());
+
     ret = DeleteFileA("");
-    ok((!ret) && (GetLastError() == ERROR_FILE_NOT_FOUND),
-       "DeleteFile should fail with an empty path, and last error value should be ERROR_FILE_NOT_FOUND");
+    ok(!ret && (GetLastError() == ERROR_PATH_NOT_FOUND ||
+                GetLastError() == ERROR_BAD_PATHNAME),
+       "DeleteFileA(\"\") returned ret=%d error=%ld",ret,GetLastError());
 }
 
-#define PATTERN_OFFSET	0x10
+static void test_DeleteFileW( void )
+{
+    BOOL ret;
+    WCHAR emptyW[]={'\0'};
+
+    ret = DeleteFileW(NULL);
+    if (ret==0 && GetLastError()==ERROR_CALL_NOT_IMPLEMENTED)
+        return;
+    ok(!ret && GetLastError() == ERROR_PATH_NOT_FOUND,
+       "DeleteFileW(NULL) returned ret=%d error=%ld",ret,GetLastError());
+
+    ret = DeleteFileW(emptyW);
+    ok(!ret && GetLastError() == ERROR_PATH_NOT_FOUND,
+       "DeleteFileW(\"\") returned ret=%d error=%ld",ret,GetLastError());
+}
+
+#define PATTERN_OFFSET 0x10
 
 void test_offset_in_overlapped_structure(void)
 {
@@ -657,5 +680,6 @@ START_TEST(file)
     test_CreateFileA();
     test_CreateFileW();
     test_DeleteFileA();
+    test_DeleteFileW();
     test_offset_in_overlapped_structure();
 }

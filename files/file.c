@@ -2418,17 +2418,10 @@ BOOL WINAPI DeleteFileW( LPCWSTR path )
     DOS_FULL_NAME full_name;
     HANDLE hFile;
 
-    if (!path)
-    {
-        SetLastError(ERROR_INVALID_PARAMETER);
-        return FALSE;
-    }
     TRACE("%s\n", debugstr_w(path) );
-
-    if (!*path)
+    if (!path || !*path)
     {
-        WARN("Empty path passed\n");
-        SetLastError( ERROR_FILE_NOT_FOUND );
+        SetLastError(ERROR_PATH_NOT_FOUND);
         return FALSE;
     }
     if (DOSFS_GetDevice( path ))
