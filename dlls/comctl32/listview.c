@@ -849,19 +849,71 @@ static BOOL notify_dispinfoT(LISTVIEW_INFO *infoPtr, INT notificationCode, LPNML
     return bResult;
 }
 
-static void customdraw_fill(NMLVCUSTOMDRAW *lpnmlvcd, LISTVIEW_INFO *infoPtr, HDC hdc, const RECT *rcBounds)
+static void customdraw_fill(NMLVCUSTOMDRAW *lpnmlvcd, LISTVIEW_INFO *infoPtr, HDC hdc, 
+			    const RECT *rcBounds, const LVITEMW *lplvItem)
 {
     ZeroMemory(lpnmlvcd, sizeof(NMLVCUSTOMDRAW));
     lpnmlvcd->nmcd.hdc = hdc;
     lpnmlvcd->nmcd.rc = *rcBounds;
     lpnmlvcd->clrTextBk = infoPtr->clrTextBk;
     lpnmlvcd->clrText   = infoPtr->clrText;
+    if (!lplvItem) return;
+    lpnmlvcd->nmcd.dwItemSpec = lplvItem->iItem;
+    lpnmlvcd->iSubItem = lplvItem->iSubItem;
+    if (lplvItem->state & LVIS_SELECTED) lpnmlvcd->nmcd.uItemState |= CDIS_SELECTED;
+    if (lplvItem->state & LVIS_FOCUSED) lpnmlvcd->nmcd.uItemState |= CDIS_FOCUS;
+    if (lplvItem->iItem == infoPtr->nHotItem) lpnmlvcd->nmcd.uItemState |= CDIS_HOT;
+    lpnmlvcd->nmcd.lItemlParam = lplvItem->lParam;
 }
 
 static inline DWORD notify_customdraw (LISTVIEW_INFO *infoPtr, DWORD dwDrawStage, NMLVCUSTOMDRAW *lpnmlvcd)
 {
     lpnmlvcd->nmcd.dwDrawStage = dwDrawStage;
+    if (lpnmlvcd->nmcd.dwItemSpec) lpnmlvcd->nmcd.dwDrawStage |= CDDS_ITEM;
     return notify_hdr(infoPtr, NM_CUSTOMDRAW, &lpnmlvcd->nmcd.hdr);
+}
+
+static DWORD notify_prepaint (LISTVIEW_INFO *infoPtr, HDC hdc, NMLVCUSTOMDRAW *lpnmlvcd)
+{
+    BOOL isSelected = lpnmlvcd->nmcd.uItemState & CDIS_SELECTED;
+    DWORD cditemmode = notify_customdraw(infoPtr, CDDS_PREPAINT, lpnmlvcd);
+
+    if (cditemmode & CDRF_SKIPDEFAULT) return cditemmode;
+
+    /* apprently, for selected items, we have to override the returned values */
+    if (isSelected)
+    {
+	if (infoPtr->bFocus)
+	{
+	    lpnmlvcd->clrTextBk = comctl32_color.clrHighlight;
+	    lpnmlvcd->clrText   = comctl32_color.clrHighlightText;
+        }
+	else if (infoPtr->dwStyle & LVS_SHOWSELALWAYS)
+	{
+	    lpnmlvcd->clrTextBk = comctl32_color.clr3dFace;
+	    lpnmlvcd->clrText   = comctl32_color.clrBtnText;
+	}
+    }
+
+    /* Set the text attributes */
+    if (lpnmlvcd->clrTextBk != CLR_NONE)
+    {
+	SetBkMode(hdc, OPAQUE);
+	if (lpnmlvcd->clrTextBk == CLR_DEFAULT)
+	    SetBkColor(hdc, infoPtr->clrTextBkDefault);
+	else
+	    SetBkColor(hdc,lpnmlvcd->clrTextBk);
+    }
+    else
+	SetBkMode(hdc, TRANSPARENT);
+    SetTextColor(hdc, lpnmlvcd->clrText);
+
+    return cditemmode;
+}
+
+static inline DWORD notify_postpaint (LISTVIEW_INFO *infoPtr, NMLVCUSTOMDRAW *lpnmlvcd)
+{
+    return notify_customdraw(infoPtr, CDDS_POSTPAINT, lpnmlvcd);
 }
 
 /******** Item iterator functions **********************************/
@@ -3504,32 +3556,11 @@ static BOOL LISTVIEW_DrawItem(LISTVIEW_INFO *infoPtr, HDC hdc, INT nItem, INT nS
 	debugrect(&rcBox), debugrect(&rcState), debugrect(&rcIcon), debugrect(&rcLabel));
 
     /* fill in the custom draw structure */
-    customdraw_fill(&nmlvcd, infoPtr, hdc, &rcBox);
-    nmlvcd.nmcd.dwItemSpec = lvItem.iItem;
-    nmlvcd.iSubItem = lvItem.iSubItem;
-    if (lvItem.state & LVIS_SELECTED) nmlvcd.nmcd.uItemState |= CDIS_SELECTED;
-    if (lvItem.state & LVIS_FOCUSED) nmlvcd.nmcd.uItemState |= CDIS_FOCUS;
-    if (lvItem.iItem == infoPtr->nHotItem) nmlvcd.nmcd.uItemState |= CDIS_HOT;
-    nmlvcd.nmcd.lItemlParam = lvItem.lParam;
+    customdraw_fill(&nmlvcd, infoPtr, hdc, &rcBox, &lvItem);
 
     if (cdmode & CDRF_NOTIFYITEMDRAW)
-        cditemmode = notify_customdraw (infoPtr, CDDS_ITEMPREPAINT, &nmlvcd);
+        cditemmode = notify_prepaint (infoPtr, hdc, &nmlvcd);
     if (cditemmode & CDRF_SKIPDEFAULT) goto postpaint;
-
-    /* apprently, for selected items, we have to override the returned values */
-    if (lvItem.state & LVIS_SELECTED)
-    {
-	if (infoPtr->bFocus)
-	{
-	    nmlvcd.clrTextBk = comctl32_color.clrHighlight;
-	    nmlvcd.clrText   = comctl32_color.clrHighlightText;
-        }
-	else if (infoPtr->dwStyle & LVS_SHOWSELALWAYS)
-	{
-	    nmlvcd.clrTextBk = comctl32_color.clr3dFace;
-	    nmlvcd.clrText   = comctl32_color.clrBtnText;
-	}
-    }
 
     /* in full row select, subitems, will just use main item's colors */
     if (nSubItem && uView == LVS_REPORT && (infoPtr->dwLvExStyle & LVS_EX_FULLROWSELECT))
@@ -3557,16 +3588,6 @@ static BOOL LISTVIEW_DrawItem(LISTVIEW_INFO *infoPtr, HDC hdc, INT nItem, INT nS
 
     /* Don't bother painting item being edited */
     if (infoPtr->hwndEdit && nItem == infoPtr->nEditLabelItem && nSubItem == 0) goto postpaint;
-
-    /* Set the text attributes */
-    if (nmlvcd.clrTextBk != CLR_NONE)
-    {
-	SetBkMode(hdc, OPAQUE);
-	SetBkColor(hdc, nmlvcd.clrTextBk == CLR_DEFAULT ? infoPtr->clrTextBkDefault : nmlvcd.clrTextBk);
-    }
-    else
-	SetBkMode(hdc, TRANSPARENT);
-    SetTextColor(hdc, nmlvcd.clrText);
 
     /* draw the selection background, if we're drawing the main item */
     if (nSubItem == 0)
@@ -3603,7 +3624,7 @@ static BOOL LISTVIEW_DrawItem(LISTVIEW_INFO *infoPtr, HDC hdc, INT nItem, INT nS
 
 postpaint:
     if (cditemmode & CDRF_NOTIFYPOSTPAINT)
-        notify_customdraw(infoPtr, CDDS_ITEMPOSTPAINT, &nmlvcd);
+        notify_postpaint(infoPtr, &nmlvcd);
     return TRUE;
 }
 
@@ -3618,10 +3639,12 @@ postpaint:
  * RETURN:
  * None
  */
-static void LISTVIEW_RefreshOwnerDraw(LISTVIEW_INFO *infoPtr, ITERATOR *i, HDC hdc)
+static void LISTVIEW_RefreshOwnerDraw(LISTVIEW_INFO *infoPtr, ITERATOR *i, HDC hdc, DWORD cdmode)
 {
     UINT uID = GetWindowLongW(infoPtr->hwndSelf, GWL_ID);
     HWND hwndParent = GetParent(infoPtr->hwndSelf);
+    DWORD cditemmode = CDRF_DODEFAULT;
+    NMLVCUSTOMDRAW nmlvcd;
     POINT Origin, Position;
     DRAWITEMSTRUCT dis;
     LVITEMW item;
@@ -3659,7 +3682,18 @@ static void LISTVIEW_RefreshOwnerDraw(LISTVIEW_INFO *infoPtr, ITERATOR *i, HDC h
 	dis.itemData = item.lParam;
 
 	TRACE("item=%s, rcItem=%s\n", debuglvitem_t(&item, TRUE), debugrect(&dis.rcItem));
-	SendMessageW(hwndParent, WM_DRAWITEM, dis.CtlID, (LPARAM)&dis);
+
+	if (cdmode & CDRF_NOTIFYITEMDRAW)
+	{
+	    customdraw_fill(&nmlvcd, infoPtr, hdc, &dis.rcItem, &item);
+            cditemmode = notify_prepaint (infoPtr, hdc, &nmlvcd);
+	}
+    
+	if (!(cditemmode & CDRF_SKIPDEFAULT))
+	    SendMessageW(hwndParent, WM_DRAWITEM, dis.CtlID, (LPARAM)&dis);
+
+    	if (cditemmode & CDRF_NOTIFYPOSTPAINT)
+            notify_postpaint(infoPtr, &nmlvcd);
     }
 }
 
@@ -3800,8 +3834,8 @@ static void LISTVIEW_Refresh(LISTVIEW_INFO *infoPtr, HDC hdc)
     oldClrText   = infoPtr->clrText;
    
     GetClientRect(infoPtr->hwndSelf, &rcClient);
-    customdraw_fill(&nmlvcd, infoPtr, hdc, &rcClient);
-    cdmode = notify_customdraw(infoPtr, CDDS_PREPAINT, &nmlvcd);
+    customdraw_fill(&nmlvcd, infoPtr, hdc, &rcClient, 0);
+    cdmode = notify_prepaint(infoPtr, hdc, &nmlvcd);
     if (cdmode & CDRF_SKIPDEFAULT) goto enddraw;
 
     /* Use these colors to draw the items */
@@ -3827,7 +3861,7 @@ static void LISTVIEW_Refresh(LISTVIEW_INFO *infoPtr, HDC hdc)
     }
 
     if ((infoPtr->dwStyle & LVS_OWNERDRAWFIXED) && (uView == LVS_REPORT))
-	LISTVIEW_RefreshOwnerDraw(infoPtr, &i, hdc);
+	LISTVIEW_RefreshOwnerDraw(infoPtr, &i, hdc, cdmode);
     else
     {
     	if (uView == LVS_REPORT)
@@ -3843,7 +3877,7 @@ static void LISTVIEW_Refresh(LISTVIEW_INFO *infoPtr, HDC hdc)
     
 enddraw:
     if (cdmode & CDRF_NOTIFYPOSTPAINT)
-	notify_customdraw(infoPtr, CDDS_POSTPAINT, &nmlvcd);
+	notify_postpaint(infoPtr, &nmlvcd);
 
     infoPtr->clrTextBk = oldClrTextBk;
     infoPtr->clrText = oldClrText;
