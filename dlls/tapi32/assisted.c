@@ -31,7 +31,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(tapi);
 /***********************************************************************
  *		tapiGetLocationInfo (TAPI32.@)
  */
-DWORD WINAPI tapiGetLocationInfo(LPSTR lpszCountryCode, LPSTR lpszCityCode)
+DWORD WINAPI tapiGetLocationInfoA(LPSTR lpszCountryCode, LPSTR lpszCityCode)
 {
     HKEY hkey, hsubkey;
     DWORD currid;
@@ -84,7 +84,7 @@ DWORD WINAPI tapiGetLocationInfo(LPSTR lpszCountryCode, LPSTR lpszCityCode)
 /***********************************************************************
  *		tapiRequestMakeCall (TAPI32.@)
  */
-DWORD WINAPI tapiRequestMakeCall(LPCSTR lpszDestAddress, LPCSTR lpszAppName,
+DWORD WINAPI tapiRequestMakeCallA(LPCSTR lpszDestAddress, LPCSTR lpszAppName,
                                  LPCSTR lpszCalledParty, LPCSTR lpszComment)
 {
     FIXME("(%s, %s, %s, %s): stub.\n", lpszDestAddress, lpszAppName, lpszCalledParty, lpszComment);

@@ -48,7 +48,7 @@ DWORD WINAPI phoneClose(HPHONE hPhone)
 /***********************************************************************
  *		phoneConfigDialog (TAPI32.@)
  */
-DWORD WINAPI phoneConfigDialog(DWORD dwDeviceID, HWND hwndOwner, LPCSTR lpszDeviceClass)
+DWORD WINAPI phoneConfigDialogA(DWORD dwDeviceID, HWND hwndOwner, LPCSTR lpszDeviceClass)
 {
     FIXME("(%08lx, %p, %s): stub.\n", dwDeviceID, hwndOwner, lpszDeviceClass);
     return 0;
@@ -66,7 +66,7 @@ DWORD WINAPI phoneDevSpecific(HPHONE hPhone, LPVOID lpParams, DWORD dwSize)
 /***********************************************************************
  *		phoneGetButtonInfo (TAPI32.@)
  */
-DWORD WINAPI phoneGetButtonInfo(HPHONE hPhone, DWORD dwButtonLampID,
+DWORD WINAPI phoneGetButtonInfoA(HPHONE hPhone, DWORD dwButtonLampID,
                                 LPPHONEBUTTONINFO lpButtonInfo)
 {
     FIXME("(%p, %08lx, %p): stub.\n", hPhone, dwButtonLampID, lpButtonInfo);
@@ -85,7 +85,7 @@ DWORD WINAPI phoneGetData(HPHONE hPhone, DWORD dwDataID, LPVOID lpData, DWORD dw
 /***********************************************************************
  *		phoneGetDevCaps (TAPI32.@)
  */
-DWORD WINAPI phoneGetDevCaps(HPHONEAPP hPhoneApp, DWORD dwDeviceID,
+DWORD WINAPI phoneGetDevCapsA(HPHONEAPP hPhoneApp, DWORD dwDeviceID,
                DWORD dwAPIVersion, DWORD dwExtVersion, LPPHONECAPS lpPhoneCaps)
 {
     FIXME("(%p, %08ld, %08lx, %08lx, %p): stub.\n", hPhoneApp, dwDeviceID, dwAPIVersion, dwExtVersion, lpPhoneCaps);
@@ -125,7 +125,7 @@ DWORD WINAPI phoneGetHookSwitch(HPHONE hPhone, LPDWORD lpdwHookSwitchDevs)
 /***********************************************************************
  *		phoneGetID (TAPI32.@)
  */
-DWORD WINAPI phoneGetID(HPHONE hPhone, LPVARSTRING lpDeviceID,
+DWORD WINAPI phoneGetIDA(HPHONE hPhone, LPVARSTRING lpDeviceID,
                         LPCSTR lpszDeviceClass)
 {
     FIXME("(%p, %p, %s): stub.\n", hPhone, lpDeviceID, lpszDeviceClass);
@@ -136,7 +136,7 @@ DWORD WINAPI phoneGetID(HPHONE hPhone, LPVARSTRING lpDeviceID,
 /***********************************************************************
  *		phoneGetIcon (TAPI32.@)
  */
-DWORD WINAPI phoneGetIcon(DWORD dwDeviceID, LPCSTR lpszDeviceClass,
+DWORD WINAPI phoneGetIconA(DWORD dwDeviceID, LPCSTR lpszDeviceClass,
 		          HICON *lphIcon)
 {
     FIXME("(%08lx, %s, %p): stub.\n", dwDeviceID, lpszDeviceClass, lphIcon);
@@ -166,7 +166,7 @@ DWORD WINAPI phoneGetRing(HPHONE hPhone, LPDWORD lpdwRingMode, LPDWORD lpdwVolum
 /***********************************************************************
  *		phoneGetStatus (TAPI32.@)
  */
-DWORD WINAPI phoneGetStatus(HPHONE hPhone, LPPHONESTATUS lpPhoneStatus)
+DWORD WINAPI phoneGetStatusA(HPHONE hPhone, LPPHONESTATUS lpPhoneStatus)
 {
     FIXME("(%p, %p): stub.\n", hPhone, lpPhoneStatus);
     /* call TSPI function here ! */
@@ -237,7 +237,7 @@ DWORD WINAPI phoneOpen(HPHONEAPP hPhoneApp, DWORD dwDeviceID, LPHPHONE lphPhone,
 /***********************************************************************
  *		phoneSetButtonInfo (TAPI32.@)
  */
-DWORD WINAPI phoneSetButtonInfo(HPHONE hPhone, DWORD dwButtonLampID, LPPHONEBUTTONINFO lpButtonInfo)
+DWORD WINAPI phoneSetButtonInfoA(HPHONE hPhone, DWORD dwButtonLampID, LPPHONEBUTTONINFO lpButtonInfo)
 {
     FIXME("(%p, %08lx, %p): stub.\n", hPhone, dwButtonLampID, lpButtonInfo);
     return 0;
