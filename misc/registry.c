@@ -181,10 +181,12 @@ static void save_key( HKEY hkey, const char *filename )
     int count = 0;
     DWORD ret;
     HANDLE handle;
+    char *p;
+    char *name = HeapAlloc( GetProcessHeap(), 0, strlen(filename) + 20 );
 
-    char *name = xmalloc( strlen(filename) + 10 );
-    char *p = strrchr( name, '/' );
-    if (p) p++;
+    if (!name) return;
+    strcpy( name, filename );
+    if ((p = strrchr( name, '/' ))) p++;
     else p = name;
 
     for (;;)
@@ -193,20 +195,24 @@ static void save_key( HKEY hkey, const char *filename )
         handle = FILE_CreateFile( name, GENERIC_WRITE, 0, NULL,
                                   CREATE_NEW, FILE_ATTRIBUTE_NORMAL, -1 );
         if (handle != INVALID_HANDLE_VALUE) break;
-        if ((ret = GetLastError()) != ERROR_FILE_EXISTS) return;
+        if ((ret = GetLastError()) != ERROR_FILE_EXISTS) break;
     }
 
-    req->hkey = hkey;
-    req->file = handle;
-    ret = server_call_noerr( REQ_SAVE_REGISTRY );
-    CloseHandle( handle );
-    if (ret) unlink( name );
-    else if (rename( name, filename ) == -1)
+    if (handle != INVALID_HANDLE_VALUE)
     {
-        ERR( "Failed to move %s to %s: ", name, filename );
-        perror( "rename" );
-        unlink( name );
+        req->hkey = hkey;
+        req->file = handle;
+        ret = server_call_noerr( REQ_SAVE_REGISTRY );
+        CloseHandle( handle );
+        if (ret) unlink( name );
+        else if (rename( name, filename ) == -1)
+        {
+            ERR( "Failed to move %s to %s: ", name, filename );
+            perror( "rename" );
+            unlink( name );
+        }
     }
+    HeapFree( GetProcessHeap(), 0, name );
 }
 
 
