@@ -134,7 +134,7 @@
 134 stub MsiSetComponentStateA
 135 stub MsiSetComponentStateW
 136 stdcall MsiSetExternalUIA(ptr long ptr)
-137 stub MsiSetExternalUIW
+137 stdcall MsiSetExternalUIW(ptr long ptr)
 138 stdcall MsiSetFeatureStateA(long str long)
 139 stdcall MsiSetFeatureStateW(long wstr long)
 140 stub MsiSetInstallLevel

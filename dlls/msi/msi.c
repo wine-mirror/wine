@@ -838,12 +838,19 @@ INSTALLUI_HANDLERA WINAPI MsiSetExternalUIA(INSTALLUI_HANDLERA puiHandler,
 {
     INSTALLUI_HANDLERA prev = gUIHandler;
 
-    TRACE("(%p %lx %p)\n",puiHandler,dwMessageFilter,pvContext);
+    TRACE("(%p %lx %p)\n",puiHandler, dwMessageFilter,pvContext);
     gUIHandler = puiHandler;
     gUIFilter = dwMessageFilter;
     gUIContext = pvContext;
 
     return prev;
+}
+
+INSTALLUI_HANDLERW WINAPI MsiSetExternalUIW(INSTALLUI_HANDLERW puiHandler,
+                                  DWORD dwMessageFilter, LPVOID pvContext)
+{
+    TRACE(" STUB (%p %lx %p)\n",puiHandler,dwMessageFilter,pvContext);
+    return NULL;
 }
 
 UINT WINAPI MsiLoadStringA(HINSTANCE hInstance, UINT uID, LPSTR lpBuffer, int nBufferMax, DWORD e)
