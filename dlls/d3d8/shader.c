@@ -747,11 +747,15 @@ inline static VOID IDirect3DVertexShaderImpl_GenerateProgramArbHW(IDirect3DVerte
 	}
 	/* Due to the dynamic constants binding mechanism, we need to declare
 	 * all the constants for relative addressing. */
-	/* Mesa supports only 95 constants for VS1.X although we should have at least 96.
-	 * Let's declare max constants minus one for now. */
-	sprintf(tmpLine, "PARAM C[%d] = { program.env[0..%d] };\n", numConstants-1, numConstants-2);
-	TRACE("GL HW (%u) : %s", strlen(pgmStr), tmpLine); /* Don't add \n to this line as already in tmpLine */
+	/* Mesa supports nly 95 constants for VS1.X although we should have at least 96. */
+	if (This->direct3d8->gl_info.gl_vendor == VENDOR_MESA || 
+	    This->direct3d8->gl_info.gl_vendor == VENDOR_WINE) {
+	  numConstants = 95;
+	}
+	sprintf(tmpLine, "PARAM C[%d] = { program.env[0..%d] };\n", numConstants, numConstants-1);
+	TRACE_(d3d_hw_shader)("GL HW (%u,%u) : %s", lineNum, strlen(pgmStr), tmpLine); /* Don't add \n to this line as already in tmpLine */
 	strcat(pgmStr, tmpLine);
+	++lineNum;
 
 	++pToken;
 	continue;
@@ -2361,9 +2365,9 @@ HRESULT WINAPI IDirect3DPixelShaderImpl_GetConstantF(IDirect3DPixelShaderImpl* T
 /***********************************************************************
  *		ValidateVertexShader (D3D8.@)
  */
-BOOL WINAPI ValidateVertexShader(LPVOID what, LPVOID toto) {
-  FIXME("(void): stub: %p %p\n", what, toto);
-  return TRUE;
+BOOL WINAPI ValidateVertexShader(LPVOID what) {
+  FIXME("(void): stub: %p\n", what);
+  return 0;
 }
 
 /***********************************************************************

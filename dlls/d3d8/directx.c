@@ -501,8 +501,10 @@ HRESULT  WINAPI  IDirect3D8Impl_CheckDeviceFormat          (LPDIRECT3D8 iface,
     case D3DFMT_A4L4:
 
       /* Bump */
-      /*case D3DFMT_V8U8:*/
-      /*case D3DFMT_V16U16:*/
+#if 0
+    case D3DFMT_V8U8:
+    case D3DFMT_V16U16:
+#endif
     case D3DFMT_L6V5U5:
     case D3DFMT_X8L8V8U8:
     case D3DFMT_Q8W8V8U8:
@@ -784,10 +786,13 @@ HRESULT  WINAPI  IDirect3D8Impl_GetDeviceCaps(LPDIRECT3D8 iface, UINT Adapter, D
 			      D3DTEXOPCAPS_MODULATECOLOR_ADDALPHA |
                               D3DTEXOPCAPS_BLENDTEXTUREALPHAPM;
     }
+    
+#if 0
     pCaps->TextureOpCaps |= D3DTEXOPCAPS_BUMPENVMAP;
                             /* FIXME: Add 
 			      D3DTEXOPCAPS_BUMPENVMAPLUMINANCE 
 			      D3DTEXOPCAPS_PREMODULATE */
+#endif
 
     if (gotContext) {
         GLint gl_max;
@@ -843,11 +848,19 @@ HRESULT  WINAPI  IDirect3D8Impl_GetDeviceCaps(LPDIRECT3D8 iface, UINT Adapter, D
     pCaps->MaxStreams = MAX_STREAMS;
     pCaps->MaxStreamStride = 1024;
 
-    if (((vs_mode == VS_HW) && GL_SUPPORT(ARB_VERTEX_PROGRAM)) || (vs_mode == VS_SW) || (DeviceType == D3DDEVTYPE_REF))
-        pCaps->VertexShaderVersion = D3DVS_VERSION(1,1);
-    else
-        pCaps->VertexShaderVersion = 0;
-    pCaps->MaxVertexShaderConst = D3D8_VSHADER_MAX_CONSTANTS;
+    if (((vs_mode == VS_HW) && GL_SUPPORT(ARB_VERTEX_PROGRAM)) || (vs_mode == VS_SW) || (DeviceType == D3DDEVTYPE_REF)) {
+      pCaps->VertexShaderVersion = D3DVS_VERSION(1,1);
+      
+      if (This->gl_info.gl_vendor == VENDOR_MESA || 
+	  This->gl_info.gl_vendor == VENDOR_WINE) {
+	pCaps->MaxVertexShaderConst = 95;
+      } else {
+	pCaps->MaxVertexShaderConst = D3D8_VSHADER_MAX_CONSTANTS;
+      }
+    } else {
+      pCaps->VertexShaderVersion = 0;
+      pCaps->MaxVertexShaderConst = 0;
+    }
 
     if ((ps_mode == PS_HW) && GL_SUPPORT(ARB_FRAGMENT_PROGRAM) && (DeviceType != D3DDEVTYPE_REF)) {
         pCaps->PixelShaderVersion = D3DPS_VERSION(1,4);

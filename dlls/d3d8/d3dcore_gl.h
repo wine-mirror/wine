@@ -696,6 +696,7 @@ typedef enum _GL_SupportedExt {
 
 typedef enum _GL_Vendors {
   VENDOR_WINE   = 0x0,
+  VENDOR_MESA   = 0x1,
   VENDOR_ATI    = 0x1002,
   VENDOR_NVIDIA = 0x10de
 } GL_Vendors;

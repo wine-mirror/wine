@@ -673,7 +673,7 @@ HRESULT WINAPI IDirect3DDeviceImpl_FillVertexShaderInputArbHW(IDirect3DDevice8Im
       case D3DVSDT_D3DCOLOR: 
           TRACE("HW VS glVertexAttribPointerARB(reg=%ld,num=%d,skip=%d,ptr=%p)\n", reg, 4, skip, curPos);
           FIXME("D3DVSDT_D3DCOLOR in hw shader - To confirm\n");
-          GL_EXTCALL(glVertexAttribPointerARB(reg, 4, GL_UNSIGNED_BYTE, GL_FALSE, skip, curPos));
+          GL_EXTCALL(glVertexAttribPointerARB(reg, 4, GL_UNSIGNED_BYTE, GL_TRUE, skip, curPos));
           GL_EXTCALL(glEnableVertexAttribArrayARB(reg));
           curPos = curPos + 4*sizeof(BYTE);
 	  break;
@@ -694,7 +694,7 @@ HRESULT WINAPI IDirect3DDeviceImpl_FillVertexShaderInputArbHW(IDirect3DDevice8Im
 
       case D3DVSDT_UBYTE4: 
           FIXME("D3DVSDT_UBYTE4 in hw shader - To confirm\n");
-          GL_EXTCALL(glVertexAttribPointerARB(reg, 4, GL_UNSIGNED_BYTE, GL_FALSE, skip, curPos));
+          GL_EXTCALL(glVertexAttribPointerARB(reg, 4, GL_UNSIGNED_BYTE, GL_TRUE, skip, curPos));
           GL_EXTCALL(glEnableVertexAttribArrayARB(reg));
           curPos = curPos + 4*sizeof(BYTE);
 	  break;
