@@ -1780,6 +1780,7 @@ enum message_type
     user_handle_t  parent;      /* parent window */
     user_handle_t  owner;       /* owner window */
     atom_t         atom;        /* class atom */
+    void*          instance;    /* module instance */
     int            extra;       /* number of extra bytes */
 @REPLY
     user_handle_t  handle;      /* created window */
@@ -2127,6 +2128,50 @@ enum message_type
     int            next_unicode;   /* is the next a unicode hook? */
     VARARG(module,unicode_str);    /* module name */
 @END
+
+
+/* Create a window class */
+@REQ(create_class)
+    int            local;          /* is it a local class? */
+    atom_t         atom;           /* class atom */
+    unsigned int   style;          /* class style */
+    void*          instance;       /* module instance */
+    int            extra;          /* number of extra class bytes */
+    int            win_extra;      /* number of window extra bytes */
+@END
+
+
+/* Destroy a window class */
+@REQ(destroy_class)
+    atom_t         atom;           /* class atom */
+    void*          instance;       /* module instance */
+@END
+
+
+/* Set some information in a class */
+@REQ(set_class_info)
+    user_handle_t  window;         /* handle to the window */
+    unsigned int   flags;          /* flags for info to set (see below) */
+    atom_t         atom;           /* class atom */
+    unsigned int   style;          /* class style */
+    int            win_extra;      /* number of window extra bytes */
+    void*          instance;       /* module instance */
+    int            extra_offset;   /* offset to set in extra bytes */
+    size_t         extra_size;     /* size to set in extra bytes */
+    unsigned int   extra_value;    /* value to set in extra bytes */
+@REPLY
+    atom_t         old_atom;       /* previous class atom */
+    unsigned int   old_style;      /* previous class style */
+    int            old_extra;      /* previous number of class extra bytes */
+    int            old_win_extra;  /* previous number of window extra bytes */
+    void*          old_instance;   /* previous module instance */
+    unsigned int   old_extra_value; /* old value in extra bytes */
+@END
+#define SET_CLASS_ATOM      0x0001
+#define SET_CLASS_STYLE     0x0002
+#define SET_CLASS_WINEXTRA  0x0004
+#define SET_CLASS_INSTANCE  0x0008
+#define SET_CLASS_EXTRA     0x0010
 
 
 /* Set/get clipboard information */

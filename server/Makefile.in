@@ -9,6 +9,7 @@ C_SRCS = \
 	async.c \
 	atom.c \
 	change.c \
+	class.c \
 	clipboard.c \
 	console.c \
 	context_i386.c \

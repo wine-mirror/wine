@@ -2096,6 +2096,7 @@ static void dump_create_window_request( const struct create_window_request *req 
     fprintf( stderr, " parent=%p,", req->parent );
     fprintf( stderr, " owner=%p,", req->owner );
     fprintf( stderr, " atom=%04x,", req->atom );
+    fprintf( stderr, " instance=%p,", req->instance );
     fprintf( stderr, " extra=%d", req->extra );
 }
 
@@ -2503,6 +2504,45 @@ static void dump_get_next_hook_reply( const struct get_next_hook_reply *req )
     dump_varargs_unicode_str( cur_size );
 }
 
+static void dump_create_class_request( const struct create_class_request *req )
+{
+    fprintf( stderr, " local=%d,", req->local );
+    fprintf( stderr, " atom=%04x,", req->atom );
+    fprintf( stderr, " style=%08x,", req->style );
+    fprintf( stderr, " instance=%p,", req->instance );
+    fprintf( stderr, " extra=%d,", req->extra );
+    fprintf( stderr, " win_extra=%d", req->win_extra );
+}
+
+static void dump_destroy_class_request( const struct destroy_class_request *req )
+{
+    fprintf( stderr, " atom=%04x,", req->atom );
+    fprintf( stderr, " instance=%p", req->instance );
+}
+
+static void dump_set_class_info_request( const struct set_class_info_request *req )
+{
+    fprintf( stderr, " window=%p,", req->window );
+    fprintf( stderr, " flags=%08x,", req->flags );
+    fprintf( stderr, " atom=%04x,", req->atom );
+    fprintf( stderr, " style=%08x,", req->style );
+    fprintf( stderr, " win_extra=%d,", req->win_extra );
+    fprintf( stderr, " instance=%p,", req->instance );
+    fprintf( stderr, " extra_offset=%d,", req->extra_offset );
+    fprintf( stderr, " extra_size=%d,", req->extra_size );
+    fprintf( stderr, " extra_value=%08x", req->extra_value );
+}
+
+static void dump_set_class_info_reply( const struct set_class_info_reply *req )
+{
+    fprintf( stderr, " old_atom=%04x,", req->old_atom );
+    fprintf( stderr, " old_style=%08x,", req->old_style );
+    fprintf( stderr, " old_extra=%d,", req->old_extra );
+    fprintf( stderr, " old_win_extra=%d,", req->old_win_extra );
+    fprintf( stderr, " old_instance=%p,", req->old_instance );
+    fprintf( stderr, " old_extra_value=%08x", req->old_extra_value );
+}
+
 static void dump_set_clipboard_info_request( const struct set_clipboard_info_request *req )
 {
     fprintf( stderr, " flags=%08x,", req->flags );
@@ -2726,6 +2766,9 @@ static const dump_func req_dumpers[REQ_NB_REQUESTS] = {
     (dump_func)dump_start_hook_chain_request,
     (dump_func)dump_finish_hook_chain_request,
     (dump_func)dump_get_next_hook_request,
+    (dump_func)dump_create_class_request,
+    (dump_func)dump_destroy_class_request,
+    (dump_func)dump_set_class_info_request,
     (dump_func)dump_set_clipboard_info_request,
     (dump_func)dump_open_token_request,
     (dump_func)dump_set_global_windows_request,
@@ -2908,6 +2951,9 @@ static const dump_func reply_dumpers[REQ_NB_REQUESTS] = {
     (dump_func)dump_start_hook_chain_reply,
     (dump_func)0,
     (dump_func)dump_get_next_hook_reply,
+    (dump_func)0,
+    (dump_func)0,
+    (dump_func)dump_set_class_info_reply,
     (dump_func)dump_set_clipboard_info_reply,
     (dump_func)dump_open_token_reply,
     (dump_func)dump_set_global_windows_reply,
@@ -3090,6 +3136,9 @@ static const char * const req_names[REQ_NB_REQUESTS] = {
     "start_hook_chain",
     "finish_hook_chain",
     "get_next_hook",
+    "create_class",
+    "destroy_class",
+    "set_class_info",
     "set_clipboard_info",
     "open_token",
     "set_global_windows",

@@ -27,6 +27,7 @@ struct thread;
 struct window;
 struct msg_queue;
 struct hook_table;
+struct window_class;
 
 enum user_object
 {
@@ -72,5 +73,13 @@ extern int make_window_active( user_handle_t window );
 extern struct thread *get_window_thread( user_handle_t handle );
 extern user_handle_t window_from_point( int x, int y );
 extern user_handle_t find_window_to_repaint( user_handle_t parent, struct thread *thread );
+extern struct window_class *get_window_class( user_handle_t window );
+
+/* window class functions */
+
+extern void destroy_process_classes( struct process *process );
+extern struct window_class *grab_class( struct process *process, atom_t atom, void *instance );
+extern void release_class( struct window_class *class );
+extern atom_t get_class_atom( struct window_class *class );
 
 #endif  /* __WINE_SERVER_USER_H */

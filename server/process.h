@@ -68,6 +68,7 @@ struct process
     int                  suspend;         /* global process suspend count */
     int                  create_flags;    /* process creation flags */
     struct list          locks;           /* list of file locks owned by the process */
+    struct list          classes;         /* window classes owned by the process */
     struct console_input*console;         /* console input */
     enum startup_state   startup_state;   /* startup state */
     struct startup_info *startup_info;    /* startup info while init is in progress */

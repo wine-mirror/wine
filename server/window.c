@@ -63,6 +63,7 @@ struct window
     struct window   *prev;            /* prev window in Z-order */
     user_handle_t    handle;          /* full handle for this window */
     struct thread   *thread;          /* thread owning the window */
+    struct window_class *class;       /* window class */
     atom_t           atom;            /* class atom */
     user_handle_t    last_active;     /* last active popup */
     rectangle_t      window_rect;     /* window rectangle */
@@ -260,6 +261,7 @@ static void destroy_window( struct window *win )
     free_user_handle( win->handle );
     destroy_properties( win );
     unlink_window( win );
+    release_class( win->class );
     if (win->text) free( win->text );
     memset( win, 0x55, sizeof(*win) );
     free( win );
@@ -267,13 +269,23 @@ static void destroy_window( struct window *win )
 
 /* create a new window structure (note: the window is not linked in the window tree) */
 static struct window *create_window( struct window *parent, struct window *owner, atom_t atom,
-                                     int extra_bytes )
+                                     void *instance, int extra_bytes )
 {
-    struct window *win = mem_alloc( sizeof(*win) + extra_bytes - 1 );
-    if (!win) return NULL;
+    struct window *win;
+    struct window_class *class = grab_class( current->process, atom, instance );
+
+    if (!class) return NULL;
+
+    win = mem_alloc( sizeof(*win) + extra_bytes - 1 );
+    if (!win)
+    {
+        release_class( class );
+        return NULL;
+    }
 
     if (!(win->handle = alloc_user_handle( win, USER_WINDOW )))
     {
+        release_class( class );
         free( win );
         return NULL;
     }
@@ -283,6 +295,7 @@ static struct window *create_window( struct window *parent, struct window *owner
     win->last_child     = NULL;
     win->first_unlinked = NULL;
     win->thread         = current;
+    win->class          = class;
     win->atom           = atom;
     win->last_active    = win->handle;
     win->style          = 0;
@@ -449,6 +462,15 @@ user_handle_t find_window_to_repaint( user_handle_t parent, struct thread *threa
 }
 
 
+/* get the window class of a window */
+struct window_class* get_window_class( user_handle_t window )
+{
+    struct window *win;
+    if (!(win = get_window( window ))) return NULL;
+    return win->class;
+}
+
+
 /* create a window */
 DECL_HANDLER(create_window)
 {
@@ -462,7 +484,7 @@ DECL_HANDLER(create_window)
     {
         if (!top_window)
         {
-            if (!(top_window = create_window( NULL, NULL, req->atom, req->extra ))) return;
+            if (!(top_window = create_window( NULL, NULL, req->atom, req->instance, req->extra ))) return;
             top_window->thread = NULL;  /* no thread owns the desktop */
             top_window->style  = WS_POPUP | WS_VISIBLE | WS_CLIPSIBLINGS | WS_CLIPCHILDREN;
         }
@@ -481,7 +503,7 @@ DECL_HANDLER(create_window)
             set_error( STATUS_ACCESS_DENIED );
             return;
         }
-        if (!(win = create_window( parent, owner, req->atom, req->extra ))) return;
+        if (!(win = create_window( parent, owner, req->atom, req->instance, req->extra ))) return;
         reply->handle = win->handle;
     }
 }
@@ -569,7 +591,7 @@ DECL_HANDLER(get_window_info)
         {
             reply->tid  = get_thread_id( win->thread );
             reply->pid  = get_process_id( win->thread->process );
-            reply->atom = win->atom;
+            reply->atom = get_class_atom( win->class );
         }
     }
 }
@@ -648,7 +670,7 @@ DECL_HANDLER(get_window_children)
     if (parent)
         for (ptr = parent->first_child, total = 0; ptr; ptr = ptr->next)
         {
-            if (req->atom && ptr->atom != req->atom) continue;
+            if (req->atom && get_class_atom(ptr->class) != req->atom) continue;
             if (req->tid && get_thread_id(ptr->thread) != req->tid) continue;
             total++;
         }
@@ -659,7 +681,7 @@ DECL_HANDLER(get_window_children)
     {
         for (ptr = parent->first_child; ptr && len; ptr = ptr->next)
         {
-            if (req->atom && ptr->atom != req->atom) continue;
+            if (req->atom && get_class_atom(ptr->class) != req->atom) continue;
             if (req->tid && get_thread_id(ptr->thread) != req->tid) continue;
             *data++ = ptr->handle;
             len -= sizeof(*data);

@@ -62,23 +62,34 @@ static void *user_handles[NB_USER_HANDLES];
  *
  * Create a window handle with the server.
  */
-static WND *create_window_handle( HWND parent, HWND owner, ATOM atom, unsigned int extra_bytes )
+static WND *create_window_handle( HWND parent, HWND owner, ATOM atom,
+                                  HINSTANCE instance, WINDOWPROCTYPE type )
 {
     BOOL res;
-    user_handle_t handle = 0;
     WORD index;
-    WND *win = HeapAlloc( GetProcessHeap(), 0, sizeof(WND) + extra_bytes - sizeof(win->wExtra) );
+    WND *win;
+    DCE *dce;
+    INT extra_bytes;
+    DWORD clsStyle;
+    WNDPROC winproc;
+    struct tagCLASS *class;
+    user_handle_t handle = 0;
 
-    if (!win) return NULL;
+    if (!(class = CLASS_AddWindow( atom, instance, type, &extra_bytes, &winproc, &clsStyle, &dce )))
+        return NULL;
+
+    if (!(win = HeapAlloc( GetProcessHeap(), 0, sizeof(WND) + extra_bytes - sizeof(win->wExtra) )))
+        return NULL;
 
     USER_Lock();
 
     SERVER_START_REQ( create_window )
     {
-        req->parent = parent;
-        req->owner  = owner;
-        req->atom   = atom;
-        req->extra  = extra_bytes;
+        req->parent   = parent;
+        req->owner    = owner;
+        req->atom     = atom;
+        req->instance = instance;
+        req->extra    = extra_bytes;
         if ((res = !wine_server_call_err( req ))) handle = reply->handle;
     }
     SERVER_END_REQ;
@@ -92,9 +103,15 @@ static WND *create_window_handle( HWND parent, HWND owner, ATOM atom, unsigned i
     index = LOWORD(handle) - FIRST_USER_HANDLE;
     assert( index < NB_USER_HANDLES );
     user_handles[index] = win;
-    win->hwndSelf = handle;
-    win->dwMagic = WND_MAGIC;
-    win->irefCount = 1;
+    win->hwndSelf   = handle;
+    win->dwMagic    = WND_MAGIC;
+    win->irefCount  = 1;
+    win->class      = class;
+    win->winproc    = winproc;
+    win->dce        = dce;
+    win->clsStyle   = clsStyle;
+    win->cbWndExtra = extra_bytes;
+    memset( win->wExtra, 0, extra_bytes );
     return win;
 }
 
@@ -669,7 +686,6 @@ LRESULT WIN_DestroyWindow( HWND hwnd )
     DCE_FreeWindowDCE( hwnd );    /* Always do this to catch orphaned DCs */
     USER_Driver.pDestroyWindow( hwnd );
     WINPROC_FreeProc( wndPtr->winproc, WIN_PROC_WINDOW );
-    CLASS_RemoveWindow( wndPtr->class );
     wndPtr->class = NULL;
     wndPtr->dwMagic = 0;  /* Mark it as invalid */
     WIN_ReleaseWndPtr( wndPtr );
@@ -705,41 +721,28 @@ void WIN_DestroyThreadWindows( HWND hwnd )
  */
 BOOL WIN_CreateDesktopWindow(void)
 {
-    struct tagCLASS *class;
     HWND hwndDesktop;
-    INT wndExtra;
-    DWORD clsStyle;
-    WNDPROC winproc;
-    DCE *dce;
     CREATESTRUCTA cs;
     RECT rect;
 
     TRACE("Creating desktop window\n");
 
-    if (!WINPOS_CreateInternalPosAtom() ||
-        !(class = CLASS_AddWindow( (ATOM)LOWORD(DESKTOP_CLASS_ATOM), 0, WIN_PROC_32W,
-                                   &wndExtra, &winproc, &clsStyle, &dce )))
-        return FALSE;
+    if (!WINPOS_CreateInternalPosAtom()) return FALSE;
 
-    pWndDesktop = create_window_handle( 0, 0, LOWORD(DESKTOP_CLASS_ATOM), wndExtra );
+    pWndDesktop = create_window_handle( 0, 0, LOWORD(DESKTOP_CLASS_ATOM), 0, WIN_PROC_32W );
     if (!pWndDesktop) return FALSE;
     hwndDesktop = pWndDesktop->hwndSelf;
 
     pWndDesktop->tid               = 0;  /* nobody owns the desktop */
     pWndDesktop->parent            = 0;
     pWndDesktop->owner             = 0;
-    pWndDesktop->class             = class;
     pWndDesktop->text              = NULL;
     pWndDesktop->hrgnUpdate        = 0;
-    pWndDesktop->clsStyle          = clsStyle;
-    pWndDesktop->dce               = NULL;
     pWndDesktop->pVScroll          = NULL;
     pWndDesktop->pHScroll          = NULL;
     pWndDesktop->helpContext       = 0;
     pWndDesktop->flags             = 0;
     pWndDesktop->hSysMenu          = 0;
-    pWndDesktop->winproc           = winproc;
-    pWndDesktop->cbWndExtra        = wndExtra;
 
     cs.lpCreateParams = NULL;
     cs.hInstance      = 0;
@@ -970,13 +973,8 @@ static HWND WIN_CreateWindowEx( CREATESTRUCTA *cs, ATOM classAtom,
 				WINDOWPROCTYPE type )
 {
     INT sw = SW_SHOW;
-    struct tagCLASS *classPtr;
     WND *wndPtr;
     HWND hwnd, parent, owner;
-    INT wndExtra;
-    DWORD clsStyle;
-    WNDPROC winproc;
-    DCE *dce;
     BOOL unicode = (type == WIN_PROC_32W);
 
     TRACE("%s %s ex=%08lx style=%08lx %d,%d %dx%d parent=%p menu=%p inst=%p params=%p\n",
@@ -1021,14 +1019,6 @@ static HWND WIN_CreateWindowEx( CREATESTRUCTA *cs, ATOM classAtom,
         return 0;  /* WS_CHILD needs a parent, but WS_POPUP doesn't */
     }
 
-    /* Find the window class */
-    if (!(classPtr = CLASS_AddWindow( classAtom, cs->hInstance, type,
-                                      &wndExtra, &winproc, &clsStyle, &dce )))
-    {
-        WARN("Bad class '%s'\n", cs->lpszClass );
-        return 0;
-    }
-
     WIN_FixCoordinates(cs, &sw); /* fix default coordinates */
 
     /* Correct the window style - stage 1
@@ -1052,7 +1042,7 @@ static HWND WIN_CreateWindowEx( CREATESTRUCTA *cs, ATOM classAtom,
 
     /* Create the window structure */
 
-    if (!(wndPtr = create_window_handle( parent, owner, classAtom, wndExtra )))
+    if (!(wndPtr = create_window_handle( parent, owner, classAtom, cs->hInstance, type )))
     {
 	TRACE("out of memory\n" );
 	return 0;
@@ -1064,15 +1054,12 @@ static HWND WIN_CreateWindowEx( CREATESTRUCTA *cs, ATOM classAtom,
     wndPtr->tid            = GetCurrentThreadId();
     wndPtr->owner          = owner;
     wndPtr->parent         = parent;
-    wndPtr->class          = classPtr;
-    wndPtr->winproc        = winproc;
     wndPtr->hInstance      = cs->hInstance;
     wndPtr->text           = NULL;
     wndPtr->hrgnUpdate     = 0;
     wndPtr->hrgnWnd        = 0;
     wndPtr->dwStyle        = cs->style & ~WS_VISIBLE;
     wndPtr->dwExStyle      = cs->dwExStyle;
-    wndPtr->clsStyle       = clsStyle;
     wndPtr->wIDmenu        = 0;
     wndPtr->helpContext    = 0;
     wndPtr->flags          = (type == WIN_PROC_16) ? 0 : WIN_ISWIN32;
@@ -1080,9 +1067,6 @@ static HWND WIN_CreateWindowEx( CREATESTRUCTA *cs, ATOM classAtom,
     wndPtr->pHScroll       = NULL;
     wndPtr->userdata       = 0;
     wndPtr->hSysMenu       = (wndPtr->dwStyle & WS_SYSMENU) ? MENU_GetSysMenu( hwnd, 0 ) : 0;
-    wndPtr->cbWndExtra     = wndExtra;
-
-    if (wndExtra) memset( wndPtr->wExtra, 0, wndExtra);
 
     /* Correct the window style - stage 2 */
 
@@ -1109,9 +1093,7 @@ static HWND WIN_CreateWindowEx( CREATESTRUCTA *cs, ATOM classAtom,
 
     /* Get class or window DC if needed */
 
-    if (clsStyle & CS_OWNDC) wndPtr->dce = DCE_AllocDCE(hwnd,DCE_WINDOW_DC);
-    else if (clsStyle & CS_CLASSDC) wndPtr->dce = dce;
-    else wndPtr->dce = NULL;
+    if (wndPtr->clsStyle & CS_OWNDC) wndPtr->dce = DCE_AllocDCE(hwnd,DCE_WINDOW_DC);
 
     /* Set the window menu */
 
@@ -1248,9 +1230,6 @@ HWND WINAPI CreateWindowExA( DWORD exStyle, LPCSTR className,
     CREATESTRUCTA cs;
     char buffer[256];
 
-    if(!instance)
-        instance=GetModuleHandleA(NULL);
-
     if(exStyle & WS_EX_MDICHILD)
         return CreateMDIWindowA(className, windowName, style, x, y, width, height, parent, instance, (LPARAM)data);
 
@@ -1306,9 +1285,6 @@ HWND WINAPI CreateWindowExW( DWORD exStyle, LPCWSTR className,
     ATOM classAtom;
     CREATESTRUCTW cs;
     WCHAR buffer[256];
-
-    if(!instance)
-        instance=GetModuleHandleW(NULL);
 
     if(exStyle & WS_EX_MDICHILD)
         return CreateMDIWindowW(className, windowName, style, x, y, width, height, parent, instance, (LPARAM)data);

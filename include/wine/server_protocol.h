@@ -2525,6 +2525,7 @@ struct create_window_request
     user_handle_t  parent;
     user_handle_t  owner;
     atom_t         atom;
+    void*          instance;
     int            extra;
 };
 struct create_window_reply
@@ -3052,6 +3053,67 @@ struct get_next_hook_reply
 
 
 
+struct create_class_request
+{
+    struct request_header __header;
+    int            local;
+    atom_t         atom;
+    unsigned int   style;
+    void*          instance;
+    int            extra;
+    int            win_extra;
+};
+struct create_class_reply
+{
+    struct reply_header __header;
+};
+
+
+
+struct destroy_class_request
+{
+    struct request_header __header;
+    atom_t         atom;
+    void*          instance;
+};
+struct destroy_class_reply
+{
+    struct reply_header __header;
+};
+
+
+
+struct set_class_info_request
+{
+    struct request_header __header;
+    user_handle_t  window;
+    unsigned int   flags;
+    atom_t         atom;
+    unsigned int   style;
+    int            win_extra;
+    void*          instance;
+    int            extra_offset;
+    size_t         extra_size;
+    unsigned int   extra_value;
+};
+struct set_class_info_reply
+{
+    struct reply_header __header;
+    atom_t         old_atom;
+    unsigned int   old_style;
+    int            old_extra;
+    int            old_win_extra;
+    void*          old_instance;
+    unsigned int   old_extra_value;
+};
+#define SET_CLASS_ATOM      0x0001
+#define SET_CLASS_STYLE     0x0002
+#define SET_CLASS_WINEXTRA  0x0004
+#define SET_CLASS_INSTANCE  0x0008
+#define SET_CLASS_EXTRA     0x0010
+
+
+
 struct set_clipboard_info_request
 {
     struct request_header __header;
@@ -3298,6 +3360,9 @@ enum request
     REQ_start_hook_chain,
     REQ_finish_hook_chain,
     REQ_get_next_hook,
+    REQ_create_class,
+    REQ_destroy_class,
+    REQ_set_class_info,
     REQ_set_clipboard_info,
     REQ_open_token,
     REQ_set_global_windows,
@@ -3484,6 +3549,9 @@ union generic_request
     struct start_hook_chain_request start_hook_chain_request;
     struct finish_hook_chain_request finish_hook_chain_request;
     struct get_next_hook_request get_next_hook_request;
+    struct create_class_request create_class_request;
+    struct destroy_class_request destroy_class_request;
+    struct set_class_info_request set_class_info_request;
     struct set_clipboard_info_request set_clipboard_info_request;
     struct open_token_request open_token_request;
     struct set_global_windows_request set_global_windows_request;
@@ -3668,11 +3736,14 @@ union generic_reply
     struct start_hook_chain_reply start_hook_chain_reply;
     struct finish_hook_chain_reply finish_hook_chain_reply;
     struct get_next_hook_reply get_next_hook_reply;
+    struct create_class_reply create_class_reply;
+    struct destroy_class_reply destroy_class_reply;
+    struct set_class_info_reply set_class_info_reply;
     struct set_clipboard_info_reply set_clipboard_info_reply;
     struct open_token_reply open_token_reply;
     struct set_global_windows_reply set_global_windows_reply;
 };
 
-#define SERVER_PROTOCOL_VERSION 128
+#define SERVER_PROTOCOL_VERSION 129
 
 #endif /* __WINE_WINE_SERVER_PROTOCOL_H */

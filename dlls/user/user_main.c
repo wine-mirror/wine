@@ -128,41 +128,6 @@ static BOOL load_driver(void)
 
 
 /***********************************************************************
- *           controls_init
- *
- * Register the classes for the builtin controls
- */
-static void controls_init(void)
-{
-    extern const struct builtin_class_descr BUTTON_builtin_class;
-    extern const struct builtin_class_descr COMBO_builtin_class;
-    extern const struct builtin_class_descr COMBOLBOX_builtin_class;
-    extern const struct builtin_class_descr DIALOG_builtin_class;
-    extern const struct builtin_class_descr DESKTOP_builtin_class;
-    extern const struct builtin_class_descr EDIT_builtin_class;
-    extern const struct builtin_class_descr ICONTITLE_builtin_class;
-    extern const struct builtin_class_descr LISTBOX_builtin_class;
-    extern const struct builtin_class_descr MDICLIENT_builtin_class;
-    extern const struct builtin_class_descr MENU_builtin_class;
-    extern const struct builtin_class_descr SCROLL_builtin_class;
-    extern const struct builtin_class_descr STATIC_builtin_class;
-
-    CLASS_RegisterBuiltinClass( &BUTTON_builtin_class );
-    CLASS_RegisterBuiltinClass( &COMBO_builtin_class );
-    CLASS_RegisterBuiltinClass( &COMBOLBOX_builtin_class );
-    CLASS_RegisterBuiltinClass( &DIALOG_builtin_class );
-    CLASS_RegisterBuiltinClass( &DESKTOP_builtin_class );
-    CLASS_RegisterBuiltinClass( &EDIT_builtin_class );
-    CLASS_RegisterBuiltinClass( &ICONTITLE_builtin_class );
-    CLASS_RegisterBuiltinClass( &LISTBOX_builtin_class );
-    CLASS_RegisterBuiltinClass( &MDICLIENT_builtin_class );
-    CLASS_RegisterBuiltinClass( &MENU_builtin_class );
-    CLASS_RegisterBuiltinClass( &SCROLL_builtin_class );
-    CLASS_RegisterBuiltinClass( &STATIC_builtin_class );
-}
-
-
-/***********************************************************************
  *           palette_init
  *
  * Patch the function pointers in GDI for SelectPalette and RealizePalette
@@ -219,7 +184,7 @@ static void tweak_init(void)
 /***********************************************************************
  *           USER initialisation routine
  */
-static BOOL process_attach(void)
+static BOOL process_attach( HINSTANCE inst )
 {
     HINSTANCE16 instance;
 
@@ -243,7 +208,7 @@ static BOOL process_attach(void)
     palette_init();
 
     /* Initialize built-in window classes */
-    controls_init();
+    CLASS_RegisterBuiltinClasses( inst );
 
     /* Initialize menus */
     if (!MENU_Init()) return FALSE;
@@ -304,7 +269,7 @@ BOOL WINAPI DllMain( HINSTANCE inst, DWORD reason, LPVOID reserved )
     switch(reason)
     {
     case DLL_PROCESS_ATTACH:
-        ret = process_attach();
+        ret = process_attach( inst );
         break;
     case DLL_THREAD_DETACH:
         thread_detach();

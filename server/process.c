@@ -44,6 +44,7 @@
 #include "thread.h"
 #include "request.h"
 #include "console.h"
+#include "user.h"
 
 /* process structure */
 
@@ -283,6 +284,7 @@ struct thread *create_process( int fd )
     process->group_id        = 0;
     process->token           = create_token();
     list_init( &process->locks );
+    list_init( &process->classes );
 
     gettimeofday( &process->start_time, NULL );
     if ((process->next = first_process) != NULL) process->next->prev = process;
@@ -597,6 +599,7 @@ static void process_killed( struct process *process )
         if (dll->filename) free( dll->filename );
         free( dll );
     }
+    destroy_process_classes( process );
     set_process_startup_state( process, STARTUP_ABORTED );
     if (process->exe.file) release_object( process->exe.file );
     process->exe.file = NULL;
