@@ -4509,6 +4509,9 @@ static BOOL SetMenuItemInfo_common(MENUITEM * menu,
 
     if (lpmii->fMask & MIIM_CHECKMARKS)
     {
+        if (lpmii->fType & MFT_RADIOCHECK)
+            menu->fType |= MFT_RADIOCHECK;
+
 	menu->hCheckBit = lpmii->hbmpChecked;
 	menu->hUnCheckBit = lpmii->hbmpUnchecked;
     }
