@@ -7944,6 +7944,7 @@ static LRESULT LISTVIEW_LButtonDown(LISTVIEW_INFO *infoPtr, WORD wKey, POINTS pt
   {
     /* remove all selections */
     LISTVIEW_DeselectAll(infoPtr);
+    ReleaseCapture();
   }
 
   return 0;
