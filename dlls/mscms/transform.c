@@ -62,10 +62,13 @@ HTRANSFORM WINAPI CreateColorTransformW( LPLOGCOLORSPACEW space, HPROFILE dest,
 #ifdef HAVE_LCMS_H
     cmsHTRANSFORM cmstransform;
     cmsHPROFILE cmsprofiles[3];
+    int intent;
 
     TRACE( "( %p, %p, %p, 0x%08lx )\n", space, dest, target, flags );
 
     if (!space || !dest) return FALSE;
+
+    intent = space->lcsIntent > 3 ? INTENT_PERCEPTUAL : space->lcsIntent;
 
     cmsprofiles[0] = cmsCreate_sRGBProfile(); /* FIXME: create from supplied color space */
     cmsprofiles[1] = MSCMS_hprofile2cmsprofile( dest ); 
@@ -74,14 +77,13 @@ HTRANSFORM WINAPI CreateColorTransformW( LPLOGCOLORSPACEW space, HPROFILE dest,
     {
         cmsprofiles[2] = MSCMS_hprofile2cmsprofile( target );
         cmstransform = cmsCreateMultiprofileTransform( cmsprofiles, 3, TYPE_BGR_8,
-                                                       TYPE_BGR_8, space->lcsIntent, 0 );
+                                                       TYPE_BGR_8, intent, 0 );
     }
     else
     {
         cmstransform = cmsCreateTransform( cmsprofiles[0], TYPE_BGR_8, cmsprofiles[1],
-                                           TYPE_BGR_8, space->lcsIntent, 0 );
+                                           TYPE_BGR_8, intent, 0 );
     }
-
     ret = MSCMS_create_htransform_handle( cmstransform );
 
 #endif /* HAVE_LCMS_H */
@@ -131,6 +133,27 @@ BOOL WINAPI DeleteColorTransform( HTRANSFORM transform )
     cmsDeleteTransform( cmstransform );
 
     MSCMS_destroy_htransform_handle( transform );
+    ret = TRUE;
+
+#endif /* HAVE_LCMS_H */
+    return ret;
+}
+
+BOOL WINAPI TranslateBitmapBits( HTRANSFORM transform, PVOID srcbits, BMFORMAT input,
+    DWORD width, DWORD height, DWORD inputstride, PVOID destbits, BMFORMAT output,
+    DWORD outputstride, PBMCALLBACKFN callback, ULONG data )
+{
+    BOOL ret = FALSE;
+#ifdef HAVE_LCMS_H
+    cmsHTRANSFORM cmstransform;
+
+    TRACE( "( %p, %p, 0x%08x, 0x%08lx, 0x%08lx, 0x%08lx, %p, 0x%08x, 0x%08lx, %p, 0x%08lx )\n",
+           transform, srcbits, input, width, height, inputstride, destbits, output,
+           outputstride, callback, data );
+
+    cmstransform = MSCMS_htransform2cmstransform( transform );
+
+    cmsDoTransform( cmstransform, srcbits, destbits, width * height );
     ret = TRUE;
 
 #endif /* HAVE_LCMS_H */

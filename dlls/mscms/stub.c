@@ -202,18 +202,6 @@ BOOL WINAPI SetColorProfileElementSize( HPROFILE profile, TAGTYPE type, DWORD si
     return FALSE;
 }
 
-BOOL WINAPI TranslateBitmapBits( HTRANSFORM transform, PVOID srcbits, BMFORMAT input,
-                                 DWORD width, DWORD height, DWORD inputstride, PVOID destbits,
-                                 BMFORMAT output, DWORD outputstride, PBMCALLBACKFN callback,
-                                 ULONG data )
-{
-    FIXME( "( %p, %p, 0x%08x, 0x%08lx, 0x%08lx, 0x%08lx, %p, 0x%08x, 0x%08lx, %p, 0x%08lx ) stub\n",
-           transform, srcbits, input, width, height, inputstride, destbits, output, outputstride, 
-           callback, data );
-
-    return FALSE;
-}
-
 BOOL WINAPI TranslateColors( HTRANSFORM transform, PCOLOR inputcolors, DWORD number,
                              COLORTYPE input, PCOLOR outputcolors, COLORTYPE output )
 {

@@ -77,6 +77,7 @@ static BOOL MSCMS_init_lcms()
     LOAD_FUNCPTR(cmsCreateMultiprofileTransform);
     LOAD_FUNCPTR(cmsCreateTransform);
     LOAD_FUNCPTR(cmsDeleteTransform);
+    LOAD_FUNCPTR(cmsDoTransform);
     LOAD_FUNCPTR(cmsOpenProfileFromMem);
     #undef LOAD_FUNCPTR
 

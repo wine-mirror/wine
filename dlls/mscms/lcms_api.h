@@ -31,6 +31,7 @@ LCMS_API_FUNCTION(cmsCreate_sRGBProfile)
 LCMS_API_FUNCTION(cmsCreateMultiprofileTransform)
 LCMS_API_FUNCTION(cmsCreateTransform)
 LCMS_API_FUNCTION(cmsDeleteTransform)
+LCMS_API_FUNCTION(cmsDoTransform)
 LCMS_API_FUNCTION(cmsOpenProfileFromMem)
 
 #ifndef LCMS_API_NO_REDEFINE
@@ -39,6 +40,7 @@ LCMS_API_FUNCTION(cmsOpenProfileFromMem)
 #define cmsCreateMultiprofileTransform pcmsCreateMultiprofileTransform
 #define cmsCreateTransform pcmsCreateTransform
 #define cmsDeleteTransform pcmsDeleteTransform
+#define cmsDoTransform pcmsDoTransform
 #define cmsOpenProfileFromMem pcmsOpenProfileFromMem
 #endif /* LCMS_API_NO_REDEFINE */
 
