@@ -31,6 +31,7 @@ static BOOL32 SYNC_BuildWaitStruct( DWORD count, const HANDLE32 *handles,
     wait->wait_all = wait_all;
     for (i = 0, ptr = wait->objs; i < count; i++, ptr++)
     {
+    	TRACE(win32,"handle %i is %08x\n",i,handles[i]);
         if (!(*ptr = HANDLE_GetObjPtr( PROCESS_Current(), handles[i],
                                        K32OBJ_UNKNOWN, SYNCHRONIZE,
                                        &wait->server[i] )))
