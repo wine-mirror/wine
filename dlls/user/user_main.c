@@ -35,6 +35,8 @@ WORD USER_HeapSel = 0;  /* USER heap selector */
 
 static HMODULE graphics_driver;
 
+extern void COMM_Init(void);
+
 #define GET_USER_FUNC(name) USER_Driver.p##name = (void*)GetProcAddress( graphics_driver, #name )
 
 /* load the graphics driver */
@@ -245,6 +247,9 @@ static BOOL process_attach(void)
 
     /* Initialize mouse driver */
     MOUSE_Enable( mouse_event );
+
+    /* Initialize 16-bit serial communications */
+    COMM_Init();
 
     return TRUE;
 }

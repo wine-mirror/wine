@@ -20,7 +20,6 @@
 extern void CODEPAGE_Init(void);
 extern BOOL RELAY_Init(void);
 extern BOOL THUNK_Init(void);
-extern void COMM_Init(void);
 
 
 /***********************************************************************
@@ -76,9 +75,6 @@ static BOOL process_attach(void)
 
     /* Force loading of some dlls */
     if (LoadLibrary16( "system" ) < 32) return FALSE;
-
-    /* Initialize communications */
-    COMM_Init();
 
     /* Read DOS config.sys */
     if (!DOSCONF_ReadConfig()) return FALSE;

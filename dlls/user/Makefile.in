@@ -10,6 +10,7 @@ IMPORTS   = gdi32 kernel32 ntdll
 C_SRCS = \
 	bidi16.c \
 	cache.c \
+	comm16.c \
 	dde/client.c \
 	dde/ddeml16.c \
 	dde/misc.c \
