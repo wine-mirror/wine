@@ -1042,7 +1042,7 @@ HCURSOR16 WINAPI CopyCursor16( HINSTANCE16 hInstance, HCURSOR16 hCursor )
  * the Win95 one exactly, especially the return values, which 
  * depend on the setting of various flags.
  */
-WORD CURSORICON_Destroy( HGLOBAL16 handle, UINT16 flags )
+WORD WINAPI CURSORICON_Destroy( HGLOBAL16 handle, UINT16 flags )
 {
     WORD retv;
 
