@@ -14,6 +14,7 @@
 #include <sys/types.h>
 #include "wine/winestring.h"
 #include "windef.h"
+#include "winnls.h"
 #include "pe_image.h"
 #include "module.h"
 #include "heap.h"
@@ -135,6 +136,13 @@ HANDLE PE_FindResourceExW(
     if ((resdirptr = GetResDirEntryW(resdirptr, name, root, FALSE)) == NULL)
 	return 0;
     result = (HANDLE)GetResDirEntryW(resdirptr, (LPCWSTR)(UINT)lang, root, FALSE);
+
+    /* Try with only the primary language set */
+    if (!result)
+    {
+        lang = MAKELANGID(PRIMARYLANGID(lang), SUBLANG_DEFAULT);
+        result = (HANDLE)GetResDirEntryW(resdirptr, (LPCWSTR)(UINT)lang, root, FALSE);
+    }
 	/* Try LANG_NEUTRAL, too */
     if(!result)
         return (HANDLE)GetResDirEntryW(resdirptr, (LPCWSTR)0, root, TRUE);
