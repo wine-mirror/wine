@@ -161,7 +161,7 @@ static IClassFactoryVtbl ITSSCF_Vtbl =
 
 HRESULT WINAPI ITSS_DllGetClassObject(REFCLSID rclsid, REFIID iid, LPVOID *ppv)
 {
-    int i;
+    DWORD i;
     IClassFactoryImpl *factory;
 
     TRACE("%s %s %p\n",debugstr_guid(rclsid), debugstr_guid(iid), ppv);
@@ -230,14 +230,14 @@ ULONG WINAPI ITStorageImpl_AddRef(
 {
     ITStorageImpl *This = (ITStorageImpl *)iface;
     TRACE("%p\n", This);
-    return ++(This->ref);
+    return InterlockedIncrement(&This->ref);
 }
 
 ULONG WINAPI ITStorageImpl_Release(
     IITStorage* iface)
 {
     ITStorageImpl *This = (ITStorageImpl *)iface;
-    ULONG ref = --This->ref;
+    ULONG ref = InterlockedDecrement(&This->ref);
 
     if (ref == 0)
 	HeapFree(GetProcessHeap(), 0, This);
