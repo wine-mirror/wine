@@ -30,7 +30,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(mpr);
  */
 DWORD WINAPI WNetLogoffA( LPCSTR lpProvider, HWND hwndOwner )
 {
-    FIXME( "(%s, %04x): stub\n", debugstr_a(lpProvider), hwndOwner );
+    FIXME( "(%s, %p): stub\n", debugstr_a(lpProvider), hwndOwner );
 
     SetLastError(WN_NO_NETWORK);
     return WN_NO_NETWORK;
@@ -41,7 +41,7 @@ DWORD WINAPI WNetLogoffA( LPCSTR lpProvider, HWND hwndOwner )
  */
 DWORD WINAPI WNetLogoffW( LPCWSTR lpProvider, HWND hwndOwner )
 {
-    FIXME( "(%s, %04x): stub\n", debugstr_w(lpProvider), hwndOwner );
+    FIXME( "(%s, %p): stub\n", debugstr_w(lpProvider), hwndOwner );
 
     SetLastError(WN_NO_NETWORK);
     return WN_NO_NETWORK;
@@ -52,7 +52,7 @@ DWORD WINAPI WNetLogoffW( LPCWSTR lpProvider, HWND hwndOwner )
  */
 DWORD WINAPI WNetLogonA( LPCSTR lpProvider, HWND hwndOwner )
 {
-    FIXME( "(%s, %04x): stub\n", debugstr_a(lpProvider), hwndOwner );
+    FIXME( "(%s, %p): stub\n", debugstr_a(lpProvider), hwndOwner );
 
     SetLastError(WN_NO_NETWORK);
     return WN_NO_NETWORK;
@@ -63,7 +63,7 @@ DWORD WINAPI WNetLogonA( LPCSTR lpProvider, HWND hwndOwner )
  */
 DWORD WINAPI WNetLogonW( LPCWSTR lpProvider, HWND hwndOwner )
 {
-    FIXME( "(%s, %04x): stub\n", debugstr_w(lpProvider), hwndOwner );
+    FIXME( "(%s, %p): stub\n", debugstr_w(lpProvider), hwndOwner );
 
     SetLastError(WN_NO_NETWORK);
     return WN_NO_NETWORK;
@@ -90,4 +90,3 @@ DWORD WINAPI WNetVerifyPasswordW( LPCWSTR lpszPassword, BOOL *pfMatch )
     SetLastError(WN_NO_NETWORK);
     return WN_NO_NETWORK;
 }
-
