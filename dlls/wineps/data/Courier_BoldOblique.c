@@ -1033,45 +1033,6 @@ const AFM PSDRV_Courier_BoldOblique =
 	833,				/* WinMetrics.usWinAscent */
 	300				/* WinMetrics.usWinDescent */
     },
-    {
-	0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 	/* CharWidths[0] - CharWidths[9] */
-	0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 	/* CharWidths[10] - CharWidths[19] */
-	0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 	/* CharWidths[20] - CharWidths[29] */
-	0, 0, 600, 600, 600, 600, 600, 	/* CharWidths[30] - CharWidths[36] */
-	600, 600, 600, 600, 600, 600, 	/* CharWidths[37] - CharWidths[42] */
-	600, 600, 600, 600, 600, 600, 	/* CharWidths[43] - CharWidths[48] */
-	600, 600, 600, 600, 600, 600, 	/* CharWidths[49] - CharWidths[54] */
-	600, 600, 600, 600, 600, 600, 	/* CharWidths[55] - CharWidths[60] */
-	600, 600, 600, 600, 600, 600, 	/* CharWidths[61] - CharWidths[66] */
-	600, 600, 600, 600, 600, 600, 	/* CharWidths[67] - CharWidths[72] */
-	600, 600, 600, 600, 600, 600, 	/* CharWidths[73] - CharWidths[78] */
-	600, 600, 600, 600, 600, 600, 	/* CharWidths[79] - CharWidths[84] */
-	600, 600, 600, 600, 600, 600, 	/* CharWidths[85] - CharWidths[90] */
-	600, 600, 600, 600, 600, 600, 	/* CharWidths[91] - CharWidths[96] */
-	600, 600, 600, 600, 600, 600, 	/* CharWidths[97] - CharWidths[102] */
-	600, 600, 600, 600, 600, 600, 	/* CharWidths[103] - CharWidths[108] */
-	600, 600, 600, 600, 600, 600, 	/* CharWidths[109] - CharWidths[114] */
-	600, 600, 600, 600, 600, 600, 	/* CharWidths[115] - CharWidths[120] */
-	600, 600, 600, 600, 600, 600, 	/* CharWidths[121] - CharWidths[126] */
-	0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 	/* CharWidths[127] - CharWidths[136] */
-	0, 0, 0, 0, 0, 0, 0, 0, 600, 	/* CharWidths[137] - CharWidths[145] */
-	600, 600, 600, 600, 600, 600, 	/* CharWidths[146] - CharWidths[151] */
-	0, 0, 0, 0, 0, 0, 0, 0, 600, 	/* CharWidths[152] - CharWidths[160] */
-	600, 600, 600, 600, 600, 600, 	/* CharWidths[161] - CharWidths[166] */
-	600, 600, 600, 600, 600, 600, 	/* CharWidths[167] - CharWidths[172] */
-	600, 600, 600, 600, 600, 600, 	/* CharWidths[173] - CharWidths[178] */
-	600, 600, 0, 600, 600, 600, 	/* CharWidths[179] - CharWidths[184] */
-	600, 600, 600, 600, 600, 600, 	/* CharWidths[185] - CharWidths[190] */
-	600, 0, 600, 600, 600, 600, 	/* CharWidths[191] - CharWidths[196] */
-	600, 600, 600, 600, 0, 600, 	/* CharWidths[197] - CharWidths[202] */
-	600, 0, 600, 600, 600, 600, 0, 	/* CharWidths[203] - CharWidths[209] */
-	0, 0, 0, 0, 0, 600, 0, 0, 0, 	/* CharWidths[210] - CharWidths[218] */
-	0, 0, 0, 0, 0, 0, 600, 0, 600, 	/* CharWidths[219] - CharWidths[227] */
-	0, 0, 0, 0, 600, 600, 600, 	/* CharWidths[228] - CharWidths[234] */
-	600, 0, 0, 0, 0, 0, 600, 0, 0, 	/* CharWidths[235] - CharWidths[243] */
-	0, 600, 0, 600, 600, 600, 600, 	/* CharWidths[244] - CharWidths[250] */
-	600, 0, 0, 0, 0			/* CharWidths[251] - CharWidths[255] */
-    },
     243,					/* NumofMetrics */
     met_Courier_BoldOblique			/* Metrics */
 };

@@ -973,46 +973,6 @@ const AFM PSDRV_AvantGarde_DemiOblique =
 	1006,				/* WinMetrics.usWinAscent */
 	220				/* WinMetrics.usWinDescent */
     },
-    {
-	0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 	/* CharWidths[0] - CharWidths[9] */
-	0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 	/* CharWidths[10] - CharWidths[19] */
-	0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 	/* CharWidths[20] - CharWidths[29] */
-	0, 0, 280, 280, 360, 560, 560, 	/* CharWidths[30] - CharWidths[36] */
-	860, 680, 220, 380, 380, 440, 	/* CharWidths[37] - CharWidths[42] */
-	600, 280, 420, 280, 460, 560, 	/* CharWidths[43] - CharWidths[48] */
-	560, 560, 560, 560, 560, 560, 	/* CharWidths[49] - CharWidths[54] */
-	560, 560, 560, 280, 280, 600, 	/* CharWidths[55] - CharWidths[60] */
-	600, 600, 560, 740, 740, 580, 	/* CharWidths[61] - CharWidths[66] */
-	780, 700, 520, 480, 840, 680, 	/* CharWidths[67] - CharWidths[72] */
-	280, 480, 620, 440, 900, 740, 	/* CharWidths[73] - CharWidths[78] */
-	840, 560, 840, 580, 520, 420, 	/* CharWidths[79] - CharWidths[84] */
-	640, 700, 900, 680, 620, 500, 	/* CharWidths[85] - CharWidths[90] */
-	320, 640, 320, 600, 500, 420, 	/* CharWidths[91] - CharWidths[96] */
-	660, 660, 640, 660, 640, 280, 	/* CharWidths[97] - CharWidths[102] */
-	660, 600, 240, 260, 580, 240, 	/* CharWidths[103] - CharWidths[108] */
-	940, 600, 640, 660, 660, 320, 	/* CharWidths[109] - CharWidths[114] */
-	440, 300, 600, 560, 800, 560, 	/* CharWidths[115] - CharWidths[120] */
-	580, 460, 340, 600, 340, 600, 	/* CharWidths[121] - CharWidths[126] */
-	0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 	/* CharWidths[127] - CharWidths[136] */
-	0, 0, 0, 0, 0, 0, 0, 0, 280, 	/* CharWidths[137] - CharWidths[145] */
-	280, 480, 480, 600, 500, 1000, 	/* CharWidths[146] - CharWidths[151] */
-	0, 0, 0, 0, 0, 0, 0, 0, 280, 	/* CharWidths[152] - CharWidths[160] */
-	280, 560, 560, 560, 560, 600, 	/* CharWidths[161] - CharWidths[166] */
-	560, 500, 740, 480, 460, 600, 	/* CharWidths[167] - CharWidths[172] */
-	420, 740, 420, 400, 600, 336, 	/* CharWidths[173] - CharWidths[178] */
-	336, 420, 0, 600, 280, 340, 	/* CharWidths[179] - CharWidths[184] */
-	336, 480, 460, 840, 840, 840, 	/* CharWidths[185] - CharWidths[190] */
-	560, 0, 420, 420, 540, 480, 	/* CharWidths[191] - CharWidths[196] */
-	420, 480, 280, 500, 0, 360, 	/* CharWidths[197] - CharWidths[202] */
-	340, 0, 700, 340, 540, 1000, 	/* CharWidths[203] - CharWidths[208] */
-	0, 0, 0, 0, 0, 0, 600, 0, 0, 	/* CharWidths[209] - CharWidths[217] */
-	0, 0, 0, 0, 0, 0, 0, 900, 0, 	/* CharWidths[218] - CharWidths[226] */
-	360, 0, 0, 0, 0, 480, 840, 	/* CharWidths[227] - CharWidths[233] */
-	1060, 360, 0, 0, 0, 0, 0, 	/* CharWidths[234] - CharWidths[240] */
-	1080, 0, 0, 0, 240, 0, 600, 	/* CharWidths[241] - CharWidths[247] */
-	320, 660, 1080, 600, 0, 0, 0, 	/* CharWidths[248] - CharWidths[254] */
-	0				/* CharWidths[255] */
-    },
     228,					/* NumofMetrics */
     met_AvantGarde_DemiOblique,			/* Metrics */
 };

@@ -813,47 +813,6 @@ const AFM PSDRV_ZapfDingbats =
 	801,				/* WinMetrics.usWinAscent */
 	201				/* WinMetrics.usWinDescent */
     },
-    {
-	0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 	/* CharWidths[0] - CharWidths[9] */
-	0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 	/* CharWidths[10] - CharWidths[19] */
-	0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 	/* CharWidths[20] - CharWidths[29] */
-	0, 0, 278, 974, 961, 974, 980, 	/* CharWidths[30] - CharWidths[36] */
-	719, 789, 790, 791, 690, 960, 	/* CharWidths[37] - CharWidths[42] */
-	939, 549, 855, 911, 933, 911, 	/* CharWidths[43] - CharWidths[48] */
-	945, 974, 755, 846, 762, 761, 	/* CharWidths[49] - CharWidths[54] */
-	571, 677, 763, 760, 759, 754, 	/* CharWidths[55] - CharWidths[60] */
-	494, 552, 537, 577, 692, 786, 	/* CharWidths[61] - CharWidths[66] */
-	788, 788, 790, 793, 794, 816, 	/* CharWidths[67] - CharWidths[72] */
-	823, 789, 841, 823, 833, 816, 	/* CharWidths[73] - CharWidths[78] */
-	831, 923, 744, 723, 749, 790, 	/* CharWidths[79] - CharWidths[84] */
-	792, 695, 776, 768, 792, 759, 	/* CharWidths[85] - CharWidths[90] */
-	707, 708, 682, 701, 826, 815, 	/* CharWidths[91] - CharWidths[96] */
-	789, 789, 707, 687, 696, 689, 	/* CharWidths[97] - CharWidths[102] */
-	786, 787, 713, 791, 785, 791, 	/* CharWidths[103] - CharWidths[108] */
-	873, 761, 762, 762, 759, 759, 	/* CharWidths[109] - CharWidths[114] */
-	892, 892, 788, 784, 438, 138, 	/* CharWidths[115] - CharWidths[120] */
-	277, 415, 392, 392, 668, 668, 	/* CharWidths[121] - CharWidths[126] */
-	0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 	/* CharWidths[127] - CharWidths[136] */
-	0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 	/* CharWidths[137] - CharWidths[146] */
-	0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 	/* CharWidths[147] - CharWidths[156] */
-	0, 0, 0, 0, 732, 544, 544, 	/* CharWidths[157] - CharWidths[163] */
-	910, 667, 760, 760, 776, 595, 	/* CharWidths[164] - CharWidths[169] */
-	694, 626, 788, 788, 788, 788, 	/* CharWidths[170] - CharWidths[175] */
-	788, 788, 788, 788, 788, 788, 	/* CharWidths[176] - CharWidths[181] */
-	788, 788, 788, 788, 788, 788, 	/* CharWidths[182] - CharWidths[187] */
-	788, 788, 788, 788, 788, 788, 	/* CharWidths[188] - CharWidths[193] */
-	788, 788, 788, 788, 788, 788, 	/* CharWidths[194] - CharWidths[199] */
-	788, 788, 788, 788, 788, 788, 	/* CharWidths[200] - CharWidths[205] */
-	788, 788, 788, 788, 788, 788, 	/* CharWidths[206] - CharWidths[211] */
-	894, 838, 1016, 458, 748, 924, 	/* CharWidths[212] - CharWidths[217] */
-	748, 918, 927, 928, 928, 834, 	/* CharWidths[218] - CharWidths[223] */
-	873, 828, 924, 924, 917, 930, 	/* CharWidths[224] - CharWidths[229] */
-	931, 463, 883, 836, 836, 867, 	/* CharWidths[230] - CharWidths[235] */
-	867, 696, 696, 874, 0, 874, 	/* CharWidths[236] - CharWidths[241] */
-	760, 946, 771, 865, 771, 888, 	/* CharWidths[242] - CharWidths[247] */
-	967, 888, 831, 873, 927, 970, 	/* CharWidths[248] - CharWidths[253] */
-	918, 0				/* CharWidths[254] - CharWidths[255] */
-    },
     188,					/* NumofMetrics */
     met_ZapfDingbats				/* Metrics */
 };

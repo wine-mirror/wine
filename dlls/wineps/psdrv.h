@@ -71,10 +71,9 @@ typedef struct _tagAFM {
     float		Descender;
     float		FullAscender;		/* Ascent of Aring character */
     WINMETRICS	    	WinMetrics;
-    float		CharWidths[256];
     int			NumofMetrics;
     const AFMMETRICS	*Metrics;
-} AFM; /* CharWidths is a shortcut to the WX values of numbered glyphs */
+} AFM;
 
 /* Note no 'next' in AFM. Use AFMLISTENTRY as a container. This allow more than
    one list to exist without having to reallocate the entire AFM structure. We

@@ -973,45 +973,6 @@ const AFM PSDRV_NewCenturySchlbk_Italic =
 	969,				/* WinMetrics.usWinAscent */
 	215				/* WinMetrics.usWinDescent */
     },
-    {
-	0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 	/* CharWidths[0] - CharWidths[9] */
-	0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 	/* CharWidths[10] - CharWidths[19] */
-	0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 	/* CharWidths[20] - CharWidths[29] */
-	0, 0, 278, 333, 400, 556, 556, 	/* CharWidths[30] - CharWidths[36] */
-	833, 852, 278, 333, 333, 500, 	/* CharWidths[37] - CharWidths[42] */
-	606, 278, 333, 278, 606, 556, 	/* CharWidths[43] - CharWidths[48] */
-	556, 556, 556, 556, 556, 556, 	/* CharWidths[49] - CharWidths[54] */
-	556, 556, 556, 278, 278, 606, 	/* CharWidths[55] - CharWidths[60] */
-	606, 606, 444, 747, 704, 722, 	/* CharWidths[61] - CharWidths[66] */
-	722, 778, 722, 667, 778, 833, 	/* CharWidths[67] - CharWidths[72] */
-	407, 611, 741, 667, 944, 815, 	/* CharWidths[73] - CharWidths[78] */
-	778, 667, 778, 741, 667, 685, 	/* CharWidths[79] - CharWidths[84] */
-	815, 704, 926, 704, 685, 667, 	/* CharWidths[85] - CharWidths[90] */
-	333, 606, 333, 606, 500, 333, 	/* CharWidths[91] - CharWidths[96] */
-	574, 556, 444, 611, 444, 333, 	/* CharWidths[97] - CharWidths[102] */
-	537, 611, 333, 315, 556, 333, 	/* CharWidths[103] - CharWidths[108] */
-	889, 611, 500, 574, 556, 444, 	/* CharWidths[109] - CharWidths[114] */
-	444, 352, 611, 519, 778, 500, 	/* CharWidths[115] - CharWidths[120] */
-	500, 463, 333, 606, 333, 606, 	/* CharWidths[121] - CharWidths[126] */
-	0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 	/* CharWidths[127] - CharWidths[136] */
-	0, 0, 0, 0, 0, 0, 0, 0, 204, 	/* CharWidths[137] - CharWidths[145] */
-	204, 389, 389, 606, 500, 1000, 	/* CharWidths[146] - CharWidths[151] */
-	0, 0, 0, 0, 0, 0, 0, 0, 278, 	/* CharWidths[152] - CharWidths[160] */
-	333, 556, 556, 556, 556, 606, 	/* CharWidths[161] - CharWidths[166] */
-	500, 333, 747, 389, 426, 606, 	/* CharWidths[167] - CharWidths[172] */
-	333, 747, 333, 400, 606, 333, 	/* CharWidths[173] - CharWidths[178] */
-	333, 333, 0, 650, 278, 333, 	/* CharWidths[179] - CharWidths[184] */
-	333, 389, 426, 834, 834, 834, 	/* CharWidths[185] - CharWidths[190] */
-	444, 0, 333, 333, 333, 333, 	/* CharWidths[191] - CharWidths[196] */
-	333, 333, 333, 333, 0, 333, 	/* CharWidths[197] - CharWidths[202] */
-	333, 0, 333, 333, 333, 1000, 	/* CharWidths[203] - CharWidths[208] */
-	0, 0, 0, 0, 0, 0, 606, 0, 0, 	/* CharWidths[209] - CharWidths[217] */
-	0, 0, 0, 0, 0, 0, 0, 870, 0, 	/* CharWidths[218] - CharWidths[226] */
-	422, 0, 0, 0, 0, 667, 778, 	/* CharWidths[227] - CharWidths[233] */
-	981, 372, 0, 0, 0, 0, 0, 722, 	/* CharWidths[234] - CharWidths[241] */
-	0, 0, 0, 333, 0, 606, 333, 	/* CharWidths[242] - CharWidths[248] */
-	500, 778, 556, 0, 0, 0, 0	/* CharWidths[249] - CharWidths[255] */
-    },
     228,					/* NumofMetrics */
     met_NewCenturySchlbk_Italic		/* Metrics */
 };
