@@ -3,7 +3,7 @@
 @ cdecl Arc(ptr long long long long long long long long) TTYDRV_DC_Arc
 @ cdecl BitBlt(ptr long long long long ptr long long long) TTYDRV_DC_BitBlt
 @ cdecl Chord(ptr long long long long long long long long) TTYDRV_DC_Chord
-@ cdecl CreateDC(ptr ptr str str str ptr) TTYDRV_DC_CreateDC
+@ cdecl CreateDC(ptr ptr wstr wstr wstr ptr) TTYDRV_DC_CreateDC
 @ cdecl DeleteDC(ptr) TTYDRV_DC_DeleteDC
 @ cdecl Ellipse(ptr long long long long) TTYDRV_DC_Ellipse
 @ cdecl ExtFloodFill(ptr long long long long) TTYDRV_DC_ExtFloodFill
