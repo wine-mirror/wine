@@ -224,7 +224,6 @@ sub parse_spec_file {
 
     my %ordinals;
     my $module;
-    my $module_file;
 
     $output->lazy_progress("$file");
 
@@ -242,8 +241,6 @@ sub parse_spec_file {
 	/^$/ && next;
 
 	if($header)  {
-	    if(/^name\s*(\S*)/) { $module = $1; }
-	    if(/^file\s*(\S*)/) { $module_file = $1; }
 	    if(/^\d+|@/) { $header = 0; $lookahead = 1; }
 	    next;
 	}
