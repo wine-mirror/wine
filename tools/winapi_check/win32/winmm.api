@@ -79,7 +79,7 @@ UINT *
 WORD *
 YIELDPROC
 
-%ptr --forbidden
+%ptr # --forbidden
 
 LPMMIOPROC16
 

@@ -7,6 +7,8 @@ my %comment_indent;
 my %comment_spacing;
 
 sub check_documentation {
+    local $_;
+
     my $options = shift;
     my $output = shift;
     my $win16api = shift;
@@ -19,125 +21,91 @@ sub check_documentation {
     my $external_name32 = $function->external_name32;
     my $internal_name = $function->internal_name;
     my $documentation = $function->documentation;
+    my $documentation_line = $function->documentation_line;
     my @argument_documentations = @{$function->argument_documentations};
 
-    # FIXME: Not correct
-    if(defined($external_name16)) {
-	$external_name16 = (split(/\s*&\s*/, $external_name16))[0];
-    }
-    
-    # FIXME: Not correct
-    if(defined($external_name32)) {
-	$external_name32 = (split(/\s*&\s*/, $external_name32))[0];
-    }
-
-    my $external_name;
-    my $name1;
-    my $name2;
-
-    if(defined($module16) && !defined($module32)) {
-	my @uc_modules16 = split(/\s*\&\s*/, uc($module16));
-	push @uc_modules16, "WIN16";
-
-	$name1 = $internal_name;
-	foreach my $uc_module16 (@uc_modules16) {
-	    if($name1 =~ s/^$uc_module16\_//) { last; }
-	}
-
-	$name2 = $name1;
-	$name2 =~ s/(?:_)?16$//;
-	$name2 =~ s/16_fn/16_/;
-
-	$external_name = $external_name16;
-    } elsif(!defined($module16) && defined($module32)) {
-	my @uc_modules32 = split(/\s*\&\s*/, uc($module32));
-	push @uc_modules32, "wine";
-
-	foreach my $uc_module32 (@uc_modules32) {
-	    if($uc_module32 =~ /^WS2_32$/) {
-		push @uc_modules32, "WSOCK32";
-	    }
-	}
-
-	$name1 = $internal_name;
-	foreach my $uc_module32 (@uc_modules32) {
-	    if($name1 =~ s/^$uc_module32\_//) { last; }
-	}
-
-	$name2 = $name1;
-	$name2 =~ s/AW$//;
-
-	$external_name = $external_name32;
-    } else {
-	my @uc_modules = split(/\s*\&\s*/, uc($module16));
-	push @uc_modules, split(/\s*\&\s*/, uc($module32));
-
-	$name1 = $internal_name;
-	foreach my $uc_module (@uc_modules) {
-	    if($name1 =~ s/^$uc_module\_//) { last; }
-	}
-
-	$name2 = $name1;
-	$external_name = $external_name32;
-    }
-
-    if(!defined($external_name)) {
-	$external_name = $internal_name;
-    }
-
-    if($options->documentation_name) {
-	my $n = 0;
-	if((++$n && defined($module16) && defined($external_name16) &&
-	    $external_name16 ne "@" && $documentation !~ /\b\Q$external_name16\E\b/) ||
-	   (++$n && defined($module16) && defined($external_name16) &&
-	    $external_name16 eq "@" && $documentation !~ /\@/) ||
-	   (++$n && defined($module32) && defined($external_name32) &&
-	    $external_name32 ne "@" && $documentation !~ /\b\Q$external_name32\E\b/) ||
-	   (++$n && defined($module32) && defined($external_name32) &&
-	    $external_name32 eq "@" && $documentation !~ /\@/))
+    if($options->documentation_name || 
+       $options->documentation_ordinal ||
+       $options->documentation_pedantic) 
+    {
+	my @winapis = ($win16api, $win32api);
+	my @modules = ($module16, $module32);
+	my @external_names = ($external_name16, $external_name32);
+	while(
+	      defined(my $winapi = shift @winapis) &&
+	      defined(my $external_name = shift @external_names) &&
+	      defined(my $module = shift @modules))
 	{
-	    my $external_name = ($external_name16, $external_name32)[($n-1)/2];
-	    if($options->documentation_pedantic || $documentation !~ /\b(?:$internal_name|$name1|$name2)\b/) {
-		$output->write("documentation: wrong or missing name ($external_name) \\\n$documentation\n");
+	    if($winapi->function_stub($internal_name)) { next; }
+
+	    my @external_name = split(/\s*\&\s*/, $external_name);
+	    my @modules = split(/\s*\&\s*/, $module);
+	    my @ordinals = split(/\s*\&\s*/, $winapi->function_internal_ordinal($internal_name));
+
+	    my $pedantic_failed = 0;
+	    while(defined(my $external_name = shift @external_name) && 
+		  defined(my $module = shift @modules) && 
+		  defined(my $ordinal = shift @ordinals)) 
+	    {
+		my $found_name = 0;
+		my $found_ordinal = 0;
+		foreach (split(/\n/, $documentation)) {
+		    if(/^(\s*)\*(\s*)(\@|\S+)(\s*)([\(\[])(\w+)\.(\@|\d+)([\)\]])/) {
+			my $external_name2 = $3;
+			my $module2 = $6;
+			my $ordinal2 = $7;
+
+			if(length($1) != 1 || length($2) < 1 || 
+			   length($4) < 1 || $5 ne "(" || $8 ne ")")
+			{
+			    $pedantic_failed = 1;
+			}
+
+			if($external_name eq $external_name2) {
+			    $found_name = 1;
+			    if("\U$module\E" eq $module2 &&
+			       $ordinal eq $ordinal2)
+			    {
+				$found_ordinal = 1;
+			    }
+			}
+		    }
+		}
+		if(($options->documentation_name && !$found_name) || 
+		   ($options->documentation_ordinal && !$found_ordinal))
+		{
+		    $output->write("documentation: expected $external_name (\U$module\E.$ordinal): \\\n$documentation\n");
+		}
+		
+	    }
+	    if($options->documentation_pedantic && $pedantic_failed) {
+		$output->write("documentation: pedantic failed: \\\n$documentation\n");
 	    }
 	}
     }
 
-    if($options->documentation_ordinal) {
-	if(defined($module16)) {
-	    my @modules16 = split(/\s*\&\s*/, $module16);
-	    my @ordinals16 = split(/\s*\&\s*/, $win16api->function_internal_ordinal($internal_name));
+    if($options->documentation_wrong) {
+	foreach (split(/\n/, $documentation)) {
+	    if(/^\s*\*\s*(\S+)\s*[\(\[]\s*(\w+)\s*\.\s*([^\s\)\]]*)\s*[\)\]].*?$/) {
+		my $external_name = $1;
+		my $module = $2;
+		my $ordinal = $3;
 
-	    my $module16;
-	    my $ordinal16;
-	    while(defined($module16 = shift @modules16) && defined($ordinal16 = shift @ordinals16)) {
-		if($documentation !~ /\b\U$module16\E\.\Q$ordinal16\E/) {
-		    $output->write("documentation: wrong or missing ordinal " .
-				   "expected (\U$module16\E.$ordinal16) \\\n$documentation\n");
+		my $found = 0;
+		foreach my $entry2 (winapi::get_all_module_internal_ordinal($internal_name)) {
+		    (my $external_name2, my $module2, my $ordinal2) = @$entry2;
+		    
+		    if($external_name eq $external_name2 &&
+		       lc($module) eq $module2 &&
+		       $ordinal eq $ordinal2) 
+		    {
+			$found = 1;
+		    }
+		}
+		if(!$found) {
+		    $output->write("documentation: $external_name (\U$module\E.$ordinal) wrong\n");
 		}
 	    }
-	}
-
-	if(defined($module32)) {
-	    my @modules32 = split(/\s*\&\s*/, $module32);
-	    my @ordinals32 = split(/\s*\&\s*/, $win32api->function_internal_ordinal($internal_name));
-
-	    my $module32;
-	    my $ordinal32;
-	    while(defined($module32 = shift @modules32) && defined($ordinal32 = shift @ordinals32)) {
-		if($documentation !~ /\b\U$module32\E\.\Q$ordinal32\E/) {
-		    $output->write("documentation: wrong or missing ordinal " .
-				   "expected (\U$module32\E.$ordinal32) \\\n$documentation\n");
-		}
-	    }
-	}
-    }
-
-    # FIXME: Not correct
-    if($options->documentation_pedantic) {
-	my $ordinal = (split(/\s*\&\s*/, $win16api->function_internal_ordinal($internal_name)))[0];
-	if(defined($ordinal) && $documentation !~ /^ \*\s+(?:\@|\w+)(?:\s+[\(\[]\w+\.(?:\@|\d+)[\)\]])+/m) {
-	    $output->write("documentation: pedantic check failed \\\n$documentation\n");
 	}
     }
 

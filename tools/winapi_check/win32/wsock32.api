@@ -3,10 +3,7 @@
 DWORD
 INT
 SOCKET
-
-%long # --forbidden
-
-long
+UINT
 
 %ptr
 

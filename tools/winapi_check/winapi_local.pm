@@ -122,7 +122,7 @@ sub check_function {
 	    $output->write("function not implemented as vararg\n");
 	}
     } elsif($#argument_types != -1 && $argument_types[$#argument_types] eq "...") {
-	if($#argument_types == 0) {
+	if($#argument_types == 0 || $winapi->name eq "win16") {
 	    pop @argument_types;
 	} else {
 	    $output->write("function not declared as vararg\n");

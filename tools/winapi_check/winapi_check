@@ -352,6 +352,8 @@ foreach my $file (@c_files) {
 	my @argument_documentations = @$refargument_documentations;
 	my $statements = shift;
 
+	my $documentation_line = $line;
+
 	my $external_name16 = $win16api->function_external_name($internal_name);
 	my $external_name32 = $win32api->function_external_name($internal_name);
 
@@ -372,10 +374,14 @@ foreach my $file (@c_files) {
 	    my $module32 = $win32api->function_internal_module($internal_name);
 
 	    if(defined($module16)) {
-		$modules->found_module_in_dir($module16, $file_dir);
+		foreach my $module (split(/ & /, $module16)) {
+		    $modules->found_module_in_dir($module, $file_dir);
+		}
 	    }
 	    if(defined($module32)) {
-		$modules->found_module_in_dir($module32, $file_dir);
+		foreach my $module (split(/ & /, $module32)) {
+		    $modules->found_module_in_dir($module, $file_dir);
+		}
 	    }
 
 	    my $previous_function;	    
@@ -387,6 +393,7 @@ foreach my $file (@c_files) {
 	    $functions{$internal_name} = $function;
 	   
  	    $function->documentation($documentation);
+ 	    $function->documentation_line($documentation_line);
 	    $function->linkage($linkage);
 	    $function->file($file);
 	    $function->return_type($return_type); 
@@ -428,33 +435,46 @@ foreach my $file (@c_files) {
 	    }
 
 	    if($options->local && $options->misplaced &&
-	       $linkage ne "extern" && $statements) 
+	       $linkage ne "extern" && defined($statements)) 
 	    {
 		if($options->win16 && $options->report_module($module16)) {
-		    my $match = 0;
 		    foreach my $module (split(/ & /, $module16)) {
+			my $match = 0;
 			foreach my $file_module (split(/ & /, $file_module16)) {
 			    if($module eq $file_module) {
-				$match++;
+				$match = 1;
 			    }
 			}
-		    }
-		    if(!$match && $file ne "library/port.c" && !$nativeapi->is_function($internal_name)) {
-			$output->write("is misplaced\n");
+			if(!$match) {
+			    if($file ne "library/port.c" && 
+			       !$nativeapi->is_function($internal_name) &&
+			       !$win16api->function_stub($internal_name)) 
+			    {
+				$output->write("is misplaced ($module)\n");
+			    }
+			    last;
+			}
+
 		    }
 		}
 
 		if($options->win32 && $options->report_module($module32)) {
-		    my $match = 0;
 		    foreach my $module (split(/ & /, $module32)) {
+			my $match = 0;
 			foreach my $file_module (split(/ & /, $file_module32)) {
 			    if($module eq $file_module) {
-				$match++;
+				$match = 1;
 			    }
 			}
-		    }
-		    if(!$match && $file ne "library/port.c" && !$nativeapi->is_function($internal_name)) {
-			$output->write("is misplaced\n");
+			if(!$match) {
+			    if($file ne "library/port.c" && 
+			       !$nativeapi->is_function($internal_name) &&
+			       !$win32api->function_stub($internal_name)) 
+			    {
+				$output->write("is misplaced ($module)\n");
+			    }
+			    last;
+			}
 		    }
 		}
 	    }
@@ -527,7 +547,7 @@ foreach my $file (@c_files) {
 	    if($options->local && $options->documentation &&
 	       !defined($previous_function) &&
 	       (defined($module16) || defined($module32)) &&
-	       $linkage ne "extern" && $statements)
+	       $linkage ne "extern" && defined($statements))
 	    {
 	        winapi_documentation::check_documentation $options, $output, $win16api, $win32api, $function;
 	    }

@@ -2,6 +2,8 @@ package winapi;
 
 use strict;
 
+my @winapis;
+
 sub new {
     my $proto = shift;
     my $class = ref($proto) || $proto;
@@ -27,6 +29,8 @@ sub new {
 	$module =~ s/.*?\/([^\/]*?)\.api$/$1/;
 	$self->parse_api_file($file,$module);
     }   
+
+    push @winapis, $self;
 
     return $self;
 }
@@ -285,7 +289,6 @@ sub parse_spec_file {
 	   
 	    $ordinal = $1;
 
-	    # FIXME: Internal name existing more than once not handled properly
 	    if(!$$function_internal_name{$external_name}) {
 		$$function_internal_name{$external_name} = $internal_name;
 	    } else {
@@ -358,7 +361,7 @@ sub parse_spec_file {
 	    $ordinal = $1;
 
 	    my $internal_name;
-	    if($type eq "win16") {
+	    if(0 && $type eq "win16") {
 		if($external_name =~ /\d$/) {
 		    $internal_name = $external_name . "_16";
 		} else {
@@ -368,8 +371,17 @@ sub parse_spec_file {
 		$internal_name = $external_name;
 	    }
 
-	    # FIXME: Internal name existing more than once not handled properly
-	    $$function_stub{$internal_name} = 1;
+	    $$function_stub{$external_name} = 1;
+	    if(!$$function_internal_name{$external_name}) {
+		$$function_internal_name{$external_name} = $internal_name;
+	    } else {
+		$$function_internal_name{$external_name} .= " & $internal_name";
+	    }
+	    if(!$$function_external_name{$internal_name}) {
+		$$function_external_name{$internal_name} = $external_name;
+	    } else {
+		$$function_external_name{$internal_name} .= " & $external_name";
+	    }
 	    if(!$$function_internal_ordinal{$internal_name}) {
 		$$function_internal_ordinal{$internal_name} = $ordinal;
 	    } else {
@@ -800,6 +812,86 @@ sub internal_function_found {
     my $name = shift;
 
     return $$function_found{$name};
+}
+
+########################################################################
+# class methods
+#
+
+sub get_all_module_internal_ordinal {
+    my $internal_name = shift;
+
+    my @entries = ();
+    foreach my $winapi (@winapis) {
+	my @name = (); {
+	    my $name = $winapi->function_external_name($internal_name);
+	    if(defined($name)) {
+		@name = split(/ & /, $name);
+	    }
+	}
+	my @module = (); {
+	    my $module = $winapi->function_internal_module($internal_name);
+	    if(defined($module)) {
+		@module = split(/ & /, $module);
+	    }
+	}
+	my @ordinal = (); {
+	    my $ordinal = $winapi->function_internal_ordinal($internal_name);
+	    if(defined($ordinal)) {
+		@ordinal = split(/ & /, $ordinal);
+	    }
+	}
+
+	my $name;
+	my $module;
+	my $ordinal;
+	while(defined($name = shift @name) &&
+	      defined($module = shift @module) &&
+	      defined($ordinal = shift @ordinal)) 
+	{
+	    push @entries, [$name, $module, $ordinal];
+	}
+    }
+
+    return @entries;
+}
+
+sub get_all_module_external_ordinal {
+    my $external_name = shift;
+
+    my @entries = ();
+    foreach my $winapi (@winapis) {
+	my @name = (); {
+	    my $name = $winapi->function_internal_name($external_name);
+	    if(defined($name)) {
+		@name = split(/ & /, $name);
+	    }
+	}
+	my @module = (); {
+	    my $module = $winapi->function_external_module($external_name);
+	    if(defined($module)) {
+		@module = split(/ & /, $module);
+	    }
+	}
+	my @ordinal = (); {
+	    my $ordinal = $winapi->function_external_ordinal($external_name);
+	    if(defined($ordinal)) {
+		@ordinal = split(/ & /, $ordinal);
+	    }
+	}
+
+	my $name;
+	my $module;
+	my $ordinal;
+	while(defined($name = shift @name) &&
+	      defined($module = shift @module) &&
+	      defined($ordinal = shift @ordinal)) 
+	{
+	    push @entries, [$name, $module, $ordinal];
+	}
+    }
+
+    return @entries;
 }
 
 1;

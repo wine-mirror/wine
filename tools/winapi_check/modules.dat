@@ -98,6 +98,8 @@ dlls/imm32
 % dlls/kernel/kernel.spec
 
 dlls/kernel
+dlls/shell32
+dlls/win32s
 files
 loader/ne
 loader
@@ -130,6 +132,7 @@ dlls/kernel
 
 % dlls/kernel/system.spec
 
+memory
 misc
 
 % dlls/kernel/toolhelp.spec
@@ -138,7 +141,6 @@ dlls/kernel
 loader/ne
 loader
 memory
-windows
 
 % dlls/kernel/wprocs.spec
 
@@ -185,6 +187,7 @@ dlls/msvideo
 % dlls/ntdll/ntdll.spec
 
 dlls/ntdll
+memory
 misc
 scheduler
 
@@ -262,6 +265,10 @@ dlls/opengl32
 
 dlls/psapi
 
+% dlls/quartz/quartz.spec
+
+dlls/quartz
+
 % dlls/rasapi32/rasapi16.spec
 
 % dlls/rasapi32/rasapi32.spec
@@ -291,10 +298,12 @@ dlls/setupapi
 % dlls/shell32/shell.spec
 
 dlls/shell32
+misc
 
 % dlls/shell32/shell32.spec
 
 dlls/shell32
+memory
 
 % dlls/shdocvw/shdocvw.spec
 
@@ -342,6 +351,7 @@ controls
 dlls/kernel
 dlls/user
 memory
+misc
 windows
 
 % dlls/user/user32.spec
@@ -350,6 +360,7 @@ controls
 dlls/user
 dlls/user/dde
 loader
+objects
 windows
 
 % dlls/version/ver.spec
@@ -366,14 +377,12 @@ dlls/win32s
 
 % dlls/win32s/w32sys.spec
 
+dlls/kernel
 dlls/win32s
 
 % dlls/win32s/win32s16.spec
 
-dlls/kernel
 dlls/win32s
-memory
-scheduler
 
 % dlls/winaspi/winaspi.spec
 

@@ -119,7 +119,7 @@ sub translate_calling_convention16 {
     if(/^__cdecl$/) {
 	return "cdecl";
     } elsif(/^VFWAPIV|WINAPIV$/) {
-	return "varargs";
+	return "pascal"; # FIXME: Is this correct?
     } elsif(/^__stdcall|VFWAPI|WINAPI|CALLBACK$/) {
 	return "pascal";
     } elsif(/^__asm$/) {

@@ -102,9 +102,14 @@ my %options = (
 	description => "check for documentation name inconsistances\n"
 	},
     "documentation-ordinal" => {
-	default => 0,
+	default => 1,
 	parent => "documentation",
 	description => "check for documentation ordinal inconsistances\n"
+	},
+    "documentation-wrong" => {
+	default => 1,
+	parent => "documentation",
+	description => "check for wrong documentation\n"
 	},
 
     "prototype" => {default => 0, parent => ["local", "headers"], description => "prototype checking" },

@@ -33,6 +33,17 @@ sub documentation {
     return $$documentation;
 }
 
+sub documentation_line {
+    my $self = shift;
+    my $documentation_line = \${$self->{DOCUMENTATION_LINE}};
+
+    local $_ = shift;
+
+    if(defined($_)) { $$documentation_line = $_; }
+    
+    return $$documentation_line;
+}
+
 sub linkage {
     my $self = shift;
     my $linkage = \${$self->{LINKAGE}};

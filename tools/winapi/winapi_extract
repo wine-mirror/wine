@@ -118,23 +118,54 @@ foreach my $file (@files) {
 
 	local $_;
 	foreach (split(/\n/, $documentation)) {
-	    if(/^\s*\*\s*(\w+|\@)\s*[\(\[]\s*(\w+)\s*\.\s*(\@|\d+)\s*[\)\]]/) {
+	    if(/^\s*\*\s*(\S+)\s*[\(\[]\s*(\w+)\s*\.\s*(\S+)\s*[\)\]]/) {
 		my $external_name = $1;
 		my $module = lc($2);
 		my $ordinal = $3;
 
 		if($ordinal eq "@") {
-		    $specifications{$module}{unfixed}{$external_name}{debug_channels} = [@debug_channels];
-		    $specifications{$module}{unfixed}{$external_name}{internal_name} = $internal_name;
-		    $specifications{$module}{unfixed}{$external_name}{external_name} = $external_name;
-		    $specifications{$module}{unfixed}{$external_name}{ordinal} = $ordinal;
-		    $specifications{$module}{unfixed}{$external_name}{arguments} = [@argument_types];
+		    if(1 || !exists($specifications{$module}{unfixed}{$external_name})) {
+			$specifications{$module}{unfixed}{$external_name}{debug_channels} = [@debug_channels];
+			$specifications{$module}{unfixed}{$external_name}{internal_name} = $internal_name;
+			$specifications{$module}{unfixed}{$external_name}{external_name} = $external_name;
+			$specifications{$module}{unfixed}{$external_name}{ordinal} = $ordinal;
+			$specifications{$module}{unfixed}{$external_name}{return_type} = $return_type;
+			$specifications{$module}{unfixed}{$external_name}{argument_types} = [@argument_types];
+		    } else {
+			output->write("$file: $external_name ($module.$ordinal) already exists\n");
+		    }
+		} elsif($ordinal =~ /^\d+$/) {
+		    if(1 || !exists($specifications{$module}{fixed}{$ordinal})) {
+			$specifications{$module}{fixed}{$ordinal}{debug_channels} = [@debug_channels];
+			$specifications{$module}{fixed}{$ordinal}{ordinal} = $ordinal;
+			$specifications{$module}{fixed}{$ordinal}{internal_name} = $internal_name;
+			$specifications{$module}{fixed}{$ordinal}{external_name} = $external_name;
+			$specifications{$module}{fixed}{$ordinal}{return_type} = $return_type;
+			$specifications{$module}{fixed}{$ordinal}{argument_types} = [@argument_types];
+		    } else {
+			output->write("$file: $external_name ($module.$ordinal) already exists\n");
+		    }
+		} elsif($ordinal eq "init") {
+		    if(!exists($specifications{$module}{init})) {
+			$specifications{$module}{init}{debug_channels} = [@debug_channels];
+			$specifications{$module}{init}{external_name} = $external_name;
+			$specifications{$module}{init}{internal_name} = $internal_name;
+			$specifications{$module}{init}{return_type} = $return_type;
+			$specifications{$module}{init}{argument_types} = [@argument_types];
+		    } else {
+			output->write("$file: $external_name ($module.$ordinal) already exists\n");
+		    }
 		} else {
-		    $specifications{$module}{fixed}{$ordinal}{debug_channels} = [@debug_channels];
-		    $specifications{$module}{fixed}{$ordinal}{ordinal} = $ordinal;
-		    $specifications{$module}{fixed}{$ordinal}{internal_name} = $internal_name;
-		    $specifications{$module}{fixed}{$ordinal}{external_name} = $external_name;
-		    $specifications{$module}{fixed}{$ordinal}{arguments} = [@argument_types];
+		    if(!exists($specifications{$module}{unknown}{$external_name})) {
+			$specifications{$module}{unknown}{$external_name}{debug_channels} = [@debug_channels];
+			$specifications{$module}{unknown}{$external_name}{internal_name} = $internal_name;
+			$specifications{$module}{unknown}{$external_name}{external_name} = $external_name;
+			$specifications{$module}{unknown}{$external_name}{ordinal} = $ordinal;
+			$specifications{$module}{unknown}{$external_name}{return_type} = $return_type;
+			$specifications{$module}{unknown}{$external_name}{argument_types} = [@argument_types];
+		    } else {
+			output->write("$file: $external_name ($module.$ordinal) already exists\n");
+		    }
 		}
 
 		if($options->debug) {
@@ -165,32 +196,52 @@ sub output_function {
     my $internal_name = $function->{internal_name};
     my $external_name = $function->{external_name};
     my $ordinal = $function->{ordinal};
-    my @arguments = @{$function->{arguments}};
-    
-    my @arguments2;
-    foreach my $argument (@arguments) {
-	my $argument2;
-	if($type eq "win16") {
-	    $argument2 = $win16api->translate_argument($argument);
-	} else {
-	    $argument2 = $win32api->translate_argument($argument);
-	}
-	if(!defined($argument2)) {
-	    $argument2 = "undef";
-	}
+    my $return_type = $function->{return_type};
+    my @argument_types = @{$function->{argument_types}};
 
-	if($argument2 eq "longlong") {
-	    push @arguments2, ("long", "long");
-	} else {
-	    push @arguments2, $argument2;
-	}
-    }
-
+    my $return_kind;
     if($type eq "win16") {
-	print OUT "$ordinal pascal $external_name(@arguments2) $internal_name\n";
+	$return_kind = $win16api->translate_argument($return_type);
     } else {
-	print OUT "$ordinal stdcall $external_name(@arguments2) $internal_name\n";
+	$return_kind = $win32api->translate_argument($return_type);
     }
+    if(!defined($return_kind)) {
+	$return_kind = "undef";
+    }
+    
+    my @argument_kinds;
+    foreach my $argument_kind (@argument_kinds) {
+	my $argument_kind;
+	if($type eq "win16") {
+	    $argument_kind = $win16api->translate_argument($argument_kind);
+	} else {
+	    $argument_kind = $win32api->translate_argument($argument_kind);
+	}
+	if(!defined($argument_kind)) {
+	    $argument_kind = "undef";
+	}
+
+	if($argument_kind eq "longlong") {
+	    push @argument_kinds, ("long", "long");
+	} else {
+	    push @argument_kinds, $argument_kind;
+	}
+    }
+
+    my $calling_convention;
+    if($type eq "win16") {
+	if($return_kind =~ /^(?:void|s_word|word)$/) {
+	    $calling_convention = "pascal16";
+	} elsif($return_kind =~ /^(?:long|ptr|segptr|segstr|str|wstr)$/) {
+	    $calling_convention = "pascal";
+	} else {
+	    $calling_convention = "undef";
+	}
+    } else {
+	$calling_convention = "stdcall";
+    }
+
+    print OUT "$ordinal $calling_convention $external_name(@argument_kinds) $internal_name\n";
 }
 
 if($options->spec_files) {
@@ -210,9 +261,19 @@ if($options->spec_files) {
 	
 	print OUT "name $module\n";
 	print OUT "type $type\n";
+	if(exists($specifications{$module}{init})) {
+	    my $init = $specifications{$module}{init}{internal_name};
+	    print OUT "init $init\n";
+	}
 	print OUT "\n";
 	
 	my %debug_channels;
+	if(exists($specifications{$module}{init})) {
+	    my $function = $specifications{$module}{init};
+	    foreach my $debug_channel (@{$function->{debug_channels}}) {
+		$debug_channels{$debug_channel}++;
+	    }
+	}
 	foreach my $ordinal (sort {$a <=> $b} keys(%{$specifications{$module}{fixed}})) {
 	    my $function = $specifications{$module}{fixed}{$ordinal};
 	    foreach my $debug_channel (@{$function->{debug_channels}}) {
@@ -225,6 +286,12 @@ if($options->spec_files) {
 		$debug_channels{$debug_channel}++;
 	    }
 	}
+	foreach my $name (sort(keys(%{$specifications{$module}{unknown}}))) {
+	    my $function = $specifications{$module}{unknown}{$name}; 
+	    foreach my $debug_channel (@{$function->{debug_channels}}) {
+		$debug_channels{$debug_channel}++;
+	    }
+	}
 
 	my @debug_channels = sort(keys(%debug_channels));
 	if($#debug_channels >= 0) { 
@@ -233,20 +300,38 @@ if($options->spec_files) {
 	}
 	
 	my $empty = 1;
-	foreach my $ordinal (sort {$a <=> $b} keys(%{$specifications{$module}{fixed}})) {       
+
+	if(!$empty) {
+	    print OUT "\n";
+	    $empty = 1;
+	}
+	foreach my $name (sort(keys(%{$specifications{$module}{unknown}}))) {
+	    my $function = $specifications{$module}{unknown}{$name};
+	    print OUT "# ";
+	    output_function(\*OUT, $type, $function);
+	    $empty = 0;
+	}
+
+	if(!$empty) {
+	    print OUT "\n";
+	    $empty = 1;
+	}
+	foreach my $ordinal (sort {$a <=> $b} keys(%{$specifications{$module}{fixed}})) {
 	    my $function = $specifications{$module}{fixed}{$ordinal};
 	    output_function(\*OUT, $type, $function);
 	    $empty = 0;
 	}
 
+	if(!$empty) {
+	    print OUT "\n";
+	    $empty = 1;
+	}
 	foreach my $name (sort(keys(%{$specifications{$module}{unfixed}}))) {
-	    if(!$empty) {
-		print OUT "\n";
-		$empty = 1;
-	    }
 	    my $function = $specifications{$module}{unfixed}{$name}; 
 	    output_function(\*OUT, $type, $function);
+	    $empty = 0;
 	}
+
 	close(OUT);
     }
 }

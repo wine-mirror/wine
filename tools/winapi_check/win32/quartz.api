@@ -1,0 +1,10 @@
+%long
+
+DWORD
+HRESULT
+
+%ptr
+
+CLSID *
+IID *
+void **
