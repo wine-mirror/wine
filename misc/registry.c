@@ -2166,7 +2166,7 @@ DWORD WINAPI RegQueryValueEx32W( HKEY hkey, LPWSTR lpValueName,
                         TRACE(reg, "Returning an empty string\n");
 			return ERROR_SUCCESS;
 		}
-		return ERROR_BAD_PATHNAME;
+		return ERROR_FILE_NOT_FOUND;
 	}
 
     if (lpdwType)
