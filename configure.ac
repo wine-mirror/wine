@@ -72,6 +72,7 @@ then
   AC_MSG_ERROR([no suitable lex found. Please install the 'flex' package.])
 fi
 
+AC_CHECK_TOOL(LD,ld,ld)
 AC_CHECK_TOOL(AR,ar,ar)
 AC_PROG_RANLIB
 AC_CHECK_TOOL(STRIP,strip,strip)
@@ -81,13 +82,6 @@ AC_PROG_LN_S
 WINE_PROG_LN
 AC_CHECK_PROG(C2MAN,c2man,c2man,\$(TOPSRCDIR)/tools/c2man.pl)
 AC_PATH_PROG(LDCONFIG, ldconfig, true, [/sbin /usr/sbin $PATH])
-
-case $host_os in
-   cygwin*|mingw32*)
-      AC_CHECK_TOOL(LDCOMBINE,[ld -r --enable-stdcall-fixup],[ld -r --enable-stdcall-fixup]) ;;
-   *)
-      AC_CHECK_TOOL(LDCOMBINE,[ld -r],[ld -r]) ;;
-esac
 
 dnl Check for lint
 AC_CHECK_PROGS(LINT, lclint lint)
