@@ -937,7 +937,7 @@ LRESULT WINAPI mmioSendMessage(HMMIO16 hmmio, UINT16 uMessage,
 /**************************************************************************
 * 				mmioDescend	       	[MMSYSTEM.1223]
 */
-UINT16 WINAPI mmioDescend(HMMIO16 hmmio, MMCKINFO * lpck,
+UINT16 WINAPI mmioDescend(HMMIO16 hmmio, LPMMCKINFO lpck,
                           const MMCKINFO * lpckParent, UINT16 uFlags)
 {
 	DWORD		dwOldPos;
@@ -947,13 +947,18 @@ UINT16 WINAPI mmioDescend(HMMIO16 hmmio, MMCKINFO * lpck,
 	TRACE(mmio,"(%04X, %p, %p, %04X);\n",hmmio,lpck,lpckParent,uFlags);
 
 	if (lpck == NULL)
-	    return 0;
+	    return MMSYSERR_INVALPARAM;
+
 	dwOldPos = mmioSeek(hmmio, 0, SEEK_CUR);
 	TRACE(mmio, "dwOldPos=%ld\n", dwOldPos);
 
 	if (lpckParent != NULL) {
 		TRACE(mmio, "seek inside parent at %ld !\n", lpckParent->dwDataOffset);
-		dwOldPos = mmioSeek(hmmio,lpckParent->dwDataOffset,SEEK_SET);
+		/* EPP: was dwOldPos = mmioSeek(hmmio,lpckParent->dwDataOffset,SEEK_SET); */
+		if (dwOldPos < lpckParent->dwDataOffset || dwOldPos >= lpckParent->dwDataOffset + lpckParent->cksize) {
+		   ERR(mmio, "outside parent chunk\n");
+		   return MMIOERR_CHUNKNOTFOUND;
+		}
 	}
 
 	/* The SDK docu says 'ckid' is used for all cases. Real World
@@ -1017,12 +1022,13 @@ UINT16 WINAPI mmioDescend(HMMIO16 hmmio, MMCKINFO * lpck,
 			lpck->dwDataOffset+=sizeof(DWORD);
 	} else {
 		/* FIXME: unverified, does it do this? */
-		if (mmioRead(hmmio, (LPSTR)lpck, sizeof(MMCKINFO)) < sizeof(MMCKINFO)) {
+		if (mmioRead(hmmio, (LPSTR)lpck, 3 * sizeof(DWORD)) < 3 * sizeof(DWORD)) {
 			mmioSeek(hmmio, dwOldPos, SEEK_SET);
 			WARN(mmio, "return ChunkNotFound 2nd\n");
 			return MMIOERR_CHUNKNOTFOUND;
 		}
 		lpck->dwDataOffset = dwOldPos + 2 * sizeof(DWORD);
+		lpck->dwFlags = 0;
 		if (lpck->ckid == FOURCC_RIFF || lpck->ckid == FOURCC_LIST) 
 			lpck->dwDataOffset += sizeof(DWORD);
 	}
