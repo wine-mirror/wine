@@ -104,7 +104,7 @@ debug_channels (msvcrt)
 @ stub __lc_codepage
 @ stub __lc_collate
 @ stub __lc_handle
-@ stub __lconv_init
+@ cdecl __lconv_init() __lconv_init
 @ extern __mb_cur_max MSVCRT___mb_cur_max
 @ cdecl __p___argc() __p___argc
 @ cdecl __p___argv() __p___argv
