@@ -5,17 +5,23 @@
  */
 
 
-/*
-  FIXME: This hack is fixing a problem in WsControl.  When we call socket(),
-         it is supposed to call into ws2_32's WSOCK32_socket.
-         The problem is that socket() is predefined in a linux system header that 
-         we are including, which is different from the WINE definition.
-         (cdecl vs. stdapi)  The result is stack corruption.
+/* FIXME: This hack is fixing a problem in WsControl.  When we call socket(),
+ * it will call into ws2_32's WSOCK32_socket (because of the redirection in 
+ * our own .spec file).
+ * The problem is that socket() is predefined in a linux system header that 
+ * we are including, which is different from the WINE definition.
+ * (cdecl vs. stdapi).  The result is stack corruption.
+ * Furthermore WsControl uses Unix macros and types. This forces us to include 
+ * the Unix headers which then conflict with the winsock headers. This forces
+ * us to use USE_WS_PREFIX but then ioctlsocket is called WS_ioctlsocket, 
+ * which causes link problems. The correct solution is to implement 
+ * WsControl using calls to WSAIoctl. Then we should no longer need to use the 
+ * Unix headers. This would also have the advantage of reducing code 
+ * duplication.
+ * Until that happens we need this ugly hack.
+ */
+#define USE_WS_PREFIX
 
-         The correct answer to this problem is to make winsock.h not dependent 
-         on system headers, that way all of our functions are defined consistently.
-         Until that happens we need this hack.
-*/
 #define socket  linux_socket
 #define recv    linux_recv
 /* */
@@ -31,6 +37,7 @@
 #include "winnt.h"
 #include "wscontrol.h"
 #include <ctype.h>
+#include <fcntl.h>
 #include <sys/ioctl.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -48,11 +55,15 @@
 #endif
 
 /* FIXME: The rest of the socket() cdecl<->stdapi stack corruption problem
-          discussed above. */
+ * discussed above.
+ */
 #undef socket
 #undef recv
 extern SOCKET WINAPI socket(INT af, INT type, INT protocol);
 extern SOCKET WINAPI recv(SOCKET,char*,int,int);
+/* Plus some missing prototypes, due to the WS_ prefixing */
+extern int    WINAPI closesocket(SOCKET);
+extern int    WINAPI ioctlsocket(SOCKET,long,u_long*);
 /* */
 
 
@@ -199,7 +210,7 @@ DWORD WINAPI WsControl(DWORD protocoll,
                      }
                
                      /* Get a socket so that we can use ioctl */
-                     if ( (sock = socket (AF_INET, SOCK_DGRAM, 0)) == INVALID_SOCKET)
+                     if ( (sock = socket(AF_INET, SOCK_DGRAM, 0)) == INVALID_SOCKET)
                      {
                         ERR ("Error creating socket!\n");
                         return (-1);
@@ -365,7 +376,7 @@ DWORD WINAPI WsControl(DWORD protocoll,
                
                
                /* Get a socket so we can use ioctl */
-               if ( (sock = socket (AF_INET, SOCK_DGRAM, 0)) == INVALID_SOCKET)
+               if ( (sock = socket(AF_INET, SOCK_DGRAM, 0)) == INVALID_SOCKET)
                {
                   ERR ("Error creating socket!\n");
                   return (-1);
@@ -380,13 +391,13 @@ DWORD WINAPI WsControl(DWORD protocoll,
                /* IP Address */
                strcpy (ifInfo.ifr_name, ifName);
 	       ifInfo.ifr_addr.sa_family = AF_INET;
-	       if (ioctlsocket(sock, SIOCGIFADDR, (ULONG*)&ifInfo) < 0) 
+	       if (ioctlsocket(sock, SIOCGIFADDR, (ULONG*)&ifInfo) < 0)
                {
                   baseIPInfo->iae_addr = 0x0;
                }
                else
                {
-                  struct ws_sockaddr_in *ipTemp = (struct ws_sockaddr_in *)&ifInfo.ifr_addr;
+                  struct WS_sockaddr_in* ipTemp = (struct WS_sockaddr_in*)&ifInfo.ifr_addr;
                   baseIPInfo->iae_addr = ipTemp->sin_addr.S_un.S_addr;
                }
                
@@ -398,8 +409,8 @@ DWORD WINAPI WsControl(DWORD protocoll,
                }
 	       else
                {
-                  struct ws_sockaddr_in *ipTemp = (struct ws_sockaddr_in *)&ifInfo.ifr_broadaddr;
-                  baseIPInfo->iae_bcastaddr = ipTemp->sin_addr.S_un.S_addr; 
+                  struct WS_sockaddr_in* ipTemp = (struct WS_sockaddr_in*)&ifInfo.ifr_broadaddr;
+                  baseIPInfo->iae_bcastaddr = ipTemp->sin_addr.S_un.S_addr;
                }
 
                /* Subnet Mask */
@@ -417,12 +428,12 @@ DWORD WINAPI WsControl(DWORD protocoll,
                         baseIPInfo->iae_mask = 0;
                         ERR ("Unable to determine Netmask on your platform!\n");
                      #else
-                        struct ws_sockaddr_in *ipTemp = (struct ws_sockaddr_in *)&ifInfo.ifr_addr;
-                        baseIPInfo->iae_mask = ipTemp->sin_addr.S_un.S_addr; 
+                        struct WS_sockaddr_in* ipTemp = (struct WS_sockaddr_in*)&ifInfo.ifr_addr;
+                        baseIPInfo->iae_mask = ipTemp->sin_addr.S_un.S_addr;
                      #endif
-                  #else  
-                     struct ws_sockaddr_in *ipTemp = (struct ws_sockaddr_in *)&ifInfo.ifr_netmask;
-                     baseIPInfo->iae_mask = ipTemp->sin_addr.S_un.S_addr; 
+                  #else
+                     struct WS_sockaddr_in* ipTemp = (struct WS_sockaddr_in*)&ifInfo.ifr_netmask;
+                     baseIPInfo->iae_mask = ipTemp->sin_addr.S_un.S_addr;
                   #endif
                }
 
@@ -959,7 +970,7 @@ INT WINAPI WSARecvEx(SOCKET s, char *buf, INT len, INT *flags)
 /***********************************************************************
  *       s_perror         (WSOCK32.1108)
  */
-void WINAPI WS_s_perror(LPCSTR message)
+void WINAPI s_perror(LPCSTR message)
 {
     FIXME("(%s): stub\n",message);
     return;

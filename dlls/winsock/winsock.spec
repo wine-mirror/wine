@@ -14,14 +14,14 @@ owner	ws2_32
 5   pascal16 getpeername(word ptr ptr) WINSOCK_getpeername16
 6   pascal16 getsockname(word ptr ptr) WINSOCK_getsockname16
 7   pascal16 getsockopt(word word word ptr ptr) WINSOCK_getsockopt16
-8   pascal   htonl(long) WINSOCK_htonl
-9   pascal16 htons(word) WINSOCK_htons
-10  pascal   inet_addr(ptr) WINSOCK_inet_addr
+8   pascal   htonl(long) WS_htonl
+9   pascal16 htons(word) WS_htons
+10  pascal   inet_addr(ptr) WS_inet_addr
 11  pascal   inet_ntoa(long) WINSOCK_inet_ntoa16
 12  pascal16 ioctlsocket(word long ptr) WINSOCK_ioctlsocket16
 13  pascal16 listen(word word) WINSOCK_listen16
-14  pascal   ntohl(long) WINSOCK_ntohl
-15  pascal16 ntohs(word) WINSOCK_ntohs
+14  pascal   ntohl(long) WS_ntohl
+15  pascal16 ntohs(word) WS_ntohs
 16  pascal16 recv(word ptr word word) WINSOCK_recv16
 17  pascal16 recvfrom(word ptr word word ptr ptr) WINSOCK_recvfrom16
 18  pascal16 select(word ptr ptr ptr ptr) WINSOCK_select16

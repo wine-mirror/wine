@@ -60,7 +60,7 @@ typedef struct WSAData16
 #include "poppack.h"
 
 #define WS_FD_CLR16(fd, set)   __WS_FD_CLR((fd),(set), ws_fd_set16)
-#define WS_FD_SET16(fd, set)   __WS_FD_SET((fd),(set), ws_fd_set16)
+#define WS_FD_SET16(fd, set)   __WS_FD_SET1((fd),(set), ws_fd_set16)
 #define WS_FD_ZERO16(set)      (((ws_fd_set16*)(set))->fd_count=0)
 #define WS_FD_ISSET16(fd, set) __WSAFDIsSet16((SOCKET16)(fd), (ws_fd_set16*)(set))
 

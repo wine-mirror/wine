@@ -7,14 +7,8 @@
  * NOTE: If you make any changes to fix a particular app, make sure 
  * they don't break something else like Netscape or telnet and ftp 
  * clients and servers (www.winsite.com got a lot of those).
- *
- * NOTE 2: Many winsock structs such as servent, hostent, protoent, ...
- * are used with 1-byte alignment for Win16 programs and 4-byte alignment
- * for Win32 programs in winsock.h. winsock2.h uses forced 4-byte alignment.
- * So we have non-forced (just as MSDN) ws_XXXXent (winsock.h), 4-byte forced
- * ws_XXXXent32 (winsock2.h) and 1-byte forced ws_XXXXent16 (winsock16.h).
  */
- 
+
 #include "config.h"
 #include "wine/port.h"
 
@@ -92,6 +86,7 @@
 #include "wingdi.h"
 #include "winuser.h"
 #include "winsock2.h"
+#include "ws2tcpip.h"
 #include "wsipx.h"
 #include "wine/winsock16.h"
 #include "winnt.h"
@@ -154,7 +149,6 @@ static FARPROC blocking_hook;
 int WS_dup_he(struct hostent* p_he, int flag);
 int WS_dup_pe(struct protoent* p_pe, int flag);
 int WS_dup_se(struct servent* p_se, int flag);
-int WINAPI WSOCK32_getpeername(SOCKET s, ws_sockaddr *name, int *namelen);
 
 typedef void	WIN_hostent;
 typedef void	WIN_protoent;
@@ -317,9 +311,9 @@ static void WINSOCK_DeleteIData(void)
 }
 
 /***********************************************************************
- *		WSOCK32_LibMain (WS2_32.init)
+ *		WS_LibMain (WS2_32.init)
  */
-BOOL WINAPI WSOCK32_LibMain(HINSTANCE hInstDLL, DWORD fdwReason, LPVOID fImpLoad)
+BOOL WINAPI WS_LibMain(HINSTANCE hInstDLL, DWORD fdwReason, LPVOID fImpLoad)
 {
     TRACE("0x%x 0x%lx %p\n", hInstDLL, fdwReason, fImpLoad);
     switch (fdwReason) {
@@ -391,7 +385,7 @@ static fd_set* fd_set_import( fd_set* fds, void* wsfds, int* highfd, int lfd[], 
     if( wsfds ) 
     { 
 #define wsfds16	((ws_fd_set16*)wsfds)
-#define wsfds32 ((ws_fd_set32*)wsfds)
+#define wsfds32 ((WS_fd_set*)wsfds)
 	int i, count;
 
 	FD_ZERO(fds);
@@ -437,7 +431,7 @@ static int fd_set_export( fd_set* fds, fd_set* exceptfds, void* wsfds, int lfd[]
     if( wsfds )
     {
 #define wsfds16 ((ws_fd_set16*)wsfds)
-#define wsfds32 ((ws_fd_set32*)wsfds)
+#define wsfds32 ((WS_fd_set*)wsfds)
 	int i, j, count = (b32) ? wsfds32->fd_count : wsfds16->fd_count;
 
 	for( i = 0, j = 0; i < count; i++ )
@@ -477,7 +471,7 @@ static void fd_set_unimport( void* wsfds, int lfd[], BOOL b32 )
     if ( wsfds )
     {
 #define wsfds16 ((ws_fd_set16*)wsfds)
-#define wsfds32 ((ws_fd_set32*)wsfds)
+#define wsfds32 ((WS_fd_set*)wsfds)
 	int i, count = (b32) ? wsfds32->fd_count : wsfds16->fd_count;
 
 	for( i = 0; i < count; i++ )
@@ -765,17 +759,17 @@ static void ws2_async_accept(SOCKET s, SOCKET as)
  * start with. Note that the returned pointer may be the original pointer 
  * if no conversion is necessary.
  */
-const struct sockaddr* ws_sockaddr_ws2u(const ws_sockaddr* wsaddr, int wsaddrlen, int *uaddrlen)
+const struct sockaddr* ws_sockaddr_ws2u(const struct WS_sockaddr* wsaddr, int wsaddrlen, int *uaddrlen)
 {
     switch (wsaddr->sa_family)
     {
 #ifdef HAVE_IPX
     case WS_AF_IPX:
         {
-            struct ws_sockaddr_ipx* wsipx=(struct ws_sockaddr_ipx*)wsaddr;
+            struct WS_sockaddr_ipx* wsipx=(struct WS_sockaddr_ipx*)wsaddr;
             struct sockaddr_ipx* uipx;
 
-            if (wsaddrlen<sizeof(struct ws_sockaddr_ipx))
+            if (wsaddrlen<sizeof(struct WS_sockaddr_ipx))
                 return NULL;
 
             *uaddrlen=sizeof(struct sockaddr_ipx);
@@ -793,7 +787,7 @@ const struct sockaddr* ws_sockaddr_ws2u(const ws_sockaddr* wsaddr, int wsaddrlen
 #endif
 
     default:
-        if (wsaddrlen<sizeof(ws_sockaddr))
+        if (wsaddrlen<sizeof(struct WS_sockaddr))
             return NULL;
 
         /* No conversion needed, just return the original address */
@@ -804,7 +798,7 @@ const struct sockaddr* ws_sockaddr_ws2u(const ws_sockaddr* wsaddr, int wsaddrlen
 }
 
 /* allocates a Unix sockaddr structure to receive the data */
-inline struct sockaddr* ws_sockaddr_alloc(const ws_sockaddr* wsaddr, int* wsaddrlen, int* uaddrlen)
+inline struct sockaddr* ws_sockaddr_alloc(const struct WS_sockaddr* wsaddr, int* wsaddrlen, int* uaddrlen)
 {
     if (*wsaddrlen==0)
         *uaddrlen=0;
@@ -817,7 +811,7 @@ inline struct sockaddr* ws_sockaddr_alloc(const ws_sockaddr* wsaddr, int* wsaddr
 }
 
 /* Returns 0 if successful, -1 if the buffer is too small */
-int ws_sockaddr_u2ws(const struct sockaddr* uaddr, int uaddrlen, ws_sockaddr* wsaddr, int* wsaddrlen)
+int ws_sockaddr_u2ws(const struct sockaddr* uaddr, int uaddrlen, struct WS_sockaddr* wsaddr, int* wsaddrlen)
 {
     int res;
 
@@ -827,7 +821,7 @@ int ws_sockaddr_u2ws(const struct sockaddr* uaddr, int uaddrlen, ws_sockaddr* ws
     case AF_IPX:
         {
             struct sockaddr_ipx* uipx=(struct sockaddr_ipx*)uaddr;
-            struct ws_sockaddr_ipx* wsipx=(struct ws_sockaddr_ipx*)wsaddr;
+            struct WS_sockaddr_ipx* wsipx=(struct WS_sockaddr_ipx*)wsaddr;
 
             res=-1;
             switch (*wsaddrlen) /* how much can we copy? */
@@ -873,7 +867,7 @@ int ws_sockaddr_u2ws(const struct sockaddr* uaddr, int uaddrlen, ws_sockaddr* ws
 /* to be called to free the memory allocated by ws_sockaddr_ws2u or 
  * ws_sockaddr_alloc
  */
-inline void ws_sockaddr_free(const struct sockaddr* uaddr, const ws_sockaddr* wsaddr)
+inline void ws_sockaddr_free(const struct sockaddr* uaddr, const struct WS_sockaddr* wsaddr)
 {
     if (uaddr!=NULL && uaddr!=(const struct sockaddr*)wsaddr)
         free((void*)uaddr);
@@ -882,7 +876,7 @@ inline void ws_sockaddr_free(const struct sockaddr* uaddr, const ws_sockaddr* ws
 /***********************************************************************
  *		accept		(WS2_32.1)
  */
-SOCKET WINAPI WSOCK32_accept(SOCKET s, ws_sockaddr *addr,
+SOCKET WINAPI WS_accept(SOCKET s, struct WS_sockaddr *addr,
                                  int *addrlen32)
 {
     int fd = _get_sock_fd(s);
@@ -913,7 +907,7 @@ SOCKET WINAPI WSOCK32_accept(SOCKET s, ws_sockaddr *addr,
 	if (as)
 	{
 	    unsigned omask = _get_sock_mask( s );
-	    WSOCK32_getpeername(fd, addr, addrlen32);
+	    WS_getpeername(fd, addr, addrlen32);
 	    if (omask & FD_WINE_SERVEVENT)
 		ws2_async_accept(s, as);
 	    return as;
@@ -929,11 +923,11 @@ SOCKET WINAPI WSOCK32_accept(SOCKET s, ws_sockaddr *addr,
 /***********************************************************************
  *              accept		(WINSOCK.1)
  */
-SOCKET16 WINAPI WINSOCK_accept16(SOCKET16 s, ws_sockaddr* addr,
+SOCKET16 WINAPI WINSOCK_accept16(SOCKET16 s, struct WS_sockaddr* addr,
                                  INT16* addrlen16 )
 {
     INT addrlen32 = addrlen16 ? *addrlen16 : 0;
-    SOCKET retSocket = WSOCK32_accept( s, addr, &addrlen32 );
+    SOCKET retSocket = WS_accept( s, addr, &addrlen32 );
     if( addrlen16 ) *addrlen16 = (INT16)addrlen32;
     return (SOCKET16)retSocket;
 }
@@ -941,7 +935,7 @@ SOCKET16 WINAPI WINSOCK_accept16(SOCKET16 s, ws_sockaddr* addr,
 /***********************************************************************
  *		bind			(WS2_32.2)
  */
-int WINAPI WSOCK32_bind(SOCKET s, const ws_sockaddr* name, int namelen)
+int WINAPI WS_bind(SOCKET s, const struct WS_sockaddr* name, int namelen)
 {
     int fd = _get_sock_fd(s);
     int res;
@@ -1007,15 +1001,15 @@ int WINAPI WSOCK32_bind(SOCKET s, const ws_sockaddr* name, int namelen)
 /***********************************************************************
  *              bind			(WINSOCK.2)
  */
-INT16 WINAPI WINSOCK_bind16(SOCKET16 s, ws_sockaddr *name, INT16 namelen)
+INT16 WINAPI WINSOCK_bind16(SOCKET16 s, struct WS_sockaddr *name, INT16 namelen)
 {
-  return (INT16)WSOCK32_bind( s, name, namelen );
+  return (INT16)WS_bind( s, name, namelen );
 }
 
 /***********************************************************************
  *		closesocket		(WS2_32.3)
  */
-INT WINAPI WSOCK32_closesocket(SOCKET s)
+int WINAPI WS_closesocket(SOCKET s)
 {
     TRACE("socket %08x\n", s);
     if (CloseHandle(s)) return 0;
@@ -1027,13 +1021,13 @@ INT WINAPI WSOCK32_closesocket(SOCKET s)
  */
 INT16 WINAPI WINSOCK_closesocket16(SOCKET16 s)
 {
-    return (INT16)WSOCK32_closesocket(s);
+    return (INT16)WS_closesocket(s);
 }
 
 /***********************************************************************
  *		connect		(WS2_32.4)
  */
-int WINAPI WSOCK32_connect(SOCKET s, const ws_sockaddr* name, int namelen)
+int WINAPI WS_connect(SOCKET s, const struct WS_sockaddr* name, int namelen)
 {
     int fd = _get_sock_fd(s);
 
@@ -1111,15 +1105,15 @@ connect_success:
 /***********************************************************************
  *              connect               (WINSOCK.4)
  */
-INT16 WINAPI WINSOCK_connect16(SOCKET16 s, ws_sockaddr *name, INT16 namelen)
+INT16 WINAPI WINSOCK_connect16(SOCKET16 s, struct WS_sockaddr *name, INT16 namelen)
 {
-  return (INT16)WSOCK32_connect( s, name, namelen );
+  return (INT16)WS_connect( s, name, namelen );
 }
 
 /***********************************************************************
  *		getpeername		(WS2_32.5)
  */
-int WINAPI WSOCK32_getpeername(SOCKET s, ws_sockaddr *name, int *namelen)
+int WINAPI WS_getpeername(SOCKET s, struct WS_sockaddr *name, int *namelen)
 {
     int fd = _get_sock_fd(s);
     int res;
@@ -1159,11 +1153,11 @@ int WINAPI WSOCK32_getpeername(SOCKET s, ws_sockaddr *name, int *namelen)
 /***********************************************************************
  *              getpeername		(WINSOCK.5)
  */
-INT16 WINAPI WINSOCK_getpeername16(SOCKET16 s, ws_sockaddr *name,
+INT16 WINAPI WINSOCK_getpeername16(SOCKET16 s, struct WS_sockaddr *name,
                                    INT16 *namelen16)
 {
     INT namelen32 = *namelen16;
-    INT retVal = WSOCK32_getpeername( s, name, &namelen32 );
+    INT retVal = WS_getpeername( s, name, &namelen32 );
 
 #if DEBUG_SOCKADDR
     dump_sockaddr(name);
@@ -1176,7 +1170,7 @@ INT16 WINAPI WINSOCK_getpeername16(SOCKET16 s, ws_sockaddr *name,
 /***********************************************************************
  *		getsockname		(WS2_32.6)
  */
-int WINAPI WSOCK32_getsockname(SOCKET s, ws_sockaddr *name, int *namelen)
+int WINAPI WS_getsockname(SOCKET s, struct WS_sockaddr *name, int *namelen)
 {
     int fd = _get_sock_fd(s);
     int res;
@@ -1215,7 +1209,7 @@ int WINAPI WSOCK32_getsockname(SOCKET s, ws_sockaddr *name, int *namelen)
 /***********************************************************************
  *              getsockname		(WINSOCK.6)
  */
-INT16 WINAPI WINSOCK_getsockname16(SOCKET16 s, ws_sockaddr *name,
+INT16 WINAPI WINSOCK_getsockname16(SOCKET16 s, struct WS_sockaddr *name,
                                    INT16 *namelen16)
 {
     INT retVal;
@@ -1223,7 +1217,7 @@ INT16 WINAPI WINSOCK_getsockname16(SOCKET16 s, ws_sockaddr *name,
     if( namelen16 )
     {
         INT namelen32 = *namelen16;
-        retVal = WSOCK32_getsockname( s, name, &namelen32 );
+        retVal = WS_getsockname( s, name, &namelen32 );
        *namelen16 = namelen32;
 
 #if DEBUG_SOCKADDR
@@ -1239,7 +1233,7 @@ INT16 WINAPI WINSOCK_getsockname16(SOCKET16 s, ws_sockaddr *name,
 /***********************************************************************
  *		getsockopt		(WS2_32.7)
  */
-INT WINAPI WSOCK32_getsockopt(SOCKET s, INT level, 
+INT WINAPI WS_getsockopt(SOCKET s, INT level, 
                                   INT optname, char *optval, INT *optlen)
 {
     int fd = _get_sock_fd(s);
@@ -1262,6 +1256,7 @@ INT WINAPI WSOCK32_getsockopt(SOCKET s, INT level,
     return SOCKET_ERROR;
 }
 
+
 /***********************************************************************
  *              getsockopt		(WINSOCK.7)
  */
@@ -1272,47 +1267,72 @@ INT16 WINAPI WINSOCK_getsockopt16(SOCKET16 s, INT16 level,
     INT *p = &optlen32;
     INT retVal;
     if( optlen ) optlen32 = *optlen; else p = NULL;
-    retVal = WSOCK32_getsockopt( s, (UINT16)level, optname, optval, p );
+    retVal = WS_getsockopt( s, (UINT16)level, optname, optval, p );
     if( optlen ) *optlen = optlen32;
     return (INT16)retVal;
 }
+
 
 /***********************************************************************
  *		htonl			(WINSOCK.8)
  *		htonl			(WS2_32.8)
  */
-u_long WINAPI WINSOCK_htonl(u_long hostlong)   { return( htonl(hostlong) ); }
+u_long WINAPI WS_htonl(u_long hostlong)
+{
+    return htonl(hostlong);
+}
+
+
 /***********************************************************************
  *		htons			(WINSOCK.9)
  *		htons			(WS2_32.9)
  */
-u_short WINAPI WINSOCK_htons(u_short hostshort) { return( htons(hostshort) ); }
+u_short WINAPI WS_htons(u_short hostshort)
+{
+    return htons(hostshort);
+}
+
+
 /***********************************************************************
  *		inet_addr		(WINSOCK.10)
  *		inet_addr		(WS2_32.11)
  */
-u_long WINAPI WINSOCK_inet_addr(char *cp)      { return( inet_addr(cp) ); }
+u_long WINAPI WS_inet_addr(const char *cp)
+{
+    return inet_addr(cp);
+}
+
+
 /***********************************************************************
  *		ntohl			(WINSOCK.14)
  *		ntohl			(WS2_32.14)
  */
-u_long WINAPI WINSOCK_ntohl(u_long netlong)    { return( ntohl(netlong) ); }
+u_long WINAPI WS_ntohl(u_long netlong)
+{
+    return ntohl(netlong);
+}
+
+
 /***********************************************************************
  *		ntohs			(WINSOCK.15)
  *		ntohs			(WS2_32.15)
  */
-u_short WINAPI WINSOCK_ntohs(u_short netshort)  { return( ntohs(netshort) ); }
+u_short WINAPI WS_ntohs(u_short netshort)
+{
+    return ntohs(netshort);
+}
+
 
 /***********************************************************************
  *		inet_ntoa		(WS2_32.12)
  */
-char* WINAPI WSOCK32_inet_ntoa(struct in_addr in)
+char* WINAPI WS_inet_ntoa(struct WS_in_addr in)
 {
   /* use "buffer for dummies" here because some applications have 
    * propensity to decode addresses in ws_hostent structure without 
    * saving them first...
    */
-    char* s = inet_ntoa(in);
+    char* s = inet_ntoa(*((struct in_addr*)&in));
     if( s )
     {
         if( dbuffer == NULL ) {
@@ -1335,7 +1355,7 @@ char* WINAPI WSOCK32_inet_ntoa(struct in_addr in)
  */
 SEGPTR WINAPI WINSOCK_inet_ntoa16(struct in_addr in)
 {
-  char* retVal = WSOCK32_inet_ntoa(in);
+  char* retVal = WS_inet_ntoa(*((struct WS_in_addr*)&in));
   return SEGPTR_GET(retVal);
 }
 
@@ -1404,11 +1424,11 @@ INT WINAPI WSAIoctl (SOCKET s,
                }
                else
                {
-                  struct ws_sockaddr_in *ipTemp = (struct ws_sockaddr_in *)&ifInfo.ifr_addr;
+                  struct WS_sockaddr_in *ipTemp = (struct WS_sockaddr_in *)&ifInfo.ifr_addr;
                
                   intArray->iiAddress.AddressIn.sin_family = AF_INET;
                   intArray->iiAddress.AddressIn.sin_port = ipTemp->sin_port;
-                  intArray->iiAddress.AddressIn.sin_addr.ws_addr = ipTemp->sin_addr.S_un.S_addr;
+                  intArray->iiAddress.AddressIn.sin_addr.WS_s_addr = ipTemp->sin_addr.S_un.S_addr;
                }
                
                /* Broadcast Address */
@@ -1422,11 +1442,11 @@ INT WINAPI WSAIoctl (SOCKET s,
                }
                else
                {
-                  struct ws_sockaddr_in *ipTemp = (struct ws_sockaddr_in *)&ifInfo.ifr_broadaddr;
+                  struct WS_sockaddr_in *ipTemp = (struct WS_sockaddr_in *)&ifInfo.ifr_broadaddr;
                
                   intArray->iiBroadcastAddress.AddressIn.sin_family = AF_INET; 
                   intArray->iiBroadcastAddress.AddressIn.sin_port = ipTemp->sin_port;
-                  intArray->iiBroadcastAddress.AddressIn.sin_addr.ws_addr = ipTemp->sin_addr.S_un.S_addr; 
+                  intArray->iiBroadcastAddress.AddressIn.sin_addr.WS_s_addr = ipTemp->sin_addr.S_un.S_addr; 
                }
 
                /* Subnet Mask */
@@ -1446,21 +1466,21 @@ INT WINAPI WSAIoctl (SOCKET s,
                     #ifndef ifr_addr
                        intArray->iiNetmask.AddressIn.sin_family = AF_INET; 
                        intArray->iiNetmask.AddressIn.sin_port = 0;
-                       intArray->iiNetmask.AddressIn.sin_addr.ws_addr = 0; 
+                       intArray->iiNetmask.AddressIn.sin_addr.WS_s_addr = 0; 
                        ERR ("Unable to determine Netmask on your platform!\n");
                     #else
-                       struct ws_sockaddr_in *ipTemp = (struct ws_sockaddr_in *)&ifInfo.ifr_addr;
+                       struct WS_sockaddr_in *ipTemp = (struct WS_sockaddr_in *)&ifInfo.ifr_addr;
             
                        intArray->iiNetmask.AddressIn.sin_family = AF_INET; 
                        intArray->iiNetmask.AddressIn.sin_port = ipTemp->sin_port;
-                       intArray->iiNetmask.AddressIn.sin_addr.ws_addr = ipTemp->sin_addr.S_un.S_addr; 
+                       intArray->iiNetmask.AddressIn.sin_addr.WS_s_addr = ipTemp->sin_addr.S_un.S_addr; 
                     #endif
                   #else
-                     struct ws_sockaddr_in *ipTemp = (struct ws_sockaddr_in *)&ifInfo.ifr_netmask;
+                     struct WS_sockaddr_in *ipTemp = (struct WS_sockaddr_in *)&ifInfo.ifr_netmask;
             
                      intArray->iiNetmask.AddressIn.sin_family = AF_INET; 
                      intArray->iiNetmask.AddressIn.sin_port = ipTemp->sin_port;
-                     intArray->iiNetmask.AddressIn.sin_addr.ws_addr = ipTemp->sin_addr.S_un.S_addr; 
+                     intArray->iiNetmask.AddressIn.sin_addr.WS_s_addr = ipTemp->sin_addr.S_un.S_addr; 
                   #endif
                }
                
@@ -1631,7 +1651,7 @@ int WSAIOCTL_GetInterfaceName(int intNumber, char *intName)
 /***********************************************************************
  *		ioctlsocket		(WS2_32.10)
  */
-INT WINAPI WSOCK32_ioctlsocket(SOCKET s, LONG cmd, ULONG *argp)
+int WINAPI WS_ioctlsocket(SOCKET s, long cmd, u_long *argp)
 {
   int fd = _get_sock_fd(s);
 
@@ -1670,7 +1690,7 @@ INT WINAPI WSOCK32_ioctlsocket(SOCKET s, LONG cmd, ULONG *argp)
 		newcmd=SIOCATMARK; 
 		break;
 
-	case WS_IOW('f',125,u_long): 
+	case WS__IOW('f',125,u_long): 
 		WARN("Warning: WS1.1 shouldn't be using async I/O\n");
 		SetLastError(WSAEINVAL); 
 		return SOCKET_ERROR;
@@ -1703,14 +1723,14 @@ INT WINAPI WSOCK32_ioctlsocket(SOCKET s, LONG cmd, ULONG *argp)
  */
 INT16 WINAPI WINSOCK_ioctlsocket16(SOCKET16 s, LONG cmd, ULONG *argp)
 {
-    return (INT16)WSOCK32_ioctlsocket( s, cmd, argp );
+    return (INT16)WS_ioctlsocket( s, cmd, argp );
 }
 
 
 /***********************************************************************
  *		listen		(WS2_32.13)
  */
-INT WINAPI WSOCK32_listen(SOCKET s, INT backlog)
+int WINAPI WS_listen(SOCKET s, int backlog)
 {
     int fd = _get_sock_fd(s);
 
@@ -1736,14 +1756,14 @@ INT WINAPI WSOCK32_listen(SOCKET s, INT backlog)
  */
 INT16 WINAPI WINSOCK_listen16(SOCKET16 s, INT16 backlog)
 {
-    return (INT16)WSOCK32_listen( s, backlog );
+    return (INT16)WS_listen( s, backlog );
 }
 
 
 /***********************************************************************
  *		recv			(WS2_32.16)
  */
-INT WINAPI WSOCK32_recv(SOCKET s, char *buf, INT len, INT flags)
+int WINAPI WS_recv(SOCKET s, char *buf, int len, int flags)
 {
     int fd = _get_sock_fd(s);
 
@@ -1780,15 +1800,15 @@ INT WINAPI WSOCK32_recv(SOCKET s, char *buf, INT len, INT flags)
  */
 INT16 WINAPI WINSOCK_recv16(SOCKET16 s, char *buf, INT16 len, INT16 flags)
 {
-    return (INT16)WSOCK32_recv( s, buf, len, flags );
+    return (INT16)WS_recv( s, buf, len, flags );
 }
 
 
 /***********************************************************************
  *		recvfrom		(WS2_32.17)
  */
-int WINAPI WSOCK32_recvfrom(SOCKET s, char *buf, INT len, int flags,
-                                ws_sockaddr *from, int *fromlen)
+int WINAPI WS_recvfrom(SOCKET s, char *buf, INT len, int flags,
+                                struct WS_sockaddr *from, int *fromlen)
 {
     int fd = _get_sock_fd(s);
     int res;
@@ -1850,14 +1870,14 @@ int WINAPI WSOCK32_recvfrom(SOCKET s, char *buf, INT len, int flags,
  *              recvfrom		(WINSOCK.17)
  */
 INT16 WINAPI WINSOCK_recvfrom16(SOCKET16 s, char *buf, INT16 len, INT16 flags,
-                                ws_sockaddr *from, INT16 *fromlen16)
+                                struct WS_sockaddr *from, INT16 *fromlen16)
 {
     INT fromlen32;
     INT *p = &fromlen32;
     INT retVal;
 
     if( fromlen16 ) fromlen32 = *fromlen16; else p = NULL;
-    retVal = WSOCK32_recvfrom( s, buf, len, flags, from, p );
+    retVal = WS_recvfrom( s, buf, len, flags, from, p );
     if( fromlen16 ) *fromlen16 = fromlen32;
     return (INT16)retVal;
 }
@@ -1865,9 +1885,9 @@ INT16 WINAPI WINSOCK_recvfrom16(SOCKET16 s, char *buf, INT16 len, INT16 flags,
 /***********************************************************************
  *		__ws_select
  */
-static INT __ws_select(BOOL b32,
+static int __ws_select(BOOL b32,
                        void *ws_readfds, void *ws_writefds, void *ws_exceptfds,
-                       const struct timeval* ws_timeout)
+                       const struct WS_timeval *ws_timeout)
 {
     int         highfd = 0;
     fd_set      readfds, writefds, exceptfds;
@@ -1875,8 +1895,8 @@ static INT __ws_select(BOOL b32,
     int         readfd[FD_SETSIZE], writefd[FD_SETSIZE], exceptfd[FD_SETSIZE];
     struct timeval timeout, *timeoutaddr = NULL;
 
-    TRACE("read %p, write %p, excp %p timeout %p\n", 
-           ws_readfds, ws_writefds, ws_exceptfds, ws_timeout);
+    TRACE("read %p, write %p, excp %p timeout %p\n",
+          ws_readfds, ws_writefds, ws_exceptfds, ws_timeout);
 
     p_read = fd_set_import(&readfds, ws_readfds, &highfd, readfd, b32);
     p_write = fd_set_import(&writefds, ws_writefds, &highfd, writefd, b32);
@@ -1896,7 +1916,7 @@ static INT __ws_select(BOOL b32,
         if (p_except && ws_exceptfds)
         {
 #define wsfds16 ((ws_fd_set16*)ws_exceptfds)
-#define wsfds32 ((ws_fd_set32*)ws_exceptfds)
+#define wsfds32 ((WS_fd_set*)ws_exceptfds)
             int i, j, count = (b32) ? wsfds32->fd_count : wsfds16->fd_count;
 
             for (i = j = 0; i < count; i++)
@@ -1924,9 +1944,9 @@ static INT __ws_select(BOOL b32,
     fd_set_unimport(ws_readfds, readfd, b32);
     fd_set_unimport(ws_writefds, writefd, b32);
     fd_set_unimport(ws_exceptfds, exceptfd, b32);
-    if( ws_readfds ) ((ws_fd_set32*)ws_readfds)->fd_count = 0;
-    if( ws_writefds ) ((ws_fd_set32*)ws_writefds)->fd_count = 0;
-    if( ws_exceptfds ) ((ws_fd_set32*)ws_exceptfds)->fd_count = 0;
+    if( ws_readfds ) ((WS_fd_set*)ws_readfds)->fd_count = 0;
+    if( ws_writefds ) ((WS_fd_set*)ws_writefds)->fd_count = 0;
+    if( ws_exceptfds ) ((WS_fd_set*)ws_exceptfds)->fd_count = 0;
 
     if( highfd == 0 ) return 0;
     SetLastError(wsaErrno());
@@ -1938,7 +1958,7 @@ static INT __ws_select(BOOL b32,
  */
 INT16 WINAPI WINSOCK_select16(INT16 nfds, ws_fd_set16 *ws_readfds,
                               ws_fd_set16 *ws_writefds, ws_fd_set16 *ws_exceptfds,
-                              struct timeval *timeout)
+                              struct WS_timeval* timeout)
 {
     return (INT16)__ws_select( FALSE, ws_readfds, ws_writefds, ws_exceptfds, timeout );
 }
@@ -1946,9 +1966,9 @@ INT16 WINAPI WINSOCK_select16(INT16 nfds, ws_fd_set16 *ws_readfds,
 /***********************************************************************
  *		select			(WS2_32.18)
  */
-INT WINAPI WSOCK32_select(INT nfds, ws_fd_set32 *ws_readfds,
-                              ws_fd_set32 *ws_writefds, ws_fd_set32 *ws_exceptfds,
-                              const struct timeval *timeout)
+int WINAPI WS_select(int nfds, WS_fd_set *ws_readfds,
+                     WS_fd_set *ws_writefds, WS_fd_set *ws_exceptfds,
+                     const struct WS_timeval* timeout)
 {
     /* struct timeval is the same for both 32- and 16-bit code */
     return (INT)__ws_select( TRUE, ws_readfds, ws_writefds, ws_exceptfds, timeout );
@@ -1958,7 +1978,7 @@ INT WINAPI WSOCK32_select(INT nfds, ws_fd_set32 *ws_readfds,
 /***********************************************************************
  *		send			(WS2_32.19)
  */
-INT WINAPI WSOCK32_send(SOCKET s, char *buf, INT len, INT flags)
+int WINAPI WS_send(SOCKET s, const char *buf, int len, int flags)
 {
     int fd = _get_sock_fd(s);
 
@@ -2024,7 +2044,7 @@ INT WINAPI WSASend( SOCKET s, LPWSABUF lpBuffers, DWORD dwBufferCount,
   /* Send all buffers with the same flags */
   for(dwCount = 0; dwCount < dwBufferCount; dwCount++ )
   {
-    if( ( rc = WSOCK32_send( s, lpBuffers[ dwCount ].buf, 
+    if( ( rc = WS_send( s, lpBuffers[ dwCount ].buf, 
                              lpBuffers[ dwCount ].len, iFlags ) ) != 0 )
     {
       break;
@@ -2042,14 +2062,14 @@ INT WINAPI WSASend( SOCKET s, LPWSABUF lpBuffers, DWORD dwBufferCount,
  */
 INT16 WINAPI WINSOCK_send16(SOCKET16 s, char *buf, INT16 len, INT16 flags)
 {
-    return WSOCK32_send( s, buf, len, flags );
+    return WS_send( s, buf, len, flags );
 }
 
 /***********************************************************************
  *		sendto		(WS2_32.20)
  */
-int WINAPI WSOCK32_sendto(SOCKET s, const char *buf, int len, int flags,
-                              const ws_sockaddr *to, int tolen)
+int WINAPI WS_sendto(SOCKET s, const char *buf, int len, int flags,
+                              const struct WS_sockaddr *to, int tolen)
 {
     int fd = _get_sock_fd(s);
     int res;
@@ -2097,16 +2117,16 @@ int WINAPI WSOCK32_sendto(SOCKET s, const char *buf, int len, int flags,
  *              sendto		(WINSOCK.20)
  */
 INT16 WINAPI WINSOCK_sendto16(SOCKET16 s, char *buf, INT16 len, INT16 flags,
-                              ws_sockaddr *to, INT16 tolen)
+                              struct WS_sockaddr *to, INT16 tolen)
 {
-    return (INT16)WSOCK32_sendto( s, buf, len, flags, to, tolen );
+    return (INT16)WS_sendto( s, buf, len, flags, to, tolen );
 }
 
 /***********************************************************************
  *		setsockopt		(WS2_32.21)
  */
-INT WINAPI WSOCK32_setsockopt(SOCKET16 s, INT level, INT optname, 
-                                  char *optval, INT optlen)
+int WINAPI WS_setsockopt(SOCKET s, int level, int optname, 
+                                  const char *optval, int optlen)
 {
     int fd = _get_sock_fd(s);
 
@@ -2144,7 +2164,7 @@ INT WINAPI WSOCK32_setsockopt(SOCKET16 s, INT level, INT optname,
                 /* FIXME: what is documented behavior if SO_LINGER optval
                    is null?? */
                 optval = (char*)&linger;
-                optlen = sizeof(struct linger);
+                optlen = sizeof(struct WS_linger);
             } else if (optlen < sizeof(int)){
                 woptval= *((INT16 *) optval);
                 optval= (char*) &woptval;
@@ -2176,14 +2196,14 @@ INT16 WINAPI WINSOCK_setsockopt16(SOCKET16 s, INT16 level, INT16 optname,
                                   char *optval, INT16 optlen)
 {
     if( !optval ) return SOCKET_ERROR;
-    return (INT16)WSOCK32_setsockopt( s, (UINT16)level, optname, optval, optlen );
+    return (INT16)WS_setsockopt( s, (UINT16)level, optname, optval, optlen );
 }
 
 
 /***********************************************************************
  *		shutdown		(WS2_32.22)
  */
-INT WINAPI WSOCK32_shutdown(SOCKET s, INT how)
+int WINAPI WS_shutdown(SOCKET s, int how)
 {
     int fd = _get_sock_fd(s);
 
@@ -2236,14 +2256,14 @@ INT WINAPI WSOCK32_shutdown(SOCKET s, INT how)
  */
 INT16 WINAPI WINSOCK_shutdown16(SOCKET16 s, INT16 how)
 {
-    return (INT16)WSOCK32_shutdown( s, how );
+    return (INT16)WS_shutdown( s, how );
 }
 
 
 /***********************************************************************
  *		socket		(WS2_32.23)
  */
-SOCKET WINAPI WSOCK32_socket(INT af, INT type, INT protocol)
+SOCKET WINAPI WS_socket(int af, int type, int protocol)
 {
     SOCKET ret;
 
@@ -2326,7 +2346,7 @@ SOCKET WINAPI WSOCK32_socket(INT af, INT type, INT protocol)
  */
 SOCKET16 WINAPI WINSOCK_socket16(INT16 af, INT16 type, INT16 protocol)
 {
-    return (SOCKET16)WSOCK32_socket( af, type, protocol );
+    return (SOCKET16)WS_socket( af, type, protocol );
 }
     
 
@@ -2398,8 +2418,8 @@ SEGPTR WINAPI WINSOCK_gethostbyaddr16(const char *addr, INT16 len, INT16 type)
 /***********************************************************************
  *		gethostbyaddr		(WS2_32.51)
  */
-WIN_hostent* WINAPI WSOCK32_gethostbyaddr(const char *addr, INT len,
-                                                INT type)
+struct WS_hostent* WINAPI WS_gethostbyaddr(const char *addr, int len,
+                                                int type)
 {
     TRACE("ptr %08x, len %d, type %d\n",
                              (unsigned) addr, len, type);
@@ -2460,7 +2480,7 @@ SEGPTR WINAPI WINSOCK_gethostbyname16(const char *name)
 /***********************************************************************
  *		gethostbyname		(WS2_32.52)
  */
-WIN_hostent* WINAPI WSOCK32_gethostbyname(const char* name)
+struct WS_hostent* WINAPI WS_gethostbyname(const char* name)
 {
     TRACE("%s\n", (name)?name:NULL_STRING);
     return __ws_gethostbyname( name, WS_DUP_LINEAR );
@@ -2505,7 +2525,7 @@ SEGPTR WINAPI WINSOCK_getprotobyname16(const char *name)
 /***********************************************************************
  *		getprotobyname		(WS2_32.53)
  */
-WIN_protoent* WINAPI WSOCK32_getprotobyname(const char* name)
+struct WS_protoent* WINAPI WS_getprotobyname(const char* name)
 {
     TRACE("%s\n", (name)?name:NULL_STRING);
     return __ws_getprotobyname(name, WS_DUP_LINEAR);
@@ -2549,7 +2569,7 @@ SEGPTR WINAPI WINSOCK_getprotobynumber16(INT16 number)
 /***********************************************************************
  *		getprotobynumber	(WS2_32.54)
  */
-WIN_protoent* WINAPI WSOCK32_getprotobynumber(INT number)
+struct WS_protoent* WINAPI WS_getprotobynumber(int number)
 {
     TRACE("%i\n", number);
     return __ws_getprotobynumber(number, WS_DUP_LINEAR);
@@ -2602,7 +2622,7 @@ SEGPTR WINAPI WINSOCK_getservbyname16(const char *name, const char *proto)
 /***********************************************************************
  *		getservbyname		(WS2_32.55)
  */
-WIN_servent* WINAPI WSOCK32_getservbyname(const char *name, const char *proto)
+struct WS_servent* WINAPI WS_getservbyname(const char *name, const char *proto)
 {
     TRACE("'%s', '%s'\n",
                             (name)?name:NULL_STRING, (proto)?proto:NULL_STRING);
@@ -2651,7 +2671,7 @@ SEGPTR WINAPI WINSOCK_getservbyport16(INT16 port, const char *proto)
 /***********************************************************************
  *		getservbyport		(WS2_32.56)
  */
-WIN_servent* WINAPI WSOCK32_getservbyport(INT port, const char *proto)
+struct WS_servent* WINAPI WS_getservbyport(int port, const char *proto)
 {
     TRACE("%d (i.e. port %d), '%s'\n",
                             (int)port, (int)ntohl(port), (proto)?proto:NULL_STRING);
@@ -2662,7 +2682,7 @@ WIN_servent* WINAPI WSOCK32_getservbyport(INT port, const char *proto)
 /***********************************************************************
  *              gethostname           (WS2_32.57)
  */
-INT WINAPI WSOCK32_gethostname(char *name, INT namelen)
+int WINAPI WS_gethostname(char *name, int namelen)
 {
     TRACE("name %p, len %d\n", name, namelen);
 
@@ -2681,7 +2701,7 @@ INT WINAPI WSOCK32_gethostname(char *name, INT namelen)
  */
 INT16 WINAPI WINSOCK_gethostname16(char *name, INT16 namelen)
 {
-    return (INT16)WSOCK32_gethostname(name, namelen);
+    return (INT16)WS_gethostname(name, namelen);
 }
 
 
@@ -2861,7 +2881,8 @@ INT16 WINAPI WSAAsyncSelect16(SOCKET16 s, HWND16 hWnd, UINT16 wMsg, LONG lEvent)
  *
  * See description for WSARecvEx()
  */
-INT16     WINAPI WSARecvEx16(SOCKET16 s, char *buf, INT16 len, INT16 *flags) {
+INT16     WINAPI WSARecvEx16(SOCKET16 s, char *buf, INT16 len, INT16 *flags)
+{
   FIXME("(WSARecvEx16) partial packet return value not set \n");
 
   return WINSOCK_recv16(s, buf, len, *flags);
@@ -2907,7 +2928,7 @@ SOCKET WINAPI WSASocketA(int af, int type, int protocol,
    TRACE("af=%d type=%d protocol=%d protocol_info=%p group=%d flags=0x%lx\n", 
          af, type, protocol, lpProtocolInfo, g, dwFlags );
 
-   return ( WSOCK32_socket (af, type, protocol) );
+   return ( WS_socket (af, type, protocol) );
 }
 
 
@@ -2928,7 +2949,7 @@ INT16 WINAPI __WSAFDIsSet16(SOCKET16 s, ws_fd_set16 *set)
 /***********************************************************************
  *      __WSAFDIsSet			(WS2_32.151)
  */
-INT WINAPI __WSAFDIsSet(SOCKET s, ws_fd_set32 *set)
+int WINAPI __WSAFDIsSet(SOCKET s, WS_fd_set *set)
 {
   int i = set->fd_count;
 
@@ -3080,7 +3101,7 @@ int WS_dup_he(struct hostent* p_he, int flag)
 	char *p_name,*p_aliases,*p_addr,*p_base,*p;
 	char *p_to;
 	struct ws_hostent16 *p_to16;
-	struct ws_hostent32 *p_to32;
+	struct WS_hostent *p_to32;
 
 	check_buffer_he(size);
 	p_to = he_buffer;
@@ -3091,7 +3112,7 @@ int WS_dup_he(struct hostent* p_he, int flag)
 	p_base = (flag & WS_DUP_OFFSET) ? NULL
 	    : ((flag & WS_DUP_SEGPTR) ? (char*)SEGPTR_GET(p) : p);
 	p += (flag & WS_DUP_SEGPTR) ?
-	    sizeof(struct ws_hostent16) : sizeof(struct ws_hostent32);
+	    sizeof(struct ws_hostent16) : sizeof(struct WS_hostent);
 	p_name = p;
 	strcpy(p, p_he->h_name); p += strlen(p) + 1;
 	p_aliases = p;
@@ -3115,7 +3136,7 @@ int WS_dup_he(struct hostent* p_he, int flag)
 	    p_to32->h_name = (p_base + (p_name - p_to));
 	    p_to32->h_aliases = (char **)(p_base + (p_aliases - p_to));
 	    p_to32->h_addr_list = (char **)(p_base + (p_addr - p_to));
-	    size += (sizeof(struct ws_hostent32) - sizeof(struct hostent));
+	    size += (sizeof(struct WS_hostent) - sizeof(struct hostent));
 	}
     }
     return size;
@@ -3140,7 +3161,7 @@ int WS_dup_pe(struct protoent* p_pe, int flag)
     {
 	char *p_to;
 	struct ws_protoent16 *p_to16;
-	struct ws_protoent32 *p_to32;
+	struct WS_protoent *p_to32;
 	char *p_name,*p_aliases,*p_base,*p;
 
 	check_buffer_pe(size);
@@ -3151,7 +3172,7 @@ int WS_dup_pe(struct protoent* p_pe, int flag)
 	p_base = (flag & WS_DUP_OFFSET) ? NULL
 	    : ((flag & WS_DUP_SEGPTR) ? (char*)SEGPTR_GET(p) : p);
 	p += (flag & WS_DUP_SEGPTR) ?
-	    sizeof(struct ws_protoent16) : sizeof(struct ws_protoent32);
+	    sizeof(struct ws_protoent16) : sizeof(struct WS_protoent);
 	p_name = p;
 	strcpy(p, p_pe->p_name); p += strlen(p) + 1;
 	p_aliases = p;
@@ -3169,7 +3190,7 @@ int WS_dup_pe(struct protoent* p_pe, int flag)
 	    p_to32->p_proto = p_pe->p_proto;
 	    p_to32->p_name = (p_base) + (p_name - p_to);
 	    p_to32->p_aliases = (char **)((p_base) + (p_aliases - p_to)); 
-	    size += (sizeof(struct ws_protoent32) - sizeof(struct protoent));
+	    size += (sizeof(struct WS_protoent) - sizeof(struct protoent));
 	}
     }
     return size;
@@ -3195,7 +3216,7 @@ int WS_dup_se(struct servent* p_se, int flag)
 	char *p_name,*p_aliases,*p_proto,*p_base,*p;
 	char *p_to;
 	struct ws_servent16 *p_to16;
-	struct ws_servent32 *p_to32;
+	struct WS_servent *p_to32;
 
 	check_buffer_se(size);
 	p_to = se_buffer;
@@ -3205,7 +3226,7 @@ int WS_dup_se(struct servent* p_se, int flag)
 	p_base = (flag & WS_DUP_OFFSET) ? NULL 
 	    : ((flag & WS_DUP_SEGPTR) ? (char*)SEGPTR_GET(p) : p);
 	p += (flag & WS_DUP_SEGPTR) ?
-	    sizeof(struct ws_servent16) : sizeof(struct ws_servent32);
+	    sizeof(struct ws_servent16) : sizeof(struct WS_servent);
 	p_name = p;
 	strcpy(p, p_se->s_name); p += strlen(p) + 1;
 	p_proto = p;
@@ -3227,7 +3248,7 @@ int WS_dup_se(struct servent* p_se, int flag)
 	    p_to32->s_name = (p_base + (p_name - p_to));
 	    p_to32->s_proto = (p_base + (p_proto - p_to));
 	    p_to32->s_aliases = (char **)(p_base + (p_aliases - p_to));
-	    size += (sizeof(struct ws_servent32) - sizeof(struct servent));
+	    size += (sizeof(struct WS_servent) - sizeof(struct servent));
 	}
     }
     return size;
@@ -3331,7 +3352,7 @@ UINT16 wsaHerrno(int loc_errno)
  *              WSARecvFrom             (WS2_32.69)
  */
 INT WINAPI WSARecvFrom( SOCKET s, LPWSABUF lpBuffers, DWORD dwBufferCount,
-                        LPDWORD lpNumberOfBytesRecvd, LPDWORD lpFlags, struct sockaddr *lpFrom,
+                        LPDWORD lpNumberOfBytesRecvd, LPDWORD lpFlags, struct WS_sockaddr *lpFrom,
                         LPINT lpFromlen, LPWSAOVERLAPPED lpOverlapped,
                         LPWSAOVERLAPPED_COMPLETION_ROUTINE lpCompletionRoutine )
 {
@@ -3345,7 +3366,7 @@ INT WINAPI WSARecvFrom( SOCKET s, LPWSABUF lpBuffers, DWORD dwBufferCount,
   for( dwCount = 0, rc = 0; dwCount < dwBufferCount; dwCount++ )
   {
 
-    if( ( rc = WSOCK32_recvfrom(s, lpBuffers[ dwCount ].buf, (INT)lpBuffers[ dwCount ].len,
+    if( ( rc = WS_recvfrom(s, lpBuffers[ dwCount ].buf, (INT)lpBuffers[ dwCount ].len,
                                 (INT)*lpFlags, lpFrom, lpFromlen ) ) != 0 )
     {
        break;

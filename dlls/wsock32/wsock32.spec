@@ -68,7 +68,7 @@ debug_channels (winsock)
 #1105 stub sethostname
 #1106 stub dn_expand
 1107 stdcall WSARecvEx(long ptr long ptr) WSARecvEx
-1108 stdcall s_perror(str) WS_s_perror
+1108 stdcall s_perror(str) s_perror
 1109 stub GetAddressByNameA
 1110 stub GetAddressByNameW
 1111 stdcall EnumProtocolsA(ptr ptr ptr) EnumProtocolsA

@@ -4,7 +4,7 @@
 
 name ws2_32
 type win32
-init WSOCK32_LibMain
+init WS_LibMain
 
 import user32.dll
 import kernel32.dll
@@ -13,29 +13,29 @@ import ntdll.dll
 debug_channels (winsock)
 
 #  EXPORTS ***********
-1   stdcall  accept(long ptr ptr) WSOCK32_accept
-2   stdcall  bind(long ptr long) WSOCK32_bind
-3   stdcall  closesocket(long) WSOCK32_closesocket
-4   stdcall  connect(long ptr long) WSOCK32_connect
-5   stdcall  getpeername(long ptr ptr) WSOCK32_getpeername
-6   stdcall  getsockname(long ptr ptr) WSOCK32_getsockname
-7   stdcall  getsockopt(long long long ptr ptr) WSOCK32_getsockopt
-8   stdcall  htonl(long) WINSOCK_htonl
-9   stdcall  htons(long) WINSOCK_htons
-10  stdcall  ioctlsocket(long long ptr) WSOCK32_ioctlsocket
-11  stdcall  inet_addr(str) WINSOCK_inet_addr
-12  stdcall  inet_ntoa(ptr) WSOCK32_inet_ntoa
-13  stdcall  listen(long long) WSOCK32_listen
-14  stdcall  ntohl(long) WINSOCK_ntohl
-15  stdcall  ntohs(long) WINSOCK_ntohs
-16  stdcall  recv(long ptr long long) WSOCK32_recv
-17  stdcall  recvfrom(long ptr long long ptr ptr) WSOCK32_recvfrom
-18  stdcall  select(long ptr ptr ptr ptr) WSOCK32_select
-19  stdcall  send(long ptr long long) WSOCK32_send
-20  stdcall  sendto(long ptr long long ptr long) WSOCK32_sendto
-21  stdcall  setsockopt(long long long ptr long) WSOCK32_setsockopt
-22  stdcall  shutdown(long long) WSOCK32_shutdown
-23  stdcall  socket(long long long) WSOCK32_socket
+1   stdcall  accept(long ptr ptr) WS_accept
+2   stdcall  bind(long ptr long) WS_bind
+3   stdcall  closesocket(long) WS_closesocket
+4   stdcall  connect(long ptr long) WS_connect
+5   stdcall  getpeername(long ptr ptr) WS_getpeername
+6   stdcall  getsockname(long ptr ptr) WS_getsockname
+7   stdcall  getsockopt(long long long ptr ptr) WS_getsockopt
+8   stdcall  htonl(long) WS_htonl
+9   stdcall  htons(long) WS_htons
+10  stdcall  ioctlsocket(long long ptr) WS_ioctlsocket
+11  stdcall  inet_addr(str) WS_inet_addr
+12  stdcall  inet_ntoa(ptr) WS_inet_ntoa
+13  stdcall  listen(long long) WS_listen
+14  stdcall  ntohl(long) WS_ntohl
+15  stdcall  ntohs(long) WS_ntohs
+16  stdcall  recv(long ptr long long) WS_recv
+17  stdcall  recvfrom(long ptr long long ptr ptr) WS_recvfrom
+18  stdcall  select(long ptr ptr ptr ptr) WS_select
+19  stdcall  send(long ptr long long) WS_send
+20  stdcall  sendto(long ptr long long ptr long) WS_sendto
+21  stdcall  setsockopt(long long long ptr long) WS_setsockopt
+22  stdcall  shutdown(long long) WS_shutdown
+23  stdcall  socket(long long long) WS_socket
 24  stdcall  WSApSetPostRoutine(ptr) WSApSetPostRoutine
 25  stub     WPUCompleteOverlappedRequest
 26  stub     WSAAccept
@@ -63,13 +63,13 @@ debug_channels (winsock)
 48  stub     WSAInstallServiceClassA
 49  stub     WSAInstallServiceClassW
 50  stdcall  WSAIoctl(long long ptr long ptr long ptr ptr ptr) WSAIoctl
-51  stdcall  gethostbyaddr(ptr long long) WSOCK32_gethostbyaddr
-52  stdcall  gethostbyname(str) WSOCK32_gethostbyname
-53  stdcall  getprotobyname(str) WSOCK32_getprotobyname
-54  stdcall  getprotobynumber(long) WSOCK32_getprotobynumber
-55  stdcall  getservbyname(str str) WSOCK32_getservbyname
-56  stdcall  getservbyport(long str) WSOCK32_getservbyport
-57  stdcall  gethostname(ptr long) WSOCK32_gethostname
+51  stdcall  gethostbyaddr(ptr long long) WS_gethostbyaddr
+52  stdcall  gethostbyname(str) WS_gethostbyname
+53  stdcall  getprotobyname(str) WS_getprotobyname
+54  stdcall  getprotobynumber(long) WS_getprotobynumber
+55  stdcall  getservbyname(str str) WS_getservbyname
+56  stdcall  getservbyport(long str) WS_getservbyport
+57  stdcall  gethostname(ptr long) WS_gethostname
 58  stub     WSAJoinLeaf
 59  stub     WSALookupServiceBeginA
 60  stub     WSALookupServiceBeginW

@@ -167,10 +167,10 @@ static int WS_copy_he(char *p_to,char *p_base,int t_size,struct hostent* p_he, i
 {
 	char* p_name,*p_aliases,*p_addr,*p;
 	struct ws_hostent16 *p_to16 = (struct ws_hostent16*)p_to;
-	struct ws_hostent32 *p_to32 = (struct ws_hostent32*)p_to;
+	struct WS_hostent *p_to32 = (struct WS_hostent*)p_to;
 	int	size = hostent_size(p_he) +
 		(
-		(flag & AQ_WIN16) ? sizeof(struct ws_hostent16) : sizeof(struct ws_hostent32)
+		(flag & AQ_WIN16) ? sizeof(struct ws_hostent16) : sizeof(struct WS_hostent)
 		- sizeof(struct hostent)
 		);
 
@@ -178,7 +178,7 @@ static int WS_copy_he(char *p_to,char *p_base,int t_size,struct hostent* p_he, i
 		return -size;
 	p = p_to;
 	p += (flag & AQ_WIN16) ?
-		sizeof(struct ws_hostent16) : sizeof(struct ws_hostent32);
+		sizeof(struct ws_hostent16) : sizeof(struct WS_hostent);
 	p_name = p;
 	strcpy(p, p_he->h_name); p += strlen(p) + 1;
 	p_aliases = p;
@@ -225,10 +225,10 @@ static int WS_copy_pe(char *p_to,char *p_base,int t_size,struct protoent* p_pe, 
 {
 	char* p_name,*p_aliases,*p;
 	struct ws_protoent16 *p_to16 = (struct ws_protoent16*)p_to;
-	struct ws_protoent32 *p_to32 = (struct ws_protoent32*)p_to;
+	struct WS_protoent *p_to32 = (struct WS_protoent*)p_to;
 	int	size = protoent_size(p_pe) +
 		(
-		(flag & AQ_WIN16) ? sizeof(struct ws_protoent16) : sizeof(struct ws_protoent32)
+		(flag & AQ_WIN16) ? sizeof(struct ws_protoent16) : sizeof(struct WS_protoent)
 		- sizeof(struct protoent)
 		);
 
@@ -236,7 +236,7 @@ static int WS_copy_pe(char *p_to,char *p_base,int t_size,struct protoent* p_pe, 
 		return -size;
 	p = p_to;
 	p += (flag & AQ_WIN16) ?
-		sizeof(struct ws_protoent16) : sizeof(struct ws_protoent32);
+		sizeof(struct ws_protoent16) : sizeof(struct WS_protoent);
 	p_name = p;
 	strcpy(p, p_pe->p_name); p += strlen(p) + 1;
 	p_aliases = p;
@@ -279,10 +279,10 @@ static int WS_copy_se(char *p_to,char *p_base,int t_size,struct servent* p_se, i
 {
 	char* p_name,*p_aliases,*p_proto,*p;
 	struct ws_servent16 *p_to16 = (struct ws_servent16*)p_to;
-	struct ws_servent32 *p_to32 = (struct ws_servent32*)p_to;
+	struct WS_servent *p_to32 = (struct WS_servent*)p_to;
 	int	size = servent_size(p_se) +
 		(
-		(flag & AQ_WIN16) ? sizeof(struct ws_servent16) : sizeof(struct ws_servent32) 
+		(flag & AQ_WIN16) ? sizeof(struct ws_servent16) : sizeof(struct WS_servent) 
 		- sizeof(struct servent)
 		);
 
@@ -290,7 +290,7 @@ static int WS_copy_se(char *p_to,char *p_base,int t_size,struct servent* p_se, i
 		return -size;
 	p = p_to;
 	p += (flag & AQ_WIN16) ?
-		sizeof(struct ws_servent16) : sizeof(struct ws_servent32);
+		sizeof(struct ws_servent16) : sizeof(struct WS_servent);
 	p_name = p;
 	strcpy(p, p_se->s_name); p += strlen(p) + 1;
 	p_proto = p;

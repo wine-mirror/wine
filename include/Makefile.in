@@ -188,6 +188,7 @@ INSTALLED_INCLUDES = \
 	wnaspi32.h \
 	wownt32.h \
 	ws2spi.h \
+	ws2tcpip.h \
 	wshisotp.h \
 	wsipx.h \
 	wtypes.h \

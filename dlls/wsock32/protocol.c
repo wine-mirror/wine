@@ -4,10 +4,20 @@
  * Copyright (C) 2001 Stefan Leichter
  */
 
+/* All we need are a couple constants for EnumProtocols. Once it is 
+ * moved to ws2_32 we may no longer need it
+ */
+#define USE_WS_PREFIX
+
 #include "config.h"
 
+#include <arpa/inet.h>
+#include <netdb.h>
+#include <netinet/in.h>
 #include <stdio.h>
 #include <string.h>
+#include <sys/socket.h>
+
 #include "winbase.h"
 #include "winnls.h"
 #include "wine/unicode.h"
@@ -52,12 +62,12 @@ static INT WSOCK32_EnterSingleProtocol( INT iProtocol,
 
   *lpSize = sizeof( PROTOCOL_INFOA);
   switch (iProtocol) {
-    case IPPROTO_TCP :
+    case WS_IPPROTO_TCP :
         dwLength = (unicode) ? sizeof(WCHAR) * (strlenW(NameTcp)+1) :
                                WideCharToMultiByte( CP_ACP, 0, NameTcp, -1,
                                                     NULL, 0, NULL, NULL);
       break;
-    case IPPROTO_UDP :
+    case WS_IPPROTO_UDP :
         dwLength = (unicode) ? sizeof(WCHAR) * (strlenW(NameUdp)+1) :
                                WideCharToMultiByte( CP_ACP, 0, NameUdp, -1,
                                                     NULL, 0, NULL, NULL);
@@ -97,7 +107,7 @@ static INT WSOCK32_EnterSingleProtocol( INT iProtocol,
   lpBuffer->iProtocol  = iProtocol;
 
   switch (iProtocol) {
-    case IPPROTO_TCP :
+    case WS_IPPROTO_TCP :
         lpBuffer->dwServiceFlags = XP_FRAGMENTATION      | XP_EXPEDITED_DATA     |
                                    XP_GRACEFUL_CLOSE     | XP_GUARANTEED_ORDER   |
                                    XP_GUARANTEED_DELIVERY;
@@ -108,7 +118,7 @@ static INT WSOCK32_EnterSingleProtocol( INT iProtocol,
         lpBuffer->dwMessageSize  = 0;
         lpProtName = NameTcp;
       break;
-    case IPPROTO_UDP :
+    case WS_IPPROTO_UDP :
         lpBuffer->dwServiceFlags = XP_FRAGMENTATION      | XP_SUPPORTS_BROADCAST |
                                    XP_SUPPORTS_MULTICAST | XP_MESSAGE_ORIENTED   |
                                    XP_CONNECTIONLESS;
@@ -162,6 +172,10 @@ static INT WSOCK32_EnterSingleProtocol( INT iProtocol,
   return iAnz;
 }
 
+/* FIXME: EnumProtocols should be moved to winsock2, and this should be 
+ * implemented by calling out to WSAEnumProtocols. See:
+ * http://support.microsoft.com/support/kb/articles/Q129/3/15.asp
+ */
 /*****************************************************************************
  *          WSOCK32_EnumProtocol [internal]
  *
@@ -194,7 +208,7 @@ static INT WSOCK32_EnumProtocol( LPINT lpiProtocols, PROTOCOL_INFOA* lpBuffer,
                                  LPDWORD lpdwLength, BOOL unicode)
 { DWORD dwCurSize, dwOldSize = *lpdwLength, dwTemp;
   INT   anz = 0, i;
-  INT   iLocal[] = { IPPROTO_TCP, IPPROTO_UDP, NSPROTO_IPX, NSPROTO_SPXII, 0};
+  INT   iLocal[] = { WS_IPPROTO_TCP, WS_IPPROTO_UDP, NSPROTO_IPX, NSPROTO_SPXII, 0};
 
   if (!lpiProtocols) lpiProtocols = iLocal;
 

@@ -32,11 +32,16 @@
 
 #include "winerror.h"
 #include "winbase.h"
-#include "winsock2.h"
 #include "process.h"
 #include "handle.h"
 #include "thread.h"
 #include "request.h"
+
+/* To avoid conflicts with the Unix socket headers. Plus we only need a few
+ * macros anyway.
+ */
+#define USE_WS_PREFIX
+#include "winsock2.h"
 
 struct sock
 {
