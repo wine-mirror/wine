@@ -1,0 +1,47 @@
+/*
+ * MOUSE driver interface
+ *
+ * Copyright 1998 Ulrich Weigand
+ */
+
+#ifndef __WINE_MOUSE_H
+#define __WINE_MOUSE_H
+
+#pragma pack(1)
+typedef struct _MOUSEINFO
+{
+    BYTE msExist;
+    BYTE msRelative;
+    WORD msNumButtons;
+    WORD msRate;
+    WORD msXThreshold;
+    WORD msYThreshold;
+    WORD msXRes;
+    WORD msYRes;
+    WORD msMouseCommPort;
+} MOUSEINFO, *LPMOUSEINFO;
+#pragma pack(4)
+
+typedef VOID (CALLBACK *LPMOUSE_EVENT_PROC)(DWORD,DWORD,DWORD,DWORD,DWORD);
+
+WORD WINAPI MOUSE_Inquire(LPMOUSEINFO lpMouseInfo);
+VOID WINAPI MOUSE_Enable(LPMOUSE_EVENT_PROC lpMouseEventProc);
+VOID WINAPI MOUSE_Disable(VOID);
+
+/* Wine internals */
+
+#define WINE_MOUSEEVENT_MAGIC  ( ('M'<<24)|('A'<<16)|('U'<<8)|'S' )
+typedef struct _WINE_MOUSEEVENT
+{
+    DWORD magic;
+    DWORD keyState;
+    DWORD time;
+    HWND32 hWnd;
+
+} WINE_MOUSEEVENT;
+
+void MOUSE_SendEvent( DWORD mouseStatus, DWORD posX, DWORD posY,
+                      DWORD keyState, DWORD time, HWND32 hWnd );
+
+#endif /* __WINE_MOUSE_H */
+
