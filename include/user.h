@@ -29,9 +29,37 @@ extern WORD USER_HeapSel;
 #define USUD_LOCALHEAP         0x0004
 #define USUD_FIRSTCLASS        0x0005
 
+struct tagCURSORICONINFO;
+struct DIDEVICEOBJECTDATA;
+
+#define WINE_KEYBOARD_CONFIG_AUTO_REPEAT 0x00000001
+typedef struct tagKEYBOARD_CONFIG {
+  BOOL auto_repeat;
+} KEYBOARD_CONFIG;
+
 typedef struct tagUSER_DRIVER {
-  BOOL (*pInitialize)(void);
-  void (*pFinalize)(void);
+    /* event functions */
+    void   (*pSynchronize)(void);
+    BOOL   (*pCheckFocus)(void);
+    void   (*pUserRepaintDisable)(BOOL);
+    /* keyboard functions */
+    void   (*pInitKeyboard)(void);
+    WORD   (*pVkKeyScan)(CHAR);
+    UINT16 (*pMapVirtualKey)(UINT16, UINT16);
+    INT16  (*pGetKeyNameText)(LONG, LPSTR, INT16);
+    INT16  (*pToAscii)(UINT16, UINT16, LPBYTE, LPVOID, UINT16);
+    BOOL   (*pGetBeepActive)(void);
+    void   (*pSetBeepActive)(BOOL);
+    void   (*pBeep)(void);
+    BOOL   (*pGetDIState)(DWORD, LPVOID);
+    BOOL   (*pGetDIData)(BYTE *, DWORD, struct DIDEVICEOBJECTDATA *, LPDWORD, DWORD);
+    void   (*pGetKeyboardConfig)(KEYBOARD_CONFIG *);
+    void   (*pSetKeyboardConfig)(KEYBOARD_CONFIG *, DWORD);
+    /* mouse functions */
+    void   (*pInitMouse)(void);
+    void   (*pSetCursor)(struct tagCURSORICONINFO *);
+    void   (*pMoveCursor)(WORD, WORD);
+    LONG   (*pEnableWarpPointer)(BOOL);
 } USER_DRIVER;
 
 extern USER_DRIVER *USER_Driver;

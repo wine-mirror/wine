@@ -126,12 +126,6 @@ static const DC_FUNCTIONS X11DRV_Funcs =
     NULL                             /* pWidenPath */
 };
 
-GDI_DRIVER X11DRV_GDI_Driver =
-{
-  X11DRV_GDI_Initialize,
-  X11DRV_GDI_Finalize
-};
-
 BITMAP_DRIVER X11DRV_BITMAP_Driver =
 {
   X11DRV_DIB_SetDIBits,

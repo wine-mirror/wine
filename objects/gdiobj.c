@@ -338,10 +338,6 @@ BOOL GDI_Init(void)
     ReadFontInformation("SystemFixed", &SystemFixedFont, 0, systemIsBold, 0, 0, 0);
     ReadFontInformation("DefaultGui", &DefaultGuiFont, 0, 0, 0, 0, 0);
 
-    /* Initialize drivers */
-
-    GDI_Driver->pInitialize();
-
     /* Create default palette */
 
     /* DR well *this* palette can't be moveable (?) */

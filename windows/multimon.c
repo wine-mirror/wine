@@ -38,22 +38,6 @@ static MONITOR *MONITOR_GetMonitor(HMONITOR hMonitor)
 #endif
 
 /***********************************************************************
- *              MONITOR_Initialize
- */
-void MONITOR_Initialize(MONITOR *pMonitor)
-{
-  MONITOR_Driver->pInitialize(pMonitor);
-}
-
-/***********************************************************************
- *              MONITOR_Finalize
- */
-void MONITOR_Finalize(MONITOR *pMonitor)
-{
-  MONITOR_Driver->pFinalize(pMonitor);
-}
-
-/***********************************************************************
  *              MONITOR_IsSingleWindow
  */
 BOOL MONITOR_IsSingleWindow(MONITOR *pMonitor)

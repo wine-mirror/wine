@@ -20,6 +20,7 @@
 #include "hook.h"
 #include "menu.h"
 #include "message.h"
+#include "monitor.h"
 #include "nonclient.h"
 #include "queue.h"
 #include "winpos.h"
@@ -602,10 +603,9 @@ BOOL WIN_CreateDesktopWindow(void)
     pWndDesktop = (WND *) USER_HEAP_LIN_ADDR( hwndDesktop );
 
     pDesktop = (DESKTOP *) pWndDesktop->wExtra;
-    pDesktop->pDriver = DESKTOP_Driver;
-    pWndDesktop->pDriver = WND_Driver;
+    pDesktop->pPrimaryMonitor = &MONITOR_PrimaryMonitor;
 
-    pDesktop->pDriver->pInitialize(pDesktop);
+    pWndDesktop->pDriver = WND_Driver;
     pWndDesktop->pDriver->pInitialize(pWndDesktop);
 
     pWndDesktop->next              = NULL;

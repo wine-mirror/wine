@@ -5,6 +5,7 @@
  */
 
 #include "dinput.h"
+#include "user.h"
 #include "keyboard.h"
 #include "ttydrv.h"
 

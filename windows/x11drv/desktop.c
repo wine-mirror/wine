@@ -37,49 +37,4 @@ Window X11DRV_DESKTOP_GetXRootWindow(DESKTOP *pDesktop)
   return X11DRV_MONITOR_GetXRootWindow(pDesktop->pPrimaryMonitor);
 }
 
-/***********************************************************************
- *              X11DRV_DESKTOP_Initialize
- */
-void X11DRV_DESKTOP_Initialize(DESKTOP *pDesktop)
-{
-  pDesktop->pPrimaryMonitor = &MONITOR_PrimaryMonitor;
-}
-
-/***********************************************************************
- *              X11DRV_DESKTOP_Finalize
- */
-void X11DRV_DESKTOP_Finalize(DESKTOP *pDesktop)
-{
-}
-
-/***********************************************************************
- *              X11DRV_DESKTOP_GetScreenWidth
- *
- * Return the width of the screen associated to the desktop.
- */
-int X11DRV_DESKTOP_GetScreenWidth(DESKTOP *pDesktop)
-{
-  return MONITOR_GetWidth(pDesktop->pPrimaryMonitor);
-}
-
-/***********************************************************************
- *              X11DRV_DESKTOP_GetScreenHeight
- *
- * Return the width of the screen associated to the desktop.
- */
-int X11DRV_DESKTOP_GetScreenHeight(DESKTOP *pDesktop)
-{
-  return MONITOR_GetHeight(pDesktop->pPrimaryMonitor);
-}
-
-/***********************************************************************
- *              X11DRV_DESKTOP_GetScreenDepth
- *
- * Return the depth of the screen associated to the desktop.
- */
-int X11DRV_DESKTOP_GetScreenDepth(DESKTOP *pDesktop)
-{
-  return MONITOR_GetDepth(pDesktop->pPrimaryMonitor);
-}
-
 #endif /* X_DISPLAY_MISSING */

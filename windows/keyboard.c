@@ -20,6 +20,7 @@
 #include "win.h"
 #include "heap.h"
 #include "keyboard.h"
+#include "user.h"
 #include "message.h"
 #include "callback.h"
 #include "builtin16.h"
@@ -31,8 +32,6 @@ DEFAULT_DEBUG_CHANNEL(keyboard)
 DECLARE_DEBUG_CHANNEL(event)
 
 /**********************************************************************/
-
-KEYBOARD_DRIVER *KEYBOARD_Driver = NULL;
 
 static LPKEYBD_EVENT_PROC DefKeybEventProc = NULL;
 LPBYTE pKeyStateTable = NULL;
@@ -67,7 +66,7 @@ VOID WINAPI KEYBOARD_Enable( LPKEYBD_EVENT_PROC lpKeybEventProc,
   /* all states to false */
   memset( lpKeyState, 0, 256 );
   
-  if (!initDone) KEYBOARD_Driver->pInit();
+  if (!initDone) USER_Driver->pInitKeyboard();
   initDone = TRUE;
 }
 
@@ -181,7 +180,7 @@ DWORD WINAPI OemKeyScan(WORD wOemChar)
 
 WORD WINAPI VkKeyScan16(CHAR cChar)
 {
-  return KEYBOARD_Driver->pVkKeyScan(cChar);
+    return USER_Driver->pVkKeyScan(cChar);
 }
 
 /******************************************************************************
@@ -214,7 +213,7 @@ INT16 WINAPI GetKeyboardType16(INT16 nTypeFlag)
  */
 UINT16 WINAPI MapVirtualKey16(UINT16 wCode, UINT16 wMapType)
 {
-  return KEYBOARD_Driver->pMapVirtualKey(wCode,wMapType);
+    return USER_Driver->pMapVirtualKey(wCode,wMapType);
 }
 
 /****************************************************************************
@@ -231,7 +230,7 @@ INT16 WINAPI GetKBCodePage16(void)
  */
 INT16 WINAPI GetKeyNameText16(LONG lParam, LPSTR lpBuffer, INT16 nSize)
 {
-  return KEYBOARD_Driver->pGetKeyNameText(lParam, lpBuffer, nSize);
+    return USER_Driver->pGetKeyNameText(lParam, lpBuffer, nSize);
 }
 
 /****************************************************************************
@@ -255,9 +254,7 @@ INT16 WINAPI GetKeyNameText16(LONG lParam, LPSTR lpBuffer, INT16 nSize)
 INT16 WINAPI ToAscii16(UINT16 virtKey,UINT16 scanCode, LPBYTE lpKeyState, 
                        LPVOID lpChar, UINT16 flags) 
 {
-    return KEYBOARD_Driver->pToAscii(
-        virtKey, scanCode, lpKeyState, lpChar, flags
-    );
+    return USER_Driver->pToAscii( virtKey, scanCode, lpKeyState, lpChar, flags );
 }
 
 /***********************************************************************
@@ -265,7 +262,7 @@ INT16 WINAPI ToAscii16(UINT16 virtKey,UINT16 scanCode, LPBYTE lpKeyState,
  */
 BOOL KEYBOARD_GetBeepActive()
 {
-  return KEYBOARD_Driver->pGetBeepActive();
+    return USER_Driver->pGetBeepActive();
 }
 
 /***********************************************************************
@@ -273,7 +270,7 @@ BOOL KEYBOARD_GetBeepActive()
  */
 void KEYBOARD_SetBeepActive(BOOL bActivate)
 {
-  KEYBOARD_Driver->pSetBeepActive(bActivate);
+    USER_Driver->pSetBeepActive(bActivate);
 }
 
 /***********************************************************************
@@ -281,6 +278,6 @@ void KEYBOARD_SetBeepActive(BOOL bActivate)
  */
 void KEYBOARD_Beep(void)
 {
-  KEYBOARD_Driver->pBeep();
+    USER_Driver->pBeep();
 }
 

@@ -110,9 +110,6 @@ BOOL MAIN_MainInit( int argc, char *argv[], BOOL win32 )
 
     if (!LoadLibraryA( "x11drv" )) return FALSE;
 
-    /* Initialize event handling */
-    if (!EVENT_Init()) return FALSE;
-
     SHELL_InitRegistrySaving();
 
     return TRUE;

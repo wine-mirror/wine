@@ -9,7 +9,6 @@
 
 #include "windef.h"
 
-struct tagDESKTOP_DRIVER;
 struct tagMONITOR;
 
 typedef struct tagDESKTOP
@@ -18,17 +17,8 @@ typedef struct tagDESKTOP
   HBITMAP               hbitmapWallPaper;
   SIZE                  bitmapSize;
   BOOL                  fTileWallPaper;
-  struct tagMONITOR      *pPrimaryMonitor;
-  struct tagDESKTOP_DRIVER *pDriver;         /* Desktop driver */
-  void                   *pDriverData;     /* Desktop driver data */
+  struct tagMONITOR    *pPrimaryMonitor;
 } DESKTOP;
-
-typedef struct tagDESKTOP_DRIVER {
-  void (*pInitialize)(struct tagDESKTOP *pDesktop);
-  void (*pFinalize)(struct tagDESKTOP *pDesktop);
-} DESKTOP_DRIVER;
-
-extern DESKTOP_DRIVER *DESKTOP_Driver;
 
 extern BOOL DESKTOP_IsSingleWindow(void);
 extern int DESKTOP_GetScreenWidth(void);

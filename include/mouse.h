@@ -34,15 +34,6 @@ VOID WINAPI MOUSE_Disable(VOID);
 
 /* Wine internals */
 
-typedef struct tagMOUSE_DRIVER {
-  VOID (*pInit)(VOID);
-  VOID (*pSetCursor)(struct tagCURSORICONINFO *);
-  VOID (*pMoveCursor)(WORD, WORD);
-  LONG (*pEnableWarpPointer)(BOOL);
-} MOUSE_DRIVER;
-
-extern MOUSE_DRIVER *MOUSE_Driver;
-
 #define WINE_MOUSEEVENT_MAGIC  ( ('M'<<24)|('A'<<16)|('U'<<8)|'S' )
 typedef struct _WINE_MOUSEEVENT
 {

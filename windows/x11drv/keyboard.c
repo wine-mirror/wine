@@ -26,6 +26,7 @@
 #include "wine/winuser16.h"
 #include "dinput.h"
 #include "debugtools.h"
+#include "user.h"
 #include "keyboard.h"
 #include "message.h"
 #include "winnls.h"
@@ -34,7 +35,6 @@
 
 DEFAULT_DEBUG_CHANNEL(keyboard)
 DECLARE_DEBUG_CHANNEL(key)
-DECLARE_DEBUG_CHANNEL(x11drv)
 DECLARE_DEBUG_CHANNEL(dinput)
 
 extern BYTE InputKeyStateTable[256];
@@ -1474,7 +1474,7 @@ BOOL X11DRV_KEYBOARD_GetDIState(DWORD len, LPVOID ptr)
       }
     return TRUE;
   }
-  WARN_(x11drv)("whoops, X11DRV_KEYBOARD_GetState got len %ld?\n", len);
+  WARN("whoops, X11DRV_KEYBOARD_GetState got len %ld?\n", len);
   return TRUE;
 }
 

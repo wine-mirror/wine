@@ -13,17 +13,16 @@
 #include "module.h"
 #include "mouse.h"
 #include "monitor.h"
+#include "user.h"
 #include "windef.h"
 #include "wingdi.h"
 #include "winuser.h"
 #include "win.h"
 #include "wine/winbase16.h"
 
-DEFAULT_DEBUG_CHANNEL(event)
+DEFAULT_DEBUG_CHANNEL(event);
 
 /**********************************************************************/
-
-MOUSE_DRIVER *MOUSE_Driver = NULL;
 
 static LPMOUSE_EVENT_PROC DefMouseEventProc = NULL;
 
@@ -57,10 +56,10 @@ VOID WINAPI MOUSE_Enable(LPMOUSE_EVENT_PROC lpMouseEventProc)
 
     /* Now initialize the mouse driver */
     if (initDone == FALSE)
-	{
-		MOUSE_Driver->pInit();
+    {
+        USER_Driver->pInitMouse();
     	initDone = TRUE;
-	}
+    }
 }
 
 static VOID WINAPI MOUSE_CallMouseEventProc( FARPROC16 proc,
@@ -127,11 +126,11 @@ void MOUSE_SendEvent( DWORD mouseStatus, DWORD posX, DWORD posY,
     wme.hWnd     = hWnd;
     wme.keyState = keyState;
     
-    MOUSE_Driver->pEnableWarpPointer(FALSE);
+    USER_Driver->pEnableWarpPointer(FALSE);
     /* To avoid deadlocks, we have to suspend all locks on windows structures
        before the program control is passed to the mouse driver */
     iWndsLocks = WIN_SuspendWndsLock();
     DefMouseEventProc( mouseStatus, posX, posY, 0, (DWORD)&wme );
     WIN_RestoreWndsLock(iWndsLocks);
-    MOUSE_Driver->pEnableWarpPointer(TRUE);
+    USER_Driver->pEnableWarpPointer(TRUE);
 }

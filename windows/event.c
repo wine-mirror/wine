@@ -7,30 +7,10 @@
 
 #include "message.h"
 #include "user.h"
-#include "x11drv.h"
-#include "ttydrv.h"
-#include "monitor.h"
+#include "win.h"
 #include "debugtools.h"
 
-DECLARE_DEBUG_CHANNEL(event)
-
-/**********************************************************************/
-
-EVENT_DRIVER *EVENT_Driver = NULL;
-
-/***********************************************************************
- *		EVENT_Init
- *
- * Initialize input event handling
- */
-BOOL EVENT_Init(void)
-{
-    USER_Driver->pInitialize();
-
-    MONITOR_Initialize(&MONITOR_PrimaryMonitor);
-
-    return EVENT_Driver->pInit();
-}
+DECLARE_DEBUG_CHANNEL(event);
 
 /***********************************************************************
  *		EVENT_Synchronize
@@ -40,7 +20,7 @@ BOOL EVENT_Init(void)
 void EVENT_Synchronize( void )
 {
     int iWndsLocks = WIN_SuspendWndsLock();
-    EVENT_Driver->pSynchronize();
+    USER_Driver->pSynchronize();
     WIN_RestoreWndsLock(iWndsLocks);
 }
 
@@ -49,7 +29,7 @@ void EVENT_Synchronize( void )
  */
 BOOL EVENT_CheckFocus(void)
 {
-  return EVENT_Driver->pCheckFocus();
+  return USER_Driver->pCheckFocus();
 }
 
 

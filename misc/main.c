@@ -6,12 +6,6 @@
 
 #include "config.h"
 
-#ifndef X_DISPLAY_MISSING
-#include "x11drv.h"
-#else /* !defined(X_DISPLAY_MISSING) */
-#include "ttydrv.h"
-#endif /* !defined(X_DISPLAY_MISSING) */
-
 #include <locale.h>
 #include <ctype.h>
 #include <stdlib.h>
@@ -640,11 +634,6 @@ void MAIN_ParseLanguageOption( const char *arg )
  */
 static void called_at_exit(void)
 {
-    if (GDI_Driver)
-	GDI_Driver->pFinalize();
-    if (USER_Driver)
-	USER_Driver->pFinalize();
-
     CONSOLE_Close();
 }
 

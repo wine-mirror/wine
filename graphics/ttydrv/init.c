@@ -112,12 +112,6 @@ static const DC_FUNCTIONS TTYDRV_DC_Driver =
 };
 
 
-GDI_DRIVER TTYDRV_GDI_Driver =
-{
-  TTYDRV_GDI_Initialize,
-  TTYDRV_GDI_Finalize
-};
-
 BITMAP_DRIVER TTYDRV_BITMAP_Driver =
 {
   TTYDRV_BITMAP_SetDIBits,

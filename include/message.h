@@ -26,16 +26,6 @@ extern BOOL TIMER_GetTimerMsg( struct tagMSG *msg, HWND hwnd,
                                  HQUEUE16 hQueue, BOOL remove );
 
 /* event.c */
-typedef struct tagEVENT_DRIVER {
-  BOOL   (*pInit)(void);
-  void   (*pSynchronize)(void);
-  BOOL   (*pCheckFocus)(void);
-  void   (*pUserRepaintDisable)(BOOL);
-} EVENT_DRIVER;
-
-extern EVENT_DRIVER *EVENT_Driver;
-
-extern BOOL EVENT_Init( void );
 extern void EVENT_Synchronize( void );
 extern BOOL EVENT_CheckFocus( void );
 

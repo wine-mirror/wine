@@ -16,9 +16,6 @@
 #include "win.h"
 #include "wine/winuser16.h"
 
-/**********************************************************************/
-
-DESKTOP_DRIVER *DESKTOP_Driver = NULL;
 
 /***********************************************************************
  *		DESKTOP_IsSingleWindow

@@ -275,8 +275,6 @@ extern void X11DRV_DIB_DeleteDIBSection(struct tagBITMAPOBJ *bmp);
  * X11 GDI driver
  */
 
-extern struct tagGDI_DRIVER X11DRV_GDI_Driver;
-
 BOOL X11DRV_GDI_Initialize(void);
 void X11DRV_GDI_Finalize(void);
 
@@ -312,14 +310,9 @@ extern BOOL X11DRV_PALETTE_IsDark(int pixel);
  * X11 USER driver
  */
 
-extern struct tagUSER_DRIVER X11DRV_USER_Driver;
-
 extern Display *display;
 extern Screen *X11DRV_GetXScreen(void);
 extern Window X11DRV_GetXRootWindow(void);
-
-extern BOOL X11DRV_USER_Initialize(void);
-extern void X11DRV_USER_Finalize(void);
 
 /* X11 clipboard driver */
 
@@ -343,26 +336,12 @@ extern void X11DRV_CLIPBOARD_ReleaseSelection(Atom selType, Window w, HWND hwnd)
 
 /* X11 desktop driver */
 
-extern struct tagDESKTOP_DRIVER X11DRV_DESKTOP_Driver;
-
-typedef struct _X11DRV_DESKTOP_DATA {
-  int dummy;
-} X11DRV_DESKTOP_DATA;
-
 struct tagDESKTOP;
 
 extern Screen *X11DRV_DESKTOP_GetXScreen(struct tagDESKTOP *pDesktop);
 extern Window X11DRV_DESKTOP_GetXRootWindow(struct tagDESKTOP *pDesktop);
 
-extern void X11DRV_DESKTOP_Initialize(struct tagDESKTOP *pDesktop);
-extern void X11DRV_DESKTOP_Finalize(struct tagDESKTOP *pDesktop);
-extern int X11DRV_DESKTOP_GetScreenWidth(struct tagDESKTOP *pDesktop);
-extern int X11DRV_DESKTOP_GetScreenHeight(struct tagDESKTOP *pDesktop);
-extern int X11DRV_DESKTOP_GetScreenDepth(struct tagDESKTOP *pDesktop);
-
 /* X11 event driver */
-
-extern struct tagEVENT_DRIVER X11DRV_EVENT_Driver;
 
 extern WORD X11DRV_EVENT_XStateToKeyState( int state ) ;
 
@@ -383,8 +362,6 @@ void X11DRV_EVENT_SetDGAStatus(HWND hwnd, int event_base) ;
 
 
 /* X11 keyboard driver */
-
-extern struct tagKEYBOARD_DRIVER X11DRV_KEYBOARD_Driver;
 
 extern void X11DRV_KEYBOARD_Init(void);
 extern WORD X11DRV_KEYBOARD_VkKeyScan(CHAR cChar);
@@ -430,8 +407,6 @@ extern int X11DRV_MONITOR_GetScreenSaveTimeout(struct tagMONITOR *pMonitor);
 extern void X11DRV_MONITOR_SetScreenSaveTimeout(struct tagMONITOR *pMonitor, int nTimeout);
 
 /* X11 mouse driver */
-
-extern struct tagMOUSE_DRIVER X11DRV_MOUSE_Driver;
 
 extern void X11DRV_MOUSE_Init();
 extern void X11DRV_MOUSE_SetCursor(struct tagCURSORICONINFO *lpCursor);

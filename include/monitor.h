@@ -32,8 +32,6 @@ extern MONITOR_DRIVER *MONITOR_Driver;
 
 extern MONITOR MONITOR_PrimaryMonitor;
 
-extern void MONITOR_Initialize(MONITOR *pMonitor);
-extern void MONITOR_Finalize(MONITOR *pMonitor);
 extern BOOL MONITOR_IsSingleWindow(MONITOR *pMonitor);
 extern int MONITOR_GetWidth(MONITOR *pMonitor);
 extern int MONITOR_GetHeight(MONITOR *pMonitor);

@@ -114,11 +114,6 @@ extern BOOL TTYDRV_PALETTE_IsDark(int pixel);
  * TTY USER driver
  */
 
-extern struct tagUSER_DRIVER TTYDRV_USER_Driver;
-
-extern BOOL TTYDRV_USER_Initialize(void);
-extern void TTYDRV_USER_Finalize(void);
-
 /* TTY clipboard driver */
 
 extern struct tagCLIPBOARD_DRIVER TTYDRV_CLIPBOARD_Driver;
@@ -134,30 +129,17 @@ extern void TTYDRV_CLIPBOARD_ResetOwner(struct tagWND *pWnd, BOOL bFooBar);
 
 /* TTY desktop driver */
 
-extern struct tagDESKTOP_DRIVER TTYDRV_DESKTOP_Driver;
-
 #ifdef HAVE_LIBCURSES
 extern WINDOW *TTYDRV_DESKTOP_GetCursesRootWindow(struct tagDESKTOP *pDesktop);
 #endif /* defined(HAVE_LIBCURSES) */
 
-extern void TTYDRV_DESKTOP_Initialize(struct tagDESKTOP *pDesktop);
-extern void TTYDRV_DESKTOP_Finalize(struct tagDESKTOP *pDesktop);
-extern int TTYDRV_DESKTOP_GetScreenWidth(struct tagDESKTOP *pDesktop);
-extern int TTYDRV_DESKTOP_GetScreenHeight(struct tagDESKTOP *pDesktop);
-extern int TTYDRV_DESKTOP_GetScreenDepth(struct tagDESKTOP *pDesktop);
-
 /* TTY event driver */
 
-extern struct tagEVENT_DRIVER TTYDRV_EVENT_Driver;
-
-extern BOOL TTYDRV_EVENT_Init(void);
 extern void TTYDRV_EVENT_Synchronize(void);
 extern BOOL TTYDRV_EVENT_CheckFocus(void);
 extern void TTYDRV_EVENT_UserRepaintDisable(BOOL bDisable);
 
 /* TTY keyboard driver */
-
-extern struct tagKEYBOARD_DRIVER TTYDRV_KEYBOARD_Driver;
 
 extern void TTYDRV_KEYBOARD_Init(void);
 extern WORD TTYDRV_KEYBOARD_VkKeyScan(CHAR cChar);
@@ -208,8 +190,6 @@ extern int TTYDRV_MONITOR_GetScreenSaveTimeout(struct tagMONITOR *pMonitor);
 extern void TTYDRV_MONITOR_SetScreenSaveTimeout(struct tagMONITOR *pMonitor, int nTimeout);
 
 /* TTY mouse driver */
-
-extern struct tagMOUSE_DRIVER TTYDRV_MOUSE_Driver;
 
 extern void TTYDRV_MOUSE_Init();
 extern void TTYDRV_MOUSE_SetCursor(struct tagCURSORICONINFO *lpCursor);

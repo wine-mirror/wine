@@ -7,14 +7,6 @@
 #include "ttydrv.h"
 
 /***********************************************************************
- *		TTYDRV_EVENT_Init
- */
-BOOL TTYDRV_EVENT_Init(void)
-{
-  return TRUE;
-}
-
-/***********************************************************************
  *		TTYDRV_EVENT_Synchronize
  */
 void TTYDRV_EVENT_Synchronize( void )
