@@ -1599,6 +1599,7 @@ dlls/olepro32/Makefile
 dlls/olesvr/Makefile
 dlls/opengl32/Makefile
 dlls/psapi/Makefile
+dlls/psapi/tests/Makefile
 dlls/qcap/Makefile
 dlls/quartz/Makefile
 dlls/rasapi32/Makefile

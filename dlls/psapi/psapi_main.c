@@ -25,6 +25,7 @@
 #include "winbase.h"
 #include "winerror.h"
 #include "wine/server.h"
+#include "wine/unicode.h"
 #include "wine/debug.h"
 #include "winnls.h"
 #include "psapi.h"
@@ -291,15 +292,24 @@ DWORD WINAPI GetMappedFileNameW(HANDLE hProcess, LPVOID lpv, LPWSTR lpFilename,
 DWORD WINAPI GetModuleBaseNameA(HANDLE hProcess, HMODULE hModule, 
                                 LPSTR lpBaseName, DWORD nSize)
 {
-    char        tmp[MAX_PATH];
-    char*       ptr;
+    WCHAR *lpBaseNameW;
+    DWORD buflenW, ret = 0;
 
-    if (!GetModuleFileNameExA(hProcess, hModule, tmp, sizeof(tmp)))
+    if(!lpBaseName || !nSize) {
+        SetLastError(ERROR_INVALID_PARAMETER);
         return 0;
-    if ((ptr = strrchr(tmp, '\\')) != NULL) ptr++; else ptr = tmp;
-    strncpy(lpBaseName, ptr, nSize);
-    lpBaseName[nSize - 1] = '\0';
-    return strlen(lpBaseName);
+    }
+    lpBaseNameW = HeapAlloc(GetProcessHeap(), 0, sizeof(WCHAR) * nSize);
+    buflenW = GetModuleBaseNameW(hProcess, hModule, lpBaseNameW, nSize);
+    TRACE("%ld, %s\n", buflenW, debugstr_w(lpBaseNameW));
+    if (buflenW)
+    {
+        ret = WideCharToMultiByte(CP_ACP, 0, lpBaseNameW, buflenW,
+                                  lpBaseName, nSize, NULL, NULL);
+        if (ret < nSize) lpBaseName[ret] = 0;
+    }
+    HeapFree(GetProcessHeap(), 0, lpBaseNameW);
+    return ret;
 }
 
 /***********************************************************************
@@ -308,30 +318,21 @@ DWORD WINAPI GetModuleBaseNameA(HANDLE hProcess, HMODULE hModule,
 DWORD WINAPI GetModuleBaseNameW(HANDLE hProcess, HMODULE hModule, 
                                 LPWSTR lpBaseName, DWORD nSize)
 {
-    char*       ptr;
-    DWORD       len;
+    WCHAR  tmp[MAX_PATH];
+    WCHAR* ptr;
 
-    TRACE("(hProcess=%p, hModule=%p, %p, %ld)\n",
-          hProcess, hModule, lpBaseName, nSize);
-   
-    if (!lpBaseName || !nSize) return 0;
-
-    ptr = HeapAlloc(GetProcessHeap(), 0, nSize / 2);
-    if (!ptr) return 0;
-
-    len = GetModuleBaseNameA(hProcess, hModule, ptr, nSize / 2);
-    if (len == 0)
-    {
-        lpBaseName[0] = '\0';
-    }
-    else
-    {
-        if (!MultiByteToWideChar( CP_ACP, 0, ptr, -1, lpBaseName, nSize / 2 ))
-            lpBaseName[nSize / 2 - 1] = 0;
+    if(!lpBaseName || !nSize) {
+        SetLastError(ERROR_INVALID_PARAMETER);
+        return 0;
     }
 
-    HeapFree(GetProcessHeap(), 0, ptr);
-    return len;
+    if (!GetModuleFileNameExW(hProcess, hModule, tmp,
+                              sizeof(tmp)/sizeof(WCHAR)))
+        return 0;
+    TRACE("%s\n", debugstr_w(tmp));
+    if ((ptr = strrchrW(tmp, '\\')) != NULL) ptr++; else ptr = tmp;
+    strncpyW(lpBaseName, ptr, nSize);
+    return min(strlenW(ptr), nSize);
 }
 
 /***********************************************************************
@@ -387,6 +388,7 @@ DWORD WINAPI GetModuleFileNameExW(HANDLE hProcess, HMODULE hModule,
     {
         DWORD len = GetModuleFileNameW( hModule, lpFileName, nSize );
         if (nSize) lpFileName[nSize - 1] = '\0';
+        TRACE("return (cur) %s (%lu)\n", debugstr_w(lpFileName), len);
         return len;
     }
 
