@@ -801,6 +801,18 @@ UINT WINAPI MsiGetProductPropertyW( MSIHANDLE hProduct, LPCWSTR szProperty,
     return ERROR_CALL_NOT_IMPLEMENTED;
 }
 
+UINT WINAPI MsiVerifyPackageA( LPCSTR szPackage )
+{
+    FIXME("%s\n", debugstr_a(szPackage) );
+    return ERROR_CALL_NOT_IMPLEMENTED;
+}
+
+UINT WINAPI MsiVerifyPackageW( LPCWSTR szPackage )
+{
+    FIXME("%s\n", debugstr_w(szPackage) );
+    return ERROR_CALL_NOT_IMPLEMENTED;
+}
+
 HRESULT WINAPI MSI_DllGetVersion(DLLVERSIONINFO *pdvi)
 {
     TRACE("%p\n",pdvi);

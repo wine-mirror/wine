@@ -99,4 +99,8 @@ UINT WINAPI MsiProvideComponentFromDescriptorA(LPCSTR,LPSTR,DWORD*,DWORD*);
 UINT WINAPI MsiProvideComponentFromDescriptorW(LPCWSTR,LPWSTR,DWORD*,DWORD*);
 #define     MsiProvideComponentFromDescriptor WINELIB_NAME_AW(MsiProvideComponentFromDescriptor)
 
+UINT WINAPI MsiVerifyPackageA(LPCSTR);
+UINT WINAPI MsiVerifyPackageW(LPCWSTR);
+#define     MsiVerifyPackage WINELIB_NAME_AW(MsiVerifyPackage)
+
 #endif /* __WINE_MSI_H */

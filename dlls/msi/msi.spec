@@ -153,8 +153,8 @@
 153 stub MsiSummaryInfoSetPropertyW
 154 stub MsiUseFeatureA
 155 stub MsiUseFeatureW
-156 stub MsiVerifyPackageA
-157 stub MsiVerifyPackageW
+156 stdcall MsiVerifyPackageA(str)
+157 stdcall MsiVerifyPackageW(wstr)
 158 stdcall MsiViewClose(long)
 159 stdcall MsiViewExecute(long long)
 160 stdcall MsiViewFetch(long ptr)
