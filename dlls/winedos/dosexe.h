@@ -148,6 +148,14 @@ extern void WINAPI DOSVM_Int20Handler(CONTEXT86*);
 /* int21.c */
 extern void WINAPI DOSVM_Int21Handler(CONTEXT86*);
 
+/* int25.c */
+BOOL DOSVM_RawRead( BYTE, DWORD, DWORD, BYTE *, BOOL );
+void WINAPI DOSVM_Int25Handler( CONTEXT86 * );
+
+/* int26.c */
+BOOL DOSVM_RawWrite( BYTE, DWORD, DWORD, BYTE *, BOOL );
+void WINAPI DOSVM_Int26Handler( CONTEXT86 * );
+
 /* int29.c */
 extern void WINAPI DOSVM_Int29Handler(CONTEXT86*);
 

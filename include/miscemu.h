@@ -175,6 +175,7 @@ struct DPMI_segments
     WORD int48_sel;
 };
 
+/* msdos/dosmem.c */
 extern struct DPMI_segments DOSMEM_dpmi_segments;
 extern const struct DPMI_segments *DOSMEM_GetDPMISegments(void);
 
@@ -196,17 +197,10 @@ extern BOOL INSTR_EmulateInstruction( CONTEXT86 *context );
 extern DWORD IO_inport( int port, int count );
 extern void IO_outport( int port, int count, DWORD value );
 
-/* msdos/int25.c */
-extern void WINAPI INT_Int25Handler(CONTEXT86*);
-
-/* msdos/int26.c */
-extern void WINAPI INT_Int26Handler(CONTEXT86*);
-
 /* msdos/dpmi.c */
 extern BOOL DPMI_LoadDosSystem(void);
 
 /* misc/ppdev.c */
-
 extern BOOL IO_pp_outp(int port, DWORD* res);
 extern int IO_pp_inp(int port, DWORD* res);
 extern char IO_pp_init(void);

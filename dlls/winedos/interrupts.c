@@ -24,17 +24,6 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(int);
 
-/***********************************************************************
- *		DOSVM_Int25Handler (WINEDOS16.137)
- *		DOSVM_Int26Handler (WINEDOS16.138)
- *
- * FIXME: Interrupt handlers for interrupts implemented in other DLLs.
- *        These functions should be removed when the interrupt handlers have
- *        been moved to winedos.
- */
-void WINAPI DOSVM_Int25Handler( CONTEXT86 *context ) { INT_Int25Handler(context); }
-void WINAPI DOSVM_Int26Handler( CONTEXT86 *context ) { INT_Int26Handler(context); }
-
 static FARPROC16     DOSVM_Vectors16[256];
 static FARPROC48     DOSVM_Vectors48[256];
 static const INTPROC DOSVM_VectorsBuiltin[] =
