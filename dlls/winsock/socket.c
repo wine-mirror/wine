@@ -3470,3 +3470,29 @@ INT WINAPI WSAStringToAddressA(LPSTR AddressString,
     FIXME("(%s, %x, %p, %p, %p) Stub!\n", AddressString, AddressFamily, lpProtocolInfo, lpAddress, lpAddressLength);
     return 0;
 }
+
+/***********************************************************************
+ *              WSALookupServiceBeginA                       (WS2_32.59)
+ */
+INT WINAPI WSALookupServiceBeginA( LPWSAQUERYSETA lpqsRestrictions,
+                                   DWORD dwControlFlags,
+                                   LPHANDLE lphLookup)
+{
+    FIXME("(%p 0x%08lx %p) Stub!\n", lpqsRestrictions, dwControlFlags,
+            lphLookup);
+    WSASetLastError(WSA_NOT_ENOUGH_MEMORY);
+    return SOCKET_ERROR;
+}
+
+/***********************************************************************
+ *              WSALookupServiceBeginW                       (WS2_32.60)
+ */
+INT WINAPI WSALookupServiceBeginW( LPWSAQUERYSETW lpqsRestrictions,
+                                   DWORD dwControlFlags,
+                                   LPHANDLE lphLookup)
+{
+    FIXME("(%p 0x%08lx %p) Stub!\n", lpqsRestrictions, dwControlFlags,
+            lphLookup);
+    WSASetLastError(WSA_NOT_ENOUGH_MEMORY);
+    return SOCKET_ERROR;
+}

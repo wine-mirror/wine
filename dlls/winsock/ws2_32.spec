@@ -60,8 +60,8 @@
 56  stdcall  getservbyport(long str) WS_getservbyport
 57  stdcall  gethostname(ptr long) WS_gethostname
 58  stdcall  WSAJoinLeaf(long ptr long ptr ptr ptr ptr long)
-59  stub     WSALookupServiceBeginA
-60  stub     WSALookupServiceBeginW
+59  stdcall  WSALookupServiceBeginA(ptr long ptr)
+60  stdcall  WSALookupServiceBeginW(ptr long ptr)
 61  stub     WSALookupServiceEnd
 62  stub     WSALookupServiceNextA
 63  stub     WSALookupServiceNextW

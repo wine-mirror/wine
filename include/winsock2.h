@@ -317,7 +317,7 @@ typedef struct _FLOWSPEC {
        unsigned int      TokenBucketSize;
        unsigned int      PeakBandwidth;
        unsigned int      Latency;
-        unsigned int      DelayVariation;
+       unsigned int      DelayVariation;
        SERVICETYPE       ServiceType;
        unsigned int      MaxSduSize;
        unsigned int      MinimumPolicedSize;
@@ -349,6 +349,95 @@ typedef void (CALLBACK *LPWSAOVERLAPPED_COMPLETION_ROUTINE)
     DWORD dwFlags
 );
 
+#ifndef _tagBLOB_DEFINED
+#define _tagBLOB_DEFINED
+#define _BLOB_DEFINED
+#define _LPBLOB_DEFINED
+typedef struct _BLOB {
+        ULONG   cbSize;
+        BYTE   *pBlobData;
+} BLOB, *LPBLOB;
+#endif
+
+#ifndef __CSADDR_DEFINED__
+#define __CSADDR_DEFINED__
+
+typedef struct _SOCKET_ADDRESS {
+        LPSOCKADDR      lpSockaddr;
+        INT             iSockaddrLength;
+} SOCKET_ADDRESS, *PSOCKET_ADDRESS, *LPSOCKET_ADDRESS;
+
+typedef struct _CSADDR_INFO {
+        SOCKET_ADDRESS  LocalAddr;
+        SOCKET_ADDRESS  RemoteAddr;
+        INT             iSocketType;
+        INT             iProtocol;
+} CSADDR_INFO, *PCSADDR_INFO, *LPCSADDR_INFO;
+#endif
+
+/*socket address list */
+typedef struct _SOCKET_ADDRESS_LIST {
+        INT             iAddressCount;
+        SOCKET_ADDRESS  Address[1];
+} SOCKET_ADDRESS_LIST, *LPSOCKET_ADDRESS_LIST;
+
+/*   addressfamily protocol pairs */
+typedef struct _AFPROTOCOLS {
+        INT     iAddressFamily;
+        INT     iProtocol;
+} AFPROTOCOLS, *PAFPROTOCOLS, *LPAFPROTOCOLS;
+
+/* client query definitions */
+typedef enum _WSAEcomparator {
+        COMP_EQUAL = 0,
+        COMP_NOTLESS
+} WSAECOMPARATOR, *PWSAECOMPARATOR, *LPWSAECOMPARATOR;
+
+typedef struct _WSAVersion {
+        DWORD           dwVersion;
+        WSAECOMPARATOR  ecHow;
+} WSAVERSION, *PWSAVERSION, *LPWSAVERSION;
+
+
+typedef struct _WSAQuerySetA {
+        DWORD           dwSize;
+        LPSTR           lpszServiceInstanceName;
+        LPGUID          lpServiceClassId;
+        LPWSAVERSION    lpVersion;
+        LPSTR           lpszComment;
+        DWORD           dwNameSpace;
+        LPGUID          lpNSProviderId;
+        LPSTR           lpszContext;
+        DWORD           dwNumberOfProtocols;
+        LPAFPROTOCOLS   lpafpProtocols;
+        LPSTR           lpszQueryString;
+        DWORD           dwNumberOfCsAddrs;
+        LPCSADDR_INFO   lpcsaBuffer;
+        DWORD           dwOutputFlags;
+        LPBLOB          lpBlob;
+} WSAQUERYSETA, *PWSAQUERYSETA, *LPWSAQUERYSETA;
+
+typedef struct _WSAQuerySetW {
+        DWORD           dwSize;
+        LPWSTR          lpszServiceInstanceName;
+        LPGUID          lpServiceClassId;
+        LPWSAVERSION    lpVersion;
+        LPWSTR          lpszComment;
+        DWORD           dwNameSpace;
+        LPGUID          lpNSProviderId;
+        LPWSTR          lpszContext;
+        DWORD           dwNumberOfProtocols;
+        LPAFPROTOCOLS   lpafpProtocols;
+        LPWSTR          lpszQueryString;
+        DWORD           dwNumberOfCsAddrs;
+        LPCSADDR_INFO   lpcsaBuffer;
+        DWORD           dwOutputFlags;
+        LPBLOB          lpBlob;
+} WSAQUERYSETW, *PWSAQUERYSETW, *LPWSAQUERYSETW;
+
+DECL_WINELIB_TYPE_AW(WSAQUERYSET)
+DECL_WINELIB_TYPE_AW(PWSAQUERYSET)
+DECL_WINELIB_TYPE_AW(LPWSAQUERYSET)
 
 
 /*
@@ -447,8 +536,9 @@ int WINAPI WSAInstallServiceClassW(LPWSASERVICECLASSINFOW);
 #define WSAInstallServiceClass     WINELIB_NAME_AW(WSAInstallServiceClass)
 int WINAPI WSAIoctl(SOCKET,DWORD,LPVOID,DWORD,LPVOID,DWORD,LPDWORD,LPWSAOVERLAPPED,LPWSAOVERLAPPED_COMPLETION_ROUTINE);
 SOCKET WINAPI WSAJoinLeaf(SOCKET,const struct WS(sockaddr)*,int,LPWSABUF,LPWSABUF,LPQOS,LPQOS,DWORD);
-/* WSALookupServiceBeginA */
-/* WSALookupServiceBeginW */
+INT WINAPI WSALookupServiceBeginA( LPWSAQUERYSETA, DWORD, LPHANDLE);
+INT WINAPI WSALookupServiceBeginW( LPWSAQUERYSETW, DWORD, LPHANDLE);
+#define    WSALookupServiceBegin WINELIB_NAME_AW(WSALookupServiceBegin)
 /* WSALookupServiceEnd */
 /* WSALookupServiceNextA */
 /* WSALookupServiceNextW */

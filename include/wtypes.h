@@ -691,11 +691,16 @@ typedef struct tagBSTRBLOB {
     BYTE *pData;
 } BSTRBLOB, *LPBSTRBLOB;
 
+#ifndef _tagBLOB_DEFINED
+#define _tagBLOB_DEFINED
+#define _BLOB_DEFINED
+#define _LPBLOB_DEFINED
 typedef struct tagBLOB {
     ULONG cbSize;
     BYTE *pBlobData;
 } BLOB, *LPBLOB;
 
+#endif
 typedef struct tagCLIPDATA {
     ULONG cbSize;
     long ulClipFmt;

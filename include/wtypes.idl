@@ -638,10 +638,15 @@ typedef struct tagBSTRBLOB {
   [size_is(cbSize)] BYTE *pData;
 } BSTRBLOB, *LPBSTRBLOB;
 
+cpp_quote("#ifndef _tagBLOB_DEFINED")
+cpp_quote("#define _tagBLOB_DEFINED")
+cpp_quote("#define _BLOB_DEFINED")
+cpp_quote("#define _LPBLOB_DEFINED")
 typedef struct tagBLOB {
   ULONG cbSize;
   [size_is(cbSize)] BYTE *pBlobData;
 } BLOB, *LPBLOB;
+cpp_quote("#endif")
 
 typedef struct tagCLIPDATA {
   ULONG cbSize;
