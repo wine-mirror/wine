@@ -688,10 +688,24 @@ static int _w95_dump_dkv(_w95dkh *dkh,int nrLS,int nrMS,FILE *f)
     return TRUE;
 }
 
+static int _w95_dump_one_dke(LPCSTR key_name,_w95creg *creg,_w95rgkn *rgkn,_w95dke *dke,FILE *f,int level);
+
+static int _w95_dump_dke(LPCSTR key_name,_w95creg *creg,_w95rgkn *rgkn,_w95dke *dke,FILE *f,int level)
+{
+    while (1)
+    {
+	if (!_w95_dump_one_dke(key_name, creg, rgkn, dke, f, level))
+	    return FALSE;
+	if (dke->next == 0xffffffff)
+	    return TRUE;
+	dke = (_w95dke*)((char*)rgkn+dke->next);
+    }
+}
+
 /******************************************************************************
  * _w95_dump_dke [Internal]
  */
-static int _w95_dump_dke(LPCSTR key_name,_w95creg *creg,_w95rgkn *rgkn,_w95dke *dke,FILE *f,int level)
+static int _w95_dump_one_dke(LPCSTR key_name,_w95creg *creg,_w95rgkn *rgkn,_w95dke *dke,FILE *f,int level)
 {
     _w95dkh * dkh;
     LPSTR new_key_name = NULL;
@@ -719,14 +733,6 @@ static int _w95_dump_dke(LPCSTR key_name,_w95creg *creg,_w95rgkn *rgkn,_w95dke *
         if (len) new_key_name[len++] = '\\';
         memcpy( new_key_name + len, dkh->name, dkh->keynamelen );
         new_key_name[len + dkh->keynamelen] = 0;
-
-        /* walk sibling keys */
-        if (dke->next != 0xffffffff ) {
-            if (!_w95_dump_dke(key_name, creg, rgkn, (_w95dke*)((char*)rgkn+dke->next),f,level)) {
-                free(new_key_name);
-                return FALSE;
-            }
-        }
 
         /* write the key path (something like [Software\\Microsoft\\..]) only if:
            1) key has some values
