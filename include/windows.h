@@ -5,10 +5,6 @@
 #error Wine should not include windows.h internally
 #endif
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-
 /* All the basic includes */
 /* #include "excpt.h" */
 #include "windef.h"
@@ -85,9 +81,5 @@ BOOL      WINAPI CheckMenuRadioButton(HMENU,UINT,UINT,UINT,BOOL);
 WORD        WINAPI WOWHandle16(HANDLE,WOW_HANDLE_TYPE);
 
 #endif /* 0 */
-
-#ifdef __cplusplus
-}
-#endif
 
 #endif  /* __WINE_WINDOWS_H */
