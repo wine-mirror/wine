@@ -32,19 +32,17 @@ DEFAULT_DEBUG_CHANNEL(text);
  */
 LPWSTR FONT_mbtowc(HDC hdc, LPCSTR str, INT count, INT *plenW, UINT *pCP)
 {
-    LOGFONTW lf;
     UINT cp = CP_ACP;
     INT lenW;
     LPWSTR strW;
     CHARSETINFO csi;
-
-    GetObjectW(GetCurrentObject(hdc, OBJ_FONT), sizeof(lf), &lf);
+    int charset = GetTextCharset(hdc);
 
     /* Hmm, nicely designed api this one! */
-    if(TranslateCharsetInfo((DWORD*)(UINT)lf.lfCharSet, &csi, TCI_SRCCHARSET))
+    if(TranslateCharsetInfo((DWORD*)charset, &csi, TCI_SRCCHARSET))
         cp = csi.ciACP;
     else {
-        switch(lf.lfCharSet) {
+        switch(charset) {
 	case SYMBOL_CHARSET:
 	    cp = CP_SYMBOL;
 	    break;
@@ -74,7 +72,7 @@ LPWSTR FONT_mbtowc(HDC hdc, LPCSTR str, INT count, INT *plenW, UINT *pCP)
 
 
 	default:
-	    FIXME("Can't find codepage for charset %d\n", lf.lfCharSet);
+	    FIXME("Can't find codepage for charset %d\n", charset);
 	    break;
 	}
     }
@@ -226,6 +224,10 @@ UINT16 WINAPI GetTextCharset16(HDC16 hdc)
  *    Should it return a UINT32 instead of an INT32?
  *    => YES and YES, from win32.hlp from Borland
  *
+ *    This returns the actual charset selected by the driver rather than the
+ *    value in lf.lfCharSet during CreateFont, to get that use
+ *    GetObject(GetCurrentObject(...),...)
+ *
  * RETURNS
  *    Success: Character set identifier
  *    Failure: DEFAULT_CHARSET
@@ -235,20 +237,16 @@ UINT WINAPI GetTextCharsetInfo(
     LPFONTSIGNATURE fs, /* [out] Pointer to struct to receive data */
     DWORD flags)        /* [in]  Reserved - must be 0 */
 {
-    HGDIOBJ hFont;
     UINT charSet = DEFAULT_CHARSET;
-    LOGFONTW lf;
     CHARSETINFO csinfo;
+    TEXTMETRICW tm;
 
-    hFont = GetCurrentObject(hdc, OBJ_FONT);
-    if (hFont == 0)
-        return(DEFAULT_CHARSET);
-    if ( GetObjectW(hFont, sizeof(LOGFONTW), &lf) != 0 )
-        charSet = lf.lfCharSet;
+    if(!GetTextMetricsW(hdc, &tm)) return DEFAULT_CHARSET;
+    charSet = tm.tmCharSet;
 
     if (fs != NULL) {
       if (!TranslateCharsetInfo((LPDWORD)charSet, &csinfo, TCI_SRCCHARSET))
-           return  (DEFAULT_CHARSET);
+           return DEFAULT_CHARSET;
       memcpy(fs, &csinfo.fs, sizeof(FONTSIGNATURE));
     }
     return charSet;
