@@ -18,8 +18,7 @@ STRINGOBJS = \
 	accel.o \
 	string.o \
 	$(LANGUAGES:%=%.o) \
-	$(LICENSELANG:%=License_%.o) \
-	$(LANGUAGES:%=Strings_%.o) 
+	$(LICENSELANG:%=License_%.o)
 
 C_SRCS = $(MOSTOBJS:.o=.c) $(STRINGOBJS:.o=.c)
 

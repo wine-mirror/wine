@@ -21,6 +21,7 @@ C_SRCS = \
 	olesvr.c \
 	port.c \
 	rect.c \
+	registry.c \
 	shell.c \
 	sound.c \
 	spy.c \

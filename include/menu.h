@@ -12,7 +12,7 @@ extern BOOL MENU_Init(void);
 extern UINT MENU_GetMenuBarHeight( HWND hwnd, UINT menubarWidth,
 				   int orgX, int orgY );         /* menu.c */
 extern void MENU_TrackMouseMenuBar( HWND hwnd, POINT pt );       /* menu.c */
-extern void MENU_TrackKbdMenuBar( HWND hwnd, UINT wParam );      /* menu.c */
+extern void MENU_TrackKbdMenuBar( WND*, UINT wParam, INT vkey);  /* menu.c */
 extern UINT MENU_DrawMenuBar( HDC hDC, LPRECT lprect,
 			      HWND hwnd, BOOL suppress_draw );   /* menu.c */
 extern LRESULT PopupMenuWndProc(HWND hwnd,UINT message,WPARAM wParam,LPARAM lParam );

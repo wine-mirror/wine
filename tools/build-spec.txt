@@ -1,4 +1,5 @@
 name	NAME
+type    win16|win32
 id	ID_NUMBER
 
 ORDINAL VARTYPE EXPORTNAME (DATA [DATA [DATA [...]]])
@@ -16,9 +17,10 @@ ORDINAL return EXPORTNAME ARGLENGTH RETVALUE
 --------------------
 General:
 
-    "name" and "id" fields are mandatory.  Specific ordinal declarations
-are optional, but the default handler will print an error message.  Lines
-whose first character is a '#' will be ignored as comments.
+    "name", "type" and "id" fields are mandatory.  Specific ordinal
+declarations are optional, but the default handler will print an error
+message.  Lines whose first character is a '#' will be ignored as
+comments.
 
 Variable ordinals:
 

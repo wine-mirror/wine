@@ -92,20 +92,6 @@ typedef struct {
 #define STD_OUTPUT_HANDLE       ((DWORD) -11)
 #define STD_ERROR_HANDLE        ((DWORD) -12)
 
-/* The security attributes structure 
- */
-typedef struct {
-    DWORD nLength;
-    void *lpSecurityDescriptor;
-    BOOL bInheritHandle;
-} SECURITY_ATTRIBUTES, *LPSECURITY_ATTRIBUTES;
-
-typedef struct
-{
-  int dwLowDateTime;
-  int dwHighDateTime;
-} FILETIME;
-
 typedef struct
 {
   int dwFileAttributes;

@@ -1,4 +1,5 @@
 name	winspool
+type	win32
 base	100
 
 001 stub ADVANCEDSETUPDIALOG

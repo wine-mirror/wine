@@ -169,11 +169,11 @@ LRESULT ErrorProc(HWND hWnd,UINT msg,WPARAM wParam,LPARAM lParam)
 }
 
 /***********************************************************************
- *           GetWndProcEntry16 (not a Windows API function)
+ *           MODULE_GetWndProcEntry16 (not a Windows API function)
  *
  * Return an entry point from the WINPROCS dll.
  */
-WNDPROC GetWndProcEntry16( char *name )
+WNDPROC MODULE_GetWndProcEntry16( char *name )
 {
 #define MAP_STR_TO_PROC(str,proc) if(!strcmp(name,str))return proc
   MAP_STR_TO_PROC("ActivateAppProc",ACTIVATEAPP_callback);
@@ -201,4 +201,14 @@ WNDPROC GetWndProcEntry16( char *name )
   MAP_STR_TO_PROC("TASK_Reschedule",TASK_Reschedule);
   fprintf(stderr,"warning: No mapping for %s(), add one in library/miscstubs.c\n",name);
   return ErrorProc;
+}
+
+/***********************************************************************
+ *           MODULE_GetWndProcEntry32 (not a Windows API function)
+ *
+ * Return an entry point from the WINPROCS32 dll.
+ */
+WNDPROC MODULE_GetWndProcEntry32( char *name )
+{
+    return MODULE_GetWndProcEntry16( name );
 }

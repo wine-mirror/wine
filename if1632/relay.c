@@ -19,44 +19,40 @@
 dprintf_relay
 #endif
 
-#define DLL_ENTRY(name) \
+#define DLL_ENTRY(name,flags) \
   { #name, name##_Code_Start, name##_Data_Start, \
-    name##_Module_Start, name##_Module_End, TRUE, 0 }
-#define DLL_ENTRY_NOTUSED(name) \
-  { #name, name##_Code_Start, name##_Data_Start, \
-    name##_Module_Start, name##_Module_End, FALSE, 0 }
+    name##_Module_Start, name##_Module_End, (flags) }
 
-struct dll_table_s dll_builtin_table[N_BUILTINS] =
+BUILTIN_DLL dll_builtin_table[] =
 {
-    DLL_ENTRY(KERNEL),
-    DLL_ENTRY(USER),
-    DLL_ENTRY(GDI),
-    DLL_ENTRY_NOTUSED(WIN87EM),
-    DLL_ENTRY_NOTUSED(SHELL),
-    DLL_ENTRY(SOUND),
-    DLL_ENTRY(KEYBOARD),
-    DLL_ENTRY(WINSOCK),
-    DLL_ENTRY(STRESS),
-    DLL_ENTRY(MMSYSTEM),
-    DLL_ENTRY(SYSTEM),
-    DLL_ENTRY(TOOLHELP),
-    DLL_ENTRY(MOUSE),
-    DLL_ENTRY_NOTUSED(COMMDLG),
-    DLL_ENTRY_NOTUSED(OLE2),
-    DLL_ENTRY_NOTUSED(OLE2CONV),
-    DLL_ENTRY_NOTUSED(OLE2DISP),
-    DLL_ENTRY_NOTUSED(OLE2NLS),
-    DLL_ENTRY_NOTUSED(OLE2PROX),
-    DLL_ENTRY_NOTUSED(OLECLI),
-    DLL_ENTRY_NOTUSED(OLESVR),
-    DLL_ENTRY_NOTUSED(COMPOBJ),
-    DLL_ENTRY_NOTUSED(STORAGE),
-    DLL_ENTRY(WINPROCS),
-    DLL_ENTRY_NOTUSED(DDEML),
-    DLL_ENTRY(LZEXPAND)
+    DLL_ENTRY( KERNEL,   0),
+    DLL_ENTRY( USER,     0),
+    DLL_ENTRY( GDI,      0),
+    DLL_ENTRY( WIN87EM,  DLL_FLAG_NOT_USED),
+    DLL_ENTRY( SHELL,    0),
+    DLL_ENTRY( SOUND,    0),
+    DLL_ENTRY( KEYBOARD, 0),
+    DLL_ENTRY( WINSOCK,  0),
+    DLL_ENTRY( STRESS,   0),
+    DLL_ENTRY( MMSYSTEM, 0),
+    DLL_ENTRY( SYSTEM,   0),
+    DLL_ENTRY( TOOLHELP, 0),
+    DLL_ENTRY( MOUSE,    0),
+    DLL_ENTRY( COMMDLG,  DLL_FLAG_NOT_USED),
+    DLL_ENTRY( OLE2,     DLL_FLAG_NOT_USED),
+    DLL_ENTRY( OLE2CONV, DLL_FLAG_NOT_USED),
+    DLL_ENTRY( OLE2DISP, DLL_FLAG_NOT_USED),
+    DLL_ENTRY( OLE2NLS,  DLL_FLAG_NOT_USED),
+    DLL_ENTRY( OLE2PROX, DLL_FLAG_NOT_USED),
+    DLL_ENTRY( OLECLI,   DLL_FLAG_NOT_USED),
+    DLL_ENTRY( OLESVR,   DLL_FLAG_NOT_USED),
+    DLL_ENTRY( COMPOBJ,  DLL_FLAG_NOT_USED),
+    DLL_ENTRY( STORAGE,  DLL_FLAG_NOT_USED),
+    DLL_ENTRY( WINPROCS, 0),
+    DLL_ENTRY( DDEML,    DLL_FLAG_NOT_USED),
+    DLL_ENTRY( LZEXPAND, 0),
+    { NULL, }  /* Last entry */
 };
-
-/* don't forget to increase N_BUILTINS in dlls.h if you add a dll */
 
   /* Saved 16-bit stack */
 WORD IF1632_Saved16_ss = 0;
@@ -112,8 +108,8 @@ void RELAY_DebugCall32( int func_type, char *args,
     frame = CURRENT_STACK16;
     table = &dll_builtin_table[frame->dll_id-1];
     name  = MODULE_GetEntryPointName( table->hModule, frame->ordinal_number );
-    printf( "Call %s.%d: %*.*s(",
-            table->name, frame->ordinal_number, *name, *name, name + 1 );
+    printf( "Call %s.%d: %.*s(",
+            table->name, frame->ordinal_number, *name, name + 1 );
 
     args16 = (char *)frame->args;
     for (i = 0; i < strlen(args); i++)
@@ -184,8 +180,8 @@ void RELAY_DebugReturn( int func_type, int ret_val, int args32 )
     frame = CURRENT_STACK16;
     table = &dll_builtin_table[frame->dll_id-1];
     name  = MODULE_GetEntryPointName( table->hModule, frame->ordinal_number );
-    printf( "Ret  %s.%d: %*.*s() ",
-            table->name, frame->ordinal_number, *name, *name, name + 1 );
+    printf( "Ret  %s.%d: %.*s() ",
+            table->name, frame->ordinal_number, *name, name + 1 );
     switch(func_type)
     {
     case 0: /* long */
@@ -212,19 +208,34 @@ void RELAY_DebugReturn( int func_type, int ret_val, int args32 )
 
 
 /***********************************************************************
- *           RELAY_Unimplemented
+ *           RELAY_Unimplemented16
  *
- * This function is called for unimplemented entry points (declared
+ * This function is called for unimplemented 16-bit entry points (declared
  * as 'stub' in the spec file).
  */
-void RELAY_Unimplemented(void)
+void RELAY_Unimplemented16(void)
 {
     STACK16FRAME *frame = CURRENT_STACK16;
     struct dll_table_s *table = &dll_builtin_table[frame->dll_id-1];
     char *name = MODULE_GetEntryPointName( table->hModule, frame->ordinal_number );
 
-    fprintf( stderr, "No handler for routine %s.%d (%*.*s)\n",
-             table->name, frame->ordinal_number, *name, *name, name + 1 );
+    fprintf( stderr, "No handler for routine %s.%d (%.*s)\n",
+             table->name, frame->ordinal_number, *name, name + 1 );
+    exit(1);
+}
+
+
+/***********************************************************************
+ *           RELAY_Unimplemented32
+ *
+ * This function is called for unimplemented 32-bit entry points (declared
+ * as 'stub' in the spec file).
+ * (The args are the same than for RELAY_DebugStdcall).
+ */
+void RELAY_Unimplemented32( int nb_args, void *entry_point,
+                            const char *func_name )
+{
+    fprintf( stderr, "No handler for Win32 routine %s\n", func_name );
     exit(1);
 }
 
@@ -249,4 +260,34 @@ void RELAY_DebugCall16( int* stack, int nbargs )
     stack += 2;
     while (nbargs--) printf( ",0x%04x", *stack++ );
     printf( ")\n" );
+}
+
+
+/***********************************************************************
+ *           RELAY_DebugStdcall
+ */
+void RELAY_DebugStdcall( int nb_args, void *entry_point, const char *func_name,
+                         int ebp, int ret_addr, int arg1 )
+{
+    int  *parg;
+    if (!debugging_relay) return;
+    printf( "Call %s(", func_name );
+    for (parg = &arg1; nb_args; parg++, nb_args--)
+    {
+        printf( "%08x", *parg );
+        if (nb_args > 1) printf( "," );
+    }
+    printf( ") ret=%08x\n", ret_addr );
+}
+
+
+/***********************************************************************
+ *           RELAY_DebugStdcallRet
+ */
+void RELAY_DebugStdcallRet( int ret_val, void *entry_point,
+                            const char *func_name, int ebp, int ret_addr )
+{
+    if (!debugging_relay) return;
+    printf( "Ret  %s() retval=0x%08x ret=%08x\n",
+            func_name, ret_val, ret_addr );
 }

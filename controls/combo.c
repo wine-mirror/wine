@@ -235,21 +235,17 @@ static LRESULT CBPaint(HWND hwnd, WPARAM wParam, LPARAM lParam)
 
   GetClientRect(hwnd, &rect);
   rect.right -= (lphc->RectButton.right - lphc->RectButton.left);
-  FillRect(hdc, &rect, hBrush);
 
   lpls = ListBoxGetItem(lphl,lphl->ItemFocused);
   if (lpls != NULL) {  
     height = lpls->mis.itemHeight;
     rect.bottom = rect.top + height;
-
-    if (lphl->OwnerDrawn) {
-      ListBoxDrawItem (hwnd, lphl, hdc, lpls, &rect, ODA_DRAWENTIRE, 0);
-    } else {
-      ListBoxDrawItem (hwnd, lphl, hdc, lpls, &rect, ODA_DRAWENTIRE, 0);
-    }
+    FillRect(hdc, &rect, hBrush);
+    ListBoxDrawItem (hwnd, lphl, hdc, lpls, &rect, ODA_DRAWENTIRE, 0);
     if (GetFocus() == hwnd)
     ListBoxDrawItem (hwnd,lphl, hdc, lpls, &rect, ODA_FOCUS, ODS_FOCUS);
   }
+  else FillRect(hdc, &rect, hBrush);
   SelectObject(hdc,hOldFont);
   EndPaint(hwnd, &ps);
   return 0;
@@ -774,8 +770,9 @@ static LRESULT CBLPaint( HWND hwnd, WPARAM wParam, LPARAM lParam )
 
     if (i >= lphl->FirstVisible) {
       height = lpls->mis.itemHeight;
+      /* must have enough room to draw entire item */
+      if (top > (rect.bottom-height+1)) break;
 
-      if (top > rect.bottom) break;
       lpls->itemRect.top    = top;
       lpls->itemRect.bottom = top + height;
       lpls->itemRect.left   = rect.left;

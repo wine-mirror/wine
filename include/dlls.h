@@ -1,34 +1,35 @@
-/* $Id: dlls.h,v 1.2 1993/07/04 04:04:21 root Exp root $
- */
 /*
  * Copyright  Robert J. Amstadt, 1993
  */
 
-#ifndef DLLS_H
-#define DLLS_H
+#ifndef __WINE_DLLS_H
+#define __WINE_DLLS_H
 
 #include "wintypes.h"
 
-#define MAX_NAME_LENGTH		64
 
-
-struct dll_table_s
+typedef struct dll_table_s
 {
-    char *  name;          /* DLL name */
-    BYTE *  code_start;    /* 32-bit address of DLL code */
-    BYTE *  data_start;    /* 32-bit address of DLL data */
-    BYTE *  module_start;  /* 32-bit address of the module data */
-    BYTE *  module_end;
-    BOOL    used;          /* use MS provided if FALSE */
-    HMODULE hModule;       /* module created for this DLL */
-};
+    char       *name;          /* DLL name */
+    const BYTE *code_start;    /* 32-bit address of DLL code */
+    const BYTE *data_start;    /* 32-bit address of DLL data */
+    BYTE       *module_start;  /* 32-bit address of the module data */
+    BYTE       *module_end;
+    int         flags;         /* flags (see below) */
+    HMODULE     hModule;       /* module created for this DLL */
+} BUILTIN_DLL;
+
+/* DLL flags */
+#define DLL_FLAG_NOT_USED    1  /* Use original Windows DLL if possible */
+#define DLL_FLAG_WIN32       2  /* DLL is a Win32 DLL */
 
 #define DECLARE_DLL(name) \
-extern BYTE name##_Code_Start[]; \
-extern BYTE name##_Data_Start[]; \
+extern const BYTE name##_Code_Start[]; \
+extern const BYTE name##_Data_Start[]; \
 extern BYTE name##_Module_Start[]; \
 extern BYTE name##_Module_End[];
 
+/* 16-bit DLLs */
 DECLARE_DLL(KERNEL)
 DECLARE_DLL(USER)
 DECLARE_DLL(GDI)
@@ -56,8 +57,19 @@ DECLARE_DLL(WINPROCS)
 DECLARE_DLL(DDEML)
 DECLARE_DLL(LZEXPAND)
 
-#define N_BUILTINS	26
+/* 32-bit DLLs */
 
-extern struct dll_table_s dll_builtin_table[];
+DECLARE_DLL(ADVAPI32)
+DECLARE_DLL(COMCTL32)
+DECLARE_DLL(COMDLG32)
+DECLARE_DLL(OLE32)
+DECLARE_DLL(GDI32)
+DECLARE_DLL(KERNEL32)
+DECLARE_DLL(SHELL32)
+DECLARE_DLL(USER32)
+DECLARE_DLL(WINPROCS32)
+DECLARE_DLL(WINSPOOL)
 
-#endif /* DLLS_H */
+extern BUILTIN_DLL dll_builtin_table[];
+
+#endif /* __WINE_DLLS_H */

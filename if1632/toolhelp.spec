@@ -1,4 +1,5 @@
 name	toolhelp
+type	win16
 id	12
 
 50 pascal16 GlobalHandleToSel(word) GlobalHandleToSel

@@ -1,4 +1,5 @@
 name	user32
+type	win32
 base	1
 
 0000 stub ActivateKeyboardLayout
@@ -592,7 +593,7 @@ base	1
 0581 stub WindowFromPoint
 0582 stub keybd_event
 0583 stub mouse_event
-0584 	cdecl wsprintfA(ptr ptr ...) vsprintf
+0584 stdcall wsprintfA() USER32_wsprintfA
 0585 stub wsprintfW
 0586 stub wvsprintfA
 0587 stub wvsprintfW

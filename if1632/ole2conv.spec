@@ -1,4 +1,5 @@
 name	ole2conv
+type	win16
 id	16
 
 1 stub GETFILTERINFO

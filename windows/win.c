@@ -217,30 +217,43 @@ BOOL WIN_LinkWindow( HWND hwnd, HWND hwndInsertAfter )
  *
  * Find a window that needs repaint.
  */
-HWND WIN_FindWinToRepaint( HWND hwnd )
+HWND WIN_FindWinToRepaint( HWND hwnd, HQUEUE hQueue )
 {
-    WND * wndPtr;
+    HWND hwndRet;
+    WND *pWnd = pWndDesktop;
 
-      /* Note: the desktop window never gets WM_PAINT messages */
-    wndPtr = hwnd ? WIN_FindWndPtr( hwnd ) : pWndDesktop->child;
-    for ( ; wndPtr; wndPtr = wndPtr->next)
+    /* Note: the desktop window never gets WM_PAINT messages */
+    pWnd = hwnd ? WIN_FindWndPtr( hwnd ) : pWndDesktop->child;
+
+    for ( ; pWnd ; pWnd = pWnd->next )
     {
-	dprintf_win( stddeb, "WIN_FindWinToRepaint: %04x, style %08lx\n",
-		     wndPtr->hwndSelf, wndPtr->dwStyle );
-        if (!(wndPtr->dwStyle & WS_VISIBLE) || (wndPtr->flags & WIN_NO_REDRAW))
+        if (!(pWnd->dwStyle & WS_VISIBLE) || (pWnd->flags & WIN_NO_REDRAW))
+        {
+            dprintf_win( stddeb, "FindWinToRepaint: skipping window %04x\n",
+                         pWnd->hwndSelf );
             continue;
-        if ((wndPtr->dwStyle & WS_MINIMIZE) && (WIN_CLASS_INFO(wndPtr).hIcon))
-            continue;
-	if (wndPtr->hrgnUpdate || (wndPtr->flags & WIN_INTERNAL_PAINT))
-	    return wndPtr->hwndSelf;
-	if (wndPtr->child)
-	{
-	    HWND child;
-	    if ((child = WIN_FindWinToRepaint( wndPtr->child->hwndSelf )))
-		return child;
-	}
+        }
+        if ((pWnd->hmemTaskQ == hQueue) &&
+            (pWnd->hrgnUpdate || (pWnd->flags & WIN_INTERNAL_PAINT))) break;
+        
+        if (pWnd->child )
+            if ((hwndRet = WIN_FindWinToRepaint( pWnd->child->hwndSelf, hQueue )) )
+                return hwndRet;
     }
-    return 0;
+    
+    if (!pWnd) return 0;
+    
+    hwndRet = pWnd->hwndSelf;
+
+    /* look among siblings if we got a transparent window */
+    while (pWnd && ((pWnd->dwExStyle & WS_EX_TRANSPARENT) ||
+                    !(pWnd->hrgnUpdate || (pWnd->flags & WIN_INTERNAL_PAINT))))
+    {
+        pWnd = pWnd->next;
+    }
+    if (pWnd) hwndRet = pWnd->hwndSelf;
+    dprintf_win(stddeb,"FindWinToRepaint: found %04x\n",hwndRet);
+    return hwndRet;
 }
 
 
@@ -252,19 +265,35 @@ HWND WIN_FindWinToRepaint( HWND hwnd )
  */
 void WIN_SendParentNotify( HWND hwnd, WORD event, WORD idChild, LONG lValue )
 {
-    WND *wndPtr = WIN_FindWndPtr( hwnd );
-    
-    while (wndPtr && (wndPtr->dwStyle & WS_CHILD))
+    LPPOINT  lppt = (LPPOINT)(void*)(&lValue);
+    WND     *wndPtr = WIN_FindWndPtr( hwnd );
+    BOOL     bMouse = ((event <= WM_MOUSELAST) && (event >= WM_MOUSEFIRST));
+
+    /* if lValue contains cursor coordinates they have to be
+     * mapped to the client area of parent window */
+
+    if (bMouse) MapWindowPoints(0, hwnd, lppt, 2);
+#ifndef WINELIB32
+    else lValue = MAKELONG( LOWORD(lValue), idChild );
+#endif
+
+    while (wndPtr)
     {
-        if (wndPtr->dwExStyle & WS_EX_NOPARENTNOTIFY) break;
+        if ((wndPtr->dwExStyle & WS_EX_NOPARENTNOTIFY) ||
+	   !(wndPtr->dwStyle & WS_CHILD)) break;
+
+        if (bMouse)
+        {
+	    lppt->x += wndPtr->rectClient.left;
+	    lppt->y += wndPtr->rectClient.top;
+        }
+
         wndPtr = wndPtr->parent;
 #ifdef WINELIB32
 	SendMessage( wndPtr->hwndSelf, WM_PARENTNOTIFY, 
-		     MAKEWPARAM(event,idChild),
-		     (LPARAM)lValue );
+		     MAKEWPARAM( event, idChild ), lValue );
 #else
-	SendMessage( wndPtr->hwndSelf, WM_PARENTNOTIFY, event,
-		     MAKELPARAM(LOWORD(lValue), idChild) );
+	SendMessage( wndPtr->hwndSelf, WM_PARENTNOTIFY, event, (LPARAM)lValue);
 #endif
     }
 }
@@ -1268,7 +1297,7 @@ static BOOL WIN_EnumChildWin( WND *wndPtr, FARPROC wndenumprc, LPARAM lParam )
         pWndChild = wndPtr->child;  /* ..side effects after wndenumprc  */
         if (!CallEnumWindowsProc( wndenumprc, wndPtr->hwndSelf, lParam ))
             return 0;
-        if (IsWindow(pWndChild->hwndSelf)) /*to prevent too early termination*/
+        if (pWndChild && IsWindow(pWndChild->hwndSelf))
             if (!WIN_EnumChildWin(pWndChild, wndenumprc, lParam)) return 0;
         wndPtr = pWndNext;
     } 

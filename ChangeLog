@@ -1,4 +1,124 @@
 ----------------------------------------------------------------------
+Sun Mar 31 13:54:46 1996  Alexandre Julliard  <julliard@lrc.epfl.ch>
+
+	* [tools/build.c]
+	Changed BuildSpec32Files() to generate assembly instead of C code.
+	Unified -spec16 and -spec32 options; DLL type is now determined by
+	the 'type' declaration in the .spec file.
+	New -stdcall option to build all stdcall assembly relays.
+
+	* [if1632/relay.c] [if1632/relay32.c] [include/dlls.h]
+	Started to unify 16- and 32-bit builtin DLLs.
+
+	* [loader/module.c]
+	Added MODULE_GetWndProcEntry32() to mirror MODULE_GetWndProcEntry16().
+
+	* [loader/pe_image.c] [loader/resource.c]
+	All modules now have a NE signature, and can be distinguished by
+	the NE_FFLAGS_WIN32 flag.
+
+	* [windows/alias.c]
+	Aliases for built-in window procedures are now all created at
+	startup in ALIAS_Init().
+
+Fri Mar 29 14:56:39 1996  Greg Kreider <kreider@natlab.research.philips.com>
+
+	* [controls/combo.c]
+	Limit rectangle to clear to size of item when painting combo, not
+ 	default.  Only draw items in list when there is enough room for them.
+
+	* [controls/listbox.c]
+	Get the measure of every item that's added and store in the item's
+ 	data structure.  Scroll listbox if mouse near edge of box.  Only
+ 	draw items in list when there is enough room.
+
+Fri Mar 29 12:00:00 1996  Alex Korobka <alex@phm30.pharm.sunysb.edu>
+
+	* [windows/defwnd.c] [windows/dialog.c] [windows/mdi.c]
+	  [windows/nonclient.c] [controls/menu.c] 
+	Various changes for better keyboard handling. 
+
+	* [windows/event.c] [windows/message.c] [misc/keyboard.c]
+	Proper keyboard message ordering, working GetKeyState() (finally!), 
+	improvements in ToAscii().
+
+	* [windows/win.c] [windows/message.c]
+	Small improvements in WIN_FindWinToRepaint.
+
+	* [windows/win.c] [windows/painting.c] [windows/nonclient.c]
+	Put update region in WM_NCPAINT wParam.
+
+	* [loader/task.c]
+	Kill task timers when task is deleted, switch timers to the
+	new queue in SetTaskQueue().
+
+	* [loader/signal.c] [miscemu/dosmem.c]
+	Added SIGALRM signal handler to increment BIOS clock. 
+
+	* [windows/win.c] [windows/winpos.c] [windows/mdi.c]
+	Fixed ChildWindowFromPoint(), WM_PARENTNOTIFY and its handling by
+	MDI client.
+
+	* [windows/winpos.c]
+	Improvements in handling of owned popups. "Floating" toolboxes 
+	work better now. 
+
+Thu Mar 28 12:38:29 1996  Marcus Meissner <msmeissn@cip.informatik.uni-erlangen.de>
+
+	* [misc/registry.c]
+	New file, registry rewrite including win32 extensions
+	- Unicode
+	- multiple valus per key
+	- different datatypes for values
+	- multiple rootkeys
+	- saving and loading in different registries.
+
+	* [include/winreg.h]
+	New file, definitions and structs for registry.
+
+	* [include/winerror.h]
+	Some new error defines added... there are more, someone please
+ 	check a (real-)windows winerror.h.
+	
+	* [if1632/shell.spec] [if1632/advapi32.spec] [if1632/kernel.spec]
+	Registry specs added.
+
+	* [if1632/relay.c]
+	Switch internal SHELL.DLL to default 'used'.
+
+	* [win32/string32.c] [include/string32.h]
+	Some new functions added.
+	char should be unsigned char when converting to 16bit ints.
+
+	* [misc/shell.c] [include/shell.h] [win32/advapi.c]
+	Removed old registry functions.
+
+Tue Mar 26 15:01:46 1996  Frans van Dorsselaer <dorssel@rulhm1.leidenuniv.nl>
+
+	* [include/bitmaps/ocr_ibeam]
+	Fixed the position of the hotspot.
+
+	* [objects/text.c]
+	Fixed a few bugs in TEXT_TabbedTextOut().
+
+	* [windows/event.c]
+	Fixed the order of the bits in the KeyStateTable.
+	0x80 is the up/down-bit.  0x01 is the toggle bit.
+
+	* [loader/resource.c] [windows/mdi.c] [controls/edit.c]
+	Fixed the calls to GetKeyState().
+
+Tue Mar 26 08:43:15 1996  Robert Pouliot <krynos@qbc.clic.net>
+
+	* [resources/sysres_Fr.rc] [resources/TODO]
+	Updated FIND_TEXT and REPLACE_TEXT to work like the English version.
+
+Mon Mar 25 17:38:59 1996  Tristan Tarrant <tst@dcs.ed.ac.uk>
+
+	* [resources/sysres_it.rc]
+	Added support for Italian [It] language.
+
+----------------------------------------------------------------------
 Sun Mar 24 13:13:11 1996  Alexandre Julliard  <julliard@lrc.epfl.ch>
 
 	* [include/win.h] [windows/*.c]

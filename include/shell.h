@@ -7,11 +7,12 @@
 #define __WINE_SHELL_H
 
 #include "windows.h"
+#include "winreg.h"
 
 extern INT ShellAbout(HWND hWnd, LPCSTR szApp, LPCSTR szOtherStuff, HICON hIcon);
 extern void SHELL_LoadRegistry();
 extern void SHELL_SaveRegistry();
-extern BOOL SHELL_Init();
+extern void SHELL_Init();
 
 #define SHELL_ERROR_SUCCESS           0L
 #define SHELL_ERROR_BADDB             1L
@@ -22,20 +23,6 @@ extern BOOL SHELL_Init();
 #define SHELL_ERROR_OUTOFMEMORY       6L
 #define SHELL_ERROR_INVALID_PARAMETER 7L
 #define SHELL_ERROR_ACCESS_DENIED     8L
-
-#define REG_SZ                  1           /* string type */
-
-#define HKEY_CLASSES_ROOT       1
-
-typedef struct tagKEYSTRUCT {
-	HKEY		hKey;
-	LPSTR		lpSubKey;
-	DWORD		dwType;
-	LPSTR		lpValue;
-	struct tagKEYSTRUCT *lpPrevKey;
-	struct tagKEYSTRUCT *lpNextKey;
-	struct tagKEYSTRUCT *lpSubLvl;
-} KEYSTRUCT, *LPKEYSTRUCT;
 
 typedef struct { 	   /* structure for dropped files */ 
 	WORD		wSize;

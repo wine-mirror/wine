@@ -9,6 +9,7 @@
 
 #include <unistd.h>
 #include <stdio.h>
+#include <stdarg.h>
 #include "windows.h"
 #include "winerror.h"
 #include "relay32.h"
@@ -526,4 +527,9 @@ int USER32_DialogBoxParamA(HINSTANCE hInstance,LPCSTR lpszName,
 		hWndParent,lpDialogFunc,dwInitParam);
 	if(hwnd)return DIALOG_DoDialogBox(hwnd,hWndParent);
 	return -1;
+}
+
+int USER32_wsprintfA( int *args )
+{
+    return vsprintf( (char *)args[0], (char *)args[1], (va_list)&args[2] );
 }

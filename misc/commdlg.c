@@ -12,7 +12,7 @@
 #include "message.h"
 #include "commdlg.h"
 #include "dlgs.h"
-#include "selectors.h"
+#include "module.h"
 #include "resource.h"
 #include "dos_fs.h"
 #include "drive.h"
@@ -83,7 +83,7 @@ BOOL GetOpenFileName(LPOPENFILENAME lpofn)
 
     hInst = WIN_GetWindowInstance( lpofn->hwndOwner );
     bRet = DialogBoxIndirectParam( hInst, hDlgTmpl, lpofn->hwndOwner,
-                                   GetWndProcEntry16("FileOpenDlgProc"),
+                                   MODULE_GetWndProcEntry16("FileOpenDlgProc"),
                                    (DWORD)lpofn );
 
     if (!(lpofn->Flags & OFN_ENABLETEMPLATEHANDLE))
@@ -125,7 +125,7 @@ BOOL GetSaveFileName(LPOPENFILENAME lpofn)
 
     hInst = WIN_GetWindowInstance( lpofn->hwndOwner );
     bRet = DialogBoxIndirectParam( hInst, hDlgTmpl, lpofn->hwndOwner,
-                                   GetWndProcEntry16("FileSaveDlgProc"),
+                                   MODULE_GetWndProcEntry16("FileSaveDlgProc"),
                                    (DWORD)lpofn); 
     if (!(lpofn->Flags & OFN_ENABLETEMPLATEHANDLE))
     {
@@ -686,7 +686,7 @@ BOOL ChooseColor(LPCHOOSECOLOR lpChCol)
     hDlgTmpl = SYSRES_LoadResource( SYSRES_DIALOG_CHOOSE_COLOR );
     hInst = WIN_GetWindowInstance( lpChCol->hwndOwner );
     bRet = DialogBoxIndirectParam( hInst, hDlgTmpl, lpChCol->hwndOwner,
-                                   GetWndProcEntry16("ColorDlgProc"), 
+                                   MODULE_GetWndProcEntry16("ColorDlgProc"), 
                                    (DWORD)lpChCol );
     SYSRES_FreeResource( hDlgTmpl );
     return bRet;
@@ -741,7 +741,7 @@ BOOL FindText(LPFINDREPLACE lpFind)
     hInst = WIN_GetWindowInstance( lpFind->hwndOwner );
     if (!(ptr = (SEGPTR)WIN16_GlobalLock( hDlgTmpl ))) return -1;
     bRet = CreateDialogIndirectParam( hInst, ptr, lpFind->hwndOwner,
-                                      GetWndProcEntry16("FindTextDlgProc"),
+                                      MODULE_GetWndProcEntry16("FindTextDlgProc"),
                                       (DWORD)lpFind );
     GlobalUnlock( hDlgTmpl );
     SYSRES_FreeResource( hDlgTmpl );
@@ -770,7 +770,7 @@ BOOL ReplaceText(LPFINDREPLACE lpFind)
     hInst = WIN_GetWindowInstance( lpFind->hwndOwner );
     if (!(ptr = (SEGPTR)WIN16_GlobalLock( hDlgTmpl ))) return -1;
     bRet = CreateDialogIndirectParam( hInst, ptr, lpFind->hwndOwner,
-                                      GetWndProcEntry16("ReplaceTextDlgProc"),
+                                      MODULE_GetWndProcEntry16("ReplaceTextDlgProc"),
                                       (DWORD)lpFind );
     GlobalUnlock( hDlgTmpl );
     SYSRES_FreeResource( hDlgTmpl );
@@ -1017,8 +1017,8 @@ BOOL PrintDlg(LPPRINTDLG lpPrint)
     hInst = WIN_GetWindowInstance( lpPrint->hwndOwner );
     bRet = DialogBoxIndirectParam( hInst, hDlgTmpl, lpPrint->hwndOwner,
                                    (lpPrint->Flags & PD_PRINTSETUP) ?
-                                       GetWndProcEntry16("PrintSetupDlgProc") :
-                                       GetWndProcEntry16("PrintDlgProc"),
+                                     MODULE_GetWndProcEntry16("PrintSetupDlgProc") :
+                                     MODULE_GetWndProcEntry16("PrintDlgProc"),
                                    (DWORD)lpPrint );
     SYSRES_FreeResource( hDlgTmpl );
     return bRet;

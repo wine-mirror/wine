@@ -15,8 +15,10 @@ extern BYTE AsyncKeyStateTable[256];
 /**********************************************************************
  *		GetKeyState			[USER.106]
  */
-int GetKeyState(int keycode)
+INT GetKeyState(INT keycode)
 {
+    INT retval;
+
     switch(keycode) {
      case VK_LBUTTON:
 	return MouseButtonsStates[0];
@@ -25,8 +27,11 @@ int GetKeyState(int keycode)
      case VK_RBUTTON:
 	return MouseButtonsStates[2];
      default:
-	return KeyStateTable[keycode];
+	retval = ( (INT)(KeyStateTable[keycode] & 0x80) << 8 ) |
+		   (INT)(KeyStateTable[keycode] & 0x01);
     }
+
+    return retval;
 }
 
 /**********************************************************************

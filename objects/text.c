@@ -522,10 +522,15 @@ LONG TEXT_TabbedTextOut( HDC hdc, int x, int y, LPSTR lpstr, int count,
                          BOOL fDisplayText)
 {
     WORD defWidth;
-    DWORD extent;
-    int i, tabPos = 0;
+    DWORD extent = 0;
+    int i, tabPos = x;
+    int start = x;
 
-    if (cTabStops == 1) defWidth = *lpTabPos;
+    if (cTabStops == 1)
+    {
+        defWidth = *lpTabPos;
+        cTabStops = 0;
+    }
     else
     {
         TEXTMETRIC tm;
@@ -538,17 +543,17 @@ LONG TEXT_TabbedTextOut( HDC hdc, int x, int y, LPSTR lpstr, int count,
         for (i = 0; i < count; i++)
             if (lpstr[i] == '\t') break;
         extent = GetTextExtent( hdc, lpstr, i );
-        while ((cTabStops > 0) && (nTabOrg + *lpTabPos < x + LOWORD(extent)))
+        while ((cTabStops > 0) && (nTabOrg + *lpTabPos <= x + LOWORD(extent)))
         {
             lpTabPos++;
             cTabStops--;
         }
-        if (lpstr[i] != '\t')
+        if (i == count)
             tabPos = x + LOWORD(extent);
         else if (cTabStops > 0)
             tabPos = nTabOrg + *lpTabPos;
         else
-            tabPos = (x + LOWORD(extent) + defWidth - 1) / defWidth * defWidth;
+            tabPos = nTabOrg + ((x + LOWORD(extent) - nTabOrg) / defWidth + 1) * defWidth;
         if (fDisplayText)
         {
             RECT r;
@@ -561,7 +566,7 @@ LONG TEXT_TabbedTextOut( HDC hdc, int x, int y, LPSTR lpstr, int count,
         count -= i+1;
         lpstr += i+1;
     }
-    return tabPos;
+    return MAKELONG(tabPos - start, HIWORD(extent));
 }
 
 

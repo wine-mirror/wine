@@ -109,7 +109,7 @@ HLOCAL GROUP_AddGroup(LPCSTR lpszName, LPCSTR lpszGrpFile, INT nCmdShow,
   HLOCAL hGrpFile = LocalAlloc(LMEM_FIXED, 1 + lstrlen(lpszGrpFile));
   if (!hGroup || !hName || !hGrpFile)
     {
-      MessageBox(Globals.hMainWnd, "out of memory", lpszName, MB_OK);
+      MAIN_MessageBoxIDS(IDS_OUT_OF_MEMORY, IDS_ERROR, MB_OK);
       if (hGroup)   LocalFree(hGroup);
       if (hName)    LocalFree(hName);
       if (hGrpFile) LocalFree(hGrpFile);

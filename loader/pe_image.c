@@ -29,7 +29,6 @@
 #include "task.h"
 #include "ldt.h"
 #include "registers.h"
-#include "selectors.h"
 #include "stddebug.h"
 #include "debug.h"
 #include "xmalloc.h"
@@ -581,10 +580,10 @@ HINSTANCE PE_LoadModule( int fd, OFSTRUCT *ofs, LOADPARAMS* params )
 	pModule = (NE_MODULE*)GlobalLock(hModule);
 
 	/* Set all used entries */
-	pModule->magic=PE_SIGNATURE;
+	pModule->magic=NE_SIGNATURE;
 	pModule->count=1;
 	pModule->next=0;
-	pModule->flags=0;
+	pModule->flags=NE_FFLAGS_WIN32;
 	pModule->dgroup=1;
 	pModule->ss=1;
 	pModule->cs=2;
@@ -610,7 +609,7 @@ HINSTANCE PE_LoadModule( int fd, OFSTRUCT *ofs, LOADPARAMS* params )
 	pSegment->minsize=0x1000;
 	pSegment++;
 
-	cts=(DWORD)GetWndProcEntry16("Win32CallToStart");
+	cts=(DWORD)MODULE_GetWndProcEntry16("Win32CallToStart");
 #ifdef WINELIB32
 	pSegment->selector=(void*)cts;
 	pModule->ip=0;

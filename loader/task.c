@@ -21,7 +21,6 @@
 #include "neexe.h"
 #include "options.h"
 #include "queue.h"
-#include "selectors.h"
 #include "toolhelp.h"
 #include "stddebug.h"
 #include "debug.h"
@@ -33,6 +32,9 @@
   /* 32-bit stack size for each task */
   /* Must not be greater than 64k, or MAKE_SEGPTR won't work */
 #define STACK32_SIZE 0x10000
+
+extern void TIMER_SwitchQueue(HQUEUE, HQUEUE );
+extern void TIMER_NukeTimers(HWND, HQUEUE );
 
 /* ------ Internal variables ------ */
 
@@ -61,7 +63,7 @@ static HANDLE TASK_CreateDOSEnvironment(void);
  */
 BOOL TASK_Init(void)
 {
-    TASK_RescheduleProc = (FARPROC)GetWndProcEntry16( "TASK_Reschedule" );
+    TASK_RescheduleProc = MODULE_GetWndProcEntry16( "TASK_Reschedule" );
     if (!(hDOSEnvironment = TASK_CreateDOSEnvironment()))
         fprintf( stderr, "Not enough memory for DOS Environment\n" );
     return (hDOSEnvironment != 0);
@@ -581,6 +583,10 @@ static void TASK_DeleteTask( HTASK hTask )
 
     FILE_CloseAllFiles( pTask->hPDB );
 
+    /* Nuke timers */
+
+    TIMER_NukeTimers( 0, pTask->hQueue );
+
     /* Free the message queue */
 
     QUEUE_DeleteMsgQueue( pTask->hQueue );
@@ -999,8 +1005,12 @@ HQUEUE SetTaskQueue( HANDLE hTask, HQUEUE hQueue )
 
     if (!hTask) hTask = hCurrentTask;
     if (!(pTask = (TDB *)GlobalLock( hTask ))) return 0;
+
     hPrev = pTask->hQueue;
     pTask->hQueue = hQueue;
+
+    TIMER_SwitchQueue( hPrev, hQueue );
+
     return hPrev;
 }
 
@@ -1153,8 +1163,6 @@ HMODULE GetExePtr( HANDLE handle )
 
     if (!(ptr = GlobalLock( handle ))) return 0;
     if (((NE_MODULE *)ptr)->magic == NE_SIGNATURE) return handle;
-	/* Fake modules describing PE modules have a PE signature */
-    if (((NE_MODULE *)ptr)->magic == PE_SIGNATURE) return handle;
 
       /* Check the owner for module handle */
 
@@ -1165,7 +1173,6 @@ HMODULE GetExePtr( HANDLE handle )
 #endif
     if (!(ptr = GlobalLock( owner ))) return 0;
     if (((NE_MODULE *)ptr)->magic == NE_SIGNATURE) return owner;
-    if (((NE_MODULE *)ptr)->magic == PE_SIGNATURE) return owner;
 
       /* Search for this handle and its owner inside all tasks */
 

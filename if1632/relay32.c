@@ -24,37 +24,37 @@
 #include "stddebug.h"
 #include "debug.h"
 
-WIN32_builtin	*WIN32_builtin_list;
+#define DLL_ENTRY(name) \
+  { #name, (WIN32_function *)name##_Module_Start, \
+    (WIN32_function *)name##_Module_End, (int *)name##_Data_Start, NULL }
 
-/* Functions are in generated code */
-void ADVAPI32_Init();
-void COMCTL32_Init();
-void COMDLG32_Init();
-void OLE32_Init();
-void GDI32_Init();
-void KERNEL32_Init();
-void SHELL32_Init();
-void USER32_Init();
-void WINPROCS32_Init();
-void WINSPOOL_Init();
+static WIN32_builtin WIN32_builtin_list[] =
+{
+    DLL_ENTRY(ADVAPI32),
+    DLL_ENTRY(COMCTL32),
+    DLL_ENTRY(COMDLG32),
+    DLL_ENTRY(OLE32),
+    DLL_ENTRY(GDI32),
+    DLL_ENTRY(KERNEL32),
+    DLL_ENTRY(SHELL32),
+    DLL_ENTRY(USER32),
+    DLL_ENTRY(WINPROCS32),
+    DLL_ENTRY(WINSPOOL)
+};
+
+#define NB_DLLS (sizeof(WIN32_builtin_list)/sizeof(WIN32_builtin_list[0]))
+
+static void RELAY32_MakeFakeModule(WIN32_builtin*dll);
 
 int RELAY32_Init(void)
 {
-#ifndef WINELIB
-	/* Add a call for each DLL */
-	ADVAPI32_Init();
-	COMCTL32_Init();
-	COMDLG32_Init();
-	GDI32_Init();
-	KERNEL32_Init();
-	OLE32_Init();
-	SHELL32_Init();
-	USER32_Init();
-	WINPROCS32_Init();
-	WINSPOOL_Init();
-#endif
-	/* Why should it fail, anyways? */
-	return 1;
+    int i;
+
+    for (i = 0; i < NB_DLLS; i++)
+        RELAY32_MakeFakeModule( &WIN32_builtin_list[i] );
+
+    /* Why should it fail, anyways? */
+    return 1;
 }
 
 WIN32_builtin *RELAY32_GetBuiltinDLL(char *name)
@@ -62,11 +62,11 @@ WIN32_builtin *RELAY32_GetBuiltinDLL(char *name)
 	WIN32_builtin *it;
 	size_t len;
 	char *cp;
+        int i;
 
 	len = (cp=strchr(name,'.')) ? (cp-name) : strlen(name);
-	for(it=WIN32_builtin_list;it;it=it->next)
-	if(lstrncmpi(name,it->name,len)==0)
-		return it;
+	for(i = NB_DLLS, it = WIN32_builtin_list; (i > 0); i--, it++)
+            if (!lstrncmpi(name,it->name,len)) return it;
 	return NULL;
 }
 
@@ -85,30 +85,32 @@ void RELAY32_Unimplemented(char *dll, int item)
 
 void *RELAY32_GetEntryPoint(WIN32_builtin *dll, char *item, int hint)
 {
-	int i;
+	int i, size;
 
 	dprintf_module(stddeb, "Looking for %s in %s, hint %x\n",
 		item ? item: "(no name)", dll->name, hint);
 	if(!dll)
 		return 0;
+        size = (int)(dll->last_func - dll->functions);
+
 	/* import by ordinal */
 	if(!item){
-		if(hint && hint<dll->size)
-			return dll->functions[hint-dll->base].definition;
+		if(hint && hint < size)
+			return dll->functions[hint - *dll->base].definition;
 		return 0;
 	}
 	/* hint is correct */
-	if(hint && hint<dll->size && 
+	if(hint && hint < size && 
 		dll->functions[hint].name &&
 		strcmp(item,dll->functions[hint].name)==0)
 		return dll->functions[hint].definition;
 	/* hint is incorrect, search for name */
-	for(i=0;i<dll->size;i++)
+	for(i=0;i < size;i++)
             if (dll->functions[i].name && !strcmp(item,dll->functions[i].name))
                 return dll->functions[i].definition;
 
 	/* function at hint has no name (unimplemented) */
-	if(hint && hint<dll->size && !dll->functions[hint].name)
+	if(hint && hint < size && !dll->functions[hint].name)
 	{
 		dll->functions[hint].name=xstrdup(item);
 		dprintf_module(stddeb, "Returning unimplemented function %s.%d\n",
@@ -116,11 +118,6 @@ void *RELAY32_GetEntryPoint(WIN32_builtin *dll, char *item, int hint)
 		return dll->functions[hint].definition;
 	}
 	return 0;
-}
-
-void RELAY32_DebugEnter(char *dll,char *name)
-{
-	dprintf_relay(stddeb, "Entering %s.%s\n",dll,name);
 }
 
 LONG RELAY32_CallWindowProc( WNDPROC func, int hwnd, int message,
@@ -201,7 +198,7 @@ LONG RELAY32_CallWindowProcConvStruct( WNDPROC func, int hwnd, int message,
 	return RELAY32_CallWindowProc(func,hwnd,message,wParam,(int)lParam);
 }
 
-void RELAY32_MakeFakeModule(WIN32_builtin*dll)
+static void RELAY32_MakeFakeModule(WIN32_builtin*dll)
 {
 	NE_MODULE *pModule;
 	struct w_files *wpnt;
@@ -227,10 +224,10 @@ void RELAY32_MakeFakeModule(WIN32_builtin*dll)
 	FarSetOwner( hModule, hModule );
 	pModule = (NE_MODULE*)GlobalLock(hModule);
 	/* Set all used entries */
-	pModule->magic=PE_SIGNATURE;
+	pModule->magic=NE_SIGNATURE;
 	pModule->count=1;
 	pModule->next=0;
-	pModule->flags=0;
+	pModule->flags=NE_FFLAGS_WIN32;
 	pModule->dgroup=0;
 	pModule->ss=0;
 	pModule->cs=0;

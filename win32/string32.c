@@ -14,7 +14,8 @@
 #include "string32.h"
 #include "xmalloc.h"
 
-int STRING32_UniLen(LPWSTR s)
+int
+STRING32_UniLen(LPCWSTR s)
 {
 	int i;
 	for(i=0;*s;s++)
@@ -38,11 +39,18 @@ void STRING32_UniToAnsi(LPSTR dest,LPCWSTR src)
 	*dest = *src;
 }
 
-void STRING32_AnsiToUni(LPWSTR dest,LPCSTR src)
-{
-	while(*src)
-		*dest++=*src++;
-	*dest = *src;
+/* FIXME: we need to use unsigned char here, for if 
+ *        we got chars with the 7th bit set, we will get
+ *	  negative integers -> wrong unicode values
+ */
+void 
+STRING32_AnsiToUni(LPWSTR dest,LPCSTR src) {
+	unsigned char	*usrc;
+
+	usrc=(unsigned char*)src;
+	while(*usrc)
+		*dest++=*usrc++;
+	*dest = *usrc;
 }
 
 LPSTR STRING32_DupUniToAnsi(LPCWSTR src)
@@ -91,4 +99,40 @@ int STRING32_lstrcmpniW(LPCWSTR a,LPCWSTR b,DWORD len)
 		b++;
 	}
 	return 0;
+}
+
+int
+STRING32_lstrcmpW(LPCWSTR a,LPCWSTR b) {
+	WCHAR	diff;
+
+	while(*a && *b) {
+		diff=*a-*b;
+		if (diff) return diff;
+		a++;
+		b++;
+	}
+	if (*a) return *a;
+	if (*b) return -*b;
+	return 0;
+}
+
+LPWSTR
+STRING32_lstrchrW(LPCWSTR a,WCHAR c) {
+	while(*a) {
+		if (*a==c)
+			return a;
+		a++;
+	}
+	return NULL;
+}
+
+LPWSTR
+STRING32_strdupW(LPCWSTR a) {
+	LPWSTR	b;
+	int	len;
+
+	len=sizeof(WCHAR)*(STRING32_UniLen(a)+1);
+	b=(LPWSTR)xmalloc(len);
+	memcpy(b,a,len);
+	return b;
 }

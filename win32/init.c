@@ -11,6 +11,7 @@
 #include "winerror.h"
 #include "kernel32.h"
 #include "handle32.h"
+#include "except.h"
 #include "pe_image.h"
 #include "task.h"
 #include "stddebug.h"
@@ -111,6 +112,11 @@ VOID GetStartupInfoA(LPSTARTUPINFO lpStartupInfo)
  */
 int KERN32_Init(void)
 {
+#ifndef WINELIB
+    /* Initialize exception handling */
+    EXC_Init();
+#endif
+
     /* Create the standard system handles
      */
     if(CreateStdHandles() != 0)

@@ -1,4 +1,5 @@
 name	ddeml
+type	win16
 id	25
 
 2 stub DdeInitialize #(ptr segptr long long) DdeInitialize

@@ -1,4 +1,5 @@
 name	winprocs
+type	win16
 id	24
 
 1  pascal ButtonWndProc(word word word long) ButtonWndProc

@@ -7,6 +7,7 @@ extern int WIN32_LastError;
  */
 #define     ERROR_UNKNOWN               99999
 
+#define     ERROR_SUCCESS               0
 #define     ERROR_FILE_NOT_FOUND        2
 #define     ERROR_TOO_MANY_OPEN_FILES   4
 #define     ERROR_ACCESS_DENIED         5
@@ -22,6 +23,8 @@ extern int WIN32_LastError;
 #define     ERROR_DIR_NOT_EMPTY         145
 #define     ERROR_BUSY                  170
 #define     ERROR_FILENAME_EXCED_RANGE  206
+#define     ERROR_MORE_DATA		234
+#define     ERROR_NO_MORE_ITEMS		259
 #define     ERROR_IO_DEVICE             1117
 #define     ERROR_POSSIBLE_DEADLOCK     1131
 #define     ERROR_BAD_DEVICE            1200

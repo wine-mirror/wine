@@ -12,5 +12,3 @@ It's possible to use an alternate `progman.ini' file by adding to
 `wine.conf' something like:
 [progman]
 progman.ini=/my/wine/path/progman.ini
-
-It's possible to start both Windows and UNIX programs.

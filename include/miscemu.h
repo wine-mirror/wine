@@ -12,7 +12,7 @@
 
   /* miscemu/dosmem.c */
 extern BOOL DOSMEM_Init(void);
-extern void DOSMEM_Alarm(void);
+extern void DOSMEM_Tick(void);
 extern void DOSMEM_FillBiosSegment(void);
 extern HANDLE DOSMEM_BiosSeg;
 

@@ -26,38 +26,38 @@ struct mz_header_s
  */
 struct ne_header_s
 {
-    WORD  ne_magic;           /* NE signature 'NE' */
-    BYTE  linker_version;	/* Linker version number		*/
-    BYTE  linker_revision;	/* Linker revision number		*/
-    WORD  entry_tab_offset;	/* Offset to entry table relative to NE */
-    WORD  entry_tab_length;	/* Length of entry table in bytes	*/
-    DWORD reserved1;		/* Reserved by Microsoft		*/
-    WORD  format_flags;	/* Flags about segments in this file	*/
-    WORD  auto_data_seg;	/* Automatic data segment number	*/
-    WORD  local_heap_length;	/* Initial size of local heap		*/
-    WORD  stack_length;	/* Initial size of stack		*/
-    WORD  ip;			/* Initial IP				*/
-    WORD  cs;			/* Initial CS				*/
-    WORD  sp;			/* Initial SP				*/
-    WORD  ss;			/* Initial SS				*/
-    WORD  n_segment_tab;	/* # of entries in segment table	*/
-    WORD  n_mod_ref_tab;	/* # of entries in module reference tab.*/
-    WORD  nrname_tab_length; 	/* Length of nonresident-name table     */
-    WORD  segment_tab_offset;	/* Offset to segment table		*/
-    WORD  resource_tab_offset;/* Offset to resource table		*/
-    WORD  rname_tab_offset;	/* Offset to resident-name table	*/
-    WORD  moduleref_tab_offset;/* Offset to module reference table	*/
-    WORD  iname_tab_offset;	/* Offset to imported name table	*/
-    DWORD nrname_tab_offset;	/* Offset to nonresident-name table	*/
-    WORD  n_mov_entry_points;	/* # of movable entry points		*/
-    WORD  align_shift_count;	/* Logical sector alignment shift count */
-    WORD  n_resource_seg;	/* # of resource segments		*/
-    BYTE  operating_system;	/* Flags indicating target OS		*/
-    BYTE  additional_flags;	/* Additional information flags		*/
-    WORD  fastload_offset;	/* Offset to fast load area		*/
-    WORD  fastload_length;	/* Length of fast load area		*/
-    WORD  reserved2;		/* Reserved by Microsoft		*/
-    WORD  expect_version;	/* Expected Windows version number	*/
+    WORD  ne_magic;             /* 00 NE signature 'NE' */
+    BYTE  linker_version;	/* 02 Linker version number */
+    BYTE  linker_revision;	/* 03 Linker revision number */
+    WORD  entry_tab_offset;	/* 04 Offset to entry table relative to NE */
+    WORD  entry_tab_length;	/* 06 Length of entry table in bytes */
+    DWORD reserved1;		/* 08 Reserved by Microsoft */
+    WORD  format_flags;         /* 0c Flags about segments in this file */
+    WORD  auto_data_seg;	/* 0e Automatic data segment number */
+    WORD  local_heap_length;	/* 10 Initial size of local heap */
+    WORD  stack_length;         /* 12 Initial size of stack */
+    WORD  ip;			/* 14 Initial IP */
+    WORD  cs;			/* 16 Initial CS */
+    WORD  sp;			/* 18 Initial SP */
+    WORD  ss;			/* 1a Initial SS */
+    WORD  n_segment_tab;	/* 1c # of entries in segment table */
+    WORD  n_mod_ref_tab;	/* 1e # of entries in module reference tab. */
+    WORD  nrname_tab_length; 	/* 20 Length of nonresident-name table     */
+    WORD  segment_tab_offset;	/* 22 Offset to segment table */
+    WORD  resource_tab_offset;  /* 24 Offset to resource table */
+    WORD  rname_tab_offset;	/* 26 Offset to resident-name table */
+    WORD  moduleref_tab_offset; /* 28 Offset to module reference table */
+    WORD  iname_tab_offset;	/* 2a Offset to imported name table */
+    DWORD nrname_tab_offset;	/* 2c Offset to nonresident-name table */
+    WORD  n_mov_entry_points;	/* 30 # of movable entry points */
+    WORD  align_shift_count;	/* 32 Logical sector alignment shift count */
+    WORD  n_resource_seg;	/* 34 # of resource segments */
+    BYTE  operating_system;	/* 36 Flags indicating target OS */
+    BYTE  additional_flags;	/* 37 Additional information flags */
+    WORD  fastload_offset;	/* 38 Offset to fast load area */
+    WORD  fastload_length;	/* 3a Length of fast load area */
+    WORD  reserved2;		/* 3c Reserved by Microsoft */
+    WORD  expect_version;	/* 3e Expected Windows version number */
 };
 
 #define NE_SIGNATURE  ('N' | ('E' << 8))
@@ -68,9 +68,11 @@ struct ne_header_s
  */
 #define NE_FFLAGS_SINGLEDATA	0x0001
 #define NE_FFLAGS_MULTIPLEDATA	0x0002
-#define NE_FFLAGS_BUILTIN       0x0010  /* Wine built-in module */
+#define NE_FFLAGS_WIN32         0x0010
+#define NE_FFLAGS_BUILTIN       0x0020  /* Wine built-in module */
 #define NE_FFLAGS_SELFLOAD	0x0800
 #define NE_FFLAGS_LINKERROR	0x2000
+#define NE_FFLAGS_CALLWEP       0x4000
 #define NE_FFLAGS_LIBMODULE	0x8000
 
 /*

@@ -7,9 +7,7 @@
 
 #include "windows.h"
 #include "dlgs.h"
-#include "selectors.h"
-#include "alias.h"
-#include "relay32.h"
+#include "module.h"
 #include "win.h"
 #include "resource.h"
 #include "task.h"
@@ -185,27 +183,16 @@ int MessageBox(HWND hWnd, LPCSTR text, LPCSTR title, WORD type)
     MSGBOX mbox;
     int ret;
     DWORD WineProc,Win16Proc,Win32Proc;
-    static int initialized = 0;
 
     mbox.title = title;
     mbox.text  = text;
     mbox.type  = type;
 
-    if (!initialized)
-    {
-        WineProc=(DWORD)SystemMessageBoxProc;
-        Win16Proc=(DWORD)GetWndProcEntry16("SystemMessageBoxProc");
-        Win32Proc=(DWORD)RELAY32_GetEntryPoint(RELAY32_GetBuiltinDLL("WINPROCS32"),
-                                               "SystemMessageBoxProc",0);
-        ALIAS_RegisterAlias(WineProc,Win16Proc,Win32Proc);
-        initialized=1;
-    }
-
     handle = SYSRES_LoadResource( SYSRES_DIALOG_MSGBOX );
     if (!handle) return 0;
     ret = DialogBoxIndirectParam( WIN_GetWindowInstance(hWnd),
                                   handle, hWnd,
-                                  GetWndProcEntry16("SystemMessageBoxProc"),
+                                  MODULE_GetWndProcEntry16("SystemMessageBoxProc"),
                                   (LONG)&mbox );
     SYSRES_FreeResource( handle );
     return ret;

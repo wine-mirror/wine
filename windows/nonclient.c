@@ -18,6 +18,7 @@
 #include "scroll.h"
 #include "nonclient.h"
 #include "graphics.h"
+#include "queue.h"
 #include "selectors.h"
 #include "stackframe.h"
 #include "stddebug.h"
@@ -618,17 +619,21 @@ static void NC_DrawCaption( HDC hdc, RECT *rect, HWND hwnd,
 /***********************************************************************
  *           NC_DoNCPaint
  *
- * Paint the non-client area.
+ * Paint the non-client area. clip is currently unused.
  */
-void NC_DoNCPaint( HWND hwnd, BOOL active, BOOL suppress_menupaint )
+void NC_DoNCPaint( HWND hwnd, HRGN clip, BOOL suppress_menupaint )
 {
-    HDC hdc;
-    RECT rect;
+    HDC 	hdc;
+    RECT 	rect;
+    BOOL	active;
 
     WND *wndPtr = WIN_FindWndPtr( hwnd );
 
-    dprintf_nonclient(stddeb, "NC_DoNCPaint: %04x %d\n", hwnd, active );
     if (!wndPtr || !(wndPtr->dwStyle & WS_VISIBLE)) return; /* Nothing to do */
+
+    active  = wndPtr->flags & WIN_NCACTIVATED;
+
+    dprintf_nonclient(stddeb, "NC_DoNCPaint: %04x %d\n", hwnd, active );
 
     if (!(hdc = GetDCEx( hwnd, 0, DCX_USESTYLE | DCX_WINDOW ))) return;
 
@@ -646,6 +651,13 @@ void NC_DoNCPaint( HWND hwnd, BOOL active, BOOL suppress_menupaint )
             DrawIcon(hdc, 0, 0, hIcon);
         }
         ReleaseDC(hwnd, hdc);
+        wndPtr->flags &= ~WIN_INTERNAL_PAINT;
+        if( wndPtr->hrgnUpdate )
+          {
+            DeleteObject( wndPtr->hrgnUpdate );
+            QUEUE_DecPaintCount( wndPtr->hmemTaskQ );
+            wndPtr->hrgnUpdate = 0;
+          }
         return;
     }
 
@@ -724,11 +736,9 @@ void NC_DoNCPaint( HWND hwnd, BOOL active, BOOL suppress_menupaint )
  *
  * Handle a WM_NCPAINT message. Called from DefWindowProc().
  */
-LONG NC_HandleNCPaint( HWND hwnd )
+LONG NC_HandleNCPaint( HWND hwnd , HRGN clip)
 {
-    WND *wndPtr = WIN_FindWndPtr(hwnd);
-
-    NC_DoNCPaint( hwnd, wndPtr->flags & WIN_NCACTIVATED, FALSE );
+    NC_DoNCPaint( hwnd, clip, FALSE );
     return 0;
 }
 
@@ -745,7 +755,7 @@ LONG NC_HandleNCActivate( HWND hwnd, WPARAM wParam )
     if (wParam != 0) wndPtr->flags |= WIN_NCACTIVATED;
     else wndPtr->flags &= ~WIN_NCACTIVATED;
 
-    NC_DoNCPaint( hwnd, (wParam != 0), FALSE );
+    NC_DoNCPaint( hwnd, (HRGN)1, FALSE );
     return TRUE;
 }
 
@@ -1297,7 +1307,7 @@ LONG NC_HandleSysCommand( HWND hwnd, WPARAM wParam, POINT pt )
     dprintf_nonclient(stddeb, "Handling WM_SYSCOMMAND %x %d,%d\n", 
 		      wParam, pt.x, pt.y );
 
-    if (wndPtr->dwStyle & WS_CHILD)
+    if (wndPtr->dwStyle & WS_CHILD && wParam != SC_KEYMENU )
         ScreenToClient( wndPtr->parent->hwndSelf, &pt );
 
     switch (wParam & 0xfff0)
@@ -1336,7 +1346,7 @@ LONG NC_HandleSysCommand( HWND hwnd, WPARAM wParam, POINT pt )
 	break;
 
     case SC_KEYMENU:
-	MENU_TrackKbdMenuBar( hwnd, wParam );
+	MENU_TrackKbdMenuBar( wndPtr , wParam , pt.x );
 	break;
 	
     case SC_ARRANGE:

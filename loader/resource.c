@@ -37,7 +37,7 @@
  */
 HRSRC FindResource( HMODULE hModule, SEGPTR name, SEGPTR type )
 {
-    WORD *pModule;
+    NE_MODULE *pModule;
 
     hModule = GetExePtr( hModule );  /* In case we were passed an hInstance */
     dprintf_resource(stddeb, "FindResource: module=%04x type=", hModule );
@@ -52,17 +52,14 @@ HRSRC FindResource( HMODULE hModule, SEGPTR name, SEGPTR type )
     dprintf_resource( stddeb, " name=" );
     PrintId( name );
     dprintf_resource( stddeb, "\n" );
-    if (!(pModule = (WORD *)GlobalLock( hModule ))) return 0;
+    if (!(pModule = (NE_MODULE *)GlobalLock( hModule ))) return 0;
 #ifndef WINELIB
-    switch(*pModule)
+    if (pModule->flags & NE_FFLAGS_WIN32)
     {
-      case NE_SIGNATURE:
-        return NE_FindResource( hModule, type, name );
-      case PE_SIGNATURE:
-        return 0;
-      default:
+        fprintf(stderr,"Don't know how to FindResource() for Win32 module\n");
         return 0;
     }
+    return NE_FindResource( hModule, type, name );
 #else
     return LIBRES_FindResource( hModule, name, type );
 #endif
@@ -74,23 +71,20 @@ HRSRC FindResource( HMODULE hModule, SEGPTR name, SEGPTR type )
  */
 HGLOBAL LoadResource( HMODULE hModule, HRSRC hRsrc )
 {
-    WORD *pModule;
+    NE_MODULE *pModule;
 
     hModule = GetExePtr( hModule );  /* In case we were passed an hInstance */
     dprintf_resource(stddeb, "LoadResource: module=%04x res=%04x\n",
                      hModule, hRsrc );
     if (!hRsrc) return 0;
-    if (!(pModule = (WORD *)GlobalLock( hModule ))) return 0;
+    if (!(pModule = (NE_MODULE *)GlobalLock( hModule ))) return 0;
 #ifndef WINELIB
-    switch(*pModule)
+    if (pModule->flags & NE_FFLAGS_WIN32)
     {
-      case NE_SIGNATURE:
-        return NE_LoadResource( hModule, hRsrc );
-      case PE_SIGNATURE:
-        return 0;
-      default:
+        fprintf(stderr,"Don't know how to LoadResource() for Win32 module\n");
         return 0;
     }
+    return NE_LoadResource( hModule, hRsrc );
 #else
     return LIBRES_LoadResource( hModule, hRsrc );
 #endif
@@ -105,21 +99,18 @@ SEGPTR WIN16_LockResource( HGLOBAL handle )
 {
 #ifndef WINELIB
     HMODULE hModule;
-    WORD *pModule;
+    NE_MODULE *pModule;
 
     dprintf_resource(stddeb, "LockResource: handle=%04x\n", handle );
     if (!handle) return (SEGPTR)0;
     hModule = GetExePtr( handle );
-    if (!(pModule = (WORD *)GlobalLock( hModule ))) return 0;
-    switch(*pModule)
+    if (!(pModule = (NE_MODULE *)GlobalLock( hModule ))) return 0;
+    if (pModule->flags & NE_FFLAGS_WIN32)
     {
-      case NE_SIGNATURE:
-        return NE_LockResource( hModule, handle );
-      case PE_SIGNATURE:
-        return 0;
-      default:
+        fprintf(stderr,"Don't know how to LockResource() for Win32 module\n");
         return 0;
     }
+    return NE_LockResource( hModule, handle );
 #else
     return LIBRES_LockResource( handle );
 #endif
@@ -130,21 +121,18 @@ LPVOID LockResource( HGLOBAL handle )
 {
 #ifndef WINELIB
     HMODULE hModule;
-    WORD *pModule;
+    NE_MODULE *pModule;
 
     dprintf_resource(stddeb, "LockResource: handle=%04x\n", handle );
     if (!handle) return NULL;
     hModule = GetExePtr( handle );
-    if (!(pModule = (WORD *)GlobalLock( hModule ))) return 0;
-    switch(*pModule)
+    if (!(pModule = (NE_MODULE *)GlobalLock( hModule ))) return 0;
+    if (pModule->flags & NE_FFLAGS_WIN32)
     {
-      case NE_SIGNATURE:
-        return (LPSTR)PTR_SEG_TO_LIN( NE_LockResource( hModule, handle ) );
-      case PE_SIGNATURE:
-        return 0;
-      default:
+        fprintf(stderr,"Don't know how to LockResource() for Win32 module\n");
         return 0;
     }
+    return (LPSTR)PTR_SEG_TO_LIN( NE_LockResource( hModule, handle ) );
 #else
     return LIBRES_LockResource( handle );
 #endif
@@ -158,21 +146,18 @@ BOOL FreeResource( HGLOBAL handle )
 {
 #ifndef WINELIB
     HMODULE hModule;
-    WORD *pModule;
+    NE_MODULE *pModule;
 
     dprintf_resource(stddeb, "FreeResource: handle=%04x\n", handle );
     if (!handle) return FALSE;
     hModule = GetExePtr( handle );
-    if (!(pModule = (WORD *)GlobalLock( hModule ))) return 0;
-    switch(*pModule)
+    if (!(pModule = (NE_MODULE *)GlobalLock( hModule ))) return 0;
+    if (pModule->flags & NE_FFLAGS_WIN32)
     {
-      case NE_SIGNATURE:
-        return NE_FreeResource( hModule, handle );
-      case PE_SIGNATURE:
-        return FALSE;
-      default:
-        return FALSE;
+        fprintf(stderr,"Don't know how to FreeResource() for Win32 module\n");
+        return 0;
     }
+    return NE_FreeResource( hModule, handle );
 #else
     return LIBRES_FreeResource( handle );
 #endif
@@ -184,25 +169,22 @@ BOOL FreeResource( HGLOBAL handle )
  */
 INT AccessResource( HINSTANCE hModule, HRSRC hRsrc )
 {
-    WORD *pModule;
+    NE_MODULE *pModule;
 
     hModule = GetExePtr( hModule );  /* In case we were passed an hInstance */
     dprintf_resource(stddeb, "AccessResource: module=%04x res=%04x\n",
                      hModule, hRsrc );
     if (!hRsrc) return 0;
-    if (!(pModule = (WORD *)GlobalLock( hModule ))) return 0;
+    if (!(pModule = (NE_MODULE *)GlobalLock( hModule ))) return 0;
 #ifndef WINELIB
-    switch(*pModule)
+    if (pModule->flags & NE_FFLAGS_WIN32)
     {
-      case NE_SIGNATURE:
-        return NE_AccessResource( hModule, hRsrc );
-      case PE_SIGNATURE:
-        return 0;
-      default:
+        fprintf(stderr,"Don't know how to AccessResource() for Win32 module\n");
         return 0;
     }
+    return NE_AccessResource( hModule, hRsrc );
 #else
-        return LIBRES_AccessResource( hModule, hRsrc );
+    return LIBRES_AccessResource( hModule, hRsrc );
 #endif
 }
 
@@ -212,22 +194,19 @@ INT AccessResource( HINSTANCE hModule, HRSRC hRsrc )
  */
 DWORD SizeofResource( HMODULE hModule, HRSRC hRsrc )
 {
-    WORD *pModule;
+    NE_MODULE *pModule;
 
     hModule = GetExePtr( hModule );  /* In case we were passed an hInstance */
     dprintf_resource(stddeb, "SizeofResource: module=%04x res=%04x\n",
                      hModule, hRsrc );
-    if (!(pModule = (WORD *)GlobalLock( hModule ))) return 0;
+    if (!(pModule = (NE_MODULE *)GlobalLock( hModule ))) return 0;
 #ifndef WINELIB
-    switch(*pModule)
+    if (pModule->flags & NE_FFLAGS_WIN32)
     {
-      case NE_SIGNATURE:
-        return NE_SizeofResource( hModule, hRsrc );
-      case PE_SIGNATURE:
-        return 0;
-      default:
+        fprintf(stderr,"Don't know how to SizeOfResource() for Win32 module\n");
         return 0;
     }
+    return NE_SizeofResource( hModule, hRsrc );
 #else
     return LIBRES_SizeofResource( hModule, hRsrc );
 #endif
@@ -239,23 +218,20 @@ DWORD SizeofResource( HMODULE hModule, HRSRC hRsrc )
  */
 HGLOBAL AllocResource( HMODULE hModule, HRSRC hRsrc, DWORD size )
 {
-    WORD *pModule;
+    NE_MODULE *pModule;
 
     hModule = GetExePtr( hModule );  /* In case we were passed an hInstance */
     dprintf_resource(stddeb, "AllocResource: module=%04x res=%04x size=%ld\n",
                      hModule, hRsrc, size );
     if (!hRsrc) return 0;
-    if (!(pModule = (WORD *)GlobalLock( hModule ))) return 0;
+    if (!(pModule = (NE_MODULE *)GlobalLock( hModule ))) return 0;
 #ifndef WINELIB
-    switch(*pModule)
+    if (pModule->flags & NE_FFLAGS_WIN32)
     {
-      case NE_SIGNATURE:
-        return NE_AllocResource( hModule, hRsrc, size );
-      case PE_SIGNATURE:
-        return 0;
-      default:
+        fprintf(stderr,"Don't know how to AllocResource() for Win32 module\n");
         return 0;
     }
+    return NE_AllocResource( hModule, hRsrc, size );
 #else
     return LIBRES_AllocResource( hModule, hRsrc, size );
 #endif
@@ -350,9 +326,9 @@ int TranslateAccelerator(HWND hWnd, HANDLE hAccel, LPMSG msg)
 	       (msg->message == WM_KEYDOWN || msg->message == WM_SYSKEYDOWN)) {
 		INT mask = 0;
 
-		if(GetKeyState(VK_SHIFT) & 0xf) mask |= SHIFT_ACCEL;
-		if(GetKeyState(VK_CONTROL) & 0xf) mask |= CONTROL_ACCEL;
-		if(GetKeyState(VK_MENU) & 0xf) mask |= ALT_ACCEL;
+		if(GetKeyState(VK_SHIFT) & 0x8000) mask |= SHIFT_ACCEL;
+		if(GetKeyState(VK_CONTROL) & 0x8000) mask |= CONTROL_ACCEL;
+		if(GetKeyState(VK_MENU) & 0x8000) mask |= ALT_ACCEL;
 		if(mask == (lpAccelTbl->tbl[i].type &
 			    (SHIFT_ACCEL | CONTROL_ACCEL | ALT_ACCEL))) {
 		    SendMessage(hWnd, WM_COMMAND, lpAccelTbl->tbl[i].wIDval,

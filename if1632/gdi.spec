@@ -1,4 +1,5 @@
 name	gdi
+type	win16
 id	3
 
 1   pascal SetBkColor(word long) SetBkColor

@@ -4,6 +4,7 @@
 #      Summary: Module definition file for Windows Sockets DLL.  
 #  
 name	winsock
+type	win16
 id	8
 
 1   pascal16 accept(word ptr ptr) WINSOCK_accept

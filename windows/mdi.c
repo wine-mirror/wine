@@ -174,7 +174,10 @@ HWND MDI_GetWindow(WND  *clientWnd, HWND hWnd, WORD wTo )
             if (!wTo || !pWndLast) return 0;
             break;
         }
-        if ((pWnd->dwStyle & WS_VISIBLE) &&
+
+	/* we are not interested in owned popups */
+        if ( !pWnd->owner &&
+	     (pWnd->dwStyle & WS_VISIBLE) &&
             !(pWnd->dwStyle & WS_DISABLED))  /* found one */
         {
             pWndLast = pWnd;
@@ -782,7 +785,7 @@ BOOL MDI_AugmentFrameMenu(MDICLIENTINFO* ci, WND *frame, HWND hChild)
  
  hSysPopup = GetSystemMenu(hChild,FALSE);
 
- dprintf_mdi(stddeb,"got popup %04x\n in sysmenu %04x",hSysPopup,child->hSysMenu);
+ dprintf_mdi(stddeb,"\t\tgot popup %04x\n in sysmenu %04x",hSysPopup,child->hSysMenu);
  
  if( !InsertMenu(frame->wIDmenu,0,MF_BYPOSITION | MF_BITMAP | MF_POPUP,
                  hSysPopup, (SEGPTR)(DWORD)ci->obmClose) )
@@ -794,6 +797,10 @@ BOOL MDI_AugmentFrameMenu(MDICLIENTINFO* ci, WND *frame, HWND hChild)
       RemoveMenu(frame->wIDmenu,0,MF_BYPOSITION);
       return 0;
    }
+
+ /* FIXME: add a call to function that sets sysmenu items according
+  *        to the window state. WS_MAXIMIZE -> no SC_SIZE, etc...
+  */
 
  EnableMenuItem(hSysPopup, SC_SIZE, MF_BYCOMMAND | MF_GRAYED);
  EnableMenuItem(hSysPopup, SC_MOVE, MF_BYCOMMAND | MF_GRAYED);
@@ -822,6 +829,10 @@ BOOL MDI_RestoreFrameMenu( WND *frameWnd, HWND hChild)
      return 0; 
 
  child->dwStyle |= WS_SYSMENU;
+
+  /* FIXME: add a call to function that sets sysmenu items according
+  *        to the window state. WS_MAXIMIZE -> no SC_SIZE, etc...
+  */
 
  RemoveMenu(frameWnd->wIDmenu,0,MF_BYPOSITION);
  DeleteMenu(frameWnd->wIDmenu,nItems-1,MF_BYPOSITION);
@@ -1057,9 +1068,25 @@ LRESULT MDIClientWndProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
 	break;
 	
       case WM_PARENTNOTIFY:
-	if (wParam == WM_LBUTTONDOWN && (ci->hwndHitTest != ci->hwndActiveChild) )
-	     SetWindowPos(ci->hwndHitTest, 0,0,0,0,0, SWP_NOSIZE | SWP_NOMOVE );
-	break;
+        if( wParam == WM_LBUTTONDOWN )
+          {
+            LPPOINT  lppt = (LPPOINT)(void*)(&lParam);
+            HWND     child = ChildWindowFromPoint(hwnd, *lppt);
+
+	    dprintf_mdi(stddeb,"MDIClient: notification from %04x (%i,%i)\n",child,lppt->x,lppt->y);
+
+            if( child && child != hwnd )
+              {
+                WND*    wnd = WIN_FindWndPtr( child );
+
+                /* if we got owned popup */
+                if( wnd->owner ) child = wnd->owner->hwndSelf;
+
+                if( child != ci->hwndActiveChild )
+                    SetWindowPos(child, 0,0,0,0,0, SWP_NOSIZE | SWP_NOMOVE );
+              }
+          }
+        return 0;
 
       case WM_SIZE:
 	if( ci->flagChildMaximized )
@@ -1178,10 +1205,6 @@ LRESULT DefMDIChildProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
 
     switch (message)
     {
-      case WM_NCHITTEST:
-	ci->hwndHitTest = hwnd;
-	break;
-	
       case WM_SETTEXT:
 	DefWindowProc(hwnd, message, wParam, lParam);
 	MDI_MenuModifyItem(clientWnd,hwnd);
@@ -1291,6 +1314,12 @@ LRESULT DefMDIChildProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
 	break;
 
       case WM_MENUCHAR:
+
+	/* MDI children don't have menus */
+	PostMessage( clientWnd->parent->hwndSelf, WM_SYSCOMMAND, 
+				          (WPARAM)SC_KEYMENU, (LPARAM)wParam);
+	return 0x00010000L;
+
       case WM_NEXTMENU:
 	   /* set current menu to child system menu */
 
@@ -1321,18 +1350,21 @@ BOOL TranslateMDISysAccel(HWND hwndClient, LPMSG msg)
   
   if( wnd->dwStyle & WS_DISABLED ) return 0;
    
-  if( GetKeyState(VK_CONTROL) && !GetKeyState(VK_MENU) )
+  if ((GetKeyState(VK_CONTROL) & 0x8000) && !(GetKeyState(VK_MENU) & 0x8000))
     switch( msg->wParam )
       {
 	case VK_F6:
 	case VK_SEPARATOR:
-	     wParam = (GetKeyState(VK_SHIFT))? SC_NEXTWINDOW: SC_PREVWINDOW;
+	     wParam = ( GetKeyState(VK_SHIFT) & 0x8000 )? SC_NEXTWINDOW: SC_PREVWINDOW;
 	     break;
 	case VK_RBUTTON:
 	     wParam = SC_CLOSE; 
+	     break;
 	default:
 	     return 0;
       }
+  else
+      return 0;
 
   dprintf_mdi(stddeb,"TranslateMDISysAccel: wParam = %04x\n", wParam);
 

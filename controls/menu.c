@@ -18,11 +18,11 @@
 #include "windows.h"
 #include "syscolor.h"
 #include "sysmetrics.h"
+#include "win.h"
 #include "menu.h"
 #include "module.h"
 #include "neexe.h"
 #include "user.h"
-#include "win.h"
 #include "message.h"
 #include "graphics.h"
 #include "resource.h"
@@ -238,6 +238,9 @@ static UINT MENU_FindItemByKey( HWND hwndOwner, HMENU hmenu, UINT key )
     LPMENUITEM lpitem;
     int i;
     LONG menuchar;
+
+    if (!IsMenu( hmenu )) hmenu = GetSystemMenu( hwndOwner, FALSE);
+    if (!hmenu) return -1;
 
     menu = (POPUPMENU *) USER_HEAP_LIN_ADDR( hmenu );
     lpitem = (MENUITEM *) USER_HEAP_LIN_ADDR( menu->hItems );
@@ -1624,19 +1627,63 @@ void MENU_TrackMouseMenuBar( HWND hwnd, POINT pt )
  *
  * Menu-bar tracking upon a keyboard event. Called from NC_HandleSysCommand().
  */
-void MENU_TrackKbdMenuBar( HWND hwnd, UINT wParam )
+void MENU_TrackKbdMenuBar( WND* wndPtr, UINT wParam, INT vkey)
 {
-    WND *wndPtr = WIN_FindWndPtr( hwnd );
-    if (!wndPtr->wIDmenu) return;
+    UINT uItem = NO_SELECTED_ITEM;
+   HMENU hTrackMenu; 
+
+    /* find window that has a menu 
+     */
+ 
+    if( !(wndPtr->dwStyle & WS_CHILD) )
+      {
+	  wndPtr = WIN_FindWndPtr( GetActiveWindow() );
+          if( !wndPtr ) return;
+      }
+    else
+      while( wndPtr->dwStyle & WS_CHILD && 
+           !(wndPtr->dwStyle & WS_SYSMENU) )
+           if( !(wndPtr = wndPtr->parent) ) return;
+          
+    if( wndPtr->dwStyle & WS_CHILD || !wndPtr->wIDmenu )
+      if( !(wndPtr->dwStyle & WS_SYSMENU) )
+	return;
+
+    hTrackMenu = ( IsMenu( wndPtr->wIDmenu ) )? wndPtr->wIDmenu:
+                                                wndPtr->hSysMenu;
+
     HideCaret(0);
-    SendMessage( hwnd, WM_ENTERMENULOOP, 0, 0 );
-    SendMessage( hwnd, WM_INITMENU, wndPtr->wIDmenu, 0 );
-      /* Select first selectable item */
-    MENU_SelectItem( hwnd, (HMENU)wndPtr->wIDmenu, NO_SELECTED_ITEM );
-    MENU_SelectNextItem( hwnd, (HMENU)wndPtr->wIDmenu );
-    MENU_TrackMenu( (HMENU)wndPtr->wIDmenu, TPM_LEFTALIGN | TPM_LEFTBUTTON,
-		    0, 0, hwnd, NULL );
-    SendMessage( hwnd, WM_EXITMENULOOP, 0, 0 );
+    SendMessage( wndPtr->hwndSelf, WM_ENTERMENULOOP, 0, 0 );
+    SendMessage( wndPtr->hwndSelf, WM_INITMENU, wndPtr->wIDmenu, 0 );
+
+    /* find suitable menu entry 
+     */
+
+    if( vkey == VK_SPACE )
+        uItem = SYSMENU_SELECTED;
+    else if( vkey )
+      {
+        uItem = MENU_FindItemByKey( wndPtr->hwndSelf, wndPtr->wIDmenu, vkey );
+	if( uItem >= 0xFFFE )
+	  {
+	    if( uItem == 0xFFFF ) 
+                MessageBeep(0);
+	    SendMessage( wndPtr->hwndSelf, WM_EXITMENULOOP, 0, 0 );
+            ShowCaret(0);
+	    return;
+	  }
+      }
+
+    MENU_SelectItem( wndPtr->hwndSelf, hTrackMenu, uItem );
+    if( uItem == NO_SELECTED_ITEM )
+      MENU_SelectNextItem( wndPtr->hwndSelf, hTrackMenu );
+    else
+      PostMessage( wndPtr->hwndSelf, WM_KEYDOWN, VK_DOWN, 0L );
+
+    MENU_TrackMenu( hTrackMenu, TPM_LEFTALIGN | TPM_LEFTBUTTON,
+		    0, 0, wndPtr->hwndSelf, NULL );
+
+    SendMessage( wndPtr->hwndSelf, WM_EXITMENULOOP, 0, 0 );
     ShowCaret(0);
 }
 
@@ -2265,14 +2312,13 @@ HMENU LoadMenu( HINSTANCE instance, SEGPTR name )
         dprintf_resource(stddeb,"LoadMenu(%04x,%04x)\n",instance,LOWORD(name));
 
     if (!name) return 0;
+    
+    /* check for Win32 module */
+    instance = GetExePtr( instance );
+    if(((NE_MODULE*)GlobalLock(instance))->flags & NE_FFLAGS_WIN32)
+        return WIN32_LoadMenuA(instance,PTR_SEG_TO_LIN(name));
 
-    if (!(hRsrc = FindResource( instance, name, RT_MENU ))) {
-		/* check for Win32 module */
-		instance =  GetExePtr( instance );
-		if(((NE_MODULE*)GlobalLock(instance))->magic == PE_SIGNATURE)
-			return WIN32_LoadMenuA(instance,PTR_SEG_TO_LIN(name));
-		return 0;
-	}
+    if (!(hRsrc = FindResource( instance, name, RT_MENU ))) return 0;
     if (!(handle = LoadResource( instance, hRsrc ))) return 0;
     hMenu = LoadMenuIndirect( WIN16_LockResource(handle) );
     FreeResource( handle );

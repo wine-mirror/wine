@@ -6,9 +6,7 @@
  */
 
 #include "windows.h"
-#include "selectors.h"
-#include "alias.h"
-#include "relay32.h"
+#include "module.h"
 #include "stddebug.h"
 /* #define DEBUG_CARET */
 #include "debug.h"
@@ -88,7 +86,7 @@ void CARET_SetTimer(void)
 {
     if (Caret.timerid) KillSystemTimer((HWND)0, Caret.timerid);
     Caret.timerid = SetSystemTimer((HWND)0, 0, Caret.timeout,
-			(FARPROC)GetWndProcEntry16("CARET_Callback"));
+                                   MODULE_GetWndProcEntry16("CARET_Callback"));
 }
 
 
@@ -101,7 +99,7 @@ void CARET_ResetTimer(void)
     {
 	KillSystemTimer((HWND)0, Caret.timerid);
 	Caret.timerid = SetSystemTimer((HWND)0, 0, Caret.timeout,
-			(FARPROC)GetWndProcEntry16("CARET_Callback"));
+                                   MODULE_GetWndProcEntry16("CARET_Callback"));
     }
 }
 
@@ -115,27 +113,6 @@ void CARET_KillTimer(void)
     {
 	KillSystemTimer((HWND)0, Caret.timerid);
 	Caret.timerid = 0;
-    }
-}
-
-
-/*****************************************************************
- *               CARET_Initialize
- */
-static void CARET_Initialize()
-{
-    DWORD WineProc,Win16Proc,Win32Proc;
-    static int initialized=0;
-
-    if(!initialized)
-    {
-	WineProc = (DWORD)CARET_Callback;
-	Win16Proc = (DWORD)GetWndProcEntry16("CARET_Callback");
-	Win32Proc = (DWORD)RELAY32_GetEntryPoint(
-				RELAY32_GetBuiltinDLL("WINPROCS32"),
-				"CARET_Callback", 0);
-	ALIAS_RegisterAlias(WineProc, Win16Proc, Win32Proc);
-	initialized=1;
     }
 }
 
@@ -176,9 +153,6 @@ BOOL CreateCaret(HWND hwnd, HBITMAP bitmap, INT width, INT height)
     Caret.y = 0;
 
     Caret.timeout = GetProfileInt( "windows", "CursorBlinkRate", 750 );
-
-    CARET_Initialize();
-
     return TRUE;
 }
    

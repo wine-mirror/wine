@@ -9,6 +9,7 @@
 #include <string.h>
 #include <ctype.h>
 #include "wine.h"
+#include "winerror.h"  /* for ERROR_CALL_NOT_IMPLEMENTED */
 #include "module.h"
 #include "neexe.h"
 #include "windows.h"
@@ -31,12 +32,19 @@
 #define TYPE_RETURN      8
 #define TYPE_STUB        9
 #define TYPE_STDCALL    10
-#define TYPE_CDECL	11
 
 #define MAX_ORDINALS	1299
 
   /* Callback function used for stub functions */
-#define STUB_CALLBACK  "RELAY_Unimplemented"
+#define STUB_CALLBACK \
+  ((SpecType == SPEC_WIN16) ? "RELAY_Unimplemented16": "RELAY_Unimplemented32")
+
+enum SPEC_TYPE
+{
+    SPEC_INVALID,
+    SPEC_WIN16,
+    SPEC_WIN32
+};
 
 typedef struct ordinal_definition_s
 {
@@ -67,8 +75,8 @@ typedef struct ordinal_return_definition_s
 
 static ORDDEF OrdinalDefinitions[MAX_ORDINALS];
 
-char LowerDLLName[80];
-char UpperDLLName[80];
+static enum SPEC_TYPE SpecType = SPEC_INVALID;
+char DLLName[80];
 int Limit = 0;
 int DLLId;
 int Base = 0;
@@ -130,16 +138,6 @@ static int IsNumberString(char *s)
 	    return 0;
 
     return 1;
-}
-
-static char *strlower(char *s)
-{
-    char *p;
-    
-    for(p = s; *p != '\0'; p++)
-	*p = tolower(*p);
-
-    return s;
 }
 
 static char *strupper(char *s)
@@ -326,8 +324,6 @@ static int ParseExportFunction(int ordinal, int type)
             fdp->arg_types[i] = 'l';
 	else if (!strcmp(token, "ptr"))
             fdp->arg_types[i] = 'p';
-	else if (!strcmp(token, "..."))
-            fdp->arg_types[i] = '.';
 	else
 	{
 	    fprintf(stderr, "%d: Unknown variable type '%s'\n", Line, token);
@@ -451,8 +447,6 @@ static int ParseOrdinal(int ordinal)
         return ParseExportFunction(ordinal, TYPE_REGISTER);
     else if (strcmp(token, "stdcall") == 0)
         return ParseExportFunction(ordinal, TYPE_STDCALL);
-    else if (strcmp(token, "cdecl") == 0)
-        return ParseExportFunction(ordinal, TYPE_CDECL);
     else if (strcmp(token, "equate") == 0)
 	return ParseEquate(ordinal);
     else if (strcmp(token, "return") == 0)
@@ -476,12 +470,20 @@ static int ParseTopLevel(void)
     {
 	if (strcmp(token, "name") == 0)
 	{
-	    strcpy(LowerDLLName, GetToken());
-	    strlower(LowerDLLName);
-
-	    strcpy(UpperDLLName, LowerDLLName);
-	    strupper(UpperDLLName);
+	    strcpy(DLLName, GetToken());
+	    strupper(DLLName);
 	}
+        else if (strcmp(token, "type") == 0)
+        {
+            token = GetToken();
+            if (!strcmp(token, "win16" )) SpecType = SPEC_WIN16;
+            else if (!strcmp(token, "win32" )) SpecType = SPEC_WIN32;
+            else
+            {
+                fprintf(stderr, "%d: Type must be 'win16' or 'win32'\n", Line);
+                exit(1);
+            }
+        }
 	else if (strcmp(token, "id") == 0)
 	{
 	    token = GetToken();
@@ -611,8 +613,8 @@ static void BuildModule( int max_code_offset, int max_data_offset )
     pModule->fileinfo = (int)pFileInfo - (int)pModule;
     memset( pFileInfo, 0, sizeof(*pFileInfo) - sizeof(pFileInfo->szPathName) );
     pFileInfo->cBytes = sizeof(*pFileInfo) - sizeof(pFileInfo->szPathName)
-                        + strlen(UpperDLLName) + 4;
-    sprintf( pFileInfo->szPathName, "%s.DLL", UpperDLLName );
+                        + strlen(DLLName) + 4;
+    sprintf( pFileInfo->szPathName, "%s.DLL", DLLName );
     pstr = (char *)pFileInfo + pFileInfo->cBytes + 1;
         
       /* Segment table */
@@ -652,8 +654,8 @@ static void BuildModule( int max_code_offset, int max_data_offset )
 
     pModule->name_table = (int)pstr - (int)pModule;
     /* First entry is module name */
-    *pstr = strlen(UpperDLLName );
-    strcpy( pstr + 1, UpperDLLName );
+    *pstr = strlen(DLLName );
+    strcpy( pstr + 1, DLLName );
     pstr += *pstr + 1;
     *(WORD *)pstr = 0;
     pstr += sizeof(WORD);
@@ -727,8 +729,8 @@ static void BuildModule( int max_code_offset, int max_data_offset )
       /* Dump the module content */
 
     printf( "\t.data\n" );
-    printf( "\t.globl " PREFIX "%s_Module_Start\n", UpperDLLName );
-    printf( PREFIX "%s_Module_Start:\n", UpperDLLName );
+    printf( "\t.globl " PREFIX "%s_Module_Start\n", DLLName );
+    printf( PREFIX "%s_Module_Start:\n", DLLName );
     size = (int)pstr - (int)pModule;
     for (i = 0, pstr = buffer; i < size; i++, pstr++)
     {
@@ -736,194 +738,113 @@ static void BuildModule( int max_code_offset, int max_data_offset )
         printf( "%d%c", *pstr, ((i & 7) != 7) ? ',' : '\n' );
     }
     if (i & 7) printf( "0\n" );
-    printf( "\t.globl " PREFIX "%s_Module_End\n", UpperDLLName );
-    printf( PREFIX "%s_Module_End:\n", UpperDLLName );
+    printf( "\t.globl " PREFIX "%s_Module_End\n", DLLName );
+    printf( PREFIX "%s_Module_End:\n", DLLName );
 }
 
 
-static void BuildSpec32Files( char *specname )
+/*******************************************************************
+ *         BuildSpec32Files
+ *
+ * Build a Win32 assembly file from a spec file.
+ */
+static void BuildSpec32Files(void)
 {
     ORDDEF *odp;
     ORDFUNCDEF *fdp;
     ORDRETDEF *rdp;
     int i;
-    int varargs;
 
-    SpecFp = fopen( specname, "r");
-    if (SpecFp == NULL)
-    {
-	fprintf(stderr, "Could not open specification file, '%s'\n", specname);
-	exit(1);
-    }
-
-    ParseTopLevel();
-
-    printf( "/* File generated automatically, do not edit! */\n" );
-    printf( "#include <sys/types.h>\n");
-    printf( "#include <stdarg.h>\n");
-    printf( "#include \"windows.h\"\n");
-    printf( "#include \"dlls.h\"\n");
-    printf( "#include \"pe_image.h\"\n");
-    printf( "#include \"winerror.h\"\n");
-    printf( "#include \"relay32.h\"\n");
-    printf( "#include \"stddebug.h\"\n");
-    printf( "#include \"debug.h\"\n");
+    printf( "/* File generated automatically; do not edit! */\n" );
+    printf( "\t.text\n" );
+    printf( "\t.globl " PREFIX "%s_Code_Start\n", DLLName );
+    printf( PREFIX "%s_Code_Start:\n\n", DLLName );
 
     odp = OrdinalDefinitions;
     for (i = 0; i <= Limit; i++, odp++)
     {
-        int argno,argc;
         fdp = odp->additional_data;
         rdp = odp->additional_data;
 
         switch (odp->type)
         {
         case TYPE_INVALID:
-        case TYPE_STUB:
-            printf( "int %s_%d()\n{\n\t", UpperDLLName, i);
-            printf( "RELAY32_Unimplemented(\"%s\",%d);\n", UpperDLLName, i);
-            printf( "\t/*NOTREACHED*/\n\treturn 0;\n}\n\n");
+            printf( "/* %s.%d */\n", DLLName, i );
+            printf( "\t.align 4\n" );
+            printf( "%s_%d:\n", DLLName, i );
+            printf( "\tpushl %%ebp\n" );
+            printf( "\tpushl $%s_%d_Name\n", DLLName, i );
+            printf( "\tpushl $" PREFIX "%s\n", STUB_CALLBACK );
+            printf( "\tjmp " PREFIX "Stdcall_0\n" );
+            printf( "%s_%d_Name:\n", DLLName, i );
+            printf( "\t.ascii \"%s_%d\\0\"\n", DLLName, i );
             break;
+
         case TYPE_STDCALL:
-        case TYPE_CDECL:
-	    varargs=0;
-            argc=strlen(fdp->arg_types);
-#if 0
-	    if(odp->type == TYPE_STDCALL)
-	    {
-		/* Output a function prototype with stdcall attribute */
-		printf( "void %s_%d(", UpperDLLName, i);
-		for(argno=0;argno<argc;argno++)
-		{
-		    switch(fdp->arg_types[argno])
-		    {
-		    case 'p': printf( "void *");break;
-		    case 'l': printf( "int ");break;
-		    case '.': printf( "... ");varargs=argno;break;
-		    default:
-			fprintf(stderr, "Not supported argument type %c\n",
-				fdp->arg_types[argno]);
-			exit(1);
-		    }
-		    if(fdp->arg_types[argno]!='.') putchar( 'a'+argno );
-		    if (argno!=argc-1) putchar( ',' );
-		}
-		printf( ") __attribute((stdcall));\n" );
-	    }
-#endif
-            printf( "void %s_%d(", UpperDLLName, i);
-            for(argno=0;argno<argc;argno++)
-            {
-	      if(odp->type == TYPE_STDCALL) {
-                switch(fdp->arg_types[argno])
-                {
-                case 'p': printf( "void *");break;
-                case 'l': printf( "int ");break;
-		default:
-                    fprintf(stderr, "Not supported argument type %c\n",
-                            fdp->arg_types[argno]);
-                    exit(1);
-                }
-	      } else {
-                switch(fdp->arg_types[argno])
-                {
-                case 'p': printf( "void *");break;
-                case 'l': printf( "int ");break;
-                case '.': printf( "... ");varargs=argno;break;
-		default:
-                    fprintf(stderr, "Not supported argument type %c\n",
-                            fdp->arg_types[argno]);
-                    exit(1);
-                }
-	      }
-              if(fdp->arg_types[argno]!='.') putchar( 'a'+argno );
-              if (argno!=argc-1) putchar( ',' );
-            }
-            printf( ")" );
-            printf( "\n{\n" );
-	    if (varargs) printf( "\tva_list valist;\n\n\tva_start(valist, %c);",
-	    			 'a'+varargs-1 );
-            printf( "\tdprintf_relay(stddeb,\"Call %%s.%%s(");
-            for (argno=0;argno<argc;argno++)
-              if(fdp->arg_types[argno]!='.')
-              {
-                putchar( '%' );
-                putchar( (fdp->arg_types[argno] == 'p') ? 'p' : 'x' );
-                if (argno < argc-1) putchar( ',' );
-              }
-            printf( ")\\n\", \"%s\", \"%s\"", UpperDLLName, odp->export_name);
-            for(argno=0;argno<argc;argno++) 
-	        if(fdp->arg_types[argno]!='.') printf( ",%c", 'a'+argno);
-            printf( ");\n\t%s(", fdp->internal_name );
-            for(argno=0;argno<argc;argno++)
-            {
-                if (fdp->arg_types[argno]=='.') printf("valist");
-		else putchar('a'+argno);
-                if (argno!=argc-1) putchar(',');
-            }
-            printf( ");\n");
-	    if(odp->type == TYPE_STDCALL) {
-	    	printf( "\t__asm__ __volatile__ (\"movl %%ebp,%%esp\");\n");
-	    	printf( "\t__asm__ __volatile__ (\"popl %%ebp\");\n");
-	    	printf( "\t__asm__ __volatile__ (\"addl $%d,%%esp\");\n", argc*4+4);
-	    	printf( "\t__asm__ __volatile__ (\"jmp -%d(%%esp)\");\n", argc*4+4);
-	    }
-	    printf( "}\n\n");
+        case TYPE_STUB:
+            printf( "/* %s.%d (%s) */\n",
+                     DLLName, i, odp->export_name);
+            printf( "\t.align 4\n" );
+            printf( "%s_%d:\n", DLLName, i );
+            printf( "\tpushl %%ebp\n" );
+            printf( "\tpushl $%s_%d_Name\n", DLLName, i );
+            printf( "\tpushl $" PREFIX "%s\n", fdp->internal_name );
+            printf( "\tjmp " PREFIX "Stdcall_%d\n", strlen(fdp->arg_types) );
+            printf( "%s_%d_Name:\n", DLLName, i );
+            printf( "\t.ascii \"%s\\0\"\n", odp->export_name );
             break;
+
         case TYPE_RETURN:
-            printf( "void %s_%d()\n{\n\t", UpperDLLName, i);
-            printf( "RELAY32_DebugEnter(\"%s\",\"%s\");\n\t",
-                   UpperDLLName, odp->export_name);
-            printf( "WIN32_LastError=ERROR_CALL_NOT_IMPLEMENTED;\n");
-            printf( "\t__asm__ __volatile__ (\"movl $%d,%%eax\");\n", 
-                   rdp->ret_value);
-            printf( "\t__asm__ __volatile__ (\"movl %%ebp,%%esp;popl %%ebp;"
-                    "ret $%d\");\n}\n\n", rdp->arg_size);
+            printf( "/* %s.%d (%s) */\n",
+                     DLLName, i, odp->export_name);
+            printf( "\t.align 4\n" );
+            printf( "%s_%d:\n", DLLName, i );
+            printf( "\tmovl $%d,%%eax\n", ERROR_CALL_NOT_IMPLEMENTED );
+            printf( "\tmovl %%eax," PREFIX "WIN32_LastError\n" );
+            printf( "\tmovl $%d,%%eax\n", rdp->ret_value );
+            if (rdp->arg_size) printf( "\tret $%d\n", rdp->arg_size );
+            else printf( "\tret\n" );
+            printf( "%s_%d_Name:\n", DLLName, i );
+            printf( "\t.ascii \"%s\\0\"\n", odp->export_name );
             break;
+
         default:
             fprintf(stderr,"build: function type %d not available for Win32\n",
-                    odp->type);
-            break;
-        }
-    }
-
-    printf( "static WIN32_function functions[%d+1]={\n", Limit);
-
-    odp = OrdinalDefinitions;
-    for (i = 0; i <= Limit; i++, odp++)
-    {
-        fdp = odp->additional_data;
-        rdp = odp->additional_data;
-
-        switch (odp->type)
-        {
-        case TYPE_INVALID:
-            printf( "{0,%s_%d},\n",UpperDLLName, i);
-            break;
-        case TYPE_RETURN:
-        case TYPE_STDCALL:
-        case TYPE_CDECL:
-        case TYPE_STUB:
-            printf( "{\"%s\",%s_%d},\n", odp->export_name, UpperDLLName, i);
-            break;
-        default:
-            fprintf(stderr, "build: implementation error: missing %d\n",
                     odp->type);
             exit(1);
         }
     }
-    printf("};\n\n");
 
-    printf( "static WIN32_builtin dll={\"%s\",functions,%d,%d,0};\n",
-            UpperDLLName, Limit+1, Base);
+    printf( "\n/* Function table */\n" );
+    printf( "\t.globl " PREFIX "%s_Module_Start\n", DLLName );
+    printf( PREFIX "%s_Module_Start:\n", DLLName );
 
-    printf( "void %s_Init(void)\n{\n",UpperDLLName);
-    printf( "\tdll.next=WIN32_builtin_list;\n");
-    printf( "\tWIN32_builtin_list=&dll;\n\tRELAY32_MakeFakeModule(&dll);\n}");
+    odp = OrdinalDefinitions;
+    for (i = 0; i <= Limit; i++, odp++)
+    {
+        if (odp->type == TYPE_INVALID)
+            printf( "\t.long 0,%s_%d\n", DLLName, i );
+        else
+            printf( "\t.long %s_%d_Name,%s_%d\n",
+                    DLLName, i, DLLName, i );
+    }
+
+    printf( "\t.globl " PREFIX "%s_Module_End\n", DLLName );
+    printf( PREFIX "%s_Module_End:\n", DLLName );
+    printf( "\t.long 0,0\n" );
+
+    printf( "\t.globl " PREFIX "%s_Data_Start\n", DLLName );
+    printf( PREFIX "%s_Data_Start:\n", DLLName );
+    printf( "\t.long %d\n", Base );
 }
 
 
-static void BuildSpec16Files( char *specname )
+/*******************************************************************
+ *         BuildSpec16Files
+ *
+ * Build a Win16 assembly file from a spec file.
+ */
+static void BuildSpec16Files(void)
 {
     ORDDEF *odp;
     ORDFUNCDEF *fdp;
@@ -931,19 +852,10 @@ static void BuildSpec16Files( char *specname )
     int i;
     int code_offset, data_offset;
 
-    SpecFp = fopen( specname, "r");
-    if (SpecFp == NULL)
-    {
-	fprintf(stderr, "Could not open specification file, '%s'\n", specname);
-	exit(1);
-    }
-
-    ParseTopLevel();
-
     printf( "/* File generated automatically; do not edit! */\n" );
     printf( "\t.data\n" );
-    printf( "\t.globl " PREFIX "%s_Data_Start\n", UpperDLLName );
-    printf( PREFIX "%s_Data_Start:\n", UpperDLLName );
+    printf( "\t.globl " PREFIX "%s_Data_Start\n", DLLName );
+    printf( PREFIX "%s_Data_Start:\n", DLLName );
 #ifdef __svr4__
     printf( "\t.4byte 0,0,0,0,0,0,0,0\n" );
 #else
@@ -951,8 +863,8 @@ static void BuildSpec16Files( char *specname )
 #endif
     data_offset = 16;
     printf( "\t.text\n" );
-    printf( "\t.globl " PREFIX "%s_Code_Start\n", UpperDLLName );
-    printf( PREFIX "%s_Code_Start:\n", UpperDLLName );
+    printf( "\t.globl " PREFIX "%s_Code_Start\n", DLLName );
+    printf( PREFIX "%s_Code_Start:\n", DLLName );
     code_offset = 0;
 
     odp = OrdinalDefinitions;
@@ -972,13 +884,13 @@ static void BuildSpec16Files( char *specname )
             break;
 
           case TYPE_BYTE:
-            printf( "/* %s.%d */\n", UpperDLLName, i);
+            printf( "/* %s.%d */\n", DLLName, i);
             odp->offset = data_offset;
             data_offset += OutputVariableCode( ".byte", odp);
             break;
 
           case TYPE_WORD:
-            printf( "/* %s.%d */\n", UpperDLLName, i);
+            printf( "/* %s.%d */\n", DLLName, i);
             odp->offset = data_offset;
 #ifdef __svr4__
             data_offset += 2 * OutputVariableCode( ".4byte", odp);
@@ -988,13 +900,13 @@ static void BuildSpec16Files( char *specname )
             break;
 
           case TYPE_LONG:
-            printf( "/* %s.%d */\n", UpperDLLName, i);
+            printf( "/* %s.%d */\n", DLLName, i);
             odp->offset = data_offset;
             data_offset += 4 * OutputVariableCode( ".long", odp);
             break;
 
           case TYPE_RETURN:
-            printf( "/* %s.%d */\n", UpperDLLName, i);
+            printf( "/* %s.%d */\n", DLLName, i);
             printf( "\tmovw $%d,%%ax\n", rdp->ret_value & 0xffff );
             printf( "\tmovw $%d,%%dx\n", (rdp->ret_value >> 16) & 0xffff);
             printf( "\t.byte 0x66\n");
@@ -1011,7 +923,7 @@ static void BuildSpec16Files( char *specname )
           case TYPE_PASCAL:
           case TYPE_PASCAL_16:
           case TYPE_STUB:
-            printf( "/* %s.%d */\n", UpperDLLName, i);
+            printf( "/* %s.%d */\n", DLLName, i);
             printf( "\tpushw %%bp\n" );
             printf( "\tpushl $0x%08x\n", (DLLId << 16) | i);
             printf( "\tpushl $" PREFIX "%s\n", fdp->internal_name );
@@ -1030,8 +942,9 @@ static void BuildSpec16Files( char *specname )
             break;
 		
           default:
-            fprintf( stderr, "build: Unknown function type; please report.\n");
-            break;
+            fprintf(stderr,"build: function type %d not available for Win16\n",
+                    odp->type);
+            exit(1);
 	}
     }
 
@@ -1042,6 +955,36 @@ static void BuildSpec16Files( char *specname )
     }
 
     BuildModule( code_offset, data_offset );
+}
+
+
+/*******************************************************************
+ *         BuildSpecFiles
+ *
+ * Build an assembly file from a spec file.
+ */
+static void BuildSpecFiles( char *specname )
+{
+    SpecFp = fopen( specname, "r");
+    if (SpecFp == NULL)
+    {
+	fprintf(stderr, "Could not open specification file, '%s'\n", specname);
+	exit(1);
+    }
+
+    ParseTopLevel();
+    switch(SpecType)
+    {
+    case SPEC_INVALID:
+        fprintf( stderr, "%s: Missing 'type' declaration\n", specname );
+        exit(1);
+    case SPEC_WIN16:
+        BuildSpec16Files();
+        break;
+    case SPEC_WIN32:
+        BuildSpec32Files();
+        break;
+    }
 }
 
 
@@ -1718,11 +1661,102 @@ static void BuildRet16Func()
 }
 
 
+/*******************************************************************
+ *         BuildStdcallFunc
+ *
+ * Build a stdcall call-back function. 'args' is the number of dword arguments.
+ *
+ * Stack layout:
+ *   ...     ...
+ * (ebp+12)  arg2
+ * (ebp+8)   arg1
+ * (ebp+4)   ret addr
+ * (ebp)     ebp
+ * (ebp-4)   func name
+ * (ebp-8)   entry point
+ */
+static void BuildStdcallFunc( int args )
+{
+    /* Function header */
+
+    printf( "/**********\n" );
+    printf( " * " PREFIX "Stdcall_%d\n", args );
+    printf( " **********/\n" );
+    printf( "\t.align 4\n" );
+    printf( "\t.globl " PREFIX "Stdcall_%d\n\n", args );
+    printf( PREFIX "Stdcall_%d:\n", args );
+
+    /* Entry code */
+
+    printf( "\tleal 8(%%esp),%%ebp\n" );
+
+#if 0
+    /* Switch to the internal stack */
+
+    printf( "\tpushl " PREFIX "IF1632_Saved32_esp\n" );
+    printf( "\tmovl %%esp, " PREFIX "IF1632_Saved32_esp\n" );
+    printf( "\tmovl " PREFIX "IF1632_Original32_esp, %%esp\n" );
+#endif
+
+    /* Print the debugging info */
+
+    if (debugging)
+    {
+        printf( "\tpushl $%d\n", args );
+        printf( "\tcall " PREFIX "RELAY_DebugStdcall\n" );
+        printf( "\tadd $4, %%esp\n" );
+    }
+
+    /* Transfer the arguments */
+
+    if (args)
+    {
+        int i;
+        for (i = args; i > 0; i--) printf( "\tpushl %d(%%ebp)\n", 4 * i + 4 );
+    }
+    else
+    {
+        /* Push the address of the arguments. The called function will */
+        /* ignore this if it really takes no arguments. */
+        printf( "\tleal 8(%%ebp),%%eax\n" );
+        printf( "\tpushl %%eax\n" );
+    }
+
+    /* Call the function */
+
+    printf( "\tcall -8(%%ebp)\n" );
+
+    /* Print the debugging info */
+
+    if (debugging)
+    {
+        printf( "\tadd $%d,%%esp\n", args ? (args * 4) : 4 );
+        printf( "\tpushl %%eax\n" );
+        printf( "\tcall " PREFIX "RELAY_DebugStdcallRet\n" );
+        printf( "\tpopl %%eax\n" );
+    }
+
+    /* Switch back to the normal stack */
+
+#if 0
+    printf( "\tmovl -12(%%ebp)," PREFIX "IF1632_Saved32_esp\n" );
+#endif
+    printf( "\tmovl %%ebp,%%esp\n" );
+    printf( "\tpopl %%ebp\n" );
+
+    /* Return, removing arguments */
+
+    if (args) printf( "\tret $%d\n", args * 4 );
+    else printf( "\tret\n" );
+}
+
+
 static void usage(void)
 {
     fprintf(stderr, "usage: build -spec SPECNAMES\n"
                     "       build -call32 FUNCTION_PROFILES\n"
-                    "       build -call16 FUNCTION_PROFILES\n" );
+                    "       build -call16 FUNCTION_PROFILES\n"
+                    "       build -stdcall FUNCTION_PROFILES\n" );
     exit(1);
 }
 
@@ -1733,13 +1767,9 @@ int main(int argc, char **argv)
 
     if (argc <= 2) usage();
 
-    if (!strcmp( argv[1], "-spec16" ))
+    if (!strcmp( argv[1], "-spec" ))
     {
-        for (i = 2; i < argc; i++) BuildSpec16Files( argv[i] );
-    }
-    else if (!strcmp( argv[1], "-spec32" ))
-    {
-        for (i = 2; i < argc; i++) BuildSpec32Files( argv[i] );
+        for (i = 2; i < argc; i++) BuildSpecFiles( argv[i] );
     }
     else if (!strcmp( argv[1], "-call32" ))  /* 32-bit callbacks */
     {
@@ -1787,6 +1817,17 @@ int main(int argc, char **argv)
 
         printf( "\t.globl " PREFIX "CALL16_End\n" );
         printf( PREFIX "CALL16_End:\n" );
+    }
+    else if (!strcmp( argv[1], "-stdcall" ))  /* stdcall callbacks */
+    {
+        /* File header */
+
+        printf( "/* File generated automatically. Do not edit! */\n\n" );
+        printf( "\t.text\n" );
+
+        /* Build the callback functions */
+
+        for (i = 2; i < argc; i++) BuildStdcallFunc( atoi(argv[i]) );
     }
     else usage();
 

@@ -17,6 +17,64 @@
   /* Last CTLCOLOR id */
 #define CTLCOLOR_MAX   CTLCOLOR_STATIC
 
+/***********************************************************************
+ *           WIN_UpdateNCArea
+ *
+ */
+void WIN_UpdateNCArea(WND* wnd, BOOL bUpdate)
+{
+    RECT rect = wnd->rectClient;
+    HRGN hClip = 1;
+
+    dprintf_nonclient(stddeb,"NCUpdate: hwnd %04x, hrgnUpdate %04x\n", 
+                      wnd->hwndSelf, wnd->hrgnUpdate );
+
+    /* desktop windows doesn't have nonclient area */
+    if(wnd == WIN_GetDesktop()) 
+    {
+        wnd->flags &= ~WIN_NEEDS_NCPAINT;
+        return;
+    }
+
+    if( wnd->hrgnUpdate > 1 )
+    {
+        MapWindowPoints(wnd->parent->hwndSelf, 0, (POINT*)&rect, 2);
+
+        hClip = CreateRectRgn( 0, 0, 0, 0 );
+        if (!CombineRgn(hClip, wnd->hrgnUpdate, 0, RGN_COPY) )
+        {
+            DeleteObject(hClip);
+            hClip = 1;
+        }
+
+        if (bUpdate)
+        {
+            HRGN hrgn = CreateRectRgnIndirect(&rect);
+            if (hrgn && (CombineRgn(wnd->hrgnUpdate, wnd->hrgnUpdate,
+                                    hrgn, RGN_AND) == NULLREGION))
+            {
+                DeleteObject(wnd->hrgnUpdate);
+                wnd->hrgnUpdate = 1;
+            }
+            DeleteObject( hrgn );
+        }
+    }
+
+    wnd->flags &= ~WIN_NEEDS_NCPAINT;
+
+    if ((wnd->hwndSelf == GetActiveWindow()) &&
+        !(wnd->flags & WIN_NCACTIVATED))
+    {
+        wnd->flags |= WIN_NCACTIVATED;
+        if( hClip > 1) DeleteObject(hClip);
+        hClip = 1;
+    }
+
+    if (hClip) SendMessage( wnd->hwndSelf, WM_NCPAINT, hClip, 0L );
+
+    if (hClip > 1) DeleteObject( hClip );
+}
+
 
 /***********************************************************************
  *           BeginPaint    (USER.39)
@@ -27,26 +85,22 @@ HDC BeginPaint( HWND hwnd, LPPAINTSTRUCT lps )
     WND * wndPtr = WIN_FindWndPtr( hwnd );
     if (!wndPtr) return 0;
 
-    hrgnUpdate = wndPtr->hrgnUpdate;  /* Save update region */
-    if (!hrgnUpdate)    /* Create an empty region */
-	if (!(hrgnUpdate = CreateRectRgn( 0, 0, 0, 0 ))) return 0;
+    wndPtr->flags &= ~WIN_NEEDS_BEGINPAINT;
 
-    if (wndPtr->hrgnUpdate || (wndPtr->flags & WIN_INTERNAL_PAINT))
-	QUEUE_DecPaintCount( wndPtr->hmemTaskQ );
+    if (wndPtr->flags & WIN_NEEDS_NCPAINT) WIN_UpdateNCArea( wndPtr, TRUE );
+
+    if (((hrgnUpdate = wndPtr->hrgnUpdate) != 0) ||
+        (wndPtr->flags & WIN_INTERNAL_PAINT))
+        QUEUE_DecPaintCount( wndPtr->hmemTaskQ );
 
     wndPtr->hrgnUpdate = 0;
-    wndPtr->flags &= ~(WIN_NEEDS_BEGINPAINT | WIN_INTERNAL_PAINT);
+    wndPtr->flags &= ~WIN_INTERNAL_PAINT;
 
     HideCaret( hwnd );
 
-    if (wndPtr->flags & WIN_NEEDS_NCPAINT)
-    {
-        wndPtr->flags &= ~WIN_NEEDS_NCPAINT;
-        SendMessage( hwnd, WM_NCPAINT, 0, 0 );
-    }
-
     lps->hdc = GetDCEx( hwnd, hrgnUpdate, DCX_INTERSECTRGN | DCX_USESTYLE );
-    DeleteObject( hrgnUpdate );
+    if(hrgnUpdate > 1) DeleteObject( hrgnUpdate );
+
     if (!lps->hdc)
     {
         fprintf(stderr, "GetDCEx() failed in BeginPaint(), hwnd=%04x\n", hwnd);
@@ -233,10 +287,8 @@ BOOL RedrawWindow( HWND hwnd, LPRECT rectUpdate, HRGN hrgnUpdate, UINT flags )
     else if (flags & RDW_ERASENOW)
     {
         if (wndPtr->flags & WIN_NEEDS_NCPAINT)
-        {
-            wndPtr->flags &= ~WIN_NEEDS_NCPAINT;
-            SendMessage( hwnd, WM_NCPAINT, 0, 0 );
-        }
+	    WIN_UpdateNCArea( wndPtr, FALSE);
+
         if (wndPtr->flags & WIN_NEEDS_ERASEBKGND)
         {
             HDC hdc = GetDCEx( hwnd, wndPtr->hrgnUpdate,

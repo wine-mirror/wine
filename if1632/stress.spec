@@ -1,6 +1,7 @@
 # summary: resource modification dll
 #
 name	stress
+type	win16
 id	9
 
 2   pascal allocmem(long)		AllocMem

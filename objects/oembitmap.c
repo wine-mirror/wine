@@ -94,8 +94,13 @@ static const struct
     { obm_dnarrowd, TRUE },     /* OBM_DNARROWD */
     { obm_uparrowd, TRUE },     /* OBM_UPARROWD */
     { obm_restored, TRUE },     /* OBM_RESTORED */
+#ifdef WIN_95_LOOK
+    { obm_zoomd_95, TRUE },     /* OBM_ZOOMD */
+    { obm_reduced_95, TRUE },   /* OBM_REDUCED */
+#else
     { obm_zoomd, TRUE },        /* OBM_ZOOMD */
     { obm_reduced, TRUE },      /* OBM_REDUCED */
+#endif
     { obm_restore, TRUE },      /* OBM_RESTORE */
 #ifdef WIN_95_LOOK
     { obm_zoom_95, TRUE },      /* OBM_ZOOM */

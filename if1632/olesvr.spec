@@ -1,4 +1,5 @@
 name	olesvr
+type	win16
 id	21
 
 #1 WEP

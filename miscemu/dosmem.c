@@ -132,18 +132,13 @@ BOOL DOSMEM_Init(void)
 
 
 /***********************************************************************
- *           DOSMEM_Alarm
+ *           DOSMEM_Tick
  *
- * Increment the BIOS tick counter.
+ * Increment the BIOS tick counter. Called by timer signal handler.
  */
-void DOSMEM_Alarm(void)
+void DOSMEM_Tick(void)
 {
-    pBiosData->Ticks = INT1A_GetTicksSinceMidnight();
-    printf( "Ticks = %ld\n", pBiosData->Ticks );
-/*
-    signal( SIGALRM, DOSMEM_Alarm );
-    alarm( 1 );
-*/
+    pBiosData->Ticks++;
 }
 
 
@@ -154,6 +149,8 @@ void DOSMEM_Alarm(void)
  */
 void DOSMEM_FillBiosSegment(void)
 {
+    extern void SIGNAL_StartBIOSTimer(void);
+
     pBiosData = (BIOSDATA *)GlobalLock( DOSMEM_BiosSeg );
 
       /* Clear all unused values */
@@ -179,8 +176,6 @@ void DOSMEM_FillBiosSegment(void)
     pBiosData->KbdBufferStart       = 0x1e;
     pBiosData->KbdBufferEnd         = 0x3e;
 
-/*
-    signal( SIGALRM, DOSMEM_Alarm );
-    alarm( 1 );
-*/
+    SIGNAL_StartBIOSTimer();
 }
+

@@ -8,7 +8,8 @@
 #include <commdlg.h>
 #include "progman.h"
 
-static BOOL DIALOG_Browse(HWND, LPCSTR, LPSTR, INT);
+static BOOL    DIALOG_BrowsePrograms(HWND, LPSTR, INT);
+static BOOL    DIALOG_BrowseSymbols(HWND, LPSTR, INT);
 static LRESULT DIALOG_NEW_DlgProc(HWND, UINT, WPARAM, LPARAM);
 static LRESULT DIALOG_COPY_MOVE_DlgProc(HWND, UINT, WPARAM, LPARAM);
 static LRESULT DIALOG_GROUP_DlgProc(HWND, UINT, WPARAM, LPARAM);
@@ -157,13 +158,10 @@ static LRESULT DIALOG_COPY_MOVE_DlgProc(HWND hDlg, UINT msg, WPARAM wParam, LPAR
  *           DIALOG_Delete
  */
 
-BOOL DIALOG_Delete(LPCSTR lpszFormat_s, LPCSTR lpszName)
+BOOL DIALOG_Delete(UINT ids_text_s, LPCSTR lpszName)
 {
-  CHAR msg[1000];
-  if (sizeof(msg) <= lstrlen(lpszFormat_s) + lstrlen(lpszName)) return FALSE;
-  wsprintf(msg, (LPSTR)lpszFormat_s, lpszName);
-  return (IDYES == MessageBox(Globals.hMainWnd, msg, STRING_DELETE,
-			      MB_YESNO | MB_DEFBUTTON2));
+  return (IDYES == MAIN_MessageBoxIDS_s(ids_text_s, lpszName, IDS_DELETE,
+					MB_YESNO | MB_DEFBUTTON2));
 }
 
 
@@ -284,6 +282,7 @@ BOOL DIALOG_ProgramAttributes(LPSTR lpszTitle, LPSTR lpszCmdLine,
 
 static LRESULT DIALOG_PROGRAM_DlgProc(HWND hDlg, UINT msg, WPARAM wParam, LPARAM lParam)
 {
+  CHAR buffer[MAX_STRING_LEN];
   switch (msg)
     {
     case WM_INITDIALOG:
@@ -291,7 +290,10 @@ static LRESULT DIALOG_PROGRAM_DlgProc(HWND hDlg, UINT msg, WPARAM wParam, LPARAM
       SetDlgItemText(hDlg, PM_COMMAND_LINE, ProgramAttributes.lpszCmdLine);
       SetDlgItemText(hDlg, PM_DIRECTORY, ProgramAttributes.lpszWorkDir);
       if (!*ProgramAttributes.lpnHotKey)
-	SetDlgItemText(hDlg, PM_HOT_KEY, (LPSTR)STRING_NO_HOT_KEY);
+	{
+	  LoadString(Globals.hInstance, IDS_NO_HOT_KEY, buffer, sizeof(buffer));
+	  SetDlgItemText(hDlg, PM_HOT_KEY, buffer);
+	}
 
       CheckDlgButton(hDlg, PM_SYMBOL,
 		     (*ProgramAttributes.lpnCmdShow == SW_SHOWMINIMIZED));
@@ -309,8 +311,7 @@ static LRESULT DIALOG_PROGRAM_DlgProc(HWND hDlg, UINT msg, WPARAM wParam, LPARAM
 	case PM_BROWSE:
 	  {
 	    CHAR filename[MAX_PATHNAME_LEN];
-	    if (DIALOG_Browse(hDlg, STRING_BROWSE_EXE_FILTER,
-			      filename, sizeof(filename)))
+	    if (DIALOG_BrowsePrograms(hDlg, filename, sizeof(filename)))
 	      SetDlgItemText(hDlg, PM_COMMAND_LINE, filename);
 	    return TRUE;
 	  }
@@ -432,14 +433,13 @@ static LRESULT DIALOG_SYMBOL_DlgProc(HWND hDlg, UINT msg, WPARAM wParam, LPARAM 
 	case PM_BROWSE:
 	  {
 	    CHAR filename[MAX_PATHNAME_LEN];
-	    if (DIALOG_Browse(hDlg, STRING_BROWSE_ICO_FILTER,
-			      filename, sizeof(filename)))
+	    if (DIALOG_BrowseSymbols(hDlg, filename, sizeof(filename)))
 	      SetDlgItemText(hDlg, PM_ICON_FILE, filename);
 	    return TRUE;
 	  }
 
 	case PM_HELP:
-	  MAIN_NotImplementedError();
+	  MAIN_MessageBoxIDS(IDS_NOT_IMPLEMENTED, IDS_ERROR, MB_OK);
 	  return TRUE;
 
 	case IDOK:
@@ -500,14 +500,13 @@ static LRESULT DIALOG_EXECUTE_DlgProc(HWND hDlg, UINT msg,
 	case PM_BROWSE:
 	  {
 	    CHAR filename[MAX_PATHNAME_LEN];
-	    if (DIALOG_Browse(hDlg, STRING_BROWSE_EXE_FILTER,
-			      filename, sizeof(filename)))
+	    if (DIALOG_BrowsePrograms(hDlg, filename, sizeof(filename)))
 	      SetDlgItemText(hDlg, PM_COMMAND, filename);
 	    return TRUE;
 	  }
 
 	case PM_HELP:
-	  MAIN_NotImplementedError();
+	  MAIN_MessageBoxIDS(IDS_NOT_IMPLEMENTED, IDS_ERROR, MB_OK);
 	  return TRUE;
 
 	case IDOK:
@@ -536,15 +535,16 @@ static LRESULT DIALOG_EXECUTE_DlgProc(HWND hDlg, UINT msg,
  *           DIALOG_Browse
  */
 
-/* FIXME is this correct ? */
-static BOOL DIALOG_Browse(HWND hDlg, LPCSTR lpcstrFilter,
+static BOOL DIALOG_Browse(HWND hDlg, LPCSTR lpszzFilter,
 			  LPSTR lpstrFile, INT nMaxFile)
 {
   OPENFILENAME openfilename;
+
+  /* FIXME is this correct ? */
   openfilename.lStructSize       = 0;
   openfilename.hwndOwner         = hDlg;
   openfilename.hInstance         = Globals.hInstance;
-  openfilename.lpstrFilter       = (LPSTR)lpcstrFilter;
+  openfilename.lpstrFilter       = (LPSTR)lpszzFilter;
   openfilename.lpstrCustomFilter = 0;
   openfilename.nMaxCustFilter    = 0;
   openfilename.nFilterIndex      = 0;
@@ -562,6 +562,55 @@ static BOOL DIALOG_Browse(HWND hDlg, LPCSTR lpcstrFilter,
   openfilename.lpfnHook          = 0;
   openfilename.lpTemplateName    = 0;
   return GetOpenFileName(&openfilename);
+}
+
+/***********************************************************************
+ *
+ *           DIALOG_AddFilterItem
+ */
+
+static VOID DIALOG_AddFilterItem(LPSTR *p, UINT ids, LPCSTR filter)
+{
+  LoadString(Globals.hInstance, ids, *p, MAX_STRING_LEN);
+  *p += strlen(*p) + 1;
+  lstrcpy(*p, (SEGPTR) filter);
+  *p += strlen(*p) + 1;
+  **p = '\0';
+}
+
+/***********************************************************************
+ *
+ *           DIALOG_BrowsePrograms
+ */
+
+static BOOL DIALOG_BrowsePrograms(HWND hDlg, LPSTR lpszFile, INT nMaxFile)
+{
+  CHAR  szzFilter[2 * MAX_STRING_LEN + 100];
+  LPSTR p = szzFilter;
+
+  DIALOG_AddFilterItem(&p, IDS_PROGRAMS,  "*.exe;*.pif;*.com;*.bat");
+  DIALOG_AddFilterItem(&p, IDS_ALL_FILES, "*.*");
+
+  return(DIALOG_Browse(hDlg, szzFilter, lpszFile, nMaxFile));
+}
+
+/***********************************************************************
+ *
+ *           DIALOG_BrowseSymbols
+ */
+
+static BOOL DIALOG_BrowseSymbols(HWND hDlg, LPSTR lpszFile, INT nMaxFile)
+{
+  CHAR  szzFilter[5 * MAX_STRING_LEN + 100];
+  LPSTR p = szzFilter;
+
+  DIALOG_AddFilterItem(&p, IDS_SYMBOL_FILES,  "*.ico;*.exe;*.dll");
+  DIALOG_AddFilterItem(&p, IDS_PROGRAMS,      "*.exe");
+  DIALOG_AddFilterItem(&p, IDS_LIBRARIES_DLL, "*.dll");
+  DIALOG_AddFilterItem(&p, IDS_SYMBOLS_ICO,   "*.ico");
+  DIALOG_AddFilterItem(&p, IDS_ALL_FILES,     "*.*");
+
+  return(DIALOG_Browse(hDlg, szzFilter, lpszFile, nMaxFile));
 }
 
 /* Local Variables:    */

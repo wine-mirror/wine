@@ -1,3 +1,16 @@
+Sun Mar 24 12:28:22 1996  Ulrich Schmid  <uschmid@mail.hh.provi.de>
+
+	* [Strings_En.c] [Strings_De.c] (deleted)
+	Use resources for stringtables.
+
+	* [Xx.rc]
+	Added `WS_TABSTOP'
+
+Wed Mar 20 13:14:58 1996  Ulrich Schmid  <uschmid@mail.hh.provi.de>
+
+	* [winexec.c] (deleted)
+	Moved code to loader/modules.c
+
 Fri Mar 15 20:56:31 1996  Ulrich Schmid  <uschmid@mail.hh.provi.de>
 
 	* [main.c]

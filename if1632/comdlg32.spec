@@ -1,4 +1,5 @@
 name	comdlg32
+type	win32
 base	1
 
 0000 stub ArrowBtnWndProc

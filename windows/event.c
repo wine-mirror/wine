@@ -54,8 +54,12 @@ BOOL MouseButtonsStates[NB_BUTTONS] = { FALSE, FALSE, FALSE };
 BOOL AsyncMouseButtonsStates[NB_BUTTONS] = { FALSE, FALSE, FALSE };
 BYTE KeyStateTable[256];
 BYTE AsyncKeyStateTable[256];
-static WORD ALTKeyState;
-static HWND captureWnd = 0;
+
+
+       WPARAM   lastEventChar = 0; /* this will have to be changed once
+				    * ToAscii starts working */
+
+static HWND 	captureWnd = 0;
 static BOOL	InputEnabled = TRUE;
 
 /* Keyboard translation tables */
@@ -114,7 +118,8 @@ typedef union
 	unsigned long count : 16;
 	unsigned long code : 8;
 	unsigned long extended : 1;
-	unsigned long : 4;
+	unsigned long : 2;
+	unsigned long reserved : 2;
 	unsigned long context : 1;
 	unsigned long previous : 1;
 	unsigned long transition : 1;
@@ -303,10 +308,11 @@ static void EVENT_key( XKeyEvent *event )
     KEYLP keylp;
     BOOL extended = FALSE;
 
-    int count = XLookupString(event, Str, 1, &keysym, &cs);
-    Str[count] = '\0';
-    dprintf_key(stddeb,"WM_KEY??? : keysym=%lX, count=%u / %X / '%s'\n", 
-	   keysym, count, Str[0], Str);
+    int ascii_chars = XLookupString(event, Str, 1, &keysym, &cs);
+
+    Str[ascii_chars] = '\0';
+    dprintf_key(stddeb,"WM_KEY??? : keysym=%lX, ascii chars=%u / %X / '%s'\n", 
+	   keysym, ascii_chars, Str[0], Str);
 
     /* Ctrl-Alt-Return enters the debugger */
     if ((keysym == XK_Return) && (event->type == KeyPress) &&
@@ -343,60 +349,59 @@ static void EVENT_key( XKeyEvent *event )
     }
     else if (key_type == 0)                        /* character key */
     {
-	if (isalnum(key))
-	    vkey = toupper(key);                 /* convert lower to uppercase */
-	else
-	    vkey = 0xbe;
+	if ( isalnum(key) )
+	     vkey = toupper(key);                  /* convert lower to uppercase */
+        else  
+	     vkey = 0xbe;
     }
 
     if (event->type == KeyPress)
     {
-	if (vkey == VK_MENU) ALTKeyState = TRUE;
-	if (!(KeyStateTable[vkey] & 0x0f))
-	    KeyStateTable[vkey] ^= 0x80;
-	KeyStateTable[vkey] |= 0x01;
+        if (!(KeyStateTable[vkey] & 0x80))
+            KeyStateTable[vkey] ^= 0x01;
+	KeyStateTable[vkey] |= 0x80;
 	keylp.lp1.count = 1;
 	keylp.lp1.code = LOBYTE(event->keycode) - 8;
 	keylp.lp1.extended = (extended ? 1 : 0);
-	keylp.lp1.context = (event->state & Mod1Mask ? 1 : 0);
+	keylp.lp1.reserved = (ascii_chars ? 1 : 0);
+	keylp.lp1.context = ( (event->state & Mod1Mask) || 
+			       (KeyStateTable[VK_MENU] & 0x80)) ? 1 : 0;
 	keylp.lp1.previous = (KeyDown ? 0 : 1);
 	keylp.lp1.transition = 0;
 	dprintf_key(stddeb,"            wParam=%X, lParam=%lX\n", 
 		    vkey, keylp.lp2 );
 	dprintf_key(stddeb,"            KeyState=%X\n", KeyStateTable[vkey]);
-	hardware_event( ALTKeyState ? WM_SYSKEYDOWN : WM_KEYDOWN, 
+	hardware_event( KeyStateTable[VK_MENU] & 0x80 ? WM_SYSKEYDOWN : WM_KEYDOWN, 
 		        vkey, keylp.lp2,
 		        event->x_root - desktopX, event->y_root - desktopY,
 		        event->time, 0 );
 	KeyDown = TRUE;
 
-	/* The key translation ought to take place in TranslateMessage().
-	 * However, there is no way of passing the required information 
-	 * in a Windows message, so TranslateMessage does not currently
-	 * do anything and the translation is done here.
+	/* Currently we use reserved field in the scan-code byte to
+	 * make it possible for TranslateMessage to recognize character keys
+	 * and get them from lastEventChar global variable.
+	 *
+	 * ToAscii should handle it.
 	 */
-	if (count == 1)                /* key has an ASCII representation */
-	{
-	    dprintf_key(stddeb,"WM_CHAR :   wParam=%X\n", (WORD)Str[0] );
-	    PostMessage( GetFocus(), WM_CHAR, (WORD)(unsigned char)(Str[0]), 
-			keylp.lp2 );
-	}
+
+	if( ascii_chars ) lastEventChar = Str[0];
     }
     else
     {
-	if (vkey == VK_MENU) ALTKeyState = FALSE;
-	KeyStateTable[vkey] &= 0xf0;
+	UINT sysKey = KeyStateTable[VK_MENU];
+
+	KeyStateTable[vkey] &= ~0x80; 
 	keylp.lp1.count = 1;
 	keylp.lp1.code = LOBYTE(event->keycode) - 8;
 	keylp.lp1.extended = (extended ? 1 : 0);
+	keylp.lp1.reserved = 0;
 	keylp.lp1.context = (event->state & Mod1Mask ? 1 : 0);
 	keylp.lp1.previous = 1;
 	keylp.lp1.transition = 1;
 	dprintf_key(stddeb,"            wParam=%X, lParam=%lX\n", 
 		    vkey, keylp.lp2 );
 	dprintf_key(stddeb,"            KeyState=%X\n", KeyStateTable[vkey]);
-	hardware_event( ((ALTKeyState || vkey == VK_MENU) ? 
-			 WM_SYSKEYUP : WM_KEYUP), 
+	hardware_event( sysKey & 0x80 ? WM_SYSKEYUP : WM_KEYUP, 
 		        vkey, keylp.lp2,
 		        event->x_root - desktopX, event->y_root - desktopY,
 		        event->time, 0 );

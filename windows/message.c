@@ -26,10 +26,13 @@
 
 #define HWND_BROADCAST  ((HWND)0xffff)
 
+extern BYTE* 	KeyStateTable;				 /* event.c */
+extern WPARAM	lastEventChar;				 /* event.c */
+
 extern BOOL TIMER_CheckTimer( LONG *next, MSG *msg,
 			      HWND hwnd, BOOL remove );  /* timer.c */
 
-DWORD MSG_WineStartTicks;  /* Ticks at Wine startup */
+DWORD MSG_WineStartTicks;  				 /* Ticks at Wine startup */
 
 static WORD doubleClickSpeed = 452;
 
@@ -180,8 +183,11 @@ static BOOL MSG_TranslateKeyboardMsg( MSG *msg, BOOL remove )
     {
 	  /* Send the message to the active window instead,  */
 	  /* translating messages to their WM_SYS equivalent */
+
 	msg->hwnd = GetActiveWindow();
-	msg->message += WM_SYSKEYDOWN - WM_KEYDOWN;
+
+	if( msg->message < WM_SYSKEYDOWN )
+	    msg->message += WM_SYSKEYDOWN - WM_KEYDOWN;
     }
     return !HOOK_CallHooks( WH_KEYBOARD, remove ? HC_ACTION : HC_NOREMOVE,
                             msg->wParam, msg->lParam );
@@ -383,6 +389,7 @@ static BOOL MSG_PeekMessage( LPMSG msg, HWND hwnd, WORD first, WORD last,
 {
     int pos, mask;
     MESSAGEQUEUE *msgQueue;
+    HQUEUE	  hQueue;
     LONG nextExp;  /* Next timer expiration time */
 
 #ifdef CONFIG_IPC
@@ -403,7 +410,8 @@ static BOOL MSG_PeekMessage( LPMSG msg, HWND hwnd, WORD first, WORD last,
 
     while(1)
     {    
-        msgQueue = (MESSAGEQUEUE *)GlobalLock( GetTaskQueue(0) );
+	hQueue   = GetTaskQueue(0);
+        msgQueue = (MESSAGEQUEUE *)GlobalLock( hQueue );
         if (!msgQueue) return FALSE;
 
 	  /* First handle a message put by SendMessage() */
@@ -461,11 +469,24 @@ static BOOL MSG_PeekMessage( LPMSG msg, HWND hwnd, WORD first, WORD last,
 	  /* Now find a WM_PAINT message */
 	if ((msgQueue->status & QS_PAINT) && (mask & QS_PAINT))
 	{
-	    msg->hwnd = WIN_FindWinToRepaint( hwnd );
+	    msg->hwnd = WIN_FindWinToRepaint( hwnd , hQueue );
 	    msg->message = WM_PAINT;
 	    msg->wParam = 0;
 	    msg->lParam = 0;
-	    if (msg->hwnd != 0) break;
+            if( msg->hwnd &&
+              (!hwnd || msg->hwnd == hwnd || IsChild(hwnd,msg->hwnd)) )
+              {
+                WND* wndPtr = WIN_FindWndPtr(msg->hwnd);
+
+	        /* FIXME: WM_PAINTICON should be sent sometimes */
+
+                if( wndPtr->flags & WIN_INTERNAL_PAINT && !wndPtr->hrgnUpdate)
+                  {
+                    wndPtr->flags &= ~WIN_INTERNAL_PAINT;
+                    QUEUE_DecPaintCount( hQueue );
+                  }
+                break;
+              }
 	}
 
 	  /* Finally handle WM_TIMER messages */
@@ -547,10 +568,14 @@ BOOL PeekMessage( LPMSG msg, HWND hwnd, WORD first, WORD last, WORD flags )
  */
 BOOL GetMessage( SEGPTR msg, HWND hwnd, UINT first, UINT last ) 
 {
-    MSG_PeekMessage( (MSG *)PTR_SEG_TO_LIN(msg),
+    MSG* lpmsg = (MSG *)PTR_SEG_TO_LIN(msg);
+    MSG_PeekMessage( lpmsg,
                      hwnd, first, last, PM_REMOVE, FALSE );
+
+    dprintf_msg(stddeb,"message %04x, hwnd %04x, filter(%04x - %04x)\n", lpmsg->message,
+		     				                 hwnd, first, last );
     HOOK_CallHooks( WH_GETMESSAGE, HC_ACTION, 0, (LPARAM)msg );
-    return (((MSG *)PTR_SEG_TO_LIN(msg))->message != WM_QUIT);
+    return (lpmsg->message != WM_QUIT);
 }
 
 
@@ -697,16 +722,35 @@ void WaitMessage( void )
 
 /***********************************************************************
  *           TranslateMessage   (USER.113)
+ *
+ * This should call ToAscii but it is currently broken
  */
+
+#define ASCII_CHAR_HACK 0x0800
+
 BOOL TranslateMessage( LPMSG msg )
 {
-    int message = msg->message;
+    UINT message = msg->message;
+    /* BYTE wparam[2]; */
     
     if ((message == WM_KEYDOWN) || (message == WM_KEYUP) ||
 	(message == WM_SYSKEYDOWN) || (message == WM_SYSKEYUP))
     {
-	dprintf_msg(stddeb, "Translating key message\n" );
-	return TRUE;
+	dprintf_msg(stddeb, "Translating key %04x, scancode %04x\n", msg->wParam, 
+							      HIWORD(msg->lParam) );
+
+	if( HIWORD(msg->lParam) & ASCII_CHAR_HACK )
+
+	/*  if( ToAscii( msg->wParam, HIWORD(msg->lParam), (LPSTR)&KeyStateTable,
+				      wparam, 0 ) ) 
+         */
+	      {
+     		message += 2 - (message & 0x0001); 
+
+	        PostMessage( msg->hwnd, message, lastEventChar, msg->lParam );
+
+	        return TRUE;
+	      }
     }
     return FALSE;
 }

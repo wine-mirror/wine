@@ -1,10 +1,6 @@
 name	shell
+type	win16
 id	5
-
-#
-# WARNING ! These functions are not documented, so I didn't look for
-# 			proper parameters. It's just to have stub for PROGMAN.EXE ...
-#
 
   1 pascal   RegOpenKey(long ptr ptr) RegOpenKey
   2 pascal   RegCreateKey(long ptr ptr) RegCreateKey
@@ -31,12 +27,5 @@ id	5
 
 #  8   7  0000  WEP exported, shared data
 #100   4  0550  HERETHARBETYGARS exported, shared data
-# 38   5  0000  FINDENVIRONMENTSTRING exported, shared data
-# 37   5  00ae  DOENVIRONMENTSUBST exported, shared data
-# 20   4  110a  SHELLEXECUTE exported, shared data
 #101   8  010e  FINDEXEDLGPROC exported, shared data
-# 39  10  026e  INTERNALEXTRACTICON exported, shared data
 # 32   9  0829  WCI exported, shared data
-# 36  10  08dc  EXTRACTASSOCIATEDICON exported, shared data
-
-

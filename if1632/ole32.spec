@@ -1,4 +1,5 @@
 name	ole32
+type	win32
 base	1
 
 0 stub BindMoniker

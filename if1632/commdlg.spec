@@ -1,4 +1,5 @@
 name	commdlg
+type	win16
 id	14
 
 1   pascal16 GetOpenFileName(ptr) GetOpenFileName

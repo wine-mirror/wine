@@ -49,6 +49,7 @@ typedef LONG LRESULT;
 typedef INT HFILE;
 typedef DWORD HHOOK;
 typedef char *LPSTR;
+typedef BYTE *LPBYTE;
 typedef const char *LPCSTR;
 typedef TCHAR *LPTSTR;
 typedef const TCHAR *LPCTSTR;
@@ -64,6 +65,8 @@ typedef void *LPVOID;
 typedef const void *LPCVOID;
 typedef WORD CATCHBUF[9];
 typedef WORD *LPCATCHBUF;
+typedef DWORD ACCESS_MASK;
+typedef ACCESS_MASK REGSAM;
 
 #define DECLARE_HANDLE(a) typedef HANDLE a;
 

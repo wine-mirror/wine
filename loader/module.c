@@ -48,20 +48,18 @@ static HMODULE MODULE_LoadBuiltin( LPCSTR name, BOOL force )
     NE_MODULE *pModule;
     SEGTABLEENTRY *pSegTable;
     struct dll_table_s *table;
-    int i;
     char dllname[16], *p;
 
     /* Fix the name in case we have a full path and extension */
 
     if ((p = strrchr( name, '\\' ))) name = p + 1;
-    strncpy( dllname, name, 15 );
-    dllname[15] = '\0';
+    lstrcpyn( dllname, name, sizeof(dllname) );
     if ((p = strrchr( dllname, '.' ))) *p = '\0';
 
-    for (i = 0, table = dll_builtin_table; i < N_BUILTINS; i++, table++)
+    for (table = dll_builtin_table; table->name; table++)
         if (!lstrcmpi( table->name, dllname )) break;
-    if (i >= N_BUILTINS) return 0;
-    if (!table->used && !force) return 0;
+    if (!table->name) return 0;
+    if ((table->flags & DLL_FLAG_NOT_USED) && !force) return 0;
 
     hModule = GLOBAL_CreateBlock( GMEM_MOVEABLE, table->module_start,
                                   table->module_end - table->module_start,
@@ -486,6 +484,10 @@ HMODULE MODULE_LoadExeHeader( HFILE hFile, OFSTRUCT *ofs )
         }
     }
 
+    /* Clear internal Wine flags in case they are set in the EXE file */
+
+    pModule->flags &= ~(NE_FFLAGS_BUILTIN | NE_FFLAGS_WIN32);
+
     /* Store the filename information */
 
     pModule->fileinfo = (int)pData - (int)pModule;
@@ -601,7 +603,7 @@ HMODULE MODULE_LoadExeHeader( HFILE hFile, OFSTRUCT *ofs )
  *
  * Lookup the ordinal for a given name.
  */
-WORD MODULE_GetOrdinal( HMODULE hModule, char *name )
+WORD MODULE_GetOrdinal( HMODULE hModule, const char *name )
 {
     char buffer[256], *cpnt;
     BYTE len;
@@ -630,7 +632,6 @@ WORD MODULE_GetOrdinal( HMODULE hModule, char *name )
     cpnt += *cpnt + 1 + sizeof(WORD);
     while (*cpnt)
     {
-        dprintf_module( stddeb, "  Checking '%*.*s'\n", *cpnt, *cpnt, cpnt+1 );
         if (((BYTE)*cpnt == len) && !memcmp( cpnt+1, buffer, len ))
         {
             dprintf_module( stddeb, "  Found: ordinal=%d\n",
@@ -649,7 +650,6 @@ WORD MODULE_GetOrdinal( HMODULE hModule, char *name )
     cpnt += *cpnt + 1 + sizeof(WORD);
     while (*cpnt)
     {
-        dprintf_module( stddeb, "  Checking '%*.*s'\n", *cpnt, *cpnt, cpnt+1 );
         if (((BYTE)*cpnt == len) && !memcmp( cpnt+1, buffer, len ))
         {
             dprintf_module( stddeb, "  Found: ordinal=%d\n",
@@ -791,6 +791,40 @@ LPSTR MODULE_GetEntryPointName( HMODULE hModule, WORD ordinal )
     }
     return NULL;
 }
+
+
+/***********************************************************************
+ *           MODULE_GetWndProcEntry16  (not a Windows API function)
+ *
+ * Return an entry point from the WINPROCS dll.
+ */
+#ifndef WINELIB
+WNDPROC MODULE_GetWndProcEntry16( const char *name )
+{
+    WORD ordinal;
+    static HMODULE hModule = 0;
+
+    if (!hModule) hModule = GetModuleHandle( "WINPROCS" );
+    ordinal = MODULE_GetOrdinal( hModule, name );
+    return MODULE_GetEntryPoint( hModule, ordinal );
+}
+#endif
+
+
+/***********************************************************************
+ *           MODULE_GetWndProcEntry32  (not a Windows API function)
+ *
+ * Return an entry point from the WINPROCS32 dll.
+ */
+#ifndef WINELIB
+WNDPROC MODULE_GetWndProcEntry32( const char *name )
+{
+    static HMODULE hModule = 0;
+
+    if (!hModule) hModule = GetModuleHandle( "WINPROCS32" );
+    return PE_GetProcAddress( hModule, name );
+}
+#endif
 
 
 /***********************************************************************
@@ -1103,10 +1137,6 @@ HINSTANCE LoadModule( LPCSTR name, LPVOID paramBlock )
           /* the module, even if it contains circular DLL references */
 
         pModule->count = 1;
-
-          /* Clear built-in flag in case it was set in the EXE file */
-
-        pModule->flags &= ~NE_FFLAGS_BUILTIN;
     }
     else
     {
@@ -1420,24 +1450,6 @@ WORD GetExpWinVer( HMODULE hModule )
 
     return pModule->expected_version;
 }
-
-
-/***********************************************************************
- *           GetWndProcEntry16 (not a Windows API function)
- *
- * Return an entry point from the WINPROCS dll.
- */
-#ifndef WINELIB
-WNDPROC GetWndProcEntry16( char *name )
-{
-    WORD ordinal;
-    static HMODULE hModule = 0;
-
-    if (!hModule) hModule = GetModuleHandle( "WINPROCS" );
-    ordinal = MODULE_GetOrdinal( hModule, name );
-    return MODULE_GetEntryPoint( hModule, ordinal );
-}
-#endif
 
 
 /**********************************************************************

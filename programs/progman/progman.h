@@ -7,11 +7,13 @@
 #ifndef PROGMAN_H
 #define PROGMAN_H
 
+#define MAX_STRING_LEN      255
+#define MAX_PATHNAME_LEN    1024
+#define MAX_LANGUAGE_NUMBER (PM_LAST_LANGUAGE - PM_FIRST_LANGUAGE)
+
 #ifndef RC_INVOKED
 
 #include "windows.h"
-
-#define MAX_PATHNAME_LEN 1024
 
 /* Fallback icon */
 #ifdef WINELIB
@@ -113,6 +115,7 @@ typedef struct
   HMENU   hFileMenu;
   HMENU   hOptionMenu;
   HMENU   hWindowsMenu;
+  HMENU   hLanguageMenu;
   LPCSTR  lpszIniFile;
   LPCSTR  lpszIcoFile;
   BOOL    bAutoArrange;
@@ -120,20 +123,15 @@ typedef struct
   BOOL    bMinOnRun;
   HLOCAL  hGroups;
   LPCSTR  lpszLanguage;
-  LPCSTR *StringTable;
-  /* FIXME should use MDI */
+  UINT    wStringTableOffset;
   HLOCAL  hActiveGroup;
 } GLOBALS;
 
 extern GLOBALS Globals;
 
+INT  MAIN_MessageBoxIDS(UINT ids_text, UINT ids_title, WORD type);
+INT  MAIN_MessageBoxIDS_s(UINT ids_text_s, LPCSTR str, UINT ids_title, WORD type);
 VOID MAIN_ReplaceString(HLOCAL *handle, LPSTR replacestring);
-VOID MAIN_NotImplementedError(void);
-VOID MAIN_FileReadError(LPCSTR lpszPath);
-VOID MAIN_FileWriteError(LPCSTR lpszPath);
-VOID MAIN_GrpFileReadError(LPCSTR lpszPath);
-VOID MAIN_OutOfMemoryError(void);
-VOID MAIN_WinHelpError(void);
 
 HLOCAL GRPFILE_ReadGroupFile(const char* path);
 BOOL   GRPFILE_WriteGroupFile(HLOCAL hGroup);
@@ -173,7 +171,7 @@ VOID   PROGRAM_ExecuteProgram(HLOCAL hLocal);
 
 INT    DIALOG_New(INT nDefault);
 HLOCAL DIALOG_CopyMove(LPCSTR lpszProgramName, LPCSTR lpszGroupName, BOOL bMove);
-BOOL   DIALOG_Delete(LPCSTR lpszFormat, LPCSTR lpszName);
+BOOL   DIALOG_Delete(UINT ids_format_s, LPCSTR lpszName);
 BOOL   DIALOG_GroupAttributes(LPSTR lpszTitle, LPSTR lpszPath, INT nSize);
 BOOL   DIALOG_ProgramAttributes(LPSTR lpszTitle, LPSTR lpszCmdLine,
 				LPSTR lpszWorkDir, LPSTR lpszIconFile,
@@ -183,7 +181,8 @@ VOID   DIALOG_Symbol(HICON *lphIcon, LPSTR lpszIconFile,
 		     INT *lpnIconIndex, INT nSize);
 VOID   DIALOG_Execute(void);
 
-VOID STRING_SelectLanguage(LPCSTR lang);
+VOID STRING_SelectLanguageByName(LPCSTR);
+VOID STRING_SelectLanguageByNumber(UINT);
 
 /* Class names */
 extern CHAR STRING_MAIN_WIN_CLASS_NAME[];
@@ -204,49 +203,39 @@ extern CHAR STRING_PROGRAM_Xx[];
 extern CHAR STRING_SYMBOL_Xx[];
 extern CHAR STRING_EXECUTE_Xx[];
 
-/* Strings */
-#define STRING_PROGRAM_MANAGER            Globals.StringTable[ 0]
-#define STRING_ERROR                      Globals.StringTable[ 1]
-#define STRING_INFO                       Globals.StringTable[ 2]
-#define STRING_DELETE                     Globals.StringTable[ 3]
-#define STRING_DELETE_GROUP_s             Globals.StringTable[ 4]
-#define STRING_DELETE_PROGRAM_s           Globals.StringTable[ 5]
-#define STRING_NOT_IMPLEMENTED            Globals.StringTable[ 6]
-#define STRING_FILE_READ_ERROR_s          Globals.StringTable[ 7]
-#define STRING_FILE_WRITE_ERROR_s         Globals.StringTable[ 8]
-#define STRING_GRPFILE_READ_ERROR_s       Globals.StringTable[ 9]
-#define STRING_OUT_OF_MEMORY              Globals.StringTable[10]
-#define STRING_WINHELP_ERROR              Globals.StringTable[11]
-#define STRING_UNKNOWN_FEATURE_IN_GRPFILE Globals.StringTable[12]
-#define STRING_FILE_NOT_OVERWRITTEN_s     Globals.StringTable[13]
-#define STRING_SAVE_GROUP_AS_s            Globals.StringTable[14]
-#define STRING_NO_HOT_KEY                 Globals.StringTable[15]
-#define STRING_BROWSE_EXE_FILTER          Globals.StringTable[16]
-#define STRING_BROWSE_ICO_FILTER          Globals.StringTable[17]
-#define NUMBER_OF_STRINGS                                     18
+#define STRINGID(id) (0x##id + Globals.wStringTableOffset)
 
-extern LPCSTR StringTableCz[];
-extern LPCSTR StringTableDa[];
-extern LPCSTR StringTableDe[];
-extern LPCSTR StringTableEn[];
-extern LPCSTR StringTableEs[];
-extern LPCSTR StringTableFi[];
-extern LPCSTR StringTableFr[];
-extern LPCSTR StringTableNo[];
+#else /* RC_INVOKED */
 
-#if defined(WINELIB) && !defined(HAVE_WINE_CONSTRUCTOR)
-  VOID LIBWINE_Register_accel(void);
-  VOID LIBWINE_Register_Cz(void);
-  VOID LIBWINE_Register_Da(void);
-  VOID LIBWINE_Register_De(void);
-  VOID LIBWINE_Register_Es(void);
-  VOID LIBWINE_Register_En(void);
-  VOID LIBWINE_Register_Fi(void);
-  VOID LIBWINE_Register_Fr(void);
-  VOID LIBWINE_Register_No(void);
+#define STRINGID(id) id
+
 #endif
 
-#endif /* !RC_INVOKED */
+/* Stringtable index */
+#define IDS_LANGUAGE_ID                STRINGID(00)
+#define IDS_LANGUAGE_MENU_ITEM         STRINGID(01)
+#define IDS_PROGRAM_MANAGER            STRINGID(02)
+#define IDS_ERROR                      STRINGID(03)
+#define IDS_WARNING                    STRINGID(04)
+#define IDS_INFO                       STRINGID(05)
+#define IDS_DELETE                     STRINGID(06)
+#define IDS_DELETE_GROUP_s             STRINGID(07)
+#define IDS_DELETE_PROGRAM_s           STRINGID(08)
+#define IDS_NOT_IMPLEMENTED            STRINGID(09)
+#define IDS_FILE_READ_ERROR_s          STRINGID(0a)
+#define IDS_FILE_WRITE_ERROR_s         STRINGID(0b)
+#define IDS_GRPFILE_READ_ERROR_s       STRINGID(0c)
+#define IDS_OUT_OF_MEMORY              STRINGID(0d)
+#define IDS_WINHELP_ERROR              STRINGID(0e)
+#define IDS_UNKNOWN_FEATURE_s          STRINGID(0f)
+#define IDS_FILE_NOT_OVERWRITTEN_s     STRINGID(10)
+#define IDS_SAVE_GROUP_AS_s            STRINGID(11)
+#define IDS_NO_HOT_KEY                 STRINGID(12)
+#define IDS_ALL_FILES                  STRINGID(13)
+#define IDS_PROGRAMS                   STRINGID(14)
+#define IDS_LIBRARIES_DLL              STRINGID(15)
+#define IDS_SYMBOL_FILES               STRINGID(16)
+#define IDS_SYMBOLS_ICO                STRINGID(17)
 
 /* Menu */
 
@@ -268,14 +257,8 @@ extern LPCSTR StringTableNo[];
 #define PM_ARRANGE          302
 #define PM_FIRST_CHILD      3030
 
-#define PM_En               400
-#define PM_Es               401
-#define PM_De               402
-#define PM_No               403
-#define PM_Fr               404
-#define PM_Fi               405
-#define PM_Da               406
-#define PM_Cz               407
+#define PM_FIRST_LANGUAGE   400
+#define PM_LAST_LANGUAGE    499
 
 #define PM_CONTENTS         501
 #define PM_SEARCH           502

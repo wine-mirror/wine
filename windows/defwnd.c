@@ -21,7 +21,11 @@
   /* Last COLOR id */
 #define COLOR_MAX   COLOR_BTNHIGHLIGHT
 
-static short iMenuKey = 0;
+  /* bits in the dwKeyData */
+#define KEYDATA_ALT 		0x2000
+#define KEYDATA_PREVSTATE	0x4000
+
+static short iF10Key = 0;
 static short iMenuSysKey = 0;
 
 /***********************************************************************
@@ -73,7 +77,7 @@ LRESULT DefWindowProc( HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam )
 
     case WM_PAINTICON: 
     case WM_NCPAINT:
-	return NC_HandleNCPaint( hwnd );
+	return NC_HandleNCPaint( hwnd, (HRGN)wParam );
 
     case WM_NCHITTEST:
         {
@@ -246,7 +250,7 @@ LRESULT DefWindowProc( HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam )
 
     case WM_SETTEXT:
 	DEFWND_SetText( hwnd, (LPSTR)PTR_SEG_TO_LIN(lParam) );
-	NC_HandleNCPaint( hwnd );  /* Repaint caption */
+	NC_HandleNCPaint( hwnd , (HRGN)1 );  /* Repaint caption */
 	return 0;
 
     case WM_SETCURSOR:
@@ -257,46 +261,76 @@ LRESULT DefWindowProc( HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam )
 	return NC_HandleSetCursor( hwnd, wParam, lParam );
 
     case WM_SYSCOMMAND:
-        {
-            POINT pt = { LOWORD(lParam), HIWORD(lParam) };
-            return NC_HandleSysCommand( hwnd, wParam, pt );
-        }
-
+	{
+          POINT pt = { LOWORD(lParam), HIWORD(lParam) };
+          return NC_HandleSysCommand( hwnd, wParam, pt );
+	}
     case WM_KEYDOWN:
 
-	if(wParam == VK_F10) iMenuKey = VK_F10;
+	if(wParam == VK_F10) iF10Key = VK_F10;
 	break;
 
     case WM_SYSKEYDOWN:
-	/* this breaks current pseudo accelerators but
-	   creates a basis for implementing real ones */
 
-	if(wParam == VK_F10) 
-	   {
-	    iMenuKey = VK_F10;
-	    break;
-	   }
-	
-	if (wParam == VK_MENU)
-	   {  
-	    iMenuSysKey = (iMenuSysKey)? 0: 1;
-	    iMenuKey    = 0;
-	}
+	if( HIWORD(lParam) & KEYDATA_ALT )
+	  {
+	    /* if( HIWORD(lParam) & ~KEYDATA_PREVSTATE ) */
+	      if( wParam == VK_MENU && !iMenuSysKey )
+		iMenuSysKey = 1;
+	      else
+		iMenuSysKey = 0;
+	    
+	    iF10Key = 0;
+
+	  } 
+	else if( wParam == VK_F10 )
+	         iF10Key = 1;
+	     else
+	         if( wParam == VK_ESCAPE && GetKeyState(VK_SHIFT) < 0 )
+		     SendMessage( hwnd, WM_SYSCOMMAND, (WPARAM)SC_KEYMENU, 
+ 						       (LPARAM)VK_SPACE);
 	break;
 
     case WM_KEYUP:
     case WM_SYSKEYUP:
 
-	if( (wParam == VK_MENU && iMenuSysKey) || 
-	    (wParam == VK_F10 && iMenuKey) )
+	/* Press and release F10 or ALT */
 
-	      /* Send to WS_OVERLAPPED parent. TODO: Handle MDI */
+	if( ( wParam == VK_MENU && iMenuSysKey ) 
+	      || ( wParam == VK_F10 && iF10Key ) )
+
 	      SendMessage( WIN_GetTopParent(hwnd), WM_SYSCOMMAND,
 			   SC_KEYMENU, 0L );
 
-	iMenuSysKey = 0;
-	iMenuKey = 0;
+	iMenuSysKey = iF10Key = 0;
         break;
+
+    case WM_SYSCHAR:
+
+	iMenuSysKey = 0;
+
+	if( wParam == VK_RETURN && (wndPtr->dwStyle & WS_MINIMIZE) )
+	  {
+	    PostMessage(hwnd, WM_SYSCOMMAND, (WPARAM)SC_RESTORE, 0L ); 
+	    break;
+	  }  
+
+	if( (HIWORD(lParam) & KEYDATA_ALT) && wParam )
+	  {
+	    if( wParam == VK_TAB || wParam == VK_ESCAPE )
+	      break;
+
+	    if( wParam == VK_SPACE && (wndPtr->dwStyle & WS_CHILD) )
+	      SendMessage( wndPtr->parent->hwndSelf, msg, wParam, lParam );
+	    else
+	      SendMessage(hwnd, WM_SYSCOMMAND, (WPARAM)SC_KEYMENU, (LPARAM)(DWORD)wParam );
+	  } 
+	else
+	  /* check for Ctrl-Esc */
+	  if( wParam != VK_ESCAPE )   
+	      MessageBeep(0);
+	  
+	break;
 
     case WM_SHOWWINDOW:
 	if( !lParam ) return 0; /* sent from ShowWindow */

@@ -25,12 +25,10 @@ typedef struct _WIN32_function{
 typedef struct _WIN32_builtin{
     char *name;
     WIN32_function *functions;
-    int size;
-	int base;
+    WIN32_function *last_func;
+    const int *base;
     struct _WIN32_builtin *next;
 } WIN32_builtin;
-
-extern WIN32_builtin *WIN32_builtin_list;
 
 struct w_files
 {

@@ -1,4 +1,5 @@
 name	kernel
+type	win16
 id	1
 
 1   stub FatalExit
@@ -208,15 +209,15 @@ id	1
 216 pascal   RegEnumKey(long long ptr long) RegEnumKey
 217 pascal   RegOpenKey(long ptr ptr) RegOpenKey
 218 pascal   RegCreateKey(long ptr ptr) RegCreateKey
-219 stub RegDeleteValue
+219 pascal   RegDeleteKey(long ptr) RegDeleteKey
 220 pascal   RegCloseKey(long) RegCloseKey
 221 pascal   RegSetValue(long ptr long ptr long) RegSetValue
-222 stub RegDeleteValue
-223 stub RegEnumValue
+222 pascal   RegDeleteValue(long ptr) RegDeleteValue
+223 pascal   RegEnumValue(long long ptr ptr ptr ptr ptr ptr) RegEnumValue
 224 pascal   RegQueryValue(long ptr ptr ptr) RegQueryValue
-225 stub RegQueryValueEx
-226 stub RegSetValueEx
-227 stub RegFlushKey
+225 pascal   RegQueryValueEx(long ptr ptr ptr ptr ptr) RegQueryValueEx
+226 pascal   RegSetValueEx(long ptr long long ptr long) RegSetValueEx
+227 pascal   RegFlushKey(long) RegFlushKey
 #228 K228
 #229 K229
 230 stub GlobalSmartPageLock

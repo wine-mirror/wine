@@ -14,6 +14,7 @@
 typedef struct tagTIMER
 {
     HWND             hwnd;
+    HQUEUE	     hq;
     WORD             msg;  /* WM_TIMER or WM_SYSTIMER */
     WORD             id;
     WORD             timeout;
@@ -74,6 +75,58 @@ static void TIMER_RemoveTimer( TIMER * pTimer )
     pTimer->next = NULL;
 }
 
+/***********************************************************************
+ *           TIMER_SwitchQueue
+ */
+void TIMER_SwitchQueue(HQUEUE old, HQUEUE new)
+{
+ TIMER*         pT = pNextTimer;
+
+ while(pT)
+  {
+   if( pT->hq == old ) pT->hq = new;
+   pT = pT->next;
+  }
+
+}
+
+/***********************************************************************
+ *           TIMER_NukeTimers
+ *
+ * Trash all timers that are bound to the hwnd or hq
+ */
+void TIMER_NukeTimers(HWND hwnd, HQUEUE hq)
+{
+ HQUEUE		hQToUpdate = ( hwnd ) ? GetTaskQueue( GetWindowTask( hwnd ) )
+				      : hq;
+ TIMER*         pT = pNextTimer;
+ TIMER*         pTnext;
+
+ if( !pT ) return;
+
+ while( (hwnd && pT->hwnd == hwnd) ||
+        (hq && pT->hq == hq) )
+      {
+	 QUEUE_DecTimerCount( hQToUpdate );
+         if( !(pT = pNextTimer = pNextTimer->next) )
+             return;
+      }
+
+ /* pT points to the "good" timer */
+
+ while( (pTnext = pT->next) )
+    {
+      while( (hwnd && pTnext->hwnd == hwnd) ||
+             (hq && pTnext->hq == hq) )
+	   {
+	      QUEUE_DecTimerCount( hQToUpdate );
+              if( !(pT->next = pTnext->next) )
+                  return;
+	   }
+
+      pT = pT->next;
+    }
+}
 
 /***********************************************************************
  *           TIMER_RestartTimers
@@ -165,6 +218,8 @@ static WORD TIMER_SetTimer( HWND hwnd, WORD id, WORD timeout,
       /* Add the timer */
 
     pTimer->hwnd    = hwnd;
+    pTimer->hq	    = (hwnd) ? GetTaskQueue( GetWindowTask( hwnd ) )
+			     : GetTaskQueue( 0 );
     pTimer->msg     = sys ? WM_SYSTIMER : WM_TIMER;
     pTimer->id      = id;
     pTimer->timeout = timeout;
@@ -173,7 +228,7 @@ static WORD TIMER_SetTimer( HWND hwnd, WORD id, WORD timeout,
     dprintf_timer(stddeb, "Timer added: %p, %04x, %04x, %04x, %08lx\n", 
 		  pTimer, pTimer->hwnd, pTimer->msg, pTimer->id, (DWORD)pTimer->proc);
     TIMER_InsertTimer( pTimer );
-    QUEUE_IncTimerCount( GetTaskQueue(0) );
+    QUEUE_IncTimerCount( pTimer->hq );
     if (!id)
 	return TRUE;
     else
@@ -188,6 +243,7 @@ static BOOL TIMER_KillTimer( HWND hwnd, WORD id, BOOL sys )
 {
     int i;
     TIMER * pTimer;
+    HQUEUE  hq;
     
       /* Find the timer */
     
@@ -201,13 +257,15 @@ static BOOL TIMER_KillTimer( HWND hwnd, WORD id, BOOL sys )
 
       /* Delete the timer */
 
+    hq = pTimer->hq;
+
     pTimer->hwnd    = 0;
     pTimer->msg     = 0;
     pTimer->id      = 0;
     pTimer->timeout = 0;
     pTimer->proc    = 0;
     TIMER_RemoveTimer( pTimer );
-    QUEUE_DecTimerCount( GetTaskQueue(0) );
+    QUEUE_DecTimerCount( hq );
     return TRUE;
 }
 

@@ -159,7 +159,7 @@ HLOCAL PROGRAM_AddProgram(HLOCAL hGroup, HICON hIcon, LPCSTR lpszName,
   HLOCAL hWorkDir  = LocalAlloc(LMEM_FIXED, 1 + lstrlen(lpszWorkDir));
   if (!hProgram || !hName || !hCmdLine || !hIconFile || !hWorkDir)
     {
-      MAIN_OutOfMemoryError();
+      MAIN_MessageBoxIDS(IDS_OUT_OF_MEMORY, IDS_ERROR, MB_OK);
       if (hProgram)  LocalFree(hProgram);
       if (hName)     LocalFree(hName);
       if (hCmdLine)  LocalFree(hCmdLine);

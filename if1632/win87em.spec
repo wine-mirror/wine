@@ -1,4 +1,5 @@
 name	win87em
+type	win16
 id	4
 
 1 register _fpMath() WIN87_fpmath

@@ -2798,12 +2798,7 @@ static void EDIT_WM_KeyDown(HWND hwnd, WPARAM wParam)
         return;
     }
 
-    /* FIXME: GetKeyState appears to have its bits reversed */
-#if CorrectGetKeyState
     if(motionKey && (0x80 & GetKeyState(VK_SHIFT))) {
-#else
-    if(motionKey && (0x01 & GetKeyState(VK_SHIFT))) {
-#endif
         EDIT_ExtendSel(hwnd, es->WndCol, es->WndRow*es->txtht);
     } else {
         EDIT_SetAnchor(hwnd, es->CurrLine, es->CurrCol);

@@ -34,6 +34,13 @@ int PASCAL WinMain (HANDLE hInstance, HANDLE prev, LPSTR cmdline, int show)
 {
   MSG      msg;
 
+#if defined(WINELIB) && !defined(HAVE_WINE_CONSTRUCTOR)
+  /* Register resources */
+  LIBWINE_Register_accel();
+  LIBWINE_Register_De();
+  LIBWINE_Register_En();
+#endif
+
 #ifndef WINELIB
   Globals.lpszIniFile         = "progman.ini";
   Globals.lpszIcoFile         = "progman.ico";
@@ -56,28 +63,15 @@ int PASCAL WinMain (HANDLE hInstance, HANDLE prev, LPSTR cmdline, int show)
 #endif
 
   /* Select Language */
-  Globals.lpszLanguage = "En";
 #ifdef WINELIB
-  if (Options.language == LANG_Cz) Globals.lpszLanguage = "Cz"; 
-  if (Options.language == LANG_Da) Globals.lpszLanguage = "Da"; 
-  if (Options.language == LANG_De) Globals.lpszLanguage = "De"; 
-  if (Options.language == LANG_Es) Globals.lpszLanguage = "Es"; 
-  if (Options.language == LANG_Fi) Globals.lpszLanguage = "Fi"; 
-  if (Options.language == LANG_Fr) Globals.lpszLanguage = "Fr"; 
-  if (Options.language == LANG_No) Globals.lpszLanguage = "No"; 
-#ifndef HAVE_WINE_CONSTRUCTOR
-  /* Register resources */
-  LIBWINE_Register_accel();
-  LIBWINE_Register_De();
-  LIBWINE_Register_En();
-#endif
+  Globals.lpszLanguage = langNames[Options.language];
+#else
+  Globals.lpszLanguage = "En";
 #endif
 
   Globals.hInstance           = hInstance;
   Globals.hGroups             = 0;
-
-  /* FIXME should use MDI */
-  Globals.hActiveGroup = 0;
+  Globals.hActiveGroup        = 0;
 
   /* Read Options from `progman.ini' */
   Globals.bAutoArrange =
@@ -108,7 +102,7 @@ int PASCAL WinMain (HANDLE hInstance, HANDLE prev, LPSTR cmdline, int show)
   Globals.hAccel = LoadAccelerators(Globals.hInstance, STRING_ACCEL);
 
   /* Setup menu, stringtable and resourcenames */
-  STRING_SelectLanguage(Globals.lpszLanguage);
+  STRING_SelectLanguageByName(Globals.lpszLanguage);
 
   MAIN_CreateMDIWindow();
 
@@ -146,7 +140,8 @@ static VOID MAIN_CreateGroups()
     {
       int num, skip, ret;
       ret = sscanf(ptr, "%d%n", &num, &skip);
-      if (ret == 0) MAIN_FileReadError(Globals.lpszIniFile);
+      if (ret == 0)
+	MAIN_MessageBoxIDS_s(IDS_FILE_READ_ERROR_s, Globals.lpszIniFile, IDS_ERROR, MB_OK);
       if (ret != 1) break;
 
       sprintf(key, "Group%d", num);
@@ -259,12 +254,12 @@ static VOID MAIN_MenuCommand(HWND hWnd, WPARAM wParam, LPARAM lParam)
     case PM_DELETE:
       if (hActiveProgram)
 	{
-	if (DIALOG_Delete(STRING_DELETE_PROGRAM_s, PROGRAM_ProgramName(hActiveProgram)))
+	if (DIALOG_Delete(IDS_DELETE_PROGRAM_s, PROGRAM_ProgramName(hActiveProgram)))
 	  PROGRAM_DeleteProgram(hActiveProgram, TRUE);
 	}
       else if (hActiveGroup)
 	{
-	if (DIALOG_Delete(STRING_DELETE_GROUP_s, GROUP_GroupName(hActiveGroup)))
+	if (DIALOG_Delete(IDS_DELETE_GROUP_s, GROUP_GroupName(hActiveGroup)))
 	  GROUP_DeleteGroup(hActiveGroup);
 	}
       break;
@@ -326,24 +321,15 @@ static VOID MAIN_MenuCommand(HWND hWnd, WPARAM wParam, LPARAM lParam)
 	SendMessage(Globals.hMDIWnd, WM_MDIICONARRANGE, 0, 0);
       break;
 
-      /* Menu Language */
-    case PM_Da: STRING_SelectLanguage("Da"); break;
-    case PM_De: STRING_SelectLanguage("De"); break;
-    case PM_En: STRING_SelectLanguage("En"); break;
-    case PM_Es: STRING_SelectLanguage("Es"); break;
-    case PM_Fi: STRING_SelectLanguage("Fi"); break;
-    case PM_Fr: STRING_SelectLanguage("Fr"); break;
-    case PM_No: STRING_SelectLanguage("No"); break;
-
       /* Menu Help */
     case PM_CONTENTS:
       if (!WinHelp(Globals.hMainWnd, "progman.hlp", HELP_INDEX, 0))
-	MAIN_WinHelpError();
+	MAIN_MessageBoxIDS(IDS_WINHELP_ERROR, IDS_ERROR, MB_OK);
       break;
 
     case PM_HELPONHELP:
       if (!WinHelp(Globals.hMainWnd, "progman.hlp", HELP_HELPONHELP, 0))
-	MAIN_WinHelpError();
+	MAIN_MessageBoxIDS(IDS_WINHELP_ERROR, IDS_ERROR, MB_OK);
       break;
 
     case PM_TUTORIAL:
@@ -368,7 +354,10 @@ static VOID MAIN_MenuCommand(HWND hWnd, WPARAM wParam, LPARAM lParam)
 #endif
 
     default:
-      MAIN_NotImplementedError();
+      if (wParam >= PM_FIRST_LANGUAGE && wParam <= PM_LAST_LANGUAGE)
+	STRING_SelectLanguageByNumber(wParam - PM_FIRST_LANGUAGE);
+      else
+	MAIN_MessageBoxIDS(IDS_NOT_IMPLEMENTED, IDS_ERROR, MB_OK);
       break;
     }
 }
@@ -464,6 +453,38 @@ static VOID MAIN_CreateMDIWindow()
 /**********************************************************************/
 /***********************************************************************
  *
+ *           MAIN_MessageBoxIDS
+ */
+INT MAIN_MessageBoxIDS(UINT ids_text, UINT ids_title, WORD type)
+{
+  CHAR text[MAX_STRING_LEN];
+  CHAR title[MAX_STRING_LEN];
+
+  LoadString(Globals.hInstance, ids_text, text, sizeof(text));
+  LoadString(Globals.hInstance, ids_title, title, sizeof(title));
+
+  return(MessageBox(Globals.hMainWnd, text, title, type));
+}
+
+/***********************************************************************
+ *
+ *           MAIN_MessageBoxIDS_s
+ */
+INT MAIN_MessageBoxIDS_s(UINT ids_text, LPCSTR str, UINT ids_title, WORD type)
+{
+  CHAR text[MAX_STRING_LEN];
+  CHAR title[MAX_STRING_LEN];
+  CHAR newtext[MAX_STRING_LEN + MAX_PATHNAME_LEN];
+
+  LoadString(Globals.hInstance, ids_text, text, sizeof(text));
+  LoadString(Globals.hInstance, ids_title, title, sizeof(title));
+  wsprintf(newtext, text, str);
+
+  return(MessageBox(Globals.hMainWnd, newtext, title, type));
+}
+
+/***********************************************************************
+ *
  *           MAIN_ReplaceString
  */
 
@@ -477,79 +498,7 @@ VOID MAIN_ReplaceString(HLOCAL *handle, LPSTR replace)
       LocalFree(*handle);
       *handle = newhandle;
     }
-  else MAIN_OutOfMemoryError();
-}
-
-/***********************************************************************
- *
- *           MAIN_NotImplementedError
- */
-
-VOID MAIN_NotImplementedError()
-{
-  MessageBox(Globals.hMainWnd,
-	     STRING_NOT_IMPLEMENTED, STRING_ERROR, MB_OK);
-}
-
-/***********************************************************************
- *
- *           MAIN_OutOfMemoryError
- */
-
-VOID MAIN_OutOfMemoryError()
-{
-  MessageBox(Globals.hMainWnd,
-	     STRING_OUT_OF_MEMORY, STRING_ERROR, MB_OK);
-}
-
-/***********************************************************************
- *
- *           MAIN_WinHelpError
- */
-
-VOID MAIN_WinHelpError()
-{
-  MessageBox(Globals.hMainWnd,
-	     STRING_WINHELP_ERROR, STRING_ERROR, MB_OK);
-}
-
-/***********************************************************************
- *
- *           MAIN_FileReadError
- */
-
-VOID MAIN_FileReadError(LPCSTR lpszPath)
-{
-  CHAR msg[MAX_PATHNAME_LEN + 1000];
-  if (sizeof(msg) <= strlen(STRING_FILE_READ_ERROR_s) + strlen(lpszPath)) return;
-  wsprintf(msg, (LPSTR)STRING_FILE_READ_ERROR_s, lpszPath);
-  MessageBox(Globals.hMainWnd, msg, STRING_ERROR, MB_OK);
-}
-
-/***********************************************************************
- *
- *           MAIN_FileWriteError
- */
-
-VOID MAIN_FileWriteError(LPCSTR lpszPath)
-{
-  CHAR msg[MAX_PATHNAME_LEN + 1000];
-  if (sizeof(msg) <= strlen(STRING_FILE_WRITE_ERROR_s) + strlen(lpszPath)) return;
-  wsprintf(msg, (LPSTR)STRING_FILE_WRITE_ERROR_s, lpszPath);
-  MessageBox(Globals.hMainWnd, msg, STRING_ERROR, MB_OK);
-}
-
-/***********************************************************************
- *
- *           MAIN_GrpFileReadError
- */
-
-VOID MAIN_GrpFileReadError(LPCSTR lpszPath)
-{
-  CHAR msg[MAX_PATHNAME_LEN + 1000];
-  if (sizeof(msg) <= strlen(STRING_GRPFILE_READ_ERROR_s) + strlen(lpszPath)) return;
-  wsprintf(msg, (LPSTR)STRING_GRPFILE_READ_ERROR_s, lpszPath);
-  MessageBox(Globals.hMainWnd, msg, STRING_ERROR, MB_YESNO);
+  else MAIN_MessageBoxIDS(IDS_OUT_OF_MEMORY, IDS_ERROR, MB_OK);
 }
 
 /* Local Variables:    */

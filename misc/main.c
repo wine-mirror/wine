@@ -57,6 +57,7 @@ static const char *langNames[] =
     "Da",  /* LANG_Da */
     "Cz",  /* LANG_Cz */
     "Eo",  /* LANG_Eo */
+    "It",  /* LANG_It */
     NULL
 };
 
@@ -139,7 +140,7 @@ static XrmOptionDescRec optionsTable[] =
   "    -fixedmap       Use a \"standard\" color map\n" \
   "    -iconic         Start as an icon\n" \
   "    -ipc            Enable IPC facilities\n" \
-  "    -language xx    Set the language (one of En,Es,De,No,Fr,Fi,Da,Cz,Eo)\n" \
+  "    -language xx    Set the language (one of En,Es,De,No,Fr,Fi,Da,Cz,Eo,It)\n" \
   "    -managed        Allow the window manager to manage created windows\n" \
   "    -mode mode      Start Wine in a particular mode (standard or enhanced)\n" \
   "    -name name      Set the application name\n" \
@@ -265,32 +266,32 @@ BOOL ParseDebugOptions(char *options)
  */
 static BOOL MAIN_ParseDLLOptions(char *options)
 {
-  int l;
-  int i;
-  if (strlen(options)<3)
-    return FALSE;
-  do
-  {
-    if ((*options!='+')&&(*options!='-'))
-      return FALSE;
-    if (strchr(options,','))
-      l=strchr(options,',')-options;
-    else l=strlen(options);
-    for (i=0;i<N_BUILTINS;i++)
-         if (!lstrncmpi(options+1,dll_builtin_table[i].name,l-1))
-           {
-             dll_builtin_table[i].used = (*options=='+');
-             break;
-           }
-    if (i==N_BUILTINS)
-         return FALSE;
-    options+=l;
-  }
-  while((*options==',')&&(*(++options)));
-  if (*options)
-    return FALSE;
-  else
-    return TRUE;
+    int i, l;
+    BUILTIN_DLL *dll;
+
+    if (strlen(options)<3) return FALSE;
+    do
+    {
+        if ((*options!='+') && (*options!='-')) return FALSE;
+        if (strchr(options,',')) l=strchr(options,',')-options;
+        else l=strlen(options);
+        for (dll = dll_builtin_table; dll->name; dll++)
+        {
+            if (!lstrncmpi(options+1,dll->name,l-1))
+            {
+                if (*options == '+') dll->flags &= ~DLL_FLAG_NOT_USED;
+                else dll->flags |= DLL_FLAG_NOT_USED;
+                break;
+            }
+        }
+        if (!dll->name) return FALSE;
+        options+=l;
+    }
+    while((*options==',')&&(*(++options)));
+    if (*options)
+        return FALSE;
+    else
+        return TRUE;
 }
 #endif
 
@@ -433,12 +434,12 @@ static void MAIN_ParseOptions( int *argc, char *argv[] )
        if(MAIN_ParseDLLOptions((char*)value.addr)==FALSE)
        {
          int i;
+         BUILTIN_DLL *dll;
          fprintf(stderr,"%s: Syntax: -dll +xxx,... or -dll -xxx,...\n",argv[0]);
          fprintf(stderr,"Example: -dll -ole2    Do not use emulated OLE2.DLL\n");
          fprintf(stderr,"Available DLLs\n");
-         for(i=0;i<N_BUILTINS;i++)
-               fprintf(stderr,"%-9s%c",dll_builtin_table[i].name,
-                       (((i+2)%8==0)?'\n':' '));
+         for (dll = dll_builtin_table; dll->name; dll++)
+             fprintf(stderr,"%-9s%c",dll->name, (((i+2)%8==0)?'\n':' '));
          fprintf(stderr,"\n\n");
          exit(1);
        }

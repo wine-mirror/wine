@@ -13,11 +13,9 @@
 #include "win.h"
 #include "ldt.h"
 #include "callback.h"
-#include "module.h"
 #include "user.h"
 #include "driver.h"
 #include "mmsystem.h"
-#include "selectors.h"
 #include "stddebug.h"
 #include "debug.h"
 
@@ -103,7 +101,7 @@ void StartMMTime()
 	mmSysTimeSMPTE.u.smpte.frame = 0;
 	mmSysTimeSMPTE.u.smpte.fps = 0;
 	mmSysTimeSMPTE.u.smpte.dummy = 0;
-	SetTimer(0, 1, 33, GetWndProcEntry16("MMSysTimeCallback"));
+	SetTimer(0, 1, 33, MODULE_GetWndProcEntry16("MMSysTimeCallback"));
     }
 }
 

@@ -63,6 +63,9 @@
 
 #define LIST_HEAP_SIZE 0x10000
 
+#define LBMM_EDGE   4    /* distance inside box which is same as moving mouse
+			    outside box, to trigger scrolling of LB */
+
 static void ListBoxInitialize(LPHEADLIST lphl)
 {
   lphl->lpFirst        = NULL;
@@ -326,7 +329,7 @@ void ListBoxAskMeasure(LPHEADLIST lphl, LPLISTSTRUCT lpls)
 
   if (lphl->dwStyle & LBS_OWNERDRAWFIXED) {
     lphl->StdItemHeight = lpmeasure->itemHeight;
-    lphl->needMeasure = FALSE;
+    lpls->mis.itemHeight = lpmeasure->itemHeight;
   }
 
   USER_HEAP_FREE(hTemp);			
@@ -1036,7 +1039,7 @@ static LONG LBMouseMove(HWND hwnd, WORD wParam, LONG lParam)
   dprintf_listbox(stddeb,"LBMouseMove %d %d\n",SLOWORD(lParam),SHIWORD(lParam));
   if ((wParam & MK_LBUTTON) != 0) {
     y = SHIWORD(lParam);
-    if (y < 0) {
+    if (y < LBMM_EDGE) {
       if (lphl->FirstVisible > 0) {
 	lphl->FirstVisible--;
 	SetScrollPos(hwnd, SB_VERT, lphl->FirstVisible, TRUE);
@@ -1045,15 +1048,15 @@ static LONG LBMouseMove(HWND hwnd, WORD wParam, LONG lParam)
       }
     }
     GetClientRect(hwnd, &rect);
-    if (y >= rect.bottom) {
+    if (y >= (rect.bottom-LBMM_EDGE)) {
       if (lphl->FirstVisible < ListMaxFirstVisible(lphl)) {
 	lphl->FirstVisible++;
 	SetScrollPos(hwnd, SB_VERT, lphl->FirstVisible, TRUE);
 	InvalidateRect(hwnd, NULL, TRUE);
 	return 0;
       }
-    }
-    if ((y > 0) && (y < (rect.bottom - 4))) {
+      }
+    if ((y > 0) && (y < (rect.bottom - LBMM_EDGE))) {
       if ((y < rectsel.top) || (y > rectsel.bottom)) {
         iRet = ListBoxFindMouse(lphl, LOWORD(lParam), HIWORD(lParam));
         if (iRet == lphl->ItemFocused || iRet == -1)  {
@@ -1088,7 +1091,7 @@ static LONG LBMouseMove(HWND hwnd, WORD wParam, LONG lParam)
   }
 
   return 0;
-}
+  }
 
 /***********************************************************************
  *           LBKeyDown
@@ -1281,7 +1284,7 @@ static LONG LBSetFont(HWND hwnd, WPARAM wParam, LPARAM lParam)
       TEXTMETRIC tm;
       GetTextMetrics( hdc, &tm );
       lphl->StdItemHeight = tm.tmHeight;
-      dprintf_listbox(stddeb,"LBSetFont:  new font %d with height %d",
+      dprintf_listbox(stddeb,"LBSetFont:  new font %d with height %d\n",
                       lphl->hFont, lphl->StdItemHeight);
       ReleaseDC( 0, hdc );
   }
@@ -1345,7 +1348,7 @@ static LONG LBPaint(HWND hwnd, WORD wParam, LONG lParam)
     if (i >= lphl->FirstVisible) {
       height = lpls->mis.itemHeight;
 
-      if (top > rect.bottom) {
+      if (top > (rect.bottom-height+1)) {
 	if (lphl->dwStyle & LBS_MULTICOLUMN) {
 	  lphl->ItemsPerColumn = MAX(lphl->ItemsPerColumn, ipc);
 	  ipc = 0;

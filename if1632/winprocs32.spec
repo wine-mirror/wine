@@ -1,4 +1,5 @@
 name	winprocs32
+type	win32
 
 1  stdcall ButtonWndProc(long long long long) ButtonWndProc32
 2  stdcall StaticWndProc(long long long long) StaticWndProc32

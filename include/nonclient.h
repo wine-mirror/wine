@@ -12,8 +12,8 @@
 extern void NC_GetInsideRect( HWND hwnd, RECT *rect );
 extern void NC_GetMinMaxInfo( HWND hwnd, POINT *maxSize, POINT *maxPos,
                               POINT *minTrack, POINT *maxTrack );
-extern void NC_DoNCPaint( HWND hwnd, BOOL active, BOOL suppress_menupaint );
-extern LONG NC_HandleNCPaint( HWND hwnd );
+extern void NC_DoNCPaint( HWND hwnd, HRGN clip, BOOL suppress_menupaint );
+extern LONG NC_HandleNCPaint( HWND hwnd , HRGN clip);
 extern LONG NC_HandleNCActivate( HWND hwnd, WPARAM wParam );
 extern LONG NC_HandleNCCalcSize( HWND hwnd, NCCALCSIZE_PARAMS *params );
 extern LONG NC_HandleNCHitTest( HWND hwnd, POINT pt );

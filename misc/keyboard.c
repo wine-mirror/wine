@@ -6,6 +6,7 @@ static char Copyright[] = "Copyright  Scott A. Laird, Erik Bos  1993, 1994";
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
+#include <ctype.h>
 #include "windows.h"
 #include "keyboard.h"
 #include "stddebug.h"
@@ -19,14 +20,27 @@ int ToAscii(WORD wVirtKey, WORD wScanCode, LPSTR lpKeyState,
 
     	dprintf_keyboard(stddeb,"ToAscii (%d,%d)\n",wVirtKey, wScanCode);
 
-	/* FIXME: this is not sufficient but better than returing -1 */
+	/* FIXME: codepage is broken */
 
 	for (i = 0 ; i != KeyTableSize ; i++) 
-		if (KeyTable[i].virtualkey == wVirtKey)  {
-			*(BYTE*)lpChar++ = *KeyTable[i].name;
-			*(BYTE*)lpChar = 0;
+		if (KeyTable[i].virtualkey == wVirtKey)  
+		 {
+		   dprintf_keyboard(stddeb,"\t\tchar = %s\n", KeyTable[i].name);
+		   if( isprint(KeyTable[i].ASCII) || isspace(KeyTable[i].ASCII) )
+		     {
+			*(BYTE*)lpChar = KeyTable[i].ASCII;
+			*(((BYTE*)lpChar) + 1) = 0;
+
+			if( isalpha( *(BYTE*)lpChar ) )
+			  if( (lpKeyState[VK_CAPITAL]<0 && !lpKeyState[VK_SHIFT]) ||
+			      (!lpKeyState[VK_CAPITAL] && lpKeyState[VK_SHIFT]<0) )
+			      *(BYTE*)lpChar = toupper( *(BYTE*)lpChar );
+			  else
+			      *(BYTE*)lpChar = tolower( *(BYTE*)lpChar );
+
 			return 1;
-		}
+		     }
+		 }
 
 	*(BYTE*)lpChar = 0;
 	return 0;

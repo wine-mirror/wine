@@ -1,4 +1,5 @@
 name	ole2nls
+type	win16
 id	18
 
 1 pascal GetUserDefaultLCID()      GetUserDefaultLCID

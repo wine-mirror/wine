@@ -1,12 +1,14 @@
-This is release 960324 of Wine the MS Windows emulator.  This is still a
+This is release 960331 of Wine the MS Windows emulator.  This is still a
 developer's only release.  There are many bugs and many unimplemented API
 features.  Most applications still do not work.
 
 Patches should be submitted to "julliard@lrc.epfl.ch".  Please don't
 forget to include a ChangeLog entry.
 
-WHAT'S NEW with Wine-960324: (see ChangeLog for details)
-	- Many Win32 and Winelib improvements.
+WHAT'S NEW with Wine-960331: (see ChangeLog for details)
+	- Many improvements to keyboard handling.
+	- New registry code with Win32 support.
+	- Support for Italian language.
 	- Lots of bug fixes.
 
 See the README file in the distribution for installation instructions.
@@ -15,10 +17,10 @@ Because of lags created by using mirror, this message may reach you before
 the release is available at the ftp sites.  The sources will be available
 from the following locations:
 
-    sunsite.unc.edu:/pub/Linux/ALPHA/wine/development/Wine-960324.tar.gz
-    tsx-11.mit.edu:/pub/linux/ALPHA/Wine/development/Wine-960324.tar.gz
-    ftp.infomagic.com:/pub/mirrors/linux/wine/development/Wine-960324.tar.gz
-    aris.com:/pub/linux/ALPHA/Wine/development/Wine-960324.tar.gz
+    sunsite.unc.edu:/pub/Linux/ALPHA/wine/development/Wine-960331.tar.gz
+    tsx-11.mit.edu:/pub/linux/ALPHA/Wine/development/Wine-960331.tar.gz
+    ftp.infomagic.com:/pub/mirrors/linux/wine/development/Wine-960331.tar.gz
+    aris.com:/pub/linux/ALPHA/Wine/development/Wine-960331.tar.gz
 
 It should also be available from any site that mirrors tsx-11 or sunsite.
 

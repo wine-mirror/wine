@@ -11,11 +11,13 @@ static char Copyright[] = "Copyright  Robert J. Amstadt, 1993";
 #include <string.h>
 #include <errno.h>
 #include "windows.h"
+#include "alias.h"
 #include "module.h"
 #include "task.h"
 #include "selectors.h"
 #include "comm.h"
 #include "user.h"
+#include "win.h"
 #include "menu.h"
 #include "kernel32.h"
 #include "atom.h"
@@ -99,9 +101,12 @@ int MAIN_Init(void)
     
       /* Global atom table initialisation */
     if (!ATOM_Init()) return 0;
-    
+
       /* GDI initialisation */
     if (!GDI_Init()) return 0;
+
+    /* Initialise window procedures aliases */
+    if (!ALIAS_Init()) return 0;
 
       /* Initialize system colors and metrics*/
     SYSMETRICS_Init();

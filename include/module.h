@@ -105,10 +105,12 @@ extern BOOL MODULE_Init(void);
 extern int MODULE_OpenFile( HMODULE hModule );
 extern LPSTR MODULE_GetModuleName( HMODULE hModule );
 extern void MODULE_RegisterModule( HMODULE hModule );
-extern WORD MODULE_GetOrdinal( HMODULE hModule, char *name );
+extern WORD MODULE_GetOrdinal( HMODULE hModule, const char *name );
 extern SEGPTR MODULE_GetEntryPoint( HMODULE hModule, WORD ordinal );
 extern BOOL MODULE_SetEntryPoint( HMODULE hModule, WORD ordinal, WORD offset );
 extern LPSTR MODULE_GetEntryPointName( HMODULE hModule, WORD ordinal );
+extern FARPROC MODULE_GetWndProcEntry16( const char *name );
+extern FARPROC MODULE_GetWndProcEntry32( const char *name );
 
 extern BOOL NE_LoadSegment( HMODULE hModule, WORD segnum );
 extern void NE_FixupPrologs( HMODULE hModule );

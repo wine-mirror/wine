@@ -4,9 +4,11 @@
  * Copyright 1996 Ulrich Schmid
  */
 
-/* Menu */
+#define LANGUAGE_ID                  En
+#define LANGUAGE_NUMBER              0
+#define LANGUAGE_MENU_ITEM           "&English"
 
-#define MENU_Xx                      MENU_En
+/* Menu */
 
 #define MENU_FILE                    "&File"
 #define MENU_FILE_NEW                "&New..."
@@ -48,30 +50,25 @@
 #define DIALOG_BROWSE                "&Browse"
 #define DIALOG_HELP                  "&Help"
 
-#define DIALOG_NEW_Xx                DIALOG_NEW_En
 #define DIALOG_NEW_CAPTION           "New Program Object"
 #define DIALOG_NEW_NEW               "New"
 #define DIALOG_NEW_GROUP             "Program &group"
 #define DIALOG_NEW_PROGRAM           "&Program"
 
-#define DIALOG_MOVE_Xx               DIALOG_MOVE_En
 #define DIALOG_MOVE_CAPTION          "Move Program"
 #define DIALOG_MOVE_PROGRAM          "Move program:"
 #define DIALOG_MOVE_FROM_GROUP       "From group:"
 #define DIALOG_MOVE_TO_GROUP         "&To group:"
 
-#define DIALOG_COPY_Xx               DIALOG_COPY_En
 #define DIALOG_COPY_CAPTION          "Copy Program"
 #define DIALOG_COPY_PROGRAM          "Copy program:"
 #define DIALOG_COPY_FROM_GROUP       DIALOG_MOVE_FROM_GROUP
 #define DIALOG_COPY_TO_GROUP         DIALOG_MOVE_TO_GROUP
 
-#define DIALOG_GROUP_Xx              DIALOG_GROUP_En
 #define DIALOG_GROUP_CAPTION         "Program Group Attributes"
 #define DIALOG_GROUP_DESCRIPTION     "&Description:"
 #define DIALOG_GROUP_FILE            "&Group file:"
 
-#define DIALOG_PROGRAM_Xx            DIALOG_PROGRAM_En
 #define DIALOG_PROGRAM_CAPTION       "Program Attributes"
 #define DIALOG_PROGRAM_DESCRIPTION   DIALOG_GROUP_DESCRIPTION
 #define DIALOG_PROGRAM_COMMAND_LINE  "&Command line:"
@@ -80,14 +77,43 @@
 #define DIALOG_PROGRAM_SYMBOL        "As &Symbol"
 #define DIALOG_PROGRAM_OTHER_SYMBOL  "&Other Symbol..."
 
-#define DIALOG_SYMBOL_Xx             DIALOG_SYMBOL_En
 #define DIALOG_SYMBOL_CAPTION        "Select Symbol"
 #define DIALOG_SYMBOL_FILE           "&Filename:"
 #define DIALOG_SYMBOL_CURRENT        "&Current Symbol:"
 
-#define DIALOG_EXECUTE_Xx            DIALOG_EXECUTE_En
 #define DIALOG_EXECUTE_CAPTION       "Execute Program"
 #define DIALOG_EXECUTE_COMMAND_LINE  DIALOG_PROGRAM_COMMAND_LINE
 #define DIALOG_EXECUTE_SYMBOL        DIALOG_PROGRAM_SYMBOL
+
+/* Strings */
+
+#define STRING_PROGRAM_MANAGER            "Program Manager"
+#define STRING_ERROR                      "ERROR"
+#define STRING_WARNING                    "WARNING"
+#define STRING_INFO                       "Information"
+#define STRING_DELETE                     "Delete"
+#define STRING_DELETE_GROUP_s             "Delete group `%s' ?"
+#define STRING_DELETE_PROGRAM_s           "Delete program `%s' ?"
+#define STRING_NOT_IMPLEMENTED            "Not implemented"
+#define STRING_FILE_READ_ERROR_s          "Error reading `%s'"
+#define STRING_FILE_WRITE_ERROR_s         "Error writeing `%s'"
+
+#define STRING_GRPFILE_READ_ERROR_s       "\
+The group file `%s' cannot be opened.\n\
+Should it be tried further on?"
+
+#define STRING_OUT_OF_MEMORY              "Out of memory"
+#define STRING_WINHELP_ERROR              "Help not available"
+#define STRING_UNKNOWN_FEATURE_s          "Unknown feature in %s"
+#define STRING_FILE_NOT_OVERWRITTEN_s     "File `%s' exists. Not overwritten."
+#define STRING_SAVE_GROUP_AS_s            "Save group as `%s' to prevent overwriting original files"
+
+#define STRING_NO_HOT_KEY                 "None"
+
+#define STRING_ALL_FILES                  "All files (*.*)"
+#define STRING_PROGRAMS                   "Programs"
+#define STRING_LIBRARIES_DLL              "Libraries (*.dll)"
+#define STRING_SYMBOL_FILES               "Symbol files"
+#define STRING_SYMBOLS_ICO                "Symbols (*.ico)"
 
 #include "Xx.rc"

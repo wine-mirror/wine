@@ -1,4 +1,5 @@
 name	comctl32
+type	win32
 base	2
 
 00 stub MenuHelp

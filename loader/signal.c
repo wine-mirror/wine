@@ -7,6 +7,9 @@
 #include <time.h>
 #include <setjmp.h>
 
+#include <sys/time.h>
+#include <sys/timeb.h>
+
 #if defined(__NetBSD__) || defined(__FreeBSD__) || defined(__svr4__)
 #include <sys/syscall.h>
 #include <sys/param.h>
@@ -43,7 +46,33 @@ wine_sigaction(int sig,struct sigaction * new, struct sigaction * old)
 #endif
 
 
-#if defined(linux) 
+/**********************************************************************
+ *		wine_timer
+ *
+ * SIGALRM handler.
+ */
+#ifdef linux
+static void wine_timer(int signal, struct sigcontext_struct context_struct)
+{
+#elif defined(__svr4__)
+static void wine_timer(int signal, void *siginfo, ucontext_t *context)
+{
+#else
+static void wine_timer(int signal, int code, struct sigcontext *context)
+{
+#endif
+    /* Should do real-time timers here */
+
+    DOSMEM_Tick();
+}
+
+
+/**********************************************************************
+ *		win_fault
+ *
+ * Segfault handler.
+ */
+#ifdef linux
 static void win_fault(int signal, struct sigcontext_struct context_struct)
 {
     struct sigcontext_struct *context = &context_struct;
@@ -99,6 +128,7 @@ static void SIGNAL_SetHandler( int sig, void (*func)() )
 
 #ifdef linux
     sig_act.sa_handler = func;
+    sig_act.sa_flags = SA_RESTART;
     /* Point to the top of the stack, minus 4 just in case, and make
        it aligned  */
     sig_act.sa_restorer = 
@@ -131,14 +161,14 @@ static void SIGNAL_SetHandler( int sig, void (*func)() )
     }
 }
 
+extern void stop_wait(int a);
+
 
 /**********************************************************************
  *		init_wine_signals
  */
 void init_wine_signals(void)
 {
-    extern void stop_wait(int a);
-
 #if defined(__NetBSD__) || defined(__FreeBSD__)
     struct sigaltstack ss;
         
@@ -174,7 +204,8 @@ void init_wine_signals(void)
         exit(1);
     }
 #endif  /* __svr4__ */
-
+    
+    SIGNAL_SetHandler( SIGALRM, (void (*)())wine_timer );
     SIGNAL_SetHandler( SIGSEGV, (void (*)())win_fault );
     SIGNAL_SetHandler( SIGILL,  (void (*)())win_fault );
     SIGNAL_SetHandler( SIGFPE,  (void (*)())win_fault );
@@ -186,6 +217,24 @@ void init_wine_signals(void)
 #ifdef CONFIG_IPC
     SIGNAL_SetHandler( SIGUSR2, (void (*)())stop_wait ); /* For IPC */
 #endif
+    SIGNAL_StartBIOSTimer();
+}
+
+
+/**********************************************************************
+ *		SIGNAL_StartTimer
+ *
+ * Start the BIOS tick timer.
+ */
+void SIGNAL_StartBIOSTimer(void)
+{
+    struct itimerval vt_timer;
+
+    vt_timer.it_interval.tv_sec = 0;
+    vt_timer.it_interval.tv_usec = 54929;
+    vt_timer.it_value = vt_timer.it_interval;
+
+    setitimer(ITIMER_REAL, &vt_timer, NULL);
 }
 
 #endif /* ifndef WINELIB */

@@ -6,7 +6,7 @@
  */
 
 #include "sysmetrics.h"
-#include "selectors.h"
+#include "module.h"
 #include "user.h"
 #include "win.h"
 #include "event.h"
@@ -238,7 +238,7 @@ INT WINPOS_WindowFromPoint( POINT pt, WND **ppWnd )
 
         /* Restart the search from the next sibling */
         wndPtr = (*ppWnd)->next;
-        *ppWnd = wndPtr->parent;
+        *ppWnd = (*ppWnd)->parent;
     }
 }
 
@@ -259,21 +259,28 @@ HWND WindowFromPoint( POINT pt )
  */
 HWND ChildWindowFromPoint( HWND hwndParent, POINT pt )
 {
+    /* pt is in the client coordinates */
+
+    WND* wnd = WIN_FindWndPtr(hwndParent);
     RECT rect;
-    HWND hwnd;
-    
-    GetWindowRect( hwndParent, &rect );
+
+    if( !wnd ) return 0;
+
+    /* get client rect fast */
+    rect.top = rect.left = 0;
+    rect.right = wnd->rectClient.right - wnd->rectClient.left;
+    rect.bottom = wnd->rectClient.bottom - wnd->rectClient.top;
+
     if (!PtInRect( &rect, pt )) return 0;
-    hwnd = GetTopWindow( hwndParent );
-    while (hwnd)
+
+    wnd = wnd->child;
+    while ( wnd )
     {
-	GetWindowRect( hwnd, &rect );
-	if (PtInRect( &rect, pt )) return hwnd;
-	hwnd = GetWindow( hwnd, GW_HWNDNEXT );
+        if (PtInRect( &wnd->rectWindow, pt )) return wnd->hwndSelf;
+        wnd = wnd->next;
     }
     return hwndParent;
 }
-
 
 /*******************************************************************
  *         MapWindowPoints   (USER.258)
@@ -652,10 +659,15 @@ BOOL WINPOS_SetActiveWindow( HWND hWnd, BOOL fMouse, BOOL fChangeFocus )
     WND                   *wndPtr          = WIN_FindWndPtr(hWnd);
     WND                   *wndTemp         = WIN_FindWndPtr(hwndActive);
     CBTACTIVATESTRUCT      cbtStruct       = { fMouse , hwndActive };
-    FARPROC                enumCallback    = (FARPROC)GetWndProcEntry16("ActivateAppProc");
+    FARPROC                enumCallback    = MODULE_GetWndProcEntry16("ActivateAppProc");
     ACTIVATESTRUCT         actStruct;
     WORD                   wIconized=0,wRet= 0;
-    HANDLE                 hActiveQ = 0;
+
+    /* FIXME: When proper support for cooperative multitasking is in place 
+     *        hActiveQ will be global 
+     */
+
+    HANDLE                 hActiveQ = 0;   
 
     /* paranoid checks */
     if( !hWnd || hWnd == GetDesktopWindow() || hWnd == hwndActive )
@@ -805,16 +817,24 @@ BOOL WINPOS_ChangeActiveWindow( HWND hWnd, BOOL mouseMsg )
 
     if( !wndPtr ) return FALSE;
 
-    /* minors are not allowed */
+    /* child windows get WM_CHILDACTIVATE message */
     if( (wndPtr->dwStyle & WS_CHILD) && !( wndPtr->dwStyle & WS_POPUP))
 	return SendMessage(hWnd, WM_CHILDACTIVATE, 0, 0L);
+
+        /* owned popups imply owner activation */
+    if( wndPtr->dwStyle & WS_POPUP && wndPtr->owner )
+      {
+        wndPtr = wndPtr->owner;
+        if( !wndPtr ) return FALSE;
+	hWnd = wndPtr->hwndSelf;
+      }
 
     if( hWnd == hwndActive ) return FALSE;
 
     if( !WINPOS_SetActiveWindow(hWnd ,mouseMsg ,TRUE) )
 	return FALSE;
 
-    /* switch desktop queue to current active here */
+    /* switch desktop queue to current active */
     if( wndPtr->parent == WIN_GetDesktop())
         WIN_GetDesktop()->hmemTaskQ = wndPtr->hmemTaskQ;
 
@@ -945,6 +965,79 @@ static void WINPOS_MoveWindowZOrder( HWND hwnd, HWND hwndAfter )
             pWndCur = pWndCur->next;
         }
     }
+}
+
+/***********************************************************************
+ *           WINPOS_ReorderOwnedPopups
+ *
+ * fix Z order taking into account owned popups -
+ * basically we need to maintain them above owner window
+ */
+HWND WINPOS_ReorderOwnedPopups(HWND hwndInsertAfter, WND* wndPtr, WORD flags)
+{
+ WND* 	w = WIN_GetDesktop();
+
+ w = w->child;
+
+ /* if we are dealing with owned popup... 
+  */
+ if( wndPtr->dwStyle & WS_POPUP && wndPtr->owner && hwndInsertAfter != HWND_TOP )
+   {
+     BOOL bFound = FALSE;
+     HWND hwndLocalPrev = HWND_TOP;
+     HWND hwndNewAfter = 0;
+
+     while( w )
+       {
+         if( !bFound && hwndInsertAfter == hwndLocalPrev )
+             hwndInsertAfter = HWND_TOP;
+
+         if( w->dwStyle & WS_POPUP && w->owner == wndPtr->owner )
+           {
+             bFound = TRUE;
+
+             if( hwndInsertAfter == HWND_TOP )
+               {
+                 hwndInsertAfter = hwndLocalPrev;
+                 break;
+               }
+             hwndNewAfter = hwndLocalPrev;
+           }
+
+         if( w == wndPtr->owner )
+           {
+             /* basically HWND_BOTTOM */
+             hwndInsertAfter = hwndLocalPrev;
+
+             if( bFound )
+                 hwndInsertAfter = hwndNewAfter;
+             break;
+           }
+
+           if( w != wndPtr )
+               hwndLocalPrev = w->hwndSelf;
+
+           w = w->next;
+        }
+   }
+ else 
+   /* or overlapped top-level window... 
+    */
+   if( !(wndPtr->dwStyle & WS_CHILD) )
+      while( w )
+        {
+          if( w == wndPtr ) break;
+
+          if( w->dwStyle & WS_POPUP && w->owner == wndPtr )
+            {
+              SetWindowPos(w->hwndSelf, hwndInsertAfter, 0, 0, 0, 0, SWP_NOMOVE | SWP_NOSIZE |
+                                        SWP_NOACTIVATE | SWP_NOSENDCHANGING | SWP_DEFERERASE);
+              hwndInsertAfter = w->hwndSelf;
+            }
+          w = w->next;
+        }
+
+  return hwndInsertAfter;
 }
 
 
@@ -1079,6 +1172,12 @@ BOOL SetWindowPos( HWND hwnd, HWND hwndInsertAfter, INT x, INT y,
 
     if (!(winpos.flags & SWP_NOZORDER))
     {
+	/* reorder owned popups if hwnd is top-level window 
+         */
+	if( wndPtr->parent == WIN_GetDesktop() )
+	    hwndInsertAfter = WINPOS_ReorderOwnedPopups( hwndInsertAfter,
+							 wndPtr, flags );
+
         if (wndPtr->window)
         {
             WIN_UnlinkWindow( winpos.hwnd );
@@ -1098,9 +1197,14 @@ BOOL SetWindowPos( HWND hwnd, HWND hwndInsertAfter, INT x, INT y,
 
     if (wndPtr->window)
     {
+        HWND bogusInsertAfter = winpos.hwndInsertAfter;
+
+        winpos.hwndInsertAfter = hwndInsertAfter;
         WINPOS_SetXWindowPos( &winpos );
+
         wndPtr->rectWindow = newWindowRect;
         wndPtr->rectClient = newClientRect;
+        winpos.hwndInsertAfter = bogusInsertAfter;
     }
     else
     {

@@ -12,10 +12,8 @@
 #include "mdi.h"
 #include "gdi.h"
 #include "user.h"
-#include "selectors.h"
+#include "module.h"
 #include "stackframe.h"
-#include "alias.h"
-#include "relay32.h"
 
 static WNDCLASS WIDGETS_BuiltinClasses[] =
 {
@@ -67,21 +65,10 @@ BOOL WIDGETS_Init(void)
 
     for (i = 0; i < NB_BUILTIN_CLASSES; i++, class++)
     {
-        DWORD WineProc,Win16Proc,Win32Proc;
-		WIN32_builtin *dll;
-        /* currently, there is no way to get the 'real' pointer at run time */
-        WineProc=0;
-        Win16Proc = (DWORD)GetWndProcEntry16( (char *)class->lpfnWndProc );
-		dll = RELAY32_GetBuiltinDLL("WINPROCS32");
-        Win32Proc = (DWORD)RELAY32_GetEntryPoint(
-			dll,(char *)class->lpfnWndProc, 0);
-        /* Register the alias so we don't pass Win16 pointers to Win32 apps */
-        ALIAS_RegisterAlias(WineProc,Win16Proc,Win32Proc);
-
         strcpy( name, (char *)class->lpszClassName );
         class->lpszClassName = MAKE_SEGPTR(name);
         class->hCursor = LoadCursor( 0, IDC_ARROW );
-        class->lpfnWndProc = GetWndProcEntry16( (char *)class->lpfnWndProc );
+        class->lpfnWndProc = MODULE_GetWndProcEntry16( (char *)class->lpfnWndProc );
         if (!RegisterClass( class )) return FALSE;
     }
     return TRUE;

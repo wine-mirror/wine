@@ -18,7 +18,8 @@ typedef enum
     LANG_Fi,  /* Finnish */
     LANG_Da,  /* Danish */
     LANG_Cz,  /* Czech */
-    LANG_Eo   /* Esperanto */
+    LANG_Eo,  /* Esperanto */
+    LANG_It   /* Italian */
 } WINE_LANGUAGE;
 
 /* Supported modes */

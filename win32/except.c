@@ -39,11 +39,18 @@
 #include "stddebug.h"
 #include "debug.h"
 #include "except.h"
+#include "relay32.h"
 
 WINAPI DWORD KERNEL32_537(PEXCEPTION_POINTERS ptrs);
 
-LPTOP_LEVEL_EXCEPTION_FILTER       pTopExcHandler=
-           (LPTOP_LEVEL_EXCEPTION_FILTER) KERNEL32_537;
+LPTOP_LEVEL_EXCEPTION_FILTER pTopExcHandler = NULL;
+
+void EXC_Init(void)
+{
+    WIN32_builtin *dll = RELAY32_GetBuiltinDLL("KERNEL32");
+    pTopExcHandler = (LPTOP_LEVEL_EXCEPTION_FILTER)RELAY32_GetEntryPoint( dll,
+                                             "UnhandledExceptionFilter", 537 );
+}
 
 /*
  *       EXC_RtlUnwind

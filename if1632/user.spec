@@ -1,4 +1,5 @@
 name	user
+type	win16
 id	2
 
 1   pascal16 MessageBox(word ptr ptr word) MessageBox

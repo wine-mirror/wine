@@ -63,14 +63,15 @@ HLOCAL GRPFILE_ReadGroupFile(LPCSTR lpszPath)
   /* Read the whole file into a buffer */
   if (!GRPFILE_ReadFileToBuffer(lpszPath, &hBuffer, &size))
     {
-      MAIN_GrpFileReadError(lpszPath);
+      MAIN_MessageBoxIDS_s(IDS_GRPFILE_READ_ERROR_s, lpszPath, IDS_ERROR, MB_YESNO);
       return(0);
     }
 
   /* Interpret buffer */
   hGroup = GRPFILE_ScanGroup(LocalLock(hBuffer), size,
 			     lpszPath, bFileNameModified);
-  if (!hGroup) MAIN_GrpFileReadError(lpszPath);
+  if (!hGroup)
+    MAIN_MessageBoxIDS_s(IDS_GRPFILE_READ_ERROR_s, lpszPath, IDS_ERROR, MB_YESNO);
 
   LocalFree(hBuffer);
 
@@ -225,8 +226,8 @@ static HLOCAL GRPFILE_ScanProgram(LPCSTR buffer, INT size,
   switch (icontype)
     {
     default:
-      MessageBox(Globals.hMainWnd, STRING_UNKNOWN_FEATURE_IN_GRPFILE,
-		 lpszGrpFile, MB_OK);
+      MAIN_MessageBoxIDS_s(IDS_UNKNOWN_FEATURE_s, lpszGrpFile,
+			   IDS_WARNING, MB_OK);
     case 0x048c:
       iconXORsize     = GET_USHORT(program_ptr,  8);
       iconANDsize     = GET_USHORT(program_ptr, 10) / 8;
@@ -305,9 +306,8 @@ static HLOCAL GRPFILE_ScanProgram(LPCSTR buffer, INT size,
 		  nCmdShow = GET_USHORT(ptr, 6);
 		  break;
 		default:
-		  MessageBox(Globals.hMainWnd,
-			     STRING_UNKNOWN_FEATURE_IN_GRPFILE,
-			     lpszGrpFile, MB_OK);
+		  MAIN_MessageBoxIDS_s(IDS_UNKNOWN_FEATURE_s,
+				       lpszGrpFile, IDS_WARNING, MB_OK);
 		}
 	    }
 	  if (!skip) break;
@@ -344,26 +344,20 @@ BOOL GRPFILE_WriteGroupFile(HLOCAL hGroup)
   if (!group->bOverwriteFileOk &&
       OpenFile(szPath, &dummy, OF_EXIST) != HFILE_ERROR)
     {
-      CHAR msg[MAX_PATHNAME_LEN + 1000];
-
       /* Original file exists, try `.gr' extension */
       GRPFILE_ModifyFileName(szPath, LocalLock(group->hGrpFile),
 			     MAX_PATHNAME_LEN, TRUE);
       if (OpenFile(szPath, &dummy, OF_EXIST) != HFILE_ERROR)
 	{
 	  /* File exists. Do not overwrite */
-	  if (sizeof(msg) <= lstrlen(STRING_FILE_NOT_OVERWRITTEN_s) + lstrlen(szPath))
-	    return FALSE;
-	  wsprintf(msg, (LPSTR)STRING_FILE_NOT_OVERWRITTEN_s, szPath);
-	  MessageBox(Globals.hMainWnd, msg, STRING_ERROR, MB_OK);
+	  MAIN_MessageBoxIDS_s(IDS_FILE_NOT_OVERWRITTEN_s, szPath,
+			       IDS_INFO, MB_OK);
 	  return FALSE;
 	}
       /* Inform about the modified file name */
-      if (sizeof(msg) <= lstrlen(STRING_SAVE_GROUP_AS_s) + lstrlen(szPath))
-	return FALSE;
-      wsprintf(msg, (LPSTR)STRING_SAVE_GROUP_AS_s, szPath);
-      if (IDCANCEL == MessageBox(Globals.hMainWnd, msg, STRING_INFO,
-				 MB_OKCANCEL | MB_ICONINFORMATION))
+      if (IDCANCEL ==
+	  MAIN_MessageBoxIDS_s(IDS_SAVE_GROUP_AS_s, szPath, IDS_INFO,
+			       MB_OKCANCEL | MB_ICONINFORMATION))
 	return FALSE;
     }
 
@@ -395,7 +389,8 @@ BOOL GRPFILE_WriteGroupFile(HLOCAL hGroup)
     }
   else ret = FALSE;
 
-  if (!ret) MAIN_FileWriteError(szPath);
+  if (!ret)
+    MAIN_MessageBoxIDS_s(IDS_FILE_WRITE_ERROR_s, szPath, IDS_ERROR, MB_OK);
 
   return(ret);
 }

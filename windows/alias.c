@@ -7,6 +7,7 @@
 
 #include "windows.h"
 #include "alias.h"
+#include "module.h"
 
 #include "stddebug.h"
 #include "debug.h"
@@ -21,6 +22,22 @@ static FUNCTIONALIAS AliasRecord[TABLESIZE];
 static int LastRecord;
 
 int ALIAS_UseAliases;
+
+/* Aliased window procedures */
+extern LRESULT ButtonWndProc( HWND, UINT, WPARAM, LPARAM );
+extern LRESULT StaticWndProc( HWND, UINT, WPARAM, LPARAM );
+extern LRESULT ScrollBarWndProc( HWND, UINT, WPARAM, LPARAM );
+extern LRESULT ListBoxWndProc( HWND, UINT, WPARAM, LPARAM );
+extern LRESULT ComboBoxWndProc( HWND, UINT, WPARAM, LPARAM );
+extern LRESULT ComboLBoxWndProc( HWND, UINT, WPARAM, LPARAM );
+extern LRESULT EditWndProc( HWND, UINT, WPARAM, LPARAM );
+extern LRESULT PopupMenuWndProc( HWND, UINT, WPARAM, LPARAM );
+extern LRESULT DesktopWndProc( HWND, UINT, WPARAM, LPARAM );
+extern LRESULT DefDlgProc( HWND, UINT, WPARAM, LPARAM );
+extern LRESULT MDIClientWndProc( HWND, UINT, WPARAM, LPARAM );
+extern LRESULT AboutDlgProc( HWND, UINT, WPARAM, LPARAM );
+extern LRESULT CARET_Callback( HWND, UINT, WPARAM, LPARAM );
+extern LRESULT SystemMessageBoxProc( HWND, UINT, WPARAM, LPARAM );
 
 /* closed hashing */
 static int ALIAS_LocateHash(DWORD value)
@@ -41,6 +58,48 @@ static int ALIAS_LocateHash(DWORD value)
 	return hash;
 }
 
+
+/***********************************************************************
+ *           ALIAS_RegisterWndProcAlias
+ */
+static void ALIAS_RegisterWndProcAlias( DWORD Wine, const char *name )
+{
+    FARPROC Win16Proc, Win32Proc;
+
+    Win16Proc = MODULE_GetWndProcEntry16( name );
+    Win32Proc = MODULE_GetWndProcEntry32( name );
+    ALIAS_RegisterAlias( Wine, (DWORD)Win16Proc, (DWORD)Win32Proc );
+}
+
+
+/***********************************************************************
+ *           ALIAS_Init
+ *
+ * Create aliases for the standard window procedures.
+ */
+BOOL ALIAS_Init(void)
+{
+    ALIAS_RegisterWndProcAlias( (DWORD)ButtonWndProc, "ButtonWndProc" );
+    ALIAS_RegisterWndProcAlias( (DWORD)StaticWndProc, "StaticWndProc" );
+    ALIAS_RegisterWndProcAlias( (DWORD)ScrollBarWndProc, "ScrollBarWndProc" );
+    ALIAS_RegisterWndProcAlias( (DWORD)ListBoxWndProc, "ListBoxWndProc" );
+    ALIAS_RegisterWndProcAlias( (DWORD)ComboBoxWndProc, "ComboBoxWndProc" );
+    ALIAS_RegisterWndProcAlias( (DWORD)ComboLBoxWndProc, "ComboLBoxWndProc" );
+    ALIAS_RegisterWndProcAlias( (DWORD)EditWndProc, "EditWndProc" );
+    ALIAS_RegisterWndProcAlias( (DWORD)PopupMenuWndProc, "PopupMenuWndProc" );
+    ALIAS_RegisterWndProcAlias( (DWORD)DesktopWndProc, "DesktopWndProc" );
+    ALIAS_RegisterWndProcAlias( (DWORD)DefDlgProc, "DefDlgProc" );
+    ALIAS_RegisterWndProcAlias( (DWORD)MDIClientWndProc, "MDIClientWndProc" );
+    ALIAS_RegisterWndProcAlias( (DWORD)AboutDlgProc, "AboutDlgProc" );
+    ALIAS_RegisterWndProcAlias( (DWORD)CARET_Callback, "CARET_Callback" );
+    ALIAS_RegisterWndProcAlias( (DWORD)SystemMessageBoxProc, "SystemMessageBoxProc" );
+    return TRUE;
+}
+
+
+/***********************************************************************
+ *           ALIAS_RegisterAlias
+ */
 void ALIAS_RegisterAlias(DWORD Wine,DWORD Win16, DWORD Win32)
 {
     int whash = 0, w16hash = 0, w32hash = 0, recno=0;

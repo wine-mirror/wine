@@ -655,6 +655,9 @@ BOOL IsDialogMessage( HWND hwndDlg, LPMSG msg )
 #endif
             }
             break;
+
+	default: 
+	    TranslateMessage( msg );
         }
         break;  /* case WM_KEYDOWN */
 

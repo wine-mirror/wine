@@ -1,4 +1,5 @@
 name	advapi32
+type	win32
 base	1
 
 0000 stub AbortSystemShutdownA
@@ -130,37 +131,37 @@ base	1
 0126 	stdcall RegCloseKey(long) RegCloseKey
 0127 stub RegConnectRegistryA
 0128 stub RegConnectRegistryW
-0129 stub RegCreateKeyA
-0130 	stdcall RegCreateKeyExA(long ptr long ptr long long ptr ptr ptr) RegCreateKeyEx
-0131 stub RegCreateKeyExW
-0132 stub RegCreateKeyW
-0133 stub RegDeleteKeyA
-0134 stub RegDeleteKeyW
-0135 stub RegDeleteValueA
-0136 stub RegDeleteValueW
-0137 stub RegEnumKeyA
-0138 stub RegEnumKeyExA
-0139 stub RegEnumKeyExW
-0140 stub RegEnumKeyW
-0141 stub RegEnumValueA
-0142 stub RegEnumValueW
-0143 stub RegFlushKey
+0129 	stdcall RegCreateKeyA(long ptr ptr) RegCreateKeyA
+0130 	stdcall RegCreateKeyExA(long ptr long ptr long long ptr ptr ptr) RegCreateKeyExA
+0131 	stdcall RegCreateKeyExW(long ptr long ptr long long ptr ptr ptr) RegCreateKeyExW
+0132 	stdcall RegCreateKeyW(long ptr ptr) RegCreateKeyW
+0133 	stdcall RegDeleteKeyA(long ptr) RegDeleteKeyA
+0134 	stdcall RegDeleteKeyW(long ptr) RegDeleteKeyW
+0135 	stdcall	RegDeleteValueA(long ptr) RegDeleteValueA
+0136 	stdcall RegDeleteValueW(long ptr) RegDeleteValueW
+0137 	stdcall RegEnumKeyA(long long ptr long) RegEnumKeyA
+0138 	stdcall RegEnumKeyExA(long long ptr ptr ptr ptr ptr ptr) RegEnumKeyExA
+0139 	stdcall RegEnumKeyExW(long long ptr ptr ptr ptr ptr ptr) RegEnumKeyExW
+0140 	stdcall RegEnumKeyW(long long ptr long) RegEnumKeyW
+0141 	stdcall RegEnumValueA(long long ptr ptr ptr ptr ptr ptr) RegEnumValueA
+0142 	stdcall RegEnumValueW(long long ptr ptr ptr ptr ptr ptr) RegEnumValueW
+0143 	stdcall RegFlushKey(long) RegFlushKey
 0144 stub RegGetKeySecurity
 0145 stub RegLoadKeyA
 0146 stub RegLoadKeyW
 0147 stub RegNotifyChangeKeyValue
-0148 stub RegOpenKeyA
-0149 stub RegOpenKeyExA
-0150 stub RegOpenKeyExW
-0151 stub RegOpenKeyW
-0152 stub RegQueryInfoKeyA
-0153 stub RegQueryInfoKeyW
+0148 	stdcall RegOpenKeyA(long ptr ptr) RegOpenKeyA
+0149 	stdcall RegOpenKeyExA(long ptr long long ptr) RegOpenKeyExA
+0150 	stdcall RegOpenKeyExW(long ptr long long ptr) RegOpenKeyExW
+0151 	stdcall RegOpenKeyW(long ptr ptr) RegOpenKeyW
+0152 	stdcall RegQueryInfoKeyA(long ptr ptr ptr ptr ptr ptr ptr ptr ptr ptr ptr) RegQueryInfoKeyA
+0153 	stdcall RegQueryInfoKeyW(long ptr ptr ptr ptr ptr ptr ptr ptr ptr ptr ptr) RegQueryInfoKeyW
 0154 stub RegQueryMultipleValuesA
 0155 stub RegQueryMultipleValuesW
-0156 stub RegQueryValueA
-0157 	stdcall RegQueryValueExA(long ptr long long ptr ptr) RegQueryValueEx
-0158 stub RegQueryValueExW
-0159 stub RegQueryValueW
+0156 	stdcall RegQueryValueA(long ptr ptr ptr) RegQueryValueA
+0157 	stdcall RegQueryValueExA(long ptr ptr ptr ptr ptr) RegQueryValueExA
+0158 	stdcall RegQueryValueExW(long ptr ptr ptr ptr ptr) RegQueryValueExW
+0159 	stdcall RegQueryValueW(long ptr ptr ptr) RegQueryValueW
 0160 stub RegRemapPreDefKey
 0161 stub RegReplaceKeyA
 0162 stub RegReplaceKeyW
@@ -169,10 +170,10 @@ base	1
 0165 stub RegSaveKeyA
 0166 stub RegSaveKeyW
 0167 stub RegSetKeySecurity
-0168 stub RegSetValueA
-0169 	stdcall RegSetValueExA(long ptr long long ptr long) RegSetValueEx
-0170 stub RegSetValueExW
-0171 stub RegSetValueW
+0168 	stdcall RegSetValueA(long ptr long ptr long) RegSetValueA
+0169 	stdcall RegSetValueExA(long ptr long long ptr long) RegSetValueExA
+0170 	stdcall RegSetValueExW(long ptr long long ptr long) RegSetValueExW
+0171 	stdcall RegSetValueW(long ptr long ptr long) RegSetValueW
 0172 stub RegUnLoadKeyA
 0173 stub RegUnLoadKeyW
 0174 stub RegisterEventSourceA

@@ -1,4 +1,5 @@
 name	compobj
+type	win16
 id	22
 
 1 pascal CoBuildVersion() CoBuildVersion
