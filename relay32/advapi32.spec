@@ -29,8 +29,8 @@ type	win32
 0025 stub CreatePrivateObjectSecurity
 0026 stub CreateProcessAsUserA
 0027 stub CreateProcessAsUserW
-0028 stdcall CreateServiceA(long ptr ptr long long long long ptr ptr ptr ptr ptr ptr) CreateServiceA
-0029 stub CreateServiceW
+0028 stdcall CreateServiceA(long ptr ptr long long long long ptr ptr ptr ptr ptr ptr) CreateService32A
+0029 stdcall CreateServiceW (long ptr ptr long long long long ptr ptr ptr ptr ptr ptr) CreateService32A
 0030 stub DeleteAce
 0031 stdcall DeleteService(long) DeleteService
 0032 stdcall DeregisterEventSource(long) DeregisterEventSource
@@ -38,8 +38,8 @@ type	win32
 0034 stub DuplicateToken
 0035 stub EnumDependentServicesA
 0036 stub EnumDependentServicesW
-0037 stub EnumServicesStatusA
-0038 stub EnumServicesStatusW
+0037 stdcall EnumServicesStatusA (long long long ptr long ptr ptr ptr) EnumServicesStatus32A
+0038 stdcall EnumServicesStatusW (long long long ptr long ptr ptr ptr) EnumServicesStatus32A
 0039 stdcall EqualPrefixSid(ptr ptr) EqualPrefixSid
 0040 stdcall EqualSid(ptr ptr) EqualSid
 0041 stub FindFirstFreeAce

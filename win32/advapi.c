@@ -11,7 +11,19 @@
 #include "shell.h"
 #include "heap.h"
 #include "debug.h"
-
+/***********************************************************************
+ *           EnumServicesStatus32A   [ADVAPI32.37]
+ */
+BOOL32 WINAPI  EnumServicesStatus32A( HANDLE32 hSCManager, DWORD dwServiceType,
+		DWORD dwServiceState, LPVOID lpServices,
+		DWORD cbBufSize, LPDWORD pcbBytesNeeded,
+		LPDWORD lpServicesReturned, LPDWORD lpResumeHandle)
+{	FIXME (advapi,"%x type=%lx state=%lx %p %lx %p %p %p\n", hSCManager, 
+		dwServiceType, dwServiceState, lpServices, cbBufSize,
+		pcbBytesNeeded, lpServicesReturned,  lpResumeHandle);
+	SetLastError (ERROR_ACCESS_DENIED);
+	return 0;
+}
 /***********************************************************************
  *           StartServiceCtrlDispatcherA   [ADVAPI32.196]
  */
@@ -169,7 +181,7 @@ BOOL32 WINAPI GetTokenInformation(
  */
 HANDLE32 WINAPI OpenSCManager32A( LPCSTR lpMachineName, LPCSTR lpDatabaseName,
                                   DWORD dwDesiredAccess )
-{
+{   
     LPWSTR lpMachineNameW = HEAP_strdupAtoW(GetProcessHeap(),0,lpMachineName);
     LPWSTR lpDatabaseNameW = HEAP_strdupAtoW(GetProcessHeap(),0,lpDatabaseName);
     DWORD ret = OpenSCManager32W(lpMachineNameW,lpDatabaseNameW,
@@ -343,9 +355,9 @@ HANDLE32 WINAPI OpenService32W( HANDLE32 hSCManager, LPCWSTR lpServiceName,
 
 
 /******************************************************************************
- * CreateServiceA [ADVAPI32.28]
+ * CreateService32A [ADVAPI32.28]
  */
-DWORD WINAPI CreateServiceA( DWORD hSCManager, LPCSTR lpServiceName,
+DWORD WINAPI CreateService32A( DWORD hSCManager, LPCSTR lpServiceName,
                              LPCSTR lpDisplayName, DWORD dwDesiredAccess, 
                              DWORD dwServiceType, DWORD dwStartType, 
                              DWORD dwErrorControl, LPCSTR lpBinaryPathName,
