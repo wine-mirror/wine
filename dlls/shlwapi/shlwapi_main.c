@@ -21,8 +21,8 @@
 
 #include "winbase.h"
 #include "winerror.h"
-#include "winreg.h"
 #include "wine/debug.h"
+#define NO_SHLWAPI_REG
 #define NO_SHLWAPI_STREAM
 #include "shlwapi.h"
 
