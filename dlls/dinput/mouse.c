@@ -210,7 +210,7 @@ static BOOL mousedev_enum_deviceA(DWORD dwDevType, DWORD dwFlags, LPDIDEVICEINST
 
     if ((dwDevType == 0) ||
 	((dwDevType == DIDEVTYPE_MOUSE) && (version < 8)) ||
-	((dwDevType == DI8DEVTYPE_MOUSE) && (version >= 8))) {
+	(((dwDevType == DI8DEVCLASS_POINTER) || (dwDevType == DI8DEVTYPE_MOUSE)) && (version >= 8))) {
 	TRACE("Enumerating the mouse device\n");
 	
 	fill_mouse_dideviceinstanceA(lpddi, version);
@@ -228,7 +228,7 @@ static BOOL mousedev_enum_deviceW(DWORD dwDevType, DWORD dwFlags, LPDIDEVICEINST
 
     if ((dwDevType == 0) ||
 	((dwDevType == DIDEVTYPE_MOUSE) && (version < 8)) ||
-	((dwDevType == DI8DEVTYPE_MOUSE) && (version >= 8))) {
+	(((dwDevType == DI8DEVCLASS_POINTER) || (dwDevType == DI8DEVTYPE_MOUSE)) && (version >= 8))) {
 	TRACE("Enumerating the mouse device\n");
 	
 	fill_mouse_dideviceinstanceW(lpddi, version);
@@ -923,33 +923,31 @@ static HRESULT WINAPI SysMouseAImpl_GetCapabilities(
 	LPDIDEVCAPS lpDIDevCaps)
 {
     SysMouseImpl *This = (SysMouseImpl *)iface;
-    
+    DIDEVCAPS devcaps;
+
     TRACE("(this=%p,%p)\n",This,lpDIDevCaps);
-    
-    if (lpDIDevCaps->dwSize == sizeof(DIDEVCAPS)) {
-	lpDIDevCaps->dwFlags = DIDC_ATTACHED;
-	if (This->dinput->version >= 8)
-	    lpDIDevCaps->dwDevType = DI8DEVTYPE_MOUSE | (DI8DEVTYPEMOUSE_TRADITIONAL << 8);
-	else
-	    lpDIDevCaps->dwDevType = DIDEVTYPE_MOUSE | (DIDEVTYPEMOUSE_TRADITIONAL << 8);
-	lpDIDevCaps->dwAxes = 3;
-	lpDIDevCaps->dwButtons = 3;
-	lpDIDevCaps->dwPOVs = 0;
-	lpDIDevCaps->dwFFSamplePeriod = 0;
-	lpDIDevCaps->dwFFMinTimeResolution = 0;
-	lpDIDevCaps->dwFirmwareRevision = 100;
-	lpDIDevCaps->dwHardwareRevision = 100;
-	lpDIDevCaps->dwFFDriverVersion = 0;
-    } else if (lpDIDevCaps->dwSize == sizeof(DIDEVCAPS_DX3)) {
-	lpDIDevCaps->dwFlags = DIDC_ATTACHED;
-	lpDIDevCaps->dwDevType = DIDEVTYPE_MOUSE | (DIDEVTYPEMOUSE_TRADITIONAL << 8);
-	lpDIDevCaps->dwAxes = 3;
-	lpDIDevCaps->dwButtons = 3;
-	lpDIDevCaps->dwPOVs = 0;
-    } else {
+
+    if ((lpDIDevCaps->dwSize != sizeof(DIDEVCAPS)) && (lpDIDevCaps->dwSize != sizeof(DIDEVCAPS_DX3))) {
         WARN("invalid parameter\n");
         return DIERR_INVALIDPARAM;
     }
+
+    devcaps.dwSize = lpDIDevCaps->dwSize;
+    devcaps.dwFlags = DIDC_ATTACHED;
+    if (This->dinput->version >= 8)
+	devcaps.dwDevType = DI8DEVTYPE_MOUSE | (DI8DEVTYPEMOUSE_TRADITIONAL << 8);
+    else
+	devcaps.dwDevType = DIDEVTYPE_MOUSE | (DIDEVTYPEMOUSE_TRADITIONAL << 8);
+    devcaps.dwAxes = 3;
+    devcaps.dwButtons = 3;
+    devcaps.dwPOVs = 0;
+    devcaps.dwFFSamplePeriod = 0;
+    devcaps.dwFFMinTimeResolution = 0;
+    devcaps.dwFirmwareRevision = 100;
+    devcaps.dwHardwareRevision = 100;
+    devcaps.dwFFDriverVersion = 0;
+
+    memcpy(lpDIDevCaps, &devcaps, lpDIDevCaps->dwSize);
     
     return DI_OK;
 }

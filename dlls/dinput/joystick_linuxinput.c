@@ -177,7 +177,7 @@ static BOOL joydev_enum_deviceA(DWORD dwDevType, DWORD dwFlags, LPDIDEVICEINSTAN
 
   if (!((dwDevType == 0) ||
         ((dwDevType == DIDEVTYPE_JOYSTICK) && (version < 8)) ||
-        ((dwDevType == DI8DEVTYPE_JOYSTICK) && (version >= 8))))
+        (((dwDevType == DI8DEVCLASS_GAMECTRL) || (dwDevType == DI8DEVTYPE_JOYSTICK)) && (version >= 8))))
     return FALSE;
 
   if (dwFlags & DIEDFL_FORCEFEEDBACK)
@@ -215,7 +215,7 @@ static BOOL joydev_enum_deviceW(DWORD dwDevType, DWORD dwFlags, LPDIDEVICEINSTAN
 
   if (!((dwDevType == 0) ||
         ((dwDevType == DIDEVTYPE_JOYSTICK) && (version < 8)) ||
-        ((dwDevType == DI8DEVTYPE_JOYSTICK) && (version >= 8))))
+        (((dwDevType == DI8DEVCLASS_GAMECTRL) || (dwDevType == DI8DEVTYPE_JOYSTICK)) && (version >= 8))))
     return FALSE;
 
   if (dwFlags & DIEDFL_FORCEFEEDBACK)
@@ -233,7 +233,10 @@ static BOOL joydev_enum_deviceW(DWORD dwDevType, DWORD dwFlags, LPDIDEVICEINSTAN
   lpddi->guidProduct	= DInput_Wine_Joystick_GUID;
 
   lpddi->guidFFDriver = GUID_NULL;
-  lpddi->dwDevType    = DIDEVTYPE_JOYSTICK | (DIDEVTYPEJOYSTICK_TRADITIONAL<<8);
+  if (version >= 8)
+    lpddi->dwDevType    = DI8DEVTYPE_JOYSTICK | (DI8DEVTYPEJOYSTICK_STANDARD << 8);
+  else
+    lpddi->dwDevType    = DIDEVTYPE_JOYSTICK | (DIDEVTYPEJOYSTICK_TRADITIONAL << 8);
 
   MultiByteToWideChar(CP_ACP, 0, "Joystick", -1, lpddi->tszInstanceName, MAX_PATH);
   /* ioctl JSIOCGNAME(len) */
@@ -760,7 +763,10 @@ static HRESULT WINAPI JoystickAImpl_GetCapabilities(
 	wasacquired = 0;
     }
     lpDIDevCaps->dwFlags	= DIDC_ATTACHED;
-    lpDIDevCaps->dwDevType	= DIDEVTYPE_JOYSTICK;
+    if (This->dinput->version >= 8)
+        lpDIDevCaps->dwDevType = DI8DEVTYPE_JOYSTICK | (DI8DEVTYPEJOYSTICK_STANDARD << 8);
+    else
+        lpDIDevCaps->dwDevType = DIDEVTYPE_JOYSTICK | (DIDEVTYPEJOYSTICK_TRADITIONAL << 8);
 
     axes=0;
     for (i=0;i<ABS_MAX;i++) if (test_bit(This->absbits,i)) axes++;

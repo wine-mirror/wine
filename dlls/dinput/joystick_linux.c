@@ -159,7 +159,7 @@ static BOOL joydev_enum_deviceA(DWORD dwDevType, DWORD dwFlags, LPDIDEVICEINSTAN
 
     if ((dwDevType == 0) ||
 	((dwDevType == DIDEVTYPE_JOYSTICK) && (version < 8)) ||
-	((dwDevType == DI8DEVTYPE_JOYSTICK) && (version >= 8))) {
+	(((dwDevType == DI8DEVCLASS_GAMECTRL) || (dwDevType == DI8DEVTYPE_JOYSTICK)) && (version >= 8))) {
         /* check whether we have a joystick */
         sprintf(dev, "%s%d", JOYDEV, id);
         if ((fd = open(dev,O_RDONLY)) < 0) {
@@ -209,7 +209,7 @@ static BOOL joydev_enum_deviceW(DWORD dwDevType, DWORD dwFlags, LPDIDEVICEINSTAN
 
     if ((dwDevType == 0) ||
 	((dwDevType == DIDEVTYPE_JOYSTICK) && (version < 8)) ||
-	((dwDevType == DI8DEVTYPE_JOYSTICK) && (version >= 8))) {
+	(((dwDevType == DI8DEVCLASS_GAMECTRL) || (dwDevType == DI8DEVTYPE_JOYSTICK)) && (version >= 8))) {
         /* check whether we have a joystick */
         sprintf(dev, "%s%d", JOYDEV, id);
         if ((fd = open(dev,O_RDONLY)) < 0) {
@@ -556,7 +556,10 @@ static HRESULT alloc_device(REFGUID rguid, LPVOID jvt, IDirectInputImpl *dinput,
 
     newDevice->devcaps.dwSize = sizeof(newDevice->devcaps);
     newDevice->devcaps.dwFlags = DIDC_ATTACHED;
-    newDevice->devcaps.dwDevType = DIDEVTYPE_JOYSTICK;
+    if (newDevice->dinput->version >= 8)
+        newDevice->devcaps.dwDevType = DI8DEVTYPE_JOYSTICK | (DI8DEVTYPEJOYSTICK_STANDARD << 8);
+    else
+        newDevice->devcaps.dwDevType = DIDEVTYPE_JOYSTICK | (DIDEVTYPEJOYSTICK_TRADITIONAL << 8);
     newDevice->devcaps.dwFFSamplePeriod = 0;
     newDevice->devcaps.dwFFMinTimeResolution = 0;
     newDevice->devcaps.dwFirmwareRevision = 0;
@@ -1582,10 +1585,7 @@ HRESULT WINAPI JoystickAImpl_GetDeviceInfo(
     pdidi->guidInstance = GUID_Joystick;
     pdidi->guidProduct = DInput_Wine_Joystick_GUID;
     /* we only support traditional joysticks for now */
-    if (This->dinput->version >= 8)
-        pdidi->dwDevType = DI8DEVTYPE_JOYSTICK | (DI8DEVTYPEJOYSTICK_STANDARD << 8);
-    else
-        pdidi->dwDevType = DIDEVTYPE_JOYSTICK | (DIDEVTYPEJOYSTICK_TRADITIONAL << 8);
+    pdidi->dwDevType = This->devcaps.dwDevType;
     strcpy(pdidi->tszInstanceName, "Joystick");
     strcpy(pdidi->tszProductName, This->name);
     if (pdidi->dwSize > sizeof(DIDEVICEINSTANCE_DX3A)) {
@@ -1620,10 +1620,7 @@ HRESULT WINAPI JoystickWImpl_GetDeviceInfo(
     pdidi->guidInstance = GUID_Joystick;
     pdidi->guidProduct = DInput_Wine_Joystick_GUID;
     /* we only support traditional joysticks for now */
-    if (This->dinput->version >= 8)
-        pdidi->dwDevType = DI8DEVTYPE_JOYSTICK | (DI8DEVTYPEJOYSTICK_STANDARD << 8);
-    else
-        pdidi->dwDevType = DIDEVTYPE_JOYSTICK | (DIDEVTYPEJOYSTICK_TRADITIONAL << 8);
+    pdidi->dwDevType = This->devcaps.dwDevType;
     MultiByteToWideChar(CP_ACP, 0, "Joystick", -1, pdidi->tszInstanceName, MAX_PATH);
     MultiByteToWideChar(CP_ACP, 0, This->name, -1, pdidi->tszProductName, MAX_PATH);
     if (pdidi->dwSize > sizeof(DIDEVICEINSTANCE_DX3W)) {
