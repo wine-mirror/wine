@@ -629,18 +629,29 @@ WORD X11DRV_EVENT_XStateToKeyState( int state )
 static void EVENT_Expose( HWND hWnd, XExposeEvent *event )
 {
   RECT rect;
+  int  offx = 0,offy = 0;
 
   WND *pWnd = WIN_FindWndPtr(hWnd);
   /* Make position relative to client area instead of window */
-  rect.left   = event->x - (pWnd? (pWnd->rectClient.left - pWnd->rectWindow.left) : 0);
-  rect.top    = event->y - (pWnd? (pWnd->rectClient.top - pWnd->rectWindow.top) : 0);
+  offx =  (pWnd? (pWnd->rectClient.left - pWnd->rectWindow.left) : 0);
+  offy =  (pWnd? (pWnd->rectClient.top - pWnd->rectWindow.top) : 0);
+
+  rect.left   = event->x - offx;
+  rect.top    = event->y - offy;
+
   rect.right  = rect.left + event->width;
   rect.bottom = rect.top + event->height;
+
   WIN_ReleaseWndPtr(pWnd);
  
   Callout.RedrawWindow( hWnd, &rect, 0,
-                          RDW_INVALIDATE | RDW_FRAME | RDW_ALLCHILDREN | RDW_ERASE |
-                          (event->count ? 0 : RDW_ERASENOW) );
+          RDW_INVALIDATE | RDW_FRAME | RDW_ALLCHILDREN | RDW_ERASE );
+
+  /* FIXME: We should use SendNotifyMessage here, but this function is not
+     implemented correctly, so for now we used SendMessage */
+  /*SendNotifyMessageA(hWnd,WM_SYNCPAINT, 0, 0);*/
+  if (event->count == 0)
+    SendMessageA(hWnd,WM_SYNCPAINT, 0, 0);
 }
 
 
@@ -653,19 +664,29 @@ static void EVENT_Expose( HWND hWnd, XExposeEvent *event )
 static void EVENT_GraphicsExpose( HWND hWnd, XGraphicsExposeEvent *event )
 {
   RECT rect;
+  int  offx = 0,offy = 0;
+
   WND *pWnd = WIN_FindWndPtr(hWnd);
-  
   /* Make position relative to client area instead of window */
-  rect.left   = event->x - (pWnd? (pWnd->rectClient.left - pWnd->rectWindow.left) : 0);
-  rect.top    = event->y - (pWnd? (pWnd->rectClient.top - pWnd->rectWindow.top) : 0);
+  offx =  (pWnd? (pWnd->rectClient.left - pWnd->rectWindow.left) : 0);
+  offy =  (pWnd? (pWnd->rectClient.top - pWnd->rectWindow.top) : 0);
+
+  rect.left   = event->x - offx;
+  rect.top    = event->y - offy;
+
   rect.right  = rect.left + event->width;
   rect.bottom = rect.top + event->height;
-  
+
   WIN_ReleaseWndPtr(pWnd);
-  
+ 
   Callout.RedrawWindow( hWnd, &rect, 0,
-                          RDW_INVALIDATE | RDW_ALLCHILDREN | RDW_ERASE |
-                          (event->count ? 0 : RDW_ERASENOW) );
+          RDW_INVALIDATE | RDW_ALLCHILDREN | RDW_ERASE );
+
+  /* FIXME: We should use SendNotifyMessage here, but this function is not
+     implemented correctly, so for now we used SendMessage */
+  /*SendNotifyMessageA(hWnd,WM_SYNCPAINT, 0, 0);*/
+  if (event->count == 0)
+    SendMessageA(hWnd,WM_SYNCPAINT, 0, 0);
 }
 
 

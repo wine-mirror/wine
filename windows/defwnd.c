@@ -303,6 +303,14 @@ static LRESULT DEFWND_DefWinProc( WND *wndPtr, UINT msg, WPARAM wParam,
 	    return 0;
 	}
 
+    case WM_SYNCPAINT:
+	if (wndPtr->hrgnUpdate) 
+	{
+	   RedrawWindow ( wndPtr->hwndSelf, 0, wndPtr->hrgnUpdate,
+                    RDW_ERASENOW | RDW_ERASE | RDW_FRAME | RDW_ALLCHILDREN );
+        }
+        return 0;
+
     case WM_SETREDRAW:
 	DEFWND_SetRedraw( wndPtr, wParam );
         return 0;
