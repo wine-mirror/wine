@@ -1801,7 +1801,12 @@ HWND WINAPI GetNextDlgTabItem( HWND hwndDlg, HWND hwndCtrl,
     else
     {
         /* No ctrl specified -> start from the beginning */
-        if (!(pWndCtrl = WIN_LockWndPtr(pWndDlg->child))) return 0;
+        if (!(pWndCtrl = WIN_LockWndPtr(pWndDlg->child)))
+        {
+            retvalue = 0;
+            goto END;
+        }
+        
         if (!fPrevious)
             while (pWndCtrl->next) WIN_UpdateWndPtr(&pWndCtrl,pWndCtrl->next);
     }
