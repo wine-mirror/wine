@@ -65,7 +65,7 @@ extern "C" {
  * we try to define our own prototypes (different calling convention).
  */
 # include <sys/types.h>
-# ifndef htonl
+# if defined(USE_WS_PREFIX) || !defined(htonl)
 #  define WS_DEFINE_HTONL
 # endif /* htonl */
 #else
@@ -913,7 +913,7 @@ int WINAPI WS(closesocket)(SOCKET);
 int WINAPI WS(connect)(SOCKET,const struct WS(sockaddr)*,int);
 struct WS(hostent)* WINAPI WS(gethostbyaddr)(const char*,int,int);
 struct WS(hostent)* WINAPI WS(gethostbyname)(const char*);
-int WINAPI WS(gethostname)(char*,int);
+/* gethostname not defined because of conflicts with unistd.h */
 int WINAPI WS(getpeername)(SOCKET,struct WS(sockaddr)*,int*);
 struct WS(protoent)* WINAPI WS(getprotobyname)(const char*);
 struct WS(protoent)* WINAPI WS(getprotobynumber)(int);
