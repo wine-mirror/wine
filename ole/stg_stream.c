@@ -20,7 +20,7 @@
 
 #include "storage32.h"
 
-DEFAULT_DEBUG_CHANNEL(ole)
+DEFAULT_DEBUG_CHANNEL(storage)
 
 
 /*
@@ -113,6 +113,8 @@ StgStreamImpl* StgStreamImpl_Construct(
  */
 void StgStreamImpl_Destroy(StgStreamImpl* This)
 {
+  TRACE(storage, "(%p)\n", This);
+
   /*
    * Release the reference we are holding on the parent storage.
    */
@@ -314,7 +316,10 @@ HRESULT WINAPI StgStreamImpl_Read(
 
   ULONG bytesReadBuffer;
   ULONG bytesToReadFromBuffer;
-  
+
+  TRACE(storage, "(%p, %p, %ld, %p)\n",
+	iface, pv, cb, pcbRead);
+
   /* 
    * If the caller is not interested in the nubmer of bytes read,
    * we use another buffer to avoid "if" statements in the code.
@@ -394,6 +399,9 @@ HRESULT WINAPI StgStreamImpl_Write(
 
   ULARGE_INTEGER newSize;
   ULONG bytesWritten = 0;
+
+  TRACE(storage, "(%p, %p, %ld, %p)\n",
+	iface, pv, cb, pcbWritten);
   
   /*
    * If the caller is not interested in the number of bytes written,
@@ -402,6 +410,11 @@ HRESULT WINAPI StgStreamImpl_Write(
   if (pcbWritten == 0)
     pcbWritten = &bytesWritten;
   
+  /*
+   * Initialize the out parameter
+   */
+  *pcbWritten = 0;
+
   if (cb == 0)
   {
     return S_OK;
@@ -418,7 +431,7 @@ HRESULT WINAPI StgStreamImpl_Write(
   if (newSize.LowPart > This->streamSize.LowPart)
   {
     /* grow stream */
-    StgStreamImpl_SetSize(iface, newSize);
+    IStream_SetSize(iface, newSize);
   }
   
   /*
@@ -470,6 +483,9 @@ HRESULT WINAPI StgStreamImpl_Seek(
   StgStreamImpl* const This=(StgStreamImpl*)iface;
 
   ULARGE_INTEGER newPosition;
+
+  TRACE(storage, "(%p, %ld, %ld, %p)\n",
+	iface, dlibMove.LowPart, dwOrigin, plibNewPosition);
 
   /* 
    * The caller is allowed to pass in NULL as the new position return value.
@@ -547,6 +563,8 @@ HRESULT WINAPI StgStreamImpl_SetSize(
   StgProperty    curProperty;
   BOOL         Success;
 
+  TRACE(storage, "(%p, %ld)\n", iface, libNewSize.LowPart);
+
   /*
    * As documented.
    */
@@ -584,9 +602,9 @@ HRESULT WINAPI StgStreamImpl_SetSize(
                                        &curProperty); 
   /*
    * Determine if we have to switch from small to big blocks or vice versa
-   */
-  
-  if (curProperty.size.LowPart < LIMIT_TO_USE_SMALL_BLOCK)
+   */  
+  if ( (This->smallBlockChain!=0) && 
+       (curProperty.size.LowPart < LIMIT_TO_USE_SMALL_BLOCK) )
   {
     if (libNewSize.LowPart >= LIMIT_TO_USE_SMALL_BLOCK)
     {
@@ -650,6 +668,9 @@ HRESULT WINAPI StgStreamImpl_CopyTo(
   ULARGE_INTEGER totalBytesRead;
   ULARGE_INTEGER totalBytesWritten;
 
+  TRACE(storage, "(%p, %p, %ld, %p, %p)\n", 
+	iface, pstm, cb.LowPart, pcbRead, pcbWritten);
+
   /*
    * Sanity check
    */
@@ -671,24 +692,27 @@ HRESULT WINAPI StgStreamImpl_CopyTo(
     else
       copySize = cb.LowPart;
     
-    StgStreamImpl_Read(iface, tmpBuffer, 128, &bytesRead);
+    IStream_Read(iface, tmpBuffer, copySize, &bytesRead);
 
     totalBytesRead.LowPart += bytesRead;
     
-    StgStreamImpl_Write(pstm, tmpBuffer, bytesRead, &bytesWritten);
+    IStream_Write(pstm, tmpBuffer, bytesRead, &bytesWritten);
 
     totalBytesWritten.LowPart += bytesWritten;
 
     /*
      * Check that read & write operations were succesfull
      */
-    if ( (bytesRead != copySize) && (bytesWritten != copySize) )
+    if (bytesRead != bytesWritten)
     {
       hr = STG_E_MEDIUMFULL;
       break;
     }
     
-    cb.LowPart = cb.LowPart - copySize;
+    if (bytesRead!=copySize)
+      cb.LowPart = 0;
+    else
+      cb.LowPart -= bytesRead;
   }
 
   /*
@@ -743,7 +767,7 @@ HRESULT WINAPI StgStreamImpl_LockRegion(
 					ULARGE_INTEGER cb,          /* [in] */ 
 					DWORD          dwLockType)  /* [in] */ 
 {
-  FIXME(ole, "not implemented!\n");
+  FIXME(storage, "not implemented!\n");
   return E_NOTIMPL;
 }
 
@@ -753,7 +777,7 @@ HRESULT WINAPI StgStreamImpl_UnlockRegion(
 					  ULARGE_INTEGER cb,          /* [in] */ 
 					  DWORD          dwLockType)  /* [in] */ 
 {
-  FIXME(ole, "not implemented!\n");
+  FIXME(storage, "not implemented!\n");
   return E_NOTIMPL;
 }
 
@@ -798,6 +822,6 @@ HRESULT WINAPI StgStreamImpl_Clone(
 				   IStream*     iface,
 				   IStream**    ppstm) /* [out] */ 
 {
-  FIXME(ole, "not implemented!\n");
+  FIXME(storage, "not implemented!\n");
   return E_NOTIMPL;
 }

@@ -17,7 +17,7 @@
 
 #include "objbase.h"
 
-DEFAULT_DEBUG_CHANNEL(ole)
+DEFAULT_DEBUG_CHANNEL(storage)
 
 /****************************************************************************
  * HGLOBALStreamImpl definition.
@@ -252,6 +252,8 @@ HGLOBALStreamImpl* HGLOBALStreamImpl_Construct(
  */
 void HGLOBALStreamImpl_Destroy(HGLOBALStreamImpl* This)
 {
+  TRACE(storage, "(%p)\n", This);
+
   /*
    * Release the HGlobal if the constructor asked for that.
    */
@@ -376,6 +378,9 @@ HRESULT WINAPI HGLOBALStreamImpl_Read(
   void* supportBuffer;
   ULONG bytesReadBuffer;
   ULONG bytesToReadFromBuffer;
+
+  TRACE(storage, "(%p, %p, %ld, %p)\n", iface,
+	pv, cb, pcbRead);
   
   /* 
    * If the caller is not interested in the nubmer of bytes read,
@@ -444,6 +449,9 @@ HRESULT WINAPI HGLOBALStreamImpl_Write(
   void*          supportBuffer;
   ULARGE_INTEGER newSize;
   ULONG          bytesWritten = 0;
+
+  TRACE(storage, "(%p, %p, %ld, %p)\n", iface,
+	pv, cb, pcbWritten);
   
   /*
    * If the caller is not interested in the number of bytes written,
@@ -468,7 +476,7 @@ HRESULT WINAPI HGLOBALStreamImpl_Write(
   if (newSize.LowPart > This->streamSize.LowPart)
   {
     /* grow stream */
-    HGLOBALStreamImpl_SetSize(iface, newSize);
+   IStream_SetSize(iface, newSize);
   }
   
   /*
@@ -513,6 +521,9 @@ HRESULT WINAPI HGLOBALStreamImpl_Seek(
   HGLOBALStreamImpl* const This=(HGLOBALStreamImpl*)iface;
 
   ULARGE_INTEGER newPosition;
+
+  TRACE(storage, "(%p, %ld, %ld, %p)\n", iface,
+	dlibMove.LowPart, dwOrigin, plibNewPosition);
 
   /* 
    * The caller is allowed to pass in NULL as the new position return value.
@@ -587,6 +598,8 @@ HRESULT WINAPI HGLOBALStreamImpl_SetSize(
 {
   HGLOBALStreamImpl* const This=(HGLOBALStreamImpl*)iface;
 
+  TRACE(storage, "(%p, %ld)\n", iface, libNewSize.LowPart);
+
   /*
    * As documented.
    */
@@ -628,6 +641,9 @@ HRESULT WINAPI HGLOBALStreamImpl_CopyTo(
   ULARGE_INTEGER totalBytesRead;
   ULARGE_INTEGER totalBytesWritten;
 
+  TRACE(storage, "(%p, %p, %ld, %p, %p)\n", iface, pstm, 
+	cb.LowPart, pcbRead, pcbWritten);
+
   /*
    * Sanity check
    */
@@ -649,24 +665,27 @@ HRESULT WINAPI HGLOBALStreamImpl_CopyTo(
     else
       copySize = cb.LowPart;
     
-    HGLOBALStreamImpl_Read(iface, tmpBuffer, 128, &bytesRead);
+    IStream_Read(iface, tmpBuffer, copySize, &bytesRead);
 
     totalBytesRead.LowPart += bytesRead;
     
-    HGLOBALStreamImpl_Write(pstm, tmpBuffer, bytesRead, &bytesWritten);
+    IStream_Write(pstm, tmpBuffer, bytesRead, &bytesWritten);
 
     totalBytesWritten.LowPart += bytesWritten;
 
     /*
      * Check that read & write operations were succesfull
      */
-    if ( (bytesRead != copySize) && (bytesWritten != copySize) )
+    if (bytesRead != bytesWritten)
     {
       hr = STG_E_MEDIUMFULL;
       break;
     }
     
-    cb.LowPart = cb.LowPart - copySize;
+    if (bytesRead!=copySize)
+      cb.LowPart = 0;
+    else
+      cb.LowPart -= bytesRead;
   }
 
   /*
@@ -777,6 +796,6 @@ HRESULT WINAPI HGLOBALStreamImpl_Clone(
 		  IStream*     iface,
 		  IStream**    ppstm) /* [out] */ 
 {
-  FIXME(ole, "not implemented!\n");
+  FIXME(storage, "not implemented!\n");
   return E_NOTIMPL;
 }

@@ -27,7 +27,7 @@
 #include "storage32.h"
 #include "ole2.h"
 
-DEFAULT_DEBUG_CHANNEL(ole)
+DEFAULT_DEBUG_CHANNEL(storage)
 
 #define FILE_BEGIN 0
 
@@ -270,9 +270,9 @@ ULONG WINAPI StorageBaseImpl_Release(
 HRESULT WINAPI StorageBaseImpl_OpenStream( 
   IStorage*        iface,
   const OLECHAR*   pwcsName,  /* [string][in] */
-  void*              reserved1, /* [unique][in] */
-  DWORD              grfMode,   /* [in]  */        
-  DWORD              reserved2, /* [in]  */        
+  void*            reserved1, /* [unique][in] */
+  DWORD            grfMode,   /* [in]  */        
+  DWORD            reserved2, /* [in]  */        
   IStream**        ppstm)     /* [out] */       
 {
   ICOM_THIS(StorageBaseImpl,iface);
@@ -280,6 +280,9 @@ HRESULT WINAPI StorageBaseImpl_OpenStream(
   StgStreamImpl*    newStream;
   StgProperty       currentProperty;
   ULONG             foundPropertyIndex;
+
+  TRACE(storage, "(%p, %s, %p, %lx, %ld, %p)\n", 
+	iface, debugstr_w(pwcsName), reserved1, grfMode, reserved2, ppstm);
 
   /*
    * Perform a sanity check on the parameters.
@@ -364,9 +367,9 @@ HRESULT WINAPI StorageBaseImpl_OpenStorage(
   IStorage*        iface,
   const OLECHAR*   pwcsName,      /* [string][unique][in] */ 
   IStorage*        pstgPriority,  /* [unique][in] */         
-  DWORD              grfMode,       /* [in] */                 
+  DWORD            grfMode,       /* [in] */                 
   SNB              snbExclude,    /* [unique][in] */         
-  DWORD              reserved,      /* [in] */                 
+  DWORD            reserved,      /* [in] */                 
   IStorage**       ppstg)         /* [out] */                        
 {
   ICOM_THIS(StorageBaseImpl,iface);
@@ -374,6 +377,10 @@ HRESULT WINAPI StorageBaseImpl_OpenStorage(
   IEnumSTATSTGImpl*      propertyEnumeration;
   StgProperty            currentProperty;
   ULONG                  foundPropertyIndex;
+
+  TRACE(storage, "(%p, %s, %p, %lx, %p, %ld, %p)\n", 
+	iface, debugstr_w(pwcsName), pstgPriority, 
+	grfMode, snbExclude, reserved, ppstg);
   
   /*
    * Perform a sanity check on the parameters.
@@ -461,14 +468,17 @@ HRESULT WINAPI StorageBaseImpl_OpenStorage(
  * See Windows documentation for more details on IStorage methods.
  */        
 HRESULT WINAPI StorageBaseImpl_EnumElements( 
-  IStorage*        iface,
-  DWORD              reserved1, /* [in] */                  
-  void*              reserved2, /* [size_is][unique][in] */ 
-  DWORD              reserved3, /* [in] */                  
-  IEnumSTATSTG**     ppenum)    /* [out] */                 
+  IStorage*       iface,
+  DWORD           reserved1, /* [in] */                  
+  void*           reserved2, /* [size_is][unique][in] */ 
+  DWORD           reserved3, /* [in] */                  
+  IEnumSTATSTG**  ppenum)    /* [out] */                 
 {
   ICOM_THIS(StorageBaseImpl,iface);
   IEnumSTATSTGImpl* newEnum;
+
+  TRACE(storage, "(%p, %ld, %p, %ld, %p)\n", 
+	iface, reserved1, reserved2, reserved3, ppenum);
 
   /*
    * Perform a sanity check on the parameters.
@@ -508,12 +518,15 @@ HRESULT WINAPI StorageBaseImpl_EnumElements(
  */        
 HRESULT WINAPI StorageBaseImpl_Stat( 
   IStorage*        iface,
-  STATSTG*           pstatstg,     /* [out] */ 
-  DWORD              grfStatFlag)  /* [in] */  
+  STATSTG*         pstatstg,     /* [out] */ 
+  DWORD            grfStatFlag)  /* [in] */  
 {
   ICOM_THIS(StorageBaseImpl,iface);
   StgProperty    curProperty;
   BOOL         readSucessful;
+
+  TRACE(storage, "(%p, %p, %lx)\n", 
+	iface, pstatstg, grfStatFlag);
 
   /*
    * Perform a sanity check on the parameters.
@@ -562,6 +575,9 @@ HRESULT WINAPI StorageBaseImpl_RenameElement(
   IEnumSTATSTGImpl* propertyEnumeration;
   StgProperty       currentProperty;
   ULONG             foundPropertyIndex;
+
+  TRACE(storage, "(%p, %s, %s)\n", 
+	iface, debugstr_w(pwcsOldName), debugstr_w(pwcsNewName));
 
   /*
    * Create a property enumeration to search the properties
@@ -704,9 +720,9 @@ HRESULT WINAPI StorageBaseImpl_RenameElement(
 HRESULT WINAPI StorageBaseImpl_CreateStream(
             IStorage*        iface,
             const OLECHAR*   pwcsName,  /* [string][in] */
-            DWORD              grfMode,   /* [in] */
-            DWORD              reserved1, /* [in] */
-            DWORD              reserved2, /* [in] */
+            DWORD            grfMode,   /* [in] */
+            DWORD            reserved1, /* [in] */
+            DWORD            reserved2, /* [in] */
             IStream**        ppstm)     /* [out] */
 {
   ICOM_THIS(StorageBaseImpl,iface);
@@ -714,6 +730,10 @@ HRESULT WINAPI StorageBaseImpl_CreateStream(
   StgStreamImpl*    newStream;
   StgProperty       currentProperty, newStreamProperty;
   ULONG             foundPropertyIndex, newPropertyIndex;
+
+  TRACE(storage, "(%p, %s, %lx, %ld, %ld, %p)\n", 
+	iface, debugstr_w(pwcsName), grfMode, 
+	reserved1, reserved2, ppstm);
 
   /*
    * Validate parameters
@@ -761,7 +781,9 @@ HRESULT WINAPI StorageBaseImpl_CreateStream(
      * An element with this name already exists 
      */
     if (grfMode & STGM_CREATE)
-      StorageImpl_DestroyElement((IStorage*)This->ancestorStorage, pwcsName); 
+    {
+      IStorage_DestroyElement(iface, pwcsName); 
+    }
     else 
       return STG_E_FILEALREADYEXISTS;
   }
@@ -851,12 +873,14 @@ HRESULT WINAPI StorageBaseImpl_CreateStream(
  */
 HRESULT WINAPI StorageBaseImpl_SetClass(
   IStorage*        iface,
-  REFCLSID           clsid) /* [in] */
+  REFCLSID         clsid) /* [in] */
 {
   ICOM_THIS(StorageBaseImpl,iface);
   HRESULT hRes = E_FAIL;
   StgProperty curProperty;
   BOOL success;
+
+  TRACE(storage, "(%p, %p)\n", iface, clsid);
   
   success = StorageImpl_ReadProperty(This->ancestorStorage,
                                        This->rootPropertySetIndex,
@@ -903,6 +927,9 @@ HRESULT WINAPI StorageImpl_CreateStorage(
   ULONG            newPropertyIndex;
   HRESULT          hr;
 
+  TRACE(storage, "(%p, %s, %lx, %ld, %ld, %p)\n", 
+	iface, debugstr_w(pwcsName), grfMode, 
+	reserved1, reserved2, ppstg);
   
   /*
    * Validate parameters
@@ -942,7 +969,7 @@ HRESULT WINAPI StorageImpl_CreateStorage(
      * An element with this name already exists 
      */
     if (grfMode & STGM_CREATE)
-      StorageImpl_DestroyElement((IStorage*)This->ancestorStorage, pwcsName); 
+      IStorage_DestroyElement(iface, pwcsName); 
     else 
       return STG_E_FILEALREADYEXISTS;
   }
@@ -1001,7 +1028,7 @@ HRESULT WINAPI StorageImpl_CreateStorage(
   /* 
    * Open it to get a pointer to return.
    */
-  hr = StorageBaseImpl_OpenStorage(
+  hr = IStorage_OpenStorage(
          iface,
          (OLECHAR*)pwcsName,
          0,
@@ -1212,7 +1239,7 @@ static void updatePropertyChain(
           found = 1;
         }
       }
-      else 
+      else if (diff > 0)
       {
         if (next != PROPERTY_NULL)
         {
@@ -1229,6 +1256,14 @@ static void updatePropertyChain(
                                       &currentProperty);
           found = 1;
         }
+      }
+      else
+      {
+	/*
+	 * Trying to insert an item with the same name in the
+	 * subtree structure.
+	 */
+	assert(FALSE);
       }
 
       previous = currentProperty.previousProperty;
@@ -1253,10 +1288,10 @@ static void updatePropertyChain(
  */
 HRESULT WINAPI StorageImpl_CopyTo( 
   IStorage*   iface,
-  DWORD         ciidExclude,  /* [in] */ 
-  const IID     *rgiidExclude,/* [size_is][unique][in] */ 
+  DWORD       ciidExclude,  /* [in] */ 
+  const IID*  rgiidExclude, /* [size_is][unique][in] */ 
   SNB         snbExclude,   /* [unique][in] */ 
-  IStorage    *pstgDest)    /* [unique][in] */ 
+  IStorage*   pstgDest)     /* [unique][in] */ 
 {
   IEnumSTATSTG *elements     = 0;
   STATSTG      curElement, strStat;
@@ -1265,7 +1300,11 @@ HRESULT WINAPI StorageImpl_CopyTo(
   IStream      *pstrTmp, *pstrChild;
 
   if ((ciidExclude != 0) || (rgiidExclude != NULL) || (snbExclude != NULL))
-    FIXME( ole, "Exclude option not implemented\n");
+    FIXME( storage, "Exclude option not implemented\n");
+
+  TRACE(storage, "(%p, %ld, %p, %p, %p)\n", 
+	iface, ciidExclude, rgiidExclude, 
+	snbExclude, pstgDest);
 
   /*
    * Perform a sanity check
@@ -1284,7 +1323,7 @@ HRESULT WINAPI StorageImpl_CopyTo(
   /*
    * set the class ID
    */
-  StorageBaseImpl_Stat( iface, &curElement, STATFLAG_NONAME);
+  IStorage_Stat( iface, &curElement, STATFLAG_NONAME);
   IStorage_SetClass( pstgDest, &curElement.clsid );
   
   do
@@ -1305,9 +1344,9 @@ HRESULT WINAPI StorageImpl_CopyTo(
       /*
        * open child source storage
        */
-      hr = StorageBaseImpl_OpenStorage( iface, curElement.pwcsName, NULL,
-                                    STGM_READ|STGM_SHARE_EXCLUSIVE,
-                                    NULL, 0, &pstgChild );
+      hr = IStorage_OpenStorage( iface, curElement.pwcsName, NULL,
+				 STGM_READ|STGM_SHARE_EXCLUSIVE,
+				 NULL, 0, &pstgChild );
 
       if (hr != S_OK)
         break;
@@ -1327,7 +1366,8 @@ HRESULT WINAPI StorageImpl_CopyTo(
        * create a new storage in destination storage
        */
       hr = IStorage_CreateStorage( pstgDest, curElement.pwcsName,
-                                   STGM_FAILIFTHERE|STGM_WRITE, 0, 0,
+                                   STGM_FAILIFTHERE|STGM_WRITE|STGM_SHARE_EXCLUSIVE,
+				   0, 0,
                                    &pstgTmp );
       /*
        * if it already exist, don't create a new one use this one
@@ -1368,17 +1408,22 @@ HRESULT WINAPI StorageImpl_CopyTo(
       /*
        * open child stream storage
        */
-      hr = StorageBaseImpl_OpenStream( iface, curElement.pwcsName, NULL,
-                                      STGM_READ|STGM_SHARE_EXCLUSIVE,
-                                      0, &pstrChild );
+      hr = IStorage_OpenStream( iface, curElement.pwcsName, NULL,
+				STGM_READ|STGM_SHARE_EXCLUSIVE,
+				0, &pstrChild );
 
       if (hr != S_OK)
         break;
 
       /*
-       * Get the size of the stream
+       * Get the size of the source stream
        */
       IStream_Stat( pstrChild, &strStat, STATFLAG_NONAME );
+
+      /*
+       * Set the size of the destination stream.
+       */
+      IStream_SetSize(pstrTmp, strStat.cbSize);
       
       /*
        * do the copy
@@ -1391,7 +1436,7 @@ HRESULT WINAPI StorageImpl_CopyTo(
     }
     else
     {
-      WARN(ole, "unknown element type: %ld\n", curElement.type);
+      WARN(storage, "unknown element type: %ld\n", curElement.type);
     }
 
   } while (hr == S_OK);
@@ -1414,7 +1459,7 @@ HRESULT WINAPI StorageImpl_MoveElementTo(
   const OLECHAR *pwcsNewName,/* [string][in] */ 
   DWORD           grfFlags)    /* [in] */ 
 {
-  FIXME(ole, "not implemented!\n");
+  FIXME(storage, "not implemented!\n");
   return E_NOTIMPL;
 }
         
@@ -1425,7 +1470,7 @@ HRESULT WINAPI StorageImpl_Commit(
   IStorage*   iface,
   DWORD         grfCommitFlags)/* [in] */ 
 {
-  FIXME(ole, "(%ld): stub!\n", grfCommitFlags);
+  FIXME(storage, "(%ld): stub!\n", grfCommitFlags);
   return S_OK;
 }
         
@@ -1435,7 +1480,7 @@ HRESULT WINAPI StorageImpl_Commit(
 HRESULT WINAPI StorageImpl_Revert( 
   IStorage* iface)
 {
-  FIXME(ole, "not implemented!\n");
+  FIXME(storage, "not implemented!\n");
   return E_NOTIMPL;
 }
 
@@ -1464,6 +1509,9 @@ HRESULT WINAPI StorageImpl_DestroyElement(
   ULONG             foundPropertyIndexToDelete;
   ULONG             typeOfRelation;
   ULONG             parentPropertyId;
+
+  TRACE(storage, "(%p, %s)\n", 
+	iface, debugstr_w(pwcsName));
 
   /*
    * Perform a sanity check on the parameters.
@@ -1680,6 +1728,11 @@ static HRESULT deleteStreamProperty(
     return hr;
   }
 
+  /*
+   * Release the stream object.
+   */
+  IStream_Release(pis);
+
   /* 
    * Invalidate the property by zeroing it's name member.
    */
@@ -1689,7 +1742,6 @@ static HRESULT deleteStreamProperty(
    * Here we should re-read the property so we get the updated pointer
    * but since we are here to zap it, I don't do it...
    */
-
   StorageImpl_WriteProperty(
     parentStorage->ancestorStorage, 
     indexOfPropertyToDelete,
@@ -1952,7 +2004,7 @@ HRESULT WINAPI StorageImpl_SetElementTimes(
   const FILETIME  *patime,  /* [in] */ 
   const FILETIME  *pmtime)  /* [in] */ 
 {
-  FIXME(ole, "not implemented!\n");
+  FIXME(storage, "not implemented!\n");
   return E_NOTIMPL;
 }
 
@@ -1964,7 +2016,7 @@ HRESULT WINAPI StorageImpl_SetStateBits(
   DWORD         grfStateBits,/* [in] */ 
   DWORD         grfMask)     /* [in] */ 
 {
-  FIXME(ole, "not implemented!\n");
+  FIXME(storage, "not implemented!\n");
   return E_NOTIMPL;
 }
 
@@ -2159,6 +2211,8 @@ HRESULT StorageImpl_Construct(
 void StorageImpl_Destroy(
   StorageImpl* This)
 {
+  TRACE(storage, "(%p)\n", This);
+
   BlockChainStream_Destroy(This->smallBlockRootChain);
   BlockChainStream_Destroy(This->rootBlockChain);
   BlockChainStream_Destroy(This->smallBlockDepotChain);
@@ -4004,23 +4058,23 @@ BOOL BlockChainStream_ReadAt(BlockChainStream* This,
   BYTE* bufferWalker;
   BYTE* bigBlockBuffer;
 
-  if (This->lastBlockNoInSequence == 0xFFFFFFFF)
-    This->lastBlockNoInSequence = blockNoInSequence;
   /*
    * Find the first block in the stream that contains part of the buffer.
    */
-  if (blockNoInSequence > This->lastBlockNoInSequence)
+  if ( (This->lastBlockNoInSequence == 0xFFFFFFFF) ||
+       (This->lastBlockNoInSequenceIndex == BLOCK_END_OF_CHAIN) ||
+       (blockNoInSequence < This->lastBlockNoInSequence) )
+  {
+    blockIndex = BlockChainStream_GetHeadOfChain(This);
+    This->lastBlockNoInSequence = blockNoInSequence;
+  }
+  else
   {
     ULONG temp = blockNoInSequence;
 
     blockIndex = This->lastBlockNoInSequenceIndex;
     blockNoInSequence -= This->lastBlockNoInSequence;
     This->lastBlockNoInSequence = temp;
-  }
-  else
-  {
-    blockIndex = BlockChainStream_GetHeadOfChain(This);
-    This->lastBlockNoInSequence = blockNoInSequence;
   }
 
   while ( (blockNoInSequence > 0) &&  (blockIndex != BLOCK_END_OF_CHAIN))
@@ -4093,24 +4147,23 @@ BOOL BlockChainStream_WriteAt(BlockChainStream* This,
   BYTE* bufferWalker;
   BYTE* bigBlockBuffer;
 
-  if (This->lastBlockNoInSequence == 0xFFFFFFFF)
-    This->lastBlockNoInSequence = blockNoInSequence;
-
   /*
    * Find the first block in the stream that contains part of the buffer.
    */
-  if (blockNoInSequence > This->lastBlockNoInSequence)
+  if ( (This->lastBlockNoInSequence == 0xFFFFFFFF) ||
+       (This->lastBlockNoInSequenceIndex == BLOCK_END_OF_CHAIN) ||
+       (blockNoInSequence < This->lastBlockNoInSequence) )
+  {
+    blockIndex = BlockChainStream_GetHeadOfChain(This);
+    This->lastBlockNoInSequence = blockNoInSequence;
+  }
+  else
   {
     ULONG temp = blockNoInSequence;
 
     blockIndex = This->lastBlockNoInSequenceIndex;
     blockNoInSequence -= This->lastBlockNoInSequence;
     This->lastBlockNoInSequence = temp;
-  }
-  else
-  {
-    blockIndex = BlockChainStream_GetHeadOfChain(This);
-    This->lastBlockNoInSequence = blockNoInSequence;
   }
 
   while ( (blockNoInSequence > 0) &&  (blockIndex != BLOCK_END_OF_CHAIN))
@@ -4173,6 +4226,12 @@ BOOL BlockChainStream_Shrink(BlockChainStream* This,
   ULONG blockIndex, extraBlock;
   ULONG numBlocks;
   ULONG count = 1;
+
+  /*
+   * Reset the last accessed block cache.
+   */
+  This->lastBlockNoInSequence = 0xFFFFFFFF;
+  This->lastBlockNoInSequenceIndex = BLOCK_END_OF_CHAIN;
 
   /*
    * Figure out how many blocks are needed to contain the new size
@@ -4306,26 +4365,29 @@ BOOL BlockChainStream_Enlarge(BlockChainStream* This,
   /*
    * Add new blocks to the chain
    */
-  while (oldNumBlocks < newNumBlocks)
+  if (oldNumBlocks < newNumBlocks)
   {
-    blockIndex = StorageImpl_GetNextFreeBigBlock(This->parentStorage);
+    while (oldNumBlocks < newNumBlocks)
+    {
+      blockIndex = StorageImpl_GetNextFreeBigBlock(This->parentStorage);
 
-    StorageImpl_SetNextBlockInChain(
-      This->parentStorage, 
-      currentBlock, 
-      blockIndex);
+      StorageImpl_SetNextBlockInChain(
+	This->parentStorage, 
+	currentBlock, 
+	blockIndex);
 
-    StorageImpl_SetNextBlockInChain(
-      This->parentStorage, 
-      blockIndex, 
-      BLOCK_END_OF_CHAIN);
+      StorageImpl_SetNextBlockInChain(
+        This->parentStorage, 
+	blockIndex, 
+	BLOCK_END_OF_CHAIN);
 
-    currentBlock = blockIndex;
-    oldNumBlocks++;
+      currentBlock = blockIndex;
+      oldNumBlocks++;
+    }
+
+    This->tailIndex = blockIndex;
+    This->numBlocks = newNumBlocks;
   }
-
-  This->tailIndex = blockIndex;
-  This->numBlocks = newNumBlocks;
 
   return TRUE;
 }
@@ -4902,7 +4964,7 @@ BOOL SmallBlockChainStream_Shrink(
 {
   ULONG blockIndex, extraBlock;
   ULONG numBlocks;
-  ULONG count = 1;
+  ULONG count = 0;
 
   numBlocks = newSize.LowPart / This->parentStorage->smallBlockSize;
 
@@ -4920,14 +4982,40 @@ BOOL SmallBlockChainStream_Shrink(
     count++;
   }
 
-  /* Get the next block before marking the new end */
-  extraBlock = SmallBlockChainStream_GetNextBlockInChain(This, blockIndex);
+  /*
+   * If the count is 0, we have a special case, the head of the chain was
+   * just freed. 
+   */
+  if (count == 0)
+  {
+    StgProperty chainProp;
 
-  /* Mark the new end of chain */
-  SmallBlockChainStream_SetNextBlockInChain(
-    This, 
-    blockIndex, 
-    BLOCK_END_OF_CHAIN);
+    StorageImpl_ReadProperty(This->parentStorage, 
+			     This->ownerPropertyIndex,
+			     &chainProp);
+
+    chainProp.startingBlock = BLOCK_END_OF_CHAIN;
+
+    StorageImpl_WriteProperty(This->parentStorage,
+			      This->ownerPropertyIndex,
+			      &chainProp);
+
+    /*
+     * We start freeing the chain at the head block.
+     */
+    extraBlock = blockIndex;
+  }
+  else
+  {
+    /* Get the next block before marking the new end */
+    extraBlock = SmallBlockChainStream_GetNextBlockInChain(This, blockIndex);
+
+    /* Mark the new end of chain */
+    SmallBlockChainStream_SetNextBlockInChain(
+      This, 
+      blockIndex, 
+      BLOCK_END_OF_CHAIN);
+  }
 
   /*
    * Mark the extra blocks as free
@@ -4962,6 +5050,7 @@ BOOL SmallBlockChainStream_Enlarge(
    */
   if (blockIndex == BLOCK_END_OF_CHAIN)
   {
+
     StgProperty chainProp;
 
     StorageImpl_ReadProperty(This->parentStorage, This->ownerPropertyIndex,
@@ -5108,6 +5197,10 @@ HRESULT WINAPI StgCreateDocfile(
   DWORD          fileAttributes;
   WCHAR          tempFileName[MAX_PATH];
 
+  TRACE(storage, "(%s, %lx, %ld, %p)\n", 
+	debugstr_w(pwcsName), grfMode, 
+	reserved, ppstgOpen);
+
   /*
    * Validate the parameters
    */
@@ -5153,7 +5246,7 @@ HRESULT WINAPI StgCreateDocfile(
     fileAttributes = FILE_ATTRIBUTE_NORMAL | FILE_FLAG_RANDOM_ACCESS;
 
   if (grfMode & STGM_TRANSACTED)
-    FIXME(ole, "Transacted mode not implemented.\n");
+    FIXME(storage, "Transacted mode not implemented.\n");
 
   /*
    * Initialize the "out" parameter.
@@ -5219,6 +5312,10 @@ HRESULT WINAPI StgOpenStorage(
   HANDLE       hFile = 0;
   DWORD          shareMode;
   DWORD          accessMode;
+
+  TRACE(storage, "(%s, %p, %lx, %p, %ld, %p)\n", 
+	debugstr_w(pwcsName), pstgPriority, grfMode,
+	snbExclude, reserved, ppstgOpen);
 
   /*
    * Perform a sanity check
@@ -5313,7 +5410,7 @@ HRESULT WINAPI ReadClassStg(IStorage *pstg,CLSID *pclsid){
     STATSTG pstatstg;
     HRESULT hRes;
     
-    TRACE(ole,"()\n");
+    TRACE(storage,"()\n");
 
     if(pclsid==NULL)
         return E_POINTER;
@@ -5338,7 +5435,7 @@ HRESULT  WINAPI OleLoadFromStream(IStream *pStm,REFIID iidInterface,void** ppvOb
     CLSID clsid;
     HRESULT res;
 
-    FIXME(ole,"(),stub!\n");
+    FIXME(storage,"(),stub!\n");
 
     res=ReadClassStm(pStm,&clsid);
 
@@ -5365,7 +5462,7 @@ HRESULT  WINAPI OleSaveToStream(IPersistStream *pPStm,IStream *pStm)
     CLSID clsid;
     HRESULT res;
     
-    TRACE(ole,"(%p,%p)\n",pPStm,pStm);
+    TRACE(storage,"(%p,%p)\n",pPStm,pStm);
 
     res=IPersistStream_GetClassID(pPStm,&clsid);
 
@@ -5555,11 +5652,11 @@ static DWORD GetCreationModeFromSTGM(DWORD stgm)
   if ( stgm & STGM_CREATE)
     return CREATE_ALWAYS;
   if (stgm & STGM_CONVERT) {
-    FIXME(ole, "STGM_CONVERT not implemented!\n");
+    FIXME(storage, "STGM_CONVERT not implemented!\n");
     return CREATE_NEW;
   }
   /* All other cases */
   if (stgm & ~ (STGM_CREATE|STGM_CONVERT))
-  	FIXME(ole,"unhandled storage mode : 0x%08lx\n",stgm & ~ (STGM_CREATE|STGM_CONVERT));
+  	FIXME(storage,"unhandled storage mode : 0x%08lx\n",stgm & ~ (STGM_CREATE|STGM_CONVERT));
   return CREATE_NEW;
 }

@@ -132,41 +132,43 @@ int dbch_snoop = 120;
 int dbch_sound = 121;
 int dbch_static = 122;
 int dbch_statusbar = 123;
-int dbch_stress = 124;
-int dbch_string = 125;
-int dbch_syscolor = 126;
-int dbch_system = 127;
-int dbch_tab = 128;
-int dbch_tapi = 129;
-int dbch_task = 130;
-int dbch_text = 131;
-int dbch_thread = 132;
-int dbch_thunk = 133;
-int dbch_timer = 134;
-int dbch_toolbar = 135;
-int dbch_toolhelp = 136;
-int dbch_tooltips = 137;
-int dbch_trackbar = 138;
-int dbch_treeview = 139;
-int dbch_ttydrv = 140;
-int dbch_tweak = 141;
-int dbch_updown = 142;
-int dbch_ver = 143;
-int dbch_virtual = 144;
-int dbch_vxd = 145;
-int dbch_wave = 146;
-int dbch_win = 147;
-int dbch_win16drv = 148;
-int dbch_win32 = 149;
-int dbch_wing = 150;
-int dbch_winsock = 151;
-int dbch_wnet = 152;
-int dbch_x11 = 153;
-int dbch_x11drv = 154;
+int dbch_storage = 124;
+int dbch_stress = 125;
+int dbch_string = 126;
+int dbch_syscolor = 127;
+int dbch_system = 128;
+int dbch_tab = 129;
+int dbch_tapi = 130;
+int dbch_task = 131;
+int dbch_text = 132;
+int dbch_thread = 133;
+int dbch_thunk = 134;
+int dbch_timer = 135;
+int dbch_toolbar = 136;
+int dbch_toolhelp = 137;
+int dbch_tooltips = 138;
+int dbch_trackbar = 139;
+int dbch_treeview = 140;
+int dbch_ttydrv = 141;
+int dbch_tweak = 142;
+int dbch_updown = 143;
+int dbch_ver = 144;
+int dbch_virtual = 145;
+int dbch_vxd = 146;
+int dbch_wave = 147;
+int dbch_win = 148;
+int dbch_win16drv = 149;
+int dbch_win32 = 150;
+int dbch_wing = 151;
+int dbch_winsock = 152;
+int dbch_wnet = 153;
+int dbch_x11 = 154;
+int dbch_x11drv = 155;
 
-#define DEBUG_CHANNEL_COUNT 155
+#define DEBUG_CHANNEL_COUNT 156
 
 char debug_msg_enabled[DEBUG_CHANNEL_COUNT][DEBUG_CLASS_COUNT] = {
+{1, 1, 0, 0},
 {1, 1, 0, 0},
 {1, 1, 0, 0},
 {1, 1, 0, 0},
@@ -449,6 +451,7 @@ const char * const debug_ch_name[DEBUG_CHANNEL_COUNT] = {
 "sound",
 "static",
 "statusbar",
+"storage",
 "stress",
 "string",
 "syscolor",
