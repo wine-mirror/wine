@@ -1104,5 +1104,9 @@ extern DWORD WINAPI IDirect3DPixelShaderImpl_GetVersion(IDirect3DPixelShaderImpl
  * to see how not defined it here
  */ 
 void setupTextureStates(LPDIRECT3DDEVICE8 iface, DWORD Stage);
+SHORT bytesPerPixel(D3DFORMAT fmt);
+GLint fmt2glintFmt(D3DFORMAT fmt);
+GLenum fmt2glFmt(D3DFORMAT fmt);
+DWORD fmt2glType(D3DFORMAT fmt);
 
 #endif /* __WINE_D3DX8_PRIVATE_H */

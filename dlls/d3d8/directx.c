@@ -373,17 +373,17 @@ HRESULT  WINAPI  IDirect3D8Impl_GetDeviceCaps              (LPDIRECT3D8 iface,
         GLint gl_max;
 
         glGetIntegerv(GL_MAX_TEXTURE_UNITS_ARB, &gl_max);
-        TRACE("GLCaps: GL_MAX_TEXTURE_UNITS_ARB=%d\n", gl_max);
         pCaps->MaxTextureBlendStages = min(8, gl_max);
         pCaps->MaxSimultaneousTextures = min(8, gl_max);
+        TRACE("GLCaps: GL_MAX_TEXTURE_UNITS_ARB=%ld\n", pCaps->MaxTextureBlendStages);
 
         glGetIntegerv(GL_MAX_CLIP_PLANES, &gl_max);
         pCaps->MaxUserClipPlanes = min(MAX_CLIPPLANES, gl_max);
-        TRACE("GLCaps: GL_MAX_CLIP_PLANES=%d\n", gl_max);
+        TRACE("GLCaps: GL_MAX_CLIP_PLANES=%ld\n", pCaps->MaxUserClipPlanes);
 
         glGetIntegerv(GL_MAX_LIGHTS, &gl_max);
         pCaps->MaxActiveLights = min(MAX_ACTIVE_LIGHTS, gl_max);
-        TRACE("GLCaps: GL_MAX_LIGHTS=%d\n", gl_max);
+        TRACE("GLCaps: GL_MAX_LIGHTS=%ld\n", pCaps->MaxActiveLights);
     }
 
     pCaps->VertexProcessingCaps = D3DVTXPCAPS_DIRECTIONALLIGHTS | D3DVTXPCAPS_MATERIALSOURCE7 | D3DVTXPCAPS_POSITIONALLIGHTS | D3DVTXPCAPS_TEXGEN;

@@ -907,7 +907,7 @@ GLenum fmt2glFmt(D3DFORMAT fmt) {
     case D3DFMT_A8R8G8B8:         retVal = GL_BGRA; break;
     case D3DFMT_X8R8G8B8:         retVal = GL_BGRA; break;
     case D3DFMT_R8G8B8:           retVal = GL_BGR; break;
-    case D3DFMT_R5G6B5:           retVal = GL_BGR; break;
+    case D3DFMT_R5G6B5:           retVal = GL_RGB; break;
     case D3DFMT_A1R5G5B5:         retVal = GL_BGRA; break;
     default:
         FIXME("Unhandled fmt %d\n", fmt);
@@ -3117,6 +3117,12 @@ HRESULT  WINAPI  IDirect3DDevice8Impl_SetTexture(LPDIRECT3DDEVICE8 iface, DWORD 
     oldTxt = This->UpdateStateBlock->textures[Stage];
     TRACE("(%p) : Stage(%ld), Texture (%p)\n", This, Stage, pTexture);
 
+    /* Reject invalid texture units */
+    if (Stage >= This->TextureUnits) {
+        TRACE("Attempt to access invalid texture rejected\n");
+        return D3DERR_INVALIDCALL;
+    }
+
     This->UpdateStateBlock->Set.textures[Stage] = TRUE;
     This->UpdateStateBlock->Changed.textures[Stage] = TRUE;
     This->UpdateStateBlock->textures[Stage] = pTexture;
@@ -3152,7 +3158,6 @@ HRESULT  WINAPI  IDirect3DDevice8Impl_SetTexture(LPDIRECT3DDEVICE8 iface, DWORD 
 
         if (textureType == D3DRTYPE_TEXTURE) {
           IDirect3DTexture8Impl *pTexture2 = (IDirect3DTexture8Impl *) pTexture;
-          int i;
 
           if ((void *)oldTxt == (void *)pTexture2 && pTexture2->Dirty == FALSE) {
               TRACE("Skipping setting texture as old == new\n");
@@ -3163,53 +3168,8 @@ HRESULT  WINAPI  IDirect3DDevice8Impl_SetTexture(LPDIRECT3DDEVICE8 iface, DWORD 
             TRACE("Standard 2d texture\n");
             This->UpdateStateBlock->textureDimensions[Stage] = GL_TEXTURE_2D;
 
-            for (i=0; i<pTexture2->levels; i++) 
-            {
-
-                if (i==0 && pTexture2->surfaces[i]->textureName != 0 && pTexture2->Dirty == FALSE) {
-                    glBindTexture(GL_TEXTURE_2D, pTexture2->surfaces[i]->textureName);
-                    checkGLcall("glBindTexture");
-                    TRACE("Texture %p (level %d) given name %d\n", pTexture2->surfaces[i], i, pTexture2->surfaces[i]->textureName);
-                    /* No need to walk through all mip-map levels, since already all assigned */
-                    i = pTexture2->levels;
-
-                } else {
-                    if (i==0) {
-
-                        if (pTexture2->surfaces[i]->textureName == 0) {
-                            glGenTextures(1, &pTexture2->surfaces[i]->textureName);
-                            checkGLcall("glGenTextures");
-                            TRACE("Texture %p (level %d) given name %d\n", pTexture2->surfaces[i], i, pTexture2->surfaces[i]->textureName);
-                        }
-
-                        glBindTexture(GL_TEXTURE_2D, pTexture2->surfaces[i]->textureName);
-                        checkGLcall("glBindTexture");
-
-                        TRACE("Setting GL_TEXTURE_MAX_LEVEL to %d\n", pTexture2->levels-1);   
-                        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAX_LEVEL, pTexture2->levels-1);
-                        checkGLcall("glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAX_LEVEL, pTexture2->levels)");
-
-                    }
-                    TRACE("Calling glTexImage2D %x i=%d, intfmt=%x, w=%d, h=%d,0=%d, glFmt=%x, glType=%lx, Mem=%p\n",
-                          GL_TEXTURE_2D, i, fmt2glintFmt(pTexture2->format), pTexture2->surfaces[i]->myDesc.Width,
-                          pTexture2->surfaces[i]->myDesc.Height, 0, fmt2glFmt(pTexture2->format),fmt2glType(pTexture2->format),
-                          pTexture2->surfaces[i]->allocatedMemory);
-                    glTexImage2D(GL_TEXTURE_2D, i,
-                                 fmt2glintFmt(pTexture2->format),
-                                 pTexture2->surfaces[i]->myDesc.Width,
-                                 pTexture2->surfaces[i]->myDesc.Height,
-                                 0,
-                                 fmt2glFmt(pTexture2->format),
-                                 fmt2glType(pTexture2->format),
-                                 pTexture2->surfaces[i]->allocatedMemory
-                                );
-                    checkGLcall("glTexImage2D");
-
-                    /* Removed glTexParameterf now TextureStageStates are initialized at startup */
-                    pTexture2->Dirty = FALSE;
-                }
-
-            }
+            /* Load up the texture now */
+            IDirect3DTexture8Impl_PreLoad((LPDIRECT3DTEXTURE8)pTexture);
           }
         } else if (textureType == D3DRTYPE_VOLUMETEXTURE) {
             IDirect3DVolumeTexture8Impl *pTexture2 = (IDirect3DVolumeTexture8Impl *) pTexture;
@@ -3300,6 +3260,12 @@ HRESULT  WINAPI  IDirect3DDevice8Impl_SetTextureStageState(LPDIRECT3DDEVICE8 ifa
     /* FIXME: Handle 3d textures? What if TSS value set before set texture? Need to reapply all values? */
    
     TRACE("(%p) : stub, Stage=%ld, Type=%d, Value =%ld\n", This, Stage, Type, Value);
+
+    /* Reject invalid texture units */
+    if (Stage >= This->TextureUnits) {
+        TRACE("Attempt to access invalid texture rejected\n");
+        return D3DERR_INVALIDCALL;
+    }
 
     This->UpdateStateBlock->Changed.texture_state[Stage][Type] = TRUE;
     This->UpdateStateBlock->Set.texture_state[Stage][Type] = TRUE;
@@ -3715,7 +3681,8 @@ HRESULT  WINAPI  IDirect3DDevice8Impl_SetTextureStageState(LPDIRECT3DDEVICE8 ifa
 }
 HRESULT  WINAPI  IDirect3DDevice8Impl_ValidateDevice(LPDIRECT3DDEVICE8 iface, DWORD* pNumPasses) {
     ICOM_THIS(IDirect3DDevice8Impl,iface);
-    FIXME("(%p) : stub\n", This);    return D3D_OK;
+    TRACE("(%p) : stub\n", This);    /* FIXME: Needs doing, but called often and is harmless */
+    return D3D_OK;
 }
 HRESULT  WINAPI  IDirect3DDevice8Impl_GetInfo(LPDIRECT3DDEVICE8 iface, DWORD DevInfoID,void* pDevInfoStruct,DWORD DevInfoStructSize) {
     ICOM_THIS(IDirect3DDevice8Impl,iface);
@@ -3933,7 +3900,7 @@ HRESULT  WINAPI  IDirect3DDevice8Impl_SetVertexShaderConstant(LPDIRECT3DDEVICE8 
   ICOM_THIS(IDirect3DDevice8Impl,iface);
 
   if (Register + ConstantCount > D3D8_VSHADER_MAX_CONSTANTS) {
-    /*ERR("(%p) : SetVertexShaderConstant C[%lu] invalid\n", This, Register);*/
+    ERR("(%p) : SetVertexShaderConstant C[%lu] invalid\n", This, Register);
     return D3DERR_INVALIDCALL;
   }
   if (NULL == pConstantData) {
@@ -3942,14 +3909,14 @@ HRESULT  WINAPI  IDirect3DDevice8Impl_SetVertexShaderConstant(LPDIRECT3DDEVICE8 
   if (ConstantCount > 1) {
     FLOAT* f = (FLOAT*)pConstantData;
     UINT i;
-    FIXME("(%p) : SetVertexShaderConstant C[%lu..%lu]=\n", This, Register, Register + ConstantCount - 1);
+    TRACE("(%p) : SetVertexShaderConstant C[%lu..%lu]=\n", This, Register, Register + ConstantCount - 1);
     for (i = 0; i < ConstantCount; ++i) {
-      DPRINTF("{%f, %f, %f, %f}\n", f[0], f[1], f[2], f[3]);
+      TRACE("{%f, %f, %f, %f}\n", f[0], f[1], f[2], f[3]);
       f += 4;
     }
   } else { 
     FLOAT* f = (FLOAT*)pConstantData;
-    FIXME("(%p) : SetVertexShaderConstant, C[%lu]={%f, %f, %f, %f}\n", This, Register, f[0], f[1], f[2], f[3]);
+    TRACE("(%p) : SetVertexShaderConstant, C[%lu]={%f, %f, %f, %f}\n", This, Register, f[0], f[1], f[2], f[3]);
   }
   This->UpdateStateBlock->Changed.vertexShaderConstant = TRUE;
   memcpy(&This->UpdateStateBlock->vertexShaderConstant[Register], pConstantData, ConstantCount * 4 * sizeof(FLOAT));
@@ -3958,6 +3925,7 @@ HRESULT  WINAPI  IDirect3DDevice8Impl_SetVertexShaderConstant(LPDIRECT3DDEVICE8 
 HRESULT  WINAPI  IDirect3DDevice8Impl_GetVertexShaderConstant(LPDIRECT3DDEVICE8 iface, DWORD Register, void* pConstantData, DWORD ConstantCount) {
   ICOM_THIS(IDirect3DDevice8Impl,iface);
 
+  TRACE("(%p) : C[%lu] count=%ld\n", This, Register, ConstantCount);
   if (Register + ConstantCount > D3D8_VSHADER_MAX_CONSTANTS) {
     return D3DERR_INVALIDCALL;
   }
