@@ -99,7 +99,7 @@ char *pp_xstrdup(const char *str)
 }
 
 /* Don't comment on the hash, its primitive but functional... */
-int pphash(char *str)
+static int pphash(const char *str)
 {
 	int sum = 0;
 	while(*str)
@@ -107,7 +107,7 @@ int pphash(char *str)
 	return sum % HASHKEY;
 }
 
-pp_entry_t *pplookup(char *ident)
+pp_entry_t *pplookup(const char *ident)
 {
 	int idx = pphash(ident);
 	pp_entry_t *ppp;
@@ -120,7 +120,7 @@ pp_entry_t *pplookup(char *ident)
 	return NULL;
 }
 
-void pp_del_define(char *name)
+void pp_del_define(const char *name)
 {
 	int idx;
 	pp_entry_t *ppp;

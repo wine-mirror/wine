@@ -24,6 +24,7 @@
 #include <stdio.h>
 
 extern void wpp_add_define( const char *name, const char *value );
+extern void wpp_del_define( const char *name );
 extern void wpp_add_cmdline_define( const char *value );
 extern void wpp_set_debug( int lex_debug, int parser_debug, int msg_debug );
 extern void wpp_set_pedantic( int on );

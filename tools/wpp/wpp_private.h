@@ -194,10 +194,10 @@ typedef struct cval {
 void *pp_xmalloc(size_t);
 void *pp_xrealloc(void *, size_t);
 char *pp_xstrdup(const char *str);
-pp_entry_t *pplookup(char *ident);
+pp_entry_t *pplookup(const char *ident);
 pp_entry_t *pp_add_define(char *def, char *text);
 pp_entry_t *pp_add_macro(char *ident, marg_t *args[], int nargs, mtext_t *exp);
-void pp_del_define(char *name);
+void pp_del_define(const char *name);
 FILE *pp_open_include(const char *name, int search, char **newpath);
 void pp_push_if(pp_if_state_t s);
 void pp_next_if_state(int);

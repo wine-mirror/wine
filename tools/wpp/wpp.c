@@ -58,6 +58,13 @@ void wpp_add_define( const char *name, const char *value )
 }
 
 
+/* undefine a previously added definition */
+void wpp_del_define( const char *value )
+{
+    pp_del_define( value );
+}
+
+
 /* add a command-line define of the form NAME=VALUE */
 void wpp_add_cmdline_define( const char *value )
 {
