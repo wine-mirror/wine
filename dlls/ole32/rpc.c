@@ -930,7 +930,9 @@ static DWORD WINAPI apartment_listener_thread(LPVOID p)
 	    return 1; /* permanent failure, so quit stubmgr thread */
 	}
 
-	if (!ConnectNamedPipe(listenPipe,NULL)) {
+	/* an already connected pipe is not an error */
+	if (!ConnectNamedPipe(listenPipe,NULL) &&
+	    (GetLastError() != ERROR_PIPE_CONNECTED)) {
 	    ERR("Failure during ConnectNamedPipe %ld!\n",GetLastError());
 	    CloseHandle(listenPipe);
 	    continue;
