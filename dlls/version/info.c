@@ -264,7 +264,7 @@ void ConvertVersionInfo32To16( VS_VERSION_INFO32 *info32,
 DWORD WINAPI GetFileVersionInfoSize32A( LPCSTR filename, LPDWORD handle )
 {
     VS_FIXEDFILEINFO *vffi;
-    DWORD len, ret;
+    DWORD len, ret, offset;
     BYTE buf[144];
 
     TRACE( ver, "(%s,%p)\n", debugstr_a(filename), handle );
@@ -272,15 +272,16 @@ DWORD WINAPI GetFileVersionInfoSize32A( LPCSTR filename, LPDWORD handle )
     len = GetFileResourceSize32( filename,
                                  MAKEINTRESOURCE32A(VS_FILE_INFO),
                                  MAKEINTRESOURCE32A(VS_VERSION_INFO),
-                                 handle );
+                                 &offset );
     if (!len) return 0;
 
     ret = GetFileResource32( filename,
                              MAKEINTRESOURCE32A(VS_FILE_INFO),
                              MAKEINTRESOURCE32A(VS_VERSION_INFO),
-                             *handle, sizeof( buf ), buf );
+                             offset, sizeof( buf ), buf );
     if (!ret) return 0;
 
+    if ( handle ) *handle = offset;
     
     if ( VersionInfoIs16( buf ) )
         vffi = (VS_FIXEDFILEINFO *)VersionInfo16_Value( (VS_VERSION_INFO16 *)buf );
