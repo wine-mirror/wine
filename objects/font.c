@@ -1124,6 +1124,33 @@ BOOL WINAPI GetTextExtentExPointA( HDC hdc, LPCSTR str, INT count,
 
 /***********************************************************************
  *           GetTextExtentExPointW    (GDI32.@)
+ *
+ * Return the size of the string as it would be if it was output properly by
+ * e.g. TextOut.
+ *
+ * This should include
+ * - Intercharacter spacing
+ * - justification spacing (not yet done)
+ * - kerning? see below
+ *
+ * Kerning.  Since kerning would be carried out by the rendering code it should
+ * be done by the driver.  However they don't support it yet.  Also I am not 
+ * yet persuaded that (certainly under Win95) any kerning is actually done.
+ *
+ * str: According to MSDN this should be null-terminated.  That is not true; a
+ *      null will not terminate it early.
+ * size: Certainly under Win95 this appears buggy or weird if *lpnFit is less
+ *       than count.  I have seen it be either the size of the full string or
+ *       1 less than the size of the full string.  I have not seen it bear any
+ *       resemblance to the portion that would fit.
+ * lpnFit: What exactly is fitting?  Stupidly, in my opinion, it includes the
+ *         trailing intercharacter spacing and any trailing justification.
+ *
+ * FIXME
+ * Currently we do this by measuring each character etc.  We should do it by
+ * passing the request to the driver, perhaps by extending the
+ * pGetTextExtentPoint function to take the alpDx argument.  That would avoid
+ * thinking about kerning issues and rounding issues in the justification.
  */
 
 BOOL WINAPI GetTextExtentExPointW( HDC hdc, LPCWSTR str, INT count,
@@ -1142,7 +1169,12 @@ BOOL WINAPI GetTextExtentExPointW( HDC hdc, LPCWSTR str, INT count,
     for(index = 0; index < count; index++)
     {
  	if(!dc->funcs->pGetTextExtentPoint( dc, str, 1, &tSize )) goto done;
-	if( extent+tSize.cx < maxExt )
+        /* GetTextExtentPoint includes intercharacter spacing. */
+        /* FIXME - justification needs doing yet.  Remember that the base
+         * data will not be in logical coordinates.
+         */
+	if( !lpnFit || extent+tSize.cx <= maxExt )
+        /* It is allowed to be equal. */
         {
 	    extent+=tSize.cx;
 	    nFit++;
@@ -1640,6 +1672,7 @@ BOOL WINAPI GetRasterizerCaps( LPRASTERIZER_STATUS lprs, UINT cbNumBytes)
 
 /*************************************************************************
  *             GetKerningPairs   (GDI.332)
+ *
  */
 INT16 WINAPI GetKerningPairs16( HDC16 hDC, INT16 cPairs,
                                 LPKERNINGPAIR16 lpKerningPairs )
@@ -1647,8 +1680,12 @@ INT16 WINAPI GetKerningPairs16( HDC16 hDC, INT16 cPairs,
     /* At this time kerning is ignored (set to 0) */
     int i;
     FIXME("(%x,%d,%p): almost empty stub!\n", hDC, cPairs, lpKerningPairs);
-    for (i = 0; i < cPairs; i++) 
-        lpKerningPairs[i].iKernAmount = 0;
+    if (lpKerningPairs)
+        for (i = 0; i < cPairs; i++) 
+            lpKerningPairs[i].iKernAmount = 0;
+ /* FIXME: Should this function call SetLastError (0)?  This is yet another
+  * Microsoft function that can return 0 on success or failure
+  */
     return 0;
 }
 
