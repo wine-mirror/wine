@@ -376,6 +376,14 @@ static void start_server( const char *oldcwd )
         if (pid == -1) fatal_perror( "fork" );
         if (!pid)
         {
+            /* if server is explicitly specified, use this */
+            if ((p = getenv("WINESERVER")))
+            {
+                execl( p, "wineserver", NULL );
+                fatal_perror( "could not exec the server '%s'\n"
+                              "    specified in the WINESERVER environment variable", p );
+            }
+
             /* first try the installation dir */
             execl( BINDIR "/wineserver", "wineserver", NULL );
 
