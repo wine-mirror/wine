@@ -3455,6 +3455,8 @@ INT32       WINAPI LookupIconIdFromDirectoryEx32(LPBYTE,BOOL32,INT32,INT32,UINT3
 UINT32      WINAPI MapVirtualKey32A(UINT32,UINT32);
 UINT32      WINAPI MapVirtualKey32W(UINT32,UINT32);
 #define     MapVirtualKey WINELIB_NAME_AW(MapVirtualKey)
+UINT32      WINAPI MapVirtualKeyEx32A(UINT32,UINT32,HKL32);
+#define     MapVirtualKeyEx WINELIB_NAME_AW(MapVirtualKeyEx)
 void        WINAPI MapDialogRect32(HWND32,LPRECT32);
 #define     MapDialogRect WINELIB_NAME(MapDialogRect)
 void        WINAPI MapWindowPoints32(HWND32,HWND32,LPPOINT32,UINT32);

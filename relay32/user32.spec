@@ -385,7 +385,7 @@ init	MAIN_UserInit
 381 stub MBToWCSEx
 382 stdcall MapDialogRect(long ptr) MapDialogRect32
 383 stdcall MapVirtualKeyA(long long) MapVirtualKey32A
-384 stub MapVirtualKeyExA
+384 stdcall MapVirtualKeyExA(long long long) MapVirtualKeyEx32A
 385 stdcall MapVirtualKeyW(long long) MapVirtualKey32A
 386 stdcall MapWindowPoints(long long ptr long) MapWindowPoints32
 387 stub MenuItemFromPoint

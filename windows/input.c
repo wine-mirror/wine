@@ -762,6 +762,16 @@ UINT32 WINAPI MapVirtualKey32W(UINT32 code, UINT32 maptype)
     return MapVirtualKey16(code,maptype);
 }
 
+/******************************************************************************
+ *    	MapVirtualKeyEx32A      (USER32.384)
+ */
+UINT32 WINAPI MapVirtualKeyEx32A(UINT32 code, UINT32 maptype, HKL32 hkl)
+{
+    if (hkl)
+    	FIXME(keyboard,"(%d,%d,0x%08lx), hkl unhandled!\n",code,maptype,(DWORD)hkl);
+    return MapVirtualKey16(code,maptype);
+}
+
 /****************************************************************************
  *	GetKBCodePage32   (USER32.246)
  */
