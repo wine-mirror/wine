@@ -1,7 +1,7 @@
 /*
  *	TYPELIB Marshaler
  *
- *	Copyright 2002	Marcus Meissner
+ *	Copyright 2002,2005	Marcus Meissner
  *
  * The olerelay debug channel allows you to see calls marshalled by
  * the typelib marshaller. It is not a generic COM relaying system.
@@ -169,11 +169,18 @@ _marshal_interface(marshal_state *buf, REFIID riid, LPUNKNOWN pUnk) {
     DWORD		xsize;
     HRESULT		hres;
 
-    hres = E_FAIL;
     if (!pUnk) {
+	/* this is valid, if for instance we serialize
+	 * a VT_DISPATCH with NULL ptr which apparently
+	 * can happen. S_OK to make sure we continue
+	 * serializing.
+	 */
         ERR("pUnk is NULL?\n");
-	goto fail;
+        xsize = 0;
+        return xbuf_add(buf,(LPBYTE)&xsize,sizeof(xsize));
     }
+
+    hres = E_FAIL;
 
     TRACE("...%s...\n",debugstr_guid(riid));
     hres = IUnknown_QueryInterface(pUnk,riid,(LPVOID*)&newiface);
