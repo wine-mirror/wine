@@ -951,7 +951,7 @@ STATUSBAR_WMCreate (HWND hwnd, WPARAM wParam, LPARAM lParam)
 	}
     }
 
-    if (!dwStyle & CCS_NORESIZE) /* don't resize wnd if it doesn't want it ! */
+    if (!(dwStyle & CCS_NORESIZE)) /* don't resize wnd if it doesn't want it ! */
     {
         GetClientRect (GetParent (hwnd), &rect);
         width = rect.right - rect.left;
@@ -1161,7 +1161,7 @@ STATUSBAR_WMSize (STATUSWINDOWINFO *infoPtr, HWND hwnd, WPARAM wParam, LPARAM lP
      */
 
     dwStyle = GetWindowLongA(hwnd, GWL_STYLE);
-    if (!dwStyle & CCS_NORESIZE) /* don't resize wnd if it doesn't want it ! */
+    if (!(dwStyle & CCS_NORESIZE)) /* don't resize wnd if it doesn't want it ! */
     {
         if (flags == SIZE_RESTORED) {
 	    /* width and height don't apply */
