@@ -26,12 +26,6 @@
 # endif
 #endif
 
-#ifndef __WINESRC__
-# include "windows.h"
-#else
-# include "windef.h"
-#endif
-
 #ifndef _WINSOCKAPI_
 #define _WINSOCKAPI_
 
@@ -45,13 +39,9 @@
 # define WS(x)    x
 #endif
 
-
 #ifdef __cplusplus
 extern "C" {
 #endif /* defined(__cplusplus) */
-
-/* proper 4-byte packing */
-#include "pshpack4.h"
 
 /*
  * This section defines the items that conflict with the Unix headers.
@@ -80,6 +70,10 @@ extern "C" {
 #  define FD_ISSET   Include_winsock_h_before_stdlib_h_or_use_the_MSVCRT_library
 #  define fd_set     Include_winsock_h_before_stdlib_h_or_use_the_MSVCRT_library
 #  define select     Include_winsock_h_before_stdlib_h_or_use_the_MSVCRT_library
+#  define htonl      Include_winsock_h_before_stdlib_h_or_use_the_MSVCRT_library
+#  define htons      Include_winsock_h_before_stdlib_h_or_use_the_MSVCRT_library
+#  define ntohl      Include_winsock_h_before_stdlib_h_or_use_the_MSVCRT_library
+#  define ntohs      Include_winsock_h_before_stdlib_h_or_use_the_MSVCRT_library
 # else  /* FD_CLR */
 /* stdlib.h has not been included yet so it's not too late. Include it now
  * making sure that none of the select symbols is affected. Then we can
@@ -88,11 +82,19 @@ extern "C" {
 #  define fd_set unix_fd_set
 #  define timeval unix_timeval
 #  define select unix_select
+#  define htonl unix_htonl
+#  define htons unix_htons
+#  define ntohl unix_ntohl
+#  define ntohs unix_ntohs
 #  include <sys/types.h>
 #  include <stdlib.h>
 #  undef fd_set
 #  undef timeval
 #  undef select
+#  undef htonl
+#  undef htons
+#  undef ntohl
+#  undef ntohs
 #  undef FD_SETSIZE
 #  undef FD_CLR
 #  undef FD_SET
@@ -108,6 +110,12 @@ extern "C" {
 # include <stdlib.h>
 #endif /* !USE_WS_PREFIX */
 
+#ifndef __WINESRC__
+# include "windows.h"
+#else
+# include "windef.h"
+#endif
+
 #if defined(__MINGW_H) && !defined(MSVCRT_BSD_TYPES_DEFINED)
 /* MinGW doesn't define the u_xxx types */
 typedef unsigned char u_char;
@@ -116,6 +124,8 @@ typedef unsigned int  u_int;
 typedef unsigned long u_long;
 #endif
 
+/* proper 4-byte packing */
+#include "pshpack4.h"
 
 /*
  * Address families
@@ -469,6 +479,12 @@ typedef struct WS(timeval)
 #define WS_FD_ZERO(set)      ((WS_fd_set*)(set))->fd_count=0)
 #define WS_FD_ISSET(fd, set) __WSAFDIsSet((SOCKET)(fd), (WS_fd_set*)(set))
 #endif
+
+u_long WINAPI WS(htonl)(u_long);
+u_short WINAPI WS(htons)(u_short);
+u_long WINAPI WS(ntohl)(u_long);
+u_short WINAPI WS(ntohs)(u_short);
+
 #endif /* WS_DEFINE_SELECT */
 
 
@@ -915,17 +931,6 @@ int WINAPI WS(sendto)(SOCKET,const char*,int,int,const struct WS(sockaddr)*,int)
 int WINAPI WS(setsockopt)(SOCKET,int,int,const char*,int);
 int WINAPI WS(shutdown)(SOCKET,int);
 SOCKET WINAPI WS(socket)(int,int,int);
-
-#if defined(htonl) && !defined(USE_WS_PREFIX)
-# undef htonl
-# undef htons
-# undef ntohl
-# undef ntohs
-#endif
-u_long WINAPI WS(htonl)(u_long);
-u_short WINAPI WS(htons)(u_short);
-u_long WINAPI WS(ntohl)(u_long);
-u_short WINAPI WS(ntohs)(u_short);
 
 #if defined(__WINESRC__) || !defined(__WINE_WINSOCK2__)
 /* Stuff specific to winsock.h */

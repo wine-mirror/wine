@@ -18,18 +18,12 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
-#ifdef _WIN32
 #include <winsock2.h>
 #include <mswsock.h>
-#include "wine/test.h"
-#else
 #include "wine/test.h"
 #include <winbase.h>
 #include <winnt.h>
 #include <winerror.h>
-#include <winsock2.h>
-#include <mswsock.h>
-#endif
 
 #define MAX_CLIENTS 4      /* Max number of clients */
 #define NUM_TESTS   2      /* Number of tests performed */
