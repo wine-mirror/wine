@@ -1821,19 +1821,14 @@ static MENUITEM *MENU_InsertItem( HMENU hMenu, UINT pos, UINT flags )
 
     /* Find where to insert new item */
 
-    if ((flags & MF_BYPOSITION) &&
-        ((pos == (UINT)-1) || (pos == menu->nItems)))
-    {
+    if ((pos==(UINT)-1) || ((flags & MF_BYPOSITION) && (pos == menu->nItems))) {
         /* Special case: append to menu */
         /* Some programs specify the menu length to do that */
         pos = menu->nItems;
-    }
-    else
-    {
+    } else {
         if (!MENU_FindItem( &hMenu, &pos, flags )) 
         {
-            WARN("item %x not found\n",
-                          pos );
+            FIXME("item %x not found\n", pos );
             return NULL;
         }
         if (!(menu = (LPPOPUPMENU) USER_HEAP_LIN_ADDR(hMenu)))
@@ -3300,17 +3295,21 @@ INT16 WINAPI GetMenuString16( HMENU16 hMenu, UINT16 wItemID,
 /*******************************************************************
  *         GetMenuString32A    (USER32.268)
  */
-INT WINAPI GetMenuStringA( HMENU hMenu, UINT wItemID,
-                               LPSTR str, INT nMaxSiz, UINT wFlags )
-{
+INT WINAPI GetMenuStringA( 
+	HMENU hMenu,	/* [in] menuhandle */
+	UINT wItemID,	/* [in] menu item (dep. on wFlags) */
+	LPSTR str,	/* [out] outbuffer. If NULL, func returns entry length*/
+	INT nMaxSiz,	/* [in] length of buffer. if 0, func returns entry len*/
+	UINT wFlags	/* [in] MF_ flags */ 
+) {
     MENUITEM *item;
 
     TRACE("menu=%04x item=%04x ptr=%p len=%d flags=%04x\n",
                  hMenu, wItemID, str, nMaxSiz, wFlags );
-    if (!str || !nMaxSiz) return 0;
-    str[0] = '\0';
     if (!(item = MENU_FindItem( &hMenu, &wItemID, wFlags ))) return 0;
     if (!IS_STRING_ITEM(item->fType)) return 0;
+    if (!str || !nMaxSiz) return strlen(item->text);
+    str[0] = '\0';
     lstrcpynA( str, item->text, nMaxSiz );
     TRACE("returning '%s'\n", str );
     return strlen(str);
@@ -3327,10 +3326,10 @@ INT WINAPI GetMenuStringW( HMENU hMenu, UINT wItemID,
 
     TRACE("menu=%04x item=%04x ptr=%p len=%d flags=%04x\n",
                  hMenu, wItemID, str, nMaxSiz, wFlags );
-    if (!str || !nMaxSiz) return 0;
-    str[0] = '\0';
     if (!(item = MENU_FindItem( &hMenu, &wItemID, wFlags ))) return 0;
     if (!IS_STRING_ITEM(item->fType)) return 0;
+    if (!str || !nMaxSiz) return strlen(item->text);
+    str[0] = '\0';
     lstrcpynAtoW( str, item->text, nMaxSiz );
     return lstrlenW(str);
 }
