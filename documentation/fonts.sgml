@@ -26,7 +26,7 @@
       <sect3>
         <title>How To Convert Windows Fonts</title>
         <para>
-          If you have access to a Windows installation you should use
+          If you have access to a Windows installation you should use the
           <command>fnt2bdf</command> utility (found in the
           <filename>tools</filename> directory) to convert bitmap
           fonts (<filename>VGASYS.FON</filename>,
@@ -61,7 +61,10 @@
               Run <command>mkfontdir</command> for the directory you
               copied fonts to. If you are already in X you should run
               <command>xset fp rehash</command> to make X server aware
-              of the new fonts.
+              of the new fonts. You may also or instead have to restart
+              the font server (using e.g. 
+              <command>/etc/init.d/xfs restart</command>
+              under RedHat 7.1)
             </para>
           </listitem>
           <listitem>
