@@ -89,9 +89,13 @@ static void test_enum_value(void)
     else
         ok( !res, "RegSetValueExA returned %ld\n", res );
     res = RegSetValueExA( hkey_main, "Test", 0, REG_EXPAND_SZ, NULL, 0 );
-    ok( !res, "RegSetValueExA returned %ld\n", res );
+    ok( ERROR_SUCCESS == res || ERROR_INVALID_PARAMETER == res, "RegSetValueExA returned %ld\n", res );
+    if (ERROR_INVALID_PARAMETER == res)
+        trace ("RegSetValueExA() returned ERROR_INVALID_PARAMETER\n");
     res = RegSetValueExA( hkey_main, "Test", 0, REG_BINARY, NULL, 0 );
-    ok( !res, "RegSetValueExA returned %ld\n", res );
+    ok( ERROR_SUCCESS == res || ERROR_INVALID_PARAMETER == res, "RegSetValueExA returned %ld\n", res );
+    if (ERROR_INVALID_PARAMETER == res)
+        trace ("RegSetValueExA() returned ERROR_INVALID_PARAMETER\n");
 
     res = RegSetValueExA( hkey_main, "Test", 0, REG_SZ, (BYTE *)"foobar", 7 );
     ok( res == 0, "RegSetValueExA failed error %ld\n", res );
@@ -314,7 +318,8 @@ static void test_reg_open_key()
      */
     hkResult = hkPreserve;
     ret = RegOpenKeyA(NULL, "Software\\Wine\\Test", &hkResult);
-    ok(ret == ERROR_INVALID_HANDLE, "expected ERROR_INVALID_HANDLE, got %ld\n", ret);
+    ok(ret == ERROR_INVALID_HANDLE || ret == ERROR_BADKEY, /* Windows 95 returns BADKEY */
+       "expected ERROR_INVALID_HANDLE or ERROR_BADKEY, got %ld\n", ret);
     ok(hkResult == hkPreserve, "expected hkResult == hkPreserve\n");
     RegCloseKey(hkResult);
 
@@ -336,12 +341,13 @@ static void test_reg_close_key()
     ok(ret == ERROR_SUCCESS, "expected ERROR_SUCCESS, got %ld\n", ret);
 
     /* try to close the key twice */
-    ret = RegCloseKey(hkHandle);
-    ok(ret == ERROR_INVALID_HANDLE, "expected ERROR_INVALID_HANDLE, got %ld\n", ret);
+    ret = RegCloseKey(hkHandle); /* Windows 95 doesn't mind. */
+    trace ("closing key twice, got %ld\n", ret);
 
     /* try to close a NULL handle */
     ret = RegCloseKey(NULL);
-    ok(ret == ERROR_INVALID_HANDLE, "expected ERROR_INVALID_HANDLE, got %ld\n", ret);
+    ok(ret == ERROR_INVALID_HANDLE || ret == ERROR_BADKEY, /* Windows 95 returns BADKEY */
+       "expected ERROR_INVALID_HANDLE or ERROR_BADKEY, got %ld\n", ret);
 }
 
 static void test_reg_save_key()
