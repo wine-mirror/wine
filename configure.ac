@@ -90,7 +90,7 @@ AC_CHECK_FUNCS(gethostbyname,,AC_CHECK_LIB(nsl,gethostbyname))
 dnl Check for -lsocket for Solaris
 AC_CHECK_FUNCS(connect,,AC_CHECK_LIB(socket,connect))
 dnl Check for -lresolv for Solaris
-AC_CHECK_LIB(resolv,inet_aton)
+AC_CHECK_FUNCS(inet_aton,,AC_CHECK_LIB(resolv,inet_aton))
 dnl Check for -lxpg4 for FreeBSD
 AC_CHECK_LIB(xpg4,_xpg4_setrunelocale)
 dnl Check for -lmmap for OS/2
@@ -392,7 +392,6 @@ dnl **** Check for FreeType 2 ****
 AC_CHECK_LIB(freetype,FT_Init_FreeType,ft_lib=yes,ft_lib=no,$X_LIBS)
 if test "$ft_lib" = "no"
 then
-    FREETYPELIBS=""
     FREETYPEINCL=""
     wine_cv_msg_freetype=no
 else
@@ -407,11 +406,9 @@ else
     fi
     if test "$ft_devel" = "no"
     then
-    	FREETYPELIBS=""
 	FREETYPEINCL=""
 	wine_cv_msg_freetype=yes
     else
-	FREETYPELIBS=`$ft_devel --libs`
 	FREETYPEINCL=`$ft_devel --cflags`
 	ac_save_CPPFLAGS="$CPPFLAGS"
 	CPPFLAGS="$FREETYPEINCL $CPPFLAGS"
@@ -436,13 +433,11 @@ else
 	    AC_DEFINE(HAVE_FREETYPE, 1, [Define if FreeType 2 is installed])
 	    wine_cv_msg_freetype=no
 	else
-	    FREETYPELIBS=""
 	    FREETYPEINCL=""
 	    wine_cv_msg_freetype=yes
 	fi
     fi
 fi
-AC_SUBST(FREETYPELIBS)
 AC_SUBST(FREETYPEINCL)
 
 dnl **** Check for parport (currently Linux only) ****
