@@ -31,6 +31,7 @@
  *   LISTVIEW_GetHotCursor : not implemented
  *   LISTVIEW_GetISearchString : not implemented 
  *   LISTVIEW_GetBkImage : not implemented
+ *   LISTVIEW_SetBkImage : not implemented
  *   LISTVIEW_GetColumnOrderArray : simple hack only
  *   LISTVIEW_SetColumnOrderArray : simple hack only
  *   LISTVIEW_Arrange : empty stub
@@ -1161,7 +1162,7 @@ static INT LISTVIEW_GetItemHeight(HWND hwnd)
   {
     nItemHeight = infoPtr->iconSpacing.cy;
   }
-  else 
+  else
   {
     TEXTMETRICA tm; 
     HDC hdc = GetDC(hwnd);
@@ -7042,28 +7043,30 @@ static LRESULT LISTVIEW_SetHoverTime(HWND hwnd, DWORD dwHoverTime)
 static LRESULT LISTVIEW_SetImageList(HWND hwnd, INT nType, HIMAGELIST himl)
 {
   LISTVIEW_INFO *infoPtr = (LISTVIEW_INFO *)GetWindowLongA(hwnd, 0);
-  HIMAGELIST himlTemp = 0;
+  HIMAGELIST himlOld = 0;
 
   switch (nType) 
   {
   case LVSIL_NORMAL:
-    himlTemp = infoPtr->himlNormal;
+    himlOld = infoPtr->himlNormal;
     infoPtr->himlNormal = himl;
-    return (LRESULT)himlTemp;
+    break;
 
   case LVSIL_SMALL:
-    himlTemp = infoPtr->himlSmall;
+    himlOld = infoPtr->himlSmall;
     infoPtr->himlSmall = himl;
-    return (LRESULT)himlTemp;
+    break;
 
   case LVSIL_STATE:
-    himlTemp = infoPtr->himlState;
+    himlOld = infoPtr->himlState;
     infoPtr->himlState = himl;
     ImageList_SetBkColor(infoPtr->himlState, CLR_NONE);
-    return (LRESULT)himlTemp;
+    break;
   }
 
-  return (LRESULT)NULL;
+  infoPtr->nItemHeight = LISTVIEW_GetItemHeight(hwnd);
+
+  return (LRESULT)himlOld;
 }
 
 
@@ -7447,6 +7450,12 @@ static LRESULT LISTVIEW_SortItems(HWND hwnd, WPARAM wParam, LPARAM lParam)
 	
         DPA_Sort(infoPtr->hdpaItems, LISTVIEW_CallBackCompare, hwnd);
     }
+
+    /* align the items */
+    LISTVIEW_AlignTop(hwnd);
+
+    /* refresh the display */
+    InvalidateRect(hwnd, NULL, TRUE);
 
     return TRUE;
 }
