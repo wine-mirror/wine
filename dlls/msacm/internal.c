@@ -14,6 +14,7 @@
 #include "wingdi.h"
 #include "winuser.h"
 #include "winerror.h"
+#include "winreg.h"
 #include "mmsystem.h"
 #include "msacm.h"
 #include "msacmdrv.h"
@@ -27,6 +28,195 @@ DEFAULT_DEBUG_CHANNEL(msacm);
 HANDLE MSACM_hHeap = (HANDLE) NULL;
 PWINE_ACMDRIVERID MSACM_pFirstACMDriverID = NULL;
 PWINE_ACMDRIVERID MSACM_pLastACMDriverID = NULL;
+
+#if 0
+/***********************************************************************
+ *           MSACM_DumpCache
+ */
+static	void MSACM_DumpCache(PWINE_ACMDRIVERID padid) 
+{
+    unsigned 	i;
+
+    TRACE("cFilterTags=%lu cFormatTags=%lu fdwSupport=%08lx\n",
+	  padid->cFilterTags, padid->cFormatTags, padid->fdwSupport);
+    for (i = 0; i < padid->cache->cFormatTags; i++) {
+	TRACE("\tdwFormatTag=%lu cbwfx=%lu\n", 
+	      padid->aFormatTag[i].dwFormatTag, padid->aFormatTag[i].cbwfx);
+    }
+}
+#endif
+
+/***********************************************************************
+ *           MSACM_FindFormatTagInCache 		[internal]
+ * 
+ *	Returns TRUE is the format tag fmtTag is present in the cache.
+ *	If so, idx is set to its index.
+ */
+BOOL MSACM_FindFormatTagInCache(WINE_ACMDRIVERID* padid, DWORD fmtTag, LPDWORD idx)
+{
+    unsigned 	i;
+
+    for (i = 0; i < padid->cFormatTags; i++) {
+	if (padid->aFormatTag[i].dwFormatTag == fmtTag) {
+	    if (idx) *idx = i;
+	    return TRUE;
+	}
+    }
+    return FALSE;
+}
+
+/***********************************************************************
+ *           MSACM_FillCache
+ */
+static BOOL MSACM_FillCache(PWINE_ACMDRIVERID padid) 
+{
+    HACMDRIVER		had = 0;
+    int			ntag;
+    ACMDRIVERDETAILSW	add;
+    ACMFORMATDETAILSW	aftd;
+    WAVEFORMATEX	wfx;
+
+    if (acmDriverOpen(&had, (HACMDRIVERID)padid, 0) != 0)
+	return FALSE;
+
+    padid->aFormatTag = NULL;
+    add.cbStruct = sizeof(add);
+    if (MSACM_Message(had, ACMDM_DRIVER_DETAILS, (LPARAM)&add,  0))
+	goto errCleanUp;
+
+    if (add.cFormatTags > 0) {
+	padid->aFormatTag = HeapAlloc(MSACM_hHeap, HEAP_ZERO_MEMORY, 
+				      add.cFormatTags * sizeof(padid->aFormatTag[0]));
+	if (!padid->aFormatTag) goto errCleanUp;
+    }
+
+    padid->cFormatTags = add.cFormatTags;
+    padid->cFilterTags = add.cFilterTags;
+    padid->fdwSupport  = add.fdwSupport;
+
+    aftd.cbStruct = sizeof(aftd);
+    /* don't care about retrieving full struct... so a bare WAVEFORMATEX should do */
+    aftd.pwfx = &wfx;
+    aftd.cbwfx = sizeof(wfx);
+
+    for (ntag = 0; ntag < add.cFormatTags; ntag++) {
+	aftd.dwFormatIndex = ntag;
+	if (MSACM_Message(had, ACMDM_FORMAT_DETAILS, (LPARAM)&aftd, ACM_FORMATDETAILSF_INDEX)) {
+	    TRACE("IIOs (%s)\n", padid->pszDriverAlias);
+	    goto errCleanUp;
+	}
+	padid->aFormatTag[ntag].dwFormatTag = aftd.dwFormatTag;
+	padid->aFormatTag[ntag].cbwfx = aftd.cbwfx;
+    }
+	    
+    acmDriverClose(had, 0);
+
+    return TRUE;
+
+errCleanUp:
+    if (had) acmDriverClose(had, 0);
+    HeapFree(MSACM_hHeap, 0, padid->aFormatTag);
+    padid->aFormatTag = NULL;
+    return FALSE;
+}
+
+/***********************************************************************
+ *           MSACM_GetRegistryKey
+ */
+static	LPSTR	MSACM_GetRegistryKey(const WINE_ACMDRIVERID* padid)
+{
+    static const char*	baseKey = "Software\\Microsoft\\AudioCompressionManager\\DriverCache\\";
+    LPSTR	ret;
+    int		len;
+
+    if (!padid->pszDriverAlias) {
+	ERR("No alias needed for registry entry\n");
+	return NULL;
+    }
+    len = strlen(baseKey);
+    ret = HeapAlloc(MSACM_hHeap, 0, len + strlen(padid->pszDriverAlias) + 1);
+    if (!ret) return NULL;
+
+    strcpy(ret, baseKey);
+    strcpy(ret + len, padid->pszDriverAlias);
+    CharLowerA(ret + len);
+    return ret;
+}
+
+/***********************************************************************
+ *           MSACM_ReadCache
+ */
+static BOOL MSACM_ReadCache(PWINE_ACMDRIVERID padid)
+{
+    LPSTR	key = MSACM_GetRegistryKey(padid);
+    HKEY	hKey;
+    DWORD	type, size;
+
+    if (!key) return FALSE;
+
+    padid->aFormatTag = NULL;
+
+    if (RegCreateKeyA(HKEY_LOCAL_MACHINE, key, &hKey))
+	goto errCleanUp;
+
+    size = sizeof(padid->cFormatTags);
+    if (RegQueryValueExA(hKey, "cFormatTags", 0, &type, (void*)&padid->cFormatTags, &size))
+	goto errCleanUp;
+    size = sizeof(padid->cFilterTags);
+    if (RegQueryValueExA(hKey, "cFilterTags", 0, &type, (void*)&padid->cFilterTags, &size))
+	goto errCleanUp;
+    size = sizeof(padid->fdwSupport);
+    if (RegQueryValueExA(hKey, "fdwSupport", 0, &type, (void*)&padid->fdwSupport, &size))
+	goto errCleanUp;
+
+    if (padid->cFormatTags > 0) {
+	size = padid->cFormatTags * sizeof(padid->aFormatTag[0]);
+	padid->aFormatTag = HeapAlloc(MSACM_hHeap, HEAP_ZERO_MEMORY, size);
+	if (!padid->aFormatTag) goto errCleanUp;
+	if (RegQueryValueExA(hKey, "aFormatTagCache", 0, &type, (void*)padid->aFormatTag, &size))
+	    goto errCleanUp;
+    }
+    HeapFree(MSACM_hHeap, 0, key);
+    return TRUE;
+
+ errCleanUp:
+    HeapFree(MSACM_hHeap, 0, key);
+    HeapFree(MSACM_hHeap, 0, padid->aFormatTag);
+    padid->aFormatTag = NULL;
+    RegCloseKey(hKey);
+    return FALSE;
+}
+
+/***********************************************************************
+ *           MSACM_WriteCache
+ */
+static	BOOL MSACM_WriteCache(PWINE_ACMDRIVERID padid)
+{
+    LPSTR	key = MSACM_GetRegistryKey(padid);
+    HKEY	hKey;
+
+    if (!key) return FALSE;
+
+    if (RegCreateKeyA(HKEY_LOCAL_MACHINE, key, &hKey))
+	goto errCleanUp;
+
+    if (RegSetValueExA(hKey, "cFormatTags", 0, REG_DWORD, (void*)&padid->cFormatTags, sizeof(DWORD)))
+	goto errCleanUp;
+    if (RegSetValueExA(hKey, "cFilterTags", 0, REG_DWORD, (void*)&padid->cFilterTags, sizeof(DWORD)))
+	goto errCleanUp;
+    if (RegSetValueExA(hKey, "fdwSupport", 0, REG_DWORD, (void*)&padid->fdwSupport, sizeof(DWORD)))
+	goto errCleanUp;
+    if (RegSetValueExA(hKey, "aFormatTagCache", 0, REG_BINARY, 
+		       (void*)padid->aFormatTag, 
+		       padid->cFormatTags * sizeof(padid->aFormatTag[0])))
+	goto errCleanUp;
+    HeapFree(MSACM_hHeap, 0, key);
+    return TRUE;
+
+ errCleanUp:
+    HeapFree(MSACM_hHeap, 0, key);
+    return FALSE;
+}
 
 /***********************************************************************
  *           MSACM_RegisterDriver() 
@@ -54,6 +244,7 @@ PWINE_ACMDRIVERID MSACM_RegisterDriver(LPSTR pszDriverAlias, LPSTR pszFileName,
         strcpy( padid->pszFileName, pszFileName );
     }
     padid->hInstModule = hinstModule;
+	
     padid->bEnabled = TRUE;
     padid->pACMDriverList = NULL;
     padid->pNextACMDriverID = NULL;
@@ -63,7 +254,12 @@ PWINE_ACMDRIVERID MSACM_RegisterDriver(LPSTR pszDriverAlias, LPSTR pszFileName,
     MSACM_pLastACMDriverID = padid;
     if (!MSACM_pFirstACMDriverID)
 	MSACM_pFirstACMDriverID = padid;
-    
+    /* disable the driver if we cannot load the cache */
+    if (!MSACM_ReadCache(padid) && !MSACM_FillCache(padid)) {
+	WARN("Couldn't load cache for ACM driver (%s)\n", pszFileName);
+	MSACM_UnregisterDriver(padid);
+	return NULL;
+    }
     return padid;
 }
 
@@ -82,7 +278,7 @@ void MSACM_RegisterAllDrivers(void)
     if (MSACM_pFirstACMDriverID)
 	return;
     
-    /* FIXME: Do not work! How do I determine the section length? */
+    /* FIXME: Does not work! How do I determine the section length? */
     dwBufferLength = 1024;
 /* EPP 	GetPrivateProfileSectionA("drivers32", NULL, 0, "system.ini"); */
     
@@ -122,7 +318,8 @@ PWINE_ACMDRIVERID MSACM_UnregisterDriver(PWINE_ACMDRIVERID p)
 	HeapFree(MSACM_hHeap, 0, p->pszDriverAlias);
     if (p->pszFileName)
 	HeapFree(MSACM_hHeap, 0, p->pszFileName);
-    
+    HeapFree(MSACM_hHeap, 0, p->aFormatTag);
+
     if (p == MSACM_pFirstACMDriverID)
 	MSACM_pFirstACMDriverID = p->pNextACMDriverID;
     if (p == MSACM_pLastACMDriverID)
@@ -142,14 +339,15 @@ PWINE_ACMDRIVERID MSACM_UnregisterDriver(PWINE_ACMDRIVERID p)
 
 /***********************************************************************
  *           MSACM_UnregisterAllDrivers()
- * FIXME
- *   Where should this function be called?
  */
 void MSACM_UnregisterAllDrivers(void)
 {
-    PWINE_ACMDRIVERID p;
+    PWINE_ACMDRIVERID p = MSACM_pFirstACMDriverID; 
 
-    for (p = MSACM_pFirstACMDriverID; p; p = MSACM_UnregisterDriver(p));
+    while (p) {
+	MSACM_WriteCache(p);
+	p = MSACM_UnregisterDriver(p);
+    }
 }
 
 /***********************************************************************

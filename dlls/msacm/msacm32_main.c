@@ -37,7 +37,7 @@ BOOL WINAPI MSACM32_LibMain(HINSTANCE hInstDLL, DWORD fdwReason, LPVOID lpvReser
     case DLL_PROCESS_DETACH:
         MSACM_UnregisterAllDrivers();
         HeapDestroy(MSACM_hHeap);
-        MSACM_hHeap = (HANDLE) NULL;
+        MSACM_hHeap = (HANDLE)NULL;
         MSACM_hInstance32 = (HINSTANCE)NULL;
 	break;
     case DLL_THREAD_ATTACH:
@@ -62,16 +62,19 @@ BOOL WINAPI MSACM32_LibMain(HINSTANCE hInstDLL, DWORD fdwReason, LPVOID lpvReser
 DWORD WINAPI acmGetVersion(void)
 {
     OSVERSIONINFOA version;
-    GetVersionExA( &version );
-    switch(version.dwPlatformId)
-    {
+
+    version.dwOSVersionInfoSize = sizeof(OSVERSIONINFOA);
+    if (!GetVersionExA( &version ))
+	return 0x04030000;
+
+    switch (version.dwPlatformId) {
     case VER_PLATFORM_WIN32_NT:
 	return 0x04000565; /* 4.0.1381 */
     default:
-        FIXME("%ld not supported\n",version.dwPlatformId);
+        FIXME("%lx not supported\n", version.dwPlatformId);
     case VER_PLATFORM_WIN32_WINDOWS:
-	return 0x04000000; /* 4.0.0 */
-  }
+	return 0x04030000; /* 4.3.0 */
+    }
 }
 
 /***********************************************************************
@@ -89,32 +92,33 @@ MMRESULT WINAPI acmMetrics(HACMOBJ hao, UINT uMetric, LPVOID pMetric)
     BOOL 		bLocal = TRUE;
     PWINE_ACMDRIVERID	padid;
     DWORD		val = 0;
+    int			i;
     MMRESULT		mmr = MMSYSERR_NOERROR;
 
     TRACE("(0x%08x, %d, %p);\n", hao, uMetric, pMetric);
     
+#define CheckLocal(padid) (!bLocal || ((padid)->fdwSupport & ACMDRIVERDETAILS_SUPPORTF_LOCAL))
+
     switch (uMetric) {
     case ACM_METRIC_COUNT_DRIVERS:
 	bLocal = FALSE;
 	/* fall thru */
     case ACM_METRIC_COUNT_LOCAL_DRIVERS:
-	if (!pao)
-	    return MMSYSERR_INVALHANDLE;
+	if (hao) return MMSYSERR_INVALHANDLE;
 	for (padid = MSACM_pFirstACMDriverID; padid; padid = padid->pNextACMDriverID)
-	    if (padid->bEnabled /* && (local(padid) || !bLocal) */)
+	    if (padid->bEnabled && CheckLocal(padid))
 		val++;
 	*(LPDWORD)pMetric = val;
 	break;
 
     case ACM_METRIC_COUNT_CODECS:
-	if (!pao)
-	    return MMSYSERR_INVALHANDLE;
 	bLocal = FALSE;
 	/* fall thru */
     case ACM_METRIC_COUNT_LOCAL_CODECS:
-	/* FIXME: don't know how to differentiate codec, converters & filters yet */
+	if (hao) return MMSYSERR_INVALHANDLE;
 	for (padid = MSACM_pFirstACMDriverID; padid; padid = padid->pNextACMDriverID)
-	    if (padid->bEnabled /* && (local(padid) || !bLocal) */)
+	    if (padid->bEnabled && (padid->fdwSupport & ACMDRIVERDETAILS_SUPPORTF_CODEC)
+		&& CheckLocal(padid))
 		val++;
 	*(LPDWORD)pMetric = val;
 	break;
@@ -123,9 +127,10 @@ MMRESULT WINAPI acmMetrics(HACMOBJ hao, UINT uMetric, LPVOID pMetric)
 	bLocal = FALSE;
 	/* fall thru */
     case ACM_METRIC_COUNT_LOCAL_CONVERTERS:
-	/* FIXME: don't know how to differentiate codec, converters & filters yet */
+	if (hao) return MMSYSERR_INVALHANDLE;
 	for (padid = MSACM_pFirstACMDriverID; padid; padid = padid->pNextACMDriverID)
-	    if (padid->bEnabled /* && (local(padid) || !bLocal) */)
+	    if (padid->bEnabled && (padid->fdwSupport & ACMDRIVERDETAILS_SUPPORTF_CONVERTER)
+		&& CheckLocal(padid))
 		val++;
 	*(LPDWORD)pMetric = val;
 	break;
@@ -134,9 +139,10 @@ MMRESULT WINAPI acmMetrics(HACMOBJ hao, UINT uMetric, LPVOID pMetric)
 	bLocal = FALSE;
 	/* fall thru */
     case ACM_METRIC_COUNT_LOCAL_FILTERS:
-	/* FIXME: don't know how to differentiate codec, converters & filters yet */
+	if (hao) return MMSYSERR_INVALHANDLE;
 	for (padid = MSACM_pFirstACMDriverID; padid; padid = padid->pNextACMDriverID)
-	    if (padid->bEnabled /* && (local(padid) || !bLocal) */)
+	    if (padid->bEnabled && (padid->fdwSupport & ACMDRIVERDETAILS_SUPPORTF_FILTER)
+		&& CheckLocal(padid))
 		val++;
 	*(LPDWORD)pMetric = val;
 	break;
@@ -145,37 +151,42 @@ MMRESULT WINAPI acmMetrics(HACMOBJ hao, UINT uMetric, LPVOID pMetric)
 	bLocal = FALSE;
 	/* fall thru */
     case ACM_METRIC_COUNT_LOCAL_DISABLED:
-	if (!pao)
-	    return MMSYSERR_INVALHANDLE;  
+	if (hao) return MMSYSERR_INVALHANDLE;
 	for (padid = MSACM_pFirstACMDriverID; padid; padid = padid->pNextACMDriverID)
-	    if (!padid->bEnabled /* && (local(padid) || !bLocal) */)
+	    if (!padid->bEnabled && CheckLocal(padid))
 		val++;
 	*(LPDWORD)pMetric = val;
 	break;
     
     case ACM_METRIC_MAX_SIZE_FORMAT:
-	{
-	    ACMFORMATTAGDETAILSW	aftd;
-
-	    aftd.cbStruct = sizeof(aftd);
-	    aftd.dwFormatTag = WAVE_FORMAT_UNKNOWN;
-
-	    if (hao == (HACMOBJ)NULL) {
-		mmr = acmFormatTagDetailsW((HACMDRIVER)NULL, &aftd, ACM_FORMATTAGDETAILSF_LARGESTSIZE);
-	    } else if (MSACM_GetObj(hao, WINE_ACMOBJ_DRIVER)) {
-		mmr = acmFormatTagDetailsW((HACMDRIVER)hao, &aftd, ACM_FORMATTAGDETAILSF_LARGESTSIZE);
-	    } else if (MSACM_GetObj(hao, WINE_ACMOBJ_DRIVERID)) {
-		HACMDRIVER	had;
-		
-		if (acmDriverOpen(&had, (HACMDRIVERID)hao, 0) == 0) {
-		    mmr = acmFormatTagDetailsW((HACMDRIVER)hao, &aftd, ACM_FORMATTAGDETAILSF_LARGESTSIZE);
-		    acmDriverClose(had, 0);
+	if (hao == (HACMOBJ)NULL) {
+	    for (padid = MSACM_pFirstACMDriverID; padid; padid = padid->pNextACMDriverID) {
+		if (padid->bEnabled) {
+		    for (i = 0; i < padid->cFormatTags; i++) {
+			if (val < padid->aFormatTag[i].cbwfx)
+			    val = padid->aFormatTag[i].cbwfx;
+		    }
 		}
-	    } else {
-		mmr = MMSYSERR_INVALHANDLE;
 	    }
-	    if (mmr == MMSYSERR_NOERROR) *(LPDWORD)pMetric = aftd.cbFormatSize;
+	} else if (pao != NULL) {
+	    switch (pao->dwType) {
+	    case WINE_ACMOBJ_DRIVER:
+	    case WINE_ACMOBJ_DRIVERID:
+		padid = pao->pACMDriverID;
+		break;
+	    default:
+		return MMSYSERR_INVALHANDLE;
+	    }
+	    if (padid->bEnabled) {
+		for (i = 0; i < padid->cFormatTags; i++) {
+		    if (val < padid->aFormatTag[i].cbwfx)
+			val = padid->aFormatTag[i].cbwfx;
+		}
+	    }
+	} else {
+	    return MMSYSERR_INVALHANDLE;
 	}
+	*(LPDWORD)pMetric = val;
         break;
 
     case ACM_METRIC_COUNT_HARDWARE:

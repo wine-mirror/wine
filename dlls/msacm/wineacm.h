@@ -307,6 +307,14 @@ typedef struct _WINE_ACMDRIVERID
     PWINE_ACMDRIVER     pACMDriverList;
     PWINE_ACMDRIVERID   pNextACMDriverID;
     PWINE_ACMDRIVERID	pPrevACMDriverID;
+    /* information about the driver itself, either gotten from registry or driver itself */
+    DWORD		cFilterTags;
+    DWORD		cFormatTags;
+    DWORD		fdwSupport;
+    struct {
+	DWORD			dwFormatTag;
+	DWORD			cbwfx;
+    }* 			aFormatTag;
 } WINE_ACMDRIVERID;
 
 /* From internal.c */
@@ -323,6 +331,7 @@ extern PWINE_ACMDRIVER MSACM_GetDriver(HACMDRIVER hDriver);
 extern PWINE_ACMOBJ MSACM_GetObj(HACMOBJ hObj, DWORD type);
 
 extern MMRESULT MSACM_Message(HACMDRIVER, UINT, LPARAM, LPARAM);
+extern BOOL MSACM_FindFormatTagInCache(WINE_ACMDRIVERID*, DWORD, LPDWORD);
 
 /* From msacm32.c */
 extern HINSTANCE MSACM_hInstance32;

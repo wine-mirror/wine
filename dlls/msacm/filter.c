@@ -101,14 +101,12 @@ MMRESULT WINAPI acmFilterDetailsW(HACMDRIVER had, PACMFILTERDETAILSW pafd,
 		}
 	    }		    
 	} else {
-	    mmr = MSACM_Message(had, ACMDM_FILTER_DETAILS,
-				(LPARAM)pafd, (LPARAM)fdwDetails);
+	    mmr = MSACM_Message(had, ACMDM_FILTER_DETAILS, (LPARAM)pafd, fdwDetails);
 	}
 	break;
     case ACM_FILTERDETAILSF_INDEX:
 	/* should check pafd->dwFilterIndex < aftd->cStandardFilters */
-	mmr = MSACM_Message(had, ACMDM_FILTER_DETAILS,
-			    (LPARAM)pafd, (LPARAM)fdwDetails);
+	mmr = MSACM_Message(had, ACMDM_FILTER_DETAILS, (LPARAM)pafd, fdwDetails);
 	break;
     default:
 	WARN("Unknown fdwDetails %08lx\n", fdwDetails);
@@ -175,15 +173,10 @@ static BOOL MSACM_FilterEnumHelper(PWINE_ACMDRIVERID padid, HACMDRIVER had,
 				   ACMFILTERENUMCBW fnCallback, DWORD dwInstance,  
 				   DWORD fdwEnum)
 {
-    ACMDRIVERDETAILSW		add;
     ACMFILTERTAGDETAILSW	aftd;
     int				i, j;
 
-    add.cbStruct = sizeof(add);
-    
-    if (acmDriverDetailsW((HACMDRIVERID)padid, &add, 0) != MMSYSERR_NOERROR) return FALSE;
-
-    for (i = 0; i < add.cFilterTags; i++) {
+    for (i = 0; i < padid->cFilterTags; i++) {
 	memset(&aftd, 0, sizeof(aftd));
 	aftd.cbStruct = sizeof(aftd);
 	aftd.dwFilterTagIndex = i;
@@ -200,7 +193,7 @@ static BOOL MSACM_FilterEnumHelper(PWINE_ACMDRIVERID padid, HACMDRIVER had,
 	    if (acmFilterDetailsW(had, pafd, ACM_FILTERDETAILSF_INDEX) != MMSYSERR_NOERROR) 
 		continue;
 	    
-	    if (!(fnCallback)((HACMDRIVERID)padid, pafd, dwInstance, add.fdwSupport))
+	    if (!(fnCallback)((HACMDRIVERID)padid, pafd, dwInstance, padid->fdwSupport))
 		return FALSE; 
 	}
     }
@@ -295,22 +288,19 @@ MMRESULT WINAPI acmFilterTagDetailsW(HACMDRIVER had, PACMFILTERTAGDETAILSW paftd
 	    for (padid = MSACM_pFirstACMDriverID; padid; padid = padid->pNextACMDriverID) {
 		/* should check for codec only */
 		if (padid->bEnabled && acmDriverOpen(&had, (HACMDRIVERID)padid, 0) == 0) {
-		    mmr = MSACM_Message(had, ACMDM_FILTERTAG_DETAILS,
-					(LPARAM)paftd, (LPARAM)fdwDetails);
+		    mmr = MSACM_Message(had, ACMDM_FILTERTAG_DETAILS, (LPARAM)paftd, fdwDetails);
 		    acmDriverClose(had, 0);
 		    if (mmr == MMSYSERR_NOERROR) break;
 		}
 	    }
 	} else {
-	    mmr = MSACM_Message(had, ACMDM_FILTERTAG_DETAILS,
-				(LPARAM)paftd, (LPARAM)fdwDetails);
+	    mmr = MSACM_Message(had, ACMDM_FILTERTAG_DETAILS, (LPARAM)paftd, fdwDetails);
 	}
 	break;
 
     case ACM_FILTERTAGDETAILSF_INDEX:
 	/* FIXME should check paftd->dwFilterTagIndex < add.cFilterTags */
-	mmr = MSACM_Message(had, ACMDM_FILTERTAG_DETAILS,
-			    (LPARAM)paftd, (LPARAM)fdwDetails);
+	mmr = MSACM_Message(had, ACMDM_FILTERTAG_DETAILS, (LPARAM)paftd, fdwDetails);
 	break;
 
     case ACM_FILTERTAGDETAILSF_LARGESTSIZE:
@@ -328,9 +318,8 @@ MMRESULT WINAPI acmFilterTagDetailsW(HACMDRIVER had, PACMFILTERTAGDETAILSW paftd
 		    tmp.cbStruct = sizeof(tmp);
 		    tmp.dwFilterTag = ft;
 
-		    if (MSACM_Message(had, ACMDM_FILTERTAG_DETAILS,
-				      (LPARAM)&tmp, 
-				      (LPARAM)fdwDetails) == MMSYSERR_NOERROR) {
+		    if (MSACM_Message(had, ACMDM_FILTERTAG_DETAILS, 
+				      (LPARAM)&tmp, fdwDetails) == MMSYSERR_NOERROR) {
 			if (mmr == ACMERR_NOTPOSSIBLE ||
 			    paftd->cbFilterSize < tmp.cbFilterSize) {
 			    *paftd = tmp;
@@ -341,8 +330,7 @@ MMRESULT WINAPI acmFilterTagDetailsW(HACMDRIVER had, PACMFILTERTAGDETAILSW paftd
 		}
 	    }
 	} else {
-	    mmr = MSACM_Message(had, ACMDM_FILTERTAG_DETAILS,
-				(LPARAM)paftd, (LPARAM)fdwDetails);
+	    mmr = MSACM_Message(had, ACMDM_FILTERTAG_DETAILS, (LPARAM)paftd, fdwDetails);
 	}
 	break;
 
@@ -417,7 +405,6 @@ MMRESULT WINAPI acmFilterTagEnumW(HACMDRIVER had, PACMFILTERTAGDETAILSW paftd,
 				  DWORD fdwEnum)
 {
     PWINE_ACMDRIVERID		padid;
-    ACMDRIVERDETAILSW		add;
     int				i;
 
     TRACE("(0x%08x, %p, %p, %ld, %ld)\n",
@@ -430,17 +417,13 @@ MMRESULT WINAPI acmFilterTagEnumW(HACMDRIVER had, PACMFILTERTAGDETAILSW paftd,
     for (padid = MSACM_pFirstACMDriverID; padid; padid = padid->pNextACMDriverID) {
 	/* should check for codec only */
 	if (padid->bEnabled && acmDriverOpen(&had, (HACMDRIVERID)padid, 0) == MMSYSERR_NOERROR) {
-	    add.cbStruct = sizeof(add);
 
-	    if (acmDriverDetailsW((HACMDRIVERID)padid, &add, 0) == MMSYSERR_NOERROR) {
-		for (i = 0; i < add.cFilterTags; i++) {
-		    paftd->dwFilterTagIndex = i;
-		    if (acmFilterTagDetailsW(had, paftd, ACM_FILTERTAGDETAILSF_INDEX) == MMSYSERR_NOERROR) {
-			if (!(fnCallback)((HACMDRIVERID)padid, paftd, dwInstance, 
-					  add.fdwSupport)) {
-			    padid = NULL;
-			    break;
-			}
+	    for (i = 0; i < padid->cFilterTags; i++) {
+		paftd->dwFilterTagIndex = i;
+		if (acmFilterTagDetailsW(had, paftd, ACM_FILTERTAGDETAILSF_INDEX) == MMSYSERR_NOERROR) {
+		    if (!(fnCallback)((HACMDRIVERID)padid, paftd, dwInstance, padid->fdwSupport)) {
+			padid = NULL;
+			break;
 		    }
 		}
 	    }

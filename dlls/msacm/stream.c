@@ -181,25 +181,30 @@ MMRESULT WINAPI acmStreamOpen(PHACMSTREAM phas, HACMDRIVER had, PWAVEFORMATEX pw
 	
 	ret = ACMERR_NOTPOSSIBLE;
 	for (wadi = MSACM_pFirstACMDriverID; wadi; wadi = wadi->pNextACMDriverID) {
+	    if (!wadi->bEnabled || 
+		!MSACM_FindFormatTagInCache(wadi, pwfxSrc->wFormatTag, NULL) ||
+		!MSACM_FindFormatTagInCache(wadi, pwfxDst->wFormatTag, NULL))
+		continue;
 	    ret = acmDriverOpen(&had, (HACMDRIVERID)wadi, 0L);
-	    if (ret == MMSYSERR_NOERROR) {
-		if ((wad = MSACM_GetDriver(had)) != 0) {
-		    was->obj.dwType = WINE_ACMOBJ_STREAM;
-		    was->obj.pACMDriverID = wad->obj.pACMDriverID;
-		    was->pDrv = wad;
-		    was->hAcmDriver = had;
-		    
-		    ret = SendDriverMessage(wad->hDrvr, ACMDM_STREAM_OPEN, (DWORD)&was->drvInst, 0L);
-		    if (ret == MMSYSERR_NOERROR) {
-			if (fdwOpen & ACM_STREAMOPENF_QUERY) {
-			    acmDriverClose(had, 0L);
-			}
-			break;
+	    if (ret != MMSYSERR_NOERROR)
+		continue;
+	    if ((wad = MSACM_GetDriver(had)) != 0) {
+		was->obj.dwType = WINE_ACMOBJ_STREAM;
+		was->obj.pACMDriverID = wad->obj.pACMDriverID;
+		was->pDrv = wad;
+		was->hAcmDriver = had;
+		
+		ret = SendDriverMessage(wad->hDrvr, ACMDM_STREAM_OPEN, (DWORD)&was->drvInst, 0L);
+		TRACE("%s => %08x\n", wadi->pszFileName, ret);
+		if (ret == MMSYSERR_NOERROR) {
+		    if (fdwOpen & ACM_STREAMOPENF_QUERY) {
+			acmDriverClose(had, 0L);
 		    }
+		    break;
 		}
-		/* no match, close this acm driver and try next one */
-		acmDriverClose(had, 0L);
 	    }
+	    /* no match, close this acm driver and try next one */
+	    acmDriverClose(had, 0L);
 	}
 	if (ret != MMSYSERR_NOERROR) {
 	    ret = ACMERR_NOTPOSSIBLE;

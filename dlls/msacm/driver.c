@@ -166,25 +166,24 @@ MMRESULT WINAPI acmDriverDetailsW(HACMDRIVERID hadid, PACMDRIVERDETAILSW padd, D
  */
 MMRESULT WINAPI acmDriverEnum(ACMDRIVERENUMCB fnCallback, DWORD dwInstance, DWORD fdwEnum)
 {
-    PWINE_ACMDRIVERID	p;
-    ACMDRIVERDETAILSW	add;
+    PWINE_ACMDRIVERID	padid;
+    DWORD		fdwSupport;
 
     if (!fnCallback) return MMSYSERR_INVALPARAM;
     
     if (fdwEnum && ~(ACM_DRIVERENUMF_NOLOCAL|ACM_DRIVERENUMF_DISABLED))
 	return MMSYSERR_INVALFLAG;
     
-    add.cbStruct = sizeof(add);
-    for (p = MSACM_pFirstACMDriverID; p; p = p->pNextACMDriverID) {
-	if (acmDriverDetailsW((HACMDRIVERID)p, &add, 0) != MMSYSERR_NOERROR)
-	    continue;
-	if (!p->bEnabled) {
+    for (padid = MSACM_pFirstACMDriverID; padid; padid = padid->pNextACMDriverID) {
+	fdwSupport = padid->fdwSupport;
+	
+	if (!padid->bEnabled) {
 	    if (fdwEnum & ACM_DRIVERENUMF_DISABLED)
-		add.fdwSupport |= ACMDRIVERDETAILS_SUPPORTF_DISABLED;
+		fdwSupport |= ACMDRIVERDETAILS_SUPPORTF_DISABLED;
 	    else
 		continue;
 	}
-	if (!(*fnCallback)((HACMDRIVERID)p, dwInstance, add.fdwSupport))
+	if (!(*fnCallback)((HACMDRIVERID)padid, dwInstance, fdwSupport))
 	    break;
     }
     

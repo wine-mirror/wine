@@ -778,7 +778,8 @@ static	LRESULT	PCM_FormatDetails(PACMFORMATDETAILSW afd, DWORD dwQuery)
     afd->dwFormatTag = WAVE_FORMAT_PCM;
     afd->fdwSupport = ACMDRIVERDETAILS_SUPPORTF_CONVERTER;
     afd->szFormat[0] = 0; /* let MSACM format this for us... */
-    
+    afd->cbwfx = sizeof(PCMWAVEFORMAT);
+
     return MMSYSERR_NOERROR;
 }
 
