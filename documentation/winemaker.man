@@ -13,6 +13,10 @@ winemaker \- generate a build infrastructure for compiling Windows programs on U
 ]
 .br
   [
+.IR               "--lower-include " "| " "--no-lower-include "
+]
+.br
+  [
 .IR               "--guiexe " "| " "--windows " "| " "--cuiexe " "| " "--console " "| " "--dll "
 ]
 .br
@@ -26,6 +30,10 @@ winemaker \- generate a build infrastructure for compiling Windows programs on U
 .br
   [
 .IR               "--interactive " "] [ " "--single-target name "
+]
+.br
+  [
+.IR               "--generated-files " "] [ " "--no-generated-files "
 ]
 
 .SH DESCRIPTION
@@ -86,6 +94,15 @@ Tells winemaker not to rename files and directories to lower case. Note
 that this does not prevent it from renaming a file if its extension cannot 
 be handled as is, e.g. ".Cxx". This is the default.
 .TP
+.I "--lower-include "
+Tells winemaker that if it does not find the file corresponding to an 
+include statement (or other form of file reference for resource files), 
+then it should convert that filename to lowercase. This is the default.
+.TP
+.I "--no-lower-include "
+Tells winemaker not to modify the include statement if it cannot find the 
+referenced file.
+.TP
 .IR "--guiexe " "| " "--windows"
 Specifies that whenever winemaker finds an executable target, or a target of 
 unknown type, it should assume that it is a graphical application.
@@ -137,6 +154,14 @@ target specific options.
 .TP
 .I --single-target name
 Specifies that there is only one target, and that it is called "name".
+.TP
+.I --generated-files
+Tells winemaker to generate the build infrastructure files, i.e. the spec 
+files, the wrapper files, the Makefile.in files, the Make.rules.in file, the 
+configure.in file and the configure script. This is the default.
+.TP
+.I --no-generated-files
+Tells winemaker not to generate any of the above files.
 
 .SH EXAMPLES
 .PP
