@@ -113,8 +113,9 @@ HBRUSH16 WINAPI CreateDIBPatternBrush16( HGLOBAL16 hbitmap, UINT16 coloruse )
     if (info->bmiHeader.biCompression)
         size = info->bmiHeader.biSizeImage;
     else
-	size = (info->bmiHeader.biWidth * info->bmiHeader.biBitCount + 31) / 32
-	         * 8 * info->bmiHeader.biHeight;
+	size = DIB_GetDIBWidthBytes(info->bmiHeader.biWidth,
+				    info->bmiHeader.biBitCount) *
+	       info->bmiHeader.biHeight;
     size += DIB_BitmapInfoSize( info, coloruse );
 
     if (!(logbrush.lbHatch = (INT16)GlobalAlloc16( GMEM_MOVEABLE, size )))
@@ -162,8 +163,9 @@ HBRUSH32 WINAPI CreateDIBPatternBrush32(
     if (info->bmiHeader.biCompression)
         size = info->bmiHeader.biSizeImage;
     else
-	size = (info->bmiHeader.biWidth * info->bmiHeader.biBitCount + 31) / 32
-	         * 8 * info->bmiHeader.biHeight;
+	size = DIB_GetDIBWidthBytes(info->bmiHeader.biWidth,
+				    info->bmiHeader.biBitCount) *
+	       info->bmiHeader.biHeight;
     size += DIB_BitmapInfoSize( info, coloruse );
 
     if (!(logbrush.lbHatch = (INT32)GlobalAlloc16( GMEM_MOVEABLE, size )))
@@ -174,7 +176,7 @@ HBRUSH32 WINAPI CreateDIBPatternBrush32(
     newInfo = (BITMAPINFO *) GlobalLock16( (HGLOBAL16)logbrush.lbHatch );
     memcpy( newInfo, info, size );
     GlobalUnlock16( (HGLOBAL16)logbrush.lbHatch );
-    GlobalUnlock16( hbitmap );
+    GlobalUnlock32( hbitmap );
     return CreateBrushIndirect32( &logbrush );
 }
 
@@ -200,7 +202,7 @@ HBRUSH32 WINAPI CreateDIBPatternBrushPt32(
     BITMAPINFO  *newInfo;
     INT32 size;
     
-    TRACE(gdi, "%04x\n", info );
+    TRACE(gdi, "%p\n", info );
 
       /* Make a copy of the bitmap */
 
@@ -208,8 +210,9 @@ HBRUSH32 WINAPI CreateDIBPatternBrushPt32(
     if (info->bmiHeader.biCompression)
         size = info->bmiHeader.biSizeImage;
     else
-	size = (info->bmiHeader.biWidth * info->bmiHeader.biBitCount + 31) / 32
-	         * 8 * info->bmiHeader.biHeight;
+	size = DIB_GetDIBWidthBytes(info->bmiHeader.biWidth,
+				    info->bmiHeader.biBitCount) *
+	       info->bmiHeader.biHeight;
     size += DIB_BitmapInfoSize( info, coloruse );
 
     if (!(logbrush.lbHatch = (INT32)GlobalAlloc16( GMEM_MOVEABLE, size )))
