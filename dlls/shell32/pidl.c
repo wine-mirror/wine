@@ -1635,6 +1635,10 @@ void _ILGetFileType(LPCITEMIDLIST pidl, LPSTR pOut, UINT uOutSize)
 	if(_ILIsValue(pidl))
 	{
 	  char sTemp[64];
+          if(uOutSize > 0)
+          {
+            pOut[0] = 0;
+          }
 	  if (_ILGetExtension (pidl, sTemp, 64))
 	  {
 	    if (!( HCR_MapTypeToValue(sTemp, sTemp, 64, TRUE)
