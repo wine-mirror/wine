@@ -2574,26 +2574,40 @@ HRGN WINAPI CreatePolygonRgn( const POINT *points, INT count,
  * GetRandomRgn [GDI32.215]
  *
  * NOTES
- *     This function is UNDOCUMENTED, it isn't even in the header file.
+ *     This function is documented in MSDN online
  */
 INT WINAPI GetRandomRgn(HDC hDC, HRGN hRgn, DWORD dwCode)
 {
-    DC *dc;
-
-    FIXME("(%08x %08x %lx): empty stub!\n",
-	   hDC, hRgn, dwCode);
-
     switch (dwCode)
     {
-	case 1:
-	    return GetClipRgn (hDC, hRgn);
-
-	case 4:
-	    dc = DC_GetDCPtr (hDC);
+        case 4: /* == SYSRGN ? */
+	{
+	    DC *dc = DC_GetDCPtr (hDC);
+	    OSVERSIONINFOA vi;
+	    POINT org;
 	    CombineRgn (hRgn, dc->w.hVisRgn, 0, RGN_COPY);
+	    /*
+	     *     On Windows NT/2000,
+	     *           the region returned is in screen coordinates.
+	     *     On Windows 95/98, 
+	     *           the region returned is in window coordinates
+	     */
+	    vi.dwOSVersionInfoSize = sizeof(vi);
+	    if (GetVersionExA( &vi ) && vi.dwPlatformId == VER_PLATFORM_WIN32_NT)
+		GetDCOrgEx(hDC, &org);
+	    else
+		org.x = org.y = 0;
+	    org.x -= dc->w.DCOrgX;
+	    org.y -= dc->w.DCOrgY;
+	    OffsetRgn (hRgn, org.x, org.y);
+		
 	    return 1;
-
+	}
+/*	case 1:
+	    return GetClipRgn (hDC, hRgn);
+*/
 	default:
+	    WARN("Unknown dwCode %ld\n", dwCode);
 	    return -1;
     }
 
