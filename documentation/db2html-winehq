@@ -23,7 +23,7 @@ if [ -f /etc/debian_version ]; then
   JADETAG=\#html
 fi
 
-if [ -f /etc/redhat_release ]; then
+if [ -f /etc/redhat-release ]; then
   LINUXDIST="Redhat"
   JADEPROG="jade"
   JADETAG=
