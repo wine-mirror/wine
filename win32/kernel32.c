@@ -44,7 +44,7 @@ DECLARE_DEBUG_CHANNEL(win32)
  */
 void WINAPI LogApiThk( LPSTR func )
 {
-    TRACE_(thunk)( "%s\n", func );
+    TRACE_(thunk)( "%s\n", debugstr_a(func) );
 }
 
 /***********************************************************************
@@ -52,10 +52,9 @@ void WINAPI LogApiThk( LPSTR func )
  * 
  * NOTE: needs to preserve all registers!
  */
-void WINAPI REGS_FUNC(LogApiThkLSF)( CONTEXT *context )
+void WINAPI REGS_FUNC(LogApiThkLSF)( LPSTR func, CONTEXT *context )
 {
-    LPSTR func = (LPSTR)STACK32_POP( context );
-    TRACE_(thunk)( "%s\n", func );
+    TRACE_(thunk)( "%s\n", debugstr_a(func) );
 }
 
 /***********************************************************************
@@ -63,10 +62,9 @@ void WINAPI REGS_FUNC(LogApiThkLSF)( CONTEXT *context )
  * 
  * NOTE: needs to preserve all registers!
  */
-void WINAPI REGS_FUNC(LogApiThkSL)( CONTEXT *context )
+void WINAPI REGS_FUNC(LogApiThkSL)( LPSTR func, CONTEXT *context )
 {
-    LPSTR func = (LPSTR)STACK32_POP( context );
-    TRACE_(thunk)( "%s\n", func );
+    TRACE_(thunk)( "%s\n", debugstr_a(func) );
 }
 
 /***********************************************************************
@@ -74,10 +72,9 @@ void WINAPI REGS_FUNC(LogApiThkSL)( CONTEXT *context )
  * 
  * NOTE: needs to preserve all registers!
  */
-void WINAPI REGS_FUNC(LogCBThkSL)( CONTEXT *context )
+void WINAPI REGS_FUNC(LogCBThkSL)( LPSTR func, CONTEXT *context )
 {
-    LPSTR func = (LPSTR)STACK32_POP( context );
-    TRACE_(thunk)( "%s\n", func );
+    TRACE_(thunk)( "%s\n", debugstr_a(func) );
 }
 
 /***********************************************************************
