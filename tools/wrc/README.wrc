@@ -1,5 +1,9 @@
-This is the first release (1.0.0 (28-May-1998)) of the new resource compiler
-'wrc'. It improves the winerc implementation by these features:
+Release 1.0.2 of wrc (20-Jun-1998), the wine resource compiler.
+
+See the file CHANGES for differences between the version and what has been
+corrected in the current version.
+
+Wrc features:
 
 - source preprocessing
 - 16 and 32 bit support
@@ -23,6 +27,7 @@ You can get this message by typing 'wrc -?':
 
 Usage: wrc [options...] [infile[.rc|.res]]
    -a n        Alignment of resource (win16 only, default is 4)
+   -A          Auto register resources (only with gcc 2.7 and better)
    -b          Create a C array from a binary .res file
    -c          Add 'const' prefix to C constants
    -C cp       Set the resource's codepage to cp (default is 0)
@@ -34,6 +39,7 @@ Usage: wrc [options...] [infile[.rc|.res]]
    -H file     Same as -h but written to file
    -I path     Set include search dir to path (multiple -I allowed)
    -l lan      Set default language to lan (default is neutral {0})
+   -L          Leave case of embedded filenames as is
    -n          Do not generate .s file
    -o file     Output to file (default is infile.[res|s|h]
    -p prefix   Give a prefix for the generated names
@@ -102,7 +108,8 @@ compiler runs on.
 Not all resource-types can have local language keywords attached yet
 (notably: BITMAP, CURSOR, ICON and usertype). This is due to implementation
 of filename-scanning and the complexity that it poses. This will be changed
-in the next release.
+in the next release. You can work arround this problem by putting a LANGUAGE
+statement before (and evt. after) the code in the resource file.
 
 
 Resource types supported
@@ -110,7 +117,7 @@ Resource types supported
 All types are supported except for:
 - FONT
 - MESSAGETABLE
-- extensions like TOOLBAR and the like
+- extensions like TOOLBAR and the like (is this a user-type?)
 
 These types will be implemented as soon as I get a proper specification of
 the layout.
@@ -120,10 +127,10 @@ layout and do not accept expressions when a numerical type is specified. The
 must be enclosed in double quotes. These are examples of valid usertype
 resources:
 
-MyName "MyType" mydata.bin
-MyName 12345 mydata.bin
-MyName "MyType" "mydata.bin"
-MyName 12345 "mydata.bin"
+MyName "MyType"	mydata.bin
+MyName 12345	mydata.bin
+MyName "MyType"	"mydata.bin"
+MyName 12345	"mydata.bin"
 
 MyName "MyType"
 {
@@ -242,7 +249,10 @@ though):
 - UNICODE translations are not/not correct implemented
 - No documentation ('wrc -?' gives command-line options though)
 - grep for FIXME in the source
-
+- Memory options are wrong under some conditions. There seems to be a
+  different action for win32 and win16.
+- User-type resources have slightly different layout.
+- Filename scanning is still hopeless.
 
 Reporting bugs and patches
 --------------------------

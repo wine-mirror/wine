@@ -47,6 +47,6 @@ typedef struct
 } HEADER_INFO;
 
 
-void HEADER_Register( void );
+extern void HEADER_Register (void);
 
 #endif /* __WINE_HEADER_H_ */

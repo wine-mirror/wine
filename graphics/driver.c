@@ -7,6 +7,7 @@
 #include "gdi.h"
 #include "heap.h"
 #include "debug.h"
+#include <string.h>
 
 typedef struct tagGRAPHICS_DRIVER
 {
@@ -54,7 +55,7 @@ const DC_FUNCTIONS *DRIVER_FindDriver( LPCSTR name )
     GRAPHICS_DRIVER *driver = firstDriver;
     while (driver)
     {
-        if (!lstrcmpi32A( driver->name, name )) return driver->funcs;
+        if (!strcasecmp( driver->name, name )) return driver->funcs;
         driver = driver->next;
     }
     return genericDriver ? genericDriver->funcs : NULL;
@@ -71,7 +72,7 @@ BOOL32 DRIVER_UnregisterDriver( LPCSTR name )
         GRAPHICS_DRIVER **ppDriver = &firstDriver;
         while (*ppDriver)
         {
-            if (!lstrcmpi32A( (*ppDriver)->name, name ))
+            if (!strcasecmp( (*ppDriver)->name, name ))
             {
                 GRAPHICS_DRIVER *driver = *ppDriver;
                 (*ppDriver) = driver->next;

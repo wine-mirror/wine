@@ -239,7 +239,7 @@ typedef struct font {
 } font_t;
 
 typedef struct icon_dir_entry {
-    BYTE  width;	/* From the SKD doc. */
+    BYTE  width;	/* From the SDK doc. */
     BYTE  height;
     BYTE  nclr;
     BYTE  reserved;
@@ -252,6 +252,7 @@ typedef struct icon_dir_entry {
 typedef struct icon {
 	struct icon	*next;
 	struct icon	*prev;
+	lvc_t		lvc;
 	int		id;	/* Unique icon id within resource file */
 	int		width;	/* Field from the IconDirEntry */
 	int		height;
@@ -263,12 +264,13 @@ typedef struct icon {
 
 typedef struct icon_group {
 	DWORD		memopt;
+	lvc_t		lvc;
 	icon_t		*iconlist;
 	int		nicon;
 } icon_group_t;
 
 typedef struct cursor_dir_entry {
-    BYTE  width;	/* From the SKD doc. */
+    BYTE  width;	/* From the SDK doc. */
     BYTE  height;
     BYTE  nclr;
     BYTE  reserved;
@@ -281,6 +283,7 @@ typedef struct cursor_dir_entry {
 typedef struct cursor {
 	struct cursor	*next;
 	struct cursor	*prev;
+	lvc_t		lvc;
 	int		id;	/* Unique icon id within resource file */
 	int		width;	/* Field from the CursorDirEntry */
 	int		height;
@@ -294,6 +297,7 @@ typedef struct cursor {
 
 typedef struct cursor_group {
 	DWORD		memopt;
+	lvc_t		lvc;
 	cursor_t	*cursorlist;
 	int		ncursor;
 } cursor_group_t;

@@ -13,6 +13,7 @@
 #include "win.h"
 #include "combo.h"
 #include "debug.h"
+#include "tweak.h"
 
 /* Unimplemented yet:
  * - LBS_NOSEL
@@ -1330,7 +1331,7 @@ static LRESULT LISTBOX_InsertItem( WND *wnd, LB_DESCR *descr, INT32 index,
     if (index <= descr->focus_item)
     {
         descr->focus_item++;
-        LISTBOX_MoveCaret( wnd, descr, descr->focus_item - 1, FALSE );
+        LISTBOX_MoveCaret( wnd, descr, descr->focus_item, FALSE );
     }
 
     /* If listbox was empty, set focus to the first item */
@@ -1447,7 +1448,7 @@ static LRESULT LISTBOX_RemoveItem( WND *wnd, LB_DESCR *descr, INT32 index )
     if (index <= descr->focus_item)
     {
         descr->focus_item--;
-        LISTBOX_MoveCaret( wnd, descr, descr->focus_item + 1, FALSE );
+        LISTBOX_MoveCaret( wnd, descr, descr->focus_item, FALSE );
     }
     return LB_OKAY;
 }
@@ -2483,6 +2484,11 @@ LRESULT WINAPI ListBoxWndProc( HWND32 hwnd, UINT32 msg,
             return SendMessage32A( descr->owner, msg, wParam, lParam );
         }
 	break;
+
+    case WM_NCCREATE:
+	if (TWEAK_Win95Look)
+	    wnd->dwExStyle |= WS_EX_CLIENTEDGE;
+        return DefWindowProc32A( hwnd, msg, wParam, lParam );
 
     default:
         if ((msg >= WM_USER) && (msg < 0xc000))

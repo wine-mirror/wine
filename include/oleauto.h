@@ -11,4 +11,8 @@ VOID SysFreeString16(BSTR16);
 VOID SysFreeString32(BSTR32);
 #define SysFreeString WINELIB_NAME(SysFreeString)
 
+typedef char OLECHAR;
+typedef void ITypeLib;
+typedef ITypeLib * LPTYPELIB;
+
 #endif

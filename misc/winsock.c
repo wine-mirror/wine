@@ -65,8 +65,6 @@
 
 /* ----------------------------------- internal data */
 
-extern int h_errno;
-
 static HANDLE32 	_WSHeap = 0;
 static unsigned char*	_ws_stub = NULL;
 static LPWSINFO         _wsi_list = NULL;
@@ -2570,9 +2568,9 @@ UINT16 wsaErrno(void)
 {
     int	loc_errno = errno; 
 #ifdef HAVE_STRERROR
-    WARN(winsock, "errno %d, (%s).\n", errno, strerror(errno));
+    WARN(winsock, "errno %d, (%s).\n", loc_errno, strerror(loc_errno));
 #else
-    WARN(winsock, "errno %d\n", errno);
+    WARN(winsock, "errno %d\n", loc_errno);
 #endif
 
     switch(loc_errno)
@@ -2635,7 +2633,7 @@ UINT16 wsaErrno(void)
        /* just in case we ever get here and there are no problems */
 	case 0:			return 0;
         default:
-		WARN(winsock, "Unknown errno %d!\n", errno);
+		WARN(winsock, "Unknown errno %d!\n", loc_errno);
 		return WSAEOPNOTSUPP;
     }
 }
@@ -2644,11 +2642,7 @@ UINT16 wsaHerrno(void)
 {
     int		loc_errno = h_errno;
 
-#ifdef HAVE_STRERROR
-    WARN(winsock, "h_errno %d, (%s).\n", h_errno, strerror(h_errno));
-#else
-    WARN(winsock, "h_errno %d.\n", h_errno);
-#endif
+    WARN(winsock, "h_errno %d.\n", loc_errno);
 
     switch(loc_errno)
     {
@@ -2659,7 +2653,7 @@ UINT16 wsaHerrno(void)
 
 	case 0:			return 0;
         default:
-		WARN(winsock,"Unknown h_errno %d!\n", h_errno);
+		WARN(winsock,"Unknown h_errno %d!\n", loc_errno);
 		return WSAEOPNOTSUPP;
     }
 }

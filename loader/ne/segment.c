@@ -349,7 +349,7 @@ BOOL32 NE_LoadSegment( NE_MODULE *pModule, WORD segnum )
                 if (next_offset == offset) break;  /* avoid infinite loop */
                 if (next_offset >= GlobalSize16(pSeg->selector)) break;
                 offset = next_offset;
-            } while (offset && (offset != 0xffff));
+            } while (offset != 0xffff);
         }
     }
 

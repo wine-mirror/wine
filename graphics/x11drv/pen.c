@@ -23,10 +23,12 @@ HPEN32 X11DRV_PEN_SelectObject( DC * dc, HPEN32 hpen, PENOBJ * pen )
 
     dc->w.hPen = hpen;
     dc->u.x.pen.style = pen->logpen.lopnStyle & PS_STYLE_MASK;
+    dc->u.x.pen.type = pen->logpen.lopnStyle & PS_TYPE_MASK;
     dc->u.x.pen.endcap = pen->logpen.lopnStyle & PS_ENDCAP_MASK;
     dc->u.x.pen.linejoin = pen->logpen.lopnStyle & PS_JOIN_MASK;
 
-    dc->u.x.pen.width = pen->logpen.lopnWidth.x * dc->vportExtX / dc->wndExtX;
+    dc->u.x.pen.width = (pen->logpen.lopnWidth.x * dc->vportExtX +
+                    dc->wndExtX / 2) / dc->wndExtX;
     if (dc->u.x.pen.width < 0) dc->u.x.pen.width = -dc->u.x.pen.width;
     if (dc->u.x.pen.width == 1) dc->u.x.pen.width = 0;  /* Faster */
     dc->u.x.pen.pixel = COLOR_ToPhysical( dc, pen->logpen.lopnColor );    

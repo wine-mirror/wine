@@ -1,4 +1,242 @@
 ----------------------------------------------------------------------
+Sun Jun 28 18:37:02 1998  Alexandre Julliard  <julliard@lrc.epfl.ch>
+
+	* [if1632/signal.c] [miscemu/instr.c] [memory/virtual.c]
+	Moved page-fault handling to INSTR_EmulateInstruction.
+
+	* [scheduler/thread.c]
+	Added locking and check for own thread in Suspend/ResumeThread.
+
+Sat Jun 27 21:25:21 1998  Ulrich Weigand <weigand@informatik.uni-erlangen.de>
+
+	* [objects/dib.c] [objects/bitmap.c] [objects/oembitmap.c] 
+	  [graphics/x11drv/bitblt.c] [include/bitmap.h]
+	Improved DIB section handling using page fault handlers.
+	(Note: This patch includes code contributed by Matthew J. Francis.)
+
+	* [memory/virtual.c] [if1632/signal.c] [include/global.h]
+	Page Fault handler support added.
+
+	* [if1632/signal.c] [loader/signal.c] [tools/build.c] [misc/system.c]
+	  [misc/winsock_dns.c] [include/sig_context.h] [include/thread.h]
+	16-bit %fs handling improved: Always preserve 16-bit %fs value,
+	always restore 32-bit %fs value for signal handlers.
+
+	* [if1632/thunk.c] [loader/module.c] [misc/callback.c] [windows/user.c]
+	  [loader/ne/resource.c] [include/callback.h] [include/module.h]
+	  [if1632/kernel.spec] [if1632/wprocs.spec]
+	Resource Handler function pointer stored as 16-bit SEGPTR.
+
+	* [loader/task.c] [windows/win.c] [windows/winpos.c] [if1632/user.spec]
+	  [if1632/kernel.spec] [loader/ne/module.c]
+	Some minor incompatibilities fixed (Win32s relies on those):
+	GetExePtr, IsWindow16 should set ES on return; WINPOS_SendNCCalcSize
+	should cope with having the WINDOWPOS structure trashed;
+	the OFSTRUCT in the NE module image should be placed *last*.
+
+	* [include/windows.h]
+	Missing prototype for FlushViewOfFile.
+
+	* [loader/task.c]
+	Bugfix: Command line should *not* start with a blank.
+	
+	* [loader/ne/segment.c]
+	Bugfix: Fixups to offset 0 were never applied.
+
+	* [misc/lstr.c]
+	Use debugstr_a in OutputDebugString16.
+
+	* [msdos/dpmi.c]
+	Stub for int 31 BL=2f AX=7a20 (NetWare: Get VLM Call Address) added.
+
+	* [msdos/int21.c]
+	Stub for int 21 AX=440d CL=6f (get drive map information) added.
+
+Fri Jun 26 18:08:30 1998  Rein Klazes <rklazes@casema.net>
+
+	* [windows/winpos.c]
+	Fix small buglet that mixed up maximized and minimized windows.
+
+	* [include/x11drv.h] [objects/dc.c] [graphics/x11drv/pen.c]
+	  [graphics/x11drv/graphics.c]
+	Fix some bugs with lines joining styles. Draws rectangles
+	with thick pens now correctly.
+
+Fri Jun 26 16:22:23 1998  James Juran <jrj120@psu.edu>
+
+	* [misc/shell.c]
+	Fixed bug I introduced last release in InternalExtractIcon.
+
+	* [win32/file.c]
+	Added documentation for CreateFile32A.
+
+	* [documentation/wine.man]
+	Updated manpage.	
+
+	* [ChangeLog]
+	Added my entry from last release.
+
+Fri Jun 26 13:33:30 1998  Huw D M Davies <daviesh@abacus.physics.ox.ac.uk>
+
+	* [graphics/psdrv/*] [if1632/wineps.spec] [include/psdrv.h]
+	  [include/print.h] [objects/gdiobj.c]
+	First stages of an internal Postscript driver. See
+	graphics/psdrv/README . Should print text (badly) from win3.1 notepad,
+	write and winword6.
+
+	* [documentation/printing]
+	Some notes on printing.
+
+	* [controls/edit.c]
+	Strip off WS_BORDER in WM_NCREATE, edit draws its own rectangle.
+	EC_USEFONTINFO seems to be used as a left/right value for EM_SETMARGINS
+	and not as an action as the docs say. This actually makes more sense.
+	Scroll the caret back to zero after a WM_SETTEXT.
+
+Fri Jun 26 10:56:25 1998  Marcus Meissner <marcus@jet.franken.de>
+
+	* [if1632/snoop.c]
+	Added win16 inter-dll snooping.
+
+	* [win32/ordinals.c]
+	KERNEL_485 is GetProcessDword.
+
+	* [include/xmalloc.h][include/bitmap.h][misc/xmalloc.c]
+	Added xcalloc so we 0 initialize XImages. 
+	Fixes/Hides the 'junk around MOPYFish'.
+
+	* [misc/ntdll.c]
+	Some stubs added.
+
+Thu Jun 25 15:22:43 1998  Adrian Harvey <adrian@select.com.au>
+
+	* [scheduler/thread.c] 
+	Implemented SuspendThread and ResumeThread.
+
+Thu Jun 25 00:55:03 1998  Peter Hunnisett <hunnise@nortel.ca>
+
+	* [include/debug.h,dplay.h,dsound.h][multimedia/dsound.c,dplay.c]
+	  [relay32/dplayx.spec,dplay.spec][multimedia/Makefile.in]
+	  [documentation/status/directplay]
+	Added preliminary support for DirectPlay & DirectPlayLobby. Moved the
+	preliminary stubs put in the dsound files into two new files
+	dplay.h and dplay.c.
+	Added new debug channel (dplay) for this.
+	Created new document to keep track of implementation.
+
+	* [include/winioctl.h][win32/device.c]
+	Added some framework in DeviceIoControl to, in the future, support
+	the "builtin" windows dwIoControlCodes. Added new header file
+	winioctl.h . 
+
+	* [multimedia/mmsystem.c]
+	Added slightly improved debugging information for PlaySound.
+
+Wed Jun 24 12:00:00 1998  Juergen Schmied <juergen.schmied@metronet.de> 
+
+	* [files/profile.c][graphics/x11drv/xfont.c][loader/module.c]
+	Changed lstrcmpi32A to strcasecmp, lstrncmpi32A to strncasecmp,
+	lstrcpy32A to strcpy, lstrlen32A to strlen, lstrcmp32A to strcmp
+	because it's not necessary to support locale on such places.
+	It causes a huge overhead and even fails sometimes 
+
+	* [include/oleauto.h][include/winerror.h]
+	Added some ole-related constants.
+
+	* [misc/shell.c]
+	SHELL32_DllGetClassObject, SHGetSpecialFolderLocation,
+	SHGetPathFromIDList improved the stubs
+
+	* [ole/folders.c]
+	IShellFolder* functions rewrote the stubs so don't crash and give
+	something sensible back, started implementation of.
+
+	* [ole/typelib.c][relay32/oleaut32.spec]
+	LoadTypeLib32, RegisterTypeLib stub.
+
+	* [ole/ole2nls.c]
+	Fixed a buffer overrun in CompareString32A.
+	Test for a bad pointer in LCMapString32A (happens
+	in winhlp32 while building a index for searching). 
+
+	* [relay32/oleaut32.spec] [ole/typelib.c]
+	Added stub for LoadTypeLib (ole32) to make excel95 happy.
+
+Tue Jun 23 22:47:09 1998  Alex Priem <alexp@sci.kun.nl>
+
+	* [files/profile.c] [relay32/kernel32.spec]
+	Added WritePrivateProfileStructA, GetPrivateProfileStructA,
+	GetPrivateProfileSectionNames16.
+
+Tue Jun 23 01:34:43 1998  Pascal Cuoq <pcuoq@ens-lyon.fr>
+
+	* [ole/ole2nls.c]
+	GetStringTypeEx32A: Implemented CT_CTYPE2 and CT_CTYPE3 cases.
+	LCMapString32A: Map final '\0' for '\0'-terminated strings.
+
+	* [misc/shellord.c] [files/profile.c] [graphics/driver.c] 
+	  [loader/module.c] [msdos/int21.c] [windows/driver.c] [files/drive.c]
+	Changed lstrcmpi32A -> strcasecmp.  Should be OK in these places.
+
+Sat Jun 20 23:40:00 1998  Bertho Stultiens <bertho@akhphd.au.dk>
+
+	* [tools/wrc/]
+	Wrc version 1.0.2 (20-Jun-1998). Please revert to 
+	the file tools/wrc/CHANGES for details.
+
+Sat Jun 20 14:58:00 1998  Marcel Baur  <mbaur@g26.ethz.ch>
+
+	* [ole/ole2nls.c] [ole/nls/*]
+	Added the first 57 nls files, most are not yet complete.
+
+Wed Jun 17 11:16:54 1998  David Luyer <luyer@ucs.uwa.edu.au>
+
+	* [relay32/relay386.c] [if1632/relay.c]
+	Move debug_relay_(include|exclude)_list handling into
+	seperate function RELAY_ShowDebugmsgsRelay().  Include
+	checking of this for 16 bit calls (originally only
+	32-bit calls).
+
+	* [relay32/snoop.c] [misc/main.c]
+	Add debug_snoop_(include|exclude)_list as per the relay stuff.
+	Fix typo and add information on -debugmsg +/-relay=... in
+	help on -debugmsg.  Refer to availability of snoop too.
+
+Tue Jun 10 22:00:18 1998  Eric Kohl <ekohl@abo.rhein-zeitung.de>
+
+	* [controls/header.c][include/header.h][include/commctrl.h]
+	Added owner draw support.
+
+	* [windows/nonclient.c][windows/sysmetics.c]
+	Fixed menu bar height for Win95 look.
+	Split NC_AdjustRect95() into NC_AdjustRectOuter95() and
+	NC_AdjustRectInner95 to fix a menu bar bug.
+	Improved Win95 look.
+
+	* [controls/progress.c]
+	Improved drawing code. Borders will be drawn by non-client code.
+
+	* [controls/updown.c]
+	Changed memory allocation and fixed some bugs.
+
+	* [controls/toolbar.c]
+	Fixed TB_BUTTONSTRUCTSIZE bug in MFC programs.
+	Several improvements.
+
+	* [misc/shell.c]
+	Added stub for BrowseForFoldersA().
+
+	* [misc/shellord.c]
+	Added stub for SHELL32_147().
+
+	* [controls/comctl32undoc.c]
+	Minor changes.
+
+	* [documentation/common_controls]
+	New File: Documentation about development status, undocumented
+	features and functions of the common controls.
+
+----------------------------------------------------------------------
 Sun Jun 15 10:30:35 1998  Andreas Mohr <100.30936@germany.net>
 
 	* [files/dos_fs.c] [files/file.c] [if1632/wprocs.spec]
@@ -111,6 +349,27 @@ Fri Jun 12 06:23:19 1998  Matthew Becker <mbecker@glasscity.net>
 	* [win32/newfns.c]
 	Added stubs for OpenDesktopA, SetThreadDesktop, and
 	SetUserObjectInformationA.
+
+Wed Jun 10  20:28:08 1998  James Juran  <jrj120@psu.edu>
+
+	* [debugger/break.c]
+	Fixed bug introduced in 980503 that broke the -debug command 
+	line option for PE executable files.
+
+	* [configure.in] [include/acconfig.h] [include/debugtools.h]
+	  [documentation/debug-msgs]
+	Added 'configure' options to compile out debugging messages.
+	Use --disable-debug to disable all debugging messages, and
+	--disable-trace to just disable TRACE messages.  This results
+	in a stripped executable that is 15-20% smaller.  This option
+	is very much untested--don't expect it to work.
+
+	* [documentation/debug-msgs] [documentation/debugging]
+	Minor updates.
+
+	* [*/*.c]
+	Fixed some compile warnings.  This also includes the
+	compile_warnings_trivial patch from WineHQ.
 
 Tue Jun 10 22:00:18 1998  Eric Kohl <ekohl@abo.rhein-zeitung.de>
 

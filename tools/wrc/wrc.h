@@ -12,8 +12,8 @@
 #include "wrctypes.h"
 #endif
 
-#define WRC_VERSION	"1.0.1"
-#define WRC_RELEASEDATE	"(08-Jun-1998)"
+#define WRC_VERSION	"1.0.2"
+#define WRC_RELEASEDATE	"(20-Jun-1998)"
 #define WRC_FULLVERSION WRC_VERSION " " WRC_RELEASEDATE
 
 /* Only used in heavy debugging sessions */
@@ -77,6 +77,7 @@ extern int create_s;
 extern DWORD codepage;
 extern int pedantic;
 extern int auto_register;
+extern int leave_case;
 
 extern char *prefix;
 extern char *output_name;

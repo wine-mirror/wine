@@ -17,6 +17,7 @@
 #include "debug.h"
 #include "module.h"
 #include "heap.h"
+#include "debugstr.h"
 
 /**************************************************************************
  *                 RtlLengthRequiredSid			[NTDLL]
@@ -679,4 +680,35 @@ long long /*LARGE_INTEGER*/ WINAPI RtlExtendedIntegerMultiply(
 	FIXME(ntdll,"((%d<<32)+%d,%ld), implement this using normal integer arithmetic!\n",factor1.HighPart,factor1.LowPart,factor2);
 	return 0;
 #endif
+}
+
+DWORD WINAPI NtOpenKey(DWORD x1,DWORD x2,DWORD x3) {
+	FIXME(ntdll,"(0x%08lx(%s),0x%08lx,0x%08lx),stub!\n",x1,
+		debugstr_w(*(LPWSTR*)x1),x2,x3);
+	/* hmm... */
+	return RegOpenKey32W(x2,*(LPWSTR*)x1,x3);
+}
+
+DWORD WINAPI NtQueryValueKey(DWORD x1,DWORD x2,DWORD x3,DWORD x4,DWORD x5,DWORD x6) {
+	FIXME(ntdll,"(%08lx,%08lx,%08lx,%08lx,%08lx,%08lx),stub!\n",
+		x1,x2,x3,x4,x5,x6
+	);
+	return 0;
+}
+
+DWORD WINAPI NtQueryTimerResolution(DWORD x1,DWORD x2,DWORD x3) {
+	FIXME(ntdll,"(0x%08lx,0x%08lx,0x%08lx), stub!\n",x1,x2,x3);
+	return 1;
+}
+
+DWORD WINAPI NtClose(DWORD x1) {
+	FIXME(ntdll,"(0x%08lx),stub!\n",x1);
+	return 1;
+}
+
+DWORD WINAPI NtQueryInformationProcess(DWORD x1,DWORD x2,DWORD x3,DWORD x4,DWORD x5) {
+	FIXME(ntdll,"(0x%08lx,0x%08lx,0x%08lx,0x%08lx,0x%08lx),stub!\n",
+		x1,x2,x3,x4,x5
+	);
+	return 0;
 }

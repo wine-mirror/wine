@@ -1,0 +1,23 @@
+DEFS      = -D__WINE__
+TOPSRCDIR = @top_srcdir@
+TOPOBJDIR = ../..
+SRCDIR    = @srcdir@
+VPATH     = @srcdir@
+MODULE    = psdrv
+
+C_SRCS = \
+	afm.c \
+	driver.c \
+	escape.c \
+	font.c \
+	graphics.c \
+	init.c \
+	objects.c \
+	ps.c \
+	text.c
+
+all: $(MODULE).o
+
+@MAKE_RULES@
+
+### Dependencies:

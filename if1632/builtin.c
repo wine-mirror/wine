@@ -76,6 +76,7 @@ extern const WIN16_DESCRIPTOR WIN32S16_Descriptor;
 extern const WIN16_DESCRIPTOR WIN87EM_Descriptor;
 extern const WIN16_DESCRIPTOR WINASPI_Descriptor;
 extern const WIN16_DESCRIPTOR WINDEBUG_Descriptor;
+extern const WIN16_DESCRIPTOR WINEPS_Descriptor;
 extern const WIN16_DESCRIPTOR WING_Descriptor;
 extern const WIN16_DESCRIPTOR WINSOCK_Descriptor;
 extern const WIN16_DESCRIPTOR WPROCS_Descriptor;
@@ -117,6 +118,7 @@ static BUILTIN16_DLL BuiltinDLLs[] =
     { &WIN32S16_Descriptor, 0 },
     { &WIN87EM_Descriptor,  DLL_FLAG_NOT_USED },
     { &WINASPI_Descriptor,  0 },
+    { &WINEPS_Descriptor,   DLL_FLAG_ALWAYS_USED },
     { &WING_Descriptor,     0 },
     { &WINSOCK_Descriptor,  0 },
     /* Last entry */

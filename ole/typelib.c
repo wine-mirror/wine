@@ -54,7 +54,7 @@ QueryPathOfRegTypeLib16(
 	*path = SysAllocString16(pathname);
 	return S_OK;
 }
-
+ 
 /****************************************************************************
  *	QueryPathOfRegTypeLib			(OLEAUT32.164)
  * RETURNS
@@ -94,7 +94,6 @@ QueryPathOfRegTypeLib32(
 
 /******************************************************************************
  * LoadTypeLib [TYPELIB.3]  Loads and registers a type library
- *
  * NOTES
  *    Docs: OLECHAR FAR* szFile
  *    Docs: iTypeLib FAR* FAR* pptLib
@@ -111,6 +110,45 @@ HRESULT WINAPI LoadTypeLib(
     return E_FAIL;
 }
 
+/******************************************************************************
+ * LoadTypeLib				(OLEAUT32.161)
+ * Loads and registers a type library
+ * NOTES
+ *    Docs: OLECHAR FAR* szFile
+ *    Docs: iTypeLib FAR* FAR* pptLib
+ *
+ * RETURNS
+ *    Success: S_OK
+ *    Failure: Status
+ */
+HRESULT WINAPI LoadTypeLib32(
+    void *szFile,   /* [in] Name of file to load from */
+    void * *pptLib) /* [out] Pointer to pointer to loaded type library */
+{
+    FIXME(ole, "(%s,%p): stub\n",szFile,pptLib);
+    (long *)pptLib=0x123;
+    return S_OK;           /* fixme: pretend everything is OK*/
+}
+
+/******************************************************************************
+ * RegisterTypeLib				(OLEAUT32.163)
+ * Adds information about a type library to the System Registry           
+ * NOTES
+ *    Docs: ITypeLib FAR * ptlib
+ *    Docs: OLECHAR FAR* szFullPath
+ *    Docs: OLECHAR FAR* szHelpDir
+ *
+ * RETURNS
+ *    Success: S_OK
+ *    Failure: Status
+ */
+HRESULT WINAPI RegisterTypeLib32(
+     ITypeLib * ptlib,      /*[in] Pointer to the library*/
+     OLECHAR * szFullPath, /*[in] full Path of the library*/
+     OLECHAR * szHelpDir)  /*[in] dir to the helpfile for the library, may be NULL*/  
+{   FIXME(ole, "(%p,%s,%s): stub\n",ptlib, szFullPath,szHelpDir);
+    return S_OK;	/* fixme: pretend everything is OK*/
+}
 
 /****************************************************************************
  *	OABuildVersion				(TYPELIB.15)

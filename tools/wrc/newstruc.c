@@ -155,6 +155,7 @@ icon_group_t *new_icon_group(raw_data_t *rd, int *memopt)
 	}
 	else
 		icog->memopt = WRC_MO_MOVEABLE | WRC_MO_PURE | WRC_MO_DISCARDABLE;
+	icog->lvc.language = dup_language(currentlanguage);
 	split_icons(rd, icog, &(icog->nicon));
 	free(rd->data);
 	free(rd);
@@ -171,6 +172,7 @@ cursor_group_t *new_cursor_group(raw_data_t *rd, int *memopt)
 	}
 	else
 		curg->memopt = WRC_MO_MOVEABLE | WRC_MO_PURE | WRC_MO_DISCARDABLE;
+	curg->lvc.language = dup_language(currentlanguage);
 	split_cursors(rd, curg, &(curg->ncursor));
 	free(rd->data);
 	free(rd);

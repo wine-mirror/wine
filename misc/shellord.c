@@ -68,9 +68,9 @@ LPSHITEMID WINAPI SHELL32_16(LPITEMIDLIST iil) {
  *     Original Name: PathIsRoot
  */
 BOOL32 WINAPI SHELL32_29(LPCSTR x) {
-	if (!lstrcmp32A(x+1,":\\"))		/* "X:\" */
+	if (!strcmp(x+1,":\\"))		/* "X:\" */
 		return 1;
-	if (!lstrcmp32A(x,"\\"))		/* "\" */
+	if (!strcmp(x,"\\"))		/* "\" */
 		return 1;
 	if (x[0]=='\\' && x[1]=='\\') {		/* UNC "\\<xx>\" */
 		int	foundbackslash = 0;
@@ -400,7 +400,7 @@ void WINAPI SHELL32_175(DWORD x1,DWORD x2,DWORD x3,DWORD x4) {
  *     Original name: RegisterShellHook (exported by ordinal)
  */
 void WINAPI SHELL32_181(HWND32 hwnd, DWORD y) {
-    FIXME(shell,"(0x%08lx,0x%08lx):stub.\n",hwnd,y);
+    FIXME(shell,"(0x%08lx,0x%08x):stub.\n",hwnd,y);
 }
 
 /*************************************************************************
@@ -441,7 +441,7 @@ static GetClassPtr SH_find_moduleproc(LPSTR dllname,HMODULE32 *xhmod,
 	FARPROC32	dllunload,nameproc;
 
 	if (xhmod) *xhmod = 0;
-	if (!lstrcmpi32A(SHELL32_34(dllname),"shell32.dll"))
+	if (!strcasecmp(SHELL32_34(dllname),"shell32.dll"))
 		return (GetClassPtr)SHELL32_DllGetClassObject;
 
 	hmod = LoadLibraryEx32A(dllname,0,LOAD_WITH_ALTERED_SEARCH_PATH);
@@ -607,6 +607,8 @@ DWORD WINAPI SHELL32_152(LPITEMIDLIST iil) {
 	LPSHITEMID	si;
 	DWORD		len;
 
+	if (!iil)
+		return 0;
 	si = &(iil->mkid);
 	len = 2;
 	while (si->cb) {
@@ -639,6 +641,9 @@ DWORD WINAPI SHELL32_165(DWORD x,LPCSTR path) {
 /*************************************************************************
  *	 		 SHELL32_195   			[SHELL32.195]
  * free_ptr() - frees memory using IMalloc
+ *
+ * NOTES
+ *     Original name: SHFree (exported by ordinal)
  */
 DWORD WINAPI SHELL32_195(LPVOID x) {
 	return LocalFree32((HANDLE32)x);
@@ -662,7 +667,8 @@ LPITEMIDLIST WINAPI SHELL32_18(LPITEMIDLIST iil) {
 
 	len = SHELL32_152(iil);
 	newiil = (LPITEMIDLIST)SHELL32_196(len);
-	memcpy(newiil,iil,len);
+	if (newiil)
+		memcpy(newiil,iil,len);
 	return newiil;
 }
 
@@ -685,16 +691,22 @@ LPITEMIDLIST WINAPI SHELL32_25(LPITEMIDLIST iil1,LPITEMIDLIST iil2) {
 /*************************************************************************
  *	 		 SHELL32_155   			[SHELL32.155]
  * free_check_ptr - frees memory (if not NULL) allocated by SHMalloc allocator
+ *
+ * NOTES
+ *     Original name: ILFree (exported by ordinal)
  */
 DWORD WINAPI SHELL32_155(LPVOID x) {
-	if (!x)
+	FIXME (shell,"(0x%08lx):stub.\n", (DWORD)x);
+//	if (!x)
 		return 0;
-	return SHELL32_195(x);
+//	return SHELL32_195(x);
 }
 
 /*************************************************************************
  * SHELL32_85 [SHELL32.85]
- * unknown
+ *
+ * NOTES
+ *     Original name: OpenRegStream (exported by ordinal)
  */
 DWORD WINAPI SHELL32_85(DWORD x1,DWORD x2,DWORD x3,DWORD x4) {
     FIXME(shell,"(0x%08lx,0x%08lx,0x%08lx,0x%08lx):stub.\n",
@@ -706,15 +718,21 @@ DWORD WINAPI SHELL32_85(DWORD x1,DWORD x2,DWORD x3,DWORD x4) {
 /*************************************************************************
  * SHELL32_86 [SHELL32.86]
  * unknown
+ *
+ * NOTES
+ *     Original name: SHRegisterDragDrop (exported by ordinal)
  */
 DWORD WINAPI SHELL32_86(HWND32 hwnd,DWORD x2) {
-    FIXME(shell,"(0x%08lx,0x%08lx):stub.\n",hwnd,x2);
+    FIXME (shell, "(0x%08lx,0x%08x):stub.\n", hwnd, x2);
     return 0;
 }
 
 /*************************************************************************
  * SHELL32_87 [SHELL32.87]
  * unknown
+ *
+ * NOTES
+ *     Original name: SHRevokeDragDrop (exported by ordinal)
  */
 DWORD WINAPI SHELL32_87(DWORD x) {
     FIXME(shell,"(0x%08lx):stub.\n",x);
@@ -724,13 +742,15 @@ DWORD WINAPI SHELL32_87(DWORD x) {
 
 /*************************************************************************
  * SHELL32_61 [SHELL32.61]
- * Shell/Run-Dialog
+ *
+ * NOTES
+ *     Original name: RunFileDlg (exported by ordinal)
  */
 DWORD WINAPI
 SHELL32_61 (HWND32 hwndOwner, DWORD dwParam1, DWORD dwParam2,
 	    LPSTR lpszTitle, LPSTR lpszPrompt, UINT32 uFlags)
 {
-    FIXME (shell,"(0x%08x 0x%lx 0x%lx \"%s\" \"%s\" 0x%lx):stub.\n",
+    FIXME (shell,"(0x%08x 0x%lx 0x%lx \"%s\" \"%s\" 0x%x):stub.\n",
 	   hwndOwner, dwParam1, dwParam2, lpszTitle, lpszPrompt, uFlags);
     return 0;
 }
@@ -758,6 +778,20 @@ SHELL32_184 (DWORD dwParam1, DWORD dwParam2, DWORD dwParam3,
 {
     FIXME (shell,"(0x%lx 0x%lx 0x%lx 0x%lx 0x%lx):stub.\n",
 	   dwParam1, dwParam2, dwParam3, dwParam4, dwParam5);
+    return 0;
+}
+
+
+/*************************************************************************
+ * SHELL32_147 [SHELL32.147]
+ *
+ * NOTES
+ *     Original name: SHCLSIDFromString (exported by ordinal)
+ */
+DWORD WINAPI
+SHELL32_147 (DWORD dwParam1, DWORD dwParam2)
+{
+    FIXME (shell,"(0x%lx 0x%lx):stub.\n", dwParam1, dwParam2);
     return 0;
 }
 

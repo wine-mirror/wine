@@ -1,0 +1,31 @@
+
+---------------------------------------------------------------------------
+Version 1.0.2 (20-Jun-1998)
+- Started this file
+- Fixed a bug in filename scanning when they are double quoted. The code now
+  is compatible with MS' rc and Borland's brc. There is a compromise in the
+  filenames because of case-sensitivity under *nix.
+- Backslashes in a filepath are now converted to forward slashes and double
+- Fixed a bug in printing the filename if loading of a file should fail.
+  backslashes are converted to single forward slash.
+- Added -L option to prevent conversion to lower case for embedded filenames
+  in resource statements.
+- Added language posibilities to icons and cursors so that the current
+  language is put into the .res ans .s file.
+- Added character position indication of an error.
+- Fixed CLASS statement so that it accepts double quoted strings as class
+  argument. This seems to be the correct behaviour (see SDK). The unquoted
+  class-name is still supported because it seems a reasonable option.
+- Fixed accelerators with CONTROL option set so that they generate correct
+  code instead of generating an error.
+- Added testing for flex version 2.5 or better because wrc needs the
+  yy_scan* functions to do preprocessing.
+
+---------------------------------------------------------------------------
+Version  1.0.1 (08-Jun-1998)
+- Added -A commandline option to generate autoregister code for the winelib
+  programs.
+
+---------------------------------------------------------------------------
+Version 1.0.0 (28-May-1998)
+- Initial release

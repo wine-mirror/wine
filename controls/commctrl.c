@@ -218,7 +218,7 @@ InitCommonControlsEx (LPINITCOMMONCONTROLSEX lpInitCtrls)
 
 
 /***********************************************************************
- * MenuHelp (COMCTL32.2)
+ * MenuHelp [COMCTL32.2]
  *
  *
  *
@@ -234,7 +234,7 @@ MenuHelp (UINT32 uMsg, WPARAM32 wParam, LPARAM lParam, HMENU32 hMainMenu,
     if (!IsWindow32 (hwndStatus)) return;
 
     switch (uMsg) {
-        case WM_MENUSELECT:
+	case WM_MENUSELECT:
             TRACE (commctrl, "WM_MENUSELECT wParam=0x%X lParam=0x%lX\n",
                    wParam, lParam);
 
@@ -245,7 +245,6 @@ MenuHelp (UINT32 uMsg, WPARAM32 wParam, LPARAM lParam, HMENU32 hMainMenu,
             else {
                 if (HIWORD(wParam) & MF_POPUP) {
                     TRACE (commctrl, "popup menu selected!\n");
-                    FIXME (commctrl, "no popup menu texts!\n");
 
                     szStatusText[0] = 0;
                 }
@@ -281,8 +280,8 @@ CreateToolbarEx (HWND32 hwnd, DWORD style, UINT32 wID, INT32 nBitmaps,
                  INT32 dxBitmap, INT32 dyBitmap, UINT32 uStructSize)
 {
     HWND32 hwndTB =
-        CreateWindowEx32A(0, TOOLBARCLASSNAME32A, "", style, 0, 0, 0, 0,
-			  hwnd, (HMENU32)wID, 0, NULL);
+        CreateWindowEx32A (0, TOOLBARCLASSNAME32A, "", style, 0, 0, 0, 0,
+			   hwnd, (HMENU32)wID, 0, NULL);
     if(hwndTB) {
 	TBADDBITMAP tbab;
 
@@ -348,35 +347,39 @@ CreateToolbar (HWND32 hwnd, DWORD style, UINT32 wID, INT32 nBitmaps,
 /***********************************************************************
  * GetEffectiveClientRect [COMCTL32.4]
  *
+ * PARAMS
+ *     hwnd   [I] handle to the client window.
+ *     lpRect [O] pointer to the rectangle of the client window
+ *     lpInfo [I] pointer to an array of integers
  *
- *
+ * NOTES
  */
 
 VOID WINAPI
 GetEffectiveClientRect (HWND32 hwnd, LPRECT32 lpRect, LPINT32 lpInfo)
 {
-    RECT32  rcClient, rcCtrl;
-    HWND32  hwndCtrl;
-    LPINT32 lpRun;
+    RECT32 rcClient, rcCtrl;
+    INT32  idCtrl, *lpRun;
 
     TRACE (commctrl, "hwnd=0x%08lx lpRect=0x%08lx lpInfo=0x%08lx\n",
 	   (DWORD)hwnd, (DWORD)lpRect, (DWORD)lpInfo);
 
     GetClientRect32 (hwnd, &rcClient);
-
+#if 0
     lpRun = lpInfo;
-    TRACE (commctrl, "*lpRun=0x%08x\n", *lpRun);
-    while (*lpRun) {
-	lpRun++;
-	TRACE (commctrl, "control id 0x%08x\n", *lpRun);
-	hwndCtrl = GetDlgItem32 (hwnd, *lpRun);
-	GetWindowRect32 (hwndCtrl, &rcCtrl);
-	MapWindowPoints32 (NULL, hwnd, (LPPOINT32)&rcCtrl, 2);
-	SubtractRect32 (&rcClient, &rcClient, &rcCtrl);
-	lpRun++;
-	TRACE (commctrl, "*lpRun=0x%08x\n", *lpRun);
-    }
 
+    do {
+	lpRun += 3;
+	idCtrl = *lpRun;
+	if (idCtrl) {
+	    TRACE (commctrl, "control id 0x%x\n", idCtrl);
+	    GetWindowRect32 (GetDlgItem32 (hwnd, idCtrl), &rcCtrl);
+	    MapWindowPoints32 (NULL, hwnd, (LPPOINT32)&rcCtrl, 2);
+	    SubtractRect32 (&rcClient, &rcClient, &rcCtrl);
+	    lpRun++;
+	}
+    } while (idCtrl);
+#endif
     CopyRect32 (lpRect, &rcClient);
 }
 

@@ -1406,8 +1406,12 @@ WORD WINAPI GetWindowWord32( HWND32 hwnd, INT32 offset )
     		WARN( win,"GWW_ID: discards high bits of 0x%08x!\n",
                     wndPtr->wIDmenu);
     	return (WORD)wndPtr->wIDmenu;
-    case GWW_HWNDPARENT: return wndPtr->parent ?
-			wndPtr->parent->hwndSelf : wndPtr->owner->hwndSelf;
+    case GWW_HWNDPARENT: 
+    	return wndPtr->parent ?
+		wndPtr->parent->hwndSelf : (
+			wndPtr->owner ?
+			 wndPtr->owner->hwndSelf : 
+			 0);
     case GWW_HINSTANCE:  
     	if (HIWORD(wndPtr->hInstance))
     		WARN(win,"GWW_HINSTANCE: discards high bits of 0x%08x!\n",
@@ -1726,6 +1730,15 @@ INT32 WINAPI GetWindowTextLength32W( HWND32 hwnd )
 BOOL16 WINAPI IsWindow16( HWND16 hwnd )
 {
     return IsWindow32( hwnd );
+}
+
+void WINAPI WIN16_IsWindow16( CONTEXT *context )
+{
+    WORD *stack = PTR_SEG_OFF_TO_LIN(SS_reg(context), SP_reg(context));
+    HWND16 hwnd = (HWND16)stack[2];
+
+    AX_reg(context) = IsWindow32( hwnd );
+    ES_reg(context) = USER_HeapSel;
 }
 
 

@@ -131,9 +131,9 @@ type win32
 149 stub SysStringByteLen
 150 stub SysAllocStringByteLen
 160 stub CreateTypeLib
-161 stub LoadTypeLib
-162 stub LoadRegTypeLib
-163 stub RegisterTypeLib
+161 stdcall LoadTypeLib (ptr ptr) LoadTypeLib32
+162 stub LoadRegTypeLib 
+163 stdcall RegisterTypeLib(ptr str str) RegisterTypeLib32
 164 stdcall QueryPathOfRegTypeLib(ptr long long long ptr) QueryPathOfRegTypeLib32
 165 stub LHashValOfNameSys
 166 stub LHashValOfNameSysA

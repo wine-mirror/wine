@@ -246,21 +246,20 @@ BOOL32 GDI_Init(void)
 
     DIB_Init();	/* always before X11DRV_Init() */
 
-    if( X11DRV_Init() )
-    {
+    if( ! X11DRV_Init() )
+        return FALSE;
+
 	/* Create default palette */
 
       /* DR well *this* palette can't be moveable (?) */
-
-	HPALETTE16 hpalette = PALETTE_Init();
-
-	if( hpalette )
-	{
-	    StockObjects[DEFAULT_PALETTE] = (GDIOBJHDR *)GDI_HEAP_LOCK( hpalette );
-	    return TRUE;
-	}
+    {
+    HPALETTE16 hpalette = PALETTE_Init();
+    if( !hpalette )
+        return FALSE;
+    StockObjects[DEFAULT_PALETTE] = (GDIOBJHDR *)GDI_HEAP_LOCK( hpalette );
     }
-    return FALSE;
+
+    return TRUE;
 }
 
 

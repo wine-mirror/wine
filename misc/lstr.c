@@ -43,13 +43,13 @@
 /* FIXME: should probably get rid of wctype.h altogether */
 #include "casemap.h"
 
-WCHAR _towupper(WCHAR code)
+WCHAR towupper(WCHAR code)
 {
     const WCHAR * ptr = uprtable[HIBYTE(code)];
     return ptr ? ptr[LOBYTE(code)] : code;
 }
 
-WCHAR _towlower(WCHAR code)
+WCHAR towlower(WCHAR code)
 {
     const WCHAR * ptr = lwrtable[HIBYTE(code)];
     return ptr ? ptr[LOBYTE(code)] : code;
@@ -171,15 +171,10 @@ SEGPTR WINAPI AnsiPrev16( SEGPTR start, SEGPTR current )
 void WINAPI OutputDebugString16( LPCSTR str )
 {
     char module[10];
-    char *p, *buffer = HeapAlloc( GetProcessHeap(), 0, strlen(str)+2 );
-    /* Remove CRs */
-    for (p = buffer; *str; str++) if (*str != '\r') *p++ = *str;
-    *p = '\0';
-    if ((p > buffer) && (p[-1] == '\n')) p[1] = '\0'; /* Remove trailing \n */
     if (!GetModuleName( GetCurrentTask(), module, sizeof(module) ))
         strcpy( module, "???" );
-    DUMP("%s says '%s'\n", module, buffer );
-    HeapFree( GetProcessHeap(), 0, buffer );
+
+    DUMP( "%s says %s\n", module, debugstr_a(str) );
 }
 
 

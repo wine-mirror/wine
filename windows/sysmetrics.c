@@ -27,8 +27,12 @@ void SYSMETRICS_Init(void)
     sysMetrics[SM_CXVSCROLL] =
 	PROFILE_GetWineIniInt("Tweak.Layout", "ScrollBarWidth", 16) + 1;
     sysMetrics[SM_CYHSCROLL] = sysMetrics[SM_CXVSCROLL];
-    sysMetrics[SM_CYCAPTION] = 2 +
-	PROFILE_GetWineIniInt("Tweak.Layout", "CaptionHeight", 18);
+    if (TWEAK_Win95Look)
+	sysMetrics[SM_CYCAPTION] =
+	    PROFILE_GetWineIniInt("Tweak.Layout", "CaptionHeight", 19);
+    else
+	sysMetrics[SM_CYCAPTION] = 2 +
+	    PROFILE_GetWineIniInt("Tweak.Layout", "CaptionHeight", 18);
     sysMetrics[SM_CXBORDER] = 1;
     sysMetrics[SM_CYBORDER] = sysMetrics[SM_CXBORDER];
     sysMetrics[SM_CXDLGFRAME] =
@@ -39,8 +43,12 @@ void SYSMETRICS_Init(void)
     sysMetrics[SM_CXHTHUMB] = sysMetrics[SM_CYVTHUMB];
     sysMetrics[SM_CXICON] = 32;
     sysMetrics[SM_CYICON] = 32;
-    sysMetrics[SM_CYMENU] =
-	PROFILE_GetWineIniInt("Tweak.Layout", "MenuHeight", 18);
+    if (TWEAK_Win95Look)
+	sysMetrics[SM_CYMENU] =
+	    PROFILE_GetWineIniInt("Tweak.Layout", "MenuHeight", 19);
+    else
+	sysMetrics[SM_CYMENU] =
+	    PROFILE_GetWineIniInt("Tweak.Layout", "MenuHeight", 18);
     sysMetrics[SM_CXFULLSCREEN] = sysMetrics[SM_CXSCREEN];
     sysMetrics[SM_CYFULLSCREEN] =
 	sysMetrics[SM_CYSCREEN] - sysMetrics[SM_CYCAPTION];

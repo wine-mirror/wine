@@ -212,6 +212,9 @@ static BOOL32 MAIN_ParseDebugOptions(char *options)
   /* defined in relay32/relay386.c */
   extern char **debug_relay_includelist;
   extern char **debug_relay_excludelist;
+  /* defined in relay32/snoop.c */
+  extern char **debug_snoop_includelist;
+  extern char **debug_snoop_excludelist;
 
   int l, cls;
   if (strlen(options)<3)
@@ -247,13 +250,14 @@ static BOOL32 MAIN_ParseDebugOptions(char *options)
 	    if(cls == -1 || cls == j)
 	      debug_msg_enabled[i][j]=(*options=='+');
       }
-    else if (!lstrncmpi32A(options+1, "relay=", 6))
+    else if (!lstrncmpi32A(options+1, "relay=", 6) ||
+	     !lstrncmpi32A(options+1, "snoop=", 6))
       {
 	int i, j;
 	char *s, *s2, ***output, c;
 
 	for (i=0; i<DEBUG_CHANNEL_COUNT; i++)
-	  if (debug_ch_name && (!lstrncmpi32A(debug_ch_name[i],"relay",5))){
+	  if (debug_ch_name && (!lstrncmpi32A(debug_ch_name[i],options+1,5))){
 	    for(j=0; j<DEBUG_CLASS_COUNT; j++)
 	      if(cls == -1 || cls == j)
 		debug_msg_enabled[i][j]=TRUE;
@@ -262,10 +266,13 @@ static BOOL32 MAIN_ParseDebugOptions(char *options)
 	/* should never happen, maybe assert(i!=DEBUG_CHANNEL_COUNT)? */
 	if (i==DEBUG_CHANNEL_COUNT)
 	  return FALSE;
-	if (*options == '+')
-	  output = &debug_relay_includelist;
-	else
-	  output = &debug_relay_excludelist;
+	output = (*options == '+') ?
+			((*(options+1) == 'r') ?
+				&debug_relay_includelist :
+				&debug_snoop_includelist) :
+			((*(options+1) == 'r') ?
+				&debug_relay_excludelist :
+				&debug_snoop_excludelist);
 	s = options + 7;
 	i = 1;
 	while((s = strchr(s, ':'))) i++, s++;
@@ -448,8 +455,13 @@ static void MAIN_ParseOptions( int *argc, char *argv[] )
 	    int i;
 	    MSG("%s: Syntax: -debugmsg [class]+xxx,...  or "
 		    "-debugmsg [class]-xxx,...\n",argv[0]);
-	    MSG("Example: -debugmsg +all,warn-heap"
-		    "turn on all messages except warning heap messages\n");
+	    MSG("Example: -debugmsg +all,warn-heap\n"
+		    "  turn on all messages except warning heap messages\n");
+	    MSG("Special case: -debugmsg +relay=DLL:DLL.###:FuncName\n"
+		"  turn on -debugmsg +relay only as specified\n"
+		"Special case: -debugmsg -relay=DLL:DLL.###:FuncName\n"
+		"  turn on -debugmsg +relay except as specified\n"
+		"Also permitted, +snoop=..., -snoop=... as with relay.\n\n");
 
 	    MSG("Available message classes:\n");
 	    for(i=0;i<DEBUG_CLASS_COUNT;i++)

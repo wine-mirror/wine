@@ -247,6 +247,84 @@ extern LPENUMIDLIST IEnumIDList_Constructor();
 
 DWORD WINAPI SHELL32_DllGetClassObject(LPCLSID,REFIID,LPVOID*);
 
+
+/****************************************************************************
+ * SHBrowseForFolder API
+ */
+
+typedef int (CALLBACK* BFFCALLBACK)(HWND32 hwnd, UINT32 uMsg, LPARAM lParam, LPARAM lpData);
+
+typedef struct tagBROWSEINFO32A {
+    HWND32        hwndOwner;
+    LPCITEMIDLIST pidlRoot;
+    LPSTR         pszDisplayName;
+    LPCSTR        lpszTitle;
+    UINT32        ulFlags;
+    BFFCALLBACK   lpfn;
+    LPARAM        lParam;
+    int           iImage;
+} BROWSEINFO32A, *PBROWSEINFO32A, *LPBROWSEINFO32A;
+
+typedef struct tagBROWSEINFO32W {
+    HWND32        hwndOwner;
+    LPCITEMIDLIST pidlRoot;
+    LPWSTR        pszDisplayName;
+    LPCWSTR       lpszTitle;
+    UINT32        ulFlags;
+    BFFCALLBACK   lpfn;
+    LPARAM        lParam;
+    int           iImage;
+} BROWSEINFO32W, *PBROWSEINFO32W, *LPBROWSEINFO32W; 
+
+#define BROWSEINFO   WINELIB_NAME_AW(BROWSEINFO)
+#define PBROWSEINFO  WINELIB_NAME_AW(PBROWSEINFO)
+#define LPBROWSEINFO WINELIB_NAME_AW(LPBROWSEINFO)
+
+// Browsing for directory.
+#define BIF_RETURNONLYFSDIRS   0x0001
+#define BIF_DONTGOBELOWDOMAIN  0x0002
+#define BIF_STATUSTEXT         0x0004
+#define BIF_RETURNFSANCESTORS  0x0008
+#define BIF_EDITBOX            0x0010
+#define BIF_VALIDATE           0x0020
+ 
+#define BIF_BROWSEFORCOMPUTER  0x1000
+#define BIF_BROWSEFORPRINTER   0x2000
+#define BIF_BROWSEINCLUDEFILES 0x4000
+
+// message from browser
+#define BFFM_INITIALIZED        1
+#define BFFM_SELCHANGED         2
+#define BFFM_VALIDATEFAILEDA    3   // lParam:szPath ret:1(cont),0(EndDialog)
+#define BFFM_VALIDATEFAILEDW    4   // lParam:wzPath ret:1(cont),0(EndDialog)
+
+// messages to browser
+#define BFFM_SETSTATUSTEXTA     (WM_USER+100)
+#define BFFM_ENABLEOK           (WM_USER+101)
+#define BFFM_SETSELECTIONA      (WM_USER+102)
+#define BFFM_SETSELECTIONW      (WM_USER+103)
+#define BFFM_SETSTATUSTEXTW     (WM_USER+104)
+
+LPITEMIDLIST WINAPI SHBrowseForFolder32A(LPBROWSEINFO32A lpbi);
+/*
+LPITEMIDLIST WINAPI SHBrowseForFolder32W(LPBROWSEINFO32W lpbi);
+
+#ifdef UNICODE
+#define SHBrowseForFolder   SHBrowseForFolderW
+#define BFFM_SETSTATUSTEXT  BFFM_SETSTATUSTEXTW
+#define BFFM_SETSELECTION   BFFM_SETSELECTIONW
+
+#define BFFM_VALIDATEFAILED BFFM_VALIDATEFAILEDW
+#else
+#define SHBrowseForFolder   SHBrowseForFolderA
+#define BFFM_SETSTATUSTEXT  BFFM_SETSTATUSTEXTA
+#define BFFM_SETSELECTION   BFFM_SETSELECTIONA
+
+#define BFFM_VALIDATEFAILED BFFM_VALIDATEFAILEDA 
+#endif 
+*/
+
+
 #undef PURE
 #undef FAR
 #undef THIS

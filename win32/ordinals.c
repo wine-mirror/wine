@@ -101,7 +101,6 @@ BOOL32 WINAPI WOWGetDescriptor(SEGPTR segptr,LPLDT_ENTRY ldtent)
  *           GetProcessDword    (KERNEL32.18)
  * 'Of course you cannot directly access Windows internal structures'
  */
-
 DWORD WINAPI GetProcessDword(DWORD processid,DWORD action)
 {
 	PDB32	*process = processid? PROCESS_IdToPDB( processid )
@@ -170,7 +169,6 @@ DWORD WINAPI GetProcessDword(DWORD processid,DWORD action)
 	}
 	/* shouldn't come here */
 }
-
 
 /***********************************************************************
  *		GetWin16DOSEnv			(KERNEL32.34)

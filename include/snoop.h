@@ -1,8 +1,13 @@
 /* 
- * Definitions for inter-win32-dll snooping
+ * Definitions for inter-dll snooping
  */
 #ifndef __WINE_SNOOP_H
 #define __WINE_SNOOP_H
-extern void SNOOP_RegisterDLL(HMODULE32 hmod,LPCSTR name,DWORD nrofordinals);
-extern FARPROC32 SNOOP_GetProcAddress32(HMODULE32 hmod,LPCSTR name,DWORD ordinal,FARPROC32 origfun);
+
+#include "module.h"
+
+extern void SNOOP_RegisterDLL(HMODULE32,LPCSTR,DWORD);
+extern FARPROC32 SNOOP_GetProcAddress32(HMODULE32,LPCSTR,DWORD,FARPROC32);
+extern void SNOOP16_RegisterDLL(NE_MODULE*,LPCSTR);
+extern FARPROC16 SNOOP16_GetProcAddress16(HMODULE16,DWORD,FARPROC16);
 #endif

@@ -64,7 +64,7 @@ file	krnl386.exe
 64  pascal16 AccessResource(word word) AccessResource16
 65  pascal SizeofResource(word word) SizeofResource16
 66  pascal16 AllocResource(word word long) AllocResource
-67  pascal SetResourceHandler(word segstr segptr) THUNK_SetResourceHandler
+67  pascal SetResourceHandler(word segstr segptr) SetResourceHandler
 68  pascal16 InitAtomTable(word) InitAtomTable16
 69  pascal16 FindAtom(segstr) FindAtom16
 70  pascal16 AddAtom(segstr) AddAtom16
@@ -133,7 +133,7 @@ file	krnl386.exe
 130 pascal FileCDR(ptr) FileCDR
 131 pascal GetDOSEnvironment() GetDOSEnvironment
 132 pascal GetWinFlags() GetWinFlags
-133 pascal16 GetExePtr(word) GetExePtr
+133 register GetExePtr(word) WIN16_GetExePtr
 134 pascal16 GetWindowsDirectory(ptr word) GetWindowsDirectory16
 135 pascal16 GetSystemDirectory(ptr word) GetSystemDirectory16
 136 pascal16 GetDriveType(word) GetDriveType16
@@ -322,7 +322,7 @@ file	krnl386.exe
 480 stub KERNEL_480
 481 stub KERNEL_481
 482 pascal LoadLibrary32(str) LoadLibrary32A
-485 stub KERNEL_485
+485 pascal GetProcessDWORD(long s_word) GetProcessDword
 486 stub KERNEL_486
 491 stub RegisterServiceProcess
 500 stub KERNEL_500

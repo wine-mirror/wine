@@ -2,6 +2,9 @@
  *	Shell Folder stuff
  *
  *	Copyright 1997	Marcus Meissner
+ *
+ *  currently work in progress on IShellFolders,IEnumIDList and pidl handling
+ *  <contact juergen.schmied@metronet.de, 980624>
  */
 
 #include <ctype.h>
@@ -13,6 +16,7 @@
 #include "compobj.h"
 #include "interfaces.h"
 #include "shlobj.h"
+#include "winerror.h"
 
 /******************************************************************************
  * IEnumIDList implementation
@@ -66,7 +70,7 @@ LPENUMIDLIST IEnumIDList_Constructor() {
  * IShellFolder implementation
  */
 static ULONG WINAPI IShellFolder_Release(LPSHELLFOLDER this) {
-	TRACE(ole,"(%p)->()\n",this);
+	TRACE(ole,"(%p)->(count=%lu)\n",this,this->ref);
 	if (!--(this->ref)) {
 		WARN(ole," freeing IShellFolder(%p)\n",this);
 		HeapFree(GetProcessHeap(),0,this);
@@ -76,43 +80,65 @@ static ULONG WINAPI IShellFolder_Release(LPSHELLFOLDER this) {
 }
 
 static ULONG WINAPI IShellFolder_AddRef(LPSHELLFOLDER this) {
-	TRACE(ole,"(%p)->()\n",this);
+	TRACE(ole,"(%p)->(count=%lu)\n",this,(this->ref)+1);
 	return ++(this->ref);
 }
 
 static HRESULT WINAPI IShellFolder_GetAttributesOf(
 	LPSHELLFOLDER this,UINT32 cidl,LPCITEMIDLIST *apidl,DWORD *rgfInOut
 ) {
-	FIXME(ole,"(%p)->(%d,%p,%p),stub!\n",
-		this,cidl,apidl,rgfInOut
+	FIXME(ole,"\n	(%p)->(%d,%p->(%p),%p),stub!\n",
+		this,cidl,apidl,*apidl,rgfInOut
 	);
-	return 0;
+	return E_NOTIMPL;
 }
 
+/*---------------------------------------------------------------
+!		IShellFolder_BindToObject
+!
+*/
 static HRESULT WINAPI IShellFolder_BindToObject(
-	LPSHELLFOLDER this,LPCITEMIDLIST pidl,LPBC pbcReserved,REFIID riid,LPVOID * ppvOut
-) {
-	char	xclsid[50];
+	LPSHELLFOLDER this,LPCITEMIDLIST pidl,LPBC pbcReserved,
+	REFIID riid,LPVOID * ppvOut)
+  {	char	xclsid[50];
 
-	WINE_StringFromCLSID(riid,xclsid);
-	FIXME(ole,"(%p)->(%p,%p,%s,%p),stub!\n",
-		this,pidl,pbcReserved,xclsid,ppvOut
-	);
-	*ppvOut = IShellFolder_Constructor();
-	return 0;
+		WINE_StringFromCLSID(riid,xclsid);
+
+		FIXME(ole,"(%p)->(pidl:%p,%p,%s,%p),stub!\n",this,pidl,pbcReserved,xclsid,ppvOut);
+		*ppvOut = IShellFolder_Constructor();
+
+		return E_NOTIMPL;
 }
-
+/*---------------------------------------------------------------
+!		IShellFolder_ParseDisplayName
+!
+*/
 static HRESULT WINAPI IShellFolder_ParseDisplayName(
 	LPSHELLFOLDER this,HWND32 hwndOwner,LPBC pbcReserved,
 	LPOLESTR32 lpszDisplayName,DWORD *pchEaten,LPITEMIDLIST *ppidl,
 	DWORD *pdwAttributes
-) {
-	FIXME(ole,"(%p)->(%08x,%p,%p,%p,%p,%p),stub!\n",
-		this,hwndOwner,pbcReserved,lpszDisplayName,pchEaten,ppidl,pdwAttributes
+) {	TRACE(ole,"(%p)->(%08x,%p,%p=%s,%p,%p,%p)\n",
+		this,hwndOwner,pbcReserved,lpszDisplayName,debugstr_w(lpszDisplayName),pchEaten,ppidl,pdwAttributes
 	);
-	if (pbcReserved)
-		*(DWORD*)pbcReserved = 0;
-	return 0;
+//	if (pbcReserved)
+//		*(DWORD*)pbcReserved = 0;
+
+	*ppidl = (LPITEMIDLIST)HeapAlloc(GetProcessHeap(),0,sizeof(ITEMIDLIST));
+	(*ppidl)->mkid.cb = 0x0;		/*the first ITEMIDLIST*/
+	(*ppidl)->mkid.abID[0] = 0x0;		/*the first ITEMIDLIST*/
+
+//	((LPITEMIDLIST) (((LPBYTE)ppidl)+4) )->mkid.cb=0; /*the second ITEMIDLIST*/
+//	((LPITEMIDLIST) (((LPBYTE)ppidl)+4) )->mkid.abID[0]=0; /*the second ITEMIDLIST*/
+	FIXME(shell, "return dummy ITEMIDLIST only (pidl %p)\n",*ppidl);
+ 
+	/* it is NULL if the caller don't request attributes*/
+	if (pdwAttributes)
+	{	*pdwAttributes=SFGAO_FOLDER;
+	}
+
+	//*pchEaten = lstrlen32W(lpszDisplayName); 		/* number of char's parsed*/
+	//TRACE(shell,"%1 chars parsed",*pchEaten)
+	return NOERROR;
 }
 
 static HRESULT WINAPI IShellFolder_EnumObjects(
@@ -158,10 +184,10 @@ static struct IShellFolder_VTable sfvt = {
 
 LPSHELLFOLDER IShellFolder_Constructor() {
 	LPSHELLFOLDER	sf;
-
 	sf = (LPSHELLFOLDER)HeapAlloc(GetProcessHeap(),0,sizeof(IShellFolder));
 	sf->ref		= 1;
 	sf->lpvtbl	= &sfvt;
+	TRACE(ole,"(%p)->()\n",sf);
 	return sf;
 }
 

@@ -1,5 +1,8 @@
 /*
  * 				Shell Library Functions
+ *
+ *  currently work in progress on SH* and SHELL32_DllGetClassObject functions
+ *  <contact juergen.schmied@metronet.de 980624>
  */
 #include <assert.h>
 #include <stdlib.h>
@@ -1172,7 +1175,7 @@ HGLOBAL16 WINAPI InternalExtractIcon(HINSTANCE16 hInstance,
 	for (i=0;i<n;i++) {
 	    LPIMAGE_RESOURCE_DIRECTORY	xresdir;
 
-	    xresdir = GetResDirEntryW(iconresdir,(LPWSTR)&(RetPtr[i]),(DWORD)rootresdir,FALSE);
+	    xresdir = GetResDirEntryW(iconresdir,(LPWSTR)RetPtr[i],(DWORD)rootresdir,FALSE);
 	    xresdir = GetResDirEntryW(xresdir,(LPWSTR)0,(DWORD)rootresdir,TRUE);
 
 	    idataent = (LPIMAGE_RESOURCE_DATA_ENTRY)xresdir;
@@ -1580,6 +1583,7 @@ DWORD WINAPI SHELL32_DllGetClassObject(REFCLSID rclsid,REFIID iid,LPVOID *ppv)
     char	xclsid[50],xiid[50];
     HRESULT	hres = E_OUTOFMEMORY;
 
+
     WINE_StringFromCLSID((LPCLSID)rclsid,xclsid);
     WINE_StringFromCLSID((LPCLSID)iid,xiid);
     TRACE(shell,"(%s,%s,%p)\n",xclsid,xiid,ppv);
@@ -1594,23 +1598,24 @@ DWORD WINAPI SHELL32_DllGetClassObject(REFCLSID rclsid,REFIID iid,LPVOID *ppv)
     
     if (pClassFactory) {
     	hRes = pClassFactory->QueryInterface(riid,ppv);
-	pClassFactory->Release();
+		pClassFactory->Release();
     }
     return hRes;
  *
  * The magic of the whole stuff is still unclear to me, so just hack together 
- * something.
+ * something.   
  */
   
-    if (!memcmp(rclsid,&CLSID_ShellDesktop,sizeof(CLSID_ShellDesktop))) {
-    	TRACE(shell,"   requested CLSID_ShellDesktop, creating it.\n");
-	*ppv = IShellFolder_Constructor();
-	FIXME(shell,"Initialize this folder to be the shell desktop folder\n");
-	return 0;
-    }
+  if (!memcmp(rclsid,&CLSID_ShellDesktop,sizeof(CLSID_ShellDesktop)))
+	{	TRACE(shell,"   requested CLSID_ShellDesktop, creating it.\n");
+  	*ppv = IShellFolder_Constructor();
+/*		FIXME(shell,"Initialize this folder to be the shell desktop folder\n")*/
+		return S_OK;
+	}
 
-    FIXME(shell, "clsid(%s) not found.  Returning E_OUTOFMEMORY.\n",xclsid);
-    return hres;
+	FIXME(shell, "clsid(%s) not found, return CLASS_E_CLASSNOTAVAILABLE.\n",xclsid);
+	*ppv=NULL;
+	return CLASS_E_CLASSNOTAVAILABLE;
 }
 
 /*************************************************************************
@@ -1651,11 +1656,51 @@ DWORD WINAPI SHGetMalloc(LPMALLOC32 *lpmal) {
  *
  * nFolder is a CSIDL_xxxxx.
  */
-HRESULT WINAPI SHGetSpecialFolderLocation(HWND32 hwndOwner, INT32 nFolder, LPITEMIDLIST * ppidl) {
-	FIXME(shell,"(%04x,%d,%p),stub!\n", hwndOwner,nFolder,ppidl);
-	*ppidl = (LPITEMIDLIST)HeapAlloc(GetProcessHeap(),0,2*sizeof(ITEMIDLIST));
-	FIXME(shell, "we return only the empty ITEMIDLIST currently.\n");
-	(*ppidl)->mkid.cb = 0;
+HRESULT WINAPI SHGetSpecialFolderLocation(HWND32 hwndOwner, INT32 nFolder, LPITEMIDLIST * ppidl)
+{	FIXME(shell,"(%04x,%d,%p),stub!\n", hwndOwner,nFolder,ppidl);
+
+	switch (nFolder)
+	{	case CSIDL_BITBUCKET:					TRACE (shell,"looking for Recyceler\n");
+																	break;
+		case CSIDL_CONTROLS:				  TRACE (shell,"looking for Control\n");
+																	break;
+		case CSIDL_DESKTOP:			  		TRACE (shell,"looking for Desktop\n");
+																	break;
+		case CSIDL_DESKTOPDIRECTORY:  TRACE (shell,"looking for DeskDir\n");
+																	break;
+		case CSIDL_DRIVES:			  		TRACE (shell,"looking for Drives\n");
+																	break;
+		case CSIDL_FONTS:			  			TRACE (shell,"looking for Fonts\n");
+																	break;
+		case CSIDL_NETHOOD:			  		TRACE (shell,"looking for Nethood\n");
+																	break;
+		case CSIDL_NETWORK:			  		TRACE (shell,"looking for Network\n");
+																	break;
+		case CSIDL_PERSONAL:			  	TRACE (shell,"looking for Personal\n");
+																	break;
+		case CSIDL_PRINTERS:			    TRACE (shell,"looking for Printers\n");
+																	break;
+		case CSIDL_PROGRAMS:				  TRACE (shell,"looking for Programms\n");
+																	break;
+		case CSIDL_RECENT:			  		TRACE (shell,"looking for Recent\n");
+																	break;
+		case CSIDL_SENDTO:			  		TRACE (shell,"looking for Sendto\n");
+																	break;
+		case CSIDL_STARTMENU:			  	TRACE (shell,"looking for Startmenu\n");
+																	break;
+		case CSIDL_STARTUP:			  		TRACE (shell,"looking for Startup\n");
+																	break;
+		case CSIDL_TEMPLATES:			  	TRACE (shell,"looking for Templates\n");
+																	break;
+		default:			  							ERR (shell,"unknown CSIDL\n");
+																	break;
+	}
+
+	*ppidl = (LPITEMIDLIST)HeapAlloc(GetProcessHeap(),0,sizeof(ITEMIDLIST));
+	(*ppidl)->mkid.cb = 0;		/*the first ITEMIDLIST*/
+
+	FIXME(shell, "return empty ITEMIDLIST only (pidl %p)\n",*ppidl);
+
 	return NOERROR;
 }
 
@@ -1663,9 +1708,9 @@ HRESULT WINAPI SHGetSpecialFolderLocation(HWND32 hwndOwner, INT32 nFolder, LPITE
  *			 SHGetPathFromIDList		[SHELL32.221]
  * returns the path from a passed PIDL.
  */
-BOOL32 WINAPI SHGetPathFromIDList(LPCITEMIDLIST pidl,LPSTR pszPath) {
-	FIXME(shell,"(%p,%p),stub!\n",pidl,pszPath);
-	lstrcpy32A(pszPath,"E:\\"); /* FIXME */
+BOOL32 WINAPI SHGetPathFromIDList(LPCITEMIDLIST pidl,LPSTR pszPath) 
+{	FIXME(shell,"(pidl %p,%p),stub, returning E:\\\\ \n",pidl,pszPath);
+	strcpy(pszPath,"E:\\"); /* FIXME */
 	return NOERROR;
 }
 
@@ -1681,5 +1726,20 @@ SHHelpShortcuts_RunDLL (DWORD dwArg1, DWORD dwArg2, DWORD dwArg3, DWORD dwArg4)
 	   dwArg1, dwArg2, dwArg3, dwArg4);
 
     return 0;
+}
+
+
+/*************************************************************************
+ * SHBrowseForFolderA [SHELL32.209]
+ *
+ */
+
+LPITEMIDLIST WINAPI
+SHBrowseForFolder32A (LPBROWSEINFO32A lpbi)
+{
+    FIXME (exec, "(%lx) empty stub!\n", (DWORD)lpbi);
+    FIXME (exec, "(%s) empty stub!\n", lpbi->lpszTitle);
+
+    return NULL;
 }
 

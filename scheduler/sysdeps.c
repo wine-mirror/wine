@@ -16,6 +16,7 @@ static int *ph_errno = &h_errno;
 #include <unistd.h>
 #include "thread.h"
 #include "winbase.h"
+#include "debug.h"
 
 /* Xlib critical section (FIXME: does not belong here) */
 CRITICAL_SECTION X11DRV_CritSection = { 0, };

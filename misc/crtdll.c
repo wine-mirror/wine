@@ -306,7 +306,9 @@ INT32 __cdecl CRTDLL_fscanf( LPVOID stream, LPSTR format, ... )
     INT32 res;
 
     va_start( valist, format );
+#ifdef HAVE_VFSCANF
     res = vfscanf( xlat_file_ptr(stream), format, valist );
+#endif
     va_end( valist );
     return res;
 }

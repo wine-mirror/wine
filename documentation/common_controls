@@ -1,0 +1,296 @@
+
+                  COMMON CONTROLS
+              their development status
+    and their UNDOCUMENTED features and functions
+-----------------------------------------------------
+
+
+1. Introduction
+---------------
+  The information provided herein is based on the dll version 4.72 which
+  is included in MS Internet Explorer 4.01.
+
+  All information about common controls should be collected in this document.
+
+  All Wine programmers are encouraged to add their knowledge to this document.
+
+
+2. General Information
+----------------------
+  Further information about common controls can be found in the MS Platform SDK
+  and the MS Internet Client SDK (most recent). Information from these SDK's
+  will NOT be repeated here. Only information which can NOT be found in these
+  SDK's will be collected here. Some information in the SDK's mentioned above
+  is (intentionally???) WRONG. Corrections to wrong information will be
+  collected here too.
+
+
+3. Controls
+-----------
+  This paragraph describes the development status of the common controls.
+
+
+
+3.1 Animation Control
+---------------------
+  Status:
+      - Nothing done at all.
+
+
+3.2 Combo Box Ex Control
+------------------------
+  Status:
+      - Nothing done at all.
+
+
+3.3 Date and Time Picker Control
+--------------------------------
+  Status:
+      - Nothing done at all.
+
+
+3.4 Drag List Box Control
+-------------------------
+  Status:
+      - Nothing done at all.
+
+
+3.5 Flat Scroll Bar Control
+---------------------------
+  Status:
+      - Nothing done at all.
+
+
+3.6 Header Control
+------------------
+  Author:
+      Eric Kohl <ekohl@abo.rhein-zeitung.de>
+
+  Status:
+      - Almost finished.
+
+
+3.7 Hot Key Control
+-------------------
+  Status:
+      - Nothing done at all.
+
+
+3.8 Image List (no control)
+---------------------------
+  Author:
+      Eric Kohl <ekohl@abo.rhein-zeitung.de>
+
+  Status:
+      - Almost finished.
+
+  Notes:
+      Most of my test programs work as expected. But when image lists are used
+      in other controls (e.g. Toolbar) they don't seem to be error-free.
+      It looks like I have to do a major re-write (use DIB's instead of DDB's).
+
+
+3.9 IP Address Control
+----------------------
+  Status:
+      - Nothing done at all.
+
+
+3.10 List View Control
+----------------------
+  Status:
+      - Nothing done at all.
+
+  Notes:
+      This control id NEEDED in many places. Any volunteers??
+
+
+3.11 Month Calendar Control
+---------------------------
+  Status:
+      - Nothing done at all.
+
+
+3.12 Pager Control
+------------------
+  Status:
+      - Dummy control. No functionality.
+      - Not yet published.
+
+  Notes:
+      The dummy source code is available from the author.
+
+
+3.13 Progress Bar Control
+-------------------------
+  Author:
+      Original implementation by Dimitrie O. Paun.
+      Fixes and improvements by Eric Kohl.
+
+  Status:
+      - Almost finished (should behave like the original).
+
+  Notes:
+      WM_GETFONT and WM_SETFONT are not implemented yet. They seem to be
+      useless because progress bars usually don't display any textual
+      information. But if M$ implemented an undocumented flag to display
+      textual information (e.g. percentage) these messages would make sense.
+
+
+3.14 Property Sheet
+-------------------
+  Status:
+      - Nothing done at all.
+
+  Notes:
+      - This control id NEEDED in many places.
+      - Tab control has to be implemented first.
+      Any volunteers??
+
+
+3.15 Rebar Control (Cool Bar)
+-----------------------------
+  Status:
+      - Dummy control. No functionality.
+      - Not yet published.
+
+  Notes:
+      The dummy source code is available from the author.
+
+
+3.16 Status Bar Control
+-----------------------
+  Author:
+      Original implementation by Bruce Milner.
+      Fixes and improvements by Eric Kohl.
+
+  Status:
+      - Almost finished.
+
+  Notes:
+      - Tool tips need to be added, but since they are not done yet...
+
+  Notes:
+      Have a look at controls/status.c for a list of bugs and missing features.
+
+
+3.17 Tab Control
+----------------
+  Status:
+      - Nothing done at all.
+      - needed.
+
+
+3.18 Toolbar Control
+--------------------
+  Author:
+      Eric Kohl <ekohl@abo.rhein-zeitung.de>
+
+  Status:
+      - Development in progress.
+      - Basic functionality is almost done. (dll version 4.0)
+
+
+3.19 Tooltip Control
+--------------------
+  Author:
+      Eric Kohl <ekohl@abo.rhein-zeitung.de>
+
+  Status:
+      - Development in progress.
+      - Not yet published, but will be published soon.
+
+
+3.20 Trackbar Control
+---------------------
+  Author:
+      Eric Kohl <ekohl@abo.rhein-zeitung.de>
+
+  Status:
+      - Development in progress.
+      - Not yet published, but will be published soon.
+
+
+3.21 Tree View Control
+----------------------
+  Status:
+      - Nothing done at all.
+      - needed.
+
+
+3.22 Updown Control
+-------------------
+  Author:
+      Original implementation by Dimitrie O. Paun.
+      Some minor changes by Eric Kohl <ekohl@abo.rhein-zeitung.de>.
+
+  Status:
+      - Unknown.
+
+  Notes:
+      - Have a look at controls/updown.c for a list of bugs and missing
+        features.
+
+      - The status is unknown, because I did not have a close look at this
+        control. One test-program looked quite good, but in Win95's
+        cdplayer.exe the control does not show at all.
+      
+      Any volunteers??
+
+
+4. Additional Information
+-------------------------
+
+  Has to be written...
+
+
+5. Undocumented features
+------------------------
+
+  There are quite a lot of undocumented functions like:
+     - DSA (Dynnamic String Array?) functions.
+     - DPA (Dymnamic Pointer Array?) functions.
+     - MRU ("Most Recently Used" List) functions.
+     - other unknown functions.
+
+  Have a look at relay32/comctl32.spec.
+
+
+5.1 Dymnamic String Arrays ??? (DSA)
+------------------------------------
+  Most of the DSA functions are implemented. I used TASKMAN.EXE to write them.
+  Since TASKMAN.EXE doesn't bail out or crash I think I've done it right.
+
+  Have a look at the source code to get more information.
+  Further documentation will be written...
+
+
+5.2 Dynamic Pointer Arrays ??? (DPA)
+------------------------------------
+  Similar to the DSA functions, but they just store pointers. I have written
+  some stubs and semi-stubs. They are used by Explorer and IE4 but the 
+  implementation is still incomplete since both programs seem to crash because
+  of other incomplete functions.
+
+  Have a look at the source code to get more information.
+  Further documentation will be written...
+
+
+5.3 MenuHelp
+------------
+  Has to be written...
+
+
+5.4 GetEffectiveClientRect
+--------------------------
+  Has to be written...
+
+
+6. Epilogue
+-----------
+  You see, much work has still to be done. If you are interested in writing
+  a control send me an e-mail. If you like to fix bugs or add some
+  functionality send an e-mail to the author of the control.
+
+  Eric Kohl <ekohl@abo.rhein-zeitung.de>
+

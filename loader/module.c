@@ -173,6 +173,12 @@ FARPROC16 MODULE_GetWndProcEntry16( LPCSTR name )
             return (FARPROC16)PrintSetupDlgProc;
         if (!strcmp(name,"ReplaceTextDlgProc"))
             return (FARPROC16)ReplaceTextDlgProc16;
+        if (!strcmp(name,"DefResourceHandler"))
+            return (FARPROC16)NE_DefResourceHandler;
+        if (!strcmp(name,"LoadDIBIconHandler"))
+            return (FARPROC16)LoadDIBIconHandler;
+        if (!strcmp(name,"LoadDIBCursorHandler"))
+            return (FARPROC16)LoadDIBCursorHandler;
         FIXME(module,"No mapping for %s(), add one in library/miscstubs.c\n",name);
         assert( FALSE );
         return NULL;
@@ -236,7 +242,7 @@ HMODULE32 MODULE_FindModule32(
 	    if (dotptr)	*dotptr		= '\0';
 	    if (xdotptr) *xdotptr	= '\0';
 	}
-	if (!lstrcmpi32A( filename, xmodname)) {
+	if (!strcasecmp( filename, xmodname)) {
 	    HeapFree(process->heap,0,filename);
 	    HeapFree(process->heap,0,xmodname);
 	    return wm->module;

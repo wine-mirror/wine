@@ -3,6 +3,12 @@
  * Copyright  Martin von Loewis, 1994
  * Copyrignt 1998 Bertho A. Stultiens (BS)
  *
+ * 20-Jun-1998 BS	- Added -L option to prevent case conversion
+ *			  of embedded filenames.
+ *
+ * 08-Jun-1998 BS	- Added -A option to generate autoregister code
+ *			  for winelib operation.
+ *
  * 21-May-1998 BS	- Removed the CPP option. Its internal now.
  *			- Added implementations for defines and includes
  *			  on the commandline.
@@ -58,6 +64,7 @@ char usage[] = "Usage: wrc [options...] [infile[.rc|.res]]\n"
 	"   -H file     Same as -h but written to file\n"
 	"   -I path     Set include search dir to path (multiple -I allowed)\n"
 	"   -l lan      Set default language to lan (default is neutral {0})\n"
+	"   -L          Leave case of embedded filenames as is\n"
 	"   -n          Do not generate .s file\n"
 	"   -o file     Output to file (default is infile.[res|s|h]\n"
 	"   -p prefix   Give a prefix for the generated names\n"
@@ -106,9 +113,6 @@ int constant = 0;
 
 /*
  * Create a .res file from the source and exit (-r option).
- * The compiler actually always creates this file, and then
- * converts it into whatever is requested. The compiler just
- * stops after the res-file when create_res is set.
  */
 int create_res = 0;
 
@@ -188,6 +192,12 @@ int pedantic = 0;
  */
 int auto_register = 0;
 
+/*
+ * Set when the case of embedded filenames should not be converted
+ * to lower case (-L option)
+ */
+int leave_case = 0;
+
 char *output_name;		/* The name given by the -o option */
 char *input_name;		/* The name given on the command-line */
 char *header_name;		/* The name given by the -H option */
@@ -223,7 +233,7 @@ int main(int argc,char *argv[])
 			strcat(cmdline, " ");
 	}
 
-	while((optc = getopt(argc, argv, "a:AbcC:d:D:eghH:I:l:no:p:rstTVw:W")) != EOF)
+	while((optc = getopt(argc, argv, "a:AbcC:d:D:eghH:I:l:Lno:p:rstTVw:W")) != EOF)
 	{
 		switch(optc)
 		{
@@ -269,6 +279,9 @@ int main(int argc,char *argv[])
 				lan = strtol(optarg, NULL, 0);
 				currentlanguage = new_language(PRIMARYLANGID(lan), SUBLANGID(lan));
 			}
+			break;
+		case 'L':
+			leave_case = 1;
 			break;
 		case 'n':
 			create_s = 0;

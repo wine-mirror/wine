@@ -50,6 +50,7 @@ LIBSUBDIRS = \
 
 EMUSUBDIRS = \
 	debugger \
+	graphics/psdrv \
 	graphics/win16drv \
 	if1632 \
 	miscemu
@@ -95,6 +96,7 @@ LIBOBJS = \
 
 EMUOBJS = \
 	debugger/debugger.o \
+	graphics/psdrv/psdrv.o \
 	graphics/win16drv/win16drv.o \
 	if1632/if1632.o \
 	miscemu/miscemu.o

@@ -18,7 +18,9 @@ void split_cursors(raw_data_t *rd, cursor_group_t *curg, int *ncur);
 
 /* From parser.l */
 extern FILE *yyin;
+extern char *yytext;
 extern int line_number;
+extern int char_number;
 
 int yylex(void);
 void set_yywf(void);

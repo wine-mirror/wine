@@ -6,6 +6,7 @@
 
 #include "windows.h"
 #include "ldt.h"
+#include "global.h"
 #include "miscemu.h"
 #include "sig_context.h"
 #include "debug.h"
@@ -295,6 +296,13 @@ BOOL32 INSTR_EmulateInstruction( SIGCONTEXT *context )
 {
     int prefix, segprefix, prefixlen, len, repX, long_op, long_addr;
     BYTE *instr;
+
+    /* Check for page-fault */
+
+#if defined(TRAP_sig) && defined(CR2_sig)
+    if (TRAP_sig(context) == 0x0e
+        && VIRTUAL_HandleFault( (LPVOID)CR2_sig(context) )) return TRUE;
+#endif
 
     long_op = long_addr = IS_SELECTOR_32BIT(CS_sig(context));
     instr = (BYTE *)MAKE_PTR(CS_sig(context),EIP_sig(context));

@@ -24,6 +24,7 @@
 #include "miscemu.h"
 #include "queue.h"
 #include "shell.h"
+#include "callback.h"
 
 /***********************************************************************
  *           GetFreeSystemResources   (USER.284)
@@ -93,7 +94,7 @@ BOOL16 WINAPI TimerCount( TIMERINFO *pTimerInfo )
     return TRUE;
 }
 
-static RESOURCEHANDLER16 __r16loader = NULL;
+static FARPROC16 __r16loader = NULL;
 
 /**********************************************************************
  *           USER_CallDefaultRsrcHandler
@@ -102,7 +103,7 @@ static RESOURCEHANDLER16 __r16loader = NULL;
  */
 HGLOBAL16 USER_CallDefaultRsrcHandler( HGLOBAL16 hMemObj, HMODULE16 hModule, HRSRC16 hRsrc )
 {
-    return __r16loader( hMemObj, hModule, hRsrc );
+    return Callbacks->CallResourceHandlerProc( __r16loader, hMemObj, hModule, hRsrc );
 }
 
 /**********************************************************************
@@ -116,13 +117,12 @@ static void USER_InstallRsrcHandler( HINSTANCE16 hInstance )
      * when a module's resource table is loaded. */
 
     proc = SetResourceHandler( hInstance, RT_ICON16,
-                               (FARPROC32)LoadDIBIconHandler );
-    if(!__r16loader ) 
-	__r16loader = (RESOURCEHANDLER16)proc;
+                               MODULE_GetWndProcEntry16("LoadDIBIconHandler") );
+    if (!__r16loader) __r16loader = proc;
+
     proc = SetResourceHandler( hInstance, RT_CURSOR16,
-                               (FARPROC32)LoadDIBCursorHandler );
-    if(!__r16loader )
-	__r16loader = (RESOURCEHANDLER16)proc;
+                               MODULE_GetWndProcEntry16("LoadDIBCursorHandler") );
+    if (!__r16loader) __r16loader = proc;
 }
 
 /**********************************************************************

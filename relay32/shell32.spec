@@ -146,7 +146,7 @@ type	win32
  144 stub SHELL32_144
  145 stub SHELL32_145
  146 stub SHELL32_146
- 147 stub SHELL32_147
+ 147 stdcall SHELL32_147(long long) SHELL32_147
  148 stub ExtractIconResInfoA
  149 stub SHELL32_149
  150 stub ExtractIconResInfoW
@@ -208,7 +208,7 @@ type	win32
  206 stub SHAddToRecentDocs
  207 stdcall SHAppBarMessage(long ptr) SHAppBarMessage32
  208 stub SHBrowseForFolder
- 209 stub SHBrowseForFolderA
+ 209 stdcall SHBrowseForFolderA(ptr) SHBrowseForFolder32A
  210 stub SHChangeNotify
  211 stub SHFileOperation
  212 stub SHFileOperationA

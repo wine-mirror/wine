@@ -1,0 +1,338 @@
+/* Header for Direct Play and Direct Play Lobby */
+#ifndef __WINE_DPLAY_H
+#define __WINE_DPLAY_H
+
+#include "mmsystem.h"
+
+/* Return Values */
+#define _FACDP  0x877
+#define MAKE_DPHRESULT( code )    MAKE_HRESULT( 1, _FACDP, code )
+
+#define DP_OK                           S_OK
+#define DPERR_ALREADYINITIALIZED        MAKE_DPHRESULT(   5 )
+#define DPERR_ACCESSDENIED              MAKE_DPHRESULT(  10 )
+#define DPERR_ACTIVEPLAYERS             MAKE_DPHRESULT(  20 )
+#define DPERR_BUFFERTOOSMALL            MAKE_DPHRESULT(  30 )
+#define DPERR_CANTADDPLAYER             MAKE_DPHRESULT(  40 )
+#define DPERR_CANTCREATEGROUP           MAKE_DPHRESULT(  50 )
+#define DPERR_CANTCREATEPLAYER          MAKE_DPHRESULT(  60 )
+#define DPERR_CANTCREATESESSION         MAKE_DPHRESULT(  70 )
+#define DPERR_CAPSNOTAVAILABLEYET       MAKE_DPHRESULT(  80 )
+#define DPERR_EXCEPTION                 MAKE_DPHRESULT(  90 )
+#define DPERR_GENERIC                   E_FAIL
+#define DPERR_INVALIDFLAGS              MAKE_DPHRESULT( 120 )
+#define DPERR_INVALIDOBJECT             MAKE_DPHRESULT( 130 )
+#define DPERR_INVALIDPARAM              E_INVALIDARG
+#define DPERR_INVALIDPARAMS             DPERR_INVALIDPARAM
+#define DPERR_INVALIDPLAYER             MAKE_DPHRESULT( 150 )
+#define DPERR_INVALIDGROUP              MAKE_DPHRESULT( 155 )
+#define DPERR_NOCAPS                    MAKE_DPHRESULT( 160 )
+#define DPERR_NOCONNECTION              MAKE_DPHRESULT( 170 )
+#define DPERR_NOMEMORY                  E_OUTOFMEMORY
+#define DPERR_OUTOFMEMORY               DPERR_NOMEMORY
+#define DPERR_NOMESSAGES                MAKE_DPHRESULT( 190 )
+#define DPERR_NONAMESERVERFOUND         MAKE_DPHRESULT( 200 )
+#define DPERR_NOPLAYERS                 MAKE_DPHRESULT( 210 )
+#define DPERR_NOSESSIONS                MAKE_DPHRESULT( 220 )
+#define DPERR_PENDING                                   E_PENDING
+#define DPERR_SENDTOOBIG                                MAKE_DPHRESULT( 230 )
+#define DPERR_TIMEOUT                   MAKE_DPHRESULT( 240 )
+#define DPERR_UNAVAILABLE               MAKE_DPHRESULT( 250 )
+#define DPERR_UNSUPPORTED               E_NOTIMPL
+#define DPERR_BUSY                      MAKE_DPHRESULT( 270 )
+#define DPERR_USERCANCEL                MAKE_DPHRESULT( 280 )
+#define DPERR_NOINTERFACE               E_NOINTERFACE
+#define DPERR_CANNOTCREATESERVER        MAKE_DPHRESULT( 290 )
+#define DPERR_PLAYERLOST                MAKE_DPHRESULT( 300 )
+#define DPERR_SESSIONLOST               MAKE_DPHRESULT( 310 )
+#define DPERR_UNINITIALIZED             MAKE_DPHRESULT( 320 )
+#define DPERR_NONEWPLAYERS              MAKE_DPHRESULT( 330 )
+#define DPERR_INVALIDPASSWORD           MAKE_DPHRESULT( 340 )
+#define DPERR_CONNECTING                MAKE_DPHRESULT( 350 )
+#define DPERR_BUFFERTOOLARGE            MAKE_DPHRESULT( 1000 )
+#define DPERR_CANTCREATEPROCESS         MAKE_DPHRESULT( 1010 )
+#define DPERR_APPNOTSTARTED             MAKE_DPHRESULT( 1020 )
+#define DPERR_INVALIDINTERFACE          MAKE_DPHRESULT( 1030 )
+#define DPERR_NOSERVICEPROVIDER         MAKE_DPHRESULT( 1040 )
+#define DPERR_UNKNOWNAPPLICATION        MAKE_DPHRESULT( 1050 )
+#define DPERR_NOTLOBBIED                MAKE_DPHRESULT( 1070 )
+#define DPERR_SERVICEPROVIDERLOADED     MAKE_DPHRESULT( 1080 )
+#define DPERR_ALREADYREGISTERED         MAKE_DPHRESULT( 1090 )
+#define DPERR_NOTREGISTERED             MAKE_DPHRESULT( 1100 )
+#define DPERR_AUTHENTICATIONFAILED      MAKE_DPHRESULT(  2000 )
+#define DPERR_CANTLOADSSPI              MAKE_DPHRESULT(  2010 )
+#define DPERR_ENCRYPTIONFAILED          MAKE_DPHRESULT(  2020 )
+#define DPERR_SIGNFAILED                MAKE_DPHRESULT(  2030 )
+#define DPERR_CANTLOADSECURITYPACKAGE   MAKE_DPHRESULT(  2040 )
+#define DPERR_ENCRYPTIONNOTSUPPORTED    MAKE_DPHRESULT(  2050 )
+#define DPERR_CANTLOADCAPI              MAKE_DPHRESULT(  2060 )
+#define DPERR_NOTLOGGEDIN               MAKE_DPHRESULT(  2070 )
+#define DPERR_LOGONDENIED               MAKE_DPHRESULT(  2080 )
+
+DEFINE_GUID(IID_IDirectPlay2, 0x2b74f7c0, 0x9154, 0x11cf, 0xa9, 0xcd, 0x0, 0xaa, 0x0, 0x68, 0x86, 0xe3);
+DEFINE_GUID(IID_IDirectPlay2A,0x9d460580, 0xa822, 0x11cf, 0x96, 0xc, 0x0, 0x80, 0xc7, 0x53, 0x4e, 0x82);
+
+DEFINE_GUID(IID_IDirectPlay3, 0x133efe40, 0x32dc, 0x11d0, 0x9c, 0xfb, 0x0, 0xa0, 0xc9, 0xa, 0x43, 0xcb);
+DEFINE_GUID(IID_IDirectPlay3A,0x133efe41, 0x32dc, 0x11d0, 0x9c, 0xfb, 0x0, 0xa0, 0xc9, 0xa, 0x43, 0xcb);
+
+// {D1EB6D20-8923-11d0-9D97-00A0C90A43CB}
+DEFINE_GUID(CLSID_DirectPlay,0xd1eb6d20, 0x8923, 0x11d0, 0x9d, 0x97, 0x0, 0xa0, 0xc9, 0xa, 0x43, 0xcb);
+
+
+/* {AF465C71-9588-11cf-A020-00AA006157AC} */
+DEFINE_GUID(IID_IDirectPlayLobby, 0xaf465c71, 0x9588, 0x11cf, 0xa0, 0x20, 0x0, 0xaa, 0x0, 0x61, 0x57, 0xac);
+/* {26C66A70-B367-11cf-A024-00AA006157AC} */
+DEFINE_GUID(IID_IDirectPlayLobbyA, 0x26c66a70, 0xb367, 0x11cf, 0xa0, 0x24, 0x0, 0xaa, 0x0, 0x61, 0x57, 0xac);
+/* {0194C220-A303-11d0-9C4F-00A0C905425E} */
+DEFINE_GUID(IID_IDirectPlayLobby2, 0x194c220, 0xa303, 0x11d0, 0x9c, 0x4f, 0x0, 0xa0, 0xc9, 0x5, 0x42, 0x5e);
+/* {1BB4AF80-A303-11d0-9C4F-00A0C905425E} */
+DEFINE_GUID(IID_IDirectPlayLobby2A, 0x1bb4af80, 0xa303, 0x11d0, 0x9c, 0x4f, 0x0, 0xa0, 0xc9, 0x5, 0x42, 0x5e);
+/* {2FE8F810-B2A5-11d0-A787-0000F803ABFC} */
+DEFINE_GUID(CLSID_DirectPlayLobby, 0x2fe8f810, 0xb2a5, 0x11d0, 0xa7, 0x87, 0x0, 0x0, 0xf8, 0x3, 0xab, 0xfc);
+
+/*
+ * GUIDS used by Service Providers shipped with DirectPlay
+ * Use these to identify Service Provider returned by EnumConnections
+ */
+
+/* GUID for IPX service provider {685BC400-9D2C-11cf-A9CD-00AA006886E3} */
+DEFINE_GUID(DPSPGUID_IPX, 0x685bc400, 0x9d2c, 0x11cf, 0xa9, 0xcd, 0x0, 0xaa, 0x0, 0x68, 0x86, 0xe3);
+
+/* GUID for TCP/IP service provider 36E95EE0-8577-11cf-960C-0080C7534E82 */
+DEFINE_GUID(DPSPGUID_TCPIP, 0x36E95EE0, 0x8577, 0x11cf, 0x96, 0xc, 0x0, 0x80, 0xc7, 0x53, 0x4e, 0x82);
+
+/* GUID for Serial service provider {0F1D6860-88D9-11cf-9C4E-00A0C905425E} */
+DEFINE_GUID(DPSPGUID_SERIAL, 0xf1d6860, 0x88d9, 0x11cf, 0x9c, 0x4e, 0x0, 0xa0, 0xc9, 0x5, 0x42, 0x5e);
+
+/* GUID for Modem service provider {44EAA760-CB68-11cf-9C4E-00A0C905425E} */
+DEFINE_GUID(DPSPGUID_MODEM, 0x44eaa760, 0xcb68, 0x11cf, 0x9c, 0x4e, 0x0, 0xa0, 0xc9, 0x5, 0x42, 0x5e);
+
+
+#pragma pack(1)
+
+/* Direct Play */
+typedef struct IDirectPlay        IDirectPlay, *LPDIRECTPLAY;
+
+/* Direct Play 2 */
+typedef struct IDirectPlay2       IDirectPlay2, *LPDIRECTPLAY2;
+typedef struct IDirectPlay2       IDirectPlay2A, *LPDIRECTPLAY2A;
+
+/* Direct Play 3 */
+typedef struct IDirectPlay3       IDirectPlay3, *LPDIRECTPLAY3;
+typedef struct IDirectPlay3       IDirectPlay3A, *LPDIRECTPLAY3A;
+
+/* DPID - DirectPlay player and group ID */
+typedef DWORD DPID, *LPDPID;
+
+/* DPID from whence originate messages - just an ID */
+#define DPID_SYSMSG             0           /* DPID of system */
+#define DPID_ALLPLAYERS         0           /* DPID of all players */
+#define DPID_SERVERPLAYER       1           /* DPID of the server player */
+#define DPID_UNKNOWN            0xFFFFFFFF  /* Player ID is unknown */
+
+/*  DPCAPS -  Used to obtain the capabilities of a DirectPlay object */
+typedef struct tagDPCAPS
+{
+    DWORD dwSize;               /* Size of structure in bytes */
+    DWORD dwFlags;              
+    DWORD dwMaxBufferSize;      
+    DWORD dwMaxQueueSize;       /* Obsolete. */
+    DWORD dwMaxPlayers;         /* Maximum players/groups (local + remote) */
+    DWORD dwHundredBaud;        /* Bandwidth in 100 bits per second units;
+                                 * i.e. 24 is 2400, 96 is 9600, etc. 
+                                 */
+    DWORD dwLatency;            /* Estimated latency; 0 = unknown */
+    DWORD dwMaxLocalPlayers;    /* Maximum # of locally created players */
+    DWORD dwHeaderLength;       /* Maximum header length in bytes */
+    DWORD dwTimeout;            /* Service provider's suggested timeout value
+                                 * This is how long DirectPlay will wait for
+                                 * responses to system messages
+                                 */
+} DPCAPS, *LPDPCAPS;
+
+typedef struct tagDPNAME
+{
+    DWORD   dwSize;             
+    DWORD   dwFlags;            /* Not used must be 0 */
+    union playerShortName       /* Player's Handle? */
+    {                           
+        LPWSTR  lpszShortName;  
+        LPSTR   lpszShortNameA; 
+    };
+    union playerLongName        /* Player's formal/real name */
+    {                         
+        LPWSTR  lpszLongName;  
+        LPSTR   lpszLongNameA;  
+    };
+
+} DPNAME, *LPDPNAME;
+
+typedef struct tagDPSESSIONDESC2
+{
+    DWORD   dwSize;             
+    DWORD   dwFlags;           
+    GUID    guidInstance;      
+    GUID    guidApplication;   
+                               
+    DWORD   dwMaxPlayers;      
+    DWORD   dwCurrentPlayers;  
+
+    union sessionName
+    {                             
+        LPWSTR  lpszSessionName;  
+        LPSTR   lpszSessionNameA; 
+    };
+
+    union optnlSessionPasswd
+    {                           
+        LPWSTR  lpszPassword;   
+        LPSTR   lpszPasswordA;  
+    };
+
+    DWORD   dwReserved1;       
+    DWORD   dwReserved2;
+    DWORD   dwUser1;          
+    DWORD   dwUser2;
+    DWORD   dwUser3;
+    DWORD   dwUser4;
+} DPSESSIONDESC2, *LPDPSESSIONDESC2;
+
+typedef struct tagDPLCONNECTION
+{
+    DWORD               dwSize;          
+    DWORD               dwFlags;          
+    LPDPSESSIONDESC2    lpSessionDesc;   
+    LPDPNAME            lpPlayerName;    
+    GUID                guidSP;          
+    LPVOID              lpAddress;       
+    DWORD               dwAddressSize;  
+} DPLCONNECTION, *LPDPLCONNECTION;
+
+typedef struct tagDPLAPPINFO
+{
+    DWORD       dwSize;            
+    GUID        guidApplication;   
+
+    union appName
+    {
+        LPSTR   lpszAppNameA;      
+        LPWSTR  lpszAppName;
+    };
+
+} DPLAPPINFO, *LPDPLAPPINFO;
+typedef const DPLAPPINFO *LPCDPLAPPINFO;
+
+typedef struct DPCOMPOUNDADDRESSELEMENT
+{
+    GUID    guidDataType;
+    DWORD   dwDataSize;
+    LPVOID  lpData;
+} DPCOMPOUNDADDRESSELEMENT, *LPDPCOMPOUNDADDRESSELEMENT;
+typedef const DPCOMPOUNDADDRESSELEMENT *LPCDPCOMPOUNDADDRESSELEMENT;
+
+typedef BOOL32 (CALLBACK* LPDPENUMDPCALLBACKW)(
+    LPGUID      lpguidSP,
+    LPWSTR      lpSPName,
+    DWORD       dwMajorVersion,
+    DWORD       dwMinorVersion,
+    LPVOID      lpContext);
+
+typedef BOOL32 (CALLBACK* LPDPENUMDPCALLBACKA)(
+    LPGUID      lpguidSP,
+    LPSTR       lpSPName,       /* ptr to str w/ driver description */
+    DWORD       dwMajorVersion, /* Major # of driver spec in lpguidSP */
+    DWORD       dwMinorVersion, /* Minor # of driver spec in lpguidSP */ 
+    LPVOID      lpContext);     /* User given */
+
+typedef const GUID   *LPCGUID;
+typedef const DPNAME *LPCDPNAME;
+
+typedef BOOL32 (CALLBACK* LPDPENUMCONNECTIONSCALLBACK)(
+    LPCGUID     lpguidSP,
+    LPVOID      lpConnection,
+    DWORD       dwConnectionSize,
+    LPCDPNAME   lpName,
+    DWORD       dwFlags,
+    LPVOID      lpContext);
+
+extern HRESULT WINAPI DirectPlayEnumerateA( LPDPENUMDPCALLBACKA, LPVOID );
+extern HRESULT WINAPI DirectPlayEnumerateW( LPDPENUMDPCALLBACKW, LPVOID );
+extern HRESULT WINAPI DirectPlayCreate( LPGUID lpGUID, LPDIRECTPLAY *lplpDP, IUnknown *pUnk);
+
+
+/* Direct Play Lobby 1 */
+typedef struct IDirectPlayLobby   IDirectPlayLobby, *LPDIRECTPLAYLOBBY;
+typedef struct IDirectPlayLobby   IDirectPlayLobbyA, *LPDIRECTPLAYLOBBYA;
+
+/* Direct Play Lobby 2 */
+typedef struct IDirectPlayLobby2    IDirectPlayLobby2, *LPDIRECTPLAYLOBBY2;
+typedef struct IDirectPlayLobby2    IDirectPlayLobby2A, *LPDIRECTPLAYLOBBY2A;
+
+extern HRESULT WINAPI DirectPlayLobbyCreateW(LPGUID, LPDIRECTPLAYLOBBY2 *, IUnknown *, LPVOID, DWORD );
+extern HRESULT WINAPI DirectPlayLobbyCreateA(LPGUID, LPDIRECTPLAYLOBBY2A *, IUnknown *, LPVOID, DWORD );
+
+
+
+typedef BOOL32 (CALLBACK* LPDPENUMADDRESSCALLBACK)(
+    REFGUID         guidDataType,
+    DWORD           dwDataSize,
+    LPCVOID         lpData,
+    LPVOID          lpContext);
+
+typedef BOOL32 (CALLBACK* LPDPLENUMADDRESSTYPESCALLBACK)(
+    REFGUID         guidDataType,
+    LPVOID          lpContext,
+    DWORD           dwFlags);
+
+typedef BOOL32 (CALLBACK* LPDPLENUMLOCALAPPLICATIONSCALLBACK)(
+    LPCDPLAPPINFO   lpAppInfo,
+    LPVOID          lpContext,
+    DWORD           dwFlags);
+
+
+#define STDMETHOD(xfn) HRESULT (CALLBACK *fn##xfn)
+#define STDMETHOD_(ret,xfn) ret (CALLBACK *fn##xfn)
+#define PURE
+#define FAR
+#define THIS_ THIS,
+
+#define THIS LPDIRECTPLAYLOBBY2 this
+typedef struct tagLPDIRECTPLAYLOBBY2_VTABLE {
+    /*  IUnknown Methods "Inherited Methods" */
+    STDMETHOD(QueryInterface)       (THIS_ REFIID riid, LPVOID * ppvObj) PURE;
+    STDMETHOD_(ULONG,AddRef)        (THIS) PURE;
+    STDMETHOD_(ULONG,Release)       (THIS) PURE;
+
+    /*  IDirectPlayLobby Methods */
+    STDMETHOD(Connect)              (THIS_ DWORD, LPDIRECTPLAY2 *, IUnknown *) PURE;
+    STDMETHOD(CreateAddress)        (THIS_ REFGUID, REFGUID, LPCVOID, DWORD, LPVOID, LPDWORD) PURE;
+    STDMETHOD(EnumAddress)          (THIS_ LPDPENUMADDRESSCALLBACK, LPCVOID, DWORD, LPVOID) PURE;
+    STDMETHOD(EnumAddressTypes)     (THIS_ LPDPLENUMADDRESSTYPESCALLBACK, REFGUID, LPVOID, DWORD) PURE;
+    STDMETHOD(EnumLocalApplications)(THIS_ LPDPLENUMLOCALAPPLICATIONSCALLBACK, LPVOID, DWORD) PURE;
+    STDMETHOD(GetConnectionSettings)(THIS_ DWORD, LPVOID, LPDWORD) PURE;
+    STDMETHOD(ReceiveLobbyMessage)  (THIS_ DWORD, DWORD, LPDWORD, LPVOID, LPDWORD) PURE;
+    STDMETHOD(RunApplication)       (THIS_ DWORD, LPDWORD, LPDPLCONNECTION, HANDLE32) PURE;
+    STDMETHOD(SendLobbyMessage)     (THIS_ DWORD, DWORD, LPVOID, DWORD) PURE;
+    STDMETHOD(SetConnectionSettings)(THIS_ DWORD, DWORD, LPDPLCONNECTION) PURE;
+    STDMETHOD(SetLobbyMessageEvent) (THIS_ DWORD, DWORD, HANDLE32) PURE;
+
+    /*  IDirectPlayLobby2 Methods */
+    STDMETHOD(CreateCompoundAddress)(THIS_ LPCDPCOMPOUNDADDRESSELEMENT, DWORD, LPVOID, LPDWORD) PURE;
+
+} DIRECTPLAYLOBBY2_VTABLE, *LPDIRECTPLAYLOBBY2_VTABLE;
+
+/* Is this right? How does one know? */
+struct IDirectPlayLobby2 {
+    LPDIRECTPLAYLOBBY2_VTABLE lpvtbl;
+    DWORD                     ref;
+};
+
+#pragma pack(4)
+
+#undef STDMETHOD
+#undef STDMETHOD_
+#undef PURE
+#undef FAR
+#undef THIS_
+
+#endif

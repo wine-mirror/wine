@@ -15,11 +15,10 @@
 #include <config.h>
 #include "wrc.h"
 #include "utils.h"
+#include "parser.h"
 
 #define WANT_NEAR_INDICATION
 
-extern int line_number;
-extern char* yytext;
 
 #ifdef WANT_NEAR_INDICATION
 void make_print(char *str)
@@ -37,7 +36,7 @@ int yyerror(const char *s, ...)
 {
 	va_list ap;
 	va_start(ap, s);
-	fprintf(stderr, "Error %s: %d: ", input_name ? input_name : "stdin", line_number);
+	fprintf(stderr, "Error %s: %d, %d: ", input_name ? input_name : "stdin", line_number, char_number);
 	vfprintf(stderr, s, ap);
 #ifdef WANT_NEAR_INDICATION
 	{
@@ -47,7 +46,7 @@ int yyerror(const char *s, ...)
 		free(cpy);
 	}
 #else
-	fprintf(stderr, "\n", yytext);
+	fprintf(stderr, "\n");
 #endif
 	va_end(ap);
 	exit(1);
@@ -58,7 +57,7 @@ int yywarning(const char *s, ...)
 {
 	va_list ap;
 	va_start(ap, s);
-	fprintf(stderr, "Warning %s:%d: ", input_name ? input_name : "stdin", line_number);
+	fprintf(stderr, "Warning %s: %d, %d: ", input_name ? input_name : "stdin", line_number, char_number);
 	vfprintf(stderr, s, ap);
 #ifdef WANT_NEAR_INDICATION
 	{
@@ -68,7 +67,7 @@ int yywarning(const char *s, ...)
 		free(cpy);
 	}
 #else
-	fprintf(stderr, "\n", yytext);
+	fprintf(stderr, "\n");
 #endif
 	va_end(ap);
 	return 0;
@@ -189,7 +188,7 @@ int string_compare(const string_t *s1, const string_t *s2)
 	}
 	else
 	{
-		error("Cannot yet compare unicode strings");
+		internal_error(__FILE__, __LINE__, "Cannot yet compare unicode strings");
 	}
 	return 0;
 }
@@ -217,7 +216,7 @@ int wstricmp(const short *s1, const short *s2)
 	int retval = stricmp(cs1, cs2);
 	free(cs1);
 	free(cs2);
-	warning("Comparing unicode strings -> converting to ascii");
+	warning("Comparing unicode strings without case -> converting to ascii");
 	return retval;;
 }
 

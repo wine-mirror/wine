@@ -116,6 +116,17 @@ static void WINAPI CALLBACK_CallSystemTimerProc( FARPROC16 proc )
     proc();
 }
 
+/**********************************************************************
+ *	     CALLBACK_CallResourceHandlerProc
+ */
+static HGLOBAL16 WINAPI CALLBACK_CallResourceHandlerProc( FARPROC16 proc,
+                                                          HGLOBAL16 hMemObj, 
+                                                          HMODULE16 hModule,
+                                                          HRSRC16 hRsrc )
+{
+    return proc( hMemObj, hModule, hRsrc );
+}
+
 
 /**********************************************************************
  *	     CALLBACK_CallASPIPostProc
@@ -227,32 +238,33 @@ static BOOL32 WINAPI CALLBACK_CallWOWCallback16Ex(
  */
 static const CALLBACKS_TABLE CALLBACK_WinelibTable =
 {
-    CALLBACK_CallRegisterProc,     /* CallRegisterShortProc */
-    CALLBACK_CallRegisterProc,     /* CallRegisterLongProc */
-    TASK_Reschedule,               /* CallTaskRescheduleProc */
-    NULL,                          /* CallFrom16WndProc */
-    CALLBACK_CallWndProc,          /* CallWndProc */
-    CALLBACK_CallDriverProc,       /* CallDriverProc */
-    CALLBACK_CallDriverCallback,   /* CallDriverCallback */
-    CALLBACK_CallTimeFuncProc,     /* CallTimeFuncProc */
-    CALLBACK_CallWindowsExitProc,  /* CallWindowsExitProc */
-    CALLBACK_CallWordBreakProc,    /* CallWordBreakProc */
-    CALLBACK_CallBootAppProc,      /* CallBootAppProc */
-    CALLBACK_CallLoadAppSegProc,   /* CallLoadAppSegProc */
-    CALLBACK_CallSystemTimerProc,  /* CallSystemTimerProc */
-    CALLBACK_CallWOWCallbackProc,  /* CallWOWCallbackProc */
-    CALLBACK_CallWOWCallback16Ex,  /* CallWOWCallback16Ex */
-    CALLBACK_CallASPIPostProc,     /* CallASPIPostProc */
+    CALLBACK_CallRegisterProc,        /* CallRegisterShortProc */
+    CALLBACK_CallRegisterProc,        /* CallRegisterLongProc */
+    TASK_Reschedule,                  /* CallTaskRescheduleProc */
+    NULL,                             /* CallFrom16WndProc */
+    CALLBACK_CallWndProc,             /* CallWndProc */
+    CALLBACK_CallDriverProc,          /* CallDriverProc */
+    CALLBACK_CallDriverCallback,      /* CallDriverCallback */
+    CALLBACK_CallTimeFuncProc,        /* CallTimeFuncProc */
+    CALLBACK_CallWindowsExitProc,     /* CallWindowsExitProc */
+    CALLBACK_CallWordBreakProc,       /* CallWordBreakProc */
+    CALLBACK_CallBootAppProc,         /* CallBootAppProc */
+    CALLBACK_CallLoadAppSegProc,      /* CallLoadAppSegProc */
+    CALLBACK_CallSystemTimerProc,     /* CallSystemTimerProc */
+    CALLBACK_CallResourceHandlerProc, /* CallResourceHandlerProc */
+    CALLBACK_CallWOWCallbackProc,     /* CallWOWCallbackProc */
+    CALLBACK_CallWOWCallback16Ex,     /* CallWOWCallback16Ex */
+    CALLBACK_CallASPIPostProc,        /* CallASPIPostProc */
     /* The graphics driver callbacks are never used in Winelib */
-    NULL,                          /* CallDrvControlProc */
-    NULL,                          /* CallDrvEnableProc */
-    NULL,                          /* CallDrvEnumDFontsProc */
-    NULL,                          /* CallDrvEnumObjProc */
-    NULL,                          /* CallDrvOutputProc */
-    NULL,                          /* CallDrvRealizeProc */
-    NULL,                          /* CallDrvStretchBltProc */
-    NULL,                          /* CallDrvExtTextOutProc */
-    NULL                           /* CallDrvGetCharWidth */
+    NULL,                             /* CallDrvControlProc */
+    NULL,                             /* CallDrvEnableProc */
+    NULL,                             /* CallDrvEnumDFontsProc */
+    NULL,                             /* CallDrvEnumObjProc */
+    NULL,                             /* CallDrvOutputProc */
+    NULL,                             /* CallDrvRealizeProc */
+    NULL,                             /* CallDrvStretchBltProc */
+    NULL,                             /* CallDrvExtTextOutProc */
+    NULL                              /* CallDrvGetCharWidth */
 };
 
 const CALLBACKS_TABLE *Callbacks = &CALLBACK_WinelibTable;

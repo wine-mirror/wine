@@ -1182,10 +1182,10 @@ BOOL16 WINAPI GetWindowPlacement16( HWND16 hwnd, WINDOWPLACEMENT16 *wndpl )
 			     *(LPPOINT32)&pWnd->rectWindow.left, &pWnd->rectWindow );
 	wndpl->length  = sizeof(*wndpl);
 	if( pWnd->dwStyle & WS_MINIMIZE )
-	    wndpl->showCmd = SW_SHOWMAXIMIZED;
+	    wndpl->showCmd = SW_SHOWMINIMIZED;
 	else 
 	    wndpl->showCmd = ( pWnd->dwStyle & WS_MAXIMIZE )
-			     ? SW_SHOWMINIMIZED : SW_SHOWNORMAL ;
+			     ? SW_SHOWMAXIMIZED : SW_SHOWNORMAL ;
 	if( pWnd->flags & WIN_RESTORE_MAX )
 	    wndpl->flags = WPF_RESTORETOMAXIMIZED;
 	else
@@ -1648,14 +1648,16 @@ LONG WINPOS_SendNCCalcSize( HWND32 hwnd, BOOL32 calcValidRect,
                             RECT32 *newClientRect )
 {
     NCCALCSIZE_PARAMS32 params;
+    WINDOWPOS32 winposCopy;
     LONG result;
 
     params.rgrc[0] = *newWindowRect;
     if (calcValidRect)
     {
+        winposCopy = *winpos;
 	params.rgrc[1] = *oldWindowRect;
 	params.rgrc[2] = *oldClientRect;
-	params.lppos = winpos;
+	params.lppos = &winposCopy;
     }
     result = SendMessage32A( hwnd, WM_NCCALCSIZE, calcValidRect,
                              (LPARAM)&params );

@@ -191,6 +191,18 @@ static void INT_DoRealModeInt( CONTEXT *context )
             /* MSCDEX hook */
             do_mscdex( &realmode_ctx, 1 );
             break;
+        case 0x7a:
+            /* NOVELL NetWare */
+            switch (AL_reg(&realmode_ctx))
+	    {
+                case 0x20:  /* Get VLM Call Address */
+                    /* return nothing -> NetWare not installed */
+                    break;
+                default:
+                    SET_CFLAG(context);
+                    break;
+            }
+	    break;
         default:
             SET_CFLAG(context);
             break;

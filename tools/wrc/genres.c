@@ -800,11 +800,6 @@ res_t *menuex2res(name_id_t *name, menuex_t *menex)
 	res = new_res();
 	if(win32)
 	{
-		/* FIXME: Borland's rc compiler writes the default system's
-		 * language if none specified (0x406 for me that is). I believe
-		 * that this is a Borland bug (brc32 ver. 5.01), as the default
-		 * should be 0 (system default).
-		 */
 		restag = put_res_header(res, WRC_RT_MENU, NULL, name, menex->memopt, &(menex->lvc));
 
 		put_word(res, 1);		/* Menuheader: Version */
@@ -847,15 +842,9 @@ res_t *cursorgroup2res(name_id_t *name, cursor_group_t *curg)
 	assert(curg != NULL);
 
 	res = new_res();
-	restag = put_res_header(res, WRC_RT_GROUP_CURSOR, NULL, name, curg->memopt, NULL);
+	restag = put_res_header(res, WRC_RT_GROUP_CURSOR, NULL, name, curg->memopt, &(curg->lvc));
 	if(win32)
 	{
-		/* FIXME: Borland's rc compiler writes the default system's
-		 * language if none specified (0x406 for me that is). I believe
-		 * that this is a Borland bug (brc32 ver. 5.01), as the default
-		 * should be 0 (system default).
-		 */
-
 		put_word(res, 0);	/* Reserved */
 		/* FIXME: The ResType in the NEWHEADER structure should
 		 * contain 14 according to the MS win32 doc. This is
@@ -963,12 +952,7 @@ res_t *cursor2res(cursor_t *cur)
 	res = new_res();
 	name.type = name_ord;
 	name.name.i_name = cur->id;
-	/* FIXME: Borland's rc compiler writes the default system's
-	 * language if none specified (0x406 for me that is). I believe
-	 * that this is a Borland bug (brc32 ver. 5.01), as the default
-	 * should be 0 (system default).
-	 */
-	restag = put_res_header(res, WRC_RT_CURSOR, NULL, &name, WRC_MO_MOVEABLE | WRC_MO_DISCARDABLE, NULL);
+	restag = put_res_header(res, WRC_RT_CURSOR, NULL, &name, WRC_MO_MOVEABLE | WRC_MO_DISCARDABLE, &(cur->lvc));
 	put_word(res, cur->xhot);
 	put_word(res, cur->yhot);
 	put_raw_data(res, cur->data, 0);
@@ -1001,15 +985,9 @@ res_t *icongroup2res(name_id_t *name, icon_group_t *icog)
 	assert(icog != NULL);
 
 	res = new_res();
-	restag = put_res_header(res, WRC_RT_GROUP_ICON, NULL, name, icog->memopt, NULL);
+	restag = put_res_header(res, WRC_RT_GROUP_ICON, NULL, name, icog->memopt, &(icog->lvc));
 	if(win32)
 	{
-		/* FIXME: Borland's rc compiler writes the default system's
-		 * language if none specified (0x406 for me that is). I believe
-		 * that this is a Borland bug (brc32 ver. 5.01), as the default
-		 * should be 0 (system default).
-		 */
-
 		put_word(res, 0);	/* Reserved */
 		/* FIXME: The ResType in the NEWHEADER structure should
 		 * contain 14 according to the MS win32 doc. This is
@@ -1077,12 +1055,7 @@ res_t *icon2res(icon_t *ico)
 	res = new_res();
 	name.type = name_ord;
 	name.name.i_name = ico->id;
-	/* FIXME: Borland's rc compiler writes the default system's
-	 * language if none specified (0x406 for me that is). I believe
-	 * that this is a Borland bug (brc32 ver. 5.01), as the default
-	 * should be 0 (system default).
-	 */
-	restag = put_res_header(res, WRC_RT_ICON, NULL, &name, WRC_MO_MOVEABLE | WRC_MO_DISCARDABLE, NULL);
+	restag = put_res_header(res, WRC_RT_ICON, NULL, &name, WRC_MO_MOVEABLE | WRC_MO_DISCARDABLE, &(ico->lvc));
 	put_raw_data(res, ico->data, 0);
 
 	SetResSize(res, restag);	/* Set ResourceSize */

@@ -465,6 +465,9 @@ DECL_WINELIB_TYPE(LPNCCALCSIZE_PARAMS)
 #define HTGROWBOX           HTSIZE
 #define HTREDUCE            HTMINBUTTON
 #define HTZOOM              HTMAXBUTTON
+#define HTOBJECT            19
+#define HTCLOSE             20
+#define HTHELP              21
 
   /* WM_SYSCOMMAND parameters */
 #ifdef SC_SIZE /* at least HP-UX: already defined in /usr/include/sys/signal.h */
@@ -5442,6 +5445,54 @@ typedef struct
 DECL_WINELIB_TYPE_AW(DEVMODE)
 DECL_WINELIB_TYPE_AW(LPDEVMODE)
 
+#define DM_UPDATE	1
+#define DM_COPY		2
+#define DM_PROMPT	4
+#define DM_MODIFY	8
+
+#define DM_ORIENTATION		0x00000001L
+#define DM_PAPERSIZE		0x00000002L
+#define DM_PAPERLENGTH		0x00000004L
+#define DM_PAPERWIDTH		0x00000008L
+#define DM_SCALE		0x00000010L
+#define DM_COPIES		0x00000100L
+#define DM_DEFAULTSOURCE	0x00000200L
+#define DM_PRINTQUALITY		0x00000400L
+#define DM_COLOR		0x00000800L
+#define DM_DUPLEX		0x00001000L
+
+/* etc.... */
+
+#define DMORIENT_PORTRAIT	1
+#define DMORIENT_LANDSCAPE	2
+
+#define DMPAPER_LETTER	1
+#define DMPAPER_A3	8
+#define DMPAPER_A4	9
+#define DMPAPER_A5	11
+
+#define DMBIN_UPPER	1
+#define DMBIN_AUTO	7
+
+#define DC_FIELDS		1
+#define DC_PAPERS		2
+#define DC_PAPERSIZE		3
+#define DC_MINEXTENT		4
+#define DC_MAXEXTENT		5
+#define DC_BINS			6
+#define DC_DUPLEX		7
+#define DC_SIZE			8
+#define DC_EXTRA		9
+#define DC_VERSION		10
+#define DC_DRIVER		11
+#define DC_BINNAMES		12
+#define DC_ENUMRESOLUTIONS	13
+#define DC_FILEDEPENDENCIES	14
+#define DC_TRUETYPE		15
+#define DC_PAPERNAMES		16
+#define DC_ORIENTATION		17
+#define DC_COPIES		18
+
 typedef struct _PRINTER_DEFAULTS32A {
     LPSTR        pDatatype;
     LPDEVMODE32A pDevMode;
@@ -6326,6 +6377,7 @@ HRSRC32     WINAPI FindResourceEx32W(HMODULE32,LPCWSTR,LPCWSTR,WORD);
 #define     FindResourceEx WINELIB_NAME_AW(FindResourceEx)
 BOOL32      WINAPI FlushConsoleInputBuffer(HANDLE32);
 BOOL32      WINAPI FlushFileBuffers(HFILE32);
+BOOL32      WINAPI FlushViewOfFile(LPCVOID, DWORD);
 DWORD       WINAPI FormatMessage32A(DWORD,LPCVOID,DWORD,DWORD,LPSTR,
 				    DWORD,LPDWORD);
 #define     FormatMessage WINELIB_NAME_AW(FormatMessage)

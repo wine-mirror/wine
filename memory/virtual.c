@@ -17,6 +17,7 @@
 #include "heap.h"
 #include "process.h"
 #include "xmalloc.h"
+#include "global.h"
 #include "debug.h"
 
 #ifndef MS_SYNC
@@ -36,15 +37,17 @@ typedef struct
 /* File view */
 typedef struct _FV
 {
-    struct _FV   *next;     /* Next view */
-    struct _FV   *prev;     /* Prev view */
-    UINT32        base;     /* Base address */
-    UINT32        size;     /* Size in bytes */
-    UINT32        flags;    /* Allocation flags */
-    UINT32        offset;   /* Offset from start of mapped file */
-    FILE_MAPPING *mapping;  /* File mapping */
-    BYTE          protect;  /* Protection for all pages at allocation time */
-    BYTE          prot[1];  /* Protection byte for each page */
+    struct _FV   *next;        /* Next view */
+    struct _FV   *prev;        /* Prev view */
+    UINT32        base;        /* Base address */
+    UINT32        size;        /* Size in bytes */
+    UINT32        flags;       /* Allocation flags */
+    UINT32        offset;      /* Offset from start of mapped file */
+    FILE_MAPPING *mapping;     /* File mapping */
+    HANDLERPROC   handlerProc; /* Fault handler */
+    LPVOID        handlerArg;  /* Fault handler argument */
+    BYTE          protect;     /* Protection for all pages at allocation time */
+    BYTE          prot[1];     /* Protection byte for each page */
 } FILE_VIEW;
 
 /* Per-page protection byte values */
@@ -497,6 +500,32 @@ DWORD VIRTUAL_GetPageSize(void)
 DWORD VIRTUAL_GetGranularity(void)
 {
     return granularity_mask + 1;
+}
+
+
+/***********************************************************************
+ *           VIRTUAL_SetFaultHandler
+ */
+BOOL32 VIRTUAL_SetFaultHandler( LPVOID addr, HANDLERPROC proc, LPVOID arg )
+{
+    FILE_VIEW *view;
+
+    if (!(view = VIRTUAL_FindView((UINT32)addr))) return FALSE;
+    view->handlerProc = proc;
+    view->handlerArg  = arg;
+    return TRUE;
+}
+
+/***********************************************************************
+ *           VIRTUAL_HandleFault
+ */
+BOOL32 VIRTUAL_HandleFault(LPVOID addr)
+{
+    FILE_VIEW *view = VIRTUAL_FindView((UINT32)addr);
+
+    if (view && view->handlerProc)
+        return view->handlerProc(view->handlerArg, addr);
+    return FALSE;
 }
 
 

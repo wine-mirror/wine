@@ -18,6 +18,46 @@
 char **debug_relay_excludelist = NULL, **debug_relay_includelist = NULL;
 
 /***********************************************************************
+ *           RELAY_ShowDebugmsgRelay
+ *
+ * Simple function to decide if a particular debugging message is
+ * wanted.  Called from RELAY_CallFrom32 and from in if1632/relay.c
+ */
+int RELAY_ShowDebugmsgRelay(const char *func) {
+
+  if(debug_relay_excludelist || debug_relay_includelist) {
+    const char *term = strchr(func, ':');
+    char **listitem;
+    int len, len2, itemlen, show;
+
+    if(debug_relay_excludelist) {
+      show = 1;
+      listitem = debug_relay_excludelist;
+    } else {
+      show = 0;
+      listitem = debug_relay_includelist;
+    }
+    assert(term);
+    assert(strlen(term) > 2);
+    len = term - func;
+    len2 = strchr(func, '.') - func;
+    assert(len2 && len2 > 0 && len2 < 64);
+    term += 2;
+    for(; *listitem; listitem++) {
+      itemlen = strlen(*listitem);
+      if((itemlen == len && !strncmp(*listitem, func, len)) ||
+         (itemlen == len2 && !strncmp(*listitem, func, len2)) ||
+         !strcmp(*listitem, term)) {
+        show = !show;
+       break;
+      }
+    }
+    return show;
+  }
+  return 1;
+}
+
+/***********************************************************************
  *           RELAY_CallFrom32
  *
  * Stack layout on entry to this function:
@@ -29,7 +69,7 @@ char **debug_relay_excludelist = NULL, **debug_relay_includelist = NULL;
  */
 int RELAY_CallFrom32( int ret_addr, ... )
 {
-    int i, ret, show = 1;
+    int i, ret, show;
     char buffer[80];
     FARPROC32 func;
     unsigned int mask, typemask;
@@ -41,36 +81,9 @@ int RELAY_CallFrom32( int ret_addr, ... )
     WORD nb_args = *(WORD *)(relay_addr + 1) / sizeof(int);
 
     assert(TRACE_ON(relay));
-    GET_FS( fs );
     func = (FARPROC32)BUILTIN32_GetEntryPoint( buffer, relay_addr - 5,
                                                &typemask );
-    if(debug_relay_excludelist || debug_relay_includelist) {
-      char *term = strchr(buffer, ':'), **listitem;
-      int len, len2, itemlen;
-
-      if(debug_relay_excludelist) {
-	show = 1;
-	listitem = debug_relay_excludelist;
-      } else {
-	show = 0;
-	listitem = debug_relay_includelist;
-      }
-      assert(term);
-      assert(strlen(term) > 2);
-      len = term - buffer;
-      len2 = strchr(buffer, '.') - buffer;
-      assert(len2 && len2 > 0 && len2 < 64);
-      term += 2;
-      for(; *listitem; listitem++) {
-        itemlen = strlen(*listitem);
-        if((itemlen == len && !strncmp(*listitem, buffer, len)) ||
-           (itemlen == len2 && !strncmp(*listitem, buffer, len2)) ||
-           !strcmp(*listitem, term)) {
-          show = !show;
-          break;
-        }
-      }
-    }
+    show = RELAY_ShowDebugmsgRelay(buffer);
     if(show) {
       DPRINTF( "Call %s(", buffer );
       args++;
@@ -86,9 +99,12 @@ int RELAY_CallFrom32( int ret_addr, ... )
 	}
         else DPRINTF( "%08x", args[i] );
       }
+      GET_FS( fs );
       DPRINTF( ") ret=%08x fs=%04x\n", ret_addr, fs );
-    } else
+    } else {
       args++;
+      fs = 0; /* quieten gcc */
+    }
     if (*relay_addr == 0xc3) /* cdecl */
     {
         LRESULT (*cfunc)() = (LRESULT(*)())func;

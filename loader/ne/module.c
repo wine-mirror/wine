@@ -18,6 +18,7 @@
 #include "global.h"
 #include "process.h"
 #include "toolhelp.h"
+#include "snoop.h"
 #include "debug.h"
 
 static HMODULE16 hFirstModule = 0;
@@ -327,7 +328,10 @@ FARPROC16 NE_GetEntryPoint( HMODULE16 hModule, WORD ordinal )
 
     if (sel == 0xfe) sel = 0xffff;  /* constant entry */
     else sel = (WORD)(DWORD)NE_SEG_TABLE(pModule)[sel-1].selector;
-    return (FARPROC16)PTR_SEG_OFF_TO_SEGPTR( sel, offset );
+    if (sel==0xffff)
+	return (FARPROC16)PTR_SEG_OFF_TO_SEGPTR( sel, offset );
+    else
+	return (FARPROC16)SNOOP16_GetProcAddress16(hModule,ordinal,(FARPROC16)PTR_SEG_OFF_TO_SEGPTR( sel, offset ));
 }
 
 
@@ -444,8 +448,6 @@ static HMODULE16 NE_LoadExeHeader( HFILE16 hFile, OFSTRUCT *ofs )
     /* We now have a valid NE header */
 
     size = sizeof(NE_MODULE) +
-             /* loaded file info */
-           sizeof(OFSTRUCT)-sizeof(ofs->szPathName)+strlen(ofs->szPathName)+1+
              /* segment table */
            ne_header.n_segment_tab * sizeof(SEGTABLEENTRY) +
              /* resource table */
@@ -457,9 +459,11 @@ static HMODULE16 NE_LoadExeHeader( HFILE16 hFile, OFSTRUCT *ofs )
              /* imported names table */
            ne_header.entry_tab_offset - ne_header.iname_tab_offset +
              /* entry table length */
-           ne_header.entry_tab_length;
+           ne_header.entry_tab_length +
+             /* loaded file info */
+           sizeof(OFSTRUCT)-sizeof(ofs->szPathName)+strlen(ofs->szPathName)+1;
 
-    hModule = GlobalAlloc16( GMEM_MOVEABLE | GMEM_ZEROINIT, size );
+    hModule = GlobalAlloc16( GMEM_FIXED | GMEM_ZEROINIT, size );
     if (!hModule) return (HMODULE16)11;  /* invalid exe */
     FarSetOwner( hModule, hModule );
     pModule = (NE_MODULE *)GlobalLock16( hModule );
@@ -493,14 +497,6 @@ static HMODULE16 NE_LoadExeHeader( HFILE16 hFile, OFSTRUCT *ofs )
             }
         }
     }
-
-    /* Store the filename information */
-
-    pModule->fileinfo = (int)pData - (int)pModule;
-    size = sizeof(OFSTRUCT)-sizeof(ofs->szPathName)+strlen(ofs->szPathName)+1;
-    memcpy( pData, ofs, size );
-    ((OFSTRUCT *)pData)->cBytes = size - 1;
-    pData += size;
 
     /* Get the segment table */
 
@@ -605,6 +601,14 @@ static HMODULE16 NE_LoadExeHeader( HFILE16 hFile, OFSTRUCT *ofs )
     }
     pData += ne_header.entry_tab_length;
 
+    /* Store the filename information */
+
+    pModule->fileinfo = (int)pData - (int)pModule;
+    size = sizeof(OFSTRUCT)-sizeof(ofs->szPathName)+strlen(ofs->szPathName)+1;
+    memcpy( pData, ofs, size );
+    ((OFSTRUCT *)pData)->cBytes = size - 1;
+    pData += size;
+
     /* Free the fast-load area */
 
 #undef READ
@@ -650,6 +654,7 @@ static HMODULE16 NE_LoadExeHeader( HFILE16 hFile, OFSTRUCT *ofs )
     else pModule->dlls_to_init = 0;
 
     NE_RegisterModule( pModule );
+    SNOOP16_RegisterDLL(pModule,ofs->szPathName);
     return hModule;
 }
 

@@ -653,7 +653,10 @@ static void MENU_CalcItemSize( HDC32 hdc, MENUITEM *lpitem, HWND32 hwndOwner,
     {
         dwSize = GetTextExtent( hdc, lpitem->text, strlen(lpitem->text) );
         lpitem->rect.right  += LOWORD(dwSize);
-        lpitem->rect.bottom += MAX( HIWORD(dwSize), SYSMETRICS_CYMENU );
+	if (TWEAK_Win95Look)
+            lpitem->rect.bottom += MAX (HIWORD(dwSize), sysMetrics[SM_CYMENU]- 1);
+        else
+            lpitem->rect.bottom += MAX( HIWORD(dwSize), SYSMETRICS_CYMENU );
         lpitem->xTab = 0;
 
         if (menuBar) lpitem->rect.right += MENU_BAR_ITEMS_SPACE;
@@ -698,6 +701,7 @@ static void MENU_PopupMenuCalcSize( LPPOPUPMENU lppop, HWND32 hwndOwner )
 	lpitem = &lppop->items[start];
 	orgX = maxX;
 	orgY = SYSMETRICS_CYBORDER;
+
 	maxTab = maxTabWidth = 0;
 
 	  /* Parse items until column break or end of menu */
@@ -730,6 +734,9 @@ static void MENU_PopupMenuCalcSize( LPPOPUPMENU lppop, HWND32 hwndOwner )
 	}
 	lppop->Height = MAX( lppop->Height, orgY );
     }
+
+    if(TWEAK_Win95Look)
+	lppop->Height++;
 
     lppop->Width  = maxX;
     ReleaseDC32( 0, hdc );
@@ -881,22 +888,10 @@ static void MENU_DrawMenuItem( HWND32 hwnd, HDC32 hdc, MENUITEM *lpitem,
 	*/
     }
 
-    if (lpitem->fState & MF_HILITE) {
-	RECT32  r = rect;
-	r.top += MENU_HighlightTopNudge;
-	r.bottom += MENU_HighlightBottomNudge;
-	r.left += MENU_HighlightLeftNudge;
-	r.right += MENU_HighlightRightNudge;
-	FillRect32( hdc, &r, GetSysColorBrush32(COLOR_HIGHLIGHT) );
-    }
-    else {
-	RECT32  r = rect;
-	r.top += MENU_HighlightTopNudge;
-	r.bottom += MENU_HighlightBottomNudge;
-	r.left += MENU_HighlightLeftNudge;
-	r.right += MENU_HighlightRightNudge;
-	FillRect32( hdc, &r, GetSysColorBrush32(COLOR_MENU) );
-    }
+    if (lpitem->fState & MF_HILITE)
+	FillRect32( hdc, &rect, GetSysColorBrush32(COLOR_HIGHLIGHT) );
+    else
+	FillRect32( hdc, &rect, GetSysColorBrush32(COLOR_MENU) );
 
     SetBkMode32( hdc, TRANSPARENT );
 
@@ -1147,13 +1142,15 @@ UINT32 MENU_DrawMenuBar( HDC32 hDC, LPRECT32 lprect, HWND32 hwnd,
     lprect->bottom = lprect->top + lppop->Height;
     if (suppress_draw) return lppop->Height;
     
-    if(TWEAK_Win95Look)
-	++lprect->bottom;
-
     FillRect32(hDC, lprect, GetSysColorBrush32(COLOR_MENU) );
 
     if(!TWEAK_Win95Look) {
 	SelectObject32( hDC, GetSysColorPen32(COLOR_WINDOWFRAME) );
+	MoveTo( hDC, lprect->left, lprect->bottom );
+	LineTo32( hDC, lprect->right, lprect->bottom );
+    }
+    else {
+	SelectObject32( hDC, GetSysColorPen32(COLOR_3DFACE));
 	MoveTo( hDC, lprect->left, lprect->bottom );
 	LineTo32( hDC, lprect->right, lprect->bottom );
     }

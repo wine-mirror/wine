@@ -1625,7 +1625,8 @@ BOOL32 WINAPI DrawIconEx32( HDC32 hdc, INT32 x0, INT32 y0, HICON32 hIcon,
     if (hMemDC && ptr)
     {
 	HBITMAP32 hXorBits, hAndBits;
-	COLORREF oldFg, oldBg;
+	COLORREF  oldFg, oldBg;
+	INT32     nStretchMode;
 
 	/* Calculate the size of the destination image.  */
 	if (cxWidth == 0)
@@ -1638,6 +1639,8 @@ BOOL32 WINAPI DrawIconEx32( HDC32 hdc, INT32 x0, INT32 y0, HICON32 hIcon,
 		cyWidth = GetSystemMetrics32 (SM_CYICON);
 	    else
 		cyWidth = ptr->nHeight;
+
+	nStretchMode = SetStretchBltMode32 (hdc, STRETCH_DELETESCANS);
 
 	hXorBits = CreateBitmap32 ( ptr->nWidth, ptr->nHeight,
 				    ptr->bPlanes, ptr->bBitsPerPixel,
@@ -1653,12 +1656,12 @@ BOOL32 WINAPI DrawIconEx32( HDC32 hdc, INT32 x0, INT32 y0, HICON32 hIcon,
 	{
 	    HBITMAP32 hBitTemp = SelectObject32( hMemDC, hAndBits );
 	    if (flags & DI_MASK)
-		BitBlt32 (hdc, x0, y0, cxWidth, cyWidth,
-			  hMemDC, 0, 0, SRCAND);
+		StretchBlt32 (hdc, x0, y0, cxWidth, cyWidth,
+			      hMemDC, 0, 0, ptr->nWidth, ptr->nHeight, SRCAND);
 	    SelectObject32( hMemDC, hXorBits );
 	    if (flags & DI_IMAGE)
-		BitBlt32 (hdc, x0, y0, cxWidth, cyWidth,
-			  hMemDC, 0, 0, SRCPAINT);
+		StretchBlt32 (hdc, x0, y0, cxWidth, cyWidth,
+			  hMemDC, 0, 0, ptr->nWidth, ptr->nHeight, SRCPAINT);
 	    SelectObject32( hMemDC, hBitTemp );
 	    result = TRUE;
 	}
@@ -1667,6 +1670,7 @@ BOOL32 WINAPI DrawIconEx32( HDC32 hdc, INT32 x0, INT32 y0, HICON32 hIcon,
 	SetBkColor32( hdc, oldBg );
 	if (hXorBits) DeleteObject32( hXorBits );
 	if (hAndBits) DeleteObject32( hAndBits );
+	SetStretchBltMode32 (hdc, nStretchMode);
     }
     if (hMemDC) DeleteDC32( hMemDC );
     GlobalUnlock16( hIcon );

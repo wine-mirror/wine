@@ -33,4 +33,8 @@ extern BOOL32 VIRTUAL_Init( void );
 extern DWORD VIRTUAL_GetPageSize(void);
 extern DWORD VIRTUAL_GetGranularity(void);
 
+typedef BOOL32 (*HANDLERPROC)(LPVOID, LPVOID);
+extern BOOL32 VIRTUAL_SetFaultHandler(LPVOID addr, HANDLERPROC proc, LPVOID arg);
+extern BOOL32 VIRTUAL_HandleFault(LPVOID addr);
+
 #endif  /* __WINE_GLOBAL_H */

@@ -12,12 +12,13 @@
 #include "static.h"
 #include "heap.h"
 #include "debug.h"
+#include "tweak.h"
 
 static void STATIC_PaintTextfn( WND *wndPtr, HDC32 hdc );
 static void STATIC_PaintRectfn( WND *wndPtr, HDC32 hdc );
 static void STATIC_PaintIconfn( WND *wndPtr, HDC32 hdc );
 static void STATIC_PaintBitmapfn( WND *wndPtr, HDC32 hdc );
-
+static void STATIC_PaintEtchedfn( WND *wndPtr, HDC32 hdc );
 
 static COLORREF color_windowframe, color_background, color_window;
 
@@ -42,9 +43,9 @@ static pfPaint staticPaintFunc[SS_TYPEMASK+1] =
     NULL,                    /* SS_OWNERDRAW */
     STATIC_PaintBitmapfn,    /* SS_BITMAP */
     NULL,                    /* SS_ENHMETAFILE */
-    NULL,                    /* SS_ETCHEDHORIZ */
-    NULL,                    /* SS_ETCHEDVERT */
-    NULL,                    /* SS_ETCHEDFRAME */
+    STATIC_PaintEtchedfn,    /* SS_ETCHEDHORIZ */
+    STATIC_PaintEtchedfn,    /* SS_ETCHEDVERT */
+    STATIC_PaintEtchedfn,    /* SS_ETCHEDFRAME */
 };
 
 
@@ -170,6 +171,9 @@ LRESULT WINAPI StaticWndProc( HWND32 hWnd, UINT32 uMsg, WPARAM32 wParam,
     switch (uMsg)
     {
     case WM_NCCREATE:
+	if (TWEAK_Win95Look && (wndPtr->dwStyle & SS_SUNKEN))
+	    wndPtr->dwExStyle |= WS_EX_STATICEDGE;
+
         if (style == SS_ICON)
         {
             CREATESTRUCT32A *cs = (CREATESTRUCT32A *)lParam;
@@ -392,7 +396,7 @@ static void STATIC_PaintIconfn( WND *wndPtr, HDC32 hdc )
     if (infoPtr->hIcon) DrawIcon32( hdc, rc.left, rc.top, infoPtr->hIcon );
 }
 
-static void STATIC_PaintBitmapfn(WND *wndPtr, HDC32 hdc ) 
+static void STATIC_PaintBitmapfn(WND *wndPtr, HDC32 hdc )
 {
     RECT32 rc;
     HBRUSH32 hbrush;
@@ -416,3 +420,48 @@ static void STATIC_PaintBitmapfn(WND *wndPtr, HDC32 hdc )
         GDI_HEAP_UNLOCK(infoPtr->hIcon);
     }
 }
+
+
+static void STATIC_PaintEtchedfn( WND *wndPtr, HDC32 hdc )
+{
+    RECT32 rc;
+    HBRUSH32 hbrush;
+    HPEN32 hpen;
+
+    if (!TWEAK_Win95Look) return;
+
+    GetClientRect32( wndPtr->hwndSelf, &rc );
+    hbrush = SendMessage32A( GetParent32(wndPtr->hwndSelf), WM_CTLCOLORSTATIC,
+                             hdc, wndPtr->hwndSelf );
+    FillRect32( hdc, &rc, hbrush );
+
+    switch (wndPtr->dwStyle & SS_TYPEMASK)
+    {
+	case SS_ETCHEDHORZ:
+	    hpen = SelectObject32 (hdc, GetSysColorPen32 (COLOR_3DSHADOW));
+	    MoveToEx32 (hdc, rc.left, rc.bottom / 2 - 1, NULL);
+	    LineTo32 (hdc, rc.right - 1, rc.bottom / 2 - 1);
+	    SelectObject32 (hdc, GetSysColorPen32 (COLOR_3DHIGHLIGHT));
+	    MoveToEx32 (hdc, rc.left, rc.bottom / 2, NULL);
+	    LineTo32 (hdc, rc.right, rc.bottom / 2);
+	    LineTo32 (hdc, rc.right, rc.bottom / 2 - 1);
+	    SelectObject32 (hdc, hpen);
+	    break;
+
+	case SS_ETCHEDVERT:
+	    hpen = SelectObject32 (hdc, GetSysColorPen32 (COLOR_3DSHADOW));
+	    MoveToEx32 (hdc, rc.right / 2 - 1, rc.top, NULL);
+	    LineTo32 (hdc, rc.right / 2 - 1, rc.bottom - 1);
+	    SelectObject32 (hdc, GetSysColorPen32 (COLOR_3DHIGHLIGHT));
+	    MoveToEx32 (hdc, rc.right / 2, rc.top, NULL);
+	    LineTo32 (hdc, rc.right / 2, rc.bottom);
+	    LineTo32 (hdc, rc.right / 2 -1 , rc.bottom);
+	    SelectObject32 (hdc, hpen); 
+	    break;
+
+	case SS_ETCHEDFRAME:
+	    DrawEdge32 (hdc, &rc, EDGE_ETCHED, BF_RECT);
+	    break;
+    }
+}
+

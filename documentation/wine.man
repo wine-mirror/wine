@@ -1,5 +1,5 @@
 .\" -*- nroff -*-
-.TH WINE 1 "September 1, 1995" "Version 9/1/95" "Windows Emulation"
+.TH WINE 1 "June 22, 1998" "Version 980614" "Windows Emulator"
 .SH NAME
 wine \- run Windows programs under Unix
 .SH SYNOPSIS
@@ -16,44 +16,50 @@ wine \- run Windows programs under Unix
 invokes the Windows emulator.
 .PP
 .B wine 
-currently runs a number of games and small applications (approximately
-half of the applets and common games actually run), although the entire API
-has not been implemented.
-.PP
-See the files 
-.B README,
-.B ChangeLog, 
-.B configure, 
-and the
-.B Makefile
-contained in the source distribution
-to compile
-.B wine.
+currently runs a growing list of applications written for both Win3.1 and 
+Win95.  Older, simpler applications work better than newer, more complex 
+ones.  A large percentage of the API has been implemented, although there
+are still several major pieces of work left to do.
 .SH REQUIREMENTS
 At present, 
 .B wine
 will run under any Linux kernel more recent than 0.99.13, or
 under recent releases of NetBSD/i386, FreeBSD and OpenBSD/i386.
 .PP
+The current support for multithreaded applications relies on the 
+.B clone(2)
+system call, which is currently available only on Linux systems running
+libc6 (glibc2).
+.PP
 .B X
-must be installed.
+must be installed.  To use Wine's support for multithreaded applications,
+your X libraries must be reetrant.  If you have libc6 (glibc2), or you 
+compiled the libraries yourself, they were probably compiled with the 
+reetrant option enabled.  
 .PP
 .B libXpm
-must be installed.  (It is probably available from the same site 
+must be installed.  It is probably available from the same site 
 .B wine
-was, or the sources may be FTP'd from ftp.x.org).
+was, or the sources may be FTP'd from ftp.x.org.  Usually it's in a
+package named something like XFree86-devel.
+
 .SH INSTALLATION
 To install 
 .B Wine,
-run "./configure", which will detect your specific setup and create
-the Makefiles. You can run "./configure --help" to see the available
-configuration options. Then do "make depend; make" to build the
+run "./configure" in the top-level directory of the source, which will 
+detect your specific setup and create the Makefiles.  You can run 
+"./configure --help" to see the available configuration options.  Then do 
+"make depend; make" to build the
 .B wine
 executable, and then "make install" to install it. By default,
 .B wine
 is installed in /usr/local/bin; you can specify a different path with
 the --prefix option when running
 .B configure.
+.PP
+For more information, see the 
+.B README
+file contained in the source distribution
 .SH OPTIONS
 .TP
 .I -backingstore
@@ -62,17 +68,39 @@ Turn on backing store
 .I -debug
 Enter the debugger before starting application
 .TP
-.I -debugmsg name[,name]
-Turn debugging messages on or off - for instance, 
-.I -debugmsg +dll,+heap
-will turn on DLL and heap debugging messages.  The full list is: all, accel,
-atom, bitblt, bitmap, caret, cdaudio, class, clipboard, clipping, combo,
-comm, commdlg, crtdll, cursor, dc, dde, dialog, dll, dosfs, driver, edit,
-env, event, exec, file, fixup, font, gdi, global, graphics, heap, hook,
-icon, int, key, keyboard, ldt, listbox, local, mci, mcianim, mciwave, mdi,
-menu, message, metafile, midi, mmio, mmsys, mmtime, module, msg, nonclient,
-ole, palette, profile, prop, reg, region, relay, resource, scroll, segment,
-selector,sem, sendmsg, shm, stress, string, syscolor, task, text, timer, toolhelp,ver, vxd, win, win32, winsock.
+.I -debugmsg [xxx]#name[,[xxx1]#name1]
+Turn debugging messages on or off.  
+.RS +7
+.PP
+xxx can be one of the following: err, warn, fixme, or trace, and # can be
+either + or -.  Note that there is not a space between names.
+.PP
+For instance:
+.PP
+.I -debugmsg warn+dll,+heap
+will turn on DLL and heap warning messages.  
+.br
+.I -debugmsg fixme-all,warn+cursor,+relay
+will turn off all FIXME messages, turn on cursor warning messages, and turn
+on all relay messages (API calls).
+.PP
+The full list of names is: all, accel, advapi, aspi, atom, bitblt, bitmap, 
+caret, cd, cdaudio, class, clipboard, clipping, combo, comm, commctrl, 
+commdlg, console, crtdll, cursor, dc, dde, ddeml, ddraw, debug, dialog, 
+dinput, dll, dosfs, driver, dsound, edit, event, exec, file, fixup, font, 
+gdi, global, graphics, header, heap, hook, icon, imagelist, int, int21, 
+int31, key, keyboard, ldt, listbox, local, mci, mcianim, mciwave, mdi, menu, 
+message, metafile, midi, mmaux, mmio, mmsys, mmtime, module, mpr, msg, 
+nonclient, ntdll, ole, palette, print, process, profile, prop, reg, region, 
+relay, resource, scroll, security, segment, selector, sem, sendmsg, shell, 
+shm, snoop, sound, stress, string, syscolor, task, text, thread, thunk, timer, 
+toolhelp, tweak, uitools, updown, ver, virtual, vxd, win, win16drv, win32, 
+wing, winsock, wnet, x11, x11drv.
+.PP
+For more information on debugging messages, see the file 
+.I documentation/debug-msgs
+in the source distribution.
+.RE
 .TP
 .I -depth n
 Change the depth to use for multiple-depth screens
@@ -133,7 +161,7 @@ Turn on synchronous display mode
 .TP
 .I -winver version
 Specify which Windows version WINE should imitate.
-Possible arguments are: win31, win95 and nt351.
+Possible arguments are: win31, win95, nt351, and nt40.
 .PD 1
 .SH PROGRAM/ARGUMENTS
 The program name may be specified in DOS format (C:\\WINDOWS\\SOL.EXE) or in 
@@ -155,7 +183,9 @@ the
 .B configure
 script.  Alternatively, you may have a 
 .I .winerc
-file of this format in your home directory.
+file of this format in your home directory or the environment variable
+.B WINE_INI
+pointing to a configuration file.
 .SH CONFIGURATION FILE FORMAT
 All entries are grouped in sections; a section begins with the line
 .br
@@ -290,6 +320,14 @@ Used to specify which messages will be excluded from the logfile.
 .br
 default: none
 .br Used to specify which messages will be included in the logfile.
+.PP
+.B [Tweak.Layout]
+.br
+.I format: Win95Look=<true|false>
+.br
+default: false
+.br 
+Use Win95 look (true) or Win3.1 look (false).
 .SH SAMPLE CONFIGURATION FILE
 [Drive A]
 .br
@@ -340,6 +378,12 @@ lpt1=/dev/lp0
 Exclude=WM_TIMER;WM_SETCURSOR;WM_MOUSEMOVE;WM_NCHITTEST;
 .br
 Include=WM_COMMAND;
+.PP
+[Tweak.Layout]
+.br Win95Look=[true|false]
+.br Win95Look=true enables Win95-like windows layouts; Win95Look=false 
+uses Win3.1-like displays. If this section is not included, it defaults
+to false.
 .SH AUTHORS
 .B Wine
 is available thanks to the work of Bob Amstadt, Dag Asheim,
@@ -356,9 +400,6 @@ Erik Svendsen, Goran Thyni, Jimmy Tirtawangsa, Jon Tombs,
 Linus Torvalds, Gregory Trubetskoy, Michael Veksler, Morten Welinder,
 Jan Willamowius, Carl Williams, Karl Guenter Wuensch, Eric Youngdale,
 and James Youngman.
-.PP
-This man page is maintained by Mike Phillips (msphil@facstaff.wm.edu), so 
-please send all corrections, comments, flames, etc., to him.
 .SH BUGS
 There are too many to count, much less list.  Some bugs of note, however,
 are that programs requiring VBRUNxxx.DLL are unreliable (with reports of
@@ -366,18 +407,11 @@ some working), OLE is not in place, the internal COMMDLG support is not yet
 at 100% (although rapidly improving).  Color support for other than 8bpp
 (256 colors) is currently flaky.
 .PP
-A partial list of applications known to work with 
-.B wine
-include: sol, cruel, golf, clock, notepad, charmap, calc, and wzip11.
-The following URLs point to different success/testing lists:
-.br
-.I http://www.ifi.uio.no/~dash/wine/working-apps.html
-.br
-.I http://dutifp.twi.tudelft.nl:8000/wine/
+A status report on many appplications is available from
+.I http://www.winehq.com/apps.cgi.
+Users can add, modify, and delete entries on this list.
 .PP
-We would like to hear about what software does run under 
-.B Wine,
-and such reports may be posted to 
+Bug reports and successes may be posted to 
 .I comp.emulators.ms-windows.wine.
 .SH AVAILABILITY
 The most recent public version of 
@@ -385,6 +419,20 @@ The most recent public version of
 can be ftp'ed from tsx-11.mit.edu in the /pub/linux/ALPHA/Wine/development 
 directory.  The releases are in the format 'Wine-yymmdd.tar.gz', 
 or 'Wine-yymmdd.diff.gz' for the diff's from the previous release.
+.PP
+The
+.B wine
+homepage is at
+.I http://www.winehq.com.
+This website contains a great deal of information about
+.B wine
+as well as a collection of unofficial patches against the current release.
+.PP
+The
+.B wine 
+newsgroup is 
+.I comp.emulators.ms-windows.wine.
+All discussions about the project take place in this forum.
 .SH FILES
 .PD 0
 .TP
@@ -392,14 +440,12 @@ or 'Wine-yymmdd.diff.gz' for the diff's from the previous release.
 The invoker program.
 .TP
 .I /usr/local/etc/wine.conf
-Main configuration file for wine.
+Global configuration file for wine.
 .TP
-.I ChangeLog
-Changes in Wine, since the beginning (most recent changes first)
+.I /usr/local/lib/wine.sym
+Global symbol table (used in debugger)
 .TP
-.I configure
-Shell script to automatically generate Makefiles.  Usually followed by
-make to compile wine.
-.TP
-.I Wine newsgroup
-Subscribe to comp.emulators.ms-windows.wine
+.I ~/.winerc
+User-specific configuration file
+.SH "SEE ALSO"
+clone(2)

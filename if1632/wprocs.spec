@@ -14,6 +14,8 @@ type	win16
 29 pascal DefResourceHandler(word word word) NE_DefResourceHandler
 30 pascal FormatCharDlgProc(word word word long) FormatCharDlgProc16
 31 pascal16 ASPI_DOS_func(long) ASPI_DOS_func
+32 pascal LoadDIBIconHandler(word word word) LoadDIBIconHandler
+33 pascal LoadDIBCursorHandler(word word word) LoadDIBCursorHandler
  
 # Interrupt vectors 0-255 are ordinals 100-355
 # The 'word' parameter are the flags pushed on the stack by the interrupt

@@ -1404,7 +1404,6 @@ BOOL32 X11DRV_BitBlt( DC *dcDst, INT32 xDst, INT32 yDst,
     result = (BOOL32)CALL_LARGE_STACK( BITBLT_DoStretchBlt, &params );
     LeaveCriticalSection( &X11DRV_CritSection );
     DIB_UpdateDIBSection( dcDst, TRUE );
-    DIB_UpdateDIBSection( dcSrc, TRUE );
     return result;
 }
 
@@ -1427,6 +1426,5 @@ BOOL32 X11DRV_StretchBlt( DC *dcDst, INT32 xDst, INT32 yDst,
     result = (BOOL32)CALL_LARGE_STACK( BITBLT_DoStretchBlt, &params );
     LeaveCriticalSection( &X11DRV_CritSection );
     DIB_UpdateDIBSection( dcDst, TRUE );
-    DIB_UpdateDIBSection( dcSrc, TRUE );
     return result;
 }

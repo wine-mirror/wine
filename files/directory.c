@@ -190,7 +190,7 @@ BYTE WINAPI GetTempDrive( BYTE ignored )
     char buffer[2];
     /* FIXME: apparently Windows does something with the ignored byte */
     if (!GetTempPath32A( sizeof(buffer), buffer )) buffer[0] = 'C';
-    return toupper(buffer[0]) - 'A';
+    return toupper(buffer[0]);
 }
 
 

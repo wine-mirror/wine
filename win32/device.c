@@ -22,6 +22,7 @@
 #include "mmsystem.h"
 #include "heap.h"
 #include "debug.h"
+#include "winioctl.h"
 
 void DEVICE_Destroy(K32OBJ *dev);
 const K32OBJ_OPS DEVICE_Ops =
@@ -71,6 +72,12 @@ DEVICE_Destroy(K32OBJ *dev) {
 
 /****************************************************************************
  *		DeviceIoControl (KERNEL32.188)
+ * This is one of those big ugly nasty procedure which can do
+ * a million and one things when it comes to devices. It can also be
+ * used for VxD communication.
+ *
+ * A return value of FALSE indicates that something has gone wrong which
+ * GetLastError can decypher.
  */
 BOOL32 WINAPI DeviceIoControl(HANDLE32 hDevice, DWORD dwIoControlCode, 
 			      LPVOID lpvlnBuffer, DWORD cblnBuffer,
@@ -85,12 +92,23 @@ BOOL32 WINAPI DeviceIoControl(HANDLE32 hDevice, DWORD dwIoControlCode,
 		hDevice,dwIoControlCode,lpvlnBuffer,cblnBuffer,
 		lpvOutBuffer,cbOutBuffer,lpcbBytesReturned,lpOverlapped
 	);
+
 	if (!dev)
+	{
+		SetLastError( ERROR_INVALID_PARAMETER );
 		return FALSE;
-	/* FIXME: Set appropriate error */
-	FIXME(win32,"	device %s\n",dev->devname);
-	if (!strcmp(dev->devname,"VTDAPI")) {
-		switch (dwIoControlCode) {
+	}
+
+	/* Check if this is a user defined control code for a VxD */
+        if( HIWORD( dwIoControlCode ) == 0 )
+        {
+	    /* FIXME: Set appropriate error */
+	    FIXME(win32," VxD device %s msg\n",dev->devname);
+ 
+	    if (!strcmp(dev->devname,"VTDAPI"))
+            {
+		switch (dwIoControlCode)
+                {
 		case 5:	if (lpvOutBuffer && (cbOutBuffer>=4))
 				*(DWORD*)lpvOutBuffer = timeGetTime();
 			if (lpcbBytesReturned)
@@ -99,7 +117,54 @@ BOOL32 WINAPI DeviceIoControl(HANDLE32 hDevice, DWORD dwIoControlCode,
 		default:
 			break;
 		}
+	
+           }
 	}
-	FIXME(win32,"	(unhandled)\n");
-	return FALSE;
+	else
+	{
+		switch( dwIoControlCode )
+		{
+		case FSCTL_DELETE_REPARSE_POINT:
+		case FSCTL_DISMOUNT_VOLUME:
+		case FSCTL_GET_COMPRESSION:
+		case FSCTL_GET_REPARSE_POINT:
+		case FSCTL_LOCK_VOLUME:
+		case FSCTL_QUERY_ALLOCATED_RANGES:
+		case FSCTL_SET_COMPRESSION:
+		case FSCTL_SET_REPARSE_POINT:
+		case FSCTL_SET_SPARSE:
+		case FSCTL_SET_ZERO_DATA:
+		case FSCTL_UNLOCK_VOLUME:
+		case IOCTL_DISK_CHECK_VERIFY:
+		case IOCTL_DISK_EJECT_MEDIA:
+		case IOCTL_DISK_FORMAT_TRACKS:
+		case IOCTL_DISK_GET_DRIVE_GEOMETRY:
+		case IOCTL_DISK_GET_DRIVE_LAYOUT:
+		case IOCTL_DISK_GET_MEDIA_TYPES:
+		case IOCTL_DISK_GET_PARTITION_INFO:
+		case IOCTL_DISK_LOAD_MEDIA:
+		case IOCTL_DISK_MEDIA_REMOVAL:
+		case IOCTL_DISK_PERFORMANCE:
+		case IOCTL_DISK_REASSIGN_BLOCKS:
+		case IOCTL_DISK_SET_DRIVE_LAYOUT:
+		case IOCTL_DISK_SET_PARTITION_INFO:
+		case IOCTL_DISK_VERIFY:
+		case IOCTL_SERIAL_LSRMST_INSERT:
+		case IOCTL_STORAGE_CHECK_VERIFY:
+		case IOCTL_STORAGE_EJECT_MEDIA:
+		case IOCTL_STORAGE_GET_MEDIA_TYPES:
+		case IOCTL_STORAGE_LOAD_MEDIA:
+		case IOCTL_STORAGE_MEDIA_REMOVAL:
+    			FIXME( win32, "unimplemented dwIoControlCode=%08lx\n", dwIoControlCode);
+    			SetLastError( ERROR_CALL_NOT_IMPLEMENTED );
+    			return FALSE;
+    			break;
+		default:
+    			FIXME( win32, "ignored dwIoControlCode=%08lx\n",dwIoControlCode);
+    			SetLastError( ERROR_CALL_NOT_IMPLEMENTED );
+    			return FALSE;
+    			break;
+		}
+	}
+   	return FALSE;
 }

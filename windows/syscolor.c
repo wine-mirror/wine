@@ -56,7 +56,7 @@ static const char * const DefSysColors95[] =
     "TitleText", "255 255 255",      /* COLOR_CAPTIONTEXT         */
     "ActiveBorder", "128 128 128",   /* COLOR_ACTIVEBORDER        */
     "InactiveBorder", "255 255 255", /* COLOR_INACTIVEBORDER      */
-    "AppWorkspace", "255 255 232",   /* COLOR_APPWORKSPACE        */
+    "AppWorkspace", "128 128 128",   /* COLOR_APPWORKSPACE        */
     "Hilight", "223 223 223",        /* COLOR_HIGHLIGHT           */
     "HilightText", "0 0 0",          /* COLOR_HIGHLIGHTTEXT       */
     "ButtonFace", "192 192 192",     /* COLOR_BTNFACE             */

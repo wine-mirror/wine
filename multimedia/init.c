@@ -58,7 +58,7 @@ int unixToWindowsDeviceType(int type)
 BOOL32 MULTIMEDIA_Init (void)
 {
 #ifdef HAVE_OSS
-  int i, status, numsynthdevs, nummididevs;
+  int i, status, numsynthdevs=255, nummididevs=255;
   struct synth_info sinfo;
   struct midi_info minfo;
   int fd;        /* file descriptor for MIDI_DEV */
@@ -182,5 +182,4 @@ BOOL32 MULTIMEDIA_Init (void)
 #endif /* HAVE_OSS */
   
   return TRUE;
-  
 }

@@ -246,7 +246,7 @@ X11DRV_Ellipse( DC *dc, INT32 left, INT32 top, INT32 right, INT32 bottom )
 BOOL32
 X11DRV_Rectangle(DC *dc, INT32 left, INT32 top, INT32 right, INT32 bottom)
 {
-    INT32 width, oldwidth;
+    INT32 width, oldwidth, oldjoinstyle;
 
     TRACE(graphics, "(%d %d %d %d)\n", 
     	left, top, right, bottom);
@@ -276,6 +276,9 @@ X11DRV_Rectangle(DC *dc, INT32 left, INT32 top, INT32 right, INT32 bottom)
     }
     if(width == 1) width=0;
     dc->u.x.pen.width=width;
+    oldjoinstyle=dc->u.x.pen.linejoin;
+    if(dc->u.x.pen.type!=PS_GEOMETRIC)
+            dc->u.x.pen.linejoin=PS_JOIN_MITER;
 
     if ((right > left + width) && (bottom > top + width))
     {
@@ -291,6 +294,7 @@ X11DRV_Rectangle(DC *dc, INT32 left, INT32 top, INT32 right, INT32 bottom)
 		        right-left-1, bottom-top-1 );
 
     dc->u.x.pen.width=oldwidth;
+    dc->u.x.pen.linejoin=oldjoinstyle;
     return TRUE;
 }
 

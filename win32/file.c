@@ -97,7 +97,29 @@ BOOL32 WINAPI ReadFileEx(HFILE32 hFile, LPVOID lpBuffer, DWORD numtoread,
 
 
 /*************************************************************************
- *              CreateFile32A              (KERNEL32.45)
+ * CreateFile32A [KERNEL32.45]  Creates or opens a file or other object
+ *
+ * Creates or opens an object, and returns a handle that can be used to
+ * access that object.
+ *
+ * PARAMS
+ *
+ * filename	[I] pointer to filename to be accessed
+ * access	[I] access mode requested
+ * sharing	[I] share mode
+ * security	[I] pointer to security attributes
+ * creation	[I] ?
+ * attributes	[I] ?
+ * template	[I] handle to file with attributes to copy
+ *
+ * RETURNS
+ *   Success: Open handle to specified file
+ *   Failure: INVALID_HANDLE_VALUE
+ *
+ * NOTES
+ *  Should call SetLastError() on failure.
+ *
+ * BUGS
  *
  * Doesn't support character devices, pipes, template files, or a
  * lot of the 'attributes' flags yet.

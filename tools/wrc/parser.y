@@ -3,6 +3,12 @@
  * Copyright  Martin von Loewis, 1994
  * Copyright 1998 Bertho A. Stultiens (BS)
  *
+ * 20-Jun-1998 BS	- Fixed a bug in load_file() where the name was not
+ *			  printed out correctly.
+ *
+ * 17-Jun-1998 BS	- Fixed a bug in CLASS statement parsing which should
+ *			  also accept a tSTRING as argument.
+ *
  * 25-May-1998 BS	- Found out that I need to support language, version
  *			  and characteristics in inline resources (bitmap,
  *			  cursor, etc) but they can also be specified with
@@ -250,7 +256,7 @@ stringtable_t *find_stringtable(lvc_t *lvc);
 %type <msg> 	messagetable
 %type <usr> 	userres
 %type <num> 	item_options
-%type <nid> 	nameid ctlclass usertype
+%type <nid> 	nameid nameid_s ctlclass usertype
 %type <num> 	acc_opt
 %type <iptr>	loadmemopts lamo lama
 %type <fntid>	opt_font opt_exfont
@@ -394,11 +400,8 @@ resource
 		}
 	;
 
-/* FIXME:
- * The problem here is that MENU MENU {...} is a valid (!) resource.
- * The name-identifier is "MENU". We cannot parse this without generating
- * an error. It would mean that a list of keywords must be added here
- * and converted into a valid name_id_t structure.
+/*
+ * Get a valid name/id
  */
 nameid	: expr	{
 		$$ = new_name_id();
@@ -407,6 +410,18 @@ nameid	: expr	{
 		want_rscname = 0;
 		}
 	| IDENT	{
+		$$ = new_name_id();
+		$$->type = name_str;
+		$$->name.s_name = $1;
+		want_rscname = 0;
+		}
+	;
+
+/*
+ * Extra string recognition for CLASS statement in dialogs
+ */
+nameid_s: nameid	{ $$ = $1; }
+	| tSTRING	{
 		$$ = new_name_id();
 		$$->type = name_str;
 		$$->name.s_name = $1;
@@ -631,7 +646,7 @@ dlg_attributes
 	| dlg_attributes EXSTYLE expr	{ $$=dialog_exstyle($3,$1); }
 	| dlg_attributes CAPTION tSTRING { $$=dialog_caption($3,$1); }
 	| dlg_attributes opt_font	{ $$=dialog_font($2,$1); }
-	| dlg_attributes CLASS nameid	{ $$=dialog_class($3,$1); }
+	| dlg_attributes CLASS nameid_s	{ $$=dialog_class($3,$1); }
 	| dlg_attributes MENU nameid	{ $$=dialog_menu($3,$1); }
 	| dlg_attributes opt_language	{ $$=dialog_language($2,$1); }
 	| dlg_attributes opt_characts	{ $$=dialog_characteristics($2,$1); }
@@ -823,7 +838,7 @@ dlgex_attribs
 	| dlgex_attribs EXSTYLE expr	{ $$=dialogex_exstyle($3,$1); }
 	| dlgex_attribs CAPTION tSTRING { $$=dialogex_caption($3,$1); }
 	| dlgex_attribs opt_exfont	{ $$=dialogex_font($2,$1); }
-	| dlgex_attribs CLASS nameid	{ $$=dialogex_class($3,$1); }
+	| dlgex_attribs CLASS nameid_s	{ $$=dialogex_class($3,$1); }
 	| dlgex_attribs MENU nameid	{ $$=dialogex_menu($3,$1); }
 	| dlgex_attribs opt_language	{ $$=dialogex_language($2,$1); }
 	| dlgex_attribs opt_characts	{ $$=dialogex_characteristics($2,$1); }
@@ -1838,10 +1853,14 @@ event_t *add_string_event(string_t *key, int id, int flags, event_t *prev)
 	if(key->type != str_char)
 		yyerror("Key code must be an ascii string");
 
-	if((flags & WRC_AF_VIRTKEY) && (!isupper(key->str.cstr[0]) || !isdigit(key->str.cstr[0])))
+	if((flags & WRC_AF_VIRTKEY) && (!isupper(key->str.cstr[0]) && !isdigit(key->str.cstr[0])))
 		yyerror("VIRTKEY code is not equal to ascii value");
 
-	if(key->str.cstr[0] == '^')
+	if(key->str.cstr[0] == '^' && (flags & WRC_AF_CONTROL) != 0)
+	{
+		yyerror("Cannot use both '^' and CONTROL modifier");
+	}
+	else if(key->str.cstr[0] == '^')
 	{
 		keycode = toupper(key->str.cstr[1]) - '@';
 		if(keycode >= ' ')
@@ -1879,7 +1898,7 @@ raw_data_t *load_file(string_t *name)
 		
 	fp = fopen(name->str.cstr, "rb");
 	if(!fp)
-		yyerror("Cannot open file %s", name);
+		yyerror("Cannot open file %s", name->str.cstr);
 	rd = new_raw_data();
 	fseek(fp, 0, SEEK_END);
 	rd->size = ftell(fp);
@@ -2175,6 +2194,7 @@ void split_icons(raw_data_t *rd, icon_group_t *icog, int *nico)
 	{
 		ico = new_icon();
 		ico->id = alloc_icon_id();
+		ico->lvc.language = dup_language(icog->lvc.language);
 		if(ide[i].offset > rd->size
 		|| ide[i].offset + ide[i].ressize > rd->size)
 			yyerror("Icon resource data corrupt");
@@ -2227,6 +2247,7 @@ void split_cursors(raw_data_t *rd, cursor_group_t *curg, int *ncur)
 	{
 		cur = new_cursor();
 		cur->id = alloc_cursor_id();
+		cur->lvc.language = dup_language(curg->lvc.language);
 		if(cde[i].offset > rd->size
 		|| cde[i].offset + cde[i].ressize > rd->size)
 			yyerror("Cursor resource data corrupt");

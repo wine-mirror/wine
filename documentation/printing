@@ -1,0 +1,50 @@
+Printing in Wine
+================
+
+Printing in Wine can be done in one of two ways. Both of which are very alpha.
+
+1. Use a windows 3.1 printer driver.
+
+2. Use the builtin Wine Postscript driver (+ ghostscript to produce output for
+   non-postscript printers).
+
+
+1. External printer drivers
+---------------------------
+At present only 16 bit drivers will work.
+Add
+
+printer=on
+
+to the [wine] section of wine.conf (or ~/.winerc). This lets CreateDC proceed
+if its driver argument is a 16 bit driver.
+
+You will probably also need to add
+
+TTEnable=0
+TTOnly=0
+
+to the [TrueType] section of win.ini .
+
+The code for the driver interface is in graphics/win16drv .
+
+
+2. Builtin Wine Postscript driver
+---------------------------------
+Enables printing of postscript files via a driver built into Wine. See
+graphics/psdrv/README for installation instructions. The code for the
+postscript driver is in graphics/psdrv .
+
+
+
+Spooling
+========
+Spooling is rather primitive. The [spooler] section of wine.conf maps a port
+(e.g. LPT1:) to a file or a command via a pipe. For example the following lines
+
+LPT1:=foo.ps
+LPT2:=|lpr
+
+map LPT1: to file foo.ps and LPT2: to the lpr command. If a job is sent to an
+unlisted port then a file is created with that port's name e.g. for LPT3: a
+file called LPT3: would be created.

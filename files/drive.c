@@ -102,7 +102,7 @@ static DRIVETYPE DRIVE_GetDriveType( const char *name )
     PROFILE_GetWineIniString( name, "Type", "hd", buffer, sizeof(buffer) );
     for (i = 0; i < sizeof(DRIVE_Types)/sizeof(DRIVE_Types[0]); i++)
     {
-        if (!lstrcmpi32A( buffer, DRIVE_Types[i] )) return (DRIVETYPE)i;
+        if (!strcasecmp( buffer, DRIVE_Types[i] )) return (DRIVETYPE)i;
     }
     MSG("%s: unknown type '%s', defaulting to 'hd'.\n", name, buffer );
     return TYPE_HD;
@@ -117,7 +117,7 @@ static UINT32 DRIVE_GetFSFlags( const char *name, const char *value )
     const FS_DESCR *descr;
 
     for (descr = DRIVE_Filesystems; descr->name; descr++)
-        if (!lstrcmpi32A( value, descr->name )) return descr->flags;
+        if (!strcasecmp( value, descr->name )) return descr->flags;
     MSG("%s: unknown filesystem type '%s', defaulting to 'unix'.\n",
 	name, value );
     return DRIVE_CASE_SENSITIVE | DRIVE_CASE_PRESERVING;

@@ -29,24 +29,19 @@
 
 
 /***********************************************************************
- *           PROGRESS_Paint
- * Draw the arrows. The background need not be erased.
- * If dc!=0, it draws on it
+ * PROGRESS_Draw
+ * Draws the progress bar.
  */
-static void PROGRESS_Paint(WND *wndPtr, HDC32 dc)
+static void
+PROGRESS_Draw (WND *wndPtr, HDC32 hdc)
 {
   PROGRESS_INFO *infoPtr = PROGRESS_GetInfoPtr(wndPtr);
   HBRUSH32 hbrBar, hbrBk;
   int rightBar, rightMost, ledWidth;
-  PAINTSTRUCT32 ps;
   RECT32 rect;
-  HDC32 hdc;
 
-  TRACE(progress, "paint pos=%d min=%d, max=%d\n",
+  TRACE(progress, "refresh pos=%d min=%d, max=%d\n",
 	       infoPtr->CurVal, infoPtr->MinVal, infoPtr->MaxVal);
-
-  /* get a dc */
-  hdc = dc==0 ? BeginPaint32(wndPtr->hwndSelf, &ps) : dc;
 
   /* get the required bar brush */
   if (infoPtr->ColorBar == CLR_DEFAULT)
@@ -60,11 +55,10 @@ static void PROGRESS_Paint(WND *wndPtr, HDC32 dc)
   else
     hbrBk = CreateSolidBrush32 (infoPtr->ColorBk);
 
-  /* get rect for the bar, adjusted for the border */
+  /* get client rectangle */
   GetClientRect32 (wndPtr->hwndSelf, &rect);
 
-  /* draw the border */
-  DrawEdge32(hdc, &rect, BDR_SUNKENOUTER, BF_RECT|BF_ADJUST);
+  /* draw the background */
   FillRect32(hdc, &rect, hbrBk);
 
   rect.left++; rect.right--; rect.top++; rect.bottom--;
@@ -125,11 +119,38 @@ static void PROGRESS_Paint(WND *wndPtr, HDC32 dc)
   /* delete background brush */
   if (infoPtr->ColorBk != CLR_DEFAULT)
       DeleteObject32 (hbrBk);
-
-  /* clean-up */  
-  if(!dc)
-    EndPaint32(wndPtr->hwndSelf, &ps);
 }
+
+/***********************************************************************
+ * PROGRESS_Refresh
+ * Draw the progress bar. The background need not be erased.
+ */
+static void
+PROGRESS_Refresh (WND *wndPtr)
+{
+    HDC32 hdc;
+
+    hdc = GetDC32 (wndPtr->hwndSelf);
+    PROGRESS_Draw (wndPtr, hdc);
+    ReleaseDC32 (wndPtr->hwndSelf, hdc);
+}
+
+/***********************************************************************
+ * PROGRESS_Paint
+ * Draw the progress bar. The background need not be erased.
+ * If dc!=0, it draws on it
+ */
+static void
+PROGRESS_Paint (WND *wndPtr)
+{
+    PAINTSTRUCT32 ps;
+    HDC32 hdc;
+
+    hdc = BeginPaint32 (wndPtr->hwndSelf, &ps);
+    PROGRESS_Draw (wndPtr, hdc);
+    EndPaint32 (wndPtr->hwndSelf, &ps);
+}
+
 
 /***********************************************************************
  *           PROGRESS_CoercePos
@@ -157,10 +178,15 @@ LRESULT WINAPI ProgressWindowProc(HWND32 hwnd, UINT32 message,
 
   switch(message)
     {
+    case WM_NCCREATE:
+      wndPtr->dwExStyle |= WS_EX_STATICEDGE;
+      return TRUE;
+
     case WM_CREATE:
       /* allocate memory for info struct */
-      infoPtr = (PROGRESS_INFO *)HeapAlloc (SystemHeap, HEAP_ZERO_MEMORY,
-                                     sizeof(PROGRESS_INFO));
+      infoPtr = 
+	(PROGRESS_INFO *)HeapAlloc (GetProcessHeap (), HEAP_ZERO_MEMORY,
+                                    sizeof(PROGRESS_INFO));
       wndPtr->wExtra[0] = (DWORD)infoPtr;
 
       /* initialize the info struct */
@@ -175,7 +201,7 @@ LRESULT WINAPI ProgressWindowProc(HWND32 hwnd, UINT32 message,
     
     case WM_DESTROY:
       TRACE(progress, "Progress Ctrl destruction, hwnd=%04x\n", hwnd);
-      HeapFree (SystemHeap, 0, infoPtr);
+      HeapFree (GetProcessHeap (), 0, infoPtr);
       break;
 
     case WM_ERASEBKGND:
@@ -194,7 +220,7 @@ LRESULT WINAPI ProgressWindowProc(HWND32 hwnd, UINT32 message,
       break;
 
     case WM_PAINT:
-      PROGRESS_Paint(wndPtr, wParam);
+      PROGRESS_Paint (wndPtr);
       break;
     
     case PBM_DELTAPOS:
@@ -204,8 +230,7 @@ LRESULT WINAPI ProgressWindowProc(HWND32 hwnd, UINT32 message,
       if(wParam != 0){
 	infoPtr->CurVal += (UINT16)wParam;
 	PROGRESS_CoercePos(wndPtr);
-        InvalidateRect32 (hwnd, NULL, FALSE);
-        UpdateWindow32 (hwnd);
+	PROGRESS_Refresh (wndPtr);
       }
       return temp;
 
@@ -216,8 +241,7 @@ LRESULT WINAPI ProgressWindowProc(HWND32 hwnd, UINT32 message,
       if(temp != wParam){
 	infoPtr->CurVal = (UINT16)wParam;
 	PROGRESS_CoercePos(wndPtr);
-        InvalidateRect32 (hwnd, NULL, FALSE);
-        UpdateWindow32 (hwnd);
+	PROGRESS_Refresh (wndPtr);
       }
       return temp;          
       
@@ -231,8 +255,7 @@ LRESULT WINAPI ProgressWindowProc(HWND32 hwnd, UINT32 message,
 	if(infoPtr->MaxVal <= infoPtr->MinVal)
 	  infoPtr->MaxVal = infoPtr->MinVal+1;
 	PROGRESS_CoercePos(wndPtr);
-        InvalidateRect32 (hwnd, NULL, FALSE);
-        UpdateWindow32 (hwnd);
+	PROGRESS_Refresh (wndPtr);
       }
       return temp;
 
@@ -251,10 +274,7 @@ LRESULT WINAPI ProgressWindowProc(HWND32 hwnd, UINT32 message,
       if(infoPtr->CurVal > infoPtr->MaxVal)
 	infoPtr->CurVal = infoPtr->MinVal;
       if(temp != infoPtr->CurVal)
-      {
-        InvalidateRect32 (hwnd, NULL, FALSE);
-        UpdateWindow32 (hwnd);
-      }
+	PROGRESS_Refresh (wndPtr);
       return temp;
 
     case PBM_SETRANGE32:
@@ -266,8 +286,7 @@ LRESULT WINAPI ProgressWindowProc(HWND32 hwnd, UINT32 message,
 	if(infoPtr->MaxVal <= infoPtr->MinVal)
 	  infoPtr->MaxVal = infoPtr->MinVal+1;
 	PROGRESS_CoercePos(wndPtr);
-        InvalidateRect32 (hwnd, NULL, FALSE);
-        UpdateWindow32 (hwnd);
+	PROGRESS_Refresh (wndPtr);
       }
       return temp;
     
@@ -287,16 +306,14 @@ LRESULT WINAPI ProgressWindowProc(HWND32 hwnd, UINT32 message,
       if (wParam)
 	UNKNOWN_PARAM(PBM_SETBARCOLOR, wParam, lParam);
       infoPtr->ColorBar = (COLORREF)lParam;     
-      InvalidateRect32 (hwnd, NULL, FALSE);
-      UpdateWindow32 (hwnd);
+      PROGRESS_Refresh (wndPtr);
       break;
 
     case PBM_SETBKCOLOR:
       if (wParam)
 	UNKNOWN_PARAM(PBM_SETBKCOLOR, wParam, lParam);
       infoPtr->ColorBk = (COLORREF)lParam;
-      InvalidateRect32 (hwnd, NULL, FALSE);
-      UpdateWindow32 (hwnd);
+      PROGRESS_Refresh (wndPtr);
       break;
 
     default: 
@@ -316,7 +333,8 @@ LRESULT WINAPI ProgressWindowProc(HWND32 hwnd, UINT32 message,
  * Registers the progress bar window class.
  * 
  */
-void PROGRESS_Register(void)
+void 
+PROGRESS_Register(void)
 {
     WNDCLASS32A wndClass;
 

@@ -20,6 +20,7 @@
 #include "module.h"
 #include "neexe.h"
 #include "resource.h"
+#include "callback.h"
 #include "debug.h"
 
 #define NEXT_TYPEINFO(pTypeInfo) ((NE_TYPEINFO *)((char*)((pTypeInfo) + 1) + \
@@ -218,11 +219,13 @@ BOOL32 NE_InitResourceHandler( HMODULE16 hModule )
     NE_MODULE *pModule = NE_GetPtr( hModule );
     NE_TYPEINFO *pTypeInfo = (NE_TYPEINFO *)((char *)pModule + pModule->res_table + 2);
 
+    FARPROC16 handler = MODULE_GetWndProcEntry16("DefResourceHandler");
+
     TRACE(resource,"InitResourceHandler[%04x]\n", hModule );
 
     while(pTypeInfo->type_id)
     {
-	pTypeInfo->resloader = (FARPROC16)&NE_DefResourceHandler;
+	pTypeInfo->resloader = handler;
 	pTypeInfo = NEXT_TYPEINFO(pTypeInfo);
     }
     return TRUE;
@@ -450,7 +453,6 @@ HGLOBAL16 WINAPI LoadResource16( HMODULE16 hModule, HRSRC16 hRsrc )
 
     if (pNameInfo)
     {
-	RESOURCEHANDLER16 loader;
 	if (pNameInfo->handle
 	    && !(GlobalFlags16(pNameInfo->handle) & GMEM_DISCARDED))
 	{
@@ -461,16 +463,16 @@ HGLOBAL16 WINAPI LoadResource16( HMODULE16 hModule, HRSRC16 hRsrc )
 	else
 	{
 	    if (pTypeInfo->resloader)
-	  	loader = (RESOURCEHANDLER16)pTypeInfo->resloader;
+                pNameInfo->handle = Callbacks->CallResourceHandlerProc(
+                    pTypeInfo->resloader, pNameInfo->handle, hModule, hRsrc );
 	    else /* this is really bad */
 	    {
 		ERR(resource, "[%04x]: Missing resource handler!\n", hModule);
-		loader = NE_DefResourceHandler;
+                pNameInfo->handle = NE_DefResourceHandler(
+                                         pNameInfo->handle, hModule, hRsrc );
 	    }
 
-	    /* Finally call resource loader */
-
-	    if ((pNameInfo->handle = loader(pNameInfo->handle, hModule, hRsrc)))
+	    if (pNameInfo->handle)
 	    {
 		pNameInfo->usage++;
 		pNameInfo->flags |= NE_SEGFLAGS_LOADED;

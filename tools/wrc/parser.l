@@ -3,6 +3,15 @@
  * Copyright 1994 Martin von Loewis
  * Copyright 1998 Bertho A. Stultiens (BS)
  *
+ * 20-Jun-1998 BS	- Changed the filename conversion. Filenames are
+ *			  case-sensitive inder *nix, but not under dos.
+ *			  default behaviour is to convert to lower case.
+ *			- All backslashes are converted to forward and
+ *			  both single and double slash is recognized as
+ *			  MS/Borland does.
+ *			- Fixed a bug in 'yywf' case that prevented
+ *			  double quoted names to be scanned propperly.
+ *
  * 19-May-1998 BS	- Started to build a preprocessor.
  *			- Changed keyword processing completely to
  *			  table-lookups.
@@ -37,6 +46,7 @@
 
 /* Exclusive rules when looking for a filename */
 %x yywf
+%x yywf_s
 /* Exclusive string handling */
 %x yystr
 /* Exclusive unicode string handling */
@@ -78,11 +88,16 @@ cident	[a-zA-Z_][0-9a-zA-Z_]*
 
 %{
 
+#if !defined(YY_FLEX_MAJOR_VERSION) || (1000 * YY_FLEX_MAJOR_VERSION + YY_FLEX_MINOR_VERSION < 2005)
+#error Must use flex version 2.5.1 or higher (yy_scan_* routines are required).
+#endif
+
 /*#define LEX_DEBUG*/
 
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <ctype.h>
 
 #include <config.h>
 #include "wrc.h"
@@ -96,6 +111,9 @@ cident	[a-zA-Z_][0-9a-zA-Z_]*
 #define YY_USE_PROTOS
 #define YY_NO_UNPUT
 
+/* Always update the current character position within a line */
+#define YY_USER_ACTION	char_number+=yyleng;
+
 raw_data_t *new_raw_data(void);
 
 void addcchar(char c);
@@ -103,8 +121,10 @@ void addwchar(short s);
 string_t *get_buffered_cstring(void);
 string_t *get_buffered_wstring(void);
 string_t *make_string(char *s);
+string_t *make_filename(char *s, int len);
 
-int line_number = 1;
+int line_number = 1;		/* The current line */
+int char_number = 1;		/* The current char pos within the line */
 static char cbuffer[1024];	/* Buffers for string collection */
 static int cbufidx;
 static short wbuffer[1024];
@@ -152,6 +172,7 @@ struct bufferstackentry {
 					   or NULL if handling includes
 					 */
 	int line_number;		/* Line that we were handling */
+	int char_number;		/* The current position */
 	char *filename;			/* Filename that we were handling */
 };
 
@@ -174,7 +195,9 @@ void push_buffer(YY_BUFFER_STATE buf, struct pp_entry *ppp, char *filename)
 	{
 		/* These will track the yyerror to the correct file and line */
 		bufferstack[bufferstackidx].line_number = line_number;
+		bufferstack[bufferstackidx].char_number = char_number;
 		line_number = 1;
+		char_number = 1;
 		bufferstack[bufferstackidx].filename = input_name;
 		input_name = filename;
 	}
@@ -193,14 +216,16 @@ YY_BUFFER_STATE pop_buffer(void)
 	else
 	{
 		line_number = bufferstack[bufferstackidx].line_number;
+		char_number = bufferstack[bufferstackidx].char_number;
 		input_name = bufferstack[bufferstackidx].filename;
 		fclose(yyin);
 	}
 	if(yydebug)
-		printf("pop_buffer: %p %p (%d) %p\n",
+		printf("pop_buffer: %p %p (%d, %d) %p\n",
 			bufferstack[bufferstackidx].bufferstate,
 			bufferstack[bufferstackidx].define,
 			bufferstack[bufferstackidx].line_number,
+			bufferstack[bufferstackidx].char_number,
 			bufferstack[bufferstackidx].filename);
 	yy_switch_to_buffer(bufferstack[bufferstackidx].bufferstate);
 	return bufferstack[bufferstackidx].bufferstate;
@@ -400,7 +425,7 @@ void add_to_substtext(char *text, int len)
 			if(YY_START == pp_def_s)
 				add_to_substtext(yytext, yyleng);
 		}
-<pp_ignore,pp_def_s>\\{ws}*\n	line_number++;	/* Line continuation */
+<pp_ignore,pp_def_s>\\{ws}*\n	line_number++;	char_number = 1; /* Line continuation */
 <pp_ignore,pp_def_s>\n		{
 			if(YY_START == pp_def_s)
 			{
@@ -409,6 +434,7 @@ void add_to_substtext(char *text, int len)
 				substtext = NULL;
 			}
 			line_number++;
+			char_number = 1;
 			pop_start();
 			pop_start();
 		}
@@ -536,7 +562,7 @@ void add_to_substtext(char *text, int len)
 
 <pp_stripp_final>{ws}*	; /* Ignore */
 <pp_stripp_final>;	pop_start(); /* Kill the semicolon */
-<pp_stripp_final>\n	line_number++; pop_start();
+<pp_stripp_final>\n	line_number++; char_number = 1; pop_start();
 <pp_stripp_final>.	yyless(0); pop_start();
 
 <pp_false>.		;	/* Ignore everything except #xxx during false #if state */
@@ -570,7 +596,7 @@ void add_to_substtext(char *text, int len)
 					want_ident = 0;
 					yylval.str = make_string(yytext);
 				#ifdef LEX_DEBUG
-					printf("want IDENT (%s, %d): <%s>\n", input_name, line_number, yytext);
+					printf("want IDENT (%s, %d, %d): <%s>\n", input_name, line_number, char_number, yytext);
 				#endif
 					return IDENT;
 				}
@@ -583,7 +609,7 @@ void add_to_substtext(char *text, int len)
 					if(!ppp->expanding)
 					{
 				#ifdef LEX_DEBUG
-						printf("expand IDENT (%s, %d): <%s>\n", input_name, line_number, yytext);
+						printf("expand IDENT (%s, %d, %d): <%s>\n", input_name, line_number, char_number, yytext);
 				#endif
 						push_buffer(YY_CURRENT_BUFFER, ppp, NULL);
 						yy_scan_string(ppp->subst);
@@ -619,10 +645,11 @@ void add_to_substtext(char *text, int len)
 				{
 					yylval.str = make_string(yytext);
 				#ifdef LEX_DEBUG
-					printf("%s IDENT (%s, %d): <%s>\n",
+					printf("%s IDENT (%s, %d, %d): <%s>\n",
 						want_rscname ? "rscname" : "just",
 						input_name,
 						line_number,
+						char_number,
 						yytext);
 				#endif
 					return IDENT;
@@ -635,8 +662,10 @@ void add_to_substtext(char *text, int len)
 \<\=			return LTE;
 \>\=			return GTE;
 
-<yywf>[^ \f\t\r\n]*	{ pop_start(); yylval.str = make_string(yytext); return FILENAME; }
-<yywf>\"[^\"]*\"	{ pop_start(); yylval.str = make_string(yytext); return FILENAME; }
+<yywf>[^ \f\t\r\n\"]*	{ pop_start(); yylval.str = make_filename(yytext, yyleng); return FILENAME; }
+<yywf>\"		push_to(yywf_s);
+<yywf_s>[^\"\n]*\"	{ pop_start(); pop_start(); yylval.str = make_filename(yytext, yyleng-1); return FILENAME; }
+<yywf_s>\n		yyerror("Newline in filename");
 
 L\"			{
 				push_to(yylstr);
@@ -739,7 +768,7 @@ L\"			{
 <INITIAL,pp_ignore,pp_def_s>"/*"	push_to(comment);	/* Eat comment */
 <comment>[^*\n]*	;
 <comment>"*"+[^*/\n]*	;
-<comment>\n		line_number++;
+<comment>\n		line_number++; char_number = 1;
 <comment>"*"+"/"	pop_start();
 
 ;[^\n]*			; /* Eat comment */
@@ -749,6 +778,7 @@ L\"			{
 				if(YY_START == yywf)
 					pop_start();
 				line_number++;
+				char_number = 1;
 				if(want_nl)
 				{
 					want_nl = 0;
@@ -827,6 +857,37 @@ string_t *make_string(char *s)
 	str->type = str_char;
 	str->str.cstr = (char *)xmalloc(str->size+1);
 	memcpy(str->str.cstr, s, str->size+1);
+	return str;
+}
+
+string_t *make_filename(char *s, int len)
+{
+	char *cptr;
+	string_t *str = new_string();
+
+	str->size = len;
+	str->type = str_char;
+	str->str.cstr = (char *)xmalloc(str->size+1);
+	memcpy(str->str.cstr, s, str->size);
+	str->str.cstr[str->size] = '\0';
+
+	/* Remove escaped backslash and convert to forward */
+	cptr = str->str.cstr;
+	for(cptr = str->str.cstr; (cptr = strchr(cptr, '\\')) != NULL; cptr++)
+	{
+		if(cptr[1] == '\\')
+		{
+			memmove(cptr, cptr+1, strlen(cptr));
+			str->size--;
+		}
+		*cptr = '/';
+	}
+
+	/* Convert to lower case. Seems to be reasonable to do */
+	for(cptr = str->str.cstr; !leave_case && *cptr; cptr++)
+	{
+		*cptr = tolower(*cptr);
+	}
 	return str;
 }
 

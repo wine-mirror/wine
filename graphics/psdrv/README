@@ -1,0 +1,75 @@
+Wine Postscript Driver
+======================
+
+When complete this will allow Wine to generate Postscript files without needing
+an external printer driver. It should be possible to print to a non Postscript
+printer by filtering the output through ghostscript.
+
+
+Installation
+------------
+
+At the moment the driver will only work for 16 bit apps, the move to 32 bit
+should be quite easy, I'd just like to improve it first. The driver behaves as
+if it were a DRV file called WINEPS.DRV . To install it as the default printer
+driver add
+
+device=Wine Postscript Driver,WINEPS,LPT1:
+
+to the [windows] section of win.ini . You may prefer to add
+
+Wine Postscript Driver=WINEPS,LPT1:
+
+to the [devices] section of win.ini instead.
+
+You will need Adobe Font Metric (AFM) files for the (type 1 Postscript) fonts
+that you wish to use. You can get these from
+
+ftp://ftp.adobe.com/pub/adobe/type/win/all/afmfiles . The directories base17 or
+base35 are good places to start.
+
+Note that these are only the font metrics and not the fonts themselves. At
+present the driver does not download additional fonts, so you can only use
+fonts that are already present on the printer.
+
+Then create a [afmfiles] section in your wine.conf (or ~/.winerc) and add a
+line of the form
+
+file=/unix/path/name/filename.afm
+
+for each AFM file that you wish to use. [This might change in the future]
+
+Note that you need not set printer=on in the [wine] section of wine.conf, this
+enables printing via external printer drivers and does not affect wineps.
+
+If you're lucky you should now be able to produce PS files from Wine!
+
+I've tested it with win3.1 notepad/write, Winword6 and Origin4.0 with some
+degree of success - you should be able to get something out, it may not be in
+the right place.
+
+TODO / Bugs
+-----------
+
+Driver doesn't read PPD files - it should.
+
+A4 portrait mode is hard coded in at the moment.
+
+Graphics are basically non-existent. Only MoveTo/LineTo/Rectangle with a thin
+black pen.
+
+No colour.
+
+AFM parsing is not finished (or ideal).
+
+No TrueType download.
+
+Many partial-implemented functions.
+
+Probably many more...
+
+
+Since the driver is very very alpha, things are likely to change quickly.
+Please contact me if you want to help so that we can avoid duplication.
+
+Huw Davies <h.davies1@physics.ox.ac.uk>

@@ -13,17 +13,21 @@ General:
 
  * Incomplete thread/process scheduling support in Win32 code.
 
+ * Threading for non Linux systems completely missing. (might use
+   LWPs in Solaris, FreeBSD? NetBSD? SCO?)
+
  * Very alpha printing code using win16 drivers.
-   We should add a WINE internal PostScript driver (all other printers
-   can be supported using ghostscript filters).
 
- * Extremely alpha Win95 interface code.
+ * Very alpha internal Postscript driver. [h.davies1@physics.ox.ac.uk]
 
+ * Extremely alpha Win95 interface code.		
  * No OLE2 and OLE32 support (including OLE2 interfaces etc.).
+	 (started work on pidl-handling, IShellFolders IEnumIdLists 
+	 and SH* functions juergen.schmied@metronet.de)	
 
  * No MS Video support. [just started, marcus@jet.franken.de]
 
- * COMDLG32 support not complete yet [bertho@akhphd.au.dk?]
+ * COMDLG32 support not complete yet [bertho@akhphd.au.dk]
 
  * COMMCTRL/COMCTL32 support in progress [ekohl@abo.rhein-zeitung.de].
 

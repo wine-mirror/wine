@@ -346,6 +346,7 @@ HTASK16 TASK_Create( THDB *thdb, NE_MODULE *pModule, HINSTANCE16 hInstance,
 
     cmd_line = pdb32->env_db->cmd_line;
     while (*cmd_line && (*cmd_line != ' ') && (*cmd_line != '\t')) cmd_line++;
+    while ((*cmd_line == ' ') || (*cmd_line == '\t')) cmd_line++;
     lstrcpyn32A( pTask->pdb.cmdLine+1, cmd_line, sizeof(pTask->pdb.cmdLine)-1);
     pTask->pdb.cmdLine[0] = strlen( pTask->pdb.cmdLine + 1 );
 
@@ -1245,10 +1246,9 @@ VOID WINAPI GlobalNotify( FARPROC16 proc )
 /***********************************************************************
  *           GetExePtr   (KERNEL.133)
  */
-HMODULE16 WINAPI GetExePtr( HANDLE16 handle )
+static HMODULE16 GetExePtrHelper( HANDLE16 handle, HTASK16 *hTask )
 {
     char *ptr;
-    HTASK16 hTask;
     HANDLE16 owner;
 
       /* Check for module handle */
@@ -1256,29 +1256,58 @@ HMODULE16 WINAPI GetExePtr( HANDLE16 handle )
     if (!(ptr = GlobalLock16( handle ))) return 0;
     if (((NE_MODULE *)ptr)->magic == IMAGE_OS2_SIGNATURE) return handle;
 
+      /* Search for this handle inside all tasks */
+
+    *hTask = hFirstTask;
+    while (*hTask)
+    {
+        TDB *pTask = (TDB *)GlobalLock16( *hTask );
+        if ((*hTask == handle) ||
+            (pTask->hInstance == handle) ||
+            (pTask->hQueue == handle) ||
+            (pTask->hPDB == handle)) return pTask->hModule;
+        *hTask = pTask->hNext;
+    }
+
       /* Check the owner for module handle */
 
     owner = FarGetOwner( handle );
     if (!(ptr = GlobalLock16( owner ))) return 0;
     if (((NE_MODULE *)ptr)->magic == IMAGE_OS2_SIGNATURE) return owner;
 
-      /* Search for this handle and its owner inside all tasks */
+      /* Search for the owner inside all tasks */
 
-    hTask = hFirstTask;
-    while (hTask)
+    *hTask = hFirstTask;
+    while (*hTask)
     {
-        TDB *pTask = (TDB *)GlobalLock16( hTask );
-        if ((hTask == handle) ||
-            (pTask->hInstance == handle) ||
-            (pTask->hQueue == handle) ||
-            (pTask->hPDB == handle)) return pTask->hModule;
-        if ((hTask == owner) ||
+        TDB *pTask = (TDB *)GlobalLock16( *hTask );
+        if ((*hTask == owner) ||
             (pTask->hInstance == owner) ||
             (pTask->hQueue == owner) ||
             (pTask->hPDB == owner)) return pTask->hModule;
-        hTask = pTask->hNext;
+        *hTask = pTask->hNext;
     }
+
     return 0;
+}
+
+HMODULE16 WINAPI GetExePtr( HANDLE16 handle )
+{
+    HTASK16 dummy;
+    return GetExePtrHelper( handle, &dummy );
+}
+
+void WINAPI WIN16_GetExePtr( CONTEXT *context )
+{
+    WORD *stack = PTR_SEG_OFF_TO_LIN(SS_reg(context), SP_reg(context));
+    HANDLE16 handle = (HANDLE16)stack[2];
+    HTASK16 hTask = 0;
+    HMODULE16 hModule;
+
+    hModule = GetExePtrHelper( handle, &hTask );
+
+    AX_reg(context) = CX_reg(context) = hModule;
+    if (hTask) ES_reg(context) = hTask;
 }
 
 /***********************************************************************

@@ -12,6 +12,7 @@
 #include "options.h"
 #include "process.h"
 #include "win16drv.h"
+#include "psdrv.h"
 #include "windows.h"
 
 
@@ -31,6 +32,9 @@ BOOL32 MAIN_EmulatorInit(void)
 
     /* Create the Win16 printer driver */
     if (!WIN16DRV_Init()) return FALSE;
+
+    /* Create the Postscript printer driver (FIXME: should be in Winelib) */
+    if (!PSDRV_Init()) return FALSE;
 
     /* Initialize all the USER stuff */
     return MAIN_UserInit();

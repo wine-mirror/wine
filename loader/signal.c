@@ -34,6 +34,8 @@
 #include "sig_context.h"
 #include "winsock.h"
 
+/* Global variable to save %fs register while in 16-bit code */
+WORD CALLTO16_Current_fs;
 
 /* Linux sigaction function */
 

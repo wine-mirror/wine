@@ -932,7 +932,8 @@ void write_s_file(char *outname, resource_t *top)
 	}
 
 	now = time(NULL);
-	fprintf(fo, s_file_head_str, input_name, cmdline, ctime(&now));
+	fprintf(fo, s_file_head_str, input_name ? input_name : "stdin",
+                cmdline, ctime(&now));
 
 	/* Get an idea how many we have and restructure the tables */
 	count_resources(top);
@@ -1084,7 +1085,8 @@ void write_h_file(char *outname, resource_t *top)
 	}
 
 	time(&now);
-	fprintf(fo, h_file_head_str, input_name, cmdline, ctime(&now), now, now);
+	fprintf(fo, h_file_head_str, input_name ? input_name : "stdin",
+                cmdline, ctime(&now), now, now);
 
 	/* First write the segment tables reference */
 	if(create_dir)

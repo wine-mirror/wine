@@ -242,7 +242,7 @@ static BOOL32 PROFILE_DeleteSection( PROFILESECTION **section, LPCSTR name )
 {
     while (*section)
     {
-        if ((*section)->name && !lstrcmpi32A( (*section)->name, name ))
+        if ((*section)->name && !strcasecmp( (*section)->name, name ))
         {
             PROFILESECTION *to_del = *section;
             *section = to_del->next;
@@ -266,12 +266,12 @@ static BOOL32 PROFILE_DeleteKey( PROFILESECTION **section,
 {
     while (*section)
     {
-        if ((*section)->name && !lstrcmpi32A( (*section)->name, section_name ))
+        if ((*section)->name && !strcasecmp( (*section)->name, section_name ))
         {
             PROFILEKEY **key = &(*section)->key;
             while (*key)
             {
-                if (!lstrcmpi32A( (*key)->name, key_name ))
+                if (!strcasecmp( (*key)->name, key_name ))
                 {
                     PROFILEKEY *to_del = *key;
                     *key = to_del->next;
@@ -300,12 +300,12 @@ static PROFILEKEY *PROFILE_Find( PROFILESECTION **section,
 {
     while (*section)
     {
-        if ((*section)->name && !lstrcmpi32A( (*section)->name, section_name ))
+        if ((*section)->name && !strcasecmp( (*section)->name, section_name ))
         {
             PROFILEKEY **key = &(*section)->key;
             while (*key)
             {
-                if (!lstrcmpi32A( (*key)->name, key_name )) return *key;
+                if (!strcasecmp( (*key)->name, key_name )) return *key;
                 key = &(*key)->next;
             }
             if (!create) return NULL;
@@ -476,7 +476,7 @@ static INT32 PROFILE_GetSection( PROFILESECTION *section, LPCSTR section_name,
     PROFILEKEY *key;
     while (section)
     {
-        if (section->name && !lstrcmpi32A( section->name, section_name ))
+        if (section->name && !strcasecmp( section->name, section_name ))
         {
             INT32 oldlen = len;
             for (key = section->key; key; key = key->next)
@@ -664,7 +664,7 @@ int  PROFILE_EnumerateWineIniSection(
 
     /* Search for the correct section */
     for(scansect = WineProfile; scansect; scansect = scansect->next) {
-	if(scansect->name && !lstrcmpi32A(scansect->name, section)) {
+	if(scansect->name && !strcasecmp(scansect->name, section)) {
 
 	    /* Enumerate each key with the callback */
 	    for(scankey = scansect->key; scankey; scankey = scankey->next) {
@@ -752,6 +752,12 @@ int PROFILE_LoadWineIni(void)
     const char *p;
     FILE *f;
 
+    if ( (p = getenv( "WINE_INI" )) && (f = fopen( p, "r" )) )
+      {
+	WineProfile = PROFILE_Load( f );
+	fclose( f );
+	return 1;
+      }
     if ((p = getenv( "HOME" )) != NULL)
     {
         lstrcpyn32A(buffer, p, MAX_PATHNAME_LEN - sizeof(PROFILE_WineIniName));
@@ -1077,10 +1083,66 @@ BOOL32 WINAPI WritePrivateProfileSection32A( LPCSTR section,
 WORD WINAPI GetPrivateProfileSectionNames16( LPSTR buffer, WORD size,
                                              LPCSTR filename )
 {
-    FIXME(profile, "(%p,%d,%s):stub\n", buffer, size, filename);
-    buffer[0] = buffer[1] = '\0';
-    return 0;
+ char *buf;
+ int l,cursize;
+ PROFILESECTION *section;
+
+    if (PROFILE_Open( filename )) {
+	buf=buffer;
+	cursize=0;
+	section=CurProfile.section;
+	for ( ; section; section = section->next) {
+		l=strlen (section->name);
+		cursize+=l+1;
+        	if (cursize > size+1)
+			return size-2;
+		strcpy (buf,section->name);
+		buf+=l;
+		*buf=0;
+		buf++;
+		}
+ 	buf++;
+ 	*buf=0;
+ 	return (buf-buffer);
+ }
+ return FALSE;
 }
+
+
+
+/***********************************************************************
+ *           GetPrivateProfileStruct32A (KERNEL32.370)
+ */
+WORD WINAPI GetPrivateProfileStruct32A (LPCSTR section, LPCSTR key, 
+	LPVOID buf, UINT32 len, LPCSTR filename)
+{
+    PROFILEKEY *k;
+
+    if (PROFILE_Open( filename )) {
+        k=PROFILE_Find ( &CurProfile.section, section, key, FALSE);
+	if (!k) return FALSE;
+    	lstrcpyn32A( buf, k->value, strlen(k->value));
+        return TRUE;
+    }
+  return FALSE;
+}
+
+
+/***********************************************************************
+ *           WritePrivateProfileStruct32A (KERNEL32.744)
+ */
+WORD WINAPI WritePrivateProfileStruct32A (LPCSTR section, LPCSTR key, 
+	LPVOID buf, UINT32 bufsize, LPCSTR filename)
+{
+    if ((!section) && (!key) && (!buf)) {	/* flush the cache */
+        PROFILE_FlushFile();
+	return FALSE;
+ 	}
+
+    if (!PROFILE_Open( filename )) return FALSE;
+    return PROFILE_SetString( section, key, buf);
+}
+
 
 /***********************************************************************
  *           WriteOutProfiles   (KERNEL.315)

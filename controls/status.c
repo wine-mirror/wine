@@ -103,7 +103,7 @@ SB_DrawPart( HDC32 hdc, LPRECT32 lprc, HICON32 hIcon,
     /* now draw text */
     if (text) {
       int oldbkmode = SetBkMode32(hdc, TRANSPARENT);
-      LPSTR p = text;
+      LPSTR p = (LPSTR)text;
       UINT32 align = DT_LEFT;
       if (*p == '\t') {
 	p++;

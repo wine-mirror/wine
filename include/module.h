@@ -142,8 +142,6 @@ extern HINSTANCE16 MODULE_Load( LPCSTR name, BOOL32 implicit, LPCSTR cmd_line,
 extern FARPROC16 MODULE_GetWndProcEntry16( const char *name );
 extern FARPROC16 WINAPI WIN32_GetProcAddress16( HMODULE32 hmodule, LPCSTR name );
 
-typedef HGLOBAL16 (CALLBACK *RESOURCEHANDLER16)(HGLOBAL16,HMODULE16,HRSRC16);
-
 /* loader/ne/module.c */
 extern NE_MODULE *NE_GetPtr( HMODULE16 hModule );
 extern void NE_DumpModule( HMODULE16 hModule );

@@ -11,6 +11,7 @@
  *
  * TODO
  *     - Fix DSA_InsertItem.
+ *     - Fix DSA_GetItem.
  *     - Write documentation.
  */
 
@@ -39,10 +40,6 @@ typedef struct _DPA_DATA
 } DPA_DATA, *LPDPA_DATA;
 
 
-DWORD WINAPI Alloc (DWORD);
-DWORD WINAPI ReAlloc (DWORD, DWORD);
-DWORD WINAPI Free (DWORD);
-
 DWORD WINAPI DSA_Create (DWORD, DWORD);
 
 
@@ -51,31 +48,32 @@ DWORD WINAPI DPA_GetPtr (DWORD, DWORD);
 DWORD WINAPI DPA_InsertPtr (DWORD, DWORD, DWORD);
 
 
-LPSTR WINAPI COMCTL32_StrChrA (LPSTR lpString, CHAR cChar);
+
 
 
 DWORD WINAPI
-Alloc (DWORD dwParam1)
+COMCTL32_Alloc (DWORD dwParam)
 {
     DWORD dwPtr;
 
-    dwPtr = (DWORD)HeapAlloc (SystemHeap, HEAP_ZERO_MEMORY, dwParam1);
+    dwPtr = (DWORD)HeapAlloc (GetProcessHeap (), HEAP_ZERO_MEMORY, dwParam);
 
-    TRACE (commctrl, "(0x%08lx) ret=0x%08lx\n", dwParam1, dwPtr);
+    TRACE (commctrl, "(0x%08lx) ret=0x%08lx\n", dwParam, dwPtr);
 
     return dwPtr;
 }
 
 
 DWORD WINAPI
-ReAlloc (DWORD dwParam1, DWORD dwParam2)
+COMCTL32_ReAlloc (DWORD dwParam1, DWORD dwParam2)
 {
     DWORD dwPtr;
 
     if (dwParam1 == 0)
-	dwPtr = (DWORD)HeapAlloc (SystemHeap, HEAP_ZERO_MEMORY, dwParam2);
+	dwPtr = (DWORD)HeapAlloc (GetProcessHeap (), HEAP_ZERO_MEMORY,
+				  dwParam2);
     else
-	dwPtr = (DWORD)HeapReAlloc (SystemHeap, HEAP_ZERO_MEMORY, 
+	dwPtr = (DWORD)HeapReAlloc (GetProcessHeap (), HEAP_ZERO_MEMORY,
 				    (LPVOID)dwParam1, dwParam2);
 
     TRACE (commctrl, "(0x%08lx 0x%08lx) ret=0x%08lx\n",
@@ -86,15 +84,21 @@ ReAlloc (DWORD dwParam1, DWORD dwParam2)
 
 
 DWORD WINAPI
-Free (DWORD dwParam1)
+COMCTL32_Free (DWORD dwParam)
 {
-    TRACE (commctrl, "(0x%08lx)\n", dwParam1);
-    HeapFree (SystemHeap, 0, (LPVOID)dwParam1);
+    TRACE (commctrl, "(0x%08lx)\n", dwParam);
+    HeapFree (GetProcessHeap (), 0, (LPVOID)dwParam);
 
     return 0;
 }
 
 
+DWORD WINAPI
+COMCTL32_GetSize (DWORD dwParam)
+{
+    TRACE (commctrl, "(0x%08lx)\n", dwParam);
+    return (HeapSize (GetProcessHeap (), 0, (LPVOID)dwParam));
+}
 
 
 
@@ -132,6 +136,36 @@ DSA_Destroy (DWORD dwParam1)
     HeapFree (SystemHeap, 0, dsaPtr);
 
     return 0;
+}
+
+
+DWORD WINAPI
+DSA_GetItem (DWORD dwParam1, DWORD dwParam2, DWORD dwParam3)
+{
+    FIXME (commctrl, "(0x%08lx 0x%08lx 0x%08lx): stub!\n",
+	   dwParam1, dwParam2, dwParam3);
+
+    return 0;
+}
+
+
+DWORD WINAPI
+DSA_GetItemPtr (DWORD dwParam1, DWORD dwParam2)
+{
+    LPDSA_DATA dsaPtr = (LPDSA_DATA)dwParam1;
+
+    TRACE (commctrl, "(0x%08lx 0x%08lx)\n", dwParam1, dwParam2);
+
+    if (dsaPtr == NULL)
+	return 0;
+    if (dsaPtr->ptrs == NULL)
+	return 0;
+    if ((dwParam2 < 0) || (dwParam2 >= dsaPtr->dwEntryCount))
+	return 0;
+
+    TRACE (commctrl, "ret=0x%08lx\n", (DWORD)dsaPtr->ptrs[dwParam2]);
+
+    return (DWORD)dsaPtr->ptrs[dwParam2];
 }
 
 
@@ -188,24 +222,6 @@ DSA_InsertItem (DWORD dwParam1, DWORD dwParam2, DWORD dwParam3)
 }
 
 
-DWORD WINAPI
-DSA_GetItemPtr (DWORD dwParam1, DWORD dwParam2)
-{
-    LPDSA_DATA dsaPtr = (LPDSA_DATA)dwParam1;
-
-    TRACE (commctrl, "(0x%08lx 0x%08lx)\n", dwParam1, dwParam2);
-
-    if (dsaPtr == NULL)
-	return 0;
-    if (dsaPtr->ptrs == NULL)
-	return 0;
-    if ((dwParam2 < 0) || (dwParam2 >= dsaPtr->dwEntryCount))
-	return 0;
-
-    TRACE (commctrl, "ret=0x%08lx\n", (DWORD)dsaPtr->ptrs[dwParam2]);
-
-    return (DWORD)dsaPtr->ptrs[dwParam2];
-}
 
 
 DWORD WINAPI

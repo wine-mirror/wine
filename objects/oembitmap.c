@@ -340,6 +340,7 @@ static HBITMAP16 OBM_MakeBitmap( WORD width, WORD height,
     bmpObjPtr->dibSection          = NULL;
     bmpObjPtr->colorMap            = NULL;
     bmpObjPtr->nColorMap           = 0;
+    bmpObjPtr->status              = DIB_NoHandler;
 
     GDI_HEAP_UNLOCK( hbitmap );
     return hbitmap;

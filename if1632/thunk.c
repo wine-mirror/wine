@@ -152,6 +152,7 @@ static const CALLBACKS_TABLE CALLBACK_EmulatorTable =
     (void *)CallTo16_word_ww,              /* CallBootAppProc */
     (void *)CallTo16_word_www,             /* CallLoadAppSegProc */
     (void *)CallTo16_word_,                /* CallSystemTimerProc */
+    (void *)CallTo16_word_www,             /* CallResourceHandlerProc */
     (void *)CallTo16_long_l,               /* CallWOWCallbackProc */
     THUNK_WOWCallback16Ex,                 /* CallWOWCallback16Ex */
     (void *)CallTo16_long_l,               /* CallASPIPostProc */
@@ -564,55 +565,6 @@ FARPROC16 WINAPI THUNK_SetTaskSignalProc( HTASK16 hTask, FARPROC16 proc )
     return defSignalProc16;
 }
 
-
-/***********************************************************************
- *           THUNK_SetResourceHandler	(KERNEL.67)
- */
-FARPROC16 WINAPI THUNK_SetResourceHandler( HMODULE16 hModule, SEGPTR typeId, FARPROC16 proc )
-{
-    static FARPROC16 defDIBIconLoader16 = NULL;
-    static FARPROC16 defDIBCursorLoader16 = NULL;
-    static FARPROC16 defResourceLoader16 = NULL;
-
-    THUNK *thunk = NULL;
-
-    if( !defResourceLoader16 )
-    {
-	HMODULE16 hUser = GetModuleHandle16("USER");
-	defDIBIconLoader16 = NE_GetEntryPoint( hUser, 357 );
-	defDIBCursorLoader16 = NE_GetEntryPoint( hUser, 356 );
-	defResourceLoader16 = MODULE_GetWndProcEntry16( "DefResourceHandler" );
-    }
-
-    if( proc == defResourceLoader16 )
-	thunk = (THUNK*)&NE_DefResourceHandler;
-    else if( proc == defDIBIconLoader16 )
-	thunk = (THUNK*)&LoadDIBIconHandler;
-    else if( proc == defDIBCursorLoader16 )
-	thunk = (THUNK*)&LoadDIBCursorHandler;
-    else
-    {
-	thunk = THUNK_Alloc( proc, (RELAY)CallTo16_word_www );
-	if( !thunk ) return FALSE;
-    }
-
-    thunk = (THUNK*)SetResourceHandler( hModule, typeId, (FARPROC16)thunk );
-
-    if( thunk == (THUNK*)&NE_DefResourceHandler )
-	return defResourceLoader16;
-    if( thunk == (THUNK*)&LoadDIBIconHandler )
-	return defDIBIconLoader16;
-    if( thunk == (THUNK*)&LoadDIBCursorHandler )
-	return defDIBCursorLoader16;
-
-    if( thunk )
-    {
-	proc = thunk->proc;
-	THUNK_Free( thunk );
-	return proc;
-    }
-    return NULL;
-}
 
 /***********************************************************************
  *           THUNK_WOWCallback16Ex	(WOW32.3)(KERNEL32.55)

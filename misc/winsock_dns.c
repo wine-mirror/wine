@@ -33,8 +33,6 @@
 # include <sys/file.h>
 #endif
 
-extern int h_errno;
-
 #include "winsock.h"
 #include "windows.h"
 #include "heap.h"

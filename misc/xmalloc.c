@@ -28,6 +28,16 @@ void *xmalloc( int size )
         MSG("Virtual memory exhausted.\n");
         exit (1);
     }
+    memset(res,0,size);
+    return res;
+}
+
+void *xcalloc( int size )
+{
+    void *res;
+
+    res = xmalloc (size);
+    memset(res,0,size);
     return res;
 }
 

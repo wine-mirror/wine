@@ -55,6 +55,9 @@ BOOL32 RELAY_Init(void)
 }
 
 
+    /* from relay32/relay386.c */
+    extern debug_relay_includelist;
+    extern debug_relay_excludelist;
 
 /***********************************************************************
  *           RELAY_DebugCallFrom16
@@ -65,14 +68,18 @@ void RELAY_DebugCallFrom16( int func_type, char *args,
     STACK16FRAME *frame;
     WORD ordinal;
     char *args16;
+    const char *funstr;
     int i;
+    /* from relay32/relay386.c */
+    extern int RELAY_ShowDebugmsgRelay(const char *);
 
     if (!TRACE_ON(relay)) return;
 
     frame = CURRENT_STACK16;
-    DPRINTF( "Call %s(", BUILTIN_GetEntryPoint16( frame->entry_cs,
-                                                  frame->entry_ip,
-                                                  &ordinal ));
+    funstr = BUILTIN_GetEntryPoint16(frame->entry_cs,frame->entry_ip,&ordinal);
+    if (!funstr) return; /* happens for the two snoop register relays */
+    if (!RELAY_ShowDebugmsgRelay(funstr)) return;
+    DPRINTF( "Call %s(",funstr);
     VA_START16( args16 );
 
     if (func_type & 4)  /* cdecl */
@@ -184,12 +191,16 @@ void RELAY_DebugCallFrom16Ret( int func_type, int ret_val, CONTEXT *context)
 {
     STACK16FRAME *frame;
     WORD ordinal;
+    const char *funstr;
+    /* from relay32/relay386.c */
+    extern int RELAY_ShowDebugmsgRelay(const char *);
 
     if (!TRACE_ON(relay)) return;
     frame = CURRENT_STACK16;
-    DPRINTF( "Ret  %s() ", BUILTIN_GetEntryPoint16( frame->entry_cs,
-                                                   frame->entry_ip,
-                                                   &ordinal ));
+    funstr = BUILTIN_GetEntryPoint16(frame->entry_cs,frame->entry_ip,&ordinal);
+    if (!funstr) return;
+    if (!RELAY_ShowDebugmsgRelay(funstr)) return;
+    DPRINTF( "Ret  %s() ",funstr);
     switch(func_type)
     {
     case 0: /* long */
@@ -475,10 +486,10 @@ DWORD WINAPI WIN16_CallProc32W()
 
 
 /**********************************************************************
-*           CallProcEx32W()   (KERNEL.518)        
+*           CallProcEx32W()   (KERNEL.518)
 *
 *      C - style linkage to CallProc32W - caller pops stack.
-*/ 
+*/
 DWORD WINAPI WIN16_CallProcEx32W()
 {
 	return RELAY_CallProc32W(TRUE);

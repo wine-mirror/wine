@@ -178,6 +178,7 @@ HBITMAP32 WINAPI CreateBitmap32( INT32 width, INT32 height, UINT32 planes,
     bmpObjPtr->dibSection = NULL;
     bmpObjPtr->colorMap = NULL;
     bmpObjPtr->nColorMap = 0;
+    bmpObjPtr->status = DIB_NoHandler;
 
       /* Create the pixmap */
     bmpObjPtr->pixmap = TSXCreatePixmap(display, rootWindow, width, height, bpp);
@@ -186,7 +187,7 @@ HBITMAP32 WINAPI CreateBitmap32( INT32 width, INT32 height, UINT32 planes,
 	GDI_HEAP_FREE( hbitmap );
 	hbitmap = 0;
     }
-    else if (bits)  /* Set bitmap bits */
+    else if (bits) /* Set bitmap bits */
 	SetBitmapBits32( hbitmap, height * bmpObjPtr->bitmap.bmWidthBytes,
                          bits );
     GDI_HEAP_UNLOCK( hbitmap );
@@ -832,8 +833,11 @@ BOOL32 BITMAP_DeleteObject( HBITMAP16 hbitmap, BITMAPOBJ * bmp )
     {
 	DIBSECTION *dib = bmp->dibSection;
 
-	if (!dib->dshSection && dib->dsBm.bmBits)
-	    HeapFree(GetProcessHeap(), 0, dib->dsBm.bmBits);
+	if (dib->dsBm.bmBits)
+            if (dib->dshSection)
+                UnmapViewOfFile(dib->dsBm.bmBits);
+            else
+                VirtualFree(dib->dsBm.bmBits, MEM_RELEASE, 0L);
 
 	HeapFree(GetProcessHeap(), 0, dib);
     }

@@ -70,7 +70,7 @@ typedef struct _THDB
     DWORD          cur_stack;      /*  80 Current stack (was: unknown) */
     DWORD          unknown3[2];    /*  84 Unknown */
     WORD           current_ss;     /*  8c Another 16-bit stack selector */
-    WORD           pad2;           /*  8e */
+    WORD           saved_fs;       /*  8e Saved 16-bit FS (was: pad2) */
     void          *ss_table;       /*  90 Pointer to info about 16-bit stack */
     WORD           thunk_ss;       /*  94 Yet another 16-bit stack selector */
     WORD           pad3;           /*  96 */

@@ -36,6 +36,7 @@ HBRUSH32  NC_WinHighlight95;
 HBRUSH32  NC_WinShadow95;
 
 static HBITMAP16 hbitmapClose = 0;
+static HBITMAP16 hbitmapCloseD = 0;
 static HBITMAP16 hbitmapMinimize = 0;
 static HBITMAP16 hbitmapMinimizeD = 0;
 static HBITMAP16 hbitmapMaximize = 0;
@@ -51,6 +52,15 @@ static HBITMAP16 hbitmapRestoreD = 0;
      (((style) & WS_DLGFRAME) && !((style) & WS_BORDER)))
 
 #define HAS_THICKFRAME(style) \
+    (((style) & WS_THICKFRAME) && \
+     !(((style) & (WS_DLGFRAME|WS_BORDER)) == WS_DLGFRAME))
+
+#define HAS_FIXEDFRAME(style,exStyle) \
+   (((((exStyle) & WS_EX_DLGMODALFRAME) || \
+      ((style) & WS_DLGFRAME)) && ((style) & WS_BORDER)) && \
+     !((style) & WS_THICKFRAME))
+
+#define HAS_SIZEFRAME(style) \
     (((style) & WS_THICKFRAME) && \
      !(((style) & (WS_DLGFRAME|WS_BORDER)) == WS_DLGFRAME))
 
@@ -113,29 +123,34 @@ static void NC_AdjustRect( LPRECT16 rect, DWORD style, BOOL32 menu,
 
 
 /******************************************************************************
+ * NC_AdjustRectOuter95
  *
- *   NC_AdjustRect95(
- *      LPRECT16  rect,
- *      DWORD  style,
- *      BOOL32  menu,
- *      DWORD  exStyle )
+ * Computes the size of the "outside" parts of the window based on the
+ * parameters of the client area.
  *
- *   Computes the size of the window based on the parameters of the client
- *   area.
+ + PARAMS
+ *     LPRECT16  rect
+ *     DWORD  style
+ *     BOOL32  menu
+ *     DWORD  exStyle
  *
- *   Bugs
- *        Most of this code is copied from NC_AdjustRect.  It shouldn't be.
- *        There are some unique things about Win 95 that are being horribly
- *        neglected here.  I don't know what they are, either.  :-\
+ * NOTES
+ *     "Outer" parts of a window means the whole window frame, caption and
+ *     menu bar. It does not include "inner" parts of the frame like client
+ *     edge, static edge or scroll bars.
  *
- *   Revision history
- *        05-Jul-1997 Dave Cuthbert (dacut@ece.cmu.edu)
- *             Original cut & paste from NC_AdjustRect
+ * Revision history
+ *     05-Jul-1997 Dave Cuthbert (dacut@ece.cmu.edu)
+ *        Original (NC_AdjustRect95) cut & paste from NC_AdjustRect
+ *
+ *     20-Jun-1998 Eric Kohl (ekohl@abo.rhein-zeitung.de)
+ *        Split NC_AdjustRect95 into NC_AdjustRectOuter95 and
+ *        NC_AdjustRectInner95 and added handling of Win95 styles.
  *
  *****************************************************************************/
 
-static void NC_AdjustRect95( LPRECT16 rect, DWORD style, BOOL32 menu,
-			     DWORD exStyle )
+static void
+NC_AdjustRectOuter95 (LPRECT16 rect, DWORD style, BOOL32 menu, DWORD exStyle)
 {
     if(style & WS_ICONIC) return;
 
@@ -144,21 +159,67 @@ static void NC_AdjustRect95( LPRECT16 rect, DWORD style, BOOL32 menu,
           ((style & (WS_DLGFRAME | WS_THICKFRAME)) ||
            (exStyle & WS_EX_DLGMODALFRAME))))
     {
-        if (HAS_DLGFRAME( style, exStyle ))
+        if (HAS_FIXEDFRAME( style, exStyle ))
             InflateRect16(rect, SYSMETRICS_CXDLGFRAME, SYSMETRICS_CYDLGFRAME );
         else
         {
-            if (HAS_THICKFRAME(style))
+            if (HAS_SIZEFRAME(style))
                 InflateRect16( rect, SYSMETRICS_CXFRAME, SYSMETRICS_CYFRAME );
+#if 0
             if (style & WS_BORDER)
                 InflateRect16( rect, SYSMETRICS_CXBORDER, SYSMETRICS_CYBORDER);
+#endif
         }
 
         if ((style & WS_CAPTION) == WS_CAPTION)
-            rect->top -= SYSMETRICS_CYCAPTION - SYSMETRICS_CYBORDER;
+	    if (exStyle & WS_EX_TOOLWINDOW)
+		rect->top -= SYSMETRICS_CYSMCAPTION;
+	    else
+		rect->top -= SYSMETRICS_CYCAPTION;
+//            rect->top -= sysMetrics[SM_CYCAPTION];
     }
-    if (menu) rect->top -= SYSMETRICS_CYMENU + SYSMETRICS_CYBORDER + 2;
-    else if (!(style & WS_CHILD)) rect->top += SYSMETRICS_CYBORDER;
+
+    if (menu)
+	rect->top -= sysMetrics[SM_CYMENU];
+}
+
+
+/******************************************************************************
+ * NC_AdjustRectInner95
+ *
+ * Computes the size of the "inside" part of the window based on the
+ * parameters of the client area.
+ *
+ + PARAMS
+ *     LPRECT16 rect
+ *     DWORD    style
+ *     DWORD    exStyle
+ *
+ * NOTES
+ *     "Inner" part of a window means the window frame inside of the flat
+ *     window frame. It includes the client edge, the static edge and the
+ *     scroll bars.
+ *
+ * Revision history
+ *     05-Jul-1997 Dave Cuthbert (dacut@ece.cmu.edu)
+ *        Original (NC_AdjustRect95) cut & paste from NC_AdjustRect
+ *
+ *     20-Jun-1998 Eric Kohl (ekohl@abo.rhein-zeitung.de)
+ *        Split NC_AdjustRect95 into NC_AdjustRectOuter95 and
+ *        NC_AdjustRectInner95 and added handling of Win95 styles.
+ *
+ *****************************************************************************/
+
+static void
+NC_AdjustRectInner95 (LPRECT16 rect, DWORD style, DWORD exStyle)
+{
+    if(style & WS_ICONIC) return;
+
+    if (exStyle & WS_EX_CLIENTEDGE)
+	InflateRect16 (rect, sysMetrics[SM_CXEDGE], sysMetrics[SM_CYEDGE]);
+
+    if (exStyle & WS_EX_STATICEDGE)
+	InflateRect16 (rect, sysMetrics[SM_CXBORDER], sysMetrics[SM_CYBORDER]);
 
     if (style & WS_VSCROLL) rect->right  += SYSMETRICS_CXVSCROLL;
     if (style & WS_HSCROLL) rect->bottom += SYSMETRICS_CYHSCROLL;
@@ -206,15 +267,18 @@ BOOL16 WINAPI AdjustWindowRectEx16( LPRECT16 rect, DWORD style,
     if (!(style & (WS_POPUP | WS_CHILD)))  /* Overlapped window */
 	style |= WS_CAPTION;
     style &= (WS_DLGFRAME | WS_BORDER | WS_THICKFRAME | WS_CHILD);
-    exStyle &= (WS_EX_DLGMODALFRAME | WS_EX_CLIENTEDGE);
+    exStyle &= (WS_EX_DLGMODALFRAME | WS_EX_CLIENTEDGE |
+		WS_EX_STATICEDGE | WS_EX_TOOLWINDOW);
     if (exStyle & WS_EX_DLGMODALFRAME) style &= ~WS_THICKFRAME;
 
     TRACE(nonclient, "(%d,%d)-(%d,%d) %08lx %d %08lx\n",
                       rect->left, rect->top, rect->right, rect->bottom,
                       style, menu, exStyle );
 
-    if(TWEAK_Win95Look)
-	NC_AdjustRect95( rect, style, menu, exStyle );
+    if(TWEAK_Win95Look) {
+	NC_AdjustRectOuter95( rect, style, menu, exStyle );
+	NC_AdjustRectInner95( rect, style, exStyle );
+    }
     else
 	NC_AdjustRect( rect, style, menu, exStyle );
 
@@ -253,7 +317,7 @@ LONG NC_HandleNCCalcSize( WND *pWnd, RECT32 *winRect )
 
     if( !( pWnd->dwStyle & WS_MINIMIZE ) ) {
 	if(TWEAK_Win95Look)
-	    NC_AdjustRect95( &tmpRect, pWnd->dwStyle, FALSE, pWnd->dwExStyle );
+	    NC_AdjustRectOuter95( &tmpRect, pWnd->dwStyle, FALSE, pWnd->dwExStyle );
 	else
 	    NC_AdjustRect( &tmpRect, pWnd->dwStyle, FALSE, pWnd->dwExStyle );
 
@@ -273,6 +337,15 @@ LONG NC_HandleNCCalcSize( WND *pWnd, RECT32 *winRect )
 		MENU_GetMenuBarHeight( pWnd->hwndSelf,
 				       winRect->right - winRect->left,
 				       -tmpRect.left, -tmpRect.top ) + 1;
+	}
+
+	if (TWEAK_Win95Look) {
+	    SetRect16 (&tmpRect, 0, 0, 0, 0);
+	    NC_AdjustRectInner95 (&tmpRect, pWnd->dwStyle, pWnd->dwExStyle);
+	    winRect->left   -= tmpRect.left;
+	    winRect->top    -= tmpRect.top;
+	    winRect->right  -= tmpRect.right;
+	    winRect->bottom -= tmpRect.bottom;
 	}
     }
     return result;
@@ -335,16 +408,24 @@ NC_GetInsideRect95 (HWND32 hwnd, RECT32 *rect)
     if ((wndPtr->dwStyle & WS_ICONIC) || (wndPtr->flags & WIN_MANAGED)) return;
 
       /* Remove frame from rectangle */
-    if (HAS_DLGFRAME (wndPtr->dwStyle, wndPtr->dwExStyle ))
+    if (HAS_FIXEDFRAME (wndPtr->dwStyle, wndPtr->dwExStyle ))
     {
 	InflateRect32( rect, -SYSMETRICS_CXFIXEDFRAME, -SYSMETRICS_CYFIXEDFRAME);
     }
-    else if (HAS_THICKFRAME (wndPtr->dwStyle))
+    else if (HAS_SIZEFRAME (wndPtr->dwStyle))
     {
 	InflateRect32( rect, -SYSMETRICS_CXSIZEFRAME, -SYSMETRICS_CYSIZEFRAME );
 
-	if (wndPtr->dwStyle & WS_BORDER)
-	    InflateRect32( rect, -SYSMETRICS_CXBORDER, -SYSMETRICS_CYBORDER );
+/*	if (wndPtr->dwStyle & WS_BORDER)
+          InflateRect32( rect, -SYSMETRICS_CXBORDER, -SYSMETRICS_CYBORDER );*/
+    }
+
+    if (wndPtr->dwStyle & WS_CHILD) {
+	if (wndPtr->dwExStyle & WS_EX_CLIENTEDGE)
+	    InflateRect32 (rect, -SYSMETRICS_CXEDGE, -SYSMETRICS_CYEDGE);
+
+	if (wndPtr->dwExStyle & WS_EX_STATICEDGE)
+	    InflateRect32 (rect, -SYSMETRICS_CXBORDER, -SYSMETRICS_CYBORDER);
     }
 
     return;
@@ -352,22 +433,19 @@ NC_GetInsideRect95 (HWND32 hwnd, RECT32 *rect)
 
 
 /***********************************************************************
- *           NC_HandleNCHitTest
+ * NC_DoNCHitTest
  *
- * Handle a WM_NCHITTEST message. Called from DefWindowProc().
- *
- * FIXME:  A Win95 version of this function is needed.
+ * Handle a WM_NCHITTEST message. Called from NC_HandleNcHitTest().
  */
-LONG NC_HandleNCHitTest( HWND32 hwnd, POINT16 pt )
+
+LONG NC_DoNCHitTest (WND *wndPtr, POINT16 pt )
 {
     RECT16 rect;
-    WND *wndPtr = WIN_FindWndPtr( hwnd );
-    if (!wndPtr) return HTERROR;
 
     TRACE(nonclient, "hwnd=%04x pt=%d,%d\n",
-		      hwnd, pt.x, pt.y );
+		      wndPtr->hwndSelf, pt.x, pt.y );
 
-    GetWindowRect16( hwnd, &rect );
+    GetWindowRect16 (wndPtr->hwndSelf, &rect );
     if (!PtInRect16( &rect, pt )) return HTNOWHERE;
 
     if (wndPtr->dwStyle & WS_MINIMIZE) return HTCAPTION;
@@ -425,7 +503,7 @@ LONG NC_HandleNCHitTest( HWND32 hwnd, POINT16 pt )
 
         if ((wndPtr->dwStyle & WS_CAPTION) == WS_CAPTION)
         {
-            rect.top += SYSMETRICS_CYCAPTION - 1;
+            rect.top += sysMetrics[SM_CYCAPTION] - 1;
             if (!PtInRect16( &rect, pt ))
             {
                 /* Check system menu */
@@ -447,8 +525,8 @@ LONG NC_HandleNCHitTest( HWND32 hwnd, POINT16 pt )
 
       /* Check client area */
 
-    ScreenToClient16( hwnd, &pt );
-    GetClientRect16( hwnd, &rect );
+    ScreenToClient16( wndPtr->hwndSelf, &pt );
+    GetClientRect16( wndPtr->hwndSelf, &rect );
     if (PtInRect16( &rect, pt )) return HTCLIENT;
 
       /* Check vertical scroll bar */
@@ -484,6 +562,173 @@ LONG NC_HandleNCHitTest( HWND32 hwnd, POINT16 pt )
 
       /* Should never get here */
     return HTERROR;
+}
+
+
+/***********************************************************************
+ * NC_DoNCHitTest95
+ *
+ * Handle a WM_NCHITTEST message. Called from NC_HandleNCHitTest().
+ *
+ * FIXME:  Just a copy of the Win 3.1 version.
+ */
+
+LONG
+NC_DoNCHitTest95 (WND *wndPtr, POINT16 pt )
+{
+    RECT16 rect;
+
+    TRACE(nonclient, "hwnd=%04x pt=%d,%d\n",
+		      wndPtr->hwndSelf, pt.x, pt.y );
+
+    GetWindowRect16 (wndPtr->hwndSelf, &rect );
+    if (!PtInRect16( &rect, pt )) return HTNOWHERE;
+
+    if (wndPtr->dwStyle & WS_MINIMIZE) return HTCAPTION;
+
+    if (!(wndPtr->flags & WIN_MANAGED))
+    {
+        /* Check borders */
+        if (HAS_SIZEFRAME( wndPtr->dwStyle ))
+        {
+            InflateRect16( &rect, -SYSMETRICS_CXFRAME, -SYSMETRICS_CYFRAME );
+//            if (wndPtr->dwStyle & WS_BORDER)
+//                InflateRect16(&rect,-SYSMETRICS_CXBORDER,-SYSMETRICS_CYBORDER);
+            if (!PtInRect16( &rect, pt ))
+            {
+                /* Check top sizing border */
+                if (pt.y < rect.top)
+                {
+                    if (pt.x < rect.left+SYSMETRICS_CXSIZE) return HTTOPLEFT;
+                    if (pt.x >= rect.right-SYSMETRICS_CXSIZE) return HTTOPRIGHT;
+                    return HTTOP;
+                }
+                /* Check bottom sizing border */
+                if (pt.y >= rect.bottom)
+                {
+                    if (pt.x < rect.left+SYSMETRICS_CXSIZE) return HTBOTTOMLEFT;
+                    if (pt.x >= rect.right-SYSMETRICS_CXSIZE) return HTBOTTOMRIGHT;
+                    return HTBOTTOM;
+                }
+                /* Check left sizing border */
+                if (pt.x < rect.left)
+                {
+                    if (pt.y < rect.top+SYSMETRICS_CYSIZE) return HTTOPLEFT;
+                    if (pt.y >= rect.bottom-SYSMETRICS_CYSIZE) return HTBOTTOMLEFT;
+                    return HTLEFT;
+                }
+                /* Check right sizing border */
+                if (pt.x >= rect.right)
+                {
+                    if (pt.y < rect.top+SYSMETRICS_CYSIZE) return HTTOPRIGHT;
+                    if (pt.y >= rect.bottom-SYSMETRICS_CYSIZE) return HTBOTTOMRIGHT;
+                    return HTRIGHT;
+                }
+            }
+        }
+        else  /* No thick frame */
+        {
+            if (HAS_FIXEDFRAME( wndPtr->dwStyle, wndPtr->dwExStyle ))
+                InflateRect16(&rect, -SYSMETRICS_CXDLGFRAME, -SYSMETRICS_CYDLGFRAME);
+//            else if (wndPtr->dwStyle & WS_BORDER)
+//                InflateRect16(&rect, -SYSMETRICS_CXBORDER, -SYSMETRICS_CYBORDER);
+            if (!PtInRect16( &rect, pt )) return HTBORDER;
+        }
+
+        /* Check caption */
+
+        if ((wndPtr->dwStyle & WS_CAPTION) == WS_CAPTION)
+        {
+	    if (wndPtr->dwExStyle & WS_EX_TOOLWINDOW)
+	        rect.top += sysMetrics[SM_CYSMCAPTION] - 1;
+	    else
+	        rect.top += sysMetrics[SM_CYCAPTION] - 1;
+            if (!PtInRect16( &rect, pt ))
+            {
+                /* Check system menu */
+                if ((wndPtr->dwStyle & WS_SYSMENU) &&
+		    ((wndPtr->class->hIconSm) || (wndPtr->class->hIcon)))
+                    rect.left += sysMetrics[SM_CYCAPTION] - 1;
+                if (pt.x < rect.left) return HTSYSMENU;
+
+                /* Check close button */
+                if (wndPtr->dwStyle & WS_SYSMENU)
+                    rect.right -= sysMetrics[SM_CYCAPTION] - 1;
+                if (pt.x > rect.right) return HTCLOSE;
+
+                /* Check maximize box */
+                if (wndPtr->dwStyle & WS_MAXIMIZEBOX)
+                    rect.right -= SYSMETRICS_CXSIZE + 1;
+                if (pt.x > rect.right) return HTMAXBUTTON;
+
+                /* Check minimize box */
+                if (wndPtr->dwStyle & WS_MINIMIZEBOX)
+                    rect.right -= SYSMETRICS_CXSIZE + 1;
+                if (pt.x > rect.right) return HTMINBUTTON;
+                return HTCAPTION;
+            }
+        }
+    }
+
+      /* Check client area */
+
+    ScreenToClient16( wndPtr->hwndSelf, &pt );
+    GetClientRect16( wndPtr->hwndSelf, &rect );
+    if (PtInRect16( &rect, pt )) return HTCLIENT;
+
+      /* Check vertical scroll bar */
+
+    if (wndPtr->dwStyle & WS_VSCROLL)
+    {
+	rect.right += SYSMETRICS_CXVSCROLL;
+	if (PtInRect16( &rect, pt )) return HTVSCROLL;
+    }
+
+      /* Check horizontal scroll bar */
+
+    if (wndPtr->dwStyle & WS_HSCROLL)
+    {
+	rect.bottom += SYSMETRICS_CYHSCROLL;
+	if (PtInRect16( &rect, pt ))
+	{
+	      /* Check size box */
+	    if ((wndPtr->dwStyle & WS_VSCROLL) &&
+		(pt.x >= rect.right - SYSMETRICS_CXVSCROLL))
+		return HTSIZE;
+	    return HTHSCROLL;
+	}
+    }
+
+      /* Check menu bar */
+
+    if (HAS_MENU(wndPtr))
+    {
+	if ((pt.y < 0) && (pt.x >= 0) && (pt.x < rect.right))
+	    return HTMENU;
+    }
+
+      /* Should never get here */
+    return HTERROR;
+}
+
+
+/***********************************************************************
+ * NC_HandleNCHitTest
+ *
+ * Handle a WM_NCHITTEST message. Called from DefWindowProc().
+ */
+LONG
+NC_HandleNCHitTest( HWND32 hwnd , POINT16 pt)
+{
+    WND* wndPtr = WIN_FindWndPtr( hwnd );
+
+    if (!wndPtr)
+	return HTERROR;
+
+    if(TWEAK_Win95Look)
+	return NC_DoNCHitTest95 (wndPtr, pt);
+    else
+        return NC_DoNCHitTest (wndPtr, pt);
 }
 
 
@@ -557,45 +802,83 @@ static void NC_DrawMinButton( HWND32 hwnd, HDC16 hdc, BOOL32 down )
  *      HDC32  hdc,
  *      BOOL32  down )
  *
- *   Draws a fake Win95 system button.  Horribly broken.  We should be drawing
- *   an icon, not the X.  (This will require some thought)
- *
- *   Bugs
- *        Plain and simply doesn't work.  Fails miserably for child windows.
+ *   Draws the Win95 system icon.
  *
  *   Revision history
  *        05-Jul-1997 Dave Cuthbert (dacut@ece.cmu.edu)
  *             Original implementation from NC_DrawSysButton source.
+ *        11-Jun-1998 Eric Kohl (ekohl@abo.rhein-zeitung.de)
+ *             Fixed most bugs.
+ *
+ *****************************************************************************/
+
+BOOL32
+NC_DrawSysButton95 (HWND32 hwnd, HDC32 hdc, BOOL32 down)
+{
+    WND *wndPtr = WIN_FindWndPtr( hwnd );
+
+    if( !(wndPtr->flags & WIN_MANAGED) )
+    {
+	HICON32  hIcon = 0;
+	RECT32 rect;
+
+	NC_GetInsideRect95( hwnd, &rect );
+
+	if (wndPtr->class->hIconSm)
+	    hIcon = wndPtr->class->hIconSm;
+	else if (wndPtr->class->hIcon)
+	    hIcon = wndPtr->class->hIcon;
+
+	if (hIcon)
+	    DrawIconEx32 (hdc, rect.left + 2, rect.top + 1, hIcon,
+			  sysMetrics[SM_CYCAPTION] - 3,
+			  sysMetrics[SM_CYCAPTION] - 3, 0, 0, DI_NORMAL);
+	return (hIcon != 0);
+    }
+    return FALSE;
+}
+
+
+/******************************************************************************
+ *
+ *   void  NC_DrawCloseButton95(
+ *      HWND32  hwnd,
+ *      HDC32  hdc,
+ *      BOOL32  down )
+ *
+ *   Draws the Win95 close button.
+ *
+ *   Revision history
+ *        11-Jun-1998 Eric Kohl (ekohl@abo.rhein-zeitung.de)
+ *             Original implementation from NC_DrawSysButton95 source.
  *
  *****************************************************************************/
 
 void
-NC_DrawSysButton95 (HWND32 hwnd, HDC32 hdc, BOOL32 down)
+NC_DrawCloseButton95 (HWND32 hwnd, HDC32 hdc, BOOL32 down)
 {
     RECT32 rect;
     HDC32 hdcMem;
-    HBITMAP32 hbitmap;
     WND *wndPtr = WIN_FindWndPtr( hwnd );
 
     if( !(wndPtr->flags & WIN_MANAGED) )
     {
 	BITMAP32 bmp;
+	HBITMAP32 hBmp, hOldBmp;
 
 	NC_GetInsideRect95( hwnd, &rect );
-	hdcMem = CreateCompatibleDC32( hdc );
-	hbitmap = SelectObject32( hdcMem, hbitmapClose );
-	GetObject32A (hbitmapClose, sizeof(BITMAP32), &bmp);
-	BitBlt32 (hdc, rect.left + (sysMetrics[SM_CXSIZE] - bmp.bmWidth) / 2 +
-		     NC_SysControlNudge,
-		     rect.top + (sysMetrics[SM_CYSIZE] - bmp.bmHeight - 1) / 2,
-		     bmp.bmWidth, bmp.bmHeight,
-		     hdcMem, 0, 0, down ? NOTSRCCOPY : SRCCOPY );
 
-	SelectObject32( hdcMem, hbitmap );
-	DeleteDC32( hdcMem );
-	
+	hdcMem = CreateCompatibleDC32( hdc );
+	hBmp = /*down ? hbitmapCloseD :*/ hbitmapClose;
+	hOldBmp = SelectObject32 (hdcMem, hBmp);
+	GetObject32A (hBmp, sizeof(BITMAP32), &bmp);
+	BitBlt32 (hdc, rect.right - (sysMetrics[SM_CYCAPTION] + 1 + bmp.bmWidth) / 2,
+		  rect.top + (sysMetrics[SM_CYCAPTION] - 1 - bmp.bmHeight) / 2,
+		  bmp.bmWidth, bmp.bmHeight, hdcMem, 0, 0, down ? NOTSRCCOPY : SRCCOPY);
+
+	SelectObject32 (hdcMem, hOldBmp);
+	DeleteDC32 (hdcMem);
     }
-    return;
 }
 
 
@@ -610,9 +893,8 @@ NC_DrawSysButton95 (HWND32 hwnd, HDC32 hdc, BOOL32 down)
  *
  *   Bugs
  *        Many.  Spacing might still be incorrect.  Need to fit a close
- *        button between the max button and the edge.  Draws the wrong thing
- *        (a Win31 up-down) when maximized.  Should scale the image with the
- *        title bar.  And more...
+ *        button between the max button and the edge.
+ *        Should scale the image with the title bar.  And more...
  *
  *   Revision history
  *        05-Jul-1997 Dave Cuthbert (dacut@ece.cmu.edu)
@@ -637,11 +919,13 @@ static void  NC_DrawMaxButton95(
 			       &bmsz)) {
 
 	NC_GetInsideRect95( hwnd, &rect );
+
+	if (wndPtr->dwStyle & WS_SYSMENU)
+	    rect.right -= sysMetrics[SM_CYCAPTION] + 1;
 	
-	GRAPH_DrawBitmap( hdc, bm,
-			  rect.right + NC_MaxControlNudge -
+	GRAPH_DrawBitmap( hdc, bm, rect.right + NC_MinControlNudge -
 			  (sysMetrics[SM_CXSIZE] + bmsz.cx) / 2,
-			  rect.top + (sysMetrics[SM_CYSIZE] - bmsz.cy - 1) / 2,
+			  rect.top + (sysMetrics[SM_CYCAPTION] - 1 - bmsz.cy) / 2,
 			  0, 0, bmsz.cx, bmsz.cy, FALSE );
     }
 
@@ -684,13 +968,16 @@ static void  NC_DrawMinButton95(
 	
 	NC_GetInsideRect95( hwnd, &rect );
 
+	if (wndPtr->dwStyle & WS_SYSMENU)
+	    rect.right -= sysMetrics[SM_CYCAPTION] + 1;
+
 	if (wndPtr->dwStyle & WS_MAXIMIZEBOX)
 	    rect.right += -1 + NC_MaxControlNudge -
 		(sysMetrics[SM_CXSIZE] + bmsz.cx) / 2;
 
 	GRAPH_DrawBitmap( hdc, bm, rect.right + NC_MinControlNudge -
 			  (sysMetrics[SM_CXSIZE] + bmsz.cx) / 2,
-			  rect.top + (sysMetrics[SM_CYSIZE] - bmsz.cy - 1) / 2,
+			  rect.top + (sysMetrics[SM_CYCAPTION] - 1 - bmsz.cy) / 2,
 			  0, 0, bmsz.cx, bmsz.cy, FALSE );
     }
 
@@ -826,8 +1113,8 @@ static void  NC_DrawFrame95(
     }
     else
     {
-	width = sysMetrics[SM_CXFRAME] - sysMetrics[SM_CXEDGE] - 1;
-	height = sysMetrics[SM_CYFRAME] - sysMetrics[SM_CYEDGE] - 1;
+	width = sysMetrics[SM_CXFRAME] - sysMetrics[SM_CXEDGE];
+	height = sysMetrics[SM_CYFRAME] - sysMetrics[SM_CYEDGE];
     }
 
     SelectObject32( hdc, GetSysColorBrush32(active ? COLOR_ACTIVEBORDER :
@@ -844,16 +1131,6 @@ static void  NC_DrawFrame95(
               -width, rect->bottom - rect->top, PATCOPY );
 
     InflateRect32( rect, -width, -height );
-
-    if(!dlgFrame) {
-	/* Draw inner rectangle */
-	GRAPH_DrawRectangle( hdc, rect->left, rect->top,
-			     rect->right - rect->left,
-			     rect->bottom - rect->top,
-			     TWEAK_PenC095 );
-
-	InflateRect32( rect, -1, -1 );
-    }
 }
 
 
@@ -897,6 +1174,7 @@ static void NC_DrawCaption( HDC32 hdc, RECT32 *rect, HWND32 hwnd,
     {
 	if (!(hbitmapClose = LoadBitmap16( 0, MAKEINTRESOURCE16(OBM_CLOSE) )))
 	    return;
+	hbitmapCloseD    = LoadBitmap16( 0, MAKEINTRESOURCE16(OBM_CLOSE) );
 	hbitmapMinimize  = LoadBitmap16( 0, MAKEINTRESOURCE16(OBM_REDUCE) );
 	hbitmapMinimizeD = LoadBitmap16( 0, MAKEINTRESOURCE16(OBM_REDUCED) );
 	hbitmapMaximize  = LoadBitmap16( 0, MAKEINTRESOURCE16(OBM_ZOOM) );
@@ -983,10 +1261,15 @@ static void  NC_DrawCaption95(
     BOOL32  active )
 {
     RECT32  r = *rect;
-    WND   *wndPtr = WIN_FindWndPtr( hwnd );
-    char  buffer[256];
+    WND     *wndPtr = WIN_FindWndPtr( hwnd );
+    char    buffer[256];
+    POINT32 sep[2] = { { r.left,  r.bottom - 1 },
+		       { r.right, r.bottom - 1 } };
 
     if (wndPtr->flags & WIN_MANAGED) return;
+
+    GRAPH_DrawLines( hdc, sep, 1, TWEAK_PenC095 );
+    r.bottom--;
 
     FillRect32( hdc, &r, GetSysColorBrush32(active ? COLOR_ACTIVECAPTION :
 					    COLOR_INACTIVECAPTION) );
@@ -1003,8 +1286,10 @@ static void  NC_DrawCaption95(
     }
 
     if (style & WS_SYSMENU) {
-	NC_DrawSysButton95( hwnd, hdc, FALSE );
-	r.left += SYSMETRICS_CXSIZE + 1;
+	if (NC_DrawSysButton95 (hwnd, hdc, FALSE))
+	    r.left += sysMetrics[SM_CYCAPTION] - 1;
+	NC_DrawCloseButton95 (hwnd, hdc, FALSE);
+	r.right -= sysMetrics[SM_CYCAPTION] - 1;
     }
     if (style & WS_MAXIMIZEBOX) {
 	NC_DrawMaxButton95( hwnd, hdc, FALSE );
@@ -1184,12 +1469,12 @@ void  NC_DoNCPaint95(
     SelectObject32( hdc, GetSysColorPen32(COLOR_WINDOWFRAME) );
 
     if(!(wndPtr->flags & WIN_MANAGED)) {
-        if((wndPtr->dwStyle & WS_BORDER) || (wndPtr->dwStyle & WS_DLGFRAME) ||
-	   (wndPtr->dwExStyle & WS_EX_DLGMODALFRAME)) {
+        if ((wndPtr->dwStyle & WS_BORDER) && ((wndPtr->dwStyle & WS_DLGFRAME) ||
+	    (wndPtr->dwExStyle & WS_EX_DLGMODALFRAME) || (wndPtr->dwStyle & WS_THICKFRAME))) {
             DrawEdge32 (hdc, &rect, EDGE_RAISED, BF_RECT | BF_ADJUST);
         }
 
-        if (HAS_DLGFRAME( wndPtr->dwStyle, wndPtr->dwExStyle )) 
+        if (HAS_FIXEDFRAME( wndPtr->dwStyle, wndPtr->dwExStyle )) 
             NC_DrawFrame95( hdc, &rect, TRUE, active );
         else if (wndPtr->dwStyle & WS_THICKFRAME)
             NC_DrawFrame95(hdc, &rect, FALSE, active );
@@ -1197,43 +1482,38 @@ void  NC_DoNCPaint95(
         if ((wndPtr->dwStyle & WS_CAPTION) == WS_CAPTION)
         {
             RECT32  r = rect;
-	    POINT32  sep[2] = { { rect.left,
-				  rect.top + sysMetrics[SM_CYCAPTION] - 2 },
-				{ rect.right,
-				  rect.top + sysMetrics[SM_CYCAPTION] - 2 } };
-
-            r.bottom = rect.top + sysMetrics[SM_CYCAPTION] - 2;
-            rect.top += sysMetrics[SM_CYCAPTION] - 2 + sysMetrics[SM_CYBORDER];
+	    if (wndPtr->dwExStyle & WS_EX_TOOLWINDOW) {
+		r.bottom = rect.top + sysMetrics[SM_CYSMCAPTION];
+		rect.top += sysMetrics[SM_CYSMCAPTION];
+	    }
+	    else {
+		r.bottom = rect.top + sysMetrics[SM_CYCAPTION];
+		rect.top += sysMetrics[SM_CYCAPTION];
+	    }
             NC_DrawCaption95( hdc, &r, hwnd, wndPtr->dwStyle, active );
-	    GRAPH_DrawLines( hdc, sep, 1, TWEAK_PenC095 );
         }
     }
 
     if (HAS_MENU(wndPtr))
     {
 	RECT32 r = rect;
-	r.bottom = rect.top + sysMetrics[SM_CYMENU] - sysMetrics[SM_CYBORDER];
-	r.top -= sysMetrics[SM_CYBORDER];
+	r.bottom = rect.top + sysMetrics[SM_CYMENU];
 	
 	TRACE(nonclient, "Calling DrawMenuBar with "
 			  "rect (%d, %d)-(%d, %d)\n", r.left, r.top,
 			  r.right, r.bottom);
 
-	rect.top += MENU_DrawMenuBar( hdc, &r, hwnd, suppress_menupaint );
+	rect.top += MENU_DrawMenuBar( hdc, &r, hwnd, suppress_menupaint ) + 1;
     }
 
     TRACE(nonclient, "After MenuBar, rect is (%d, %d)-(%d, %d).\n",
 		       rect.left, rect.top, rect.right, rect.bottom );
 
-    /* Draw the inner frames */
-    GRAPH_DrawRectangle( hdc, rect.left, rect.top, rect.right - rect.left,
-			 rect.bottom - rect.top, TWEAK_PenC095 );
-    InflateRect32(&rect, -1, -1);
-    GRAPH_DrawGenericReliefRect( hdc, &rect, 1, 1, NC_WinShadow95,
-				 NC_WinHighlight95 );
+    if (wndPtr->dwExStyle & WS_EX_CLIENTEDGE)
+	DrawEdge32 (hdc, &rect, EDGE_SUNKEN, BF_RECT | BF_ADJUST);
 
-    InflateRect32(&rect, -1, -1);
-
+    if (wndPtr->dwExStyle & WS_EX_STATICEDGE)
+	DrawEdge32 (hdc, &rect, BDR_SUNKENOUTER, BF_RECT | BF_ADJUST);
 
     /* Draw the scroll-bars */
 
@@ -1378,8 +1658,14 @@ BOOL32 NC_GetSysPopupPos( WND* wndPtr, RECT32* rect )
   	  OffsetRect32( rect, wndPtr->rectWindow.left, wndPtr->rectWindow.top);
   	  if (wndPtr->dwStyle & WS_CHILD)
      	      ClientToScreen32( wndPtr->parent->hwndSelf, (POINT32 *)rect );
-          rect->right = rect->left + SYSMETRICS_CXSIZE;
-          rect->bottom = rect->top + SYSMETRICS_CYSIZE;
+          if(TWEAK_Win95Look) {
+            rect->right = rect->left + sysMetrics[SM_CYCAPTION] - 1;
+            rect->bottom = rect->top + sysMetrics[SM_CYCAPTION] - 1;
+	  }
+	  else {
+            rect->right = rect->left + SYSMETRICS_CXSIZE;
+            rect->bottom = rect->top + SYSMETRICS_CYSIZE;
+	  }
       }
       return TRUE;
   }
@@ -1749,6 +2035,42 @@ static void NC_TrackMinMaxBox( HWND32 hwnd, WORD wParam )
 
 
 /***********************************************************************
+ * NC_TrackCloseButton95
+ *
+ * Track a mouse button press on the Win95 close button.
+ */
+static void
+NC_TrackCloseButton95 (HWND32 hwnd, WORD wParam)
+{
+    MSG16 msg;
+    HDC32 hdc = GetWindowDC32( hwnd );
+    BOOL32 pressed = TRUE;
+
+    SetCapture32( hwnd );
+
+    NC_DrawCloseButton95 (hwnd, hdc, TRUE);
+
+    do
+    {
+	BOOL32 oldstate = pressed;
+        MSG_InternalGetMessage( &msg, 0, 0, 0, PM_REMOVE, FALSE );
+
+	pressed = (NC_HandleNCHitTest( hwnd, msg.pt ) == wParam);
+	if (pressed != oldstate)
+	   NC_DrawCloseButton95 (hwnd, hdc, pressed);
+    } while (msg.message != WM_LBUTTONUP);
+
+    NC_DrawCloseButton95 (hwnd, hdc, FALSE);
+
+    ReleaseCapture();
+    ReleaseDC32( hwnd, hdc );
+    if (!pressed) return;
+
+    SendMessage16( hwnd, WM_SYSCOMMAND, SC_CLOSE, *(LONG*)&msg.pt );
+}
+
+
+/***********************************************************************
  *           NC_TrackScrollBar
  *
  * Track a mouse button press on the horizontal or vertical scroll-bar.
@@ -1853,6 +2175,11 @@ LONG NC_HandleNCLButtonDown( WND* pWnd, WPARAM16 wParam, LPARAM lParam )
     case HTMINBUTTON:
     case HTMAXBUTTON:
 	NC_TrackMinMaxBox( hwnd, wParam );
+	break;
+
+    case HTCLOSE:
+	if (TWEAK_Win95Look)
+	    NC_TrackCloseButton95 (hwnd, wParam);
 	break;
 
     case HTLEFT:

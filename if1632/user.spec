@@ -48,7 +48,7 @@ file	user.exe
 44  pascal16 OpenIcon(word) OpenIcon16
 45  pascal16 BringWindowToTop(word) BringWindowToTop16
 46  pascal16 GetParent(word) GetParent16
-47  pascal16 IsWindow(word) IsWindow16
+47  register IsWindow(word) WIN16_IsWindow16
 48  pascal16 IsChild(word word) IsChild16
 49  pascal16 IsWindowVisible(word) IsWindowVisible16
 50  pascal16 FindWindow(segstr str) FindWindow16

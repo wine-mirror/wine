@@ -251,29 +251,4 @@ struct IDirectSoundNotify {
 #undef PURE
 #undef FAR
 #undef THIS_
-
-/* DirectPlayLobby stuff */
-/* {AF465C71-9588-11cf-A020-00AA006157AC} */
-DEFINE_GUID(IID_IDirectPlayLobby, 0xaf465c71, 0x9588, 0x11cf, 0xa0, 0x20, 0x0, 0xaa, 0x0, 0x61, 0x57, 0xac);
-/* {26C66A70-B367-11cf-A024-00AA006157AC} */
-DEFINE_GUID(IID_IDirectPlayLobbyA, 0x26c66a70, 0xb367, 0x11cf, 0xa0, 0x24, 0x0, 0xaa, 0x0, 0x61, 0x57, 0xac);
-/* {0194C220-A303-11d0-9C4F-00A0C905425E} */
-DEFINE_GUID(IID_IDirectPlayLobby2, 0x194c220, 0xa303, 0x11d0, 0x9c, 0x4f, 0x0, 0xa0, 0xc9, 0x5, 0x42, 0x5e);
-/* {1BB4AF80-A303-11d0-9C4F-00A0C905425E} */
-DEFINE_GUID(IID_IDirectPlayLobby2A, 0x1bb4af80, 0xa303, 0x11d0, 0x9c, 0x4f, 0x0, 0xa0, 0xc9, 0x5, 0x42, 0x5e);
-/* {2FE8F810-B2A5-11d0-A787-0000F803ABFC} */
-DEFINE_GUID(CLSID_DirectPlayLobby, 0x2fe8f810, 0xb2a5, 0x11d0, 0xa7, 0x87, 0x0, 0x0, 0xf8, 0x3, 0xab, 0xfc);
-
-typedef struct IDirectPlayLobby     *LPDIRECTPLAYLOBBY;
-typedef struct IDirectPlayLobby     *LPDIRECTPLAYLOBBYA;
-typedef struct IDirectPlayLobby     IDirectPlayLobbyA;
-
-typedef struct IDirectPlayLobby2    *LPDIRECTPLAYLOBBY2;
-typedef struct IDirectPlayLobby2    *LPDIRECTPLAYLOBBY2A;
-typedef struct IDirectPlayLobby2    IDirectPlayLobby2A;
-
-extern HRESULT WINAPI DirectPlayLobbyCreateW(LPGUID, LPDIRECTPLAYLOBBY *, IUnknown *, LPVOID, DWORD );
-
-extern HRESULT WINAPI DirectPlayLobbyCreateA(LPGUID, LPDIRECTPLAYLOBBYA *, IUnknown *, LPVOID, DWORD );
-
 #endif

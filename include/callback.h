@@ -37,6 +37,7 @@ typedef struct
     VOID (CALLBACK *CallBootAppProc)( FARPROC16, HANDLE16, HFILE16 );
     WORD (CALLBACK *CallLoadAppSegProc)( FARPROC16, HANDLE16, HFILE16, WORD );
     VOID (CALLBACK *CallSystemTimerProc)( FARPROC16 );
+    HGLOBAL16 (CALLBACK *CallResourceHandlerProc)( FARPROC16, HGLOBAL16, HMODULE16, HRSRC16 );
     DWORD (CALLBACK *CallWOWCallbackProc)( FARPROC16, DWORD );
     BOOL32 (CALLBACK *CallWOWCallback16Ex)( FARPROC16, DWORD, DWORD, LPVOID, 
                                             LPDWORD );

@@ -7,7 +7,7 @@ type	win16
 5      pascal  mmsystemGetVersion() mmsystemGetVersion16
 6      pascal  DriverProc(long word word long long) DriverProc
 8      stub    WMMMIDIRUNONCE
-30     pascal16 OutputDebugStr(ptr) OutputDebugString16
+30     pascal16 OutputDebugStr(str) OutputDebugString16
 31     pascal  DriverCallback(long word word word long long long) DriverCallback
 32     stub    STACKENTER
 33     stub    STACKLEAVE

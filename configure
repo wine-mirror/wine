@@ -2447,7 +2447,7 @@ EOF
 fi
 
 
-for ac_func in clone getpagesize memmove sigaltstack strerror stricmp tcgetattr timegm usleep wait4 waitpid
+for ac_func in clone getpagesize memmove sigaltstack strerror stricmp tcgetattr timegm usleep wait4 waitpid vfscanf
 do
 echo $ac_n "checking for $ac_func""... $ac_c" 1>&6
 echo "configure:2454: checking for $ac_func" >&5
@@ -3303,6 +3303,7 @@ documentation/Makefile
 files/Makefile
 graphics/Makefile
 graphics/metafiledrv/Makefile
+graphics/psdrv/Makefile
 graphics/win16drv/Makefile
 graphics/x11drv/Makefile
 if1632/Makefile
@@ -3435,6 +3436,7 @@ documentation/Makefile
 files/Makefile
 graphics/Makefile
 graphics/metafiledrv/Makefile
+graphics/psdrv/Makefile
 graphics/win16drv/Makefile
 graphics/x11drv/Makefile
 if1632/Makefile

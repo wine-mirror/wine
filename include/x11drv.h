@@ -20,6 +20,7 @@ typedef struct
     int          width;
     char *       dashes;
     int          dash_len;
+    int          type;          /* GEOMETRIC || COSMETIC */
 } X_PHYSPEN;
 
   /* X physical brush */

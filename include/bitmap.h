@@ -34,6 +34,8 @@ typedef struct
     DIBSECTION *dibSection;
     RGBQUAD    *colorMap;
     int         nColorMap;
+    /* DIBSECTION mapping status */
+    enum { DIB_NoHandler, DIB_InSync, DIB_AppMod, DIB_GdiMod } status;
 
 } BITMAPOBJ;
 
@@ -51,7 +53,7 @@ extern GC BITMAP_monoGC, BITMAP_colorGC;
 { \
     int width_bytes = DIB_GetXImageWidthBytes( (width), (bpp) ); \
     (image) = TSXCreateImage(display, DefaultVisualOfScreen(screen), \
-                           (bpp), ZPixmap, 0, xmalloc( (height)*width_bytes ),\
+                           (bpp), ZPixmap, 0, xcalloc( (height)*width_bytes ),\
                            (width), (height), 32, width_bytes ); \
 }
 

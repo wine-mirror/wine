@@ -289,6 +289,13 @@ static BOOL32 ioctlGenericBlkDevReq( CONTEXT *context )
 			TRACE(int21,"logical volume %d unlocked.\n",drive);
 			break;
 
+		case 0x6f:
+			memset(dataptr+1, '\0', dataptr[0]-1);
+			dataptr[1] = dataptr[0]; 
+			dataptr[2] = 0x07; /* protected mode driver; no eject; no notification */
+			dataptr[3] = 0xFF; /* no physical drive */
+			break;
+
 		default:
                         INT_BARF( context, 0x21 );
 	}
@@ -1316,7 +1323,7 @@ void WINAPI DOS3Call( CONTEXT *context )
         case 0x02:{
            FILE_OBJECT *file;
            file = FILE_GetFile(BX_reg(context));
-            if (!lstrcmpi32A(file->unix_name, "SCSIMGR$"))
+            if (!strcasecmp(file->unix_name, "SCSIMGR$"))
                         ASPI_DOS_HandleInt(context);
            break;
        }

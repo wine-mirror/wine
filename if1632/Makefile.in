@@ -38,6 +38,7 @@ DLLS = \
 	win87em.spec \
 	winaspi.spec \
 	windebug.spec \
+	wineps.spec \
 	wing.spec \
 	winsock.spec \
 	wprocs.spec
@@ -49,6 +50,7 @@ C_SRCS = \
 	dummy.c \
 	relay.c \
 	signal.c \
+	snoop.c \
 	thunk.c
 
 GEN_ASM_SRCS = \

@@ -12,6 +12,7 @@
 #include "driver.h"
 #include "module.h"
 #include "debug.h"
+#include <string.h>
 
 LPDRIVERITEM lpDrvItemList = NULL;
 LPDRIVERITEM32A lpDrvItemList32 = NULL;
@@ -121,7 +122,7 @@ HDRVR16 WINAPI OpenDriver16(
     lpdrv = lpDrvItemList;
     while (lpdrv)			/* XXX find it... like this? */
     {
-	if (!lstrcmpi32A( lpDriverName, lpdrv->dis.szAliasName ))
+	if (!strcasecmp( lpDriverName, lpdrv->dis.szAliasName ))
 	{
 	    lpdrv->count++;
 	    SendDriverMessage16( lpdrv->dis.hDriver, DRV_OPEN, 0L, lParam );
@@ -205,7 +206,7 @@ HDRVR32 WINAPI OpenDriver32A(
 
     lpdrv = lpDrvItemList32;
     while (lpdrv) {
-	if (!lstrcmpi32A( lpDriverName, lpdrv->dis.szAliasName )) {
+	if (!strcasecmp( lpDriverName, lpdrv->dis.szAliasName )) {
 	    lpdrv->count++;
 	    lpdrv->dis.hDriver = SendDriverMessage32( lpdrv->dis.hDriver, DRV_OPEN, ""/*FIXME*/, 0L );
 	    return (HDRVR32)lpdrv;

@@ -12,6 +12,7 @@
 #include "callback.h"
 #include "palette.h"
 #include "color.h"
+#include "global.h"
 #include "debug.h"
 
 static int bitmapDepthTable[] = { 8, 1, 32, 16, 24, 15, 4, 0 };
@@ -280,6 +281,22 @@ static int *DIB_PhysicalColorMap( DC *dc, int depth,
 }
 
 /***********************************************************************
+ *           DIB_MapColor
+ */
+static int DIB_MapColor( int *physMap, int nPhysMap, int phys )
+{
+    int color;
+
+    for (color = 0; color < nPhysMap; color++)
+        if (physMap[color] == phys)
+            return color;
+
+    WARN(bitmap, "Strange color %08x\n", phys);
+    return 0;
+}
+
+
+/***********************************************************************
  *           DIB_SetImageBits_1_Line
  *
  * Handles a single line of 1 bit data.
@@ -392,6 +409,51 @@ static void DIB_SetImageBits_4( int lines, const BYTE *srcbits,
     }
 }
 
+/***********************************************************************
+ *           DIB_GetImageBits_4
+ *
+ * GetDIBits for a 4-bit deep DIB.
+ */
+static void DIB_GetImageBits_4( int lines, BYTE *srcbits,
+                                DWORD srcwidth, DWORD dstwidth, int left,
+                                int *colors, int nColors, XImage *bmpImage )
+{
+    DWORD i, x;
+    int h;
+    BYTE *bits = srcbits + (left >> 1);
+
+    /* 32 bit aligned */
+    DWORD linebytes = ((srcwidth+7)&~7)/2;
+
+    dstwidth += left;
+
+    /* FIXME: should avoid putting x<left pixels (minor speed issue) */
+    if (lines > 0) {
+       for (h = lines-1; h >= 0; h--) {
+           for (i = dstwidth/2, x = left&~1; i > 0; i--) {
+               *bits++ = (DIB_MapColor( colors, nColors, XGetPixel( bmpImage, x++, h )) << 4)
+                       | (DIB_MapColor( colors, nColors, XGetPixel( bmpImage, x++, h )) & 0x0f);
+           }
+           if (dstwidth & 1)
+               *bits = (DIB_MapColor( colors, nColors, XGetPixel( bmpImage, x++, h )) << 4);
+           srcbits += linebytes;
+           bits     = srcbits + (left >> 1);
+       }
+    } else {
+       lines = -lines;
+       for (h = 0; h < lines; h++) {
+           for (i = dstwidth/2, x = left&~1; i > 0; i--) {
+               *bits++ = (DIB_MapColor( colors, nColors, XGetPixel( bmpImage, x++, h )) << 4)
+                       | (DIB_MapColor( colors, nColors, XGetPixel( bmpImage, x++, h )) & 0x0f);
+           }
+           if (dstwidth & 1)
+               *bits = (DIB_MapColor( colors, nColors, XGetPixel( bmpImage, x++, h )) << 4);
+           srcbits += linebytes;
+           bits     = srcbits + (left >> 1);
+       }
+    }
+}
+
 #define check_xy(x,y) \
 	if (x > width) { \
 		x = 0; \
@@ -494,6 +556,46 @@ static void DIB_SetImageBits_8( int lines, const BYTE *srcbits,
 	    }
 	    bits = (srcbits += linebytes) + left;
 	}
+    }
+}
+
+/***********************************************************************
+ *           DIB_GetImageBits_8
+ *
+ * GetDIBits for an 8-bit deep DIB.
+ */
+static void DIB_GetImageBits_8( int lines, BYTE *srcbits,
+                                DWORD srcwidth, DWORD dstwidth, int left,
+                                int *colors, int nColors, XImage *bmpImage )
+{
+    DWORD x;
+    int h;
+    BYTE *bits = srcbits + left;
+
+    /* align to 32 bit */
+    DWORD linebytes = (srcwidth + 3) & ~3;
+
+    dstwidth+=left;
+
+    if (lines > 0) {
+       for (h = lines - 1; h >= 0; h--) {
+           for (x = left; x < dstwidth; x++, bits++) {
+               if ( XGetPixel( bmpImage, x, h ) != colors[*bits] )
+                   *bits = DIB_MapColor( colors, nColors,
+                                          XGetPixel( bmpImage, x, h ) );
+           }
+           bits = (srcbits += linebytes) + left;
+       }
+    } else {
+       lines = -lines;
+       for (h = 0; h < lines; h++) {
+           for (x = left; x < dstwidth; x++, bits++) {
+               if ( XGetPixel( bmpImage, x, h ) != colors[*bits] )
+                   *bits = DIB_MapColor( colors, nColors,
+                                         XGetPixel( bmpImage, x, h ) );
+           }
+           bits = (srcbits += linebytes) + left;
+       }
     }
 }
 
@@ -727,6 +829,58 @@ static void DIB_SetImageBits_16( int lines, const BYTE *srcbits,
 
 
 /***********************************************************************
+ *           DIB_GetImageBits_16
+ *
+ * GetDIBits for an 16-bit deep DIB.
+ */
+static void DIB_GetImageBits_16( int lines, BYTE *srcbits,
+                               DWORD srcwidth, DWORD dstwidth, int left,
+                                int *colors, int nColors, XImage *bmpImage )
+{
+    DWORD x;
+    LPWORD ptr;
+    int h;
+    BYTE r, g, b;
+
+    /* align to 32 bit */
+    DWORD linebytes = (srcwidth * 2 + 3) & ~3;
+
+    dstwidth += left;
+
+    ptr = (LPWORD) srcbits + left;
+    if (lines > 0) {
+       for (h = lines - 1; h >= 0; h--)
+        {
+           for (x = left; x < dstwidth; x++, ptr++)
+            {
+                COLORREF pixel = COLOR_ToLogical( XGetPixel( bmpImage, x, h ) );
+               r = (BYTE) GetRValue(pixel);
+               g = (BYTE) GetGValue(pixel);
+               b = (BYTE) GetBValue(pixel);
+                *ptr = ( ((r << 7) & 0x7c00) | ((g << 2) & 0x03e0) | ((b >> 3) & 0x001f) );
+           }
+           ptr = (LPWORD) (srcbits += linebytes) + left;
+       }
+    } else {
+       lines = -lines;
+       for (h = 0; h < lines; h++)
+        {
+           for (x = left; x < dstwidth; x++, ptr++)
+            {
+                COLORREF pixel = COLOR_ToLogical( XGetPixel( bmpImage, x, h ) );
+               r = (BYTE) GetRValue(pixel);
+               g = (BYTE) GetGValue(pixel);
+               b = (BYTE) GetBValue(pixel);
+                *ptr = ( ((r << 7) & 0x7c00) | ((g << 2) & 0x03e0) | ((b >> 3) & 0x001f) );
+           }
+
+           ptr = (LPWORD) (srcbits += linebytes) + left;
+       }
+    }
+}
+
+
+/***********************************************************************
  *           DIB_SetImageBits_24
  *
  * SetDIBits for a 24-bit deep DIB.
@@ -763,6 +917,54 @@ static void DIB_SetImageBits_24( int lines, const BYTE *srcbits,
 	    }
 	    bits = (srcbits += linebytes) + left * 3;
 	}
+    }
+}
+
+
+/***********************************************************************
+ *           DIB_GetImageBits_24
+ *
+ * GetDIBits for an 24-bit deep DIB.
+ */
+static void DIB_GetImageBits_24( int lines, BYTE *srcbits,
+                               DWORD srcwidth, DWORD dstwidth, int left,
+                                int *colors, int nColors, XImage *bmpImage )
+{
+    DWORD x;
+    int h;
+    BYTE *bits = srcbits + (left * 3);
+
+    /* align to 32 bit */
+    DWORD linebytes = (srcwidth * 3 + 3) & ~3;
+
+    dstwidth += left;
+
+    if (lines > 0) {
+       for (h = lines - 1; h >= 0; h--)
+        {
+           for (x = left; x < dstwidth; x++, bits += 3)
+            {
+                COLORREF pixel = COLOR_ToLogical( XGetPixel( bmpImage, x, h ) );
+                bits[0] = GetRValue(pixel);
+                bits[1] = GetGValue(pixel);
+                bits[2] = GetBValue(pixel);
+           }
+           bits = (srcbits += linebytes) + (left * 3);
+       }
+    } else {
+       lines = -lines;
+       for (h = 0; h < lines; h++)
+        {
+           for (x = left; x < dstwidth; x++, bits += 3)
+            {
+                COLORREF pixel = COLOR_ToLogical( XGetPixel( bmpImage, x, h ) );
+                bits[0] = GetRValue(pixel);
+                bits[1] = GetGValue(pixel);
+                bits[2] = GetBValue(pixel);
+           }
+
+           bits = (srcbits += linebytes) + (left * 3);
+       }
     }
 }
 
@@ -806,6 +1008,54 @@ static void DIB_SetImageBits_32( int lines, const BYTE *srcbits,
 
 
 /***********************************************************************
+ *           DIB_GetImageBits_32
+ *
+ * GetDIBits for an 32-bit deep DIB.
+ */
+static void DIB_GetImageBits_32( int lines, BYTE *srcbits,
+                               DWORD srcwidth, DWORD dstwidth, int left,
+                                int *colors, int nColors, XImage *bmpImage )
+{
+    DWORD x;
+    int h;
+    BYTE *bits = srcbits + (left * 4);
+
+    /* align to 32 bit */
+    DWORD linebytes = (srcwidth * 4);
+
+    dstwidth += left;
+
+    if (lines > 0) {
+       for (h = lines - 1; h >= 0; h--)
+        {
+           for (x = left; x < dstwidth; x++, bits += 4)
+            {
+                COLORREF pixel = COLOR_ToLogical( XGetPixel( bmpImage, x, h ) );
+                bits[0] = GetRValue(pixel);
+                bits[1] = GetGValue(pixel);
+                bits[2] = GetBValue(pixel);
+           }
+           bits = (srcbits += linebytes) + (left * 4);
+       }
+    } else {
+       lines = -lines;
+       for (h = 0; h < lines; h++)
+        {
+           for (x = left; x < dstwidth; x++, bits += 4)
+            {
+                COLORREF pixel = COLOR_ToLogical( XGetPixel( bmpImage, x, h ) );
+                bits[0] = GetRValue(pixel);
+                bits[1] = GetGValue(pixel);
+                bits[2] = GetBValue(pixel);
+           }
+
+           bits = (srcbits += linebytes) + (left * 4);
+       }
+    }
+}
+
+
+/***********************************************************************
  *           DIB_SetImageBits
  *
  * Transfer the bits to an X image.
@@ -825,7 +1075,8 @@ static int DIB_SetImageBits( const DIB_SETIMAGEBITS_DESCR *descr )
 						    descr->colorMap, descr->nColorMap )))
         return 0;
 
-    if( descr->dc->w.flags & DC_DIRTY ) CLIPPING_UpdateGCRegion(descr->dc);
+    if ( descr->dc && descr->dc->w.flags & DC_DIRTY ) 
+        CLIPPING_UpdateGCRegion(descr->dc);
 
       /* Transfer the pixels */
     lines = descr->lines;
@@ -873,6 +1124,82 @@ static int DIB_SetImageBits( const DIB_SETIMAGEBITS_DESCR *descr )
     XPutImage( display, descr->drawable, descr->gc, bmpImage,
                descr->xSrc, descr->ySrc, descr->xDest, descr->yDest,
                descr->width, descr->height );
+    XDestroyImage( bmpImage );
+    return lines;
+}
+
+/***********************************************************************
+ *           DIB_GetImageBits
+ *
+ * Transfer the bits from an X image.
+ * The Xlib critical section must be entered before calling this function.
+ */
+static int DIB_GetImageBits( const DIB_SETIMAGEBITS_DESCR *descr )
+{
+    int *colorMapping;
+    XImage *bmpImage;
+    int lines;
+
+      /* Translate the color mapping table */
+
+    if (descr->infoBpp > 8) colorMapping = NULL;
+    else if (!(colorMapping = DIB_PhysicalColorMap( descr->dc, descr->depth,
+                                                   descr->colorMap, descr->nColorMap )))
+        return 0;
+
+      /* Transfer the pixels */
+
+    lines = descr->lines;
+    if (lines < 0) lines = -lines;
+    bmpImage = XGetImage( display, descr->drawable, descr->xDest, descr->yDest,
+                          descr->width, descr->height, AllPlanes, ZPixmap );
+
+    switch(descr->infoBpp)
+    {
+    case 1:
+        FIXME(bitmap, "Depth 1 not yet supported!\n");
+       break;
+
+    case 4:
+       if (descr->compression) FIXME(bitmap, "Compression not yet supported!\n");
+       else DIB_GetImageBits_4( descr->lines, (LPVOID)descr->bits, descr->infoWidth,
+                                 descr->width, descr->xSrc,
+                                 colorMapping, descr->nColorMap, bmpImage );
+       break;
+
+    case 8:
+       if (descr->compression) FIXME(bitmap, "Compression not yet supported!\n");
+       else DIB_GetImageBits_8( descr->lines, (LPVOID)descr->bits, descr->infoWidth,
+                                 descr->width, descr->xSrc,
+                                 colorMapping, descr->nColorMap, bmpImage );
+       break;
+
+    case 15:
+    case 16:
+       DIB_GetImageBits_16( descr->lines, (LPVOID)descr->bits, descr->infoWidth,
+                             descr->width, descr->xSrc,
+                             colorMapping, descr->nColorMap, bmpImage );
+       break;
+
+    case 24:
+       DIB_GetImageBits_24( descr->lines, (LPVOID)descr->bits, descr->infoWidth,
+                             descr->width, descr->xSrc,
+                             colorMapping, descr->nColorMap, bmpImage );
+       break;
+
+    case 32:
+       DIB_GetImageBits_32( descr->lines, (LPVOID)descr->bits, descr->infoWidth,
+                             descr->width, descr->xSrc,
+                             colorMapping, descr->nColorMap, bmpImage );
+       break;
+
+    default:
+        WARN(bitmap, "(%d): Invalid depth\n", descr->infoBpp );
+        break;
+    }
+
+    if (colorMapping) HeapFree( GetProcessHeap(), 0, colorMapping );
+
     XDestroyImage( bmpImage );
     return lines;
 }
@@ -1491,6 +1818,195 @@ HBITMAP32 WINAPI CreateDIBitmap32( HDC32 hdc, const BITMAPINFOHEADER *header,
     return handle;
 }
 
+
+/***********************************************************************
+ *           DIB_DoProtectDIBSection
+ */
+static void DIB_DoProtectDIBSection( BITMAPOBJ *bmp, DWORD new_prot )
+{
+    DIBSECTION *dib = bmp->dibSection;
+    INT32 effHeight = dib->dsBm.bmHeight >= 0? dib->dsBm.bmHeight
+                                             : -dib->dsBm.bmHeight;
+    INT32 totalSize = dib->dsBmih.biSizeImage? dib->dsBmih.biSizeImage
+                         : dib->dsBm.bmWidthBytes * effHeight;
+    DWORD old_prot;
+
+    VirtualProtect(dib->dsBm.bmBits, totalSize, new_prot, &old_prot);
+    TRACE(bitmap, "Changed protection from %ld to %ld\n", 
+                  old_prot, new_prot);
+}
+
+/***********************************************************************
+ *           DIB_DoUpdateDIBSection
+ */
+static void DIB_DoUpdateDIBSection( BITMAPOBJ *bmp, BOOL32 toDIB )
+{
+    DIBSECTION *dib = bmp->dibSection;
+    DIB_SETIMAGEBITS_DESCR descr;
+
+    if (DIB_GetBitmapInfo( &dib->dsBmih, &descr.infoWidth, &descr.lines,
+                           &descr.infoBpp, &descr.compression ) == -1)
+	return;
+
+    descr.dc        = NULL;
+    descr.colorMap  = bmp->colorMap;
+    descr.nColorMap = bmp->nColorMap;
+    descr.bits      = dib->dsBm.bmBits;
+    descr.depth     = bmp->bitmap.bmBitsPixel;
+    descr.drawable  = bmp->pixmap;
+    descr.gc        = BITMAP_GC(bmp);
+    descr.xSrc      = 0;
+    descr.ySrc      = 0;
+    descr.xDest     = 0;
+    descr.yDest     = 0;
+    descr.width     = bmp->bitmap.bmWidth;
+    descr.height    = bmp->bitmap.bmHeight;
+
+    if (toDIB)
+    {
+        TRACE(bitmap, "Copying from Pixmap to DIB bits\n");
+        EnterCriticalSection( &X11DRV_CritSection );
+        CALL_LARGE_STACK( DIB_GetImageBits, &descr );
+        LeaveCriticalSection( &X11DRV_CritSection );
+    }
+    else
+    {
+	TRACE(bitmap, "Copying from DIB bits to Pixmap\n"); 
+        EnterCriticalSection( &X11DRV_CritSection );
+        CALL_LARGE_STACK( DIB_SetImageBits, &descr );
+        LeaveCriticalSection( &X11DRV_CritSection );
+    }
+}
+
+/***********************************************************************
+ *           DIB_FaultHandler
+ */
+static BOOL32 DIB_FaultHandler( LPVOID res, LPVOID addr )
+{
+    BOOL32 handled = FALSE;
+    BITMAPOBJ *bmp;
+
+    bmp = (BITMAPOBJ *)GDI_GetObjPtr( (HBITMAP32)res, BITMAP_MAGIC );
+    if (!bmp) return FALSE;
+
+    if (bmp->dibSection)
+        switch (bmp->status)
+        {
+        case DIB_GdiMod:
+            TRACE( bitmap, "called in status DIB_GdiMod\n" );
+            DIB_DoProtectDIBSection( bmp, PAGE_READWRITE );
+            DIB_DoUpdateDIBSection( bmp, TRUE );
+            DIB_DoProtectDIBSection( bmp, PAGE_READONLY );
+            bmp->status = DIB_InSync;
+            handled = TRUE;
+            break;
+
+        case DIB_InSync:
+            TRACE( bitmap, "called in status DIB_InSync\n" );
+            DIB_DoProtectDIBSection( bmp, PAGE_READWRITE );
+            bmp->status = DIB_AppMod;
+            handled = TRUE;
+            break;
+
+        case DIB_AppMod:
+            FIXME( bitmap, "called in status DIB_AppMod: "
+                           "this can't happen!\n" );
+            break;
+
+        case DIB_NoHandler:
+            FIXME( bitmap, "called in status DIB_NoHandler: "
+                           "this can't happen!\n" );
+            break;
+        }
+
+    GDI_HEAP_UNLOCK( (HBITMAP32)res );
+    return handled;
+}
+
+/***********************************************************************
+ *           DIB_UpdateDIBSection
+ */
+void DIB_UpdateDIBSection( DC *dc, BOOL32 toDIB )
+{
+    BITMAPOBJ *bmp;
+
+    /* Ensure this is a Compatible DC that has a DIB section selected */
+
+    if (!dc) return;
+    if (!(dc->w.flags & DC_MEMORY)) return;
+
+    bmp = (BITMAPOBJ *)GDI_GetObjPtr( dc->w.hBitmap, BITMAP_MAGIC );
+    if (!bmp) return;
+
+    if (!bmp->dibSection)
+    {
+	GDI_HEAP_UNLOCK(dc->w.hBitmap);
+	return;
+    }
+
+
+    if (!toDIB)
+    {
+        /* Prepare for access to the DIB by GDI functions */
+
+        switch (bmp->status)
+        {
+        default:
+        case DIB_NoHandler:
+            DIB_DoUpdateDIBSection( bmp, FALSE );
+            break;
+
+        case DIB_GdiMod:
+            TRACE( bitmap, "fromDIB called in status DIB_GdiMod\n" );
+            /* nothing to do */
+            break;
+
+        case DIB_InSync:
+            TRACE( bitmap, "fromDIB called in status DIB_InSync\n" );
+            /* nothing to do */
+            break;
+
+        case DIB_AppMod:
+            TRACE( bitmap, "fromDIB called in status DIB_AppMod\n" );
+            DIB_DoUpdateDIBSection( bmp, FALSE );
+            DIB_DoProtectDIBSection( bmp, PAGE_READONLY );
+            bmp->status = DIB_InSync;
+            break;
+        }
+    }
+    else
+    {
+        /* Acknowledge write access to the DIB by GDI functions */
+
+        switch (bmp->status)
+        {
+        default:
+        case DIB_NoHandler:
+            DIB_DoUpdateDIBSection( bmp, TRUE );
+            break;
+
+        case DIB_GdiMod:
+            TRACE( bitmap, "  toDIB called in status DIB_GdiMod\n" );
+            /* nothing to do */
+            break;
+
+        case DIB_InSync:
+            TRACE( bitmap, "  toDIB called in status DIB_InSync\n" );
+            DIB_DoProtectDIBSection( bmp, PAGE_NOACCESS );
+            bmp->status = DIB_GdiMod;
+            break;
+
+        case DIB_AppMod:
+            FIXME( bitmap, "  toDIB called in status DIB_AppMod: "
+                           "this can't happen!\n" );
+            break;
+        }
+    }
+
+  
+    GDI_HEAP_UNLOCK(dc->w.hBitmap);
+}
+
 /***********************************************************************
  *           CreateDIBSection16    (GDI.489)
  */
@@ -1516,6 +2032,7 @@ HBITMAP32 WINAPI CreateDIBSection32 (HDC32 hdc, BITMAPINFO *bmi, UINT32 usage,
 
     /* Fill BITMAP32 structure with DIB data */
     BITMAPINFOHEADER *bi = &bmi->bmiHeader;
+    INT32 effHeight, totalSize;
     BITMAP32 bm;
 
     TRACE(bitmap, "format (%ld,%ld), planes %d, bpp %d, size %ld, colors %ld (%s)\n",
@@ -1537,15 +2054,15 @@ HBITMAP32 WINAPI CreateDIBSection32 (HDC32 hdc, BITMAPINFO *bmi, UINT32 usage,
     bm.bmBits = NULL;
 
     /* Get storage location for DIB bits */
-    if (section)
-	FIXME(bitmap, "section != NULL not implemented!\n");	
-    else
-    {
-	INT32 totalSize = bi->biSizeImage? bi->biSizeImage
-                                         : bm.bmWidthBytes * bm.bmHeight;
+    effHeight = bm.bmHeight >= 0 ? bm.bmHeight : -bm.bmHeight;
+    totalSize = bi->biSizeImage? bi->biSizeImage : bm.bmWidthBytes * effHeight;
 
-	bm.bmBits = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, totalSize);
-    }
+    if (section)
+        bm.bmBits = MapViewOfFile(section, FILE_MAP_ALL_ACCESS, 
+                                  0L, offset, totalSize);
+    else
+	bm.bmBits = VirtualAlloc(NULL, totalSize, 
+                                 MEM_RESERVE|MEM_COMMIT, PAGE_READWRITE);
 
     /* Allocate Memory for DIB and fill structure */
     if (bm.bmBits)
@@ -1587,94 +2104,35 @@ HBITMAP32 WINAPI CreateDIBSection32 (HDC32 hdc, BITMAPINFO *bmi, UINT32 usage,
 	    bmp->dibSection = dib;
             bmp->colorMap   = colorMap;
 	    bmp->nColorMap  = nColorMap;
-	    GDI_HEAP_UNLOCK(res);
+            bmp->status     = DIB_NoHandler;
        }
     }
 
     /* Clean up in case of errors */
     if (!res || !bmp || !dib || !bm.bmBits || (bm.bmBitsPixel <= 8 && !colorMap))
     {
-	if (bm.bmBits && section) 
-	    HeapFree(GetProcessHeap(), 0, bm.bmBits), bm.bmBits = NULL;
+	if (bm.bmBits)
+            if (section)
+                UnmapViewOfFile(bm.bmBits), bm.bmBits = NULL;
+            else
+                VirtualFree(bm.bmBits, MEM_RELEASE, 0L), bm.bmBits = NULL;
 
 	if (colorMap) HeapFree(GetProcessHeap(), 0, colorMap), colorMap = NULL;
 	if (dib) HeapFree(GetProcessHeap(), 0, dib), dib = NULL;
 	if (res) DeleteObject32(res), res = 0;
     }
 
+    /* Install fault handler, if possible */
+    if (bm.bmBits)
+        if (VIRTUAL_SetFaultHandler(bm.bmBits, DIB_FaultHandler, (LPVOID)res))
+        {
+            DIB_DoProtectDIBSection( bmp, PAGE_READONLY );
+            bmp->status = DIB_InSync;
+        }
+
     /* Return BITMAP handle and storage location */
+    if (res) GDI_HEAP_UNLOCK(res);
     if (bm.bmBits && bits) *bits = bm.bmBits;
     return res;
-}
-
-/***********************************************************************
- *           DIB_UpdateDIBSection
- */
-void DIB_UpdateDIBSection( DC *dc, BOOL32 toDIB )
-{
-    BITMAPOBJ *bmp;
-    DIBSECTION *dib;
-
-    /* Ensure this is a Compatible DC that has a DIB section selected */
-
-    if (!dc) return;
-    if (!(dc->w.flags & DC_MEMORY)) return;
-
-    bmp = (BITMAPOBJ *)GDI_GetObjPtr( dc->w.hBitmap, BITMAP_MAGIC );
-    if (!bmp) return;
-
-    dib = bmp->dibSection;
-    if (!dib)
-    {
-	GDI_HEAP_UNLOCK(dc->w.hBitmap);
-	return;
-    }
-
-  
-    /* Copy Pixmap to bits */
-    if (toDIB)
-    {
-        /* Expect colour corruption if you uncomment this. -MF */
-//        BITMAPINFO bi;
-//        bi.bmiHeader = dib->dsBmih;
-//        bi.bmiHeader.biClrUsed = 0; /* don't copy palette */
-//        TRACE(bitmap, "Copying from Pixmap to DIB bits\n");
-//        GetDIBits32( dc->hSelf, dc->w.hBitmap, 0, dib->dsBmih.biHeight,
-//                     dib->dsBm.bmBits, &bi, 0 );
-    }
-
-    /* Copy bits to Pixmap */
-    else
-    {
-    	DIB_SETIMAGEBITS_DESCR descr;
-
-	TRACE(bitmap, "Copying from DIB bits to Pixmap\n"); 
-	if (DIB_GetBitmapInfo( &dib->dsBmih, &descr.infoWidth, &descr.lines,
-			       &descr.infoBpp, &descr.compression ) == -1)
-	{
-	    GDI_HEAP_UNLOCK(dc->w.hBitmap);
-	    return;
-	}
-
-        descr.dc        = dc;
-        descr.colorMap  = bmp->colorMap;
-        descr.nColorMap = bmp->nColorMap;
-        descr.bits      = dib->dsBm.bmBits;
-        descr.depth     = bmp->bitmap.bmBitsPixel;
-        descr.drawable  = bmp->pixmap;
-        descr.gc        = BITMAP_GC(bmp);
-        descr.xSrc      = 0;
-        descr.ySrc      = 0;
-        descr.xDest     = 0;
-        descr.yDest     = 0;
-        descr.width     = bmp->bitmap.bmWidth;
-        descr.height    = bmp->bitmap.bmHeight;
-
-        EnterCriticalSection( &X11DRV_CritSection );
-        CALL_LARGE_STACK( DIB_SetImageBits, &descr );
-        LeaveCriticalSection( &X11DRV_CritSection );
-    }
-
-    GDI_HEAP_UNLOCK(dc->w.hBitmap);
 }
 

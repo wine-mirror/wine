@@ -101,3 +101,12 @@ FARPROC16 tmp;
 	/* just return previously installed notification function */
 	return tmp;
 }
+
+/***********************************************************************
+ *           CreateToolHelp32Snapshot			(KERNEL32.179)
+ *	see "Undocumented Windows"
+ */
+HANDLE32 WINAPI CreateToolhelp32Snapshot(DWORD dwFlags, DWORD th32ProcessID) {
+	FIXME(toolhelp,"(0x%08lx,0x%08lx), stub!\n",dwFlags,th32ProcessID);
+	return INVALID_HANDLE_VALUE32;
+}

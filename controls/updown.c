@@ -8,7 +8,9 @@
  *     arrow keys
  *   - I am not sure about the default values for the Min, Max, Pos
  *     (in the UPDOWN_INFO the fields: MinVal, MaxVal, CurVal)
- *   - I think I do not handle correctly the WS_BORDER style.
+ *   - I think I don not handle correctly the WS_BORDER style.
+ *     (Should be fixed. <ekohl@abo.rhein-zeitung.de>)
+ *
  * Testing:
  *   Not much. The following  have not been tested at all:
  *     - horizontal arrows
@@ -63,7 +65,8 @@ static int accelIndex = -1;
         "UpDown Ctrl: Unknown parameter(s) for message " #msg     \
 	"(%04x): wp=%04x lp=%08lx\n", msg, wParam, lParam);
 
-#define UPDOWN_GetInfoPtr(wndPtr) ((UPDOWN_INFO *)wndPtr->wExtra)
+#define UPDOWN_GetInfoPtr(wndPtr) ((UPDOWN_INFO *)wndPtr->wExtra[0])
+
 
 /***********************************************************************
  *           UPDOWN_InBounds
@@ -189,7 +192,7 @@ static BOOL32 UPDOWN_GetBuddyInt(WND *wndPtr)
       return FALSE;
   }
   else{
-    /* we have a regural window, so will get the text */
+    /* we have a regular window, so will get the text */
     if (!GetWindowText32A(infoPtr->Buddy, txt, sizeof(txt)))
       return FALSE;
 
@@ -238,7 +241,7 @@ static BOOL32 UPDOWN_SetBuddyInt(WND *wndPtr)
   if(WIDGETS_IsControl32(WIN_FindWndPtr(infoPtr->Buddy), BIC32_LISTBOX)){
     SendMessage32A(infoPtr->Buddy, LB_SETCURSEL32, infoPtr->CurVal, 0);
   }
-  else{ /* Regural window, so set caption to the number */
+  else{ /* Regular window, so set caption to the number */
     len = sprintf(txt1, (infoPtr->Base==16) ? "%X" : "%d", infoPtr->CurVal);
 
     sep = UPDOWN_GetThousandSep(); 
@@ -265,20 +268,16 @@ static BOOL32 UPDOWN_SetBuddyInt(WND *wndPtr)
 } 
 
 /***********************************************************************
- *           UPDOWN_Paint
+ * UPDOWN_Draw [Internal]
+ *
  * Draw the arrows. The background need not be erased.
  */
-static void UPDOWN_Paint(WND *wndPtr)
+static void UPDOWN_Draw (WND *wndPtr, HDC32 hdc)
 {
   UPDOWN_INFO *infoPtr = UPDOWN_GetInfoPtr(wndPtr);
-  PAINTSTRUCT32 ps;
   BOOL32 prssed;
   RECT32 rect;
-  HDC32 hdc;
   
-  /* start painting the button */
-  hdc = BeginPaint32( wndPtr->hwndSelf, &ps );
-
   /* Draw the incr button */
   UPDOWN_GetArrowRect(wndPtr, &rect, TRUE);
   prssed = (infoPtr->Flags & FLAG_INCR) && (infoPtr->Flags & FLAG_MOUSEIN);
@@ -298,10 +297,38 @@ static void UPDOWN_Paint(WND *wndPtr)
 	(wndPtr->dwStyle & UDS_HORZ ? DFCS_SCROLLRIGHT : DFCS_SCROLLDOWN) |
 	(prssed ? DFCS_PUSHED : 0) |
 	(wndPtr->dwStyle&WS_DISABLED ? DFCS_INACTIVE : 0) );
+}
+
+/***********************************************************************
+ * UPDOWN_Refresh [Internal]
+ *
+ * Synchronous drawing (must NOT be used in WM_PAINT).
+ * Calls UPDOWN_Draw.
+ */
+static void UPDOWN_Refresh (WND *wndPtr)
+{
+    HDC32 hdc;
+  
+    hdc = GetDC32 (wndPtr->hwndSelf);
+    UPDOWN_Draw (wndPtr, hdc);
+    ReleaseDC32 (wndPtr->hwndSelf, hdc);
+}
 
 
-  /* clean-up */  
-  EndPaint32( wndPtr->hwndSelf, &ps );
+/***********************************************************************
+ * UPDOWN_Paint [Internal]
+ *
+ * Asynchronous drawing (must ONLY be used in WM_PAINT).
+ * Calls UPDOWN_Draw.
+ */
+static void UPDOWN_Paint (WND *wndPtr)
+{
+    PAINTSTRUCT32 ps;
+    HDC32 hdc;
+  
+    hdc = BeginPaint32 (wndPtr->hwndSelf, &ps);
+    UPDOWN_Draw (wndPtr, hdc);
+    EndPaint32 (wndPtr->hwndSelf, &ps);
 }
 
 /***********************************************************************
@@ -355,9 +382,10 @@ static BOOL32 UPDOWN_SetBuddy(WND *wndPtr, HWND32 hwndBud)
   /* now position the up/down */
   /* Since the UDS_ALIGN* flags were used, */
   /* we will pick the position and size of the window. */
+
   SetWindowPos32(wndPtr->hwndSelf,0,x,budRect.top-DEFAULT_ADDTOP,DEFAULT_WIDTH,
 		 (budRect.bottom-budRect.top)+DEFAULT_ADDTOP+DEFAULT_ADDBOT,
-		 SWP_NOACTIVATE|SWP_NOZORDER); 
+		 SWP_NOACTIVATE|SWP_NOZORDER);
 
   return TRUE;
 }	  
@@ -413,7 +441,8 @@ static void UPDOWN_DoAction(WND *wndPtr, int delta, BOOL32 incr)
   /* Also, notify it */
   /* FIXME: do we need to send the notification only if
             we do not have the UDS_SETBUDDYINT style set? */
-  SendMessage32A(infoPtr->Buddy, 
+
+  SendMessage32A(GetParent32 (wndPtr->hwndSelf), 
 		 wndPtr->dwStyle & UDS_HORZ ? WM_HSCROLL : WM_VSCROLL, 
 		 MAKELONG(incr ? SB_LINEUP : SB_LINEDOWN, infoPtr->CurVal),
 		 wndPtr->hwndSelf);
@@ -457,7 +486,7 @@ static BOOL32 UPDOWN_CancelMode(WND *wndPtr)
     ReleaseCapture();          /* if we still have it      */  
   
   infoPtr->Flags = 0;          /* get rid of any flags     */
-  UPDOWN_Paint(wndPtr);        /* redraw the control just in case */
+  UPDOWN_Refresh (wndPtr);     /* redraw the control just in case */
   
   return TRUE;
 }
@@ -505,7 +534,7 @@ static void UPDOWN_HandleMouseEvent(WND *wndPtr, UINT32 msg, POINT32 pt)
       infoPtr->Flags |= FLAG_MOUSEIN;
       
       /* repaint the control */
-      UPDOWN_Paint(wndPtr);
+      UPDOWN_Refresh (wndPtr);
 
       /* process the click */
       UPDOWN_DoAction(wndPtr, 1, infoPtr->Flags & FLAG_INCR);
@@ -541,7 +570,7 @@ static void UPDOWN_HandleMouseEvent(WND *wndPtr, UINT32 msg, POINT32 pt)
       }
       /* If state changed, redraw the control */
       if(temp != infoPtr->Flags)
-	UPDOWN_Paint(wndPtr);
+	UPDOWN_Refresh (wndPtr);
       break;
 
       default:
@@ -562,9 +591,16 @@ LRESULT WINAPI UpDownWindowProc(HWND32 hwnd, UINT32 message, WPARAM32 wParam,
 
   switch(message)
     {
-    case WM_CREATE:
+    case WM_NCCREATE:
       /* get rid of border, if any */
       wndPtr->dwStyle &= ~WS_BORDER;
+      return TRUE;
+
+    case WM_CREATE:
+      infoPtr =
+	(UPDOWN_INFO*)HeapAlloc (GetProcessHeap (), HEAP_ZERO_MEMORY,
+				 sizeof(UPDOWN_INFO));
+      wndPtr->wExtra[0] = (DWORD)infoPtr;
 
       /* initialize the info struct */
       infoPtr->AccelCount=0; infoPtr->AccelVect=0; 
@@ -583,6 +619,10 @@ LRESULT WINAPI UpDownWindowProc(HWND32 hwnd, UINT32 message, WPARAM32 wParam,
     case WM_DESTROY:
       if(infoPtr->AccelVect)
 	free(infoPtr->AccelVect);
+
+      HeapFree (GetProcessHeap (), 0, infoPtr);
+      wndPtr->wExtra[0] = 0;
+
       TRACE(updown, "UpDown Ctrl destruction, hwnd=%04x\n", hwnd);
       break;
 	
@@ -785,7 +825,7 @@ LRESULT WINAPI UpDownWindowProc(HWND32 hwnd, UINT32 message, WPARAM32 wParam,
 }
 
 /***********************************************************************
- *           UPDOWN_Register [Internal]
+ * UPDOWN_Register [Internal]
  *
  * Registers the updown window class.
  */
@@ -796,10 +836,10 @@ void UPDOWN_Register(void)
     if( GlobalFindAtom32A( UPDOWN_CLASS32A ) ) return;
 
     ZeroMemory( &wndClass, sizeof( WNDCLASS32A ) );
-    wndClass.style         = CS_GLOBALCLASS | CS_DBLCLKS | CS_VREDRAW;
+    wndClass.style         = CS_GLOBALCLASS | CS_VREDRAW;
     wndClass.lpfnWndProc   = (WNDPROC32)UpDownWindowProc;
     wndClass.cbClsExtra    = 0;
-    wndClass.cbWndExtra    = sizeof(UPDOWN_INFO);
+    wndClass.cbWndExtra    = sizeof(UPDOWN_INFO*);
     wndClass.hCursor       = LoadCursor32A( 0, IDC_ARROW32A );
     wndClass.hbrBackground = (HBRUSH32)(COLOR_3DFACE + 1);
     wndClass.lpszClassName = UPDOWN_CLASS32A;

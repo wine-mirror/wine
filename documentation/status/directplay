@@ -1,0 +1,17 @@
+This file contains information on the implementation of the direct play
+and direct play lobby features. 
+
+Most methods and APIs are not implemented at this point. Examine the code
+to see what has been implemented.  Stay tuned for some information here once
+there is more implementation (and I figure out what the heck I'm doing).
+
+The files are include/dplay.h and multimedia/dplay.c.
+
+I think I can safely say that any application which requires direct play
+or direct play lobby will not work at this point. Priority will be to get
+lserver.exe and star wars rebellion going (at least the direct play portions).
+
+
+
+TODO:
+  Just about everything

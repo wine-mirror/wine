@@ -389,8 +389,10 @@ BOOL32 DC_SetupGCForPen( DC * dc )
     {
     case PS_JOIN_BEVEL:
 	val.join_style = JoinBevel;
+        break;
     case PS_JOIN_MITER:
 	val.join_style = JoinMiter;
+        break;
     case PS_JOIN_ROUND:
     default:
 	val.join_style = JoinRound;

@@ -19,13 +19,15 @@
 #include "debugstr.h"
 #include "debug.h"
 
+char **debug_snoop_excludelist = NULL, **debug_snoop_includelist = NULL;
+
 #ifdef NEED_UNDERSCORE_PREFIX
 # define PREFIX "_"
 #else
 # define PREFIX
 #endif
 
-/* Well ,not exactly extern since they are in the same file (in the lines
+/* Well, not exactly extern since they are in the same file (in the lines
  * below). But the C Compiler doesn't see them there, so we have to help a bit.
  */
 extern void SNOOP_Return();
@@ -81,6 +83,7 @@ typedef struct tagSNOOP_RETURNENTRY {
 	DWORD		ordinal;
 	DWORD		origESP;
 	DWORD		*args;		/* saved args across a stdcall */
+	BYTE		show;
 } SNOOP_RETURNENTRY;
 
 typedef struct tagSNOOP_RETURNENTRIES {
@@ -92,6 +95,44 @@ typedef struct tagSNOOP_RETURNENTRIES {
 
 static	SNOOP_DLL		*firstdll = NULL;
 static	SNOOP_RETURNENTRIES 	*firstrets = NULL;
+
+/***********************************************************************
+ *          SNOOP_ShowDebugmsgSnoop
+ *
+ * Simple function to decide if a particular debugging message is
+ * wanted.
+ */
+int SNOOP_ShowDebugmsgSnoop(const char *dll, int ord, const char *fname) {
+
+  if(debug_snoop_excludelist || debug_snoop_includelist) {
+    char **listitem;
+    char buf[80];
+    int len, len2, itemlen, show;
+
+    if(debug_snoop_excludelist) {
+      show = 1;
+      listitem = debug_snoop_excludelist;
+    } else {
+      show = 0;
+      listitem = debug_snoop_includelist;
+    }
+    len = strlen(dll);
+    assert(len < 64);
+    sprintf(buf, "%s.%d", dll, ord);
+    len2 = strlen(buf);
+    for(; *listitem; listitem++) {
+      itemlen = strlen(*listitem);
+      if((itemlen == len && !strncmp(*listitem, buf, len)) ||
+         (itemlen == len2 && !strncmp(*listitem, buf, len2)) ||
+         !strcmp(*listitem, fname)) {
+        show = !show;
+       break;
+      }
+    }
+    return show;
+  }
+  return 1;
+}
 
 void
 SNOOP_RegisterDLL(HMODULE32 hmod,LPCSTR name,DWORD nrofordinals) {
@@ -136,7 +177,7 @@ SNOOP_GetProcAddress32(HMODULE32 hmod,LPCSTR name,DWORD ordinal,FARPROC32 origfu
 		    		   pe_seg[j].SizeOfRawData)
 		)
 			break;
-	/* If we looked through all sections (and didn't find one) 
+	/* If we looked through all sections (and didn't find one)
 	 * or if the sectionname contains "data", we return the
 	 * original function since it is most likely a datareference.
 	 */
@@ -225,7 +266,7 @@ REGS_ENTRYPOINT(SNOOP_Entry) {
 	SNOOP_FUN	*fun = NULL;
 	SNOOP_RETURNENTRIES	**rets = &firstrets;
 	SNOOP_RETURNENTRY	*ret;
-	int		i,max;
+	int		i,max,show;
 
 	while (dll) {
 		if (	((char*)entry>=(char*)dll->funs)	&&
@@ -244,7 +285,7 @@ REGS_ENTRYPOINT(SNOOP_Entry) {
 	/* guess cdecl ... */
 	if (fun->nrofargs<0) {
 		/* Typical cdecl return frame is:
-		 * 	add esp, xxxxxxxx 
+		 * 	add esp, xxxxxxxx
 		 * which has (for xxxxxxxx up to 255 the opcode "83 C4 xx".
 		 */
 		LPBYTE	reteip = (LPBYTE)CALLER1REF;
@@ -279,6 +320,8 @@ REGS_ENTRYPOINT(SNOOP_Entry) {
 
 	EIP_reg(context)= (DWORD)fun->origfun;
 
+	ret->show = SNOOP_ShowDebugmsgSnoop(dll->name, ordinal, fun->name);
+	if(!ret->show) return;
 	DPRINTF("Call %s.%ld: %s(",dll->name,ordinal,fun->name);
 	if (fun->nrofargs>0) {
 		max = fun->nrofargs; if (max>16) max=16;
@@ -298,14 +341,16 @@ REGS_ENTRYPOINT(SNOOP_Return) {
 	SNOOP_RETURNENTRY	*ret = (SNOOP_RETURNENTRY*)(EIP_reg(context)-5);
 
 	/* We haven't found out the nrofargs yet. If we called a cdecl
-	 * function it is too late anyway and we can just set '0' (which 
+	 * function it is too late anyway and we can just set '0' (which
 	 * will be the difference between orig and current ESP
 	 * If stdcall -> everything ok.
 	 */
 	if (ret->dll->funs[ret->ordinal].nrofargs<0)
 		ret->dll->funs[ret->ordinal].nrofargs=(ESP_reg(context)-ret->origESP-4)/4;
 	EIP_reg(context) = (DWORD)ret->origreturn;
-	if (ret->args) {
+	if(!ret->show) {
+		;
+	} else if (ret->args) {
 		int	i,max;
 
 		DPRINTF("Ret  %s.%ld: %s(",ret->dll->name,ret->ordinal,ret->dll->funs[ret->ordinal].name);

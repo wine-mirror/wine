@@ -75,10 +75,10 @@ type	win32
  68 stdcall ImageList_Replace(ptr long long long) ImageList_Replace
  69 stdcall ImageList_ReplaceIcon(ptr long long) ImageList_ReplaceIcon
  70 stdcall ImageList_SetBkColor(ptr long) ImageList_SetBkColor
- 71 stdcall Alloc(long) Alloc
- 72 stdcall ReAlloc(long long) ReAlloc
- 73 stdcall Free(long) Free
- 74 stub GetSize
+ 71 stdcall Alloc(long) COMCTL32_Alloc
+ 72 stdcall ReAlloc(long long) COMCTL32_ReAlloc
+ 73 stdcall Free(long) COMCTL32_Free
+ 74 stdcall GetSize(long) COMCTL32_GetSize
  75 stdcall ImageList_SetDragCursorImage(ptr long long long) ImageList_SetDragCursorImage
  76 stub ImageList_SetFilter
  77 stdcall ImageList_SetIconSize(ptr long long) ImageList_SetIconSize
@@ -114,7 +114,7 @@ type	win32
 
 320 stdcall DSA_Create(long long) DSA_Create
 321 stdcall DSA_Destroy(long) DSA_Destroy
-322 stub DSA_GetItem
+322 stdcall DSA_GetItem(long long long) DSA_GetItem
 323 stdcall DSA_GetItemPtr(long long) DSA_GetItemPtr
 324 stdcall DSA_InsertItem(long long long) DSA_InsertItem
 325 stub DSA_SetItem

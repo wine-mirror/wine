@@ -27,7 +27,6 @@ typedef struct tagTOOLBAR_INFO
     DWORD      dwStructSize;   /* size of TBBUTTON struct */
     INT32      nHeight;        /* height of the toolbar */
     INT32      nWidth;         /* width of the toolbar */
-    INT32      nButtonTop;     /* top of the button rectangle */
     INT32      nButtonHeight;
     INT32      nButtonWidth;
     INT32      nBitmapHeight;
@@ -42,12 +41,14 @@ typedef struct tagTOOLBAR_INFO
     BOOL32     bCaptured;
     INT32      nButtonDown;
     INT32      nOldHit;
+    INT32      nHotItem;        /* index of the "hot" item */
 
     HIMAGELIST himlDef;         /* default image list */
     HIMAGELIST himlHot;         /* hot image list */
     HIMAGELIST himlDis;         /* disabled image list */
     HWND32     hwndToolTip;     /* handle to tool tip control */
     HWND32     hwndNotify;      /* handle to the window that gets notifications */
+    BOOL32     bTransparent;    /* background transparency flag */
 
     TBUTTON_INFO *buttons;
     CHAR         **strings;

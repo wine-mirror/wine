@@ -217,8 +217,11 @@ typedef struct _CONTEXT		/* Note 1 */
 #define FL_sig(context)      (*(WORD*)&EFL_sig(context))
 
 #ifdef FS_sig
-#define HANDLER_INIT() SET_FS(FS_sig(HANDLER_CONTEXT))
-#else FS_sig
+extern WORD CALLTO16_Current_fs;
+#define HANDLER_INIT() \
+    SET_FS(IS_SELECTOR_SYSTEM(CS_sig(HANDLER_CONTEXT)) ? \
+           FS_sig(HANDLER_CONTEXT) : CALLTO16_Current_fs)
+#else
 #define HANDLER_INIT() /* nothing */
 #endif
 

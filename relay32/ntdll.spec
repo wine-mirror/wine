@@ -65,7 +65,7 @@ type	win32
 062 stub NtCancelIoFile
 063 stub NtCancelTimer
 064 stub NtClearEvent
-065 stub NtClose
+065 stdcall NtClose(long) NtClose
 066 stub NtCloseObjectAuditAlarm
 067 stub NtCompleteConnectPort
 068 stub NtConnectPort
@@ -129,7 +129,7 @@ type	win32
 126 stub NtOpenEventPair
 127 stdcall NtOpenFile(ptr long ptr ptr long long) NtOpenFile
 128 stub NtOpenIoCompletion
-129 stub NtOpenKey
+129 stdcall NtOpenKey(ptr long ptr) NtOpenKey
 130 stub NtOpenMutant
 131 stub NtOpenObjectAuditAlarm
 132 stub NtOpenProcess
@@ -154,7 +154,7 @@ type	win32
 151 stub NtQueryEvent
 152 stub NtQueryInformationFile
 153 stub NtQueryInformationPort
-154 stub NtQueryInformationProcess
+154 stdcall NtQueryInformationProcess(long long long long long) NtQueryInformationProcess
 155 stub NtQueryInformationThread
 156 stub NtQueryInformationToken
 157 stub NtQueryIntervalProfile
@@ -171,8 +171,8 @@ type	win32
 168 stdcall NtQuerySystemInformation(long long long long) NtQuerySystemInformation
 169 stub NtQuerySystemTime
 170 stub NtQueryTimer
-171 stub NtQueryTimerResolution
-172 stub NtQueryValueKey
+171 stdcall NtQueryTimerResolution(long long long) NtQueryTimerResolution
+172 stdcall NtQueryValueKey(long long long long long long) NtQueryValueKey
 173 stub NtQueryVirtualMemory
 174 stub NtQueryVolumeInformationFile
 175 stub NtRaiseException
@@ -399,11 +399,11 @@ type	win32
 396 stub RtlImageDirectoryEntryToData
 397 stdcall RtlImageNtHeader(long) RtlImageNtHeader
 398 stub RtlImpersonateSelf
-399 stdcall RtlInitAnsiString(ptr ptr) RtlInitAnsiString
+399 stdcall RtlInitAnsiString(ptr str) RtlInitAnsiString
 400 stub RtlInitCodePageTable
 401 stub RtlInitNlsTables
-402 stdcall RtlInitString(ptr ptr) RtlInitString
-403 stdcall RtlInitUnicodeString(ptr ptr) RtlInitUnicodeString
+402 stdcall RtlInitString(ptr str) RtlInitString
+403 stdcall RtlInitUnicodeString(ptr wstr) RtlInitUnicodeString
 404 stub RtlInitializeBitMap
 405 stub RtlInitializeContext
 406 stdcall RtlInitializeCriticalSection(ptr) InitializeCriticalSection

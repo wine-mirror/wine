@@ -124,7 +124,7 @@ BOOL32 WINAPI PlaySound32A(LPCSTR pszSound, HMODULE32 hmod, DWORD fdwSound)
   TRACE(mmsys, "pszSound='%p' hmod=%04X fdwSound=%08lX\n",
 	pszSound, hmod, fdwSound);
   if(hmod != 0 || !(fdwSound & SND_FILENAME)) {
-    FIXME(mmsys, "only disk sound files are supported\n");
+    FIXME(mmsys, "only disk sound files are supported. Type: %08lx\n",fdwSound);
     return FALSE;
   } else
     return  sndPlaySound(pszSound, (UINT16) fdwSound);

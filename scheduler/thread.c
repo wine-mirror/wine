@@ -690,12 +690,36 @@ BOOL32 WINAPI GetExitCodeThread(
  * RETURNS
  *    Success: Previous suspend count
  *    Failure: 0xFFFFFFFF
+ *    Already running: 0
  */
 DWORD WINAPI ResumeThread(
-    HANDLE32 handle) /* [in] Indentifies thread to restart */
+    HANDLE32 hthread) /* [in] Indentifies thread to restart */
 {
-    FIXME(thread,"(0x%08x): stub\n",handle);
-    return 0xFFFFFFFF;
+    THDB *thread;
+    DWORD oldcount;
+
+    SYSTEM_LOCK();
+    if (!(thread = THREAD_GetPtr( hthread, THREAD_QUERY_INFORMATION )))
+    {
+        SYSTEM_UNLOCK();
+        WARN(thread, "Invalid thread handle\n");
+	return 0xFFFFFFFF;
+    }
+    if ((oldcount = thread->suspend_count) != 0)
+    {
+        if (!--thread->suspend_count)
+        {
+            if (kill(thread->unix_pid, SIGCONT))
+            {
+                WARN(thread, "Unable to CONTinue pid: %04x\n",
+                     thread->unix_pid);
+                oldcount = 0xFFFFFFFF;
+            }
+        }
+    }
+    K32OBJ_DecCount(&thread->header);
+    SYSTEM_UNLOCK();
+    return oldcount;
 }
 
 
@@ -707,10 +731,39 @@ DWORD WINAPI ResumeThread(
  *    Failure: 0xFFFFFFFF
  */
 DWORD WINAPI SuspendThread(
-    HANDLE32 handle) /* [in] Handle to the thread */
+    HANDLE32 hthread) /* [in] Handle to the thread */
 {
-    FIXME(thread,"(0x%08x): stub\n",handle);
-    return 0xFFFFFFFF;
+    THDB *thread;
+    DWORD oldcount;
+
+    SYSTEM_LOCK();
+    if (!(thread = THREAD_GetPtr( hthread, THREAD_QUERY_INFORMATION )))
+    {
+        SYSTEM_UNLOCK();
+        WARN(thread, "Invalid thread handle\n");
+	return 0xFFFFFFFF;
+    }
+    
+    if (!(oldcount = thread->suspend_count))
+    {
+        if (thread->unix_pid == getpid())
+            WARN(thread, "Attempting to suspend myself\n" );
+        else
+        {
+            if (kill(thread->unix_pid, SIGSTOP))
+            {
+                WARN(thread, "Unable to STOP pid: %04x\n", 
+                     thread->unix_pid);
+                oldcount = 0xFFFFFFFF;
+            }
+            else thread->suspend_count++;
+        }
+    }
+    else thread->suspend_count++;
+    K32OBJ_DecCount( &thread->header );
+    SYSTEM_UNLOCK();
+    return oldcount;
+
 }
 
 

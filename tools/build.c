@@ -167,6 +167,9 @@ static int debugging = 1;
   /* Offset of the stack pointer relative to %fs:(0) */
 #define STACKOFFSET (STRUCTOFFSET(THDB,cur_stack) - STRUCTOFFSET(THDB,teb))
 
+  /* Offset of the saved fs relative to %fs:(0) */
+#define FSOFFSET (STRUCTOFFSET(THDB,saved_fs) - STRUCTOFFSET(THDB,teb))
+
 
 static void *xmalloc (size_t size)
 {
@@ -1605,7 +1608,10 @@ static void BuildCallFrom16Func( FILE *outfile, char *profile )
     fprintf( outfile, "\tdata16\n");
 #endif
     fprintf( outfile, "\tmovw %%bx,%%es\n" );
+
+    fprintf( outfile, "\tmovw %%fs, %%bx\n" );
     fprintf( outfile, "\tmovw " PREFIX "CALLTO16_Current_fs,%%fs\n" );
+    fprintf( outfile, "\t.byte 0x64\n\tmovw %%bx,(%d)\n", FSOFFSET );
 
     /* Get the 32-bit stack pointer from the TEB */
 
@@ -1723,6 +1729,9 @@ static void BuildCallFrom16Func( FILE *outfile, char *profile )
     fprintf( outfile, "\t.byte 0x64\n\tmovw (%d),%%sp\n", STACKOFFSET );
     fprintf( outfile, "\t.byte 0x64\n\tpopl (%d)\n", STACKOFFSET );
     fprintf( outfile, "\tmovw %%fs," PREFIX "CALLTO16_Current_fs\n" );
+
+    fprintf( outfile, "\t.byte 0x64\n\tmovw (%d),%%bx\n", FSOFFSET );
+    fprintf( outfile, "\tmovw %%bx, %%fs\n" );
 
     if (reg_func)
     {
@@ -1909,6 +1918,9 @@ static void BuildCallTo16Func( FILE *outfile, char *profile )
         fprintf( outfile, "\tmovl %%eax,%%esp\n" );
         fprintf( outfile, "\t.byte 0x64\n\tmovl %%edx,(%d)\n", STACKOFFSET );
 
+    fprintf( outfile, "\t.byte 0x64\n\tmovw (%d),%%cx\n", FSOFFSET );
+    fprintf( outfile, "\tmovw %%cx, %%fs\n" );
+
         /* Get the registers. ebx is handled later on. */
 
         fprintf( outfile, "\tmovl 8(%%ebx),%%ebx\n" );
@@ -1958,6 +1970,9 @@ static void BuildCallTo16Func( FILE *outfile, char *profile )
         fprintf( outfile, "\t.byte 0x64\n\tmovw (%d),%%ss\n", STACKOFFSET + 2);
         fprintf( outfile, "\t.byte 0x64\n\tmovw (%d),%%sp\n", STACKOFFSET );
         fprintf( outfile, "\t.byte 0x64\n\tmovl %%edx,(%d)\n", STACKOFFSET );
+
+    fprintf( outfile, "\t.byte 0x64\n\tmovw (%d),%%cx\n", FSOFFSET );
+    fprintf( outfile, "\tmovw %%cx, %%fs\n" );
 
         /* Make %bp point to the previous stackframe (built by CallFrom16) */
         fprintf( outfile, "\tmovzwl %%sp,%%ebp\n" );
@@ -2039,7 +2054,10 @@ static void BuildRet16Func( FILE *outfile )
     fprintf( outfile, "\tdata16\n");
 #endif
     fprintf( outfile, "\tmovw %%bx,%%es\n" );
+
+    fprintf( outfile, "\tmovw %%fs, %%cx\n" );
     fprintf( outfile, "\tmovw " PREFIX "CALLTO16_Current_fs,%%fs\n" );
+    fprintf( outfile, "\t.byte 0x64\n\tmovw %%cx,(%d)\n", FSOFFSET );
 
     /* Restore the 32-bit stack */
 
@@ -2068,11 +2086,9 @@ static void BuildRet16Func( FILE *outfile )
     fprintf( outfile, "\t.globl " PREFIX "CALLTO16_RetAddr_word\n" );
     fprintf( outfile, "\t.globl " PREFIX "CALLTO16_RetAddr_long\n" );
     fprintf( outfile, "\t.globl " PREFIX "CALLTO16_RetAddr_eax\n" );
-    fprintf( outfile, "\t.globl " PREFIX "CALLTO16_Current_fs\n" );
     fprintf( outfile, PREFIX "CALLTO16_RetAddr_word:\t.long 0\n" );
     fprintf( outfile, PREFIX "CALLTO16_RetAddr_long:\t.long 0\n" );
     fprintf( outfile, PREFIX "CALLTO16_RetAddr_eax:\t.long 0\n" );
-    fprintf( outfile, PREFIX "CALLTO16_Current_fs:\t.long 0\n" );
     fprintf( outfile, "\t.text\n" );
 }
 

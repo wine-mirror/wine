@@ -191,7 +191,7 @@ type	win32
 176 stub CreateSocketHandle
 177 stub CreateTapePartition
 178 stdcall CreateThread(ptr long ptr long long ptr) CreateThread
-179 stub CreateToolhelp32Snapshot
+179 stdcall CreateToolhelp32Snapshot(long long) CreateToolhelp32Snapshot
 180 stub DebugActiveProcess
 # FIXME
 #181 register DebugBreak() DebugBreak
@@ -384,7 +384,7 @@ type	win32
 367 stub GetPrivateProfileSectionW
 368 stdcall GetPrivateProfileStringA(str str str ptr long str) GetPrivateProfileString32A
 369 stdcall GetPrivateProfileStringW(wstr wstr wstr ptr long wstr) GetPrivateProfileString32W
-370 stub GetPrivateProfileStructA
+370 stdcall GetPrivateProfileStructA (str str ptr long str) GetPrivateProfileStruct32A
 371 stub GetPrivateProfileStructW
 372 stdcall GetProcAddress(long str) GetProcAddress32
 373 stdcall GetProcessAffinityMask(long ptr ptr) GetProcessAffinityMask
@@ -723,8 +723,8 @@ type	win32
 706 stdcall UnmapViewOfFile(ptr) UnmapViewOfFile
 707 stub UpdateResourceA
 708 stub UpdateResourceW
-709 stub VerLanguageNameA
-710 stub VerLanguageNameW
+709 stdcall VerLanguageNameA(long str long) VerLanguageName32A
+710 stdcall VerLanguageNameW(long wstr long) VerLanguageName32W
 711 stdcall VirtualAlloc(ptr long long long) VirtualAlloc
 712 stdcall VirtualFree(ptr long long) VirtualFree
 713 stdcall VirtualLock(ptr long) VirtualLock
@@ -758,7 +758,7 @@ type	win32
 741 stub WritePrivateProfileSectionW
 742 stdcall WritePrivateProfileStringA(str str str str) WritePrivateProfileString32A
 743 stdcall WritePrivateProfileStringW(wstr wstr wstr wstr) WritePrivateProfileString32W
-744 stub WritePrivateProfileStructA
+744 stdcall WritePrivateProfileStructA (str str ptr long str) WritePrivateProfileStruct32A
 745 stub WritePrivateProfileStructW
 746 stdcall WriteProcessMemory(long ptr ptr long ptr) WriteProcessMemory
 747 stub WriteProfileSectionA
