@@ -435,7 +435,7 @@ static HANDLE WINSPOOL_GetOpenedPrinterEntry( LPCWSTR name )
 
     if (i >= nb_printers)
     {
-        LPWSTR *new_array = HeapReAlloc( GetProcessHeap(), 0, printer_array,
+        LPWSTR *new_array = HeapReAlloc( GetProcessHeap(), HEAP_ZERO_MEMORY, printer_array,
                                          (nb_printers + 16) * sizeof(*new_array) );
         if (!new_array) return 0;
         printer_array = new_array;
