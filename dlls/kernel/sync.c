@@ -58,6 +58,14 @@ inline static int is_version_nt(void)
 
 /***********************************************************************
  *           InitializeCriticalSection   (KERNEL32.@)
+ *
+ * Initialise a critical section before use.
+ *
+ * PARAMS
+ *  crit [O] Critical section to initialise.
+ *
+ * RETURNS
+ *  Nothing. If the function fails an exception is raised.
  */
 void WINAPI InitializeCriticalSection( CRITICAL_SECTION *crit )
 {
@@ -67,6 +75,19 @@ void WINAPI InitializeCriticalSection( CRITICAL_SECTION *crit )
 
 /***********************************************************************
  *           InitializeCriticalSectionAndSpinCount   (KERNEL32.@)
+ *
+ * Initialise a critical section with a spin count.
+ *
+ * PARAMS
+ *  crit      [O] Critical section to initialise.
+ *  spincount [I] Number of times to spin upon contention.
+ *
+ * RETURNS
+ *  Success: TRUE.
+ *  Failure: Nothing. If the function fails an exception is raised.
+ *
+ * NOTES
+ *  spincount is ignored on uni-processor systems.
  */
 BOOL WINAPI InitializeCriticalSectionAndSpinCount( CRITICAL_SECTION *crit, DWORD spincount )
 {
@@ -77,8 +98,18 @@ BOOL WINAPI InitializeCriticalSectionAndSpinCount( CRITICAL_SECTION *crit, DWORD
 
 /***********************************************************************
  *           SetCriticalSectionSpinCount   (KERNEL32.@)
- * This function is available on NT4SP3 or later, but not Win98
- * It is SMP related
+ *
+ * Set the spin count for a critical section.
+ *
+ * PARAMS
+ *  crit      [O] Critical section to set the spin count for.
+ *  spincount [I] Number of times to spin upon contention.
+ *
+ * RETURNS
+ *  The previous spin count value of crit.
+ *
+ * NOTES
+ *  This function is available on NT4SP3 or later, but not Win98.
  */
 DWORD WINAPI SetCriticalSectionSpinCount( CRITICAL_SECTION *crit, DWORD spincount )
 {
@@ -107,6 +138,14 @@ void WINAPI MakeCriticalSectionGlobal( CRITICAL_SECTION *crit )
 
 /***********************************************************************
  *           ReinitializeCriticalSection   (KERNEL32.@)
+ *
+ * Initialise an already used critical section.
+ *
+ * PARAMS
+ *  crit [O] Critical section to initialise.
+ *
+ * RETURNS
+ *  Nothing.
  */
 void WINAPI ReinitializeCriticalSection( CRITICAL_SECTION *crit )
 {
@@ -117,6 +156,14 @@ void WINAPI ReinitializeCriticalSection( CRITICAL_SECTION *crit )
 
 /***********************************************************************
  *           UninitializeCriticalSection   (KERNEL32.@)
+ *
+ * UnInitialise a critical section after use.
+ *
+ * PARAMS
+ *  crit [O] Critical section to uninitialise (destroy).
+ *
+ * RETURNS
+ *  Nothing.
  */
 void WINAPI UninitializeCriticalSection( CRITICAL_SECTION *crit )
 {
@@ -1208,7 +1255,9 @@ HANDLE WINAPI CreateMailslotA( LPCSTR lpName, DWORD nMaxMessageSize,
 
 
 /******************************************************************************
- * CreateMailslotW [KERNEL32.@]  Creates a mailslot with specified name
+ * CreateMailslotW [KERNEL32.@]
+ *
+ * Create a mailslot with specified name.
  *
  * PARAMS
  *    lpName          [I] Pointer to string for mailslot name
@@ -1230,7 +1279,9 @@ HANDLE WINAPI CreateMailslotW( LPCWSTR lpName, DWORD nMaxMessageSize,
 
 
 /******************************************************************************
- * GetMailslotInfo [KERNEL32.@]  Retrieves info about specified mailslot
+ * GetMailslotInfo [KERNEL32.@]
+ *
+ * Retrieve information about a mailslot.
  *
  * PARAMS
  *    hMailslot        [I] Mailslot handle
@@ -1257,7 +1308,13 @@ BOOL WINAPI GetMailslotInfo( HANDLE hMailslot, LPDWORD lpMaxMessageSize,
 
 
 /******************************************************************************
- * SetMailslotInfo [KERNEL32.@]  Sets the read timeout of a specified mailslot
+ * SetMailslotInfo [KERNEL32.@]
+ *
+ * Set the read timeout of a mailslot.
+ *
+ * PARAMS
+ *  hMailslot     [I] Mailslot handle
+ *  dwReadTimeout [I] Timeout in milliseconds.
  *
  * RETURNS
  *    Success: TRUE
@@ -1328,6 +1385,19 @@ __ASM_GLOBAL_FUNC(InterlockedDecrement,
 
 /***********************************************************************
  *		InterlockedCompareExchange (KERNEL32.@)
+ *
+ * Atomically swap one value with another.
+ *
+ * PARAMS
+ *  dest    [I/O] The value to replace
+ *  xchq    [I]   The value to be swapped
+ *  compare [I]   The value to compare to dest
+ *
+ * RETURNS
+ *  The resulting value of dest.
+ *
+ * NOTES
+ *  dest is updated only if it is equal to compare, otherwise no swap is done.
  */
 LONG WINAPI InterlockedCompareExchange( PLONG dest, LONG xchg, LONG compare )
 {
@@ -1336,6 +1406,15 @@ LONG WINAPI InterlockedCompareExchange( PLONG dest, LONG xchg, LONG compare )
 
 /***********************************************************************
  *		InterlockedExchange (KERNEL32.@)
+ *
+ * Atomically swap one value with another.
+ *
+ * PARAMS
+ *  dest [I/O] The value to replace
+ *  val  [I]   The value to be swapped
+ *
+ * RETURNS
+ *  The resulting value of dest.
  */
 LONG WINAPI InterlockedExchange( PLONG dest, LONG val )
 {
@@ -1344,6 +1423,15 @@ LONG WINAPI InterlockedExchange( PLONG dest, LONG val )
 
 /***********************************************************************
  *		InterlockedExchangeAdd (KERNEL32.@)
+ *
+ * Atomically add one value to another.
+ *
+ * PARAMS
+ *  dest [I/O] The value to add to
+ *  incr [I]   The value to be added
+ *
+ * RETURNS
+ *  The resulting value of dest.
  */
 LONG WINAPI InterlockedExchangeAdd( PLONG dest, LONG incr )
 {
@@ -1352,6 +1440,14 @@ LONG WINAPI InterlockedExchangeAdd( PLONG dest, LONG incr )
 
 /***********************************************************************
  *		InterlockedIncrement (KERNEL32.@)
+ *
+ * Atomically increment a value.
+ *
+ * PARAMS
+ *  dest [I/O] The value to increment
+ *
+ * RETURNS
+ *  The resulting value of dest.
  */
 LONG WINAPI InterlockedIncrement( PLONG dest )
 {
@@ -1360,6 +1456,14 @@ LONG WINAPI InterlockedIncrement( PLONG dest )
 
 /***********************************************************************
  *		InterlockedDecrement (KERNEL32.@)
+ *
+ * Atomically decrement a value.
+ *
+ * PARAMS
+ *  dest [I/O] The value to decrement
+ *
+ * RETURNS
+ *  The resulting value of dest.
  */
 LONG WINAPI InterlockedDecrement( PLONG dest )
 {
