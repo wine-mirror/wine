@@ -469,6 +469,9 @@ static BOOL _CmdWndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
     case ID_EDIT_COPYKEYNAME:
         CopyKeyName(hWnd, _T(""));
         break;
+    case ID_EDIT_NEW_KEY:
+	CreateKey(hKey);
+	break;
     case ID_REGISTRY_PRINTERSETUP:
         /*PRINTDLG pd;*/
         /*PrintDlg(&pd);*/

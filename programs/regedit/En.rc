@@ -201,6 +201,7 @@ BEGIN
     IDS_BAD_VALUE           "Can't query value '%s'"
     IDS_UNSUPPORTED_TYPE    "Can't edit keys of this type (%ld)"
     IDS_TOO_BIG_VALUE       "Value is too big (%ld)"
+    IDS_NEWKEY              "New Key"
 END
 
 /*****************************************************************/

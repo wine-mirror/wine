@@ -93,6 +93,7 @@ extern BOOL OnTreeExpanding(HWND hWnd, NMTREEVIEW* pnmtv);
 extern LPCTSTR GetItemPath(HWND hwndTV, HTREEITEM hItem, HKEY* phRootKey);
 
 /* edit.c */
+BOOL CreateKey(HKEY hKey);
 BOOL ModifyValue(HWND hwnd, HKEY hKey, LPCTSTR valueName);
 
 #endif /* __MAIN_H__ */

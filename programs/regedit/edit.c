@@ -91,6 +91,40 @@ INT_PTR CALLBACK modify_string_dlgproc(HWND hwndDlg, UINT uMsg, WPARAM wParam, L
     return FALSE;
 }
 
+BOOL CreateKey(HKEY hKey)
+{
+    LONG lRet;
+    HKEY retKey;
+    TCHAR keyName[32];
+    static TCHAR newKey[28] = ""; /* should be max keyName len - 4 */
+    HINSTANCE hInstance;
+    unsigned int keyNum = 1;
+         
+    /* If we have illegal parameter return with operation failure */
+    if (!hKey) return FALSE;
+
+    /* Load localized "new key" string. -4 is because we need max 4 character
+	to numbering. */
+    if (newKey[0] == 0) {
+	hInstance = GetModuleHandle(0);
+	if (!LoadString(hInstance, IDS_NEWKEY, newKey, COUNT_OF(newKey)))
+    	    lstrcpy(newKey, "new key");
+    }
+    lstrcpy(keyName, newKey);
+
+    /* try to find out a name for the newly create key.
+	We try it max 100 times. */
+    lRet = RegOpenKey(hKey, keyName, &retKey);
+    while (lRet == ERROR_SUCCESS && keyNum < 100) {
+	    sprintf(keyName, "%s %u", newKey, ++keyNum);
+	    lRet = RegOpenKey(hKey, keyName, &retKey);
+    }
+    if (lRet == ERROR_SUCCESS) return FALSE;
+    
+    lRet = RegCreateKey(hKey, keyName, &retKey);
+    return lRet == ERROR_SUCCESS;
+}
+
 BOOL ModifyValue(HWND hwnd, HKEY hKey, LPCTSTR valueName)
 {
     DWORD valueDataLen;
