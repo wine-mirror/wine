@@ -148,7 +148,7 @@ unsigned long *vptr = (unsigned long *)frm, rgb;
 int row_inc = stride/4;
 
 #ifndef ORIGINAL
-    vptr += row_inc*3;
+    vptr += stride*3;
 #endif
     vptr[0] = rgb = cb->rgb0; vptr[1] = rgb;
     vptr[2] = rgb = cb->rgb1; vptr[3] = rgb;
@@ -184,7 +184,7 @@ unsigned long *vptr = (unsigned long *)frm;
 int row_inc = stride/4;
 
 #ifndef ORIGINAL
-    vptr += row_inc*3;
+    vptr += stride*3;
 #endif
     vptr[0] = cb0->rgb0;
     vptr[1] = cb0->rgb1;
@@ -270,7 +270,7 @@ int row_inc = stride-4*3;
 #endif
 
 #ifndef ORIGINAL
-    vptr += (3*row_inc);
+    vptr += (3*stride);
 #endif
     *vptr++ = b = cb->b[0]; *vptr++ = g = cb->g[0]; *vptr++ = r = cb->r[0];
     *vptr++ = b; *vptr++ = g; *vptr++ = r;
@@ -317,7 +317,7 @@ int row_inc = stride-4*3;
 #endif
 
 #ifndef ORIGINAL
-    vptr += (3*row_inc);
+    vptr += (3*stride);
 #endif
     *vptr++ = cb0->b[0]; *vptr++ = cb0->g[0]; *vptr++ = cb0->r[0];
     *vptr++ = cb0->b[1]; *vptr++ = cb0->g[1]; *vptr++ = cb0->r[1];
