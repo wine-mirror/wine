@@ -279,10 +279,14 @@ void CLASS_FreeModuleClasses( HMODULE16 hModule )
  * NOTES
  *  980805 a local class will be found now if registred with hInst=0
  *  and looed up with a hInst!=0. msmoney does it (jsch)
+ *  
+ *  Local class registered with a USER instance handle are found as if 
+ *  they were global classes.
  */
 static CLASS *CLASS_FindClassByAtom( ATOM atom, HINSTANCE hinstance )
 {
-    CLASS * class, *tclass=0;
+    CLASS * class, *tclass = 0, *user_class = 0;
+    HINSTANCE16 hUser = GetModuleHandle16("USER");
 
     TRACE("0x%08x 0x%08x\n", atom, hinstance);
 
@@ -293,16 +297,20 @@ static CLASS *CLASS_FindClassByAtom( ATOM atom, HINSTANCE hinstance )
         if (class->style & CS_GLOBALCLASS) continue;
         if (class->atomName == atom)
         {
-            if (hinstance==class->hInstance || hinstance==0xffff )
+            if (hinstance==class->hInstance || hinstance==0xffff)
             {
                 TRACE("-- found local %p\n", class);
                 return class;
             }
-            if (class->hInstance==0) tclass = class;
+            if (class->hInstance == 0) tclass = class;
+            else if(class->hInstance == hUser)
+            {
+                user_class = class;
+            }
         }
     }
     
-      /* Then search global classes */
+    /* Then search global classes */
 
     for (class = firstClass; (class); class = class->next)
     {
@@ -312,6 +320,13 @@ static CLASS *CLASS_FindClassByAtom( ATOM atom, HINSTANCE hinstance )
             TRACE("-- found global %p\n", class);
             return class;
         }
+    }
+
+    /* Check if there was a local class registered with USER */
+    if( user_class )
+    {
+        TRACE("--found local USER class %p\n", user_class);
+        return user_class;
     }
 
     /* Then check if there was a local class with hInst=0*/
