@@ -71,7 +71,7 @@ type	win32
  68 stub CreateDesktopA
  69 stub CreateDesktopW
  70 stdcall CreateDialogIndirectParamA(long ptr long ptr long) CreateDialogIndirectParam32A
- 71 stub CreateDialogIndirectParamAorW
+ 71 stdcall CreateDialogIndirectParamAorW (long ptr long ptr long) CreateDialogIndirectParam32AorW
  72 stdcall CreateDialogIndirectParamW(long ptr long ptr long) CreateDialogIndirectParam32W
  73 stdcall CreateDialogParamA(long ptr long ptr long) CreateDialogParam32A
  74 stdcall CreateDialogParamW(long ptr long ptr long) CreateDialogParam32W

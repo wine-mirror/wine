@@ -747,7 +747,6 @@ HWND16 WINAPI CreateDialogParam16( HINSTANCE16 hInst, SEGPTR dlgTemplate,
     return hwnd;
 }
 
-
 /***********************************************************************
  *           CreateDialogParam32A   (USER32.73)
  */
@@ -816,6 +815,17 @@ HWND32 WINAPI CreateDialogIndirectParam32A( HINSTANCE32 hInst,
                                   (DLGPROC16)dlgProc, param, WIN_PROC_32A );
 }
 
+/***********************************************************************
+ *           CreateDialogIndirectParam32AorW   (USER32.71)
+ */
+HWND32 WINAPI CreateDialogIndirectParam32AorW( HINSTANCE32 hInst,
+                                            LPCVOID dlgTemplate,
+                                            HWND32 owner, DLGPROC32 dlgProc,
+                                            LPARAM param )
+{   FIXME(dialog,"assume WIN_PROC_32W\n");
+    return DIALOG_CreateIndirect( hInst, dlgTemplate, TRUE, owner,
+                                  (DLGPROC16)dlgProc, param, WIN_PROC_32W );
+}
 
 /***********************************************************************
  *           CreateDialogIndirectParam32W   (USER32.72)
