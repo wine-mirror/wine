@@ -60,6 +60,9 @@
 #ifdef HAVE_SYS_CDIO_H
 # include <sys/cdio.h>
 #endif
+#ifdef HAVE_SYS_SCSIIO_H
+# include <sys/scsiio.h>
+#endif
 
 #define NONAMELESSUNION
 #define NONAMELESSSTRUCT
@@ -379,7 +382,24 @@ static int CDROM_GetIdeInterface(int fd, int* iface, int* device)
         *device = (minor(st.st_rdev) == 63 ? 1 : 0);
         return 1;
     }
-#elif defined(__FreeBSD__) || defined(__NetBSD__)
+#elif defined(__NetBSD__)
+    {
+       struct scsi_addr addr;
+       if (ioctl(fd, SCIOCIDENTIFY, &addr) != -1) {
+            switch (addr.type) {
+                /* for SCSI copy linux case, i.e. start at *iface = 11 */
+                case TYPE_SCSI:  *iface = 11 + addr.addr.scsi.scbus;
+                                 *device = addr.addr.scsi.target;
+                                 break;
+                case TYPE_ATAPI: *iface = addr.addr.atapi.atbus;
+                                 *device = addr.addr.atapi.drive;
+                                 break;
+            }
+            return 1;
+       }
+       return 0;
+    }
+#elif defined(__FreeBSD__)
     FIXME("not implemented for BSD\n");
     return 0;
 #else

@@ -1007,6 +1007,7 @@ AC_CHECK_HEADERS(\
 	sys/poll.h \
 	sys/ptrace.h \
 	sys/reg.h \
+	sys/scsiio.h \
 	sys/shm.h \
 	sys/signal.h \
 	sys/socket.h \

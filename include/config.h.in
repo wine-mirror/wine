@@ -560,6 +560,9 @@
 /* Define to 1 if you have the <sys/reg.h> header file. */
 #undef HAVE_SYS_REG_H
 
+/* Define to 1 if you have the <sys/scsiio.h> header file. */
+#undef HAVE_SYS_SCSIIO_H
+
 /* Define to 1 if you have the <sys/shm.h> header file. */
 #undef HAVE_SYS_SHM_H
 
