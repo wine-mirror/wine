@@ -216,6 +216,7 @@ static FILE_VIEW *VIRTUAL_CreateView( UINT32 base, UINT32 size, UINT32 offset,
     view->offset  = offset;
     view->mapping = mapping;
     view->protect = vprot;
+    view->handlerProc = NULL;
     memset( view->prot, vprot, size );
 
     /* Duplicate the mapping handle */
