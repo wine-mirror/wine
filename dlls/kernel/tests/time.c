@@ -30,6 +30,143 @@
 #define TICKS_1601_TO_1970 (SECS_1601_TO_1970 * TICKSPERSEC)
 
 
+#define NEWYEAR_1980_HI 0x01a8e79f
+#define NEWYEAR_1980_LO 0xe1d58000
+
+#define MAYDAY_2002_HI 0x01c1f107
+#define MAYDAY_2002_LO 0xb82b6000
+
+#define ATIME_HI  0x1c2349b
+#define ATIME_LOW 0x580716b0
+
+#define LOCAL_ATIME_HI  0x01c23471
+#define LOCAL_ATIME_LOW 0x6f310eb0
+
+#define DOS_DATE(y,m,d) ( (((y)-1980)<<9) | ((m)<<5) | (d) )
+#define DOS_TIME(h,m,s) ( ((h)<<11) | ((m)<<5) | ((s)>>1) )
+
+
+#define SETUP_1980(st) \
+    (st).wYear = 1980; \
+    (st).wMonth = 1; \
+    (st).wDay = 1; \
+    (st).wHour = 0; \
+    (st).wMinute = 0; \
+    (st).wSecond = 0; \
+    (st).wMilliseconds = 0;
+
+#define SETUP_2002(st) \
+    (st).wYear = 2002; \
+    (st).wMonth = 5; \
+    (st).wDay = 1; \
+    (st).wHour = 12; \
+    (st).wMinute = 0; \
+    (st).wSecond = 0; \
+    (st).wMilliseconds = 0;
+
+#define SETUP_ATIME(st) \
+    (st).wYear = 2002; \
+    (st).wMonth = 7; \
+    (st).wDay = 26; \
+    (st).wHour = 11; \
+    (st).wMinute = 55; \
+    (st).wSecond = 32; \
+    (st).wMilliseconds = 123;
+
+
+
+static void test_conversions()
+{
+    FILETIME ft;
+    SYSTEMTIME st;
+
+    memset(&ft,0,sizeof ft);
+
+    SETUP_ATIME(st)
+    ok (SystemTimeToFileTime(&st,&ft), "Conversion Failed ATIME\n");
+    ok( (!((ft.dwHighDateTime != ATIME_HI) || (ft.dwLowDateTime!=ATIME_LOW))),
+        "Wrong time for ATIME: %08lx %08lx (correct %08x %08x)\n",
+        ft.dwLowDateTime, ft.dwHighDateTime, ATIME_LOW, ATIME_HI);
+
+
+    SETUP_2002(st)
+    ok (SystemTimeToFileTime(&st, &ft), "Conversion failed 2002\n");
+
+    ok( (!((ft.dwHighDateTime != MAYDAY_2002_HI) ||
+         (ft.dwLowDateTime!=MAYDAY_2002_LO))),
+        "Wrong time for 2002 %08lx %08lx (correct %08x %08x)\n", ft.dwLowDateTime,
+        ft.dwHighDateTime, MAYDAY_2002_LO, MAYDAY_2002_HI);
+
+
+    SETUP_1980(st)
+    ok((SystemTimeToFileTime(&st, &ft)), "Conversion failed 1980\n");
+
+    ok( (!((ft.dwHighDateTime!=NEWYEAR_1980_HI) ||
+        (ft.dwLowDateTime!=NEWYEAR_1980_LO))) ,
+        "Wrong time for 1980 %08lx %08lx (correct %08x %08x)\n", ft.dwLowDateTime,
+         ft.dwHighDateTime, NEWYEAR_1980_LO,NEWYEAR_1980_HI  );
+
+    ok(DosDateTimeToFileTime(DOS_DATE(1980,1,1),DOS_TIME(0,0,0),&ft),
+        "DosDateTimeToFileTime() failed\n");
+
+    ok( (!((ft.dwHighDateTime!=NEWYEAR_1980_HI) ||
+         (ft.dwLowDateTime!=NEWYEAR_1980_LO))),
+        "Wrong time DosDateTimeToFileTime %08lx %08lx (correct %08x %08x)\n",
+        ft.dwHighDateTime, ft.dwLowDateTime, NEWYEAR_1980_HI, NEWYEAR_1980_LO);
+
+}
+
+static void test_invalid_arg()
+{
+    FILETIME ft;
+    SYSTEMTIME st;
+
+    memset(&ft,0,sizeof ft);
+
+    /* Invalid argument checks */
+
+    todo_wine {
+    ok( !DosDateTimeToFileTime(0,0,&ft), /* invalid dos date/time */
+        "DosDateTimeToFileTime() didn't fail\n");
+    }
+
+    ok( DosDateTimeToFileTime(DOS_DATE(1980,1,1),DOS_TIME(0,0,0),&ft), /* this is 1 Jan 1980 00:00:00 */
+        "DosDateTimeToFileTime() failed\n");
+
+    ok( (ft.dwHighDateTime==NEWYEAR_1980_HI) && (ft.dwLowDateTime==NEWYEAR_1980_LO),
+        "filetime for 1/1/80 00:00:00 was %08lx %08lx\n", ft.dwHighDateTime, ft.dwLowDateTime);
+
+    todo_wine {
+    /* now check SystemTimeToFileTime */
+    memset(&ft,0,sizeof ft);
+
+
+    /* try with a bad month */
+    SETUP_1980(st)
+    st.wMonth = 0;
+
+    ok( !SystemTimeToFileTime(&st, &ft), "bad month\n");
+
+    /* with a bad day */
+    SETUP_1980(st)
+    st.wDay = 0;
+
+    ok( !SystemTimeToFileTime(&st, &ft), "bad day\n");
+
+    /* with a bad hour */
+    SETUP_1980(st)
+    st.wHour = 25;
+
+    ok( !SystemTimeToFileTime(&st, &ft), "bad hour\n");
+
+    /* with a bad minute */
+    SETUP_1980(st)
+    st.wMinute = 61;
+
+    ok( !SystemTimeToFileTime(&st, &ft), "bad minute\n");
+    }
+}
+ 
 void test_GetTimeZoneInformation()
 {
     TIME_ZONE_INFORMATION tzinfo, tzinfo1;
@@ -252,6 +389,8 @@ void test_TzSpecificLocalTimeToSystemTime()
 
 START_TEST(time)
 {
+    test_conversions();
+    test_invalid_arg();
     test_GetTimeZoneInformation();
     test_FileTimeToSystemTime();
     test_FileTimeToLocalFileTime();
