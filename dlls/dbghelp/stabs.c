@@ -104,9 +104,18 @@ static void stab_strcpy(char* dest, int sz, const char* source)
      * A strcpy routine that stops when we hit the ':' character.
      * Faster than copying the whole thing, and then nuking the
      * ':'.
+     * Takes also care of (valid) a::b constructs
      */
-    while (*source != '\0' && *source != ':' && sz-- > 0)
-        *dest++ = *source++;
+    while (*source != '\0')
+    {
+        if (source[0] != ':' && sz-- > 0) *dest++ = *source++;
+        else if (source[1] == ':' && (sz -= 2) > 0)
+        {
+            *dest++ = *source++;
+            *dest++ = *source++;
+        }
+        else break;
+    }
     *dest-- = '\0';
     /* GCC seems to emit, in some cases, a .<digit>+ suffix.
      * This is used for static variable inside functions, so
@@ -358,16 +367,29 @@ static int stabs_pts_read_type_def(struct ParseTypedefData* ptd,
 static int stabs_pts_read_id(struct ParseTypedefData* ptd)
 {
     const char*	        first = ptd->ptr;
-    unsigned int	len;
+    unsigned int	template = 0;
+    char                ch;
 
-    PTS_ABORTIF(ptd, (ptd->ptr = strchr(ptd->ptr, ':')) == NULL);
-    len = ptd->ptr - first;
-    PTS_ABORTIF(ptd, len >= sizeof(ptd->buf) - ptd->idx);
-    memcpy(ptd->buf + ptd->idx, first, len);
-    ptd->buf[ptd->idx + len] = '\0';
-    ptd->idx += len + 1;
-    ptd->ptr++; /* ':' */
-    return 0;
+    while ((ch = *ptd->ptr++) != '\0')
+    {
+        switch (ch)
+        {
+        case ':':
+            if (template == 0)
+            {
+                unsigned int len = ptd->ptr - first - 1;
+                PTS_ABORTIF(ptd, len >= sizeof(ptd->buf) - ptd->idx);
+                memcpy(ptd->buf + ptd->idx, first, len);
+                ptd->buf[ptd->idx + len] = '\0';
+                ptd->idx += len + 1;
+                return 0;
+            }
+            break;
+        case '<': template++; break;
+        case '>': PTS_ABORTIF(ptd, template == 0); template--; break;
+        }
+    }
+    return -1;
 }
 
 static int stabs_pts_read_number(struct ParseTypedefData* ptd, long* v)
@@ -604,7 +626,7 @@ static inline int stabs_pts_read_aggregate(struct ParseTypedefData* ptd,
                 DWORD   size;
 
                 symt_get_info(adt, TI_GET_SYMNAME, &name);
-                strcmp(tmp, "__inherited_class_");
+                strcpy(tmp, "__inherited_class_");
                 WideCharToMultiByte(CP_ACP, 0, name, -1, 
                                     tmp + strlen(tmp), sizeof(tmp) - strlen(tmp),
                                     NULL, NULL);
@@ -845,16 +867,28 @@ static int stabs_pts_read_type_def(struct ParseTypedefData* ptd, const char* typ
                 }
                 else
                 {
+                    unsigned l1, l2;
                     if (udt->symt.tag != SymTagUDT)
                     {
                         ERR("Forward declaration (%p/%s) is not an aggregate (%u)\n",
                             udt, symt_get_name(&udt->symt), udt->symt.tag);
                         return -1;
                     }
-                    if (strcmp(udt->hash_elt.name, typename))
+                    /* FIXME: we currently don't correctly construct nested C++
+                     * classes names. Therefore, we could be here with either:
+                     * - typename and udt->hash_elt.name being the same string
+                     *   (non embedded case)
+                     * - typename being foo::bar while udt->hash_elt.name being 
+                     *   just bar
+                     * So, we twist the comparison to test both occurrences. When
+                     * we have proper C++ types in this file, this twist has to be
+                     * removed
+                     */
+                    l1 = strlen(udt->hash_elt.name);
+                    l2 = strlen(typename);
+                    if (l1 > l2 || strcmp(udt->hash_elt.name, typename + l2 - l1))
                         ERR("Forward declaration name mismatch %s <> %s\n",
                             udt->hash_elt.name, typename);
-                    /* should check typename is the same too */
                     new_dt = &udt->symt;
                 }
                 PTS_ABORTIF(ptd, stabs_pts_read_aggregate(ptd, udt) == -1);
@@ -971,7 +1005,7 @@ static int stabs_parse_typedef(struct module* module, const char* ptr,
 
     /* check for already existing definition */
 
-    TRACE("%s\n", debugstr_a(ptr));
+    TRACE("%s => %s\n", typename, debugstr_a(ptr));
     ptd.module = module;
     ptd.idx = 0;
 #ifdef PTS_DEBUG
