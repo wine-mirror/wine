@@ -526,7 +526,7 @@ main()
  *
  * Favor correctness or speed?
  */
-static inline int perfect_graphics(void)
+static int perfect_graphics(void)
 {
     static int perfect = -1;
     if (perfect == -1)
