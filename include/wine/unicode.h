@@ -76,6 +76,8 @@ extern int strncmpiW( const WCHAR *str1, const WCHAR *str2, int n );
 extern WCHAR *strstrW( const WCHAR *str, const WCHAR *sub );
 extern long int strtolW( const WCHAR *nptr, WCHAR **endptr, int base );
 extern unsigned long int strtoulW( const WCHAR *nptr, WCHAR **endptr, int base );
+extern int snprintfW( WCHAR *str, unsigned int len, const WCHAR *format, ... );
+extern int vsnprintfW( WCHAR *str, unsigned int len, const WCHAR *format, va_list valist );
 
 static inline int is_dbcs_leadbyte( const union cptable *table, unsigned char ch )
 {

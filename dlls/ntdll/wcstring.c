@@ -628,131 +628,6 @@ LONGLONG  __cdecl _wtoi64( LPWSTR str )
 }
 
 
-/* INTERNAL: Wide char snprintf
- * If you fix a bug in this function, fix it in msvcrt/wcs.c also!
- */
-static int __cdecl NTDLL_vsnwprintf(WCHAR *str, unsigned int len,
-                                    const WCHAR *format, va_list valist)
-{
-  unsigned int written = 0;
-  const WCHAR *iter = format;
-  char bufa[256], fmtbufa[64], *fmta;
-
-  TRACE("(%d,%s)\n",len,debugstr_w(format));
-
-  while (*iter)
-  {
-    while (*iter && *iter != (WCHAR)L'%')
-    {
-     if (written++ >= len)
-       return -1;
-     *str++ = *iter++;
-    }
-    if (*iter == (WCHAR)L'%')
-    {
-      fmta = fmtbufa;
-      *fmta++ = *iter++;
-      while (*iter == (WCHAR)L'0' ||
-             *iter == (WCHAR)L'+' ||
-             *iter == (WCHAR)L'-' ||
-             *iter == (WCHAR)L' ' ||
-             *iter == (WCHAR)L'0' ||
-             *iter == (WCHAR)L'*' ||
-             *iter == (WCHAR)L'#')
-      {
-        if (*iter == (WCHAR)L'*')
-        {
-          char *buffiter = bufa;
-          int fieldlen = va_arg(valist, int);
-          sprintf(buffiter, "%d", fieldlen);
-          while (*buffiter)
-            *fmta++ = *buffiter++;
-        }
-        else
-          *fmta++ = *iter;
-        iter++;
-      }
-
-      while (isdigit(*iter))
-        *fmta++ = *iter++;
-
-      if (*iter == (WCHAR)L'.')
-      {
-        *fmta++ = *iter++;
-        if (*iter == (WCHAR)L'*')
-        {
-          char *buffiter = bufa;
-          int fieldlen = va_arg(valist, int);
-          sprintf(buffiter, "%d", fieldlen);
-          while (*buffiter)
-            *fmta++ = *buffiter++;
-        }
-        else
-          while (isdigit(*iter))
-            *fmta++ = *iter++;
-      }
-      if (*iter == (WCHAR)L'h' ||
-          *iter == (WCHAR)L'l')
-          *fmta++ = *iter++;
-
-      switch (*iter)
-      {
-      case (WCHAR)L's':
-        {
-          static const WCHAR none[] = { '(', 'n', 'u', 'l', 'l', ')', 0 };
-          const WCHAR *wstr = va_arg(valist, const WCHAR *);
-          const WCHAR *striter = wstr ? wstr : none;
-          while (*striter)
-          {
-            if (written++ >= len)
-              return -1;
-            *str++ = *striter++;
-          }
-          iter++;
-          break;
-        }
-
-      case (WCHAR)L'c':
-        if (written++ >= len)
-          return -1;
-        *str++ = (WCHAR)va_arg(valist, int);
-        iter++;
-        break;
-
-      default:
-        {
-          /* For non wc types, use system sprintf and append to wide char output */
-          /* FIXME: for unrecognised types, should ignore % when printing */
-          char *bufaiter = bufa;
-          if (*iter == (WCHAR)L'p')
-            sprintf(bufaiter, "%08lX", va_arg(valist, long));
-          else
-          {
-            *fmta++ = *iter;
-            *fmta = '\0';
-            if (*iter == (WCHAR)L'f')
-              sprintf(bufaiter, fmtbufa, va_arg(valist, double));
-            else
-              sprintf(bufaiter, fmtbufa, va_arg(valist, void *));
-          }
-          while (*bufaiter)
-          {
-            if (written++ >= len)
-              return -1;
-            *str++ = *bufaiter++;
-          }
-          iter++;
-          break;
-        }
-      }
-    }
-  }
-  if (written >= len)
-    return -1;
-  *str++ = (WCHAR)L'\0';
-  return (int)written;
-}
-
 
 /***********************************************************************
  *        _snwprintf (NTDLL.@)
@@ -762,7 +637,7 @@ int __cdecl _snwprintf(WCHAR *str, unsigned int len, const WCHAR *format, ...)
   int retval;
   va_list valist;
   va_start(valist, format);
-  retval = NTDLL_vsnwprintf(str, len, format, valist);
+  retval = vsnprintfW(str, len, format, valist);
   va_end(valist);
   return retval;
 }
@@ -776,7 +651,7 @@ int __cdecl NTDLL_swprintf(WCHAR *str, const WCHAR *format, ...)
   int retval;
   va_list valist;
   va_start(valist, format);
-  retval = NTDLL_vsnwprintf(str, INT_MAX, format, valist);
+  retval = vsnprintfW(str, INT_MAX, format, valist);
   va_end(valist);
   return retval;
 }

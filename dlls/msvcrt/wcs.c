@@ -117,124 +117,7 @@ MSVCRT_wchar_t* _wcsset( MSVCRT_wchar_t* str, MSVCRT_wchar_t c )
 int _vsnwprintf(MSVCRT_wchar_t *str, unsigned int len,
                 const MSVCRT_wchar_t *format, va_list valist)
 {
-/* If you fix a bug in this function, fix it in ntdll/wcstring.c also! */
-  unsigned int written = 0;
-  const MSVCRT_wchar_t *iter = format;
-  char bufa[256], fmtbufa[64], *fmta;
-
-  TRACE("(%d,%s)\n",len,debugstr_w(format));
-
-  while (*iter)
-  {
-    while (*iter && *iter != '%')
-    {
-     if (written++ >= len)
-       return -1;
-     *str++ = *iter++;
-    }
-    if (*iter == '%')
-    {
-      fmta = fmtbufa;
-      *fmta++ = *iter++;
-      while (*iter == '0' ||
-             *iter == '+' ||
-             *iter == '-' ||
-             *iter == ' ' ||
-             *iter == '0' ||
-             *iter == '*' ||
-             *iter == '#')
-      {
-        if (*iter == '*')
-        {
-          char *buffiter = bufa;
-          int fieldlen = va_arg(valist, int);
-          sprintf(buffiter, "%d", fieldlen);
-          while (*buffiter)
-            *fmta++ = *buffiter++;
-        }
-        else
-          *fmta++ = *iter;
-        iter++;
-      }
-
-      while (isdigit(*iter))
-        *fmta++ = *iter++;
-
-      if (*iter == '.')
-      {
-        *fmta++ = *iter++;
-        if (*iter == '*')
-        {
-          char *buffiter = bufa;
-          int fieldlen = va_arg(valist, int);
-          sprintf(buffiter, "%d", fieldlen);
-          while (*buffiter)
-            *fmta++ = *buffiter++;
-        }
-        else
-          while (isdigit(*iter))
-            *fmta++ = *iter++;
-      }
-      if (*iter == 'h' ||
-          *iter == 'l')
-          *fmta++ = *iter++;
-
-      switch (*iter)
-      {
-      case 's':
-        {
-          static const MSVCRT_wchar_t none[] = { '(', 'n', 'u', 'l', 'l', ')', 0 };
-          const MSVCRT_wchar_t *wstr = va_arg(valist, const MSVCRT_wchar_t *);
-          const MSVCRT_wchar_t *striter = wstr ? wstr : none;
-          while (*striter)
-          {
-            if (written++ >= len)
-              return -1;
-            *str++ = *striter++;
-          }
-          iter++;
-          break;
-        }
-
-      case 'c':
-        if (written++ >= len)
-          return -1;
-        *str++ = (MSVCRT_wchar_t)va_arg(valist, int);
-        iter++;
-        break;
-
-      default:
-        {
-          /* For non wc types, use system sprintf and append to wide char output */
-          /* FIXME: for unrecognised types, should ignore % when printing */
-          char *bufaiter = bufa;
-          if (*iter == 'p')
-            sprintf(bufaiter, "%08lX", va_arg(valist, long));
-          else
-          {
-            *fmta++ = *iter;
-            *fmta = '\0';
-            if (*iter == 'f')
-              sprintf(bufaiter, fmtbufa, va_arg(valist, double));
-            else
-              sprintf(bufaiter, fmtbufa, va_arg(valist, void *));
-          }
-          while (*bufaiter)
-          {
-            if (written++ >= len)
-              return -1;
-            *str++ = *bufaiter++;
-          }
-          iter++;
-          break;
-        }
-      }
-    }
-  }
-  if (written >= len)
-    return -1;
-  *str++ = 0;
-  return (int)written;
+    return vsnprintfW(str, len, format, valist);
 }
 
 /*********************************************************************
@@ -242,7 +125,7 @@ int _vsnwprintf(MSVCRT_wchar_t *str, unsigned int len,
  */
 int MSVCRT_vswprintf( MSVCRT_wchar_t* str, const MSVCRT_wchar_t* format, va_list args )
 {
-  return _vsnwprintf( str, INT_MAX, format, args );
+    return vsnprintfW( str, INT_MAX, format, args );
 }
 
 /*********************************************************************

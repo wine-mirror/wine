@@ -19,6 +19,7 @@
  */
 
 #include <limits.h>
+#include <stdio.h>
 
 #include "wine/unicode.h"
 
@@ -285,4 +286,134 @@ noconv:
     }
 
   return 0L;
+}
+
+
+int vsnprintfW(WCHAR *str, unsigned int len, const WCHAR *format, va_list valist)
+{
+    unsigned int written = 0;
+    const WCHAR *iter = format;
+    char bufa[256], fmtbufa[64], *fmta;
+
+    while (*iter)
+    {
+        while (*iter && *iter != '%')
+        {
+            if (written++ >= len)
+                return -1;
+            *str++ = *iter++;
+        }
+        if (*iter == '%')
+        {
+            fmta = fmtbufa;
+            *fmta++ = *iter++;
+            while (*iter == '0' ||
+                   *iter == '+' ||
+                   *iter == '-' ||
+                   *iter == ' ' ||
+                   *iter == '0' ||
+                   *iter == '*' ||
+                   *iter == '#')
+            {
+                if (*iter == '*')
+                {
+                    char *buffiter = bufa;
+                    int fieldlen = va_arg(valist, int);
+                    sprintf(buffiter, "%d", fieldlen);
+                    while (*buffiter)
+                        *fmta++ = *buffiter++;
+                }
+                else
+                    *fmta++ = *iter;
+                iter++;
+            }
+
+            while (isdigit(*iter))
+                *fmta++ = *iter++;
+
+            if (*iter == '.')
+            {
+                *fmta++ = *iter++;
+                if (*iter == '*')
+                {
+                    char *buffiter = bufa;
+                    int fieldlen = va_arg(valist, int);
+                    sprintf(buffiter, "%d", fieldlen);
+                    while (*buffiter)
+                        *fmta++ = *buffiter++;
+                }
+                else
+                    while (isdigit(*iter))
+                        *fmta++ = *iter++;
+            }
+            if (*iter == 'h' || *iter == 'l')
+                *fmta++ = *iter++;
+
+            switch (*iter)
+            {
+            case 's':
+            {
+                static const WCHAR none[] = { '(','n','u','l','l',')',0 };
+                const WCHAR *wstr = va_arg(valist, const WCHAR *);
+                const WCHAR *striter = wstr ? wstr : none;
+                while (*striter)
+                {
+                    if (written++ >= len)
+                        return -1;
+                    *str++ = *striter++;
+                }
+                iter++;
+                break;
+            }
+
+            case 'c':
+                if (written++ >= len)
+                    return -1;
+                *str++ = (WCHAR)va_arg(valist, int);
+                iter++;
+                break;
+
+            default:
+            {
+                /* For non wc types, use system sprintf and append to wide char output */
+                /* FIXME: for unrecognised types, should ignore % when printing */
+                char *bufaiter = bufa;
+                if (*iter == 'p')
+                    sprintf(bufaiter, "%08lX", va_arg(valist, long));
+                else
+                {
+                    *fmta++ = *iter;
+                    *fmta = '\0';
+                    if (*iter == 'f')
+                        sprintf(bufaiter, fmtbufa, va_arg(valist, double));
+                    else
+                        sprintf(bufaiter, fmtbufa, va_arg(valist, void *));
+                }
+                while (*bufaiter)
+                {
+                    if (written++ >= len)
+                        return -1;
+                    *str++ = *bufaiter++;
+                }
+                iter++;
+                break;
+            }
+            }
+        }
+    }
+    if (written >= len)
+        return -1;
+    *str++ = 0;
+    return (int)written;
+}
+
+
+int snprintfW(WCHAR *str, unsigned int len, const WCHAR *format, ...)
+{
+    int retval;
+    va_list valist;
+    va_start(valist, format);
+    retval = vsnprintfW(str, len, format, valist);
+    va_end(valist);
+    return retval;
 }
