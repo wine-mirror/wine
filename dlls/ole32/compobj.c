@@ -399,22 +399,6 @@ BOOL16 WINAPI IsEqualGUID16(
     return !memcmp( g1, g2, sizeof(GUID) );
 }
 
-/***********************************************************************
- *           IsEqualGUID32 [OLE32.76]
- *
- * Compares two Unique Identifiers.
- *
- * RETURNS
- *	TRUE if equal
- */
-BOOL WINAPI IsEqualGUID32(
-     REFGUID rguid1, /* [in] unique id 1 */
-     REFGUID rguid2  /* [in] unique id 2 */
-     )
-{
-    return !memcmp(rguid1,rguid2,sizeof(GUID));
-}
-
 /******************************************************************************
  *		CLSIDFromString16	[COMPOBJ.20]
  * Converts a unique identifier from its string representation into 
@@ -915,7 +899,7 @@ static HRESULT COM_GetRegisteredClassObject(
     /*
      * Check if we have a match on the class ID.
      */
-    if (IsEqualGUID32(&(curClass->classIdentifier), rclsid))
+    if (IsEqualGUID(&(curClass->classIdentifier), rclsid))
     {
       /*
        * Since we don't do out-of process or DCOM just right away, let's ignore the
@@ -1962,4 +1946,21 @@ HRESULT WINAPI OleGetAutoConvert(REFCLSID clsidOld, LPCLSID pClsidNew)
   lstrcpyAtoW(wbuf,buf);
   CLSIDFromString(wbuf,pClsidNew);
   return S_OK;
+}
+
+/***********************************************************************
+ *           IsEqualGUID [OLE32.76]
+ *
+ * Compares two Unique Identifiers.
+ *
+ * RETURNS
+ *	TRUE if equal
+ */
+#undef IsEqualGUID
+BOOL WINAPI IsEqualGUID(
+     REFGUID rguid1, /* [in] unique id 1 */
+     REFGUID rguid2  /* [in] unique id 2 */
+     )
+{
+    return !memcmp(rguid1,rguid2,sizeof(GUID));
 }

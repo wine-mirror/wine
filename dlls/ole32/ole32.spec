@@ -82,7 +82,7 @@ import kernel32.dll
  73 stdcall GetRunningObjectTable(long ptr) GetRunningObjectTable
  74 stdcall IIDFromString(wstr ptr) CLSIDFromString 
  75 stdcall IsAccelerator(long long ptr long) IsAccelerator
- 76 stdcall IsEqualGUID(ptr ptr) IsEqualGUID32
+ 76 stdcall IsEqualGUID(ptr ptr) IsEqualGUID
  77 stub IsValidIid
  78 stdcall IsValidInterface(ptr) IsValidInterface
  79 stub IsValidPtrIn
