@@ -110,8 +110,8 @@ HMETAFILE16 MF_Create_HMETAFILE16(METAHEADER *mh)
  */
 static METAHEADER *MF_GetMetaHeader( HMETAFILE hmf )
 {
-    METAFILEOBJ *metaObj = (METAFILEOBJ *)GDI_GetObjPtr( hmf, METAFILE_MAGIC );
-    return metaObj->mh;
+    METAFILEOBJ * metaObj = (METAFILEOBJ *)GDI_GetObjPtr( hmf, METAFILE_MAGIC );
+    return metaObj ? metaObj->mh : 0;
 }
 
 /******************************************************************
