@@ -199,7 +199,7 @@ BOOL PROPSHEET_CollectPageInfo(LPCPROPSHEETPAGEA lppsp,
    * Process property page flags.
    */
   dwFlags = lppsp->dwFlags;
-  psInfo->proppage[index].useCallback = dwFlags & PSP_USECALLBACK;
+  psInfo->proppage[index].useCallback = (dwFlags & PSP_USECALLBACK) && (lppsp->pfnCallback);
   psInfo->proppage[index].hasHelp = dwFlags & PSP_HASHELP;
   psInfo->proppage[index].hasIcon = dwFlags & (PSP_USEHICON | PSP_USEICONID);
 
