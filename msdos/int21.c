@@ -532,24 +532,6 @@ static BOOL INT21_ExtendedOpenCreateFile(CONTEXT86 *context )
 }
 
 
-static BOOL INT21_ChangeDir( CONTEXT86 *context )
-{
-    int drive;
-    char *dirname = CTX_SEG_OFF_TO_LIN(context, context->SegDs,context->Edx);
-    WCHAR dirnameW[MAX_PATH];
-
-    TRACE("changedir %s\n", dirname);
-    if (dirname[0] && (dirname[1] == ':'))
-    {
-        drive = toupper(dirname[0]) - 'A';
-        dirname += 2;
-    }
-    else drive = DRIVE_GetCurrentDrive();
-    MultiByteToWideChar(CP_OEMCP, 0, dirname, -1, dirnameW, MAX_PATH);
-    return DRIVE_Chdir( drive, dirnameW );
-}
-
-
 static int INT21_FindFirst( CONTEXT86 *context )
 {
     char *p;
@@ -658,23 +640,6 @@ static BOOL INT21_CreateTempFile( CONTEXT86 *context )
         }
         if (GetLastError() != ERROR_FILE_EXISTS) return FALSE;
     }
-}
-
-
-static BOOL INT21_GetCurrentDirectory( CONTEXT86 *context )
-{
-    int drive = DOS_GET_DRIVE( DL_reg(context) );
-    char *ptr = (char *)CTX_SEG_OFF_TO_LIN(context,  context->SegDs, context->Esi );
-
-    if (!DRIVE_IsValid(drive))
-    {
-        SetLastError( ERROR_INVALID_DRIVE );
-        return FALSE;
-    }
-    WideCharToMultiByte(CP_OEMCP, 0, DRIVE_GetDosCwd(drive), -1, ptr, 64, NULL, NULL);
-    ptr[63] = 0; /* ensure 0 termination */
-    SET_AX( context, 0x0100 );			     /* success return code */
-    return TRUE;
 }
 
 
@@ -893,12 +858,6 @@ void WINAPI INT_Int21Handler( CONTEXT86 *context )
         if (!INT21_GetFreeDiskSpace(context)) SET_AX( context, 0xffff );
         break;
 
-    case 0x3b: /* "CHDIR" - SET CURRENT DIRECTORY */
-        TRACE("CHDIR %s\n",
-	      (LPCSTR)CTX_SEG_OFF_TO_LIN(context,  context->SegDs, context->Edx));
-        bSetDOSExtendedError = !INT21_ChangeDir(context);
-        break;
-
     case 0x3c: /* "CREAT" - CREATE OR TRUNCATE FILE */
         TRACE("CREAT flag 0x%02x %s\n",CX_reg(context),
 	      (LPCSTR)CTX_SEG_OFF_TO_LIN(context,  context->SegDs, context->Edx));
@@ -934,12 +893,6 @@ void WINAPI INT_Int21Handler( CONTEXT86 *context )
             break;
 	    }
         }
-        break;
-
-    case 0x47: /* "CWD" - GET CURRENT DIRECTORY */
-        TRACE("CWD - GET CURRENT DIRECTORY for drive %s\n",
-	      INT21_DriveName( DL_reg(context)));
-        bSetDOSExtendedError = !INT21_GetCurrentDirectory(context);
         break;
 
     case 0x4e: /* "FINDFIRST" - FIND FIRST MATCHING FILE */
@@ -1048,12 +1001,6 @@ void WINAPI INT_Int21Handler( CONTEXT86 *context )
     case 0x71: /* MS-DOS 7 (Windows95) - LONG FILENAME FUNCTIONS */
         switch(AL_reg(context))
         {
-        case 0x47:  /* Get current directory */
-	    TRACE(" LONG FILENAME - GET CURRENT DIRECTORY for drive %s\n",
-		  INT21_DriveName(DL_reg(context)));
-	    bSetDOSExtendedError = !INT21_GetCurrentDirectory(context);
-            break;
-
         case 0x4e:  /* Find first file */
 	    TRACE(" LONG FILENAME - FIND FIRST MATCHING FILE for %s\n",
 		  (LPCSTR)CTX_SEG_OFF_TO_LIN(context, context->SegDs,context->Edx));
@@ -1132,19 +1079,6 @@ void WINAPI INT_Int21Handler( CONTEXT86 *context )
 		 (LPCSTR)CTX_SEG_OFF_TO_LIN(context,  context->SegDs, context->Esi));
 	  /* translate Dos 7 action to Dos 6 action */
 	    bSetDOSExtendedError = INT21_ExtendedOpenCreateFile(context);
-	    break;
-
-        case 0x3b:  /* Change directory */
-            TRACE("LONG FILENAME - CHANGE DIRECTORY %s\n",
-		 (LPCSTR)CTX_SEG_OFF_TO_LIN(context,  context->SegDs, context->Edx));
-	    if (!SetCurrentDirectoryA(CTX_SEG_OFF_TO_LIN(context,
-	    					context->SegDs,
-				        	context->Edx
-					))
-	    ) {
-		SET_CFLAG(context);
-		SET_AL( context, GetLastError() );
-	    }
 	    break;
 
         default:

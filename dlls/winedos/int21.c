@@ -147,8 +147,19 @@ static BYTE INT21_GetCurrentDrive()
 static BYTE INT21_MapDrive( BYTE drive )
 {
     if (drive)
+    {
+        WCHAR drivespec[3] = {'A', ':', 0};
+        UINT  drivetype;
+
+        drivespec[0] += drive - 1;
+        drivetype = GetDriveTypeW( drivespec );
+
+        if (drivetype == DRIVE_UNKNOWN || drivetype == DRIVE_NO_ROOT_DIR)
+            return MAX_DOS_DRIVES;
+
         return drive - 1;
-    
+    }
+
     return INT21_GetCurrentDrive();
 }
 
@@ -208,7 +219,7 @@ static BOOL INT21_ReadChar( BYTE *input, CONTEXT86 *waitctx )
  *
  * Return DOS country code for default system locale.
  */
-static WORD INT21_GetSystemCountryCode()
+static WORD INT21_GetSystemCountryCode( void )
 {
     /*
      * FIXME: Determine country code. We should probably use
@@ -366,6 +377,144 @@ static WORD INT21_GetHeapSelector( CONTEXT86 *context )
         return heap_selector;
     else
         return heap_segment;
+}
+
+
+/***********************************************************************
+ *           INT21_GetCurrentDirectory
+ *
+ * Handler for:
+ * - function 0x47
+ * - subfunction 0x47 of function 0x71
+ */
+static BOOL INT21_GetCurrentDirectory( CONTEXT86 *context, BOOL islong )
+{
+    char  *buffer = CTX_SEG_OFF_TO_LIN(context, context->SegDs, context->Esi);
+    BYTE   new_drive = INT21_MapDrive( DL_reg(context) );
+    BYTE   old_drive = INT21_GetCurrentDrive();
+    WCHAR  pathW[MAX_PATH];
+    char   pathA[MAX_PATH];
+    WCHAR *ptr = pathW;
+
+    TRACE( "drive %d\n", DL_reg(context) );
+
+    if (new_drive == MAX_DOS_DRIVES)
+    {        
+        SetLastError(ERROR_INVALID_DRIVE);
+        return FALSE;
+    }
+    
+    /*
+     * Grab current directory.
+     */
+
+    INT21_SetCurrentDrive( new_drive );
+    if (!GetCurrentDirectoryW( MAX_PATH, pathW ))
+    {        
+        INT21_SetCurrentDrive( old_drive );
+        return FALSE;
+    }
+    INT21_SetCurrentDrive( old_drive );
+
+    /*
+     * Convert into short format.
+     */
+
+    if (!islong)
+    {
+        DWORD result = GetShortPathNameW( pathW, pathW, MAX_PATH );
+        if (!result)
+            return FALSE;
+        if (result > MAX_PATH)
+        {
+            WARN( "Short path too long!\n" );
+            SetLastError(ERROR_NETWORK_BUSY); /* Internal Wine error. */
+            return FALSE;
+        }
+    }
+
+    /*
+     * The returned pathname does not include 
+     * the drive letter, colon or leading backslash.
+     */
+
+    if (ptr[0] == '\\')
+    {
+        /*
+         * FIXME: We should probably just strip host part from name...
+         */
+        FIXME( "UNC names are not supported.\n" );
+        SetLastError(ERROR_NETWORK_BUSY); /* Internal Wine error. */
+        return FALSE;
+    }
+    else if (!ptr[0] || ptr[1] != ':' || ptr[2] != '\\')
+    {
+        WARN( "Path is neither UNC nor DOS path: %s\n",
+              wine_dbgstr_w(ptr) );
+        SetLastError(ERROR_NETWORK_BUSY); /* Internal Wine error. */
+        return FALSE;
+    }
+    else
+    {
+        /* Remove drive letter, colon and leading backslash. */
+        ptr += 3;
+    }
+
+    /*
+     * Convert into OEM string.
+     */
+    
+    if (!WideCharToMultiByte(CP_OEMCP, 0, ptr, -1, pathA, 
+                             MAX_PATH, NULL, NULL))
+    {
+        WARN( "Cannot convert path!\n" );
+        SetLastError(ERROR_NETWORK_BUSY); /* Internal Wine error. */
+        return FALSE;
+    }
+
+    /*
+     * Success.
+     */
+
+    if (!islong)
+    {
+        /* Undocumented success code. */
+        SET_AX( context, 0x0100 );
+        
+        /* Truncate buffer to 64 bytes. */
+        pathA[63] = 0;
+    }
+
+    TRACE( "%c:=%s\n", 'A' + new_drive, pathA );
+
+    strcpy( buffer, pathA );
+    return TRUE;
+}
+
+
+/***********************************************************************
+ *           INT21_SetCurrentDirectory
+ *
+ * Handler for:
+ * - function 0x3b
+ * - subfunction 0x3b of function 0x71
+ */
+static BOOL INT21_SetCurrentDirectory( CONTEXT86 *context )
+{
+    WCHAR dirW[MAX_PATH];
+    char *dirA = CTX_SEG_OFF_TO_LIN(context, context->SegDs, context->Edx);
+    BYTE  drive = INT21_GetCurrentDrive();
+    BOOL  result;
+
+    TRACE( "SET CURRENT DIRECTORY %s\n", dirA );
+
+    MultiByteToWideChar(CP_OEMCP, 0, dirA, -1, dirW, MAX_PATH);
+    result = SetCurrentDirectoryW( dirW );
+
+    /* This function must not change current drive. */
+    INT21_SetCurrentDrive( drive );
+
+    return result;
 }
 
 
@@ -1968,7 +2117,8 @@ static void INT21_LongFilename( CONTEXT86 *context )
         break;
 
     case 0x3b: /* LONG FILENAME - CHANGE DIRECTORY */
-        INT_Int21Handler( context );
+        if (!INT21_SetCurrentDirectory( context ))
+            bSetDOSExtendedError = TRUE;
         break;
 
     case 0x41: /* LONG FILENAME - DELETE FILE */
@@ -1991,6 +2141,10 @@ static void INT21_LongFilename( CONTEXT86 *context )
         break;
 
     case 0x47: /* LONG FILENAME - GET CURRENT DIRECTORY */
+        if (!INT21_GetCurrentDirectory( context, TRUE ))
+            bSetDOSExtendedError = TRUE;
+        break;
+
     case 0x4e: /* LONG FILENAME - FIND FIRST MATCHING FILE */
     case 0x4f: /* LONG FILENAME - FIND NEXT MATCHING FILE */
         INT_Int21Handler( context );
@@ -2758,6 +2912,10 @@ void WINAPI DOSVM_Int21Handler( CONTEXT86 *context )
         break;
 
     case 0x3b: /* "CHDIR" - SET CURRENT DIRECTORY */
+        if (!INT21_SetCurrentDirectory( context ))
+            bSetDOSExtendedError = TRUE;
+        break;
+
     case 0x3c: /* "CREAT" - CREATE OR TRUNCATE FILE */
     case 0x3d: /* "OPEN" - OPEN EXISTING FILE */
         INT_Int21Handler( context );
@@ -2910,7 +3068,8 @@ void WINAPI DOSVM_Int21Handler( CONTEXT86 *context )
         break;
 
     case 0x47: /* "CWD" - GET CURRENT DIRECTORY */
-        INT_Int21Handler( context );
+        if (!INT21_GetCurrentDirectory( context, FALSE ))
+            bSetDOSExtendedError = TRUE;
         break;
 
     case 0x48: /* ALLOCATE MEMORY */
