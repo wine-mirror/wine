@@ -268,22 +268,19 @@ void WINAPI DebugBreak(void)
  */
 BOOL WINAPI DebugBreakProcess(HANDLE hProc)
 {
-#if 0  /* FIXME: not correct */
-    int res;
-    int pid;
+    BOOL ret, self;
 
-    TRACE("(%08lx)\n", (DWORD)hProc);
+    TRACE("(%08x)\n", hProc);
 
-    SERVER_START_REQ( get_process_info )
+    SERVER_START_REQ( debug_break )
     {
         req->handle = hProc;
-        res = wine_server_call_err( req );
-        pid = (int)reply->pid;
+        ret = !wine_server_call_err( req );
+        self = ret && reply->self;
     }
     SERVER_END_REQ;
-    return !res && kill(pid, SIGINT) == 0;
-#endif
-    return FALSE;
+    if (self) DbgBreakPoint();
+    return ret;
 }
 
 

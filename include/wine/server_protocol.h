@@ -1563,6 +1563,19 @@ struct debug_process_reply
 
 
 
+struct debug_break_request
+{
+    struct request_header __header;
+    handle_t     handle;
+};
+struct debug_break_reply
+{
+    struct reply_header __header;
+    int          self;
+};
+
+
+
 struct set_debugger_kill_on_exit_request
 {
     struct request_header __header;
@@ -2681,6 +2694,7 @@ enum request
     REQ_output_debug_string,
     REQ_continue_debug_event,
     REQ_debug_process,
+    REQ_debug_break,
     REQ_set_debugger_kill_on_exit,
     REQ_read_process_memory,
     REQ_write_process_memory,
@@ -2837,6 +2851,7 @@ union generic_request
     struct output_debug_string_request output_debug_string_request;
     struct continue_debug_event_request continue_debug_event_request;
     struct debug_process_request debug_process_request;
+    struct debug_break_request debug_break_request;
     struct set_debugger_kill_on_exit_request set_debugger_kill_on_exit_request;
     struct read_process_memory_request read_process_memory_request;
     struct write_process_memory_request write_process_memory_request;
@@ -2991,6 +3006,7 @@ union generic_reply
     struct output_debug_string_reply output_debug_string_reply;
     struct continue_debug_event_reply continue_debug_event_reply;
     struct debug_process_reply debug_process_reply;
+    struct debug_break_reply debug_break_reply;
     struct set_debugger_kill_on_exit_reply set_debugger_kill_on_exit_reply;
     struct read_process_memory_reply read_process_memory_reply;
     struct write_process_memory_reply write_process_memory_reply;
@@ -3059,6 +3075,6 @@ union generic_reply
     struct get_window_properties_reply get_window_properties_reply;
 };
 
-#define SERVER_PROTOCOL_VERSION 71
+#define SERVER_PROTOCOL_VERSION 72
 
 #endif /* __WINE_WINE_SERVER_PROTOCOL_H */

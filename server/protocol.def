@@ -1124,6 +1124,14 @@ enum char_info_mode
 @END
 
 
+/* Simulate a breakpoint in a process */
+@REQ(debug_break)
+    handle_t     handle;       /* process handle */
+@REPLY
+    int          self;         /* was it the caller itself? */
+@END
+
+
 /* Set debugger kill on exit flag */
 @REQ(set_debugger_kill_on_exit)
     int          kill_on_exit;  /* 0=detach/1=kill debuggee when debugger dies */

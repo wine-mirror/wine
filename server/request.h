@@ -170,6 +170,7 @@ DECL_HANDLER(get_exception_status);
 DECL_HANDLER(output_debug_string);
 DECL_HANDLER(continue_debug_event);
 DECL_HANDLER(debug_process);
+DECL_HANDLER(debug_break);
 DECL_HANDLER(set_debugger_kill_on_exit);
 DECL_HANDLER(read_process_memory);
 DECL_HANDLER(write_process_memory);
@@ -325,6 +326,7 @@ static const req_handler req_handlers[REQ_NB_REQUESTS] =
     (req_handler)req_output_debug_string,
     (req_handler)req_continue_debug_event,
     (req_handler)req_debug_process,
+    (req_handler)req_debug_break,
     (req_handler)req_set_debugger_kill_on_exit,
     (req_handler)req_read_process_memory,
     (req_handler)req_write_process_memory,

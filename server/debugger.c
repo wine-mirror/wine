@@ -5,6 +5,7 @@
  */
 
 #include <assert.h>
+#include <signal.h>
 #include <string.h>
 #include <stdio.h>
 
@@ -696,6 +697,32 @@ DECL_HANDLER(output_debug_string)
     data.unicode = req->unicode;
     data.length  = req->length;
     generate_debug_event( current, OUTPUT_DEBUG_STRING_EVENT, &data );
+}
+
+/* simulate a breakpoint in a process */
+DECL_HANDLER(debug_break)
+{
+    struct process *process;
+
+    reply->self = 0;
+    if (!(process = get_process_from_handle( req->handle, PROCESS_SET_INFORMATION /*FIXME*/ )))
+        return;
+    if (process != current->process)
+    {
+        /* find a suitable thread to signal */
+        struct thread *thread;
+        for (thread = process->thread_list; thread; thread = thread->proc_next)
+        {
+            if (thread->unix_pid)
+            {
+                kill( thread->unix_pid, SIGTRAP );
+                break;
+            }
+        }
+        if (!thread) set_error( STATUS_ACCESS_DENIED );
+    }
+    else reply->self = 1;
+    release_object( process );
 }
 
 /* set debugger kill on exit flag */
