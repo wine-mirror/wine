@@ -1,83 +1,611 @@
   <chapter id="documentation">
     <title>Documenting Wine</title>
-    <para>How to help out with the Wine documentation effort...</para>
+
+    <para>
+      Written by &name-jon-griffiths; <email>&email-jon-griffiths;</email>
+    </para>
+
+    <para>
+      This chapter describes how you can help improve Wines documentation.
+    </para>
+
+    <para>
+      Like most large scale volunteer projects, Wine is strongest in areas that are rewarding
+      for its volunteers to work in. The majority of contributors send code patches either
+      fixing bugs, adding new functionalty or otherwise improving the software components of
+      the distribution. A lesser number contribute in other ways, such as reporting bugs and
+      regressions, creating tests, providing organisational assistance, or helping to document
+      Wine.
+    </para>
+
+    <para>
+      Documentation is important for many reasons, and is often the key to the end user having
+      a successful experience in installing, setting up and using software. Because Wine is a
+      complicated, evolving entity, providing quality up to date documentation is vital to
+      encourage more people to persevere with using and contributing to the project.
+      The following sections describe in detail how to go about adding to or updating Wines
+      existing documentation.
+    </para>
+
+    <sect1 id="doc-overview">
+      <title>An Overview Of Wine Documentation</title>
+
+      <para>
+        The Wine source code tree comes with a large amount of documentation in the
+        <filename>documentation/</filename> subdirectory. This used to be a collection
+        of text files culled from various places such as the Wine Weekly News and the wine-devel
+        mailing list, but was reorganised some time ago into a number of books, each of which is
+        marked up using SGML. You are reading one of these books (the
+        <emphasis>Wine Developer's Guide</emphasis>) right now.
+      </para>
+
+      <para>
+        Since being reorganised, the books have been updated and extended regularly. In their
+        current state they provide a good framework which over time can be expanded and kept
+        up to date. This means that most of the time when further documentation is added, it is
+        a simple matter of updating the content of an already existing file. The books
+        available at the time of writing are:
+
+          <itemizedlist>
+
+          <listItem><para>
+          The <emphasis>Wine User Guide</emphasis>. This book contains information for end users
+          on installing, configuring and running Wine.
+          </para></listitem>
+
+          <listItem><para>
+          The <emphasis>Wine Developer's Guide</emphasis>. This book contains information and
+          guidelines for developers and contributors to the Wine project.
+          </para></listitem>
+
+          <listItem><para>
+          The <emphasis>Winelib User's Guide</emphasis>. This book contains information for
+          developers using Winelib to port Win32 applications to Unix.
+          </para></listitem>
+
+          <listItem><para>
+          The <emphasis>Wine Packagers Guide</emphasis>. This book contains information for
+          anyone who will be distributing Wine to end users in a prepackaged format.
+          </para></listitem>
+
+          <listItem><para>
+          The <emphasis>Wine FAQ</emphasis>. This book contains frequently asked questions
+          about Wine with their answers.
+          </para></listitem>
+          </itemizedlist>
+      </para>
+
+      <para>
+        Another source of documentation is the <emphasis>Wine API Guide</emphasis>. This is
+        generated information taken from special comments placed in the Wine source code.
+        When you update or add new API calls to Wine you should consider documenting them so
+        that developers can determine what the API does and how it should be used.
+      </para>
+
+      <para>
+        The next sections describe how to create Wine API documentation and how to work with
+        SGML so you can add to the existing books.
+      </para>
+    </sect1>
 
     <sect1 id="api-docs">
       <title>Writing Wine API Documentation</title>
 
       <para>
-        Written by &name-douglas-ridgway; <email>&email-douglas-ridgway;</email>
+        Written by &name-jon-griffiths; <email>&email-jon-griffiths;</email>
       </para>
+
+      <sect2 id="api-docs-intro">
+      <title>Introduction to API Documentation</title>
       <para>
-        (Extracted from <filename>wine/documentation/README.documentation</filename>)
+        Wine includes a large amount of documentation on the API functions
+        it implements. There are serveral reasons to want to document the Win32
+        API:
+          <itemizedlist>
+
+          <listItem><para>
+          To allow Wine developers to know what each function should do, should
+          they need to update or fix it.
+          </para></listitem>
+
+          <listItem><para>
+          To allow Winelib users to understand the functions that are available
+          to their applications.
+          </para></listitem>
+
+          <listItem><para>
+          To provide an alternative source of free documentation on the Win32 API.
+          </para></listitem>
+
+          <listItem><para>
+          To provide more accurate documentation where the existing documentation
+          is accendentally or deliberately vague or misleading.
+          </para></listitem>
+
+          </itemizedlist>
       </para>
 
       <para>
-        To improve the documentation of the Wine API, just add
-        comments to the existing source. For example,
+        To this end, a semi formalised way of producing documentation from the Wine
+        source code has evolved. Since the primary users of API documentation are Wine
+        developers themselves, documentation is usually inserted into the source code
+        in the form of comments and notes. Good things to include in the documentation
+        of a function include:
+          <itemizedlist>
+
+          <listItem><para>
+          The purpose of the function.
+          </para></listitem>
+
+          <listItem><para>
+          The parameters of the function and their purpose.
+          </para></listitem>
+
+          <listItem><para>
+          The return value of the function, in success as well as failure cases.
+          </para></listitem>
+
+          <listItem><para>
+          Additional notes such as interaction with other parts of the system, differences
+          between Wines implementation and Win32s, errors in MSDN documentation,
+          undocumented cases and bugs that Wine corrects or is compatable with.
+          </para></listitem>
+
+          </itemizedlist>
       </para>
+
+      <para>
+        Good documentation helps developers be aware of the effects of making changes. It
+        also allows good tests to be written which cover all of the documented cases.
+      </para>
+
+      <para>
+        Note that you do not need to be a programmer to update the documentation in Wine.
+        If you would like to contribute to the project, patches that improve the API
+        documentation are welcome. The following describes how to format any documentation
+        that you write so that the Wine documentation generator can extract it and make it
+        available to other developers and users.
+      </para>
+
+      <para>
+        In general, if you did not write the function in question, you should be wary of
+        adding comments to other peoples code. It is quite possible you may misunderstand
+        or misrepresent what the original author intended! Adding API documentation on
+        the other hand can be done by anybody, since in most cases there is plenty of
+        information about what a function is supposed to do (if it isn't obvious)
+        available in books and articles on the internet.
+      </para>
+
+      <para>
+        A final warning concerns copyright and must be noted. If you read MSDN or any
+        publication in order to find out what an API call does, you must be aware that
+        the text you are reading is copyrighted and in most cases cannot legally be
+        reproduced without the authors permission. If you copy verbatim any information
+        from such sources and submit it for inclusion into Wine, you open yourself up
+        to potential legal liability. You must ensure that anything you submit is
+        your own work, although it can be based on your understanding gleaned from
+        reading other peoples work.
+      </para>
+      </sect2>
+
+      <sect2 id="api-docs-basics">
+      <title>Basic API Documentation</title>
+
+      <para>
+        The general form of an API comment in Wine is a block comment immediately before a
+        function is implemented in the source code. General comments within a function body or
+        at the top of an implementation file are ignored by the API documentation generator.
+        Such comments are for the benefit of developers only, for example to explain what the
+        source code is doing or to describe something that may not be obvious to the person
+        reading the source code.
+      </para>
+
+      <para>
+        The following text uses the function <emphasis>PathRelativePathToA()</emphasis> from
+        <filename>SHLWAPI.DLL</filename> as an example. You can find this function in the Wine
+        source code tree in the file <filename>dlls/shlwapi/path.c</filename>.
+      </para>
+
+      <para>
+        The first line of the comment gives the name of the function, the DLL that the
+        function is exported from, and its export ordinal number. This is the simplest
+        (and most common type of) comment:
+      </para>
+
       <screen>
-/******************************************************************
- *         CopyMetaFileA   (GDI32.23)
+/*************************************************************************
+ * PathRelativePathToA   [SHLWAPI.@]
+ */
+      </screen>
+
+      <para>
+        The functions name and the DLL name are obvious. The ordinal number takes one of
+        two forms: Either <command>@</command> as in the above, or a number if the export
+        is exported by ordinal. You can see which to use by looking at the DLL's
+        <filename>.spec</filename> file. If the line on which the function is listed begins
+        with a number, use it, otherwise use the <command>@</command> symbol, which indicates
+        that this function is imported only by name.
+      </para>
+
+      <para>
+        Note also that round or square brackets can be used, and whitespace between the name
+        and the DLL/ordinal is free form. Thus the following is equally valid:
+      </para>
+
+      <screen>
+/*************************************************************************
+ *		PathRelativePathToA	(SHLWAPI.@)
+ */
+      </screen>
+
+      <para>
+        This basic comment will not get processed into documentation, since it
+        contains no information. In order to produce documentation for the function,
+        We must add some of the information listed above.
+      </para>
+
+      <para>
+        First we add a description of the function. This can be as long as you like, but
+        typically contains only a brief description of what the function is meant to do
+        in general terms. It is free form text:
+      </para>
+
+      <screen>
+/*************************************************************************
+ * PathRelativePathToA   [SHLWAPI.@]
  *
- *  Copies the metafile corresponding to hSrcMetaFile to either
- *  a disk file, if a filename is given, or to a new memory based
- *  metafile, if lpFileName is NULL.
+ * Create a relative path from one path to another.
+ */
+      </screen>
+
+      <para>
+        To be truly useful however we must document the parameters to the function.
+        There are two methods for doing this: In the comment, or in the function
+        prototype.
+      </para>
+
+      <para>
+        Parameters documented in the comment should be formatted as follows:
+      </para>
+
+      <screen>
+/*************************************************************************
+ * PathRelativePathToA   [SHLWAPI.@]
+ *
+ * Create a relative path from one path to another.
+ *
+ * PARAMS
+ *  lpszPath   [O] Destination for relative path
+ *  lpszFrom   [I] Source path
+ *  dwAttrFrom [I] File attribute of source path
+ *  lpszTo     [I] Destination path
+ *  dwAttrTo   [I] File attributes of destination path
+ *
+ */
+      </screen>
+
+      <para>
+        The parameters section starts with <command>PARAMS</command> on its own line.
+        Each parameter is listed in the order they appear in the functions prototype,
+        first with the parameters name, followed by its input/output status, followed
+        by a free form text description of the comment.
+      </para>
+
+      <para>
+        The input/output status tells the programmer whether the value will be modified
+        by the function (an output parameter), or only read (an input parameter). The
+        status must be enclosed in square brackets to be recognised, otherwise, or if it
+        is absent, anything following the parameter name is treated as the parameter
+        description. This field is case insensitive and can be any of the following:
+        <command>[I]</command>, <command>[In]</command>, <command>[O]</command>,
+        <command>[Out]</command>, <command>[I/O]</command>, <command>[In/Out]</command>.
+      </para>
+
+      <para>
+        Parameters documented in the prototype should be formatted as follows:
+      </para>
+
+      <screen>
+/*************************************************************************
+ * PathRelativePathToA   [SHLWAPI.@]
+ *
+ * Create a relative path from one path to another.
+ *
+ */
+BOOL WINAPI PathRelativePathToA(
+ LPSTR  lpszPath,   /* [O] Destination for relative path */
+ LPCSTR lpszFrom,   /* [I] Source path */
+ DWORD  dwAttrFrom, /* [I] File attribute of source path */
+ LPCSTR lpszTo,     /* [I] Destination path */
+ DWORD  dwAttrTo)   /* [I] File attributes of destination path */
+      </screen>
+
+      <para>
+        The choice of which style to use is up to you, although for readability it
+        is suggested you stick with the same style within a single source file.
+      </para>
+
+      <para>
+        Following the description and parameters come a number of optional sections, all
+        in the same format. A section is defined as the section name, which is an all upper
+        case section name on its own line, followed by free form text. You can create any
+        sections you like, however for consistency it is recommended you use the following
+        section names:
+          <orderedlist>
+
+          <listItem><para>
+          <command>NOTES</command>. Anything that needs to be noted about the function
+          such as special cases and the effects of input arguments.
+          </para></listitem>
+
+          <listItem><para>
+          <command>BUGS</command>. Any bugs in the function that exist 'by design', i.e.
+          those that will not be fixed or exist for compatability with Windows.
+          </para></listitem>
+
+          <listItem><para>
+          <command>TODO</command>. Any unhandled cases or missing functionality in the Wine
+          implementation of the function.
+          </para></listitem>
+
+          <listItem><para>
+          <command>FIXME</command>. Things that should be updated or addressed in the implementation
+          of the function at some future date (perhaps dependent on other parts of Wine). Note
+          that if this information is only relevant to Wine developers then it should probably
+          be placed in the relavent code section instead.
+          </para></listitem>
+          </orderedlist>
+      </para>
+
+      <para>
+        Following or before the optional sections comes the <command>RETURNS</command> section
+        which describes the return value of the function. This is free form text but should include
+        what is returned on success as well as possible error return codes. Note that this
+        section must be present for documentation to be generated for your comment.
+      </para>
+
+      <para>
+        Our final documentation looks like the following:
+      </para>
+
+      <screen>
+/*************************************************************************
+ * PathRelativePathToA   [SHLWAPI.@]
+ *
+ * Create a relative path from one path to another.
+ *
+ * PARAMS
+ *  lpszPath   [O] Destination for relative path
+ *  lpszFrom   [I] Source path
+ *  dwAttrFrom [I] File attribute of source path
+ *  lpszTo     [I] Destination path
+ *  dwAttrTo   [I] File attributes of destination path
  *
  * RETURNS
+ *  TRUE  If a relative path can be formed. lpszPath contains the new path
+ *  FALSE If the paths are not relative or any parameters are invalid
  *
- *  Handle to metafile copy on success, NULL on failure.
+ * NOTES
+ *  lpszTo should be at least MAX_PATH in length.
+ *  Calling this function with relative paths for lpszFrom or lpszTo may
+ *  give erroneous results.
  *
- * BUGS
- *
- *  Copying to disk returns NULL even if successful.
+ *  The Win32 version of this function contains a bug where the lpszTo string
+ *  may be referenced 1 byte beyond the end of the string. As a result random
+ *  garbage may be written to the output path, depending on what lies beyond
+ *  the last byte of the string. This bug occurs because of the behaviour of
+ *  PathCommonPrefix() (see notes for that function), and no workaround seems
+ *  possible with Win32.
+ *  This bug has been fixed here, so for example the relative path from "\\"
+ *  to "\\" is correctly determined as "." in this implementation.
  */
-HMETAFILE WINAPI CopyMetaFileA(
-		   HMETAFILE hSrcMetaFile, /* handle of metafile to copy */
-		   LPCSTR lpFilename /* filename if copying to a file */
-) { ... }
       </screen>
+      </sect2>
+
+      <sect2 id="api-docs-advanced">
+      <title>Advanced API Documentation</title>
+
       <para>
-        becomes, after processing with <command>c2man</command> and
-        <command>nroff -man</command>,
+        There is no markup language for formatting API comments, since they should
+        be easily readable by any developer working on the source file. A number of
+        constructs are treated specially however, and are noted here. You can use these
+        constructs to enhance the usefulness of the generated documentation by making it
+        easier to read and referencing related documents.
+      </para>
+
+      <para>
+        Any valid c identifier that ends with <command>()</command> is taken to
+        be an API function and is formatted accordingly. When generating documentation,
+        this text will become a link to that API call, if the output type supports
+        hyperlinks or their equivalent.
+      </para>
+
+      <para>
+        Similarly, any interface name starting with a capital I and followed by the
+        words "reference" or "object" become a link to that objects documentation.
+      </para>
+
+      <para>
+        Where an Ascii and Unicode version of a function are available, it is
+        recommended that you document only the Ascii version and have the Unicode
+        version refer to the Ascii one, as follows:
       </para>
       <screen>
-CopyMetaFileA(3w)                               CopyMetaFileA(3w)
-
-
-NAME
-       CopyMetaFileA   (GDI32.23)
-
-SYNOPSIS
-       HMETAFILE CopyMetaFileA
-       (
-            HMETAFILE hSrcMetaFile,
-            LPCSTR lpFilename
-       );
-
-PARAMETERS
-       HMETAFILE hSrcMetaFile
-              Handle of metafile to copy.
-
-       LPCSTR lpFilename
-              Filename if copying to a file.
-
-DESCRIPTION
-       Copies  the  metafile  corresponding  to  hSrcMetaFile  to
-       either a disk file, if a filename is given, or  to  a  new
-       memory based metafile, if lpFileName is NULL.
-
-RETURNS
-       Handle to metafile copy on success, NULL on failure.
-
-BUGS
-       Copying to disk returns NULL even if successful.
-
-SEE ALSO
-       GetMetaFileA(3w),   GetMetaFileW(3w),   CopyMetaFileW(3w),
-       PlayMetaFile(3w),  SetMetaFileBitsEx(3w),  GetMetaFileBit-
-       sEx(3w)
+/*************************************************************************
+ * PathRelativePathToW   [SHLWAPI.@]
+ *
+ * See PathRelativePathToA.
+ */
       </screen>
+      <para>
+        Alternately you may use the following form:
+      </para>
+      <screen>
+/*************************************************************************
+ * PathRelativePathToW   [SHLWAPI.@]
+ *
+ * Unicode version of PathRelativePathToA.
+ */
+      </screen>
+
+      <para>
+        You may also use this construct in any other section, such as <command>NOTES</command>.
+      </para>
+
+      <para>
+        Any numbers and text in quotes (<command>""</command>) are highlighted.
+      </para>
+
+      <para>
+        Words in all uppercase are assumed to be API constants and are highlighted. If
+        you want to emphasise something in the documentation, put it in a section by itself
+        rather than making it upper case.
+      </para>
+
+      <para>
+        Blank lines in a section cause a new paragraph to be started. Blank lines
+        at the start and end of sections are ignored.
+      </para>
+
+      <para>
+        Any comment line starting with (<command>"*|"</command>) is treated as raw text and
+        is not pre-processed before being output. This should be used for code listings,
+        tables and any text that should remain unformatted.
+      </para>
+
+      <para>
+        Any line starting with a single word followed by a colon (<command>:</command>)
+        is assumed to be case listing and is emphasised and put in its own paragrah. This
+        is most often used for return values, as in the example section below.
+      </para>
+      <screen>
+ * RETURNS
+ *  Success: TRUE. Something happens that is documented here.
+ *  Failure: FALSE. The reasons why this call can fail are listed here.
+      </screen>
+
+      <para>
+        Any line starting with a (<command>-</command>) is put into a paragraph by itself.
+        this allows lists to avoid being run together.
+      </para>
+
+      <para>
+        If you are in doubt as to how your comment will look, try generating the API
+        documentation and checking the output.
+      </para>
+      </sect2>
+
+      <sect2 id="api-docs-extra">
+      <title>Extra API Documentation</title>
+
+      <para>
+        Simply documenting the API calls available provides a great deal of information to
+        developers working with the Win32 API. However additional documentation is needed
+        before the API Guide can be considered truly useful or comprehensive. For example,
+        COM objects that are available for developers use should be documented, along with
+        the interface(s) that those objects export. Also, it would be helpful to document
+        each dll, to provide some structure to the documentation.
+      </para>
+
+      <para>
+        To facilitate providing extra documentation, you can create comments that provide
+        extra documentation on functions, or on keywords such as the name of a COM interface
+        or a type definition.
+      </para>
+
+      <para>
+        These items are generated using the same formatting rules as described earlier. The
+        only difference is the first line of the comment, which indicates to the generator
+        that the documentation is supplimental and does not describe an export from the dll
+        being processed.
+      </para>
+
+      <para>
+        Lets assume you have implemented a COM interface that you want to document; we'll
+        use the name <command>IExample</command> as an example here. Your comment would
+        look like the following (assuming you are exporting this object from
+        <filename>EXAMPLE.DLL</filename>):
+      <screen>
+/*************************************************************************
+ * IExample   {EXAMPLE}
+ *
+ * The IExample object provides lots of interesting functionality.
+ * ...
+ */
+      </screen>
+      </para>
+
+      <para>
+        Format this documentation exactly as you would a standard export. The only
+        difference is the use of curly brackets to mark this documentation as supplimental.
+        The generator will output this documentation using the name given before the
+        DLL name, and will link to it from the main DLL page. In addition, if you have
+        referred to the comment name in other documentation using "IExample interface",
+        "IExample object", or "IExample()", those references will point to this documentation.
+      </para>
+
+      <para>
+        If you document you COM interfaces this way then all following extra comments that
+        follow in the same source file that begin with the same document title will be added
+        as references to this comment before it is output. For an example of this see
+        <filename>dlls/oleaut32/safearray.c</filename>. This uses an extra comment to document
+        The SafeArray functions and link them together under one heading.
+      </para>
+
+       <para>
+        As a special case, if you use the DLL name as the comment name, the comment will
+        be treated as documentation on the DLL itself. When the documentation for the DLL
+        is processed, the contents of the comment will be placed before the generated
+        statistics, exports and other information that makes up a DLL's documentation page.
+      </para>
+      </sect2>
+
+      <sect2 id="api-docs-generating">
+      <title>Generating API Documentation</title>
+
+      <para>
+        Having edited or added new API documentation to a source code file, you
+        should generate the documentation to ensure that the result is what you
+        expected. Wine includes a tool (slightly misleadingly) called
+        <command>c2man.pl</command> in the <filename>tools/</filename> directory
+        which is used to generate the documentation from the source code.
+      </para>
+
+      <para>
+        You can run <command>c2man.pl</command> manually for testing purposes; it is
+        a fairly simple perl script which parses <filename>.c</filename> files
+        to create output in several formats. If you wish to try this you may want
+        to run it with no arguments, which will cause it to print usage information.
+      </para>
+
+      <para>
+        An easier way is to use Wines build system. To create man pages for a given
+        dll, just type <command>make man</command> from within the dlls directory
+        or type <command>make manpages</command> in the root directory of the Wine
+        source tree. You can then check that a man page was generated for your function,
+        it should be present in the <filename>documentation/man3w</filename> directory
+        with the same name as the function.
+      </para>
+
+      <para>
+        Once you have generated the man pages from the source code, running
+        <command>make install</command> will install them for you. By default they are
+        installed in section 3w of the manual, so they don't conflict with any existing
+        man page names. So, to read the man page you should use
+        <command>man -S 3w {name}</command>. Alternately you can edit
+        <filename>/etc/man.config</filename> and add 3w to the list of search paths
+        given in the variable <emphasis>MANSECT</emphasis>.
+      </para>
+
+      <para>
+        You can also generate HTML output for the API documentation, in this case the
+        make command is <command>make doc-html</command> in the dll directory,
+        or <command>make htmlpages</command> from the root. The output will be
+        placed by default under <filename>documentation/html</filename>. Similarly
+        you can create SGML source code to produce the <emphasis>Wine Api Guide</emphasis>
+        with the command <command>make sgmlpages</command>.
+      </para>
+      </sect2>
     </sect1>
 
     <sect1 id="wine-docbook">
@@ -106,11 +634,10 @@ SEE ALSO
             <note>
 	    <title>Why SGML?</title>
               <para>
-               The simple answer to that is that SGML allows you 
+               The simple answer to that is that SGML allows you
                to create multiple formats of a given document from a single
-               source. Currently sgml is used to create html, pdf and PS 
-               formats of the Users Guide, Developers Guide, Winelib Users
-               Guide Packagers Guide and FAQ.
+               source. Currently it is used to create html, pdf and PS (PostScript)
+               versions of the Wine books.
               </para>
             </note>
 
@@ -118,14 +645,15 @@ SEE ALSO
             <title>What do I need?</title>
               <para>
                You need the sgml tools. There are various places where you
-               can get them. The most generic way of geting them form source.
+               can get them. The most generic way of geting them is from their
+               source as discussed below.
               </para>
 	    </note>
 
             <note>
-            <title>Quick instructions</title> 
+            <title>Quick instructions</title>
 	      <para>
-               These are the generic steps to get output from sgml.
+               These are the basic steps to create the Wine books from the sgml source.
 	      </para>
             </note>
 
@@ -140,33 +668,33 @@ SEE ALSO
           </para></listitem>
 
           <listItem><para>
-          Install them all and build them (./configure; make; make install)
+          Install them all and build them (<command>./configure; make; make install</command>)
           </para></listitem>
 
           <listItem><para>
-          Switch to your toplevel wine directory
+          Switch to your toplevel Wine directory
           </para></listitem>
 
           <listItem><para>
-          Run ./configure (or make distclean && ./configure)
+          Run <command>./configure</command> (or <command>make distclean && ./configure</command>)
           </para></listitem>
 
           <listItem><para>
-          Switch to the documentation directory
+          Switch to the <filename>documentation/</filename> directory
           </para></listitem>
 
           <listItem><para>
-          run make_winehq
+          run <command>./make_winehq</command>
           </para></listitem>
 
           <listItem><para>
-          View wine-doc/index.html in your favorite browser
+          View <filename>wine-doc/index.html</filename> in your favorite browser
           </para></listitem>
 
           </orderedlist>
-	
+
 	</sect3>
-   
+
         <sect3>
           <title>Getting SGML for various distributions</title>
           <para>
@@ -193,7 +721,7 @@ SEE ALSO
               <listitem><para>jadetex-*.rpm</para></listitem>
               <listitem><para>docbook-utils-*.rpm</para></listitem>
             </itemizedlist>
-            You can also use ghostscript to view the ps format output and 
+            You can also use ghostscript to view the ps format output and
             Adobe Acrobat 4 to view the pdf file.
           </para>
         </sect4>
@@ -239,7 +767,7 @@ SEE ALSO
             must have a matching end tag to show where the start tag's
             contents end.  End tags begin with
             <quote><literal>&lt;/</literal></quote> markup, e.g.,
-            <sgmltag class="endtag">para</sgmltag>.  
+            <sgmltag class="endtag">para</sgmltag>.
           </para>
           <para>
             The combination of a start tag, contents, and an end tag
@@ -247,7 +775,7 @@ SEE ALSO
             elements can be nested inside of each other, or contain
             only text, or may be a combination of both text and other
             elements, although in most cases it is better to limit
-            your elements to one or the other.  
+            your elements to one or the other.
           </para>
           <para>
             The <acronym>XML</acronym> (<firstterm>eXtensible Markup
