@@ -1745,7 +1745,7 @@ static HRESULT WINAPI _SHStrDupAA(LPCSTR src, LPSTR * dest)
 }
 
 /*************************************************************************
- * SHStrDupA
+ * SHStrDupA	[SHLWAPI.@]
  *
  * Return a Unicode copy of a string, in memory allocated by CoTaskMemAlloc().
  *
@@ -1812,7 +1812,7 @@ static HRESULT WINAPI _SHStrDupAW(LPCWSTR src, LPSTR * dest)
 }
 
 /*************************************************************************
- * SHStrDupW
+ * SHStrDupW	[SHLWAPI.@]
  *
  * See SHStrDupA.
  */

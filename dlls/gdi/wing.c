@@ -29,6 +29,19 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(wing);
 
+/*************************************************************************
+ * WING {WING}
+ *
+ * The Windows Game dll provides a number of functions designed to allow
+ * programmers to bypass Gdi and write directly to video memory. The intention
+ * was to bolster the use of Windows as a gaming platform and remove the
+ * need for Dos based games using 32 bit Dos extenders.
+ *
+ * This initial approach could not compete with the performance of Dos games
+ * (such as Doom and Warcraft) at the time, and so this dll was eventually
+ * superceeded by DirectX. It should not be used by new applications, and is
+ * provided only for compatability with older Windows programs.
+ */
 
 typedef enum WING_DITHER_TYPE
 {
@@ -50,6 +63,15 @@ typedef enum WING_DITHER_TYPE
 
 /***********************************************************************
  *          WinGCreateDC	(WING.1001)
+ *
+ * Create a new WinG device context.
+ *
+ * PARAMS
+ *  None.
+ *
+ * RETURNS
+ *  Success: A handle to the created device context.
+ *  Failure: A NULL handle.
  */
 HDC16 WINAPI WinGCreateDC16(void)
 {
@@ -59,6 +81,15 @@ HDC16 WINAPI WinGCreateDC16(void)
 
 /***********************************************************************
  *  WinGRecommendDIBFormat    (WING.1002)
+ *
+ * Get the recommended format of bitmaps for the current display.
+ *
+ * PARAMS
+ *  bmpi [O] Destination for format information
+ *
+ * RETURNS
+ *  Success: TRUE. bmpi is filled with the best (fastest) bitmap format
+ *  Failure: FALSE, if bmpi is NULL.
  */
 BOOL16 WINAPI WinGRecommendDIBFormat16(BITMAPINFO *bmpi)
 {
@@ -85,6 +116,17 @@ BOOL16 WINAPI WinGRecommendDIBFormat16(BITMAPINFO *bmpi)
 
 /***********************************************************************
  *        WinGCreateBitmap    (WING.1003)
+ *
+ * Create a new WinG bitmap.
+ *
+ * PARAMS
+ *  hdc  [I] WinG device context
+ *  bmpi [I] Information about the bitmap
+ *  bits [I] Location of the bitmap image data
+ *
+ * RETURNS
+ *  Success: A handle to the created bitmap.
+ *  Failure: A NULL handle.
  */
 HBITMAP16 WINAPI WinGCreateBitmap16(HDC16 hdc, BITMAPINFO *bmpi,
                                     SEGPTR *bits)
@@ -116,6 +158,17 @@ SEGPTR WINAPI WinGGetDIBPointer16(HBITMAP16 hWinGBitmap, BITMAPINFO* bmpi)
 
 /***********************************************************************
  *  WinGSetDIBColorTable   (WING.1006)
+ *
+ * Set all or part of the color table for a WinG device context.
+ *
+ * PARAMS
+ *  hdc    [I] WinG device context
+ *  start  [I] Start color
+ *  num    [I] Number of entries to set
+ *  colors [I] Array of color data
+ *
+ * RETURNS
+ *  The number of entries set.
  */
 UINT16 WINAPI WinGSetDIBColorTable16(HDC16 hdc, UINT16 start, UINT16 num,
                                      RGBQUAD *colors)
@@ -126,6 +179,17 @@ UINT16 WINAPI WinGSetDIBColorTable16(HDC16 hdc, UINT16 start, UINT16 num,
 
 /***********************************************************************
  *  WinGGetDIBColorTable   (WING.1005)
+ *
+ * Get all or part of the color table for a WinG device context.
+ *
+ * PARAMS
+ *  hdc    [I] WinG device context
+ *  start  [I] Start color
+ *  num    [I] Number of entries to set
+ *  colors [O] Destination for the array of color data
+ *
+ * RETURNS
+ *  The number of entries retrieved.
  */
 UINT16 WINAPI WinGGetDIBColorTable16(HDC16 hdc, UINT16 start, UINT16 num,
 				     RGBQUAD *colors)
@@ -136,6 +200,15 @@ UINT16 WINAPI WinGGetDIBColorTable16(HDC16 hdc, UINT16 start, UINT16 num,
 
 /***********************************************************************
  *  WinGCreateHalfTonePalette   (WING.1007)
+ *
+ * Create a half tone palette.
+ *
+ * PARAMS
+ *  None.
+ *
+ * RETURNS
+ *  Success: A handle to the created palette.
+ *  Failure: A NULL handle.
  */
 HPALETTE16 WINAPI WinGCreateHalfTonePalette16(void)
 {
@@ -148,6 +221,17 @@ HPALETTE16 WINAPI WinGCreateHalfTonePalette16(void)
 
 /***********************************************************************
  *  WinGCreateHalfToneBrush   (WING.1008)
+ *
+ * Create a half tone brush for a WinG device context.
+ *
+ * PARAMS
+ *  winDC [I] WinG device context
+ *  col   [I] Color
+ *  type  [I] Desired dithering type.
+ *
+ * RETURNS
+ *  Success: A handle to the created brush.
+ *  Failure: A NULL handle.
  */
 HBRUSH16 WINAPI WinGCreateHalfToneBrush16(HDC16 winDC, COLORREF col,
                                             WING_DITHER_TYPE type)
@@ -158,6 +242,8 @@ HBRUSH16 WINAPI WinGCreateHalfToneBrush16(HDC16 winDC, COLORREF col,
 
 /***********************************************************************
  *  WinGStretchBlt   (WING.1009)
+ *
+ * See StretchBlt16.
  */
 BOOL16 WINAPI WinGStretchBlt16(HDC16 destDC, INT16 xDest, INT16 yDest,
                                INT16 widDest, INT16 heiDest,
@@ -175,6 +261,8 @@ BOOL16 WINAPI WinGStretchBlt16(HDC16 destDC, INT16 xDest, INT16 yDest,
 
 /***********************************************************************
  *  WinGBitBlt   (WING.1010)
+ *
+ * See BitBlt16.
  */
 BOOL16 WINAPI WinGBitBlt16(HDC16 destDC, INT16 xDest, INT16 yDest,
                            INT16 widDest, INT16 heiDest, HDC16 srcDC,

@@ -39,6 +39,15 @@
 
 /******************************************************************************
  *        RtlLargeIntegerAdd   (NTDLL.@)
+ *
+ * Add two 64 bit integers.
+ *
+ * PARAMS
+ *  a [I] Initial number.
+ *  b [I] Number to add to a.
+ *
+ * RETURNS
+ *  The sum of a and b.
  */
 LONGLONG WINAPI RtlLargeIntegerAdd( LONGLONG a, LONGLONG b )
 {
@@ -48,6 +57,15 @@ LONGLONG WINAPI RtlLargeIntegerAdd( LONGLONG a, LONGLONG b )
 
 /******************************************************************************
  *        RtlLargeIntegerSubtract   (NTDLL.@)
+ *
+ * Subtract two 64 bit integers.
+ *
+ * PARAMS
+ *  a [I] Initial number.
+ *  b [I] Number to subtract from a.
+ *
+ * RETURNS
+ *  The difference of a and b.
  */
 LONGLONG WINAPI RtlLargeIntegerSubtract( LONGLONG a, LONGLONG b )
 {
@@ -57,6 +75,14 @@ LONGLONG WINAPI RtlLargeIntegerSubtract( LONGLONG a, LONGLONG b )
 
 /******************************************************************************
  *        RtlLargeIntegerNegate   (NTDLL.@)
+ *
+ * Negate a 64 bit integer.
+ *
+ * PARAMS
+ *  a     [I] Initial number.
+ *
+ * RETURNS
+ *  The value of a negated.
  */
 LONGLONG WINAPI RtlLargeIntegerNegate( LONGLONG a )
 {
@@ -66,6 +92,15 @@ LONGLONG WINAPI RtlLargeIntegerNegate( LONGLONG a )
 
 /******************************************************************************
  *        RtlLargeIntegerShiftLeft   (NTDLL.@)
+ *
+ * Perform a shift left on a 64 bit integer.
+ *
+ * PARAMS
+ *  a     [I] Initial number.
+ *  count [I] Number of bits to shift by
+ *
+ * RETURNS
+ *  The value of a following the shift.
  */
 LONGLONG WINAPI RtlLargeIntegerShiftLeft( LONGLONG a, INT count )
 {
@@ -75,6 +110,15 @@ LONGLONG WINAPI RtlLargeIntegerShiftLeft( LONGLONG a, INT count )
 
 /******************************************************************************
  *        RtlLargeIntegerShiftRight   (NTDLL.@)
+ *
+ * Perform a shift right on a 64 bit integer.
+ *
+ * PARAMS
+ *  a     [I] Initial number.
+ *  count [I] Number of bits to shift by
+ *
+ * RETURNS
+ *  The value of a following the shift.
  */
 LONGLONG WINAPI RtlLargeIntegerShiftRight( LONGLONG a, INT count )
 {
@@ -84,6 +128,15 @@ LONGLONG WINAPI RtlLargeIntegerShiftRight( LONGLONG a, INT count )
 
 /******************************************************************************
  *        RtlLargeIntegerArithmeticShift   (NTDLL.@)
+ *
+ * Perform an arithmetic shift right on a 64 bit integer.
+ *
+ * PARAMS
+ *  a     [I] Initial number.
+ *  count [I] Number of bits to shift by
+ *
+ * RETURNS
+ *  The value of a following the shift.
  */
 LONGLONG WINAPI RtlLargeIntegerArithmeticShift( LONGLONG a, INT count )
 {
@@ -95,7 +148,18 @@ LONGLONG WINAPI RtlLargeIntegerArithmeticShift( LONGLONG a, INT count )
 /******************************************************************************
  *        RtlLargeIntegerDivide   (NTDLL.@)
  *
- * FIXME: should it be signed division instead?
+ * Divide one 64 bit unsigned integer by another, with remainder.
+ *
+ * PARAMS
+ *  a   [I] Initial number.
+ *  b   [I] Number to divide a by
+ *  rem [O] Destination for remainder
+ *
+ * RETURNS
+ *  The dividend of a and b. If rem is non-NULL it is set to the remainder.
+ *
+ * FIXME
+ *  Should it be signed division instead?
  */
 ULONGLONG WINAPI RtlLargeIntegerDivide( ULONGLONG a, ULONGLONG b, ULONGLONG *rem )
 {
@@ -107,6 +171,14 @@ ULONGLONG WINAPI RtlLargeIntegerDivide( ULONGLONG a, ULONGLONG b, ULONGLONG *rem
 
 /******************************************************************************
  *        RtlConvertLongToLargeInteger   (NTDLL.@)
+ *
+ * Convert a 32 bit integer into 64 bits.
+ *
+ * PARAMS
+ *  a [I] Number to convert
+ *
+ * RETURNS
+ *  a.
  */
 LONGLONG WINAPI RtlConvertLongToLargeInteger( LONG a )
 {
@@ -116,6 +188,14 @@ LONGLONG WINAPI RtlConvertLongToLargeInteger( LONG a )
 
 /******************************************************************************
  *        RtlConvertUlongToLargeInteger   (NTDLL.@)
+ *
+ * Convert a 32 bit unsigned integer into 64 bits.
+ *
+ * PARAMS
+ *  a [I] Number to convert
+ *
+ * RETURNS
+ *  a.
  */
 ULONGLONG WINAPI RtlConvertUlongToLargeInteger( ULONG a )
 {
@@ -125,6 +205,15 @@ ULONGLONG WINAPI RtlConvertUlongToLargeInteger( ULONG a )
 
 /******************************************************************************
  *        RtlEnlargedIntegerMultiply   (NTDLL.@)
+ *
+ * Multiply two integers giving a 64 bit integer result.
+ *
+ * PARAMS
+ *  a [I] Initial number.
+ *  b [I] Number to multiply a by.
+ *
+ * RETURNS
+ *  The product of a and b.
  */
 LONGLONG WINAPI RtlEnlargedIntegerMultiply( INT a, INT b )
 {
@@ -134,6 +223,15 @@ LONGLONG WINAPI RtlEnlargedIntegerMultiply( INT a, INT b )
 
 /******************************************************************************
  *        RtlEnlargedUnsignedMultiply   (NTDLL.@)
+ *
+ * Multiply two unsigned integers giving a 64 bit unsigned integer result.
+ *
+ * PARAMS
+ *  a [I] Initial number.
+ *  b [I] Number to multiply a by.
+ *
+ * RETURNS
+ *  The product of a and b.
  */
 ULONGLONG WINAPI RtlEnlargedUnsignedMultiply( UINT a, UINT b )
 {
@@ -143,6 +241,16 @@ ULONGLONG WINAPI RtlEnlargedUnsignedMultiply( UINT a, UINT b )
 
 /******************************************************************************
  *        RtlEnlargedUnsignedDivide   (NTDLL.@)
+ *
+ * Divide one 64 bit unsigned integer by a 32 bit unsigned integer, with remainder.
+ *
+ * PARAMS
+ *  a      [I] Initial number.
+ *  b      [I] Number to divide a by
+ *  remptr [O] Destination for remainder
+ *
+ * RETURNS
+ *  The dividend of a and b. If remptr is non-NULL it is set to the remainder.
  */
 UINT WINAPI RtlEnlargedUnsignedDivide( ULONGLONG a, UINT b, UINT *remptr )
 {
@@ -167,6 +275,16 @@ UINT WINAPI RtlEnlargedUnsignedDivide( ULONGLONG a, UINT b, UINT *remptr )
 
 /******************************************************************************
  *        RtlExtendedLargeIntegerDivide   (NTDLL.@)
+ *
+ * Divide one 64 bit integer by a 32 bit integer, with remainder.
+ *
+ * PARAMS
+ *  a   [I] Initial number.
+ *  b   [I] Number to divide a by
+ *  rem [O] Destination for remainder
+ *
+ * RETURNS
+ *  The dividend of a and b. If rem is non-NULL it is set to the remainder.
  */
 LONGLONG WINAPI RtlExtendedLargeIntegerDivide( LONGLONG a, INT b, INT *rem )
 {
@@ -178,6 +296,15 @@ LONGLONG WINAPI RtlExtendedLargeIntegerDivide( LONGLONG a, INT b, INT *rem )
 
 /******************************************************************************
  *        RtlExtendedIntegerMultiply   (NTDLL.@)
+ *
+ * Multiply one 64 bit integer by another 32 bit integer.
+ *
+ * PARAMS
+ *  a [I] Initial number.
+ *  b [I] Number to multiply a by.
+ *
+ * RETURNS
+ *  The product of a and b.
  */
 LONGLONG WINAPI RtlExtendedIntegerMultiply( LONGLONG a, INT b )
 {
@@ -269,7 +396,7 @@ LONGLONG WINAPI RtlExtendedMagicDivide(
  * DIFFERENCES
  * - Accept base 0 as 10 instead of crashing as native function does.
  * - The native function does produce garbage or STATUS_BUFFER_OVERFLOW for
- *   base 2, 8 and 16 when the value is larger than 0xFFFFFFFF. 
+ *   base 2, 8 and 16 when the value is larger than 0xFFFFFFFF.
  */
 NTSTATUS WINAPI RtlLargeIntegerToChar(
     const ULONGLONG *value_ptr, /* [I] Pointer to the value to be converted */
@@ -383,6 +510,15 @@ NTSTATUS WINAPI RtlInt64ToUnicodeString(
 
 /******************************************************************************
  *        _alldiv   (NTDLL.@)
+ *
+ * Divide two 64 bit unsigned integers.
+ *
+ * PARAMS
+ *  a [I] Initial number.
+ *  b [I] Number to multiply a by.
+ *
+ * RETURNS
+ *  The dividend of a and b.
  */
 LONGLONG WINAPI _alldiv( LONGLONG a, LONGLONG b )
 {
@@ -392,6 +528,15 @@ LONGLONG WINAPI _alldiv( LONGLONG a, LONGLONG b )
 
 /******************************************************************************
  *        _allmul   (NTDLL.@)
+ *
+ * Multiply two 64 bit integers.
+ *
+ * PARAMS
+ *  a [I] Initial number.
+ *  b [I] Number to multiply a by.
+ *
+ * RETURNS
+ *  The product of a and b.
  */
 LONGLONG WINAPI _allmul( LONGLONG a, LONGLONG b )
 {
@@ -401,6 +546,15 @@ LONGLONG WINAPI _allmul( LONGLONG a, LONGLONG b )
 
 /******************************************************************************
  *        _allrem   (NTDLL.@)
+ *
+ * Calculate the remainder after dividing two 64 bit integers.
+ *
+ * PARAMS
+ *  a [I] Initial number.
+ *  b [I] Number to divide a by.
+ *
+ * RETURNS
+ *  The remainder of a divided by b.
  */
 LONGLONG WINAPI _allrem( LONGLONG a, LONGLONG b )
 {
@@ -410,6 +564,15 @@ LONGLONG WINAPI _allrem( LONGLONG a, LONGLONG b )
 
 /******************************************************************************
  *        _aulldiv   (NTDLL.@)
+ *
+ * Divide two 64 bit unsigned integers.
+ *
+ * PARAMS
+ *  a [I] Initial number.
+ *  b [I] Number to multiply a by.
+ *
+ * RETURNS
+ *  The dividend of a and b.
  */
 ULONGLONG WINAPI _aulldiv( ULONGLONG a, ULONGLONG b )
 {
@@ -419,6 +582,15 @@ ULONGLONG WINAPI _aulldiv( ULONGLONG a, ULONGLONG b )
 
 /******************************************************************************
  *        _aullrem   (NTDLL.@)
+ *
+ * Calculate the remainder after dividing two 64 bit unsigned integers.
+ *
+ * PARAMS
+ *  a [I] Initial number.
+ *  b [I] Number to divide a by.
+ *
+ * RETURNS
+ *  The remainder of a divided by b.
  */
 ULONGLONG WINAPI _aullrem( ULONGLONG a, ULONGLONG b )
 {

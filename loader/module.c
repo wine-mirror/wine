@@ -55,7 +55,19 @@ WINE_DECLARE_DEBUG_CHANNEL(loaddll);
 /****************************************************************************
  *              DisableThreadLibraryCalls (KERNEL32.@)
  *
- * Don't call DllEntryPoint for DLL_THREAD_{ATTACH,DETACH} if set.
+ * Inform the module loader that thread notifications are not required for a dll.
+ *
+ * PARAMS
+ *  hModule [I] Module handle to skip calls for
+ *
+ * RETURNS
+ *  Success: TRUE. Thread attach and detach notifications will not be sent
+ *           to hModule.
+ *  Failure: FALSE. Use GetLastError() to determine the cause.
+ *
+ * NOTES
+ *  This is typically called from the dll entry point of a dll during process
+ *  attachment, for dlls that do not need to process thread notifications.
  */
 BOOL WINAPI DisableThreadLibraryCalls( HMODULE hModule )
 {
@@ -243,32 +255,35 @@ enum binary_type MODULE_GetBinaryType( HANDLE hfile )
  *             GetBinaryTypeA                     [KERNEL32.@]
  *             GetBinaryType                      [KERNEL32.@]
  *
- * The GetBinaryType function determines whether a file is executable
- * or not and if it is it returns what type of executable it is.
- * The type of executable is a property that determines in which
- * subsystem an executable file runs under.
+ * Determine whether a file is executable, and if so, what kind.
  *
- * Binary types returned:
- * SCS_32BIT_BINARY: A Win32 based application
- * SCS_DOS_BINARY: An MS-Dos based application
- * SCS_WOW_BINARY: A Win16 based application
- * SCS_PIF_BINARY: A PIF file that executes an MS-Dos based app
- * SCS_POSIX_BINARY: A POSIX based application ( Not implemented )
- * SCS_OS216_BINARY: A 16bit OS/2 based application
+ * PARAMS
+ *  lpApplicationName [I] Path of the file to check
+ *  lpBinaryType      [O] Destination for the binary type
  *
- * Returns TRUE if the file is an executable in which case
- * the value pointed by lpBinaryType is set.
- * Returns FALSE if the file is not an executable or if the function fails.
+ * RETURNS
+ *  TRUE, if the file is an executable, in which case lpBinaryType is set.
+ *  FALSE, if the file is not an executable or if the function fails.
  *
- * To do so it opens the file and reads in the header information
- * if the extended header information is not present it will
- * assume that the file is a DOS executable.
- * If the extended header information is present it will
- * determine if the file is a 16 or 32 bit Windows executable
- * by check the flags in the header.
+ * NOTES
+ *  The type of executable is a property that determines which subsytem an
+ *  executable file runs under. lpBinaryType can be set to one of the following
+ *  values:
+ *   SCS_32BIT_BINARY: A Win32 based application
+ *   SCS_DOS_BINARY: An MS-Dos based application
+ *   SCS_WOW_BINARY: A Win16 based application
+ *   SCS_PIF_BINARY: A PIF file that executes an MS-Dos based app
+ *   SCS_POSIX_BINARY: A POSIX based application ( Not implemented )
+ *   SCS_OS216_BINARY: A 16bit OS/2 based application
  *
- * Note that .COM and .PIF files are only recognized by their
- * file name extension; but Windows does it the same way ...
+ *  To find the binary type, this function reads in the files header information.
+ *  If extended header information is not present it will assume that the file
+ *  is a DOS executable. If extended header information is present it will
+ *  determine if the file is a 16 or 32 bit Windows executable by checking the
+ *  flags in the header.
+ *
+ *  ".com" and ".pif" files are only recognized by their file name extension,
+ *  as per native Windows.
  */
 BOOL WINAPI GetBinaryTypeA( LPCSTR lpApplicationName, LPDWORD lpBinaryType )
 {
@@ -338,6 +353,8 @@ BOOL WINAPI GetBinaryTypeA( LPCSTR lpApplicationName, LPDWORD lpBinaryType )
 
 /***********************************************************************
  *             GetBinaryTypeW                      [KERNEL32.@]
+ *
+ * Unicode version of GetBinaryTypeA.
  */
 BOOL WINAPI GetBinaryTypeW( LPCWSTR lpApplicationName, LPDWORD lpBinaryType )
 {
@@ -371,6 +388,15 @@ BOOL WINAPI GetBinaryTypeW( LPCWSTR lpApplicationName, LPDWORD lpBinaryType )
 /***********************************************************************
  *              GetModuleHandleA         (KERNEL32.@)
  *              GetModuleHandle32        (KERNEL.488)
+ *
+ * Get the handle of a dll loaded into the process address space.
+ *
+ * PARAMS
+ *  module [I] Name of the dll
+ *
+ * RETURNS
+ *  Success: A handle to the loaded dll.
+ *  Failure: A NULL handle. Use GetLastError() to determine the cause.
  */
 HMODULE WINAPI GetModuleHandleA(LPCSTR module)
 {
@@ -393,6 +419,8 @@ HMODULE WINAPI GetModuleHandleA(LPCSTR module)
 
 /***********************************************************************
  *		GetModuleHandleW (KERNEL32.@)
+ *
+ * Unicode version of GetModuleHandleA.
  */
 HMODULE WINAPI GetModuleHandleW(LPCWSTR module)
 {
@@ -417,15 +445,21 @@ HMODULE WINAPI GetModuleHandleW(LPCWSTR module)
  *              GetModuleFileNameA      (KERNEL32.@)
  *              GetModuleFileName32     (KERNEL.487)
  *
- * GetModuleFileNameA seems to *always* return the long path;
- * it's only GetModuleFileName16 that decides between short/long path
- * by checking if exe version >= 4.0.
- * (SDK docu doesn't mention this)
+ * Get the file name of a loaded module from its handle.
+ *
+ * RETURNS
+ *  Success: The length of the file name, excluding the terminating NUL.
+ *  Failure: 0. Use GetLastError() to determine the cause.
+ *
+ * NOTES
+ *  This function always returns the long path of hModule (as opposed to
+ *  GetModuleFileName16() which returns short paths when the modules version
+ *  field is < 4.0).
  */
 DWORD WINAPI GetModuleFileNameA(
-	HMODULE hModule,	/* [in] module handle (32bit) */
-	LPSTR lpFileName,	/* [out] filenamebuffer */
-        DWORD size )		/* [in] size of filenamebuffer */
+	HMODULE hModule,	/* [in] Module handle (32 bit) */
+	LPSTR lpFileName,	/* [out] Destination for file name */
+        DWORD size )		/* [in] Size of lpFileName in characters */
 {
     LPWSTR filenameW = HeapAlloc( GetProcessHeap(), 0, size * sizeof(WCHAR) );
 
@@ -442,6 +476,8 @@ DWORD WINAPI GetModuleFileNameA(
 
 /***********************************************************************
  *              GetModuleFileNameW      (KERNEL32.@)
+ *
+ * Unicode version of GetModuleFileNameA.
  */
 DWORD WINAPI GetModuleFileNameW( HMODULE hModule, LPWSTR lpFileName, DWORD size )
 {
@@ -522,11 +558,22 @@ static BOOL load_library_as_datafile( LPCWSTR name, HMODULE* hmod)
 /******************************************************************
  *		LoadLibraryExA          (KERNEL32.@)
  *
+ * Load a dll file into the process address space.
+ *
+ * PARAMS
+ *  libname [I] Name of the file to load
+ *  hfile   [I] Reserved, must be 0.
+ *  flags   [I] Flags for loading the dll
+ *
+ * RETURNS
+ *  Success: A handle to the loaded dll.
+ *  Failure: A NULL handle. Use GetLastError() to determine the cause.
+ *
+ * NOTES
  * The HFILE parameter is not used and marked reserved in the SDK. I can
  * only guess that it should force a file to be mapped, but I rather
  * ignore the parameter because it would be extremely difficult to
  * integrate this with different types of module representations.
- *
  */
 HMODULE WINAPI LoadLibraryExA(LPCSTR libname, HANDLE hfile, DWORD flags)
 {
@@ -568,6 +615,8 @@ HMODULE WINAPI LoadLibraryExA(LPCSTR libname, HANDLE hfile, DWORD flags)
 
 /***********************************************************************
  *           LoadLibraryExW       (KERNEL32.@)
+ *
+ * Unicode version of LoadLibraryExA.
  */
 HMODULE WINAPI LoadLibraryExW(LPCWSTR libnameW, HANDLE hfile, DWORD flags)
 {
@@ -603,6 +652,18 @@ HMODULE WINAPI LoadLibraryExW(LPCWSTR libnameW, HANDLE hfile, DWORD flags)
 
 /***********************************************************************
  *           LoadLibraryA         (KERNEL32.@)
+ *
+ * Load a dll file into the process address space.
+ *
+ * PARAMS
+ *  libname [I] Name of the file to load
+ *
+ * RETURNS
+ *  Success: A handle to the loaded dll.
+ *  Failure: A NULL handle. Use GetLastError() to determine the cause.
+ *
+ * NOTES
+ * See LoadLibraryExA().
  */
 HMODULE WINAPI LoadLibraryA(LPCSTR libname)
 {
@@ -611,6 +672,8 @@ HMODULE WINAPI LoadLibraryA(LPCSTR libname)
 
 /***********************************************************************
  *           LoadLibraryW         (KERNEL32.@)
+ *
+ * Unicode version of LoadLibraryA.
  */
 HMODULE WINAPI LoadLibraryW(LPCWSTR libnameW)
 {
@@ -620,6 +683,15 @@ HMODULE WINAPI LoadLibraryW(LPCWSTR libnameW)
 /***********************************************************************
  *           FreeLibrary   (KERNEL32.@)
  *           FreeLibrary32 (KERNEL.486)
+ *
+ * Free a dll loaded into the process address space.
+ *
+ * PARAMS
+ *  hLibModule [I] Handle to the dll returned by LoadLibraryA().
+ *
+ * RETURNS
+ *  Success: TRUE. The dll is removed if it is not still in use.
+ *  Failure: FALSE. Use GetLastError() to determine the cause.
  */
 BOOL WINAPI FreeLibrary(HINSTANCE hLibModule)
 {
@@ -648,6 +720,16 @@ BOOL WINAPI FreeLibrary(HINSTANCE hLibModule)
 
 /***********************************************************************
  *           GetProcAddress   		(KERNEL32.@)
+ *
+ * Find the address of an exported symbol in a loaded dll.
+ *
+ * PARAMS
+ *  hModule  [I] Handle to the dll returned by LoadLibraryA().
+ *  function [I] Name of the symbol, or an integer ordinal number < 16384
+ *
+ * RETURNS
+ *  Success: A pointer to the symbol in the process address space.
+ *  Failure: NULL. Use GetLastError() to determine the cause.
  */
 FARPROC WINAPI GetProcAddress( HMODULE hModule, LPCSTR function )
 {
@@ -673,6 +755,16 @@ FARPROC WINAPI GetProcAddress( HMODULE hModule, LPCSTR function )
 
 /***********************************************************************
  *           GetProcAddress32   		(KERNEL.453)
+ *
+ * Find the address of an exported symbol in a loaded dll.
+ *
+ * PARAMS
+ *  hModule  [I] Handle to the dll returned by LoadLibraryA().
+ *  function [I] Name of the symbol, or an integer ordinal number < 16384
+ *
+ * RETURNS
+ *  Success: A pointer to the symbol in the process address space.
+ *  Failure: NULL. Use GetLastError() to determine the cause.
  */
 FARPROC WINAPI GetProcAddress32_16( HMODULE hModule, LPCSTR function )
 {

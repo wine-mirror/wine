@@ -817,7 +817,7 @@ LookupPrivilegeValueW( LPCWSTR lpSystemName, LPCWSTR lpName, PLUID lpLuid )
  * PARAMS
  *  lpSystemName [I] Name of the system
  *  lpName       [I] Name of the privilege
- *  pLuid        [O] Destination for the resulting LUD
+ *  pLuid        [O] Destination for the resulting LUID
  *
  * RETURNS
  *  Success: TRUE. pLuid contains the requested LUID.
