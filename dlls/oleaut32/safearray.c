@@ -262,6 +262,8 @@ SAFEARRAY* WINAPI SafeArrayCreate(
   HRESULT   hRes;
   USHORT    cDim;
 
+  TRACE("(%d, %d, %p)\n", vt, cDims, rgsabound);
+
   /* Validate supported VARTYPE */
   if ( (vt >= LAST_VARTYPE) ||
        ( VARTYPE_SIZE[vt] == VARTYPE_NOT_SUPPORTED ) )
@@ -859,7 +861,9 @@ SAFEARRAY* WINAPI SafeArrayCreateVector(
   ULONG   cElements)
 {
   SAFEARRAY *psa;
-  LPVOID    *ptr;
+  BYTE *ptr;
+
+  TRACE("%d, %ld, %ld\n", vt, lLbound, cElements);
 
   /* Validate supported VARTYPE */
   if ( (vt >= LAST_VARTYPE) ||
