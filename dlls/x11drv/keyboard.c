@@ -1358,15 +1358,22 @@ UINT X11DRV_MapVirtualKey(UINT wCode, UINT wMapType)
 		        return 0; }
 
 		case 2: { /* vkey-code to unshifted ANSI code */
-			/* (was FIXME) : what does unshifted mean ? 'a' or 'A' ? */
-		        /* My Windows returns 'A'. */
+                        /* we still don't know what "unshifted" means. in windows VK_W (0x57)
+                         * returns 0x57, which is upercase 'W'. So we have to return the uppercase
+                         * key.. Looks like something is wrong with the MS docs?
+                         * This is only true for letters, for example VK_0 returns '0' not ')'.
+                         * - hence we use the lock mask to ensure this happens.
+                         */
 			/* let's do vkey -> keycode -> (XLookupString) ansi char */
 			XKeyEvent e;
 			KeySym keysym;
 			int keyc;
 			char s[2];
 			e.display = display;
-			e.state = 0; /* unshifted */
+
+			e.state = LockMask;
+			/* LockMask should behave exactly like caps lock - upercase
+			 * the letter keys and thats about it. */
 
 			e.keycode = 0;
 			/* We exit on the first keycode found, to speed up the thing. */
