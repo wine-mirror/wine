@@ -23,6 +23,8 @@ extern HGLOBAL16 GLOBAL_Alloc( WORD flags, DWORD size, HGLOBAL16 hOwner,
 extern DWORD VIRTUAL_GetPageSize(void);
 extern DWORD VIRTUAL_GetGranularity(void);
 extern LPVOID VIRTUAL_MapFileW( LPCWSTR name );
+extern LPVOID VIRTUAL_mmap( int unix_handle, LPVOID start, DWORD size,
+                            DWORD offset, int prot, int flags );
 
 typedef BOOL (*HANDLERPROC)(LPVOID, LPCVOID);
 extern BOOL VIRTUAL_SetFaultHandler(LPCVOID addr, HANDLERPROC proc, LPVOID arg);

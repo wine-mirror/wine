@@ -265,7 +265,7 @@ static void VIRTUAL_DeleteView(
             FILE_VIEW *view /* [in] View */
 ) {
     if (!(view->flags & VFLAG_SYSTEM))
-        FILE_munmap( (void *)view->base, 0, view->size );
+        munmap( (void *)view->base, view->size );
     if (view->next) view->next->prev = view->prev;
     if (view->prev) view->prev->next = view->next;
     else VIRTUAL_FirstView = view->next;
@@ -414,11 +414,11 @@ static LPVOID map_image( HANDLE hmapping, int fd, char *base, DWORD total_size,
 
     /* zero-map the whole range */
 
-    if ((ptr = FILE_dommap( -1, base, 0, total_size, 0, 0, PROT_READ|PROT_WRITE|PROT_EXEC,
-                            MAP_PRIVATE )) == (char *)-1)
+    if ((ptr = VIRTUAL_mmap( -1, base, total_size, 0,
+                             PROT_READ | PROT_WRITE | PROT_EXEC, 0 )) == (char *)-1)
     {
-        ptr = FILE_dommap( -1, NULL, 0, total_size, 0, 0,
-                           PROT_READ|PROT_WRITE|PROT_EXEC, MAP_PRIVATE );
+        ptr = VIRTUAL_mmap( -1, NULL, total_size, 0,
+                            PROT_READ | PROT_WRITE | PROT_EXEC, 0 );
         if (ptr == (char *)-1)
         {
             ERR_(module)("Not enough memory for module (%ld bytes)\n", total_size);
@@ -431,15 +431,15 @@ static LPVOID map_image( HANDLE hmapping, int fd, char *base, DWORD total_size,
                                      VPROT_COMMITTED|VPROT_READ|VPROT_WRITE|VPROT_WRITECOPY,
                                      hmapping )))
     {
-        FILE_munmap( ptr, 0, total_size );
+        munmap( ptr, total_size );
         SetLastError( ERROR_OUTOFMEMORY );
         goto error;
     }
 
     /* map the header */
 
-    if (FILE_dommap( fd, ptr, 0, header_size, 0, 0,
-                     PROT_READ | PROT_WRITE, MAP_PRIVATE | MAP_FIXED ) == (char *)-1) goto error;
+    if (VIRTUAL_mmap( fd, ptr, header_size, 0, PROT_READ | PROT_WRITE,
+                      MAP_PRIVATE | MAP_FIXED ) == (char *)-1) goto error;
     dos = (IMAGE_DOS_HEADER *)ptr;
     nt = (IMAGE_NT_HEADERS *)(ptr + dos->e_lfanew);
     if ((char *)(nt + 1) > ptr + header_size) goto error;
@@ -499,9 +499,9 @@ static LPVOID map_image( HANDLE hmapping, int fd, char *base, DWORD total_size,
                           sec->Name, (char *)ptr + sec->VirtualAddress,
                           sec->PointerToRawData, pos, sec->SizeOfRawData,
                           size, sec->Characteristics );
-            if (FILE_dommap( shared_fd, (char *)ptr + sec->VirtualAddress, 0, size,
-                             0, pos, PROT_READ|PROT_WRITE|PROT_EXEC,
-                             MAP_SHARED|MAP_FIXED ) == (void *)-1)
+            if (VIRTUAL_mmap( shared_fd, (char *)ptr + sec->VirtualAddress, size,
+                              pos, PROT_READ|PROT_WRITE|PROT_EXEC,
+                              MAP_SHARED|MAP_FIXED ) == (void *)-1)
             {
                 ERR_(module)( "Could not map shared section %.8s\n", sec->Name );
                 goto error;
@@ -518,12 +518,12 @@ static LPVOID map_image( HANDLE hmapping, int fd, char *base, DWORD total_size,
                         sec->PointerToRawData, sec->SizeOfRawData,
                         sec->Characteristics );
 
-        /* Note: if the section is not aligned properly FILE_dommap will magically
+        /* Note: if the section is not aligned properly VIRTUAL_mmap will magically
          *       fall back to read(), so we don't need to check anything here.
          */
-        if (FILE_dommap( fd, (char *)ptr + sec->VirtualAddress, 0, sec->SizeOfRawData,
-                         0, sec->PointerToRawData, PROT_READ|PROT_WRITE|PROT_EXEC,
-                         MAP_PRIVATE | MAP_FIXED ) == (void *)-1)
+        if (VIRTUAL_mmap( fd, (char *)ptr + sec->VirtualAddress, sec->SizeOfRawData,
+                          sec->PointerToRawData, PROT_READ|PROT_WRITE|PROT_EXEC,
+                          MAP_PRIVATE | MAP_FIXED ) == (void *)-1)
         {
             ERR_(module)( "Could not map section %.8s, file probably truncated\n", sec->Name );
             goto error;
@@ -646,6 +646,82 @@ DWORD VIRTUAL_HandleFault( LPCVOID addr )
 
 
 /***********************************************************************
+ *           VIRTUAL_mmap
+ *
+ * Wrapper for mmap() that handles anonymous mappings portably,
+ * and falls back to read if mmap of a file fails.
+ */
+LPVOID VIRTUAL_mmap( int unix_handle, LPVOID start, DWORD size,
+                     DWORD offset, int prot, int flags )
+{
+    int fd = -1;
+    int pos;
+    LPVOID ret;
+
+    if (unix_handle == -1)
+    {
+#ifdef MAP_ANON
+        flags |= MAP_ANON;
+#else
+        static int fdzero = -1;
+
+        if (fdzero == -1)
+        {
+            if ((fdzero = open( "/dev/zero", O_RDONLY )) == -1)
+            {
+                perror( "/dev/zero: open" );
+                ExitProcess(1);
+            }
+        }
+        fd = fdzero;
+#endif  /* MAP_ANON */
+        /* Linux EINVAL's on us if we don't pass MAP_PRIVATE to an anon mmap */
+#ifdef MAP_SHARED
+        flags &= ~MAP_SHARED;
+#endif
+#ifdef MAP_PRIVATE
+        flags |= MAP_PRIVATE;
+#endif
+    }
+    else fd = unix_handle;
+
+    if ((ret = mmap( start, size, prot, flags, fd, offset )) != (LPVOID)-1)
+        return ret;
+
+    /* mmap() failed; if this is because the file offset is not    */
+    /* page-aligned (EINVAL), or because the underlying filesystem */
+    /* does not support mmap() (ENOEXEC,ENODEV), we do it by hand. */
+
+    if (unix_handle == -1) return ret;
+    if ((errno != ENOEXEC) && (errno != EINVAL) && (errno != ENODEV)) return ret;
+    if (prot & PROT_WRITE)
+    {
+        /* We cannot fake shared write mappings */
+#ifdef MAP_SHARED
+        if (flags & MAP_SHARED) return ret;
+#endif
+#ifdef MAP_PRIVATE
+        if (!(flags & MAP_PRIVATE)) return ret;
+#endif
+    }
+
+    /* Reserve the memory with an anonymous mmap */
+    ret = VIRTUAL_mmap( -1, start, size, 0, PROT_READ | PROT_WRITE, flags );
+    if (ret == (LPVOID)-1) return ret;
+    /* Now read in the file */
+    if ((pos = lseek( fd, offset, SEEK_SET )) == -1)
+    {
+        munmap( ret, size );
+        return (LPVOID)-1;
+    }
+    read( fd, ret, size );
+    lseek( fd, pos, SEEK_SET );  /* Restore the file pointer */
+    mprotect( ret, size, prot );  /* Set the right protection */
+    return ret;
+}
+
+
+/***********************************************************************
  *             VirtualAlloc   (KERNEL32.548)
  * Reserves or commits a region of pages in virtual address space
  *
@@ -721,8 +797,8 @@ LPVOID WINAPI VirtualAlloc(
         if (type & MEM_SYSTEM)
              ptr = base;
         else
-             ptr = (UINT)FILE_dommap( -1, (LPVOID)base, 0, view_size, 0, 0,
-                                       VIRTUAL_GetUnixProt( vprot ), MAP_PRIVATE );
+            ptr = (UINT)VIRTUAL_mmap( -1, (LPVOID)base, view_size, 0,
+                                      VIRTUAL_GetUnixProt( vprot ), 0 );
         if (ptr == (UINT)-1)
         {
             SetLastError( ERROR_OUTOFMEMORY );
@@ -736,28 +812,27 @@ LPVOID WINAPI VirtualAlloc(
             if (ptr & granularity_mask)
             {
                 UINT extra = granularity_mask + 1 - (ptr & granularity_mask);
-                FILE_munmap( (void *)ptr, 0, extra );
+                munmap( (void *)ptr, extra );
                 ptr += extra;
                 view_size -= extra;
             }
             if (view_size > size)
-                FILE_munmap( (void *)(ptr + size), 0, view_size - size );
+                munmap( (void *)(ptr + size), view_size - size );
         }
         else if (ptr != base)
         {
             /* We couldn't get the address we wanted */
-            FILE_munmap( (void *)ptr, 0, view_size );
+            munmap( (void *)ptr, view_size );
 	    SetLastError( ERROR_INVALID_ADDRESS );
 	    return NULL;
         }
         if (!(view = VIRTUAL_CreateView( ptr, size, (type & MEM_SYSTEM) ?
                                          VFLAG_SYSTEM : 0, vprot, -1 )))
         {
-            FILE_munmap( (void *)ptr, 0, size );
+            munmap( (void *)ptr, size );
             SetLastError( ERROR_OUTOFMEMORY );
             return NULL;
         }
-        VIRTUAL_DEBUG_DUMP_VIEW( view );
         return (LPVOID)ptr;
     }
 
@@ -849,9 +924,8 @@ BOOL WINAPI VirtualFree(
 
     /* Decommit the pages by remapping zero-pages instead */
 
-    if (FILE_dommap( -1, (LPVOID)base, 0, size, 0, 0,
-                     VIRTUAL_GetUnixProt( 0 ), MAP_PRIVATE|MAP_FIXED ) 
-        != (LPVOID)base)
+    if (VIRTUAL_mmap( -1, (LPVOID)base, size, 0, VIRTUAL_GetUnixProt( 0 ),
+                      MAP_FIXED ) != (LPVOID)base)
         ERR( "Could not remap pages, expect trouble\n" );
     return VIRTUAL_SetProt( view, base, size, 0 );
 }
@@ -940,7 +1014,7 @@ BOOL WINAPI VirtualProtect(
         }
     }
 
-    VIRTUAL_GetWin32Prot( view->prot[0], old_prot, NULL );
+    if (old_prot) VIRTUAL_GetWin32Prot( view->prot[0], old_prot, NULL );
     vprot = VIRTUAL_GetProt( new_prot ) | VPROT_COMMITTED;
     return VIRTUAL_SetProt( view, base, size, vprot );
 }
@@ -1492,8 +1566,8 @@ LPVOID WINAPI MapViewOfFileEx(
 
     TRACE("handle=%x size=%x offset=%lx\n", handle, size, offset_low );
 
-    ptr = (UINT)FILE_dommap( unix_handle, addr, 0, size, 0, offset_low,
-                             VIRTUAL_GetUnixProt( prot ), flags );
+    ptr = (UINT)VIRTUAL_mmap( unix_handle, addr, size, offset_low,
+                              VIRTUAL_GetUnixProt( prot ), flags );
     if (ptr == (UINT)-1) {
         /* KB: Q125713, 25-SEP-1995, "Common File Mapping Problems and
 	 * Platform Differences": 
@@ -1518,7 +1592,7 @@ LPVOID WINAPI MapViewOfFileEx(
 
 error:
     if (unix_handle != -1) close( unix_handle );
-    if (ptr != (UINT)-1) FILE_munmap( (void *)ptr, 0, size );
+    if (ptr != (UINT)-1) munmap( (void *)ptr, size );
     return NULL;
 }
 

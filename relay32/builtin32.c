@@ -22,7 +22,6 @@
 #include "wine/winbase16.h"
 #include "builtin32.h"
 #include "elfdll.h"
-#include "file.h"
 #include "global.h"
 #include "neexe.h"
 #include "heap.h"
@@ -130,8 +129,8 @@ static HMODULE BUILTIN32_DoLoadImage( const BUILTIN32_DESCRIPTOR *descr )
 
     if (descr->pe_header)
     {
-        if ((addr = FILE_dommap( -1, descr->pe_header, 0, page_size, 0, 0,
-                                 PROT_READ|PROT_WRITE, MAP_FIXED )) != descr->pe_header)
+        if ((addr = VIRTUAL_mmap( -1, descr->pe_header, page_size, 0,
+                                  PROT_READ|PROT_WRITE, MAP_FIXED )) != descr->pe_header)
         {
             ERR("failed to map over PE header for %s at %p\n", descr->filename, descr->pe_header );
             return 0;

@@ -41,11 +41,6 @@ extern HANDLE FILE_CreateFile( LPCSTR filename, DWORD access, DWORD sharing,
                                DWORD attributes, HANDLE template, BOOL fail_read_only );
 extern HFILE FILE_CreateDevice( int client_id, DWORD access,
                                   LPSECURITY_ATTRIBUTES sa );
-extern LPVOID FILE_dommap( int unix_handle, LPVOID start,
-                           DWORD size_high, DWORD size_low,
-                           DWORD offset_high, DWORD offset_low,
-                           int prot, int flags );
-extern int FILE_munmap( LPVOID start, DWORD size_high, DWORD size_low );
 extern HFILE16 FILE_AllocDosHandle( HANDLE handle );
 extern HANDLE FILE_GetHandle( HFILE16 hfile );
 
