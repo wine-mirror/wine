@@ -70,7 +70,7 @@ rsrc	user32
  65 stdcall CreateAcceleratorTableW(ptr long) CreateAcceleratorTableW
  66 stdcall CreateCaret(long long long long) CreateCaret
  67 stdcall CreateCursor(long long long long long ptr ptr) CreateCursor
- 68 stub CreateDesktopA
+ 68 stdcall CreateDesktopA(str str ptr long long ptr) CreateDesktopA
  69 stdcall CreateDesktopW(wstr wstr ptr long long ptr) CreateDesktopW
  70 stdcall CreateDialogIndirectParamA(long ptr long ptr long) CreateDialogIndirectParamA
  71 stdcall CreateDialogIndirectParamAorW (long ptr long ptr long) CreateDialogIndirectParamAorW
@@ -594,7 +594,7 @@ rsrc	user32
 #late additions
 589 stdcall ChangeDisplaySettingsA(ptr long) ChangeDisplaySettingsA
 590 stub ChangeDisplaySettingsW
-591 stub EnumDesktopWindows
+591 stdcall EnumDesktopWindows(long ptr ptr) EnumDesktopWindows
 592 stdcall EnumDisplaySettingsA(str long ptr) EnumDisplaySettingsA
 593 stdcall EnumDisplaySettingsW(wstr long ptr ) EnumDisplaySettingsW
 594 stdcall GetWindowRgn(long long) GetWindowRgn

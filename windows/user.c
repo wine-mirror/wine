@@ -590,6 +590,20 @@ BOOL WINAPI SetUserObjectSecurity(
 }
 
 /***********************************************************************
+ *           CreateDesktopA   (USER32.68)
+ */
+HDESK WINAPI CreateDesktopA(
+	LPSTR lpszDesktop,LPSTR lpszDevice,LPDEVMODEA pDevmode,
+	DWORD dwFlags,DWORD dwDesiredAccess,LPSECURITY_ATTRIBUTES lpsa
+) {
+	FIXME_(win32)("(%s,%s,%p,0x%08lx,0x%08lx,%p),stub!\n",
+		lpszDesktop,lpszDevice,pDevmode,
+		dwFlags,dwDesiredAccess,lpsa
+	);
+	return 0xcafedead;
+}
+
+/***********************************************************************
  *           CreateDesktopW   (USER32.69)
  */
 HDESK WINAPI CreateDesktopW(
@@ -602,6 +616,15 @@ HDESK WINAPI CreateDesktopW(
 	);
 	return 0xcafedead;
 }
+
+/***********************************************************************
+ *           EnumDesktopWindows   (USER32.591)
+ */
+BOOL WINAPI EnumDesktopWindows( HDESK hDesktop, WNDENUMPROC lpfn, LPARAM lParam ) {
+  FIXME_(win32)("(0x%08x, %p, 0x%08lx), stub!\n", hDesktop, lpfn, lParam );
+  return TRUE;
+}
+
 
 /***********************************************************************
  *           CloseWindowStation
