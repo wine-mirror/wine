@@ -155,19 +155,21 @@ static HRESULT WINAPI IGetFrame_fnQueryInterface(IGetFrame *iface,
 static ULONG   WINAPI IGetFrame_fnAddRef(IGetFrame *iface)
 {
   IGetFrameImpl *This = (IGetFrameImpl *)iface;
+  ULONG ref = InterlockedIncrement(&This->ref);
 
   TRACE("(%p)\n", iface);
 
-  return ++(This->ref);
+  return ref;
 }
 
 static ULONG   WINAPI IGetFrame_fnRelease(IGetFrame *iface)
 {
   IGetFrameImpl *This = (IGetFrameImpl *)iface;
+  ULONG ref = InterlockedDecrement(&This->ref);
 
   TRACE("(%p)\n", iface);
 
-  if (!--(This->ref)) {
+  if (!ref) {
     AVIFILE_CloseCompressor(This);
     if (This->pStream != NULL) {
       IAVIStream_Release(This->pStream);
@@ -178,7 +180,7 @@ static ULONG   WINAPI IGetFrame_fnRelease(IGetFrame *iface)
     return 0;
   }
 
-  return This->ref;
+  return ref;
 }
 
 static LPVOID  WINAPI IGetFrame_fnGetFrame(IGetFrame *iface, LONG lPos)

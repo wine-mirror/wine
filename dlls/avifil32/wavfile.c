@@ -272,16 +272,17 @@ static ULONG WINAPI IAVIFile_fnAddRef(IAVIFile *iface)
 
   TRACE("(%p)\n",iface);
 
-  return ++(This->ref);
+  return InterlockedIncrement(&This->ref);
 }
 
 static ULONG WINAPI IAVIFile_fnRelease(IAVIFile *iface)
 {
   IAVIFileImpl *This = (IAVIFileImpl *)iface;
+  ULONG ref = InterlockedDecrement(&This->ref);
 
   TRACE("(%p)\n",iface);
 
-  if (!--(This->ref)) {
+  if (!ref) {
     if (This->fDirty) {
       /* need to write headers to file */
       AVIFILE_SaveFile(This);
@@ -309,7 +310,7 @@ static ULONG WINAPI IAVIFile_fnRelease(IAVIFile *iface)
     LocalFree((HLOCAL)This);
     return 0;
   }
-  return This->ref;
+  return ref;
 }
 
 static HRESULT WINAPI IAVIFile_fnInfo(IAVIFile *iface, LPAVIFILEINFOW afi,

@@ -152,18 +152,21 @@ static HRESULT WINAPI ITmpFile_fnQueryInterface(IAVIFile *iface, REFIID refiid,
 static ULONG   WINAPI ITmpFile_fnAddRef(IAVIFile *iface)
 {
   ITmpFileImpl *This = (ITmpFileImpl *)iface;
+  ULONG ref = InterlockedIncrement(&This->ref);
 
-  TRACE("(%p) -> %ld\n", iface, This->ref + 1);
-  return ++(This->ref);
+  TRACE("(%p) -> %ld\n", iface, ref);
+
+  return ref;
 }
 
 static ULONG   WINAPI ITmpFile_fnRelease(IAVIFile *iface)
 {
   ITmpFileImpl *This = (ITmpFileImpl *)iface;
+  ULONG ref = InterlockedDecrement(&This->ref);
 
-  TRACE("(%p) -> %ld\n", iface, This->ref - 1);
+  TRACE("(%p) -> %ld\n", iface, ref);
 
-  if (!--(This->ref)) {
+  if (!ref) {
     unsigned int i;
 
     for (i = 0; i < This->fInfo.dwStreams; i++) {
@@ -178,7 +181,7 @@ static ULONG   WINAPI ITmpFile_fnRelease(IAVIFile *iface)
     return 0;
   }
 
-  return This->ref;
+  return ref;
 }
 
 static HRESULT WINAPI ITmpFile_fnInfo(IAVIFile *iface,

@@ -163,14 +163,15 @@ static HRESULT WINAPI ICMStream_fnQueryInterface(IAVIStream *iface,
 static ULONG WINAPI ICMStream_fnAddRef(IAVIStream *iface)
 {
   IAVIStreamImpl *This = (IAVIStreamImpl *)iface;
+  ULONG ref = InterlockedIncrement(&This->ref);
 
-  TRACE("(%p) -> %ld\n", iface, This->ref + 1);
+  TRACE("(%p) -> %ld\n", iface, ref);
 
   /* also add reference to the nested stream */
   if (This->pStream != NULL)
     IAVIStream_AddRef(This->pStream);
 
-  return ++(This->ref);
+  return ref;
 }
 
 static ULONG WINAPI ICMStream_fnRelease(IAVIStream* iface)

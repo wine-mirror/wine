@@ -282,21 +282,22 @@ static HRESULT WINAPI IAVIFile_fnQueryInterface(IAVIFile *iface, REFIID refiid,
 static ULONG WINAPI IAVIFile_fnAddRef(IAVIFile *iface)
 {
   IAVIFileImpl *This = (IAVIFileImpl *)iface;
+  ULONG ref = InterlockedIncrement(&This->ref);
 
-  TRACE("(%p) -> %ld\n", iface, This->ref + 1);
-  return InterlockedIncrement(&This->ref);
+  TRACE("(%p) -> %ld\n", iface, ref);
+
+  return ref;
 }
 
 static ULONG WINAPI IAVIFile_fnRelease(IAVIFile *iface)
 {
   IAVIFileImpl *This = (IAVIFileImpl *)iface;
   UINT i;
-  ULONG ret;
+  ULONG ref = InterlockedDecrement(&This->ref);
 
-  TRACE("(%p) -> %ld\n", iface, This->ref - 1);
+  TRACE("(%p) -> %ld\n", iface, ref);
 
-  ret = InterlockedDecrement(&This->ref);
-  if (!ret) {
+  if (!ref) {
     if (This->fDirty) {
       /* need to write headers to file */
       AVIFILE_SaveFile(This);
@@ -337,7 +338,7 @@ static ULONG WINAPI IAVIFile_fnRelease(IAVIFile *iface)
 
     LocalFree((HLOCAL)This);
   }
-  return ret;
+  return ref;
 }
 
 static HRESULT WINAPI IAVIFile_fnInfo(IAVIFile *iface, LPAVIFILEINFOW afi,
@@ -737,27 +738,28 @@ static HRESULT WINAPI IAVIStream_fnQueryInterface(IAVIStream *iface,
 static ULONG WINAPI IAVIStream_fnAddRef(IAVIStream *iface)
 {
   IAVIStreamImpl *This = (IAVIStreamImpl *)iface;
+  ULONG ref = InterlockedIncrement(&This->ref);
 
-  TRACE("(%p) -> %ld\n", iface, This->ref + 1);
+  TRACE("(%p) -> %ld\n", iface, ref);
 
   /* also add ref to parent, so that it doesn't kill us */
   if (This->paf != NULL)
     IAVIFile_AddRef((PAVIFILE)This->paf);
 
-  return InterlockedIncrement(&This->ref);
+  return ref;
 }
 
 static ULONG WINAPI IAVIStream_fnRelease(IAVIStream* iface)
 {
   IAVIStreamImpl *This = (IAVIStreamImpl *)iface;
-  ULONG ret = InterlockedDecrement(&This->ref);
+  ULONG ref = InterlockedDecrement(&This->ref);
 
-  TRACE("(%p) -> %ld\n", iface, ret);
+  TRACE("(%p) -> %ld\n", iface, ref);
 
   if (This->paf != NULL)
     IAVIFile_Release((PAVIFILE)This->paf);
 
-  return ret;
+  return ref;
 }
 
 static HRESULT WINAPI IAVIStream_fnCreate(IAVIStream *iface, LPARAM lParam1,

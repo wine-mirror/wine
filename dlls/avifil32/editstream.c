@@ -381,20 +381,23 @@ static HRESULT WINAPI IAVIEditStream_fnQueryInterface(IAVIEditStream*iface,REFII
 static ULONG   WINAPI IAVIEditStream_fnAddRef(IAVIEditStream*iface)
 {
   IAVIEditStreamImpl *This = (IAVIEditStreamImpl *)iface;
+  ULONG ref = InterlockedIncrement(&This->ref);
 
-  TRACE("(%p) -> %ld\n", iface, This->ref + 1);
-  return ++(This->ref);
+  TRACE("(%p) -> %ld\n", iface, ref);
+
+  return ref;
 }
 
 static ULONG   WINAPI IAVIEditStream_fnRelease(IAVIEditStream*iface)
 {
   IAVIEditStreamImpl *This = (IAVIEditStreamImpl *)iface;
   DWORD i;
+  ULONG ref = InterlockedDecrement(&This->ref);
 
-  TRACE("(%p) -> %ld\n", iface, This->ref - 1);
+  TRACE("(%p) -> %ld\n", iface, ref);
 
-  if (!--(This->ref)) {
-    /* releaase memory */
+  if (!ref) {
+    /* release memory */
     if (This->pg != NULL)
       AVIStreamGetFrameClose(This->pg);
     if (This->pStreams != NULL) {
@@ -408,7 +411,7 @@ static ULONG   WINAPI IAVIEditStream_fnRelease(IAVIEditStream*iface)
     LocalFree((HLOCAL)This);
     return 0;
   }
-  return This->ref;
+  return ref;
 }
 
 static HRESULT WINAPI IAVIEditStream_fnCut(IAVIEditStream*iface,LONG*plStart,
