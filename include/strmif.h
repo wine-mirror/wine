@@ -268,6 +268,21 @@ typedef enum
 	State_Running = 2,
 } FILTER_STATE;
 
+typedef enum
+{
+	Famine = 0,
+	Flood = 1,
+} QualityMessageType;
+
+typedef enum
+{
+	REG_PINFLAG_B_ZERO = 0x1,
+	REG_PINFLAG_B_RENDERER = 0x2,
+	REG_PINFLAG_B_MANY = 0x4,
+	REG_PINFLAG_B_OUTPUT = 0x8,
+} REG_PINFLAG;
+
+
 /* structs. */
 
 typedef struct
@@ -321,6 +336,66 @@ typedef struct tagCOLORKEY
 	COLORREF	HighColorValue;
 } COLORKEY;
 
+typedef struct
+{
+	QualityMessageType	Type;
+	long			Proportion;
+	REFERENCE_TIME		Late;
+	REFERENCE_TIME		TimeStamp;
+} Quality;
+
+typedef struct
+{
+	const CLSID*	clsMajorType;
+	const CLSID*	clsMinorType;
+} REGPINTYPES;
+
+typedef struct
+{
+	LPWSTR	strName;
+	BOOL	bRendered;
+	BOOL	bOutput;
+	BOOL	bZero;
+	BOOL	bMany;
+	const CLSID*	clsConnectsToFilter;
+	const WCHAR*	strConnectsToPin;
+	UINT	nMediaTypes;
+	const REGPINTYPES*	lpMediaType;
+} REGFILTERPINS;
+
+typedef struct
+{
+	CLSID	clsMedium;
+	DWORD	dw1;
+	DWORD	dw2;
+} REGPINMEDIUM;
+
+typedef struct
+{
+	DWORD	dwFlags;
+	UINT	cInstances;
+	UINT	nMediaTypes;
+	const REGPINTYPES*	lpMediaType;
+	UINT	nMediums;
+	const REGPINMEDIUM*	lpMedium;
+	const CLSID*	clsPinCategory;
+} REGFILTERPINS2;
+
+typedef struct
+{
+	DWORD	dwVersion;
+	DWORD	dwMerit;
+	union {
+		struct {
+			ULONG	cPins;
+			const REGFILTERPINS*	rgPins;
+		} DUMMYSTRUCTNAME1;
+		struct {
+			ULONG	cPins2;
+			const REGFILTERPINS2*	rgPins2;
+		} DUMMYSTRUCTNAME2;
+	} DUMMYUNIONNAME;
+} REGFILTER2;
 
 
 /* defines. */
@@ -408,6 +483,30 @@ ICOM_DEFINE(IBaseFilter,IMediaFilter)
 #define IBaseFilter_QueryFilterInfo(p,a1) ICOM_CALL1(QueryFilterInfo,p,a1)
 #define IBaseFilter_JoinFilterGraph(p,a1,a2) ICOM_CALL2(JoinFilterGraph,p,a1,a2)
 #define IBaseFilter_QueryVendorInfo(p,a1) ICOM_CALL1(QueryVendorInfo,p,a1)
+
+/**************************************************************************
+ *
+ * ICreateDevEnum interface
+ *
+ */
+
+#define ICOM_INTERFACE ICreateDevEnum
+#define ICreateDevEnum_METHODS \
+    ICOM_METHOD3(HRESULT,CreateClassEnumerator,REFCLSID,a1,IEnumMoniker**,a2,DWORD,a3)
+
+#define ICreateDevEnum_IMETHODS \
+    IUnknown_IMETHODS \
+    ICreateDevEnum_METHODS
+
+ICOM_DEFINE(ICreateDevEnum,IUnknown)
+#undef ICOM_INTERFACE
+
+    /*** IUnknown methods ***/
+#define ICreateDevEnum_QueryInterface(p,a1,a2) ICOM_CALL2(QueryInterface,p,a1,a2)
+#define ICreateDevEnum_AddRef(p) ICOM_CALL (AddRef,p)
+#define ICreateDevEnum_Release(p) ICOM_CALL (Release,p)
+    /*** ICreateDevEnum methods ***/
+#define ICreateDevEnum_CreateClassEnumerator(p,a1,a2,a3) ICOM_CALL3(CreateClassEnumerator,p,a1,a2,a3)
 
 /**************************************************************************
  *
@@ -501,6 +600,61 @@ ICOM_DEFINE(IEnumPins,IUnknown)
 
 /**************************************************************************
  *
+ * IFileSinkFilter interface
+ *
+ */
+
+#define ICOM_INTERFACE IFileSinkFilter
+#define IFileSinkFilter_METHODS \
+    ICOM_METHOD2(HRESULT,SetFileName,LPCOLESTR,a1,const AM_MEDIA_TYPE*,a2) \
+    ICOM_METHOD2(HRESULT,GetCurFile,LPOLESTR*,a1,AM_MEDIA_TYPE*,a2)
+
+#define IFileSinkFilter_IMETHODS \
+    IUnknown_IMETHODS \
+    IFileSinkFilter_METHODS
+
+ICOM_DEFINE(IFileSinkFilter,IUnknown)
+#undef ICOM_INTERFACE
+
+    /*** IUnknown methods ***/
+#define IFileSinkFilter_QueryInterface(p,a1,a2) ICOM_CALL2(QueryInterface,p,a1,a2)
+#define IFileSinkFilter_AddRef(p) ICOM_CALL (AddRef,p)
+#define IFileSinkFilter_Release(p) ICOM_CALL (Release,p)
+    /*** IFileSinkFilter methods ***/
+#define IFileSinkFilter_SetFileName(p,a1,a2) ICOM_CALL2(SetFileName,p,a1,a2)
+#define IFileSinkFilter_GetCurFile(p,a1,a2) ICOM_CALL2(GetCurFile,p,a1,a2)
+
+/**************************************************************************
+ *
+ * IFileSinkFilter2 interface
+ *
+ */
+
+#define ICOM_INTERFACE IFileSinkFilter2
+#define IFileSinkFilter2_METHODS \
+    ICOM_METHOD1(HRESULT,SetMode,DWORD,a1) \
+    ICOM_METHOD1(HRESULT,GetMode,DWORD*,a1)
+
+#define IFileSinkFilter2_IMETHODS \
+    IFileSinkFilter_IMETHODS \
+    IFileSinkFilter2_METHODS
+
+ICOM_DEFINE(IFileSinkFilter2,IFileSinkFilter)
+#undef ICOM_INTERFACE
+
+    /*** IUnknown methods ***/
+#define IFileSinkFilter2_QueryInterface(p,a1,a2) ICOM_CALL2(QueryInterface,p,a1,a2)
+#define IFileSinkFilter2_AddRef(p) ICOM_CALL (AddRef,p)
+#define IFileSinkFilter2_Release(p) ICOM_CALL (Release,p)
+    /*** IFileSinkFilter methods ***/
+#define IFileSinkFilter2_SetFileName(p,a1,a2) ICOM_CALL2(SetFileName,p,a1,a2)
+#define IFileSinkFilter2_GetCurFile(p,a1,a2) ICOM_CALL2(GetCurFile,p,a1,a2)
+    /*** IFileSinkFilter2 methods ***/
+#define IFileSinkFilter2_SetMode(p,a1) ICOM_CALL1(SetMode,p,a1)
+#define IFileSinkFilter2_GetMode(p,a1) ICOM_CALL1(GetMode,p,a1)
+
+/**************************************************************************
+ *
  * IFileSourceFilter interface
  *
  */
@@ -524,6 +678,103 @@ ICOM_DEFINE(IFileSourceFilter,IUnknown)
     /*** IFileSourceFilter methods ***/
 #define IFileSourceFilter_Load(p,a1,a2) ICOM_CALL2(Load,p,a1,a2)
 #define IFileSourceFilter_GetCurFile(p,a1,a2) ICOM_CALL2(GetCurFile,p,a1,a2)
+
+/**************************************************************************
+ *
+ * IFilterMapper interface
+ *
+ */
+
+#define ICOM_INTERFACE IFilterMapper
+#define IFilterMapper_METHODS \
+    ICOM_METHOD3(HRESULT,RegisterFilter,CLSID,a1,LPCWSTR,a2,DWORD,a3) \
+    ICOM_METHOD3(HRESULT,RegisterFilterInstance,CLSID,a1,LPCWSTR,a2,CLSID*,a3) \
+    ICOM_METHOD8(HRESULT,RegisterPin,CLSID,a1,LPCWSTR,a2,BOOL,a3,BOOL,a4,BOOL,a5,BOOL,a6,CLSID,a7,LPCWSTR,a8) \
+    ICOM_METHOD4(HRESULT,RegisterPinType,CLSID,a1,LPCWSTR,a2,CLSID,a3,CLSID,a4) \
+    ICOM_METHOD1(HRESULT,UnregisterFilter,CLSID,a1) \
+    ICOM_METHOD1(HRESULT,UnregisterFilterInstance,CLSID,a1) \
+    ICOM_METHOD2(HRESULT,UnregisterPin,CLSID,a1,LPCWSTR,a2) \
+    ICOM_METHOD9(HRESULT,EnumMatchingFilters,IEnumRegFilters**,a1,DWORD,a2,BOOL,a3,CLSID,a4,CLSID,a5,BOOL,a6,BOOL,a7,CLSID,a8,CLSID,a9)
+
+#define IFilterMapper_IMETHODS \
+    IUnknown_IMETHODS \
+    IFilterMapper_METHODS
+
+ICOM_DEFINE(IFilterMapper,IUnknown)
+#undef ICOM_INTERFACE
+
+    /*** IUnknown methods ***/
+#define IFilterMapper_QueryInterface(p,a1,a2) ICOM_CALL2(QueryInterface,p,a1,a2)
+#define IFilterMapper_AddRef(p) ICOM_CALL (AddRef,p)
+#define IFilterMapper_Release(p) ICOM_CALL (Release,p)
+    /*** IFilterMapper methods ***/
+#define IFilterMapper_RegisterFilter(p,a1,a2,a3) ICOM_CALL3(RegisterFilter,p,a1,a2,a3)
+#define IFilterMapper_RegisterFilterInstance(p,a1,a2,a3) ICOM_CALL3(RegisterFilterInstance,p,a1,a2,a3)
+#define IFilterMapper_RegisterPin(p,a1,a2,a3,a4,a5,a6,a7,a8) ICOM_CALL8(RegisterPin,p,a1,a2,a3,a4,a5,a6,a7,a8)
+#define IFilterMapper_RegisterPinType(p,a1,a2,a3,a4) ICOM_CALL4(RegisterPinType,p,a1,a2,a3,a4)
+#define IFilterMapper_UnregisterFilter(p,a1) ICOM_CALL1(UnregisterFilter,p,a1)
+#define IFilterMapper_UnregisterFilterInstance(p,a1) ICOM_CALL1(UnregisterFilterInstance,p,a1)
+#define IFilterMapper_UnregisterPin(p,a1,a2) ICOM_CALL2(UnregisterPin,p,a1,a2)
+#define IFilterMapper_EnumMatchingFilters(p,a1,a2,a3,a4,a5,a6,a7,a8,a9) ICOM_CALL9(EnumMatchingFilters,p,a1,a2,a3,a4,a5,a6,a7,a8,a9)
+
+/**************************************************************************
+ *
+ * IFilterMapper2 interface
+ *
+ */
+
+#define ICOM_INTERFACE IFilterMapper2
+#define IFilterMapper2_METHODS \
+    ICOM_METHOD3(HRESULT,CreateCategory,REFCLSID,a1,DWORD,a2,LPCWSTR,a3) \
+    ICOM_METHOD3(HRESULT,UnregisterFilter,const CLSID*,a1,const OLECHAR*,a2,REFCLSID,a3) \
+    ICOM_METHOD6(HRESULT,RegisterFilter,REFCLSID,a1,LPCWSTR,a2,IMoniker**,a3,const CLSID*,a4,const OLECHAR*,a5,const REGFILTER2*,a6) \
+    ICOM_METHOD15(HRESULT,EnumMatchingFilters,IEnumMoniker**,a1,DWORD,a2,BOOL,a3,DWORD,a4,BOOL,a5,DWORD,a6,const GUID*,a7,const REGPINMEDIUM*,a8,const CLSID*,a9,BOOL,a10,BOOL,a11,DWORD,a12,const GUID*,a13,const REGPINMEDIUM*,a14,const CLSID*,a15)
+
+#define IFilterMapper2_IMETHODS \
+    IUnknown_IMETHODS \
+    IFilterMapper2_METHODS
+
+ICOM_DEFINE(IFilterMapper2,IUnknown)
+#undef ICOM_INTERFACE
+
+    /*** IUnknown methods ***/
+#define IFilterMapper2_QueryInterface(p,a1,a2) ICOM_CALL2(QueryInterface,p,a1,a2)
+#define IFilterMapper2_AddRef(p) ICOM_CALL (AddRef,p)
+#define IFilterMapper2_Release(p) ICOM_CALL (Release,p)
+    /*** IFilterMapper2 methods ***/
+#define IFilterMapper2_CreateCategory(p,a1,a2,a3) ICOM_CALL3(CreateCategory,p,a1,a2,a3)
+#define IFilterMapper2_UnregisterFilter(p,a1,a2,a3) ICOM_CALL3(UnregisterFilter,p,a1,a2,a3)
+#define IFilterMapper2_RegisterFilter(p,a1,a2,a3,a4,a5,a6) ICOM_CALL6(RegisterFilter,p,a1,a2,a3,a4,a5,a6)
+#define IFilterMapper2_EnumMatchingFilters(p,a1,a2,a3,a4,a5,a6,a7,a8,a9,a10,a11,a12,a13,a14,a15) ICOM_CALL15(EnumMatchingFilters,p,a1,a2,a3,a4,a5,a6,a7,a8,a9,a10,a11,a12,a13,a14,a15)
+
+/**************************************************************************
+ *
+ * IFilterMapper3 interface
+ *
+ */
+
+#define ICOM_INTERFACE IFilterMapper3
+#define IFilterMapper3_METHODS \
+    ICOM_METHOD1(HRESULT,GetICreateDevEnum,ICreateDevEnum**,a1)
+
+#define IFilterMapper3_IMETHODS \
+    IFilterMapper2_IMETHODS \
+    IFilterMapper3_METHODS
+
+ICOM_DEFINE(IFilterMapper3,IFilterMapper2)
+#undef ICOM_INTERFACE
+
+    /*** IUnknown methods ***/
+#define IFilterMapper3_QueryInterface(p,a1,a2) ICOM_CALL2(QueryInterface,p,a1,a2)
+#define IFilterMapper3_AddRef(p) ICOM_CALL (AddRef,p)
+#define IFilterMapper3_Release(p) ICOM_CALL (Release,p)
+    /*** IFilterMapper2 methods ***/
+#define IFilterMapper3_CreateCategory(p,a1,a2,a3) ICOM_CALL3(CreateCategory,p,a1,a2,a3)
+#define IFilterMapper3_UnregisterFilter(p,a1,a2,a3) ICOM_CALL3(UnregisterFilter,p,a1,a2,a3)
+#define IFilterMapper3_RegisterFilter(p,a1,a2,a3,a4,a5,a6) ICOM_CALL6(RegisterFilter,p,a1,a2,a3,a4,a5,a6)
+#define IFilterMapper3_EnumMatchingFilters(p,a1,a2,a3,a4,a5,a6,a7,a8,a9,a10,a11,a12,a13,a14,a15) ICOM_CALL15(EnumMatchingFilters,p,a1,a2,a3,a4,a5,a6,a7,a8,a9,a10,a11,a12,a13,a14,a15)
+    /*** IFilterMapper3 methods ***/
+#define IFilterMapper3_GetICreateDevEnum(p,a1) ICOM_CALL1(GetICreateDevEnum,p,a1)
 
 /**************************************************************************
  *
@@ -652,6 +903,54 @@ ICOM_DEFINE(IFilterGraph2,IGraphBuilder)
 #define IFilterGraph2_AddSourceFilterForMoniker(p,a1,a2,a3,a4) ICOM_CALL4(AddSourceFilterForMoniker,p,a1,a2,a3,a4)
 #define IFilterGraph2_ReconnectEx(p,a1,a2) ICOM_CALL2(ReconnectEx,p,a1,a2)
 #define IFilterGraph2_RenderEx(p,a1,a2,a3) ICOM_CALL3(RenderEx,p,a1,a2,a3)
+
+/**************************************************************************
+ *
+ * IGraphVersion interface
+ *
+ */
+
+#define ICOM_INTERFACE IGraphVersion
+#define IGraphVersion_METHODS \
+    ICOM_METHOD1(HRESULT,QueryVersion,LONG*,a1)
+
+#define IGraphVersion_IMETHODS \
+    IUnknown_IMETHODS \
+    IGraphVersion_METHODS
+
+ICOM_DEFINE(IGraphVersion,IUnknown)
+#undef ICOM_INTERFACE
+
+    /*** IUnknown methods ***/
+#define IGraphVersion_QueryInterface(p,a1,a2) ICOM_CALL2(QueryInterface,p,a1,a2)
+#define IGraphVersion_AddRef(p) ICOM_CALL (AddRef,p)
+#define IGraphVersion_Release(p) ICOM_CALL (Release,p)
+    /*** IGraphVersion methods ***/
+#define IGraphVersion_QueryVersion(p,a1) ICOM_CALL1(QueryVersion,p,a1)
+
+/**************************************************************************
+ *
+ * IMediaEventSink interface
+ *
+ */
+
+#define ICOM_INTERFACE IMediaEventSink
+#define IMediaEventSink_METHODS \
+    ICOM_METHOD3(HRESULT,Notify,long,a1,LONG_PTR,a2,LONG_PTR,a3)
+
+#define IMediaEventSink_IMETHODS \
+    IUnknown_IMETHODS \
+    IMediaEventSink_METHODS
+
+ICOM_DEFINE(IMediaEventSink,IUnknown)
+#undef ICOM_INTERFACE
+
+    /*** IUnknown methods ***/
+#define IMediaEventSink_QueryInterface(p,a1,a2) ICOM_CALL2(QueryInterface,p,a1,a2)
+#define IMediaEventSink_AddRef(p) ICOM_CALL (AddRef,p)
+#define IMediaEventSink_Release(p) ICOM_CALL (Release,p)
+    /*** IMediaEventSink methods ***/
+#define IMediaEventSink_Notify(p,a1,a2,a3) ICOM_CALL3(Notify,p,a1,a2,a3)
 
 /**************************************************************************
  *
@@ -985,6 +1284,32 @@ ICOM_DEFINE(IPin,IUnknown)
 
 /**************************************************************************
  *
+ * IQualityControl interface
+ *
+ */
+
+#define ICOM_INTERFACE IQualityControl
+#define IQualityControl_METHODS \
+    ICOM_METHOD2(HRESULT,Notify,IBaseFilter*,a1,Quality,a2) \
+    ICOM_METHOD1(HRESULT,SetSink,IQualityControl*,a1)
+
+#define IQualityControl_IMETHODS \
+    IUnknown_IMETHODS \
+    IQualityControl_METHODS
+
+ICOM_DEFINE(IQualityControl,IUnknown)
+#undef ICOM_INTERFACE
+
+    /*** IUnknown methods ***/
+#define IQualityControl_QueryInterface(p,a1,a2) ICOM_CALL2(QueryInterface,p,a1,a2)
+#define IQualityControl_AddRef(p) ICOM_CALL (AddRef,p)
+#define IQualityControl_Release(p) ICOM_CALL (Release,p)
+    /*** IQualityControl methods ***/
+#define IQualityControl_Notify(p,a1,a2) ICOM_CALL2(Notify,p,a1,a2)
+#define IQualityControl_SetSink(p,a1) ICOM_CALL1(SetSink,p,a1)
+
+/**************************************************************************
+ *
  * IReferenceClock interface
  *
  */
@@ -1039,5 +1364,32 @@ ICOM_DEFINE(IReferenceClock2,IReferenceClock)
 #define IReferenceClock2_AdvisePeriodic(p,a1,a2,a3,a4) ICOM_CALL4(AdvisePeriodic,p,a1,a2,a3,a4)
 #define IReferenceClock2_Unadvise(p,a1) ICOM_CALL1(Unadvise,p,a1)
     /*** IReferenceClock2 methods ***/
+
+/**************************************************************************
+ *
+ * ISeekingPassThru interface
+ *
+ */
+
+#define ICOM_INTERFACE ISeekingPassThru
+#define ISeekingPassThru_METHODS \
+    ICOM_METHOD2(HRESULT,Init,BOOL,a1,IPin*,a2)
+
+#define ISeekingPassThru_IMETHODS \
+    IUnknown_IMETHODS \
+    ISeekingPassThru_METHODS
+
+ICOM_DEFINE(ISeekingPassThru,IUnknown)
+#undef ICOM_INTERFACE
+
+    /*** IUnknown methods ***/
+#define ISeekingPassThru_QueryInterface(p,a1,a2) ICOM_CALL2(QueryInterface,p,a1,a2)
+#define ISeekingPassThru_AddRef(p) ICOM_CALL (AddRef,p)
+#define ISeekingPassThru_Release(p) ICOM_CALL (Release,p)
+    /*** ISeekingPassThru methods ***/
+#define ISeekingPassThru_Init(p,a1,a2) ICOM_CALL2(Init,p,a1,a2)
+
+
+
 
 #endif  /* __WINE_STRMIF_H_ */
