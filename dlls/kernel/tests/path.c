@@ -483,6 +483,7 @@ static void test_PathNameA(CHAR *curdir)
   CHAR curdir_short[MAX_PATH],
        longdir_short[MAX_PATH];
   CHAR tmpstr[MAX_PATH],tmpstr1[MAX_PATH];
+  LPSTR strptr;                 /*ptr to the filename portion of the path */
   DWORD len;
   INT i;
   CHAR dir[MAX_PATH],eight[MAX_PATH],three[MAX_PATH];
@@ -656,6 +657,59 @@ static void test_PathNameA(CHAR *curdir)
        "GetLongPathA returned %ld and not 'ERROR_FILE_NOT_FOUND'",
        passfail.longerror);
   }
+/* Test GetFullPathNameA with drive letters */
+  sprintf(tmpstr,"C:\\%s\\%s",SHORTDIR,SHORTFILE);
+  ok(GetFullPathNameA(tmpstr,MAX_PATH,tmpstr1,&strptr),"GetFullPathNameA failed");
+  ok(lstrcmpiA(tmpstr,tmpstr1)==0,
+      "GetLongPathNameA returned '%s' instead of '%s'",tmpstr1,tmpstr);
+  ok(lstrcmpiA(SHORTFILE,strptr)==0,
+      "GetLongPathNameA returned part '%s' instead of '%s'",strptr,SHORTFILE);
+/* Without a leading slash, insert the current directory if on the current drive */
+  sprintf(tmpstr,"%c:%s\\%s",curdir[0],SHORTDIR,SHORTFILE);
+  ok(GetFullPathNameA(tmpstr,MAX_PATH,tmpstr1,&strptr),"GetFullPathNameA failed");
+  sprintf(tmpstr,"%s\\%s\\%s",curdir,SHORTDIR,SHORTFILE);
+  ok(lstrcmpiA(tmpstr,tmpstr1)==0,
+      "GetLongPathNameA returned '%s' instead of '%s'",tmpstr1,tmpstr);
+  ok(lstrcmpiA(SHORTFILE,strptr)==0,
+      "GetLongPathNameA returned part '%s' instead of '%s'",strptr,SHORTFILE);
+/* Otherwise insert the missing leading slash */
+  sprintf(tmpstr,"D:%s\\%s",SHORTDIR,SHORTFILE);
+  ok(GetFullPathNameA(tmpstr,MAX_PATH,tmpstr1,&strptr),"GetFullPathNameA failed");
+  sprintf(tmpstr,"D:\\%s\\%s",SHORTDIR,SHORTFILE);
+  ok(lstrcmpiA(tmpstr,tmpstr1)==0,
+      "GetLongPathNameA returned '%s' instead of '%s'",tmpstr1,tmpstr);
+  ok(lstrcmpiA(SHORTFILE,strptr)==0,
+      "GetLongPathNameA returned part '%s' instead of '%s'",strptr,SHORTFILE);
+/* Xilinx tools like to mix Unix and DOS formats, which Windows handles fine.
+   So test for them. */
+  sprintf(tmpstr,"C:/%s\\%s",SHORTDIR,SHORTFILE);
+  ok(GetFullPathNameA(tmpstr,MAX_PATH,tmpstr1,&strptr),"GetFullPathNameA failed");
+  sprintf(tmpstr,"C:\\%s\\%s",SHORTDIR,SHORTFILE);
+  ok(lstrcmpiA(tmpstr,tmpstr1)==0,
+      "GetLongPathNameA returned '%s' instead of '%s'",tmpstr1,tmpstr);
+  ok(lstrcmpiA(SHORTFILE,strptr)==0,
+      "GetLongPathNameA returned part '%s' instead of '%s'",strptr,SHORTFILE);
+/**/
+  sprintf(tmpstr,"%c:%s/%s",curdir[0],SHORTDIR,SHORTFILE);
+  ok(GetFullPathNameA(tmpstr,MAX_PATH,tmpstr1,&strptr),"GetFullPathNameA failed");
+  sprintf(tmpstr,"%s\\%s\\%s",curdir,SHORTDIR,SHORTFILE);
+  ok(lstrcmpiA(tmpstr,tmpstr1)==0,
+      "GetLongPathNameA returned '%s' instead of '%s'",tmpstr1,tmpstr);
+  ok(lstrcmpiA(SHORTFILE,strptr)==0,
+      "GetLongPathNameA returned part '%s' instead of '%s'",strptr,SHORTFILE);
+/* Windows will insert a drive letter in front of an absolute UNIX path, but
+    Wine probably shouldn't. */
+  sprintf(tmpstr,"/%s/%s",SHORTDIR,SHORTFILE);
+  ok(GetFullPathNameA(tmpstr,MAX_PATH,tmpstr1,&strptr),"GetFullPathNameA failed");
+  todo_wine {
+    sprintf(tmpstr,"C:\\%s\\%s",SHORTDIR,SHORTFILE);
+    ok(lstrcmpiA(tmpstr,tmpstr1)==0,
+        "GetLongPathNameA returned '%s' instead of '%s'",tmpstr1,tmpstr);
+  }
+/* This passes in Wine because it still contains the pointer from the previous test */
+  ok(lstrcmpiA(SHORTFILE,strptr)==0,
+      "GetLongPathNameA returned part '%s' instead of '%s'",strptr,SHORTFILE);
+
 /* Now try some relative paths */
   ok(GetShortPathNameA(LONGDIR,tmpstr,MAX_PATH),"GetShortPathNameA failed");
   test_SplitShortPathA(tmpstr,dir,eight,three);
