@@ -181,7 +181,7 @@ static void ctl2_init_header(
     This->typelib_header.posguid = -1;
     This->typelib_header.lcid = 0x0409; /* or do we use the current one? */
     This->typelib_header.lcid2 = 0x0409;
-    This->typelib_header.varflags = 0x41;
+    This->typelib_header.varflags = 0x40;
     This->typelib_header.version = 0;
     This->typelib_header.flags = 0;
     This->typelib_header.nrtypeinfos = 0;
@@ -3097,6 +3097,8 @@ static ICreateTypeLib2 *ICreateTypeLib2_Constructor(SYSKIND syskind, LPCOLESTR s
 
     ctl2_init_header(pCreateTypeLib2Impl);
     ctl2_init_segdir(pCreateTypeLib2Impl);
+
+    pCreateTypeLib2Impl->typelib_header.varflags |= syskind;
 
     /*
      * The following two calls return an offset or -1 if out of memory. We
