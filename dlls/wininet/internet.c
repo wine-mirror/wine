@@ -52,6 +52,7 @@
 #include "windef.h"
 #include "winbase.h"
 #include "winreg.h"
+#include "winuser.h"
 #include "wininet.h"
 #include "winnls.h"
 #include "wine/debug.h"
@@ -63,6 +64,7 @@
 #include "excpt.h"
 
 #include "internet.h"
+#include "resource.h"
 
 #include "wine/unicode.h"
 
@@ -98,6 +100,7 @@ HANDLE hEventArray[2];
 CRITICAL_SECTION csQueue;
 LPWORKREQUEST lpHeadWorkQueue;
 LPWORKREQUEST lpWorkQueueTail;
+HMODULE WININET_hModule;
 
 extern void URLCacheContainers_CreateDefaults();
 extern void URLCacheContainers_DeleteAll();
@@ -279,6 +282,8 @@ BOOL WINAPI DllMain (HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
             dwNumThreads = 0;
             dwNumIdleThreads = 0;
 	    dwNumJobs = 0;
+
+            WININET_hModule = (HMODULE)hinstDLL;
 
         case DLL_THREAD_ATTACH:
 	    {
@@ -650,16 +655,32 @@ BOOL WINAPI InternetGetConnectedState(LPDWORD lpdwStatus, DWORD dwReserved)
  *
  * Return connected state
  *
+ * PARAMS
+ *
+ * lpdwStatus         [O] Flags specifying the status of the internet connection.
+ * lpszConnectionName [O] Pointer to buffer to receive the friendly name of the internet connection.
+ * dwNameLen          [I] Size of the buffer, in characters.
+ * dwReserved         [I] Reserved. Must be set to 0.
+ *
  * RETURNS
  *    TRUE if connected
  *    if lpdwStatus is not null, return the status (off line,
  *    modem, lan...) in it.
  *    FALSE if not connected
+ *
+ * NOTES
+ *   If the system has no available network connections, an empty string is
+ *   stored in lpszConnectionName. If there is a LAN connection, a localized
+ *   "LAN Connection" string is stored. Presumably, if only a dial-up
+ *   connection is available then the name of the dial-up connection is
+ *   returned. Why any application, other than the "Internet Settings" CPL,
+ *   would want to use this function instead of the simpler InternetGetConnectedStateW
+ *   function is beyond me.
  */
 BOOL WINAPI InternetGetConnectedStateExW(LPDWORD lpdwStatus, LPWSTR lpszConnectionName,
                                          DWORD dwNameLen, DWORD dwReserved)
 {
-    TRACE("(%p, %s, %ld, 0x%08lx)\n", lpdwStatus, debugstr_w(lpszConnectionName), dwNameLen, dwReserved);
+    TRACE("(%p, %p, %ld, 0x%08lx)\n", lpdwStatus, lpszConnectionName, dwNameLen, dwReserved);
 
     /* Must be zero */
     if(dwReserved)
@@ -669,7 +690,7 @@ BOOL WINAPI InternetGetConnectedStateExW(LPDWORD lpdwStatus, LPWSTR lpszConnecti
         FIXME("always returning LAN connection.\n");
         *lpdwStatus = INTERNET_CONNECTION_LAN;
     }
-    return TRUE;
+    return LoadStringW(WININET_hModule, IDS_LANCONNECTION, lpszConnectionName, dwNameLen);
 }
 
 
@@ -682,7 +703,7 @@ BOOL WINAPI InternetGetConnectedStateExA(LPDWORD lpdwStatus, LPSTR lpszConnectio
     LPWSTR lpwszConnectionName = NULL;
     BOOL rc;
 
-    TRACE("(%p, %s, %ld, 0x%08lx)\n", lpdwStatus, debugstr_a(lpszConnectionName), dwNameLen, dwReserved);
+    TRACE("(%p, %p, %ld, 0x%08lx)\n", lpdwStatus, lpszConnectionName, dwNameLen, dwReserved);
 
     if (lpszConnectionName && dwNameLen > 0)
         lpwszConnectionName= HeapAlloc(GetProcessHeap(), 0, dwNameLen * sizeof(WCHAR));
