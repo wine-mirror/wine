@@ -43,3 +43,17 @@ typedef struct {
 
 DWORD WINAPI SHLWAPI_2(LPCWSTR x, UNKNOWN_SHLWAPI_2 *y);
 
+/* Macro to get function pointer for a module*/
+#define GET_FUNC(module, name, fail) \
+  if (!SHLWAPI_h##module) SHLWAPI_h##module = LoadLibraryA(#module ".dll"); \
+  if (!SHLWAPI_h##module) return fail; \
+  if (!pfnFunc) pfnFunc = (void*)GetProcAddress(SHLWAPI_h##module, name); \
+  if (!pfnFunc) return fail
+
+extern HMODULE SHLWAPI_hshell32;
+
+/* Shared internal functions */
+BOOL WINAPI SHLWAPI_PathFindLocalExeA(LPSTR lpszPath, DWORD dwWhich);
+BOOL WINAPI SHLWAPI_PathFindLocalExeW(LPWSTR lpszPath, DWORD dwWhich);
+BOOL WINAPI SHLWAPI_PathFindOnPathExA(LPSTR lpszFile,LPCSTR *lppszOtherDirs,DWORD dwWhich);
+BOOL WINAPI SHLWAPI_PathFindOnPathExW(LPWSTR lpszFile,LPCWSTR *lppszOtherDirs,DWORD dwWhich);

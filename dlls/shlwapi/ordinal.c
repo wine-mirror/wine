@@ -114,13 +114,6 @@ static const SHL_2_inet_scheme shlwapi_schemes[] = {
   {0, 0}
 };
 
-/* Macro to get function pointer for a module*/
-#define GET_FUNC(module, name, fail) \
-  if (!SHLWAPI_h##module) SHLWAPI_h##module = LoadLibraryA(#module ".dll"); \
-  if (!SHLWAPI_h##module) return fail; \
-  if (!pfnFunc) pfnFunc = (void*)GetProcAddress(SHLWAPI_h##module, name); \
-  if (!pfnFunc) return fail
-
 /*
  NOTES: Most functions exported by ordinal seem to be superflous.
  The reason for these functions to be there is to provide a wraper
@@ -199,7 +192,7 @@ DWORD WINAPI SHLWAPI_2 (LPCWSTR x, UNKNOWN_SHLWAPI_2 *y)
     INT len;
 
     if (y->size != 0x18) return E_INVALIDARG;
-    /* FIXME: leading white space generates error of 0x80041001 which 
+    /* FIXME: leading white space generates error of 0x80041001 which
      *        is undefined
      */
     if (*x <= L' ') return 0x80041001;
@@ -243,6 +236,73 @@ DWORD WINAPI SHLWAPI_2 (LPCWSTR x, UNKNOWN_SHLWAPI_2 *y)
     }
     HeapFree(GetProcessHeap(), 0, cmpstr);
     return S_OK;
+}
+
+/*************************************************************************
+ * @	[SHLWAPI.3]
+ *
+ * Determine if a file exists locally and is of an executable type.
+ *
+ * PARAMS
+ *  lpszFile       [O] File to search for
+ *  dwWhich        [I] Type of executable to search for
+ *
+ * RETURNS
+ *  TRUE  If the file was found. lpszFile contains the file name.
+ *  FALSE Otherwise.
+ *
+ * NOTES
+ *  lpszPath is modified in place and must be at least MAX_PATH in length.
+ *  If the function returns FALSE, the path is modified to its orginal state.
+ *  If the given path contains an extension or dwWhich is 0, executable
+ *  extensions are not checked.
+ *
+ *  Ordinals 3-6 are a classic case of MS exposing limited functionality to
+ *  users (here through PathFindOnPath) and keeping advanced functionality for
+ *  their own developers exclusive use. Monopoly, anyone?
+ */
+BOOL WINAPI SHLWAPI_3(LPSTR lpszFile,DWORD dwWhich)
+{
+  return SHLWAPI_PathFindLocalExeA(lpszFile,dwWhich);
+}
+
+/*************************************************************************
+ * @	[SHLWAPI.4]
+ *
+ * Unicode version of SHLWAPI_3.
+ */
+BOOL WINAPI SHLWAPI_4(LPWSTR lpszFile,DWORD dwWhich)
+{
+  return SHLWAPI_PathFindLocalExeW(lpszFile,dwWhich);
+}
+
+/*************************************************************************
+ * @	[SHLWAPI.5]
+ *
+ * Search a range of paths for a specific type of executable.
+ *
+ * PARAMS
+ *  lpszFile       [O] File to search for
+ *  lppszOtherDirs [I] Other directories to look in
+ *  dwWhich        [I] Type of executable to search for
+ *
+ * RETURNS
+ *  Success: TRUE. The path to the executable is stored in sFile.
+ *  Failure: FALSE. The path to the executable is unchanged.
+ */
+BOOL WINAPI SHLWAPI_5(LPSTR lpszFile,LPCSTR *lppszOtherDirs,DWORD dwWhich)
+{
+  return SHLWAPI_PathFindOnPathExA(lpszFile,lppszOtherDirs,dwWhich);
+}
+
+/*************************************************************************
+ * @	[SHLWAPI.6]
+ *
+ * Unicode version of SHLWAPI_5.
+ */
+BOOL WINAPI SHLWAPI_6(LPWSTR lpszFile,LPCWSTR *lppszOtherDirs,DWORD dwWhich)
+{
+  return SHLWAPI_PathFindOnPathExW(lpszFile,lppszOtherDirs,dwWhich);
 }
 
 /*************************************************************************

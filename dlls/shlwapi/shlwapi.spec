@@ -12,10 +12,10 @@ debug_channels (shell)
 
 1   stdcall @(str ptr) SHLWAPI_1
 2   stdcall @(wstr ptr) SHLWAPI_2
-3   stub @
-4   stub @
-5   stub @
-6   stub @
+3   stdcall @(str long) SHLWAPI_3
+4   stdcall @(wstr long) SHLWAPI_4
+5   stdcall @(str ptr long) SHLWAPI_5
+6   stdcall @(wstr ptr long) SHLWAPI_6
 7   stdcall @(long long ptr) SHLWAPI_7
 8   stdcall @(long long) SHLWAPI_8
 9   stdcall @(ptr) SHLWAPI_9
@@ -702,17 +702,17 @@ debug_channels (shell)
 @ stdcall SHRegGetPathW(long wstr wstr ptr long)SHRegGetPathW
 @ stub    MLLoadLibraryA
 @ stub    MLLoadLibraryW
-@ stub    PathIsDirectoryEmptyA
-@ stub    PathIsDirectoryEmptyW
-@ stub    PathIsNetworkPathA
-@ stub    PathIsNetworkPathW
-@ stub    PathIsLFNFileSpecA
-@ stub    PathIsLFNFileSpecW
-@ stub    PathFindSuffixArrayA
-@ stub    PathFindSuffixArrayW
+@ stdcall PathIsDirectoryEmptyA(str) PathIsDirectoryEmptyA
+@ stdcall PathIsDirectoryEmptyW(wstr) PathIsDirectoryEmptyW
+@ stdcall PathIsNetworkPathA(str) PathIsNetworkPathA
+@ stdcall PathIsNetworkPathW(wstr) PathIsNetworkPathW
+@ stdcall PathIsLFNFileSpecA(str) PathIsLFNFileSpecA
+@ stdcall PathIsLFNFileSpecW(wstr) PathIsLFNFileSpecW
+@ stdcall PathFindSuffixArrayA(str) PathFindSuffixArrayA
+@ stdcall PathFindSuffixArrayW(wstr) PathFindSuffixArrayW
 @ stdcall _SHGetInstanceExplorer@4(ptr) _SHGetInstanceExplorer
-@ stub    PathUndecorateA
-@ stub    PathUndecorateW
+@ stdcall PathUndecorateA(str) PathUndecorateA
+@ stdcall PathUndecorateW(wstr) PathUndecorateW
 @ stub    PathUnExpandEnvStringsA
 @ stub    PathUnExpandEnvStringsW
 @ stub    SHCopyKeyA

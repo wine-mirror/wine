@@ -310,8 +310,8 @@ int WINAPI PathParseIconLocationA(LPSTR);
 int WINAPI PathParseIconLocationW(LPWSTR);
 #define PathParseIconLocation WINELIB_NAME_AW(PathParseIconLocation)
 
-LPSTR  WINAPI PathQuoteSpacesA(LPSTR);
-LPWSTR WINAPI PathQuoteSpacesW(LPWSTR);
+VOID WINAPI PathQuoteSpacesA(LPSTR);
+VOID WINAPI PathQuoteSpacesW(LPWSTR);
 #define PathQuoteSpaces WINELIB_NAME_AW(PathQuoteSpaces)
 
 BOOL WINAPI PathRelativePathToA(LPSTR,LPCSTR,DWORD,LPCSTR,DWORD);
@@ -346,8 +346,8 @@ BOOL WINAPI PathSearchAndQualifyA(LPCSTR,LPSTR,UINT);
 BOOL WINAPI PathSearchAndQualifyW(LPCWSTR,LPWSTR,UINT);
 #define PathSearchAndQualify WINELIB_NAME_AW(PathSearchAndQualify)
 
-BOOL WINAPI PathSetDlgItemPathA(HWND,int,LPCSTR);
-BOOL WINAPI PathSetDlgItemPathW(HWND,int,LPCWSTR);
+VOID WINAPI PathSetDlgItemPathA(HWND,int,LPCSTR);
+VOID WINAPI PathSetDlgItemPathW(HWND,int,LPCWSTR);
 #define PathSetDlgItemPath WINELIB_NAME_AW(PathSetDlgItemPath)
 
 LPSTR  WINAPI PathSkipRootA(LPCSTR);
@@ -386,8 +386,8 @@ BOOL WINAPI PathIsLFNFileSpecA(LPCSTR);
 BOOL WINAPI PathIsLFNFileSpecW(LPCWSTR);
 #define PathIsLFNFileSpec WINELIB_NAME_AW(PathIsLFNFileSpec)
 
-LPCSTR  WINAPI PathFindSuffixArrayA(LPCSTR,LPCSTR *,int);
-LPCWSTR WINAPI PathFindSuffixArrayW(LPCWSTR,LPCWSTR *,int);
+int WINAPI PathFindSuffixArrayA(LPCSTR,LPCSTR *,int);
+int WINAPI PathFindSuffixArrayW(LPCWSTR,LPCWSTR *,int);
 #define PathFindSuffixArray WINELIB_NAME_AW(PathFindSuffixArray)
 
 VOID WINAPI PathUndecorateA(LPSTR);
