@@ -221,12 +221,6 @@ else {
     rm -f config.cache
     exit 1
   }
-  elif [ "$ac_cv_header_X11_xpm_h" != "yes" ]
-  then {
-    echo "Install the Xpm development headers and try again."
-    rm -f config.cache
-    exit 1
-  }
   fi
 }
 fi

@@ -151,35 +151,6 @@ then
     ac_save_CPPFLAGS="$CPPFLAGS"
     CPPFLAGS="$CPPFLAGS $X_CFLAGS"
 
-    dnl *** Check for -lXpm
-    AC_CHECK_HEADERS(X11/xpm.h,
-      [ dnl *** If X11/xpm.h exists...
-        AC_CHECK_LIB(Xpm, XpmCreatePixmapFromData,
-          [ AC_DEFINE(HAVE_LIBXXPM, 1, [Define if you have the Xpm library])
-            X_PRE_LIBS="$X_PRE_LIBS -lXpm"],,
-          $X_LIBS -lXext -lX11 $X_EXTRA_LIBS
-        )
-      ],
-      [ dnl *** If X11/xpm.h does not exist...
-        dnl NOTE: autoconf does not allow commas inside the third 
-        dnl       parameter to AC_CHECK_HEADERS, due to some quoting
-        dnl       magic it does.
-	echo "Couldn't find the xpm development header X11/xpm.h"
-	echo "Install the following packages:"
-	echo "Red Hat < 7.1	:	xpm xpm-devel"
-	echo "Red Hat >= 7.1	:	XFree86-devel"
-	echo "Caldera OpenLinux	:	xpm xpm-devel xpm-devel-static"
-	echo "SuSE		:	xpm"
-	echo "Debian/Corel Linux: 	xpm4g xpm4g-dev"
-	echo "Solaris 8         :       SFWxpm"
-	echo
-	echo "Or get the sources from ftp.x.org and all its mirror sites from "
-	echo "the directory /contrib/libraries."
-	echo
-	exit 1
-      ]
-    )
-
     dnl *** All of the following tests require X11/Xlib.h
     AC_CHECK_HEADERS(X11/Xlib.h,
       [
@@ -1380,13 +1351,7 @@ then
   echo "*** Warning: X development files not found. Wine will be built without"
   echo "*** X support, which currently does not work, and would probably not be"
   echo "*** what you want anyway. You will need to install devel packages of"
-  echo "*** Xlib/Xfree86 and Xpm at the very least."
-elif test "$ac_cv_lib_Xpm_XpmCreatePixmapFromData" = "no"
-then
-  echo
-  echo "*** Warning: Xpm development files not found. Wine will be built without"
-  echo "*** Xpm support, which currently does not work. You will need to install"
-  echo "*** devel packages of Xpm."
+  echo "*** Xlib/Xfree86 at the very least."
 fi
 
 if test "$ac_cv_lib_ncurses_resizeterm" = "no" -a "$ac_cv_lib_ncurses_waddch" = "yes"

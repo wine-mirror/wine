@@ -202,9 +202,6 @@
 /* Define if you have the <X11/extensions/xf86vmode.h> header file.  */
 #undef HAVE_X11_EXTENSIONS_XF86VMODE_H
 
-/* Define if you have the <X11/xpm.h> header file.  */
-#undef HAVE_X11_XPM_H
-
 /* Define if you have the <arpa/inet.h> header file.  */
 #undef HAVE_ARPA_INET_H
 
@@ -426,9 +423,6 @@
 
 /* Define if you have libjpeg including devel headers */
 #undef HAVE_LIBJPEG
-
-/* Define if you have the Xpm library */
-#undef HAVE_LIBXXPM
 
 /* Define if you have the XKB extension */
 #undef HAVE_XKB
