@@ -1087,7 +1087,7 @@ HRESULT WINAPI RunDLL_CallEntry16(DWORD v, DWORD w, DWORD x, DWORD y, DWORD z)
  *	shell32_654				[SHELL32.654]
  *
  */
-HRESULT shell32_654 (DWORD x, DWORD y)
+HRESULT WINAPI shell32_654 (DWORD x, DWORD y)
 {	FIXME(shell,"0x%08lx 0x%08lx stub\n",x,y);
 	return 0;
 }
