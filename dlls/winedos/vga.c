@@ -363,6 +363,32 @@ typedef struct {
   int ret;
 } ModeSet;
 
+
+/**********************************************************************
+ *         VGA_SyncWindow
+ *
+ * Copy VGA window into framebuffer (if argument is TRUE) or
+ * part of framebuffer into VGA window (if argument is FALSE).
+ */
+static void VGA_SyncWindow( BOOL target_is_fb )
+{
+    int size = VGA_WINDOW_SIZE;
+
+    /* Window does not overlap framebuffer. */
+    if (vga_fb_window >= vga_fb_size)
+        return;
+
+    /* Check if window overlaps framebuffer only partially. */
+    if (vga_fb_size - vga_fb_window < VGA_WINDOW_SIZE)
+        size = vga_fb_size - vga_fb_window;
+
+    if (target_is_fb)
+        memmove( vga_fb_data + vga_fb_window, VGA_WINDOW_START, size );
+    else
+        memmove( VGA_WINDOW_START, vga_fb_data + vga_fb_window, size );
+}
+
+
 static void WINAPI VGA_DoExit(ULONG_PTR arg)
 {
     VGA_DeinstallTimer();
@@ -603,17 +629,15 @@ void VGA_SetWindowStart(int start)
 
     if(vga_fb_window == -1)
         FIXME("Remove VGA memory emulation.\n");
-    else if(vga_fb_window + VGA_WINDOW_SIZE < vga_fb_size)
-        memmove(vga_fb_data + vga_fb_window, VGA_WINDOW_START,
-                VGA_WINDOW_SIZE);
+    else
+        VGA_SyncWindow( TRUE );
 
     vga_fb_window = start;
 
     if(vga_fb_window == -1)
         FIXME("Install VGA memory emulation.\n");
-    else if(vga_fb_window + VGA_WINDOW_SIZE < vga_fb_size)
-        memmove( VGA_WINDOW_START, vga_fb_data + vga_fb_window, 
-                 VGA_WINDOW_SIZE);
+    else
+        VGA_SyncWindow( FALSE );
 
     LeaveCriticalSection(&vga_lock);
 }
@@ -925,9 +949,8 @@ static void VGA_Poll_Graphics(void)
   /*
    * Synchronize framebuffer contents.
    */
-  if(vga_fb_window != -1 && vga_fb_window + VGA_WINDOW_SIZE < vga_fb_size)
-    memmove(vga_fb_data + vga_fb_window, VGA_WINDOW_START,
-            VGA_WINDOW_SIZE);
+  if (vga_fb_window != -1)
+      VGA_SyncWindow( TRUE );
 
   /*
    * Double VGA framebuffer (320x200 -> 640x400), if needed.
