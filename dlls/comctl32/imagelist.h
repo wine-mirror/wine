@@ -29,28 +29,29 @@
 /* the ones with offsets at the end are the same as in Windows */
 struct _IMAGELIST
 {
-    DWORD	magic; 			/* 00:	'SAMX' */
-    INT		cCurImage;		/* 04: ImageCount */
-    INT		cMaxImage;		/* 08: maximages */
-    DWORD	x3;
-    INT		cx;			/* 10: cx */
-    INT		cy;			/* 14: cy */
-    DWORD	x4;
-    UINT	flags;			/* 1c: flags */
-    DWORD   	x5;
-    COLORREF	clrBk;			/* 24: bkcolor */
+    DWORD       magic;                  /* 00: 'SAMX' */
+    INT         cCurImage;              /* 04: ImageCount */
+    INT         cMaxImage;              /* 08: maximages */
+    INT         cGrow;                  /* 0c: cGrow */
+    INT         cx;                     /* 10: cx */
+    INT         cy;                     /* 14: cy */
+    DWORD       x4;
+    UINT        flags;                  /* 1c: flags */
+    COLORREF    clrFg;                  /* 20: foreground color */
+    COLORREF    clrBk;                  /* 24: backgournd color */
 
+
+    HBITMAP     hbmImage;               /* 30: images Bitmap */
+    HBITMAP     hbmMask;                /* 34: masks  Bitmap */
+    HDC         hdcImage;               /* 38: images MemDC  */
+    HDC         hdcMask;                /* 3C: masks  MemDC  */
+    INT         nOvlIdx[15];            /* 40: overlay images index */
 
     /* not yet found out */
-    HBITMAP hbmImage;
-    HBITMAP hbmMask;
     HBRUSH  hbrBlend25;
     HBRUSH  hbrBlend50;
-    COLORREF  clrFg;
     INT     cInitial;
-    INT     cGrow;
     UINT    uBitsPixel;
-    INT     nOvlIdx[15];
 };
 
 #define IMAGELIST_MAGIC 0x53414D58
