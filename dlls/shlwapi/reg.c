@@ -99,13 +99,13 @@ LONG WINAPI SHRegOpenUSKeyA(
     ihky->HKCUkey = 0;
     ihky->HKLMkey = 0;
     if (!fIgnoreHKCU) {
-	ret1 = RegOpenKeyExA(HKEY_CURRENT_USER, Path, 
+	ret1 = RegOpenKeyExA(openHKCUkey, Path, 
 			     0, AccessType, &ihky->HKCUkey);
 	/* if successful, then save real starting point */
 	if (ret1 != ERROR_SUCCESS)
 	    ihky->HKCUkey = 0;
     }
-    ret2 = RegOpenKeyExA(HKEY_LOCAL_MACHINE, Path, 
+    ret2 = RegOpenKeyExA(openHKLMkey, Path, 
 			 0, AccessType, &ihky->HKLMkey);
     if (ret2 != ERROR_SUCCESS)
 	ihky->HKLMkey = 0;
@@ -165,13 +165,13 @@ LONG WINAPI SHRegOpenUSKeyW(
     ihky->HKCUkey = 0;
     ihky->HKLMkey = 0;
     if (!fIgnoreHKCU) {
-	ret1 = RegOpenKeyExW(HKEY_CURRENT_USER, Path, 
+	ret1 = RegOpenKeyExW(openHKCUkey, Path, 
 			    0, AccessType, &ihky->HKCUkey);
 	/* if successful, then save real starting point */
 	if (ret1 != ERROR_SUCCESS)
 	    ihky->HKCUkey = 0;
     }
-    ret2 = RegOpenKeyExW(HKEY_LOCAL_MACHINE, Path, 
+    ret2 = RegOpenKeyExW(openHKLMkey, Path, 
 			0, AccessType, &ihky->HKLMkey);
     if (ret2 != ERROR_SUCCESS)
 	ihky->HKLMkey = 0;
@@ -231,15 +231,19 @@ LONG WINAPI SHRegQueryUSValueA(
 	CHAR *src, *dst;
 
 	/* if user wants HKCU, and it exists, then try it */
-	if (!fIgnoreHKCU && (dokey = REG_GetHKEYFromHUSKEY(hUSKey,REG_HKCU)))
+	if (!fIgnoreHKCU && (dokey = REG_GetHKEYFromHUSKEY(hUSKey,REG_HKCU))) {
 	    ret = RegQueryValueExA(dokey,
 				   pszValue, 0, pdwType, pvData, pcbData);
+	    TRACE("HKCU RegQueryValue returned %08lx\n", ret);
+	}
 
 	/* if HKCU did not work and HKLM exists, then try it */
 	if ((ret != ERROR_SUCCESS) &&
-	    (dokey = REG_GetHKEYFromHUSKEY(hUSKey,REG_HKCU)))
+	    (dokey = REG_GetHKEYFromHUSKEY(hUSKey,REG_HKLM))) {
 	    ret = RegQueryValueExA(dokey,
 				   pszValue, 0, pdwType, pvData, pcbData);
+	    TRACE("HKLM RegQueryValue returned %08lx\n", ret);
+	}
 
 	/* if neither worked, and default data exists, then use it */
 	if (ret != ERROR_SUCCESS) {
@@ -276,15 +280,19 @@ LONG WINAPI SHRegQueryUSValueW(
 	CHAR *src, *dst;
 
 	/* if user wants HKCU, and it exists, then try it */
-	if (!fIgnoreHKCU && (dokey = REG_GetHKEYFromHUSKEY(hUSKey,REG_HKCU)))
+	if (!fIgnoreHKCU && (dokey = REG_GetHKEYFromHUSKEY(hUSKey,REG_HKCU))) {
 	    ret = RegQueryValueExW(dokey,
 				   pszValue, 0, pdwType, pvData, pcbData);
+	    TRACE("HKCU RegQueryValue returned %08lx\n", ret);
+	}
 
 	/* if HKCU did not work and HKLM exists, then try it */
 	if ((ret != ERROR_SUCCESS) &&
-	    (dokey = REG_GetHKEYFromHUSKEY(hUSKey,REG_HKCU)))
+	    (dokey = REG_GetHKEYFromHUSKEY(hUSKey,REG_HKLM))) {
 	    ret = RegQueryValueExW(dokey,
 				   pszValue, 0, pdwType, pvData, pcbData);
+	    TRACE("HKLM RegQueryValue returned %08lx\n", ret);
+	}
 
 	/* if neither worked, and default data exists, then use it */
 	if (ret != ERROR_SUCCESS) {
