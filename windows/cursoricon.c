@@ -117,8 +117,9 @@ static WORD ICON_HOTSPOT = 0x4242;
  * Helper function to map a file to memory:
  *  name			-	file name
  *  [RETURN] ptr		-	pointer to mapped file
+ *  [RETURN] filesize           -       pointer size of file to be stored if not NULL
  */
-static void *map_fileW( LPCWSTR name )
+static void *map_fileW( LPCWSTR name, LPDWORD filesize )
 {
     HANDLE hFile, hMapping;
     LPVOID ptr = NULL;
@@ -128,12 +129,14 @@ static void *map_fileW( LPCWSTR name )
     if (hFile != INVALID_HANDLE_VALUE)
     {
         hMapping = CreateFileMappingW( hFile, NULL, PAGE_READONLY, 0, 0, NULL );
-        CloseHandle( hFile );
         if (hMapping)
         {
             ptr = MapViewOfFile( hMapping, FILE_MAP_READ, 0, 0, 0 );
             CloseHandle( hMapping );
+            if (filesize)
+                *filesize = GetFileSize( hFile, NULL );
         }
+        CloseHandle( hFile );
     }
     return ptr;
 }
@@ -573,12 +576,13 @@ static BOOL CURSORICON_SimulateLoadingFromResourceW( LPCWSTR filename, BOOL fCur
                                                      CURSORICONDIR **res, LPBYTE **ptr)
 {
     LPBYTE   _free;
+    DWORD filesize;
     CURSORICONFILEDIR *bits;
     int	     entries, size, i;
 
     *res = NULL;
     *ptr = NULL;
-    if (!(bits = map_fileW( filename ))) return FALSE;
+    if (!(bits = map_fileW( filename, &filesize ))) return FALSE;
 
     /* FIXME: test for inimated icons
      * hack to load the first icon from the *.ani file
@@ -603,6 +607,12 @@ static BOOL CURSORICON_SimulateLoadingFromResourceW( LPCWSTR filename, BOOL fCur
       }
     }
     if (!(entries = bits->idCount)) goto fail;
+    if ( (sizeof(CURSORICONFILEDIR) + 
+          sizeof(CURSORICONFILEDIRENTRY) * (entries - 1)) > filesize)
+    {
+        FIXME("broken file %s\n", wine_dbgstr_w(filename));
+        goto fail;
+    }
     size = sizeof(CURSORICONDIR) + sizeof(CURSORICONDIRENTRY) * (entries - 1);
     _free = (LPBYTE) size;
 
@@ -2110,7 +2120,7 @@ static HBITMAP BITMAP_Load( HINSTANCE instance, LPCWSTR name, UINT loadflags )
     }
     else
     {
-        if (!(ptr = map_fileW( name ))) return 0;
+        if (!(ptr = map_fileW( name, NULL ))) return 0;
         info = (BITMAPINFO *)(ptr + sizeof(BITMAPFILEHEADER));
     }
 
