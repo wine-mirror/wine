@@ -512,7 +512,7 @@ static HGLOBAL16 CURSORICON_CreateFromResource( HINSTANCE16 hInstance, HGLOBAL16
 	    /* Create the XOR bitmap */
 
 	    if (DoStretch) {
-	      if ((hXorBits = CreateCompatibleBitmap(hdc, width, height))) {
+              if ((hXorBits = CreateBitmap(width, height, 1, 1, NULL))) {
 		HBITMAP hOld;
 		HDC hMem = CreateCompatibleDC(hdc);
 		BOOL res;
