@@ -504,14 +504,24 @@ serialize_param(
     case VT_ERROR:
     case VT_UINT:
     case VT_I4:
-    case VT_I2:
-    case VT_I1:
     case VT_R4:
     case VT_UI4:
-    case VT_UI2:
-    case VT_UI1:
 	hres = S_OK;
 	if (debugout) TRACE_(olerelay)("%lx",*arg);
+	if (writeit)
+	    hres = xbuf_add(buf,(LPBYTE)arg,sizeof(DWORD));
+	return hres;
+    case VT_I2:
+    case VT_UI2:
+	hres = S_OK;
+	if (debugout) TRACE_(olerelay)("%04lx",*arg & 0xffff);
+	if (writeit)
+	    hres = xbuf_add(buf,(LPBYTE)arg,sizeof(DWORD));
+	return hres;
+    case VT_I1:
+    case VT_UI1:
+	hres = S_OK;
+	if (debugout) TRACE_(olerelay)("%02lx",*arg & 0xff);
 	if (writeit)
 	    hres = xbuf_add(buf,(LPBYTE)arg,sizeof(DWORD));
 	return hres;
@@ -1043,18 +1053,34 @@ deserialize_param(
         case VT_ERROR:
 	case VT_BOOL:
         case VT_I4:
-        case VT_I2:
-        case VT_I1:
         case VT_UINT:
         case VT_R4:
         case VT_UI4:
-        case VT_UI2:
-	case VT_UI1:
 	    if (readit) {
 		hres = xbuf_get(buf,(LPBYTE)arg,sizeof(DWORD));
 		if (hres) ERR("Failed to read integer 4 byte\n");
 	    }
 	    if (debugout) TRACE_(olerelay)("%lx",*arg);
+	    return hres;
+        case VT_I2:
+        case VT_UI2:
+	    if (readit) {
+		DWORD x;
+		hres = xbuf_get(buf,(LPBYTE)&x,sizeof(DWORD));
+		if (hres) ERR("Failed to read integer 4 byte\n");
+		memcpy(arg,&x,2);
+	    }
+	    if (debugout) TRACE_(olerelay)("%04lx",*arg & 0xffff);
+	    return hres;
+        case VT_I1:
+	case VT_UI1:
+	    if (readit) {
+		DWORD x;
+		hres = xbuf_get(buf,(LPBYTE)&x,sizeof(DWORD));
+		if (hres) ERR("Failed to read integer 4 byte\n");
+		memcpy(arg,&x,1);
+	    }
+	    if (debugout) TRACE_(olerelay)("%02lx",*arg & 0xff);
 	    return hres;
 	case VT_BSTR|VT_BYREF: {
 	    BSTR **bstr = (BSTR **)arg;
