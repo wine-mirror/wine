@@ -11,6 +11,7 @@
 #include <assert.h>
 #include <stdio.h>
 #include <unistd.h>
+#include <errno.h>
 
 #include "winnt.h"
 #include "build.h"
@@ -113,6 +114,11 @@ static void do_pic(void)
 
 static void do_output( const char *arg )
 {
+    if ( ( unlink ( arg ) ) == -1 && ( errno != ENOENT ) ) 
+    {
+        fprintf ( stderr, "Unable to create output file '%s'\n", arg );
+        exit (1);
+    }
     if (!(output_file = fopen( arg, "w" )))
     {
         fprintf( stderr, "Unable to create output file '%s'\n", arg );
