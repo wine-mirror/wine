@@ -132,6 +132,7 @@ DLLS = \
 	rasapi32 \
 	riched32 \
 	rpcrt4 \
+	serialui \
 	setupapi \
 	setupx \
 	shell32 \

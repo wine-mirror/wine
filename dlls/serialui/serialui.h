@@ -1,0 +1,9 @@
+#define IDD_SERIALUICONFIG 0x401
+#define IDC_BAUD 0x402
+#define IDC_PARITY 0x0403
+#define IDC_STOP 0x0404
+#define IDC_FLOW 0x0405
+#define IDC_DATA 0x0406
+
+#define ID_GETDEFAULT 0x410
+#define ID_SETDEFAULT 0x411

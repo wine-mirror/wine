@@ -44,6 +44,7 @@ DLLFILES = \
 	rasapi32/librasapi32.@LIBEXT@ \
 	richedit/libriched32.@LIBEXT@ \
 	rpcrt4/librpcrt4.@LIBEXT@ \
+	serialui/libserialui.@LIBEXT@ \
 	setupx/libsetupx.@LIBEXT@ \
 	setupapi/libsetupapi.@LIBEXT@ \
 	shell32/libshell32.@LIBEXT@ \
@@ -150,6 +151,7 @@ SUBDIRS = \
 	rasapi32 \
 	richedit \
 	rpcrt4 \
+	serialui \
 	setupx \
 	shell32 \
 	shfolder \
@@ -303,6 +305,9 @@ libriched32.@LIBEXT@: richedit/libriched32.@LIBEXT@
 
 librpcrt4.@LIBEXT@: rpcrt4/librpcrt4.@LIBEXT@
 	$(RM) $@ && $(LN_S) rpcrt4/librpcrt4.@LIBEXT@ $@
+
+libserialui.@LIBEXT@: serialui/libserialui.@LIBEXT@
+	$(RM) $@ && $(LN_S) serialui/libserialui.@LIBEXT@ $@
 
 libsetupapi.@LIBEXT@: setupapi/libsetupapi.@LIBEXT@
 	$(RM) $@ && $(LN_S) setupapi/libsetupapi.@LIBEXT@ $@

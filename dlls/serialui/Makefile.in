@@ -1,0 +1,16 @@
+TOPSRCDIR = @top_srcdir@
+TOPOBJDIR = ../..
+SRCDIR    = @srcdir@
+VPATH     = @srcdir@
+MODULE    = serialui
+SOVERSION = 1.0
+
+C_SRCS = \
+	confdlg.c
+
+RC_SRCS= \
+	serialui_rc.rc
+
+@MAKE_DLL_RULES@
+
+### Dependencies:
