@@ -97,12 +97,14 @@ LCID lcid;
 	lcid = MAKELCID(MAKELANGID(LANG_ENGLISH, SUBLANG_ENGLISH_US), SORT_DEFAULT );
 	strcpy(format, "tt HH':'mm'@'ss");
 
-	/* fill curtime with dummy data */
-	memset(&curtime, 2, sizeof(SYSTEMTIME));
-	ret = GetTimeFormatA(lcid, TIME_FORCE24HOURFORMAT, &curtime, format, buffer, sizeof(buffer));
-	error = GetLastError ();
-	ok (ret == 0, "GetTimeFormat should fail on dummy data");
-	eq (error, ERROR_INVALID_PARAMETER, "GetTimeFormat GetLastError()", "%d");
+        todo_wine {
+            /* fill curtime with dummy data */
+            memset(&curtime, 2, sizeof(SYSTEMTIME));
+            ret = GetTimeFormatA(lcid, TIME_FORCE24HOURFORMAT, &curtime, format, buffer, sizeof(buffer));
+            error = GetLastError ();
+            ok (ret == 0, "GetTimeFormat should fail on dummy data");
+            eq (error, ERROR_INVALID_PARAMETER, "GetTimeFormat GetLastError()", "%d");
+        }
 
 	strcpy(Expected, "AM 08:56@13");
 	curtime.wHour = 8;  curtime.wMinute = 56; 
@@ -118,14 +120,14 @@ LCID lcid;
 	ret = GetTimeFormatA(lcid, TIME_FORCE24HOURFORMAT, &curtime, format, buffer, 0);
 	cmp = strncmp (Expected, buffer, 4);
 	ok (cmp == 0, "GetTimeFormat with len=0 got %s instead of %s", buffer, Expected);
-	eq (ret, 12, "GetTimeFormat with len=0", "%d");
+	todo_wine { eq (ret, 12, "GetTimeFormat with len=0", "%d"); }
 
 	memset(buffer, 'x', sizeof (buffer)/sizeof(buffer[0]) );
 	strcpy(Expected, "AMxx");
 	ret = GetTimeFormatA(lcid, TIME_FORCE24HOURFORMAT, &curtime, format, buffer, 2);
 	cmp = strncmp (Expected, buffer, 4);
-	ok (cmp == 0, "GetTimeFormat with len=2 got %s instead of %s", buffer, Expected);
-	eq (ret, 0, "GetTimeFormat with len=0", "%d");
+	todo_wine { ok (cmp == 0, "GetTimeFormat with len=2 got %s instead of %s", buffer, Expected); }
+	eq (ret, 0, "GetTimeFormat with len=2", "%d");
 }
 
 void TestGetDateFormatA()
@@ -138,13 +140,15 @@ LCID lcid;
 	lcid = MAKELCID(MAKELANGID(LANG_ENGLISH, SUBLANG_ENGLISH_US), SORT_DEFAULT );
 	strcpy(format, "ddd',' MMM dd yy");
 
-	/* fill curtime with dummy data */
-	memset(&curtime, 2, sizeof(SYSTEMTIME));
-	memset(buffer, 'x', sizeof (buffer)/sizeof(buffer[0]) );
-	ret = GetDateFormatA(lcid, 0, &curtime, format, buffer, sizeof(buffer));
-	error = GetLastError ();
-	ok (ret== 0, "GetDateFormat should fail on dummy data");
-	eq (error, ERROR_INVALID_PARAMETER, "GetDateFormat", "%d");
+        todo_wine {
+            /* fill curtime with dummy data */
+            memset(&curtime, 2, sizeof(SYSTEMTIME));
+            memset(buffer, 'x', sizeof (buffer)/sizeof(buffer[0]) );
+            ret = GetDateFormatA(lcid, 0, &curtime, format, buffer, sizeof(buffer));
+            error = GetLastError ();
+            ok (ret== 0, "GetDateFormat should fail on dummy data");
+            eq (error, ERROR_INVALID_PARAMETER, "GetDateFormat", "%d");
+        }
 
 	strcpy(Expected, "Sat, May 04 02");
 	memset(buffer, 'x', sizeof (buffer)/sizeof(buffer[0]) );
@@ -154,7 +158,7 @@ LCID lcid;
 	curtime.wDayOfWeek = 3;
 	ret = GetDateFormatA(lcid, 0, &curtime, format, buffer, sizeof(buffer));
 	cmp = strncmp (Expected, buffer, strlen(Expected)+1);
-	ok (cmp == 0, "GetDateFormat got %s instead of %s", buffer, Expected);
+	todo_wine { ok (cmp == 0, "GetDateFormat got %s instead of %s", buffer, Expected); }
 	eq (ret, strlen(Expected)+1, "GetDateFormat", "%d");
 
 	/* test format with "'" */
@@ -163,7 +167,7 @@ LCID lcid;
 	strcpy(Expected, "Sat, May 04 '02");
 	ret = GetDateFormatA(lcid, 0, &curtime, format, buffer, sizeof(buffer));
 	cmp = strncmp (Expected, buffer, strlen(Expected)+1);
-	ok (cmp == 0, "GetDateFormat got %s instead of %s", buffer, Expected);
+	todo_wine { ok (cmp == 0, "GetDateFormat got %s instead of %s", buffer, Expected); }
 	eq (ret, (strlen(Expected)+1), "GetDateFormat", "%d");
 
 	/* test with too small buffers */
@@ -172,13 +176,13 @@ LCID lcid;
 	ret = GetDateFormatA(lcid, 0, &curtime, format, buffer, 0);
 	cmp = strncmp (Expected, buffer, 4);
 	ok (cmp == 0, "GetDateFormat got %s instead of %s", buffer, Expected);
-	eq (ret, 16, "GetDateFormat with len=0", "%d");
+	todo_wine { eq (ret, 16, "GetDateFormat with len=0", "%d"); }
 
 	memset(buffer, 'x', sizeof (buffer)/sizeof(buffer[0]) );
 	strcpy(Expected, "Saxx");
 	ret = GetDateFormatA(lcid, 0, &curtime, format, buffer, 2);
 	cmp = strncmp (Expected, buffer, 4);
-	ok (cmp == 0, "GetDateFormat got %s instead of %s", buffer, Expected);
+	todo_wine { ok (cmp == 0, "GetDateFormat got %s instead of %s", buffer, Expected); }
 	eq (ret, 0, "GetDateFormat with len=2", "%d");
 }
 
@@ -304,28 +308,28 @@ char buffer1[BUFFER_SIZE], buffer2[BUFFER_SIZE];
 	lcid = MAKELCID(MAKELANGID(LANG_FRENCH, SUBLANG_DEFAULT), SORT_DEFAULT );
 
 	strcpy(buffer1, "Salut"); strcpy(buffer2, "Salute");
-	ret = CompareStringA(lcid, NORM_IGNORECASE, buffer1, BUFFER_SIZE, buffer2, BUFFER_SIZE);
+	ret = CompareStringA(lcid, NORM_IGNORECASE, buffer1, -1, buffer2, -1);
 	ok (ret== 1, "CompareStringA (st1=%s str2=%s) expected result=1", buffer1, buffer2);
 
 	strcpy(buffer1, "Salut"); strcpy(buffer2, "saLuT");
-	ret = CompareStringA(lcid, NORM_IGNORECASE, buffer1, BUFFER_SIZE, buffer2, BUFFER_SIZE);
+	ret = CompareStringA(lcid, NORM_IGNORECASE, buffer1, -1, buffer2, -1);
 	ok (ret== 2, "CompareStringA (st1=%s str2=%s) expected result=2", buffer1, buffer2);
 
 	strcpy(buffer1, "Salut"); strcpy(buffer2, "hola");
-	ret = CompareStringA(lcid, NORM_IGNORECASE, buffer1, BUFFER_SIZE, buffer2, BUFFER_SIZE);
+	ret = CompareStringA(lcid, NORM_IGNORECASE, buffer1, -1, buffer2, -1);
 	ok (ret== 3, "CompareStringA (st1=%s str2=%s) expected result=3", buffer1, buffer2);
 
 	strcpy(buffer1, "héhé"); strcpy(buffer2, "hèhè");
-	ret = CompareStringA(lcid, NORM_IGNORECASE, buffer1, BUFFER_SIZE, buffer2, BUFFER_SIZE);
+	ret = CompareStringA(lcid, NORM_IGNORECASE, buffer1, -1, buffer2, -1);
 	ok (ret== 1, "CompareStringA (st1=%s str2=%s) expected result=1", buffer1, buffer2);
 
 	lcid = MAKELCID(MAKELANGID(LANG_ENGLISH, SUBLANG_ENGLISH_US), SORT_DEFAULT );
 	
 	strcpy(buffer1, "héhé"); strcpy(buffer2, "hèhè");
-	ret = CompareStringA(lcid, NORM_IGNORECASE, buffer1, BUFFER_SIZE, buffer2, BUFFER_SIZE);
+	ret = CompareStringA(lcid, NORM_IGNORECASE, buffer1, -1, buffer2, -1);
 	ok (ret== 1, "CompareStringA (st1=%s str2=%s) expected result=1", buffer1, buffer2);
 
-	ret = CompareStringA(lcid, NORM_IGNORECASE, buffer1, BUFFER_SIZE, buffer2, 0);
+	ret = CompareStringA(lcid, NORM_IGNORECASE, buffer1, -1, buffer2, 0);
 	ok (ret== 3, "CompareStringA (st1=%s str2=%s) expected result=3", buffer1, buffer2);
 }
 

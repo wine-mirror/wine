@@ -3,6 +3,7 @@ atom.ok
 directory.ok
 file.ok
 kernel32_test.exe.spec.c
+locale.ok
 path.ok
 process.ok
 testlist.c
