@@ -50,7 +50,6 @@ static void do_spec (const char *arg)
 {
     if (globals.mode != NONE) fatal("Only one mode can be specified\n");
     globals.mode = SPEC;
-    globals.input_name = arg;
 }
 
 
@@ -59,7 +58,6 @@ static void do_demangle (const char *arg)
     if (globals.mode != NONE) fatal("Only one mode can be specified\n");
     globals.mode = DMGL;
     globals.do_code = 1;
-    globals.input_name = arg;
 }
 
 
@@ -68,7 +66,6 @@ static void do_dump (const char *arg)
     if (globals.mode != NONE) fatal("Only one mode can be specified\n");
     globals.mode = DUMP; 
     globals.do_code = 1;
-    globals.input_name = arg;
 }
 
 
@@ -163,8 +160,8 @@ struct option
 
 static const struct option option_table[] = {
   {"-h",    NONE, 0, do_usage,    "-h           Display this help message"},
-  {"sym",   DMGL, 2, do_demangle, "sym <sym>    Demangle C++ symbol <sym> and exit"},
-  {"spec",  SPEC, 2, do_spec,     "spec <dll>   Use dll for input file and generate implementation code"},
+  {"sym",   DMGL, 0, do_demangle, "sym <sym>    Demangle C++ symbol <sym> and exit"},
+  {"spec",  SPEC, 0, do_spec,     "spec <dll>   Use dll for input file and generate implementation code"},
   {"-I",    SPEC, 1, do_include,  "-I dir       Look for prototypes in 'dir' (implies -c)"},
   {"-c",    SPEC, 0, do_code,     "-c           Generate skeleton code (requires -I)"},
   {"-t",    SPEC, 0, do_trace,    "-t           TRACE arguments (implies -c)"},
@@ -176,7 +173,7 @@ static const struct option option_table[] = {
   {"-e",    SPEC, 1, do_end,      "-e num       End prototype search after symbol 'num'"},
   {"-q",    SPEC, 0, do_quiet,    "-q           Don't show progress (quiet)."},
   {"-v",    SPEC, 0, do_verbose,  "-v           Show lots of detail while working (verbose)."},
-  {"dump",  DUMP, 2, do_dump,     "dump <mod>   Dumps the content of the module (dll, exe...) named <mod>"},
+  {"dump",  DUMP, 0, do_dump,     "dump <mod>   Dumps the content of the module (dll, exe...) named <mod>"},
   {"-C",    DUMP, 0, do_symdmngl, "-C           Turns on symbol demangling"},
   {"-f",    DUMP, 0, do_dumphead, "-f           Dumps file header information"},
   {"-j",    DUMP, 1, do_dumpsect, "-j sect_name Dumps only the content of section sect_name (import, export, debug)"},
@@ -187,23 +184,24 @@ static const struct option option_table[] = {
 void do_usage (void)
 {
     const struct option *opt;
-    printf ("Usage: winedump [-h sym <sym> spec <dll> dump <dll>] [mode options]\n");
-    printf ("When used in -h mode\n");
+    printf ("Usage: winedump [-h | sym <sym> | spec <dll> | dump <dll>]\n");
+    printf ("Mode options (can be put as the mode (sym/spec/dump...) is declared):\n");
+    printf ("\tWhen used in -h mode\n");
     for (opt = option_table; opt->name; opt++)
 	if (opt->mode == NONE)
-	    printf ("   %s\n", opt->usage);
-    printf ("When used in sym mode\n");
+	    printf ("\t   %s\n", opt->usage);
+    printf ("\tWhen used in sym mode\n");
     for (opt = option_table; opt->name; opt++)
 	if (opt->mode == DMGL)
-	    printf ("   %s\n", opt->usage);
-    printf ("When used in spec mode\n");
+	    printf ("\t   %s\n", opt->usage);
+    printf ("\tWhen used in spec mode\n");
     for (opt = option_table; opt->name; opt++)
 	if (opt->mode == SPEC)
-	    printf ("   %s\n", opt->usage);
-    printf ("When used in dump mode\n");
+	    printf ("\t   %s\n", opt->usage);
+    printf ("\tWhen used in dump mode\n");
     for (opt = option_table; opt->name; opt++)
 	if (opt->mode == DUMP)
-	    printf ("   %s\n", opt->usage);
+	    printf ("\t   %s\n", opt->usage);
 
     puts ("\n");
     exit (1);
@@ -244,9 +242,14 @@ static void parse_options (char *argv[])
     }
 
     if (!opt->name)
-	fatal ("Unrecognized option");
-
-    if (opt->has_arg && arg != NULL)
+    {
+        if ((*ptr)[0] == '-')
+            fatal ("Unrecognized option");
+        if (globals.input_name != NULL)
+            fatal ("Only one file can be treated at once");
+        globals.input_name = *ptr;
+    }
+    else if (opt->has_arg && arg != NULL)
 	opt->func (arg);
     else
 	opt->func ("");
@@ -299,6 +302,7 @@ int   main (int argc, char *argv[])
 
     globals.mode = NONE;
     globals.forward_dll = NULL;
+    globals.input_name = NULL;
 
     parse_options (argv);
 
