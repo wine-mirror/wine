@@ -18,6 +18,11 @@
 
 #include "config.h"
 #include "winbase.h"
+#include "wincrypt.h"
+/* #include "mssip.h" */
+
+typedef struct SIP_DISPATCH_INFO_ SIP_DISPATCH_INFO, *LPSIP_DISPATCH_INFO;
+typedef struct SIP_ADD_NEWPROVIDER_ SIP_ADD_NEWPROVIDER, *PSIP_ADD_NEWPROVIDER;
 
 /* this function is called by Internet Explorer when it is about to verify a downloaded component */
 BOOL WINAPI I_CryptCreateLruCache(DWORD x, DWORD y)
@@ -37,6 +42,28 @@ BOOL WINAPI I_CryptFlushLruCache(DWORD x)
 }
 
 BOOL WINAPI I_CryptFreeLruCache(DWORD x)
+{
+    return FALSE;
+}
+
+BOOL WINAPI CryptSIPRemoveProvider(GUID *pgProv)
+{
+    return FALSE;
+}
+
+BOOL WINAPI CryptSIPAddProvider(SIP_ADD_NEWPROVIDER *psNewProv)
+{
+    return FALSE;
+}
+
+BOOL WINAPI CryptSIPRetrieveSubjectGuid
+      (LPCWSTR FileName, OPTIONAL HANDLE hFileIn, GUID *pgSubject)
+{
+    return FALSE;
+}
+
+BOOL WINAPI CryptSIPLoad
+       (const GUID *pgSubject, DWORD dwFlags, SIP_DISPATCH_INFO *pSipDispatch)
 {
     return FALSE;
 }

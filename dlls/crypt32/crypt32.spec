@@ -137,10 +137,10 @@ name crypt32
 @ stub CryptRegisterDefaultOIDFunction
 @ stub CryptRegisterOIDFunction
 @ stub CryptRegisterOIDInfo
-@ stub CryptSIPAddProvider
-@ stub CryptSIPLoad
-@ stub CryptSIPRemoveProvider
-@ stub CryptSIPRetrieveSubjectGuid
+@ stdcall CryptSIPAddProvider(ptr) CryptSIPAddProvider
+@ stdcall CryptSIPLoad(ptr long ptr) CryptSIPLoad
+@ stdcall CryptSIPRemoveProvider(ptr) CryptSIPRemoveProvider
+@ stdcall CryptSIPRetrieveSubjectGuid(wstr long ptr) CryptSIPRetrieveSubjectGuid
 @ stub CryptSetAsyncParam
 @ stub CryptSetOIDFunctionValue
 @ stub CryptSetProviderU
