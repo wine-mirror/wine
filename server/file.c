@@ -344,9 +344,9 @@ static int set_file_pointer( int handle, int *low, int *high, int whence )
     struct file *file;
     int result;
 
-    if (*high)
+    if ((*low >= 0 && *high != 0) || (*low < 0 && *high != -1))
     {
-        fprintf( stderr, "set_file_pointer: offset > 4Gb not supported yet\n" );
+        fprintf( stderr, "set_file_pointer: offset > 2Gb not supported yet\n" );
         set_error( STATUS_INVALID_PARAMETER );
         return 0;
     }

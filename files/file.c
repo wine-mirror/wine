@@ -1289,9 +1289,12 @@ DWORD WINAPI SetFilePointer( HANDLE hFile, LONG distance, LONG *highword,
 {
     struct set_file_pointer_request *req = get_req_buffer();
 
-    if (highword && *highword)
+    if (highword &&
+        ((distance >= 0 && *highword != 0) || (distance < 0 && *highword != -1)))
     {
-        FIXME("64-bit offsets not supported yet\n");
+        FIXME("64-bit offsets not supported yet\n"
+              "SetFilePointer(%08x,%08lx,%08lx,%08lx)\n",
+              hFile,distance,*highword,method);
         SetLastError( ERROR_INVALID_PARAMETER );
         return 0xffffffff;
     }
@@ -1300,7 +1303,7 @@ DWORD WINAPI SetFilePointer( HANDLE hFile, LONG distance, LONG *highword,
 
     req->handle = hFile;
     req->low = distance;
-    req->high = highword ? *highword : 0;
+    req->high = highword ? *highword : (distance >= 0) ? 0 : -1;
     /* FIXME: assumes 1:1 mapping between Windows and Unix seek constants */
     req->whence = method;
     SetLastError( 0 );
