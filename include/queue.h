@@ -63,14 +63,13 @@ HWND PERQDATA_GetCaptureWnd( INT *hittest );
 HWND PERQDATA_SetCaptureWnd( HWND hWndCapture, INT hittest );
 
 /* Message queue management methods */
+extern MESSAGEQUEUE *QUEUE_Current(void);
 extern MESSAGEQUEUE *QUEUE_Lock( HQUEUE16 hQueue );
 extern void QUEUE_Unlock( MESSAGEQUEUE *queue );
 extern BOOL QUEUE_IsExitingQueue( HQUEUE16 hQueue );
 extern void QUEUE_SetExitingQueue( HQUEUE16 hQueue );
-extern BOOL QUEUE_DeleteMsgQueue( HQUEUE16 hQueue );
+extern void QUEUE_DeleteMsgQueue(void);
 extern HTASK16 QUEUE_GetQueueTask( HQUEUE16 hQueue );
 extern void QUEUE_CleanupWindow( HWND hwnd );
-
-extern HQUEUE16 WINAPI InitThreadInput16( WORD unknown, WORD flags );
 
 #endif  /* __WINE_QUEUE_H */

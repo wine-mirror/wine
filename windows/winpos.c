@@ -772,20 +772,16 @@ HWND16 WINAPI GetActiveWindow16(void)
 HWND WINAPI GetActiveWindow(void)
 {
     MESSAGEQUEUE *pCurMsgQ = 0;
-    HWND hwndActive = 0;
 
     /* Get the messageQ for the current thread */
-    if (!(pCurMsgQ = (MESSAGEQUEUE *)QUEUE_Lock( GetFastQueue16() )))
+    if (!(pCurMsgQ = QUEUE_Current()))
 {
         WARN("\tCurrent message queue not found. Exiting!\n" );
         return 0;
     }
 
     /* Return the current active window from the perQ data of the current message Q */
-    hwndActive = PERQDATA_GetActiveWnd( pCurMsgQ->pQData );
-
-    QUEUE_Unlock( pCurMsgQ );
-    return hwndActive;
+    return PERQDATA_GetActiveWnd( pCurMsgQ->pQData );
 }
 
 
@@ -825,7 +821,7 @@ HWND WINAPI SetActiveWindow( HWND hwnd )
     }
 
     /* Get the messageQ for the current thread */
-    if (!(pCurMsgQ = (MESSAGEQUEUE *)QUEUE_Lock( GetFastQueue16() )))
+    if (!(pCurMsgQ = QUEUE_Current()))
     {
         WARN("\tCurrent message queue not found. Exiting!\n" );
         goto CLEANUP;
@@ -855,8 +851,6 @@ CLEANUP:
     /* Unlock the queues before returning */
     if ( pMsgQ )
         QUEUE_Unlock( pMsgQ );
-    if ( pCurMsgQ )
-        QUEUE_Unlock( pCurMsgQ );
     
 end:
     WIN_ReleaseWndPtr(wndPtr);

@@ -160,7 +160,7 @@ static UINT TIMER_SetTimer( HWND hwnd, UINT id, UINT timeout,
       /* Add the timer */
 
     pTimer->hwnd    = hwnd;
-    pTimer->hq      = GetFastQueue16();
+    pTimer->hq      = InitThreadInput16( 0, 0 );
     pTimer->msg     = sys ? WM_SYSTIMER : WM_TIMER;
     pTimer->id      = id;
     pTimer->timeout = timeout;

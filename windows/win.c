@@ -769,7 +769,7 @@ static HWND WIN_CreateWindowEx( CREATESTRUCTA *cs, ATOM classAtom,
     wndPtr->hwndSelf       = hwnd;
     wndPtr->hInstance      = cs->hInstance;
     wndPtr->text           = NULL;
-    wndPtr->hmemTaskQ      = GetFastQueue16();
+    wndPtr->hmemTaskQ      = InitThreadInput16( 0, 0 );
     wndPtr->hrgnUpdate     = 0;
     wndPtr->hrgnWnd        = 0;
     wndPtr->hwndLastActive = hwnd;

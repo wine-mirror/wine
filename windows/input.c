@@ -499,7 +499,7 @@ HWND EVENT_Capture(HWND hwnd, INT16 ht)
     }
 
     /* Get the messageQ for the current thread */
-    if (!(pCurMsgQ = (MESSAGEQUEUE *)QUEUE_Lock( GetFastQueue16() )))
+    if (!(pCurMsgQ = QUEUE_Current()))
     {
         WARN_(win)("\tCurrent message queue not found. Exiting!\n" );
         goto CLEANUP;
@@ -533,9 +533,7 @@ CLEANUP:
     /* Unlock the queues before returning */
     if ( pMsgQ )
         QUEUE_Unlock( pMsgQ );
-    if ( pCurMsgQ )
-        QUEUE_Unlock( pCurMsgQ );
-    
+
     WIN_ReleaseWndPtr(wndPtr);
     return capturePrev;
 }

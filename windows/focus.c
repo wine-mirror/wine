@@ -64,7 +64,7 @@ HWND WINAPI SetFocus( HWND hwnd )
     BOOL16 bRet = 0;
 
     /* Get the messageQ for the current thread */
-    if (!(pCurMsgQ = (MESSAGEQUEUE *)QUEUE_Lock( GetFastQueue16() )))
+    if (!(pCurMsgQ = QUEUE_Current()))
     {
         WARN("\tCurrent message queue not found. Exiting!\n" );
         goto CLEANUP;
@@ -149,8 +149,6 @@ CLEANUP:
     /* Unlock the queues before returning */
     if ( pMsgQ )
         QUEUE_Unlock( pMsgQ );
-    if ( pCurMsgQ )
-        QUEUE_Unlock( pCurMsgQ );
 
     WIN_ReleaseWndPtr(wndPtr);
     return bRet ? hWndFocus : 0;
@@ -172,19 +170,14 @@ HWND16 WINAPI GetFocus16(void)
 HWND WINAPI GetFocus(void)
 {
     MESSAGEQUEUE *pCurMsgQ = 0;
-    HWND hwndFocus = 0;
 
     /* Get the messageQ for the current thread */
-    if (!(pCurMsgQ = (MESSAGEQUEUE *)QUEUE_Lock( GetFastQueue16() )))
+    if (!(pCurMsgQ = QUEUE_Current()))
     {
         WARN("\tCurrent message queue not found. Exiting!\n" );
         return 0;
     }
 
     /* Get the current focus from the perQ data of the current message Q */
-    hwndFocus = PERQDATA_GetFocusWnd( pCurMsgQ->pQData );
-
-    QUEUE_Unlock( pCurMsgQ );
-
-    return hwndFocus;
+    return PERQDATA_GetFocusWnd( pCurMsgQ->pQData );
 }

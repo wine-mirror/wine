@@ -83,7 +83,7 @@ INT16 WINAPI InitApp16( HINSTANCE16 hInstance )
     INT_SetPMHandler( 0, INT_GetPMHandler( 0xff ) );
 
     /* Create task message queue */
-    if ( !GetFastQueue16() ) return 0;
+    if ( !InitThreadInput16( 0, 0 ) ) return 0;
 
     return 1;
 }

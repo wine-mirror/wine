@@ -684,7 +684,7 @@ static BOOL process_cooked_hardware_message( MSG *msg, BOOL remove )
 static void handle_sent_message( MSG *msg, int type, ULONG_PTR extra_info )
 {
     LRESULT result = 0;
-    MESSAGEQUEUE *queue = QUEUE_Lock( GetFastQueue16() );
+    MESSAGEQUEUE *queue = QUEUE_Current();
     ULONG_PTR old_extra_info = queue->GetMessageExtraInfoVal; /* save ExtraInfo */
     WND *wndPtr = WIN_FindWndPtr( msg->hwnd );
 
@@ -716,7 +716,6 @@ static void handle_sent_message( MSG *msg, int type, ULONG_PTR extra_info )
 
     queue->GetMessageExtraInfoVal = old_extra_info;  /* Restore extra info */
     WIN_ReleaseWndPtr(wndPtr);
-    QUEUE_Unlock( queue );
 
     SERVER_START_REQ( reply_message )
     {
@@ -861,12 +860,10 @@ static BOOL peek_message( HWND hwnd, UINT first, UINT last, int flags, int type,
 static int wait_queue_bits( WORD bits, DWORD timeout )
 {
     MESSAGEQUEUE *queue;
-    HQUEUE16 hQueue;
 
-    TRACE_(msg)("q %04x waiting for %04x\n", GetFastQueue16(), bits);
+    if (!(queue = QUEUE_Current())) return 0;
 
-    hQueue = GetFastQueue16();
-    if (!(queue = QUEUE_Lock( hQueue ))) return 0;
+    TRACE("q %04x waiting for %04x\n", queue->self, bits);
 
     for (;;)
     {
@@ -889,7 +886,6 @@ static int wait_queue_bits( WORD bits, DWORD timeout )
         if (changed_bits & bits)
         {
             /* One of the bits is set; we can return */
-            QUEUE_Unlock( queue );
             return 1;
         }
         if (wake_bits & QS_SENDMESSAGE)
@@ -1179,12 +1175,11 @@ static BOOL MSG_PeekMessage( int type, LPMSG msg_out, HWND hwnd,
 
     WIN_RestoreWndsLock(iWndsLocks);
 
-    if ((msgQueue = QUEUE_Lock( GetFastQueue16() )))
+    if ((msgQueue = QUEUE_Current()))
     {
         msgQueue->GetMessageTimeVal      = msg.time;
         msgQueue->GetMessagePosVal       = MAKELONG( msg.pt.x, msg.pt.y );
         msgQueue->GetMessageExtraInfoVal = extra_info;
-        QUEUE_Unlock( msgQueue );
     }
 
       /* We got a message */
@@ -1953,7 +1948,6 @@ DWORD WINAPI MsgWaitForMultipleObjectsEx( DWORD count, CONST HANDLE *pHandles,
 {
     HANDLE handles[MAXIMUM_WAIT_OBJECTS];
     DWORD i, ret;
-    HQUEUE16 hQueue = GetFastQueue16();
     MESSAGEQUEUE *msgQueue;
 
     if (count > MAXIMUM_WAIT_OBJECTS-1)
@@ -1962,7 +1956,7 @@ DWORD WINAPI MsgWaitForMultipleObjectsEx( DWORD count, CONST HANDLE *pHandles,
         return WAIT_FAILED;
     }
 
-    if (!(msgQueue = QUEUE_Lock( hQueue ))) return WAIT_FAILED;
+    if (!(msgQueue = QUEUE_Current())) return WAIT_FAILED;
 
     /* set the queue mask */
     SERVER_START_REQ( set_queue_mask )
@@ -1987,7 +1981,6 @@ DWORD WINAPI MsgWaitForMultipleObjectsEx( DWORD count, CONST HANDLE *pHandles,
     else
         ret = WaitForMultipleObjectsEx( count+1, handles, flags & MWMO_WAITALL,
                                         timeout, flags & MWMO_ALERTABLE );
-    QUEUE_Unlock( msgQueue );
     return ret;
 }
 

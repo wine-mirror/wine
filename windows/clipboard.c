@@ -131,7 +131,7 @@ BOOL CLIPBOARD_IsLocked()
        * clipboard in order to update data in response to this message.
        */
 #if 0
-      MESSAGEQUEUE *queue = QUEUE_Lock( GetFastQueue16() );
+      MESSAGEQUEUE *queue = QUEUE_Current();
       
       if ( queue
            && queue->smWaiting
@@ -139,8 +139,6 @@ BOOL CLIPBOARD_IsLocked()
            && queue->smWaiting->hSrcQueue
          )
   	bIsLocked = FALSE;
-        
-      QUEUE_Unlock( queue );
 #else
       /* FIXME: queue check no longer possible */
       bIsLocked = FALSE;

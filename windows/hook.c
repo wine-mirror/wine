@@ -835,16 +835,14 @@ static HANDLE16 HOOK_GetNextHook( HANDLE16 hook )
  *
  * Get the first hook for a given type.
  */
-static HANDLE16 HOOK_GetHook( INT16 id, HQUEUE16 hQueue )
+static HANDLE16 HOOK_GetHook( INT16 id )
 {
     MESSAGEQUEUE *queue;
     HANDLE16 hook = 0;
 
-    if ((queue = (MESSAGEQUEUE *)QUEUE_Lock( hQueue )) != NULL)
+    if ((queue = QUEUE_Current()) != NULL)
         hook = queue->hooks[id - WH_MINHOOK];
     if (!hook) hook = HOOK_systemHooks[id - WH_MINHOOK];
-
-    QUEUE_Unlock( queue );
     return hook;
 }
 
@@ -870,7 +868,7 @@ static HHOOK HOOK_SetHook( INT16 id, LPVOID proc, INT type,
                   id, (UINT)proc, hModule, dwThreadId );
 
     /* Create task queue if none present */
-    GetFastQueue16();
+    InitThreadInput16( 0, 0 );
 
     if (id == WH_JOURNALPLAYBACK) EnableHardwareInput16(FALSE);
 
@@ -1018,7 +1016,7 @@ static LRESULT HOOK_CallHook( HANDLE16 hook, INT fromtype, INT code,
 
     /* Now call it */
 
-    if (!(queue = (MESSAGEQUEUE *)QUEUE_Lock( GetFastQueue16() ))) return 0;
+    if (!(queue = QUEUE_Current())) return 0;
     prevHook = queue->hCurHook;
     queue->hCurHook = hook;
     data->flags |= HOOK_INUSE;
@@ -1047,8 +1045,6 @@ static LRESULT HOOK_CallHook( HANDLE16 hook, INT fromtype, INT code,
     data->flags &= ~HOOK_INUSE;
     queue->hCurHook = prevHook;
 
-    QUEUE_Unlock( queue );
-
     if (UnMapFunc)
       UnMapFunc( data->id, code, wParamOrig, lParamOrig, wParam, lParam );
 
@@ -1068,10 +1064,7 @@ static LRESULT HOOK_CallHook( HANDLE16 hook, INT fromtype, INT code,
  */
 BOOL HOOK_IsHooked( INT16 id )
 {
-    /* Hmmm. Use GetThreadQueue(0) instead of GetFastQueue() here to 
-       avoid queue being created if someone wants to merely check ... */
-
-    return HOOK_GetHook( id, GetThreadQueue16(0) ) != 0;
+    return HOOK_GetHook( id ) != 0;
 }
 
 
@@ -1085,7 +1078,7 @@ LRESULT HOOK_CallHooks16( INT16 id, INT16 code, WPARAM16 wParam,
 {
     HANDLE16 hook; 
 
-    if (!(hook = HOOK_GetHook( id, GetFastQueue16() ))) return 0;
+    if (!(hook = HOOK_GetHook( id ))) return 0;
     if (!(hook = HOOK_FindValidHook(hook))) return 0;
     return HOOK_CallHook( hook, HOOK_WIN16, code, wParam, lParam );
 }
@@ -1100,7 +1093,7 @@ LRESULT HOOK_CallHooksA( INT id, INT code, WPARAM wParam,
 {
     HANDLE16 hook; 
 
-    if (!(hook = HOOK_GetHook( id, GetFastQueue16() ))) return 0;
+    if (!(hook = HOOK_GetHook( id ))) return 0;
     if (!(hook = HOOK_FindValidHook(hook))) return 0;
     return HOOK_CallHook( hook, HOOK_WIN32A, code, wParam, lParam );
 }
@@ -1115,41 +1108,12 @@ LRESULT HOOK_CallHooksW( INT id, INT code, WPARAM wParam,
 {
     HANDLE16 hook; 
 
-    if (!(hook = HOOK_GetHook( id, GetFastQueue16() ))) return 0;
+    if (!(hook = HOOK_GetHook( id ))) return 0;
     if (!(hook = HOOK_FindValidHook(hook))) return 0;
     return HOOK_CallHook( hook, HOOK_WIN32W, code, wParam,
 			  lParam );
 }
 
-
-/***********************************************************************
- *           HOOK_ResetQueueHooks
- */
-void HOOK_ResetQueueHooks( HQUEUE16 hQueue )
-{
-    MESSAGEQUEUE *queue;
-
-    if ((queue = (MESSAGEQUEUE *)QUEUE_Lock( hQueue )) != NULL)
-    {
-	HOOKDATA*	data;
-	HHOOK		hook;
-	int		id;
-	for( id = WH_MINHOOK; id <= WH_MAXHOOK; id++ )
-	{
-	    hook = queue->hooks[id - WH_MINHOOK];
-	    while( hook )
-	    {
-	        if( (data = (HOOKDATA *)USER_HEAP_LIN_ADDR(hook)) )
-	        {
-		  data->ownerQueue = hQueue;
-		  hook = data->next;
-		} else break;
-	    }
-	}
-
-        QUEUE_Unlock( queue );
-    }
-}
 
 /***********************************************************************
  *	     HOOK_FreeModuleHooks
@@ -1183,9 +1147,9 @@ void HOOK_FreeModuleHooks( HMODULE16 hModule )
 /***********************************************************************
  *	     HOOK_FreeQueueHooks
  */
-void HOOK_FreeQueueHooks( HQUEUE16 hQueue )
+void HOOK_FreeQueueHooks(void)
 {
-  /* remove all hooks registered by this queue */
+  /* remove all hooks registered by the current queue */
 
   HOOKDATA*	hptr = NULL;
   HHOOK 	hook, next;
@@ -1193,13 +1157,13 @@ void HOOK_FreeQueueHooks( HQUEUE16 hQueue )
 
   for( id = WH_MINHOOK; id <= WH_MAXHOOK; id++ )
     {
-       hook = HOOK_GetHook( id, hQueue );
+       hook = HOOK_GetHook( id );
        while( hook )
 	{
 	  next = HOOK_GetNextHook(hook);
 
 	  hptr = (HOOKDATA *)USER_HEAP_LIN_ADDR(hook);
-	  if( hptr && hptr->ownerQueue == hQueue )
+	  if( hptr && hptr->ownerQueue )
 	    {
 	      hptr->flags &= HOOK_MAPTYPE;
 	      HOOK_RemoveHook(hook);
@@ -1287,7 +1251,7 @@ BOOL16 WINAPI UnhookWindowsHook16( INT16 id, HOOKPROC16 proc )
  */
 BOOL WINAPI UnhookWindowsHook( INT id, HOOKPROC proc )
 {
-    HANDLE16 hook = HOOK_GetHook( id, GetFastQueue16() );
+    HANDLE16 hook = HOOK_GetHook( id );
 
     TRACE("%d %08lx\n", id, (DWORD)proc );
 
@@ -1373,12 +1337,9 @@ LRESULT WINAPI DefHookProc16( INT16 code, WPARAM16 wParam, LPARAM lParam,
     /* Note: the *hhook parameter is never used, since we rely on the
      * current hook value from the task queue to find the next hook. */
     MESSAGEQUEUE *queue;
-    LRESULT ret;
 
-    if (!(queue = (MESSAGEQUEUE *)QUEUE_Lock( GetFastQueue16() ))) return 0;
-    ret = CallNextHookEx16( queue->hCurHook, code, wParam, lParam );
-    QUEUE_Unlock( queue );
-    return ret;
+    if (!(queue = QUEUE_Current())) return 0;
+    return CallNextHookEx16( queue->hCurHook, code, wParam, lParam );
 }
 
 

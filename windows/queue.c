@@ -214,15 +214,13 @@ HWND PERQDATA_GetCaptureWnd( INT *hittest )
     PERQUEUEDATA *pQData;
     HWND hWndCapture;
 
-    if (!(queue = QUEUE_Lock( GetFastQueue16() ))) return 0;
+    if (!(queue = QUEUE_Current())) return 0;
     pQData = queue->pQData;
 
     EnterCriticalSection( &pQData->cSection );
     hWndCapture = pQData->hWndCapture;
     *hittest = pQData->nCaptureHT;
     LeaveCriticalSection( &pQData->cSection );
-
-    QUEUE_Unlock( queue );
     return hWndCapture;
 }
 
@@ -238,7 +236,7 @@ HWND PERQDATA_SetCaptureWnd( HWND hWndCapture, INT hittest )
     PERQUEUEDATA *pQData;
     HWND hWndCapturePrv;
 
-    if (!(queue = QUEUE_Lock( GetFastQueue16() ))) return 0;
+    if (!(queue = QUEUE_Current())) return 0;
     pQData = queue->pQData;
 
     EnterCriticalSection( &pQData->cSection );
@@ -246,8 +244,6 @@ HWND PERQDATA_SetCaptureWnd( HWND hWndCapture, INT hittest )
     pQData->hWndCapture = hWndCapture;
     pQData->nCaptureHT = hittest;
     LeaveCriticalSection( &pQData->cSection );
-
-    QUEUE_Unlock( queue );
     return hWndCapturePrv;
 }
 
@@ -275,6 +271,31 @@ MESSAGEQUEUE *QUEUE_Lock( HQUEUE16 hQueue )
 
     queue->lockCount++;
     HeapUnlock( GetProcessHeap() );
+    return queue;
+}
+
+
+/***********************************************************************
+ *	     QUEUE_Current
+ *
+ * Get the current thread queue, creating it if required.
+ * QUEUE_Unlock is not needed since the queue can only be deleted by
+ * the current thread anyway.
+ */
+MESSAGEQUEUE *QUEUE_Current(void)
+{
+    MESSAGEQUEUE *queue;
+    HQUEUE16 hQueue;
+
+    if (!(hQueue = GetThreadQueue16(0)))
+    {
+        if (!(hQueue = InitThreadInput16( 0, 0 ))) return NULL;
+    }
+
+    if ((queue = GlobalLock16( hQueue )))
+    {
+        if (queue->magic != QUEUE_MAGIC) queue = NULL;
+    }
     return queue;
 }
 
@@ -378,16 +399,19 @@ static HQUEUE16 QUEUE_CreateMsgQueue( BOOL16 bCreatePerQData )
  * Note: We need to mask asynchronous events to make sure PostMessage works
  * even in the signal handler.
  */
-BOOL QUEUE_DeleteMsgQueue( HQUEUE16 hQueue )
+void QUEUE_DeleteMsgQueue(void)
 {
-    MESSAGEQUEUE * msgQueue = QUEUE_Lock(hQueue);
+    HQUEUE16 hQueue = GetThreadQueue16(0);
+    MESSAGEQUEUE * msgQueue;
 
-    TRACE_(msg)("(): Deleting message queue %04x\n", hQueue);
+    if (!hQueue) return;  /* thread doesn't have a queue */
 
-    if (!hQueue || !msgQueue)
+    TRACE("(): Deleting message queue %04x\n", hQueue);
+
+    if (!(msgQueue = QUEUE_Lock(hQueue)))
     {
-	ERR_(msg)("invalid argument.\n");
-	return 0;
+        ERR("invalid thread queue\n");
+        return;
     }
 
     msgQueue->magic = 0;
@@ -407,12 +431,11 @@ BOOL QUEUE_DeleteMsgQueue( HQUEUE16 hQueue )
     msgQueue->self = 0;
 
     HeapUnlock( GetProcessHeap() );
+    SetThreadQueue16( 0, 0 );
 
     /* free up resource used by MESSAGEQUEUE structure */
     msgQueue->lockCount--;
     QUEUE_Unlock( msgQueue );
-    
-    return 1;
 }
 
 
@@ -534,10 +557,6 @@ BOOL WINAPI SetMessageQueue( INT size )
 {
     /* now obsolete the message queue will be expanded dynamically
      as necessary */
-
-    /* access the queue to create it if it's not existing */
-    GetFastQueue16();
-
     return TRUE;
 }
 
@@ -546,16 +565,9 @@ BOOL WINAPI SetMessageQueue( INT size )
  */
 HQUEUE16 WINAPI InitThreadInput16( WORD unknown, WORD flags )
 {
-    HQUEUE16 hQueue;
     MESSAGEQUEUE *queuePtr;
+    HQUEUE16 hQueue = NtCurrentTeb()->queue;
 
-    TEB *teb = NtCurrentTeb();
-
-    if (!teb)
-        return 0;
-
-    hQueue = teb->queue;
-    
     if ( !hQueue )
     {
         /* Create thread message queue */
@@ -571,7 +583,7 @@ HQUEUE16 WINAPI InitThreadInput16( WORD unknown, WORD flags )
 
         HeapLock( GetProcessHeap() );  /* FIXME: a bit overkill */
         SetThreadQueue16( 0, hQueue );
-        teb->queue = hQueue;
+        NtCurrentTeb()->queue = hQueue;
         HeapUnlock( GetProcessHeap() );
         
         QUEUE_Unlock( queuePtr );
@@ -656,13 +668,9 @@ BOOL WINAPI GetInputState(void)
 DWORD WINAPI GetMessagePos(void)
 {
     MESSAGEQUEUE *queue;
-    DWORD ret;
 
-    if (!(queue = QUEUE_Lock( GetFastQueue16() ))) return 0;
-    ret = queue->GetMessagePosVal;
-    QUEUE_Unlock( queue );
-
-    return ret;
+    if (!(queue = QUEUE_Current())) return 0;
+    return queue->GetMessagePosVal;
 }
 
 
@@ -689,13 +697,9 @@ DWORD WINAPI GetMessagePos(void)
 LONG WINAPI GetMessageTime(void)
 {
     MESSAGEQUEUE *queue;
-    LONG ret;
 
-    if (!(queue = QUEUE_Lock( GetFastQueue16() ))) return 0;
-    ret = queue->GetMessageTimeVal;
-    QUEUE_Unlock( queue );
-    
-    return ret;
+    if (!(queue = QUEUE_Current())) return 0;
+    return queue->GetMessageTimeVal;
 }
 
 
@@ -706,13 +710,9 @@ LONG WINAPI GetMessageTime(void)
 LONG WINAPI GetMessageExtraInfo(void)
 {
     MESSAGEQUEUE *queue;
-    LONG ret;
 
-    if (!(queue = QUEUE_Lock( GetFastQueue16() ))) return 0;
-    ret = queue->GetMessageExtraInfoVal;
-    QUEUE_Unlock( queue );
-
-    return ret;
+    if (!(queue = QUEUE_Current())) return 0;
+    return queue->GetMessageExtraInfoVal;
 }
 
 
