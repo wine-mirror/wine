@@ -6,8 +6,6 @@
 
 #include "config.h"
 
-#ifndef X_DISPLAY_MISSING
-
 #ifdef HAVE_LIBXXF86DGA2
 
 #include <X11/Xlib.h>
@@ -199,4 +197,3 @@ void TSXDGAKeyEventToXKeyEvent(XDGAKeyEvent* a0, XKeyEvent* a1)
 
 #endif /* defined(HAVE_LIBXXF86DGA2) */
 
-#endif /* !defined(X_DISPLAY_MISSING) */

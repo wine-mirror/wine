@@ -11,8 +11,6 @@
 
 #include "config.h"
 
-#ifndef X_DISPLAY_MISSING
-
 
 #include <X11/Xlib.h>
 #include <X11/Xresource.h>
@@ -53,7 +51,5 @@ extern struct _XImage * TSXSubImage(struct _XImage *, int, int, unsigned int, un
 extern int TSXAddPixel(struct _XImage *, long);
 extern XContext TSXUniqueContext(void);
 
-
-#endif /* !defined(X_DISPLAY_MISSING) */
 
 #endif /* __WINE_TS_XUTIL_H */

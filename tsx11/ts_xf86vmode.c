@@ -6,8 +6,6 @@
 
 #include "config.h"
 
-#ifndef X_DISPLAY_MISSING
-
 #include "windef.h"
 #ifdef HAVE_LIBXXF86VM
 #define XMD_H
@@ -178,4 +176,3 @@ Bool TSXF86VidModeSetViewPort(Display*a0,int a1,int a2,int a3)
 
 #endif /* defined(HAVE_LIBXXF86VM) */
 
-#endif /* !defined(X_DISPLAY_MISSING) */

@@ -7,18 +7,18 @@
 
 #include "config.h"
 
-#ifndef X_DISPLAY_MISSING
 #include <X11/Xlib.h>
 #include <X11/Xresource.h>
 #include <X11/Xutil.h>
 #include <X11/Xatom.h>
-#endif /* !defined(X_DISPLAY_MISSING) */
+#ifdef HAVE_LIBXXSHM
+# include <X11/extensions/XShm.h>
+#endif /* defined(HAVE_LIBXXSHM) */
 
 #include "gdi.h"
 #include "winbase.h"
 #include "windef.h"
 
-#include <X11/extensions/XShm.h>
 
 struct tagBITMAPOBJ;
 struct tagCLASS;

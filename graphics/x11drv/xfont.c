@@ -9,11 +9,9 @@
 
 #include "config.h"
 
-#ifndef X_DISPLAY_MISSING
 #include <X11/Xatom.h>
+
 #include "ts_xlib.h"
-#include "x11font.h"
-#endif /* !defined(X_DISPLAY_MISSING) */
 
 #include <ctype.h>
 #include <stdio.h>
@@ -25,6 +23,7 @@
 #include <fcntl.h>
 #include <math.h>
 #include <assert.h>
+
 #include "windef.h"
 #include "wingdi.h"
 #include "winuser.h"
@@ -34,10 +33,9 @@
 #include "debugtools.h"
 #include "ldt.h"
 #include "tweak.h"
+#include "x11font.h"
 
 DEFAULT_DEBUG_CHANNEL(font)
-
-#ifndef X_DISPLAY_MISSING
 
 #define X_PFONT_MAGIC		(0xFADE0000)
 #define X_FMC_MAGIC		(0x0000CAFE)
@@ -3073,5 +3071,3 @@ BOOL X11DRV_GetCharWidth( DC *dc, UINT firstChar, UINT lastChar,
     }
     return FALSE;
 }
-
-#endif /* !defined(X_DISPLAY_MISSING) */

@@ -8,14 +8,14 @@
 
 #include "config.h"
 
-#ifndef X_DISPLAY_MISSING
-
 #include <X11/Xatom.h>
+
 #include "ts_xlib.h"
 #include "ts_xutil.h"
 
 #include <stdlib.h>
 #include <string.h>
+
 #include "bitmap.h"
 #include "color.h"
 #include "debugtools.h"
@@ -882,4 +882,4 @@ void X11DRV_WND_DockWindow(WND *wndPtr)
     display,win,kwmDockWindow,kwmDockWindow,32,PropModeReplace,(char*)&data,1
   );
 }
-#endif /* !defined(X_DISPLAY_MISSING) */
+

@@ -4,10 +4,6 @@
  * Copyright 1998 Patrik Stridvall
  */
 
-#include "config.h"
-
-#ifndef X_DISPLAY_MISSING
-
 #include "clipboard.h"
 #include "monitor.h"
 #include "user.h"
@@ -45,7 +41,5 @@ WND_DRIVER X11DRV_WND_Driver =
   X11DRV_WND_SetHostAttr,
   X11DRV_WND_IsSelfClipping
 };
-
-#endif /* !defined(X_DISPLAY_MISSING) */
 
 

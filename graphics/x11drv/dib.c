@@ -6,11 +6,8 @@
 
 #include "config.h"
 
-#ifndef X_DISPLAY_MISSING
-
 #include "ts_xlib.h"
 #include "ts_xutil.h"
-
 #ifdef HAVE_LIBXXSHM
 # include "ts_xshm.h"
 # ifdef HAVE_SYS_SHM_H
@@ -3553,8 +3550,3 @@ Pixmap X11DRV_DIB_CreatePixmapFromDIB( HGLOBAL hPackedDIB, HDC hdc )
     TRACE("\tReturning Pixmap %ld\n", pixmap);
     return pixmap;
 }
-
-#endif /* !defined(X_DISPLAY_MISSING) */
-
-
-

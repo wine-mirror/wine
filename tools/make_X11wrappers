@@ -95,8 +95,6 @@ foreach $name (@dolist) {
 
 #include "config.h"
 
-#ifndef X_DISPLAY_MISSING
-
 $pre_file
 $x11_incl#include <X11/$extensions_dir$inc_name.h>
 
@@ -110,8 +108,6 @@ END
  */
 
 #include "config.h"
-
-#ifndef X_DISPLAY_MISSING
 
 $pre_file
 $x11_incl#include <X11/$extensions_dir$inc_name.h>
@@ -375,14 +371,11 @@ END
     print OUTH <<END;
 
 $post_file
-#endif /* !defined(X_DISPLAY_MISSING) */
-
 #endif /* __WINE_TS_$ucname\_H */
 END
     print OUTC <<END;
 
 $post_file
-#endif /* !defined(X_DISPLAY_MISSING) */
 END
 
 

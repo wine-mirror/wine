@@ -6,8 +6,6 @@
 
 #include "config.h"
 
-#ifndef X_DISPLAY_MISSING
-
 #include "ts_xlib.h"
 
 #include <stdlib.h>
@@ -285,6 +283,3 @@ HBRUSH X11DRV_BRUSH_SelectObject( DC * dc, HBRUSH hbrush, BRUSHOBJ * brush )
     
     return prevHandle;
 }
-
-#endif /* !defined(X_DISPLAY_MISSING) */
-

@@ -6,8 +6,6 @@
 
 #include "config.h"
 
-#ifndef X_DISPLAY_MISSING
-
 
 #include <X11/Xlib.h>
 #include <X11/Xresource.h>
@@ -81,4 +79,3 @@ void  TSXrmParseCommand(XrmDatabase* a0, XrmOptionDescList a1, int a2, const  ch
 }
 
 
-#endif /* !defined(X_DISPLAY_MISSING) */

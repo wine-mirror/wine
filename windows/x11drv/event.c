@@ -7,17 +7,15 @@
 
 #include "config.h"
 
-#ifndef X_DISPLAY_MISSING
-
 #include <X11/Xatom.h>
 #include <X11/keysym.h>
+
 #include "ts_xlib.h"
 #include "ts_xresource.h"
 #include "ts_xutil.h"
 #ifdef HAVE_LIBXXSHM
 #include "ts_xshm.h"
 #endif
-
 #ifdef HAVE_LIBXXF86DGA2
 #include "ts_xf86dga2.h"
 #endif
@@ -2183,5 +2181,3 @@ void X11DRV_EVENT_WaitShmCompletions( Drawable dw )
 }
 
 #endif /* defined(HAVE_LIBXXSHM) */
-
-#endif /* !defined(X_DISPLAY_MISSING) */

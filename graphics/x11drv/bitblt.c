@@ -6,9 +6,8 @@
 
 #include "config.h"
 
-#ifndef X_DISPLAY_MISSING
-
 #include <X11/Intrinsic.h>
+
 #include "ts_xlib.h"
 
 #include <assert.h>
@@ -1542,4 +1541,3 @@ BOOL X11DRV_StretchBlt( DC *dcDst, INT xDst, INT yDst,
     return result;
 }
 
-#endif /* !defined(X_DISPLAY_MISSING) */

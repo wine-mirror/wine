@@ -11,9 +11,8 @@
 
 #include "config.h"
 
-#ifndef X_DISPLAY_MISSING
-
 #include <X11/Intrinsic.h>
+
 #include "ts_xlib.h"
 #include "ts_xutil.h"
 
@@ -1352,4 +1351,3 @@ BOOL X11DRV_GetDCOrgEx( DC *dc, LPPOINT lpp )
     return TRUE;
 }
 
-#endif /* !defined(X_DISPLAY_MISSING) */

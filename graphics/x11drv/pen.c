@@ -6,8 +6,6 @@
 
 #include "config.h"
 
-#ifndef X_DISPLAY_MISSING
-
 #include "pen.h"
 #include "color.h"
 #include "x11drv.h"
@@ -68,5 +66,3 @@ HPEN X11DRV_PEN_SelectObject( DC * dc, HPEN hpen, PENOBJ * pen )
     
     return prevHandle;
 }
-
-#endif /* !defined(X_DISPLAY_MISSING) */

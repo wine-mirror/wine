@@ -11,8 +11,6 @@
 
 #include "config.h"
 
-#ifndef X_DISPLAY_MISSING
-
 
 #include <X11/Xlib.h>
 #include <X11/Xresource.h>
@@ -24,7 +22,5 @@ extern XrmDatabase  TSXrmGetStringDatabase(const  char*);
 extern void  TSXrmMergeDatabases(XrmDatabase, XrmDatabase*);
 extern void  TSXrmParseCommand(XrmDatabase*, XrmOptionDescList, int, const  char*, int*, char**);
 
-
-#endif /* !defined(X_DISPLAY_MISSING) */
 
 #endif /* __WINE_TS_XRESOURCE_H */

@@ -6,11 +6,10 @@
 
 #include "config.h"
 
-#ifndef X_DISPLAY_MISSING
-
 #include "ts_xlib.h"
 
 #include <stdio.h>
+
 #include "dc.h"
 #include "x11drv.h"
 #include "region.h"
@@ -73,6 +72,4 @@ void X11DRV_SetDeviceClipping( DC * dc )
 
     GDI_HEAP_UNLOCK( dc->w.hGCClipRgn );
 }
-
-#endif /* !defined(X_DISPLAY_MISSING) */
 

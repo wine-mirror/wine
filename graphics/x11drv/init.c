@@ -6,8 +6,6 @@
 
 #include "config.h"
 
-#ifndef X_DISPLAY_MISSING
-
 #include "ts_xlib.h"
 
 #include <string.h>
@@ -312,4 +310,3 @@ static INT X11DRV_Escape( DC *dc, INT nEscape, INT cbInput,
     return 0;
 }
 
-#endif /* !defined(X_DISPLAY_MISSING) */

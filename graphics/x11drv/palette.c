@@ -7,8 +7,6 @@
 
 #include "config.h"
 
-#ifndef X_DISPLAY_MISSING
-
 #include "ts_xlib.h"
 
 #include <stdlib.h>
@@ -992,4 +990,3 @@ BOOL X11DRV_PALETTE_IsDark(int pixel)
   return (GetRValue(col) + GetGValue(col) + GetBValue(col)) <= 0x180;
 }
 
-#endif /* !defined(X_DISPLAY_MISSING) */

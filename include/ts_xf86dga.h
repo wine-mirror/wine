@@ -11,8 +11,6 @@
 
 #include "config.h"
 
-#ifndef X_DISPLAY_MISSING
-
 #ifdef HAVE_LIBXXF86DGA
 
 #include <X11/Xlib.h>
@@ -29,7 +27,5 @@ extern Status TSXF86DGAQueryDirectVideo(Display*,int,int*);
 extern Status TSXF86DGAViewPortChanged(Display*,int,int);
 
 #endif /* defined(HAVE_LIBXXF86DGA) */
-
-#endif /* !defined(X_DISPLAY_MISSING) */
 
 #endif /* __WINE_TS_XF86DGA_H */

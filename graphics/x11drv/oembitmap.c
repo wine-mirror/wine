@@ -7,8 +7,6 @@
 
 #include "config.h"
 
-#ifndef X_DISPLAY_MISSING
-
 #include "ts_xlib.h"
 #include "ts_xutil.h"
 
@@ -625,4 +623,3 @@ BOOL X11DRV_OBM_Init(void)
     return 1;
 }
 
-#endif /* !defined(X_DISPLAY_MISSING) */

@@ -11,8 +11,6 @@
 
 #include "config.h"
 
-#ifndef X_DISPLAY_MISSING
-
 #include "windef.h"
 #ifdef HAVE_LIBXXF86VM
 #define XMD_H
@@ -37,7 +35,5 @@ extern Bool TSXF86VidModeGetViewPort(Display*,int,int*,int*);
 extern Bool TSXF86VidModeSetViewPort(Display*,int,int,int);
 
 #endif /* defined(HAVE_LIBXXF86VM) */
-
-#endif /* !defined(X_DISPLAY_MISSING) */
 
 #endif /* __WINE_TS_XF86VMODE_H */

@@ -11,8 +11,6 @@
 
 #include "config.h"
 
-#ifndef X_DISPLAY_MISSING
-
 #ifdef HAVE_LIBXXSHM
 
 #include <X11/Xlib.h>
@@ -29,7 +27,5 @@ extern XImage * TSXShmCreateImage(Display *, Visual *, unsigned int, int, char *
 extern Pixmap TSXShmCreatePixmap(Display *, Drawable, char *, XShmSegmentInfo *, unsigned int, unsigned int, unsigned int);
 
 #endif /* defined(HAVE_LIBXXSHM) */
-
-#endif /* !defined(X_DISPLAY_MISSING) */
 
 #endif /* __WINE_TS_XSHM_H */

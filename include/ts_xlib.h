@@ -11,8 +11,6 @@
 
 #include "config.h"
 
-#ifndef X_DISPLAY_MISSING
-
 
 #include <X11/Xlib.h>
 
@@ -142,7 +140,5 @@ extern XIM  TSXOpenIM(Display*, struct _XrmHashBucketRec*, char*, char*);
 extern int (*TSXSynchronize(Display *, Bool))(Display *);
 extern void TS_XInitImageFuncPtrs(XImage *);
 
-
-#endif /* !defined(X_DISPLAY_MISSING) */
 
 #endif /* __WINE_TS_XLIB_H */

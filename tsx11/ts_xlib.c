@@ -6,8 +6,6 @@
 
 #include "config.h"
 
-#ifndef X_DISPLAY_MISSING
-
 
 #include <X11/Xlib.h>
 
@@ -1391,4 +1389,3 @@ void TS_XInitImageFuncPtrs(XImage *a0)
 }
 
 
-#endif /* !defined(X_DISPLAY_MISSING) */

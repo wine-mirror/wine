@@ -6,14 +6,14 @@
 
 #include "config.h"
 
-#ifndef X_DISPLAY_MISSING
-
 #include <X11/Xatom.h>
+
 #include "ts_xlib.h"
 
 #include <stdlib.h>
-#include "windef.h"
 #include <math.h>
+
+#include "windef.h"
 #include "dc.h"
 #include "gdi.h"
 #include "heap.h"
@@ -371,4 +371,3 @@ END:
     return TRUE;
 }
 
-#endif /* !defined(X_DISPLAY_MISSING) */

@@ -11,8 +11,6 @@
 
 #include "config.h"
 
-#ifndef X_DISPLAY_MISSING
-
 #ifdef HAVE_LIBXXF86DGA2
 
 #include <X11/Xlib.h>
@@ -38,7 +36,5 @@ extern void TSXDGAChangePixmapMode(Display*, int, int*, int*, int);
 extern void TSXDGAKeyEventToXKeyEvent(XDGAKeyEvent*, XKeyEvent*);
 
 #endif /* defined(HAVE_LIBXXF86DGA2) */
-
-#endif /* !defined(X_DISPLAY_MISSING) */
 
 #endif /* __WINE_TS_XF86DGA2_H */

@@ -6,8 +6,6 @@
 
 #include "config.h"
 
-#ifndef X_DISPLAY_MISSING
-
 #ifdef HAVE_LIBXXF86DGA
 
 #include <X11/Xlib.h>
@@ -120,4 +118,3 @@ Status TSXF86DGAViewPortChanged(Display*a0,int a1,int a2)
 
 #endif /* defined(HAVE_LIBXXF86DGA) */
 
-#endif /* !defined(X_DISPLAY_MISSING) */

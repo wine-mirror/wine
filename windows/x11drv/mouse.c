@@ -6,8 +6,6 @@
 
 #include "config.h"
 
-#ifndef X_DISPLAY_MISSING
-
 #include "ts_xlib.h"
 
 #include "callback.h"
@@ -272,6 +270,3 @@ void X11DRV_MOUSE_Init()
 		  GetTickCount(),
 		  0);
 }
-
-
-#endif /* !defined(X_DISPLAY_MISSING) */

@@ -6,8 +6,6 @@
 
 #include "config.h"
 
-#ifndef X_DISPLAY_MISSING
-
 #ifdef HAVE_LIBXXSHM
 
 #include <X11/Xlib.h>
@@ -120,4 +118,3 @@ Pixmap TSXShmCreatePixmap(Display *a0, Drawable a1, char *a2, XShmSegmentInfo *a
 
 #endif /* defined(HAVE_LIBXXSHM) */
 
-#endif /* !defined(X_DISPLAY_MISSING) */

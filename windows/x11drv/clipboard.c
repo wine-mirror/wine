@@ -47,16 +47,15 @@
 
 #include "config.h"
 
-#ifndef X_DISPLAY_MISSING
+#include <X11/Xatom.h>
+
+#include "ts_xlib.h"
 
 #include <errno.h>
-#include <X11/Xatom.h>
 #include <string.h>
 #include <stdio.h>
 #include <unistd.h>
 #include <fcntl.h>
-
-#include "ts_xlib.h"
 
 #include "windef.h"
 #include "wingdi.h"
@@ -1239,5 +1238,3 @@ void X11DRV_CLIPBOARD_FreeResources( Atom property )
         else prop = &(*prop)->next;
     }
 }
-
-#endif /* !defined(X_DISPLAY_MISSING) */

@@ -7,8 +7,6 @@
 
 #include "config.h"
 
-#ifndef X_DISPLAY_MISSING
-
 #include "ts_xlib.h"
 #include "ts_xutil.h"
 
@@ -618,4 +616,3 @@ Pixmap X11DRV_BITMAP_Pixmap(HBITMAP hbitmap)
     return (Pixmap)bmp->physBitmap;
 }
 
-#endif /* !defined(X_DISPLAY_MISSING) */

@@ -11,15 +11,15 @@
 
 #include "config.h"
 
-#ifndef X_DISPLAY_MISSING
-
-#include <ctype.h>
-#include <string.h>
 #include <X11/Xatom.h>
 #include <X11/keysym.h>
+
 #include "ts_xlib.h"
 #include "ts_xresource.h"
 #include "ts_xutil.h"
+
+#include <ctype.h>
+#include <string.h>
 
 #include "windef.h"
 #include "wingdi.h"
@@ -1566,7 +1566,4 @@ extern void X11DRV_KEYBOARD_SetKeyboardConfig(KEYBOARD_CONFIG *cfg, DWORD mask) 
   if (X_mask)
     TSXChangeKeyboardControl(display, X_mask, &xkc);
 }
-
-
-#endif /* !defined(X_DISPLAY_MISSING) */
 

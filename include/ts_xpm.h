@@ -11,8 +11,6 @@
 
 #include "config.h"
 
-#ifndef X_DISPLAY_MISSING
-
 #ifdef HAVE_LIBXXPM
 
 #include <X11/xpm.h>
@@ -21,7 +19,5 @@ extern int TSXpmCreatePixmapFromData(Display *, Drawable, char **, Pixmap *, Pix
 extern int TSXpmAttributesSize(void);
 
 #endif /* defined(HAVE_LIBXXPM) */
-
-#endif /* !defined(X_DISPLAY_MISSING) */
 
 #endif /* __WINE_TS_XPM_H */

@@ -6,10 +6,9 @@
 
 #include "config.h"
 
-#ifndef X_DISPLAY_MISSING
-
 #include <stdlib.h>
 #include <stdio.h>
+
 #include "bitmap.h"
 #include "brush.h"
 #include "font.h"
@@ -88,4 +87,3 @@ BOOL X11DRV_DeleteObject( HGDIOBJ handle )
     return ret;
 }
 
-#endif /* !defined(X_DISPLAY_MISSING) */
