@@ -765,7 +765,44 @@ static void NE_CallDllEntryPoint( NE_MODULE *pModule, DWORD dwReason )
  *         returns FALSE ...
  *
  */
-void NE_DllProcessAttach( HMODULE16 hModule )
+
+struct ne_init_list
+{
+    int count;
+    int size;
+    NE_MODULE **module;
+};
+
+static void add_to_init_list( struct ne_init_list *list, NE_MODULE *hModule )
+{
+    if ( list->count == list->size )
+    {
+        int newSize = list->size + 128;
+        NE_MODULE **newModule = HeapReAlloc( GetProcessHeap(), 0, 
+                                             list->module, newSize*sizeof(NE_MODULE *) );
+        if ( !newModule )
+        {
+            FIXME_(dll)("Out of memory!");
+            return;
+        }
+
+        list->module = newModule;
+        list->size   = newSize;
+    }
+
+    list->module[list->count++] = hModule;
+}
+
+static void free_init_list( struct ne_init_list *list )
+{
+    if ( list->module )
+    {
+        HeapFree( GetProcessHeap(), 0, list->module );
+        memset( list, 0, sizeof(*list) );
+    }
+}
+
+static void fill_init_list( struct ne_init_list *list, HMODULE16 hModule )
 {
     NE_MODULE *pModule;
     WORD *pModRef;
@@ -773,6 +810,11 @@ void NE_DllProcessAttach( HMODULE16 hModule )
 
     if (!(pModule = NE_GetPtr( hModule ))) return;
     assert( !(pModule->flags & NE_FFLAGS_WIN32) );
+
+    /* Never add a module twice */
+    for ( i = 0; i < list->count; i++ )
+        if ( list->module[i] == pModule )
+            return;
 
     /* Check for recursive call */
     if ( pModule->misc_flags & 0x80 ) return;
@@ -786,15 +828,32 @@ void NE_DllProcessAttach( HMODULE16 hModule )
     pModRef = NE_MODULE_TABLE( pModule );
     for ( i = 0; i < pModule->modref_count; i++ )
         if ( pModRef[i] )
-            NE_DllProcessAttach( (HMODULE16)pModRef[i] );
+            fill_init_list( list, (HMODULE16)pModRef[i] );
 
-    /* Call DLL entry point */
-    NE_CallDllEntryPoint( pModule, DLL_PROCESS_ATTACH );
+    /* Add current module */
+    add_to_init_list( list, pModule );
 
     /* Remove recursion flag */
     pModule->misc_flags &= ~0x80;
 
     TRACE_(dll)("(%s) - END\n", NE_MODULE_NAME(pModule) );
+}
+
+static void call_init_list( struct ne_init_list *list )
+{
+    int i;
+    for ( i = 0; i < list->count; i++ )
+        NE_CallDllEntryPoint( list->module[i], DLL_PROCESS_ATTACH );
+}
+
+void NE_DllProcessAttach( HMODULE16 hModule )
+{
+    struct ne_init_list list;
+    memset( &list, 0, sizeof(list) );
+
+    fill_init_list( &list, hModule );
+    call_init_list( &list );
+    free_init_list( &list );
 }
 
 
