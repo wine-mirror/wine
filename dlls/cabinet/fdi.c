@@ -43,19 +43,7 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(cabinet);
 
-struct fdi_cab {
-  struct fdi_cab *next;                /* for making a list of cabinets  */
-  LPCSTR filename;                     /* input name of cabinet          */
-  int *fh;                             /* open file handle or NULL       */
-  cab_off_t filelen;                   /* length of cabinet file         */
-  struct fdi_cab *prevcab, *nextcab;   /* multipart cabinet chains       */
-  char *prevname, *nextname;           /* and their filenames            */
-  char *previnfo, *nextinfo;           /* and their visible names        */
-  struct fdi_folder *folders;          /* first folder in this cabinet   */
-  struct fdi_file *files;              /* first file in this cabinet     */
-  cab_UBYTE block_resv;                /* reserved space in datablocks   */
-  cab_UBYTE flags;                     /* header flags                   */
-};
+THOSE_ZIP_CONSTS;
 
 struct fdi_file {
   struct fdi_file *next;               /* next file in sequence          */
@@ -66,11 +54,11 @@ struct fdi_file {
   cab_ULONG offset;                    /* uncompressed offset in folder  */
   cab_UWORD index;                     /* magic index number of folder   */
   cab_UWORD time, date, attribs;       /* MS-DOS time/date/attributes    */
+  BOOL oppressed;                       /* never to be processed          */
 };
 
 struct fdi_folder {
   struct fdi_folder *next;
-  struct fdi_cab *cab[CAB_SPLITMAX];   /* cabinet(s) this folder spans   */
   cab_off_t offset[CAB_SPLITMAX];      /* offset to data blocks (32 bit) */
   cab_UWORD comp_type;                 /* compression format/window size */
   cab_ULONG comp_size;                 /* compressed size of folder      */
@@ -88,6 +76,25 @@ struct fdi_folder {
  * for now.
  */
 
+typedef struct fdi_cds_fwd {
+  void *hfdi;                      /* the hfdi we are using                 */
+  int filehf, cabhf;               /* file handle we are using              */
+  struct fdi_folder *current;      /* current folder we're extracting from  */
+  cab_UBYTE block_resv;
+  cab_ULONG offset;                /* uncompressed offset within folder     */
+  cab_UBYTE *outpos;               /* (high level) start of data to use up  */
+  cab_UWORD outlen;                /* (high level) amount of data to use up */
+  cab_UWORD split;                 /* at which split in current folder?     */
+  int (*decompress)(int, int, struct fdi_cds_fwd *); /* chosen compress fn  */
+  cab_UBYTE inbuf[CAB_INPUTMAX+2]; /* +2 for lzx bitbuffer overflows!       */
+  cab_UBYTE outbuf[CAB_BLOCKMAX];
+  union {
+    struct ZIPstate zip;
+    struct QTMstate qtm;
+    struct LZXstate lzx;
+  } methods;
+} fdi_decomp_state;
+
 /*
  * this structure fills the gaps between what is available in a PFDICABINETINFO
  * vs what is needed by FDICopy.  Memory allocated for these becomes the responsibility
@@ -97,6 +104,7 @@ typedef struct {
   char *prevname, *previnfo;
   char *nextname, *nextinfo;
   int folder_resv, header_resv;
+  cab_UBYTE block_resv;
 } MORE_ISCAB_INFO, *PMORE_ISCAB_INFO;
 
 /***********************************************************************
@@ -358,13 +366,14 @@ BOOL FDI_read_entries(
     folder_resv = buf[cfheadext_FolderReserved];
     if (pmii) pmii->folder_resv = folder_resv;
     block_resv  = buf[cfheadext_DataReserved];
+    if (pmii) pmii->block_resv = block_resv;
 
     if (header_resv > 60000) {
       WARN("WARNING; header reserved space > 60000\n");
     }
 
     /* skip the reserved header */
-    if ((header_resv) && (PFDI_SEEK(hfdi, hf, header_resv, SEEK_CUR) == -1L)) {
+    if ((header_resv) && (PFDI_SEEK(hfdi, hf, header_resv, SEEK_CUR) == -1)) {
       ERR("seek failure: header_resv\n");
       PFDI_INT(hfdi)->perf->erfOper = FDIERROR_CORRUPT_CABINET;
       PFDI_INT(hfdi)->perf->erfType = 0; /* ? */
@@ -475,31 +484,1316 @@ BOOL __cdecl FDIIsCabinet(
   return rv;
 }
 
+/* FIXME: eliminate global variables */
+static cab_UBYTE q_length_base[27], q_length_extra[27], q_extra_bits[42];
+static cab_ULONG q_position_base[42];
+
+/******************************************************************
+ * QTMfdi_initmodel (internal)
+ *
+ * Initialise a model which decodes symbols from [s] to [s]+[n]-1
+ */
+void QTMfdi_initmodel(struct QTMmodel *m, struct QTMmodelsym *sym, int n, int s) {
+  int i;
+  m->shiftsleft = 4;
+  m->entries    = n;
+  m->syms       = sym;
+  memset(m->tabloc, 0xFF, sizeof(m->tabloc)); /* clear out look-up table */
+  for (i = 0; i < n; i++) {
+    m->tabloc[i+s]     = i;   /* set up a look-up entry for symbol */
+    m->syms[i].sym     = i+s; /* actual symbol */
+    m->syms[i].cumfreq = n-i; /* current frequency of that symbol */
+  }
+  m->syms[n].cumfreq = 0;
+}
+
+/******************************************************************
+ * QTMfdi_init (internal)
+ */
+int QTMfdi_init(int window, int level, fdi_decomp_state *decomp_state) {
+  int wndsize = 1 << window, msz = window * 2, i;
+  cab_ULONG j;
+
+  /* QTM supports window sizes of 2^10 (1Kb) through 2^21 (2Mb) */
+  /* if a previously allocated window is big enough, keep it    */
+  if (window < 10 || window > 21) return DECR_DATAFORMAT;
+  if (QTM(actual_size) < wndsize) {
+    if (QTM(window)) PFDI_FREE(CAB(hfdi), QTM(window));
+    QTM(window) = NULL;
+  }
+  if (!QTM(window)) {
+    if (!(QTM(window) = PFDI_ALLOC(CAB(hfdi), wndsize))) return DECR_NOMEMORY;
+    QTM(actual_size) = wndsize;
+  }
+  QTM(window_size) = wndsize;
+  QTM(window_posn) = 0;
+
+  /* initialise static slot/extrabits tables */
+  for (i = 0, j = 0; i < 27; i++) {
+    q_length_extra[i] = (i == 26) ? 0 : (i < 2 ? 0 : i - 2) >> 2;
+    q_length_base[i] = j; j += 1 << ((i == 26) ? 5 : q_length_extra[i]);
+  }
+  for (i = 0, j = 0; i < 42; i++) {
+    q_extra_bits[i] = (i < 2 ? 0 : i-2) >> 1;
+    q_position_base[i] = j; j += 1 << q_extra_bits[i];
+  }
+
+  /* initialise arithmetic coding models */
+
+  QTMfdi_initmodel(&QTM(model7), &QTM(m7sym)[0], 7, 0);
+
+  QTMfdi_initmodel(&QTM(model00), &QTM(m00sym)[0], 0x40, 0x00);
+  QTMfdi_initmodel(&QTM(model40), &QTM(m40sym)[0], 0x40, 0x40);
+  QTMfdi_initmodel(&QTM(model80), &QTM(m80sym)[0], 0x40, 0x80);
+  QTMfdi_initmodel(&QTM(modelC0), &QTM(mC0sym)[0], 0x40, 0xC0);
+
+  /* model 4 depends on table size, ranges from 20 to 24  */
+  QTMfdi_initmodel(&QTM(model4), &QTM(m4sym)[0], (msz < 24) ? msz : 24, 0);
+  /* model 5 depends on table size, ranges from 20 to 36  */
+  QTMfdi_initmodel(&QTM(model5), &QTM(m5sym)[0], (msz < 36) ? msz : 36, 0);
+  /* model 6pos depends on table size, ranges from 20 to 42 */
+  QTMfdi_initmodel(&QTM(model6pos), &QTM(m6psym)[0], msz, 0);
+  QTMfdi_initmodel(&QTM(model6len), &QTM(m6lsym)[0], 27, 0);
+
+  return DECR_OK;
+}
+
+/* FIXME: Eliminate global variables */
+static cab_ULONG lzx_position_base[51];
+static cab_UBYTE extra_bits[51];
+
+/************************************************************
+ * LZXfdi_init (internal)
+ */
+int LZXfdi_init(int window, fdi_decomp_state *decomp_state) {
+  cab_ULONG wndsize = 1 << window;
+  int i, j, posn_slots;
+
+  /* LZX supports window sizes of 2^15 (32Kb) through 2^21 (2Mb) */
+  /* if a previously allocated window is big enough, keep it     */
+  if (window < 15 || window > 21) return DECR_DATAFORMAT;
+  if (LZX(actual_size) < wndsize) {
+    if (LZX(window)) PFDI_FREE(CAB(hfdi), LZX(window));
+    LZX(window) = NULL;
+  }
+  if (!LZX(window)) {
+    if (!(LZX(window) = PFDI_ALLOC(CAB(hfdi), wndsize))) return DECR_NOMEMORY;
+    LZX(actual_size) = wndsize;
+  }
+  LZX(window_size) = wndsize;
+
+  /* initialise static tables */
+  for (i=0, j=0; i <= 50; i += 2) {
+    extra_bits[i] = extra_bits[i+1] = j; /* 0,0,0,0,1,1,2,2,3,3... */
+    if ((i != 0) && (j < 17)) j++; /* 0,0,1,2,3,4...15,16,17,17,17,17... */
+  }
+  for (i=0, j=0; i <= 50; i++) {
+    lzx_position_base[i] = j; /* 0,1,2,3,4,6,8,12,16,24,32,... */
+    j += 1 << extra_bits[i]; /* 1,1,1,1,2,2,4,4,8,8,16,16,32,32,... */
+  }
+
+  /* calculate required position slots */
+       if (window == 20) posn_slots = 42;
+  else if (window == 21) posn_slots = 50;
+  else posn_slots = window << 1;
+
+  /*posn_slots=i=0; while (i < wndsize) i += 1 << extra_bits[posn_slots++]; */
+
+  LZX(R0)  =  LZX(R1)  = LZX(R2) = 1;
+  LZX(main_elements)   = LZX_NUM_CHARS + (posn_slots << 3);
+  LZX(header_read)     = 0;
+  LZX(frames_read)     = 0;
+  LZX(block_remaining) = 0;
+  LZX(block_type)      = LZX_BLOCKTYPE_INVALID;
+  LZX(intel_curpos)    = 0;
+  LZX(intel_started)   = 0;
+  LZX(window_posn)     = 0;
+
+  /* initialise tables to 0 (because deltas will be applied to them) */
+  for (i = 0; i < LZX_MAINTREE_MAXSYMBOLS; i++) LZX(MAINTREE_len)[i] = 0;
+  for (i = 0; i < LZX_LENGTH_MAXSYMBOLS; i++)   LZX(LENGTH_len)[i]   = 0;
+
+  return DECR_OK;
+}
+
+/****************************************************
+ * NONEfdi_decomp(internal)
+ */
+int NONEfdi_decomp(int inlen, int outlen, fdi_decomp_state *decomp_state)
+{
+  if (inlen != outlen) return DECR_ILLEGALDATA;
+  memcpy(CAB(outbuf), CAB(inbuf), (size_t) inlen);
+  return DECR_OK;
+}
+
+/********************************************************
+ * Ziphuft_free (internal)
+ */
+void fdi_Ziphuft_free(HFDI hfdi, struct Ziphuft *t)
+{
+  register struct Ziphuft *p, *q;
+
+  /* Go through linked list, freeing from the allocated (t[-1]) address. */
+  p = t;
+  while (p != (struct Ziphuft *)NULL)
+  {
+    q = (--p)->v.t;
+    PFDI_FREE(hfdi, p);
+    p = q;
+  } 
+}
+
+/*********************************************************
+ * fdi_Ziphuft_build (internal)
+ */
+cab_LONG fdi_Ziphuft_build(cab_ULONG *b, cab_ULONG n, cab_ULONG s, cab_UWORD *d, cab_UWORD *e,
+struct Ziphuft **t, cab_LONG *m, fdi_decomp_state *decomp_state)
+{
+  cab_ULONG a;                   	/* counter for codes of length k */
+  cab_ULONG el;                  	/* length of EOB code (value 256) */
+  cab_ULONG f;                   	/* i repeats in table every f entries */
+  cab_LONG g;                    	/* maximum code length */
+  cab_LONG h;                    	/* table level */
+  register cab_ULONG i;          	/* counter, current code */
+  register cab_ULONG j;          	/* counter */
+  register cab_LONG k;           	/* number of bits in current code */
+  cab_LONG *l;                  	/* stack of bits per table */
+  register cab_ULONG *p;         	/* pointer into ZIP(c)[],ZIP(b)[],ZIP(v)[] */
+  register struct Ziphuft *q;           /* points to current table */
+  struct Ziphuft r;                     /* table entry for structure assignment */
+  register cab_LONG w;                  /* bits before this table == (l * h) */
+  cab_ULONG *xp;                 	/* pointer into x */
+  cab_LONG y;                           /* number of dummy codes added */
+  cab_ULONG z;                   	/* number of entries in current table */
+
+  l = ZIP(lx)+1;
+
+  /* Generate counts for each bit length */
+  el = n > 256 ? b[256] : ZIPBMAX; /* set length of EOB code, if any */
+
+  for(i = 0; i < ZIPBMAX+1; ++i)
+    ZIP(c)[i] = 0;
+  p = b;  i = n;
+  do
+  {
+    ZIP(c)[*p]++; p++;               /* assume all entries <= ZIPBMAX */
+  } while (--i);
+  if (ZIP(c)[0] == n)                /* null input--all zero length codes */
+  {
+    *t = (struct Ziphuft *)NULL;
+    *m = 0;
+    return 0;
+  }
+
+  /* Find minimum and maximum length, bound *m by those */
+  for (j = 1; j <= ZIPBMAX; j++)
+    if (ZIP(c)[j])
+      break;
+  k = j;                        /* minimum code length */
+  if ((cab_ULONG)*m < j)
+    *m = j;
+  for (i = ZIPBMAX; i; i--)
+    if (ZIP(c)[i])
+      break;
+  g = i;                        /* maximum code length */
+  if ((cab_ULONG)*m > i)
+    *m = i;
+
+  /* Adjust last length count to fill out codes, if needed */
+  for (y = 1 << j; j < i; j++, y <<= 1)
+    if ((y -= ZIP(c)[j]) < 0)
+      return 2;                 /* bad input: more codes than bits */
+  if ((y -= ZIP(c)[i]) < 0)
+    return 2;
+  ZIP(c)[i] += y;
+
+  /* Generate starting offsets LONGo the value table for each length */
+  ZIP(x)[1] = j = 0;
+  p = ZIP(c) + 1;  xp = ZIP(x) + 2;
+  while (--i)
+  {                 /* note that i == g from above */
+    *xp++ = (j += *p++);
+  }
+
+  /* Make a table of values in order of bit lengths */
+  p = b;  i = 0;
+  do{
+    if ((j = *p++) != 0)
+      ZIP(v)[ZIP(x)[j]++] = i;
+  } while (++i < n);
+
+
+  /* Generate the Huffman codes and for each, make the table entries */
+  ZIP(x)[0] = i = 0;                 /* first Huffman code is zero */
+  p = ZIP(v);                        /* grab values in bit order */
+  h = -1;                       /* no tables yet--level -1 */
+  w = l[-1] = 0;                /* no bits decoded yet */
+  ZIP(u)[0] = (struct Ziphuft *)NULL;   /* just to keep compilers happy */
+  q = (struct Ziphuft *)NULL;      /* ditto */
+  z = 0;                        /* ditto */
+
+  /* go through the bit lengths (k already is bits in shortest code) */
+  for (; k <= g; k++)
+  {
+    a = ZIP(c)[k];
+    while (a--)
+    {
+      /* here i is the Huffman code of length k bits for value *p */
+      /* make tables up to required level */
+      while (k > w + l[h])
+      {
+        w += l[h++];            /* add bits already decoded */
+
+        /* compute minimum size table less than or equal to *m bits */
+        z = (z = g - w) > (cab_ULONG)*m ? *m : z;        /* upper limit */
+        if ((f = 1 << (j = k - w)) > a + 1)     /* try a k-w bit table */
+        {                       /* too few codes for k-w bit table */
+          f -= a + 1;           /* deduct codes from patterns left */
+          xp = ZIP(c) + k;
+          while (++j < z)       /* try smaller tables up to z bits */
+          {
+            if ((f <<= 1) <= *++xp)
+              break;            /* enough codes to use up j bits */
+            f -= *xp;           /* else deduct codes from patterns */
+          }
+        }
+        if ((cab_ULONG)w + j > el && (cab_ULONG)w < el)
+          j = el - w;           /* make EOB code end at table */
+        z = 1 << j;             /* table entries for j-bit table */
+        l[h] = j;               /* set table size in stack */
+
+        /* allocate and link in new table */
+        if (!(q = (struct Ziphuft *) PFDI_ALLOC(CAB(hfdi), (z + 1)*sizeof(struct Ziphuft))))
+        {
+          if(h)
+            fdi_Ziphuft_free(CAB(hfdi), ZIP(u)[0]);
+          return 3;             /* not enough memory */
+        }
+        *t = q + 1;             /* link to list for Ziphuft_free() */
+        *(t = &(q->v.t)) = (struct Ziphuft *)NULL;
+        ZIP(u)[h] = ++q;             /* table starts after link */
+
+        /* connect to last table, if there is one */
+        if (h)
+        {
+          ZIP(x)[h] = i;              /* save pattern for backing up */
+          r.b = (cab_UBYTE)l[h-1];    /* bits to dump before this table */
+          r.e = (cab_UBYTE)(16 + j);  /* bits in this table */
+          r.v.t = q;                  /* pointer to this table */
+          j = (i & ((1 << w) - 1)) >> (w - l[h-1]);
+          ZIP(u)[h-1][j] = r;        /* connect to last table */
+        }
+      }
+
+      /* set up table entry in r */
+      r.b = (cab_UBYTE)(k - w);
+      if (p >= ZIP(v) + n)
+        r.e = 99;               /* out of values--invalid code */
+      else if (*p < s)
+      {
+        r.e = (cab_UBYTE)(*p < 256 ? 16 : 15);    /* 256 is end-of-block code */
+        r.v.n = *p++;           /* simple code is just the value */
+      }
+      else
+      {
+        r.e = (cab_UBYTE)e[*p - s];   /* non-simple--look up in lists */
+        r.v.n = d[*p++ - s];
+      }
+
+      /* fill code-like entries with r */
+      f = 1 << (k - w);
+      for (j = i >> w; j < z; j += f)
+        q[j] = r;
+
+      /* backwards increment the k-bit code i */
+      for (j = 1 << (k - 1); i & j; j >>= 1)
+        i ^= j;
+      i ^= j;
+
+      /* backup over finished tables */
+      while ((i & ((1 << w) - 1)) != ZIP(x)[h])
+        w -= l[--h];            /* don't need to update q */
+    }
+  }
+
+  /* return actual size of base table */
+  *m = l[0];
+
+  /* Return true (1) if we were given an incomplete table */
+  return y != 0 && g != 1;
+}
+
+/*********************************************************
+ * fdi_Zipinflate_codes (internal)
+ */
+cab_LONG fdi_Zipinflate_codes(struct Ziphuft *tl, struct Ziphuft *td,
+  cab_LONG bl, cab_LONG bd, fdi_decomp_state *decomp_state)
+{
+  register cab_ULONG e;  /* table entry flag/number of extra bits */
+  cab_ULONG n, d;        /* length and index for copy */
+  cab_ULONG w;           /* current window position */
+  struct Ziphuft *t;     /* pointer to table entry */
+  cab_ULONG ml, md;      /* masks for bl and bd bits */
+  register cab_ULONG b;  /* bit buffer */
+  register cab_ULONG k;  /* number of bits in bit buffer */
+
+  /* make local copies of globals */
+  b = ZIP(bb);                       /* initialize bit buffer */
+  k = ZIP(bk);
+  w = ZIP(window_posn);                       /* initialize window position */
+
+  /* inflate the coded data */
+  ml = Zipmask[bl];           	/* precompute masks for speed */
+  md = Zipmask[bd];
+
+  for(;;)
+  {
+    ZIPNEEDBITS((cab_ULONG)bl)
+    if((e = (t = tl + ((cab_ULONG)b & ml))->e) > 16)
+      do
+      {
+        if (e == 99)
+          return 1;
+        ZIPDUMPBITS(t->b)
+        e -= 16;
+        ZIPNEEDBITS(e)
+      } while ((e = (t = t->v.t + ((cab_ULONG)b & Zipmask[e]))->e) > 16);
+    ZIPDUMPBITS(t->b)
+    if (e == 16)                /* then it's a literal */
+      CAB(outbuf)[w++] = (cab_UBYTE)t->v.n;
+    else                        /* it's an EOB or a length */
+    {
+      /* exit if end of block */
+      if(e == 15)
+        break;
+
+      /* get length of block to copy */
+      ZIPNEEDBITS(e)
+      n = t->v.n + ((cab_ULONG)b & Zipmask[e]);
+      ZIPDUMPBITS(e);
+
+      /* decode distance of block to copy */
+      ZIPNEEDBITS((cab_ULONG)bd)
+      if ((e = (t = td + ((cab_ULONG)b & md))->e) > 16)
+        do {
+          if (e == 99)
+            return 1;
+          ZIPDUMPBITS(t->b)
+          e -= 16;
+          ZIPNEEDBITS(e)
+        } while ((e = (t = t->v.t + ((cab_ULONG)b & Zipmask[e]))->e) > 16);
+      ZIPDUMPBITS(t->b)
+      ZIPNEEDBITS(e)
+      d = w - t->v.n - ((cab_ULONG)b & Zipmask[e]);
+      ZIPDUMPBITS(e)
+      do
+      {
+        n -= (e = (e = ZIPWSIZE - ((d &= ZIPWSIZE-1) > w ? d : w)) > n ?n:e);
+        do
+        {
+          CAB(outbuf)[w++] = CAB(outbuf)[d++];
+        } while (--e);
+      } while (n);
+    }
+  }
+
+  /* restore the globals from the locals */
+  ZIP(window_posn) = w;              /* restore global window pointer */
+  ZIP(bb) = b;                       /* restore global bit buffer */
+  ZIP(bk) = k;
+
+  /* done */
+  return 0;
+}
+
+/***********************************************************
+ * Zipinflate_stored (internal)
+ */
+cab_LONG fdi_Zipinflate_stored(fdi_decomp_state *decomp_state)
+/* "decompress" an inflated type 0 (stored) block. */
+{
+  cab_ULONG n;           /* number of bytes in block */
+  cab_ULONG w;           /* current window position */
+  register cab_ULONG b;  /* bit buffer */
+  register cab_ULONG k;  /* number of bits in bit buffer */
+
+  /* make local copies of globals */
+  b = ZIP(bb);                       /* initialize bit buffer */
+  k = ZIP(bk);
+  w = ZIP(window_posn);              /* initialize window position */
+
+  /* go to byte boundary */
+  n = k & 7;
+  ZIPDUMPBITS(n);
+
+  /* get the length and its complement */
+  ZIPNEEDBITS(16)
+  n = ((cab_ULONG)b & 0xffff);
+  ZIPDUMPBITS(16)
+  ZIPNEEDBITS(16)
+  if (n != (cab_ULONG)((~b) & 0xffff))
+    return 1;                   /* error in compressed data */
+  ZIPDUMPBITS(16)
+
+  /* read and output the compressed data */
+  while(n--)
+  {
+    ZIPNEEDBITS(8)
+    CAB(outbuf)[w++] = (cab_UBYTE)b;
+    ZIPDUMPBITS(8)
+  }
+
+  /* restore the globals from the locals */
+  ZIP(window_posn) = w;              /* restore global window pointer */
+  ZIP(bb) = b;                       /* restore global bit buffer */
+  ZIP(bk) = k;
+  return 0;
+}
+
+/******************************************************
+ * fdi_Zipinflate_fixed (internal)
+ */
+cab_LONG fdi_Zipinflate_fixed(fdi_decomp_state *decomp_state)
+{
+  struct Ziphuft *fixed_tl;
+  struct Ziphuft *fixed_td;
+  cab_LONG fixed_bl, fixed_bd;
+  cab_LONG i;                /* temporary variable */
+  cab_ULONG *l;
+
+  l = ZIP(ll);
+
+  /* literal table */
+  for(i = 0; i < 144; i++)
+    l[i] = 8;
+  for(; i < 256; i++)
+    l[i] = 9;
+  for(; i < 280; i++)
+    l[i] = 7;
+  for(; i < 288; i++)          /* make a complete, but wrong code set */
+    l[i] = 8;
+  fixed_bl = 7;
+  if((i = fdi_Ziphuft_build(l, 288, 257, (cab_UWORD *) Zipcplens,
+  (cab_UWORD *) Zipcplext, &fixed_tl, &fixed_bl, decomp_state)))
+    return i;
+
+  /* distance table */
+  for(i = 0; i < 30; i++)      /* make an incomplete code set */
+    l[i] = 5;
+  fixed_bd = 5;
+  if((i = fdi_Ziphuft_build(l, 30, 0, (cab_UWORD *) Zipcpdist, (cab_UWORD *) Zipcpdext,
+  &fixed_td, &fixed_bd, decomp_state)) > 1)
+  {
+    fdi_Ziphuft_free(CAB(hfdi), fixed_tl);
+    return i;
+  }
+
+  /* decompress until an end-of-block code */
+  i = fdi_Zipinflate_codes(fixed_tl, fixed_td, fixed_bl, fixed_bd, decomp_state);
+
+  fdi_Ziphuft_free(CAB(hfdi), fixed_td);
+  fdi_Ziphuft_free(CAB(hfdi), fixed_tl);
+  return i;
+}
+
+/**************************************************************
+ * fdi_Zipinflate_dynamic (internal)
+ */
+cab_LONG fdi_Zipinflate_dynamic(fdi_decomp_state *decomp_state)
+ /* decompress an inflated type 2 (dynamic Huffman codes) block. */
+{
+  cab_LONG i;          	/* temporary variables */
+  cab_ULONG j;
+  cab_ULONG *ll;
+  cab_ULONG l;           	/* last length */
+  cab_ULONG m;           	/* mask for bit lengths table */
+  cab_ULONG n;           	/* number of lengths to get */
+  struct Ziphuft *tl;           /* literal/length code table */
+  struct Ziphuft *td;           /* distance code table */
+  cab_LONG bl;                  /* lookup bits for tl */
+  cab_LONG bd;                  /* lookup bits for td */
+  cab_ULONG nb;          	/* number of bit length codes */
+  cab_ULONG nl;          	/* number of literal/length codes */
+  cab_ULONG nd;          	/* number of distance codes */
+  register cab_ULONG b;         /* bit buffer */
+  register cab_ULONG k;	        /* number of bits in bit buffer */
+
+  /* make local bit buffer */
+  b = ZIP(bb);
+  k = ZIP(bk);
+  ll = ZIP(ll);
+
+  /* read in table lengths */
+  ZIPNEEDBITS(5)
+  nl = 257 + ((cab_ULONG)b & 0x1f);      /* number of literal/length codes */
+  ZIPDUMPBITS(5)
+  ZIPNEEDBITS(5)
+  nd = 1 + ((cab_ULONG)b & 0x1f);        /* number of distance codes */
+  ZIPDUMPBITS(5)
+  ZIPNEEDBITS(4)
+  nb = 4 + ((cab_ULONG)b & 0xf);         /* number of bit length codes */
+  ZIPDUMPBITS(4)
+  if(nl > 288 || nd > 32)
+    return 1;                   /* bad lengths */
+
+  /* read in bit-length-code lengths */
+  for(j = 0; j < nb; j++)
+  {
+    ZIPNEEDBITS(3)
+    ll[Zipborder[j]] = (cab_ULONG)b & 7;
+    ZIPDUMPBITS(3)
+  }
+  for(; j < 19; j++)
+    ll[Zipborder[j]] = 0;
+
+  /* build decoding table for trees--single level, 7 bit lookup */
+  bl = 7;
+  if((i = fdi_Ziphuft_build(ll, 19, 19, NULL, NULL, &tl, &bl, decomp_state)) != 0)
+  {
+    if(i == 1)
+      fdi_Ziphuft_free(CAB(hfdi), tl);
+    return i;                   /* incomplete code set */
+  }
+
+  /* read in literal and distance code lengths */
+  n = nl + nd;
+  m = Zipmask[bl];
+  i = l = 0;
+  while((cab_ULONG)i < n)
+  {
+    ZIPNEEDBITS((cab_ULONG)bl)
+    j = (td = tl + ((cab_ULONG)b & m))->b;
+    ZIPDUMPBITS(j)
+    j = td->v.n;
+    if (j < 16)                 /* length of code in bits (0..15) */
+      ll[i++] = l = j;          /* save last length in l */
+    else if (j == 16)           /* repeat last length 3 to 6 times */
+    {
+      ZIPNEEDBITS(2)
+      j = 3 + ((cab_ULONG)b & 3);
+      ZIPDUMPBITS(2)
+      if((cab_ULONG)i + j > n)
+        return 1;
+      while (j--)
+        ll[i++] = l;
+    }
+    else if (j == 17)           /* 3 to 10 zero length codes */
+    {
+      ZIPNEEDBITS(3)
+      j = 3 + ((cab_ULONG)b & 7);
+      ZIPDUMPBITS(3)
+      if ((cab_ULONG)i + j > n)
+        return 1;
+      while (j--)
+        ll[i++] = 0;
+      l = 0;
+    }
+    else                        /* j == 18: 11 to 138 zero length codes */
+    {
+      ZIPNEEDBITS(7)
+      j = 11 + ((cab_ULONG)b & 0x7f);
+      ZIPDUMPBITS(7)
+      if ((cab_ULONG)i + j > n)
+        return 1;
+      while (j--)
+        ll[i++] = 0;
+      l = 0;
+    }
+  }
+
+  /* free decoding table for trees */
+  fdi_Ziphuft_free(CAB(hfdi), tl);
+
+  /* restore the global bit buffer */
+  ZIP(bb) = b;
+  ZIP(bk) = k;
+
+  /* build the decoding tables for literal/length and distance codes */
+  bl = ZIPLBITS;
+  if((i = fdi_Ziphuft_build(ll, nl, 257, (cab_UWORD *) Zipcplens, (cab_UWORD *) Zipcplext,
+                        &tl, &bl, decomp_state)) != 0)
+  {
+    if(i == 1)
+      fdi_Ziphuft_free(CAB(hfdi), tl);
+    return i;                   /* incomplete code set */
+  }
+  bd = ZIPDBITS;
+  fdi_Ziphuft_build(ll + nl, nd, 0, (cab_UWORD *) Zipcpdist, (cab_UWORD *) Zipcpdext,
+                &td, &bd, decomp_state);
+
+  /* decompress until an end-of-block code */
+  if(fdi_Zipinflate_codes(tl, td, bl, bd, decomp_state))
+    return 1;
+
+  /* free the decoding tables, return */
+  fdi_Ziphuft_free(CAB(hfdi), tl);
+  fdi_Ziphuft_free(CAB(hfdi), td);
+  return 0;
+}
+
+/*****************************************************
+ * fdi_Zipinflate_block (internal)
+ */
+cab_LONG fdi_Zipinflate_block(cab_LONG *e, fdi_decomp_state *decomp_state) /* e == last block flag */
+{ /* decompress an inflated block */
+  cab_ULONG t;           	/* block type */
+  register cab_ULONG b;     /* bit buffer */
+  register cab_ULONG k;     /* number of bits in bit buffer */
+
+  /* make local bit buffer */
+  b = ZIP(bb);
+  k = ZIP(bk);
+
+  /* read in last block bit */
+  ZIPNEEDBITS(1)
+  *e = (cab_LONG)b & 1;
+  ZIPDUMPBITS(1)
+
+  /* read in block type */
+  ZIPNEEDBITS(2)
+  t = (cab_ULONG)b & 3;
+  ZIPDUMPBITS(2)
+
+  /* restore the global bit buffer */
+  ZIP(bb) = b;
+  ZIP(bk) = k;
+
+  /* inflate that block type */
+  if(t == 2)
+    return fdi_Zipinflate_dynamic(decomp_state);
+  if(t == 0)
+    return fdi_Zipinflate_stored(decomp_state);
+  if(t == 1)
+    return fdi_Zipinflate_fixed(decomp_state);
+  /* bad block type */
+  return 2;
+}
+
+/****************************************************
+ * ZIPfdi_decomp(internal)
+ */
+int ZIPfdi_decomp(int inlen, int outlen, fdi_decomp_state *decomp_state)
+{
+  cab_LONG e;               /* last block flag */
+
+  TRACE("(inlen == %d, outlen == %d)\n", inlen, outlen);
+
+  ZIP(inpos) = CAB(inbuf);
+  ZIP(bb) = ZIP(bk) = ZIP(window_posn) = 0;
+  if(outlen > ZIPWSIZE)
+    return DECR_DATAFORMAT;
+
+  /* CK = Chris Kirmse, official Microsoft purloiner */
+  if(ZIP(inpos)[0] != 0x43 || ZIP(inpos)[1] != 0x4B)
+    return DECR_ILLEGALDATA;
+  ZIP(inpos) += 2;
+
+  do {
+    if(fdi_Zipinflate_block(&e, decomp_state))
+      return DECR_ILLEGALDATA;
+  } while(!e);
+
+  /* return success */
+  return DECR_OK;
+}
+
+/*******************************************************************
+ * QTMfdi_decomp(internal)
+ */
+int QTMfdi_decomp(int inlen, int outlen, fdi_decomp_state *decomp_state)
+{
+  cab_UBYTE *inpos  = CAB(inbuf);
+  cab_UBYTE *window = QTM(window);
+  cab_UBYTE *runsrc, *rundest;
+
+  cab_ULONG window_posn = QTM(window_posn);
+  cab_ULONG window_size = QTM(window_size);
+
+  /* used by bitstream macros */
+  register int bitsleft, bitrun, bitsneed;
+  register cab_ULONG bitbuf;
+
+  /* used by GET_SYMBOL */
+  cab_ULONG range;
+  cab_UWORD symf;
+  int i;
+
+  int extra, togo = outlen, match_length = 0, copy_length;
+  cab_UBYTE selector, sym;
+  cab_ULONG match_offset = 0;
+
+  cab_UWORD H = 0xFFFF, L = 0, C;
+
+  TRACE("(inlen == %d, outlen == %d)\n", inlen, outlen);
+
+  /* read initial value of C */
+  Q_INIT_BITSTREAM;
+  Q_READ_BITS(C, 16);
+
+  /* apply 2^x-1 mask */
+  window_posn &= window_size - 1;
+  /* runs can't straddle the window wraparound */
+  if ((window_posn + togo) > window_size) {
+    TRACE("straddled run\n");
+    return DECR_DATAFORMAT;
+  }
+
+  while (togo > 0) {
+    GET_SYMBOL(model7, selector);
+    switch (selector) {
+    case 0:
+      GET_SYMBOL(model00, sym); window[window_posn++] = sym; togo--;
+      break;
+    case 1:
+      GET_SYMBOL(model40, sym); window[window_posn++] = sym; togo--;
+      break;
+    case 2:
+      GET_SYMBOL(model80, sym); window[window_posn++] = sym; togo--;
+      break;
+    case 3:
+      GET_SYMBOL(modelC0, sym); window[window_posn++] = sym; togo--;
+      break;
+
+    case 4:
+      /* selector 4 = fixed length of 3 */
+      GET_SYMBOL(model4, sym);
+      Q_READ_BITS(extra, q_extra_bits[sym]);
+      match_offset = q_position_base[sym] + extra + 1;
+      match_length = 3;
+      break;
+
+    case 5:
+      /* selector 5 = fixed length of 4 */
+      GET_SYMBOL(model5, sym);
+      Q_READ_BITS(extra, q_extra_bits[sym]);
+      match_offset = q_position_base[sym] + extra + 1;
+      match_length = 4;
+      break;
+
+    case 6:
+      /* selector 6 = variable length */
+      GET_SYMBOL(model6len, sym);
+      Q_READ_BITS(extra, q_length_extra[sym]);
+      match_length = q_length_base[sym] + extra + 5;
+      GET_SYMBOL(model6pos, sym);
+      Q_READ_BITS(extra, q_extra_bits[sym]);
+      match_offset = q_position_base[sym] + extra + 1;
+      break;
+
+    default:
+      TRACE("Selector is bogus\n");
+      return DECR_ILLEGALDATA;
+    }
+
+    /* if this is a match */
+    if (selector >= 4) {
+      rundest = window + window_posn;
+      togo -= match_length;
+
+      /* copy any wrapped around source data */
+      if (window_posn >= match_offset) {
+        /* no wrap */
+        runsrc = rundest - match_offset;
+      } else {
+        runsrc = rundest + (window_size - match_offset);
+        copy_length = match_offset - window_posn;
+        if (copy_length < match_length) {
+          match_length -= copy_length;
+          window_posn += copy_length;
+          while (copy_length-- > 0) *rundest++ = *runsrc++;
+          runsrc = window;
+        }
+      }
+      window_posn += match_length;
+
+      /* copy match data - no worries about destination wraps */
+      while (match_length-- > 0) *rundest++ = *runsrc++;
+    }
+  } /* while (togo > 0) */
+
+  if (togo != 0) {
+    TRACE("Frame overflow, this_run = %d\n", togo);
+    return DECR_ILLEGALDATA;
+  }
+
+  memcpy(CAB(outbuf), window + ((!window_posn) ? window_size : window_posn) -
+    outlen, outlen);
+
+  QTM(window_posn) = window_posn;
+  return DECR_OK;
+}
+
+/************************************************************
+ * fdi_lzx_read_lens (internal)
+ */
+int fdi_lzx_read_lens(cab_UBYTE *lens, cab_ULONG first, cab_ULONG last, struct lzx_bits *lb,
+                  fdi_decomp_state *decomp_state) {
+  cab_ULONG i,j, x,y;
+  int z;
+
+  register cab_ULONG bitbuf = lb->bb;
+  register int bitsleft = lb->bl;
+  cab_UBYTE *inpos = lb->ip;
+  cab_UWORD *hufftbl;
+  
+  for (x = 0; x < 20; x++) {
+    READ_BITS(y, 4);
+    LENTABLE(PRETREE)[x] = y;
+  }
+  BUILD_TABLE(PRETREE);
+
+  for (x = first; x < last; ) {
+    READ_HUFFSYM(PRETREE, z);
+    if (z == 17) {
+      READ_BITS(y, 4); y += 4;
+      while (y--) lens[x++] = 0;
+    }
+    else if (z == 18) {
+      READ_BITS(y, 5); y += 20;
+      while (y--) lens[x++] = 0;
+    }
+    else if (z == 19) {
+      READ_BITS(y, 1); y += 4;
+      READ_HUFFSYM(PRETREE, z);
+      z = lens[x] - z; if (z < 0) z += 17;
+      while (y--) lens[x++] = z;
+    }
+    else {
+      z = lens[x] - z; if (z < 0) z += 17;
+      lens[x++] = z;
+    }
+  }
+
+  lb->bb = bitbuf;
+  lb->bl = bitsleft;
+  lb->ip = inpos;
+  return 0;
+}
+
+/*******************************************************
+ * LZXfdi_decomp(internal)
+ */
+int LZXfdi_decomp(int inlen, int outlen, fdi_decomp_state *decomp_state) {
+  cab_UBYTE *inpos  = CAB(inbuf);
+  cab_UBYTE *endinp = inpos + inlen;
+  cab_UBYTE *window = LZX(window);
+  cab_UBYTE *runsrc, *rundest;
+  cab_UWORD *hufftbl; /* used in READ_HUFFSYM macro as chosen decoding table */
+
+  cab_ULONG window_posn = LZX(window_posn);
+  cab_ULONG window_size = LZX(window_size);
+  cab_ULONG R0 = LZX(R0);
+  cab_ULONG R1 = LZX(R1);
+  cab_ULONG R2 = LZX(R2);
+
+  register cab_ULONG bitbuf;
+  register int bitsleft;
+  cab_ULONG match_offset, i,j,k; /* ijk used in READ_HUFFSYM macro */
+  struct lzx_bits lb; /* used in READ_LENGTHS macro */
+
+  int togo = outlen, this_run, main_element, aligned_bits;
+  int match_length, copy_length, length_footer, extra, verbatim_bits;
+
+  TRACE("(inlen == %d, outlen == %d)\n", inlen, outlen);
+
+  INIT_BITSTREAM;
+
+  /* read header if necessary */
+  if (!LZX(header_read)) {
+    i = j = 0;
+    READ_BITS(k, 1); if (k) { READ_BITS(i,16); READ_BITS(j,16); }
+    LZX(intel_filesize) = (i << 16) | j; /* or 0 if not encoded */
+    LZX(header_read) = 1;
+  }
+
+  /* main decoding loop */
+  while (togo > 0) {
+    /* last block finished, new block expected */
+    if (LZX(block_remaining) == 0) {
+      if (LZX(block_type) == LZX_BLOCKTYPE_UNCOMPRESSED) {
+        if (LZX(block_length) & 1) inpos++; /* realign bitstream to word */
+        INIT_BITSTREAM;
+      }
+
+      READ_BITS(LZX(block_type), 3);
+      READ_BITS(i, 16);
+      READ_BITS(j, 8);
+      LZX(block_remaining) = LZX(block_length) = (i << 8) | j;
+
+      switch (LZX(block_type)) {
+      case LZX_BLOCKTYPE_ALIGNED:
+        for (i = 0; i < 8; i++) { READ_BITS(j, 3); LENTABLE(ALIGNED)[i] = j; }
+        BUILD_TABLE(ALIGNED);
+        /* rest of aligned header is same as verbatim */
+
+      case LZX_BLOCKTYPE_VERBATIM:
+        READ_LENGTHS(MAINTREE, 0, 256, fdi_lzx_read_lens);
+        READ_LENGTHS(MAINTREE, 256, LZX(main_elements), fdi_lzx_read_lens);
+        BUILD_TABLE(MAINTREE);
+        if (LENTABLE(MAINTREE)[0xE8] != 0) LZX(intel_started) = 1;
+
+        READ_LENGTHS(LENGTH, 0, LZX_NUM_SECONDARY_LENGTHS, fdi_lzx_read_lens);
+        BUILD_TABLE(LENGTH);
+        break;
+
+      case LZX_BLOCKTYPE_UNCOMPRESSED:
+        LZX(intel_started) = 1; /* because we can't assume otherwise */
+        ENSURE_BITS(16); /* get up to 16 pad bits into the buffer */
+        if (bitsleft > 16) inpos -= 2; /* and align the bitstream! */
+        R0 = inpos[0]|(inpos[1]<<8)|(inpos[2]<<16)|(inpos[3]<<24);inpos+=4;
+        R1 = inpos[0]|(inpos[1]<<8)|(inpos[2]<<16)|(inpos[3]<<24);inpos+=4;
+        R2 = inpos[0]|(inpos[1]<<8)|(inpos[2]<<16)|(inpos[3]<<24);inpos+=4;
+        break;
+
+      default:
+        return DECR_ILLEGALDATA;
+      }
+    }
+
+    /* buffer exhaustion check */
+    if (inpos > endinp) {
+      /* it's possible to have a file where the next run is less than
+       * 16 bits in size. In this case, the READ_HUFFSYM() macro used
+       * in building the tables will exhaust the buffer, so we should
+       * allow for this, but not allow those accidentally read bits to
+       * be used (so we check that there are at least 16 bits
+       * remaining - in this boundary case they aren't really part of
+       * the compressed data)
+       */
+      if (inpos > (endinp+2) || bitsleft < 16) return DECR_ILLEGALDATA;
+    }
+
+    while ((this_run = LZX(block_remaining)) > 0 && togo > 0) {
+      if (this_run > togo) this_run = togo;
+      togo -= this_run;
+      LZX(block_remaining) -= this_run;
+
+      /* apply 2^x-1 mask */
+      window_posn &= window_size - 1;
+      /* runs can't straddle the window wraparound */
+      if ((window_posn + this_run) > window_size)
+        return DECR_DATAFORMAT;
+
+      switch (LZX(block_type)) {
+
+      case LZX_BLOCKTYPE_VERBATIM:
+        while (this_run > 0) {
+          READ_HUFFSYM(MAINTREE, main_element);
+
+          if (main_element < LZX_NUM_CHARS) {
+            /* literal: 0 to LZX_NUM_CHARS-1 */
+            window[window_posn++] = main_element;
+            this_run--;
+          }
+          else {
+            /* match: LZX_NUM_CHARS + ((slot<<3) | length_header (3 bits)) */
+            main_element -= LZX_NUM_CHARS;
+  
+            match_length = main_element & LZX_NUM_PRIMARY_LENGTHS;
+            if (match_length == LZX_NUM_PRIMARY_LENGTHS) {
+              READ_HUFFSYM(LENGTH, length_footer);
+              match_length += length_footer;
+            }
+            match_length += LZX_MIN_MATCH;
+  
+            match_offset = main_element >> 3;
+  
+            if (match_offset > 2) {
+              /* not repeated offset */
+              if (match_offset != 3) {
+                extra = extra_bits[match_offset];
+                READ_BITS(verbatim_bits, extra);
+                match_offset = lzx_position_base[match_offset] 
+                               - 2 + verbatim_bits;
+              }
+              else {
+                match_offset = 1;
+              }
+  
+              /* update repeated offset LRU queue */
+              R2 = R1; R1 = R0; R0 = match_offset;
+            }
+            else if (match_offset == 0) {
+              match_offset = R0;
+            }
+            else if (match_offset == 1) {
+              match_offset = R1;
+              R1 = R0; R0 = match_offset;
+            }
+            else /* match_offset == 2 */ {
+              match_offset = R2;
+              R2 = R0; R0 = match_offset;
+            }
+
+            rundest = window + window_posn;
+            this_run -= match_length;
+
+            /* copy any wrapped around source data */
+            if (window_posn >= match_offset) {
+              /* no wrap */
+              runsrc = rundest - match_offset;
+            } else {
+              runsrc = rundest + (window_size - match_offset);
+              copy_length = match_offset - window_posn;
+              if (copy_length < match_length) {
+                match_length -= copy_length;
+                window_posn += copy_length;
+                while (copy_length-- > 0) *rundest++ = *runsrc++;
+                runsrc = window;
+              }
+            }
+            window_posn += match_length;
+
+            /* copy match data - no worries about destination wraps */
+            while (match_length-- > 0) *rundest++ = *runsrc++;
+          }
+        }
+        break;
+
+      case LZX_BLOCKTYPE_ALIGNED:
+        while (this_run > 0) {
+          READ_HUFFSYM(MAINTREE, main_element);
+  
+          if (main_element < LZX_NUM_CHARS) {
+            /* literal: 0 to LZX_NUM_CHARS-1 */
+            window[window_posn++] = main_element;
+            this_run--;
+          }
+          else {
+            /* match: LZX_NUM_CHARS + ((slot<<3) | length_header (3 bits)) */
+            main_element -= LZX_NUM_CHARS;
+  
+            match_length = main_element & LZX_NUM_PRIMARY_LENGTHS;
+            if (match_length == LZX_NUM_PRIMARY_LENGTHS) {
+              READ_HUFFSYM(LENGTH, length_footer);
+              match_length += length_footer;
+            }
+            match_length += LZX_MIN_MATCH;
+  
+            match_offset = main_element >> 3;
+  
+            if (match_offset > 2) {
+              /* not repeated offset */
+              extra = extra_bits[match_offset];
+              match_offset = lzx_position_base[match_offset] - 2;
+              if (extra > 3) {
+                /* verbatim and aligned bits */
+                extra -= 3;
+                READ_BITS(verbatim_bits, extra);
+                match_offset += (verbatim_bits << 3);
+                READ_HUFFSYM(ALIGNED, aligned_bits);
+                match_offset += aligned_bits;
+              }
+              else if (extra == 3) {
+                /* aligned bits only */
+                READ_HUFFSYM(ALIGNED, aligned_bits);
+                match_offset += aligned_bits;
+              }
+              else if (extra > 0) { /* extra==1, extra==2 */
+                /* verbatim bits only */
+                READ_BITS(verbatim_bits, extra);
+                match_offset += verbatim_bits;
+              }
+              else /* extra == 0 */ {
+                /* ??? */
+                match_offset = 1;
+              }
+  
+              /* update repeated offset LRU queue */
+              R2 = R1; R1 = R0; R0 = match_offset;
+            }
+            else if (match_offset == 0) {
+              match_offset = R0;
+            }
+            else if (match_offset == 1) {
+              match_offset = R1;
+              R1 = R0; R0 = match_offset;
+            }
+            else /* match_offset == 2 */ {
+              match_offset = R2;
+              R2 = R0; R0 = match_offset;
+            }
+
+            rundest = window + window_posn;
+            this_run -= match_length;
+
+            /* copy any wrapped around source data */
+            if (window_posn >= match_offset) {
+              /* no wrap */
+              runsrc = rundest - match_offset;
+            } else {
+              runsrc = rundest + (window_size - match_offset);
+              copy_length = match_offset - window_posn;
+              if (copy_length < match_length) {
+                match_length -= copy_length;
+                window_posn += copy_length;
+                while (copy_length-- > 0) *rundest++ = *runsrc++;
+                runsrc = window;
+              }
+            }
+            window_posn += match_length;
+
+            /* copy match data - no worries about destination wraps */
+            while (match_length-- > 0) *rundest++ = *runsrc++;
+          }
+        }
+        break;
+
+      case LZX_BLOCKTYPE_UNCOMPRESSED:
+        if ((inpos + this_run) > endinp) return DECR_ILLEGALDATA;
+        memcpy(window + window_posn, inpos, (size_t) this_run);
+        inpos += this_run; window_posn += this_run;
+        break;
+
+      default:
+        return DECR_ILLEGALDATA; /* might as well */
+      }
+
+    }
+  }
+
+  if (togo != 0) return DECR_ILLEGALDATA;
+  memcpy(CAB(outbuf), window + ((!window_posn) ? window_size : window_posn) -
+    outlen, (size_t) outlen);
+
+  LZX(window_posn) = window_posn;
+  LZX(R0) = R0;
+  LZX(R1) = R1;
+  LZX(R2) = R2;
+
+  /* intel E8 decoding */
+  if ((LZX(frames_read)++ < 32768) && LZX(intel_filesize) != 0) {
+    if (outlen <= 6 || !LZX(intel_started)) {
+      LZX(intel_curpos) += outlen;
+    }
+    else {
+      cab_UBYTE *data    = CAB(outbuf);
+      cab_UBYTE *dataend = data + outlen - 10;
+      cab_LONG curpos    = LZX(intel_curpos);
+      cab_LONG filesize  = LZX(intel_filesize);
+      cab_LONG abs_off, rel_off;
+
+      LZX(intel_curpos) = curpos + outlen;
+
+      while (data < dataend) {
+        if (*data++ != 0xE8) { curpos++; continue; }
+        abs_off = data[0] | (data[1]<<8) | (data[2]<<16) | (data[3]<<24);
+        if ((abs_off >= -curpos) && (abs_off < filesize)) {
+          rel_off = (abs_off >= 0) ? abs_off - curpos : abs_off + filesize;
+          data[0] = (cab_UBYTE) rel_off;
+          data[1] = (cab_UBYTE) (rel_off >> 8);
+          data[2] = (cab_UBYTE) (rel_off >> 16);
+          data[3] = (cab_UBYTE) (rel_off >> 24);
+        }
+        data += 4;
+        curpos += 5;
+      }
+    }
+  }
+  return DECR_OK;
+}
+
+/**********************************************************
+ * fdi_decomp (internal)
+ */
+int fdi_decomp(struct fdi_file *fi, int savemode, fdi_decomp_state *decomp_state)
+{
+  cab_ULONG bytes = savemode ? fi->length : fi->offset - CAB(offset);
+  cab_UBYTE buf[cfdata_SIZEOF], *data;
+  cab_UWORD inlen, len, outlen, cando;
+  cab_ULONG cksum;
+  cab_LONG err;
+
+  TRACE("(fi == ^%p, savemode == %d)\n", fi, savemode);
+
+  while (bytes > 0) {
+    /* cando = the max number of bytes we can do */
+    cando = CAB(outlen);
+    if (cando > bytes) cando = bytes;
+
+    /* if cando != 0 */
+    if (cando && savemode)
+      PFDI_WRITE(CAB(hfdi), CAB(filehf), CAB(outpos), cando);
+
+    CAB(outpos) += cando;
+    CAB(outlen) -= cando;
+    bytes -= cando; if (!bytes) break;
+
+    /* we only get here if we emptied the output buffer */
+
+    /* read data header + data */
+    inlen = outlen = 0;
+    while (outlen == 0) {
+      /* read the block header, skip the reserved part */
+      if (PFDI_READ(CAB(hfdi), CAB(cabhf), buf, cfdata_SIZEOF) != cfdata_SIZEOF)
+        return DECR_INPUT;
+
+      if (PFDI_SEEK(CAB(hfdi), CAB(cabhf), CAB(block_resv), SEEK_CUR) == -1)
+        return DECR_INPUT;
+
+      /* we shouldn't get blocks over CAB_INPUTMAX in size */
+      data = CAB(inbuf) + inlen;
+      len = EndGetI16(buf+cfdata_CompressedSize);
+      inlen += len;
+      if (inlen > CAB_INPUTMAX) return DECR_INPUT;
+      if (PFDI_READ(CAB(hfdi), CAB(cabhf), data, len) != len)
+        return DECR_INPUT;
+
+      /* clear two bytes after read-in data */
+      data[len+1] = data[len+2] = 0;
+
+      /* perform checksum test on the block (if one is stored) */
+      cksum = EndGetI32(buf+cfdata_CheckSum);
+      if (cksum && cksum != checksum(buf+4, 4, checksum(data, len, 0)))
+        return DECR_CHECKSUM; /* checksum is wrong */
+
+      /* outlen=0 means this block was part of a split block */
+      outlen = EndGetI16(buf+cfdata_UncompressedSize);
+      if (outlen == 0) {
+      /* 
+        cabinet_close(cab);
+        cab = CAB(current)->cab[++CAB(split)];
+        if (!cabinet_open(cab)) return DECR_INPUT;
+        cabinet_seek(cab, CAB(current)->offset[CAB(split)]); */
+        FIXME("split block... ack! fix this.\n");
+        return DECR_INPUT;
+      }
+    }
+
+    /* decompress block */
+    if ((err = CAB(decompress)(inlen, outlen, decomp_state)))
+      return err;
+    CAB(outlen) = outlen;
+    CAB(outpos) = CAB(outbuf);
+  }
+
+  return DECR_OK;
+}
+
 /***********************************************************************
  *		FDICopy (CABINET.22)
  */
 BOOL __cdecl FDICopy(
-	HFDI           hfdi,
-	char          *pszCabinet,
-	char          *pszCabPath,
-	int            flags,
-	PFNFDINOTIFY   pfnfdin,
-	PFNFDIDECRYPT  pfnfdid,
-	void          *pvUser)
+        HFDI           hfdi,
+        char          *pszCabinet,
+        char          *pszCabPath,
+        int            flags,
+        PFNFDINOTIFY   pfnfdin,
+        PFNFDIDECRYPT  pfnfdid,
+        void          *pvUser)
 { 
   FDICABINETINFO    fdici;
   FDINOTIFICATION   fdin;
   MORE_ISCAB_INFO   mii;
-  int               hf, i, idx;
+  int               cabhf, filehf;
+  int               i, idx;
   char              fullpath[MAX_PATH];
   size_t            pathlen, filenamelen;
   char              emptystring = '\0';
-  cab_UBYTE         buf[64];
+  cab_UBYTE         buf[64], buf2[256] /* for modification by call back fn */ ;
   BOOL              initialcab = TRUE;
   struct fdi_folder *fol = NULL, *linkfol = NULL, *firstfol = NULL; 
   struct fdi_file   *file = NULL, *linkfile = NULL, *firstfile = NULL;
-  struct fdi_cab    _cab;
-  struct fdi_cab    *cab = &_cab;
 
   TRACE("(hfdi == ^%p, pszCabinet == ^%p, pszCabPath == ^%p, flags == %0d, \
         pfnfdin == ^%p, pfnfdid == ^%p, pvUser == ^%p)\n",
@@ -536,8 +1830,8 @@ BOOL __cdecl FDICopy(
     TRACE("full cab path/file name: %s\n", debugstr_a(fullpath));
   
     /* get a handle to the cabfile */
-    hf = PFDI_OPEN(hfdi, fullpath, _O_BINARY | _O_RDONLY | _O_SEQUENTIAL, 0);
-    if (hf == -1) {
+    cabhf = PFDI_OPEN(hfdi, fullpath, _O_BINARY | _O_RDONLY | _O_SEQUENTIAL, 0);
+    if (cabhf == -1) {
       PFDI_INT(hfdi)->perf->erfOper = FDIERROR_CABINET_NOT_FOUND;
       PFDI_INT(hfdi)->perf->erfType = ERROR_FILE_NOT_FOUND;
       PFDI_INT(hfdi)->perf->fError = TRUE;
@@ -546,9 +1840,9 @@ BOOL __cdecl FDICopy(
     }
   
     /* check if it's really a cabfile. Note that this doesn't implement the bug */
-    if (!FDI_read_entries(hfdi, hf, &fdici, &mii)) {
+    if (!FDI_read_entries(hfdi, cabhf, &fdici, &mii)) {
       ERR("FDIIsCabinet failed.\n");
-      PFDI_CLOSE(hfdi, hf);
+      PFDI_CLOSE(hfdi, cabhf);
       return FALSE;
     }
      
@@ -570,58 +1864,54 @@ BOOL __cdecl FDICopy(
 
     /* read folders */
     for (i = 0; i < fdici.cFolders; i++) {
-      if (PFDI_READ(hfdi, hf, buf, cffold_SIZEOF) != cffold_SIZEOF) {
+      if (PFDI_READ(hfdi, cabhf, buf, cffold_SIZEOF) != cffold_SIZEOF) {
         PFDI_INT(hfdi)->perf->erfOper = FDIERROR_CORRUPT_CABINET;
-	PFDI_INT(hfdi)->perf->erfType = 0;
-	PFDI_INT(hfdi)->perf->fError = TRUE;
-	goto bail_and_fail;
+        PFDI_INT(hfdi)->perf->erfType = 0;
+        PFDI_INT(hfdi)->perf->fError = TRUE;
+        goto bail_and_fail;
       }
 
       if (mii.folder_resv > 0)
-        PFDI_SEEK(hfdi, hf, mii.folder_resv, SEEK_CUR);
+        PFDI_SEEK(hfdi, cabhf, mii.folder_resv, SEEK_CUR);
 
       fol = (struct fdi_folder *) PFDI_ALLOC(hfdi, sizeof(struct fdi_folder));
       if (!fol) {
         ERR("out of memory!\n");
-	PFDI_INT(hfdi)->perf->erfOper = FDIERROR_ALLOC_FAIL;
+        PFDI_INT(hfdi)->perf->erfOper = FDIERROR_ALLOC_FAIL;
         PFDI_INT(hfdi)->perf->erfType = ERROR_NOT_ENOUGH_MEMORY;
-	PFDI_INT(hfdi)->perf->fError = TRUE;
-	SetLastError(ERROR_NOT_ENOUGH_MEMORY);
-	goto bail_and_fail;
+        PFDI_INT(hfdi)->perf->fError = TRUE;
+        SetLastError(ERROR_NOT_ENOUGH_MEMORY);
+        goto bail_and_fail;
       }
       ZeroMemory(fol, sizeof(struct fdi_folder));
       if (!firstfol) firstfol = fol;
 
-      fol->cab[0]     = cab;
       fol->offset[0]  = (cab_off_t) EndGetI32(buf+cffold_DataOffset);
       fol->num_blocks = EndGetI16(buf+cffold_NumBlocks);
       fol->comp_type  = EndGetI16(buf+cffold_CompType);
 
-      if (!linkfol)
-        cab->folders = fol; 
-      else 
+      if (linkfol)
         linkfol->next = fol; 
-
       linkfol = fol;
     }
 
     /* read files */
     for (i = 0; i < fdici.cFiles; i++) {
-      if (PFDI_READ(hfdi, hf, buf, cffile_SIZEOF) != cffile_SIZEOF) {
+      if (PFDI_READ(hfdi, cabhf, buf, cffile_SIZEOF) != cffile_SIZEOF) {
         PFDI_INT(hfdi)->perf->erfOper = FDIERROR_CORRUPT_CABINET;
-	PFDI_INT(hfdi)->perf->erfType = 0;
-	PFDI_INT(hfdi)->perf->fError = TRUE;
-	goto bail_and_fail;
+        PFDI_INT(hfdi)->perf->erfType = 0;
+        PFDI_INT(hfdi)->perf->fError = TRUE;
+        goto bail_and_fail;
       }
 
       file = (struct fdi_file *) PFDI_ALLOC(hfdi, sizeof(struct fdi_file));
       if (!file) { 
         ERR("out of memory!\n"); 
-	PFDI_INT(hfdi)->perf->erfOper = FDIERROR_ALLOC_FAIL;
+        PFDI_INT(hfdi)->perf->erfOper = FDIERROR_ALLOC_FAIL;
         PFDI_INT(hfdi)->perf->erfType = ERROR_NOT_ENOUGH_MEMORY;
-	PFDI_INT(hfdi)->perf->fError = TRUE;
-	SetLastError(ERROR_NOT_ENOUGH_MEMORY);
-	goto bail_and_fail;
+        PFDI_INT(hfdi)->perf->fError = TRUE;
+        SetLastError(ERROR_NOT_ENOUGH_MEMORY);
+        goto bail_and_fail;
       }
       ZeroMemory(file, sizeof(struct fdi_file));
       if (!firstfile) firstfile = file;
@@ -632,58 +1922,197 @@ BOOL __cdecl FDICopy(
       file->time     = EndGetI16(buf+cffile_Time);
       file->date     = EndGetI16(buf+cffile_Date);
       file->attribs  = EndGetI16(buf+cffile_Attribs);
-      file->filename = FDI_read_string(hfdi, hf, fdici.cbCabinet);
+      file->filename = FDI_read_string(hfdi, cabhf, fdici.cbCabinet);
   
       if (!file->filename) {
         PFDI_INT(hfdi)->perf->erfOper = FDIERROR_CORRUPT_CABINET;
-	PFDI_INT(hfdi)->perf->erfType = 0;
-	PFDI_INT(hfdi)->perf->fError = TRUE;
-	goto bail_and_fail;
-      }
-  
-      if (!linkfile)
-        cab->files = file;
-      else 
-        linkfile->next = file;
-  
-      linkfile = file;
-    }
-
-    /* partial file notification (do it just once for the first cabinet) */
-    if (initialcab && (firstfile->attribs & cffileCONTINUED_FROM_PREV) && (fdici.iCabinet != 0)) {
-      /* OK, more MS bugs to simulate here, I think.  I don't have a huge spanning
-       * cabinet to test this theory on ATM, but here's the deal.  The SDK says that we
-       * are supposed to notify the user of the filename and "disk name" (info) of
-       * the cabinet where the spanning file /started/.  That would certainly be convenient
-       * for the consumer, who could decide to abort everything and try to start over with
-       * that cabinet so as not to create a front-truncated output file.  Note that this
-       * task would be a horrible bitch from the implementor's (wine's) perspective: the
-       * information is associated nowhere with the file header and is not to be found in
-       * the cabinet header.  So we would have to open the previous cabinet, and check
-       * if it contains a single spanning file that's continued from yet another prior cabinet,
-       * and so-on, until we find the beginning.  Note that cabextract.c has code to do exactly
-       * this.  Luckily, MS clearly didn't implement this logic, so we don't have to either.
-       * Watching the callbacks (and debugmsg +file) clearly shows that they don't open
-       * the preceeding cabinet -- and therefore, I deduce, there is NO WAY they could
-       * have implemented what's in the spec.  Instead, they are obviously just returning
-       * the previous cabinet and it's info from the header of this cabinet.  So we shall
-       * do the same.  Of course, I could be missing something...
-       */
-      ZeroMemory(&fdin, sizeof(FDINOTIFICATION));
-      fdin.pv = pvUser;
-      fdin.psz1 = (char *)firstfile->filename;
-      fdin.psz2 = (mii.prevname) ? mii.prevname : &emptystring;
-      fdin.psz3 = (mii.previnfo) ? mii.previnfo : &emptystring;
-
-      if (((*pfnfdin)(fdintPARTIAL_FILE, &fdin))) {
-        PFDI_INT(hfdi)->perf->erfOper = FDIERROR_USER_ABORT;
         PFDI_INT(hfdi)->perf->erfType = 0;
         PFDI_INT(hfdi)->perf->fError = TRUE;
         goto bail_and_fail;
       }
-
+  
+      if (linkfile)
+        linkfile->next = file;
+      linkfile = file;
     }
 
+    for (file = firstfile; (file); file = file->next) {
+      /* partial file notification (do it just once for the first cabinet) */
+      if (initialcab && ((file->index & cffileCONTINUED_FROM_PREV) == cffileCONTINUED_FROM_PREV)) {
+        /* OK, more MS bugs to simulate here, I think.  I don't have a huge spanning
+         * cabinet to test this theory on ATM, but here's the deal.  The SDK says that we
+         * are supposed to notify the user of the filename and "disk name" (info) of
+         * the cabinet where the spanning file /started/.  That would certainly be convenient
+         * for the consumer, who could decide to abort everything and try to start over with
+         * that cabinet so as not to create a front-truncated output file.  Note that this
+         * task would be a horrible bitch from the implementor's (wine's) perspective: the
+         * information is associated nowhere with the file header and is not to be found in
+         * the cabinet header.  So we would have to open the previous cabinet, and check
+         * if it contains a single spanning file that's continued from yet another prior cabinet,
+         * and so-on, until we find the beginning.  Note that cabextract.c has code to do exactly
+         * this.  Luckily, MS clearly didn't implement this logic, so we don't have to either.
+         * Watching the callbacks (and debugmsg +file) clearly shows that they don't open
+         * the preceeding cabinet -- and therefore, I deduce, there is NO WAY they could
+         * have implemented what's in the spec.  Instead, they are obviously just returning
+         * the previous cabinet and it's info from the header of this cabinet.  So we shall
+         * do the same.  Of course, I could be missing something...
+         */
+        ZeroMemory(&fdin, sizeof(FDINOTIFICATION));
+        fdin.pv = pvUser;
+        fdin.psz1 = (char *)file->filename;
+        fdin.psz2 = (mii.prevname) ? mii.prevname : &emptystring;
+        fdin.psz3 = (mii.previnfo) ? mii.previnfo : &emptystring;
+  
+        if (((*pfnfdin)(fdintPARTIAL_FILE, &fdin))) {
+          PFDI_INT(hfdi)->perf->erfOper = FDIERROR_USER_ABORT;
+          PFDI_INT(hfdi)->perf->erfType = 0;
+          PFDI_INT(hfdi)->perf->fError = TRUE;
+          goto bail_and_fail;
+        }
+        /* I don't think we are supposed to decompress partial files */
+        file->oppressed = TRUE;
+      }
+      if (file->oppressed) {
+        filehf = 0;
+      } else {
+        /* fdintCOPY_FILE notification (TODO: skip for spanning cab's we already should have hf) */
+        ZeroMemory(&fdin, sizeof(FDINOTIFICATION));
+        fdin.pv = pvUser;
+        fdin.psz1 = (char *)file->filename;
+        fdin.cb = file->length;
+        fdin.date = file->date;
+        fdin.time = file->time;
+        fdin.attribs = file->attribs;
+        if ((filehf = ((*pfnfdin)(fdintCOPY_FILE, &fdin))) == -1) {
+          PFDI_INT(hfdi)->perf->erfOper = FDIERROR_USER_ABORT;
+          PFDI_INT(hfdi)->perf->erfType = 0;
+          PFDI_INT(hfdi)->perf->fError = TRUE;
+          goto bail_and_fail;
+        }
+      }
+
+      if (filehf) {
+        cab_UWORD comptype = fol->comp_type;
+        int ct1 = comptype & cffoldCOMPTYPE_MASK;
+        fdi_decomp_state _decomp_state;
+        fdi_decomp_state *decomp_state = &_decomp_state;
+        int err = 0;
+
+        TRACE("Extracting file %s as requested by callee.\n", debugstr_a(file->filename));
+
+        /* set up decomp_state */
+        ZeroMemory(decomp_state, sizeof(fdi_decomp_state));
+        CAB(hfdi) = hfdi;
+        CAB(filehf) = filehf;
+        CAB(cabhf) = cabhf;
+        CAB(current) = file->folder;
+        CAB(block_resv) = mii.block_resv;
+
+        /* set up the appropriate decompressor */
+        switch (ct1) {
+          case cffoldCOMPTYPE_NONE:
+            CAB(decompress) = NONEfdi_decomp;
+            break;
+          case cffoldCOMPTYPE_MSZIP:
+            CAB(decompress) = ZIPfdi_decomp;
+            break;
+          case cffoldCOMPTYPE_QUANTUM:
+            CAB(decompress) = QTMfdi_decomp;
+            err = QTMfdi_init((comptype >> 8) & 0x1f, (comptype >> 4) & 0xF, decomp_state);
+            break;
+          case cffoldCOMPTYPE_LZX:
+            CAB(decompress) = LZXfdi_decomp;
+            err = LZXfdi_init((comptype >> 8) & 0x1f, decomp_state);
+            break;
+          default:
+            err = DECR_DATAFORMAT;
+        }
+
+        switch (err) {
+          case DECR_OK:
+            break;
+          case DECR_NOMEMORY:
+            PFDI_INT(hfdi)->perf->erfOper = FDIERROR_ALLOC_FAIL;
+            PFDI_INT(hfdi)->perf->erfType = ERROR_NOT_ENOUGH_MEMORY;
+            PFDI_INT(hfdi)->perf->fError = TRUE;
+            SetLastError(ERROR_NOT_ENOUGH_MEMORY);
+            goto bail_and_fail;
+          default:
+            PFDI_INT(hfdi)->perf->erfOper = FDIERROR_CORRUPT_CABINET;
+            PFDI_INT(hfdi)->perf->erfOper = 0;
+            PFDI_INT(hfdi)->perf->fError = TRUE;
+            goto bail_and_fail;
+        }
+
+        PFDI_SEEK(CAB(hfdi), CAB(cabhf), fol->offset[0], SEEK_SET);
+        CAB(offset) = 0;
+        CAB(outlen) = 0;
+        CAB(split)  = 0;
+
+        if (file->offset > CAB(offset)) {
+          /* decode bytes and send them to /dev/null */
+          switch ((err = fdi_decomp(file, 0, decomp_state))) {
+            case DECR_OK:
+              break;
+            case DECR_NOMEMORY:
+              PFDI_INT(hfdi)->perf->erfOper = FDIERROR_ALLOC_FAIL;
+              PFDI_INT(hfdi)->perf->erfType = ERROR_NOT_ENOUGH_MEMORY;
+              PFDI_INT(hfdi)->perf->fError = TRUE;
+              SetLastError(ERROR_NOT_ENOUGH_MEMORY);
+              goto bail_and_fail;
+            default:
+              PFDI_INT(hfdi)->perf->erfOper = FDIERROR_CORRUPT_CABINET;
+              PFDI_INT(hfdi)->perf->erfOper = 0;
+              PFDI_INT(hfdi)->perf->fError = TRUE;
+              goto bail_and_fail;
+          }
+          CAB(offset) = file->offset;
+        }
+  
+        /* now do the actual decompression */
+        err = fdi_decomp(file, 1, decomp_state);
+        if (err) CAB(current) = NULL; else CAB(offset) += file->length;
+
+        switch (err) {
+          case DECR_OK:
+            break;
+          case DECR_NOMEMORY:
+            PFDI_INT(hfdi)->perf->erfOper = FDIERROR_ALLOC_FAIL;
+            PFDI_INT(hfdi)->perf->erfType = ERROR_NOT_ENOUGH_MEMORY;
+            PFDI_INT(hfdi)->perf->fError = TRUE;
+            SetLastError(ERROR_NOT_ENOUGH_MEMORY);
+            goto bail_and_fail;
+          default:
+            PFDI_INT(hfdi)->perf->erfOper = FDIERROR_CORRUPT_CABINET;
+            PFDI_INT(hfdi)->perf->erfOper = 0;
+            PFDI_INT(hfdi)->perf->fError = TRUE;
+            goto bail_and_fail;
+        }
+
+        /* FIXME: don't do it if we are continuing the file in another cab */
+        /* fdintCLOSE_FILE_INFO notification */
+        ZeroMemory(&fdin, sizeof(FDINOTIFICATION));
+        fdin.pv = pvUser;
+        fdin.psz1 = (char *)file->filename;
+        fdin.hf = filehf;
+        fdin.cb = (file->attribs & cffile_A_EXEC) ? TRUE : FALSE;
+        fdin.date = file->date;
+        fdin.time = file->time;
+        fdin.attribs = file->attribs;
+        err = ((*pfnfdin)(fdintCLOSE_FILE_INFO, &fdin));
+        if (err == FALSE || err == -1) {
+          /*
+           * SDK states that even though they indicated failure,
+           * we are not supposed to try and close the file, so we
+           * just treat this like all the others
+           */
+          PFDI_INT(hfdi)->perf->erfOper = FDIERROR_USER_ABORT;
+          PFDI_INT(hfdi)->perf->erfType = 0;
+          PFDI_INT(hfdi)->perf->fError = TRUE;
+          goto bail_and_fail;
+        }
+      }
+    }
 
     while (firstfol) {
       fol = firstfol;
@@ -702,7 +2131,7 @@ BOOL __cdecl FDICopy(
     if (mii.prevname) PFDI_FREE(hfdi, mii.prevname);
     if (mii.previnfo) PFDI_FREE(hfdi, mii.previnfo);
   
-    PFDI_CLOSE(hfdi, hf);
+    PFDI_CLOSE(hfdi, cabhf);
     /* TODO: if (:?) */ return TRUE; /* else { ...; initialcab=FALSE; continue; } */
 
     bail_and_fail: /* here we free ram before error returns */
@@ -724,7 +2153,7 @@ BOOL __cdecl FDICopy(
     if (mii.prevname) PFDI_FREE(hfdi, mii.prevname);
     if (mii.previnfo) PFDI_FREE(hfdi, mii.previnfo);
   
-    PFDI_CLOSE(hfdi, hf);
+    PFDI_CLOSE(hfdi, cabhf);
     return FALSE;
   }
 }

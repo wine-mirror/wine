@@ -40,6 +40,8 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(cabinet);
 
+THOSE_ZIP_CONSTS;
+
 /* all the file IO is abstracted into these routines:
  * cabinet_(open|close|read|seek|skip|getoffset)
  * file_(open|close|write)
@@ -543,33 +545,6 @@ struct cabinet *load_cab_offset(LPCSTR name, cab_off_t offset)
 /* MSZIP decruncher */
 
 /* Dirk Stoecker wrote the ZIP decoder, based on the InfoZip deflate code */
-
-/* Tables for deflate from PKZIP's appnote.txt. */
-static const cab_UBYTE Zipborder[] = /* Order of the bit length code lengths */
-{ 16, 17, 18, 0, 8, 7, 9, 6, 10, 5, 11, 4, 12, 3, 13, 2, 14, 1, 15};
-static const cab_UWORD Zipcplens[] = /* Copy lengths for literal codes 257..285 */
-{ 3, 4, 5, 6, 7, 8, 9, 10, 11, 13, 15, 17, 19, 23, 27, 31, 35, 43, 51,
- 59, 67, 83, 99, 115, 131, 163, 195, 227, 258, 0, 0};
-static const cab_UWORD Zipcplext[] = /* Extra bits for literal codes 257..285 */
-{ 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 2, 2, 2, 2, 3, 3, 3, 3, 4, 4, 4,
-  4, 5, 5, 5, 5, 0, 99, 99}; /* 99==invalid */
-static const cab_UWORD Zipcpdist[] = /* Copy offsets for distance codes 0..29 */
-{ 1, 2, 3, 4, 5, 7, 9, 13, 17, 25, 33, 49, 65, 97, 129, 193, 257, 385,
-513, 769, 1025, 1537, 2049, 3073, 4097, 6145, 8193, 12289, 16385, 24577};
-static const cab_UWORD Zipcpdext[] = /* Extra bits for distance codes */
-{ 0, 0, 0, 0, 1, 1, 2, 2, 3, 3, 4, 4, 5, 5, 6, 6, 7, 7, 8, 8, 9, 9, 10,
-10, 11, 11, 12, 12, 13, 13};
-
-/* And'ing with Zipmask[n] masks the lower n bits */
-static const cab_UWORD Zipmask[17] = {
- 0x0000, 0x0001, 0x0003, 0x0007, 0x000f, 0x001f, 0x003f, 0x007f, 0x00ff,
- 0x01ff, 0x03ff, 0x07ff, 0x0fff, 0x1fff, 0x3fff, 0x7fff, 0xffff
-};
-
-#define ZIPNEEDBITS(n) {while(k<(n)){cab_LONG c=*(ZIP(inpos)++);\
-    b|=((cab_ULONG)c)<<k;k+=8;}}
-#define ZIPDUMPBITS(n) {b>>=(n);k-=(n);}
-
 
 /********************************************************
  * Ziphuft_free (internal)
@@ -1148,6 +1123,7 @@ int ZIPdecompress(int inlen, int outlen, cab_decomp_state *decomp_state)
 /* This decruncher was researched and implemented by Matthew Russoto. */
 /* It has since been tidied up by Stuart Caie */
 
+/* FIXME: eliminate global variables */
 static cab_UBYTE q_length_base[27], q_length_extra[27], q_extra_bits[42];
 static cab_ULONG q_position_base[42];
 
@@ -1275,91 +1251,6 @@ void QTMupdatemodel(struct QTMmodel *model, int sym) {
     }
   }
 }
-
-/* Bitstream reading macros (Quantum / normal byte order)
- *
- * Q_INIT_BITSTREAM    should be used first to set up the system
- * Q_READ_BITS(var,n)  takes N bits from the buffer and puts them in var.
- *                     unlike LZX, this can loop several times to get the
- *                     requisite number of bits.
- * Q_FILL_BUFFER       adds more data to the bit buffer, if there is room
- *                     for another 16 bits.
- * Q_PEEK_BITS(n)      extracts (without removing) N bits from the bit
- *                     buffer
- * Q_REMOVE_BITS(n)    removes N bits from the bit buffer
- *
- * These bit access routines work by using the area beyond the MSB and the
- * LSB as a free source of zeroes. This avoids having to mask any bits.
- * So we have to know the bit width of the bitbuffer variable. This is
- * defined as ULONG_BITS.
- *
- * ULONG_BITS should be at least 16 bits. Unlike LZX's Huffman decoding,
- * Quantum's arithmetic decoding only needs 1 bit at a time, it doesn't
- * need an assured number. Retrieving larger bitstrings can be done with
- * multiple reads and fills of the bitbuffer. The code should work fine
- * for machines where ULONG >= 32 bits.
- *
- * Also note that Quantum reads bytes in normal order; LZX is in
- * little-endian order.
- */
-
-#define Q_INIT_BITSTREAM do { bitsleft = 0; bitbuf = 0; } while (0)
-
-#define Q_FILL_BUFFER do {                                                  \
-  if (bitsleft <= (CAB_ULONG_BITS - 16)) {                                  \
-    bitbuf |= ((inpos[0]<<8)|inpos[1]) << (CAB_ULONG_BITS-16 - bitsleft);   \
-    bitsleft += 16; inpos += 2;                                             \
-  }                                                                         \
-} while (0)
-
-#define Q_PEEK_BITS(n)   (bitbuf >> (CAB_ULONG_BITS - (n)))
-#define Q_REMOVE_BITS(n) ((bitbuf <<= (n)), (bitsleft -= (n)))
-
-#define Q_READ_BITS(v,n) do {						\
-  (v) = 0;                                                              \
-  for (bitsneed = (n); bitsneed; bitsneed -= bitrun) {                  \
-    Q_FILL_BUFFER;                                                      \
-    bitrun = (bitsneed > bitsleft) ? bitsleft : bitsneed;               \
-    (v) = ((v) << bitrun) | Q_PEEK_BITS(bitrun);                        \
-    Q_REMOVE_BITS(bitrun);                                              \
-  }                                                                     \
-} while (0)
-
-#define Q_MENTRIES(model) (QTM(model).entries)
-#define Q_MSYM(model,symidx) (QTM(model).syms[(symidx)].sym)
-#define Q_MSYMFREQ(model,symidx) (QTM(model).syms[(symidx)].cumfreq)
-
-/* GET_SYMBOL(model, var) fetches the next symbol from the stated model
- * and puts it in var. it may need to read the bitstream to do this.
- */
-#define GET_SYMBOL(m, var) do {                                         \
-  range =  ((H - L) & 0xFFFF) + 1;                                      \
-  symf = ((((C - L + 1) * Q_MSYMFREQ(m,0)) - 1) / range) & 0xFFFF;      \
-                                                                        \
-  for (i=1; i < Q_MENTRIES(m); i++) {                                   \
-    if (Q_MSYMFREQ(m,i) <= symf) break;                                 \
-  }                                                                     \
-  (var) = Q_MSYM(m,i-1);                                                \
-                                                                        \
-  range = (H - L) + 1;                                                  \
-  H = L + ((Q_MSYMFREQ(m,i-1) * range) / Q_MSYMFREQ(m,0)) - 1;          \
-  L = L + ((Q_MSYMFREQ(m,i)   * range) / Q_MSYMFREQ(m,0));              \
-  while (1) {                                                           \
-    if ((L & 0x8000) != (H & 0x8000)) {                                 \
-      if ((L & 0x4000) && !(H & 0x4000)) {                              \
-        /* underflow case */                                            \
-        C ^= 0x4000; L &= 0x3FFF; H |= 0x4000;                          \
-      }                                                                 \
-      else break;                                                       \
-    }                                                                   \
-    L <<= 1; H = (H << 1) | 1;                                          \
-    Q_FILL_BUFFER;                                                      \
-    C  = (C << 1) | Q_PEEK_BITS(1);                                     \
-    Q_REMOVE_BITS(1);                                                   \
-  }                                                                     \
-                                                                        \
-  QTMupdatemodel(&(QTM(m)), i);                                         \
-} while (0)
 
 /*******************************************************************
  * QTMdecompress (internal)
@@ -1542,6 +1433,8 @@ int QTMdecompress(int inlen, int outlen, cab_decomp_state *decomp_state)
  * - lzx_position_base is an index to the position slot bases
  * - lzx_extra_bits states how many bits of offset-from-base data is needed.
  */
+
+/* FIXME: Eliminate global variables */
 static cab_ULONG lzx_position_base[51];
 static cab_UBYTE extra_bits[51];
 
@@ -1598,93 +1491,6 @@ int LZXinit(int window, cab_decomp_state *decomp_state) {
 
   return DECR_OK;
 }
-
-/* Bitstream reading macros (LZX / intel little-endian byte order)
- *
- * INIT_BITSTREAM    should be used first to set up the system
- * READ_BITS(var,n)  takes N bits from the buffer and puts them in var
- *
- * ENSURE_BITS(n)    ensures there are at least N bits in the bit buffer.
- *                   it can guarantee up to 17 bits (i.e. it can read in
- *                   16 new bits when there is down to 1 bit in the buffer,
- *                   and it can read 32 bits when there are 0 bits in the
- *                   buffer).
- * PEEK_BITS(n)      extracts (without removing) N bits from the bit buffer
- * REMOVE_BITS(n)    removes N bits from the bit buffer
- *
- * These bit access routines work by using the area beyond the MSB and the
- * LSB as a free source of zeroes. This avoids having to mask any bits.
- * So we have to know the bit width of the bitbuffer variable.
- */
-
-#define INIT_BITSTREAM do { bitsleft = 0; bitbuf = 0; } while (0)
-
-/* Quantum reads bytes in normal order; LZX is little-endian order */
-#define ENSURE_BITS(n)                                                    \
-  while (bitsleft < (n)) {			    		          \
-    bitbuf |= ((inpos[1]<<8)|inpos[0]) << (CAB_ULONG_BITS-16 - bitsleft); \
-    bitsleft += 16; inpos+=2;						  \
-  }
-
-#define PEEK_BITS(n)   (bitbuf >> (CAB_ULONG_BITS - (n)))
-#define REMOVE_BITS(n) ((bitbuf <<= (n)), (bitsleft -= (n)))
-
-#define READ_BITS(v,n) do {						\
-  if (n) {								\
-    ENSURE_BITS(n);							\
-    (v) = PEEK_BITS(n);							\
-    REMOVE_BITS(n);							\
-  }									\
-  else {								\
-    (v) = 0;								\
-  }									\
-} while (0)
-
-/* Huffman macros */
-
-#define TABLEBITS(tbl)   (LZX_##tbl##_TABLEBITS)
-#define MAXSYMBOLS(tbl)  (LZX_##tbl##_MAXSYMBOLS)
-#define SYMTABLE(tbl)    (LZX(tbl##_table))
-#define LENTABLE(tbl)    (LZX(tbl##_len))
-
-/* BUILD_TABLE(tablename) builds a huffman lookup table from code lengths.
- * In reality, it just calls make_decode_table() with the appropriate
- * values - they're all fixed by some #defines anyway, so there's no point
- * writing each call out in full by hand.
- */
-#define BUILD_TABLE(tbl)						\
-  if (make_decode_table(						\
-    MAXSYMBOLS(tbl), TABLEBITS(tbl), LENTABLE(tbl), SYMTABLE(tbl)	\
-  )) { return DECR_ILLEGALDATA; }
-
-/* READ_HUFFSYM(tablename, var) decodes one huffman symbol from the
- * bitstream using the stated table and puts it in var.
- */
-#define READ_HUFFSYM(tbl,var) do {					\
-  ENSURE_BITS(16);							\
-  hufftbl = SYMTABLE(tbl);						\
-  if ((i = hufftbl[PEEK_BITS(TABLEBITS(tbl))]) >= MAXSYMBOLS(tbl)) {	\
-    j = 1 << (CAB_ULONG_BITS - TABLEBITS(tbl));				\
-    do {								\
-      j >>= 1; i <<= 1; i |= (bitbuf & j) ? 1 : 0;			\
-      if (!j) { return DECR_ILLEGALDATA; }	                        \
-    } while ((i = hufftbl[i]) >= MAXSYMBOLS(tbl));			\
-  }									\
-  j = LENTABLE(tbl)[(var) = i];						\
-  REMOVE_BITS(j);							\
-} while (0)
-
-/* READ_LENGTHS(tablename, first, last) reads in code lengths for symbols
- * first to last in the given table. The code lengths are stored in their
- * own special LZX way.
- */
-#define READ_LENGTHS(tbl,first,last) do { \
-  lb.bb = bitbuf; lb.bl = bitsleft; lb.ip = inpos; \
-  if (lzx_read_lens(LENTABLE(tbl),(first),(last),&lb,decomp_state)) { \
-    return DECR_ILLEGALDATA; \
-  } \
-  bitbuf = lb.bb; bitsleft = lb.bl; inpos = lb.ip; \
-} while (0)
 
 /*************************************************************************
  * make_decode_table (internal)
@@ -1772,12 +1578,6 @@ int make_decode_table(cab_ULONG nsyms, cab_ULONG nbits, cab_UBYTE *length, cab_U
   for (sym = 0; sym < nsyms; sym++) if (length[sym]) return 1;
   return 0;
 }
-
-struct lzx_bits {
-  cab_ULONG bb;
-  int bl;
-  cab_UBYTE *ip;
-};
 
 /************************************************************
  * lzx_read_lens (internal)
@@ -1883,12 +1683,12 @@ int LZXdecompress(int inlen, int outlen, cab_decomp_state *decomp_state) {
         /* rest of aligned header is same as verbatim */
 
       case LZX_BLOCKTYPE_VERBATIM:
-        READ_LENGTHS(MAINTREE, 0, 256);
-        READ_LENGTHS(MAINTREE, 256, LZX(main_elements));
+        READ_LENGTHS(MAINTREE, 0, 256, lzx_read_lens);
+        READ_LENGTHS(MAINTREE, 256, LZX(main_elements), lzx_read_lens);
         BUILD_TABLE(MAINTREE);
         if (LENTABLE(MAINTREE)[0xE8] != 0) LZX(intel_started) = 1;
 
-        READ_LENGTHS(LENGTH, 0, LZX_NUM_SECONDARY_LENGTHS);
+        READ_LENGTHS(LENGTH, 0, LZX_NUM_SECONDARY_LENGTHS, lzx_read_lens);
         BUILD_TABLE(LENGTH);
         break;
 
