@@ -377,7 +377,7 @@ static BOOL PRINTDLG_PaperSize(
     DEVMODEA	*dm;
     LPSTR	devname,portname;
     int		i;
-    DWORD	NrOfEntries,ret;
+    INT		NrOfEntries,ret;
     char	*Names = NULL;
     POINT	*points = NULL;
     BOOL	retval = FALSE;
@@ -393,9 +393,14 @@ static BOOL PRINTDLG_PaperSize(
 	FIXME("No papernames found for %s/%s\n",devname,portname);
 	goto out;
     }
+    if (NrOfEntries == -1) {
+	ERR("Hmm ? DeviceCapabilities() DC_PAPERNAMES failed, ret -1 !\n");
+	goto out;
+    }
+	    
     Names = (char*)HeapAlloc(GetProcessHeap(),0,NrOfEntries*64);
     if (NrOfEntries != (ret=DeviceCapabilitiesA(devname,portname,DC_PAPERNAMES,Names,dm))) {
-	FIXME("Number of returned vals %ld is not %ld\n",NrOfEntries,ret);
+	FIXME("Number of returned vals %d is not %d\n",NrOfEntries,ret);
 	goto out;
     }
     for (i=0;i<NrOfEntries;i++)
@@ -408,7 +413,7 @@ static BOOL PRINTDLG_PaperSize(
     }
     points = HeapAlloc(GetProcessHeap(),0,sizeof(points[0])*NrOfEntries);
     if (NrOfEntries!=(ret=DeviceCapabilitiesA(devname,portname,DC_PAPERSIZE,(LPBYTE)points,dm))) {
-	FIXME("Number of returned sizes %ld is not %ld?\n",NrOfEntries,ret);
+	FIXME("Number of returned sizes %d is not %d?\n",NrOfEntries,ret);
 	goto out;
     }
     /* this is _10ths_ of a millimeter */
