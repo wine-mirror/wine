@@ -2,3 +2,4 @@ class.ok
 sysparams.ok
 testlist.c
 user32_test.spec.c
+wsprintf.ok
