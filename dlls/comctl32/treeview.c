@@ -19,6 +19,8 @@
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  *
+ * NOTES
+ *
  * Note that TREEVIEW_INFO * and HTREEITEM are the same thing.
  *
  * Note2: All items always! have valid (allocated) pszText field.
@@ -2816,7 +2818,7 @@ TREEVIEW_Paint(TREEVIEW_INFO *infoPtr, WPARAM wParam)
             BITMAP bitmap;
             hbitmap = GetCurrentObject(hdc, OBJ_BITMAP);
             if (!hbitmap) return 0;
-            GetObjectA(hbitmap, sizeof(BITMAP), &bitmap);
+            GetObjectW(hbitmap, sizeof(BITMAP), &bitmap);
             rc.left = 0; rc.top = 0;
             rc.right = bitmap.bmWidth;
             rc.bottom = bitmap.bmHeight;
@@ -3809,7 +3811,7 @@ TREEVIEW_TrackMouse(TREEVIEW_INFO *infoPtr, POINT pt)
 
     while (1)
     {
-	if (PeekMessageA(&msg, 0, 0, 0, PM_REMOVE | PM_NOYIELD))
+	if (PeekMessageW(&msg, 0, 0, 0, PM_REMOVE | PM_NOYIELD))
 	{
 	    if (msg.message == WM_MOUSEMOVE)
 	    {
@@ -3831,7 +3833,7 @@ TREEVIEW_TrackMouse(TREEVIEW_INFO *infoPtr, POINT pt)
 		break;
 	    }
 
-	    DispatchMessageA(&msg);
+	    DispatchMessageW(&msg);
 	}
 
 	if (GetCapture() != infoPtr->hwnd)
@@ -5185,7 +5187,7 @@ TREEVIEW_Notify(TREEVIEW_INFO *infoPtr, WPARAM wParam, LPARAM lParam)
 	}
 	return 0;
     }
-    return DefWindowProcA(infoPtr->hwnd, WM_NOTIFY, wParam, lParam);
+    return DefWindowProcW(infoPtr->hwnd, WM_NOTIFY, wParam, lParam);
 }
 
 static INT TREEVIEW_NotifyFormat (TREEVIEW_INFO *infoPtr, HWND hwndFrom, UINT nCommand)
@@ -5572,7 +5574,7 @@ TREEVIEW_WindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 	if ((uMsg >= WM_USER) && (uMsg < WM_APP))
 	    TRACE("Unknown msg %04x wp=%08x lp=%08lx\n", uMsg, wParam, lParam);
 def:
-	return DefWindowProcA(hwnd, uMsg, wParam, lParam);
+	return DefWindowProcW(hwnd, uMsg, wParam, lParam);
     }
 }
 
@@ -5582,28 +5584,28 @@ def:
 VOID
 TREEVIEW_Register(void)
 {
-    WNDCLASSA wndClass;
+    WNDCLASSW wndClass;
 
     TRACE("\n");
 
-    ZeroMemory(&wndClass, sizeof(WNDCLASSA));
+    ZeroMemory(&wndClass, sizeof(WNDCLASSW));
     wndClass.style = CS_GLOBALCLASS | CS_DBLCLKS;
     wndClass.lpfnWndProc = TREEVIEW_WindowProc;
     wndClass.cbClsExtra = 0;
     wndClass.cbWndExtra = sizeof(TREEVIEW_INFO *);
 
-    wndClass.hCursor = LoadCursorA(0, (LPSTR)IDC_ARROW);
+    wndClass.hCursor = LoadCursorW(0, (LPWSTR)IDC_ARROW);
     wndClass.hbrBackground = 0;
-    wndClass.lpszClassName = WC_TREEVIEWA;
+    wndClass.lpszClassName = WC_TREEVIEWW;
 
-    RegisterClassA(&wndClass);
+    RegisterClassW(&wndClass);
 }
 
 
 VOID
 TREEVIEW_Unregister(void)
 {
-    UnregisterClassA(WC_TREEVIEWA, NULL);
+    UnregisterClassW(WC_TREEVIEWW, NULL);
 }
 
 
