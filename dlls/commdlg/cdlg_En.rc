@@ -196,40 +196,43 @@ FONT 8, "Helv"
 
 
 
-PRINT32 DIALOG LOADONCALL MOVEABLE DISCARDABLE 36,24, 289,182
-STYLE DS_MODALFRAME | WS_POPUP | WS_CAPTION | WS_SYSMENU
+PRINT32 DIALOG LOADONCALL MOVEABLE DISCARDABLE  32, 32, 288, 186
+STYLE DS_MODALFRAME | WS_POPUP | WS_VISIBLE | WS_CAPTION | WS_SYSMENU |
+      DS_CONTEXTHELP | DS_3DLOOK
 CAPTION "Print32"
 FONT 8, "Helv"
 {
-    DEFPUSHBUTTON   "OK",         IDOK, 176,161,50,14, WS_GROUP | WS_TABSTOP | BS_DEFPUSHBUTTON 
-    PUSHBUTTON      "Cancel",     IDCANCEL, 232,161,50,14, WS_GROUP | WS_TABSTOP
+    DEFPUSHBUTTON   "OK",     IDOK,     180,164, 48,14, WS_GROUP | BS_DEFPUSHBUTTON
+    PUSHBUTTON      "Cancel", IDCANCEL, 232,164, 48,14, WS_GROUP
+    PUSHBUTTON      "&Help",  pshHelp,  50, 161, 48,14, WS_GROUP
 
-    GROUPBOX        "Printer",    stc2, 7,2,275,87
-    CHECKBOX        "Print to fi&le",chx1, 224,73,49,10, BS_AUTOCHECKBOX | WS_TABSTOP
-    PUSHBUTTON      "&Properties",psh3, 209,17,58,14
-    LTEXT           "&Name:",     -1,    16,20,22,8
-    COMBOBOX                      cmb1, 49,18,154,15,CBS_DROPDOWN | CBS_SORT | WS_VSCROLL | WS_TABSTOP
-    LTEXT           "Status:",    -1,    16,37,23,8
-    LTEXT           "Dummy State",stc3, 63,37,120,8
-    LTEXT           "Type:",      -1,    16,49,19,8
-    LTEXT           "Dummy Type", stc4, 63,49,120,8
-    LTEXT           "Where:",     -1,    16,61,24,8
-    LTEXT           "Dummy Location",stc5, 63,61,120,8
-    LTEXT           "Comment:",   -1,    16,73,32,8
-    LTEXT           "Dummy Remark",stc6, 63,73,120,8
+    GROUPBOX        "Printer",        grp4,   8,  4, 272,84, WS_GROUP
+    CONTROL         "Print to fi&le", chx1, "Button",BS_AUTOCHECKBOX | WS_GROUP | WS_TABSTOP,212,70,64,12
+    PUSHBUTTON      "&Properties",    psh2, 212, 17,  60,14, WS_GROUP
+    LTEXT           "&Name:",         stc6,  16, 20,  36,8
+    COMBOBOX                          cmb4,  52, 18, 152,152,CBS_DROPDOWNLIST | CBS_SORT | WS_VSCROLL | WS_GROUP | WS_TABSTOP
+    LTEXT           "Status:",        stc8,  16, 36,  36,10, SS_NOPREFIX
+    LTEXT           "Dummy State",    stc12, 52, 36, 224,10, SS_NOPREFIX | SS_LEFTNOWORDWRAP
+    LTEXT           "Type:",          stc7,  16, 48,  36,10, SS_NOPREFIX
+    LTEXT           "Dummy Type",     stc11, 52, 48, 224,10, SS_NOPREFIX | SS_LEFTNOWORDWRAP
+    LTEXT           "Where:",         stc10, 16, 60,  36,10, SS_NOPREFIX
+    LTEXT           "Dummy Location", stc14, 52, 60, 224,10, SS_NOPREFIX | SS_LEFTNOWORDWRAP
+    LTEXT           "Comment:",       stc9,  16, 72,  36,10, SS_NOPREFIX
+    LTEXT           "Dummy Remark",   stc13, 52, 72, 152,10, SS_NOPREFIX | SS_LEFTNOWORDWRAP
 
-    GROUPBOX        "Copies",     stc7, 157,92,125,65
-    LTEXT           "Number of &copies:",stc8, 164,106,58,8
-    CHECKBOX        "C&ollate",   chx2, 241,130,37,10, BS_AUTOCHECKBOX | WS_TABSTOP
-    EDITTEXT                      edt1, 240,104,34,13,ES_NUMBER
+    GROUPBOX        "Copies",         grp2, 160, 92, 120,64, WS_GROUP
+    LTEXT           "Number of &copies:",stc5,168,108,68,8
+    ICON            "",               ico3, 162,124,  76,24, WS_GROUP | SS_CENTERIMAGE
+    CONTROL         "C&ollate",       chx2,"Button",BS_AUTOCHECKBOX | WS_GROUP | WS_TABSTOP,240,130,36,12
+    EDITTEXT                          edt3, 240,106,  32,12, WS_GROUP | ES_NUMBER
 
-    GROUPBOX        "Print Range",stc9, 7,92,141,65 
-    CONTROL         "&All",         rad1, "Button",BS_AUTORADIOBUTTON,15,106,23,10
-    CONTROL         "&Pages",       rad2, "Button",BS_AUTORADIOBUTTON,15,124,36,10
-    CONTROL         "&Selection",   rad3, "Button",BS_AUTORADIOBUTTON,15,142,45,10
-    EDITTEXT                      edt2, 73,121,25,14, ES_NUMBER | ES_RIGHT
-    EDITTEXT                      edt3, 113,121,28,14,ES_NUMBER | ES_RIGHT
-    LTEXT           "&to:",       stc10,102,124,9,8
-    LTEXT           "&from:",     stc11,55,124,16,8
+    GROUPBOX        "Print range",    grp1,   8,92,  144,64, WS_GROUP
+    CONTROL         "&All",           rad1,"Button",BS_AUTORADIOBUTTON | WS_GROUP | WS_TABSTOP,16,106,64,12
+    CONTROL         "Pa&ges",         rad3,"Button",BS_AUTORADIOBUTTON,16,122,36,12
+    CONTROL         "&Selection",     rad2,"Button",BS_AUTORADIOBUTTON,16,138,64,12
+    EDITTEXT                          edt1,  74,122,  26,12, WS_GROUP | ES_NUMBER
+    EDITTEXT                          edt2, 118,122,  26,12, WS_GROUP | ES_NUMBER
+    RTEXT           "&from:",         stc2,  52,124,  20,8
+    RTEXT           "&to:",           stc3, 100,124,  16,8
 }
 

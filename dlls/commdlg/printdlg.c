@@ -22,6 +22,7 @@
 #include "debug.h"
 #include "winproc.h"
 #include "cderr.h"
+#include "winspool.h"
 
 DEFAULT_DEBUG_CHANNEL(commdlg)
 
@@ -75,6 +76,18 @@ BOOL16 WINAPI PrintDlg16( SEGPTR printdlg )
 }
 
 
+/* This PRINTDLGA internal structure stores
+ * pointers to several throughout useful structures.
+ * 
+ */
+typedef struct  
+{
+  LPPRINTER_INFO_2A lpPrinterInfo;
+  DWORD             NrOfPrinterInfoEntries;
+  LPPRINTDLGA       lpPrintDlg;
+  UINT              HelpMessageID;
+} PRINT_PTRA;
+
 /***********************************************************************
  *           PrintDlgA   (COMDLG32.17)
  *
@@ -106,7 +119,7 @@ BOOL WINAPI PrintDlgA(
  * step 4: implement all other specs
  * step 5: allow customisation of the dialog box
  *
- * current implementation is in step 1.
+ * current implementation is in step 2, nearly going to 3.
      */ 
 
     HWND      hwndDialog;
@@ -114,8 +127,12 @@ BOOL WINAPI PrintDlgA(
     LPCVOID   ptr;
     HANDLE    hResInfo, hDlgTmpl;
     HINSTANCE hInst = WIN_GetWindowInstance( lppd->hwndOwner );
+    DWORD     EnumBytesNeeded;
+    DWORD     CopyOfEnumBytesNeeded;
+    PRINT_PTRA PrintStructures;
 
     FIXME(commdlg, "KVG (%p): stub\n", lppd);
+    PrintStructures.lpPrintDlg = lppd;
 
     if (!(hResInfo = FindResourceA(COMDLG32_hInstance, "PRINT32", RT_DIALOGA)))
     {
@@ -130,13 +147,20 @@ BOOL WINAPI PrintDlgA(
     }
 
     /*
-     * FIXME : Should respond to TEMPLATE and HOOK flags here
-     * For now, only the standard dialog works.
+     * if lppd->Flags PD_SHOWHELP is specified, a HELPMESGSTRING message
+     * must be registered and the Help button must be shown.
      */
-    if (lppd->Flags & (PD_ENABLEPRINTHOOK | PD_ENABLEPRINTTEMPLATE |
-			  PD_ENABLEPRINTTEMPLATEHANDLE | PD_ENABLESETUPHOOK | 
-			  PD_ENABLESETUPTEMPLATE|PD_ENABLESETUPTEMPLATEHANDLE)) 
-    	FIXME(commdlg, ": unimplemented flag (ignored)\n");     
+    if (lppd->Flags & PD_SHOWHELP)
+       {
+        if((PrintStructures.HelpMessageID = RegisterWindowMessageA(HELPMSGSTRING)) 
+    			== 0)
+            {
+             COMDLG32_SetCommDlgExtendedError(CDERR_REGISTERMSGFAIL);
+             return FALSE;
+            }
+       }
+    else
+    	PrintStructures.HelpMessageID=0;
 	
 	/*
 	 * if lppd->Flags PD_RETURNDEFAULT is specified, the PrintDlg function
@@ -162,10 +186,45 @@ BOOL WINAPI PrintDlgA(
 		 return(FALSE);
 		}
 		
+    /* Use EnumPrinters to obtain a list of PRINTER_INFO_2A's
+     * and store a pointer to this list in our "global structure"
+     * as reference for the rest of the PrintDlg routines
+     */
+    EnumPrintersA(PRINTER_ENUM_LOCAL, NULL, 2, NULL, 
+        0, &EnumBytesNeeded, &PrintStructures.NrOfPrinterInfoEntries);
+    CopyOfEnumBytesNeeded=EnumBytesNeeded+16;
+    PrintStructures.lpPrinterInfo = malloc(CopyOfEnumBytesNeeded*sizeof(char));
+    EnumPrintersA(PRINTER_ENUM_LOCAL, NULL, 2, 
+        (LPBYTE)PrintStructures.lpPrinterInfo, 
+        CopyOfEnumBytesNeeded, &EnumBytesNeeded, 
+        &PrintStructures.NrOfPrinterInfoEntries);
+
+    /* Find the default printer.
+     * If not: display a warning message (unless PD_NOWARNING specified)
+     */
+    /* FIXME: Currently Unimplemented */
+    if (lppd->Flags & PD_NOWARNING)	
+	   {
+	    WARN(commdlg, ": PD_NOWARNING Flag is not yet implemented.\n");
+	   }
+    	
+    /*
+     * FIXME : Should respond to TEMPLATE and HOOK flags here
+     * For now, only the standard dialog works.
+     */
+    if (lppd->Flags & (PD_ENABLEPRINTHOOK | PD_ENABLEPRINTTEMPLATE |
+			  PD_ENABLEPRINTTEMPLATEHANDLE | PD_ENABLESETUPHOOK | 
+			  PD_ENABLESETUPTEMPLATE|PD_ENABLESETUPTEMPLATEHANDLE)) 
+    	FIXME(commdlg, ": unimplemented flag (ignored)\n");     
+	
+		
     hwndDialog= DIALOG_CreateIndirect(hInst, ptr, TRUE, lppd->hwndOwner,
-            (DLGPROC16)PrintDlgProcA, (LPARAM)lppd, WIN_PROC_32A );
+            (DLGPROC16)PrintDlgProcA, (LPARAM)&PrintStructures, WIN_PROC_32A );
     if (hwndDialog) 
         bRet = DIALOG_DoDialogBox(hwndDialog, lppd->hwndOwner);  
+        
+    free(PrintStructures.lpPrinterInfo);
+        
   return bRet;            
 }
 
@@ -181,13 +240,46 @@ BOOL WINAPI PrintDlgW( LPPRINTDLGW printdlg )
 }
 
 
+/***********************************************************************
+ *               PRINTDLG_UpdatePrinterInfoTexts               [internal]
+ */
+void PRINTDLG_UpdatePrinterInfoTexts(HWND hDlg, PRINT_PTRA* PrintStructures)
+{
+	char   PrinterName[256];
+    char   StatusMsg[256];
+    int    i;
+    LPPRINTER_INFO_2A lpPi = NULL;
+	GetDlgItemTextA(hDlg, cmb4, PrinterName, 255);
+             
+    /* look the selected PrinterName up in our array Printer_Info2As*/
+    for (i=0; i < PrintStructures->NrOfPrinterInfoEntries; i++)
+    	{
+         lpPi = &PrintStructures->lpPrinterInfo[i];
+         if (strcmp(lpPi->pPrinterName, PrinterName)==0)
+         break;
+        }
+    /* FIXME: the status byte must be converted to user-understandable text...*/
+    sprintf(StatusMsg,"%ld = 0x%08lx", lpPi->Status, lpPi->Status);
+    SendDlgItemMessageA(hDlg, stc12, WM_SETTEXT, 0, (LPARAM)StatusMsg);
+    SendDlgItemMessageA(hDlg, stc11, WM_SETTEXT, 0, (LPARAM)lpPi->pDriverName);
+    if (lpPi->pLocation != NULL && lpPi->pLocation[0]!='\0')
+        SendDlgItemMessageA(hDlg, stc14, WM_SETTEXT, 0,(LPARAM)lpPi->pLocation);
+    else                                        
+        SendDlgItemMessageA(hDlg, stc14, WM_SETTEXT, 0, (LPARAM)lpPi->pPortName);
+    SendDlgItemMessageA(hDlg, stc13, WM_SETTEXT, 0, (LPARAM)lpPi->pComment);
+}
+
 
 /***********************************************************************
  *           PRINTDLG_WMInitDialog                      [internal]
  */
 LRESULT PRINTDLG_WMInitDialog(HWND hDlg, WPARAM wParam, LPARAM lParam,
-                         LPPRINTDLGA lppd)
+                         PRINT_PTRA* PrintStructures)
 {
+ int         i;
+ LPPRINTDLGA lppd = PrintStructures->lpPrintDlg;
+ LPPRINTER_INFO_2A lppi = PrintStructures->lpPrinterInfo;
+ 
 	SetWindowLongA(hDlg, DWL_USER, lParam); 
 	TRACE(commdlg,"WM_INITDIALOG lParam=%08lX\n", lParam);
 
@@ -198,17 +290,28 @@ LRESULT PRINTDLG_WMInitDialog(HWND hDlg, WPARAM wParam, LPARAM lParam,
 		return FALSE; 
 */	}
 
+/* Fill Combobox according to info from PRINTER_INFO2A
+ * structure inside PrintStructures and generate an
+ * update-message to have the rest of the dialog box updated.
+ */ 
+    for (i=0; i < PrintStructures->NrOfPrinterInfoEntries; i++)
+	   SendDlgItemMessageA(hDlg, cmb4, CB_ADDSTRING, 0,
+                        (LPARAM)lppi[i].pPrinterName );  
+    PRINTDLG_UpdatePrinterInfoTexts(hDlg, PrintStructures);
+
 /* Flag processing to set the according buttons on/off and
  * Initialise the various values
  */
 
     /* Print range (All/Range/Selection) */
-    if (lppd->nMinPage == lppd->nMaxPage) 
-    	lppd->Flags &= ~PD_NOPAGENUMS;        
     /* FIXME: I allow more freedom than either Win95 or WinNT,
-     *        as officially we should return error if
-     *        ToPage or FromPage is out-of-range
+     *        which do not agree to what errors should be thrown or not
+     *        in case nToPage or nFromPage is out-of-range.
      */
+    if (lppd->nMaxPage < lppd->nMinPage)
+    	lppd->nMaxPage = lppd->nMinPage;
+    if (lppd->nMinPage == lppd->nMaxPage) 
+    	lppd->Flags |= PD_NOPAGENUMS;        
     if (lppd->nToPage < lppd->nMinPage)
         lppd->nToPage = lppd->nMinPage;
     if (lppd->nToPage > lppd->nMaxPage)
@@ -217,26 +320,26 @@ LRESULT PRINTDLG_WMInitDialog(HWND hDlg, WPARAM wParam, LPARAM lParam,
         lppd->nFromPage = lppd->nMinPage;
     if (lppd->nFromPage > lppd->nMaxPage)
         lppd->nFromPage = lppd->nMaxPage;
-    SetDlgItemInt(hDlg, edt2, lppd->nFromPage, FALSE);
-    SetDlgItemInt(hDlg, edt3, lppd->nToPage, FALSE);
-    CheckRadioButton(hDlg, rad1, rad3, rad1);
+    SetDlgItemInt(hDlg, edt1, lppd->nFromPage, FALSE);
+    SetDlgItemInt(hDlg, edt2, lppd->nToPage, FALSE);
+    CheckRadioButton(hDlg, rad1, rad3, rad1);		/* default */
     if (lppd->Flags & PD_NOSELECTION)
-		EnableWindow(GetDlgItem(hDlg, rad3), FALSE);
+		EnableWindow(GetDlgItem(hDlg, rad2), FALSE);
     else
 		if (lppd->Flags & PD_SELECTION)
-	    	CheckRadioButton(hDlg, rad1, rad3, rad3);
+	    	CheckRadioButton(hDlg, rad1, rad3, rad2);
     if (lppd->Flags & PD_NOPAGENUMS)
        {
-		EnableWindow(GetDlgItem(hDlg, rad2), FALSE);
-		EnableWindow(GetDlgItem(hDlg, stc10),FALSE);
+		EnableWindow(GetDlgItem(hDlg, rad3), FALSE);
+		EnableWindow(GetDlgItem(hDlg, stc2),FALSE);
+		EnableWindow(GetDlgItem(hDlg, edt1), FALSE);
+		EnableWindow(GetDlgItem(hDlg, stc3),FALSE);
 		EnableWindow(GetDlgItem(hDlg, edt2), FALSE);
-		EnableWindow(GetDlgItem(hDlg, stc11),FALSE);
-		EnableWindow(GetDlgItem(hDlg, edt3), FALSE);
        }
     else
        {
 		if (lppd->Flags & PD_PAGENUMS)
-	    	CheckRadioButton(hDlg, rad1, rad3, rad2);
+	    	CheckRadioButton(hDlg, rad1, rad3, rad3);
        }
 	/* FIXME: in Win95, the radiobutton "All" is displayed as
 	 * "Print all xxx pages"... This is not done here (yet?)
@@ -255,6 +358,12 @@ LRESULT PRINTDLG_WMInitDialog(HWND hDlg, WPARAM wParam, LPARAM lParam,
     
     /* status */
 
+    /* help button */
+	if ((lppd->Flags & PD_SHOWHELP)==0)
+    	{	/* hide if PD_SHOWHELP not specified */
+		 ShowWindow(GetDlgItem(hDlg, pshHelp), SW_HIDE);         
+        }
+
 TRACE(commdlg, "succesful!\n");
   return TRUE;
 }
@@ -262,27 +371,32 @@ TRACE(commdlg, "succesful!\n");
 
 /***********************************************************************
  *             PRINTDLG_ValidateAndDuplicateSettings          [internal]
+ *
+ *
+ *   updates the PrintDlg structure for returnvalues.
+ * RETURNS
+ *   FALSE if user is not allowed to close (i.e. wrong nTo or nFrom values)
+ *   TRUE  if succesful.
  */
-BOOL PRINTDLG_ValidateAndDuplicateSettings(HWND hDlg, LPPRINTDLGA lppd)
+BOOL PRINTDLG_ValidateAndDuplicateSettings(HWND hDlg, 
+                                           PRINT_PTRA* PrintStructures)
 {
- WORD nToPage;
- WORD nFromPage;
- char TempBuffer[256];
+ LPPRINTDLGA lppd = PrintStructures->lpPrintDlg;
  
     /* check whether nFromPage and nToPage are within range defined by
      * nMinPage and nMaxPage
      */
-    /* FIXMNo checking on rad2 is performed now, because IsDlgButtonCheck
-     * currently doesn't seem to know a state BST_CHECKED
-     */
-/*	if (IsDlgButtonChecked(hDlg, rad2) == BST_CHECKED) */
+    if (IsDlgButtonChecked(hDlg, rad3) == BST_CHECKED)
     {
-    	nFromPage = GetDlgItemInt(hDlg, edt2, NULL, FALSE);
-        nToPage   = GetDlgItemInt(hDlg, edt3, NULL, FALSE);
+        WORD nToPage;
+        WORD nFromPage;
+     	nFromPage = GetDlgItemInt(hDlg, edt1, NULL, FALSE);
+        nToPage   = GetDlgItemInt(hDlg, edt2, NULL, FALSE);
         if (nFromPage < lppd->nMinPage || nFromPage > lppd->nMaxPage ||
             nToPage < lppd->nMinPage || nToPage > lppd->nMaxPage)
         {
-         FIXME(commdlg, "The MessageBox is not internationalised.");
+			char TempBuffer[256];
+            FIXME(commdlg, "This MessageBox is not internationalised.");
          sprintf(TempBuffer, "This value lies not within Page range\n"
                              "Please enter a value between %d and %d",
                              lppd->nMinPage, lppd->nMaxPage);
@@ -293,31 +407,75 @@ BOOL PRINTDLG_ValidateAndDuplicateSettings(HWND hDlg, LPPRINTDLGA lppd)
         lppd->nToPage   = nToPage;
     }
      
- return(TRUE);   
+    if (IsDlgButtonChecked(hDlg, chx1) == BST_CHECKED)
+       {
+        lppd->Flags |= PD_PRINTTOFILE;
+        /* FIXME: insert code to set "FILE:" in DEVNAMES structure */
 }
 
+ return(TRUE);   
+}
 
 
 /***********************************************************************
  *                              PRINTDLG_WMCommand               [internal]
  */
 static LRESULT PRINTDLG_WMCommand(HWND hDlg, WPARAM wParam, 
-			LPARAM lParam, LPPRINTDLGA lppd)
+			LPARAM lParam, PRINT_PTRA* PrintStructures)
 {
-    switch (wParam) 
+    LPPRINTDLGA lppd = PrintStructures->lpPrintDlg;
+
+    switch (LOWORD(wParam)) 
     {
 	 case IDOK:
-        if (PRINTDLG_ValidateAndDuplicateSettings(hDlg, lppd) != TRUE)
+        TRACE(commdlg, " OK button was hit\n");
+        if (PRINTDLG_ValidateAndDuplicateSettings(hDlg, PrintStructures) != TRUE)
         	return(FALSE);
-        MessageBoxA(hDlg, "OK was hit!", NULL, MB_OK);
 	    DestroyWindow(hDlg);
 	    return(TRUE);
 	 case IDCANCEL:
-        MessageBoxA(hDlg, "CANCEL was hit!", NULL, MB_OK);
+        TRACE(commdlg, " CANCEL button was hit\n");
         EndDialog(hDlg, FALSE);
-/*	    DestroyWindow(hDlg); */
 	    return(FALSE);
+     case pshHelp:
+        TRACE(commdlg, " HELP button was hit\n");
+        SendMessageA(lppd->hwndOwner, PrintStructures->HelpMessageID, 
+        			(WPARAM) hDlg, (LPARAM) lppd);
+        break;
+     case edt1:							/* from page nr editbox */
+     case edt2:							/* to page nr editbox */
+        if (HIWORD(wParam)==EN_CHANGE)
+           {
+            WORD nToPage;
+	        WORD nFromPage;
+	    	nFromPage = GetDlgItemInt(hDlg, edt1, NULL, FALSE);
+	        nToPage   = GetDlgItemInt(hDlg, edt2, NULL, FALSE);
+            if (nFromPage != lppd->nFromPage || nToPage != lppd->nToPage)
+			    CheckRadioButton(hDlg, rad1, rad3, rad3);
     }
+        break;
+     case psh2:							/* Properties button */
+        {
+         HANDLE hPrinter;
+         char   PrinterName[256];
+         GetDlgItemTextA(hDlg, cmb4, PrinterName, 255);
+         if (OpenPrinterA(PrinterName, &hPrinter, NULL))
+            {
+             PrinterProperties(hDlg, hPrinter);
+             ClosePrinter(hPrinter);
+            }
+         else
+            WARN(commdlg, " Call to OpenPrinter did not succeed!\n");
+         break;
+        }
+     case cmb4:							/* Printer combobox */
+        if (HIWORD(wParam)==CBN_SELCHANGE)
+			PRINTDLG_UpdatePrinterInfoTexts(hDlg, PrintStructures);
+        break;
+/*     default:
+        printf("wParam: 0x%x  ",wParam);
+        break;
+*/    }
     return FALSE;
 }    
 
@@ -329,18 +487,18 @@ static LRESULT PRINTDLG_WMCommand(HWND hDlg, WPARAM wParam,
 LRESULT WINAPI PrintDlgProcA(HWND hDlg, UINT uMsg, WPARAM wParam,
                                     LPARAM lParam)
 {
-  LPPRINTDLGA lppd;
+  PRINT_PTRA* PrintStructures;
   LRESULT res=FALSE;
   if (uMsg!=WM_INITDIALOG)
   {
-   lppd=(LPPRINTDLGA)GetWindowLongA(hDlg, DWL_USER);   
-   if (!lppd)
+   PrintStructures = (PRINT_PTRA*) GetWindowLongA(hDlg, DWL_USER);   
+   if (!PrintStructures)
     return FALSE;
 }
   else
   {
-    lppd=(LPPRINTDLGA)lParam;
-    if (!PRINTDLG_WMInitDialog(hDlg, wParam, lParam, lppd)) 
+    PrintStructures=(PRINT_PTRA*) lParam;
+    if (!PRINTDLG_WMInitDialog(hDlg, wParam, lParam, PrintStructures)) 
     {
       TRACE(commdlg, "PRINTDLG_WMInitDialog returned FALSE\n");
       return FALSE;
@@ -351,16 +509,13 @@ LRESULT WINAPI PrintDlgProcA(HWND hDlg, UINT uMsg, WPARAM wParam,
   switch (uMsg)
   {
   	case WM_COMMAND:
-		return PRINTDLG_WMCommand(hDlg, wParam, lParam, lppd);
+       return PRINTDLG_WMCommand(hDlg, wParam, lParam, PrintStructures);
     case WM_DESTROY:
 	    return FALSE;
   }
   
  return res;
 }
-
-
-
 
 
 
