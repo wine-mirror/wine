@@ -87,7 +87,4 @@ version16.res: version16.rc
 
 gdi.exe.spec.c: version16.res
 
-install:: install_libdir
-uninstall:: uninstall_libdir
-
 ### Dependencies:

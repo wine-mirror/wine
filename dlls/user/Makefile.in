@@ -123,7 +123,4 @@ mouse.spec.c: resources/mouse.res
 
 user.exe.spec.c: resources/version16.res
 
-install:: install_libdir
-uninstall:: uninstall_libdir
-
 ### Dependencies:

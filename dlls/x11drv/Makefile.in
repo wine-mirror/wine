@@ -48,11 +48,11 @@ all: $(PROGRAMS)
 wineclipsrv: wineclipsrv.c
 	$(CC) $(ALLCFLAGS) -o wineclipsrv $(SRCDIR)/wineclipsrv.c $(X_LIBS) $(XLIB) $(LIBS)
 
-install:: $(PROGRAMS) install_libdir
+install:: $(PROGRAMS)
 	$(MKINSTALLDIRS) $(bindir)
 	$(INSTALL_PROGRAM) wineclipsrv $(bindir)/wineclipsrv
 
-uninstall:: uninstall_libdir
+uninstall::
 	$(RM) $(bindir)/wineclipsrv
 
 ### Dependencies:

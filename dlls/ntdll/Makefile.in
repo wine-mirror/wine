@@ -147,7 +147,4 @@ relay16.s: $(WINEBUILD)
 relay32.s: $(WINEBUILD)
 	$(LDPATH) $(WINEBUILD) $(DEFS) -o $@ -relay32
 
-install:: install_libdir
-uninstall:: uninstall_libdir
-
 ### Dependencies:

@@ -72,14 +72,4 @@ install:: install_lib $(ALTNAMES:%=_install_/%$(DLLEXT))
 uninstall::
 	$(RM) $(dlldir)/$(MODULE)$(DLLEXT) $(ALTNAMES:%=$(dlldir)/%$(DLLEXT))
 
-# Extra install rules for dlls not yet properly separated
-
-install_libdir:: install_lib
-	cd $(libdir) && $(RM) lib$(MODULE).$(LIBEXT) && if [ "$(dlldir)" = "$(libdir)/wine" ]; \
-	then $(LN_S) wine/$(MODULE)$(DLLEXT) lib$(MODULE).$(LIBEXT); \
-	else $(LN_S) $(dlldir)/$(MODULE)$(DLLEXT) lib$(MODULE).$(LIBEXT); fi
-
-uninstall_libdir::
-	$(RM) $(libdir)/lib$(MODULE).$(LIBEXT)
-
 # End of global dll rules

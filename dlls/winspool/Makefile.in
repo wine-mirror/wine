@@ -16,7 +16,4 @@ C_SRCS = \
 
 @MAKE_DLL_RULES@
 
-install:: install_libdir
-uninstall:: uninstall_libdir
-
 ### Dependencies:

@@ -741,6 +741,8 @@ x11drv:   user32.dll$(DLLEXT) gdi32.dll$(DLLEXT) advapi32.dll$(DLLEXT) kernel32.
 
 # Special targets for dlls that we need to link to
 
+LINKABLE_DLLS = ntdll.dll gdi32.dll user32.dll kernel32.dll
+
 libntdll.dll.$(LIBEXT): ntdll
 	$(RM) $@ && $(LN_S) ntdll/ntdll.dll$(DLLEXT) $@
 
@@ -753,14 +755,31 @@ libuser32.dll.$(LIBEXT): user
 libkernel32.dll.$(LIBEXT): kernel
 	$(RM) $@ && $(LN_S) kernel/kernel32.dll$(DLLEXT) $@
 
+uninstall-links: dummy
+	$(RM) $(LINKABLE_DLLS:%=$(libdir)/lib%.$(LIBEXT))
+
+install-links: uninstall-links dummy
+	cd $(libdir) && if [ "$(dlldir)" = "$(libdir)/wine" ]; \
+	then \
+	  $(LN_S) wine/ntdll.dll$(DLLEXT) libntdll.dll.$(LIBEXT); \
+	  $(LN_S) wine/gdi32.dll$(DLLEXT) libgdi32.dll.$(LIBEXT); \
+	  $(LN_S) wine/user32.dll$(DLLEXT) libuser32.dll.$(LIBEXT); \
+	  $(LN_S) wine/kernel32.dll$(DLLEXT) libkernel32.dll.$(LIBEXT); \
+	else \
+	  $(LN_S) $(dlldir)/ntdll.dll$(DLLEXT) libntdll.dll.$(LIBEXT); \
+	  $(LN_S) $(dlldir)/gdi32.dll$(DLLEXT) libgdi32.dll.$(LIBEXT); \
+	  $(LN_S) $(dlldir)/user32.dll$(DLLEXT) libuser32.dll.$(LIBEXT); \
+	  $(LN_S) $(dlldir)/kernel32.dll$(DLLEXT) libkernel32.dll.$(LIBEXT); \
+	fi
+
 # Misc rules
 
 $(BUILDSUBDIRS:%=%/__checklink__): dummy
 	@cd `dirname $@` && $(MAKE) checklink
 
-install:: $(BUILDSUBDIRS:%=%/__install__)
+install:: $(BUILDSUBDIRS:%=%/__install__) install-links
 
-uninstall:: $(BUILDSUBDIRS:%=%/__uninstall__)
+uninstall:: $(BUILDSUBDIRS:%=%/__uninstall__) uninstall-links
 	-rmdir $(dlldir)
 
 check test:: $(BUILDSUBDIRS:%=%/__test__)
