@@ -223,8 +223,7 @@ UINT16 WINAPI MapVirtualKey16(UINT16 wCode, UINT16 wMapType)
  */
 INT16 WINAPI GetKBCodePage16(void)
 {
-  TRACE("(void)\n");
-  return 850;
+    return GetKBCodePage();
 }
 
 /****************************************************************************

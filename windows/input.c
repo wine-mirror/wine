@@ -735,7 +735,7 @@ UINT WINAPI MapVirtualKeyExW(UINT code, UINT maptype, HKL hkl)
  */
 UINT WINAPI GetKBCodePage(void)
 {
-    return GetKBCodePage16();
+    return GetOEMCP();
 }
 
 /****************************************************************************
