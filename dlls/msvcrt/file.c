@@ -1788,6 +1788,11 @@ MSVCRT_size_t MSVCRT_fread(void *ptr, MSVCRT_size_t size, MSVCRT_size_t nmemb, M
 		return 0;
   }
   if(rcnt) pread = _read(file->_file,ptr, rcnt);
+  if (MSVCRT_flags[file->_file] & MSVCRT__IOEOF)
+     /* expose feof condition in the flags
+        MFC tests file->_flag for feof, and doesn't not call feof())
+    */
+    file->_flag |= MSVCRT__IOEOF;
   if (pread <= 0)
     pread = 0;
   read+=pread;
