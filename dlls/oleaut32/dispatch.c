@@ -160,6 +160,9 @@ HRESULT WINAPI DispGetParam(
  * RETURNS
  *  Success: S_OK. ppunkStdDisp contains the new object.
  *  Failure: An HRESULT error code.
+ *
+ * NOTES
+ *  Outer unknown appears to be completely ignored.
  */
 HRESULT WINAPI CreateStdDispatch(
         IUnknown* punkOuter,
@@ -235,7 +238,6 @@ HRESULT WINAPI CreateDispTypeInfo(
 typedef struct
 {
     ICOM_VFIELD(IDispatch);
-    IUnknown * outerUnknown;
     void * pvThis;
     ITypeInfo * pTypeInfo;
     ULONG ref;
@@ -253,9 +255,6 @@ static HRESULT WINAPI StdDispatch_QueryInterface(
 {
     ICOM_THIS(StdDispatch, iface);
     TRACE("(%p)->(%s, %p)\n", iface, debugstr_guid(riid), ppvObject);
-
-    if (This->outerUnknown)
-        return IUnknown_QueryInterface(This->outerUnknown, riid, ppvObject);
 
     if (IsEqualIID(riid, &IID_IDispatch) ||
         IsEqualIID(riid, &IID_IUnknown))
@@ -276,11 +275,8 @@ static ULONG WINAPI StdDispatch_AddRef(LPDISPATCH iface)
 {
     ICOM_THIS(StdDispatch, iface);
     TRACE("()\n");
-    This->ref++;
-    if (This->outerUnknown)
-        return IUnknown_AddRef(This->outerUnknown);
-    else
-        return This->ref;
+
+    return ++This->ref;
 }
 
 /******************************************************************************
@@ -294,15 +290,13 @@ static ULONG WINAPI StdDispatch_Release(LPDISPATCH iface)
     ULONG ret;
     TRACE("(%p)->()\n", This);
 
-    This->ref--;
+    ret = This->ref--;
 
-    if (This->outerUnknown)
-        ret = IUnknown_Release(This->outerUnknown);
-    else
-        ret = This->ref;
-
-    if (This->ref <= 0)
+    if (This->ref == 0)
+    {
+        ITypeInfo_Release(This->pTypeInfo);
         CoTaskMemFree(This);
+    }
 
     return ret;
 }
@@ -469,10 +463,13 @@ static IDispatch * WINAPI StdDispatch_Construct(
         return (IDispatch *)pStdDispatch;
 
     pStdDispatch->lpVtbl = &StdDispatch_VTable;
-    pStdDispatch->outerUnknown = punkOuter;
     pStdDispatch->pvThis = pvThis;
     pStdDispatch->pTypeInfo = pTypeInfo;
     pStdDispatch->ref = 1;
+
+    /* we keep a reference to the type info so prevent it from
+     * being destroyed until we are done with it */
+    ITypeInfo_AddRef(pTypeInfo);
 
     return (IDispatch *)pStdDispatch;
 }
