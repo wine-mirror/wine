@@ -863,7 +863,7 @@ void BuildDef32File(FILE *outfile)
         ORDDEF *odp = EntryPoints[i];
 
         if (!odp) continue;
-        if (odp->flags & FLAG_NOIMPORT) continue;
+        if (odp->flags & (FLAG_NOIMPORT|FLAG_REGISTER)) continue;
         if (odp->type == TYPE_STUB) continue;
 
         if (odp->name) name = odp->name;
