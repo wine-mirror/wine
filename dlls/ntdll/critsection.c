@@ -264,7 +264,7 @@ NTSTATUS WINAPI RtlpWaitForCriticalSection( RTL_CRITICAL_SECTION *crit )
         rec.ExceptionRecord  = NULL;
         rec.ExceptionAddress = RtlRaiseException;  /* sic */
         rec.NumberParameters = 1;
-        rec.ExceptionInformation[0] = (DWORD)crit;
+        rec.ExceptionInformation[0] = (ULONG_PTR)crit;
         RtlRaiseException( &rec );
     }
 }

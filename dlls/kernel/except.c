@@ -66,7 +66,7 @@ typedef INT (WINAPI *MessageBoxW_funcptr)(HWND,LPCWSTR,LPCWSTR,UINT);
 /*******************************************************************
  *         RaiseException  (KERNEL32.@)
  */
-void WINAPI RaiseException( DWORD code, DWORD flags, DWORD nbargs, const LPDWORD args )
+void WINAPI RaiseException( DWORD code, DWORD flags, DWORD nbargs, const ULONG_PTR *args )
 {
     EXCEPTION_RECORD record;
 

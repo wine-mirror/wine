@@ -317,7 +317,7 @@ static void do_segv( CONTEXT *context, int trap, int err, int code, void * addr 
 	case SEGV_ACCERR:
 		rec.NumberParameters = 2;
 		rec.ExceptionInformation[0] = 0; /* FIXME ? */
-		rec.ExceptionInformation[1] = (DWORD)addr;
+		rec.ExceptionInformation[1] = (ULONG_PTR)addr;
 		if (!(page_fault_code=VIRTUAL_HandleFault(addr)))
 			return;
 		rec.ExceptionCode = page_fault_code;
@@ -339,7 +339,7 @@ static void do_segv( CONTEXT *context, int trap, int err, int code, void * addr 
 		/* FIXME: correct for all cases ? */
 		rec.NumberParameters = 2;
 		rec.ExceptionInformation[0] = 0; /* FIXME ? */
-		rec.ExceptionInformation[1] = (DWORD)addr;
+		rec.ExceptionInformation[1] = (ULONG_PTR)addr;
 		if (!(page_fault_code=VIRTUAL_HandleFault(addr)))
 			return;
 		rec.ExceptionCode = page_fault_code;

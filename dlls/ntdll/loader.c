@@ -178,8 +178,8 @@ static void stub_entry_point( const char *dll, const char *name, ... )
     rec.ExceptionAddress        = *((void **)&dll - 1);
 #endif
     rec.NumberParameters        = 2;
-    rec.ExceptionInformation[0] = (DWORD)dll;
-    rec.ExceptionInformation[1] = (DWORD)name;
+    rec.ExceptionInformation[0] = (ULONG_PTR)dll;
+    rec.ExceptionInformation[1] = (ULONG_PTR)name;
     for (;;) RtlRaiseException( &rec );
 }
 

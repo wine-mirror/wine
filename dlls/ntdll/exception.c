@@ -266,7 +266,7 @@ void WINAPI EXC_RtlRaiseException( EXCEPTION_RECORD *rec, CONTEXT *context )
         /* Check frame address */
         if (((void*)frame < NtCurrentTeb()->Tib.StackLimit) ||
             ((void*)(frame+1) > NtCurrentTeb()->Tib.StackBase) ||
-            (int)frame & 3)
+            (ULONG_PTR)frame & 3)
         {
             rec->ExceptionFlags |= EH_STACK_INVALID;
             break;

@@ -171,7 +171,7 @@ static void segv_handler( int signal, siginfo_t *info, ucontext_t *ucontext )
     rec.ExceptionAddress = (LPVOID)context.pc;
     rec.NumberParameters = 2;
     rec.ExceptionInformation[0] = 0;  /* FIXME: read/write access ? */
-    rec.ExceptionInformation[1] = (DWORD)info->si_addr;
+    rec.ExceptionInformation[1] = (ULONG_PTR)info->si_addr;
 
     EXC_RtlRaiseException( &rec, &context );
     restore_context( &context, ucontext );

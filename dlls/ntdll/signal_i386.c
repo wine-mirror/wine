@@ -1022,7 +1022,7 @@ static HANDLER_DEF(segv_handler)
 #ifdef FAULT_ADDRESS
         rec->NumberParameters = 2;
         rec->ExceptionInformation[0] = (get_error_code(HANDLER_CONTEXT) & 2) != 0;
-        rec->ExceptionInformation[1] = (DWORD)FAULT_ADDRESS;
+        rec->ExceptionInformation[1] = (ULONG_PTR)FAULT_ADDRESS;
 #endif
         break;
     case T_ALIGNFLT:  /* Alignment check exception */

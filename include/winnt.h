@@ -1494,15 +1494,15 @@ typedef CONTEXT *PCONTEXT;
 
 #define EXCEPTION_MAXIMUM_PARAMETERS 15
 
-typedef struct __EXCEPTION_RECORD
+typedef struct _EXCEPTION_RECORD
 {
     DWORD    ExceptionCode;
     DWORD    ExceptionFlags;
-    struct __EXCEPTION_RECORD *ExceptionRecord;
+    struct  _EXCEPTION_RECORD *ExceptionRecord;
 
-    LPVOID   ExceptionAddress;
+    PVOID    ExceptionAddress;
     DWORD    NumberParameters;
-    DWORD    ExceptionInformation[EXCEPTION_MAXIMUM_PARAMETERS];
+    ULONG_PTR ExceptionInformation[EXCEPTION_MAXIMUM_PARAMETERS];
 } EXCEPTION_RECORD, *PEXCEPTION_RECORD;
 
 /*

@@ -1600,7 +1600,7 @@ DWORD       WINAPI QueryDosDeviceW(LPCWSTR,LPWSTR,DWORD);
 BOOL        WINAPI QueryPerformanceCounter(LARGE_INTEGER*);
 BOOL        WINAPI QueryPerformanceFrequency(LARGE_INTEGER*);
 DWORD       WINAPI QueueUserAPC(PAPCFUNC,HANDLE,ULONG_PTR);
-void        WINAPI RaiseException(DWORD,DWORD,DWORD,const LPDWORD);
+void        WINAPI RaiseException(DWORD,DWORD,DWORD,const ULONG_PTR *);
 BOOL        WINAPI ReadEventLogA(HANDLE,DWORD,DWORD,LPVOID,DWORD,DWORD *,DWORD *);
 BOOL        WINAPI ReadEventLogW(HANDLE,DWORD,DWORD,LPVOID,DWORD,DWORD *,DWORD *);
 #define     ReadEventLog WINELIB_NAME_AW(ReadEventLog)
