@@ -277,7 +277,7 @@ static HRESULT WINAPI IAutoComplete_fnInit(
 	LONG len;
 
 	/* pwszRegKeyPath contains the key as well as the value, so we split */
-	key = (WCHAR*)HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, lstrlenW(pwzsRegKeyPath)*sizeof(WCHAR));
+	key = (WCHAR*)HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, (lstrlenW(pwzsRegKeyPath)+1)*sizeof(WCHAR));
 	strcpyW(key, pwzsRegKeyPath);
 	value = strrchrW(key, '\\');
 	*value = 0;
