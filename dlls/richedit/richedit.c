@@ -27,9 +27,7 @@
 DEFAULT_DEBUG_CHANNEL(richedit);
 
 HANDLE RICHED32_hHeap = (HANDLE)NULL;
-DWORD  RICHED32_dwProcessesAttached = 0;
 /* LPSTR  RICHED32_aSubclass = (LPSTR)NULL; */
-HMODULE RICHED32_hModule = 0;
 
 /***********************************************************************
  * RICHED32_LibMain [Internal] Initializes the internal 'RICHED32.DLL'.
@@ -47,39 +45,22 @@ HMODULE RICHED32_hModule = 0;
 BOOL WINAPI
 RICHED32_LibMain (HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
 {
-        
-    switch (fdwReason) {
-	    case DLL_PROCESS_ATTACH:
+    switch (fdwReason)
+    {
+    case DLL_PROCESS_ATTACH:
+        /* create private heap */
+        RICHED32_hHeap = HeapCreate (0, 0x10000, 0);
+        /* register the Rich Edit class */
+        RICHED32_Register ();
+        break;
 
-            if (RICHED32_dwProcessesAttached == 0) {
-
-		    /* This will be wrong for any other process attching in this address-space! */
-	            RICHED32_hModule = (HMODULE)hinstDLL;
-
-		        /* create private heap */
-		        RICHED32_hHeap = HeapCreate (0, 0x10000, 0);
-
-	        }
-		
-	        /* register the Rich Edit class */
-	        RICHED32_Register ();
-
-	        RICHED32_dwProcessesAttached++;
-	        break;
-
-	    case DLL_PROCESS_DETACH:
-	        RICHED32_dwProcessesAttached--;
-
-	        /* unregister all common control classes */      
-	        RICHED32_Unregister ();
-
-	        if (RICHED32_dwProcessesAttached == 0) {
-		    HeapDestroy (RICHED32_hHeap);
-		    RICHED32_hHeap = (HANDLE)NULL;
-                }
-		break;	    
+    case DLL_PROCESS_DETACH:
+        /* unregister all common control classes */
+        RICHED32_Unregister ();
+        HeapDestroy (RICHED32_hHeap);
+        RICHED32_hHeap = (HANDLE)NULL;
+        break;
     }
-
     return TRUE;
 }
 

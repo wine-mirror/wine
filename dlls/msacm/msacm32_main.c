@@ -19,7 +19,6 @@ DEFAULT_DEBUG_CHANNEL(msacm);
 	
 /**********************************************************************/
 	
-static DWORD MSACM_dwProcessesAttached = 0;
 HINSTANCE	MSACM_hInstance32 = 0;
 
 /***********************************************************************
@@ -31,21 +30,15 @@ BOOL WINAPI MSACM32_LibMain(HINSTANCE hInstDLL, DWORD fdwReason, LPVOID lpvReser
 
     switch (fdwReason) {
     case DLL_PROCESS_ATTACH:
-	if (MSACM_dwProcessesAttached == 0) {
-	    MSACM_hHeap = HeapCreate(0, 0x10000, 0);
-	    MSACM_hInstance32 = hInstDLL;
-	    MSACM_RegisterAllDrivers();
-	}
-	MSACM_dwProcessesAttached++;
+        MSACM_hHeap = HeapCreate(0, 0x10000, 0);
+        MSACM_hInstance32 = hInstDLL;
+        MSACM_RegisterAllDrivers();
 	break;
     case DLL_PROCESS_DETACH:
-	MSACM_dwProcessesAttached--;
-	if (MSACM_dwProcessesAttached == 0) {
-	    MSACM_UnregisterAllDrivers();
-	    HeapDestroy(MSACM_hHeap);
-	    MSACM_hHeap = (HANDLE) NULL;
-	    MSACM_hInstance32 = (HINSTANCE)NULL;
-	}
+        MSACM_UnregisterAllDrivers();
+        HeapDestroy(MSACM_hHeap);
+        MSACM_hHeap = (HANDLE) NULL;
+        MSACM_hInstance32 = (HINSTANCE)NULL;
 	break;
     case DLL_THREAD_ATTACH:
 	break;

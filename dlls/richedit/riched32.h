@@ -10,7 +10,6 @@
 
 #include "richedit.h"
 
-extern HMODULE RICHED32_hModule;
 extern VOID RICHED32_Register (VOID);
 extern VOID RICHED32_Unregister (VOID);
 

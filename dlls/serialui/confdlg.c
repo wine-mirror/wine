@@ -28,7 +28,6 @@
 DEFAULT_DEBUG_CHANNEL(comm);
 
 HMODULE SERIALUI_hModule = 0;
-DWORD SERIALUI_dwProcessesAttached = 0;
 
 /***********************************************************************
  * SERIALUI_LibMain [Internal] Initializes the internal 'SERIALUI.DLL'.
@@ -50,20 +49,9 @@ SERIALUI_LibMain (HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
 
     switch (fdwReason) {
 	case DLL_PROCESS_ATTACH:
-	    if (SERIALUI_dwProcessesAttached == 0) {
-
-		/* This will be wrong for any other process attching in this address-space! */
-	        SERIALUI_hModule = (HMODULE)hinstDLL;
-
-	    }
-	    SERIALUI_dwProcessesAttached++;
+            SERIALUI_hModule = hinstDLL;
 	    break;
-
 	case DLL_PROCESS_DETACH:
-	    SERIALUI_dwProcessesAttached--;
-	    if (SERIALUI_dwProcessesAttached == 0) {
-		TRACE("Last Process detached\n");
-	    }
 	    break;
     }
 

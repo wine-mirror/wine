@@ -231,13 +231,10 @@ static LOGFONTA DefaultLogFont = {
  */
 BOOL WINAPI PSDRV_Init( HINSTANCE hinst, DWORD reason, LPVOID reserved )
 {
-    static int process_count = 0;
-
     TRACE("(0x%4x, 0x%08lx, %p)\n", hinst, reason, reserved);
    
     switch(reason) {
 	case DLL_PROCESS_ATTACH:
-	    if (!process_count++) {
 		/* FIXME: return FALSE if we fail any of these steps */
 		PSDRV_Heap = HeapCreate(0, 0x10000, 0);
 		PSDRV_GetFontMetrics();
@@ -247,17 +244,14 @@ BOOL WINAPI PSDRV_Init( HINSTANCE hinst, DWORD reason, LPVOID reserved )
 		DRIVER_RegisterDriver( "WINEPS", &PSDRV_Funcs );
 		DRIVER_RegisterDriver( "WINEPS.DLL", &PSDRV_Funcs );
 		DRIVER_RegisterDriver( "WINEPS.DRV", &PSDRV_Funcs );
-	    }
-	break;
+                break;
 	case DLL_PROCESS_DETACH:
-            if (!--process_count) {
 		DeleteObject( PSDRV_DefaultFont );
 		HeapDestroy( PSDRV_Heap );
 		DRIVER_UnregisterDriver( "WINEPS" );
 		DRIVER_UnregisterDriver( "WINEPS.DLL" );
 		DRIVER_UnregisterDriver( "WINEPS.DRV" );
-	    }
-	break;
+                break;
     }
  
     return TRUE;

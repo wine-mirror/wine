@@ -33,7 +33,7 @@ DEFAULT_DEBUG_CHANNEL(aspi);
 #ifdef linux
 
 static ASPI_DEVICE_INFO *ASPI_open_devices = NULL;
-static CRITICAL_SECTION ASPI_CritSection;
+static CRITICAL_SECTION ASPI_CritSection = CRITICAL_SECTION_INIT;
 
 #endif /* defined(linux) */
 
@@ -41,33 +41,20 @@ static CRITICAL_SECTION ASPI_CritSection;
 BOOL WINAPI WNASPI32_LibMain(HINSTANCE hInstDLL, DWORD fdwReason, LPVOID fImpLoad)
 {
 #ifdef linux
-	static BOOL	bInitDone=FALSE;
-#if 0
-	TRACE("0x%x 0x%1x %p\n", hInstDLL, fdwReason, fImpLoad);
-#endif
 	switch( fdwReason )
 	{
 	case DLL_PROCESS_ATTACH:
-		/* Create instance data */
-		if(!bInitDone)
-		{
-			bInitDone=TRUE;
-			/* Initialize global stuff just once */
-			InitializeCriticalSection(&ASPI_CritSection);
-			SCSI_Init();
-		}
-		break;
+            SCSI_Init();
+            break;
 	case DLL_PROCESS_DETACH:
-		/* Destroy instance data */
-		break;
+            DeleteCriticalSection( &ASPI_CritSection );
+            break;
 	case DLL_THREAD_ATTACH:
 	case DLL_THREAD_DETACH:
 		break;
 	}
-	return TRUE;
-#else /* defined(linux) */
-	return TRUE;
 #endif /* defined(linux) */
+	return TRUE;
 }
 
 

@@ -18,7 +18,6 @@ DEFAULT_DEBUG_CHANNEL(imm);
 
 #include "imm_private.h"
 
-static DWORD			IMM32_dwProcessAttached = 0;
 static HANDLE			IMM32_hHeap;
 static DWORD			IMM32_dwTLSIndex;
 static CRITICAL_SECTION		IMM32_csIMM;
@@ -40,13 +39,6 @@ BOOL WINAPI IMM32_DllMain(
 	switch ( fdwReason )
 	{
 	case DLL_PROCESS_ATTACH:
-		if ( IMM32_dwProcessAttached > 0 )
-		{
-			ERR( "cannot attach to two or more processes.\n" );
-			return FALSE;
-		}
-		IMM32_dwProcessAttached ++;
-
 		IMM32_InitProcessMem();
 		IMM32_RegisterIMEWndClass( hInstDLL );
 		break;
@@ -54,8 +46,6 @@ BOOL WINAPI IMM32_DllMain(
 		IMM32_UnloadAllIMEs();
 		IMM32_UnregisterIMEWndClass( hInstDLL );
 		IMM32_CleanupProcessMem();
-
-		IMM32_dwProcessAttached --;
 		break;
 	case DLL_THREAD_ATTACH:
 		IMM32_InitThreadData();

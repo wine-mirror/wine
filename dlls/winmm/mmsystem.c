@@ -110,20 +110,15 @@ static	void MULTIMEDIA_DeleteIData(void)
  */
 BOOL WINAPI WINMM_LibMain(HINSTANCE hInstDLL, DWORD fdwReason, LPVOID fImpLoad)
 {
-    static BOOL     		bInitDone = FALSE;
-
     TRACE("0x%x 0x%lx %p\n", hInstDLL, fdwReason, fImpLoad);
 
     switch (fdwReason) {
     case DLL_PROCESS_ATTACH:
 	if (!MULTIMEDIA_CreateIData(hInstDLL))
 	    return FALSE;
-	if (!bInitDone) { /* to be done only once */
-	    if (!MULTIMEDIA_MciInit() || !MMDRV_Init()) {
-		MULTIMEDIA_DeleteIData();
-		return FALSE;
-	    }
-	    bInitDone = TRUE;	
+        if (!MULTIMEDIA_MciInit() || !MMDRV_Init()) {
+            MULTIMEDIA_DeleteIData();
+            return FALSE;
 	}
 	break;
     case DLL_PROCESS_DETACH:

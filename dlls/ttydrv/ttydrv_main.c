@@ -67,16 +67,14 @@ static void process_detach(void)
  */
 BOOL WINAPI TTYDRV_Init( HINSTANCE hinst, DWORD reason, LPVOID reserved )
 {
-    static int process_count;
-
     switch(reason)
     {
     case DLL_PROCESS_ATTACH:
-        if (!process_count++) process_attach();
+        process_attach();
         break;
 
     case DLL_PROCESS_DETACH:
-        if (!--process_count) process_detach();
+        process_detach();
         break;
     }
     return TRUE;

@@ -1960,19 +1960,7 @@ BOOL WINAPI COMPOBJ_DllEntryPoint(DWORD Reason, HINSTANCE16 hInst, WORD ds, WORD
         switch(Reason)
         {
         case DLL_PROCESS_ATTACH:
-                COMPOBJ_Attach++;
-                if(COMPOBJ_hInstance)
-                {
-                        ERR("compobj.dll instantiated twice!\n");
-                        /*
-                         * We should return FALSE here, but that will break
-                         * most apps that use CreateProcess because we do
-                         * not yet support seperate address-spaces.
-                         */
-                        return TRUE;
-                }
-
-                COMPOBJ_hInstance = hInst;
+                if (!COMPOBJ_Attach++) COMPOBJ_hInstance = hInst;
                 break;
 
         case DLL_PROCESS_DETACH:

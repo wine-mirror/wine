@@ -61,18 +61,7 @@ BOOL WINAPI SHELL_DllEntryPoint(DWORD Reason, HINSTANCE16 hInst,
     switch(Reason)
     {
     case DLL_PROCESS_ATTACH:
-	SHELL_Attach++;
-	if (SHELL_hInstance)
-	{
-	    ERR("shell.dll instantiated twice!\n");
-	    /*
-	     * We should return FALSE here, but that will break
-	     * most apps that use CreateProcess because we do
-	     * not yet support seperate address-spaces.
-	     */
-	    return TRUE;
-	}
-
+	if (SHELL_Attach++) break;
 	SHELL_hInstance = hInst;
 	if(!SHELL_hInstance32)
 	{

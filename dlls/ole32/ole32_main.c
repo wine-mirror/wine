@@ -10,7 +10,6 @@
 DEFAULT_DEBUG_CHANNEL(ole);
 
 HINSTANCE OLE32_hInstance = 0;
-static INT OLE32_RefCount = 0;
 
 /***********************************************************************
  *		DllEntryPoint (OLE32.@)
@@ -22,15 +21,11 @@ BOOL WINAPI OLE32_DllEntryPoint(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID fImp
 
     switch(fdwReason) {
     case DLL_PROCESS_ATTACH:
-        if(OLE32_hInstance == 0)
-	    OLE32_hInstance = hinstDLL;
-        OLE32_RefCount++;
+        OLE32_hInstance = hinstDLL;
 	break;
 
     case DLL_PROCESS_DETACH:
-        OLE32_RefCount--;
-	if(OLE32_RefCount == 0)
-	    OLE32_hInstance = 0;
+        OLE32_hInstance = 0;
 	break;
     }
     return TRUE;

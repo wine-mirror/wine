@@ -52,18 +52,14 @@ DEFAULT_DEBUG_CHANNEL(ole);
  *     Failure: FALSE
  */
 
-static DWORD RPCRT4_dwProcessesAttached = 0;
-
 BOOL WINAPI
 RPCRT4_LibMain (HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
 {
     switch (fdwReason) {
     case DLL_PROCESS_ATTACH:
-        RPCRT4_dwProcessesAttached++;
 	break;
 
     case DLL_PROCESS_DETACH:
-        RPCRT4_dwProcessesAttached--;
 	break;	    
     }
 

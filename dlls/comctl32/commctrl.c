@@ -60,7 +60,6 @@ extern void UPDOWN_Unregister(void);
 
 
 HANDLE COMCTL32_hHeap = (HANDLE)NULL;
-DWORD    COMCTL32_dwProcessesAttached = 0;
 LPSTR    COMCTL32_aSubclass = (LPSTR)NULL;
 HMODULE COMCTL32_hModule = 0;
 LANGID  COMCTL32_uiLang = MAKELANGID(LANG_NEUTRAL, SUBLANG_NEUTRAL);
@@ -95,85 +94,75 @@ COMCTL32_LibMain (HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
 
     switch (fdwReason) {
 	case DLL_PROCESS_ATTACH:
-	    if (COMCTL32_dwProcessesAttached == 0) {
+            COMCTL32_hModule = (HMODULE)hinstDLL;
 
-		/* This will be wrong for any other process attching in this address-space! */
-	        COMCTL32_hModule = (HMODULE)hinstDLL;
+            /* create private heap */
+            COMCTL32_hHeap = HeapCreate (0, 0x10000, 0);
+            TRACE("Heap created: 0x%x\n", COMCTL32_hHeap);
 
-		/* create private heap */
-		COMCTL32_hHeap = HeapCreate (0, 0x10000, 0);
-		TRACE("Heap created: 0x%x\n", COMCTL32_hHeap);
+            /* add global subclassing atom (used by 'tooltip' and 'updown') */
+            COMCTL32_aSubclass = (LPSTR)(DWORD)GlobalAddAtomA ("CC32SubclassInfo");
+            TRACE("Subclassing atom added: %p\n", COMCTL32_aSubclass);
 
-		/* add global subclassing atom (used by 'tooltip' and 'updown') */
-		COMCTL32_aSubclass = (LPSTR)(DWORD)GlobalAddAtomA ("CC32SubclassInfo");
-		TRACE("Subclassing atom added: %p\n",
-		       COMCTL32_aSubclass);
+            /* create local pattern brush */
+            COMCTL32_hPattern55AABitmap = CreateBitmap (8, 8, 1, 1, wPattern55AA);
+            COMCTL32_hPattern55AABrush = CreatePatternBrush (COMCTL32_hPattern55AABitmap);
 
-		/* create local pattern brush */
-		COMCTL32_hPattern55AABitmap = CreateBitmap (8, 8, 1, 1, wPattern55AA);
-		COMCTL32_hPattern55AABrush = CreatePatternBrush (COMCTL32_hPattern55AABitmap);
-
-		/* register all Win95 common control classes */
-		ANIMATE_Register ();
-		FLATSB_Register ();
-		HEADER_Register ();
-		HOTKEY_Register ();
-		LISTVIEW_Register ();
-		PROGRESS_Register ();
-		STATUS_Register ();
-		TAB_Register ();
-		TOOLBAR_Register ();
-		TOOLTIPS_Register ();
-		TRACKBAR_Register ();
-		TREEVIEW_Register ();
-		UPDOWN_Register ();
-	    }
-	    COMCTL32_dwProcessesAttached++;
-	    break;
+            /* register all Win95 common control classes */
+            ANIMATE_Register ();
+            FLATSB_Register ();
+            HEADER_Register ();
+            HOTKEY_Register ();
+            LISTVIEW_Register ();
+            PROGRESS_Register ();
+            STATUS_Register ();
+            TAB_Register ();
+            TOOLBAR_Register ();
+            TOOLTIPS_Register ();
+            TRACKBAR_Register ();
+            TREEVIEW_Register ();
+            UPDOWN_Register ();
+            break;
 
 	case DLL_PROCESS_DETACH:
-	    COMCTL32_dwProcessesAttached--;
-	    if (COMCTL32_dwProcessesAttached == 0) {
-		/* unregister all common control classes */
-		ANIMATE_Unregister ();
-		COMBOEX_Unregister ();
-		DATETIME_Unregister ();
-		FLATSB_Unregister ();
-		HEADER_Unregister ();
-		HOTKEY_Unregister ();
-		IPADDRESS_Unregister ();
-		LISTVIEW_Unregister ();
-		MONTHCAL_Unregister ();
-		NATIVEFONT_Unregister ();
-		PAGER_Unregister ();
-		PROGRESS_Unregister ();
-		REBAR_Unregister ();
-		STATUS_Unregister ();
-		TAB_Unregister ();
-		TOOLBAR_Unregister ();
-		TOOLTIPS_Unregister ();
-		TRACKBAR_Unregister ();
-		TREEVIEW_Unregister ();
-		UPDOWN_Unregister ();
+            /* unregister all common control classes */
+            ANIMATE_Unregister ();
+            COMBOEX_Unregister ();
+            DATETIME_Unregister ();
+            FLATSB_Unregister ();
+            HEADER_Unregister ();
+            HOTKEY_Unregister ();
+            IPADDRESS_Unregister ();
+            LISTVIEW_Unregister ();
+            MONTHCAL_Unregister ();
+            NATIVEFONT_Unregister ();
+            PAGER_Unregister ();
+            PROGRESS_Unregister ();
+            REBAR_Unregister ();
+            STATUS_Unregister ();
+            TAB_Unregister ();
+            TOOLBAR_Unregister ();
+            TOOLTIPS_Unregister ();
+            TRACKBAR_Unregister ();
+            TREEVIEW_Unregister ();
+            UPDOWN_Unregister ();
 
-		/* delete local pattern brush */
-		DeleteObject (COMCTL32_hPattern55AABrush);
-		COMCTL32_hPattern55AABrush = (HANDLE)NULL;
-		DeleteObject (COMCTL32_hPattern55AABitmap);
-		COMCTL32_hPattern55AABitmap = (HANDLE)NULL;
+            /* delete local pattern brush */
+            DeleteObject (COMCTL32_hPattern55AABrush);
+            COMCTL32_hPattern55AABrush = (HANDLE)NULL;
+            DeleteObject (COMCTL32_hPattern55AABitmap);
+            COMCTL32_hPattern55AABitmap = (HANDLE)NULL;
 
-		/* delete global subclassing atom */
-		GlobalDeleteAtom (LOWORD(COMCTL32_aSubclass));
-		TRACE("Subclassing atom deleted: %p\n",
-		       COMCTL32_aSubclass);
-		COMCTL32_aSubclass = (LPSTR)NULL;
+            /* delete global subclassing atom */
+            GlobalDeleteAtom (LOWORD(COMCTL32_aSubclass));
+            TRACE("Subclassing atom deleted: %p\n", COMCTL32_aSubclass);
+            COMCTL32_aSubclass = (LPSTR)NULL;
 
-		/* destroy private heap */
-		HeapDestroy (COMCTL32_hHeap);
-		TRACE("Heap destroyed: 0x%x\n", COMCTL32_hHeap);
-		COMCTL32_hHeap = (HANDLE)NULL;
-	    }
-	    break;
+            /* destroy private heap */
+            HeapDestroy (COMCTL32_hHeap);
+            TRACE("Heap destroyed: 0x%x\n", COMCTL32_hHeap);
+            COMCTL32_hHeap = (HANDLE)NULL;
+            break;
     }
 
     return TRUE;

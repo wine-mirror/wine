@@ -32,18 +32,7 @@ BOOL WINAPI COMMDLG_DllEntryPoint(DWORD Reason, HINSTANCE16 hInst, WORD ds, WORD
 	switch(Reason)
 	{
 	case DLL_PROCESS_ATTACH:
-		COMMDLG_Attach++;
-		if(COMMDLG_hInstance)
-		{
-			ERR("commdlg.dll instantiated twice!\n");
-			/*
-			 * We should return FALSE here, but that will break
-			 * most apps that use CreateProcess because we do
-			 * not yet support seperate address-spaces.
-			 */
-			return TRUE;
-		}
-
+		if (COMMDLG_Attach++) break;
 		COMMDLG_hInstance = hInst;
 		if(!COMMDLG_hInstance32)
 		{
