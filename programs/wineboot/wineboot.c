@@ -16,10 +16,18 @@
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
+/* Bugs:
+ * - If a pending rename registry does not start with \??\, the first four
+ *   chars are still going to be skipped.
+ * - Need to check what is the windows behaviour when trying to delete files
+ *   and directories that are read-only
+ * - In the pending rename registry processing - there are no traces of the files
+ *   processed (requires translations from Unicode to Ansi).
+ */
 
 #include <stdio.h>
-#include "winbase.h"
-#include "wine/debug.h"
+#include <windows.h>
+#include <wine/debug.h>
 
 WINE_DEFAULT_DEBUG_CHANNEL(wineboot);
 
@@ -153,6 +161,151 @@ static BOOL wininit()
     return TRUE;
 }
 
+static BOOL pendingRename()
+{
+    static const WCHAR ValueName[] = {'P','e','n','d','i','n','g',
+                                      'F','i','l','e','R','e','n','a','m','e',
+                                      'O','p','e','r','a','t','i','o','n','s',0};
+    static const WCHAR SessionW[] = { 'S','y','s','t','e','m','\\',
+                                     'C','u','r','r','e','n','t','C','o','n','t','r','o','l','S','e','t','\\',
+                                     'C','o','n','t','r','o','l','\\',
+                                     'S','e','s','s','i','o','n',' ','M','a','n','a','g','e','r',0};
+    const WCHAR *buffer=NULL;
+    const WCHAR *src=NULL, *dst=NULL;
+    DWORD dataLength=0;
+    HKEY hSession=NULL;
+    DWORD res;
+
+    WINE_TRACE("Entered\n");
+
+    if( (res=RegOpenKeyExW( HKEY_LOCAL_MACHINE, SessionW, 0, KEY_ALL_ACCESS, &hSession ))
+            !=ERROR_SUCCESS )
+    {
+        if( res==ERROR_FILE_NOT_FOUND )
+        {
+            WINE_TRACE("The key was not found - skipping\n");
+            res=TRUE;
+        }
+        else
+        {
+            WINE_ERR("Couldn't open key, error %ld\n", res );
+            res=FALSE;
+        }
+
+        goto end;
+    }
+
+    res=RegQueryValueExW( hSession, ValueName, NULL, NULL /* The value type does not really interest us, as it is not
+                                                             truely a REG_MULTI_SZ anyways */,
+            NULL, &dataLength );
+    if( res==ERROR_FILE_NOT_FOUND )
+    {
+        /* No value - nothing to do. Great! */
+        WINE_TRACE("Value not present - nothing to rename\n");
+        res=TRUE;
+        goto end;
+    }
+
+    if( res!=ERROR_SUCCESS )
+    {
+        WINE_ERR("Couldn't query value's length (%ld)\n", res );
+        res=FALSE;
+        goto end;
+    }
+
+    buffer=malloc( dataLength );
+    if( buffer==NULL )
+    {
+        WINE_ERR("Couldn't allocate %lu bytes for the value\n", dataLength );
+        res=FALSE;
+        goto end;
+    }
+
+    res=RegQueryValueExW( hSession, ValueName, NULL, NULL, (LPBYTE)buffer, &dataLength );
+    if( res!=ERROR_SUCCESS )
+    {
+        WINE_ERR("Couldn't query value after successfully querying before (%lu),\n"
+                "please report to wine-devel@winehq.org\n", res);
+        res=FALSE;
+        goto end;
+    }
+
+    /* Make sure that the data is long enough and ends with two NULLs. This
+     * simplifies the code later on.
+     */
+    if( dataLength<2*sizeof(buffer[0]) ||
+            buffer[dataLength/sizeof(buffer[0])-1]!='\0' ||
+            buffer[dataLength/sizeof(buffer[0])-2]!='\0' )
+    {
+        WINE_ERR("Improper value format - doesn't end with NULL\n");
+        res=FALSE;
+        goto end;
+    }
+
+    for( src=buffer; (src-buffer)*sizeof(src[0])<dataLength && *src!='\0';
+            src=dst+lstrlenW(dst)+1 )
+    {
+        DWORD dwFlags=0;
+
+        WINE_TRACE("processing next command\n");
+
+        dst=src+lstrlenW(src)+1;
+
+        /* We need to skip the \??\ header */
+        if( src[0]=='\\' && src[1]=='?' && src[2]=='?' && src[3]=='\\' )
+            src+=4;
+
+        if( dst[0]=='!' )
+        {
+            dwFlags|=MOVEFILE_REPLACE_EXISTING;
+            dst++;
+        }
+
+        if( dst[0]=='\\' && dst[1]=='?' && dst[2]=='?' && dst[3]=='\\' )
+            dst+=4;
+
+        if( *dst!='\0' )
+        {
+            /* Rename the file */
+            MoveFileExW( src, dst, dwFlags );
+        } else
+        {
+            /* Delete the file or directory */
+            if( (res=GetFileAttributesW(src))!=INVALID_FILE_ATTRIBUTES )
+            {
+                if( (res&FILE_ATTRIBUTE_DIRECTORY)==0 )
+                {
+                    /* It's a file */
+                    DeleteFileW(src);
+                } else
+                {
+                    /* It's a directory */
+                    RemoveDirectoryW(src);
+                }
+            } else
+            {
+                WINE_ERR("couldn't get file attributes (%ld)\n", GetLastError() );
+            }
+        }
+    }
+
+    if((res=RegDeleteValueW(hSession, ValueName))!=ERROR_SUCCESS )
+    {
+        WINE_ERR("Error deleting the value (%lu)\n", GetLastError() );
+        res=FALSE;
+    } else
+        res=TRUE;
+    
+end:
+    if( buffer!=NULL )
+        free(buffer);
+
+    if( hSession!=NULL )
+        RegCloseKey( hSession );
+
+    return res;
+}
+
 int main( int argc, char *argv[] )
 {
     /* First, set the current directory to SystemRoot */
@@ -183,7 +336,9 @@ int main( int argc, char *argv[] )
         return 100;
     }
 
-    res=wininit();
+    /* Perform the operations by order, stopping if one fails */
+    res=wininit()&&
+        pendingRename();
 
     return res?0:101;
 }
