@@ -196,36 +196,6 @@ static inline VOID SERV_free( LPWSTR wstr )
 }
 
 /******************************************************************************
- * EnumServicesStatusA [ADVAPI32.@]
- */
-BOOL WINAPI
-EnumServicesStatusA( SC_HANDLE hSCManager, DWORD dwServiceType,
-                     DWORD dwServiceState, LPENUM_SERVICE_STATUSA lpServices,
-                     DWORD cbBufSize, LPDWORD pcbBytesNeeded,
-                     LPDWORD lpServicesReturned, LPDWORD lpResumeHandle )
-{	FIXME("%p type=%lx state=%lx %p %lx %p %p %p\n", hSCManager,
-		dwServiceType, dwServiceState, lpServices, cbBufSize,
-		pcbBytesNeeded, lpServicesReturned,  lpResumeHandle);
-	SetLastError (ERROR_ACCESS_DENIED);
-	return FALSE;
-}
-
-/******************************************************************************
- * EnumServicesStatusW [ADVAPI32.@]
- */
-BOOL WINAPI
-EnumServicesStatusW( SC_HANDLE hSCManager, DWORD dwServiceType,
-                     DWORD dwServiceState, LPENUM_SERVICE_STATUSW lpServices,
-                     DWORD cbBufSize, LPDWORD pcbBytesNeeded,
-                     LPDWORD lpServicesReturned, LPDWORD lpResumeHandle )
-{	FIXME("%p type=%lx state=%lx %p %lx %p %p %p\n", hSCManager,
-		dwServiceType, dwServiceState, lpServices, cbBufSize,
-		pcbBytesNeeded, lpServicesReturned,  lpResumeHandle);
-	SetLastError (ERROR_ACCESS_DENIED);
-	return FALSE;
-}
-
-/******************************************************************************
  * read_scm_lock_data
  *
  * helper function for service control dispatcher
@@ -1820,36 +1790,78 @@ QueryServiceConfigW( SC_HANDLE hService,
     return TRUE;
 }
 
+/******************************************************************************
+ * EnumServicesStatusA [ADVAPI32.@]
+ */
+BOOL WINAPI
+EnumServicesStatusA( SC_HANDLE hSCManager, DWORD dwServiceType,
+                     DWORD dwServiceState, LPENUM_SERVICE_STATUSA lpServices,
+                     DWORD cbBufSize, LPDWORD pcbBytesNeeded,
+                     LPDWORD lpServicesReturned, LPDWORD lpResumeHandle )
+{
+    FIXME("%p type=%lx state=%lx %p %lx %p %p %p\n", hSCManager,
+          dwServiceType, dwServiceState, lpServices, cbBufSize,
+          pcbBytesNeeded, lpServicesReturned,  lpResumeHandle);
+    SetLastError (ERROR_ACCESS_DENIED);
+    return FALSE;
+}
+
+/******************************************************************************
+ * EnumServicesStatusW [ADVAPI32.@]
+ */
+BOOL WINAPI
+EnumServicesStatusW( SC_HANDLE hSCManager, DWORD dwServiceType,
+                     DWORD dwServiceState, LPENUM_SERVICE_STATUSW lpServices,
+                     DWORD cbBufSize, LPDWORD pcbBytesNeeded,
+                     LPDWORD lpServicesReturned, LPDWORD lpResumeHandle )
+{
+    FIXME("%p type=%lx state=%lx %p %lx %p %p %p\n", hSCManager,
+          dwServiceType, dwServiceState, lpServices, cbBufSize,
+          pcbBytesNeeded, lpServicesReturned,  lpResumeHandle);
+    SetLastError (ERROR_ACCESS_DENIED);
+    return FALSE;
+}
+
+/******************************************************************************
+ * GetServiceKeyNameA [ADVAPI32.@]
+ */
 BOOL WINAPI GetServiceKeyNameA( SC_HANDLE hSCManager, LPCSTR lpDisplayName,
                                 LPSTR lpServiceName, LPDWORD lpcchBuffer )
 {
     FIXME("%p %s %p %p\n", hSCManager, debugstr_a(lpDisplayName), lpServiceName, lpcchBuffer);
-
     return FALSE;
 }
 
+/******************************************************************************
+ * GetServiceKeyNameW [ADVAPI32.@]
+ */
 BOOL WINAPI GetServiceKeyNameW( SC_HANDLE hSCManager, LPCWSTR lpDisplayName,
                                 LPWSTR lpServiceName, LPDWORD lpcchBuffer )
 {
     FIXME("%p %s %p %p\n", hSCManager, debugstr_w(lpDisplayName), lpServiceName, lpcchBuffer);
-
     return FALSE;
 }
 
+/******************************************************************************
+ * QueryServiceLockStatusA [ADVAPI32.@]
+ */
 BOOL WINAPI QueryServiceLockStatusA( SC_HANDLE hSCManager,
                                      LPQUERY_SERVICE_LOCK_STATUSA lpLockStatus,
                                      DWORD cbBufSize, LPDWORD pcbBytesNeeded)
 {
-    FIXME("%p %p 0x%08lx %p - stub\n", hSCManager, lpLockStatus, cbBufSize, pcbBytesNeeded);
+    FIXME("%p %p %08lx %p\n", hSCManager, lpLockStatus, cbBufSize, pcbBytesNeeded);
 
     return FALSE;
 }
 
+/******************************************************************************
+ * QueryServiceLockStatusW [ADVAPI32.@]
+ */
 BOOL WINAPI QueryServiceLockStatusW( SC_HANDLE hSCManager,
                                      LPQUERY_SERVICE_LOCK_STATUSW lpLockStatus,
                                      DWORD cbBufSize, LPDWORD pcbBytesNeeded)
 {
-    FIXME("%p %p 0x%08lx %p - stub\n", hSCManager, lpLockStatus, cbBufSize, pcbBytesNeeded);
+    FIXME("%p %p %08lx %p\n", hSCManager, lpLockStatus, cbBufSize, pcbBytesNeeded);
 
     return FALSE;
 }
@@ -1865,7 +1877,6 @@ BOOL WINAPI GetServiceDisplayNameA( SC_HANDLE hSCManager, LPCSTR lpServiceName,
     return FALSE;
 }
 
-
 /******************************************************************************
  * GetServiceDisplayNameW  [ADVAPI32.@]
  */
@@ -1876,7 +1887,6 @@ BOOL WINAPI GetServiceDisplayNameW( SC_HANDLE hSCManager, LPCWSTR lpServiceName,
           debugstr_w(lpServiceName), lpDisplayName, lpcchBuffer);
     return FALSE;
 }
-
 
 /******************************************************************************
  * ChangeServiceConfigW  [ADVAPI32.@]
@@ -2023,9 +2033,9 @@ BOOL WINAPI QueryServiceObjectSecurity(SC_HANDLE hService,
        DWORD cbBufSize, LPDWORD pcbBytesNeeded)
 {
     PACL pACL = NULL;
+
     FIXME("%p %ld %p %lu %p\n", hService, dwSecurityInformation,
           lpSecurityDescriptor, cbBufSize, pcbBytesNeeded);
-
 
     InitializeSecurityDescriptor(lpSecurityDescriptor, SECURITY_DESCRIPTOR_REVISION);
 
@@ -2046,13 +2056,15 @@ BOOL WINAPI SetServiceObjectSecurity(SC_HANDLE hService,
     return TRUE;
 }
 
+/******************************************************************************
+ * SetServiceBits [ADVAPI32.@]
+ */
 BOOL WINAPI SetServiceBits( SERVICE_STATUS_HANDLE hServiceStatus,
         DWORD dwServiceBits,
         BOOL bSetBitsOn,
         BOOL bUpdateImmediately)
 {
-    FIXME("0x%08lx 0x%08lx %x %x - stub\n", hServiceStatus, dwServiceBits,
+    FIXME("%08lx %08lx %x %x\n", hServiceStatus, dwServiceBits,
           bSetBitsOn, bUpdateImmediately);
-
     return TRUE;
 }
