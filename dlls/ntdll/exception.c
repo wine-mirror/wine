@@ -7,6 +7,8 @@
 
 #include <assert.h>
 #include <signal.h>
+
+#include "config.h"
 #include "winnt.h"
 #include "ntddk.h"
 #include "global.h"

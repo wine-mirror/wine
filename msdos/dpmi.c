@@ -6,6 +6,8 @@
 
 #include <unistd.h>
 #include <string.h>
+
+#include "config.h"
 #include "windef.h"
 #include "wine/winbase16.h"
 #include "ldt.h"
@@ -110,7 +112,7 @@ DPMI_xfree(LPVOID ptr) {
 
 /* FIXME: perhaps we could grow this mapped area... */
 static LPVOID
-DPMI_xrealloc(LPVOID ptr,int newsize) {
+DPMI_xrealloc(LPVOID ptr,DWORD newsize) {
 	MEMORY_BASIC_INFORMATION	mbi;
 	LPVOID				newptr;
 
@@ -899,7 +901,7 @@ void WINAPI INT_Int31Handler( CONTEXT86 *context )
     	SET_CFLAG(context);
         break;
     case 0x0201: /* set real mode interrupt vector */
-	FIXME("set realmode interupt vector(0x%02x,0x%04x:0x%04x) unimplemented\n", BL_reg(context),CX_reg(context),DX_reg(context));
+	FIXME("set realmode interrupt vector(0x%02x,0x%04x:0x%04x) unimplemented\n", BL_reg(context),CX_reg(context),DX_reg(context));
     	SET_CFLAG(context);
         break;
     case 0x0204:  /* Get protected mode interrupt vector */

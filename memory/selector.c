@@ -5,6 +5,8 @@
  */
 
 #include <string.h>
+
+#include "config.h"
 #include "winerror.h"
 #include "wine/winbase16.h"
 #include "ldt.h"

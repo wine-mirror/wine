@@ -3,6 +3,8 @@
  */
 
 #include <stdlib.h>
+
+#include "config.h"
 #include "windows.h"
 #include "miscemu.h"
 #include "msdos.h"

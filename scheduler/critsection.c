@@ -8,6 +8,8 @@
 #include <errno.h>
 #include <stdio.h>
 #include <sys/types.h>
+
+#include "config.h"
 #include "winerror.h"
 #include "winbase.h"
 #include "ntddk.h"

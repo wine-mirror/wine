@@ -8,6 +8,8 @@
 #include <assert.h>
 #include <string.h>
 #include <stdio.h>
+
+#include "config.h"
 #include "winnt.h"
 #include "selectors.h"
 #include "stackframe.h"
