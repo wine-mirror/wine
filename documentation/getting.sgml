@@ -534,7 +534,7 @@ checkout -P
             <command>joe</command>, <command>ae</command>,
             <command>vi</command>),
             or by creating the file <filename>.cvsrc</filename> in your
-            home directory with your favourite graphical editor like nedit, kedit,
+            home directory with your favorite graphical editor like nedit, kedit,
             gedit or others.
           </para>
         </sect3>

@@ -455,7 +455,7 @@ child1-&gt;popup-&gt;child2-&gt;child3-&gt;wnd1-&gt;child4-&gt;wnd2-&gt;desktop.
               not obscured by other windows. If a window has the
               <constant>WS_CLIPCHILDREN</constant> style then all
               areas below its children are considered invisible.
-              Similarily, if the <constant>WS_CLIPSIBLINGS</constant>
+              Similarly, if the <constant>WS_CLIPSIBLINGS</constant>
               bit is in effect then all areas obscured by its siblings
               are invisible. Child windows are always clipped by the
               boundaries of their parent windows.
@@ -675,7 +675,7 @@ child1-&gt;popup-&gt;child2-&gt;child3-&gt;wnd1-&gt;child4-&gt;wnd2-&gt;desktop.
                   Most windowing systems use a concept known as
                   "focus".  The window with focus gets all incoming
                   keyboard messages.  Focus can be changed from window
-                  to window by apps or by users clicking on winodws.
+                  to window by apps or by users clicking on windows.
                 </para>
                 <para>
                   This is the second source of the problem.  Suppose
@@ -738,7 +738,7 @@ child1-&gt;popup-&gt;child2-&gt;child3-&gt;wnd1-&gt;child4-&gt;wnd2-&gt;desktop.
                   queues, a timer is started.  When the timer goes
                   off, if the focus change has not yet happened, the
                   bad app has its focus taken away and all messages
-                  targetted at that window are skipped.  When the bad
+                  targeted at that window are skipped.  When the bad
                   app finally handles the focus change message, OS/2
                   will detect this and stop skipping its messages.
                 </para>
@@ -860,7 +860,7 @@ child1-&gt;popup-&gt;child2-&gt;child3-&gt;wnd1-&gt;child4-&gt;wnd2-&gt;desktop.
           present under Intel Unix and Wine.
         </para>
         <para>
-          Finally, occassionally built-in Wine DLLs implement more
+          Finally, occasionally built-in Wine DLLs implement more
           features than the corresponding native Windows DLLs.
           Probably the most important example of such behavior is the
           integration of Wine with X provided by Wine's built-in USER
@@ -954,7 +954,7 @@ child1-&gt;popup-&gt;child2-&gt;child3-&gt;wnd1-&gt;child4-&gt;wnd2-&gt;desktop.
 <!-- FIXME: Should convert this table into a VariableList element -->
         <screen>
 ADVAPI32.DLL:	   32-bit application advanced programming interfaces
-                   like crypto, systeminfo, security and eventlogging
+                   like crypto, systeminfo, security and event logging
 AVIFILE.DLL:	   32-bit application programming interfaces for the
                    Audio Video Interleave (AVI) Windows-specific
                    Microsoft audio-video standard

@@ -175,13 +175,13 @@
         <listitem>
           <para>
             Several of the winelib based programs in the subdirectory
-            programs also have internationalisation support. See the
+            programs also have internationalization support. See the
             appropriate files there for reference.
           </para>
         </listitem>
         <listitem>
           <para>Edit
-            <filename>documentation/internationalisation</filename> to
+            <filename>documentation/internationalization</filename> to
             show the new status.</para>
         </listitem>
         <listitem>

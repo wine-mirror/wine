@@ -11,7 +11,7 @@
     <para>
       A problem that can happen sometimes is 'it used to work
       before, now it doesn't anymore...'. Here is a step by step
-      procedure to try to pinpoint when the problem occured. This is
+      procedure to try to pinpoint when the problem occurred. This is
       <emphasis>NOT</emphasis> for casual users.
     </para>
 
@@ -115,8 +115,8 @@ make depend && make
         </screen>
         <para>
           If any non-programmer reads this, the fastest method to get
-          at the point where the problem occured is to use a binary
-          search, that is, if the problem occured in 1999, start at
+          at the point where the problem occurred is to use a binary
+          search, that is, if the problem occurred in 1999, start at
           mid-year, then is the problem is already here, back to 1st
           April, if not, to 1st October, and so on.
         </para>
@@ -143,7 +143,7 @@ cvs -d $CVSROOT update -D "2002-06-01 15:17:25 CST"
           If you find the patch that is the cause of the problem, you have
           almost won; report about it to
           <ulink url="http://bugs.winehq.com/">Wine Bugzilla</ulink>
-          or susbscribe to wine-devel and post it there. There is a chance
+          or subscribe to wine-devel and post it there. There is a chance
           that the author
           will jump in to suggest a fix; or there is always the possibility
           to look hard at the patch until it is coerced to reveal where is

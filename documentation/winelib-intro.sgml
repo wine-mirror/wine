@@ -32,7 +32,7 @@
         What you gain by recompiling your application with Winelib is the
         ability to make calls to Unix APIs, directly from your
         Windows source code. This allows for a better integration with the
-        Unix environment than is allowed by runnning an unmodified Windows
+        Unix environment than is allowed by running an unmodified Windows
         application running in Wine. Another benefit is that a Winelib
         application can relatively easily be recompiled on a non-Intel
         architecture and run there without the need for a slow software
@@ -398,7 +398,7 @@
                       review the <filename>Makefile.in</filename> files to
                       adjust the default compilation and link options set by
                       winemaker. See the <xref linkend="source-analysis"
-                                               endterm="source-analysis.title"> section for some hints.
+                      endterm="source-analysis.title"> section for some hints.
                     </para>
                   </listitem>
                   <listitem>

@@ -207,7 +207,7 @@ WORD   cmd;
         <filename>stdout</filename>, <filename>stderr</filename>,
         <filename>stdaux</filename> and <filename>stdprn</filename>.
         Windows 16 inherits this behavior, and in fact, win16 handles
-        are interchangable with DOS handles. Some nasty windows
+        are interchangeable with DOS handles. Some nasty windows
         programs even do this!
       </para>
       <para>
@@ -363,7 +363,7 @@ XXXX &gt; YY @ ZZZZ:ZZZZ
 &lt; data was read from the port
       </programlisting>
       <para>
-        My basic tip for interperating these logs is to pay close
+        My basic tip for interpreting these logs is to pay close
         attention to the addresses of the IO instructions. Their
         grouping and sometimes proximity should reveal the presence of
         subroutines in the driver. By studying the different versions
@@ -450,7 +450,7 @@ int udpp_put(int udpp_base, unsigned char command)
         program to analyse the logfile and decode them futher as this
         can reveal higher level grouping of the low level routines.
         For example from the logs from my UMAX Astra 600P when decoded
-        futher reveal (this is a small snippet)
+        further reveal (this is a small snippet)
       </para>
       <programlisting>
 start:

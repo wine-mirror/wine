@@ -1170,7 +1170,7 @@ C:\                Root directory of primary disk drive
               <para>
                 Case insensitive. Alike to Windows 9x/NT 4. This is
                 the long filename filesystem you are probably used
-                to working with. The filesystem bæhaviour of choice for most
+                to working with. The filesystem behavior of choice for most
                 programs to be run under wine.  <emphasis>Probably the one
                 you want!</emphasis>
               </para>
@@ -1889,7 +1889,7 @@ And here is a setup for Drive A, a generic floppy drive:
       <sect3>
         <title>How To Set Up?</title>
         <para>
-          Reading labels and serial numbers just works automagically
+          Reading labels and serial numbers just works automatically
           if you specify a <literal>"Device" =</literal> line in the
           [Drive x] section in your <filename>~/.wine/config</filename>.
           Note that the device has to exist and must be accessible by the user
@@ -2194,7 +2194,7 @@ And here is a setup for Drive A, a generic floppy drive:
   </para>
   <para>
     It is of course also possible to override these settings by
-    explictly using Wine's <parameter>--dll</parameter>
+    explicitly using Wine's <parameter>--dll</parameter>
     command-line option (see the man page for details).  Some
     hints for choosing your optimal configuration (listed by
     16/32-bit DLL pair):

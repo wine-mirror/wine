@@ -12,9 +12,9 @@
     <para>
       Like most large scale volunteer projects, Wine is strongest in areas that are rewarding
       for its volunteers to work in. The majority of contributors send code patches either
-      fixing bugs, adding new functionalty or otherwise improving the software components of
+      fixing bugs, adding new functionality or otherwise improving the software components of
       the distribution. A lesser number contribute in other ways, such as reporting bugs and
-      regressions, creating tests, providing organisational assistance, or helping to document
+      regressions, creating tests, providing organizational assistance, or helping to document
       Wine.
     </para>
 
@@ -34,13 +34,13 @@
         The Wine source code tree comes with a large amount of documentation in the
         <filename>documentation/</filename> subdirectory. This used to be a collection
         of text files culled from various places such as the Wine Weekly News and the wine-devel
-        mailing list, but was reorganised some time ago into a number of books, each of which is
+        mailing list, but was reorganized some time ago into a number of books, each of which is
         marked up using SGML. You are reading one of these books (the
         <emphasis>Wine Developer's Guide</emphasis>) right now.
       </para>
 
       <para>
-        Since being reorganised, the books have been updated and extended regularly. In their
+        Since being reorganized, the books have been updated and extended regularly. In their
         current state they provide a good framework which over time can be expanded and kept
         up to date. This means that most of the time when further documentation is added, it is
         a simple matter of updating the content of an already existing file. The books
@@ -99,7 +99,7 @@
       <title>Introduction to API Documentation</title>
       <para>
         Wine includes a large amount of documentation on the API functions
-        it implements. There are serveral reasons to want to document the Win32
+        it implements. There are several reasons to want to document the Win32
         API:
           <itemizedlist>
 
@@ -119,14 +119,14 @@
 
           <listItem><para>
           To provide more accurate documentation where the existing documentation
-          is accendentally or deliberately vague or misleading.
+          is accidentally or deliberately vague or misleading.
           </para></listitem>
 
           </itemizedlist>
       </para>
 
       <para>
-        To this end, a semi formalised way of producing documentation from the Wine
+        To this end, a semi formalized way of producing documentation from the Wine
         source code has evolved. Since the primary users of API documentation are Wine
         developers themselves, documentation is usually inserted into the source code
         in the form of comments and notes. Good things to include in the documentation
@@ -294,7 +294,7 @@
       <para>
         The input/output status tells the programmer whether the value will be modified
         by the function (an output parameter), or only read (an input parameter). The
-        status must be enclosed in square brackets to be recognised, otherwise, or if it
+        status must be enclosed in square brackets to be recognized, otherwise, or if it
         is absent, anything following the parameter name is treated as the parameter
         description. This field is case insensitive and can be any of the following:
         <command>[I]</command>, <command>[In]</command>, <command>[O]</command>,
@@ -352,7 +352,7 @@ BOOL WINAPI PathRelativePathToA(
           <command>FIXME</command>. Things that should be updated or addressed in the implementation
           of the function at some future date (perhaps dependent on other parts of Wine). Note
           that if this information is only relevant to Wine developers then it should probably
-          be placed in the relavent code section instead.
+          be placed in the relevant code section instead.
           </para></listitem>
           </orderedlist>
       </para>
@@ -458,7 +458,7 @@ BOOL WINAPI PathRelativePathToA(
 
       <para>
         Words in all uppercase are assumed to be API constants and are highlighted. If
-        you want to emphasise something in the documentation, put it in a section by itself
+        you want to emphasize something in the documentation, put it in a section by itself
         rather than making it upper case.
       </para>
 
@@ -475,7 +475,7 @@ BOOL WINAPI PathRelativePathToA(
 
       <para>
         Any line starting with a single word followed by a colon (<command>:</command>)
-        is assumed to be case listing and is emphasised and put in its own paragrah. This
+        is assumed to be case listing and is emphasized and put in its own paragraph. This
         is most often used for return values, as in the example section below.
       </para>
       <screen>
@@ -516,7 +516,7 @@ BOOL WINAPI PathRelativePathToA(
       <para>
         These items are generated using the same formatting rules as described earlier. The
         only difference is the first line of the comment, which indicates to the generator
-        that the documentation is supplimental and does not describe an export from the dll
+        that the documentation is supplemental and does not describe an export from the dll
         being processed.
       </para>
 
@@ -537,7 +537,7 @@ BOOL WINAPI PathRelativePathToA(
 
       <para>
         Format this documentation exactly as you would a standard export. The only
-        difference is the use of curly brackets to mark this documentation as supplimental.
+        difference is the use of curly brackets to mark this documentation as supplemental.
         The generator will output this documentation using the name given before the
         DLL name, and will link to it from the main DLL page. In addition, if you have
         referred to the comment name in other documentation using "IExample interface",
@@ -1545,7 +1545,7 @@ BOOL WINAPI PathRelativePathToA(
 ...</programlisting>
                 </para>
                 <para>
-                  By default, most SGML processors will autogenerate
+                  By default, most SGML processors will auto generate
                   some generic text for the <sgmltag
                   class="starttag">xref</sgmltag> link, like
                   <quote>Section 2.3.1</quote>.  You can use the

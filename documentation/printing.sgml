@@ -184,7 +184,7 @@ printer=on
 	  </para>
 	  <para>
 	    You also need to add certain entries to the registry.
-	    The easiest way to do this is to customise the PostScript
+	    The easiest way to do this is to customize the PostScript
 	    driver contents of <filename>winedefault.reg</filename> (see below) and use the
 	    Winelib program <command>programs/regedit/regedit</command>.  For
 	    example, if you have installed the Wine source tree in

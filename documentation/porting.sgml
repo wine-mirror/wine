@@ -21,7 +21,7 @@
 
         <itemizedlist>
           <listitem>
-            <para>How to port Wine to your favourite operating system</para>
+            <para>How to port Wine to your favorite operating system</para>
           </listitem>
           <listitem>
             <para>Why you probably shouldn't use <symbol>#ifdef MyOS</symbol></para>

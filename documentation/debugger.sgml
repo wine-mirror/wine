@@ -251,7 +251,7 @@ winedbg "hl.exe -windowed"
 	  <command>detach</command> command). Unfortunately, as the
 	  debugger cannot, for now, neither clear its internal
 	  information, nor restart a new process, the debugger, after
-	  detaching itself, cannot do much except being quited.  
+	  detaching itself, cannot do much except being quitted.  
         </para>
       </sect2>
     </sect1>
@@ -320,7 +320,7 @@ winedbg "hl.exe -windowed"
             <para>
               Get the reason for the crash. This is usually an access to
               an invalid selector, an access to an out of range address
-              in a valid selector, popping a segmentregister from the
+              in a valid selector, popping a segment register from the
               stack or the like. When reporting a crash, report this
               <emphasis>whole</emphasis> crashdump even if it doesn't
               make sense to you.
@@ -369,9 +369,9 @@ winedbg "hl.exe -windowed"
             </para>
             <para>
               Occasionally there are additional debug channels defined at the 
-              begining of the file in the form.
+              beginning of the file in the form.
               <function>WINE_DECLARE_DEBUG_CHANNEL(&lt;channel>);</function>
-              If so the offending fuction may also uses one of these alternate
+              If so the offending function may also uses one of these alternate
               channels. Look through the the function for  
              <function>TRACE_(&lt;channel>)(" ... /n");</function> and add any
              additional channels to the commandline.
@@ -622,7 +622,7 @@ call KERNEL.LSTRLEN
 |Ret  KERNEL.74: OPENFILE() retval=0xffff ret=060f:09d8 ds=0927
                                    ^^^^^^ HFILE_ERROR16, yes, it failed.
 
-|Call USER.1: MESSAGEBOX(0x0000,0x09278376"Sie mussen Windows verlassen und SHARE.EXE laden bevor Sie Word starten.",0x00000000,0x1030) ret=060f:084f ds=0927
+|Call USER.1: MESSAGEBOX(0x0000,0x09278376"You must close Windows and load SHARE.EXE before you start Word.",0x00000000,0x1030) ret=060f:084f ds=0927
         </screen>
         <para>
           And MessageBox'ed.
@@ -734,8 +734,8 @@ Call KERNEL.96: FREELIBRARY(0x031f) ret=01cf:105c ds=01ff
             <para>
               Provided that segment <literal>0x0004</literal> is indeed segment
               <literal>0x1cf</literal>, we now we can use IDA                 (available at
-              <ulink url="ftp://ftp.uni-koeln.de/pc/msdos/programming/assembler/ida35bx.zip">
-                ftp://ftp.uni-koeln.de/pc/msdos/programming/assembler/ida35bx.zip</ulink>) to
+              <ulink url="http://www.filelibrary.com:8080/cgi-bin/freedownload/DOS/h/72/ida35bx.zip">
+               http://www.filelibrary.com:8080/cgi-bin/freedownload/DOS/h/72/ida35bx.zip</ulink>) to
               disassemble the part that caused the error. We just have to find the address of
               the call to <function>FreeLibrary()</function>. Some lines before that the
               runtime error occurred. But be careful! In some cases you don't have to
@@ -767,8 +767,8 @@ Call KERNEL.96: FREELIBRARY(0x031f) ret=01cf:105c ds=01ff
                 <term>
                   <application>IDA</application>:
                   <filename>
-                    <ulink url="ftp://ftp.uni-koeln.de/pc/msdos/programming/assembler/ida35bx.zip">
-                      ftp://ftp.uni-koeln.de/pc/msdos/programming/assembler/ida35bx.zip</ulink>
+                    <ulink url="http://www.filelibrary.com:8080/cgi-bin/freedownload/DOS/h/72/ida35bx.zip">
+                     http://www.filelibrary.com:8080/cgi-bin/freedownload/DOS/h/72/ida35bx.zip</ulink>
                   </filename>
                 </term>
                 <listitem>
@@ -782,8 +782,8 @@ Call KERNEL.96: FREELIBRARY(0x031f) ret=01cf:105c ds=01ff
                 <term>
                   <application>XRAY</application>:
                   <filename>
-                    <ulink url="ftp://ftp.th-darmstadt.de/pub/machines/ms-dos/SimTel/msdos/asmutil/xray15.zip">
-                      ftp://ftp.th-darmstadt.de/pub/machines/ms-dos/SimTel/msdos/asmutil/xray15.zip</ulink>
+                    <ulink url="http://garbo.uwasa.fi/pub/pc/sysinfo/xray15.zip">
+                     http://garbo.uwasa.fi/pub/pc/sysinfo/xray15.zip</ulink>
                   </filename>
                 </term>
                 <listitem>
@@ -797,8 +797,8 @@ Call KERNEL.96: FREELIBRARY(0x031f) ret=01cf:105c ds=01ff
                 <term>
                   <application>pedump</application>:
                   <filename>
-                    <ulink url="http://oak.oakland.edu/pub/simtelnet/win95/prog/pedump.zip">
-                      http://oak.oakland.edu/pub/simtelnet/win95/prog/pedump.zip</ulink>
+                    <ulink url="ftp://ftp.simtel.net/pub/simtelnet/win95/prog/pedump.zip">
+                     ftp://ftp.simtel.net/pub/simtelnet/win95/prog/pedump.zip</ulink>
                   </filename>
                 </term>
                 <listitem>
@@ -1472,7 +1472,7 @@ i =&gt; instructions (disassemble)
 x =&gt; 32 bit unsigned hexadecimal integer
 d =&gt; 32 bit signed decimal integer
 w =&gt; 16 bit unsigned hexadecimal integer
-c =&gt; character (only printable 0x20-0x7f are actuallyprinted)
+c =&gt; character (only printable 0x20-0x7f are actually printed)
 b =&gt; 8 bit unsigned hexadecimal integer
 g =&gt; GUID
         </screen>
@@ -1535,7 +1535,7 @@ set - fixme	=&gt; turn off the 'fixme' class
 
 	<para>
 	  However, some limitation in GDB while debugging wine (see
-	  below) don't ppear in this mode:
+	  below) don't appear in this mode:
 	  <itemizedlist>
 	    <listitem>
 	      <para>

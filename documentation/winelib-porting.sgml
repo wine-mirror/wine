@@ -87,7 +87,7 @@ printf("Processor architecture=%d\n",si ANONS .wProcessorArchitecture);
             <constant>WINE_UNICODE_REWRITE</constant> for each file
             that is built, and add
             <parameter>-fwritable-strings</parameter> to the compiler
-            command line. You should replace all occurances of
+            command line. You should replace all occurrences of
             <type>wchar_t</type> with <type>WCHAR</type> also, since
             <type>wchar_t</type> is the native (32 bit) type. These
             changes allow Wine to modify the native unicode strings
@@ -247,7 +247,7 @@ printf("Processor architecture=%d\n",si ANONS .wProcessorArchitecture);
         too that some functions are implemented with an underscore in
         their name and <function>#define</function>d to that name in
         the MS headers. So you may need to find out the name by
-        examing <filename>dlls/msvcrt/msvcrt.spec</filename> to get
+        examining <filename>dlls/msvcrt/msvcrt.spec</filename> to get
         the correct name for your <function>@ignore</function> entry.
       </para>
     </sect1>
@@ -271,9 +271,9 @@ printf("Processor architecture=%d\n",si ANONS .wProcessorArchitecture);
         <parameter>-lwine_uuid</parameter> to the link line.
       </para>
       <para>
-        gcc is more strict than VC++, especially whan compiling
+        gcc is more strict than VC++, especially when compiling
         C++. This may require you to add casts to your C++ to prevent
-        overloading abiguities between similar types (such as two
+        overloading ambiguities between similar types (such as two
         overloads that take int and char respectively).
       </para>
       <para>
@@ -305,7 +305,7 @@ printf("Processor architecture=%d\n",si ANONS .wProcessorArchitecture);
         Further compounding the problem is the fact that Linux's (GNU's?)
         current dynamic library loader does not call the module
         initializers in their dependency order. So even if Winelib were to
-        have its own initializer there would be no garantee that it would be
+        have its own initializer there would be no guarantee that it would be
         called before the initializer of the library containing this static
         variable. Finally even if the variable is in a library that your
         application links with, that library's initializer may be called

@@ -426,7 +426,7 @@
 
 	  <para>
 	    A built-in MIDI mapper can be found in dlls/winmm/midimap/. It partly
-	    provides the same functionnality as the Windows' one. It allows to pick up
+	    provides the same functionality as the Windows' one. It allows to pick up
 	    destination channels (you can map a given channel to a specific playback
 	    device channel (see the configuration bits for more details).
 	  </para>
@@ -717,7 +717,7 @@
 	      </listitem>
 	      <listitem>
 		<para>
-		  fix the audio/video synchronisation issue
+		  fix the audio/video synchronization issue
 		</para>
 	      </listitem>
 	    </itemizedlist>
@@ -817,7 +817,7 @@
 
 	<para>
 	  Note that native VIDEODISC crashes when the module is loaded, which
-	  occurs when the MCI procedures are initialised. Make sure that this is
+	  occurs when the MCI procedures are initialized. Make sure that this is
 	  not in the list from above. Try adding:
 	  mci=CDAUDIO:SEQUENCER:WAVEAUDIO:AVIVIDEO:MPEGVIDEO
 	  to the [options] section of the wine config file.
@@ -913,7 +913,7 @@
 	<para>
 	  The API consists of the mmio* functions found in dlls/winmm/mmio.c.
 	  Seems to work ok in most of the cases. There's some linear/segmented
-	  issues with 16 bit code. There are also some bugs when writting MMIO
+	  issues with 16 bit code. There are also some bugs when writing MMIO
           files.
 	</para>
 
@@ -1047,7 +1047,7 @@ HKEY_LOCAL_MACHINE\System\CurrentControlSet\Control\MediaProperties\PrivatePrope
 	  </screen>
 	  a link to and .IDF file which allows to remap channels internally (for
 	  example 9 -&gt; 16), to change instruments identification, event
-	  controlers values. See the source file dlls/winmm/midimap/midimap.c
+	  controllers values. See the source file dlls/winmm/midimap/midimap.c
 	  for the details (this isn't implemented yet).
 	</para>
       </sect2>

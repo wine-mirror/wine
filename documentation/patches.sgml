@@ -59,7 +59,7 @@
       </para>
       <para>
         Since wine is constantly changing due to development it is strongly
-        recomended that you use cvs for patches, if you cannot use cvs for
+        recommended that you use cvs for patches, if you cannot use cvs for
         some reason, you can submit patches against the latest tarball. 
         To do this make a copy of the files that you will be modifying and
         <command>diff -u</command> against the old file. I.E.
@@ -80,8 +80,8 @@ diff -u file.old file.c > file.txt
       <itemizedlist>
         <listitem>
         <para>
-          No HTML mail, since patches should be inlined and HTML turns the 
-          patch into garbage. Also it is considered bad netiquette as it 
+          No HTML mail, since patches should be in-lined and HTML turns the 
+          patch into garbage. Also it is considered bad etiquette as it 
           uglifies the message, and is not viewable by many of the subscribers.
         </para>
         </listitem>
@@ -89,7 +89,7 @@ diff -u file.old file.c > file.txt
         <para>
            Only one change set per patch. Patches should address only one
            bug/problem at a time. If a lot of changes need to be made then it
-           is perfered to break it into a series of patches. This makes it
+           is preferred to break it into a series of patches. This makes it
            easier to find regressions.
         </para>
         </listitem>
@@ -126,8 +126,8 @@ code
         </listitem>
         <listitem>
         <para>
-          Patches should be inlined (if you can configure your email client to
-          not wrap lines), or attached as plain text attachements so they can 
+          Patches should be in-lined (if you can configure your email client to
+          not wrap lines), or attached as plain text attachments so they can 
           be read inline. This may mean some more work for you. However it
           allows others to review your patch easily and decreases the chances
           of it being overlooked or forgotten.
@@ -144,7 +144,7 @@ code
       <sect2 id="Inline-Attachments-with-OE">
         <title>Inline attachments with Outlook Express</title>
         <para>
-          Outlook Express is notorious for mangleing attachements. Giving the
+          Outlook Express is notorious for mangling attachments. Giving the
           patch a <filename>.txt</filename> extension and attaching will solve
           the problem for most mailers including Outlook. Also, there is a way
           to enable Outlook Express send <filename>.diff</filename>
@@ -197,7 +197,7 @@ code
       </para>
       <para>
         Make sure your patch applies to the current CVS head
-        revisions.  If a bunch of patches are commited to CVS that may
+        revisions.  If a bunch of patches are committed to CVS that may
         affect whether your patch will apply cleanly then verify that
         your patch does apply!   <command>cvs update</command> is your
         friend!

@@ -147,7 +147,7 @@
           If winemaker fails to find a file in any of the directories of the 
           include path, it will rename it to lowercase on the basis that it 
           is most likely a system header and that all system headers names 
-          are lowercase (this can be overriden by using 
+          are lowercase (this can be overridden by using 
           <option>--nolower-include</option>).
         </para>
         <para>
@@ -700,7 +700,7 @@ ORDINAL VARTYPE EXPORTNAME (DATA [DATA [DATA [...]]])
           <literal>long</literal> for 8, 16, or 32 bits respectively. 
           <literal>EXPORTNAME</literal> will be the name available for
           dynamic linking. <literal>DATA</literal> can be a decimal number 
-          or a hex number preceeded by "0x". The example defines the 
+          or a hex number preceded by "0x". The example defines the 
           variable <literal>Variable</literal> at ordinal 2 and containing 
           4 bytes.
         </para>
@@ -715,7 +715,7 @@ ORDINAL equate EXPORTNAME DATA
           corresponding to the variable. <literal>EXPORTNAME</literal> will 
           be the name available for dynamic linking. 
           <literal>DATA</literal> can be a decimal number or a hex number 
-          preceeded by "0x".
+          preceded by "0x".
         </para>
 
         <programlisting>

@@ -193,7 +193,7 @@ signed short WINAPI MyProxyWinFunc (unsigned short a, void *b, void *c,
       </para>
       <para>
         Then each of the functions simply calls the appropriate Linux function
-        through the function pointer that was set up during initialisation.
+        through the function pointer that was set up during initialization.
       </para>
     </sect1>
 

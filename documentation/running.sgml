@@ -464,12 +464,12 @@ winspool</><entry>wnet</><entry>x11</>
     <sect1 id="CUI-programs">
       <title>Text mode programs (CUI: Console User Interface)</title>
       <para>Text mode programs are program which output is only made
-	out of text (surprise!). In Windows terminolgy, they are
+	out of text (surprise!). In Windows terminology, they are
 	called CUI (Console User Interface) executables, by opposition
 	to GUI (Graphical User Interface) executables. Win32 API
 	provide a complete set of APIs to handle this situation, which
 	goes from basic features like text printing, up to high level
-	functionnalities (like full screen editing, color support,
+	functionalities (like full screen editing, color support,
 	cursor motion, mouse support), going through features like
 	line editing or raw/cooked input stream support
       </para>
@@ -676,7 +676,7 @@ winspool</><entry>wnet</><entry>x11</>
 		    This lets you pick up how many commands you want
 		    the console to recall. You can also drive whether
 		    you want, when entering several times the same
-		    command - potentially intertwened with others -
+		    command - potentially intertwined with others -
 		    whether you want to store all of them (tick off)
 		    or only the last one (tick on).
 		  </entry>

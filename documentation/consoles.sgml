@@ -18,7 +18,7 @@
 	differences between the three approaches.
 
 	<table>
-	  <title>Fonction consoles implementation comparison</title>
+	  <title>Function consoles implementation comparison</title>
 	  <tgroup cols="4" align="left">
 	    <thead>
 	      <row>
@@ -76,7 +76,7 @@
 		  Fully supported, except for the creation of a new
 		  console, which will be rendered on the same Unix
 		  terminal as the previous one, leading to
-		  unpredictible results.
+		  unpredictable results.
 		</entry>
 	      </row>
 	      <row>
