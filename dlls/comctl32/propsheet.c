@@ -1517,7 +1517,7 @@ static BOOL PROPSHEET_AddPage(HWND hwndDlg,
 
   psInfo->nPages++;
 
-  return FALSE;
+  return TRUE;
 }
 
 /******************************************************************************
@@ -2073,8 +2073,21 @@ PROPSHEET_DialogProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
     }
 
     case PSM_ADDPAGE:
-      PROPSHEET_AddPage(hwnd, (HPROPSHEETPAGE)lParam);
+    {
+      /*
+       * Note: MSVC++ 6.0 documentation says that PSM_ADDPAGE does not have
+       *       a return value. This is not true. PSM_ADDPAGE returns TRUE
+       *       on success or FALSE otherwise, as specified on MSDN Online.
+       *       Also see the MFC code for
+       *       CPropertySheet::AddPage(CPropertyPage* pPage).
+       */
+
+      BOOL msgResult = PROPSHEET_AddPage(hwnd, (HPROPSHEETPAGE)lParam);
+
+      SetWindowLongA(hwnd, DWL_MSGRESULT, msgResult);
+
       return TRUE;
+    }
 
     case PSM_REMOVEPAGE:
       PROPSHEET_RemovePage(hwnd, (int)wParam, (HPROPSHEETPAGE)lParam);
