@@ -4104,7 +4104,9 @@ void StorageUtl_CopyPropertyToSTATSTG(
   /*
    * The copy of the string occurs only when the flag is not set
    */
-  if ((statFlags & STATFLAG_NONAME) != 0)
+  if( ((statFlags & STATFLAG_NONAME) != 0) || 
+       (source->name == NULL) || 
+       (source->name[0] == 0) )
   {
     destination->pwcsName = 0;
   }
