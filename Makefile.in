@@ -141,7 +141,9 @@ lib: $(LIBSUBDIRS) $(LIB_TARGET)
 
 wine wine.sym: $(LIBSUBDIRS) $(LIB_TARGET) $(EMUSUBDIRS) dummy
 	$(CC) -o wine $(EMUOBJS) $(LIB_TARGET) $(ALT_LINK) $(LDOPTIONS) $(X_LIBS) $(XPM_LIB) $(XLIB) $(LIBS)
+	@echo "Please ignore the 'gets' warning message, it only applies to Windows programs which use 'gets'"
 	nm -n wine | grep -v _compiled >wine.sym
+	@echo "Wine build complete."
 
 libwine.a: $(LIBOBJS)
 	$(RM) $@
