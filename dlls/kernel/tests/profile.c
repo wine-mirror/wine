@@ -36,36 +36,37 @@ struct _profileInt {
     LPCSTR iniFile;
     INT defaultVal;
     UINT result;
+    UINT result9x;
 };
 
 static void test_profile_int(void)
 {
     struct _profileInt profileInt[]={
-         { NULL,    NULL, NULL,          NULL,     70, 0          }, /*  0 */
-         { NULL,    NULL, NULL,          TESTFILE, -1, 4294967295U},
-         { NULL,    NULL, NULL,          TESTFILE,  1, 1          },
-         { SECTION, NULL, NULL,          TESTFILE, -1, 4294967295U},
-         { SECTION, NULL, NULL,          TESTFILE,  1, 1          },
-         { NULL,    KEY,  NULL,          TESTFILE, -1, 4294967295U}, /*  5 */
-         { NULL,    KEY,  NULL,          TESTFILE,  1, 1          },
-         { SECTION, KEY,  NULL,          TESTFILE, -1, 4294967295U},
-         { SECTION, KEY,  NULL,          TESTFILE,  1, 1          },
-         { SECTION, KEY,  "-1",          TESTFILE, -1, 4294967295U},
-         { SECTION, KEY,  "-1",          TESTFILE,  1, 4294967295U}, /* 10 */
-         { SECTION, KEY,  "1",           TESTFILE, -1, 1          },
-         { SECTION, KEY,  "1",           TESTFILE,  1, 1          },
-         { SECTION, KEY,  "+1",          TESTFILE, -1, 1          },
-         { SECTION, KEY,  "+1",          TESTFILE,  1, 1          },
-         { SECTION, KEY,  "4294967296",  TESTFILE, -1, 0          }, /* 15 */
-         { SECTION, KEY,  "4294967296",  TESTFILE,  1, 0          },
-         { SECTION, KEY,  "4294967297",  TESTFILE, -1, 1          },
-         { SECTION, KEY,  "4294967297",  TESTFILE,  1, 1          },
-         { SECTION, KEY,  "-4294967297", TESTFILE, -1, 4294967295U},
-         { SECTION, KEY,  "-4294967297", TESTFILE,  1, 4294967295U}, /* 20 */
-         { SECTION, KEY,  "42A94967297", TESTFILE, -1, 42         },
-         { SECTION, KEY,  "42A94967297", TESTFILE,  1, 42         },
-         { SECTION, KEY,  "B4294967297", TESTFILE, -1, 0          },
-         { SECTION, KEY,  "B4294967297", TESTFILE,  1, 0          },
+         { NULL,    NULL, NULL,          NULL,     70, 0          , 0}, /*  0 */
+         { NULL,    NULL, NULL,          TESTFILE, -1, 4294967295U, 0},
+         { NULL,    NULL, NULL,          TESTFILE,  1, 1          , 0},
+         { SECTION, NULL, NULL,          TESTFILE, -1, 4294967295U, 0},
+         { SECTION, NULL, NULL,          TESTFILE,  1, 1          , 0},
+         { NULL,    KEY,  NULL,          TESTFILE, -1, 4294967295U, 0}, /*  5 */
+         { NULL,    KEY,  NULL,          TESTFILE,  1, 1          , 0},
+         { SECTION, KEY,  NULL,          TESTFILE, -1, 4294967295U, 4294967295U},
+         { SECTION, KEY,  NULL,          TESTFILE,  1, 1          , 1},
+         { SECTION, KEY,  "-1",          TESTFILE, -1, 4294967295U, 4294967295U},
+         { SECTION, KEY,  "-1",          TESTFILE,  1, 4294967295U, 4294967295U}, /* 10 */
+         { SECTION, KEY,  "1",           TESTFILE, -1, 1          , 1},
+         { SECTION, KEY,  "1",           TESTFILE,  1, 1          , 1},
+         { SECTION, KEY,  "+1",          TESTFILE, -1, 1          , 0},
+         { SECTION, KEY,  "+1",          TESTFILE,  1, 1          , 0},
+         { SECTION, KEY,  "4294967296",  TESTFILE, -1, 0          , 0}, /* 15 */
+         { SECTION, KEY,  "4294967296",  TESTFILE,  1, 0          , 0},
+         { SECTION, KEY,  "4294967297",  TESTFILE, -1, 1          , 1},
+         { SECTION, KEY,  "4294967297",  TESTFILE,  1, 1          , 1},
+         { SECTION, KEY,  "-4294967297", TESTFILE, -1, 4294967295U, 4294967295U},
+         { SECTION, KEY,  "-4294967297", TESTFILE,  1, 4294967295U, 4294967295U}, /* 20 */
+         { SECTION, KEY,  "42A94967297", TESTFILE, -1, 42         , 42},
+         { SECTION, KEY,  "42A94967297", TESTFILE,  1, 42         , 42},
+         { SECTION, KEY,  "B4294967297", TESTFILE, -1, 0          , 0},
+         { SECTION, KEY,  "B4294967297", TESTFILE,  1, 0          , 0},
     };
     int i, num_test = (sizeof(profileInt)/sizeof(struct _profileInt));
     UINT res;
@@ -79,8 +80,9 @@ static void test_profile_int(void)
 
        res = GetPrivateProfileIntA(profileInt[i].section, profileInt[i].key, 
                  profileInt[i].defaultVal, profileInt[i].iniFile); 
-       ok(res == profileInt[i].result, "test<%02d>: ret<%010u> exp<%010u>\n",
-                                       i, res, profileInt[i].result);
+       ok((res == profileInt[i].result) || (res == profileInt[i].result9x),
+	    "test<%02d>: ret<%010u> exp<%010u><%010u>\n",
+            i, res, profileInt[i].result, profileInt[i].result9x);
     }
 
     DeleteFileA( TESTFILE);
