@@ -776,24 +776,25 @@ static BOOL32 MDI_AugmentFrameMenu( MDICLIENTINFO* ci, WND *frame,
     TRACE(mdi,"\tgot popup %04x in sysmenu %04x\n", 
 		hSysPopup, child->hSysMenu);
  
-     AppendMenu32A(frame->wIDmenu,MF_HELP | MF_BITMAP,
+    AppendMenu32A(frame->wIDmenu,MF_HELP | MF_BITMAP,
                    SC_MINIMIZE, (LPSTR)(DWORD)MAGIC_REDUCE ) ;
-     AppendMenu32A(frame->wIDmenu,MF_HELP | MF_BITMAP,
+    AppendMenu32A(frame->wIDmenu,MF_HELP | MF_BITMAP,
                    SC_RESTORE, (LPSTR)(DWORD)MAGIC_RESTORE );
 
-     // The close button is only present in Win 95 look
-     if(TWEAK_WineLook > WIN31_LOOK)
-     {
     if( !InsertMenu32A(frame->wIDmenu,0,MF_BYPOSITION | MF_BITMAP | MF_POPUP,
                     hSysPopup, (LPSTR)(DWORD)hBmpClose ))
     {  
-             TRACE(mdi,"not inserted\n");
+        TRACE(mdi,"not inserted\n");
 	DestroyMenu32(hSysPopup); 
 	return 0; 
     }
-    AppendMenu32A(frame->wIDmenu,MF_HELP | MF_BITMAP,
+
+     // The close button is only present in Win 95 look
+    if(TWEAK_WineLook > WIN31_LOOK)
+    {
+        AppendMenu32A(frame->wIDmenu,MF_HELP | MF_BITMAP,
                        SC_CLOSE, (LPSTR)(DWORD)MAGIC_CLOSE );
-     }
+    }
 
     EnableMenuItem32(hSysPopup, SC_SIZE, MF_BYCOMMAND | MF_GRAYED);
     EnableMenuItem32(hSysPopup, SC_MOVE, MF_BYCOMMAND | MF_GRAYED);
@@ -818,10 +819,11 @@ static BOOL32 MDI_RestoreFrameMenu( WND *frameWnd, HWND32 hChild )
     if(!(iId == SC_RESTORE || iId == SC_CLOSE) )
 	return 0; 
 
+    // app button
+    RemoveMenu32(frameWnd->wIDmenu,0,MF_BYPOSITION);
+
     if(TWEAK_WineLook > WIN31_LOOK)
     {
-        // app button
-    RemoveMenu32(frameWnd->wIDmenu,0,MF_BYPOSITION);
         // close
     DeleteMenu32(frameWnd->wIDmenu,GetMenuItemCount32(frameWnd->wIDmenu) - 1,MF_BYPOSITION);
     }
