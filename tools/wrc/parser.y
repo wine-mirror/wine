@@ -19,7 +19,7 @@
  * 14-Jan-2000 BS	- Redid the usertype resources so that they
  *			  are compatible.
  * 02-Jan-2000 BS	- Removed the preprocessor from the grammar
- *			  expect for the # command (line numbers).
+ *			  except for the # command (line numbers).
  *
  * 06-Nov-1999 JS	- see CHANGES
  * 
@@ -264,7 +264,7 @@ static int rsrcid_to_token(int lookahead);
 	ani_any_t	*ani;
 }
 
-%token tTYPEDEF tEXTERN tSTRUCT tENUM tCPPCLASS tINLINE tSTATIC tNL
+%token tNL
 %token <num> tNUMBER tLNUMBER
 %token <str> tSTRING tIDENT tFILENAME
 %token <raw> tRAWDATA
@@ -423,48 +423,8 @@ resources
 			want_id = 1;
 		dont_want_id = 0;
 		}
-	| resources cjunk			{ $$ = $1; want_id = 1; }
 	;
 
-
-/* C ignore stuff */
-cjunk	: tTYPEDEF			{ strip_til_semicolon(); }
-	| tSTRUCT			{ strip_til_semicolon(); }
-	| tEXTERN			{ strip_til_semicolon(); }
-	| tENUM				{ strip_til_semicolon(); }
-	| tCPPCLASS			{ strip_til_semicolon(); }
-	| tSTATIC			{ strip_til_semicolon(); }
-	| tINLINE			{ internal_error(__FILE__, __LINE__, "Don't yet know how to strip inline functions\n"); }
-/*	| tIDENT tIDENT			{ strip_til_semicolon(); } */
-/*	| tIDENT tIDENT '('		{ strip_til_parenthesis(); } See comments in 'resource' below */
-/*	| tIDENT '('			{ strip_til_parenthesis(); } */
-	| tIDENT '*'			{ strip_til_semicolon(); }
-	| tNL	/*
-		 * This newline rule will never get reduced because we never
-		 * get the tNL token, unless we explicitely set the 'want_nl'
-		 * flag, which we don't.
-		 * The *ONLY* reason for this to be here is because Berkeley
-		 * yacc (byacc), at least version 1.9, has a bug.
-		 * (identified in the generated parser on the second
-		 *  line with:
-		 *  static char yysccsid[] = "@(#)yaccpar   1.9 (Berkeley) 02/21/93";
-		 * )
-		 * This extra rule fixes it.
-		 * The problem is that the expression handling rule "expr: xpr"
-		 * is not reduced on non-terminal tokens, defined above in the
-		 * %token declarations. Token tNL is the only non-terminal that
-		 * can occur. The error becomes visible in the language parsing
-		 * rule below, which looks at the look-ahead token and tests it
-		 * for tNL. However, byacc already generates an error upon reading
-		 * the token instead of keeping it as a lookahead. The reason
-		 * lies in the lack of a $default transition in the "expr : xpr . "
-		 * state (currently state 25). It is probably ommitted because tNL
-		 * is a non-terminal and the state contains 2 s/r conflicts. The
-		 * state enumerates all possible transitions instead of using a
-		 * $default transition.
-		 * All in all, it is a bug in byacc. (period)
-		 */
-	;
 
 /* Parse top level resource definitions etc. */
 resource
@@ -490,27 +450,6 @@ resource
 			chat("Got %s (%s)", get_typename($3), $$->name->name.s_name->str.cstr);
 		}
 		}
-	| tIDENT usrcvt tIDENT '('	{ /* cjunk */ strip_til_parenthesis(); $$ = NULL; }
-		/* The above rule is inserted here with explicit tIDENT
-		 * references to avoid a nasty LALR(2) problem when
-		 * considering the 'cjunk' rules with respect to the usertype
-		 * resources.
-		 * A usertype resource can have two leading identifiers before
-		 * it qualifies as shift into usertype rules. However, the
-		 * cjunk scanner also has a rule of two leading identifiers.
-		 * The problem occurs because the second identifier is at the
-		 * second lookahead (hence LALR(2)) seen from the recursion
-		 * rule 'resources'.
-		 * Thus, the scanner will pick *one* of the rules in preference
-		 * of the other (in this case it was 'cjunk') and generates a
-		 * syntax error if the trailing context wasn't seen. The
-		 * correct action would have been to rollback the stack and
-		 * decent into the 'userres' rule, but this cannot be done
-		 * because yacc only parses LALR(1).
-		 * The problem is prevented from happening by making the decent
-		 * into the cjunk-scanning obsolete and explicitly force the
-		 * scanner to require no more than 1 lookahead.
-		 */
 	| stringtable {
 		/* Don't do anything, stringtables are converted to
 		 * resource_t structures when we are finished parsing and
@@ -869,7 +808,6 @@ dlg_attributes
 	| dlg_attributes tCAPTION tSTRING	{ $$=dialog_caption($3,$1); }
 	| dlg_attributes opt_font		{ $$=dialog_font($2,$1); }
 	| dlg_attributes tCLASS nameid_s	{ $$=dialog_class($3,$1); }
-	| dlg_attributes tCPPCLASS nameid_s	{ $$=dialog_class($3,$1); }
 	| dlg_attributes tMENU nameid		{ $$=dialog_menu($3,$1); }
 	| dlg_attributes opt_language		{ $$=dialog_language($2,$1); }
 	| dlg_attributes opt_characts		{ $$=dialog_characteristics($2,$1); }
@@ -1082,7 +1020,6 @@ dlgex_attribs
 	| dlgex_attribs opt_font		{ $$=dialogex_font($2,$1); }
 	| dlgex_attribs opt_exfont		{ $$=dialogex_font($2,$1); }
 	| dlgex_attribs tCLASS nameid_s		{ $$=dialogex_class($3,$1); }
-	| dlgex_attribs tCPPCLASS nameid_s	{ $$=dialogex_class($3,$1); }
 	| dlgex_attribs tMENU nameid		{ $$=dialogex_menu($3,$1); }
 	| dlgex_attribs opt_language		{ $$=dialogex_language($2,$1); }
 	| dlgex_attribs opt_characts		{ $$=dialogex_characteristics($2,$1); }

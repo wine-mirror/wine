@@ -173,9 +173,7 @@ static struct keyword keywords[] = {
 	{ "DLGINIT",		tDLGINIT,		0, 0, 0},
 	{ "EDITTEXT",		tEDITTEXT,		0, 0, 0},
 	{ "END",		tEND,			0, 0, 0},
-	{ "enum",		tENUM,			0, 1, 1},
 	{ "EXSTYLE",		tEXSTYLE,		0, 0, 0},
-	{ "extern",		tEXTERN,		0, 1, 1},
 	{ "FILEFLAGS",		tFILEFLAGS,		0, 0, 0},
 	{ "FILEFLAGSMASK",	tFILEFLAGSMASK,		0, 0, 0},
 	{ "FILEOS",		tFILEOS,		0, 0, 0},
@@ -191,7 +189,6 @@ static struct keyword keywords[] = {
 	{ "ICON",		tICON,			0, 0, 0},
 	{ "IMPURE",		tIMPURE,		0, 0, 0},
 	{ "INACTIVE",		tINACTIVE,		0, 0, 0},
-	{ "inline",		tINLINE,		0, 1, 1},
 	{ "LANGUAGE",		tLANGUAGE,		1, 0, 1},
 	{ "LISTBOX",		tLISTBOX,		0, 0, 0},
 	{ "LOADONCALL",		tLOADONCALL,		0, 0, 0},
@@ -217,13 +214,10 @@ static struct keyword keywords[] = {
 	{ "SEPARATOR",		tSEPARATOR,		0, 0, 0},
 	{ "SHIFT",		tSHIFT,			0, 0, 0},
 	{ "STATE3",		tSTATE3,		1, 0, 0},
-	{ "static",		tSTATIC,		0, 1, 1},
 	{ "STRING",		tSTRING,		0, 0, 0},
 	{ "STRINGTABLE",	tSTRINGTABLE,		0, 0, 1},
-	{ "struct",		tSTRUCT,		0, 1, 1},
 	{ "STYLE",		tSTYLE,			0, 0, 0},
 	{ "TOOLBAR",		tTOOLBAR,		1, 0, 0},
-	{ "typedef",		tTYPEDEF,		0, 1, 1},
 	{ "VALUE",		tVALUE,			0, 0, 0},
 	{ "VERSION",		tVERSION,		1, 0, 0},
 	{ "VERSIONINFO",	tVERSIONINFO,		0, 0, 0},
@@ -380,9 +374,7 @@ static struct keyword *iskeyword(char *kw)
 
 				if(tok)
 				{
-					if(tok->token == tCLASS && !strcmp(yytext, "class"))
-						return tCPPCLASS;
-					else if(wanted_id && !tok->alwayskw)
+					if(wanted_id && !tok->alwayskw)
 					{
 						yylval.str = make_string(yytext);
 						return tIDENT;
@@ -427,7 +419,7 @@ L\"			{
 			}
 <yylstr>\\x[0-9a-fA-F]{1,3} {  yyerror("Invalid hex escape sequence '%s'", yytext); }
 
-<yylstr>\\[0-9]+	yyerror("Bad escape secuence");
+<yylstr>\\[0-9]+	yyerror("Bad escape sequence");
 <yylstr>\\a		addwchar('\a');
 <yylstr>\\b		addwchar('\b');
 <yylstr>\\f		addwchar('\f');
@@ -644,24 +636,3 @@ static string_t *make_string(char *s)
 	memcpy(str->str.cstr, s, str->size+1);
 	return str;
 }
-
-/* Called from the parser to kill c-junk */
-void strip_extern(void)
-{
-	cjunk_tagline = line_number;
-	yy_push_state(pp_stripe);
-}
-
-void strip_til_semicolon(void)
-{
-	cjunk_tagline = line_number;
-	yy_push_state(pp_strips);
-}
-
-void strip_til_parenthesis(void)
-{
-	cjunk_tagline = line_number;
-	stripplevel = 1;	/* One scanned already */
-	yy_push_state(pp_stripp);
-}
-

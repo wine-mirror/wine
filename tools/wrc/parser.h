@@ -20,9 +20,6 @@ extern char *yytext;
 extern int yy_flex_debug;
 
 int yylex(void);
-void set_pp_ignore(int state);
-void strip_til_semicolon(void);
-void strip_til_parenthesis(void);
 
 #endif
 

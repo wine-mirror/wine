@@ -15,8 +15,6 @@
 #include "preproc.h"
 
 
-extern void set_pp_ignore(int);	/* From parser.l */
-
 #define HASHKEY		2039
 static pp_entry_t *pp_defines[HASHKEY];
 
