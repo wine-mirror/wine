@@ -180,6 +180,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance,
             } else {
                 perror("");
                 printf("%s: Can't open file \"%s\"\n", getAppName(), filename);
+                exit(1);
             }
             get_file_name(&s, filename);
         }

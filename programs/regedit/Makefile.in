@@ -10,6 +10,11 @@ C_SRCS = \
 	regedit.c \
 	regproc.c
 
+PLTESTS = \
+	tests/regedit.pl
+
+EXTRASUBDIRS = tests
+
 @MAKE_PROG_RULES@
 
 ### Dependencies:

@@ -13105,6 +13105,8 @@ ac_config_commands="$ac_config_commands objects"
 
 ac_config_commands="$ac_config_commands programs/regapi/tests"
 
+ac_config_commands="$ac_config_commands programs/regedit/tests"
+
 ac_config_commands="$ac_config_commands programs/winetest/tests"
 
 ac_config_commands="$ac_config_commands relay32"
@@ -13771,6 +13773,7 @@ do
   "msdos" ) CONFIG_COMMANDS="$CONFIG_COMMANDS msdos" ;;
   "objects" ) CONFIG_COMMANDS="$CONFIG_COMMANDS objects" ;;
   "programs/regapi/tests" ) CONFIG_COMMANDS="$CONFIG_COMMANDS programs/regapi/tests" ;;
+  "programs/regedit/tests" ) CONFIG_COMMANDS="$CONFIG_COMMANDS programs/regedit/tests" ;;
   "programs/winetest/tests" ) CONFIG_COMMANDS="$CONFIG_COMMANDS programs/winetest/tests" ;;
   "relay32" ) CONFIG_COMMANDS="$CONFIG_COMMANDS relay32" ;;
   "scheduler" ) CONFIG_COMMANDS="$CONFIG_COMMANDS scheduler" ;;
@@ -14481,6 +14484,8 @@ echo "$as_me: creating msdos" >&6;} && mkdir "msdos") ;;
 echo "$as_me: creating objects" >&6;} && mkdir "objects") ;;
     programs/regapi/tests ) test -d "programs/regapi/tests" || ({ echo "$as_me:$LINENO: creating programs/regapi/tests" >&5
 echo "$as_me: creating programs/regapi/tests" >&6;} && mkdir "programs/regapi/tests") ;;
+    programs/regedit/tests ) test -d "programs/regedit/tests" || ({ echo "$as_me:$LINENO: creating programs/regedit/tests" >&5
+echo "$as_me: creating programs/regedit/tests" >&6;} && mkdir "programs/regedit/tests") ;;
     programs/winetest/tests ) test -d "programs/winetest/tests" || ({ echo "$as_me:$LINENO: creating programs/winetest/tests" >&5
 echo "$as_me: creating programs/winetest/tests" >&6;} && mkdir "programs/winetest/tests") ;;
     relay32 ) test -d "relay32" || ({ echo "$as_me:$LINENO: creating relay32" >&5
