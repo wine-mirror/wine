@@ -404,6 +404,15 @@ else
     	AC_DEFINE(HAVE_FREETYPE)
 	FREETYPELIBS=`$ft_devel --libs`
 	FREETYPEINCL=`$ft_devel --cflags`
+	ac_save_CPPFLAGS="$CPPFLAGS"
+	CPPFLAGS="$FREETYPEINCL $CPPFLAGS"
+	AC_CHECK_HEADERS(freetype/freetype.h \
+                         freetype/ftglyph.h \
+                         freetype/tttables.h \
+                         freetype/ftnames.h \
+                         freetype/ftsnames.h \
+                         freetype/ttnameid.h)
+	CPPFLAGS="$ac_save_CPPFLAGS"
 	wine_cv_msg_freetype=no
     fi
 fi

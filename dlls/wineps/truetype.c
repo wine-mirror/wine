@@ -9,11 +9,30 @@
 
 #ifdef HAVE_FREETYPE
 
+/*
+ *  These stupid #ifdefs should work for FreeType 2.0.1 and 2.0.2.  Beyond that
+ *  is anybody's guess.
+ */
+
+#ifdef HAVE_FREETYPE_FREETYPE_H
 #include <freetype/freetype.h>
-#include FT_NAMES_H
-#include FT_TRUETYPE_NAMES_H
-#include FT_TRUETYPE_TABLES_H
-#include FT_GLYPH_H
+#endif
+#ifdef HAVE_FREETYPE_FTGLYPH_H
+#include <freetype/ftglyph.h>
+#endif
+#ifdef HAVE_FREETYPE_TTTABLES_H
+#include <freetype/tttables.h>
+#endif
+#ifdef HAVE_FREETYPE_FTNAMES_H
+#include <freetype/ftnames.h>
+#endif
+#ifdef HAVE_FREETYPE_FTSNAMES_H
+#include <freetype/ftsnames.h>
+#endif
+#ifdef HAVE_FREETYPE_TTNAMEID_H
+#include <freetype/ttnameid.h>
+#endif
+
 #include <sys/types.h>
 #include <dirent.h>
 #include <string.h>
