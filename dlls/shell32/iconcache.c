@@ -638,14 +638,14 @@ DWORD WINAPI SHMapPIDLToSystemImageListIndex(LPSHELLFOLDER sh,LPITEMIDLIST pidl,
 	DWORD	dwNr, ret = INVALID_INDEX;
 	LPITEMIDLIST pidltemp = ILFindLastID(pidl);
 
- 	WARN(shell,"(SF=%p,pidl=%p,0x%08x)\n",sh,pidl,z);
+ 	WARN(shell,"(SF=%p,pidl=%p,0x%08lx)\n",sh,pidl,z);
 	pdump(pidl);
 
 	if (_ILIsDesktop(pidltemp))
 	{ return 34;
 	}
 	else if (_ILIsMyComputer(pidltemp))
-	{ if (HCR_GetDefaultIcon("CLSID\\{20D04FE0-3AEA-1069-A2D8-08002B30309D}", sTemp, 64, &dwNr))
+	{ if (HCR_GetDefaultIcon("CLSID\\{20D04FE0-3AEA-1069-A2D8-08002B30309D}", sTemp, MAX_PATH, &dwNr))
 	  { ret = SIC_GetIconIndex(sTemp, dwNr);
 	    return (( INVALID_INDEX == ret) ? 15 : ret);
 	  }
@@ -675,6 +675,32 @@ DWORD WINAPI SHMapPIDLToSystemImageListIndex(LPSHELLFOLDER sh,LPITEMIDLIST pidl,
 	  }
 	}
 	return (( INVALID_INDEX == ret) ? 1 : ret);
+}
+
+/*************************************************************************
+ * Shell_GetCachedImageIndex [SHELL32.72]
+ *
+ */
+INT32 WINAPI Shell_GetCachedImageIndex32A(LPCSTR szPath, INT32 nIndex, DWORD z) 
+{	WARN(shell,"(%s,%08x,%08lx) semi-stub.\n",debugstr_a(szPath),nIndex,z);
+	return SIC_GetIconIndex(szPath, nIndex);
+}
+
+INT32 WINAPI Shell_GetCachedImageIndex32W(LPCWSTR szPath, INT32 nIndex, DWORD z) 
+{	INT32 ret;
+	LPSTR sTemp = HEAP_strdupWtoA (GetProcessHeap(),0,szPath);   
+	
+	WARN(shell,"(%s,%08x,%08lx) semi-stub.\n",debugstr_w(szPath),nIndex,z);
+
+	ret = SIC_GetIconIndex(sTemp, nIndex);
+	HeapFree(GetProcessHeap(),0,sTemp);
+ 	return ret;
+}
+
+INT32 WINAPI Shell_GetCachedImageIndex32AW(LPCVOID szPath, INT32 nIndex, DWORD z)
+{	if( VERSION_OsIsUnicode())
+	  return Shell_GetCachedImageIndex32W(szPath, nIndex, z);
+	return Shell_GetCachedImageIndex32A(szPath, nIndex, z);
 }
 
 /*************************************************************************
