@@ -74,8 +74,25 @@ INT32 WINAPI Escape32( HDC32 hdc, INT32 nEscape, INT32 cbInput,
         segout = SEGPTR_GET(SEGPTR_ALLOC(200));
         break;
     }
+
+      /* Escape(hdc,STARTDOC,LPSTR,NULL); */
+
+    case STARTDOC: /* string may not be \0 terminated */
+        if(lpszInData) {
+	    char *cp = SEGPTR_ALLOC(cbInput);
+	    memcpy(cp, lpszInData, cbInput);
+	    segin = SEGPTR_GET(cp);
+	} else
+	    segin = 0;
+	break;
+
+    default:
+        break;
+
     }
+
     ret = dc->funcs->pEscape( dc, nEscape, cbInput, segin, segout );
+
     switch(nEscape) {
     case QUERYESCSUPPORT:
     	if (ret)
@@ -110,6 +127,10 @@ INT32 WINAPI Escape32( HDC32 hdc, INT32 nEscape, INT32 cbInput,
         SEGPTR_FREE(x);
         break;
     }
+    case STARTDOC:
+        SEGPTR_FREE(PTR_SEG_TO_LIN(segin));
+	break;
+
     default:
     	break;
     }
