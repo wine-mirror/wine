@@ -32,152 +32,173 @@
 WINE_DEFAULT_DEBUG_CHANNEL(msdmo);
 
 /***********************************************************************
- *		MoCreateMediaType	(MSDMO.@)
+ *        MoCreateMediaType    (MSDMO.@)
+ *
+ * Allocate a new media type structure
  */
 HRESULT WINAPI MoCreateMediaType(DMO_MEDIA_TYPE** ppmedia, DWORD cbFormat)
 {
-  HRESULT hr;
+    HRESULT r;
 
-  TRACE("(%p,%lu)\n", ppmedia, cbFormat);
+    TRACE("%p %lu\n", ppmedia, cbFormat);
 
-  if (ppmedia == NULL)
-    return E_POINTER;
+    if (!ppmedia)
+        return E_POINTER;
 
-  *ppmedia = CoTaskMemAlloc(sizeof(DMO_MEDIA_TYPE));
-  if (*ppmedia == NULL)
-    return E_OUTOFMEMORY;
+    *ppmedia = CoTaskMemAlloc(sizeof(DMO_MEDIA_TYPE));
+    if (!*ppmedia)
+        return E_OUTOFMEMORY;
 
-  hr = MoInitMediaType(*ppmedia, cbFormat);
-  if (FAILED(hr)) {
-    CoTaskMemFree(*ppmedia);
-    *ppmedia = NULL;
-  }
+    r = MoInitMediaType(*ppmedia, cbFormat);
+    if (FAILED(r))
+    {
+        CoTaskMemFree(*ppmedia);
+        *ppmedia = NULL;
+    }
 
-  return hr;
+    return r;
 }
 
 /***********************************************************************
- *		MoInitMediaType		(MSDMO.@)
+ *        MoInitMediaType        (MSDMO.@)
+ *
+ * Initialize media type structure
  */
 HRESULT WINAPI MoInitMediaType(DMO_MEDIA_TYPE* pmedia, DWORD cbFormat)
 {
-  TRACE("(%p,%lu)\n", pmedia,cbFormat);
+    TRACE("%p %lu\n", pmedia, cbFormat);
 
-  if (pmedia == NULL)
-    return E_POINTER;
+    if (!pmedia)
+        return E_POINTER;
 
-  memset(pmedia, 0, sizeof(DMO_MEDIA_TYPE));
+    memset(pmedia, 0, sizeof(DMO_MEDIA_TYPE));
 
-  if (cbFormat > 0) {
-    pmedia->pbFormat = CoTaskMemAlloc(cbFormat);
-    if (pmedia->pbFormat == NULL)
-      return E_OUTOFMEMORY;
+    if (cbFormat > 0)
+    {
+        pmedia->pbFormat = CoTaskMemAlloc(cbFormat);
+        if (!pmedia->pbFormat)
+            return E_OUTOFMEMORY;
 
-    pmedia->cbFormat = cbFormat;
-  }
+        pmedia->cbFormat = cbFormat;
+    }
 
-  return S_OK;
+    return S_OK;
 }
 
 /***********************************************************************
- *		MoDeleteMediaType	(MSDMO.@)
+ *        MoDeleteMediaType    (MSDMO.@)
+ *
+ * Delete a media type structure
  */
 HRESULT WINAPI MoDeleteMediaType(DMO_MEDIA_TYPE* pmedia)
 {
-  TRACE("(%p)\n", pmedia);
+    TRACE("%p\n", pmedia);
 
-  if (pmedia == NULL)
-    return E_POINTER;
+    if (!pmedia)
+        return E_POINTER;
 
-  MoFreeMediaType(pmedia);
-  CoTaskMemFree(pmedia);
+    MoFreeMediaType(pmedia);
+    CoTaskMemFree(pmedia);
 
-  return S_OK;
+    return S_OK;
 }
 
 /***********************************************************************
- *		MoFreeMediaType		(MSDMO.@)
+ *        MoFreeMediaType        (MSDMO.@)
+ *
+ * Free allocated members of a media type structure
  */
 HRESULT WINAPI MoFreeMediaType(DMO_MEDIA_TYPE* pmedia)
 {
-  TRACE("(%p)\n", pmedia);
+    TRACE("%p\n", pmedia);
 
-  if (pmedia == NULL)
-    return E_POINTER;
+    if (!pmedia)
+        return E_POINTER;
 
-  if (pmedia->pUnk != NULL) {
-    IUnknown_Release(pmedia->pUnk);
-    pmedia->pUnk = NULL;
-  }
+    if (pmedia->pUnk)
+    {
+        IUnknown_Release(pmedia->pUnk);
+        pmedia->pUnk = NULL;
+    }
 
-  if (pmedia->pbFormat != NULL) {
-    CoTaskMemFree(pmedia->pbFormat);
-    pmedia->pbFormat = NULL;
-  }
+    if (pmedia->pbFormat)
+    {
+        CoTaskMemFree(pmedia->pbFormat);
+        pmedia->pbFormat = NULL;
+    }
 
-  return S_OK;
+    return S_OK;
 }
 
 /***********************************************************************
- *		MoDuplicateMediaType	(MSDMO.@)
+ *        MoDuplicateMediaType    (MSDMO.@)
+ *
+ * Duplicates a media type structure
  */
 HRESULT WINAPI MoDuplicateMediaType(DMO_MEDIA_TYPE** ppdst,
-				    const DMO_MEDIA_TYPE* psrc)
+                                    const DMO_MEDIA_TYPE* psrc)
 {
-  HRESULT hr;
+    HRESULT r;
 
-  TRACE("(%p,%p)\n", ppdst, psrc);
+    TRACE("%p %p\n", ppdst, psrc);
 
-  if (ppdst == NULL || psrc == NULL)
-    return E_POINTER;
+    if (!ppdst || !psrc)
+        return E_POINTER;
 
-  *ppdst = CoTaskMemAlloc(sizeof(DMO_MEDIA_TYPE));
-  if (*ppdst == NULL)
-    return E_OUTOFMEMORY;
+    *ppdst = CoTaskMemAlloc(sizeof(DMO_MEDIA_TYPE));
+    if (!*ppdst)
+        return E_OUTOFMEMORY;
 
-  hr = MoCopyMediaType(*ppdst, psrc);
-  if (FAILED(hr)) {
-    MoFreeMediaType(*ppdst);
-    *ppdst = NULL;
-  }
+    r = MoCopyMediaType(*ppdst, psrc);
+    if (FAILED(r))
+    {
+        MoFreeMediaType(*ppdst);
+        *ppdst = NULL;
+    }
 
-  return hr;
+    return r;
 }
 
 /***********************************************************************
- *		MoCopyMediaType		(MSDMO.@)
+ *        MoCopyMediaType        (MSDMO.@)
+ *
+ * Copy a new media type structure
  */
 HRESULT WINAPI MoCopyMediaType(DMO_MEDIA_TYPE* pdst,
-			       const DMO_MEDIA_TYPE* psrc)
+                               const DMO_MEDIA_TYPE* psrc)
 {
-  TRACE("(%p,%p)\n", pdst, psrc);
+    TRACE("%p %p\n", pdst, psrc);
 
-  if (pdst == NULL || psrc == NULL)
-    return E_POINTER;
+    if (!pdst || !psrc)
+        return E_POINTER;
 
-  memcpy(&pdst->majortype,  &psrc->majortype,  sizeof(psrc->majortype));
-  memcpy(&pdst->subtype,    &psrc->subtype,    sizeof(psrc->subtype));
-  memcpy(&pdst->formattype, &psrc->formattype, sizeof(psrc->formattype));
+    memcpy(&pdst->majortype,  &psrc->majortype,  sizeof(psrc->majortype));
+    memcpy(&pdst->subtype,    &psrc->subtype,    sizeof(psrc->subtype));
+    memcpy(&pdst->formattype, &psrc->formattype, sizeof(psrc->formattype));
 
-  pdst->bFixedSizeSamples    = psrc->bFixedSizeSamples;
-  pdst->bTemporalCompression = psrc->bTemporalCompression;
-  pdst->lSampleSize          = psrc->lSampleSize;
-  pdst->cbFormat             = psrc->cbFormat;
+    pdst->bFixedSizeSamples    = psrc->bFixedSizeSamples;
+    pdst->bTemporalCompression = psrc->bTemporalCompression;
+    pdst->lSampleSize          = psrc->lSampleSize;
+    pdst->cbFormat             = psrc->cbFormat;
 
-  if (psrc->pbFormat != NULL && psrc->cbFormat > 0) {
-    pdst->pbFormat = CoTaskMemAlloc(psrc->cbFormat);
-    if (pdst->pbFormat == NULL)
-      return E_OUTOFMEMORY;
+    if (psrc->pbFormat && psrc->cbFormat > 0)
+    {
+        pdst->pbFormat = CoTaskMemAlloc(psrc->cbFormat);
+        if (!pdst->pbFormat)
+            return E_OUTOFMEMORY;
 
-    memcpy(pdst->pbFormat, psrc->pbFormat, psrc->cbFormat);
-  } else
-    pdst->pbFormat = NULL;
+        memcpy(pdst->pbFormat, psrc->pbFormat, psrc->cbFormat);
+    }
+    else
+        pdst->pbFormat = NULL;
 
-  if (psrc->pUnk != NULL) {
-    pdst->pUnk = psrc->pUnk;
-    IUnknown_AddRef(pdst->pUnk);
-  } else
-    pdst->pUnk = NULL;
+    if (psrc->pUnk)
+    {
+        pdst->pUnk = psrc->pUnk;
+        IUnknown_AddRef(pdst->pUnk);
+    }
+    else
+        pdst->pUnk = NULL;
 
-  return S_OK;
+    return S_OK;
 }
