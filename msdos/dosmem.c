@@ -21,69 +21,8 @@
 HANDLE16 DOSMEM_BiosDataSeg;  /* BIOS data segment at 0x40:0 */
 HANDLE16 DOSMEM_BiosSysSeg;   /* BIOS ROM segment at 0xf000:0 */
 
-#pragma pack(1)
-
-typedef struct
-{
-    WORD  Com1Addr;                  /* 00: COM1 I/O address */
-    WORD  Com2Addr;                  /* 02: COM2 I/O address */
-    WORD  Com3Addr;                  /* 04: COM3 I/O address */
-    WORD  Com4Addr;                  /* 06: COM4 I/O address */
-    WORD  Lpt1Addr;                  /* 08: LPT1 I/O address */
-    WORD  Lpt2Addr;                  /* 0a: LPT2 I/O address */
-    WORD  Lpt3Addr;                  /* 0c: LPT3 I/O address */
-    WORD  Lpt4Addr;                  /* 0e: LPT4 I/O address */
-    WORD  InstalledHardware;         /* 10: Installed hardware flags */
-    BYTE  POSTstatus;                /* 12: Power-On Self Test status */
-    WORD  MemSize WINE_PACKED;       /* 13: Base memory size in Kb */
-    WORD  unused1 WINE_PACKED;       /* 15: Manufacturing test scratch pad */
-    BYTE  KbdFlags1;                 /* 17: Keyboard flags 1 */
-    BYTE  KbdFlags2;                 /* 18: Keyboard flags 2 */
-    BYTE  unused2;                   /* 19: Keyboard driver workspace */
-    WORD  NextKbdCharPtr;            /* 1a: Next character in kbd buffer */
-    WORD  FirstKbdCharPtr;           /* 1c: First character in kbd buffer */
-    WORD  KbdBuffer[16];             /* 1e: Keyboard buffer */
-    BYTE  DisketteStatus1;           /* 3e: Diskette recalibrate status */
-    BYTE  DisketteStatus2;           /* 3f: Diskette motor status */
-    BYTE  DisketteStatus3;           /* 40: Diskette motor timeout */
-    BYTE  DisketteStatus4;           /* 41: Diskette last operation status */
-    BYTE  DiskStatus[7];             /* 42: Disk status/command bytes */
-    BYTE  VideoMode;                 /* 49: Video mode */
-    WORD  VideoColumns;              /* 4a: Number of columns */
-    WORD  VideoPageSize;             /* 4c: Video page size in bytes */
-    WORD  VideoPageStartAddr;        /* 4e: Video page start address */
-    BYTE  VideoCursorPos[16];        /* 50: Cursor position for 8 pages */
-    WORD  VideoCursorType;           /* 60: Video cursor type */
-    BYTE  VideoCurPage;              /* 62: Video current page */
-    WORD  VideoCtrlAddr WINE_PACKED; /* 63: Video controller address */
-    BYTE  VideoReg1;                 /* 65: Video mode select register */
-    BYTE  VideoReg2;                 /* 66: Video CGA palette register */
-    DWORD ResetEntry WINE_PACKED;    /* 67: Warm reset entry point */
-    BYTE  LastIRQ;                   /* 6b: Last unexpected interrupt */
-    DWORD Ticks;                     /* 6c: Ticks since midnight */
-    BYTE  TicksOverflow;             /* 70: Timer overflow if past midnight */
-    BYTE  CtrlBreakFlag;             /* 71: Ctrl-Break flag */
-    WORD  ResetFlag;                 /* 72: POST Reset flag */
-    BYTE  DiskOpStatus;              /* 74: Last hard-disk operation status */
-    BYTE  NbHardDisks;               /* 75: Number of hard disks */
-    BYTE  DiskCtrlByte;              /* 76: Disk control byte */
-    BYTE  DiskIOPort;                /* 77: Disk I/O port offset */
-    BYTE  LptTimeout[4];             /* 78: Timeouts for parallel ports */
-    BYTE  ComTimeout[4];             /* 7c: Timeouts for serial ports */
-    WORD  KbdBufferStart;            /* 80: Keyboard buffer start */
-    WORD  KbdBufferEnd;              /* 82: Keyboard buffer end */
-    BYTE  RowsOnScreenMinus1;        /* 84: EGA only */
-    WORD  BytesPerChar;              /* 85: EGA only */
-    BYTE  ModeOptions;               /* 87: EGA only */
-    BYTE  FeatureBitsSwitches;       /* 88: EGA only */
-    BYTE  unknown;                   /* 89: ??? */
-    BYTE  DisplayCombination;        /* 8A: VGA display combinations */
-    BYTE  DiskDataRate;              /* 8B: Last disk data rate selected */
-} BIOSDATA;
-
 #pragma pack(4)
 
-static BIOSDATA *pBiosData = NULL;
 static char	*DOSMEM_dosmem;
 
        DWORD 	 DOSMEM_CollateTable;
@@ -206,6 +145,16 @@ static void DOSMEM_InitDPMI(void)
     memcpy(wrapper, wrap_code, sizeof(wrap_code));
 }
 
+BIOSDATA * DOSMEM_BiosData()
+{
+    return (BIOSDATA *)DOSMEM_MemoryBase(0)+0x400;
+}
+
+BYTE * DOSMEM_BiosSys()
+{
+    return DOSMEM_MemoryBase(0)+0xf0000;
+}
+
 /***********************************************************************
  *           DOSMEM_FillBiosSegments
  *
@@ -215,8 +164,13 @@ static void DOSMEM_FillBiosSegments(void)
 {
     BYTE *pBiosSys = (BYTE *)GlobalLock16( DOSMEM_BiosSysSeg );
     BYTE *pBiosROMTable = pBiosSys+0xe6f5;
+    BIOSDATA *pBiosData = (BIOSDATA *)GlobalLock16( DOSMEM_BiosDataSeg );
 
-    pBiosData = (BIOSDATA *)GlobalLock16( DOSMEM_BiosDataSeg );
+    /* bogus 0xe0xx addresses !! Adapt int 0x10/0x1b if change needed */
+    BYTE *pVideoStaticFuncTable = pBiosSys+0xe000;
+    BYTE *pVideoStateInfo = pBiosSys+0xe010;
+    BYTE *p;
+    int i;
 
       /* Clear all unused values */
     memset( pBiosData, 0, sizeof(*pBiosData) );
@@ -244,7 +198,7 @@ static void DOSMEM_FillBiosSegments(void)
     pBiosData->BytesPerChar         = 0x10;
     pBiosData->ModeOptions          = 0x64;
     pBiosData->FeatureBitsSwitches  = 0xf9;
-    pBiosData->unknown              = 0x51;
+    pBiosData->VGASettings          = 0x51;
     pBiosData->DisplayCombination   = 0x08;
     pBiosData->DiskDataRate         = 0;
 
@@ -258,6 +212,60 @@ static void DOSMEM_FillBiosSegments(void)
     *(pBiosROMTable+0x7)	= 0x00; /* feature byte 3 */
     *(pBiosROMTable+0x8)	= 0x00; /* feature byte 4 */
     *(pBiosROMTable+0x9)	= 0x00; /* feature byte 5 */
+
+    p = pVideoStaticFuncTable;
+    for (i=0; i < 7; i++)
+      *(p+i)  = 0xff; /* modes supported 1 to 7 */
+    
+    *(p+0x7)  = 7;                  /* scan lines supported */
+    *(p+0x8)  = 0;                  /* tot nr of char blocks in text mode */
+    *(p+0x9)  = 0;                  /* max nr of active char blocks in text */
+    *(WORD *)(p+0xa) = 0x8ff;       /* misc support flags */
+    *(WORD *)(p+0xc) = 0;           /* reserved */
+    *(p+0xe)  = 0x3f;               /* save pointer function flags */  
+    *(p+0xf)  = 0;                  /* reserved */
+
+    p = pVideoStateInfo;
+    *(DWORD *)p = 0xf000e000;       /* address of pVideoStaticFuncTable, FIXME: always real mode ? */
+    *(p+0x04) =                     /* current video mode, needs updates ! */
+      pBiosData->VideoMode;
+    *(WORD *)(p+0x05) =             /* number of columns, needs updates ! */
+      pBiosData->VideoColumns;
+    *(WORD *)(p+0x07) = 0;          /* length of regen (???) buffer in bytes */
+    *(WORD *)(p+0x09) = 0;          /* starting address of regen (?) buffer */
+    *(WORD *)(p+0x0b) = 0;          /* cursorpos page 0 */
+    *(WORD *)(p+0x0d) = 0;          /* cursorpos page 1 */
+    *(WORD *)(p+0x0f) = 0;          /* page 2 */
+    *(WORD *)(p+0x11) = 0;          /* page 3 */
+    *(WORD *)(p+0x13) = 0;          /* page 4 */
+    *(WORD *)(p+0x15) = 0;          /* page 5 */
+    *(WORD *)(p+0x17) = 0;          /* page 6 */
+    *(WORD *)(p+0x19) = 0;          /* page 7 */
+    *(WORD *)(p+0x1b) = 0x0a0b;     /* cursor size (start/end line) */
+    *(p+0x1d) = 0;                  /* active display page */
+    *(WORD *)(p+0x1e) = 0x3da;      /* CRTC port address */
+    *(p+0x20) = 0x0;                /* current setting of port 0x3x8 */
+    *(p+0x21) = 0x0;                /* current setting of port 0x3x9 */
+    *(p+0x22) = 23;                 /* number of rows - 1 */
+    *(WORD *)(p+0x23) = 0x10;       /* bytes/character */
+    *(p+0x25) =                     /* comb. of active display */
+      pBiosData->DisplayCombination;
+    *(p+0x26) = 0;                  /* DCC (???) of alternate display */
+    *(WORD *)(p+0x27) = 16;         /* number of colors in current mode */
+    *(p+0x29) = 1;                  /* number of pages in current mode */
+    *(p+0x2a) = 3;                  /* number of scan lines active */
+                                    /* (0,1,2,3) =  (200,350,400,480) */
+    *(p+0x2b) = 0;                  /* primary character block (?) */
+    *(p+0x2c) = 0;                  /* secondary character block (?) */
+    *(p+0x2d) =                     /* miscellaneous flags */
+        (pBiosData->VGASettings & 0x0f)
+      | ((pBiosData->ModeOptions & 1) << 4); /* cursor emulation */
+    *(p+0x2e) = 0;                  /* non-VGA mode support */
+    *(WORD *)(p+0x2f) = 0;          /* reserved */
+    *(p+0x31) =                     /* video memory available */
+      (pBiosData->ModeOptions & 0x60 >> 5);
+    *(p+0x32) = 0;                  /* save pointer state flags */
+    *(p+0x33) = 4;                  /* display info and status */
 
     /* BIOS date string */
     strcpy((char *)pBiosSys+0xfff5, "13/01/99");
@@ -420,6 +428,7 @@ BOOL DOSMEM_Init(HMODULE16 hModule)
  */
 void DOSMEM_Tick( WORD timer )
 {
+    BIOSDATA *pBiosData = DOSMEM_BiosData();
     if (pBiosData) pBiosData->Ticks++;
 }
 

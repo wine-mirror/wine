@@ -15,7 +15,7 @@ static void write_char_attribute_at_cursor(char output, char page_num,
 static void scroll_window(int direction, char lines, char row1, 
    char col1, char row2, char col2, char attribute);
 
-static int color_pallet[16];
+static int color_palette[16];
 
 #define SCROLL_UP 1
 #define SCROLL_DOWN 2
@@ -56,8 +56,6 @@ static int color_pallet[16];
 void WINAPI INT_Int10Handler( CONTEXT *context )
 {
     static int registered_colors = FALSE;
-    static int video_mode = 7;
-    static int video_columns = 80;
 
     if (!registered_colors)
     {
@@ -76,22 +74,22 @@ void WINAPI INT_Int10Handler( CONTEXT *context )
            ternimal initialization as xx_Init() is no longer called on
            startup. Which is what we want anyway. */
 
-        color_pallet[0]  = CONSOLE_AllocColor(WINE_BLACK);
-        color_pallet[1]  = CONSOLE_AllocColor(WINE_BLUE);
-        color_pallet[2]  = CONSOLE_AllocColor(WINE_GREEN);
-        color_pallet[3]  = CONSOLE_AllocColor(WINE_CYAN);
-        color_pallet[4]  = CONSOLE_AllocColor(WINE_RED);
-        color_pallet[5]  = CONSOLE_AllocColor(WINE_MAGENTA);
-        color_pallet[6]  = CONSOLE_AllocColor(WINE_BROWN);
-        color_pallet[7]  = CONSOLE_AllocColor(WINE_LIGHT_GRAY);
-        color_pallet[8]  = CONSOLE_AllocColor(WINE_DARK_GRAY);
-        color_pallet[9]  = CONSOLE_AllocColor(WINE_LIGHT_BLUE);
-        color_pallet[10] = CONSOLE_AllocColor(WINE_LIGHT_GREEN);
-        color_pallet[11] = CONSOLE_AllocColor(WINE_LIGHT_CYAN);
-        color_pallet[12] = CONSOLE_AllocColor(WINE_LIGHT_RED);
-        color_pallet[13] = CONSOLE_AllocColor(WINE_LIGHT_MAGENTA);
-        color_pallet[14] = CONSOLE_AllocColor(WINE_YELLOW);
-        color_pallet[15] = CONSOLE_AllocColor(WINE_WHITE);
+        color_palette[0]  = CONSOLE_AllocColor(WINE_BLACK);
+        color_palette[1]  = CONSOLE_AllocColor(WINE_BLUE);
+        color_palette[2]  = CONSOLE_AllocColor(WINE_GREEN);
+        color_palette[3]  = CONSOLE_AllocColor(WINE_CYAN);
+        color_palette[4]  = CONSOLE_AllocColor(WINE_RED);
+        color_palette[5]  = CONSOLE_AllocColor(WINE_MAGENTA);
+        color_palette[6]  = CONSOLE_AllocColor(WINE_BROWN);
+        color_palette[7]  = CONSOLE_AllocColor(WINE_LIGHT_GRAY);
+        color_palette[8]  = CONSOLE_AllocColor(WINE_DARK_GRAY);
+        color_palette[9]  = CONSOLE_AllocColor(WINE_LIGHT_BLUE);
+        color_palette[10] = CONSOLE_AllocColor(WINE_LIGHT_GREEN);
+        color_palette[11] = CONSOLE_AllocColor(WINE_LIGHT_CYAN);
+        color_palette[12] = CONSOLE_AllocColor(WINE_LIGHT_RED);
+        color_palette[13] = CONSOLE_AllocColor(WINE_LIGHT_MAGENTA);
+        color_palette[14] = CONSOLE_AllocColor(WINE_YELLOW);
+        color_palette[15] = CONSOLE_AllocColor(WINE_WHITE);
 
         registered_colors = TRUE;
     }
@@ -119,7 +117,7 @@ void WINAPI INT_Int10Handler( CONTEXT *context )
                 	   BX_reg(context));
                 	CONSOLE_ResizeScreen(40, 25);
                 	CONSOLE_ClearScreen();
-                	video_columns = 40;
+                    DOSMEM_BiosData()->VideoColumns = 40;
                 	break;                
             	case 0x02:
             	case 0x03:
@@ -129,7 +127,7 @@ void WINAPI INT_Int10Handler( CONTEXT *context )
             	       BX_reg(context));
             	    CONSOLE_ResizeScreen(80, 25);
             	    CONSOLE_ClearScreen();
-            	    video_columns = 80;
+                    DOSMEM_BiosData()->VideoColumns = 80;
             	    break;
             	case 0x13:
             	    TRACE(int10, "Setting VESA 320x200 256-color mode\n");
@@ -233,14 +231,14 @@ void WINAPI INT_Int10Handler( CONTEXT *context )
 		default:
 		    FIXME(int10,"VESA Set Video Mode (0x%x) - Not Supported\n", BX_reg(context));
 	    }
-            video_mode = BX_reg(context);
+            DOSMEM_BiosData()->VideoMode = BX_reg(context);
             AL_reg(context) = 0x4f;
 	    AH_reg(context) = 0x00;
 	    break;	
 	case 0x03: /* VESA SuperVGA BIOS - GET CURRENT VIDEO MODE */
 		AL_reg(context) = 0x4f;
 		AH_reg(context) = 0x00; /* should probly check if a vesa mode has ben set */
-		BX_reg(context) = video_mode;
+		BX_reg(context) = DOSMEM_BiosData()->VideoMode;
 		break;
 	case 0x04: /* VESA SuperVGA BIOS - SAVE/RESTORE SuperVGA VIDEO STATE */
 		ERR(int10,"VESA SAVE/RESTORE Video State - Not Implemented\n");
@@ -302,8 +300,8 @@ else {
                    AL_reg(context));
                 CONSOLE_ResizeScreen(40, 25);
                 CONSOLE_ClearScreen();
-                video_mode = AL_reg(context);
-                video_columns = 40;
+                DOSMEM_BiosData()->VideoMode = AL_reg(context);
+                DOSMEM_BiosData()->VideoColumns = 40;
                 break;                
             case 0x02:
             case 0x03:
@@ -313,13 +311,13 @@ else {
                    AL_reg(context));
                 CONSOLE_ResizeScreen(80, 25);
                 CONSOLE_ClearScreen();
-                video_mode = AL_reg(context);
-                video_columns = 80;
+                DOSMEM_BiosData()->VideoMode = AL_reg(context);
+                DOSMEM_BiosData()->VideoColumns = 80;
                 break;
             case 0x13:
                 TRACE(int10, "Setting VGA 320x200 256-color mode\n");
                 VGA_SetMode(320,200,8);
-                video_mode = AL_reg(context);
+                DOSMEM_BiosData()->VideoMode = AL_reg(context);
                 break;
             default:
                 FIXME(int10, "Set Video Mode (0x%x) - Not Supported\n", 
@@ -349,9 +347,15 @@ else {
         break;
 
     case 0x03: /* GET CURSOR POSITION AND SIZE */
-        FIXME(int10, "Get Cursor Position and Size - Not Supported\n");
-        CX_reg(context) = 0x0000; /* Bogus cursor data */
-        DX_reg(context) = 0x0000;
+        {
+          CHAR row, col;
+
+          FIXME(int10, "Get cursor position and size - partially supported\n");
+          CX_reg(context) = 0x0a0b; /* Bogus cursor data */
+          CONSOLE_GetCursorPosition(&row, &col);
+          DH_reg(context) = row;
+          DL_reg(context) = col;
+        }
         break;
 
     case 0x04: /* READ LIGHT PEN POSITION */
@@ -392,7 +396,7 @@ else {
             int bg, fg, attr;
             if (BH_reg(context)) /* Write to different page */
             {
-                FIXME(int10, "Read Character and Attribute at Cursor Position -"
+                FIXME(int10, "Read character and attribute at cursor position -"
                       " Can't read from non-0 page\n");
                 AL_reg(context) = ' '; /* That page is blank */
                 AH_reg(context) = 7;
@@ -447,8 +451,8 @@ else {
                foreground already is... FIXME */
             TRACE(int10, "Set Background/Border Color: %d\n", 
                BL_reg(context));
-            CONSOLE_SetBackgroundColor(color_pallet[0],
-               color_pallet[BL_reg(context)]);   
+            CONSOLE_SetBackgroundColor(color_palette[0],
+               color_palette[BL_reg(context)]);   
             break;
         case 0x01: /* SET PALETTE */
             FIXME(int10, "Set Palette - Not Supported\n");
@@ -476,10 +480,10 @@ else {
         break;
 
     case 0x0f: /* GET CURRENT VIDEO MODE */
-        TRACE(int10, "Get Current Video Mode\n");
+        TRACE(int10, "Get current video mode\n");
         /* Note: This should not be a constant value. */
-        AL_reg(context) = video_mode;
-        AH_reg(context) = video_columns;
+        AL_reg(context) = DOSMEM_BiosData()->VideoMode;
+        AH_reg(context) = DOSMEM_BiosData()->VideoColumns;
         BH_reg(context) = 0; /* Display page 0 */
         break;
 
@@ -597,20 +601,24 @@ else {
     case 0x12: /* ALTERNATE FUNCTION SELECT */
         switch BL_reg(context) {
         case 0x10: /* GET EGA INFO */
-            TRACE(int10, "EGA Info Requested\n");
+            TRACE(int10, "EGA info requested\n");
             BH_reg(context) = 0x00;   /* Color screen */
-            BL_reg(context) = 0x03;   /* 256K EGA card */
-            CH_reg(context) = 0x00;   /* Switch settings?? */
-            CL_reg(context) = 0x09;   /* EGA+ card */
+            BL_reg(context) =
+                DOSMEM_BiosData()->ModeOptions >> 5; /* EGA memory size */
+            CX_reg(context) =
+                DOSMEM_BiosData()->FeatureBitsSwitches;
             break;
         case 0x20: /* ALTERNATE PRTSC */
             FIXME(int10, "Install Alternate Print Screen - Not Supported\n");
             break;
         case 0x30: /* SELECT VERTICAL RESOULTION */
-            FIXME(int10, "Select Vertical Resoultion - Not Supported\n");
+            FIXME(int10, "Select vertical resolution - not supported\n");
             break;
-        case 0x31: /* ENABLE/DISABLE PALETTE LOADING */
-            FIXME(int10, "Palette Loading - Not Supported\n");
+        case 0x31: /* ENABLE/DISABLE DEFAULT PALETTE LOADING */
+            FIXME(int10, "Default palette loading - not supported\n");
+            DOSMEM_BiosData()->VGASettings =
+                (DOSMEM_BiosData()->VGASettings & 0xf7) |
+                ((AL_reg(context) == 1) << 3);
             break;
         case 0x32: /* ENABLE/DISABLE VIDEO ADDRERSSING */
             FIXME(int10, "Video Addressing - Not Supported\n");
@@ -619,7 +627,9 @@ else {
             FIXME(int10, "Gray Scale Summing - Not Supported\n");
             break;
         case 0x34: /* ENABLE/DISABLE CURSOR EMULATION */
-            FIXME(int10, "Cursor Emulation - Not Supported\n");
+            TRACE(int10, "Set cursor emulation to %d\n", AL_reg(context));
+            DOSMEM_BiosData()->ModeOptions =
+                (DOSMEM_BiosData()->ModeOptions & 0xfe)|(AL_reg(context) == 1);
             break;
         case 0x36: /* VIDEO ADDRESS CONTROL */
             FIXME(int10, "Video Address Control - Not Supported\n");
@@ -655,13 +665,36 @@ else {
     break;
 
     case 0x1b: /* FUNCTIONALITY/STATE INFORMATION */
-        FIXME(int10, "Get Functionality/State Information - Not Supported\n");
+        FIXME(int10, "Get functionality/state information - partially implemented\n");
+        if (BX_reg(context) == 0x0)
+        {
+          AL_reg(context) = 0x1b;
+          if (ISV86(context)) /* real */
+            ES_reg(context) = 0xf000;
+          else
+            ES_reg(context) = DOSMEM_BiosSysSeg;
+          BX_reg(context) = 0xe000;
+        }
         break;
 
     case 0x1c: /* SAVE/RESTORE VIDEO STATE */
         FIXME(int10, "Save/Restore Video State - Not Supported\n");
         break;
 
+    case 0x4f: /* Get SuperVGA INFORMATION */
+        {
+          BYTE *p =
+               CTX_SEG_OFF_TO_LIN(context, ES_reg(context), DI_reg(context));
+          BOOL16 vesa20 = (*(DWORD *)p == "VBE2");
+  
+          TRACE(int10, "Get SuperVGA information\n");
+          AH_reg(context) = 0;
+          *(WORD *)p = "VESA";
+          *(WORD *)(p+0x04) = 0x0200; /* VESA 2.0 */
+          *(DWORD *)(p+0x06) = NULL;   /* pointer to OEM name */
+          *(DWORD *)(p+0x0a) = 0xfffffffd; /* capabilities flags :-) */
+        }
+        break;
     default:
         FIXME(int10, "Unknown - 0x%x\n", AH_reg(context));
         INT_BARF( context, 0x10 );
@@ -712,8 +745,8 @@ static void conv_text_mode_attributes(char attribute, int *fg, int *bg,
     /* Background Color is stored in bits 6 through 4 */
     /* If this has bit 7 set, then we need to blink */
 
-    *fg = color_pallet[attribute & 15];
-    *bg = color_pallet[(attribute & 112) / 16];
+    *fg = color_palette[attribute & 15];
+    *bg = color_palette[(attribute & 112) / 16];
     *wattribute = attribute & 128;
 
 }
