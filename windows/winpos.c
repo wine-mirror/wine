@@ -2533,14 +2533,9 @@ static UINT SWP_DoNCCalcSize( WND* wndPtr, WINDOWPOS* pWinpos,
 
          /* FIXME: WVR_ALIGNxxx */
 
-         /* check if client area moved relative to the window */
-         if ( ( (wndPtr->rectClient.left - pNewClientRect->left) != 
-                (wndPtr->rectWindow.left - pNewWindowRect->left) ) ||
-              ( (wndPtr->rectClient.top - pNewClientRect->top) != 
-                (wndPtr->rectWindow.top - pNewWindowRect->top) ) )
-         {   
+         if( pNewClientRect->left != wndPtr->rectClient.left ||
+             pNewClientRect->top != wndPtr->rectClient.top )
              pWinpos->flags &= ~SWP_NOCLIENTMOVE;
-         }
 
          if( (pNewClientRect->right - pNewClientRect->left !=
               wndPtr->rectClient.right - wndPtr->rectClient.left) ||
