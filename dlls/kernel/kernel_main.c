@@ -165,8 +165,10 @@ static BOOL process_attach(void)
         LoadLibrary16( "system.drv" );
     }
 
+#ifdef __i386__
     /* Create the shared heap for broken win95 native dlls */
     if (GetVersion() & 0x80000000) HeapCreate( HEAP_SHARED, 0, 0 );
+#endif
 
     /* initialize LDT locking */
     wine_ldt_init_locking( ldt_lock, ldt_unlock );
