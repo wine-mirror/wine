@@ -32,6 +32,8 @@
 #define MAX_FONT_FAMILIES	128
 #define MAX_LFD_LENGTH		256
 
+#define MAX_FONT_SIZE           5000    /* Max size in pixels */
+
 #define REMOVE_SUBSETS		1
 #define UNMARK_SUBSETS		0
 
@@ -2224,6 +2226,13 @@ static X_PHYSFONT XFONT_RealizeFont( LPLOGFONT16 plf )
 		TRACE(font,"(%u) '%s' h=%i weight=%i %s\n",
 			     plf->lfCharSet, plf->lfFaceName, plf->lfHeight, 
 			     plf->lfWeight, (plf->lfItalic) ? "Italic" : "" );
+
+		if(abs(plf->lfHeight) > MAX_FONT_SIZE) {
+		    ERR(font,
+	  "plf->lfHeight = %d, this is probably not right. Setting to 100\n", 
+			plf->lfHeight);
+		    plf->lfHeight = 100;
+		}
 
 		XFONT_MatchDeviceFont( fontList, &fm );
 
