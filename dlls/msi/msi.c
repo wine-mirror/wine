@@ -1169,11 +1169,19 @@ INSTALLSTATE WINAPI MsiGetComponentPathW(LPCWSTR szProduct, LPCWSTR szComponent,
     TRACE("found path of (%s:%s)(%s)\n", debugstr_w(szComponent),
            debugstr_w(szProduct), debugstr_w(path));
 
-    FIXME("Only working for installed files, not registry keys\n");
-    if ( GetFileAttributesW(path) != INVALID_FILE_ATTRIBUTES )
-        rrc = INSTALLSTATE_LOCAL;
+    if (path[0]=='0')
+    {
+        FIXME("Registry entry.. check entry\n");
+            rrc = INSTALLSTATE_LOCAL;
+    }
     else
-        rrc = INSTALLSTATE_ABSENT;
+    {
+        /* PROBIBLY a file */
+        if ( GetFileAttributesW(path) != INVALID_FILE_ATTRIBUTES )
+            rrc = INSTALLSTATE_LOCAL;
+        else
+            rrc = INSTALLSTATE_ABSENT;
+    }
 
     if( pcchBuf )
     {
