@@ -19,6 +19,7 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
+#define COM_NO_WINDOWS_H
 #include "initguid.h"
 
 /* GUIDs defined in uuids.lib */

@@ -22,6 +22,7 @@
 #ifndef SHBROWSER_H
 #define SHBROWSER_H
 
+#define COM_NO_WINDOWS_H
 #include "shlobj.h"
 #include "winbase.h"
 #include "objbase.h"

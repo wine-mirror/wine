@@ -21,9 +21,7 @@
 #ifndef MAPICODE_H
 #define MAPICODE_H
 
-#ifndef __WINE__
 #include "winerror.h"
-#endif
 
 #define MAKE_MAPI_SCODE(sev,fac,code) \
     ( (((ULONG)(sev)<<31) | ((ULONG)(fac)<<16) | ((ULONG)(code))) )

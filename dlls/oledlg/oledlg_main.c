@@ -18,6 +18,7 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
+#define COM_NO_WINDOWS_H
 #include "windef.h"
 #include "winbase.h"
 #include "winerror.h"
@@ -289,6 +290,3 @@ UINT WINAPI OleUIChangeSourceW(
   SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
   return OLEUI_FALSE;
 }
-
-
-

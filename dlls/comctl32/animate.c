@@ -28,6 +28,7 @@
  *   - concurrent access to infoPtr
  */
 
+#define COM_NO_WINDOWS_H
 #include <string.h>
 #include "winbase.h"
 #include "commctrl.h"

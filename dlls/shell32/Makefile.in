@@ -1,4 +1,4 @@
-EXTRADEFS = -D_SHELL32_
+EXTRADEFS = -D_SHELL32_ -DCOM_NO_WINDOWS_H
 TOPSRCDIR = @top_srcdir@
 TOPOBJDIR = ../..
 SRCDIR    = @srcdir@

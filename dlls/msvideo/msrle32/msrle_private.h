@@ -19,6 +19,7 @@
 #ifndef __MSRLE32_PRIVATE_H
 #define __MSRLE32_PRIVATE_H
 
+#define COM_NO_WINDOWS_H
 #include "winbase.h"
 #include "mmsystem.h"
 #include "vfw.h"

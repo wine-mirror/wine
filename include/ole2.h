@@ -27,9 +27,7 @@
 #define __WINE_INCLUDE_OLEIDL
 #include "oleidl.h"
 #undef __WINE_INCLUDE_OLEIDL
-#ifndef __WINE__
 #include "oleauto.h"
-#endif
 struct tagMSG;
 
 #ifdef __cplusplus
@@ -150,4 +148,3 @@ HRESULT     WINAPI OleSetAutoConvert( REFCLSID clsidOld, REFCLSID clsidNew );
 #endif /* defined(__cplusplus) */
 
 #endif  /* __WINE_OLE2_H */
-

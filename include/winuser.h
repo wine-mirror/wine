@@ -29,7 +29,7 @@ extern "C" {
 
 /* Define a bunch of callback types */
 
-#if defined(STRICT) || defined(__WINE__)
+#if defined(STRICT)
 typedef INT_PTR (CALLBACK *DLGPROC)(HWND,UINT,WPARAM,LPARAM);
 typedef BOOL    (CALLBACK *DRAWSTATEPROC)(HDC,LPARAM,WPARAM,int,int);
 typedef INT     (CALLBACK *EDITWORDBREAKPROCA)(LPSTR,INT,INT,INT);
@@ -65,7 +65,7 @@ typedef FARPROC SENDASYNCPROC;
 typedef FARPROC TIMERPROC;
 typedef FARPROC WINEVENTPROC;
 typedef FARPROC WNDENUMPROC;
-#endif /* STRICT || __WINE__ */
+#endif /* STRICT */
 
 typedef NAMEENUMPROCA WINSTAENUMPROCA;
 typedef NAMEENUMPROCA DESKTOPENUMPROCA;

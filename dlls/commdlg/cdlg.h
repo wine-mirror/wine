@@ -21,6 +21,7 @@
 #ifndef _WINE_DLL_CDLG_H
 #define _WINE_DLL_CDLG_H
 
+#define COM_NO_WINDOWS_H
 #include "dlgs.h"
 #include "wine/windef16.h"
 #include "wownt32.h"

@@ -18,6 +18,7 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
+#define COM_NO_WINDOWS_H
 #include <string.h>
 #include "winreg.h"
 #include "initguid.h"
@@ -94,4 +95,3 @@ HRESULT WINAPI SHDOCVW_DllUnregisterServer()
     FIXME("(), stub!\n");
     return S_OK;
 }
-

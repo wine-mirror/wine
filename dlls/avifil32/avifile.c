@@ -26,6 +26,7 @@
  *  - IAVIStream_fnSetInfo: a stub.
  */
 
+#define COM_NO_WINDOWS_H
 #include <assert.h>
 
 #include "winbase.h"

@@ -20,12 +20,10 @@
 #define __WINE_MAPIDEFS_H
 
 #include "windef.h"
-#ifndef __WINE__
 #include "windows.h"
 #include "winerror.h"
 #ifndef _OBJBASE_H_
 #include "objbase.h"
-#endif
 #endif
 
 /* Some types */

@@ -21,6 +21,7 @@
 #ifndef __WINE_SHDOCVW_H
 #define __WINE_SHDOCVW_H
 
+#define COM_NO_WINDOWS_H
 /* FIXME: Is there a better way to deal with all these includes? */
 #include "wingdi.h"
 #include "winbase.h"

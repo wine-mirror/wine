@@ -19,6 +19,7 @@
 #ifndef __WINE_MSVIDEO_PRIVATE_H
 #define __WINE_MSVIDEO_PRIVATE_H
 
+#define COM_NO_WINDOWS_H
 #include "winbase.h"
 #include "windef.h"
 #include "vfw.h"

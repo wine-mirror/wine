@@ -16,13 +16,11 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
-#ifndef __WINE__
 #include "rpc.h"
 #include "rpcndr.h"
 #ifndef COM_NO_WINDOWS_H
 #include "windows.h"
 #include "ole2.h"
-#endif
 #endif
 
 #ifndef __WINE_URLMON_H

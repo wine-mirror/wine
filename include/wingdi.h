@@ -1166,7 +1166,7 @@ typedef struct
 
 DECL_WINELIB_TYPE_AW(NEWTEXTMETRICEX)
 
-#if defined(STRICT) || defined(__WINE__)
+#if defined(STRICT)
 
 #if !defined(NOTEXTMETRIC)
 typedef int (CALLBACK *OLDFONTENUMPROCA)(const LOGFONTA *, const TEXTMETRICA *, DWORD, LPARAM);
@@ -1184,7 +1184,7 @@ DECL_WINELIB_TYPE_AW(FONTENUMPROC)
 typedef INT (CALLBACK *GOBJENUMPROC)(LPVOID, LPARAM);
 typedef VOID (CALLBACK *LINEDDAPROC)(INT, INT, LPARAM);
 
-#else /* defined(STRICT) || defined(__WINE__) */
+#else /* defined(STRICT) */
 
 typedef FARPROC OLDFONTENUMPROC;
 
@@ -1195,7 +1195,7 @@ DECL_WINELIB_TYPE_AW(FONTENUMPROC)
 typedef FARPROC GOBJENUMPROC;
 typedef FARPROC LINEDDAPROC;
 
-#endif /* defined(STRICT) || defined(__WINE__) */
+#endif /* defined(STRICT) */
 
   /* tmPitchAndFamily bits */
 #define TMPF_FIXED_PITCH    1		/* means variable pitch */
