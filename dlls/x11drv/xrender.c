@@ -1290,45 +1290,6 @@ BOOL X11DRV_XRender_ExtTextOut( X11DRV_PDEVICE *physDev, INT x, INT y, UINT flag
 	}
 	wine_tsx11_unlock();
 
-	if (lf.lfUnderline || lf.lfStrikeOut) {
-	    int linePos;
-	    unsigned int lineWidth;
-	    UINT nMetricsSize = GetOutlineTextMetricsW(hdc, 0, NULL);
-	    OUTLINETEXTMETRICW* otm = HeapAlloc(GetProcessHeap(), 0, nMetricsSize);
-	    if (!otm) goto done;
-
-	    GetOutlineTextMetricsW(hdc, nMetricsSize, otm);
-
-            wine_tsx11_lock();
-	    XSetForeground( gdi_display, physDev->gc, physDev->textPixel );
-
-	    if (lf.lfUnderline) {
-                linePos = X11DRV_YWStoDS(physDev, otm->otmsUnderscorePosition);
-                lineWidth = X11DRV_YWStoDS(physDev, otm->otmsUnderscoreSize);
-
-                XSetLineAttributes( gdi_display, physDev->gc, lineWidth,
-                                    LineSolid, CapProjecting, JoinBevel );
-                XDrawLine( gdi_display, physDev->drawable, physDev->gc,
-                           physDev->org.x + x - linePos * sinEsc,
-                           physDev->org.y + y - linePos * cosEsc,
-                           physDev->org.x + x + width * cosEsc - linePos * sinEsc,
-                           physDev->org.y + y - width * sinEsc - linePos * cosEsc );
-	    }
-
-	    if (lf.lfStrikeOut) { 
-                linePos = X11DRV_YWStoDS(physDev, otm->otmsStrikeoutPosition);
-                lineWidth = X11DRV_YWStoDS(physDev, otm->otmsStrikeoutSize);
-
-                XSetLineAttributes( gdi_display, physDev->gc, lineWidth,
-                                    LineSolid, CapProjecting, JoinBevel );
-                XDrawLine( gdi_display, physDev->drawable, physDev->gc,
-                           physDev->org.x + x, physDev->org.y + y - linePos,
-                           physDev->org.x + x + width, physDev->org.y + y - linePos );
-	    } 
-            wine_tsx11_unlock();
-	    HeapFree(GetProcessHeap(), 0, otm);
-	}
-
     } else {
         INT offset = 0, xoff = 0, yoff = 0;
         wine_tsx11_lock();
@@ -1485,6 +1446,45 @@ BOOL X11DRV_XRender_ExtTextOut( X11DRV_PDEVICE *physDev, INT x, INT y, UINT flag
 	wine_tsx11_unlock();
     }
     LeaveCriticalSection(&xrender_cs);
+
+    if (lf.lfUnderline || lf.lfStrikeOut) {
+        int linePos;
+        unsigned int lineWidth;
+        UINT nMetricsSize = GetOutlineTextMetricsW(hdc, 0, NULL);
+        OUTLINETEXTMETRICW* otm = HeapAlloc(GetProcessHeap(), 0, nMetricsSize);
+        if (!otm) goto done;
+
+        GetOutlineTextMetricsW(hdc, nMetricsSize, otm);
+
+        wine_tsx11_lock();
+        XSetForeground( gdi_display, physDev->gc, physDev->textPixel );
+
+        if (lf.lfUnderline) {
+            linePos = X11DRV_YWStoDS(physDev, otm->otmsUnderscorePosition);
+            lineWidth = X11DRV_YWStoDS(physDev, otm->otmsUnderscoreSize);
+
+            XSetLineAttributes( gdi_display, physDev->gc, lineWidth,
+                                LineSolid, CapProjecting, JoinBevel );
+            XDrawLine( gdi_display, physDev->drawable, physDev->gc,
+                       physDev->org.x + x - linePos * sinEsc,
+                       physDev->org.y + y - linePos * cosEsc,
+                       physDev->org.x + x + width * cosEsc - linePos * sinEsc,
+                       physDev->org.y + y - width * sinEsc - linePos * cosEsc );
+        }
+
+        if (lf.lfStrikeOut) { 
+            linePos = X11DRV_YWStoDS(physDev, otm->otmsStrikeoutPosition);
+            lineWidth = X11DRV_YWStoDS(physDev, otm->otmsStrikeoutSize);
+            
+            XSetLineAttributes( gdi_display, physDev->gc, lineWidth,
+                                LineSolid, CapProjecting, JoinBevel );
+            XDrawLine( gdi_display, physDev->drawable, physDev->gc,
+                       physDev->org.x + x, physDev->org.y + y - linePos,
+                       physDev->org.x + x + width, physDev->org.y + y - linePos );
+        }
+        wine_tsx11_unlock();
+        HeapFree(GetProcessHeap(), 0, otm);
+    }
 
     if(deltas && deltas != lpDx)
         HeapFree(GetProcessHeap(), 0, deltas);
