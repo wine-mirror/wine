@@ -30,6 +30,13 @@
 #define REDRAW
 #endif
 
+static const char *strings[4] = {
+  "First added",
+  "Second added",
+  "Third added",
+  "Fourth added which is very long because at some time we only had a 256 byte character buffer and that was overflowing in one of those applications that had a common dialog file open box and tried to add a 300 characters long custom filter string which of course the code did not like and crashed. Just make sure this string is longer than 256 characters."
+};
+
 HWND
 create_listbox (DWORD add_style)
 {
@@ -39,9 +46,10 @@ create_listbox (DWORD add_style)
                             NULL, NULL, NULL, 0);
 
   assert (handle);
-  SendMessage (handle, LB_ADDSTRING, 0, (LPARAM) (LPCTSTR) "First added");
-  SendMessage (handle, LB_ADDSTRING, 0, (LPARAM) (LPCTSTR) "Second added");
-  SendMessage (handle, LB_ADDSTRING, 0, (LPARAM) (LPCTSTR) "Third added");
+  SendMessage (handle, LB_ADDSTRING, 0, (LPARAM) (LPCTSTR) strings[0]);
+  SendMessage (handle, LB_ADDSTRING, 0, (LPARAM) (LPCTSTR) strings[1]);
+  SendMessage (handle, LB_ADDSTRING, 0, (LPARAM) (LPCTSTR) strings[2]);
+  SendMessage (handle, LB_ADDSTRING, 0, (LPARAM) (LPCTSTR) strings[3]);
 
 #ifdef VISIBLE
   ShowWindow (handle, SW_SHOW);
@@ -119,6 +127,7 @@ check (const struct listbox_test test)
   struct listbox_stat answer;
   HWND hLB=create_listbox (test.prop.add_style);
   RECT second_item;
+  int i;
 
   listbox_query (hLB, &answer);
   listbox_ok (test, init, answer);
@@ -140,6 +149,24 @@ check (const struct listbox_test test)
   SendMessage (hLB, LB_SELITEMRANGE, TRUE, MAKELPARAM(1, 2));
   listbox_query (hLB, &answer);
   listbox_ok (test, sel, answer);
+
+  for (i=0;i<4;i++) {
+	DWORD size = SendMessage (hLB, LB_GETTEXTLEN, i, 0);
+	CHAR *txt;
+	WCHAR *txtw;
+
+	txt = HeapAlloc (GetProcessHeap(), 0, size+1);
+	SendMessageA(hLB, LB_GETTEXT, i, (LPARAM)txt);
+        ok(!strcmp (txt, strings[i]), "returned string for item %d does not match %s vs %s\n", i, txt, strings[i]);
+
+	txtw = HeapAlloc (GetProcessHeap(), 0, 2*size+2);
+	SendMessageW(hLB, LB_GETTEXT, i, (LPARAM)txtw);
+	WideCharToMultiByte( CP_ACP, 0, txtw, -1, txt, size, NULL, NULL );
+        ok(!strcmp (txt, strings[i]), "returned string for item %d does not match %s vs %s\n", i, txt, strings[i]);
+
+	HeapFree (GetProcessHeap(), 0, txtw);
+	HeapFree (GetProcessHeap(), 0, txt);
+  }
   
   WAIT;
   DestroyWindow (hLB);

@@ -766,7 +766,7 @@ INT WINPROC_MapMsg32ATo32W( HWND hwnd, UINT msg, WPARAM *pwparam, LPARAM *plpara
 
     case LB_GETTEXT:		    /* FIXME: fixed sized buffer */
         { if ( WINPROC_TestLBForStr( hwnd ))
-	  { LPARAM *ptr = (LPARAM *)HeapAlloc( GetProcessHeap(), 0, 256 * sizeof(WCHAR) + sizeof(LPARAM) );
+	  { LPARAM *ptr = (LPARAM *)HeapAlloc( GetProcessHeap(), 0, 512 * sizeof(WCHAR) + sizeof(LPARAM) );
             if (!ptr) return -1;
             *ptr++ = *plparam;  /* Store previous lParam */
             *plparam = (LPARAM)ptr;
@@ -791,7 +791,7 @@ INT WINPROC_MapMsg32ATo32W( HWND hwnd, UINT msg, WPARAM *pwparam, LPARAM *plpara
 
     case CB_GETLBTEXT:    /* FIXME: fixed sized buffer */
         { if ( WINPROC_TestCBForStr( hwnd ))
-          { LPARAM *ptr = (LPARAM *)HeapAlloc( GetProcessHeap(), 0, 256 * sizeof(WCHAR) + sizeof(LPARAM) );
+          { LPARAM *ptr = (LPARAM *)HeapAlloc( GetProcessHeap(), 0, 512 * sizeof(WCHAR) + sizeof(LPARAM) );
             if (!ptr) return -1;
             *ptr++ = *plparam;  /* Store previous lParam */
             *plparam = (LPARAM)ptr;
@@ -1061,7 +1061,7 @@ static INT WINPROC_MapMsg32WTo32A( HWND hwnd, UINT msg, WPARAM *pwparam, LPARAM 
 
     case LB_GETTEXT:			/* FIXME: fixed sized buffer */
         { if ( WINPROC_TestLBForStr( hwnd ))
-	  { LPARAM *ptr = (LPARAM *)HeapAlloc( GetProcessHeap(), 0, 256 + sizeof(LPARAM) );
+	  { LPARAM *ptr = (LPARAM *)HeapAlloc( GetProcessHeap(), 0, 512 + sizeof(LPARAM) );
             if (!ptr) return -1;
             *ptr++ = *plparam;  /* Store previous lParam */
             *plparam = (LPARAM)ptr;
@@ -1087,7 +1087,7 @@ static INT WINPROC_MapMsg32WTo32A( HWND hwnd, UINT msg, WPARAM *pwparam, LPARAM 
 
     case CB_GETLBTEXT:		/* FIXME: fixed sized buffer */
         { if ( WINPROC_TestCBForStr( hwnd ))
-	  { LPARAM *ptr = (LPARAM *)HeapAlloc( GetProcessHeap(), 0, 256 + sizeof(LPARAM) );
+	  { LPARAM *ptr = (LPARAM *)HeapAlloc( GetProcessHeap(), 0, 512 + sizeof(LPARAM) );
             if (!ptr) return -1;
             *ptr++ = *plparam;  /* Store previous lParam */
             *plparam = (LPARAM)ptr;
@@ -2782,7 +2782,7 @@ INT WINPROC_MapMsg32WTo16( HWND hwnd, UINT msg32, WPARAM wParam32,
     case LB_GETTEXT:
         if ( WINPROC_TestLBForStr( hwnd ))
         {
-            LPSTR str = HeapAlloc( GetProcessHeap(), 0, 256 ); /* FIXME: fixed sized buffer */
+            LPSTR str = HeapAlloc( GetProcessHeap(), 0, 512 ); /* FIXME: fixed sized buffer */
             if (!str) return -1;
             *pmsg16    = LB_GETTEXT16;
             *plparam   = (LPARAM)MapLS(str);
@@ -2791,7 +2791,7 @@ INT WINPROC_MapMsg32WTo16( HWND hwnd, UINT msg32, WPARAM wParam32,
     case CB_GETLBTEXT:
         if ( WINPROC_TestCBForStr( hwnd ))
         {
-            LPSTR str = HeapAlloc( GetProcessHeap(), 0, 256 ); /* FIXME: fixed sized buffer */
+            LPSTR str = HeapAlloc( GetProcessHeap(), 0, 512 ); /* FIXME: fixed sized buffer */
             if (!str) return -1;
             *pmsg16    = CB_GETLBTEXT16;
             *plparam   = (LPARAM)MapLS(str);
