@@ -374,7 +374,8 @@ BOOL32 WINAPI DuplicateHandle( HANDLE32 source_process, HANDLE32 source,
 
     SYSTEM_LOCK();
 
-    if (!(src_pdb = PROCESS_GetPtr( source_process, PROCESS_DUP_HANDLE, &src_process )))
+    if (!(src_pdb = (PDB32 *)HANDLE_GetObjPtr( PROCESS_Current(), source_process,
+                                    K32OBJ_PROCESS, PROCESS_DUP_HANDLE, &src_process )))
         goto done;
     if (!(obj = HANDLE_GetObjPtr( src_pdb, source, K32OBJ_UNKNOWN, 0, &src_handle )))
         goto done;
@@ -388,7 +389,8 @@ BOOL32 WINAPI DuplicateHandle( HANDLE32 source_process, HANDLE32 source,
 
     /* And duplicate the handle in the dest process */
 
-    if (!(dst_pdb = PROCESS_GetPtr( dest_process, PROCESS_DUP_HANDLE, &dst_process )))
+    if (!(dst_pdb = (PDB32 *)HANDLE_GetObjPtr( PROCESS_Current(), dest_process,
+                                    K32OBJ_PROCESS, PROCESS_DUP_HANDLE, &dst_process )))
         goto done;
 
     if ((src_process != -1) && (src_handle != -1) && (dst_process != -1))

@@ -56,17 +56,6 @@ PDB32 *PROCESS_Initial(void)
 }
 
 /***********************************************************************
- *           PROCESS_GetPtr
- *
- * Get a process from a handle, incrementing the PDB refcount.
- */
-PDB32 *PROCESS_GetPtr( HANDLE32 handle, DWORD access, int *server_handle )
-{
-    return (PDB32 *)HANDLE_GetObjPtr( PROCESS_Current(), handle,
-                                     K32OBJ_PROCESS, access, server_handle );
-}
-
-/***********************************************************************
  *           PROCESS_QueryInfo
  *
  * Retrieve information about a process

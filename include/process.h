@@ -153,7 +153,6 @@ extern BOOL32 PROCESS_Init( void );
 extern PDB32 *PROCESS_Current(void);
 extern BOOL32 PROCESS_IsCurrent( HANDLE32 handle );
 extern PDB32 *PROCESS_Initial(void);
-extern PDB32 *PROCESS_GetPtr( HANDLE32 handle, DWORD access, int *server_handle );
 extern PDB32 *PROCESS_IdToPDB( DWORD id );
 extern PDB32 *PROCESS_Create( struct _NE_MODULE *pModule, LPCSTR cmd_line,
                               LPCSTR env, HINSTANCE16 hInstance,
