@@ -89,22 +89,168 @@ gltex_download_texture(IDirectDrawSurfaceImpl *surf_ptr) {
 
     FIXME("This is not supported yet... Expect some graphical glitches !!!\n");
 
-    /* GL and memory are in sync again ... */
+    /* GL and memory are in sync again ... 
+       No need to change the 'global' flag as it only handles the 'MEMORY_DIRTY' case.
+    */
     gl_surf_ptr->dirty_flag = SURFACE_MEMORY;
     
     return DD_OK;
 }
 
-HRESULT
-gltex_upload_texture(IDirectDrawSurfaceImpl *surf_ptr) {
-    IDirect3DTextureGLImpl *gl_surf_ptr = (IDirect3DTextureGLImpl *) surf_ptr->tex_private;
-    GLuint tex_name = gl_surf_ptr->tex_name;
-    
-    TRACE(" activating OpenGL texture id %d.\n", tex_name);
-    glBindTexture(GL_TEXTURE_2D, tex_name);
+static GLenum
+convert_min_filter_to_GL(D3DTEXTUREMINFILTER dwMinState, D3DTEXTUREMIPFILTER dwMipState)
+{
+    GLenum gl_state;
 
+    if (dwMipState == D3DTFP_NONE) {
+        switch (dwMinState) {
+            case D3DTFN_POINT:  gl_state = GL_NEAREST; break;
+	    case D3DTFN_LINEAR: gl_state = GL_LINEAR;  break;
+	    default:            gl_state = GL_LINEAR;  break;
+	}
+    } else if (dwMipState == D3DTFP_POINT) {
+        switch (dwMinState) {
+            case D3DTFN_POINT:  gl_state = GL_NEAREST_MIPMAP_NEAREST; break;
+	    case D3DTFN_LINEAR: gl_state = GL_LINEAR_MIPMAP_NEAREST;  break;
+	    default:            gl_state = GL_LINEAR_MIPMAP_NEAREST;  break;
+	}
+    } else {
+        switch (dwMinState) {
+            case D3DTFN_POINT:  gl_state = GL_NEAREST_MIPMAP_LINEAR; break;
+	    case D3DTFN_LINEAR: gl_state = GL_LINEAR_MIPMAP_LINEAR;  break;
+	    default:            gl_state = GL_LINEAR_MIPMAP_LINEAR;  break;
+	}
+    }
+    return gl_state;
+}
+
+static GLenum
+convert_mag_filter_to_GL(D3DTEXTUREMAGFILTER dwState)
+{
+    GLenum gl_state;
+
+    switch (dwState) {
+        case D3DTFG_POINT:
+	    gl_state = GL_NEAREST;
+	    break;
+        case D3DTFG_LINEAR:
+	    gl_state = GL_LINEAR;
+	    break;
+        default:
+	    gl_state = GL_LINEAR;
+	    break;
+    }
+    return gl_state;
+}
+
+static GLenum
+convert_tex_address_to_GL(D3DTEXTUREADDRESS dwState)
+{
+    GLenum gl_state;
+    switch (dwState) {
+        case D3DTADDRESS_WRAP:   gl_state = GL_REPEAT; break;
+	case D3DTADDRESS_CLAMP:  gl_state = GL_CLAMP; break;
+	case D3DTADDRESS_BORDER: gl_state = GL_CLAMP_TO_EDGE; break;
+#if defined(GL_VERSION_1_4)
+	case D3DTADDRESS_MIRROR: gl_state = GL_MIRRORED_REPEAT; break;
+#elif defined(GL_ARB_texture_mirrored_repeat)
+	case D3DTADDRESS_MIRROR: gl_state = GL_MIRRORED_REPEAT_ARB; break;
+#endif
+	default:                 gl_state = GL_REPEAT; break;
+    }
+    return gl_state;
+}
+
+HRESULT
+gltex_upload_texture(IDirectDrawSurfaceImpl *surf_ptr, IDirect3DDeviceImpl *d3ddev, DWORD stage) {
+    IDirect3DTextureGLImpl *gl_surf_ptr = (IDirect3DTextureGLImpl *) surf_ptr->tex_private;
+    BOOLEAN changed = FALSE;
+    
     if (surf_ptr->mipmap_level != 0) {
         WARN(" application activating a sub-level of the mipmapping chain (level %d) !\n", surf_ptr->mipmap_level);
+    }
+
+    /* Now check if the texture parameters for this texture are still in-line with what D3D expect
+       us to do..
+
+       NOTE: there is no check for the situation where the same texture is bound to multiple stage
+             but with different parameters per stage.
+    */
+    if ((gl_surf_ptr->tex_parameters == NULL) ||
+	(gl_surf_ptr->tex_parameters[D3DTSS_MAXMIPLEVEL - D3DTSS_ADDRESSU] != 
+	 d3ddev->state_block.texture_stage_state[stage][D3DTSS_MAXMIPLEVEL - 1])) {
+	DWORD max_mip_level;
+	
+	if ((surf_ptr->surface_desc.ddsCaps.dwCaps & DDSCAPS_MIPMAP) == 0) {
+	    max_mip_level = 0;
+	} else {
+	    max_mip_level = surf_ptr->surface_desc.u2.dwMipMapCount - 1;
+	    if (d3ddev->state_block.texture_stage_state[stage][D3DTSS_MAXMIPLEVEL - 1] != 0) {
+		if (max_mip_level >= d3ddev->state_block.texture_stage_state[stage][D3DTSS_MAXMIPLEVEL - 1]) {
+		    max_mip_level = d3ddev->state_block.texture_stage_state[stage][D3DTSS_MAXMIPLEVEL - 1] - 1;
+		}
+	    }
+	}
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAX_LEVEL, max_mip_level);
+	changed = TRUE;
+    }
+    
+    if ((gl_surf_ptr->tex_parameters == NULL) ||
+	(gl_surf_ptr->tex_parameters[D3DTSS_MAGFILTER - D3DTSS_ADDRESSU] != 
+	 d3ddev->state_block.texture_stage_state[stage][D3DTSS_MAGFILTER - 1])) {
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, 
+			convert_mag_filter_to_GL(d3ddev->state_block.texture_stage_state[stage][D3DTSS_MAGFILTER - 1]));
+	changed = TRUE;
+    }
+    if ((gl_surf_ptr->tex_parameters == NULL) ||
+	(gl_surf_ptr->tex_parameters[D3DTSS_MINFILTER - D3DTSS_ADDRESSU] != 
+	 d3ddev->state_block.texture_stage_state[stage][D3DTSS_MINFILTER - 1]) ||
+	(gl_surf_ptr->tex_parameters[D3DTSS_MIPFILTER - D3DTSS_ADDRESSU] != 
+	 d3ddev->state_block.texture_stage_state[stage][D3DTSS_MIPFILTER - 1])) {
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER,
+			convert_min_filter_to_GL(d3ddev->state_block.texture_stage_state[stage][D3DTSS_MINFILTER - 1],
+						 d3ddev->state_block.texture_stage_state[stage][D3DTSS_MIPFILTER - 1]));
+	changed = TRUE;
+    }
+    if ((gl_surf_ptr->tex_parameters == NULL) ||
+	(gl_surf_ptr->tex_parameters[D3DTSS_ADDRESSU - D3DTSS_ADDRESSU] != 
+	 d3ddev->state_block.texture_stage_state[stage][D3DTSS_ADDRESSU - 1])) {
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S,
+			convert_tex_address_to_GL(d3ddev->state_block.texture_stage_state[stage][D3DTSS_ADDRESSU - 1]));
+	changed = TRUE;
+    }
+    if ((gl_surf_ptr->tex_parameters == NULL) ||
+	(gl_surf_ptr->tex_parameters[D3DTSS_ADDRESSV - D3DTSS_ADDRESSU] != 
+	 d3ddev->state_block.texture_stage_state[stage][D3DTSS_ADDRESSV - 1])) {
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T,
+			convert_tex_address_to_GL(d3ddev->state_block.texture_stage_state[stage][D3DTSS_ADDRESSV - 1]));	
+	changed = TRUE;
+    }
+    if ((gl_surf_ptr->tex_parameters == NULL) ||
+	(gl_surf_ptr->tex_parameters[D3DTSS_BORDERCOLOR - D3DTSS_ADDRESSU] != 
+	 d3ddev->state_block.texture_stage_state[stage][D3DTSS_BORDERCOLOR - 1])) {
+	GLfloat color[4];
+	
+	color[0] = ((d3ddev->state_block.texture_stage_state[stage][D3DTSS_BORDERCOLOR - 1] >> 16) & 0xFF) / 255.0;
+	color[1] = ((d3ddev->state_block.texture_stage_state[stage][D3DTSS_BORDERCOLOR - 1] >>  8) & 0xFF) / 255.0;
+	color[2] = ((d3ddev->state_block.texture_stage_state[stage][D3DTSS_BORDERCOLOR - 1] >>  0) & 0xFF) / 255.0;
+	color[3] = ((d3ddev->state_block.texture_stage_state[stage][D3DTSS_BORDERCOLOR - 1] >> 24) & 0xFF) / 255.0;
+	glTexParameterfv(GL_TEXTURE_2D, GL_TEXTURE_BORDER_COLOR, color);
+	changed = TRUE;
+    }
+
+    if (changed == TRUE) {
+	if (gl_surf_ptr->tex_parameters == NULL) {
+	    gl_surf_ptr->tex_parameters = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY,
+						    sizeof(DWORD) * (D3DTSS_MAXMIPLEVEL + 1 - D3DTSS_ADDRESSU));
+	}
+	memcpy(gl_surf_ptr->tex_parameters, &(d3ddev->state_block.texture_stage_state[stage][D3DTSS_ADDRESSU - 1]),
+	       sizeof(DWORD) * (D3DTSS_MAXMIPLEVEL + 1 - D3DTSS_ADDRESSU));
+    }
+
+    if (*(gl_surf_ptr->global_dirty_flag) != SURFACE_MEMORY_DIRTY) {
+	TRACE(" nothing to do - memory copy and GL state in synch for all texture levels.\n");
+	return DD_OK;
     }
     
     while (surf_ptr != NULL) {
@@ -133,7 +279,9 @@ gltex_upload_texture(IDirectDrawSurfaceImpl *surf_ptr) {
 	    surf_ptr = NULL;
 	}
     }
-
+    
+    *(gl_surf_ptr->global_dirty_flag) = SURFACE_MEMORY;
+    
     return DD_OK;
 }
 
@@ -164,6 +312,7 @@ gltex_setcolorkey_cb(IDirectDrawSurfaceImpl *This, DWORD dwFlags, LPDDCOLORKEY c
     }
 
     glThis->dirty_flag = SURFACE_MEMORY_DIRTY;
+    *(glThis->global_dirty_flag) = SURFACE_MEMORY_DIRTY;
     /* TODO: check color-keying on mipmapped surfaces... */
     
     return DD_OK;
@@ -277,6 +426,7 @@ gltex_bltfast(IDirectDrawSurfaceImpl *surf_ptr, DWORD dstx,
 	    glBindTexture(GL_TEXTURE_2D, cur_tex);
 	    LEAVE_GL();
 	    
+	    /* The SURFACE_GL case is not handled by the 'global' dirty flag */
 	    gl_surf_ptr->dirty_flag = SURFACE_GL;
 	    
 	    return DD_OK;
@@ -353,6 +503,7 @@ static void gltex_set_palette(IDirectDrawSurfaceImpl* This, IDirectDrawPaletteIm
     
     /* And set the dirty flag */
     glThis->dirty_flag = SURFACE_MEMORY_DIRTY;
+    *(glThis->global_dirty_flag) = SURFACE_MEMORY_DIRTY;
     
     /* TODO: check palette on mipmapped surfaces...
        TODO: do we need to re-upload in case of usage of the paletted texture extension ? */
@@ -408,8 +559,10 @@ gltex_unlock_update(IDirectDrawSurfaceImpl* This, LPCRECT pRect)
     glThis->unlock_update(This, pRect);
     
     /* Set the dirty flag according to the lock type */
-    if ((This->lastlocktype & DDLOCK_READONLY) == 0)
+    if ((This->lastlocktype & DDLOCK_READONLY) == 0) {
         glThis->dirty_flag = SURFACE_MEMORY_DIRTY;
+	*(glThis->global_dirty_flag) = SURFACE_MEMORY_DIRTY;
+    }
 }
 
 HRESULT WINAPI
@@ -499,6 +652,7 @@ GL_IDirect3DTextureImpl_2_1T_Load(LPDIRECT3DTEXTURE2 iface,
 
 		/* Set this texture as dirty */
 		gl_dst_ptr->dirty_flag = SURFACE_MEMORY_DIRTY;
+		*(gl_dst_ptr->global_dirty_flag) = SURFACE_MEMORY_DIRTY;
 	    }
 	}
 
@@ -682,16 +836,19 @@ HRESULT d3dtexture_create(IDirectDrawImpl *d3d, IDirectDrawSurfaceImpl *surf, BO
 	   to save those... */
 	surf->aux_blt = gltex_blt;
 	surf->aux_bltfast = gltex_bltfast;
-	
+
 	ENTER_GL();
 	if (surf->mipmap_level == 0) {
 	    glGenTextures(1, &(private->tex_name));
 	    if (private->tex_name == 0) ERR("Error at creation of OpenGL texture ID !\n");
 	    TRACE(" GL texture created for surface %p (private data at %p and GL id %d).\n", surf, private, private->tex_name);
+	    private->__global_dirty_flag = (at_creation == FALSE ? SURFACE_MEMORY_DIRTY : SURFACE_MEMORY);
+	    private->global_dirty_flag = &(private->__global_dirty_flag);
 	} else {
 	    private->tex_name = ((IDirect3DTextureGLImpl *) (main->tex_private))->tex_name;
 	    TRACE(" GL texture created for surface %p (private data at %p and GL id reusing id %d from surface %p (%p)).\n",
 		  surf, private, private->tex_name, main, main->tex_private);
+	    private->global_dirty_flag = &(((IDirect3DTextureGLImpl *) (main->tex_private))->__global_dirty_flag);
 	}
 	LEAVE_GL();
 

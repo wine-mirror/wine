@@ -68,6 +68,18 @@ typedef struct IDirect3DTextureGLImpl
     BOOLEAN initial_upload_done;
     SURFACE_STATE dirty_flag;
 
+    /* This is used to optimize dirty checking in case of mipmapping.
+       Note that a bitmap could have been used but it was not worth the pain as it will be very rare
+       to have only one mipmap level change...
+
+       The __global_dirty_flag will only be set for the main mipmap level.
+    */
+    SURFACE_STATE __global_dirty_flag;
+    SURFACE_STATE *global_dirty_flag;
+    
+    /* This is to optimize the 'per-texture' parameters. */
+    DWORD *tex_parameters;
+    
     /* Surface optimization */
     void *surface_ptr;
 
@@ -93,6 +105,9 @@ typedef struct IDirect3DDeviceGLImpl
     struct IDirect3DDeviceImpl parent;
     
     GLXContext gl_context;
+
+    /* This stores the textures which are actually bound to the GL context */
+    IDirectDrawSurfaceImpl *current_bound_texture[MAX_TEXTURES];
 
     /* The last type of vertex drawn */
     GL_TRANSFORM_STATE transform_state;
@@ -139,7 +154,7 @@ extern HRESULT d3ddevice_enumerate7(LPD3DENUMDEVICESCALLBACK7 cb, LPVOID context
 extern HRESULT d3ddevice_find(IDirectDrawImpl *d3d, LPD3DFINDDEVICESEARCH lpD3DDFS, LPD3DFINDDEVICERESULT lplpD3DDevice);
 
 /* Used to upload the texture */
-extern HRESULT gltex_upload_texture(IDirectDrawSurfaceImpl *This) ;
+extern HRESULT gltex_upload_texture(IDirectDrawSurfaceImpl *This, IDirect3DDeviceImpl *d3ddev, DWORD stage) ;
 
 /* Used to set-up our orthographic projection */
 extern void d3ddevice_set_ortho(IDirect3DDeviceImpl *This) ;

@@ -56,13 +56,6 @@ const GUID IID_D3DDEVICE_OpenGL = {
   { 0x82,0x2d,0xa8,0xd5,0x31,0x87,0xca,0xfa }
 };
 
-#ifndef HAVE_GLEXT_PROTOTYPES
-/* This is for non-OpenGL ABI compliant glext.h headers :-) */
-typedef void (* PFNGLCOLORTABLEEXTPROC) (GLenum target, GLenum internalFormat,
-					 GLsizei width, GLenum format, GLenum type,
-					 const GLvoid *table);
-#endif
-
 const float id_mat[16] = {
     1.0, 0.0, 0.0, 0.0,
     0.0, 1.0, 0.0, 0.0,
@@ -78,6 +71,8 @@ static void draw_primitive_strided(IDirect3DDeviceImpl *This,
 				   LPWORD dwIndices,
 				   DWORD dwIndexCount,
 				   DWORD dwFlags) ;
+
+static DWORD draw_primitive_handle_textures(IDirect3DDeviceImpl *This);
 
 /* retrieve the X display to use on a given DC */
 inline static Display *get_display( HDC hdc )
@@ -651,9 +646,7 @@ GL_IDirect3DDeviceImpl_3_2T_SetLightState(LPDIRECT3DDEVICE3 iface,
 	IDirect3DMaterialImpl *mat = (IDirect3DMaterialImpl *) dwLightState;
 
 	if (mat != NULL) {
-	    ENTER_GL();
 	    mat->activate(mat);
-	    LEAVE_GL();
 	} else {
 	    ERR(" D3DLIGHTSTATE_MATERIAL called with NULL material !!!\n");
 	}
@@ -1111,9 +1104,6 @@ static void draw_primitive_strided(IDirect3DDeviceImpl *This,
 
     glThis->state = SURFACE_GL;
     
-    /* Compute the number of active texture stages */
-    while (This->current_texture[num_active_stages] != NULL) num_active_stages++;
-
     if (TRACE_ON(ddraw)) {
         TRACE(" Vertex format : "); dump_flexible_vertex(d3dvtVertexType);
     }
@@ -1125,6 +1115,9 @@ static void draw_primitive_strided(IDirect3DDeviceImpl *This,
         if ((d3dvtVertexType & D3DFVF_NORMAL) == 0) glNormal3f(0.0, 0.0, 0.0);
     }
     
+    /* Compute the number of active texture stages and set the various texture parameters */
+    num_active_stages = draw_primitive_handle_textures(This);
+
     draw_primitive_handle_GL_state(This,
 				   (d3dvtVertexType & D3DFVF_POSITION_MASK) != D3DFVF_XYZ,
 				   vertex_lighted);
@@ -1460,70 +1453,6 @@ GL_IDirect3DDeviceImpl_7_3T_DrawIndexedPrimitiveVB(LPDIRECT3DDEVICE7 iface,
     return DD_OK;
 }
 
-static GLenum
-convert_min_filter_to_GL(D3DTEXTUREMINFILTER dwMinState, D3DTEXTUREMIPFILTER dwMipState)
-{
-    GLenum gl_state;
-
-    if (dwMipState == D3DTFP_NONE) {
-        switch (dwMinState) {
-            case D3DTFN_POINT:  gl_state = GL_NEAREST; break;
-	    case D3DTFN_LINEAR: gl_state = GL_LINEAR;  break;
-	    default:            gl_state = GL_LINEAR;  break;
-	}
-    } else if (dwMipState == D3DTFP_POINT) {
-        switch (dwMinState) {
-            case D3DTFN_POINT:  gl_state = GL_NEAREST_MIPMAP_NEAREST; break;
-	    case D3DTFN_LINEAR: gl_state = GL_LINEAR_MIPMAP_NEAREST;  break;
-	    default:            gl_state = GL_LINEAR_MIPMAP_NEAREST;  break;
-	}
-    } else {
-        switch (dwMinState) {
-            case D3DTFN_POINT:  gl_state = GL_NEAREST_MIPMAP_LINEAR; break;
-	    case D3DTFN_LINEAR: gl_state = GL_LINEAR_MIPMAP_LINEAR;  break;
-	    default:            gl_state = GL_LINEAR_MIPMAP_LINEAR;  break;
-	}
-    }
-    return gl_state;
-}
-
-static GLenum
-convert_mag_filter_to_GL(D3DTEXTUREMAGFILTER dwState)
-{
-    GLenum gl_state;
-
-    switch (dwState) {
-        case D3DTFG_POINT:
-	    gl_state = GL_NEAREST;
-	    break;
-        case D3DTFG_LINEAR:
-	    gl_state = GL_LINEAR;
-	    break;
-        default:
-	    gl_state = GL_LINEAR;
-	    break;
-    }
-    return gl_state;
-}
-
-static GLenum
-convert_tex_address_to_GL(D3DTEXTUREADDRESS dwState)
-{
-    GLenum gl_state;
-    switch (dwState) {
-        case D3DTADDRESS_WRAP:   gl_state = GL_REPEAT; break;
-	case D3DTADDRESS_CLAMP:  gl_state = GL_CLAMP; break;
-	case D3DTADDRESS_BORDER: gl_state = GL_CLAMP_TO_EDGE; break;
-#if defined(GL_VERSION_1_4)
-	case D3DTADDRESS_MIRROR: gl_state = GL_MIRRORED_REPEAT; break;
-#elif defined(GL_ARB_texture_mirrored_repeat)
-	case D3DTADDRESS_MIRROR: gl_state = GL_MIRRORED_REPEAT_ARB; break;
-#endif
-	default:                 gl_state = GL_REPEAT; break;
-    }
-    return gl_state;
-}
-
 /* We need a static function for that to handle the 'special' case of 'SELECT_ARG2' */
 static BOOLEAN
 handle_color_alpha_args(IDirect3DDeviceImpl *This, DWORD dwStage, D3DTEXTURESTAGESTATETYPE d3dTexStageStateType, DWORD dwState, D3DTEXTUREOP tex_op)
@@ -1677,10 +1606,6 @@ GL_IDirect3DDeviceImpl_7_3T_SetTextureStageState(LPDIRECT3DDEVICE7 iface,
 		    }
 		}
 	    }
-
-	    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER,
-			    convert_min_filter_to_GL(This->state_block.texture_stage_state[dwStage][D3DTSS_MINFILTER - 1],
-						     This->state_block.texture_stage_state[dwStage][D3DTSS_MIPFILTER - 1]));
 	    break;
 	    
         case D3DTSS_MAGFILTER:
@@ -1691,14 +1616,11 @@ GL_IDirect3DDeviceImpl_7_3T_SetTextureStageState(LPDIRECT3DDEVICE7 iface,
 		    default: FIXME(" Unhandled stage type : D3DTSS_MAGFILTER => %08lx\n", dwState); break;
 		}
 	    }
-	    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, convert_mag_filter_to_GL(dwState));
             break;
 
         case D3DTSS_ADDRESS:
         case D3DTSS_ADDRESSU:
         case D3DTSS_ADDRESSV: {
-	    GLenum arg = convert_tex_address_to_GL(dwState);
-	    
 	    switch ((D3DTEXTUREADDRESS) dwState) {
 	        case D3DTADDRESS_WRAP:   TRACE(" Stage type is : %s => D3DTADDRESS_WRAP\n", type); break;
 	        case D3DTADDRESS_CLAMP:  TRACE(" Stage type is : %s => D3DTADDRESS_CLAMP\n", type); break;
@@ -1710,13 +1632,6 @@ GL_IDirect3DDeviceImpl_7_3T_SetTextureStageState(LPDIRECT3DDEVICE7 iface,
 #endif
 	        default: FIXME(" Unhandled stage type : %s => %08lx\n", type, dwState); break;
 	    }
-	    
-	    if ((d3dTexStageStateType == D3DTSS_ADDRESS) ||
-		(d3dTexStageStateType == D3DTSS_ADDRESSU))
-	        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, arg);
-	    if ((d3dTexStageStateType == D3DTSS_ADDRESS) ||
-		(d3dTexStageStateType == D3DTSS_ADDRESSV))
-	        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, arg);
         } break;
 
 	case D3DTSS_ALPHAOP:
@@ -1917,29 +1832,16 @@ GL_IDirect3DDeviceImpl_7_3T_SetTextureStageState(LPDIRECT3DDEVICE7 iface,
 	} break;
 
 	case D3DTSS_MAXMIPLEVEL: 
-	    if (dwState == 0) {
-	        TRACE(" Stage type : D3DTSS_MAXMIPLEVEL => 0 (disabled) \n");
-	    } else {
-	        FIXME(" Unhandled stage type : D3DTSS_MAXMIPLEVEL => %ld\n", dwState);
-	    }
+	    TRACE(" Stage type : D3DTSS_MAXMIPLEVEL => 0 (disabled) \n");
 	    break;
 
-	case D3DTSS_BORDERCOLOR: {
-	    GLfloat color[4];
-
-	    color[0] = ((dwState >> 16) & 0xFF) / 255.0;
-	    color[1] = ((dwState >>  8) & 0xFF) / 255.0;
-	    color[2] = ((dwState >>  0) & 0xFF) / 255.0;
-	    color[3] = ((dwState >> 24) & 0xFF) / 255.0;
-
-	    glTexParameterfv(GL_TEXTURE_2D, GL_TEXTURE_BORDER_COLOR, color);
-
+	case D3DTSS_BORDERCOLOR:
 	    TRACE(" Stage type : D3DTSS_BORDERCOLOR => %02lx %02lx %02lx %02lx (RGBA)\n",
 		  ((dwState >> 16) & 0xFF),
 		  ((dwState >>  8) & 0xFF),
 		  ((dwState >>  0) & 0xFF),
 		  ((dwState >> 24) & 0xFF));
-	} break;
+	    break;
 	    
 	case D3DTSS_TEXCOORDINDEX: {
 	    BOOLEAN handled = TRUE;
@@ -2003,6 +1905,48 @@ GL_IDirect3DDeviceImpl_7_3T_SetTextureStageState(LPDIRECT3DDEVICE7 iface,
     return DD_OK;
 }
 
+static DWORD
+draw_primitive_handle_textures(IDirect3DDeviceImpl *This)
+{
+    IDirect3DDeviceGLImpl *glThis = (IDirect3DDeviceGLImpl *) This;
+    DWORD stage;
+    
+    for (stage = 0; stage < MAX_TEXTURES; stage++) {
+	IDirectDrawSurfaceImpl *surf_ptr = This->current_texture[stage];
+
+	/* First check if we need to bind any other texture for this stage */
+	if (This->current_texture[stage] != glThis->current_bound_texture[stage]) {
+	    if (This->current_texture[stage] == NULL) {
+		TRACE(" disabling 2D texturing for stage %ld.\n", stage);
+		glBindTexture(GL_TEXTURE_2D, 0);
+		glDisable(GL_TEXTURE_2D);
+	    } else {
+		GLenum tex_name = ((IDirect3DTextureGLImpl *) surf_ptr->tex_private)->tex_name;
+		
+		if (glThis->current_bound_texture[stage] == NULL) {
+		    if (This->state_block.texture_stage_state[stage][D3DTSS_COLOROP - 1] != D3DTOP_DISABLE) {
+			glEnable(GL_TEXTURE_2D);
+		    }
+		}
+		TRACE(" activating OpenGL texture id %d for stage %ld.\n", tex_name, stage);
+		glBindTexture(GL_TEXTURE_2D, tex_name);
+	    }
+
+	    glThis->current_bound_texture[stage] = This->current_texture[stage];
+	}
+
+	/* If no texure valid for this stage, go out of the loop */
+	if (This->current_texture[stage] == NULL) break;
+
+	/* Then check if we need to flush this texture to GL or not (ie did it change) ?.
+	   This will also update the various texture parameters if needed.
+	*/
+	gltex_upload_texture(surf_ptr, This, stage);
+    }
+
+    return stage;
+}
+
 HRESULT WINAPI
 GL_IDirect3DDeviceImpl_7_3T_SetTexture(LPDIRECT3DDEVICE7 iface,
 				       DWORD dwStage,
@@ -2018,57 +1962,13 @@ GL_IDirect3DDeviceImpl_7_3T_SetTexture(LPDIRECT3DDEVICE7 iface,
 	IDirectDrawSurface7_Release(ICOM_INTERFACE(This->current_texture[dwStage], IDirectDrawSurface7));
     }
     
-    ENTER_GL();
     if (lpTexture2 == NULL) {
 	This->current_texture[dwStage] = NULL;
-
-        TRACE(" disabling 2D texturing.\n");
-	glBindTexture(GL_TEXTURE_2D, 0);
-        glDisable(GL_TEXTURE_2D);
     } else {
         IDirectDrawSurfaceImpl *tex_impl = ICOM_OBJECT(IDirectDrawSurfaceImpl, IDirectDrawSurface7, lpTexture2);
-	GLint max_mip_level;
-	GLfloat color[4];
-	
-	IDirectDrawSurface7_AddRef(ICOM_INTERFACE(tex_impl, IDirectDrawSurface7)); /* Not sure about this either */
-
-	if (This->current_texture[dwStage] == tex_impl) {
-	    /* No need to do anything as the texture did not change. */
-	    return DD_OK;
-	}
+	IDirectDrawSurface7_AddRef(ICOM_INTERFACE(tex_impl, IDirectDrawSurface7));
 	This->current_texture[dwStage] = tex_impl;
-	
-	if (This->state_block.texture_stage_state[dwStage][D3DTSS_COLOROP - 1] != D3DTOP_DISABLE) {
-	    /* Do not re-enable texturing if it was disabled due to the COLOROP code */
-	    glEnable(GL_TEXTURE_2D);
-	    TRACE(" enabling 2D texturing.\n");
-	}
-	gltex_upload_texture(tex_impl);
-
-	if ((tex_impl->surface_desc.ddsCaps.dwCaps & DDSCAPS_MIPMAP) == 0) {
-	    max_mip_level = 0;
-	} else {
-	    max_mip_level = tex_impl->surface_desc.u2.dwMipMapCount - 1;
-	}
-
-	/* Now we need to reset all glTexParameter calls for this particular texture... */
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, 
-			convert_mag_filter_to_GL(This->state_block.texture_stage_state[dwStage][D3DTSS_MAGFILTER - 1]));
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER,
-			convert_min_filter_to_GL(This->state_block.texture_stage_state[dwStage][D3DTSS_MINFILTER - 1],
-						  This->state_block.texture_stage_state[dwStage][D3DTSS_MIPFILTER - 1]));
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S,
-			convert_tex_address_to_GL(This->state_block.texture_stage_state[dwStage][D3DTSS_ADDRESSU - 1]));
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T,
-			convert_tex_address_to_GL(This->state_block.texture_stage_state[dwStage][D3DTSS_ADDRESSV - 1]));	
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAX_LEVEL, max_mip_level);
-	color[0] = ((This->state_block.texture_stage_state[dwStage][D3DTSS_BORDERCOLOR - 1] >> 16) & 0xFF) / 255.0;
-	color[1] = ((This->state_block.texture_stage_state[dwStage][D3DTSS_BORDERCOLOR - 1] >>  8) & 0xFF) / 255.0;
-	color[2] = ((This->state_block.texture_stage_state[dwStage][D3DTSS_BORDERCOLOR - 1] >>  0) & 0xFF) / 255.0;
-	color[3] = ((This->state_block.texture_stage_state[dwStage][D3DTSS_BORDERCOLOR - 1] >> 24) & 0xFF) / 255.0;
-	glTexParameterfv(GL_TEXTURE_2D, GL_TEXTURE_BORDER_COLOR, color);
     }
-    LEAVE_GL();
     
     return DD_OK;
 }
@@ -2101,6 +2001,7 @@ GL_IDirect3DDeviceImpl_7_SetMaterial(LPDIRECT3DDEVICE7 iface,
     
     This->current_material = *lpMat;
 
+    ENTER_GL();
     glMaterialfv(GL_FRONT_AND_BACK,
 		 GL_DIFFUSE,
 		 (float *) &(This->current_material.u.diffuse));
@@ -2116,6 +2017,7 @@ GL_IDirect3DDeviceImpl_7_SetMaterial(LPDIRECT3DDEVICE7 iface,
     glMaterialf(GL_FRONT_AND_BACK,
 		GL_SHININESS,
 		This->current_material.u4.power); /* Not sure about this... */
+    LEAVE_GL();
 
     return DD_OK;
 }
@@ -2173,6 +2075,7 @@ GL_IDirect3DDeviceImpl_7_LightEnable(LPDIRECT3DDEVICE7 iface,
     
     if (dwLightIndex >= MAX_LIGHTS) return DDERR_INVALIDPARAMS;
 
+    ENTER_GL();
     if (bEnable) {
         if (((0x00000001 << dwLightIndex) & This->set_lights) == 0) {
 	    /* Set the default parameters.. */
@@ -2191,6 +2094,7 @@ GL_IDirect3DDeviceImpl_7_LightEnable(LPDIRECT3DDEVICE7 iface,
         glDisable(GL_LIGHT0 + dwLightIndex);
 	This->active_lights &= ~(0x00000001 << dwLightIndex);
     }
+    LEAVE_GL();
 
     return DD_OK;
 }
@@ -2608,7 +2512,8 @@ d3ddevice_set_ortho(IDirect3DDeviceImpl *This)
     trans_mat[ 1] = 0.0; trans_mat[ 5] = -2.0 / height; trans_mat[ 9] = 0.0; trans_mat[13] =  1.0;
     trans_mat[ 2] = 0.0; trans_mat[ 6] = 0.0; trans_mat[10] = 1.0;           trans_mat[14] = -1.0;
     trans_mat[ 3] = 0.0; trans_mat[ 7] = 0.0; trans_mat[11] = 0.0;           trans_mat[15] =  1.0;
-    
+
+    ENTER_GL();
     glMatrixMode(GL_MODELVIEW);
     glLoadIdentity();
     /* See the OpenGL Red Book for an explanation of the following translation (in the OpenGL
@@ -2622,12 +2527,14 @@ d3ddevice_set_ortho(IDirect3DDeviceImpl *This)
     glTranslatef(0.375, 0.375, 0);
     glMatrixMode(GL_PROJECTION);
     glLoadMatrixf(trans_mat);
+    LEAVE_GL();
 }
 
 void
 d3ddevice_set_matrices(IDirect3DDeviceImpl *This, DWORD matrices,
 		       D3DMATRIX *world_mat, D3DMATRIX *view_mat, D3DMATRIX *proj_mat)
 {
+    ENTER_GL();
     if ((matrices & (VIEWMAT_CHANGED|WORLDMAT_CHANGED)) != 0) {
         glMatrixMode(GL_MODELVIEW);
 	glLoadMatrixf((float *) view_mat);
@@ -2730,6 +2637,7 @@ d3ddevice_set_matrices(IDirect3DDeviceImpl *This, DWORD matrices,
 	glMatrixMode(GL_PROJECTION);
 	glLoadMatrixf((float *) proj_mat);
     }
+    LEAVE_GL();
 }
 
 void
@@ -2898,8 +2806,6 @@ static void d3ddevice_flush_to_frame_buffer(IDirect3DDeviceImpl *d3d_dev, LPCREC
     RECT loc_rect;
     IDirect3DDeviceGLImpl* gl_d3d_dev = (IDirect3DDeviceGLImpl*) d3d_dev;
     GLint depth_test, alpha_test, cull_face, lighting, tex_env, blend, stencil_test, fog;
-    GLuint initial_texture;
-    GLint tex_state;
     int x, y;
     BOOLEAN initial = FALSE;
 
@@ -2913,7 +2819,9 @@ static void d3ddevice_flush_to_frame_buffer(IDirect3DDeviceImpl *d3d_dev, LPCREC
 
     TRACE(" flushing memory back to the frame-buffer (%ld,%ld) x (%ld,%ld).\n", loc_rect.top, loc_rect.left, loc_rect.right, loc_rect.bottom);
 
-    glGetIntegerv(GL_TEXTURE_BINDING_2D, &initial_texture);
+    /* This is a hack to prevent querying the current texture from GL */
+    gl_d3d_dev->current_bound_texture[0] = (IDirectDrawSurfaceImpl *) 0x00000001;
+
     if (gl_d3d_dev->unlock_tex == 0) {
         glGenTextures(1, &gl_d3d_dev->unlock_tex);
 	glBindTexture(GL_TEXTURE_2D, gl_d3d_dev->unlock_tex);
@@ -2923,11 +2831,11 @@ static void d3ddevice_flush_to_frame_buffer(IDirect3DDeviceImpl *d3d_dev, LPCREC
     } else {
         glBindTexture(GL_TEXTURE_2D, gl_d3d_dev->unlock_tex);
     }
+
     
     if (upload_surface_to_tex_memory_init(surf, 0, &gl_d3d_dev->current_internal_format,
 					  initial, FALSE, UNLOCK_TEX_SIZE, UNLOCK_TEX_SIZE) != D3D_OK) {
         ERR(" unsupported pixel format at frame buffer flush.\n");
-	glBindTexture(GL_TEXTURE_2D, initial_texture);
 	return;
     }
 	
@@ -2937,7 +2845,6 @@ static void d3ddevice_flush_to_frame_buffer(IDirect3DDeviceImpl *d3d_dev, LPCREC
     glGetIntegerv(GL_CULL_FACE, &cull_face);
     glGetIntegerv(GL_LIGHTING, &lighting);
     glGetIntegerv(GL_BLEND, &blend);
-    glGetIntegerv(GL_TEXTURE_2D, &tex_state);
     glGetIntegerv(GL_FOG, &fog);
     glGetTexEnviv(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, &tex_env);
     glMatrixMode(GL_TEXTURE);
@@ -2998,8 +2905,6 @@ static void d3ddevice_flush_to_frame_buffer(IDirect3DDeviceImpl *d3d_dev, LPCREC
     if (cull_face != 0) glEnable(GL_CULL_FACE);
     if (blend != 0) glEnable(GL_BLEND);
     if (fog != 0) glEnable(GL_FOG);
-    glBindTexture(GL_TEXTURE_2D, initial_texture);
-    if (tex_state == 0) glDisable(GL_TEXTURE_2D);
     glDisable(GL_SCISSOR_TEST);
     glPixelStorei(GL_UNPACK_ROW_LENGTH, 0);
     glPixelStorei(GL_UNPACK_SWAP_BYTES, FALSE);
