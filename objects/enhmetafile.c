@@ -31,15 +31,42 @@ HENHMETAFILE32 WINAPI GetEnhMetaFile32A(
     FIXME(metafile,"could not open %s\n",lpszMetaFile);
     return 0;
   }
-  if (!ReadFile(hf, &h, sizeof(ENHMETAHEADER), &read, NULL)) 
+  if (!ReadFile(hf, &h, sizeof(ENHMETAHEADER), &read, NULL)) {
+    FIXME(metafile,"%s can't be read.\n",lpszMetaFile);
+    CloseHandle(hf);
     return 0;
-  if (read!=sizeof(ENHMETAHEADER)) return 0;
+  }
+  if (read!=sizeof(ENHMETAHEADER)) {
+    FIXME(metafile,"%s is not long enough.\n",lpszMetaFile);
+    CloseHandle(hf);
+    return 0;
+  }
+  if (h.iType!=1) {
+    FIXME(metafile,"%s has invalid emf header (type 0x%08lx).\n",lpszMetaFile,h.iType);
+    CloseHandle(hf);
+    return 0;
+  }
+  if (memcmp(&(h.dSignature)," EMF",4)) {
+    FIXME(metafile,"%s has invalid EMF header (dSignature 0x%08lx).\n",lpszMetaFile,h.dSignature);
+    CloseHandle(hf);
+    return 0;
+  }
   SetFilePointer(hf, 0, NULL, FILE_BEGIN); 
   /*  hmf = CreateFileMapping32A( hf, NULL, NULL, NULL, NULL, "temp"); */
   hmf = GlobalAlloc32(GPTR, h.nBytes);
   p = GlobalLock32(hmf);
-  if (!ReadFile(hf, p, h.nBytes, &read, NULL)) return 0;
-  assert(read==h.nBytes);
+  if (!ReadFile(hf, p, h.nBytes, &read, NULL)) {
+    FIXME(metafile,"%s could not be read.\n",lpszMetaFile);
+    GlobalFree32(hmf);
+    CloseHandle(hf);
+    return 0;
+  }
+  if (read!=h.nBytes) {
+    FIXME(metafile,"%s is not long enough (%ld expected, %ld got).\n",lpszMetaFile,h.nBytes,read);
+    GlobalFree32(hmf);
+    CloseHandle(hf);
+    return 0;
+  }
   GlobalUnlock32(hmf);
   return hmf;
 }
