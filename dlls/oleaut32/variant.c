@@ -41,6 +41,8 @@
 
 DEFAULT_DEBUG_CHANNEL(ole);
 
+#define SYSDUPSTRING(str) SysAllocStringLen((str), SysStringLen(str))
+
 #ifndef FLT_MAX
 # ifdef MAXFLOAT
 #  define FLT_MAX MAXFLOAT
@@ -1675,7 +1677,7 @@ static HRESULT WINAPI ValidateVt( VARTYPE vt )
  */
 void WINAPI VariantInit(VARIANTARG* pvarg)
 {
-  TRACE("(%p),stub\n",pvarg);
+  TRACE("(%p)\n",pvarg);
 
   memset(pvarg, 0, sizeof (VARIANTARG));
   V_VT(pvarg) = VT_EMPTY;
@@ -1754,7 +1756,7 @@ HRESULT WINAPI VariantCopy(VARIANTARG* pvargDest, VARIANTARG* pvargSrc)
 {
   HRESULT res = S_OK;
 
-  TRACE("(%p, %p)\n", pvargDest, pvargSrc);
+  TRACE("(%p, %p), vt=%d\n", pvargDest, pvargSrc, V_VT(pvargSrc));
 
   res = ValidateVariantType( V_VT(pvargSrc) );
 
@@ -1795,7 +1797,7 @@ HRESULT WINAPI VariantCopy(VARIANTARG* pvargDest, VARIANTARG* pvargSrc)
 	  switch( V_VT(pvargSrc) & VT_TYPEMASK )
 	  {
 	    case( VT_BSTR ):
-	      V_UNION(pvargDest,bstrVal) = SysAllocString( V_UNION(pvargSrc,bstrVal) );
+	      V_UNION(pvargDest,bstrVal) = SYSDUPSTRING( V_UNION(pvargSrc,bstrVal) );
 	      break;
 	    case( VT_DISPATCH ):
 	      V_UNION(pvargDest,pdispVal) = V_UNION(pvargSrc,pdispVal);
@@ -1884,7 +1886,7 @@ HRESULT WINAPI VariantCopyInd(VARIANT* pvargDest, VARIANTARG* pvargSrc)
 	  switch( V_VT(pvargSrc) & VT_TYPEMASK )
 	  {
 	    case( VT_BSTR ):
-	      V_UNION(pvargDest,bstrVal) = SysAllocString( *(V_UNION(pvargSrc,pbstrVal)) );
+	      V_UNION(pvargDest,bstrVal) = SYSDUPSTRING( *(V_UNION(pvargSrc,pbstrVal)) );
 	      break;
 	    case( VT_DISPATCH ):
 	      break;
@@ -1976,7 +1978,7 @@ HRESULT WINAPI VariantChangeTypeEx(VARIANTARG* pvargDest, VARIANTARG* pvargSrc,
 	VARIANTARG varg;
 	VariantInit( &varg );
 	
-	TRACE("(%p, %p, %ld, %u, %u),stub\n", pvargDest, pvargSrc, lcid, wFlags, vt);
+	TRACE("(%p, %p, %ld, %u, %u) vt=%d\n", pvargDest, pvargSrc, lcid, wFlags, vt, V_VT(pvargSrc));
 
 	/* validate our source argument.
 	 */
