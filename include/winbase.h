@@ -600,6 +600,8 @@ typedef struct {
         HANDLE hEvent;
 } OVERLAPPED, *LPOVERLAPPED;
 
+typedef VOID (CALLBACK *LPOVERLAPPED_COMPLETION_ROUTINE)(DWORD dwErrorCode, DWORD dwNumberOfBytesTransfered, LPOVERLAPPED lpOverlapped);
+
 /* Process startup information.
  */
 
@@ -758,17 +760,6 @@ typedef struct _SYSTEM_POWER_STATUS
   DWORD   BatteryFullLifeTime;
 } SYSTEM_POWER_STATUS, *LPSYSTEM_POWER_STATUS;
 
-typedef struct _MEMORY_BASIC_INFORMATION
-{
-    LPVOID   BaseAddress;
-    LPVOID   AllocationBase;
-    DWORD    AllocationProtect;
-    DWORD    RegionSize;
-    DWORD    State;
-    DWORD    Protect;
-    DWORD    Type;
-} MEMORY_BASIC_INFORMATION,*LPMEMORY_BASIC_INFORMATION;
-
 
 typedef BOOL (CALLBACK *CODEPAGE_ENUMPROCA)(LPSTR);
 typedef BOOL (CALLBACK *CODEPAGE_ENUMPROCW)(LPWSTR);
@@ -871,7 +862,7 @@ typedef struct _DllVersionInfo {
  * This one seems to be a Win32 only definition. It also is defined with
  * WINAPI instead of CALLBACK in the windows headers.
  */
-typedef DWORD (WINAPI *LPPROGRESS_ROUTINE)(LARGE_INTEGER, LARGE_INTEGER, LARGE_INTEGER, 
+typedef DWORD (CALLBACK *LPPROGRESS_ROUTINE)(LARGE_INTEGER, LARGE_INTEGER, LARGE_INTEGER, 
                                            LARGE_INTEGER, DWORD, DWORD, HANDLE,
                                            HANDLE, LPVOID);
 
@@ -884,43 +875,9 @@ typedef DWORD (WINAPI *LPPROGRESS_ROUTINE)(LARGE_INTEGER, LARGE_INTEGER, LARGE_I
 #define WAIT_TIMEOUT		STATUS_TIMEOUT
 #define STILL_ACTIVE            STATUS_PENDING
 
-#define	PAGE_NOACCESS		0x01
-#define	PAGE_READONLY		0x02
-#define	PAGE_READWRITE		0x04
-#define	PAGE_WRITECOPY		0x08
-#define	PAGE_EXECUTE		0x10
-#define	PAGE_EXECUTE_READ	0x20
-#define	PAGE_EXECUTE_READWRITE	0x40
-#define	PAGE_EXECUTE_WRITECOPY	0x80
-#define	PAGE_GUARD		0x100
-#define	PAGE_NOCACHE		0x200
-
-#define MEM_COMMIT              0x00001000
-#define MEM_RESERVE             0x00002000
-#define MEM_DECOMMIT            0x00004000
-#define MEM_RELEASE             0x00008000
-#define MEM_FREE                0x00010000
-#define MEM_PRIVATE             0x00020000
-#define MEM_MAPPED              0x00040000
-#define MEM_TOP_DOWN            0x00100000
-#ifdef __WINE__
-#define MEM_SYSTEM              0x80000000
-#endif
-
-#define SEC_FILE                0x00800000
-#define SEC_IMAGE               0x01000000
-#define SEC_RESERVE             0x04000000
-#define SEC_COMMIT              0x08000000
-#define SEC_NOCACHE             0x10000000
-
 #define FILE_BEGIN              0
 #define FILE_CURRENT            1
 #define FILE_END                2
-
-#define FILE_CASE_SENSITIVE_SEARCH      0x00000001
-#define FILE_CASE_PRESERVED_NAMES       0x00000002
-#define FILE_UNICODE_ON_DISK            0x00000004
-#define FILE_PERSISTENT_ACLS            0x00000008
 
 #define FILE_MAP_COPY                   0x00000001
 #define FILE_MAP_WRITE                  0x00000002
@@ -1354,6 +1311,7 @@ BOOL      WINAPI HeapUnlock(HANDLE);
 BOOL      WINAPI HeapValidate(HANDLE,DWORD,LPCVOID);
 BOOL        WINAPI HeapWalk(HANDLE,LPPROCESS_HEAP_ENTRY);
 BOOL        WINAPI InitializeSid(PSID,PSID_IDENTIFIER_AUTHORITY,BYTE);
+BOOL        WINAPI IsTextUnicode(CONST LPVOID lpBuffer, int cb, LPINT lpi);
 BOOL        WINAPI IsValidSecurityDescriptor(PSECURITY_DESCRIPTOR);
 BOOL        WINAPI IsValidSid(PSID);
 BOOL        WINAPI ImpersonateSelf(SECURITY_IMPERSONATION_LEVEL);

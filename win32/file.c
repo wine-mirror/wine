@@ -35,14 +35,6 @@ DWORD ErrnoToLastError(int errno_num);
 /***********************************************************************
  *              ReadFileEx                (KERNEL32.)
  */
-typedef
-VOID
-(CALLBACK *LPOVERLAPPED_COMPLETION_ROUTINE)(
-    DWORD dwErrorCode,
-    DWORD dwNumberOfBytesTransfered,
-    LPOVERLAPPED lpOverlapped
-    );
-
 BOOL WINAPI ReadFileEx(HFILE hFile, LPVOID lpBuffer, DWORD numtoread,
 			 LPOVERLAPPED lpOverlapped, 
 			 LPOVERLAPPED_COMPLETION_ROUTINE lpCompletionRoutine)

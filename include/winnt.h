@@ -57,6 +57,49 @@
 #define PROCESSOR_ARM920         2336    /* 0x920 */
 #define PROCESSOR_ARM_7TDMI      70001
 
+typedef struct _MEMORY_BASIC_INFORMATION
+{
+    LPVOID   BaseAddress;
+    LPVOID   AllocationBase;
+    DWORD    AllocationProtect;
+    DWORD    RegionSize;
+    DWORD    State;
+    DWORD    Protect;
+    DWORD    Type;
+} MEMORY_BASIC_INFORMATION,*LPMEMORY_BASIC_INFORMATION,*PMEMORY_BASIC_INFORMATION;
+
+#define	PAGE_NOACCESS		0x01
+#define	PAGE_READONLY		0x02
+#define	PAGE_READWRITE		0x04
+#define	PAGE_WRITECOPY		0x08
+#define	PAGE_EXECUTE		0x10
+#define	PAGE_EXECUTE_READ	0x20
+#define	PAGE_EXECUTE_READWRITE	0x40
+#define	PAGE_EXECUTE_WRITECOPY	0x80
+#define	PAGE_GUARD		0x100
+#define	PAGE_NOCACHE		0x200
+
+#define MEM_COMMIT              0x00001000
+#define MEM_RESERVE             0x00002000
+#define MEM_DECOMMIT            0x00004000
+#define MEM_RELEASE             0x00008000
+#define MEM_FREE                0x00010000
+#define MEM_PRIVATE             0x00020000
+#define MEM_MAPPED              0x00040000
+#define MEM_RESET               0x00080000
+#define MEM_TOP_DOWN            0x00100000
+#ifdef __WINE__
+#define MEM_SYSTEM              0x80000000
+#endif
+
+#define SEC_FILE                0x00800000
+#define SEC_IMAGE               0x01000000
+#define SEC_RESERVE             0x04000000
+#define SEC_COMMIT              0x08000000
+#define SEC_NOCACHE             0x10000000
+#define MEM_IMAGE               SEC_IMAGE
+
+
 #define ANYSIZE_ARRAY 1
 
 #define MINCHAR       0x80
@@ -2575,8 +2618,7 @@ typedef enum tagSID_NAME_USE {
                                    FILE_READ_ATTRIBUTES | SYNCHRONIZE)
 
 
-/* File attribute flags
- */
+/* File attribute flags */
 #define FILE_SHARE_READ			0x00000001L
 #define FILE_SHARE_WRITE		0x00000002L
 #define FILE_SHARE_DELETE		0x00000004L
@@ -2592,6 +2634,30 @@ typedef enum tagSID_NAME_USE {
 #define FILE_ATTRIBUTE_XACTION_WRITE    0x00000400L
 #define FILE_ATTRIBUTE_COMPRESSED       0x00000800L
 #define FILE_ATTRIBUTE_OFFLINE		0x00001000L
+
+/* File notification flags */
+#define FILE_NOTIFY_CHANGE_FILE_NAME    0x00000001
+#define FILE_NOTIFY_CHANGE_DIR_NAME     0x00000002
+#define FILE_NOTIFY_CHANGE_ATTRIBUTES   0x00000004
+#define FILE_NOTIFY_CHANGE_SIZE         0x00000008
+#define FILE_NOTIFY_CHANGE_LAST_WRITE   0x00000010
+#define FILE_NOTIFY_CHANGE_LAST_ACCESS  0x00000020
+#define FILE_NOTIFY_CHANGE_CREATION     0x00000040
+#define FILE_NOTIFY_CHANGE_SECURITY     0x00000100
+
+#define FILE_ACTION_ADDED               0x00000001
+#define FILE_ACTION_REMOVED             0x00000002
+#define FILE_ACTION_MODIFIED            0x00000003
+#define FILE_ACTION_RENAMED_OLD_NAME    0x00000004
+#define FILE_ACTION_RENAMED_NEW_NAME    0x00000005
+
+
+#define FILE_CASE_SENSITIVE_SEARCH      0x00000001
+#define FILE_CASE_PRESERVED_NAMES       0x00000002
+#define FILE_UNICODE_ON_DISK            0x00000004
+#define FILE_PERSISTENT_ACLS            0x00000008
+#define FILE_FILE_COMPRESSION           0x00000010
+#define FILE_VOLUME_IS_COMPRESSED       0x00008000
 
 /* File alignments (NT) */
 #define	FILE_BYTE_ALIGNMENT		0x00000000
