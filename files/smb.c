@@ -306,13 +306,9 @@ static BOOL NB_Lookup(LPCSTR host, struct sockaddr_in *addr)
     if(r<0)
         goto err;
 
-    if(0==inet_aton("255.255.255.255", (struct in_addr *)&sin.sin_addr.s_addr))
-    {
-        FIXME("Error getting bcast address\n");
-        goto err;
-    }
     sin.sin_family = AF_INET;
     sin.sin_port    = htons(137);
+    sin.sin_addr.s_addr = 0xffffffff;
 
     len = NB_NameReq(host,buffer,sizeof(buffer));
     if(len<=0)

@@ -798,6 +798,7 @@ NTSTATUS WINAPI RtlQueryTimeZoneInformation(LPTIME_ZONE_INFORMATION tzinfo)
  */
 NTSTATUS WINAPI RtlSetTimeZoneInformation( const TIME_ZONE_INFORMATION *tzinfo )
 {
+#ifdef HAVE_SETTIMEOFDAY
     struct timezone tz;
 
     tz.tz_minuteswest = tzinfo->Bias;
@@ -808,6 +809,7 @@ NTSTATUS WINAPI RtlSetTimeZoneInformation( const TIME_ZONE_INFORMATION *tzinfo )
 #endif
     if(!settimeofday(NULL, &tz))
         return STATUS_SUCCESS;
+#endif
     return STATUS_PRIVILEGE_NOT_HELD;
 }
 
