@@ -416,6 +416,7 @@ typedef int (*wine_signal_handler)(unsigned int sig);
 static wine_signal_handler handlers[256];
 
 extern void WINAPI EXC_RtlRaiseException( PEXCEPTION_RECORD, PCONTEXT );
+extern void DECLSPEC_NORETURN __wine_call_from_32_restore_regs( CONTEXT context );
 
 /* Global variable to save the thread %fs register while in 16-bit code (FIXME) */
 static unsigned int signal_fs;
@@ -511,6 +512,8 @@ static void restore_vm86_context( const CONTEXT *context, struct vm86plus_struct
 }
 #endif /* __HAVE_VM86 */
 
+
+typedef void (WINAPI *raise_func)( EXCEPTION_RECORD *rec, CONTEXT *context );
 
 /***********************************************************************
  *           save_context
@@ -737,21 +740,166 @@ inline static void save_fpu( CONTEXT *context, const SIGCONTEXT *sigcontext )
  *
  * Restore the FPU context to a sigcontext.
  */
-inline static void restore_fpu( CONTEXT *context, const SIGCONTEXT *sigcontext )
+inline static void restore_fpu( CONTEXT *context )
 {
     /* reset the current interrupt status */
     context->FloatSave.StatusWord &= context->FloatSave.ControlWord | 0xffffff80;
-#ifdef FPU_sig
-    if (FPU_sig(sigcontext))
-    {
-        *FPU_sig(sigcontext) = context->FloatSave;
-        return;
-    }
-#endif  /* FPU_sig */
 #ifdef __GNUC__
     /* avoid nested exceptions */
     __asm__ __volatile__( "frstor %0; fwait" : : "m" (context->FloatSave) );
 #endif  /* __GNUC__ */
+}
+
+
+/***********************************************************************
+ *           setup_exception
+ *
+ * Setup a proper stack frame for the raise function, and modify the
+ * sigcontext so that the return from the signal handler will call
+ * the raise function.
+ */
+static EXCEPTION_RECORD *setup_exception( SIGCONTEXT *sigcontext, raise_func func )
+{
+    struct stack_layout
+    {
+        void             *ret_addr;      /* return address from raise_func */
+        EXCEPTION_RECORD *rec_ptr;       /* first arg for raise_func */
+        CONTEXT          *context_ptr;   /* second arg for raise_func */
+        void             *dummy;         /* dummy ret addr for __wine_call_from_32_restore_regs */
+        CONTEXT           context;
+        EXCEPTION_RECORD  rec;
+        DWORD             ebp;
+        DWORD             eip;
+    } *stack;
+
+    WORD fs, gs;
+
+    /* get %fs and %gs at time of the fault */
+#ifdef FS_sig
+    fs = LOWORD(FS_sig(sigcontext));
+#else
+    fs = wine_get_fs();
+#endif
+#ifdef GS_sig
+    gs = LOWORD(GS_sig(sigcontext));
+#else
+    gs = wine_get_gs();
+#endif
+
+    /* now restore a proper %fs for the fault handler */
+    if (!IS_SELECTOR_SYSTEM(CS_sig(sigcontext)) ||
+        !IS_SELECTOR_SYSTEM(SS_sig(sigcontext)))  /* 16-bit mode */
+    {
+        /*
+         * Win16 or DOS protected mode. Note that during switch
+         * from 16-bit mode to linear mode, CS may be set to system
+         * segment before FS is restored. Fortunately, in this case
+         * SS is still non-system segment. This is why both CS and SS
+         * are checked.
+         */
+        wine_set_fs( signal_fs );
+        wine_set_gs( NtCurrentTeb()->gs_sel );
+        stack = (struct stack_layout *)NtCurrentTeb()->cur_stack;
+    }
+    else  /* 32-bit mode */
+    {
+        stack = (struct stack_layout *)ESP_sig(sigcontext);
+#ifdef __HAVE_VM86
+        if ((void *)EIP_sig(sigcontext) == vm86_return)  /* vm86 mode */
+        {
+            unsigned int *int_stack = (unsigned int *)stack;
+            /* fetch the saved %fs and %gs from the stack */
+            wine_set_fs( int_stack[0] );
+            wine_set_gs( int_stack[1] );
+        }
+        else
+#endif
+        {
+#ifdef FS_sig
+            wine_set_fs( FS_sig(sigcontext) );
+#endif
+#ifdef GS_sig
+            wine_set_gs( GS_sig(sigcontext) );
+#endif
+        }
+    }
+
+    /* stack sanity checks */
+
+    if ((char *)stack >= (char *)NtCurrentTeb()->DeallocationStack &&
+        (char *)stack < (char *)NtCurrentTeb()->DeallocationStack + SIGNAL_STACK_SIZE)
+    {
+        ERR( "nested exception on signal stack in thread %04lx eip %08lx esp %08lx stack %p-%p\n",
+             GetCurrentThreadId(), EIP_sig(sigcontext), ESP_sig(sigcontext),
+             NtCurrentTeb()->Tib.StackLimit, NtCurrentTeb()->Tib.StackBase );
+        SYSDEPS_AbortThread(1);
+    }
+
+    if ((char *)(stack - 1) < (char *)NtCurrentTeb()->Tib.StackLimit + SIGNAL_STACK_SIZE + 4096 ||
+        (char *)stack > (char *)NtCurrentTeb()->Tib.StackBase)
+    {
+        UINT diff = (char *)NtCurrentTeb()->Tib.StackLimit + SIGNAL_STACK_SIZE + 4096 - (char *)stack;
+        if (diff < 4096)
+            ERR( "stack overflow %u bytes in thread %04lx eip %08lx esp %08lx stack %p-%p\n",
+                 diff, GetCurrentThreadId(), EIP_sig(sigcontext), ESP_sig(sigcontext),
+                 NtCurrentTeb()->Tib.StackLimit, NtCurrentTeb()->Tib.StackBase );
+        else
+            ERR( "exception outside of stack limits in thread %04lx eip %08lx esp %08lx stack %p-%p\n",
+                 GetCurrentThreadId(), EIP_sig(sigcontext), ESP_sig(sigcontext),
+                 NtCurrentTeb()->Tib.StackLimit, NtCurrentTeb()->Tib.StackBase );
+        SYSDEPS_AbortThread(1);
+    }
+
+    stack--;  /* push the stack_layout structure */
+    stack->ret_addr     = __wine_call_from_32_restore_regs;
+    stack->rec_ptr      = &stack->rec;
+    stack->context_ptr  = &stack->context;
+
+    stack->rec.ExceptionRecord  = NULL;
+    stack->rec.ExceptionFlags   = EXCEPTION_CONTINUABLE;
+    stack->rec.ExceptionAddress = (LPVOID)EIP_sig(sigcontext);
+    stack->rec.NumberParameters = 0;
+
+    stack->context.ContextFlags = CONTEXT_FULL;
+    stack->context.Eax          = EAX_sig(sigcontext);
+    stack->context.Ebx          = EBX_sig(sigcontext);
+    stack->context.Ecx          = ECX_sig(sigcontext);
+    stack->context.Edx          = EDX_sig(sigcontext);
+    stack->context.Esi          = ESI_sig(sigcontext);
+    stack->context.Edi          = EDI_sig(sigcontext);
+    stack->context.Ebp          = EBP_sig(sigcontext);
+    stack->context.EFlags       = EFL_sig(sigcontext);
+    stack->context.Eip          = EIP_sig(sigcontext);
+    stack->context.Esp          = ESP_sig(sigcontext);
+    stack->context.SegCs        = LOWORD(CS_sig(sigcontext));
+    stack->context.SegDs        = LOWORD(DS_sig(sigcontext));
+    stack->context.SegEs        = LOWORD(ES_sig(sigcontext));
+    stack->context.SegFs        = fs;
+    stack->context.SegGs        = gs;
+    stack->context.SegSs        = LOWORD(SS_sig(sigcontext));
+
+    /* now modify the sigcontext to return to the raise function */
+    ESP_sig(sigcontext) = (DWORD)stack;
+    EIP_sig(sigcontext) = (DWORD)func;
+    CS_sig(sigcontext)  = wine_get_cs();
+    DS_sig(sigcontext)  = wine_get_ds();
+    ES_sig(sigcontext)  = wine_get_es();
+    FS_sig(sigcontext)  = wine_get_fs();
+    GS_sig(sigcontext)  = wine_get_gs();
+    SS_sig(sigcontext)  = wine_get_ss();
+
+    return stack->rec_ptr;
+}
+
+
+/***********************************************************************
+ *           get_exception_context
+ *
+ * Get a pointer to the context built by setup_exception.
+ */
+static inline CONTEXT *get_exception_context( EXCEPTION_RECORD *rec )
+{
+    return (CONTEXT *)rec - 1;  /* cf. stack_layout structure */
 }
 
 
@@ -781,49 +929,20 @@ static inline DWORD get_fpu_code( const CONTEXT *context )
 
 
 /**********************************************************************
- *		do_segv
- *
- * Implementation of SIGSEGV handler.
+ *		raise_segv_exception
  */
-static void do_segv( CONTEXT *context, int trap_code, void *cr2, int err_code )
+static void WINAPI raise_segv_exception( EXCEPTION_RECORD *rec, CONTEXT *context )
 {
-    EXCEPTION_RECORD rec;
-
-    rec.ExceptionRecord  = NULL;
-    rec.ExceptionFlags   = EXCEPTION_CONTINUABLE;
-    rec.ExceptionAddress = (LPVOID)context->Eip;
-    rec.NumberParameters = 0;
-
-    switch(trap_code)
+    switch(rec->ExceptionCode)
     {
-    case T_OFLOW:   /* Overflow exception */
-        rec.ExceptionCode = EXCEPTION_INT_OVERFLOW;
+    case EXCEPTION_ACCESS_VIOLATION:
+        if (rec->NumberParameters == 2)
+        {
+            if (!(rec->ExceptionCode = VIRTUAL_HandleFault( (void *)rec->ExceptionInformation[1] )))
+                return;
+        }
         break;
-    case T_BOUND:   /* Bound range exception */
-        rec.ExceptionCode = EXCEPTION_ARRAY_BOUNDS_EXCEEDED;
-        break;
-    case T_PRIVINFLT:   /* Invalid opcode exception */
-        rec.ExceptionCode = EXCEPTION_ILLEGAL_INSTRUCTION;
-        break;
-    case T_STKFLT:  /* Stack fault */
-        rec.ExceptionCode = EXCEPTION_STACK_OVERFLOW;
-        break;
-    case T_SEGNPFLT:  /* Segment not present exception */
-    case T_PROTFLT:   /* General protection fault */
-    case T_UNKNOWN:   /* Unknown fault code */
-        rec.ExceptionCode = err_code ? EXCEPTION_ACCESS_VIOLATION : EXCEPTION_PRIV_INSTRUCTION;
-        break;
-    case T_PAGEFLT:  /* Page fault */
-#ifdef FAULT_ADDRESS
-        if (!(rec.ExceptionCode = VIRTUAL_HandleFault( cr2 ))) return;
-        rec.NumberParameters = 2;
-        rec.ExceptionInformation[0] = (err_code & 2) != 0;
-        rec.ExceptionInformation[1] = (DWORD)cr2;
-#else
-        rec.ExceptionCode = EXCEPTION_ACCESS_VIOLATION;
-#endif
-        break;
-    case T_ALIGNFLT:  /* Alignment check exception */
+    case EXCEPTION_DATATYPE_MISALIGNMENT:
         /* FIXME: pass through exception handler first? */
         if (context->EFlags & 0x00040000)
         {
@@ -831,46 +950,21 @@ static void do_segv( CONTEXT *context, int trap_code, void *cr2, int err_code )
             context->EFlags &= ~0x00040000;
             return;
         }
-        rec.ExceptionCode = EXCEPTION_DATATYPE_MISALIGNMENT;
-        break;
-    default:
-        ERR( "Got unexpected trap %d\n", trap_code );
-        /* fall through */
-    case T_NMI:       /* NMI interrupt */
-    case T_DNA:       /* Device not available exception */
-    case T_DOUBLEFLT: /* Double fault exception */
-    case T_TSSFLT:    /* Invalid TSS exception */
-    case T_RESERVED:  /* Unknown exception */
-    case T_MCHK:      /* Machine check exception */
-#ifdef T_CACHEFLT
-    case T_CACHEFLT:  /* Cache flush exception */
-#endif
-        rec.ExceptionCode = EXCEPTION_ILLEGAL_INSTRUCTION;
         break;
     }
-    EXC_RtlRaiseException( &rec, context );
+    EXC_RtlRaiseException( rec, context );
 }
 
 
 /**********************************************************************
- *		do_trap
- *
- * Implementation of SIGTRAP handler.
+ *		raise_trap_exception
  */
-static void do_trap( CONTEXT *context, int trap_code )
+static void WINAPI raise_trap_exception( EXCEPTION_RECORD *rec, CONTEXT *context )
 {
-    EXCEPTION_RECORD rec;
     DWORD dr0, dr1, dr2, dr3, dr6, dr7;
 
-    rec.ExceptionFlags   = EXCEPTION_CONTINUABLE;
-    rec.ExceptionRecord  = NULL;
-    rec.ExceptionAddress = (LPVOID)context->Eip;
-    rec.NumberParameters = 0;
-
-    switch(trap_code)
+    if (rec->ExceptionCode == EXCEPTION_SINGLE_STEP)
     {
-    case T_TRCTRAP:  /* Single-step exception */
-        rec.ExceptionCode = EXCEPTION_SINGLE_STEP;
         if (context->EFlags & 0x100)
         {
             context->EFlags &= ~0x100;  /* clear single-step flag */
@@ -883,17 +977,10 @@ static void do_trap( CONTEXT *context, int trap_code )
              * if not, then someone did a kill(SIGTRAP) on us, and we
              * shall return a breakpoint, not a single step exception
              */
-            if (!(context->Dr6 & 0xf))
-                rec.ExceptionCode = EXCEPTION_BREAKPOINT;
+            if (!(context->Dr6 & 0xf)) rec->ExceptionCode = EXCEPTION_BREAKPOINT;
         }
-        break;
-    case T_BPTFLT:   /* Breakpoint exception */
-        rec.ExceptionAddress = (char *)rec.ExceptionAddress - 1;  /* back up over the int3 instruction */
-        /* fall through */
-    default:
-        rec.ExceptionCode = EXCEPTION_BREAKPOINT;
-        break;
     }
+
     dr0 = context->Dr0;
     dr1 = context->Dr1;
     dr2 = context->Dr2;
@@ -901,7 +988,7 @@ static void do_trap( CONTEXT *context, int trap_code )
     dr6 = context->Dr6;
     dr7 = context->Dr7;
 
-    EXC_RtlRaiseException( &rec, context );
+    EXC_RtlRaiseException( rec, context );
 
     if (dr0 != context->Dr0 || dr1 != context->Dr1 || dr2 != context->Dr2 ||
         dr3 != context->Dr3 || dr6 != context->Dr6 || dr7 != context->Dr7)
@@ -914,36 +1001,12 @@ static void do_trap( CONTEXT *context, int trap_code )
 
 
 /**********************************************************************
- *		do_fpe
- *
- * Implementation of SIGFPE handler
+ *		raise_fpu_exception
  */
-static void do_fpe( CONTEXT *context, int trap_code )
+static void WINAPI raise_fpu_exception( EXCEPTION_RECORD *rec, CONTEXT *context )
 {
-    EXCEPTION_RECORD rec;
-
-    switch(trap_code)
-    {
-    case T_DIVIDE:   /* Division by zero exception */
-        rec.ExceptionCode = EXCEPTION_INT_DIVIDE_BY_ZERO;
-        break;
-    case T_FPOPFLT:   /* Coprocessor segment overrun */
-        rec.ExceptionCode = EXCEPTION_FLT_INVALID_OPERATION;
-        break;
-    case T_ARITHTRAP:  /* Floating point exception */
-    case T_UNKNOWN:    /* Unknown fault code */
-        rec.ExceptionCode = get_fpu_code( context );
-        break;
-    default:
-        ERR( "Got unexpected trap %d\n", trap_code );
-        rec.ExceptionCode = EXCEPTION_FLT_INVALID_OPERATION;
-        break;
-    }
-    rec.ExceptionFlags   = EXCEPTION_CONTINUABLE;
-    rec.ExceptionRecord  = NULL;
-    rec.ExceptionAddress = (LPVOID)context->Eip;
-    rec.NumberParameters = 0;
-    EXC_RtlRaiseException( &rec, context );
+    EXC_RtlRaiseException( rec, context );
+    restore_fpu( context );
 }
 
 
@@ -1031,6 +1094,7 @@ static HANDLER_DEF(usr2_handler)
 {
     CONTEXT context;
 
+    /* FIXME: should use setup_exception here */
     save_context( &context, HANDLER_CONTEXT );
     set_vm86_pend( &context );
     restore_context( &context, HANDLER_CONTEXT );
@@ -1045,17 +1109,54 @@ static HANDLER_DEF(usr2_handler)
  */
 static HANDLER_DEF(segv_handler)
 {
-    CONTEXT context;
-    void *cr2;
+    EXCEPTION_RECORD *rec = setup_exception( HANDLER_CONTEXT, raise_segv_exception );
 
-    save_context( &context, HANDLER_CONTEXT );
+    switch(get_trap_code(HANDLER_CONTEXT))
+    {
+    case T_OFLOW:   /* Overflow exception */
+        rec->ExceptionCode = EXCEPTION_INT_OVERFLOW;
+        break;
+    case T_BOUND:   /* Bound range exception */
+        rec->ExceptionCode = EXCEPTION_ARRAY_BOUNDS_EXCEEDED;
+        break;
+    case T_PRIVINFLT:   /* Invalid opcode exception */
+        rec->ExceptionCode = EXCEPTION_ILLEGAL_INSTRUCTION;
+        break;
+    case T_STKFLT:  /* Stack fault */
+        rec->ExceptionCode = EXCEPTION_STACK_OVERFLOW;
+        break;
+    case T_SEGNPFLT:  /* Segment not present exception */
+    case T_PROTFLT:   /* General protection fault */
+    case T_UNKNOWN:   /* Unknown fault code */
+        rec->ExceptionCode = get_error_code(HANDLER_CONTEXT) ? EXCEPTION_ACCESS_VIOLATION
+                                                             : EXCEPTION_PRIV_INSTRUCTION;
+        break;
+    case T_PAGEFLT:  /* Page fault */
+        rec->ExceptionCode = EXCEPTION_ACCESS_VIOLATION;
 #ifdef FAULT_ADDRESS
-    cr2 = FAULT_ADDRESS;
-#else
-    cr2 = NULL;
+        rec->NumberParameters = 2;
+        rec->ExceptionInformation[0] = (get_error_code(HANDLER_CONTEXT) & 2) != 0;
+        rec->ExceptionInformation[1] = (DWORD)FAULT_ADDRESS;
 #endif
-    do_segv( &context, get_trap_code(HANDLER_CONTEXT), cr2, get_error_code(HANDLER_CONTEXT) );
-    restore_context( &context, HANDLER_CONTEXT );
+        break;
+    case T_ALIGNFLT:  /* Alignment check exception */
+        rec->ExceptionCode = EXCEPTION_DATATYPE_MISALIGNMENT;
+        break;
+    default:
+        ERR( "Got unexpected trap %d\n", get_trap_code(HANDLER_CONTEXT) );
+        /* fall through */
+    case T_NMI:       /* NMI interrupt */
+    case T_DNA:       /* Device not available exception */
+    case T_DOUBLEFLT: /* Double fault exception */
+    case T_TSSFLT:    /* Invalid TSS exception */
+    case T_RESERVED:  /* Unknown exception */
+    case T_MCHK:      /* Machine check exception */
+#ifdef T_CACHEFLT
+    case T_CACHEFLT:  /* Cache flush exception */
+#endif
+        rec->ExceptionCode = EXCEPTION_ILLEGAL_INSTRUCTION;
+        break;
+    }
 }
 
 
@@ -1066,10 +1167,21 @@ static HANDLER_DEF(segv_handler)
  */
 static HANDLER_DEF(trap_handler)
 {
-    CONTEXT context;
-    save_context( &context, HANDLER_CONTEXT );
-    do_trap( &context, get_trap_code(HANDLER_CONTEXT) );
-    restore_context( &context, HANDLER_CONTEXT );
+    EXCEPTION_RECORD *rec = setup_exception( HANDLER_CONTEXT, raise_trap_exception );
+
+    switch(get_trap_code(HANDLER_CONTEXT))
+    {
+    case T_TRCTRAP:  /* Single-step exception */
+        rec->ExceptionCode = EXCEPTION_SINGLE_STEP;
+        EFL_sig(HANDLER_CONTEXT) &= ~0x100;  /* clear single-step flag */
+        break;
+    case T_BPTFLT:   /* Breakpoint exception */
+        rec->ExceptionAddress = (char *)rec->ExceptionAddress - 1;  /* back up over the int3 instruction */
+        /* fall through */
+    default:
+        rec->ExceptionCode = EXCEPTION_BREAKPOINT;
+        break;
+    }
 }
 
 
@@ -1080,12 +1192,29 @@ static HANDLER_DEF(trap_handler)
  */
 static HANDLER_DEF(fpe_handler)
 {
-    CONTEXT context;
-    save_fpu( &context, HANDLER_CONTEXT );
-    save_context( &context, HANDLER_CONTEXT );
-    do_fpe( &context, get_trap_code(HANDLER_CONTEXT) );
-    restore_context( &context, HANDLER_CONTEXT );
-    restore_fpu( &context, HANDLER_CONTEXT );
+    EXCEPTION_RECORD *rec = setup_exception( HANDLER_CONTEXT, raise_fpu_exception );
+    CONTEXT *context;
+
+    context = get_exception_context( rec );
+    save_fpu( context, HANDLER_CONTEXT );
+
+    switch(get_trap_code(HANDLER_CONTEXT))
+    {
+    case T_DIVIDE:   /* Division by zero exception */
+        rec->ExceptionCode = EXCEPTION_INT_DIVIDE_BY_ZERO;
+        break;
+    case T_FPOPFLT:   /* Coprocessor segment overrun */
+        rec->ExceptionCode = EXCEPTION_FLT_INVALID_OPERATION;
+        break;
+    case T_ARITHTRAP:  /* Floating point exception */
+    case T_UNKNOWN:    /* Unknown fault code */
+        rec->ExceptionCode = get_fpu_code( context );
+        break;
+    default:
+        ERR( "Got unexpected trap %d\n", get_trap_code(HANDLER_CONTEXT) );
+        rec->ExceptionCode = EXCEPTION_FLT_INVALID_OPERATION;
+        break;
+    }
 }
 
 
@@ -1099,17 +1228,8 @@ static HANDLER_DEF(int_handler)
     init_handler( HANDLER_CONTEXT );
     if (!dispatch_signal(SIGINT))
     {
-        EXCEPTION_RECORD rec;
-        CONTEXT context;
-
-        save_context( &context, HANDLER_CONTEXT );
-        rec.ExceptionCode    = CONTROL_C_EXIT;
-        rec.ExceptionFlags   = EXCEPTION_CONTINUABLE;
-        rec.ExceptionRecord  = NULL;
-        rec.ExceptionAddress = (LPVOID)context.Eip;
-        rec.NumberParameters = 0;
-        EXC_RtlRaiseException( &rec, &context );
-        restore_context( &context, HANDLER_CONTEXT );
+        EXCEPTION_RECORD *rec = setup_exception( HANDLER_CONTEXT, EXC_RtlRaiseException );
+        rec->ExceptionCode = CONTROL_C_EXIT;
     }
 }
 
@@ -1120,17 +1240,9 @@ static HANDLER_DEF(int_handler)
  */
 static HANDLER_DEF(abrt_handler)
 {
-    EXCEPTION_RECORD rec;
-    CONTEXT context;
-
-    save_context( &context, HANDLER_CONTEXT );
-    rec.ExceptionCode    = EXCEPTION_WINE_ASSERTION;
-    rec.ExceptionFlags   = EH_NONCONTINUABLE;
-    rec.ExceptionRecord  = NULL;
-    rec.ExceptionAddress = (LPVOID)context.Eip;
-    rec.NumberParameters = 0;
-    EXC_RtlRaiseException( &rec, &context ); /* Should never return.. */
-    restore_context( &context, HANDLER_CONTEXT );
+    EXCEPTION_RECORD *rec = setup_exception( HANDLER_CONTEXT, EXC_RtlRaiseException );
+    rec->ExceptionCode  = EXCEPTION_WINE_ASSERTION;
+    rec->ExceptionFlags = EH_NONCONTINUABLE;
 }
 
 
@@ -1350,14 +1462,19 @@ void __wine_enter_vm86( CONTEXT *context )
          * (avoiding sigprocmask for performance reasons) */
         teb->vm86_ptr = &vm86;
         vm86.regs.eflags |= teb->vm86_pending;
+
         /* Check for VIF|VIP here, since vm86_enter doesn't */
         if ((vm86.regs.eflags & (VIF_MASK|VIP_MASK)) == (VIF_MASK|VIP_MASK)) {
             teb->vm86_ptr = NULL;
             teb->vm86_pending = 0;
             context->EFlags |= VIP_MASK;
-            rec.ExceptionCode = EXCEPTION_VM86_STI;
-            rec.ExceptionInformation[0] = 0;
-            goto cancel_vm86;
+            rec.ExceptionCode    = EXCEPTION_VM86_STI;
+            rec.ExceptionFlags   = EXCEPTION_CONTINUABLE;
+            rec.ExceptionRecord  = NULL;
+            rec.ExceptionAddress = (LPVOID)context->Eip;
+            rec.NumberParameters = 0;
+            EXC_RtlRaiseException( &rec, context );
+            continue;
         }
 
         do
@@ -1373,16 +1490,37 @@ void __wine_enter_vm86( CONTEXT *context )
         save_vm86_context( context, &vm86 );
         context->EFlags |= teb->vm86_pending;
 
+        rec.ExceptionFlags   = EXCEPTION_CONTINUABLE;
+        rec.ExceptionRecord  = NULL;
+        rec.ExceptionAddress = (LPVOID)context->Eip;
+        rec.NumberParameters = 0;
+
         switch(VM86_TYPE(res))
         {
         case VM86_UNKNOWN: /* unhandled GP fault - IO-instruction or similar */
-            do_segv( context, T_PROTFLT, 0, 0 );
+            rec.ExceptionCode = EXCEPTION_PRIV_INSTRUCTION;
+            raise_segv_exception( &rec, context );
             continue;
         case VM86_TRAP: /* return due to DOS-debugger request */
-            do_trap( context, VM86_ARG(res) );
+            switch(VM86_ARG(res))
+            {
+            case T_TRCTRAP:  /* Single-step exception */
+                rec.ExceptionCode = EXCEPTION_SINGLE_STEP;
+                context->EFlags &= ~0x100;  /* clear single-step flag */
+                break;
+            case T_BPTFLT:   /* Breakpoint exception */
+                rec.ExceptionAddress = (char *)rec.ExceptionAddress - 1;  /* back up over the int3 instruction */
+                /* fall through */
+            default:
+                rec.ExceptionCode = EXCEPTION_BREAKPOINT;
+                break;
+            }
+            raise_trap_exception( &rec, context );
             continue;
         case VM86_INTx: /* int3/int x instruction (ARG = x) */
             rec.ExceptionCode = EXCEPTION_VM86_INTx;
+            rec.NumberParameters = 1;
+            rec.ExceptionInformation[0] = VM86_ARG(res);
             break;
         case VM86_STI: /* sti/popf/iret instruction enabled virtual interrupts */
             teb->vm86_pending = 0;
@@ -1395,12 +1533,6 @@ void __wine_enter_vm86( CONTEXT *context )
             ERR( "unhandled result from vm86 mode %x\n", res );
             continue;
         }
-        rec.ExceptionInformation[0] = VM86_ARG(res);
-cancel_vm86:
-        rec.ExceptionFlags          = EXCEPTION_CONTINUABLE;
-        rec.ExceptionRecord         = NULL;
-        rec.ExceptionAddress        = (LPVOID)context->Eip;
-        rec.NumberParameters        = 1;
         EXC_RtlRaiseException( &rec, context );
     }
 }

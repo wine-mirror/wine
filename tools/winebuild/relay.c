@@ -1006,41 +1006,40 @@ static void BuildCallFrom32Regs( FILE *outfile )
     /* Call the entry point */
 
     fprintf( outfile, "\tcall *0(%%ebx)\n" );
-
-    /* Store %eip and %ebp onto the new stack */
-
-    fprintf( outfile, "\tmovl %d(%%ebp),%%edx\n", CONTEXTOFFSET(Esp) - STACK_SPACE );
-    fprintf( outfile, "\tmovl %d(%%ebp),%%eax\n", CONTEXTOFFSET(Eip) - STACK_SPACE );
-    fprintf( outfile, "\tmovl %%eax,-4(%%edx)\n" );
-    fprintf( outfile, "\tmovl %d(%%ebp),%%eax\n", CONTEXTOFFSET(Ebp) - STACK_SPACE );
-    fprintf( outfile, "\tmovl %%eax,-8(%%edx)\n" );
+    fprintf( outfile, "\tleal -%d(%%ebp),%%ecx\n", STACK_SPACE );
 
     /* Restore the context structure */
 
-    /* Note: we don't bother to restore %cs, %ds and %ss
-     *       changing them in 32-bit code is a recipe for disaster anyway
-     */
-    fprintf( outfile, "\tpushl %d(%%ebp)\n", CONTEXTOFFSET(SegEs) - STACK_SPACE );
+    fprintf( outfile, "2:\tpushl %d(%%ecx)\n", CONTEXTOFFSET(SegEs) );
     fprintf( outfile, "\tpopl %%es\n" );
-    fprintf( outfile, "\tpushl %d(%%ebp)\n", CONTEXTOFFSET(SegFs) - STACK_SPACE );
+    fprintf( outfile, "\tpushl %d(%%ecx)\n", CONTEXTOFFSET(SegFs) );
     fprintf( outfile, "\tpopl %%fs\n" );
-    fprintf( outfile, "\tpushl %d(%%ebp)\n", CONTEXTOFFSET(SegGs) - STACK_SPACE );
+    fprintf( outfile, "\tpushl %d(%%ecx)\n", CONTEXTOFFSET(SegGs) );
     fprintf( outfile, "\tpopl %%gs\n" );
 
-    fprintf( outfile, "\tmovl %d(%%ebp),%%edi\n", CONTEXTOFFSET(Edi) - STACK_SPACE );
-    fprintf( outfile, "\tmovl %d(%%ebp),%%esi\n", CONTEXTOFFSET(Esi) - STACK_SPACE );
-    fprintf( outfile, "\tmovl %d(%%ebp),%%edx\n", CONTEXTOFFSET(Edx) - STACK_SPACE );
-    fprintf( outfile, "\tmovl %d(%%ebp),%%ecx\n", CONTEXTOFFSET(Ecx) - STACK_SPACE );
-    fprintf( outfile, "\tmovl %d(%%ebp),%%ebx\n", CONTEXTOFFSET(Ebx) - STACK_SPACE );
+    fprintf( outfile, "\tmovl %d(%%ecx),%%edi\n", CONTEXTOFFSET(Edi) );
+    fprintf( outfile, "\tmovl %d(%%ecx),%%esi\n", CONTEXTOFFSET(Esi) );
+    fprintf( outfile, "\tmovl %d(%%ecx),%%edx\n", CONTEXTOFFSET(Edx) );
+    fprintf( outfile, "\tmovl %d(%%ecx),%%ebx\n", CONTEXTOFFSET(Ebx) );
+    fprintf( outfile, "\tmovl %d(%%ecx),%%eax\n", CONTEXTOFFSET(Eax) );
+    fprintf( outfile, "\tmovl %d(%%ecx),%%ebp\n", CONTEXTOFFSET(Ebp) );
 
-    fprintf( outfile, "\tpushl %d(%%ebp)\n", CONTEXTOFFSET(EFlags) - STACK_SPACE );
-    fprintf( outfile, "\tpopfl\n" );
-    fprintf( outfile, "\tmovl %d(%%ebp),%%eax\n", CONTEXTOFFSET(Eax) - STACK_SPACE );
+    fprintf( outfile, "\tpushl %d(%%ecx)\n", CONTEXTOFFSET(SegSs) );
+    fprintf( outfile, "\tpopl %%ss\n" );
+    fprintf( outfile, "\tmovl %d(%%ecx),%%esp\n", CONTEXTOFFSET(Esp) );
 
-    fprintf( outfile, "\tmovl %d(%%ebp),%%ebp\n", CONTEXTOFFSET(Esp) - STACK_SPACE );
-    fprintf( outfile, "\tleal -8(%%ebp),%%esp\n" );
-    fprintf( outfile, "\tpopl %%ebp\n" );
-    fprintf( outfile, "\tret\n" );
+    fprintf( outfile, "\tpushl %d(%%ecx)\n", CONTEXTOFFSET(EFlags) );
+    fprintf( outfile, "\tpushl %d(%%ecx)\n", CONTEXTOFFSET(SegCs) );
+    fprintf( outfile, "\tpushl %d(%%ecx)\n", CONTEXTOFFSET(Eip) );
+    fprintf( outfile, "\tpushl %d(%%ecx)\n", CONTEXTOFFSET(SegDs) );
+    fprintf( outfile, "\tmovl %d(%%ecx),%%ecx\n", CONTEXTOFFSET(Ecx) );
+
+    fprintf( outfile, "\tpopl %%ds\n" );
+    fprintf( outfile, "\tiret\n" );
+
+    function_header( outfile, "__wine_call_from_32_restore_regs" );
+    fprintf( outfile, "\tleal 4(%%esp),%%ecx\n" );
+    fprintf( outfile, "\tjmp 2b\n" );
 }
 
 
