@@ -79,6 +79,7 @@ static inline HRESULT VARIANT_Coerce(VARIANTARG* pd, LCID lcid, USHORT wFlags,
 {
   HRESULT res = DISP_E_TYPEMISMATCH;
   VARTYPE vtFrom =  V_TYPE(ps);
+  BOOL bIgnoreOverflow = FALSE;
   DWORD dwFlags = 0;
 
   TRACE("(%p->(%s%s),0x%08lx,0x%04x,%p->(%s%s),%s%s)\n", pd, debugstr_VT(pd),
@@ -113,7 +114,11 @@ static inline HRESULT VARIANT_Coerce(VARIANTARG* pd, LCID lcid, USHORT wFlags,
   if (vtFrom == VT_INT)
     vtFrom = VT_I4;
   else if (vtFrom == VT_UINT)
-     vtFrom = VT_UI4;
+  {
+    vtFrom = VT_UI4;
+    if (vt == VT_I4)
+      bIgnoreOverflow = TRUE;
+  }
 
   if (vt == vtFrom)
      return VariantCopy(pd, ps);
@@ -193,7 +198,14 @@ static inline HRESULT VARIANT_Coerce(VARIANTARG* pd, LCID lcid, USHORT wFlags,
     case VT_I2:       return VarI4FromI2(V_I2(ps), &V_I4(pd));
     case VT_UI1:      return VarI4FromUI1(V_UI1(ps), &V_I4(pd));
     case VT_UI2:      return VarI4FromUI2(V_UI2(ps), &V_I4(pd));
-    case VT_UI4:      return VarI4FromUI4(V_UI4(ps), &V_I4(pd));
+    case VT_UI4:      
+          if (bIgnoreOverflow)
+          {
+            V_VT(pd) = VT_I4;
+            V_I4(pd) = V_I4(ps);
+            return S_OK;
+          }
+          return VarI4FromUI4(V_UI4(ps), &V_I4(pd));
     case VT_I8:       return VarI4FromI8(V_I8(ps), &V_I4(pd));
     case VT_UI8:      return VarI4FromUI8(V_UI8(ps), &V_I4(pd));
     case VT_R4:       return VarI4FromR4(V_R4(ps), &V_I4(pd));
