@@ -4062,7 +4062,10 @@ static BOOL SetMenuItemInfo_common(MENUITEM * menu,
 	if (IS_STRING_ITEM(menu->fType) && menu->text)
 	    HeapFree(SystemHeap, 0, menu->text);
 
-	menu->fType = lpmii->fType;
+        /* make only MENU_ITEM_TYPE bits in menu->fType equal lpmii->fType */ 
+        menu->fType &= ~MENU_ITEM_TYPE(menu->fType);
+        menu->fType |= MENU_ITEM_TYPE(lpmii->fType);
+
 	menu->text = lpmii->dwTypeData;
 	if (IS_STRING_ITEM(menu->fType) && menu->text) {
 	    menu->text =
