@@ -81,6 +81,9 @@ static BOOL PSDRV_Text(DC *dc, INT x, INT y, LPCWSTR str, UINT count,
     LPWSTR strbuf;
     SIZE sz;
 
+    if (!count)
+	return TRUE;
+
     strbuf = HeapAlloc( PSDRV_Heap, 0, (count + 1) * sizeof(WCHAR));
     if(!strbuf) {
         WARN("HeapAlloc failed\n");
