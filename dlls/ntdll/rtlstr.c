@@ -1403,7 +1403,9 @@ NTSTATUS WINAPI RtlFindCharInUnicodeString(
 /*
         MISC
 */
-
+/* Tests that we currently implement */
+#define ITU_IMPLEMENTED_TESTS \
+        (IS_TEXT_UNICODE_SIGNATURE|IS_TEXT_UNICODE_ODD_LENGTH)
 
 /**************************************************************************
  *	RtlIsTextUnicode (NTDLL.@)
