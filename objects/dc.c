@@ -257,6 +257,10 @@ void DC_UpdateXforms( DC *dc )
     /* Create inverse of world-to-viewport transformation */
     dc->vport2WorldValid = DC_InvertXform( &dc->xformWorld2Vport,
         &dc->xformVport2World );
+
+    /* Reselect the font back into the dc so that the font size
+       gets updated. */
+    SelectObject(dc->hSelf, GetCurrentObject(dc->hSelf, OBJ_FONT));
 }
 
 
