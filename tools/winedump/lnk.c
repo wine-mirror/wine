@@ -78,6 +78,14 @@ typedef struct _LOCATION_INFO
     DWORD  dwFinalPathOfs;
 } LOCATION_INFO;
 
+typedef struct _LOCAL_VOLUME_INFO
+{
+    DWORD dwSize;
+    DWORD dwType;
+    DWORD dwVolSerial;
+    DWORD dwVolLabelOfs;
+} LOCAL_VOLUME_INFO;
+
 typedef struct lnk_string_tag {
     unsigned short size;
     union {
@@ -221,20 +229,43 @@ static int dump_string(int fd, char *what, int unicode)
 static int dump_location(int fd)
 {
     LOCATION_INFO *loc;
+    char *p;
 
     loc = load_long_section(fd);
     if (!loc)
         return -1;
+    p = (char*)loc;
 
     printf("Location\n");
     printf("--------\n\n");
     printf("Total size    = %ld\n", loc->dwTotalSize);
     printf("Header size   = %ld\n", loc->dwHeaderSize);
     printf("Flags         = %08lx\n", loc->dwFlags);
-    printf("Volume ofs    = %08lx\n", loc->dwVolTableOfs);
-    printf("LocalPath ofs = %08lx\n", loc->dwLocalPathOfs);
+
+    /* dump out information about the volume the link points to */
+    printf("Volume ofs    = %08lx ", loc->dwVolTableOfs);
+    if (loc->dwVolTableOfs && (loc->dwVolTableOfs<loc->dwTotalSize))
+    {
+        LOCAL_VOLUME_INFO *vol = (LOCAL_VOLUME_INFO *) &p[loc->dwVolTableOfs];
+
+        printf("size %ld  type %ld  serial %08lx  label %ld ",
+               vol->dwSize, vol->dwType, vol->dwVolSerial, vol->dwVolLabelOfs);
+        if(vol->dwVolLabelOfs)
+            printf("(\"%s\")", &p[vol->dwVolLabelOfs]);
+    }
+    printf("\n");
+
+    /* dump out the path the link points to */
+    printf("LocalPath ofs = %08lx ", loc->dwLocalPathOfs);
+    if( loc->dwLocalPathOfs && (loc->dwLocalPathOfs < loc->dwTotalSize) )
+        printf("(\"%s\")", &p[loc->dwLocalPathOfs]);
+    printf("\n");
+
     printf("Net Path ofs  = %08lx\n", loc->dwNetworkVolTableOfs);
-    printf("Final Path    = %08lx\n", loc->dwFinalPathOfs);
+    printf("Final Path    = %08lx ", loc->dwFinalPathOfs);
+    if( loc->dwFinalPathOfs && (loc->dwFinalPathOfs < loc->dwTotalSize) )
+        printf("(\"%s\")", &p[loc->dwFinalPathOfs]);
+    printf("\n");
     printf("\n");
 
     free(loc);
@@ -274,7 +305,23 @@ static int dump_lnk_fd(int fd)
     printf("------\n\n");
     printf("Size:    %04lx\n", hdr->dwSize);
     printf("GUID:    %s\n", guid);
-    printf("Flags:   %04lx\n", hdr->dwFlags);
+
+    /* dump out all the flags */
+    printf("Flags:   %04lx ( ", hdr->dwFlags);
+#define FLAG(x) if(hdr->dwFlags & SCF_##x) printf("%s ",#x);
+    FLAG(PIDL)
+    FLAG(LOCATION)
+    FLAG(DESCRIPTION)
+    FLAG(RELATIVE)
+    FLAG(WORKDIR)
+    FLAG(ARGS)
+    FLAG(CUSTOMICON)
+    FLAG(UNICODE)
+    FLAG(PRODUCT)
+    FLAG(COMPONENT)
+#undef FLAG
+    printf(")\n");
+
     printf("Length:  %04lx\n", hdr->dwFileLength);
     printf("\n");
 
