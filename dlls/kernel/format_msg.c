@@ -171,8 +171,6 @@ DWORD WINAPI FormatMessageA(
 
     TRACE("(0x%lx,%p,%ld,0x%lx,%p,%ld,%p)\n",
           dwFlags,lpSource,dwMessageId,dwLanguageId,lpBuffer,nSize,args);
-    if ((dwFlags & FORMAT_MESSAGE_FROM_SYSTEM)
-        && (dwFlags & FORMAT_MESSAGE_FROM_HMODULE)) return 0;
     if ((dwFlags & FORMAT_MESSAGE_FROM_STRING)
         &&((dwFlags & FORMAT_MESSAGE_FROM_SYSTEM)
            || (dwFlags & FORMAT_MESSAGE_FROM_HMODULE))) return 0;
@@ -186,29 +184,47 @@ DWORD WINAPI FormatMessageA(
         strcpy( from, (LPSTR)lpSource );
     }
     else {
-        if (dwFlags & FORMAT_MESSAGE_FROM_SYSTEM)
-            hmodule = GetModuleHandleA("kernel32");
-        bufsize=load_messageA(hmodule,dwMessageId,dwLanguageId,NULL,100);
-        if (!bufsize) {
-            if (dwLanguageId) {
-                SetLastError (ERROR_RESOURCE_LANG_NOT_FOUND);
-                return 0;
-            }
-            bufsize=load_messageA(hmodule,dwMessageId,
-                                  MAKELANGID(LANG_NEUTRAL,SUBLANG_NEUTRAL),NULL,100);
-            if (!bufsize) bufsize=load_messageA(hmodule,dwMessageId,
-                                                MAKELANGID(LANG_NEUTRAL,SUBLANG_DEFAULT),NULL,100);
-            if (!bufsize) bufsize=load_messageA(hmodule,dwMessageId,
-                                                MAKELANGID(LANG_NEUTRAL,SUBLANG_SYS_DEFAULT),NULL,100);
-            if (!bufsize) bufsize=load_messageA(hmodule,dwMessageId,
-                                                MAKELANGID(LANG_NEUTRAL,SUBLANG_SYS_DEFAULT),NULL,100);
-            if (!bufsize) bufsize=load_messageA(hmodule,dwMessageId,
-                                                MAKELANGID(LANG_ENGLISH,SUBLANG_ENGLISH_US),NULL,100);
-            if (!bufsize) {
-                SetLastError (ERROR_RESOURCE_LANG_NOT_FOUND);
-                return 0;
+        bufsize = 0;
+
+        if (dwFlags & FORMAT_MESSAGE_FROM_HMODULE)
+        {
+           bufsize=load_messageA(hmodule,dwMessageId,dwLanguageId,NULL,100);
+           if ((!bufsize) && (!dwLanguageId)) {
+                bufsize=load_messageA(hmodule,dwMessageId,
+                                      MAKELANGID(LANG_NEUTRAL,SUBLANG_NEUTRAL),NULL,100);
+                if (!bufsize) bufsize=load_messageA(hmodule,dwMessageId,
+                                                    MAKELANGID(LANG_NEUTRAL,SUBLANG_DEFAULT),NULL,100);
+                if (!bufsize) bufsize=load_messageA(hmodule,dwMessageId,
+                                                    MAKELANGID(LANG_NEUTRAL,SUBLANG_SYS_DEFAULT),NULL,100);
+                if (!bufsize) bufsize=load_messageA(hmodule,dwMessageId,
+                                                    MAKELANGID(LANG_NEUTRAL,SUBLANG_SYS_DEFAULT),NULL,100);
+                if (!bufsize) bufsize=load_messageA(hmodule,dwMessageId,
+                                                    MAKELANGID(LANG_ENGLISH,SUBLANG_ENGLISH_US),NULL,100);
             }
         }
+        if ((dwFlags & FORMAT_MESSAGE_FROM_SYSTEM) && (!bufsize))
+        {
+           hmodule = GetModuleHandleA("kernel32");
+           bufsize=load_messageA(hmodule,dwMessageId,dwLanguageId,NULL,100);
+           if ((!bufsize) && (!dwLanguageId)) {
+                bufsize=load_messageA(hmodule,dwMessageId,
+                                      MAKELANGID(LANG_NEUTRAL,SUBLANG_NEUTRAL),NULL,100);
+                if (!bufsize) bufsize=load_messageA(hmodule,dwMessageId,
+                                                    MAKELANGID(LANG_NEUTRAL,SUBLANG_DEFAULT),NULL,100);
+                if (!bufsize) bufsize=load_messageA(hmodule,dwMessageId,
+                                                    MAKELANGID(LANG_NEUTRAL,SUBLANG_SYS_DEFAULT),NULL,100);
+                if (!bufsize) bufsize=load_messageA(hmodule,dwMessageId,
+                                                    MAKELANGID(LANG_NEUTRAL,SUBLANG_SYS_DEFAULT),NULL,100);
+                if (!bufsize) bufsize=load_messageA(hmodule,dwMessageId,
+                                                    MAKELANGID(LANG_ENGLISH,SUBLANG_ENGLISH_US),NULL,100);
+            }
+        }
+
+        if (!bufsize) {
+            SetLastError (ERROR_RESOURCE_LANG_NOT_FOUND);
+            return 0;
+        }
+ 
         from = HeapAlloc( GetProcessHeap(), 0, bufsize + 1 );
         load_messageA(hmodule,dwMessageId,dwLanguageId,from,bufsize+1);
     }
@@ -406,8 +422,6 @@ DWORD WINAPI FormatMessageW(
 
     TRACE("(0x%lx,%p,%ld,0x%lx,%p,%ld,%p)\n",
           dwFlags,lpSource,dwMessageId,dwLanguageId,lpBuffer,nSize,args);
-    if ((dwFlags & FORMAT_MESSAGE_FROM_SYSTEM)
-        && (dwFlags & FORMAT_MESSAGE_FROM_HMODULE)) return 0;
     if ((dwFlags & FORMAT_MESSAGE_FROM_STRING)
         &&((dwFlags & FORMAT_MESSAGE_FROM_SYSTEM)
            || (dwFlags & FORMAT_MESSAGE_FROM_HMODULE))) return 0;
@@ -419,29 +433,47 @@ DWORD WINAPI FormatMessageW(
         from = HEAP_strdupWtoA(GetProcessHeap(),0,(LPWSTR)lpSource);
     }
     else {
-        if (dwFlags & FORMAT_MESSAGE_FROM_SYSTEM)
-            hmodule = GetModuleHandleA("kernel32");
-        bufsize=load_messageA(hmodule,dwMessageId,dwLanguageId,NULL,100);
-        if (!bufsize) {
-            if (dwLanguageId) {
-                SetLastError (ERROR_RESOURCE_LANG_NOT_FOUND);
-                return 0;
-            }
-            bufsize=load_messageA(hmodule,dwMessageId,
-                                  MAKELANGID(LANG_NEUTRAL,SUBLANG_NEUTRAL),NULL,100);
-            if (!bufsize) bufsize=load_messageA(hmodule,dwMessageId,
-                                                MAKELANGID(LANG_NEUTRAL,SUBLANG_DEFAULT),NULL,100);
-            if (!bufsize) bufsize=load_messageA(hmodule,dwMessageId,
-                                                MAKELANGID(LANG_NEUTRAL,SUBLANG_SYS_DEFAULT),NULL,100);
-            if (!bufsize) bufsize=load_messageA(hmodule,dwMessageId,
-                                                MAKELANGID(LANG_NEUTRAL,SUBLANG_SYS_DEFAULT),NULL,100);
-            if (!bufsize) bufsize=load_messageA(hmodule,dwMessageId,
-                                                MAKELANGID(LANG_ENGLISH,SUBLANG_ENGLISH_US),NULL,100);
-            if (!bufsize) {
-                SetLastError (ERROR_RESOURCE_LANG_NOT_FOUND);
-                return 0;
+        bufsize = 0;
+
+        if (dwFlags & FORMAT_MESSAGE_FROM_HMODULE)
+        {
+           bufsize=load_messageA(hmodule,dwMessageId,dwLanguageId,NULL,100);
+           if ((!bufsize) && (!dwLanguageId)) {
+                bufsize=load_messageA(hmodule,dwMessageId,
+                                      MAKELANGID(LANG_NEUTRAL,SUBLANG_NEUTRAL),NULL,100);
+                if (!bufsize) bufsize=load_messageA(hmodule,dwMessageId,
+                                                    MAKELANGID(LANG_NEUTRAL,SUBLANG_DEFAULT),NULL,100);
+                if (!bufsize) bufsize=load_messageA(hmodule,dwMessageId,
+                                                    MAKELANGID(LANG_NEUTRAL,SUBLANG_SYS_DEFAULT),NULL,100);
+                if (!bufsize) bufsize=load_messageA(hmodule,dwMessageId,
+                                                    MAKELANGID(LANG_NEUTRAL,SUBLANG_SYS_DEFAULT),NULL,100);
+                if (!bufsize) bufsize=load_messageA(hmodule,dwMessageId,
+                                                    MAKELANGID(LANG_ENGLISH,SUBLANG_ENGLISH_US),NULL,100);
             }
         }
+        if ((dwFlags & FORMAT_MESSAGE_FROM_SYSTEM) && (!bufsize))
+        {
+           hmodule = GetModuleHandleA("kernel32");
+           bufsize=load_messageA(hmodule,dwMessageId,dwLanguageId,NULL,100);
+           if ((!bufsize) && (!dwLanguageId)) {
+                bufsize=load_messageA(hmodule,dwMessageId,
+                                      MAKELANGID(LANG_NEUTRAL,SUBLANG_NEUTRAL),NULL,100);
+                if (!bufsize) bufsize=load_messageA(hmodule,dwMessageId,
+                                                    MAKELANGID(LANG_NEUTRAL,SUBLANG_DEFAULT),NULL,100);
+                if (!bufsize) bufsize=load_messageA(hmodule,dwMessageId,
+                                                    MAKELANGID(LANG_NEUTRAL,SUBLANG_SYS_DEFAULT),NULL,100);
+                if (!bufsize) bufsize=load_messageA(hmodule,dwMessageId,
+                                                    MAKELANGID(LANG_NEUTRAL,SUBLANG_SYS_DEFAULT),NULL,100);
+                if (!bufsize) bufsize=load_messageA(hmodule,dwMessageId,
+                                                    MAKELANGID(LANG_ENGLISH,SUBLANG_ENGLISH_US),NULL,100);
+            }
+        }
+
+        if (!bufsize) {
+            SetLastError (ERROR_RESOURCE_LANG_NOT_FOUND);
+            return 0;
+        }
+ 
         from = HeapAlloc( GetProcessHeap(), 0, bufsize + 1 );
         load_messageA(hmodule,dwMessageId,dwLanguageId,from,bufsize+1);
     }
