@@ -26,7 +26,7 @@ winebuild$(EXEEXT): $(OBJS)
 	$(CC) $(CFLAGS) -o $@ $(OBJS) $(LIBPORT) $(LDFLAGS)
 
 winebuild.man: winebuild.man.in
-	sed -e 's,@PACKAGE_STRING\@,@PACKAGE_STRING@,g' $(SRCDIR)/winebuild.man.in >$@ || $(RM) $@
+	sed -e 's,@PACKAGE_STRING\@,@PACKAGE_STRING@,g' $(SRCDIR)/winebuild.man.in >$@ || ($(RM) $@ && false)
 
 install:: $(PROGRAMS) winebuild.man
 	$(MKINSTALLDIRS) $(bindir) $(mandir)/man$(prog_manext)

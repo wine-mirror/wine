@@ -95,10 +95,10 @@ SYMLINKS = \
 all: wineapploader winelauncher $(SUBDIRS) $(SYMLINKS:%=%$(DLLEXT))
 
 wineapploader: wineapploader.in
-	sed -e 's,@bindir\@,$(bindir),g' $(SRCDIR)/wineapploader.in >$@ || $(RM) $@
+	sed -e 's,@bindir\@,$(bindir),g' $(SRCDIR)/wineapploader.in >$@ || ($(RM) $@ && false)
 
 winelauncher: winelauncher.in
-	sed -e 's,@bindir\@,$(bindir),g' -e 's,@libdir\@,$(libdir),g' -e 's,@dlldir\@,$(dlldir),g' $(SRCDIR)/winelauncher.in >$@ || $(RM) $@
+	sed -e 's,@bindir\@,$(bindir),g' -e 's,@libdir\@,$(libdir),g' -e 's,@dlldir\@,$(dlldir),g' $(SRCDIR)/winelauncher.in >$@ || ($(RM) $@ && false)
 
 # Rules for installation
 
