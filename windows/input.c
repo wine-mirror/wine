@@ -32,7 +32,6 @@
 #include "queue.h"
 #include "debugtools.h"
 #include "winerror.h"
-#include "task.h"
 
 DECLARE_DEBUG_CHANNEL(event);
 DECLARE_DEBUG_CHANNEL(key);

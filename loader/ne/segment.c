@@ -426,6 +426,7 @@ BOOL NE_LoadAllSegments( NE_MODULE *pModule )
     {
         HFILE hf;
         HFILE16 hFile16;
+        HGLOBAL16 sel;
         /* Handle self-loading modules */
         SELFLOADHEADER *selfloadheader;
         HMODULE16 mod = GetModuleHandle16("KERNEL");
@@ -439,7 +440,9 @@ BOOL NE_LoadAllSegments( NE_MODULE *pModule )
         selfloadheader->EntryAddrProc = GetProcAddress16(mod,"EntryAddrProc");
         selfloadheader->MyAlloc       = GetProcAddress16(mod,"MyAlloc");
         selfloadheader->SetOwner      = GetProcAddress16(mod,"FarSetOwner");
-        pModule->self_loading_sel = SEL(GLOBAL_Alloc(GMEM_ZEROINIT, 0xFF00, pModule->self, WINE_LDT_FLAGS_DATA));
+        sel = GlobalAlloc16( GMEM_ZEROINIT, 0xFF00 );
+        pModule->self_loading_sel = SEL(sel);
+        FarSetOwner16( sel, pModule->self );
         oldstack = NtCurrentTeb()->cur_stack;
         NtCurrentTeb()->cur_stack = MAKESEGPTR(pModule->self_loading_sel,
                                                0xff00 - sizeof(STACK16FRAME) );
@@ -614,7 +617,7 @@ static VOID NE_GetDLLInitParams( NE_MODULE *pModule,
  *
  * Call the DLL initialization code
  */
-static BOOL NE_InitDLL( TDB* pTask, NE_MODULE *pModule )
+static BOOL NE_InitDLL( NE_MODULE *pModule )
 {
     SEGTABLEENTRY *pSegTable;
     WORD hInst, ds, heap;
@@ -668,7 +671,6 @@ static BOOL NE_InitDLL( TDB* pTask, NE_MODULE *pModule )
  */
 void NE_InitializeDLLs( HMODULE16 hModule )
 {
-    TDB* pTask = (TDB*)GlobalLock16(GetCurrentTask());
     NE_MODULE *pModule;
     HMODULE16 *pDLL;
 
@@ -685,7 +687,7 @@ void NE_InitializeDLLs( HMODULE16 hModule )
         }
         GlobalFree16( to_init );
     }
-    NE_InitDLL( pTask, pModule );
+    NE_InitDLL( pModule );
 }
 
 

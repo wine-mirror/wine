@@ -15,7 +15,6 @@
 #include "hook.h"
 #include "message.h"
 #include "queue.h"
-#include "task.h"
 #include "debugtools.h"
 
 DEFAULT_DEBUG_CHANNEL(win);

@@ -20,7 +20,6 @@
 #include "message.h"
 #include "queue.h"
 #include "options.h"
-#include "task.h"
 #include "winpos.h"
 #include "dce.h"
 #include "nonclient.h"

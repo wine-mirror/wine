@@ -19,7 +19,6 @@
 #include "module.h"
 #include "file.h"
 #include "heap.h"
-#include "task.h"
 #include "thread.h"
 #include "winerror.h"
 #include "server.h"
@@ -899,7 +898,6 @@ BOOL WINAPI TerminateProcess( HANDLE handle, DWORD exit_code )
  */
 DWORD WINAPI GetProcessDword( DWORD dwProcessID, INT offset )
 {
-    TDB *pTask;
     DWORD x, y;
 
     TRACE_(win32)("(%ld, %d)\n", dwProcessID, offset );
@@ -913,19 +911,16 @@ DWORD WINAPI GetProcessDword( DWORD dwProcessID, INT offset )
     switch ( offset ) 
     {
     case GPD_APP_COMPAT_FLAGS:
-        pTask = (TDB *)GlobalLock16( GetCurrentTask() );
-        return pTask? pTask->compat_flags : 0;
+        return GetAppCompatFlags16(0);
 
     case GPD_LOAD_DONE_EVENT:
         return current_process.load_done_evt;
 
     case GPD_HINSTANCE16:
-        pTask = (TDB *)GlobalLock16( GetCurrentTask() );
-        return pTask? pTask->hInstance : 0;
+        return GetTaskDS16();
 
     case GPD_WINDOWS_VERSION:
-        pTask = (TDB *)GlobalLock16( GetCurrentTask() );
-        return pTask? pTask->version : 0;
+        return GetExeVersion16();
 
     case GPD_THDB:
         return (DWORD)NtCurrentTeb() - 0x10 /* FIXME */;

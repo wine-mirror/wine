@@ -18,7 +18,6 @@
 #include "wine/exception.h"
 #include "debugger.h"
 #include "expr.h"
-#include "task.h"
 
 extern FILE * yyin;
 

@@ -85,7 +85,6 @@
 #include "wine/winsock16.h"
 #include "winnt.h"
 #include "heap.h"
-#include "task.h"
 #include "wine/port.h"
 #include "debugtools.h"
 

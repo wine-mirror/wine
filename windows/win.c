@@ -21,7 +21,6 @@
 #include "message.h"
 #include "queue.h"
 #include "winpos.h"
-#include "task.h"
 #include "thread.h"
 #include "winerror.h"
 #include "stackframe.h"

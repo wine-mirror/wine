@@ -12,7 +12,6 @@
 #include "wine/winbase16.h"
 #include "wine/winuser16.h"
 #include "queue.h"
-#include "task.h"
 #include "win.h"
 #include "hook.h"
 #include "heap.h"
@@ -368,7 +367,6 @@ void QUEUE_DumpQueue( HQUEUE16 hQueue )
              "lastMsg:  %8p   smPending:     %10p\n"
              "msgCount: %8.4x   smProcessing:  %10p\n"
              "lockCount: %7.4x\n"
-             "wWinVer: %9.4x\n"
              "paints: %10.4x\n"
              "timers: %10.4x\n"
              "wakeBits: %8.4x\n"
@@ -376,8 +374,7 @@ void QUEUE_DumpQueue( HQUEUE16 hQueue )
              "hCurHook: %8.4x\n",
              pq->next, pq->teb, pq->firstMsg, pq->smWaiting, pq->lastMsg,
              pq->smPending, pq->msgCount, pq->smProcessing,
-             (unsigned)pq->lockCount, pq->wWinVersion,
-             pq->wPaintCount, pq->wTimerCount,
+             (unsigned)pq->lockCount, pq->wPaintCount, pq->wTimerCount,
              pq->wakeBits, pq->wakeMask, pq->hCurHook);
 
     QUEUE_Unlock( pq );
@@ -440,7 +437,6 @@ static HQUEUE16 QUEUE_CreateMsgQueue( BOOL16 bCreatePerQData )
     HQUEUE16 hQueue;
     HANDLE handle;
     MESSAGEQUEUE * msgQueue;
-    TDB *pTask = (TDB *)GlobalLock16( GetCurrentTask() );
 
     TRACE_(msg)("(): Creating message queue...\n");
 
@@ -470,7 +466,6 @@ static HQUEUE16 QUEUE_CreateMsgQueue( BOOL16 bCreatePerQData )
 
     msgQueue->self        = hQueue;
     msgQueue->wakeBits    = msgQueue->changeBits = 0;
-    msgQueue->wWinVersion = pTask ? pTask->version : 0;
     
     InitializeCriticalSection( &msgQueue->cSection );
     MakeCriticalSectionGlobal( &msgQueue->cSection );

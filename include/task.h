@@ -153,10 +153,4 @@ extern void TASK_Reschedule(void);
 extern void TASK_InstallTHHook( THHOOK *pNewThook );
 extern void TASK_CallTaskSignalProc( UINT16 uCode, HANDLE16 hTaskOrModule );
 
-extern HQUEUE16 WINAPI SetThreadQueue16( DWORD thread, HQUEUE16 hQueue );
-extern HQUEUE16 WINAPI GetThreadQueue16( DWORD thread );
-extern VOID WINAPI SetFastQueue16( DWORD thread, HANDLE hQueue );
-extern HANDLE WINAPI GetFastQueue16( void );
-
-
 #endif /* __WINE_TASK_H */

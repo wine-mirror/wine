@@ -137,8 +137,10 @@ static void USER_QueueCleanup( HQUEUE16 hQueue )
 /**********************************************************************
  *           USER_AppExit
  */
-static void USER_AppExit( HINSTANCE16 hInstance )
+static void USER_AppExit(void)
 {
+    HINSTANCE16 hInstance = MapHModuleLS(0);
+
     /* FIXME: maybe destroy menus (Windows only complains about them
      * but does nothing);
      */
@@ -179,8 +181,6 @@ void WINAPI FinalUserInit16( void )
 WORD WINAPI UserSignalProc( UINT uCode, DWORD dwThreadOrProcessID,
                             DWORD dwFlags, HMODULE16 hModule )
 {
-    HINSTANCE16 hInst;
-
     /* FIXME: Proper reaction to most signals still missing. */
 
     switch ( uCode )
@@ -217,9 +217,8 @@ WORD WINAPI UserSignalProc( UINT uCode, DWORD dwThreadOrProcessID,
     case USIG_PROCESS_EXIT:
         break;
 
-    case USIG_PROCESS_DESTROY:      
-      hInst = ((TDB *)GlobalLock16( GetCurrentTask() ))->hInstance;
-      USER_AppExit( hInst );
+    case USIG_PROCESS_DESTROY:
+      USER_AppExit();
       break;
 
     default:

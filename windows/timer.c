@@ -9,7 +9,6 @@
 #include "wine/winuser16.h"
 #include "winuser.h"
 #include "queue.h"
-#include "task.h"
 #include "winproc.h"
 #include "services.h"
 #include "message.h"

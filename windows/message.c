@@ -22,7 +22,6 @@
 #include "dde.h"
 #include "queue.h"
 #include "winproc.h"
-#include "task.h"
 #include "thread.h"
 #include "options.h"
 #include "controls.h"

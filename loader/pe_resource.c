@@ -21,7 +21,6 @@
 #include "winerror.h"
 #include "module.h"
 #include "heap.h"
-#include "task.h"
 #include "stackframe.h"
 #include "debugtools.h"
 

@@ -95,7 +95,6 @@ typedef struct tagMESSAGEQUEUE
 
   DWORD     magic;                  /* magic number should be QUEUE_MAGIC */
   DWORD     lockCount;              /* reference counter */
-  WORD      wWinVersion;            /* Expected Windows version */
   
   WORD      msgCount;               /* Number of waiting messages */
   QMSG*     firstMsg;               /* First message in linked list */

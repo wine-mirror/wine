@@ -9,10 +9,9 @@
 #include <unistd.h>
 #include <stdlib.h>
 #include "winnls.h"
+#include "winbase.h"
 #include "winerror.h"
 #include "wine/exception.h"
-#include "heap.h"
-#include "task.h"
 #include "debugtools.h"
 
 DEFAULT_DEBUG_CHANNEL(win32);

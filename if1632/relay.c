@@ -13,7 +13,6 @@
 #include "stackframe.h"
 #include "selectors.h"
 #include "builtin16.h"
-#include "task.h"
 #include "syslevel.h"
 #include "debugtools.h"
 #include "callback.h"

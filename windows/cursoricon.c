@@ -42,7 +42,6 @@
 #include "cursoricon.h"
 #include "module.h"
 #include "debugtools.h"
-#include "task.h"
 #include "user.h"
 #include "input.h"
 #include "message.h"
@@ -623,7 +622,8 @@ static HGLOBAL16 CURSORICON_CreateFromResource( HINSTANCE16 hInstance, HGLOBAL16
 	CURSORICONINFO *info;
 
 	/* Make it owned by the module */
-	if (hInstance) FarSetOwner16( hObj, GetExePtr(hInstance) );
+        if (hInstance) hInstance = GetExePtr(hInstance);
+        FarSetOwner16( hObj, hInstance );
 
 	info = (CURSORICONINFO *)GlobalLock16( hObj );
 	info->ptHotSpot.x   = hotspot.x;
@@ -678,11 +678,8 @@ HICON WINAPI CreateIconFromResourceEx( LPBYTE bits, UINT cbSize,
                                            INT width, INT height,
                                            UINT cFlag )
 {
-    TDB* pTask = (TDB*)GlobalLock16( GetCurrentTask() );
-    if( pTask )
-	return CURSORICON_CreateFromResource( pTask->hInstance, 0, bits, cbSize, bIcon, dwVersion,
-					      width, height, cFlag );
-    return 0;
+    return CURSORICON_CreateFromResource( 0, 0, bits, cbSize, bIcon, dwVersion,
+                                          width, height, cFlag );
 }
 
 /**********************************************************************
@@ -810,7 +807,7 @@ static HGLOBAL16 CURSORICON_Copy( HINSTANCE16 hInstance, HGLOBAL16 handle )
     HGLOBAL16 hNew;
 
     if (!(ptrOld = (char *)GlobalLock16( handle ))) return 0;
-    if (!(hInstance = GetExePtr( hInstance ))) return 0;
+    if (hInstance && !(hInstance = GetExePtr( hInstance ))) return 0;
     size = GlobalSize16( handle );
     hNew = GlobalAlloc16( GMEM_MOVEABLE, size );
     FarSetOwner16( hNew, hInstance );
@@ -869,8 +866,7 @@ HGLOBAL CURSORICON_ExtCopy(HGLOBAL Handle, UINT nType,
         */
         if(pIconCache == NULL)
         {
-            TDB* pTask = (TDB *) GlobalLock16 (GetCurrentTask ());
-            hNew = CURSORICON_Copy(pTask->hInstance, Handle);
+            hNew = CURSORICON_Copy(0, Handle);
             if(nFlags & LR_COPYFROMRESOURCE)
             {
                 TRACE_(icon)("LR_COPYFROMRESOURCE: Failed to load from cache\n");
@@ -959,11 +955,7 @@ HGLOBAL CURSORICON_ExtCopy(HGLOBAL Handle, UINT nType,
             FreeResource(hMem);
         }
     }
-    else
-    {
-        TDB* pTask = (TDB *) GlobalLock16 (GetCurrentTask ());
-        hNew = CURSORICON_Copy(pTask->hInstance, Handle);
-    }
+    else hNew = CURSORICON_Copy(0, Handle);
     return hNew;
 }
 
@@ -977,14 +969,12 @@ HCURSOR16 CURSORICON_IconToCursor(HICON16 hIcon, BOOL bSemiTransparent)
 {
  HCURSOR16       hRet = 0;
  CURSORICONINFO *pIcon = NULL;
- HTASK16 	 hTask = GetCurrentTask();
- TDB*  		 pTask = (TDB *)GlobalLock16(hTask);
 
- if(hIcon && pTask)
+ if(hIcon)
     if (!(pIcon = (CURSORICONINFO*)GlobalLock16( hIcon ))) return FALSE;
        if (pIcon->bPlanes * pIcon->bBitsPerPixel == 1)
        {
-           hRet = CURSORICON_Copy( pTask->hInstance, hIcon );
+           hRet = CURSORICON_Copy( 0, hIcon );
 
  
 	   pIcon = GlobalLock16(hRet);
@@ -1052,10 +1042,10 @@ HCURSOR16 CURSORICON_IconToCursor(HICON16 hIcon, BOOL bSemiTransparent)
               pxbPtr += 4;
            }
 
-           hRet = CreateCursorIconIndirect16( pTask->hInstance , &cI, pAndBits, pXorBits);
+           hRet = CreateCursorIconIndirect16( 0 , &cI, pAndBits, pXorBits);
 
            if( !hRet ) /* fall back on default drag cursor */
-                hRet = CURSORICON_Copy( pTask->hInstance ,
+                hRet = CURSORICON_Copy( 0 ,
                               CURSORICON_Load(0,MAKEINTRESOURCEW(OCR_DRAGOBJECT),
                                          GetSystemMetrics(SM_CXCURSOR),
 					 GetSystemMetrics(SM_CYCURSOR), 1, TRUE, 0) );
@@ -1201,7 +1191,7 @@ HGLOBAL16 WINAPI CreateCursorIconIndirect16( HINSTANCE16 hInstance,
     if (!(handle = GlobalAlloc16( GMEM_MOVEABLE,
                                   sizeof(CURSORICONINFO) + sizeXor + sizeAnd)))
         return 0;
-    if (hInstance) FarSetOwner16( handle, hInstance );
+    FarSetOwner16( handle, hInstance );
     ptr = (char *)GlobalLock16( handle );
     memcpy( ptr, info, sizeof(*info) );
     memcpy( ptr + sizeof(CURSORICONINFO), lpANDbits, sizeAnd );
@@ -1226,10 +1216,8 @@ HICON16 WINAPI CopyIcon16( HINSTANCE16 hInstance, HICON16 hIcon )
  */
 HICON WINAPI CopyIcon( HICON hIcon )
 {
-  HTASK16 hTask = GetCurrentTask ();
-  TDB* pTask = (TDB *) GlobalLock16 (hTask);
     TRACE_(icon)("%04x\n", hIcon );
-  return CURSORICON_Copy( pTask->hInstance, hIcon );
+    return CURSORICON_Copy( 0, hIcon );
 }
 
 

@@ -24,7 +24,6 @@
 #include "hook.h"
 #include "win.h"
 #include "queue.h"
-#include "task.h"
 #include "user.h"
 #include "heap.h"
 #include "struct32.h"

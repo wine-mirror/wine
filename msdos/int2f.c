@@ -13,7 +13,6 @@
 #include "dosexe.h"
 #include "miscemu.h"
 #include "module.h"
-#include "task.h"
 /* #define DEBUG_INT */
 #include "debugtools.h"
 #include "cdrom.h"

@@ -40,7 +40,6 @@
 #include "file.h"
 #include "heap.h"
 #include "msdos.h"
-#include "task.h"
 #include "wincon.h"
 #include "debugtools.h"
 
@@ -1746,50 +1745,7 @@ LONG WINAPI _hwrite( HFILE handle, LPCSTR buffer, LONG count )
  */
 UINT16 WINAPI SetHandleCount16( UINT16 count )
 {
-    HGLOBAL16 hPDB = GetCurrentPDB16();
-    PDB16 *pdb = (PDB16 *)GlobalLock16( hPDB );
-    BYTE *files = MapSL( pdb->fileHandlesPtr );
-
-    TRACE("(%d)\n", count );
-
-    if (count < 20) count = 20;  /* No point in going below 20 */
-    else if (count > 254) count = 254;
-
-    if (count == 20)
-    {
-        if (pdb->nbFiles > 20)
-        {
-            memcpy( pdb->fileHandles, files, 20 );
-            GlobalFree16( pdb->hFileHandles );
-            pdb->fileHandlesPtr = (SEGPTR)MAKELONG( 0x18,
-                                                   GlobalHandleToSel16( hPDB ) );
-            pdb->hFileHandles = 0;
-            pdb->nbFiles = 20;
-        }
-    }
-    else  /* More than 20, need a new file handles table */
-    {
-        BYTE *newfiles;
-        HGLOBAL16 newhandle = GlobalAlloc16( GMEM_MOVEABLE, count );
-        if (!newhandle)
-        {
-            SetLastError( ERROR_NOT_ENOUGH_MEMORY );
-            return pdb->nbFiles;
-        }
-        newfiles = (BYTE *)GlobalLock16( newhandle );
-
-        if (count > pdb->nbFiles)
-        {
-            memcpy( newfiles, files, pdb->nbFiles );
-            memset( newfiles + pdb->nbFiles, 0xff, count - pdb->nbFiles );
-        }
-        else memcpy( newfiles, files, count );
-        if (pdb->nbFiles > 20) GlobalFree16( pdb->hFileHandles );
-        pdb->fileHandlesPtr = K32WOWGlobalLock16( newhandle );
-        pdb->hFileHandles   = newhandle;
-        pdb->nbFiles = count;
-    }
-    return pdb->nbFiles;
+    return SetHandleCount( count );
 }
 
 
