@@ -1275,7 +1275,8 @@ void WINAPI INT_Int21Handler( CONTEXT86 *context )
 
     case 0x3e: /* "CLOSE" - CLOSE FILE */
         TRACE("CLOSE handle %d\n",BX_reg(context));
-        bSetDOSExtendedError = ((SET_AX( context, _lclose16( BX_reg(context) )) != 0) );
+	SET_AX( context, _lclose16( BX_reg(context) ));
+        bSetDOSExtendedError = (AX_reg(context) != 0);
         break;
 
     case 0x3f: /* "READ" - READ FROM FILE OR DEVICE */
@@ -1677,9 +1678,10 @@ void WINAPI INT_Int21Handler( CONTEXT86 *context )
     case 0x5b: /* CREATE NEW FILE */
         TRACE("CREATE NEW FILE 0x%02x for %s\n", CX_reg(context),
 	      (LPCSTR)CTX_SEG_OFF_TO_LIN(context,  context->SegDs, context->Edx));
-        bSetDOSExtendedError = ((SET_AX( context,
+        SET_AX( context,
                _lcreat16_uniq( CTX_SEG_OFF_TO_LIN(context, context->SegDs,context->Edx),
-                               CX_reg(context) ))) == (WORD)HFILE_ERROR16);
+                               CX_reg(context) ));
+        bSetDOSExtendedError = (AX_reg(context) != 0);
         break;
 
     case 0x5d: /* NETWORK */
