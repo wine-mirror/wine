@@ -69,11 +69,21 @@ typedef struct
 
 #pragma pack(4)
 
+#define CID_RESOURCE  0x0001
+#define CID_WIN32     0x0004
+#define CID_NONSHARED 0x0008
+
+extern void CURSORICON_Init( void );
+
 extern HCURSOR16 CURSORICON_IconToCursor( HICON16 hIcon,
                                           BOOL bSemiTransparent );
 
 extern HGLOBAL CURSORICON_Load( HINSTANCE hInstance, LPCWSTR name,
-                                    int width, int height, int colors,
-                                    BOOL fCursor, UINT loadflags);
+                                int width, int height, int colors,
+                                BOOL fCursor, UINT loadflags);
+
+extern WORD CURSORICON_Destroy( HGLOBAL16 handle, UINT16 flags );
+
+extern void CURSORICON_FreeModuleIcons( HMODULE hModule );
 				    
 #endif /* __WINE_CURSORICON_H */
