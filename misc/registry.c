@@ -659,7 +659,6 @@ static void _wine_loadreg( HKEY hkey, char *fn )
     fclose(F);
 }
 
-
 /* NT REGISTRY LOADER */
 
 #ifdef HAVE_SYS_MMAN_H
@@ -1110,42 +1109,48 @@ static int _w95_parse_dke(
 	/* get start address of root key block */
 	if (!dke) dke = (_w95dke*)((char*)rgkn + rgkn->root_off);
 	
-	/* create key */
-	if (dke->nrLS != 0xffff && dke->nrMS!=0xffff)		/* eg. the root key has no name */
+	/* special root key */
+	if (dke->nrLS == 0xffff || dke->nrMS==0xffff)		/* eg. the root key has no name */
 	{
-	  if (!(dkh = _w95_lookup_dkh(creg, dke->nrLS, dke->nrMS)))
+	  /* parse the one subkey*/
+	  if (dke->nextsub != 0xffffffff) 
 	  {
-	    fprintf(stderr, "dke pointing to missing dkh !\n");
-	    goto error;
+    	    return _w95_parse_dke(hsubkey, creg, rgkn, (_w95dke*)((char*)rgkn+dke->nextsub), level);
 	  }
-	  /* subblock found */
-	  if ( level <= 0 )
-	  {
-	    name = _strdupnA( dkh->name, dkh->keynamelen+1);
-	    if (RegCreateKeyA(hkey, name, &hsubkey)) { free(name); goto error; }
-	    free(name);
-	  }
-	  _w95_parse_dkv(hsubkey, dkh, dke->nrLS, dke->nrMS);
-	}
-	else 
-	{
-	  level++; /* we have to skip the root-block anyway */
-	}
-	
-	/* walk sibling keys */
-	if (dke->next != 0xffffffff )
-	{
-    	  _w95_parse_dke(hkey, creg, rgkn, (_w95dke*)((char*)rgkn+dke->next), level);
+	  /* has no sibling keys */
+	  goto error;
 	}
 
-	/* next sub key */
+	/* search subblock */
+	if (!(dkh = _w95_lookup_dkh(creg, dke->nrLS, dke->nrMS)))
+	{
+	  fprintf(stderr, "dke pointing to missing dkh !\n");
+	  goto error;
+	}
+
+	if ( level <= 0 )
+	{
+	  /* walk sibling keys */
+	  if (dke->next != 0xffffffff )
+	  {
+    	    if (!_w95_parse_dke(hkey, creg, rgkn, (_w95dke*)((char*)rgkn+dke->next), level)) goto error;
+	  }
+
+	  /* create subkey and insert values */
+	  name = _strdupnA( dkh->name, dkh->keynamelen+1);
+	  if (RegCreateKeyA(hkey, name, &hsubkey)) { free(name); goto error; }
+	  free(name);
+	  if (!_w95_parse_dkv(hsubkey, dkh, dke->nrLS, dke->nrMS)) goto error1;
+	}  
+	
+ 	/* next sub key */
 	if (dke->nextsub != 0xffffffff) 
 	{
-    	  _w95_parse_dke(hsubkey, creg, rgkn, (_w95dke*)((char*)rgkn+dke->nextsub), level-1);
+    	  if (!_w95_parse_dke(hsubkey, creg, rgkn, (_w95dke*)((char*)rgkn+dke->nextsub), level-1)) goto error1;
 	}
-  
+
 	ret = TRUE;
-	if (hsubkey != hkey) RegCloseKey(hsubkey);
+error1:	if (hsubkey != hkey) RegCloseKey(hsubkey);
 error:	return ret;
 }
 /* end windows 95 loader */
@@ -1243,7 +1248,7 @@ static int NativeRegLoadKey( HKEY hkey, char* fn, int level )
 	      goto error1;
 	    }
 	}
-
+	if(!ret) ERR("error loading registry file %s\n", fn);
 error1:	munmap(base, st.st_size);
 error:	close(fd);
 	return ret;	
