@@ -225,8 +225,11 @@ BOOL WINAPI InternetGetLastResponseInfoA(LPDWORD lpdwError,
  */
 BOOL WINAPI InternetGetConnectedState(LPDWORD lpdwStatus, DWORD dwReserved)
 {
-    FIXME("Stub\n");
-    return FALSE;
+    if (lpdwStatus) {
+	FIXME("always returning LAN connection.\n");
+	*lpdwStatus = INTERNET_CONNECTION_LAN;
+    }
+    return TRUE;
 }
 
 
