@@ -230,6 +230,9 @@ TOOLBAR_DrawString (TOOLBAR_INFO *infoPtr, TBUTTON_INFO *btnPtr,
 	if (nState & (TBSTATE_PRESSED | TBSTATE_CHECKED))
 	    OffsetRect (&rcText, 1, 1);
 
+	TRACE("string rect=(%d,%d)-(%d,%d)\n",
+	      rcText.left, rcText.top, rcText.right, rcText.bottom);
+
 	hOldFont = SelectObject (hdc, infoPtr->hFont);
 	nOldBkMode = SetBkMode (hdc, TRANSPARENT);
 	if (!(nState & TBSTATE_ENABLED)) {
@@ -348,7 +351,9 @@ TOOLBAR_DrawButton (HWND hwnd, TBUTTON_INFO *btnPtr, HDC hdc)
     else
         rcBitmap.top+=(infoPtr->nButtonHeight - infoPtr->nBitmapHeight) / 2;
 
-    TRACE("iBitmap: %d\n", btnPtr->iBitmap);
+    TRACE("iBitmap: %d, start=(%d,%d) w=%d, h=%d\n", 
+	  btnPtr->iBitmap, rcBitmap.left, rcBitmap.top,
+	  infoPtr->nBitmapWidth, infoPtr->nBitmapHeight);
 
     /* separator */
     if (btnPtr->fsStyle & TBSTYLE_SEP) {
@@ -3435,7 +3440,14 @@ TOOLBAR_SetImageList (HWND hwnd, WPARAM wParam, LPARAM lParam)
     himlTemp = infoPtr->himlDef;
     infoPtr->himlDef = (HIMAGELIST)lParam;
 
-     infoPtr->nNumBitmaps = ImageList_GetImageCount(infoPtr->himlDef);
+    infoPtr->nNumBitmaps = ImageList_GetImageCount(infoPtr->himlDef);
+
+    ImageList_GetIconSize(infoPtr->himlDef, &infoPtr->nBitmapWidth,
+			  &infoPtr->nBitmapHeight);
+    TRACE("hwnd %08x, new himl=%08x, bitmap w=%d, h=%d\n",
+	  hwnd, (INT)infoPtr->himlDef, 
+	  infoPtr->nBitmapWidth, infoPtr->nBitmapHeight);
+
     /* FIXME: redraw ? */
 
     return (LRESULT)himlTemp; 
@@ -3804,6 +3816,7 @@ TOOLBAR_LButtonDown (HWND hwnd, WPARAM wParam, LPARAM lParam)
     TBUTTON_INFO *btnPtr;
     POINT pt;
     INT   nHit;
+    NMTOOLBARA nmtb;
 
     if (infoPtr->hwndToolTip)
 	TOOLBAR_RelayEvent (infoPtr->hwndToolTip, hwnd,
@@ -3829,7 +3842,7 @@ TOOLBAR_LButtonDown (HWND hwnd, WPARAM wParam, LPARAM lParam)
 	     ((TOOLBAR_HasDropDownArrows(infoPtr->dwExStyle) && PtInRect(&arrowRect, pt)) ||
 	      (!TOOLBAR_HasDropDownArrows(infoPtr->dwExStyle))))
 	{
-	    NMTOOLBARA nmtb;
+	    LRESULT res;
 	    /*
 	     * this time we must force a Redraw, so the btn is
 	     * painted down before CaptureChanged repaints it up
@@ -3841,22 +3854,44 @@ TOOLBAR_LButtonDown (HWND hwnd, WPARAM wParam, LPARAM lParam)
 	    nmtb.hdr.idFrom = GetWindowLongA (hwnd, GWL_ID);
 	    nmtb.hdr.code = TBN_DROPDOWN;
 	    nmtb.iItem = btnPtr->idCommand;
+	    memset(&nmtb.tbButton, 0, sizeof(TBBUTTON));
+	    nmtb.cchText = 0;
+	    nmtb.pszText = 0;
+	    memset(&nmtb.rcButton, 0, sizeof(RECT));
+	    res = SendMessageA (infoPtr->hwndNotify, WM_NOTIFY,
+				(WPARAM)nmtb.hdr.idFrom, (LPARAM)&nmtb);
+	    if (res != TBDDRET_TREATPRESSED)
+		/* ??? guess  (GA)  */
+		return 0;
+	    /* otherwise drop through and process as pushed */
+       	}
+	/* SetCapture (hwnd); */
+	infoPtr->bCaptured = TRUE;
+	infoPtr->nButtonDown = nHit;
 
-	    SendMessageA (infoPtr->hwndNotify, WM_NOTIFY,
-			  (WPARAM)nmtb.hdr.idFrom, (LPARAM)&nmtb);
-	}
-	else
-	{
-	    SetCapture (hwnd);
-	    infoPtr->bCaptured = TRUE;
-	    infoPtr->nButtonDown = nHit;
+	btnPtr->fsState |= TBSTATE_PRESSED;
+	btnPtr->bHot = FALSE;
 
-	    btnPtr->fsState |= TBSTATE_PRESSED;
-	    btnPtr->bHot = FALSE;
+	InvalidateRect(hwnd, &btnPtr->rect,
+		       TOOLBAR_HasText(infoPtr, btnPtr));
+	UpdateWindow(hwnd);
+	SetCapture (hwnd);
 
-	    InvalidateRect(hwnd, &btnPtr->rect,
-			   TOOLBAR_HasText(infoPtr, btnPtr));
-	}
+	/* native issues the TBN_BEGINDRAG here */
+	nmtb.hdr.hwndFrom = hwnd;
+	nmtb.hdr.idFrom = GetWindowLongA (hwnd, GWL_ID);
+	nmtb.hdr.code = TBN_BEGINDRAG;
+	nmtb.iItem = btnPtr->idCommand;
+	nmtb.tbButton.iBitmap = btnPtr->iBitmap;
+	nmtb.tbButton.idCommand = btnPtr->idCommand;
+	nmtb.tbButton.fsState = btnPtr->fsState;
+	nmtb.tbButton.fsStyle = btnPtr->fsStyle;
+	nmtb.tbButton.dwData = btnPtr->dwData;
+	nmtb.tbButton.iString = btnPtr->iString;
+	nmtb.cchText = 0;  /* !!! not correct */
+	nmtb.pszText = 0;  /* !!! not correct */
+        SendMessageA (infoPtr->hwndNotify, WM_NOTIFY,
+		      (WPARAM)nmtb.hdr.idFrom, (LPARAM)&nmtb);
     }
 
     return 0;
@@ -3871,6 +3906,9 @@ TOOLBAR_LButtonUp (HWND hwnd, WPARAM wParam, LPARAM lParam)
     INT   nHit;
     INT   nOldIndex = -1;
     BOOL  bSendMessage = TRUE;
+    NMHDR hdr;
+    NMMOUSE nmmouse;
+    NMTOOLBARA nmtb;
 
     if (infoPtr->hwndToolTip)
 	TOOLBAR_RelayEvent (infoPtr->hwndToolTip, hwnd,
@@ -3925,9 +3963,47 @@ TOOLBAR_LButtonUp (HWND hwnd, WPARAM wParam, LPARAM lParam)
 	 */
 	ReleaseCapture ();
 
+	/* Issue NM_RELEASEDCAPTURE to parent to let him know it is released */
+	hdr.hwndFrom = hwnd;
+	hdr.idFrom = GetWindowLongA (hwnd, GWL_ID);
+	hdr.code = NM_RELEASEDCAPTURE;
+	SendMessageA (infoPtr->hwndNotify, WM_NOTIFY,
+		      (WPARAM)hdr.idFrom, (LPARAM)&hdr);
+
+	/* native issues TBN_ENDDRAG here, if _LBUTTONDOWN issued the 
+	 * TBN_BEGINDRAG
+	 */
+	nmtb.hdr.hwndFrom = hwnd;
+	nmtb.hdr.idFrom = GetWindowLongA (hwnd, GWL_ID);
+	nmtb.hdr.code = TBN_ENDDRAG;
+	nmtb.iItem = btnPtr->idCommand;
+	nmtb.tbButton.iBitmap = btnPtr->iBitmap;
+	nmtb.tbButton.idCommand = btnPtr->idCommand;
+	nmtb.tbButton.fsState = btnPtr->fsState;
+	nmtb.tbButton.fsStyle = btnPtr->fsStyle;
+	nmtb.tbButton.dwData = btnPtr->dwData;
+	nmtb.tbButton.iString = btnPtr->iString;
+	nmtb.cchText = 0;  /* !!! not correct */
+	nmtb.pszText = 0;  /* !!! not correct */
+        SendMessageA (infoPtr->hwndNotify, WM_NOTIFY,
+		      (WPARAM)nmtb.hdr.idFrom, (LPARAM)&nmtb);
+
 	if (bSendMessage)
 	    SendMessageA (GetParent(hwnd), WM_COMMAND,
 			  MAKEWPARAM(btnPtr->idCommand, 0), (LPARAM)hwnd);
+
+	/* !!! Undocumented - toolbar at 4.71 level and above sends
+	 * either NMRCLICK or NM_CLICK with the NMMOUSE structure.
+	 * Only NM_RCLICK is documented.
+	 */
+	nmmouse.hdr.hwndFrom = hwnd;
+	nmmouse.hdr.idFrom = GetWindowLongA (hwnd, GWL_ID);
+	nmmouse.hdr.code = NM_CLICK;
+	nmmouse.dwItemSpec = btnPtr->idCommand;
+	nmmouse.dwItemData = btnPtr->dwData;
+	SendMessageA (infoPtr->hwndNotify, WM_NOTIFY,
+		      (WPARAM)nmmouse.hdr.idFrom, (LPARAM)&nmmouse);
+
     }
 
     return 0;
