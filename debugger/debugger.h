@@ -209,8 +209,14 @@ typedef struct tagDBG_THREAD {
 } DBG_THREAD;
 
 typedef struct tagDBG_DELAYED_BP {
-    int				lineno;
-    char*			name;
+    BOOL                        is_symbol;
+    union {
+        struct {
+            int				lineno;
+            char*			name;
+        } symbol;
+        DBG_VALUE                       value;
+    } u;
 } DBG_DELAYED_BP;
 
 typedef struct tagDBG_PROCESS {
@@ -227,7 +233,7 @@ typedef struct tagDBG_PROCESS {
     int				num_delayed_bp;
     /*
      * This is an index we use to keep track of the debug information
-     * when we have multiple sources.  We use the same database to also
+     * when we have multiple sources. We use the same database to also
      * allow us to do an 'info shared' type of deal, and we use the index
      * to eliminate duplicates.
      */
@@ -288,7 +294,8 @@ extern void DEBUG_ExternalDebugger(void);
 
   /* debugger/break.c */
 extern void DEBUG_SetBreakpoints( BOOL set );
-extern void DEBUG_AddBreakpoint( const DBG_VALUE *addr, BOOL (*func)(void) );
+extern BOOL DEBUG_AddBreakpoint( const DBG_VALUE *addr, BOOL (*func)(void), BOOL verbose );
+extern BOOL DEBUG_AddBreakpointFromValue( const DBG_VALUE *addr );
 extern void DEBUG_AddBreakpointFromId( const char *name, int lineno );
 extern void DEBUG_AddBreakpointFromLineno( int lineno );
 extern void DEBUG_AddWatchpoint( const DBG_VALUE *addr, int is_write );

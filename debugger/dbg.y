@@ -164,7 +164,7 @@ command:
     ;
 
 set_command:
-      tSET lval_addr '=' expr_value tEOL { DEBUG_WriteMemory(&$2,$4); DEBUG_FreeExprMem(); }
+      tSET lval_addr '=' expr_value tEOL { DEBUG_WriteMemory(&$2, $4); DEBUG_FreeExprMem(); }
     | tSET '+' tIDENTIFIER tEOL {DEBUG_DbgChannel(TRUE, NULL, $3);}
     | tSET '-' tIDENTIFIER tEOL {DEBUG_DbgChannel(FALSE, NULL, $3);}
     | tSET tIDENTIFIER '+' tIDENTIFIER tEOL {DEBUG_DbgChannel(TRUE, $2, $4);}
@@ -212,7 +212,7 @@ print_command:
     ;
 
 break_command:
-      tBREAK '*' expr_addr tEOL{ DEBUG_AddBreakpoint( &$3, NULL ); DEBUG_FreeExprMem(); }
+      tBREAK '*' expr_addr tEOL{ DEBUG_AddBreakpointFromValue( &$3 ); DEBUG_FreeExprMem(); }
     | tBREAK identifier tEOL   { DEBUG_AddBreakpointFromId($2, -1); }
     | tBREAK identifier ':' tNUM tEOL  { DEBUG_AddBreakpointFromId($2, $4); }
     | tBREAK tNUM tEOL	       { DEBUG_AddBreakpointFromLineno($2); }

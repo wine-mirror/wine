@@ -274,7 +274,7 @@ static int DEBUG_FindBreakpoint( const DBG_ADDR *addr, int type )
  *
  * Find an empty slot in BP table to add a new break/watch point
  */
-static	int	DEBUG_InitXPoint(int type, DBG_ADDR* addr)
+static	int	DEBUG_InitXPoint(int type, const DBG_ADDR* addr)
 {
    int	num;
 
@@ -336,13 +336,48 @@ static	BOOL	DEBUG_GetWatchedValue( int num, LPDWORD val )
  *
  * Add a breakpoint.
  */
-void DEBUG_AddBreakpoint( const DBG_VALUE *_value, BOOL (*func)(void) )
+BOOL DEBUG_AddBreakpoint( const DBG_VALUE *value, BOOL (*func)(void), BOOL verbose )
 {
-    DBG_VALUE value = *_value;
     int num;
     BYTE ch;
 
-    if( value.type != NULL && value.type == DEBUG_GetBasicType(DT_BASIC_CONST_INT) )
+    if ((num = DEBUG_FindBreakpoint(&value->addr, DBG_BREAK)) >= 1)
+    {
+        breakpoints[num].refcount++;
+        return TRUE;
+    }
+
+    if (!DEBUG_READ_MEM((void*)DEBUG_ToLinear( &value->addr ), &ch, sizeof(ch)))
+    {
+        if (verbose)
+            DEBUG_Printf( DBG_CHN_MESG, "Invalid address, can't set breakpoint\n");
+        return FALSE;
+    }
+
+    if ((num = DEBUG_InitXPoint(DBG_BREAK, &value->addr)) == -1)
+        return FALSE;
+
+    breakpoints[num].u.b.opcode = ch;
+    breakpoints[num].u.b.func = func;
+
+    DEBUG_Printf( DBG_CHN_MESG, "Breakpoint %d at ", num );
+    DEBUG_PrintAddress( &breakpoints[num].addr, breakpoints[num].is32 ? MODE_32 : MODE_16,
+			TRUE );
+    DEBUG_Printf( DBG_CHN_MESG, "\n" );
+
+    return FALSE;
+}
+
+/***********************************************************************
+ *           DEBUG_AddBreakpointFromValue
+ *
+ * Add a breakpoint.
+ */
+BOOL DEBUG_AddBreakpointFromValue( const DBG_VALUE *_value )
+{
+    DBG_VALUE value = *_value;
+
+    if (value.type != NULL && value.type == DEBUG_GetBasicType(DT_BASIC_CONST_INT) && value.cookie == DV_HOST)
     {
         /*
          * We know that we have the actual offset stored somewhere
@@ -353,30 +388,27 @@ void DEBUG_AddBreakpoint( const DBG_VALUE *_value, BOOL (*func)(void) )
         value.addr.seg = 0;
         value.addr.off = DEBUG_GetExprValue(&value, NULL);
         value.addr.seg = seg2;
+        value.cookie = DV_TARGET;
     }
 
-    if ((num = DEBUG_FindBreakpoint(&value.addr, DBG_BREAK)) >= 1)
+    if (!DEBUG_AddBreakpoint( &value, NULL, TRUE ))
     {
-       breakpoints[num].refcount++;
-       return;
+        if (!DBG_IVAR(CanDeferOnBPByAddr))
+        {
+            DEBUG_Printf( DBG_CHN_MESG, "Invalid address, can't set breakpoint\n"
+                          "You can turn on deferring breakpoints by address by setting $CanDeferOnBPByAddr to 1\n");
+            return FALSE;
+        }
+        DEBUG_Printf(DBG_CHN_MESG, "Unable to add breakpoint, will check again any time a new DLL is loaded\n");
+        DEBUG_CurrProcess->delayed_bp = DBG_realloc(DEBUG_CurrProcess->delayed_bp,
+                                                    sizeof(DBG_DELAYED_BP) * ++DEBUG_CurrProcess->num_delayed_bp);
+
+        DEBUG_CurrProcess->delayed_bp[DEBUG_CurrProcess->num_delayed_bp - 1].is_symbol = FALSE;
+        DEBUG_CurrProcess->delayed_bp[DEBUG_CurrProcess->num_delayed_bp - 1].u.value = value;
+        return TRUE;
     }
 
-    if (!DEBUG_READ_MEM_VERBOSE((void*)DEBUG_ToLinear( &value.addr ), &ch, sizeof(ch)))
-    {
-       DEBUG_Printf( DBG_CHN_MESG, "Invalid address, can't set breakpoint\n");
-       return;
-    }
-
-    if ((num = DEBUG_InitXPoint(DBG_BREAK, &value.addr)) == -1)
-       return;
-
-    breakpoints[num].u.b.opcode = ch;
-    breakpoints[num].u.b.func = func;
-
-    DEBUG_Printf( DBG_CHN_MESG, "Breakpoint %d at ", num );
-    DEBUG_PrintAddress( &breakpoints[num].addr, breakpoints[num].is32 ? MODE_32 : MODE_16,
-			TRUE );
-    DEBUG_Printf( DBG_CHN_MESG, "\n" );
+    return TRUE;
 }
 
 /***********************************************************************
@@ -386,26 +418,29 @@ void DEBUG_AddBreakpoint( const DBG_VALUE *_value, BOOL (*func)(void) )
  */
 void	DEBUG_AddBreakpointFromId(const char *name, int lineno)
 {
-   DBG_VALUE 	value;
-   int		i;
+    DBG_VALUE 	value;
+    int		i;
 
-   if (DEBUG_GetSymbolValue(name, lineno, &value, TRUE)) {
-      DEBUG_AddBreakpoint(&value, NULL);
-      return;
-   }
+    if (DEBUG_GetSymbolValue(name, lineno, &value, TRUE))
+    {
+        DEBUG_AddBreakpoint(&value, NULL, TRUE);
+        return;
+    }
 
-   DEBUG_Printf(DBG_CHN_MESG, "Unable to add breakpoint, will check again when a new DLL is loaded\n");
-   for (i = 0; i < DEBUG_CurrProcess->num_delayed_bp; i++) {
-      if (!strcmp(name, DEBUG_CurrProcess->delayed_bp[i].name) &&
-	  lineno == DEBUG_CurrProcess->delayed_bp[i].lineno) {
-	 return;
-      }
-   }
-   DEBUG_CurrProcess->delayed_bp = DBG_realloc(DEBUG_CurrProcess->delayed_bp,
-					       sizeof(DBG_DELAYED_BP) * ++DEBUG_CurrProcess->num_delayed_bp);
+    DEBUG_Printf(DBG_CHN_MESG, "Unable to add breakpoint, will check again when a new DLL is loaded\n");
+    for (i = 0; i < DEBUG_CurrProcess->num_delayed_bp; i++)
+    {
+        if (DEBUG_CurrProcess->delayed_bp[i].is_symbol &&
+            !strcmp(name, DEBUG_CurrProcess->delayed_bp[i].u.symbol.name) &&
+            lineno == DEBUG_CurrProcess->delayed_bp[i].u.symbol.lineno)
+            return;
+    }
+    DEBUG_CurrProcess->delayed_bp = DBG_realloc(DEBUG_CurrProcess->delayed_bp,
+                                                sizeof(DBG_DELAYED_BP) * ++DEBUG_CurrProcess->num_delayed_bp);
 
-   DEBUG_CurrProcess->delayed_bp[DEBUG_CurrProcess->num_delayed_bp - 1].name = strcpy(DBG_alloc(strlen(name) + 1), name);
-   DEBUG_CurrProcess->delayed_bp[DEBUG_CurrProcess->num_delayed_bp - 1].lineno = lineno;
+    DEBUG_CurrProcess->delayed_bp[DEBUG_CurrProcess->num_delayed_bp - 1].is_symbol = TRUE;
+    DEBUG_CurrProcess->delayed_bp[DEBUG_CurrProcess->num_delayed_bp - 1].u.symbol.name = strcpy(DBG_alloc(strlen(name) + 1), name);
+    DEBUG_CurrProcess->delayed_bp[DEBUG_CurrProcess->num_delayed_bp - 1].u.symbol.lineno = lineno;
 }
 
 /***********************************************************************
@@ -415,24 +450,26 @@ void	DEBUG_AddBreakpointFromId(const char *name, int lineno)
  */
 void	DEBUG_AddBreakpointFromLineno(int lineno)
 {
-   DBG_VALUE 			value;
+    DBG_VALUE 			value;
 
-   DEBUG_GetCurrentAddress(&value.addr);
+    DEBUG_GetCurrentAddress(&value.addr);
 
-   if (lineno != -1) {
-      struct name_hash*	nh;
+    if (lineno != -1)
+    {
+        struct name_hash*	nh;
 
-      DEBUG_FindNearestSymbol(&value.addr, TRUE, &nh, 0, NULL);
-      if (nh == NULL) {
-	 DEBUG_Printf(DBG_CHN_MESG, "Unable to add breakpoint\n");
-	 return;
-      }
-      DEBUG_GetLineNumberAddr(nh, lineno, &value.addr, TRUE);
-   }
+        DEBUG_FindNearestSymbol(&value.addr, TRUE, &nh, 0, NULL);
+        if (nh == NULL)
+        {
+            DEBUG_Printf(DBG_CHN_MESG, "Unable to add breakpoint\n");
+            return;
+        }
+        DEBUG_GetLineNumberAddr(nh, lineno, &value.addr, TRUE);
+    }
 
-   value.type = NULL;
-   value.cookie = DV_TARGET;
-   DEBUG_AddBreakpoint( &value, NULL );
+    value.type = NULL;
+    value.cookie = DV_TARGET;
+    DEBUG_AddBreakpoint( &value,NULL, TRUE );
 }
 
 /***********************************************************************
@@ -442,18 +479,32 @@ void	DEBUG_AddBreakpointFromLineno(int lineno)
  */
 void		DEBUG_CheckDelayedBP(void)
 {
-   DBG_VALUE		value;
-   int			i = 0;
-   DBG_DELAYED_BP*	dbp = DEBUG_CurrProcess->delayed_bp;
+    DBG_VALUE		value;
+    int			i;
+    DBG_DELAYED_BP*	dbp = DEBUG_CurrProcess->delayed_bp;
 
-   while (i < DEBUG_CurrProcess->num_delayed_bp) {
-      if (DEBUG_GetSymbolValue(dbp[i].name, dbp[i].lineno, &value, TRUE)) {
-	 DEBUG_AddBreakpoint(&value, NULL);
-	 memmove(&dbp[i], &dbp[i+1], (--DEBUG_CurrProcess->num_delayed_bp - i) * sizeof(*dbp));
-      } else {
-	 i++;
-      }
-   }
+    for (i = 0; i < DEBUG_CurrProcess->num_delayed_bp; i++)
+    {
+        if (dbp[i].is_symbol)
+        {
+            if (!DEBUG_GetSymbolValue(dbp[i].u.symbol.name, dbp[i].u.symbol.lineno, &value, TRUE))
+                continue;
+        }
+        else
+            value = dbp[i].u.value;
+        DEBUG_Printf(DBG_CHN_MESG, "trying to add delayed %s-bp\n", dbp[i].is_symbol ? "S" : "A");
+        if (!dbp[i].is_symbol)
+            DEBUG_Printf(DBG_CHN_MESG, "\t%04x %04lx:%08lx\n",
+                         dbp[i].u.value.cookie,
+                         dbp[i].u.value.addr.seg,
+                         dbp[i].u.value.addr.off);
+        else
+            DEBUG_Printf(DBG_CHN_MESG, "\t'%s' @ %d\n",
+                         dbp[i].u.symbol.name, dbp[i].u.symbol.lineno);
+
+        if (DEBUG_AddBreakpoint(&value, NULL, FALSE))
+            memmove(&dbp[i], &dbp[i+1], (--DEBUG_CurrProcess->num_delayed_bp - i) * sizeof(*dbp));
+    }
 }
 
 /***********************************************************************

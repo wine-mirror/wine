@@ -25,6 +25,7 @@ INTERNAL_VAR(BreakOnCritSectTimeOut,    FALSE,          NULL,  			DT_BASIC_CONST
 INTERNAL_VAR(BreakOnAttach,		FALSE,		NULL,			DT_BASIC_CONST_INT)
 INTERNAL_VAR(BreakOnFirstChance,	TRUE,		NULL,			DT_BASIC_CONST_INT)
 INTERNAL_VAR(BreakOnDllLoad,		FALSE, 		NULL, 			DT_BASIC_CONST_INT)
+INTERNAL_VAR(CanDeferOnBPByAddr,        FALSE,          NULL,                   DT_BASIC_CONST_INT)
 
    /* output handling */
 INTERNAL_VAR(ConChannelMask,		DBG_CHN_MESG,	NULL,  			DT_BASIC_CONST_INT)

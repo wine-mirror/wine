@@ -196,9 +196,10 @@ void DEBUG_DelProcess(DBG_PROCESS* p)
 
     while (p->threads) DEBUG_DelThread(p->threads);
 
-    for (i = 0; i < p->num_delayed_bp; i++) {
-	DBG_free(p->delayed_bp[i].name);
-    }
+    for (i = 0; i < p->num_delayed_bp; i++)
+        if (p->delayed_bp[i].is_symbol)
+            DBG_free(p->delayed_bp[i].u.symbol.name);
+
     DBG_free(p->delayed_bp);
     if (p->prev) p->prev->next = p->next;
     if (p->next) p->next->prev = p->prev;
@@ -283,7 +284,7 @@ static	void			DEBUG_InitCurrThread(void)
 	    value.cookie = DV_TARGET;
 	    value.addr.seg = 0;
 	    value.addr.off = (DWORD)DEBUG_CurrThread->start;
-	    DEBUG_AddBreakpoint(&value, NULL);
+	    DEBUG_AddBreakpointFromValue(&value);
 	    DEBUG_SetBreakpoints(TRUE);
 	}
     } else {

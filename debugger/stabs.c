@@ -1453,7 +1453,7 @@ enum DbgInfoLoad	DEBUG_ReadExecutableDbgInfo(const char* exe_name)
 	value.cookie = DV_TARGET;
 	value.addr.seg = 0;
 	value.addr.off = (DWORD)dbg_hdr.r_brk;
-	DEBUG_AddBreakpoint(&value, DEBUG_RescanElf);
+	DEBUG_AddBreakpoint(&value, DEBUG_RescanElf, TRUE);
 	DEBUG_SetBreakpoints(TRUE);
     }
 
