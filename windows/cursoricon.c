@@ -735,8 +735,8 @@ static HICON CURSORICON_CreateFromResource( HMODULE16 hModule, HGLOBAL16 hObj, L
 	 *   BYTE            icAND[]      // DIB bits for AND mask
 	 */
 
-    	if ((pInfo = (BITMAPINFO *)HeapAlloc( GetProcessHeap(), 0,
-	  max(size, sizeof(BITMAPINFOHEADER) + 2*sizeof(RGBQUAD)))))
+    	if ((pInfo = HeapAlloc( GetProcessHeap(), 0,
+	                        max(size, sizeof(BITMAPINFOHEADER) + 2*sizeof(RGBQUAD)))))
 	{
 	    memcpy( pInfo, bmi, size );
 	    pInfo->bmiHeader.biHeight /= 2;

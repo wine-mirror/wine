@@ -656,7 +656,7 @@ INT WINPROC_MapMsg32ATo32W( HWND hwnd, UINT msg, WPARAM *pwparam, LPARAM *plpara
     case WM_GETTEXT:
     case WM_ASKCBFORMATNAME:
         {
-            LPARAM *ptr = (LPARAM *)HeapAlloc( GetProcessHeap(), 0,
+            LPARAM *ptr = HeapAlloc( GetProcessHeap(), 0,
                                      *pwparam * sizeof(WCHAR) + sizeof(LPARAM) );
             if (!ptr) return -1;
             *ptr++ = *plparam;  /* Store previous lParam */
@@ -708,8 +708,7 @@ INT WINPROC_MapMsg32ATo32W( HWND hwnd, UINT msg, WPARAM *pwparam, LPARAM *plpara
 
             if (GetWindowLongW(hwnd, GWL_EXSTYLE) & WS_EX_MDICHILD)
             {
-                MDICREATESTRUCTW *mdi_cs = (MDICREATESTRUCTW *)HeapAlloc(GetProcessHeap(), 0,
-                                                                         sizeof(*mdi_cs));
+                MDICREATESTRUCTW *mdi_cs = HeapAlloc(GetProcessHeap(), 0, sizeof(*mdi_cs));
                 *mdi_cs = *(MDICREATESTRUCTW *)xs->cs.lpCreateParams;
                 if (HIWORD(mdi_cs->szTitle))
                 {
@@ -729,8 +728,7 @@ INT WINPROC_MapMsg32ATo32W( HWND hwnd, UINT msg, WPARAM *pwparam, LPARAM *plpara
         return 1;
     case WM_MDICREATE:
         {
-            MDICREATESTRUCTW *cs =
-                (MDICREATESTRUCTW *)HeapAlloc( GetProcessHeap(), 0, sizeof(*cs) );
+            MDICREATESTRUCTW *cs = HeapAlloc( GetProcessHeap(), 0, sizeof(*cs) );
             if (!cs) return -1;
             *cs = *(MDICREATESTRUCTW *)*plparam;
             if (HIWORD(cs->szClass))
@@ -766,7 +764,7 @@ INT WINPROC_MapMsg32ATo32W( HWND hwnd, UINT msg, WPARAM *pwparam, LPARAM *plpara
 
     case LB_GETTEXT:		    /* FIXME: fixed sized buffer */
         { if ( WINPROC_TestLBForStr( hwnd ))
-	  { LPARAM *ptr = (LPARAM *)HeapAlloc( GetProcessHeap(), 0, 512 * sizeof(WCHAR) + sizeof(LPARAM) );
+	  { LPARAM *ptr = HeapAlloc( GetProcessHeap(), 0, 512 * sizeof(WCHAR) + sizeof(LPARAM) );
             if (!ptr) return -1;
             *ptr++ = *plparam;  /* Store previous lParam */
             *plparam = (LPARAM)ptr;
@@ -791,7 +789,7 @@ INT WINPROC_MapMsg32ATo32W( HWND hwnd, UINT msg, WPARAM *pwparam, LPARAM *plpara
 
     case CB_GETLBTEXT:    /* FIXME: fixed sized buffer */
         { if ( WINPROC_TestCBForStr( hwnd ))
-          { LPARAM *ptr = (LPARAM *)HeapAlloc( GetProcessHeap(), 0, 512 * sizeof(WCHAR) + sizeof(LPARAM) );
+          { LPARAM *ptr = HeapAlloc( GetProcessHeap(), 0, 512 * sizeof(WCHAR) + sizeof(LPARAM) );
             if (!ptr) return -1;
             *ptr++ = *plparam;  /* Store previous lParam */
             *plparam = (LPARAM)ptr;
@@ -802,7 +800,7 @@ INT WINPROC_MapMsg32ATo32W( HWND hwnd, UINT msg, WPARAM *pwparam, LPARAM *plpara
 /* Multiline edit */
     case EM_GETLINE:
         { WORD len = (WORD)*plparam;
-	  LPARAM *ptr = (LPARAM *) HeapAlloc( GetProcessHeap(), 0, sizeof(LPARAM) + sizeof (WORD) + len*sizeof(WCHAR) );
+	  LPARAM *ptr = HeapAlloc( GetProcessHeap(), 0, sizeof(LPARAM) + sizeof (WORD) + len*sizeof(WCHAR) );
           if (!ptr) return -1;
           *ptr++ = *plparam;  /* Store previous lParam */
 	  *((WORD *) ptr) = len;   /* Store the length */
@@ -994,8 +992,7 @@ static INT WINPROC_MapMsg32WTo32A( HWND hwnd, UINT msg, WPARAM *pwparam, LPARAM 
     case WM_GETTEXT:
     case WM_ASKCBFORMATNAME:
         {
-            LPARAM *ptr = (LPARAM *)HeapAlloc( GetProcessHeap(), 0,
-                                               *pwparam + sizeof(LPARAM) );
+            LPARAM *ptr = HeapAlloc( GetProcessHeap(), 0, *pwparam + sizeof(LPARAM) );
             if (!ptr) return -1;
             *ptr++ = *plparam;  /* Store previous lParam */
             *plparam = (LPARAM)ptr;
@@ -1061,7 +1058,7 @@ static INT WINPROC_MapMsg32WTo32A( HWND hwnd, UINT msg, WPARAM *pwparam, LPARAM 
 
     case LB_GETTEXT:			/* FIXME: fixed sized buffer */
         { if ( WINPROC_TestLBForStr( hwnd ))
-	  { LPARAM *ptr = (LPARAM *)HeapAlloc( GetProcessHeap(), 0, 512 + sizeof(LPARAM) );
+	  { LPARAM *ptr = HeapAlloc( GetProcessHeap(), 0, 512 + sizeof(LPARAM) );
             if (!ptr) return -1;
             *ptr++ = *plparam;  /* Store previous lParam */
             *plparam = (LPARAM)ptr;
@@ -1087,7 +1084,7 @@ static INT WINPROC_MapMsg32WTo32A( HWND hwnd, UINT msg, WPARAM *pwparam, LPARAM 
 
     case CB_GETLBTEXT:		/* FIXME: fixed sized buffer */
         { if ( WINPROC_TestCBForStr( hwnd ))
-	  { LPARAM *ptr = (LPARAM *)HeapAlloc( GetProcessHeap(), 0, 512 + sizeof(LPARAM) );
+	  { LPARAM *ptr = HeapAlloc( GetProcessHeap(), 0, 512 + sizeof(LPARAM) );
             if (!ptr) return -1;
             *ptr++ = *plparam;  /* Store previous lParam */
             *plparam = (LPARAM)ptr;
@@ -1098,7 +1095,7 @@ static INT WINPROC_MapMsg32WTo32A( HWND hwnd, UINT msg, WPARAM *pwparam, LPARAM 
 /* Multiline edit */
     case EM_GETLINE:
         { WORD len = (WORD)*plparam;
-	  LPARAM *ptr = (LPARAM *) HeapAlloc( GetProcessHeap(), 0, sizeof(LPARAM) + sizeof (WORD) + len*sizeof(CHAR) );
+	  LPARAM *ptr = HeapAlloc( GetProcessHeap(), 0, sizeof(LPARAM) + sizeof (WORD) + len*sizeof(CHAR) );
           if (!ptr) return -1;
           *ptr++ = *plparam;  /* Store previous lParam */
 	  *((WORD *) ptr) = len;   /* Store the length */
@@ -1342,8 +1339,7 @@ INT WINPROC_MapMsg16To32A( HWND hwnd, UINT16 msg16, WPARAM16 wParam16, UINT *pms
     case WM_DRAWITEM:
         {
             DRAWITEMSTRUCT16* dis16 = MapSL(*plparam);
-            DRAWITEMSTRUCT *dis = (DRAWITEMSTRUCT*)HeapAlloc(GetProcessHeap(), 0,
-                                                                 sizeof(*dis));
+            DRAWITEMSTRUCT *dis = HeapAlloc(GetProcessHeap(), 0, sizeof(*dis));
             if (!dis) return -1;
             dis->CtlType       = dis16->CtlType;
             dis->CtlID         = dis16->CtlID;
@@ -1363,8 +1359,7 @@ INT WINPROC_MapMsg16To32A( HWND hwnd, UINT16 msg16, WPARAM16 wParam16, UINT *pms
         return 1;
     case WM_GETMINMAXINFO:
         {
-            MINMAXINFO *mmi = (MINMAXINFO *)HeapAlloc( GetProcessHeap(), 0,
-                                                sizeof(*mmi) + sizeof(LPARAM));
+            MINMAXINFO *mmi = HeapAlloc( GetProcessHeap(), 0, sizeof(*mmi) + sizeof(LPARAM));
             if (!mmi) return -1;
             MINMAXINFO16to32( MapSL(*plparam), mmi );
             *(LPARAM *)(mmi + 1) = *plparam;  /* Store the previous lParam */
@@ -1428,8 +1423,7 @@ INT WINPROC_MapMsg16To32A( HWND hwnd, UINT16 msg16, WPARAM16 wParam16, UINT *pms
             NCCALCSIZE_PARAMS16 *nc16;
             NCCALCSIZE_PARAMS *nc;
 
-            nc = (NCCALCSIZE_PARAMS *)HeapAlloc( GetProcessHeap(), 0,
-                                                sizeof(*nc) + sizeof(LPARAM) );
+            nc = HeapAlloc( GetProcessHeap(), 0, sizeof(*nc) + sizeof(LPARAM) );
             if (!nc) return -1;
             nc16 = MapSL(*plparam);
             nc->rgrc[0].left   = nc16->rgrc[0].left;
@@ -1438,8 +1432,7 @@ INT WINPROC_MapMsg16To32A( HWND hwnd, UINT16 msg16, WPARAM16 wParam16, UINT *pms
             nc->rgrc[0].bottom = nc16->rgrc[0].bottom;
             if (wParam16)
             {
-                nc->lppos = (WINDOWPOS *)HeapAlloc( GetProcessHeap(), 0,
-                                                      sizeof(*nc->lppos) );
+                nc->lppos = HeapAlloc( GetProcessHeap(), 0, sizeof(*nc->lppos) );
                 nc->rgrc[1].left   = nc16->rgrc[1].left;
                 nc->rgrc[1].top    = nc16->rgrc[1].top;
                 nc->rgrc[1].right  = nc16->rgrc[1].right;
@@ -1458,8 +1451,7 @@ INT WINPROC_MapMsg16To32A( HWND hwnd, UINT16 msg16, WPARAM16 wParam16, UINT *pms
     case WM_CREATE:
         {
             CREATESTRUCT16 *cs16 = MapSL(*plparam);
-            CREATESTRUCTA *cs = (CREATESTRUCTA *)HeapAlloc( GetProcessHeap(), 0,
-                                                sizeof(*cs) + sizeof(LPARAM) );
+            CREATESTRUCTA *cs = HeapAlloc( GetProcessHeap(), 0, sizeof(*cs) + sizeof(LPARAM) );
             if (!cs) return -1;
             CREATESTRUCT16to32A( cs16, cs );
             cs->lpszName  = MapSL(cs16->lpszName);
@@ -1468,8 +1460,7 @@ INT WINPROC_MapMsg16To32A( HWND hwnd, UINT16 msg16, WPARAM16 wParam16, UINT *pms
             if (GetWindowLongW(hwnd, GWL_EXSTYLE) & WS_EX_MDICHILD)
             {
                 MDICREATESTRUCT16 *mdi_cs16;
-                MDICREATESTRUCTA *mdi_cs = (MDICREATESTRUCTA *)HeapAlloc(GetProcessHeap(), 0,
-                                                                           sizeof(*mdi_cs));
+                MDICREATESTRUCTA *mdi_cs = HeapAlloc(GetProcessHeap(), 0, sizeof(*mdi_cs));
                 if (!mdi_cs)
                 {
                     HeapFree(GetProcessHeap(), 0, cs);
@@ -1496,8 +1487,7 @@ INT WINPROC_MapMsg16To32A( HWND hwnd, UINT16 msg16, WPARAM16 wParam16, UINT *pms
     case WM_WINDOWPOSCHANGING:
     case WM_WINDOWPOSCHANGED:
         {
-            WINDOWPOS *wp = (WINDOWPOS *)HeapAlloc( GetProcessHeap(), 0,
-                                                sizeof(*wp) + sizeof(LPARAM) );
+            WINDOWPOS *wp = HeapAlloc( GetProcessHeap(), 0, sizeof(*wp) + sizeof(LPARAM) );
             if (!wp) return -1;
             WINDOWPOS16to32( MapSL(*plparam), wp );
             *(LPARAM *)(wp + 1) = *plparam;  /* Store the previous lParam */
@@ -1508,7 +1498,7 @@ INT WINPROC_MapMsg16To32A( HWND hwnd, UINT16 msg16, WPARAM16 wParam16, UINT *pms
         if (*plparam)
         {
             LPMSG16 msg16 = MapSL(*plparam);
-            LPMSG msg32 = (LPMSG)HeapAlloc( GetProcessHeap(), 0, sizeof(MSG) );
+            LPMSG msg32 = HeapAlloc( GetProcessHeap(), 0, sizeof(MSG) );
 
             if (!msg32) return -1;
             msg32->hwnd = WIN_Handle32( msg16->hwnd );
@@ -1765,8 +1755,7 @@ INT WINPROC_MapMsg16To32W( HWND hwnd, UINT16 msg16, WPARAM16 wParam16, UINT *pms
     case WM_CREATE:
         {
             CREATESTRUCT16 *cs16 = MapSL(*plparam);
-            CREATESTRUCTW *cs = (CREATESTRUCTW *)HeapAlloc( GetProcessHeap(), 0,
-                                                sizeof(*cs) + sizeof(LPARAM) );
+            CREATESTRUCTW *cs = HeapAlloc( GetProcessHeap(), 0, sizeof(*cs) + sizeof(LPARAM) );
             if (!cs) return -1;
             CREATESTRUCT16to32A( cs16, (CREATESTRUCTA *)cs );
             cs->lpszName  = map_str_16_to_32W(cs16->lpszName);
@@ -1775,8 +1764,7 @@ INT WINPROC_MapMsg16To32W( HWND hwnd, UINT16 msg16, WPARAM16 wParam16, UINT *pms
             if (GetWindowLongW(hwnd, GWL_EXSTYLE) & WS_EX_MDICHILD)
             {
                 MDICREATESTRUCT16 *mdi_cs16;
-                MDICREATESTRUCTW *mdi_cs = (MDICREATESTRUCTW *)HeapAlloc(GetProcessHeap(), 0,
-                                                                           sizeof(*mdi_cs));
+                MDICREATESTRUCTW *mdi_cs = HeapAlloc(GetProcessHeap(), 0, sizeof(*mdi_cs));
                 if (!mdi_cs)
                 {
                     HeapFree(GetProcessHeap(), 0, cs);
@@ -1796,9 +1784,7 @@ INT WINPROC_MapMsg16To32W( HWND hwnd, UINT16 msg16, WPARAM16 wParam16, UINT *pms
     case WM_MDICREATE:
         {
             MDICREATESTRUCT16 *cs16 = MapSL(*plparam);
-            MDICREATESTRUCTW *cs =
-                (MDICREATESTRUCTW *)HeapAlloc( GetProcessHeap(), 0,
-                                                sizeof(*cs) + sizeof(LPARAM) );
+            MDICREATESTRUCTW *cs = HeapAlloc( GetProcessHeap(), 0, sizeof(*cs) + sizeof(LPARAM) );
             if (!cs) return -1;
             MDICREATESTRUCT16to32A( cs16, (MDICREATESTRUCTA *)cs );
             cs->szTitle = map_str_16_to_32W(cs16->szTitle);
@@ -1811,7 +1797,7 @@ INT WINPROC_MapMsg16To32W( HWND hwnd, UINT16 msg16, WPARAM16 wParam16, UINT *pms
         if (*plparam)
         {
             LPMSG16 msg16 = MapSL(*plparam);
-            LPMSG msg32 = (LPMSG)HeapAlloc( GetProcessHeap(), 0, sizeof(MSG) );
+            LPMSG msg32 = HeapAlloc( GetProcessHeap(), 0, sizeof(MSG) );
 
             if (!msg32) return -1;
             msg32->hwnd = WIN_Handle32( msg16->hwnd );
