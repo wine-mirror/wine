@@ -195,9 +195,9 @@ BOOL WINAPI SetThreadDesktop( HANDLE hDesktop )
 /***********************************************************************
  *           RegisterShellHookWindow			[USER32.@]
  */
-HRESULT WINAPI RegisterShellHookWindow ( DWORD u )
+BOOL WINAPI RegisterShellHookWindow ( HWND hWnd )
 {
-    FIXME("0x%08lx stub\n",u);
+    FIXME("(%p): stub\n", hWnd);
     return 0;
 }
 
@@ -230,6 +230,19 @@ DWORD WINAPI GetAppCompatFlags( HTASK hTask )
 {
     FIXME("stub\n");
     return 0;
+}
+
+
+/***********************************************************************
+ *           AlignRects   (USER32.@)
+ */
+BOOL WINAPI AlignRects(LPRECT rect, DWORD b, DWORD c, DWORD d)
+{
+    FIXME("(%p, %ld, %ld, %ld): stub\n", rect, b, c, d);
+    if (rect)
+        FIXME("rect: [[%ld, %ld], [%ld, %ld]]\n", rect->left, rect->top, rect->right, rect->bottom);
+    /* Calls OffsetRect */
+    return FALSE;
 }
 
 

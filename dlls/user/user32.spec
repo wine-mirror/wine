@@ -643,6 +643,7 @@
 @ stub    UnregisterDeviceNotification
 
 # win98/win2k
+@ stdcall AlignRects(ptr long long long) AlignRects
 @ stdcall AllowSetForegroundWindow (long) AllowSetForegroundWindow
 @ stdcall AnimateWindow(long long long) AnimateWindow
 @ stdcall DrawMenuBarTemp(long long long long long) DrawMenuBarTemp
