@@ -660,8 +660,8 @@ static HRESULT WINAPI SysMouseAImpl_Unacquire(LPDIRECTINPUTDEVICE8A iface)
         This->acquired = 0;
     }
     else
-	ERR("Unacquiring a not-acquired device !!!\n");
-
+	return DI_NOEFFECT;
+	
     return DI_OK;
 }
 
