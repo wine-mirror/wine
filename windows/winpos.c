@@ -2670,3 +2670,38 @@ void WINAPI CascadeChildWindows( HWND16 parent, WORD action )
 {
     FIXME(win, "(%04x, %d): stub\n", parent, action);
 }
+/***********************************************************************
+ *           GetProgmanWindow			[USER32.289]
+ */
+HRESULT WINAPI GetProgmanWindow ( )
+{	FIXME(win,"stub\n");
+	return 0;
+}
+/***********************************************************************
+ *           GetTaskmanWindow			[USER32.304]
+ */
+HRESULT WINAPI GetTaskmanWindow ( )
+{	FIXME(win,"stub\n");
+	return 0;
+}
+/***********************************************************************
+ *           SetProgmanWindow			[USER32.522]
+ */
+HRESULT WINAPI SetProgmanWindow ( DWORD x )
+{	FIXME(win,"0x%08lx stub\n",x);
+	return 0;
+}
+/***********************************************************************
+ *           SetShellWindowEx			[USER32.531]
+ */
+HRESULT WINAPI SetShellWindowEx ( DWORD x, DWORD y )
+{	FIXME(win,"0x%08lx 0x%08lx stub\n",x,y);
+	return 0;
+}
+/***********************************************************************
+ *           SetTaskmanWindow			[USER32.537]
+ */
+HRESULT WINAPI SetTaskmanWindow ( DWORD x )
+{	FIXME(win,"0x%08lx stub\n",x);
+	return 0;
+}

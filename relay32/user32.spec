@@ -614,3 +614,14 @@ type	win32
 610 stdcall MonitorFromRect(ptr long) MonitorFromRect
 611 stdcall MonitorFromPoint(long long long) MonitorFromPoint
 612 stdcall EnumDisplayMonitors(long ptr ptr long) EnumDisplayMonitors
+
+613 stdcall PrivateExtractIconExA (long long long long long) PrivateExtractIconExA
+614 stdcall PrivateExtractIconExW (long long long long long) PrivateExtractIconExW
+615 stdcall PrivateExtractIconsW (long long long long long long long long) PrivateExtractIconsW
+616 stdcall RegisterShellHookWindow (long) RegisterShellHookWindow
+617 stdcall DeregisterShellHookWindow (long) DeregisterShellHookWindow
+618 stdcall SetShellWindowEx (long long) SetShellWindowEx
+619 stdcall SetProgmanWindow (long) SetProgmanWindow
+620 stdcall GetTaskmanWindow () GetTaskmanWindow
+621 stdcall SetTaskmanWindow (long) SetTaskmanWindow
+622 stdcall GetProgmanWindow () GetProgmanWindow
