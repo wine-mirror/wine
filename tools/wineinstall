@@ -288,7 +288,7 @@ then {
       echo
       echo "$libdir doesn't exist in your /etc/ld.so.conf, it will be added"
       echo "when we perform the install..."
-      sucommand="echo $libdir>>/etc/ld.so.conf;ldconfig;$sucommand"
+      sucommand="$sucommand;echo $libdir>>/etc/ld.so.conf;$ac_cv_path_LDCONFIG"
     }
     fi
 
