@@ -528,27 +528,21 @@ static WINE_EXCEPTION_FILTER(exception_handler)
 
   switch(rec->ExceptionCode) {
   case EXCEPTION_VM86_INTx:
-    if (TRACE_ON(relay)) {
-      DPRINTF("Call DOS int 0x%02x ret=%04lx:%04lx\n",
-	      arg, context->SegCs, context->Eip );
-      DPRINTF(" eax=%08lx ebx=%08lx ecx=%08lx edx=%08lx esi=%08lx edi=%08lx\n",
-	      context->Eax, context->Ebx, context->Ecx, context->Edx,
-	      context->Esi, context->Edi );
-      DPRINTF(" ebp=%08lx esp=%08lx ds=%04lx es=%04lx fs=%04lx gs=%04lx flags=%08lx\n",
-	      context->Ebp, context->Esp, context->SegDs, context->SegEs,
-	      context->SegFs, context->SegGs, context->EFlags );
-      }
+    TRACE_(relay)("Call DOS int 0x%02x ret=%04lx:%04lx\n"
+                  " eax=%08lx ebx=%08lx ecx=%08lx edx=%08lx esi=%08lx edi=%08lx\n"
+                  " ebp=%08lx esp=%08lx ds=%04lx es=%04lx fs=%04lx gs=%04lx flags=%08lx\n",
+                  arg, context->SegCs, context->Eip,
+                  context->Eax, context->Ebx, context->Ecx, context->Edx, context->Esi, context->Edi,
+                  context->Ebp, context->Esp, context->SegDs, context->SegEs, context->SegFs, context->SegGs,
+                  context->EFlags );
     ret = DOSVM_EmulateInterruptRM( context, arg );
-    if (TRACE_ON(relay)) {
-      DPRINTF("Ret  DOS int 0x%02x ret=%04lx:%04lx\n",
-	      arg, context->SegCs, context->Eip );
-      DPRINTF(" eax=%08lx ebx=%08lx ecx=%08lx edx=%08lx esi=%08lx edi=%08lx\n",
-	      context->Eax, context->Ebx, context->Ecx, context->Edx,
-	      context->Esi, context->Edi );
-      DPRINTF(" ebp=%08lx esp=%08lx ds=%04lx es=%04lx fs=%04lx gs=%04lx flags=%08lx\n",
-	      context->Ebp, context->Esp, context->SegDs, context->SegEs,
-	      context->SegFs, context->SegGs, context->EFlags );
-    }
+    TRACE_(relay)("Ret  DOS int 0x%02x ret=%04lx:%04lx\n"
+                  " eax=%08lx ebx=%08lx ecx=%08lx edx=%08lx esi=%08lx edi=%08lx\n"
+                  " ebp=%08lx esp=%08lx ds=%04lx es=%04lx fs=%04lx gs=%04lx flags=%08lx\n",
+                  arg, context->SegCs, context->Eip,
+                  context->Eax, context->Ebx, context->Ecx, context->Edx, context->Esi, context->Edi,
+                  context->Ebp, context->Esp, context->SegDs, context->SegEs,
+                  context->SegFs, context->SegGs, context->EFlags );
     return ret ? EXCEPTION_CONTINUE_EXECUTION : EXCEPTION_EXECUTE_HANDLER;
 
   case EXCEPTION_VM86_STI:

@@ -243,18 +243,15 @@ static void DOSVM_PushFlags( CONTEXT86 *context, BOOL islong, BOOL isstub )
  */
 void WINAPI DOSVM_EmulateInterruptPM( CONTEXT86 *context, BYTE intnum ) 
 {
-    if (TRACE_ON(relay)) 
-    {
-        DPRINTF( "Call DOS int 0x%02x ret=%04lx:%08lx\n",
-                 intnum, context->SegCs, context->Eip );
-        DPRINTF( "  eax=%08lx ebx=%08lx ecx=%08lx edx=%08lx\n",
-                 context->Eax, context->Ebx, context->Ecx, context->Edx );
-        DPRINTF( "  esi=%08lx edi=%08lx ebp=%08lx esp=%08lx \n",
-                 context->Esi, context->Edi, context->Ebp, context->Esp );
-        DPRINTF( "  ds=%04lx es=%04lx fs=%04lx gs=%04lx ss=%04lx flags=%08lx\n",
-                 context->SegDs, context->SegEs, context->SegFs, context->SegGs,
-                 context->SegSs, context->EFlags );
-    }
+    TRACE_(relay)("Call DOS int 0x%02x ret=%04lx:%08lx\n"
+                  "  eax=%08lx ebx=%08lx ecx=%08lx edx=%08lx\n"
+                  "  esi=%08lx edi=%08lx ebp=%08lx esp=%08lx \n"
+                  "  ds=%04lx es=%04lx fs=%04lx gs=%04lx ss=%04lx flags=%08lx\n",
+                  intnum, context->SegCs, context->Eip,
+                  context->Eax, context->Ebx, context->Ecx, context->Edx,
+                  context->Esi, context->Edi, context->Ebp, context->Esp,
+                  context->SegDs, context->SegEs, context->SegFs, context->SegGs,
+                  context->SegSs, context->EFlags );
 
     if (context->SegCs == DOSVM_dpmi_segments->dpmi_sel)
     {
@@ -425,18 +422,15 @@ void DOSVM_HardwareInterruptPM( CONTEXT86 *context, BYTE intnum )
  */
 BOOL WINAPI DOSVM_EmulateInterruptRM( CONTEXT86 *context, BYTE intnum ) 
 {
-    if (TRACE_ON(relay)) 
-    {
-        DPRINTF( "Call DOS int 0x%02x ret=%04lx:%08lx\n",
-                 intnum, context->SegCs, context->Eip );
-        DPRINTF( "  eax=%08lx ebx=%08lx ecx=%08lx edx=%08lx\n",
-                 context->Eax, context->Ebx, context->Ecx, context->Edx );
-        DPRINTF( "  esi=%08lx edi=%08lx ebp=%08lx esp=%08lx \n",
-                 context->Esi, context->Edi, context->Ebp, context->Esp );
-        DPRINTF( "  ds=%04lx es=%04lx fs=%04lx gs=%04lx flags=%08lx\n",
-                 context->SegDs, context->SegEs,
-                 context->SegFs, context->SegGs, context->EFlags );
-    }
+    TRACE_(relay)("Call DOS int 0x%02x ret=%04lx:%08lx\n"
+                  "  eax=%08lx ebx=%08lx ecx=%08lx edx=%08lx\n"
+                  "  esi=%08lx edi=%08lx ebp=%08lx esp=%08lx \n"
+                  "  ds=%04lx es=%04lx fs=%04lx gs=%04lx ss=%04lx flags=%08lx\n",
+                  intnum, context->SegCs, context->Eip,
+                  context->Eax, context->Ebx, context->Ecx, context->Edx,
+                  context->Esi, context->Edi, context->Ebp, context->Esp,
+                  context->SegDs, context->SegEs, context->SegFs, context->SegGs,
+                  context->SegSs, context->EFlags );
 
     /* check for our real-mode hooks */
     if (intnum == 0x31)

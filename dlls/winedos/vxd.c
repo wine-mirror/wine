@@ -50,7 +50,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(vxd);
 #define W32S_WINE2APP(addr) ((addr)? (DWORD)(addr) - W32S_offset : 0)
 
 #define VXD_BARF(context,name) \
-    DPRINTF( "vxd %s: unknown/not implemented parameters:\n" \
+    TRACE( "vxd %s: unknown/not implemented parameters:\n" \
                      "vxd %s: AX %04x, BX %04x, CX %04x, DX %04x, " \
                      "SI %04x, DI %04x, DS %04x, ES %04x\n", \
              (name), (name), AX_reg(context), BX_reg(context), \
