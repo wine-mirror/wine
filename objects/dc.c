@@ -253,7 +253,7 @@ HDC16 WINAPI GetDCState16( HDC16 hdc )
     DC * newdc, * dc;
     HGDIOBJ handle;
     
-    if (!(dc = DC_GetDCUpdate( hdc ))) return 0;
+    if (!(dc = DC_GetDCPtr( hdc ))) return 0;
     if (!(newdc = GDI_AllocObject( sizeof(DC), DC_MAGIC, &handle )))
     {
       GDI_ReleaseObj( hdc );
@@ -346,7 +346,7 @@ void WINAPI SetDCState16( HDC16 hdc, HDC16 hdcs )
 {
     DC *dc, *dcs;
 
-    if (!(dc = GDI_GetObjPtr( hdc, DC_MAGIC ))) return;
+    if (!(dc = DC_GetDCUpdate( hdc ))) return;
     if (!(dcs = GDI_GetObjPtr( hdcs, DC_MAGIC )))
     {
       GDI_ReleaseObj( hdc );
@@ -446,7 +446,7 @@ INT WINAPI SaveDC( HDC hdc )
     DC * dc, * dcs;
     INT ret;
 
-    dc = DC_GetDCUpdate( hdc );
+    dc = DC_GetDCPtr( hdc );
     if (!dc) return 0;
 
     if(dc->funcs->pSaveDC)
@@ -505,7 +505,7 @@ BOOL WINAPI RestoreDC( HDC hdc, INT level )
     BOOL success;
 
     TRACE("%04x %d\n", hdc, level );
-    dc = DC_GetDCPtr( hdc );
+    dc = DC_GetDCUpdate( hdc );
     if(!dc) return FALSE;
     if(dc->funcs->pRestoreDC)
     {
