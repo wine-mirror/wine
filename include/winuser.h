@@ -3817,13 +3817,16 @@ BOOL      WINAPI AnyPopup(void);
 BOOL      WINAPI AppendMenuA(HMENU,UINT,UINT_PTR,LPCSTR);
 BOOL      WINAPI AppendMenuW(HMENU,UINT,UINT_PTR,LPCWSTR);
 #define     AppendMenu WINELIB_NAME_AW(AppendMenu)
-UINT      WINAPI ArrangeIconicWindows(HWND);
-HDWP      WINAPI BeginDeferWindowPos(INT);
-HDC       WINAPI BeginPaint(HWND,LPPAINTSTRUCT);
-BOOL      WINAPI BringWindowToTop(HWND);
-void      WINAPI CalcChildScroll(HWND, INT);
-BOOL      WINAPI CallMsgFilterA(LPMSG,INT);
-BOOL      WINAPI CallMsgFilterW(LPMSG,INT);
+UINT        WINAPI ArrangeIconicWindows(HWND);
+HDWP        WINAPI BeginDeferWindowPos(INT);
+HDC         WINAPI BeginPaint(HWND,LPPAINTSTRUCT);
+BOOL        WINAPI BringWindowToTop(HWND);
+LONG        WINAPI BroadcastSystemMessageA(DWORD,LPDWORD,UINT,WPARAM,LPARAM);
+LONG        WINAPI BroadcastSystemMessageW(DWORD,LPDWORD,UINT,WPARAM,LPARAM);
+#define     BroadcastSystemMessage WINELIB_NAME_A(BroadcastSystemMessage)
+void        WINAPI CalcChildScroll(HWND, INT);
+BOOL        WINAPI CallMsgFilterA(LPMSG,INT);
+BOOL        WINAPI CallMsgFilterW(LPMSG,INT);
 #define     CallMsgFilter WINELIB_NAME_AW(CallMsgFilter)
 LRESULT     WINAPI CallNextHookEx(HHOOK,INT,WPARAM,LPARAM);
 LRESULT     WINAPI CallWindowProcA(WNDPROC,HWND,UINT,WPARAM,LPARAM);
@@ -4133,6 +4136,9 @@ LONG        WINAPI GetWindowLongW(HWND,INT);
 #define     GetWindowLongPtrA GetWindowLongA
 #define     GetWindowLongPtrW GetWindowLongW
 #define     GetWindowLongPtr WINELIB_NAME_AW(GetWindowLongPtr)
+UINT        WINAPI GetWindowModuleFileNameA(HWND,LPSTR,UINT);
+UINT        WINAPI GetWindowModuleFileNameW(HWND,LPWSTR,UINT);
+#define     GetWindowModuleFileName WINELIB_NAME_AW(GetWindowModuleFileName)
 BOOL        WINAPI GetWindowPlacement(HWND,LPWINDOWPLACEMENT);
 BOOL        WINAPI GetWindowRect(HWND,LPRECT);
 INT         WINAPI GetWindowRgn(HWND,HRGN);
@@ -4384,18 +4390,20 @@ BOOL      WINAPI SystemParametersInfoW(UINT,UINT,LPVOID,UINT);
 LONG        WINAPI TabbedTextOutA(HDC,INT,INT,LPCSTR,INT,INT,const INT*,INT);
 LONG        WINAPI TabbedTextOutW(HDC,INT,INT,LPCWSTR,INT,INT,const INT*,INT);
 #define     TabbedTextOut WINELIB_NAME_AW(TabbedTextOut)
-INT       WINAPI ToAscii(UINT,UINT,LPBYTE,LPWORD,UINT);
-INT       WINAPI ToAsciiEx(UINT,UINT,LPBYTE,LPWORD,UINT,HKL);
-BOOL      WINAPI TrackMouseEvent(LPTRACKMOUSEEVENT);
-BOOL      WINAPI TrackPopupMenu(HMENU,UINT,INT,INT,INT,HWND,const RECT*);
-INT       WINAPI TranslateAccelerator(HWND,HACCEL,LPMSG);
-BOOL      WINAPI TranslateMDISysAccel(HWND,LPMSG);
-BOOL      WINAPI TranslateMessage(const MSG*);
-BOOL      WINAPI UnhookWindowsHook(INT,HOOKPROC);
-BOOL      WINAPI UnhookWindowsHookEx(HHOOK);
-BOOL      WINAPI UnionRect(LPRECT,const RECT*,const RECT*);
-BOOL      WINAPI UnregisterClassA(LPCSTR,HINSTANCE);
-BOOL      WINAPI UnregisterClassW(LPCWSTR,HINSTANCE);
+INT         WINAPI ToAscii(UINT,UINT,LPBYTE,LPWORD,UINT);
+INT         WINAPI ToAsciiEx(UINT,UINT,LPBYTE,LPWORD,UINT,HKL);
+BOOL        WINAPI TrackMouseEvent(LPTRACKMOUSEEVENT);
+BOOL        WINAPI TrackPopupMenu(HMENU,UINT,INT,INT,INT,HWND,const RECT*);
+INT         WINAPI TranslateAcceleratorA(HWND,HACCEL,LPMSG);
+INT         WINAPI TranslateAcceleratorW(HWND,HACCEL,LPMSG);
+#define     TranslateAccelerator WINELIB_NAME_AW(TranslateAccelerator)
+BOOL        WINAPI TranslateMDISysAccel(HWND,LPMSG);
+BOOL        WINAPI TranslateMessage(const MSG*);
+BOOL        WINAPI UnhookWindowsHook(INT,HOOKPROC);
+BOOL        WINAPI UnhookWindowsHookEx(HHOOK);
+BOOL        WINAPI UnionRect(LPRECT,const RECT*,const RECT*);
+BOOL        WINAPI UnregisterClassA(LPCSTR,HINSTANCE);
+BOOL        WINAPI UnregisterClassW(LPCWSTR,HINSTANCE);
 #define     UnregisterClass WINELIB_NAME_AW(UnregisterClass)
 BOOL        WINAPI UpdateWindow(HWND);
 UINT        WINAPI UserRealizePalette(HDC);

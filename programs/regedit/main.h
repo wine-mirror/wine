@@ -156,7 +156,7 @@ d(SetFocus)
 d(SetWindowLongA)
 d(SetWindowTextA)
 d(ShowWindow)
-d(TranslateAccelerator)
+d(TranslateAcceleratorA)
 d(TranslateMessage)
 d(UpdateWindow)
 d(WinHelpA)
@@ -227,7 +227,7 @@ d(wsprintfA)
 #define SetWindowLongA pSetWindowLongA
 #define SetWindowTextA pSetWindowTextA
 #define ShowWindow pShowWindow
-#define TranslateAccelerator pTranslateAccelerator
+#define TranslateAcceleratorA pTranslateAcceleratorA
 #define TranslateMessage pTranslateMessage
 #define UpdateWindow pUpdateWindow
 #define WinHelpA pWinHelpA

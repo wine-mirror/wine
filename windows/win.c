@@ -3199,7 +3199,7 @@ UINT WINAPI GetWindowModuleFileNameA( HWND hwnd, LPSTR lpszFileName, UINT cchFil
 /******************************************************************************
  *		GetWindowModuleFileNameW (USER32.@)
  */
-UINT WINAPI GetWindowModuleFileNameW( HWND hwnd, LPSTR lpszFileName, UINT cchFileNameMax)
+UINT WINAPI GetWindowModuleFileNameW( HWND hwnd, LPWSTR lpszFileName, UINT cchFileNameMax)
 {
     FIXME("GetWindowModuleFileNameW(hwnd %p, lpszFileName %p, cchFileNameMax %u) stub!\n",
           hwnd, lpszFileName, cchFileNameMax);

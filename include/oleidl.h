@@ -260,6 +260,9 @@ void __RPC_STUB IOleInPlaceObject_ReactivateAndUndo_Stub(
 
 #endif  /* __IOleInPlaceObject_INTERFACE_DEFINED__ */
 
+#ifdef __WINESRC__
+#undef TranslateAccelerator
+#endif
 #ifndef __IOleInPlaceUIWindow_FWD_DEFINED__
 #define __IOleInPlaceUIWindow_FWD_DEFINED__
 typedef struct IOleInPlaceUIWindow IOleInPlaceUIWindow;

@@ -96,6 +96,11 @@ interface IOleInPlaceObject : IOleWindow
 }
 
 
+/* avoid conflict with Wine Unicode macros */
+cpp_quote("#ifdef __WINESRC__")
+cpp_quote("#undef TranslateAccelerator")
+cpp_quote("#endif")
+
 /*****************************************************************************
  * IOleInPlaceActiveObject interface
  */

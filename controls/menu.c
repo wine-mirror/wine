@@ -4754,7 +4754,7 @@ static BOOL translate_accelerator( HWND hWnd, UINT message, WPARAM wParam, LPARA
  *      TranslateAcceleratorA     (USER32.@)
  *      TranslateAcceleratorW     (USER32.@)
  */
-INT WINAPI TranslateAccelerator( HWND hWnd, HACCEL hAccel, LPMSG msg )
+INT WINAPI TranslateAcceleratorW( HWND hWnd, HACCEL hAccel, LPMSG msg )
 {
     /* YES, Accel16! */
     LPACCEL16 lpAccelTbl;

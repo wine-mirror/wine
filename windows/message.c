@@ -932,7 +932,7 @@ WORD WINAPI RegisterWindowMessageW( LPCWSTR str )
  *		BroadcastSystemMessage  (USER32.@)
  *		BroadcastSystemMessageA (USER32.@)
  */
-LONG WINAPI BroadcastSystemMessage(
+LONG WINAPI BroadcastSystemMessageA(
 	DWORD dwFlags,LPDWORD recipients,UINT uMessage,WPARAM wParam,
 	LPARAM lParam )
 {

@@ -468,7 +468,7 @@ INT16 WINAPI TranslateAccelerator16( HWND16 hwnd, HACCEL16 hAccel, LPMSG16 msg )
     /* msg32.hwnd not used */
     msg32.wParam  = msg->wParam;
     msg32.lParam  = msg->lParam;
-    return TranslateAccelerator( WIN_Handle32(hwnd), HACCEL_32(hAccel), &msg32 );
+    return TranslateAcceleratorW( WIN_Handle32(hwnd), HACCEL_32(hAccel), &msg32 );
 }
 
 

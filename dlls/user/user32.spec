@@ -10,8 +10,8 @@
 @ stdcall BeginPaint(long ptr)
 # @ stub BlockInput
 @ stdcall BringWindowToTop(long)
-@ stdcall BroadcastSystemMessage(long ptr long long long)
-@ stdcall BroadcastSystemMessageA(long ptr long long long) BroadcastSystemMessage
+@ stdcall BroadcastSystemMessage(long ptr long long long) BroadcastSystemMessageA
+@ stdcall BroadcastSystemMessageA(long ptr long long long)
 @ stdcall BroadcastSystemMessageW(long ptr long long long)
 @ stdcall CalcChildScroll(long long)
 @ stdcall CallMsgFilter(ptr long) CallMsgFilterA
@@ -583,9 +583,9 @@
 @ stdcall ToUnicode(long long ptr wstr long long)
 @ stdcall TrackPopupMenu(long long long long long long ptr)
 @ stdcall TrackPopupMenuEx(long long long long long ptr)
-@ stdcall TranslateAccelerator(long long ptr)
-@ stdcall TranslateAcceleratorA(long long ptr) TranslateAccelerator
-@ stdcall TranslateAcceleratorW(long long ptr) TranslateAccelerator
+@ stdcall TranslateAccelerator(long long ptr) TranslateAcceleratorW
+@ stdcall TranslateAcceleratorA(long long ptr) TranslateAcceleratorW
+@ stdcall TranslateAcceleratorW(long long ptr)
 @ stdcall TranslateMDISysAccel(long ptr)
 @ stdcall TranslateMessage(ptr)
 @ stdcall UnhookWindowsHook(long ptr)
