@@ -789,6 +789,45 @@ static void test_VarParseNumFromStr(void)
   EXPECTRGB(2,0);
   EXPECTRGB(3,FAILDIG);
 
+  /* VB hex */
+  CONVERT("&HF800", NUMPRS_HEX_OCT);
+  EXPECT(4,NUMPRS_HEX_OCT,0x40,6,4,0);
+  EXPECTRGB(0,15);
+  EXPECTRGB(1,8);
+  EXPECTRGB(2,0);
+  EXPECTRGB(3,0);
+  EXPECTRGB(4,FAILDIG);
+
+  /* VB hex lower case and leading zero */
+  CONVERT("&h0abcd", NUMPRS_HEX_OCT);
+  EXPECT(4,NUMPRS_HEX_OCT,0x40,7,4,0);
+  EXPECTRGB(0,10);
+  EXPECTRGB(1,11);
+  EXPECTRGB(2,12);
+  EXPECTRGB(3,13);
+  EXPECTRGB(4,FAILDIG);
+
+  /* VB oct */
+  CONVERT("&O300", NUMPRS_HEX_OCT);
+  EXPECT(3,NUMPRS_HEX_OCT,0x40,5,3,0);
+  EXPECTRGB(0,3);
+  EXPECTRGB(1,0);
+  EXPECTRGB(2,0);
+  EXPECTRGB(3,FAILDIG);
+
+  /* VB oct lower case and leading zero */
+  CONVERT("&o0777", NUMPRS_HEX_OCT);
+  EXPECT(3,NUMPRS_HEX_OCT,0x40,6,3,0);
+  EXPECTRGB(0,7);
+  EXPECTRGB(1,7);
+  EXPECTRGB(2,7);
+  EXPECTRGB(3,FAILDIG);
+
+  /* VB oct char bigger than 7 */
+  CONVERT("&o128", NUMPRS_HEX_OCT);
+  EXPECTFAIL;
+  EXPECTRGB(0,FAILDIG);
+
   /** NUMPRS_PARENS **/
 
   /* Empty parens = error */

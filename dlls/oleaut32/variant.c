@@ -1464,6 +1464,8 @@ void VARIANT_GetLocalisedNumberChars(VARIANT_NUMBER_CHARS *lpChars, LCID lcid, D
 #define B_EXPONENT_START      0x4
 #define B_INEXACT_ZEROS       0x8
 #define B_LEADING_ZERO        0x10
+#define B_PROCESSING_HEX      0x20
+#define B_PROCESSING_OCT      0x40
 
 /**********************************************************************
  *              VarParseNumFromStr [OLEAUT32.46]
@@ -1581,6 +1583,23 @@ HRESULT WINAPI VarParseNumFromStr(OLECHAR *lpszStr, LCID lcid, ULONG dwFlags,
     chars.cCurrencyDigitSeperator = chars.cDigitSeperator;
   }
 
+  if ((*lpszStr == '&' && (*(lpszStr+1) == 'H' || *(lpszStr+1) == 'h')) &&
+    pNumprs->dwInFlags & NUMPRS_HEX_OCT)
+  {
+      dwState |= B_PROCESSING_HEX;
+      pNumprs->dwOutFlags |= NUMPRS_HEX_OCT;
+      cchUsed=cchUsed+2;
+      lpszStr=lpszStr+2;
+  }
+  else if ((*lpszStr == '&' && (*(lpszStr+1) == 'O' || *(lpszStr+1) == 'o')) &&
+    pNumprs->dwInFlags & NUMPRS_HEX_OCT)
+  {
+      dwState |= B_PROCESSING_OCT;
+      pNumprs->dwOutFlags |= NUMPRS_HEX_OCT;
+      cchUsed=cchUsed+2;
+      lpszStr=lpszStr+2;
+  }
+
   /* Strip Leading zeros */
   while (*lpszStr == '0')
   {
@@ -1624,7 +1643,8 @@ HRESULT WINAPI VarParseNumFromStr(OLECHAR *lpszStr, LCID lcid, ULONG dwFlags,
       }
       else
       {
-        if (pNumprs->cDig >= iMaxDigits)
+        if ((pNumprs->cDig >= iMaxDigits) && !(dwState & B_PROCESSING_HEX)
+          && !(dwState & B_PROCESSING_OCT))
         {
           pNumprs->dwOutFlags |= NUMPRS_INEXACT;
 
@@ -1639,8 +1659,13 @@ HRESULT WINAPI VarParseNumFromStr(OLECHAR *lpszStr, LCID lcid, ULONG dwFlags,
         }
         else
         {
+          if ((dwState & B_PROCESSING_OCT) && ((*lpszStr == '8') || (*lpszStr == '9'))) {
+            return DISP_E_TYPEMISMATCH;
+          }
+
           if (pNumprs->dwOutFlags & NUMPRS_DECIMAL)
             pNumprs->nPwr10--; /* Count decimal points in nPwr10 */
+
           rgbTmp[pNumprs->cDig] = *lpszStr - '0';
         }
         pNumprs->cDig++;
@@ -1694,6 +1719,24 @@ HRESULT WINAPI VarParseNumFromStr(OLECHAR *lpszStr, LCID lcid, ULONG dwFlags,
       dwState |= B_NEGATIVE_EXPONENT;
       cchUsed++;
     }
+    else if (((*lpszStr >= 'a' && *lpszStr <= 'f') ||
+             (*lpszStr >= 'A' && *lpszStr <= 'F')) &&
+             dwState & B_PROCESSING_HEX)
+    {
+      if (pNumprs->cDig >= iMaxDigits)
+      {
+        return DISP_E_OVERFLOW;
+      }
+      else
+      {
+        if (*lpszStr >= 'a')
+          rgbTmp[pNumprs->cDig] = *lpszStr - 'a' + 10;
+        else
+          rgbTmp[pNumprs->cDig] = *lpszStr - 'A' + 10;
+      }
+      pNumprs->cDig++;
+      cchUsed++;
+    }
     else
       break; /* Stop at an unrecognised character */
 
@@ -1724,14 +1767,26 @@ HRESULT WINAPI VarParseNumFromStr(OLECHAR *lpszStr, LCID lcid, ULONG dwFlags,
     /* cDig of X and writes X+Y where Y>=0 number of digits to rgbDig */
     memcpy(rgbDig, rgbTmp, pNumprs->cDig * sizeof(BYTE));
 
-    while (pNumprs->cDig > 1 && !rgbTmp[pNumprs->cDig - 1])
-    {
-      if (pNumprs->dwOutFlags & NUMPRS_DECIMAL)
-        pNumprs->nPwr10--;
-      else
-        pNumprs->nPwr10++;
+    if (dwState & B_PROCESSING_HEX) {
+      /* hex numbers have always the same format */
+      pNumprs->nPwr10=0;
+      pNumprs->nBaseShift=4;
+    } else {
+      if (dwState & B_PROCESSING_OCT) {
+        /* oct numbers have always the same format */
+        pNumprs->nPwr10=0;
+        pNumprs->nBaseShift=3;
+      } else {
+        while (pNumprs->cDig > 1 && !rgbTmp[pNumprs->cDig - 1])
+        {
+          if (pNumprs->dwOutFlags & NUMPRS_DECIMAL)
+            pNumprs->nPwr10--;
+          else
+            pNumprs->nPwr10++;
 
-      pNumprs->cDig--;
+          pNumprs->cDig--;
+        }
+      }
     }
   } else
   {
@@ -1866,7 +1921,110 @@ HRESULT WINAPI VarNumFromParseNum(NUMPARSE *pNumprs, BYTE *rgbDig,
   if (pNumprs->nBaseShift)
   {
     /* nBaseShift indicates a hex or octal number */
-    FIXME("nBaseShift=%d not yet implemented, returning overflow\n", pNumprs->nBaseShift);
+    ULONG64 ul64 = 0;
+    LONG64 l64;
+    int i;
+
+    /* Convert the hex or octal number string into a UI64 */
+    for (i = 0; i < pNumprs->cDig; i++)
+    {
+      if (ul64 > ((UI8_MAX>>pNumprs->nBaseShift) - rgbDig[i]))
+      {
+        TRACE("Overflow multiplying digits\n");
+        return DISP_E_OVERFLOW;
+      }
+      ul64 = (ul64<<pNumprs->nBaseShift) + rgbDig[i];
+    }
+
+    /* also make a negative representation */
+    l64=-ul64;
+
+    /* Try signed and unsigned types in size order */
+    if (dwVtBits & VTBIT_I1 && ((ul64 <= I1_MAX)||(l64 >= I1_MIN)))
+    {
+      V_VT(pVarDst) = VT_I1;
+      if (ul64 <= I1_MAX)
+          V_I1(pVarDst) = ul64;
+      else
+          V_I1(pVarDst) = l64;
+      return S_OK;
+    }
+    else if (dwVtBits & VTBIT_UI1 && ul64 <= UI1_MAX)
+    {
+      V_VT(pVarDst) = VT_UI1;
+      V_UI1(pVarDst) = ul64;
+      return S_OK;
+    }
+    else if (dwVtBits & VTBIT_I2 && ((ul64 <= I2_MAX)||(l64 >= I2_MIN)))
+    {
+      V_VT(pVarDst) = VT_I2;
+      if (ul64 <= I2_MAX)
+          V_I2(pVarDst) = ul64;
+      else
+          V_I2(pVarDst) = l64;
+      return S_OK;
+    }
+    else if (dwVtBits & VTBIT_UI2 && ul64 <= UI2_MAX)
+    {
+      V_VT(pVarDst) = VT_UI2;
+      V_UI2(pVarDst) = ul64;
+      return S_OK;
+    }
+    else if (dwVtBits & VTBIT_I4 && ((ul64 <= I4_MAX)||(l64 >= I4_MIN)))
+    {
+      V_VT(pVarDst) = VT_I4;
+      if (ul64 <= I4_MAX)
+          V_I4(pVarDst) = ul64;
+      else
+          V_I4(pVarDst) = l64;
+      return S_OK;
+    }
+    else if (dwVtBits & VTBIT_UI4 && ul64 <= UI4_MAX)
+    {
+      V_VT(pVarDst) = VT_UI4;
+      V_UI4(pVarDst) = ul64;
+      return S_OK;
+    }
+    else if (dwVtBits & VTBIT_I8 && ((ul64 <= I4_MAX)||(l64>=I4_MIN)))
+    {
+      V_VT(pVarDst) = VT_I8;
+      V_I8(pVarDst) = ul64;
+      return S_OK;
+    }
+    else if (dwVtBits & VTBIT_UI8)
+    {
+      V_VT(pVarDst) = VT_UI8;
+      V_UI8(pVarDst) = ul64;
+      return S_OK;
+    }
+    else if ((dwVtBits & REAL_VTBITS) == VTBIT_DECIMAL)
+    {
+      V_VT(pVarDst) = VT_DECIMAL;
+      DEC_SIGNSCALE(&V_DECIMAL(pVarDst)) = SIGNSCALE(DECIMAL_POS,0);
+      DEC_HI32(&V_DECIMAL(pVarDst)) = 0;
+      DEC_LO64(&V_DECIMAL(pVarDst)) = ul64;
+      return S_OK;
+    }
+    else if (dwVtBits & VTBIT_R4 && ((ul64 <= I4_MAX)||(l64 >= I4_MIN)))
+    {
+      V_VT(pVarDst) = VT_R4;
+      if (ul64 <= I4_MAX)
+          V_R4(pVarDst) = ul64;
+      else
+          V_R4(pVarDst) = l64;
+      return S_OK;
+    }
+    else if (dwVtBits & VTBIT_R8 && ((ul64 <= I4_MAX)||(l64 >= I4_MIN)))
+    {
+      V_VT(pVarDst) = VT_R8;
+      if (ul64 <= I4_MAX)
+          V_R8(pVarDst) = ul64;
+      else
+          V_R8(pVarDst) = l64;
+      return S_OK;
+    }
+
+    TRACE("Overflow: possible return types: 0x%lx, value: %s\n", dwVtBits, wine_dbgstr_longlong(ul64));
     return DISP_E_OVERFLOW;
   }
 
