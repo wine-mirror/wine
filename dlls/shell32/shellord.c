@@ -1041,6 +1041,15 @@ HRESULT WINAPI SHRunControlPanel (DWORD x, DWORD z)
 	return 0;
 }
 /*************************************************************************
+ *  SHSimpleIDListFromPath [SHELL32.162]
+ *
+ */
+LPITEMIDLIST WINAPI SHSimpleIDListFromPath (LPCSTR lpszPath)
+{
+	FIXME(shell,"(%s): stub\n",lpszPath);
+	return 0;
+}
+/*************************************************************************
  * ShellExecuteEx [SHELL32.291]
  *
  */

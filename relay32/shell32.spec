@@ -167,7 +167,7 @@ init	Shell32LibMain
  159 stub PathIsDirectory
  160 stub SHNetConnectionDialog
  161 stdcall SHRunControlPanel (long long) SHRunControlPanel
- 162 stub SHSimpleIDListFromPath
+ 162 stdcall SHSimpleIDListFromPath (ptr) SHSimpleIDListFromPath
  163 stub StrToOleStr
  164 stub Win32DeleteFile
  165 stdcall SHCreateDirectory(long long) SHCreateDirectory
