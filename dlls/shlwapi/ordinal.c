@@ -1793,14 +1793,9 @@ HICON WINAPI SHLWAPI_337(LPCWSTR lpszFile, INT nIconIndex, HICON *phiconLarge,
  *      @	[SHLWAPI.342]
  *
  */
-DWORD WINAPI SHLWAPI_342 (
-	LPDWORD  w,   /* [out] location to put HKEY value???   */
-	HKEY     x,   /* [in]  appears to be HKEY_CURRENT_USER */
-	LPVOID y)
+LONG WINAPI SHLWAPI_342( PLONG dest, LONG xchg, LONG compare)
 {
-	FIXME("(%p 0x%08x %p)stub\n", w,x,y);
-	*w = (DWORD)x;
-	return /* 0xabba1249 */ 0;
+        return InterlockedCompareExchange(dest, xchg, compare);
 }
 
 /*************************************************************************
