@@ -21,24 +21,5 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
- #include <windows.h>
-
-typedef struct
-{
-  int StartX,StartY,EndX,EndY;
-  BOOL DontRedraw;
-} HandData;
-
-extern HandData OldMinute, OldHour, OldSecond;
-
-/* function prototypes */
-
-
-void DrawFace(HDC dc);
-void DrawHourHand(HDC dc);
-void DrawMinuteHand(HDC dc);
-void DrawSecondHand(HDC dc);
-BOOL UpdateHourHand(HDC dc,int MidX,int MidY,int XExt,int YExt,WORD Pos);
-BOOL UpdateMinuteHand(HDC dc,int MidX,int MidY,int XExt,int YExt,WORD Pos);
-BOOL UpdateSecondHand(HDC dc,int MidX,int MidY,int XExt,int YExt,WORD Pos);
-void Idle(HDC idc);
+void AnalogClock(HDC dc, int X, int Y);
+void DigitalClock(HDC dc, int X, int Y);

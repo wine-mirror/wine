@@ -26,12 +26,14 @@
 #include "config.h"
 
 #include <stdio.h>
+
 #include "windows.h"
+#include "commdlg.h"
+
 #include "main.h"
 #include "license.h"
 #include "language.h"
 #include "winclock.h"
-#include "commdlg.h"
 
 #define INITIAL_WINDOW_SIZE 200
 #define TIMER_ID 1
@@ -176,14 +178,10 @@ LRESULT WINAPI CLOCK_WndProc (HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
             HDC context;
             
             context = BeginPaint(hWnd, &ps);
-            if(Globals.bAnalog) {
-                DrawFace(context);
-                Idle(context);
-            }
+            if(Globals.bAnalog)
+                AnalogClock(context, Globals.MaxX, Globals.MaxY);
             else
-            {
-                /* do nothing */
-            }
+                DigitalClock(context, Globals.MaxX, Globals.MaxY);
             EndPaint(hWnd, &ps);
             break;
         }
@@ -191,9 +189,6 @@ LRESULT WINAPI CLOCK_WndProc (HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
         case WM_SIZE: {
             Globals.MaxX = LOWORD(lParam);
             Globals.MaxY = HIWORD(lParam);
-            OldHour.DontRedraw   = TRUE;
-            OldMinute.DontRedraw = TRUE;
-            OldSecond.DontRedraw = TRUE;
             break;
         }
 
@@ -203,8 +198,11 @@ LRESULT WINAPI CLOCK_WndProc (HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
         }
             
         case WM_TIMER: {
-            Idle(0);
-            break;
+            /* Could just invalidate the changed hands,
+             * but it doesn't really seem worth the effort
+             */
+	    InvalidateRect(Globals.hMainWnd, NULL, FALSE);
+	    break;
         }
 
         case WM_DESTROY: {
