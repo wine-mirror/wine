@@ -37,6 +37,7 @@
 #include <winbase.h>
 #include <winuser.h>
 #include <commctrl.h>
+#include <objbase.h>
 #include <wine/debug.h>
 
 #include "properties.h"
@@ -248,16 +249,17 @@ WinMain (HINSTANCE hInstance, HINSTANCE hPrev, LPSTR szCmdLine, int nShow)
     }
     
     /*
-     * The next 3 lines should be all that is needed
+     * The next 9 lines should be all that is needed
      * for the Wine Configuration property sheet
      */
     InitCommonControls ();
+    CoInitializeEx(NULL, COINIT_APARTMENTTHREADED);
     if (doPropertySheet (hInstance, NULL) > 0) {
 	WINE_TRACE("OK\n");
     } else {
 	WINE_TRACE("Cancel\n");
     }
-    
+    CoUninitialize(); 
     ExitProcess (0);
 
     return 0;

@@ -517,6 +517,66 @@ static void paint(HWND dialog)
     EndPaint(dialog, &ps);
 }
 
+static void browse_for_folder(HWND dialog)
+{
+    static WCHAR wszUnixRootDisplayName[] = 
+        { ':',':','{','C','C','7','0','2','E','B','2','-','7','D','C','5','-','1','1','D','9','-',
+          'C','6','8','7','-','0','0','0','4','2','3','8','A','0','1','C','D','}','\\','/', 0 };
+    BROWSEINFOA bi = {
+        dialog,
+        NULL,
+        NULL,
+        "Select the unix directory to be mapped, please.",
+        0,
+        NULL,
+        0,
+        0
+    };
+    IShellFolder *pDesktop;
+    LPITEMIDLIST pidlUnixRoot, pidlSelectedPath;
+    HRESULT hr;
+    
+    hr = SHGetDesktopFolder(&pDesktop);
+    if (!SUCCEEDED(hr)) return;
+
+    hr = pDesktop->lpVtbl->ParseDisplayName(pDesktop, NULL, NULL, wszUnixRootDisplayName, NULL, 
+                                            &pidlUnixRoot, NULL);
+    if (!SUCCEEDED(hr)) {
+        pDesktop->lpVtbl->Release(pDesktop);
+        return;
+    }
+
+    bi.pidlRoot = pidlUnixRoot;
+    pidlSelectedPath = SHBrowseForFolderA(&bi);
+    
+    SHFree(pidlUnixRoot);
+    
+    if (pidlSelectedPath) {
+        STRRET strSelectedPath;
+        char *pszSelectedPath;
+        HRESULT hr;
+        
+        hr = pDesktop->lpVtbl->GetDisplayNameOf(pDesktop, pidlSelectedPath, SHGDN_FORPARSING, 
+                                                &strSelectedPath);
+        pDesktop->lpVtbl->Release(pDesktop);
+        if (!SUCCEEDED(hr)) {
+            SHFree(pidlSelectedPath);
+            return;
+        }
+
+        hr = StrRetToStr(&strSelectedPath, pidlSelectedPath, &pszSelectedPath);
+        SHFree(pidlSelectedPath);
+        if (!SUCCEEDED(hr)) return;
+    
+        HeapFree(GetProcessHeap(), 0, current_drive->unixpath);
+        current_drive->unixpath = strdupA(pszSelectedPath);
+        fill_drives_list(dialog);
+        update_controls(dialog);   
+        
+        CoTaskMemFree(pszSelectedPath);
+    }
+}
+
 INT_PTR CALLBACK
 DriveDlgProc (HWND dialog, UINT msg, WPARAM wParam, LPARAM lParam)
 {
@@ -588,7 +648,7 @@ DriveDlgProc (HWND dialog, UINT msg, WPARAM wParam, LPARAM lParam)
                     break;
 
                 case IDC_BUTTON_BROWSE_PATH:
-                    MessageBox(dialog, "", "Write me!", MB_OK);
+                    browse_for_folder(dialog);
                     break;
 
                 case IDC_RADIO_ASSIGN:
