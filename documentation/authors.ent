@@ -38,7 +38,8 @@
 <!entity email-james-juran "juran@cse.psu.edu">
 
 <!entity name-ove-kaaven "Ove Kåven">
-<!entity email-ove-kaaven "ovek@winehq.com">
+<!-- <!entity email-ove-kaaven "ovek@winehq.com"> -->
+<!entity email-ove-kaaven "ovek@arcticnet.no">
 
 <!entity name-eric-kohl "Eric Kohl">
 <!entity email-eric-kohl "ekohl@abo.rhein-zeitung.de">
@@ -51,23 +52,27 @@
 
 <!entity name-marcus-meissner "Marcus Meissner">
 <!-- <!entity email-marcus-meissner "msmeissn@cip.informatik.uni-erlangen.de"> -->
-<!entity email-marcus-meissner "Marcus.Meissner@caldera.de">
+<!-- <!entity email-marcus-meissner "Marcus.Meissner@caldera.de"> -->
+<!entity email-marcus-meissner "marcus@jet.franken.de">
 
 <!entity name-dustin-navea "Dustin Navea">
-<!entity email-dustin-navea "Speeddymon@yahoo.com">
+<!-- <!entity email-dustin-navea "Speeddymon@yahoo.com"> -->
+<!entity email-dustin-navea "Speeddymon@sbcglobal.net">
 
 <!entity name-bruce-milner "Bruce Milner">
 <!entity email-bruce-milner "">
 
 <!entity name-andreas-mohr "Andreas Mohr">
 <!-- <!entity email-andreas-mohr "a.mohr@mailto.de"> -->
-<!entity email-andreas-mohr "amohr@codeweavers.com">
+<!-- <!entity email-andreas-mohr "amohr@codeweavers.com"> -->
+<!entity email-andreas-mohr "andi@rhlx01.fht-esslingen.de">
 
 <!entity name-gerard-patel "Gerard Patel">
 <!entity email-gerard-patel "">
 
 <!entity name-dimitrie-paun "Dimitrie O. Paun">
-<!entity email-dimitrie-paun "dimi@cs.toronto.edu">
+<!-- <!entity email-dimitrie-paun "dimi@cs.toronto.edu"> -->
+<!entity email-dimitrie-paun "dpaun@rogers.com">
 
 <!entity name-eric-pouech "Eric Pouech">
 <!entity email-eric-pouech "Eric.Pouech@wanadoo.fr">
@@ -91,7 +96,8 @@
 <!entity email-adam-sacarny "magicbox@bestweb.net">
 
 <!entity name-juergen-schmied "Juergen Schmied">
-<!entity email-juergen-schmied "juergen.schmied@metronet.de">
+<!-- <!entity email-juergen-schmied "juergen.schmied@metronet.de"> -->
+<!entity email-juergen-schmied "juergen.schmied@debitel.net">
 
 <!entity name-john-sheets "John R. Sheets">
 <!entity email-john-sheets "jsheets@codeweavers.com">
@@ -107,6 +113,9 @@
 
 <!entity name-jeremy-white "Jeremy White">
 <!entity email-jeremy-white "jwhite@codeweavers.com">
+
+<!entity name-tom-wickline "Tom Wickline">
+<!entity email-tom-wickline "twickline2@triad.rr.com">
 
 <!-- *** Coders mentioned in docs, but not doc writers *** -->
 
