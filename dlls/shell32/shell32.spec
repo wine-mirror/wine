@@ -76,7 +76,7 @@
   82 stdcall DragQueryFileA(long long ptr long) DragQueryFileA
   83 stdcall CIDLData_CreateFromIDArray(ptr long ptr ptr) CIDLData_CreateFromIDArray
   84 stub SHIsBadInterfacePtr
-  85 forward OpenRegStream shlwapi.SHOpenRegStreamA
+  85 stdcall OpenRegStream(long str str long) shlwapi.SHOpenRegStreamA
   86 stdcall SHRegisterDragDrop(long ptr) SHRegisterDragDrop
   87 stdcall SHRevokeDragDrop(long) SHRevokeDragDrop
   88 stdcall SHDoDragDrop(long ptr ptr long ptr) SHDoDragDrop
@@ -230,34 +230,34 @@
  298 stdcall Shell_NotifyIconW(long ptr) Shell_NotifyIconW
  299 stub Shl1632_ThunkData32
  300 stub Shl3216_ThunkData32
- 301 forward StrChrA shlwapi.StrChrA
- 302 forward StrChrIA shlwapi.StrChrIA
- 303 forward StrChrIW shlwapi.StrChrIW
- 304 forward StrChrW shlwapi.StrChrW
- 305 forward StrCmpNA shlwapi.StrCmpNA
- 306 forward StrCmpNIA shlwapi.StrCmpNIA
- 307 forward StrCmpNIW shlwapi.StrCmpNIW
- 308 forward StrCmpNW shlwapi.StrCmpNW
+ 301 stdcall StrChrA(str long) shlwapi.StrChrA
+ 302 stdcall StrChrIA(str long) shlwapi.StrChrIA
+ 303 stdcall StrChrIW(wstr long) shlwapi.StrChrIW
+ 304 stdcall StrChrW(wstr long) shlwapi.StrChrW
+ 305 stdcall StrCmpNA(str str long) shlwapi.StrCmpNA
+ 306 stdcall StrCmpNIA(str str long) shlwapi.StrCmpNIA
+ 307 stdcall StrCmpNIW(wstr wstr long) shlwapi.StrCmpNIW
+ 308 stdcall StrCmpNW(wstr wstr long) shlwapi.StrCmpNW
  309 stdcall StrCpyNA (ptr str long) lstrcpynA
- 310 forward StrCpyNW shlwapi.StrCpyNW
- 311 forward StrNCmpA shlwapi.StrCmpNA
- 312 forward StrNCmpIA shlwapi.StrCmpNIA
- 313 forward StrNCmpIW shlwapi.StrCmpNIW
- 314 forward StrNCmpW shlwapi.StrCmpNW
+ 310 stdcall StrCpyNW(wstr wstr long) shlwapi.StrCpyNW
+ 311 stdcall StrNCmpA(str str long) shlwapi.StrCmpNA
+ 312 stdcall StrNCmpIA(str str long) shlwapi.StrCmpNIA
+ 313 stdcall StrNCmpIW(wstr wstr long) shlwapi.StrCmpNIW
+ 314 stdcall StrNCmpW(wstr wstr long) shlwapi.StrCmpNW
  315 stdcall StrNCpyA (ptr str long) lstrcpynA
- 316 forward StrNCpyW shlwapi.StrCpyNW
- 317 forward StrRChrA shlwapi.StrRChrA
- 318 forward StrRChrIA shlwapi.StrRChrIA
- 319 forward StrRChrIW shlwapi.StrRChrIW
- 320 forward StrRChrW shlwapi.StrRChrW
+ 316 stdcall StrNCpyW(wstr wstr long) shlwapi.StrCpyNW
+ 317 stdcall StrRChrA(str str long) shlwapi.StrRChrA
+ 318 stdcall StrRChrIA(str str long) shlwapi.StrRChrIA
+ 319 stdcall StrRChrIW(str str long) shlwapi.StrRChrIW
+ 320 stdcall StrRChrW(wstr wstr long) shlwapi.StrRChrW
  321 stub StrRStrA
- 322 forward StrRStrIA shlwapi.StrRStrIA
- 323 forward StrRStrIW shlwapi.StrRStrIW
+ 322 stdcall StrRStrIA(str str str) shlwapi.StrRStrIA
+ 323 stdcall StrRStrIW(wstr wstr wstr) shlwapi.StrRStrIW
  324 stub StrRStrW
- 325 forward StrStrA shlwapi.StrStrA
- 326 forward StrStrIA shlwapi.StrStrIA
- 327 forward StrStrIW shlwapi.StrStrIW
- 328 forward StrStrW shlwapi.StrStrW
+ 325 stdcall StrStrA(str str) shlwapi.StrStrA
+ 326 stdcall StrStrIA(str str) shlwapi.StrStrIA
+ 327 stdcall StrStrIW(wstr wstr) shlwapi.StrStrIW
+ 328 stdcall StrStrW(wstr wstr) shlwapi.StrStrW
 
  505 stdcall SHRegCloseKey (long) SHRegCloseKey
  506 stdcall SHRegOpenKeyA (long str long) SHRegOpenKeyA

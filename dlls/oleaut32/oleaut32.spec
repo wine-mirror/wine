@@ -195,9 +195,9 @@
 197 stub VarDecFromStr
 198 stub VarDecFromDisp
 199 stub VarDecFromBool
-200 forward GetErrorInfo ole32.GetErrorInfo
-201 forward SetErrorInfo ole32.SetErrorInfo
-202 forward CreateErrorInfo ole32.CreateErrorInfo
+200 stdcall GetErrorInfo(long ptr) ole32.GetErrorInfo
+201 stdcall SetErrorInfo(long ptr) ole32.SetErrorInfo
+202 stdcall CreateErrorInfo(ptr) ole32.CreateErrorInfo
 203 stub VarDecRound # stdcall (ptr long ptr)
 204 stub VarDecCmp # stdcall (ptr ptr)
 205 stdcall VarI2FromI1(long ptr) VarI2FromI1

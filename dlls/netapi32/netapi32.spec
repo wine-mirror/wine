@@ -219,7 +219,7 @@
 @ stub NetpCreateSecurityObject
 @ stub NetpDbgDisplayServerInfo
 @ stub NetpDbgPrint
-@ forward NetpDeleteSecurityObject ntdll.RtlDeleteSecurityObject
+@ stdcall NetpDeleteSecurityObject(long) ntdll.RtlDeleteSecurityObject
 @ stdcall NetpGetComputerName(ptr) NetpGetComputerName
 @ stub NetpGetConfigBool
 @ stub NetpGetConfigDword
@@ -229,7 +229,7 @@
 @ stub NetpGetFileSecurity
 @ stub NetpGetPrivilege
 @ stub NetpHexDump
-@ forward NetpInitOemString ntdll.RtlInitAnsiString
+@ stdcall NetpInitOemString(ptr str) ntdll.RtlInitAnsiString
 @ stub NetpIsRemote
 @ stub NetpIsUncComputerNameValid
 @ stub NetpLocalTimeZoneOffset

@@ -20,11 +20,11 @@
 @  stub    wglUseFontBitmapsW
 @  stub    wglUseFontOutlinesW
 @  stub    wglGetDefaultProcAddress
-@  forward wglChoosePixelFormat GDI32.ChoosePixelFormat
-@  forward wglDescribePixelFormat GDI32.DescribePixelFormat
-@  forward wglGetPixelFormat GDI32.GetPixelFormat
-@  forward wglSetPixelFormat GDI32.SetPixelFormat
-@  forward wglSwapBuffers GDI32.SwapBuffers
+@  stdcall wglChoosePixelFormat(long ptr) gdi32.ChoosePixelFormat
+@  stdcall wglDescribePixelFormat(long long long ptr) gdi32.DescribePixelFormat
+@  stdcall wglGetPixelFormat(long) gdi32.GetPixelFormat
+@  stdcall wglSetPixelFormat(long long ptr) gdi32.SetPixelFormat
+@  stdcall wglSwapBuffers(long) gdi32.SwapBuffers
 @  stdcall glAccum( long long ) wine_glAccum
 @  stdcall glActiveTextureARB( long ) wine_glActiveTextureARB
 @  stdcall glAlphaFunc( long long ) wine_glAlphaFunc

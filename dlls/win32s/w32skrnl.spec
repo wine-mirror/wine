@@ -14,7 +14,7 @@
 14 stdcall _kGetWin32sDirectory@0() GetWin32sDirectory
 15 stub _sprintf
 16 stub _KIsDBCSLeadByte@4
-17 forward W32S_BackTo32 KERNEL32.W32S_BackTo32
+17 stdcall -i386 W32S_BackTo32() kernel32.W32S_BackTo32
 18 stub _KGetDbgFlags32
 19 stub SelToFlat
 20 stub _FreeKernelHeap@4
@@ -27,7 +27,7 @@
 27 stub _NtDupSection@4
 28 stub _GetSelModName@20
 29 stub _FGetDscr@8
-30 forward _RtlNtStatusToDosError ntdll.RtlNtStatusToDosError #FIXME: not sure
+30 stdcall _RtlNtStatusToDosError(long) ntdll.RtlNtStatusToDosError #FIXME: not sure
 31 stub _NtFlushVirtualMemory@16
 32 stub _snprintf
 33 stub _NtUnmapViewOfSection@8

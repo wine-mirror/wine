@@ -26,7 +26,7 @@
 @ stdcall DllRegisterServer() URLMON_DllRegisterServer
 @ stdcall DllRegisterServerEx() URLMON_DllRegisterServerEx
 @ stdcall DllUnregisterServer() URLMON_DllUnregisterServer
-@ forward Extract cabinet.Extract
+@ stdcall Extract(long ptr) cabinet.Extract
 @ stub FaultInIEFeature
 @ stub FindMediaType
 @ stub FindMediaTypeClass
@@ -46,7 +46,7 @@
 @ stub IsLoggingEnabledA
 @ stub IsLoggingEnabledW
 @ stub IsValidURL
-@ forward MkParseDisplayNameEx ole32.MkParseDisplayName
+@ stdcall MkParseDisplayNameEx(ptr ptr ptr ptr) ole32.MkParseDisplayName
 @ stdcall ObtainUserAgentString(long str ptr) ObtainUserAgentString
 @ stub PrivateCoInstall
 @ stdcall RegisterBindStatusCallback(ptr ptr ptr long) RegisterBindStatusCallback

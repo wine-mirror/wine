@@ -133,7 +133,7 @@
 @ stub InitiateSystemShutdownW
 @ stub InstallApplication
 @ stub IsProcessRestricted
-@ forward IsTextUnicode ntdll.RtlIsTextUnicode
+@ stdcall IsTextUnicode(ptr long ptr) ntdll.RtlIsTextUnicode
 @ stub IsTokenRestricted
 @ stub IsValidAcl
 @ stdcall IsValidSecurityDescriptor(ptr) IsValidSecurityDescriptor

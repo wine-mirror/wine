@@ -7,8 +7,8 @@
 @ stdcall VerFindFileW(long wstr wstr wstr ptr ptr ptr ptr) VerFindFileW
 @ stdcall VerInstallFileA(long str str str str str ptr ptr) VerInstallFileA
 @ stdcall VerInstallFileW(long wstr wstr wstr wstr wstr ptr ptr) VerInstallFileW
-@ forward VerLanguageNameA KERNEL32.VerLanguageNameA
-@ forward VerLanguageNameW KERNEL32.VerLanguageNameW
+@ stdcall VerLanguageNameA(long str long) kernel32.VerLanguageNameA
+@ stdcall VerLanguageNameW(long wstr long) kernel32.VerLanguageNameW
 @ stdcall VerQueryValueA(ptr str ptr ptr) VerQueryValueA
 @ stdcall VerQueryValueW(ptr wstr ptr ptr) VerQueryValueW
 @ stub VerThkSL_ThunkData32

@@ -79,20 +79,20 @@
  69 stdcall K32WOWGetVDMPointerUnfix(long) K32WOWGetVDMPointerUnfix
  70 stdcall K32WOWGetDescriptor(long long) K32WOWGetDescriptor
  71 stub IsThreadId
- 72 forward K32RtlLargeIntegerAdd ntdll.RtlLargeIntegerAdd
- 73 forward K32RtlEnlargedIntegerMultiply ntdll.RtlEnlargedIntegerMultiply
- 74 forward K32RtlEnlargedUnsignedMultiply ntdll.RtlEnlargedUnsignedMultiply
- 75 forward K32RtlEnlargedUnsignedDivide ntdll.RtlEnlargedUnsignedDivide
- 76 forward K32RtlExtendedLargeIntegerDivide ntdll.RtlExtendedLargeIntegerDivide
- 77 forward K32RtlExtendedMagicDivide ntdll.RtlExtendedMagicDivide
- 78 forward K32RtlExtendedIntegerMultiply ntdll.RtlExtendedIntegerMultiply
- 79 forward K32RtlLargeIntegerShiftLeft ntdll.RtlLargeIntegerShiftLeft
- 80 forward K32RtlLargeIntegerShiftRight ntdll.RtlLargeIntegerShiftRight
- 81 forward K32RtlLargeIntegerArithmeticShift ntdll.RtlLargeIntegerArithmeticShift
- 82 forward K32RtlLargeIntegerNegate ntdll.RtlLargeIntegerNegate
- 83 forward K32RtlLargeIntegerSubtract ntdll.RtlLargeIntegerSubtract
- 84 forward K32RtlConvertLongToLargeInteger ntdll.RtlConvertLongToLargeInteger
- 85 forward K32RtlConvertUlongToLargeInteger ntdll.RtlConvertUlongToLargeInteger
+72 stdcall -ret64 K32RtlLargeIntegerAdd(long long long long) ntdll.RtlLargeIntegerAdd
+73 stdcall -ret64 K32RtlEnlargedIntegerMultiply(long long) ntdll.RtlEnlargedIntegerMultiply
+74 stdcall -ret64 K32RtlEnlargedUnsignedMultiply(long long) ntdll.RtlEnlargedUnsignedMultiply
+75 stdcall K32RtlEnlargedUnsignedDivide(long long long ptr) ntdll.RtlEnlargedUnsignedDivide
+76 stdcall -ret64 K32RtlExtendedLargeIntegerDivide(long long long ptr) ntdll.RtlExtendedLargeIntegerDivide
+77 stdcall -ret64 K32RtlExtendedMagicDivide(long long long long long) ntdll.RtlExtendedMagicDivide
+78 stdcall -ret64 K32RtlExtendedIntegerMultiply(long long long) ntdll.RtlExtendedIntegerMultiply
+79 stdcall -ret64 K32RtlLargeIntegerShiftLeft(long long long) ntdll.RtlLargeIntegerShiftLeft
+80 stdcall -ret64 K32RtlLargeIntegerShiftRight(long long long) ntdll.RtlLargeIntegerShiftRight
+81 stdcall -ret64 K32RtlLargeIntegerArithmeticShift(long long long) ntdll.RtlLargeIntegerArithmeticShift
+82 stdcall -ret64 K32RtlLargeIntegerNegate(long long) ntdll.RtlLargeIntegerNegate
+83 stdcall -ret64 K32RtlLargeIntegerSubtract(long long long long) ntdll.RtlLargeIntegerSubtract
+84 stdcall -ret64 K32RtlConvertLongToLargeInteger(long) ntdll.RtlConvertLongToLargeInteger
+85 stdcall -ret64 K32RtlConvertUlongToLargeInteger(long) ntdll.RtlConvertUlongToLargeInteger
  86 stdcall @(ptr) _KERNEL32_86
  87 stdcall SSOnBigStack() SSOnBigStack
  88 varargs SSCall(long long ptr) SSCall
@@ -835,7 +835,7 @@
 @ stub ValidateLocale
 @ stdcall VerLanguageNameA(long str long) VerLanguageNameA
 @ stdcall VerLanguageNameW(long wstr long) VerLanguageNameW
-@ forward VerSetConditionMask ntdll.VerSetConditionMask
+@ stdcall -ret64 VerSetConditionMask(long long long long) ntdll.VerSetConditionMask
 @ stdcall VirtualAlloc(ptr long long long) VirtualAlloc
 @ stdcall VirtualFree(ptr long long) VirtualFree
 @ stdcall VirtualLock(ptr long) VirtualLock

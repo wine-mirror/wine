@@ -72,7 +72,7 @@
 68  stub     WSARecvDisconnect
 69  stdcall  WSARecvFrom(long ptr long ptr ptr ptr ptr ptr ptr ) WSARecvFrom
 70  stub     WSARemoveServiceClass
-71  forward  WSAResetEvent KERNEL32.ResetEvent
+71  stdcall  WSAResetEvent(long) kernel32.ResetEvent
 72  stdcall  WSASend(long ptr long ptr long ptr ptr) WSASend
 73  stdcall  WSASendDisconnect(long ptr) WSASendDisconnect
 74  stdcall  WSASendTo(long ptr long ptr long ptr long ptr ptr) WSASendTo
@@ -83,7 +83,7 @@
 79  stub     WSASocketW
 80  stub     WSAStringToAddressA
 81  stub     WSAStringToAddressW
-82  forward  WSAWaitForMultipleEvents KERNEL32.WaitForMultipleObjectsEx
+82  stdcall  WSAWaitForMultipleEvents(long ptr long long long) kernel32.WaitForMultipleObjectsEx
 83  stdcall  WSCDeinstallProvider(ptr ptr) WSCDeinstallProvider
 84  stub     WSCEnableNSProvider
 85  stub     WSCEnumProtocols

@@ -1,2 +1,2 @@
-@ forward SHGetFolderPathA shell32.SHGetFolderPathA
-@ forward SHGetFolderPathW shell32.SHGetFolderPathW
+@ stdcall SHGetFolderPathA(long long long long ptr) shell32.SHGetFolderPathA
+@ stdcall SHGetFolderPathW(long long long long ptr) shell32.SHGetFolderPathW
