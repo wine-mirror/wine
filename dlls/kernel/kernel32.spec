@@ -800,7 +800,7 @@ debug_channels (comm debugstr dll int resource stress thunk toolhelp win32)
 @ stdcall _hread(long ptr long) _hread
 @ stdcall _hwrite(long ptr long) _hwrite
 @ stdcall _lclose(long) _lclose
-@ stdcall _lcreat(ptr long) _lcreat
+@ stdcall _lcreat(str long) _lcreat
 @ stdcall _llseek(long long long) _llseek
 @ stdcall _lopen(str long) _lopen
 @ stdcall _lread(long ptr long) _lread
