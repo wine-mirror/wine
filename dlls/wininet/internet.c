@@ -22,7 +22,10 @@
 
 #include "config.h"
 
+#define MAXHOSTNAME 100 /* from http.c */
+
 #include <string.h>
+#include <stdio.h>
 #include <sys/types.h>
 #ifdef HAVE_SYS_SOCKET_H
 # include <sys/socket.h>
@@ -517,7 +520,7 @@ BOOL SetUrlComponentValue(LPSTR* lppszComponent, LPDWORD dwComponentLen, LPCSTR 
  *
  * Break up URL into its components
  *
- * TODO: Hadnle dwFlags
+ * TODO: Handle dwFlags
  *
  * RETURNS
  *    TRUE on success
@@ -1165,7 +1168,80 @@ End:
   return rc;
 }
 
-
+/**********************************************************
+ *	InternetOpenUrlA (WININET.@)
+ *
+ * Opens an URL
+ * 
+ * RETURNS
+ *   handle of connection or NULL on failure
+ */
+HINTERNET WINAPI InternetOpenUrlA(HINTERNET hInternet, LPCSTR lpszUrl, LPCSTR lpszHeaders, DWORD dwHeadersLength, DWORD dwFlags, DWORD dwContext)
+{
+  URL_COMPONENTSA urlComponents;
+  char protocol[32], hostName[MAXHOSTNAME], userName[1024], password[1024], path[2048], extra[1024];
+  HINTERNET client = NULL, client1 = NULL;
+  urlComponents.dwStructSize = sizeof(URL_COMPONENTSA);
+  urlComponents.lpszScheme = protocol;
+  urlComponents.dwSchemeLength = 32;
+  urlComponents.lpszHostName = hostName;
+  urlComponents.dwHostNameLength = MAXHOSTNAME;
+  urlComponents.lpszUserName = userName;
+  urlComponents.dwUserNameLength = 1024;
+  urlComponents.lpszPassword = password;
+  urlComponents.dwPasswordLength = 1024;
+  urlComponents.lpszUrlPath = path;
+  urlComponents.dwUrlPathLength = 2048;
+  urlComponents.lpszExtraInfo = extra;
+  urlComponents.dwExtraInfoLength = 1024;
+  if(!InternetCrackUrlA(lpszUrl, strlen(lpszUrl), 0, &urlComponents))
+    return NULL;
+  switch(urlComponents.nScheme) {
+  case INTERNET_SCHEME_FTP:
+    if(urlComponents.nPort == 0)
+      urlComponents.nPort = INTERNET_DEFAULT_FTP_PORT;
+    client = InternetConnectA(hInternet, hostName, urlComponents.nPort, userName, password, INTERNET_SERVICE_FTP, dwFlags, dwContext);
+    return FtpOpenFileA(client, path, GENERIC_READ, dwFlags, dwContext);
+    break;
+  case INTERNET_SCHEME_HTTP:
+  case INTERNET_SCHEME_HTTPS:
+  {
+    LPCSTR accept[2] = { "*/*", NULL };
+    char *hostreq=(char*)malloc(strlen(hostName)+9);
+    sprintf(hostreq, "Host: %s\r\n", hostName);
+    if(urlComponents.nPort == 0) {
+      if(urlComponents.nScheme == INTERNET_SCHEME_HTTP)
+        urlComponents.nPort = INTERNET_DEFAULT_HTTP_PORT;
+      else
+	urlComponents.nPort = INTERNET_DEFAULT_HTTPS_PORT;
+    }
+    client = InternetConnectA(hInternet, hostName, urlComponents.nPort, userName, password, INTERNET_SERVICE_HTTP, dwFlags, dwContext);
+    if(client == NULL)
+      return NULL;
+    client1 = HttpOpenRequestA(hInternet, NULL, path, NULL, NULL, accept, dwFlags, dwContext);
+    if(client1 == NULL) {
+      InternetCloseHandle(client);
+      return NULL;
+    }
+    HttpAddRequestHeadersA(client1, lpszHeaders, dwHeadersLength, HTTP_ADDREQ_FLAG_ADD);
+    HttpAddRequestHeadersA(client1, hostreq, -1L, HTTP_ADDREQ_FLAG_ADD_IF_NEW);
+    if(!HttpSendRequestA(client1, NULL, 0, NULL, 0)) {
+      InternetCloseHandle(client1);
+      InternetCloseHandle(client);
+      return NULL;
+    }
+    return client1;
+    break;
+  }
+  case INTERNET_SCHEME_GOPHER:
+    /* gopher doesn't seem to be implemented in wine, but it's supposed
+     * to be supported by InternetOpenUrlA. */
+  default:
+    return NULL;
+  }
+  if(client != NULL)
+    InternetCloseHandle(client);
+}
 
 /***********************************************************************
  *           INTERNET_WriteDataToStream (internal)
@@ -1586,4 +1662,3 @@ lend:
         return NULL;
     }
 }
-

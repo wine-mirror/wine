@@ -123,7 +123,7 @@ debug_channels (wininet)
 @ stub InternetLockRequestFile
 @ stdcall InternetOpenA(str long str str long) InternetOpenA
 @ stub InternetOpenServerPushParse
-@ stub InternetOpenUrlA
+@ stdcall InternetOpenUrlA(ptr str str long long long) InternetOpenUrlA
 @ stub InternetOpenUrlW
 @ stub InternetOpenW
 @ stub InternetQueryDataAvailable
