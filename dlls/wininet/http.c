@@ -588,7 +588,7 @@ BOOL WINAPI HTTP_HttpSendRequestA(HINTERNET hHttpRequest, LPCSTR lpszHeaders,
         requestStringLen += headerLength +  2; /* \r\n */
     }
 
-    /* Calculate length of custom reuqest headers */
+    /* Calculate length of custom request headers */
     for (i = 0; i < lpwhr->nCustHeaders; i++)
     {
 	    if (lpwhr->pCustHeaders[i].wFlags & HDR_ISREQUEST)
@@ -598,7 +598,7 @@ BOOL WINAPI HTTP_HttpSendRequestA(HINTERNET hHttpRequest, LPCSTR lpszHeaders,
 	    }
     }
 
-    /* Calculate the length of stadard request headers */
+    /* Calculate the length of standard request headers */
     for (i = 0; i <= HTTP_QUERY_MAX; i++)
     {
        if (lpwhr->StdHeaders[i].wFlags & HDR_ISREQUEST)
@@ -623,7 +623,7 @@ BOOL WINAPI HTTP_HttpSendRequestA(HINTERNET hHttpRequest, LPCSTR lpszHeaders,
         lpwhr->lpszHostName ? (HTTPHEADER HTTPHOSTHEADER) : HTTPHEADER,
         lpwhr->lpszHostName ? lpwhr->lpszHostName : "");
 
-    /* Append standard request heades */
+    /* Append standard request headers */
     for (i = 0; i <= HTTP_QUERY_MAX; i++)
     {
        if (lpwhr->StdHeaders[i].wFlags & HDR_ISREQUEST)
@@ -962,7 +962,7 @@ BOOL HTTP_InterpretHttpHeader(LPSTR buffer, LPSTR field, INT fieldlen, LPSTR val
 /***********************************************************************
  *           HTTP_GetStdHeaderIndex (internal)
  *
- * Lookup field index in stadard http header array
+ * Lookup field index in standard http header array
  *
  * FIXME: This should be stuffed into a hash table
  */
@@ -986,6 +986,18 @@ INT HTTP_GetStdHeaderIndex(LPCSTR lpszField)
         index = HTTP_QUERY_REFERER;
     else if (!_stricmp(lpszField,"Content-Transfer-Encoding"))
         index = HTTP_QUERY_CONTENT_TRANSFER_ENCODING;
+    else if (!_stricmp(lpszField,"Date"))
+        index = HTTP_QUERY_DATE;
+    else if (!_stricmp(lpszField,"Server"))
+        index = HTTP_QUERY_SERVER;
+    else if (!_stricmp(lpszField,"Connection"))
+        index = HTTP_QUERY_CONNECTION;
+    else if (!_stricmp(lpszField,"ETag"))
+        index = HTTP_QUERY_ETAG;
+    else if (!_stricmp(lpszField,"Accept-Ranges"))
+        index = HTTP_QUERY_ACCEPT_RANGES;
+    else if (!_stricmp(lpszField,"Expires"))
+        index = HTTP_QUERY_EXPIRES;
     else
     {
        FIXME("Couldn't find %s in standard header table\n", lpszField);
