@@ -22,9 +22,12 @@ C_SRCS = \
 	$(TOPOBJDIR)/graphics/x11drv/pen.c \
 	$(TOPOBJDIR)/graphics/x11drv/text.c \
 	$(TOPOBJDIR)/graphics/x11drv/xfont.c \
-	desktop.c \
 	clipboard.c \
+	desktop.c \
 	dga2.c \
+	dib_convert.c \
+	dib_dst_swap.c \
+	dib_src_swap.c \
 	event.c \
 	keyboard.c \
 	mouse.c \

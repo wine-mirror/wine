@@ -540,4 +540,137 @@ LPDDHALMODEINFO X11DRV_Settings_SetHandlers(const char *name,
                                             unsigned int nmodes, 
                                             int reserve_depths);
 
+
+
+typedef struct {
+    void (*Convert_5x5_asis)(int width, int height,
+                             const void* srcbits, int srclinebytes,
+                             void* dstbits, int dstlinebytes);
+    void (*Convert_555_reverse)(int width, int height,
+                                const void* srcbits, int srclinebytes,
+                                void* dstbits, int dstlinebytes);
+    void (*Convert_555_to_565_asis)(int width, int height,
+                                    const void* srcbits, int srclinebytes,
+                                    void* dstbits, int dstlinebytes);
+    void (*Convert_555_to_565_reverse)(int width, int height,
+                                       const void* srcbits, int srclinebytes,
+                                       void* dstbits, int dstlinebytes);
+    void (*Convert_555_to_888_asis)(int width, int height,
+                                    const void* srcbits, int srclinebytes,
+                                    void* dstbits, int dstlinebytes);
+    void (*Convert_555_to_888_reverse)(int width, int height,
+                                       const void* srcbits, int srclinebytes,
+                                       void* dstbits, int dstlinebytes);
+    void (*Convert_555_to_0888_asis)(int width, int height,
+                                     const void* srcbits, int srclinebytes,
+                                     void* dstbits, int dstlinebytes);
+    void (*Convert_555_to_0888_reverse)(int width, int height,
+                                        const void* srcbits, int srclinebytes,
+                                        void* dstbits, int dstlinebytes);
+    void (*Convert_5x5_to_any0888)(int width, int height,
+                                   const void* srcbits, int srclinebytes,
+                                   WORD rsrc, WORD gsrc, WORD bsrc,
+                                   void* dstbits, int dstlinebytes,
+                                   DWORD rdst, DWORD gdst, DWORD bdst);
+    void (*Convert_565_reverse)(int width, int height,
+                                const void* srcbits, int srclinebytes,
+                                void* dstbits, int dstlinebytes);
+    void (*Convert_565_to_555_asis)(int width, int height,
+                                    const void* srcbits, int srclinebytes,
+                                    void* dstbits, int dstlinebytes);
+    void (*Convert_565_to_555_reverse)(int width, int height,
+                                       const void* srcbits, int srclinebytes,
+                                       void* dstbits, int dstlinebytes);
+    void (*Convert_565_to_888_asis)(int width, int height,
+                                    const void* srcbits, int srclinebytes,
+                                    void* dstbits, int dstlinebytes);
+    void (*Convert_565_to_888_reverse)(int width, int height,
+                                       const void* srcbits, int srclinebytes,
+                                       void* dstbits, int dstlinebytes);
+    void (*Convert_565_to_0888_asis)(int width, int height,
+                                     const void* srcbits, int srclinebytes,
+                                     void* dstbits, int dstlinebytes);
+    void (*Convert_565_to_0888_reverse)(int width, int height,
+                                        const void* srcbits, int srclinebytes,
+                                        void* dstbits, int dstlinebytes);
+    void (*Convert_888_asis)(int width, int height,
+                             const void* srcbits, int srclinebytes,
+                             void* dstbits, int dstlinebytes);
+    void (*Convert_888_reverse)(int width, int height,
+                                const void* srcbits, int srclinebytes,
+                                void* dstbits, int dstlinebytes);
+    void (*Convert_888_to_555_asis)(int width, int height,
+                                    const void* srcbits, int srclinebytes,
+                                    void* dstbits, int dstlinebytes);
+    void (*Convert_888_to_555_reverse)(int width, int height,
+                                       const void* srcbits, int srclinebytes,
+                                       void* dstbits, int dstlinebytes);
+    void (*Convert_888_to_565_asis)(int width, int height,
+                                    const void* srcbits, int srclinebytes,
+                                    void* dstbits, int dstlinebytes);
+    void (*Convert_888_to_565_reverse)(int width, int height,
+                                       const void* srcbits, int srclinebytes,
+                                       void* dstbits, int dstlinebytes);
+    void (*Convert_888_to_0888_asis)(int width, int height,
+                                     const void* srcbits, int srclinebytes,
+                                     void* dstbits, int dstlinebytes);
+    void (*Convert_888_to_0888_reverse)(int width, int height,
+                                        const void* srcbits, int srclinebytes,
+                                        void* dstbits, int dstlinebytes);
+    void (*Convert_rgb888_to_any0888)(int width, int height,
+                                      const void* srcbits, int srclinebytes,
+                                      void* dstbits, int dstlinebytes,
+                                      DWORD rdst, DWORD gdst, DWORD bdst);
+    void (*Convert_bgr888_to_any0888)(int width, int height,
+                                      const void* srcbits, int srclinebytes,
+                                      void* dstbits, int dstlinebytes,
+                                      DWORD rdst, DWORD gdst, DWORD bdst);
+    void (*Convert_0888_asis)(int width, int height,
+                              const void* srcbits, int srclinebytes,
+                              void* dstbits, int dstlinebytes);
+    void (*Convert_0888_reverse)(int width, int height,
+                                 const void* srcbits, int srclinebytes,
+                                 void* dstbits, int dstlinebytes);
+    void (*Convert_0888_any)(int width, int height,
+                             const void* srcbits, int srclinebytes,
+                             DWORD rsrc, DWORD gsrc, DWORD bsrc,
+                             void* dstbits, int dstlinebytes,
+                             DWORD rdst, DWORD gdst, DWORD bdst);
+    void (*Convert_0888_to_555_asis)(int width, int height,
+                                     const void* srcbits, int srclinebytes,
+                                     void* dstbits, int dstlinebytes);
+    void (*Convert_0888_to_555_reverse)(int width, int height,
+                                        const void* srcbits, int srclinebytes,
+                                        void* dstbits, int dstlinebytes);
+    void (*Convert_0888_to_565_asis)(int width, int height,
+                                     const void* srcbits, int srclinebytes,
+                                     void* dstbits, int dstlinebytes);
+    void (*Convert_0888_to_565_reverse)(int width, int height,
+                                        const void* srcbits, int srclinebytes,
+                                        void* dstbits, int dstlinebytes);
+    void (*Convert_any0888_to_5x5)(int width, int height,
+                                   const void* srcbits, int srclinebytes,
+                                   DWORD rsrc, DWORD gsrc, DWORD bsrc,
+                                   void* dstbits, int dstlinebytes,
+                                   WORD rdst, WORD gdst, WORD bdst);
+    void (*Convert_0888_to_888_asis)(int width, int height,
+                                     const void* srcbits, int srclinebytes,
+                                     void* dstbits, int dstlinebytes);
+    void (*Convert_0888_to_888_reverse)(int width, int height,
+                                        const void* srcbits, int srclinebytes,
+                                        void* dstbits, int dstlinebytes);
+    void (*Convert_any0888_to_rgb888)(int width, int height,
+                                      const void* srcbits, int srclinebytes,
+                                      DWORD rsrc, DWORD gsrc, DWORD bsrc,
+                                      void* dstbits, int dstlinebytes);
+    void (*Convert_any0888_to_bgr888)(int width, int height,
+                                      const void* srcbits, int srclinebytes,
+                                      DWORD rsrc, DWORD gsrc, DWORD bsrc,
+                                      void* dstbits, int dstlinebytes);
+} dib_conversions;
+
+extern const dib_conversions dib_normal, dib_src_byteswap, dib_dst_byteswap;
+
+extern INT X11DRV_DIB_MaskToShift(DWORD mask);
+
 #endif  /* __WINE_X11DRV_H */
