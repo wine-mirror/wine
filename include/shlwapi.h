@@ -39,6 +39,40 @@ typedef enum {
     URLIS_HASQUERY,
 } URLIS;
 
+/* This is used by the UrlApplyScheme... routines */
+#define URL_APPLY_FORCEAPPLY         0x00000008
+#define URL_APPLY_GUESSFILE          0x00000004
+#define URL_APPLY_GUESSSCHEME        0x00000002
+#define URL_APPLY_DEFAULT            0x00000001
+
+/* This is used by shlwapi ordinal.1 & .2 */
+typedef enum {
+    URL_SCHEME_INVALID     = -1,
+    URL_SCHEME_UNKNOWN     =  0,
+    URL_SCHEME_FTP,
+    URL_SCHEME_HTTP,
+    URL_SCHEME_GOPHER,
+    URL_SCHEME_MAILTO,
+    URL_SCHEME_NEWS,
+    URL_SCHEME_NNTP,
+    URL_SCHEME_TELNET,
+    URL_SCHEME_WAIS,
+    URL_SCHEME_FILE,
+    URL_SCHEME_MK,
+    URL_SCHEME_HTTPS,
+    URL_SCHEME_SHELL,
+    URL_SCHEME_SNEWS,
+    URL_SCHEME_LOCAL,
+    URL_SCHEME_JAVASCRIPT,
+    URL_SCHEME_VBSCRIPT,
+    URL_SCHEME_ABOUT,
+    URL_SCHEME_RES,
+    URL_SCHEME_MAXVALUE
+} URL_SCHEME;
+
+/* The following are used by UrlEscape..., UrlUnEscape...,
+ * UrlCanonicalize..., and UrlCombine... routines
+ */
 #define URL_WININET_COMPATIBILITY    0x80000000
 #define URL_PLUGGABLE_PROTOCOL       0x40000000
 #define URL_ESCAPE_UNSAFE            0x20000000
@@ -169,6 +203,10 @@ BOOL WINAPI PathRemoveFileSpecA(LPSTR lpszPath);
 BOOL WINAPI PathRemoveFileSpecW(LPWSTR lpszPath);
 #define PathRemoveFileSpec WINELIB_NAME_AW(PathRemoveFileSpec)
 
+BOOL WINAPI PathRenameExtensionA(LPSTR pszPath, LPCSTR pszExt);
+BOOL WINAPI PathRenameExtensionW(LPWSTR pszPath, LPCWSTR pszExt);
+#define PathRenameExtension WINELIB_NAME_AW(PathRenameExtension)
+
 BOOL WINAPI PathSetDlgItemPathA(HWND hDlg, int id, LPCSTR pszPath);
 BOOL WINAPI PathSetDlgItemPathW(HWND hDlg, int id, LPCWSTR pszPath);
 #define PathSetDlgItemPath WINELIB_NAME_AW(PathSetDlgItemPath)
@@ -185,6 +223,10 @@ void WINAPI PathUnquoteSpacesA(LPSTR str);
 void WINAPI PathUnquoteSpacesW(LPWSTR str);
 #define PathUnquoteSpaces WINELIB_NAME_AW(PathUnquoteSpaces)
 
+
+BOOL WINAPI ChrCmpIA (WORD w1, WORD w2);
+BOOL WINAPI ChrCmpIW (WCHAR w1, WCHAR w2);
+#define ChrCmpI WINELIB_NAME_AW(ChrCmpI)
 
 INT WINAPI StrCSpnA(LPCSTR lpStr, LPCSTR lpSet);
 INT WINAPI StrCSpnW(LPCWSTR lpStr, LPCWSTR lpSet);
@@ -300,6 +342,8 @@ DWORD WINAPI SHDeleteEmptyKeyA(HKEY hKey, LPCSTR lpszSubKey);
 DWORD WINAPI SHDeleteEmptyKeyW(HKEY hKey, LPCWSTR lpszSubKey);
 #define  SHDeleteEmptyKey WINELIB_NAME_AW(SHDeleteEmptyKey)
 
+HKEY WINAPI SHRegDuplicateHKey(HKEY hKey);
+
 DWORD WINAPI SHRegGetPathA(HKEY hKey, LPCSTR pcszSubKey,
 			   LPCSTR pcszValue, LPSTR pszPath, DWORD dwFlags);
 DWORD WINAPI SHRegGetPathW(HKEY hKey, LPCWSTR pcszSubKey,
@@ -409,6 +453,12 @@ LONG  WINAPI SHRegWriteUSValueW(HUSKEY hUSKey, LPCWSTR pszValue, DWORD dwType,
 
 /* Shell URL interfaces */
 
+HRESULT WINAPI UrlApplySchemeA(LPCSTR pszIn, LPSTR pszOut, 
+			       LPDWORD pcchOut, DWORD dwFlags);
+HRESULT WINAPI UrlApplySchemeW(LPCWSTR pszIn, LPWSTR pszOut, 
+			       LPDWORD pcchOut, DWORD dwFlags);
+#define UrlApplyScheme WINELIB_NAME_AW(UrlApplyScheme)
+
 HRESULT WINAPI UrlCanonicalizeA(LPCSTR pszUrl, LPSTR pszCanonicalized, 
 				LPDWORD pcchCanonicalized, DWORD dwFlags);
 HRESULT WINAPI UrlCanonicalizeW(LPCWSTR pszUrl, LPWSTR pszCanonicalized, 
@@ -422,6 +472,10 @@ HRESULT WINAPI UrlCombineW(LPCWSTR pszBase, LPCWSTR pszRelative,
 			   LPWSTR pszCombined, LPDWORD pcchCombined,
 			   DWORD dwFlags);
 #define UrlCombine WINELIB_NAME_AW(UrlCombine)
+
+INT WINAPI UrlCompareA(LPCSTR pszUrl1, LPCSTR pszUrl2, BOOL fIgnoreSlash);
+INT WINAPI UrlCompareW(LPCWSTR pszUrl1, LPCWSTR pszUrl2, BOOL fIgnoreSlash);
+#define UrlCompare WINELIB_NAME_AW(UrlCompare)
 
 HRESULT WINAPI UrlEscapeA(LPCSTR pszUrl, LPSTR pszEscaped, LPDWORD pcchEscaped,
 			  DWORD dwFlags);

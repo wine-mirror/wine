@@ -1063,6 +1063,56 @@ LPCWSTR WINAPI UrlGetLocationW(
 }
 
 /*************************************************************************
+ *      UrlCompareA	[SHLWAPI.@]
+ */
+INT WINAPI UrlCompareA(
+	LPCSTR pszUrl1,
+	LPCSTR pszUrl2,
+	BOOL fIgnoreSlash)
+{
+    INT ret, len, len1, len2;
+
+    if (!fIgnoreSlash)
+	return strcmp(pszUrl1, pszUrl2);
+    len1 = strlen(pszUrl1);
+    if (pszUrl1[len1-1] == L'/') len1--;
+    len2 = strlen(pszUrl2);
+    if (pszUrl2[len2-1] == L'/') len2--;
+    if (len1 == len2)
+	return strncmp(pszUrl1, pszUrl2, len1);
+    len = min(len1, len2);
+    ret = strncmp(pszUrl1, pszUrl2, len);
+    if (ret) return ret;
+    if (len1 > len2) return 1;
+    return -1;
+}
+
+/*************************************************************************
+ *      UrlCompareW	[SHLWAPI.@]
+ */
+INT WINAPI UrlCompareW(
+	LPCWSTR pszUrl1,
+	LPCWSTR pszUrl2,
+	BOOL fIgnoreSlash)
+{
+    INT ret, len, len1, len2;
+
+    if (!fIgnoreSlash)
+	return strcmpW(pszUrl1, pszUrl2);
+    len1 = strlenW(pszUrl1);
+    if (pszUrl1[len1-1] == L'/') len1--;
+    len2 = strlenW(pszUrl2);
+    if (pszUrl2[len2-1] == L'/') len2--;
+    if (len1 == len2)
+	return strncmpW(pszUrl1, pszUrl2, len1);
+    len = min(len1, len2);
+    ret = strncmpW(pszUrl1, pszUrl2, len);
+    if (ret) return ret;
+    if (len1 > len2) return 1;
+    return -1;
+}
+
+/*************************************************************************
  *      HashData	[SHLWAPI.@]
  *
  * Hash an input block into a variable sized digest.
@@ -1110,15 +1160,181 @@ HRESULT WINAPI UrlHashA(LPCSTR pszUrl, unsigned char *lpDest, INT nDestLen)
 }
 
 /*************************************************************************
+ *      UrlApplySchemeA	[SHLWAPI.@]
+ */
+HRESULT WINAPI UrlApplySchemeA(LPCSTR pszIn, LPSTR pszOut, LPDWORD pcchOut, DWORD dwFlags)
+{
+    LPWSTR in, out;
+    DWORD ret, len, len2;
+
+    TRACE("(in %s, out size %ld, flags %08lx) using W version\n",
+	  debugstr_a(pszIn), *pcchOut, dwFlags);
+
+    in = (LPWSTR) HeapAlloc(GetProcessHeap(), 0, 
+			      (2*INTERNET_MAX_URL_LENGTH) * sizeof(WCHAR));
+    out = in + INTERNET_MAX_URL_LENGTH;
+
+    MultiByteToWideChar(0, 0, pszIn, -1, in, INTERNET_MAX_URL_LENGTH);
+    len = INTERNET_MAX_URL_LENGTH;
+
+    ret = UrlApplySchemeW(in, out, &len, dwFlags);
+    if ((ret != S_OK) && (ret != S_FALSE)) {
+	HeapFree(GetProcessHeap(), 0, in);
+	return ret;
+    }
+
+    len2 = WideCharToMultiByte(0, 0, out, len+1, 0, 0, 0, 0);
+    if (len2 > *pcchOut) {
+	*pcchOut = len2;
+	HeapFree(GetProcessHeap(), 0, in);
+	return E_POINTER;
+    }
+    WideCharToMultiByte(0, 0, out, len+1, pszOut, *pcchOut, 0, 0);
+    *pcchOut = len2;
+    HeapFree(GetProcessHeap(), 0, in);
+    return ret;
+}
+
+HRESULT URL_GuessScheme(LPCWSTR pszIn, LPWSTR pszOut, LPDWORD pcchOut)
+{
+    HKEY newkey;
+    BOOL j;
+    INT index, i;
+    DWORD value_len, data_len, dwType;
+    WCHAR reg_path[MAX_PATH];
+    WCHAR value[MAX_PATH], data[MAX_PATH];
+    WCHAR Wxx, Wyy;
+
+    MultiByteToWideChar(0, 0,
+	      "Software\\Microsoft\\Windows\\CurrentVersion\\URL\\Prefixes",
+			-1, reg_path, MAX_PATH);
+    RegOpenKeyExW(HKEY_LOCAL_MACHINE, reg_path, 0, 1, &newkey);
+    index = 0;
+    while(value_len = data_len = MAX_PATH,
+	  RegEnumValueW(newkey, index, value, &value_len,
+			0, &dwType, (LPVOID)data, &data_len) == 0) {
+	TRACE("guess %d %s is %s\n",
+	      index, debugstr_w(value), debugstr_w(data));
+
+	j = FALSE;
+	for(i=0; i<value_len; i++) {
+	    Wxx = pszIn[i];
+	    Wyy = value[i];
+	    /* remember that TRUE is not-equal */
+	    j = ChrCmpIW(Wxx, Wyy);
+	    if (j) break;
+	}
+	if ((i == value_len) && !j) {
+	    if (strlenW(data) + strlenW(pszIn) + 1 > *pcchOut) {
+		*pcchOut = strlenW(data) + strlenW(pszIn) + 1;
+		RegCloseKey(newkey);
+		return E_POINTER;
+	    }
+	    strcpyW(pszOut, data);
+	    strcatW(pszOut, pszIn);
+	    *pcchOut = strlenW(pszOut);
+	    TRACE("matched and set to %s\n", debugstr_w(pszOut));
+	    RegCloseKey(newkey);
+	    return S_OK;
+	}
+	index++;
+    }
+    RegCloseKey(newkey);
+    return -1;
+}
+
+HRESULT URL_ApplyDefault(LPCWSTR pszIn, LPWSTR pszOut, LPDWORD pcchOut)
+{
+    HKEY newkey;
+    DWORD data_len, dwType;
+    WCHAR reg_path[MAX_PATH];
+    WCHAR value[MAX_PATH], data[MAX_PATH];
+
+    /* get and prepend default */
+    MultiByteToWideChar(0, 0,
+	 "Software\\Microsoft\\Windows\\CurrentVersion\\URL\\DefaultPrefix",
+			-1, reg_path, MAX_PATH);
+    RegOpenKeyExW(HKEY_LOCAL_MACHINE, reg_path, 0, 1, &newkey);
+    data_len = MAX_PATH;
+    value[0] = L'@';
+    value[1] = L'\0';
+    RegQueryValueExW(newkey, value, 0, &dwType, (LPBYTE)data, &data_len);
+    RegCloseKey(newkey);
+    if (strlenW(data) + strlenW(pszIn) + 1 > *pcchOut) {
+	*pcchOut = strlenW(data) + strlenW(pszIn) + 1;
+	return E_POINTER;
+    }
+    strcpyW(pszOut, data);
+    strcatW(pszOut, pszIn);
+    *pcchOut = strlenW(pszOut);
+    TRACE("used default %s\n", debugstr_w(pszOut));
+    return S_OK;
+}
+
+/*************************************************************************
  *      UrlApplySchemeW	[SHLWAPI.@]
  */
 HRESULT WINAPI UrlApplySchemeW(LPCWSTR pszIn, LPWSTR pszOut, LPDWORD pcchOut, DWORD dwFlags)
 {
-    HRESULT err = NOERROR;
-    FIXME("(%s %p %p %08lx): stub !\n", debugstr_w(pszIn), pszOut, pcchOut, dwFlags);
+    UNKNOWN_SHLWAPI_2 in_scheme;
+    DWORD res1;
+    HRESULT ret;
+
+    TRACE("(in %s, out size %ld, flags %08lx)\n",
+	  debugstr_w(pszIn), *pcchOut, dwFlags);
+
+    if (dwFlags & URL_APPLY_GUESSFILE) {
+	FIXME("(%s %p %p(%ld) 0x%08lx): stub URL_APPLY_GUESSFILE not implemented\n", 
+	      debugstr_w(pszIn), pszOut, pcchOut, *pcchOut, dwFlags);
+	strcpyW(pszOut, pszIn);
+	*pcchOut = strlenW(pszOut);
+	return S_FALSE;
+    }
+
+    in_scheme.size = 24;
+    /* See if the base has a scheme */
+    res1 = SHLWAPI_2(pszIn, &in_scheme);
+    if (res1) {
+	/* no scheme in input, need to see if we need to guess */
+	if (dwFlags & URL_APPLY_GUESSSCHEME) {
+	    if ((ret = URL_GuessScheme(pszIn, pszOut, pcchOut)) != -1) 
+		return ret;
+	}
+    }
+    else {
+	/* we have a scheme, see if valid (known scheme) */
+	if (in_scheme.fcncde) {
+	    /* have valid scheme, so just copy and exit */
+	    if (strlenW(pszIn) + 1 > *pcchOut) {
+		*pcchOut = strlenW(pszIn) + 1;
+		return E_POINTER;
+	    }
+	    strcpyW(pszOut, pszIn);
+	    *pcchOut = strlenW(pszOut);
+	    TRACE("valid scheme, returing copy\n");
+	    return S_OK;
+	}
+    }
+
+    /* If we are here, then either invalid scheme, 
+     * or no scheme and can't/failed guess.
+     */
+    if ( ( ((res1 == 0) && (dwFlags & URL_APPLY_FORCEAPPLY)) ||
+	   ((res1 != 0)) ) &&
+	 (dwFlags & URL_APPLY_DEFAULT)) {
+	/* find and apply default scheme */
+	return URL_ApplyDefault(pszIn, pszOut, pcchOut);
+    }
+
+    /* just copy and give proper return code */
+    if (strlenW(pszIn) + 1 > *pcchOut) {
+	*pcchOut = strlenW(pszIn) + 1;
+	return E_POINTER;
+    }
     strcpyW(pszOut, pszIn);
-    *pcchOut = (err != E_POINTER) ? strlenW(pszOut) : 0;
-    return err;
+    *pcchOut = strlenW(pszOut);
+    TRACE("returing copy, left alone\n");
+    return S_FALSE;
 }
 
 /*************************************************************************
