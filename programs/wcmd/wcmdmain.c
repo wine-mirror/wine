@@ -47,50 +47,162 @@ BATCH_CONTEXT *context = NULL;
  * winmain().
  */
 
-int main (int argc, char *argv[]) {
+int main (int argc, char *argv[])
+{
+  char string[1024];
+  char* cmd=NULL;
+  DWORD count;
+  HANDLE h;
+  int opt_c, opt_k, opt_q;
 
-char string[1024], args[MAX_PATH], param[MAX_PATH];
-int i;
-DWORD count;
-HANDLE h;
-
-  args[0] = param[0] = '\0';
-  if (argc > 1) {
-    /* interpreter options must come before the command to execute. 
-     * Any options after the command are command options, not interpreter options.
-     */
-    for (i=1; i<argc && argv[i][0] == '/'; i++)
-        strcat (args, argv[i]);
-    for (; i<argc; i++) {
-        strcat (param, argv[i]);
-        strcat (param, " ");
-    }
+  argv++;
+  opt_c=opt_k=opt_q=0;
+  while (*argv!=NULL)
+  {
+      if (lstrcmpi(*argv,"/c")==0) {
+          opt_c=1;
+          argv++;
+          break;
+      } else if (lstrcmpi(*argv,"/q")==0) {
+          opt_q=1;
+      } else if (lstrcmpi(*argv,"/k")==0) {
+          opt_k=1;
+          argv++;
+          break;
+      } else if (lstrcmpi(*argv,"/t")==0 || lstrcmpi(*argv,"/x")==0 ||
+                 lstrcmpi(*argv,"/y")==0) {
+          /* Ignored for compatibility with Windows */
+      } else {
+          break;
+      }
+      argv++;
   }
 
-  /* If we do a "wcmd /c command", we don't want to allocate a new
-   * console since the command returns immediately. Rather, we use
-   * the surrently allocated input and output handles. This allows
-   * us to pipe to and read from the command interpreter.
-   */
-  if (strstr(args, "/c") != NULL) {
-    WCMD_process_command (param);
-    return 0;
+  if (opt_q) {
+    WCMD_echo("OFF");
   }
 
-  SetConsoleMode (GetStdHandle(STD_INPUT_HANDLE), ENABLE_LINE_INPUT | ENABLE_ECHO_INPUT |
-  	ENABLE_PROCESSED_INPUT);
+  if (opt_c || opt_k) {
+      int len;
+      char** arg;
+      char* p;
+
+      /* Build the command to execute */
+      len = 0;
+      for (arg = argv; *arg; arg++)
+      {
+          int has_space,bcount;
+          char* a;
+
+          has_space=0;
+          bcount=0;
+          a=*arg;
+          while (*a!='\0') {
+              if (*a=='\\') {
+                  bcount++;
+              } else {
+                  if (*a==' ' || *a=='\t') {
+                      has_space=1;
+                  } else if (*a=='"') {
+                      /* doubling of '\' preceeding a '"',
+                       * plus escaping of said '"'
+                       */
+                      len+=2*bcount+1;
+                  }
+                  bcount=0;
+              }
+              a++;
+          }
+          len+=(a-*arg)+1 /* for the separating space */;
+          if (has_space)
+              len+=2; /* for the quotes */
+      }
+
+      cmd = HeapAlloc(GetProcessHeap(), 0, len);
+      if (!cmd)
+          exit(1);
+
+      p = cmd;
+      for (arg = argv; *arg; arg++)
+      {
+          int has_space,has_quote;
+          char* a;
+
+          /* Check for quotes and spaces in this argument */
+          has_space=has_quote=0;
+          a=*arg;
+          while (*a!='\0') {
+              if (*a==' ' || *a=='\t') {
+                  has_space=1;
+                  if (has_quote)
+                      break;
+              } else if (*a=='"') {
+                  has_quote=1;
+                  if (has_space)
+                      break;
+              }
+              a++;
+          }
+
+          /* Now transfer it to the command line */
+          if (has_space)
+              *p++='"';
+          if (has_quote) {
+              int bcount;
+              char* a;
+
+              bcount=0;
+              a=*arg;
+              while (*a!='\0') {
+                  if (*a=='\\') {
+                      *p++=*a;
+                      bcount++;
+                  } else {
+                      if (*a=='"') {
+                          int i;
+
+                          /* Double all the '\\' preceeding this '"', plus one */
+                          for (i=0;i<=bcount;i++)
+                              *p++='\\';
+                          *p++='"';
+                      } else {
+                          *p++=*a;
+                      }
+                      bcount=0;
+                  }
+                  a++;
+              }
+          } else {
+              strcpy(p,*arg);
+              p+=strlen(*arg);
+          }
+          if (has_space)
+              *p++='"';
+          *p++=' ';
+      }
+      if (p > cmd)
+          p--;  /* remove last space */
+      *p = '\0';
+  }
+
+  if (opt_c) {
+      /* If we do a "wcmd /c command", we don't want to allocate a new
+       * console since the command returns immediately. Rather, we use
+       * the currently allocated input and output handles. This allows
+       * us to pipe to and read from the command interpreter.
+       */
+      WCMD_process_command(cmd);
+      HeapFree(GetProcessHeap(), 0, cmd);
+      return 0;
+  }
+
+  SetConsoleMode(GetStdHandle(STD_INPUT_HANDLE), ENABLE_LINE_INPUT |
+                 ENABLE_ECHO_INPUT | ENABLE_PROCESSED_INPUT);
   SetConsoleTitle("Wine Command Prompt");
 
-/*
- *	Execute any command-line options.
- */
-
-  if (strstr(args, "/q") != NULL) {
-    WCMD_echo ("OFF");
-  }
-
-  if (strstr(args, "/k") != NULL) {
-    WCMD_process_command (param);
+  if (opt_k) {
+      WCMD_process_command(cmd);
+      HeapFree(GetProcessHeap(), 0, cmd);
   }
 
 /*
@@ -115,15 +227,15 @@ HANDLE h;
     WCMD_show_prompt ();
     ReadFile (GetStdHandle(STD_INPUT_HANDLE), string, sizeof(string), &count, NULL);
     if (count > 1) {
-      string[count-1] = '\0';		/* ReadFile output is not null-terminated! */
+      string[count-1] = '\0'; /* ReadFile output is not null-terminated! */
       if (string[count-2] == '\r') string[count-2] = '\0'; /* Under Windoze we get CRLF! */
       if (lstrlen (string) != 0) {
         if (strchr(string,'|') != NULL) {
           WCMD_pipe (string);
         }
-	else {
+        else {
           WCMD_process_command (string);
-	}
+        }
       }
     }
   }
