@@ -12,14 +12,27 @@
 ## $LINUXDIST holds the name of the distribution
 ## $JADETAG adds "/#html" to the stylesheet-specification in the Jade
 ##          command line (see comments below), if necessary for that dist.
+
+LINUXDIST="Generic"
+JADEPROG="jade"
+JADETAG=
+
 if [ -f /etc/debian_version ]; then
   LINUXDIST="Debian"
+  JADEPROG="jade"
   JADETAG=\#html
 fi
 
 if [ -f /etc/redhat_release ]; then
   LINUXDIST="Redhat"
+  JADEPROG="jade"
   JADETAG=
+fi
+
+if [ -f /usr/bin/crux ]; then
+	LINUXDIST="Crux"
+	JADEPROG="openjade"
+	JADETAG=
 fi
 
 ## FIXME: Add more distributions here...
@@ -81,7 +94,7 @@ else
   EXTRA_PATH=
 fi
 
-JADE_CMD="jade -t sgml -ihtml -d ${DB_STYLESHEET}${JADETAG} ${EXTRA_PATH}$1"
+JADE_CMD="$JADEPROG -t sgml -ihtml -d ${DB_STYLESHEET}${JADETAG} ${EXTRA_PATH}$1"
 echo "Invoking command '$JADE_CMD'"
 echo
 
