@@ -908,6 +908,7 @@ static LRESULT FILEDLG_WMCommand(HWND16 hWnd, WPARAM16 wParam, LPARAM lParam)
                            (LPARAM)SEGPTR_GET(pstr));
       sprintf(tmpstr, "%c:", pstr[2]);
       SEGPTR_FREE(pstr);
+      if (notification != CBN_SELCHANGE) return TRUE;
     reset_scan:
       lRet = SendDlgItemMessage16(hWnd, cmb1, CB_GETCURSEL16, 0, 0);
       if (lRet == LB_ERR)
