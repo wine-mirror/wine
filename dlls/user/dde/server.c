@@ -8,6 +8,7 @@
  * Copyright 1999 Keith Matthews
  * Copyright 2000 Corel
  * Copyright 2001 Eric Pouech
+ * Copyright 2003, 2004, 2005 Dmitry Timoshkov
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -39,9 +40,8 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(ddeml);
 
-static const char  szServerNameClassA[] = "DdeServerNameAnsi";
-const char  WDML_szServerConvClassA[] = "DdeServerConvAnsi";
-const WCHAR WDML_szServerConvClassW[] = {'D','d','e','S','e','r','v','e','r','C','o','n','v','U','n','i','c','o','d','e',0};
+static const WCHAR szServerNameClass[] = {'W','i','n','e','D','d','e','S','e','r','v','e','r','N','a','m','e',0};
+const WCHAR WDML_szServerConvClass[] = {'W','i','n','e','D','d','e','S','e','r','v','e','r','C','o','n','v',0};
 
 static LRESULT CALLBACK WDML_ServerNameProc(HWND, UINT, WPARAM, LPARAM);
 static LRESULT CALLBACK WDML_ServerConvProc(HWND, UINT, WPARAM, LPARAM);
@@ -132,7 +132,7 @@ BOOL WINAPI DdePostAdvise(DWORD idInst, HSZ hszTopic, HSZ hszItem)
 		    goto theError;
 		}
 
-		if (!PostMessageA(pConv->hwndClient, WM_DDE_DATA, (WPARAM)pConv->hwndServer,
+		if (!PostMessageW(pConv->hwndClient, WM_DDE_DATA, (WPARAM)pConv->hwndServer,
 				  PackDDElParam(WM_DDE_DATA, (UINT_PTR)hItemData, atom)))
 		{
 		    ERR("post message failed\n");
@@ -173,7 +173,7 @@ HDDEDATA WINAPI DdeNameService(DWORD idInst, HSZ hsz1, HSZ hsz2, UINT afCmd)
     WDML_INSTANCE*	pInstance;
     HDDEDATA 		hDdeData;
     HWND 		hwndServer;
-    WNDCLASSEXA  	wndclass;
+    WNDCLASSEXW  	wndclass;
 
     hDdeData = NULL;
 
@@ -233,25 +233,25 @@ HDDEDATA WINAPI DdeNameService(DWORD idInst, HSZ hsz1, HSZ hsz2, UINT afCmd)
 	wndclass.style         = 0;
 	wndclass.lpfnWndProc   = WDML_ServerNameProc;
 	wndclass.cbClsExtra    = 0;
-	wndclass.cbWndExtra    = 2 * sizeof(DWORD);
+	wndclass.cbWndExtra    = 2 * sizeof(ULONG_PTR);
 	wndclass.hInstance     = 0;
 	wndclass.hIcon         = 0;
 	wndclass.hCursor       = 0;
 	wndclass.hbrBackground = 0;
 	wndclass.lpszMenuName  = NULL;
-	wndclass.lpszClassName = szServerNameClassA;
+	wndclass.lpszClassName = szServerNameClass;
 	wndclass.hIconSm       = 0;
 
-	RegisterClassExA(&wndclass);
+	RegisterClassExW(&wndclass);
 
 	LeaveCriticalSection(&WDML_CritSect);
-	hwndServer = CreateWindowA(szServerNameClassA, NULL,
+	hwndServer = CreateWindowW(szServerNameClass, NULL,
 				   WS_POPUP, 0, 0, 0, 0,
 				   0, 0, 0, 0);
 	EnterCriticalSection(&WDML_CritSect);
 
-	SetWindowLongA(hwndServer, GWL_WDML_INSTANCE, (DWORD)pInstance);
-	SetWindowLongA(hwndServer, GWL_WDML_SERVER, (DWORD)pServer);
+	SetWindowLongPtrW(hwndServer, GWL_WDML_INSTANCE, (ULONG_PTR)pInstance);
+	SetWindowLongPtrW(hwndServer, GWL_WDML_SERVER, (ULONG_PTR)pServer);
 	TRACE("Created nameServer=%p for instance=%08lx\n", hwndServer, idInst);
 
 	pServer->hwndServer = hwndServer;
@@ -310,53 +310,26 @@ static WDML_CONV* WDML_CreateServerConv(WDML_INSTANCE* pInstance, HWND hwndClien
 {
     HWND	hwndServerConv;
     WDML_CONV*	pConv;
+    WNDCLASSEXW wndclass;
 
-    if (pInstance->unicode)
-    {
-	WNDCLASSEXW	wndclass;
+    wndclass.cbSize        = sizeof(wndclass);
+    wndclass.style         = 0;
+    wndclass.lpfnWndProc   = WDML_ServerConvProc;
+    wndclass.cbClsExtra    = 0;
+    wndclass.cbWndExtra    = 2 * sizeof(ULONG_PTR);
+    wndclass.hInstance     = 0;
+    wndclass.hIcon         = 0;
+    wndclass.hCursor       = 0;
+    wndclass.hbrBackground = 0;
+    wndclass.lpszMenuName  = NULL;
+    wndclass.lpszClassName = WDML_szServerConvClass;
+    wndclass.hIconSm       = 0;
 
-	wndclass.cbSize        = sizeof(wndclass);
-	wndclass.style         = 0;
-	wndclass.lpfnWndProc   = WDML_ServerConvProc;
-	wndclass.cbClsExtra    = 0;
-	wndclass.cbWndExtra    = 2 * sizeof(DWORD);
-	wndclass.hInstance     = 0;
-	wndclass.hIcon         = 0;
-	wndclass.hCursor       = 0;
-	wndclass.hbrBackground = 0;
-	wndclass.lpszMenuName  = NULL;
-	wndclass.lpszClassName = WDML_szServerConvClassW;
-	wndclass.hIconSm       = 0;
+    RegisterClassExW(&wndclass);
 
-	RegisterClassExW(&wndclass);
-
-	hwndServerConv = CreateWindowW(WDML_szServerConvClassW, 0,
+    hwndServerConv = CreateWindowW(WDML_szServerConvClass, 0,
 				       WS_CHILD, 0, 0, 0, 0,
 				       hwndServerName, 0, 0, 0);
-    }
-    else
-    {
-	WNDCLASSEXA	wndclass;
-
-	wndclass.cbSize        = sizeof(wndclass);
-	wndclass.style         = 0;
-	wndclass.lpfnWndProc   = WDML_ServerConvProc;
-	wndclass.cbClsExtra    = 0;
-	wndclass.cbWndExtra    = 2 * sizeof(DWORD);
-	wndclass.hInstance     = 0;
-	wndclass.hIcon         = 0;
-	wndclass.hCursor       = 0;
-	wndclass.hbrBackground = 0;
-	wndclass.lpszMenuName  = NULL;
-	wndclass.lpszClassName = WDML_szServerConvClassA;
-	wndclass.hIconSm       = 0;
-
-	RegisterClassExA(&wndclass);
-
-	hwndServerConv = CreateWindowA(WDML_szServerConvClassA, 0,
-				       WS_CHILD, 0, 0, 0, 0,
-				       hwndServerName, 0, 0, 0);
-    }
 
     TRACE("Created convServer=%p (nameServer=%p) for instance=%08lx\n",
 	  hwndServerConv, hwndServerName, pInstance->instanceID);
@@ -365,12 +338,12 @@ static WDML_CONV* WDML_CreateServerConv(WDML_INSTANCE* pInstance, HWND hwndClien
 			 hwndClient, hwndServerConv);
     if (pConv)
     {
-	SetWindowLongA(hwndServerConv, GWL_WDML_INSTANCE, (DWORD)pInstance);
-	SetWindowLongA(hwndServerConv, GWL_WDML_CONVERSATION, (DWORD)pConv);
+	SetWindowLongPtrW(hwndServerConv, GWL_WDML_INSTANCE, (ULONG_PTR)pInstance);
+	SetWindowLongPtrW(hwndServerConv, GWL_WDML_CONVERSATION, (ULONG_PTR)pConv);
 
 	/* this should be the only place using SendMessage for WM_DDE_ACK */
         /* note: sent messages shall not use packing */
-	SendMessageA(hwndClient, WM_DDE_ACK, (WPARAM)hwndServerConv,
+	SendMessageW(hwndClient, WM_DDE_ACK, (WPARAM)hwndServerConv,
 		     MAKELPARAM(WDML_MakeAtomFromHsz(hszApp), WDML_MakeAtomFromHsz(hszTopic)));
 	/* we assume we're connected since we've sent an answer...
 	 * I'm not sure what we can do... it doesn't look like the return value
@@ -425,7 +398,7 @@ static LRESULT CALLBACK WDML_ServerNameProc(HWND hwndServer, UINT iMsg, WPARAM w
 	    CONVCONTEXT		cc;
 	    CONVCONTEXT*	pcc = NULL;
 	    WDML_CONV*		pConv;
-	    char		buf[256];
+	    WCHAR		buf[256];
 
 	    if (GetWindowThreadProcessId(hwndClient, NULL) == GetWindowThreadProcessId(hwndServer, NULL) &&
 		WDML_GetInstanceFromWnd(hwndClient) == WDML_GetInstanceFromWnd(hwndServer))
@@ -435,15 +408,13 @@ static LRESULT CALLBACK WDML_ServerNameProc(HWND hwndServer, UINT iMsg, WPARAM w
 	    /* FIXME: so far, we don't grab distant convcontext, so only check if remote is
 	     * handled under DDEML, and if so build a default context
 	     */
-	    if ((GetClassNameA(hwndClient, buf, sizeof(buf)) &&
-		 strcmp(buf, WDML_szClientConvClassA) == 0) ||
-		(GetClassNameW(hwndClient, (LPWSTR)buf, sizeof(buf)/sizeof(WCHAR)) &&
-		 lstrcmpW((LPWSTR)buf, WDML_szClientConvClassW) == 0))
+	    if (GetClassNameW(hwndClient, buf, sizeof(buf)/sizeof(WCHAR)) &&
+		 lstrcmpiW(buf, WDML_szClientConvClass) == 0)
 	    {
 		pcc = &cc;
 		memset(pcc, 0, sizeof(*pcc));
 		pcc->cb = sizeof(*pcc);
-		pcc->iCodePage = IsWindowUnicode(hwndClient) ? CP_WINUNICODE : CP_WINANSI;
+		pcc->iCodePage = CP_WINUNICODE;
 	    }
 	    if ((pInstance->CBFflags & CBF_FAIL_SELFCONNECTIONS) && self)
 	    {
@@ -451,7 +422,7 @@ static LRESULT CALLBACK WDML_ServerNameProc(HWND hwndServer, UINT iMsg, WPARAM w
 	    }
 	    else if (hszApp && hszTop)
 	    {
-		WDML_SERVER*	pServer = (WDML_SERVER*)GetWindowLongA(hwndServer, GWL_WDML_SERVER);
+		WDML_SERVER*	pServer = (WDML_SERVER*)GetWindowLongPtrW(hwndServer, GWL_WDML_SERVER);
 
 		/* check filters for name service */
 		if (!pServer->filterOn || DdeCmpStringHandles(pServer->hszService, hszApp) == 0)
@@ -459,7 +430,7 @@ static LRESULT CALLBACK WDML_ServerNameProc(HWND hwndServer, UINT iMsg, WPARAM w
 		    /* pass on to the callback  */
 		    hDdeData = WDML_InvokeCallback(pInstance, XTYP_CONNECT,
 						   0, 0, hszTop, hszApp, 0, (ULONG_PTR)pcc, self);
-		    if ((UINT)hDdeData)
+		    if ((ULONG_PTR)hDdeData)
 		    {
 			pConv = WDML_CreateServerConv(pInstance, hwndClient, hwndServer,
 						      hszApp, hszTop);
@@ -483,7 +454,7 @@ static LRESULT CALLBACK WDML_ServerNameProc(HWND hwndServer, UINT iMsg, WPARAM w
 		    /* MS doc is not consistent here */
 		    FIXME("CBR_BLOCK returned for WILDCONNECT\n");
 		}
-		else if ((UINT)hDdeData != 0)
+		else if ((ULONG_PTR)hDdeData != 0)
 		{
 		    HSZPAIR*	hszp;
 
@@ -511,7 +482,6 @@ static LRESULT CALLBACK WDML_ServerNameProc(HWND hwndServer, UINT iMsg, WPARAM w
 
 	return 0;
 
-
     case WM_DDE_REQUEST:
 	FIXME("WM_DDE_REQUEST message received!\n");
 	return 0;
@@ -530,10 +500,11 @@ static LRESULT CALLBACK WDML_ServerNameProc(HWND hwndServer, UINT iMsg, WPARAM w
     case WM_DDE_TERMINATE:
 	FIXME("WM_DDE_TERMINATE message received!\n");
 	return 0;
-
+    default:
+	break;
     }
 
-    return DefWindowProcA(hwndServer, iMsg, wParam, lParam);
+    return DefWindowProcW(hwndServer, iMsg, wParam, lParam);
 }
 
 /******************************************************************
@@ -584,7 +555,7 @@ static	WDML_QUEUE_STATE WDML_ServerHandleRequest(WDML_CONV* pConv, WDML_XACT* pX
     default:
         {
 	    HGLOBAL	hMem = WDML_DataHandle2Global(hDdeData, TRUE, FALSE, FALSE, FALSE);
-	    if (!PostMessageA(pConv->hwndClient, WM_DDE_DATA, (WPARAM)pConv->hwndServer,
+	    if (!PostMessageW(pConv->hwndClient, WM_DDE_DATA, (WPARAM)pConv->hwndServer,
 			      ReuseDDElParam(pXAct->lParam, WM_DDE_REQUEST, WM_DDE_DATA,
 					     (UINT_PTR)hMem, (UINT_PTR)pXAct->atom)))
 	    {
@@ -928,7 +899,7 @@ static	WDML_QUEUE_STATE WDML_ServerHandleTerminate(WDML_CONV* pConv, WDML_XACT* 
 	WDML_InvokeCallback(pConv->instance, XTYP_DISCONNECT, 0, (HCONV)pConv, 0, 0,
 			    0, 0, (pConv->wStatus & ST_ISSELF) ? 1 : 0);
     }
-    PostMessageA(pConv->hwndClient, WM_DDE_TERMINATE, (WPARAM)pConv->hwndServer, 0);
+    PostMessageW(pConv->hwndClient, WM_DDE_TERMINATE, (WPARAM)pConv->hwndServer, 0);
     WDML_RemoveConv(pConv, WDML_SERVER_SIDE);
 
     return WDML_QS_HANDLED;
@@ -1007,8 +978,7 @@ static LRESULT CALLBACK WDML_ServerConvProc(HWND hwndServer, UINT iMsg, WPARAM w
     }
     if (iMsg < WM_DDE_FIRST || iMsg > WM_DDE_LAST)
     {
-        return IsWindowUnicode(hwndServer) ? DefWindowProcW(hwndServer, iMsg, wParam, lParam) :
-                                             DefWindowProcA(hwndServer, iMsg, wParam, lParam);
+        return DefWindowProcW(hwndServer, iMsg, wParam, lParam);
     }
 
     EnterCriticalSection(&WDML_CritSect);

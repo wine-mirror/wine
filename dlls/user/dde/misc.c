@@ -8,6 +8,7 @@
  * Copyright 1999 Keith Matthews
  * Copyright 2000 Corel
  * Copyright 2001 Eric Pouech
+ * Copyright 2003, 2004, 2005 Dmitry Timoshkov
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -38,8 +39,9 @@
 #include "dde.h"
 #include "ddeml.h"
 #include "win.h"
-#include "wine/debug.h"
 #include "dde/dde_private.h"
+#include "wine/unicode.h"
+#include "wine/debug.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(ddeml);
 
@@ -49,7 +51,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(ddeml);
 
 static WDML_INSTANCE*	WDML_InstanceList = NULL;
 static DWORD		WDML_MaxInstanceID = 0;  /* OK for present, have to worry about wrap-around later */
-const char		WDML_szEventClass[] = "DdeEventClass";
+const WCHAR		WDML_szEventClass[] = {'W','i','n','e','D','d','e','E','v','e','n','t','C','l','a','s','s',0};
 
 static CRITICAL_SECTION_DEBUG critsect_debug =
 {
@@ -330,7 +332,7 @@ static LRESULT CALLBACK WDML_EventProc(HWND hwndEvent, UINT uMsg, WPARAM wParam,
 	}
 	break;
     default:
-	return DefWindowProcA(hwndEvent, uMsg, wParam, lParam);
+	return DefWindowProcW(hwndEvent, uMsg, wParam, lParam);
     }
     return 0;
 }
@@ -341,12 +343,12 @@ static LRESULT CALLBACK WDML_EventProc(HWND hwndEvent, UINT uMsg, WPARAM wParam,
  *
  */
 UINT WDML_Initialize(LPDWORD pidInst, PFNCALLBACK pfnCallback,
-		     DWORD afCmd, DWORD ulRes, BOOL bUnicode, BOOL b16)
+		     DWORD afCmd, DWORD ulRes, BOOL b16)
 {
     WDML_INSTANCE*		pInstance;
     WDML_INSTANCE*		reference_inst;
     UINT			ret;
-    WNDCLASSEXA			wndclass;
+    WNDCLASSEXW			wndclass;
 
     TRACE("(%p,%p,0x%lx,%ld)\n",
 	  pidInst, pfnCallback, afCmd, ulRes);
@@ -376,7 +378,6 @@ UINT WDML_Initialize(LPDWORD pidInst, PFNCALLBACK pfnCallback,
     pInstance->instanceID = *pidInst; /* May need to add calling proc Id */
     pInstance->threadID = GetCurrentThreadId();
     pInstance->callback = *pfnCallback;
-    pInstance->unicode = bUnicode;
     pInstance->win16 = b16;
     pInstance->nodeList = NULL; /* node will be added later */
     pInstance->monitorFlags = afCmd & MF_MASK;
@@ -483,7 +484,7 @@ UINT WDML_Initialize(LPDWORD pidInst, PFNCALLBACK pfnCallback,
 	wndclass.style         = 0;
 	wndclass.lpfnWndProc   = WDML_EventProc;
 	wndclass.cbClsExtra    = 0;
-	wndclass.cbWndExtra    = sizeof(DWORD);
+	wndclass.cbWndExtra    = sizeof(ULONG_PTR);
 	wndclass.hInstance     = 0;
 	wndclass.hIcon         = 0;
 	wndclass.hCursor       = 0;
@@ -492,13 +493,13 @@ UINT WDML_Initialize(LPDWORD pidInst, PFNCALLBACK pfnCallback,
 	wndclass.lpszClassName = WDML_szEventClass;
 	wndclass.hIconSm       = 0;
 
-	RegisterClassExA(&wndclass);
+	RegisterClassExW(&wndclass);
 
-	pInstance->hwndEvent = CreateWindowA(WDML_szEventClass, NULL,
+	pInstance->hwndEvent = CreateWindowW(WDML_szEventClass, NULL,
 						WS_POPUP, 0, 0, 0, 0,
 						0, 0, 0, 0);
 
-	SetWindowLongA(pInstance->hwndEvent, GWL_WDML_INSTANCE, (DWORD)pInstance);
+	SetWindowLongPtrW(pInstance->hwndEvent, GWL_WDML_INSTANCE, (ULONG_PTR)pInstance);
 
 	TRACE("New application instance processing finished OK\n");
     }
@@ -586,7 +587,7 @@ UINT WDML_Initialize(LPDWORD pidInst, PFNCALLBACK pfnCallback,
 UINT WINAPI DdeInitializeA(LPDWORD pidInst, PFNCALLBACK pfnCallback,
 			   DWORD afCmd, DWORD ulRes)
 {
-    return WDML_Initialize(pidInst, pfnCallback, afCmd, ulRes, FALSE, FALSE);
+    return WDML_Initialize(pidInst, pfnCallback, afCmd, ulRes, FALSE);
 }
 
 /******************************************************************************
@@ -606,7 +607,7 @@ UINT WINAPI DdeInitializeA(LPDWORD pidInst, PFNCALLBACK pfnCallback,
 UINT WINAPI DdeInitializeW(LPDWORD pidInst, PFNCALLBACK pfnCallback,
 			   DWORD afCmd, DWORD ulRes)
 {
-    return WDML_Initialize(pidInst, pfnCallback, afCmd, ulRes, TRUE, FALSE);
+    return WDML_Initialize(pidInst, pfnCallback, afCmd, ulRes, FALSE);
 }
 
 /*****************************************************************
@@ -773,7 +774,7 @@ WDML_INSTANCE*	WDML_GetInstance(DWORD instId)
  */
 WDML_INSTANCE*	WDML_GetInstanceFromWnd(HWND hWnd)
 {
-    return (WDML_INSTANCE*)GetWindowLongA(hWnd, GWL_WDML_INSTANCE);
+    return (WDML_INSTANCE*)GetWindowLongPtrW(hWnd, GWL_WDML_INSTANCE);
 }
 
 /******************************************************************************
@@ -1573,7 +1574,7 @@ HGLOBAL WDML_DataHandle2Global(HDDEDATA hDdeData, BOOL fResponse, BOOL fRelease,
                 DWORD   count;
                 HBITMAP hbmp = *(HBITMAP*)(pDdh + 1);
 
-                if (GetObjectA(hbmp, sizeof(bmp), &bmp))
+                if (GetObjectW(hbmp, sizeof(bmp), &bmp))
                 {
                     count = bmp.bmWidthBytes * bmp.bmHeight;
                     hMem = GlobalAlloc(GMEM_MOVEABLE | GMEM_DDESHARE,
@@ -1616,18 +1617,20 @@ HGLOBAL WDML_DataHandle2Global(HDDEDATA hDdeData, BOOL fResponse, BOOL fRelease,
  */
 WDML_SERVER*	WDML_AddServer(WDML_INSTANCE* pInstance, HSZ hszService, HSZ hszTopic)
 {
+    static const WCHAR fmtW[] = {'%','s','(','0','x','%','0','8','l','x',')',0};
     WDML_SERVER* 	pServer;
-    char		buf1[256];
-    char		buf2[256];
+    WCHAR		buf1[256];
+    WCHAR		buf2[256];
 
     pServer = (WDML_SERVER*)HeapAlloc(GetProcessHeap(), 0, sizeof(WDML_SERVER));
     if (pServer == NULL) return NULL;
 
-    WDML_IncHSZ(pInstance, pServer->hszService = hszService);
+    pServer->hszService = hszService;
+    WDML_IncHSZ(pInstance, hszService);
 
-    DdeQueryStringA(pInstance->instanceID, hszService, buf1, sizeof(buf1), CP_WINANSI);
-    snprintf(buf2, sizeof(buf2), "%s(0x%08lx)", buf1, GetCurrentProcessId());
-    pServer->hszServiceSpec = DdeCreateStringHandleA(pInstance->instanceID, buf2, CP_WINANSI);
+    DdeQueryStringW(pInstance->instanceID, hszService, buf1, 256, CP_WINUNICODE);
+    snprintfW(buf2, 256, fmtW, buf1, GetCurrentProcessId());
+    pServer->hszServiceSpec = DdeCreateStringHandleW(pInstance->instanceID, buf2, CP_WINUNICODE);
 
     pServer->atomService = WDML_MakeAtomFromHsz(pServer->hszService);
     pServer->atomServiceSpec = WDML_MakeAtomFromHsz(pServer->hszServiceSpec);
@@ -1667,7 +1670,7 @@ void WDML_RemoveServer(WDML_INSTANCE* pInstance, HSZ hszService, HSZ hszTopic)
 		{
 		    WDML_RemoveConv(pConv, WDML_SERVER_SIDE);
 		    /* don't care about return code (whether client window is present or not) */
-		    PostMessageA(pConv->hwndClient, WM_DDE_TERMINATE, (WPARAM)pConv->hwndServer, 0L);
+		    PostMessageW(pConv->hwndClient, WM_DDE_TERMINATE, (WPARAM)pConv->hwndServer, 0);
 		}
 	    }
 	    if (pServer == pInstance->servers)
@@ -1814,7 +1817,7 @@ void WDML_RemoveConv(WDML_CONV* pRef, WDML_SIDE side)
      * this would help the wndProc do appropriate handling upon a WM_DESTROY message
      */
     hWnd = (side == WDML_CLIENT_SIDE) ? pRef->hwndClient : pRef->hwndServer;
-    SetWindowLongA(hWnd, GWL_WDML_CONVERSATION, 0);
+    SetWindowLongPtrW(hWnd, GWL_WDML_CONVERSATION, 0);
 
     DestroyWindow((side == WDML_CLIENT_SIDE) ? pRef->hwndClient : pRef->hwndServer);
 
@@ -1934,7 +1937,7 @@ WDML_CONV*	WDML_GetConv(HCONV hConv, BOOL checkConnected)
  */
 WDML_CONV*	WDML_GetConvFromWnd(HWND hWnd)
 {
-    return (WDML_CONV*)GetWindowLongA(hWnd, GWL_WDML_CONVERSATION);
+    return (WDML_CONV*)GetWindowLongPtrW(hWnd, GWL_WDML_CONVERSATION);
 }
 
 /******************************************************************
@@ -1968,7 +1971,7 @@ BOOL		WDML_PostAck(WDML_CONV* pConv, WDML_SIDE side, WORD appRetCode,
 
     lParam = (lParam) ? ReuseDDElParam(lParam, oldMsg, WM_DDE_ACK, *(WORD*)&ddeAck, pmt) :
         PackDDElParam(WM_DDE_ACK, *(WORD*)&ddeAck, pmt);
-    if (!PostMessageA(to, WM_DDE_ACK, (WPARAM)from, lParam))
+    if (!PostMessageW(to, WM_DDE_ACK, (WPARAM)from, lParam))
     {
 	pConv->wStatus &= ~ST_CONNECTED;
         FreeDDElParam(WM_DDE_ACK, lParam);
@@ -2030,7 +2033,7 @@ static	BOOL	WDML_GetLocalConvInfo(WDML_CONV* pConv, CONVINFO* ci, DWORD id)
     WDML_LINK*	pLink;
     WDML_SIDE	side;
 
-    ci->hConvPartner = (pConv->wStatus & ST_ISLOCAL) ? (HCONV)((DWORD)pConv | 1) : 0;
+    ci->hConvPartner = (pConv->wStatus & ST_ISLOCAL) ? (HCONV)((ULONG_PTR)pConv | 1) : 0;
     ci->hszSvcPartner = pConv->hszService;
     ci->hszServiceReq = pConv->hszService; /* FIXME: they shouldn't be the same, should they ? */
     ci->hszTopic = pConv->hszTopic;
@@ -2121,9 +2124,9 @@ UINT WINAPI DdeQueryConvInfo(HCONV hConv, DWORD id, PCONVINFO lpConvInfo)
     {
 	ret = 0;
     }
-    else if ((DWORD)hConv & 1)
+    else if ((ULONG_PTR)hConv & 1)
     {
-	pConv = WDML_GetConv((HCONV)((DWORD)hConv & ~1), FALSE);
+	pConv = WDML_GetConv((HCONV)((ULONG_PTR)hConv & ~1), FALSE);
 	if (pConv != NULL)
 	{
 	    FIXME("Request on remote conversation information is not implemented yet\n");
@@ -2362,7 +2365,7 @@ BOOL	WDML_UnQueueTransaction(WDML_CONV* pConv, WDML_XACT*  pXAct)
 void	WDML_FreeTransaction(WDML_INSTANCE* pInstance, WDML_XACT* pXAct, BOOL doFreePmt)
 {
     /* free pmt(s) in pXAct too. check against one for not deleting TRUE return values */
-    if (doFreePmt && (DWORD)pXAct->hMem > 1)
+    if (doFreePmt && (ULONG_PTR)pXAct->hMem > 1)
     {
 	GlobalFree(pXAct->hMem);
     }
@@ -2397,7 +2400,7 @@ WDML_XACT*	WDML_FindTransaction(WDML_CONV* pConv, DWORD tid)
 
 struct tagWDML_BroadcastPmt
 {
-    LPCSTR	clsName;
+    LPCWSTR	clsName;
     UINT	uMsg;
     WPARAM	wParam;
     LPARAM	lParam;
@@ -2411,12 +2414,12 @@ struct tagWDML_BroadcastPmt
 static	BOOL CALLBACK WDML_BroadcastEnumProc(HWND hWnd, LPARAM lParam)
 {
     struct tagWDML_BroadcastPmt*	s = (struct tagWDML_BroadcastPmt*)lParam;
-    char				buffer[128];
+    WCHAR				buffer[128];
 
-    if (GetClassNameA(hWnd, buffer, sizeof(buffer)) > 0 &&
-	strcmp(buffer, s->clsName) == 0)
+    if (GetClassNameW(hWnd, buffer, 128) > 0 &&
+	lstrcmpiW(buffer, s->clsName) == 0)
     {
-	PostMessageA(hWnd, s->uMsg, s->wParam, s->lParam);
+	PostMessageW(hWnd, s->uMsg, s->wParam, s->lParam);
     }
     return TRUE;
 }
@@ -2426,7 +2429,7 @@ static	BOOL CALLBACK WDML_BroadcastEnumProc(HWND hWnd, LPARAM lParam)
  *
  *
  */
-void WDML_BroadcastDDEWindows(const char* clsName, UINT uMsg, WPARAM wParam, LPARAM lParam)
+void WDML_BroadcastDDEWindows(LPCWSTR clsName, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
     struct tagWDML_BroadcastPmt	s;
 

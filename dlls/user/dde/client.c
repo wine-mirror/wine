@@ -8,6 +8,7 @@
  * Copyright 1999 Keith Matthews
  * Copyright 2000 Corel
  * Copyright 2001 Eric Pouech
+ * Copyright 2004, 2005 Dmitry Timoshkov
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -41,8 +42,7 @@
 WINE_DEFAULT_DEBUG_CHANNEL(ddeml);
 
 static LRESULT CALLBACK WDML_ClientProc(HWND, UINT, WPARAM, LPARAM);	/* only for one client, not conv list */
-const char  WDML_szClientConvClassA[] = "DdeClientAnsi";
-const WCHAR WDML_szClientConvClassW[] = {'D','d','e','C','l','i','e','n','t','U','n','i','c','o','d','e',0};
+const WCHAR WDML_szClientConvClass[] = {'W','i','n','e','D','d','e','C','l','i','e','n','t',0};
 
 /******************************************************************************
  * DdeConnectList [USER32.@]  Establishes conversation with DDE servers
@@ -101,6 +101,7 @@ HCONV WINAPI DdeConnect(DWORD idInst, HSZ hszService, HSZ hszTopic,
     WDML_INSTANCE*	pInstance;
     WDML_CONV*		pConv = NULL;
     ATOM		aSrv = 0, aTpc = 0;
+    WNDCLASSEXW		wndclass;
 
     TRACE("(0x%lx,%p,%p,%p)\n", idInst, hszService, hszTopic, pCC);
 
@@ -123,50 +124,24 @@ HCONV WINAPI DdeConnect(DWORD idInst, HSZ hszService, HSZ hszTopic,
     /* we need to establish a conversation with
        server, so create a window for it       */
 
-    if (pInstance->unicode)
-    {
-	WNDCLASSEXW	wndclass;
+    wndclass.cbSize        = sizeof(wndclass);
+    wndclass.style         = 0;
+    wndclass.lpfnWndProc   = WDML_ClientProc;
+    wndclass.cbClsExtra    = 0;
+    wndclass.cbWndExtra    = 2 * sizeof(ULONG_PTR);
+    wndclass.hInstance     = 0;
+    wndclass.hIcon         = 0;
+    wndclass.hCursor       = 0;
+    wndclass.hbrBackground = 0;
+    wndclass.lpszMenuName  = NULL;
+    wndclass.lpszClassName = WDML_szClientConvClass;
+    wndclass.hIconSm       = 0;
 
-	wndclass.cbSize        = sizeof(wndclass);
-	wndclass.style         = 0;
-	wndclass.lpfnWndProc   = WDML_ClientProc;
-	wndclass.cbClsExtra    = 0;
-	wndclass.cbWndExtra    = 2 * sizeof(DWORD);
-	wndclass.hInstance     = 0;
-	wndclass.hIcon         = 0;
-	wndclass.hCursor       = 0;
-	wndclass.hbrBackground = 0;
-	wndclass.lpszMenuName  = NULL;
-	wndclass.lpszClassName = WDML_szClientConvClassW;
-	wndclass.hIconSm       = 0;
+    RegisterClassExW(&wndclass);
 
-	RegisterClassExW(&wndclass);
+    hwndClient = CreateWindowW(WDML_szClientConvClass, NULL, WS_POPUP, 0, 0, 0, 0, 0, 0, 0, 0);
 
-	hwndClient = CreateWindowW(WDML_szClientConvClassW, NULL, WS_POPUP, 0, 0, 0, 0, 0, 0, 0, 0);
-    }
-    else
-    {
-	WNDCLASSEXA	wndclass;
-
-	wndclass.cbSize        = sizeof(wndclass);
-	wndclass.style         = 0;
-	wndclass.lpfnWndProc   = WDML_ClientProc;
-	wndclass.cbClsExtra    = 0;
-	wndclass.cbWndExtra    = 2 * sizeof(DWORD);
-	wndclass.hInstance     = 0;
-	wndclass.hIcon         = 0;
-	wndclass.hCursor       = 0;
-	wndclass.hbrBackground = 0;
-	wndclass.lpszMenuName  = NULL;
-	wndclass.lpszClassName = WDML_szClientConvClassA;
-	wndclass.hIconSm       = 0;
-
-	RegisterClassExA(&wndclass);
-
-	hwndClient = CreateWindowA(WDML_szClientConvClassA, NULL, WS_POPUP, 0, 0, 0, 0, 0, 0, 0, 0);
-    }
-
-    SetWindowLongPtrW(hwndClient, GWL_WDML_INSTANCE, (LONG_PTR)pInstance);
+    SetWindowLongPtrW(hwndClient, GWL_WDML_INSTANCE, (ULONG_PTR)pInstance);
 
     if (hszService)
     {
@@ -215,7 +190,7 @@ HCONV WINAPI DdeConnect(DWORD idInst, HSZ hszService, HSZ hszTopic,
     {
 	memset(&pConv->convContext, 0, sizeof(pConv->convContext));
 	pConv->convContext.cb = sizeof(pConv->convContext);
-	pConv->convContext.iCodePage = (pInstance->unicode) ? CP_WINUNICODE : CP_WINANSI;
+	pConv->convContext.iCodePage = CP_WINUNICODE;
     }
 
  theEnd:
@@ -257,7 +232,7 @@ HCONV WINAPI DdeReconnect(HCONV hConv)
 	    HWND	hwndServer = pConv->hwndServer;
 	    ATOM	aSrv, aTpc;
 
-	    SetWindowLongA(pConv->hwndClient, GWL_WDML_CONVERSATION, 0);
+	    SetWindowLongPtrW(pConv->hwndClient, GWL_WDML_CONVERSATION, 0);
 
 	    aSrv = WDML_MakeAtomFromHsz(pConv->hszService);
 	    aTpc = WDML_MakeAtomFromHsz(pConv->hszTopic);
@@ -266,7 +241,7 @@ HCONV WINAPI DdeReconnect(HCONV hConv)
 	    LeaveCriticalSection(&WDML_CritSect);
 
             /* note: sent messages shall not use packing */
-	    ret = SendMessageA(hwndServer, WM_DDE_INITIATE, (WPARAM)hwndClient,
+	    ret = SendMessageW(hwndServer, WM_DDE_INITIATE, (WPARAM)hwndClient,
                                MAKELPARAM(aSrv, aTpc));
 
 	    EnterCriticalSection(&WDML_CritSect);
@@ -296,7 +271,7 @@ HCONV WINAPI DdeReconnect(HCONV hConv)
 	    else
 	    {
 		/* reset the conversation as it was */
-		SetWindowLongA(pConv->hwndClient, GWL_WDML_CONVERSATION, (DWORD)pConv);
+		SetWindowLongPtrW(pConv->hwndClient, GWL_WDML_CONVERSATION, (ULONG_PTR)pConv);
 	    }
 	}
     }
@@ -907,7 +882,7 @@ static WDML_QUEUE_STATE WDML_HandleIncomingTerminate(WDML_CONV* pConv, MSG* msg,
     if (pConv->wStatus & ST_CONNECTED)
     {
 	/* don't care about result code (if server exists or not) */
-	PostMessageA(pConv->hwndServer, WM_DDE_TERMINATE, (WPARAM)pConv->hwndClient, 0L);
+	PostMessageW(pConv->hwndServer, WM_DDE_TERMINATE, (WPARAM)pConv->hwndClient, 0L);
 	pConv->wStatus &= ~ST_CONNECTED;
     }
     /* have to keep connection around to allow reconnection */
@@ -1041,7 +1016,7 @@ static HDDEDATA WDML_SyncWaitTransactionReply(HCONV hConv, DWORD dwTimeout, WDML
 		/* conversation no longer available... return failure */
 		break;
 	    }
-	    while (PeekMessageA(&msg, pConv->hwndClient, WM_DDE_FIRST, WM_DDE_LAST, PM_REMOVE))
+	    while (PeekMessageW(&msg, pConv->hwndClient, WM_DDE_FIRST, WM_DDE_LAST, PM_REMOVE))
 	    {
 		/* check that either pXAct has been processed or no more xActions are pending */
 		ret = (pConv->transactions == pXAct);
@@ -1167,7 +1142,7 @@ HDDEDATA WINAPI DdeClientTransaction(LPBYTE pData, DWORD cbData, HCONV hConv, HS
 
     WDML_QueueTransaction(pConv, pXAct);
 
-    if (!PostMessageA(pConv->hwndServer, pXAct->ddeMsg, (WPARAM)pConv->hwndClient, pXAct->lParam))
+    if (!PostMessageW(pConv->hwndServer, pXAct->ddeMsg, (WPARAM)pConv->hwndClient, pXAct->lParam))
     {
 	WARN("Failed posting message %x to %p (error=0x%lx)\n",
 	      pXAct->ddeMsg, pConv->hwndServer, GetLastError());
@@ -1278,7 +1253,7 @@ static LRESULT CALLBACK WDML_ClientProc(HWND hwnd, UINT iMsg, WPARAM wParam, LPA
 	((pConv = WDML_GetConvFromWnd(hwnd)) == NULL || pConv->wStatus == XST_INIT1))
     {
 	/* In response to WM_DDE_INITIATE, save server window  */
-	char		buf[256];
+	WCHAR		buf[256];
 	WDML_INSTANCE*	pInstance;
 
         /* note: sent messages do not need packing */
@@ -1291,7 +1266,7 @@ static LRESULT CALLBACK WDML_ClientProc(HWND hwnd, UINT iMsg, WPARAM wParam, LPA
 	    /* we already have started the conv with a server, drop other replies */
 	    GlobalDeleteAtom(uiLo);
 	    GlobalDeleteAtom(uiHi);
-            PostMessageA((HWND)wParam, WM_DDE_TERMINATE, (WPARAM)hwnd, 0);
+            PostMessageW((HWND)wParam, WM_DDE_TERMINATE, (WPARAM)hwnd, 0);
 	    return 0;
 	}
 
@@ -1302,15 +1277,13 @@ static LRESULT CALLBACK WDML_ClientProc(HWND hwnd, UINT iMsg, WPARAM wParam, LPA
 
 	pConv = WDML_AddConv(pInstance, WDML_CLIENT_SIDE, hszSrv, hszTpc, hwnd, (HWND)wParam);
 
-	SetWindowLongA(hwnd, GWL_WDML_CONVERSATION, (DWORD)pConv);
+	SetWindowLongPtrW(hwnd, GWL_WDML_CONVERSATION, (ULONG_PTR)pConv);
 	pConv->wStatus |= ST_CONNECTED;
 	pConv->wConvst = XST_INIT1;
 
 	/* check if server is handled by DDEML */
-	if ((GetClassNameA((HWND)wParam, buf, sizeof(buf)) &&
-	     strcmp(buf, WDML_szServerConvClassA) == 0) ||
-	    (GetClassNameW((HWND)wParam, (LPWSTR)buf, sizeof(buf)/sizeof(WCHAR)) &&
-	     lstrcmpW((LPWSTR)buf, WDML_szServerConvClassW) == 0))
+	if (GetClassNameW((HWND)wParam, buf, sizeof(buf)/sizeof(WCHAR)) &&
+	     lstrcmpiW(buf, WDML_szServerConvClass) == 0)
 	{
 	    pConv->wStatus |= ST_ISLOCAL;
 	}
@@ -1347,8 +1320,7 @@ static LRESULT CALLBACK WDML_ClientProc(HWND hwnd, UINT iMsg, WPARAM wParam, LPA
 	return 0;
     }
 
-    return (IsWindowUnicode(hwnd)) ?
-	DefWindowProcW(hwnd, iMsg, wParam, lParam) : DefWindowProcA(hwnd, iMsg, wParam, lParam);
+    return DefWindowProcW(hwnd, iMsg, wParam, lParam);
 }
 
 /*****************************************************************
@@ -1382,7 +1354,7 @@ BOOL WINAPI DdeDisconnect(HCONV hConv)
                 count = WDML_CritSect.RecursionCount;
                 for (i = 0; i < count; i++)
                     LeaveCriticalSection(&WDML_CritSect);
-                if (PostMessageA(pConv->hwndServer, pXAct->ddeMsg,
+                if (PostMessageW(pConv->hwndServer, pXAct->ddeMsg,
                                  (WPARAM)pConv->hwndClient, pXAct->lParam))
                     WDML_SyncWaitTransactionReply(hConv, 10000, pXAct);
                 for (i = 0; i < count; i++)
