@@ -385,11 +385,70 @@ EMFDRV_Polylinegon( PHYSDEV dev, const POINT* pt, INT count, DWORD iType )
 
 
 /**********************************************************************
+ *          EMFDRV_Polylinegon16
+ *
+ * Helper for EMFDRV_Poly{line|gon}
+ *
+ *  This is not a legacy function!
+ *  We are using SHORT integers to save space.
+ */
+static BOOL
+EMFDRV_Polylinegon16( PHYSDEV dev, const POINT* pt, INT count, DWORD iType )
+{
+    EMRPOLYLINE16 *emr;
+    DWORD size;
+    INT i;
+    BOOL ret;
+
+    /* check whether all points fit in the SHORT int POINT structure */
+    for(i = 0; i < count; i++) {
+        if( ((pt[i].x+0x8000) & ~0xffff ) || 
+            ((pt[i].y+0x8000) & ~0xffff ) )
+            return FALSE;
+    }
+
+    size = sizeof(EMRPOLYLINE16) + sizeof(POINTS) * (count - 1);
+
+    emr = HeapAlloc( GetProcessHeap(), 0, size );
+    emr->emr.iType = iType;
+    emr->emr.nSize = size;
+
+    emr->rclBounds.left = emr->rclBounds.right = pt[0].x;
+    emr->rclBounds.top = emr->rclBounds.bottom = pt[0].y;
+
+    for(i = 1; i < count; i++) {
+        if(pt[i].x < emr->rclBounds.left)
+	    emr->rclBounds.left = pt[i].x;
+	else if(pt[i].x > emr->rclBounds.right)
+	    emr->rclBounds.right = pt[i].x;
+	if(pt[i].y < emr->rclBounds.top)
+	    emr->rclBounds.top = pt[i].y;
+	else if(pt[i].y > emr->rclBounds.bottom)
+	    emr->rclBounds.bottom = pt[i].y;
+    }
+
+    emr->cpts = count;
+    for(i = 0; i < count; i++ ) {
+        emr->apts[i].x = pt[i].x;
+        emr->apts[i].y = pt[i].y;
+    }
+
+    ret = EMFDRV_WriteRecord( dev, &emr->emr );
+    if(ret)
+        EMFDRV_UpdateBBox( dev, &emr->rclBounds );
+    HeapFree( GetProcessHeap(), 0, emr );
+    return ret;
+}
+
+
+/**********************************************************************
  *          EMFDRV_Polyline
  */
 BOOL
 EMFDRV_Polyline( PHYSDEV dev, const POINT* pt, INT count )
 {
+    if( EMFDRV_Polylinegon16( dev, pt, count, EMR_POLYLINE16 ) )
+        return TRUE;
     return EMFDRV_Polylinegon( dev, pt, count, EMR_POLYLINE );
 }
 
