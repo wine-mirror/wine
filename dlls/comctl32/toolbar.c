@@ -4482,18 +4482,16 @@ TOOLBAR_LButtonUp (HWND hwnd, WPARAM wParam, LPARAM lParam)
     if((infoPtr->nHotItem >= 0) && (nHit != -1))
         infoPtr->buttons[infoPtr->nHotItem].bHot = TRUE;
 
-    if ((infoPtr->bCaptured) && (infoPtr->nButtonDown >= 0)) {
 	btnPtr = &infoPtr->buttons[infoPtr->nButtonDown];
 	btnPtr->fsState &= ~TBSTATE_PRESSED;
 
-	if (nHit == infoPtr->nButtonDown) {
-	    if (btnPtr->fsStyle & TBSTYLE_CHECK) {
+	if (btnPtr->fsStyle & TBSTYLE_CHECK) {
 		if (btnPtr->fsStyle & TBSTYLE_GROUP) {
 		    nOldIndex = TOOLBAR_GetCheckedGroupButtonIndex (infoPtr,
-			infoPtr->nButtonDown);
-		    if (nOldIndex == infoPtr->nButtonDown)
+			nHit);
+		    if (nOldIndex == nHit)
 			bSendMessage = FALSE;
-		    if ((nOldIndex != infoPtr->nButtonDown) && 
+		    if ((nOldIndex != nHit) && 
 			(nOldIndex != -1))
 			infoPtr->buttons[nOldIndex].fsState &= ~TBSTATE_CHECKED;
 		    btnPtr->fsState |= TBSTATE_CHECKED;
@@ -4504,10 +4502,7 @@ TOOLBAR_LButtonUp (HWND hwnd, WPARAM wParam, LPARAM lParam)
 		    else
 			btnPtr->fsState |= TBSTATE_CHECKED;
 		}
-	    }
 	}
-	else
-	    bSendMessage = FALSE;
 
 	if (nOldIndex != -1)
         {
@@ -4520,7 +4515,8 @@ TOOLBAR_LButtonUp (HWND hwnd, WPARAM wParam, LPARAM lParam)
 	 * that resets bCaptured and btn TBSTATE_PRESSED flags,
 	 * and obliterates nButtonDown and nOldHit (see TOOLBAR_CaptureChanged) 
 	 */
-	ReleaseCapture ();
+	if ((infoPtr->bCaptured) && (infoPtr->nButtonDown >= 0))
+	    ReleaseCapture ();
 
 	/* Issue NM_RELEASEDCAPTURE to parent to let him know it is released */
 	TOOLBAR_SendNotify ((NMHDR *) &hdr, infoPtr,
@@ -4541,9 +4537,8 @@ TOOLBAR_LButtonUp (HWND hwnd, WPARAM wParam, LPARAM lParam)
 	TOOLBAR_SendNotify ((NMHDR *) &nmtb, infoPtr,
 			TBN_ENDDRAG);
 
-	if (bSendMessage)
-	    SendMessageA (infoPtr->hwndNotify, WM_COMMAND,
-			  MAKEWPARAM(btnPtr->idCommand, 0), (LPARAM)hwnd);
+	SendMessageA (infoPtr->hwndNotify, WM_COMMAND,
+	  MAKEWPARAM(infoPtr->buttons[nHit].idCommand, 0), (LPARAM)hwnd);
 
 	/* !!! Undocumented - toolbar at 4.71 level and above sends
 	 * either NMRCLICK or NM_CLICK with the NMMOUSE structure.
@@ -4553,8 +4548,6 @@ TOOLBAR_LButtonUp (HWND hwnd, WPARAM wParam, LPARAM lParam)
 	nmmouse.dwItemData = btnPtr->dwData;
 	TOOLBAR_SendNotify ((NMHDR *) &nmmouse, infoPtr,
 			NM_CLICK);
-    }
-
     return 0;
 }
 
