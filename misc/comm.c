@@ -73,6 +73,7 @@
 #define	TIOCINQ FIONREAD
 #endif
 #define COMM_MSR_OFFSET  35       /* see knowledge base Q101417 */
+#define FLAG_LPT 0x80
 
 struct DosDeviceStruct COM[MAX_PORTS];
 struct DosDeviceStruct LPT[MAX_PORTS];
@@ -160,7 +161,7 @@ struct DosDeviceStruct *GetDeviceStruct_fd(int fd)
 struct DosDeviceStruct *GetDeviceStruct(int fd)
 {
 	if ((fd&0x7F)<=MAX_PORTS) {
-            if (!(fd&0x80)) {
+            if (!(fd&FLAG_LPT)) {
 		if (COM[fd].fd)
 		    return &COM[fd];
 	    } else {
@@ -392,25 +393,24 @@ INT16 WINAPI OpenComm16(LPCSTR device,UINT16 cbInQueue,UINT16 cbOutQueue)
 
     	TRACE(comm, "%s, %d, %d\n", device, cbInQueue, cbOutQueue);
 
-	if (!lstrncmpiA(device,"COM",3)) {
 		port = device[3] - '0';
 
-		if (port-- == 0) {
-			ERR(comm, "BUG ! COM0 doesn't exist !\n");
-		}
+	if (port-- == 0)
+		ERR(comm, "BUG ! COM0 or LPT0 don't exist !\n");
+
+	if (!lstrncmpiA(device,"COM",3)) {
 		
                 TRACE(comm, "%s = %s\n", device, COM[port].devicename);
 
-		if (!ValidCOMPort(port)) {
+		if (!ValidCOMPort(port))
 			return IE_BADID;
-		}
-		if (COM[port].fd) {
+
+		if (COM[port].fd)
 			return IE_OPEN;
-		}
 
 		fd = open(COM[port].devicename, O_RDWR | O_NONBLOCK);
 		if (fd == -1) {
-			return WinError();
+			return IE_HARDWARE;
 		} else {
                         unknown[port] = SEGPTR_ALLOC(40);
                         bzero(unknown[port],40);
@@ -458,27 +458,21 @@ INT16 WINAPI OpenComm16(LPCSTR device,UINT16 cbInQueue,UINT16 cbOutQueue)
 	} 
 	else 
 	if (!lstrncmpiA(device,"LPT",3)) {
-		port = device[3] - '0';
 	
-		if (port-- == 0) {
-			ERR(comm, "BUG ! LPT0 doesn't exist !\n");
-		}
-
-		if (!ValidLPTPort(port)) {
+		if (!ValidLPTPort(port))
 			return IE_BADID;
-		}		
-		if (LPT[port].fd) {
+
+		if (LPT[port].fd)
 			return IE_OPEN;
-		}
 
 		fd = open(LPT[port].devicename, O_RDWR | O_NONBLOCK, 0);
 		if (fd == -1) {
-			return WinError();
+			return IE_HARDWARE;
 		} else {
 			LPT[port].fd = fd;
 			LPT[port].commerror = 0;
 			LPT[port].eventmask = 0;
-			return port|0x80;
+			return port|FLAG_LPT;
 		}
 	}
 	return 0;
@@ -495,7 +489,7 @@ INT16 WINAPI CloseComm16(INT16 cid)
 	if ((ptr = GetDeviceStruct(cid)) == NULL) {
 		return -1;
 	}
-	if (!(cid&0x80)) {
+	if (!(cid&FLAG_LPT)) {
 		/* COM port */
 		SEGPTR_FREE(unknown[cid]); /* [LW] */
 
@@ -585,7 +579,7 @@ LONG WINAPI EscapeCommFunction16(UINT16 cid,UINT16 nFunction)
 		case GETMAXLPT:
 			for (max = MAX_PORTS;!LPT[max].devicename;max--)
 				;
-			return 0x80 + max;
+			return FLAG_LPT + max;
 			break;
 
 #ifdef TIOCM_DTR
@@ -678,7 +672,7 @@ INT16 WINAPI GetCommError16(INT16 cid,LPCOMSTAT16 lpStat)
 	if ((ptr = GetDeviceStruct(cid)) == NULL) {
 		return -1;
 	}
-        if (cid&0x80) {
+        if (cid&FLAG_LPT) {
             WARN(comm," cid %d not comm port\n",cid);
             return CE_MODE;
         }
@@ -720,19 +714,24 @@ SEGPTR WINAPI SetCommEventMask16(INT16 cid,UINT16 fuEvtMask)
         unsigned int mstat;
 
     	TRACE(comm,"cid %d,mask %d\n",cid,fuEvtMask);
-	if ((ptr = GetDeviceStruct(cid)) == NULL) {
-		return -1;
-	}
+	if ((ptr = GetDeviceStruct(cid)) == NULL)
+	    return (SEGPTR)NULL;
+
 	ptr->eventmask = fuEvtMask;
-        if (cid&0x80) {
+
+        if ((cid&FLAG_LPT) || !ValidCOMPort(cid)) {
             WARN(comm," cid %d not comm port\n",cid);
-            return SEGPTR_GET(NULL);
+            return (SEGPTR)NULL;
         }
+        /* it's a COM port ? -> modify flags */
         stol = (unsigned char *)unknown[cid] + COMM_MSR_OFFSET;
 	repid = ioctl(ptr->fd,TIOCMGET,&mstat);
 	TRACE(comm, " ioctl  %d, msr %x at %p %p\n",repid,mstat,stol,unknown[cid]);
-	if ((mstat&TIOCM_CAR)) {*stol |= 0x80;}
-	     else {*stol &=0x7f;}
+	if ((mstat&TIOCM_CAR))
+	    *stol |= 0x80;
+	else
+	    *stol &=0x7f;
+
 	TRACE(comm," modem dcd construct %x\n",*stol);
 	return SEGPTR_GET(unknown[cid]);
 }
@@ -746,10 +745,10 @@ UINT16 WINAPI GetCommEventMask16(INT16 cid,UINT16 fnEvtClear)
 	WORD events;
 
     	TRACE(comm, "cid %d, mask %d\n", cid, fnEvtClear);
-	if ((ptr = GetDeviceStruct(cid)) == NULL) {
-		return -1;
-	}
-        if (cid&0x80) {
+	if ((ptr = GetDeviceStruct(cid)) == NULL)
+	    return 0;
+
+        if ((cid&FLAG_LPT) || !ValidCOMPort(cid)) {
             WARN(comm," cid %d not comm port\n",cid);
             return 0;
         }
