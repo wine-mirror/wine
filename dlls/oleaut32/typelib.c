@@ -1739,6 +1739,7 @@ ITypeInfoImpl * MSFT_DoTypeInfo(
         pcx->pTblDir->pTypeInfoTab.offset+count*sizeof(tiBase));
 /* this is where we are coming from */
     ptiRet->pTypeLib = pLibInfo;
+    ITypeLib2_AddRef((ITypeLib2 *)pLibInfo);
     ptiRet->index=count;
 /* fill in the typeattr fields */
     FIXME("Assign constructor/destructor memid\n");
@@ -2883,6 +2884,7 @@ static ITypeLib2* ITypeLib2_Constructor_SLTG(LPVOID pLib, DWORD dwTLBLength)
       }
       *ppTypeInfoImpl = (ITypeInfoImpl*)ITypeInfo_Constructor();
       (*ppTypeInfoImpl)->pTypeLib = pTypeLibImpl;
+	  ITypeLib2_AddRef((ITypeLib2 *)pTypeLibImpl);
       (*ppTypeInfoImpl)->index = i;
       (*ppTypeInfoImpl)->Name = TLB_MultiByteToBSTR(
 					     pOtherTypeInfoBlks[i].name_offs +
@@ -4217,7 +4219,7 @@ static HRESULT WINAPI ITypeInfo_fnGetRefTypeInfo(
 	if(!pRefType)
 	  FIXME("Can't find pRefType for ref %lx\n", hRefType);
 	if(pRefType && hRefType != -1) {
-            ITypeLib *pTLib;
+            ITypeLib *pTLib = NULL;
 
 	    if(pRefType->pImpTLInfo == TLB_REF_INTERNAL) {
 	        int Index;
@@ -4256,6 +4258,8 @@ static HRESULT WINAPI ITypeInfo_fnGetRefTypeInfo(
 		    result = ITypeLib2_GetTypeInfo(pTLib, pRefType->index,
 						   ppTInfo);
 	    }
+	    if (pTLib != NULL)
+		ITypeLib2_Release(pTLib);
 	}
     }
 
