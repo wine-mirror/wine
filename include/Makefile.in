@@ -14,6 +14,7 @@ INSTALLED_INCLUDES = \
 	commdlg.h \
 	compobj.h \
 	cpl.h \
+	custcntl.h \
 	d3d.h \
 	d3d8.h \
 	d3d8caps.h \
