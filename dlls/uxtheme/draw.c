@@ -930,12 +930,6 @@ HRESULT WINAPI GetThemeTextExtent(HTHEME hTheme, HDC hdc, int iPartId,
         DeleteObject(hFont);
     }
     return S_OK;
-
-    
-    FIXME("%d %d: stub\n", iPartId, iStateId);
-    if(!hTheme)
-        return E_HANDLE;
-    return ERROR_CALL_NOT_IMPLEMENTED;
 }
 
 /***********************************************************************
@@ -944,10 +938,32 @@ HRESULT WINAPI GetThemeTextExtent(HTHEME hTheme, HDC hdc, int iPartId,
 HRESULT WINAPI GetThemeTextMetrics(HTHEME hTheme, HDC hdc, int iPartId,
                                    int iStateId, TEXTMETRICW *ptm)
 {
-    FIXME("%d %d: stub\n", iPartId, iStateId);
+    HRESULT hr;
+    HFONT hFont = NULL;
+    HGDIOBJ oldFont = NULL;
+    LOGFONTW logfont;
+
+    TRACE("(%p, %p, %d, %d)\n", hTheme, hdc, iPartId, iStateId);
     if(!hTheme)
         return E_HANDLE;
-    return ERROR_CALL_NOT_IMPLEMENTED;
+
+    hr = GetThemeFont(hTheme, hdc, iPartId, iStateId, TMT_FONT, &logfont);
+    if(SUCCEEDED(hr)) {
+        hFont = CreateFontIndirectW(&logfont);
+        if(!hFont)
+            TRACE("Failed to create font\n");
+    }
+    if(hFont)
+        oldFont = SelectObject(hdc, hFont);
+
+    if(!GetTextMetricsW(hdc, ptm))
+        hr = HRESULT_FROM_WIN32(GetLastError());
+
+    if(hFont) {
+        SelectObject(hdc, oldFont);
+        DeleteObject(hFont);
+    }
+    return hr;
 }
 
 /***********************************************************************
