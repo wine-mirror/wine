@@ -720,18 +720,20 @@ void WINAPI DirectedYield16( HTASK16 hTask )
 {
     TDB *pCurTask = TASK_GetCurrent();
 
-    if (pCurTask->flags & TDBF_WIN32)
+    if (!pCurTask) OldYield16();
+    else
     {
-        FIXME("called for Win32 thread (%04x)!\n", NtCurrentTeb()->teb_sel);
-        return;
+        if (pCurTask->flags & TDBF_WIN32)
+        {
+            FIXME("called for Win32 thread (%04x)!\n", NtCurrentTeb()->teb_sel);
+            return;
+        }
+
+        TRACE("%04x: DirectedYield(%04x)\n", pCurTask->hSelf, hTask );
+        pCurTask->hYieldTo = hTask;
+        OldYield16();
+        TRACE("%04x: back from DirectedYield(%04x)\n", pCurTask->hSelf, hTask );
     }
-
-    TRACE("%04x: DirectedYield(%04x)\n", pCurTask->hSelf, hTask );
-
-    pCurTask->hYieldTo = hTask;
-    OldYield16();
-
-    TRACE("%04x: back from DirectedYield(%04x)\n", pCurTask->hSelf, hTask );
 }
 
 /***********************************************************************
