@@ -19,6 +19,7 @@
  */
 
 #include <assert.h>
+#include <stdio.h>
 
 #include "wine/test.h"
 #include "winbase.h"
@@ -189,7 +190,242 @@ static void test_ExtTextOut(void)
     ok(ReleaseDC(hwnd, hdcDisplay), "ReleaseDC error %ld\n", GetLastError());
 }
 
+/* Win-format metafile (mfdrv) tests */
+/* These tests compare the generated metafiles byte-by-byte */
+/* with the nominal results. */
+
+/* Maximum size of sample metafiles in bytes. */
+#define MF_BUFSIZE 256
+
+/* 8x8 bitmap data for a pattern brush */
+static const unsigned char SAMPLE_PATTERN_BRUSH[] = {
+    0x01, 0x00, 0x02, 0x00,
+    0x03, 0x00, 0x04, 0x00,
+    0x05, 0x00, 0x06, 0x00,
+    0x07, 0x00, 0x08, 0x00
+};
+
+/* Sample metafiles to be compared to the outputs of the
+ * test functions.
+ */
+
+static const unsigned char MF_BLANK_BITS[] = {
+    0x01, 0x00, 0x09, 0x00, 0x00, 0x03, 0x0c, 0x00,
+    0x00, 0x00, 0x00, 0x00, 0x03, 0x00, 0x00, 0x00,
+    0x00, 0x00, 0x03, 0x00, 0x00, 0x00, 0x00, 0x00,
+};
+
+static const unsigned char MF_GRAPHICS_BITS[] = {
+    0x01, 0x00, 0x09, 0x00, 0x00, 0x03, 0x22, 0x00,
+    0x00, 0x00, 0x00, 0x00, 0x07, 0x00, 0x00, 0x00,
+    0x00, 0x00, 0x05, 0x00, 0x00, 0x00, 0x14, 0x02,
+    0x01, 0x00, 0x01, 0x00, 0x05, 0x00, 0x00, 0x00,
+    0x13, 0x02, 0x02, 0x00, 0x02, 0x00, 0x05, 0x00,
+    0x00, 0x00, 0x14, 0x02, 0x01, 0x00, 0x01, 0x00,
+    0x07, 0x00, 0x00, 0x00, 0x18, 0x04, 0x02, 0x00,
+    0x02, 0x00, 0x00, 0x00, 0x00, 0x00, 0x03, 0x00,
+    0x00, 0x00, 0x00, 0x00
+};
+
+static const unsigned char MF_PATTERN_BRUSH_BITS[] = {
+    0x01, 0x00, 0x09, 0x00, 0x00, 0x03, 0x3d, 0x00,
+    0x00, 0x00, 0x01, 0x00, 0x2d, 0x00, 0x00, 0x00,
+    0x00, 0x00, 0x2d, 0x00, 0x00, 0x00, 0x42, 0x01,
+    0x03, 0x00, 0x00, 0x00, 0x28, 0x00, 0x00, 0x00,
+    0x08, 0x00, 0x00, 0x00, 0x08, 0x00, 0x00, 0x00,
+    0x01, 0x00, 0x01, 0x00, 0x00, 0x00, 0x00, 0x00,
+    0x20, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+    0xff, 0xff, 0xff, 0x00, 0x08, 0x00, 0x00, 0x00,
+    0x07, 0x00, 0x00, 0x00, 0x06, 0x00, 0x00, 0x00,
+    0x05, 0x00, 0x00, 0x00, 0x04, 0x00, 0x00, 0x00,
+    0x03, 0x00, 0x00, 0x00, 0x02, 0x00, 0x00, 0x00,
+    0x01, 0x00, 0x00, 0x00, 0x04, 0x00, 0x00, 0x00,
+    0x2d, 0x01, 0x00, 0x00, 0x03, 0x00, 0x00, 0x00,
+    0x00, 0x00
+};
+
+/* For debugging or dumping the raw metafiles produced by
+ * new test functions.
+ */
+
+static void dump_mf_bits (const HMETAFILE mf, const char *desc)
+{
+    char buf[MF_BUFSIZE];
+    UINT mfsize;
+    int i;
+
+    mfsize = GetMetaFileBitsEx (mf, MF_BUFSIZE, buf);
+    ok (mfsize > 0, "%s: GetMetaFileBitsEx failed.\n", desc);
+
+    printf ("MetaFile %s has bits:\n{\n    ", desc);
+    for (i=0; i<mfsize; i++)
+    {
+        printf ("0x%.2hhx", buf[i]);
+        if (i == mfsize-1)
+            printf ("\n");
+        else if (i % 8 == 7)
+            printf (",\n    ");
+        else
+            printf (", ");
+    }
+    printf ("};\n");
+}
+
+/* Compare the metafile produced by a test function with the
+ * expected raw metafile data in "bits".
+ * Return value is 0 for a perfect match,
+ * -1 if lengths aren't equal,
+ * otherwise returns the number of non-matching bytes.
+ */
+
+static int compare_mf_bits (const HMETAFILE mf, const char *bits, int bsize,
+    const char *desc)
+{
+    char buf[MF_BUFSIZE];
+    UINT mfsize;
+    int i, diff;
+
+    mfsize = GetMetaFileBitsEx (mf, MF_BUFSIZE, buf);
+    ok (mfsize > 0, "%s: GetMetaFileBitsEx failed.\n", desc);
+    if (mfsize < MF_BUFSIZE)
+        ok (mfsize == bsize, "%s: mfsize=%d, bsize=%d.\n",
+            desc, mfsize, bsize);
+    else
+        ok (bsize >= MF_BUFSIZE, "%s: mfsize > bufsize (%d bytes), bsize=%d.\n",
+            desc, mfsize, bsize);
+    if (mfsize != bsize)
+        return -1;
+
+    diff = 0;
+    for (i=0; i<bsize; i++)
+    {
+       if (buf[i] !=  bits[i])
+           diff++;
+    }
+    ok (diff == 0, "%s: mfsize=%d, bsize=%d, diff=%d\n",
+        desc, mfsize, bsize, diff);
+
+    return diff; 
+}
+
+/* Test a blank metafile.  May be used as a template for new tests. */
+
+static void test_mf_Blank(void)
+{
+    HDC hdcMetafile;
+    HMETAFILE hMetafile;
+    INT caps;
+
+    hdcMetafile = CreateMetaFileA(NULL);
+    ok(hdcMetafile != 0, "CreateMetaFileA(NULL) error %ld\n", GetLastError());
+    trace("hdcMetafile %p\n", hdcMetafile);
+
+/* Tests on metafile initialization */
+    caps = GetDeviceCaps (hdcMetafile, TECHNOLOGY);
+    ok (caps == DT_METAFILE,
+        "GetDeviceCaps: TECHNOLOGY=%d != DT_METAFILE.\n", caps);
+
+    hMetafile = CloseMetaFile(hdcMetafile);
+    ok(hMetafile != 0, "CloseMetaFile error %ld\n", GetLastError());
+    ok(!GetObjectType(hdcMetafile), "CloseMetaFile has to destroy metafile hdc\n");
+
+    if (compare_mf_bits (hMetafile, MF_BLANK_BITS, sizeof(MF_BLANK_BITS),
+        "mf_blank") != 0)
+            dump_mf_bits (hMetafile, "mf_Blank");
+
+    ok(DeleteMetaFile(hMetafile), "DeleteMetaFile(%p) error %ld\n", hMetafile, GetLastError());
+}
+
+/* Simple APIs from mfdrv/graphics.c
+ */
+
+static void test_mf_Graphics()
+{
+    HDC hdcMetafile;
+    HMETAFILE hMetafile;
+    POINT oldpoint;
+
+    hdcMetafile = CreateMetaFileA(NULL);
+    ok(hdcMetafile != 0, "CreateMetaFileA(NULL) error %ld\n", GetLastError());
+    trace("hdcMetafile %p\n", hdcMetafile);
+
+    ok(MoveToEx(hdcMetafile, 1, 1, NULL), "MoveToEx error %ld.\n", GetLastError());
+    ok(LineTo(hdcMetafile, 2, 2), "LineTo error %ld.\n", GetLastError());
+    ok(MoveToEx(hdcMetafile, 1, 1, &oldpoint), "MoveToEx error %ld.\n", GetLastError());
+
+/* oldpoint gets garbage under Win XP, so the following test would
+ * work under Wine but fails under Windows:
+ *
+ *   ok((oldpoint.x == 2) && (oldpoint.y == 2),
+ *       "MoveToEx: (x, y) = (%ld, %ld), should be (2, 2).\n",
+ *       oldpoint.x, oldpoint.y);
+ */
+
+    ok(Ellipse(hdcMetafile, 0, 0, 2, 2), "Ellipse error %ld.\n", GetLastError());
+
+    hMetafile = CloseMetaFile(hdcMetafile);
+    ok(hMetafile != 0, "CloseMetaFile error %ld\n", GetLastError());
+    ok(!GetObjectType(hdcMetafile), "CloseMetaFile has to destroy metafile hdc\n");
+
+    if (compare_mf_bits (hMetafile, MF_GRAPHICS_BITS, sizeof(MF_GRAPHICS_BITS),
+        "mf_Graphics") != 0)
+            dump_mf_bits (hMetafile, "mf_Graphics");
+
+    ok(DeleteMetaFile(hMetafile), "DeleteMetaFile(%p) error %ld\n",
+        hMetafile, GetLastError());
+}
+
+static void test_mf_PatternBrush(void)
+{
+    HDC hdcMetafile;
+    HMETAFILE hMetafile;
+    LOGBRUSH *orig_lb;
+    HBRUSH hBrush;
+
+    orig_lb = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(LOGBRUSH));
+
+    orig_lb->lbStyle = BS_PATTERN;
+    orig_lb->lbColor = RGB(0, 0, 0);
+    orig_lb->lbHatch = (INT) CreateBitmap (8, 8, 1, 1, SAMPLE_PATTERN_BRUSH);
+    ok((HBITMAP *)orig_lb->lbHatch != NULL, "CreateBitmap error %ld.\n", GetLastError());
+
+    hBrush = CreateBrushIndirect (orig_lb);
+    ok(hBrush != 0, "CreateBrushIndirect error %ld\n", GetLastError());
+
+    hdcMetafile = CreateMetaFileA(NULL);
+    ok(hdcMetafile != 0, "CreateMetaFileA error %ld\n", GetLastError());
+    trace("hdcMetafile %p\n", hdcMetafile);
+
+    hBrush = SelectObject(hdcMetafile, hBrush);
+    ok(hBrush != 0, "SelectObject error %ld.\n", GetLastError());
+
+    hMetafile = CloseMetaFile(hdcMetafile);
+    ok(hMetafile != 0, "CloseMetaFile error %ld\n", GetLastError());
+    ok(!GetObjectType(hdcMetafile), "CloseMetaFile has to destroy metafile hdc\n");
+
+    if (compare_mf_bits (hMetafile, MF_PATTERN_BRUSH_BITS, sizeof(MF_PATTERN_BRUSH_BITS),
+        "mf_Pattern_Brush") != 0)
+            dump_mf_bits (hMetafile, "mf_Pattern_Brush");
+
+    ok(DeleteMetaFile(hMetafile), "DeleteMetaFile error %ld\n", GetLastError());
+    ok(DeleteObject(hBrush), "DeleteObject(HBRUSH) error %ld\n", GetLastError());
+    ok(DeleteObject((HBITMAP *)orig_lb->lbHatch), "DeleteObject(HBITMAP) error %ld\n",
+        GetLastError());
+    HeapFree (GetProcessHeap(), 0, orig_lb);
+}
+
 START_TEST(metafile)
 {
+    /* For enhanced metafiles (enhmfdrv) */
     test_ExtTextOut();
+
+    /* For win-format metafiles (mfdrv) */
+    test_mf_Blank();
+    test_mf_Graphics();
+
+    /* Crashes under wine: */
+    /* test_mf_PatternBrush(); */
+
 }
