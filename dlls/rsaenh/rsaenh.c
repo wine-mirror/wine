@@ -2762,6 +2762,11 @@ BOOL WINAPI RSAENH_CPGetProvParam(HCRYPTPROV hProv, DWORD dwParam, BYTE *pbData,
     TRACE("(hProv=%08lx, dwParam=%08lx, pbData=%p, pdwDataLen=%p, dwFlags=%08lx)\n", 
            hProv, dwParam, pbData, pdwDataLen, dwFlags);
 
+    if (!pdwDataLen) {
+        SetLastError(ERROR_INVALID_PARAMETER);
+        return FALSE;
+    }
+    
     if (!lookup_handle(&handle_table, (unsigned int)hProv, RSAENH_MAGIC_CONTAINER, 
                        (OBJECTHDR**)&pKeyContainer)) 
     {
@@ -2784,7 +2789,15 @@ BOOL WINAPI RSAENH_CPGetProvParam(HCRYPTPROV hProv, DWORD dwParam, BYTE *pbData,
         case PP_KEYX_KEYSIZE_INC:
             dwTemp = 8;
             return copy_param(pbData, pdwDataLen, (CONST BYTE*)&dwTemp, sizeof(dwTemp));
- 
+
+        case PP_IMPTYPE:
+            dwTemp = CRYPT_IMPL_SOFTWARE;
+            return copy_param(pbData, pdwDataLen, (CONST BYTE*)&dwTemp, sizeof(dwTemp));
+
+        case PP_VERSION:
+            dwTemp = 0x00000200;
+            return copy_param(pbData, pdwDataLen, (CONST BYTE*)&dwTemp, sizeof(dwTemp));
+            
         case PP_ENUMCONTAINERS:
             if ((dwFlags & CRYPT_FIRST) == CRYPT_FIRST) pKeyContainer->dwEnumContainersCtr = 0;
 
