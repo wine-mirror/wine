@@ -211,6 +211,7 @@ static HRGN WIN_UpdateNCRgn(WND* wnd, HRGN hRgn, UINT uncFlags )
         wnd->flags &= ~WIN_NEEDS_NCPAINT;
 	if( wnd->hrgnUpdate > 1 )
         {
+            if (!hRgn) hRgn = CreateRectRgn( 0, 0, 0, 0 );
             CombineRgn( hRgn, wnd->hrgnUpdate, 0, RGN_COPY );
             hrgnRet = hRgn;
         }
@@ -292,6 +293,7 @@ static HRGN WIN_UpdateNCRgn(WND* wnd, HRGN hRgn, UINT uncFlags )
 copyrgn:
 	    if( uncFlags & UNC_REGION )
             {
+                if (!hRgn) hRgn = CreateRectRgn( 0, 0, 0, 0 );
                 CombineRgn( hRgn, wnd->hrgnUpdate, 0, RGN_COPY );
                 hrgnRet = hRgn;
             }
