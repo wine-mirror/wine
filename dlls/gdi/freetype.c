@@ -189,10 +189,25 @@ typedef struct {
     BOOL init;
 } GM;
 
+typedef struct {
+    FLOAT eM11, eM12;
+    FLOAT eM21, eM22;
+} FMAT2;
+
+typedef struct {
+    DWORD hash;
+    LOGFONTW lf;
+    FMAT2 matrix;
+} FONT_DESC;
+
+typedef struct tagHFONTLIST {
+    struct list entry;
+    HFONT hfont;
+} HFONTLIST;
+
 struct tagGdiFont {
     struct list entry;
     FT_Face ft_face;
-    XFORM xform;
     LPWSTR name;
     int charset;
     BOOL fake_italic;
@@ -202,7 +217,8 @@ struct tagGdiFont {
     INT orientation;
     GM *gm;
     DWORD gmsize;
-    HFONT hfont;
+    struct list hfontlist;
+    FONT_DESC font_desc;
     LONG aveWidth;
     SHORT yMax;
     SHORT yMin;
@@ -213,6 +229,8 @@ struct tagGdiFont {
 #define INIT_GM_SIZE 128
 
 static struct list gdi_font_list = LIST_INIT(gdi_font_list);
+static struct list unused_gdi_font_list = LIST_INIT(unused_gdi_font_list);
+#define UNUSED_CACHE_SIZE 10
 
 static Family *FontList = NULL;
 
@@ -1331,7 +1349,8 @@ static GdiFont alloc_font(void)
     ret->gm = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY,
 			ret->gmsize * sizeof(*ret->gm));
     ret->potm = NULL;
-    ret->xform.eM11 = ret->xform.eM22 = 1.0;
+    ret->font_desc.matrix.eM11 = ret->font_desc.matrix.eM22 = 1.0;
+    list_init(&ret->hfontlist);
     return ret;
 }
 
@@ -1492,6 +1511,85 @@ static LONG load_VDMX(GdiFont font, LONG height)
     return ppem;
 }
 
+static BOOL fontcmp(GdiFont font, FONT_DESC *fd)
+{
+    if(font->font_desc.hash != fd->hash) return TRUE;
+    if(memcmp(&font->font_desc.matrix, &fd->matrix, sizeof(fd->matrix))) return TRUE;
+    if(memcmp(&font->font_desc.lf, &fd->lf, offsetof(LOGFONTW, lfFaceName))) return TRUE;
+    return strcmpiW(font->font_desc.lf.lfFaceName, fd->lf.lfFaceName);
+}
+
+static void calc_hash(FONT_DESC *pfd)
+{
+    DWORD hash = 0, *ptr, two_chars;
+    WORD *pwc;
+    int i;
+
+    for(i = 0, ptr = (DWORD*)&pfd->matrix; i < sizeof(FMAT2)/sizeof(DWORD); i++, ptr++)
+        hash ^= *ptr;
+    for(i = 0, ptr = (DWORD*)&pfd->lf; i < 7; i++, ptr++)
+        hash ^= *ptr;
+    for(i = 0, ptr = (DWORD*)&pfd->lf.lfFaceName; i < LF_FACESIZE/2; i++, ptr++) {
+        two_chars = *ptr;
+        pwc = (WCHAR *)&two_chars;
+        if(!*pwc) break;
+        *pwc = toupperW(*pwc);
+        pwc++;
+        *pwc = toupperW(*pwc);
+        hash ^= two_chars;
+        if(!*pwc) break;
+    }
+    pfd->hash = hash;
+    return;
+}
+
+static GdiFont find_in_cache(HFONT hfont, LOGFONTW *plf, XFORM *pxf, BOOL can_use_bitmap)
+{
+    GdiFont ret;
+    FONT_DESC fd;
+    HFONTLIST *hflist;
+    struct list *font_elem_ptr, *hfontlist_elem_ptr;
+
+    memcpy(&fd.lf, plf, sizeof(LOGFONTW));
+    memcpy(&fd.matrix, pxf, sizeof(FMAT2));
+    calc_hash(&fd);
+
+    /* try the in-use list */
+    LIST_FOR_EACH(font_elem_ptr, &gdi_font_list) {
+        ret = LIST_ENTRY(font_elem_ptr, struct tagGdiFont, entry);
+        if(!fontcmp(ret, &fd)) {
+            if(!can_use_bitmap && !FT_IS_SCALABLE(ret->ft_face)) continue;
+            LIST_FOR_EACH(hfontlist_elem_ptr, &ret->hfontlist) {
+                hflist = LIST_ENTRY(hfontlist_elem_ptr, struct tagHFONTLIST, entry);
+                if(hflist->hfont == hfont)
+                    return ret;
+            }
+            hflist = HeapAlloc(GetProcessHeap(), 0, sizeof(*hflist));
+            hflist->hfont = hfont;
+            list_add_head(&ret->hfontlist, &hflist->entry);
+            return ret;
+        }
+    }
+ 
+    /* then the unused list */
+    font_elem_ptr = list_head(&unused_gdi_font_list);
+    while(font_elem_ptr) {
+        ret = LIST_ENTRY(font_elem_ptr, struct tagGdiFont, entry);
+        font_elem_ptr = list_next(&unused_gdi_font_list, font_elem_ptr);
+        if(!fontcmp(ret, &fd)) {
+            if(!can_use_bitmap && !FT_IS_SCALABLE(ret->ft_face)) continue;
+            assert(list_empty(&ret->hfontlist));
+            TRACE("Found %p in unused list\n", ret);
+            list_remove(&ret->entry);
+            list_add_head(&gdi_font_list, &ret->entry);
+            hflist = HeapAlloc(GetProcessHeap(), 0, sizeof(*hflist));
+            hflist->hfont = hfont;
+            list_add_head(&ret->hfontlist, &hflist->entry);
+            return ret;
+        }
+    }
+    return NULL;
+}
 
 /*************************************************************
  * WineEngCreateFontInstance
@@ -1507,7 +1605,7 @@ GdiFont WineEngCreateFontInstance(DC *dc, HFONT hfont)
     BOOL bd, it, can_use_bitmap;
     LOGFONTW lf;
     CHARSETINFO csi;
-    struct list *elem_ptr;
+    HFONTLIST *hflist;
 
     if (!GetObjectW( hfont, sizeof(lf), &lf )) return NULL;
     can_use_bitmap = GetDeviceCaps(dc->hSelf, TEXTCAPS) & TC_RA_ABLE;
@@ -1518,16 +1616,12 @@ GdiFont WineEngCreateFontInstance(DC *dc, HFONT hfont)
 	  lf.lfEscapement);
 
     /* check the cache first */
-    LIST_FOR_EACH(elem_ptr, &gdi_font_list) {
-        ret = LIST_ENTRY(elem_ptr, struct tagGdiFont, entry);
-        if(ret->hfont == hfont && !memcmp(&ret->xform, &dc->xformWorld2Vport, offsetof(XFORM, eDx)) &&
-           (can_use_bitmap || FT_IS_SCALABLE(ret->ft_face))) {
-
-	    TRACE("returning cached gdiFont(%p) for hFont %p\n", ret, hfont);
-	    return ret;
-	}
+    if((ret = find_in_cache(hfont, &lf, &dc->xformWorld2Vport, can_use_bitmap)) != NULL) {
+        TRACE("returning cached gdiFont(%p) for hFont %p\n", ret, hfont);
+        return ret;
     }
 
+    TRACE("not in cache\n");
     if(!FontList || !have_installed_roman_font) /* No fonts installed */
     {
 	TRACE("No fonts installed\n");
@@ -1535,7 +1629,14 @@ GdiFont WineEngCreateFontInstance(DC *dc, HFONT hfont)
     }
 
     ret = alloc_font();
-    memcpy(&ret->xform, &dc->xformWorld2Vport, sizeof(XFORM));
+
+     memcpy(&ret->font_desc.matrix, &dc->xformWorld2Vport, sizeof(FMAT2));
+     memcpy(&ret->font_desc.lf, &lf, sizeof(LOGFONTW));
+     calc_hash(&ret->font_desc);
+     hflist = HeapAlloc(GetProcessHeap(), 0, sizeof(*hflist));
+     hflist->hfont = hfont;
+     list_add_head(&ret->hfontlist, &hflist->entry);
+
 
     /* If lfFaceName is "Symbol" then Windows fixes up lfCharSet to
        SYMBOL_CHARSET so that Symbol gets picked irrespective of the
@@ -1702,7 +1803,6 @@ GdiFont WineEngCreateFontInstance(DC *dc, HFONT hfont)
     ret->strikeout = lf.lfStrikeOut ? 0xff : 0;
 
     TRACE("caching: gdiFont=%p  hfont=%p\n", ret, hfont);
-    ret->hfont = hfont;
     ret->aveWidth= lf.lfWidth;
     list_add_head(&gdi_font_list, &ret->entry);
     return ret;
@@ -1711,15 +1811,20 @@ GdiFont WineEngCreateFontInstance(DC *dc, HFONT hfont)
 static void dump_gdi_font_list(void)
 {
     GdiFont gdiFont;
-    LOGFONTW lf;
     struct list *elem_ptr;
 
     TRACE("---------- gdiFont Cache ----------\n");
     LIST_FOR_EACH(elem_ptr, &gdi_font_list) {
         gdiFont = LIST_ENTRY(elem_ptr, struct tagGdiFont, entry);
-        GetObjectW( gdiFont->hfont, sizeof(lf), &lf );
-	TRACE("gdiFont=%p  hfont=%p (%s)\n",
-	       gdiFont, gdiFont->hfont, debugstr_w(lf.lfFaceName));
+        TRACE("gdiFont=%p %s %ld\n",
+              gdiFont, debugstr_w(gdiFont->font_desc.lf.lfFaceName), gdiFont->font_desc.lf.lfHeight);
+    }
+
+    TRACE("---------- Unused gdiFont Cache ----------\n");
+    LIST_FOR_EACH(elem_ptr, &unused_gdi_font_list) {
+        gdiFont = LIST_ENTRY(elem_ptr, struct tagGdiFont, entry);
+        TRACE("gdiFont=%p %s %ld\n",
+              gdiFont, debugstr_w(gdiFont->font_desc.lf.lfFaceName), gdiFont->font_desc.lf.lfHeight);
     }
 }
 
@@ -1732,22 +1837,47 @@ static void dump_gdi_font_list(void)
 BOOL WineEngDestroyFontInstance(HFONT handle)
 {
     GdiFont gdiFont;
+    HFONTLIST *hflist;
     BOOL ret = FALSE;
-    struct list *elem_ptr;
+    struct list *font_elem_ptr, *hfontlist_elem_ptr;
+    int i = 0;
 
     TRACE("destroying hfont=%p\n", handle);
     if(TRACE_ON(font))
 	dump_gdi_font_list();
 
-    elem_ptr = list_head(&gdi_font_list);
-    while(elem_ptr) {
-        gdiFont = LIST_ENTRY(elem_ptr, struct tagGdiFont, entry);
-        elem_ptr = list_next(&gdi_font_list, elem_ptr);
-        if(gdiFont->hfont == handle) {
-            list_remove(&gdiFont->entry);
-            free_font(gdiFont);
-            ret = TRUE;
+    font_elem_ptr = list_head(&gdi_font_list);
+    while(font_elem_ptr) {
+        gdiFont = LIST_ENTRY(font_elem_ptr, struct tagGdiFont, entry);
+        font_elem_ptr = list_next(&gdi_font_list, font_elem_ptr);
+
+        hfontlist_elem_ptr = list_head(&gdiFont->hfontlist);
+        while(hfontlist_elem_ptr) {
+            hflist = LIST_ENTRY(hfontlist_elem_ptr, struct tagHFONTLIST, entry);
+            hfontlist_elem_ptr = list_next(&gdiFont->hfontlist, hfontlist_elem_ptr);
+            if(hflist->hfont == handle) {
+                list_remove(&hflist->entry);
+                HeapFree(GetProcessHeap(), 0, hflist);
+                ret = TRUE;
+            }
         }
+        if(list_empty(&gdiFont->hfontlist)) {
+            TRACE("Moving to Unused list\n");
+            list_remove(&gdiFont->entry);
+            list_add_head(&unused_gdi_font_list, &gdiFont->entry);
+        }
+    }
+
+
+    font_elem_ptr = list_head(&unused_gdi_font_list);
+    while(font_elem_ptr && i++ < UNUSED_CACHE_SIZE)
+        font_elem_ptr = list_next(&unused_gdi_font_list, font_elem_ptr);
+    while(font_elem_ptr) {
+        gdiFont = LIST_ENTRY(font_elem_ptr, struct tagGdiFont, entry);
+        font_elem_ptr = list_next(&unused_gdi_font_list, font_elem_ptr);
+        TRACE("freeing %p\n", gdiFont);
+        list_remove(&gdiFont->entry);
+        free_font(gdiFont);
     }
     return ret;
 }
@@ -2056,7 +2186,7 @@ DWORD WineEngGetGlyphOutline(GdiFont font, UINT glyph, UINT format,
 	
     /* Scaling factor */
     if (font->aveWidth && font->potm) {
-	     widthRatio = (float)font->aveWidth * font->xform.eM11 / (float) font->potm->otmTextMetrics.tmAveCharWidth;
+        widthRatio = (float)font->aveWidth * font->font_desc.matrix.eM11 / (float) font->potm->otmTextMetrics.tmAveCharWidth;
     }
 
     left = (INT)(ft_face->glyph->metrics.horiBearingX * widthRatio) & -64;
@@ -2530,7 +2660,7 @@ BOOL WineEngGetTextMetrics(GdiFont font, LPTEXTMETRICW ptm)
     memcpy(ptm, &font->potm->otmTextMetrics, sizeof(*ptm));
 
     if (font->aveWidth) {
-	     ptm->tmAveCharWidth = font->aveWidth * font->xform.eM11;
+        ptm->tmAveCharWidth = font->aveWidth * font->font_desc.matrix.eM11;
     }
     return TRUE;
 }
