@@ -1109,6 +1109,7 @@ void __wine_kernel_init(void)
             ExitProcess(1);
         }
         /* fall through */
+    case BINARY_OS216:
     case BINARY_WIN16:
     case BINARY_DOS:
         TRACE( "starting Win16/DOS binary %s\n", debugstr_w(main_exe_name) );
@@ -1121,9 +1122,6 @@ void __wine_kernel_init(void)
             goto found;
         MESSAGE( "wine: trying to run %s, cannot open builtin library for 'winevdm.exe': %s\n",
                  debugstr_w(main_exe_name), error );
-        ExitProcess(1);
-    case BINARY_OS216:
-        MESSAGE( "wine: %s is an OS/2 binary, not supported\n", debugstr_w(main_exe_name) );
         ExitProcess(1);
     case BINARY_UNIX_EXE:
         MESSAGE( "wine: %s is a Unix binary, not supported\n", debugstr_w(main_exe_name) );
@@ -1906,15 +1904,12 @@ BOOL WINAPI CreateProcessW( LPCWSTR app_name, LPWSTR cmd_line, LPSECURITY_ATTRIB
         retv = create_process( hFile, name, tidy_cmdline, envW, cur_dir, process_attr, thread_attr,
                                inherit, flags, startup_info, info, unixdir, res_start, res_end );
         break;
+    case BINARY_OS216:
     case BINARY_WIN16:
     case BINARY_DOS:
         TRACE( "starting %s as Win16/DOS binary\n", debugstr_w(name) );
         retv = create_vdm_process( name, tidy_cmdline, envW, cur_dir, process_attr, thread_attr,
                                    inherit, flags, startup_info, info, unixdir );
-        break;
-    case BINARY_OS216:
-        FIXME( "%s is OS/2 binary, not supported\n", debugstr_w(name) );
-        SetLastError( ERROR_BAD_EXE_FORMAT );
         break;
     case BINARY_PE_DLL:
         TRACE( "not starting %s since it is a dll\n", debugstr_w(name) );

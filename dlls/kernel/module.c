@@ -118,7 +118,7 @@ static enum binary_type MODULE_Decide_OS2_OldWin(HANDLE hfile, const IMAGE_DOS_H
     }
 
 broken:
-    ERR("Hmm, an error occurred. Is this binary file broken ?\n");
+    ERR("Hmm, an error occurred. Is this binary file broken?\n");
 
 good:
     HeapFree( GetProcessHeap(), 0, modtab);
@@ -169,7 +169,7 @@ enum binary_type MODULE_GetBinaryType( HANDLE hfile, void **res_start, void **re
         return BINARY_UNKNOWN;
     }
 
-    /* Mach-o File with Endian set to Big Endian  or Little Endian*/
+    /* Mach-o File with Endian set to Big Endian or Little Endian */
     if (header.macho.magic == 0xfeedface || header.macho.magic == 0xecafdeef)
     {
         switch(header.macho.filetype)
@@ -230,8 +230,12 @@ enum binary_type MODULE_GetBinaryType( HANDLE hfile, void **res_start, void **re
             {
                 switch ( ext_header.os2.ne_exetyp )
                 {
-                case 2:  return BINARY_WIN16;
-                case 5:  return BINARY_DOS;
+                case 1:  return BINARY_OS216; /* OS/2 */
+                case 2:  return BINARY_WIN16; /* Windows */
+                case 3:  return BINARY_DOS; /* European MS-DOS 4.x */
+                case 4:  return BINARY_WIN16; /* Windows 386; FIXME: is this 32bit??? */
+                case 5:  return BINARY_DOS; /* BOSS, Borland Operating System Services */
+                /* other types, e.g. 0 is: "unknown" */
                 default: return MODULE_Decide_OS2_OldWin(hfile, &header.mz, &ext_header.os2);
                 }
             }

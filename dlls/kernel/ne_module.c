@@ -644,12 +644,19 @@ static HMODULE16 NE_LoadExeHeader( HANDLE handle, LPCSTR path )
 
     if (ne_header.ne_magic == IMAGE_NT_SIGNATURE) return (HMODULE16)21;  /* win32 exe */
     if (ne_header.ne_magic == IMAGE_OS2_SIGNATURE_LX) {
-        MESSAGE("Sorry, this is an OS/2 linear executable (LX) file !\n");
+        MESSAGE("Sorry, this is an OS/2 linear executable (LX) file!\n");
         return (HMODULE16)12;
     }
     if (ne_header.ne_magic != IMAGE_OS2_SIGNATURE) return (HMODULE16)11;  /* invalid exe */
 
     /* We now have a valid NE header */
+
+    /* check to be able to fall back to loading OS/2 programs as DOS
+     * FIXME: should this check be reversed in order to be less strict?
+     * (only fail for OS/2 ne_exetyp 0x01 here?) */
+    if ((ne_header.ne_exetyp != 0x02 /* Windows */)
+        && (ne_header.ne_exetyp != 0x04) /* Windows 386 */)
+        return (HMODULE16)11;  /* invalid exe */
 
     size = sizeof(NE_MODULE) +
              /* segment table */
