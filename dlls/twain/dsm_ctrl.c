@@ -136,7 +136,7 @@ TW_UINT16 TWAIN_IdentityGetFirst (pTW_IDENTITY pOrigin, TW_MEMREF pData)
     return TWRC_FAILURE;
 #else
     TW_UINT16 twRC = TWRC_SUCCESS;
-    pTW_IDENTITY pSourceIdentity;/* = (pTW_IDENTITY) pData;*/
+    pTW_IDENTITY pSourceIdentity = (pTW_IDENTITY) pData;
     SANE_Status status;
 
     TRACE ("DG_CONTROL/DAT_IDENTITY/MSG_GETFIRST\n");
