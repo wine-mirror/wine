@@ -1860,20 +1860,6 @@ BOOL WINAPI PeekMessageW( MSG *msg_out, HWND hwnd, UINT first, UINT last, UINT f
         queue->GetMessagePosVal  = MAKELONG( msg.pt.x, msg.pt.y );
     }
 
-      /* We got a message */
-    if (flags & PM_REMOVE)
-    {
-        if (msg.message == WM_KEYDOWN || msg.message == WM_SYSKEYDOWN)
-        {
-            BYTE *p = &QueueKeyStateTable[msg.wParam & 0xff];
-
-            if (!(*p & 0x80)) *p ^= 0x01;
-            *p |= 0x80;
-        }
-        else if (msg.message == WM_KEYUP || msg.message == WM_SYSKEYUP)
-            QueueKeyStateTable[msg.wParam & 0xff] &= ~0x80;
-    }
-
     HOOK_CallHooksW( WH_GETMESSAGE, HC_ACTION, flags & PM_REMOVE, (LPARAM)&msg );
 
     /* copy back our internal safe copy of message data to msg_out.

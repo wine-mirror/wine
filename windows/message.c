@@ -37,6 +37,7 @@ DECLARE_DEBUG_CHANNEL(key);
 #define WM_NCMOUSEFIRST         WM_NCMOUSEMOVE
 #define WM_NCMOUSELAST          WM_NCMBUTTONDBLCLK
 
+static BYTE QueueKeyStateTable[256];
 static UINT doubleClickSpeed = 452;
 
 
@@ -115,6 +116,52 @@ static void queue_hardware_message( MSG *msg, ULONG_PTR extra_info, enum message
 
 
 /***********************************************************************
+ *           update_queue_key_state
+ */
+static void update_queue_key_state( UINT msg, WPARAM wp )
+{
+    BOOL down = FALSE;
+
+    switch (msg)
+    {
+    case WM_LBUTTONDOWN:
+        down = TRUE;
+        /* fall through */
+    case WM_LBUTTONUP:
+        wp = VK_LBUTTON;
+        break;
+    case WM_MBUTTONDOWN:
+        down = TRUE;
+        /* fall through */
+    case WM_MBUTTONUP:
+        wp = VK_MBUTTON;
+        break;
+    case WM_RBUTTONDOWN:
+        down = TRUE;
+        /* fall through */
+    case WM_RBUTTONUP:
+        wp = VK_RBUTTON;
+        break;
+    case WM_KEYDOWN:
+    case WM_SYSKEYDOWN:
+        down = TRUE;
+        /* fall through */
+    case WM_KEYUP:
+    case WM_SYSKEYUP:
+        wp = wp & 0xff;
+        break;
+    }
+    if (down)
+    {
+        BYTE *p = &QueueKeyStateTable[wp];
+        if (!(*p & 0x80)) *p ^= 0x01;
+        *p |= 0x80;
+    }
+    else QueueKeyStateTable[wp] &= ~0x80;
+}
+
+
+/***********************************************************************
  *           MSG_SendParentNotify
  *
  * Send a WM_PARENTNOTIFY to all ancestors of the given window, unless
@@ -172,12 +219,13 @@ void MSG_JournalPlayBackMsg(void)
                         keyDown++;
                 if (!keyDown)
                     msg.lParam |= 0x40000000;
-                AsyncKeyStateTable[msg.wParam]=InputKeyStateTable[msg.wParam] |= 0x80;
+                InputKeyStateTable[msg.wParam] |= 0x80;
+                AsyncKeyStateTable[msg.wParam] |= 0x80;
             }
             else                                       /* WM_KEYUP, WM_SYSKEYUP */
             {
                 msg.lParam |= 0xC0000000;
-                AsyncKeyStateTable[msg.wParam]=InputKeyStateTable[msg.wParam] &= ~0x80;
+                InputKeyStateTable[msg.wParam] &= ~0x80;
             }
             if (InputKeyStateTable[VK_MENU] & 0x80)
                 msg.lParam |= 0x20000000;
@@ -192,27 +240,33 @@ void MSG_JournalPlayBackMsg(void)
             switch (tmpMsg.message)
             {
             case WM_LBUTTONDOWN:
-                MouseButtonsStates[0]=AsyncMouseButtonsStates[0]=TRUE;break;
+                InputKeyStateTable[VK_LBUTTON] |= 0x80;
+                AsyncKeyStateTable[VK_LBUTTON] |= 0x80;
+                break;
             case WM_LBUTTONUP:
-                MouseButtonsStates[0]=AsyncMouseButtonsStates[0]=FALSE;break;
+                InputKeyStateTable[VK_LBUTTON] &= ~0x80;
+                break;
             case WM_MBUTTONDOWN:
-                MouseButtonsStates[1]=AsyncMouseButtonsStates[1]=TRUE;break;
+                InputKeyStateTable[VK_MBUTTON] |= 0x80;
+                AsyncKeyStateTable[VK_MBUTTON] |= 0x80;
+                break;
             case WM_MBUTTONUP:
-                MouseButtonsStates[1]=AsyncMouseButtonsStates[1]=FALSE;break;
+                InputKeyStateTable[VK_MBUTTON] &= ~0x80;
+                break;
             case WM_RBUTTONDOWN:
-                MouseButtonsStates[2]=AsyncMouseButtonsStates[2]=TRUE;break;
+                InputKeyStateTable[VK_RBUTTON] |= 0x80;
+                AsyncKeyStateTable[VK_RBUTTON] |= 0x80;
+                break;
             case WM_RBUTTONUP:
-                MouseButtonsStates[2]=AsyncMouseButtonsStates[2]=FALSE;break;
+                InputKeyStateTable[VK_RBUTTON] &= ~0x80;
+                break;
             }
-            AsyncKeyStateTable[VK_LBUTTON]= InputKeyStateTable[VK_LBUTTON] = MouseButtonsStates[0] ? 0x80 : 0;
-            AsyncKeyStateTable[VK_MBUTTON]= InputKeyStateTable[VK_MBUTTON] = MouseButtonsStates[1] ? 0x80 : 0;
-            AsyncKeyStateTable[VK_RBUTTON]= InputKeyStateTable[VK_RBUTTON] = MouseButtonsStates[2] ? 0x80 : 0;
             SetCursorPos(tmpMsg.paramL,tmpMsg.paramH);
             msg.lParam=MAKELONG(tmpMsg.paramL,tmpMsg.paramH);
             msg.wParam=0;
-            if (MouseButtonsStates[0]) msg.wParam |= MK_LBUTTON;
-            if (MouseButtonsStates[1]) msg.wParam |= MK_MBUTTON;
-            if (MouseButtonsStates[2]) msg.wParam |= MK_RBUTTON;
+            if (InputKeyStateTable[VK_LBUTTON] & 0x80) msg.wParam |= MK_LBUTTON;
+            if (InputKeyStateTable[VK_MBUTTON] & 0x80) msg.wParam |= MK_MBUTTON;
+            if (InputKeyStateTable[VK_RBUTTON] & 0x80) msg.wParam |= MK_RBUTTON;
 
             msg.pt.x = tmpMsg.paramL;
             msg.pt.y = tmpMsg.paramH;
@@ -270,6 +324,8 @@ static BOOL process_cooked_keyboard_message( MSG *msg, BOOL remove )
 {
     if (remove)
     {
+        update_queue_key_state( msg->message, msg->wParam );
+
         /* Handle F1 key by sending out WM_HELP message */
         if ((msg->message == WM_KEYUP) &&
             (msg->wParam == VK_F1) &&
@@ -399,6 +455,8 @@ static BOOL process_cooked_mouse_message( MSG *msg, BOOL remove )
     {
         raw_message += WM_LBUTTONDOWN - WM_LBUTTONDBLCLK;
     }
+
+    if (remove) update_queue_key_state( raw_message, 0 );
 
     if (HOOK_IsHooked( WH_MOUSE ))
     {
@@ -534,6 +592,61 @@ BOOL MSG_process_cooked_hardware_message( MSG *msg, BOOL remove )
 
     ERR( "unknown message type %x\n", msg->message );
     return FALSE;
+}
+
+
+/**********************************************************************
+ *		GetKeyState (USER.106)
+ */
+INT16 WINAPI GetKeyState16(INT16 vkey)
+{
+    return GetKeyState(vkey);
+}
+
+
+/**********************************************************************
+ *		GetKeyState (USER32.@)
+ *
+ * An application calls the GetKeyState function in response to a
+ * keyboard-input message.  This function retrieves the state of the key
+ * at the time the input message was generated.  (SDK 3.1 Vol 2. p 390)
+ */
+SHORT WINAPI GetKeyState(INT vkey)
+{
+    INT retval;
+
+    if (vkey >= 'a' && vkey <= 'z') vkey += 'A' - 'a';
+    retval = ((WORD)(QueueKeyStateTable[vkey] & 0x80) << 8 ) | (QueueKeyStateTable[vkey] & 0x01);
+    /* TRACE(key, "(0x%x) -> %x\n", vkey, retval); */
+    return retval;
+}
+
+
+/**********************************************************************
+ *		GetKeyboardState (USER.222)
+ *		GetKeyboardState (USER32.@)
+ *
+ * An application calls the GetKeyboardState function in response to a
+ * keyboard-input message.  This function retrieves the state of the keyboard
+ * at the time the input message was generated.  (SDK 3.1 Vol 2. p 387)
+ */
+BOOL WINAPI GetKeyboardState(LPBYTE lpKeyState)
+{
+    TRACE_(key)("(%p)\n", lpKeyState);
+    if (lpKeyState) memcpy(lpKeyState, QueueKeyStateTable, 256);
+    return TRUE;
+}
+
+
+/**********************************************************************
+ *		SetKeyboardState (USER.223)
+ *		SetKeyboardState (USER32.@)
+ */
+BOOL WINAPI SetKeyboardState(LPBYTE lpKeyState)
+{
+    TRACE_(key)("(%p)\n", lpKeyState);
+    if (lpKeyState) memcpy(QueueKeyStateTable, lpKeyState, 256);
+    return TRUE;
 }
 
 

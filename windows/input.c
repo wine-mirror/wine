@@ -41,21 +41,18 @@ DEFAULT_DEBUG_CHANNEL(event);
 static BOOL InputEnabled = TRUE;
 static BOOL SwappedButtons;
 
-BOOL MouseButtonsStates[3];
-BOOL AsyncMouseButtonsStates[3];
 BYTE InputKeyStateTable[256];
-BYTE QueueKeyStateTable[256];
 BYTE AsyncKeyStateTable[256];
 
 /* Storage for the USER-maintained mouse positions */
 static DWORD PosX, PosY;
 
 #define GET_KEYSTATE() \
-     ((MouseButtonsStates[SwappedButtons ? 2 : 0]  ? MK_LBUTTON : 0) | \
-      (MouseButtonsStates[1]                       ? MK_RBUTTON : 0) | \
-      (MouseButtonsStates[SwappedButtons ? 0 : 2]  ? MK_MBUTTON : 0) | \
-      (InputKeyStateTable[VK_SHIFT]   & 0x80       ? MK_SHIFT   : 0) | \
-      (InputKeyStateTable[VK_CONTROL] & 0x80       ? MK_CONTROL : 0))
+     ((InputKeyStateTable[SwappedButtons ? VK_RBUTTON : VK_LBUTTON] & 0x80 ? MK_LBUTTON : 0) | \
+      (InputKeyStateTable[SwappedButtons ? VK_LBUTTON : VK_LBUTTON] & 0x80 ? MK_RBUTTON : 0) | \
+      (InputKeyStateTable[VK_MBUTTON] & 0x80 ? MK_MBUTTON : 0) | \
+      (InputKeyStateTable[VK_SHIFT]   & 0x80 ? MK_SHIFT   : 0) | \
+      (InputKeyStateTable[VK_CONTROL] & 0x80 ? MK_CONTROL : 0))
 
 typedef union
 {
@@ -190,37 +187,40 @@ static void queue_mouse_event( const MOUSEINPUT *mi, WORD keystate )
     }
     if (mi->dwFlags & (!SwappedButtons? MOUSEEVENTF_LEFTDOWN : MOUSEEVENTF_RIGHTDOWN))
     {
-        MouseButtonsStates[0] = AsyncMouseButtonsStates[0] = TRUE;
+        InputKeyStateTable[VK_LBUTTON] |= 0x80;
+        AsyncKeyStateTable[VK_LBUTTON] |= 0x80;
         queue_raw_hardware_message( WM_LBUTTONDOWN, keystate, 0, PosX, PosY,
                                     mi->time, mi->dwExtraInfo );
     }
     if (mi->dwFlags & (!SwappedButtons? MOUSEEVENTF_LEFTUP : MOUSEEVENTF_RIGHTUP))
     {
-        MouseButtonsStates[0] = FALSE;
+        AsyncKeyStateTable[VK_LBUTTON] &= ~0x80;
         queue_raw_hardware_message( WM_LBUTTONUP, keystate, 0, PosX, PosY,
                                     mi->time, mi->dwExtraInfo );
     }
     if (mi->dwFlags & (!SwappedButtons? MOUSEEVENTF_RIGHTDOWN : MOUSEEVENTF_LEFTDOWN))
     {
-        MouseButtonsStates[2] = AsyncMouseButtonsStates[2] = TRUE;
+        InputKeyStateTable[VK_RBUTTON] |= 0x80;
+        AsyncKeyStateTable[VK_RBUTTON] |= 0x80;
         queue_raw_hardware_message( WM_RBUTTONDOWN, keystate, 0, PosX, PosY,
                                     mi->time, mi->dwExtraInfo );
     }
     if (mi->dwFlags & (!SwappedButtons? MOUSEEVENTF_RIGHTUP : MOUSEEVENTF_LEFTUP))
     {
-        MouseButtonsStates[2] = FALSE;
+        AsyncKeyStateTable[VK_RBUTTON] &= ~0x80;
         queue_raw_hardware_message( WM_RBUTTONUP, keystate, 0, PosX, PosY,
                                     mi->time, mi->dwExtraInfo );
     }
     if (mi->dwFlags & MOUSEEVENTF_MIDDLEDOWN)
     {
-        MouseButtonsStates[1] = AsyncMouseButtonsStates[1] = TRUE;
+        InputKeyStateTable[VK_MBUTTON] |= 0x80;
+        AsyncKeyStateTable[VK_MBUTTON] |= 0x80;
         queue_raw_hardware_message( WM_MBUTTONDOWN, keystate, 0, PosX, PosY,
                                     mi->time, mi->dwExtraInfo );
     }
     if (mi->dwFlags & MOUSEEVENTF_MIDDLEUP)
     {
-        MouseButtonsStates[1] = FALSE;
+        AsyncKeyStateTable[VK_MBUTTON] &= ~0x80;
         queue_raw_hardware_message( WM_MBUTTONUP, keystate, 0, PosX, PosY,
                                     mi->time, mi->dwExtraInfo );
     }
@@ -340,9 +340,9 @@ void WINAPI mouse_event( DWORD dwFlags, DWORD dx, DWORD dy,
         if (keyState != GET_KEYSTATE())
         {
             /* We need to update the keystate with what X provides us */
-            MouseButtonsStates[SwappedButtons ? 2 : 0] = (keyState & MK_LBUTTON ? TRUE : FALSE);
-            MouseButtonsStates[SwappedButtons ? 0 : 2] = (keyState & MK_RBUTTON ? TRUE : FALSE);
-            MouseButtonsStates[1]                      = (keyState & MK_MBUTTON ? TRUE : FALSE);
+            InputKeyStateTable[SwappedButtons ? VK_RBUTTON : VK_LBUTTON] = (keyState & MK_LBUTTON ? 0x80 : 0);
+            InputKeyStateTable[SwappedButtons ? VK_LBUTTON : VK_RBUTTON] = (keyState & MK_RBUTTON ? 0x80 : 0);
+            InputKeyStateTable[VK_MBUTTON]             = (keyState & MK_MBUTTON ? 0x80 : 0);
             InputKeyStateTable[VK_SHIFT]               = (keyState & MK_SHIFT   ? 0x80 : 0);
             InputKeyStateTable[VK_CONTROL]             = (keyState & MK_CONTROL ? 0x80 : 0);
         }
@@ -563,84 +563,6 @@ HWND WINAPI GetCapture(void)
 }
 
 /**********************************************************************
- *		GetKeyState (USER.106)
- */
-INT16 WINAPI GetKeyState16(INT16 vkey)
-{
-    return GetKeyState(vkey);
-}
-
-/**********************************************************************
- *		GetKeyState (USER32.@)
- *
- * An application calls the GetKeyState function in response to a
- * keyboard-input message.  This function retrieves the state of the key
- * at the time the input message was generated.  (SDK 3.1 Vol 2. p 390)
- */
-SHORT WINAPI GetKeyState(INT vkey)
-{
-    INT retval;
-
-    switch (vkey)
-	{
-	case VK_LBUTTON : /* VK_LBUTTON is 1 */
-	    retval = MouseButtonsStates[0] ? 0x8000 : 0;
-	    break;
-	case VK_MBUTTON : /* VK_MBUTTON is 4 */
-	    retval = MouseButtonsStates[1] ? 0x8000 : 0;
-	    break;
-	case VK_RBUTTON : /* VK_RBUTTON is 2 */
-	    retval = MouseButtonsStates[2] ? 0x8000 : 0;
-	    break;
-	default :
-	    if (vkey >= 'a' && vkey <= 'z')
-		vkey += 'A' - 'a';
-	    retval = ( (WORD)(QueueKeyStateTable[vkey] & 0x80) << 8 ) |
-		       (WORD)(QueueKeyStateTable[vkey] & 0x01);
-	}
-    /* TRACE(key, "(0x%x) -> %x\n", vkey, retval); */
-    return retval;
-}
-
-/**********************************************************************
- *		GetKeyboardState (USER.222)
- *		GetKeyboardState (USER32.@)
- *
- * An application calls the GetKeyboardState function in response to a
- * keyboard-input message.  This function retrieves the state of the keyboard
- * at the time the input message was generated.  (SDK 3.1 Vol 2. p 387)
- */
-BOOL WINAPI GetKeyboardState(LPBYTE lpKeyState)
-{
-    TRACE_(key)("(%p)\n", lpKeyState);
-    if (lpKeyState != NULL) {
-	QueueKeyStateTable[VK_LBUTTON] = MouseButtonsStates[0] ? 0x80 : 0;
-	QueueKeyStateTable[VK_MBUTTON] = MouseButtonsStates[1] ? 0x80 : 0;
-	QueueKeyStateTable[VK_RBUTTON] = MouseButtonsStates[2] ? 0x80 : 0;
-	memcpy(lpKeyState, QueueKeyStateTable, 256);
-    }
-
-    return TRUE;
-}
-
-/**********************************************************************
- *		SetKeyboardState (USER.223)
- *		SetKeyboardState (USER32.@)
- */
-BOOL WINAPI SetKeyboardState(LPBYTE lpKeyState)
-{
-    TRACE_(key)("(%p)\n", lpKeyState);
-    if (lpKeyState != NULL) {
-	memcpy(QueueKeyStateTable, lpKeyState, 256);
-	MouseButtonsStates[0] = (QueueKeyStateTable[VK_LBUTTON] != 0);
-	MouseButtonsStates[1] = (QueueKeyStateTable[VK_MBUTTON] != 0);
-	MouseButtonsStates[2] = (QueueKeyStateTable[VK_RBUTTON] != 0);
-    }
-
-    return TRUE;
-}
-
-/**********************************************************************
  *		GetAsyncKeyState (USER32.@)
  *
  *	Determine if a key is or was pressed.  retval has high-order 
@@ -655,31 +577,9 @@ BOOL WINAPI SetKeyboardState(LPBYTE lpKeyState)
  */
 WORD WINAPI GetAsyncKeyState(INT nKey)
 {
-    WORD retval;
-
-    switch (nKey) {
-     case VK_LBUTTON:
-         retval = (AsyncMouseButtonsStates[0] ? 0x0001 : 0) |
-                 (MouseButtonsStates[0] ? 0x8000 : 0);
-        AsyncMouseButtonsStates[0] = 0;
-        break;
-     case VK_MBUTTON:
-         retval = (AsyncMouseButtonsStates[1] ? 0x0001 : 0) |
-                 (MouseButtonsStates[1] ? 0x8000 : 0);
-        AsyncMouseButtonsStates[1] = 0;
-        break;
-     case VK_RBUTTON:
-         retval = (AsyncMouseButtonsStates[2] ? 0x0001 : 0) |
-                 (MouseButtonsStates[2] ? 0x8000 : 0);
-        AsyncMouseButtonsStates[2] = 0;
-        break;
-     default:
-         retval = ((AsyncKeyStateTable[nKey] & 0x80) ? 0x0001 : 0) |
+    WORD retval = ((AsyncKeyStateTable[nKey] & 0x80) ? 0x0001 : 0) |
                   ((InputKeyStateTable[nKey] & 0x80) ? 0x8000 : 0);
-        AsyncKeyStateTable[nKey] = 0;
-        break;
-    }
-
+    AsyncKeyStateTable[nKey] = 0;
     TRACE_(key)("(%x) -> %x\n", nKey, retval);
     return retval;
 }
