@@ -1265,6 +1265,14 @@ int DRIVE_Chdir( int drive, LPCWSTR path )
     strcpyW(DOSDrives[drive].dos_cwd, full_name.short_name + 3);
     DOSDrives[drive].unix_cwd = heap_strdup( unix_cwd );
 
+    if (drive == DRIVE_CurDrive)
+    {
+        UNICODE_STRING dirW;
+
+        RtlInitUnicodeString( &dirW, full_name.short_name );
+        RtlSetCurrentDirectory_U( &dirW );
+    }
+
     if (pTask && (pTask->curdrive & 0x80) &&
         ((pTask->curdrive & ~0x80) == drive))
     {
