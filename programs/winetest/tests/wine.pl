@@ -1,10 +1,8 @@
-#
-# Test script for the winetest program
+################################################################
+# Tests for wine.pm module functions
 #
 
 use wine;
-
-$wine::debug = 0;
 
 ################################################################
 # Declarations for functions we use in this script
@@ -26,47 +24,67 @@ wine::declare( "kernel32",
 
 # Test string arguments
 $atom = GlobalAddAtomA("foo");
-assert( $atom >= 0xc000 && $atom <= 0xffff );
-assert( !defined($wine::err) );
+ok( $atom >= 0xc000 && $atom <= 0xffff );
+ok( !defined($wine::err) );
 
 # Test integer and string reference arguments
 $buffer = "xxxxxx";
 $ret = GlobalGetAtomNameA( $atom, \$buffer, length(buffer) );
-assert( !defined($wine::err) );
-assert( $ret == 3 );
-assert( lc $buffer eq "foo\000xx" );
+ok( !defined($wine::err) );
+ok( $ret == 3 );
+ok( lc $buffer eq "foo\000xx" );
 
 # Test integer reference
 $code = 0;
 $ret = GetExitCodeThread( GetCurrentThread(), \$code );
-assert( !defined($wine::err) );
-assert( $ret );
-assert( $code == 0x103 );
+ok( !defined($wine::err) );
+ok( $ret );
+ok( $code == 0x103 );
 
 # Test string return value
 $str = lstrcatA( "foo\0foo", "bar" );
-assert( !defined($wine::err) );
-assert( $str eq "foobar" );
+ok( !defined($wine::err) );
+ok( $str eq "foobar" );
 
 ################################################################
 # Test last error handling
 
 SetLastError( 123 );
 $ret = GetLastError();
-assert( $ret == 123 );
+ok( $ret == 123 );
 
 ################################################################
 # Test various error cases
 
 eval { SetLastError(1,2,3,4,5,6,7,8,9,0,1,2,3,4,5,6,7); };
-assert( $@ =~ /Too many arguments at/ );
+ok( $@ =~ /Too many arguments at/ );
 
 my $funcptr = GetProcAddress( GetModuleHandleA("kernel32"), "SetLastError" );
-assert( $funcptr );
-eval { wine::call_wine_API( $funcptr, 10, $wine::debug, 0); };
-assert( $@ =~ /Bad return type 10 at/ );
+ok( $funcptr );
+eval { wine::call_wine_API( $funcptr, 10, $wine::debug-1, 0); };
+ok( $@ =~ /Bad return type 10 at/ );
 
 eval { foobar(1,2,3); };
-assert( $@ =~ /Function 'foobar' not declared at/ );
+ok( $@ =~ /Function 'foobar' not declared at/ );
 
-print "OK\n";
+################################################################
+# Test assert
+
+assert( 1, "cannot fail" );
+
+eval { assert( 0, "this must fail" ); };
+ok( $@ =~ /Assertion failed/ );
+ok( $@ =~ /this must fail/ );
+
+################################################################
+# Test todo blocks
+
+todo_wine
+{
+    ok( $wine::platform ne "wine", "Must fail only on Wine" );
+};
+
+todo( $wine::platform,
+      sub { ok( 0, "Failure must be ignored inside todo" ); } );
+todo( $wine::platform . "xxx",
+      sub { ok( 1, "Success must not cause error inside todo for other platform" ); } );

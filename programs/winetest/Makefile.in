@@ -12,6 +12,10 @@ C_SRCS = winetest.c
 
 EXTRA_OBJS = wine.o
 
+EXTRASUBDIRS = include tests
+
+PLTESTS = \
+	tests/wine.pl
 
 @MAKE_PROG_RULES@
 
