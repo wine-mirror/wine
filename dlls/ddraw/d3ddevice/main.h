@@ -345,9 +345,9 @@ Main_IDirect3DDeviceImpl_3_2T_SetLightState(LPDIRECT3DDEVICE3 iface,
                                             DWORD dwLightState);
 
 HRESULT WINAPI
-Main_IDirect3DDeviceImpl_2_SwapTextureHandles(LPDIRECT3DDEVICE2 iface,
-                                              LPDIRECT3DTEXTURE2 lpD3DTex1,
-                                              LPDIRECT3DTEXTURE2 lpD3DTex2);
+Main_IDirect3DDeviceImpl_2_1T_SwapTextureHandles(LPDIRECT3DDEVICE2 iface,
+                                                 LPDIRECT3DTEXTURE2 lpD3DTex1,
+                                                 LPDIRECT3DTEXTURE2 lpD3DTex2);
 
 HRESULT WINAPI
 Main_IDirect3DDeviceImpl_2_1T_EnumTextureFormats(LPDIRECT3DDEVICE2 iface,
@@ -391,11 +391,6 @@ Main_IDirect3DDeviceImpl_1_Initialize(LPDIRECT3DDEVICE iface,
                                       LPDIRECT3D lpDirect3D,
                                       LPGUID lpGUID,
                                       LPD3DDEVICEDESC lpD3DDVDesc);
-
-HRESULT WINAPI
-Main_IDirect3DDeviceImpl_1_SwapTextureHandles(LPDIRECT3DDEVICE iface,
-                                              LPDIRECT3DTEXTURE lpD3Dtex1,
-                                              LPDIRECT3DTEXTURE lpD3DTex2);
 
 HRESULT WINAPI
 Main_IDirect3DDeviceImpl_1_CreateExecuteBuffer(LPDIRECT3DDEVICE iface,
@@ -678,6 +673,11 @@ HRESULT WINAPI
 Thunk_IDirect3DDeviceImpl_1_GetCaps(LPDIRECT3DDEVICE iface,
                                     LPD3DDEVICEDESC lpD3DHWDevDesc,
                                     LPD3DDEVICEDESC lpD3DHELDevDesc);
+
+HRESULT WINAPI
+Thunk_IDirect3DDeviceImpl_1_SwapTextureHandles(LPDIRECT3DDEVICE iface,
+                                               LPDIRECT3DTEXTURE lpD3Dtex1,
+                                               LPDIRECT3DTEXTURE lpD3DTex2);
 
 HRESULT WINAPI
 Thunk_IDirect3DDeviceImpl_2_GetStats(LPDIRECT3DDEVICE2 iface,

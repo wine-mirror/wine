@@ -901,12 +901,20 @@ Main_IDirect3DDeviceImpl_3_2T_SetLightState(LPDIRECT3DDEVICE3 iface,
 }
 
 HRESULT WINAPI
-Main_IDirect3DDeviceImpl_2_SwapTextureHandles(LPDIRECT3DDEVICE2 iface,
-                                              LPDIRECT3DTEXTURE2 lpD3DTex1,
-                                              LPDIRECT3DTEXTURE2 lpD3DTex2)
+Main_IDirect3DDeviceImpl_2_1T_SwapTextureHandles(LPDIRECT3DDEVICE2 iface,
+                                                 LPDIRECT3DTEXTURE2 lpD3DTex1,
+                                                 LPDIRECT3DTEXTURE2 lpD3DTex2)
 {
     ICOM_THIS_FROM(IDirect3DDeviceImpl, IDirect3DDevice2, iface);
-    FIXME("(%p/%p)->(%p,%p): stub!\n", This, iface, lpD3DTex1, lpD3DTex2);
+    IDirectDrawSurfaceImpl tmp,*surf1,*surf2;
+    TRACE("(%p/%p)->(%p,%p):\n", This, iface, lpD3DTex1, lpD3DTex2);
+
+    surf1 = ICOM_OBJECT(IDirectDrawSurfaceImpl,IDirect3DTexture2,lpD3DTex1);
+    surf2 = ICOM_OBJECT(IDirectDrawSurfaceImpl,IDirect3DTexture2,lpD3DTex2);
+    tmp = *surf1;
+    *surf1 = *surf2;
+    *surf2 = tmp;
+    
     return DD_OK;
 }
 
@@ -991,16 +999,6 @@ Main_IDirect3DDeviceImpl_1_Initialize(LPDIRECT3DDEVICE iface,
 {
     ICOM_THIS_FROM(IDirect3DDeviceImpl, IDirect3DDevice, iface);
     FIXME("(%p/%p)->(%p,%p,%p): stub!\n", This, iface, lpDirect3D, lpGUID, lpD3DDVDesc);
-    return DD_OK;
-}
-
-HRESULT WINAPI
-Main_IDirect3DDeviceImpl_1_SwapTextureHandles(LPDIRECT3DDEVICE iface,
-                                              LPDIRECT3DTEXTURE lpD3Dtex1,
-                                              LPDIRECT3DTEXTURE lpD3DTex2)
-{
-    ICOM_THIS_FROM(IDirect3DDeviceImpl, IDirect3DDevice, iface);
-    FIXME("(%p/%p)->(%p,%p): stub!\n", This, iface, lpD3Dtex1, lpD3DTex2);
     return DD_OK;
 }
 
@@ -1667,6 +1665,17 @@ Thunk_IDirect3DDeviceImpl_1_GetCaps(LPDIRECT3DDEVICE iface,
     return IDirect3DDevice3_GetCaps(COM_INTERFACE_CAST(IDirect3DDeviceImpl, IDirect3DDevice, IDirect3DDevice3, iface),
                                     lpD3DHWDevDesc,
                                     lpD3DHELDevDesc);
+}
+
+HRESULT WINAPI
+Thunk_IDirect3DDeviceImpl_1_SwapTextureHandles(LPDIRECT3DDEVICE iface,
+                                              LPDIRECT3DTEXTURE lpD3DTex1,
+                                              LPDIRECT3DTEXTURE lpD3DTex2)
+{
+    TRACE("(%p)->(%p,%p) thunking to IDirect3DDevice2 interface.\n", iface, lpD3DTex1, lpD3DTex2);
+    return IDirect3DDevice2_SwapTextureHandles(COM_INTERFACE_CAST(IDirect3DDeviceImpl, IDirect3DDevice, IDirect3DDevice2, iface),
+                                               COM_INTERFACE_CAST(IDirectDrawSurfaceImpl, IDirect3DTexture, IDirect3DTexture2, lpD3DTex1),
+                                               COM_INTERFACE_CAST(IDirectDrawSurfaceImpl, IDirect3DTexture, IDirect3DTexture2, lpD3DTex2));
 }
 
 HRESULT WINAPI
