@@ -6,21 +6,21 @@ owner	w32skrnl
 2 pascal16 BootTask() BootTask16
 3 stub CREATEPROCESS
 4 stub WAITFORDEBUGEVENT
-5 pascal ContinueDebugEvent(long long long) ContinueDebugEvent
-6 pascal ReadProcessMemory(long ptr ptr long ptr) ReadProcessMemory
+5 pascal ContinueDebugEvent(long long long) ContinueDebugEvent16
+6 pascal ReadProcessMemory(long ptr ptr long ptr) ReadProcessMemory16
 7 stub WRITEPROCESSMEMORY
 8 stub GETTHREADCONTEXT
 9 stub SETTHREADCONTEXT
-10 pascal GETLASTERROR() GetLastError
-11 pascal CloseHandle(long) CloseHandle
+10 pascal GetLastError() GetLastError16
+11 pascal CloseHandle(long) CloseHandle16
 12 stub ALLOCCLBKTO32BDLL
-13 pascal GetExitCodeThread(long ptr) GetExitCodeThread
+13 pascal GetExitCodeThread(long ptr) GetExitCodeThread16
 14 stub GETEXITCODEPROCESS
 15 stub OPENPROCESS
 16 stub OPENTHREAD
 17 stub GETTHREADSELECTORENTRY
-18 pascal VIRTUALQUERYEX(long ptr ptr long) VirtualQueryEx
-19 pascal VIRTUALPROTECTEX(long ptr long long ptr) VirtualProtectEx
+18 pascal VirtualQueryEx(long ptr ptr long) VirtualQueryEx16
+19 pascal VirtualProtectEx(long ptr long long ptr) VirtualProtectEx16
 20 stub KGETTASKPPDB
 21 stub KGETTHREADPTDB
 22 stub FREECALLBACK
