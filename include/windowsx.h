@@ -93,14 +93,13 @@ extern "C" {
 
 /****** KERNEL Macro APIs ******************************************************/
 
-#define     GetInstanceModule(hInst) (GetModuleHandle((LPCSTR)MAKELP(0, hInst)))
-#define     GlobalPtrHandle(lp)      ((HGLOBAL)LOWORD(GlobalHandle(SELECTOROF(lp))))
-#define     GlobalLockPtr(lp)        ((BOOL)SELECTOROF(GlobalLock(GlobalPtrHandle(lp))))
-#define     GlobalUnlockPtr(lp)      (GlobalUnlock(GlobalPtrHandle(lp)))
-#define     GlobalAllocPtr(flags,cb) (GlobalLock(GlobalAlloc((flags), (cb))))
-#define     GlobalReAllocPtr(lp, cbNew, flags) (GlobalUnlockPtr(lp), \
-                               GlobalLock(GlobalReAlloc(GlobalPtrHandle(lp) , (cbNew), (flags))))
-#define     GlobalFreePtr(lp)        (GlobalUnlockPtr(lp), (BOOL)GlobalFree(GlobalPtrHandle(lp)))
+#define GetInstanceModule(hInst)                (HMODULE)(hInst)
+#define GlobalPtrHandle(lp)                     ((HGLOBAL)GlobalHandle(lp))
+#define GlobalLockPtr(lp)                       ((BOOL)GlobalLock(GlobalPtrHandle(lp)))
+#define GlobalUnlockPtr(lp)                     GlobalUnlock(GlobalPtrHandle(lp))
+#define GlobalAllocPtr(flags, cb)               (GlobalLock(GlobalAlloc((flags), (cb))))
+#define GlobalReAllocPtr(lp, cbNew, flags)      (GlobalUnlockPtr(lp), GlobalLock(GlobalReAlloc(GlobalPtrHandle(lp) , (cbNew), (flags))))
+#define GlobalFreePtr(lp)                       (GlobalUnlockPtr(lp), (BOOL)(ULONG_PTR)GlobalFree(GlobalPtrHandle(lp)))
 
 /****** USER Macro APIs ******************************************************/
 
