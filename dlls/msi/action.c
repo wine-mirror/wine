@@ -19,7 +19,7 @@
  */
 
 /*
- * pages i need
+ * Pages I need
  *
 http://msdn.microsoft.com/library/default.asp?url=/library/en-us/msi/setup/installexecutesequence_table.asp
 
@@ -263,9 +263,9 @@ end:
 /* 
  * Alot of actions are really important even if they don't do anything
  * explicit.. Lots of properties are set at the beginning of the installation
- * CostFinalize does a bunch of work to translated the directorys and such
+ * CostFinalize does a bunch of work to translated the directories and such
  * 
- * But until I get write access to the database that is hard. so I am going to
+ * But until I get write access to the database that is hard, so I am going to
  * hack it to see if I can get something to run.
  */
 UINT ACTION_PerformAction(MSIHANDLE hPackage, const WCHAR *action)
@@ -421,7 +421,7 @@ static UINT ACTION_CustomAction(MSIHANDLE hPackage,const WCHAR *action)
     TRACE("Handling custom action %s (%x %s %s)\n",debugstr_w(action),type,
           debugstr_w(source), debugstr_w(target));
 
-    /* we are ignoring ALOT of flags and important syncornication stuff */
+    /* we are ignoring ALOT of flags and important synchronization stuff */
     switch (type & CUSTOM_ACTION_TYPE_MASK)
     {
         case 1: /* DLL file stored in a Binary table stream */
@@ -553,7 +553,7 @@ static UINT HANDLE_CustomType1(MSIHANDLE hPackage, const LPWSTR source,
 
     if (type & 0xc0)
     {
-        ERR("Asyncronious execution.. UNHANDLED\n");
+        ERR("Asynchronous execution.. UNHANDLED\n");
         return ERROR_SUCCESS;
     }
 
@@ -678,7 +678,7 @@ sizeof(WCHAR));
 
 /*
  * Also we cannot enable/disable components either, so for now I am just going 
- * to do all the directorys for all the components.
+ * to do all the directories for all the components.
  */
 static UINT ACTION_CreateFolders(MSIHANDLE hPackage)
 {
@@ -919,9 +919,9 @@ static UINT resolve_directory(MSIHANDLE hPackage, const WCHAR* dir,
  *
  * The native MSI does ALOT of modification to tables here. Mostly adding alot
  * of temporary columns to the Feature and Component tables. 
- * Unfortinatly i cannot add temporary columns yet, nor can i really figure
- * out what all the colums are for. So i am going to attack this another way
- * and make some temporary tables to hold the data i think i need.
+ * Unfortunately I cannot add temporary columns yet, nor can I really figure
+ * out what all the columns are for. So I am going to attack this another way
+ * and make some temporary tables to hold the data I think I need.
  *
  * WINE_Feature
  *   Feature Identifier : key into the Feature table
@@ -1049,7 +1049,7 @@ static UINT ACTION_CostInitialize(MSIHANDLE hPackage)
 
 /* 
  * Alot is done in this function aside from just the costing.
- * The costing needs to be implemented at some point but for now i am going
+ * The costing needs to be implemented at some point but for now I am going
  * to focus on the directory building
  *
  * WINE_Directory
@@ -1248,7 +1248,7 @@ static BOOL extract_cabinet_file_cabinet( const WCHAR *cabinet,
     fl.next = NULL;
     fl.unknown = 1;
     exd.filelist = &fl;
-    FIXME( "awfuler hack: extracting cabinet %s\n", debugstr_a(cab_path) );
+    FIXME( "more aweful hack: extracting cabinet %s\n", debugstr_a(cab_path) );
     Extract(&exd,cab_path);
 
     HeapFree( GetProcessHeap(), 0, cab_path );
@@ -1538,7 +1538,7 @@ static UINT ACTION_DuplicateFiles(MSIHANDLE hPackage)
 
 
     /*
-     * Yes we should only do this for componenets that are installed
+     * Yes we should only do this for components that are installed
      * but again I need to do that went I track components.
      */
     db = MsiGetActiveDatabase(hPackage);
@@ -1641,7 +1641,7 @@ static UINT ACTION_DuplicateFiles(MSIHANDLE hPackage)
 }
 
 
-/* ok this value is "interperted" and then formated based on the 
+/* OK this value is "interpretted" and then formatted based on the 
    first few characters */
 static LPSTR parse_value(MSIHANDLE hPackage, WCHAR *value, DWORD *type, 
                          DWORD *size)
@@ -1832,7 +1832,7 @@ static UINT ACTION_WriteRegistryValues(MSIHANDLE hPackage)
 /*
  * This helper function should probably go alot of places
  *
- * thinking about this, maybe this should becaome yet another Bison file
+ * Thinking about this, maybe this should become yet another Bison file
  */
 static DWORD deformat_string(MSIHANDLE hPackage, WCHAR* ptr,WCHAR** data)
 {
@@ -1900,7 +1900,7 @@ static DWORD deformat_string(MSIHANDLE hPackage, WCHAR* ptr,WCHAR** data)
     (*data)[strlenW(*data)]=0;
     TRACE("Current %s .. %s\n",debugstr_w(*data),debugstr_w(mark));
 
-    /* recursivly do this to clean up */
+    /* recursively do this to clean up */
     mark = HeapAlloc(GetProcessHeap(),0,size);
     strcpyW(mark,*data);
     TRACE("String at this point %s\n",debugstr_w(mark));

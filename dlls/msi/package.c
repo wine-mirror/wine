@@ -323,7 +323,7 @@ MSIHANDLE WINAPI MsiGetActiveDatabase(MSIHANDLE hInstall)
 {
     MSIPACKAGE *package;
 
-    TRACE("(%i)\n",(INT)hInstall);
+    TRACE("(%ld)\n",hInstall);
 
     package = msihandle2msiinfo( hInstall, MSIHANDLETYPE_PACKAGE);
 
