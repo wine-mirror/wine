@@ -425,7 +425,7 @@ void BUILTIN32_Unimplemented( const char *dllname, const char *funcname )
 {
     __RESTORE_ES;  /* Just in case */
 
-    MESSAGE( "No handler for Win32 routine %s.%s", dllname, funcname );
+    MESSAGE( "FATAL: No handler for Win32 routine %s.%s", dllname, funcname );
 #ifdef __GNUC__
     MESSAGE( " (called from %p)", __builtin_return_address(1) );
 #endif

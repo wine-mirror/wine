@@ -274,7 +274,7 @@ void RELAY_Unimplemented16(void)
     char name[80];
     STACK16FRAME *frame = CURRENT_STACK16;
     BUILTIN_GetEntryPoint16( frame, name, &ordinal );
-    MESSAGE("No handler for Win16 routine %s (called from %04x:%04x)\n",
+    MESSAGE("FATAL: No handler for Win16 routine %s (called from %04x:%04x)\n",
             name, frame->cs, frame->ip );
     ExitProcess(1);
 }
