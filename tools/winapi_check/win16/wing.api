@@ -1,3 +1,8 @@
+%ptr
+
+BITMAPINFO *
+
 %word
 
 HDC16
+WING_DITHER_TYPE

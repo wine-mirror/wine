@@ -1,7 +1,44 @@
+%double
+
+CY
+double
+
+
 %long
 
+DATE
 HPALETTE
+REGKIND
+SYSKIND
+USHORT
+VARIANT_BOOL
+VARTYPE
+VOID **
 
 %ptr
 
+BSTR *
+CY *
 COLORREF *
+DATE *
+FLOAT *
+IErrorInfo *
+ITypeLib *
+ITypeLib **
+LPBSTR
+LPFONTDESC
+LPOLESTR
+SAFEARRAY *
+SAFEARRAY **
+SAFEARRAYBOUND *
+USHORT *
+VARIANT *
+VARIANTARG *
+VARIANT_BOOL *
+double *
+short *
+
+%wstr
+
+BSTR
+

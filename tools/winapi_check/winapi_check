@@ -275,7 +275,7 @@ foreach my $file ($options->files) {
 	   if(!$nativeapi->is_conditional($_)) {
 	       if(/^HAVE_/ && !/^HAVE_(IPX|MESAGL|BUGGY_MESAGL|WINE_CONSTRUCTOR)$/)
 	       {
-		   $output->write("$file: $_ is not a declared as a conditional\n");
+		   $output->write("$file: $_ is not declared as a conditional\n");
 	       }
 	   } else {
 	       $conditional++;

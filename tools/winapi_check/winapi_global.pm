@@ -34,9 +34,21 @@ sub check {
 
 	foreach my $module (sort(keys(%$not_used))) {
 	    foreach my $type (sort(keys(%{$$not_used{$module}}))) {
-		$output->write("*.c: $module: type $type not used\n");
+		$output->write("*.c: $module: type ($type) not used\n");
 	    }
-	}	
+	}
+
+	my $types_used = $winapi->types_unlimited_used_in_modules;
+
+	foreach my $type (sort(keys(%$types_used))) {
+	    $output->write("*.c: type ($type) only used in module[s] (");
+	    my $count = 0;
+	    foreach my $module (sort(keys(%{$$types_used{$type}}))) {
+		if($count++) { $output->write(", "); }
+		$output->write("$module");
+	    }
+	    $output->write(")\n");
+	}
     }
 }
 

@@ -271,9 +271,15 @@ sub allowed_type_in_module {
     my $allowed_modules_limited = \%{$self->{ALLOWED_MODULES_LIMITED}};
 
     my $type = shift;
-    my $module = shift;
+    my @modules = split(/ \& /, shift);
 
-    return !$$allowed_modules_limited{$type} || $$allowed_modules{$type}{$module};
+    if(!$$allowed_modules_limited{$type}) { return 1; }
+
+    foreach my $module (@modules) {
+	if($$allowed_modules{$type}{$module}) { return 1; }
+    }
+
+    return 0;
 }
 
 sub type_used_in_module {
@@ -281,10 +287,12 @@ sub type_used_in_module {
     my $used_modules = \%{$self->{USED_MODULES}};
 
     my $type = shift;
-    my $module = shift;
+    my @modules = split(/ \& /, shift);
 
-    $$used_modules{$type}{$module} = 1;
-    
+    foreach my $module (@modules) {
+	$$used_modules{$type}{$module} = 1;
+    }
+
     return ();
 }
 
@@ -302,6 +310,31 @@ sub types_not_used {
 	}
     }
     return $not_used;
+}
+
+sub types_unlimited_used_in_modules {
+    my $self = shift;
+
+    my $output = \${$self->{OUTPUT}};
+    my $used_modules = \%{$self->{USED_MODULES}};
+    my $allowed_modules = \%{$self->{ALLOWED_MODULES}};
+    my $allowed_modules_unlimited = \%{$self->{ALLOWED_MODULES_UNLIMITED}};
+
+    my $used_types;
+    foreach my $type (sort(keys(%$allowed_modules_unlimited))) {
+	my $count = 0;
+	my @modules = ();
+	foreach my $module (sort(keys(%{$$used_modules{$type}}))) {
+	    $count++;
+	    push @modules, $module;
+	}
+        if($count <= 1) {
+	    foreach my $module (@modules) {
+	      $$used_types{$type}{$module} = 1;
+	    }
+	}
+    }
+    return $used_types;
 }
 
 sub translate_argument {

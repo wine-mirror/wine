@@ -1,0 +1,15 @@
+%long # --forbidden
+
+HKEY
+
+%ptr
+
+HICON16 *
+
+%ptr # --forbidden
+
+LPHKEY
+
+%word
+
+HDROP16

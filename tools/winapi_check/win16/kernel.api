@@ -1,0 +1,38 @@
+%long # --forbidden
+
+HKEY
+HMODULE
+
+%ptr
+
+BYTE *
+FARPROC16 *
+HANDLE *
+LPCATCHBUF
+OFSTRUCT *
+OSVERSIONINFO16 *
+SECURITY_ATTRIBUTES *
+SEGINFO *
+SYSLEVEL *
+THUNKLET *
+WIN32_FIND_DATAA *
+WINDEBUGINFO *
+struct ThunkDataCommon *
+
+%ptr # --forbidden
+
+FARPROC
+FARPROC *
+LPHKEY
+
+%word
+
+ATOM
+HLOCAL16
+HQUEUE16
+HRSRC16
+
+%wstr # --forbidden
+
+LPCWSTR
+

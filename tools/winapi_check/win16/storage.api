@@ -1,0 +1,17 @@
+%ptr
+
+LPSTORAGE16
+IID *
+IStorage16 *
+IStorage16 **
+IStream16 *
+IStream16 **
+SNB16
+STATSTG16 *
+ULARGE_INTEGER *
+
+%longlong
+
+LARGE_INTEGER
+
+

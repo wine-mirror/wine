@@ -1,0 +1,23 @@
+%long # --forbidden
+u_long
+
+%ptr
+
+LPWSADATA
+struct sockaddr *
+struct timeval *
+ws_fd_set16 *
+
+%unknown
+
+struct in_addr
+
+%word
+
+SOCKET16
+
+%word # --forbidden
+
+u_short
+
+

@@ -1,3 +1,7 @@
 %ptr
 
 LPCURSORINFO
+
+%ptr # --forbidden
+
+struct tagCURSORICONINFO *

@@ -1,0 +1,7 @@
+%ptr
+
+LPBSTR16
+
+%str # --forbidden
+
+LPOLESTR

@@ -1,0 +1,24 @@
+%long
+
+clock_t
+time_t
+
+%ptr
+
+CRTDLL_FILE *
+LPDWORD *
+LPSTR **
+PCONTEXT
+PEXCEPTION_FRAME *
+VOID *
+_INITTERMFUN *
+jmp_buf
+struct find_t *
+struct stat *
+struct win_stat *
+time_t *
+
+%unknown
+
+new_handler_type
+sig_handler_type

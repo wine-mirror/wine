@@ -1,0 +1,15 @@
+%ptr
+
+BSTR16 *
+LPBSTR16
+INTERFACEDATA *
+ITypeInfo **
+IUnknown *
+
+%segstr
+
+BSTR16
+
+%word # --forbidden
+
+unsigned

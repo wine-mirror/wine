@@ -1,3 +1,26 @@
 %long
 
 HWND
+SOCKET
+u_long
+u_short
+
+%long # --forbidden
+
+SOCKET16
+
+%ptr
+
+FARPROC
+LPWSADATA
+struct WIN_hostent *
+struct WIN_protoent *
+struct WIN_servent *
+struct netent *
+struct sockaddr *
+struct timeval *
+ws_fd_set32 *
+
+%unknown
+
+struct in_addr

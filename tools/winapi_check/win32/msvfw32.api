@@ -5,3 +5,7 @@ HIC
 HPALETTE
 HWND
 
+%ptr
+
+FARPROC
+ICINFO *
