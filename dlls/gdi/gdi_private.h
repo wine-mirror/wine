@@ -297,6 +297,7 @@ extern BOOL BidiAvail;
 /* bitmap.c */
 extern HBITMAP BITMAP_CopyBitmap( HBITMAP hbitmap );
 extern BOOL BITMAP_SetOwnerDC( HBITMAP hbitmap, DC *dc );
+extern INT BITMAP_GetWidthBytes( INT bmWidth, INT bpp );
 
 /* clipping.c */
 extern void CLIPPING_UpdateGCRegion( DC * dc );
@@ -398,4 +399,6 @@ extern HPALETTE PALETTE_Init(void);
 /* region.c */
 extern BOOL REGION_FrameRgn( HRGN dest, HRGN src, INT x, INT y );
 
+/* Undocumented value for DIB's iUsage: Indicates a mono DIB w/o pal enties */
+#define DIB_PAL_MONO 2
 #endif /* __WINE_GDI_PRIVATE_H */

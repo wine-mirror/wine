@@ -35,6 +35,7 @@
 #include "wine/port.h"
 
 #include <stdarg.h>
+#include <stdlib.h>
 #include <string.h>
 #include <assert.h>
 #include "windef.h"
@@ -208,19 +209,18 @@ static const char *get_emr_name(DWORD type)
  *        black, we can't convert it to a monochrome DDB with
  *        SetDIBits, because black and white would be inverted.
  */
-static BOOL is_dib_monochrome( const BITMAPINFO* info )
+static inline BOOL is_dib_monochrome( const BITMAPINFO* info )
 {
     if (info->bmiHeader.biBitCount != 1) return FALSE;
 
     if (info->bmiHeader.biSize == sizeof(BITMAPCOREHEADER))
     {
         RGBTRIPLE *rgb = ((BITMAPCOREINFO *) info)->bmciColors;
-    
+
         /* Check if the first color is black */
         if ((rgb->rgbtRed == 0) && (rgb->rgbtGreen == 0) && (rgb->rgbtBlue == 0))
         {
             rgb++;
-
             /* Check if the second color is white */
             return ((rgb->rgbtRed == 0xff) && (rgb->rgbtGreen == 0xff)
                  && (rgb->rgbtBlue == 0xff));
@@ -1137,6 +1137,7 @@ BOOL WINAPI PlayEnhMetaFileRecord(
 #if 0
 	PEMREXTSELECTCLIPRGN lpRgn = (PEMREXTSELECTCLIPRGN)mr;
 	HRGN hRgn = ExtCreateRegion(NULL, lpRgn->cbRgnData, (RGNDATA *)lpRgn->RgnData);
+
 	ExtSelectClipRgn(hdc, hRgn, (INT)(lpRgn->iMode));
 	/* ExtSelectClipRgn created a copy of the region */
 	DeleteObject(hRgn);
@@ -1645,7 +1646,7 @@ BOOL WINAPI PlayEnhMetaFileRecord(
                                     lpCreate->cbBmi + lpCreate->cbBits );
         if(!lpPackedStruct)
         {
-	    SetLastError(ERROR_NOT_ENOUGH_MEMORY);
+            SetLastError(ERROR_NOT_ENOUGH_MEMORY);
             break;
         }
 
@@ -1662,7 +1663,6 @@ BOOL WINAPI PlayEnhMetaFileRecord(
                                     (UINT)lpCreate->iUsage );
 
         HeapFree(GetProcessHeap(), 0, lpPackedStruct);
-
         break;
       }
 
@@ -1674,19 +1674,34 @@ BOOL WINAPI PlayEnhMetaFileRecord(
 
         /* Need to check if the bitmap is monochrome, and if the
            two colors are really black and white */
-        if (is_dib_monochrome(pbi))
+        if (pCreateMonoBrush->iUsage == DIB_PAL_MONO)
+        {
+            BITMAP bm;
+
+            /* Undocumented iUsage indicates a mono bitmap with no palette table,
+             * aligned to 32 rather than 16 bits.
+             */
+            bm.bmType = 0;
+            bm.bmWidth = pbi->bmiHeader.biWidth;
+            bm.bmHeight = abs(pbi->bmiHeader.biHeight);
+            bm.bmWidthBytes = 4 * ((pbi->bmiHeader.biWidth + 31) / 32);
+            bm.bmPlanes = pbi->bmiHeader.biPlanes;
+            bm.bmBitsPixel = pbi->bmiHeader.biBitCount;
+            bm.bmBits = (BYTE *)mr + pCreateMonoBrush->offBits;
+            hBmp = CreateBitmapIndirect(&bm);
+        }
+        else if (is_dib_monochrome(pbi))
         {
           /* Top-down DIBs have a negative height */
           LONG height = pbi->bmiHeader.biHeight;
-          if (height < 0) height = -height;
 
-          hBmp = CreateBitmap(pbi->bmiHeader.biWidth, height, 1, 1, NULL);
+          hBmp = CreateBitmap(pbi->bmiHeader.biWidth, abs(height), 1, 1, NULL);
           SetDIBits(hdc, hBmp, 0, pbi->bmiHeader.biHeight,
               (BYTE *)mr + pCreateMonoBrush->offBits, pbi, pCreateMonoBrush->iUsage);
         }
-	else
-	{
-	  hBmp = CreateDIBitmap(hdc, (BITMAPINFOHEADER *)pbi, CBM_INIT,
+        else
+        {
+            hBmp = CreateDIBitmap(hdc, (BITMAPINFOHEADER *)pbi, CBM_INIT,
               (BYTE *)mr + pCreateMonoBrush->offBits, pbi, pCreateMonoBrush->iUsage);
         }
 
