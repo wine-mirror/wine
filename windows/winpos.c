@@ -2449,7 +2449,7 @@ BOOL16 WINAPI SetWindowPos16( HWND16 hwnd, HWND16 hwndInsertAfter,
  *           SetWindowPos   (USER32.520)
  */
 BOOL WINAPI SetWindowPos( HWND hwnd, HWND hwndInsertAfter,
-                              INT x, INT y, INT cx, INT cy, WORD flags)
+                          INT x, INT y, INT cx, INT cy, UINT flags )
 {
     WINDOWPOS 	winpos;
     WND *	wndPtr,*wndTemp;
@@ -2457,7 +2457,7 @@ BOOL WINAPI SetWindowPos( HWND hwnd, HWND hwndInsertAfter,
     RECT	oldWindowRect, oldClientRect;
     HRGN	visRgn = 0;
     UINT 	wvrFlags = 0, uFlags = 0;
-    BOOL	retvalue, resync = FALSE;
+    BOOL	retvalue, resync = FALSE, bChangePos;
     HWND	hwndActive = 0;
 
     /* Get current active window from the active queue */
@@ -2473,6 +2473,10 @@ BOOL WINAPI SetWindowPos( HWND hwnd, HWND hwndInsertAfter,
 
     TRACE(win,"hwnd %04x, swp (%i,%i)-(%i,%i) flags %08x\n", 
 						 hwnd, x, y, x+cx, y+cy, flags);  
+
+    bChangePos = !(flags & SWP_WINE_NOHOSTMOVE);
+    flags &= ~SWP_WINE_NOHOSTMOVE;
+
 
       /* ------------------------------------------------------------------------ CHECKS */
 
@@ -2651,7 +2655,7 @@ Pos:  /* -----------------------------------------------------------------------
 		cx = newWindowRect.right - newWindowRect.left;
 		cy = newWindowRect.bottom - newWindowRect.top;
 
-		wndPtr->pDriver->pSetWindowPos(wndPtr, &winpos, TRUE);
+		wndPtr->pDriver->pSetWindowPos(wndPtr, &winpos, bChangePos);
 		winpos.hwndInsertAfter = tempInsertAfter;
 		bCallDriver = FALSE;
 
@@ -2701,7 +2705,7 @@ Pos:  /* -----------------------------------------------------------------------
 		    wndPtr->pDriver->pSetHostAttr(wndPtr, HAK_BITGRAVITY, BGForget );
 	    }
 
-	    wndPtr->pDriver->pSetWindowPos(wndPtr, &winpos, TRUE);
+	    wndPtr->pDriver->pSetWindowPos(wndPtr, &winpos, bChangePos);
 	    winpos.hwndInsertAfter = tempInsertAfter;
 	}
 

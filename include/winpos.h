@@ -15,6 +15,9 @@
 #define SWP_NOCLIENTSIZE	0x0800
 #define SWP_NOCLIENTMOVE	0x1000
 
+/* Wine extra SWP flag */
+#define SWP_WINE_NOHOSTMOVE	0x80000000
+
 struct tagWINDOWPOS16;
 
 typedef struct

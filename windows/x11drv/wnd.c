@@ -234,7 +234,8 @@ BOOL X11DRV_WND_CreateWindow(WND *wndPtr, CLASS *classPtr, CREATESTRUCTA *cs, BO
       if (wndPtr->flags & WIN_MANAGED) 
       {
 	  XClassHint *class_hints = TSXAllocClassHint();
-
+	  XSizeHints* size_hints = TSXAllocSizeHints();
+	  
 	  if (class_hints) 
 	  {
 	      class_hints->res_name = "wineManaged";
@@ -243,19 +244,21 @@ BOOL X11DRV_WND_CreateWindow(WND *wndPtr, CLASS *classPtr, CREATESTRUCTA *cs, BO
 	      TSXFree (class_hints);
 	  }
 
-	  if (cs->dwExStyle & WS_EX_DLGMODALFRAME) 
+	  if (size_hints) 
 	  {
-	      XSizeHints* size_hints = TSXAllocSizeHints();
-	  
-	      if (size_hints) 
+              size_hints->win_gravity = StaticGravity;
+              size_hints->flags = PWinGravity;
+
+	      if (cs->dwExStyle & WS_EX_DLGMODALFRAME) 
 	      {
 	          size_hints->min_width = size_hints->max_width = cs->cx;
 	          size_hints->min_height = size_hints->max_height = cs->cy;
-                  size_hints->flags = (PSize | PMinSize | PMaxSize);
-                  TSXSetWMSizeHints( display, X11DRV_WND_GetXWindow(wndPtr), 
-					size_hints, XA_WM_NORMAL_HINTS );
-                  TSXFree(size_hints);
+                  size_hints->flags |= PMinSize | PMaxSize;
               }
+
+              TSXSetWMSizeHints( display, X11DRV_WND_GetXWindow(wndPtr), 
+                                 size_hints, XA_WM_NORMAL_HINTS );
+              TSXFree(size_hints);
           }
       }
       
@@ -488,6 +491,7 @@ void X11DRV_WND_SetWindowPos(WND *wndPtr, const WINDOWPOS *winpos, BOOL bChangeP
     XWindowChanges winChanges;
     int changeMask = 0;
     WND *winposPtr = WIN_FindWndPtr( winpos->hwnd );
+    if ( !winposPtr ) return;
 
     if(!wndPtr->hwndSelf) wndPtr = NULL; /* FIXME: WND destroyed, shouldn't happend!!! */
   

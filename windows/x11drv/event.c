@@ -708,32 +708,25 @@ BOOL X11DRV_EVENT_CheckFocus(void)
 static void EVENT_GetGeometry( Window win, int *px, int *py,
                                unsigned int *pwidth, unsigned int *pheight )
 {
-  Window root, parent, *children;
-  int xpos, ypos;
-  unsigned int width, height, border, depth, nb_children;
-  
-  if (!TSXGetGeometry( display, win, &root, px, py, pwidth, pheight,
-                       &border, &depth )) return;
-  if (win == X11DRV_GetXRootWindow())
-  {
-      *px = *py = 0;
-      return;
-  }
-  
-  for (;;)
-  {
-      if (!TSXQueryTree(display, win, &root, &parent, &children, &nb_children))
-	return;
-      TSXFree( children );
-      if (parent == X11DRV_GetXRootWindow()) break;
-      win = parent;
-      if (!TSXGetGeometry( display, win, &root, &xpos, &ypos,
-                           &width, &height, &border, &depth )) return;
-      *px += xpos;
-      *py += ypos;
-  }
-}
+    Window root, top;
+    int x, y, width, height, border, depth;
 
+    EnterCriticalSection( &X11DRV_CritSection );
+
+    /* Get the geometry of the window */
+    XGetGeometry( display, win, &root, &x, &y, &width, &height,
+                  &border, &depth );
+
+    /* Translate the window origin to root coordinates */
+    XTranslateCoordinates( display, win, root, 0, 0, &x, &y, &top );
+
+    LeaveCriticalSection( &X11DRV_CritSection );
+
+    *px = x;
+    *py = y;
+    *pwidth = width;
+    *pheight = height;
+}
 
 /**********************************************************************
  *              EVENT_ConfigureNotify
@@ -785,7 +778,7 @@ static void EVENT_ConfigureNotify( HWND hWnd, XConfigureEvent *event )
 
     if ( flags != (SWP_NOMOVE | SWP_NOSIZE | SWP_NOZORDER) )
         SetWindowPos( hWnd, newInsertAfter, x, y, width, height, 
-                            flags | SWP_NOACTIVATE );
+                            flags | SWP_NOACTIVATE | SWP_WINE_NOHOSTMOVE );
 }
 
 
