@@ -38,10 +38,10 @@
 #include <basetsd.h>
 
 #define __RPC_FAR
-#define __RPC_API  WINAPI
-#define __RPC_USER WINAPI
-#define __RPC_STUB WINAPI
-#define RPC_ENTRY  WINAPI
+#define __RPC_API  __stdcall
+#define __RPC_USER __stdcall
+#define __RPC_STUB __stdcall
+#define RPC_ENTRY  __stdcall
 #define RPCRTAPI
 typedef long RPC_STATUS;
 

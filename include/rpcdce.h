@@ -19,6 +19,16 @@
 #ifndef __WINE_RPCDCE_H
 #define __WINE_RPCDCE_H
 
+#ifndef IN
+#define IN
+#endif
+#ifndef OUT
+#define OUT
+#endif
+#ifndef OPTIONAL
+#define OPTIONAL
+#endif
+
 #ifndef GUID_DEFINED
 #include <guiddef.h>
 #endif
@@ -83,14 +93,14 @@ typedef struct _RPC_IF_ID
 #define RPC_C_MQ_AUTHN_LEVEL_PKT_PRIVACY    0x0010
 
 
-typedef RPC_STATUS RPC_ENTRY RPC_IF_CALLBACK_FN( RPC_IF_HANDLE InterfaceUuid, LPVOID Context );
+typedef RPC_STATUS RPC_ENTRY RPC_IF_CALLBACK_FN( RPC_IF_HANDLE InterfaceUuid, void *Context );
 typedef void (__RPC_USER *RPC_AUTH_KEY_RETRIEVAL_FN)();
 
 typedef struct _RPC_POLICY
 {
-  UINT  Length;
-  ULONG EndpointFlags;
-  ULONG NICFlags;
+  unsigned int  Length;
+  unsigned long EndpointFlags;
+  unsigned long NICFlags;
 } RPC_POLICY,  *PRPC_POLICY;
 
 /* RpcServerRegisterIfEx Flags */
@@ -120,13 +130,13 @@ RPCRTAPI RPC_STATUS RPC_ENTRY
 RPCRTAPI RPC_STATUS RPC_ENTRY
   RpcBindingFromStringBindingA( unsigned char *StringBinding, RPC_BINDING_HANDLE* Binding );
 RPCRTAPI RPC_STATUS RPC_ENTRY
-  RpcBindingFromStringBindingW( LPWSTR StringBinding, RPC_BINDING_HANDLE* Binding );
+  RpcBindingFromStringBindingW( unsigned short *StringBinding, RPC_BINDING_HANDLE* Binding );
 #define RpcBindingFromStringBinding WINELIB_NAME_AW(RpcBindingFromStringBinding)
 
 RPCRTAPI RPC_STATUS RPC_ENTRY
   RpcBindingToStringBindingA( RPC_BINDING_HANDLE Binding, unsigned char **StringBinding );
 RPCRTAPI RPC_STATUS RPC_ENTRY
-  RpcBindingToStringBindingW( RPC_BINDING_HANDLE Binding, LPWSTR* StringBinding );
+  RpcBindingToStringBindingW( RPC_BINDING_HANDLE Binding, unsigned short **StringBinding );
 #define RpcBindingFromStringBinding WINELIB_NAME_AW(RpcBindingFromStringBinding)
 
 RPCRTAPI RPC_STATUS RPC_ENTRY
@@ -136,16 +146,16 @@ RPCRTAPI RPC_STATUS RPC_ENTRY
   RpcStringBindingComposeA( unsigned char *ObjUuid, unsigned char *Protseq, unsigned char *NetworkAddr,
                             unsigned char *Endpoint, unsigned char *Options, unsigned char **StringBinding );
 RPCRTAPI RPC_STATUS RPC_ENTRY
-  RpcStringBindingComposeW( LPWSTR ObjUuid, LPWSTR Protseq, LPWSTR NetworkAddr,
-                            LPWSTR Endpoint, LPWSTR Options, LPWSTR* StringBinding );
+  RpcStringBindingComposeW( unsigned short *ObjUuid, unsigned short *Protseq, unsigned short *NetworkAddr,
+                            unsigned short *Endpoint, unsigned short *Options, unsigned short **StringBinding );
 #define RpcStringBindingCompose WINELIB_NAME_AW(RpcStringBindingCompose)
 
 RPCRTAPI RPC_STATUS RPC_ENTRY
   RpcStringBindingParseA( unsigned char *StringBinding, unsigned char **ObjUuid, unsigned char **Protseq,
                           unsigned char **NetworkAddr, unsigned char **Endpoint, unsigned char **NetworkOptions );
 RPCRTAPI RPC_STATUS RPC_ENTRY
-  RpcStringBindingParseW( LPWSTR StringBinding, LPWSTR* ObjUuid, LPWSTR* Protseq,
-                          LPWSTR* NetworkAddr, LPWSTR* Endpoint, LPWSTR* NetworkOptions );
+  RpcStringBindingParseW( unsigned short *StringBinding, unsigned short **ObjUuid, unsigned short **Protseq,
+                          unsigned short **NetworkAddr, unsigned short **Endpoint, unsigned short **NetworkOptions );
 #define RpcStringBindingParse WINELIB_NAME_AW(RpcStringBindingParse)
 
 RPCRTAPI RPC_STATUS RPC_ENTRY
@@ -156,7 +166,7 @@ RPCRTAPI RPC_STATUS RPC_ENTRY
                   PUUID_VECTOR UuidVector, unsigned char *Annotation );
 RPCRTAPI RPC_STATUS RPC_ENTRY
   RpcEpRegisterW( RPC_IF_HANDLE IfSpec, PRPC_BINDING_VECTOR BindingVector,
-                  PUUID_VECTOR UuidVector, LPWSTR Annotation );
+                  PUUID_VECTOR UuidVector, unsigned short *Annotation );
 #define RpcEpRegister WINELIB_NAME_AW(RpcEpRegister)
 
 RPCRTAPI RPC_STATUS RPC_ENTRY
@@ -164,7 +174,7 @@ RPCRTAPI RPC_STATUS RPC_ENTRY
                            UUID_VECTOR* UuidVector, unsigned char *Annotation );
 RPCRTAPI RPC_STATUS RPC_ENTRY
   RpcEpRegisterNoReplaceW( RPC_IF_HANDLE IfSpec, RPC_BINDING_VECTOR* BindingVector,
-                           UUID_VECTOR* UuidVector, LPWSTR Annotation );
+                           UUID_VECTOR* UuidVector, unsigned short *Annotation );
 #define RpcEpRegisterNoReplace WINELIB_NAME_AW(RpcEpRegisterNoReplace)
 
 RPCRTAPI RPC_STATUS RPC_ENTRY
@@ -175,7 +185,7 @@ RPCRTAPI RPC_STATUS RPC_ENTRY
   RpcServerInqBindings( RPC_BINDING_VECTOR** BindingVector );
 
 RPCRTAPI RPC_STATUS RPC_ENTRY
-  RpcServerListen( UINT MinimumCallThreads, UINT MaxCalls, UINT DontWait );
+  RpcServerListen( unsigned int MinimumCallThreads, unsigned int MaxCalls, unsigned int DontWait );
 
 RPCRTAPI RPC_STATUS RPC_ENTRY
   RpcMgmtWaitServerListen( void );
@@ -188,14 +198,14 @@ RPCRTAPI RPC_STATUS RPC_ENTRY
 
 RPCRTAPI RPC_STATUS RPC_ENTRY
   RpcServerRegisterIfEx( RPC_IF_HANDLE IfSpec, UUID* MgrTypeUuid, RPC_MGR_EPV* MgrEpv,
-                         UINT Flags, UINT MaxCalls, RPC_IF_CALLBACK_FN* IfCallbackFn );
+                         unsigned int Flags, unsigned int MaxCalls, RPC_IF_CALLBACK_FN* IfCallbackFn );
 
 RPCRTAPI RPC_STATUS RPC_ENTRY
   RpcServerRegisterIf2( RPC_IF_HANDLE IfSpec, UUID* MgrTypeUuid, RPC_MGR_EPV* MgrEpv,
-                        UINT Flags, UINT MaxCalls, UINT MaxRpcSize, RPC_IF_CALLBACK_FN* IfCallbackFn );
+                        unsigned int Flags, unsigned int MaxCalls, unsigned int MaxRpcSize, RPC_IF_CALLBACK_FN* IfCallbackFn );
 
 RPCRTAPI RPC_STATUS RPC_ENTRY
-  RpcServerUnregisterIf( RPC_IF_HANDLE IfSpec, UUID* MgrTypeUuid, UINT WaitForCallsToComplete );
+  RpcServerUnregisterIf( RPC_IF_HANDLE IfSpec, UUID* MgrTypeUuid, unsigned int WaitForCallsToComplete );
 
 RPCRTAPI RPC_STATUS RPC_ENTRY
   RpcServerUnregisterIfEx( RPC_IF_HANDLE IfSpec, UUID* MgrTypeUuid, int RundownContextHandles );
@@ -204,43 +214,35 @@ RPCRTAPI RPC_STATUS RPC_ENTRY
 RPCRTAPI RPC_STATUS RPC_ENTRY
   RpcServerUseProtseqA(unsigned char *Protseq, unsigned int MaxCalls, void *SecurityDescriptor);
 RPCRTAPI RPC_STATUS RPC_ENTRY
-  RpcServerUseProtseqW(LPWSTR Protseq, unsigned int MaxCalls, void *SecurityDescriptor);
+  RpcServerUseProtseqW(unsigned short *Protseq, unsigned int MaxCalls, void *SecurityDescriptor);
 #define RpcServerUseProtseq WINELIB_NAME_AW(RpcServerUseProtseq)
 
 RPCRTAPI RPC_STATUS RPC_ENTRY
-  RpcServerUseProtseqEpA( unsigned char *Protseq, UINT MaxCalls, unsigned char *Endpoint, LPVOID SecurityDescriptor );
+  RpcServerUseProtseqEpA( unsigned char *Protseq, unsigned int MaxCalls, unsigned char *Endpoint, void *SecurityDescriptor );
 RPCRTAPI RPC_STATUS RPC_ENTRY
-  RpcServerUseProtseqEpW( LPWSTR Protseq, UINT MaxCalls, LPWSTR Endpoint, LPVOID SecurityDescriptor );
+  RpcServerUseProtseqEpW( unsigned short *Protseq, unsigned int MaxCalls, unsigned short *Endpoint, void *SecurityDescriptor );
 #define RpcServerUseProtseqEp WINELIB_NAME_AW(RpcServerUseProtseqEp)
 
 RPCRTAPI RPC_STATUS RPC_ENTRY
-  RpcServerUseProtseqEpExA( unsigned char *Protseq, UINT MaxCalls, unsigned char *Endpoint, LPVOID SecurityDescriptor,
+  RpcServerUseProtseqEpExA( unsigned char *Protseq, unsigned int MaxCalls, unsigned char *Endpoint, void *SecurityDescriptor,
                             PRPC_POLICY Policy );
 RPCRTAPI RPC_STATUS RPC_ENTRY
-  RpcServerUseProtseqEpExW( LPWSTR Protseq, UINT MaxCalls, LPWSTR Endpoint, LPVOID SecurityDescriptor,
+  RpcServerUseProtseqEpExW( unsigned short *Protseq, unsigned int MaxCalls, unsigned short *Endpoint, void *SecurityDescriptor,
                             PRPC_POLICY Policy );
 #define RpcServerUseProtseqEpEx WINELIB_NAME_AW(RpcServerUseProtseqEpEx)
 
 RPCRTAPI RPC_STATUS RPC_ENTRY
-  RpcServerRegisterAuthInfoA( unsigned char *ServerPrincName, ULONG AuthnSvc, RPC_AUTH_KEY_RETRIEVAL_FN GetKeyFn,
-                              LPVOID Arg );
+  RpcServerRegisterAuthInfoA( unsigned char *ServerPrincName, unsigned long AuthnSvc, RPC_AUTH_KEY_RETRIEVAL_FN GetKeyFn,
+                              void *Arg );
 RPCRTAPI RPC_STATUS RPC_ENTRY
-  RpcServerRegisterAuthInfoW( LPWSTR ServerPrincName, ULONG AuthnSvc, RPC_AUTH_KEY_RETRIEVAL_FN GetKeyFn,
-                              LPVOID Arg );
+  RpcServerRegisterAuthInfoW( unsigned short *ServerPrincName, unsigned long AuthnSvc, RPC_AUTH_KEY_RETRIEVAL_FN GetKeyFn,
+                              void *Arg );
 #define RpcServerRegisterAuthInfo WINELIB_NAME_AW(RpcServerRegisterAuthInfo)
-
-RPCRTAPI RPC_STATUS RPC_ENTRY
-  RpcStringBindingComposeA( unsigned char *ObjUuid, unsigned char *Protseq, unsigned char *NetworkAddr, unsigned char *Endpoint,
-                            unsigned char *Options, unsigned char **StringBinding );
-RPCRTAPI RPC_STATUS RPC_ENTRY
-  RpcStringBindingComposeW( LPWSTR ObjUuid, LPWSTR Protseq, LPWSTR NetworkAddr, LPWSTR Endpoint,
-                            LPWSTR Options, LPWSTR* StringBinding );
-#define RpcStringBindingCompose WINELIB_NAME_AW(RpcStringBindingCompose)
 
 RPCRTAPI RPC_STATUS RPC_ENTRY
   RpcNetworkIsProtseqValidA( unsigned char *protseq );
 RPCRTAPI RPC_STATUS RPC_ENTRY
-  RpcNetworkIsProtseqValidW( LPWSTR protseq );
+  RpcNetworkIsProtseqValidW( unsigned short *protseq );
 #define RpcNetworkIsProtseqValid WINELIB_NAME_AW(RpcNetworkIsProtseqValid)
 
 RPCRTAPI RPC_STATUS RPC_ENTRY
