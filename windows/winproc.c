@@ -14,6 +14,7 @@
 #include "winproc.h"
 #include "debug.h"
 #include "spy.h"
+#include "commctrl.h"
 
 /* Window procedure 16-to-32-bit thunk,
  * see BuildSpec16Files() in tools/build.c */
@@ -388,6 +389,8 @@ WINDOWPROCTYPE WINPROC_GetProcType( HWINDOWPROC proc )
  *
  * Map a message from Ansi to Unicode.
  * Return value is -1 on error, 0 if OK, 1 if an UnmapMsg call is needed.
+ * fixme WM_CHAR, WM_CHARTOITEM, WM_DEADCHAR, WM_MENUCHAR, WM_SYSCHAR,
+ * WM_SYSDEADCHAR ???
  */
 INT32 WINPROC_MapMsg32ATo32W( UINT32 msg, WPARAM32 wParam, LPARAM *plparam )
 {
@@ -402,8 +405,26 @@ INT32 WINPROC_MapMsg32ATo32W( UINT32 msg, WPARAM32 wParam, LPARAM *plparam )
             *plparam = (LPARAM)ptr;
         }
         return 1;
+    case LB_GETTEXT32:
+    case CB_GETLBTEXT32:
+    /* fixme: fixed sized buffer */
+        {
+            LPARAM *ptr = (LPARAM *)HeapAlloc( SystemHeap, 0,
+                                     256 * sizeof(WCHAR) + sizeof(LPARAM) );
+            if (!ptr) return -1;
+            *ptr++ = *plparam;  /* Store previous lParam */
+            *plparam = (LPARAM)ptr;
+        }
+        return 1;
     case WM_SETTEXT:
+    case CB_ADDSTRING32:
+    case CB_DIR32:
+    case CB_FINDSTRING32:
+    case CB_FINDSTRINGEXACT32:
+    case CB_INSERTSTRING32:
+    case CB_SELECTSTRING32:
     case LB_ADDSTRING32:
+    case LB_INSERTSTRING32:
         *plparam = (LPARAM)HEAP_strdupAtoW( SystemHeap, 0, (LPCSTR)*plparam );
         return (*plparam ? 1 : -1);
     case WM_NCCREATE:
@@ -442,7 +463,14 @@ INT32 WINPROC_MapMsg32ATo32W( UINT32 msg, WPARAM32 wParam, LPARAM *plparam )
     case WM_PAINTCLIPBOARD:
     case WM_SIZECLIPBOARD:
     case WM_WININICHANGE:
-        TRACE(msg, "message %s needs translation\n", SPY_GetMsgName(msg) );
+    case EM_GETLINE32:
+    case EM_REPLACESEL32:
+    case EM_SETPASSWORDCHAR32:
+    case LB_ADDFILE32:
+    case LB_DIR32:
+    case LB_FINDSTRING32:
+    case LB_SELECTSTRING32:
+        FIXME(msg, "message %s (0x%x) needs translation\n", SPY_GetMsgName(msg), msg );
         return -1;
     default:  /* No translation needed */
         return 0;
@@ -466,7 +494,23 @@ void WINPROC_UnmapMsg32ATo32W( UINT32 msg, WPARAM32 wParam, LPARAM lParam )
             HeapFree( SystemHeap, 0, ptr );
         }
         break;
+    case LB_GETTEXT32:
+    case CB_GETLBTEXT32:
+        {
+            LPARAM *ptr = (LPARAM *)lParam - 1;
+            lstrcpyWtoA( (LPSTR)*ptr, (LPWSTR)(ptr + 1) );
+            HeapFree( SystemHeap, 0, ptr );
+        }
+        break;
+
     case LB_ADDSTRING32:
+    case LB_INSERTSTRING32:
+    case CB_ADDSTRING32:
+    case CB_DIR32:
+    case CB_FINDSTRING32:
+    case CB_FINDSTRINGEXACT32:
+    case CB_INSERTSTRING32:
+    case CB_SELECTSTRING32:
     case WM_SETTEXT:
         HeapFree( SystemHeap, 0, (void *)lParam );
         break;
@@ -514,8 +558,28 @@ INT32 WINPROC_MapMsg32WTo32A( UINT32 msg, WPARAM32 wParam, LPARAM *plparam )
             *plparam = (LPARAM)ptr;
         }
         return 1;
-    case WM_SETTEXT:
+
+    case LB_GETTEXT32:
+    case CB_GETLBTEXT32:
+	/* fixme: fixed sized buffer */
+        {
+            LPARAM *ptr = (LPARAM *)HeapAlloc( SystemHeap, 0,
+                                               256 + sizeof(LPARAM) );
+            if (!ptr) return -1;
+            *ptr++ = *plparam;  /* Store previous lParam */
+            *plparam = (LPARAM)ptr;
+        }
+        return 1;
+
     case LB_ADDSTRING32:
+    case LB_INSERTSTRING32:
+    case CB_ADDSTRING32:
+    case CB_DIR32:
+    case CB_FINDSTRING32:
+    case CB_FINDSTRINGEXACT32:
+    case CB_INSERTSTRING32:
+    case CB_SELECTSTRING32:
+    case WM_SETTEXT:
         *plparam = (LPARAM)HEAP_strdupWtoA( SystemHeap, 0, (LPCWSTR)*plparam );
         return (*plparam ? 1 : -1);
     case WM_NCCREATE:
@@ -554,7 +618,14 @@ INT32 WINPROC_MapMsg32WTo32A( UINT32 msg, WPARAM32 wParam, LPARAM *plparam )
     case WM_PAINTCLIPBOARD:
     case WM_SIZECLIPBOARD:
     case WM_WININICHANGE:
-        WARN(msg, "message %04x needs translation\n",msg );
+    case EM_GETLINE32:
+    case EM_REPLACESEL32:
+    case EM_SETPASSWORDCHAR32:
+    case LB_ADDFILE32:
+    case LB_DIR32:
+    case LB_FINDSTRING32:
+    case LB_SELECTSTRING32:
+        FIXME(msg, "message %04x needs translation\n",msg );
         return -1;
     default:  /* No translation needed */
         return 0;
@@ -578,7 +649,22 @@ void WINPROC_UnmapMsg32WTo32A( UINT32 msg, WPARAM32 wParam, LPARAM lParam )
             HeapFree( SystemHeap, 0, ptr );
         }
         break;
+    case LB_GETTEXT32:
+    case CB_GETLBTEXT32:
+        {
+            LPARAM *ptr = (LPARAM *)lParam - 1;
+            lstrcpyAtoW( (LPWSTR)*ptr, (LPSTR)(ptr + 1) );
+            HeapFree( SystemHeap, 0, ptr );
+        }
+        break;
     case LB_ADDSTRING32:
+    case LB_INSERTSTRING32:
+    case CB_ADDSTRING32:
+    case CB_DIR32:
+    case CB_FINDSTRING32:
+    case CB_FINDSTRINGEXACT32:
+    case CB_INSERTSTRING32:
+    case CB_SELECTSTRING32:
     case WM_SETTEXT:
         HeapFree( SystemHeap, 0, (void *)lParam );
         break;
