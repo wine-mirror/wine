@@ -510,7 +510,8 @@ static char *extract_icon( const char *path, int index)
     xpm_path=NULL;
 
  end:
-    HeapFree( GetProcessHeap(), 0, ico_path );
+    HeapFree(GetProcessHeap(), 0, iconsdir);
+    HeapFree(GetProcessHeap(), 0, ico_path);
     return xpm_path;
 }
 
@@ -650,12 +651,14 @@ static char *cleanup_link( LPCWSTR link )
  */
 static BOOL GetLinkLocation( LPCWSTR linkfile, DWORD *ofs, DWORD *loc )
 {
-    WCHAR ch, filename[MAX_PATH], buffer[MAX_PATH];
-    DWORD len, i, r;
+    WCHAR filename[MAX_PATH], buffer[MAX_PATH];
+    DWORD len, i, r, filelen;
     const DWORD locations[] = {
         CSIDL_STARTUP, CSIDL_DESKTOPDIRECTORY, CSIDL_STARTMENU };
 
-    if( !GetFullPathNameW( linkfile, MAX_PATH, filename, NULL ))
+    WINE_TRACE("%s\n", wine_dbgstr_w(linkfile));
+    filelen=GetFullPathNameW( linkfile, MAX_PATH, filename, NULL );
+    if (filelen==0 || filelen>MAX_PATH)
         return FALSE;
 
     for( i=0; i<sizeof(locations)/sizeof(locations[0]); i++ )
@@ -664,15 +667,15 @@ static BOOL GetLinkLocation( LPCWSTR linkfile, DWORD *ofs, DWORD *loc )
             continue;
 
         len = lstrlenW(buffer);
-        if( len >= MAX_PATH )
+        if (len >= MAX_PATH)
             continue;
 
+        if (len > filelen || filename[len]!='\\')
+            continue;
         /* do a lstrcmpinW */
-        ch = filename[len];
         filename[len] = 0;
         r = lstrcmpiW( filename, buffer );
-        filename[len] = ch;
-
+        filename[len] = '\\';
         if ( r )
             continue;
 
@@ -702,7 +705,7 @@ static BOOL InvokeShellLinker( IShellLinkA *sl, LPCWSTR link )
 
     if( !GetLinkLocation( link, &ofs, &csidl ) )
     {
-        WINE_WARN("Unknown link location (%08lx). Ignoring\n", csidl);
+        WINE_WARN("Unknown link location '%s'. Ignoring.\n",wine_dbgstr_w(link));
         return TRUE;
     }
     if( (csidl != CSIDL_DESKTOPDIRECTORY) && (csidl != CSIDL_STARTMENU) )
@@ -814,14 +817,16 @@ static BOOL Process_Link( LPWSTR linkname, BOOL bAgain )
     IPersistFile *pf;
     HRESULT r;
     WCHAR fullname[MAX_PATH];
- 
+    DWORD len;
+
     if( !linkname[0] )
     {
         WINE_ERR("link name missing\n");
         return 1;
     }
 
-    if( !GetFullPathNameW( linkname, MAX_PATH, fullname, NULL ))
+    len=GetFullPathNameW( linkname, MAX_PATH, fullname, NULL );
+    if (len==0 || len>MAX_PATH)
     {
         WINE_ERR("couldn't get full path of link file\n");
         return 1;
