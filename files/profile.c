@@ -1480,8 +1480,13 @@ BOOL WINAPI WritePrivateProfileStringA( LPCSTR section, LPCSTR entry,
     {
         if (!section && !entry && !string) /* documented "file flush" case */
             PROFILE_ReleaseFile();  /* always return FALSE in this case */
-        else
-            ret = PROFILE_SetString( section, entry, string );
+	else {
+	    if (!section) {
+		FIXME("(NULL?,%s,%s,%s)? \n",entry,string,filename);
+	    } else {
+		ret = PROFILE_SetString( section, entry, string );
+	    }
+	}
     }
 
     LeaveCriticalSection( &PROFILE_CritSect );
