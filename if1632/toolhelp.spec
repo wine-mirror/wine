@@ -35,6 +35,6 @@ type	win16
 81 stub TASKSETCSIP
 82 stub TASKGETCSIP
 83 stub TASKSWITCH
-84 stub LOCAL32INFO
-85 stub LOCAL32FIRST
-86 stub LOCAL32NEXT
+84 pascal16 Local32Info(ptr word) Local32Info
+85 pascal16 Local32First(ptr word) Local32First
+86 pascal16 Local32Next(ptr) Local32Next

@@ -160,6 +160,40 @@ BOOL16 WINAPI LocalInfo( LOCALINFO *pLocalInfo, HGLOBAL16 handle );
 BOOL16 WINAPI LocalFirst( LOCALENTRY *pLocalEntry, HGLOBAL16 handle );
 BOOL16 WINAPI LocalNext( LOCALENTRY *pLocalEntry );
 
+/* Local 32-bit heap */
+
+typedef struct
+{
+    DWORD dwSize;                /* 00 */
+    DWORD dwMemReserved;         /* 04 */
+    DWORD dwMemCommitted;        /* 08 */
+    DWORD dwTotalFree;           /* 0C */
+    DWORD dwLargestFreeBlock;    /* 10 */
+    DWORD dwcFreeHandles;        /* 14 */
+} LOCAL32INFO;
+
+typedef struct
+{
+    DWORD dwSize;                /* 00 */
+    WORD hHandle;                /* 04 */
+    DWORD dwAddress;             /* 06 */
+    DWORD dwSizeBlock;           /* 0A */
+    WORD wFlags;                 /* 0E */
+    WORD wType;                  /* 10 */
+    WORD hHeap;                  /* 12 */
+    WORD wHeapType;              /* 14 */
+    DWORD dwNext;                /* 16 */
+    DWORD dwNextAlt;             /* 1A */
+} LOCAL32ENTRY;
+
+/* LOCAL32ENTRY.wHeapType flags same as LOCALENTRY.wHeapType flags */
+/* LOCAL32ENTRY.wFlags same as LOCALENTRY.wFlags */
+/* LOCAL32ENTRY.wType same as LOCALENTRY.wType */
+
+BOOL16 WINAPI Local32Info( LOCAL32INFO *pLocal32Info, HGLOBAL16 handle );
+BOOL16 WINAPI Local32First( LOCAL32ENTRY *pLocal32Entry, HGLOBAL16 handle );
+BOOL16 WINAPI Local32Next( LOCAL32ENTRY *pLocal32Entry );
+
 
 /* modules */
 

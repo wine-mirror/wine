@@ -15,6 +15,7 @@
 #include "winerror.h"
 #include "winnt.h"
 #include "heap.h"
+#include "toolhelp.h"
 #include "debug.h"
 
 /* Note: the heap data structures are based on what Pietrek describes in his
@@ -1833,4 +1834,99 @@ WORD WINAPI Local32GetSegment( HANDLE32 heap )
     return header->segment;
 }
 
+/***********************************************************************
+ *           Local32_GetHeap
+ */
+static LOCAL32HEADER *Local32_GetHeap( HGLOBAL16 handle )
+{
+    WORD selector = GlobalHandleToSel( handle );
+    DWORD base  = GetSelectorBase( selector ); 
+    DWORD limit = GetSelectorLimit( selector ); 
+
+    /* Hmmm. This is a somewhat stupid heuristic, but Windows 95 does
+       it this way ... */
+
+    if ( limit > 0x10000 && ((LOCAL32HEADER *)base)->magic == LOCAL32_MAGIC )
+        return (LOCAL32HEADER *)base;
+
+    base  += 0x10000;
+    limit -= 0x10000;
+
+    if ( limit > 0x10000 && ((LOCAL32HEADER *)base)->magic == LOCAL32_MAGIC )
+        return (LOCAL32HEADER *)base;
+
+    return NULL;
+}
+
+/***********************************************************************
+ *           Local32Info   (KERNEL.444)  (TOOLHELP.84)
+ */
+BOOL16 WINAPI Local32Info( LOCAL32INFO *pLocal32Info, HGLOBAL16 handle )
+{
+    SUBHEAP *heapPtr;
+    LPBYTE ptr;
+    int i;
+
+    LOCAL32HEADER *header = Local32_GetHeap( handle );
+    if ( !header ) return FALSE;
+
+    if ( !pLocal32Info || pLocal32Info->dwSize < sizeof(LOCAL32INFO) )
+        return FALSE;
+
+    heapPtr = (SUBHEAP *)HEAP_GetPtr( header->heap );
+    pLocal32Info->dwMemReserved = heapPtr->size;
+    pLocal32Info->dwMemCommitted = heapPtr->commitSize;
+    pLocal32Info->dwTotalFree = 0L;
+    pLocal32Info->dwLargestFreeBlock = 0L;
+
+    /* Note: Local32 heaps always have only one subheap! */
+    ptr = (LPBYTE)heapPtr + heapPtr->headerSize;
+    while ( ptr < (LPBYTE)heapPtr + heapPtr->size )
+    {
+        if (*(DWORD *)ptr & ARENA_FLAG_FREE)
+        {
+            ARENA_FREE *pArena = (ARENA_FREE *)ptr;
+            DWORD size = (pArena->size & ARENA_SIZE_MASK);
+            ptr += sizeof(*pArena) + size;
+
+            pLocal32Info->dwTotalFree += size;
+            if ( size > pLocal32Info->dwLargestFreeBlock )
+                pLocal32Info->dwLargestFreeBlock = size;
+        }
+        else
+        {
+            ARENA_INUSE *pArena = (ARENA_INUSE *)ptr;
+            DWORD size = (pArena->size & ARENA_SIZE_MASK);
+            ptr += sizeof(*pArena) + size;
+        }
+    }
+
+    pLocal32Info->dwcFreeHandles = 0;
+    for ( i = 0; i < HTABLE_NPAGES; i++ )
+    {
+        if ( header->freeListFirst[i] == 0xffff ) break;
+        pLocal32Info->dwcFreeHandles += header->freeListSize[i];
+    }
+    pLocal32Info->dwcFreeHandles += (HTABLE_NPAGES - i) * HTABLE_PAGESIZE/4;
+
+    return TRUE;
+}
+
+/***********************************************************************
+ *           Local32First   (KERNEL.445)  (TOOLHELP.85)
+ */
+BOOL16 WINAPI Local32First( LOCAL32ENTRY *pLocal32Entry, HGLOBAL16 handle )
+{
+    FIXME( heap, "(%p, %04X): stub!\n", pLocal32Entry, handle );
+    return FALSE;
+}
+
+/***********************************************************************
+ *           Local32Next   (KERNEL.446)  (TOOLHELP.86)
+ */
+BOOL16 WINAPI Local32Next( LOCAL32ENTRY *pLocal32Entry )
+{
+    FIXME( heap, "(%p): stub!\n", pLocal32Entry );
+    return FALSE;
+}
 
