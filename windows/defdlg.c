@@ -223,8 +223,8 @@ static LRESULT DEFDLG_Proc( HWND32 hwnd, UINT32 msg, WPARAM32 wParam,
 	    return dlgInfo->hUserFont;
 
         case WM_CLOSE:
-            EndDialog32( hwnd, TRUE );
-            DestroyWindow32( hwnd );
+            PostMessage32A( hwnd, WM_COMMAND, IDCANCEL,
+                            (LPARAM)GetDlgItem32( hwnd, IDCANCEL ) );
             return 0;
     }
     return 0;
