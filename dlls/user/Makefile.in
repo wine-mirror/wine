@@ -6,17 +6,22 @@ MODULE    = user32
 SOVERSION = 1.0
 WRCEXTRA  = -w16 -m
 ALTNAMES  = user keyboard ddeml display mouse
-IMPORTS   = gdi32
+IMPORTS   = gdi32 kernel32
 
 C_SRCS = \
 	bidi16.c \
+	cache.c \
 	ddeml.c \
 	display.c \
 	exticon.c \
+	lstr.c \
+	misc.c \
 	mouse.c \
 	network.c \
-	user_main.c \
-	thunk.c
+	resource.c \
+	text.c \
+	thunk.c \
+	user_main.c
 
 RC_SRCS = \
 	disp.rc \

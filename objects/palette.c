@@ -746,16 +746,6 @@ BOOL16 WINAPI IsDCCurrentPalette16(HDC16 hDC)
 
 
 /***********************************************************************
- *           SelectPalette16    (USER.282)
- */
-HPALETTE16 WINAPI SelectPalette16( HDC16 hDC, HPALETTE16 hPal,
-                                   BOOL16 bForceBackground )
-{
-    return SelectPalette( hDC, hPal, bForceBackground );
-}
-
-
-/***********************************************************************
  * SelectPalette [GDI32.300]  Selects logical palette into DC
  *
  * RETURNS
@@ -780,15 +770,6 @@ HPALETTE WINAPI SelectPalette(
         }
     }
     return GDISelectPalette16( hDC, hPal, wBkgPalette);
-}
-
-
-/***********************************************************************
- *           RealizePalette16    (USER.283)
- */
-UINT16 WINAPI RealizePalette16( HDC16 hDC )
-{
-    return RealizePalette( hDC );
 }
 
 

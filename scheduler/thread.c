@@ -28,8 +28,6 @@
 #include "stackframe.h"
 #include "builtin16.h"
 #include "debugtools.h"
-#include "queue.h"
-#include "hook.h"
 #include "winnls.h"
 
 DEFAULT_DEBUG_CHANNEL(thread);
@@ -356,32 +354,6 @@ void WINAPI ExitThread( DWORD code ) /* [in] Exit code for this thread */
         if (!(NtCurrentTeb()->tibflags & TEBF_WIN32)) TASK_KillTask( 0 );
         SYSDEPS_ExitThread( code );
     }
-}
-
-
-/**********************************************************************
- * SetLastErrorEx [USER32.485]  Sets the last-error code.
- *
- * RETURNS
- *    None.
- */
-void WINAPI SetLastErrorEx(
-    DWORD error, /* [in] Per-thread error code */
-    DWORD type)  /* [in] Error type */
-{
-    TRACE("(0x%08lx, 0x%08lx)\n", error,type);
-    switch(type) {
-        case 0:
-            break;
-        case SLE_ERROR:
-        case SLE_MINORERROR:
-        case SLE_WARNING:
-            /* Fall through for now */
-        default:
-            FIXME("(error=%08lx, type=%08lx): Unhandled type\n", error,type);
-            break;
-    }
-    SetLastError( error );
 }
 
 
@@ -746,95 +718,6 @@ BOOL WINAPI GetThreadTimes(
     return FALSE;
 }
 
-
-/**********************************************************************
- * AttachThreadInput [KERNEL32.8]  Attaches input of 1 thread to other
- *
- * Attaches the input processing mechanism of one thread to that of
- * another thread.
- *
- * RETURNS
- *    Success: TRUE
- *    Failure: FALSE
- *
- * TODO:
- *    1. Reset the Key State (currenly per thread key state is not maintained)
- */
-BOOL WINAPI AttachThreadInput( 
-    DWORD idAttach,   /* [in] Thread to attach */
-    DWORD idAttachTo, /* [in] Thread to attach to */
-    BOOL fAttach)   /* [in] Attach or detach */
-{
-#if 0  /* FIXME: cannot call USER functions here */
-    MESSAGEQUEUE *pSrcMsgQ = 0, *pTgtMsgQ = 0;
-    BOOL16 bRet = 0;
-
-    SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
-
-    /* A thread cannot attach to itself */
-    if ( idAttach == idAttachTo )
-        goto CLEANUP;
-
-    /* According to the docs this method should fail if a
-     * "Journal record" hook is installed. (attaches all input queues together)
-     */
-    if ( HOOK_IsHooked( WH_JOURNALRECORD ) )
-        goto CLEANUP;
-        
-    /* Retrieve message queues corresponding to the thread id's */
-    pTgtMsgQ = (MESSAGEQUEUE *)QUEUE_Lock( GetThreadQueue16( idAttach ) );
-    pSrcMsgQ = (MESSAGEQUEUE *)QUEUE_Lock( GetThreadQueue16( idAttachTo ) );
-
-    /* Ensure we have message queues and that Src and Tgt threads
-     * are not system threads.
-     */
-    if ( !pSrcMsgQ || !pTgtMsgQ || !pSrcMsgQ->pQData || !pTgtMsgQ->pQData )
-        goto CLEANUP;
-
-    if (fAttach)   /* Attach threads */
-    {
-        /* Only attach if currently detached  */
-        if ( pTgtMsgQ->pQData != pSrcMsgQ->pQData )
-        {
-            /* First release the target threads perQData */
-            PERQDATA_Release( pTgtMsgQ->pQData );
-        
-            /* Share a reference to the source threads perQDATA */
-            PERQDATA_Addref( pSrcMsgQ->pQData );
-            pTgtMsgQ->pQData = pSrcMsgQ->pQData;
-        }
-    }
-    else    /* Detach threads */
-    {
-        /* Only detach if currently attached */
-        if ( pTgtMsgQ->pQData == pSrcMsgQ->pQData )
-        {
-            /* First release the target threads perQData */
-            PERQDATA_Release( pTgtMsgQ->pQData );
-        
-            /* Give the target thread its own private perQDATA once more */
-            pTgtMsgQ->pQData = PERQDATA_CreateInstance();
-        }
-    }
-
-    /* TODO: Reset the Key State */
-
-    bRet = 1;      /* Success */
-    
-CLEANUP:
-
-    /* Unlock the queues before returning */
-    if ( pSrcMsgQ )
-        QUEUE_Unlock( pSrcMsgQ );
-    if ( pTgtMsgQ )
-        QUEUE_Unlock( pTgtMsgQ );
-    
-    return bRet;
-#endif
-    SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
-    FIXME( "broken for now\n" );
-    return FALSE;
-}
 
 /**********************************************************************
  * VWin32_BoostThreadGroup [KERNEL.535]

@@ -7,7 +7,6 @@ MODULE    = graphics
 
 C_SRCS = \
 	bitblt.c \
-	cache.c \
 	dispdib.c \
 	driver.c \
 	env.c \

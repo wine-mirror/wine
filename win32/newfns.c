@@ -227,56 +227,6 @@ DWORD WINAPI GetCompressedFileSizeW(
 
 
 /******************************************************************************
- * GetProcessWindowStation [USER32.280]  Returns handle of window station
- *
- * NOTES
- *    Docs say the return value is HWINSTA
- *
- * RETURNS
- *    Success: Handle to window station associated with calling process
- *    Failure: NULL
- */
-DWORD WINAPI GetProcessWindowStation(void)
-{
-    FIXME("(void): stub\n");
-    return 1;
-}
-
-
-/******************************************************************************
- * GetThreadDesktop [USER32.295]  Returns handle to desktop
- *
- * NOTES
- *    Docs say the return value is HDESK
- *
- * PARAMS
- *    dwThreadId [I] Thread identifier
- *
- * RETURNS
- *    Success: Handle to desktop associated with specified thread
- *    Failure: NULL
- */
-DWORD WINAPI GetThreadDesktop( DWORD dwThreadId )
-{
-    FIXME("(%lx): stub\n",dwThreadId);
-    return 1;
-}
-
-
-/******************************************************************************
- * SetDebugErrorLevel [USER32.475]
- * Sets the minimum error level for generating debugging events
- *
- * PARAMS
- *    dwLevel [I] Debugging error level
- */
-VOID WINAPI SetDebugErrorLevel( DWORD dwLevel )
-{
-    FIXME("(%ld): stub\n", dwLevel);
-}
-
-
-/******************************************************************************
  * SetComputerNameA [KERNEL32.621]  
  */
 BOOL WINAPI SetComputerNameA( LPCSTR lpComputerName )
@@ -311,44 +261,6 @@ BOOL WINAPI EnumPortsA(LPSTR name,DWORD level,LPBYTE ports,DWORD bufsize,LPDWORD
 }
 
 /******************************************************************************
- * OpenDesktopA [USER32.408]
- *
- * NOTES
- *    Return type should be HDESK
- *
- *    Not supported on Win9x - returns NULL and calls SetLastError.
- */
-HANDLE WINAPI OpenDesktopA( LPCSTR lpszDesktop, DWORD dwFlags, 
-                                BOOL fInherit, DWORD dwDesiredAccess )
-{
-    FIXME("(%s,%lx,%i,%lx): stub\n",debugstr_a(lpszDesktop),dwFlags,
-          fInherit,dwDesiredAccess);
-
-    SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
-    return 0;
-}
-
-
-/******************************************************************************
- *		SetUserObjectInformationA
- */
-BOOL WINAPI SetUserObjectInformationA( HANDLE hObj, INT nIndex, 
-				       LPVOID pvInfo, DWORD nLength )
-{
-    FIXME("(%x,%d,%p,%lx): stub\n",hObj,nIndex,pvInfo,nLength);
-    return TRUE;
-}
-
-/******************************************************************************
- *		SetThreadDesktop
- */
-BOOL WINAPI SetThreadDesktop( HANDLE hDesktop )
-{
-    FIXME("(%x): stub\n",hDesktop);
-    return TRUE;
-}
-
-/******************************************************************************
  *		CreateIoCompletionPort
  */
 HANDLE WINAPI CreateIoCompletionPort(HANDLE hFileHandle,
@@ -358,52 +270,3 @@ DWORD dwNumberOfConcurrentThreads)
     FIXME("(%04x, %04x, %08lx, %08lx): stub.\n", hFileHandle, hExistingCompletionPort, dwCompletionKey, dwNumberOfConcurrentThreads);
     return (HANDLE)NULL;
 }
-
-
-/******************************************************************************
- *                    GetProcessDefaultLayout [USER32.802]
- *
- * Gets the default layout for parentless windows.
- * Right now, just returns 0 (left-to-right).
- *
- * RETURNS
- *    Success: Nonzero
- *    Failure: Zero
- *
- * BUGS
- *    No RTL
- */
-BOOL WINAPI GetProcessDefaultLayout( DWORD *pdwDefaultLayout )
-{
-    if ( !pdwDefaultLayout ) {
-        SetLastError( ERROR_INVALID_PARAMETER );
-        return FALSE;
-     }
-    FIXME( "( %p ): No BiDi\n", pdwDefaultLayout );
-    *pdwDefaultLayout = 0;
-    return TRUE;
-}
-
-
-/******************************************************************************
- *                    SetProcessDefaultLayout [USER32.803]
- *
- * Sets the default layout for parentless windows.
- * Right now, only accepts 0 (left-to-right).
- *
- * RETURNS
- *    Success: Nonzero
- *    Failure: Zero
- *
- * BUGS
- *    No RTL
- */
-BOOL WINAPI SetProcessDefaultLayout( DWORD dwDefaultLayout )
-{
-    if ( dwDefaultLayout == 0 )
-        return TRUE;
-    FIXME( "( %08lx ): No BiDi\n", dwDefaultLayout );
-    SetLastError( ERROR_CALL_NOT_IMPLEMENTED );
-    return FALSE;
-}
-

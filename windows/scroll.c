@@ -279,7 +279,7 @@ rc.left, rc.top, rc.right, rc.bottom, (UINT16)flags );
 	if( (dc = (DC *)GDI_GetObjPtr(hDC, DC_MAGIC)) )
 	{
             if (dc->w.hVisRgn) {
-                wnd->pDriver->pSurfaceCopy(wnd,dc,dx,dy,&rc,bUpdate);
+                wnd->pDriver->pSurfaceCopy(wnd,hDC,dx,dy,&rc,bUpdate);
 
                 if( bUpdate )
                     {

@@ -14,7 +14,6 @@ C_SRCS = \
 	init.c \
 	kernel32.c \
 	newfns.c \
-	ordinals.c \
 	process.c \
 	struct32.c \
 	time.c
