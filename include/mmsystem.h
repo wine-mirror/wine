@@ -435,8 +435,8 @@ UINT 		WINAPI 	waveOutGetNumDevs(void);
 UINT 		WINAPI 	waveOutGetDevCapsA(UINT,LPWAVEOUTCAPSA,UINT);
 UINT 		WINAPI	waveOutGetDevCapsW(UINT,LPWAVEOUTCAPSW,UINT);
 #define 		waveOutGetDevCaps WINELIB_NAME_AW(waveOutGetDevCaps)
-UINT 		WINAPI	waveOutGetVolume(UINT,DWORD*);
-UINT 		WINAPI 	waveOutSetVolume(UINT,DWORD);
+UINT 		WINAPI	waveOutGetVolume(HWAVEOUT,DWORD*);
+UINT 		WINAPI 	waveOutSetVolume(HWAVEOUT,DWORD);
 UINT 		WINAPI 	waveOutGetErrorTextA(UINT,LPSTR,UINT);
 UINT 		WINAPI 	waveOutGetErrorTextW(UINT,LPWSTR,UINT);
 #define 	    	waveOutGetErrorText WINELIB_NAME_AW(waveOutGetErrorText)
@@ -637,8 +637,8 @@ UINT		WINAPI	midiOutGetNumDevs(void);
 UINT		WINAPI	midiOutGetDevCapsA(UINT,LPMIDIOUTCAPSA,UINT);
 UINT		WINAPI	midiOutGetDevCapsW(UINT,LPMIDIOUTCAPSW,UINT);
 #define 		midiOutGetDevCaps WINELIB_NAME_AW(midiOutGetDevCaps)
-UINT		WINAPI	midiOutGetVolume(UINT,DWORD*);
-UINT		WINAPI	midiOutSetVolume(UINT,DWORD);
+UINT		WINAPI	midiOutGetVolume(HMIDIOUT,DWORD*);
+UINT		WINAPI	midiOutSetVolume(HMIDIOUT,DWORD);
 UINT		WINAPI	midiOutGetErrorTextA(UINT,LPSTR,UINT);
 UINT		WINAPI	midiOutGetErrorTextW(UINT,LPWSTR,UINT);
 #define 		midiOutGetErrorText WINELIB_NAME_AW(midiOutGetErrorText)

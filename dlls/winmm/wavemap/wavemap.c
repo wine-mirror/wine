@@ -405,14 +405,14 @@ static	DWORD	wodGetDevCaps(UINT wDevID, WAVEMAPDATA* wom, LPWAVEOUTCAPSA lpWaveC
 static	DWORD	wodGetVolume(UINT wDevID, WAVEMAPDATA* wom, LPDWORD lpVol)
 {
     if (WAVEMAP_IsData(wom))
-	return waveOutGetVolume((UINT)wom->u.out.hInnerWave, lpVol);
+	return waveOutGetVolume(wom->u.out.hInnerWave, lpVol);
     return MMSYSERR_NOERROR;
 }
 
 static	DWORD	wodSetVolume(UINT wDevID, WAVEMAPDATA* wom, DWORD vol)
 {
     if (WAVEMAP_IsData(wom))
-	return waveOutSetVolume((UINT)wom->u.out.hInnerWave, vol);
+	return waveOutSetVolume(wom->u.out.hInnerWave, vol);
     return MMSYSERR_NOERROR;
 }
 

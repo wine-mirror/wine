@@ -808,7 +808,7 @@ UINT16 WINAPI midiOutReset16(HMIDIOUT16 hMidiOut)
  */
 UINT16 WINAPI midiOutGetVolume16(UINT16 uDeviceID, DWORD* lpdwVolume)
 {
-    return midiOutGetVolume(uDeviceID, lpdwVolume);
+    return midiOutGetVolume(HMIDIOUT_32(uDeviceID), lpdwVolume);
 }
 
 /**************************************************************************
@@ -816,7 +816,7 @@ UINT16 WINAPI midiOutGetVolume16(UINT16 uDeviceID, DWORD* lpdwVolume)
  */
 UINT16 WINAPI midiOutSetVolume16(UINT16 uDeviceID, DWORD dwVolume)
 {
-    return midiOutSetVolume(uDeviceID, dwVolume);
+    return midiOutSetVolume(HMIDIOUT_32(uDeviceID), dwVolume);
 }
 
 /**************************************************************************
@@ -1413,7 +1413,7 @@ UINT16 WINAPI waveOutSetPlaybackRate16(HWAVEOUT16 hWaveOut16, DWORD dw)
  */
 UINT16 WINAPI waveOutGetVolume16(UINT16 devid, LPDWORD lpdw)
 {
-    return waveOutGetVolume(devid, lpdw);
+    return waveOutGetVolume(HWAVEOUT_32(devid), lpdw);
 }
 
 /**************************************************************************
@@ -1421,7 +1421,7 @@ UINT16 WINAPI waveOutGetVolume16(UINT16 devid, LPDWORD lpdw)
  */
 UINT16 WINAPI waveOutSetVolume16(UINT16 devid, DWORD dw)
 {
-    return waveOutSetVolume(devid, dw);
+    return waveOutSetVolume(HWAVEOUT_32(devid), dw);
 }
 
 /**************************************************************************

@@ -1182,13 +1182,13 @@ UINT WINAPI midiOutReset(HMIDIOUT hMidiOut)
 /**************************************************************************
  * 				midiOutGetVolume	[WINMM.@]
  */
-UINT WINAPI midiOutGetVolume(UINT uDeviceID, DWORD* lpdwVolume)
+UINT WINAPI midiOutGetVolume(HMIDIOUT hMidiOut, DWORD* lpdwVolume)
 {
     LPWINE_MLD		wmld;
 
-    TRACE("(%04X, %p);\n", uDeviceID, lpdwVolume);
+    TRACE("(%p, %p);\n", hMidiOut, lpdwVolume);
 
-    if ((wmld = MMDRV_Get((HANDLE)uDeviceID, MMDRV_MIDIOUT, TRUE)) == NULL)
+    if ((wmld = MMDRV_Get(hMidiOut, MMDRV_MIDIOUT, TRUE)) == NULL)
 	return MMSYSERR_INVALHANDLE;
 
     return MMDRV_Message(wmld, MODM_GETVOLUME, (DWORD)lpdwVolume, 0L, TRUE);
@@ -1197,13 +1197,13 @@ UINT WINAPI midiOutGetVolume(UINT uDeviceID, DWORD* lpdwVolume)
 /**************************************************************************
  * 				midiOutSetVolume	[WINMM.@]
  */
-UINT WINAPI midiOutSetVolume(UINT uDeviceID, DWORD dwVolume)
+UINT WINAPI midiOutSetVolume(HMIDIOUT hMidiOut, DWORD dwVolume)
 {
     LPWINE_MLD		wmld;
 
-    TRACE("(%04X, %ld);\n", uDeviceID, dwVolume);
+    TRACE("(%p, %ld);\n", hMidiOut, dwVolume);
 
-    if ((wmld = MMDRV_Get((HANDLE)uDeviceID, MMDRV_MIDIOUT, TRUE)) == NULL)
+    if ((wmld = MMDRV_Get(hMidiOut, MMDRV_MIDIOUT, TRUE)) == NULL)
 	return MMSYSERR_INVALHANDLE;
 
     return MMDRV_Message(wmld, MODM_SETVOLUME, dwVolume, 0L, TRUE);
@@ -2519,13 +2519,13 @@ UINT WINAPI waveOutSetPlaybackRate(HWAVEOUT hWaveOut, DWORD dw)
 /**************************************************************************
  * 				waveOutGetVolume	[WINMM.@]
  */
-UINT WINAPI waveOutGetVolume(UINT devid, LPDWORD lpdw)
+UINT WINAPI waveOutGetVolume(HWAVEOUT hWaveOut, LPDWORD lpdw)
 {
     LPWINE_MLD		wmld;
 
-    TRACE("(%04X, %08lx);\n", devid, (DWORD)lpdw);
+    TRACE("(%p, %08lx);\n", hWaveOut, (DWORD)lpdw);
 
-     if ((wmld = MMDRV_Get((HANDLE)devid, MMDRV_WAVEOUT, TRUE)) == NULL)
+     if ((wmld = MMDRV_Get(hWaveOut, MMDRV_WAVEOUT, TRUE)) == NULL)
         return MMSYSERR_INVALHANDLE;
 
     return MMDRV_Message(wmld, WODM_GETVOLUME, (DWORD)lpdw, 0L, TRUE);
@@ -2534,13 +2534,13 @@ UINT WINAPI waveOutGetVolume(UINT devid, LPDWORD lpdw)
 /**************************************************************************
  * 				waveOutSetVolume	[WINMM.@]
  */
-UINT WINAPI waveOutSetVolume(UINT devid, DWORD dw)
+UINT WINAPI waveOutSetVolume(HWAVEOUT hWaveOut, DWORD dw)
 {
     LPWINE_MLD		wmld;
 
-    TRACE("(%04X, %08lx);\n", devid, dw);
+    TRACE("(%p, %08lx);\n", hWaveOut, dw);
 
-     if ((wmld = MMDRV_Get((HANDLE)devid, MMDRV_WAVEOUT, TRUE)) == NULL)
+     if ((wmld = MMDRV_Get(hWaveOut, MMDRV_WAVEOUT, TRUE)) == NULL)
         return MMSYSERR_INVALHANDLE;
 
     return MMDRV_Message(wmld, WODM_SETVOLUME, dw, 0L, TRUE);
