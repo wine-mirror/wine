@@ -17,55 +17,6 @@
 #include "server.h"
 #include "debug.h"
 
-/***********************************************************************
- *           SYNC_BuildWaitStruct
- */
-static BOOL32 SYNC_BuildWaitStruct( DWORD count, const HANDLE32 *handles,
-                                    BOOL32 wait_all, WAIT_STRUCT *wait )
-{
-    DWORD i;
-    K32OBJ **ptr;
-
-    SYSTEM_LOCK();
-    wait->count    = count;
-    wait->wait_all = wait_all;
-    for (i = 0, ptr = wait->objs; i < count; i++, ptr++)
-    {
-    	TRACE(win32,"handle %ld is %08x\n",i,handles[i]);
-        if (!(*ptr = HANDLE_GetObjPtr( PROCESS_Current(), handles[i],
-                                       K32OBJ_UNKNOWN, SYNCHRONIZE,
-                                       &wait->server[i] )))
-        { 
-            ERR(win32, "Bad handle %08x\n", handles[i]); 
-            break; 
-        }
-        if (wait->server[i] == -1)
-            WARN(win32,"No server handle for %08x (type %d)\n",
-                 handles[i], (*ptr)->type );
-    }
-
-    if (i != count)
-    {
-        /* There was an error */
-        while (i--) K32OBJ_DecCount( wait->objs[i] );
-    }
-    SYSTEM_UNLOCK();
-    return (i == count);
-}
-
-
-/***********************************************************************
- *           SYNC_FreeWaitStruct
- */
-static void SYNC_FreeWaitStruct( WAIT_STRUCT *wait )
-{
-    DWORD i;
-    K32OBJ **ptr;
-    SYSTEM_LOCK();
-    for (i = 0, ptr = wait->objs; i < wait->count; i++, ptr++)
-        K32OBJ_DecCount( *ptr );
-    SYSTEM_UNLOCK();
-}
 
 /***********************************************************************
  *              Sleep  (KERNEL32.679)
@@ -122,11 +73,11 @@ DWORD WINAPI WaitForMultipleObjectsEx( DWORD count, const HANDLE32 *handles,
                                        BOOL32 wait_all, DWORD timeout,
                                        BOOL32 alertable )
 {
-    WAIT_STRUCT *wait = &THREAD_Current()->wait_struct;
     struct select_request req;
     struct select_reply reply;
+    int server_handle[MAXIMUM_WAIT_OBJECTS];
     void *apc[32];
-    int len;
+    int i, len;
 
     if (count > MAXIMUM_WAIT_OBJECTS)
     {
@@ -134,8 +85,17 @@ DWORD WINAPI WaitForMultipleObjectsEx( DWORD count, const HANDLE32 *handles,
         return WAIT_FAILED;
     }
 
-    if (!SYNC_BuildWaitStruct( count, handles, wait_all, wait ))
-        return WAIT_FAILED;
+    for (i = 0; i < count; i++)
+    {
+    	TRACE(win32,"handle %d is %08x\n",i,handles[i]);
+        server_handle[i] = HANDLE_GetServerHandle( PROCESS_Current(), handles[i],
+                                                   K32OBJ_UNKNOWN, SYNCHRONIZE );
+        if (server_handle[i] == -1)
+        {
+            ERR(win32,"No server handle for %08x\n",handles[i] );
+            return WAIT_FAILED;
+        }
+    }
 
     req.count   = count;
     req.flags   = 0;
@@ -147,7 +107,7 @@ DWORD WINAPI WaitForMultipleObjectsEx( DWORD count, const HANDLE32 *handles,
 
     CLIENT_SendRequest( REQ_SELECT, -1, 2,
                         &req, sizeof(req),
-                        wait->server, count * sizeof(int) );
+                        server_handle, count * sizeof(int) );
     CLIENT_WaitReply( &len, NULL, 2, &reply, sizeof(reply),
                       apc, sizeof(apc) );
     if ((reply.signaled == STATUS_USER_APC) && (len > sizeof(reply)))
@@ -160,7 +120,6 @@ DWORD WINAPI WaitForMultipleObjectsEx( DWORD count, const HANDLE32 *handles,
             func( (ULONG_PTR)apc[i+1] );
         }
     }
-    SYNC_FreeWaitStruct( wait );
     return reply.signaled;
 }
 
