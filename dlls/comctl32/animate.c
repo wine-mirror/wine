@@ -119,7 +119,7 @@ static BOOL ANIMATE_LoadResA(ANIMATE_INFO *infoPtr, HINSTANCE hInst, LPSTR lpNam
     mminfo.cchBuffer = SizeofResource(hInst, hrsrc);
     infoPtr->hMMio = mmioOpenA(NULL, &mminfo, MMIO_READ);
     if (!infoPtr->hMMio) {
-	GlobalFree((HGLOBAL)lpAvi);
+	FreeResource(infoPtr->hRes);
 	return FALSE;
     }
 
