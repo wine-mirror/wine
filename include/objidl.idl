@@ -1575,7 +1575,7 @@ interface IMessageFilter : IUnknown
     WORD wMethod;
   } INTERFACEINFO, *LPINTERFACEINFO;
 
-  DWORD HandleIncomingCall(
+  DWORD HandleInComingCall(
     [in] DWORD dwCallType,
     [in] HTASK htaskCaller,
     [in] DWORD dwTickCount,
