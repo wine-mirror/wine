@@ -1303,6 +1303,7 @@ BOOL        WINAPI InitializeSid(PSID,PSID_IDENTIFIER_AUTHORITY,BYTE);
 BOOL        WINAPI IsTextUnicode(CONST LPVOID lpBuffer, int cb, LPINT lpi);
 BOOL        WINAPI IsValidSecurityDescriptor(PSECURITY_DESCRIPTOR);
 BOOL        WINAPI IsValidSid(PSID);
+BOOL        WINAPI ImpersonateLoggedOnUser(HANDLE);
 BOOL        WINAPI ImpersonateSelf(SECURITY_IMPERSONATION_LEVEL);
 BOOL        WINAPI IsProcessorFeaturePresent(DWORD);
 BOOL        WINAPI LookupAccountSidA(LPCSTR,PSID,LPSTR,LPDWORD,LPSTR,LPDWORD,PSID_NAME_USE);

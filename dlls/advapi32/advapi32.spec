@@ -117,7 +117,7 @@ debug_channels (advapi crypt reg)
 @ stdcall GetTokenInformation(long long ptr long ptr) GetTokenInformation
 @ stdcall GetUserNameA(ptr ptr) GetUserNameA
 @ stdcall GetUserNameW(ptr ptr) GetUserNameW
-@ stub ImpersonateLoggedOnUser
+@ stdcall ImpersonateLoggedOnUser(long) ImpersonateLoggedOnUser
 @ stub ImpersonateNamedPipeClient
 @ stdcall ImpersonateSelf(long) ImpersonateSelf
 @ stdcall InitializeAcl(ptr long long) InitializeAcl

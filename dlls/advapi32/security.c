@@ -100,7 +100,7 @@ OpenThreadToken( HANDLE ThreadHandle, DWORD DesiredAccess,
  */
 BOOL WINAPI
 AdjustTokenPrivileges( HANDLE TokenHandle, BOOL DisableAllPrivileges,
-                       LPVOID NewState, DWORD BufferLength, 
+                       LPVOID NewState, DWORD BufferLength,
                        LPVOID PreviousState, LPDWORD ReturnLength )
 {
 	CallWin32ToNt(NtAdjustPrivilegesToken(TokenHandle, DisableAllPrivileges, NewState, BufferLength, PreviousState, ReturnLength));
@@ -136,7 +136,7 @@ CheckTokenMembership( HANDLE TokenHandle, PSID SidToCheck,
  *
  */
 BOOL WINAPI
-GetTokenInformation( HANDLE token, TOKEN_INFORMATION_CLASS tokeninfoclass, 
+GetTokenInformation( HANDLE token, TOKEN_INFORMATION_CLASS tokeninfoclass,
 		     LPVOID tokeninfo, DWORD tokeninfolength, LPDWORD retlen )
 {
 	CallWin32ToNt (NtQueryInformationToken( token, tokeninfoclass, tokeninfo, tokeninfolength, retlen));
@@ -147,7 +147,7 @@ GetTokenInformation( HANDLE token, TOKEN_INFORMATION_CLASS tokeninfoclass,
  *
  * Assigns an "impersonation token" to a thread so it can assume the
  * security privledges of another thread or process.  Can also remove
- * a previously assigned token.  Only supported on NT - it's a stub 
+ * a previously assigned token.  Only supported on NT - it's a stub
  * exactly like this one on Win9X.
  *
  */
@@ -892,6 +892,15 @@ BOOL WINAPI
 ImpersonateSelf(SECURITY_IMPERSONATION_LEVEL ImpersonationLevel)
 {
 	return RtlImpersonateSelf(ImpersonationLevel);
+}
+
+/******************************************************************************
+ * ImpersonateLoggedOnUser [ADVAPI32.@]
+ */
+BOOL WINAPI ImpersonateLoggedOnUser(HANDLE hToken)
+{
+    FIXME("(%08x):stub returning FALSE\n", hToken);
+    return FALSE;
 }
 
 /******************************************************************************
