@@ -187,7 +187,7 @@ char* get_basename(const char* file)
     return base_name;
 }
 
-void create_file(const char* name, const char* fmt, ...)
+void create_file(const char* name, int mode, const char* fmt, ...)
 {
     va_list ap;
     FILE *file;
@@ -198,6 +198,7 @@ void create_file(const char* name, const char* fmt, ...)
 	error ("Can not create %s.", name);
     vfprintf(file, fmt, ap);
     va_end(ap);
+    fchmod(fileno(file), mode);
     fclose(file);
 }
 

@@ -133,11 +133,11 @@ static const char *app_loader_template =
     "\n"
     "# figure out the full app path\n"
     "if [ -n \"$appdir\" ]; then\n"
-    "    apppath=\"$appdir/$appname.exe.so\"\n"
+    "    apppath=\"$appdir/$appname\"\n"
     "    WINEDLLPATH=\"$appdir:$WINEDLLPATH\"\n"
     "    export WINEDLLPATH\n"
     "else\n"
-    "    apppath=\"$appname.exe.so\"\n"
+    "    apppath=\"$appname\"\n"
     "fi\n"
     "\n"
     "# determine the WINELOADER\n"
@@ -363,7 +363,10 @@ static void build(struct options* opts)
     else base_name = base_file;
 
     if (opts->files->size == 1 && strendswith(opts->files->base[0], ".exe.so"))
-	goto only_app_loader;
+    {
+	create_file(base_file, 0755, app_loader_template, opts->files->base[0]);
+	return;
+    }
 
     /* prepare the linking path */
     lib_dirs = strarray_dup(opts->lib_dirs);
@@ -511,12 +514,8 @@ static void build(struct options* opts)
     spawn(link_args);
 
     /* create the loader script */
-only_app_loader:
     if (generate_app_loader)
-    {
-        create_file(base_file, app_loader_template, base_name);
-        chmod(base_file, 0755);
-    }
+        create_file(base_file, 0755, app_loader_template, strmake("%s.exe.so", base_name));
 }
 
 
