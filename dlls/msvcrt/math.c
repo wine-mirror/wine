@@ -535,7 +535,7 @@ unsigned int __cdecl MSVCRT__control87(unsigned int newval, unsigned int mask)
   __asm__ __volatile__( "fldcw %0" : : "m" (fpword) );
   return fpword;
 #else
-  return  MSVCRT__controlfp( newVal, mask );
+  return  MSVCRT__controlfp( newval, mask );
 #endif
 }
 
