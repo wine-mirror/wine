@@ -2473,7 +2473,10 @@ TOOLBAR_AddButtonsA (HWND hwnd, WPARAM wParam, LPARAM lParam)
 	btnPtr->fsState   = lpTbb[nCount].fsState;
 	btnPtr->fsStyle   = lpTbb[nCount].fsStyle;
 	btnPtr->dwData    = lpTbb[nCount].dwData;
-	btnPtr->iString   = lpTbb[nCount].iString;
+        if(HIWORD(lpTbb[nCount].iString) && lpTbb[nCount].iString != -1)
+            Str_SetPtrAtoW ((LPWSTR*)&btnPtr->iString, (LPSTR)lpTbb[nCount].iString );
+        else
+            btnPtr->iString   = lpTbb[nCount].iString;
 	btnPtr->bHot      = FALSE;
 
 	if ((infoPtr->hwndToolTip) && !(btnPtr->fsStyle & BTNS_SEP)) {
@@ -2537,7 +2540,10 @@ TOOLBAR_AddButtonsW (HWND hwnd, WPARAM wParam, LPARAM lParam)
 	btnPtr->fsState   = lpTbb[nCount].fsState;
 	btnPtr->fsStyle   = lpTbb[nCount].fsStyle;
 	btnPtr->dwData    = lpTbb[nCount].dwData;
-	btnPtr->iString   = lpTbb[nCount].iString;
+        if(HIWORD(lpTbb[nCount].iString) && lpTbb[nCount].iString != -1)
+            Str_SetPtrW ((LPWSTR*)&btnPtr->iString, (LPWSTR)lpTbb[nCount].iString );
+        else
+            btnPtr->iString   = lpTbb[nCount].iString;
 	btnPtr->bHot      = FALSE;
 
 	if ((infoPtr->hwndToolTip) && !(btnPtr->fsStyle & BTNS_SEP)) {
@@ -3147,10 +3153,16 @@ TOOLBAR_GetButtonInfoA (HWND hwnd, WPARAM wParam, LPARAM lParam)
 	lpTbInfo->fsState = btnPtr->fsState;
     if (lpTbInfo->dwMask & TBIF_STYLE)
 	lpTbInfo->fsStyle = btnPtr->fsStyle;
-     if (lpTbInfo->dwMask & TBIF_TEXT) {
-         LPWSTR lpText = TOOLBAR_GetText(infoPtr,btnPtr);
-	 Str_GetPtrWtoA (lpText, lpTbInfo->pszText,lpTbInfo->cchText);
-         }
+    if (lpTbInfo->dwMask & TBIF_TEXT) {
+        /* TB_GETBUTTONINFO doesn't retrieve text from the string list, so we
+           can't use TOOLBAR_GetText here */
+        LPWSTR lpText;
+        if (HIWORD(btnPtr->iString) && (btnPtr->iString != -1)) {
+            lpText = (LPWSTR)btnPtr->iString;
+            Str_GetPtrWtoA (lpText, lpTbInfo->pszText,lpTbInfo->cchText);
+        } else
+            lpTbInfo->pszText[0] = '\0';
+    }
     return nIndex;
 }
 
@@ -3193,8 +3205,14 @@ TOOLBAR_GetButtonInfoW (HWND hwnd, WPARAM wParam, LPARAM lParam)
     if (lpTbInfo->dwMask & TBIF_STYLE)
 	lpTbInfo->fsStyle = btnPtr->fsStyle;
     if (lpTbInfo->dwMask & TBIF_TEXT) {
-	LPWSTR lpText = TOOLBAR_GetText(infoPtr,btnPtr);
-	Str_GetPtrW (lpText,lpTbInfo->pszText,lpTbInfo->cchText);
+        /* TB_GETBUTTONINFO doesn't retrieve text from the string list, so we
+           can't use TOOLBAR_GetText here */
+        LPWSTR lpText;
+        if (HIWORD(btnPtr->iString) && (btnPtr->iString != -1)) {
+            lpText = (LPWSTR)btnPtr->iString;
+            Str_GetPtrW (lpText,lpTbInfo->pszText,lpTbInfo->cchText);
+        } else
+            lpTbInfo->pszText[0] = '\0';
     }
 
     return nIndex;
