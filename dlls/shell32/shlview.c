@@ -787,6 +787,9 @@ static LRESULT ShellView_OnSetFocus(IShellViewImpl * This)
 	IShellBrowser_OnViewWindowActive(This->pShellBrowser,(IShellView*) This);
 	ShellView_OnActivate(This, SVUIA_ACTIVATE_FOCUS);
 
+	/* Set the focus to the listview */
+	SetFocus(This->hWndList);
+
 	/* Notify the ICommDlgBrowser interface */
 	OnStateChange(This,CDBOSC_SETFOCUS);
 
@@ -1035,6 +1038,8 @@ static LRESULT CALLBACK ShellView_WndProc(HWND hWnd, UINT uMessage, WPARAM wPara
 
 	  case WM_SHOWWINDOW:	UpdateWindow(pThis->hWndList);
 				break;
+
+	  case WM_GETDLGCODE:   return SendMessageA(pThis->hWndList,uMessage,0,0);
 
 	  case WM_DESTROY:	pRevokeDragDrop(pThis->hWnd);
 	                        break;
@@ -1293,7 +1298,7 @@ static HRESULT WINAPI IShellView_fnCreateViewWindow(
 	*phWnd = CreateWindowExA(0,
 				SV_CLASS_NAME,
 				NULL,
-				WS_CHILD | WS_VISIBLE | WS_CLIPSIBLINGS,
+				WS_CHILD | WS_VISIBLE | WS_CLIPSIBLINGS | WS_TABSTOP,
 				prcView->left,
 				prcView->top,
 				prcView->right - prcView->left,
