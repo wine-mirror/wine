@@ -794,8 +794,14 @@ HMODULE32 WINAPI LoadLibraryEx32A(LPCSTR libname,HFILE32 hfile,DWORD flags)
     HMODULE32 hmod;
     hmod = MODULE_LoadLibraryEx32A(libname,PROCESS_Current(),hfile,flags);
 
+    /* at least call not the dllmain...*/
+    if ( DONT_RESOLVE_DLL_REFERENCES==flags || LOAD_LIBRARY_AS_DATAFILE==flags )
+    { FIXME(module,"flag not properly supported %lx\n", flags);
+      return hmod;
+    }
+
     /* initialize DLL just loaded */
-    if ( hmod >= 32 )
+    if ( hmod >= 32 )       
         MODULE_InitializeDLLs( PROCESS_Current(), hmod, 
                                DLL_PROCESS_ATTACH, (LPVOID)-1 );
 
