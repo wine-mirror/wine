@@ -2157,6 +2157,7 @@ static void dump_set_window_info_request( const struct set_window_info_request *
     fprintf( stderr, " instance=%p,", req->instance );
     fprintf( stderr, " user_data=%p,", req->user_data );
     fprintf( stderr, " extra_offset=%d,", req->extra_offset );
+    fprintf( stderr, " extra_size=%d,", req->extra_size );
     fprintf( stderr, " extra_value=%08x", req->extra_value );
 }
 

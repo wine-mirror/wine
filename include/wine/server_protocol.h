@@ -2605,6 +2605,7 @@ struct set_window_info_request
     void*          instance;
     void*          user_data;
     int            extra_offset;
+    size_t         extra_size;
     unsigned int   extra_value;
 };
 struct set_window_info_reply
@@ -2622,8 +2623,7 @@ struct set_window_info_reply
 #define SET_WIN_ID        0x04
 #define SET_WIN_INSTANCE  0x08
 #define SET_WIN_USERDATA  0x10
-#define SET_WIN_EXTRAWORD 0x20
-#define SET_WIN_EXTRALONG 0x40
+#define SET_WIN_EXTRA     0x20
 
 
 
@@ -3673,6 +3673,6 @@ union generic_reply
     struct set_global_windows_reply set_global_windows_reply;
 };
 
-#define SERVER_PROTOCOL_VERSION 127
+#define SERVER_PROTOCOL_VERSION 128
 
 #endif /* __WINE_WINE_SERVER_PROTOCOL_H */

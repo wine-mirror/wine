@@ -1752,17 +1752,24 @@ WORD WINAPI GetWindowWord( HWND hwnd, INT offset )
         }
         if (wndPtr == WND_OTHER_PROCESS)
         {
-            if (IsWindow( hwnd ))
-                FIXME( "(%d) not supported yet on other process window %p\n", offset, hwnd );
-            SetLastError( ERROR_INVALID_WINDOW_HANDLE );
-            return 0;
+            SERVER_START_REQ( set_window_info )
+            {
+                req->handle = hwnd;
+                req->flags  = 0;  /* don't set anything, just retrieve */
+                req->extra_offset = offset;
+                req->extra_size = sizeof(retvalue);
+                if (!wine_server_call_err( req ))
+                    memcpy( &retvalue, &reply->old_extra_value, sizeof(retvalue) );
+            }
+            SERVER_END_REQ;
+            return retvalue;
         }
         if (offset > (int)(wndPtr->cbWndExtra - sizeof(WORD)))
         {
             WARN("Invalid offset %d\n", offset );
             SetLastError( ERROR_INVALID_INDEX );
         }
-        else retvalue = *(WORD *)(((char *)wndPtr->wExtra) + offset);
+        else memcpy( &retvalue,  (char *)wndPtr->wExtra + offset, sizeof(retvalue) );
         WIN_ReleasePtr( wndPtr );
         return retvalue;
     }
@@ -1834,14 +1841,15 @@ WORD WINAPI SetWindowWord( HWND hwnd, INT offset, WORD newval )
     SERVER_START_REQ( set_window_info )
     {
         req->handle = hwnd;
-        req->flags = SET_WIN_EXTRAWORD;
+        req->flags = SET_WIN_EXTRA;
         req->extra_offset = offset;
-        req->extra_value = newval;
+        req->extra_size = sizeof(newval);
+        memcpy( &req->extra_value, &newval, sizeof(newval) );
         if (!wine_server_call_err( req ))
         {
-            WORD *ptr = (WORD *)(((char *)wndPtr->wExtra) + offset);
-            retval = *ptr;
-            *ptr = newval;
+            void *ptr = (char *)wndPtr->wExtra + offset;
+            memcpy( &retval, ptr, sizeof(retval) );
+            memcpy( ptr, &newval, sizeof(newval) );
         }
     }
     SERVER_END_REQ;
@@ -1885,6 +1893,7 @@ static LONG WIN_GetWindowLong( HWND hwnd, INT offset, WINDOWPROCTYPE type )
             req->handle = hwnd;
             req->flags  = 0;  /* don't set anything, just retrieve */
             req->extra_offset = (offset >= 0) ? offset : -1;
+            req->extra_size = (offset >= 0) ? sizeof(retvalue) : 0;
             if (!wine_server_call_err( req ))
             {
                 switch(offset)
@@ -1900,8 +1909,6 @@ static LONG WIN_GetWindowLong( HWND hwnd, INT offset, WINDOWPROCTYPE type )
                     break;
                 }
             }
-            else if (offset >= 0 && GetLastError() == ERROR_INVALID_PARAMETER)
-                SetLastError( ERROR_INVALID_INDEX );
         }
         SERVER_END_REQ;
         return retvalue;
@@ -2094,9 +2101,10 @@ static LONG WIN_SetWindowLong( HWND hwnd, INT offset, LONG newval,
             req->user_data = (void *)newval;
             break;
         default:
-            req->flags = SET_WIN_EXTRALONG;
+            req->flags = SET_WIN_EXTRA;
             req->extra_offset = offset;
-            req->extra_value = newval;
+            req->extra_size = sizeof(newval);
+            memcpy( &req->extra_value, &newval, sizeof(newval) );
         }
         if ((ok = !wine_server_call_err( req )))
         {
@@ -2124,9 +2132,9 @@ static LONG WIN_SetWindowLong( HWND hwnd, INT offset, LONG newval,
                 break;
             default:
                 {
-                    LONG *ptr = (LONG *)((char *)wndPtr->wExtra + offset);
-                    retval = *ptr;
-                    *ptr = newval;
+                    void *ptr = (char *)wndPtr->wExtra + offset;
+                    memcpy( &retval, ptr, sizeof(retval) );
+                    memcpy( ptr, &newval, sizeof(newval) );
                 }
                 break;
             }

@@ -1834,6 +1834,7 @@ enum message_type
     void*          instance;      /* creator instance */
     void*          user_data;     /* user-specific data */
     int            extra_offset;  /* offset to set in extra bytes */
+    size_t         extra_size;    /* size to set in extra bytes */
     unsigned int   extra_value;   /* value to set in extra bytes */
 @REPLY
     unsigned int   old_style;     /* old window style */
@@ -1848,8 +1849,7 @@ enum message_type
 #define SET_WIN_ID        0x04
 #define SET_WIN_INSTANCE  0x08
 #define SET_WIN_USERDATA  0x10
-#define SET_WIN_EXTRAWORD 0x20
-#define SET_WIN_EXTRALONG 0x40
+#define SET_WIN_EXTRA     0x20
 
 
 /* Get a list of the window parents, up to the root of the tree */

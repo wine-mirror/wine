@@ -586,20 +586,20 @@ DECL_HANDLER(set_window_info)
         set_error( STATUS_ACCESS_DENIED );
         return;
     }
-    if (req->extra_offset < -1 || req->extra_offset >= win->nb_extra_bytes)
+    if (req->extra_size > sizeof(req->extra_value) ||
+        req->extra_offset < -1 ||
+        req->extra_offset > win->nb_extra_bytes - (int)req->extra_size)
     {
-        set_error( STATUS_INVALID_PARAMETER );
+        set_win32_error( ERROR_INVALID_INDEX );
         return;
     }
     if (req->extra_offset != -1)
     {
-        memcpy( &reply->old_extra_value, win->extra_bytes + req->extra_offset,
-                min( sizeof(reply->old_extra_value),
-                     (size_t)(win->nb_extra_bytes - req->extra_offset) ));
+        memcpy( &reply->old_extra_value, win->extra_bytes + req->extra_offset, req->extra_size );
     }
-    else if (req->flags & (SET_WIN_EXTRAWORD|SET_WIN_EXTRALONG))
+    else if (req->flags & SET_WIN_EXTRA)
     {
-        set_error( STATUS_INVALID_PARAMETER );
+        set_win32_error( ERROR_INVALID_INDEX );
         return;
     }
     reply->old_style     = win->style;
@@ -612,12 +612,8 @@ DECL_HANDLER(set_window_info)
     if (req->flags & SET_WIN_ID) win->id = req->id;
     if (req->flags & SET_WIN_INSTANCE) win->instance = req->instance;
     if (req->flags & SET_WIN_USERDATA) win->user_data = req->user_data;
-    if (req->flags & (SET_WIN_EXTRAWORD|SET_WIN_EXTRALONG))
-    {
-        const int len = (req->flags & SET_WIN_EXTRALONG) ? sizeof(int) : sizeof(short);
-        memcpy( win->extra_bytes + req->extra_offset, &req->extra_value,
-                min( len, win->nb_extra_bytes - req->extra_offset ));
-    }
+    if (req->flags & SET_WIN_EXTRA) memcpy( win->extra_bytes + req->extra_offset,
+                                            &req->extra_value, req->extra_size );
 }
 
 
