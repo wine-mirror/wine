@@ -2138,8 +2138,12 @@ static inline LRESULT WINAPI ComboWndProc_locked( WND* pWnd, UINT message,
 	case CB_GETEXTENDEDUI16:
 	case CB_GETEXTENDEDUI:
 		return  (lphc->wState & CBF_EUI) ? TRUE : FALSE;
-	case (WM_USER + 0x1B):
-	        WARN("[%04x]: undocumented msg!\n", hwnd );
+
+	default:
+		if (message >= WM_USER)
+		    WARN("unknown msg WM_USER+%04x wp=%04x lp=%08lx\n",
+			message - WM_USER, wParam, lParam );
+		break;
     }
     return DefWindowProcA(hwnd, message, wParam, lParam);
   }
