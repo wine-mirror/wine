@@ -71,7 +71,7 @@ type	win32
  68 stub GetConvertStg
  69 stub GetDocumentBitStg
  70 stdcall GetHGlobalFromILockBytes(ptr ptr) GetHGlobalFromILockBytes
- 71 stub GetHGlobalFromStream
+ 71 stdcall GetHGlobalFromStream(ptr ptr) GetHGlobalFromStream
  72 stub GetHookInterface
  73 stdcall GetRunningObjectTable(long ptr) GetRunningObjectTable
  74 stub IIDFromString

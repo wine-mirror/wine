@@ -185,6 +185,32 @@ HRESULT WINAPI CreateStreamOnHGlobal(
   return E_OUTOFMEMORY;
 }
 
+/***********************************************************************
+ *           GetHGlobalFromStream     [OLE32.71]
+ */
+HRESULT WINAPI GetHGlobalFromStream(IStream* pstm, HGLOBAL* phglobal)
+{
+  HGLOBALStreamImpl* pStream;
+
+  if (pstm == NULL)
+    return E_INVALIDARG;
+
+  pStream = (HGLOBALStreamImpl*) pstm;
+
+  /*
+   * Verify that the stream object was created with CreateStreamOnHGlobal.
+   */
+  if (pStream->lpvtbl == &HGLOBALStreamImpl_Vtbl)
+    *phglobal = pStream->supportHandle;
+  else
+  {
+    *phglobal = 0;
+    return E_INVALIDARG;
+  }
+
+  return S_OK;
+}
+
 /******************************************************************************
 ** HGLOBALStreamImpl implementation
 */
