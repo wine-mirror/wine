@@ -502,7 +502,7 @@ LONG WINAPI LZCopy( HFILE src, HFILE dest )
 	/* we need that weird typedef, for i can't seem to get function pointer
 	 * casts right. (Or they probably just do not like WINAPI in general)
 	 */
-	typedef	UINT	WINAPI (*_readfun)(HFILE,LPVOID,UINT);
+	typedef	UINT	(WINAPI *_readfun)(HFILE,LPVOID,UINT);
 
 	_readfun	xread;
 

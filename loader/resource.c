@@ -408,7 +408,7 @@ LPVOID WINAPI LockResource( HGLOBAL handle )
     return LockResource16( handle );
 }
 
-typedef WORD WINAPI (*pDestroyIcon32Proc)( HGLOBAL16 handle, UINT16 flags );
+typedef WORD (WINAPI *pDestroyIcon32Proc)( HGLOBAL16 handle, UINT16 flags );
 
 
 /**********************************************************************

@@ -265,7 +265,7 @@ struct IDirectDrawSurfaceImpl
     BOOL (*aux_flip)(LPVOID ctx, LPVOID data);
     void (*aux_unlock)(LPVOID ctx, LPVOID data, LPRECT lpRect);
     struct IDirect3DTexture2Impl*	texture;
-    HRESULT WINAPI		(*SetColorKey_cb)(struct IDirect3DTexture2Impl *texture, DWORD dwFlags, LPDDCOLORKEY ckey ) ; 
+    HRESULT (WINAPI *SetColorKey_cb)(struct IDirect3DTexture2Impl *texture, DWORD dwFlags, LPDDCOLORKEY ckey ) ; 
 };
 
 /*****************************************************************************

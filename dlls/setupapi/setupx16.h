@@ -337,9 +337,9 @@ enum {
 	VCPM_FILECERTIFYWARN
 };
 
-typedef LRESULT CALLBACK (*VIFPROC)(LPVOID lpvObj, UINT16 uMsg, WPARAM wParam, LPARAM lParam, LPARAM lparamRef);
+typedef LRESULT (CALLBACK *VIFPROC)(LPVOID lpvObj, UINT16 uMsg, WPARAM wParam, LPARAM lParam, LPARAM lparamRef);
 
-typedef int CALLBACK (*VCPENUMPROC)(LPVIRTNODE lpvn, LPARAM lparamRef);
+typedef int (CALLBACK *VCPENUMPROC)(LPVIRTNODE lpvn, LPARAM lparamRef);
 
 RETERR16 WINAPI VcpOpen16(VIFPROC vifproc, LPARAM lparamMsgRef);
 RETERR16 WINAPI VcpQueueCopy16(

@@ -239,9 +239,9 @@ BOOL WINAPI PSDRV_PaperDlgProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM
 }
 
 
-static void WINAPI (*pInitCommonControls) (void);
-static HPROPSHEETPAGE WINAPI (*pCreatePropertySheetPage) (LPCPROPSHEETPAGEA);
-static int WINAPI (*pPropertySheet) (LPCPROPSHEETHEADERA);
+static void (WINAPI *pInitCommonControls) (void);
+static HPROPSHEETPAGE (WINAPI *pCreatePropertySheetPage) (LPCPROPSHEETPAGEA);
+static int (WINAPI *pPropertySheet) (LPCPROPSHEETHEADERA);
 
 /***************************************************************
  *	ExtDeviceMode	[WINEPS16.90]

@@ -818,8 +818,8 @@ UINT WINAPI RealizePalette(
 }
 
 
-typedef HWND WINAPI (*WindowFromDC_funcptr)( HDC );
-typedef BOOL WINAPI (*RedrawWindow_funcptr)( HWND, const RECT *, HRGN, UINT );
+typedef HWND (WINAPI *WindowFromDC_funcptr)( HDC );
+typedef BOOL (WINAPI *RedrawWindow_funcptr)( HWND, const RECT *, HRGN, UINT );
 
 /**********************************************************************
  * UpdateColors [GDI32.@]  Remaps current colors to logical palette

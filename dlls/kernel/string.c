@@ -9,8 +9,8 @@
 #include "wine/winbase16.h"
 
 
-static INT WINAPI (*pLoadStringA)(HINSTANCE, UINT, LPSTR, INT);
-static INT WINAPI (*pwvsprintfA)(LPSTR, LPCSTR, va_list);
+static INT (WINAPI *pLoadStringA)(HINSTANCE, UINT, LPSTR, INT);
+static INT (WINAPI *pwvsprintfA)(LPSTR, LPCSTR, va_list);
 
 /***********************************************************************
  * Helper for k32 family functions

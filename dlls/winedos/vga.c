@@ -30,7 +30,7 @@ static int vga_width;
 static int vga_height;
 static int vga_depth;
 
-typedef HRESULT WINAPI (*DirectDrawCreateProc)(LPGUID,LPDIRECTDRAW *,LPUNKNOWN);
+typedef HRESULT (WINAPI *DirectDrawCreateProc)(LPGUID,LPDIRECTDRAW *,LPUNKNOWN);
 static DirectDrawCreateProc pDirectDrawCreate;
 
 static PALETTEENTRY vga_def_palette[256]={

@@ -50,7 +50,7 @@ typedef struct _UTINFO
 
 static UTINFO *UT_head; /* head of Universal Thunk list */
 
-typedef DWORD CALLBACK (*UTGLUEPROC)( LPVOID lpBuff, DWORD dwUserDefined );
+typedef DWORD (CALLBACK *UTGLUEPROC)( LPVOID lpBuff, DWORD dwUserDefined );
 
 BOOL WINAPI UTRegister( HMODULE hModule, LPSTR lpsz16BITDLL, 
                         LPSTR lpszInitName, LPSTR lpszProcName,

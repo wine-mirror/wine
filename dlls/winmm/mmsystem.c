@@ -5274,7 +5274,7 @@ void WINAPI WINE_mmThreadEntryPoint(DWORD _pmt)
     TRACE("done\n");
 }
 
-typedef	BOOL16 WINAPI (*MMCPLCALLBACK)(HWND, LPCSTR, LPCSTR, LPCSTR);
+typedef	BOOL16 (WINAPI *MMCPLCALLBACK)(HWND, LPCSTR, LPCSTR, LPCSTR);
 
 /**************************************************************************
  * 			mmShowMMCPLPropertySheet	[MMSYSTEM.1150]

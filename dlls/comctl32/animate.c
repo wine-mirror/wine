@@ -25,10 +25,10 @@ DEFAULT_DEBUG_CHANNEL(animate);
 
 static struct {
     HMODULE	hModule;
-    HIC         WINAPI  (*fnICOpen)(DWORD, DWORD, UINT);
-    LRESULT     WINAPI  (*fnICClose)(HIC);
-    LRESULT     WINAPI  (*fnICSendMessage)(HIC, UINT, DWORD, DWORD);
-    DWORD       WINAPIV (*fnICDecompress)(HIC,DWORD,LPBITMAPINFOHEADER,LPVOID,LPBITMAPINFOHEADER,LPVOID);
+    HIC         (WINAPI *fnICOpen)(DWORD, DWORD, UINT);
+    LRESULT     (WINAPI *fnICClose)(HIC);
+    LRESULT     (WINAPI *fnICSendMessage)(HIC, UINT, DWORD, DWORD);
+    DWORD       (WINAPIV *fnICDecompress)(HIC,DWORD,LPBITMAPINFOHEADER,LPVOID,LPBITMAPINFOHEADER,LPVOID);
 } fnIC;
 
 typedef struct

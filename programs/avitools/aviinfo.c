@@ -17,14 +17,14 @@ int PASCAL WinMain(HINSTANCE hInstance, HINSTANCE prev, LPSTR cmdline, int show)
     AVIFILEINFO		afi;
     AVISTREAMINFO	asi;
 
-void	WINAPI (*fnAVIFileInit)(void);
-void	WINAPI (*fnAVIFileExit)(void);
-ULONG	WINAPI (*fnAVIFileRelease)(PAVIFILE);
-ULONG	WINAPI (*fnAVIStreamRelease)(PAVISTREAM);
-HRESULT WINAPI (*fnAVIFileOpen)(PAVIFILE * ppfile,LPCTSTR szFile,UINT uMode,LPCLSID lpHandler);
-HRESULT WINAPI (*fnAVIFileInfo)(PAVIFILE ppfile,AVIFILEINFO *afi,LONG size);
-HRESULT WINAPI (*fnAVIFileGetStream)(PAVIFILE ppfile,PAVISTREAM *afi,DWORD fccType,LONG lParam);
-HRESULT WINAPI (*fnAVIStreamInfo)(PAVISTREAM iface,AVISTREAMINFO *afi,LONG size);
+void	(WINAPI *fnAVIFileInit)(void);
+void	(WINAPI *fnAVIFileExit)(void);
+ULONG	(WINAPI *fnAVIFileRelease)(PAVIFILE);
+ULONG	(WINAPI *fnAVIStreamRelease)(PAVISTREAM);
+HRESULT (WINAPI *fnAVIFileOpen)(PAVIFILE * ppfile,LPCTSTR szFile,UINT uMode,LPCLSID lpHandler);
+HRESULT (WINAPI *fnAVIFileInfo)(PAVIFILE ppfile,AVIFILEINFO *afi,LONG size);
+HRESULT (WINAPI *fnAVIFileGetStream)(PAVIFILE ppfile,PAVISTREAM *afi,DWORD fccType,LONG lParam);
+HRESULT (WINAPI *fnAVIStreamInfo)(PAVISTREAM iface,AVISTREAMINFO *afi,LONG size);
 
 #define XX(x) fn##x = (void*)GetProcAddress(avifil32,#x);assert(fn##x);
 #ifdef UNICODE

@@ -33,10 +33,10 @@ DEFAULT_DEBUG_CHANNEL(winspool);
 static LPWSTR *printer_array;
 static int nb_printers;
 
-static DWORD WINAPI (*GDI_CallDeviceCapabilities16)( LPCSTR lpszDevice, LPCSTR lpszPort,
+static DWORD (WINAPI *GDI_CallDeviceCapabilities16)( LPCSTR lpszDevice, LPCSTR lpszPort,
                                                      WORD fwCapability, LPSTR lpszOutput,
                                                      LPDEVMODEA lpdm );
-static INT WINAPI (*GDI_CallExtDeviceMode16)( HWND hwnd, LPDEVMODEA lpdmOutput,
+static INT (WINAPI *GDI_CallExtDeviceMode16)( HWND hwnd, LPDEVMODEA lpdmOutput,
                                               LPSTR lpszDevice, LPSTR lpszPort,
                                               LPDEVMODEA lpdmInput, LPSTR lpszProfile,
                                               DWORD fwMode );

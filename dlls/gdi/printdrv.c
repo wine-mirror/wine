@@ -656,7 +656,7 @@ INT16 WINAPI WriteSpool16(HPJOB16 hJob, LPSTR lpData, INT16 cch)
     return nRet;
 }
 
-typedef INT WINAPI (*MSGBOX_PROC)( HWND, LPCSTR, LPCSTR, UINT );
+typedef INT (WINAPI *MSGBOX_PROC)( HWND, LPCSTR, LPCSTR, UINT );
 
 /**********************************************************************
  *           WriteDialog   (GDI.242)

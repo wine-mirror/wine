@@ -158,7 +158,7 @@ static inline void RELAY_PrintArgs( int *args, int nb_args, unsigned int typemas
 
 
 typedef LONGLONG (*LONGLONG_CPROC)();
-typedef LONGLONG WINAPI (*LONGLONG_FARPROC)();
+typedef LONGLONG (WINAPI *LONGLONG_FARPROC)();
 
 
 /***********************************************************************

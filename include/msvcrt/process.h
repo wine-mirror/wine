@@ -33,8 +33,8 @@
 extern "C" {
 #endif
 
-typedef void __cdecl (*_beginthread_start_routine_t)(void *);
-typedef unsigned int __stdcall (*_beginthreadex_start_routine_t)(void *);
+typedef void (__cdecl *_beginthread_start_routine_t)(void *);
+typedef unsigned int (__stdcall *_beginthreadex_start_routine_t)(void *);
 
 unsigned long _beginthread(_beginthread_start_routine_t,unsigned int,void*);
 unsigned long _beginthreadex(void*,unsigned int,_beginthreadex_start_routine_t,void*,unsigned int,unsigned int*);
