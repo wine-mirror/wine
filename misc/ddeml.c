@@ -27,29 +27,11 @@
  */
 #define MAX_BUFFER_LEN            (MAX_ATOM_LEN + 1)
 
-
-static DDE_HANDLE_ENTRY *DDE_Handle_Table_Base = NULL;
-static DWORD 		DDE_Max_Assigned_Instance = 0;  // OK for present, may have to worry about wrap-around later
-static const char	inst_string[]= "DDEMaxInstance";
-static LPCWSTR 		DDEInstanceAccess = (LPCWSTR)&inst_string;
-static const char	handle_string[] = "DDEHandleAccess";
-static LPCWSTR      	DDEHandleAccess = (LPCWSTR)&handle_string;
-static HANDLE	     	inst_count_mutex = 0;
-static HANDLE	     	handle_mutex = 0;
-       DDE_HANDLE_ENTRY *this_instance;
-       SECURITY_ATTRIBUTES *s_att= NULL;
-       DWORD 	     	err_no = 0;
-
 /*  typedef struct {
 	DWORD		nLength;
 	LPVOID		lpSecurityDescriptor;
 	BOOL		bInheritHandle;
 }	SECURITY_ATTRIBUTES; */
-
-#define TRUE	1
-#define FALSE	0
-
-
 
 /* This is a simple list to keep track of the strings created
  * by DdeCreateStringHandle.  The list is used to free
@@ -66,9 +48,40 @@ struct tagHSZNode
     HSZ hsz;
 };
 
-/* Start off the list pointer with a NULL.
- */
-static HSZNode* pHSZNodes = NULL;
+
+typedef struct DDE_HANDLE_ENTRY {
+    BOOL16              Monitor;        /* have these two as full Booleans cos they'll be tested frequently */
+    BOOL16              Client_only;    /* bit wasteful of space but it will be faster */
+    BOOL16              Unicode;        /* Flag to indicate Win32 API used to initialise */
+    BOOL16              Win16;          /* flag to indicate Win16 API used to initialize */
+    DWORD               Instance_id;  /* needed to track monitor usage */
+    struct DDE_HANDLE_ENTRY    *Next_Entry;
+    HSZNode	*Node_list;
+    PFNCALLBACK         CallBack;
+    DWORD               CBF_Flags;
+    DWORD               Monitor_flags;
+    UINT              Txn_count;      /* count transactions open to simplify closure */
+    DWORD               Last_Error; 
+} DDE_HANDLE_ENTRY;
+
+static DDE_HANDLE_ENTRY *DDE_Handle_Table_Base = NULL;
+static DWORD 		DDE_Max_Assigned_Instance = 0;  /* OK for present, may have to worry about wrap-around later */
+static const char	inst_string[]= "DDEMaxInstance";
+static LPCWSTR 		DDEInstanceAccess = (LPCWSTR)&inst_string;
+static const char	handle_string[] = "DDEHandleAccess";
+static LPCWSTR      	DDEHandleAccess = (LPCWSTR)&handle_string;
+static HANDLE	     	inst_count_mutex = 0;
+static HANDLE	     	handle_mutex = 0;
+       DDE_HANDLE_ENTRY *this_instance;
+       SECURITY_ATTRIBUTES *s_att= NULL;
+       DWORD 	     	err_no = 0;
+       DDE_HANDLE_ENTRY *reference_inst;
+
+#define TRUE	1
+#define FALSE	0
+
+
+
 
 
 /******************************************************************************
@@ -83,16 +96,17 @@ static HSZNode* pHSZNodes = NULL;
  *  Vn       Date    	Author         		Comment
  *
  *  1.0      Dec 1998  Corel/Macadamian    Initial version
+ *  1.1      Mar 1999  Keith Matthews      Added multiple instance handling
  *
  */
-static void RemoveHSZNode( DWORD idInst, HSZ hsz )
+static void RemoveHSZNode( HSZ hsz )
 {
     HSZNode* pPrev = NULL;
     HSZNode* pCurrent = NULL;
 
     /* Set the current node at the start of the list.
      */
-    pCurrent = pHSZNodes;
+    pCurrent = reference_inst->Node_list;
     /* While we have more nodes.
      */
     while( pCurrent != NULL )
@@ -106,9 +120,9 @@ static void RemoveHSZNode( DWORD idInst, HSZ hsz )
             /* If the first node in the list is to to be removed.
              * Set the global list pointer to the next node.
              */
-            if( pCurrent == pHSZNodes )
+            if( pCurrent == reference_inst->Node_list )
             {
-                pHSZNodes = pCurrent->next;
+                reference_inst->Node_list = pCurrent->next;
             }
             /* Just fix the pointers has to skip the current
              * node so we can delete it.
@@ -144,15 +158,16 @@ static void RemoveHSZNode( DWORD idInst, HSZ hsz )
  *  Vn       Date    	Author         		Comment
  *
  *  1.0      Dec 1998  Corel/Macadamian    Initial version
+ *  1.1      Mar 1999  Keith Matthews      Added multiple instance handling
  *
  */
 static void FreeAndRemoveHSZNodes( DWORD idInst )
 {
     /* Free any strings created in this instance.
      */
-    while( pHSZNodes != NULL )
+    while( reference_inst->Node_list != NULL )
     {
-        DdeFreeStringHandle( idInst, pHSZNodes->hsz );
+        DdeFreeStringHandle( idInst, reference_inst->Node_list->hsz );
     }
 }
 
@@ -168,9 +183,10 @@ static void FreeAndRemoveHSZNodes( DWORD idInst )
  *  Vn       Date    	Author         		Comment
  *
  *  1.0      Dec 1998  Corel/Macadamian    Initial version
+ *  1.1	     Mar 1999  Keith Matthews      Added instance handling
  *
  */
-static void InsertHSZNode( DWORD idInst, HSZ hsz )
+static void InsertHSZNode( HSZ hsz )
 {
     if( hsz != 0 )
     {
@@ -183,15 +199,48 @@ static void InsertHSZNode( DWORD idInst, HSZ hsz )
             /* Set the handle value.
              */
             pNew->hsz = hsz;
-            /* Attach the node to the head of the list.
+            /* Attach the node to the head of the list. i.e most recently added is first
              */
-            pNew->next = pHSZNodes;
+            pNew->next = reference_inst->Node_list;
             /* The new node is now at the head of the list
              * so set the global list pointer to it.
              */
-            pHSZNodes = pNew;
+            reference_inst->Node_list = pNew;
+	    TRACE(ddeml,"HSZ node list entry added\n");
         }
     }
+}
+
+/*****************************************************************************
+ *	Find_Instance_Entry
+ *
+ *	generic routine to return a pointer to the relevant DDE_HANDLE_ENTRY
+ *	for an instance Id, or NULL if the entry does not exist
+ *
+ *	ASSUMES the mutex protecting the handle entry list is reserved before calling
+ *
+ ******************************************************************************
+ *
+ *	Change History
+ *
+ *  Vn       Date       Author		        Comment
+ *
+ *  1.0      March 1999  Keith Matthews      1st implementation
+             */
+ DDE_HANDLE_ENTRY *Find_Instance_Entry (DWORD InstId)
+{
+	reference_inst =  DDE_Handle_Table_Base;
+	while ( reference_inst != NULL )
+	{
+		if ( reference_inst->Instance_id == InstId )
+		{
+			TRACE(ddeml,"Instance entry found\n");
+			return reference_inst;
+        }
+		reference_inst = reference_inst->Next_Entry;
+    }
+	TRACE(ddeml,"Instance entry missing\n");
+	return NULL;
 }
 
 /******************************************************************************
@@ -207,7 +256,7 @@ static void InsertHSZNode( DWORD idInst, HSZ hsz )
  *  Vn       Date    	Author         		Comment
  *
  *  1.0      Jan 1999  Keith Matthews        Initial version
- *  1.1	     Mar 1999  Keith Matthews	     Corrected Heap handling.
+ *  1.1	     Mar 1999  Keith Matthews	     Corrected Heap handling. Corrected re-initialisation handling
  *
  */
  DWORD Release_reserved_mutex (HANDLE mutex, LPTSTR mutex_name, BOOL release_handle_m, BOOL release_this_i )
@@ -248,15 +297,15 @@ DWORD IncrementInstanceId()
 {
     	SECURITY_ATTRIBUTES s_attrib;
 	/*  Need to set up Mutex in case it is not already present */
-	// increment handle count & get value
+	/* increment handle count & get value */
 	if ( !inst_count_mutex )
 	{
 		s_attrib.bInheritHandle = TRUE;
 		s_attrib.lpSecurityDescriptor = NULL;
 		s_attrib.nLength = sizeof(s_attrib);
-		inst_count_mutex = CreateMutexW(&s_attrib,1,DDEInstanceAccess); // 1st time through
+		inst_count_mutex = CreateMutexW(&s_attrib,1,DDEInstanceAccess); /* 1st time through */
 	} else {
-		WaitForSingleObject(inst_count_mutex,1000); // subsequent calls
+		WaitForSingleObject(inst_count_mutex,1000); /* subsequent calls */
 		/*  FIXME  - needs refinement with popup for timeout, also is timeout interval OK */
 	}
 	if ( (err_no=GetLastError()) != 0 )
@@ -267,6 +316,7 @@ DWORD IncrementInstanceId()
 	}
 	DDE_Max_Assigned_Instance++;
 	this_instance->Instance_id = DDE_Max_Assigned_Instance;
+        TRACE(ddeml,"New instance id %ld allocated\n",DDE_Max_Assigned_Instance);
 	if (Release_reserved_mutex(inst_count_mutex,"instance_count",1,0)) return DMLERR_SYS_ERROR;
 	return DMLERR_NO_ERROR;
 }
@@ -322,12 +372,12 @@ UINT WINAPI DdeInitializeA( LPDWORD pidInst, PFNCALLBACK pfnCallback,
 UINT WINAPI DdeInitializeW( LPDWORD pidInst, PFNCALLBACK pfnCallback,
                                 DWORD afCmd, DWORD ulRes )
 {
-    DDE_HANDLE_ENTRY *reference_inst;
+
+/*  probably not really capable of handling mutliple processes, but should handle
+ *	multiple instances within one process */
+
     SECURITY_ATTRIBUTES s_attrib;
     s_att = &s_attrib;
-
-    /*  probably not really capable of handling mutliple processes, 
-	but should handle multiple instances within one process */
 
     if( ulRes )
     {
@@ -348,37 +398,37 @@ UINT WINAPI DdeInitializeW( LPDWORD pidInst, PFNCALLBACK pfnCallback,
         return DMLERR_INVALIDPARAMETER; /* might be DMLERR_DLL_USAGE */
      }
 
-     /* grab enough heap for one control struct - not really necessary 
-	for re-initialise but allows us to use same validation routines */
-     this_instance= (DDE_HANDLE_ENTRY*)HeapAlloc( SystemHeap, 0, 
-						  sizeof(DDE_HANDLE_ENTRY) );
+     /* grab enough heap for one control struct - not really necessary for re-initialise
+      *	but allows us to use same validation routines */
+     this_instance= (DDE_HANDLE_ENTRY*)HeapAlloc( SystemHeap, 0, sizeof(DDE_HANDLE_ENTRY) );
      if ( this_instance == NULL )
      {
-	// catastrophe !! warn user & abort
+	/* catastrophe !! warn user & abort */
 	ERR (ddeml, "Instance create failed - out of memory\n");
 	return DMLERR_SYS_ERROR;
      }
      this_instance->Next_Entry = NULL;
      this_instance->Monitor=(afCmd|APPCLASS_MONITOR);
 
-     // messy bit, spec implies that 'Client Only' can be set in 2 different ways, catch 1 here
+     /* messy bit, spec implies that 'Client Only' can be set in 2 different ways, catch 1 here */
 
      this_instance->Client_only=afCmd&APPCMD_CLIENTONLY;
-     this_instance->Instance_id = *pidInst; // May need to add calling proc Id
+     this_instance->Instance_id = *pidInst; /* May need to add calling proc Id */
      this_instance->CallBack=*pfnCallback;
      this_instance->Txn_count=0;
      this_instance->Unicode = TRUE;
      this_instance->Win16 = FALSE;
+     this_instance->Node_list = NULL; /* node will be added later */
      this_instance->Monitor_flags = afCmd & MF_MASK;
 
-     // isolate CBF flags in one go, expect this will go the way of all attempts to be clever !!
+     /* isolate CBF flags in one go, expect this will go the way of all attempts to be clever !! */
 
      this_instance->CBF_Flags=afCmd^((afCmd&MF_MASK)|((afCmd&APPCMD_MASK)|(afCmd&APPCLASS_MASK)));
 
      if ( ! this_instance->Client_only )
      {
 
-	// Check for other way of setting Client-only !!
+	/* Check for other way of setting Client-only !! */
 
 	this_instance->Client_only=(this_instance->CBF_Flags&CBF_FAIL_ALLSVRXACTIONS)
 			==CBF_FAIL_ALLSVRXACTIONS;
@@ -389,6 +439,9 @@ UINT WINAPI DdeInitializeW( LPDWORD pidInst, PFNCALLBACK pfnCallback,
     if( *pidInst == 0 ) {
         /*  Initialisation of new Instance Identifier */
         TRACE(ddeml,"new instance, callback %p flags %lX\n",pfnCallback,afCmd);
+        if ( DDE_Max_Assigned_Instance == 0 )
+        {
+                /*  Nothing has been initialised - exit now ! can return TRUE since effect is the same */
 	/*  Need to set up Mutex in case it is not already present */
 	s_att->bInheritHandle = TRUE;
 	s_att->lpSecurityDescriptor = NULL;
@@ -400,42 +453,54 @@ UINT WINAPI DdeInitializeW( LPDWORD pidInst, PFNCALLBACK pfnCallback,
                 HeapFree(SystemHeap, 0, this_instance);
 		return DMLERR_SYS_ERROR;
 	}
+        } else
+	{
+        	WaitForSingleObject(handle_mutex,1000);
+        	if ( (err_no=GetLastError()) != 0 )
+        	{
+                	/*  FIXME  - needs refinement with popup for timeout, also is timeout interval OK */
+	
+                	ERR(ddeml,"WaitForSingleObject failed - handle list %li\n",err_no);
+                	return DMLERR_SYS_ERROR;
+        	}
+	}
+
 	TRACE(ddeml,"Handle Mutex created/reserved\n");
         if (DDE_Handle_Table_Base == NULL ) 
 	{
                 /* can't be another instance in this case, assign to the base pointer */
                 DDE_Handle_Table_Base= this_instance;
 
-		// since first must force filter of XTYP_CONNECT and XTYP_WILDCONNECT for
-		//    present
-		//   -------------------------------      NOTE NOTE NOTE    --------------------------
-		//
-		//	   the manual is not clear if this condition
-		//	applies to the first call to DdeInitialize from an application, or the 
-		//	first call for a given callback !!!
-		//
+		/* since first must force filter of XTYP_CONNECT and XTYP_WILDCONNECT for
+		 *		present 
+		 *	-------------------------------      NOTE NOTE NOTE    --------------------------
+	 	 *		
+	 	 *	the manual is not clear if this condition
+	 	 *	applies to the first call to DdeInitialize from an application, or the 
+	 	 *	first call for a given callback !!!
+		*/
 
 		this_instance->CBF_Flags=this_instance->CBF_Flags|APPCMD_FILTERINITS;
  		TRACE(ddeml,"First application instance detected OK\n");
-		// allocate new instance ID
+		/*	allocate new instance ID */
 		if ((err_no = IncrementInstanceId()) ) return err_no;
    	} else {
                 /* really need to chain the new one in to the latest here, but after checking conditions
-                such as trying to start a conversation from an application trying to monitor */
+                 *	such as trying to start a conversation from an application trying to monitor */
                 reference_inst =  DDE_Handle_Table_Base;
 		TRACE(ddeml,"Subsequent application instance - starting checks\n");
                 while ( reference_inst->Next_Entry != NULL ) 
 		{
-			//
-			//	This set of tests will work if application uses same instance Id
-			//	at application level once allocated - which is what manual implies
-			//	should happen. If someone tries to be 
-			//	clever (lazy ?) it will fail to pick up that later calls are for
-			//	the same application - should we trust them ?
-			//
+			/*
+			*	This set of tests will work if application uses same instance Id
+			*	at application level once allocated - which is what manual implies
+			*	should happen. If someone tries to be 
+			*	clever (lazy ?) it will fail to pick up that later calls are for
+			*	the same application - should we trust them ?
+			*/
                         if ( this_instance->Instance_id == reference_inst->Instance_id) 
 			{
-				// Check 1 - must be same Client-only state
+				/* Check 1 - must be same Client-only state */
 
                                 if ( this_instance->Client_only != reference_inst->Client_only)
 				{
@@ -444,7 +509,7 @@ UINT WINAPI DdeInitializeW( LPDWORD pidInst, PFNCALLBACK pfnCallback,
                                         return DMLERR_DLL_USAGE;
                                 }
 
-				// Check 2 - cannot use 'Monitor' with any non-monitor modes
+				/* Check 2 - cannot use 'Monitor' with any non-monitor modes */
 
                                 if ( this_instance->Monitor != reference_inst->Monitor) 
 				{
@@ -453,7 +518,7 @@ UINT WINAPI DdeInitializeW( LPDWORD pidInst, PFNCALLBACK pfnCallback,
                                         return DMLERR_INVALIDPARAMETER;
                                 }
 
-				// Check 3 - must supply different callback address
+				/* Check 3 - must supply different callback address */
 
 				if ( this_instance->CallBack == reference_inst->CallBack)
 				{
@@ -464,14 +529,14 @@ UINT WINAPI DdeInitializeW( LPDWORD pidInst, PFNCALLBACK pfnCallback,
                         }
                         reference_inst = reference_inst->Next_Entry;
                 }
-		//  All cleared, add to chain
+		/*  All cleared, add to chain */
 
 		TRACE(ddeml,"Application Instance checks finished\n");
                 if ((err_no = IncrementInstanceId())) return err_no;
 		if ( Release_reserved_mutex(handle_mutex,"handle_mutex",0,0)) return DMLERR_SYS_ERROR;
 		reference_inst->Next_Entry = this_instance;
         }
-	pidInst = (LPDWORD)this_instance->Instance_id;
+	*pidInst = this_instance->Instance_id;
 	TRACE(ddeml,"New application instance processing finished OK\n");
      } else {
         /* Reinitialisation situation   --- FIX  */
@@ -491,21 +556,25 @@ UINT WINAPI DdeInitializeW( LPDWORD pidInst, PFNCALLBACK pfnCallback,
 		if ( Release_reserved_mutex(handle_mutex,"handle_mutex",0,1)) return DMLERR_SYS_ERROR;
         	return DMLERR_DLL_USAGE;
  	}
-        HeapFree(SystemHeap, 0, this_instance); // finished - release heap space used as work store
-        // can't reinitialise if we have initialised nothing !!
+        HeapFree(SystemHeap, 0, this_instance); /* finished - release heap space used as work store */
+        /* can't reinitialise if we have initialised nothing !! */
         reference_inst =  DDE_Handle_Table_Base;
         /* must first check if we have been given a valid instance to re-initialise !!  how do we do that ? */
+	/*
+	*	MS allows initialisation without specifying a callback, should we allow addition of the
+	*	callback by a later call to initialise ? - if so this lot will have to change
+	*/
 	while ( reference_inst->Next_Entry != NULL )
 	{
 		if ( *pidInst == reference_inst->Instance_id && pfnCallback == reference_inst->CallBack )
 		{
-			// Check 1 - cannot change client-only mode if set via APPCMD_CLIENTONLY
+			/* Check 1 - cannot change client-only mode if set via APPCMD_CLIENTONLY */
 
 			if (  reference_inst->Client_only )
 			{
 			   if  ((reference_inst->CBF_Flags & CBF_FAIL_ALLSVRXACTIONS) != CBF_FAIL_ALLSVRXACTIONS) 
 			   {
-				// i.e. Was set to Client-only and through APPCMD_CLIENTONLY
+				/* i.e. Was set to Client-only and through APPCMD_CLIENTONLY */
 
 				if ( ! ( afCmd & APPCMD_CLIENTONLY))
 				{
@@ -515,7 +584,7 @@ UINT WINAPI DdeInitializeW( LPDWORD pidInst, PFNCALLBACK pfnCallback,
 				}
 			   }
 			}
-			// Check 2 - cannot change monitor modes
+			/* Check 2 - cannot change monitor modes */
 
                         if ( this_instance->Monitor != reference_inst->Monitor) 
 			{
@@ -524,7 +593,7 @@ UINT WINAPI DdeInitializeW( LPDWORD pidInst, PFNCALLBACK pfnCallback,
                                 return DMLERR_DLL_USAGE;
                         }
 
-			// Check 3 - trying to set Client-only via APPCMD when not set so previously
+			/* Check 3 - trying to set Client-only via APPCMD when not set so previously */
 
 			if (( afCmd&APPCMD_CLIENTONLY) && ! reference_inst->Client_only )
 			{
@@ -532,9 +601,21 @@ UINT WINAPI DdeInitializeW( LPDWORD pidInst, PFNCALLBACK pfnCallback,
 					return DMLERR_SYS_ERROR;
                                 return DMLERR_DLL_USAGE;
 			}
+			break;
 		}
+                reference_inst = reference_inst->Next_Entry;
 	}
-	//		All checked - change relevant flags
+	if ( reference_inst->Next_Entry == NULL )
+	{
+		/* Crazy situation - trying to re-initialize something that has not beeen initialized !! 
+		*	
+		*	Manual does not say what we do, cannot return DMLERR_NOT_INITIALIZED so what ?
+		*/
+		if ( Release_reserved_mutex(handle_mutex,"handle_mutex",0,1))
+			return DMLERR_SYS_ERROR;
+		return DMLERR_INVALIDPARAMETER;
+	}
+	/*		All checked - change relevant flags */
 
 	reference_inst->CBF_Flags = this_instance->CBF_Flags;
 	reference_inst->Client_only = this_instance->Client_only;
@@ -552,6 +633,7 @@ UINT WINAPI DdeInitializeW( LPDWORD pidInst, PFNCALLBACK pfnCallback,
  */
 BOOL16 WINAPI DdeUninitialize16( DWORD idInst )
 {
+    FIXME(ddeml," stub calling DdeUninitialize\n");
     return (BOOL16)DdeUninitialize( idInst );
 }
 
@@ -566,16 +648,72 @@ BOOL16 WINAPI DdeUninitialize16( DWORD idInst )
  *    Success: TRUE
  *    Failure: FALSE
  */
+
 BOOL WINAPI DdeUninitialize( DWORD idInst )
 {
+	/*  Stage one - check if we have a handle for this instance
+									*/
+  	SECURITY_ATTRIBUTES s_attrib;
+  	s_att = &s_attrib;
 
-    FIXME(ddeml, "(%ld): stub\n", idInst);
+	if ( DDE_Max_Assigned_Instance == 0 )
+	{
+		/*  Nothing has been initialised - exit now ! can return TRUE since effect is the same */
+		return TRUE;
+	}
+	WaitForSingleObject(handle_mutex,1000);
+        if ( (err_no=GetLastError()) != 0 )
+        {
+    		/*  FIXME  - needs refinement with popup for timeout, also is timeout interval OK */
+
+               	ERR(ddeml,"WaitForSingleObject failed - handle list %li\n",err_no);
+               	return DMLERR_SYS_ERROR;
+	}
+  	TRACE(ddeml,"Uninitialize - Handle Mutex created/reserved\n");
+  	/*  First check instance 
+  	*/
+  	this_instance = Find_Instance_Entry(idInst);
+  	if ( this_instance == NULL )
+  	{
+		if ( Release_reserved_mutex(handle_mutex,"handle_mutex",FALSE,FALSE)) return FALSE;
+		/*
+		  *	Needs something here to record NOT_INITIALIZED ready for DdeGetLastError
+		*/
+		return FALSE;
+        }
+    	FIXME(ddeml, "(%ld): partial stub\n", idInst);
 
     /* Free the nodes that were not freed by this instance
      * and remove the nodes from the list of HSZ nodes.
      */
     FreeAndRemoveHSZNodes( idInst );
     
+	/* OK now delete the instance handle itself */
+
+	if ( DDE_Handle_Table_Base == this_instance )
+	{
+		/* special case - the first/only entry
+		*/
+		DDE_Handle_Table_Base = this_instance->Next_Entry;
+	} else
+	{
+		/* general case
+		*/
+		reference_inst->Next_Entry = DDE_Handle_Table_Base;
+		while ( reference_inst->Next_Entry != this_instance )
+		{
+			reference_inst = this_instance->Next_Entry;
+		}
+		reference_inst->Next_Entry = this_instance->Next_Entry;
+    	}
+	/* release the mutex and the heap entry
+	*/
+      	if ( Release_reserved_mutex(handle_mutex,"handle_mutex",FALSE,TRUE)) 
+	{
+		/* should record something here, but nothing left to hang it from !!
+		*/
+		return FALSE;
+	}
     return TRUE;
 }
 
@@ -583,6 +721,7 @@ BOOL WINAPI DdeUninitialize( DWORD idInst )
 /*****************************************************************
  * DdeConnectList16 [DDEML.4]
  */
+
 HCONVLIST WINAPI DdeConnectList16( DWORD idInst, HSZ hszService, HSZ hszTopic,
                  HCONVLIST hConvList, LPCONVCONTEXT16 pCC )
 {
@@ -686,6 +825,7 @@ DWORD WINAPI DdeQueryStringA(DWORD idInst, HSZ hsz, LPSTR psz, DWORD cchMax, INT
  *  1.0      Dec 1998  Corel/Macadamian    Initial version
  *
  */
+
 DWORD WINAPI DdeQueryStringW(DWORD idInst, HSZ hsz, LPWSTR psz, DWORD cchMax, INT iCodePage)
 {
     DWORD ret = 0;
@@ -878,12 +1018,52 @@ HSZ WINAPI DdeCreateStringHandle16( DWORD idInst, LPCSTR str, INT16 codepage )
  *
  * RETURNS
  *    Success: String handle
- *    Failure: 0
+ *    Failure: 1
+ *
+ *****************************************************************
+ *
+ *      Change History
+ *
+ *  Vn       Date       Author                  Comment
+ *
+ *  1.0      Dec 1998  Corel/Macadamian    Initial version
+ *  1.1      Mar 1999  Keith Matthews      Added links to instance table and related processing
+ *
  */
 HSZ WINAPI DdeCreateStringHandleA( DWORD idInst, LPCSTR psz, INT codepage )
 {
   HSZ hsz = 0;
-  TRACE(ddeml, "(%ld,%s,%d): stub\n",idInst,debugstr_a(psz),codepage);
+  SECURITY_ATTRIBUTES s_attrib;
+  s_att = &s_attrib;
+  TRACE(ddeml, "(%ld,%s,%d): partial stub\n",idInst,debugstr_a(psz),codepage);
+  
+
+  if ( DDE_Max_Assigned_Instance == 0 )
+  {
+          /*  Nothing has been initialised - exit now ! can return TRUE since effect is the same */
+          return TRUE;
+  }
+  WaitForSingleObject(handle_mutex,1000);
+  if ( (err_no=GetLastError()) != 0 )
+  {
+          /*  FIXME  - needs refinement with popup for timeout, also is timeout interval OK */
+
+          ERR(ddeml,"WaitForSingleObject failed - handle list %li\n",err_no);
+          return DMLERR_SYS_ERROR;
+  }
+  TRACE(ddeml,"Handle Mutex created/reserved\n");
+
+  /*  First check instance 
+  */
+  reference_inst = Find_Instance_Entry(idInst);
+  if ( reference_inst == NULL )
+  {
+	if ( Release_reserved_mutex(handle_mutex,"handle_mutex",FALSE,FALSE)) return 0;
+	/*
+	Needs something here to record NOT_INITIALIZED ready for DdeGetLastError
+	*/
+	return 0;
+  }
   
   if (codepage==CP_WINANSI)
   {
@@ -891,9 +1071,16 @@ HSZ WINAPI DdeCreateStringHandleA( DWORD idInst, LPCSTR psz, INT codepage )
       /* Save the handle so we know to clean it when
        * uninitialize is called.
        */
-      InsertHSZNode( idInst, hsz );
+      InsertHSZNode( hsz );
+      if ( Release_reserved_mutex(handle_mutex,"handle_mutex",FALSE,FALSE)) 
+	{
+		reference_inst->Last_Error = DMLERR_SYS_ERROR;
+		return 0;
+	}
+      TRACE(ddeml,"Returning pointer\n");
       return hsz;
   }
+    TRACE(ddeml,"Returning error\n");
     return 0;  
 }
 
@@ -904,6 +1091,16 @@ HSZ WINAPI DdeCreateStringHandleA( DWORD idInst, LPCSTR psz, INT codepage )
  * RETURNS
  *    Success: String handle
  *    Failure: 0
+ *
+ *****************************************************************
+ *
+ *	Change History
+ *
+ *  Vn       Date    	Author         		Comment
+ *
+ *  1.0      Dec 1998  Corel/Macadamian    Initial version
+ *  1.1	     Mar 1999  Keith Matthews	   Added links to instance table and related processing
+ *
  */
 HSZ WINAPI DdeCreateStringHandleW(
     DWORD idInst,   /* [in] Instance identifier */
@@ -911,16 +1108,49 @@ HSZ WINAPI DdeCreateStringHandleW(
     INT codepage) /* [in] Code page identifier */
 {
   HSZ hsz = 0;
+  SECURITY_ATTRIBUTES s_attrib;
+  s_att = &s_attrib;
 
-    FIXME(ddeml, "(%ld,%s,%d): stub\n",idInst,debugstr_w(psz),codepage);
+  /*  Need to set up Mutex in case it is not already present */
+  s_att->bInheritHandle = TRUE;
+  s_att->lpSecurityDescriptor = NULL;
+  s_att->nLength = sizeof(s_att);
+  handle_mutex = CreateMutexW(s_att,1,DDEHandleAccess);
+  if ( (err_no=GetLastError()) != 0 )
+  {
+	  ERR(ddeml,"CreateMutex failed - handle list  %li\n",err_no);
+	  return 0;
+  }
+  TRACE(ddeml,"CreateString - Handle Mutex created/reserved\n");
+  /*  First check instance 
+  */
+  reference_inst = Find_Instance_Entry(idInst);
+  if ( reference_inst == NULL )
+  {
+	if ( Release_reserved_mutex(handle_mutex,"handle_mutex",FALSE,FALSE)) return 0;
+	/*
+	Needs something here to record NOT_INITIALIZED ready for DdeGetLastError
+	*/
+	return 0;
+  }
+
+    FIXME(ddeml, "(%ld,%s,%d): partial stub\n",idInst,debugstr_w(psz),codepage);
 
   if (codepage==CP_WINUNICODE)
+  /*
+  Should we be checking this against the unicode/ascii nature of the call to DdeInitialize ?
+  */
   {
       hsz = GlobalAddAtomW (psz);
       /* Save the handle so we know to clean it when
        * uninitialize is called.
        */
-      InsertHSZNode( idInst, hsz );
+      InsertHSZNode( hsz );
+      if ( Release_reserved_mutex(handle_mutex,"handle_mutex",FALSE,FALSE)) 
+	{
+		reference_inst->Last_Error = DMLERR_SYS_ERROR;
+		return 0;
+	}
       return hsz;
 }
   return 0;
@@ -932,6 +1162,7 @@ HSZ WINAPI DdeCreateStringHandleW(
  */
 BOOL16 WINAPI DdeFreeStringHandle16( DWORD idInst, HSZ hsz )
 {
+	FIXME(ddeml,"idInst %ld hsz 0x%lx\n",idInst,hsz);
     return (BOOL)DdeFreeStringHandle( idInst, hsz );
 }
 
@@ -946,7 +1177,7 @@ BOOL WINAPI DdeFreeStringHandle( DWORD idInst, HSZ hsz )
     TRACE( ddeml, "(%ld,%ld): stub\n",idInst, hsz );
     /* Remove the node associated with this HSZ.
      */
-    RemoveHSZNode( idInst, hsz );
+    RemoveHSZNode( hsz );
     /* Free the string associated with this HSZ.
      */
     return GlobalDeleteAtom (hsz) ? 0 : hsz;
