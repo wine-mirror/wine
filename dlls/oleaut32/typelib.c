@@ -5249,18 +5249,18 @@ static HRESULT WINAPI ITypeInfo2_fnGetFuncIndexOfMemId( ITypeInfo2 * iface,
     TLBFuncDesc *pFuncInfo;
     int i;
     HRESULT result;
-    /* FIXME: should check for invKind??? */
-    for(i=0, pFuncInfo=This->funclist;pFuncInfo &&
-            memid != pFuncInfo->funcdesc.memid; i++, pFuncInfo=pFuncInfo->next);
-    if(pFuncInfo){
-        *pFuncIndex=i;
-        result= S_OK;
-    }else{
-        *pFuncIndex=0;
-        result=E_INVALIDARG;
-    }
+
+    for(i = 0, pFuncInfo = This->funclist; pFuncInfo; i++, pFuncInfo=pFuncInfo->next)
+        if(memid == pFuncInfo->funcdesc.memid && (invKind & pFuncInfo->funcdesc.invkind))
+            break;
+    if(pFuncInfo) {
+        *pFuncIndex = i;
+        result = S_OK;
+    } else
+        result = TYPE_E_ELEMENTNOTFOUND;
+
     TRACE("(%p) memid 0x%08lx invKind 0x%04x -> %s\n", This,
-          memid, invKind, SUCCEEDED(result)? "SUCCES":"FAILED");
+          memid, invKind, SUCCEEDED(result) ? "SUCCESS" : "FAILED");
     return result;
 }
 
