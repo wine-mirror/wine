@@ -3927,9 +3927,10 @@ ICOM_VTABLE(IDirect3DDevice8) Direct3DDevice8_Vtbl =
     IDirect3DDevice8Impl_DeletePatch
 };
 
-HRESULT WINAPI IDirect3DDevice8Impl_CleanRender(LPDIRECT3DDEVICE8 iface) {
-  ICOM_THIS(IDirect3DDevice8Impl,iface);
+HRESULT WINAPI IDirect3DDevice8Impl_CleanRender(LPDIRECT3DDEVICE8 iface)
+{
 #if defined(GL_VERSION_1_3) /* @see comments on ActiveRender */
+  ICOM_THIS(IDirect3DDevice8Impl,iface);
 
   ENTER_GL();
 
