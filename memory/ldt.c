@@ -8,12 +8,13 @@
 #include "config.h"
 
 #include <stdlib.h>
+#include <stdio.h>
 #include <string.h>
 #include <errno.h>
 #include "ldt.h"
 #include "debugtools.h"
 
-DEFAULT_DEBUG_CHANNEL(ldt)
+DEFAULT_DEBUG_CHANNEL(ldt);
 
 #ifdef __i386__
 

@@ -8,6 +8,8 @@
 
 #include <stdlib.h>
 #include <string.h>
+#include <sys/types.h>
+#include <unistd.h>
 
 #include "neexe.h"
 #include "module.h"
@@ -15,7 +17,7 @@
 #include "lzexpand.h"
 #include "debugtools.h"
 
-DEFAULT_DEBUG_CHANNEL(ver)
+DEFAULT_DEBUG_CHANNEL(ver);
 
 
 /***********************************************************************

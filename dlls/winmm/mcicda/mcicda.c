@@ -8,6 +8,7 @@
  */
 
 #include "config.h"
+#include <stdio.h>
 #include "windef.h"
 #include "wingdi.h"
 #include "winuser.h"

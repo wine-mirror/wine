@@ -40,13 +40,13 @@ void dump_UnicodeString(PUNICODE_STRING us, BOOLEAN showstring)
 	}
 }
 
-LPSTR debugstr_as (PANSI_STRING us)
+LPCSTR debugstr_as (PANSI_STRING us)
 {
 	if (!us) return NULL;
 	return debugstr_an(us->Buffer, us->Length);
 }
 
-LPSTR debugstr_us (PUNICODE_STRING us)
+LPCSTR debugstr_us (PUNICODE_STRING us)
 {
 	if (!us) return NULL;
 	return debugstr_wn(us->Buffer, us->Length);

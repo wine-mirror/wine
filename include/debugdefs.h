@@ -4,505 +4,354 @@
 
 #define DEBUG_CLASS_COUNT __DBCL_COUNT
 
-#ifdef DEBUG_RUNTIME
+static const char * const debug_cl_name[] = { "fixme", "err", "warn", "trace" };
 
-const char * const debug_cl_name[] = { "fixme", "err", "warn", "trace" };
-
-const int dbch_accel = 0;
-const int dbch_advapi = 1;
-const int dbch_animate = 2;
-const int dbch_aspi = 3;
-const int dbch_atom = 4;
-const int dbch_avifile = 5;
-const int dbch_bitblt = 6;
-const int dbch_bitmap = 7;
-const int dbch_caret = 8;
-const int dbch_cdrom = 9;
-const int dbch_class = 10;
-const int dbch_clipboard = 11;
-const int dbch_clipping = 12;
-const int dbch_combo = 13;
-const int dbch_comboex = 14;
-const int dbch_comm = 15;
-const int dbch_commctrl = 16;
-const int dbch_commdlg = 17;
-const int dbch_console = 18;
-const int dbch_crtdll = 19;
-const int dbch_cursor = 20;
-const int dbch_datetime = 21;
-const int dbch_dc = 22;
-const int dbch_ddeml = 23;
-const int dbch_ddraw = 24;
-const int dbch_debug = 25;
-const int dbch_debugstr = 26;
-const int dbch_delayhlp = 27;
-const int dbch_dialog = 28;
-const int dbch_dinput = 29;
-const int dbch_dll = 30;
-const int dbch_dosfs = 31;
-const int dbch_dosmem = 32;
-const int dbch_dplay = 33;
-const int dbch_driver = 34;
-const int dbch_dsound = 35;
-const int dbch_edit = 36;
-const int dbch_elfdll = 37;
-const int dbch_enhmetafile = 38;
-const int dbch_event = 39;
-const int dbch_exec = 40;
-const int dbch_file = 41;
-const int dbch_fixup = 42;
-const int dbch_font = 43;
-const int dbch_gdi = 44;
-const int dbch_global = 45;
-const int dbch_graphics = 46;
-const int dbch_header = 47;
-const int dbch_heap = 48;
-const int dbch_hook = 49;
-const int dbch_hotkey = 50;
-const int dbch_icmp = 51;
-const int dbch_icon = 52;
-const int dbch_imagehlp = 53;
-const int dbch_imagelist = 54;
-const int dbch_imm = 55;
-const int dbch_int = 56;
-const int dbch_int10 = 57;
-const int dbch_int16 = 58;
-const int dbch_int17 = 59;
-const int dbch_int19 = 60;
-const int dbch_int21 = 61;
-const int dbch_int31 = 62;
-const int dbch_io = 63;
-const int dbch_ipaddress = 64;
-const int dbch_key = 65;
-const int dbch_keyboard = 66;
-const int dbch_ldt = 67;
-const int dbch_listbox = 68;
-const int dbch_listview = 69;
-const int dbch_local = 70;
-const int dbch_mci = 71;
-const int dbch_mcianim = 72;
-const int dbch_mciavi = 73;
-const int dbch_mcicda = 74;
-const int dbch_mcimidi = 75;
-const int dbch_mciwave = 76;
-const int dbch_mdi = 77;
-const int dbch_menu = 78;
-const int dbch_message = 79;
-const int dbch_metafile = 80;
-const int dbch_midi = 81;
-const int dbch_mmaux = 82;
-const int dbch_mmio = 83;
-const int dbch_mmsys = 84;
-const int dbch_mmtime = 85;
-const int dbch_module = 86;
-const int dbch_monthcal = 87;
-const int dbch_mpr = 88;
-const int dbch_msacm = 89;
-const int dbch_msg = 90;
-const int dbch_msvideo = 91;
-const int dbch_nativefont = 92;
-const int dbch_nonclient = 93;
-const int dbch_ntdll = 94;
-const int dbch_odbc = 95;
-const int dbch_ole = 96;
-const int dbch_pager = 97;
-const int dbch_palette = 98;
-const int dbch_pidl = 99;
-const int dbch_print = 100;
-const int dbch_process = 101;
-const int dbch_profile = 102;
-const int dbch_progress = 103;
-const int dbch_prop = 104;
-const int dbch_propsheet = 105;
-const int dbch_psapi = 106;
-const int dbch_psdrv = 107;
-const int dbch_ras = 108;
-const int dbch_rebar = 109;
-const int dbch_reg = 110;
-const int dbch_region = 111;
-const int dbch_relay = 112;
-const int dbch_resource = 113;
-const int dbch_scroll = 114;
-const int dbch_security = 115;
-const int dbch_segment = 116;
-const int dbch_seh = 117;
-const int dbch_selector = 118;
-const int dbch_sendmsg = 119;
-const int dbch_server = 120;
-const int dbch_setupx = 121;
-const int dbch_shell = 122;
-const int dbch_snoop = 123;
-const int dbch_sound = 124;
-const int dbch_static = 125;
-const int dbch_statusbar = 126;
-const int dbch_storage = 127;
-const int dbch_stress = 128;
-const int dbch_string = 129;
-const int dbch_syscolor = 130;
-const int dbch_system = 131;
-const int dbch_tab = 132;
-const int dbch_tape = 133;
-const int dbch_tapi = 134;
-const int dbch_task = 135;
-const int dbch_text = 136;
-const int dbch_thread = 137;
-const int dbch_thunk = 138;
-const int dbch_timer = 139;
-const int dbch_toolbar = 140;
-const int dbch_toolhelp = 141;
-const int dbch_tooltips = 142;
-const int dbch_trackbar = 143;
-const int dbch_treeview = 144;
-const int dbch_ttydrv = 145;
-const int dbch_tweak = 146;
-const int dbch_typelib = 147;
-const int dbch_updown = 148;
-const int dbch_ver = 149;
-const int dbch_virtual = 150;
-const int dbch_vxd = 151;
-const int dbch_wave = 152;
-const int dbch_win = 153;
-const int dbch_win16drv = 154;
-const int dbch_win32 = 155;
-const int dbch_wing = 156;
-const int dbch_winsock = 157;
-const int dbch_winspool = 158;
-const int dbch_wnet = 159;
-const int dbch_x11 = 160;
-const int dbch_x11drv = 161;
+char dbch_accel[] = "\003accel";
+char dbch_advapi[] = "\003advapi";
+char dbch_animate[] = "\003animate";
+char dbch_aspi[] = "\003aspi";
+char dbch_atom[] = "\003atom";
+char dbch_avifile[] = "\003avifile";
+char dbch_bitblt[] = "\003bitblt";
+char dbch_bitmap[] = "\003bitmap";
+char dbch_caret[] = "\003caret";
+char dbch_cdrom[] = "\003cdrom";
+char dbch_class[] = "\003class";
+char dbch_clipboard[] = "\003clipboard";
+char dbch_clipping[] = "\003clipping";
+char dbch_combo[] = "\003combo";
+char dbch_comboex[] = "\003comboex";
+char dbch_comm[] = "\003comm";
+char dbch_commctrl[] = "\003commctrl";
+char dbch_commdlg[] = "\003commdlg";
+char dbch_console[] = "\003console";
+char dbch_crtdll[] = "\003crtdll";
+char dbch_cursor[] = "\003cursor";
+char dbch_datetime[] = "\003datetime";
+char dbch_dc[] = "\003dc";
+char dbch_ddeml[] = "\003ddeml";
+char dbch_ddraw[] = "\003ddraw";
+char dbch_debug[] = "\003debug";
+char dbch_debugstr[] = "\003debugstr";
+char dbch_delayhlp[] = "\003delayhlp";
+char dbch_dialog[] = "\003dialog";
+char dbch_dinput[] = "\003dinput";
+char dbch_dll[] = "\003dll";
+char dbch_dosfs[] = "\003dosfs";
+char dbch_dosmem[] = "\003dosmem";
+char dbch_dplay[] = "\003dplay";
+char dbch_driver[] = "\003driver";
+char dbch_dsound[] = "\003dsound";
+char dbch_edit[] = "\003edit";
+char dbch_elfdll[] = "\003elfdll";
+char dbch_enhmetafile[] = "\003enhmetafile";
+char dbch_event[] = "\003event";
+char dbch_exec[] = "\003exec";
+char dbch_file[] = "\003file";
+char dbch_fixup[] = "\003fixup";
+char dbch_font[] = "\003font";
+char dbch_gdi[] = "\003gdi";
+char dbch_global[] = "\003global";
+char dbch_graphics[] = "\003graphics";
+char dbch_header[] = "\003header";
+char dbch_heap[] = "\003heap";
+char dbch_hook[] = "\003hook";
+char dbch_hotkey[] = "\003hotkey";
+char dbch_icmp[] = "\003icmp";
+char dbch_icon[] = "\003icon";
+char dbch_imagehlp[] = "\003imagehlp";
+char dbch_imagelist[] = "\003imagelist";
+char dbch_imm[] = "\003imm";
+char dbch_int[] = "\003int";
+char dbch_int10[] = "\003int10";
+char dbch_int16[] = "\003int16";
+char dbch_int17[] = "\003int17";
+char dbch_int19[] = "\003int19";
+char dbch_int21[] = "\003int21";
+char dbch_int31[] = "\003int31";
+char dbch_io[] = "\003io";
+char dbch_ipaddress[] = "\003ipaddress";
+char dbch_key[] = "\003key";
+char dbch_keyboard[] = "\003keyboard";
+char dbch_ldt[] = "\003ldt";
+char dbch_listbox[] = "\003listbox";
+char dbch_listview[] = "\003listview";
+char dbch_local[] = "\003local";
+char dbch_mci[] = "\003mci";
+char dbch_mcianim[] = "\003mcianim";
+char dbch_mciavi[] = "\003mciavi";
+char dbch_mcicda[] = "\003mcicda";
+char dbch_mcimidi[] = "\003mcimidi";
+char dbch_mciwave[] = "\003mciwave";
+char dbch_mdi[] = "\003mdi";
+char dbch_menu[] = "\003menu";
+char dbch_message[] = "\003message";
+char dbch_metafile[] = "\003metafile";
+char dbch_midi[] = "\003midi";
+char dbch_mmaux[] = "\003mmaux";
+char dbch_mmio[] = "\003mmio";
+char dbch_mmsys[] = "\003mmsys";
+char dbch_mmtime[] = "\003mmtime";
+char dbch_module[] = "\003module";
+char dbch_monthcal[] = "\003monthcal";
+char dbch_mpr[] = "\003mpr";
+char dbch_msacm[] = "\003msacm";
+char dbch_msg[] = "\003msg";
+char dbch_msvideo[] = "\003msvideo";
+char dbch_nativefont[] = "\003nativefont";
+char dbch_nonclient[] = "\003nonclient";
+char dbch_ntdll[] = "\003ntdll";
+char dbch_odbc[] = "\003odbc";
+char dbch_ole[] = "\003ole";
+char dbch_pager[] = "\003pager";
+char dbch_palette[] = "\003palette";
+char dbch_pidl[] = "\003pidl";
+char dbch_print[] = "\003print";
+char dbch_process[] = "\003process";
+char dbch_profile[] = "\003profile";
+char dbch_progress[] = "\003progress";
+char dbch_prop[] = "\003prop";
+char dbch_propsheet[] = "\003propsheet";
+char dbch_psapi[] = "\003psapi";
+char dbch_psdrv[] = "\003psdrv";
+char dbch_ras[] = "\003ras";
+char dbch_rebar[] = "\003rebar";
+char dbch_reg[] = "\003reg";
+char dbch_region[] = "\003region";
+char dbch_relay[] = "\003relay";
+char dbch_resource[] = "\003resource";
+char dbch_scroll[] = "\003scroll";
+char dbch_security[] = "\003security";
+char dbch_segment[] = "\003segment";
+char dbch_seh[] = "\003seh";
+char dbch_selector[] = "\003selector";
+char dbch_sendmsg[] = "\003sendmsg";
+char dbch_server[] = "\003server";
+char dbch_setupx[] = "\003setupx";
+char dbch_shell[] = "\003shell";
+char dbch_snoop[] = "\003snoop";
+char dbch_sound[] = "\003sound";
+char dbch_static[] = "\003static";
+char dbch_statusbar[] = "\003statusbar";
+char dbch_storage[] = "\003storage";
+char dbch_stress[] = "\003stress";
+char dbch_string[] = "\003string";
+char dbch_syscolor[] = "\003syscolor";
+char dbch_system[] = "\003system";
+char dbch_tab[] = "\003tab";
+char dbch_tape[] = "\003tape";
+char dbch_tapi[] = "\003tapi";
+char dbch_task[] = "\003task";
+char dbch_text[] = "\003text";
+char dbch_thread[] = "\003thread";
+char dbch_thunk[] = "\003thunk";
+char dbch_timer[] = "\003timer";
+char dbch_toolbar[] = "\003toolbar";
+char dbch_toolhelp[] = "\003toolhelp";
+char dbch_tooltips[] = "\003tooltips";
+char dbch_trackbar[] = "\003trackbar";
+char dbch_treeview[] = "\003treeview";
+char dbch_ttydrv[] = "\003ttydrv";
+char dbch_tweak[] = "\003tweak";
+char dbch_typelib[] = "\003typelib";
+char dbch_updown[] = "\003updown";
+char dbch_ver[] = "\003ver";
+char dbch_virtual[] = "\003virtual";
+char dbch_vxd[] = "\003vxd";
+char dbch_wave[] = "\003wave";
+char dbch_win[] = "\003win";
+char dbch_win16drv[] = "\003win16drv";
+char dbch_win32[] = "\003win32";
+char dbch_wing[] = "\003wing";
+char dbch_winsock[] = "\003winsock";
+char dbch_winspool[] = "\003winspool";
+char dbch_wnet[] = "\003wnet";
+char dbch_x11[] = "\003x11";
+char dbch_x11drv[] = "\003x11drv";
 
 #define DEBUG_CHANNEL_COUNT 162
 
-char __debug_msg_enabled[DEBUG_CHANNEL_COUNT][DEBUG_CLASS_COUNT] = {
-{1, 1, 0, 0},
-{1, 1, 0, 0},
-{1, 1, 0, 0},
-{1, 1, 0, 0},
-{1, 1, 0, 0},
-{1, 1, 0, 0},
-{1, 1, 0, 0},
-{1, 1, 0, 0},
-{1, 1, 0, 0},
-{1, 1, 0, 0},
-{1, 1, 0, 0},
-{1, 1, 0, 0},
-{1, 1, 0, 0},
-{1, 1, 0, 0},
-{1, 1, 0, 0},
-{1, 1, 0, 0},
-{1, 1, 0, 0},
-{1, 1, 0, 0},
-{1, 1, 0, 0},
-{1, 1, 0, 0},
-{1, 1, 0, 0},
-{1, 1, 0, 0},
-{1, 1, 0, 0},
-{1, 1, 0, 0},
-{1, 1, 0, 0},
-{1, 1, 0, 0},
-{1, 1, 0, 0},
-{1, 1, 0, 0},
-{1, 1, 0, 0},
-{1, 1, 0, 0},
-{1, 1, 0, 0},
-{1, 1, 0, 0},
-{1, 1, 0, 0},
-{1, 1, 0, 0},
-{1, 1, 0, 0},
-{1, 1, 0, 0},
-{1, 1, 0, 0},
-{1, 1, 0, 0},
-{1, 1, 0, 0},
-{1, 1, 0, 0},
-{1, 1, 0, 0},
-{1, 1, 0, 0},
-{1, 1, 0, 0},
-{1, 1, 0, 0},
-{1, 1, 0, 0},
-{1, 1, 0, 0},
-{1, 1, 0, 0},
-{1, 1, 0, 0},
-{1, 1, 0, 0},
-{1, 1, 0, 0},
-{1, 1, 0, 0},
-{1, 1, 0, 0},
-{1, 1, 0, 0},
-{1, 1, 0, 0},
-{1, 1, 0, 0},
-{1, 1, 0, 0},
-{1, 1, 0, 0},
-{1, 1, 0, 0},
-{1, 1, 0, 0},
-{1, 1, 0, 0},
-{1, 1, 0, 0},
-{1, 1, 0, 0},
-{1, 1, 0, 0},
-{1, 1, 0, 0},
-{1, 1, 0, 0},
-{1, 1, 0, 0},
-{1, 1, 0, 0},
-{1, 1, 0, 0},
-{1, 1, 0, 0},
-{1, 1, 0, 0},
-{1, 1, 0, 0},
-{1, 1, 0, 0},
-{1, 1, 0, 0},
-{1, 1, 0, 0},
-{1, 1, 0, 0},
-{1, 1, 0, 0},
-{1, 1, 0, 0},
-{1, 1, 0, 0},
-{1, 1, 0, 0},
-{1, 1, 0, 0},
-{1, 1, 0, 0},
-{1, 1, 0, 0},
-{1, 1, 0, 0},
-{1, 1, 0, 0},
-{1, 1, 0, 0},
-{1, 1, 0, 0},
-{1, 1, 0, 0},
-{1, 1, 0, 0},
-{1, 1, 0, 0},
-{1, 1, 0, 0},
-{1, 1, 0, 0},
-{1, 1, 0, 0},
-{1, 1, 0, 0},
-{1, 1, 0, 0},
-{1, 1, 0, 0},
-{1, 1, 0, 0},
-{1, 1, 0, 0},
-{1, 1, 0, 0},
-{1, 1, 0, 0},
-{1, 1, 0, 0},
-{1, 1, 0, 0},
-{1, 1, 0, 0},
-{1, 1, 0, 0},
-{1, 1, 0, 0},
-{1, 1, 0, 0},
-{1, 1, 0, 0},
-{1, 1, 0, 0},
-{1, 1, 0, 0},
-{1, 1, 0, 0},
-{1, 1, 0, 0},
-{1, 1, 0, 0},
-{1, 1, 0, 0},
-{1, 1, 0, 0},
-{1, 1, 0, 0},
-{1, 1, 0, 0},
-{1, 1, 0, 0},
-{1, 1, 0, 0},
-{1, 1, 0, 0},
-{1, 1, 0, 0},
-{1, 1, 0, 0},
-{1, 1, 0, 0},
-{1, 1, 0, 0},
-{1, 1, 0, 0},
-{1, 1, 0, 0},
-{1, 1, 0, 0},
-{1, 1, 0, 0},
-{1, 1, 0, 0},
-{1, 1, 0, 0},
-{1, 1, 0, 0},
-{1, 1, 0, 0},
-{1, 1, 0, 0},
-{1, 1, 0, 0},
-{1, 1, 0, 0},
-{1, 1, 0, 0},
-{1, 1, 0, 0},
-{1, 1, 0, 0},
-{1, 1, 0, 0},
-{1, 1, 0, 0},
-{1, 1, 0, 0},
-{1, 1, 0, 0},
-{1, 1, 0, 0},
-{1, 1, 0, 0},
-{1, 1, 0, 0},
-{1, 1, 0, 0},
-{1, 1, 0, 0},
-{1, 1, 0, 0},
-{1, 1, 0, 0},
-{1, 1, 0, 0},
-{1, 1, 0, 0},
-{1, 1, 0, 0},
-{1, 1, 0, 0},
-{1, 1, 0, 0},
-{1, 1, 0, 0},
-{1, 1, 0, 0},
-{1, 1, 0, 0},
-{1, 1, 0, 0},
-{1, 1, 0, 0},
-{1, 1, 0, 0},
-{1, 1, 0, 0},
-{1, 1, 0, 0},
-{1, 1, 0, 0},
-{1, 1, 0, 0}
+static char * const debug_channels[DEBUG_CHANNEL_COUNT] = {
+    dbch_accel,
+    dbch_advapi,
+    dbch_animate,
+    dbch_aspi,
+    dbch_atom,
+    dbch_avifile,
+    dbch_bitblt,
+    dbch_bitmap,
+    dbch_caret,
+    dbch_cdrom,
+    dbch_class,
+    dbch_clipboard,
+    dbch_clipping,
+    dbch_combo,
+    dbch_comboex,
+    dbch_comm,
+    dbch_commctrl,
+    dbch_commdlg,
+    dbch_console,
+    dbch_crtdll,
+    dbch_cursor,
+    dbch_datetime,
+    dbch_dc,
+    dbch_ddeml,
+    dbch_ddraw,
+    dbch_debug,
+    dbch_debugstr,
+    dbch_delayhlp,
+    dbch_dialog,
+    dbch_dinput,
+    dbch_dll,
+    dbch_dosfs,
+    dbch_dosmem,
+    dbch_dplay,
+    dbch_driver,
+    dbch_dsound,
+    dbch_edit,
+    dbch_elfdll,
+    dbch_enhmetafile,
+    dbch_event,
+    dbch_exec,
+    dbch_file,
+    dbch_fixup,
+    dbch_font,
+    dbch_gdi,
+    dbch_global,
+    dbch_graphics,
+    dbch_header,
+    dbch_heap,
+    dbch_hook,
+    dbch_hotkey,
+    dbch_icmp,
+    dbch_icon,
+    dbch_imagehlp,
+    dbch_imagelist,
+    dbch_imm,
+    dbch_int,
+    dbch_int10,
+    dbch_int16,
+    dbch_int17,
+    dbch_int19,
+    dbch_int21,
+    dbch_int31,
+    dbch_io,
+    dbch_ipaddress,
+    dbch_key,
+    dbch_keyboard,
+    dbch_ldt,
+    dbch_listbox,
+    dbch_listview,
+    dbch_local,
+    dbch_mci,
+    dbch_mcianim,
+    dbch_mciavi,
+    dbch_mcicda,
+    dbch_mcimidi,
+    dbch_mciwave,
+    dbch_mdi,
+    dbch_menu,
+    dbch_message,
+    dbch_metafile,
+    dbch_midi,
+    dbch_mmaux,
+    dbch_mmio,
+    dbch_mmsys,
+    dbch_mmtime,
+    dbch_module,
+    dbch_monthcal,
+    dbch_mpr,
+    dbch_msacm,
+    dbch_msg,
+    dbch_msvideo,
+    dbch_nativefont,
+    dbch_nonclient,
+    dbch_ntdll,
+    dbch_odbc,
+    dbch_ole,
+    dbch_pager,
+    dbch_palette,
+    dbch_pidl,
+    dbch_print,
+    dbch_process,
+    dbch_profile,
+    dbch_progress,
+    dbch_prop,
+    dbch_propsheet,
+    dbch_psapi,
+    dbch_psdrv,
+    dbch_ras,
+    dbch_rebar,
+    dbch_reg,
+    dbch_region,
+    dbch_relay,
+    dbch_resource,
+    dbch_scroll,
+    dbch_security,
+    dbch_segment,
+    dbch_seh,
+    dbch_selector,
+    dbch_sendmsg,
+    dbch_server,
+    dbch_setupx,
+    dbch_shell,
+    dbch_snoop,
+    dbch_sound,
+    dbch_static,
+    dbch_statusbar,
+    dbch_storage,
+    dbch_stress,
+    dbch_string,
+    dbch_syscolor,
+    dbch_system,
+    dbch_tab,
+    dbch_tape,
+    dbch_tapi,
+    dbch_task,
+    dbch_text,
+    dbch_thread,
+    dbch_thunk,
+    dbch_timer,
+    dbch_toolbar,
+    dbch_toolhelp,
+    dbch_tooltips,
+    dbch_trackbar,
+    dbch_treeview,
+    dbch_ttydrv,
+    dbch_tweak,
+    dbch_typelib,
+    dbch_updown,
+    dbch_ver,
+    dbch_virtual,
+    dbch_vxd,
+    dbch_wave,
+    dbch_win,
+    dbch_win16drv,
+    dbch_win32,
+    dbch_wing,
+    dbch_winsock,
+    dbch_winspool,
+    dbch_wnet,
+    dbch_x11,
+    dbch_x11drv
 };
 
-const char * const debug_ch_name[DEBUG_CHANNEL_COUNT] = {
-"accel",
-"advapi",
-"animate",
-"aspi",
-"atom",
-"avifile",
-"bitblt",
-"bitmap",
-"caret",
-"cdrom",
-"class",
-"clipboard",
-"clipping",
-"combo",
-"comboex",
-"comm",
-"commctrl",
-"commdlg",
-"console",
-"crtdll",
-"cursor",
-"datetime",
-"dc",
-"ddeml",
-"ddraw",
-"debug",
-"debugstr",
-"delayhlp",
-"dialog",
-"dinput",
-"dll",
-"dosfs",
-"dosmem",
-"dplay",
-"driver",
-"dsound",
-"edit",
-"elfdll",
-"enhmetafile",
-"event",
-"exec",
-"file",
-"fixup",
-"font",
-"gdi",
-"global",
-"graphics",
-"header",
-"heap",
-"hook",
-"hotkey",
-"icmp",
-"icon",
-"imagehlp",
-"imagelist",
-"imm",
-"int",
-"int10",
-"int16",
-"int17",
-"int19",
-"int21",
-"int31",
-"io",
-"ipaddress",
-"key",
-"keyboard",
-"ldt",
-"listbox",
-"listview",
-"local",
-"mci",
-"mcianim",
-"mciavi",
-"mcicda",
-"mcimidi",
-"mciwave",
-"mdi",
-"menu",
-"message",
-"metafile",
-"midi",
-"mmaux",
-"mmio",
-"mmsys",
-"mmtime",
-"module",
-"monthcal",
-"mpr",
-"msacm",
-"msg",
-"msvideo",
-"nativefont",
-"nonclient",
-"ntdll",
-"odbc",
-"ole",
-"pager",
-"palette",
-"pidl",
-"print",
-"process",
-"profile",
-"progress",
-"prop",
-"propsheet",
-"psapi",
-"psdrv",
-"ras",
-"rebar",
-"reg",
-"region",
-"relay",
-"resource",
-"scroll",
-"security",
-"segment",
-"seh",
-"selector",
-"sendmsg",
-"server",
-"setupx",
-"shell",
-"snoop",
-"sound",
-"static",
-"statusbar",
-"storage",
-"stress",
-"string",
-"syscolor",
-"system",
-"tab",
-"tape",
-"tapi",
-"task",
-"text",
-"thread",
-"thunk",
-"timer",
-"toolbar",
-"toolhelp",
-"tooltips",
-"trackbar",
-"treeview",
-"ttydrv",
-"tweak",
-"typelib",
-"updown",
-"ver",
-"virtual",
-"vxd",
-"wave",
-"win",
-"win16drv",
-"win32",
-"wing",
-"winsock",
-"winspool",
-"wnet",
-"x11",
-"x11drv"
-};
+int dbg_header_err( const char *dbg_channel, const char *func )
+{
+    return dbg_printf( "err:%s:%s ", dbg_channel + 1, func );
+}
 
-#endif /*DEBUG_RUNTIME*/
+int dbg_header_fixme( const char *dbg_channel, const char *func )
+{
+    return dbg_printf( "fixme:%s:%s ", dbg_channel + 1, func );
+}
 
-/* end of automatically generated debug.h */
+int dbg_header_warn( const char *dbg_channel, const char *func )
+{
+    return dbg_printf( "warn:%s:%s ", dbg_channel + 1, func );
+}
+
+int dbg_header_trace( const char *dbg_channel, const char *func )
+{
+    return dbg_printf( "trace:%s:%s ", dbg_channel + 1, func );
+}

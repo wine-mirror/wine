@@ -55,6 +55,7 @@
 #include <fcntl.h>
 #include <string.h>
 #include <stdlib.h>
+#include <stdio.h>
 
 #include "gdi.h"
 #include "heap.h"
@@ -75,7 +76,7 @@ static char *ddProp = "WINE_DDRAW_Property";
 #include "ddraw_private.h"
 #include "d3d_private.h"
 
-DEFAULT_DEBUG_CHANNEL(ddraw)
+DEFAULT_DEBUG_CHANNEL(ddraw);
 
 /* Restore signal handlers overwritten by XF86DGA 
  */

@@ -5,11 +5,8 @@
 #ifdef __WINE__  /* Debugging interface is internal to Wine */
 
 #include <stdarg.h>
-#include <stdio.h>
 #include "config.h"
 #include "windef.h"
-
-#define DEBUG_RUNTIME
 
 struct _GUID;
 
@@ -17,40 +14,54 @@ struct _GUID;
 
 enum __DEBUG_CLASS { __DBCL_FIXME, __DBCL_ERR, __DBCL_WARN, __DBCL_TRACE, __DBCL_COUNT };
 
-extern char __debug_msg_enabled[][__DBCL_COUNT];
+#ifndef NO_TRACE_MSGS
+# define __GET_DEBUGGING_trace(dbch) ((dbch)[0] & (1 << __DBCL_TRACE))
+#else
+# define __GET_DEBUGGING_trace(dbch) 0
+#endif
 
-extern const char * const debug_cl_name[__DBCL_COUNT];
-extern const char * const debug_ch_name[];
+#ifndef NO_DEBUG_MSGS
+# define __GET_DEBUGGING_warn(dbch)  ((dbch)[0] & (1 << __DBCL_WARN))
+# define __GET_DEBUGGING_fixme(dbch) ((dbch)[0] & (1 << __DBCL_FIXME))
+#else
+# define __GET_DEBUGGING_warn(dbch)  0
+# define __GET_DEBUGGING_fixme(dbch) 0
+#endif
 
-#define __GET_DEBUGGING(dbcl,dbch)    (__debug_msg_enabled[(dbch)][(dbcl)])
-#define __SET_DEBUGGING(dbcl,dbch,on) (__debug_msg_enabled[(dbch)][(dbcl)] = (on))
+/* define error macro regardless of what is configured */
+#define __GET_DEBUGGING_err(dbch)  ((dbch)[0] & (1 << __DBCL_ERR))
+
+#define __GET_DEBUGGING(dbcl,dbch)  __GET_DEBUGGING_##dbcl(dbch)
+#define __SET_DEBUGGING(dbcl,dbch,on) \
+    ((on) ? ((dbch)[0] |= 1 << (dbcl)) : ((dbch)[0] &= ~(1 << (dbcl))))
 
 #ifndef __GNUC__
 #define __FUNCTION__ ""
 #endif
 
 #define __DPRINTF(dbcl,dbch) \
-  (!__GET_DEBUGGING(dbcl,dbch) || \
-     (dbg_printf("%s:%s:%s ", debug_cl_name[(dbcl)], debug_ch_name[(dbch)], __FUNCTION__),0)) \
-    ? 0 : dbg_printf
-
-#define __DUMMY_DPRINTF 1 ? (void)0 : (void)((int (*)(char *, ...)) NULL)
-
+  (!__GET_DEBUGGING(dbcl,(dbch)) || (dbg_header_##dbcl((dbch),__FUNCTION__),0)) ? \
+     (void)0 : (void)dbg_printf
 
 /* Exported definitions and macros */
 
 /* These function return a printable version of a string, including
    quotes.  The string will be valid for some time, but not indefinitely
    as strings are re-used.  */
-extern LPSTR debugstr_an (LPCSTR s, int n);
-extern LPSTR debugstr_a (LPCSTR s);
-extern LPSTR debugstr_wn (LPCWSTR s, int n);
-extern LPSTR debugstr_w (LPCWSTR s);
-extern LPSTR debugres_a (LPCSTR res);
-extern LPSTR debugres_w (LPCWSTR res);
-extern LPSTR debugstr_guid( const struct _GUID *id );
-extern LPSTR debugstr_hex_dump (const void *ptr, int len);
+extern LPCSTR debugstr_an (LPCSTR s, int n);
+extern LPCSTR debugstr_wn (LPCWSTR s, int n);
+extern LPCSTR debugres_a (LPCSTR res);
+extern LPCSTR debugres_w (LPCWSTR res);
+extern LPCSTR debugstr_guid( const struct _GUID *id );
+extern LPCSTR debugstr_hex_dump (const void *ptr, int len);
+extern int dbg_header_err( const char *dbg_channel, const char *func );
+extern int dbg_header_warn( const char *dbg_channel, const char *func );
+extern int dbg_header_fixme( const char *dbg_channel, const char *func );
+extern int dbg_header_trace( const char *dbg_channel, const char *func );
 extern int dbg_vprintf( const char *format, va_list args );
+
+static inline LPCSTR debugstr_a( LPCSTR s )  { return debugstr_an( s, 80 ); }
+static inline LPCSTR debugstr_w( LPCWSTR s ) { return debugstr_wn( s, 80 ); }
 
 #ifdef __GNUC__
 extern int dbg_printf(const char *format, ...) __attribute__((format (printf,1,2)));
@@ -58,44 +69,27 @@ extern int dbg_printf(const char *format, ...) __attribute__((format (printf,1,2
 extern int dbg_printf(const char *format, ...);
 #endif
 
-/* use configure to allow user to compile out debugging messages */
-#ifndef NO_TRACE_MSGS
-#define TRACE        __DPRINTF(__DBCL_TRACE,*DBCH_DEFAULT)
-#define TRACE_(ch)   __DPRINTF(__DBCL_TRACE,dbch_##ch)
-#define TRACE_ON(ch) __GET_DEBUGGING(__DBCL_TRACE,dbch_##ch)
-#else
-#define TRACE        __DUMMY_DPRINTF
-#define TRACE_(ch)   __DUMMY_DPRINTF
-#define TRACE_ON(ch) 0
-#endif /* NO_TRACE_MSGS */
+#define TRACE        __DPRINTF(trace,__dbch_default)
+#define TRACE_(ch)   __DPRINTF(trace,dbch_##ch)
+#define TRACE_ON(ch) __GET_DEBUGGING(trace,dbch_##ch)
 
-#ifndef NO_DEBUG_MSGS
-#define WARN         __DPRINTF(__DBCL_WARN,*DBCH_DEFAULT)
-#define WARN_(ch)    __DPRINTF(__DBCL_WARN,dbch_##ch)
-#define WARN_ON(ch)  __GET_DEBUGGING(__DBCL_WARN,dbch_##ch)
-#define FIXME        __DPRINTF(__DBCL_FIXME,*DBCH_DEFAULT)
-#define FIXME_(ch)   __DPRINTF(__DBCL_FIXME,dbch_##ch)
-#define FIXME_ON(ch) __GET_DEBUGGING(__DBCL_FIXME,dbch_##ch)
-#else
-#define WARN         __DUMMY_DPRINTF
-#define WARN_(ch)    __DUMMY_DPRINTF
-#define WARN_ON(ch)  0
-#define FIXME        __DUMMY_DPRINTF
-#define FIXME_(ch)   __DUMMY_DPRINTF
-#define FIXME_ON(ch) 0
-#endif /* NO_DEBUG_MSGS */
+#define WARN         __DPRINTF(warn,__dbch_default)
+#define WARN_(ch)    __DPRINTF(warn,dbch_##ch)
+#define WARN_ON(ch)  __GET_DEBUGGING(warn,dbch_##ch)
 
-/* define error macro regardless of what is configured */
-/* Solaris got an 'ERR' define in <sys/reg.h> */
-#undef ERR
-#define ERR        __DPRINTF(__DBCL_ERR,*DBCH_DEFAULT)
-#define ERR_(ch)   __DPRINTF(__DBCL_ERR,dbch_##ch)
-#define ERR_ON(ch) __GET_DEBUGGING(__DBCL_ERR,dbch_##ch)
+#define FIXME        __DPRINTF(fixme,__dbch_default)
+#define FIXME_(ch)   __DPRINTF(fixme,dbch_##ch)
+#define FIXME_ON(ch) __GET_DEBUGGING(fixme,dbch_##ch)
+
+#undef ERR  /* Solaris got an 'ERR' define in <sys/reg.h> */
+#define ERR          __DPRINTF(err,__dbch_default)
+#define ERR_(ch)     __DPRINTF(err,dbch_##ch)
+#define ERR_ON(ch)   __GET_DEBUGGING(err,dbch_##ch)
 
 #define DECLARE_DEBUG_CHANNEL(ch) \
-    extern const int dbch_##ch;
+    extern char dbch_##ch[];
 #define DEFAULT_DEBUG_CHANNEL(ch) \
-    extern const int dbch_##ch; static const int *const DBCH_DEFAULT = &dbch_##ch;
+    extern char dbch_##ch[]; static char * const __dbch_default = dbch_##ch;
 
 #define DPRINTF dbg_printf
 #define MESSAGE dbg_printf

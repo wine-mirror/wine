@@ -303,7 +303,7 @@ HRESULT WINAPI CompositeMonikerImpl_Load(IMoniker* iface,IStream* pStm)
         res=OleLoadFromStream(pStm,&IID_IMoniker,(void**)&This->tabMoniker[This->tabLastIndex]);
 #endif
         res=ReadClassStm(pStm,&clsid);
-        printf("res=%ld",res);
+        DPRINTF("res=%ld",res);
         if (FAILED(res))
             break;
 

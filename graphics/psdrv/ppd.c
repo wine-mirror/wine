@@ -6,6 +6,7 @@
  */
 
 #include <string.h>
+#include <stdio.h>
 #include <ctype.h>
 #include "winnt.h" /* HEAP_ZERO_MEMORY */
 #include "heap.h"
@@ -13,7 +14,7 @@
 #include "psdrv.h"
 #include "winspool.h"
 
-DEFAULT_DEBUG_CHANNEL(psdrv)
+DEFAULT_DEBUG_CHANNEL(psdrv);
 
 typedef struct {
 char	*key;

@@ -6,8 +6,9 @@
 #include <stdlib.h>
 #include "msdos.h"
 #include "miscemu.h"
-/* #define DEBUG_INT */
 #include "debugtools.h"
+
+DEFAULT_DEBUG_CHANNEL(int);
 
 /**********************************************************************
  *          INT_Int3dHandler

@@ -11,16 +11,17 @@
  *
  */
 
+#include <math.h>
+#include <string.h>
+#include <stdio.h>
+
 #include "winbase.h"
 #include "commctrl.h"
 #include "datetime.h"
 #include "monthcal.h"
 #include "debugtools.h"
 
-#include <math.h>
-#include <string.h>
-
-DEFAULT_DEBUG_CHANNEL(datetime)
+DEFAULT_DEBUG_CHANNEL(datetime);
 
 
 #define DATETIME_GetInfoPtr(hwnd) ((DATETIME_INFO *)GetWindowLongA (hwnd, 0))

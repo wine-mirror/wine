@@ -19,7 +19,7 @@
 #include "mmsystem.h"
 #include "debugtools.h"
 
-DEFAULT_DEBUG_CHANNEL(mmio)
+DEFAULT_DEBUG_CHANNEL(mmio);
 
 LPMMIOPROC16 MMIO_InstallIOProc(FOURCC, LPMMIOPROC16, DWORD, BOOL);
 
@@ -1114,11 +1114,12 @@ LRESULT WINAPI mmioSendMessage(HMMIO16 hmmio, UINT16 uMessage,
 {
 	LPMMIOINFO16 lpmminfo;
 	LRESULT result;
-	const char *msg = NULL;
 	struct IOProcList *pListNode;
 
-#ifdef DEBUG_RUNTIME
-	switch (uMessage) {
+        if (TRACE_ON(mmio))
+        {
+            const char *msg = NULL;
+            switch (uMessage) {
 #define msgname(x) case x: msg = #x; break;
 		msgname(MMIOM_OPEN);
 		msgname(MMIOM_CLOSE);
@@ -1128,15 +1129,14 @@ LRESULT WINAPI mmioSendMessage(HMMIO16 hmmio, UINT16 uMessage,
 		msgname(MMIOM_SEEK);
 		msgname(MMIOM_RENAME);
 #undef msgname
-	}
-#endif
-
-	if (msg)
+            }
+            if (msg)
 		TRACE("(%04X, %s, %ld, %ld)\n",
-					 hmmio, msg, lParam1, lParam2);
-	else
+                      hmmio, msg, lParam1, lParam2);
+            else
 		TRACE("(%04X, %u, %ld, %ld)\n",
-					 hmmio, uMessage, lParam1, lParam2);
+                      hmmio, uMessage, lParam1, lParam2);
+        }
 	
 	lpmminfo = (LPMMIOINFO16)GlobalLock16(hmmio);
 

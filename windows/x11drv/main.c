@@ -258,16 +258,7 @@ void X11DRV_USER_ParseOptions(int *argc, char *argv[])
   if (X11DRV_USER_GetResource( db, ".debugoptions", &value))
     MAIN_ParseDebugOptions((char*)value.addr);
   if (X11DRV_USER_GetResource( db, ".debugmsg", &value))
-    {
-#ifndef DEBUG_RUNTIME
-      MESSAGE("%s: Option \"-debugmsg\" not implemented.\n" \
-          "    Recompile with DEBUG_RUNTIME in include/debugtools.h defined.\n",
-	  argv[0]);
-      exit(1);
-#else
-      MAIN_ParseDebugOptions((char*)value.addr);
-#endif
-    }
+    MAIN_ParseDebugOptions((char*)value.addr);
   
   if (X11DRV_USER_GetResource( db, ".dll", &value))
   {

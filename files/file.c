@@ -16,6 +16,7 @@
 #include <errno.h>
 #include <fcntl.h>
 #include <stdlib.h>
+#include <stdio.h>
 #include <string.h>
 #ifdef HAVE_SYS_ERRNO_H
 #include <sys/errno.h>
@@ -50,7 +51,7 @@
 
 #include "server.h"
 
-DEFAULT_DEBUG_CHANNEL(file)
+DEFAULT_DEBUG_CHANNEL(file);
 
 #if defined(MAP_ANONYMOUS) && !defined(MAP_ANON)
 #define MAP_ANON MAP_ANONYMOUS

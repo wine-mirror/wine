@@ -21,16 +21,14 @@ cat <<EOF
 
 #define DEBUG_CLASS_COUNT __DBCL_COUNT
 
-#ifdef DEBUG_RUNTIME
-
-const char * const debug_cl_name[] = { "fixme", "err", "warn", "trace" };
+static const char * const debug_cl_name[] = { "fixme", "err", "warn", "trace" };
 
 EOF
 
 chno=0
 for ch in $DEBUG_CHANNELS
 do
-    echo "const int dbch_$ch = $chno;"
+    echo "char dbch_$ch[] = \"\\003$ch\";"
     chno=`expr $chno + 1`
 done
 echo
@@ -38,35 +36,25 @@ echo "#define DEBUG_CHANNEL_COUNT $chno"
 
 count=1
 echo
-echo 'char __debug_msg_enabled[DEBUG_CHANNEL_COUNT][DEBUG_CLASS_COUNT] = {'
+echo 'static char * const debug_channels[DEBUG_CHANNEL_COUNT] = {'
 for ch in $DEBUG_CHANNELS
 do
     if [ "${count}" != "${chno}" ]; then
-	echo "{1, 1, 0, 0},"
+	echo "    dbch_${ch},"
     else
-	echo "{1, 1, 0, 0}"
+	echo "    dbch_${ch}"
     fi
     count=`expr $count + 1`
 done
 echo '};'
 
-count=1
-echo
-echo 'const char * const debug_ch_name[DEBUG_CHANNEL_COUNT] = {'
-for ch in $DEBUG_CHANNELS
+for cls in err fixme warn trace
 do
-    if [ "${count}" != "${chno}" ]; then
-	echo "\"${ch}\",";
-    else
-    echo "\"${ch}\"";
-    fi
-    count=`expr $count + 1`
-done
-echo '};'
+    cat <<EOF
 
-cat <<EOF
-
-#endif /*DEBUG_RUNTIME*/
-
-/* end of automatically generated debug.h */
+int dbg_header_$cls( const char *dbg_channel, const char *func )
+{
+    return dbg_printf( "$cls:%s:%s ", dbg_channel + 1, func );
+}
 EOF
+done

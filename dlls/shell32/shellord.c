@@ -6,6 +6,7 @@
  *           1998 Jürgen Schmied
  */
 #include <string.h>
+#include <stdio.h>
 #include "winerror.h"
 #include "winreg.h"
 #include "debugtools.h"
@@ -19,7 +20,7 @@
 #include "wine/undocshell.h"
 #include "shpolicy.h"
 
-DEFAULT_DEBUG_CHANNEL(shell)
+DEFAULT_DEBUG_CHANNEL(shell);
 
 /*************************************************************************
  * SHChangeNotifyRegister			[SHELL32.2]

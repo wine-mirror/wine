@@ -8,6 +8,7 @@
 #include <memory.h>
 #include <unistd.h>
 #include <string.h>
+#include <stdio.h>
 
 #include "winbase.h"
 #include "aspi.h"

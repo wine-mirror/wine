@@ -22,7 +22,7 @@
 #include "callback.h"
 #include "debugtools.h"
 
-DEFAULT_DEBUG_CHANNEL(int31)
+DEFAULT_DEBUG_CHANNEL(int31);
 
 #define DOS_GET_DRIVE(reg) ((reg) ? (reg) - 1 : DRIVE_GetCurrentDrive())
 

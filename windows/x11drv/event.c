@@ -43,8 +43,8 @@
 #include "windef.h"
 #include "x11drv.h"
 
-DEFAULT_DEBUG_CHANNEL(event)
-DECLARE_DEBUG_CHANNEL(win)
+DEFAULT_DEBUG_CHANNEL(event);
+DECLARE_DEBUG_CHANNEL(win);
   
 /* X context to associate a hwnd to an X window */
 extern XContext winContext;
@@ -1005,20 +1005,19 @@ static Atom EVENT_SelectionRequest_TARGETS( Window requestor, Atom target, Atom 
         }
     }
 
-#ifdef DEBUG_RUNTIME
-{
-    int i;
-    for ( i = 0; i < cTargets; i++)
+    if (TRACE_ON(event))
     {
-        if (targets[i])
+        int i;
+        for ( i = 0; i < cTargets; i++)
         {
-          char *itemFmtName = TSXGetAtomName(display, targets[i]);
-          TRACE("\tAtom# %d:  Type %s\n", i, itemFmtName);
-          TSXFree(itemFmtName);
+            if (targets[i])
+            {
+                char *itemFmtName = TSXGetAtomName(display, targets[i]);
+                TRACE("\tAtom# %d:  Type %s\n", i, itemFmtName);
+                TSXFree(itemFmtName);
+            }
         }
     }
-}
-#endif
     
     /* Update the X property */
     TRACE("\tUpdating property %s...", TSXGetAtomName(display, rprop));

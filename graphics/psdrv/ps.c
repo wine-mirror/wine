@@ -6,12 +6,13 @@
  */
 
 #include <ctype.h>
+#include <stdio.h>
 #include <string.h>
 #include "psdrv.h"
 #include "winspool.h"
 #include "debugtools.h"
 
-DEFAULT_DEBUG_CHANNEL(psdrv)
+DEFAULT_DEBUG_CHANNEL(psdrv);
 
 static char psheader[] = /* title llx lly urx ury orientation */
 "%%!PS-Adobe-3.0\n"

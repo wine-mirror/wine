@@ -23,6 +23,7 @@
 
 #include <stdlib.h>
 #include <string.h>
+#include <stdio.h>
 #include <unistd.h>
 #include <ctype.h>
 #include <errno.h>
@@ -49,7 +50,7 @@
 #include "server.h"
 #include "services.h"
 
-DEFAULT_DEBUG_CHANNEL(reg)
+DEFAULT_DEBUG_CHANNEL(reg);
 
 static void REGISTRY_Init(void);
 /* FIXME: following defines should be configured global ... */

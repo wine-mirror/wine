@@ -13,6 +13,7 @@
  */
 
 #include <stdlib.h>
+#include <stdio.h>
 #include <unistd.h>
 
 #include "winbase.h"
@@ -25,7 +26,7 @@
 #include "server.h"
 #include "debugtools.h"
 
-DEFAULT_DEBUG_CHANNEL(reg)
+DEFAULT_DEBUG_CHANNEL(reg);
 
 
 /* Ansi->Unicode conversion without string delimiters */

@@ -31,6 +31,7 @@
 # include <netinet/in.h>
 #endif
 #include <stdlib.h>
+#include <stdio.h>
 #include <string.h>
 #include <time.h>
 #include <assert.h>
@@ -56,7 +57,8 @@
 #include "ifs.h"
 #include "compobj.h"
 
-DEFAULT_DEBUG_CHANNEL(ole)
+DEFAULT_DEBUG_CHANNEL(ole);
+
 /****************************************************************************
  *  COM External Lock structures and methods declaration
  *
@@ -1958,13 +1960,11 @@ void COM_ExternalLockDump()
 {
   COM_ExternalLock *current = elList.head;
 
-  printf("\nExternal lock list contains:\n");
+  DPRINTF("\nExternal lock list contains:\n");
 
   while ( current != EL_END_OF_LIST )
   {
-    printf( "\t%p with %lu references count.\n", 
-      current->pUnk, 
-      current->uRefCount);
+      DPRINTF( "\t%p with %lu references count.\n", current->pUnk, current->uRefCount);
  
     /* Skip to the next item */ 
     current = current->next;

@@ -218,7 +218,7 @@ extern void ASPI_DOS_HandleInt(CONTEXT86 *context);
      (!seg || IS_SELECTOR_SYSTEM(seg))? (void *)off : PTR_SEG_OFF_TO_LIN(seg,off&0xffff))
 
 #define INT_BARF(context,num) \
-    fprintf( stderr, "int%x: unknown/not implemented parameters:\n" \
+    ERR( "int%x: unknown/not implemented parameters:\n" \
                      "int%x: AX %04x, BX %04x, CX %04x, DX %04x, " \
                      "SI %04x, DI %04x, DS %04x, ES %04x\n", \
              (num), (num), AX_reg(context), BX_reg(context), CX_reg(context), \

@@ -52,8 +52,7 @@ gimme1 (int n)
 
 /* ---------------------------------------------------------------------- */
 
-LPSTR
-debugstr_an (LPCSTR src, int n)
+LPCSTR debugstr_an (LPCSTR src, int n)
 {
   LPSTR dst, res;
 
@@ -96,16 +95,7 @@ debugstr_an (LPCSTR src, int n)
 
 /* ---------------------------------------------------------------------- */
 
-LPSTR
-debugstr_a (LPCSTR s)
-{
-  return debugstr_an (s, 80);
-}
-
-/* ---------------------------------------------------------------------- */
-
-LPSTR
-debugstr_wn (LPCWSTR src, int n)
+LPCSTR debugstr_wn (LPCWSTR src, int n)
 {
   LPSTR dst, res;
 
@@ -147,36 +137,30 @@ debugstr_wn (LPCWSTR src, int n)
 }
 
 /* ---------------------------------------------------------------------- */
-
-LPSTR
-debugstr_w (LPCWSTR s)
-{
-  return debugstr_wn (s, 80);
-}
-
-/* ---------------------------------------------------------------------- */
 /* This routine returns a nicely formated name of the resource res
    If the resource name is a string, it will return '<res-name>'
    If it is a number, it will return #<4-digit-hex-number> */
-LPSTR debugres_a( LPCSTR res )
+LPCSTR debugres_a( LPCSTR res )
 {
-    char resname[10];
+    char *resname;
     if (HIWORD(res)) return debugstr_a(res);
-    sprintf(resname, "#%04x", LOWORD(res));
-    return debugstr_a (resname);
+    resname = gimme1(6);
+    sprintf(resname, "#%04x", LOWORD(res) );
+    return resname;
 }
 
-LPSTR debugres_w( LPCWSTR res )
+LPCSTR debugres_w( LPCWSTR res )
 {
-    char resname[10];
+    char *resname;
     if (HIWORD(res)) return debugstr_w(res);
-    sprintf(resname, "#%04x", LOWORD(res));
-    return debugstr_a (resname);
+    resname = gimme1(6);
+    sprintf( resname, "#%04x", LOWORD(res) );
+    return resname;
 }
 
 /* ---------------------------------------------------------------------- */
 
-LPSTR debugstr_guid( const GUID *id )
+LPCSTR debugstr_guid( const GUID *id )
 {
     LPSTR str;
 
@@ -232,7 +216,6 @@ int dbg_printf(const char *format, ...)
 }
 
 
-
 /*--< Function >---------------------------------------------------------
 **  
 **              debugstr_hex_dump
@@ -252,8 +235,7 @@ int dbg_printf(const char *format, ...)
 **  TRACE("struct dump is \n%s", debugstr_hex_dump(&x, sizeof(x)));
 **          
 **-------------------------------------------------------------------------*/
-LPSTR 
-debugstr_hex_dump (const void *ptr, int len)
+LPCSTR debugstr_hex_dump (const void *ptr, int len)
 {
     /* Locals */
     char          dumpbuf[59];

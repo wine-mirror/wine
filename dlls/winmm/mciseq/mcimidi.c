@@ -16,6 +16,7 @@
  */
 
 #include <stdlib.h>
+#include <stdio.h>
 #include "windef.h"
 #include "wingdi.h"
 #include "winuser.h"
@@ -24,7 +25,7 @@
 #include "heap.h"
 #include "debugtools.h"
 
-DEFAULT_DEBUG_CHANNEL(mcimidi)
+DEFAULT_DEBUG_CHANNEL(mcimidi);
 
 #define MIDI_NOTEOFF             0x80
 #define MIDI_NOTEON              0x90

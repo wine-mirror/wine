@@ -7,6 +7,7 @@
 
 #include <ctype.h>
 #include <string.h>
+#include <stdio.h>
 #include "winbase.h"
 #include "wine/winbase16.h"
 #include "wine/winestring.h"
@@ -16,7 +17,7 @@
 #include "winerror.h"
 #include "debugtools.h"
 
-DEFAULT_DEBUG_CHANNEL(reg)
+DEFAULT_DEBUG_CHANNEL(reg);
 
 static BYTE PF[64] = {0,};
 

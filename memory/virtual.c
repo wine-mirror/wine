@@ -14,6 +14,7 @@
 #include <fcntl.h>
 #include <unistd.h>
 #include <stdlib.h>
+#include <stdio.h>
 #include <string.h>
 #include <sys/types.h>
 #ifdef HAVE_SYS_MMAN_H
@@ -28,7 +29,7 @@
 #include "server.h"
 #include "debugtools.h"
 
-DEFAULT_DEBUG_CHANNEL(virtual)
+DEFAULT_DEBUG_CHANNEL(virtual);
 
 #ifndef MS_SYNC
 #define MS_SYNC 0

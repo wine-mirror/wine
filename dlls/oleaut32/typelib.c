@@ -26,6 +26,7 @@
 
 #include <stdlib.h>
 #include <string.h>
+#include <stdio.h>
 #include <assert.h>
 #include "winerror.h"
 #include "winreg.h"         /* for HKEY_LOCAL_MACHINE */
@@ -40,8 +41,8 @@ typedef struct ITypeInfoVtbl ITypeLib_VTable, *LPTYPEINFO_VTABLE ;
 typedef struct ITypeLibVtbl *LPTYPELIB_VTABLE  ; 
 #include "typelib.h"
 
-DEFAULT_DEBUG_CHANNEL(ole)
-DECLARE_DEBUG_CHANNEL(typelib)
+DEFAULT_DEBUG_CHANNEL(ole);
+DECLARE_DEBUG_CHANNEL(typelib);
 
 /****************************************************************************
  *		QueryPathOfRegTypeLib16	[TYPELIB.14]

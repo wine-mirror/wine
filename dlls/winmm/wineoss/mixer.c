@@ -10,6 +10,7 @@
 #include "config.h"
 
 #include <stdlib.h>
+#include <stdio.h>
 #include <string.h>
 #include <unistd.h>
 #include <fcntl.h>
@@ -21,7 +22,7 @@
 #include "oss.h"
 #include "debugtools.h"
 
-DEFAULT_DEBUG_CHANNEL(mmaux)
+DEFAULT_DEBUG_CHANNEL(mmaux);
 
 #ifdef HAVE_OSS
 

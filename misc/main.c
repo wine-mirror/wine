@@ -104,6 +104,7 @@ struct options Options =
     FALSE,          /* Perfect graphics */
     FALSE,          /* No DGA */
     FALSE,          /* No XSHM */
+    FALSE,          /* DXGrab */
     NULL,           /* Alternate config file name */
     0               /* screenDepth */
 };
@@ -194,7 +195,7 @@ BOOL MAIN_ParseDebugOptions(char *options)
   int l, cls, dotracerelay = TRACE_ON(relay);
 
   l = strlen(options);
-  if (l<3)
+  if (l<2)
     return FALSE;
   if (options[l-1]=='\n') options[l-1]='\0';
   do
@@ -226,7 +227,7 @@ BOOL MAIN_ParseDebugOptions(char *options)
 	for (i=0; i<DEBUG_CHANNEL_COUNT; i++)
 	  for(j=0; j<DEBUG_CLASS_COUNT; j++)
 	    if(cls == -1 || cls == j)
-                __SET_DEBUGGING( j, i, (*options=='+') );
+                __SET_DEBUGGING( j, debug_channels[i], (*options=='+') );
       }
     else if (!lstrncmpiA(options+1, "relay=", 6) ||
 	     !lstrncmpiA(options+1, "snoop=", 6))
@@ -235,10 +236,11 @@ BOOL MAIN_ParseDebugOptions(char *options)
 	char *s, *s2, ***output, c;
 
 	for (i=0; i<DEBUG_CHANNEL_COUNT; i++)
-	  if (debug_ch_name && (!lstrncmpiA(debug_ch_name[i],options+1,5))){
+	  if (!strncasecmp( debug_channels[i] + 1, options + 1, 5))
+          {
 	    for(j=0; j<DEBUG_CLASS_COUNT; j++)
 	      if(cls == -1 || cls == j)
-                  __SET_DEBUGGING( j, i, 1 );
+                  __SET_DEBUGGING( j, debug_channels[i], 1 );
 	    break;
 	  }
 	/* should never happen, maybe assert(i!=DEBUG_CHANNEL_COUNT)? */
@@ -277,10 +279,11 @@ BOOL MAIN_ParseDebugOptions(char *options)
       {
 	int i, j;
 	for (i=0; i<DEBUG_CHANNEL_COUNT; i++)
-	  if (debug_ch_name && (!lstrncmpiA(options+1,debug_ch_name[i],l-1))){
+          if (!strncasecmp( debug_channels[i] + 1, options + 1, l - 1) && !debug_channels[i][l])
+          {
 	    for(j=0; j<DEBUG_CLASS_COUNT; j++)
 	      if(cls == -1 || cls == j)
-                  __SET_DEBUGGING( j, i, (*options=='+') );
+                  __SET_DEBUGGING( j, debug_channels[i], (*options=='+') );
 	    break;
 	  }
 	if (i==DEBUG_CHANNEL_COUNT)
@@ -316,8 +319,7 @@ BOOL MAIN_ParseDebugOptions(char *options)
   MESSAGE("Available message types:\n");
   MESSAGE("%-9s ","all");
   for(i=0;i<DEBUG_CHANNEL_COUNT;i++)
-    if(debug_ch_name[i])
-      MESSAGE("%-9s%c",debug_ch_name[i],
+      MESSAGE("%-9s%c",debug_channels[i] + 1,
 	  (((i+2)%8==0)?'\n':' '));
   MESSAGE("\n\n");
   ExitProcess(1);

@@ -23,6 +23,7 @@
 
 #include <ctype.h>
 #include <stdlib.h>
+#include <stdio.h>
 
 #include "winbase.h"
 #include "commctrl.h"
@@ -30,7 +31,7 @@
 #include "heap.h"
 #include "debugtools.h"
 
-DEFAULT_DEBUG_CHANNEL(ipaddress)
+DEFAULT_DEBUG_CHANNEL(ipaddress);
 
 #define IPADDRESS_GetInfoPtr(hwnd) ((IPADDRESS_INFO *)GetWindowLongA (hwnd, 0))
 

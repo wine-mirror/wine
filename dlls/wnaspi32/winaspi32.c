@@ -1,6 +1,7 @@
 #include "config.h"
 
 #include <stdlib.h>
+#include <stdio.h>
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <errno.h>
@@ -17,7 +18,7 @@
 #include "ldt.h"
 #include "callback.h"
 
-DEFAULT_DEBUG_CHANNEL(aspi)
+DEFAULT_DEBUG_CHANNEL(aspi);
 
 /* FIXME!
  * 1) Residual byte length reporting not handled

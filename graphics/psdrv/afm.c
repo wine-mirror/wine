@@ -7,13 +7,14 @@
  */
 
 #include <string.h>
+#include <stdio.h>
 #include "winnt.h" /* HEAP_ZERO_MEMORY */
 #include "psdrv.h"
 #include "options.h"
 #include "debugtools.h"
 #include "heap.h"
 
-DEFAULT_DEBUG_CHANNEL(psdrv)
+DEFAULT_DEBUG_CHANNEL(psdrv);
 #include <ctype.h>
 
 /* ptr to fonts for which we have afm files */

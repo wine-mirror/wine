@@ -6,6 +6,7 @@
  */
 
 #include <stdlib.h>
+#include <stdio.h>
 #include <string.h>
 
 #include "windef.h"
@@ -17,7 +18,7 @@
 #include "xmalloc.h"
 #include "debugtools.h"
 
-DEFAULT_DEBUG_CHANNEL(ver)
+DEFAULT_DEBUG_CHANNEL(ver);
 
 
 /******************************************************************************

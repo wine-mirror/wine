@@ -9,6 +9,8 @@
 
 #include <string.h>
 #include <ctype.h>
+#include <sys/types.h>
+#include <unistd.h>
 #include "windef.h"
 #include "winbase.h"
 #include "wine/winbase16.h"
@@ -18,7 +20,7 @@
 #include "lzexpand.h"
 #include "debugtools.h"
 
-DEFAULT_DEBUG_CHANNEL(file)
+DEFAULT_DEBUG_CHANNEL(file);
 
 
 /* The readahead length of the decompressor. Reading single bytes

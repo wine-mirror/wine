@@ -6,6 +6,7 @@
  */
 #include <stdlib.h>
 #include <string.h>
+#include <stdio.h>
 #include "debugtools.h"
 #include "winerror.h"
 #include "winreg.h"
@@ -15,7 +16,7 @@
 #include "shlguid.h"
 #include "shresdef.h"
 
-DEFAULT_DEBUG_CHANNEL(shell)
+DEFAULT_DEBUG_CHANNEL(shell);
 
 #define MAX_EXTENSION_LENGTH 20
 

@@ -11,6 +11,7 @@
 #include <errno.h>
 #include <signal.h>
 #include <stdlib.h>
+#include <stdio.h>
 #include <unistd.h>
 
 #ifdef HAVE_SYS_PARAM_H

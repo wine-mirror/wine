@@ -10,6 +10,7 @@
  *       dplayx.dll data which is accessible from all processes.
  */ 
 
+#include <stdio.h>
 #include "debugtools.h"
 #include "winbase.h"
 #include "winerror.h"
@@ -17,7 +18,7 @@
 
 #include "dplayx_global.h"
 
-DEFAULT_DEBUG_CHANNEL(dplay)
+DEFAULT_DEBUG_CHANNEL(dplay);
 
 /* FIXME: Need to do all that fun other dll referencing type of stuff */
 /* FIXME: Need to allocate a giant static area */

@@ -7,6 +7,7 @@
 #include <assert.h>
 #include <ctype.h>
 #include <string.h>
+#include <stdio.h>
 #include "winbase.h"
 #include "wine/winbase16.h"
 #include "wine/winestring.h"

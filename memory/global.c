@@ -7,6 +7,7 @@
 
 #include <sys/types.h>
 #include <stdlib.h>
+#include <stdio.h>
 #include <unistd.h>
 #include <string.h>
 
@@ -21,7 +22,7 @@
 #include "debugtools.h"
 #include "winerror.h"
 
-DEFAULT_DEBUG_CHANNEL(global)
+DEFAULT_DEBUG_CHANNEL(global);
 
   /* Global arena block */
 typedef struct

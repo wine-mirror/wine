@@ -54,6 +54,7 @@
 #include "config.h"
 #include <assert.h>
 #include <errno.h>
+#include <stdio.h>
 #include <sys/types.h>
 #include <sys/time.h>
 #include <sys/fcntl.h>
@@ -70,7 +71,7 @@
 #include "thread.h"
 #include "debugtools.h"
 
-DEFAULT_DEBUG_CHANNEL(dsound)
+DEFAULT_DEBUG_CHANNEL(dsound);
 
 
 /*****************************************************************************
@@ -1197,7 +1198,7 @@ static HRESULT WINAPI IDirectSoundBufferImpl_Initialize(
 ) {
 	ICOM_THIS(IDirectSoundBufferImpl,iface);
 	FIXME("(%p,%p,%p):stub\n",This,dsound,dbsd);
-	printf("Re-Init!!!\n");
+	DPRINTF("Re-Init!!!\n");
 	return DSERR_ALREADYINITIALIZED;
 }
 

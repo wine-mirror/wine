@@ -23,13 +23,14 @@
 */
 
 
+#include <stdio.h>
 
 #include "winbase.h"
 #include "commctrl.h"
 #include "trackbar.h"
 #include "debugtools.h"
 
-DEFAULT_DEBUG_CHANNEL(trackbar)
+DEFAULT_DEBUG_CHANNEL(trackbar);
 
 
 #define TRACKBAR_GetInfoPtr(wndPtr) ((TRACKBAR_INFO *)GetWindowLongA (hwnd,0))

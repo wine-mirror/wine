@@ -4,6 +4,9 @@
 
 #include <stdio.h>
 #include "miscemu.h"
+#include "debugtools.h"
+
+DEFAULT_DEBUG_CHANNEL(int);
 
 /***********************************************************************
  *           INT_Int4bHandler

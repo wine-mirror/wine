@@ -7,6 +7,7 @@
 
 #include <assert.h>
 #include <stdlib.h>
+#include <stdio.h>
 #include <string.h>
 #include "wine/winbase16.h"
 #include "wine/winestring.h"
@@ -19,7 +20,7 @@
 #include "toolhelp.h"
 #include "debugtools.h"
 
-DEFAULT_DEBUG_CHANNEL(heap)
+DEFAULT_DEBUG_CHANNEL(heap);
 
 /* Note: the heap data structures are based on what Pietrek describes in his
  * book 'Windows 95 System Programming Secrets'. The layout is not exactly

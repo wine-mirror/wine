@@ -4,6 +4,7 @@
  */
 #include <ctype.h>
 #include <stdlib.h>
+#include <stdio.h>
 #include <string.h>
 #include "winbase.h"
 #include "ldt.h"
@@ -20,7 +21,7 @@
 #include "filedlgbrowser.h"
 #include "wine/obj_contextmenu.h"
 
-DEFAULT_DEBUG_CHANNEL(commdlg)
+DEFAULT_DEBUG_CHANNEL(commdlg);
 
 /***********************************************************************
  * Data structure and global variables
