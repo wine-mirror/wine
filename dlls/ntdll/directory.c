@@ -76,14 +76,22 @@ typedef struct
 # define O_DIRECTORY 0200000 /* must be directory */
 #endif
 
+/* Using the same seekdir value across multiple directories is not portable,  */
+/* but it works on Linux, and it's a major performance gain so we want to use */
+/* it if possible. */
+/* FIXME: do some sort of runtime check instead */
+#define USE_SEEKDIR
+
 #else   /* linux */
 #undef VFAT_IOCTL_READDIR_BOTH  /* just in case... */
+#undef USE_SEEKDIR
 #endif  /* linux */
 
 #define IS_OPTION_TRUE(ch) ((ch) == 'y' || (ch) == 'Y' || (ch) == 't' || (ch) == 'T' || (ch) == '1')
 #define IS_SEPARATOR(ch)   ((ch) == '\\' || (ch) == '/')
 
-#define INVALID_DOS_CHARS  '*','?','<','>','|','"','+','=',',',';','[',']',' ','\345'
+#define INVALID_NT_CHARS   '*','?','<','>','|','"'
+#define INVALID_DOS_CHARS  INVALID_NT_CHARS,'+','=',',',';','[',']',' ','\345'
 
 #define MAX_DIR_ENTRY_LEN 255  /* max length of a directory entry in chars */
 
@@ -101,6 +109,35 @@ static CRITICAL_SECTION_DEBUG critsect_debug =
       0, 0, { 0, (DWORD)(__FILE__ ": chdir_section") }
 };
 static CRITICAL_SECTION chdir_section = { &critsect_debug, -1, 0, 0, 0, 0 };
+
+
+/***********************************************************************
+ *           seekdir_wrapper
+ *
+ * Wrapper for supporting seekdir across multiple directory objects.
+ */
+static inline void seekdir_wrapper( DIR *dir, off_t pos )
+{
+#ifdef USE_SEEKDIR
+    seekdir( dir, pos );
+#else
+    while (pos-- > 0) if (!readdir( dir )) break;
+#endif
+}
+
+/***********************************************************************
+ *           telldir_wrapper
+ *
+ * Wrapper for supporting telldir across multiple directory objects.
+ */
+static inline off_t telldir_wrapper( DIR *dir, off_t pos, int count )
+{
+#ifdef USE_SEEKDIR
+    return telldir( dir );
+#else
+    return pos + count;
+#endif
+}
 
 
 /***********************************************************************
@@ -521,7 +558,7 @@ NTSTATUS WINAPI NtQueryDirectoryFile( HANDLE handle, HANDLE event,
             if (!restart_scan)
             {
                 old_pos = lseek( fd, 0, SEEK_CUR );
-                seekdir( dir, old_pos );
+                seekdir_wrapper( dir, old_pos );
             }
             io->u.Status = STATUS_SUCCESS;
 
@@ -537,16 +574,18 @@ NTSTATUS WINAPI NtQueryDirectoryFile( HANDLE handle, HANDLE event,
                         if ((char *)info->FileName + info->FileNameLength > (char *)buffer + length)
                             io->u.Status = STATUS_BUFFER_OVERFLOW;
                         else
-                            old_pos = telldir( dir );
+                            old_pos = telldir_wrapper( dir, old_pos, 1 );
                         break;
                     }
-                    old_pos = telldir( dir );
+                    old_pos = telldir_wrapper( dir, old_pos, 1 );
                 }
             }
             else  /* we'll only return full entries, no need to worry about overflow */
             {
+                int count = 0;
                 while ((de = readdir( dir )))
                 {
+                    count++;
                     info = append_entry( buffer, &io->Information, length,
                                          de->d_name, NULL, mask );
                     if (info)
@@ -557,7 +596,7 @@ NTSTATUS WINAPI NtQueryDirectoryFile( HANDLE handle, HANDLE event,
                         if (io->Information + max_dir_info_size > length) break;
                     }
                 }
-                old_pos = telldir( dir );
+                old_pos = telldir_wrapper( dir, old_pos, count );
             }
             lseek( fd, old_pos, SEEK_SET );  /* store dir offset as filepos for fd */
             closedir( dir );
@@ -747,9 +786,12 @@ static inline int get_dos_prefix_len( const UNICODE_STRING *name )
 NTSTATUS DIR_nt_to_unix( const UNICODE_STRING *nameW, ANSI_STRING *unix_name_ret,
                          int check_last, int check_case )
 {
+    static const WCHAR uncW[] = {'U','N','C','\\'};
+    static const WCHAR invalid_charsW[] = { INVALID_NT_CHARS, 0 };
+
     NTSTATUS status = STATUS_NO_SUCH_FILE;
     const char *config_dir = wine_get_config_dir();
-    const WCHAR *end, *name;
+    const WCHAR *end, *name, *p;
     struct stat st;
     char *unix_name;
     int pos, ret, name_len, unix_len, used_default;
@@ -757,14 +799,30 @@ NTSTATUS DIR_nt_to_unix( const UNICODE_STRING *nameW, ANSI_STRING *unix_name_ret
     name     = nameW->Buffer;
     name_len = nameW->Length / sizeof(WCHAR);
 
+    if (!name_len || !IS_SEPARATOR(name[0])) return STATUS_OBJECT_PATH_SYNTAX_BAD;
+
     if ((pos = get_dos_prefix_len( nameW )))
     {
         name += pos;
         name_len -= pos;
+
+        /* check for UNC prefix */
+        if (name_len > 4 && !memicmpW( name, uncW, 4 ))
+        {
+            FIXME( "UNC name %s not supported\n", debugstr_us(nameW) );
+            return STATUS_NO_SUCH_FILE;
+        }
+
+        /* make sure we have a drive letter */
         if (name_len < 3 || !isalphaW(name[0]) || name[1] != ':' || !IS_SEPARATOR(name[2]))
             return STATUS_NO_SUCH_FILE;
         name += 2;  /* skip drive letter */
         name_len -= 2;
+
+        /* check for invalid characters */
+        for (p = name; p < name + name_len; p++)
+            if (*p < 32 || strchrW( invalid_charsW, *p )) return STATUS_OBJECT_NAME_INVALID;
+
         unix_len = ntdll_wcstoumbs( 0, name, name_len, NULL, 0, NULL, NULL );
         unix_len += MAX_DIR_ENTRY_LEN + 3;
         unix_len += strlen(config_dir) + sizeof("/dosdevices/a:");
