@@ -528,7 +528,7 @@ static BOOL  select_font(struct dialog_info* di)
     if (!hFont) return FALSE;
 
     if (config.cell_height != di->font[size_idx].height)
-        WINE_TRACE("select_font: mismatched heights (%u<>%u)\n",
+        WINE_TRACE("mismatched heights (%u<>%u)\n",
                    config.cell_height, di->font[size_idx].height);
     hOldFont = (HFONT)SendDlgItemMessage(di->hDlg, IDC_FNT_PREVIEW, WM_GETFONT, 0L, 0L);
 
@@ -747,7 +747,7 @@ static BOOL WINAPI WCUSER_ConfigDlgProc(HWND hDlg, UINT msg, WPARAM wParam, LPAR
 /******************************************************************
  *		WCUSER_GetProperties
  *
- * Runs the dialog box to set up the winconsole options
+ * Runs the dialog box to set up the wineconsole options
  */
 BOOL WCUSER_GetProperties(struct inner_data* data, BOOL current)
 {
@@ -842,5 +842,3 @@ BOOL WCUSER_GetProperties(struct inner_data* data, BOOL current)
 
     return TRUE;
 }
-
-

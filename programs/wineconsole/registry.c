@@ -53,6 +53,7 @@ BOOL WINECON_RegLoad(struct config_data* cfg)
     DWORD 	count;
     DWORD       val;
 
+    WINE_TRACE("loading registry settings.\n");
     if (RegOpenKey(HKEY_CURRENT_USER, wszConsole, &hConKey)) hConKey = 0;
 
     count = sizeof(val);
@@ -133,6 +134,7 @@ BOOL WINECON_RegSave(const struct config_data* cfg)
     HKEY        hConKey;
     DWORD       val;
 
+    WINE_TRACE("saving registry settings.\n");
     if (RegCreateKey(HKEY_CURRENT_USER, wszConsole, &hConKey))
     {
         WINE_ERR("Can't open registry for saving\n");

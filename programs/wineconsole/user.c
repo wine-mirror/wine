@@ -82,8 +82,8 @@ static void WCUSER_FillMemDC(const struct inner_data* data, int upd_tp, int upd_
 /******************************************************************
  *		WCUSER_NewBitmap
  *
- * Either the font geometry or the sb geometry has changed. we need to recreate the
- * bitmap geometry
+ * Either the font geometry or the sb geometry has changed. we need
+ * to recreate the bitmap geometry.
  */
 static void WCUSER_NewBitmap(struct inner_data* data, BOOL fill)
 {
@@ -149,7 +149,7 @@ void	WCUSER_ShapeCursor(struct inner_data* data, int size, int vis, BOOL force)
 	PRIVATE(data)->cursor_bitmap = (HBITMAP)0;
 	if (size != 100)
 	{
-	    int		w16b; /* number of byets per row, aligned on word size */
+	    int		w16b; /* number of bytes per row, aligned on word size */
 	    BYTE*	ptr;
 	    int		i, j, nbl;
 
@@ -193,7 +193,7 @@ void	WCUSER_ShapeCursor(struct inner_data* data, int size, int vis, BOOL force)
 }
 
 /******************************************************************
- *		INECON_ComputePositions
+ *		WCUSER_ComputePositions
  *
  * Recomputes all the components (mainly scroll bars) positions
  */
@@ -298,7 +298,7 @@ void WCUSER_DumpTextMetric(const TEXTMETRIC* tm, DWORD ft)
 }
 
 /******************************************************************
- *		FontEqual
+ *		WCUSER_AreFontsEqual
  *
  *
  */
@@ -401,7 +401,7 @@ static int CALLBACK get_first_font_enum(const LOGFONT* lf, const TEXTMETRIC* tm,
 }
 
 /******************************************************************
- *		CopyFont
+ *		WCUSER_CopyFont
  *
  * get the relevant information from the font described in lf and store them
  * in config
@@ -422,15 +422,15 @@ HFONT WCUSER_CopyFont(struct config_data* config, HWND hWnd, const LOGFONT* lf)
     /* FIXME:
      * the current freetype engine (at least 2.0.x with x <= 8) and its implementation
      * in Wine don't return adequate values for fixed fonts
-     * In Windows, those fonts are expectes to return the same value for
+     * In Windows, those fonts are expected to return the same value for
      *  - the average width
      *  - the largest width
      *  - the width of all characters in the font
-     * This isn't true in Wine. As a temporary workaound, we get as the width of the
+     * This isn't true in Wine. As a temporary workaround, we get as the width of the
      * cell, the width of the first character in the font, after checking that all
      * characters in the font have the same width (I hear paranoïa coming)
-     * when this gets fixed, the should be using tm.tmAveCharWidth or tm.tmMaxCharWidth
-     * as the cell width.
+     * when this gets fixed, the code should be using tm.tmAveCharWidth
+     * or tm.tmMaxCharWidth as the cell width.
      */
     GetCharWidth32(hDC, tm.tmFirstChar, tm.tmFirstChar, &w);
     for (i = tm.tmFirstChar + 1; i <= tm.tmLastChar; i += sizeof(buf) / sizeof(buf[0]))
@@ -557,7 +557,7 @@ static BOOL	WCUSER_InitFont(struct inner_data* data)
 /******************************************************************
  *		WCUSER_GetCell
  *
- * Get a cell from the a relative coordinate in window (takes into
+ * Get a cell from a relative coordinate in window (takes into
  * account the scrolling)
  */
 static COORD	WCUSER_GetCell(const struct inner_data* data, LPARAM lParam)
@@ -723,7 +723,7 @@ static void	WCUSER_PasteFromClipboard(struct inner_data* data)
 }
 
 /******************************************************************
- *		Refresh
+ *		WCUSER_Refresh
  *
  *
  */
@@ -827,6 +827,24 @@ static BOOL WCUSER_FillMenu(HMENU hMenu, BOOL sep)
 }
 
 /******************************************************************
+ *		WCUSER_SetMenuDetails
+ *
+ * Grays / ungrays the menu items according to their state
+ */
+static void	WCUSER_SetMenuDetails(const struct inner_data* data, HMENU hMenu)
+{
+    if (!hMenu) {WINE_ERR("Issue in getting menu bits\n");return;}
+
+    EnableMenuItem(hMenu, IDS_COPY,
+                   MF_BYCOMMAND|(PRIVATE(data)->has_selection ? MF_ENABLED : MF_GRAYED));
+    EnableMenuItem(hMenu, IDS_PASTE,
+		   MF_BYCOMMAND|(IsClipboardFormatAvailable(CF_UNICODETEXT)
+				 ? MF_ENABLED : MF_GRAYED));
+    EnableMenuItem(hMenu, IDS_SCROLL, MF_BYCOMMAND|MF_GRAYED);
+    EnableMenuItem(hMenu, IDS_SEARCH, MF_BYCOMMAND|MF_GRAYED);
+}
+
+/******************************************************************
  *		WCUSER_Create
  *
  * Creates the window for the rendering
@@ -855,24 +873,6 @@ static LRESULT WCUSER_Create(HWND hWnd, LPCREATESTRUCT lpcs)
 
     data->curcfg.quick_edit = FALSE;
     return 0;
-}
-
-/******************************************************************
- *		WCUSER_SetMenuDetails
- *
- * Grays / ungrays the menu items according to their state
- */
-static void	WCUSER_SetMenuDetails(const struct inner_data* data, HMENU hMenu)
-{
-    if (!hMenu) {WINE_ERR("Issue in getting menu bits\n");return;}
-
-    EnableMenuItem(hMenu, IDS_COPY,
-                   MF_BYCOMMAND|(PRIVATE(data)->has_selection ? MF_ENABLED : MF_GRAYED));
-    EnableMenuItem(hMenu, IDS_PASTE,
-		   MF_BYCOMMAND|(IsClipboardFormatAvailable(CF_UNICODETEXT)
-				 ? MF_ENABLED : MF_GRAYED));
-    EnableMenuItem(hMenu, IDS_SCROLL, MF_BYCOMMAND|MF_GRAYED);
-    EnableMenuItem(hMenu, IDS_SEARCH, MF_BYCOMMAND|MF_GRAYED);
 }
 
 /******************************************************************
