@@ -206,7 +206,8 @@ END
 STRINGTABLE DISCARDABLE
 BEGIN
     IDS_ERROR		    "Errore"
-    IDS_BAD_VALUE           "Impossibile interrogare il valore '%s'"
+    IDS_BAD_KEY		    "Impossibile trovare la chiave '%s'"
+    IDS_BAD_VALUE           "Impossibile trovare il valore '%s'"
     IDS_UNSUPPORTED_TYPE    "Impossibile editare valori di questo tipo (%ld)"
     IDS_TOO_BIG_VALUE       "Valore troppo grande (%ld)"
     IDS_DELETE_BOX_TITLE    "Confermare Cancellazione del Valore"
