@@ -28,7 +28,6 @@
 #include "mlang.h"
 
 #include "wine/test.h"
-#include "wine/debug.h"
 
 #ifndef CP_UNICODE
 #define CP_UNICODE 1200
@@ -37,7 +36,13 @@
 /*#define DUMP_CP_INFO*/
 /*#define DUMP_SCRIPT_INFO*/
 
+#ifdef DUMP_CP_INFO
+#include "wine/debug.h"
+#endif
+
 #define TRACE_2 OutputDebugStringA
+
+static BOOL (WINAPI *pGetCPInfoExA)(UINT,DWORD,LPCPINFOEXA);
 
 static void test_multibyte_to_unicode_translations(IMultiLanguage2 *iML2)
 {
@@ -336,14 +341,17 @@ static void test_EnumCodePages(IMultiLanguage2 *iML2, DWORD flags)
 	else
 	    trace("TranslateCharsetInfo failed for cp %u\n", cpinfo[i].uiFamilyCodePage);
 
-	if (GetCPInfoExA(cpinfo[i].uiCodePage, 0, &cpinfoex))
-	    trace("CodePage %u name: %s\n", cpinfo[i].uiCodePage, cpinfoex.CodePageName);
-	else
-	    trace("GetCPInfoExA failed for cp %u\n", cpinfo[i].uiCodePage);
-	if (GetCPInfoExA(cpinfo[i].uiFamilyCodePage, 0, &cpinfoex))
-	    trace("CodePage %u name: %s\n", cpinfo[i].uiFamilyCodePage, cpinfoex.CodePageName);
-	else
-	    trace("GetCPInfoExA failed for cp %u\n", cpinfo[i].uiFamilyCodePage);
+        if (pGetCPInfoExA)
+        {
+            if (pGetCPInfoExA(cpinfo[i].uiCodePage, 0, &cpinfoex))
+                trace("CodePage %u name: %s\n", cpinfo[i].uiCodePage, cpinfoex.CodePageName);
+            else
+                trace("GetCPInfoExA failed for cp %u\n", cpinfo[i].uiCodePage);
+            if (pGetCPInfoExA(cpinfo[i].uiFamilyCodePage, 0, &cpinfoex))
+                trace("CodePage %u name: %s\n", cpinfo[i].uiFamilyCodePage, cpinfoex.CodePageName);
+            else
+                trace("GetCPInfoExA failed for cp %u\n", cpinfo[i].uiFamilyCodePage);
+        }
 
         /* Win95 does not support UTF-7 */
         if (cpinfo[i].uiCodePage == CP_UTF7) continue;
@@ -525,9 +533,12 @@ static void test_EnumScripts(IMultiLanguage2 *iML2, DWORD flags)
 
 START_TEST(mlang)
 {
+    HINSTANCE lib;
     IMultiLanguage2 *iML2 = NULL;
     HRESULT ret;
 
+    lib=LoadLibraryA("mlang");
+    pGetCPInfoExA=(void*)GetProcAddress(lib,"GetCPInfoExA");
     CoInitialize(NULL);
     TRACE_2("Call CoCreateInstance\n");
     ret = CoCreateInstance(&CLSID_CMultiLanguage, NULL, CLSCTX_INPROC_SERVER,
