@@ -3955,3 +3955,31 @@ HRESULT WINAPI SKGetValueW(DWORD a, LPWSTR b, LPWSTR c, DWORD d, DWORD e, DWORD 
     FIXME("(%lx, %s, %s, %lx, %lx, %lx): stub\n", a, debugstr_w(b), debugstr_w(c), d, e, f);
     return E_FAIL;
 }
+
+typedef HRESULT (WINAPI *DllGetVersion_func)(DLLVERSIONINFO *);
+
+/***********************************************************************
+ *              GetUIVersion (SHLWAPI.452)
+ */
+DWORD WINAPI GetUIVersion(void)
+{
+    static DWORD version;
+
+    if (!version)
+    {
+        DllGetVersion_func pDllGetVersion;
+        HMODULE dll = LoadLibraryA("shell32.dll");
+        if (!dll) return 0;
+
+        pDllGetVersion = (DllGetVersion_func)GetProcAddress(dll, "DllGetVersion");
+        if (pDllGetVersion)
+        {
+            DLLVERSIONINFO dvi;
+            dvi.cbSize = sizeof(DLLVERSIONINFO);
+            if (pDllGetVersion(&dvi) == S_OK) version = dvi.dwMajorVersion;
+        }
+        FreeLibrary( dll );
+        if (!version) version = 3;  /* old shell dlls don't have DllGetVersion */
+    }
+    return version;
+}
