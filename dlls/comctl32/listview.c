@@ -4054,7 +4054,17 @@ static BOOL LISTVIEW_DeleteColumn(LISTVIEW_INFO *infoPtr, INT nColumn)
     
     TRACE("nColumn=%d\n", nColumn);
 
-    if (nColumn <= 0 || nColumn >= infoPtr->hdpaColumns->nItemCount) return FALSE;
+    if (nColumn < 0 || infoPtr->hdpaColumns->nItemCount == 0
+           || nColumn >= infoPtr->hdpaColumns->nItemCount) return FALSE;
+
+    /* While the MSDN specifically says that column zero should not be deleted,
+       it does in fact work on WinNT, and at least one app depends on it. On
+       WinNT, deleting column zero deletes the last column of items but the
+       first header. Since no app will ever depend on that bizarre behavior, 
+       we just delete the last column including the header.
+     */
+    if (nColumn == 0)
+        nColumn = infoPtr->hdpaColumns->nItemCount - 1;
 
     LISTVIEW_GetHeaderRect(infoPtr, nColumn, &rcCol);
     
@@ -4070,6 +4080,9 @@ static BOOL LISTVIEW_DeleteColumn(LISTVIEW_INFO *infoPtr, INT nColumn)
 	HDPA hdpaSubItems;
 	INT nItem, nSubItem, i;
 	
+	if (nColumn == 0)
+	    return LISTVIEW_DeleteAllItems(infoPtr);
+	    
 	for (nItem = 0; nItem < infoPtr->nItemCount; nItem++)
 	{
 	    hdpaSubItems = (HDPA)DPA_GetPtr(infoPtr->hdpaItems, nItem);
