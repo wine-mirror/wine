@@ -63,10 +63,7 @@ LPWSTR* WINAPI CommandLineToArgvW(LPWSTR cmdline,LPDWORD numargs)
 	    *s=0x0020;
 	    while (*s && *s==0x0020)
 	      s++;
-	    if (*s)
-	      t=s+1;
-	    else
-	      t=s;
+	    t=s;
 	    continue;
 	  }
 	  s++;
