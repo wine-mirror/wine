@@ -479,7 +479,7 @@ void generate_startup_debug_events( struct process *process )
 
     /* generate creation events */
     generate_debug_event( thread, CREATE_PROCESS_DEBUG_EVENT, process );
-    while ((thread = thread->next))
+    while ((thread = thread->proc_next))
         generate_debug_event( thread, CREATE_THREAD_DEBUG_EVENT, thread );
 
     /* generate dll events (in loading order, i.e. reverse list order) */
