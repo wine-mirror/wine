@@ -283,6 +283,9 @@ DECL_HANDLER(set_class_info);
 DECL_HANDLER(set_clipboard_info);
 DECL_HANDLER(open_token);
 DECL_HANDLER(set_global_windows);
+DECL_HANDLER(adjust_token_privileges);
+DECL_HANDLER(get_token_privileges);
+DECL_HANDLER(duplicate_token);
 
 #ifdef WANT_REQUEST_HANDLERS
 
@@ -469,6 +472,9 @@ static const req_handler req_handlers[REQ_NB_REQUESTS] =
     (req_handler)req_set_clipboard_info,
     (req_handler)req_open_token,
     (req_handler)req_set_global_windows,
+    (req_handler)req_adjust_token_privileges,
+    (req_handler)req_get_token_privileges,
+    (req_handler)req_duplicate_token,
 };
 #endif  /* WANT_REQUEST_HANDLERS */
 

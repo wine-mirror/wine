@@ -35,9 +35,19 @@
 struct token
 {
     struct object  obj;             /* object header */
+    struct list    privileges;      /* privileges available to the token */
+};
+
+struct privilege
+{
+    struct list entry;
+    LUID        luid;
+    int         enabled  : 1; /* is the privilege currently enabled? */
+    int         def      : 1; /* is the privilege enabled by default? */
 };
 
 static void token_dump( struct object *obj, int verbose );
+static void token_destroy( struct object *obj );
 
 static const struct object_ops token_ops =
 {
@@ -48,7 +58,7 @@ static const struct object_ops token_ops =
     NULL,                      /* signaled */
     NULL,                      /* satified */
     no_get_fd,                 /* get_fd */
-    no_destroy                 /* destroy */
+    token_destroy              /* destroy */
 };
 
 
@@ -57,10 +67,161 @@ static void token_dump( struct object *obj, int verbose )
     fprintf( stderr, "Security token\n" );
 }
 
-struct token *create_token( void )
+static inline int is_equal_luid( const LUID *luid1, const LUID *luid2 )
+{
+    return (luid1->LowPart == luid2->LowPart && luid1->HighPart == luid2->HighPart);
+}
+
+static inline void luid_and_attr_from_privilege( LUID_AND_ATTRIBUTES *out, const struct privilege *in)
+{
+    out->Luid = in->luid;
+    out->Attributes =
+        (in->enabled ? SE_PRIVILEGE_ENABLED : 0) |
+        (in->def ? SE_PRIVILEGE_ENABLED_BY_DEFAULT : 0);
+}
+
+static struct privilege *privilege_add( struct token *token, const LUID *luid, int enabled )
+{
+    struct privilege *privilege = mem_alloc( sizeof(*privilege) );
+    if (privilege)
+    {
+        privilege->luid = *luid;
+        privilege->def = privilege->enabled = (enabled != 0);
+        list_add_tail( &token->privileges, &privilege->entry );
+    }
+    return privilege;
+}
+
+static void privilege_remove( struct privilege *privilege )
+{
+    list_remove( &privilege->entry );
+    free( privilege );
+}
+
+static void token_destroy( struct object *obj )
+{
+    struct token* token;
+    struct list *cursor, *cursor_next;
+
+    assert( obj->ops == &token_ops );
+    token = (struct token *)obj;
+
+    LIST_FOR_EACH_SAFE( cursor, cursor_next, &token->privileges )
+    {
+        struct privilege *privilege = LIST_ENTRY( cursor, struct privilege, entry );
+        privilege_remove( privilege );
+    }
+}
+
+static struct token *create_token( const LUID_AND_ATTRIBUTES *privs, unsigned int priv_count )
 {
     struct token *token = alloc_object( &token_ops );
+    if (token)
+    {
+        int i;
+        list_init( &token->privileges );
+        for (i = 0; i < priv_count; i++)
+        {
+            /* note: we don't check uniqueness: the caller must make sure
+             * privs doesn't contain any duplicate luids */
+            if (!privilege_add( token, &privs[i].Luid,
+                                privs[i].Attributes & SE_PRIVILEGE_ENABLED ))
+            {
+                release_object( token );
+                return NULL;
+            }
+        }
+    }
     return token;
+}
+
+struct token *create_admin_token( void )
+{
+    static const LUID_AND_ATTRIBUTES admin_privs[] =
+    {
+        { { 23, 0 }, SE_PRIVILEGE_ENABLED }, /* SeChangeNotifyPrivilege */
+        { {  8, 0 }, 0                    }, /* SeSecurityPrivilege */
+        { { 17, 0 }, 0                    }, /* SeBackupPrivilege */
+        { { 18, 0 }, 0                    }, /* SeRestorePrivilege */
+        { { 12, 0 }, 0                    }, /* SeSystemtimePrivilege */
+        { { 19, 0 }, 0                    }, /* SeShutdownPrivilege */
+        { { 24, 0 }, 0                    }, /* SeRemoteShutdownPrivilege */
+        { {  9, 0 }, 0                    }, /* SeTakeOwnershipPrivilege */
+        { { 20, 0 }, 0                    }, /* SeDebugPrivilege */
+        { { 22, 0 }, 0                    }, /* SeSystemEnvironmentPrivilege */
+        { { 11, 0 }, 0                    }, /* SeSystemProfilePrivilege */
+        { { 13, 0 }, 0                    }, /* SeProfileSingleProcessPrivilege */
+        { { 14, 0 }, 0                    }, /* SeIncreaseBasePriorityPrivilege */
+        { { 10, 0 }, 0                    }, /* SeLoadDriverPrivilege */
+        { { 15, 0 }, 0                    }, /* SeCreatePagefilePrivilege */
+        { {  5, 0 }, 0                    }, /* SeIncreaseQuotaPrivilege */
+        { { 25, 0 }, 0                    }, /* SeUndockPrivilege */
+        { { 28, 0 }, 0                    }, /* SeManageVolumePrivilege */
+        { { 29, 0 }, SE_PRIVILEGE_ENABLED }, /* SeImpersonatePrivilege */
+        { { 30, 0 }, SE_PRIVILEGE_ENABLED }, /* SeCreateGlobalPrivilege */
+    };
+    return create_token( admin_privs, sizeof(admin_privs)/sizeof(admin_privs[0]) );
+}
+
+static struct privilege *token_find_privilege( struct token *token, const LUID *luid, int enabled_only)
+{
+    struct privilege *privilege;
+    LIST_FOR_EACH_ENTRY( privilege, &token->privileges, struct privilege, entry )
+    {
+        if (is_equal_luid( luid, &privilege->luid ))
+        {
+            if (enabled_only && !privilege->enabled)
+                return NULL;
+            return privilege;
+        }
+    }
+    return NULL;
+}
+
+static unsigned int token_adjust_privileges( struct token *token, const LUID_AND_ATTRIBUTES *privs,
+                                             unsigned int count, LUID_AND_ATTRIBUTES *mod_privs,
+                                             unsigned int mod_privs_count)
+{
+    int i;
+    unsigned int modified_count = 0;
+
+    for (i = 0; i < count; i++)
+    {
+        struct privilege *privilege =
+            token_find_privilege( token, &privs[i].Luid, FALSE );
+        if (!privilege)
+        {
+            set_error( STATUS_NOT_ALL_ASSIGNED );
+            continue;
+        }
+
+        if (privs[i].Attributes & SE_PRIVILEGE_REMOVE)
+            privilege_remove( privilege );
+        else
+        {
+            /* save previous state for caller */
+            if (mod_privs_count)
+            {
+                luid_and_attr_from_privilege(mod_privs, privilege);
+                mod_privs++;
+                mod_privs_count--;
+                modified_count++;
+            }
+
+            if (privs[i].Attributes & SE_PRIVILEGE_ENABLED)
+                privilege->enabled = TRUE;
+            else
+                privilege->enabled = FALSE;
+        }
+    }
+    return modified_count;
+}
+
+static void token_disable_privileges( struct token *token )
+{
+    struct privilege *privilege;
+    LIST_FOR_EACH_ENTRY( privilege, &token->privileges, struct privilege, entry )
+        privilege->enabled = FALSE;
 }
 
 /* open a security token */
@@ -73,6 +234,8 @@ DECL_HANDLER(open_token)
         {
             if (thread->token)
                 reply->token = alloc_handle( current->process, thread->token, TOKEN_ALL_ACCESS, 0);
+            else
+                set_error(STATUS_NO_TOKEN);
             release_object( thread );
         }
     }
@@ -83,7 +246,117 @@ DECL_HANDLER(open_token)
         {
             if (process->token)
                 reply->token = alloc_handle( current->process, process->token, TOKEN_ALL_ACCESS, 0);
+            else
+                set_error(STATUS_NO_TOKEN);
             release_object( process );
         }
+    }
+}
+
+/* adjust the privileges held by a token */
+DECL_HANDLER(adjust_token_privileges)
+{
+    struct token *token;
+    unsigned int access = TOKEN_ADJUST_PRIVILEGES;
+
+    if (req->get_modified_state) access |= TOKEN_QUERY;
+
+    if ((token = (struct token *)get_handle_obj( current->process, req->handle,
+                                                 access, &token_ops )))
+    {
+        const LUID_AND_ATTRIBUTES *privs = get_req_data();
+        LUID_AND_ATTRIBUTES *modified_privs = NULL;
+        unsigned int priv_count = get_req_data_size() / sizeof(LUID_AND_ATTRIBUTES);
+        unsigned int modified_priv_count = 0;
+
+        if (req->get_modified_state && !req->disable_all)
+        {
+            int i;
+            /* count modified privs */
+            for (i = 0; i < priv_count; i++)
+            {
+                struct privilege *privilege =
+                    token_find_privilege( token, &privs[i].Luid, FALSE );
+                if (privilege && req->get_modified_state)
+                    modified_priv_count++;
+            }
+            reply->len = modified_priv_count;
+            modified_priv_count = min( modified_priv_count, get_reply_max_size() / sizeof(*modified_privs) );
+            if (modified_priv_count)
+                modified_privs = set_reply_data_size( modified_priv_count * sizeof(*modified_privs) );
+        }
+        reply->len = modified_priv_count * sizeof(*modified_privs);
+
+        if (req->disable_all)
+            token_disable_privileges( token );
+        else
+            modified_priv_count = token_adjust_privileges( token, privs,
+                priv_count, modified_privs, modified_priv_count );
+
+        release_object( token );
+    }
+}
+
+/* retrieves the list of privileges that may be held be the token */
+DECL_HANDLER(get_token_privileges)
+{
+    struct token *token;
+
+    if ((token = (struct token *)get_handle_obj( current->process, req->handle,
+                                                 TOKEN_QUERY,
+                                                 &token_ops )))
+    {
+        int priv_count = 0;
+        LUID_AND_ATTRIBUTES *privs;
+        struct privilege *privilege;
+
+        LIST_FOR_EACH_ENTRY( privilege, &token->privileges, struct privilege, entry )
+            priv_count++;
+
+        reply->len = priv_count * sizeof(*privs);
+        if (reply->len <= get_reply_max_size())
+        {
+            privs = set_reply_data_size( priv_count * sizeof(*privs) );
+            if (privs)
+            {
+                int i = 0;
+                LIST_FOR_EACH_ENTRY( privilege, &token->privileges, struct privilege, entry )
+                {
+                    luid_and_attr_from_privilege( &privs[i], privilege );
+                    i++;
+                }
+            }
+        }
+        else
+            set_error(STATUS_BUFFER_TOO_SMALL);
+
+        release_object( token );
+    }
+}
+
+/* creates a duplicate of the token */
+DECL_HANDLER(duplicate_token)
+{
+    struct token *src_token;
+    if ((src_token = (struct token *)get_handle_obj( current->process, req->handle,
+                                                     TOKEN_DUPLICATE,
+                                                     &token_ops )))
+    {
+        /* FIXME: use req->primary and req->impersonation_level */
+        struct token *token = create_token( NULL, 0 );
+        if (token)
+        {
+            struct privilege *privilege;
+            unsigned int access;
+
+            LIST_FOR_EACH_ENTRY( privilege, &src_token->privileges, struct privilege, entry )
+                privilege_add( token, &privilege->luid, privilege->enabled );
+
+            access = req->access;
+            if (access & MAXIMUM_ALLOWED) access = TOKEN_ALL_ACCESS; /* FIXME: needs general solution */
+            reply->new_handle = alloc_handle( current->process, token, access, req->inherit);
+            release_object( token );
+        }
+        release_object( src_token );
     }
 }

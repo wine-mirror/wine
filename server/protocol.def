@@ -2229,3 +2229,32 @@ enum message_type
 #define SET_GLOBAL_SHELL_WINDOWS   0x01  /* set both main shell and listview windows */
 #define SET_GLOBAL_PROGMAN_WINDOW  0x02
 #define SET_GLOBAL_TASKMAN_WINDOW  0x04
+
+/* Adjust the privileges held by a token */
+@REQ(adjust_token_privileges)
+    obj_handle_t  handle; /* handle to the token */
+    int           disable_all; /* disable all privileges? */
+    int           get_modified_state; /* get modified privileges? */
+    VARARG(privileges,LUID_AND_ATTRIBUTES); /* privileges to enable/disable/remove */
+@REPLY
+    unsigned int  len; /* total length in bytes required to store token privileges */
+    VARARG(privileges,LUID_AND_ATTRIBUTES); /* modified privileges */
+@END
+
+/* Retrieves the set of privileges held by or available to a token */
+@REQ(get_token_privileges)
+    obj_handle_t  handle; /* handle to the token */
+@REPLY
+    unsigned int  len; /* total length in bytes required to store token privileges */
+    VARARG(privileges,LUID_AND_ATTRIBUTES); /* privileges held by or available to a token */
+@END
+
+@REQ(duplicate_token)
+    obj_handle_t  handle; /* handle to the token to duplicate */
+    unsigned int  access; /* access rights to the new token */
+    int           inherit; /* inherit flag */
+    int           primary; /* is the new token to be a primary one? */
+    int           impersonation_level; /* impersonation level of the new token */
+@REPLY
+    obj_handle_t  new_handle; /* duplicated handle */
+@END

@@ -3171,6 +3171,50 @@ struct set_global_windows_reply
 #define SET_GLOBAL_TASKMAN_WINDOW  0x04
 
 
+struct adjust_token_privileges_request
+{
+    struct request_header __header;
+    obj_handle_t  handle;
+    int           disable_all;
+    int           get_modified_state;
+    /* VARARG(privileges,LUID_AND_ATTRIBUTES); */
+};
+struct adjust_token_privileges_reply
+{
+    struct reply_header __header;
+    unsigned int  len;
+    /* VARARG(privileges,LUID_AND_ATTRIBUTES); */
+};
+
+
+struct get_token_privileges_request
+{
+    struct request_header __header;
+    obj_handle_t  handle;
+};
+struct get_token_privileges_reply
+{
+    struct reply_header __header;
+    unsigned int  len;
+    /* VARARG(privileges,LUID_AND_ATTRIBUTES); */
+};
+
+struct duplicate_token_request
+{
+    struct request_header __header;
+    obj_handle_t  handle;
+    unsigned int  access;
+    int           inherit;
+    int           primary;
+    int           impersonation_level;
+};
+struct duplicate_token_reply
+{
+    struct reply_header __header;
+    obj_handle_t  new_handle;
+};
+
+
 enum request
 {
     REQ_new_process,
@@ -3353,6 +3397,9 @@ enum request
     REQ_set_clipboard_info,
     REQ_open_token,
     REQ_set_global_windows,
+    REQ_adjust_token_privileges,
+    REQ_get_token_privileges,
+    REQ_duplicate_token,
     REQ_NB_REQUESTS
 };
 
@@ -3540,6 +3587,9 @@ union generic_request
     struct set_clipboard_info_request set_clipboard_info_request;
     struct open_token_request open_token_request;
     struct set_global_windows_request set_global_windows_request;
+    struct adjust_token_privileges_request adjust_token_privileges_request;
+    struct get_token_privileges_request get_token_privileges_request;
+    struct duplicate_token_request duplicate_token_request;
 };
 union generic_reply
 {
@@ -3725,8 +3775,11 @@ union generic_reply
     struct set_clipboard_info_reply set_clipboard_info_reply;
     struct open_token_reply open_token_reply;
     struct set_global_windows_reply set_global_windows_reply;
+    struct adjust_token_privileges_reply adjust_token_privileges_reply;
+    struct get_token_privileges_reply get_token_privileges_reply;
+    struct duplicate_token_reply duplicate_token_reply;
 };
 
-#define SERVER_PROTOCOL_VERSION 156
+#define SERVER_PROTOCOL_VERSION 157
 
 #endif /* __WINE_WINE_SERVER_PROTOCOL_H */

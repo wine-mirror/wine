@@ -238,9 +238,18 @@ AdjustTokenPrivileges( HANDLE TokenHandle, BOOL DisableAllPrivileges,
                        LPVOID NewState, DWORD BufferLength,
                        LPVOID PreviousState, LPDWORD ReturnLength )
 {
-	return set_ntstatus( NtAdjustPrivilegesToken(TokenHandle, DisableAllPrivileges,
+    NTSTATUS status;
+
+    TRACE("\n");
+    
+    status = NtAdjustPrivilegesToken(TokenHandle, DisableAllPrivileges,
                                                      NewState, BufferLength, PreviousState,
-                                                     ReturnLength));
+                                                     ReturnLength);
+    SetLastError( RtlNtStatusToDosError( status ));
+    if ((status == STATUS_SUCCESS) || (status == STATUS_NOT_ALL_ASSIGNED))
+        return TRUE;
+    else
+        return FALSE;
 }
 
 /******************************************************************************
@@ -2996,10 +3005,24 @@ BOOL WINAPI DuplicateTokenEx(
         TOKEN_TYPE TokenType,
         PHANDLE DuplicateTokenHandle )
 {
-    FIXME("%p 0x%08lx 0x%08x 0x%08x %p - stub\n", ExistingTokenHandle, dwDesiredAccess,
+    OBJECT_ATTRIBUTES ObjectAttributes;
+
+    TRACE("%p 0x%08lx 0x%08x 0x%08x %p\n", ExistingTokenHandle, dwDesiredAccess,
           ImpersonationLevel, TokenType, DuplicateTokenHandle);
 
-    return FALSE;
+    InitializeObjectAttributes(
+        &ObjectAttributes,
+        NULL,
+        (lpTokenAttributes && lpTokenAttributes->bInheritHandle) ? OBJ_INHERIT : 0,
+        NULL,
+        lpTokenAttributes ? lpTokenAttributes->lpSecurityDescriptor : NULL );
+
+    return set_ntstatus( NtDuplicateToken( ExistingTokenHandle,
+                                           dwDesiredAccess,
+                                           &ObjectAttributes,
+                                           ImpersonationLevel,
+                                           TokenType,
+                                           DuplicateTokenHandle ) );
 }
 
 BOOL WINAPI DuplicateToken(

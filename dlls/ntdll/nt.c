@@ -88,11 +88,26 @@ NTSTATUS WINAPI NtDuplicateToken(
         IN TOKEN_TYPE TokenType,
         OUT PHANDLE NewToken)
 {
-	FIXME("(%p,0x%08lx,%p,0x%08x,0x%08x,%p),stub!\n",
-	ExistingToken, DesiredAccess, ObjectAttributes,
-	ImpersonationLevel, TokenType, NewToken);
-	dump_ObjectAttributes(ObjectAttributes);
-	return 0;
+    NTSTATUS status;
+
+    TRACE("(%p,0x%08lx,%p,0x%08x,0x%08x,%p)\n",
+        ExistingToken, DesiredAccess, ObjectAttributes,
+        ImpersonationLevel, TokenType, NewToken);
+        dump_ObjectAttributes(ObjectAttributes);
+
+    SERVER_START_REQ( duplicate_token )
+    {
+        req->handle = ExistingToken;
+        req->access = DesiredAccess;
+        req->inherit = ObjectAttributes && (ObjectAttributes->Attributes & OBJ_INHERIT);
+        req->primary = (TokenType == TokenPrimary);
+        req->impersonation_level = ImpersonationLevel;
+        status = wine_server_call( req );
+        if (!status) *NewToken = reply->new_handle;
+    }
+    SERVER_END_REQ;
+
+    return status;
 }
 
 /******************************************************************************
@@ -162,9 +177,34 @@ NTSTATUS WINAPI NtAdjustPrivilegesToken(
 	OUT PTOKEN_PRIVILEGES PreviousState,
 	OUT PDWORD ReturnLength)
 {
-	FIXME("(%p,0x%08x,%p,0x%08lx,%p,%p),stub!\n",
-	TokenHandle, DisableAllPrivileges, NewState, BufferLength, PreviousState, ReturnLength);
-	return 0;
+    NTSTATUS ret;
+
+    TRACE("(%p,0x%08x,%p,0x%08lx,%p,%p)\n",
+        TokenHandle, DisableAllPrivileges, NewState, BufferLength, PreviousState, ReturnLength);
+
+    SERVER_START_REQ( adjust_token_privileges )
+    {
+        req->handle = TokenHandle;
+        req->disable_all = DisableAllPrivileges;
+        req->get_modified_state = (PreviousState != NULL);
+        if (!DisableAllPrivileges)
+        {
+            wine_server_add_data( req, &NewState->Privileges,
+                                  NewState->PrivilegeCount * sizeof(NewState->Privileges[0]) );
+        }
+        if (PreviousState && BufferLength >= FIELD_OFFSET( TOKEN_PRIVILEGES, Privileges ))
+            wine_server_set_reply( req, &PreviousState->Privileges,
+                                   BufferLength - FIELD_OFFSET( TOKEN_PRIVILEGES, Privileges ) );
+        ret = wine_server_call( req );
+        if (PreviousState)
+        {
+            *ReturnLength = reply->len + FIELD_OFFSET( TOKEN_PRIVILEGES, Privileges );
+            PreviousState->PrivilegeCount = reply->len / sizeof(LUID_AND_ATTRIBUTES);
+        }
+    }
+    SERVER_END_REQ;
+
+    return ret;
 }
 
 /******************************************************************************
@@ -185,6 +225,7 @@ NTSTATUS WINAPI NtQueryInformationToken(
 	LPDWORD retlen )
 {
     unsigned int len = 0;
+    NTSTATUS status = STATUS_SUCCESS;
 
     TRACE("(%p,%ld,%p,%ld,%p)\n",
           token,tokeninfoclass,tokeninfo,tokeninfolength,retlen);
@@ -196,9 +237,6 @@ NTSTATUS WINAPI NtQueryInformationToken(
         break;
     case TokenGroups:
         len = sizeof(TOKEN_GROUPS);
-        break;
-    case TokenPrivileges:
-        len = sizeof(TOKEN_PRIVILEGES);
         break;
     case TokenOwner:
         len = sizeof(TOKEN_OWNER) + sizeof(SID);
@@ -271,11 +309,17 @@ NTSTATUS WINAPI NtQueryInformationToken(
         }
         break;
     case TokenPrivileges:
-        if (tokeninfo)
+        SERVER_START_REQ( get_token_privileges )
         {
             TOKEN_PRIVILEGES *tpriv = tokeninfo;
-            tpriv->PrivilegeCount = 1;
+            req->handle = token;
+            if (tpriv && tokeninfolength > FIELD_OFFSET( TOKEN_PRIVILEGES, Privileges ))
+                wine_server_set_reply( req, &tpriv->Privileges, tokeninfolength - FIELD_OFFSET( TOKEN_PRIVILEGES, Privileges ) );
+            status = wine_server_call( req );
+            *retlen = FIELD_OFFSET( TOKEN_PRIVILEGES, Privileges ) + reply->len;
+            if (tpriv) tpriv->PrivilegeCount = reply->len / sizeof(LUID_AND_ATTRIBUTES);
         }
+        SERVER_END_REQ;
         break;
     case TokenOwner:
         if (tokeninfo)
@@ -294,7 +338,7 @@ NTSTATUS WINAPI NtQueryInformationToken(
             return STATUS_NOT_IMPLEMENTED;
         }
     }
-    return 0;
+    return status;
 }
 
 /******************************************************************************

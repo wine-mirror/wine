@@ -407,6 +407,23 @@ static void dump_varargs_properties( size_t size )
     remove_data( size );
 }
 
+static void dump_varargs_LUID_AND_ATTRIBUTES( size_t size )
+{
+    const LUID_AND_ATTRIBUTES *lat = cur_data;
+    size_t len = size / sizeof(*lat);
+
+    fputc( '{', stderr );
+    while (len > 0)
+    {
+        fprintf( stderr, "{luid=%08lx%08lx,attr=%lx}",
+                 lat->Luid.HighPart, lat->Luid.LowPart, lat->Attributes );
+        lat++;
+        if (--len) fputc( ',', stderr );
+    }
+    fputc( '}', stderr );
+    remove_data( size );
+}
+
 typedef void (*dump_func)( const void *req );
 
 /* Everything below this line is generated automatically by tools/make_requests */
@@ -2623,6 +2640,48 @@ static void dump_set_global_windows_reply( const struct set_global_windows_reply
     fprintf( stderr, " old_taskman_window=%p", req->old_taskman_window );
 }
 
+static void dump_adjust_token_privileges_request( const struct adjust_token_privileges_request *req )
+{
+    fprintf( stderr, " handle=%p,", req->handle );
+    fprintf( stderr, " disable_all=%d,", req->disable_all );
+    fprintf( stderr, " get_modified_state=%d,", req->get_modified_state );
+    fprintf( stderr, " privileges=" );
+    dump_varargs_LUID_AND_ATTRIBUTES( cur_size );
+}
+
+static void dump_adjust_token_privileges_reply( const struct adjust_token_privileges_reply *req )
+{
+    fprintf( stderr, " len=%08x,", req->len );
+    fprintf( stderr, " privileges=" );
+    dump_varargs_LUID_AND_ATTRIBUTES( cur_size );
+}
+
+static void dump_get_token_privileges_request( const struct get_token_privileges_request *req )
+{
+    fprintf( stderr, " handle=%p", req->handle );
+}
+
+static void dump_get_token_privileges_reply( const struct get_token_privileges_reply *req )
+{
+    fprintf( stderr, " len=%08x,", req->len );
+    fprintf( stderr, " privileges=" );
+    dump_varargs_LUID_AND_ATTRIBUTES( cur_size );
+}
+
+static void dump_duplicate_token_request( const struct duplicate_token_request *req )
+{
+    fprintf( stderr, " handle=%p,", req->handle );
+    fprintf( stderr, " access=%08x,", req->access );
+    fprintf( stderr, " inherit=%d,", req->inherit );
+    fprintf( stderr, " primary=%d,", req->primary );
+    fprintf( stderr, " impersonation_level=%d", req->impersonation_level );
+}
+
+static void dump_duplicate_token_reply( const struct duplicate_token_reply *req )
+{
+    fprintf( stderr, " new_handle=%p", req->new_handle );
+}
+
 static const dump_func req_dumpers[REQ_NB_REQUESTS] = {
     (dump_func)dump_new_process_request,
     (dump_func)dump_get_new_process_info_request,
@@ -2804,6 +2863,9 @@ static const dump_func req_dumpers[REQ_NB_REQUESTS] = {
     (dump_func)dump_set_clipboard_info_request,
     (dump_func)dump_open_token_request,
     (dump_func)dump_set_global_windows_request,
+    (dump_func)dump_adjust_token_privileges_request,
+    (dump_func)dump_get_token_privileges_request,
+    (dump_func)dump_duplicate_token_request,
 };
 
 static const dump_func reply_dumpers[REQ_NB_REQUESTS] = {
@@ -2987,6 +3049,9 @@ static const dump_func reply_dumpers[REQ_NB_REQUESTS] = {
     (dump_func)dump_set_clipboard_info_reply,
     (dump_func)dump_open_token_reply,
     (dump_func)dump_set_global_windows_reply,
+    (dump_func)dump_adjust_token_privileges_reply,
+    (dump_func)dump_get_token_privileges_reply,
+    (dump_func)dump_duplicate_token_reply,
 };
 
 static const char * const req_names[REQ_NB_REQUESTS] = {
@@ -3170,6 +3235,9 @@ static const char * const req_names[REQ_NB_REQUESTS] = {
     "set_clipboard_info",
     "open_token",
     "set_global_windows",
+    "adjust_token_privileges",
+    "get_token_privileges",
+    "duplicate_token",
 };
 
 /* ### make_requests end ### */

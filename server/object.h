@@ -153,7 +153,7 @@ extern void close_signals(void);
 
 /* token functions */
 
-extern struct token *create_token(void);
+extern struct token *create_admin_token(void);
 
 /* atom functions */
 
