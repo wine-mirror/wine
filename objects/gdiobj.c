@@ -372,7 +372,7 @@ BOOL GDI_Init(void)
 /***********************************************************************
  *           GDI_AllocObject
  */
-HGDIOBJ16 GDI_AllocObject( WORD size, WORD magic )
+HGDIOBJ GDI_AllocObject( WORD size, WORD magic )
 {
     static DWORD count = 0;
     GDIOBJHDR * obj;
@@ -394,7 +394,7 @@ HGDIOBJ16 GDI_AllocObject( WORD size, WORD magic )
 /***********************************************************************
  *           GDI_FreeObject
  */
-BOOL GDI_FreeObject( HGDIOBJ16 handle )
+BOOL GDI_FreeObject( HGDIOBJ handle )
 {
     GDIOBJHDR * object;
 
@@ -420,12 +420,14 @@ BOOL GDI_FreeObject( HGDIOBJ16 handle )
  * Movable GDI objects are locked in memory: it is up to the caller to unlock
  * it after the caller is done with the pointer.
  */
-GDIOBJHDR * GDI_GetObjPtr( HGDIOBJ16 handle, WORD magic )
+GDIOBJHDR * GDI_GetObjPtr( HGDIOBJ handle, WORD magic )
 {
     GDIOBJHDR * ptr = NULL;
 
-    if ((handle >= FIRST_STOCK_HANDLE) && (handle <= LAST_STOCK_HANDLE))
-      ptr = StockObjects[handle - FIRST_STOCK_HANDLE];
+    if (handle >= FIRST_STOCK_HANDLE)
+    {
+        if (handle <= LAST_STOCK_HANDLE) ptr = StockObjects[handle - FIRST_STOCK_HANDLE];
+    }
     else 
       ptr = (GDIOBJHDR *) GDI_HEAP_LOCK( handle );
     if (!ptr) return NULL;
@@ -510,16 +512,12 @@ HGDIOBJ WINAPI GetStockObject( INT obj )
  */
 INT16 WINAPI GetObject16( HANDLE16 handle, INT16 count, LPVOID buffer )
 {
-    GDIOBJHDR * ptr = NULL;
+    GDIOBJHDR * ptr;
     INT16 result = 0;
     TRACE("%04x %d %p\n", handle, count, buffer );
     if (!count) return 0;
 
-    if ((handle >= FIRST_STOCK_HANDLE) && (handle <= LAST_STOCK_HANDLE))
-      ptr = StockObjects[handle - FIRST_STOCK_HANDLE];
-    else
-      ptr = (GDIOBJHDR *) GDI_HEAP_LOCK( handle );
-    if (!ptr) return 0;
+    if (!(ptr = GDI_GetObjPtr( handle, MAGIC_DONTCARE ))) return 0;
     
     switch(ptr->wMagic)
       {
@@ -556,17 +554,13 @@ INT16 WINAPI GetObject16( HANDLE16 handle, INT16 count, LPVOID buffer )
  */
 INT WINAPI GetObjectA( HANDLE handle, INT count, LPVOID buffer )
 {
-    GDIOBJHDR * ptr = NULL;
+    GDIOBJHDR * ptr;
     INT result = 0;
     TRACE("%08x %d %p\n", handle, count, buffer );
     if (!count) return 0;
 
-    if ((handle >= FIRST_STOCK_HANDLE) && (handle <= LAST_STOCK_HANDLE))
-      ptr = StockObjects[handle - FIRST_STOCK_HANDLE];
-    else
-      ptr = (GDIOBJHDR *) GDI_HEAP_LOCK( handle );
-    if (!ptr) return 0;
-    
+    if (!(ptr = GDI_GetObjPtr( handle, MAGIC_DONTCARE ))) return 0;
+
     switch(ptr->wMagic)
     {
       case PEN_MAGIC:
@@ -591,30 +585,39 @@ INT WINAPI GetObjectA( HANDLE handle, INT count, LPVOID buffer )
       case PALETTE_MAGIC:
 	  result = PALETTE_GetObject( (PALETTEOBJ *)ptr, count, buffer );
 	  break;
-      default:
+
+      case REGION_MAGIC:
+      case DC_MAGIC:
+      case DISABLED_DC_MAGIC:
+      case META_DC_MAGIC:
+      case METAFILE_MAGIC:
+      case METAFILE_DC_MAGIC:
+      case ENHMETAFILE_MAGIC:
+      case ENHMETAFILE_DC_MAGIC:
           FIXME("Magic %04x not implemented\n",
                    ptr->wMagic );
           break;
+
+      default:
+          ERR("Invalid GDI Magic %04x\n", ptr->wMagic);
+	  return 0;
     }
     GDI_HEAP_UNLOCK( handle );
     return result;
 }
+
 /***********************************************************************
  *           GetObject32W    (GDI32.206)
  */
 INT WINAPI GetObjectW( HANDLE handle, INT count, LPVOID buffer )
 {
-    GDIOBJHDR * ptr = NULL;
+    GDIOBJHDR * ptr;
     INT result = 0;
     TRACE("%08x %d %p\n", handle, count, buffer );
     if (!count) return 0;
 
-    if ((handle >= FIRST_STOCK_HANDLE) && (handle <= LAST_STOCK_HANDLE))
-      ptr = StockObjects[handle - FIRST_STOCK_HANDLE];
-    else
-      ptr = (GDIOBJHDR *) GDI_HEAP_LOCK( handle );
-    if (!ptr) return 0;
-    
+    if (!(ptr = GDI_GetObjPtr( handle, MAGIC_DONTCARE ))) return 0;
+
     switch(ptr->wMagic)
     {
       case PEN_MAGIC:
@@ -653,15 +656,11 @@ INT WINAPI GetObjectW( HANDLE handle, INT count, LPVOID buffer )
  */
 DWORD WINAPI GetObjectType( HANDLE handle )
 {
-    GDIOBJHDR * ptr = NULL;
+    GDIOBJHDR * ptr;
     INT result = 0;
     TRACE("%08x\n", handle );
 
-    if ((handle >= FIRST_STOCK_HANDLE) && (handle <= LAST_STOCK_HANDLE))
-      ptr = StockObjects[handle - FIRST_STOCK_HANDLE];
-    else
-      ptr = (GDIOBJHDR *) GDI_HEAP_LOCK( handle );
-    if (!ptr) return 0;
+    if (!(ptr = GDI_GetObjPtr( handle, MAGIC_DONTCARE ))) return 0;
     
     switch(ptr->wMagic)
     {
