@@ -9,7 +9,7 @@
 /*
  * FIXME:
  *	pause in waveOut does not work correctly in loop mode
- *      experimental full duples mode
+ *      experimental full duplex mode
  *      only one sound card is currently supported
  */
 
@@ -41,8 +41,6 @@ DEFAULT_DEBUG_CHANNEL(wave);
 
 /* Allow 1% deviation for sample rates (some ES137x cards) */
 #define NEAR_MATCH(rate1,rate2) (((100*((int)(rate1)-(int)(rate2)))/(rate1))==0)
-
-#define REFILL_BUFFER_WHEN 3/4 /* fill the buffer when it's 3/4 empty */
 
 #ifdef HAVE_OSS
 
@@ -92,6 +90,7 @@ typedef struct {
  * this ring will be used by the input (resp output) record (resp playback) routine
  */
 typedef struct {
+    /* FIXME: this could be made a dynamically growing array (if needed) */
 #define OSS_RING_BUFFER_SIZE	30
     OSS_MSG			messages[OSS_RING_BUFFER_SIZE];
     int				msg_tosave;
@@ -111,9 +110,6 @@ typedef struct {
     /* OSS information */
     DWORD			dwFragmentSize;		/* size of OSS buffer fragment */
     DWORD                       dwBufferSize;           /* size of whole OSS buffer in bytes */
-    WORD                        uWaitForFragments;      /* The number of OSS buffer fragments we would like to be free
-							 * before trying to write to the DSP
-							 */
     LPWAVEHDR			lpQueuePtr;		/* start of queued WAVEHDRs (waiting to be notified) */
     LPWAVEHDR			lpPlayPtr;		/* start of not yet fully played buffers */
     DWORD			dwPartialOffset;	/* Offset of not yet written bytes in lpPlayPtr */
@@ -166,8 +162,8 @@ static const char *wodPlayerCmdString[] = {
     "WINE_WM_RESETTING",
     "WINE_WM_HEADER",
     "WINE_WM_UPDATE",
-    "WINE_WM_CLOSING",
     "WINE_WM_BREAKLOOP",
+    "WINE_WM_CLOSING",
 };
 
 /*======================================================================*
@@ -178,8 +174,9 @@ static const char *wodPlayerCmdString[] = {
 static unsigned OSS_OpenCount /* = 0 */;  /* number of times fd has been opened */
 static unsigned OSS_OpenAccess /* = 0 */; /* access used for opening... used to handle compat */
 static int      OSS_OpenFD;
-static BOOL     OSS_FullDuplex;           /* set to non-zero if the device supports full duplex */
+static DWORD    OSS_OwnerThreadID /* = 0 */;
 #endif
+static BOOL     OSS_FullDuplex;           /* set to non-zero if the device supports full duplex */
 
 /******************************************************************
  *		OSS_OpenDevice
@@ -191,6 +188,7 @@ static BOOL     OSS_FullDuplex;           /* set to non-zero if the device suppo
 static int	OSS_OpenDevice(unsigned req_access)
 {
 #ifdef USE_FULLDUPLEX
+    /* FIXME: race */
     if (OSS_OpenCount == 0)
     {
 	if (access(SOUND_DEV, 0) != 0 || 
@@ -203,12 +201,22 @@ static int	OSS_OpenDevice(unsigned req_access)
 	if (req_access == O_RDWR && OSS_FullDuplex)
 	    ioctl(OSS_OpenFD, SNDCTL_DSP_SETDUPLEX, 0);
 	OSS_OpenAccess = req_access;
+        OSS_OwnerThreadID = GetCurrentThreadId();
     }
-    else if (OSS_OpenAccess != req_access)
+    else 
     {
-	WARN("Mismatch in access...\n");
-	return -1;
+        if (OSS_OpenAccess != req_access)
+        {
+            WARN("Mismatch in access...\n");
+            return -1;
+        }
+        if (GetCurrentThreadId() == OSS_OwnerThreadID)
+        {
+            WARN("Another thread is trying to access audio...\n");
+            return -1;
+        }
     }
+
     OSS_OpenCount++;
     return OSS_OpenFD;
 #else
@@ -477,31 +485,47 @@ static int OSS_DestroyRingMessage(OSS_MSG_RING* omr)
  */
 static int OSS_AddRingMessage(OSS_MSG_RING* omr, enum win_wm_message msg, DWORD param, BOOL wait)
 {
-    HANDLE	hEvent;
+    HANDLE	hEvent = INVALID_HANDLE_VALUE;
 
     EnterCriticalSection(&omr->msg_crst);
-    if ((omr->msg_tosave == omr->msg_toget) /* buffer overflow ? */
-	&& (omr->messages[omr->msg_toget].msg))
+    if ((omr->msg_toget == ((omr->msg_tosave + 1) % OSS_RING_BUFFER_SIZE))) /* buffer overflow ? */
     {
 	ERR("buffer overflow !?\n");
         LeaveCriticalSection(&omr->msg_crst);
 	return 0;
     }
+    if (wait)
+    {
+        hEvent = CreateEventA(NULL, FALSE, FALSE, NULL);
+        if (hEvent == INVALID_HANDLE_VALUE)
+        {
+            ERR("can't create event !?\n");
+            LeaveCriticalSection(&omr->msg_crst);
+            return 0;
+        }
+        if (omr->msg_toget != omr->msg_tosave && omr->messages[omr->msg_toget].msg != WINE_WM_HEADER)
+            FIXME("two fast messages in the queue!!!!\n");
 
-    hEvent = wait ? CreateEventA(NULL, FALSE, FALSE, NULL) : INVALID_HANDLE_VALUE;
+        /* fast messages have to be added at the start of the queue */
+        omr->msg_toget = (omr->msg_toget + OSS_RING_BUFFER_SIZE - 1) % OSS_RING_BUFFER_SIZE;
 
-    omr->messages[omr->msg_tosave].msg = msg;
-    omr->messages[omr->msg_tosave].param = param;
-    omr->messages[omr->msg_tosave].hEvent = hEvent;
-
-    omr->msg_tosave++;
-    if (omr->msg_tosave > OSS_RING_BUFFER_SIZE-1)
-	omr->msg_tosave = 0;
+        omr->messages[omr->msg_toget].msg = msg;
+        omr->messages[omr->msg_toget].param = param;
+        omr->messages[omr->msg_toget].hEvent = hEvent;
+    }
+    else
+    { 
+        omr->messages[omr->msg_tosave].msg = msg;
+        omr->messages[omr->msg_tosave].param = param;
+        omr->messages[omr->msg_tosave].hEvent = INVALID_HANDLE_VALUE;
+        omr->msg_tosave = (omr->msg_tosave + 1) % OSS_RING_BUFFER_SIZE;
+    }
     LeaveCriticalSection(&omr->msg_crst);
     /* signal a new message */
     SetEvent(omr->msg_event);
     if (wait)
     {
+        /* wait for playback/record thread to have processed the message */
         WaitForSingleObject(hEvent, INFINITE);
         CloseHandle(hEvent);
     }
@@ -528,9 +552,7 @@ static int OSS_RetrieveRingMessage(OSS_MSG_RING* omr,
     omr->messages[omr->msg_toget].msg = 0;
     *param = omr->messages[omr->msg_toget].param;
     *hEvent = omr->messages[omr->msg_toget].hEvent;
-    omr->msg_toget++;
-    if (omr->msg_toget > OSS_RING_BUFFER_SIZE-1)
-	omr->msg_toget = 0;
+    omr->msg_toget = (omr->msg_toget + 1) % OSS_RING_BUFFER_SIZE;
     LeaveCriticalSection(&omr->msg_crst);
     return 1;
 }
@@ -646,17 +668,13 @@ static LPWAVEHDR wodPlayer_PlayPtrNext(WINE_WAVEOUT* wwo)
 
 /**************************************************************************
  * 			     wodPlayer_DSPWait			[internal]
- * Returns the number of milliseconds to wait for the DSP buffer to clear.
- * This is based on the number of fragments we want to be clear before
- * writing and the number of free fragments we already have.
+ * Returns the number of milliseconds to wait for the DSP buffer to write 
+ * one fragment.
  */
-static DWORD wodPlayer_DSPWait(const WINE_WAVEOUT *wwo, DWORD availInQ)
+static DWORD wodPlayer_DSPWait(const WINE_WAVEOUT *wwo)
 {
-    DWORD       uFreeFragments = availInQ / wwo->dwFragmentSize;
-
-    return (uFreeFragments >= wwo->uWaitForFragments) 
-        ? 1 : (wwo->dwFragmentSize * 1000 / wwo->format.wf.nAvgBytesPerSec) * 
-              (wwo->uWaitForFragments - uFreeFragments);
+    /* time for one fragment to be played */
+    return wwo->dwFragmentSize * 1000 / wwo->format.wf.nAvgBytesPerSec;
 }
 
 /**************************************************************************
@@ -754,7 +772,6 @@ static DWORD wodPlayer_NotifyCompletions(WINE_WAVEOUT* wwo, BOOL force)
 static	void	wodPlayer_Reset(WINE_WAVEOUT* wwo, BOOL reset)
 {
     wodUpdatePlayedTotal(wwo, NULL);
-
     /* updates current notify list */
     wodPlayer_NotifyCompletions(wwo, FALSE);
 
@@ -767,7 +784,11 @@ static	void	wodPlayer_Reset(WINE_WAVEOUT* wwo, BOOL reset)
     }
 
     if (reset) {
-	/* empty notify list */
+        enum win_wm_message	msg;
+        DWORD		        param;
+        HANDLE		        ev;
+
+	/* remove any buffer */
 	wodPlayer_NotifyCompletions(wwo, TRUE);
 
 	wwo->lpPlayPtr = wwo->lpQueuePtr = wwo->lpLoopPtr = NULL;
@@ -775,6 +796,25 @@ static	void	wodPlayer_Reset(WINE_WAVEOUT* wwo, BOOL reset)
 	wwo->dwPlayedTotal = wwo->dwWrittenTotal = 0;
         /* Clear partial wavehdr */
         wwo->dwPartialOffset = 0;
+
+        /* remove any existing message in the ring */
+        EnterCriticalSection(&wwo->msgRing.msg_crst);
+        /* return all pending headers in queue */
+        while (OSS_RetrieveRingMessage(&wwo->msgRing, &msg, &param, &ev))
+        {
+            if (msg != WINE_WM_HEADER) 
+            {
+                FIXME("shouldn't have headers left\n");
+                SetEvent(ev);
+                continue;
+            }
+            ((LPWAVEHDR)param)->dwFlags &= ~WHDR_INQUEUE;
+            ((LPWAVEHDR)param)->dwFlags |= WHDR_DONE;
+
+            wodNotifyClient(wwo, WOM_DONE, param, 0);
+        }
+        ResetEvent(wwo->msgRing.msg_event);
+        LeaveCriticalSection(&wwo->msgRing.msg_crst);
     } else {
         if (wwo->lpLoopPtr) {
             /* complicated case, not handled yet (could imply modifying the loop counter */
@@ -890,21 +930,23 @@ static DWORD wodPlayer_FeedDSP(WINE_WAVEOUT* wwo)
     }
 
     /* no more room... no need to try to feed */
-    if (dspspace.fragments == 0) return wodPlayer_DSPWait(wwo, 0);
+    if (dspspace.fragments != 0) {
+        /* Feed from partial wavehdr */
+        if (wwo->lpPlayPtr && wwo->dwPartialOffset != 0) {
+            wodPlayer_WriteMaxFrags(wwo, &availInQ);
+        }
 
-    /* Feed from partial wavehdr */
-    if (wwo->lpPlayPtr && wwo->dwPartialOffset != 0) {
-        wodPlayer_WriteMaxFrags(wwo, &availInQ);
+        /* Feed wavehdrs until we run out of wavehdrs or DSP space */
+        if (wwo->dwPartialOffset == 0) {
+            while (wwo->lpPlayPtr && availInQ > 0) {
+                /* note the value that dwPlayedTotal will return when this wave finishes playing */
+                wwo->lpPlayPtr->reserved = wwo->dwWrittenTotal + wwo->lpPlayPtr->dwBufferLength;
+                wodPlayer_WriteMaxFrags(wwo, &availInQ);
+            }
+        }
     }
 
-    /* Feed wavehdrs until we run out of wavehdrs or DSP space */
-    if (wwo->dwPartialOffset == 0) while (wwo->lpPlayPtr && availInQ > 0) {
-	/* note the value that dwPlayedTotal will return when this wave finishes playing */
-	wwo->lpPlayPtr->reserved = wwo->dwWrittenTotal + wwo->lpPlayPtr->dwBufferLength;
-	wodPlayer_WriteMaxFrags(wwo, &availInQ);
-    }
-
-    return wodPlayer_DSPWait(wwo, availInQ);
+    return wodPlayer_DSPWait(wwo);
 }
 
 
@@ -1080,10 +1122,8 @@ static DWORD wodOpen(WORD wDevID, LPWAVEOPENDESC lpDesc, DWORD dwFlags)
     /* Remember fragsize and total buffer size for future use */
     wwo->dwFragmentSize = info.fragsize;
     wwo->dwBufferSize = info.fragstotal * info.fragsize;
-    wwo->uWaitForFragments = info.fragstotal * REFILL_BUFFER_WHEN;
     wwo->dwPlayedTotal = 0;
     wwo->dwWrittenTotal = 0;
-    TRACE("wait for %d fragments\n", wwo->uWaitForFragments);
 
     OSS_InitRingMessage(&wwo->msgRing);
 
@@ -1131,7 +1171,6 @@ static DWORD wodClose(WORD wDevID)
 	WARN("buffers still playing !\n");
 	ret = WAVERR_STILLPLAYING;
     } else {
-	TRACE("imhere[3-close]\n");
 	if (wwo->hThread != INVALID_HANDLE_VALUE) {
 	    OSS_AddRingMessage(&wwo->msgRing, WINE_WM_CLOSING, 0, TRUE);
 	}
@@ -1174,7 +1213,6 @@ static DWORD wodWrite(WORD wDevID, LPWAVEHDR lpWaveHdr, DWORD dwSize)
     lpWaveHdr->dwFlags |= WHDR_INQUEUE;
     lpWaveHdr->lpNext = 0;
 
-    TRACE("imhere[3-HEADER]\n");
     OSS_AddRingMessage(&WOutDev[wDevID].msgRing, WINE_WM_HEADER, (DWORD)lpWaveHdr, FALSE);
 
     return MMSYSERR_NOERROR;
@@ -1233,7 +1271,6 @@ static DWORD wodPause(WORD wDevID)
 	return MMSYSERR_BADDEVICEID;
     }
     
-    TRACE("imhere[3-PAUSING]\n");
     OSS_AddRingMessage(&WOutDev[wDevID].msgRing, WINE_WM_PAUSING, 0, TRUE);
     
     return MMSYSERR_NOERROR;
@@ -1252,7 +1289,6 @@ static DWORD wodRestart(WORD wDevID)
     }
     
     if (WOutDev[wDevID].state == WINE_WS_PAUSED) {
-	TRACE("imhere[3-RESTARTING]\n");
 	OSS_AddRingMessage(&WOutDev[wDevID].msgRing, WINE_WM_RESTARTING, 0, TRUE);
     }
     
@@ -1276,7 +1312,6 @@ static DWORD wodReset(WORD wDevID)
 	return MMSYSERR_BADDEVICEID;
     }
     
-    TRACE("imhere[3-RESET]\n");
     OSS_AddRingMessage(&WOutDev[wDevID].msgRing, WINE_WM_RESETTING, 0, TRUE);
     
     return MMSYSERR_NOERROR;
@@ -1424,7 +1459,7 @@ static	DWORD	wodGetNumDevs(void)
 {
     DWORD	ret = 1;
     /* FIXME: For now, only one sound device (SOUND_DEV) is allowed */
-    int audio = OSS_OpenDevice(O_WRONLY);
+    int audio = OSS_OpenDevice(OSS_FullDuplex ? O_RDWR : O_WRONLY);
     
     if (audio == -1) {
 	if (errno != EBUSY)
@@ -2357,7 +2392,7 @@ static DWORD widPrepare(WORD wDevID, LPWAVEHDR lpWaveHdr, DWORD dwSize)
 	return WAVERR_STILLPLAYING;
 
     lpWaveHdr->dwFlags |= WHDR_PREPARED;
-    lpWaveHdr->dwFlags &= ~(WHDR_INQUEUE|WHDR_DONE);
+    lpWaveHdr->dwFlags &= ~WHDR_DONE;
     lpWaveHdr->dwBytesRecorded = 0;
     TRACE("header prepared !\n");
     return MMSYSERR_NOERROR;
@@ -2374,7 +2409,7 @@ static DWORD widUnprepare(WORD wDevID, LPWAVEHDR lpWaveHdr, DWORD dwSize)
     if (lpWaveHdr->dwFlags & WHDR_INQUEUE)
 	return WAVERR_STILLPLAYING;
 
-    lpWaveHdr->dwFlags &= ~(WHDR_PREPARED|WHDR_INQUEUE);
+    lpWaveHdr->dwFlags &= ~WHDR_PREPARED;
     lpWaveHdr->dwFlags |= WHDR_DONE;
     
     return MMSYSERR_NOERROR;
