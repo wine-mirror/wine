@@ -48,7 +48,7 @@ static void test_default_printer(void)
 
     retval = func( buffer, &exact);
     if (ERROR_FILE_NOT_FOUND == GetLastError()) {
-	ok( 0, "this test requires a default printer to be set\n");
+	trace("this test requires a default printer to be set\n");
 	return;
     }
     if (!retval || !exact || !strlen(buffer)) {
