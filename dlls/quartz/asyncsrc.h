@@ -40,14 +40,7 @@ typedef struct CAsyncReaderImpl
 
 	CRITICAL_SECTION	m_csReader;
 	BOOL	m_bInFlushing;
-	BOOL	m_bAbortThread;
-	HANDLE	m_hEventInit;
-	HANDLE	m_hEventCancel;
-	HANDLE	m_hEventReqQueued;
-	HANDLE	m_hEventSampQueued;
-	HANDLE	m_hThread;
 	CRITICAL_SECTION	m_csRequest;
-	AsyncSourceRequest*	m_pRequestFirst;
 	CRITICAL_SECTION	m_csReply;
 	AsyncSourceRequest*	m_pReplyFirst;
 	CRITICAL_SECTION	m_csFree;
@@ -96,12 +89,9 @@ struct AsyncSourceRequest
 {
 	AsyncSourceRequest*	pNext;
 
-	LONGLONG	llStart;
-	LONG	lLength;
-	LONG	lActual;
-	BYTE*	pBuf;
 	IMediaSample*	pSample; /* for async req. */
 	DWORD_PTR	dwContext; /* for async req. */
+	HRESULT	hr;
 };
 
 struct AsyncSourceHandlers

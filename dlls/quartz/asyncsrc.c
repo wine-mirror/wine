@@ -77,12 +77,9 @@ AsyncSourceRequest* CAsyncReaderImpl_AllocRequest( CAsyncReaderImpl* This )
 	}
 
 	pReq->pNext = NULL;
-	pReq->llStart = 0;
-	pReq->lLength = 0;
-	pReq->lActual = 0;
-	pReq->pBuf = NULL;
 	pReq->pSample = NULL;
 	pReq->dwContext = 0;
+	pReq->hr = E_FAIL;
 
 	return pReq;
 }
@@ -104,20 +101,6 @@ void CAsyncReaderImpl_FreeRequest( CAsyncReaderImpl* This, AsyncSourceRequest* p
 }
 
 static
-AsyncSourceRequest* CAsyncReaderImpl_GetRequest( CAsyncReaderImpl* This )
-{
-	AsyncSourceRequest*	pReq;
-
-	EnterCriticalSection( &This->m_csRequest );
-	pReq = This->m_pRequestFirst;
-	if ( pReq != NULL )
-		This->m_pRequestFirst = pReq->pNext;
-	LeaveCriticalSection( &This->m_csRequest );
-
-	return pReq;
-}
-
-static
 AsyncSourceRequest* CAsyncReaderImpl_GetReply( CAsyncReaderImpl* This )
 {
 	AsyncSourceRequest*	pReq;
@@ -132,26 +115,12 @@ AsyncSourceRequest* CAsyncReaderImpl_GetReply( CAsyncReaderImpl* This )
 }
 
 static
-void CAsyncReaderImpl_PostRequest( CAsyncReaderImpl* This, AsyncSourceRequest* pReq )
-{
-	/* FIXME - add to tail */
-	EnterCriticalSection( &This->m_csRequest );
-	pReq->pNext = This->m_pRequestFirst;
-	This->m_pRequestFirst = pReq;
-	if ( This->m_hEventReqQueued != (HANDLE)NULL )
-		SetEvent( This->m_hEventReqQueued );
-	LeaveCriticalSection( &This->m_csRequest );
-}
-
-static
 void CAsyncReaderImpl_PostReply( CAsyncReaderImpl* This, AsyncSourceRequest* pReq )
 {
 	/* FIXME - add to tail */
 	EnterCriticalSection( &This->m_csReply );
 	pReq->pNext = This->m_pReplyFirst;
 	This->m_pReplyFirst = pReq;
-	if ( This->m_hEventSampQueued != (HANDLE)NULL )
-		SetEvent( This->m_hEventSampQueued );
 	LeaveCriticalSection( &This->m_csReply );
 }
 
@@ -168,150 +137,6 @@ void CAsyncReaderImpl_ReleaseReqList( CAsyncReaderImpl* This, AsyncSourceRequest
 		pReqNext = pReq->pNext;
 		CAsyncReaderImpl_FreeRequest(This,pReq,bReleaseMem);
 		pReq = pReqNext;
-	}
-}
-
-static DWORD WINAPI
-CAsyncReaderImpl_ThreadEntry( LPVOID pv )
-{
-	CAsyncReaderImpl*	This = (CAsyncReaderImpl*)pv;
-	HANDLE hWaitEvents[2];
-	HRESULT hr;
-	DWORD	dwRes;
-	AsyncSourceRequest*	pReq = NULL;
-
-	SetEvent( This->m_hEventInit );
-
-	hWaitEvents[0] = This->m_hEventReqQueued;
-	hWaitEvents[1] = This->m_hEventCancel;
-
-	TRACE("enter message loop.\n");
-
-	while ( 1 )
-	{
-		ResetEvent( This->m_hEventReqQueued );
-		pReq = CAsyncReaderImpl_GetRequest(This);
-		if ( pReq == NULL )
-		{
-			dwRes = WaitForMultipleObjects(2,hWaitEvents,FALSE,INFINITE);
-			if ( dwRes != WAIT_OBJECT_0 )
-			{
-				if ( This->m_bAbortThread )
-					break;
-			}
-			continue;
-		}
-
-		/* process a queued request */
-		EnterCriticalSection( &This->m_csReader );
-		hr = This->pSource->m_pHandler->pRead( This->pSource, pReq->llStart, pReq->lLength, pReq->pBuf, &pReq->lActual, This->m_hEventCancel );
-		LeaveCriticalSection( &This->m_csReader );
-
-		if ( FAILED(hr) )
-		{
-			/* Notify(ABORT) */
-			break;
-		}
-		if ( hr != S_OK )
-		{
-			if ( This->m_bAbortThread )
-				break;
-			ResetEvent( This->m_hEventCancel );
-		}
-
-		CAsyncReaderImpl_PostReply( This, pReq );
-		SetEvent( This->m_hEventSampQueued );
-		pReq = NULL;
-	}
-
-	if ( pReq != NULL )
-		CAsyncReaderImpl_PostRequest( This, pReq );
-
-	SetEvent( This->m_hEventSampQueued );
-	return 0;
-}
-
-static HRESULT
-CAsyncReaderImpl_BeginThread( CAsyncReaderImpl* This )
-{
-	DWORD dwRes;
-	DWORD dwThreadId;
-	HANDLE hEvents[2];
-
-	if ( This->m_hEventInit != (HANDLE)NULL ||
-		 This->m_hEventCancel != (HANDLE)NULL ||
-		 This->m_hEventReqQueued != (HANDLE)NULL ||
-		 This->m_hEventSampQueued != (HANDLE)NULL ||
-		 This->m_hThread != (HANDLE)NULL )
-		return E_UNEXPECTED;
-	This->m_bAbortThread = FALSE;
-
-	This->m_hEventInit = CreateEventA(NULL,TRUE,FALSE,NULL);
-	if ( This->m_hEventInit == (HANDLE)NULL )
-		return E_OUTOFMEMORY;
-	This->m_hEventCancel = CreateEventA(NULL,TRUE,FALSE,NULL);
-	if ( This->m_hEventCancel == (HANDLE)NULL )
-		return E_OUTOFMEMORY;
-	This->m_hEventReqQueued = CreateEventA(NULL,TRUE,FALSE,NULL);
-	if ( This->m_hEventReqQueued == (HANDLE)NULL )
-		return E_OUTOFMEMORY;
-	This->m_hEventSampQueued = CreateEventA(NULL,TRUE,FALSE,NULL);
-	if ( This->m_hEventSampQueued == (HANDLE)NULL )
-		return E_OUTOFMEMORY;
-
-	/* create the processing thread. */
-	This->m_hThread = CreateThread(
-		NULL, 0,
-		CAsyncReaderImpl_ThreadEntry,
-		(LPVOID)This,
-		0, &dwThreadId );
-	if ( This->m_hThread == (HANDLE)NULL )
-		return E_FAIL;
-
-	hEvents[0] = This->m_hEventInit;
-	hEvents[1] = This->m_hThread;
-
-	dwRes = WaitForMultipleObjects(2,hEvents,FALSE,INFINITE);
-	if ( dwRes != WAIT_OBJECT_0 )
-		return E_FAIL;
-
-	return NOERROR;
-}
-
-static void
-CAsyncReaderImpl_EndThread( CAsyncReaderImpl* This )
-{
-	if ( This->m_hThread != (HANDLE)NULL )
-	{
-		while ( 1 )
-		{
-			This->m_bAbortThread = TRUE;
-			SetEvent( This->m_hEventCancel );
-			if ( WaitForSingleObject( This->m_hThread, 100 ) == WAIT_OBJECT_0 )
-				break;
-		}
-		CloseHandle( This->m_hThread );
-		This->m_hThread = (HANDLE)NULL;
-	}
-	if ( This->m_hEventInit != (HANDLE)NULL )
-	{
-		CloseHandle( This->m_hEventInit );
-		This->m_hEventInit = (HANDLE)NULL;
-	}
-	if ( This->m_hEventCancel != (HANDLE)NULL )
-	{
-		CloseHandle( This->m_hEventCancel );
-		This->m_hEventCancel = (HANDLE)NULL;
-	}
-	if ( This->m_hEventReqQueued != (HANDLE)NULL )
-	{
-		CloseHandle( This->m_hEventReqQueued );
-		This->m_hEventReqQueued = (HANDLE)NULL;
-	}
-	if ( This->m_hEventSampQueued != (HANDLE)NULL )
-	{
-		CloseHandle( This->m_hEventSampQueued );
-		This->m_hEventSampQueued = (HANDLE)NULL;
 	}
 }
 
@@ -396,31 +221,25 @@ static HRESULT WINAPI
 CAsyncReaderImpl_fnRequest(IAsyncReader* iface,IMediaSample* pSample,DWORD_PTR dwContext)
 {
 	ICOM_THIS(CAsyncReaderImpl,iface);
+	AsyncSourceRequest* pReq;
 	HRESULT hr = NOERROR;
-	REFERENCE_TIME	rtStart;
-	REFERENCE_TIME	rtEnd;
-	AsyncSourceRequest*	pReq;
-	BYTE*	pData = NULL;
 
-	TRACE("(%p)->(%p,%u)\n",This,pSample,dwContext);
+	/*
+	 * before implementing asynchronous I/O,
+	 * please check patents by yourself
+	 */
+	WARN("(%p,%p,%u) no async I/O\n",This,pSample,dwContext);
 
-	hr = IMediaSample_GetPointer(pSample,&pData);
-	if ( SUCCEEDED(hr) )
-		hr = IMediaSample_GetTime(pSample,&rtStart,&rtEnd);
+	hr = IAsyncReader_SyncReadAligned(iface,pSample);
 	if ( FAILED(hr) )
 		return hr;
-
 	pReq = CAsyncReaderImpl_AllocRequest(This);
 	if ( pReq == NULL )
 		return E_OUTOFMEMORY;
-
-	pReq->llStart = rtStart / QUARTZ_TIMEUNITS;
-	pReq->lLength = (LONG)(rtEnd / QUARTZ_TIMEUNITS - rtStart / QUARTZ_TIMEUNITS);
-	pReq->lActual = 0;
-	pReq->pBuf = pData;
 	pReq->pSample = pSample;
 	pReq->dwContext = dwContext;
-	CAsyncReaderImpl_PostRequest( This, pReq );
+	pReq->hr = hr;
+	CAsyncReaderImpl_PostReply( This, pReq );
 
 	return NOERROR;
 }
@@ -430,13 +249,13 @@ CAsyncReaderImpl_fnWaitForNext(IAsyncReader* iface,DWORD dwTimeout,IMediaSample*
 {
 	ICOM_THIS(CAsyncReaderImpl,iface);
 	HRESULT hr = NOERROR;
-	DWORD dwRes;
 	AsyncSourceRequest*	pReq;
-	REFERENCE_TIME	rtStart;
-	REFERENCE_TIME	rtEnd;
 
-	/*TRACE("(%p)->(%lu,%p,%p)\n",This,dwTimeout,ppSample,pdwContext);*/
-
+	/*
+	 * before implementing asynchronous I/O,
+	 * please check patents by yourself
+	 */
+	WARN("(%p)->(%lu,%p,%p) no async I/O\n",This,dwTimeout,ppSample,pdwContext);
 	EnterCriticalSection( &This->m_csRequest );
 	if ( This->m_bInFlushing )
 		hr = VFW_E_TIMEOUT;
@@ -444,27 +263,12 @@ CAsyncReaderImpl_fnWaitForNext(IAsyncReader* iface,DWORD dwTimeout,IMediaSample*
 
 	if ( hr == NOERROR )
 	{
-		ResetEvent( This->m_hEventSampQueued );
 		pReq = CAsyncReaderImpl_GetReply(This);
-		if ( pReq == NULL )
-		{
-			dwRes = WaitForSingleObject( This->m_hEventSampQueued, dwTimeout );
-			if ( dwRes == WAIT_OBJECT_0 )
-				pReq = CAsyncReaderImpl_GetReply(This);
-		}
 		if ( pReq != NULL )
 		{
-			hr = IMediaSample_SetActualDataLength(pReq->pSample,pReq->lActual);
-			if ( hr == S_OK )
-			{
-				rtStart = pReq->llStart * QUARTZ_TIMEUNITS;
-				rtEnd = (pReq->llStart + pReq->lActual) * QUARTZ_TIMEUNITS;
-				hr = IMediaSample_SetTime(pReq->pSample,&rtStart,&rtEnd);
-			}
 			*ppSample = pReq->pSample;
 			*pdwContext = pReq->dwContext;
-			if ( hr == S_OK && pReq->lActual != pReq->lLength )
-				hr = S_FALSE;
+			hr = pReq->hr;
 		}
 		else
 		{
@@ -565,8 +369,7 @@ CAsyncReaderImpl_fnBeginFlush(IAsyncReader* iface)
 
 	EnterCriticalSection( &This->m_csRequest );
 	This->m_bInFlushing = TRUE;
-	SetEvent( This->m_hEventCancel );
-	CAsyncReaderImpl_ReleaseReqList(This,&This->m_pRequestFirst,FALSE);
+	CAsyncReaderImpl_ReleaseReqList(This,&This->m_pReplyFirst,FALSE);
 	LeaveCriticalSection( &This->m_csRequest );
 
 	return NOERROR;
@@ -581,7 +384,6 @@ CAsyncReaderImpl_fnEndFlush(IAsyncReader* iface)
 
 	EnterCriticalSection( &This->m_csRequest );
 	This->m_bInFlushing = FALSE;
-	ResetEvent( This->m_hEventCancel );
 	LeaveCriticalSection( &This->m_csRequest );
 
 	return NOERROR;
@@ -623,13 +425,6 @@ HRESULT CAsyncReaderImpl_InitIAsyncReader(
 	This->punkControl = punkControl;
 	This->pSource = pSource;
 	This->m_bInFlushing = FALSE;
-	This->m_bAbortThread = FALSE;
-	This->m_hEventInit = (HANDLE)NULL;
-	This->m_hEventCancel = (HANDLE)NULL;
-	This->m_hEventReqQueued = (HANDLE)NULL;
-	This->m_hEventSampQueued = (HANDLE)NULL;
-	This->m_hThread = (HANDLE)NULL;
-	This->m_pRequestFirst = NULL;
 	This->m_pReplyFirst = NULL;
 	This->m_pFreeFirst = NULL;
 
@@ -646,7 +441,6 @@ void CAsyncReaderImpl_UninitIAsyncReader(
 {
 	TRACE("(%p) enter\n",This);
 
-	CAsyncReaderImpl_ReleaseReqList(This,&This->m_pRequestFirst,TRUE);
 	CAsyncReaderImpl_ReleaseReqList(This,&This->m_pReplyFirst,TRUE);
 	CAsyncReaderImpl_ReleaseReqList(This,&This->m_pFreeFirst,TRUE);
 
@@ -895,36 +689,27 @@ static const CBasePinHandlers outputpinhandlers =
  *
  */
 
-static HRESULT CAsyncSourceImpl_OnActive( CBaseFilterImpl* pImpl )
+static HRESULT CAsyncSourceImpl_OnStop( CBaseFilterImpl* pImpl )
 {
 	CAsyncSourceImpl_THIS(pImpl,basefilter);
-	HRESULT hr;
+	CAsyncReaderImpl*	pReader;
 
 	TRACE( "(%p)\n", This );
 
-	hr = CAsyncReaderImpl_BeginThread(&This->pPin->async);
-	if ( FAILED(hr) )
-		return hr;
-
-	return NOERROR;
-}
-
-static HRESULT CAsyncSourceImpl_OnInactive( CBaseFilterImpl* pImpl )
-{
-	CAsyncSourceImpl_THIS(pImpl,basefilter);
-
-	TRACE( "(%p)\n", This );
-
-	CAsyncReaderImpl_EndThread(&This->pPin->async);
+	if ( This->pPin != NULL )
+	{
+		pReader = &This->pPin->async;
+		CAsyncReaderImpl_ReleaseReqList(pReader,&pReader->m_pReplyFirst,FALSE);
+	}
 
 	return NOERROR;
 }
 
 static const CBaseFilterHandlers filterhandlers =
 {
-	CAsyncSourceImpl_OnActive, /* pOnActive */
-	CAsyncSourceImpl_OnInactive, /* pOnInactive */
-	NULL, /* pOnStop */
+	NULL, /* pOnActive */
+	NULL, /* pOnInactive */
+	CAsyncSourceImpl_OnStop, /* pOnStop */
 };
 
 /***************************************************************************
