@@ -36,6 +36,10 @@
 # define WORDS_BIGENDIAN
 # define BITFIELDS_BIGENDIAN
 # undef  ALLOW_UNALIGNED_ACCESS
+#elif defined(__PPC__)
+# define WORDS_BIGENDIAN
+# define BITFIELDS_BIGENDIAN
+# undef  ALLOW_UNALIGNED_ACCESS
 #elif !defined(RC_INVOKED)
 # error Unknown CPU architecture!
 #endif
@@ -1117,6 +1121,34 @@ typedef CONTEXT *PCONTEXT;
   { _GET_CONTEXT; fn( a1, a2, a3, a4, &context ); }
 
 #endif /* __sparc__ */
+
+#ifdef __PPC__
+
+/* FIXME: use getcontext() to retrieve full context */
+#define _GET_CONTEXT \
+    CONTEXT context;   \
+    do { memset(&context, 0, sizeof(CONTEXT));            \
+         context.ContextFlags = CONTEXT_CONTROL;          \
+       } while (0)
+
+#define DEFINE_REGS_ENTRYPOINT_0( name, fn ) \
+  void WINAPI name ( void ) \
+  { _GET_CONTEXT; fn( &context ); }
+#define DEFINE_REGS_ENTRYPOINT_1( name, fn, t1 ) \
+  void WINAPI name ( t1 a1 ) \
+  { _GET_CONTEXT; fn( a1, &context ); }
+#define DEFINE_REGS_ENTRYPOINT_2( name, fn, t1, t2 ) \
+  void WINAPI name ( t1 a1, t2 a2 ) \
+  { _GET_CONTEXT; fn( a1, a2, &context ); }
+#define DEFINE_REGS_ENTRYPOINT_3( name, fn, t1, t2, t3 ) \
+  void WINAPI name ( t1 a1, t2 a2, t3 a3 ) \
+  { _GET_CONTEXT; fn( a1, a2, a3, &context ); }
+#define DEFINE_REGS_ENTRYPOINT_4( name, fn, t1, t2, t3, t4 ) \
+  void WINAPI name ( t1 a1, t2 a2, t3 a3, t4 a4 ) \
+  { _GET_CONTEXT; fn( a1, a2, a3, a4, &context ); }
+
+#endif /* __PPC__ */
+
 
 #ifndef DEFINE_REGS_ENTRYPOINT_0
 #error You need to define DEFINE_REGS_ENTRYPOINT macros for your CPU
