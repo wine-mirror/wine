@@ -104,16 +104,19 @@ DEFAULT_DEBUG_CHANNEL(region);
 /*
  *   Check to see if there is enough memory in the present region.
  */
-#define MEMCHECK(reg, rect, firstrect){\
-        if ((reg)->numRects >= ((reg)->size - 1)){\
-          (firstrect) = HeapReAlloc( GetProcessHeap(), 0, \
-           (firstrect), (2 * (sizeof(RECT)) * ((reg)->size)));\
-          if ((firstrect) == 0)\
-            return;\
-          (reg)->size *= 2;\
-          (rect) = &(firstrect)[(reg)->numRects];\
-         }\
-       }
+
+static inline int xmemcheck(WINEREGION *reg, LPRECT *rect, LPRECT *firstrect ) {
+    if (reg->numRects >= (reg->size - 1)) {
+	*firstrect = HeapReAlloc( GetProcessHeap(), 0, *firstrect, (2 * (sizeof(RECT)) * (reg->size)));
+	if (*firstrect == 0)
+	    return 0;
+	reg->size *= 2;
+	*rect = (*firstrect)+reg->numRects;
+    }
+    return 1;
+}
+
+#define MEMCHECK(reg, rect, firstrect) xmemcheck(reg,&(rect),&(firstrect))
 
 #define EMPTY_REGION(pReg) { \
     (pReg)->numRects = 0; \
