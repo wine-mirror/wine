@@ -168,7 +168,8 @@ int DRIVE_Init(void)
 
             if (stat( path, &drive_stat_buffer ))
             {
-                MESSAGE("Could not stat %s, ignoring drive %c:\n", path, 'A' + i );
+                MESSAGE("Could not stat %s, ignoring drive %c: %s\n",
+                    path, 'A' + i, strerror(errno));
                 continue;
             }
             if (!S_ISDIR(drive_stat_buffer.st_mode))

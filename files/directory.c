@@ -48,13 +48,14 @@ static int DIR_GetPath( const char *keyname, const char *defval,
 {
     char path[MAX_PATHNAME_LEN];
     BY_HANDLE_FILE_INFORMATION info;
+    const char *mess = "does not exist";
 
     PROFILE_GetWineIniString( "wine", keyname, defval, path, sizeof(path) );
     if (!DOSFS_GetFullName( path, TRUE, full_name ) ||
-        !FILE_Stat( full_name->long_name, &info ) ||
-        !(info.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY))
+        (!FILE_Stat( full_name->long_name, &info ) && (mess=strerror(errno)))||
+        (!(info.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) && (mess="not a directory")))
     {
-        MESSAGE("Invalid path '%s' for %s directory\n", path, keyname);
+        MESSAGE("Invalid path '%s' for %s directory: %s\n", path, keyname, mess);
         return 0;
     }
     return 1;
