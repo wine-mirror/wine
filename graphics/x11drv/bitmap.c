@@ -595,8 +595,14 @@ Pixmap X11DRV_BITMAP_Pixmap(HBITMAP hbitmap)
 {
     Pixmap pixmap;
     BITMAPOBJ *bmp = (BITMAPOBJ *) GDI_GetObjPtr( hbitmap, BITMAP_MAGIC );
-    pixmap = (Pixmap)bmp->physBitmap;
-    GDI_ReleaseObj( hbitmap );
+    if (bmp) {
+      pixmap = (Pixmap)bmp->physBitmap;
+      GDI_ReleaseObj( hbitmap );
+    }
+    else {
+      ERR("handle %08x returned no obj\n", hbitmap);
+      pixmap = 0;
+    }
     return pixmap;
 }
 
