@@ -486,10 +486,9 @@ HMETAFILE WINAPI CopyMetaFileA( HMETAFILE hSrcMetaFile,
     if (lpFilename) RtlCreateUnicodeStringFromAsciiz(&lpFilenameW, lpFilename);
     else lpFilenameW.Buffer = NULL;
 
-    if (lpFilenameW.Buffer) {
-        ret = CopyMetaFileW( hSrcMetaFile, lpFilenameW.Buffer );
-    }
-    RtlFreeUnicodeString(&lpFilenameW);
+    ret = CopyMetaFileW( hSrcMetaFile, lpFilenameW.Buffer );
+    if (lpFilenameW.Buffer)
+        RtlFreeUnicodeString(&lpFilenameW);
     return ret;
 }
 
