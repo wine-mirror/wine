@@ -682,7 +682,6 @@ BOOL TASK_Reschedule(void)
     TDB *pOldTask = NULL, *pNewTask;
     HTASK16 hTask = 0;
     STACK16FRAME *newframe16;
-    BOOL pending = FALSE;
 
     /* Get the initial task up and running */
     if (!hCurrentTask && GetCurrentTask())
@@ -743,10 +742,6 @@ BOOL TASK_Reschedule(void)
         pOldTask->hYieldTo = 0;
     }
 
-    /* extract hardware events only! */
-
-    if (!hTask) pending = EVENT_WaitNetEvent( FALSE, TRUE );
-
     while (!hTask)
     {
         /* Find a task that has an event pending */
@@ -764,10 +759,6 @@ BOOL TASK_Reschedule(void)
         if (hLockedTask && (hTask != hLockedTask)) hTask = 0;
         if (hTask) break;
 
-        /* If a non-hardware event is pending, return to TASK_YieldToSystem
-           temporarily to process it safely */
-        if (pending) return TRUE;
-
         /* No task found, wait for some events to come in */
 
         /* NOTE: We release the Win16Lock while waiting for events. This is to enable
@@ -776,7 +767,7 @@ BOOL TASK_Reschedule(void)
                  TASK_Reschedule anyway, there should be no re-entrancy problem ... */
 
         SYSLEVEL_ReleaseWin16Lock();
-        pending = EVENT_WaitNetEvent( TRUE, TRUE );
+        EVENT_WaitNetEvent( );
         SYSLEVEL_RestoreWin16Lock();
     }
 
@@ -850,24 +841,9 @@ static void TASK_YieldToSystem( void )
         return;
     }
 
-    if ( Callbacks->CallTaskRescheduleProc() )
-    {
-        /* NOTE: We get here only when no task has an event. This means also
-                 the current task, so we shouldn't actually return to the
-                 caller here. But, we need to do so, as the EVENT_WaitNetEvent
-                 call could lead to a complex series of inter-task SendMessage
-                 calls which might leave this task in a state where it again
-                 has no event, but where its queue's wakeMask is also reset
-                 to zero. Reentering TASK_Reschedule in this state would be 
-                 suicide.  Hence, we do return to the caller after processing
-                 non-hardware events. Actually, this should not hurt anyone,
-                 as the caller must be WaitEvent, and thus the QUEUE_WaitBits
-                 loop in USER. Should there actually be no message pending 
-                 for this task after processing non-hardware events, that loop
-                 will simply return to WaitEvent.  */
-                 
-        EVENT_WaitNetEvent( FALSE, FALSE );
-    }
+    EVENT_Synchronize( FALSE );
+
+    Callbacks->CallTaskRescheduleProc();
 }
 
 

@@ -13,6 +13,8 @@
 #include "thread.h"
 #include "winerror.h"
 #include "syslevel.h"
+#include "message.h"
+#include "x11drv.h"
 #include "server.h"
 #include "debug.h"
 
@@ -82,6 +84,20 @@ DWORD WINAPI WaitForMultipleObjectsEx( DWORD count, const HANDLE *handles,
     {
         SetLastError( ERROR_INVALID_PARAMETER );
         return WAIT_FAILED;
+    }
+
+    /* FIXME: This is extremely ugly, but needed to avoid endless
+     *        recursion due to EVENT_Synchronize itself using 
+     *        EnterCriticalSection( &X11DRV_CritSection ) ...
+     */ 
+    if ( count == 0 || handles[0] != X11DRV_CritSection.LockSemaphore )
+    {
+        /* Before we might possibly block, we need to push outstanding
+         * graphics output to the X server ...  This needs to be done
+         * here so that it also works with native USER.
+         */
+        if ( timeout != 0 )
+            EVENT_Synchronize( FALSE );
     }
 
     for (i = 0; i < count; i++) server_handle[i] = handles[i];
