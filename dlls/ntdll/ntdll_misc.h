@@ -94,6 +94,7 @@ extern NTSTATUS FILE_GetNtStatus(void);
 typedef BOOL (*HANDLERPROC)(LPVOID, LPCVOID);
 extern BOOL VIRTUAL_SetFaultHandler(LPCVOID addr, HANDLERPROC proc, LPVOID arg);
 extern DWORD VIRTUAL_HandleFault(LPCVOID addr);
+extern BOOL VIRTUAL_HasMapping( LPCVOID addr );
 
 /* code pages */
 extern int ntdll_umbstowcs(DWORD flags, const char* src, int srclen, WCHAR* dst, int dstlen);

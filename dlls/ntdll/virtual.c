@@ -43,6 +43,7 @@
 #include "ntstatus.h"
 #include "thread.h"
 #include "winternl.h"
+#include "winioctl.h"
 #include "wine/library.h"
 #include "wine/server.h"
 #include "wine/debug.h"
@@ -877,6 +878,22 @@ DWORD VIRTUAL_HandleFault( LPCVOID addr )
     return ret;
 }
 
+/***********************************************************************
+ *           VIRTUAL_HasMapping
+ *
+ * Check if the specified view has an associated file mapping.
+ */
+BOOL VIRTUAL_HasMapping( LPCVOID addr )
+{
+    FILE_VIEW *view;
+    BOOL ret = FALSE;
+
+    RtlEnterCriticalSection( &csVirtual );
+    if ((view = VIRTUAL_FindView( addr ))) ret = (view->mapping != 0);
+    RtlLeaveCriticalSection( &csVirtual );
+    return ret;
+}
+
 
 
 /***********************************************************************
@@ -1434,6 +1451,8 @@ NTSTATUS WINAPI NtMapViewOfSection( HANDLE handle, HANDLE process, PVOID *addr_p
                                     ULONG commit_size, const LARGE_INTEGER *offset, ULONG *size_ptr,
                                     SECTION_INHERIT inherit, ULONG alloc_type, ULONG protect )
 {
+    IO_STATUS_BLOCK io;
+    FILE_FS_DEVICE_INFORMATION device_info;
     NTSTATUS res;
     UINT size = 0;
     int flags = MAP_PRIVATE;
@@ -1442,7 +1461,7 @@ NTSTATUS WINAPI NtMapViewOfSection( HANDLE handle, HANDLE process, PVOID *addr_p
     void *base, *ptr = (void *)-1, *ret;
     DWORD size_low, size_high, header_size, shared_size;
     HANDLE shared_file;
-    BOOL removable;
+    BOOL removable = FALSE;
 
     if (!is_current_process( process ))
     {
@@ -1470,12 +1489,15 @@ NTSTATUS WINAPI NtMapViewOfSection( HANDLE handle, HANDLE process, PVOID *addr_p
         header_size = reply->header_size;
         shared_file = reply->shared_file;
         shared_size = reply->shared_size;
-        removable   = reply->removable;
     }
     SERVER_END_REQ;
     if (res) return res;
 
     if ((res = wine_server_handle_to_fd( handle, 0, &unix_handle, NULL, NULL ))) return res;
+
+    if (NtQueryVolumeInformationFile( handle, &io, &device_info, sizeof(device_info),
+                                      FileFsDeviceInformation ) == STATUS_SUCCESS)
+        removable = device_info.Characteristics & FILE_REMOVABLE_MEDIA;
 
     if (prot & VPROT_IMAGE)
     {

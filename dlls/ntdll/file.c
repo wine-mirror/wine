@@ -964,8 +964,7 @@ NTSTATUS WINAPI NtQueryVolumeInformationFile( HANDLE handle, PIO_STATUS_BLOCK io
 {
     int fd;
 
-    if ((io->u.Status = wine_server_handle_to_fd( handle, GENERIC_READ,
-                                                  &fd, NULL, NULL )) != STATUS_SUCCESS)
+    if ((io->u.Status = wine_server_handle_to_fd( handle, 0, &fd, NULL, NULL )) != STATUS_SUCCESS)
         return io->u.Status;
 
     io->u.Status = STATUS_NOT_IMPLEMENTED;
