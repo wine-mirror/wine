@@ -34,6 +34,7 @@
 #include <sys/stat.h>
 
 #include "windef.h"
+#include "debugger.h"
 
 /*
 **  Manifest constants.
@@ -55,11 +56,11 @@
 #define MEM_INC		64
 #define SCREEN_INC	256
 
-#define DISPOSE(p)	free((char *)(p))
+#define DISPOSE(p)	DBG_free((char *)(p))
 #define NEW(T, c)	\
-	((T *)malloc((unsigned int)(sizeof (T) * (c))))
+	((T *)DBG_alloc((unsigned int)(sizeof (T) * (c))))
 #define RENEW(p, T, c)	\
-	(p = (T *)realloc((char *)(p), (unsigned int)(sizeof (T) * (c))))
+	(p = (T *)DBG_realloc((char *)(p), (unsigned int)(sizeof (T) * (c))))
 #define COPYFROMTO(new, p, len)	\
 	(void)memcpy((char *)(new), (char *)(p), (int)(len))
 
@@ -664,7 +665,7 @@ search_hist(search, move)
     if (search && *search) {
 	if (old_search)
 	    DISPOSE(old_search);
-	old_search = (CHAR *)strdup((char *)search);
+	old_search = (CHAR *)DBG_strdup((char *)search);
     }
     else {
 	if (old_search == NULL || *old_search == '\0')
@@ -1014,7 +1015,7 @@ hist_add(p)
 {
     int		i;
 
-    if ((p = (CHAR *)strdup((char *)p)) == NULL)
+    if ((p = (CHAR *)DBG_strdup((char *)p)) == NULL)
 	return;
     if (H.Size < HIST_SIZE)
 	H.Lines[H.Size++] = p;
@@ -1047,7 +1048,7 @@ readline(prompt)
     Prompt = prompt ? prompt : (char *)NIL;
     TTYputs((CHAR *)Prompt);
     if ((line = editinput()) != NULL) {
-	line = (CHAR *)strdup((char *)line);
+	line = (CHAR *)DBG_strdup((char *)line);
 	TTYputs((CHAR *)NEWLINE);
 	TTYflush();
     }
@@ -1318,7 +1319,7 @@ last_argument()
     if (H.Size == 1 || (p = H.Lines[H.Size - 2]) == NULL)
 	return ring_bell();
 
-    if ((p = (CHAR *)strdup((char *)p)) == NULL)
+    if ((p = (CHAR *)DBG_strdup((char *)p)) == NULL)
 	return CSstay;
     ac = argify(p, &av);
 

@@ -31,7 +31,6 @@
 #include "debugger.h"
 #include "neexe.h"
 #include "peexe.h"
-#include "xmalloc.h"
 #include "file.h"
 
 /*
@@ -39,8 +38,8 @@
 */
 static void LocateDebugInfoFile(char *filename, char *dbg_filename)
 {
-    char	  *str1 = xmalloc(MAX_PATHNAME_LEN*10);
-    char	  *str2 = xmalloc(MAX_PATHNAME_LEN);
+    char	  *str1 = DBG_alloc(MAX_PATHNAME_LEN*10);
+    char	  *str2 = DBG_alloc(MAX_PATHNAME_LEN);
     char	  *file;
     char	  *name_part;
     DOS_FULL_NAME fullname;
@@ -60,8 +59,8 @@ static void LocateDebugInfoFile(char *filename, char *dbg_filename)
     {
 quit:	
         memcpy(dbg_filename, filename, MAX_PATHNAME_LEN);
-	free(str1);
-	free(str2);
+	DBG_free(str1);
+	DBG_free(str2);
 	return;
     }
 ok:
@@ -69,8 +68,8 @@ ok:
 	memcpy(dbg_filename, fullname.long_name, MAX_PATHNAME_LEN);
     else
 	goto quit;
-    free(str1);
-    free(str2);
+    DBG_free(str1);
+    DBG_free(str2);
     return;
 }
 /*
@@ -627,7 +626,7 @@ DEBUG_ParseTypeTable(char * table, int len)
       if( curr_type - 0x1000 >= num_cv_defined_types )
 	{
 	  num_cv_defined_types += 0x100;
-	  cv_defined_types = (struct datatype **) realloc(cv_defined_types,
+	  cv_defined_types = (struct datatype **) DBG_realloc(cv_defined_types,
 		  num_cv_defined_types * sizeof(struct datatype *));
 	  memset(cv_defined_types + num_cv_defined_types - 0x100,
 		 0,
@@ -987,7 +986,7 @@ DEBUG_RegisterDebugInfo( HMODULE hModule, const char *module_name)
                 char                 fn[PATH_MAX];
                 int                  fd = -1;
                 DOS_FULL_NAME        full_name;
-                struct deferred_debug_info*      deefer = (struct deferred_debug_info *) xmalloc(sizeof(*deefer));
+                struct deferred_debug_info*      deefer = (struct deferred_debug_info *) DBG_alloc(sizeof(*deefer));
  
                 deefer->module    = hModule;
                 deefer->load_addr = (char *)hModule;
@@ -1011,13 +1010,13 @@ DEBUG_RegisterDebugInfo( HMODULE hModule, const char *module_name)
                     close(fd);
                     if( deefer->dbg_info == (char *) 0xffffffff )
                     {
-                        free(deefer);
+                        DBG_free(deefer);
                         break;
                     }
                 }
                 else
                 {
-                    free(deefer);
+                    DBG_free(deefer);
                     fprintf(stderr, " (not mapped: fn=%s, lfn=%s, fd=%d)", fn, full_name.long_name, fd);
                     break;
                 }
@@ -1026,7 +1025,7 @@ DEBUG_RegisterDebugInfo( HMODULE hModule, const char *module_name)
                 deefer->next = dbglist;
                 deefer->loaded = FALSE;
                 deefer->dbg_index = DEBUG_next_index;
-                deefer->module_name = xstrdup(module_name);
+                deefer->module_name = DBG_strdup(module_name);
 
                 deefer->sectp = PE_SECTIONS(hModule);
                 deefer->nsect = PE_HEADER(hModule)->FileHeader.NumberOfSections;
@@ -1077,7 +1076,7 @@ DEBUG_RegisterELFDebugInfo(int load_addr, u_long size, char * name)
 {
   struct deferred_debug_info * deefer;
 
-  deefer = (struct deferred_debug_info *) xmalloc(sizeof(*deefer));
+  deefer = (struct deferred_debug_info *) DBG_alloc(sizeof(*deefer));
   deefer->module = 0;
   
   /*
@@ -1093,7 +1092,7 @@ DEBUG_RegisterELFDebugInfo(int load_addr, u_long size, char * name)
   deefer->next = dbglist;
   deefer->loaded = TRUE;
   deefer->dbg_index = DEBUG_next_index;
-  deefer->module_name = xstrdup(name);
+  deefer->module_name = DBG_strdup(name);
   dbglist = deefer;
 
   DEBUG_next_index++;
@@ -1162,7 +1161,7 @@ DEBUG_ProcessCoff(struct deferred_debug_info * deefer)
 	  if( nfiles + 1 >= nfiles_alloc )
 	    {
 	      nfiles_alloc += 10;
-	      coff_files = (struct CoffFiles *) realloc( coff_files,
+	      coff_files = (struct CoffFiles *) DBG_realloc(coff_files,
 			nfiles_alloc * sizeof(struct CoffFiles));
 	    }
 	  curr_file = coff_files + nfiles;
@@ -1224,7 +1223,7 @@ DEBUG_ProcessCoff(struct deferred_debug_info * deefer)
 	      if( nfiles + 1 >= nfiles_alloc )
 		{
 		  nfiles_alloc += 10;
-		  coff_files = (struct CoffFiles *) realloc( coff_files,
+		  coff_files = (struct CoffFiles *) DBG_realloc(coff_files,
 							     nfiles_alloc * sizeof(struct CoffFiles));
 		}
 	      curr_file = coff_files + nfiles;
@@ -1304,7 +1303,7 @@ DEBUG_ProcessCoff(struct deferred_debug_info * deefer)
 	    {
 	      curr_file->neps_alloc += 10;
 	      curr_file->entries = (struct name_hash **) 
-		realloc( curr_file->entries, 
+		DBG_realloc(curr_file->entries, 
 			 curr_file->neps_alloc * sizeof(struct name_hash *));
 	    }
 #if 0
@@ -1363,7 +1362,7 @@ DEBUG_ProcessCoff(struct deferred_debug_info * deefer)
 	    {
 	      coff_files[j].neps_alloc += 10;
 	      coff_files[j].entries = (struct name_hash **) 
-		realloc( coff_files[j].entries, 
+		DBG_realloc(coff_files[j].entries, 
 			 coff_files[j].neps_alloc * sizeof(struct name_hash *));
 	    }
 	  coff_files[j].entries[coff_files[j].neps++] =
@@ -1509,10 +1508,10 @@ DEBUG_ProcessCoff(struct deferred_debug_info * deefer)
 	{
 	  if( coff_files[j].entries != NULL )
 	    {
-	      free(coff_files[j].entries);
+	      DBG_free(coff_files[j].entries);
 	    }
 	}
-      free(coff_files);
+      DBG_free(coff_files);
     }
 
   return (rtn);
@@ -1568,7 +1567,7 @@ DEBUG_SnarfLinetab(char			     * linetab,
    * and pull bits as required.
    */
   lt_hdr = (struct codeview_linetab_hdr *) 
-    xmalloc((nseg + 1) * sizeof(*lt_hdr));
+    DBG_alloc((nseg + 1) * sizeof(*lt_hdr));
   if( lt_hdr == NULL )
     {
       goto leave;
@@ -1602,7 +1601,7 @@ DEBUG_SnarfLinetab(char			     * linetab,
       fn = (unsigned char *) (start + file_segcount);
       memset(filename, 0, sizeof(filename));
       memcpy(filename, fn + 1, *fn);
-      fn = strdup(filename);
+      fn = DBG_strdup(filename);
 
       for(k = 0; k < file_segcount; k++, this_seg++)
 	{
@@ -1825,7 +1824,7 @@ DEBUG_SnarfCodeView(      struct deferred_debug_info * deefer,
 
   if( linetab != NULL )
     {
-      free(linetab);
+      DBG_free(linetab);
     }
 
   return TRUE;
@@ -1926,7 +1925,7 @@ DEBUG_ProcessPDBFile(struct deferred_debug_info * deefer, char * full_filename)
    * extents from the file to form the TOC.
    */
   toc_blocks = (pdbhdr->toc_len + blocksize - 1) / blocksize;
-  toc = (char *) xmalloc(toc_blocks * blocksize);
+  toc = (char *) DBG_alloc(toc_blocks * blocksize);
   table = pdbhdr->toc_ext;
   for(i=0; i < toc_blocks; i++)
     {
@@ -1955,7 +1954,7 @@ DEBUG_ProcessPDBFile(struct deferred_debug_info * deefer, char * full_filename)
       goto leave;
     }
   
-  filelist = (struct file_list *) xmalloc(npair * sizeof(*filelist));
+  filelist = (struct file_list *) DBG_alloc(npair * sizeof(*filelist));
   if( filelist == NULL )
     {
       goto leave;
@@ -1996,7 +1995,7 @@ DEBUG_ProcessPDBFile(struct deferred_debug_info * deefer, char * full_filename)
       if( bufflen < filelist[i].nextents * blocksize )
 	{
 	  bufflen = filelist[i].nextents * blocksize;
-	  buffer = (char *) realloc(buffer, bufflen);
+	  buffer = (char *) DBG_realloc(buffer, bufflen);
 	}
 
       /*
@@ -2056,7 +2055,7 @@ DEBUG_ProcessPDBFile(struct deferred_debug_info * deefer, char * full_filename)
 	  hd = (struct filetab_hdr *) buffer;
 
 	  gsym_record = hd->gsym_file;
-	  gsymtab = (char *) xmalloc( filelist[gsym_record].nextents 
+	  gsymtab = (char *) DBG_alloc(filelist[gsym_record].nextents 
 				      * blocksize);
 	  memset(gsymtab, 0, filelist[gsym_record].nextents * blocksize);
 	  
@@ -2162,18 +2161,18 @@ leave:
 
   if( gsymtab != NULL )
     {
-      free(gsymtab);
+      DBG_free(gsymtab);
       gsymtab = NULL;
     }
 
   if( buffer != NULL )
     {
-      free(buffer);
+      DBG_free(buffer);
     }
 
   if( filelist != NULL )
     {
-      free(filelist);
+      DBG_free(filelist);
     }
 
   if( addr != (char *) 0xffffffff )

@@ -20,7 +20,6 @@
 #endif
 
 #include "debugger.h"
-#include "xmalloc.h"
 
 #ifdef __svr4__
 #define __ELF__
@@ -146,14 +145,14 @@ static
 int
 DEBUG_FileSubNr2StabEnum(int filenr,int subnr) {
     if (nrofnroftypenums<=filenr) {
-    	nroftypenums = xrealloc(nroftypenums,sizeof(nroftypenums[0])*(filenr+1));
+    	nroftypenums = DBG_realloc(nroftypenums,sizeof(nroftypenums[0])*(filenr+1));
 	memset(nroftypenums+nrofnroftypenums,0,(filenr+1-nrofnroftypenums)*sizeof(nroftypenums[0]));
-	typenums = xrealloc(typenums,sizeof(typenums[0])*(filenr+1));
+	typenums = DBG_realloc(typenums,sizeof(typenums[0])*(filenr+1));
 	memset(typenums+nrofnroftypenums,0,sizeof(typenums[0])*(filenr+1-nrofnroftypenums));
 	nrofnroftypenums=filenr+1;
     }
     if (nroftypenums[filenr]<=subnr) {
-    	typenums[filenr] = xrealloc(typenums[filenr],sizeof(typenums[0][0])*(subnr+1));
+    	typenums[filenr] = DBG_realloc(typenums[filenr],sizeof(typenums[0][0])*(subnr+1));
 	memset(typenums[filenr]+nroftypenums[filenr],0,sizeof(typenums[0][0])*(subnr+1-nroftypenums[filenr]));
 	nroftypenums[filenr] = subnr+1;
     }
@@ -162,7 +161,7 @@ DEBUG_FileSubNr2StabEnum(int filenr,int subnr) {
 
     if( num_stab_types <= curtypenum ) {
 	num_stab_types = curtypenum + 256;
-	stab_types = (struct datatype **) xrealloc(stab_types, 
+	stab_types = (struct datatype **) DBG_realloc(stab_types, 
 		    num_stab_types * sizeof(struct datatype *)
 	);
         memset( stab_types + curtypenum, 0, sizeof(struct datatype *) * (num_stab_types - curtypenum) );
@@ -221,12 +220,12 @@ DEBUG_RegisterTypedef(const char * name, struct datatype ** types, int ndef)
   if( ndef == 1 )
       return TRUE;
 
-  ktd = (struct known_typedef *) xmalloc(sizeof(struct known_typedef) 
+  ktd = (struct known_typedef *) DBG_alloc(sizeof(struct known_typedef) 
 					 + ndef * sizeof(struct datatype *));
   
   hash = stab_hash(name);
 
-  ktd->name = xstrdup(name);
+  ktd->name = DBG_strdup(name);
   ktd->ndefs = ndef;
   memcpy(&ktd->types[0], types, ndef * sizeof(struct datatype *));
   ktd->next = ktd_head[hash];
@@ -333,8 +332,8 @@ static int DEBUG_FreeRegisteredTypedefs()
 	{
 	  count++;
 	  next = ktd->next;
-	  free(ktd->name);
-	  free(ktd);
+	  DBG_free(ktd->name);
+	  DBG_free(ktd);
 	}  
       ktd_head[j] = NULL;
     }
@@ -654,7 +653,7 @@ DEBUG_ParseStabs(char * addr, unsigned int load_offset,
    * where the stab is continued over multiple lines.
    */
   stabbufflen = 65536;
-  stabbuff = (char *) xmalloc(stabbufflen);
+  stabbuff = (char *) DBG_alloc(stabbufflen);
 
   strtabinc = 0;
   stabbuff[0] = '\0';
@@ -672,7 +671,7 @@ DEBUG_ParseStabs(char * addr, unsigned int load_offset,
 	  if( strlen(stabbuff) + len > stabbufflen )
 	    {
 	      stabbufflen += 65536;
-	      stabbuff = (char *) xrealloc(stabbuff, stabbufflen);
+	      stabbuff = (char *) DBG_realloc(stabbuff, stabbufflen);
 	    }
 	  strncat(stabbuff, ptr, len - 1);
 	  continue;
@@ -935,7 +934,7 @@ DEBUG_ParseStabs(char * addr, unsigned int load_offset,
 
   if( stab_types != NULL )
     {
-      free(stab_types);
+      DBG_free(stab_types);
       stab_types = NULL;
       num_stab_types = 0;
     }
@@ -1063,25 +1062,25 @@ DEBUG_ProcessElfObject(char * filename, unsigned int load_offset)
       char *s,*t,*fn,*paths;
       if (strchr(filename,'/'))
       	goto leave;
-      paths = xstrdup(getenv("PATH"));
+      paths = DBG_strdup(getenv("PATH"));
       s = paths;
       while (s && *s) {
       	t = strchr(s,':');
 	if (t) *t='\0';
-	fn = (char*)xmalloc(strlen(filename)+1+strlen(s)+1);
+	fn = (char*)DBG_alloc(strlen(filename)+1+strlen(s)+1);
 	strcpy(fn,s);
 	strcat(fn,"/");
 	strcat(fn,filename);
 	if ((rtn = DEBUG_ProcessElfObject(fn,load_offset))) {
-		free(fn);
-      		free(paths);
+		DBG_free(fn);
+      		DBG_free(paths);
 		goto leave;
 	}
-	free(fn);
+	DBG_free(fn);
 	if (t) s = t+1; else break;
       }
       if (!s || !*s) fprintf(stderr," not found");
-      free(paths);
+      DBG_free(paths);
       goto leave;
     }
 

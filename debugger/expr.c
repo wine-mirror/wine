@@ -17,7 +17,6 @@
 #include "task.h"
 #include "selectors.h"
 #include "debugger.h"
-#include "xmalloc.h"
 
 #include "expr.h"
 
@@ -811,7 +810,7 @@ DEBUG_CloneExpr(struct expr * exp)
   int		i;
   struct expr * rtn;
 
-  rtn = (struct expr *) xmalloc(sizeof(struct expr));
+  rtn = (struct expr *) DBG_alloc(sizeof(struct expr));
 
   /*
    * First copy the contents of the expression itself.
@@ -829,15 +828,15 @@ DEBUG_CloneExpr(struct expr * exp)
     case EXPR_TYPE_CONST:
       break;
     case EXPR_TYPE_STRING:
-      rtn->un.string.str = xstrdup(exp->un.string.str);
+      rtn->un.string.str = DBG_strdup(exp->un.string.str);
       break;
     case EXPR_TYPE_SYMBOL:
-      rtn->un.symbol.name = xstrdup(exp->un.symbol.name);
+      rtn->un.symbol.name = DBG_strdup(exp->un.symbol.name);
       break;
     case EXPR_TYPE_PSTRUCT:
     case EXPR_TYPE_STRUCT:
       rtn->un.structure.exp1 = DEBUG_CloneExpr(exp->un.structure.exp1);
-      rtn->un.structure.element_name = xstrdup(exp->un.structure.element_name);
+      rtn->un.structure.element_name = DBG_strdup(exp->un.structure.element_name);
       break;
     case EXPR_TYPE_CALL:
       /*
@@ -848,7 +847,7 @@ DEBUG_CloneExpr(struct expr * exp)
 	{
 	  rtn->un.call.arg[i]  = DEBUG_CloneExpr(exp->un.call.arg[i]);
 	}
-      rtn->un.call.funcname = xstrdup(exp->un.call.funcname);
+      rtn->un.call.funcname = DBG_strdup(exp->un.call.funcname);
       break;
     case EXPR_TYPE_BINOP:
       rtn->un.binop.exp1 = DEBUG_CloneExpr(exp->un.binop.exp1);
@@ -886,15 +885,15 @@ DEBUG_FreeExpr(struct expr * exp)
     case EXPR_TYPE_CONST:
       break;
     case EXPR_TYPE_STRING:
-      free((char *) exp->un.string.str);
+      DBG_free((char *) exp->un.string.str);
       break;
     case EXPR_TYPE_SYMBOL:
-      free((char *) exp->un.symbol.name);
+      DBG_free((char *) exp->un.symbol.name);
       break;
     case EXPR_TYPE_PSTRUCT:
     case EXPR_TYPE_STRUCT:
       DEBUG_FreeExpr(exp->un.structure.exp1);
-      free((char *) exp->un.structure.element_name);
+      DBG_free((char *) exp->un.structure.element_name);
       break;
     case EXPR_TYPE_CALL:
       /*
@@ -905,7 +904,7 @@ DEBUG_FreeExpr(struct expr * exp)
 	{
 	  DEBUG_FreeExpr(exp->un.call.arg[i]);
 	}
-      free((char *) exp->un.call.funcname);
+      DBG_free((char *) exp->un.call.funcname);
       break;
     case EXPR_TYPE_BINOP:
       DEBUG_FreeExpr(exp->un.binop.exp1);
@@ -920,6 +919,6 @@ DEBUG_FreeExpr(struct expr * exp)
       break;
     }
 
-  free(exp);
+  DBG_free(exp);
   return TRUE;
 }

@@ -32,6 +32,7 @@
 
 extern FILE * yyin;
 unsigned int dbg_mode = 0;
+HANDLE dbg_heap = 0;
 int curr_frame = 0;
 
 static enum exec_mode dbg_exec_mode = EXEC_CONT;
@@ -42,6 +43,12 @@ void mode_command(int);
 void flush_symbols(void);
 int yylex(void);
 int yyerror(char *);
+
+#ifdef DBG_need_heap
+#define malloc(x) DBG_alloc(x)
+#define realloc(x,y) DBG_realloc(x,y)
+#define free(x) DBG_free(x)
+#endif
 
 extern void VIRTUAL_Dump(void);  /* memory/virtual.c */
 
@@ -451,6 +458,13 @@ static void DEBUG_Main( int signal )
             CLIENT_DebuggerRequest( DEBUGGER_FREEZE_ALL );
             frozen = TRUE;
         }
+
+#ifdef DBG_need_heap
+	/*
+	 * Initialize the debugger heap.
+	 */
+	dbg_heap = HeapCreate(HEAP_NO_SERIALIZE, 0x1000, 0x8000000); /* 128MB */
+#endif
 
 	/*
 	 * Initialize the type handling stuff.

@@ -23,7 +23,6 @@
 #include "peexe.h"
 #include "debugger.h"
 #include "peexe.h"
-#include "xmalloc.h"
 
 #define NR_TYPE_HASH 521
 
@@ -153,7 +152,7 @@ DEBUG_InitBasic(int type, char * name, int size, int b_signed,
   int hash;
 
   struct datatype * dt;
-  dt = (struct datatype *) xmalloc(sizeof(struct datatype));
+  dt = (struct datatype *) DBG_alloc(sizeof(struct datatype));
 
   if( dt != NULL )
     {
@@ -227,7 +226,7 @@ DEBUG_NewDataType(enum debug_type xtype, const char * typename)
 
   if( dt == NULL )
     {
-      dt = (struct datatype *) xmalloc(sizeof(struct datatype));
+      dt = (struct datatype *) DBG_alloc(sizeof(struct datatype));
       
       if( dt != NULL )
 	{
@@ -236,7 +235,7 @@ DEBUG_NewDataType(enum debug_type xtype, const char * typename)
 	  dt->type = xtype;
 	  if( typename != NULL )
 	    {
-	      dt->name = xstrdup(typename);
+	      dt->name = DBG_strdup(typename);
 	    }
 	  else
 	    {
@@ -281,7 +280,7 @@ DEBUG_FindOrMakePointerType(struct datatype * reftype)
 
   if( dt == NULL )
     {
-      dt = (struct datatype *) xmalloc(sizeof(struct datatype));
+      dt = (struct datatype *) DBG_alloc(sizeof(struct datatype));
       
       if( dt != NULL )
 	{
@@ -571,13 +570,13 @@ DEBUG_AddStructElement(struct datatype * dt, char * name, struct datatype * type
 	      break;
 	    }
 	}
-      m = (struct member *) xmalloc(sizeof(struct member));
+      m = (struct member *) DBG_alloc(sizeof(struct member));
       if( m == FALSE )
 	{
 	  return FALSE;
 	}
       
-      m->name = xstrdup(name);
+      m->name = DBG_strdup(name);
       m->type = type;
       m->offset = offset;
       m->size = size;
@@ -604,13 +603,13 @@ DEBUG_AddStructElement(struct datatype * dt, char * name, struct datatype * type
     }
   else if( dt->type == DT_ENUM )
     {
-      e = (struct en_values *) xmalloc(sizeof(struct en_values));
+      e = (struct en_values *) DBG_alloc(sizeof(struct en_values));
       if( e == FALSE )
 	{
 	  return FALSE;
 	}
       
-      e->name = xstrdup(name);
+      e->name = DBG_strdup(name);
       e->value = offset;
       e->next = dt->un.enumeration.members;
       dt->un.enumeration.members = e;

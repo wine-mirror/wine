@@ -14,7 +14,6 @@
 #include "module.h"
 #include "selectors.h"
 #include "debugger.h"
-#include "xmalloc.h"
 
 #include <stdarg.h>
 

@@ -9,8 +9,13 @@
 #include <stdlib.h>
 #include <string.h>
 #include "debugger.h"
-#include "xmalloc.h"
 #include "y.tab.h"
+
+#ifdef DBG_need_heap
+#define malloc(x) DBG_alloc(x)
+#define realloc(x,y) DBG_realloc(x,y)
+#define free(x) DBG_free(x)
+#endif
 
 #ifndef DONT_USE_READLINE
 #undef YY_INPUT
@@ -270,12 +275,12 @@ static char *local_symbols[30];
 static int next_symbol;
 
 char * make_symbol(char * symbol){
-        return local_symbols[next_symbol++] = xstrdup(symbol);
+        return local_symbols[next_symbol++] = DBG_strdup(symbol);
 }
 
 void flush_symbols()
 {
-	while(--next_symbol>= 0) free(local_symbols[next_symbol]);
+	while(--next_symbol>= 0) DBG_free(local_symbols[next_symbol]);
 	next_symbol = 0;
 }
 

@@ -17,7 +17,6 @@
 #include "selectors.h"
 #include "debugger.h"
 #include "toolhelp.h"
-#include "xmalloc.h"
 
 #define NR_NAME_HASH 16384
 #ifndef PATH_MAX
@@ -154,7 +153,7 @@ DEBUG_ResortSymbols()
 	return;
       }
 
-    addr_sorttab = (struct name_hash **) xrealloc(addr_sorttab, 
+    addr_sorttab = (struct name_hash **) DBG_realloc(addr_sorttab, 
 					 nsym * sizeof(struct name_hash *));
 
     nsym = 0;
@@ -215,9 +214,9 @@ DEBUG_AddSymbol( const char * name, const DBG_ADDR *addr, const char * source,
      * return it, so we don't end up with duplicates.
      */
     
-    new = (struct name_hash *) xmalloc(sizeof(struct name_hash));
+    new = (struct name_hash *) DBG_alloc(sizeof(struct name_hash));
     new->addr = *addr;
-    new->name = xstrdup(name);
+    new->name = DBG_strdup(name);
 
     if( source != NULL )
       {
@@ -233,7 +232,7 @@ DEBUG_AddSymbol( const char * name, const DBG_ADDR *addr, const char * source,
 	else
 	  {
 	    strcpy(prev_source, source);
-	    prev_duped_source = new->sourcefile = xstrdup(source);
+	    prev_duped_source = new->sourcefile = DBG_strdup(source);
 	  }
       }
     else
@@ -301,14 +300,14 @@ BOOL DEBUG_Normalize(struct name_hash * nh )
   if( nh->n_locals != nh->locals_alloc )
     {
       nh->locals_alloc = nh->n_locals;
-      nh->local_vars = xrealloc(nh->local_vars,
+      nh->local_vars = DBG_realloc(nh->local_vars,
 				  nh->locals_alloc * sizeof(WineLocals));
     }
 
   if( nh->n_lines != nh->lines_alloc )
     {
       nh->lines_alloc = nh->n_lines;
-      nh->linetab = xrealloc(nh->linetab,
+      nh->linetab = DBG_realloc(nh->linetab,
 			      nh->lines_alloc * sizeof(WineLineNo));
     }
 
@@ -928,7 +927,7 @@ DEBUG_AddLineNumber( struct name_hash * func, int line_num,
   if( func->n_lines + 1 >= func->lines_alloc )
     {
       func->lines_alloc += 64;
-      func->linetab = xrealloc(func->linetab,
+      func->linetab = DBG_realloc(func->linetab,
 			      func->lines_alloc * sizeof(WineLineNo));
     }
 
@@ -955,7 +954,7 @@ DEBUG_AddLocal( struct name_hash * func, int regno,
   if( func->n_locals + 1 >= func->locals_alloc )
     {
       func->locals_alloc += 32;
-      func->local_vars = xrealloc(func->local_vars,
+      func->local_vars = DBG_realloc(func->local_vars,
 			      func->locals_alloc * sizeof(WineLocals));
     }
 
@@ -963,7 +962,7 @@ DEBUG_AddLocal( struct name_hash * func, int regno,
   func->local_vars[func->n_locals].offset = offset;
   func->local_vars[func->n_locals].pc_start = pc_start;
   func->local_vars[func->n_locals].pc_end = pc_end;
-  func->local_vars[func->n_locals].name = xstrdup(name);
+  func->local_vars[func->n_locals].name = DBG_strdup(name);
   func->local_vars[func->n_locals].type = NULL;
   func->n_locals++;
 

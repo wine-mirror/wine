@@ -143,6 +143,7 @@ enum exec_mode
 
 extern CONTEXT DEBUG_context;  /* debugger/registers.c */
 extern unsigned int dbg_mode;
+extern HANDLE dbg_heap;
 
   /* debugger/break.c */
 extern void DEBUG_SetBreakpoints( BOOL set );
@@ -328,5 +329,26 @@ extern void (*fnWINE_Debugger)(int,SIGCONTEXT*);
 extern void (*ctx_debug_call)( int, CONTEXT* );
 extern BOOL (*fnINSTR_EmulateInstruction)( SIGCONTEXT* );
 
+  /* Choose your allocator! */
+#if 1
+/* this one is libc's fast one */
+#include "xmalloc.h"
+#define DBG_alloc(x) xmalloc(x)
+#define DBG_realloc(x,y) xrealloc(x,y)
+#define DBG_free(x) free(x)
+#define DBG_strdup(x) xstrdup(x)
+#else
+/* this one is slow (takes 5 minutes to load the debugger on my machine),
+   but is pretty crash-proof (can step through malloc() without problems,
+   malloc() arena (and other heaps) can be totally wasted and it'll still
+   work, etc... if someone could make optimized routines so it wouldn't
+   take so long to load, it could be made default) */
+#include "heap.h"
+#define DBG_alloc(x) HEAP_xalloc(dbg_heap,0,x)
+#define DBG_realloc(x,y) HEAP_xrealloc(dbg_heap,0,x,y)
+#define DBG_free(x) HeapFree(dbg_heap,0,x)
+#define DBG_strdup(x) HEAP_strdupA(dbg_heap,0,x)
+#define DBG_need_heap
+#endif
 
 #endif  /* __WINE_DEBUGGER_H */

@@ -26,7 +26,6 @@
 #include "debugger.h"
 #include "peexe.h"
 #include "task.h"
-#include "xmalloc.h"
 
 struct searchlist
 {
@@ -70,14 +69,14 @@ DEBUG_AddPath(const char * path)
 {
   struct searchlist * sl;
 
-  sl = (struct searchlist *) xmalloc(sizeof(struct searchlist));
+  sl = (struct searchlist *) DBG_alloc(sizeof(struct searchlist));
   if( sl == NULL )
     {
       return;
     }
 
   sl->next = listhead;
-  sl->path = xstrdup(path);
+  sl->path = DBG_strdup(path);
   listhead = sl;
 }
 
@@ -90,8 +89,8 @@ DEBUG_NukePath()
   for(sl = listhead; sl; sl = nxt)
     {
       nxt = sl->next;
-      free(sl->path);
-      free(sl);
+      DBG_free(sl->path);
+      DBG_free(sl);
     }
 
   listhead = NULL;
@@ -215,8 +214,8 @@ DEBUG_DisplaySource(char * sourcefile, int start, int end)
 		   * OK, I guess the user doesn't really want to see it
 		   * after all.
 		   */
-		  ol = (struct open_filelist *) xmalloc(sizeof(*ol));
-		  ol->path = xstrdup(sourcefile);
+		  ol = (struct open_filelist *) DBG_alloc(sizeof(*ol));
+		  ol->path = DBG_strdup(sourcefile);
 		  ol->real_path = NULL;
 		  ol->next = ofiles;
 		  ol->nlines = 0;
@@ -230,9 +229,9 @@ DEBUG_DisplaySource(char * sourcefile, int start, int end)
       /*
        * Create header for file.
        */
-      ol = (struct open_filelist *) xmalloc(sizeof(*ol));
-      ol->path = xstrdup(sourcefile);
-      ol->real_path = xstrdup(tmppath);
+      ol = (struct open_filelist *) DBG_alloc(sizeof(*ol));
+      ol->path = DBG_strdup(sourcefile);
+      ol->real_path = DBG_strdup(tmppath);
       ol->next = ofiles;
       ol->nlines = 0;
       ol->linelist = NULL;
@@ -268,7 +267,7 @@ DEBUG_DisplaySource(char * sourcefile, int start, int end)
 	}
 
       ol->nlines++;
-      ol->linelist = (unsigned int*) xmalloc(ol->nlines * sizeof(unsigned int) );
+      ol->linelist = (unsigned int*) DBG_alloc( ol->nlines * sizeof(unsigned int) );
 
       nlines = 0;
       pnt = addr;

@@ -8,7 +8,6 @@
 #include "config.h"
 #include <stdio.h>
 #include <stdlib.h>
-#include "xmalloc.h"
 #include "debugger.h"
 
 
@@ -85,8 +84,8 @@ void DEBUG_BackTrace(void)
     if (IS_SELECTOR_SYSTEM(SS_reg(&DEBUG_context)))  /* system stack */
     {
         nframe = 1;
-        if (frames) free( frames );
-	frames = (struct bt_info *) xmalloc( sizeof(struct bt_info) );
+        if (frames) DBG_free( frames );
+	frames = (struct bt_info *) DBG_alloc( sizeof(struct bt_info) );
         fprintf(stderr,"%s%d ",(curr_frame == 0 ? "=>" : "  "), frameno++);
 
         addr.seg = 0;
@@ -102,7 +101,7 @@ void DEBUG_BackTrace(void)
             if (!DBG_CHECK_READ_PTR( &addr, sizeof(FRAME32) )) return;
             if (!frame->ip) break;
             nframe++;
-            frames = (struct bt_info *)xrealloc(frames,
+            frames = (struct bt_info *)DBG_realloc(frames,
                                                 nframe*sizeof(struct bt_info));
             fprintf(stderr,"%s%d ", (frameno == curr_frame ? "=>" : "  "),
 		    frameno);
@@ -161,8 +160,8 @@ void DEBUG_SilentBackTrace(void)
     int frameno = 0;
 
     nframe = 1;
-    if (frames) free( frames );
-    frames = (struct bt_info *) xmalloc( sizeof(struct bt_info) );
+    if (frames) DBG_free( frames );
+    frames = (struct bt_info *) DBG_alloc( sizeof(struct bt_info) );
     if (IS_SELECTOR_SYSTEM(SS_reg(&DEBUG_context)))  /* system stack */
     {
         addr.seg = 0;
@@ -179,7 +178,7 @@ void DEBUG_SilentBackTrace(void)
             if (!DBG_CHECK_READ_PTR( &addr, sizeof(FRAME32) )) return;
             if (!frame->ip) break;
             nframe++;
-            frames = (struct bt_info *)xrealloc(frames,
+            frames = (struct bt_info *)DBG_realloc(frames,
                                                 nframe*sizeof(struct bt_info));
             addr.off = frame->ip;
 	    frames[frameno].eip = addr.off;
