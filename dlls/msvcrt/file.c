@@ -202,6 +202,15 @@ void msvcrt_init_io(void)
   }
 }
 
+/* free everything on process exit */
+void msvcrt_free_io(void)
+{
+    _fcloseall();
+    _close(0);
+    _close(1);
+    _close(2);
+}
+
 /* INTERNAL: Flush stdio file buffer */
 static int msvcrt_flush_buffer(MSVCRT_FILE* file)
 {

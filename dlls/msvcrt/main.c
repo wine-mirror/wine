@@ -33,13 +33,6 @@ static inline BOOL msvcrt_init_tls(void);
 static inline BOOL msvcrt_free_tls(void);
 const char* msvcrt_get_reason(DWORD reason) WINE_UNUSED;
 
-void msvcrt_init_io(void);
-void msvcrt_init_console(void);
-void msvcrt_free_console(void);
-void msvcrt_init_args(void);
-void msvcrt_free_args(void);
-void msvcrt_init_vtables(void);
-
 typedef void* (*MSVCRT_malloc_func)(unsigned int);
 typedef void (*MSVCRT_free_func)(void*);
 
@@ -82,7 +75,7 @@ BOOL WINAPI MSVCRT_Init(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
     break;
   case DLL_PROCESS_DETACH:
     msvcrt_free_mt_locks();
-    _fcloseall();
+    msvcrt_free_io();
     msvcrt_free_console();
     msvcrt_free_args();
     if (!msvcrt_free_tls())

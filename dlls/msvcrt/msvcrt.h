@@ -59,7 +59,15 @@ LPWSTR msvcrt_wstrndup(LPCWSTR, unsigned int);
 int    MSVCRT__set_new_mode(int mode);
 
 /* Setup and teardown multi threaded locks */
-void msvcrt_init_mt_locks(void);
-void msvcrt_free_mt_locks(void);
+extern void msvcrt_init_mt_locks(void);
+extern void msvcrt_free_mt_locks(void);
+
+extern void msvcrt_init_io(void);
+extern void msvcrt_free_io(void);
+extern void msvcrt_init_console(void);
+extern void msvcrt_free_console(void);
+extern void msvcrt_init_args(void);
+extern void msvcrt_free_args(void);
+extern void msvcrt_init_vtables(void);
 
 #endif /* __WINE_MSVCRT_H */
