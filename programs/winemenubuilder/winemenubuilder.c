@@ -618,27 +618,6 @@ static int fork_and_wait( char *linker, char *link_name, char *path,
     return retcode;
 }
 
-/* write the name of the ShellLinker into the buffer provided */
-static BOOL GetLinkerName( LPSTR szLinker, DWORD max )
-{
-    LONG r;
-    DWORD type = 0;
-    HKEY hkey;
-
-    szLinker[0] = 0;
-    r = RegOpenKeyExA( HKEY_LOCAL_MACHINE,
-                        "Software\\Wine\\Wine\\Config\\Wine",
-                        0, KEY_ALL_ACCESS, &hkey );
-    if( r )
-        return FALSE;
-    r = RegQueryValueExA( hkey, "ShellLinker", 0, &type, szLinker, &max );
-    RegCloseKey( hkey );
-    if( r || ( type != REG_SZ ) )
-        return FALSE;
-
-    return TRUE ;
-}
-
 static char *cleanup_link( LPCWSTR link )
 {
     char  *p, *link_name;
@@ -711,19 +690,13 @@ static BOOL InvokeShellLinker( IShellLinkA *sl, LPCWSTR link )
     char *link_name, *p, *icon_name = NULL, *work_dir = NULL;
     char *escaped_path = NULL, *escaped_args = NULL;
     CHAR szDescription[MAX_PATH], szPath[MAX_PATH], szWorkDir[MAX_PATH];
-    CHAR szArgs[MAX_PATH], szIconPath[MAX_PATH], szLinker[MAX_PATH];
+    CHAR szArgs[MAX_PATH], szIconPath[MAX_PATH];
     int iIconId = 0, r;
     DWORD ofs=0, csidl= -1;
 
     if ( !link )
     {
         WINE_ERR("Link name is null\n");
-        return FALSE;
-    }
-
-    if( !GetLinkerName( szLinker, MAX_PATH ) )
-    {
-        WINE_ERR("Can't find the name of the linker script\n");
         return FALSE;
     }
 
@@ -811,7 +784,7 @@ static BOOL InvokeShellLinker( IShellLinkA *sl, LPCWSTR link )
     if (szArgs)
         escaped_args = escape(szArgs);
 
-    r = fork_and_wait(szLinker, link_name, escaped_path,
+    r = fork_and_wait("wineshelllink", link_name, escaped_path,
                   (csidl == CSIDL_DESKTOPDIRECTORY), escaped_args, icon_name,
                    work_dir ? work_dir : "", szDescription );
 
@@ -825,7 +798,7 @@ static BOOL InvokeShellLinker( IShellLinkA *sl, LPCWSTR link )
 
     if (r)
     {
-        WINE_ERR("failed to fork and exec %s\n", szLinker );
+        WINE_ERR("failed to fork and exec wineshelllink\n" );
         return FALSE;
     }
 

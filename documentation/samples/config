@@ -14,7 +14,6 @@ WINE REGISTRY Version 2
 "GraphicsDriver" = "x11drv"
 ;"ShowDirSymlinks" = "1"
 ;"ShowDotFiles" = "1"
-"ShellLinker" = "wineshelllink"
 
 # [wineconf]
 
