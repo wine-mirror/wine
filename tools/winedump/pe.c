@@ -273,7 +273,7 @@ static	void	dump_sections(void* addr, unsigned num_sect)
     printf("Section Table\n");
     for (i = 0; i < num_sect; i++, sectHead++)
     {
-	printf("  %02d %-8s   VirtSize: %-8lu  VirtAddr:  %-8lu 0x%08lx\n",
+	printf("  %02d %-8.8s   VirtSize: %-8lu  VirtAddr:  %-8lu 0x%08lx\n",
 	       i + 1, sectHead->Name, sectHead->Misc.VirtualSize, sectHead->VirtualAddress,
 	       sectHead->VirtualAddress);
 	printf("    raw data offs: %-8lu raw data size: %-8lu\n",
@@ -282,7 +282,7 @@ static	void	dump_sections(void* addr, unsigned num_sect)
 	       sectHead->PointerToRelocations, sectHead->NumberOfRelocations);
 	printf("    line # offs:     %-8lu  line #'s:      %-8u\n",
 	       sectHead->PointerToLinenumbers, sectHead->NumberOfLinenumbers);
-	printf("    characteristics: 0x$%08lx\n", sectHead->Characteristics);
+	printf("    characteristics: 0x%08lx\n", sectHead->Characteristics);
 	printf("      ");
 #define X(b,s)	if (sectHead->Characteristics & b) printf(s "  ")
 /* #define IMAGE_SCN_TYPE_REG			0x00000000 - Reserved */
