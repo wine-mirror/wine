@@ -12,7 +12,6 @@
 #include <string.h>
 #include "psdrv.h"
 #include "debugtools.h"
-#include "resource.h"
 #include "winuser.h"
 #include "winspool.h"
 

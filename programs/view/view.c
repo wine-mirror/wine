@@ -10,7 +10,6 @@
 #include <commdlg.h>
 
 #include "globals.h"        
-#include "resource.h"
 #include <stdio.h>
 
 BOOL FileIsPlaceable( LPCSTR szFileName );

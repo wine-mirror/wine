@@ -26,7 +26,6 @@
 #include "nonclient.h"
 #include "user.h"
 #include "message.h"
-#include "resource.h"
 #include "tweak.h"
 
 #include "debugtools.h"

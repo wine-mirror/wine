@@ -3,7 +3,6 @@
 
 #include "winerror.h"
 #include "heap.h"
-#include "resource.h"
 #include "dlgs.h"
 #include "win.h"
 #include "sysmetrics.h"

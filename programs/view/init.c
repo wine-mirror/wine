@@ -1,6 +1,5 @@
 #include <windows.h>
 #include "globals.h"
-#include "resource.h"
 
 /* global variables */
 

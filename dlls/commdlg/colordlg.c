@@ -14,7 +14,6 @@
 #include "ldt.h"
 #include "heap.h"
 #include "commdlg.h"
-#include "resource.h"
 #include "dialog.h"
 #include "dlgs.h"
 #include "module.h"

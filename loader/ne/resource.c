@@ -19,7 +19,6 @@
 #include "ldt.h"
 #include "module.h"
 #include "neexe.h"
-#include "resource.h"
 #include "callback.h"
 #include "debugtools.h"
 

@@ -19,7 +19,6 @@
 #include "wine/winbase16.h"
 #include "combo.h"
 #include "local.h"
-#include "resource.h"
 #include "debugtools.h"
 #include "callback.h"
 #include "tweak.h"

@@ -40,8 +40,6 @@
 #include <assert.h>
 #include <ctype.h>
 
-#include "resource.h"	/* For HAVE_WINE_CONSTRUCTOR */
-
 #include "wrc.h"
 #include "utils.h"
 #include "writeres.h"
@@ -391,14 +389,6 @@ int main(int argc,char *argv[])
 			error("Option -r and -b cannot be used together\n");
 		}
 	}
-
-#if !defined(HAVE_WINE_CONSTRUCTOR)
-	if(auto_register)
-	{
-		warning("Autoregister code non-operable (HAVE_WINE_CONSTRUCTOR not defined)");
-		auto_register = 0;
-	}
-#endif
 
 	/* Set alignment power */
 	a = alignment;

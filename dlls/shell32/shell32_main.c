@@ -10,7 +10,6 @@
 #include "wine/winuser16.h"
 #include "winerror.h"
 #include "heap.h"
-#include "resource.h"
 #include "dlgs.h"
 #include "ldt.h"
 #include "sysmetrics.h"

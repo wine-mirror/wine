@@ -22,7 +22,6 @@
 #include "mdi.h"
 #include "user.h"
 #include "menu.h"
-#include "resource.h"
 #include "scroll.h"
 #include "struct32.h"
 #include "tweak.h"
