@@ -204,7 +204,7 @@ static LRESULT	EDIT_EM_CharFromPos(WND *wnd, EDITSTATE *es, INT x, INT y);
 static BOOL	EDIT_EM_FmtLines(EDITSTATE *es, BOOL add_eol);
 static HLOCAL	EDIT_EM_GetHandle(EDITSTATE *es);
 static HLOCAL16	EDIT_EM_GetHandle16(WND *wnd, EDITSTATE *es);
-static INT	EDIT_EM_GetLine(EDITSTATE *es, INT line, LPWSTR lpch);
+static INT	EDIT_EM_GetLine(EDITSTATE *es, INT line, LPARAM lParam, BOOL unicode);
 static LRESULT	EDIT_EM_GetSel(EDITSTATE *es, LPUINT start, LPUINT end);
 static LRESULT	EDIT_EM_GetThumb(WND *wnd, EDITSTATE *es);
 static INT	EDIT_EM_LineFromChar(EDITSTATE *es, INT index);
@@ -661,7 +661,7 @@ static LRESULT WINAPI EditWndProc_locked( WND *wnd, UINT msg,
 		/* fall through */
 	case EM_GETLINE:
 		DPRINTF_EDIT_MSG32("EM_GETLINE");
-		result = (LRESULT)EDIT_EM_GetLine(es, (INT)wParam, (LPWSTR)lParam);
+		result = (LRESULT)EDIT_EM_GetLine(es, (INT)wParam, lParam, unicode);
 		break;
 
 	case EM_LIMITTEXT16:
@@ -2501,10 +2501,10 @@ static HLOCAL16 EDIT_EM_GetHandle16(WND *wnd, EDITSTATE *es)
  *	EM_GETLINE
  *
  */
-static INT EDIT_EM_GetLine(EDITSTATE *es, INT line, LPWSTR lpch)
+static INT EDIT_EM_GetLine(EDITSTATE *es, INT line, LPARAM lParam, BOOL unicode)
 {
 	LPWSTR src;
-	INT len;
+	INT line_len, dst_len;
 	INT i;
 
 	if (es->style & ES_MULTILINE) {
@@ -2514,13 +2514,34 @@ static INT EDIT_EM_GetLine(EDITSTATE *es, INT line, LPWSTR lpch)
 		line = 0;
 	i = EDIT_EM_LineIndex(es, line);
 	src = es->text + i;
-	len = min(*(WORD *)lpch, EDIT_EM_LineLength(es, i));
-	for (i = 0 ; i < len ; i++) {
-		*lpch = *src;
-		src++;
-		lpch++;
+	line_len = EDIT_EM_LineLength(es, i);
+	dst_len = *(WORD *)lParam;
+	if(unicode)
+	{
+	    LPWSTR dst = (LPWSTR)lParam;
+	    if(dst_len <= line_len)
+	    {
+		memcpy(dst, src, dst_len * sizeof(WCHAR));
+		return dst_len;
+	    }
+	    else /* Append 0 if enough space */
+	    {
+		memcpy(dst, src, line_len * sizeof(WCHAR));
+		dst[line_len] = 0;
+		return line_len;
+	    }
 	}
-	return (LRESULT)len;
+	else
+	{
+	    LPSTR dst = (LPSTR)lParam;
+	    INT ret;
+	    ret = WideCharToMultiByte(CP_ACP, 0, src, line_len, dst, dst_len, NULL, NULL);
+	    if(!ret) /* Insufficient buffer size */
+		return dst_len;
+	    if(ret < dst_len) /* Append 0 if enough space */
+		dst[ret] = 0;
+	    return ret;
+	}
 }
 
 
