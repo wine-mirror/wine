@@ -49,6 +49,21 @@ extern  int __wine_set_signal_handler(unsigned, int (*)(unsigned));
 
 extern int main_create_flags;
 
+static CRITICAL_SECTION ldt_section = CRITICAL_SECTION_INIT("ldt_section");
+
+/***********************************************************************
+ *           locking for LDT routines
+ */
+static void ldt_lock(void)
+{
+    EnterCriticalSection( &ldt_section );
+}
+
+static void ldt_unlock(void)
+{
+    LeaveCriticalSection( &ldt_section );
+}
+
 /***********************************************************************
  *           KERNEL process initialisation routine
  */
@@ -113,6 +128,9 @@ static BOOL process_attach(void)
 
     /* Create the shared heap for broken win95 native dlls */
     HeapCreate( HEAP_SHARED, 0, 0 );
+
+    /* initialize LDT locking */
+    wine_ldt_init_locking( ldt_lock, ldt_unlock );
 
     /* finish the process initialisation for console bits, if needed */
     __wine_set_signal_handler(SIGINT, CONSOLE_HandleCtrlC);

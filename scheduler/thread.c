@@ -105,7 +105,7 @@ static BOOL THREAD_InitTEB( TEB *teb )
     teb->stack_top  = (void *)~0UL;
     teb->StaticUnicodeString.MaximumLength = sizeof(teb->StaticUnicodeBuffer);
     teb->StaticUnicodeString.Buffer = (PWSTR)teb->StaticUnicodeBuffer;
-    teb->teb_sel = SELECTOR_AllocBlock( teb, 0x1000, WINE_LDT_FLAGS_DATA|WINE_LDT_FLAGS_32BIT );
+    teb->teb_sel = wine_ldt_alloc_fs();
     return (teb->teb_sel != 0);
 }
 
@@ -120,8 +120,8 @@ static void THREAD_FreeTEB( TEB *teb )
 {
     TRACE("(%p) called\n", teb );
     /* Free the associated memory */
-    FreeSelector16( teb->stack_sel );
-    FreeSelector16( teb->teb_sel );
+    wine_ldt_free_entries( teb->stack_sel, 1 );
+    wine_ldt_free_fs( teb->teb_sel );
     VirtualFree( teb->stack_base, 0, MEM_RELEASE );
 }
 
@@ -204,7 +204,7 @@ TEB *THREAD_InitStack( TEB *teb, DWORD stack_size )
     return teb;
 
 error:
-    FreeSelector16( teb->teb_sel );
+    wine_ldt_free_fs( teb->teb_sel );
     VirtualFree( base, 0, MEM_RELEASE );
     return NULL;
 }

@@ -28,13 +28,9 @@ extern WORD SELECTOR_AllocBlock( const void *base, DWORD size, unsigned char fla
 extern WORD SELECTOR_ReallocBlock( WORD sel, const void *base, DWORD size );
 extern void SELECTOR_FreeBlock( WORD sel );
 
-#define FIRST_LDT_ENTRY_TO_ALLOC  17
-
-#define IS_SELECTOR_FREE(sel) (!(wine_ldt_copy.flags[LOWORD(sel) >> 3] & WINE_LDT_FLAGS_ALLOCATED))
-
 /* Determine if sel is a system selector (i.e. not managed by Wine) */
 #define IS_SELECTOR_SYSTEM(sel) \
-   (!((sel) & 4) || ((LOWORD(sel) >> 3) < FIRST_LDT_ENTRY_TO_ALLOC))
+   (!((sel) & 4) || ((LOWORD(sel) >> 3) < WINE_LDT_FIRST_ENTRY))
 #define IS_SELECTOR_32BIT(sel) \
    (IS_SELECTOR_SYSTEM(sel) || (wine_ldt_copy.flags[LOWORD(sel) >> 3] & WINE_LDT_FLAGS_32BIT))
 

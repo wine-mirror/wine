@@ -790,17 +790,6 @@ FARPROC16 WINAPI MakeProcInstance16( FARPROC16 func, HANDLE16 hInstance )
       return (FARPROC16)0;
     }
 
-    if (hInstance)
-    {
-	if ( (!(hInstance & 4)) ||
-	     ((hInstance != 0xffff) && IS_SELECTOR_FREE(hInstance|7)) )
- 	{
-	    WARN("Invalid hInstance (%04x) passed to MakeProcInstance !\n",
-		hInstance);
-	    return 0;
-	}
-    }
-
     if ( (GlobalHandleToSel16(CURRENT_DS) != hInstanceSelector)
       && (hInstance != 0)
       && (hInstance != 0xffff) )

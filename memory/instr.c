@@ -55,13 +55,8 @@ inline static void *make_ptr( CONTEXT86 *context, DWORD seg, DWORD off, int long
 
 inline static void *get_stack( CONTEXT86 *context )
 {
-    if (ISV86(context))
-        return PTR_REAL_TO_LIN( context->SegSs, context->Esp );
-    if (IS_SELECTOR_SYSTEM(context->SegSs))
-        return (void *)context->Esp;
-    if (IS_SELECTOR_32BIT(context->SegSs))
-        return (char *) MapSL( MAKESEGPTR( context->SegSs, 0 ) ) + context->Esp;
-    return MapSL( MAKESEGPTR( context->SegSs, LOWORD(context->Esp) ) );
+    if (ISV86(context)) return PTR_REAL_TO_LIN( context->SegSs, context->Esp );
+    return wine_ldt_get_ptr( context->SegSs, context->Esp );
 }
 
 /***********************************************************************
@@ -97,8 +92,6 @@ static BOOL INSTR_ReplaceSelector( CONTEXT86 *context, WORD *sel )
         *sel = DOSMEM_BiosDataSeg;
         return TRUE;
     }
-    if (!IS_SELECTOR_SYSTEM(*sel) && !IS_SELECTOR_FREE(*sel))
-        ERR("Got protection fault on valid selector, maybe your kernel is too old?\n" );
     return FALSE;  /* Can't replace selector, crashdump */
 }
 
@@ -112,6 +105,7 @@ static BYTE *INSTR_GetOperandAddr( CONTEXT86 *context, BYTE *instr,
                                    int long_addr, int segprefix, int *len )
 {
     int mod, rm, base, index = 0, ss = 0, seg = 0, off;
+    LDT_ENTRY entry;
 
 #define GET_VAL(val,type) \
     { *val = *(type *)instr; instr += sizeof(type); *len += sizeof(type); }
@@ -253,9 +247,11 @@ static BYTE *INSTR_GetOperandAddr( CONTEXT86 *context, BYTE *instr,
 
     /* Make sure the segment and offset are valid */
     if (IS_SELECTOR_SYSTEM(seg)) return (BYTE *)(base + (index << ss));
-    if (((seg & 7) != 7) || IS_SELECTOR_FREE(seg)) return NULL;
-    if (wine_ldt_copy.limit[seg >> 3] < (base + (index << ss))) return NULL;
-    return (char *) MapSL( MAKESEGPTR( seg, 0 ) ) + base + (index << ss);
+    if ((seg & 7) != 7) return NULL;
+    wine_ldt_get_entry( seg, &entry );
+    if (wine_ldt_is_empty( &entry )) return NULL;
+    if (wine_ldt_get_limit(&entry) < (base + (index << ss))) return NULL;
+    return (char *)wine_ldt_get_base(&entry) + base + (index << ss);
 #undef GET_VAL
 }
 

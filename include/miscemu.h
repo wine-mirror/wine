@@ -145,11 +145,7 @@ extern char IO_pp_init(void);
  *       selector which is neither system selector nor zero.
  */
 #define CTX_SEG_OFF_TO_LIN(context,seg,off) \
-    (ISV86(context) ? PTR_REAL_TO_LIN((seg),(off)) : \
-     (!seg || IS_SELECTOR_SYSTEM(seg))? (void *)(ULONG_PTR)(off) : \
-      (IS_SELECTOR_32BIT(seg) ? \
-       (void *)((off) + (char*)MapSL(MAKESEGPTR((seg),0))) : \
-       MapSL(MAKESEGPTR((seg),(off)))))
+    (ISV86(context) ? PTR_REAL_TO_LIN((seg),(off)) : wine_ldt_get_ptr((seg),(off)))
 
 #define INT_BARF(context,num) \
     ERR( "int%x: unknown/not implemented parameters:\n" \

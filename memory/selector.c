@@ -42,39 +42,13 @@ inline static WORD get_sel_count( WORD sel )
     return (wine_ldt_copy.limit[sel >> __AHSHIFT] >> 16) + 1;
 }
 
-static const LDT_ENTRY null_entry;  /* all-zeros, used to clear LDT entries */
-
-/***********************************************************************
- *           SELECTOR_AllocArray
- *
- * Allocate a selector array without setting the LDT entries
- */
-static WORD SELECTOR_AllocArray( WORD count )
-{
-    WORD i, sel, size = 0;
-
-    if (!count) return 0;
-    for (i = FIRST_LDT_ENTRY_TO_ALLOC; i < LDT_SIZE; i++)
-    {
-        if (wine_ldt_copy.flags[i] & WINE_LDT_FLAGS_ALLOCATED) size = 0;
-        else if (++size >= count) break;
-    }
-    if (i == LDT_SIZE) return 0;
-    sel = i - size + 1;
-
-    /* mark selectors as allocated */
-    for (i = 0; i < count; i++) wine_ldt_copy.flags[sel + i] |= WINE_LDT_FLAGS_ALLOCATED;
-
-    return (sel << __AHSHIFT) | 7;
-}
-
 
 /***********************************************************************
  *           AllocSelectorArray   (KERNEL.206)
  */
 WORD WINAPI AllocSelectorArray16( WORD count )
 {
-    WORD i, sel = SELECTOR_AllocArray( count );
+    WORD i, sel = wine_ldt_alloc_entries( count );
 
     if (sel)
     {
@@ -96,7 +70,7 @@ WORD WINAPI AllocSelector16( WORD sel )
     WORD newsel, count, i;
 
     count = sel ? get_sel_count(sel) : 1;
-    newsel = SELECTOR_AllocArray( count );
+    newsel = wine_ldt_alloc_entries( count );
     TRACE("(%04x): returning %04x\n", sel, newsel );
     if (!newsel) return 0;
     if (!sel) return newsel;  /* nothing to copy */
@@ -115,38 +89,17 @@ WORD WINAPI AllocSelector16( WORD sel )
  */
 WORD WINAPI FreeSelector16( WORD sel )
 {
-    if (IS_SELECTOR_FREE(sel)) return sel;  /* error */
+    LDT_ENTRY entry;
 
+    wine_ldt_get_entry( sel, &entry );
+    if (wine_ldt_is_empty( &entry )) return sel;  /* error */
 #ifdef __i386__
-    /* Check if we are freeing current %fs or %gs selector */
+    /* Check if we are freeing current %fs selector */
     if (!((wine_get_fs() ^ sel) & ~3))
-    {
         WARN("Freeing %%fs selector (%04x), not good.\n", wine_get_fs() );
-        wine_set_fs( 0 );
-    }
-    if (!((wine_get_gs() ^ sel) & ~3)) wine_set_gs( 0 );
 #endif  /* __i386__ */
-
-    wine_ldt_set_entry( sel, &null_entry );
-    wine_ldt_copy.flags[sel >> __AHSHIFT] &= ~WINE_LDT_FLAGS_ALLOCATED;
+    wine_ldt_free_entries( sel, 1 );
     return 0;
-}
-
-
-/***********************************************************************
- *           SELECTOR_FreeFs
- *
- * Free the current %fs selector.
- */
-void SELECTOR_FreeFs(void)
-{
-    WORD fs = wine_get_fs();
-    if (fs)
-    {
-        wine_ldt_copy.flags[fs >> __AHSHIFT] &= ~WINE_LDT_FLAGS_ALLOCATED;
-        wine_set_fs(0);
-        wine_ldt_set_entry( fs, &null_entry );
-    }
 }
 
 
@@ -185,7 +138,7 @@ WORD SELECTOR_AllocBlock( const void *base, DWORD size, unsigned char flags )
 
     if (!size) return 0;
     count = (size + 0xffff) / 0x10000;
-    sel = SELECTOR_AllocArray( count );
+    sel = wine_ldt_alloc_entries( count );
     if (sel) SELECTOR_SetEntries( sel, base, size, flags );
     return sel;
 }
@@ -213,37 +166,14 @@ void SELECTOR_FreeBlock( WORD sel )
 WORD SELECTOR_ReallocBlock( WORD sel, const void *base, DWORD size )
 {
     LDT_ENTRY entry;
-    WORD i, oldcount, newcount;
+    int oldcount, newcount;
 
     if (!size) size = 1;
-    oldcount = get_sel_count( sel );
-    newcount = (size + 0xffff) >> 16;
     wine_ldt_get_entry( sel, &entry );
+    oldcount = (wine_ldt_get_limit(&entry) >> 16) + 1;
+    newcount = (size + 0xffff) >> 16;
 
-    if (oldcount < newcount)  /* We need to add selectors */
-    {
-        WORD index = sel >> __AHSHIFT;
-          /* Check if the next selectors are free */
-        if (index + newcount > LDT_SIZE) i = oldcount;
-        else
-            for (i = oldcount; i < newcount; i++)
-                if (wine_ldt_copy.flags[index+i] & WINE_LDT_FLAGS_ALLOCATED) break;
-
-        if (i < newcount)  /* they are not free */
-        {
-            SELECTOR_FreeBlock( sel );
-            sel = SELECTOR_AllocArray( newcount );
-        }
-        else  /* mark the selectors as allocated */
-        {
-            for (i = oldcount; i < newcount; i++)
-                wine_ldt_copy.flags[index+i] |= WINE_LDT_FLAGS_ALLOCATED;
-        }
-    }
-    else if (oldcount > newcount) /* We need to remove selectors */
-    {
-        SELECTOR_FreeBlock( sel + (newcount << __AHSHIFT) );
-    }
+    sel = wine_ldt_realloc_entries( sel, oldcount, newcount );
     if (sel) SELECTOR_SetEntries( sel, base, size, wine_ldt_get_flags(&entry) );
     return sel;
 }
@@ -272,7 +202,7 @@ WORD WINAPI AllocCStoDSAlias16( WORD sel )
     WORD newsel;
     LDT_ENTRY entry;
 
-    newsel = SELECTOR_AllocArray( 1 );
+    newsel = wine_ldt_alloc_entries( 1 );
     TRACE("(%04x): returning %04x\n",
                       sel, newsel );
     if (!newsel) return 0;
@@ -291,7 +221,7 @@ WORD WINAPI AllocDStoCSAlias16( WORD sel )
     WORD newsel;
     LDT_ENTRY entry;
 
-    newsel = SELECTOR_AllocArray( 1 );
+    newsel = wine_ldt_alloc_entries( 1 );
     TRACE("(%04x): returning %04x\n",
                       sel, newsel );
     if (!newsel) return 0;
@@ -395,8 +325,8 @@ BOOL16 WINAPI IsBadCodePtr16( SEGPTR lpfn )
 
     sel = SELECTOROF(lpfn);
     if (!sel) return TRUE;
-    if (IS_SELECTOR_FREE(sel)) return TRUE;
     wine_ldt_get_entry( sel, &entry );
+    if (wine_ldt_is_empty( &entry )) return TRUE;
     /* check for code segment, ignoring conforming, read-only and accessed bits */
     if ((entry.HighWord.Bits.Type ^ WINE_LDT_FLAGS_CODE) & 0x18) return TRUE;
     if (OFFSETOF(lpfn) > wine_ldt_get_limit(&entry)) return TRUE;
@@ -414,8 +344,8 @@ BOOL16 WINAPI IsBadStringPtr16( SEGPTR ptr, UINT16 size )
 
     sel = SELECTOROF(ptr);
     if (!sel) return TRUE;
-    if (IS_SELECTOR_FREE(sel)) return TRUE;
     wine_ldt_get_entry( sel, &entry );
+    if (wine_ldt_is_empty( &entry )) return TRUE;
     /* check for data or readable code segment */
     if (!(entry.HighWord.Bits.Type & 0x10)) return TRUE;  /* system descriptor */
     if ((entry.HighWord.Bits.Type & 0x0a) == 0x08) return TRUE;  /* non-readable code segment */
@@ -435,8 +365,8 @@ BOOL16 WINAPI IsBadHugeReadPtr16( SEGPTR ptr, DWORD size )
 
     sel = SELECTOROF(ptr);
     if (!sel) return TRUE;
-    if (IS_SELECTOR_FREE(sel)) return TRUE;
     wine_ldt_get_entry( sel, &entry );
+    if (wine_ldt_is_empty( &entry )) return TRUE;
     /* check for data or readable code segment */
     if (!(entry.HighWord.Bits.Type & 0x10)) return TRUE;  /* system descriptor */
     if ((entry.HighWord.Bits.Type & 0x0a) == 0x08) return TRUE;  /* non-readable code segment */
@@ -455,8 +385,8 @@ BOOL16 WINAPI IsBadHugeWritePtr16( SEGPTR ptr, DWORD size )
 
     sel = SELECTOROF(ptr);
     if (!sel) return TRUE;
-    if (IS_SELECTOR_FREE(sel)) return TRUE;
     wine_ldt_get_entry( sel, &entry );
+    if (wine_ldt_is_empty( &entry )) return TRUE;
     /* check for writeable data segment, ignoring expand-down and accessed flags */
     if ((entry.HighWord.Bits.Type ^ WINE_LDT_FLAGS_DATA) & ~5) return TRUE;
     if (size && (OFFSETOF(ptr) + size - 1 > wine_ldt_get_limit( &entry ))) return TRUE;
@@ -496,13 +426,15 @@ BOOL16 WINAPI IsBadFlatReadWritePtr16( SEGPTR ptr, DWORD size, BOOL16 bWrite )
  */
 DWORD WINAPI MemoryRead16( WORD sel, DWORD offset, void *buffer, DWORD count )
 {
-    WORD index = sel >> __AHSHIFT;
+    LDT_ENTRY entry;
+    DWORD limit;
 
-    if (!(wine_ldt_copy.flags[index] & WINE_LDT_FLAGS_ALLOCATED)) return 0;
-    if (offset > wine_ldt_copy.limit[index]) return 0;
-    if (offset + count > wine_ldt_copy.limit[index] + 1)
-        count = wine_ldt_copy.limit[index] + 1 - offset;
-    memcpy( buffer, (char *)wine_ldt_copy.base[index] + offset, count );
+    wine_ldt_get_entry( sel, &entry );
+    if (wine_ldt_is_empty( &entry )) return 0;
+    limit = wine_ldt_get_limit( &entry );
+    if (offset > limit) return 0;
+    if (offset + count > limit + 1) count = limit + 1 - offset;
+    memcpy( buffer, (char *)wine_ldt_get_base(&entry) + offset, count );
     return count;
 }
 
@@ -512,13 +444,15 @@ DWORD WINAPI MemoryRead16( WORD sel, DWORD offset, void *buffer, DWORD count )
  */
 DWORD WINAPI MemoryWrite16( WORD sel, DWORD offset, void *buffer, DWORD count )
 {
-    WORD index = sel >> __AHSHIFT;
+    LDT_ENTRY entry;
+    DWORD limit;
 
-    if (!(wine_ldt_copy.flags[index] & WINE_LDT_FLAGS_ALLOCATED)) return 0;
-    if (offset > wine_ldt_copy.limit[index]) return 0;
-    if (offset + count > wine_ldt_copy.limit[index] + 1)
-        count = wine_ldt_copy.limit[index] + 1 - offset;
-    memcpy( (char *)wine_ldt_copy.base[index] + offset, buffer, count );
+    wine_ldt_get_entry( sel, &entry );
+    if (wine_ldt_is_empty( &entry )) return 0;
+    limit = wine_ldt_get_limit( &entry );
+    if (offset > limit) return 0;
+    if (offset + count > limit) count = limit + 1 - offset;
+    memcpy( (char *)wine_ldt_get_base(&entry) + offset, buffer, count );
     return count;
 }
 

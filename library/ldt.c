@@ -22,6 +22,7 @@
 #include "config.h"
 #include "wine/port.h"
 
+#include <assert.h>
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
@@ -52,11 +53,25 @@ struct modify_ldt_s
     unsigned int  useable:1;
 };
 
-static inline int modify_ldt( int func, struct modify_ldt_s *ptr,
-                                  unsigned long count )
+#ifndef SYS_set_thread_area
+#define SYS_set_thread_area 243
+#endif
+
+static inline void fill_modify_ldt_struct( struct modify_ldt_s *ptr, const LDT_ENTRY *entry )
+{
+    ptr->base_addr       = (unsigned long)wine_ldt_get_base(entry);
+    ptr->limit           = entry->LimitLow | (entry->HighWord.Bits.LimitHi << 16);
+    ptr->seg_32bit       = entry->HighWord.Bits.Default_Big;
+    ptr->contents        = (entry->HighWord.Bits.Type >> 2) & 3;
+    ptr->read_exec_only  = !(entry->HighWord.Bits.Type & 2);
+    ptr->limit_in_pages  = entry->HighWord.Bits.Granularity;
+    ptr->seg_not_present = !entry->HighWord.Bits.Pres;
+    ptr->useable         = entry->HighWord.Bits.Sys;
+}
+
+static inline int modify_ldt( int func, struct modify_ldt_s *ptr, unsigned long count )
 {
     int res;
-#ifdef __PIC__
     __asm__ __volatile__( "pushl %%ebx\n\t"
                           "movl %2,%%ebx\n\t"
                           "int $0x80\n\t"
@@ -66,14 +81,20 @@ static inline int modify_ldt( int func, struct modify_ldt_s *ptr,
                             "r" (func),
                             "c" (ptr),
                             "d" (count) );
-#else
-    __asm__ __volatile__("int $0x80"
-                         : "=a" (res)
-                         : "0" (SYS_modify_ldt),
-                           "b" (func),
-                           "c" (ptr),
-                           "d" (count) );
-#endif  /* __PIC__ */
+    if (res >= 0) return res;
+    errno = -res;
+    return -1;
+}
+
+static inline int set_thread_area( struct modify_ldt_s *ptr )
+{
+    int res;
+    __asm__ __volatile__( "pushl %%ebx\n\t"
+                          "movl %2,%%ebx\n\t"
+                          "int $0x80\n\t"
+                          "popl %%ebx"
+                          : "=a" (res)
+                          : "0" (SYS_set_thread_area), "r" (ptr) );
     if (res >= 0) return res;
     errno = -res;
     return -1;
@@ -101,32 +122,67 @@ extern int i386_set_ldt(int, union descriptor *, int);
 /* local copy of the LDT */
 struct __wine_ldt_copy wine_ldt_copy;
 
+static const LDT_ENTRY null_entry;  /* all-zeros, used to clear LDT entries */
+
+#define LDT_SIZE 8192
+
+/* empty function for default locks */
+static void nop(void) { }
+
+static void (*lock_ldt)(void) = nop;
+static void (*unlock_ldt)(void) = nop;
+
+
+static inline int is_gdt_sel( unsigned short sel ) { return !(sel & 4); }
 
 /***********************************************************************
- *           ldt_get_entry
+ *           wine_ldt_init_locking
  *
- * Retrieve an LDT entry.
+ * Set the LDT locking/unlocking functions.
  */
-void wine_ldt_get_entry( unsigned short sel, LDT_ENTRY *entry )
+void wine_ldt_init_locking( void (*lock_func)(void), void (*unlock_func)(void) )
 {
-    int index = sel >> 3;
-    wine_ldt_set_base(  entry, wine_ldt_copy.base[index] );
-    wine_ldt_set_limit( entry, wine_ldt_copy.limit[index] );
-    wine_ldt_set_flags( entry, wine_ldt_copy.flags[index] );
+    lock_ldt = lock_func;
+    unlock_ldt = unlock_func;
 }
 
 
 /***********************************************************************
- *           ldt_set_entry
+ *           wine_ldt_get_entry
  *
- * Set an LDT entry.
+ * Retrieve an LDT entry. Return a null entry if selector is not allocated.
  */
-int wine_ldt_set_entry( unsigned short sel, const LDT_ENTRY *entry )
+void wine_ldt_get_entry( unsigned short sel, LDT_ENTRY *entry )
+{
+    int index = sel >> 3;
+
+    if (is_gdt_sel(sel))
+    {
+        *entry = null_entry;
+        return;
+    }
+    lock_ldt();
+    if (wine_ldt_copy.flags[index] & WINE_LDT_FLAGS_ALLOCATED)
+    {
+        wine_ldt_set_base(  entry, wine_ldt_copy.base[index] );
+        wine_ldt_set_limit( entry, wine_ldt_copy.limit[index] );
+        wine_ldt_set_flags( entry, wine_ldt_copy.flags[index] );
+    }
+    else *entry = null_entry;
+    unlock_ldt();
+}
+
+
+/***********************************************************************
+ *           internal_set_entry
+ *
+ * Set an LDT entry, without locking. For internal use only.
+ */
+static int internal_set_entry( unsigned short sel, const LDT_ENTRY *entry )
 {
     int ret = 0, index = sel >> 3;
 
-    /* Entry 0 must not be modified; its base and limit are always 0 */
-    if (!index) return 0;
+    if (index < WINE_LDT_FIRST_ENTRY) return 0;  /* cannot modify reserved entries */
 
 #ifdef __i386__
 
@@ -134,16 +190,8 @@ int wine_ldt_set_entry( unsigned short sel, const LDT_ENTRY *entry )
     {
         struct modify_ldt_s ldt_info;
 
-        ldt_info.entry_number    = index;
-        ldt_info.base_addr       = (unsigned long)wine_ldt_get_base(entry);
-        ldt_info.limit           = entry->LimitLow | (entry->HighWord.Bits.LimitHi << 16);
-        ldt_info.seg_32bit       = entry->HighWord.Bits.Default_Big;
-        ldt_info.contents        = (entry->HighWord.Bits.Type >> 2) & 3;
-        ldt_info.read_exec_only  = !(entry->HighWord.Bits.Type & 2);
-        ldt_info.limit_in_pages  = entry->HighWord.Bits.Granularity;
-        ldt_info.seg_not_present = !entry->HighWord.Bits.Pres;
-        ldt_info.useable         = entry->HighWord.Bits.Sys;
-
+        ldt_info.entry_number = index;
+        fill_modify_ldt_struct( &ldt_info, entry );
         if ((ret = modify_ldt(0x11, &ldt_info, sizeof(ldt_info))) < 0)
             perror( "modify_ldt" );
     }
@@ -193,9 +241,215 @@ int wine_ldt_set_entry( unsigned short sel, const LDT_ENTRY *entry )
 
 
 /***********************************************************************
+ *           wine_ldt_set_entry
+ *
+ * Set an LDT entry.
+ */
+int wine_ldt_set_entry( unsigned short sel, const LDT_ENTRY *entry )
+{
+    int ret;
+
+    lock_ldt();
+    ret = internal_set_entry( sel, entry );
+    unlock_ldt();
+    return ret;
+}
+
+
+/***********************************************************************
+ *           wine_ldt_get_ptr
+ *
+ * Convert a segment:offset pair to a linear pointer.
+ * Note: we don't lock the LDT since this has to be fast.
+ */
+void *wine_ldt_get_ptr( unsigned short sel, unsigned int offset )
+{
+    int index;
+
+    if (is_gdt_sel(sel))  /* GDT selector */
+        return (void *)offset;
+    if ((index = (sel >> 3)) < WINE_LDT_FIRST_ENTRY)  /* system selector */
+        return (void *)offset;
+    if (!(wine_ldt_copy.flags[index] & WINE_LDT_FLAGS_32BIT)) offset &= 0xffff;
+    return (char *)wine_ldt_copy.base[index] + offset;
+}
+
+
+/***********************************************************************
+ *           wine_ldt_alloc_entries
+ *
+ * Allocate a number of consecutive ldt entries, without setting the LDT contents.
+ * Return a selector for the first entry.
+ */
+unsigned short wine_ldt_alloc_entries( int count )
+{
+    int i, index, size = 0;
+
+    if (count <= 0) return 0;
+    lock_ldt();
+    for (i = WINE_LDT_FIRST_ENTRY; i < LDT_SIZE; i++)
+    {
+        if (wine_ldt_copy.flags[i] & WINE_LDT_FLAGS_ALLOCATED) size = 0;
+        else if (++size >= count)  /* found a large enough block */
+        {
+            index = i - size + 1;
+
+            /* mark selectors as allocated */
+            for (i = 0; i < count; i++) wine_ldt_copy.flags[index + i] |= WINE_LDT_FLAGS_ALLOCATED;
+            unlock_ldt();
+            return (index << 3) | 7;
+        }
+    }
+    unlock_ldt();
+    return 0;
+}
+
+
+/***********************************************************************
+ *           wine_ldt_realloc_entries
+ *
+ * Reallocate a number of consecutive ldt entries, without changing the LDT contents.
+ * Return a selector for the first entry.
+ */
+unsigned short wine_ldt_realloc_entries( unsigned short sel, int oldcount, int newcount )
+{
+    int i;
+
+    if (oldcount < newcount)  /* we need to add selectors */
+    {
+        int index = sel >> 3;
+
+        lock_ldt();
+        /* check if the next selectors are free */
+        if (index + newcount > LDT_SIZE) i = oldcount;
+        else
+            for (i = oldcount; i < newcount; i++)
+                if (wine_ldt_copy.flags[index+i] & WINE_LDT_FLAGS_ALLOCATED) break;
+
+        if (i < newcount)  /* they are not free */
+        {
+            wine_ldt_free_entries( sel, oldcount );
+            sel = wine_ldt_alloc_entries( newcount );
+        }
+        else  /* mark the selectors as allocated */
+        {
+            for (i = oldcount; i < newcount; i++)
+                wine_ldt_copy.flags[index+i] |= WINE_LDT_FLAGS_ALLOCATED;
+        }
+        unlock_ldt();
+    }
+    else if (oldcount > newcount) /* we need to remove selectors */
+    {
+        wine_ldt_free_entries( sel + (newcount << 3), newcount - oldcount );
+    }
+    return sel;
+}
+
+
+/***********************************************************************
+ *           wine_ldt_free_entries
+ *
+ * Free a number of consecutive ldt entries and clear their contents.
+ */
+void wine_ldt_free_entries( unsigned short sel, int count )
+{
+    int index;
+
+    lock_ldt();
+    for (index = sel >> 3; count > 0; count--, index++)
+    {
+        internal_set_entry( sel, &null_entry );
+        wine_ldt_copy.flags[index] = 0;
+    }
+    unlock_ldt();
+}
+
+
+#ifdef __i386__
+
+static int fs_gdt_index = -1;  /* GDT index for %fs, or 0 if GDT not supported on this kernel */
+
+/***********************************************************************
+ *           wine_ldt_alloc_fs
+ *
+ * Allocate an LDT entry for a %fs selector, reusing a global
+ * GDT selector if possible. Return the selector value.
+ */
+unsigned short wine_ldt_alloc_fs(void)
+{
+    if (fs_gdt_index == -1)
+    {
+#ifdef __linux__
+        struct modify_ldt_s ldt_info;
+        int ret;
+
+        ldt_info.entry_number = -1;
+        fill_modify_ldt_struct( &ldt_info, &null_entry );
+        if ((ret = set_thread_area( &ldt_info ) < 0))
+        {
+            fs_gdt_index = 0;  /* don't try it again */
+            if (errno != ENOSYS) perror( "set_thread_area" );
+        }
+        else fs_gdt_index = ldt_info.entry_number;
+#endif  /* __linux__ */
+    }
+    if (fs_gdt_index > 0) return (fs_gdt_index << 3) | 3;
+    return wine_ldt_alloc_entries( 1 );
+}
+
+
+/***********************************************************************
+ *           wine_ldt_init_fs
+ *
+ * Initialize the entry for the %fs selector of the current thread, and
+ * set the thread %fs register.
+ *
+ * Note: this runs in the context of the new thread, so cannot acquire locks.
+ */
+void wine_ldt_init_fs( unsigned short sel, const LDT_ENTRY *entry )
+{
+    if (is_gdt_sel(sel))
+    {
+#ifdef __linux__
+        struct modify_ldt_s ldt_info;
+        int ret;
+
+        ldt_info.entry_number = sel >> 3;
+        assert( ldt_info.entry_number == fs_gdt_index );
+        fill_modify_ldt_struct( &ldt_info, entry );
+        if ((ret = set_thread_area( &ldt_info ) < 0)) perror( "set_thread_area" );
+#endif  /* __linux__ */
+    }
+    else  /* LDT selector */
+    {
+        internal_set_entry( sel, entry );
+    }
+    wine_set_fs( sel );
+}
+
+
+/***********************************************************************
+ *           wine_ldt_free_fs
+ *
+ * Free a %fs selector returned by wine_ldt_alloc_fs.
+ */
+void wine_ldt_free_fs( unsigned short sel )
+{
+    if (is_gdt_sel(sel)) return;  /* nothing to do */
+    if (!((wine_get_fs() ^ sel) & ~3))
+    {
+        /* FIXME: if freeing current %fs we cannot acquire locks */
+        wine_set_fs( 0 );
+        internal_set_entry( sel, &null_entry );
+        wine_ldt_copy.flags[sel >> 3] = 0;
+    }
+    else wine_ldt_free_entries( sel, 1 );
+}
+
+
+/***********************************************************************
  *           selector access functions
  */
-#ifdef __i386__
 # ifndef _MSC_VER
 /* Nothing needs to be done for MS C, it will do with inline versions from the winnt.h */
 __ASM_GLOBAL_FUNC( wine_get_cs, "movw %cs,%ax\n\tret" )
@@ -207,4 +461,5 @@ __ASM_GLOBAL_FUNC( wine_get_ss, "movw %ss,%ax\n\tret" )
 __ASM_GLOBAL_FUNC( wine_set_fs, "movl 4(%esp),%eax\n\tmovw %ax,%fs\n\tret" )
 __ASM_GLOBAL_FUNC( wine_set_gs, "movl 4(%esp),%eax\n\tmovw %ax,%gs\n\tret" )
 # endif /* defined(_MSC_VER) */
-#endif /* defined(__i386__) */
+
+#endif /* __i386__ */

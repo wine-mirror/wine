@@ -68,8 +68,23 @@ extern int* (*wine_h_errno_location)(void);
 
 /* LDT management */
 
+extern void wine_ldt_init_locking( void (*lock_func)(void), void (*unlock_func)(void) );
 extern void wine_ldt_get_entry( unsigned short sel, LDT_ENTRY *entry );
 extern int wine_ldt_set_entry( unsigned short sel, const LDT_ENTRY *entry );
+extern void *wine_ldt_get_ptr( unsigned short sel, unsigned int offset );
+extern unsigned short wine_ldt_alloc_entries( int count );
+extern unsigned short wine_ldt_realloc_entries( unsigned short sel, int oldcount, int newcount );
+extern void wine_ldt_free_entries( unsigned short sel, int count );
+#ifdef __i386__
+extern unsigned short wine_ldt_alloc_fs(void);
+extern void wine_ldt_init_fs( unsigned short sel, const LDT_ENTRY *entry );
+extern void wine_ldt_free_fs( unsigned short sel );
+#else  /* __i386__ */
+static inline unsigned short wine_ldt_alloc_fs(void) { return 0x0b; /* pseudo GDT selector */ }
+static inline void wine_ldt_init_fs( unsigned short sel, const LDT_ENTRY *entry ) { }
+static inline void wine_ldt_free_fs( unsigned short sel ) { }
+#endif  /* __i386__ */
+
 
 /* the local copy of the LDT */
 #ifdef __CYGWIN__
@@ -95,6 +110,8 @@ WINE_LDT_EXTERN struct __wine_ldt_copy
 #define WINE_LDT_FLAGS_TYPE_MASK 0x1f  /* Mask for segment type */
 #define WINE_LDT_FLAGS_32BIT     0x40  /* Segment is 32-bit (code or stack) */
 #define WINE_LDT_FLAGS_ALLOCATED 0x80  /* Segment is allocated (no longer free) */
+
+#define WINE_LDT_FIRST_ENTRY     17
 
 /* helper functions to manipulate the LDT_ENTRY structure */
 inline static void wine_ldt_set_base( LDT_ENTRY *ent, const void *base )
@@ -135,6 +152,11 @@ inline static unsigned char wine_ldt_get_flags( const LDT_ENTRY *ent )
     unsigned char ret = ent->HighWord.Bits.Type;
     if (ent->HighWord.Bits.Default_Big) ret |= WINE_LDT_FLAGS_32BIT;
     return ret;
+}
+inline static int wine_ldt_is_empty( const LDT_ENTRY *ent )
+{
+    const DWORD *dw = (const DWORD *)ent;
+    return (dw[0] | dw[1]) == 0;
 }
 
 /* segment register access */

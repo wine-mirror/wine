@@ -64,8 +64,6 @@ WINE_DEFAULT_DEBUG_CHANNEL(thread);
 # endif  /* CLONE_VM */
 #endif  /* linux || HAVE_CLONE */
 
-extern void SELECTOR_FreeFs(void);
-
 struct thread_cleanup_info
 {
     void *stack_base;
@@ -88,7 +86,12 @@ void SYSDEPS_SetCurThread( TEB *teb )
 {
 #if defined(__i386__)
     /* On the i386, the current thread is in the %fs register */
-    wine_set_fs( teb->teb_sel );
+    LDT_ENTRY fs_entry;
+
+    wine_ldt_set_base( &fs_entry, teb );
+    wine_ldt_set_limit( &fs_entry, 0xfff );
+    wine_ldt_set_flags( &fs_entry, WINE_LDT_FLAGS_DATA|WINE_LDT_FLAGS_32BIT );
+    wine_ldt_init_fs( teb->teb_sel, &fs_entry );
 #elif defined(__powerpc__)
     /* On PowerPC, the current TEB is in the gpr13 register */
     __asm__ __volatile__("mr 2, %0" : : "r" (teb));
@@ -142,7 +145,7 @@ static void cleanup_thread( void *ptr )
     /* copy the info structure since it is on the stack we will free */
     struct thread_cleanup_info info = *(struct thread_cleanup_info *)ptr;
     munmap( info.stack_base, info.stack_size );
-    SELECTOR_FreeFs();
+    wine_ldt_free_fs( wine_get_fs() );
 #ifdef HAVE__LWP_CREATE
     _lwp_exit();
 #endif
@@ -294,7 +297,7 @@ void SYSDEPS_ExitThread( int status )
     struct thread_cleanup_info info;
     MEMORY_BASIC_INFORMATION meminfo;
 
-    FreeSelector16( teb->stack_sel );
+    wine_ldt_free_entries( teb->stack_sel, 1 );
     VirtualQuery( teb->stack_top, &meminfo, sizeof(meminfo) );
     info.stack_base = meminfo.AllocationBase;
     info.stack_size = meminfo.RegionSize + ((char *)teb->stack_top - (char *)meminfo.AllocationBase);
