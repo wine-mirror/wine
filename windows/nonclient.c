@@ -11,6 +11,7 @@
 #include "sysmetrics.h"
 #include "user.h"
 #include "heap.h"
+#include "dce.h"
 #include "cursoricon.h"
 #include "dialog.h"
 #include "menu.h"
@@ -1563,7 +1564,8 @@ void NC_DoNCPaint( WND* wndPtr, HRGN clip, BOOL suppress_menupaint )
 
     TRACE(nonclient, "%04x %d\n", hwnd, active );
 
-    if (!(hdc = GetDCEx( hwnd, 0, DCX_USESTYLE | DCX_WINDOW ))) return;
+    if (!(hdc = GetDCEx( hwnd, (clip > 1) ? clip : 0, DCX_USESTYLE | DCX_WINDOW |
+			      ((clip > 1) ? (DCX_INTERSECTRGN | DCX_KEEPCLIPRGN): 0) ))) return;
 
     if (ExcludeVisRect16( hdc, wndPtr->rectClient.left-wndPtr->rectWindow.left,
 		        wndPtr->rectClient.top-wndPtr->rectWindow.top,
@@ -1665,7 +1667,7 @@ void  NC_DoNCPaint95(
     BOOL  suppress_menupaint )
 {
     HDC hdc;
-    RECT rect;
+    RECT rfuzz, rect, rectClip;
     BOOL active;
     HWND hwnd = wndPtr->hwndSelf;
 
@@ -1676,7 +1678,15 @@ void  NC_DoNCPaint95(
 
     TRACE(nonclient, "%04x %d\n", hwnd, active );
 
-    if (!(hdc = GetDCEx( hwnd, 0, DCX_USESTYLE | DCX_WINDOW ))) return;
+    /* MSDN docs are pretty idiotic here, they say app CAN use clipRgn in the call to
+     * GetDCEx implying that it is allowed not to use it either. However, the suggested
+     * GetDCEx(    , DCX_WINDOW | DCX_INTERSECTRGN) will cause clipRgn to be deleted
+     * after ReleaseDC(). Now, how is the "system" supposed to tell what happened?
+     */
+
+    if (!(hdc = GetDCEx( hwnd, (clip > 1) ? clip : 0, DCX_USESTYLE | DCX_WINDOW |
+			      ((clip > 1) ?(DCX_INTERSECTRGN | DCX_KEEPCLIPRGN) : 0) ))) return;
+
 
     if (ExcludeVisRect16( hdc, wndPtr->rectClient.left-wndPtr->rectWindow.left,
 		        wndPtr->rectClient.top-wndPtr->rectWindow.top,
@@ -1691,6 +1701,14 @@ void  NC_DoNCPaint95(
     rect.top = rect.left = 0;
     rect.right  = wndPtr->rectWindow.right - wndPtr->rectWindow.left;
     rect.bottom = wndPtr->rectWindow.bottom - wndPtr->rectWindow.top;
+
+    if( clip > 1 )
+	GetRgnBox( clip, &rectClip );
+    else
+    {
+	clip = 0;
+	rectClip = rect;
+    }
 
     SelectObject( hdc, GetSysColorPen(COLOR_WINDOWFRAME) );
 
@@ -1716,8 +1734,9 @@ void  NC_DoNCPaint95(
 		r.bottom = rect.top + sysMetrics[SM_CYCAPTION];
 		rect.top += sysMetrics[SM_CYCAPTION];
 	    }
-            NC_DrawCaption95 (hdc, &r, hwnd, wndPtr->dwStyle,
-                              wndPtr->dwExStyle, active);
+	    if( !clip || IntersectRect( &rfuzz, &r, &rectClip ) )
+                NC_DrawCaption95 (hdc, &r, hwnd, wndPtr->dwStyle,
+                                  wndPtr->dwExStyle, active);
         }
     }
 

@@ -520,8 +520,7 @@ static void EVENT_ProcessEvent( XEvent *event )
 /***********************************************************************
  *           EVENT_QueryZOrder
  *
- * Try to synchronize internal z-order with the window manager's.
- * Probably a futile endeavor.
+ * Synchronize internal z-order with the window manager's.
  */
 static BOOL __check_query_condition( WND** pWndA, WND** pWndB )
 {
@@ -540,19 +539,25 @@ static BOOL __check_query_condition( WND** pWndA, WND** pWndB )
 static Window __get_common_ancestor( Window A, Window B,
                                      Window** children, unsigned* total )
 {
-  /* find the real root window */
+    /* find the real root window */
   
-  Window      root, *childrenB;
-  unsigned    totalB;
+    Window      root, *childrenB;
+    unsigned    totalB;
   
-  do
+    do
     {
-      if( *children ) TSXFree( *children );
       TSXQueryTree( display, A, &root, &A, children, total );
       TSXQueryTree( display, B, &root, &B, &childrenB, &totalB );
       if( childrenB ) TSXFree( childrenB );
+      if( *children ) TSXFree( *children );
     } while( A != B && A && B );
-  return ( A && B ) ? A : 0 ;
+
+    if( A && B )
+    {
+	TSXQueryTree( display, A, &root, &B, children, total );
+	return A;
+    }
+    return 0 ;
 }
 
 static Window __get_top_decoration( Window w, Window ancestor )
@@ -573,7 +578,7 @@ static Window __get_top_decoration( Window w, Window ancestor )
 static unsigned __td_lookup( Window w, Window* list, unsigned max )
 {
   unsigned    i;
-  for( i = 0; i < max; i++ ) if( list[i] == w ) break;
+  for( i = max - 1; i >= 0; i-- ) if( list[i] == w ) break;
   return i;
 }
 
@@ -591,32 +596,42 @@ static BOOL EVENT_QueryZOrder( WND* pWndCheck )
 				  X11DRV_WND_GetXWindow(pWnd),
 				  &children, &total );
   if( parent && children )
-    {
+  {
+      /* w is the ancestor if pWndCheck that is a direct descendant of 'parent' */
+
       w = __get_top_decoration( X11DRV_WND_GetXWindow(pWndCheck), parent );
-      if( w != children[total - 1] )
-        {
+
+      if( w != children[total-1] ) /* check if at the top */
+      {
+	  /* X child at index 0 is at the bottom, at index total-1 is at the top */
 	  check = __td_lookup( w, children, total );
 	  best = total;
+
 	  for( pWnd = pWndZ; pWnd; pWnd = pWnd->next )
-            {
+          {
+	      /* go through all windows in Wine z-order... */
+
 	      if( pWnd != pWndCheck )
-                {
+              {
 		  if( !(pWnd->flags & WIN_MANAGED) ||
 		      !(w = __get_top_decoration( X11DRV_WND_GetXWindow(pWnd), parent )) )
 		    continue;
 		  pos = __td_lookup( w, children, total );
 		  if( pos < best && pos > check )
-                    {
+                  {
+		      /* find a nearest Wine window precedes 
+		       * pWndCheck in the real z-order... */
 		      best = pos;
 		      hwndInsertAfter = pWnd->hwndSelf;
-                    }
-		  if( check - best == 1 ) break;
-                }
-            }
-	  WIN_UnlinkWindow( pWndCheck->hwndSelf );
-	  WIN_LinkWindow( pWndCheck->hwndSelf, hwndInsertAfter);
-        }
-    }
+                  }
+		  if( best - check == 1 ) break;
+              }
+          }
+	  /* and link pWndCheck right behind it in the local z-order */
+      }
+      WIN_UnlinkWindow( pWndCheck->hwndSelf );
+      WIN_LinkWindow( pWndCheck->hwndSelf, hwndInsertAfter);
+  }
   if( children ) TSXFree( children );
   return bRet;
 }
@@ -867,14 +882,17 @@ static void EVENT_FocusIn( WND *pWnd, XFocusChangeEvent *event )
  */
 static void EVENT_FocusOut( WND *pWnd, XFocusChangeEvent *event )
 {
-  if (event->detail != NotifyPointer)
+    if (event->detail != NotifyPointer)
     {
-      HWND	hwnd = pWnd->hwndSelf;
-      
-      if (hwnd == GetActiveWindow()) 
-	WINPOS_ChangeActiveWindow( 0, FALSE );
-      if ((hwnd == GetFocus()) || IsChild( hwnd, GetFocus()))
-	SetFocus( 0 );
+        HWND	hwnd = pWnd->hwndSelf;
+
+        if (hwnd == GetActiveWindow()) 
+	{
+	    SendMessageA( hwnd, WM_CANCELMODE, 0, 0 );
+	    WINPOS_ChangeActiveWindow( 0, FALSE );
+	}
+        if ((hwnd == GetFocus()) || IsChild( hwnd, GetFocus()))
+	    SetFocus( 0 );
     }
 }
 
@@ -910,13 +928,13 @@ static void EVENT_GetGeometry( Window win, int *px, int *py,
   if (!TSXGetGeometry( display, win, &root, px, py, pwidth, pheight,
                        &border, &depth )) return;
   if (win == X11DRV_GetXRootWindow())
-    {
+  {
       *px = *py = 0;
       return;
-    }
+  }
   
   for (;;)
-    {
+  {
       if (!TSXQueryTree(display, win, &root, &parent, &children, &nb_children))
 	return;
       TSXFree( children );
@@ -926,7 +944,7 @@ static void EVENT_GetGeometry( Window win, int *px, int *py,
                            &width, &height, &border, &depth )) return;
       *px += xpos;
       *py += ypos;
-    }
+  }
 }
 
 
@@ -940,7 +958,7 @@ static void EVENT_ConfigureNotify( WND *pWnd, XConfigureEvent *event )
 {
   WINDOWPOS winpos;
   RECT newWindowRect, newClientRect;
-  HRGN hrgnOldPos, hrgnNewPos;
+  RECT oldWindowRect, oldClientRect;
   Window above = event->above;
   int x, y;
   unsigned int width, height;
@@ -953,6 +971,9 @@ static void EVENT_ConfigureNotify( WND *pWnd, XConfigureEvent *event )
    */
   EVENT_GetGeometry( event->window, &x, &y, &width, &height );
     
+TRACE(win, "%04x adjusted to (%i,%i)-(%i,%i)\n", pWnd->hwndSelf, 
+	    x, y, x + width, y + height );
+
   /* Fill WINDOWPOS struct */
   winpos.flags = SWP_NOACTIVATE | SWP_NOZORDER;
   winpos.hwnd = pWnd->hwndSelf;
@@ -991,15 +1012,20 @@ static void EVENT_ConfigureNotify( WND *pWnd, XConfigureEvent *event )
   
   if (!IsWindow( winpos.hwnd )) return;
   
-  hrgnOldPos = CreateRectRgnIndirect( &pWnd->rectWindow );
-  hrgnNewPos = CreateRectRgnIndirect( &newWindowRect );
-  CombineRgn( hrgnOldPos, hrgnOldPos, hrgnNewPos, RGN_DIFF );
-  DeleteObject(hrgnOldPos);
-  DeleteObject(hrgnNewPos);
-  
+  oldWindowRect = pWnd->rectWindow;
+  oldClientRect = pWnd->rectClient;
+
   /* Set new size and position */
   pWnd->rectWindow = newWindowRect;
   pWnd->rectClient = newClientRect;
+
+  /* FIXME: Copy valid bits */
+
+  if( oldClientRect.top - oldWindowRect.top != newClientRect.top - newWindowRect.top ||
+      oldClientRect.left - oldWindowRect.left != newClientRect.left - newWindowRect.left )
+      RedrawWindow( winpos.hwnd, 0, NULL, RDW_FRAME | RDW_ALLCHILDREN |
+                                          RDW_INVALIDATE | RDW_ERASE | RDW_ERASENOW );
+
   SendMessageA( winpos.hwnd, WM_WINDOWPOSCHANGED, 0, (LPARAM)&winpos );
   
   if (!IsWindow( winpos.hwnd )) return;

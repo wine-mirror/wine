@@ -170,7 +170,9 @@ BOOL X11DRV_WND_CreateWindow(WND *wndPtr, CLASS *classPtr, CREATESTRUCTA *cs, BO
   
   if (!(cs->style & WS_CHILD) && 
       (X11DRV_WND_GetXRootWindow(wndPtr) == DefaultRootWindow(display)))
-    {
+  {
+      Window    wGroupLeader;
+      XWMHints* wm_hints;
       XSetWindowAttributes win_attr;
       
       if (Options.managed && ((cs->style & (WS_DLGFRAME | WS_THICKFRAME)) ||
@@ -191,10 +193,15 @@ BOOL X11DRV_WND_CreateWindow(WND *wndPtr, CLASS *classPtr, CREATESTRUCTA *cs, BO
 	    FocusChangeMask;
 	  win_attr.override_redirect = TRUE;
 	}
+      wndPtr->flags |= WIN_NATIVE;
+
+      win_attr.bit_gravity   = BGNorthWest;
       win_attr.colormap      = X11DRV_COLOR_GetColormap();
       win_attr.backing_store = Options.backingstore ? WhenMapped : NotUseful;
       win_attr.save_under    = ((classPtr->style & CS_SAVEBITS) != 0);
       win_attr.cursor        = X11DRV_MOUSE_XCursor;
+
+      ((X11DRV_WND_DATA *) wndPtr->pDriverData)->bit_gravity = BGNorthWest;
       ((X11DRV_WND_DATA *) wndPtr->pDriverData)->window = 
 	TSXCreateWindow( display, 
 			 X11DRV_WND_GetXRootWindow(wndPtr), 
@@ -203,9 +210,10 @@ BOOL X11DRV_WND_CreateWindow(WND *wndPtr, CLASS *classPtr, CREATESTRUCTA *cs, BO
 			 InputOutput, CopyFromParent,
 			 CWEventMask | CWOverrideRedirect |
 			 CWColormap | CWCursor | CWSaveUnder |
-			 CWBackingStore, &win_attr );
+			 CWBackingStore | CWBitGravity, 
+			 &win_attr );
       
-      if(!X11DRV_WND_GetXWindow(wndPtr))
+      if(!(wGroupLeader = X11DRV_WND_GetXWindow(wndPtr)))
 	return FALSE;
 
       if (wndPtr->flags & WIN_MANAGED) {
@@ -233,14 +241,36 @@ BOOL X11DRV_WND_CreateWindow(WND *wndPtr, CLASS *classPtr, CREATESTRUCTA *cs, BO
       }
       
       if (cs->hwndParent)  /* Get window owner */
-	{
+      {
+	  Window w;
           WND *tmpWnd = WIN_FindWndPtr(cs->hwndParent);
-	  Window win = X11DRV_WND_FindXWindow( tmpWnd );
-	  if (win) TSXSetTransientForHint( display, X11DRV_WND_GetXWindow(wndPtr), win );
+
+	  w = X11DRV_WND_FindXWindow( tmpWnd );
+	  if (w != None)
+	  {
+	      TSXSetTransientForHint( display, X11DRV_WND_GetXWindow(wndPtr), w );
+	      wGroupLeader = w;
+	  }
           WIN_ReleaseWndPtr(tmpWnd);
-	}
+      }
+
+      wm_hints = TSXAllocWMHints();
+      {
+	  wm_hints->flags = InputHint | StateHint | WindowGroupHint;
+	  wm_hints->input = True;
+	  if( wndPtr->dwStyle & WS_VISIBLE )
+	      wm_hints->initial_state = (wndPtr->dwStyle & WS_MINIMIZE &&
+					wndPtr->flags & WIN_MANAGED ) ? 
+					IconicState : NormalState;
+	  else
+	      wm_hints->initial_state = WithdrawnState;
+	  wm_hints->window_group = wGroupLeader;
+
+	  TSXSetWMHints( display, X11DRV_WND_GetXWindow(wndPtr), wm_hints );
+	  TSXFree(wm_hints);
+      }
       X11DRV_WND_RegisterWindow( wndPtr );
-    }
+  }
   return TRUE;
 }
 
@@ -400,26 +430,26 @@ static Window X11DRV_WND_FindDesktopXWindow( WND *wndPtr )
  *
  * SetWindowPos() for an X window. Used by the real SetWindowPos().
  */
-void X11DRV_WND_SetWindowPos(WND *wndPtr, const WINDOWPOS *winpos, BOOL bSMC_SETXPOS)
+void X11DRV_WND_SetWindowPos(WND *wndPtr, const WINDOWPOS *winpos, BOOL bChangePos)
 {
-  XWindowChanges winChanges;
-  int changeMask = 0;
-  WND *winposPtr = WIN_FindWndPtr( winpos->hwnd );
+    XWindowChanges winChanges;
+    int changeMask = 0;
+    WND *winposPtr = WIN_FindWndPtr( winpos->hwnd );
 
-  if(!wndPtr->hwndSelf) wndPtr = NULL; /* FIXME: WND destroyed, shouldn't happend!!! */
+    if(!wndPtr->hwndSelf) wndPtr = NULL; /* FIXME: WND destroyed, shouldn't happend!!! */
   
-  if (!(winpos->flags & SWP_SHOWWINDOW) && (winpos->flags & SWP_HIDEWINDOW))
+    if (!(winpos->flags & SWP_SHOWWINDOW) && (winpos->flags & SWP_HIDEWINDOW))
     {
       if(X11DRV_WND_GetXWindow(wndPtr)) 
 	TSXUnmapWindow( display, X11DRV_WND_GetXWindow(wndPtr) );
     }
 
-  if(bSMC_SETXPOS)
+    if(bChangePos)
     {
       if ( !(winpos->flags & SWP_NOSIZE))
 	{
-	  winChanges.width     = winpos->cx;
-	  winChanges.height    = winpos->cy;
+	  winChanges.width     = (winpos->cx > 0 ) ? winpos->cx : 1;
+	  winChanges.height    = (winpos->cy > 0 ) ? winpos->cy : 1;
 	  changeMask |= CWWidth | CWHeight;
 	  
 	  /* Tweak dialog window size hints */
@@ -477,11 +507,11 @@ void X11DRV_WND_SetWindowPos(WND *wndPtr, const WINDOWPOS *winpos, BOOL bSMC_SET
 	}
     }
 
-  if ( winpos->flags & SWP_SHOWWINDOW )
+    if ( winpos->flags & SWP_SHOWWINDOW )
     {
       if(X11DRV_WND_GetXWindow(wndPtr)) TSXMapWindow( display, X11DRV_WND_GetXWindow(wndPtr) );
     }
-  WIN_ReleaseWndPtr(winposPtr);
+    WIN_ReleaseWndPtr(winposPtr);
 }
 
 /*****************************************************************
@@ -555,31 +585,32 @@ void X11DRV_WND_PostSizeMove(WND *wndPtr)
 }
 
 /*****************************************************************
- *		 X11DRV_WND_ScrollWindow
+ *		 X11DRV_WND_SurfaceCopy
+ *
+ * Copies rect to (rect.left + dx, rect.top + dy). 
  */
-void X11DRV_WND_ScrollWindow(
-  WND *wndPtr, DC *dcPtr, INT dx, INT dy, 
-  const RECT *rect, BOOL bUpdate)
+void X11DRV_WND_SurfaceCopy(WND* wndPtr, DC *dcPtr, INT dx, INT dy, 
+			    const RECT *rect, BOOL bUpdate)
 {
-  X11DRV_PDEVICE *physDev = (X11DRV_PDEVICE *)dcPtr->physDev;
-  POINT dst, src;
+    X11DRV_PDEVICE *physDev = (X11DRV_PDEVICE *)dcPtr->physDev;
+    POINT dst, src;
   
-  dst.x = (src.x = dcPtr->w.DCOrgX + rect->left) + dx;
-  dst.y = (src.y = dcPtr->w.DCOrgY + rect->top) + dy;
+    dst.x = (src.x = dcPtr->w.DCOrgX + rect->left) + dx;
+    dst.y = (src.y = dcPtr->w.DCOrgY + rect->top) + dy;
   
-  if (bUpdate) /* handles non-Wine windows hanging over the scrolled area */
-    TSXSetGraphicsExposures( display, physDev->gc, True );
-  TSXSetFunction( display, physDev->gc, GXcopy );
-  TSXCopyArea( display, physDev->drawable, physDev->drawable,
-               physDev->gc, src.x, src.y,
-               rect->right - rect->left,
-               rect->bottom - rect->top,
-               dst.x, dst.y );
-  if (bUpdate)
-    TSXSetGraphicsExposures( display, physDev->gc, False );
+    if (bUpdate) /* handles non-Wine windows hanging over the copied area */
+	TSXSetGraphicsExposures( display, physDev->gc, True );
+    TSXSetFunction( display, physDev->gc, GXcopy );
+    TSXCopyArea( display, physDev->drawable, physDev->drawable,
+                 physDev->gc, src.x, src.y,
+                 rect->right - rect->left,
+                 rect->bottom - rect->top,
+                 dst.x, dst.y );
+    if (bUpdate)
+	TSXSetGraphicsExposures( display, physDev->gc, False );
 
-  if (bUpdate) /* Make sure exposure events have been processed */
-    EVENT_Synchronize();
+    if (bUpdate) /* Make sure exposure events have been processed */
+	EVENT_Synchronize();
 }
 
 /***********************************************************************
@@ -631,6 +662,50 @@ void X11DRV_WND_SetDrawable(WND *wndPtr, DC *dc, WORD flags, BOOL bSetClipOrigin
 	    TSXSetClipOrigin( display, physDev->gc, dc->w.DCOrgX, dc->w.DCOrgY );
 #endif
     }
+}
+
+/***********************************************************************
+ *              X11DRV_WND_SetHostAttr
+ */
+BOOL X11DRV_WND_SetHostAttr(WND* wnd, INT ha, INT value)
+{
+    Window w;
+
+    if( (w = X11DRV_WND_GetXWindow(wnd)) )
+    {
+	XSetWindowAttributes win_attr;
+
+	switch( ha )
+	{
+	case HAK_BITGRAVITY:
+
+		    if( ((X11DRV_WND_DATA *) wnd->pDriverData)->bit_gravity != value )
+		    {
+		        win_attr.bit_gravity = value;
+		        ((X11DRV_WND_DATA *) wnd->pDriverData)->bit_gravity = value;
+		        TSXChangeWindowAttributes( display, w, CWBitGravity, &win_attr );
+		    }
+		    return TRUE;
+
+	case HAK_ACCEPTFOCUS:
+
+		if( (wnd->flags & WIN_MANAGED) )
+		{
+		    XWMHints* wm_hints = TSXAllocWMHints();
+
+		    if( wm_hints )
+		    {
+			wm_hints->flags = InputHint;
+			wm_hints->input = value;
+			TSXSetWMHints( display, X11DRV_WND_GetXWindow(wnd), wm_hints );
+			TSXFree( wm_hints );
+			return TRUE;
+		    }
+		}
+		break;
+	}
+    }
+    return FALSE;
 }
 
 /***********************************************************************

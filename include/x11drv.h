@@ -328,6 +328,7 @@ extern struct _WND_DRIVER X11DRV_WND_Driver;
 
 typedef struct _X11DRV_WND_DATA {
   Window window;
+  int bit_gravity;
 } X11DRV_WND_DATA;
 
 extern Window X11DRV_WND_GetXWindow(struct tagWND *wndPtr);
@@ -347,8 +348,9 @@ extern void X11DRV_WND_SetText(struct tagWND *wndPtr, LPCSTR text);
 extern void X11DRV_WND_SetFocus(struct tagWND *wndPtr);
 extern void X11DRV_WND_PreSizeMove(struct tagWND *wndPtr);
 extern void X11DRV_WND_PostSizeMove(struct tagWND *wndPtr);
-extern void X11DRV_WND_ScrollWindow(struct tagWND *wndPtr, struct tagDC *dcPtr, INT dx, INT dy, const RECT *clipRect, BOOL bUpdate);
+extern void X11DRV_WND_SurfaceCopy(struct tagWND *wndPtr, struct tagDC *dcPtr, INT dx, INT dy, const RECT *clipRect, BOOL bUpdate);
 extern void X11DRV_WND_SetDrawable(struct tagWND *wndPtr, struct tagDC *dc, WORD flags, BOOL bSetClipOrigin);
+extern BOOL X11DRV_WND_SetHostAttr(struct tagWND *wndPtr, INT haKey, INT value);
 extern BOOL X11DRV_WND_IsSelfClipping(struct tagWND *wndPtr);
 
 #endif  /* __WINE_X11DRV_H */

@@ -131,6 +131,7 @@ XSetSelectionOwner
 XSetSubwindowMode
 XSetTransientForHint
 XSetWindowColormap
+XSetWMHints
 XSetWMProperties
 XSetWMProtocols
 XSetWMSizeHints

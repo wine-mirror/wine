@@ -1666,14 +1666,24 @@ BOOL WINAPI EnableWindow( HWND hwnd, BOOL enable )
     {
 	  /* Enable window */
 	wndPtr->dwStyle &= ~WS_DISABLED;
+
+	if( wndPtr->flags & WIN_NATIVE )
+	    wndPtr->pDriver->pSetHostAttr( wndPtr, HAK_ACCEPTFOCUS, TRUE );
+
 	SendMessageA( hwnd, WM_ENABLE, TRUE, 0 );
         retvalue = TRUE;
         goto end;
     }
     else if (!enable && !(wndPtr->dwStyle & WS_DISABLED))
     {
+	SendMessageA( wndPtr->hwndSelf, WM_CANCELMODE, 0, 0);
+
 	  /* Disable window */
 	wndPtr->dwStyle |= WS_DISABLED;
+
+	if( wndPtr->flags & WIN_NATIVE )
+            wndPtr->pDriver->pSetHostAttr( wndPtr, HAK_ACCEPTFOCUS, FALSE );
+
 	if ((hwnd == GetFocus()) || IsChild( hwnd, GetFocus() ))
         {
 	    SetFocus( 0 );  /* A disabled window can't have the focus */

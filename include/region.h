@@ -378,6 +378,7 @@ typedef struct _ScanLineListBlock {
 
 extern BOOL REGION_DeleteObject( HRGN hrgn, RGNOBJ * obj );
 extern BOOL REGION_UnionRectWithRgn( HRGN hrgn, const RECT *lpRect );
+extern HRGN REGION_CropRgn( HRGN hDst, HRGN hSrc, const RECT *lpRect, const POINT *lpPt );
 extern BOOL REGION_FrameRgn( HRGN dest, HRGN src, INT x, INT y );
 extern BOOL REGION_LPTODP( HDC hdc, HRGN hDest, HRGN hSrc );
 

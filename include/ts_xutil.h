@@ -38,6 +38,7 @@ extern Region  TSXPolygonRegion(XPoint*, int, int);
 extern int  TSXRectInRegion(Region, int, int, unsigned int, unsigned int);
 extern int  TSXSaveContext(Display*, XID, XContext, const  char*);
 extern int  TSXSetClassHint(Display*, Window, XClassHint*);
+extern int  TSXSetWMHints(Display*, Window, XWMHints*);
 extern void  TSXSetWMProperties(Display*, Window, XTextProperty*, XTextProperty*, char**, int, XSizeHints*, XWMHints*, XClassHint*);
 extern void  TSXSetWMSizeHints(Display*, Window, XSizeHints*, Atom);
 extern int  TSXSetRegion(Display*, GC, Region);

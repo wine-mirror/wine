@@ -222,8 +222,9 @@ static INT DCE_ReleaseDC( DCE* dce )
  *   DCE_InvalidateDCE
  *
  * It is called from SetWindowPos() - we have to mark as dirty all busy
- * DCE's for windows that have pWnd->parent as an ansector and whose client 
- * rect intersects with specified update rectangle. 
+ * DCEs for windows that have pWnd->parent as an ansector and whose client 
+ * rect intersects with specified update rectangle. In addition, pWnd->parent
+ * DCEs may need to be updated if DCX_CLIPCHILDREN flag is set.
  */
 BOOL DCE_InvalidateDCE(WND* pWnd, const RECT* pRectUpdate)
 {
@@ -248,16 +249,24 @@ BOOL DCE_InvalidateDCE(WND* pWnd, const RECT* pRectUpdate)
 	    {
 		WND* wndCurrent = WIN_FindWndPtr(dce->hwndCurrent);
 
-		if( wndCurrent && wndCurrent != WIN_GetDesktop() )
+		if( wndCurrent )
 		{
 		    WND* wnd = NULL;
 		    INT xoffset = 0, yoffset = 0;
 
                     if( (wndCurrent == wndScope) && !(dce->DCXflags & DCX_CLIPCHILDREN) )
                     {
+			/* child window positions don't bother us */
                         WIN_ReleaseWndPtr(wndCurrent);
                         continue;
                     }
+
+		    if( !Options.desktopGeometry && wndCurrent == WIN_GetDesktop() )
+		    {
+			/* don't bother with fake desktop */
+			WIN_ReleaseDesktop();
+			continue;
+		    }
 
 		    /* check if DCE window is within the z-order scope */
 
@@ -305,7 +314,6 @@ BOOL DCE_InvalidateDCE(WND* pWnd, const RECT* pRectUpdate)
 		    }
 		}
                 WIN_ReleaseWndPtr(wndCurrent);
-                WIN_ReleaseDesktop();
 	    }
 	} /* dce list */
     }

@@ -121,6 +121,7 @@ extern void TTYDRV_WND_PreSizeMove(struct tagWND *wndPtr);
 extern void TTYDRV_WND_PostSizeMove(struct tagWND *wndPtr);
 extern void TTYDRV_WND_ScrollWindow(struct tagWND *wndPtr, struct tagDC *dcPtr, INT dx, INT dy, const RECT *clipRect, BOOL bUpdate);
 extern void TTYDRV_WND_SetDrawable(struct tagWND *wndPtr, struct tagDC *dc, WORD flags, BOOL bSetClipOrigin);
+extern BOOL TTYDRV_WND_SetHostAttr(struct tagWND *wndPtr, INT haKey, INT value);
 extern BOOL TTYDRV_WND_IsSelfClipping(struct tagWND *wndPtr);
 
 #endif /* !defined(__WINE_TTYDRV_H) */

@@ -3791,6 +3791,10 @@ BOOL WINAPI DrawMenuBar( HWND hWnd )
  */
 void WINAPI EndMenu(void)
 {
+    /*
+     * FIXME: NOT ENOUGH! This has to cancel menu tracking right away.
+     */
+
     fEndMenu = TRUE;
 }
 

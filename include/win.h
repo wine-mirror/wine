@@ -44,8 +44,10 @@ typedef enum
 } BUILTIN_CLASS32;
 
   /* PAINT_RedrawWindow() control flags */
-#define RDW_C_USEHRGN		0x0001
-#define RDW_C_DELETEHRGN	0x0002
+#define RDW_EX_USEHRGN		0x0001
+#define RDW_EX_DELETEHRGN	0x0002
+#define RDW_EX_XYWINDOW		0x0004
+#define RDW_EX_TOPFRAME		0x0010
 
 struct tagCLASS;
 struct tagDCE;
@@ -86,6 +88,25 @@ typedef struct tagWND
     DWORD          wExtra[1];     /* Window extra bytes */
 } WND;
 
+/* Host attributes */
+
+#define HAK_BITGRAVITY     1
+#define HAK_ACCEPTFOCUS	   2
+
+/* Bit Gravity */
+
+#define BGForget           0
+#define BGNorthWest        1
+#define BGNorth            2
+#define BGNorthEast        3
+#define BGWest             4
+#define BGCenter           5
+#define BGEast             6
+#define BGSouthWest        7
+#define BGSouth            8
+#define BGSouthEast        9
+#define BGStatic           10
+
 typedef struct _WND_DRIVER
 {
     void   (*pInitialize)(WND *);
@@ -100,8 +121,9 @@ typedef struct _WND_DRIVER
     void   (*pSetFocus)(WND *);
     void   (*pPreSizeMove)(WND *);
     void   (*pPostSizeMove)(WND *);
-    void   (*pScrollWindow)(WND *, struct tagDC *, INT, INT, const RECT *, BOOL);
+    void   (*pSurfaceCopy)(WND *, struct tagDC *, INT, INT, const RECT *, BOOL);
     void   (*pSetDrawable)(WND *, struct tagDC *, WORD, BOOL);
+    BOOL   (*pSetHostAttr)(WND *, INT haKey, INT value);
     BOOL (*pIsSelfClipping)(WND *);
 } WND_DRIVER;
 
@@ -119,13 +141,12 @@ typedef struct
 #define WIN_NEEDS_NCPAINT      0x0004 /* WM_NCPAINT must be sent to window */
 #define WIN_RESTORE_MAX        0x0008 /* Maximize when restoring */
 #define WIN_INTERNAL_PAINT     0x0010 /* Internal WM_PAINT message pending */
-/* Used to have WIN_NO_REDRAW  0x0020 here */
+#define WIN_NATIVE	       0x0020 /* Directly mapped to the window provided by the driver */
 #define WIN_NEED_SIZE          0x0040 /* Internal WM_SIZE is needed */
 #define WIN_NCACTIVATED        0x0080 /* last WM_NCACTIVATE was positive */
-#define WIN_MANAGED            0x0100 /* Window managed by the X wm */
+#define WIN_MANAGED            0x0100 /* Window managed by the window system */
 #define WIN_ISDIALOG           0x0200 /* Window is a dialog */
 #define WIN_ISWIN32            0x0400 /* Understands Win32 messages */
-#define WIN_SAVEUNDER_OVERRIDE 0x0800
 
   /* BuildWinArray() flags */
 #define BWA_SKIPDISABLED	0x0001
@@ -170,7 +191,7 @@ extern void PROPERTY_RemoveWindowProps( WND *pWnd );  		      /* windows/propert
 extern BOOL PAINT_RedrawWindow( HWND hwnd, const RECT *rectUpdate,
                                   HRGN hrgnUpdate, UINT flags,
                                   UINT control );		      /* windows/painting.c */
-extern void WIN_UpdateNCArea(WND* wnd, BOOL bUpdate);
+extern HRGN WIN_UpdateNCRgn(WND* wnd, BOOL bUpdate, BOOL bForce);     /* windows/painting.c */
 
 
 /* controls/widgets.c */

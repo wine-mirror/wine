@@ -84,8 +84,9 @@ WND_DRIVER X11DRV_WND_Driver =
   X11DRV_WND_SetFocus,
   X11DRV_WND_PreSizeMove,
   X11DRV_WND_PostSizeMove,
-  X11DRV_WND_ScrollWindow,
+  X11DRV_WND_SurfaceCopy,
   X11DRV_WND_SetDrawable,
+  X11DRV_WND_SetHostAttr,
   X11DRV_WND_IsSelfClipping
 };
 

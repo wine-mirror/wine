@@ -117,6 +117,14 @@ void TTYDRV_WND_SetDrawable(WND *wndPtr, DC *dc, WORD flags, BOOL bSetClipOrigin
 }
 
 /***********************************************************************
+ *              TTYDRV_WND_SetHostAttr
+ */
+BOOL TTYDRV_WND_SetHostAttr(WND *wndPtr, INT attr, INT value)
+{
+    return FALSE;
+}
+
+/***********************************************************************
  *		TTYDRV_WND_IsSelfClipping
  */
 BOOL TTYDRV_WND_IsSelfClipping(WND *wndPtr)

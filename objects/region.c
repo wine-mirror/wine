@@ -4,6 +4,7 @@
  *
  * Copyright 1993, 1994, 1995 Alexandre Julliard
  * Modifications and additions: Copyright 1998 Huw Davies
+ *					  1999 Alex Korobka
  *
  */
 
@@ -99,6 +100,7 @@ static void REGION_SubtractRegion(WINEREGION *d, WINEREGION *s1, WINEREGION *s2)
 static void REGION_XorRegion(WINEREGION *d, WINEREGION *s1, WINEREGION *s2);
 static void REGION_UnionRectWithRegion(const RECT *rect, WINEREGION *rgn);
 
+#define RGN_DEFAULT_RECTS	2
 
 /***********************************************************************
  *            REGION_DumpRegion
@@ -117,46 +119,49 @@ static void REGION_DumpRegion(WINEREGION *pReg)
     return;
 }
 
+
 /***********************************************************************
  *            REGION_AllocWineRegion
  *            Create a new empty WINEREGION.
  */
-static WINEREGION *REGION_AllocWineRegion( void )    
+static WINEREGION *REGION_AllocWineRegion( INT n )
 {
     WINEREGION *pReg;
 
     if ((pReg = HeapAlloc(SystemHeap, 0, sizeof( WINEREGION ))))
     {
-	if ((pReg->rects = HeapAlloc(SystemHeap, 0, sizeof( RECT ))))
-	{
-	    pReg->size = 1;
-	    EMPTY_REGION(pReg);
-	    return pReg;
-	}
-	HeapFree(SystemHeap, 0, pReg);
+        if ((pReg->rects = HeapAlloc(SystemHeap, 0, n * sizeof( RECT ))))
+        {
+            pReg->size = n;
+            EMPTY_REGION(pReg);
+            return pReg;
+        }
+        HeapFree(SystemHeap, 0, pReg);
     }
     return NULL;
 }
+
 
 /***********************************************************************
  *          REGION_CreateRegion
  *          Create a new empty region.
  */
-static HRGN REGION_CreateRegion(void)
+static HRGN REGION_CreateRegion( INT n )
 {
     HRGN hrgn;
     RGNOBJ *obj;
-    
+
     if(!(hrgn = GDI_AllocObject( sizeof(RGNOBJ), REGION_MAGIC )))
-	return 0;
+        return 0;
     obj = (RGNOBJ *) GDI_HEAP_LOCK( hrgn );
-    if(!(obj->rgn = REGION_AllocWineRegion())) {
-	GDI_FreeObject( hrgn );
-	return 0;
+    if(!(obj->rgn = REGION_AllocWineRegion(n))) {
+        GDI_FreeObject( hrgn );
+        return 0;
     }
     GDI_HEAP_UNLOCK( hrgn );
     return hrgn;
 }
+
 
 /***********************************************************************
  *           REGION_DestroyWineRegion
@@ -194,14 +199,14 @@ INT WINAPI OffsetRgn( HRGN hrgn, INT x, INT y )
 {
     RGNOBJ * obj = (RGNOBJ *) GDI_GetObjPtr( hrgn, REGION_MAGIC );
 
-    if (obj)
+    if (obj && (x || y))
     {
 	INT ret;
 	int nbox = obj->rgn->numRects;
 	RECT *pbox = obj->rgn->rects;
 	
 	TRACE(region, " %04x %d,%d\n", hrgn, x, y );
-	if(nbox && (x || y)) {
+	if(nbox) {
 	    while(nbox--) {
 	        pbox->left += x;
 		pbox->right += x;
@@ -264,7 +269,7 @@ HRGN16 WINAPI CreateRectRgn16(INT16 left, INT16 top, INT16 right, INT16 bottom)
 {
     HRGN16 hrgn;
 
-    if (!(hrgn = (HRGN16)REGION_CreateRegion()))
+    if (!(hrgn = (HRGN16)REGION_CreateRegion(RGN_DEFAULT_RECTS)))
 	return 0;
     TRACE(region, "\n");
     SetRectRgn16(hrgn, left, top, right, bottom);
@@ -279,7 +284,9 @@ HRGN WINAPI CreateRectRgn(INT left, INT top, INT right, INT bottom)
 {
     HRGN hrgn;
 
-    if (!(hrgn = REGION_CreateRegion()))
+    /* Allocate 2 rects by default to reduce the number of reallocs */
+
+    if (!(hrgn = REGION_CreateRegion(RGN_DEFAULT_RECTS)))
 	return 0;
     TRACE(region, "\n");
     SetRectRgn(hrgn, left, top, right, bottom);
@@ -399,7 +406,8 @@ HRGN WINAPI CreateRoundRectRgn( INT left, INT top,
 
       /* Create region */
 
-    if (!(hrgn = REGION_CreateRegion())) return 0;
+    d = (ellipse_height < 128) ? ((3 * ellipse_height) >> 2) : 64;
+    if (!(hrgn = REGION_CreateRegion(d))) return 0;
     obj = (RGNOBJ *) GDI_HEAP_LOCK( hrgn );
     TRACE(region,"(%d,%d-%d,%d %dx%d): ret=%04x\n",
 	       left, top, right, bottom, ellipse_width, ellipse_height, hrgn );
@@ -574,34 +582,38 @@ DWORD WINAPI GetRegionData16(HRGN16 hrgn, DWORD count, LPRGNDATA rgndata)
  */
 HRGN WINAPI ExtCreateRegion( const XFORM* lpXform, DWORD dwCount, const RGNDATA* rgndata)
 {
-    HRGN hrgn = CreateRectRgn(0, 0, 0, 0);
-    RGNOBJ *obj = (RGNOBJ *) GDI_GetObjPtr( hrgn, REGION_MAGIC );
-    RECT *pCurRect, *pEndRect;
+    HRGN hrgn;
 
-    TRACE(region, " %p %ld %p. Returning %04x\n",
-		   lpXform, dwCount, rgndata, hrgn);
-    if(!hrgn)
-    {
-        WARN(region, "Can't create a region!\n");
-	return 0;
-    }
-    if(lpXform)
-        WARN(region, "Xform not implemented - ignoring\n");
+    TRACE(region, " %p %ld %p = ", lpXform, dwCount, rgndata );
+
+    if( lpXform )
+        WARN(region, "(Xform not implemented - ignored) ");
     
-    if(rgndata->rdh.iType != RDH_RECTANGLES)
+    if( rgndata->rdh.iType != RDH_RECTANGLES )
     {
-        WARN(region, "Type not RDH_RECTANGLES\n");
-	GDI_HEAP_UNLOCK( hrgn );
-	DeleteObject( hrgn );
-	return 0;
+	/* FIXME: We can use CreatePolyPolygonRgn() here
+	 *        for trapezoidal data */
+
+        WARN(region, "(Unsupported region data) ");
+	goto fail;
     }
 
-    pEndRect = (RECT *)rgndata->Buffer + rgndata->rdh.nCount;
-    for(pCurRect = (RECT *)rgndata->Buffer; pCurRect < pEndRect; pCurRect++)
-        REGION_UnionRectWithRegion( pCurRect, obj->rgn );
+    if( (hrgn = REGION_CreateRegion( rgndata->rdh.nCount )) )
+    {
+	RECT *pCurRect, *pEndRect;
+	RGNOBJ *obj = (RGNOBJ *) GDI_GetObjPtr( hrgn, REGION_MAGIC );
 
-    GDI_HEAP_UNLOCK( hrgn );
-    return hrgn;
+	pEndRect = (RECT *)rgndata->Buffer + rgndata->rdh.nCount;
+	for(pCurRect = (RECT *)rgndata->Buffer; pCurRect < pEndRect; pCurRect++)
+	    REGION_UnionRectWithRegion( pCurRect, obj->rgn );
+	GDI_HEAP_UNLOCK( hrgn );
+
+	TRACE(region,"%04x\n", hrgn );
+	return hrgn;
+    }
+fail:
+    WARN(region, "Failed\n");
+    return 0;
 }
 
 /***********************************************************************
@@ -1402,7 +1414,7 @@ static void REGION_RegionOp(
      * Only do this stuff if the number of rectangles allocated is more than
      * twice the number of rectangles in the region (a simple optimization...).
      */
-    if (newReg->numRects < (newReg->size >> 1))
+    if ((newReg->numRects < (newReg->size >> 1)) && (newReg->numRects > 2))
     {
 	if (REGION_NOT_EMPTY(newReg))
 	{
@@ -1916,8 +1928,8 @@ static void REGION_XorRegion(WINEREGION *dr, WINEREGION *sra,
 {
     WINEREGION *tra, *trb;
 
-    if ((! (tra = REGION_AllocWineRegion())) || 
-	(! (trb = REGION_AllocWineRegion())))
+    if ((! (tra = REGION_AllocWineRegion(sra->numRects + 1))) || 
+	(! (trb = REGION_AllocWineRegion(srb->numRects + 1))))
 	return;
     REGION_SubtractRegion(tra,sra,srb);
     REGION_SubtractRegion(trb,srb,sra);
@@ -2357,7 +2369,7 @@ HRGN WINAPI CreatePolyPolygonRgn(const POINT *Pts, const INT *Count,
     int numFullPtBlocks = 0;
     INT poly, total;
 
-    if(!(hrgn = REGION_CreateRegion()))
+    if(!(hrgn = REGION_CreateRegion(nbpolygons)))
         return 0;
     obj = (RGNOBJ *) GDI_GetObjPtr( hrgn, REGION_MAGIC );
     region = obj->rgn;
@@ -2568,3 +2580,205 @@ HRGN WINAPI GetRandomRgn(DWORD dwArg1, DWORD dwArg2, DWORD dwArg3)
 
     return 0;
 }
+
+/***********************************************************************
+ *           REGION_CropAndOffsetRegion
+ */
+static BOOL REGION_CropAndOffsetRegion(const POINT* off, const RECT *rect, WINEREGION *rgnSrc, WINEREGION* rgnDst)
+{
+    if( IsRectEmpty(rect) || !EXTENTCHECK(rect, &rgnSrc->extents) )
+    {
+empty:
+	if( !rgnDst->rects )
+	{
+	    rgnDst->rects = HeapAlloc(SystemHeap, 0, sizeof( RECT ));
+	    if( rgnDst->rects )
+		rgnDst->size = 1;
+	    else
+		return FALSE;
+	}
+
+	TRACE(region,"cropped to empty!\n");
+	EMPTY_REGION(rgnDst);
+    }
+    else /* region box and clipping rect appear to intersect */
+    {
+	RECT *lpr;
+	INT i, j, clipa, clipb;
+	INT left = rgnSrc->extents.right + off->x;
+	INT right = rgnSrc->extents.left + off->x;
+
+	for( clipa = 0; rgnSrc->rects[clipa].bottom <= rect->top; clipa++ )
+	     ; /* skip bands above the clipping rectangle */
+
+	for( clipb = clipa; clipb < rgnSrc->numRects; clipb++ )
+	     if( rgnSrc->rects[clipb].top >= rect->bottom )
+		 break;    /* and below it */
+
+	/* clipa - index of the first rect in the first intersecting band
+	 * clipb - index of the last rect in the last intersecting band
+	 */
+
+	if((rgnDst != rgnSrc) && (rgnDst->size < (i = (clipb - clipa))))
+	{
+	    rgnDst->rects = HeapReAlloc( SystemHeap, 0, 
+				rgnDst->rects, i * sizeof(RECT));
+	    if( !rgnDst->rects ) return FALSE;
+	    rgnDst->size = i;
+	}
+
+	if( TRACE_ON(region) )
+	{
+	    REGION_DumpRegion( rgnSrc );
+	    TRACE(region,"\tclipa = %i, clipb = %i\n", clipa, clipb );
+	}
+
+	for( i = clipa, j = 0; i < clipb ; i++ )
+	{
+	     /* i - src index, j - dst index, j is always <= i for obvious reasons */
+
+	     lpr = rgnSrc->rects + i;
+	     if( lpr->left < rect->right && lpr->right > rect->left )
+	     {
+		 rgnDst->rects[j].top = lpr->top + off->y;
+		 rgnDst->rects[j].bottom = lpr->bottom + off->y;
+		 rgnDst->rects[j].left = ((lpr->left > rect->left) ? lpr->left : rect->left) + off->x;
+		 rgnDst->rects[j].right = ((lpr->right < rect->right) ? lpr->right : rect->right) + off->x;
+
+		 if( rgnDst->rects[j].left < left ) left = rgnDst->rects[j].left;
+		 if( rgnDst->rects[j].right > right ) right = rgnDst->rects[j].right;
+
+		 j++;
+	     }
+	}
+
+	if( j == 0 ) goto empty;
+
+        rgnDst->extents.left = left;
+        rgnDst->extents.right = right;
+
+	left = rect->top + off->y;
+	right = rect->bottom + off->y;
+
+	rgnDst->numRects = j--;
+	for( i = 0; i <= j; i++ )	/* fixup top band */
+	     if( rgnDst->rects[i].top < left )
+		 rgnDst->rects[i].top = left;
+	     else
+		 break;
+
+	for( i = j; i >= 0; i-- )	/* fixup bottom band */
+	     if( rgnDst->rects[i].bottom > right )
+		 rgnDst->rects[i].bottom = right;
+	     else
+		 break;
+
+	rgnDst->extents.top = rgnDst->rects[0].top;
+	rgnDst->extents.bottom = rgnDst->rects[j].bottom;
+
+	rgnDst->type = (j >= 1) ? COMPLEXREGION : SIMPLEREGION;
+
+	if( TRACE_ON(region) )
+	{
+	    TRACE(region,"result:\n");
+	    REGION_DumpRegion( rgnDst );
+	}
+    }
+
+    return TRUE;
+}
+
+/***********************************************************************
+ *           REGION_CropRgn
+ *
+ *
+ * hSrc: 	Region to crop and offset.
+ * lpRect: 	Clipping rectangle.
+ * lpPt:	Points to offset the cropped region. Can be NULL.
+ *
+ * hDst: Region to hold the result (if 0 a new region is created).
+ *       Allowed to be the same region as hSrc (in place, no extra memory needed).
+ *
+ * Returns: hDst if success, 0 otherwise.
+ */
+HRGN REGION_CropRgn( HRGN hDst, HRGN hSrc, const RECT *lpRect, const POINT *lpPt )
+{
+/*  Optimization of the following generic code:
+
+    HRGN h = CreateRectRgn( lpRect->left, lpRect->top, lpRect->right, lpRect->bottom );
+    if( hDst == 0 ) hDst = h;
+    CombineRgn( hDst, hSrc, h, RGN_AND );
+    if( lpPt )
+	OffsetRgn( hDst, lpPt->x, lpPt->y );
+    if( hDst != h )
+	DeleteObject( h );
+    return hDst;
+
+*/
+
+    RGNOBJ *objSrc = (RGNOBJ *) GDI_HEAP_LOCK( hSrc );
+
+    if(objSrc)
+    {
+ 	RGNOBJ *objDst;
+	WINEREGION *rgnDst;
+
+	if( hDst )
+	{
+	    objDst = (RGNOBJ *) GDI_HEAP_LOCK( hDst );
+	    rgnDst = objDst->rgn;
+	}
+	else
+	{
+	    rgnDst = HeapAlloc(SystemHeap, 0, sizeof( WINEREGION ));
+	    if( rgnDst ) 
+	    {
+	        rgnDst->size = rgnDst->numRects = 0;
+	        rgnDst->rects = NULL;	/* back end will allocate exact number */
+	    }
+	}
+
+	if( rgnDst )
+	{
+	    POINT pt = { 0, 0 };
+
+	    if( !lpPt ) lpPt = &pt;
+
+	    TRACE(region, "src %p -> dst %p (%i,%i)-(%i,%i) by (%li,%li)\n", objSrc->rgn, rgnDst,
+			   lpRect->left, lpRect->top, lpRect->right, lpRect->bottom, lpPt->x, lpPt->y );
+
+	    if( REGION_CropAndOffsetRegion( lpPt, lpRect, objSrc->rgn, rgnDst ) == FALSE )
+	    {
+		if( hDst ) /* existing rgn */
+		{
+		    GDI_HEAP_UNLOCK(hDst);
+		    hDst = 0;
+		    goto done;
+		}
+		goto fail;
+	    }
+	    else if( hDst == 0 )
+	    {
+		if(!(hDst = GDI_AllocObject( sizeof(RGNOBJ), REGION_MAGIC )))
+		{
+fail:
+		    if( rgnDst->rects )
+			HeapFree( SystemHeap, 0, rgnDst->rects );
+		    HeapFree( SystemHeap, 0, rgnDst );
+		    goto done;
+		}
+
+		objDst = (RGNOBJ *) GDI_HEAP_LOCK( hDst );
+		objDst->rgn = rgnDst;
+	    }
+
+	    GDI_HEAP_UNLOCK(hDst);
+	}
+	else hDst = 0;
+done:
+	GDI_HEAP_UNLOCK(hSrc);
+	return hDst;
+    }
+    return 0;
+}
+
