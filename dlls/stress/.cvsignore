@@ -1,3 +1,3 @@
 Makefile
-wing.spec.c
-wing.spec.glue.s
+stress.spec.c
+stress.spec.glue.s
