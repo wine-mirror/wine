@@ -1212,7 +1212,19 @@ HMODULE WINAPI LoadLibraryExA(LPCSTR libname, HFILE hfile, DWORD flags)
 		return 0;
 	}
 
+	EnterCriticalSection(&PROCESS_Current()->crit_section);
+
 	wm = MODULE_LoadLibraryExA( libname, hfile, flags );
+
+	if(wm && !MODULE_DllProcessAttach(wm, NULL))
+	{
+		WARN(module, "Attach failed for module '%s', \n", libname);
+		MODULE_FreeLibrary(wm);
+		SetLastError(ERROR_DLL_INIT_FAILED);
+		wm = NULL;
+	}
+
+	LeaveCriticalSection(&PROCESS_Current()->crit_section);
 
 	return wm ? wm->module : 0;
 }
@@ -1289,14 +1301,6 @@ WINE_MODREF *MODULE_LoadLibraryExA( LPCSTR libname, HFILE hfile, DWORD flags )
 			/* Set the refCount here so that an attach failure will */
 			/* decrement the dependencies through the MODULE_FreeLibrary call. */
 			pwm->refCount++;
-
-			if(!MODULE_DllProcessAttach(pwm, NULL))
-			{
-				WARN(module, "Attach failed for module '%s', \n", libname);
-				MODULE_FreeLibrary(pwm);
-				SetLastError(ERROR_DLL_INIT_FAILED);
-				pwm = NULL;
-			}
 
 			LeaveCriticalSection(&PROCESS_Current()->crit_section);
 			return pwm;
