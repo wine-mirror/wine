@@ -1559,11 +1559,25 @@ static void test_pack_PSYSTEM_AUDIT_ACE(void)
     TEST_TYPE_POINTER(PSYSTEM_AUDIT_ACE, 12, 4);
 }
 
+static void test_pack_PTOKEN_GROUPS(void)
+{
+    /* PTOKEN_GROUPS */
+    TEST_TYPE(PTOKEN_GROUPS, 4, 4);
+    TEST_TYPE_POINTER(PTOKEN_GROUPS, 12, 4);
+}
+
 static void test_pack_PTOKEN_PRIVILEGES(void)
 {
     /* PTOKEN_PRIVILEGES */
     TEST_TYPE(PTOKEN_PRIVILEGES, 4, 4);
     TEST_TYPE_POINTER(PTOKEN_PRIVILEGES, 16, 4);
+}
+
+static void test_pack_PTOKEN_USER(void)
+{
+    /* PTOKEN_USER */
+    TEST_TYPE(PTOKEN_USER, 4, 4);
+    TEST_TYPE_POINTER(PTOKEN_USER, 8, 4);
 }
 
 static void test_pack_PTOP_LEVEL_EXCEPTION_FILTER(void)
@@ -2080,6 +2094,13 @@ static void test_pack_PPOINT(void)
     TEST_TYPE_POINTER(PPOINT, 8, 4);
 }
 
+static void test_pack_PPOINTL(void)
+{
+    /* PPOINTL */
+    TEST_TYPE(PPOINTL, 4, 4);
+    TEST_TYPE_POINTER(PPOINTL, 8, 4);
+}
+
 static void test_pack_PPOINTS(void)
 {
     /* PPOINTS */
@@ -2112,6 +2133,12 @@ static void test_pack_PSIZE(void)
     /* PSIZE */
     TEST_TYPE(PSIZE, 4, 4);
     TEST_TYPE_POINTER(PSIZE, 8, 4);
+}
+
+static void test_pack_PSZ(void)
+{
+    /* PSZ */
+    TEST_TYPE(PSZ, 4, 4);
 }
 
 static void test_pack_RECT(void)
@@ -2366,6 +2393,7 @@ static void test_pack(void)
     test_pack_POINTL();
     test_pack_POINTS();
     test_pack_PPOINT();
+    test_pack_PPOINTL();
     test_pack_PPOINTS();
     test_pack_PPRIVILEGE_SET();
     test_pack_PRECT();
@@ -2387,7 +2415,10 @@ static void test_pack(void)
     test_pack_PSTR();
     test_pack_PSYSTEM_ALARM_ACE();
     test_pack_PSYSTEM_AUDIT_ACE();
+    test_pack_PSZ();
+    test_pack_PTOKEN_GROUPS();
     test_pack_PTOKEN_PRIVILEGES();
+    test_pack_PTOKEN_USER();
     test_pack_PTOP_LEVEL_EXCEPTION_FILTER();
     test_pack_PTSTR();
     test_pack_PULARGE_INTEGER();
