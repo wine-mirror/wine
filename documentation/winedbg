@@ -196,6 +196,9 @@ BreakOnAttach,		set to TRUE if when WineDbg attaches to an
 			context	of an exception event (the next event 
 			which is the exception event is of course
 			relevant), that option is likely to be FALSE.
+BreakOnDllLoad		When set to TRUE, allows the debugger to be
+			entered when a new DLL is loaded into the system.
+			FALSE by default.
 BreakOnFirstChance	an exception can generate two debug events.
 			The first one is passed to the debugger (known
 			as a first chance) just after the
@@ -466,7 +469,8 @@ V.3 Main differences between winedbg and regular Unix debuggers
 VI Limitations
 ==============
 
-16 bit processes are not supported (but calls to 16 bit code in 32 bit 
-applications is).
++ 16 bit processes are not supported (but calls to 16 bit code in 32 
+  bit applications is).
++ there are reports of debugger's freeze when loading large PDB files
 
 Last updated: 6/14/2000 by ericP

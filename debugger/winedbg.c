@@ -441,11 +441,12 @@ static	BOOL	DEBUG_HandleException(EXCEPTION_RECORD *rec, BOOL first_chance, BOOL
 		 DEBUG_CurrThread->dbg_exec_mode, DEBUG_CurrThread->dbg_exec_count);
 
     if (DEBUG_ExceptionProlog(is_debug, force, rec->ExceptionCode)) {
-	for (;;) {
-	    ret = DEBUG_Parser();
-	    if (!ret || DEBUG_CurrThread->dbg_exec_mode != EXEC_PASS || first_chance)
-		break;
-	    DEBUG_Printf(DBG_CHN_MESG, "Cannot pass on last chance exception. You must use cont\n");
+	while ((ret = DEBUG_Parser())) {
+	    if (DEBUG_ValidateRegisters()) {
+		if (DEBUG_CurrThread->dbg_exec_mode != EXEC_PASS || first_chance)
+		    break;
+		DEBUG_Printf(DBG_CHN_MESG, "Cannot pass on last chance exception. You must use cont\n");
+	    }
 	}
     }
     *cont = DEBUG_ExceptionEpilog();
@@ -667,6 +668,7 @@ static	BOOL	DEBUG_HandleDebugEvent(DEBUG_EVENT* de, LPDWORD cont)
 			 de->u.LoadDll.nDebugInfoSize);
 	    CharUpper(buffer);
 	    DEBUG_LoadModule32(buffer, de->u.LoadDll.hFile, (DWORD)de->u.LoadDll.lpBaseOfDll);
+	    if (DBG_IVAR(BreakOnDllLoad)) ret = DEBUG_Parser();
 	    break;
 	    
 	case UNLOAD_DLL_DEBUG_EVENT:

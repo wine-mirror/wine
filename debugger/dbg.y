@@ -397,12 +397,9 @@ BOOL	DEBUG_Parser(void)
     do {
        __TRY {
 	  issue_prompt();
+	  ret_ok = TRUE;
 	  if ((ret = yyparse())) {
 	     DEBUG_FlushSymbols();
-	     
-	     ret_ok = (DEBUG_CurrThread) ? DEBUG_ValidateRegisters() : TRUE;
-	  } else {
-	     ret_ok = TRUE;
 	  }
        } __EXCEPT(wine_dbg_cmd) {
 	  ret_ok = FALSE;
