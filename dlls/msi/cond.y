@@ -33,6 +33,7 @@
 
 #include "msi.h"
 #include "msiquery.h"
+#include "msipriv.h"
 
 #define YYLEX_PARAM info
 #define YYPARSE_PARAM info
@@ -43,7 +44,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(msi);
 
 typedef struct tag_yyinput
 {
-    MSIHANDLE hInstall;
+    MSIPACKAGE *package;
     LPCWSTR str;
     INT    n;
     MSICONDITION result;
@@ -408,7 +409,7 @@ symbol_i:
             COND_input* cond = (COND_input*) info;
             INSTALLSTATE install = INSTALLSTATE_UNKNOWN, action = INSTALLSTATE_UNKNOWN;
       
-            MsiGetComponentStateW(cond->hInstall, $2, &install, &action );
+            MSI_GetComponentStateW(cond->package, $2, &install, &action );
             $$ = action;
             HeapFree( GetProcessHeap(), 0, $2 );
         }
@@ -417,7 +418,7 @@ symbol_i:
             COND_input* cond = (COND_input*) info;
             INSTALLSTATE install = INSTALLSTATE_UNKNOWN, action = INSTALLSTATE_UNKNOWN;
       
-            MsiGetComponentStateW(cond->hInstall, $2, &install, &action );
+            MSI_GetComponentStateW(cond->package, $2, &install, &action );
             $$ = install;
             HeapFree( GetProcessHeap(), 0, $2 );
         }
@@ -426,7 +427,7 @@ symbol_i:
             COND_input* cond = (COND_input*) info;
             INSTALLSTATE install = INSTALLSTATE_UNKNOWN, action = INSTALLSTATE_UNKNOWN;
       
-            MsiGetFeatureStateW(cond->hInstall, $2, &install, &action );
+            MSI_GetFeatureStateW(cond->package, $2, &install, &action );
             $$ = action;
             HeapFree( GetProcessHeap(), 0, $2 );
         }
@@ -435,7 +436,7 @@ symbol_i:
             COND_input* cond = (COND_input*) info;
             INSTALLSTATE install = INSTALLSTATE_UNKNOWN, action = INSTALLSTATE_UNKNOWN;
       
-            MsiGetFeatureStateW(cond->hInstall, $2, &install, &action );
+            MSI_GetFeatureStateW(cond->package, $2, &install, &action );
             $$ = install;
             HeapFree( GetProcessHeap(), 0, $2 );
         }
@@ -451,7 +452,7 @@ symbol_s:
             /* Lookup the identifier */
 
             sz=0x100;
-            if (MsiGetPropertyW(cond->hInstall,$1,$$,&sz) != ERROR_SUCCESS)
+            if (MSI_GetPropertyW(cond->package,$1,$$,&sz) != ERROR_SUCCESS)
             {
                 $$[0]=0;
             }
@@ -687,12 +688,12 @@ static int COND_error(char *str)
     return 0;
 }
 
-MSICONDITION WINAPI MsiEvaluateConditionW( MSIHANDLE hInstall, LPCWSTR szCondition )
+MSICONDITION MSI_EvaluateConditionW( MSIPACKAGE *package, LPCWSTR szCondition )
 {
     COND_input cond;
     MSICONDITION r;
 
-    cond.hInstall = hInstall;
+    cond.package = package;
     cond.str   = szCondition;
     cond.n     = 0;
     cond.result = -1;
@@ -706,6 +707,19 @@ MSICONDITION WINAPI MsiEvaluateConditionW( MSIHANDLE hInstall, LPCWSTR szConditi
 
     TRACE("Evaluates to %i\n",r);
     return r;
+}
+
+MSICONDITION WINAPI MsiEvaluateConditionW( MSIHANDLE hInstall, LPCWSTR szCondition )
+{
+    MSIPACKAGE *package;
+    UINT ret;
+
+    package = msihandle2msiinfo( hInstall, MSIHANDLETYPE_PACKAGE);
+    if( !package)
+        return ERROR_INVALID_HANDLE;
+    ret = MSI_EvaluateConditionW( package, szCondition );
+    msiobj_release( &package->hdr );
+    return ret;
 }
 
 MSICONDITION WINAPI MsiEvaluateConditionA( MSIHANDLE hInstall, LPCSTR szCondition )

@@ -107,13 +107,13 @@ static UINT DISTINCT_fetch_int( struct tagMSIVIEW *view, UINT row, UINT col, UIN
     return dv->table->ops->fetch_int( dv->table, row, col, val );
 }
 
-static UINT DISTINCT_execute( struct tagMSIVIEW *view, MSIHANDLE record )
+static UINT DISTINCT_execute( struct tagMSIVIEW *view, MSIRECORD *record )
 {
     MSIDISTINCTVIEW *dv = (MSIDISTINCTVIEW*)view;
     UINT r, i, j, r_count, c_count;
     DISTINCTSET *rowset = NULL;
 
-    TRACE("%p %ld\n", dv, record);
+    TRACE("%p %p\n", dv, record);
 
     if( !dv->table )
          return ERROR_FUNCTION_FAILED;
@@ -242,6 +242,7 @@ static UINT DISTINCT_delete( struct tagMSIVIEW *view )
     if( dv->translation )
         HeapFree( GetProcessHeap(), 0, dv->translation );
     HeapFree( GetProcessHeap(), 0, dv );
+    msiobj_release( &dv->db->hdr );
 
     return ERROR_SUCCESS;
 }
@@ -281,6 +282,7 @@ UINT DISTINCT_CreateView( MSIDATABASE *db, MSIVIEW **view, MSIVIEW *table )
     
     /* fill the structure */
     dv->view.ops = &distinct_ops;
+    msiobj_addref( &db->hdr );
     dv->db = db;
     dv->table = table;
     dv->translation = NULL;

@@ -288,18 +288,7 @@ UINT db_get_raw_stream( MSIDATABASE *db, LPCWSTR stname, IStream **stm )
     return ERROR_SUCCESS;
 }
 
-/* FIXME: we should be passing around pointers to db structures internally */
-UINT get_raw_stream( MSIHANDLE hdb, LPCWSTR stname, IStream **stm )
-{
-    MSIDATABASE *db = msihandle2msiinfo(hdb, MSIHANDLETYPE_DATABASE );
-
-    if ( !db )
-        return ERROR_INVALID_HANDLE;
-
-    return db_get_raw_stream( db, stname, stm );
-}
-
-UINT read_raw_stream_data( MSIHANDLE hdb, LPCWSTR stname,
+UINT read_raw_stream_data( MSIDATABASE *db, LPCWSTR stname,
                               USHORT **pdata, UINT *psz )
 {
     HRESULT r;
@@ -309,10 +298,9 @@ UINT read_raw_stream_data( MSIHANDLE hdb, LPCWSTR stname,
     IStream *stm = NULL;
     STATSTG stat;
 
-    r = get_raw_stream( hdb, stname, &stm );
+    r = db_get_raw_stream( db, stname, &stm );
     if( r != ERROR_SUCCESS)
-        goto end;
-    ret = ERROR_FUNCTION_FAILED;
+        return ret;
     r = IStream_Stat(stm, &stat, STATFLAG_NONAME );
     if( FAILED( r ) )
     {
@@ -1114,6 +1102,9 @@ static UINT TABLE_fetch_stream( struct tagMSIVIEW *view, UINT row, UINT col, ISt
     MSITABLEVIEW *tv = (MSITABLEVIEW*)view;
     UINT ival = 0, refcol = 0, r;
     LPWSTR sval;
+    LPWSTR full_name;
+    DWORD len;
+    static const WCHAR szDot[] = { '.', 0 };
 
     if( !view->ops->fetch_int )
         return ERROR_INVALID_PARAMETER;
@@ -1138,22 +1129,16 @@ static UINT TABLE_fetch_stream( struct tagMSIVIEW *view, UINT row, UINT col, ISt
     if( !sval )
         return ERROR_INVALID_PARAMETER;
 
-    {
-        LPWSTR full_name;
-        DWORD len;
-        static const WCHAR szDot[] = { '.', 0 };
+    len = strlenW( tv->name ) + 2 + strlenW( sval );
+    full_name = HeapAlloc( GetProcessHeap(), 0, len*sizeof(WCHAR) );
+    strcpyW( full_name, tv->name );
+    strcatW( full_name, szDot );
+    strcatW( full_name, sval );
 
-        len = strlenW( tv->name ) + 2 + strlenW( sval );
-        full_name = HeapAlloc( GetProcessHeap(), 0, len*sizeof(WCHAR) );
-        strcpyW( full_name, tv->name );
-        strcatW( full_name, szDot );
-        strcatW( full_name, sval );
-
-        r = db_get_raw_stream( tv->db, full_name, stm );
-        if( r )
-            ERR("fetching stream %s, error = %d\n",debugstr_w(full_name), r);
-        HeapFree( GetProcessHeap(), 0, full_name );
-    }
+    r = db_get_raw_stream( tv->db, full_name, stm );
+    if( r )
+        ERR("fetching stream %s, error = %d\n",debugstr_w(full_name), r);
+    HeapFree( GetProcessHeap(), 0, full_name );
     HeapFree( GetProcessHeap(), 0, sval );
 
     return r;
@@ -1228,12 +1213,12 @@ UINT TABLE_insert_row( struct tagMSIVIEW *view, UINT *num )
     return ERROR_SUCCESS;
 }
 
-static UINT TABLE_execute( struct tagMSIVIEW *view, MSIHANDLE record )
+static UINT TABLE_execute( struct tagMSIVIEW *view, MSIRECORD *record )
 {
     MSITABLEVIEW *tv = (MSITABLEVIEW*)view;
     UINT r;
 
-    TRACE("%p %ld\n", tv, record);
+    TRACE("%p %p\n", tv, record);
 
     if( tv->table )
         return ERROR_FUNCTION_FAILED;

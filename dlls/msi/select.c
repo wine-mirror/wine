@@ -111,11 +111,11 @@ static UINT SELECT_insert_row( struct tagMSIVIEW *view, UINT *num )
     return sv->table->ops->insert_row( sv->table, num );
 }
 
-static UINT SELECT_execute( struct tagMSIVIEW *view, MSIHANDLE record )
+static UINT SELECT_execute( struct tagMSIVIEW *view, MSIRECORD *record )
 {
     MSISELECTVIEW *sv = (MSISELECTVIEW*)view;
 
-    TRACE("%p %ld\n", sv, record);
+    TRACE("%p %p\n", sv, record);
 
     if( !sv->table )
          return ERROR_FUNCTION_FAILED;

@@ -1,7 +1,7 @@
 /*
  * Implementation of the Microsoft Installer (msi.dll)
  *
- * Copyright 2002 Mike McCormack for CodeWeavers
+ * Copyright 2002-2004 Mike McCormack for CodeWeavers
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -36,12 +36,15 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(msi);
 
+#if 0
 typedef struct tagMSIQUERY
 {
+    MSIOBJECTHDR hdr;
     MSIVIEW *view;
     UINT row;
     MSIDATABASE *db;
 } MSIQUERY;
+#endif
 
 UINT WINAPI MsiDatabaseIsTablePersistentA(
               MSIHANDLE hDatabase, LPSTR szTableName)
@@ -57,12 +60,13 @@ UINT WINAPI MsiDatabaseIsTablePersistentW(
     return ERROR_CALL_NOT_IMPLEMENTED;
 }
 
-void MSI_CloseView( VOID *arg )
+void MSI_CloseView( MSIOBJECTHDR *arg )
 {
-    MSIQUERY *query = arg;
+    MSIQUERY *query = (MSIQUERY*) arg;
 
     if( query->view && query->view->ops->delete )
         query->view->ops->delete( query->view );
+    msiobj_release( &query->db->hdr );
 }
 
 UINT VIEW_find_column( MSIVIEW *table, LPWSTR name, UINT *n )
@@ -118,57 +122,71 @@ UINT WINAPI MsiDatabaseOpenViewA(MSIHANDLE hdb,
     return r;
 }
 
-UINT WINAPI MsiDatabaseOpenViewW(MSIHANDLE hdb,
-              LPCWSTR szQuery, MSIHANDLE *phView)
+UINT MSI_DatabaseOpenViewW(MSIDATABASE *db,
+              LPCWSTR szQuery, MSIQUERY **pView)
 {
-    MSIDATABASE *db;
-    MSIHANDLE handle;
     MSIQUERY *query;
     UINT r;
 
-    TRACE("%s %p\n", debugstr_w(szQuery), phView);
+    TRACE("%s %p\n", debugstr_w(szQuery), pView);
 
     if( !szQuery)
         return ERROR_INVALID_PARAMETER;
 
-    db = msihandle2msiinfo( hdb, MSIHANDLETYPE_DATABASE );
-    if( !db )
-        return ERROR_INVALID_HANDLE;
-
     /* pre allocate a handle to hold a pointer to the view */
-    handle = alloc_msihandle( MSIHANDLETYPE_VIEW, sizeof (MSIQUERY),
-                              MSI_CloseView, (void**) &query );
-    if( !handle )
+    query = alloc_msiobject( MSIHANDLETYPE_VIEW, sizeof (MSIQUERY),
+                              MSI_CloseView );
+    if( !query )
         return ERROR_FUNCTION_FAILED;
 
+    msiobj_addref( &db->hdr );
     query->row = 0;
     query->db = db;
     query->view = NULL;
 
     r = MSI_ParseSQL( db, szQuery, &query->view );
-    if( r != ERROR_SUCCESS )
+    if( r == ERROR_SUCCESS )
     {
-        MsiCloseHandle( handle );
-        return r;
+        msiobj_addref( &query->hdr );
+        *pView = query;
     }
 
-    *phView = handle;
-
+    msiobj_release( &query->hdr );
     return ERROR_SUCCESS;
 }
 
-UINT WINAPI MsiViewFetch(MSIHANDLE hView, MSIHANDLE *record)
+UINT WINAPI MsiDatabaseOpenViewW(MSIHANDLE hdb,
+              LPCWSTR szQuery, MSIHANDLE *phView)
 {
-    MSIQUERY *query;
+    MSIDATABASE *db;
+    MSIQUERY *query = NULL;
+    UINT ret;
+
+    TRACE("%s %p\n", debugstr_w(szQuery), phView);
+
+    db = msihandle2msiinfo( hdb, MSIHANDLETYPE_DATABASE );
+    if( !db )
+        return ERROR_INVALID_HANDLE;
+
+    ret = MSI_DatabaseOpenViewW( db, szQuery, &query );
+    if( ret == ERROR_SUCCESS )
+    {
+        *phView = alloc_msihandle( &query->hdr );
+        msiobj_release( &query->hdr );
+    }
+    msiobj_release( &db->hdr );
+
+    return ret;
+}
+
+UINT MSI_ViewFetch(MSIQUERY *query, MSIRECORD **prec)
+{
     MSIVIEW *view;
-    MSIHANDLE handle;
+    MSIRECORD *rec;
     UINT row_count = 0, col_count = 0, i, ival, ret, type;
 
-    TRACE("%ld %p\n", hView, record);
+    TRACE("%p %p\n", query, prec );
 
-    query = msihandle2msiinfo( hView, MSIHANDLETYPE_VIEW );
-    if( !query )
-        return ERROR_INVALID_HANDLE;
     view = query->view;
     if( !view )
         return ERROR_FUNCTION_FAILED;
@@ -182,8 +200,8 @@ UINT WINAPI MsiViewFetch(MSIHANDLE hView, MSIHANDLE *record)
     if( query->row >= row_count )
         return ERROR_NO_MORE_ITEMS;
 
-    handle = MsiCreateRecord( col_count );
-    if( !handle )
+    rec = MSI_CreateRecord( col_count );
+    if( !rec )
         return ERROR_FUNCTION_FAILED;
 
     for( i=1; i<=col_count; i++ )
@@ -215,25 +233,25 @@ UINT WINAPI MsiViewFetch(MSIHANDLE hView, MSIHANDLE *record)
                 LPWSTR sval;
 
                 sval = MSI_makestring( query->db, ival );
-                MsiRecordSetStringW( handle, i, sval );
+                MSI_RecordSetStringW( rec, i, sval );
                 HeapFree( GetProcessHeap(), 0, sval );
             }
             else
             {
                 if( (type & MSI_DATASIZEMASK) == 2 )
-                    MsiRecordSetInteger( handle, i, ival - (1<<15) );
+                    MSI_RecordSetInteger( rec, i, ival - (1<<15) );
                 else
-                    MsiRecordSetInteger( handle, i, ival - (1<<31) );
+                    MSI_RecordSetInteger( rec, i, ival - (1<<31) );
             }
         }
         else
         {
-            IStream *stm;
+            IStream *stm = NULL;
 
             ret = view->ops->fetch_stream( view, query->row, i, &stm );
             if( ( ret == ERROR_SUCCESS ) && stm )
             {
-                MSI_RecordSetIStream( handle, i, stm );
+                MSI_RecordSetIStream( rec, i, stm );
                 IStream_Release( stm );
             }
             else
@@ -242,21 +260,37 @@ UINT WINAPI MsiViewFetch(MSIHANDLE hView, MSIHANDLE *record)
     }
     query->row ++;
 
-    *record = handle;
+    *prec = rec;
 
     return ERROR_SUCCESS;
 }
 
-UINT WINAPI MsiViewClose(MSIHANDLE hView)
+UINT WINAPI MsiViewFetch(MSIHANDLE hView, MSIHANDLE *record)
 {
     MSIQUERY *query;
-    MSIVIEW *view;
+    MSIRECORD *rec = NULL;
+    UINT ret;
 
-    TRACE("%ld\n", hView );
+    TRACE("%ld %p\n", hView, record);
 
     query = msihandle2msiinfo( hView, MSIHANDLETYPE_VIEW );
     if( !query )
         return ERROR_INVALID_HANDLE;
+    ret = MSI_ViewFetch( query, &rec );
+    if( ret == ERROR_SUCCESS )
+    {
+        *record = alloc_msihandle( &rec->hdr );
+        msiobj_release( &rec->hdr );
+    }
+    msiobj_release( &query->hdr );
+    return ret;
+}
+
+UINT MSI_ViewClose(MSIQUERY *query)
+{
+    MSIVIEW *view;
+
+    TRACE("%p\n", query );
 
     view = query->view;
     if( !view )
@@ -267,16 +301,27 @@ UINT WINAPI MsiViewClose(MSIHANDLE hView)
     return view->ops->close( view );
 }
 
-UINT WINAPI MsiViewExecute(MSIHANDLE hView, MSIHANDLE hRec)
+UINT WINAPI MsiViewClose(MSIHANDLE hView)
 {
     MSIQUERY *query;
-    MSIVIEW *view;
+    UINT ret;
 
-    TRACE("%ld %ld\n", hView, hRec);
+    TRACE("%ld\n", hView );
 
     query = msihandle2msiinfo( hView, MSIHANDLETYPE_VIEW );
     if( !query )
         return ERROR_INVALID_HANDLE;
+
+    ret = MSI_ViewClose( query );
+    msiobj_release( &query->hdr );
+    return ret;
+}
+
+UINT MSI_ViewExecute(MSIQUERY *query, MSIRECORD *rec )
+{
+    MSIVIEW *view;
+
+    TRACE("%p %p\n", query, rec);
 
     view = query->view;
     if( !view )
@@ -285,7 +330,39 @@ UINT WINAPI MsiViewExecute(MSIHANDLE hView, MSIHANDLE hRec)
         return ERROR_FUNCTION_FAILED;
     query->row = 0;
 
-    return view->ops->execute( view, hRec );
+    return view->ops->execute( view, rec );
+}
+
+UINT WINAPI MsiViewExecute(MSIHANDLE hView, MSIHANDLE hRec)
+{
+    MSIQUERY *query;
+    MSIRECORD *rec = NULL;
+    UINT ret;
+    
+    TRACE("%ld %ld\n", hView, hRec);
+
+    query = msihandle2msiinfo( hView, MSIHANDLETYPE_VIEW );
+    if( !query )
+        return ERROR_INVALID_HANDLE;
+
+    if( hRec )
+    {
+        rec = msihandle2msiinfo( hRec, MSIHANDLETYPE_RECORD );
+        if( !rec )
+        {
+            ret = ERROR_INVALID_HANDLE;
+            goto out;
+        }
+    }
+
+    ret = MSI_ViewExecute( query, rec );
+out:
+    if( query )
+        msiobj_release( &query->hdr );
+    if( rec )
+        msiobj_release( &rec->hdr );
+
+    return ret;
 }
 
 UINT WINAPI MsiViewGetColumnInfo(MSIHANDLE hView, MSICOLINFO info, MSIHANDLE *hRec)

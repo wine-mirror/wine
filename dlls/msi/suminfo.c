@@ -38,7 +38,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(msi);
 static const WCHAR szSumInfo[] = { 5 ,'S','u','m','m','a','r','y',
                        'I','n','f','o','r','m','a','t','i','o','n',0 };
 
-static void MSI_CloseSummaryInfo( VOID *arg )
+static void MSI_CloseSummaryInfo( MSIOBJECTHDR *arg )
 {
     MSISUMMARYINFO *suminfo = (MSISUMMARYINFO *) arg;
     IPropertyStorage_Release( suminfo->propstg );
@@ -74,7 +74,7 @@ UINT WINAPI MsiGetSummaryInformationW(MSIHANDLE hDatabase,
               LPCWSTR szDatabase, UINT uiUpdateCount, MSIHANDLE *phSummaryInfo)
 {
     HRESULT r;
-    MSIHANDLE handle, hdb = hDatabase;
+    MSIHANDLE handle;
     MSISUMMARYINFO *suminfo;
     MSIDATABASE *db;
     UINT ret = ERROR_SUCCESS;
@@ -92,20 +92,24 @@ UINT WINAPI MsiGetSummaryInformationW(MSIHANDLE hDatabase,
     {
         UINT res;
 
-        res = MsiOpenDatabaseW(szDatabase, NULL, &hdb);
+        res = MSI_OpenDatabaseW(szDatabase, NULL, &db);
         if( res != ERROR_SUCCESS )
             return res;
     }
-
-    db = msihandle2msiinfo(hdb, MSIHANDLETYPE_DATABASE);
-    if( !db )
-        return ERROR_INVALID_PARAMETER;
+    else
+    {
+        db = msihandle2msiinfo(hDatabase, MSIHANDLETYPE_DATABASE);
+        if( !db )
+            return ERROR_INVALID_PARAMETER;
+    }
 
     r = IStorage_QueryInterface( db->storage, 
              &IID_IPropertySetStorage, (LPVOID)&psstg);
     if( FAILED( r ) )
     {
         ERR("IStorage -> IPropertySetStorage failed\n");
+        if (db)
+            msiobj_release(&db->hdr);
         return ERROR_FUNCTION_FAILED;
     }
     ERR("storage = %p propertysetstorage = %p\n", db->storage, psstg);
@@ -119,10 +123,9 @@ UINT WINAPI MsiGetSummaryInformationW(MSIHANDLE hDatabase,
         goto end;
     }
 
-    handle = alloc_msihandle( MSIHANDLETYPE_SUMMARYINFO, 
-                  sizeof (MSISUMMARYINFO), MSI_CloseSummaryInfo,
-                  (void**) &suminfo );
-    if( !handle )
+    suminfo = alloc_msiobject( MSIHANDLETYPE_SUMMARYINFO, 
+                  sizeof (MSISUMMARYINFO), MSI_CloseSummaryInfo );
+    if( !suminfo )
     {
         ret = ERROR_FUNCTION_FAILED;
         goto end;
@@ -130,15 +133,20 @@ UINT WINAPI MsiGetSummaryInformationW(MSIHANDLE hDatabase,
 
     IPropertyStorage_AddRef(ps);
     suminfo->propstg = ps;
+    handle = alloc_msihandle( &suminfo->hdr );
+    if( handle )
     *phSummaryInfo = handle;
+    else
+        ret = ERROR_FUNCTION_FAILED;
+    msiobj_release( &suminfo->hdr );
 
 end:
     if( ps )
         IPropertyStorage_Release(ps);
     if( psstg )
         IPropertySetStorage_Release(psstg);
-    if( !hDatabase )
-        MsiCloseHandle( hdb );
+    if (db)
+        msiobj_release(&db->hdr);
 
     return ret;
 }

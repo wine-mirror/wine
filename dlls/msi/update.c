@@ -55,13 +55,13 @@ static UINT UPDATE_fetch_int( struct tagMSIVIEW *view, UINT row, UINT col, UINT 
     return ERROR_FUNCTION_FAILED;
 }
 
-static UINT UPDATE_execute( struct tagMSIVIEW *view, MSIHANDLE record )
+static UINT UPDATE_execute( struct tagMSIVIEW *view, MSIRECORD *record )
 {
     MSIUPDATEVIEW *uv = (MSIUPDATEVIEW*)view;
     UINT n, type, val, r, row, col_count = 0, row_count = 0;
     MSIVIEW *wv;
 
-    TRACE("%p %ld\n", uv, record );
+    TRACE("%p %p\n", uv, record );
 
     if( !record )
         return ERROR_FUNCTION_FAILED;
@@ -94,7 +94,7 @@ static UINT UPDATE_execute( struct tagMSIVIEW *view, MSIHANDLE record )
             }
             else
             {
-                val = MsiRecordGetInteger( record, n );
+                val = MSI_RecordGetInteger( record, n );
                 val |= 0x8000;
             }
             r = wv->ops->set_int( wv, row, n, val );
@@ -172,6 +172,7 @@ static UINT UPDATE_delete( struct tagMSIVIEW *view )
         wv->ops->delete( wv );
     delete_value_list( uv->vals );
     HeapFree( GetProcessHeap(), 0, uv );
+    msiobj_release( &uv->db->hdr );
 
     return ERROR_SUCCESS;
 }
@@ -228,6 +229,7 @@ UINT UPDATE_CreateView( MSIDATABASE *db, MSIVIEW **view, LPWSTR table,
 
     /* fill the structure */
     uv->view.ops = &update_ops;
+    msiobj_addref( &db->hdr );
     uv->db = db;
     uv->vals = list->val_list;
     uv->wv = sv;

@@ -43,15 +43,58 @@ typedef struct tagMSITABLE MSITABLE;
 struct string_table;
 typedef struct string_table string_table;
 
+struct tagMSIOBJECTHDR;
+typedef struct tagMSIOBJECTHDR MSIOBJECTHDR;
+
+typedef VOID (*msihandledestructor)( MSIOBJECTHDR * );
+
+struct tagMSIOBJECTHDR
+{
+    UINT magic;
+    UINT type;
+    UINT refcount;
+    msihandledestructor destructor;
+    struct tagMSIOBJECTHDR *next;
+    struct tagMSIOBJECTHDR *prev;
+};
+
 typedef struct tagMSIDATABASE
 {
+    MSIOBJECTHDR hdr;
     IStorage *storage;
     string_table *strings;
     LPWSTR mode;
     MSITABLE *first_table, *last_table;
 } MSIDATABASE;
 
-struct tagMSIVIEW;
+typedef struct tagMSIVIEW MSIVIEW;
+
+typedef struct tagMSIQUERY
+{
+    MSIOBJECTHDR hdr;
+    MSIVIEW *view;
+    UINT row;
+    MSIDATABASE *db;
+} MSIQUERY;
+
+/* maybe we can use a Variant instead of doing it ourselves? */
+typedef struct tagMSIFIELD
+{
+    UINT type;
+    union
+    {
+        INT iVal;
+        LPWSTR szwVal;
+        IStream *stream;
+    } u;
+} MSIFIELD;
+
+typedef struct tagMSIRECORD
+{
+    MSIOBJECTHDR hdr;
+    UINT count;       /* as passed to MsiCreateRecord */
+    MSIFIELD fields[1]; /* nb. array size is count+1 */
+} MSIRECORD;
 
 typedef struct tagMSIVIEWOPS
 {
@@ -90,7 +133,7 @@ typedef struct tagMSIVIEWOPS
     /*
      * execute - loads the underlying data into memory so it can be read
      */
-    UINT (*execute)( struct tagMSIVIEW *, MSIHANDLE );
+    UINT (*execute)( struct tagMSIVIEW *, MSIRECORD * );
 
     /*
      * close - clears the data read by execute from memory
@@ -126,31 +169,22 @@ typedef struct tagMSIVIEWOPS
 
 } MSIVIEWOPS;
 
-typedef struct tagMSIVIEW
-{
-    MSIVIEWOPS   *ops;
-} MSIVIEW;
-
 typedef struct tagMSISUMMARYINFO
 {
+    MSIOBJECTHDR hdr;
     IPropertyStorage *propstg;
 } MSISUMMARYINFO;
 
-typedef VOID (*msihandledestructor)( VOID * );
-
-typedef struct tagMSIHANDLEINFO
+struct tagMSIVIEW
 {
-    UINT magic;
-    UINT type;
-    UINT refcount;
-    msihandledestructor destructor;
-    struct tagMSIHANDLEINFO *next;
-    struct tagMSIHANDLEINFO *prev;
-} MSIHANDLEINFO;
+    MSIOBJECTHDR hdr;
+    MSIVIEWOPS   *ops;
+};
 
 typedef struct tagMSIPACKAGE
 {
-    MSIHANDLE db;
+    MSIOBJECTHDR hdr;
+    MSIDATABASE *db;
     struct tagMSIFEATURE *features;
     UINT loaded_features;
     struct tagMSIFOLDER  *folders;
@@ -186,10 +220,14 @@ DEFINE_GUID(CLSID_IMsiServerX3, 0x000C1094,0x0000,0x0000,0xC0,0x00,0x00,0x00,0x0
 
 DEFINE_GUID(CLSID_IMsiServerMessage, 0x000C101D,0x0000,0x0000,0xC0,0x00,0x00,0x00,0x00,0x00,0x00,0x46);
 
-extern void *msihandle2msiinfo(MSIHANDLE handle, UINT type);
 
-MSIHANDLE alloc_msihandle(UINT type, UINT extra, msihandledestructor destroy, void **out);
-void msihandle_addref(MSIHANDLE handle);
+/* handle functions */
+extern void *msihandle2msiinfo(MSIHANDLE handle, UINT type);
+extern MSIHANDLE alloc_msihandle( MSIOBJECTHDR * );
+extern void *alloc_msiobject(UINT type, UINT size, msihandledestructor destroy );
+extern void msiobj_addref(MSIOBJECTHDR *);
+extern int msiobj_release(MSIOBJECTHDR *);
+extern MSIHANDLE msiobj_findhandle( MSIOBJECTHDR *hdr );
 
 /* add this table to the list of cached tables in the database */
 extern void add_table(MSIDATABASE *db, MSITABLE *table);
@@ -222,27 +260,53 @@ extern const WCHAR *msi_string_lookup_id( string_table *st, UINT id );
 extern UINT msi_string_get_codepage( string_table *st );
 
 
-UINT VIEW_find_column( MSIVIEW *view, LPWSTR name, UINT *n );
+extern UINT VIEW_find_column( MSIVIEW *view, LPWSTR name, UINT *n );
 
 extern BOOL TABLE_Exists( MSIDATABASE *db, LPWSTR name );
 
-UINT read_raw_stream_data( MSIHANDLE hdb, LPCWSTR stname,
+extern UINT read_raw_stream_data( MSIDATABASE*, LPCWSTR stname,
                               USHORT **pdata, UINT *psz );
-UINT ACTION_DoTopLevelINSTALL(MSIHANDLE hPackage, LPCWSTR szPackagePath,
-                              LPCWSTR szCommandLine);
-void ACTION_remove_tracked_tempfiles(MSIPACKAGE* hPackage);
+extern UINT ACTION_DoTopLevelINSTALL( MSIPACKAGE *, LPCWSTR, LPCWSTR );
+extern void ACTION_remove_tracked_tempfiles( MSIPACKAGE* );
 
 /* record internals */
-extern UINT WINAPI MSI_RecordSetIStream( MSIHANDLE handle, 
-              unsigned int iField, IStream *stm );
-extern const WCHAR *MSI_RecordGetString( MSIHANDLE handle, unsigned int iField );
-
+extern UINT MSI_RecordSetIStream( MSIRECORD *, unsigned int, IStream *);
+extern const WCHAR *MSI_RecordGetString( MSIRECORD *, unsigned int );
+extern MSIRECORD *MSI_CreateRecord( unsigned int );
+extern UINT MSI_RecordSetInteger( MSIRECORD *, unsigned int, int );
+extern UINT MSI_RecordSetStringW( MSIRECORD *, unsigned int, LPCWSTR );
+extern BOOL MSI_RecordIsNull( MSIRECORD *, unsigned int );
+extern UINT MSI_RecordGetStringW( MSIRECORD * , unsigned int, LPWSTR, DWORD *);
+extern int MSI_RecordGetInteger( MSIRECORD *, unsigned int );
+extern UINT MSI_RecordReadStream( MSIRECORD *, unsigned int, char *, DWORD *);
+extern unsigned int MSI_RecordGetFieldCount( MSIRECORD *rec );
 
 /* stream internals */
 extern UINT get_raw_stream( MSIHANDLE hdb, LPCWSTR stname, IStream **stm );
 extern UINT db_get_raw_stream( MSIDATABASE *db, LPCWSTR stname, IStream **stm );
 extern void enum_stream_names( IStorage *stg );
 
+/* database internals */
+extern UINT MSI_OpenDatabaseW( LPCWSTR, LPCWSTR, MSIDATABASE ** );
+extern UINT MSI_DatabaseOpenViewW(MSIDATABASE *, LPCWSTR, MSIQUERY ** );
+
+/* view internals */
+extern UINT MSI_ViewExecute( MSIQUERY*, MSIRECORD * );
+extern UINT MSI_ViewFetch( MSIQUERY*, MSIRECORD ** );
+extern UINT MSI_ViewClose( MSIQUERY* );
+
+/* package internals */
+extern UINT MSI_OpenPackageW(LPCWSTR szPackage, MSIPACKAGE ** );
+extern UINT MSI_SetTargetPathW( MSIPACKAGE *, LPCWSTR, LPCWSTR);
+extern UINT MSI_SetPropertyW( MSIPACKAGE *, LPCWSTR, LPCWSTR );
+extern INT MSI_ProcessMessage( MSIPACKAGE *, INSTALLMESSAGE, MSIRECORD* );
+extern UINT MSI_GetPropertyW( MSIPACKAGE *, LPCWSTR, LPWSTR, DWORD*);
+extern MSICONDITION MSI_EvaluateConditionW( MSIPACKAGE *, LPCWSTR );
+extern UINT MSI_SetPropertyW( MSIPACKAGE *, LPCWSTR, LPCWSTR );
+extern UINT MSI_GetComponentStateW(MSIPACKAGE *, LPWSTR, INSTALLSTATE *, INSTALLSTATE *);
+extern UINT MSI_GetFeatureStateW(MSIPACKAGE *, LPWSTR, INSTALLSTATE *, INSTALLSTATE *);
+
+/* registry data encoding/decoding functions */
 BOOL unsquash_guid(LPCWSTR in, LPWSTR out);
 BOOL squash_guid(LPCWSTR in, LPWSTR out);
 BOOL encode_base85_guid(GUID *,LPWSTR);

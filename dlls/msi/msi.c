@@ -1,7 +1,7 @@
 /*
  * Implementation of the Microsoft Installer (msi.dll)
  *
- * Copyright 2002,2003 Mike McCormack for CodeWeavers
+ * Copyright 2002,2003,2004 Mike McCormack for CodeWeavers
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -222,7 +222,7 @@ BOOL encode_base85_guid( GUID *guid, LPWSTR str )
 }
 
 
-VOID MSI_CloseDatabase( VOID *arg )
+VOID MSI_CloseDatabase( MSIOBJECTHDR *arg )
 {
     MSIDATABASE *db = (MSIDATABASE *) arg;
 
@@ -230,58 +230,18 @@ VOID MSI_CloseDatabase( VOID *arg )
     IStorage_Release( db->storage );
 }
 
-UINT WINAPI MsiOpenDatabaseA(LPCSTR szDBPath, LPCSTR szPersist, MSIHANDLE *phDB)
-{
-    HRESULT r = ERROR_FUNCTION_FAILED;
-    LPWSTR szwDBPath = NULL, szwPersist = NULL;
-    UINT len;
-
-    TRACE("%s %s %p\n", debugstr_a(szDBPath), debugstr_a(szPersist), phDB);
-
-    if( szDBPath )
-    {
-        len = MultiByteToWideChar( CP_ACP, 0, szDBPath, -1, NULL, 0 );
-        szwDBPath = HeapAlloc( GetProcessHeap(), 0, len * sizeof(WCHAR) );
-        if( !szwDBPath )
-            goto end;
-        MultiByteToWideChar( CP_ACP, 0, szDBPath, -1, szwDBPath, len );
-    }
-
-    if( HIWORD(szPersist) )
-    {
-        len = MultiByteToWideChar( CP_ACP, 0, szPersist, -1, NULL, 0 );
-        szwPersist = HeapAlloc( GetProcessHeap(), 0, len * sizeof(WCHAR) );
-        if( !szwPersist )
-            goto end;
-        MultiByteToWideChar( CP_ACP, 0, szPersist, -1, szwPersist, len );
-    }
-    else
-        szwPersist = (LPWSTR) szPersist;
-
-    r = MsiOpenDatabaseW( szwDBPath, szwPersist, phDB );
-
-end:
-    if( szwPersist )
-        HeapFree( GetProcessHeap(), 0, szwPersist );
-    if( szwDBPath )
-        HeapFree( GetProcessHeap(), 0, szwDBPath );
-
-    return r;
-}
-
-UINT WINAPI MsiOpenDatabaseW(LPCWSTR szDBPath, LPCWSTR szPersist, MSIHANDLE *phDB)
+UINT MSI_OpenDatabaseW(LPCWSTR szDBPath, LPCWSTR szPersist, MSIDATABASE **pdb)
 {
     IStorage *stg = NULL;
     HRESULT r;
-    MSIHANDLE handle;
-    MSIDATABASE *db;
-    UINT ret;
+    MSIDATABASE *db = NULL;
+    UINT ret = ERROR_FUNCTION_FAILED;
     LPWSTR szMode;
     STATSTG stat;
 
-    TRACE("%s %s %p\n",debugstr_w(szDBPath),debugstr_w(szPersist), phDB);
+    TRACE("%s %s\n",debugstr_w(szDBPath),debugstr_w(szPersist) );
 
-    if( !phDB )
+    if( !pdb )
         return ERROR_INVALID_PARAMETER;
 
     szMode = (LPWSTR) szPersist;
@@ -328,7 +288,6 @@ UINT WINAPI MsiOpenDatabaseW(LPCWSTR szDBPath, LPCWSTR szPersist, MSIHANDLE *phD
     if( FAILED( r ) )
     {
         FIXME("Failed to stat storage\n");
-        ret = ERROR_FUNCTION_FAILED;
         goto end;
     }
 
@@ -336,17 +295,15 @@ UINT WINAPI MsiOpenDatabaseW(LPCWSTR szDBPath, LPCWSTR szPersist, MSIHANDLE *phD
     {
         ERR("storage GUID is not a MSI database GUID %s\n",
              debugstr_guid(&stat.clsid) );
-        ret = ERROR_FUNCTION_FAILED;
         goto end;
     }
 
 
-    handle = alloc_msihandle( MSIHANDLETYPE_DATABASE, sizeof (MSIDATABASE),
-                              MSI_CloseDatabase, (void**) &db );
-    if( !handle )
+    db = alloc_msiobject( MSIHANDLETYPE_DATABASE, sizeof (MSIDATABASE),
+                              MSI_CloseDatabase );
+    if( !db )
     {
         FIXME("Failed to allocate a handle\n");
-        ret = ERROR_FUNCTION_FAILED;
         goto end;
     }
 
@@ -355,22 +312,78 @@ UINT WINAPI MsiOpenDatabaseW(LPCWSTR szDBPath, LPCWSTR szPersist, MSIHANDLE *phD
 
     db->storage = stg;
     db->mode = szMode;
-    /* db->strings = NULL;
-    db->first_table = NULL;
-    db->last_table = NULL; */
 
     ret = load_string_table( db );
     if( ret != ERROR_SUCCESS )
         goto end;
 
-    *phDB = handle;
-
+    msiobj_addref( &db->hdr );
     IStorage_AddRef( stg );
+    *pdb = db;
+
 end:
+    if( db )
+        msiobj_release( &db->hdr );
     if( stg )
         IStorage_Release( stg );
 
     return ret;
+}
+
+UINT WINAPI MsiOpenDatabaseW(LPCWSTR szDBPath, LPCWSTR szPersist, MSIHANDLE *phDB)
+{
+    MSIDATABASE *db;
+    UINT ret;
+
+    TRACE("%s %s %p\n",debugstr_w(szDBPath),debugstr_w(szPersist), phDB);
+
+    ret = MSI_OpenDatabaseW( szDBPath, szPersist, &db );
+    if( ret == ERROR_SUCCESS )
+    {
+        *phDB = alloc_msihandle( &db->hdr );
+        msiobj_release( &db->hdr );
+    }
+
+    return ret;
+}
+
+UINT WINAPI MsiOpenDatabaseA(LPCSTR szDBPath, LPCSTR szPersist, MSIHANDLE *phDB)
+{
+    HRESULT r = ERROR_FUNCTION_FAILED;
+    LPWSTR szwDBPath = NULL, szwPersist = NULL;
+    UINT len;
+
+    TRACE("%s %s %p\n", debugstr_a(szDBPath), debugstr_a(szPersist), phDB);
+
+    if( szDBPath )
+    {
+        len = MultiByteToWideChar( CP_ACP, 0, szDBPath, -1, NULL, 0 );
+        szwDBPath = HeapAlloc( GetProcessHeap(), 0, len * sizeof(WCHAR) );
+        if( !szwDBPath )
+            goto end;
+        MultiByteToWideChar( CP_ACP, 0, szDBPath, -1, szwDBPath, len );
+    }
+
+    if( HIWORD(szPersist) )
+    {
+        len = MultiByteToWideChar( CP_ACP, 0, szPersist, -1, NULL, 0 );
+        szwPersist = HeapAlloc( GetProcessHeap(), 0, len * sizeof(WCHAR) );
+        if( !szwPersist )
+            goto end;
+        MultiByteToWideChar( CP_ACP, 0, szPersist, -1, szwPersist, len );
+    }
+    else
+        szwPersist = (LPWSTR) szPersist;
+
+    r = MsiOpenDatabaseW( szwDBPath, szwPersist, phDB );
+
+end:
+    if( szwPersist )
+        HeapFree( GetProcessHeap(), 0, szwPersist );
+    if( szwDBPath )
+        HeapFree( GetProcessHeap(), 0, szwDBPath );
+
+    return r;
 }
 
 UINT WINAPI MsiOpenProductA(LPCSTR szProduct, MSIHANDLE *phProduct)
@@ -525,8 +538,9 @@ end:
 
 UINT WINAPI MsiInstallProductW(LPCWSTR szPackagePath, LPCWSTR szCommandLine)
 {
-   MSIHANDLE packagehandle;
+    MSIPACKAGE *package = NULL;
     UINT rc = ERROR_SUCCESS; 
+    MSIHANDLE handle;
 
     FIXME("%s %s\n",debugstr_w(szPackagePath), debugstr_w(szCommandLine));
 
@@ -534,13 +548,16 @@ UINT WINAPI MsiInstallProductW(LPCWSTR szPackagePath, LPCWSTR szCommandLine)
     if (rc != ERROR_SUCCESS)
         return rc;
 
-    rc = MsiOpenPackageW(szPackagePath,&packagehandle);
+    rc = MSI_OpenPackageW(szPackagePath,&package);
     if (rc != ERROR_SUCCESS)
         return rc;
 
-    ACTION_DoTopLevelINSTALL(packagehandle, szPackagePath, szCommandLine);
+    handle = alloc_msihandle( &package->hdr );
 
-    MsiCloseHandle(packagehandle);
+    rc = ACTION_DoTopLevelINSTALL(package, szPackagePath, szCommandLine);
+
+    MsiCloseHandle(handle);
+    msiobj_release( &package->hdr );
     return rc;
 }
 

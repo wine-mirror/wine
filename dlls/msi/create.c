@@ -56,7 +56,7 @@ static UINT CREATE_fetch_int( struct tagMSIVIEW *view, UINT row, UINT col, UINT 
     return ERROR_FUNCTION_FAILED;
 }
 
-static UINT CREATE_execute( struct tagMSIVIEW *view, MSIHANDLE record )
+static UINT CREATE_execute( struct tagMSIVIEW *view, MSIRECORD *record )
 {
     MSICREATEVIEW *cv = (MSICREATEVIEW*)view;
     create_col_info *col;
@@ -214,6 +214,7 @@ static UINT CREATE_delete( struct tagMSIVIEW *view )
     }
     HeapFree( GetProcessHeap(), 0, cv->name );
     HeapFree( GetProcessHeap(), 0, cv );
+    msiobj_release( &cv->db->hdr );
 
     return ERROR_SUCCESS;
 }
@@ -246,6 +247,7 @@ UINT CREATE_CreateView( MSIDATABASE *db, MSIVIEW **view, LPWSTR table,
     
     /* fill the structure */
     cv->view.ops = &create_ops;
+    msiobj_addref( &db->hdr );
     cv->db = db;
     cv->name = table;  /* FIXME: strdupW it? */
     cv->col_info = col_info;

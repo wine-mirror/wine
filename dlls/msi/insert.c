@@ -56,13 +56,13 @@ static UINT INSERT_fetch_int( struct tagMSIVIEW *view, UINT row, UINT col, UINT 
     return ERROR_FUNCTION_FAILED;
 }
 
-static UINT INSERT_execute( struct tagMSIVIEW *view, MSIHANDLE record )
+static UINT INSERT_execute( struct tagMSIVIEW *view, MSIRECORD *record )
 {
     MSIINSERTVIEW *iv = (MSIINSERTVIEW*)view;
     UINT n, type, val, r, row, col_count = 0;
     MSIVIEW *sv;
 
-    TRACE("%p %ld\n", iv, record );
+    TRACE("%p %p\n", iv, record );
 
     sv = iv->sv;
     if( !sv )
@@ -77,7 +77,7 @@ static UINT INSERT_execute( struct tagMSIVIEW *view, MSIHANDLE record )
     if( r )
         goto err;
 
-    n = MsiRecordGetFieldCount( record );
+    n = MSI_RecordGetFieldCount( record );
     if( n != col_count )
     {
         ERR("Number of fields do not match\n");
@@ -103,7 +103,7 @@ static UINT INSERT_execute( struct tagMSIVIEW *view, MSIHANDLE record )
         }
         else
         {
-            val = MsiRecordGetInteger( record, n );
+            val = MSI_RecordGetInteger( record, n );
             val |= 0x8000;
         }
         r = sv->ops->set_int( sv, row, n, val );
@@ -180,6 +180,7 @@ static UINT INSERT_delete( struct tagMSIVIEW *view )
         sv->ops->delete( sv );
     delete_value_list( iv->vals );
     HeapFree( GetProcessHeap(), 0, iv );
+    msiobj_release( &iv->db->hdr );
 
     return ERROR_SUCCESS;
 }
@@ -226,6 +227,7 @@ UINT INSERT_CreateView( MSIDATABASE *db, MSIVIEW **view, LPWSTR table,
 
     /* fill the structure */
     iv->view.ops = &insert_ops;
+    msiobj_addref( &db->hdr );
     iv->db = db;
     iv->vals = values;
     iv->bIsTemp = temp;

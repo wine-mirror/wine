@@ -1,7 +1,7 @@
 /*
  * Implementation of the Microsoft Installer (msi.dll)
  *
- * Copyright 2002 Mike McCormack for CodeWeavers
+ * Copyright 2002-2004 Mike McCormack for CodeWeavers
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -31,65 +31,108 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(msi);
 
-MSIHANDLEINFO *msihandletable[MSIMAXHANDLES];
-
-MSIHANDLE alloc_msihandle(UINT type, UINT size, msihandledestructor destroy, void **out)
+static CRITICAL_SECTION MSI_handle_cs;
+static CRITICAL_SECTION_DEBUG MSI_handle_cs_debug =
 {
-    MSIHANDLEINFO *info;
+    0, 0, &MSI_handle_cs,
+    { &MSI_handle_cs_debug.ProcessLocksList, 
+      &MSI_handle_cs_debug.ProcessLocksList },
+      0, 0, { 0, (DWORD)(__FILE__ ": MSI_handle_cs") }
+};
+static CRITICAL_SECTION MSI_handle_cs = { &MSI_handle_cs_debug, -1, 0, 0, 0, 0 };
+
+MSIOBJECTHDR *msihandletable[MSIMAXHANDLES];
+
+MSIHANDLE alloc_msihandle( MSIOBJECTHDR *obj )
+{
+    MSIHANDLE ret = 0;
     UINT i;
 
-    *out = NULL;
+    EnterCriticalSection( &MSI_handle_cs );
 
     /* find a slot */
     for(i=0; i<MSIMAXHANDLES; i++)
         if( !msihandletable[i] )
             break;
     if( (i>=MSIMAXHANDLES) || msihandletable[i] )
-        return 0;
+        goto out;
 
-    size += sizeof (MSIHANDLEINFO);
-    info = HeapAlloc( GetProcessHeap(), HEAP_ZERO_MEMORY, size );
-    if( !info )
-        return 0;
+    msiobj_addref( obj );
+    msihandletable[i] = obj;
+    ret = (MSIHANDLE) (i+1);
+out:
+    TRACE("%p -> %ld\n", obj, ret );
 
-    info->magic = MSIHANDLE_MAGIC;
-    info->type = type;
-    info->refcount = 1;
-    info->destructor = destroy;
-
-    msihandletable[i] = info;
-    *out = (void*) &info[1];
-
-    return (MSIHANDLE) (i+1);
+    LeaveCriticalSection( &MSI_handle_cs );
+    return ret;
 }
 
 void *msihandle2msiinfo(MSIHANDLE handle, UINT type)
 {
+    MSIOBJECTHDR *ret = NULL;
+
+    EnterCriticalSection( &MSI_handle_cs );
     handle--;
     if( handle<0 )
-        return NULL;
+        goto out;
     if( handle>=MSIMAXHANDLES )
-        return NULL;
+        goto out;
     if( !msihandletable[handle] )
-        return NULL;
+        goto out;
     if( msihandletable[handle]->magic != MSIHANDLE_MAGIC )
-        return NULL;
+        goto out;
     if( type && (msihandletable[handle]->type != type) )
-        return NULL;
+        goto out;
+    ret = msihandletable[handle];
+    msiobj_addref( ret );
+    
+out:
+    LeaveCriticalSection( &MSI_handle_cs );
 
-    return &msihandletable[handle][1];
+    return (void*) ret;
 }
 
-void msihandle_addref(MSIHANDLE handle)
+MSIHANDLE msiobj_findhandle( MSIOBJECTHDR *hdr )
 {
-    MSIHANDLEINFO *info = msihandle2msiinfo(handle, 0);
+    MSIHANDLE ret = 0;
+    UINT i;
 
-    TRACE("%lx\n",handle);
+    TRACE("%p\n", hdr);
+
+    EnterCriticalSection( &MSI_handle_cs );
+    for(i=0; (i<MSIMAXHANDLES) && !ret; i++)
+        if( msihandletable[i] == hdr )
+            ret = i+1;
+    LeaveCriticalSection( &MSI_handle_cs );
+
+    TRACE("%p -> %ld\n", hdr, ret);
+
+    msiobj_addref( hdr );
+    return ret;
+}
+
+void *alloc_msiobject(UINT type, UINT size, msihandledestructor destroy )
+{
+    MSIOBJECTHDR *info;
+
+    info = HeapAlloc( GetProcessHeap(), HEAP_ZERO_MEMORY, size );
+    if( info )
+    {
+        info->magic = MSIHANDLE_MAGIC;
+        info->type = type;
+        info->refcount = 1;
+        info->destructor = destroy;
+    }
+
+    return info;
+}
+
+void msiobj_addref( MSIOBJECTHDR *info )
+{
+    TRACE("%p\n", info);
 
     if( !info )
         return;
-
-    info--;
 
     if( info->magic != MSIHANDLE_MAGIC )
     {
@@ -100,36 +143,63 @@ void msihandle_addref(MSIHANDLE handle)
     info->refcount++;
 }
 
-UINT WINAPI MsiCloseHandle(MSIHANDLE handle)
+int msiobj_release( MSIOBJECTHDR *info )
 {
-    MSIHANDLEINFO *info = msihandle2msiinfo(handle, 0);
+    int ret;
 
-    TRACE("%lx\n",handle);
+    TRACE("%p\n",info);
 
     if( !info )
-        return ERROR_INVALID_HANDLE;
-
-    info--;
+        return -1;
 
     if( info->magic != MSIHANDLE_MAGIC )
     {
         ERR("Invalid handle!\n");
-        return ERROR_INVALID_HANDLE;
+        return -1;
     }
 
-    info->refcount--;
-    if (info->refcount > 0)
-        return ERROR_SUCCESS;
-
+    ret = info->refcount--;
+    if (info->refcount == 0)
+    {
     if( info->destructor )
-        info->destructor( &info[1] );
-
+            info->destructor( info );
     HeapFree( GetProcessHeap(), 0, info );
+        TRACE("object %p destroyed\n", info);
+    }
+
+    return ret;
+}
+
+UINT WINAPI MsiCloseHandle(MSIHANDLE handle)
+{
+    MSIOBJECTHDR *info;
+    UINT ret = ERROR_INVALID_HANDLE;
+
+    TRACE("%lx\n",handle);
+
+    EnterCriticalSection( &MSI_handle_cs );
+
+    info = msihandle2msiinfo(handle, 0);
+    if( !info )
+        goto out;
+
+    if( info->magic != MSIHANDLE_MAGIC )
+    {
+        ERR("Invalid handle!\n");
+        goto out;
+    }
+
+    msiobj_release( info );
     msihandletable[handle-1] = NULL;
+    ret = ERROR_SUCCESS;
 
-    TRACE("Destroyed\n");
+    TRACE("handle %lx Destroyed\n", handle);
+out:
+    LeaveCriticalSection( &MSI_handle_cs );
+    if( info )
+        msiobj_release( info );
 
-    return 0;
+    return ret;
 }
 
 UINT WINAPI MsiCloseAllHandles(void)

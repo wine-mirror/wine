@@ -142,12 +142,12 @@ static UINT ORDER_fetch_int( struct tagMSIVIEW *view, UINT row, UINT col, UINT *
     return ov->table->ops->fetch_int( ov->table, row, col, val );
 }
 
-static UINT ORDER_execute( struct tagMSIVIEW *view, MSIHANDLE record )
+static UINT ORDER_execute( struct tagMSIVIEW *view, MSIRECORD *record )
 {
     MSIORDERVIEW *ov = (MSIORDERVIEW*)view;
     UINT r, num_rows = 0, i;
 
-    TRACE("%p %ld\n", ov, record);
+    TRACE("%p %p\n", ov, record);
 
     if( !ov->table )
          return ERROR_FUNCTION_FAILED;
@@ -245,6 +245,7 @@ static UINT ORDER_delete( struct tagMSIVIEW *view )
     ov->reorder = NULL;
 
     HeapFree( GetProcessHeap(), 0, ov );
+    msiobj_release( &ov->db->hdr );
 
     return ERROR_SUCCESS;
 }
@@ -285,6 +286,7 @@ UINT ORDER_CreateView( MSIDATABASE *db, MSIVIEW **view, MSIVIEW *table )
     
     /* fill the structure */
     ov->view.ops = &order_ops;
+    msiobj_addref( &db->hdr );
     ov->db = db;
     ov->table = table;
     ov->reorder = NULL;

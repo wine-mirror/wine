@@ -131,7 +131,7 @@ static UINT INT_evaluate( UINT lval, UINT op, UINT rval )
 }
 
 static const WCHAR *STRING_evaluate( string_table *st,
-              MSIVIEW *table, UINT row, struct expr *expr, MSIHANDLE record )
+              MSIVIEW *table, UINT row, struct expr *expr, MSIRECORD *record )
 {
     UINT val = 0, r;
 
@@ -157,7 +157,7 @@ static const WCHAR *STRING_evaluate( string_table *st,
 }
 
 static UINT STRCMP_Evaluate( string_table *st, MSIVIEW *table, UINT row, 
-                             struct expr *cond, UINT *val, MSIHANDLE record )
+                             struct expr *cond, UINT *val, MSIRECORD *record )
 {
     int sr;
     const WCHAR *l_str, *r_str;
@@ -181,7 +181,7 @@ static UINT STRCMP_Evaluate( string_table *st, MSIVIEW *table, UINT row,
 }
 
 static UINT WHERE_evaluate( MSIDATABASE *db, MSIVIEW *table, UINT row, 
-                             struct expr *cond, UINT *val, MSIHANDLE record )
+                             struct expr *cond, UINT *val, MSIRECORD *record )
 {
     UINT r, lval, rval;
 
@@ -211,7 +211,7 @@ static UINT WHERE_evaluate( MSIDATABASE *db, MSIVIEW *table, UINT row,
         return STRCMP_Evaluate( db->strings, table, row, cond, val, record );
 
     case EXPR_WILDCARD:
-        *val = MsiRecordGetInteger( record, 1 );
+        *val = MSI_RecordGetInteger( record, 1 );
         return ERROR_SUCCESS;
 
     default:
@@ -223,13 +223,13 @@ static UINT WHERE_evaluate( MSIDATABASE *db, MSIVIEW *table, UINT row,
 
 }
 
-static UINT WHERE_execute( struct tagMSIVIEW *view, MSIHANDLE record )
+static UINT WHERE_execute( struct tagMSIVIEW *view, MSIRECORD *record )
 {
     MSIWHEREVIEW *wv = (MSIWHEREVIEW*)view;
     UINT count = 0, r, val, i;
     MSIVIEW *table = wv->table;
 
-    TRACE("%p %ld\n", wv, record);
+    TRACE("%p %p\n", wv, record);
 
     if( !table )
          return ERROR_FUNCTION_FAILED;
@@ -337,6 +337,7 @@ static UINT WHERE_delete( struct tagMSIVIEW *view )
         delete_expr( wv->cond );
 
     HeapFree( GetProcessHeap(), 0, wv );
+    msiobj_release( &wv->db->hdr );
 
     return ERROR_SUCCESS;
 }
@@ -458,6 +459,7 @@ UINT WHERE_CreateView( MSIDATABASE *db, MSIVIEW **view, MSIVIEW *table,
     
     /* fill the structure */
     wv->view.ops = &where_ops;
+    msiobj_addref( &db->hdr );
     wv->db = db;
     wv->table = table;
     wv->row_count = 0;
