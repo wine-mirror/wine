@@ -234,3 +234,94 @@ HPEN MFDRV_SelectPen( PHYSDEV dev, HPEN hpen )
     if (MFDRV_CreatePenIndirect( dev, hpen, &logpen )) return hpen;
     return 0;
 }
+
+
+/******************************************************************
+ *         MFDRV_CreatePalette
+ */
+static BOOL MFDRV_CreatePalette(PHYSDEV dev, HPALETTE hPalette, LOGPALETTE* logPalette, int sizeofPalette)
+{
+    int index;
+    BOOL ret;
+    METARECORD *mr;
+
+    mr = HeapAlloc( GetProcessHeap(), 0, sizeof(METARECORD) + sizeofPalette - sizeof(WORD) );
+    mr->rdSize = (sizeof(METARECORD) + sizeofPalette - sizeof(WORD)) / sizeof(WORD);
+    mr->rdFunction = META_CREATEPALETTE;
+    memcpy(&(mr->rdParm), logPalette, sizeofPalette);
+    if (!(MFDRV_WriteRecord( dev, mr, mr->rdSize * sizeof(WORD))))
+    {
+        HeapFree(GetProcessHeap(), 0, mr);
+        return FALSE;
+    }
+
+    mr->rdSize = sizeof(METARECORD) / sizeof(WORD);
+    mr->rdFunction = META_SELECTPALETTE;
+
+    if ((index = MFDRV_AddHandleDC( dev )) == -1) ret = FALSE;
+    else
+    {
+        *(mr->rdParm) = index;
+        ret = MFDRV_WriteRecord( dev, mr, mr->rdSize * sizeof(WORD));
+    }
+    HeapFree(GetProcessHeap(), 0, mr);
+    return ret;
+}
+
+
+/***********************************************************************
+ *           MFDRV_SelectPalette
+ */
+HPALETTE MFDRV_SelectPalette( PHYSDEV dev, HPALETTE hPalette, BOOL bForceBackground )
+{
+#define PALVERSION 0x0300
+
+    PLOGPALETTE logPalette;
+    WORD        wNumEntries = 0;
+    BOOL        creationSucceed;
+    int         sizeofPalette;
+
+    GetObjectA(hPalette, sizeof(WORD), (LPSTR) &wNumEntries);
+
+    if (wNumEntries == 0) return 0;
+
+    sizeofPalette = sizeof(LOGPALETTE) + ((wNumEntries-1) * sizeof(PALETTEENTRY));
+    logPalette = HeapAlloc( GetProcessHeap(), 0, sizeofPalette );
+
+    if (logPalette == NULL) return 0;
+
+    logPalette->palVersion = PALVERSION;
+    logPalette->palNumEntries = wNumEntries;
+
+    GetPaletteEntries(hPalette, 0, wNumEntries, logPalette->palPalEntry);
+
+    creationSucceed = MFDRV_CreatePalette( dev, hPalette, logPalette, sizeofPalette );
+
+    HeapFree( GetProcessHeap(), 0, logPalette );
+
+    if (creationSucceed)
+        return hPalette;
+
+    return 0;
+}
+
+/***********************************************************************
+ *           MFDRV_RealizePalette
+ */
+UINT MFDRV_RealizePalette(PHYSDEV dev, HPALETTE hPalette, BOOL dummy)
+{
+    char buffer[sizeof(METARECORD) - sizeof(WORD)];
+    METARECORD *mr = (METARECORD *)&buffer;
+
+    mr->rdSize = (sizeof(METARECORD) - sizeof(WORD)) / sizeof(WORD);
+    mr->rdFunction = META_REALIZEPALETTE;
+
+    if (!(MFDRV_WriteRecord( dev, mr, mr->rdSize * sizeof(WORD)))) return 0;
+
+    /* The return value is suppose to be the number of entries
+       in the logical palette mapped to the system palette or 0
+       if the function failed. Since it's not trivial here to
+       get that kind of information and since it's of little
+       use in the case of metafiles, we'll always return 1. */
+    return 1;
+}

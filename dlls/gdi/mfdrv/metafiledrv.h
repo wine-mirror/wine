@@ -118,6 +118,8 @@ extern HBRUSH MFDRV_SelectBrush( PHYSDEV dev, HBRUSH handle );
 extern BOOL MFDRV_SelectClipPath( PHYSDEV dev, INT iMode );
 extern HFONT MFDRV_SelectFont( PHYSDEV dev, HFONT handle );
 extern HPEN MFDRV_SelectPen( PHYSDEV dev, HPEN handle );
+extern HPALETTE MFDRV_SelectPalette( PHYSDEV dev, HPALETTE hPalette, BOOL bForceBackground);
+extern UINT MFDRV_RealizePalette(PHYSDEV dev, HPALETTE hPalette, BOOL primary);
 extern COLORREF MFDRV_SetBkColor( PHYSDEV dev, COLORREF color );
 extern INT MFDRV_SetBkMode( PHYSDEV dev, INT mode );
 extern INT MFDRV_SetMapMode( PHYSDEV dev, INT mode );

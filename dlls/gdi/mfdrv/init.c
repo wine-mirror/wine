@@ -97,7 +97,7 @@ static const DC_FUNCTIONS MFDRV_Funcs =
     MFDRV_Polyline,                  /* pPolyline */
     NULL,                            /* pPolylineTo */
     NULL,                            /* pRealizeDefaultPalette */
-    NULL,                            /* pRealizePalette */
+    MFDRV_RealizePalette,            /* pRealizePalette */
     MFDRV_Rectangle,                 /* pRectangle */
     NULL,                            /* pResetDC */
     MFDRV_RestoreDC,                 /* pRestoreDC */
@@ -109,7 +109,7 @@ static const DC_FUNCTIONS MFDRV_Funcs =
     MFDRV_SelectBrush,               /* pSelectBrush */
     MFDRV_SelectClipPath,            /* pSelectClipPath */
     MFDRV_SelectFont,                /* pSelectFont */
-    NULL,                            /* pSelectPalette */
+    MFDRV_SelectPalette,             /* pSelectPalette */
     MFDRV_SelectPen,                 /* pSelectPen */
     NULL,                            /* pSetBitmapBits */
     MFDRV_SetBkColor,                /* pSetBkColor */

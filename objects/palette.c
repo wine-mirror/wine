@@ -677,7 +677,7 @@ static BOOL PALETTE_DeleteObject( HGDIOBJ handle, void *obj )
  */
 HPALETTE WINAPI GDISelectPalette( HDC hdc, HPALETTE hpal, WORD wBkg)
 {
-    HPALETTE prev;
+    HPALETTE ret;
     DC *dc;
 
     TRACE("%p %p\n", hdc, hpal );
@@ -688,11 +688,16 @@ HPALETTE WINAPI GDISelectPalette( HDC hdc, HPALETTE hpal, WORD wBkg)
       return 0;
     }
     if (!(dc = DC_GetDCPtr( hdc ))) return 0;
-    prev = dc->hPalette;
-    dc->hPalette = hpal;
+    ret = dc->hPalette;
+    if (dc->funcs->pSelectPalette) hpal = dc->funcs->pSelectPalette( dc->physDev, hpal, FALSE );
+    if (hpal)
+    {
+        dc->hPalette = hpal;
+        if (!wBkg) hPrimaryPalette = hpal;
+    }
+    else ret = 0;
     GDI_ReleaseObj( hdc );
-    if (!wBkg) hPrimaryPalette = hpal;
-    return prev;
+    return ret;
 }
 
 
