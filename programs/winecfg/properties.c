@@ -34,6 +34,7 @@ static VERSION_DESC sWinVersions[] = {
     {"win98", "Windows 98"},
     {"winme", "Windows ME"},
     {"win2k", "Windows 2000"},
+    {"win2k3", "Windows 2003"},
     {"winxp", "Windows XP"},
     {"", ""}
 };
