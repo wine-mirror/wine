@@ -1486,7 +1486,14 @@ DWORD WINAPI GetSecurityInfoExW(
  */
 VOID WINAPI BuildTrusteeWithSidA(PTRUSTEEA pTrustee, PSID pSid)
 {
-    FIXME("%p %p\n", pTrustee, pSid);
+    TRACE("%p %p\n", pTrustee, pSid);
+
+    pTrustee->pMultipleTrustee = NULL;
+    pTrustee->MultipleTrusteeOperation = NO_MULTIPLE_TRUSTEE;
+    pTrustee->TrusteeForm = NO_MULTIPLE_TRUSTEE;
+    pTrustee->TrusteeType = TRUSTEE_IS_UNKNOWN;
+    pTrustee->TrusteeType = TRUSTEE_IS_UNKNOWN;
+    pTrustee->ptstrName = (LPSTR) pSid;
 }
 
 /******************************************************************************
@@ -1494,7 +1501,14 @@ VOID WINAPI BuildTrusteeWithSidA(PTRUSTEEA pTrustee, PSID pSid)
  */
 VOID WINAPI BuildTrusteeWithSidW(PTRUSTEEW pTrustee, PSID pSid)
 {
-    FIXME("%p %p\n", pTrustee, pSid);
+    TRACE("%p %p\n", pTrustee, pSid);
+
+    pTrustee->pMultipleTrustee = NULL;
+    pTrustee->MultipleTrusteeOperation = NO_MULTIPLE_TRUSTEE;
+    pTrustee->TrusteeForm = NO_MULTIPLE_TRUSTEE;
+    pTrustee->TrusteeType = TRUSTEE_IS_UNKNOWN;
+    pTrustee->TrusteeType = TRUSTEE_IS_UNKNOWN;
+    pTrustee->ptstrName = (LPWSTR) pSid;
 }
 
 /******************************************************************************

@@ -24,6 +24,7 @@
 #include "windef.h"
 #include "winbase.h"
 #include "winerror.h"
+#include "aclapi.h"
 
 typedef BOOL (WINAPI *fnConvertSidToStringSidA)( PSID pSid, LPSTR *str );
 typedef BOOL (WINAPI *fnConvertSidToStringSidW)( PSID pSid, LPWSTR *str );
@@ -53,9 +54,34 @@ void test_sid()
     ok( r, "failed to convert sid\n" );
     ok( !lstrcmpW( str, refstr ), "incorrect sid\n" );
     LocalFree( str );
+    FreeSid( psid );
+}
+
+void test_trustee()
+{
+    TRUSTEE trustee;
+    PSID psid;
+    DWORD r;
+
+    SID_IDENTIFIER_AUTHORITY auth = { {0x11,0x22,0,0,0, 0} };
+
+    r = AllocateAndInitializeSid( &auth, 1, 42, 0,0,0,0,0,0,0,&psid );
+    ok( r, "failed to init SID\n" );
+
+    memset( &trustee, 0xff, sizeof trustee );
+    BuildTrusteeWithSidA( &trustee, psid );
+
+    ok( trustee.pMultipleTrustee == NULL, "pMultipleTrustee wrong\n");
+    ok( trustee.MultipleTrusteeOperation == NO_MULTIPLE_TRUSTEE, 
+        "MultipleTrusteeOperation wrong\n");
+    ok( trustee.TrusteeForm == TRUSTEE_IS_SID, "TrusteeForm wrong\n");
+    ok( trustee.TrusteeType == TRUSTEE_IS_UNKNOWN, "TrusteeType wrong\n");
+    ok( trustee.ptstrName == (LPSTR) psid, "ptstrName wrong\n" );
+    FreeSid( psid );
 }
 
 START_TEST(security)
 {
     test_sid();
+    test_trustee();
 }

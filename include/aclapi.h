@@ -72,6 +72,10 @@ void BuildTrusteeWithObjectsAndSidW( PTRUSTEEW,
     POBJECTS_AND_SID, GUID*, GUID*, PSID );
 #define     BuildTrusteeWithObjectsAndSid WINELIB_NAME_AW(BuildTrusteeWithObjectsAndSid)
 
+VOID WINAPI BuildTrusteeWithSidA(PTRUSTEEA pTrustee, PSID pSid);
+VOID WINAPI BuildTrusteeWithSidW(PTRUSTEEW pTrustee, PSID pSid);
+#define     BuildTrusteeWithSid WINELIB_NAME_AW(BuildTrusteeWithSid)
+
 #ifdef __cplusplus
 }
 #endif
