@@ -12,6 +12,7 @@
 @ stub DeleteUrlCacheContainerW
 @ stdcall DeleteUrlCacheEntry(str)
 @ stdcall DeleteUrlCacheGroup(double long ptr) DeleteUrlCacheGroup
+@ stdcall DetectAutoProxyUrl(str long long)
 @ stdcall DllInstall(long ptr) WININET_DllInstall
 @ stub FindCloseUrlCache
 @ stub FindFirstUrlCacheContainerA

@@ -189,6 +189,23 @@ BOOL WINAPI InternetInitializeAutoProxyDll(DWORD dwReserved)
     return FALSE;
 }
 
+/***********************************************************************
+ *           DetectAutoProxyUrl   (WININET.@)
+ *
+ * Auto detect the proxy url
+ *
+ * RETURNS
+ *     FALSE on failure
+ *
+ */
+BOOL WINAPI DetectAutoProxyUrl(LPSTR lpszAutoProxyUrl,
+	DWORD dwAutoProxyUrlLength, DWORD dwDetectFlags)
+{
+    FIXME("STUB\n");
+    INTERNET_SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
+    return FALSE;
+}
+
 
 /***********************************************************************
  *           InternetOpenA   (WININET.@)
