@@ -115,10 +115,12 @@ static void test_default_printer(void)
 
 static void test_printer_directory(void)
 {   LPBYTE buffer = NULL;
-    DWORD  cbBuf, pcbNeeded;
+    DWORD  cbBuf = 0, pcbNeeded = 0;
     BOOL   res;
 
-    (void) GetPrinterDriverDirectoryA( NULL, NULL, 1, NULL, 0, &cbBuf);
+    res = GetPrinterDriverDirectoryA( NULL, NULL, 1, NULL, 0, &cbBuf);
+    trace("GetPrinterDriverDirectoryA: first call returned 0x%04x, "
+	  "buffer size 0x%08lx\n", res, cbBuf);
 
     buffer = HeapAlloc( GetProcessHeap(), 0, cbBuf*2);
 
