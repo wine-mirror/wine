@@ -79,7 +79,7 @@ RPCRT4_LibMain (HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
  *
  *  S_OK if successful.
  */
-RPC_STATUS RPC_ENTRY UuidCreate(UUID *Uuid)
+RPC_STATUS WINAPI UuidCreate(UUID *Uuid)
 {
    static char has_init = 0;
    unsigned char a[6];

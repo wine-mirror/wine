@@ -2759,7 +2759,7 @@ BOOL WINAPI SetCommConfig(
 }
 
 /***********************************************************************
- *           GetCommProperties   (KERNEL32.286)
+ *           SetDefaultCommConfigA   (KERNEL32.@)
  */
 BOOL WINAPI SetDefaultCommConfigA(
 	LPCSTR lpszDevice, 
