@@ -1130,21 +1130,90 @@ static void WIN_SendDestroyMsg( WND* pWnd )
 
     if( CARET_GetHwnd() == pWnd->hwndSelf ) DestroyCaret();
     CLIPBOARD_GetDriver()->pResetOwner( pWnd, TRUE ); 
-  
+
+    /*
+     * Send the WM_DESTROY to the window.
+     */
     SendMessageA( pWnd->hwndSelf, WM_DESTROY, 0, 0);
 
-    if( IsWindow(pWnd->hwndSelf) )
+    /*
+     * This WM_DESTROY message can trigger re-entrant calls to DestroyWindow
+     * make sure that the window still exists when we come back.
+     */
+    if (IsWindow(pWnd->hwndSelf))
     {
-	WND* pChild = WIN_LockWndPtr(pWnd->child);
-	while( pChild )
+      HWND* pWndArray = NULL;
+      WND*  pChild    = NULL;
+      int   nKidCount = 0;
+
+      /*
+       * Now, if the window has kids, we have to send WM_DESTROY messages 
+       * recursively to it's kids. It seems that those calls can also
+       * trigger re-entrant calls to DestroyWindow for the kids so we must 
+       * protect against corruption of the list of siblings. We first build
+       * a list of HWNDs representing all the kids.
+       */
+      pChild = WIN_LockWndPtr(pWnd->child);
+      while( pChild )
+      {
+	nKidCount++;
+	WIN_UpdateWndPtr(&pChild,pChild->next);
+      }
+
+      /*
+       * If there are no kids, we're done.
+       */
+      if (nKidCount==0)
+	return;
+
+      pWndArray = HeapAlloc(GetProcessHeap(), 0, nKidCount*sizeof(HWND));
+
+      /*
+       * Sanity check
+       */
+      if (pWndArray==NULL)
+	return;
+
+      /*
+       * Now, enumerate all the kids in a list, since we wait to make the SendMessage
+       * call, our linked list of siblings should be safe.
+       */
+      nKidCount = 0;
+      pChild = WIN_LockWndPtr(pWnd->child);
+      while( pChild )
+      {
+	pWndArray[nKidCount] = pChild->hwndSelf;
+	nKidCount++;
+	WIN_UpdateWndPtr(&pChild,pChild->next);
+      }
+
+      /*
+       * Now that we have a list, go through that list again and send the destroy
+       * message to those windows. We are using the HWND to retrieve the
+       * WND pointer so we are effectively checking that all the kid windows are
+       * still valid before sending the message.
+       */
+      while (nKidCount>0)
+      {
+	pChild = WIN_FindWndPtr(pWndArray[nKidCount]);
+
+	if (pChild!=NULL)
 	{
-	    WIN_SendDestroyMsg( pChild );
-            WIN_UpdateWndPtr(&pChild,pChild->next);
+	  WIN_SendDestroyMsg( pChild );
+	  WIN_ReleaseWndPtr(pChild);	  
 	}
-	WIN_CheckFocus(pWnd);
+       
+	nKidCount--;
+      }
+
+      /*
+       * Cleanup
+       */
+      HeapFree(GetProcessHeap(), 0, pWndArray);
+      WIN_CheckFocus(pWnd);	
     }
     else
-	WARN(win, "\tdestroyed itself while in WM_DESTROY!\n");
+      WARN(win, "\tdestroyed itself while in WM_DESTROY!\n");
 }
 
 
