@@ -274,6 +274,7 @@ void select_loop(void)
                     break;
                 }
             }
+            if (!active_users) break;  /* last user removed by a timeout */
         }
 
         sigprocmask( SIG_UNBLOCK, &sigset, NULL );

@@ -497,7 +497,7 @@ static void process_killed( struct process *process )
         /* last process died, close global handles */
         close_global_handles();
         /* this will cause the select loop to terminate */
-        if (!persistent_server) close_master_socket();
+        close_master_socket();
     }
 }
 

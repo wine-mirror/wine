@@ -198,7 +198,7 @@ extern void release_global_atom( atom_t atom );
 
   /* command-line options */
 extern int debug_level;
-extern int persistent_server;
+extern int master_socket_timeout;
 
   /* server start time used for GetTickCount() */
 extern unsigned int server_start_ticks;

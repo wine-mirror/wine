@@ -60,12 +60,12 @@
 
 struct master_socket
 {
-    struct object       obj;         /* object header */
+    struct object        obj;         /* object header */
+    struct timeout_user *timeout;    /* timeout on last process exit */
 };
 
 static void master_socket_dump( struct object *obj, int verbose );
 static void master_socket_poll_event( struct object *obj, int event );
-static void master_socket_destroy( struct object *obj );
 
 static const struct object_ops master_socket_ops =
 {
@@ -81,7 +81,7 @@ static const struct object_ops master_socket_ops =
     no_flush,                      /* flush */
     no_get_file_info,              /* get_file_info */
     NULL,                          /* queue_async */
-    master_socket_destroy          /* destroy */
+    no_destroy                     /* destroy */
 };
 
 
@@ -447,6 +447,11 @@ static void master_socket_poll_event( struct object *obj, int event )
         int len = sizeof(dummy);
         int client = accept( master_socket->obj.fd, (struct sockaddr *) &dummy, &len );
         if (client == -1) return;
+        if (sock->timeout)
+        {
+            remove_timeout_user( sock->timeout );
+            sock->timeout = NULL;
+        }
         fcntl( client, F_SETFL, O_NONBLOCK );
         create_process( client );
     }
@@ -457,11 +462,6 @@ static void socket_cleanup(void)
 {
     static int do_it_once;
     if (!do_it_once++) unlink( SOCKETNAME );
-}
-
-static void master_socket_destroy( struct object *obj )
-{
-    socket_cleanup();
 }
 
 /* return the configuration directory ($WINEPREFIX or $HOME/.wine) */
@@ -557,6 +557,7 @@ void open_master_socket(void)
 
     if (!(master_socket = alloc_object( &master_socket_ops, fd )))
         fatal_error( "out of memory\n" );
+    master_socket->timeout = NULL;
     set_select_events( &master_socket->obj, POLLIN );
 
     /* setup msghdr structure constant fields */
@@ -581,12 +582,28 @@ void open_master_socket(void)
     }
 }
 
-/* close the master socket and stop waiting for new clients */
-void close_master_socket(void)
+/* master socket timer expiration handler */
+static void close_socket_timeout( void *arg )
 {
     /* if a new client is waiting, we keep on running */
     if (!check_select_events( master_socket->obj.fd, POLLIN ))
         release_object( master_socket );
+}
+
+/* close the master socket and stop waiting for new clients */
+void close_master_socket(void)
+{
+    struct timeval when;
+
+    if (master_socket_timeout == -1) return;  /* just keep running forever */
+
+    if (master_socket_timeout)
+    {
+        gettimeofday( &when, 0 );
+        add_timeout( &when, master_socket_timeout * 1000 );
+        master_socket->timeout = add_timeout_user( &when, close_socket_timeout, NULL );
+    }
+    else close_socket_timeout( NULL );  /* close it right away */
 }
 
 /* lock/unlock the master socket to stop accepting new clients */

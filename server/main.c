@@ -33,7 +33,7 @@
 
 /* command-line options */
 int debug_level = 0;
-int persistent_server = 0;
+int master_socket_timeout = 3;  /* master socket timeout in seconds, default is 3 s */
 
 /* parse-line args */
 /* FIXME: should probably use getopt, and add a (more complete?) help option */
@@ -43,7 +43,7 @@ static void usage(const char *exeName)
     fprintf(stderr, "\nusage: %s [options]\n\n", exeName);
     fprintf(stderr, "options:\n");
     fprintf(stderr, "   -d<n>  set debug level to <n>\n");
-    fprintf(stderr, "   -p     make server persistent\n");
+    fprintf(stderr, "   -p[n]  make server persistent, optionally for n seconds\n");
     fprintf(stderr, "   -h     display this help message\n");
     fprintf(stderr, "\n");
 }
@@ -66,7 +66,8 @@ static void parse_args( int argc, char *argv[] )
                 exit(0);
                 break;
             case 'p':
-                persistent_server = 1;
+                if (isdigit(argv[i][2])) master_socket_timeout = atoi( argv[i] + 2 );
+                else master_socket_timeout = -1;
                 break;
             default:
                 fprintf( stderr, "Unknown option '%s'\n", argv[i] );
