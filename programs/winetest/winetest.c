@@ -111,7 +111,7 @@ unsigned long perl_call_wine
     unsigned long ret;
     DWORD error, old_error;
 
-    if (debug)
+    if (debug > 1)
     {
         int i;
         fprintf(stderr,"    perl_call_wine(func=%p", proc);

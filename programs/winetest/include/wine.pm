@@ -1,14 +1,15 @@
-# --------------------------------------------------------------------------------
-# | Module:      wine.pm                                                         |
-# | ---------------------------------------------------------------------------- |
-# | Purpose:     Module to supply wrapper around and support for gateway to wine |
-# |              API functions                                                   |
-# --------------------------------------------------------------------------------
+# --------------------------------------------------------------------
+# Module:      wine.pm
+#
+# Purpose: Module to supply wrapper around and support for gateway to
+#          Windows API functions
+# --------------------------------------------------------------------
 
 package wine;
 
 use strict;
-use vars qw($VERSION @ISA @EXPORT @EXPORT_OK $AUTOLOAD
+use vars qw($VERSION @ISA @EXPORT @EXPORT_OK $AUTOLOAD $todo_level
+            $successes $failures $todo_successes $todo_failures
             %return_types %prototypes %loaded_modules);
 
 require Exporter;
@@ -23,6 +24,10 @@ require Exporter;
              alloc_callback
              assert
              hd
+             ok
+             todo
+             todo_wine
+             trace
              wc
              wclen
             );
@@ -32,8 +37,15 @@ bootstrap wine $VERSION;
 
 # Global variables
 $wine::err = 0;
-$wine::debug = 0;
+$wine::exit_status = 0;
+$wine::debug = defined($ENV{WINETEST_DEBUG}) ? $ENV{WINETEST_DEBUG} : 1;
+$wine::platform = defined($ENV{WINETEST_PLATFORM}) ? $ENV{WINETEST_PLATFORM} : "windows";
 
+$todo_level = 0;
+$successes = 0;
+$failures = 0;
+$todo_successes = 0;
+$todo_failures = 0;
 %loaded_modules = ();
 
 # --------------------------------------------------------------
@@ -87,7 +99,7 @@ sub AUTOLOAD
     # --------------------------------------------------------------
     if (defined($prototypes{$func}))
     {
-        return call( $func, $wine::debug, @_ );
+        return call( $func, @_ );
     }
     die "Function '$func' not declared";
 } # End AUTOLOAD
@@ -99,35 +111,36 @@ sub AUTOLOAD
 # | -------------------------------------------------------------------- |
 # | Purpose:     Call a wine API function                                |
 # |                                                                      |
-# | Usage:       call FUNCTION, DEBUG, [ARGS ...]
+# | Usage:       call FUNCTION, [ARGS ...]
 # |                                                                      |
 # | Returns:     value returned by API function called                   |
 # ------------------------------------------------------------------------
-sub call
+sub call($@)
 {
-    my ($function,$debug,@args) = @_;
+    my ($function,@args) = @_;
     my ($funcptr,$ret_type) = @{$prototypes{$function}};
 
-    if ($debug)
+    if ($wine::debug > 1)
     {
-        print STDERR "==== [$function() / " . scalar (@args) . " arg(s)]";
+        print STDERR "==== Call $function(";
         for (@args)
         {
             print STDERR " ", +(ref () ? ("(" . ${$_} . ")") : "$_");
         }
-        print STDERR " ====\n";
+        print STDERR " " if (scalar @args);
+        print STDERR ")\n";
     }
 
     # Now call call_wine_API(), which will turn around and call
     # the appropriate wine API function.
-    my ($err,$r) = call_wine_API( $funcptr, $ret_type, $debug, @args );
+    my ($err,$r) = call_wine_API( $funcptr, $ret_type, $wine::debug-1, @args );
 
-    if ($debug)
+    if ($wine::debug > 1)
     {
-        my $z = "[$function()] -> ";
-        $z .= defined($r) ? sprintf("[0x%x/%d]", $r, $r) : "[void]";
-        if (defined($err)) { $z .= sprintf " err=%d", $err; }
-        print STDERR "==== $z ====\n";
+        print STDERR "==== Ret  $function()";
+        if (defined($r)) { printf STDERR " ret=0x%x", $r; }
+        if (defined($err)) { printf STDERR " err=%d", $err; }
+        print STDERR "\n";
     }
 
     # Pass the return value back
@@ -139,7 +152,7 @@ sub call
 # ----------------------------------------------------------------------
 # | Subroutine:  declare
 # ----------------------------------------------------------------------
-sub declare
+sub declare($%)
 {
     my ($module, %list) = @_;
     my ($handle, $func);
@@ -180,7 +193,7 @@ sub declare
 # |     really suitable for anything but to be passed to a wine API      |
 # |     function ...                                                     |
 # ------------------------------------------------------------------------
-sub alloc_callback
+sub alloc_callback($@)
 {
     # ----------------------------------------------
     # | Locals                                     |
@@ -215,7 +228,7 @@ sub alloc_callback
 # |                                                                    |
 # | Returns:     (none)                                                |
 # ----------------------------------------------------------------------
-sub hd
+sub hd($;$)
 {
     # Locals
     my  ($buf, $length);
@@ -323,7 +336,7 @@ sub hd
 # |                                                                    |
 # | Returns:     string generated                                      |
 # ----------------------------------------------------------------------
-sub wc
+sub wc($)
 {
     return pack("S*",unpack("C*",shift));
 } # End sub wc
@@ -339,7 +352,7 @@ sub wc
 # |                                                                    |
 # | Returns:     string generated                                      |
 # ----------------------------------------------------------------------
-sub wclen
+sub wclen($)
 {
     # Locals
     my  $str = shift;
@@ -362,26 +375,134 @@ sub wclen
 
 
 # ----------------------------------------------------------------------
-# | Subroutine:  assert                                                |
-# |                                                                    |
-# | Purpose:     Print warning if something fails                      |
-# |                                                                    |
-# | Usage:       assert CONDITION                                      |
-# |                                                                    |
-# | Returns:     (none)                                                |
+# Subroutine:  ok
+#
+# Purpose:     Print warning if something fails
+#
+# Usage:       ok CONDITION [DESCRIPTION]
+#
+# Returns:     (none)
 # ----------------------------------------------------------------------
-sub assert
+sub ok($;$)
 {
-    # Locals
-    my  $assertion = shift;
-    my  ($fn, $line);
+    my $assertion = shift;
+    my $description = shift;
+    my ($filename, $line) = (caller (0))[1,2];
+    if ($todo_level)
+    {
+        if ($assertion)
+        {
+            print STDERR ("$filename:$line: Test succeeded inside todo block" .
+                          ($description ? ": $description" : "") . "\n");
+            $todo_failures++;
+        }
+        else { $todo_successes++; }
+    }
+    else
+    {
+        if (!$assertion)
+        {
+            print STDERR ("$filename:$line: Test failed" .
+                          ($description ? ": $description" : "") . "\n");
+            $failures++;
+        }
+        else { $successes++; }
+    }
+}
 
-# Begin sub assert
 
-    ($fn, $line) = (caller (0))[1,2];
-    unless ($assertion) { print "Assertion failed [$fn, line $line]\n"; exit 1; }
+# ----------------------------------------------------------------------
+# Subroutine:  assert
+#
+# Purpose:     Print error and die if something fails
+#
+# Usage:       assert CONDITION [DESCRIPTION]
+#
+# Returns:     (none)
+# ----------------------------------------------------------------------
+sub assert($;$)
+{
+    my $assertion = shift;
+    my $description = shift;
+    my ($filename, $line) = (caller (0))[1,2];
+    unless ($assertion)
+    {
+        die ("$filename:$line: Assertion failed" . ($description ? ": $description" : "") . "\n");
+    }
+}
 
-} # End sub assert
+
+# ----------------------------------------------------------------------
+# Subroutine:  trace
+#
+# Purpose:     Print debugging traces
+#
+# Usage:       trace format [arguments]
+# ----------------------------------------------------------------------
+sub trace($@)
+{
+    return unless ($wine::debug > 0);
+    my $format = shift;
+    my $filename = (caller(0))[1];
+    $filename =~ s!.*/!!;
+    printf "trace:$filename $format", @_;
+}
+
+# ----------------------------------------------------------------------
+# Subroutine:  todo
+#
+# Purpose:     Specify a block of code as todo for a given platform
+#
+# Usage:       todo name coderef
+# ----------------------------------------------------------------------
+sub todo($$)
+{
+    my ($platform,$code) = @_;
+    if ($wine::platform eq $platform)
+    {
+        $todo_level++;
+        eval &$code;
+        $todo_level--;
+    }
+    else
+    {
+        eval &$code;
+    }
+}
+
+
+# ----------------------------------------------------------------------
+# Subroutine:  todo_wine
+#
+# Purpose:     Specify a block of test as todo for the Wine platform
+#
+# Usage:       todo_wine { code }
+# ----------------------------------------------------------------------
+sub todo_wine(&)
+{
+    my $code = shift;
+    todo( "wine", $code );
+}
+
+
+# ----------------------------------------------------------------------
+# Subroutine:  END
+#
+# Purpose:     Called at the end of execution, print results summary
+# ----------------------------------------------------------------------
+END
+{
+    return if $?;  # got some other error already
+    if ($wine::debug > 0)
+    {
+        my $filename = (caller(0))[1];
+        printf STDERR ("%s: %d tests executed, %d marked as todo, %d %s.\n",
+                       $filename, $successes + $failures + $todo_successes + $todo_failures,
+                       $todo_successes, $failures + $todo_failures,
+                       ($failures + $todo_failures != 1) ? "failures" : "failure" );
+    }
+    $? = ($failures + $todo_failures < 255) ? $failures + $todo_failures : 255;
+}
 
 
 # Autoload methods go after =cut, and are processed by the autosplit program.
