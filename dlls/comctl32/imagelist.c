@@ -2292,6 +2292,8 @@ ImageList_Remove (HIMAGELIST himl, INT i)
     HDC     hdcSrc, hdcDst;
     INT     cxNew, nCount;
 
+    TRACE("(himl=%p i=%d)\n", himl, i);
+
     if (himl == NULL) {
         ERR("Invalid image list handle!\n");
         return FALSE;
@@ -2302,14 +2304,13 @@ ImageList_Remove (HIMAGELIST himl, INT i)
         return FALSE;
     }
 
-    if (himl->cCurImage == 0) {
-        ERR("image list is already empty!\n");
-        return FALSE;
-    }
-
     if (i == -1) {
         /* remove all */
-        TRACE("remove all!\n");
+	if (himl->cCurImage == 0) {
+	    /* remove all on empty ImageList is allowed */
+	    TRACE("remove all on empty ImageList!\n");
+	    return TRUE;
+	}
 
         himl->cMaxImage = himl->cInitial + himl->cGrow;
         himl->cCurImage = 0;
@@ -3051,4 +3052,3 @@ ImageList_Write (HIMAGELIST himl, LPSTREAM pstm)
 
     return TRUE;
 }
-
