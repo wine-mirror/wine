@@ -298,6 +298,7 @@ _invoke_onereq(wine_rpc_request *req) {
     msg.cbBuffer	= req->reqh.cbBuffer;
     req->state		= REQSTATE_INVOKING;
     req->resph.retval	= IRpcStubBuffer_Invoke(stub,&msg,NULL);
+    IUnknown_Release(stub);
     req->Buffer		= msg.Buffer;
     req->resph.cbBuffer	= msg.cbBuffer;
     reqtype 		= REQTYPE_RESPONSE;
