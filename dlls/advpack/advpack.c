@@ -31,6 +31,9 @@
 WINE_DEFAULT_DEBUG_CHANNEL(advpack);
 
 
+/***********************************************************************
+ *           DllMain (ADVPACK.@)
+ */
 BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
 {
     TRACE("(%p, %ld, %p)\n",hinstDLL, fdwReason, lpvReserved);
@@ -42,7 +45,7 @@ BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
 }
 
 /***********************************************************************
- *		LaunchINFSection  (SETUPAPI.@)
+ *		LaunchINFSection  (ADVPACK.@)
  */
 void WINAPI LaunchINFSection( HWND hWnd, HINSTANCE hInst, LPCSTR cmdline, INT show )
 {
@@ -50,7 +53,7 @@ void WINAPI LaunchINFSection( HWND hWnd, HINSTANCE hInst, LPCSTR cmdline, INT sh
 }
 
 /***********************************************************************
- *		LaunchINFSectionEx  (SETUPAPI.@)
+ *		LaunchINFSectionEx  (ADVPACK.@)
  */
 void WINAPI LaunchINFSectionEx( HWND hWnd, HINSTANCE hInst, LPCSTR cmdline, INT show )
 {

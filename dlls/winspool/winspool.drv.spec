@@ -107,7 +107,6 @@
 @ stdcall GetPrinterDriverDirectoryW(wstr wstr long ptr long ptr)
 @ stdcall GetPrinterDriverW(long str long ptr long ptr)
 @ stdcall GetPrinterW(long long ptr long ptr)
-@ stub InitializeDll
 @ stdcall OpenPrinterA(str ptr ptr)
 @ stdcall OpenPrinterW(wstr ptr ptr)
 @ stub PlayGdiScriptOnPrinterIC
