@@ -25,11 +25,21 @@
 #include "windef.h"
 #include "winbase.h"
 #include "winreg.h"
+#include "winnls.h"
 #include "winerror.h"
 #include "tapi.h"
 #include "wine/debug.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(tapi);
+
+/* registry keys */
+static const char szCountrylistKey[] =
+    "Software\\Microsoft\\Windows\\CurrentVersion\\Telephony\\Country List";
+static const char szLocationsKey[] =
+    "Software\\Microsoft\\Windows\\CurrentVersion\\Telephony\\Locations";
+static const char szCardsKey[] =
+    "Software\\Microsoft\\Windows\\CurrentVersion\\Telephony\\Cards";
+
 
 /***********************************************************************
  *		lineAccept (TAPI32.@)
@@ -304,9 +314,8 @@ DWORD WINAPI lineGetCountry(DWORD dwCountryID, DWORD dwAPIVersion, LPLINECOUNTRY
 	  dwCountryID, dwAPIVersion, lpLineCountryList,
 	  lpLineCountryList->dwTotalSize);
 
-    if(RegOpenKeyA(HKEY_LOCAL_MACHINE,
-		   "Software\\Microsoft\\Windows\\CurrentVersion\\Telephony\\Country List",
-		   &hkey) != ERROR_SUCCESS)
+    if(RegOpenKeyA(HKEY_LOCAL_MACHINE, szCountrylistKey, &hkey)
+            != ERROR_SUCCESS)
         return LINEERR_INIFILECORRUPT;
 
 
@@ -537,13 +546,386 @@ DWORD WINAPI lineGetStatusMessages(HLINE hLine, LPDWORD lpdwLineStatus, LPDWORD 
 
 /***********************************************************************
  *		lineGetTranslateCaps (TAPI32.@)
+ *
+ *      get address translate capabilities. Returns a LINETRANSLATECAPS
+ *      structure:
+ *
+ *      +-----------------------+
+ *      |TotalSize              |
+ *      |NeededSize             |
+ *      |UsedSize               |
+ *      +-----------------------+
+ *      |NumLocations           |
+ *      |LocationsListSize      |
+ *      |LocationsListOffset    | -+
+ *      |CurrentLocationID      |  |
+ *      +-----------------------+  |
+ *      |NumCards               |  |
+ *      |CardListSize           |  |
+ *      |CardListOffset         | -|--+
+ *      |CurrentPreferredCardID |  |  |
+ *      +-----------------------+  |  |
+ *      |                       | <+  |
+ *      |LINELOCATIONENTRY #1   |     |
+ *      |                       |     |
+ *      +-----------------------+     |
+ *      ~                       ~     |
+ *      +-----------------------+     |
+ *      |                       |     |
+ *      |LINELOCATIONENTRY      |     |
+ *      |          #NumLocations|     |
+ *      +-----------------------+     |
+ *      |                       | <---+
+ *      |LINECARDENTRY #1       |
+ *      |                       |
+ *      +-----------------------+
+ *      ~                       ~
+ *      +-----------------------+
+ *      |                       |
+ *      |LINECARDENTRY #NumCards|
+ *      |                       |
+ *      +-----------------------+
+ *      | room for strings named|
+ *      | in the structures     |
+ *      | above.                |
+ *      +-----------------------+
  */
-DWORD WINAPI lineGetTranslateCaps(HLINEAPP hLineApp, DWORD dwAPIVersion, LPLINETRANSLATECAPS lpTranslateCaps)
+DWORD WINAPI lineGetTranslateCaps(HLINEAPP hLineApp, DWORD dwAPIVersion,
+        LPLINETRANSLATECAPS lpTranslateCaps)
 {
-    FIXME("(%p, %08lx, %p): stub.\n", hLineApp, dwAPIVersion, lpTranslateCaps);
-    if(lpTranslateCaps->dwTotalSize >= sizeof(DWORD))
-        memset(&lpTranslateCaps->dwNeededSize, 0, lpTranslateCaps->dwTotalSize - sizeof(DWORD));
-    return 0;
+    HKEY hkLocations, hkCards, hkCardLocations, hsubkey;
+    int numlocations, numcards;
+    DWORD maxlockeylen,
+        maxcardkeylen;
+    char *loc_key_name = NULL;
+    char *card_key_name = NULL;
+    LPBYTE strptr;
+    int length;
+    int i;
+    DWORD lendword;
+    DWORD currentid;
+    LPLINELOCATIONENTRY pLocEntry;
+    LPLINECARDENTRY pCardEntry;
+    
+    TRACE("(%p, %08lx, %p (tot. size %ld)\n", hLineApp, dwAPIVersion,
+            lpTranslateCaps, lpTranslateCaps->dwTotalSize );
+    if( lpTranslateCaps->dwTotalSize < sizeof(LINETRANSLATECAPS))
+        return LINEERR_STRUCTURETOOSMALL;
+    if( RegCreateKeyA(HKEY_LOCAL_MACHINE, szLocationsKey, &hkLocations)
+            != ERROR_SUCCESS ) {
+        ERR("unexpected registry error 1.\n");
+        return LINEERR_INIFILECORRUPT;  
+    }
+    lendword = sizeof( DWORD);
+    if( RegQueryValueExA( hkLocations, "CurrentID", NULL, NULL,
+                (LPBYTE) &currentid, &lendword) != ERROR_SUCCESS )
+        currentid = -1;  /* change this later */
+    if(RegQueryInfoKeyA(hkLocations, NULL, NULL, NULL, NULL, &maxlockeylen,
+			NULL, NULL, NULL, NULL, NULL, NULL) != ERROR_SUCCESS) {
+        RegCloseKey(hkLocations);
+        ERR("unexpected registry error 2.\n");
+        return LINEERR_INIFILECORRUPT;
+    }
+    maxlockeylen++;
+    if( maxlockeylen < 10)
+        maxlockeylen = 10; /* need this also if there is no key */
+    loc_key_name = HeapAlloc( GetProcessHeap(), 0, maxlockeylen);
+    /* first time through: calculate needed space */
+    length=0;
+    i=0;
+    numlocations=0;
+    while( RegEnumKeyA(hkLocations, i, loc_key_name, maxlockeylen)
+            == ERROR_SUCCESS){
+        DWORD size_val;
+        i++;
+        if( strncasecmp(loc_key_name, "location", 8)  ||
+                (RegOpenKeyA(hkLocations, loc_key_name, &hsubkey)
+                 != ERROR_SUCCESS))
+            continue;
+        numlocations++;
+        length += sizeof(LINELOCATIONENTRY);
+        RegQueryValueExA(hsubkey, "Name",NULL,NULL,NULL,&size_val); 
+        length += size_val;
+        RegQueryValueExA(hsubkey, "AreaCode",NULL,NULL,NULL,&size_val); 
+        length += size_val;
+        RegQueryValueExA(hsubkey, "OutsideAccess",NULL,NULL,NULL,&size_val); 
+        length += size_val;
+        RegQueryValueExA(hsubkey, "LongDistanceAccess",NULL,NULL,NULL,&size_val); 
+        length += size_val;
+        RegQueryValueExA(hsubkey, "DisableCallWaiting",NULL,NULL,NULL,&size_val); 
+        length += size_val;
+        /* fixme: what about TollPrefixList???? */
+        RegCloseKey(hsubkey);
+    }
+    if(numlocations == 0) {
+        /* add one location */
+        if( RegCreateKeyA( hkLocations, "Location1", &hsubkey)
+                == ERROR_SUCCESS) {
+            DWORD dwval;
+            BYTE buf[10];
+            numlocations = 1;
+            length += sizeof(LINELOCATIONENTRY) + 20 ;
+            RegSetValueExA( hsubkey, "AreaCode", 0, REG_SZ, "010", 4);
+            GetLocaleInfoA( LOCALE_SYSTEM_DEFAULT, LOCALE_ICOUNTRY, buf, 8);
+            dwval = atoi(buf);
+            RegSetValueExA( hsubkey, "Country", 0, REG_DWORD, (LPBYTE)&dwval,
+                    sizeof(DWORD));
+            RegSetValueExA( hsubkey, "DisableCallWaiting", 0, REG_SZ, "", 1);
+            dwval = 1;  
+            RegSetValueExA( hsubkey, "Flags", 0, REG_DWORD, (LPBYTE)&dwval,
+                    sizeof(DWORD));
+            RegSetValueExA( hsubkey, "LongDistanceAccess", 0, REG_SZ, "", 1);
+            RegSetValueExA( hsubkey, "Name", 0, REG_SZ, "New Location", 13);
+            RegSetValueExA( hsubkey, "OutsideAccess", 0, REG_SZ, "", 1);
+            RegCloseKey(hsubkey);
+            dwval = 1;  
+            RegSetValueExA( hkLocations, "CurrentID", 0, REG_DWORD,
+                    (LPBYTE)&dwval, sizeof(DWORD));
+            dwval = 2;  
+            RegSetValueExA( hkLocations, "NextID", 0, REG_DWORD, (LPBYTE)&dwval,
+                    sizeof(DWORD));
+        }
+    }
+    /* do the card list */
+    numcards=0;
+    if( RegCreateKeyA(HKEY_CURRENT_USER, szCardsKey, &hkCards)
+            == ERROR_SUCCESS ) {
+        if(RegQueryInfoKeyA(hkCards, NULL, NULL, NULL, NULL, &maxcardkeylen,
+                NULL, NULL, NULL, NULL, NULL, NULL) == ERROR_SUCCESS) {
+            maxcardkeylen++;
+            if( maxcardkeylen < 6) maxcardkeylen = 6;
+            card_key_name = HeapAlloc(GetProcessHeap(), 0, maxcardkeylen);
+            i=0;
+            while( RegEnumKeyA(hkCards, i, card_key_name, maxcardkeylen) ==
+                    ERROR_SUCCESS){
+                DWORD size_val;
+                i++;
+                if( strncasecmp(card_key_name, "card", 4)  || ERROR_SUCCESS !=
+                        (RegOpenKeyA(hkCards, card_key_name, &hsubkey) ))
+                    continue;
+                numcards++;
+                length += sizeof(LINECARDENTRY);
+                RegQueryValueExA(hsubkey, "Name",NULL,NULL,NULL,&size_val); 
+                length += size_val;
+                RegQueryValueExA(hsubkey, "LocalRule",NULL,NULL,NULL,&size_val); 
+                length += size_val;
+                RegQueryValueExA(hsubkey, "LDRule",NULL,NULL,NULL,&size_val); 
+                length += size_val;
+                RegQueryValueExA(hsubkey, "InternationalRule",NULL,NULL,NULL,
+                        &size_val); 
+                length += size_val;
+                RegCloseKey(hsubkey);
+            }
+        }
+        /* add one card (direct call) */
+        if (numcards == 0 &&
+                ERROR_SUCCESS == RegCreateKeyA( hkCards, "Card1", &hsubkey)) {
+            DWORD dwval;
+            numcards = 1;
+            length += sizeof(LINECARDENTRY) + 22 ;
+            RegSetValueExA( hsubkey, "Name", 0, REG_SZ, "None (Direct Call)", 19);
+            dwval = 1;  
+            RegSetValueExA( hsubkey, "Flags", 0, REG_DWORD, (LPBYTE)&dwval,
+                    sizeof(DWORD));
+            RegSetValueExA( hsubkey, "InternationalRule", 0, REG_SZ, "", 1);
+            RegSetValueExA( hsubkey, "LDRule", 0, REG_SZ, "", 1);
+            RegSetValueExA( hsubkey, "LocalRule", 0, REG_SZ, "", 1);
+            RegCloseKey(hsubkey);
+            dwval = 2;  
+            RegSetValueExA( hkCards, "NextID", 0, REG_DWORD, (LPBYTE)&dwval,
+                    sizeof(DWORD));
+        }
+    } else hkCards = 0;  /* should realy fail */
+    /* check if sufficient room is available */
+    lpTranslateCaps->dwNeededSize =  sizeof(LINETRANSLATECAPS) + length;
+    if ( lpTranslateCaps->dwNeededSize > lpTranslateCaps->dwTotalSize ) {
+        RegCloseKey( hkLocations);
+        if( hkCards) RegCloseKey( hkCards);
+        HeapFree(GetProcessHeap(), 0, loc_key_name);
+        HeapFree(GetProcessHeap(), 0, card_key_name);
+        lpTranslateCaps->dwUsedSize = sizeof(LINETRANSLATECAPS);
+        TRACE("Insufficient space: total %ld needed %ld used %ld\n",
+                lpTranslateCaps->dwTotalSize,
+                lpTranslateCaps->dwNeededSize,
+                lpTranslateCaps->dwUsedSize);
+        return  0;
+    }
+    /* fill in the LINETRANSLATECAPS structure */
+    lpTranslateCaps->dwUsedSize = lpTranslateCaps->dwNeededSize;
+    lpTranslateCaps->dwNumLocations = numlocations;
+    lpTranslateCaps->dwLocationListSize = sizeof(LINELOCATIONENTRY) *
+            lpTranslateCaps->dwNumLocations;
+    lpTranslateCaps->dwLocationListOffset = sizeof(LINETRANSLATECAPS);
+    lpTranslateCaps->dwCurrentLocationID = currentid; 
+    lpTranslateCaps->dwNumCards = numcards;
+    lpTranslateCaps->dwCardListSize = sizeof(LINECARDENTRY) *
+            lpTranslateCaps->dwNumCards;
+    lpTranslateCaps->dwCardListOffset = lpTranslateCaps->dwLocationListOffset +
+            lpTranslateCaps->dwLocationListSize;
+    lpTranslateCaps->dwCurrentPreferredCardID = 0; 
+    /* this is where the strings will be stored */
+    strptr = ((LPBYTE) lpTranslateCaps) +
+        lpTranslateCaps->dwCardListOffset + lpTranslateCaps->dwCardListSize;
+    pLocEntry = (LPLINELOCATIONENTRY) (lpTranslateCaps + 1);
+    /* key with Preferred CardID's */
+    if( RegOpenKeyA(HKEY_CURRENT_USER, szLocationsKey, &hkCardLocations)
+            != ERROR_SUCCESS ) 
+        hkCardLocations = 0;
+    /* second time through all locations */
+    i=0;
+    while(RegEnumKeyA(hkLocations, i, loc_key_name, maxlockeylen)
+            == ERROR_SUCCESS){
+        DWORD size_val;
+        i++;
+        if( strncasecmp(loc_key_name, "location", 8)  ||
+                (RegOpenKeyA(hkLocations, loc_key_name, &hsubkey)
+                 != ERROR_SUCCESS))
+            continue;
+        size_val=sizeof(DWORD);
+        if( RegQueryValueExA(hsubkey, "ID",NULL, NULL,
+                (LPBYTE) &(pLocEntry->dwPermanentLocationID), &size_val) !=
+                ERROR_SUCCESS)
+            pLocEntry->dwPermanentLocationID = atoi( loc_key_name + 8);
+        size_val=2048;
+        RegQueryValueExA(hsubkey, "Name",NULL,NULL, strptr, &size_val);
+        pLocEntry->dwLocationNameSize = size_val;
+        pLocEntry->dwLocationNameOffset = strptr - (LPBYTE) lpTranslateCaps;
+        strptr += size_val;
+ 
+        size_val=2048;
+        RegQueryValueExA(hsubkey, "AreaCode",NULL,NULL, strptr, &size_val);
+        pLocEntry->dwCityCodeSize = size_val;
+        pLocEntry->dwCityCodeOffset = strptr - (LPBYTE) lpTranslateCaps;
+        strptr += size_val;
+        
+        size_val=2048;
+        RegQueryValueExA(hsubkey, "OutsideAccess",NULL,NULL, strptr, &size_val);
+        pLocEntry->dwLocalAccessCodeSize = size_val;
+        pLocEntry->dwLocalAccessCodeOffset = strptr - (LPBYTE) lpTranslateCaps;
+        strptr += size_val;
+        size_val=2048;
+        RegQueryValueExA(hsubkey, "LongDistanceAccess",NULL,NULL, strptr,
+                &size_val);
+        pLocEntry->dwLongDistanceAccessCodeSize= size_val;
+        pLocEntry->dwLongDistanceAccessCodeOffset= strptr -
+            (LPBYTE) lpTranslateCaps;
+        strptr += size_val;
+        size_val=2048;
+        RegQueryValueExA(hsubkey, "DisableCallWaiting",NULL,NULL, strptr,
+                &size_val);
+        pLocEntry->dwCancelCallWaitingSize= size_val;
+        pLocEntry->dwCancelCallWaitingOffset= strptr - (LPBYTE) lpTranslateCaps;
+        strptr += size_val;
+
+        pLocEntry->dwTollPrefixListSize = 0;    /* FIXME */
+        pLocEntry->dwTollPrefixListOffset = 0;    /* FIXME */
+
+        size_val=sizeof(DWORD);
+        RegQueryValueExA(hsubkey, "Country",NULL,NULL,
+                (LPBYTE) &(pLocEntry->dwCountryCode), &size_val);
+        pLocEntry->dwCountryID = pLocEntry->dwCountryCode; /* FIXME */
+        RegQueryValueExA(hsubkey, "Flags",NULL,NULL,
+                (LPBYTE) &(pLocEntry->dwOptions), &size_val);
+        RegCloseKey(hsubkey);
+        /* get preferred cardid */
+        pLocEntry->dwPreferredCardID = 0;
+        if ( hkCardLocations) {
+            size_val=sizeof(DWORD);
+            if(RegOpenKeyA(hkCardLocations, loc_key_name, &hsubkey) ==
+                    ERROR_SUCCESS) {
+                RegQueryValueExA(hsubkey, "CallingCard",NULL,NULL,
+                        (LPBYTE) &(pLocEntry->dwPreferredCardID), &size_val);
+                RegCloseKey(hsubkey);
+            }
+                
+        }
+        /* make sure there is a currentID */
+        if(currentid == -1){
+            currentid = pLocEntry->dwPermanentLocationID;
+            lpTranslateCaps->dwCurrentLocationID = currentid; 
+        }
+        if(pLocEntry->dwPermanentLocationID == currentid )
+            lpTranslateCaps->dwCurrentPreferredCardID =
+                    pLocEntry->dwPreferredCardID;
+        TRACE("added: ID %ld %s CountryCode %ld CityCode %s CardID %ld "
+                "LocalAccess: %s LongDistanceAccess: %s CountryID %ld "
+                "Options %ld CancelCallWait %s\n",
+                pLocEntry->dwPermanentLocationID,
+                debugstr_a( (char*)lpTranslateCaps + pLocEntry->dwLocationNameOffset),
+                pLocEntry->dwCountryCode,
+                debugstr_a( (char*)lpTranslateCaps + pLocEntry->dwCityCodeOffset),
+                pLocEntry->dwPreferredCardID,
+                debugstr_a( (char*)lpTranslateCaps + pLocEntry->dwLocalAccessCodeOffset),
+                debugstr_a( (char*)lpTranslateCaps + pLocEntry->dwLongDistanceAccessCodeOffset),
+                pLocEntry->dwCountryID,
+                pLocEntry->dwOptions,
+                debugstr_a( (char*)lpTranslateCaps + pLocEntry->dwCancelCallWaitingOffset));
+        pLocEntry++;
+    }
+    pCardEntry= (LPLINECARDENTRY) pLocEntry;
+    /* do the card list */
+    if( hkCards) {
+        i=0;
+        while( RegEnumKeyA(hkCards, i, card_key_name, maxcardkeylen) ==
+                ERROR_SUCCESS){
+            DWORD size_val;
+            i++;
+            if( strncasecmp(card_key_name, "card", 4)  ||
+                    (RegOpenKeyA(hkCards, card_key_name, &hsubkey) != ERROR_SUCCESS))
+                continue;
+            size_val=sizeof(DWORD);
+            if( RegQueryValueExA(hsubkey, "ID",NULL, NULL,
+                    (LPBYTE) &(pCardEntry->dwPermanentCardID), &size_val) !=
+                    ERROR_SUCCESS)
+                pCardEntry->dwPermanentCardID= atoi( card_key_name + 4);
+            size_val=2048;
+            RegQueryValueExA(hsubkey, "Name",NULL,NULL, strptr, &size_val);
+            pCardEntry->dwCardNameSize = size_val;
+            pCardEntry->dwCardNameOffset = strptr - (LPBYTE) lpTranslateCaps;
+            strptr += size_val;
+            pCardEntry->dwCardNumberDigits = 1; /* FIXME */
+            size_val=2048;
+            RegQueryValueExA(hsubkey, "LocalRule",NULL,NULL, strptr, &size_val);
+            pCardEntry->dwSameAreaRuleSize= size_val;
+            pCardEntry->dwSameAreaRuleOffset= strptr - (LPBYTE) lpTranslateCaps;
+            strptr += size_val;
+            size_val=2048;
+            RegQueryValueExA(hsubkey, "LDRule",NULL,NULL, strptr, &size_val);
+            pCardEntry->dwLongDistanceRuleSize = size_val;
+            pCardEntry->dwLongDistanceRuleOffset = strptr - (LPBYTE) lpTranslateCaps;
+            strptr += size_val;
+            size_val=2048;
+            RegQueryValueExA(hsubkey, "InternationalRule",NULL,NULL, strptr,
+                    &size_val);
+            pCardEntry->dwInternationalRuleSize = size_val;
+            pCardEntry->dwInternationalRuleOffset = strptr -
+                (LPBYTE) lpTranslateCaps;
+            strptr += size_val;
+            size_val=sizeof(DWORD);
+            RegQueryValueExA(hsubkey, "Flags",NULL, NULL,
+                    (LPBYTE) &(pCardEntry->dwOptions), &size_val); 
+            TRACE( "added card: ID %ld name %s SameArea %s LongDistance %s International %s Options 0x%lx\n", 
+                    pCardEntry->dwPermanentCardID,
+                    debugstr_a( (char*)lpTranslateCaps + pCardEntry->dwCardNameOffset),
+                    debugstr_a( (char*)lpTranslateCaps + pCardEntry->dwSameAreaRuleOffset),
+                    debugstr_a( (char*)lpTranslateCaps + pCardEntry->dwLongDistanceRuleOffset),
+                    debugstr_a( (char*)lpTranslateCaps + pCardEntry->dwInternationalRuleOffset),
+                    pCardEntry->dwOptions);
+
+            pCardEntry++;
+        }
+    }
+
+    if(hkLocations) RegCloseKey(hkLocations);
+    if(hkCards) RegCloseKey(hkCards);
+    if(hkCardLocations) RegCloseKey(hkCardLocations);
+    HeapFree(GetProcessHeap(), 0, loc_key_name);
+    HeapFree(GetProcessHeap(), 0, card_key_name);
+    TRACE(" returning success tot %ld needed %ld used %ld \n",
+            lpTranslateCaps->dwTotalSize,
+            lpTranslateCaps->dwNeededSize,
+            lpTranslateCaps->dwUsedSize );
+    return 0; /* success */
 }
 
 /***********************************************************************
