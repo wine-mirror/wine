@@ -86,7 +86,7 @@ DECLARE_INTERFACE_(IDxDiagProvider,IUnknown)
 #define	IDxDiagProvider_AddRef(p)                            (p)->lpVtbl->AddRef(p)
 #define	IDxDiagProvider_Release(p)                           (p)->lpVtbl->Release(p)
 /*** IDxDiagProvider methods ***/
-#define IDxDiagProvider_Initialize(p,a,b)                    (p)->lpVtbl->Initialize(p,a,b)
+#define IDxDiagProvider_Initialize(p,a)                      (p)->lpVtbl->Initialize(p,a)
 #define IDxDiagProvider_GetRootContainer(p,a)                (p)->lpVtbl->GetRootContainer(p,a)
 #else
 /*** IUnknown methods ***/
@@ -94,7 +94,7 @@ DECLARE_INTERFACE_(IDxDiagProvider,IUnknown)
 #define	IDxDiagProvider_AddRef(p)                            (p)->AddRef()
 #define	IDxDiagProvider_Release(p)                           (p)->Release()
 /*** IDxDiagProvider methods ***/
-#define IDxDiagProvider_Initialize(p,a,b)                    (p)->Initialize(a,b)
+#define IDxDiagProvider_Initialize(p,a)                      (p)->Initialize(a)
 #define IDxDiagProvider_GetRootContainer(p,a)                (p)->GetRootContainer(a)
 #endif
 
@@ -132,7 +132,7 @@ DECLARE_INTERFACE_(IDxDiagContainer,IUnknown)
 #define IDxDiagContainer_EnumChildContainerNames(p,a,b,c)    (p)->lpVtbl->EnumChildContainerNames(p,a,b,c)
 #define IDxDiagContainer_GetChildContainer(p,a,b)            (p)->lpVtbl->GetChildContainer(p,a,b)
 #define IDxDiagContainer_GetNumberOfProps(p,a)               (p)->lpVtbl->GetNumberOfProps(p,a)
-#define IDxDiagContainer_EnumProps(p,a,b)                    (p)->lpVtbl->EnumProps(p,a,b,c)
+#define IDxDiagContainer_EnumPropNames(p,a,b,c)              (p)->lpVtbl->EnumPropNames(p,a,b,c)
 #define IDxDiagContainer_GetProp(p,a,b)                      (p)->lpVtbl->GetProp(p,a,b)
 #else
 /*** IUnknown methods ***/
@@ -144,7 +144,7 @@ DECLARE_INTERFACE_(IDxDiagContainer,IUnknown)
 #define IDxDiagContainer_EnumChildContainerNames(p,a,b,c)    (p)->EnumChildContainerNames(a,b,c)
 #define IDxDiagContainer_GetChildContainer(p,a,b)            (p)->GetChildContainer(a,b)
 #define IDxDiagContainer_GetNumberOfProps(p,a)               (p)->GetNumberOfProps(a)
-#define IDxDiagContainer_EnumProps(p,a,b)                    (p)->EnumProps(a,b,c)
+#define IDxDiagContainer_EnumPropNames(p,a,b,c)              (p)->EnumPropNames(a,b,c)
 #define IDxDiagContainer_GetProp(p,a,b)                      (p)->GetProp(a,b)
 #endif
 
