@@ -321,7 +321,7 @@ static BOOL PROPSHEET_CollectSheetInfoA(LPCPROPSHEETHEADERA lppsh,
 
   if (dwFlags & PSH_USEPSTARTPAGE)
   {
-    TRACE("PSH_USEPSTARTPAGE is on");
+    TRACE("PSH_USEPSTARTPAGE is on\n");
     psInfo->active_page = 0;
   }
   else
@@ -375,7 +375,7 @@ static BOOL PROPSHEET_CollectSheetInfoW(LPCPROPSHEETHEADERW lppsh,
 
   if (dwFlags & PSH_USEPSTARTPAGE)
   {
-    TRACE("PSH_USEPSTARTPAGE is on");
+    TRACE("PSH_USEPSTARTPAGE is on\n");
     psInfo->active_page = 0;
   }
   else

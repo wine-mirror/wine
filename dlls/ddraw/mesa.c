@@ -702,7 +702,7 @@ HRESULT upload_surface_to_tex_memory_init(IDirectDrawSurfaceImpl *surf_ptr, GLui
 		    if (colorkey_active) {
 			/* This texture format will never be used.. So do not care about color keying
 			   up until the point in time it will be needed :-) */
-			FIXME(" ColorKeying not supported in the RGB 332 format !");
+			FIXME(" ColorKeying not supported in the RGB 332 format !\n");
 		    }
 		    current_format = GL_RGB;
 		    internal_format = GL_RGB;

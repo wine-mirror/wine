@@ -1461,7 +1461,7 @@ static LRESULT Compress(CodecInfo *pi, ICCOMPRESS* lpic, DWORD dwSize)
   } else if ((lpic->dwFlags & ICCOMPRESS_KEYFRAME) == 0) {
     LPWORD pTmp;
 
-    WARN(": prev=%ld cur=%ld gone back? -- untested",pi->nPrevFrame,lpic->lFrameNum);
+    WARN(": prev=%ld cur=%ld gone back? -- untested\n",pi->nPrevFrame,lpic->lFrameNum);
     if (lpic->lpbiPrev == NULL || lpic->lpPrev == NULL)
       return ICERR_GOTOKEYFRAME; /* Need a keyframe if you go back */
     if (CompressQuery(pi, lpic->lpbiPrev, lpic->lpbiOutput) != ICERR_OK)

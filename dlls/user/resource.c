@@ -280,7 +280,7 @@ HACCEL WINAPI CreateAcceleratorTableW(LPACCEL lpaccel, INT cEntries)
        if( !(accel[i].fVirt & FVIRTKEY) ) {
 	  ckey = (char) lpaccel[i].key;
          if(!MultiByteToWideChar(CP_ACP, MB_PRECOMPOSED, &ckey, 1, &accel[i].key, 1))
-            WARN_(accel)("Error converting ASCII accelerator table to Unicode");
+            WARN_(accel)("Error converting ASCII accelerator table to Unicode\n");
        }
        else
          accel[i].key = lpaccel[i].key;

@@ -541,7 +541,7 @@ DWORD WINAPI UserSeeUserDo16(WORD wReqType, WORD wParam1, WORD wParam2, WORD wPa
         FIXME_(local)("return a pointer to the first window class.\n");
         return (DWORD)-1;
     default:
-        WARN_(local)("wReqType %04x (unknown)", wReqType);
+        WARN_(local)("wReqType %04x (unknown)\n", wReqType);
         return (DWORD)-1;
     }
 }

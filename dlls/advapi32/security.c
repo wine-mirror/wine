@@ -1806,7 +1806,7 @@ static BOOL ParseStringAclToAcl(LPCWSTR StringAcl, LPDWORD lpdwFlags,
         /* Parse ACE object guid */
         if (*StringAcl != ';')
         {
-            FIXME("Support for *_OBJECT_ACE_TYPE not implemented");
+            FIXME("Support for *_OBJECT_ACE_TYPE not implemented\n");
             goto lerr;
         }
         StringAcl++;
@@ -1814,7 +1814,7 @@ static BOOL ParseStringAclToAcl(LPCWSTR StringAcl, LPDWORD lpdwFlags,
         /* Parse ACE inherit object guid */
         if (*StringAcl != ';')
         {
-            FIXME("Support for *_OBJECT_ACE_TYPE not implemented");
+            FIXME("Support for *_OBJECT_ACE_TYPE not implemented\n");
             goto lerr;
         }
         StringAcl++;

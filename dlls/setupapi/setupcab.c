@@ -312,7 +312,7 @@ static INT_PTR sc_FNNOTIFY_A(FDINOTIFICATIONTYPE fdint, PFDINOTIFICATION pfdin)
     if (err == FILEOP_DOIT) {
       TRACE("  Callback specified filename: %s\n", debugstr_a(&(fici.FullTargetName[0])));
       if (!fici.FullTargetName[0]) {
-        WARN("  Empty return string causing abort.");
+        WARN("  Empty return string causing abort.\n");
         SetLastError(ERROR_PATH_NOT_FOUND);
         return -1;
       }

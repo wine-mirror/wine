@@ -1057,7 +1057,7 @@ BOOL WINAPI SHAboutInfoA(LPSTR lpszDest, DWORD dwDestLen)
 {
   WCHAR buff[2084];
 
-  TRACE("(%p,%ld)", lpszDest, dwDestLen);
+  TRACE("(%p,%ld)\n", lpszDest, dwDestLen);
 
   if (lpszDest && SHAboutInfoW(buff, dwDestLen))
   {
@@ -1103,7 +1103,7 @@ BOOL WINAPI SHAboutInfoW(LPWSTR lpszDest, DWORD dwDestLen)
   HKEY hReg;
   DWORD dwType, dwLen;
 
-  TRACE("(%p,%ld)", lpszDest, dwDestLen);
+  TRACE("(%p,%ld)\n", lpszDest, dwDestLen);
 
   if (!lpszDest)
     return FALSE;

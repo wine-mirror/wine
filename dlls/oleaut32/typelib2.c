@@ -1033,7 +1033,7 @@ static HRESULT WINAPI ICreateTypeInfo2_fnSetVarName(
     TRACE("(%p,%d,%s), stub!\n", iface, index, debugstr_w(szName));
 
     if ((This->typeinfo->cElement >> 16) <= index) {
-	TRACE("Out-of-order element.");
+	TRACE("Out-of-order element.\n");
 	return TYPE_E_ELEMENTNOTFOUND;
     }
 

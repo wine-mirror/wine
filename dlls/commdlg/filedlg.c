@@ -1560,9 +1560,9 @@ BOOL FILEDLG95_OnOpenMultipleFiles(HWND hwnd, LPWSTR lpstrFileList, UINT nFileCo
   if ( !(fodInfos->ofnInfos->Flags & OFN_EXPLORER) )
   {
     /* For "oldstyle" dialog the components have to
-       be spearated by blanks (not '\0'!) and short
+       be separated by blanks (not '\0'!) and short
        filenames have to be used! */
-    FIXME("Components have to be separated by blanks");
+    FIXME("Components have to be separated by blanks\n");
   }
   if(fodInfos->unicode)
   {

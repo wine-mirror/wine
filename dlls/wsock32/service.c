@@ -56,7 +56,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(winsock);
 INT WINAPI GetTypeByNameA(LPSTR lpServiceName, LPGUID lpServiceType)
 {
    /* tell the user they've got a substandard implementation */
-   FIXME("wsock32: GetTypeByNameA(%p, %p): stub/n", lpServiceName, lpServiceType);
+   FIXME("wsock32: GetTypeByNameA(%p, %p): stub\n", lpServiceName, lpServiceType);
    
    /* some programs may be able to compensate if they know what happened */
    SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
@@ -72,7 +72,7 @@ INT WINAPI GetTypeByNameA(LPSTR lpServiceName, LPGUID lpServiceType)
 INT WINAPI GetTypeByNameW(LPWSTR lpServiceName, LPGUID lpServiceType)
 {
     /* tell the user they've got a substandard implementation */
-    FIXME("wsock32: GetTypeByNameW(%p, %p): stub/n", lpServiceName, lpServiceType);
+    FIXME("wsock32: GetTypeByNameW(%p, %p): stub\n", lpServiceName, lpServiceType);
     
     /* some programs may be able to compensate if they know what happened */
     SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
@@ -107,7 +107,7 @@ INT WINAPI SetServiceA(DWORD dwNameSpace, DWORD dwOperation, DWORD dwFlags, LPSE
                        LPSERVICE_ASYNC_INFO lpServiceAsyncInfo, LPDWORD lpdwStatusFlags)
 {
    /* tell the user they've got a substandard implementation */
-   FIXME("wsock32: SetServiceA(%lu, %lu, %lu, %p, %p, %p): stub/n", dwNameSpace, dwOperation, dwFlags,
+   FIXME("wsock32: SetServiceA(%lu, %lu, %lu, %p, %p, %p): stub\n", dwNameSpace, dwOperation, dwFlags,
            lpServiceInfo, lpServiceAsyncInfo, lpdwStatusFlags);
     
    /* some programs may be able to compensate if they know what happened */
@@ -124,7 +124,7 @@ INT WINAPI SetServiceW(DWORD dwNameSpace, DWORD dwOperation, DWORD dwFlags, LPSE
                        LPSERVICE_ASYNC_INFO lpServiceAsyncInfo, LPDWORD lpdwStatusFlags)
 {
    /* tell the user they've got a substandard implementation */
-   FIXME("wsock32: SetServiceW(%lu, %lu, %lu, %p, %p, %p): stub/n", dwNameSpace, dwOperation, dwFlags,
+   FIXME("wsock32: SetServiceW(%lu, %lu, %lu, %p, %p, %p): stub\n", dwNameSpace, dwOperation, dwFlags,
            lpServiceInfo, lpServiceAsyncInfo, lpdwStatusFlags);
     
    /* some programs may be able to compensate if they know what happened */

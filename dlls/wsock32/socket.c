@@ -134,7 +134,7 @@ DWORD WINAPI WsControl(DWORD protocol,
       if (pcommand->toi_class != INFO_CLASS_GENERIC &&
        pcommand->toi_class != INFO_CLASS_PROTOCOL)
       {
-         ERR("Unexpected class %ld for WSCNTL_TCPIP_QUERY_INFO",
+         ERR("Unexpected class %ld for WSCNTL_TCPIP_QUERY_INFO\n",
           pcommand->toi_class);
          return ERROR_BAD_ENVIRONMENT;
       }
@@ -157,7 +157,7 @@ DWORD WINAPI WsControl(DWORD protocol,
                return ERROR_BAD_ENVIRONMENT;
             if (pcommand->toi_class != INFO_CLASS_GENERIC)
             {
-               FIXME ("Unexpected Option for ENTITY_LIST_ID request -> toi_class=0x%lx",
+               FIXME ("Unexpected Option for ENTITY_LIST_ID request -> toi_class=0x%lx\n",
                     pcommand->toi_class);
                return (ERROR_BAD_ENVIRONMENT);
             }
@@ -375,7 +375,7 @@ DWORD WINAPI WsControl(DWORD protocol,
                break;
 
             default:
-               ERR("Unknown entity %ld for ENTITY_TYPE_ID query",
+               ERR("Unknown entity %ld for ENTITY_TYPE_ID query\n",
                 pcommand->toi_entity.tei_entity);
          }
          break;

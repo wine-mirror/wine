@@ -687,7 +687,7 @@ RPC_STATUS WINAPI RpcServerUseProtseqEpExW( LPWSTR Protseq, UINT MaxCalls, LPWST
  */
 RPC_STATUS WINAPI RpcServerUseProtseqA(LPSTR Protseq, unsigned int MaxCalls, void *SecurityDescriptor)
 {
-  TRACE("(Protseq == %s, MaxCalls == %d, SecurityDescriptor == ^%p)", debugstr_a(Protseq), MaxCalls, SecurityDescriptor);
+  TRACE("(Protseq == %s, MaxCalls == %d, SecurityDescriptor == ^%p)\n", debugstr_a(Protseq), MaxCalls, SecurityDescriptor);
   return RpcServerUseProtseqEpA(Protseq, MaxCalls, NULL, SecurityDescriptor);
 }
 
@@ -696,7 +696,7 @@ RPC_STATUS WINAPI RpcServerUseProtseqA(LPSTR Protseq, unsigned int MaxCalls, voi
  */
 RPC_STATUS WINAPI RpcServerUseProtseqW(LPWSTR Protseq, unsigned int MaxCalls, void *SecurityDescriptor)
 {
-  TRACE("Protseq == %s, MaxCalls == %d, SecurityDescriptor == ^%p)", debugstr_w(Protseq), MaxCalls, SecurityDescriptor);
+  TRACE("Protseq == %s, MaxCalls == %d, SecurityDescriptor == ^%p)\n", debugstr_w(Protseq), MaxCalls, SecurityDescriptor);
   return RpcServerUseProtseqEpW(Protseq, MaxCalls, NULL, SecurityDescriptor);
 }
 

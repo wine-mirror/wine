@@ -1918,7 +1918,7 @@ static DWORD wodGetVolume(WORD wDevID, LPDWORD lpdwVol)
 	return MMSYSERR_NOTENABLED;
     }
     if (ioctl(mixer, SOUND_MIXER_READ_PCM, &volume) == -1) {
-	WARN("ioctl(%s, SOUND_MIXER_READ_PCM) failed (%s)n", WOutDev[wDevID].ossdev->mixer_name, strerror(errno));
+	WARN("ioctl(%s, SOUND_MIXER_READ_PCM) failed (%s)\n", WOutDev[wDevID].ossdev->mixer_name, strerror(errno));
 	return MMSYSERR_NOTENABLED;
     }
     close(mixer);

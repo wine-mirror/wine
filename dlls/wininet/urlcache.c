@@ -1621,7 +1621,7 @@ BOOL WINAPI CreateUrlCacheEntryA(
     }
     else
     {
-        FIXME("need to generate a random filename");
+        FIXME("need to generate a random filename\n");
     }
 
     TRACE("File name: %s\n", szFile);

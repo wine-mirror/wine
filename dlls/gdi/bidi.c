@@ -56,10 +56,9 @@ BOOL BIDI_Reorder(
     )
 {
 #ifdef HAVE_ICU
-    TRACE("%s, %d, 0x%08lx\n",
-          debugstr_wn(lpString, uCount), uCount, dwFlags);
-
-    TRACE("lpOutString=%p, lpOrder=%p", lpOutString, lpOrder );
+    TRACE("%s, %d, 0x%08lx lpOutString=%p, lpOrder=%p\n",
+          debugstr_wn(lpString, uCount), uCount, dwFlags,
+          lpOutString, lpOrder);
 
     if ((dwFlags & GCP_REORDER) != 0) {
         UBiDi *bidi;

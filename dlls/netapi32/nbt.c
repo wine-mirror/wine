@@ -977,7 +977,7 @@ static UCHAR NetBTCall(void *adapt, PNCB ncb, void **sess)
     UCHAR ret;
     const NBNameCacheEntry *cacheEntry = NULL;
 
-    TRACE("adapt %p, ncb %p", adapt, ncb);
+    TRACE("adapt %p, ncb %p\n", adapt, ncb);
 
     if (!adapter) return NRC_ENVNOTDEF;
     if (!ncb) return NRC_INVADDRESS;

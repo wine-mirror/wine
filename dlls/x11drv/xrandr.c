@@ -172,7 +172,7 @@ static void X11DRV_XRandR_SetCurrentMode(int mode)
     }
     if (stat != RRSetConfigSuccess)
     {
-        ERR("Resolution change not successful -- perhaps display has chaned?");
+        ERR("Resolution change not successful -- perhaps display has changed?\n");
     }
     XRRFreeScreenConfigInfo(sc);
     wine_tsx11_unlock();

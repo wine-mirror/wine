@@ -604,7 +604,7 @@ UINT WINAPI PrivateExtractIconsW (
 
 	if ((nIcons & 1) && HIWORD(sizeX) && HIWORD(sizeY))
 	{
-	  WARN("Uneven number %d of icons requested for small and large icons!", nIcons);
+	  WARN("Uneven number %d of icons requested for small and large icons!\n", nIcons);
 	}
 	return ICO_ExtractIconExW(lpwstrFile, phicon, nIndex, nIcons, sizeX, sizeY, pIconId, flags);
 }

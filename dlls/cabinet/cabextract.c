@@ -66,7 +66,7 @@ BOOL cabinet_open(struct cabinet *cab)
   /* seek to end of file and get the length */
   if ((cab->filelen = SetFilePointer(fh, 0, NULL, FILE_END)) == INVALID_SET_FILE_POINTER) {
     if (GetLastError() != NO_ERROR) {
-      ERR("Seek END failed: %s", debugstr_a(name));
+      ERR("Seek END failed: %s\n", debugstr_a(name));
       CloseHandle(fh);
       return FALSE;
     }
@@ -74,7 +74,7 @@ BOOL cabinet_open(struct cabinet *cab)
 
   /* return to the start of the file */
   if (SetFilePointer(fh, 0, NULL, FILE_BEGIN) == INVALID_SET_FILE_POINTER) {
-    ERR("Seek BEGIN failed: %s", debugstr_a(name));
+    ERR("Seek BEGIN failed: %s\n", debugstr_a(name));
     CloseHandle(fh);
     return FALSE;
   }
@@ -220,7 +220,7 @@ BOOL file_open(struct cab_file *fi, BOOL lower, LPCSTR dir)
       fi->fh = 0;
     }
   } else 
-    ERR("Couldn't ensure filepath for %s", debugstr_a(name));
+    ERR("Couldn't ensure filepath for %s\n", debugstr_a(name));
 
   if (!ok) {
     ERR("Couldn't open file %s for writing\n", debugstr_a(name));
@@ -279,7 +279,7 @@ void cabinet_skip(struct cabinet *cab, cab_off_t distance)
   TRACE("(cab == ^%p, distance == %u)\n", cab, distance);
   if (SetFilePointer(cab->fh, distance, NULL, FILE_CURRENT) == INVALID_SET_FILE_POINTER) {
     if (distance != INVALID_SET_FILE_POINTER)
-      ERR("%s", debugstr_a((char *) cab->filename));
+      ERR("%s\n", debugstr_a((char *) cab->filename));
   }
 }
 
@@ -2091,7 +2091,7 @@ void find_cabinet_file(char **cabname, LPCSTR origcab) {
     }
 
     do {
-      TRACE("trying cab == %s", debugstr_a(cab));
+      TRACE("trying cab == %s\n", debugstr_a(cab));
 
       /* we don't want null cabinet filenames */
       if (name[0] == '\0') {

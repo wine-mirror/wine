@@ -4746,7 +4746,7 @@ static BOOL translate_accelerator( HWND hWnd, UINT message, WPARAM wParam, LPARA
          */
         TRACE_(accel)(", but won't send WM_{SYS}COMMAND, reason is #%d\n",mesg);
         if(mesg==0)
-            ERR_(accel)(" unknown reason - please report!");
+            ERR_(accel)(" unknown reason - please report!\n");
     }
     return TRUE;
 }

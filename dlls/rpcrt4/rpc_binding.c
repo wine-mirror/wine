@@ -1056,6 +1056,6 @@ RPC_STATUS RPC_ENTRY RpcNetworkIsProtSeqValidW(LPWSTR protseq) {
     if (!strcmpW(protseq, protseqsW[i])) return RPC_S_OK;
   }
   
-  FIXME("Unknown protseq %s - we probably need to implement it one day", debugstr_w(protseq));
+  FIXME("Unknown protseq %s - we probably need to implement it one day\n", debugstr_w(protseq));
   return RPC_S_PROTSEQ_NOT_SUPPORTED;
 }

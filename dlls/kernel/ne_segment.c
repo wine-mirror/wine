@@ -205,7 +205,7 @@ BOOL NE_LoadSegment( NE_MODULE *pModule, WORD segnum )
       char* curr = buff;
 
       if(buff == NULL) {
-          WARN_(dll)("Memory exausted!");
+          WARN_(dll)("Memory exhausted!\n");
           goto fail;
       }
 
@@ -242,7 +242,7 @@ BOOL NE_LoadSegment( NE_MODULE *pModule, WORD segnum )
 
     reloc_entries = (struct relocation_entry_s *)HeapAlloc(GetProcessHeap(), 0, count * sizeof(struct relocation_entry_s));
     if(reloc_entries == NULL) {
-        WARN("Not enough memory for relocation entries!");
+        WARN("Not enough memory for relocation entries!\n");
         goto fail;
     }
     if (!ReadFile( hf, reloc_entries, count * sizeof(struct relocation_entry_s), &res, NULL) ||
@@ -853,7 +853,7 @@ static void add_to_init_list( struct ne_init_list *list, NE_MODULE *hModule )
                                              newSize*sizeof(NE_MODULE *) );
         if ( !newModule )
         {
-            FIXME_(dll)("Out of memory!");
+            FIXME_(dll)("Out of memory!\n");
             return;
         }
 

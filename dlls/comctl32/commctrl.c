@@ -1076,7 +1076,7 @@ BOOL WINAPI SetWindowSubclass (HWND hWnd, SUBCLASSPROC pfnSubclass,
       stack = (LPSUBCLASS_INFO)HeapAlloc (GetProcessHeap(), HEAP_ZERO_MEMORY,
                                          sizeof(SUBCLASS_INFO));
       if (!stack) {
-         ERR ("Failed to allocate our Subclassing stack");
+         ERR ("Failed to allocate our Subclassing stack\n");
          return FALSE;
       }
       SetPropA (hWnd, COMCTL32_aSubclass, (HANDLE)stack);
@@ -1111,7 +1111,7 @@ BOOL WINAPI SetWindowSubclass (HWND hWnd, SUBCLASSPROC pfnSubclass,
       }
 
    if ((stack->stacknum + stack->stacknew) >= 32) {
-      ERR ("We have a Subclass stack overflow, please increment size");
+      ERR ("We have a Subclass stack overflow, please increment size\n");
       return FALSE;
    }
 

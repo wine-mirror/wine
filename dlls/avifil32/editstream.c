@@ -771,7 +771,7 @@ static HRESULT WINAPI IAVIEditStream_fnSetInfo(IAVIEditStream*iface,
 {
   ICOM_THIS(IAVIEditStreamImpl,iface);
 
-  TRACE("(%p,%p,%ld)",iface,asi,size);
+  TRACE("(%p,%p,%ld)\n",iface,asi,size);
 
   /* check parameters */
   if (asi == NULL)
@@ -1061,7 +1061,7 @@ static HRESULT WINAPI IEditAVIStream_fnWrite(IAVIStream*iface,LONG start,
                                              LONG buffersize,DWORD flags,
                                              LONG*sampwritten,LONG*byteswritten)
 {
-  TRACE("(%p,%ld,%ld,%p,%ld,0x%08lX,%p,%p)",iface,start,samples,buffer,
+  TRACE("(%p,%ld,%ld,%p,%ld,0x%08lX,%p,%p)\n",iface,start,samples,buffer,
         buffersize,flags,sampwritten,byteswritten);
 
   /* be sure return parameters have correct values */
@@ -1089,7 +1089,7 @@ static HRESULT WINAPI IEditAVIStream_fnReadData(IAVIStream*iface,DWORD fcc,
   IAVIEditStreamImpl* const This = ((IEditAVIStreamImpl* const)iface)->pae;
   DWORD n;
 
-  TRACE("(%p,0x%08lX,%p,%p)",iface,fcc,lp,lpread);
+  TRACE("(%p,0x%08lX,%p,%p)\n",iface,fcc,lp,lpread);
 
   /* check parameters */
   if (lp == NULL || lpread == NULL)
@@ -1110,7 +1110,7 @@ static HRESULT WINAPI IEditAVIStream_fnReadData(IAVIStream*iface,DWORD fcc,
 static HRESULT WINAPI IEditAVIStream_fnWriteData(IAVIStream*iface,DWORD fcc,
                                                  LPVOID lp,LONG size)
 {
-  TRACE("(%p,0x%08lX,%p,%ld)",iface,fcc,lp,size);
+  TRACE("(%p,0x%08lX,%p,%ld)\n",iface,fcc,lp,size);
 
   return AVIERR_UNSUPPORTED;
 }

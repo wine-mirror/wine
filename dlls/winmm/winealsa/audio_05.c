@@ -267,7 +267,7 @@ LONG ALSA_WaveInit(void)
     X(22050,2);
     X(44100,4);
 #undef X
-    if (chn_info.min_voices > 1) FIXME("-");
+    if (chn_info.min_voices > 1) FIXME("-\n");
     WOutDev[0].caps.wChannels = (chn_info.max_voices >= 2) ? 2 : 1;
     if (chn_info.min_voices <= 2 && 2 <= chn_info.max_voices)
         WOutDev[0].caps.dwSupport |= WAVECAPS_LRVOLUME;

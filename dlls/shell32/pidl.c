@@ -123,7 +123,7 @@ BOOL WINAPI ILGetDisplayNameExW(LPSHELLFOLDER psf, LPCITEMIDLIST pidl, LPWSTR pa
 	      flag = SHGDN_INFOLDER;
 	      break;
 	    default:
-	      FIXME("Unknown type parameter = %lx", type);
+	      FIXME("Unknown type parameter = %lx\n", type);
 	      flag = SHGDN_FORPARSING | SHGDN_FORADDRESSBAR;
 	      break;
 	  }
