@@ -213,24 +213,34 @@ NtQuerySecurityObject(
 
 	return STATUS_SUCCESS;
 }
+
+
 /******************************************************************************
  *  NtDuplicateObject		[NTDLL.@]
  *  ZwDuplicateObject		[NTDLL.@]
  */
-NTSTATUS WINAPI NtDuplicateObject(
-	IN HANDLE SourceProcessHandle,
-	IN PHANDLE SourceHandle,
-	IN HANDLE TargetProcessHandle,
-	OUT PHANDLE TargetHandle,
-	IN ACCESS_MASK DesiredAccess,
-	IN BOOLEAN InheritHandle,
-	ULONG Options)
+NTSTATUS WINAPI NtDuplicateObject( HANDLE source_process, HANDLE source,
+                                   HANDLE dest_process, PHANDLE dest,
+                                   ACCESS_MASK access, ULONG attributes, ULONG options )
 {
-	FIXME("(0x%08x,%p,0x%08x,%p,0x%08lx,0x%08x,0x%08lx) stub!\n",
-	SourceProcessHandle,SourceHandle,TargetProcessHandle,TargetHandle,
-	DesiredAccess,InheritHandle,Options);
-	*TargetHandle = 0;
-	return 0;
+    NTSTATUS ret;
+    SERVER_START_REQ( dup_handle )
+    {
+        req->src_process = source_process;
+        req->src_handle  = source;
+        req->dst_process = dest_process;
+        req->access      = access;
+        req->inherit     = (attributes & OBJ_INHERIT) != 0;
+        req->options     = options;
+
+        if (!(ret = wine_server_call( req )))
+        {
+            if (dest) *dest = reply->handle;
+            if (reply->fd != -1) close( reply->fd );
+        }
+    }
+    SERVER_END_REQ;
+    return ret;
 }
 
 /**************************************************************************

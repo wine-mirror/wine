@@ -98,28 +98,13 @@ BOOL WINAPI SetHandleInformation( HANDLE handle, DWORD mask, DWORD flags )
  *           DuplicateHandle   (KERNEL32.@)
  */
 BOOL WINAPI DuplicateHandle( HANDLE source_process, HANDLE source,
-                               HANDLE dest_process, HANDLE *dest,
-                               DWORD access, BOOL inherit, DWORD options )
+                             HANDLE dest_process, HANDLE *dest,
+                             DWORD access, BOOL inherit, DWORD options )
 {
-    BOOL ret;
-    SERVER_START_REQ( dup_handle )
-    {
-        req->src_process = source_process;
-        req->src_handle  = source;
-        req->dst_process = dest_process;
-        req->access      = access;
-        req->inherit     = inherit;
-        req->options     = options;
-
-        ret = !wine_server_call_err( req );
-        if (ret)
-        {
-            if (dest) *dest = reply->handle;
-            if (reply->fd != -1) close( reply->fd );
-        }
-    }
-    SERVER_END_REQ;
-    return ret;
+    NTSTATUS status = NtDuplicateObject( source_process, source, dest_process, dest,
+                                         access, inherit ? OBJ_INHERIT : 0, options );
+    if (status) SetLastError( RtlNtStatusToDosError(status) );
+    return !status;
 }
 
 

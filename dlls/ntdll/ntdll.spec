@@ -99,7 +99,7 @@
 @ stdcall NtDeleteValueKey(long ptr) NtDeleteValueKey
 @ stdcall NtDeviceIoControlFile(long long long long long long long long long long) NtDeviceIoControlFile
 @ stdcall NtDisplayString(ptr)NtDisplayString
-@ stdcall NtDuplicateObject(long long long long long long long) NtDuplicateObject
+@ stdcall NtDuplicateObject(long long long ptr long long long) NtDuplicateObject
 @ stdcall NtDuplicateToken(long long long long long long) NtDuplicateToken
 @ stub NtEnumerateBus
 @ stdcall NtEnumerateKey (long long long long long long) NtEnumerateKey
@@ -616,7 +616,7 @@
 @ stdcall ZwDeleteValueKey(long ptr) NtDeleteValueKey
 @ stdcall ZwDeviceIoControlFile(long long long long long long long long long long) NtDeviceIoControlFile
 @ stub ZwDisplayString
-@ stdcall ZwDuplicateObject(long long long long long long long) NtDuplicateObject
+@ stdcall ZwDuplicateObject(long long long ptr long long long) NtDuplicateObject
 @ stdcall ZwDuplicateToken(long long long long long long) NtDuplicateToken
 @ stub ZwEnumerateBus
 @ stdcall ZwEnumerateKey(long long long ptr long ptr) NtEnumerateKey
