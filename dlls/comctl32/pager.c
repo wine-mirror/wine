@@ -747,6 +747,23 @@ PAGER_Scroll(HWND hwnd, INT dir)
 }
 
 static LRESULT
+PAGER_FmtLines(HWND hwnd)
+{
+    PAGER_INFO *infoPtr = PAGER_GetInfoPtr (hwnd);
+
+    /* initiate NCCalcSize to resize client wnd and get size */
+    SetWindowPos(hwnd, 0, 0,0,0,0, 
+		 SWP_FRAMECHANGED | SWP_NOSIZE | SWP_NOMOVE |
+		 SWP_NOZORDER | SWP_NOACTIVATE);
+
+    SetWindowPos(infoPtr->hwndChild, 0, 
+		 0,0,infoPtr->nWidth,infoPtr->nHeight, 
+		 0);
+
+    return DefWindowProcA (hwnd, EM_FMTLINES, 0, 0);
+}
+
+static LRESULT
 PAGER_Create (HWND hwnd, WPARAM wParam, LPARAM lParam)
 {
     PAGER_INFO *infoPtr;
@@ -1234,6 +1251,9 @@ PAGER_WindowProc (HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 
     switch (uMsg)
     {
+        case EM_FMTLINES:
+	    return PAGER_FmtLines(hwnd);
+
         case PGM_FORWARDMOUSE:
             return PAGER_ForwardMouse (hwnd, wParam);
 
