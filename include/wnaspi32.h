@@ -1,7 +1,7 @@
 #if !defined(WNASPI32_H)
 #define WNASPI32_H
 
-#pragma pack(1)
+#include "pshpack1.h"
 
 typedef union SRB * LPSRB;
 
@@ -93,6 +93,6 @@ union SRB {
 
 typedef union SRB SRB;
 
-#pragma pack(4)
+#include "poppack.h"
 
 #endif

@@ -110,7 +110,7 @@ typedef struct PDEVICE_HEADER
     LOADED_PRINTER_DRIVER *pLPD;	/* Associated printer driver */
 } PDEVICE_HEADER;
 
-#pragma pack(1)
+#include "pshpack1.h"
 #define PCOLOR DWORD
 typedef struct DRAWMODE 
 {
@@ -129,7 +129,7 @@ typedef struct DRAWMODE
 } DRAWMODE, *LPDRAWMODE;
 
 
-#pragma pack(4)
+#include "poppack.h"
 
 typedef struct WINE_ENUM_PRINTER_FONT_CALLBACK
 {

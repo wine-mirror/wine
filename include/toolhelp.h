@@ -9,7 +9,7 @@
 #define MAX_PATH16	255
 #define MAX_CLASSNAME	255
 
-#pragma pack(1)
+#include "pshpack1.h"
 
 /* Global heap */
 
@@ -395,7 +395,7 @@ typedef struct {
     WORD wFlags;
 } STACKTRACEENTRY;
 
-#pragma pack(4)
+#include "poppack.h"
 
 /*
  * Process Entry list as created by CreateToolHelp32Snapshot 

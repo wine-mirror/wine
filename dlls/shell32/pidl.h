@@ -62,7 +62,7 @@
 #define PT_NETWORK	0x47
 #define PT_SHARE	0xc3
 
-#pragma pack(1)
+#include "pshpack1.h"
 typedef BYTE PIDLTYPE;
 
 typedef struct tagPIDLDATA
@@ -94,7 +94,7 @@ typedef struct tagPIDLDATA
 	  } network;
 	}u;
 } PIDLDATA, *LPPIDLDATA;
-#pragma pack(4)
+#include "poppack.h"
 
 /*
  * getting string values from pidls

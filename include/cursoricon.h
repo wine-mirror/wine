@@ -9,7 +9,7 @@
 
 #include "windef.h"
 
-#pragma pack(1)
+#include "pshpack1.h"
 
 typedef struct
 {
@@ -64,7 +64,7 @@ typedef struct
 } CURSORICONFILEDIR;
 
 
-#pragma pack(4)
+#include "poppack.h"
 
 #define CID_RESOURCE  0x0001
 #define CID_WIN32     0x0004

@@ -3,7 +3,7 @@
 #if !defined(ASPI_H)
 #define ASPI_H
 
-#pragma pack(1)
+#include "pshpack1.h"
 
 #define SS_PENDING      0x00
 #define SS_COMP         0x01
@@ -115,6 +115,6 @@ struct ASPI_DEVICE_INFO {
 typedef struct ASPI_DEVICE_INFO ASPI_DEVICE_INFO;
 static ASPI_DEVICE_INFO *ASPI_open_devices = NULL;
 
-#pragma pack(4)
+#include "poppack.h"
 
 #endif

@@ -29,7 +29,7 @@
 #include "windef.h"
 #include "task.h"
 
-#pragma pack(1)
+#include "pshpack1.h"
 
 /* Win16 socket-related types */
 
@@ -160,7 +160,7 @@ typedef struct WSAData {
         SEGPTR			lpVendorInfo;
 } WSADATA, *LPWSADATA;
 
-#pragma pack(4)
+#include "poppack.h"
 
 /* ----------------------------------- no Win16 structure defs beyond this line! */
 

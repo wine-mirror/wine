@@ -15,7 +15,7 @@
 
 DEFAULT_DEBUG_CHANNEL(thunk)
 
-#pragma pack(1)
+#include "pshpack1.h"
 
 typedef struct
 {
@@ -39,7 +39,7 @@ typedef struct
 
 } UT32THUNK;
 
-#pragma pack(4)
+#include "poppack.h"
 
 typedef struct _UTINFO
 {

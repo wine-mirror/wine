@@ -20,7 +20,7 @@
 DEFAULT_DEBUG_CHANNEL(win16drv)
 
 #define SUPPORT_REALIZED_FONTS 1
-#pragma pack(1)
+#include "pshpack1.h"
 typedef struct
 {
   SHORT nSize;
@@ -29,7 +29,7 @@ typedef struct
   SEGPTR lpXForm;
   SEGPTR lpDrawMode;
 } EXTTEXTDATA, *LPEXTTEXTDATA;
-#pragma pack(4)
+#include "poppack.h"
 
 SEGPTR		win16drv_SegPtr_TextXForm;
 LPTEXTXFORM16 	win16drv_TextXFormP;

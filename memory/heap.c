@@ -1444,7 +1444,7 @@ LPSTR HEAP_strdupWtoA( HANDLE heap, DWORD flags, LPCWSTR str )
 #define HTABLE_PAGESIZE  0x1000
 #define HTABLE_NPAGES    (HTABLE_SIZE / HTABLE_PAGESIZE)
 
-#pragma pack(1)
+#include "pshpack1.h"
 typedef struct _LOCAL32HEADER
 {
     WORD     freeListFirst[HTABLE_NPAGES];
@@ -1465,7 +1465,7 @@ typedef struct _LOCAL32HEADER
     HANDLE heap;
 
 } LOCAL32HEADER;
-#pragma pack(4)
+#include "poppack.h"
 
 #define LOCAL32_MAGIC    ((DWORD)('L' | ('H'<<8) | ('3'<<16) | ('2'<<24)))
 

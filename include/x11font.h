@@ -9,7 +9,7 @@
 
 #include "gdi.h"
 #include "x11drv.h"
-#pragma pack(1)
+#include "pshpack1.h"
 
 /* this is a part of the font resource header, should 
  * make it easier to implement dynamic softfont loading */
@@ -42,7 +42,7 @@ typedef struct
     LPCSTR	dfFace;
 } IFONTINFO16, *LPIFONTINFO16;
 
-#pragma pack(4)
+#include "poppack.h"
 
 /* internal flags */
 

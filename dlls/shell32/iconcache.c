@@ -21,7 +21,7 @@
 
 DEFAULT_DEBUG_CHANNEL(shell)
 
-#pragma pack(1)
+#include "pshpack1.h"
 
 typedef struct
 {
@@ -43,7 +43,7 @@ typedef struct
     icoICONDIRENTRY idEntries[1]; /* An entry for each image (idCount of 'em) */
 } icoICONDIR, *LPicoICONDIR;
 
-#pragma pack(4)
+#include "poppack.h"
 
 #if 0
 static void dumpIcoDirEnty ( LPicoICONDIRENTRY entry )

@@ -9,7 +9,7 @@
 
 #include "gdi.h"
 
-#pragma pack(1)
+#include "pshpack1.h"
 
   /* GDI logical font object */
 typedef struct
@@ -51,7 +51,7 @@ typedef struct {
     CHAR	szFaceName[60];   /* dito */
 } FONTDIR16, *LPFONTDIR16;
 
-#pragma pack(4)
+#include "poppack.h"
 
 #define FONTCACHE 	32	/* dynamic font cache size */
 

@@ -11,7 +11,7 @@
 
 struct tagCURSORICONINFO;
 
-#pragma pack(1)
+#include "pshpack1.h"
 typedef struct _MOUSEINFO
 {
     BYTE msExist;
@@ -24,7 +24,7 @@ typedef struct _MOUSEINFO
     WORD msYRes;
     WORD msMouseCommPort;
 } MOUSEINFO, *LPMOUSEINFO;
-#pragma pack(4)
+#include "poppack.h"
 
 typedef VOID (CALLBACK *LPMOUSE_EVENT_PROC)(DWORD,DWORD,DWORD,DWORD,DWORD);
 

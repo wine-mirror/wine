@@ -69,8 +69,6 @@ DEFAULT_DEBUG_CHANNEL(winsock)
                         inet_ntoa(((struct sockaddr_in *)a)->sin_addr), \
                         ntohs(((struct sockaddr_in *)a)->sin_port))
 
-#pragma pack(4)
-
 /* ----------------------------------- internal data */
 
 static HANDLE 	_WSHeap = 0;

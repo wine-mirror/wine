@@ -9,7 +9,7 @@
 
 #include "windef.h"
 
-#pragma pack(1)
+#include "pshpack1.h"
 
   /* Process database (i.e. a normal DOS PSP) */
 
@@ -141,7 +141,7 @@ typedef struct _THHOOK
     HTASK16    LockTDB;             /* 14 hLockedTask */
 } THHOOK;
 
-#pragma pack(4)
+#include "poppack.h"
 
 extern THHOOK *pThhook;
 extern void (*TASK_AddTaskEntryBreakpoint)( HTASK16 hTask );

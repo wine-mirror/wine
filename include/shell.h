@@ -59,7 +59,7 @@ typedef struct { 	   /* structure for dropped files */
 /****************************************************************************
 * SHITEMID, ITEMIDLIST, PIDL API 
 */
-#pragma pack(1)
+#include "pshpack1.h"
 typedef struct 
 { WORD	cb;	/* nr of bytes in this item */
   BYTE	abID[1];/* first byte in this item */
@@ -68,7 +68,7 @@ typedef struct
 typedef struct 
 { SHITEMID mkid; /* first itemid in list */
 } ITEMIDLIST,*LPITEMIDLIST,*LPCITEMIDLIST;
-#pragma pack(4)
+#include "poppack.h"
 
 DWORD WINAPI SHGetPathFromIDListA (LPCITEMIDLIST pidl,LPSTR pszPath);
 DWORD WINAPI SHGetPathFromIDListW (LPCITEMIDLIST pidl,LPWSTR pszPath);

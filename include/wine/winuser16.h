@@ -5,7 +5,7 @@
 #include "winbase.h"
 #include "winuser.h"
 
-#pragma pack(1)
+#include "pshpack1.h"
 
   /* SetWindowPlacement() struct */
 typedef struct
@@ -473,7 +473,7 @@ typedef struct
     DWORD       itemData2 WINE_PACKED;
 } COMPAREITEMSTRUCT16, *LPCOMPAREITEMSTRUCT16;
 
-#pragma pack(4)
+#include "poppack.h"
 
 /* WM_COMMNOTIFY flags */
 #define CN_RECEIVE	0x0001

@@ -239,14 +239,14 @@ typedef struct tagDIOCRegs {
 
 /* Important: All MS_DOS data structures must be packed on a one-byte boundary - good old 16 bit. */
 
-#pragma pack(1)
+#include "pshpack1.h"
 typedef struct tagMID {
     WORD  midInfoLevel;
     DWORD midSerialNum;
     BYTE  midVolLabel[11];
     BYTE  midFileSysType[8];
 } MID, *PMID;
-#pragma pack(4)
+#include "poppack.h"
 
 /* End VWIN32 information */
 

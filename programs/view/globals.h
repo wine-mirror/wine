@@ -19,7 +19,7 @@ extern char      szAppName[];    /* The name of this application */
 extern char      szTitle[];      /* The title bar text */
 
 
-#pragma pack(1)
+#include "pshpack1.h"
 typedef struct
 {
 	DWORD		key;
@@ -32,4 +32,4 @@ typedef struct
 
 #define APMHEADER_KEY	0x9AC6CDD7l
 
-#pragma pack(4)
+#include "poppack.h"

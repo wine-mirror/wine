@@ -84,7 +84,7 @@ typedef struct
 
   /* Self-loading modules contain this structure in their first segment */
 
-#pragma pack(1)
+#include "pshpack1.h"
 
 typedef struct
 {
@@ -118,7 +118,7 @@ typedef struct
     DWORD dwReserved;
 } LOADPARAMS;
 
-#pragma pack(4)
+#include "poppack.h"
 
 /* internal representation of 32bit modules. per process. */
 typedef enum {

@@ -13,7 +13,7 @@ extern "C" {
 typedef LPSTR		HPSTR;          /* a huge version of LPSTR */
 typedef LPCSTR		HPCSTR;         /* a huge version of LPCSTR */
    
-#pragma pack(1)
+#include "pshpack1.h"
    
 #define MAXWAVEDRIVERS	10
 #define MAXMIDIDRIVERS	10
@@ -2865,7 +2865,7 @@ DWORD		WINAPI	widMessage(WORD wDevID, WORD wMsg, DWORD dwUser,
 				   DWORD dwParam1, DWORD dwParam2);
 DWORD		WINAPI	wodMessage(WORD wDevID, WORD wMsg, DWORD dwUser, 
 				   DWORD dwParam1, DWORD dwParam2);
-#pragma pack(4)
+#include "poppack.h"
 
 #ifdef __cplusplus
 }

@@ -9,7 +9,7 @@
 
 #include "windef.h"
 
-#pragma pack(1)
+#include "pshpack1.h"
 typedef struct _KBINFO
 {
     BYTE Begin_First_Range;
@@ -18,7 +18,7 @@ typedef struct _KBINFO
     BYTE End_Second_Range;
     WORD StateSize;
 } KBINFO, *LPKBINFO;
-#pragma pack(4)
+#include "poppack.h"
 
 typedef VOID (CALLBACK *LPKEYBD_EVENT_PROC)(BYTE,BYTE,DWORD,DWORD);
 

@@ -52,7 +52,7 @@ __asm__(".align 4\n\t"
         "ret"
 );
 
-#pragma pack(1)
+#include "pshpack1.h"
 
 typedef	struct tagSNOOP_FUN {
 	/* code part */
@@ -94,7 +94,7 @@ typedef struct tagSNOOP_RETURNENTRIES {
 	struct tagSNOOP_RETURNENTRIES	*next;
 } SNOOP_RETURNENTRIES;
 
-#pragma pack(4)
+#include "poppack.h"
 
 static	SNOOP_DLL		*firstdll = NULL;
 static	SNOOP_RETURNENTRIES 	*firstrets = NULL;

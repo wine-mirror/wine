@@ -31,7 +31,7 @@ DECLARE_DEBUG_CHANNEL(shell)
 
 /* .ICO file ICONDIR definitions */
 
-#pragma pack(1)
+#include "pshpack1.h"
 
 typedef struct
 {
@@ -53,7 +53,7 @@ typedef struct
     icoICONDIRENTRY idEntries[1]; /* An entry for each image (idCount of 'em) */
 } icoICONDIR, *LPicoICONDIR;
 
-#pragma pack(4)
+#include "poppack.h"
 
 static const char*	lpstrMsgWndCreated = "OTHERWINDOWCREATED";
 static const char*	lpstrMsgWndDestroyed = "OTHERWINDOWDESTROYED";

@@ -23,7 +23,7 @@ DEFAULT_DEBUG_CHANNEL(shell)
 
 /* link file formats */
 
-#pragma (1);
+#include "pshpack1.h"
 
 /* lnk elements: simple link has 0x0B */
 #define	WORKDIR		0x10
@@ -52,7 +52,7 @@ typedef struct _LINK_HEADER
 	ITEMIDLIST Pidl;	/* 0x4e */
 } LINK_HEADER, * PLINK_HEADER;
 
-#pragma (4);
+#include "poppack.h"
 
 /* IPersistFile Implementation */
 typedef struct

@@ -71,8 +71,6 @@
 
 DEFAULT_DEBUG_CHANNEL(winsock)
 
-#pragma pack(4)
-
 /* ----------------------------------- helper functions - */
 
 static int list_size(char** l, int item_size)

@@ -11,13 +11,13 @@
 
 struct tagCURSORICONINFO;
 
-#pragma pack(1)
+#include "pshpack1.h"
 typedef struct tagCURSORINFO
 {
     WORD wXMickeys;
     WORD wYMickeys;
 } CURSORINFO, *PCURSORINFO, *LPCURSORINFO;
-#pragma pack(4)
+#include "poppack.h"
 
 WORD WINAPI DISPLAY_Inquire(LPCURSORINFO lpCursorInfo);
 VOID WINAPI DISPLAY_SetCursor( struct tagCURSORICONINFO *lpCursor );

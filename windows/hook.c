@@ -28,7 +28,7 @@
 
 DEFAULT_DEBUG_CHANNEL(hook)
 
-#pragma pack(1)
+#include "pshpack1.h"
 
   /* Hook data (pointed to by a HHOOK) */
 typedef struct
@@ -41,7 +41,7 @@ typedef struct
     WORD       flags;              /* 0c flags */
 } HOOKDATA;
 
-#pragma pack(4)
+#include "poppack.h"
 
 #define HOOK_MAGIC  ((int)'H' | (int)'K' << 8)  /* 'HK' */
 

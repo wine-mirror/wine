@@ -20,7 +20,7 @@ DEFAULT_DEBUG_CHANNEL(snoop)
 
 #ifdef __i386__
 
-#pragma pack(1)
+#include "pshpack1.h"
 
 void WINAPI SNOOP16_Entry(CONTEXT *context);
 void WINAPI SNOOP16_Return(CONTEXT *context);
@@ -82,7 +82,7 @@ typedef struct tagSNOOP16_RELAY {
 	/* unreached */
 } SNOOP16_RELAY;
 
-#pragma pack(4)
+#include "poppack.h"
 
 static	SNOOP16_DLL		*firstdll = NULL;
 static	SNOOP16_RETURNENTRIES 	*firstrets = NULL;

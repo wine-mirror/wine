@@ -1,7 +1,7 @@
 #if !defined(WINASPI_H)
 #define WINASPI_H
 
-#pragma pack(1)
+#include "pshpack1.h"
 
 #define ASPI_DOS        1
 #define ASPI_WIN16      2
@@ -97,6 +97,6 @@ union SRB16 {
 
 typedef union SRB16 SRB16;
 
-#pragma pack(4)
+#include "poppack.h"
 
 #endif

@@ -14,7 +14,7 @@
 extern int DOSCONF_ReadConfig(void);
 
 /* msdos/dosmem.c */
-#pragma pack(1)
+#include "pshpack1.h"
 
 typedef struct
 {
@@ -74,7 +74,7 @@ typedef struct
     BYTE  DiskDataRate;              /* 8B: Last disk data rate selected */
 } BIOSDATA;
 
-#pragma pack(4)
+#include "poppack.h"
 
 extern HANDLE16 DOSMEM_BiosDataSeg;
 extern HANDLE16 DOSMEM_BiosSysSeg;

@@ -9,7 +9,7 @@
 
 #include "windef.h"
 
-#pragma pack(1)
+#include "pshpack1.h"
 /* Defines */
 
 /* Argument 1 passed to the DllEntryProc. */
@@ -332,8 +332,8 @@ typedef struct _EXCEPTION_POINTERS
   PCONTEXT           ContextRecord;
 } EXCEPTION_POINTERS, *PEXCEPTION_POINTERS;
 
+#include "poppack.h"
 
-#pragma pack(4)
 /*
  * function pointer to a exception filter
  */
@@ -378,7 +378,7 @@ typedef enum _TOKEN_INFORMATION_CLASS {
 #ifndef _SECURITY_DEFINED
 #define _SECURITY_DEFINED
 
-#pragma pack(1)
+#include "pshpack1.h"
 
 typedef struct {
     BYTE Value[6];
@@ -437,7 +437,11 @@ typedef struct {
 
 #define SECURITY_DESCRIPTOR_MIN_LENGTH   (sizeof(SECURITY_DESCRIPTOR)) 
 
+#include "poppack.h"
+
 #endif /* _SECURITY_DEFINED */
+
+#include "pshpack1.h"
 
 /* 
  * SID_AND_ATTRIBUTES
@@ -784,6 +788,6 @@ typedef enum tagSID_NAME_USE {
 #define DACL_SECURITY_INFORMATION   0x00000004
 #define SACL_SECURITY_INFORMATION   0x00000008
 
-#pragma pack(4)
+#include "poppack.h"
 
 #endif  /* __WINE_WINNT_H */

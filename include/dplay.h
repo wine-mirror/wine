@@ -3,7 +3,7 @@
 
 #include "wine/obj_base.h"
 
-#pragma pack(1)
+#include "pshpack1.h"
 
 /*****************************************************************************
  * Predeclare the interfaces
@@ -585,6 +585,6 @@ ICOM_DEFINE(IDirectPlay3,IDirectPlay2)
 #endif
 
 
-#pragma pack(4)
+#include "poppack.h"
 
 #endif /* __WINE_DPLAY_H */

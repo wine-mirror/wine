@@ -2,7 +2,7 @@
 #define _INCLUDE_WINE_WINBASE16_H
 
 #include "windef.h"
-#pragma pack(1)
+#include "pshpack1.h"
 typedef struct _SEGINFO {
     UINT16    offSegment;
     UINT16    cbSegment;
@@ -34,7 +34,7 @@ typedef struct _SEGINFO {
 #define	WF_WIN32WOW     0x4000	/* undoc */
 #define	WF_WLO          0x8000
 
-#pragma pack(4)
+#include "poppack.h"
 
 HMODULE16   WINAPI GetModuleHandle16(LPCSTR);
 HLOCAL16    WINAPI LocalAlloc16(UINT16,WORD);

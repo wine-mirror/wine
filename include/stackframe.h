@@ -10,7 +10,7 @@
 #include "ldt.h"
 #include "thread.h"
 
-#pragma pack(1)
+#include "pshpack1.h"
 
   /* 32-bit stack layout after CallTo16() */
 typedef struct _STACK32FRAME
@@ -45,7 +45,7 @@ typedef struct
     WORD          cs;             /* 1c */
 } STACK16FRAME;
 
-#pragma pack(4)
+#include "poppack.h"
 
 #define THREAD_STACK16(thdb) ((STACK16FRAME*)PTR_SEG_TO_LIN((thdb)->cur_stack))
 #define CURRENT_STACK16      (THREAD_STACK16(THREAD_Current()))

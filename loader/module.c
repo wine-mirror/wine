@@ -1633,7 +1633,7 @@ PIMAGE_NT_HEADERS WINAPI RtlImageNtHeader(HMODULE hModule)
  *              HasGPHandler                    (KERNEL.338)
  */
 
-#pragma pack(1)
+#include "pshpack1.h"
 typedef struct _GPHANDLERDEF
 {
     WORD selector;
@@ -1641,7 +1641,7 @@ typedef struct _GPHANDLERDEF
     WORD rangeEnd;
     WORD handler;
 } GPHANDLERDEF;
-#pragma pack(4)
+#include "poppack.h"
 
 SEGPTR WINAPI HasGPHandler16( SEGPTR address )
 {

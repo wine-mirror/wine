@@ -114,7 +114,7 @@ extern LONG CALLBACK CallTo16_long_llllllllllllllll(FARPROC16,LONG,LONG,LONG,
 
 typedef void (*RELAY)();
 
-#pragma pack(1)
+#include "pshpack1.h"
 
 typedef struct tagTHUNK
 {
@@ -127,7 +127,7 @@ typedef struct tagTHUNK
     struct tagTHUNK *next WINE_PACKED;
 } THUNK;
 
-#pragma pack(4)
+#include "poppack.h"
 
 #define DECL_THUNK(name,proc,relay) \
     THUNK name = { 0x58, 0x68, (FARPROC)(proc), 0x50, 0xe9, \
@@ -1152,7 +1152,7 @@ WOW16Call(WORD x,WORD y,WORD z) {
  * 16<->32 Thunklet/Callback API:
  */
 
-#pragma pack(1)
+#include "pshpack1.h"
 typedef struct _THUNKLET
 {
     BYTE        prefix_target;
@@ -1170,7 +1170,7 @@ typedef struct _THUNKLET
     HINSTANCE16 owner;
     struct _THUNKLET *next;
 } THUNKLET;
-#pragma pack(4)
+#include "poppack.h"
 
 #define THUNKLET_TYPE_LS  1
 #define THUNKLET_TYPE_SL  2

@@ -79,7 +79,7 @@ typedef struct
  * (LMEM_DISCARDED >> 8)
  */
 
-#pragma pack(1)
+#include "pshpack1.h"
 
 typedef struct
 {
@@ -105,7 +105,7 @@ typedef struct
     WORD magic;                 /* 28 Magic number */
 } LOCALHEAPINFO;
 
-#pragma pack(4)
+#include "poppack.h"
 
 #define LOCAL_HEAP_MAGIC  0x484c  /* 'LH' */
 

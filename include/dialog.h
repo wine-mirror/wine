@@ -14,7 +14,7 @@
    * sizeof(DIALOGINFO) must be <= DLGWINDOWEXTRA (=30).
    */
 
-#pragma pack(1)
+#include "pshpack1.h"
 
 typedef struct
 {
@@ -34,7 +34,7 @@ typedef struct
     HGLOBAL16   hDialogHeap;
 } DIALOGINFO;
 
-#pragma pack(4)
+#include "poppack.h"
 
 #define DF_END  0x0001
 
