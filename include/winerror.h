@@ -19,9 +19,6 @@
 #ifndef __WINE_WINERROR_H
 #define __WINE_WINERROR_H
 
-
-extern int WIN32_LastError;
-
 #define FACILITY_NULL      0
 #define FACILITY_RPC       1
 #define FACILITY_DISPATCH  2
