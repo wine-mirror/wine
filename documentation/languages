@@ -35,14 +35,11 @@ you must...
 5.  Edit include/options.h enum "WINE_LANGUAGE" to have a member called
     LANG_XX where XX is the new abbreviation.
 
-6.  Edit resources/sysres.c variable "SYSRES_Resources" to contain an 
-    entry for your language.
-
-7.  Create a new file, resources/sysres_XX.rc, where XX is the
-    abbreviation that you chose.  Your best bet is to copy sysres_En.rc
-    and start translating.  [Warning: the author of this file does not
-    know the details of the structure of these files.  
-    There seems to be no need to, however.]
+6.  Create a new file dlls/commdlg/cdlg_XX.rc (where XX is your language 
+    abbreviation) containing all menus.
+    Your best bet is to copy cdlg_En.rc and start translating.  
+    There is no real need to know how the internal structure of the file,
+    as you only need to translate the text within quotes. 
 
     In menus, the character "&" means that the next character will
     be highlighted and that pressing that letter will select the item.
@@ -50,17 +47,25 @@ you must...
     copy the positions from (say) English.  In particular, items within
     one menu should have different highlighted letters.
 
-8.  Edit resources/Makefile.in to add the name of the new file to the
-    SYSRES_SRCS variable.
+7.  Edit dlls/commdlg/rsrc.rc to contain an include statement for your
+    cdlg_XX.rc file.
+
+8.  Repeat steps 6 and 7 again for:
+    - dlls/shell32/shell32_XX.rc  and shres.rc
+    - resources/sysres_XX.rc      and user32.rc
 
 9.  Re-configure, re-make dependencies, and re-make Wine.
 
 10. Check your new menus and forms; when they're not ok,
-    go back to 7) and adapt the sizes, etc.
+    go back to 6) and adapt the sizes, etc.
+    
+11. Several of the winelib based programs in the subdirectory programs
+    also have internationalisation support. See the appropriate files
+    there for reference.
 
-11. Edit /resources/TODO if necessary.
+12. Edit /documentation/internationalisation to show the new status.
 
-12. Submit patches for inclusion in the next Wine release, 
+13. Submit patches for inclusion in the next Wine release, 
     see file ./ANNOUNCE for details about where to submit.
 
 
@@ -73,3 +78,4 @@ Also note that re-organization of the source code might change the list
 of places.]
 
 Therefore revised Februari 1999 by Klaas van Gend
+Revised again May 23, 1999, Klaas van Gend
