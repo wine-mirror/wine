@@ -20,12 +20,12 @@ C_SRCS = \
 	install.c \
 	parser.c \
 	queue.c \
-	setupx_main.c \
-	stubs.c \
-	virtcopy.c
+	stubs.c
 
 C_SRCS16 = \
-	devinst16.c
+	devinst16.c \
+	setupx_main.c \
+	virtcopy.c
 
 RC_SRCS= setupapi.rc
 
