@@ -979,12 +979,17 @@ HBITMAP32 WINAPI CreateDIBSection32 (HDC32 hdc, BITMAPINFO *bmi, UINT32 usage,
     if (dib) 
     {
        res = CreateDIBitmap32(hdc, bi, 0, NULL, bmi, usage);
-       bmp = (BITMAPOBJ *) GDI_GetObjPtr(res, BITMAP_MAGIC);
-       if (bmp) bmp->dib = dib;
-
-       /* HACK for now */
-       if(!bmp->DDBitmap)
-	  X11DRV_CreateBitmap(res); 
+       if (res)
+       {
+           bmp = (BITMAPOBJ *) GDI_GetObjPtr(res, BITMAP_MAGIC);
+           if (bmp)
+           {
+               bmp->dib = dib;
+               /* HACK for now */
+               if(!bmp->DDBitmap)
+                   X11DRV_CreateBitmap(res); 
+           }
+       }
     }
 
     /* Create XImage */
@@ -994,6 +999,8 @@ HBITMAP32 WINAPI CreateDIBSection32 (HDC32 hdc, BITMAPINFO *bmi, UINT32 usage,
     /* Clean up in case of errors */
     if (!res || !bmp || !dib || !bm.bmBits || (bm.bmBitsPixel <= 8 && !colorMap))
     {
+        TRACE(bitmap, "got an error res=%lu, bmp=%p, dib=%p, bm.bmBits=%p\n",
+              res, bmp, dib, bm.bmBits);
 	if (bm.bmBits)
         {
             if (section)
@@ -1002,19 +1009,21 @@ HBITMAP32 WINAPI CreateDIBSection32 (HDC32 hdc, BITMAPINFO *bmi, UINT32 usage,
                 VirtualFree(bm.bmBits, MEM_RELEASE, 0L), bm.bmBits = NULL;
         }
 
-        if (dib->image) XDestroyImage(dib->image), dib->image = NULL;
-	if (colorMap) HeapFree(GetProcessHeap(), 0, colorMap), colorMap = NULL;
-	if (dib) HeapFree(GetProcessHeap(), 0, dib), dib = NULL;
-	if (res) DeleteObject32(res), res = 0;
+        if (dib && dib->image) { XDestroyImage(dib->image); dib->image = NULL; }
+	if (colorMap) { HeapFree(GetProcessHeap(), 0, colorMap); colorMap = NULL; }
+	if (dib) { HeapFree(GetProcessHeap(), 0, dib); dib = NULL; }
+	if (res) { DeleteObject32(res); res = 0; }
     }
 
     /* Install fault handler, if possible */
     if (bm.bmBits)
+    {
         if (VIRTUAL_SetFaultHandler(bm.bmBits, DIB_FaultHandler, (LPVOID)res))
         {
             DIB_DoProtectDIBSection( bmp, PAGE_READONLY );
-            dib->status = DIB_InSync;
+            if (dib) dib->status = DIB_InSync;
         }
+    }
 
     /* Return BITMAP handle and storage location */
     if (res) GDI_HEAP_UNLOCK(res);
