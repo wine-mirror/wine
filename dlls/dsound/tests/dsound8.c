@@ -29,12 +29,7 @@
 #define NONAMELESSUNION
 #include <windows.h>
 
-#include <math.h>
-#include <stdlib.h>
-
 #include "wine/test.h"
-#include "windef.h"
-#include "wingdi.h"
 #include "dsound.h"
 #include "dxerr8.h"
 #include "dsconf.h"
