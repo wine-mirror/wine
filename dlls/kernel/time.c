@@ -60,6 +60,237 @@ WINE_DEFAULT_DEBUG_CHANNEL(time);
     ll = (((LONGLONG)((pft)->dwHighDateTime))<<32) + (pft)-> dwLowDateTime ;
 
 /***********************************************************************
+ *  TIME_DayLightCompareDate
+ *
+ *  Compares two dates without looking at the year
+ *
+ * RETURNS
+ *
+ *  -1 if date < compareDate
+ *   0 if date == compareDate
+ *   1 if date > compareDate
+ *  -2 if an error occures
+ */
+static int TIME_DayLightCompareDate(
+    const SYSTEMTIME *date,        /* [in] The local time to compare. */
+    const SYSTEMTIME *compareDate) /* [in] The daylight saving begin
+                                       or end date */
+{
+    int limit_day, dayinsecs;
+
+    if (date->wMonth < compareDate->wMonth)
+        return -1; /* We are in a month before the date limit. */
+
+    if (date->wMonth > compareDate->wMonth)
+        return 1; /* We are in a month after the date limit. */
+
+    if (compareDate->wDayOfWeek <= 6)
+    {
+       SYSTEMTIME tmp;
+       FILETIME tmp_ft;
+
+       /* compareDate->wDay is interpreted as number of the week in the month
+        * 5 means: the last week in the month */
+       int weekofmonth = compareDate->wDay;
+
+         /* calculate day of week for the first day in the month */
+        memcpy(&tmp, date, sizeof(SYSTEMTIME));
+        tmp.wDay = 1;
+        tmp.wDayOfWeek = -1;
+
+        if (weekofmonth == 5)
+        {
+             /* Go to the beginning of the next month. */
+            if (++tmp.wMonth > 12)
+            {
+                tmp.wMonth = 1;
+                ++tmp.wYear;
+            }
+        }
+
+        if (!SystemTimeToFileTime(&tmp, &tmp_ft))
+            return -2;
+
+        if (weekofmonth == 5)
+        {
+          LONGLONG t;
+          FILETIME2LL( &tmp_ft, t)
+          /* subtract one day */
+          t -= (LONGLONG) 24*60*60*10000000;
+          LL2FILETIME( t, &tmp_ft);
+        }
+
+        if (!FileTimeToSystemTime(&tmp_ft, &tmp))
+            return -2;
+
+       if (weekofmonth == 5)
+       {
+          /* calculate the last matching day of the week in this month */
+          int dif = tmp.wDayOfWeek - compareDate->wDayOfWeek;
+          if (dif < 0)
+             dif += 7;
+
+          limit_day = tmp.wDay - dif;
+       }
+       else
+       {
+          /* calculate the matching day of the week in the given week */
+          int dif = compareDate->wDayOfWeek - tmp.wDayOfWeek;
+          if (dif < 0)
+             dif += 7;
+
+          limit_day = tmp.wDay + 7*(weekofmonth-1) + dif;
+       }
+    }
+    else
+    {
+       limit_day = compareDate->wDay;
+    }
+
+    /* convert to seconds */
+    limit_day = ((limit_day * 24  + compareDate->wHour) * 60 +
+            compareDate->wMinute ) * 60;
+    dayinsecs = ((date->wDay * 24  + date->wHour) * 60 +
+            date->wMinute ) * 60 + date->wSecond;
+    /* and compare */
+    return dayinsecs < limit_day ? -1 :
+           dayinsecs > limit_day ? 1 :
+           0;   /* date is equal to the date limit. */
+}
+
+/***********************************************************************
+ *  TIME_CompTimeZoneID
+ *
+ *  Computes the local time bias for a given time and time zone
+ *
+ *  Returns:
+ *      TIME_ZONE_ID_INVALID    An error occurred
+ *      TIME_ZONE_ID_UNKNOWN    There are no transition time known
+ *      TIME_ZONE_ID_STANDARD   Current time is standard time
+ *      TIME_ZONE_ID_DAYLIGHT   Current time is dayligh saving time
+ */
+static BOOL TIME_CompTimeZoneID (
+    const TIME_ZONE_INFORMATION *pTZinfo, /* [in] The time zone data. */
+    FILETIME      *lpFileTime,            /* [in] The system or local time. */
+    BOOL           islocal                /* [in] it is local time */       
+    )
+{
+    int ret;
+    BOOL beforeStandardDate, afterDaylightDate;
+    DWORD retval = TIME_ZONE_ID_INVALID;
+    LONGLONG llTime = 0; /* initialized to prevent gcc complaining */
+    SYSTEMTIME SysTime;
+    FILETIME ftTemp;
+
+    if (pTZinfo->DaylightDate.wMonth != 0)
+    {
+        if (pTZinfo->StandardDate.wMonth == 0 ||
+            pTZinfo->StandardDate.wDay<1 ||
+            pTZinfo->StandardDate.wDay>5 ||
+            pTZinfo->DaylightDate.wDay<1 ||
+            pTZinfo->DaylightDate.wDay>5)
+        {
+            SetLastError(ERROR_INVALID_PARAMETER);
+            return TIME_ZONE_ID_INVALID;
+        }
+
+        if (!islocal) {
+            FILETIME2LL( lpFileTime, llTime );
+            llTime -= ( pTZinfo->Bias + pTZinfo->DaylightBias )
+                * (LONGLONG)600000000;
+            LL2FILETIME( llTime, &ftTemp)
+            lpFileTime = &ftTemp;
+        }
+
+        FileTimeToSystemTime(lpFileTime, &SysTime);
+        
+         /* check for daylight saving */
+        ret = TIME_DayLightCompareDate( &SysTime, &pTZinfo->StandardDate);
+        if (ret == -2)
+          return TIME_ZONE_ID_INVALID;
+
+        beforeStandardDate = ret < 0;
+
+        if (!islocal) {
+            llTime -= ( pTZinfo->StandardBias - pTZinfo->DaylightBias )
+                * (LONGLONG)600000000;
+            LL2FILETIME( llTime, &ftTemp)
+            FileTimeToSystemTime(lpFileTime, &SysTime);
+        }
+
+        ret = TIME_DayLightCompareDate( &SysTime, &pTZinfo->DaylightDate);
+        if (ret == -2)
+          return TIME_ZONE_ID_INVALID;
+
+        afterDaylightDate = ret >= 0;
+
+        retval = TIME_ZONE_ID_STANDARD;
+        if( pTZinfo->DaylightDate.wMonth <  pTZinfo->StandardDate.wMonth ) {
+            /* Northern hemisphere */
+            if( beforeStandardDate && afterDaylightDate )
+                retval = TIME_ZONE_ID_DAYLIGHT;
+        } else    /* Down south */
+            if( beforeStandardDate || afterDaylightDate )
+            retval = TIME_ZONE_ID_DAYLIGHT;
+    } else 
+        /* No transition date */
+        retval = TIME_ZONE_ID_UNKNOWN;
+        
+    return retval;
+}
+
+/***********************************************************************
+ *  TIME_TimeZoneID
+ *
+ *  Calculates whether daylight saving is on now.
+ *
+ *  Returns:
+ *      TIME_ZONE_ID_INVALID    An error occurred
+ *      TIME_ZONE_ID_UNKNOWN    There are no transition time known
+ *      TIME_ZONE_ID_STANDARD   Current time is standard time
+ *      TIME_ZONE_ID_DAYLIGHT   Current time is dayligh saving time
+ */
+static DWORD TIME_ZoneID(
+        const TIME_ZONE_INFORMATION  *pTzi   /* Timezone info */
+        )
+{
+    FILETIME ftTime;
+    GetSystemTimeAsFileTime( &ftTime);
+    return TIME_CompTimeZoneID( pTzi, &ftTime, FALSE);
+}
+
+/***********************************************************************
+ *  TIME_GetTimezoneBias
+ *
+ *  Calculates the local time bias for a given time zone
+ *
+ * RETURNS
+ *
+ *  Returns TRUE when the time zone bias was calculated.
+ */
+static BOOL TIME_GetTimezoneBias(
+    const TIME_ZONE_INFORMATION
+                  *pTZinfo, /* [in] The time zone data. */
+    FILETIME      *lpFileTime,         /* [in] The system or local time. */
+    BOOL           islocal,            /* [in] it is local time */       
+    LONG          *pBias               /* [out] The calulated bias in minutes */
+    )
+{
+    LONG bias = pTZinfo->Bias;
+    DWORD tzid = TIME_CompTimeZoneID( pTZinfo, lpFileTime, islocal);
+
+    if( tzid == TIME_ZONE_ID_INVALID)
+        return FALSE;
+    if (tzid == TIME_ZONE_ID_DAYLIGHT)
+        bias += pTZinfo->DaylightBias;
+    else if (tzid == TIME_ZONE_ID_STANDARD)
+        bias += pTZinfo->StandardBias;
+    *pBias = bias;
+    return TRUE;
+}
+
+
+/***********************************************************************
  *              SetLocalTime            (KERNEL32.@)
  *
  *  Set the local time using current time zone and daylight
@@ -155,26 +386,27 @@ BOOL WINAPI SetSystemTimeAdjustment(
     return TRUE;
 }
 
-
 /***********************************************************************
  *              GetTimeZoneInformation  (KERNEL32.@)
  *
  *  Get information about the current local time zone.
  *
  * RETURNS
- *  Success: TIME_ZONE_ID_STANDARD. tzinfo contains the time zone info.
- *  Failure: TIME_ZONE_ID_INVALID.
- *  FIXME: return TIME_ZONE_ID_DAYLIGHT when daylight saving is on.
+ *      TIME_ZONE_ID_INVALID    An error occurred
+ *      TIME_ZONE_ID_UNKNOWN    There are no transition time known
+ *      TIME_ZONE_ID_STANDARD   Current time is standard time
+ *      TIME_ZONE_ID_DAYLIGHT   Current time is dayligh saving time
  */
 DWORD WINAPI GetTimeZoneInformation(
     LPTIME_ZONE_INFORMATION tzinfo) /* [out] Destination for time zone information */
 {
     NTSTATUS status;
-    if ((status = RtlQueryTimeZoneInformation(tzinfo)))
+    if ((status = RtlQueryTimeZoneInformation(tzinfo))) {
         SetLastError( RtlNtStatusToDosError(status) );
-    return TIME_ZONE_ID_STANDARD;
+        return TIME_ZONE_ID_INVALID;
+    }
+    return TIME_ZoneID( tzinfo );
 }
-
 
 /***********************************************************************
  *              SetTimeZoneInformation  (KERNEL32.@)
@@ -186,205 +418,13 @@ DWORD WINAPI GetTimeZoneInformation(
  *  Failure: FALSE.
  */
 BOOL WINAPI SetTimeZoneInformation(
-    const LPTIME_ZONE_INFORMATION tzinfo) /* [in] The new time zone. */
+    const TIME_ZONE_INFORMATION *tzinfo) /* [in] The new time zone. */
 {
     NTSTATUS status;
     if ((status = RtlSetTimeZoneInformation(tzinfo)))
         SetLastError( RtlNtStatusToDosError(status) );
     return !status;
 }
-
-
-/***********************************************************************
- *  _DayLightCompareDate
- *
- *  Compares two dates without looking at the year
- *
- * RETURNS
- *
- *  -1 if date < compareDate
- *   0 if date == compareDate
- *   1 if date > compareDate
- *  -2 if an error occures
- */
-
-static int _DayLightCompareDate(
-    const LPSYSTEMTIME date,        /* [in] The local time to compare. */
-    const LPSYSTEMTIME compareDate) /* [in] The daylight saving begin
-                                       or end date */
-{
-    int limit_day, dayinsecs;
-
-    if (date->wMonth < compareDate->wMonth)
-        return -1; /* We are in a month before the date limit. */
-
-    if (date->wMonth > compareDate->wMonth)
-        return 1; /* We are in a month after the date limit. */
-
-    if (compareDate->wDayOfWeek <= 6)
-    {
-       SYSTEMTIME tmp;
-       FILETIME tmp_ft;
-
-       /* compareDate->wDay is interpreted as number of the week in the month
-        * 5 means: the last week in the month */
-       int weekofmonth = compareDate->wDay;
-
-         /* calculate day of week for the first day in the month */
-        memcpy(&tmp, date, sizeof(SYSTEMTIME));
-        tmp.wDay = 1;
-        tmp.wDayOfWeek = -1;
-
-        if (weekofmonth == 5)
-        {
-             /* Go to the beginning of the next month. */
-            if (++tmp.wMonth > 12)
-            {
-                tmp.wMonth = 1;
-                ++tmp.wYear;
-            }
-        }
-
-        if (!SystemTimeToFileTime(&tmp, &tmp_ft))
-            return -2;
-
-        if (weekofmonth == 5)
-        {
-          LONGLONG t;
-          FILETIME2LL( &tmp_ft, t)
-          /* subtract one day */
-          t -= (LONGLONG) 24*60*60*10000000;
-          LL2FILETIME( t, &tmp_ft);
-        }
-
-        if (!FileTimeToSystemTime(&tmp_ft, &tmp))
-            return -2;
-
-       if (weekofmonth == 5)
-       {
-          /* calculate the last matching day of the week in this month */
-          int dif = tmp.wDayOfWeek - compareDate->wDayOfWeek;
-          if (dif < 0)
-             dif += 7;
-
-          limit_day = tmp.wDay - dif;
-       }
-       else
-       {
-          /* calculate the matching day of the week in the given week */
-          int dif = compareDate->wDayOfWeek - tmp.wDayOfWeek;
-          if (dif < 0)
-             dif += 7;
-
-          limit_day = tmp.wDay + 7*(weekofmonth-1) + dif;
-       }
-    }
-    else
-    {
-       limit_day = compareDate->wDay;
-    }
-
-    /* convert to seconds */
-    limit_day = ((limit_day * 24  + compareDate->wHour) * 60 +
-            compareDate->wMinute ) * 60;
-    dayinsecs = ((date->wDay * 24  + date->wHour) * 60 +
-            date->wMinute ) * 60 + date->wSecond;
-    /* and compare */
-    return dayinsecs < limit_day ? -1 :
-           dayinsecs > limit_day ? 1 :
-           0;   /* date is equal to the date limit. */
-}
-
-
-/***********************************************************************
- *  _GetTimezoneBias
- *
- *  Calculates the local time bias for a given time zone
- *
- * RETURNS
- *
- *  Returns TRUE when the time zone bias was calculated.
- */
-
-static BOOL _GetTimezoneBias(
-    const LPTIME_ZONE_INFORMATION
-                   lpTimeZoneInformation, /* [in] The time zone data. */
-    LPSYSTEMTIME   lpSysOrLocalTime,   /* [in] The system or local time. */
-    BOOL           islocal,            /* [in] it is local time */       
-    LONG*          pBias               /* [out] The calulated bias in minutes */
-    )
-{
-    int ret;
-    BOOL beforeStandardDate, afterDaylightDate;
-    BOOL daylightsaving = FALSE;
-    LONG bias = lpTimeZoneInformation->Bias;
-    FILETIME ft;
-    LONGLONG llTime = 0; /* initialized to prevent gcc complaining */
-    SYSTEMTIME stTemp;
-    LPSYSTEMTIME lpTime = lpSysOrLocalTime;
-
-    if (lpTimeZoneInformation->DaylightDate.wMonth != 0)
-    {
-        if (lpTimeZoneInformation->StandardDate.wMonth == 0 ||
-            lpTimeZoneInformation->StandardDate.wDay<1 ||
-            lpTimeZoneInformation->StandardDate.wDay>5 ||
-            lpTimeZoneInformation->DaylightDate.wDay<1 ||
-            lpTimeZoneInformation->DaylightDate.wDay>5)
-        {
-            SetLastError(ERROR_INVALID_PARAMETER);
-            return FALSE;
-        }
-
-        if (!islocal) {
-            if (!SystemTimeToFileTime(lpSysOrLocalTime, &ft)) return -2;
-            FILETIME2LL( &ft, llTime );
-            llTime -= ( lpTimeZoneInformation->Bias +
-                    lpTimeZoneInformation->DaylightBias ) * (LONGLONG)600000000;
-            LL2FILETIME( llTime, &ft)
-            FileTimeToSystemTime(&ft, &stTemp);
-            lpTime =  &stTemp;
-        }
-        
-         /* check for daylight saving */
-        ret = _DayLightCompareDate(lpTime, &lpTimeZoneInformation->StandardDate);
-        if (ret == -2)
-          return FALSE;
-
-        beforeStandardDate = ret < 0;
-
-        if (!islocal) {
-            llTime -= ( lpTimeZoneInformation->StandardBias -
-                    lpTimeZoneInformation->DaylightBias ) * (LONGLONG)600000000;
-            LL2FILETIME( llTime, &ft)
-            FileTimeToSystemTime(&ft, &stTemp);
-            lpTime =  &stTemp;
-        }
-
-        ret = _DayLightCompareDate(lpTime, &lpTimeZoneInformation->DaylightDate);
-        if (ret == -2)
-          return FALSE;
-
-        afterDaylightDate = ret >= 0;
-
-        if( lpTimeZoneInformation->DaylightDate.wMonth <       /* Northern */
-                lpTimeZoneInformation->StandardDate.wMonth ) { /* hemisphere */
-            if( beforeStandardDate && afterDaylightDate )
-                daylightsaving = TRUE;
-        } else    /* Down south */
-            if( beforeStandardDate || afterDaylightDate )
-            daylightsaving = TRUE;
-    }
-
-    if (daylightsaving)
-        bias += lpTimeZoneInformation->DaylightBias;
-    else if (lpTimeZoneInformation->StandardDate.wMonth != 0)
-        bias += lpTimeZoneInformation->StandardBias;
-
-    *pBias = bias;
-
-    return TRUE;
-}
-
 
 /***********************************************************************
  *              SystemTimeToTzSpecificLocalTime  (KERNEL32.@)
@@ -420,7 +460,7 @@ BOOL WINAPI SystemTimeToTzSpecificLocalTime(
     if (!SystemTimeToFileTime(lpUniversalTime, &ft))
         return FALSE;
     FILETIME2LL( &ft, llTime)
-    if (!_GetTimezoneBias(&tzinfo, lpUniversalTime, FALSE, &lBias))
+    if (!TIME_GetTimezoneBias(&tzinfo, &ft, FALSE, &lBias))
         return FALSE;
     /* convert minutes to 100-nanoseconds-ticks */
     llTime -= (LONGLONG)lBias * 600000000;
@@ -462,7 +502,7 @@ BOOL WINAPI TzSpecificLocalTimeToSystemTime(
     if (!SystemTimeToFileTime(lpLocalTime, &ft))
         return FALSE;
     FILETIME2LL( &ft, t)
-    if (!_GetTimezoneBias(&tzinfo, lpLocalTime, TRUE, &lBias))
+    if (!TIME_GetTimezoneBias(&tzinfo, &ft, TRUE, &lBias))
         return FALSE;
     /* convert minutes to 100-nanoseconds-ticks */
     t += (LONGLONG)lBias * 600000000;
@@ -894,11 +934,9 @@ VOID WINAPI GetSystemTime(LPSYSTEMTIME systime) /* [O] Destination for current t
  */
 BOOL WINAPI GetDaylightFlag(void)
 {
-    time_t t = time(NULL);
-    struct tm *ptm = localtime( &t);
-    return ptm->tm_isdst > 0;
+    TIME_ZONE_INFORMATION tzinfo;
+    return GetTimeZoneInformation( &tzinfo) == TIME_ZONE_ID_DAYLIGHT;
 }
-
 
 /***********************************************************************
  *           DosDateTimeToFileTime   (KERNEL32.@)

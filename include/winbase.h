@@ -1638,7 +1638,7 @@ DWORD       WINAPI SetThreadIdealProcessor(HANDLE,DWORD);
 BOOL        WINAPI SetThreadPriority(HANDLE,INT);
 BOOL        WINAPI SetThreadPriorityBoost(HANDLE,BOOL);
 BOOL        WINAPI SetThreadToken(PHANDLE,HANDLE);
-BOOL        WINAPI SetTimeZoneInformation(const LPTIME_ZONE_INFORMATION);
+BOOL        WINAPI SetTimeZoneInformation(const TIME_ZONE_INFORMATION *);
 BOOL        WINAPI SetVolumeMountPointA(LPCSTR,LPCSTR);
 BOOL        WINAPI SetVolumeMountPointW(LPCSTR,LPCSTR);
 #define     SetVolumeMountPoint WINELIB_NAME_AW(SetVolumeMountPoint)
