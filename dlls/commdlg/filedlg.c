@@ -17,12 +17,9 @@
 #include "ldt.h"
 #include "heap.h"
 #include "commdlg.h"
-#include "dialog.h"
-#include "dlgs.h"
 #include "module.h"
 #include "drive.h"
 #include "debugtools.h"
-#include "winproc.h"
 #include "cderr.h"
 #include "tweak.h"
 
@@ -315,17 +312,17 @@ static BOOL FILEDLG_CallWindowProc(LFSPRIVATE lfs, UINT wMsg, WPARAM wParam,
 
 
 /***********************************************************************
- * 				FILEDLG_ScanDir			[internal]
+ * 				FILEDLG_ScanDir                 [internal]
  */
-static BOOL FILEDLG_ScanDir(HWND hWnd, LPWSTR newPath)
+static BOOL FILEDLG_ScanDir(HWND hWnd, LPWSTR newPath, BOOL bChgDir)
 {
     WCHAR		buffer[BUFFILE];
     HWND 		hdlg;
 
+    if (bChgDir)
+        if  ( !SetCurrentDirectoryW( newPath ))
+            return FALSE;
     lstrcpynW(buffer, newPath, sizeof(buffer));
-
-    if ( !SetCurrentDirectoryW( newPath ))
-        return FALSE;
     /* get the list of spec files */
     GetDlgItemTextW(hWnd, edt1, buffer, sizeof(buffer));
     /* list of files */
@@ -350,6 +347,7 @@ static BOOL FILEDLG_ScanDir(HWND hWnd, LPWSTR newPath)
     strcpyW(buffer, FILE_star);
     return DlgDirListW(hWnd, buffer, lst2, stc1, DDL_EXCLUSIVE | DDL_DIRECTORY);
 }
+
 
 /***********************************************************************
  * 				FILEDLG_GetFileType		[internal]
@@ -587,9 +585,9 @@ static LONG FILEDLG_WMInitDialog(HWND hWnd, WPARAM wParam, LPARAM lParam)
     }
   else
     *tmpstr = 0;
-  if (!FILEDLG_ScanDir(hWnd, tmpstr)) {
+  if (!FILEDLG_ScanDir(hWnd, tmpstr, TRUE)) {
     *tmpstr = 0;
-    if (!FILEDLG_ScanDir(hWnd, tmpstr))
+    if (!FILEDLG_ScanDir(hWnd, tmpstr, TRUE))
       WARN("Couldn't read initial directory %s!\n", debugstr_w(tmpstr));
   }
   /* select current drive in combo 2, omit missing drives */
@@ -667,6 +665,54 @@ void FILEDLG_UpdateFileTitle(LFSPRIVATE lfs)
   }
 }
 
+
+
+/***********************************************************************
+ *                              FILEDLG_DirListDblClick         [internal]
+ */
+static LRESULT FILEDLG_DirListDblClick(HWND hWnd, LFSPRIVATE lfs)
+{
+  LONG lRet;
+  LPWSTR pstr;
+  WCHAR tmpstr[BUFFILE];
+
+  /* get the raw string (with brackets) */
+  lRet = SendDlgItemMessageW(hWnd, lst2, LB_GETCURSEL, 0, 0);
+  if (lRet == LB_ERR) return TRUE;
+  pstr = HeapAlloc(GetProcessHeap(), 0, BUFFILEALLOC);
+  SendDlgItemMessageW(hWnd, lst2, LB_GETTEXT, lRet,
+		     (LPARAM)pstr);
+  strcpyW( tmpstr, pstr );
+  HeapFree(GetProcessHeap(), 0, pstr);
+  /* get the selected directory in tmpstr */
+  if (tmpstr[0] == '[')
+    {
+      tmpstr[lstrlenW(tmpstr) - 1] = 0;
+      strcpyW(tmpstr,tmpstr+1);
+    }
+  strcatW(tmpstr, FILE_bslash);
+
+  /* directory *has* to be changed before notifying the hook */
+  SetCurrentDirectoryW( tmpstr ); 
+  /* notify the app */
+  if (lfs->hook)
+    {
+      if (FILEDLG_CallWindowProc(lfs, lfs->lbselchstring, lst2,
+              MAKELONG(lRet,CD_LBSELCHANGE)))
+        return TRUE;
+    }
+
+  lRet = SendDlgItemMessageW(hWnd, cmb1, CB_GETCURSEL, 0, 0);
+  if (lRet == LB_ERR)
+     return TRUE;
+  pstr = (LPWSTR)SendDlgItemMessageW(hWnd, cmb1, CB_GETITEMDATA, lRet, 0);
+  TRACE("Selected filter : %s\n", debugstr_w(pstr));
+  SetDlgItemTextW( hWnd, edt1, pstr );
+
+  FILEDLG_ScanDir(hWnd, tmpstr, FALSE);
+  return TRUE;
+}
+
 /***********************************************************************
  *                              FILEDLG_WMCommand               [internal]
  */
@@ -707,31 +753,7 @@ static LRESULT FILEDLG_WMCommand(HWND hWnd, LPARAM lParam, UINT notification,
       FILEDLG_StripEditControl(hWnd);
       if (notification == LBN_DBLCLK)
 	{
-          /* get the raw string (with brackets) */
-	  lRet = SendDlgItemMessageW(hWnd, lst2, LB_GETCURSEL, 0, 0);
-	  if (lRet == LB_ERR) return TRUE;
-          pstr = HeapAlloc(GetProcessHeap(), 0, BUFFILEALLOC);
-	  SendDlgItemMessageW(hWnd, lst2, LB_GETTEXT, lRet,
-			     (LPARAM)pstr);
-          strcpyW( tmpstr, pstr );
-          HeapFree(GetProcessHeap(), 0, pstr);
-          /* get the selected directory in tmpstr */
-	  if (tmpstr[0] == '[')
-	    {
-	      tmpstr[lstrlenW(tmpstr) - 1] = 0;
-	      strcpyW(tmpstr,tmpstr+1);
-	    }
-	  strcatW(tmpstr, FILE_bslash);
-          /* directory *has* to be changed before notifying the hook */
-          SetCurrentDirectoryW( tmpstr );
-          /* notify the app */
-          if (lfs->hook)
-          {
-              if (FILEDLG_CallWindowProc(lfs, lfs->lbselchstring, control,
-                                 MAKELONG(lRet,CD_LBSELCHANGE)))
-                  return TRUE;
-          }
-	  goto reset_scan;
+          return FILEDLG_DirListDblClick(hWnd, lfs);
 	}
       return TRUE;
 
@@ -767,7 +789,7 @@ static LRESULT FILEDLG_WMCommand(HWND hWnd, LPARAM lParam, UINT notification,
       pstr = (LPWSTR)SendDlgItemMessageW(hWnd, cmb1, CB_GETITEMDATA, lRet, 0);
       TRACE("Selected filter : %s\n", debugstr_w(pstr));
       SetDlgItemTextW( hWnd, edt1, pstr );
-      FILEDLG_ScanDir(hWnd, tmpstr);
+      FILEDLG_ScanDir(hWnd, tmpstr, TRUE);
       in_update=TRUE;
 
     case IDOK:
@@ -796,7 +818,7 @@ static LRESULT FILEDLG_WMCommand(HWND hWnd, LPARAM lParam, UINT notification,
 
 	  TRACE("tmpstr=%s, tmpstr2=%s\n", debugstr_w(tmpstr), debugstr_w(tmpstr2));
           SetDlgItemTextW( hWnd, edt1, tmpstr2 );
-	  FILEDLG_ScanDir(hWnd, tmpstr);
+	  FILEDLG_ScanDir(hWnd, tmpstr, TRUE);
 	  return TRUE;
 	}
       /* no wildcards, we might have a directory or a filename */
@@ -817,7 +839,7 @@ static LRESULT FILEDLG_WMCommand(HWND hWnd, LPARAM lParam, UINT notification,
       if (!in_update)
       {
           /* if ScanDir succeeds, we have changed the directory */
-          if (FILEDLG_ScanDir(hWnd, tmpstr))
+          if (FILEDLG_ScanDir(hWnd, tmpstr, TRUE))
               return TRUE;
       }
       /* if not, this must be a filename */
@@ -830,7 +852,7 @@ static LRESULT FILEDLG_WMCommand(HWND hWnd, LPARAM lParam, UINT notification,
           SetDlgItemTextW( hWnd, edt1, pstr + 1 );
 	  lstrcpynW(tmpstr2, pstr+1, sizeof(tmpstr2) );
 	  /* Should we MessageBox() if this fails? */
-	  if (!FILEDLG_ScanDir(hWnd, tmpstr)) return TRUE;
+	  if (!FILEDLG_ScanDir(hWnd, tmpstr, TRUE)) return TRUE;
 	  strcpyW(tmpstr, tmpstr2);
 	}
       else SetDlgItemTextW( hWnd, edt1, tmpstr );
