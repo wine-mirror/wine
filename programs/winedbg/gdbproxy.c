@@ -3,7 +3,7 @@
  * This allows to debug Wine (and any "emulated" program) under
  * Linux using GDB
  *
- * Copyright (c) Eric Pouech 2002
+ * Copyright (c) Eric Pouech 2002-2003
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -58,6 +58,7 @@
 #define GDBPXY_TRC_COMMAND_ERROR        0x08
 #define GDBPXY_TRC_WIN32_EVENT          0x10
 #define GDBPXY_TRC_WIN32_ERROR          0x20
+#define GDBPXY_TRC_COMMAND_FIXME        0x80
 
 struct gdb_ctx_Xpoint
 {
@@ -83,8 +84,8 @@ struct gdb_context
     int                         out_len;
     int                         out_curr_packet;
     /* generic GDB thread information */
-    unsigned                    exec_thread;    /* thread used in step & continue */
-    unsigned                    other_thread;   /* thread to be used in any other operation */
+    DBG_THREAD*                 exec_thread;    /* thread used in step & continue */
+    DBG_THREAD*                 other_thread;   /* thread to be used in any other operation */
     unsigned                    trace;
     /* current Win32 trap env */
     unsigned                    last_sig;
@@ -262,10 +263,10 @@ static size_t cpu_register_map[] = {
 
 static const size_t cpu_num_regs = (sizeof(cpu_register_map) / sizeof(cpu_register_map[0]));
 
-static inline unsigned long* cpu_register(struct gdb_context* gdbctx, unsigned idx)
+static inline unsigned long* cpu_register(const CONTEXT* ctx, unsigned idx)
 {
     assert(idx < cpu_num_regs);
-    return (unsigned long*)((char*)&gdbctx->context + cpu_register_map[idx]);
+    return (unsigned long*)((char*)ctx + cpu_register_map[idx]);
 }
 
 static inline BOOL     cpu_enter_stepping(struct gdb_context* gdbctx)
@@ -496,6 +497,26 @@ static inline BOOL      cpu_remove_Xpoint(struct gdb_context* gdbctx,
  * =============================================== *
  */
 
+static BOOL fetch_context(struct gdb_context* gdbctx, HANDLE h, CONTEXT* ctx)
+{
+    ctx->ContextFlags =  CONTEXT_CONTROL
+                       | CONTEXT_INTEGER
+#ifdef CONTEXT_SEGMENTS
+	               | CONTEXT_SEGMENTS
+#endif
+#ifdef CONTEXT_DEBUG_REGISTERS
+	               | CONTEXT_DEBUG_REGISTERS
+#endif
+		       ;
+    if (!GetThreadContext(h, ctx))
+    {
+        if (gdbctx->trace & GDBPXY_TRC_WIN32_ERROR)
+            fprintf(stderr, "Can't get thread's context\n");
+        return FALSE;
+    }
+    return TRUE;
+}
+
 static BOOL handle_exception(struct gdb_context* gdbctx, EXCEPTION_DEBUG_INFO* exc)
 {
     EXCEPTION_RECORD*   rec = &exc->ExceptionRecord;
@@ -550,7 +571,7 @@ static BOOL handle_exception(struct gdb_context* gdbctx, EXCEPTION_DEBUG_INFO* e
         break;
     default:
         if (gdbctx->trace & GDBPXY_TRC_WIN32_EVENT)
-            fprintf(stderr, "unhandled exception code %08lx\n", rec->ExceptionCode);
+            fprintf(stderr, "Unhandled exception code %08lx\n", rec->ExceptionCode);
         gdbctx->last_sig = SIGABRT;
         ret = TRUE;
         break;
@@ -659,22 +680,10 @@ static	void	handle_debug_event(struct gdb_context* gdbctx, DEBUG_EVENT* de)
                     de->dwProcessId, de->dwThreadId,
                     de->u.Exception.ExceptionRecord.ExceptionCode);
 
-        gdbctx->context.ContextFlags =  CONTEXT_CONTROL
-                                      | CONTEXT_INTEGER
-#ifdef CONTEXT_SEGMENTS
-	                              | CONTEXT_SEGMENTS
-#endif
-#ifdef CONTEXT_DEBUG_REGISTERS
-		                      | CONTEXT_DEBUG_REGISTERS
-#endif
-				      ;
-        if (!GetThreadContext(DEBUG_CurrThread->handle, &gdbctx->context))
+        if (fetch_context(gdbctx, DEBUG_CurrThread->handle, &gdbctx->context))
         {
-            if (gdbctx->trace & GDBPXY_TRC_WIN32_ERROR)
-                fprintf(stderr, "Can't get thread's context\n");
-            break;
+            gdbctx->in_trap = handle_exception(gdbctx, &de->u.Exception);
         }
-        gdbctx->in_trap = handle_exception(gdbctx, &de->u.Exception);
         break;
 
     case CREATE_THREAD_DEBUG_EVENT:
@@ -695,6 +704,8 @@ static	void	handle_debug_event(struct gdb_context* gdbctx, DEBUG_EVENT* de)
                     de->dwProcessId, de->dwThreadId, de->u.ExitThread.dwExitCode);
 
         assert(DEBUG_CurrThread);
+        if (DEBUG_CurrThread == gdbctx->exec_thread) gdbctx->exec_thread = NULL;
+        if (DEBUG_CurrThread == gdbctx->other_thread) gdbctx->other_thread = NULL;
         DEBUG_DelThread(DEBUG_CurrThread);
         break;
 
@@ -741,14 +752,14 @@ static void    resume_debuggee(struct gdb_context* gdbctx, unsigned long cont)
     {
         if (!SetThreadContext(DEBUG_CurrThread->handle, &gdbctx->context))
             if (gdbctx->trace & GDBPXY_TRC_WIN32_ERROR)
-                fprintf(stderr, "cannot set ctx on %lu\n", DEBUG_CurrThread->tid);
+                fprintf(stderr, "Cannot set context on thread %lu\n", DEBUG_CurrThread->tid);
         if (!ContinueDebugEvent(gdbctx->process->pid, DEBUG_CurrThread->tid, cont))
             if (gdbctx->trace & GDBPXY_TRC_WIN32_ERROR)
-                fprintf(stderr, "cannot continue on %lu (%lu)\n",
+                fprintf(stderr, "Cannot continue on %lu (%lu)\n",
                         DEBUG_CurrThread->tid, cont);
     }
     else if (gdbctx->trace & GDBPXY_TRC_WIN32_ERROR)
-        fprintf(stderr, "cannot find last thread (%lu)\n", DEBUG_CurrThread->tid);
+        fprintf(stderr, "Cannot find last thread (%lu)\n", DEBUG_CurrThread->tid);
 }
 
 static void    wait_for_debuggee(struct gdb_context* gdbctx)
@@ -997,7 +1008,7 @@ static enum packet_return packet_reply_status(struct gdb_context* gdbctx)
              */
             packet_reply_val(gdbctx, i, 1);
             packet_reply_catc(gdbctx, ':');
-            packet_reply_hex_to(gdbctx, cpu_register(gdbctx, i), 4);
+            packet_reply_hex_to(gdbctx, cpu_register(&gdbctx->context, i), 4);
             packet_reply_catc(gdbctx, ';');
         }
     }
@@ -1033,10 +1044,10 @@ static enum packet_return packet_continue(struct gdb_context* gdbctx)
 {
     /* FIXME: add support for address in packet */
     assert(gdbctx->in_packet_len == 0);
-    if (DEBUG_CurrThread->tid != gdbctx->exec_thread && gdbctx->exec_thread)
-        if (gdbctx->trace & GDBPXY_TRC_COMMAND_ERROR)
-            fprintf(stderr, "NIY: cont on %u, while last thd is %lu\n",
-                    gdbctx->exec_thread, DEBUG_CurrThread->tid);
+    if (DEBUG_CurrThread != gdbctx->exec_thread && gdbctx->exec_thread)
+        if (gdbctx->trace & GDBPXY_TRC_COMMAND_FIXME)
+            fprintf(stderr, "NIY: cont on %lu, while last thread is %lu\n",
+                    gdbctx->exec_thread->tid, DEBUG_CurrThread->tid);
     resume_debuggee(gdbctx, DBG_CONTINUE);
     wait_for_debuggee(gdbctx);
     return packet_reply_status(gdbctx);
@@ -1048,10 +1059,10 @@ static enum packet_return packet_continue_signal(struct gdb_context* gdbctx)
 
     /* FIXME: add support for address in packet */
     assert(gdbctx->in_packet_len == 2);
-    if (DEBUG_CurrThread->tid != gdbctx->exec_thread && gdbctx->exec_thread)
-        if (gdbctx->trace & GDBPXY_TRC_COMMAND_ERROR)
-            fprintf(stderr, "NIY: cont/sig on %u, while last thd is %lu\n",
-                    gdbctx->exec_thread, DEBUG_CurrThread->tid);
+    if (DEBUG_CurrThread != gdbctx->exec_thread && gdbctx->exec_thread)
+        if (gdbctx->trace & GDBPXY_TRC_COMMAND_FIXME)
+            fprintf(stderr, "NIY: cont/sig on %lu, while last thread is %lu\n",
+                    gdbctx->exec_thread->tid, DEBUG_CurrThread->tid);
     hex_from(&sig, gdbctx->in_packet, 1);
     /* cannot change signals on the fly */
     if (gdbctx->trace & GDBPXY_TRC_COMMAND)
@@ -1072,20 +1083,22 @@ static enum packet_return packet_detach(struct gdb_context* gdbctx)
 static enum packet_return packet_read_registers(struct gdb_context* gdbctx)
 {
     int                 i;
+    CONTEXT             ctx;
+    CONTEXT*            pctx = &gdbctx->context;
 
     assert(gdbctx->in_trap);
-    if (DEBUG_CurrThread->tid != gdbctx->other_thread && gdbctx->other_thread)
-        if (gdbctx->trace & GDBPXY_TRC_COMMAND_ERROR)
-            fprintf(stderr, "NIY: read regs on %u, while last thd is %lu\n",
-                    gdbctx->other_thread, DEBUG_CurrThread->tid);
 
-    packet_reply_open(gdbctx);
-
-    for (i = 0; i < cpu_num_regs; i++)
+    if (DEBUG_CurrThread != gdbctx->other_thread && gdbctx->other_thread)
     {
-        packet_reply_hex_to(gdbctx, cpu_register(gdbctx, i), 4);
+        if (!fetch_context(gdbctx, gdbctx->other_thread->handle, pctx = &ctx))
+            return packet_error;
     }
 
+    packet_reply_open(gdbctx);
+    for (i = 0; i < cpu_num_regs; i++)
+    {
+        packet_reply_hex_to(gdbctx, cpu_register(pctx, i), 4);
+    }
     packet_reply_close(gdbctx);
     return packet_done;
 }
@@ -1093,15 +1106,25 @@ static enum packet_return packet_read_registers(struct gdb_context* gdbctx)
 static enum packet_return packet_write_registers(struct gdb_context* gdbctx)
 {
     unsigned    i;
+    CONTEXT     ctx;
+    CONTEXT*    pctx = &gdbctx->context;
 
     assert(gdbctx->in_trap);
-    if (DEBUG_CurrThread->tid != gdbctx->other_thread && gdbctx->other_thread)
-        if (gdbctx->trace & GDBPXY_TRC_COMMAND_ERROR)
-            fprintf(stderr, "NIY: write regs on %u, while last thd is %lu\n",
-                    gdbctx->other_thread, DEBUG_CurrThread->tid);
+    if (DEBUG_CurrThread != gdbctx->other_thread && gdbctx->other_thread)
+    {
+        if (!fetch_context(gdbctx, gdbctx->other_thread->handle, pctx = &ctx))
+            return packet_error;
+    }
     if (gdbctx->in_packet_len < cpu_num_regs * 2) return packet_error;
+
     for (i = 0; i < cpu_num_regs; i++)
-        hex_from(cpu_register(gdbctx, i), &gdbctx->in_packet[8 * i], 4);
+        hex_from(cpu_register(pctx, i), &gdbctx->in_packet[8 * i], 4);
+    if (pctx != &gdbctx->context && !SetThreadContext(gdbctx->other_thread->handle, pctx))
+    {
+        if (gdbctx->trace & GDBPXY_TRC_WIN32_ERROR)
+            fprintf(stderr, "Cannot set context on thread %lu\n", gdbctx->other_thread->tid);
+        return packet_error;
+    }
     return packet_ok;
 }
 
@@ -1140,9 +1163,9 @@ static enum packet_return packet_thread(struct gdb_context* gdbctx)
             return packet_error;
         }
         if (gdbctx->in_packet[0] == 'c')
-            gdbctx->exec_thread = thread;
+            gdbctx->exec_thread = DEBUG_GetThread(gdbctx->process, thread);
         else
-            gdbctx->other_thread = thread;
+            gdbctx->other_thread = DEBUG_GetThread(gdbctx->process, thread);
         return packet_ok;
     default:
         if (gdbctx->trace & GDBPXY_TRC_COMMAND_ERROR)
@@ -1162,7 +1185,7 @@ static enum packet_return packet_read_memory(struct gdb_context* gdbctx)
     /* FIXME:check in_packet_len for reading %p,%x */
     if (sscanf(gdbctx->in_packet, "%p,%x", &addr, &len) != 2) return packet_error;
     if (gdbctx->trace & GDBPXY_TRC_COMMAND)
-        fprintf(stderr, "read mem at %p for %u bytes\n", addr, len);
+        fprintf(stderr, "Read mem at %p for %u bytes\n", addr, len);
     for (nread = 0; nread < len > 0; nread += r, addr += r)
     {
         blk_len = min(sizeof(buffer), len - nread);
@@ -1194,7 +1217,7 @@ static enum packet_return packet_write_memory(struct gdb_context* gdbctx)
     if (ptr == NULL)
     {
         if (gdbctx->trace & GDBPXY_TRC_COMMAND_ERROR)
-            fprintf(stderr, "cannot find ':' in %*.*s\n",
+            fprintf(stderr, "Cannot find ':' in %*.*s\n",
                     gdbctx->in_packet_len, gdbctx->in_packet_len, gdbctx->in_packet);
         return packet_error;
     }
@@ -1203,18 +1226,18 @@ static enum packet_return packet_write_memory(struct gdb_context* gdbctx)
     if (sscanf(gdbctx->in_packet, "%p,%x", &addr, &len) != 2)
     {
         if (gdbctx->trace & GDBPXY_TRC_COMMAND_ERROR)
-            fprintf(stderr, "cannot scan addr,len in %s\n", gdbctx->in_packet);
+            fprintf(stderr, "Cannot scan addr,len in %s\n", gdbctx->in_packet);
         return packet_error;
     }
     if (ptr - gdbctx->in_packet + len * 2 != gdbctx->in_packet_len)
     {
         if (gdbctx->trace & GDBPXY_TRC_COMMAND_ERROR)
-            fprintf(stderr, "wrong sizes %u <> %u\n",
+            fprintf(stderr, "Wrong sizes %u <> %u\n",
                     ptr - gdbctx->in_packet + len * 2, gdbctx->in_packet_len);
         return packet_error;
     }
     if (gdbctx->trace & GDBPXY_TRC_COMMAND)
-        fprintf(stderr, "write %u bytes at %p\n", len, addr);
+        fprintf(stderr, "Write %u bytes at %p\n", len, addr);
     while (len > 0)
     {
         blk_len = min(sizeof(buffer), len);
@@ -1238,12 +1261,10 @@ static enum packet_return packet_write_register(struct gdb_context* gdbctx)
     unsigned            reg;
     char*               ptr;
     char*               end;
+    CONTEXT             ctx;
+    CONTEXT*            pctx = &gdbctx->context;
 
     assert(gdbctx->in_trap);
-    if (DEBUG_CurrThread->tid != gdbctx->other_thread && gdbctx->other_thread)
-        if (gdbctx->trace & GDBPXY_TRC_COMMAND_ERROR)
-            fprintf(stderr, "NIY: read reg on %u, while last thd is %lu\n",
-                    gdbctx->other_thread, DEBUG_CurrThread->tid);
 
     ptr = memchr(gdbctx->in_packet, '=', gdbctx->in_packet_len);
     *ptr++ = '\0';
@@ -1251,7 +1272,7 @@ static enum packet_return packet_write_register(struct gdb_context* gdbctx)
     if (end == NULL || reg > cpu_num_regs)
     {
         if (gdbctx->trace & GDBPXY_TRC_COMMAND_ERROR)
-            fprintf(stderr, "invalid register index %s\n", gdbctx->in_packet);
+            fprintf(stderr, "Invalid register index %s\n", gdbctx->in_packet);
         /* FIXME: if just the reg is above cpu_num_regs, don't tell gdb
          *        it wouldn't matter too much, and it fakes our support for all regs
          */
@@ -1260,7 +1281,7 @@ static enum packet_return packet_write_register(struct gdb_context* gdbctx)
     if (ptr + 8 - gdbctx->in_packet != gdbctx->in_packet_len)
     {
         if (gdbctx->trace & GDBPXY_TRC_COMMAND_ERROR)
-            fprintf(stderr, "wrong sizes %u <> %u\n",
+            fprintf(stderr, "Wrong sizes %u <> %u\n",
                     ptr + 8 - gdbctx->in_packet, gdbctx->in_packet_len);
         return packet_error;
     }
@@ -1268,7 +1289,21 @@ static enum packet_return packet_write_register(struct gdb_context* gdbctx)
         fprintf(stderr, "Writing reg %u <= %*.*s\n",
                 reg, gdbctx->in_packet_len - (ptr - gdbctx->in_packet),
                 gdbctx->in_packet_len - (ptr - gdbctx->in_packet), ptr);
-    hex_from(cpu_register(gdbctx, reg), ptr, 4);
+
+    if (DEBUG_CurrThread != gdbctx->other_thread && gdbctx->other_thread)
+    {
+        if (!fetch_context(gdbctx, gdbctx->other_thread->handle, pctx = &ctx))
+            return packet_error;
+    }
+
+    hex_from(cpu_register(pctx, reg), ptr, 4);
+    if (pctx != &gdbctx->context && !SetThreadContext(gdbctx->other_thread->handle, pctx))
+    {
+        if (gdbctx->trace & GDBPXY_TRC_WIN32_ERROR)
+            fprintf(stderr, "Cannot set context for thread %lu\n", gdbctx->other_thread->tid);
+        return packet_error;
+    }
+
     return packet_ok;
 }
 
@@ -1646,10 +1681,10 @@ static enum packet_return packet_step(struct gdb_context* gdbctx)
 {
     /* FIXME: add support for address in packet */
     assert(gdbctx->in_packet_len == 0);
-    if (DEBUG_CurrThread->tid != gdbctx->exec_thread && gdbctx->exec_thread)
-        if (gdbctx->trace & GDBPXY_TRC_COMMAND_ERROR)
-            fprintf(stderr, "NIY: step on %u, while last thd is %lu\n",
-                    gdbctx->exec_thread, DEBUG_CurrThread->tid);
+    if (DEBUG_CurrThread != gdbctx->exec_thread && gdbctx->exec_thread)
+        if (gdbctx->trace & GDBPXY_TRC_COMMAND_FIXME)
+            fprintf(stderr, "NIY: step on %lu, while last thread is %lu\n",
+                    gdbctx->exec_thread->tid, DEBUG_CurrThread->tid);
     if (!cpu_enter_stepping(gdbctx)) return packet_error;
     resume_debuggee(gdbctx, DBG_CONTINUE);
     wait_for_debuggee(gdbctx);
@@ -1666,7 +1701,7 @@ static enum packet_return packet_step_signal(struct gdb_context* gdbctx)
     assert(gdbctx->in_packet_len == 2);
     if (DEBUG_CurrThread->tid != gdbctx->exec_thread && gdbctx->exec_thread)
         if (gdbctx->trace & GDBPXY_TRC_COMMAND_ERROR)
-            fprintf(stderr, "NIY: step/sig on %u, while last thd is %u\n",
+            fprintf(stderr, "NIY: step/sig on %u, while last thread is %u\n",
                     gdbctx->exec_thread, DEBUG_CurrThread->tid);
     hex_from(&sig, gdbctx->in_packet, 1);
     /* cannot change signals on the fly */
@@ -1705,7 +1740,7 @@ static enum packet_return packet_remove_breakpoint(struct gdb_context* gdbctx)
         sscanf(gdbctx->in_packet + 2, "%p,%x", &addr, &len) != 2)
         return packet_error;
     if (gdbctx->trace & GDBPXY_TRC_COMMAND)
-        fprintf(stderr, "remove bp %p[%u] typ=%c\n",
+        fprintf(stderr, "Remove bp %p[%u] typ=%c\n",
                 addr, len, gdbctx->in_packet[0]);
     for (xpt = &gdbctx->Xpoints[NUM_XPOINT - 1]; xpt >= gdbctx->Xpoints; xpt--)
     {
@@ -1735,7 +1770,7 @@ static enum packet_return packet_set_breakpoint(struct gdb_context* gdbctx)
         sscanf(gdbctx->in_packet + 2, "%p,%x", &addr, &len) != 2)
         return packet_error;
     if (gdbctx->trace & GDBPXY_TRC_COMMAND)
-        fprintf(stderr, "set bp %p[%u] typ=%c\n",
+        fprintf(stderr, "Set bp %p[%u] typ=%c\n",
                 addr, len, gdbctx->in_packet[0]);
     /* because of packet command handling, this should be made idempotent */
     for (xpt = &gdbctx->Xpoints[NUM_XPOINT - 1]; xpt >= gdbctx->Xpoints; xpt--)
@@ -1810,7 +1845,7 @@ static BOOL extract_packets(struct gdb_context* gdbctx)
     while ((ret & packet_last_f) == 0)
     {
         if (gdbctx->in_len && (gdbctx->trace & GDBPXY_TRC_LOWLEVEL))
-            fprintf(stderr, "in-buf: %*.*s\n",
+            fprintf(stderr, "In-buf: %*.*s\n",
                     gdbctx->in_len, gdbctx->in_len, gdbctx->in_buf);
         ptr = memchr(gdbctx->in_buf, '$', gdbctx->in_len);
         if (ptr == NULL) return FALSE;
@@ -1818,7 +1853,7 @@ static BOOL extract_packets(struct gdb_context* gdbctx)
         {
             int glen = ptr - gdbctx->in_buf; /* garbage len */
             if (gdbctx->trace & GDBPXY_TRC_LOWLEVEL)
-                fprintf(stderr, "removing garbage: %*.*s\n",
+                fprintf(stderr, "Removing garbage: %*.*s\n",
                         glen, glen, gdbctx->in_buf);
             gdbctx->in_len -= glen;
             memmove(gdbctx->in_buf, ptr, gdbctx->in_len);
@@ -1847,7 +1882,7 @@ static BOOL extract_packets(struct gdb_context* gdbctx)
                 }
                 if (i == sizeof(packet_entries)/sizeof(packet_entries[0]))
                 {
-                    if (gdbctx->trace & GDBPXY_TRC_PACKET)
+                    if (gdbctx->trace & GDBPXY_TRC_COMMAND_ERROR)
                         fprintf(stderr, "Unknown packet request %*.*s\n",
                                 plen, plen, &gdbctx->in_buf[1]);
                 }
@@ -1869,7 +1904,7 @@ static BOOL extract_packets(struct gdb_context* gdbctx)
                 case packet_done:   break;
                 }
                 if (gdbctx->trace & GDBPXY_TRC_LOWLEVEL)
-                    fprintf(stderr, "reply-full: %*.*s\n",
+                    fprintf(stderr, "Reply-full: %*.*s\n",
                             gdbctx->out_len, gdbctx->out_len, gdbctx->out_buf);
                 i = write(gdbctx->sock, gdbctx->out_buf, gdbctx->out_len);
                 assert(i == gdbctx->out_len);
@@ -1889,17 +1924,17 @@ static BOOL extract_packets(struct gdb_context* gdbctx)
                  * - one managing the packets for gdb
                  * - the second one managing the commands...
                  * This would allow us also the reply with the '+' character (Ack of
-                 * the command) way sooner than what we do know
+                 * the command) way sooner than what we do now
                  */
                 if (gdbctx->trace & GDBPXY_TRC_LOWLEVEL)
-                    fprintf(stderr, "dropping packet, I was too slow to respond\n");
+                    fprintf(stderr, "Dropping packet, I was too slow to respond\n");
             }
         }
         else
         {
             write(gdbctx->sock, "+", 1);
             if (gdbctx->trace & GDBPXY_TRC_LOWLEVEL)
-                fprintf(stderr, "dropping packet, invalid checksum %d <> %d\n", in_cksum, loc_cksum);
+                fprintf(stderr, "Dropping packet, invalid checksum %d <> %d\n", in_cksum, loc_cksum);
         }
         gdbctx->in_len -= plen + 4;
         memmove(gdbctx->in_buf, end + 3, gdbctx->in_len);
@@ -1958,7 +1993,7 @@ static BOOL gdb_startup(struct gdb_context* gdbctx, DEBUG_EVENT* de, unsigned fl
     ptr = getenv("WINELOADER");
     strcpy(wine_path, ptr ? ptr : "wine");
 
-    fprintf(stderr, "using wine_path: %s\n", wine_path);
+    fprintf(stderr, "Using wine_path: %s\n", wine_path);
     read_elf_info(wine_path, gdbctx->wine_segs);
 
     /* step 3: fire up gdb (if requested) */
@@ -1987,7 +2022,7 @@ static BOOL gdb_startup(struct gdb_context* gdbctx, DEBUG_EVENT* de, unsigned fl
                 if ((f = fdopen(fd, "w+")) == NULL) return FALSE;
                 fprintf(f, "file %s\n", wine_path);
                 fprintf(f, "target remote localhost:%d\n", ntohs(s_addrs.sin_port));
-                fprintf(f, "monitor trace=0\n");
+                fprintf(f, "monitor trace=%d\n", GDBPXY_TRC_COMMAND_FIXME);
                 fprintf(f, "set prompt Wine-gdb>\\ \n");
                 /* gdb 5.1 seems to require it, won't hurt anyway */
                 fprintf(f, "sharedlibrary\n");
@@ -2031,11 +2066,11 @@ static BOOL gdb_startup(struct gdb_context* gdbctx, DEBUG_EVENT* de, unsigned fl
         break;
     case 0:
         if (gdbctx->trace & GDBPXY_TRC_LOWLEVEL)
-            fprintf(stderr, "poll for cnx failed (timeout)\n");
+            fprintf(stderr, "Poll for cnx failed (timeout)\n");
         return FALSE;
     case -1:
         if (gdbctx->trace & GDBPXY_TRC_LOWLEVEL)
-            fprintf(stderr, "poll for cnx failed (error)\n");
+            fprintf(stderr, "Poll for cnx failed (error)\n");
         return FALSE;
     default:
         assert(0);
@@ -2059,10 +2094,10 @@ static BOOL gdb_init_context(struct gdb_context* gdbctx, unsigned flags)
     gdbctx->out_len = 0;
     gdbctx->out_curr_packet = -1;
 
-    gdbctx->exec_thread = gdbctx->other_thread = 0;
+    gdbctx->exec_thread = gdbctx->other_thread = NULL;
     gdbctx->last_sig = 0;
     gdbctx->in_trap = FALSE;
-    gdbctx->trace = /*GDBPXY_TRC_PACKET | GDBPXY_TRC_COMMAND |*/ GDBPXY_TRC_COMMAND_ERROR | GDBPXY_TRC_WIN32_EVENT;
+    gdbctx->trace = /*GDBPXY_TRC_PACKET | GDBPXY_TRC_COMMAND |*/ GDBPXY_TRC_COMMAND_ERROR | GDBPXY_TRC_COMMAND_FIXME | GDBPXY_TRC_WIN32_EVENT;
     gdbctx->process = NULL;
     for (i = 0; i < NUM_XPOINT; i++)
         gdbctx->Xpoints[i].type = -1;
@@ -2124,7 +2159,7 @@ BOOL DEBUG_GdbRemote(unsigned flags)
             break;
         case -1:
             if (gdbctx.trace & GDBPXY_TRC_LOWLEVEL)
-                fprintf(stderr, "poll failed\n");
+                fprintf(stderr, "Poll failed\n");
             doLoop = FALSE;
             break;
         }
