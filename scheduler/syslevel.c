@@ -67,7 +67,7 @@ SEGPTR WINAPI GetpWin16Lock16(void)
  */
 VOID WINAPI _CreateSysLevel(SYSLEVEL *lock, INT level)
 {
-    InitializeCriticalSection( &lock->crst );
+    RtlInitializeCriticalSection( &lock->crst );
     lock->level = level;
 
     TRACE("(%p, %d): handle is %p\n",
@@ -94,7 +94,7 @@ VOID WINAPI _EnterSysLevel(SYSLEVEL *lock)
                         lock, lock->level, teb->sys_mutex[i], i );
         }
 
-    EnterCriticalSection( &lock->crst );
+    RtlEnterCriticalSection( &lock->crst );
 
     teb->sys_count[lock->level]++;
     teb->sys_mutex[lock->level] = lock;
@@ -131,7 +131,7 @@ VOID WINAPI _LeaveSysLevel(SYSLEVEL *lock)
             teb->sys_mutex[lock->level] = NULL;
     }
 
-    LeaveCriticalSection( &lock->crst );
+    RtlLeaveCriticalSection( &lock->crst );
 
     TRACE("(%p, level %d): thread %lx (fs %04x, pid %ld) count after  %ld\n",
                   lock, lock->level, teb->tid, teb->teb_sel, (long) getpid(),

@@ -38,6 +38,8 @@
 #include "winnt.h"
 #include "thread.h"
 #include "wine/debug.h"
+#include "winternl.h"
+#include "wine/server_protocol.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(heap);
 
@@ -587,7 +589,15 @@ static BOOL HEAP_InitSubHeap( HEAP *heap, LPVOID address, DWORD flags,
 
         RtlInitializeCriticalSection( &heap->critSection );
         if (flags & HEAP_SHARED)
-            MakeCriticalSectionGlobal( &heap->critSection );  /* FIXME: dll separation */
+        {
+            /* let's assume that only one thread at a time will try to do this */
+            HANDLE sem = heap->critSection.LockSemaphore;
+            if (!sem) NtCreateSemaphore( &sem, SEMAPHORE_ALL_ACCESS, NULL, 0, 1 );
+
+            NtDuplicateObject( GetCurrentProcess(), sem, GetCurrentProcess(), &sem, 0, 0,
+                               DUP_HANDLE_MAKE_GLOBAL | DUP_HANDLE_SAME_ACCESS | DUP_HANDLE_CLOSE_SOURCE );
+            heap->critSection.LockSemaphore = sem;
+        }
     }
 
     /* Create the first free block */

@@ -236,13 +236,13 @@ int __pthread_atfork(void (*prepare)(void),
 		     void (*parent)(void),
 		     void (*child)(void))
 {
-    if (init_done) EnterCriticalSection( &atfork_section );
+    if (init_done) RtlEnterCriticalSection( &atfork_section );
     assert( atfork_count < MAX_ATFORK );
     atfork_prepare[atfork_count] = prepare;
     atfork_parent[atfork_count] = parent;
     atfork_child[atfork_count] = child;
     atfork_count++;
-    if (init_done) LeaveCriticalSection( &atfork_section );
+    if (init_done) RtlLeaveCriticalSection( &atfork_section );
     return 0;
 }
 strong_alias(__pthread_atfork, pthread_atfork);
@@ -257,18 +257,18 @@ pid_t __fork(void)
         libc_fork = dlsym( RTLD_NEXT, "fork" );
         assert( libc_fork );
     }
-    EnterCriticalSection( &atfork_section );
+    RtlEnterCriticalSection( &atfork_section );
     /* prepare handlers are called in reverse insertion order */
     for (i = atfork_count - 1; i >= 0; i--) if (atfork_prepare[i]) atfork_prepare[i]();
     if (!(pid = libc_fork()))
     {
-        InitializeCriticalSection( &atfork_section );
+        RtlInitializeCriticalSection( &atfork_section );
         for (i = 0; i < atfork_count; i++) if (atfork_child[i]) atfork_child[i]();
     }
     else
     {
         for (i = 0; i < atfork_count; i++) if (atfork_parent[i]) atfork_parent[i]();
-        LeaveCriticalSection( &atfork_section );
+        RtlLeaveCriticalSection( &atfork_section );
     }
     return pid;
 }
@@ -293,11 +293,11 @@ strong_alias(__pthread_mutex_init, pthread_mutex_init);
 static void mutex_real_init( pthread_mutex_t *mutex )
 {
   CRITICAL_SECTION *critsect = HeapAlloc(GetProcessHeap(), 0, sizeof(CRITICAL_SECTION));
-  InitializeCriticalSection(critsect);
+  RtlInitializeCriticalSection(critsect);
 
   if (InterlockedCompareExchangePointer((void**)&(((wine_mutex)mutex)->critsect),critsect,NULL) != NULL) {
     /* too late, some other thread already did it */
-    DeleteCriticalSection(critsect);
+    RtlDeleteCriticalSection(critsect);
     HeapFree(GetProcessHeap(), 0, critsect);
   }
 }
@@ -308,7 +308,7 @@ int __pthread_mutex_lock(pthread_mutex_t *mutex)
   if (!((wine_mutex)mutex)->critsect)
     mutex_real_init( mutex );
 
-  EnterCriticalSection(((wine_mutex)mutex)->critsect);
+  RtlEnterCriticalSection(((wine_mutex)mutex)->critsect);
   return 0;
 }
 strong_alias(__pthread_mutex_lock, pthread_mutex_lock);
@@ -319,7 +319,7 @@ int __pthread_mutex_trylock(pthread_mutex_t *mutex)
   if (!((wine_mutex)mutex)->critsect)
     mutex_real_init( mutex );
 
-  if (!TryEnterCriticalSection(((wine_mutex)mutex)->critsect)) {
+  if (!RtlTryEnterCriticalSection(((wine_mutex)mutex)->critsect)) {
     errno = EBUSY;
     return -1;
   }
@@ -330,7 +330,7 @@ strong_alias(__pthread_mutex_trylock, pthread_mutex_trylock);
 int __pthread_mutex_unlock(pthread_mutex_t *mutex)
 {
   if (!((wine_mutex)mutex)->critsect) return 0;
-  LeaveCriticalSection(((wine_mutex)mutex)->critsect);
+  RtlLeaveCriticalSection(((wine_mutex)mutex)->critsect);
   return 0;
 }
 strong_alias(__pthread_mutex_unlock, pthread_mutex_unlock);
@@ -343,10 +343,10 @@ int __pthread_mutex_destroy(pthread_mutex_t *mutex)
     return EBUSY;
 #else
     while (((wine_mutex)mutex)->critsect->RecursionCount)
-      LeaveCriticalSection(((wine_mutex)mutex)->critsect);
+      RtlLeaveCriticalSection(((wine_mutex)mutex)->critsect);
 #endif
   }
-  DeleteCriticalSection(((wine_mutex)mutex)->critsect);
+  RtlDeleteCriticalSection(((wine_mutex)mutex)->critsect);
   HeapFree(GetProcessHeap(), 0, ((wine_mutex)mutex)->critsect);
   return 0;
 }

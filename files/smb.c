@@ -107,6 +107,8 @@
 #include "file.h"
 
 #include "smb.h"
+#include "winternl.h"
+#include "ntdll_misc.h"
 
 #include "wine/server.h"
 #include "wine/debug.h"
@@ -379,7 +381,7 @@ static BOOL NB_RecvData(int fd, struct NB_Buffer *rx)
 
     rx->len = NBR_GETWORD(&buffer[2]);
 
-    rx->buffer = HeapAlloc(GetProcessHeap(), 0, rx->len);
+    rx->buffer = RtlAllocateHeap(ntdll_get_process_heap(), 0, rx->len);
     if(!rx->buffer)
         return FALSE;
 
@@ -387,7 +389,7 @@ static BOOL NB_RecvData(int fd, struct NB_Buffer *rx)
     if(rx->len!=r)
     {
         TRACE("Received %d bytes\n",r);
-        HeapFree(GetProcessHeap(), 0, rx->buffer);
+        RtlFreeHeap(ntdll_get_process_heap(), 0, rx->buffer);
         rx->buffer = 0;
         rx->len = 0;
         return FALSE;
@@ -556,11 +558,11 @@ static BOOL SMB_NegotiateProtocol(int fd, USHORT *dialect)
     if(SMB_GetError(rx.buffer))
     {
         ERR("returned error\n");
-        HeapFree(GetProcessHeap(),0,rx.buffer);
+        RtlFreeHeap(ntdll_get_process_heap(),0,rx.buffer);
         return FALSE;
     }
 
-    HeapFree(GetProcessHeap(),0,rx.buffer);
+    RtlFreeHeap(ntdll_get_process_heap(),0,rx.buffer);
 
     *dialect = 0;
 
@@ -658,11 +660,11 @@ static BOOL SMB_SessionSetup(int fd, USHORT *userid)
 
     *userid = SMB_GETWORD(&rx.buffer[SMB_USERID]);
 
-    HeapFree(GetProcessHeap(),0,rx.buffer);
+    RtlFreeHeap(ntdll_get_process_heap(),0,rx.buffer);
     return TRUE;
 
 done:
-    HeapFree(GetProcessHeap(),0,rx.buffer);
+    RtlFreeHeap(ntdll_get_process_heap(),0,rx.buffer);
     return FALSE;
 }
 
@@ -716,13 +718,13 @@ static BOOL SMB_TreeConnect(int fd, USHORT user_id, LPCSTR share_name, USHORT *t
 
     if(SMB_GetError(rx.buffer))
     {
-        HeapFree(GetProcessHeap(),0,rx.buffer);
+        RtlFreeHeap(ntdll_get_process_heap(),0,rx.buffer);
         return FALSE;
     }
 
     *treeid = SMB_GETWORD(&rx.buffer[SMB_TREEID]);
 
-    HeapFree(GetProcessHeap(),0,rx.buffer);
+    RtlFreeHeap(ntdll_get_process_heap(),0,rx.buffer);
     TRACE("OK, treeid = %04x\n", *treeid);
 
     return TRUE;
@@ -955,7 +957,7 @@ static BOOL SMB_Read(int fd, USHORT tree_id, USHORT user_id, USHORT dialect,
         user_id, tree_id, file_id, count, offset);
 
     buf_size = count+0x100;
-    tx.buffer = (unsigned char *) HeapAlloc(GetProcessHeap(),0,buf_size);
+    tx.buffer = (unsigned char *) RtlAllocateHeap(ntdll_get_process_heap(),0,buf_size);
 
     memset(tx.buffer,0,buf_size);
 
@@ -973,14 +975,14 @@ static BOOL SMB_Read(int fd, USHORT tree_id, USHORT user_id, USHORT dialect,
     rx.len = 0;
     if(!NB_Transaction(fd, &tx, &rx))
     {
-        HeapFree(GetProcessHeap(),0,tx.buffer);
+        RtlFreeHeap(ntdll_get_process_heap(),0,tx.buffer);
         return FALSE;
     }
 
     if(SMB_GetError(rx.buffer))
     {
-        HeapFree(GetProcessHeap(),0,rx.buffer);
-        HeapFree(GetProcessHeap(),0,tx.buffer);
+        RtlFreeHeap(ntdll_get_process_heap(),0,rx.buffer);
+        RtlFreeHeap(ntdll_get_process_heap(),0,tx.buffer);
         return FALSE;
     }
 
@@ -988,8 +990,8 @@ static BOOL SMB_Read(int fd, USHORT tree_id, USHORT user_id, USHORT dialect,
 
     if( (SMB_HDRSIZE+n*2) > rx.len )
     {
-        HeapFree(GetProcessHeap(),0,rx.buffer);
-        HeapFree(GetProcessHeap(),0,tx.buffer);
+        RtlFreeHeap(ntdll_get_process_heap(),0,rx.buffer);
+        RtlFreeHeap(ntdll_get_process_heap(),0,tx.buffer);
         ERR("Bad parameter count %d\n",n);
         return FALSE;
     }
@@ -1008,8 +1010,8 @@ static BOOL SMB_Read(int fd, USHORT tree_id, USHORT user_id, USHORT dialect,
     TRACE("Read %d bytes\n",n);
     *read = n;
 
-    HeapFree(GetProcessHeap(),0,tx.buffer);
-    HeapFree(GetProcessHeap(),0,rx.buffer);
+    RtlFreeHeap(ntdll_get_process_heap(),0,tx.buffer);
+    RtlFreeHeap(ntdll_get_process_heap(),0,rx.buffer);
 
     return TRUE;
 }
@@ -1051,7 +1053,7 @@ static BOOL SMB_Transaction2(int fd, int tree_id, int user_id,
     BOOL ret = FALSE;
 
     buf_size = 0x100 + send->setup_count*2 + send->param_count + send->data_count ;
-    tx.buffer = (unsigned char *) HeapAlloc(GetProcessHeap(),0,buf_size);
+    tx.buffer = (unsigned char *) RtlAllocateHeap(ntdll_get_process_heap(),0,buf_size);
 
     tx.len = SMB_Header(tx.buffer, SMB_COM_TRANSACTION2, tree_id, user_id);
 
@@ -1153,7 +1155,7 @@ static BOOL SMB_Transaction2(int fd, int tree_id, int user_id,
 
 done:
     if(tx.buffer)
-        HeapFree(GetProcessHeap(),0,tx.buffer);
+        RtlFreeHeap(ntdll_get_process_heap(),0,tx.buffer);
 
     return ret;
 }
@@ -1170,15 +1172,15 @@ static BOOL SMB_SetupFindFirst(struct SMB_Trans2Info *send, LPSTR filename)
     memset(send,0,sizeof(send));
 
     send->setup_count = 1;
-    send->setup = HeapAlloc(GetProcessHeap(),0,send->setup_count*2);
+    send->setup = RtlAllocateHeap(ntdll_get_process_heap(),0,send->setup_count*2);
     if(!send->setup)
         return FALSE;
 
-    buf_size = 0x10 + lstrlenA(filename);
-    send->params = HeapAlloc(GetProcessHeap(),0,buf_size);
+    buf_size = 0x10 + strlen(filename);
+    send->params = RtlAllocateHeap(ntdll_get_process_heap(),0,buf_size);
     if(!send->params)
     {
-        HeapFree(GetProcessHeap(),0,send->setup);
+        RtlFreeHeap(ntdll_get_process_heap(),0,send->setup);
         return FALSE;
     }
 
@@ -1193,7 +1195,7 @@ static BOOL SMB_SetupFindFirst(struct SMB_Trans2Info *send, LPSTR filename)
     SMB_ADDDWORD(&send->params[len],storagetype); len += 4;
 
     strcpy(&send->params[len],filename);
-    len += lstrlenA(filename)+1;
+    len += strlen(filename)+1;
 
     send->param_count = len;
     send->data = NULL;
@@ -1219,8 +1221,8 @@ static SMB_DIR *SMB_Trans2FindFirst(int fd, USHORT tree_id,
     memset(&recv,0,sizeof(recv));
 
     ret = SMB_Transaction2(fd, tree_id, user_id, &send, &recv);
-    HeapFree(GetProcessHeap(),0,send.params);
-    HeapFree(GetProcessHeap(),0,send.setup);
+    RtlFreeHeap(ntdll_get_process_heap(),0,send.params);
+    RtlFreeHeap(ntdll_get_process_heap(),0,send.setup);
 
     if(!ret)
         goto done;
@@ -1237,14 +1239,14 @@ static SMB_DIR *SMB_Trans2FindFirst(int fd, USHORT tree_id,
     if(SMB_GETWORD(&recv.params[4]))
         FIXME("need to read more!\n");
 
-    smbdir = HeapAlloc(GetProcessHeap(),0,sizeof(*smbdir));
+    smbdir = RtlAllocateHeap(ntdll_get_process_heap(),0,sizeof(*smbdir));
     if(smbdir)
     {
         int i, ofs=0;
 
         smbdir->current = 0;
         smbdir->num_entries = num;
-        smbdir->entries = HeapAlloc(GetProcessHeap(), 0, sizeof(unsigned char*)*num);
+        smbdir->entries = RtlAllocateHeap(ntdll_get_process_heap(), 0, sizeof(unsigned char*)*num);
         if(!smbdir->entries)
             goto done;
         smbdir->buffer = recv.buf.buffer; /* save to free later */
@@ -1274,12 +1276,12 @@ done:
     if(!ret)
     {
         if( recv.buf.buffer )
-            HeapFree(GetProcessHeap(),0,recv.buf.buffer);
+            RtlFreeHeap(ntdll_get_process_heap(),0,recv.buf.buffer);
         if( smbdir )
         {
             if( smbdir->entries )
-                HeapFree(GetProcessHeap(),0,smbdir->entries);
-            HeapFree(GetProcessHeap(),0,smbdir);
+                RtlFreeHeap(ntdll_get_process_heap(),0,smbdir->entries);
+            RtlFreeHeap(ntdll_get_process_heap(),0,smbdir);
         }
         smbdir = NULL;
     }
@@ -1346,14 +1348,14 @@ static BOOL SMB_LoginAndConnect(int fd, LPCSTR host, LPCSTR share, USHORT *tree_
     if(!SMB_SessionSetup(fd, user_id))
         return FALSE;
 
-    name = HeapAlloc(GetProcessHeap(),0,strlen(host)+strlen(share)+5);
+    name = RtlAllocateHeap(ntdll_get_process_heap(),0,strlen(host)+strlen(share)+5);
     if(!name)
         return FALSE;
 
     sprintf(name,"\\\\%s\\%s",host,share);
     if(!SMB_TreeConnect(fd,*user_id,name,tree_id))
     {
-        HeapFree(GetProcessHeap(),0,name);
+        RtlFreeHeap(ntdll_get_process_heap(),0,name);
         return FALSE;
     }
 
@@ -1399,7 +1401,7 @@ HANDLE WINAPI SMB_CreateFileW( LPCWSTR uncname, DWORD access, DWORD sharing,
     INT len;
 
     len = WideCharToMultiByte(CP_ACP, 0, uncname, -1, NULL, 0, NULL, NULL);
-    name = HeapAlloc(GetProcessHeap(), 0, len);
+    name = RtlAllocateHeap(ntdll_get_process_heap(), 0, len);
     if(!name)
         return handle;
 
@@ -1407,7 +1409,7 @@ HANDLE WINAPI SMB_CreateFileW( LPCWSTR uncname, DWORD access, DWORD sharing,
 
     if( !UNC_SplitName(name, &host, &share, &file) )
     {
-        HeapFree(GetProcessHeap(),0,name);
+        RtlFreeHeap(ntdll_get_process_heap(),0,name);
         return handle;
     }
 
@@ -1445,7 +1447,7 @@ HANDLE WINAPI SMB_CreateFileW( LPCWSTR uncname, DWORD access, DWORD sharing,
     }
 
 done:
-    HeapFree(GetProcessHeap(),0,name);
+    RtlFreeHeap(ntdll_get_process_heap(),0,name);
     return handle;
 }
 
@@ -1555,7 +1557,7 @@ SMB_DIR* WINAPI SMB_FindFirst(LPCWSTR name)
     TRACE("Find %s\n",debugstr_w(name));
 
     len = WideCharToMultiByte( CP_ACP, 0, name, -1, NULL, 0, NULL, NULL );
-    filename = HeapAlloc(GetProcessHeap(),0,len);
+    filename = RtlAllocateHeap(ntdll_get_process_heap(),0,len);
     if(!filename)
         return ret;
     WideCharToMultiByte( CP_ACP, 0, name, -1, filename, len, NULL, NULL );
@@ -1580,7 +1582,7 @@ done:
         close(fd);
 
     if(filename)
-        HeapFree(GetProcessHeap(),0,filename);
+        RtlFreeHeap(ntdll_get_process_heap(),0,filename);
 
     return ret;
 }
@@ -1630,9 +1632,9 @@ BOOL WINAPI SMB_FindNext(SMB_DIR *dir, WIN32_FIND_DATAW *data )
 
 BOOL WINAPI SMB_CloseDir(SMB_DIR *dir)
 {
-    HeapFree(GetProcessHeap(),0,dir->buffer);
-    HeapFree(GetProcessHeap(),0,dir->entries);
+    RtlFreeHeap(ntdll_get_process_heap(),0,dir->buffer);
+    RtlFreeHeap(ntdll_get_process_heap(),0,dir->entries);
     memset(dir,0,sizeof(*dir));
-    HeapFree(GetProcessHeap(),0,dir);
+    RtlFreeHeap(ntdll_get_process_heap(),0,dir);
     return TRUE;
 }

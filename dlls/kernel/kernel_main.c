@@ -60,12 +60,12 @@ static CRITICAL_SECTION ldt_section = CRITICAL_SECTION_INIT("ldt_section");
  */
 static void ldt_lock(void)
 {
-    EnterCriticalSection( &ldt_section );
+    RtlEnterCriticalSection( &ldt_section );
 }
 
 static void ldt_unlock(void)
 {
-    LeaveCriticalSection( &ldt_section );
+    RtlLeaveCriticalSection( &ldt_section );
 }
 
 

@@ -1294,15 +1294,15 @@ BOOL WINAPI SetConsoleCtrlHandler(PHANDLER_ROUTINE func, BOOL add)
 
         if (!ch) return FALSE;
         ch->handler = func;
-        EnterCriticalSection(&CONSOLE_CritSect);
+        RtlEnterCriticalSection(&CONSOLE_CritSect);
         ch->next = CONSOLE_Handlers;
         CONSOLE_Handlers = ch;
-        LeaveCriticalSection(&CONSOLE_CritSect);
+        RtlLeaveCriticalSection(&CONSOLE_CritSect);
     }
     else
     {
         struct ConsoleHandler**  ch;
-        EnterCriticalSection(&CONSOLE_CritSect);
+        RtlEnterCriticalSection(&CONSOLE_CritSect);
         for (ch = &CONSOLE_Handlers; *ch; *ch = (*ch)->next)
         {
             if ((*ch)->handler == func) break;
@@ -1329,7 +1329,7 @@ BOOL WINAPI SetConsoleCtrlHandler(PHANDLER_ROUTINE func, BOOL add)
             WARN("Attempt to remove non-installed CtrlHandler %p\n", func);
             ret = FALSE;
         }
-        LeaveCriticalSection(&CONSOLE_CritSect);
+        RtlLeaveCriticalSection(&CONSOLE_CritSect);
     }
     return ret;
 }
@@ -1344,13 +1344,13 @@ static DWORD WINAPI CONSOLE_HandleCtrlCEntry(void* pmt)
 {
     struct ConsoleHandler*  ch;
 
-    EnterCriticalSection(&CONSOLE_CritSect);
+    RtlEnterCriticalSection(&CONSOLE_CritSect);
     /* the debugger didn't continue... so, pass to ctrl handlers */
     for (ch = CONSOLE_Handlers; ch; ch = ch->next)
     {
         if (ch->handler((DWORD)pmt)) break;
     }
-    LeaveCriticalSection(&CONSOLE_CritSect);
+    RtlLeaveCriticalSection(&CONSOLE_CritSect);
     return 0;
 }
 

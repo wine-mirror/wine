@@ -260,23 +260,3 @@ SIZE_T WINAPI HeapSize( HANDLE heap, DWORD flags, LPVOID ptr )
 {
     return RtlSizeHeap( heap, flags, ptr );
 }
-
-void WINAPI EnterCriticalSection( CRITICAL_SECTION *crit )
-{
-    RtlEnterCriticalSection( crit );
-}
-
-BOOL WINAPI TryEnterCriticalSection( CRITICAL_SECTION *crit )
-{
-    return RtlTryEnterCriticalSection( crit );
-}
-
-void WINAPI DeleteCriticalSection( CRITICAL_SECTION *crit )
-{
-    RtlDeleteCriticalSection( crit );
-}
-
-void WINAPI LeaveCriticalSection( CRITICAL_SECTION *crit )
-{
-    RtlLeaveCriticalSection( crit );
-}

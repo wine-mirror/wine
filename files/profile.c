@@ -1108,7 +1108,7 @@ static int PROFILE_GetPrivateProfileString( LPCWSTR section, LPCWSTR entry,
     if (!pDefVal)
 	pDefVal = (LPWSTR)def_val;
 
-    EnterCriticalSection( &PROFILE_CritSect );
+    RtlEnterCriticalSection( &PROFILE_CritSect );
 
     if (PROFILE_Open( filename )) {
 	if ((allow_section_name_copy) && (section == NULL))
@@ -1121,7 +1121,7 @@ static int PROFILE_GetPrivateProfileString( LPCWSTR section, LPCWSTR entry,
        ret = strlenW( buffer );
     }
 
-    LeaveCriticalSection( &PROFILE_CritSect );
+    RtlLeaveCriticalSection( &PROFILE_CritSect );
 
     if (pDefVal != def_val) /* allocated */
 	HeapFree(GetProcessHeap(), 0, pDefVal);
@@ -1371,13 +1371,13 @@ INT WINAPI GetPrivateProfileSectionW( LPCWSTR section, LPWSTR buffer,
 {
     int		ret = 0;
 
-    EnterCriticalSection( &PROFILE_CritSect );
+    RtlEnterCriticalSection( &PROFILE_CritSect );
 
     if (PROFILE_Open( filename ))
         ret = PROFILE_GetSection(CurProfile->section, section, buffer, len,
 				 FALSE, TRUE);
 
-    LeaveCriticalSection( &PROFILE_CritSect );
+    RtlLeaveCriticalSection( &PROFILE_CritSect );
 
     return ret;
 }
@@ -1465,7 +1465,7 @@ BOOL WINAPI WritePrivateProfileStringW( LPCWSTR section, LPCWSTR entry,
 {
     BOOL ret = FALSE;
 
-    EnterCriticalSection( &PROFILE_CritSect );
+    RtlEnterCriticalSection( &PROFILE_CritSect );
 
     if (PROFILE_Open( filename ))
     {
@@ -1485,7 +1485,7 @@ BOOL WINAPI WritePrivateProfileStringW( LPCWSTR section, LPCWSTR entry,
 	}
     }
 
-    LeaveCriticalSection( &PROFILE_CritSect );
+    RtlLeaveCriticalSection( &PROFILE_CritSect );
     return ret;
 }
 
@@ -1534,7 +1534,7 @@ BOOL WINAPI WritePrivateProfileSectionW( LPCWSTR section,
     BOOL ret = FALSE;
     LPWSTR p;
 
-    EnterCriticalSection( &PROFILE_CritSect );
+    RtlEnterCriticalSection( &PROFILE_CritSect );
 
     if (PROFILE_Open( filename )) {
         if (!section && !string)
@@ -1559,7 +1559,7 @@ BOOL WINAPI WritePrivateProfileSectionW( LPCWSTR section,
         }
     }
 
-    LeaveCriticalSection( &PROFILE_CritSect );
+    RtlLeaveCriticalSection( &PROFILE_CritSect );
     return ret;
 }
 
@@ -1686,12 +1686,12 @@ DWORD WINAPI GetPrivateProfileSectionNamesW( LPWSTR buffer, DWORD size,
 {
     DWORD ret = 0;
 
-    EnterCriticalSection( &PROFILE_CritSect );
+    RtlEnterCriticalSection( &PROFILE_CritSect );
 
     if (PROFILE_Open( filename ))
         ret = PROFILE_GetSectionNames(buffer, size);
 
-    LeaveCriticalSection( &PROFILE_CritSect );
+    RtlLeaveCriticalSection( &PROFILE_CritSect );
 
     return ret;
 }
@@ -1746,7 +1746,7 @@ BOOL WINAPI GetPrivateProfileStructW (LPCWSTR section, LPCWSTR key,
 {
     BOOL	ret = FALSE;
 
-    EnterCriticalSection( &PROFILE_CritSect );
+    RtlEnterCriticalSection( &PROFILE_CritSect );
 
     if (PROFILE_Open( filename )) {
         PROFILEKEY *k = PROFILE_Find ( &CurProfile->section, section, key, FALSE, FALSE);
@@ -1806,7 +1806,7 @@ BOOL WINAPI GetPrivateProfileStructW (LPCWSTR section, LPCWSTR key,
             }
 	}
     }
-    LeaveCriticalSection( &PROFILE_CritSect );
+    RtlLeaveCriticalSection( &PROFILE_CritSect );
 
     return ret;
 }
@@ -1875,14 +1875,14 @@ BOOL WINAPI WritePrivateProfileStructW (LPCWSTR section, LPCWSTR key,
     *p++ = hex[sum & 0xf];
     *p++ = '\0';
 
-    EnterCriticalSection( &PROFILE_CritSect );
+    RtlEnterCriticalSection( &PROFILE_CritSect );
 
     if (PROFILE_Open( filename )) {
         ret = PROFILE_SetString( section, key, outstring, FALSE);
         PROFILE_FlushFile();
     }
 
-    LeaveCriticalSection( &PROFILE_CritSect );
+    RtlLeaveCriticalSection( &PROFILE_CritSect );
 
     HeapFree( GetProcessHeap(), 0, outstring );
 
@@ -1921,9 +1921,9 @@ BOOL WINAPI WritePrivateProfileStructA (LPCSTR section, LPCSTR key,
  */
 void WINAPI WriteOutProfiles16(void)
 {
-    EnterCriticalSection( &PROFILE_CritSect );
+    RtlEnterCriticalSection( &PROFILE_CritSect );
     PROFILE_FlushFile();
-    LeaveCriticalSection( &PROFILE_CritSect );
+    RtlLeaveCriticalSection( &PROFILE_CritSect );
 }
 
 /***********************************************************************
