@@ -1425,6 +1425,10 @@ static LONG load_VDMX(GdiFont font, LONG height)
     LONG ppem = 0;
     int i;
 
+    /* For documentation on VDMX records, see
+     * http://www.microsoft.com/OpenType/OTSpec/vdmx.htm
+     */
+
     result = WineEngGetFontData(font, MS_VDMX_TAG, 0, hdr, 6);
 
     if(result == GDI_ERROR) /* no vdmx table present, use linear scaling */
@@ -1446,9 +1450,6 @@ static LONG load_VDMX(GdiFont font, LONG height)
 	offset = -1;
 
 	TRACE("Ratios[%d] %d  %d : %d -> %d\n", i, ratio.bCharSet, ratio.xRatio, ratio.yStartRatio, ratio.yEndRatio);
-
-	if(ratio.bCharSet != 1)
-	    continue;
 
 	if((ratio.xRatio == 0 &&
 	    ratio.yStartRatio == 0 &&
