@@ -123,10 +123,9 @@ typedef struct
 #define FLAG_RET64     0x08  /* function returns a 64-bit value */
 #define FLAG_I386      0x10  /* function is i386 only */
 #define FLAG_REGISTER  0x20  /* use register calling convention */
-#define FLAG_INTERRUPT 0x40  /* function is an interrupt handler */
-#define FLAG_PRIVATE   0x80  /* function is private (cannot be imported) */
+#define FLAG_PRIVATE   0x40  /* function is private (cannot be imported) */
 
-#define FLAG_FORWARD   0x100 /* function is a forwarded name */
+#define FLAG_FORWARD   0x80  /* function is a forwarded name */
 
   /* Offset of a structure field relative to the start of the struct */
 #define STRUCTOFFSET(type,field) ((int)&((type *)0)->field)

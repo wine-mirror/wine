@@ -66,7 +66,6 @@ static const char * const FlagNames[] =
     "ret64",       /* FLAG_RET64 */
     "i386",        /* FLAG_I386 */
     "register",    /* FLAG_REGISTER */
-    "interrupt",   /* FLAG_INTERRUPT */
     "private",     /* FLAG_PRIVATE */
     NULL
 };
@@ -238,11 +237,6 @@ static int parse_spec_export( ORDDEF *odp, DLLSPEC *spec )
         if (odp->type == TYPE_PASCAL)
         {
             error( "'pascal' not supported for Win32\n" );
-            return 0;
-        }
-        if (odp->flags & FLAG_INTERRUPT)
-        {
-            error( "'interrupt' not supported for Win32\n" );
             return 0;
         }
         break;

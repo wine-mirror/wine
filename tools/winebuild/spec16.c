@@ -317,8 +317,6 @@ static int BuildModule16( FILE *outfile, int max_code_offset,
  *  extern LONG WINAPI PREFIX_CallFrom16_C_long_xxx( FARPROC func, LPBYTE args );
  *  extern void WINAPI PREFIX_CallFrom16_C_regs_xxx( FARPROC func, LPBYTE args,
  *                                                   CONTEXT86 *context );
- *  extern void WINAPI PREFIX_CallFrom16_C_intr_xxx( FARPROC func, LPBYTE args,
- *                                                   CONTEXT86 *context );
  *
  * where 'C' is the calling convention ('p' for pascal or 'c' for cdecl),
  * and each 'x' is an argument  ('w'=word, 's'=signed word, 'l'=long,
@@ -333,10 +331,6 @@ static int BuildModule16( FILE *outfile, int max_code_offset,
  * For register functions, the arguments (if present) are converted just
  * the same as for normal functions, but in addition the CONTEXT86 pointer
  * filled with the current register values is passed to the 32-bit routine.
- * (An 'intr' interrupt handler routine is treated exactly like a register
- * routine, except that upon return, the flags word pushed onto the stack
- * by the interrupt is removed by the 16-bit call stub.)
- *
  */
 static void BuildCallFrom16Func( FILE *outfile, const char *profile, const char *prefix )
 {
@@ -360,7 +354,6 @@ static void BuildCallFrom16Func( FILE *outfile, const char *profile, const char 
 
     if (!strncmp( "word_", profile + 2, 5 )) short_ret = 1;
     else if (!strncmp( "regs_", profile + 2, 5 )) reg_func = 1;
-    else if (!strncmp( "intr_", profile + 2, 5 )) reg_func = 2;
     else if (strncmp( "long_", profile + 2, 5 ))
     {
         fprintf( stderr, "Invalid function name '%s', ignored\n", profile );
@@ -467,7 +460,6 @@ static const char *get_function_name( const ORDDEF *odp )
              (odp->type == TYPE_PASCAL) ? "p" :
              (odp->type == TYPE_VARARGS) ? "v" : "c",
              (odp->flags & FLAG_REGISTER) ? "regs" :
-             (odp->flags & FLAG_INTERRUPT) ? "intr" :
              (odp->flags & FLAG_RET16) ? "word" : "long",
              odp->u.func.arg_types );
     return buffer;
@@ -490,8 +482,8 @@ static int Spec16TypeCompare( const void *e1, const void *e2 )
 
     if ((retval = type1 - type2) != 0) return retval;
 
-    type1 = odp1->flags & (FLAG_RET16|FLAG_REGISTER|FLAG_INTERRUPT);
-    type2 = odp2->flags & (FLAG_RET16|FLAG_REGISTER|FLAG_INTERRUPT);
+    type1 = odp1->flags & (FLAG_RET16|FLAG_REGISTER);
+    type2 = odp2->flags & (FLAG_RET16|FLAG_REGISTER);
 
     if ((retval = type1 - type2) != 0) return retval;
 
@@ -701,8 +693,6 @@ void BuildSpec16File( FILE *outfile, DLLSPEC *spec )
                     break;
                 }
 
-        if (typelist[i]->flags & FLAG_INTERRUPT) argsize += 2;
-
         /* build the arg types bit fields */
         arg_types[0] = arg_types[1] = 0;
         for (j = 0; typelist[i]->u.func.arg_types[j]; j++)
@@ -719,13 +709,13 @@ void BuildSpec16File( FILE *outfile, DLLSPEC *spec )
             }
             arg_types[j / 10] |= type << (3 * (j % 10));
         }
-        if (typelist[i]->flags & (FLAG_REGISTER|FLAG_INTERRUPT)) arg_types[0] |= ARG_REGISTER;
+        if (typelist[i]->flags & FLAG_REGISTER) arg_types[0] |= ARG_REGISTER;
         if (typelist[i]->flags & FLAG_RET16) arg_types[0] |= ARG_RET16;
 
 #ifdef __i386__
         fprintf( outfile, "    { 0x68, __wine_%s_CallFrom16_%s, 0x9a, __wine_call_from_16_%s,\n",
                  make_c_identifier(spec->file_name), profile,
-                 (typelist[i]->flags & (FLAG_REGISTER|FLAG_INTERRUPT)) ? "regs":
+                 (typelist[i]->flags & FLAG_REGISTER) ? "regs":
                  (typelist[i]->flags & FLAG_RET16) ? "word" : "long" );
         if (argsize)
             fprintf( outfile, "      0x%04x, 0xca66, %d, { 0x%08x, 0x%08x } },\n",

@@ -239,9 +239,6 @@ The entry point is only available on i386 platforms.
 .B -register
 The function uses CPU register to pass arguments.
 .TP
-.B -interrupt
-The function is an interrupt handler routine.
-.TP
 .B -private
 The function cannot be imported from other dlls, it can only be
 accessed through GetProcAddress.
