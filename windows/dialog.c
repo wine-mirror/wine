@@ -391,8 +391,8 @@ static const WORD *DIALOG_GetControl32( const WORD *p, DLG_CONTROL_INFO *info,
             WORD i, count = GET_WORD(p) / sizeof(WORD);
             TRACE("  BEGIN\n");
             TRACE("    ");
-            for (i = 0; i < count; i++) DPRINTF( "%04x,", GET_WORD(p+i+1) );
-            DPRINTF("\n");
+            for (i = 0; i < count; i++) TRACE( "%04x,", GET_WORD(p+i+1) );
+            TRACE("\n");
             TRACE("  END\n" );
         }
         info->data = p + 1;

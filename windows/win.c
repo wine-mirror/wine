@@ -894,28 +894,28 @@ static void WIN_FixCoordinates( CREATESTRUCTA *cs, INT *sw)
 static void dump_window_styles( DWORD style, DWORD exstyle )
 {
     TRACE( "style:" );
-    if(style & WS_POPUP) DPRINTF(" WS_POPUP");
-    if(style & WS_CHILD) DPRINTF(" WS_CHILD");
-    if(style & WS_MINIMIZE) DPRINTF(" WS_MINIMIZE");
-    if(style & WS_VISIBLE) DPRINTF(" WS_VISIBLE");
-    if(style & WS_DISABLED) DPRINTF(" WS_DISABLED");
-    if(style & WS_CLIPSIBLINGS) DPRINTF(" WS_CLIPSIBLINGS");
-    if(style & WS_CLIPCHILDREN) DPRINTF(" WS_CLIPCHILDREN");
-    if(style & WS_MAXIMIZE) DPRINTF(" WS_MAXIMIZE");
-    if((style & WS_CAPTION) == WS_CAPTION) DPRINTF(" WS_CAPTION");
+    if(style & WS_POPUP) TRACE(" WS_POPUP");
+    if(style & WS_CHILD) TRACE(" WS_CHILD");
+    if(style & WS_MINIMIZE) TRACE(" WS_MINIMIZE");
+    if(style & WS_VISIBLE) TRACE(" WS_VISIBLE");
+    if(style & WS_DISABLED) TRACE(" WS_DISABLED");
+    if(style & WS_CLIPSIBLINGS) TRACE(" WS_CLIPSIBLINGS");
+    if(style & WS_CLIPCHILDREN) TRACE(" WS_CLIPCHILDREN");
+    if(style & WS_MAXIMIZE) TRACE(" WS_MAXIMIZE");
+    if((style & WS_CAPTION) == WS_CAPTION) TRACE(" WS_CAPTION");
     else
     {
-        if(style & WS_BORDER) DPRINTF(" WS_BORDER");
-        if(style & WS_DLGFRAME) DPRINTF(" WS_DLGFRAME");
+        if(style & WS_BORDER) TRACE(" WS_BORDER");
+        if(style & WS_DLGFRAME) TRACE(" WS_DLGFRAME");
     }
-    if(style & WS_VSCROLL) DPRINTF(" WS_VSCROLL");
-    if(style & WS_HSCROLL) DPRINTF(" WS_HSCROLL");
-    if(style & WS_SYSMENU) DPRINTF(" WS_SYSMENU");
-    if(style & WS_THICKFRAME) DPRINTF(" WS_THICKFRAME");
-    if(style & WS_GROUP) DPRINTF(" WS_GROUP");
-    if(style & WS_TABSTOP) DPRINTF(" WS_TABSTOP");
-    if(style & WS_MINIMIZEBOX) DPRINTF(" WS_MINIMIZEBOX");
-    if(style & WS_MAXIMIZEBOX) DPRINTF(" WS_MAXIMIZEBOX");
+    if(style & WS_VSCROLL) TRACE(" WS_VSCROLL");
+    if(style & WS_HSCROLL) TRACE(" WS_HSCROLL");
+    if(style & WS_SYSMENU) TRACE(" WS_SYSMENU");
+    if(style & WS_THICKFRAME) TRACE(" WS_THICKFRAME");
+    if(style & WS_GROUP) TRACE(" WS_GROUP");
+    if(style & WS_TABSTOP) TRACE(" WS_TABSTOP");
+    if(style & WS_MINIMIZEBOX) TRACE(" WS_MINIMIZEBOX");
+    if(style & WS_MAXIMIZEBOX) TRACE(" WS_MAXIMIZEBOX");
 
     /* FIXME: Add dumping of BS_/ES_/SBS_/LBS_/CBS_/DS_/etc. styles */
 #define DUMPED_STYLES \
@@ -938,29 +938,29 @@ static void dump_window_styles( DWORD style, DWORD exstyle )
      WS_MINIMIZEBOX | \
      WS_MAXIMIZEBOX)
 
-    if(style & ~DUMPED_STYLES) DPRINTF(" %08lx", style & ~DUMPED_STYLES);
-    DPRINTF("\n");
+    if(style & ~DUMPED_STYLES) TRACE(" %08lx", style & ~DUMPED_STYLES);
+    TRACE("\n");
 #undef DUMPED_STYLES
 
     TRACE( "exstyle:" );
-    if(exstyle & WS_EX_DLGMODALFRAME) DPRINTF(" WS_EX_DLGMODALFRAME");
-    if(exstyle & WS_EX_DRAGDETECT) DPRINTF(" WS_EX_DRAGDETECT");
-    if(exstyle & WS_EX_NOPARENTNOTIFY) DPRINTF(" WS_EX_NOPARENTNOTIFY");
-    if(exstyle & WS_EX_TOPMOST) DPRINTF(" WS_EX_TOPMOST");
-    if(exstyle & WS_EX_ACCEPTFILES) DPRINTF(" WS_EX_ACCEPTFILES");
-    if(exstyle & WS_EX_TRANSPARENT) DPRINTF(" WS_EX_TRANSPARENT");
-    if(exstyle & WS_EX_MDICHILD) DPRINTF(" WS_EX_MDICHILD");
-    if(exstyle & WS_EX_TOOLWINDOW) DPRINTF(" WS_EX_TOOLWINDOW");
-    if(exstyle & WS_EX_WINDOWEDGE) DPRINTF(" WS_EX_WINDOWEDGE");
-    if(exstyle & WS_EX_CLIENTEDGE) DPRINTF(" WS_EX_CLIENTEDGE");
-    if(exstyle & WS_EX_CONTEXTHELP) DPRINTF(" WS_EX_CONTEXTHELP");
-    if(exstyle & WS_EX_RIGHT) DPRINTF(" WS_EX_RIGHT");
-    if(exstyle & WS_EX_RTLREADING) DPRINTF(" WS_EX_RTLREADING");
-    if(exstyle & WS_EX_LEFTSCROLLBAR) DPRINTF(" WS_EX_LEFTSCROLLBAR");
-    if(exstyle & WS_EX_CONTROLPARENT) DPRINTF(" WS_EX_CONTROLPARENT");
-    if(exstyle & WS_EX_STATICEDGE) DPRINTF(" WS_EX_STATICEDGE");
-    if(exstyle & WS_EX_APPWINDOW) DPRINTF(" WS_EX_APPWINDOW");
-    if(exstyle & WS_EX_LAYERED) DPRINTF(" WS_EX_LAYERED");
+    if(exstyle & WS_EX_DLGMODALFRAME) TRACE(" WS_EX_DLGMODALFRAME");
+    if(exstyle & WS_EX_DRAGDETECT) TRACE(" WS_EX_DRAGDETECT");
+    if(exstyle & WS_EX_NOPARENTNOTIFY) TRACE(" WS_EX_NOPARENTNOTIFY");
+    if(exstyle & WS_EX_TOPMOST) TRACE(" WS_EX_TOPMOST");
+    if(exstyle & WS_EX_ACCEPTFILES) TRACE(" WS_EX_ACCEPTFILES");
+    if(exstyle & WS_EX_TRANSPARENT) TRACE(" WS_EX_TRANSPARENT");
+    if(exstyle & WS_EX_MDICHILD) TRACE(" WS_EX_MDICHILD");
+    if(exstyle & WS_EX_TOOLWINDOW) TRACE(" WS_EX_TOOLWINDOW");
+    if(exstyle & WS_EX_WINDOWEDGE) TRACE(" WS_EX_WINDOWEDGE");
+    if(exstyle & WS_EX_CLIENTEDGE) TRACE(" WS_EX_CLIENTEDGE");
+    if(exstyle & WS_EX_CONTEXTHELP) TRACE(" WS_EX_CONTEXTHELP");
+    if(exstyle & WS_EX_RIGHT) TRACE(" WS_EX_RIGHT");
+    if(exstyle & WS_EX_RTLREADING) TRACE(" WS_EX_RTLREADING");
+    if(exstyle & WS_EX_LEFTSCROLLBAR) TRACE(" WS_EX_LEFTSCROLLBAR");
+    if(exstyle & WS_EX_CONTROLPARENT) TRACE(" WS_EX_CONTROLPARENT");
+    if(exstyle & WS_EX_STATICEDGE) TRACE(" WS_EX_STATICEDGE");
+    if(exstyle & WS_EX_APPWINDOW) TRACE(" WS_EX_APPWINDOW");
+    if(exstyle & WS_EX_LAYERED) TRACE(" WS_EX_LAYERED");
 
 #define DUMPED_EX_STYLES \
     (WS_EX_DLGMODALFRAME | \
@@ -982,8 +982,8 @@ static void dump_window_styles( DWORD style, DWORD exstyle )
      WS_EX_APPWINDOW | \
      WS_EX_LAYERED)
 
-    if(exstyle & ~DUMPED_EX_STYLES) DPRINTF(" %08lx", exstyle & ~DUMPED_EX_STYLES);
-    DPRINTF("\n");
+    if(exstyle & ~DUMPED_EX_STYLES) TRACE(" %08lx", exstyle & ~DUMPED_EX_STYLES);
+    TRACE("\n");
 #undef DUMPED_EX_STYLES
 }
 

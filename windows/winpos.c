@@ -1127,19 +1127,19 @@ LONG WINPOS_HandleWindowPosChanging( HWND hwnd, WINDOWPOS *winpos )
 static void dump_winpos_flags(UINT flags)
 {
     TRACE("flags:");
-    if(flags & SWP_NOSIZE) DPRINTF(" SWP_NOSIZE");
-    if(flags & SWP_NOMOVE) DPRINTF(" SWP_NOMOVE");
-    if(flags & SWP_NOZORDER) DPRINTF(" SWP_NOZORDER");
-    if(flags & SWP_NOREDRAW) DPRINTF(" SWP_NOREDRAW");
-    if(flags & SWP_NOACTIVATE) DPRINTF(" SWP_NOACTIVATE");
-    if(flags & SWP_FRAMECHANGED) DPRINTF(" SWP_FRAMECHANGED");
-    if(flags & SWP_SHOWWINDOW) DPRINTF(" SWP_SHOWWINDOW");
-    if(flags & SWP_HIDEWINDOW) DPRINTF(" SWP_HIDEWINDOW");
-    if(flags & SWP_NOCOPYBITS) DPRINTF(" SWP_NOCOPYBITS");
-    if(flags & SWP_NOOWNERZORDER) DPRINTF(" SWP_NOOWNERZORDER");
-    if(flags & SWP_NOSENDCHANGING) DPRINTF(" SWP_NOSENDCHANGING");
-    if(flags & SWP_DEFERERASE) DPRINTF(" SWP_DEFERERASE");
-    if(flags & SWP_ASYNCWINDOWPOS) DPRINTF(" SWP_ASYNCWINDOWPOS");
+    if(flags & SWP_NOSIZE) TRACE(" SWP_NOSIZE");
+    if(flags & SWP_NOMOVE) TRACE(" SWP_NOMOVE");
+    if(flags & SWP_NOZORDER) TRACE(" SWP_NOZORDER");
+    if(flags & SWP_NOREDRAW) TRACE(" SWP_NOREDRAW");
+    if(flags & SWP_NOACTIVATE) TRACE(" SWP_NOACTIVATE");
+    if(flags & SWP_FRAMECHANGED) TRACE(" SWP_FRAMECHANGED");
+    if(flags & SWP_SHOWWINDOW) TRACE(" SWP_SHOWWINDOW");
+    if(flags & SWP_HIDEWINDOW) TRACE(" SWP_HIDEWINDOW");
+    if(flags & SWP_NOCOPYBITS) TRACE(" SWP_NOCOPYBITS");
+    if(flags & SWP_NOOWNERZORDER) TRACE(" SWP_NOOWNERZORDER");
+    if(flags & SWP_NOSENDCHANGING) TRACE(" SWP_NOSENDCHANGING");
+    if(flags & SWP_DEFERERASE) TRACE(" SWP_DEFERERASE");
+    if(flags & SWP_ASYNCWINDOWPOS) TRACE(" SWP_ASYNCWINDOWPOS");
 
 #define DUMPED_FLAGS \
     (SWP_NOSIZE | \
@@ -1156,8 +1156,8 @@ static void dump_winpos_flags(UINT flags)
     SWP_DEFERERASE | \
     SWP_ASYNCWINDOWPOS)
 
-    if(flags & ~DUMPED_FLAGS) DPRINTF(" %08x", flags & ~DUMPED_FLAGS);
-    DPRINTF("\n");
+    if(flags & ~DUMPED_FLAGS) TRACE(" %08x", flags & ~DUMPED_FLAGS);
+    TRACE("\n");
 #undef DUMPED_FLAGS
 }
 

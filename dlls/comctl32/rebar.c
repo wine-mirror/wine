@@ -406,14 +406,14 @@ REBAR_DumpBandInfo( LPREBARBANDINFOA pB)
     if (pB->fMask & (RBBIM_SIZE | RBBIM_IDEALSIZE | RBBIM_HEADERSIZE | RBBIM_LPARAM )) {
 	TRACE("band info:");
 	if (pB->fMask & RBBIM_SIZE)
-	    DPRINTF(" cx=%u", pB->cx);
+	    TRACE(" cx=%u", pB->cx);
 	if (pB->fMask & RBBIM_IDEALSIZE)
-	    DPRINTF(" xIdeal=%u", pB->cxIdeal);
+	    TRACE(" xIdeal=%u", pB->cxIdeal);
 	if (pB->fMask & RBBIM_HEADERSIZE)
-	    DPRINTF(" xHeader=%u", pB->cxHeader);
+	    TRACE(" xHeader=%u", pB->cxHeader);
 	if (pB->fMask & RBBIM_LPARAM)
-	    DPRINTF(" lParam=0x%08lx", pB->lParam);
-	DPRINTF("\n");
+	    TRACE(" lParam=0x%08lx", pB->lParam);
+	TRACE("\n");
     }
     if (pB->fMask & RBBIM_CHILDSIZE)
 	TRACE("band info: xMin=%u, yMin=%u, yChild=%u, yMax=%u, yIntgl=%u\n",
@@ -451,13 +451,13 @@ REBAR_DumpBand (REBAR_INFO *iP)
 	      i, pB->uMinHeight, pB->cxHeader);
 	if (pB->fMask & (RBBIM_SIZE | RBBIM_IDEALSIZE | RBBIM_LPARAM )) {
 	    if (pB->fMask & RBBIM_SIZE)
-		DPRINTF(" cx=%u", pB->cx);
+		TRACE(" cx=%u", pB->cx);
 	    if (pB->fMask & RBBIM_IDEALSIZE)
-		DPRINTF(" xIdeal=%u", pB->cxIdeal);
+		TRACE(" xIdeal=%u", pB->cxIdeal);
 	    if (pB->fMask & RBBIM_LPARAM)
-		DPRINTF(" lParam=0x%08lx", pB->lParam);
+		TRACE(" lParam=0x%08lx", pB->lParam);
 	}
-	DPRINTF("\n");
+	TRACE("\n");
 	if (RBBIM_CHILDSIZE)
 	    TRACE("band # %u: xMin=%u, yMin=%u, yChild=%u, yMax=%u, yIntgl=%u\n",
 		  i, pB->cxMinChild, pB->cyMinChild, pB->cyChild, pB->cyMaxChild, pB->cyIntegral);
