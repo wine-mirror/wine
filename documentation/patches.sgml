@@ -14,18 +14,28 @@
       <itemizedlist>
         <listitem>
           <para>
-            a description of what was wrong and what is now better
-            (and now broken :).
+            A meaningfull subject (very short description of patch)            
+          </para>
+        </listitem>
+         <listitem>
+          <para>
+            A long (paragraph) description of what was wrong and what is now 
+            better (and now broken :). (recomended)
           </para>
         </listitem>
         <listitem>
           <para>
-            your contact information ( Name/Handle and e-mail )
+            Change Log: A short description of what was changed.
           </para>
         </listitem>
         <listitem>
           <para>
-            the patch in <command>diff -u</command> format (it happens...)
+            Your contact information ( Name/Handle and e-mail )
+          </para>
+        </listitem>
+        <listitem>
+          <para>
+            The patch in <command>diff -u</command> format (it happens...)
           </para>
         </listitem>
       </itemizedlist>
@@ -47,6 +57,118 @@
       <para>
         For removals, list the files.
       </para>
+      <para>
+        Since wine is constantly changing due to development it is strongly
+        recomended that you use cvs for patches, if you cannot use cvs for
+        some reason, you can submit patches against the latest tarball. 
+        To do this make a copy of the files that you will be modifying and
+        <command>diff -u</command> against the old file. I.E.
+      </para>
+      <screen>
+diff -u file.old file.c > file.txt
+      </screen>
+    </sect1>
+
+    <sect1 id="Style-notes">
+      <title>Some notes about style</title>
+       
+      <para>
+        There are a few conventions that about coding style that have been
+        adopted over the years of development. The rational for these 
+        <quote>rules</quote> is explained for each one.
+      </para>
+      <itemizedlist>
+        <listitem>
+        <para>
+           Only one change set per patch. Patches should address only one
+           bug/problem at a time. If a lot of changes need to be made then it
+           is perfered to break it into a series of patches. This makes it
+           easier to find regressions.
+        </para>
+        </listitem>
+        <listitem>
+        <para>
+          Tabs are not forbidden but are defined as 8 charaters and the usual
+          amount of indentation is 4 characters. 
+        </para>
+        </listitem>
+        <listitem>
+        <para>
+          C++ style comments are discouraged since some compilers choke on 
+          them.
+        </para>
+        </listitem>
+        <listitem>
+        <para>
+          Commenting out a block of code is usually done by enclosing it in 
+          <command>#if 0 ... #endif</command> Statements. For example.
+        </para>
+        <screen> 
+/* note about reason for commenting block */
+#if 0
+code
+code /* comments */
+code
+#endif
+        </screen>
+        <para>
+          The reason for using this method is that it does not require that
+          you edit comments that may be inside the block of code.
+        </para>
+        </listitem>
+        <listitem>
+        <para>
+          Patches should be inlined (if you can configure your email client to
+          not wrap lines), or attached as plain text attachements so they can 
+          be read inline. This may mean some more work for you. However it
+          allows others to review your patch easily and decreases the chances
+          of it being overlooked or forgotten.
+        </para>
+        </listitem>
+        <listitem>
+        <para>
+          Code is usually limited to 80 columns. This helps prevent mailers
+          mangling patches by line wrap. Also it generally makes code easier
+          to read.
+        </para>
+        </listitem>
+      </itemizedlist>
+      <sect2 id="Inline-Attachments-with-OE">
+        <title>Inline attachments with Outlook Express</title>
+        <para>
+          Outlook Express is notorious for mangleing attachements. Giving the
+          patch a <filename>.txt</filename> extention and attaching will solve
+          the problem for most mailers including Outlook. Also, there is a way
+          to enable Outlook Express send <filename>.diff</filename>
+          attachmnets.
+        </para>
+        <para>
+          You need following two things to make it work.
+        </para>
+        <orderedlist>
+          <listitem>
+          <para>
+            Make sure that <filename>.diff</filename> files have \r\n line
+            ends, because if OE detects that there is no \r\n line endings it
+            switches to quoted-printable format attachments.
+          </para>
+          </listitem>
+          <listitem>
+          <para>
+            Using regedit add key "Content Type" with value "text/plain" 
+            to the .diff extension under HKEY_CLASSES_ROOT (same as for .txt
+            extension). This tells OE to use Content-Type: text/plain instead
+            of application/octet-stream.
+          </para>
+          </listitem>
+        </orderedlist>
+        <para>
+          Item #1 is important. After you hit "Send" button, go to "Outbox" 
+          and using "Properties" verify the message source to make sure that
+          the mail has correct format. You might want to send several test
+          emails to yourself too.
+        </para>
+      </sect2>
     </sect1>
 
     <sect1 id="patch-quality">
