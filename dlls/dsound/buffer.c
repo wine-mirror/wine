@@ -404,6 +404,10 @@ static DWORD WINAPI IDirectSoundBufferImpl_Release(LPDIRECTSOUNDBUFFER8 iface) {
 		This->dsound->buffers = HeapReAlloc(GetProcessHeap(),0,This->dsound->buffers,sizeof(LPDIRECTSOUNDBUFFER8)*This->dsound->nrofbuffers);
 		TRACE("(%p) buffer count is now %d\n", This, This->dsound->nrofbuffers);
 	}
+	if (This->dsound->nrofbuffers == 0) {
+		HeapFree(GetProcessHeap(),0,This->dsound->buffers);
+		This->dsound->buffers = NULL;
+        }
 	RtlReleaseResource(&(This->dsound->lock));
 
 	DeleteCriticalSection(&(This->lock));
