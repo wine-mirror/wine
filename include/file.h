@@ -67,7 +67,7 @@ extern HFILE32 FILE_DupUnixHandle( int fd );
 extern BOOL32 FILE_Stat( LPCSTR unixName, BY_HANDLE_FILE_INFORMATION *info );
 extern HFILE32 FILE_Dup( HFILE32 hFile );
 extern HFILE32 FILE_Dup2( HFILE32 hFile1, HFILE32 hFile2 );
-extern HFILE32 FILE_Open( LPCSTR path, INT32 mode );
+extern HFILE32 FILE_Open( LPCSTR path, INT32 mode ,INT32 sharemode);
 extern HFILE32 FILE_OpenUnixFile( LPCSTR path, INT32 mode );
 extern BOOL32 FILE_SetFileType( HFILE32 hFile, DWORD type );
 extern LPVOID FILE_mmap( HFILE32 hFile, LPVOID start,

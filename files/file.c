@@ -603,8 +603,13 @@ HFILE32 FILE_OpenUnixFile( const char *name, int mode )
 
 /***********************************************************************
  *           FILE_Open
+ *
+ * path[I] name of file to open
+ * mode[I] mode how to open, in unix notation
+ * shareMode[I] the sharing mode in the win OpenFile notation
+ *
  */
-HFILE32 FILE_Open( LPCSTR path, INT32 mode )
+HFILE32 FILE_Open( LPCSTR path, INT32 mode, INT32 shareMode )
 {
     DOS_FULL_NAME full_name;
     const char *unixName;
@@ -640,7 +645,7 @@ HFILE32 FILE_Open( LPCSTR path, INT32 mode )
         unixName = full_name.long_name;
     }
     
-    dosMode = FILE_UnixToDosMode(mode);
+    dosMode = FILE_UnixToDosMode(mode)| shareMode;
     fileInUse = FILE_InUse(full_name.long_name,&oldMode);
     if(fileInUse)
       {
@@ -1409,9 +1414,7 @@ HFILE32 WINAPI _lopen32( LPCSTR path, INT32 mode )
     TRACE(file, "('%s',%04x)\n", path, mode );
 
     unixMode= FILE_DOSToUnixMode(mode);
-    unixMode |= (mode &0x70); /* transfer the OF_SHARE options to handle 
-				 them in FILE_Open*/
-    return FILE_Open( path, unixMode );
+    return FILE_Open( path, unixMode , (mode & 0x70));
 }
 
 

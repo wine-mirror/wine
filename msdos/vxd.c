@@ -607,7 +607,7 @@ void VXD_Win32s( CONTEXT *context )
         IMAGE_NT_HEADERS *nt_header = PE_HEADER(module->baseAddr);
         IMAGE_SECTION_HEADER *pe_seg = PE_SECTIONS(module->baseAddr);
 
-        HFILE32 image = FILE_Open(module->pathName, O_RDONLY);
+        HFILE32 image = FILE_Open(module->pathName, O_RDONLY,0);
         BOOL32 error = (image == INVALID_HANDLE_VALUE32);
         UINT32 i;
 

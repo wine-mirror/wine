@@ -295,7 +295,7 @@ DWORD __cdecl CRTDLL_fopen(LPCSTR path, LPCSTR mode)
   else if (strchr(mode,'b'))
     TRACE(crtdll, "%s in BINARY mode\n",path);
       
-  dos_fildes=FILE_Open(path, flagmode);
+  dos_fildes=FILE_Open(path, flagmode,0);
   unix_fildes=FILE_GetUnixHandle(dos_fildes);
   file = fdopen(unix_fildes,mode);
 
@@ -1199,7 +1199,7 @@ HFILE32 __cdecl CRTDLL__open(LPCSTR path,INT32 flags)
       TRACE(crtdll,"CRTDLL_open file unsupported flags 0x%04x\n",flags);
     /* End Fixme */
 
-    ret = FILE_Open(path,wineflags);
+    ret = FILE_Open(path,wineflags,0);
     TRACE(crtdll,"CRTDLL_open file %s mode 0x%04x (lccmode 0x%04x) got dfh %d\n",
 		   path,wineflags,flags,ret);
     return ret;

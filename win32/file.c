@@ -27,6 +27,7 @@ DWORD ErrnoToLastError(int errno_num);
 
 static int TranslateCreationFlags(DWORD create_flags);
 static int TranslateAccessFlags(DWORD access_flags);
+static int TranslateShareFlags(DWORD share_flags);
 
 /***********************************************************************
  *             WriteFile               (KERNEL32.578)
@@ -129,13 +130,14 @@ HFILE32 WINAPI CreateFile32A(LPCSTR filename, DWORD access, DWORD sharing,
                              LPSECURITY_ATTRIBUTES security, DWORD creation,
                              DWORD attributes, HANDLE32 template)
 {
-    int access_flags, create_flags;
+    int access_flags, create_flags, share_flags;
     HFILE32 to_dup = HFILE_ERROR32; /* handle to dup */
 
     /* Translate the various flags to Unix-style.
      */
     access_flags = TranslateAccessFlags(access);
     create_flags = TranslateCreationFlags(creation);
+    share_flags = TranslateShareFlags(sharing);
 
     if(template)
         FIXME(file, "template handles not supported.\n");
@@ -183,7 +185,7 @@ HFILE32 WINAPI CreateFile32A(LPCSTR filename, DWORD access, DWORD sharing,
 	    handle = HFILE_ERROR32;
 	return handle;
     }
-    return FILE_Open( filename, access_flags | create_flags );
+    return FILE_Open( filename, access_flags | create_flags,share_flags );
 }
 
 
@@ -252,8 +254,29 @@ static int TranslateCreationFlags(DWORD create_flags)
 
     return rc;
 }
-
-
+static int TranslateShareFlags(DWORD share_flags)
+/* 
+OPEN_SHARE_DENYNONE	FILE_SHARE_READ | FILE_SHARE_WRITE
+OPEN_SHARE_DENYREAD	FILE_SHARE_WRITE
+OPEN_SHARE_DENYREADWRITE	0
+OPEN_SHARE_DENYWRITE	FILE_SHARE_READ
+*/
+{
+  switch(share_flags)
+    {
+    case FILE_SHARE_READ | FILE_SHARE_WRITE: 
+      return OF_SHARE_DENY_NONE;
+    case FILE_SHARE_WRITE: 
+      return OF_SHARE_DENY_READ;
+    case FILE_SHARE_READ:
+      return OF_SHARE_DENY_WRITE;
+    case 0:
+      return OF_SHARE_EXCLUSIVE;
+    default:
+    }
+  FIXME(file,"unknown sharing flags 0x%04lx\n",share_flags);
+  return OF_SHARE_EXCLUSIVE;
+}
 /**************************************************************************
  *              SetFileAttributes16	(KERNEL.421)
  */
