@@ -2227,9 +2227,34 @@ TOOLBAR_AddBitmap (HWND hwnd, WPARAM wParam, LPARAM lParam)
     /* Add bitmaps to the default image list */
     if (lpAddBmp->hInst == NULL)
     {
-	nIndex =
-	    ImageList_AddMasked (himlDef, (HBITMAP)lpAddBmp->nID,
-				 CLR_DEFAULT);
+       BITMAP  bmp;
+       HBITMAP hOldBitmapBitmap, hOldBitmapLoad;
+       HDC     hdcImage, hdcBitmap;
+
+       /* copy the bitmap before adding it so that the user's bitmap
+        * doesn't get modified.
+        */
+       GetObjectA ((HBITMAP)lpAddBmp->nID, sizeof(BITMAP), (LPVOID)&bmp);
+
+       hdcImage  = CreateCompatibleDC(0);
+       hdcBitmap = CreateCompatibleDC(0);
+
+       /* create new bitmap */
+       hbmLoad = CreateBitmap (bmp.bmWidth, bmp.bmHeight, bmp.bmPlanes, bmp.bmBitsPixel, NULL);
+       hOldBitmapBitmap = SelectObject(hdcBitmap, (HBITMAP)lpAddBmp->nID);
+       hOldBitmapLoad = SelectObject(hdcImage, hbmLoad);
+
+       /* Copy the user's image */
+       BitBlt (hdcImage, 0, 0, bmp.bmWidth, bmp.bmHeight,
+               hdcBitmap, 0, 0, SRCCOPY);
+
+       SelectObject (hdcImage, hOldBitmapLoad);
+       SelectObject (hdcBitmap, hOldBitmapBitmap);
+       DeleteDC (hdcImage);
+       DeleteDC (hdcBitmap);
+
+       nIndex = ImageList_AddMasked (himlDef, hbmLoad, CLR_DEFAULT);
+       DeleteObject (hbmLoad);
     }
     else if (lpAddBmp->hInst == HINST_COMMCTRL)
     {
@@ -3803,12 +3828,41 @@ TOOLBAR_ReplaceBitmap (HWND hwnd, WPARAM wParam, LPARAM lParam)
     /* ImageList_Replace(GETDEFIMAGELIST(), pos, hBitmap, NULL); */
 
 
-	himlDef = GETDEFIMAGELIST(infoPtr, 0);
+    himlDef = GETDEFIMAGELIST(infoPtr, 0);
     for (i = pos + nOldButtons - 1; i >= pos; i--) {
         ImageList_Remove(himlDef, i);
     }
 
-    ImageList_AddMasked(himlDef, hBitmap, CLR_DEFAULT);
+    {
+       BITMAP  bmp;
+       HBITMAP hOldBitmapBitmap, hOldBitmapLoad, hbmLoad;
+       HDC     hdcImage, hdcBitmap;
+
+       /* copy the bitmap before adding it so that the user's bitmap
+        * doesn't get modified.
+        */
+       GetObjectA (hBitmap, sizeof(BITMAP), (LPVOID)&bmp);
+
+       hdcImage  = CreateCompatibleDC(0);
+       hdcBitmap = CreateCompatibleDC(0);
+
+       /* create new bitmap */
+       hbmLoad = CreateBitmap (bmp.bmWidth, bmp.bmHeight, bmp.bmPlanes, bmp.bmBitsPixel, NULL);
+       hOldBitmapBitmap = SelectObject(hdcBitmap, hBitmap);
+       hOldBitmapLoad = SelectObject(hdcImage, hbmLoad);
+
+       /* Copy the user's image */
+       BitBlt (hdcImage, 0, 0, bmp.bmWidth, bmp.bmHeight,
+               hdcBitmap, 0, 0, SRCCOPY);
+
+       SelectObject (hdcImage, hOldBitmapLoad);
+       SelectObject (hdcBitmap, hOldBitmapBitmap);
+       DeleteDC (hdcImage);
+       DeleteDC (hdcBitmap);
+
+       ImageList_AddMasked (himlDef, hbmLoad, CLR_DEFAULT);
+       DeleteObject (hbmLoad);
+    }
 
     InvalidateRect(hwnd, NULL, FALSE);
 
