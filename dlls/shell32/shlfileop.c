@@ -694,7 +694,7 @@ DWORD WINAPI SHFileOperationA(LPSHFILEOPSTRUCTA lpFileOp)
 	LPWSTR ForFree = NULL, /* we change wString in SHNameTranslate and can't use it for freeing */
 	       wString = NULL; /* we change this in SHNameTranslate */
 
-	TRACE("SHFileOperationA");
+	TRACE("\n");
 	if (FO_DELETE == (nFileOp.wFunc & FO_MASK))
 	  nFileOp.pTo = NULL; /* we need a NULL or a valid pointer for translation */
 	if (!(nFileOp.fFlags & FOF_SIMPLEPROGRESS))
@@ -725,6 +725,30 @@ DWORD WINAPI SHFileOperationA(LPSHFILEOPSTRUCTA lpFileOp)
 	lpFileOp->hNameMappings = nFileOp.hNameMappings;
 	lpFileOp->fAnyOperationsAborted = nFileOp.fAnyOperationsAborted;
 	return retCode;
+}
+
+static const char * debug_shfileops_flags( DWORD fFlags )
+{
+    return wine_dbg_sprintf( "%s%s%s%s%s%s%s%s%s%s%s%s%s",
+	fFlags & FOF_MULTIDESTFILES ? "FOF_MULTIDESTFILES " : "",
+	fFlags & FOF_CONFIRMMOUSE ? "FOF_CONFIRMMOUSE " : "",
+	fFlags & FOF_SILENT ? "FOF_SILENT " : "",
+	fFlags & FOF_RENAMEONCOLLISION ? "FOF_RENAMEONCOLLISION " : "",
+	fFlags & FOF_NOCONFIRMATION ? "FOF_NOCONFIRMATION " : "",
+	fFlags & FOF_WANTMAPPINGHANDLE ? "FOF_WANTMAPPINGHANDLE " : "",
+	fFlags & FOF_ALLOWUNDO ? "FOF_ALLOWUNDO " : "",
+	fFlags & FOF_FILESONLY ? "FOF_FILESONLY " : "",
+	fFlags & FOF_SIMPLEPROGRESS ? "FOF_SIMPLEPROGRESS " : "",
+	fFlags & FOF_NOCONFIRMMKDIR ? "FOF_NOCONFIRMMKDIR " : "",
+	fFlags & FOF_NOERRORUI ? "FOF_NOERRORUI " : "",
+	fFlags & FOF_NOCOPYSECURITYATTRIBS ? "FOF_NOCOPYSECURITYATTRIBS" : "",
+	fFlags & 0xf000 ? "MORE-UNKNOWN-Flags" : "");
+}
+
+static const char * debug_shfileops_action( DWORD op )
+{
+    LPCSTR cFO_Name [] = {"FO_????","FO_MOVE","FO_COPY","FO_DELETE","FO_RENAME"};
+    return wine_dbg_sprintf("%s", cFO_Name[ op ]);
 }
 
 /*************************************************************************
@@ -766,7 +790,6 @@ DWORD WINAPI SHFileOperationW(LPSHFILEOPSTRUCTW lpFileOp)
 	BOOL b_ToValid; /* for W98-Bug for FO_MOVE with source and target in same rootdrive */
 	BOOL b_Mask;
 	BOOL b_ToTailSlash = FALSE;
-	LPCSTR cFO_Name [] = {"FO_????","FO_MOVE","FO_COPY","FO_DELETE","FO_RENAME"};
 
 	long FuncSwitch = (nFileOp.wFunc & FO_MASK);
 	long level= nFileOp.wFunc>>4;
@@ -777,22 +800,10 @@ DWORD WINAPI SHFileOperationW(LPSHFILEOPSTRUCTW lpFileOp)
 	if ((FuncSwitch < FO_MOVE) || (FuncSwitch > FO_RENAME))
 	  goto shfileop_normal; /* no valid FunctionCode */
 
-	cFO_Name[0] = cFO_Name [FuncSwitch];
 	if (level == 0)
-	  TRACE("%s: flags (0x%04x) : %s%s%s%s%s%s%s%s%s%s%s%s%s \n",cFO_Name[0], nFileOp.fFlags,
-	              nFileOp.fFlags & FOF_MULTIDESTFILES ? "FOF_MULTIDESTFILES " : "",
-	              nFileOp.fFlags & FOF_CONFIRMMOUSE ? "FOF_CONFIRMMOUSE " : "",
-	              nFileOp.fFlags & FOF_SILENT ? "FOF_SILENT " : "",
-	              nFileOp.fFlags & FOF_RENAMEONCOLLISION ? "FOF_RENAMEONCOLLISION " : "",
-	              nFileOp.fFlags & FOF_NOCONFIRMATION ? "FOF_NOCONFIRMATION " : "",
-	              nFileOp.fFlags & FOF_WANTMAPPINGHANDLE ? "FOF_WANTMAPPINGHANDLE " : "",
-	              nFileOp.fFlags & FOF_ALLOWUNDO ? "FOF_ALLOWUNDO " : "",
-	              nFileOp.fFlags & FOF_FILESONLY ? "FOF_FILESONLY " : "",
-	              nFileOp.fFlags & FOF_SIMPLEPROGRESS ? "FOF_SIMPLEPROGRESS " : "",
-	              nFileOp.fFlags & FOF_NOCONFIRMMKDIR ? "FOF_NOCONFIRMMKDIR " : "",
-	              nFileOp.fFlags & FOF_NOERRORUI ? "FOF_NOERRORUI " : "",
-	              nFileOp.fFlags & FOF_NOCOPYSECURITYATTRIBS ? "FOF_NOCOPYSECURITYATTRIBS" : "",
-	              nFileOp.fFlags & 0xf000 ? "MORE-UNKNOWN-Flags" : "");
+            TRACE("%s: flags (0x%04x) : %s\n",
+                debug_shfileops_action(FuncSwitch), nFileOp.fFlags,
+                debug_shfileops_flags(nFileOp.fFlags) );
 
         /* establish when pTo is interpreted as the name of the destination file
          * or the directory where the Fromfile should be copied to.
@@ -818,7 +829,8 @@ DWORD WINAPI SHFileOperationW(LPSHFILEOPSTRUCTW lpFileOp)
  * FOF_ALLOWUNDO, FOF_WANTMAPPINGHANDLE                   are not implemented and breaks
  * if any other flag set, an error occurs
  */
-        TRACE(" %s level=%ld nFileOp.fFlags=0x%x\n", cFO_Name[0], level, lpFileOp->fFlags);
+        TRACE("%s level=%ld nFileOp.fFlags=0x%x\n", 
+                debug_shfileops_action(FuncSwitch), level, lpFileOp->fFlags);
 
 /*    OFl &= (-1 - (FOF_MULTIDESTFILES | FOF_FILESONLY)); */
 /*    OFl ^= (FOF_SILENT | FOF_NOCONFIRMATION | FOF_SIMPLEPROGRESS | FOF_NOCONFIRMMKDIR); */
@@ -830,13 +842,15 @@ DWORD WINAPI SHFileOperationW(LPSHFILEOPSTRUCTW lpFileOp)
 	    if (OFl & (~(FOF_CONFIRMMOUSE | FOF_SILENT | FOF_RENAMEONCOLLISION |
 	                 FOF_NOCONFIRMMKDIR | FOF_NOERRORUI | FOF_NOCOPYSECURITYATTRIBS)))
 	    {
-                TRACE("%s level=%ld lpFileOp->fFlags=0x%x not implemented, Aborted=TRUE, stub\n", cFO_Name[0], level, OFl);
+                TRACE("%s level=%ld lpFileOp->fFlags=0x%x not implemented, Aborted=TRUE, stub\n",
+                      debug_shfileops_action(FuncSwitch), level, OFl);
                 retCode = 0x403; /* 1027, we need an extension to shlfileop */
                 goto shfileop_error;
 	    }
 	    else
 	    {
-                TRACE("%s level=%ld lpFileOp->fFlags=0x%x not fully implemented, stub\n", cFO_Name[0], level, OFl);
+                TRACE("%s level=%ld lpFileOp->fFlags=0x%x not fully implemented, stub\n", 
+                      debug_shfileops_action(FuncSwitch), level, OFl);
 	    } /* endif */
         } /* endif */
 
@@ -1213,7 +1227,8 @@ shfileop_error:
 	  nFileOp.fAnyOperationsAborted = TRUE;
 	}
 	TRACE("%s level=%ld AnyOpsAborted=%s ret=0x%lx, with %s %s%s\n",
-	      cFO_Name[0], level, nFileOp.fAnyOperationsAborted ? "TRUE":"FALSE",
+              debug_shfileops_action(FuncSwitch), level,
+	      nFileOp.fAnyOperationsAborted ? "TRUE":"FALSE",
 	      retCode, debugstr_w(pFrom), pTo ? "-> ":"", debugstr_w(pTo));
 
 	lpFileOp->fAnyOperationsAborted = nFileOp.fAnyOperationsAborted;
