@@ -2117,6 +2117,99 @@ inline static BOOL is_executable( const char *name )
 }
 
 
+/***********************************************************************
+ *           FILE_AddBootRenameEntry
+ *
+ * Adds an entry to the registry that is loaded when windows boots and
+ * checks if there are some files to be removed or renamed/moved.
+ * <fn1> has to be valid and <fn2> may be NULL. If both pointers are
+ * non-NULL then the file is moved, otherwise it is deleted.  The
+ * entry of the registrykey is always appended with two zero
+ * terminated strings. If <fn2> is NULL then the second entry is
+ * simply a single 0-byte. Otherwise the second filename goes
+ * there. The entries are prepended with \??\ before the path and the
+ * second filename gets also a '!' as the first character if
+ * MOVEFILE_REPLACE_EXISTING is set. After the final string another
+ * 0-byte follows to indicate the end of the strings.
+ * i.e.:
+ * \??\D:\test\file1[0]
+ * !\??\D:\test\file1_renamed[0]
+ * \??\D:\Test|delete[0]
+ * [0]                        <- file is to be deleted, second string empty
+ * \??\D:\test\file2[0]
+ * !\??\D:\test\file2_renamed[0]
+ * [0]                        <- indicates end of strings
+ *
+ * or:
+ * \??\D:\test\file1[0]
+ * !\??\D:\test\file1_renamed[0]
+ * \??\D:\Test|delete[0]
+ * [0]                        <- file is to be deleted, second string empty
+ * [0]                        <- indicates end of strings
+ *
+ */
+static BOOL FILE_AddBootRenameEntry( const char *fn1, const char *fn2, DWORD flags )
+{
+    static const char PreString[] = "\\??\\";
+    static const char ValueName[] = "PendingFileRenameOperations";
+
+    BOOL rc = FALSE;
+    HKEY Reboot = 0;
+    DWORD Type, len1, len2, l;
+    DWORD DataSize = 0;
+    BYTE *Buffer = NULL;
+
+    if(RegCreateKeyA(HKEY_LOCAL_MACHINE, "SYSTEM\\CurrentControlSet\\Control\\Session Manager",
+                     &Reboot) != ERROR_SUCCESS)
+    {
+        WARN("Error creating key for reboot managment [%s]\n",
+             "SYSTEM\\CurrentControlSet\\Control\\Session Manager");
+        return FALSE;
+    }
+
+    l = strlen(PreString);
+    len1 = strlen(fn1) + l + 1;
+    if (fn2)
+    {
+        len2 = strlen(fn2) + l + 1;
+        if (flags & MOVEFILE_REPLACE_EXISTING) len2++; /* Plus 1 because of the leading '!' */
+    }
+    else len2 = 1; /* minimum is the 0 byte for the empty second string */
+
+    /* First we check if the key exists and if so how many bytes it already contains. */
+    if (RegQueryValueExA(Reboot, ValueName, NULL, &Type, NULL, &DataSize) == ERROR_SUCCESS)
+    {
+        if (Type != REG_MULTI_SZ) goto Quit;
+        if (!(Buffer = HeapAlloc( GetProcessHeap(), 0, DataSize + len1 + len2 + 1 ))) goto Quit;
+        if (RegQueryValueExA(Reboot, ValueName, NULL, &Type, Buffer, &DataSize) != ERROR_SUCCESS)
+            goto Quit;
+        if (DataSize) DataSize--;  /* remove terminating null (will be added back later) */
+    }
+    else
+    {
+        if (!(Buffer = HeapAlloc( GetProcessHeap(), 0, len1 + len2 + 1 ))) goto Quit;
+        DataSize = 0;
+    }
+    sprintf( Buffer + DataSize, "%s%s", PreString, fn1 );
+    DataSize += len1;
+    if (fn2)
+    {
+        sprintf( Buffer + DataSize, "%s%s%s",
+                 (flags & MOVEFILE_REPLACE_EXISTING) ? "!" : "", PreString, fn2 );
+        DataSize += len2;
+    }
+    else Buffer[DataSize++] = 0;
+
+    Buffer[DataSize++] = 0;  /* add final null */
+    rc = !RegSetValueExA( Reboot, ValueName, 0, REG_MULTI_SZ, Buffer, DataSize );
+
+ Quit:
+    if (Reboot) RegCloseKey(Reboot);
+    if (Buffer) HeapFree( GetProcessHeap(), 0, Buffer );
+    return(rc);
+}
+
+
 /**************************************************************************
  *           MoveFileExA   (KERNEL32.@)
  */
@@ -2126,26 +2219,57 @@ BOOL WINAPI MoveFileExA( LPCSTR fn1, LPCSTR fn2, DWORD flag )
 
     TRACE("(%s,%s,%04lx)\n", fn1, fn2, flag);
 
+    /* FIXME: <Gerhard W. Gruber>sparhawk@gmx.at
+       In case of W9x and lesser this function should return 120 (ERROR_CALL_NOT_IMPLEMENTED)
+       to be really compatible. Most programs wont have any problems though. In case
+       you encounter one, this is what you should return here. I don't know what's up 
+       with NT 3.5. Is this function available there or not?
+       Does anybody really care about 3.5? :)
+    */
+
+    /* Filename1 has to be always set to a valid path. Filename2 may be NULL
+       if the source file has to be deleted.
+    */
     if (!fn1) {
         SetLastError(ERROR_INVALID_PARAMETER);
         return FALSE;
     }
 
-    if (!DOSFS_GetFullName( fn1, TRUE, &full_name1 )) return FALSE;
+    /* This function has to be run through in order to process the name properly.
+       If the BOOTDELAY flag is set, the file doesn't need to exist though. At least
+       that is the behaviour on NT 4.0. The operation accepts the filenames as
+       they are given but it can't reply with a reasonable returncode. Success
+       means in that case success for entering the values into the registry.
+    */
+    if(!DOSFS_GetFullName( fn1, TRUE, &full_name1 ))
+    {
+        if(!(flag & MOVEFILE_DELAY_UNTIL_REBOOT))
+            return FALSE;
+    }
 
     if (fn2)  /* !fn2 means delete fn1 */
     {
-        if (DOSFS_GetFullName( fn2, TRUE, &full_name2 )) 
+        if (DOSFS_GetFullName( fn2, TRUE, &full_name2 ))
         {
-            /* target exists, check if we may overwrite */
-            if (!(flag & MOVEFILE_REPLACE_EXISTING))
+            if(!(flag & MOVEFILE_DELAY_UNTIL_REBOOT))
             {
-                /* FIXME: Use right error code */
-                SetLastError( ERROR_ACCESS_DENIED );
-                return FALSE;
+                /* target exists, check if we may overwrite */
+                if (!(flag & MOVEFILE_REPLACE_EXISTING))
+                {
+                    /* FIXME: Use right error code */
+                    SetLastError( ERROR_ACCESS_DENIED );
+                    return FALSE;
+                }
             }
         }
-        else if (!DOSFS_GetFullName( fn2, FALSE, &full_name2 )) return FALSE;
+        else
+        {
+            if (!DOSFS_GetFullName( fn2, FALSE, &full_name2 ))
+            {
+                if(!(flag & MOVEFILE_DELAY_UNTIL_REBOOT))
+                    return FALSE;
+            }
+        }
 
         /* Source name and target path are valid */
 
@@ -2156,8 +2280,8 @@ BOOL WINAPI MoveFileExA( LPCSTR fn1, LPCSTR fn2, DWORD flag )
                when exiting... What about using on_exit(2)
             */
             FIXME("Please move existing file '%s' to file '%s' when Wine has finished\n",
-                  full_name1.long_name, full_name2.long_name);
-            return TRUE;
+                  fn1, fn2);
+            return FILE_AddBootRenameEntry( fn1, fn2, flag );
         }
 
         if (full_name1.drive != full_name2.drive)
@@ -2204,9 +2328,8 @@ BOOL WINAPI MoveFileExA( LPCSTR fn1, LPCSTR fn2, DWORD flag )
                Perhaps we should queue these command and execute it 
                when exiting... What about using on_exit(2)
             */
-            FIXME("Please delete file '%s' when Wine has finished\n",
-                  full_name1.long_name);
-            return TRUE;
+            FIXME("Please delete file '%s' when Wine has finished\n", fn1);
+            return FILE_AddBootRenameEntry( fn1, NULL, flag );
         }
 
         if (unlink( full_name1.long_name ) == -1)
