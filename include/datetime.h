@@ -18,9 +18,11 @@ typedef struct tagDATETIME_INFO
 	SYSTEMTIME date;
 	BOOL dateValid;
 	HWND hwndCheckbut;
-	RECT rect;
-	RECT checkbox;
-	RECT calbutton;
+	RECT rcClient; /* rect around the edge of the window */
+	RECT rcDraw; /* rect inside of the border */
+	RECT checkbox;  /* checkbox allowing the control to be enabled/disabled */
+	RECT calbutton; /* button that toggles the dropdown of the monthcal control */
+	BOOL bCalDepressed; /* TRUE = cal button is depressed */
 	int  select;
 	HFONT hFont;
 	int nrFieldsAllocated;
@@ -30,6 +32,7 @@ typedef struct tagDATETIME_INFO
 	RECT *fieldRect;
 	int  *buflen;		
 	char textbuf[256];
+        POINT monthcal_pos;
 } DATETIME_INFO, *LPDATETIME_INFO;
 
 extern VOID DATETIME_Register (VOID);

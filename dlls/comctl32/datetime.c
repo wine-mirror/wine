@@ -3,6 +3,7 @@
  *
  * Copyright 1998, 1999 Eric Kohl
  * Copyright 1999, 2000 Alex Priem <alexp@sci.kun.nl>
+ * Copyright 2000 Chris Morgan <cmorgan@wpi.edu>
  *
  *
  * TODO:
@@ -16,6 +17,7 @@
 #include <stdio.h>
 
 #include "winbase.h"
+#include "wingdi.h"
 #include "commctrl.h"
 #include "datetime.h"
 #include "monthcal.h"
@@ -80,6 +82,7 @@ DATETIME_GetMonthCalColor (HWND hwnd, WPARAM wParam)
   return SendMessageA (infoPtr->hMonthCal, MCM_GETCOLOR, wParam, 0);
 }
 
+
 static LRESULT
 DATETIME_SetMonthCalColor (HWND hwnd, WPARAM wParam, LPARAM lParam)
 {
@@ -90,7 +93,6 @@ DATETIME_SetMonthCalColor (HWND hwnd, WPARAM wParam, LPARAM lParam)
 
 
 /* FIXME: need to get way to force font into monthcal structure */
-
 static LRESULT
 DATETIME_GetMonthCal (HWND hwnd)
 {
@@ -110,13 +112,13 @@ DATETIME_GetMonthCalFont (HWND hwnd)
   return 0;
 }
 
+
 static LRESULT
 DATETIME_SetMonthCalFont (HWND hwnd, WPARAM wParam, LPARAM lParam)
 {
 
   return 0;
 }
-
 
 
 /* 
@@ -130,7 +132,6 @@ DATETIME_SetMonthCalFont (HWND hwnd, WPARAM wParam, LPARAM lParam)
    Therefore, 'string' ends finally up as '<show seconds>tring'.
 
  */
-
 
 
 static void 
@@ -195,30 +196,33 @@ DATETIME_UseFormat (DATETIME_INFO *infoPtr, const char *formattxt)
 
   } /* for i */
 
- if (infoPtr->fieldspec[*nrFields]!=0) (*nrFields)++;
+  TRACE("\n");
+
+  if (infoPtr->fieldspec[*nrFields]!=0) (*nrFields)++;
 }
+
 
 static LRESULT 
 DATETIME_SetFormat (HWND hwnd, WPARAM wParam, LPARAM lParam)
-
 {
  DATETIME_INFO *infoPtr= DATETIME_GetInfoPtr (hwnd);
 
  if (!lParam) {
   	DWORD dwStyle = GetWindowLongA (hwnd, GWL_STYLE);
 
-	if (dwStyle & DTS_SHORTDATEFORMAT) 
-			DATETIME_UseFormat (infoPtr, "M/d/yy");
 	if (dwStyle & DTS_LONGDATEFORMAT) 
-			DATETIME_UseFormat (infoPtr, "dddd, MMMM dd, yyy");
-	if (dwStyle & DTS_TIMEFORMAT) 
-			DATETIME_UseFormat (infoPtr, "h:mm:ss tt");
+		DATETIME_UseFormat (infoPtr, "dddd, MMMM dd, yyy");
+	else if (dwStyle & DTS_TIMEFORMAT) 
+		DATETIME_UseFormat (infoPtr, "h:mm:ss tt");
+        else /* DTS_SHORTDATEFORMAT */
+		DATETIME_UseFormat (infoPtr, "M/d/yy");
  } 	
  else
  	DATETIME_UseFormat (infoPtr, (char *) lParam);
 
  return infoPtr->nrFields;
 }
+
 
 static LRESULT 
 DATETIME_SetFormatW (HWND hwnd, WPARAM wParam, LPARAM lParam)
@@ -239,6 +243,7 @@ DATETIME_SetFormatW (HWND hwnd, WPARAM wParam, LPARAM lParam)
 	return DATETIME_SetFormat (hwnd, 0, 0);
 
 }
+
 
 static void 
 DATETIME_ReturnTxt (DATETIME_INFO *infoPtr, int count, char *result)
@@ -264,8 +269,8 @@ DATETIME_ReturnTxt (DATETIME_INFO *infoPtr, int count, char *result)
 	TRACE ("arg%d=%x->[%s]\n",count,infoPtr->fieldspec[count],result);
 	return;
  }
-		
 
+		
  switch (spec) {
 	case DT_END_FORMAT: 
 		*result=0;
@@ -354,6 +359,7 @@ DATETIME_ReturnTxt (DATETIME_INFO *infoPtr, int count, char *result)
 	TRACE ("arg%d=%x->[%s]\n",count,infoPtr->fieldspec[count],result);
 }
 
+
 static void 
 DATETIME_IncreaseField (DATETIME_INFO *infoPtr, int number)
 {
@@ -366,7 +372,6 @@ DATETIME_IncreaseField (DATETIME_INFO *infoPtr, int number)
  spec=infoPtr->fieldspec[number];
  if ((spec & DTHT_DATEFIELD)==0) return;
 		
-
  switch (spec) {
 	case ONEDIGITDAY: 
 	case TWODIGITDAY: 
@@ -418,6 +423,7 @@ DATETIME_IncreaseField (DATETIME_INFO *infoPtr, int number)
 
 }
 
+
 static void 
 DATETIME_DecreaseField (DATETIME_INFO *infoPtr, int number)
 {
@@ -427,7 +433,7 @@ DATETIME_DecreaseField (DATETIME_INFO *infoPtr, int number)
  TRACE ("%d\n",number);
  if ((number>infoPtr->nrFields) || (number<0)) return;
 
- spec=infoPtr->fieldspec[number];
+ spec = infoPtr->fieldspec[number];
  if ((spec & DTHT_DATEFIELD)==0) return;
 		
  TRACE ("%x\n",spec);
@@ -503,7 +509,7 @@ DATETIME_ResetFieldDown (DATETIME_INFO *infoPtr, int number)
  TRACE ("%d\n",number);
  if ((number>infoPtr->nrFields) || (number<0)) return;
 
- spec=infoPtr->fieldspec[number];
+ spec = infoPtr->fieldspec[number];
  if ((spec & DTHT_DATEFIELD)==0) return;
 		
 
@@ -512,7 +518,7 @@ DATETIME_ResetFieldDown (DATETIME_INFO *infoPtr, int number)
 	case TWODIGITDAY: 
 	case THREECHARDAY: 
 	case FULLDAY:
-		date->wDay=1;
+		date->wDay = 1;
 		break;
 	case ONEDIGIT12HOUR: 
 	case TWODIGIT12HOUR: 
@@ -520,37 +526,42 @@ DATETIME_ResetFieldDown (DATETIME_INFO *infoPtr, int number)
 	case TWODIGIT24HOUR: 
 	case ONELETTERAMPM:   
 	case TWOLETTERAMPM:   
-		date->wHour=0;
+		date->wHour = 0;
 		break;
 	case ONEDIGITSECOND: 
 	case TWODIGITSECOND: 
-		date->wSecond=0;
+		date->wSecond = 0;
 		break;
 	case ONEDIGITMINUTE: 
 	case TWODIGITMINUTE: 
-		date->wMinute=0;
+		date->wMinute = 0;
 		break;
 	case ONEDIGITMONTH: 
 	case TWODIGITMONTH: 
 	case THREECHARMONTH: 
 	case FULLMONTH:   
-		date->wMonth=1;
+		date->wMonth = 1;
 	case FORMATCALLBACK:   
 		FIXME ("Not implemented\n");
 		break;
 	case ONEDIGITYEAR: 
 	case TWODIGITYEAR: 
+        /* FYI: On 9/14/1752 the calender changed and England and the American */
+        /* colonies changed to the Gregorian calender.  This change involved */
+        /* having September 14th following September 2nd.  So no date algorithms */
+        /* work before that date. */
 	case FULLYEAR:   
-		date->wSecond=0;
-		date->wMinute=0;
-		date->wHour=0;
-		date->wDay=14;		/* overactive ms-programmers..*/
-		date->wMonth=9;
-		date->wYear=1752;
+		date->wSecond = 0;
+		date->wMinute = 0;
+		date->wHour = 0;
+		date->wDay = 14;		/* overactive ms-programmers..*/
+		date->wMonth = 9;
+		date->wYear = 1752;
 		break;
 	}
 
 }
+
 
 static void 
 DATETIME_ResetFieldUp (DATETIME_INFO *infoPtr, int number)
@@ -611,157 +622,168 @@ static void DATETIME_Refresh (HWND hwnd, HDC hdc)
   int i,prevright;
   RECT *field;
   DWORD dwStyle = GetWindowLongA (hwnd, GWL_STYLE);
-  RECT *rect     = &infoPtr->rect;
-  RECT *calbutton= &infoPtr->calbutton;
-  RECT *checkbox= &infoPtr->checkbox;
+  RECT *rcDraw = &infoPtr->rcDraw;
+  RECT *rcClient = &infoPtr->rcClient;
+  RECT *calbutton = &infoPtr->calbutton;
+  RECT *checkbox = &infoPtr->checkbox;
   HBRUSH hbr;
   SIZE size;
-  BOOL prssed=FALSE;
   COLORREF oldBk, oldTextColor;
   
-
+  /* draw control edge */
+  hbr = CreateSolidBrush(RGB(255, 255, 255));
+  FillRect(hdc, rcClient, hbr);
+  DrawEdge(hdc, rcClient, EDGE_SUNKEN, BF_RECT);
+  DeleteObject(hbr);   
 	
   if (infoPtr->dateValid) {
     char txt[80];
-	HFONT oldFont;
-  	oldFont = SelectObject (hdc, infoPtr->hFont);
+    HFONT oldFont;
+    oldFont = SelectObject (hdc, infoPtr->hFont);
 
-	GetClientRect (hwnd, rect);
-	hbr = CreateSolidBrush (GetSysColor (COLOR_WINDOW));
-    FillRect(hdc, rect, hbr);
-    DeleteObject(hbr);
+    DATETIME_ReturnTxt (infoPtr, 0, txt);
+    GetTextExtentPoint32A (hdc, txt, strlen (txt), &size);
+    rcDraw->bottom = size.cy+2;
 
-	
-	DATETIME_ReturnTxt (infoPtr, 0, txt);
-	GetTextExtentPoint32A (hdc, txt, strlen (txt), &size);
-	rect->bottom=size.cy+2;
+    if (dwStyle & DTS_SHOWNONE) checkbox->right = 18;
 
-	checkbox->left  = 0;
-	checkbox->right = 0;
-	checkbox->top   = rect->top;
-	checkbox->bottom= rect->bottom;
+    prevright = checkbox->right;
 
-    if (dwStyle & DTS_SHOWNONE) checkbox->right=18;
+    for (i=0; i<infoPtr->nrFields; i++) {
+      DATETIME_ReturnTxt (infoPtr, i, txt);
+      GetTextExtentPoint32A (hdc, txt, strlen (txt), &size);
+      field = & infoPtr->fieldRect[i];
+      field->left  = prevright;
+      field->right = prevright+size.cx;
+      field->top   = rcDraw->top;
+      field->bottom = rcDraw->bottom;
+      prevright = field->right;
 
-    prevright=checkbox->right;
-	for (i=0; i<infoPtr->nrFields; i++) {
-		DATETIME_ReturnTxt (infoPtr, i, txt);
-		GetTextExtentPoint32A (hdc, txt, strlen (txt), &size);
-		field = & infoPtr->fieldRect[i];
-        field->left  = prevright;
-        field->right = prevright+size.cx;
-        field->top   = rect->top;
-        field->bottom= rect->bottom;
-	prevright=field->right;
-
-	if ((infoPtr->haveFocus) && (i==infoPtr->select)) {
-		hbr=CreateSolidBrush (GetSysColor (COLOR_ACTIVECAPTION));
-  		FillRect(hdc, field, hbr);
-  		oldBk=SetBkColor (hdc, GetSysColor(COLOR_ACTIVECAPTION));
-		oldTextColor=SetTextColor (hdc, GetSysColor(COLOR_WINDOW));
-		DeleteObject (hbr);
-        	DrawTextA ( hdc, txt, strlen(txt), field,
-                        DT_RIGHT | DT_VCENTER | DT_SINGLELINE );
-  		SetBkColor (hdc, oldBk);
+      if ((infoPtr->haveFocus) && (i==infoPtr->select)) {
+        hbr = CreateSolidBrush (GetSysColor (COLOR_ACTIVECAPTION));
+        FillRect(hdc, field, hbr);
+        oldBk = SetBkColor (hdc, GetSysColor(COLOR_ACTIVECAPTION));
+        oldTextColor = SetTextColor (hdc, GetSysColor(COLOR_WINDOW));
+        DeleteObject (hbr);
+        DrawTextA ( hdc, txt, strlen(txt), field,
+              DT_RIGHT | DT_VCENTER | DT_SINGLELINE );
+        SetBkColor (hdc, oldBk);
 		SetTextColor (hdc, oldTextColor);
-	}
-	else 
-	    DrawTextA ( hdc, txt, strlen(txt), field,
+      }
+      else
+        DrawTextA ( hdc, txt, strlen(txt), field,
                          DT_RIGHT | DT_VCENTER | DT_SINGLELINE );
-	}
+    }
 
-  	SelectObject (hdc, oldFont);
-	}
+    SelectObject (hdc, oldFont);
+  }
 
-	if (!(dwStyle & DTS_UPDOWN)) {
-
-		calbutton->right = rect->right;
-		calbutton->left  = rect->right-15;
-		calbutton->top   = rect->top;
-		calbutton->bottom= rect->bottom;
-
-                DrawFrameControl(hdc, calbutton, DFC_SCROLL,
-        	DFCS_SCROLLDOWN | (prssed ? DFCS_PUSHED : 0) |
-        	(dwStyle & WS_DISABLED ? DFCS_INACTIVE : 0) );
-	}
-
+  if (!(dwStyle & DTS_UPDOWN)) {
+    DrawFrameControl(hdc, calbutton, DFC_SCROLL,
+        DFCS_SCROLLDOWN | (infoPtr->bCalDepressed ? DFCS_PUSHED : 0) |
+        (dwStyle & WS_DISABLED ? DFCS_INACTIVE : 0) );
+  }
 }
+
 
 static LRESULT
 DATETIME_HitTest (HWND hwnd, DATETIME_INFO *infoPtr, POINT pt)
 {
-  int i,retval;
+  int i, retval;
 
   TRACE ("%ld, %ld\n",pt.x,pt.y);
 
-  retval=DTHT_NONE;
-  if (PtInRect (&infoPtr->calbutton, pt)) {retval=DTHT_MCPOPUP; goto done; }
-  if (PtInRect (&infoPtr->checkbox, pt))  {retval=DTHT_CHECKBOX; goto done; }
+  retval = DTHT_NONE;
+  if (PtInRect (&infoPtr->calbutton, pt))
+    {retval = DTHT_MCPOPUP; TRACE("Hit in calbutton(DTHT_MCPOPUP)\n"); goto done; }
+  if (PtInRect (&infoPtr->checkbox, pt))
+    {retval = DTHT_CHECKBOX; TRACE("Hit in checkbox(DTHT_CHECKBOX)\n"); goto done; }
 
   for (i=0; i<infoPtr->nrFields; i++) {
-	if (PtInRect (&infoPtr->fieldRect[i], pt)) {
-		retval=i;
-		break;
-	}
+    if (PtInRect (&infoPtr->fieldRect[i], pt)) {
+      retval = i;
+      TRACE("Hit in date text in field %d\n", i);           
+      break;
+    }
  }
 
 done:
-  TRACE ("%x\n",retval);
   return retval;
 }
+
 
 static LRESULT
 DATETIME_LButtonDown (HWND hwnd, WPARAM wParam, LPARAM lParam)
 {
   DATETIME_INFO *infoPtr = DATETIME_GetInfoPtr (hwnd);	
+  DWORD dwStyle = GetWindowLongA (hwnd, GWL_STYLE);
+  int old, new;
   POINT pt;
-  int old,new;
 
   TRACE ("\n");
 
-  old=infoPtr->select;
-  pt.x=(INT)LOWORD(lParam);
-  pt.y=(INT)HIWORD(lParam);
+  old = infoPtr->select;
+  pt.x = (INT)LOWORD(lParam);
+  pt.y = (INT)HIWORD(lParam);
 
-  new=DATETIME_HitTest (hwnd, infoPtr, pt);
+  new = DATETIME_HitTest (hwnd, infoPtr, pt);
 
-  if ((new & DT_STRING)==0) infoPtr->select=new;
+  /* FIXME: might be conditions where we don't want to update infoPtr->select */
+  infoPtr->select = new;
 
-  if (infoPtr->select!=old) {
-		HDC hdc;
-
-		SetFocus (hwnd);
-		hdc=GetDC (hwnd);
-		DATETIME_Refresh (hwnd,hdc);
-		infoPtr->haveFocus=DTHT_GOTFOCUS;
-		
-        ReleaseDC (hwnd, hdc);
+  if (infoPtr->select != old) {
+    infoPtr->haveFocus = DTHT_GOTFOCUS;
    }
 
-  if (infoPtr->select==DTHT_MCPOPUP) {
-	POINT pt;
+  if (infoPtr->select == DTHT_MCPOPUP) {
+    /* FIXME: button actually is only depressed during dropdown of the */
+    /* calender control and when the mouse is over the button window */
+    infoPtr->bCalDepressed = TRUE;
 
-	pt.x=8;
-	pt.y=infoPtr->rect.bottom+5;
-	ClientToScreen (hwnd, &pt);
-	infoPtr->hMonthCal=CreateWindowExA (0,"SysMonthCal32", 0, 
-			WS_POPUP | WS_BORDER,
-			pt.x,pt.y,145,150,
-			GetParent (hwnd), 
-			0,0,0);
+    /* recalculate the position of the monthcal popup */
+    if(dwStyle & DTS_RIGHTALIGN)
+      infoPtr->monthcal_pos.x = infoPtr->rcClient.right - ((infoPtr->calbutton.right -
+                                infoPtr->calbutton.left) + 145);
+    else 
+      infoPtr->monthcal_pos.x = 8;
 
-	TRACE ("dt:%x mc:%x mc parent:%x, desktop:%x, mcpp:%x\n",
-                hwnd,infoPtr->hMonthCal, 
-                GetParent (infoPtr->hMonthCal),
-                GetDesktopWindow (),
-                GetParent (GetParent (infoPtr->hMonthCal)));
+    infoPtr->monthcal_pos.y = infoPtr->rcClient.bottom;
+    ClientToScreen (hwnd, &(infoPtr->monthcal_pos));
+    SetWindowPos(infoPtr->hMonthCal, 0, infoPtr->monthcal_pos.x,
+        infoPtr->monthcal_pos.y, 145, 150, 0);
 
-	SetFocus (hwnd);
-	DATETIME_SendSimpleNotify (hwnd, DTN_DROPDOWN);
-	return 0;
-    }
+    if(IsWindowVisible(infoPtr->hMonthCal))
+        ShowWindow(infoPtr->hMonthCal, SW_HIDE);
+    else
+        ShowWindow(infoPtr->hMonthCal, SW_SHOW);
 
-    return 0;
+    TRACE ("dt:%x mc:%x mc parent:%x, desktop:%x, mcpp:%x\n",
+              hwnd,infoPtr->hMonthCal, 
+              GetParent (infoPtr->hMonthCal),
+              GetDesktopWindow (),
+              GetParent (GetParent (infoPtr->hMonthCal)));
+    DATETIME_SendSimpleNotify (hwnd, DTN_DROPDOWN);
+  }
+
+  InvalidateRect(hwnd, NULL, FALSE);
+
+  return 0;
+}
+
+
+static LRESULT
+DATETIME_LButtonUp (HWND hwnd, WPARAM wParam, LPARAM lParam)
+{
+  DATETIME_INFO *infoPtr = DATETIME_GetInfoPtr (hwnd);	
+
+  TRACE("\n");
+  
+  if(infoPtr->bCalDepressed == TRUE) {
+    infoPtr->bCalDepressed = FALSE;
+    RedrawWindow(hwnd, &(infoPtr->calbutton), NULL, RDW_ERASE|RDW_INVALIDATE);
+  }
+
+  return 0;
 }
 
 
@@ -778,24 +800,26 @@ DATETIME_Paint (HWND hwnd, WPARAM wParam)
     return 0;
 }
 
+
 static LRESULT
 DATETIME_ParentNotify (HWND hwnd, WPARAM wParam, LPARAM lParam)
 {
  DATETIME_INFO *infoPtr = DATETIME_GetInfoPtr (hwnd);	
- LPNMHDR lpnmh=(LPNMHDR) lParam;
+ LPNMHDR lpnmh = (LPNMHDR) lParam;
 
  TRACE ("%x,%lx\n",wParam, lParam);
  TRACE ("Got notification %x from %x\n", lpnmh->code, lpnmh->hwndFrom);
  TRACE ("info: %x %x %x\n",hwnd,infoPtr->hMonthCal,infoPtr->hUpdown);
  return 0;
 }
+
 
 static LRESULT
 DATETIME_Notify (HWND hwnd, WPARAM wParam, LPARAM lParam)
 
 {
  DATETIME_INFO *infoPtr = DATETIME_GetInfoPtr (hwnd);	
- LPNMHDR lpnmh=(LPNMHDR) lParam;
+ LPNMHDR lpnmh = (LPNMHDR) lParam;
 
  TRACE ("%x,%lx\n",wParam, lParam);
  TRACE ("Got notification %x from %x\n", lpnmh->code, lpnmh->hwndFrom);
@@ -804,17 +828,15 @@ DATETIME_Notify (HWND hwnd, WPARAM wParam, LPARAM lParam)
 }
 
 
-
 static LRESULT 
 DATETIME_KeyDown (HWND hwnd, WPARAM wParam, LPARAM lParam)
 {
  DATETIME_INFO *infoPtr = DATETIME_GetInfoPtr (hwnd);
- HDC hdc;
  int FieldNum,wrap=0;
 
  TRACE("%x %lx %x\n",wParam, lParam, infoPtr->select);
 
- FieldNum=infoPtr->select & DTHT_DATEFIELD;
+ FieldNum = infoPtr->select & DTHT_DATEFIELD;
 
  if (!(infoPtr->haveFocus)) return 0;
  if ((FieldNum==0) && (infoPtr->select)) return 0;
@@ -845,7 +867,7 @@ DATETIME_KeyDown (HWND hwnd, WPARAM wParam, LPARAM lParam)
 	case VK_LEFT: 
 		do {
 			if (infoPtr->select==0) {
-				infoPtr->select=infoPtr->nrFields-1;
+				infoPtr->select = infoPtr->nrFields - 1;
 				wrap++;
 			} else 
 			infoPtr->select--;
@@ -856,7 +878,7 @@ DATETIME_KeyDown (HWND hwnd, WPARAM wParam, LPARAM lParam)
 		do {
 			infoPtr->select++;
 			if (infoPtr->select==infoPtr->nrFields) {
-				infoPtr->select=0;
+				infoPtr->select = 0;
 				wrap++;
 			}
 			}
@@ -864,9 +886,7 @@ DATETIME_KeyDown (HWND hwnd, WPARAM wParam, LPARAM lParam)
 		break;
 	}
 
-  hdc = GetDC (hwnd);
-  DATETIME_Refresh (hwnd, hdc);
-  ReleaseDC (hwnd, hdc);
+  InvalidateRect(hwnd, NULL, FALSE);
 
   return 0;
 }
@@ -876,7 +896,6 @@ static LRESULT
 DATETIME_KillFocus (HWND hwnd, WPARAM wParam, LPARAM lParam)
 {
     DATETIME_INFO *infoPtr = DATETIME_GetInfoPtr (hwnd);	
-    HDC hdc;
 
     TRACE ("\n");
 
@@ -884,9 +903,7 @@ DATETIME_KillFocus (HWND hwnd, WPARAM wParam, LPARAM lParam)
 	DATETIME_SendSimpleNotify (hwnd, NM_KILLFOCUS);
 	infoPtr->haveFocus = 0;
     }
-    hdc = GetDC (hwnd);
-    DATETIME_Refresh (hwnd, hdc);
-    ReleaseDC (hwnd, hdc);
+
     InvalidateRect (hwnd, NULL, TRUE);
 
     return 0;
@@ -897,17 +914,15 @@ static LRESULT
 DATETIME_SetFocus (HWND hwnd, WPARAM wParam, LPARAM lParam)
 {
     DATETIME_INFO *infoPtr = DATETIME_GetInfoPtr (hwnd);	
-    HDC hdc;
 
     TRACE ("\n");
 
     if (infoPtr->haveFocus==0) {
 	DATETIME_SendSimpleNotify (hwnd, NM_SETFOCUS);	
-	infoPtr->haveFocus=DTHT_GOTFOCUS;
+	infoPtr->haveFocus = DTHT_GOTFOCUS;
     }
-    hdc = GetDC (hwnd);
-    DATETIME_Refresh (hwnd, hdc);
-    ReleaseDC (hwnd, hdc);
+
+    InvalidateRect(hwnd, NULL, FALSE);
 
     return 0;
 }
@@ -926,9 +941,9 @@ DATETIME_SendDateTimeChangeNotify (HWND hwnd)
  dtdtc.nmhdr.code     = DTN_DATETIMECHANGE;
 
  if ((GetWindowLongA (hwnd, GWL_STYLE) & DTS_SHOWNONE))
- 	dtdtc.dwFlags = GDT_NONE;
+   dtdtc.dwFlags = GDT_NONE;
  else
- 	dtdtc.dwFlags = GDT_VALID;
+   dtdtc.dwFlags = GDT_VALID;
 
  MONTHCAL_CopyTime (&infoPtr->date, &dtdtc.st);
  return (BOOL) SendMessageA (GetParent (hwnd), WM_NOTIFY,
@@ -950,9 +965,54 @@ DATETIME_SendSimpleNotify (HWND hwnd, UINT code)
                                 (WPARAM)nmhdr.idFrom, (LPARAM)&nmhdr);
 }
 
+static LRESULT
+DATETIME_Size (HWND hwnd, WPARAM wParam, LPARAM lParam)
+{
+  DATETIME_INFO *infoPtr = DATETIME_GetInfoPtr(hwnd);
+  DWORD dwStyle = GetWindowLongA(hwnd, GWL_STYLE);
 
+  /* set size */
+  infoPtr->rcClient.bottom = HIWORD(lParam);
+  infoPtr->rcClient.right = LOWORD(lParam);
 
+  TRACE("Height=%d, Width=%d\n", infoPtr->rcClient.bottom, infoPtr->rcClient.right);
 
+  /* use DrawEdge to adjust the size of rcEdge to get rcDraw */
+  memcpy((&infoPtr->rcDraw), (&infoPtr->rcClient), sizeof(infoPtr->rcDraw));
+
+  DrawEdge((HDC)NULL, &(infoPtr->rcDraw), EDGE_SUNKEN, BF_RECT | BF_ADJUST);
+
+  /* set the size of the button that drops the calender down */
+  /* FIXME: account for style that allows button on left side */
+  infoPtr->calbutton.top   = infoPtr->rcDraw.top;
+  infoPtr->calbutton.bottom= infoPtr->rcDraw.bottom;
+  infoPtr->calbutton.left  = infoPtr->rcDraw.right-15;
+  infoPtr->calbutton.right = infoPtr->rcDraw.right;
+
+  /* set enable/disable button size for show none style being enabled */
+  /* FIXME: these dimensions are completely incorrect */
+  infoPtr->checkbox.top = infoPtr->rcDraw.top;
+  infoPtr->checkbox.bottom = infoPtr->rcDraw.bottom;
+  infoPtr->checkbox.left = infoPtr->rcDraw.left;
+  infoPtr->checkbox.right = infoPtr->rcDraw.left + 10;
+
+  /* update the position of the monthcal control */
+  if(dwStyle & DTS_RIGHTALIGN)
+    infoPtr->monthcal_pos.x = infoPtr->rcClient.right - ((infoPtr->calbutton.right -
+                                infoPtr->calbutton.left) + 145);
+  else 
+    infoPtr->monthcal_pos.x = 8;
+
+  infoPtr->monthcal_pos.y = infoPtr->rcClient.bottom;
+  ClientToScreen (hwnd, &(infoPtr->monthcal_pos));
+  SetWindowPos(infoPtr->hMonthCal, 0, infoPtr->monthcal_pos.x,
+    infoPtr->monthcal_pos.y,
+    145, 150, 0);
+
+  InvalidateRect(hwnd, NULL, FALSE);
+
+  return 0;
+}
 
 
 static LRESULT
@@ -961,46 +1021,51 @@ DATETIME_Create (HWND hwnd, WPARAM wParam, LPARAM lParam)
   DATETIME_INFO *infoPtr;
   DWORD dwStyle = GetWindowLongA (hwnd, GWL_STYLE);
 
-    /* allocate memory for info structure */
-    infoPtr = (DATETIME_INFO *)COMCTL32_Alloc (sizeof(DATETIME_INFO));
-    if (infoPtr == NULL) {
-	ERR("could not allocate info memory!\n");
-	return 0;
-    }
-
-    SetWindowLongA (hwnd, 0, (DWORD)infoPtr);
-
-	if (dwStyle & DTS_SHOWNONE) {
-		infoPtr->hwndCheckbut=CreateWindowExA (0,"button", 0, 
-				WS_CHILD | WS_VISIBLE | BS_AUTOCHECKBOX, 
-				2,2,13,13,
-				hwnd, 
-                0, GetWindowLongA  (hwnd, GWL_HINSTANCE), 0);
-		SendMessageA (infoPtr->hwndCheckbut, BM_SETCHECK, 1, 0);
-	}
-
-	if (dwStyle & DTS_UPDOWN) {
-
-		infoPtr->hUpdown=CreateUpDownControl (
-				WS_CHILD | WS_BORDER | WS_VISIBLE,
-				120,1,20,20,
-				hwnd,1,0,0,
-				UD_MAXVAL, UD_MINVAL, 0);
-	}
-
-	infoPtr->fieldspec=(int *) COMCTL32_Alloc (32*sizeof(int));
-	infoPtr->fieldRect=(RECT *) COMCTL32_Alloc (32*sizeof(RECT));
-	infoPtr->buflen=(int *) COMCTL32_Alloc (32*sizeof(int));
-	infoPtr->nrFieldsAllocated=32;
-
-	DATETIME_SetFormat (hwnd, 0, 0);
-
-    /* initialize info structure */
-	infoPtr->hMonthCal=0;
-	GetSystemTime (&infoPtr->date);
-	infoPtr->dateValid = TRUE;
-	infoPtr->hFont = GetStockObject(DEFAULT_GUI_FONT);
+  /* allocate memory for info structure */
+  infoPtr = (DATETIME_INFO *)COMCTL32_Alloc (sizeof(DATETIME_INFO));
+  if (infoPtr == NULL) {
+    ERR("could not allocate info memory!\n");
     return 0;
+  }
+
+  SetWindowLongA (hwnd, 0, (DWORD)infoPtr);
+
+  if (dwStyle & DTS_SHOWNONE) {
+    infoPtr->hwndCheckbut=CreateWindowExA (0,"button", 0, 
+         WS_CHILD | WS_VISIBLE | BS_AUTOCHECKBOX, 
+         2,2,13,13,
+         hwnd, 
+         0, GetWindowLongA  (hwnd, GWL_HINSTANCE), 0);
+         SendMessageA (infoPtr->hwndCheckbut, BM_SETCHECK, 1, 0);
+  }
+
+  if (dwStyle & DTS_UPDOWN) {
+    infoPtr->hUpdown=CreateUpDownControl (
+        WS_CHILD | WS_BORDER | WS_VISIBLE,
+        120,1,20,20,
+        hwnd,1,0,0,
+        UD_MAXVAL, UD_MINVAL, 0);
+  }
+
+  infoPtr->fieldspec = (int *) COMCTL32_Alloc (32*sizeof(int));
+  infoPtr->fieldRect = (RECT *) COMCTL32_Alloc (32*sizeof(RECT));
+  infoPtr->buflen = (int *) COMCTL32_Alloc (32*sizeof(int));
+  infoPtr->nrFieldsAllocated = 32;
+
+  DATETIME_SetFormat (hwnd, 0, 0);
+
+  /* create the monthcal control */
+    infoPtr->hMonthCal = CreateWindowExA (0,"SysMonthCal32", 0, 
+	WS_BORDER | WS_POPUP | WS_CLIPSIBLINGS,
+	0, 0, 0, 0,
+	GetParent(hwnd), 
+	0, 0, 0);
+
+  /* initialize info structure */
+  GetSystemTime (&infoPtr->date);
+  infoPtr->dateValid = TRUE;
+  infoPtr->hFont = GetStockObject(DEFAULT_GUI_FONT);
+  return 0;
 }
 
 
@@ -1014,13 +1079,9 @@ DATETIME_Destroy (HWND hwnd, WPARAM wParam, LPARAM lParam)
 }
 
 
-
-
-
 static LRESULT WINAPI
 DATETIME_WindowProc (HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
-
     switch (uMsg)
     {
 
@@ -1080,8 +1141,14 @@ DATETIME_WindowProc (HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
     case WM_SETFOCUS:
         return DATETIME_SetFocus (hwnd, wParam, lParam);
 
+    case WM_SIZE:
+        return DATETIME_Size (hwnd, wParam, lParam);
+
     case WM_LBUTTONDOWN:
         return DATETIME_LButtonDown (hwnd, wParam, lParam);
+
+    case WM_LBUTTONUP:
+        return DATETIME_LButtonUp (hwnd, wParam, lParam);
 
     case WM_CREATE:
 	return DATETIME_Create (hwnd, wParam, lParam);
@@ -1122,4 +1189,3 @@ DATETIME_Unregister (void)
 {
     UnregisterClassA (DATETIMEPICK_CLASSA, (HINSTANCE)NULL);
 }
-
