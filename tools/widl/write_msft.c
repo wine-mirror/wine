@@ -1139,11 +1139,11 @@ static HRESULT set_custdata(msft_typelib_t *typelib, REFGUID guid,
     return S_OK;
 }
 
-static HRESULT add_func_desc(msft_typeinfo_t* typeinfo, func_t *func)
+static HRESULT add_func_desc(msft_typeinfo_t* typeinfo, func_t *func, int index)
 {
     int offset;
     int *typedata;
-    int i, index = func->idx, id;
+    int i, id;
     int decoded_size, extra_attr = 0;
     int num_params = 0, num_defaults = 0;
     var_t *arg, *last_arg = NULL;
@@ -1155,8 +1155,15 @@ static HRESULT add_func_desc(msft_typeinfo_t* typeinfo, func_t *func)
 
     id = ((0x6000 | typeinfo->typeinfo->cImplTypes) << 16) | index;
 
-    chat("(%p,%d)\n", typeinfo, index);
-    
+    chat("add_func_desc(%p,%d)\n", typeinfo, index);
+
+    for(attr = func->def->attrs; attr; attr = NEXT_LINK(attr)) {
+        if(attr->type == ATTR_LOCAL) {
+            chat("add_func_desc: skipping local function\n");
+            return S_FALSE;
+        }
+    }
+
     if (!typeinfo->typedata) {
 	typeinfo->typedata = xmalloc(0x2000);
 	typeinfo->typedata[0] = 0;
@@ -1950,10 +1957,8 @@ int create_msft_typelib(typelib_t *typelib)
             func_t *cur = entry->u.interface->funcs;
             while(NEXT_LINK(cur)) cur = NEXT_LINK(cur);
             while(cur) {
-                if(cur->idx == -1) cur->idx = idx;
-                else if(cur->idx != idx) error("method index mismatch\n");
-                add_func_desc(msft_typeinfo, cur);
-                idx++;
+                if(add_func_desc(msft_typeinfo, cur, idx) == S_OK)
+                    idx++;
                 cur = PREV_LINK(cur);
             }
             break;
