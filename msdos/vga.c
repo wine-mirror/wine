@@ -7,6 +7,8 @@
 
 #include <string.h>
 #include "winbase.h"
+#include "wingdi.h"
+#include "winuser.h"
 #include "wincon.h"
 #include "miscemu.h"
 #include "vga.h"
@@ -25,6 +27,9 @@ static HANDLE poll_timer;
 
 typedef HRESULT WINAPI (*DirectDrawCreateProc)(LPGUID,LPDIRECTDRAW *,LPUNKNOWN);
 static DirectDrawCreateProc pDirectDrawCreate;
+
+typedef HWND WINAPI (*CreateWindowExAProc)(DWORD,LPCSTR,LPCSTR,DWORD,INT,INT, INT,INT,HWND,HMENU,HINSTANCE,LPVOID);
+static CreateWindowExAProc pCreateWindowExA;
 
 static void VGA_DeinstallTimer(void)
 {
@@ -57,25 +62,56 @@ char*VGA_AlphaBuffer(void)
 
 int VGA_SetMode(unsigned Xres,unsigned Yres,unsigned Depth)
 {
+    LRESULT	res;
+    HWND	hwnd;
+
     if (lpddraw) VGA_Exit();
     if (!lpddraw) {
         if (!pDirectDrawCreate)
         {
             HMODULE hmod = LoadLibraryA( "ddraw.dll" );
             if (hmod) pDirectDrawCreate = (DirectDrawCreateProc)GetProcAddress( hmod, "DirectDrawCreate" );
+	    if (!pDirectDrawCreate) {
+		ERR("Can't lookup DirectDrawCreate from ddraw.dll.\n");
+		return 1;
+	    }
         }
-        if (pDirectDrawCreate) pDirectDrawCreate(NULL,&lpddraw,NULL);
+        if (!pCreateWindowExA)
+	{
+            HMODULE hmod = LoadLibraryA( "user32.dll" );
+	    if (!hmod) {
+		ERR("Can't load user32.dll.\n");
+		return 1;
+	    }
+            if (hmod) pCreateWindowExA = (CreateWindowExAProc)GetProcAddress( hmod, "CreateWindowExA" );
+	    if (!pCreateWindowExA) {
+		ERR("Can't lookup CreateWindowExA from user32.dll.\n");
+		return 1;
+	    }
+	}
+        res = pDirectDrawCreate(NULL,&lpddraw,NULL);
         if (!lpddraw) {
-            ERR("DirectDraw is not available\n");
+            ERR("DirectDraw is not available (res = %lx)\n",res);
             return 1;
         }
-        if (IDirectDraw_SetDisplayMode(lpddraw,Xres,Yres,Depth)) {
-            ERR("DirectDraw does not support requested display mode\n");
+	hwnd = pCreateWindowExA(0,"STATIC","WINEDOS VGA",WS_POPUP|WS_BORDER|WS_CAPTION|WS_SYSMENU,0,0,Xres,Yres,0,0,0,NULL);
+	if (!hwnd) {
+	    ERR("Failed to create user window.\n");
+	}
+        if ((res=IDirectDraw_SetCooperativeLevel(lpddraw,hwnd,DDSCL_FULLSCREEN|DDSCL_EXCLUSIVE))) {
+	    ERR("Could not set cooperative level to exclusive (%lx)\n",res);
+	}
+
+        if ((res=IDirectDraw_SetDisplayMode(lpddraw,Xres,Yres,Depth))) {
+            ERR("DirectDraw does not support requested display mode (%dx%dx%d), res = %lx!\n",Xres,Yres,Depth,res);
             IDirectDraw_Release(lpddraw);
             lpddraw=NULL;
             return 1;
         }
-        IDirectDraw_CreatePalette(lpddraw,DDPCAPS_8BIT,NULL,&lpddpal,NULL);
+        res=IDirectDraw_CreatePalette(lpddraw,DDPCAPS_8BIT,NULL,&lpddpal,NULL);
+	if (res) {
+	    ERR("Could not create palette (res = %lx)\n",res);
+	}
         memset(&sdesc,0,sizeof(sdesc));
         sdesc.dwSize=sizeof(sdesc);
 	sdesc.dwFlags = DDSD_CAPS;
