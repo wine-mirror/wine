@@ -239,7 +239,7 @@ static HFONT MSGBOX_OnInit(HWND hwnd, LPMSGBOXPARAMSW lpmb)
 
     if (hFont)
 	SelectObject(hdc, hPrevFont);
-    ReleaseDC(hItem, hdc);
+    ReleaseDC(hwnd, hdc);
 
     tiheight = 16 + max(iheight, theight);
     wwidth  = tleft + twidth + ileft + borwidth;
