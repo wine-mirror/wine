@@ -1205,24 +1205,24 @@ void WINAPI DOSVM_Int31Handler( CONTEXT86 *context )
         break;
 
     case 0x0507:  /* Set page attributes (1.0) */
-        FIXME("set page attributes unimplemented\n");
+        FIXME( "set page attributes - unimplemented\n" );
         break;  /* Just ignore it */
 
     case 0x0600:  /* Lock linear region */
-        FIXME("lock linear region unimplemented\n");
-        break;  /* Just ignore it */
+        TRACE( "lock linear region - ignored (no paging)\n" );
+        break;
 
     case 0x0601:  /* Unlock linear region */
-        FIXME("unlock linear region unimplemented\n");
-        break;  /* Just ignore it */
+        TRACE( "unlock linear region - ignored (no paging)\n" );
+        break;
 
-    case 0x0602:  /* Unlock real-mode region */
-        FIXME("unlock realmode region unimplemented\n");
-        break;  /* Just ignore it */
+    case 0x0602:  /* Mark real mode region as pageable */
+        TRACE( "mark real mode region as pageable - ignored (no paging)\n" );
+        break;
 
-    case 0x0603:  /* Lock real-mode region */
-        FIXME("lock realmode region unimplemented\n");
-        break;  /* Just ignore it */
+    case 0x0603:  /* Relock real mode region */
+        TRACE( "relock real mode region - ignored (no paging)\n" );
+        break;
 
     case 0x0604:  /* Get page size */
         TRACE("get pagesize\n");
@@ -1231,16 +1231,55 @@ void WINAPI DOSVM_Int31Handler( CONTEXT86 *context )
         break;
 
     case 0x0702:  /* Mark page as demand-paging candidate */
-        FIXME("mark page as demand-paging candidate\n");
-        break;  /* Just ignore it */
+        TRACE( "mark page as demand-paging candidate - ignored (no paging)\n" );
+        break;
 
     case 0x0703:  /* Discard page contents */
-        FIXME("discard page contents\n");
-        break;  /* Just ignore it */
+        TRACE( "discard page contents - ignored (no paging)\n" );
+        break;
 
     case 0x0800:  /* Physical address mapping */
         FIXME( "physical address mapping (0x%08lx) - unimplemented\n", 
                MAKELONG(CX_reg(context),BX_reg(context)) );
+        break;
+
+    case 0x0e00:  /* Get Coprocessor Status (1.0) */
+        /*
+         * Return status in AX bits:
+         * B0    - MPv (MP bit in the virtual MSW/CR0)
+         *         0 = numeric coprocessor is disabled for this client
+         *         1 = numeric coprocessor is enabled for this client
+         * B1    - EMv (EM bit in the virtual MSW/CR0)
+         *         0 = client is not emulating coprocessor instructions
+         *         1 = client is emulating coprocessor instructions
+         * B2    - MPr (MP bit from the actual MSW/CR0)
+         *         0 = numeric coprocessor is not present
+         *         1 = numeric coprocessor is present
+         * B3    - EMr (EM bit from the actual MSW/CR0)
+         *         0 = host is not emulating coprocessor instructions
+         *         1 = host is emulating coprocessor instructions
+         * B4-B7 - coprocessor type
+         *         00H = no coprocessor
+         *         02H = 80287
+         *         03H = 80387
+         *         04H = 80486 with numeric coprocessor
+         *         05H-0FH = reserved for future numeric processors
+         */
+        TRACE( "Get Coprocessor Status\n" );
+        SET_AX( context, 69 ); /* 486, coprocessor present and enabled */ 
+        break;
+
+    case 0x0e01: /* Set Coprocessor Emulation (1.0) */
+        /*
+         * See function 0x0e00.
+         * BX bit B0 is new value for MPv.
+         * BX bit B1 is new value for EMv.
+         */
+        if (BX_reg(context) != 1)
+            FIXME( "Set Coprocessor Emulation to %d - unimplemented\n", 
+                   BX_reg(context) );
+        else
+            TRACE( "Set Coprocessor Emulation - ignored\n" );
         break;
 
     default:
