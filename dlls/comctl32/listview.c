@@ -4257,7 +4257,8 @@ static BOOL LISTVIEW_EnsureVisible(LISTVIEW_INFO *infoPtr, INT nItem, BOOL bPart
     UINT uView = LISTVIEW_GetType(infoPtr);
     INT nScrollPosHeight = 0;
     INT nScrollPosWidth = 0;
-    INT nPartialAdjust = 0;
+    INT nHorzAdjust = 0;
+    INT nVertAdjust = 0;
     INT nHorzDiff = 0;
     INT nVertDiff = 0;
     RECT rcItem;
@@ -4277,12 +4278,12 @@ static BOOL LISTVIEW_EnsureVisible(LISTVIEW_INFO *infoPtr, INT nItem, BOOL bPart
 
 	if (rcItem.left < infoPtr->rcList.left)
 	{
-	    nPartialAdjust = -1;
-	    if (uView != LVS_REPORT) nHorzDiff = rcItem.left + infoPtr->rcList.left;
+	    nHorzAdjust = -1;
+	    if (uView != LVS_REPORT) nHorzDiff = rcItem.left - infoPtr->rcList.left;
 	}
 	else
 	{
-	    nPartialAdjust = 1;
+	    nHorzAdjust = 1;
 	    if (uView != LVS_REPORT) nHorzDiff = rcItem.right - infoPtr->rcList.right;
 	}
     }
@@ -4297,12 +4298,12 @@ static BOOL LISTVIEW_EnsureVisible(LISTVIEW_INFO *infoPtr, INT nItem, BOOL bPart
 
 	if (rcItem.top < infoPtr->rcList.top)
 	{
-	    nPartialAdjust = -1;
-	    if (uView != LVS_LIST) nVertDiff = rcItem.top + infoPtr->rcList.top;
+	    nVertAdjust = -1;
+	    if (uView != LVS_LIST) nVertDiff = rcItem.top - infoPtr->rcList.top;
 	}
 	else
 	{
-	    nPartialAdjust = 1;
+	    nVertAdjust = 1;
 	    if (uView != LVS_LIST) nVertDiff = rcItem.bottom - infoPtr->rcList.bottom;
 	}
     }
@@ -4312,14 +4313,14 @@ static BOOL LISTVIEW_EnsureVisible(LISTVIEW_INFO *infoPtr, INT nItem, BOOL bPart
     if (nScrollPosWidth)
     {
 	INT diff = nHorzDiff / nScrollPosWidth;
-	if (rcItem.left % nScrollPosWidth) diff += nPartialAdjust;
+	if (nHorzDiff % nScrollPosWidth) diff += nHorzAdjust;
 	LISTVIEW_HScroll(infoPtr, SB_INTERNAL, diff, 0);
     }
 
     if (nScrollPosHeight)
     {
 	INT diff = nVertDiff / nScrollPosHeight;
-	if (rcItem.top % nScrollPosHeight) diff += nPartialAdjust;
+	if (nVertDiff % nScrollPosHeight) diff += nVertAdjust;
 	LISTVIEW_VScroll(infoPtr, SB_INTERNAL, diff, 0);
     }
 
