@@ -21,6 +21,8 @@
 #include "config.h"
 #include "wine/port.h"
 
+#include <errno.h>
+
 #ifndef HAVE_USLEEP
 int usleep (unsigned int useconds)
 {

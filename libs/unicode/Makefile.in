@@ -81,7 +81,7 @@ C_SRCS = \
 	wctype.c \
 	$(CODEPAGES:%=c_%.c)
 
-all: $(MODULE)
+all: $(MODULE) $(MODULE:.dll=.a)
 
 @MAKE_RULES@
 

@@ -71,7 +71,9 @@ mkstemps (template, suffix_len)
   static const char letters[]
     = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
   static gcc_uint64_t value;
+#ifdef HAVE_GETTIMEOFDAY
   struct timeval tv;
+#endif
   char *XXXXXX;
   size_t len;
   int count;
@@ -86,9 +88,13 @@ mkstemps (template, suffix_len)
 
   XXXXXX = &template[len - 6 - suffix_len];
 
+#ifdef HAVE_GETTIMEOFDAY
   /* Get some more or less random data.  */
   gettimeofday (&tv, NULL);
   value += ((gcc_uint64_t) tv.tv_usec << 16) ^ tv.tv_sec ^ getpid ();
+#else
+  value += getpid ();
+#endif
 
   for (count = 0; count < TMP_MAX; ++count)
     {

@@ -149,6 +149,9 @@
 /* Define to 1 if you have the `getservbyport' function. */
 #undef HAVE_GETSERVBYPORT
 
+/* Define to 1 if you have the `gettimeofday' function. */
+#undef HAVE_GETTIMEOFDAY
+
 /* Define to 1 if you have the <gif_lib.h> header file. */
 #undef HAVE_GIF_LIB_H
 

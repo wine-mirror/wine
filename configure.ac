@@ -950,6 +950,7 @@ AC_CHECK_FUNCS(\
 	getprotobynumber \
 	getpwuid \
 	getservbyport \
+	gettimeofday \
 	inet_network \
 	lseek64 \
 	lstat \
