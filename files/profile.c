@@ -145,7 +145,7 @@ static void PROFILE_Save( FILE *file, PROFILESECTION *section )
 
     for ( ; section; section = section->next)
     {
-        if (section->name) fprintf( file, "\r\n[%s]\r\n", section->name );
+        if (section->name[0]) fprintf( file, "\r\n[%s]\r\n", section->name );
         for (key = section->key; key; key = key->next)
         {
             fprintf( file, "%s", key->name );
