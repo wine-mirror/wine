@@ -52,6 +52,55 @@ typedef struct tagSTYLEBUFW
 DECL_WINELIB_TYPE_AW(STYLEBUF)
 DECL_WINELIB_TYPE_AW(LPSTYLEBUF)
 
+#if	(WINVER >= 0x040A)
+
+typedef struct tagRECONVERTSTRING
+{
+	DWORD	dwSize;
+	DWORD	dwVersion;
+	DWORD	dwStrLen;
+	DWORD	dwStrOffset;
+	DWORD	dwCompStrLen;
+	DWORD	dwCompStrOffset;
+	DWORD	dwTargetStrLen;
+	DWORD	dwTargetStrOffset;
+} RECONVERTSTRING, *LPRECONVERTSTRING;
+
+
+#define IMEMENUITEM_STRING_SIZE 80
+
+typedef struct tagIMEMENUITEMINFOA
+{
+	UINT		cbSize;
+	UINT		fType;
+	UINT		fState;
+	UINT		wID;
+	HBITMAP		hbmpChecked;
+	HBITMAP		hbmpUnchecked;
+	DWORD		dwItemData;
+	CHAR		szString[IMEMENUITEM_STRING_SIZE];
+	HBITMAP		hbmpItem;
+} IMEMENUITEMINFOA, *LPIMEMENUITEMINFOA;
+
+typedef struct tagIMEMENUITEMINFOW
+{
+	UINT		cbSize;
+	UINT		fType;
+	UINT		fState;
+	UINT		wID;
+	HBITMAP		hbmpChecked;
+	HBITMAP		hbmpUnchecked;
+	DWORD		dwItemData;
+	WCHAR		szString[IMEMENUITEM_STRING_SIZE];
+	HBITMAP		hbmpItem;
+} IMEMENUITEMINFOW, *LPIMEMENUITEMINFOW;
+
+DECL_WINELIB_TYPE_AW(IMEMENUITEMINFO)
+DECL_WINELIB_TYPE_AW(LPIMEMENUITEMINFO)
+
+#endif	/* WINVER >= 0x040A */
+
+
 typedef struct _tagCOMPOSITIONFORM
 {
 				DWORD   dwStyle;
@@ -83,6 +132,7 @@ typedef struct _tagCOMPOSITIONFORM
 #define NI_COMPOSITIONSTR               0x0015
 #define NI_SETCANDIDATE_PAGESTART       0x0016
 #define NI_SETCANDIDATE_PAGESIZE        0x0017
+#define NI_IMEMENUSELECTED		0x0018
 
 /* lParam for WM_IME_SETCONTEXT */
 #define ISC_SHOWUICANDIDATEWINDOW       0x00000001
@@ -137,6 +187,7 @@ typedef struct _tagCOMPOSITIONFORM
 #define IME_ITHOTKEY_RESEND_RESULTSTR           0x200
 #define IME_ITHOTKEY_PREVIOUS_COMPOSITION       0x201
 #define IME_ITHOTKEY_UISTYLE_TOGGLE             0x202
+#define IME_ITHOTKEY_RECONVERTSTRING		0x203
 #define IME_HOTKEY_PRIVATE_LAST                 0x21F
 
 
@@ -175,6 +226,7 @@ typedef struct _tagCOMPOSITIONFORM
 #define IME_PROP_SPECIAL_UI             0x00020000
 #define IME_PROP_CANDLIST_START_FROM_1  0x00040000
 #define IME_PROP_UNICODE                0x00080000
+#define IME_PROP_COMPLETE_ON_UNSELECT	0x00100000
 
 
 /* IME UICapability bits */
@@ -184,6 +236,7 @@ typedef struct _tagCOMPOSITIONFORM
 /* ImmSetCompositionString Capability bits */
 #define SCS_CAP_COMPSTR                 0x00000001
 #define SCS_CAP_MAKEREAD                0x00000002
+#define SCS_CAP_SETRECONVERTSTRING	0x00000004
 
 
 /* IME WM_IME_SELECT inheritance Capability bits */
@@ -236,12 +289,16 @@ typedef struct _tagCOMPOSITIONFORM
 #define SCS_SETSTR          (GCS_COMPREADSTR|GCS_COMPSTR)
 #define SCS_CHANGEATTR      (GCS_COMPREADATTR|GCS_COMPATTR)
 #define SCS_CHANGECLAUSE    (GCS_COMPREADCLAUSE|GCS_COMPCLAUSE)
+#define SCS_SETRECONVERTSTRING		0x00010000
+#define SCS_QUERYRECONVERTSTRING	0x00020000
+
 /* attribute for COMPOSITIONSTRING Structure */
 #define ATTR_INPUT                      0x00
 #define ATTR_TARGET_CONVERTED           0x01
 #define ATTR_CONVERTED                  0x02
 #define ATTR_TARGET_NOTCONVERTED        0x03
 #define ATTR_INPUT_ERROR                0x04
+#define ATTR_FIXEDCONVERTED		0x05
 
 
 /* bit field for IMC_SETCOMPOSITIONWINDOW, IMC_SETCANDIDATEWINDOW */
@@ -276,6 +333,7 @@ typedef struct _tagCOMPOSITIONFORM
 #define IME_CMODE_NOCONVERSION          0x0100
 #define IME_CMODE_EUDC                  0x0200
 #define IME_CMODE_SYMBOL                0x0400
+#define IME_CMODE_FIXED			0x0800
 
 
 #define IME_SMODE_NONE                  0x0000
@@ -283,6 +341,7 @@ typedef struct _tagCOMPOSITIONFORM
 #define IME_SMODE_SINGLECONVERT         0x0002
 #define IME_SMODE_AUTOMATIC             0x0004
 #define IME_SMODE_PHRASEPREDICT         0x0008
+#define IME_SMODE_CONVERSATION		0x0010
 
 /* style of candidate */
 #define IME_CAND_UNKNOWN                0x0000
@@ -310,6 +369,18 @@ typedef struct _tagCOMPOSITIONFORM
 #define IMN_PRIVATE                     0x000E
 
 
+#if	(WINVER >= 0x040A)
+
+/* wParam of report message WM_IME_REQUEST */
+#define IMR_COMPOSITIONWINDOW		0x0001
+#define IMR_CANDIDATEWINDOW		0x0002
+#define IMR_COMPOSITIONFONT		0x0003
+#define IMR_RECONVERTSTRING		0x0004
+#define IMR_CONFIRMRECONVERTSTRING	0x0005
+
+#endif	/* WINVER >= 0x040A */
+
+
 /* error code of ImmGetCompositionString */
 #define IMM_ERROR_NODATA                (-1)
 #define IMM_ERROR_GENERAL               (-2)
@@ -335,12 +406,52 @@ typedef struct _tagCOMPOSITIONFORM
 #define IME_ESC_HANJA_MODE              0x1008
 #define IME_ESC_AUTOMATA                0x1009
 #define IME_ESC_PRIVATE_HOTKEY          0x100a
+#define IME_ESC_GETHELPFILENAME		0x100b
 
 
 /* style of word registration */
 #define IME_REGWORD_STYLE_EUDC          0x00000001
 #define IME_REGWORD_STYLE_USER_FIRST    0x80000000
 #define IME_REGWORD_STYLE_USER_LAST     0xFFFFFFFF
+
+
+#if	(WINVER >= 0x040A)
+
+/* dwFlags for ImmAssociateContextEx */
+#define IACE_CHILDREN			0x0001
+#define IACE_DEFAULT			0x0010
+#define IACE_IGNORENOCONTEXT		0x0020
+
+/* dwFlags for ImmGetImeMenuItems */
+#define IGIMIF_RIGHTMENU		0x0001
+
+/* dwType for ImmGetImeMenuItems */
+#define IGIMII_CMODE			0x0001
+#define IGIMII_SMODE			0x0002
+#define IGIMII_CONFIGURE		0x0004
+#define IGIMII_TOOLS			0x0008
+#define IGIMII_HELP			0x0010
+#define IGIMII_OTHER			0x0020
+#define IGIMII_INPUTTOOLS		0x0040
+
+/* fType of IMEMENUITEMINFO structure */
+#define IMFT_RADIOCHECK			0x00001
+#define IMFT_SEPARATOR			0x00002
+#define IMFT_SUBMENU			0x00004
+
+/* fState of IMEMENUITEMINFO structure */
+#define IMFS_GRAYED			MFS_GRAYED
+#define IMFS_DISABLED			MFS_DISABLED
+#define IMFS_CHECKED			MFS_CHECKED
+#define IMFS_HILITE			MFS_HILITE
+#define IMFS_ENABLED			MFS_ENABLED
+#define IMFS_UNCHECKED			MFS_UNCHECKED
+#define IMFS_UNHILITE			MFS_UNHILITE
+#define IMFS_DEFAULT			MFS_DEFAULT
+
+#endif	/* WINVER >= 0x040A */
+
+
 
 /*
  * type of soft keyboard
@@ -426,6 +537,13 @@ BOOL   WINAPI ImmSimulateHotKey(HWND, DWORD);
 BOOL   WINAPI ImmUnregisterWordA(HKL, LPCSTR, DWORD, LPCSTR);
 BOOL   WINAPI ImmUnregisterWordW(HKL, LPCWSTR, DWORD, LPCWSTR);
 #define  ImmUnregisterWord WINELIB_NAME_AW(ImmUnregisterWord)
+
+#if	(WINVER >= 0x040A)
+
+BOOL   WINAPI ImmAssociateContextEx(HWND, HIMC, DWORD);
+
+#endif	/* WINVER >= 0x040A */
+
 
 #ifdef __cplusplus
 }
