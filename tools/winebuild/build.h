@@ -202,6 +202,7 @@ extern int display_warnings;
 extern int kill_at;
 
 extern char *input_file_name;
+extern char *spec_file_name;
 extern const char *output_file_name;
 extern char **debug_channels;
 extern char **lib_path;
