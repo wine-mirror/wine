@@ -154,7 +154,7 @@ void THREAD_FreeTHDB( THDB *thdb )
 {
     THDB **pptr = &THREAD_First;
 
-    PROCESS_CallUserSignalProc( USIG_THREAD_EXIT, 0 );
+    PROCESS_CallUserSignalProc( USIG_THREAD_EXIT, 0, 0 );
     
     CloseHandle( thdb->event );
     while (*pptr && (*pptr != thdb)) pptr = &(*pptr)->next;
@@ -279,7 +279,7 @@ static void THREAD_Start(void)
 {
     THDB *thdb = THREAD_Current();
     LPTHREAD_START_ROUTINE func = (LPTHREAD_START_ROUTINE)thdb->entry_point;
-    PROCESS_CallUserSignalProc( USIG_THREAD_INIT, 0 );
+    PROCESS_CallUserSignalProc( USIG_THREAD_INIT, 0, 0 );
     PE_InitTls();
     MODULE_InitializeDLLs( 0, DLL_THREAD_ATTACH, NULL );
     ExitThread( func( thdb->entry_arg ) );

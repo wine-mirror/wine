@@ -1091,7 +1091,7 @@ static BOOL16 NE_FreeModule( HMODULE16 hModule, BOOL call_wep )
                 pTask->userhandler( hModule, USIG16_DLL_UNLOAD, 0,
                                     pTask->hInstance, pTask->hQueue );
 
-            PROCESS_CallUserSignalProc( USIG_DLL_UNLOAD_WIN16, hModule );
+            PROCESS_CallUserSignalProc( USIG_DLL_UNLOAD_WIN16, 0, hModule );
         }
         else
             call_wep = FALSE;  /* We are freeing a task -> no more WEPs */

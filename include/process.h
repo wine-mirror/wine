@@ -136,7 +136,7 @@ typedef struct _PDB
 #define  GPD_STARTF_SIZE         (-20)
 #define  GPD_STARTF_POSITION     (-16)
 #define  GPD_STARTF_FLAGS        (-12)
-#define  GPD_PARENT_PDB          (- 8)
+#define  GPD_PARENT              (- 8)
 #define  GPD_FLAGS               (- 4)
 #define  GPD_USERDATA            (  0)
 
@@ -154,7 +154,7 @@ extern PDB *PROCESS_Current(void);
 extern BOOL PROCESS_IsCurrent( HANDLE handle );
 extern PDB *PROCESS_Initial(void);
 extern PDB *PROCESS_IdToPDB( DWORD id );
-extern void PROCESS_CallUserSignalProc( UINT uCode, HMODULE hModule );
+extern void PROCESS_CallUserSignalProc( UINT uCode, DWORD dwThreadOrProcessId, HMODULE hModule );
 extern PDB *PROCESS_Create( struct _NE_MODULE *pModule, 
                             LPCSTR cmd_line, LPCSTR env, 
                             HINSTANCE16 hInstance, HINSTANCE16 hPrevInstance, 

@@ -172,11 +172,11 @@ PDB *PROCESS_IdToPDB( DWORD id )
  * USIG_FLAGS_FAULT
  *     The signal is being sent due to a fault.
  */
-void PROCESS_CallUserSignalProc( UINT uCode, HMODULE hModule )
+void PROCESS_CallUserSignalProc( UINT uCode, DWORD dwThreadOrProcessId, HMODULE hModule )
 {
     PDB *pdb = PROCESS_Current();
     STARTUPINFOA *startup = pdb->env_db? pdb->env_db->startup_info : NULL;
-    DWORD dwFlags = 0, dwThreadOrProcessID;
+    DWORD dwFlags = 0;
 
     /* Determine dwFlags */
 
@@ -201,10 +201,11 @@ void PROCESS_CallUserSignalProc( UINT uCode, HMODULE hModule )
 
     /* Get thread or process ID */
 
-    if ( uCode == USIG_THREAD_INIT || uCode == USIG_THREAD_EXIT )
-        dwThreadOrProcessID = GetCurrentThreadId();
-    else
-        dwThreadOrProcessID = GetCurrentProcessId();
+    if ( dwThreadOrProcessId == 0 )
+        if ( uCode == USIG_THREAD_INIT || uCode == USIG_THREAD_EXIT )
+            dwThreadOrProcessId = GetCurrentThreadId();
+        else
+            dwThreadOrProcessId = GetCurrentProcessId();
 
     /* Convert module handle to 16-bit */
 
@@ -214,7 +215,7 @@ void PROCESS_CallUserSignalProc( UINT uCode, HMODULE hModule )
     /* Call USER signal proc */
 
     if ( Callout.UserSignalProc )
-        Callout.UserSignalProc( uCode, dwThreadOrProcessID, dwFlags, hModule );
+        Callout.UserSignalProc( uCode, dwThreadOrProcessId, dwFlags, hModule );
 }
 
 
@@ -450,7 +451,7 @@ void PROCESS_Start(void)
     NE_MODULE *pModule = NE_GetPtr( pTask->hModule );
     OFSTRUCT *ofs = (OFSTRUCT *)((char*)(pModule) + (pModule)->fileinfo);
 
-    PROCESS_CallUserSignalProc( USIG_THREAD_INIT, 0 );  /* for initial thread */
+    PROCESS_CallUserSignalProc( USIG_THREAD_INIT, 0, 0 );  /* for initial thread */
 
 #if 0
     /* Initialize the critical section */
@@ -474,7 +475,7 @@ void PROCESS_Start(void)
 
 #endif
 
-    PROCESS_CallUserSignalProc( USIG_PROCESS_INIT, 0 );
+    PROCESS_CallUserSignalProc( USIG_PROCESS_INIT, 0, 0 );
 
     /* Map system DLLs into this process (from initial process) */
     /* FIXME: this is a hack */
@@ -483,7 +484,7 @@ void PROCESS_Start(void)
     /* Create 32-bit MODREF */
     if (!PE_CreateModule( pModule->module32, ofs, 0, FALSE )) goto error;
 
-    PROCESS_CallUserSignalProc( USIG_PROCESS_LOADED, 0 );   /* FIXME: correct location? */
+    PROCESS_CallUserSignalProc( USIG_PROCESS_LOADED, 0, 0 );   /* FIXME: correct location? */
 
     /* Initialize thread-local storage */
 
@@ -496,7 +497,7 @@ void PROCESS_Start(void)
 
     MODULE_InitializeDLLs( 0, DLL_PROCESS_ATTACH, (LPVOID)1 );
 
-    PROCESS_CallUserSignalProc( USIG_PROCESS_RUNNING, 0 );
+    PROCESS_CallUserSignalProc( USIG_PROCESS_RUNNING, 0, 0 );
 
     entry = (LPTHREAD_START_ROUTINE)RVA_PTR(pModule->module32,
                                             OptionalHeader.AddressOfEntryPoint);
@@ -586,6 +587,10 @@ PDB *PROCESS_Create( NE_MODULE *pModule, LPCSTR cmd_line, LPCSTR env,
     /* Inherit the env DB from the parent */
 
     if (!PROCESS_InheritEnvDB( pdb, cmd_line, env, inherit, startup )) goto error;
+
+    /* Call USER signal proc */
+
+    PROCESS_CallUserSignalProc( USIG_PROCESS_CREATE, info->dwProcessId, 0 );
 
     /* Create the main thread */
 
@@ -730,8 +735,8 @@ DWORD WINAPI GetProcessDword( DWORD dwProcessID, INT offset )
     case GPD_STARTF_FLAGS:
         return process->env_db->startup_info->dwFlags;
 
-    case GPD_PARENT_PDB:
-        return (DWORD)process->parent;
+    case GPD_PARENT:
+        return (DWORD)process->parent->server_pid;
 
     case GPD_FLAGS:
         return process->flags;
@@ -770,7 +775,7 @@ void WINAPI SetProcessDword( DWORD dwProcessID, INT offset, DWORD value )
     case GPD_STARTF_SIZE:
     case GPD_STARTF_POSITION:
     case GPD_STARTF_FLAGS:
-    case GPD_PARENT_PDB:
+    case GPD_PARENT:
     case GPD_FLAGS:
         ERR( win32, "Not allowed to modify offset %d\n", offset );
         break;
