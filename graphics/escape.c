@@ -10,6 +10,8 @@
 #include "heap.h"
 #include "ldt.h"
 #include "dc.h"
+#include <debug.h>
+
 
 INT16 WINAPI Escape16( HDC16 hdc, INT16 nEscape, INT16 cbInput,
                        SEGPTR lpszInData, SEGPTR lpvOutData )
@@ -77,7 +79,7 @@ INT32 WINAPI Escape32( HDC32 hdc, INT32 nEscape, INT32 cbInput,
     switch(nEscape) {
     case QUERYESCSUPPORT:
     	if (ret)
-		fprintf(stderr,"target DC implements Escape %d\n",nEscape);
+		TRACE(driver,"target DC implements Escape %d\n",nEscape);
     	SEGPTR_FREE(PTR_SEG_TO_LIN(segin));
 	break;
     case GETSCALINGFACTOR:
@@ -115,7 +117,7 @@ INT32 WINAPI Escape32( HDC32 hdc, INT32 nEscape, INT32 cbInput,
 }
 
 INT32 WINAPI ExtEscape32(HDC32 hdc,INT32 nEscape,INT32 cbInput,LPCSTR x,INT32 cbOutput,LPSTR out) {
-	fprintf(stderr,"ExtEscape32(0x%04x,0x%x,%d,%s,%d,%p),stub!\n",
+	FIXME(driver,"(0x%04x,0x%x,%d,%s,%d,%p),stub!\n",
 		hdc,nEscape,cbInput,x,cbOutput,out
 	);
 	return 1;

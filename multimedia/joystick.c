@@ -145,7 +145,7 @@ UINT16 WINAPI joyGetNumDevs16(void)
 		joy_cnt++;
     }
     TRACE(mmsys, "returning %d\n", joy_cnt);
-    if (!joy_cnt) fprintf(stderr, "No joystick found - "
+    if (!joy_cnt) ERR(mmsys, "No joystick found - "
 			  "perhaps get joystick-0.8.0.tar.gz and load"
 			  "it as module or use Linux >= 2.1.45 to be "
 			  "able to use joysticks.\n");
@@ -409,6 +409,6 @@ MMRESULT16 WINAPI joySetThreshold16(UINT16 wID, UINT16 wThreshold)
  */
 MMRESULT16 WINAPI joySetCalibration16(UINT16 wID)
 {
-    fprintf(stderr, "EMPTY STUB !!! joySetCalibration(%04X);\n", wID);
+    FIXME(mmsys, "(%04X): stub.\n", wID);
     return JOYERR_NOCANDO;
 }

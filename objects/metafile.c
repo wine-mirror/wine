@@ -186,7 +186,7 @@ HMETAFILE32 WINAPI CopyMetaFile32A(
     METAHEADER *mh2;
     HFILE32 hFile;
     
-    TRACE(metafile,"%s\n", lpFilename);
+    TRACE(metafile,"(%08x,%s)\n", hSrcMetaFile, lpFilename);
     
     mh = (METAHEADER *)GlobalLock16(hSrcMetaFile);
     
@@ -213,7 +213,8 @@ HMETAFILE32 WINAPI CopyMetaFile32A(
 	memcpy(mh2,mh, mh->mtSize * 2);
 	GlobalUnlock16(handle);
         }
-    
+
+    GlobalUnlock16(hSrcMetaFile);
     return handle;
 }
 
@@ -295,6 +296,8 @@ BOOL32 WINAPI PlayMetaFile32(
     
     TRACE(metafile,"(%04x %04x)\n",hdc,hmf);
     if (!mh) return FALSE;
+
+    /* save the current pen, brush and font */
     if (!(dc = (DC *) GDI_GetObjPtr( hdc, DC_MAGIC ))) return 0;
     hPen = dc->w.hPen;
     hBrush = dc->w.hBrush;
@@ -311,10 +314,11 @@ BOOL32 WINAPI PlayMetaFile32(
     while (offset < mh->mtSize * 2)
     {
         mr = (METARECORD *)((char *)mh + offset);
-	TRACE(metafile,"offset = %04x size = %08lx\n",
-			 offset, mr->rdSize);
+	TRACE(metafile,"offset=%04x,size=%08lx\n",
+            offset, mr->rdSize);
 	if (!mr->rdSize) {
-		fprintf(stderr,"METAFILE entry got size 0 at offset %d, total mf length is %ld\n",offset,mh->mtSize*2);
+            TRACE(metafile,"Entry got size 0 at offset %d, total mf length is %ld\n",
+                offset,mh->mtSize*2);
 		break; /* would loop endlessly otherwise */
 	}
 	offset += mr->rdSize * 2;
@@ -419,6 +423,68 @@ BOOL16 WINAPI EnumMetaFile16(
 
     /* free handle table */
     GlobalFree16(hHT);
+    GlobalUnlock16(hmf);
+    return result;
+}
+
+BOOL32 WINAPI EnumMetaFile32( 
+			     HDC32 hdc, 
+			     HMETAFILE32 hmf,
+			     MFENUMPROC32 lpEnumFunc, 
+			     LPARAM lpData 
+) {
+    METAHEADER *mh = (METAHEADER *)GlobalLock16(hmf);
+    METARECORD *mr;
+    HANDLETABLE32 *ht;
+    BOOL32 result = TRUE;
+    int i, offset = 0;
+    DC *dc = (DC *) GDI_GetObjPtr( hdc, DC_MAGIC );
+    HPEN32 hPen;
+    HBRUSH32 hBrush;
+    HFONT32 hFont;
+
+    TRACE(metafile,"(%08x,%08x,%p,%p)\n",
+		     hdc, hmf, lpEnumFunc, lpData);
+    if (!mh) return 0;
+
+    /* save the current pen, brush and font */
+    if (!dc) return 0;
+    hPen = dc->w.hPen;
+    hBrush = dc->w.hBrush;
+    hFont = dc->w.hFont;
+    GDI_HEAP_UNLOCK(hdc);
+
+
+    ht = (HANDLETABLE32 *) GlobalAlloc32(GPTR, 
+			    sizeof(HANDLETABLE32) * mh->mtNoObjects);
+    
+    /* loop through metafile records */
+    offset = mh->mtHeaderSize * 2;
+    
+    while (offset < (mh->mtSize * 2))
+    {
+	mr = (METARECORD *)((char *)mh + offset);
+        if (!lpEnumFunc( hdc, ht, mr, mh->mtNoObjects, (LONG)lpData ))
+	{
+	    result = FALSE;
+	    break;
+	}
+	
+	offset += (mr->rdSize * 2);
+    }
+
+    /* restore pen, brush and font */
+    SelectObject32(hdc, hBrush);
+    SelectObject32(hdc, hPen);
+    SelectObject32(hdc, hFont);
+
+    /* free objects in handle table */
+    for(i = 0; i < mh->mtNoObjects; i++)
+      if(*(ht->objectHandle + i) != 0)
+        DeleteObject32(*(ht->objectHandle + i));
+
+    /* free handle table */
+    GlobalFree32(ht);
     GlobalUnlock16(hmf);
     return result;
 }
@@ -893,7 +959,16 @@ BOOL32 WINAPI PlayMetaFileRecord32(
      UINT32 handles  
     )
 {
-  PlayMetaFileRecord16(hdc, handletable, metarecord, handles);
+  HANDLETABLE16 * ht = (void *)GlobalAlloc32(GPTR, 
+                               handles*sizeof(HANDLETABLE16));
+  int i = 0;
+  TRACE(metafile, "(%08x,%p,%p,%d)\n", hdc, handletable, metarecord, handles); 
+  for (i=0; i<handles; i++)  
+    ht->objectHandle[i] =  handletable->objectHandle[i];
+  PlayMetaFileRecord16(hdc, ht, metarecord, handles);
+  for (i=0; i<handles; i++) 
+    handletable->objectHandle[i] = ht->objectHandle[i];
+  GlobalFree32(ht);
   return TRUE;
 }
 
@@ -961,10 +1036,38 @@ HMETAFILE32 WINAPI SetMetaFileBitsEx(
 {
   HMETAFILE32 hmf = GlobalAlloc16(GHND, size);
   BYTE *p = GlobalLock16(hmf) ;
+  TRACE(metafile, "(%d,%p) returning %08x\n", size, lpData, hmf);
+  if (!hmf || !p) return 0;
   memcpy(p, lpData, size);
   GlobalUnlock16(hmf);
   return hmf;
 }
+
+/*****************************************************************
+ *  GetMetaFileBitsEx     (GDI32.198)  Get raw metafile data
+ * 
+ *  Copies the data from metafile _hmf_ into the buffer _buf_.
+ *  If _buf_ is zero, returns size of buffer required. Otherwise,
+ *  returns number of bytes copied.
+ */
+UINT32 WINAPI GetMetaFileBitsEx( 
+     HMETAFILE32 hmf, /* metafile */
+     UINT32 nSize, /* size of buf */ 
+     LPVOID buf   /* buffer to receive raw metafile data */  
+) {
+  METAHEADER *h = GlobalLock16(hmf);
+  TRACE(metafile, "(%08x,%d,%p)\n", hmf, nSize, buf);
+  if (!h) return 0;  /* FIXME: error code */
+  if (!buf) {
+    GlobalUnlock16(hmf);
+    TRACE(metafile,"returning size %d\n", h->mtSize);
+    return h->mtSize;
+  }
+  memmove(buf, h, MIN(nSize, h->mtSize));
+  GlobalUnlock16(hmf);
+  return MIN(nSize, h->mtSize);
+}
+
 
 /******************************************************************
  *         MF_Meta_CreateRegion
@@ -1008,20 +1111,20 @@ static BOOL32 MF_Meta_CreateRegion( METARECORD *mr, HRGN32 hrgn )
     for(band  = 0, start = &(mr->rdParam[11]); band < mr->rdParam[5];
  					        band++, start = end + 1) {
         if(*start / 2 != (*start + 1) / 2) {
- 	    fprintf(stderr, "META_CREATEREGION: delimiter not even.\n");
+ 	    WARN(metafile, "Delimiter not even.\n");
 	    DeleteObject32( hrgn2 );
  	    return FALSE;
         }
 
 	end = start + *start + 3;
 	if(end > (WORD *)mr + mr->rdSize) {
-	    WARN(metafile, "META_CREATEREGION: end points outside record.\n");
+	    WARN(metafile, "End points outside record.\n");
 	    DeleteObject32( hrgn2 );
 	    return FALSE;
         }
 
 	if(*start != *end) {
-	    WARN(metafile, "META_CREATEREGION: mismatched delimiters.\n");
+	    WARN(metafile, "Mismatched delimiters.\n");
 	    DeleteObject32( hrgn2 );
 	    return FALSE;
 	}
@@ -1384,7 +1487,7 @@ BOOL32 MF_ExtTextOut(DC*dc, short x, short y, UINT16 flags, const RECT16 *rect,
     METARECORD *mr;
     
     if((!flags && rect) || (flags && !rect))
-	fprintf(stderr, "MF_ExtTextOut: Inconsistent flags and rect\n");
+	WARN(metafile, "Inconsistent flags and rect\n");
     len = sizeof(METARECORD) + (((count + 1) >> 1) * 2) + 2 * sizeof(short)
 	    + sizeof(UINT16);
     if(rect)

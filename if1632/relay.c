@@ -16,11 +16,6 @@
 #include "debugstr.h"
 #include "debug.h"
 
-#if 0
-/* Make make_debug think these were really used */
-TRACE(relay, "test - dummy");
-#endif
-
 
 /***********************************************************************
  *           RELAY_Init
@@ -228,7 +223,7 @@ void RELAY_Unimplemented16(void)
 {
     WORD ordinal;
     STACK16FRAME *frame = CURRENT_STACK16;
-    fprintf(stderr,"No handler for Win16 routine %s (called from %04x:%04x)\n",
+    MSG("No handler for Win16 routine %s (called from %04x:%04x)\n",
             BUILTIN_GetEntryPoint16(frame->entry_cs,frame->entry_ip,&ordinal),
             frame->cs, frame->ip );
     TASK_KillCurrentTask(1);
@@ -366,22 +361,21 @@ void WINAPI Throw( CONTEXT *context )
 
     IP_reg(context) = lpbuf[0];
     CS_reg(context) = lpbuf[1];
-    SP_reg(context) = lpbuf[2] + 4 * sizeof(WORD) + sizeof(WORD) /*extra arg*/;
+    SP_reg(context) = lpbuf[2] + 4 * sizeof(WORD) - sizeof(WORD) /*extra arg*/;
     BP_reg(context) = lpbuf[3];
     SI_reg(context) = lpbuf[4];
     DI_reg(context) = lpbuf[5];
     DS_reg(context) = lpbuf[6];
 
     if (lpbuf[8] != SS_reg(context))
-        fprintf( stderr, "Switching stack segment with Throw() not supported; expect crash now\n" );
+        ERR(relay, "Switching stack segment with Throw() not supported; expect crash now\n" );
 
     if (TRACE_ON(relay))  /* Make sure we have a valid entry point address */
     {
         static FARPROC16 entryPoint = NULL;
 
         if (!entryPoint)  /* Get entry point for Throw() */
-            entryPoint = MODULE_GetEntryPoint( GetModuleHandle16("KERNEL"),
-                                               56 );
+            entryPoint = NE_GetEntryPoint( GetModuleHandle16("KERNEL"), 56 );
         pFrame->entry_cs = SELECTOROF(entryPoint);
         pFrame->entry_ip = OFFSETOF(entryPoint);
     }
@@ -452,7 +446,7 @@ static DWORD RELAY_CallProc32W(int Ex)
 		break;
 	default:
 		/* FIXME: should go up to 32  arguments */
-		fprintf(stderr,"CallProc32W: unsupported number of arguments %ld, please report.\n",nrofargs);
+		ERR(relay,"Unsupported number of arguments %ld, please report.\n",nrofargs);
 		ret = 0;
 		break;
 	}

@@ -16,6 +16,7 @@
 #include "callback.h"
 #include "windows.h"
 #include "miscemu.h"
+#include "debug.h"
 
 typedef struct
 {
@@ -115,10 +116,10 @@ DWORD WINAPI InquireSystem( WORD code, WORD arg )
         return MAKELONG( drivetype, drivetype );
 
     case 2:  /* Enable one-drive logic */
-        fprintf( stderr, "InquireSystem(2): set single-drive %d not supported\n", arg );
+        FIXME(system, "Case %d: set single-drive %d not supported\n", code, arg );
         return 0;
     }
-    fprintf( stderr, "InquireSystem: unknown code %d\n", code );
+    WARN(system, "Unknown code %d\n", code );
     return 0;
 }
 

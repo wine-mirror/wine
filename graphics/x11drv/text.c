@@ -8,6 +8,7 @@
 #include "ts_xlib.h"
 #include <X11/Xatom.h>
 #include "windows.h"
+#include <math.h>
 #include "dc.h"
 #include "gdi.h"
 /*#include "callback.h"*/
@@ -17,7 +18,7 @@
 #include "debug.h"
 
 #define SWAP_INT(a,b)  { int t = a; a = b; b = t; }
-
+#define IROUND(x) (int)((x)>0? (x)+0.5 : (x) - 0.5)
 
 /***********************************************************************
  *           X11DRV_ExtTextOut
@@ -186,8 +187,35 @@ X11DRV_ExtTextOut( DC *dc, INT32 x, INT32 y, UINT32 flags,
     TSXSetForeground( display, dc->u.x.gc, dc->w.textPixel );
     if (!dc->w.charExtra && !dc->w.breakExtra && !lpDx)
     {
+      if (!pfo->lf.lfOrientation)  /* angled baseline? */
+      {
         TSXDrawString( display, dc->u.x.drawable, dc->u.x.gc, 
                      dc->w.DCOrgX + x, dc->w.DCOrgY + y, str, count );
+      }
+      else 
+      {  
+	/* have to render character by character. */
+	double offset = 0.0;
+	int i;
+	/* tenths of degrees to radians */
+	double theta = M_PI*pfo->lf.lfOrientation/1800.;
+	/* components of pointsize matrix */
+	double xc = pfo->fi->lfd_decipoints*cos(theta)/10.;
+	double yc = pfo->fi->lfd_decipoints*sin(theta)/10.;
+	
+	for(i=0; i<count; i++) {
+	  int char_metric_offset = (unsigned char) str[i] 
+	    - font->min_char_or_byte2;
+	  int x_i = IROUND((double) (dc->w.DCOrgX + x) + offset*xc/1000. );
+	  int y_i = IROUND((double) (dc->w.DCOrgY + y) - offset*yc/1000. );
+	   
+	  TSXDrawString( display, dc->u.x.drawable, dc->u.x.gc,
+			 x_i, y_i, &str[i], 1);
+	  offset += (double) (font->per_char ?
+		     font->per_char[char_metric_offset].attributes:
+		     font->min_bounds.attributes);
+	}
+      }
     }
     else  /* Now the fun begins... */
     {

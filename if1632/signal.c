@@ -22,6 +22,7 @@
 #include "sig_context.h"
 #include "miscemu.h"
 #include "thread.h"
+#include "debug.h"
 
 
 extern void SIGNAL_SetHandler( int sig, void (*func)(), int flags );
@@ -61,20 +62,21 @@ static HANDLER_DEF(SIGNAL_trap)
  */
 static HANDLER_DEF(SIGNAL_fault)
 {
-    WORD cs;
-    GET_CS(cs);
     HANDLER_INIT();
-    if (CS_sig(HANDLER_CONTEXT) == cs)
+    if (INSTR_EmulateInstruction( HANDLER_CONTEXT )) return;
+    if (IS_SELECTOR_SYSTEM(CS_sig(HANDLER_CONTEXT)))
     {
-        fprintf( stderr, "Segmentation fault in 32-bit code (0x%08lx).\n",
-                 EIP_sig(HANDLER_CONTEXT) );
+        MSG("Segmentation fault in 32-bit code (0x%08lx).\n",
+            EIP_sig(HANDLER_CONTEXT) );
     }
     else
     {
-        if (INSTR_EmulateInstruction( HANDLER_CONTEXT )) return;
-        fprintf( stderr, "Segmentation fault in 16-bit code (%04x:%04lx).\n",
-                 (WORD)CS_sig(HANDLER_CONTEXT), EIP_sig(HANDLER_CONTEXT) );
+        MSG("Segmentation fault in 16-bit code (%04x:%04lx).\n",
+            (WORD)CS_sig(HANDLER_CONTEXT), EIP_sig(HANDLER_CONTEXT) );
     }
+#ifdef CR2_sig
+    fprintf(stderr,"Fault address is 0x%08lx\n",CR2_sig(HANDLER_CONTEXT));
+#endif
     wine_debug( signal, HANDLER_CONTEXT );
 }
 
@@ -158,17 +160,17 @@ static void SIGNAL_GetSigContext( SIGCONTEXT *sigcontext,
  */
 void SIGNAL_InfoRegisters( CONTEXT *context )
 {
-    fprintf( stderr," CS:%04x SS:%04x DS:%04x ES:%04x FS:%04x GS:%04x",
+    MSG(" CS:%04x SS:%04x DS:%04x ES:%04x FS:%04x GS:%04x",
              (WORD)CS_reg(context), (WORD)SS_reg(context),
              (WORD)DS_reg(context), (WORD)ES_reg(context),
              (WORD)FS_reg(context), (WORD)GS_reg(context) );
-    fprintf( stderr, "\n EIP:%08lx ESP:%08lx EBP:%08lx EFLAGS:%08lx\n", 
+    MSG( "\n EIP:%08lx ESP:%08lx EBP:%08lx EFLAGS:%08lx\n", 
              EIP_reg(context), ESP_reg(context),
              EBP_reg(context), EFL_reg(context) );
-    fprintf( stderr, " EAX:%08lx EBX:%08lx ECX:%08lx EDX:%08lx\n", 
+    MSG( " EAX:%08lx EBX:%08lx ECX:%08lx EDX:%08lx\n", 
              EAX_reg(context), EBX_reg(context),
              ECX_reg(context), EDX_reg(context) );
-    fprintf( stderr, " ESI:%08lx EDI:%08lx\n",
+    MSG( " ESI:%08lx EDI:%08lx\n",
              ESI_reg(context), EDI_reg(context) );
 }
 

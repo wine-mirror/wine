@@ -274,7 +274,7 @@ int PASCAL WinMain (HANDLE hInstance, HANDLE prev, LPSTR cmdline, int show)
 	class.hCursor       = LoadCursor (0, IDC_ARROW);
 	class.hbrBackground = GetStockObject (GRAY_BRUSH);
 	class.lpszMenuName  = "\0";
-	class.lpszClassName = (SEGPTR)className;
+	class.lpszClassName = className;
     }
     if (!RegisterClass (&class))
 	return FALSE;

@@ -632,10 +632,7 @@ UINT16 WINAPI GetTempFileName16( BYTE drive, LPCSTR prefix, UINT16 unique,
     if (drive & TF_FORCEDRIVE)
         sprintf(temppath,"%c:", drive & ~TF_FORCEDRIVE );
     else
-    {
         GetTempPath32A( 132, temppath );
-        strcat( temppath, "\\" );
-    }
     return (UINT16)GetTempFileName32A( temppath, prefix, unique, buffer );
 }
 
@@ -1611,7 +1608,7 @@ BOOL32 WINAPI CopyFile32A( LPCSTR source, LPCSTR dest, BOOL32 fail_if_exists )
         CloseHandle( h1 );
         return FALSE;
     }
-    while ((count = _lread32( h2, buffer, sizeof(buffer) )) > 0)
+    while ((count = _lread32( h1, buffer, sizeof(buffer) )) > 0)
     {
         char *p = buffer;
         while (count > 0)

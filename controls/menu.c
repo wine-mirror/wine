@@ -817,7 +817,7 @@ static void MENU_MenuBarCalcSize( HDC32 hdc, LPRECT32 lprect,
  * Draw a single menu item.
  */
 static void MENU_DrawMenuItem( HWND32 hwnd, HDC32 hdc, MENUITEM *lpitem,
-			       UINT32 height, BOOL32 menuBar )
+			       UINT32 height, BOOL32 menuBar, UINT32 odaction )
 {
     RECT32 rect;
 
@@ -843,7 +843,6 @@ static void MENU_DrawMenuItem( HWND32 hwnd, HDC32 hdc, MENUITEM *lpitem,
     {
         DRAWITEMSTRUCT32 dis;
 
-        TRACE(menu, "Ownerdraw!\n" );
         dis.CtlType   = ODT_MENU;
         dis.itemID    = lpitem->wID;
         dis.itemData  = (DWORD)lpitem->text;
@@ -851,11 +850,16 @@ static void MENU_DrawMenuItem( HWND32 hwnd, HDC32 hdc, MENUITEM *lpitem,
         if (lpitem->fState & MF_CHECKED) dis.itemState |= ODS_CHECKED;
         if (lpitem->fState & MF_GRAYED)  dis.itemState |= ODS_GRAYED;
         if (lpitem->fState & MF_HILITE)  dis.itemState |= ODS_SELECTED;
-        dis.itemAction = ODA_DRAWENTIRE | ODA_SELECT | ODA_FOCUS;
+        dis.itemAction = odaction; /* ODA_DRAWENTIRE | ODA_SELECT | ODA_FOCUS; */
         dis.hwndItem   = hwnd;
         dis.hDC        = hdc;
         dis.rcItem     = lpitem->rect;
-        SendMessage32A( hwnd, WM_DRAWITEM, 0, (LPARAM)&dis );
+        TRACE(menu, "Ownerdraw: itemID=%d, itemState=%d, itemAction=%d, "
+	      "hwndItem=%04x, hdc=%04x, rcItem={%d,%d,%d,%d}, rcItem=%p\n",dis.itemID,
+	      dis.itemState, dis.itemAction, dis.hwndItem, dis.hDC,
+	      dis.rcItem.left, dis.rcItem.top, dis.rcItem.right,
+	      dis.rcItem.bottom, dis.rcItem );
+        SendMessage32A( GetWindow32(hwnd,GW_OWNER), WM_DRAWITEM, 0, (LPARAM)&dis );
         return;
     }
 
@@ -1114,7 +1118,8 @@ static void MENU_DrawPopupMenu( HWND32 hwnd, HDC32 hdc, HMENU32 hmenu )
 		UINT32 u;
 
 		for (u = menu->nItems, item = menu->items; u > 0; u--, item++)
-		    MENU_DrawMenuItem( hwnd, hdc, item, menu->Height, FALSE );
+		    MENU_DrawMenuItem( hwnd, hdc, item, menu->Height, FALSE,
+				       ODA_DRAWENTIRE );
 
 	    }
 	} else SelectObject32( hdc, hPrevBrush );
@@ -1156,7 +1161,8 @@ UINT32 MENU_DrawMenuBar( HDC32 hDC, LPRECT32 lprect, HWND32 hwnd,
     if (lppop->nItems == 0) return SYSMETRICS_CYMENU;
     for (i = 0; i < lppop->nItems; i++)
     {
-	MENU_DrawMenuItem( hwnd, hDC, &lppop->items[i], lppop->Height, TRUE );
+	MENU_DrawMenuItem( hwnd, hDC, &lppop->items[i], lppop->Height, TRUE,
+			   ODA_DRAWENTIRE );
     }
     return lppop->Height;
 } 
@@ -1339,7 +1345,8 @@ static void MENU_SelectItem( HWND32 hwndOwner, HMENU32 hmenu, UINT32 wIndex,
     {
 	lppop->items[lppop->FocusedItem].fState &= ~(MF_HILITE|MF_MOUSESELECT);
 	MENU_DrawMenuItem(lppop->hWnd,hdc,&lppop->items[lppop->FocusedItem],
-                          lppop->Height, !(lppop->wFlags & MF_POPUP) );
+                          lppop->Height, !(lppop->wFlags & MF_POPUP),
+			  ODA_SELECT );
     }
 
       /* Highlight new item (if any) */
@@ -1348,7 +1355,8 @@ static void MENU_SelectItem( HWND32 hwndOwner, HMENU32 hmenu, UINT32 wIndex,
     {
 	lppop->items[lppop->FocusedItem].fState |= MF_HILITE;
 	MENU_DrawMenuItem( lppop->hWnd, hdc, &lppop->items[lppop->FocusedItem],
-                           lppop->Height, !(lppop->wFlags & MF_POPUP) );
+                           lppop->Height, !(lppop->wFlags & MF_POPUP),
+			   ODA_SELECT );
         if (sendMenuSelect)
         {
             MENUITEM *ip = &lppop->items[lppop->FocusedItem];
@@ -1742,7 +1750,7 @@ static HMENU32 MENU_ShowSubPopup( HWND32 hwndOwner, HMENU32 hmenu,
         if (menu->wFlags & MF_POPUP) hdc = GetDC32( menu->hWnd );
         else hdc = GetDCEx32( menu->hWnd, 0, DCX_CACHE | DCX_WINDOW);
         item->fState |= MF_HILITE;
-        MENU_DrawMenuItem( menu->hWnd, hdc, item, menu->Height, !(menu->wFlags & MF_POPUP) ); 
+        MENU_DrawMenuItem( menu->hWnd, hdc, item, menu->Height, !(menu->wFlags & MF_POPUP), ODA_DRAWENTIRE ); 
 	ReleaseDC32( menu->hWnd, hdc );
     }
     if (!item->rect.top && !item->rect.left && !item->rect.bottom && !item->rect.right)

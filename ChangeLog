@@ -1,4 +1,260 @@
 ----------------------------------------------------------------------
+Thu Apr 30 16:28:12 1998  James Juran <jrj120@psu.edu>
+
+	* [scheduler/process.c]
+	Implemented GetExitCodeProcess.  The code is a direct translation
+	of GetExitCodeThread.
+
+Mon Apr 27 22:20:25 1998  Uwe Bonnes <bon@elektron.ikp.physik.tu-darmstadt.de>
+
+	* [loader/pe_image.c]
+	Unload dummy module when PE_LoadLibraryEx32A fails with
+	PE_LoadImage (makes Encarta 98 installer proceed).
+
+	* [files/drive.c]
+	Make GetDriveType16 return DRIVE_REMOVABLE for TYPE_CDROM.
+	Make GetCurrentDirectory32 behave like the code does and not
+	like the help describes.
+
+	* [files/profile.c]
+	Revoke recent change in PROFILE_GetSection and try better 
+	handling of special case.
+
+	* [include/windows.h]
+	Change definition of ACCEL32.
+
+	* [misc/commdlg.c]
+	Replace the GetXXXFilename32 macros by normal code.
+	Fix two reported bugs in my changes to commdlg.
+
+	* [windows/win.c]
+	Add a hook to catch bogus WM_SIZE messages by emitting a warning
+	in the appropriate case.
+
+	* [objects/bitmap.c]
+	Reject unreasonbable large size arguments in
+	CreateCompatibleBitmap32 and add an fixme for that situation.
+
+Sun Apr 26 18:30:07 1998  Alexandre Julliard  <julliard@lrc.epfl.ch>
+
+	* [include/ldt.h] [debugger/*.c] [miscemu/instr.c]
+	Added IS_SELECTOR_SYSTEM and IS_SELECTOR_32BIT macros.
+	Make instruction emulation support system selectors.
+
+	* [loader/*.c]
+	Started moving NE specific functions to the new loader/ne
+	directory.
+
+	* [memory/environ.c]
+	Enforce the 127 chars limit only when creating the environment of
+	a Win16 process.
+
+Sun Apr 26 12:22:23 1998  Andreas Mohr <100.30936@germany.net>
+
+	* [files/file.c]
+	Fixed an incredible typo in CopyFile32A that made it unusable
+	since a rewrite in 970112 (!!).
+
+	* [files/directory.c]
+	Fixed GetTempPath32A/W to include trailing backslash.
+
+	* [misc/ver.c]
+	Make find_pe_resource "work" with corrupt files.
+
+	* [misc/wsprintf.c]
+	Altered WPRINTF_ParseFormatA/W to treat invalid format chars
+	as normal output, too.
+
+	* [msdos/dpmi.c]
+	Implemented "Allocate/Free real mode callback" (0x0303/0x0304).
+	Cross your fingers if you need to use it ;) (completely untested)
+	Implemented "Call real mode proc with far return" (0x0301, tested).
+
+	* [msdos/int21.c]
+	Fixed ioctlGenericBlkDevReq/0x60.
+
+	* [relay32/dplayx.spec] [relay32/builtin32.c] [relay32/Makefile.in]
+	Added built-in DPLAYX.DLL. 
+
+	* [windows/win.c]
+	Fixed GetWindowWord()/GWW_HWNDPARENT to return the window's owner
+	if it has no parent (SDK).
+
+Sat Apr 25 15:09:53 1998  M.T.Fortescue  <mark@mtfhpc.demon.co.uk>
+
+	* [debugger/db_disasm.c]
+	Fixed disassemble bug for no-display option and 'lock',
+	'repne' and 'repe' prefixes.
+
+	* [debugger/registers.c]
+	Added textual flag description output on 'info regs'.
+
+Sat Apr 25 14:18:26 1998  Matthew Becker <mbecker@glasscity.net>
+
+	* [*/*.c]
+	Added stubs and/or documentation for the following functions: 
+	LookupPrivilegeValue, OpenService, ControlService, RegGetKeySecurity, 
+	StartService, SetComputerName, DeleteService, CloseServiceHandle, 
+	OpenProcessToken, OpenSCManager, DeregisterEventSource, 
+	WaitForDebugEvent, WaitForInputIdle, RegisterEventSource,
+	SetDebugErrorLevel, SetConsoleCursorPosition, ChoosePixelFormat,
+	SetPixelFormat, GetPixelFormat, DescribePixelFormat, SwapBuffers,
+	PolyBezier, AbortPath, DestroyAcceleratorTable, HeapWalk,
+	DdeInitialize, DdeUninitialize, DdeConnectList, DdeDisconnectList,
+	DdeCreateStringHandle, DdePostAdvise, DdeGetData, DdeNameService,
+	DdeGetLastError, WNetGetDirectoryType, EnumPrinters, RegFlushKey,
+	RegGetKeySecurity, DllGetClassObject, DllCanUnloadNow, CreateBitmap,
+	CreateCompatibleBitmap, CreateBitmapIndirect, GetBitmapBits,
+	SetBitmapBits, LoadImage, CopyImage, LoadBitmap, DrawIcon,
+	CreateDiscardableBitmap, SetDIBits, GetCharABCWidths, LoadTypeLib,
+	SetConsoleCtrlHandler, CreateConsoleScreenBuffer, ReadConsoleInput,
+	GetConsoleCursorInfo, SetConsoleCursorInfo, SetConsoleWindowInfo,
+	SetConsoleTextAttribute, SetConsoleScreenBufferSize,
+	FillConsoleOutputCharacter, FillConsoleOutputAttribute,
+	CreateMailslot, GetMailslotInfo, GetCompressedFileSize,
+	GetProcessWindowStation, GetThreadDesktop, SetDebugErrorLevel,
+	WaitForDebugEvent, SetComputerName, CreateMDIWindow.
+
+Thu Apr 23 23:54:04 1998  Douglas Ridgway  <ridgway@winehq.com>
+
+	* [include/windows.h] [objects/enhmetafile.c] [relay32/gdi32.spec]
+	Implement CopyEnhMetaFile, Get/SetEnhMetaFileBits, other fixes.
+
+	* [include/windows.h] [objects/metafile.c] [relay32/gdi32.spec]
+	32-bit metafile fixes, implement EnumMetaFile32, GetMetaFileBitsEx.
+
+	* [objects/font.c] [graphics/x11drv/xfont.c] [graphics/x11drv/text.c]
+	Some rotated text support for X11R6 displays.
+
+	* [win32/newfns.c] [ole/ole2nls.c]
+	Moved GetNumberFormat32A.
+
+Wed Apr 22 17:38:20 1998  David Lee Lambert <lamber45@egr.msu.edu>
+
+	* [ole/ole2nls.c] [misc/network.c]
+	Changed some function documentation to the new style.
+
+	* [misc/network.c] [include/windows.h] [if1632/user.spec]
+	  [relay32/mpr.spec] [misc/mpr.c]
+	Added stubs for some Win32 network functions;  renamed some 
+	16-bit ones with 32-bit counterparts,  as well as
+	WNetGetDirectoryType;  moved the stubs in misc/mpr.c (three of
+	them!) to misc/network.c.
+
+	* [ole/compobj.c] [ole/storage.c] [ole/ole2disp.c] 
+	  [ole/ole2nls.c] [ole/folders.c] [ole/moniker.c] [ole/ole2.c]
+	  [graphics/fontengine.c] [graphics/ddraw.c] [graphics/env.c]
+	  [graphics/driver.c] [graphics/escape.c]
+	Changed fprintf's to proper debug-macros.
+
+	* [include/winnls.h]
+	Added some flags (for internal use).
+
+	* [ole/ole2nls.c] 
+	Added the Unicode core function, and worked out a way to hide
+	the commonality of the core.
+
+	* [relay32/kernel32.spec]
+	Added support for GetDate/Time32A/W.
+
+Wed Apr 22 09:16:03 1998  Gordon Chaffee  <chaffee@cs.berkeley.edu>
+
+	* [win32/code_page.c]
+	Fixed problem with MultiByteToWideChar that was introduced in
+	last release.  Made MultiByteToWideChar more compatible with Win32.
+
+	* [graphics/x11drv/graphics.c]
+	Fixed problem with drawing arcs.
+
+Tue Apr 21 11:24:58 1998  Constantine Sapuntzakis  <csapuntz@tma-1.lcs.mit.edu>
+
+	*  [ole/ole2nls.c]
+	Move stuff from 0x409 case to Lang_En. 
+
+	*  [relay32/user32.spec] [windows/winpos.c]
+	Added stubs for GetWindowRgn32 and SetWindowRgn32. Makes Office
+	Paperclip happy.
+
+Tue Apr 21 11:16:16 1998  Constantine Sapuntzakis  <csapuntz@tma-1.lcs.mit.edu>
+
+	*  [loader/pe_image.c]
+	If image is relocated, TLS addresses need to be adjusted.
+
+	* [debugger/*.c]
+	Generalized tests for 32-bit segments.
+
+Tue Apr 21 02:04:59 1998  James Juran  <jrj120@psu.edu>
+	
+	* [misc/*.c] [miscemu/*.c] [msdos/*.c] [if1632/*.c] 
+	  [include/*.h] [loader/*.c] [memory/*.c] [multimedia/*.c] 
+	  [objects/*.c]
+	Almost all fprintf statements converted to appropriate 
+	debug messages.
+
+	* [README]
+	Updated "GETTING MORE INFORMATION" section to include WineHQ.
+
+	* [documentation/debugger]
+	Fixed typo.
+
+	* [windows/defwnd.c]
+	Added function documentation.
+
+Sun Apr 19 16:30:58 1998  Marcus Meissner <marcus@mud.de>
+
+	* [Make.rules.in]
+	Added lint target (using lclint).
+
+	* [relay32/oleaut32.spec][relay32/Makefile.in][ole/typelib.c]
+	  [ole/ole2disp.c]
+	Added oleaut32 spec, added some SysString functions.
+
+	* [if1632/signal.c]
+	Added printing of faultaddress in Linux (using CR2 debug register).
+
+	* [configure.in]
+	Added <sys/types.h> for statfs checks.
+
+	* [loader/*.c][debugger/break.c][debugger/hash.c]
+	Started to split win32/win16 module handling, preparing support
+	for other binary formats (like ELF).
+
+Sat Apr 18 10:07:41 1998  Rein Klazes <rklazes@casema.net>
+
+	* [misc/registry.c]
+	Fixed a bug that made RegQueryValuexxx returning
+	incorrect registry values.
+
+Fri Apr 17 22:59:22 1998  Alexander V. Lukyanov <lav@long.yar.ru>
+
+	* [misc/lstr.c]
+	FormatMessage32*: remove linefeed when nolinefeed set;
+	check for target underflow.
+
+Fri Apr 17 00:38:14 1998  Alexander V. Lukyanov <lav@long.yar.ru>
+
+	* [misc/crtdll.c]
+	Implement xlat_file_ptr for CRT stdin/stdout/stderr address
+	translation.
+
+Wed Apr 15 20:43:56 1998  Jim Peterson <jspeter@birch.ee.vt.edu>
+
+	* [controls/menu.c]
+	Added 'odaction' parameter to MENU_DrawMenuItem() and redirected
+	WM_DRAWITEM messages to GetWindow(hwnd,GW_OWNER).
+
+Tue Apr 14 16:17:55 1998  Berend Reitsma <berend@united-info.com>
+
+	* [graphics/metafiledrv/init.c]	[graphics/painting.c] 
+	  [graphics/win16drv/init.c] [graphics/x11drv/graphics.c]
+	  [graphics/x11drv/init.c] [include/gdi.h] [include/x11drv.h]
+	  [relay32/gdi32.spec]
+	Added PolyPolyline routine.
+
+	* [windows/winproc.c]
+	Changed WINPROC_GetProc() to return proc instead of &(jmp proc).
+
+----------------------------------------------------------------------
 Sun Apr 12 12:22:23 1997  Andreas Mohr <100.30936@germany.net>
 
 	* [files/drive.c]

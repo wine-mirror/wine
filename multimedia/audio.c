@@ -1541,7 +1541,8 @@ static DWORD widStart(WORD wDevID)
 			lpWIHdr->dwBufferLength);
 		if (bytesRead==-1)
 			perror("read from audio device");
-		fprintf(stderr,"bytesread = %d (%ld)\n",bytesRead,lpWIHdr->dwBufferLength);
+		TRACE(mciwave,"bytesread=%d (%ld)\n",
+                    bytesRead,lpWIHdr->dwBufferLength);
 		lpWIHdr->dwBytesRecorded = bytesRead;
 		WInDev[wDevID].dwTotalRecorded += lpWIHdr->dwBytesRecorded;
 		lpWIHdr->dwFlags &= ~WHDR_INQUEUE;
@@ -1804,7 +1805,7 @@ LONG WAVE_DriverProc(DWORD dwDevID, HDRVR16 hDriv, WORD wMsg,
 DWORD wodMessage(WORD wDevID, WORD wMsg, DWORD dwUser, 
 					DWORD dwParam1, DWORD dwParam2)
 {
-	fprintf(stderr,"wodMessage(%u, %04X, %08lX, %08lX, %08lX);\n",
+	FIXME(mciwave,"(%u, %04X, %08lX, %08lX, %08lX):stub\n",
 			wDevID, wMsg, dwUser, dwParam1, dwParam2);
 	return MMSYSERR_NOTENABLED;
 }
@@ -1815,7 +1816,7 @@ DWORD wodMessage(WORD wDevID, WORD wMsg, DWORD dwUser,
 DWORD widMessage(WORD wDevID, WORD wMsg, DWORD dwUser, 
 					DWORD dwParam1, DWORD dwParam2)
 {
-	fprintf(stderr,"widMessage(%u, %04X, %08lX, %08lX, %08lX);\n",
+	FIXME(mciwave,"(%u, %04X, %08lX, %08lX, %08lX):stub\n",
 			wDevID, wMsg, dwUser, dwParam1, dwParam2);
 	return MMSYSERR_NOTENABLED;
 }

@@ -6,13 +6,14 @@
  */
 
 #include "windows.h"
+#include "debug.h"
 #include <string.h>
 #include <stdlib.h>
 #include <stdio.h>
 
 void BootTask()
 {
-	fprintf(stderr, "BootTask(): should only be used by WIN32S.EXE.\n");
+	MSG("BootTask(): should only be used by WIN32S.EXE.\n");
 }
 
 /***********************************************************************
@@ -22,6 +23,6 @@ void BootTask()
  */
 SEGPTR WINAPI StackLinearToSegmented(WORD w1, WORD w2)
 {
-	fprintf(stderr, "StackLinearToSegmented(), stub !\n");
+	FIXME(dll,"(%d,%d):stub.\n",w1,w2);
 	return (SEGPTR)NULL;
 }

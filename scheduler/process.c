@@ -261,6 +261,7 @@ PDB32 *PROCESS_Create( NE_MODULE *pModule, LPCSTR cmd_line, LPCSTR env,
     {
 	size = 0x10000;
 	commit = 0;
+        pdb->flags |= PDB32_WIN16_PROC;  /* This is a Win16 process */
     }
     if (!(pdb->heap = HeapCreate( HEAP_GROWABLE, size, commit ))) goto error;
     pdb->heap_list = pdb->heap;
@@ -667,4 +668,29 @@ DWORD RegisterServiceProcess(DWORD dwProcessId, DWORD dwType)
 {
 	/* I don't think that Wine needs to do anything in that function */
 	return 1; /* success */
+}
+
+/***********************************************************************
+ * GetExitCodeProcess [KERNEL32.325]
+ *
+ * Gets termination status of specified process
+ * 
+ * RETURNS
+ *   Success: TRUE
+ *   Failure: FALSE
+ * 
+ * FIXME
+ *   Should call SetLastError (but doesn't).
+ */
+BOOL32 WINAPI GetExitCodeProcess(
+    HANDLE32 hProcess,  /* [I] handle to the process */
+    LPDWORD lpExitCode) /* [O] address to receive termination status */
+{
+    PDB32 *process;
+
+    if (!(process = PROCESS_GetPtr( hProcess, PROCESS_QUERY_INFORMATION )))
+        return FALSE;
+    if (lpExitCode) *lpExitCode = process->exit_code;
+    K32OBJ_DecCount( &process->header );
+    return TRUE;
 }

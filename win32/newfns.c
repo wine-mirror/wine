@@ -14,6 +14,7 @@ at a later date. */
 #include "windows.h"
 #include "winnt.h"
 #include "winerror.h"
+#include "heap.h"
 #include "debug.h"
 
 /****************************************************************************
@@ -108,7 +109,10 @@ HANDLE32 WINAPI CreateNamedPipeA (LPCSTR lpName, DWORD dwOpenMode,
 				  DWORD nDafaultTimeOut,
 				  LPSECURITY_ATTRIBUTES lpSecurityAttributes)
 {
-  FIXME (win32, "CreateNamedPipeA: stub\n");
+  FIXME (win32, "(Name=%s, OpenMode=%#08x, dwPipeMode=%#08x, MaxInst=%d, OutBSize=%d, InBuffSize=%d, DefTimeOut=%d, SecAttr=%p): stub\n",
+	 debugstr_a(lpName), dwOpenMode, dwPipeMode, nMaxInstances,
+	 nOutBufferSize, nInBufferSize, nDafaultTimeOut, 
+	 lpSecurityAttributes);
   /* if (nMaxInstances > PIPE_UNLIMITED_INSTANCES) {
     SetLastError (ERROR_INVALID_PARAMETER);
     return INVALID_HANDLE_VALUE;
@@ -127,7 +131,10 @@ HANDLE32 WINAPI CreateNamedPipeW (LPCWSTR lpName, DWORD dwOpenMode,
 				  DWORD nDafaultTimeOut,
 				  LPSECURITY_ATTRIBUTES lpSecurityAttributes)
 {
-  FIXME (win32, "CreateNamedPipeW: stub\n");
+  FIXME (win32, "(Name=%s, OpenMode=%#08x, dwPipeMode=%#08x, MaxInst=%d, OutBSize=%d, InBuffSize=%d, DefTimeOut=%d, SecAttr=%p): stub\n",
+	 debugstr_w(lpName), dwOpenMode, dwPipeMode, nMaxInstances,
+	 nOutBufferSize, nInBufferSize, nDafaultTimeOut, 
+	 lpSecurityAttributes);
 
   SetLastError (ERROR_UNKNOWN);
   return INVALID_HANDLE_VALUE32;
@@ -163,26 +170,190 @@ BOOL32 WINAPI SetSystemPowerState(BOOL32 suspend_or_hibernate,
     return TRUE;
 }
 
-/**************************************************************************
- *              GetNumberFormat32A	(KERNEL32.355)
+
+/******************************************************************************
+ * CreateMailslot32A [KERNEL32.164]
  */
-INT32 WINAPI GetNumberFormat32A(LCID locale, DWORD dwflags,
-			       LPCSTR lpvalue,  char *lpFormat,
-			       LPSTR lpNumberStr, int cchNumber)
-/* NOTE: type of lpFormat should be CONST NUMBERFORMAT */
-
+HANDLE32 WINAPI CreateMailslot32A( LPCSTR lpName, DWORD nMaxMessageSize,
+                                   DWORD lReadTimeout, LPSECURITY_ATTRIBUTES sa)
 {
- int n;
-
- FIXME(file,"%s: stub, no reformating done\n",lpvalue);
-
- n = strlen(lpvalue);
- if (cchNumber) { 
-   strncpy(lpNumberStr,lpvalue,cchNumber);
-   if (cchNumber <= n) {
-     lpNumberStr[cchNumber-1] = 0;
-     n = cchNumber-1;
-   }
- }
- return n;
+    FIXME(win32, "(%s,%ld,%ld,%p): stub\n", debugstr_a(lpName),
+          nMaxMessageSize, lReadTimeout, sa);
+    return 1;
 }
+
+
+/******************************************************************************
+ * CreateMailslot32W [KERNEL32.165]  Creates a mailslot with specified name
+ * 
+ * PARAMS
+ *    lpName          [I] Pointer to string for mailslot name
+ *    nMaxMessageSize [I] Maximum message size
+ *    lReadTimeout    [I] Milliseconds before read time-out
+ *    sa              [I] Pointer to security structure
+ *
+ * RETURNS
+ *    Success: Handle to mailslot
+ *    Failure: INVALID_HANDLE_VALUE
+ */
+HANDLE32 WINAPI CreateMailslot32W( LPCWSTR lpName, DWORD nMaxMessageSize,
+                                   DWORD lReadTimeout, LPSECURITY_ATTRIBUTES sa )
+{
+    FIXME(win32, "(%s,%ld,%ld,%p): stub\n", debugstr_w(lpName), 
+          nMaxMessageSize, lReadTimeout, sa);
+    return 1;
+}
+
+
+/******************************************************************************
+ * GetMailslotInfo [KERNEL32.347]  Retrieves info about specified mailslot
+ *
+ * PARAMS
+ *    hMailslot        [I] Mailslot handle
+ *    lpMaxMessageSize [O] Address of maximum message size
+ *    lpNextSize       [O] Address of size of next message
+ *    lpMessageCount   [O] Address of number of messages
+ *    lpReadTimeout    [O] Address of read time-out
+ * 
+ * RETURNS
+ *    Success: TRUE
+ *    Failure: FALSE
+ */
+BOOL32 WINAPI GetMailslotInfo( HANDLE32 hMailslot, LPDWORD lpMaxMessageSize,
+                               LPDWORD lpNextSize, LPDWORD lpMessageCount,
+                               LPDWORD lpReadTimeout )
+{
+    FIXME(win32, "(%d): stub\n",hMailslot);
+    *lpMaxMessageSize = NULL;
+    *lpNextSize = NULL;
+    *lpMessageCount = NULL;
+    *lpReadTimeout = NULL;
+    return TRUE;
+}
+
+
+/******************************************************************************
+ * GetCompressedFileSize32A [KERNEL32.291]
+ *
+ * NOTES
+ *    This should call the W function below
+ */
+DWORD WINAPI GetCompressedFileSize32A(
+    LPCSTR lpFileName,
+    LPDWORD lpFileSizeHigh)
+{
+    FIXME(win32, "(...): stub\n");
+    return 0xffffffff;
+}
+
+
+/******************************************************************************
+ * GetCompressedFileSize32W [KERNEL32.292]  
+ * 
+ * RETURNS
+ *    Success: Low-order doubleword of number of bytes
+ *    Failure: 0xffffffff
+ */
+DWORD WINAPI GetCompressedFileSize32W(
+    LPCWSTR lpFileName,     /* [in]  Pointer to name of file */
+    LPDWORD lpFileSizeHigh) /* [out] Receives high-order doubleword of size */
+{
+    FIXME(win32, "(%s,%p): stub\n",debugstr_w(lpFileName),lpFileSizeHigh);
+    return 0xffffffff;
+}
+
+
+/******************************************************************************
+ * GetProcessWindowStation [USER32.280]  Returns handle of window station
+ *
+ * NOTES
+ *    Docs say the return value is HWINSTA
+ *
+ * RETURNS
+ *    Success: Handle to window station associated with calling process
+ *    Failure: NULL
+ */
+DWORD WINAPI GetProcessWindowStation(void)
+{
+    FIXME(win32, "(void): stub\n");
+    return 1;
+}
+
+
+/******************************************************************************
+ * GetThreadDesktop [USER32.295]  Returns handle to desktop
+ *
+ * NOTES
+ *    Docs say the return value is HDESK
+ *
+ * PARAMS
+ *    dwThreadId [I] Thread identifier
+ *
+ * RETURNS
+ *    Success: Handle to desktop associated with specified thread
+ *    Failure: NULL
+ */
+DWORD WINAPI GetThreadDesktop( DWORD dwThreadId )
+{
+    FIXME(win32, "(%ld): stub\n",dwThreadId);
+    return 1;
+}
+
+
+/******************************************************************************
+ * SetDebugErrorLevel [USER32.475]
+ * Sets the minimum error level for generating debugging events
+ *
+ * PARAMS
+ *    dwLevel [I] Debugging error level
+ */
+VOID WINAPI SetDebugErrorLevel( DWORD dwLevel )
+{
+    FIXME(win32, "(%ld): stub\n", dwLevel);
+}
+
+
+/******************************************************************************
+ * WaitForDebugEvent [KERNEL32.720]
+ * Waits for a debugging event to occur in a process being debugged
+ *
+ * PARAMS
+ *    lpDebugEvent   [I] Address of structure for event information
+ *    dwMilliseconds [I] Number of milliseconds to wait for event
+ *
+ * RETURNS STD
+ */
+BOOL32 WINAPI WaitForDebugEvent( LPDEBUG_EVENT lpDebugEvent, 
+                                 DWORD dwMilliseconds )
+{
+    FIXME(win32, "(%p,%ld): stub\n", lpDebugEvent, dwMilliseconds);
+    return TRUE;
+}
+
+
+/******************************************************************************
+ * SetComputerName32A [KERNEL32.621]  
+ */
+BOOL32 WINAPI SetComputerName32A( LPCSTR lpComputerName )
+{
+    LPWSTR lpComputerNameW = HEAP_strdupAtoW(GetProcessHeap(),0,lpComputerName);
+    BOOL32 ret = SetComputerName32W(lpComputerNameW);
+    HeapFree(GetProcessHeap(),0,lpComputerNameW);
+    return ret;
+}
+
+
+/******************************************************************************
+ * SetComputerName32W [KERNEL32.622]
+ *
+ * PARAMS
+ *    lpComputerName [I] Address of new computer name
+ * 
+ * RETURNS STD
+ */
+BOOL32 WINAPI SetComputerName32W( LPCWSTR lpComputerName )
+{
+    FIXME(win32, "(%s): stub\n", debugstr_w(lpComputerName));
+    return TRUE;
+}
+

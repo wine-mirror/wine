@@ -85,10 +85,10 @@ HPEN32 WINAPI ExtCreatePen32( DWORD style, DWORD width,
     LOGPEN32 logpen;
 
     if ((style & PS_STYLE_MASK) == PS_USERSTYLE)
-	fprintf(stderr, "ExtCreatePen: PS_USERSTYLE not handled\n");
+	FIXME(gdi, "PS_USERSTYLE not handled\n");
     if ((style & PS_TYPE_MASK) == PS_GEOMETRIC)
 	if (brush->lbHatch)
-	    fprintf(stderr, "ExtCreatePen: Hatches not implemented\n");
+	    FIXME(gdi, "Hatches not implemented\n");
 
     logpen.lopnStyle = style & ~PS_TYPE_MASK;
     logpen.lopnWidth.x = (style & PS_GEOMETRIC) ? width : 1;

@@ -66,7 +66,7 @@ HRESULT WINAPI CoRegisterMessageFilter32(
  *           OleInitializeWOW (OLE32.27)
  */
 HRESULT WINAPI OleInitializeWOW(DWORD x) {
-        fprintf(stderr,"OleInitializeWOW(0x%08lx),stub!\n",x);
+        FIXME(ole,"(0x%08lx),stub!\n",x);
         return 0;
 }
 
@@ -74,7 +74,7 @@ HRESULT WINAPI OleInitializeWOW(DWORD x) {
  *           GetRunningObjectTable (OLE2.30)
  */
 HRESULT WINAPI GetRunningObjectTable16(DWORD reserved, LPVOID *pprot) {
-	fprintf(stderr,"GetRunningObjectTable(%ld,%p),stub!\n",reserved,pprot);
+	FIXME(ole,"(%ld,%p),stub!\n",reserved,pprot);
 	return E_FAIL;
 }
 
@@ -85,7 +85,7 @@ HRESULT WINAPI RegisterDragDrop16(
 	HWND16 hwnd,
 	LPDROPTARGET pDropTarget
 ) {
-	fprintf(stderr,"RegisterDragDrop(0x%04x,%p),stub!\n",hwnd,pDropTarget);
+	FIXME(ole,"(0x%04x,%p),stub!\n",hwnd,pDropTarget);
 	return S_OK;
 }
 

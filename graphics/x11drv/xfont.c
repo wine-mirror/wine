@@ -18,6 +18,7 @@
 #include <fcntl.h>
 #include "ts_xlib.h"
 #include <X11/Xatom.h>
+#include <math.h>
 #include "heap.h"
 #include "options.h"
 #include "x11font.h"
@@ -383,6 +384,7 @@ static int LFD_InitFontInfo( fontInfo* fi, LPSTR lpstr )
    return TRUE;					
 }
 
+
 /*************************************************************************
  *           LFD_ComposeLFD
  */
@@ -392,6 +394,7 @@ static BOOL32  LFD_ComposeLFD( fontObject* fo,
    int		h, w, ch, enc_ch, point = 0;
    char*	lpch; 
    const char*  lpEncoding = NULL;
+   char         h_string[64], point_string[64];
 
    lstrcpy32A( lpLFD, fo->fr->resource );
 
@@ -448,6 +451,23 @@ static BOOL32  LFD_ComposeLFD( fontObject* fo,
 	if( fo->fi->fi_flags & FI_SCALABLE ) /* adjust h/w ratio */
 	    point = h * 72 * 10 / fo->fi->lfd_resolution;
 
+   /* handle rotated fonts */
+   if (fo->lf.lfEscapement) {
+     /* escapement is in tenths of degrees, theta is in radians */
+     double theta = M_PI*fo->lf.lfEscapement/1800.;  
+     double h_matrix[4] = {h*cos(theta), h*sin(theta), -h*sin(theta), h*cos(theta)};
+     double point_matrix[4] = {point*cos(theta), point*sin(theta), -point*sin(theta), point*cos(theta)};
+     char *s;
+     sprintf(h_string, "[%+f%+f%+f%+f]", h_matrix[0], h_matrix[1], h_matrix[2], h_matrix[3]);
+     sprintf(point_string, "[%+f%+f%+f%+f]", point_matrix[0], point_matrix[1], point_matrix[2], point_matrix[3]);
+     while (s = strchr(h_string, '-')) *s='~';
+     while (s = strchr(point_string, '-')) *s='~';
+   } else {
+     sprintf(h_string, "%d", h);
+     sprintf(point_string, "%d", point);
+   }
+
+
 /* spacing and width */
 
    if( fo->fi->fi_flags & FI_FIXEDPITCH ) 
@@ -496,20 +516,21 @@ static BOOL32  LFD_ComposeLFD( fontObject* fo,
        case 0: 
 	    if( point )
 	    {
-	        sprintf( lpch, "%i-%i-%i-%c-%c-*-%s%c", h, point, 
+	        sprintf( lpch, "%s-%s-%i-%c-%c-*-%s%c", h_string, 
+			 point_string, 
 			 fo->fi->lfd_resolution, ch, w, lpEncoding, enc_ch );
 	        break;
 	    }
 	    /* fall through */
 
        case 1: 
-	    sprintf( lpch, "%i-*-%i-%c-%c-*-%s%c", h, 
+	    sprintf( lpch, "%s-*-%i-%c-%c-*-%s%c", h_string, 
 			fo->fi->lfd_resolution, ch, w, lpEncoding, enc_ch );
 	    break;
 
        case 2:
-	    sprintf( lpch, "%i-*-%i-%c-*-*-%s%c",
-			h, fo->fi->lfd_resolution, ch, lpEncoding, enc_ch );
+	    sprintf( lpch, "%s-*-%i-%c-*-*-%s%c",
+			h_string, fo->fi->lfd_resolution, ch, lpEncoding, enc_ch );
 	    break;
 
        case 3:

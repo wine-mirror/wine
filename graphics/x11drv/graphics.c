@@ -90,6 +90,7 @@ X11DRV_DrawArc( DC *dc, INT32 left, INT32 top, INT32 right,
     ystart = YLPTODP( dc, ystart );
     xend   = XLPTODP( dc, xend );
     yend   = YLPTODP( dc, yend );
+
     if ((left == right) || (top == bottom)) return FALSE;
 
     if (left > right) { tmp=left; left=right; right=tmp; }
@@ -113,11 +114,7 @@ X11DRV_DrawArc( DC *dc, INT32 left, INT32 top, INT32 right,
 	end_angle = - PI;
     istart_angle = (INT32)(start_angle * 180 * 64 / PI);
     idiff_angle  = (INT32)((end_angle - start_angle) * 180 * 64 / PI );
-    if (idiff_angle < 0) 
-      {
-	istart_angle+= idiff_angle;
-	idiff_angle = abs(idiff_angle);
-      }
+    if (idiff_angle <= 0) idiff_angle += 360 * 64;
 
       /* Fill arc with brush if Chord() or Pie() */
 
@@ -577,6 +574,38 @@ X11DRV_PolyPolygon( DC *dc, LPPOINT32 pt, LPINT32 counts, UINT32 polygons)
 		        points, j + 1, CoordModeOrigin );
 	}
 	free( points );
+    }
+    return TRUE;
+}
+
+
+/**********************************************************************
+ *          X11DRV_PolyPolyline
+ */
+BOOL32 
+X11DRV_PolyPolyline( DC *dc, LPPOINT32 pt, LPINT32 counts, UINT32 polylines )
+{
+    if (DC_SetupGCForPen ( dc ))
+    {
+        int i, j, max = 0;
+        XPoint *points;
+
+        for (i = 0; i < polylines; i++) if (counts[i] > max) max = counts[i];
+        points = (XPoint *) xmalloc( sizeof(XPoint) * (max+1) );
+
+        for (i = 0; i < polylines; i++)
+        {
+            for (j = 0; j < counts[i]; j++)
+            {
+                points[j].x = dc->w.DCOrgX + XLPTODP( dc, pt->x );
+                points[j].y = dc->w.DCOrgY + YLPTODP( dc, pt->y );
+                pt++;
+            }
+            points[j] = points[0];
+            TSXDrawLines( display, dc->u.x.drawable, dc->u.x.gc,
+                        points, j + 1, CoordModeOrigin );
+        }
+        free( points );
     }
     return TRUE;
 }

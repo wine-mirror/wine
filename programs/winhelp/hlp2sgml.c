@@ -264,7 +264,7 @@ HFILE _lclose32( HFILE hFile )
   return 0;
 }
 
-LONG _hread32( HFILE hFile, SEGPTR buffer, LONG count )
+LONG _hread32( HFILE hFile, LPVOID buffer, LONG count )
 {
   return fread(buffer, 1, count, file);
 }

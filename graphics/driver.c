@@ -7,6 +7,7 @@
 #include <stdio.h>
 #include "gdi.h"
 #include "heap.h"
+#include "debug.h"
 
 typedef struct tagGRAPHICS_DRIVER
 {
@@ -36,7 +37,7 @@ BOOL32 DRIVER_RegisterDriver( LPCSTR name, const DC_FUNCTIONS *funcs )
     /* No name -> it's the generic driver */
     if (genericDriver)
     {
-        fprintf( stderr, "DRIVER_RegisterDriver: already a generic driver\n" );
+        WARN(driver, " already a generic driver\n" );
         HeapFree( SystemHeap, 0, driver );
         return FALSE;
     }

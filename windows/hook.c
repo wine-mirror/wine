@@ -1168,7 +1168,7 @@ void HOOK_FreeQueueHooks( HQUEUE16 hQueue )
 FARPROC16 WINAPI SetWindowsHook16( INT16 id, HOOKPROC16 proc )
 {
     HANDLE16 handle;
-    HINSTANCE16 hInst = __winelib ? 0 : FarGetOwner( HIWORD(proc) );
+    HINSTANCE16 hInst = FarGetOwner( HIWORD(proc) );
 
     /* WH_MSGFILTER is the only task-specific hook for SetWindowsHook() */
     HTASK16 hTask = (id == WH_MSGFILTER) ? GetCurrentTask() : 0;
@@ -1191,12 +1191,10 @@ FARPROC16 WINAPI SetWindowsHook16( INT16 id, HOOKPROC16 proc )
  */
 HHOOK WINAPI SetWindowsHook32A( INT32 id, HOOKPROC32 proc )
 {
-    HINSTANCE16 hInst = __winelib ? 0 : FarGetOwner( HIWORD(proc) );
-
     /* WH_MSGFILTER is the only task-specific hook for SetWindowsHook() */
     HTASK16 hTask = (id == WH_MSGFILTER) ? GetCurrentTask() : 0;
 
-    HANDLE16 handle = HOOK_SetHook( id, proc, HOOK_WIN32A, hInst, hTask );
+    HANDLE16 handle = HOOK_SetHook( id, proc, HOOK_WIN32A, 0, hTask );
     return (handle) ? (HHOOK)MAKELONG( handle, HOOK_MAGIC ) : 0;
 }
 
@@ -1208,12 +1206,10 @@ HHOOK WINAPI SetWindowsHook32A( INT32 id, HOOKPROC32 proc )
  */
 HHOOK WINAPI SetWindowsHook32W( INT32 id, HOOKPROC32 proc )
 {
-    HINSTANCE16 hInst = __winelib ? 0 : FarGetOwner( HIWORD(proc) );
-
     /* WH_MSGFILTER is the only task-specific hook for SetWindowsHook() */
     HTASK16 hTask = (id == WH_MSGFILTER) ? GetCurrentTask() : 0;
 
-    HANDLE16 handle = HOOK_SetHook( id, proc, HOOK_WIN32W, hInst, hTask );
+    HANDLE16 handle = HOOK_SetHook( id, proc, HOOK_WIN32W, 0, hTask );
     return (handle) ? (HHOOK)MAKELONG( handle, HOOK_MAGIC ) : 0;
 }
 
@@ -1241,7 +1237,7 @@ HHOOK WINAPI SetWindowsHookEx32A( INT32 id, HOOKPROC32 proc, HINSTANCE32 hInst,
     if (dwThreadID == GetCurrentThreadId())
       hTask = GetCurrentTask();
     else
-      hTask = LOWORD(dwThreadID);
+      hTask = LOWORD(dwThreadID);  /* FIXME! */
 
     handle = HOOK_SetHook( id, proc, HOOK_WIN32A, hInst, hTask );
     return (handle) ? (HHOOK)MAKELONG( handle, HOOK_MAGIC ) : (HHOOK)NULL;
@@ -1260,7 +1256,7 @@ HHOOK WINAPI SetWindowsHookEx32W( INT32 id, HOOKPROC32 proc, HINSTANCE32 hInst,
     if (dwThreadID == GetCurrentThreadId())
       hTask = GetCurrentTask();
     else
-      hTask = LOWORD(dwThreadID);
+      hTask = LOWORD(dwThreadID);  /* FIXME! */
 
     handle = HOOK_SetHook( id, proc, HOOK_WIN32W, hInst, hTask );
     return (handle) ? (HHOOK)MAKELONG( handle, HOOK_MAGIC ) : (HHOOK)NULL;

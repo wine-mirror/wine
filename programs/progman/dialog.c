@@ -573,7 +573,7 @@ static VOID DIALOG_AddFilterItem(LPSTR *p, UINT ids, LPCSTR filter)
 {
   LoadString(Globals.hInstance, ids, *p, MAX_STRING_LEN);
   *p += strlen(*p) + 1;
-  lstrcpy(*p, (SEGPTR) filter);
+  lstrcpy(*p, filter);
   *p += strlen(*p) + 1;
   **p = '\0';
 }

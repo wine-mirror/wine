@@ -1452,9 +1452,9 @@ BOOL32 WINAPI ImageList_Remove (
         /* create new bitmap(s) */
         cxNew = (himl->cCurImage + himl->cGrow - 1) * himl->cx;
 
-        fprintf (stderr, " - Number of images: %d / %d (Old/New)\n",
+        TRACE(imagelist, " - Number of images: %d / %d (Old/New)\n",
                  himl->cCurImage, himl->cCurImage - 1);
-        fprintf (stderr, " - Max. number of images: %d / %d (Old/New)\n",
+        TRACE(imagelist, " - Max. number of images: %d / %d (Old/New)\n",
                  himl->cMaxImage, himl->cCurImage + himl->cGrow - 1);
         
         hbmNewImage =

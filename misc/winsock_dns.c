@@ -301,7 +301,7 @@ static int aop_control(ws_async_op* p_aop, int flag )
 		case WSMSG_ASYNC_SERVBYPORT:
 		     fixup_wsse((struct ws_servent*)buffer, p_aop->b.ptr_base); break;
 		default:
-                     if( p_aop->flags ) fprintf(stderr,"Received unknown async request!\n");
+                     if( p_aop->flags ) WARN(winsock,"Received unknown async request!\n");
                      return AOP_CONTROL_REMOVE;
             }
 	}

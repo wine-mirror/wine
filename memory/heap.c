@@ -188,7 +188,7 @@ static HEAP *HEAP_GetPtr(
     HEAP *heapPtr = (HEAP *)heap;
     if (!heapPtr || (heapPtr->magic != HEAP_MAGIC))
     {
-        fprintf( stderr, "Invalid heap %08x!\n", heap );
+        WARN(heap, "Invalid heap %08x!\n", heap );
         SetLastError( ERROR_INVALID_HANDLE );
         return NULL;
     }
@@ -258,7 +258,7 @@ static BOOL32 HEAP_Commit( SUBHEAP *subheap, void *ptr )
                        size - subheap->commitSize, MEM_COMMIT,
                        PAGE_EXECUTE_READWRITE))
     {
-        fprintf( stderr, "HEAP_Commit: could not commit %08lx bytes at %08lx for heap %08lx\n",
+        WARN(heap, "Could not commit %08lx bytes at %08lx for heap %08lx\n",
                  size - subheap->commitSize,
                  (DWORD)((char *)subheap + subheap->commitSize),
                  (DWORD)subheap->heap );
@@ -282,7 +282,7 @@ static BOOL32 HEAP_Decommit( SUBHEAP *subheap, void *ptr )
     if (!VirtualFree( (char *)subheap + size,
                       subheap->commitSize - size, MEM_DECOMMIT ))
     {
-        fprintf( stderr, "HEAP_Decommit: could not decommit %08lx bytes at %08lx for heap %08lx\n",
+        WARN(heap, "Could not decommit %08lx bytes at %08lx for heap %08lx\n",
                  subheap->commitSize - size,
                  (DWORD)((char *)subheap + size),
                  (DWORD)subheap->heap );
@@ -458,13 +458,13 @@ static SUBHEAP *HEAP_CreateSubHeap( DWORD flags, DWORD commitSize,
     if (!(subheap = VirtualAlloc( NULL, totalSize,
                                   MEM_RESERVE, PAGE_EXECUTE_READWRITE )))
     {
-        fprintf( stderr, "HEAP_CreateSubHeap: could not VirtualAlloc %08lx bytes\n",
+        WARN(heap, "Could not VirtualAlloc %08lx bytes\n",
                  totalSize );
         return NULL;
     }
     if (!VirtualAlloc(subheap, commitSize, MEM_COMMIT, PAGE_EXECUTE_READWRITE))
     {
-        fprintf( stderr, "HEAP_CreateSubHeap: could not commit %08lx bytes for sub-heap %08lx\n",
+        WARN(heap, "Could not commit %08lx bytes for sub-heap %08lx\n",
                  commitSize, (DWORD)subheap );
         VirtualFree( subheap, 0, MEM_RELEASE );
         return NULL;
@@ -479,7 +479,7 @@ static SUBHEAP *HEAP_CreateSubHeap( DWORD flags, DWORD commitSize,
                      (flags & HEAP_WINE_CODESEG) != 0, FALSE );
         if (!selector)
         {
-            fprintf( stderr, "HEAP_CreateSubHeap: could not allocate selector\n" );
+            WARN(heap, "Could not allocate selector\n" );
             VirtualFree( subheap, 0, MEM_RELEASE );
             return NULL;
         }
@@ -534,7 +534,7 @@ static ARENA_FREE *HEAP_FindFreeBlock( HEAP *heap, DWORD size,
 
     if (!(heap->flags & HEAP_GROWABLE))
     {
-        fprintf( stderr, "HEAP_FindFreeBlock: Not enough space in heap %08lx for %08lx bytes\n",
+        WARN(heap, "Not enough space in heap %08lx for %08lx bytes\n",
                  (DWORD)heap, size );
         return NULL;
     }
@@ -586,7 +586,7 @@ static BOOL32 HEAP_ValidateFreeArena( SUBHEAP *subheap, ARENA_FREE *pArena )
     /* Check magic number */
     if (pArena->magic != ARENA_FREE_MAGIC)
     {
-        fprintf( stderr, "Heap %08lx: invalid free arena magic for %08lx\n",
+        WARN(heap, "Heap %08lx: invalid free arena magic for %08lx\n",
                  (DWORD)subheap->heap, (DWORD)pArena );
         return FALSE;
     }
@@ -594,20 +594,20 @@ static BOOL32 HEAP_ValidateFreeArena( SUBHEAP *subheap, ARENA_FREE *pArena )
     if (!(pArena->size & ARENA_FLAG_FREE) ||
         (pArena->size & ARENA_FLAG_PREV_FREE))
     {
-        fprintf( stderr, "Heap %08lx: bad flags %lx for free arena %08lx\n",
+        WARN(heap, "Heap %08lx: bad flags %lx for free arena %08lx\n",
                  (DWORD)subheap->heap, pArena->size & ~ARENA_SIZE_MASK, (DWORD)pArena );
     }
     /* Check arena size */
     if ((char *)(pArena + 1) + (pArena->size & ARENA_SIZE_MASK) > heapEnd)
     {
-        fprintf( stderr, "Heap %08lx: bad size %08lx for free arena %08lx\n",
+        WARN(heap, "Heap %08lx: bad size %08lx for free arena %08lx\n",
                  (DWORD)subheap->heap, (DWORD)pArena->size & ARENA_SIZE_MASK, (DWORD)pArena );
         return FALSE;
     }
     /* Check that next pointer is valid */
     if (!HEAP_IsValidArenaPtr( subheap->heap, pArena->next ))
     {
-        fprintf( stderr, "Heap %08lx: bad next ptr %08lx for arena %08lx\n",
+        WARN(heap, "Heap %08lx: bad next ptr %08lx for arena %08lx\n",
                  (DWORD)subheap->heap, (DWORD)pArena->next, (DWORD)pArena );
         return FALSE;
     }
@@ -615,14 +615,14 @@ static BOOL32 HEAP_ValidateFreeArena( SUBHEAP *subheap, ARENA_FREE *pArena )
     if (!(pArena->next->size & ARENA_FLAG_FREE) ||
         (pArena->next->magic != ARENA_FREE_MAGIC))
     { 
-        fprintf( stderr, "Heap %08lx: next arena %08lx invalid for %08lx\n", 
+        WARN(heap, "Heap %08lx: next arena %08lx invalid for %08lx\n", 
                  (DWORD)subheap->heap, (DWORD)pArena->next, (DWORD)pArena );
         return FALSE;
     }
     /* Check that prev pointer is valid */
     if (!HEAP_IsValidArenaPtr( subheap->heap, pArena->prev ))
     {
-        fprintf( stderr, "Heap %08lx: bad prev ptr %08lx for arena %08lx\n",
+        WARN(heap, "Heap %08lx: bad prev ptr %08lx for arena %08lx\n",
                  (DWORD)subheap->heap, (DWORD)pArena->prev, (DWORD)pArena );
         return FALSE;
     }
@@ -630,7 +630,7 @@ static BOOL32 HEAP_ValidateFreeArena( SUBHEAP *subheap, ARENA_FREE *pArena )
     if (!(pArena->prev->size & ARENA_FLAG_FREE) ||
         (pArena->prev->magic != ARENA_FREE_MAGIC))
     { 
-        fprintf( stderr, "Heap %08lx: prev arena %08lx invalid for %08lx\n", 
+        WARN(heap, "Heap %08lx: prev arena %08lx invalid for %08lx\n", 
                  (DWORD)subheap->heap, (DWORD)pArena->prev, (DWORD)pArena );
         return FALSE;
     }
@@ -640,7 +640,7 @@ static BOOL32 HEAP_ValidateFreeArena( SUBHEAP *subheap, ARENA_FREE *pArena )
         if (!(*(DWORD *)((char *)(pArena + 1) +
             (pArena->size & ARENA_SIZE_MASK)) & ARENA_FLAG_PREV_FREE))
         {
-            fprintf( stderr, "Heap %08lx: free arena %08lx next block has no PREV_FREE flag\n",
+            WARN(heap, "Heap %08lx: free arena %08lx next block has no PREV_FREE flag\n",
                      (DWORD)subheap->heap, (DWORD)pArena );
             return FALSE;
         }
@@ -648,7 +648,7 @@ static BOOL32 HEAP_ValidateFreeArena( SUBHEAP *subheap, ARENA_FREE *pArena )
         if (*((ARENA_FREE **)((char *)(pArena + 1) +
             (pArena->size & ARENA_SIZE_MASK)) - 1) != pArena)
         {
-            fprintf( stderr, "Heap %08lx: arena %08lx has wrong back ptr %08lx\n",
+            WARN(heap, "Heap %08lx: arena %08lx has wrong back ptr %08lx\n",
                      (DWORD)subheap->heap, (DWORD)pArena,
                      *((DWORD *)((char *)(pArena+1)+ (pArena->size & ARENA_SIZE_MASK)) - 1));
             return FALSE;
@@ -668,20 +668,20 @@ static BOOL32 HEAP_ValidateInUseArena( SUBHEAP *subheap, ARENA_INUSE *pArena )
     /* Check magic number */
     if (pArena->magic != ARENA_INUSE_MAGIC)
     {
-        fprintf( stderr, "Heap %08lx: invalid in-use arena magic for %08lx\n",
+        WARN(heap, "Heap %08lx: invalid in-use arena magic for %08lx\n",
                  (DWORD)subheap->heap, (DWORD)pArena );
         return FALSE;
     }
     /* Check size flags */
     if (pArena->size & ARENA_FLAG_FREE) 
     {
-        fprintf( stderr, "Heap %08lx: bad flags %lx for in-use arena %08lx\n",
+        WARN(heap, "Heap %08lx: bad flags %lx for in-use arena %08lx\n",
                  (DWORD)subheap->heap, pArena->size & ~ARENA_SIZE_MASK, (DWORD)pArena );
     }
     /* Check arena size */
     if ((char *)(pArena + 1) + (pArena->size & ARENA_SIZE_MASK) > heapEnd)
     {
-        fprintf( stderr, "Heap %08lx: bad size %08lx for in-use arena %08lx\n",
+        WARN(heap, "Heap %08lx: bad size %08lx for in-use arena %08lx\n",
                  (DWORD)subheap->heap, (DWORD)pArena->size & ARENA_SIZE_MASK, (DWORD)pArena );
         return FALSE;
     }
@@ -689,7 +689,7 @@ static BOOL32 HEAP_ValidateInUseArena( SUBHEAP *subheap, ARENA_INUSE *pArena )
     if (((char *)(pArena + 1) + (pArena->size & ARENA_SIZE_MASK) < heapEnd) &&
         (*(DWORD *)((char *)(pArena + 1) + (pArena->size & ARENA_SIZE_MASK)) & ARENA_FLAG_PREV_FREE))
     {
-        fprintf( stderr, "Heap %08lx: in-use arena %08lx next block has PREV_FREE flag\n",
+        WARN(heap, "Heap %08lx: in-use arena %08lx next block has PREV_FREE flag\n",
                  (DWORD)subheap->heap, (DWORD)pArena );
         return FALSE;
     }
@@ -700,7 +700,7 @@ static BOOL32 HEAP_ValidateInUseArena( SUBHEAP *subheap, ARENA_INUSE *pArena )
         /* Check prev pointer */
         if (!HEAP_IsValidArenaPtr( subheap->heap, pPrev ))
         {
-            fprintf(stderr, "Heap %08lx: bad back ptr %08lx for arena %08lx\n",
+            WARN(heap, "Heap %08lx: bad back ptr %08lx for arena %08lx\n",
                     (DWORD)subheap->heap, (DWORD)pPrev, (DWORD)pArena );
             return FALSE;
         }
@@ -708,14 +708,14 @@ static BOOL32 HEAP_ValidateInUseArena( SUBHEAP *subheap, ARENA_INUSE *pArena )
         if (!(pPrev->size & ARENA_FLAG_FREE) ||
             (pPrev->magic != ARENA_FREE_MAGIC))
         { 
-            fprintf( stderr, "Heap %08lx: prev arena %08lx invalid for in-use %08lx\n", 
+            WARN(heap, "Heap %08lx: prev arena %08lx invalid for in-use %08lx\n", 
                      (DWORD)subheap->heap, (DWORD)pPrev, (DWORD)pArena );
             return FALSE;
         }
         /* Check that prev arena is really the previous block */
         if ((char *)(pPrev + 1) + (pPrev->size & ARENA_SIZE_MASK) != (char *)pArena)
         {
-            fprintf( stderr, "Heap %08lx: prev arena %08lx is not prev for in-use %08lx\n",
+            WARN(heap, "Heap %08lx: prev arena %08lx is not prev for in-use %08lx\n",
                      (DWORD)subheap->heap, (DWORD)pPrev, (DWORD)pArena );
             return FALSE;
         }
@@ -775,7 +775,7 @@ SEGPTR HEAP_GetSegptr( HANDLE32 heap, DWORD flags, LPCVOID ptr )
     flags |= heapPtr->flags;
     if (!(flags & HEAP_WINE_SEGPTR))
     {
-        fprintf( stderr, "HEAP_GetSegptr: heap %08x is not a SEGPTR heap\n",
+        WARN(heap, "Heap %08x is not a SEGPTR heap\n",
                  heap );
         return 0;
     }
@@ -785,7 +785,7 @@ SEGPTR HEAP_GetSegptr( HANDLE32 heap, DWORD flags, LPCVOID ptr )
 
     if (!(subheap = HEAP_FindSubHeap( heapPtr, ptr )))
     {
-        fprintf( stderr, "HEAP_GetSegptr: %p is not inside heap %08x\n",
+        WARN(heap, "%p is not inside heap %08x\n",
                  ptr, heap );
         if (!(flags & HEAP_NO_SERIALIZE)) HeapUnlock( heap );
         return 0;
@@ -1229,7 +1229,7 @@ BOOL32 WINAPI HeapValidate(
 
     if (!heapPtr || (heapPtr->magic != HEAP_MAGIC))
     {
-        fprintf( stderr, "Invalid heap %08x!\n", heap );
+        WARN(heap, "Invalid heap %08x!\n", heap );
         return FALSE;
     }
 
@@ -1240,7 +1240,7 @@ BOOL32 WINAPI HeapValidate(
             ((char *)block < (char *)subheap + subheap->headerSize
                               + sizeof(ARENA_INUSE)))
         {
-            fprintf( stderr, "Heap %08lx: block %08lx is not inside heap\n",
+            WARN(heap, "Heap %08lx: block %08lx is not inside heap\n",
                      (DWORD)heap, (DWORD)block );
             return FALSE;
         }
@@ -1284,7 +1284,7 @@ BOOL32 WINAPI HeapWalk(
               HANDLE32 heap,               /* [in]  Handle to heap to enumerate */
               LPPROCESS_HEAP_ENTRY *entry  /* [out] Pointer to structure of enumeration info */
 ) {
-    fprintf( stderr, "HeapWalk(%08x): not implemented\n", heap );
+    FIXME(heap, "(%08x): stub.\n", heap );
     return FALSE;
 }
 
@@ -1299,7 +1299,7 @@ LPVOID HEAP_xalloc( HANDLE32 heap, DWORD flags, DWORD size )
     LPVOID p = HeapAlloc( heap, flags, size );
     if (!p)
     {
-        fprintf( stderr, "Virtual memory exhausted.\n" );
+        MSG("Virtual memory exhausted.\n" );
         exit(1);
     }
     return p;

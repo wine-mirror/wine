@@ -43,6 +43,7 @@ static const DC_FUNCTIONS MFDRV_Funcs =
     MFDRV_PatBlt,                    /* pPatBlt */
     MFDRV_Pie,                       /* pPie */
     MFDRV_PolyPolygon,               /* pPolyPolygon */
+    NULL,                            /* pPolyPolyline */
     MFDRV_Polygon,                   /* pPolygon */
     MFDRV_Polyline,                  /* pPolyline */
     NULL,                            /* pRealizePalette */

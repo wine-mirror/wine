@@ -28,8 +28,8 @@
 
 static const char ENV_program_name[] = "C:\\WINDOWS\\SYSTEM\\KRNL386.EXE";
 
-/* Maximum length of an environment string (including NULL) */
-#define MAX_STR_LEN  128
+/* Maximum length of a Win16 environment string (including NULL) */
+#define MAX_WIN16_LEN  128
 
 /* Extra bytes to reserve at the end of an environment */
 #define EXTRA_ENV_SIZE (sizeof(BYTE) + sizeof(WORD) + sizeof(ENV_program_name))
@@ -68,29 +68,23 @@ BOOL32 ENV_BuildEnvironment( PDB32 *pdb )
 {
     extern char **environ;
     LPSTR p, *e;
-    int size, len;
+    int size;
 
     /* Compute the total size of the Unix environment */
 
     size = EXTRA_ENV_SIZE;
-    for (e = environ; *e; e++)
-    {
-        len = strlen(*e) + 1;
-        size += MIN( len, MAX_STR_LEN );
-    }
+    for (e = environ; *e; e++) size += strlen(*e) + 1;
 
     /* Now allocate the environment */
 
     if (!(p = HeapAlloc( SystemHeap, 0, size ))) return FALSE;
     pdb->env_db->environ = p;
-    pdb->env_db->env_sel = SELECTOR_AllocBlock( p, 0x10000, SEGMENT_DATA,
-                                                FALSE, FALSE );
 
     /* And fill it with the Unix environment */
 
     for (e = environ; *e; e++)
     {
-        lstrcpyn32A( p, *e, MAX_STR_LEN );
+        strcpy( p, *e );
         p += strlen(p) + 1;
     }
 
@@ -110,16 +104,24 @@ BOOL32 ENV_BuildEnvironment( PDB32 *pdb )
 BOOL32 ENV_InheritEnvironment( PDB32 *pdb, LPCSTR env )
 {
     DWORD size;
-    LPCSTR p;
+    LPCSTR src;
+    LPSTR dst;
 
     /* FIXME: should lock the parent environment */
     if (!env) env = pdb->parent->env_db->environ;
 
     /* Compute the environment size */
 
-    p = env;
-    while (*p) p += strlen(p) + 1;
-    size = (p - env);
+    src = env;
+    size = EXTRA_ENV_SIZE;
+    while (*src)
+    {
+        int len = strlen(src) + 1;
+        src += len;
+        if ((len > MAX_WIN16_LEN) && (pdb->flags & PDB32_WIN16_PROC))
+            len = MAX_WIN16_LEN;
+        size += len;
+    }
 
     /* Copy the environment */
 
@@ -129,8 +131,18 @@ BOOL32 ENV_InheritEnvironment( PDB32 *pdb, LPCSTR env )
     pdb->env_db->env_sel = SELECTOR_AllocBlock( pdb->env_db->environ,
                                                 0x10000, SEGMENT_DATA,
                                                 FALSE, FALSE );
-    memcpy( pdb->env_db->environ, env, size );
-    FILL_EXTRA_ENV( pdb->env_db->environ + size );
+    src = env;
+    dst = pdb->env_db->environ;
+    while (*src)
+    {
+        if (pdb->flags & PDB32_WIN16_PROC)
+            lstrcpyn32A( dst, src, MAX_WIN16_LEN );
+        else
+            strcpy( dst, src );
+        src += strlen(src) + 1;
+        dst += strlen(dst) + 1;
+    }
+    FILL_EXTRA_ENV( dst );
     return TRUE;
 }
 
@@ -314,7 +326,8 @@ BOOL32 WINAPI SetEnvironmentVariable32A( LPCSTR name, LPCSTR value )
     }
     if (!(new_env = HeapReAlloc( pdb->heap, 0, env, old_size + len )))
         goto done;
-    SELECTOR_MoveBlock( pdb->env_db->env_sel, new_env );
+    if (pdb->env_db->env_sel)
+        SELECTOR_MoveBlock( pdb->env_db->env_sel, new_env );
     p = new_env + (p - env);
     if (len > 0) memmove( p + len, p, old_size - (p - new_env) );
 

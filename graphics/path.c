@@ -157,11 +157,19 @@ BOOL16 WINAPI AbortPath16(HDC16 hdc)
 }
 
 
-/***********************************************************************
- *           AbortPath32    (GDI32.1)
+/******************************************************************************
+ * AbortPath32 [GDI32.1]
+ * Closes and discards paths from device context
+ *
+ * NOTES
+ *    Check that SetLastError is being called correctly
+ *
+ * PARAMS
+ *    hdc [I] Handle to device context
+ *
+ * RETURNS STD
  */
-BOOL32 WINAPI AbortPath32(HDC32 hdc)
-/* FIXME: Check that SetLastError is being called correctly */
+BOOL32 WINAPI AbortPath32( HDC32 hdc )
 {
    GdiPath *pPath;
    

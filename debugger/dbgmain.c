@@ -103,12 +103,12 @@ void WIN_WalkWindows( HWND32 hwnd, int indent )
   exit(0);
 }
 
-NE_MODULE *MODULE_GetPtr( HMODULE16 hModule )
+NE_MODULE *MODULE_GetPtr16( HMODULE16 hModule )
 {
   exit(0);
 }
 
-FARPROC16 MODULE_GetEntryPoint( HMODULE16 hModule, WORD ordinal )
+FARPROC16 NE_GetEntryPoint( HMODULE16 hModule, WORD ordinal )
 {
   exit(0);
 }

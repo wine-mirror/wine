@@ -477,15 +477,18 @@ static INT32 PROFILE_GetSection( PROFILESECTION *section, LPCSTR section_name,
                 PROFILE_CopyEntry( buffer, key->name, len - 1, handle_env );
                 len -= strlen(buffer) + 1;
                 buffer += strlen(buffer) + 1;
-                if (key->value)
-                {
-                    buffer[-1] = '=';
-                    PROFILE_CopyEntry(buffer, key->value, len - 1, handle_env);
-                    len -= strlen(buffer) + 1; 
-                    buffer += strlen(buffer) + 1;
-                }
             }
             *buffer = '\0';
+            if (len < 1)
+                /*If either lpszSection or lpszKey is NULL and the supplied
+                  destination buffer is too small to hold all the strings, 
+                  the last string is truncated and followed by two null characters.
+                  In this case, the return value is equal to cchReturnBuffer
+                  minus two. */
+            {
+		buffer[-1] = '\0';
+                return oldlen - 2;
+            }
             return oldlen - len + 1;
         }
         section = section->next;

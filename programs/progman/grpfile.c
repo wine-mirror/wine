@@ -631,7 +631,7 @@ static BOOL GRPFILE_DoWriteGroupFile(HFILE file, GROUP *group)
     {
       PROGRAM *program = LocalLock(hProgram);
       CURSORICONINFO *iconinfo = LocalLock(program->hIcon);
-      SEGPTR XorBits, AndBits;
+      LPVOID XorBits, AndBits;
       INT sizeXor = iconinfo->nHeight * iconinfo->nWidthBytes;
       INT sizeAnd = iconinfo->nHeight * ((iconinfo->nWidth + 15) / 16 * 2);
       DumpIcon(LocalLock(program->hIcon), 0, &XorBits, &AndBits);

@@ -743,7 +743,11 @@ static HWND32 WIN_CreateWindowEx( CREATESTRUCT32A *cs, ATOM classAtom,
             if (!(wndPtr->flags & WIN_NEED_SIZE))
             {
                 /* send it anyway */
-
+	        if (((wndPtr->rectClient.right-wndPtr->rectClient.left) <0)
+		    ||((wndPtr->rectClient.bottom-wndPtr->rectClient.top)<0))
+		  WARN(win,"sending bogus WM_SIZE message 0x%08lx\n",
+			MAKELONG(wndPtr->rectClient.right-wndPtr->rectClient.left,
+				 wndPtr->rectClient.bottom-wndPtr->rectClient.top));
                 SendMessage32A( hwnd, WM_SIZE, SIZE_RESTORED,
                                 MAKELONG(wndPtr->rectClient.right-wndPtr->rectClient.left,
                                          wndPtr->rectClient.bottom-wndPtr->rectClient.top));
@@ -1408,7 +1412,8 @@ WORD WINAPI GetWindowWord32( HWND32 hwnd, INT32 offset )
     	if (HIWORD(wndPtr->wIDmenu))
     		fprintf(stderr,"GetWindowWord32(GWW_ID) discards high bits of 0x%08x!\n",wndPtr->wIDmenu);
     	return (WORD)wndPtr->wIDmenu;
-    case GWW_HWNDPARENT: return wndPtr->parent ? wndPtr->parent->hwndSelf : 0;
+    case GWW_HWNDPARENT: return wndPtr->parent ?
+			wndPtr->parent->hwndSelf : wndPtr->owner->hwndSelf;
     case GWW_HINSTANCE:  
     	if (HIWORD(wndPtr->hInstance))
     		fprintf(stderr,"GetWindowWord32(GWW_HINSTANCE) discards high bits of 0x%08x!\n",wndPtr->hInstance);

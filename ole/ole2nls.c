@@ -528,120 +528,105 @@ LOCVAL(LOCALE_INEGSEPBYSPACE, "0")
 
     case LANG_En:
     	switch (LCType) {
-LOCVAL(LOCALE_ILANGUAGE,"9")
-LOCVAL(LOCALE_SLANGUAGE,"English")
-LOCVAL(LOCALE_SENGLANGUAGE,"English")
-LOCVAL(LOCALE_SABBREVLANGNAME,"en")
-LOCVAL(LOCALE_SNATIVELANGNAME,"English")
-LOCVAL(LOCALE_ICOUNTRY,"11")
-LOCVAL(LOCALE_SCOUNTRY,"United States")
-LOCVAL(LOCALE_SENGCOUNTRY,"United States")
-LOCVAL(LOCALE_SABBREVCTRYNAME,"US")
-LOCVAL(LOCALE_SNATIVECTRYNAME,"United States")
-LOCVAL(LOCALE_IDEFAULTLANGUAGE,"9")
-LOCVAL(LOCALE_IDEFAULTCOUNTRY,"49")
-LOCVAL(LOCALE_IDEFAULTCODEPAGE,"437")
-/* Dunno
-LOCVAL(LOCALE_IDEFAULTANSICODEPAGE)
-*/
-LOCVAL(LOCALE_SLIST,";")
-LOCVAL(LOCALE_IMEASURE,"0")
-LOCVAL(LOCALE_SDECIMAL,".")
-LOCVAL(LOCALE_STHOUSAND,",")
+LOCVAL(LOCALE_ILANGUAGE, "0409")
+LOCVAL(LOCALE_SLANGUAGE, "English (United States)")
+LOCVAL(LOCALE_SENGLANGUAGE, "English")
+LOCVAL(LOCALE_SABBREVLANGNAME, "ENU")
+LOCVAL(LOCALE_SNATIVELANGNAME, "English")
+LOCVAL(LOCALE_ICOUNTRY, "1")
+LOCVAL(LOCALE_SCOUNTRY, "United States")
+LOCVAL(LOCALE_SENGCOUNTRY, "United States")
+LOCVAL(LOCALE_SABBREVCTRYNAME, "USA")
+LOCVAL(LOCALE_SNATIVECTRYNAME, "United States")
+LOCVAL(LOCALE_IDEFAULTLANGUAGE, "0409")
+LOCVAL(LOCALE_IDEFAULTCOUNTRY, "1")
+LOCVAL(LOCALE_IDEFAULTCODEPAGE, "437")
+LOCVAL(LOCALE_IDEFAULTANSICODEPAGE, "1252")
+LOCVAL(LOCALE_SLIST, ",")
+LOCVAL(LOCALE_IMEASURE, "1")
+LOCVAL(LOCALE_SDECIMAL, ".")
+LOCVAL(LOCALE_STHOUSAND, ",")
 LOCVAL(LOCALE_SGROUPING, "3;0")
-LOCVAL(LOCALE_IDIGITS,"2")
-LOCVAL(LOCALE_ILZERO,"1")
-/*
-LOCVAL(LOCALE_INEGNUMBER)
-Is this "0123456789" ??
-LOCVAL(LOCALE_SNATIVEDIGITS)
-*/
-LOCVAL(LOCALE_SCURRENCY,"DM")
+LOCVAL(LOCALE_IDIGITS, "2")
+LOCVAL(LOCALE_ILZERO, "1")
+LOCVAL(LOCALE_INEGNUMBER, "1")
+LOCVAL(LOCALE_SNATIVEDIGITS, "0123456789")
+LOCVAL(LOCALE_SCURRENCY, "$")
 LOCVAL(LOCALE_SINTLSYMBOL, "USD")
 LOCVAL(LOCALE_SMONDECIMALSEP, ".")
-LOCVAL(LOCALE_SMONTHOUSANDSEP, ".")
+LOCVAL(LOCALE_SMONTHOUSANDSEP, ",")
 LOCVAL(LOCALE_SMONGROUPING, "3;0")
-LOCVAL(LOCALE_ICURRDIGITS,"2")
-LOCVAL(LOCALE_IINTLCURRDIGITS,"2")
-LOCVAL(LOCALE_ICURRENCY,"3")
-LOCVAL(LOCALE_INEGCURR,"8")
-LOCVAL(LOCALE_SDATE,".")
-LOCVAL(LOCALE_STIME,":")
-LOCVAL(LOCALE_SSHORTDATE,"MM/dd/yy")
-LOCVAL(LOCALE_SLONGDATE,"ddd, MMMM d\'th\', yyyy")
+LOCVAL(LOCALE_ICURRDIGITS, "2")
+LOCVAL(LOCALE_IINTLCURRDIGITS, "2")
+LOCVAL(LOCALE_ICURRENCY, "0")
+LOCVAL(LOCALE_INEGCURR, "0")
+LOCVAL(LOCALE_SDATE, "/")
+LOCVAL(LOCALE_STIME, ":")
+LOCVAL(LOCALE_SSHORTDATE, "M/d/yy")
+LOCVAL(LOCALE_SLONGDATE, "dddd, MMMM dd, yyyy")
 LOCVAL(LOCALE_STIMEFORMAT, "h:mm:ss tt")
-LOCVAL(LOCALE_IDATE,"1")
-/*
-LOCVAL(LOCALE_ILDATE)
-*/
-LOCVAL(LOCALE_ITIME,"1")
-/*
-LOCVAL(LOCALE_ITIMEMARKPOSN)
-LOCVAL(LOCALE_ICENTURY)
-*/
-LOCVAL(LOCALE_ITLZERO,"1")
-/*
-LOCVAL(LOCALE_IDAYLZERO)
-LOCVAL(LOCALE_IMONLZERO)
-*/
-LOCVAL(LOCALE_S1159,"AM")
-LOCVAL(LOCALE_S2359,"PM")
-LOCVAL(LOCALE_ICALENDARTYPE,"1")
-/*
-LOCVAL(LOCALE_IOPTIONALCALENDAR)
-LOCVAL(LOCALE_IFIRSTDAYOFWEEK)
-LOCVAL(LOCALE_IFIRSTWEEKOFYEAR)
-*/
-LOCVAL(LOCALE_SDAYNAME1,"Monday")
-LOCVAL(LOCALE_SDAYNAME2,"Tuesday")
-LOCVAL(LOCALE_SDAYNAME3,"Wednesday")
-LOCVAL(LOCALE_SDAYNAME4,"Thursday")
-LOCVAL(LOCALE_SDAYNAME5,"Friday")
-LOCVAL(LOCALE_SDAYNAME6,"Saturday")
-LOCVAL(LOCALE_SDAYNAME7,"Sunday")
-LOCVAL(LOCALE_SABBREVDAYNAME1,"Mon")
-LOCVAL(LOCALE_SABBREVDAYNAME2,"Tue")
-LOCVAL(LOCALE_SABBREVDAYNAME3,"Wed")
-LOCVAL(LOCALE_SABBREVDAYNAME4,"Thu")
-LOCVAL(LOCALE_SABBREVDAYNAME5,"Fri")
-LOCVAL(LOCALE_SABBREVDAYNAME6,"Sat")
-LOCVAL(LOCALE_SABBREVDAYNAME7,"Sun")
-LOCVAL(LOCALE_SMONTHNAME1,"January")
-LOCVAL(LOCALE_SMONTHNAME2,"February")
-LOCVAL(LOCALE_SMONTHNAME3,"March")
-LOCVAL(LOCALE_SMONTHNAME4,"April")
-LOCVAL(LOCALE_SMONTHNAME5,"May")
-LOCVAL(LOCALE_SMONTHNAME6,"June")
-LOCVAL(LOCALE_SMONTHNAME7,"July")
-LOCVAL(LOCALE_SMONTHNAME8,"August")
-LOCVAL(LOCALE_SMONTHNAME9,"September")
-LOCVAL(LOCALE_SMONTHNAME10,"October")
-LOCVAL(LOCALE_SMONTHNAME11,"November")
-LOCVAL(LOCALE_SMONTHNAME12,"December")
-LOCVAL(LOCALE_SMONTHNAME13,"")
-LOCVAL(LOCALE_SABBREVMONTHNAME1,"Jan")
-LOCVAL(LOCALE_SABBREVMONTHNAME2,"Feb")
-LOCVAL(LOCALE_SABBREVMONTHNAME3,"Mar")
-LOCVAL(LOCALE_SABBREVMONTHNAME4,"Apr")
-LOCVAL(LOCALE_SABBREVMONTHNAME5,"May")
-LOCVAL(LOCALE_SABBREVMONTHNAME6,"Jun")
-LOCVAL(LOCALE_SABBREVMONTHNAME7,"Jul")
-LOCVAL(LOCALE_SABBREVMONTHNAME8,"Aug")
-LOCVAL(LOCALE_SABBREVMONTHNAME9,"Sep")
-LOCVAL(LOCALE_SABBREVMONTHNAME10,"Oct")
-LOCVAL(LOCALE_SABBREVMONTHNAME11,"Nov")
-LOCVAL(LOCALE_SABBREVMONTHNAME12,"Dec")
-LOCVAL(LOCALE_SABBREVMONTHNAME13,"")
-LOCVAL(LOCALE_SPOSITIVESIGN,"")
-LOCVAL(LOCALE_SNEGATIVESIGN,"-")
-/*
-LOCVAL(LOCALE_IPOSSIGNPOSN)
-LOCVAL(LOCALE_INEGSIGNPOSN)
-LOCVAL(LOCALE_IPOSSYMPRECEDES)
-LOCVAL(LOCALE_IPOSSEPBYSPACE)
-LOCVAL(LOCALE_INEGSYMPRECEDES)
-LOCVAL(LOCALE_INEGSEPBYSPACE)
-*/
+LOCVAL(LOCALE_IDATE, "0")
+LOCVAL(LOCALE_ILDATE, "0")
+LOCVAL(LOCALE_ITIME, "0")
+LOCVAL(LOCALE_ITIMEMARKPOSN, "0")
+LOCVAL(LOCALE_ICENTURY, "0")
+LOCVAL(LOCALE_ITLZERO, "0")
+LOCVAL(LOCALE_IDAYLZERO, "0")
+LOCVAL(LOCALE_IMONLZERO, "0")
+LOCVAL(LOCALE_S1159, "AM")
+LOCVAL(LOCALE_S2359, "PM")
+LOCVAL(LOCALE_ICALENDARTYPE, "1")
+LOCVAL(LOCALE_IOPTIONALCALENDAR, "0")
+LOCVAL(LOCALE_IFIRSTDAYOFWEEK, "6")
+LOCVAL(LOCALE_IFIRSTWEEKOFYEAR, "0")
+LOCVAL(LOCALE_SDAYNAME1, "Monday")
+LOCVAL(LOCALE_SDAYNAME2, "Tuesday")
+LOCVAL(LOCALE_SDAYNAME3, "Wednesday")
+LOCVAL(LOCALE_SDAYNAME4, "Thursday")
+LOCVAL(LOCALE_SDAYNAME5, "Friday")
+LOCVAL(LOCALE_SDAYNAME6, "Saturday")
+LOCVAL(LOCALE_SDAYNAME7, "Sunday")
+LOCVAL(LOCALE_SABBREVDAYNAME1, "Mon")
+LOCVAL(LOCALE_SABBREVDAYNAME2, "Tue")
+LOCVAL(LOCALE_SABBREVDAYNAME3, "Wed")
+LOCVAL(LOCALE_SABBREVDAYNAME4, "Thu")
+LOCVAL(LOCALE_SABBREVDAYNAME5, "Fri")
+LOCVAL(LOCALE_SABBREVDAYNAME6, "Sat")
+LOCVAL(LOCALE_SABBREVDAYNAME7, "Sun")
+LOCVAL(LOCALE_SMONTHNAME1, "January")
+LOCVAL(LOCALE_SMONTHNAME2, "February")
+LOCVAL(LOCALE_SMONTHNAME3, "March")
+LOCVAL(LOCALE_SMONTHNAME4, "April")
+LOCVAL(LOCALE_SMONTHNAME5, "May")
+LOCVAL(LOCALE_SMONTHNAME6, "June")
+LOCVAL(LOCALE_SMONTHNAME7, "July")
+LOCVAL(LOCALE_SMONTHNAME8, "August")
+LOCVAL(LOCALE_SMONTHNAME9, "September")
+LOCVAL(LOCALE_SMONTHNAME10, "October")
+LOCVAL(LOCALE_SMONTHNAME11, "November")
+LOCVAL(LOCALE_SMONTHNAME12, "December")
+LOCVAL(LOCALE_SMONTHNAME13, "")
+LOCVAL(LOCALE_SABBREVMONTHNAME1, "Jan")
+LOCVAL(LOCALE_SABBREVMONTHNAME2, "Feb")
+LOCVAL(LOCALE_SABBREVMONTHNAME3, "Mar")
+LOCVAL(LOCALE_SABBREVMONTHNAME4, "Apr")
+LOCVAL(LOCALE_SABBREVMONTHNAME5, "May")
+LOCVAL(LOCALE_SABBREVMONTHNAME6, "Jun")
+LOCVAL(LOCALE_SABBREVMONTHNAME7, "Jul")
+LOCVAL(LOCALE_SABBREVMONTHNAME8, "Aug")
+LOCVAL(LOCALE_SABBREVMONTHNAME9, "Sep")
+LOCVAL(LOCALE_SABBREVMONTHNAME10, "Oct")
+LOCVAL(LOCALE_SABBREVMONTHNAME11, "Nov")
+LOCVAL(LOCALE_SABBREVMONTHNAME12, "Dec")
+LOCVAL(LOCALE_SABBREVMONTHNAME13, "")
+LOCVAL(LOCALE_SPOSITIVESIGN, "")
+LOCVAL(LOCALE_SNEGATIVESIGN, "-")
+LOCVAL(LOCALE_IPOSSIGNPOSN, "3")
+LOCVAL(LOCALE_INEGSIGNPOSN, "0")
+LOCVAL(LOCALE_IPOSSYMPRECEDES, "1")
+LOCVAL(LOCALE_IPOSSEPBYSPACE, "0")
+LOCVAL(LOCALE_INEGSYMPRECEDES, "1")
+LOCVAL(LOCALE_INEGSEPBYSPACE, "0")
 	default: found=0;break;
 	}
     break;  /* LANG(En) */
@@ -1004,111 +989,6 @@ LOCVAL(LOCALE_INEGSEPBYSPACE)
 	default: found=0;break;
 	}
     break;  /* LANG(It) */
-
-    case 0x0409:
-    	switch (LCType) {
-LOCVAL(LOCALE_ILANGUAGE, "0409")
-LOCVAL(LOCALE_SLANGUAGE, "English (United States)")
-LOCVAL(LOCALE_SENGLANGUAGE, "English")
-LOCVAL(LOCALE_SABBREVLANGNAME, "ENU")
-LOCVAL(LOCALE_SNATIVELANGNAME, "English")
-LOCVAL(LOCALE_ICOUNTRY, "1")
-LOCVAL(LOCALE_SCOUNTRY, "United States")
-LOCVAL(LOCALE_SENGCOUNTRY, "United States")
-LOCVAL(LOCALE_SABBREVCTRYNAME, "USA")
-LOCVAL(LOCALE_SNATIVECTRYNAME, "United States")
-LOCVAL(LOCALE_IDEFAULTLANGUAGE, "0409")
-LOCVAL(LOCALE_IDEFAULTCOUNTRY, "1")
-LOCVAL(LOCALE_IDEFAULTCODEPAGE, "437")
-LOCVAL(LOCALE_IDEFAULTANSICODEPAGE, "1252")
-LOCVAL(LOCALE_SLIST, ",")
-LOCVAL(LOCALE_IMEASURE, "1")
-LOCVAL(LOCALE_SDECIMAL, ".")
-LOCVAL(LOCALE_STHOUSAND, ",")
-LOCVAL(LOCALE_SGROUPING, "3;0")
-LOCVAL(LOCALE_IDIGITS, "2")
-LOCVAL(LOCALE_ILZERO, "1")
-LOCVAL(LOCALE_INEGNUMBER, "1")
-LOCVAL(LOCALE_SNATIVEDIGITS, "0123456789")
-LOCVAL(LOCALE_SCURRENCY, "$")
-LOCVAL(LOCALE_SINTLSYMBOL, "USD")
-LOCVAL(LOCALE_SMONDECIMALSEP, ".")
-LOCVAL(LOCALE_SMONTHOUSANDSEP, ",")
-LOCVAL(LOCALE_SMONGROUPING, "3;0")
-LOCVAL(LOCALE_ICURRDIGITS, "2")
-LOCVAL(LOCALE_IINTLCURRDIGITS, "2")
-LOCVAL(LOCALE_ICURRENCY, "0")
-LOCVAL(LOCALE_INEGCURR, "0")
-LOCVAL(LOCALE_SDATE, "/")
-LOCVAL(LOCALE_STIME, ":")
-LOCVAL(LOCALE_SSHORTDATE, "M/d/yy")
-LOCVAL(LOCALE_SLONGDATE, "dddd, MMMM dd, yyyy")
-LOCVAL(LOCALE_STIMEFORMAT, "h:mm:ss tt")
-LOCVAL(LOCALE_IDATE, "0")
-LOCVAL(LOCALE_ILDATE, "0")
-LOCVAL(LOCALE_ITIME, "0")
-LOCVAL(LOCALE_ITIMEMARKPOSN, "0")
-LOCVAL(LOCALE_ICENTURY, "0")
-LOCVAL(LOCALE_ITLZERO, "0")
-LOCVAL(LOCALE_IDAYLZERO, "0")
-LOCVAL(LOCALE_IMONLZERO, "0")
-LOCVAL(LOCALE_S1159, "AM")
-LOCVAL(LOCALE_S2359, "PM")
-LOCVAL(LOCALE_ICALENDARTYPE, "1")
-LOCVAL(LOCALE_IOPTIONALCALENDAR, "0")
-LOCVAL(LOCALE_IFIRSTDAYOFWEEK, "6")
-LOCVAL(LOCALE_IFIRSTWEEKOFYEAR, "0")
-LOCVAL(LOCALE_SDAYNAME1, "Monday")
-LOCVAL(LOCALE_SDAYNAME2, "Tuesday")
-LOCVAL(LOCALE_SDAYNAME3, "Wednesday")
-LOCVAL(LOCALE_SDAYNAME4, "Thursday")
-LOCVAL(LOCALE_SDAYNAME5, "Friday")
-LOCVAL(LOCALE_SDAYNAME6, "Saturday")
-LOCVAL(LOCALE_SDAYNAME7, "Sunday")
-LOCVAL(LOCALE_SABBREVDAYNAME1, "Mon")
-LOCVAL(LOCALE_SABBREVDAYNAME2, "Tue")
-LOCVAL(LOCALE_SABBREVDAYNAME3, "Wed")
-LOCVAL(LOCALE_SABBREVDAYNAME4, "Thu")
-LOCVAL(LOCALE_SABBREVDAYNAME5, "Fri")
-LOCVAL(LOCALE_SABBREVDAYNAME6, "Sat")
-LOCVAL(LOCALE_SABBREVDAYNAME7, "Sun")
-LOCVAL(LOCALE_SMONTHNAME1, "January")
-LOCVAL(LOCALE_SMONTHNAME2, "February")
-LOCVAL(LOCALE_SMONTHNAME3, "March")
-LOCVAL(LOCALE_SMONTHNAME4, "April")
-LOCVAL(LOCALE_SMONTHNAME5, "May")
-LOCVAL(LOCALE_SMONTHNAME6, "June")
-LOCVAL(LOCALE_SMONTHNAME7, "July")
-LOCVAL(LOCALE_SMONTHNAME8, "August")
-LOCVAL(LOCALE_SMONTHNAME9, "September")
-LOCVAL(LOCALE_SMONTHNAME10, "October")
-LOCVAL(LOCALE_SMONTHNAME11, "November")
-LOCVAL(LOCALE_SMONTHNAME12, "December")
-LOCVAL(LOCALE_SMONTHNAME13, "")
-LOCVAL(LOCALE_SABBREVMONTHNAME1, "Jan")
-LOCVAL(LOCALE_SABBREVMONTHNAME2, "Feb")
-LOCVAL(LOCALE_SABBREVMONTHNAME3, "Mar")
-LOCVAL(LOCALE_SABBREVMONTHNAME4, "Apr")
-LOCVAL(LOCALE_SABBREVMONTHNAME5, "May")
-LOCVAL(LOCALE_SABBREVMONTHNAME6, "Jun")
-LOCVAL(LOCALE_SABBREVMONTHNAME7, "Jul")
-LOCVAL(LOCALE_SABBREVMONTHNAME8, "Aug")
-LOCVAL(LOCALE_SABBREVMONTHNAME9, "Sep")
-LOCVAL(LOCALE_SABBREVMONTHNAME10, "Oct")
-LOCVAL(LOCALE_SABBREVMONTHNAME11, "Nov")
-LOCVAL(LOCALE_SABBREVMONTHNAME12, "Dec")
-LOCVAL(LOCALE_SABBREVMONTHNAME13, "")
-LOCVAL(LOCALE_SPOSITIVESIGN, "")
-LOCVAL(LOCALE_SNEGATIVESIGN, "-")
-LOCVAL(LOCALE_IPOSSIGNPOSN, "3")
-LOCVAL(LOCALE_INEGSIGNPOSN, "0")
-LOCVAL(LOCALE_IPOSSYMPRECEDES, "1")
-LOCVAL(LOCALE_IPOSSEPBYSPACE, "0")
-LOCVAL(LOCALE_INEGSYMPRECEDES, "1")
-LOCVAL(LOCALE_INEGSEPBYSPACE, "0")
-	default: found=0;break;
-	}
-    break; /* LANG(0x0409) (U.S. English) */
 
     case 0x0809:
     	switch (LCType) {
@@ -1879,7 +1759,7 @@ UINT32 WINAPI CompareString32W(DWORD lcid, DWORD fdwStyle,
 }
 
 /***********************************************************************
- *           SetLocalInfoA       (KERNEL32.499)
+ *           SetLocaleInfoA       [KERNEL32.499]
  */
 BOOL16 WINAPI SetLocaleInfoA(DWORD lcid, DWORD lctype, LPCSTR data)
 {
@@ -1888,7 +1768,7 @@ BOOL16 WINAPI SetLocaleInfoA(DWORD lcid, DWORD lctype, LPCSTR data)
 }
 
 /***********************************************************************
- *           IsValidLocale       (KERNEL32.361)
+ *           IsValidLocale       [KERNEL32.361]
  */
 BOOL32 WINAPI IsValidLocale(LCID lcid,DWORD flags)
 {
@@ -1897,7 +1777,7 @@ BOOL32 WINAPI IsValidLocale(LCID lcid,DWORD flags)
 }
 
 /***********************************************************************
- *              EnumSystemLocales32W                (KERNEL32.93)
+ *              EnumSystemLocales32W                [KERNEL32.93]
  */
 BOOL32 WINAPI EnumSystemLocales32W( LOCALE_ENUMPROC32W lpfnLocaleEnum,
                                     DWORD flags )
@@ -1940,7 +1820,7 @@ BOOL32 WINAPI EnumSystemLocales32W( LOCALE_ENUMPROC32W lpfnLocaleEnum,
 }
 
 /***********************************************************************
- *              EnumSystemLocales32A                (KERNEL32.92)
+ *              EnumSystemLocales32A                [KERNEL32.92]
  */
 BOOL32 WINAPI EnumSystemLocales32A(LOCALE_ENUMPROC32A lpfnLocaleEnum,
                                    DWORD flags)
@@ -1975,7 +1855,7 @@ BOOL32 WINAPI EnumSystemLocales32A(LOCALE_ENUMPROC32A lpfnLocaleEnum,
 }
 
 /***********************************************************************
- *              GetStringTypeA                (OLE2NLS.7)
+ *              GetStringTypeA                [OLE2NLS.7]
  */
 BOOL16 WINAPI GetStringType16(LCID locale,DWORD dwInfoType,LPCSTR src,
                               INT16 cchSrc,LPWORD chartype)
@@ -1983,7 +1863,7 @@ BOOL16 WINAPI GetStringType16(LCID locale,DWORD dwInfoType,LPCSTR src,
 	return GetStringTypeEx32A(locale,dwInfoType,src,cchSrc,chartype);
 }
 /***********************************************************************
- *              GetStringTypeA                (KERNEL32.277)
+ *              GetStringTypeA                [KERNEL32.277]
  */
 BOOL32 WINAPI GetStringType32A(LCID locale,DWORD dwInfoType,LPCSTR src,
                                INT32 cchSrc,LPWORD chartype)
@@ -1991,7 +1871,7 @@ BOOL32 WINAPI GetStringType32A(LCID locale,DWORD dwInfoType,LPCSTR src,
 	return GetStringTypeEx32A(locale,dwInfoType,src,cchSrc,chartype);
 }
 /***********************************************************************
- *              GetStringTypeExA                (KERNEL32.276)
+ *              GetStringTypeExA                [KERNEL32.276]
  */
 BOOL32 WINAPI GetStringTypeEx32A(LCID locale,DWORD dwInfoType,LPCSTR src,
                                  INT32 cchSrc,LPWORD chartype)
@@ -2026,8 +1906,10 @@ BOOL32 WINAPI GetStringTypeEx32A(LCID locale,DWORD dwInfoType,LPCSTR src,
 	return TRUE;
 }
 
-/***********************************************************************
- *              GetStringTypeW                (KERNEL32.279)
+/*********************************************************************
+ *  GetStringTypeW [KERNEL32.279]
+ *
+ * NOTES
  * Yes, this is missing LCID locale. MS fault.
  */
 BOOL32 WINAPI GetStringType32W(DWORD dwInfoType,LPCWSTR src,INT32 cchSrc,
@@ -2036,8 +1918,8 @@ BOOL32 WINAPI GetStringType32W(DWORD dwInfoType,LPCWSTR src,INT32 cchSrc,
 	return GetStringTypeEx32W(0/*defaultlocale*/,dwInfoType,src,cchSrc,chartype);
 }
 
-/***********************************************************************
- *              GetStringTypeW                (KERNEL32.278)
+/*********************************************************************
+ *   GetStringTypeW   [KERNEL32.278]
  * FIXME: unicode chars are assumed chars
  */
 BOOL32 WINAPI GetStringTypeEx32W(LCID locale,DWORD dwInfoType,LPCWSTR src,
@@ -2073,7 +1955,9 @@ BOOL32 WINAPI GetStringTypeEx32W(LCID locale,DWORD dwInfoType,LPCWSTR src,
 	return TRUE;
 }
 
-/* VerLanguageName				[VER.10] */
+/*****************************************************************
+ * VerLanguageName16   [VER.10] 
+ */
 DWORD WINAPI VerLanguageName16(UINT16 langid,LPSTR langname,UINT16 langnamelen)
 {
 	int	i;
@@ -2098,14 +1982,18 @@ DWORD WINAPI VerLanguageName16(UINT16 langid,LPSTR langname,UINT16 langnamelen)
 	return strlen(languages[i].langname);
 }
 
-/* VerLanguageNameA				[VERSION.9] */
+/*****************************************************************
+ * VerLanguageName32A				[VERSION.9] 
+ */
 DWORD WINAPI VerLanguageName32A(UINT32 langid,LPSTR langname,
                                 UINT32 langnamelen)
 {
 	return VerLanguageName16(langid,langname,langnamelen);
 }
 
-/* VerLanguageNameW				[VERSION.10] */
+/*****************************************************************
+ * VerLanguageName32W				[VERSION.10] 
+ */
 DWORD WINAPI VerLanguageName32W(UINT32 langid,LPWSTR langname,
                                 UINT32 langnamelen)
 {
@@ -2207,8 +2095,8 @@ INT32 WINAPI LCMapString32W(
 
 /*****************************************************************
  *
- *  OLE_GetFormatA()
- *  OLE_GetFormatW()
+ *  OLE_GetFormatA() [internal]
+
 
  This function implements stuff for GetDateFormat() and 
  GetTimeFormat().
@@ -2257,7 +2145,7 @@ INT32 WINAPI OLE_GetFormatA(LCID locale,
    const char ** dgfmt = _dgfmt - 1; 
 
    /* report, for debugging */
-   TRACE(ole, "func(%#lx,%#lx, time(d=%d,h=%d,m=%d,s=%d), fmt:\'%s\' (at %p), %p (%9s), len=%d)\n", locale, flags,
+   TRACE(ole, "func(%8lx,%8lx, time(d=%d,h=%d,m=%d,s=%d), fmt:\'%s\' (at %p), %p (%9s), len=%d)\n", locale, flags,
 	 xtime->wDay, xtime->wHour, xtime->wMinute, xtime->wSecond,
 	 format, format, date, date, datelen);
   
@@ -2430,39 +2318,233 @@ c=%c, n=%d\n", type, count);
    return outpos;
 }
 
+/*  OLE_GetFormatW  [internal]  */
+
 INT32 WINAPI OLE_GetFormatW(LCID locale, DWORD flags,
 			    LPSYSTEMTIME xtime,
 			    LPCWSTR format,
-			    LPWSTR timestr, INT32 timelen)
+			    LPWSTR output, INT32 outlen)
 {
-   FIXME(ole, "(unicode GetDateFormat) STUB\n");
-   return 0;
+   INT32   inpos, outpos;
+   int     count, type, inquote;
+   int     Overflow; /* loop check */
+   int usedate, usetime;
+   WCHAR   buf[40];
+   int     buflen;
+   char    abuf[40];
+   WCHAR   arg0[] = {0}, arg1[] = {'%','d',0};
+   WCHAR   arg2[] = {'%','0','2','d',0};
+   WCHAR  *argarr[] = {arg0, arg1, arg2};
+   int     datevars, timevars;
+
+   /* make a debug report */
+   lstrcpynWtoA(abuf, format, sizeof(format));
+   TRACE(ole, "args: %8lx, %8lx, time(d=%d,h=%d,m=%d,s=%d), fmt:\'%s\' (at %p), %p with max len %d\n",
+	 locale, flags, 
+	 xtime->wDay, xtime->wHour, xtime->wMinute, xtime->wSecond,
+	 abuf, format, output, outlen);
+   
+
+   /* initialize state variables */
+   inpos = outpos = 0;
+   count = 0;
+   inquote = Overflow = 0;
+   /* this is really just a sanity check */
+   output[0] = buf[0] = 0;
+   abuf[0] = '\0';
+   /* for compatibility with official Windows behavior */
+   usedate = flags & DATE_DATEVARSONLY;
+   usetime = flags & TIME_TIMEVARSONLY;
+   
+   /* this loop is the core of the function */
+   for (inpos = 0; /* we have several break points */ ; inpos++) {
+      if (inquote) {
+	 if (format[inpos] == (WCHAR) '\'') {
+	    if (format[inpos+1] == '\'') {
+	       inpos++;
+	       output[outpos++] = '\'';
+	    } else {
+	       inquote = 0;
+	       continue;
+	    }
+	 } else if (format[inpos] == 0) {
+	    output[outpos++] = 0;
+	    if (outpos > outlen) Overflow = 1;
+	    break;  /*  normal exit (within a quote) */
+	 } else {
+	    output[outpos++] = format[inpos]; /* copy input */
+	    if (outpos > outlen) {
+	       Overflow = 1;
+	       output[outpos-1] = 0; 
+	       break;
+	    }
+	 }
+      } else if (  (count && (format[inpos] != type))
+		   || ( (count==4 && type =='y') ||
+			(count==4 && type =='M') ||
+			(count==4 && type =='d') ||
+			(count==2 && type =='g') ||
+			(count==2 && type =='h') ||
+			(count==2 && type =='H') ||
+			(count==2 && type =='m') ||
+			(count==2 && type =='s') ||
+			(count==2 && type =='t') )  ) {
+	 if        (type == 'd') {
+	    if        (count == 3) {
+	       GetLocaleInfo32W(locale,
+			     LOCALE_SDAYNAME1 + xtime->wDayOfWeek -1,
+			     buf, sizeof(buf)/sizeof(WCHAR) );
+	    } else if (count == 3) {
+	       GetLocaleInfo32W(locale,
+				LOCALE_SABBREVDAYNAME1 +
+				xtime->wDayOfWeek -1,
+				buf, sizeof(buf)/sizeof(WCHAR) );
+	    } else {
+	       wsnprintf32W(buf, 5, argarr[count], xtime->wDay );
+	    };
+	 } else if (type == 'M') {
+	    if        (count == 4) {
+	       GetLocaleInfo32W(locale,  LOCALE_SMONTHNAME1 +
+				xtime->wMonth -1, buf,
+				sizeof(buf)/sizeof(WCHAR) );
+	    } else if (count == 3) {
+	       GetLocaleInfo32W(locale,  LOCALE_SABBREVMONTHNAME1 +
+				xtime->wMonth -1, buf,
+				sizeof(buf)/sizeof(WCHAR) );
+	    } else {
+	       wsnprintf32W(buf, 5, argarr[count], xtime->wMonth);
+	    }
+	 } else if (type == 'y') {
+	    if        (count == 4) {
+	       wsnprintf32W(buf, 6, argarr[1] /* "%d" */,
+			 xtime->wYear);
+	    } else if (count == 3) {
+	       lstrcpynAtoW(buf, "yyy", 5);
+	    } else {
+	       wsnprintf32W(buf, 6, argarr[count],
+			    xtime->wYear % 100);
+	    }
+	 } else if (type == 'g') {
+	    if        (count == 2) {
+	       FIXME(ole, "LOCALE_ICALENDARTYPE unimplemented\n");
+	       lstrcpynAtoW(buf, "AD", 5);
+	    } else {
+	       /* Win API sez we copy it verbatim */
+	       lstrcpynAtoW(buf, "g", 5);
+	    }
+	 } else if (type == 'h') {
+	    /* hours 1:00-12:00 --- is this right? */
+	    wsnprintf32W(buf, 5, argarr[count], 
+			 (xtime->wHour-1)%12 +1);
+	 } else if (type == 'H') {
+	    wsnprintf32W(buf, 5, argarr[count], 
+			 xtime->wHour);
+	 } else if (type == 'm') {
+	    wsnprintf32W(buf, 5, argarr[count],
+			 xtime->wMinute);
+	 } else if (type == 's') {
+	    wsnprintf32W(buf, 5, argarr[count],
+			 xtime->wSecond);
+	 } else if (type == 't') {
+	    GetLocaleInfo32W(locale, (xtime->wHour < 12) ?
+			     LOCALE_S1159 : LOCALE_S2359,
+			     buf, sizeof(buf) );
+	    if        (count == 1) {
+	       buf[1] = 0;
+	    }
+}
+
+	 /* no matter what happened,  we need to check this next 
+	    character the next time we loop through */
+	 inpos--;
+
+	 /* cat buf onto the output */
+	 outlen = lstrlen32W(buf);
+	 if (outpos + buflen < outlen) {
+	    output[outpos] = 0;  /* a "hook" for strcat */
+	    lstrcat32W(output, buf);
+	    outpos += buflen;
+	 } else {
+	    output[outpos] = 0;
+	    lstrcatn32W(output, buf, outlen - outpos);
+	    output[outlen - 1] = 0;
+	    Overflow = 1;
+	    break; /* Abnormal exit */
+	 }
+
+	 /* reset the variables we used this time */
+	 count = 0;
+	 type = '\0';
+      } else if (format[inpos] == 0) {
+	 /* we can't check for this at the beginning,  because that 
+	 would keep us from printing a format spec that ended the 
+	 string */
+	 output[outpos] = 0;
+	 break;  /*  NORMAL EXIT  */
+      } else if (count) {
+	 /* how we keep track of the middle of a format spec */
+	 count++;
+	 continue;
+      } else if ( (datevars && (format[inpos]=='d' ||
+				format[inpos]=='M' ||
+				format[inpos]=='y' ||
+				format[inpos]=='g')  ) ||
+		  (timevars && (format[inpos]=='H' ||
+				format[inpos]=='h' ||
+				format[inpos]=='m' ||
+				format[inpos]=='s' ||
+				format[inpos]=='t') )    ) {
+	 type = format[inpos];
+	 count = 1;
+	 continue;
+      } else if (format[inpos] == '\'') {
+	 inquote = 1;
+	 continue;
+      } else {
+	 /* unquoted literals */
+	 output[outpos++] = format[inpos];
+      }
+   }
+
+   if (Overflow) {
+      SetLastError(ERROR_INSUFFICIENT_BUFFER);
+      WARN(ole, " buffer overflow\n");
+   };
+
+   /* final string terminator and sanity check */
+   outpos++;
+   if (outpos > outlen-1) outpos = outlen-1;
+   output[outpos] = '0';
+
+   lstrcpynWtoA(abuf, output, sizeof(abuf) );
+   TRACE(ole, " returning string \'%s\'\n", abuf);
+	
+   return (!Overflow) ? outlen : 0;
    
 }
 
 
 /*****************************************************************
+ *  GetDateFormat32A() [KERNEL32.310] Makes an ASCII string of the date
  *
- *  GetDateFormat32A()
-
-  This function uses format to format the date,  or,  if format
-  is NULL, uses the default for the locale.  format is a string
-  of literal fields and characters as follows:
-
-  d    single-digit (no leading zero) day (of month)
-  dd   two-digit day (of month)
-  ddd  short day-of-week name
-  dddd long day-of-week name
-  M    single-digit month
-  MM   two-digit month
-  MMM  short month name
-  MMMM full month name
-  y    two-digit year, no leading 0
-  yy   two-digit year
-  yyyy four-digit year
-  gg   era string
-
- * ***********************/
+ * This function uses format to format the date,  or,  if format
+ * is NULL, uses the default for the locale.  format is a string
+ * of literal fields and characters as follows:
+ *
+ * - d    single-digit (no leading zero) day (of month)
+ * - dd   two-digit day (of month)
+ * - ddd  short day-of-week name
+ * - dddd long day-of-week name
+ * - M    single-digit month
+ * - MM   two-digit month
+ * - MMM  short month name
+ * - MMMM full month name
+ * - y    two-digit year, no leading 0
+ * - yy   two-digit year
+ * - yyyy four-digit year
+ * - gg   era string
+ *
+ */
 
 INT32 WINAPI GetDateFormat32A(LCID locale,DWORD flags,
 			      LPSYSTEMTIME xtime,
@@ -2521,11 +2603,11 @@ INT32 WINAPI GetDateFormat32A(LCID locale,DWORD flags,
 }
 
 /* ****************************************************************
- *  GetDateFormat32W()
-
+ * GetDateFormat32W() [KERNEL32.311] Makes a Unicode string of the date
+ *
  * Acts the same as GetDateFormat32A(),  except that it's Unicode.
  * Accepts & returns sizes as counts of Unicode characters.
-
+ *
  */
 INT32 WINAPI GetDateFormat32W(LCID locale,DWORD flags,
 			      LPSYSTEMTIME xtime,
@@ -2534,37 +2616,67 @@ INT32 WINAPI GetDateFormat32W(LCID locale,DWORD flags,
 {
    short datearr[] = {'1','9','9','4','-','1','-','1',0};
 
-   FIXME(ole, "STUB\n");   
+   FIXME(ole, "STUB (should call OLE_GetFormatW)\n");   
    lstrcpyn32W(date, datearr, datelen);
    return (  datelen < 9) ? datelen : 9;
    
    
 }
 
+
+/**************************************************************************
+ *              GetNumberFormat32A	(KERNEL32.355)
+ */
+INT32 WINAPI GetNumberFormat32A(LCID locale, DWORD dwflags,
+			       LPCSTR lpvalue,  char *lpFormat,
+			       LPSTR lpNumberStr, int cchNumber)
+/* NOTE: type of lpFormat should be CONST NUMBERFORMAT */
+
+{
+ int n;
+
+ FIXME(file,"%s: stub, no reformating done\n",lpvalue);
+
+ n = strlen(lpvalue);
+ if (cchNumber) { 
+   strncpy(lpNumberStr,lpvalue,cchNumber);
+   if (cchNumber <= n) {
+     lpNumberStr[cchNumber-1] = 0;
+     n = cchNumber-1;
+   }
+ }
+ return n;
+}
+ 
+
+
 /*****************************************************************
  *
- * GetTimeFormat32A() 
-
- Formats date according to format,  or locale default if format is
- NULL. The format consists of literal characters and fields as follows:
-
- h  hours with no leading zero (12-hour)
- hh hours with full two digits
- H  hours with no leading zero (24-hour)
- HH hours with full two digits
- m  minutes with no leading zero
- mm minutes with full two digits
- s  seconds with no leading zero
- ss seconds with full two digits
- t  time marker (A or P)
- tt time marker (AM, PM)
-
+ * GetTimeFormat32A() [KERNEL32.422] Makes an ASCII string of the time
+ *
+ * Formats date according to format,  or locale default if format is
+ * NULL. The format consists of literal characters and fields as follows:
+ *
+ * h  hours with no leading zero (12-hour)
+ * hh hours with full two digits
+ * H  hours with no leading zero (24-hour)
+ * HH hours with full two digits
+ * m  minutes with no leading zero
+ * mm minutes with full two digits
+ * s  seconds with no leading zero
+ * ss seconds with full two digits
+ * t  time marker (A or P)
+ * tt time marker (AM, PM)
+ *
  */
 
-INT32 WINAPI GetTimeFormat32A(LCID locale,DWORD flags,
-			      LPSYSTEMTIME xtime,
-			      LPCSTR format, 
-			      LPSTR timestr,INT32 timelen) 
+INT32 WINAPI 
+GetTimeFormat32A(LCID locale,        /* in  */
+		 DWORD flags,        /* in  */
+		 LPSYSTEMTIME xtime, /* in  */ 
+		 LPCSTR format,      /* in  */
+		 LPSTR timestr,      /* out */
+		 INT32 timelen       /* in  */) 
 {
    LPCSTR realformat;
    char fmt_buf[40];
@@ -2585,40 +2697,78 @@ INT32 WINAPI GetTimeFormat32A(LCID locale,DWORD flags,
    if (!locale) {
       locale = GetSystemDefaultLCID();
    }
-
-
    return OLE_GetFormatA(locale, flags, xtime, realformat, timestr, timelen);
-
 }
 
+
 /* ****************************************************************
- *  GetTimeFormat32W()
+ *  GetTimeFormat32W()  [KERNEL32.423] Makes a Unicode string of the time
  * 
+
  *
  */
 
-INT32 WINAPI GetTimeFormat32W(LCID locale,DWORD flags,
+INT32 WINAPI 
+GetTimeFormat32W(LCID locale,DWORD flags,
 			      LPSYSTEMTIME xtime,
 			      LPCWSTR format, 
 			      LPWSTR timestr,INT32 timelen) 
 {
-   char buf[40];
+   char debugbuf[40];
+   WCHAR buf[20];
+   LPCWSTR realformat;
+   SYSTEMTIME t;
+   LPSYSTEMTIME realtime;
+   WCHAR * fmt_buf = NULL;
+   int fmt_buf_size = 0; /* units of WCHARs */
+   INT32 retval;
    
-   lstrcpynWtoA(buf, format, (sizeof(buf))/2);
-   
+   lstrcpynWtoA(debugbuf, format, (sizeof(buf))/2);
    TRACE(ole, "GetTimeFormatW len %d flags 0x%lX format >%s<\n",
-		timelen, flags, buf);
-   FIXME(ole, "STUB");
-   SetLastError(ERROR_INSUFFICIENT_BUFFER);
-   return 0;
+		timelen, flags, debugbuf);
 
+   /* Enforce the Windows behavior */
+   flags |= ~LOCALE_TIMEDATEBOTH;
+   flags |= TIME_TIMEVARSONLY;
 
+   /* take care of the format or locale not being given */
+   if (format) {
+      realformat = format;
+   } else if (locale) {
+      /* allocate memory */
+      fmt_buf = malloc((fmt_buf_size+=7) * sizeof(WCHAR));
+      if (!fmt_buf) {
+	 SetLastError(ERROR_INSUFFICIENT_BUFFER);
+	 WARN(ole, "could not allocate %d chars of memory\n", fmt_buf_size); 
+	 return 0;
+      };
+      while(!GetLocaleInfo32W(locale, LOCALE_STIMEFORMAT,
+			      fmt_buf, fmt_buf_size)) {
+	 fmt_buf = realloc(fmt_buf, 
+			   (fmt_buf_size += 10) * sizeof(WCHAR));
+	 if (!fmt_buf) {
+	    SetLastError(ERROR_OUTOFMEMORY);
+	    WARN(ole, "could not allocate %d chars of memory\n", fmt_buf_size); 
+	    return 0;
+	 };
+      };
+      realformat = fmt_buf;
+   } else {
+      FIXME(ole,  "caller gave no locale,  no format;  what should we do?\n");
+      SetLastError(ERROR_BAD_FORMAT);
+   };
+   if (!locale) {
+      locale = GetSystemDefaultLCID();
 }
 
+   realtime = xtime;
+   if (!realtime) {
+      realtime = &t;
+      GetSystemTime(realtime);
+   };
 
 
-
-
-
-
-
+   retval = OLE_GetFormatW(locale, flags, realtime, realformat, timestr,  timelen);
+   if (fmt_buf) free(fmt_buf);
+   return retval;
+}

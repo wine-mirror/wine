@@ -140,8 +140,7 @@ static const char *GetParamErrorString(UINT16 uErr) {
 */
 VOID WINAPI LogError(UINT16 uErr, LPVOID lpvInfo)
 {
-	fprintf(stddeb, "LogError(%s, %p)\n", 
-		GetErrorString(uErr), lpvInfo);
+	MSG("(%s, %p)\n", GetErrorString(uErr), lpvInfo);
 }
 
 
@@ -153,6 +152,5 @@ void WINAPI LogParamError(UINT16 uErr, FARPROC16 lpfn, LPVOID lpvParam)
 	/* FIXME: is it possible to get the module name/function
 	 * from the lpfn param?
 	 */
-	fprintf(stddeb, "LogParamError(%s, %p, %p)\n", 
-		GetParamErrorString(uErr), lpfn, lpvParam);
+	MSG("(%s, %p, %p)\n", GetParamErrorString(uErr), lpfn, lpvParam);
 }

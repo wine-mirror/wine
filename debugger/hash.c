@@ -754,8 +754,7 @@ static void DEBUG_LoadEntryPoints16( HMODULE16 hModule, NE_MODULE *pModule,
     {
         cpnt += *cpnt + 1 + sizeof(WORD);
         sprintf( buffer, "%s.%.*s", name, *cpnt, cpnt + 1 );
-        if ((address = MODULE_GetEntryPoint( hModule,
-                                             *(WORD *)(cpnt + *cpnt + 1) )))
+        if ((address = NE_GetEntryPoint(hModule, *(WORD *)(cpnt + *cpnt + 1))))
         {
             addr.seg = HIWORD(address);
             addr.off = LOWORD(address);
@@ -772,8 +771,7 @@ static void DEBUG_LoadEntryPoints16( HMODULE16 hModule, NE_MODULE *pModule,
     {
         cpnt += *cpnt + 1 + sizeof(WORD);
         sprintf( buffer, "%s.%.*s", name, *cpnt, cpnt + 1 );
-        if ((address = MODULE_GetEntryPoint( hModule,
-                                             *(WORD *)(cpnt + *cpnt + 1) )))
+        if ((address = NE_GetEntryPoint(hModule, *(WORD *)(cpnt + *cpnt + 1))))
         {
             addr.seg = HIWORD(address);
             addr.off = LOWORD(address);
@@ -875,16 +873,19 @@ void DEBUG_LoadEntryPoints(void)
     MODULEENTRY entry;
     NE_MODULE *pModule;
     BOOL32 ok;
+    WINE_MODREF	*wm;
 
     for (ok = ModuleFirst(&entry); ok; ok = ModuleNext(&entry))
     {
-        if (!(pModule = MODULE_GetPtr( entry.hModule ))) continue;
+        if (!(pModule = MODULE_GetPtr16( entry.hModule ))) continue;
         fprintf( stderr, " %s", entry.szModule );
 
-        if (pModule->flags & NE_FFLAGS_WIN32)  /* PE module */
-            DEBUG_LoadEntryPoints32( pModule->module32, entry.szModule );
-        else  /* NE module */
+        if (!(pModule->flags & NE_FFLAGS_WIN32))  /* NE module */
             DEBUG_LoadEntryPoints16( entry.hModule, pModule, entry.szModule );
+    }
+    for (wm=PROCESS_Current()->modref_list;wm;wm=wm->next) {
+        fprintf( stderr, " %s", wm->modname );
+	DEBUG_LoadEntryPoints32( wm->module, wm->modname );
     }
 }
 

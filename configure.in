@@ -227,6 +227,7 @@ AC_CACHE_CHECK( "for statfs.f_bavail", wine_cv_statfs_bavail,
         wine_cv_statfs_bavail=no
     else
     	AC_TRY_COMPILE([
+	#include <sys/types.h>
 	#ifdef HAVE_SYS_PARAM_H
 	# include <sys/param.h>
 	#endif
@@ -257,6 +258,7 @@ AC_CACHE_CHECK( "for statfs.f_bfree", wine_cv_statfs_bfree,
         wine_cv_statfs_bfree=no
     else
     	AC_TRY_COMPILE([
+	#include <sys/types.h>
 	#ifdef HAVE_SYS_PARAM_H
 	# include <sys/param.h>
 	#endif
@@ -303,6 +305,7 @@ ipc/Makefile
 library/Makefile
 libtest/Makefile
 loader/Makefile
+loader/ne/Makefile
 memory/Makefile
 misc/Makefile
 miscemu/Makefile

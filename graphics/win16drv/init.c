@@ -76,6 +76,7 @@ static const DC_FUNCTIONS WIN16DRV_Funcs =
     WIN16DRV_PatBlt,                 /* pPatBlt */
     NULL,                            /* pPie */
     NULL,                            /* pPolyPolygon */
+    NULL,                            /* pPolyPolyline */
     WIN16DRV_Polygon,                /* pPolygon */
     WIN16DRV_Polyline,               /* pPolyline */
     NULL,                            /* pRealizePalette */

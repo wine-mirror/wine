@@ -146,7 +146,7 @@ static XrmOptionDescRec optionsTable[] =
  */
 void MAIN_Usage( char *name )
 {
-    fprintf( stderr, USAGE, name );
+    MSG( USAGE, name );
     exit(1);
 }
 
@@ -281,9 +281,9 @@ static void MAIN_ParseLanguageOption( char *arg )
 	}
         Options.language++;
     }
-    fprintf( stderr, "Invalid language specified '%s'. Supported languages are: ", arg );
-    for (p = Languages; p->name; p++) fprintf( stderr, "%s ", p->name );
-    fprintf( stderr, "\n" );
+    MSG( "Invalid language specified '%s'. Supported languages are: ", arg );
+    for (p = Languages; p->name; p++) MSG( "%s ", p->name );
+    MSG( "\n" );
     exit(1);
 }
 
@@ -299,8 +299,8 @@ static void MAIN_ParseModeOption( char *arg )
     else if (!lstrcmpi32A("standard", arg)) Options.mode = MODE_STANDARD;
     else
     {
-        fprintf(stderr, "Invalid mode '%s' specified.\n", arg);
-        fprintf(stderr, "Valid modes are: 'standard', 'enhanced' (default).\n");
+        MSG( "Invalid mode '%s' specified.\n", arg);
+        MSG( "Valid modes are: 'standard', 'enhanced' (default).\n");
 	exit(1);
     }
 }
@@ -339,7 +339,7 @@ static void MAIN_ParseOptions( int *argc, char *argv[] )
 
     if (!(display = TSXOpenDisplay( display_name )))
     {
-	fprintf( stderr, "%s: Can't open display: %s\n",
+	MSG( "%s: Can't open display: %s\n",
 		 argv[0], display_name ? display_name : "(none specified)" );
 	exit(1);
     }
@@ -387,7 +387,7 @@ static void MAIN_ParseOptions( int *argc, char *argv[] )
     if (MAIN_GetResource( db, ".debugmsg", &value))
       {
 #ifndef DEBUG_RUNTIME
-	fprintf(stderr,"%s: Option \"-debugmsg\" not implemented.\n" \
+	MSG("%s: Option \"-debugmsg\" not implemented.\n" \
           "    Recompile with DEBUG_RUNTIME in include/debugtools.h defined.\n",
 	  argv[0]);
 	exit(1);
@@ -395,23 +395,23 @@ static void MAIN_ParseOptions( int *argc, char *argv[] )
 	if (ParseDebugOptions((char*)value.addr)==FALSE)
 	  {
 	    int i;
-	    fprintf(stderr,"%s: Syntax: -debugmsg [class]+xxx,...  or "
+	    MSG("%s: Syntax: -debugmsg [class]+xxx,...  or "
 		    "-debugmsg [class]-xxx,...\n",argv[0]);
-	    fprintf(stderr,"Example: -debugmsg +all,warn-heap"
+	    MSG("Example: -debugmsg +all,warn-heap"
 		    "turn on all messages except warning heap messages\n");
 
-	    fprintf(stderr,"Available message classes:\n");
+	    MSG("Available message classes:\n");
 	    for(i=0;i<DEBUG_CLASS_COUNT;i++)
-	      fprintf(stderr, "%-9s", debug_cl_name[i]);
-	    fprintf(stderr,"\n\n");
+	      MSG( "%-9s", debug_cl_name[i]);
+	    MSG("\n\n");
 
-	    fprintf(stderr,"Available message types:\n");
-	    fprintf(stderr,"%-9s ","all");
+	    MSG("Available message types:\n");
+	    MSG("%-9s ","all");
 	    for(i=0;i<DEBUG_CHANNEL_COUNT;i++)
 	      if(debug_ch_name[i])
-		fprintf(stderr,"%-9s%c",debug_ch_name[i],
+		MSG("%-9s%c",debug_ch_name[i],
 			(((i+2)%8==0)?'\n':' '));
-	    fprintf(stderr,"\n\n");
+	    MSG("\n\n");
 	    exit(1);
 	  }
 #endif
@@ -424,7 +424,7 @@ static void MAIN_ParseOptions( int *argc, char *argv[] )
           if (!__winelib) Options.dllFlags = xstrdup((char *)value.addr);
           else
           {
-              fprintf( stderr, "-dll not supported in Winelib\n" );
+              MSG("-dll not supported in Winelib\n" );
               exit(1);
           }
       }
@@ -472,7 +472,7 @@ static void MAIN_CreateDesktop( int argc, char *argv[] )
     class_hints = TSXAllocClassHint();
     if (!size_hints || !wm_hints || !class_hints)
     {
-        fprintf( stderr, "Not enough memory for window manager hints.\n" );
+        MSG("Not enough memory for window manager hints.\n" );
         exit(1);
     }
     size_hints->min_width = size_hints->max_width = width;
@@ -557,11 +557,11 @@ BOOL32 MAIN_WineInit( int *argc, char *argv[] )
     mcheck(NULL);
     if (!(trace = getenv("MALLOC_TRACE")))
     {       
-        fprintf( stderr, "MALLOC_TRACE not set. No trace generated\n" );
+        MSG( "MALLOC_TRACE not set. No trace generated\n" );
     }
     else
     {
-        fprintf( stderr, "malloc trace goes to %s\n", trace );
+        MSG( "malloc trace goes to %s\n", trace );
         mtrace();
     }
 #endif
@@ -584,7 +584,7 @@ BOOL32 MAIN_WineInit( int *argc, char *argv[] )
 
     if (Options.desktopGeometry && Options.managed)
     {
-        fprintf( stderr, "%s: -managed and -desktop options cannot be used together\n",
+        MSG( "%s: -managed and -desktop options cannot be used together\n",
                  Options.programName );
         exit(1);
     }
@@ -600,7 +600,7 @@ BOOL32 MAIN_WineInit( int *argc, char *argv[] )
 	TSXFree( depth_list );
 	if (i >= depth_count)
 	{
-	    fprintf( stderr, "%s: Depth %d not supported on this screen.\n",
+	    MSG( "%s: Depth %d not supported on this screen.\n",
 		              Options.programName, screenDepth );
 	    exit(1);
 	}
@@ -796,7 +796,7 @@ BOOL32 WINAPI SystemParametersInfo32A( UINT32 uAction, UINT32 uParam,
                 LPANIMATIONINFO lpAnimInfo = (LPANIMATIONINFO)lpvParam;
  
                 /* Do nothing */
-                fprintf(stderr, "SystemParametersInfo: SPI_SETANIMATION ignored.\n");
+                WARN(system, "SPI_SETANIMATION ignored.\n");
                 lpAnimInfo->cbSize = sizeof(ANIMATIONINFO);
                 uParam = sizeof(ANIMATIONINFO);
                 break;
@@ -982,7 +982,7 @@ BOOL16 WINAPI SystemParametersInfo16( UINT16 uAction, UINT16 uParam,
 		case SPI_SETKEYBOARDDELAY:
 		case SPI_SETKEYBOARDSPEED:
 	        case SPI_GETHIGHCONTRAST:
-			fprintf(stderr, "SystemParametersInfo: option %d ignored.\n", uAction);
+			WARN(system, "Option %d ignored.\n", uAction);
 			break;
 
                 case SPI_GETWORKAREA:
@@ -992,7 +992,7 @@ BOOL16 WINAPI SystemParametersInfo16( UINT16 uAction, UINT16 uParam,
                     break;
 
 		default:
-			fprintf(stderr, "SystemParametersInfo: unknown option %d.\n", uAction);
+			WARN(system, "Unknown option %d.\n", uAction);
 			break;
 	}
 	return 1;

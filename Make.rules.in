@@ -37,6 +37,8 @@ AR        = ar rc
 RM        = rm -f
 MKDIR     = mkdir
 C2MAN     = @C2MAN@
+LINT      = lclint
+LINTFLAGS = +posixlib +gnuextensions +trytorecover
 BUILD     = $(TOPOBJDIR)/tools/build@PROGEXT@
 MAKEDEP   = $(TOPOBJDIR)/tools/makedep@PROGEXT@
 WINERC    = $(TOPOBJDIR)/rc/winerc@PROGEXT@
@@ -113,6 +115,16 @@ $(MODULE).o: $(OBJS)
 
 man: $(C_SRCS)
 	for i in $(C_SRCS); do $(C2MAN) -L -o$(TOPOBJDIR)/documentation/man3w -S3w $(DIVINCL) $$i; done
+
+# Rule for linting
+
+lint:
+	for i in $(C_SRCS); do $(LINT) $(LINTFLAGS) -D__WINE__ $(OPTIONS) $(DIVINCL) $(X_CFLAGS) $$i; done
+
+# Rule for html pages
+
+html: $(C_SRCS)
+	for i in $(C_SRCS); do $(C2MAN) -L -o$(TOPOBJDIR)/documentation/html -Th -iwindows.h  $(DIVINCL) $$i; done
 
 # Misc. rules
 

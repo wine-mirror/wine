@@ -34,7 +34,7 @@
  *	 		 SHELL32_2   			[SHELL32.2]
  */
 DWORD WINAPI SHELL32_2(HWND32 hwnd,DWORD x2,DWORD x3,DWORD x4,DWORD x5,DWORD x6) {
-	fprintf(stderr,"SHELL32_2(0x%04x,0x%08lx,0x%08lx,0x%08lx,0x%08lx,0x%08lx),stub!\n",
+	FIXME(shell,"(0x%04x,0x%08lx,0x%08lx,0x%08lx,0x%08lx,0x%08lx):stub.\n",
 		hwnd,x2,x3,x4,x5,x6
 	);
 	return 0;
@@ -286,7 +286,7 @@ VOID WINAPI SHELL32_56(LPSTR str) {
  *	 		 SHELL32_58   			[SHELL32.58]
  */
 DWORD WINAPI SHELL32_58(LPCSTR src,DWORD x2,LPSTR target,DWORD pathlen) {
-	fprintf(stderr,"SHELL32_58(%s,0x%08lx,%p,%ld),STUB!\n",
+	FIXME(shell,"(%s,0x%08lx,%p,%ld):stub.\n",
 		src,x2,target,pathlen
 	);
 	if (!src)
@@ -298,7 +298,7 @@ DWORD WINAPI SHELL32_58(LPCSTR src,DWORD x2,LPSTR target,DWORD pathlen) {
  *	 		 SHELL32_62   			[SHELL32.62]
  */
 DWORD WINAPI SHELL32_62(DWORD x,DWORD y,DWORD z,DWORD a) {
-	fprintf(stderr,"SHELL32_62(%08lx,%08lx,%08lx,%08lx),stub!\n",x,y,z,a);
+	FIXME(shell,"(%08lx,%08lx,%08lx,%08lx):stub.\n",x,y,z,a);
 	return 0xffffffff;
 }
 
@@ -306,7 +306,7 @@ DWORD WINAPI SHELL32_62(DWORD x,DWORD y,DWORD z,DWORD a) {
  *                      SHELL32_63                     [SHELL32.63]
  */
 DWORD WINAPI SHELL32_63(HWND32 howner, LPSTR targetbuf, DWORD len, DWORD x, LPCSTR suffix, LPCSTR y, LPCSTR cmd) {
-    fprintf(stderr,"SHELL32_63(%04x,%p,%ld,%08lx,%s,%s,%s),stub!\n",
+    FIXME(shell,"(%04x,%p,%ld,%08lx,%s,%s,%s):stub.\n",
 	    howner,targetbuf,len,x,suffix,y,cmd
     );
     /* puts up a Open Dialog and requests input into targetbuf */
@@ -319,7 +319,7 @@ DWORD WINAPI SHELL32_63(HWND32 howner, LPSTR targetbuf, DWORD len, DWORD x, LPCS
  *                      SHELL32_68                     [SHELL32.68]
  */
 DWORD WINAPI SHELL32_68(DWORD x,DWORD y,DWORD z) {
-	fprintf(stderr,"SHELL32_68(0x%08lx,0x%08lx,0x%08lx),stub!\n",
+	FIXME(shell,"(0x%08lx,0x%08lx,0x%08lx):stub.\n",
 		x,y,z
 	);
 	return 0;
@@ -330,7 +330,7 @@ DWORD WINAPI SHELL32_68(DWORD x,DWORD y,DWORD z) {
  */
 BOOL32 WINAPI SHELL32_71(LPDWORD x,LPDWORD y) {
 
-	fprintf(stderr,"SHELL32_71(%p,%p),stub!\n",x,y);
+	FIXME(shell,"(%p,%p):stub.\n",x,y);
 	return TRUE;
 }
 
@@ -339,14 +339,14 @@ BOOL32 WINAPI SHELL32_71(LPDWORD x,LPDWORD y) {
  * dunno. something with icons
  */
 void WINAPI SHELL32_72(LPSTR x,DWORD y,DWORD z) {
-	fprintf(stderr,"SHELL32_72(%s,%08lx,%08lx),stub!\n",x,y,z);
+	FIXME(shell,"(%s,%08lx,%08lx):stub.\n",x,y,z);
 }
 
 /*************************************************************************
  *			 SHELL32_89   			[SHELL32.89]
  */
 DWORD WINAPI SHELL32_89(DWORD x1,DWORD x2,DWORD x3) {
-	fprintf(stderr,"SHELL32_89(0x%08lx,0x%08lx,0x%08lx),stub!\n",
+	FIXME(shell,"(0x%08lx,0x%08lx,0x%08lx):stub.\n",
 		x1,x2,x3
 	);
 	return 0;
@@ -357,7 +357,7 @@ DWORD WINAPI SHELL32_89(DWORD x1,DWORD x2,DWORD x3) {
  * unknown
  */
 void WINAPI SHELL32_119(LPVOID x) {
-    fprintf(stderr,"SHELL32_119(%p(%s)),stub\n",x,(char *)x);
+    FIXME(shell,"(%p(%s)):stub.\n",x,(char *)x);
 }
 
 /*************************************************************************
@@ -365,7 +365,7 @@ void WINAPI SHELL32_119(LPVOID x) {
  * unknown
  */
 void WINAPI SHELL32_175(DWORD x1,DWORD x2,DWORD x3,DWORD x4) {
-    fprintf(stderr,"SHELL32_175(0x%08lx,0x%08lx,0x%08lx,0x%08lx),stub\n",
+    FIXME(shell,"(0x%08lx,0x%08lx,0x%08lx,0x%08lx):stub.\n",
     	x1,x2,x3,x4
     );
 }
@@ -375,7 +375,7 @@ void WINAPI SHELL32_175(DWORD x1,DWORD x2,DWORD x3,DWORD x4) {
  * unknown
  */
 void WINAPI SHELL32_181(DWORD x,DWORD y) {
-    fprintf(stderr,"SHELL32_181(0x%08lx,0x%08lx)\n",x,y);
+    FIXME(shell,"(0x%08lx,0x%08lx):stub.\n",x,y);
 }
 
 /*************************************************************************
@@ -383,7 +383,7 @@ void WINAPI SHELL32_181(DWORD x,DWORD y) {
  * unknown
  */
 BOOL32 WINAPI SHELL32_75(LPDWORD x,LPDWORD y) {
-    fprintf(stderr,"SHELL32_75(%p,%p),stub\n",x,y);
+    FIXME(shell,"(%p,%p):stub.\n",x,y);
     return TRUE;
 }
 
@@ -391,7 +391,7 @@ BOOL32 WINAPI SHELL32_75(LPDWORD x,LPDWORD y) {
  *	 		 SHELL32_77   			[SHELL32.77]
  */
 DWORD WINAPI SHELL32_77(DWORD x,DWORD y,DWORD z) {
-	fprintf(stderr,"SHELL32_77(%08lx,%08lx,%08lx),stub!\n",x,y,z);
+	FIXME(shell,"(%08lx,%08lx,%08lx):stub.\n",x,y,z);
 	return 0;
 }
 
@@ -400,20 +400,24 @@ DWORD WINAPI SHELL32_77(DWORD x,DWORD y,DWORD z) {
  * create_directory_and_notify(...)
  */
 DWORD WINAPI SHELL32_79(LPCSTR dir,LPVOID xvoid) {
-	fprintf(stderr,"mkdir %s,%p\n",dir,xvoid);
+	TRACE(shell,"mkdir %s,%p\n",dir,xvoid);
 	if (!CreateDirectory32A(dir,xvoid))
 		return FALSE;
 	/* SHChangeNotify(8,1,dir,0); */
 	return TRUE;
 }
 
-static FARPROC32 _find_moduleproc(LPSTR dllname,HMODULE32 *xhmod,LPSTR name) {
+typedef DWORD (* WINAPI GetClassPtr)(REFCLSID,REFIID,LPVOID);
+
+static GetClassPtr SH_find_moduleproc(LPSTR dllname,HMODULE32 *xhmod,
+                                      LPSTR name)
+{
 	HMODULE32	hmod;
 	FARPROC32	dllunload,nameproc;
 
 	if (xhmod) *xhmod = 0;
 	if (!lstrcmpi32A(SHELL32_34(dllname),"shell32.dll"))
-		return (FARPROC32)SHELL32_DllGetClassObject;
+		return (GetClassPtr)SHELL32_DllGetClassObject;
 
 	hmod = LoadLibraryEx32A(dllname,0,LOAD_WITH_ALTERED_SEARCH_PATH);
 	if (!hmod)
@@ -427,17 +431,17 @@ static FARPROC32 _find_moduleproc(LPSTR dllname,HMODULE32 *xhmod,LPSTR name) {
 		return NULL;
 	}
 	/* register unloadable dll with unloadproc ... */
-	return nameproc;
+	return (GetClassPtr)nameproc;
 }
 
-static DWORD _get_instance(REFCLSID clsid,LPSTR dllname,
+static DWORD SH_get_instance(REFCLSID clsid,LPSTR dllname,
 	LPVOID	unknownouter,REFIID refiid,LPVOID inst
 ) {
-	DWORD	WINAPI	(*dllgetclassob)(REFCLSID,REFIID,LPVOID);
+        GetClassPtr     dllgetclassob;
 	DWORD		hres;
 	LPCLASSFACTORY	classfac;
 
-	dllgetclassob = (DWORD(*)(REFCLSID,REFIID,LPVOID))_find_moduleproc(dllname,NULL,"DllGetClassObject");
+	dllgetclassob = SH_find_moduleproc(dllname,NULL,"DllGetClassObject");
 	if (!dllgetclassob)
 		return 0x80070000|GetLastError();
 
@@ -455,6 +459,7 @@ static DWORD _get_instance(REFCLSID clsid,LPSTR dllname,
 	classfac->lpvtbl->fnRelease(classfac);
 	return 0;
 }
+
 /*************************************************************************
  *				SHELL32_102	[SHELL32.102]
  * unknown
@@ -476,29 +481,29 @@ LRESULT WINAPI SHELL32_102(
 		    return 0x80040154;
 		strcpy(xclsid,aclsid);
 	}
-	fprintf(stderr,"SHELL32_102(%p,%s,%p,%s,%p)\n",
+	TRACE(shell,"(%p,%s,%p,%s,%p)\n",
 		aclsid,xclsid,unknownouter,xiid,inst
 	);
 
 	sprintf(buffer,"CLSID\\%s\\InProcServer32",xclsid);
 	if (RegOpenKeyEx32A(HKEY_CLASSES_ROOT,buffer,0,0x02000000,&inprockey))
-		return _get_instance(clsid,"shell32.dll",unknownouter,refiid,inst);
+		return SH_get_instance(clsid,"shell32.dll",unknownouter,refiid,inst);
 	pathlen=sizeof(path);
 	if (RegQueryValue32A(inprockey,NULL,path,&pathlen)) {
 		RegCloseKey(inprockey);
-		return _get_instance(clsid,"shell32.dll",unknownouter,refiid,inst);
+		return SH_get_instance(clsid,"shell32.dll",unknownouter,refiid,inst);
 	}
-	fprintf(stderr,"	-> server dll is %s\n",path);
+	TRACE(shell, "Server dll is %s\n",path);
 	tmodellen=sizeof(tmodel);
 	type=REG_SZ;
 	if (RegQueryValueEx32A(inprockey,"ThreadingModel",NULL,&type,tmodel,&tmodellen)) {
 		RegCloseKey(inprockey);
-		return _get_instance(clsid,"shell32.dll",unknownouter,refiid,inst);
+		return SH_get_instance(clsid,"shell32.dll",unknownouter,refiid,inst);
 	}
-	fprintf(stderr,"	-> threading model is %s\n",tmodel);
-	hres=_get_instance(clsid,path,unknownouter,refiid,inst);
+	TRACE(shell, "Threading model is %s\n",tmodel);
+	hres=SH_get_instance(clsid,path,unknownouter,refiid,inst);
 	if (hres<0)
-		hres=_get_instance(clsid,"shell32.dll",unknownouter,refiid,inst);
+		hres=SH_get_instance(clsid,"shell32.dll",unknownouter,refiid,inst);
 	RegCloseKey(inprockey);
 	return hres;
 }
@@ -518,7 +523,7 @@ void __cdecl SHELL32_183(HMODULE32 hmod,HWND32 hwnd,DWORD id,DWORD x,DWORD type,
 	/* FIXME: the varargs handling doesn't. */
 	FormatMessage32A(0x500,buf2,0,0,&buf3,256,&args);
 
-	fprintf(stderr,"SHELL32_183(%08lx,%08lx,%08lx(%s),%08lx(%s),%08lx,%p),stub!\n",
+	FIXME(shell,"(%08lx,%08lx,%08lx(%s),%08lx(%s),%08lx,%p):stub.\n",
 		(DWORD)hmod,(DWORD)hwnd,id,buf2,x,buf,type,arglist
 	);
 	/*MessageBox32A(hwnd,buf3,buf,id|0x10000);*/
@@ -553,7 +558,7 @@ void __cdecl SHELL32_183(HMODULE32 hmod,HWND32 hwnd,DWORD id,DWORD x,DWORD type,
 DWORD WINAPI SHELL32_100(DWORD pol) {
 	HKEY	xhkey;
 
-	fprintf(stderr,"SHELL32_100(%08lx),stub!\n",pol);
+	FIXME(shell,"(%08lx):stub.\n",pol);
 	if (RegOpenKey32A(HKEY_CURRENT_USER,"Software\\Microsoft\\Windows\\CurrentVersion\\Policies",&xhkey))
 		return 0;
 	/* FIXME: do nothing for now, just return 0 (== "allowed") */
@@ -583,7 +588,7 @@ DWORD WINAPI SHELL32_152(LPITEMIDLIST iil) {
  *                      SHELL32_158                    [SHELL32.158]
  */
 LPSTR WINAPI SHELL32_158(LPSTR path,DWORD y,DWORD z) {
-    fprintf(stderr,"SHELL32_158(%s,%08lx,%08lx)\n",path,y,z);
+    TRACE(shell,"(%s,%08lx,%08lx)\n",path,y,z);
     path = SHELL32_31(path);
     return *path?(path+1):path;
 }
@@ -595,7 +600,7 @@ LPSTR WINAPI SHELL32_158(LPSTR path,DWORD y,DWORD z) {
 DWORD WINAPI SHELL32_165(DWORD x,LPCSTR path) {
 	if (SHELL32_79(path,(LPVOID)x))
 		return 0;
-	fprintf(stderr,"SHELL32_165(%08lx,%s),stub!\n",x,path);
+	FIXME(shell,"(%08lx,%s):stub.\n",x,path);
 	return 0;
 }
 
@@ -654,3 +659,4 @@ DWORD WINAPI SHELL32_155(LPVOID x) {
 		return 0;
 	return SHELL32_195(x);
 }
+

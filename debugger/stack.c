@@ -51,24 +51,16 @@ typedef struct
  */
 void DEBUG_InfoStack(void)
 {
-    DBG_ADDR addr;
-    WORD ss;
+    DBG_ADDR addr = { NULL, SS_reg(&DEBUG_context), ESP_reg(&DEBUG_context) };
 
     fprintf(stderr,"Stack dump:\n");
-    GET_SS(ss);
-    if ((SS_reg(&DEBUG_context) == ss) ||
-        (GET_SEL_FLAGS(SS_reg(&DEBUG_context)) & LDT_FLAGS_32BIT))
+    if (IS_SELECTOR_32BIT(addr.seg))
     {  /* 32-bit mode */
-        addr.seg = 0;
-        addr.off = ESP_reg(&DEBUG_context);
-	addr.type = NULL;
         DEBUG_ExamineMemory( &addr, 24, 'x' );
     }
     else  /* 16-bit mode */
     {
-        addr.seg = SS_reg(&DEBUG_context);
-        addr.off = SP_reg(&DEBUG_context);
-	addr.type = NULL;
+        addr.off &= 0xffff;
         DEBUG_ExamineMemory( &addr, 24, 'w' );
     }
     fprintf(stderr,"\n");
@@ -84,11 +76,9 @@ void DEBUG_BackTrace(void)
 {
     DBG_ADDR addr;
     int frameno = 0;
-    WORD ss;
 
     fprintf(stderr,"Backtrace:\n");
-    GET_SS(ss);
-    if (SS_reg(&DEBUG_context) == ss)  /* 32-bit mode */
+    if (IS_SELECTOR_SYSTEM(SS_reg(&DEBUG_context)))  /* system stack */
     {
         nframe = 1;
         if (frames) free( frames );
@@ -163,15 +153,13 @@ void DEBUG_BackTrace(void)
  */
 void DEBUG_SilentBackTrace(void)
 {
-    WORD ss;
     DBG_ADDR addr;
     int frameno = 0;
 
     nframe = 1;
     if (frames) free( frames );
     frames = (struct bt_info *) xmalloc( sizeof(struct bt_info) );
-    GET_SS(ss);
-    if (SS_reg(&DEBUG_context) == ss)  /* 32-bit mode */
+    if (IS_SELECTOR_SYSTEM(SS_reg(&DEBUG_context)))  /* system stack */
     {
         addr.seg = 0;
         addr.off = EIP_reg(&DEBUG_context);

@@ -20,15 +20,17 @@
 static CRITICAL_SECTION Win16Mutex;
 static SEGPTR segWin16Mutex = NULL;
 
+
 /***********************************************
  *           GetPWinLock    (KERNEL32.93)
  * Return the infamous Win16Mutex.
  */
 VOID WINAPI GetPWinLock(CRITICAL_SECTION **lock)
 {
-        fprintf(stderr,"GetPWinlock(%p)\n",lock);
-        *lock = &Win16Mutex;
+    FIXME(win32, "(%p)\n",lock);
+    *lock = &Win16Mutex;
 }
+
 
 /**********************************************************************
  *           WOW32_1        (KERNEL32.88)

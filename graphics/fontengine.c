@@ -2,28 +2,38 @@
  * True Type font engine support
  *
  * Copyright 1996 John Harvey
+ * Copyright 1998 David Lee Lambert
+ * 
  */
+#include "windows.h"
 #include <stdio.h>
 #include <stdlib.h>
-#include "windows.h"
+#include <debug.h>     
 #include "font.h"
 
-/* GDI 300 */
-WORD WINAPI EngineEnumerateFont(LPSTR fontname, FARPROC16 proc, DWORD data )
+
+
+/* **************************************************************** 
+ *    EngineEnumerateFont [GDI.300] 
+ */
+WORD WINAPI 
+EngineEnumerateFont(LPSTR fontname, FARPROC16 proc, DWORD data )
 {
-    fprintf(stderr,"EngineEnumerateFont(%s,%p,%lx),stub\n",fontname,proc,data);
+    FIXME(font,"(%s,%p,%lx),stub\n",fontname,proc,data);
     return 0;
 }
 
-/* GDI 301 */
+/* **************************************************************** 
+ *   EngineDeleteFont [GDI.301] 
+ */
 WORD WINAPI EngineDeleteFont(LPFONTINFO16 lpFontInfo)
 {
     WORD handle;
 
     /*	untested, don't know if it works.
 	We seem to access some structure that is located after the
-	FONTINFO. The FONTINFO docu says that there may follow some char-width
-	table or font bitmap or vector info.
+	FONTINFO. The FONTINFO documentation says that there may 
+	follow some char-width table or font bitmap or vector info.
 	I think it is some kind of font bitmap that begins at offset 0x52,
 	as FONTINFO goes up to 0x51.
 	If this is correct, everything should be implemented correctly.
@@ -39,46 +49,63 @@ WORD WINAPI EngineDeleteFont(LPFONTINFO16 lpFontInfo)
     return 1;
 }
 
-/* GDI 302 */
+/* ****************************************************************
+ *       EngineRealizeFont [GDI.302] 
+ */
 WORD WINAPI EngineRealizeFont(LPLOGFONT16 lplogFont, LPTEXTXFORM16 lptextxform, LPFONTINFO16 lpfontInfo)
 {
-    fprintf(stderr,"EngineRealizeFont(%p,%p,%p),stub\n",lplogFont,lptextxform,lpfontInfo);
+    FIXME(font,"(%p,%p,%p),stub\n",lplogFont,lptextxform,lpfontInfo);
     
     return 0;
 }
 
-/* GDI 303 */
+/* ****************************************************************
+ *        EngineGetCharWidth [GDI.303] 
+ */
 WORD WINAPI EngineGetCharWidth(LPFONTINFO16 lpFontInfo, BYTE firstChar, BYTE lastChar, LPINT16 buffer)
 {
     int i;
 
     for (i = firstChar; i <= lastChar; i++)
+       FIXME(font, " returns font's average width for range %d to %d\n", firstChar, lastChar);
 	*buffer++ = lpFontInfo->dfAvgWidth; /* insert some charwidth functionality here; use average width for now */
     return 1;
 }
 
-/* GDI 304 */
+/* ****************************************************************
+ *      EngineSetFontContext [GDI.304] 
+ */
 WORD WINAPI EngineSetFontContext(LPFONTINFO16 lpFontInfo, WORD data)
 {
+   FIXME(font, "stub?\n");
 	return 0;
 }
 
-/* GDI 305 */
+/* ****************************************************************
+ *       EngineGetGlyphBMP   [GDI.305] 
+ */
 WORD WINAPI EngineGetGlyphBMP(WORD word, LPFONTINFO16 lpFontInfo, WORD w1, WORD w2, LPSTR string, DWORD dword, /*LPBITMAPMETRICS16*/ LPVOID metrics)
 {
+   FIXME(font, "stub?\n");
     return 0;
 }
 
-/* GDI 306 */
+/* ****************************************************************
+ *             EngineMakeFontDir  [GDI.306] 
+ */
 DWORD WINAPI EngineMakeFontDir(HDC16 hdc, LPFONTDIR16 fontdir, LPCSTR string)
 {
+   FIXME(font, " stub! (always fails)\n");
     return -1; /* error */
     
 }
 
-/* GDI 314 */
+/* ****************************************************************
+ *              EngineExtTextOut [GDI.314] 
+ */
 
 WORD WINAPI EngineExtTextOut()
 {
+   FIXME(font, "stub!\n");
     return 0;
 }

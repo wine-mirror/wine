@@ -168,51 +168,6 @@ struct relocation_entry_s
 #define NE_RELFLAG_ADDITIVE	4
 
 /*
- * DOS PSP
- */
-struct dos_psp_s
-{
-    unsigned short pspInt20;
-    unsigned short pspNextParagraph;
-    unsigned char  pspReserved1;
-    unsigned char  pspDispatcher[5];
-    unsigned short pspTerminateVector[2];
-    unsigned short pspControlCVector[2];
-    unsigned short pspCritErrorVector[2];
-    unsigned short pspReserved2[11];
-    unsigned short pspEnvironment;
-    unsigned short pspReserved3[23];
-    unsigned char  pspFCB_1[16];
-    unsigned char  pspFCB_2[16];
-    unsigned char  pspReserved4[4];
-    unsigned char  pspCommandTailCount;
-    unsigned char  pspCommandTail[128];
-};
-
-/*
- * Entry table structures.
- */
-struct entry_tab_header_s
-{
-    unsigned char n_entries;
-    unsigned char seg_number;
-};
-
-struct entry_tab_movable_s
-{
-    unsigned char flags;
-    unsigned char int3f[2];
-    unsigned char seg_number;
-    unsigned short offset;
-};
-
-struct entry_tab_fixed_s
-{
-    unsigned char flags;
-    unsigned char offset[2];
-};
-
-/*
  * Resource table structures.
  */
 struct resource_nameinfo_s
@@ -229,7 +184,7 @@ struct resource_typeinfo_s
 {
     unsigned short type_id;	/* Type identifier */
     unsigned short count;	/* Number of resources of this type */
-    DWORD	   resloader;	/* SetResourceHandler() */
+    FARPROC16	   resloader;	/* SetResourceHandler() */
     /*
      * Name info array.
      */

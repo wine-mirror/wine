@@ -238,6 +238,41 @@ void WINAPI GetWindowRect32( HWND32 hwnd, LPRECT32 rect )
 
 
 /***********************************************************************
+ *           GetWindowRgn32 
+ */
+BOOL32 WINAPI GetWindowRgn32 ( HWND32 hwnd, HRGN32 hrgn )
+
+{
+  RECT32    rect;
+  WND * wndPtr = WIN_FindWndPtr( hwnd ); 
+  if (!wndPtr) return (ERROR);
+
+  FIXME (win, "GetWindowRgn32: doesn't really do regions\n"); 
+  
+  memset (&rect, 0, sizeof(rect));
+
+  GetWindowRect32 ( hwnd, &rect );
+
+  FIXME (win, "Check whether a valid region here\n");
+
+  SetRectRgn32 ( hrgn, rect.left, rect.top, rect.right, rect.bottom );
+
+  return (SIMPLEREGION);
+}
+
+/***********************************************************************
+ *           SetWindowRgn32 
+ */
+BOOL32 WINAPI SetWindowRgn32 ( HWND32 hwnd, HRGN32 hrgn,BOOL32 bRedraw)
+
+{
+
+  FIXME (win, "SetWindowRgn32: stub\n"); 
+  return TRUE;
+}
+
+
+/***********************************************************************
  *           GetClientRect16   (USER.33)
  */
 void WINAPI GetClientRect16( HWND16 hwnd, LPRECT16 rect ) 

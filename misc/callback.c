@@ -6,6 +6,7 @@
 
 #include <assert.h>
 #include <stdio.h>
+#include "debug.h"
 #include "windows.h"
 #include "callback.h"
 #include "task.h"
@@ -27,7 +28,7 @@ static LRESULT WINAPI CALLBACK_CallWndProc( WNDPROC16 proc, HWND16 hwnd,
  */
 static LONG WINAPI CALLBACK_CallRegisterProc( CONTEXT *context, INT32 offset)
 {
-    fprintf( stderr, "Cannot call a register proc in Winelib\n" );
+    ERR(relay, "Cannot call a register proc in Winelib\n" );
     assert( FALSE );
     return 0;
 }
@@ -208,7 +209,7 @@ static BOOL32 WINAPI CALLBACK_CallWOWCallback16Ex(
 	    );
 	    break;
     default:
-	    fprintf(stderr,"CALLBACK_CallWOWCallback16Ex(), %ld arguments not supported.!n",cbArgs);
+	    WARN(relay,"(%ld) arguments not supported.\n",cbArgs);
 	    if (dwFlags == WCB16_CDECL)
 		HeapFree(GetProcessHeap(),0,args);
 	    return FALSE;

@@ -182,7 +182,7 @@ int LDT_SetEntry( int entry, const ldt_entry *content )
         {
             if (ldt_info.base_addr >= 0xc0000000)
             {
-                fprintf( stderr, "LDT_SetEntry: invalid base addr %08lx\n",
+                WARN(ldt, "Invalid base addr %08lx\n",
                          ldt_info.base_addr );
                 return -1;
             }
@@ -212,8 +212,7 @@ int LDT_SetEntry( int entry, const ldt_entry *content )
         if (ret < 0)
         {
             perror("i386_set_ldt");
-            fprintf(stderr,
-		"Did you reconfigure the kernel with \"options USER_LDT\"?\n");
+            MSG("Did you reconfigure the kernel with \"options USER_LDT\"?\n");
     	    exit(1);
         }
     }
@@ -287,7 +286,7 @@ void LDT_Print( int start, int length )
             flags[1] = (ldt_flags_copy[i] & LDT_FLAGS_READONLY) ? '-' : 'w';
             flags[2] = '-';
         }
-        fprintf(stderr,"%04x: sel=%04x base=%08lx limit=%08lx %d-bit %c%c%c\n",
+        TRACE(ldt,"%04x: sel=%04x base=%08lx limit=%08lx %d-bit %c%c%c\n",
                 i, ENTRY_TO_SELECTOR(i),
                 ldt_copy[i].base, ldt_copy[i].limit,
                 ldt_flags_copy[i] & LDT_FLAGS_32BIT ? 32 : 16,

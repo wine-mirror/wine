@@ -39,16 +39,16 @@ DWORD WINAPI DrvGetPrinterData(LPSTR lpPrinter, LPSTR lpProfile,
                                LPDWORD lpType, LPBYTE lpPrinterData,
                                int cbData, LPDWORD lpNeeded)
 {
-    fprintf(stderr,"In DrvGetPrinterData ");
+    FIXME(print, "stub.\n");
     if (HIWORD(lpPrinter))
-	    fprintf(stderr,"printer %s ",lpPrinter);
+	    TRACE(print,"printer %s\n",lpPrinter);
     else
-	    fprintf(stderr,"printer %p ",lpPrinter);
+	    TRACE(print,"printer %p\n",lpPrinter);
     if (HIWORD(lpProfile))
-	    fprintf(stderr,"profile %s ",lpProfile);
+	    TRACE(print,"profile %s\n",lpProfile);
     else
-	    fprintf(stderr,"profile %p ",lpProfile);
-    fprintf(stderr,"lpType %p\n",lpType);
+	    TRACE(print,"profile %p\n",lpProfile);
+    TRACE(print,"lpType %p\n",lpType);
     return 0;
 }
 
@@ -58,16 +58,16 @@ DWORD WINAPI DrvSetPrinterData(LPSTR lpPrinter, LPSTR lpProfile,
                                LPDWORD lpType, LPBYTE lpPrinterData,
                                DWORD dwSize)
 {
-    fprintf(stderr,"In DrvSetPrinterData ");
+    FIXME(print, "stub.\n");
     if (HIWORD(lpPrinter))
-	    fprintf(stderr,"printer %s ",lpPrinter);
+	    TRACE(print,"printer %s\n",lpPrinter);
     else
-	    fprintf(stderr,"printer %p ",lpPrinter);
+	    TRACE(print,"printer %p\n",lpPrinter);
     if (HIWORD(lpProfile))
-	    fprintf(stderr,"profile %s ",lpProfile);
+	    TRACE(print,"profile %s\n",lpProfile);
     else
-	    fprintf(stderr,"profile %p ",lpProfile);
-    fprintf(stderr,"lpType %p\n",lpType);
+	    TRACE(print,"profile %p\n",lpProfile);
+    TRACE(print,"lpType %p\n",lpType);
     return 0;
 }
 
@@ -75,7 +75,7 @@ DWORD WINAPI DrvSetPrinterData(LPSTR lpPrinter, LPSTR lpProfile,
 INT32 WINAPI DeviceCapabilities32A(LPCSTR printer,LPCSTR target,WORD z,
                                    LPSTR a,LPDEVMODE32A b)
 {
-    fprintf(stderr,"DeviceCapabilitiesA(%s,%s,%d,%p,%p)\n",printer,target,z,a,b);
+    FIXME(print,"(%s,%s,%d,%p,%p):stub.\n",printer,target,z,a,b);
     return 1;   	
 }
 
@@ -83,7 +83,7 @@ LONG WINAPI DocumentProperties32A(HWND32 hWnd,HANDLE32 hPrinter,
                                 LPSTR pDeviceName, LPDEVMODE32A pDevModeOutput,
                                   LPDEVMODE32A pDevModeInput,DWORD fMode )
 {
-    fprintf(stderr,"DocumentPropertiesA(%d,%d,%s,%p,%p,%ld)\n",
+    FIXME(print,"(%d,%d,%s,%p,%p,%ld):stub.\n",
 	hWnd,hPrinter,pDeviceName,pDevModeOutput,pDevModeInput,fMode
     );
     return 1;
@@ -92,7 +92,7 @@ LONG WINAPI DocumentProperties32A(HWND32 hWnd,HANDLE32 hPrinter,
 BOOL32 WINAPI OpenPrinter32A(LPSTR lpPrinterName,HANDLE32 *phPrinter,
 			     LPPRINTER_DEFAULTS32A pDefault)
 {
-    fprintf(stderr,"OpenPrinter32A(%s,%p,%p), stub\n",
+    FIXME(print,"(%s,%p,%p):stub.\n",
 	    lpPrinterName, phPrinter, pDefault);
     SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
     return FALSE;
@@ -102,7 +102,7 @@ BOOL32  WINAPI EnumPrinters32A(DWORD dwType, LPSTR lpszName,
 			       DWORD cbBuf, LPDWORD lpdwNeeded,
 			       LPDWORD lpdwReturned)
 {
-    fprintf(stderr,"EnumPrinters32A nearly empty stub\n");
+    FIXME(print,"Nearly empty stub\n");
     *lpdwReturned=0;
     return TRUE;
 }

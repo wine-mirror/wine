@@ -170,7 +170,7 @@ static HMODULE16 BUILTIN_DoLoadModule16( const WIN16_DESCRIPTOR *descr )
     if (pModule->heap_size)
         LocalInit( pSegTable->selector, pSegTable->minsize, minsize );
 
-    MODULE_RegisterModule( pModule );
+    NE_RegisterModule( pModule );
     return hModule;
 }
 
@@ -197,27 +197,42 @@ BOOL32 BUILTIN_Init(void)
 
     /* Set the USER and GDI heap selectors */
 
-    pModule      = MODULE_GetPtr( GetModuleHandle16( "USER" ));
+    pModule      = MODULE_GetPtr16( GetModuleHandle16( "USER" ));
     USER_HeapSel = (NE_SEG_TABLE( pModule ) + pModule->dgroup - 1)->selector;
-    pModule      = MODULE_GetPtr( GetModuleHandle16( "GDI" ));
+    pModule      = MODULE_GetPtr16( GetModuleHandle16( "GDI" ));
     GDI_HeapSel  = (NE_SEG_TABLE( pModule ) + pModule->dgroup - 1)->selector;
 
     /* Initialize KERNEL.178 (__WINFLAGS) with the correct flags value */
 
     hModule = GetModuleHandle16( "KERNEL" );
-    MODULE_SetEntryPoint( hModule, 178, GetWinFlags() );
+    NE_SetEntryPoint( hModule, 178, GetWinFlags() );
 
     /* Initialize the real-mode selector entry points */
 
-    DOSMEM_InitExports( hModule );
+#define SET_ENTRY_POINT( num, addr ) \
+    NE_SetEntryPoint( hModule, (num), GLOBAL_CreateBlock( GMEM_FIXED, \
+                      DOSMEM_MapDosToLinear(addr), 0x10000, hModule, \
+                      FALSE, FALSE, FALSE, NULL ))
+
+    SET_ENTRY_POINT( 183, 0x00000 );  /* KERNEL.183: __0000H */
+    SET_ENTRY_POINT( 174, 0xa0000 );  /* KERNEL.174: __A000H */
+    SET_ENTRY_POINT( 181, 0xb0000 );  /* KERNEL.181: __B000H */
+    SET_ENTRY_POINT( 182, 0xb8000 );  /* KERNEL.182: __B800H */
+    SET_ENTRY_POINT( 195, 0xc0000 );  /* KERNEL.195: __C000H */
+    SET_ENTRY_POINT( 179, 0xd0000 );  /* KERNEL.179: __D000H */
+    SET_ENTRY_POINT( 190, 0xe0000 );  /* KERNEL.190: __E000H */
+    SET_ENTRY_POINT( 173, 0xf0000 );  /* KERNEL.173: __ROMBIOS */
+    SET_ENTRY_POINT( 194, 0xf0000 );  /* KERNEL.194: __F000H */
+    NE_SetEntryPoint( hModule, 193, DOSMEM_BiosSeg ); /* KERNEL.193: __0040H */
+#undef SET_ENTRY_POINT
 
     /* Set interrupt vectors from entry points in WPROCS.DLL */
 
     hModule = GetModuleHandle16( "WPROCS" );
     for (vector = 0; vector < 256; vector++)
     {
-        FARPROC16 proc = MODULE_GetEntryPoint( hModule,
-                                               FIRST_INTERRUPT_ORDINAL+vector);
+        FARPROC16 proc = NE_GetEntryPoint( hModule,
+                                           FIRST_INTERRUPT_ORDINAL + vector );
         assert(proc);
         INT_SetHandler( vector, proc );
     }
@@ -266,7 +281,7 @@ LPCSTR BUILTIN_GetEntryPoint16( WORD cs, WORD ip, WORD *pOrd )
     register BYTE *p;
     NE_MODULE *pModule;
 
-    if (!(pModule = MODULE_GetPtr( FarGetOwner( GlobalHandle16(cs) ))))
+    if (!(pModule = MODULE_GetPtr16( FarGetOwner( GlobalHandle16(cs) ))))
         return NULL;
 
     /* Search for the ordinal */
@@ -299,7 +314,7 @@ LPCSTR BUILTIN_GetEntryPoint16( WORD cs, WORD ip, WORD *pOrd )
             }
             break;
         case 0xff: /* moveable (should not happen in built-in modules) */
-            fprintf( stderr, "Built-in module has moveable entry\n" );
+            TRACE( relay, "Built-in module has moveable entry\n" );
             ordinal += *p;
             p += 2 + *p * 6;
             break;
@@ -396,14 +411,14 @@ void BUILTIN_PrintDLLs(void)
     int i;
     BUILTIN16_DLL *dll;
 
-    fprintf(stderr,"Example: -dll -ole2    Do not use emulated OLE2.DLL\n");
-    fprintf(stderr,"Available Win16 DLLs:\n");
+    MSG("Example: -dll -ole2    Do not use emulated OLE2.DLL\n");
+    MSG("Available Win16 DLLs:\n");
     for (i = 0, dll = BuiltinDLLs; dll->descr; dll++)
     {
         if (!(dll->flags & DLL_FLAG_ALWAYS_USED))
-            fprintf( stderr, "%-9s%c", dll->descr->name,
+            MSG("%-9s%c", dll->descr->name,
                      ((++i) % 8) ? ' ' : '\n' );
     }
-    fprintf(stderr,"\n");
+    MSG("\n");
     BUILTIN32_PrintDLLs();
 }

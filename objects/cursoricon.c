@@ -44,6 +44,7 @@
 #include "keyboard.h"
 
 extern UINT16 COLOR_GetSystemPaletteSize();
+extern void _XInitImageFuncPtrs(XImage *);
 
 Cursor CURSORICON_XCursor = None;    /* Current X cursor */
 static HCURSOR32 hActiveCursor = 0;  /* Active cursor */
@@ -63,7 +64,7 @@ static ICONDIRENTRY *CURSORICON_FindBestIcon( CURSORICONDIR *dir, int width,
 
     if (dir->idCount < 1)
     {
-        fprintf( stderr, "Icon: empty directory!\n" );
+        WARN(icon, "Empty directory!\n" );
         return NULL;
     }
     if (dir->idCount == 1) return &dir->idEntries[0].icon;  /* No choice... */
@@ -168,7 +169,7 @@ static CURSORDIRENTRY *CURSORICON_FindBestCursor( CURSORICONDIR *dir,
 
     if (dir->idCount < 1)
     {
-        fprintf( stderr, "Cursor: empty directory!\n" );
+        WARN(cursor, "Empty directory!\n" );
         return NULL;
     }
     if (dir->idCount == 1) return &dir->idEntries[0].cursor; /* No choice... */
@@ -278,7 +279,7 @@ static BOOL32 CURSORICON_LoadDirEntry32( HINSTANCE32 hInstance, LPCWSTR name,
  *        Convert to mono when cFlag is LR_MONOCHROME. Do something
  *        with cbSize parameter as well.
  */
-static HGLOBAL16 CURSORICON_CreateFromResource( HINSTANCE32 hInstance, HGLOBAL16 hObj, LPBYTE bits,
+static HGLOBAL16 CURSORICON_CreateFromResource( HINSTANCE16 hInstance, HGLOBAL16 hObj, LPBYTE bits,
 	 					UINT32 cbSize, BOOL32 bIcon, DWORD dwVersion, 
 						INT32 width, INT32 height, UINT32 cFlag )
 {
@@ -400,7 +401,7 @@ static HGLOBAL16 CURSORICON_CreateFromResource( HINSTANCE32 hInstance, HGLOBAL16
 	CURSORICONINFO *info;
 
 	/* Make it owned by the module */
-	if (hInstance) FarSetOwner( hObj, MODULE_HANDLEtoHMODULE16(hInstance));
+	if (hInstance) FarSetOwner( hObj, GetExePtr(hInstance) );
 
 	info = (CURSORICONINFO *)GlobalLock16( hObj );
 	info->ptHotSpot.x   = hotspot.x;
@@ -571,7 +572,7 @@ static HGLOBAL32 CURSORICON_Load32( HINSTANCE32 hInstance, LPCWSTR name,
 	    if( !pRsrcEntry->ResourceHandle ) 
 	    {
 		LPBYTE bits = (LPBYTE)LockResource32( handle );
-		h = CURSORICON_CreateFromResource( hInstance, 0, bits, dirEntry.icon.dwBytesInRes, 
+		h = CURSORICON_CreateFromResource( 0, 0, bits, dirEntry.icon.dwBytesInRes, 
 					!fCursor, 0x00030000, width, height, LR_DEFAULTCOLOR );
 		pRsrcEntry->ResourceHandle = h;
 	    }
@@ -1099,7 +1100,8 @@ static BOOL32 CURSORICON_SetCursor( HCURSOR16 hCursor )
         while(hwnd)
         {
             Window win = WIN_GetXWindow( hwnd );
-            if (win) XDefineCursor( display, win, cursor );
+            if (win && win!=DefaultRootWindow(display))
+                XDefineCursor( display, win, cursor );
             hwnd = GetWindow32( hwnd, GW_HWNDNEXT );
         }
     }
@@ -1555,31 +1557,54 @@ HICON32 WINAPI CreateIconIndirect(LPICONINFO iconinfo) {
     return hObj;
 }
 
+
 /**********************************************************************
  *          DrawIconEx16		(USER.394)
  */
-
 BOOL16 WINAPI DrawIconEx16 (HDC16 hdc, INT16 xLeft, INT16 yTop, HICON16 hIcon,
 			    INT16 cxWidth, INT16 cyWidth, UINT16 istep,
 			    HBRUSH16 hbr, UINT16 flags)
 {
-  return DrawIconEx32 (hdc, xLeft, yTop, hIcon, cxWidth, cyWidth,
-		       istep, hbr, flags);
+    return DrawIconEx32(hdc, xLeft, yTop, hIcon, cxWidth, cyWidth,
+                        istep, hbr, flags);
 }
 
-/**********************************************************************
- *          DrawIconEx32		(USER32.160)
- */
 
-BOOL32 WINAPI DrawIconEx32 (HDC32 hdc, INT32 x0, INT32 y0, HICON32 hIcon,
-			    INT32 cxWidth, INT32 cyWidth, UINT32 istep,
-			    HBRUSH32 hbr, UINT32 flags)
+/******************************************************************************
+ * DrawIconEx32 [USER32.160]  Draws an icon or cursor on device context
+ *
+ * NOTES
+ *    Why is this using SM_CXICON instead of SM_CXCURSOR?
+ *
+ * PARAMS
+ *    hdc     [I] Handle to device context
+ *    x0      [I] X coordinate of upper left corner
+ *    y0      [I] Y coordinate of upper left corner
+ *    hIcon   [I] Handle to icon to draw
+ *    cxWidth [I] Width of icon
+ *    cyWidth [I] Height of icon
+ *    istep   [I] Index of frame in animated cursor
+ *    hbr     [I] Handle to background brush
+ *    flags   [I] Icon-drawing flags
+ *
+ * RETURNS
+ *    Success: TRUE
+ *    Failure: FALSE
+ */
+BOOL32 WINAPI DrawIconEx32( HDC32 hdc, INT32 x0, INT32 y0, HICON32 hIcon,
+                            INT32 cxWidth, INT32 cyWidth, UINT32 istep, 
+                            HBRUSH32 hbr, UINT32 flags )
 {
     CURSORICONINFO *ptr = (CURSORICONINFO *)GlobalLock16 (hIcon);
     HDC32 hMemDC = CreateCompatibleDC32 (hdc);
     BOOL32 result = FALSE;
 
-    FIXME(icon, "part stub.\n");
+    if (istep)
+        FIXME(icon, "Ignoring istep=%d\n", istep);
+    if (hbr)
+        FIXME(icon, "Ignoring hbr=%x\n", hbr);
+    if (flags & DI_COMPAT)
+        FIXME(icon, "Ignoring flag DI_COMPAT\n");
 
     if (hMemDC && ptr)
     {

@@ -1219,8 +1219,7 @@ HWND32 WINAPI GetCapture32(void)
 FARPROC16 WINAPI GetMouseEventProc(void)
 {
     HMODULE16 hmodule = GetModuleHandle16("USER");
-    return MODULE_GetEntryPoint( hmodule,
-                                 MODULE_GetOrdinal( hmodule, "Mouse_Event" ) );
+    return NE_GetEntryPoint( hmodule, NE_GetOrdinal( hmodule, "Mouse_Event" ));
 }
 
 

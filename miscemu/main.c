@@ -10,6 +10,7 @@
 #include "miscemu.h"
 #include "module.h"
 #include "options.h"
+#include "debug.h"
 
 
 /***********************************************************************
@@ -72,7 +73,7 @@ int main( int argc, char *argv[] )
     {
         if (!BUILTIN_ParseDLLOptions( Options.dllFlags ))
         {
-            fprintf( stderr, "%s: Syntax: -dll +xxx,... or -dll -xxx,...\n",
+            MSG("%s: Syntax: -dll +xxx,... or -dll -xxx,...\n",
                      argv[0] );
             BUILTIN_PrintDLLs();
             exit(1);
@@ -92,13 +93,13 @@ int main( int argc, char *argv[] )
     {
         if ((handle = WinExec32( argv[i], SW_SHOWNORMAL )) < 32)
         {
-            fprintf(stderr, "wine: can't exec '%s': ", argv[i]);
+            MSG("wine: can't exec '%s': ", argv[i]);
             switch (handle)
             {
-            case 2: fprintf( stderr, "file not found\n" ); break;
-            case 11: fprintf( stderr, "invalid exe file\n" ); break;
-            case 21: fprintf( stderr, "win32 executable\n" ); break;
-            default: fprintf( stderr, "error=%d\n", handle ); break;
+            case 2: MSG("file not found\n" ); break;
+            case 11: MSG("invalid exe file\n" ); break;
+            case 21: MSG("win32 executable\n" ); break; /* FIXME: Obsolete? */
+            default: MSG("error=%d\n", handle ); break;
             }
             return 1;
         }
@@ -113,13 +114,13 @@ int main( int argc, char *argv[] )
 
     if (!GetNumTasks())
     {
-        fprintf( stderr, "wine: no executable file found.\n" );
+        MSG("wine: no executable file found.\n" );
         return 0;
     }
 
     if (Options.debug) DEBUG_AddModuleBreakpoints();
 
     Yield16();  /* Start the first task */
-    fprintf( stderr, "WinMain: Should never happen: returned from Yield()\n" );
+    MSG("WinMain: Should never happen: returned from Yield16()\n" );
     return 0;
 }

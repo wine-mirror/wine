@@ -536,15 +536,15 @@ HRGN32 WINAPI ExtCreateRegion( XFORM *lpXform, DWORD dwCount, RGNDATA *rgndata)
 		   lpXform, dwCount, rgndata, hrgn);
     if(!hrgn)
     {
-        fprintf(stderr, "ExtCreateRegion can't create a region!\n");
+        WARN(region, "Can't create a region!\n");
 	return 0;
     }
     if(lpXform)
-        fprintf(stderr, "ExtCreateRegion: Xform not implemented - ignoring\n");
+        WARN(region, "Xform not implemented - ignoring\n");
     
     if(rgndata->rdh.iType != RDH_RECTANGLES)
     {
-        fprintf(stderr, "ExtCreateRegion: type not RDH_RECTANGLES\n");
+        WARN(region, "Type not RDH_RECTANGLES\n");
 	GDI_HEAP_UNLOCK( hrgn );
 	DeleteObject32( hrgn );
 	return 0;
@@ -1923,7 +1923,7 @@ static void REGION_InsertEdgeInET(EdgeTable *ET, EdgeTableEntry *ETE,
             tmpSLLBlock = HeapAlloc( SystemHeap, 0, sizeof(ScanLineListBlock));
 	    if(!tmpSLLBlock)
 	    {
-	        fprintf(stderr, "REGION_InsertEdgeInET(): Can't alloc SLLB\n");
+	        WARN(region, "Can't alloc SLLB\n");
 		return;
 	    }
             (*SLLBlock)->next = tmpSLLBlock;
@@ -2371,8 +2371,7 @@ HRGN32 WINAPI CreatePolyPolygonRgn32(const POINT32 *Pts, const INT32 *Count,
                 if (iPts == NUMPTSTOBUFFER) {
                     tmpPtBlock = HeapAlloc( SystemHeap, 0, sizeof(POINTBLOCK));
 		    if(!tmpPtBlock) {
-		        fprintf(stderr, 
-				"CreatePolyPolygonRgn(): can't alloc tPB\n");
+		        WARN(region, "Can't alloc tPB\n");
 			return 0;
 		    }
                     curPtBlock->next = tmpPtBlock;
@@ -2423,8 +2422,7 @@ HRGN32 WINAPI CreatePolyPolygonRgn32(const POINT32 *Pts, const INT32 *Count,
                         tmpPtBlock = HeapAlloc( SystemHeap, 0,
 					       sizeof(POINTBLOCK) );
 			if(!tmpPtBlock) {
-			    fprintf(stderr, 
-				"CreatePolyPolygonRgn(): can't alloc tPB\n");
+			    WARN(region, "Can't alloc tPB\n");
 			    return 0;
 			}
                         curPtBlock->next = tmpPtBlock;

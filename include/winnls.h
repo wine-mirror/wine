@@ -5,6 +5,8 @@
 #define	LOCALE_NOUSEROVERRIDE	    0x80000000
 #define	LOCALE_USE_CP_ACP	    0x40000000
 
+#define LOCALE_LOCALEINFOFLAGSMASK  0xC0000000
+
 /* When adding new defines, don't forget to add an entry to the
  * locale2id map in misc/ole2nls.c
  */
@@ -205,6 +207,14 @@
 #define DATE_LONGDATE          0x00000002  /* use long date picture */
 #define DATE_USE_ALT_CALENDAR  0x00000004  /* use alternate calendar */
                           /* alt. calendar support is broken anyway */
+#define TIME_NOSECONDS         0x00000002  /* show no seconds */
+#define TIME_NOMINUTESORSECONDS 0x0000001  /* show no minutes either */
+
+/* internal flags for GetDateFormat system */
+#define DATE_DATEVARSONLY      0x00000100  /* only date stuff: yMdg */
+#define TIME_TIMEVARSONLY      0x00000200  /* only time stuff: hHmst */
+/* use this in a WineLib program if you really want all types */
+#define LOCALE_TIMEDATEBOTH    0x00000300  /* full set */
 
 
 #endif  /* __WINE_WINNLS_H */

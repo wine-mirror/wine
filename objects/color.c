@@ -288,7 +288,7 @@ static BOOL32 COLOR_BuildPrivateMap(CSPACE* cs)
 
     COLOR_sysPal = (PALETTEENTRY*)xmalloc(sizeof(PALETTEENTRY)*cs->size);
 
-    TRACE(palette,"\tbuilding private map - %i palette entries\n", cs->size);
+    TRACE(palette,"Building private map - %i palette entries\n", cs->size);
 
       /* Allocate system palette colors */ 
 
@@ -347,7 +347,7 @@ static BOOL32 COLOR_BuildSharedMap(CSPACE* cs)
    else if (COLOR_max < 20) COLOR_max = 20;
    TRACE(palette,"%d colors configured.\n", COLOR_max);
    
-   TRACE(palette,"\tbuilding shared map - %i palette entries\n", cs->size);
+   TRACE(palette,"Building shared map - %i palette entries\n", cs->size);
 
    /* Be nice and allocate system colors as read-only */
 
@@ -402,7 +402,7 @@ static BOOL32 COLOR_BuildSharedMap(CSPACE* cs)
 
         sysPixel[i] = color.pixel;
 
-        TRACE(palette,"\tsyscolor(%lx) -> pixel %i\n",
+        TRACE(palette,"syscolor(%lx) -> pixel %i\n",
 		      *(COLORREF*)(__sysPalTemplate+i), (int)color.pixel);
 
         /* Set EGA mapping if color in the first or last eight */
@@ -419,7 +419,7 @@ static BOOL32 COLOR_BuildSharedMap(CSPACE* cs)
      {
 	int c_min = 0, c_max = cs->size, c_val;
 
-	TRACE(palette,"\tdynamic colormap... \n");
+	TRACE(palette,"Dynamic colormap... \n");
 
 	/* comment this out if you want to debug palette init */
 
@@ -453,7 +453,7 @@ static BOOL32 COLOR_BuildSharedMap(CSPACE* cs)
 	  if( !TSXAllocColorCells(display, cs->colorMap, False,
                                 plane_masks, 0, pixDynMapping, c_min) )
 	    {
-	      fprintf(stderr,"Inexplicable failure during colorcell allocation.\n");
+	      WARN(palette,"Inexplicable failure during colorcell allocation.\n");
 	      c_min = 0;
 	    }
 
@@ -470,7 +470,7 @@ static BOOL32 COLOR_BuildSharedMap(CSPACE* cs)
 	   * to maintain compatibility
 	   */
 	  cs->size = 256;
-	  TRACE(palette,"\tvirtual colorspace - screendepth %i\n", screenDepth);
+	  TRACE(palette,"Virtual colorspace - screendepth %i\n", screenDepth);
 	}
    else cs->size = NB_RESERVED_COLORS;	/* system palette only - however we can alloc a bunch
 			                 * of colors and map to them */
@@ -529,7 +529,7 @@ static BOOL32 COLOR_BuildSharedMap(CSPACE* cs)
            else
              COLOR_PaletteToPixel[i] = i;
 
-      TRACE(palette,"\tindex %i -> pixel %i\n", i, COLOR_PaletteToPixel[i]);
+      TRACE(palette,"index %i -> pixel %i\n", i, COLOR_PaletteToPixel[i]);
 
       if( COLOR_PixelToPalette )
           COLOR_PixelToPalette[COLOR_PaletteToPixel[i]] = i;
@@ -798,7 +798,7 @@ COLORREF COLOR_LookupNearestColor( PALETTEENTRY* palPalEntry, int size, COLORREF
   else if( spec_type == 1 ) /* PALETTEINDEX */
     if( (i = color & 0x0000ffff) >= size ) 
       {
-	fprintf(stderr, "\tRGB(%lx) : idx %d is out of bounds, assuming NULL\n", color, i);
+	WARN(palette, "RGB(%lx) : idx %d is out of bounds, assuming NULL\n", color, i);
 	color = *(COLORREF*)palPalEntry;
       }
     else color = *(COLORREF*)(palPalEntry + i);
@@ -888,7 +888,7 @@ int COLOR_ToPhysical( DC *dc, COLORREF color )
 
             if( (idx = color & 0xffff) >= palPtr->logpalette.palNumEntries)
             {
-                fprintf(stderr, "\tRGB(%lx) : idx %d is out of bounds, assuming black\n", color, idx);
+                WARN(palette, "RGB(%lx) : idx %d is out of bounds, assuming black\n", color, idx);
 		GDI_HEAP_UNLOCK( hPal );
                 return 0;
             }
@@ -941,7 +941,7 @@ int COLOR_ToPhysical( DC *dc, COLORREF color )
 
 	if( !palPtr ) return 0;
 	else if( !palPtr->mapping ) 
-            WARN(palette, "\tpalette %04x is not realized\n", dc->w.hPalette);
+            WARN(palette, "Palette %04x is not realized\n", dc->w.hPalette);
 
 	switch(spec_type)	/* we have to peruse DC and system palette */
     	{
@@ -960,24 +960,24 @@ int COLOR_ToPhysical( DC *dc, COLORREF color )
 	    	index = COLOR_PaletteLookupPixel( COLOR_sysPal, 256, 
 						  COLOR_PaletteToPixel, color, FALSE);
 
-		/* TRACE(palette,"\tRGB(%lx) -> pixel %i\n", color, index);
+		/* TRACE(palette,"RGB(%lx) -> pixel %i\n", color, index);
 		 */
 	    	break;
        	    case 1:  /* PALETTEINDEX */
 		index = color & 0xffff;
 
 	        if( index >= palPtr->logpalette.palNumEntries )
-		    fprintf(stderr, "\tRGB(%lx) : index %i is out of bounds\n", color, index); 
+		    WARN(palette, "RGB(%lx) : index %i is out of bounds\n", color, index); 
 		else if( palPtr->mapping ) index = palPtr->mapping[index];
 
-		/*  TRACE(palette,"\tPALETTEINDEX(%04x) -> pixel %i\n", (WORD)color, index);
+		/*  TRACE(palette,"PALETTEINDEX(%04x) -> pixel %i\n", (WORD)color, index);
 		 */
 		break;
             case 2:  /* PALETTERGB */
 		index = COLOR_PaletteLookupPixel( palPtr->logpalette.palPalEntry, 
                                              palPtr->logpalette.palNumEntries,
                                              palPtr->mapping, color, FALSE);
-		/* TRACE(palette,"\tPALETTERGB(%lx) -> pixel %i\n", color, index);
+		/* TRACE(palette,"PALETTERGB(%lx) -> pixel %i\n", color, index);
 		 */
 		break;
 	}
@@ -1020,7 +1020,7 @@ int COLOR_SetMapping( PALETTEOBJ* palPtr, UINT32 uStart, UINT32 uNum, BOOL32 map
             index = *(WORD*)(palPtr->logpalette.palPalEntry + uStart);
             if( index > 255 || (index >= COLOR_gapStart && index <= COLOR_gapEnd) ) 
             {
-                fprintf(stderr,"PC_EXPLICIT: idx %d out of system palette, assuming black.\n", index); 
+                WARN(palette,"PC_EXPLICIT: idx %d out of system palette, assuming black.\n", index); 
                 index = 0;
             }
             break;
@@ -1077,7 +1077,7 @@ int COLOR_SetMapping( PALETTEOBJ* palPtr, UINT32 uStart, UINT32 uNum, BOOL32 map
         if( !prevMapping || palPtr->mapping[uStart] != index ) iRemapped++;
         palPtr->mapping[uStart] = index;
 
-        TRACE(palette,"\tentry %i (%lx) -> pixel %i\n", uStart, 
+        TRACE(palette,"entry %i (%lx) -> pixel %i\n", uStart, 
 				*(COLORREF*)(palPtr->logpalette.palPalEntry + uStart), index);
 	
     }

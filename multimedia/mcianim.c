@@ -196,7 +196,7 @@ static DWORD ANIM_CalcTime(UINT16 wDevID, DWORD dwFormatType, DWORD dwFrame)
 		case MCI_FORMAT_TMSF:
 			for (wTrack = 0; wTrack < AnimDev[wDevID].nTracks; wTrack++) {
 /*				dwTime += AnimDev[wDevID].lpdwTrackLen[wTrack - 1];
-				printf("Adding trk#%u curpos=%u \n", dwTime);
+				TRACE(mcianim, "Adding trk#%u curpos=%u \n", dwTime);
 				if (dwTime >= dwFrame) break; */
 				if (AnimDev[wDevID].lpdwTrackPos[wTrack - 1] >= dwFrame) break;
 				}
@@ -361,11 +361,11 @@ static DWORD ANIM_mciStatus(UINT16 wDevID, DWORD dwFlags, LPMCI_STATUS_PARMS lpP
 				lpParms->dwReturn = MCI_FORMAT_MILLISECONDS;
 			 	return 0;
 			default:
-				fprintf(stderr,"ANIM_mciStatus // unknown command %08lX !\n", lpParms->dwItem);
+				WARN(mcianim,"Unknown command %08lX !\n", lpParms->dwItem);
 				return MCIERR_UNRECOGNIZED_COMMAND;
 			}
 		}
-    fprintf(stderr,"ANIM_mciStatus // not MCI_STATUS_ITEM !\n");
+    WARN(mcianim,"Not MCI_STATUS_ITEM !\n");
  	return 0;
 }
 
@@ -500,8 +500,8 @@ static DWORD ANIM_mciSet(UINT16 wDevID, DWORD dwFlags, LPMCI_SET_PARMS lpParms)
 	TRACE(mcianim,"(%u, %08lX, %p);\n", wDevID, dwFlags, lpParms);
 	if (lpParms == NULL) return MCIERR_INTERNAL;
 /*
-	printf("ANIM_mciSet // dwTimeFormat=%08lX\n", lpParms->dwTimeFormat);
-	printf("ANIM_mciSet // dwAudio=%08lX\n", lpParms->dwAudio);
+	TRACE(mcianim,"(dwTimeFormat=%08lX)\n", lpParms->dwTimeFormat);
+	TRACE(mcianim,"(dwAudio=%08lX)\n", lpParms->dwAudio);
 */
 	if (dwFlags & MCI_SET_TIME_FORMAT) {
 		switch (lpParms->dwTimeFormat) {
@@ -515,7 +515,7 @@ static DWORD ANIM_mciSet(UINT16 wDevID, DWORD dwFlags, LPMCI_SET_PARMS lpParms)
 				TRACE(mcianim,"MCI_FORMAT_TMSF !\n");
 				break;
 			default:
-				fprintf(stderr,"ANIM_mciSet // bad time format !\n");
+				WARN(mcianim,"Bad time format !\n");
 				return MCIERR_BAD_TIME_FORMAT;
 			}
 		AnimDev[wDevID].dwTimeFormat = lpParms->dwTimeFormat;

@@ -582,7 +582,7 @@ static DWORD CDAUDIO_CalcTime(UINT16 wDevID, DWORD dwFormatType, DWORD dwFrame)
 		case MCI_FORMAT_TMSF:
 			for (wTrack = 0; wTrack < CDADev[wDevID].nTracks; wTrack++) {
 /*				dwTime += CDADev[wDevID].lpdwTrackLen[wTrack - 1];
-				printf("Adding trk#%u curpos=%u \n", dwTime);
+				TRACE(cdaudio, "Adding trk#%u curpos=%u \n", dwTime);
 				if (dwTime >= dwFrame) break; */
 				if (CDADev[wDevID].lpdwTrackPos[wTrack - 1] >= dwFrame) break;
 				}
@@ -938,8 +938,8 @@ static DWORD CDAUDIO_mciSet(UINT16 wDevID, DWORD dwFlags, LPMCI_SET_PARMS lpParm
     	TRACE(cdaudio,"(%04X, %08lX, %p);\n", wDevID, dwFlags, lpParms);
 	if (lpParms == NULL) return MCIERR_INTERNAL;
 /*
-	printf("CDAUDIO_mciSet // dwTimeFormat=%08lX\n", lpParms->dwTimeFormat);
-	printf("CDAUDIO_mciSet // dwAudio=%08lX\n", lpParms->dwAudio);
+	TRACE(cdaudio,"dwTimeFormat=%08lX\n", lpParms->dwTimeFormat);
+	TRACE(cdaudio,"dwAudio=%08lX\n", lpParms->dwAudio);
 */
 	if (dwFlags & MCI_SET_TIME_FORMAT) {
 		switch (lpParms->dwTimeFormat) {

@@ -492,7 +492,7 @@ BOOL16 WINAPI THUNK_SetDCHook( HDC16 hdc, FARPROC16 proc, DWORD dwHookData )
     THUNK *thunk, *oldThunk;
 
     if (!defDCHookProc)  /* Get DCHook Win16 entry point */
-        defDCHookProc = MODULE_GetEntryPoint( GetModuleHandle16("USER"), 362 );
+        defDCHookProc = NE_GetEntryPoint( GetModuleHandle16("USER"), 362 );
 
     if (proc != defDCHookProc)
     {
@@ -521,8 +521,7 @@ DWORD WINAPI THUNK_GetDCHook( HDC16 hdc, FARPROC16 *phookProc )
         if (thunk == (THUNK *)DCHook)
         {
             if (!defDCHookProc)  /* Get DCHook Win16 entry point */
-                defDCHookProc = MODULE_GetEntryPoint(GetModuleHandle16("USER"),
-                                                     362 );
+                defDCHookProc = NE_GetEntryPoint(GetModuleHandle16("USER"),362);
             *phookProc = defDCHookProc;
         }
         else *phookProc = thunk->proc;
@@ -541,7 +540,7 @@ FARPROC16 WINAPI THUNK_SetTaskSignalProc( HTASK16 hTask, FARPROC16 proc )
     THUNK *thunk = NULL;
 
     if( !defSignalProc16 )
-	defSignalProc16 = MODULE_GetEntryPoint(GetModuleHandle16("USER"), 314 );
+	defSignalProc16 = NE_GetEntryPoint(GetModuleHandle16("USER"), 314 );
 
     if( proc == defSignalProc16 )
 	thunk = (THUNK*)SetTaskSignalProc( hTask, (FARPROC16)&USER_SignalProc );
@@ -569,9 +568,6 @@ FARPROC16 WINAPI THUNK_SetTaskSignalProc( HTASK16 hTask, FARPROC16 proc )
  */
 FARPROC16 WINAPI THUNK_SetResourceHandler( HMODULE16 hModule, SEGPTR typeId, FARPROC16 proc )
 {
-    /* loader/ne_resource.c */
-    extern HGLOBAL16 WINAPI NE_DefResourceHandler(HGLOBAL16,HMODULE16,HRSRC16);
-
     static FARPROC16 defDIBIconLoader16 = NULL;
     static FARPROC16 defDIBCursorLoader16 = NULL;
     static FARPROC16 defResourceLoader16 = NULL;
@@ -581,8 +577,8 @@ FARPROC16 WINAPI THUNK_SetResourceHandler( HMODULE16 hModule, SEGPTR typeId, FAR
     if( !defResourceLoader16 )
     {
 	HMODULE16 hUser = GetModuleHandle16("USER");
-	defDIBIconLoader16 = MODULE_GetEntryPoint( hUser, 357 );
-	defDIBCursorLoader16 = MODULE_GetEntryPoint( hUser, 356 );
+	defDIBIconLoader16 = NE_GetEntryPoint( hUser, 357 );
+	defDIBCursorLoader16 = NE_GetEntryPoint( hUser, 356 );
 	defResourceLoader16 = MODULE_GetWndProcEntry16( "DefResourceHandler" );
     }
 
@@ -703,7 +699,7 @@ static BOOL32 WINAPI THUNK_WOWCallback16Ex(
 	    );
 	    break;
     default:
-	    fprintf(stderr,"CALLBACK_CallWOWCallback16Ex(), %ld arguments not supported.!n",cbArgs);
+	    ERR(thunk,"%ld arguments not supported.\n",cbArgs);
 	    if (dwFlags == WCB16_CDECL)
 		HeapFree(GetProcessHeap(),0,args);
 	    return FALSE;

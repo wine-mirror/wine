@@ -181,8 +181,7 @@ BOOL32	WIN16DRV_EnumDeviceFonts( DC* dc, LPLOGFONT16 plf,
     WEPFC wepfc = {proc, lp};
 
     /* EnumDFontCallback is GDI.158 */
-    FARPROC16 pfnCallback = MODULE_GetEntryPoint( GetModuleHandle16("GDI"),
-						              158 );
+    FARPROC16 pfnCallback = NE_GetEntryPoint( GetModuleHandle16("GDI"), 158 );
 
     wRet = PRTDRV_EnumDFonts(physDev->segptrPDEVICE, plf->lfFaceName[0] ?
 			     plf->lfFaceName : NULL , pfnCallback , &wepfc );

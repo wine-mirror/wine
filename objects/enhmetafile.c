@@ -22,7 +22,7 @@ HENHMETAFILE32 WINAPI GetEnhMetaFile32A(
 {
   HENHMETAFILE32 hmf = 0;
   ENHMETAHEADER h;
-  char *p;
+  BYTE *p;
   DWORD read;
   HFILE32 hf = CreateFile32A(lpszMetaFile, GENERIC_READ, 0, 0, 
 			     OPEN_EXISTING, 0, 0);
@@ -31,7 +31,7 @@ HENHMETAFILE32 WINAPI GetEnhMetaFile32A(
   if (read!=sizeof(ENHMETAHEADER)) return 0;
   SetFilePointer(hf, 0, NULL, FILE_BEGIN); 
   /*  hmf = CreateFileMapping32A( hf, NULL, NULL, NULL, NULL, "temp"); */
-  hmf = GlobalAlloc32(GHND, h.nBytes);
+  hmf = GlobalAlloc32(GPTR, h.nBytes);
   p = GlobalLock32(hmf);
   if (!ReadFile(hf, p, h.nBytes, &read, NULL)) return 0;
   GlobalUnlock32(hmf);
@@ -54,6 +54,7 @@ UINT32 WINAPI GetEnhMetaFileHeader(
   LPENHMETAHEADER p = GlobalLock32(hmf);
   if (!buf) return sizeof(ENHMETAHEADER);
   memmove(buf, p, MIN(sizeof(ENHMETAHEADER), bufsize));
+  GlobalUnlock32(hmf);
   return MIN(sizeof(ENHMETAHEADER), bufsize);
 }
 
@@ -105,6 +106,32 @@ UINT32 WINAPI GetEnhMetaFileDescription32W(
   return MIN(size,p->nDescription);
 }
 
+/****************************************************************************
+ *    SetEnhMetaFileBits (GDI32.315)
+ *
+ *  Creates an enhanced metafile by copying _bufsize_ bytes from _buf_.
+ */
+HENHMETAFILE32 WINAPI SetEnhMetaFileBits(UINT32 bufsize, const BYTE *buf)
+{
+  HENHMETAFILE32 hmf = GlobalAlloc32(GPTR, bufsize);
+  LPENHMETAHEADER h = GlobalLock32(hmf);
+  memmove(h, buf, bufsize);
+  GlobalUnlock32(hmf);
+  return hmf;
+}
+
+/*****************************************************************************
+ *  GetEnhMetaFileBits (GDI32.175)
+ *
+ */
+UINT32 WINAPI GetEnhMetaFileBits(
+    HENHMETAFILE32 hmf, 
+    UINT32 bufsize, 
+    LPBYTE buf  
+) {
+  return 0;
+}
+
 /*****************************************************************************
  *           PlayEnhMetaFileRecord  (GDI32.264)
  *
@@ -142,11 +169,9 @@ BOOL32 WINAPI PlayEnhMetaFileRecord(
       }
     case EMR_EOF:
       break;
-
     case EMR_GDICOMMENT:
       /* application defined and processed */
       break;
-
     case EMR_SETMAPMODE:
       {
 	DWORD mode = mr->dParm[0];
@@ -212,7 +237,6 @@ BOOL32 WINAPI PlayEnhMetaFileRecord(
 	IntersectClipRect32(hdc, left, top, right, bottom);
 	break;
       }
-
     case EMR_SELECTOBJECT:
       {
 	DWORD obj = mr->dParm[0];
@@ -226,7 +250,6 @@ BOOL32 WINAPI PlayEnhMetaFileRecord(
 	(handletable->objectHandle)[obj] = 0;
 	break;
       }
-
     case EMR_SETWINDOWORGEX:
       {
 	DWORD x = mr->dParm[0], y = mr->dParm[1];
@@ -251,7 +274,6 @@ BOOL32 WINAPI PlayEnhMetaFileRecord(
 	SetViewportExtEx32(hdc, x, y, NULL);
 	break;
       }
-
     case EMR_CREATEPEN:
       {
 	DWORD obj = mr->dParm[0];
@@ -264,7 +286,7 @@ BOOL32 WINAPI PlayEnhMetaFileRecord(
 	DWORD obj = mr->dParm[0];
 	DWORD style = mr->dParm[1], brush = mr->dParm[2];
 	LOGBRUSH32 *b = (LOGBRUSH32 *) &mr->dParm[3];
-	/* FIXME: other args not handled */
+	FIXME(metafile, "Some ExtCreatePen args not handled\n");
 	(handletable->objectHandle)[obj] = 
 	  ExtCreatePen32(style, brush, b, 0, NULL);
 	break;
@@ -283,7 +305,6 @@ BOOL32 WINAPI PlayEnhMetaFileRecord(
 	  CreateFontIndirect32W((LOGFONT32W *) &(mr->dParm[1]));
 	break;
 	}
-
     case EMR_MOVETOEX:
       {
 	DWORD x = mr->dParm[0], y = mr->dParm[1];
@@ -310,14 +331,23 @@ BOOL32 WINAPI PlayEnhMetaFileRecord(
 	Ellipse32(hdc, left, top, right, bottom);
 	break;
       }
-
     case EMR_POLYGON16:
       {
-	/* FIXME: 0-3 : a bounding rectangle? */
+	/* 0-3 : a bounding rectangle? */
 	INT32 count = mr->dParm[4];
+	FIXME(metafile, "Some Polygon16 args not handled\n");
 	Polygon16(hdc, (POINT16 *)&mr->dParm[5], count);
 	break;
       }
+    case EMR_POLYLINE16:
+      {
+	/* 0-3 : a bounding rectangle? */
+	INT32 count = mr->dParm[4];
+	FIXME(metafile, "Some Polyline16 args not handled\n");
+	Polyline16(hdc, (POINT16 *)&mr->dParm[5], count);
+	break;
+      }
+
 #if 0
     case EMR_POLYPOLYGON16:
       {
@@ -338,6 +368,7 @@ BOOL32 WINAPI PlayEnhMetaFileRecord(
 	/* 10-16: ??? */
 	LPWSTR str = (LPWSTR)& mr->dParm[17];
 	/* trailing info: dx array? */
+	FIXME(metafile, "Many ExtTextOut args not handled\n");
 	ExtTextOut32W(hdc, x, y, flags, /* lpRect */ NULL, 
 		      str, count, /* lpDx */ NULL); 
 	break;
@@ -413,27 +444,61 @@ BOOL32 WINAPI PlayEnhMetaFile(
   INT32 count = ((LPENHMETAHEADER) p)->nHandles;
   HANDLETABLE32 *ht = (HANDLETABLE32 *)GlobalAlloc32(GPTR, 
 				    sizeof(HANDLETABLE32)*count);
+  BOOL32 ret = FALSE;
+  if (lpRect) {
+    LPENHMETAHEADER h = (LPENHMETAHEADER) p;
+    FLOAT xscale = (h->rclBounds.right-h->rclBounds.left)/(lpRect->right-lpRect->left);
+    FLOAT yscale = (h->rclBounds.bottom-h->rclBounds.top)/(lpRect->bottom-lpRect->top);
+    XFORM xform = {xscale, 0, 0, yscale, 0, 0};
+    /*    xform.eDx = lpRect->left;
+	  xform.eDy = lpRect->top; */
+    FIXME(metafile, "play into rect doesn't work\n");
+    if (!SetWorldTransform(hdc, &xform)) {
+      WARN(metafile, "World transform failed!\n");
+    }
+  }
+
   ht->objectHandle[0] = hmf;
   while (1) {
     PlayEnhMetaFileRecord(hdc, ht, p, count);
     if (p->iType == EMR_EOF) break;
     p = (void *) p + p->nSize; /* casted so that arithmetic is in bytes */
   }
-  return FALSE;
+  GlobalUnlock32(hmf);
+  return TRUE;
 }
 
 /*****************************************************************************
  *  DeleteEnhMetaFile (GDI32.68)
+ *
+ *  Deletes an enhanced metafile and frees the associated storage.
  */
 BOOL32 WINAPI DeleteEnhMetaFile(HENHMETAFILE32 hmf) {
   return !GlobalFree32(hmf);
 }
 
 /*****************************************************************************
- *  CopyEnhMetaFileA (GDI32.21)
+ *  CopyEnhMetaFileA (GDI32.21)  Duplicate an enhanced metafile
+ *
+ *   
  */
-HENHMETAFILE32 WINAPI CopyEnhMetaFile32A(HENHMETAFILE32 hmf, LPCSTR file) {
-  return 0;
+HENHMETAFILE32 WINAPI CopyEnhMetaFile32A(
+    HENHMETAFILE32 hmf, 
+    LPCSTR file)
+{
+  if (!file) {
+    LPENHMETAHEADER h = GlobalLock32(hmf);
+    HENHMETAFILE32 hmf2 = GlobalAlloc32(GPTR, h->nBytes);
+    LPENHMETAHEADER h2 = GlobalLock32(hmf2);
+    if (!h2) return 0;
+    memmove(h2, h, h->nBytes);
+    GlobalUnlock32(hmf2);
+    GlobalUnlock32(hmf);
+    return hmf2;
+  } else {
+    FIXME(metafile, "write to file not implemented\n");
+    return 0;
+  }
 }
 
 

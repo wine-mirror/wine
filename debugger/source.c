@@ -492,10 +492,9 @@ DEBUG_Disassemble(const DBG_ADDR *xstart,const DBG_ADDR *xend,int offset)
     last = DEBUG_LastDisassemble;
     if (!last.seg && !last.off)
     {
-        WORD cs;
-        GET_CS(cs);
-        last.seg = (CS_reg(&DEBUG_context) == cs) ? 0 : CS_reg(&DEBUG_context);
+        last.seg = CS_reg(&DEBUG_context);
         last.off = EIP_reg(&DEBUG_context);
+        if (IS_SELECTOR_SYSTEM(last.seg)) last.seg = 0;
     }
     for (i=0;i<offset;i++)
       if (!_disassemble(&last)) break;

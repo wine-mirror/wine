@@ -137,7 +137,7 @@ type	win32
 133 stub _heapwalk
 134 stub _hypot
 135 cdecl _initterm(ptr ptr) CRTDLL__initterm
-136 stub _iob
+136 extern _iob CRTDLL_iob
 137 cdecl _isatty(long) CRTDLL__isatty
 138 cdecl _isctype(long long) CRTDLL__isctype
 139 stub _ismbbalnum

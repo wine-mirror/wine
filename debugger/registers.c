@@ -192,6 +192,59 @@ void DEBUG_GetSigContext( SIGCONTEXT *sigcontext )
 #endif
 }
 
+/***********************************************************************
+ *           DEBUG_Flags
+ *
+ * Return Flag String.
+ */
+char *DEBUG_Flags( DWORD flag, char *buf )
+{
+    char *pt;
+
+    strcpy( buf, "   - 00      - - - " );
+    pt = buf + strlen( buf );
+    if ( buf >= pt-- ) return( buf );
+    if ( flag & 0x00000001 ) *pt = 'C'; /* Carry Falg */
+    if ( buf >= pt-- ) return( buf );
+    if ( flag & 0x00000002 ) *pt = '1';
+    if ( buf >= pt-- ) return( buf );
+    if ( flag & 0x00000004 ) *pt = 'P'; /* Parity Flag */
+    if ( buf >= pt-- ) return( buf );
+    if ( flag & 0x00000008 ) *pt = '-';
+    if ( buf >= pt-- ) return( buf );
+    if ( flag & 0x00000010 ) *pt = 'A'; /* Auxiliary Carry Flag */
+    if ( buf >= pt-- ) return( buf );
+    if ( flag & 0x00000020 ) *pt = '-';
+    if ( buf >= pt-- ) return( buf );
+    if ( flag & 0x00000040 ) *pt = 'Z'; /* Zero Flag */
+    if ( buf >= pt-- ) return( buf );
+    if ( flag & 0x00000080 ) *pt = 'S'; /* Sign Flag */
+    if ( buf >= pt-- ) return( buf );
+    if ( flag & 0x00000100 ) *pt = 'T'; /* Trap/Trace Flag */
+    if ( buf >= pt-- ) return( buf );
+    if ( flag & 0x00000200 ) *pt = 'I'; /* Interupt Enable Flag */
+    if ( buf >= pt-- ) return( buf );
+    if ( flag & 0x00000400 ) *pt = 'D'; /* Direction Indicator */
+    if ( buf >= pt-- ) return( buf );
+    if ( flag & 0x00000800 ) *pt = 'O'; /* Overflow Flag */
+    if ( buf >= pt-- ) return( buf );
+    if ( flag & 0x00001000 ) *pt = '1'; /* I/O Privilage Level */
+    if ( buf >= pt-- ) return( buf );
+    if ( flag & 0x00002000 ) *pt = '1'; /* I/O Privilage Level */
+    if ( buf >= pt-- ) return( buf );
+    if ( flag & 0x00004000 ) *pt = 'N'; /* Nested Task Flag */
+    if ( buf >= pt-- ) return( buf );
+    if ( flag & 0x00008000 ) *pt = '-';
+    if ( buf >= pt-- ) return( buf );
+    if ( flag & 0x00010000 ) *pt = 'R'; /* Resume Flag */
+    if ( buf >= pt-- ) return( buf );
+    if ( flag & 0x00020000 ) *pt = 'V'; /* Vritual Mode Flag */
+    if ( buf >= pt-- ) return( buf );
+    if ( flag & 0x00040000 ) *pt = 'a'; /* Alignment Check Flag */
+    if ( buf >= pt-- ) return( buf );
+    return( buf );
+}
+
 
 /***********************************************************************
  *           DEBUG_InfoRegisters
@@ -200,6 +253,8 @@ void DEBUG_GetSigContext( SIGCONTEXT *sigcontext )
  */
 void DEBUG_InfoRegisters(void)
 {
+    char flag[33];
+
     fprintf(stderr,"Register dump:\n");
 
     /* First get the segment registers out of the way */
@@ -209,9 +264,10 @@ void DEBUG_InfoRegisters(void)
              (WORD)FS_reg(&DEBUG_context), (WORD)GS_reg(&DEBUG_context) );
     if (dbg_mode == 16)
     {
-        fprintf( stderr,"\n IP:%04x SP:%04x BP:%04x FLAGS:%04x\n",
+        fprintf( stderr,"\n IP:%04x SP:%04x BP:%04x FLAGS:%04x(%s)\n",
                  IP_reg(&DEBUG_context), SP_reg(&DEBUG_context),
-                 BP_reg(&DEBUG_context), FL_reg(&DEBUG_context) );
+                 BP_reg(&DEBUG_context), FL_reg(&DEBUG_context),
+		 DEBUG_Flags(FL_reg(&DEBUG_context), flag));
 	fprintf( stderr," AX:%04x BX:%04x CX:%04x DX:%04x SI:%04x DI:%04x\n",
                  AX_reg(&DEBUG_context), BX_reg(&DEBUG_context),
                  CX_reg(&DEBUG_context), DX_reg(&DEBUG_context),
@@ -219,9 +275,10 @@ void DEBUG_InfoRegisters(void)
     }
     else  /* 32-bit mode */
     {
-        fprintf( stderr, "\n EIP:%08lx ESP:%08lx EBP:%08lx EFLAGS:%08lx\n", 
+        fprintf( stderr, "\n EIP:%08lx ESP:%08lx EBP:%08lx EFLAGS:%08lx(%s)\n", 
                  EIP_reg(&DEBUG_context), ESP_reg(&DEBUG_context),
-                 EBP_reg(&DEBUG_context), EFL_reg(&DEBUG_context) );
+                 EBP_reg(&DEBUG_context), EFL_reg(&DEBUG_context),
+		 DEBUG_Flags(EFL_reg(&DEBUG_context), flag));
 	fprintf( stderr, " EAX:%08lx EBX:%08lx ECX:%08lx EDX:%08lx\n", 
 		 EAX_reg(&DEBUG_context), EBX_reg(&DEBUG_context),
                  ECX_reg(&DEBUG_context), EDX_reg(&DEBUG_context) );

@@ -248,7 +248,7 @@ INT32 WINAPI GetExpandedName32A( LPCSTR in, LPSTR out )
 	/* now mangle the basename */
 	if (!*s) {
 		/* FIXME: hmm. shouldn't happen? */
-		fprintf(stddeb,__FILE__":GetExpandedFileName(), specified a directory or what? (%s)\n",in);
+		WARN(file,"Specified a directory or what? (%s)\n",in);
 		_lclose32(fd);
 		return 1;
 	}

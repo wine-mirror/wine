@@ -120,9 +120,10 @@ typedef struct _CONTEXT		/* Note 1 */
 #define SS_sig(context)      ((context)->sc_ss)
                             
 #ifdef linux
-/* fs and gs are not supported on *BSD. Hopefully we won't need them. */
+/* fs and gs are not supported on *BSD. */
 #define FS_sig(context)      ((context)->sc_fs)
 #define GS_sig(context)      ((context)->sc_gs)
+#define CR2_sig(context)     ((context)->cr2)
 #endif
                             
 #ifndef __FreeBSD__         

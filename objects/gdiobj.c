@@ -471,7 +471,7 @@ INT32 WINAPI GetObject32A( HANDLE32 handle, INT32 count, LPVOID buffer )
 	  result = PALETTE_GetObject( (PALETTEOBJ *)ptr, count, buffer );
 	  break;
       default:
-          fprintf( stderr, "GetObject32: magic %04x not implemented\n",
+          FIXME(gdi, "Magic %04x not implemented\n",
                    ptr->wMagic );
           break;
     }
@@ -527,8 +527,8 @@ DWORD WINAPI GetObjectType( HANDLE32 handle )
 	  result = OBJ_METADC;
 	  break;
 
-	  default:
-	  fprintf( stderr, "GetObjectType: magic %04x not implemented\n",
+      default:
+	  FIXME(gdi, "Magic %04x not implemented\n",
 			   ptr->wMagic );
 	  break;
     }
@@ -561,7 +561,7 @@ HANDLE32 WINAPI GetCurrentObject(HDC32 hdc,UINT32 type)
     case OBJ_BITMAP:	return dc->w.hBitmap;
     default:
     	/* the SDK only mentions those above */
-    	fprintf(stderr,"GetCurrentObject(%08x,%d), unknown type.\n",hdc,type);
+    	WARN(gdi,"(%08x,%d): unknown type.\n",hdc,type);
 	return 0;
     }
 }
@@ -699,7 +699,7 @@ INT16 WINAPI EnumObjects16( HDC16 hdc, INT16 nObjType,
         break;
 
     default:
-        fprintf( stderr, "EnumObjects16: invalid type %d\n", nObjType );
+        WARN(gdi, "(%d): Invalid type\n", nObjType );
         break;
     }
     return retval;
@@ -775,7 +775,7 @@ INT32 WINAPI EnumObjects32( HDC32 hdc, INT32 nObjType,
 
     default:
         /* FIXME: implement Win32 types */
-        fprintf( stderr, "EnumObjects32: invalid type %d\n", nObjType );
+        WARN( gdi, "(%d): Invalid type\n", nObjType );
         break;
     }
     return retval;
@@ -867,7 +867,7 @@ DWORD WINAPI GdiSeeGdiDo( WORD wReqType, WORD wParam1, WORD wParam2,
     case 0x0103:  /* LocalHeap */
         return GDI_HeapSel;
     default:
-        fprintf(stderr, "GdiSeeGdiDo: wReqType %04x (unknown)", wReqType);
+        WARN(gdi, "(wReqType=%04x): Unknown\n", wReqType);
         return (DWORD)-1;
     }
 }

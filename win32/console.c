@@ -48,6 +48,14 @@ typedef struct _CONSOLE {
 } CONSOLE;
 
 
+/* This probably belongs somewhere else */
+typedef struct _CONSOLE_CURSOR_INFO {
+    DWORD  dwSize;   /* Between 1 & 100 for percentage of cell filled */
+    BOOL32 bVisible; /* Visibility of cursor */
+} CONSOLE_CURSOR_INFO, *LPCONSOLE_CURSOR_INFO;
+
+
+
 static void CONSOLE_Destroy( K32OBJ *obj );
 static BOOL32 CONSOLE_Write(K32OBJ *ptr, LPCVOID lpBuffer, 
 			    DWORD nNumberOfChars,  LPDWORD lpNumberOfChars, 
@@ -72,7 +80,9 @@ const K32OBJ_OPS CONSOLE_Ops =
 
 
 
-
+/***********************************************************************
+ * CONSOLE_Destroy
+ */
 static void CONSOLE_Destroy(K32OBJ *obj)
 {
 	CONSOLE *console = (CONSOLE *)obj;
@@ -91,7 +101,12 @@ static void CONSOLE_Destroy(K32OBJ *obj)
 }
 
 
-/* lpOverlapped is ignored */
+/***********************************************************************
+ * CONSOLE_Read
+ *
+ * NOTES
+ *    lpOverlapped is ignored
+ */
 static BOOL32 CONSOLE_Read(K32OBJ *ptr, LPVOID lpBuffer, DWORD nNumberOfChars,
 			LPDWORD lpNumberOfChars, LPOVERLAPPED lpOverlapped)
 {
@@ -112,7 +127,12 @@ static BOOL32 CONSOLE_Read(K32OBJ *ptr, LPVOID lpBuffer, DWORD nNumberOfChars,
 }
 
 
-/* lpOverlapped is ignored */
+/***********************************************************************
+ * CONSOLE_Write
+ *
+ * NOTES
+ *    lpOverlapped is ignored
+ */
 static BOOL32 CONSOLE_Write(K32OBJ *ptr, LPCVOID lpBuffer, 
 			    DWORD nNumberOfChars,
 			    LPDWORD lpNumberOfChars, LPOVERLAPPED lpOverlapped)
@@ -145,28 +165,50 @@ static BOOL32 CONSOLE_Write(K32OBJ *ptr, LPCVOID lpBuffer,
 }
 
 
-
-
-/***********************************************************************
- *           SetConsoleCtrlHandler               (KERNEL32.459)
+/******************************************************************************
+ * SetConsoleCtrlHandler [KERNEL32.459]  Adds function to calling process list
+ *
+ * PARAMS
+ *    func [I] Address of handler function
+ *    add  [I] Handler to add or remove
+ *
+ * RETURNS
+ *    Success: TRUE
+ *    Failure: FALSE
  */
-BOOL32 WINAPI SetConsoleCtrlHandler(HANDLER_ROUTINE * func,  BOOL32 a)
+BOOL32 WINAPI SetConsoleCtrlHandler( HANDLER_ROUTINE *func, BOOL32 add )
 {
-	return 0;
+    FIXME(console, "(%p,%i): stub\n",func,add);
+    return TRUE;
 }
 
-/***********************************************************************
- *           CreateConsoleScreenBuffer   (KERNEL32.151)
+
+/******************************************************************************
+ * CreateConsoleScreenBuffer [KERNEL32.151]  Creates a console screen buffer
+ *
+ * PARAMS
+ *    dwDesiredAccess    [I] Access flag
+ *    dwShareMode        [I] Buffer share mode
+ *    sa                 [I] Security attributes
+ *    dwFlags            [I] Type of buffer to create
+ *    lpScreenBufferData [I] Reserved
+ *
+ * NOTES
+ *    Should call SetLastError
+ *
+ * RETURNS
+ *    Success: Handle to new console screen buffer
+ *    Failure: INVALID_HANDLE_VALUE
  */
 HANDLE32 WINAPI CreateConsoleScreenBuffer( DWORD dwDesiredAccess,
-                                           DWORD dwShareMode,
-                                           LPSECURITY_ATTRIBUTES lpSecurityAttributes,
-                                           DWORD dwFlags,
-                                           LPVOID lpScreenBufferData)
+                DWORD dwShareMode, LPSECURITY_ATTRIBUTES sa,
+                DWORD dwFlags, LPVOID lpScreenBufferData )
 {
-	FIXME(console, "(...): stub !\n");
-	return INVALID_HANDLE_VALUE32;
+    FIXME(console, "(%ld,%ld,%p,%ld,%p): stub\n",dwDesiredAccess,
+          dwShareMode, sa, dwFlags, lpScreenBufferData);
+    return 1;
 }
+
 
 /***********************************************************************
  *           GetConsoleScreenBufferInfo   (KERNEL32.190)
@@ -188,14 +230,21 @@ BOOL32 WINAPI GetConsoleScreenBufferInfo( HANDLE32 hConsoleOutput,
     return TRUE;
 }
 
-/***********************************************************************
- *           SetConsoleActiveScreenBuffer   (KERNEL32.623)
+
+/******************************************************************************
+ * SetConsoleActiveScreenBuffer [KERNEL32.623]  Sets buffer to current console
+ *
+ * RETURNS
+ *    Success: TRUE
+ *    Failure: FALSE
  */
-BOOL32 WINAPI SetConsoleActiveScreenBuffer(HANDLE32 hConsoleOutput)
+BOOL32 WINAPI SetConsoleActiveScreenBuffer(
+    HANDLE32 hConsoleOutput) /* [in] Handle to console screen buffer */
 {
-	FIXME(console, "(%x): stub!\n", hConsoleOutput);
-	return 0;
+    FIXME(console, "(%x): stub\n", hConsoleOutput);
+    return FALSE;
 }
+
 
 /***********************************************************************
  *            GetLargestConsoleWindowSize   (KERNEL32.226)
@@ -433,13 +482,17 @@ BOOL32 WINAPI AllocConsole(VOID)
 }
 
 
-/***********************************************************************
- *            GetConsoleCP   (KERNEL32.226)
+/******************************************************************************
+ * GetConsoleCP [KERNEL32.295]  Returns the OEM code page for the console
+ *
+ * RETURNS
+ *    Code page code
  */
 UINT32 WINAPI GetConsoleCP(VOID)
 {
     return GetACP();
 }
+
 
 /***********************************************************************
  *            GetConsoleOutputCP   (KERNEL32.189)
@@ -460,14 +513,24 @@ BOOL32 WINAPI GetConsoleMode(HANDLE32 hcon,LPDWORD mode)
 	return TRUE;
 }
 
-/***********************************************************************
- *            SetConsoleMode   (KERNEL32.628)
+
+/******************************************************************************
+ * SetConsoleMode [KERNEL32.628]  Sets input mode of console's input buffer
+ *
+ * PARAMS
+ *    hcon [I] Handle to console input or screen buffer
+ *    mode [I] Input or output mode to set
+ *
+ * RETURNS
+ *    Success: TRUE
+ *    Failure: FALSE
  */
-BOOL32 WINAPI SetConsoleMode(HANDLE32 hcon,DWORD mode)
+BOOL32 WINAPI SetConsoleMode( HANDLE32 hcon, DWORD mode )
 {
-	FIXME(console,"(%08x,%08lx): stub\n",hcon,mode);
-	return TRUE;
+    FIXME(console,"(%08x,%08lx): stub\n",hcon,mode);
+    return TRUE;
 }
+
 
 /***********************************************************************
  *            GetConsoleTitleA   (KERNEL32.191)
@@ -485,20 +548,30 @@ DWORD WINAPI GetConsoleTitle32A(LPSTR title,DWORD size)
 	return 0;
 }
 
-/***********************************************************************
- *            GetConsoleTitleW   (KERNEL32.192)
+
+/******************************************************************************
+ * GetConsoleTitle32W [KERNEL32.192]  Retrieves title string for console
+ *
+ * PARAMS
+ *    title [O] Address of buffer for title
+ *    size  [I] Size of buffer
+ *
+ * RETURNS
+ *    Success: Length of string copied
+ *    Failure: 0
  */
-DWORD WINAPI GetConsoleTitle32W(LPWSTR title,DWORD size)
+DWORD WINAPI GetConsoleTitle32W( LPWSTR title, DWORD size )
 {
-	PDB32 *pdb = PROCESS_Current();
-	CONSOLE *console= (CONSOLE *)pdb->console;
-	if(console && console->title) 
-	  {
-	    lstrcpynAtoW(title,console->title,size);
-	    return (lstrlen32W(title));
-	  }
-	return 0;
+    PDB32 *pdb = PROCESS_Current();
+    CONSOLE *console= (CONSOLE *)pdb->console;
+    if(console && console->title) 
+    {
+        lstrcpynAtoW(title,console->title,size);
+        return (lstrlen32W(title));
+    }
+    return 0;
 }
+
 
 /***********************************************************************
  *            WriteConsoleA   (KERNEL32.729)
@@ -514,6 +587,7 @@ BOOL32 WINAPI WriteConsole32A( HANDLE32 hConsoleOutput,
 			 lpNumberOfCharsWritten, NULL);
 }
 
+
 /***********************************************************************
  *            WriteConsoleOutputA   (KERNEL32.732)
  */
@@ -523,7 +597,8 @@ BOOL32 WINAPI WriteConsoleOutput32A( HANDLE32 hConsoleOutput,
                                      COORD dwBufferCoord,
                                      LPSMALL_RECT lpWriteRegion)
 {
-	return FALSE;
+    FIXME(console, "(...):stub\n");
+    return FALSE;
 }
 
 /***********************************************************************
@@ -545,8 +620,8 @@ BOOL32 WINAPI WriteConsole32W( HANDLE32 hConsoleOutput,
 			 lpNumberOfCharsWritten, NULL);
 	HeapFree( GetProcessHeap(), 0, xstring );
 	return ret;
-
 }
+
 
 /***********************************************************************
  *            ReadConsoleA   (KERNEL32.419)
@@ -610,6 +685,31 @@ BOOL32 WINAPI ReadConsole32W( HANDLE32 hConsoleInput,
 
 }
 
+
+/******************************************************************************
+ * ReadConsoleInputA [KERNEL32.569]  Reads data from a console
+ *
+ * PARAMS
+ *    hConsoleInput        [I] Handle to console input buffer
+ *    lpBuffer             [O] Address of buffer for read data
+ *    nLength              [I] Number of records to read
+ *    lpNumberOfEventsRead [O] Address of number of records read
+ *
+ * RETURNS
+ *    Success: TRUE
+ *    Failure: FALSE
+ */
+BOOL32 WINAPI ReadConsoleInputA( HANDLE32 hConsoleInput,
+                                 LPINPUT_RECORD lpBuffer,
+                                 DWORD nLength, LPDWORD lpNumberOfEventsRead)
+{
+    FIXME(console, "(%d,%p,%ld,%p): stub\n",hConsoleInput, lpBuffer, nLength,
+          lpNumberOfEventsRead);
+    return ReadConsole32A(hConsoleInput, lpBuffer, nLength, 
+                          lpNumberOfEventsRead, 0);
+}
+
+
 /***********************************************************************
  *            SetConsoleTitle32A   (KERNEL32.476)
  */
@@ -622,7 +722,7 @@ BOOL32 WINAPI SetConsoleTitle32A(LPCSTR title)
 	LPSTR titlestring; 
 	BOOL32 ret=FALSE;
 
-	TRACE(console,"SetConsoleTitle(%s)\n",title);
+	TRACE(console,"(%s)\n",title);
 	
 	console = (CONSOLE *)pdb->console;
 	if (!console)
@@ -645,8 +745,19 @@ BOOL32 WINAPI SetConsoleTitle32A(LPCSTR title)
 	return ret;
 }
 
-/***********************************************************************
- *            SetConsoleTitle32W   (KERNEL32.477)
+
+/******************************************************************************
+ * SetConsoleTitle32W [KERNEL32.477]  Sets title bar string for console
+ *
+ * PARAMS
+ *    title [I] Address of new title
+ *
+ * NOTES
+ *    This should not be calling the A version
+ *
+ * RETURNS
+ *    Success: TRUE
+ *    Failure: FALSE
  */
 BOOL32 WINAPI SetConsoleTitle32W( LPCWSTR title )
 {
@@ -658,6 +769,7 @@ BOOL32 WINAPI SetConsoleTitle32W( LPCWSTR title )
     return ret;
 }
 
+
 /***********************************************************************
  *            FlushConsoleInputBuffer   (KERNEL32.132)
  */
@@ -667,26 +779,43 @@ BOOL32 WINAPI FlushConsoleInputBuffer(HANDLE32 hConsoleInput)
     return TRUE;
 }
 
-BOOL32 WINAPI SetConsoleCursorPosition(HANDLE32 hcons,COORD c)
+
+/******************************************************************************
+ * SetConsoleCursorPosition [KERNEL32.627]
+ * Sets the cursor position in console
+ *
+ * PARAMS
+ *    hConsoleOutput   [I] Handle of console screen buffer
+ *    dwCursorPosition [I] New cursor position coordinates
+ *
+ * RETURNS STD
+ */
+BOOL32 WINAPI SetConsoleCursorPosition( HANDLE32 hConsoleOutput, 
+                                        COORD dwCursorPosition )
 {
+    TRACE(console, "%d (%d x %d)\n", hConsoleOutput, dwCursorPosition.x, 
+          dwCursorPosition.y);
     /* x are columns, y rows */
-    if (!c.y) {
+    if (!dwCursorPosition.y) {
     	fprintf(stderr,"\r");
-	if (c.x)
-		fprintf(stderr,"%c[%dC", 0x1B, c.x); /* note: 0x1b == ESC */
+	if (dwCursorPosition.x)
+            /* note: 0x1B == ESC */
+            fprintf(stderr,"%c[%dC", 0x1B, dwCursorPosition.x);
 	return TRUE;
     }
-    /* handle rest of the cases */
+    FIXME(console, "Unhandled case: y=%d\n", dwCursorPosition.y);
     return FALSE;
 }
+
 
 /***********************************************************************
  *            GetNumberOfConsoleInputEvents   (KERNEL32.246)
  */
 BOOL32 WINAPI GetNumberOfConsoleInputEvents(HANDLE32 hcon,LPDWORD nrofevents)
 {
-	*nrofevents = 0;
-	return TRUE;
+    *nrofevents = 0;
+    FIXME(console,"(%x): stub\n", hcon);
+    return TRUE;
 }
 
 /***********************************************************************
@@ -694,10 +823,11 @@ BOOL32 WINAPI GetNumberOfConsoleInputEvents(HANDLE32 hcon,LPDWORD nrofevents)
  */
 BOOL32 WINAPI GetNumberOfConsoleMouseButtons(LPDWORD nrofbuttons)
 {
+    FIXME(console,"(%p): stub\n", nrofbuttons);
     *nrofbuttons = 2;
-    FIXME(console,"(%p): STUB returning 2\n", nrofbuttons);
     return TRUE;
 }
+
 
 /***********************************************************************
  *            PeekConsoleInputA   (KERNEL32.550)
@@ -710,9 +840,11 @@ BOOL32 WINAPI PeekConsoleInput32A(HANDLE32 hConsoleInput,
     pirBuffer = NULL;
     cInRecords = 0;
     *lpcRead = 0;
-    FIXME(console,"(...): STUB returning TRUE\n");
-	return TRUE;
+    FIXME(console,"(%d,%p,%ld,%p): stub\n",hConsoleInput, pirBuffer,
+          cInRecords, lpcRead);
+    return TRUE;
 }
+
 
 /***********************************************************************
  *            PeekConsoleInputW   (KERNEL32.551)
@@ -725,45 +857,169 @@ BOOL32 WINAPI PeekConsoleInput32W(HANDLE32 hConsoleInput,
     pirBuffer = NULL;
     cInRecords = 0;
     *lpcRead = 0;
-    FIXME(console,"(...): STUB returning TRUE\n");
+    FIXME(console,"(%d,%p,%ld,%p): stub\n", hConsoleInput, pirBuffer,
+          cInRecords, lpcRead);
     return TRUE;
 }
 
-/***********************************************************************
- *            GetConsoleCursorInfo32   (KERNEL32.296)
+
+/******************************************************************************
+ * GetConsoleCursorInfo32 [KERNEL32.296]  Gets size and visibility of console
+ *
+ * PARAMS
+ *    hcon  [I] Handle to console screen buffer
+ *    cinfo [O] Address of cursor information
+ *
+ * RETURNS
+ *    Success: TRUE
+ *    Failure: FALSE
  */
-BOOL32 WINAPI GetConsoleCursorInfo32(HANDLE32 hcon, LPDWORD cinfo)
+BOOL32 WINAPI GetConsoleCursorInfo32( HANDLE32 hcon,
+                                      LPCONSOLE_CURSOR_INFO cinfo )
 {
-  cinfo[0] = 10; /* 10% of character box is cursor.  */
-  cinfo[1] = TRUE;  /* Cursor is visible.  */
-  FIXME(console, "(%x,%p): STUB!\n", hcon, cinfo);
-  return TRUE;
+    FIXME(console, "(%x,%p): stub\n", hcon, cinfo);
+    if (!cinfo) return FALSE;
+    cinfo->dwSize = 10;      /* 10% of character box is cursor.  */
+    cinfo->bVisible = TRUE;  /* Cursor is visible.  */
+    return TRUE;
 }
 
-/***********************************************************************
- *            SetConsoleCursorInfo32   (KERNEL32.626)
+
+/******************************************************************************
+ * SetConsoleCursorInfo32 [KERNEL32.626]  Sets size and visibility of cursor
+ *
+ * RETURNS
+ *    Success: TRUE
+ *    Failure: FALSE
  */
-BOOL32 WINAPI SetConsoleCursorInfo32(HANDLE32 hcon, LPDWORD cinfo)
+BOOL32 WINAPI SetConsoleCursorInfo32( 
+    HANDLE32 hcon,                /* [in] Handle to console screen buffer */
+    LPCONSOLE_CURSOR_INFO cinfo)  /* [in] Address of cursor information */
 {
-  FIXME(console, "(%#x,%p): STUB!\n", hcon, cinfo);
-  return TRUE;
+    FIXME(console, "(%x,%ld,%i): stub\n", hcon,cinfo->dwSize,cinfo->bVisible);
+    return TRUE;
 }
 
-/***********************************************************************
- *            SetConsoleWindowInfo32   (KERNEL32.634)
+
+/******************************************************************************
+ * SetConsoleWindowInfo [KERNEL32.634]  Sets size and position of console
+ *
+ * RETURNS
+ *    Success: TRUE
+ *    Failure: FALSE
  */
-BOOL32 WINAPI SetConsoleWindowInfo32(HANDLE32 hcon, BOOL32 flag, LPSMALL_RECT window)
+BOOL32 WINAPI SetConsoleWindowInfo(
+    HANDLE32 hcon,       /* [in] Handle to console screen buffer */
+    BOOL32 bAbsolute,    /* [in] Coordinate type flag */
+    LPSMALL_RECT window) /* [in] Address of new window rectangle */
 {
-  FIXME(console, "(%x,%d,%p): STUB!\n", hcon, flag, window);
-  return TRUE;
+    FIXME(console, "(%x,%d,%p): stub\n", hcon, bAbsolute, window);
+    return TRUE;
 }
 
-/***********************************************************************
- *               (KERNEL32.631)
+
+/******************************************************************************
+ * SetConsoleTextAttribute32 [KERNEL32.631]  Sets colors for text
+ *
+ * Sets the foreground and background color attributes of characters
+ * written to the screen buffer.
+ *
+ * RETURNS
+ *    Success: TRUE
+ *    Failure: FALSE
  */
-BOOL32 WINAPI SetConsoleTextAttribute32(HANDLE32 hcon, DWORD attributes)
+BOOL32 WINAPI SetConsoleTextAttribute32(
+    HANDLE32 hcon,    /* [in] Handle to console screen buffer */
+    DWORD attributes) /* [in] Text and background colors */
 {
-  FIXME(console, "(%#x,%#lx): STUB!\n", hcon, attributes);
-  return TRUE;
+    FIXME(console, "(%x,%lx): stub\n", hcon, attributes);
+    return TRUE;
+}
+
+
+/******************************************************************************
+ * SetConsoleScreenBufferSize [KERNEL32.630]  Changes size of console 
+ *
+ * PARAMS
+ *    hConsoleOutput [I] Handle to console screen buffer
+ *    dwSize         [I] New size in character rows and cols
+ *
+ * RETURNS
+ *    Success: TRUE
+ *    Failure: FALSE
+ */
+BOOL32 WINAPI SetConsoleScreenBufferSize( HANDLE32 hConsoleOutput, 
+                                          COORD dwSize )
+{
+    FIXME(console, "(%d,%dx%d): stub\n",hConsoleOutput,dwSize.x,dwSize.y);
+    return TRUE;
+}
+
+
+/******************************************************************************
+ * FillConsoleOutputCharacterA [KERNEL32.242]
+ */
+BOOL32 WINAPI FillConsoleOutputCharacterA(
+    HANDLE32 hConsoleOutput,
+    CHAR cCharacter,
+    DWORD nLength,
+    COORD dwWriteCoord,
+    LPDWORD lpNumberOfCharsWritten)
+{
+    FIXME(console, "(%d,%c,%ld,%dx%d,%p): stub\n", hConsoleOutput,cCharacter,
+          nLength,dwWriteCoord.x,dwWriteCoord.y,lpNumberOfCharsWritten);
+    *lpNumberOfCharsWritten = 0;
+    return TRUE;
+}
+
+
+/******************************************************************************
+ * FillConsoleOutputCharacterW [KERNEL32.243]  Writes characters to console
+ *
+ * PARAMS
+ *    hConsoleOutput    [I] Handle to screen buffer
+ *    cCharacter        [I] Character to write
+ *    nLength           [I] Number of cells to write to
+ *    dwCoord           [I] Coords of first cell
+ *    lpNumCharsWritten [O] Pointer to number of cells written
+ *
+ * RETURNS
+ *    Success: TRUE
+ *    Failure: FALSE
+ */
+BOOL32 WINAPI FillConsoleOutputCharacterW( HANDLE32 hConsoleOutput,
+                                           WCHAR cCharacter, DWORD nLength,
+                                           COORD dwCoord, 
+                                           LPDWORD lpNumCharsWritten )
+{
+    FIXME(console, "(%d,%c,%ld,%dx%d,%p): stub\n", hConsoleOutput,
+          cCharacter,nLength,dwCoord.x,dwCoord.y,lpNumCharsWritten);
+    *lpNumCharsWritten = 0;
+    return TRUE;
+}
+
+
+/******************************************************************************
+ * FillConsoleOutputAttribute [KERNEL32.241]  Sets attributes for console
+ *
+ * PARAMS
+ *    hConsoleOutput    [I] Handle to screen buffer
+ *    wAttribute        [I] Color attribute to write
+ *    nLength           [I] Number of cells to write to
+ *    dwCoord           [I] Coords of first cell
+ *    lpNumAttrsWritten [O] Pointer to number of cells written
+ *
+ * RETURNS
+ *    Success: TRUE
+ *    Failure: FALSE
+ */
+BOOL32 WINAPI FillConsoleOutputAttribute( HANDLE32 hConsoleOutput, 
+              WORD wAttribute, DWORD nLength, COORD dwCoord, 
+              LPDWORD lpNumAttrsWritten)
+{
+    FIXME(console, "(%d,%d,%ld,%dx%d,%p): stub\n", hConsoleOutput,
+          wAttribute,nLength,dwCoord.x,dwCoord.y,lpNumAttrsWritten);
+    *lpNumAttrsWritten = nLength;
+    return TRUE;
 }
 

@@ -288,7 +288,7 @@ OLESTATUS WINAPI StringFromCLSID16(
 	(LPVOID)args,
 	(LPDWORD)idstr
     )) {
-    	fprintf(stderr,"CallTo16 IMalloc16 failed\n");
+    	WARN(ole,"CallTo16 IMalloc16 failed\n");
     	return E_FAIL;
     }
     return WINE_StringFromCLSID(id,PTR_SEG_TO_LIN(*idstr));
@@ -395,7 +395,7 @@ OLESTATUS WINAPI CLSIDFromProgID32(
  *           LookupETask (COMPOBJ.94)
  */
 OLESTATUS WINAPI LookupETask(LPVOID p1,LPVOID p2) {
-	fprintf(stderr,"LookupETask(%p,%p),stub!\n",p1,p2);
+	FIXME(ole,"(%p,%p),stub!\n",p1,p2);
 	return 0;
 }
 
@@ -403,7 +403,7 @@ OLESTATUS WINAPI LookupETask(LPVOID p1,LPVOID p2) {
  *           LookupETask (COMPOBJ.201)
  */
 OLESTATUS WINAPI CallObjectInWOW(LPVOID p1,LPVOID p2) {
-	fprintf(stderr,"CallObjectInWOW(%p,%p),stub!\n",p1,p2);
+	FIXME(ole,"(%p,%p),stub!\n",p1,p2);
 	return 0;
 }
 
@@ -539,7 +539,7 @@ VOID WINAPI CoTaskMemFree(
  *           CoInitializeWOW (OLE32.27)
  */
 HRESULT WINAPI CoInitializeWOW(DWORD x,DWORD y) {
-    fprintf(stderr,"CoInitializeWOW(0x%08lx,0x%08lx),stub!\n",x,y);
+    FIXME(ole,"(0x%08lx,0x%08lx),stub!\n",x,y);
     return 0;
 }
 
@@ -551,6 +551,6 @@ HRESULT WINAPI CoLockObjectExternal16(
     BOOL16 fLock,		/* [in] do lock */
     BOOL16 fLastUnlockReleases	/* [in] ? */
 ) {
-    fprintf(stderr,"CoLockObjectExternal(%p,%d,%d),stub!\n",pUnk,fLock,fLastUnlockReleases);
+    FIXME(ole,"(%p,%d,%d),stub!\n",pUnk,fLock,fLastUnlockReleases);
     return S_OK;
 }

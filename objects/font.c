@@ -221,12 +221,21 @@ HFONT16 WINAPI CreateFontIndirect16( const LOGFONT16 *font )
 	    fontPtr = (FONTOBJ *) GDI_HEAP_LOCK( hFont );
 	    memcpy( &fontPtr->logfont, font, sizeof(LOGFONT16) );
 
-	    TRACE(font,"(%i %i) '%s' %s %s => %04x\n",
+	    TRACE(font,"(%i %i %i %i) '%s' %s %s => %04x\n",
 				 font->lfHeight, font->lfWidth, 
+		                 font->lfEscapement, font->lfOrientation,
 				 font->lfFaceName ? font->lfFaceName : "NULL",
 				 font->lfWeight > 400 ? "Bold" : "",
 				 font->lfItalic ? "Italic" : "",
 				 hFont);
+
+	    if (font->lfEscapement != font->lfOrientation) {
+	      /* this should really depend on whether GM_ADVANCED is set */
+	      fontPtr->logfont.lfOrientation = fontPtr->logfont.lfEscapement;
+	      WARN(font, 
+       "orientation angle %f set to escapement angle %f for new font %04x\n", 
+	   font->lfOrientation/10., font->lfEscapement/10., hFont);
+	    }
 	    GDI_HEAP_UNLOCK( hFont );
 	}
     }
@@ -1052,19 +1061,32 @@ BOOL16 WINAPI GetCharABCWidths16( HDC16 hdc, UINT16 firstChar, UINT16 lastChar,
 BOOL32 WINAPI GetCharABCWidths32A(HDC32 hdc, UINT32 firstChar, UINT32 lastChar,
                                   LPABC32 abc )
 {
-    /* No TrueType fonts in Wine so far */
-    FIXME(font, "(%04x,%04x,%04x,%p): stub\n", hdc, firstChar, lastChar, abc );
-    return FALSE;
+    return GetCharABCWidths32W( hdc, firstChar, lastChar, abc );
 }
 
 
-/***********************************************************************
- *           GetCharABCWidths32W   (GDI32.152)
+/******************************************************************************
+ * GetCharABCWidths32W [GDI32.152]  Retrieves widths of characters in range
+ *
+ * PARAMS
+ *    hdc       [I] Handle of device context
+ *    firstChar [I] First character in range to query
+ *    lastChar  [I] Last character in range to query
+ *    abc       [O] Address of character-width structure
+ *
+ * NOTES
+ *    Only works with TrueType fonts
+ *
+ * RETURNS
+ *    Success: TRUE
+ *    Failure: FALSE
  */
-BOOL32 WINAPI GetCharABCWidths32W(HDC32 hdc, UINT32 firstChar, UINT32 lastChar,
-                                  LPABC32 abc )
+BOOL32 WINAPI GetCharABCWidths32W( HDC32 hdc, UINT32 firstChar, UINT32 lastChar,
+                                   LPABC32 abc )
 {
-    return GetCharABCWidths32A( hdc, firstChar, lastChar, abc );
+    /* No TrueType fonts in Wine so far */
+    FIXME(font, "(%04x,%04x,%04x,%p): stub\n", hdc, firstChar, lastChar, abc);
+    return FALSE;
 }
 
 

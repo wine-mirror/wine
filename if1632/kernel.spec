@@ -63,7 +63,7 @@ file	krnl386.exe
 63  pascal16 FreeResource(word) FreeResource16
 64  pascal16 AccessResource(word word) AccessResource16
 65  pascal SizeofResource(word word) SizeofResource16
-66  pascal16 AllocResource(word word long) AllocResource16
+66  pascal16 AllocResource(word word long) AllocResource
 67  pascal SetResourceHandler(word segstr segptr) THUNK_SetResourceHandler
 68  pascal16 InitAtomTable(word) InitAtomTable16
 69  pascal16 FindAtom(segstr) FindAtom16

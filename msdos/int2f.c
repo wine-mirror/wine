@@ -133,14 +133,14 @@ static void do_int2f_16( CONTEXT *context )
 	break;
 
     case 0x84:  /* Get device API entry point */
-        addr = (DWORD)MODULE_GetEntryPoint( GetModuleHandle16("WPROCS"),
-                                            VXD_BASE + BX_reg(context) );
+        addr = (DWORD)NE_GetEntryPoint( GetModuleHandle16("WPROCS"),
+                                        VXD_BASE + BX_reg(context) );
         if (!addr)  /* not supported */
         {
-	    fprintf( stderr,"Application attempted to access VxD %04x\n",
+	    WARN(int,"Application attempted to access VxD %04x\n",
                      BX_reg(context) );
-	    fprintf( stderr,"This device is not known to Wine.");
-	    fprintf( stderr,"Expect a failure now\n");
+	    WARN(int,"This device is not known to Wine.");
+	    WARN(int,"Expect a failure now\n");
         }
 	ES_reg(context) = SELECTOROF(addr);
 	DI_reg(context) = OFFSETOF(addr);
@@ -217,7 +217,7 @@ void do_mscdex( CONTEXT *context )
             break;
 
         default:
-            fprintf(stderr, "Unimplemented MSCDEX function 0x%02.2X.\n", AL_reg(context));
+            FIXME(int, "Unimplemented MSCDEX function 0x%02.2X.\n", AL_reg(context));
             break;
     }
 }

@@ -24,13 +24,13 @@ type win32
 0043 stub PwdGetPasswordStatusW
 0044 stub PwdSetPasswordStatusA
 0045 stub PwdSetPasswordStatusW
-0046 stub WNetAddConnection2A
-0047 stub WNetAddConnection2W
-0048 stub WNetAddConnection3A
-0049 stub WNetAddConnection3W
-0050 stub WNetAddConnectionA
-0051 stub WNetAddConnectionW
-0052 stdcall WNetCachePassword(ptr long ptr long long) WNetCachePassword
+0046 stdcall WNetAddConnection2A(ptr str str long) WNetAddConnection2_32A
+0047 stdcall WNetAddConnection2W(ptr wstr wstr long) WNetAddConnection2_32W
+0048 stdcall WNetAddConnection3A(long ptr str str long) WNetAddConnection3_32A
+0049 stdcall WNetAddConnection3W(long ptr wstr wstr long) WNetAddConnection3_32W
+0050 stdcall WNetAddConnectionA(str str str) WNetAddConnection32A
+0051 stdcall WNetAddConnectionW(wstr wstr wstr) WNetAddConnection32W
+0052 stdcall WNetCachePassword(str long str long long) WNetCachePassword
 0053 stub WNetCancelConnection2A
 0054 stub WNetCancelConnection2W
 0055 stub WNetCancelConnectionA

@@ -119,8 +119,8 @@ Program reports an error with a Messagebox
   Since the failure happens usually directly before setting up the Messagebox
   you can start wine with "-debug" added to the commandline, set a breakpoint
   at "MessageBox32A" (called by win16 and win32 programs) and proceed with
-  "continue". With "-debugmsg +all" Wine will now stop directly directly
-  before setting up the Messagebox.  Proceed as explained above.
+  "continue". With "-debugmsg +all" Wine will now stop directly before 
+  setting up the Messagebox.  Proceed as explained above.
 
   You can also run wine using "wine -debugmsg +relay program.exe 2>&1|less -i"
   and in less search for messagebox.

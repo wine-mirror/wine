@@ -67,7 +67,7 @@ void WINAPI INT_Int13Handler( CONTEXT *context )
 
                         if ( (floppy_fd = DRIVE_OpenDevice( drive_nr, O_NONBLOCK)) == -1)
                         {
-                                fprintf(stderr, "INT 0x13 (GET DRIVE PARAMETERS): can't determine floppy geometry !\n");
+                                WARN(int, "(GET DRIVE PARAMETERS): Can't determine floppy geometry !\n");
                                 BX_reg(context) = 0;
                                 CX_reg(context) = 0;
                                 DH_reg(context) = 0;

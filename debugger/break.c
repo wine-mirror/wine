@@ -339,43 +339,26 @@ void DEBUG_AddModuleBreakpoints(void)
     NE_MODULE *pModule;
     BOOL32 ok;
     DBG_ADDR addr = { NULL, 0, 0 };
+    WINE_MODREF *wm;
 
     for (ok = ModuleFirst(&entry); ok; ok = ModuleNext(&entry))
     {
-        if (!(pModule = MODULE_GetPtr( entry.hModule ))) continue;
+        if (!(pModule = MODULE_GetPtr16( entry.hModule ))) continue;
         if (pModule->flags & NE_FFLAGS_LIBMODULE) continue;  /* Library */
 
-        if (pModule->flags & NE_FFLAGS_WIN32)  /* PE module */
-        {
-            PE_MODREF *pem = PROCESS_Current()->modref_list;
-            if (!pem)
-            {
-                addr.seg = 0;
-                addr.off = (DWORD)RVA_PTR( pModule->module32,
-                                           OptionalHeader.AddressOfEntryPoint);
-            }
-            else
-            {
-                while (pem)
-                {
-                   if (pem->module == pModule->module32) break;
-                   pem = pem->next;
-                }
-                if (!pem) continue;
-                addr.seg = 0;
-                addr.off = (DWORD)RVA_PTR( pem->module,
-                                           OptionalHeader.AddressOfEntryPoint);
-            }
-            fprintf( stderr, "Win32 task '%s': ", entry.szModule );
-            DEBUG_AddBreakpoint( &addr );
-        }
-        else  /* NE module */
+        if (!(pModule->flags & NE_FFLAGS_WIN32))  /* NE module */
         {
             addr.seg = NE_SEG_TABLE(pModule)[pModule->cs-1].selector;
             addr.off = pModule->ip;
             fprintf( stderr, "Win16 task '%s': ", entry.szModule );
             DEBUG_AddBreakpoint( &addr );
         }
+    }
+    for (wm=PROCESS_Current()->modref_list;wm;wm=wm->next) {
+	addr.seg = 0;
+	addr.off =(DWORD)RVA_PTR(wm->module,OptionalHeader.AddressOfEntryPoint);
+        fprintf( stderr, "Win32 module '%s': ", wm->modname );
+        DEBUG_AddBreakpoint( &addr );
     }
 
     DEBUG_SetBreakpoints( TRUE );  /* Setup breakpoints */
@@ -394,15 +377,14 @@ BOOL32 DEBUG_ShouldContinue( enum exec_mode mode, int * count )
     DBG_ADDR cond_addr;
     int bpnum;
     struct list_id list;
-    WORD cs;
 
       /* If not single-stepping, back up over the int3 instruction */
     if (!(EFL_reg(&DEBUG_context) & STEP_FLAG)) EIP_reg(&DEBUG_context)--;
 
-    GET_CS(cs);
-    addr.seg = (CS_reg(&DEBUG_context) == cs) ? 0 : CS_reg(&DEBUG_context);
+    addr.seg = CS_reg(&DEBUG_context);
     addr.off = EIP_reg(&DEBUG_context);
-        
+    if (IS_SELECTOR_SYSTEM(addr.seg)) addr.seg = 0;
+
     bpnum = DEBUG_FindBreakpoint( &addr );
     breakpoints[0].enabled = 0;  /* disable the step-over breakpoint */
 
@@ -519,11 +501,10 @@ enum exec_mode DEBUG_RestartExecution( enum exec_mode mode, int count )
     unsigned int * value;
     enum exec_mode ret_mode;
     BYTE *instr;
-    WORD cs;
 
-    GET_CS(cs);
-    addr.seg = (CS_reg(&DEBUG_context) == cs) ? 0 : CS_reg(&DEBUG_context);
+    addr.seg = CS_reg(&DEBUG_context);
     addr.off = EIP_reg(&DEBUG_context);
+    if (IS_SELECTOR_SYSTEM(addr.seg)) addr.seg = 0;
 
     /*
      * This is the mode we will be running in after we finish.  We would like

@@ -190,8 +190,8 @@ int RELAY_CallFrom32( int ret_addr, ... )
 
 void RELAY_CallFrom32Regs( CONTEXT context )
 {
-    void (CALLBACK *entry_point)(CONTEXT *) = 
-	 *(void (CALLBACK **)(CONTEXT *)) (ESP_reg(&context) - 4);
+    typedef void (CALLBACK *entry_point_t)(CONTEXT *);
+    entry_point_t entry_point = *(entry_point_t*) (ESP_reg(&context) - 4);
 
     if (!TRACE_ON(relay))
     {

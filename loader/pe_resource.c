@@ -31,18 +31,13 @@
  */
 static PE_MODREF*
 HMODULE32toPE_MODREF(HMODULE32 hmod) {
-	NE_MODULE	*pModule;
+	WINE_MODREF	*wm;
 	PDB32		*pdb = PROCESS_Current();
-	PE_MODREF	*pem;
 
-	if (!hmod) hmod = GetTaskDS(); /* FIXME: correct? */
-	hmod = MODULE_HANDLEtoHMODULE32( hmod );
-	if (!hmod) return NULL;
-	if (!(pModule = MODULE_GetPtr( hmod ))) return 0;
-	pem = pdb->modref_list;
-	while (pem && pem->module != hmod)
-		pem=pem->next;
-	return pem;
+	wm = MODULE32_LookupHMODULE( pdb, hmod );
+	if (!wm || wm->type!=MODULE32_PE)
+		return NULL;
+	return &(wm->binfmt.pe);
 }
 
 /**********************************************************************
@@ -106,12 +101,12 @@ LPIMAGE_RESOURCE_DIRECTORY GetResDirEntryW(LPIMAGE_RESOURCE_DIRECTORY resdirptr,
  *	    PE_FindResourceEx32W
  */
 HANDLE32 PE_FindResourceEx32W(
-	HINSTANCE32 hModule,LPCWSTR name,LPCWSTR type,WORD lang
+	WINE_MODREF *wm,LPCWSTR name,LPCWSTR type,WORD lang
 ) {
     LPIMAGE_RESOURCE_DIRECTORY resdirptr;
     DWORD root;
     HANDLE32 result;
-    PE_MODREF	*pem = HMODULE32toPE_MODREF(hModule);
+    PE_MODREF	*pem = &(wm->binfmt.pe);
 
     if (!pem || !pem->pe_resource)
     	return 0;
@@ -133,15 +128,11 @@ HANDLE32 PE_FindResourceEx32W(
 /**********************************************************************
  *	    PE_LoadResource32
  */
-HANDLE32 PE_LoadResource32( HINSTANCE32 hModule, HANDLE32 hRsrc )
+HANDLE32 PE_LoadResource32( WINE_MODREF *wm, HANDLE32 hRsrc )
 {
-    PE_MODREF	*pem = HMODULE32toPE_MODREF(hModule);
-
-    if (!pem || !pem->pe_resource)
+    if (!hRsrc || !wm || wm->type!=MODULE32_PE)
     	return 0;
-    if (!hRsrc)
-   	 return 0;
-    return (HANDLE32) (pem->module + ((LPIMAGE_RESOURCE_DATA_ENTRY)hRsrc)->OffsetToData);
+    return (HANDLE32) (wm->module + ((LPIMAGE_RESOURCE_DATA_ENTRY)hRsrc)->OffsetToData);
 }
 
 

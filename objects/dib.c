@@ -77,7 +77,8 @@ int DIB_GetXImageWidthBytes( int width, int depth )
     for( i = 0; bitmapDepthTable[i] ; i++ )
 	 if( bitmapDepthTable[i] == depth )
 	     return (4 * ((width * ximageDepthTable[i] + 31)/32));
-    fprintf(stderr, "DIB: unsupported depth %d.\n", depth );
+    
+    WARN(bitmap, "(%d): Unsupported depth\n", depth );
     return (4 * width);
 }
 
@@ -101,7 +102,7 @@ int DIB_GetDIBWidthBytes( int width, int depth )
 	case 24: words = (width * 3 + 3)/4; break;
 
 	default:
-        	fprintf(stderr, "DIB: unsupported depth %d.\n", depth );
+            WARN(bitmap, "(%d): Unsupported depth\n", depth );
 	/* fall through */
 	case 32:
 	        words = width;
@@ -161,8 +162,7 @@ static int DIB_GetBitmapInfo( const BITMAPINFOHEADER *header, DWORD *width,
         *bpp    = core->bcBitCount;
         return 0;
     }
-    fprintf( stderr, "DIB_GetBitmapInfo: wrong size (%ld) for header\n",
-             header->biSize );
+    WARN(bitmap, "(%ld): wrong size for header\n", header->biSize );
     return -1;
 }
 
@@ -825,7 +825,7 @@ static int DIB_SetImageBits( const DIB_SETIMAGEBITS_DESCR *descr )
                              descr->width, descr->xSrc, descr->dc, bmpImage);
 	break;
     default:
-        fprintf( stderr, "Invalid depth %d for SetDIBits!\n", descr->infoBpp );
+        WARN(bitmap, "(%d): Invalid depth\n", descr->infoBpp );
         break;
     }
     if (colorMapping) HeapFree( GetProcessHeap(), 0, colorMapping );
@@ -886,8 +886,21 @@ INT16 WINAPI SetDIBits16( HDC16 hdc, HBITMAP16 hbitmap, UINT16 startscan,
 }
 
 
-/***********************************************************************
- *           SetDIBits32   (GDI32.312)
+/******************************************************************************
+ * SetDIBits32 [GDI32.312]  Sets pixels in a bitmap using colors from DIB
+ *
+ * PARAMS
+ *    hdc       [I] Handle to device context
+ *    hbitmap   [I] Handle to bitmap
+ *    startscan [I] Starting scan line
+ *    lines     [I] Number of scan lines
+ *    bits      [I] Array of bitmap bits
+ *    info      [I] Address of structure with data
+ *    coloruse  [I] Type of color indexes to use
+ *
+ * RETURNS
+ *    Success: Number of scan lines copied
+ *    Failure: 0
  */
 INT32 WINAPI SetDIBits32( HDC32 hdc, HBITMAP32 hbitmap, UINT32 startscan,
                           UINT32 lines, LPCVOID bits, const BITMAPINFO *info,
@@ -1124,14 +1137,23 @@ INT16 WINAPI GetDIBits16( HDC16 hdc, HBITMAP16 hbitmap, UINT16 startscan,
 }
 
 
-/***********************************************************************
- *           GetDIBits32    (GDI32.170)
+/******************************************************************************
+ * GetDIBits32 [GDI32.170]  Retrieves bits of bitmap and copies to buffer
+ *
+ * RETURNS
+ *    Success: Number of scan lines copied from bitmap
+ *    Failure: 0
  *
  * http://www.microsoft.com/msdn/sdk/platforms/doc/sdk/win32/func/src/f30_14.htm
  */
-INT32 WINAPI GetDIBits32( HDC32 hdc, HBITMAP32 hbitmap, UINT32 startscan,
-                          UINT32 lines, LPSTR bits, BITMAPINFO * info,
-                          UINT32 coloruse )
+INT32 WINAPI GetDIBits32(
+    HDC32 hdc,         /* [in]  Handle to device context */
+    HBITMAP32 hbitmap, /* [in]  Handle to bitmap */
+    UINT32 startscan,  /* [in]  First scan line to set in dest bitmap */
+    UINT32 lines,      /* [in]  Number of scan lines to copy */
+    LPSTR bits,        /* [out] Address of array for bitmap bits */
+    BITMAPINFO * info, /* [out] Address of structure with bitmap data */
+    UINT32 coloruse)   /* [in]  RGB or palette index */
 {
     DC * dc;
     BITMAPOBJ * bmp;
@@ -1292,9 +1314,8 @@ INT32 WINAPI GetDIBits32( HDC32 hdc, HBITMAP32 hbitmap, UINT32 startscan,
 		}
 		break;
 	   default:
-	   	fprintf(stderr,"GetDIBits*: unsupported depth %d\n",
-			info->bmiHeader.biBitCount
-		);
+	   	WARN(bitmap,"Unsupported depth %d\n",
+                   info->bmiHeader.biBitCount);
 	   	break;
 	}
 
@@ -1386,7 +1407,7 @@ HBITMAP32 WINAPI CreateDIBitmap32( HDC32 hdc, const BITMAPINFOHEADER *header,
         }
         else
         {
-            fprintf( stderr, "CreateDIBitmap: wrong size (%ld) for data\n",
+            WARN(bitmap, "(%ld): wrong size for data\n",
                      data->bmiHeader.biSize );
             return 0;
         }
@@ -1422,11 +1443,11 @@ HBITMAP32 WINAPI CreateDIBSection32 (HDC32 hdc, BITMAPINFO *bmi, UINT32 usage,
 {
   HBITMAP32 res = 0;
 
-  fprintf(stderr,
-	  "CreateDIBSection(%d,[w=%ld,h=%ld],%d,%p,0x%08x,%ld),semistub\n",
+  FIXME(bitmap,
+	  "(%d,[w=%ld,h=%ld],%d,%p,0x%08x,%ld),semistub\n",
 	  hdc,bmi->bmiHeader.biWidth,bmi->bmiHeader.biHeight,
-	  usage,bits,section,offset
-	);
+	  usage,bits,section,offset);
+
   if (bmi->bmiHeader.biHeight < 0 ) bmi->bmiHeader.biHeight = -bmi->bmiHeader.biHeight;
   if (bmi->bmiHeader.biWidth < 0 ) bmi->bmiHeader.biWidth = -bmi->bmiHeader.biWidth;
   /* FIXME.  The following line isn't quite right.  */
@@ -1439,8 +1460,10 @@ HBITMAP32 WINAPI CreateDIBSection32 (HDC32 hdc, BITMAPINFO *bmi, UINT32 usage,
             /* FIXME: this is wrong! (bmBits is always NULL) */
             if (bits) *bits = bmp.bmBits;
 	    /* hmpf */
-	    fprintf(stderr,"allocating %ld bytes of memory\n",bmi->bmiHeader.biWidth*bmi->bmiHeader.biHeight*4);
-	    if (bits) *bits = HeapAlloc(GetProcessHeap(),HEAP_ZERO_MEMORY,bmi->bmiHeader.biWidth*bmi->bmiHeader.biHeight*4);
+	    TRACE(bitmap,"allocating %ld bytes of memory\n",
+                bmi->bmiHeader.biWidth*bmi->bmiHeader.biHeight*4);
+	    if (bits) *bits = HeapAlloc(GetProcessHeap(),HEAP_ZERO_MEMORY,
+                bmi->bmiHeader.biWidth*bmi->bmiHeader.biHeight*4);
             return res;
 	}
     }

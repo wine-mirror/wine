@@ -175,8 +175,8 @@ type	win32
 161 stdcall CreateFileW(wstr long long ptr long long long) CreateFile32W
 162 stub CreateIoCompletionPort
 163 stub CreateKernelThread
-164 stub CreateMailslotA
-165 stub CreateMailslotW
+164 stdcall CreateMailslotA(ptr long long ptr) CreateMailslot32A
+165 stdcall CreateMailslotW(ptr long long ptr) CreateMailslot32W
 166 stdcall CreateMutexA(ptr long str) CreateMutex32A
 167 stdcall CreateMutexW(ptr long wstr) CreateMutex32W
 168 stdcall CreateNamedPipeA(str long long long long long long ptr) CreateNamedPipeA
@@ -252,9 +252,9 @@ type	win32
 238 stdcall FileTimeToDosDateTime(ptr ptr ptr) FileTimeToDosDateTime
 239 stdcall FileTimeToLocalFileTime(ptr ptr) FileTimeToLocalFileTime
 240 stdcall FileTimeToSystemTime(ptr ptr) FileTimeToSystemTime
-241 stub FillConsoleOutputAttribute
-242 stub FillConsoleOutputCharacterA
-243 stub FillConsoleOutputCharacterW
+241 stdcall FillConsoleOutputAttribute(long long long long ptr) FillConsoleOutputAttribute
+242 stdcall FillConsoleOutputCharacterA(long long long long ptr) FillConsoleOutputCharacterA
+243 stdcall FillConsoleOutputCharacterW(long long long long ptr) FillConsoleOutputCharacterW
 244 stdcall FindAtomA(str) FindAtom32A
 245 stdcall FindAtomW(wstr) FindAtom32W
 247 stub FindCloseChangeNotification
@@ -302,8 +302,8 @@ type	win32
 288 stdcall GetCommTimeouts(long ptr) GetCommTimeouts
 289 stdcall GetCommandLineA() GetCommandLine32A
 290 stdcall GetCommandLineW() GetCommandLine32W
-291 stub GetCompressedFileSizeA
-292 stub GetCompressedFileSizeW
+291 stdcall GetCompressedFileSizeA(long ptr) GetCompressedFileSize32A
+292 stdcall GetCompressedFileSizeW(long ptr) GetCompressedFileSize32W
 293 stdcall GetComputerNameA(ptr ptr) GetComputerName32A
 294 stdcall GetComputerNameW(ptr ptr) GetComputerName32W
 295 stdcall GetConsoleCP() GetConsoleCP
@@ -321,8 +321,8 @@ type	win32
 307 stdcall GetCurrentProcessId() GetCurrentProcessId
 308 stdcall GetCurrentThread() GetCurrentThread
 309 stdcall GetCurrentThreadId() GetCurrentThreadId
-310 stdcall GetDateFormatA(long long ptr ptr ptr long) GetDateFormat32A
-311 stub GetDateFormatW
+310 stdcall GetDateFormatA(long long ptr str ptr long) GetDateFormat32A
+311 stdcall GetDateFormatW(long long ptr wstr ptr long) GetDateFormat32W
 312 stub GetDaylightFlag
 313 stub GetDefaultCommConfigA
 314 stub GetDefaultCommConfigW
@@ -336,7 +336,7 @@ type	win32
 322 stdcall GetEnvironmentVariableA(str ptr long) GetEnvironmentVariable32A
 323 stdcall GetEnvironmentVariableW(wstr ptr long) GetEnvironmentVariable32W
 324 stub GetErrorMode
-325 stub GetExitCodeProcess
+325 stdcall GetExitCodeProcess(long ptr) GetExitCodeProcess
 326 stdcall GetExitCodeThread(long ptr) GetExitCodeThread
 327 stdcall GetFileAttributesA(str) GetFileAttributes32A
 328 stdcall GetFileAttributesW(wstr) GetFileAttributes32W
@@ -358,7 +358,7 @@ type	win32
 344 stdcall GetLogicalDriveStringsA(long ptr) GetLogicalDriveStrings32A
 345 stdcall GetLogicalDriveStringsW(long ptr) GetLogicalDriveStrings32W
 346 stdcall GetLogicalDrives() GetLogicalDrives
-347 stub GetMailslotInfo
+347 stdcall GetMailslotInfo(long ptr ptr ptr ptr) GetMailslotInfo
 348 stdcall GetModuleFileNameA(long ptr long) GetModuleFileName32A
 349 stdcall GetModuleFileNameW(long ptr long) GetModuleFileName32W
 350 stdcall GetModuleHandleA(str) GetModuleHandle32A
@@ -434,7 +434,7 @@ type	win32
 420 stdcall GetThreadTimes(long ptr ptr ptr ptr) GetThreadTimes
 421 stdcall GetTickCount() GetTickCount
 422 stdcall GetTimeFormatA(long long ptr str ptr long) GetTimeFormat32A
-423 stub GetTimeFormatW
+423 stdcall GetTimeFormatW(long long ptr wstr ptr long) GetTimeFormat32W
 424 stdcall GetTimeZoneInformation(ptr) GetTimeZoneInformation
 425 stdcall GetUserDefaultLCID() GetUserDefaultLCID
 426 stdcall GetUserDefaultLangID() GetUserDefaultLangID
@@ -580,7 +580,7 @@ type	win32
 566 stub QueueUserAPC
 567 register RaiseException() EXC_RaiseException
 568 stdcall ReadConsoleA(long ptr long ptr ptr) ReadConsole32A
-569 stub ReadConsoleInputA
+569 stdcall ReadConsoleInputA(long ptr long ptr) ReadConsoleInputA
 570 stub ReadConsoleInputW
 571 stub ReadConsoleOutputA
 572 stub ReadConsoleOutputAttribute
@@ -632,8 +632,8 @@ type	win32
 618 stdcall SetCommMask(long ptr) SetCommMask
 619 stdcall SetCommState(long ptr) SetCommState32
 620 stdcall SetCommTimeouts(long ptr) SetCommTimeouts
-621 stub SetComputerNameA
-622 stub SetComputerNameW
+621 stdcall SetComputerNameA(str) SetComputerName32A
+622 stdcall SetComputerNameW(wstr) SetComputerName32W
 623 stdcall SetConsoleActiveScreenBuffer(long) SetConsoleActiveScreenBuffer
 624 stub SetConsoleCP
 625 stdcall SetConsoleCtrlHandler(ptr long) SetConsoleCtrlHandler
@@ -641,11 +641,11 @@ type	win32
 627 stdcall SetConsoleCursorPosition(long long) SetConsoleCursorPosition
 628 stdcall SetConsoleMode(long long) SetConsoleMode
 629 stub SetConsoleOutputCP
-630 stub SetConsoleScreenBufferSize
-631 stub SetConsoleTextAttribute
+630 stdcall SetConsoleScreenBufferSize(long long) SetConsoleScreenBufferSize
+631 stdcall SetConsoleTextAttribute(long long) SetConsoleTextAttribute32
 632 stdcall SetConsoleTitleA(str) SetConsoleTitle32A
 633 stdcall SetConsoleTitleW(wstr) SetConsoleTitle32W
-634 stub SetConsoleWindowInfo
+634 stdcall SetConsoleWindowInfo(long long ptr) SetConsoleWindowInfo
 635 stdcall SetCurrentDirectoryA(str) SetCurrentDirectory32A
 636 stdcall SetCurrentDirectoryW(wstr) SetCurrentDirectory32W
 637 stub SetDaylightFlag
@@ -731,7 +731,7 @@ type	win32
 717 stdcall VirtualQueryEx(long ptr ptr long) VirtualQueryEx
 718 stdcall VirtualUnlock(ptr long) VirtualUnlock
 719 stub WaitCommEvent
-720 stub WaitForDebugEvent
+720 stdcall WaitForDebugEvent(ptr long) WaitForDebugEvent
 721 stdcall WaitForMultipleObjects(long ptr long long) WaitForMultipleObjects
 722 stdcall WaitForMultipleObjectsEx(long ptr long long long) WaitForMultipleObjectsEx
 723 stdcall WaitForSingleObject(long long) WaitForSingleObject

@@ -5,7 +5,7 @@ type	win32
  1 stub ChooseColorA
  2 stub ChooseColorW
  3 stdcall ChooseFontA(ptr) ChooseFont32A
- 4 stub ChooseFontW
+ 4 stdcall ChooseFontW(ptr) ChooseFont32W
  5 stdcall CommDlgExtendedError() CommDlgExtendedError
  6 stdcall FindTextA(ptr) FindText32A
  7 stdcall FindTextW(ptr) FindText32W

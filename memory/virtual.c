@@ -84,7 +84,7 @@ static const BYTE VIRTUAL_Win32Flags[16] =
 
 static FILE_VIEW *VIRTUAL_FirstView;
 
-#ifdef __i386___
+#ifdef __i386__
 /* These are always the same on an i386, and it will be faster this way */
 # define page_mask  0xfff
 # define page_shift 12
@@ -552,7 +552,7 @@ LPVOID WINAPI VirtualAlloc(
     	/* FIXME: MEM_TOP_DOWN allocates the largest possible address.
 	 *  	  Is there _ANY_ way to do it with UNIX mmap()?
 	 */
-    	fprintf(stderr,"VirtualAlloc:MEM_TOP_DOWN ignored\n");
+    	WARN(virtual,"MEM_TOP_DOWN ignored\n");
     	type &= ~MEM_TOP_DOWN;
     }
     /* Compute the protection flags */
@@ -795,7 +795,7 @@ BOOL32 WINAPI VirtualProtectEx(
         if (pdb == PROCESS_Current())
             ret = VirtualProtect( addr, size, new_prot, old_prot );
         else
-            fprintf(stderr,"Unsupported: VirtualProtectEx on other process\n");
+            ERR(virtual,"Unsupported on other process\n");
         K32OBJ_DecCount( &pdb->header );
     }
     return ret;
@@ -892,7 +892,7 @@ DWORD WINAPI VirtualQueryEx(
         if (pdb == PROCESS_Current())
             ret = VirtualQuery( addr, info, len );
         else
-            fprintf(stderr,"Unsupported: VirtualQueryEx on other process\n");
+            ERR(virtual,"Unsupported on other process\n");
         K32OBJ_DecCount( &pdb->header );
     }
     return ret;
@@ -1288,7 +1288,7 @@ LPVOID WINAPI MapViewOfFileEx(
         return NULL;
 
     if (mapping->size_high || offset_high)
-        fprintf( stderr, "MapViewOfFileEx: offsets larger than 4Gb not supported\n");
+        ERR(virtual, "Offsets larger than 4Gb not supported\n");
 
     if ((offset_low >= mapping->size_low) ||
         (count > mapping->size_low - offset_low))

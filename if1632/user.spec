@@ -462,7 +462,7 @@ file	user.exe
 514 pascal16 WNetDeviceMode(word) WNetDeviceMode
 515 pascal16 WNetBrowseDialog(word word ptr) WNetBrowseDialog
 516 pascal16 WNetGetUser(ptr ptr ptr) WNetGetUser
-517 pascal16 WNetAddConnection(ptr ptr ptr) WNetAddConnection
+517 pascal16 WNetAddConnection(ptr ptr ptr) WNetAddConnection16
 518 pascal16 WNetCancelConnection(ptr word) WNetCancelConnection
 519 pascal16 WNetGetError(ptr) WNetGetError
 520 pascal16 WNetGetErrorText(word ptr ptr) WNetGetErrorText
@@ -475,7 +475,7 @@ file	user.exe
 527 pascal16 WNetConnectionDialog(word word) WNetConnectionDialog
 528 pascal16 WNetViewQueueDialog(word ptr) WNetViewQueueDialog
 529 pascal16 WNetPropertyDialog(word word ptr word) WNetPropertyDialog
-530 pascal16 WNetGetDirectoryType(ptr ptr) WNetGetDirectoryType
+530 pascal16 WNetGetDirectoryType(ptr ptr) WNetGetDirectoryType16
 531 pascal16 WNetDirectoryNotify(word ptr word) WNetDirectoryNotify
 532 pascal16 WNetGetPropertyText(word word word ptr word) WNetGetPropertyText
 533 stub WNetInitialize

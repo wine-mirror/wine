@@ -20,6 +20,7 @@
 #include "debug.h"
 #include "toolhelp.h"
 #include "message.h"
+#include "module.h"
 #include "miscemu.h"
 #include "shell.h"
 

@@ -228,7 +228,7 @@ typedef struct
 	short			nSizeMin WINE_PACKED;   /* minimum pt size allowed & */
 	short			nSizeMax WINE_PACKED;   /* max pt size allowed if    */
 							/* CF_LIMITSIZE is used      */
-} CHOOSEFONT, *LPCHOOSEFONT;
+} CHOOSEFONT16, *LPCHOOSEFONT16;
 
 typedef struct
 {
@@ -248,7 +248,30 @@ typedef struct
 	UINT16	___MISSING_ALIGNMENT__; 
 	INT32   	nSizeMin; 
 	INT32		nSizeMax; 
-} CHOOSEFONT32A, *PCHOOSEFONT32A;
+} CHOOSEFONT32A, *LPCHOOSEFONT32A;
+
+typedef struct
+{
+	UINT32  	lStructSize; 
+	HWND32 		hwndOwner; 
+	HDC32  		hDC; 
+	LPLOGFONT32W    lpLogFont; 
+	INT32		iPointSize; 
+	UINT32		Flags; 
+	COLORREF	rgbColors; 
+	LPARAM		lCustData; 
+	WNDPROC32 	lpfnHook; 
+	LPCWSTR		lpTemplateName; 
+	HINSTANCE32	hInstance; 
+	LPWSTR		lpszStyle; 
+	UINT16		nFontType; 
+	UINT16	___MISSING_ALIGNMENT__; 
+	INT32   	nSizeMin; 
+	INT32		nSizeMax; 
+} CHOOSEFONT32W, *LPCHOOSEFONT32W;
+
+DECL_WINELIB_TYPE_AW(CHOOSEFONT);
+DECL_WINELIB_TYPE_AW(LPCHOOSEFONT);
 
 #pragma pack(4)
 
@@ -264,6 +287,7 @@ typedef struct
 #define CF_EFFECTS                   0x00000100L
 #define CF_APPLY                     0x00000200L
 #define CF_ANSIONLY                  0x00000400L
+#define CF_SCRIPTSONLY               CF_ANSIONLY
 #define CF_NOVECTORFONTS             0x00000800L
 #define CF_NOOEMFONTS                CF_NOVECTORFONTS
 #define CF_NOSIMULATIONS             0x00001000L
@@ -276,6 +300,9 @@ typedef struct
 #define CF_NOFACESEL                 0x00080000L
 #define CF_NOSTYLESEL                0x00100000L
 #define CF_NOSIZESEL                 0x00200000L
+#define CF_SELECTSCRIPT              0x00400000L
+#define CF_NOSCRIPTSEL               0x00800000L
+#define CF_NOVERTFONTS               0x01000000L
 
 #define SIMULATED_FONTTYPE      0x8000
 #define PRINTER_FONTTYPE        0x4000
@@ -285,6 +312,8 @@ typedef struct
 #define REGULAR_FONTTYPE        0x0400
 
 #define WM_CHOOSEFONT_GETLOGFONT        (WM_USER + 1)
+#define WM_CHOOSEFONT_SETLOGFONT	(WM_USER + 101)
+#define WM_CHOOSEFONT_SETFLAGS		(WM_USER + 102)
 
 #define LBSELCHSTRING  "commdlg_LBSelChangedNotify"
 #define SHAREVISTRING  "commdlg_ShareViolation"
@@ -446,7 +475,10 @@ HWND16  WINAPI ReplaceText16( SEGPTR find);
 HWND32  WINAPI ReplaceText32A( LPFINDREPLACE32A lpFind);
 HWND32  WINAPI ReplaceText32W( LPFINDREPLACE32W lpFind);
 #define ReplaceText WINELIB_NAME_AW(ReplaceText)
-BOOL16  WINAPI ChooseFont(LPCHOOSEFONT lpChFont);
+BOOL16  WINAPI ChooseFont16(LPCHOOSEFONT16);
+BOOL32  WINAPI ChooseFont32A(LPCHOOSEFONT32A);
+BOOL32  WINAPI ChooseFont32W(LPCHOOSEFONT32W);
+#define ChooseFont WINELIB_NAME_AW(ChooseFont)
 LRESULT WINAPI FileOpenDlgProc(HWND16 hWnd, UINT16 wMsg, WPARAM16 wParam, LPARAM lParam);
 LRESULT WINAPI FileSaveDlgProc(HWND16 hWnd, UINT16 wMsg, WPARAM16 wParam, LPARAM lParam);
 LRESULT WINAPI ColorDlgProc(HWND16 hWnd, UINT16 wMsg, WPARAM16 wParam, LPARAM lParam);
@@ -460,8 +492,10 @@ LRESULT WINAPI ReplaceTextDlgProc32W(HWND32 hWnd, UINT32 wMsg, WPARAM32 wParam, 
 #define ReplaceTextProc WINELIB_NAME_AW(ReplaceTextDlgProc)
 LRESULT WINAPI PrintDlgProc(HWND16 hWnd, UINT16 wMsg, WPARAM16 wParam, LPARAM lParam);
 LRESULT WINAPI PrintSetupDlgProc(HWND16 hWnd, UINT16 wMsg, WPARAM16 wParam, LPARAM lParam);
-LRESULT WINAPI FormatCharDlgProc(HWND16 hWnd, UINT16 wMsg, WPARAM16 wParam, LPARAM lParam);
-
+LRESULT WINAPI FormatCharDlgProc16(HWND16,UINT16,WPARAM16,LPARAM);
+LRESULT WINAPI FormatCharDlgProc32A(HWND32,UINT32,WPARAM32,LPARAM);
+LRESULT WINAPI FormatCharDlgProc32W(HWND32,UINT32,WPARAM32,LPARAM);
+#define FormatCharDlgProc LIBWINE_NAME_AW(FormatCharDlgProc)
 #ifdef __cplusplus
 }
 #endif

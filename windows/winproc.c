@@ -251,7 +251,9 @@ WNDPROC16 WINPROC_GetProc( HWINDOWPROC proc, WINDOWPROCTYPE type )
         if (((WINDOWPROC *)proc)->type == WIN_PROC_16)
             return (WNDPROC16)&((WINDOWPROC *)proc)->thunk;
         else
-            return (WNDPROC16)&((WINDOWPROC *)proc)->jmp;
+            /* return (WNDPROC16)&((WINDOWPROC *)proc)->jmp; */
+            /* Some Win16 programs want to get back the proc they set */
+            return (WNDPROC16)((WINDOWPROC *)proc)->thunk.t_from16.proc;
     }
 }
 

@@ -10,8 +10,8 @@
 #include "windows.h"
 #include "winbase.h"
 #include "winnt.h"
+#include "module.h"
 #include "k32obj.h"
-#include "pe_image.h"
 
 struct _NE_MODULE;
 
@@ -77,7 +77,7 @@ typedef struct _PDB32
     ENVDB           *env_db;           /* 40 Environment database */
     HANDLE_TABLE    *handle_table;     /* 44 Handle table */
     struct _PDB32   *parent;           /* 48 Parent process */
-    PE_MODREF       *modref_list;      /* 4c MODREF list */
+    WINE_MODREF     *modref_list;      /* 4c MODREF list */
     void            *thread_list;      /* 50 List of threads */
     void            *debuggee_CB;      /* 54 Debuggee context block */
     void            *local_heap_free;  /* 58 Head of local heap free list */
@@ -88,7 +88,7 @@ typedef struct _PDB32
     DWORD            tls_bits[2];      /* 88 TLS in-use bits */
     DWORD            process_dword;    /* 90 Unknown */
     struct _PDB32   *group;            /* 94 Process group */
-    PE_MODREF       *exe_modref;       /* 98 MODREF for the process EXE */
+    WINE_MODREF     *exe_modref;       /* 98 MODREF for the process EXE */
     LPTOP_LEVEL_EXCEPTION_FILTER top_filter; /* 9c Top exception filter */
     DWORD            priority;         /* a0 Priority level */
     HANDLE32         heap_list;        /* a4 Head of process heap list */
@@ -102,6 +102,12 @@ typedef struct _PDB32
     DWORD            unknown8;         /* c0 Unknown (NT) */
     LCID             locale;           /* c4 Locale to be queried by GetThreadLocale (NT) */
 } PDB32;
+
+/* Process flags */
+#define PDB32_WIN16_PROC    0x0008  /* Win16 process */
+#define PDB32_DOS_PROC      0x0010  /* Dos process */
+#define PDB32_CONSOLE_PROC  0x0020  /* Console process */
+#define PDB32_FILE_APIS_OEM 0x0040  /* File APIs are OEM */
 
 /* PDB <-> Process id conversion macros */
 #define PROCESS_OBFUSCATOR     ((DWORD)0xdeadbeef)

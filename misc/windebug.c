@@ -9,6 +9,7 @@
 #include <stdlib.h>
 #include "windows.h"
 #include "module.h"
+#include "debug.h"
 
 /***********************************************************************
  *           WinNotify       (WINDEBUG.3)
@@ -16,7 +17,7 @@
  */
 void WinNotify(CONTEXT *context)
 {
-	fprintf(stderr, "WinNotify(AX=%04x): stub !\n", AX_reg(context));
+	FIXME(dll, "(AX=%04x):stub.\n", AX_reg(context));
 	switch (AX_reg(context))
 	{
 		case 0x000D:

@@ -1,5 +1,9 @@
 /*
  * Network functions
+ *
+ * This is the MPR.DLL stuff from Win32,  as well as the USER
+ * stuff by the same names in Win 3.x.  
+ *
  */
 
 #include <ctype.h>
@@ -10,9 +14,114 @@
 #include "drive.h"
 #include "wnet.h"
 #include "debug.h"
+#include "win.h"
+
+/********************************************************************
+ *  WNetAddConnection16 [USER.517]  Directs a local device to net
+ * 
+ * Redirects a local device (either a disk drive or printer port)
+ * to a shared device on a remote server.
+ */
+UINT16 WINAPI WNetAddConnection16(LPSTR lpNetPath, LPSTR lpPassWord,
+                                LPSTR lpLocalName)
+{	
+   return WNetAddConnection32A(lpNetPath, lpPassWord, lpLocalName);
+}
+
+/* [MPR.50] */
+
+UINT32 WNetAddConnection32A(LPSTR NetPath, LPSTR PassWord,
+			    LPSTR LocalName)
+{
+   FIXME(wnet, "('%s', %p, '%s'): stub\n",
+	 NetPath, PassWord, LocalName);
+   return WN_NO_NETWORK;
+}
+
+/* [MPR.51] */
+
+UINT32 WNetAddConnection32W(LPWSTR NetPath, 
+			    LPWSTR PassWord,
+			    LPWSTR LocalName)
+{
+   FIXME(wnet, " stub!\n");
+   return WN_NO_NETWORK;
+}
+
+/* **************************************************************** 
+ * WNetAddConnection2_32A [MPR.46] 
+ */
+
+UINT32
+WNetAddConnection2_32A(LPNETRESOURCE32A netresource, /* [in] */
+		       LPCSTR password,        /* [in] */     
+		       LPCSTR username,        /* [in] */
+		       DWORD flags             /* [in] */  )
+{
+   FIXME(wnet, "(%p,%s,%s,0x%08lx), stub!\n", netresource,
+	 password, username, (unsigned long) flags);
+   SetLastError(WN_NO_NETWORK);
+   return WN_NO_NETWORK;
+}
+
+/* ****************************************************************
+ * WNetAddConnection2W [MPR.47]
+ */
+
+UINT32
+WNetAddConnection2_32W(LPNETRESOURCE32W netresource, /* [in] */
+		       LPCWSTR password,        /* [in] */     
+		       LPCWSTR username,        /* [in] */
+		       DWORD flags              /* [in] */  )
+{
+   FIXME(wnet, ", stub!\n");
+   SetLastError(WN_NO_NETWORK);
+   return WN_NO_NETWORK;
+}
+
+/* ****************************************************************
+ * WNetAddConnection3_32A [MPR.48]
+ */
+
+UINT32 WNetAddConnection3_32A(HWND32 owner,
+		      LPNETRESOURCE32A netresource,
+		      LPCSTR password,
+		      LPCSTR username,
+		      DWORD flags)
+{
+   TRACE(wnet, "owner = 0x%x\n", owner);
+   return WNetAddConnection2_32A(netresource, 
+				 password, username, flags);
+}
+
+/* ****************************************************************
+ * WNetAddConnection3W [MPR.49]
+ */
+
+UINT32 WNetAddConnection3_32W(HWND32 owner,
+			      LPNETRESOURCE32W netresource,
+			      LPCWSTR username,
+			      LPCWSTR password,
+			      DWORD flags)
+{
+   TRACE(wnet,"owner = 0x%x\n", owner);
+   return WNetAddConnection2_32W(netresource, username, password,
+				 flags); 
+} 
+
+
+/********************************************************************
+ *   WNetCancelConnection	[USER.518]  undirects a local device
+ */
+UINT16 WINAPI WNetCancelConnection(LPSTR lpName, BOOL16 bForce)
+{
+    FIXME(wnet, "('%s', %04X): stub\n", lpName, bForce);
+    return WN_NO_NETWORK;
+}
+
 
 /**************************************************************************
- *              WNetErrorText       [USER.499]
+ *              WNetErrorText16       [USER.499]
  */
 int WINAPI WNetErrorText(WORD nError,LPSTR lpszText,WORD cbText)
 {
@@ -21,7 +130,7 @@ int WINAPI WNetErrorText(WORD nError,LPSTR lpszText,WORD cbText)
 }
 
 /**************************************************************************
- *              WNetOpenJob       [USER.501]
+ *              WNetOpenJob16       [USER.501]
  */
 int WINAPI WNetOpenJob(LPSTR szQueue,LPSTR szJobTitle,WORD nCopies,LPWORD pfh)
 {
@@ -120,8 +229,15 @@ int WINAPI WNetUnlockQueueData(LPSTR szQueue)
 	return WN_NET_ERROR;
 }
 
-/**************************************************************************
- *				WNetGetConnection	[USER.512]
+
+/********************************************************************
+ * WNetGetConnection16 [USER.512] reverse-resolves a local device
+ *
+ * RETURNS
+ * - WN_BAD_LOCALNAME     lpLocalName makes no sense
+ * - WN_NOT_CONNECTED     drive is a local drive
+ * - WN_MORE_DATA         buffer isn't big enough
+ * - WN_SUCCESS           success (net path in buffer)  
  */
 int WINAPI WNetGetConnection16(LPCSTR lpLocalName, 
                                LPSTR lpRemoteName, UINT16 *cbRemoteName)
@@ -153,6 +269,19 @@ int WINAPI WNetGetConnection16(LPCSTR lpLocalName,
     }
     return WN_BAD_LOCALNAME;
 }
+
+/**************************************************************************
+ *				WNetGetConnectionA	[MPR.70]
+ */
+DWORD WINAPI
+WNetGetConnection32A(LPCSTR localname,LPSTR remotename,LPDWORD buflen)
+{
+	UINT16	x;
+	DWORD	ret = WNetGetConnection16(localname,remotename,&x);
+	*buflen = x;
+	return ret;
+}
+
 
 /**************************************************************************
  *				WNetGetCaps		[USER.513]
@@ -255,27 +384,6 @@ UINT16 WINAPI WNetGetUser(LPSTR lpLocalName, LPSTR lpUserName, DWORD *lpSize)
 }
 
 /**************************************************************************
- *				WNetAddConnection	[USER.517]
- */
-UINT16 WINAPI WNetAddConnection(LPSTR lpNetPath, LPSTR lpPassWord,
-                                LPSTR lpLocalName)
-{
-	FIXME(wnet, "('%s', %p, '%s'): stub\n",
-	      lpNetPath,lpPassWord,lpLocalName);
-	return WN_NO_NETWORK;
-}
-
-
-/**************************************************************************
- *				WNetCancelConnection	[USER.518]
- */
-UINT16 WINAPI WNetCancelConnection(LPSTR lpName, BOOL16 bForce)
-{
-    FIXME(wnet, "('%s', %04X): stub\n", lpName, bForce);
-    return WN_NO_NETWORK;
-}
-
-/**************************************************************************
  *              WNetGetError       [USER.519]
  */
 int WINAPI WNetGetError(LPWORD nError)
@@ -311,8 +419,8 @@ int WINAPI WNetWriteJob(HANDLE16 hJob,void *lpData,LPWORD lpcbData)
 	return WN_NO_NETWORK;
 }
 
-/**************************************************************************
- *              WnetConnectDialog       [USER.525]
+/********************************************************************
+ *              WNetConnectDialog       [USER.525]
  */
 UINT16 WINAPI WNetConnectDialog(HWND16 hWndParent, WORD iType)
 {
@@ -338,6 +446,8 @@ UINT16 WINAPI WNetConnectionDialog(HWND16 hWndParent, WORD iType)
 	return WN_SUCCESS;
 }
 
+
+
 /**************************************************************************
  *              WNetViewQueueDialog       [USER.528]
  */
@@ -358,13 +468,28 @@ int WINAPI WNetPropertyDialog(HWND16 hwndParent,WORD iButton,
 	return WN_NO_NETWORK;
 }
 
-/**************************************************************************
- *              WNetGetDirectoryType       [USER.530]
+/*********************************************************************
+ *  WNetGetDirectoryType [USER.530]  Decides whether resource is local
+ *
+ * RETURNS
+ *    on success,  puts one of the following in *lpType:
+ * - WNDT_NETWORK   on a network
+ * - WNDT_LOCAL     local
  */
-int WINAPI WNetGetDirectoryType(LPSTR lpName,void *lpType)
+int WINAPI WNetGetDirectoryType16(LPSTR lpName, LPINT16 lpType)
 {
 	FIXME(wnet, "('%s',%p): stub\n",lpName,lpType);
+	*lpType = 0;
 	return WN_NO_NETWORK;
+}
+
+/*****************************************************************
+ *              WNetGetDirectoryTypeA     [MPR.109]
+ */
+
+UINT32 WINAPI WNetGetDirectoryType32A(LPSTR lpName,void *lpType)
+{
+   return WNetGetDirectoryType16(lpName, lpType);
 }
 
 /**************************************************************************
@@ -387,16 +512,6 @@ int WINAPI WNetGetPropertyText(HWND16 hwndParent,WORD iButton,WORD nPropSel,
 	return WN_NO_NETWORK;
 }
 
-/**************************************************************************
- *				WNetAddConnection2	[USER.???]
- */
-UINT16 WINAPI WNetAddConnection2(LPSTR lpNetPath, LPSTR lpPassWord, 
-                                 LPSTR lpLocalName, LPSTR lpUserName)
-{
-	FIXME(wnet, "('%s', %p, '%s', '%s'): stub\n",
-	      lpNetPath, lpPassWord, lpLocalName, lpUserName);
-	return WN_NO_NETWORK;
-}
 
 /**************************************************************************
  *				WNetCloseEnum		[USER.???]
@@ -440,17 +555,9 @@ UINT32 WINAPI WNetOpenEnum32A(DWORD dwScope, DWORD dwType,
 	return WN_NO_NETWORK;
 }
 
-/**************************************************************************
- *				WNetGetConnectionA	[MPR.92]
- */
-DWORD WINAPI
-WNetGetConnection32A(LPCSTR localname,LPSTR remotename,LPDWORD buflen)
-{
-	UINT16	x;
-	DWORD	ret = WNetGetConnection16(localname,remotename,&x);
-	*buflen = x;
-	return ret;
-}
+/* ****************************************************************
+ *    WNetGetResourceInformationA [MPR.80]
+ * */
 
 DWORD WINAPI 
 WNetGetResourceInformation32A(
@@ -458,4 +565,64 @@ WNetGetResourceInformation32A(
 ) {
 	FIXME(wnet,"(%p,%p,%p,%p): stub!\n",netres,buf,buflen,systemstr);
 	return WN_NO_NETWORK;
+}
+
+/**************************************************************************
+ * WNetCachePassword [MPR.52]  Saves password in cache
+ *
+ * RETURNS
+ *    Success: WN_SUCCESS
+ *    Failure: WNACCESS_DENIED, WN_BAD_PASSWORD, WN_BADVALUE, WN_NET_ERROR,
+ *             WN_NOT_SUPPORTED, WN_OUT_OF_MEMORY
+ */
+DWORD WINAPI WNetCachePassword(
+    LPSTR pbResource, /* [in] Name of workgroup, computer, or resource */
+    WORD cbResource,  /* [in] Size of name */
+    LPSTR pbPassword, /* [in] Buffer containing password */
+    WORD cbPassword,  /* [in] Size of password */
+    BYTE nType)       /* [in] Type of password to cache */
+{
+    FIXME(mpr,"(%s,%d,%s,%d,%d): stub\n", pbResource,cbResource,
+          pbPassword,cbPassword,nType);
+    return WN_SUCCESS;
+}
+
+
+
+/*****************************************************************
+ * WNetGetCachedPassword [MPR.69]  Retrieves password from cache
+ *
+ * RETURNS
+ *    Success: WN_SUCCESS
+ *    Failure: WNACCESS_DENIED, WN_BAD_PASSWORD, WN_BAD_VALUE, 
+ *             WN_NET_ERROR, WN_NOT_SUPPORTED, WN_OUT_OF_MEMORY
+ */
+DWORD WINAPI WNetGetCachedPassword(
+    LPSTR pbResource,   /* [in]  Name of workgroup, computer, or resource */
+    WORD cbResource,    /* [in]  Size of name */
+    LPSTR pbPassword,   /* [out] Buffer to receive password */
+    LPWORD pcbPassword, /* [out] Receives size of password */
+    BYTE nType)         /* [in]  Type of password to retrieve */
+{
+    FIXME(mpr,"(%s,%d,%p,%d,%d): stub\n",
+          pbResource,cbResource,pbPassword,*pcbPassword,nType);
+    return WN_ACCESS_DENIED;
+}
+
+/* ****************************************************************
+ *     MultinetGetConnectionPerformanceA [MPR.25]
+ *
+ * RETURNS
+ *    Success: NO_ERROR
+ *    Failure: ERROR_NOT_SUPPORTED, ERROR_NOT_CONNECTED,
+ *             ERROR_NO_NET_OR_BAD_PATH, ERROR_BAD_DEVICE,
+ *             ERROR_BAD_NET_NAME, ERROR_INVALID_PARAMETER, 
+ *             ERROR_NO_NETWORK, ERROR_EXTENDED_ERROR
+ */
+DWORD WINAPI MultinetGetConnectionPerformance32A(
+	LPNETRESOURCE32A lpNetResource,
+	LPNETCONNECTINFOSTRUCT lpNetConnectInfoStruct
+) {
+	FIXME(mpr,"(%p,%p): stub\n",lpNetResource,lpNetConnectInfoStruct);
+	return 1;
 }

@@ -137,29 +137,25 @@ static IMalloc16_VTable *msegvt16 = NULL;
 LPMALLOC16
 IMalloc16_Constructor() {
 	LPMALLOC16	this;
+        HMODULE16	hcomp = GetModuleHandle16("COMPOBJ");
 
 	this = (LPMALLOC16)SEGPTR_NEW(IMalloc16);
-	if (__winelib) {
-		this->lpvtbl = &mvt16;
-	} else {
-		HMODULE16	hcomp = GetModuleHandle16("COMPOBJ");
-		if (!msegvt16) {
-			this->lpvtbl = msegvt16 = SEGPTR_NEW(IMalloc16_VTable);
+        if (!msegvt16) {
+            this->lpvtbl = msegvt16 = SEGPTR_NEW(IMalloc16_VTable);
 
-#define FN(x) this->lpvtbl->fn##x = (void*)WIN32_GetProcAddress16(hcomp,"IMalloc16_"#x);assert(this->lpvtbl->fn##x);
-			FN(QueryInterface)
-			FN(AddRef)
-			FN(Release)
-			FN(Alloc)
-			FN(Realloc)
-			FN(Free)
-			FN(GetSize)
-			FN(DidAlloc)
-			FN(HeapMinimize)
-			msegvt16 = (LPMALLOC16_VTABLE)SEGPTR_GET(msegvt16);
+#define FN(x) this->lpvtbl->fn##x = (void*)WIN32_GetProcAddress16(hcomp,"IMalloc16_"#x);assert(this->lpvtbl->fn##x)
+            FN(QueryInterface);
+            FN(AddRef);
+            FN(Release);
+            FN(Alloc);
+            FN(Realloc);
+            FN(Free);
+            FN(GetSize);
+            FN(DidAlloc);
+            FN(HeapMinimize);
+            msegvt16 = (LPMALLOC16_VTABLE)SEGPTR_GET(msegvt16);
 #undef FN
-		}
-		this->lpvtbl = msegvt16;
+            this->lpvtbl = msegvt16;
 	}
 	this->ref = 1;
 	/* FIXME: implement multiple heaps */

@@ -9,8 +9,6 @@ C_SRCS = \
 	libres.c \
 	main.c \
 	module.c \
-	ne_image.c \
-	ne_resource.c \
 	pe_image.c \
 	pe_resource.c \
 	resource.c \

@@ -418,7 +418,7 @@ HGLOBAL16 WINAPI GlobalFree16(
     void *ptr;
 
     if (!VALID_HANDLE(handle)) {
-    	fprintf(stderr," Invalid handle 0x%04x passed to GlobalFree16!\n",handle);
+    	WARN(global,"Invalid handle 0x%04x passed to GlobalFree16!\n",handle);
     	return 0;
     }
     ptr = (void *)GET_ARENA_PTR(handle)->base;
@@ -452,7 +452,7 @@ SEGPTR WINAPI WIN16_GlobalLock16( HGLOBAL16 handle )
 #endif  /* CONFIG_IPC */
 
 	if (!VALID_HANDLE(handle)) {
-	    fprintf(stderr,"Invalid handle 0x%04x passed to WIN16_GlobalLock16!\n",handle);
+	    WARN(global,"Invalid handle 0x%04x passed to WIN16_GlobalLock16!\n",handle);
 	    return (SEGPTR)0;
 	}
 	if (!GET_ARENA_PTR(handle)->base) return (SEGPTR)0;
@@ -501,7 +501,7 @@ BOOL16 WINAPI GlobalUnlock16(
 ) {
     GLOBALARENA *pArena = GET_ARENA_PTR(handle);
     if (!VALID_HANDLE(handle)) {
-	fprintf(stderr,"Invalid handle 0x%04x passed to GlobalUnlock16!\n",handle);
+	WARN(global,"Invalid handle 0x%04x passed to GlobalUnlock16!\n",handle);
 	return 0;
     }
     TRACE(global, "%04x\n", handle );
@@ -541,7 +541,7 @@ DWORD WINAPI GlobalHandle16(
 ) {
     TRACE(global, "%04x\n", sel );
     if (!VALID_HANDLE(sel)) {
-	fprintf(stderr,"Invalid handle 0x%04x passed to GlobalHandle16!\n",sel);
+	WARN(global,"Invalid handle 0x%04x passed to GlobalHandle16!\n",sel);
 	return 0;
     }
     return MAKELONG( GET_ARENA_PTR(sel)->handle, GlobalHandleToSel(sel) );
@@ -578,7 +578,7 @@ UINT16 WINAPI GlobalFlags16(
 
     TRACE(global, "%04x\n", handle );
     if (!VALID_HANDLE(handle)) {
-	fprintf(stderr,"Invalid handle 0x%04x passed to GlobalFlags16!\n",handle);
+	WARN(global,"Invalid handle 0x%04x passed to GlobalFlags16!\n",handle);
 	return 0;
     }
     pArena = GET_ARENA_PTR(handle);
@@ -596,7 +596,7 @@ HGLOBAL16 WINAPI LockSegment16( HGLOBAL16 handle )
     TRACE(global, "%04x\n", handle );
     if (handle == (HGLOBAL16)-1) handle = CURRENT_DS;
     if (!VALID_HANDLE(handle)) {
-	fprintf(stderr,"Invalid handle 0x%04x passed to LockSegment16!\n",handle);
+	WARN(global,"Invalid handle 0x%04x passed to LockSegment16!\n",handle);
 	return 0;
     }
     GET_ARENA_PTR(handle)->lockCount++;
@@ -612,7 +612,7 @@ void WINAPI UnlockSegment16( HGLOBAL16 handle )
     TRACE(global, "%04x\n", handle );
     if (handle == (HGLOBAL16)-1) handle = CURRENT_DS;
     if (!VALID_HANDLE(handle)) {
-	fprintf(stderr,"Invalid handle 0x%04x passed to UnlockSegment16!\n",handle);
+	WARN(global,"Invalid handle 0x%04x passed to UnlockSegment16!\n",handle);
 	return;
     }
     GET_ARENA_PTR(handle)->lockCount--;
@@ -759,7 +759,7 @@ WORD WINAPI GlobalPageLock( HGLOBAL16 handle )
 {
     TRACE(global, "%04x\n", handle );
     if (!VALID_HANDLE(handle)) {
-	fprintf(stderr,"Invalid handle 0x%04x passed to GlobalPageLock!\n",handle);
+	WARN(global,"Invalid handle 0x%04x passed to GlobalPageLock!\n",handle);
 	return 0;
     }
     return ++(GET_ARENA_PTR(handle)->pageLockCount);
@@ -773,7 +773,7 @@ WORD WINAPI GlobalPageUnlock( HGLOBAL16 handle )
 {
     TRACE(global, "%04x\n", handle );
     if (!VALID_HANDLE(handle)) {
-	fprintf(stderr,"Invalid handle 0x%04x passed to GlobalPageUnlock!\n",handle);
+	WARN(global,"Invalid handle 0x%04x passed to GlobalPageUnlock!\n",handle);
 	return 0;
     }
     return --(GET_ARENA_PTR(handle)->pageLockCount);
@@ -787,7 +787,7 @@ void WINAPI GlobalFix16( HGLOBAL16 handle )
 {
     TRACE(global, "%04x\n", handle );
     if (!VALID_HANDLE(handle)) {
-	fprintf(stderr,"Invalid handle 0x%04x passed to GlobalFix16!\n",handle);
+	WARN(global,"Invalid handle 0x%04x passed to GlobalFix16!\n",handle);
 	return;
     }
     GET_ARENA_PTR(handle)->lockCount++;
@@ -801,7 +801,7 @@ void WINAPI GlobalUnfix16( HGLOBAL16 handle )
 {
     TRACE(global, "%04x\n", handle );
     if (!VALID_HANDLE(handle)) {
-	fprintf(stderr,"Invalid handle 0x%04x passed to GlobalUnfix16!\n",handle);
+	WARN(global,"Invalid handle 0x%04x passed to GlobalUnfix16!\n",handle);
 	return;
     }
     GET_ARENA_PTR(handle)->lockCount--;
@@ -814,7 +814,7 @@ void WINAPI GlobalUnfix16( HGLOBAL16 handle )
 void WINAPI FarSetOwner( HGLOBAL16 handle, HANDLE16 hOwner )
 {
     if (!VALID_HANDLE(handle)) {
-	fprintf(stderr,"Invalid handle 0x%04x passed to FarSetOwner!\n",handle);
+	WARN(global,"Invalid handle 0x%04x passed to FarSetOwner!\n",handle);
 	return;
     }
     GET_ARENA_PTR(handle)->hOwner = hOwner;
@@ -827,7 +827,7 @@ void WINAPI FarSetOwner( HGLOBAL16 handle, HANDLE16 hOwner )
 HANDLE16 WINAPI FarGetOwner( HGLOBAL16 handle )
 {
     if (!VALID_HANDLE(handle)) {
-	fprintf(stderr,"Invalid handle 0x%04x passed to FarGetOwner!\n",handle);
+	WARN(global,"Invalid handle 0x%04x passed to FarGetOwner!\n",handle);
 	return 0;
     }
     return GET_ARENA_PTR(handle)->hOwner;
@@ -845,12 +845,12 @@ WORD WINAPI GlobalHandleToSel( HGLOBAL16 handle )
     if (is_dde_handle(handle)) return DDE_GlobalHandleToSel(handle);
 #endif
     if (!VALID_HANDLE(handle)) {
-	fprintf(stderr,"Invalid handle 0x%04x passed to GlobalHandleToSel!\n",handle);
+	WARN(global,"Invalid handle 0x%04x passed to GlobalHandleToSel!\n",handle);
 	return 0;
     }
     if (!(handle & 7))
     {
-        fprintf( stderr, "Program attempted invalid selector conversion\n" );
+        WARN(global, "Program attempted invalid selector conversion\n" );
         return handle - 1;
     }
     return handle | 7;

@@ -334,7 +334,7 @@ BOOL16 WINAPI LocalInit( HANDLE16 selector, WORD start, WORD end )
         /* cleared before use, so we can test for double initialization. */
         if (LOCAL_GetHeap(selector))
         {
-            fprintf( stderr, "LocalInit: Heap %04x initialized twice.\n", selector);
+            WARN(local, "Heap %04x initialized twice.\n", selector);
             LOCAL_PrintHeap(selector);
         }
     }
@@ -342,7 +342,7 @@ BOOL16 WINAPI LocalInit( HANDLE16 selector, WORD start, WORD end )
     if (start == 0) {
       /* Check if the segment is the DGROUP of a module */
 
-	if ((pModule = MODULE_GetPtr( selector )))
+	if ((pModule = MODULE_GetPtr16( selector )))
 	{
 	    SEGTABLEENTRY *pSeg = NE_SEG_TABLE( pModule ) + pModule->dgroup - 1;
 	    if (pModule->dgroup && (pSeg->selector == selector)) {
@@ -441,7 +441,7 @@ static void LOCAL_GrowHeap( HANDLE16 ds )
     ptr = PTR_SEG_OFF_TO_LIN( ds, 0 );
     pHeapInfo = LOCAL_GetHeap( ds );
     if (pHeapInfo == NULL) {
-	fprintf( stderr, "Local_GrowHeap: heap not found\n" );
+	WARN(local, "Heap not found\n" );
 	return;
     }
     end = GlobalSize16( hseg );
@@ -496,7 +496,7 @@ static HLOCAL16 LOCAL_FreeArena( WORD ds, WORD arena )
     if ((pArena->prev & 3) == LOCAL_ARENA_FREE)
     {
 	/* shouldn't happen */
-        fprintf( stderr, "LocalFreeArena: Trying to free block %04x twice!\n",
+        WARN(local, "Trying to free block %04x twice!\n",
                  arena );
 	LOCAL_PrintHeap( ds );
 	return arena;
@@ -619,7 +619,7 @@ static WORD LOCAL_GetFreeSpace(WORD ds, WORD countdiscard)
     
     if (!(pInfo = LOCAL_GetHeap( ds )))
     {
-        fprintf( stderr, "LOCAL_GetFreeSpace: Local heap not found\n" );
+        WARN(local, "Local heap not found\n" );
         LOCAL_PrintHeap(ds);
         return 0;
     }
@@ -654,7 +654,7 @@ WORD LOCAL_Compact( HANDLE16 ds, UINT16 minfree, UINT16 flags )
 
     if (!(pInfo = LOCAL_GetHeap( ds )))
     {
-        fprintf( stderr, "Local_Compact: Local heap not found\n" );
+        WARN(local, "Local heap not found\n" );
         LOCAL_PrintHeap(ds);
         return 0;
     }
@@ -773,7 +773,7 @@ static HLOCAL16 LOCAL_FindFreeBlock( HANDLE16 ds, WORD size )
 
     if (!(pInfo = LOCAL_GetHeap( ds )))
     {
-        fprintf( stderr, "Local_FindFreeBlock: Local heap not found\n" );
+        WARN(local, "Local heap not found\n" );
 	LOCAL_PrintHeap(ds);
 	return 0;
     }
@@ -805,7 +805,7 @@ static HLOCAL16 LOCAL_GetBlock( HANDLE16 ds, WORD size, WORD flags )
 
     if (!(pInfo = LOCAL_GetHeap( ds )))
     {
-        fprintf( stderr, "Local_GetBlock: Local heap not found\n");
+        WARN(local, "Local heap not found\n");
 	LOCAL_PrintHeap(ds);
 	return 0;
     }
@@ -868,7 +868,7 @@ static BOOL16 LOCAL_NewHTable( HANDLE16 ds )
     TRACE(local, "Local_NewHTable\n" );
     if (!(pInfo = LOCAL_GetHeap( ds )))
     {
-        fprintf( stderr, "Local heap not found\n");
+        WARN(local, "Local heap not found\n");
         LOCAL_PrintHeap(ds);
         return FALSE;
     }
@@ -877,9 +877,9 @@ static BOOL16 LOCAL_NewHTable( HANDLE16 ds )
                                    + 2 * sizeof(WORD), LMEM_FIXED )))
         return FALSE;
     if (!(ptr = PTR_SEG_OFF_TO_LIN( ds, 0 )))
-        fprintf(stderr, "LOCAL_NewHTable: ptr == NULL after GetBlock.\n");
+        WARN(local, "ptr == NULL after GetBlock.\n");
     if (!(pInfo = LOCAL_GetHeap( ds )))
-        fprintf(stderr,"LOCAL_NewHTable: pInfo == NULL after GetBlock.\n");
+        WARN(local,"pInfo == NULL after GetBlock.\n");
 
     /* Fill the entry table */
 
@@ -907,7 +907,7 @@ static HLOCAL16 LOCAL_GetNewHandleEntry( HANDLE16 ds )
 
     if (!(pInfo = LOCAL_GetHeap( ds )))
     {
-        fprintf( stderr, "LOCAL_GetNewHandleEntry: Local heap not found\n");
+        WARN(local, "Local heap not found\n");
 	LOCAL_PrintHeap(ds);
 	return 0;
     }
@@ -970,7 +970,7 @@ static void LOCAL_FreeHandleEntry( HANDLE16 ds, HLOCAL16 handle )
     }
     if (!*pTable)
     {
-        fprintf(stderr, "LOCAL_FreeHandleEntry: invalid entry %04x\n", handle);
+        WARN(local, "Invalid entry %04x\n", handle);
         LOCAL_PrintHeap( ds );
         return;
     }
@@ -1007,7 +1007,7 @@ HLOCAL16 LOCAL_Free( HANDLE16 ds, HLOCAL16 handle )
 
     TRACE(local, "%04x ds=%04x\n", handle, ds );
     
-    if (!handle) { fprintf( stderr, "LOCAL_Free: handle is 0.\n" ); return 0; }
+    if (!handle) { WARN(local, "Handle is 0.\n" ); return 0; }
     if (HANDLE_FIXED( handle ))
     {
         if (!LOCAL_FreeArena( ds, ARENA_HEADER( handle ) )) return 0;  /* OK */
@@ -1057,7 +1057,7 @@ HLOCAL16 LOCAL_Alloc( HANDLE16 ds, WORD flags, WORD size )
 	    hmem = 0;
 	if (!(handle = LOCAL_GetNewHandleEntry( ds )))
         {
-	    fprintf( stderr, "LocalAlloc: couldn't get handle\n");
+	    WARN(local, "Couldn't get handle.\n");
 	    if(hmem)
 		LOCAL_FreeArena( ds, ARENA_HEADER(hmem) );
 	    return 0;
@@ -1120,8 +1120,7 @@ HLOCAL16 LOCAL_ReAlloc( HANDLE16 ds, HLOCAL16 handle, WORD size, WORD flags )
         {
 	    HLOCAL16 hl;
 	    if(pEntry->addr)
-		fprintf(stderr,
-			"LOCAL_ReAlloc: Dicarded block has non-zero addr.\n");
+		WARN(local,"Dicarded block has non-zero addr.\n");
 	    TRACE(local, "ReAllocating discarded block\n");
 	    if(size <= 4) size = 5;
 	    if (!(hl = LOCAL_GetBlock( ds, size + sizeof(HLOCAL16), flags)))
@@ -1136,12 +1135,12 @@ HLOCAL16 LOCAL_ReAlloc( HANDLE16 ds, HLOCAL16 handle, WORD size, WORD flags )
 	}
 	if (((blockhandle = pEntry->addr) & 3) != 2)
 	{
-	    fprintf( stderr, "Local_ReAlloc(%04x,%04x): invalid handle\n",
+	    WARN(local, "(%04x,%04x): invalid handle\n",
                      ds, handle );
 	    return 0;
         }
 	if(*((HLOCAL16 *)(ptr + blockhandle) - 1) != handle) {
-	    fprintf(stderr, "Local_ReAlloc: Back ptr to handle is invalid\n");
+	    WARN(local, "Back ptr to handle is invalid\n");
 	    return 0;
         }
     }
@@ -1261,7 +1260,7 @@ HLOCAL16 LOCAL_ReAlloc( HANDLE16 ds, HLOCAL16 handle, WORD size, WORD flags )
         {
             if (!(hmem = LOCAL_GetBlock( ds, oldsize, flags )))
             {
-                fprintf( stderr, "LocalRealloc: can't restore saved block\n" );
+                WARN(local, "Can't restore saved block\n" );
                 HeapFree( GetProcessHeap(), 0, buffer );
                 return 0;
             }
@@ -1283,7 +1282,7 @@ HLOCAL16 LOCAL_ReAlloc( HANDLE16 ds, HLOCAL16 handle, WORD size, WORD flags )
         pEntry->addr = hmem + sizeof(HLOCAL16);
 	/* Back ptr should still be correct */
 	if(*(HLOCAL16 *)(ptr + hmem) != handle)
-	    fprintf(stderr, "Local_ReAlloc: back ptr is invalid.\n");
+	    WARN(local, "back ptr is invalid.\n");
 	hmem = handle;
     }
     if (size == oldsize) hmem = 0;  /* Realloc failed */
@@ -1423,7 +1422,7 @@ WORD LOCAL_CountFree( HANDLE16 ds )
 
     if (!(pInfo = LOCAL_GetHeap( ds )))
     {
-        fprintf( stderr, "LOCAL_Handle(%04x): Local heap not found\n", ds );
+        WARN(local, "(%04x): Local heap not found\n", ds );
 	LOCAL_PrintHeap( ds );
 	return 0;
     }
@@ -1456,7 +1455,7 @@ HLOCAL16 LOCAL_Handle( HANDLE16 ds, WORD addr )
 
     if (!(pInfo = LOCAL_GetHeap( ds )))
     {
-        fprintf( stderr, "LOCAL_Handle(%04x): Local heap not found\n", ds );
+        WARN(local, "(%04x): Local heap not found\n", ds );
 	LOCAL_PrintHeap( ds );
 	return 0;
     }
@@ -1602,7 +1601,7 @@ DWORD WINAPI GetHeapSpaces( HMODULE16 module )
     NE_MODULE *pModule;
     WORD ds;
 
-    if (!(pModule = MODULE_GetPtr( module ))) return 0;
+    if (!(pModule = MODULE_GetPtr16( module ))) return 0;
     ds = (NE_SEG_TABLE( pModule ) + pModule->dgroup - 1)->selector;
     return MAKELONG( LOCAL_CountFree( ds ), LOCAL_HeapSize( ds ) );
 }

@@ -23,6 +23,7 @@
 
 typedef enum
 {
+    WPR_UNKNOWN,
     WPR_CHAR,
     WPR_WCHAR,
     WPR_STRING,
@@ -108,8 +109,9 @@ static INT32 WPRINTF_ParseFormatA( LPCSTR format, WPRINTF_FORMAT *res )
     case 'x':
         res->type = WPR_HEXA;
         break;
-    default:
-        fprintf( stderr, "wvsprintf32A: unknown format '%c'\n", *p );
+    default: /* unknown format char */
+        res->type = WPR_UNKNOWN;
+        p--;  /* print format as normal char */
         break;
     }
     return (INT32)(p - format) + 1;
@@ -180,7 +182,8 @@ static INT32 WPRINTF_ParseFormatW( LPCWSTR format, WPRINTF_FORMAT *res )
         res->type = WPR_HEXA;
         break;
     default:
-        fprintf( stderr, "wvsprintf32W: unknown format '%c'\n", (CHAR)*p );
+        res->type = WPR_UNKNOWN;
+        p--;  /* print format as normal char */
         break;
     }
     return (INT32)(p - format) + 1;
@@ -282,6 +285,8 @@ INT16 WINAPI wvsnprintf16( LPSTR buffer, UINT16 maxlen, LPCSTR spec,
             else
                 cur_arg = (DWORD)VA_ARG16( args, UINT16 );
             break;
+        case WPR_UNKNOWN:
+            continue;
         }
         len = WPRINTF_GetLen( &format, &cur_arg, number, maxlen - 1 );
         if (!(format.flags & WPRINTF_LEFTALIGN))
@@ -317,6 +322,8 @@ INT16 WINAPI wvsnprintf16( LPSTR buffer, UINT16 maxlen, LPCSTR spec,
             if (len) memcpy( p, number, len );
             p += len;
             break;
+        case WPR_UNKNOWN:
+            continue;
         }
         if (format.flags & WPRINTF_LEFTALIGN)
             for (i = format.precision; i < format.width; i++, maxlen--)
@@ -389,6 +396,8 @@ INT32 WINAPI wvsnprintf32A( LPSTR buffer, UINT32 maxlen, LPCSTR spec,
             p += len;
             (void)va_arg( args, INT32 ); /* Go to the next arg */
             break;
+        case WPR_UNKNOWN:
+            continue;
         }
         if (format.flags & WPRINTF_LEFTALIGN)
             for (i = format.precision; i < format.width; i++, maxlen--)
@@ -461,6 +470,8 @@ INT32 WINAPI wvsnprintf32W( LPWSTR buffer, UINT32 maxlen, LPCWSTR spec,
             for (i = 0; i < len; i++) *p++ = (WCHAR)number[i];
             (void)va_arg( args, INT32 ); /* Go to the next arg */
             break;
+        case WPR_UNKNOWN:
+            continue;
         }
         if (format.flags & WPRINTF_LEFTALIGN)
             for (i = format.precision; i < format.width; i++, maxlen--)

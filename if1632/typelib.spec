@@ -2,7 +2,7 @@ name typelib
 type win16
 
 2  stub CREATETYPELIB                
-3  stub LOADTYPELIB                  
+3  pascal LoadTypeLib(ptr ptr) LoadTypeLib
 4  stub LHASHVALOFNAMESYS            
 5  stub _IID_ICREATETYPEINFO         
 6  stub _IID_ICREATETYPELIB          
@@ -11,5 +11,5 @@ type win16
 9  stub _IID_ITYPELIB                
 10 stub REGISTERTYPELIB              
 11 stub LOADREGTYPELIB               
-14 pascal QueryPathOfRegTypeLib(ptr word word word ptr) QueryPathOfRegTypeLib
+14 pascal QueryPathOfRegTypeLib(ptr word word word ptr) QueryPathOfRegTypeLib16
 15 pascal OABuildVersion() OABuildVersion               

@@ -159,7 +159,7 @@ void WINAPI OutputDebugString16( LPCSTR str )
     *p = '\0';
     if ((p > buffer) && (p[-1] == '\n')) p[1] = '\0'; /* Remove trailing \n */
     module = MODULE_GetModuleName( GetCurrentTask() );
-    fprintf( stderr, "OutputDebugString: %s says '%s'\n",
+    TRACE(resource, "%s says '%s'\n",
              module ? module : "???", buffer );
     HeapFree( GetProcessHeap(), 0, buffer );
 }
@@ -646,8 +646,18 @@ DWORD WINAPI FormatMessage32A(
 		}
 		*t='\0';
 	}
-	if (!nolinefeed && t[-1]!='\n')
-		ADD_TO_T('\n');
+	if (nolinefeed) {
+	    /* remove linefeed */
+	    if(t>target && t[-1]=='\n') {
+		*--t=0;
+		if(t>target && t[-1]=='\r')
+		    *--t=0;
+	    }
+	} else {
+	    /* add linefeed */
+	    if(t==target || t[-1]!='\n')
+		ADD_TO_T('\n'); /* FIXME: perhaps add \r too? */
+	}
 	talloced = strlen(target)+1;
 	if (nSize && talloced<nSize) {
 		target = (char*)HeapReAlloc(GetProcessHeap(),HEAP_ZERO_MEMORY,target,nSize);
@@ -816,8 +826,18 @@ DWORD WINAPI FormatMessage32W(
 		}
 		*t='\0';
 	}
-	if (!nolinefeed && t[-1]!='\n')
-		ADD_TO_T('\n');
+	if (nolinefeed) {
+	    /* remove linefeed */
+	    if(t>target && t[-1]=='\n') {
+		*--t=0;
+		if(t>target && t[-1]=='\r')
+		    *--t=0;
+	    }
+	} else {
+	    /* add linefeed */
+	    if(t==target || t[-1]!='\n')
+		ADD_TO_T('\n'); /* FIXME: perhaps add \r too? */
+	}
 	talloced = strlen(target)+1;
 	if (nSize && talloced<nSize)
 		target = (char*)HeapReAlloc(GetProcessHeap(),HEAP_ZERO_MEMORY,target,nSize);

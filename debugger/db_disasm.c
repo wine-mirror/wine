@@ -1009,8 +1009,6 @@ static void db_task_printsym(unsigned int addr, int size)
     switch(size)
     {
     case BYTE:
-        fprintf(stderr, "0x%2.2x", addr & 0xff );
-        break;
     case WORD:
         fprintf(stderr, "0x%4.4x", addr & 0xffff );
         break;
@@ -1162,9 +1160,7 @@ void DEBUG_Disasm( DBG_ADDR *addr, int display )
 	 * Set this so we get can supress the printout if we need to.
 	 */
 	db_display = display;
-
-        if (!addr->seg) db_disasm_16 = FALSE;
-        else db_disasm_16 = !(GET_SEL_FLAGS(addr->seg) & LDT_FLAGS_32BIT);
+        db_disasm_16 = !IS_SELECTOR_32BIT(addr->seg);
 
 	get_value_inc( inst, addr, 1, FALSE );
 
@@ -1212,13 +1208,16 @@ void DEBUG_Disasm( DBG_ADDR *addr, int display )
 		    seg = "%gs";
 		    break;
 		case 0xf0:
-		    fprintf(stderr,"lock ");
+		    if( db_display )
+			fprintf(stderr,"lock ");
 		    break;
 		case 0xf2:
-		    fprintf(stderr,"repne ");
+		    if( db_display )
+			fprintf(stderr,"repne ");
 		    break;
 		case 0xf3:
-		    fprintf(stderr,"repe ");	/* XXX repe VS rep */
+		    if( db_display )
+			fprintf(stderr,"repe ");	/* XXX repe VS rep */
 		    break;
 		default:
 		    prefix = FALSE;

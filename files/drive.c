@@ -745,7 +745,7 @@ UINT16 WINAPI GetDriveType16( UINT16 drive )
     {
     case TYPE_FLOPPY:  return DRIVE_REMOVABLE;
     case TYPE_HD:      return DRIVE_FIXED;
-    case TYPE_CDROM:   return DRIVE_REMOTE;
+    case TYPE_CDROM:   return DRIVE_REMOVABLE;
     case TYPE_NETWORK: return DRIVE_REMOTE;
     case TYPE_INVALID:
     default:           return DRIVE_CANNOTDETERMINE;
@@ -801,16 +801,22 @@ UINT16 WINAPI GetCurrentDirectory16( UINT16 buflen, LPSTR buf )
  *           GetCurrentDirectory32A   (KERNEL32.196)
  *
  * Returns "X:\\path\\etc\\".
+ *
+ * Despite the API description, return required length including the 
+ * terminating null when buffer too small. This is the real behaviour.
  */
 UINT32 WINAPI GetCurrentDirectory32A( UINT32 buflen, LPSTR buf )
 {
-    char *pref = "A:\\";
+    UINT32 ret;
     const char *s = DRIVE_GetDosCwd( DRIVE_GetCurrentDrive() );
+
     assert(s);
-    lstrcpyn32A( buf, pref, MIN( 4, buflen ) );
+    ret = strlen(s) + 3; /* length of WHOLE current directory */
+    if (ret >= buflen) return ret + 1;
+    lstrcpyn32A( buf, "A:\\", MIN( 4, buflen ) );
     if (buflen) buf[0] += DRIVE_GetCurrentDrive();
     if (buflen > 3) lstrcpyn32A( buf + 3, s, buflen - 3 );
-    return strlen(s) + 3; /* length of WHOLE current directory */
+    return ret;
 }
 
 

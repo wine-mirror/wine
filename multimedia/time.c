@@ -380,7 +380,7 @@ DWORD WINAPI timeGetTime()
   /* FIXME all this function should have to be is
        long result;
        struct timeval time;
-       dprintf_mmtime(stddeb, "timeGetTime(); !\n");
+       TRACE(mmtime,"timeGetTime(); !\n");
        gettimeofday(&time, 0);
        result = (((long)time.tv_sec * (long)1000) + ((long)time.tv_usec / (long)1000));
 

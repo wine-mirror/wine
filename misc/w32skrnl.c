@@ -12,10 +12,10 @@
 
 LPSTR WINAPI GetWin32sDirectory(void)
 {
-    static char *sysdir;
+    static char sysdir[0x80];
     LPSTR text;
 
-    sysdir = getenv("winsysdir");
+    GetEnvironmentVariable32A("winsysdir", sysdir, 0x80);
     if (!sysdir) return NULL;
     strcat(sysdir, "\\WIN32S");
     text = HeapAlloc(GetProcessHeap(), 0, strlen(sysdir)+1);

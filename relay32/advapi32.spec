@@ -23,17 +23,17 @@ type	win32
 0019 stub ClearEventLogA
 0020 stub ClearEventLogW
 0021 stub CloseEventLog
-0022 stub CloseServiceHandle
-0023 stub ControlService
+0022 stdcall CloseServiceHandle(long) CloseServiceHandle
+0023 stdcall ControlService(long long ptr) ControlService
 0024 stdcall CopySid(long ptr ptr) CopySid
 0025 stub CreatePrivateObjectSecurity
 0026 stub CreateProcessAsUserA
 0027 stub CreateProcessAsUserW
-0028 stub CreateServiceA
+0028 stdcall CreateServiceA(long ptr ptr long long long long ptr ptr ptr ptr ptr ptr) CreateServiceA
 0029 stub CreateServiceW
 0030 stub DeleteAce
-0031 stub DeleteService
-0032 stub DeregisterEventSource
+0031 stdcall DeleteService(long) DeleteService
+0032 stdcall DeregisterEventSource(long) DeregisterEventSource
 0033 stub DestroyPrivateObjectSecurity
 0034 stub DuplicateToken
 0035 stub EnumDependentServicesA
@@ -94,7 +94,7 @@ type	win32
 0090 stub LookupPrivilegeNameA
 0091 stub LookupPrivilegeNameW
 0092 stdcall LookupPrivilegeValueA(ptr ptr ptr) LookupPrivilegeValue32A
-0093 stub LookupPrivilegeValueW
+0093 stdcall LookupPrivilegeValueW(ptr ptr ptr) LookupPrivilegeValue32W
 0094 stub MakeAbsoluteSD
 0095 stub MakeSelfRelativeSD
 0096 stub MapGenericMask
@@ -111,10 +111,10 @@ type	win32
 0107 stub OpenEventLogA
 0108 stub OpenEventLogW
 0109 stdcall OpenProcessToken(long long ptr) OpenProcessToken
-0110 stdcall OpenSCManagerA(ptr ptr long) OpenSCManagerA
-0111 stdcall OpenSCManagerW(ptr ptr long) OpenSCManagerW
-0112 stub OpenServiceA
-0113 stub OpenServiceW
+0110 stdcall OpenSCManagerA(ptr ptr long) OpenSCManager32A
+0111 stdcall OpenSCManagerW(ptr ptr long) OpenSCManager32W
+0112 stdcall OpenServiceA(long str long) OpenService32A
+0113 stdcall OpenServiceW(long wstr long) OpenService32W
 0114 stdcall OpenThreadToken(long long long ptr) OpenThreadToken
 0115 stub PrivilegeCheck
 0116 stub PrivilegedServiceAuditAlarmA
@@ -145,7 +145,7 @@ type	win32
 0141 stdcall RegEnumValueA(long long ptr ptr ptr ptr ptr ptr) RegEnumValue32A
 0142 stdcall RegEnumValueW(long long ptr ptr ptr ptr ptr ptr) RegEnumValue32W
 0143 stdcall RegFlushKey(long) RegFlushKey
-0144 stub RegGetKeySecurity
+0144 stdcall RegGetKeySecurity(long long ptr ptr) RegGetKeySecurity
 0145 stub RegLoadKeyA
 0146 stub RegLoadKeyW
 0147 stub RegNotifyChangeKeyValue
@@ -175,8 +175,8 @@ type	win32
 0171 stdcall RegSetValueW(long wstr long ptr long) RegSetValue32W
 0172 stub RegUnLoadKeyA
 0173 stub RegUnLoadKeyW
-0174 stub RegisterEventSourceA
-0175 stub RegisterEventSourceW
+0174 stdcall RegisterEventSourceA(ptr ptr) RegisterEventSource32A
+0175 stdcall RegisterEventSourceW(ptr ptr) RegisterEventSource32W
 0176 stub RegisterServiceCtrlHandlerA
 0177 stub RegisterServiceCtrlHandlerW
 0178 stub ReportEventA
@@ -196,10 +196,10 @@ type	win32
 0192 stub SetServiceStatus
 0193 stub SetThreadToken
 0194 stub SetTokenInformation
-0195 stub StartServiceA
+0195 stdcall StartServiceA(long long ptr) StartService32A
 0196 stdcall StartServiceCtrlDispatcherA(ptr) StartServiceCtrlDispatcher32A
 0197 stdcall StartServiceCtrlDispatcherW(ptr) StartServiceCtrlDispatcher32W
-0198 stub StartServiceW
+0198 stdcall StartServiceW(long long ptr) StartService32W
 0199 stub UnlockServiceDatabase
 0200 stub LsaOpenPolicy
 0201 stub LsaLookupSids

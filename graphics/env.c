@@ -5,18 +5,18 @@
  *
  * Copyright 1997 Marcus Meissner
  */
+#include <windows.h>
 #include <stdio.h>
-#include "windows.h"
-#include "gdi.h"
-#include "debug.h"
+#include <config.h>
+#include <gdi.h>
+#include <debug.h>
 
 /***********************************************************************
  *           GetEnvironment   (GDI.134)
  */
 INT16 WINAPI GetEnvironment(LPCSTR lpPortName, LPDEVMODE16 lpdev, UINT16 nMaxSiz)
 {
-    fprintf(stddeb, "GetEnvironment('%s','%p',%d),\n",
-		lpPortName, lpdev, nMaxSiz);
+   FIXME(gdi, "('%s','%p',%d),stub\n", lpPortName, lpdev, nMaxSiz);
     return 0;
 }
 
@@ -25,9 +25,9 @@ INT16 WINAPI GetEnvironment(LPCSTR lpPortName, LPDEVMODE16 lpdev, UINT16 nMaxSiz
  */
 INT16 WINAPI SetEnvironment(LPCSTR lpPortName, LPDEVMODE16 lpdev, UINT16 nCount)
 {
-    fprintf(stddeb, "SetEnvironment('%s', '%p', %d) !\n", 
-		lpPortName, lpdev, nCount);
-    fprintf(stderr,
+
+   FIXME(gdi, "('%s', '%p', %d) stub!\n", lpPortName, lpdev, nCount);
+   if (TRACE_ON(gdi)) DUMP(
     	"\tdevmode:\n"
     	"\tname = %s\n"
 	"\tdmSpecVersion = %d\n"

@@ -816,7 +816,8 @@ BOOL16 WINAPI GetInputState16(void)
  */
 DWORD WINAPI WaitForInputIdle (HANDLE32 hProcess, DWORD dwTimeOut)
 {
-  FIXME (msg, "WaitForInputIdle: stub\n");
+  FIXME (msg, "(hProcess=%d, dwTimeOut=%d): stub\n", hProcess, dwTimeOut);
+
   return WAIT_TIMEOUT;
 }
 

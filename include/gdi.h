@@ -198,6 +198,7 @@ typedef struct tagDC_FUNCS
     BOOL32     (*pPatBlt)(DC*,INT32,INT32,INT32,INT32,DWORD);
     BOOL32     (*pPie)(DC*,INT32,INT32,INT32,INT32,INT32,INT32,INT32,INT32);
     BOOL32     (*pPolyPolygon)(DC*,LPPOINT32,LPINT32,UINT32);
+    BOOL32     (*pPolyPolyline)(DC*,LPPOINT32,LPINT32,UINT32);
     BOOL32     (*pPolygon)(DC*,LPPOINT32,INT32);
     BOOL32     (*pPolyline)(DC*,LPPOINT32,INT32);
     UINT32     (*pRealizePalette)(DC*);

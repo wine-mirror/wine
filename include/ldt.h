@@ -59,13 +59,13 @@ extern ldt_copy_entry ldt_copy[LDT_SIZE];
 /* Convert a segmented ptr (16:16) to a linear (32) pointer */
 
 #define PTR_SEG_OFF_TO_LIN(seg,off) \
- ((void*)(GET_SEL_BASE(seg) + (unsigned int)(off)))
+   ((void*)(GET_SEL_BASE(seg) + (unsigned int)(off)))
 #define PTR_SEG_TO_LIN(ptr) \
- (__winelib ? (void*)(ptr) : PTR_SEG_OFF_TO_LIN(SELECTOROF(ptr),OFFSETOF(ptr)))
+   PTR_SEG_OFF_TO_LIN(SELECTOROF(ptr),OFFSETOF(ptr))
 #define PTR_SEG_OFF_TO_SEGPTR(seg,off) \
- (__winelib ? (SEGPTR)PTR_SEG_OFF_TO_LIN(seg,off) : (SEGPTR)MAKELONG(off,seg))
+   ((SEGPTR)MAKELONG(off,seg))
 #define PTR_SEG_OFF_TO_HUGEPTR(seg,off) \
- (PTR_SEG_OFF_TO_SEGPTR( (seg) + (HIWORD(off) << __AHSHIFT), LOWORD(off) ))
+   PTR_SEG_OFF_TO_SEGPTR( (seg) + (HIWORD(off) << __AHSHIFT), LOWORD(off) )
 
 extern unsigned char ldt_flags_copy[LDT_SIZE];
 
@@ -77,5 +77,13 @@ extern unsigned char ldt_flags_copy[LDT_SIZE];
 #define LDT_FLAGS_ALLOCATED 0x80  /* Segment is allocated (no longer free) */
 
 #define GET_SEL_FLAGS(sel)   (ldt_flags_copy[SELECTOR_TO_ENTRY(sel)])
+
+#define FIRST_LDT_ENTRY_TO_ALLOC  17
+
+/* Determine if sel is a system selector (i.e. not managed by Wine) */
+#define IS_SELECTOR_SYSTEM(sel) \
+   (!((sel) & 4) || (SELECTOR_TO_ENTRY(sel) < FIRST_LDT_ENTRY_TO_ALLOC))
+#define IS_SELECTOR_32BIT(sel) \
+   (IS_SELECTOR_SYSTEM(sel) || (GET_SEL_FLAGS(sel) & LDT_FLAGS_32BIT))
 
 #endif  /* __WINE_LDT_H */

@@ -14,7 +14,7 @@ type	win32
  10 stdcall BitBlt(long long long long long long long long long) BitBlt32
  11 stub CancelDC
  12 stub CheckColorsInGamut
- 13 stub ChoosePixelFormat
+ 13 stdcall ChoosePixelFormat(long ptr) ChoosePixelFormat
  14 stdcall Chord(long long long long long long long long long) Chord32
  15 stdcall CloseEnhMetaFile(long) CloseEnhMetaFile32
  16 stdcall CloseFigure(long) CloseFigure32
@@ -22,7 +22,7 @@ type	win32
  18 stub ColorMatchToTarget
  19 stdcall CombineRgn(long long long long) CombineRgn32
  20 stub CombineTransform
- 21 stub CopyEnhMetaFileA
+ 21 stdcall CopyEnhMetaFileA(long str) CopyEnhMetaFile32A
  22 stub CopyEnhMetaFileW
  23 stdcall CopyMetaFileA(long str) CopyMetaFile32A
  24 stdcall CopyMetaFileW(long wstr) CopyMetaFile32W
@@ -75,7 +75,7 @@ type	win32
  68 stdcall DeleteEnhMetaFile(long) DeleteEnhMetaFile
  69 stdcall DeleteMetaFile(long) DeleteMetaFile32
  70 stdcall DeleteObject(long)	DeleteObject32
- 71 stub DescribePixelFormat
+ 71 stdcall DescribePixelFormat(long long long ptr) DescribePixelFormat
  72 stub DeviceCapabilitiesExA
  73 stub DeviceCapabilitiesExW
  74 stub DrawEscape
@@ -92,7 +92,7 @@ type	win32
  85 stdcall EnumFontsW(long wstr ptr long) EnumFonts32W
  86 stub EnumICMProfilesA
  87 stub EnumICMProfilesW
- 88 stub EnumMetaFile
+ 88 stdcall EnumMetaFile(long long ptr ptr) EnumMetaFile32
  89 stdcall EnumObjects(long long ptr long) EnumObjects32
  90 stdcall EqualRgn(long long) EqualRgn32
  91 stdcall Escape(long long long ptr ptr) Escape32
@@ -179,7 +179,7 @@ type	win32
 172 stub GetDeviceGammaRamp
 173 stub GetETM
 174 stdcall GetEnhMetaFileA(ptr) GetEnhMetaFile32A
-175 stub GetEnhMetaFileBits
+175 stdcall GetEnhMetaFileBits(long long ptr) GetEnhMetaFileBits
 176 stdcall GetEnhMetaFileDescriptionA(long long ptr) GetEnhMetaFileDescription32A
 177 stub GetEnhMetaFileDescriptionW
 178 stdcall GetEnhMetaFileHeader(long long ptr) GetEnhMetaFileHeader
@@ -202,7 +202,7 @@ type	win32
 195 stub GetLogColorSpaceW
 196 stdcall GetMapMode(long) GetMapMode32
 197 stdcall GetMetaFileA(str) GetMetaFile32A
-198 stub GetMetaFileBitsEx
+198 stdcall GetMetaFileBitsEx(long long ptr) GetMetaFileBitsEx
 199 stdcall GetMetaFileW(wstr) GetMetaFile32W
 200 stub GetMetaRgn
 201 stub GetMiterLimit
@@ -216,7 +216,7 @@ type	win32
 209 stdcall GetPaletteEntries(long long long ptr) GetPaletteEntries32
 210 stdcall GetPath(long ptr ptr long) GetPath32
 211 stdcall GetPixel(long long long) GetPixel32
-212 stub GetPixelFormat
+212 stdcall GetPixelFormat(long) GetPixelFormat
 213 stdcall GetPolyFillMode(long) GetPolyFillMode32
 214 stdcall GetROP2(long) GetROP232
 215 stub GetRandomRgn
@@ -272,11 +272,11 @@ type	win32
 265 stdcall PlayMetaFile(long long) PlayMetaFile32
 266 stdcall PlayMetaFileRecord(long ptr ptr long) PlayMetaFileRecord32
 267 stub PlgBlt
-268 stub PolyBezier
+268 stdcall PolyBezier(long ptr long) PolyBezier32
 269 stub PolyBezierTo
 270 stub PolyDraw
 271 stdcall PolyPolygon(long ptr ptr long) PolyPolygon32
-272 stub PolyPolyline
+272 stdcall PolyPolyline(long ptr ptr long) PolyPolyline32
 273 stub PolyTextOutA
 274 stub PolyTextOutW
 275 stdcall Polygon(long ptr long) Polygon32
@@ -320,7 +320,7 @@ type	win32
 313 stdcall SetDIBitsToDevice(long long long long long long long long long
                                ptr ptr long) SetDIBitsToDevice32
 314 stub SetDeviceGammaRamp
-315 stub SetEnhMetaFileBits
+315 stdcall SetEnhMetaFileBits(long ptr) SetEnhMetaFileBits
 316 stub SetFontEnumeration
 317 stdcall SetGraphicsMode(long long) SetGraphicsMode
 318 stub SetICMMode
@@ -333,7 +333,7 @@ type	win32
 325 stub SetMiterLimit
 326 stdcall SetPaletteEntries(long long long ptr) SetPaletteEntries32
 327 stdcall SetPixel(long long long long) SetPixel32
-328 stub SetPixelFormat
+328 stdcall SetPixelFormat(long long ptr) SetPixelFormat
 329 stdcall SetPixelV(long long long long) SetPixelV32
 330 stdcall SetPolyFillMode(long long) SetPolyFillMode32
 331 stdcall SetROP2(long long) SetROP232
@@ -361,7 +361,7 @@ type	win32
                           ptr ptr long long) StretchDIBits32
 352 stub StrokeAndFillPath
 353 stub StrokePath
-354 stub SwapBuffers
+354 stdcall SwapBuffers(long) SwapBuffers
 355 stdcall TextOutA(long long long str long) TextOut32A
 356 stdcall TextOutW(long long long wstr long) TextOut32W
 357 stub UnloadNetworkFonts

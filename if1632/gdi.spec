@@ -326,7 +326,7 @@ file	gdi.exe
 498 stub GetEnhMetafileDescription
 499 stub GetEnhMetafileHeader
 501 stub GetEnhMetafilePaletteEntries
-502 stub PolyBezier
+502 pascal16 PolyBezier(word ptr word) PolyBezier16
 503 stub PolyBezierTo
 504 stub PlayEnhMetafileRecord
 505 stub SetEnhMetafileBits

@@ -1,1 +1,1 @@
-#define WINE_RELEASE_INFO "Wine release 980413"
+#define WINE_RELEASE_INFO "Wine release 980503"

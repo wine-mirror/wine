@@ -208,7 +208,7 @@ BOOL32 DOSMEM_Init(void)
                                   PAGE_EXECUTE_READWRITE );
     if (!DOSMEM_dosmem)
     {
-        fprintf( stderr, "Could not allocate DOS memory.\n" );
+        WARN(dosmem, "Could not allocate DOS memory.\n" );
         return FALSE;
     }
     DOSMEM_BiosSeg = GLOBAL_CreateBlock(GMEM_FIXED,DOSMEM_dosmem+0x400,0x100,
@@ -219,26 +219,6 @@ BOOL32 DOSMEM_Init(void)
     return TRUE;
 }
 
-void DOSMEM_InitExports(HMODULE16 hKernel)
-{
-#define SET_ENTRY_POINT(num,addr) \
-    MODULE_SetEntryPoint( hKernel, (num), GLOBAL_CreateBlock( GMEM_FIXED, \
-                                  DOSMEM_dosmem+(addr), 0x10000, hKernel, \
-                                  FALSE, FALSE, FALSE, NULL ))
-
-    SET_ENTRY_POINT( 183, 0x00000 );  /* KERNEL.183: __0000H */
-    SET_ENTRY_POINT( 174, 0xa0000 );  /* KERNEL.174: __A000H */
-    SET_ENTRY_POINT( 181, 0xb0000 );  /* KERNEL.181: __B000H */
-    SET_ENTRY_POINT( 182, 0xb8000 );  /* KERNEL.182: __B800H */
-    SET_ENTRY_POINT( 195, 0xc0000 );  /* KERNEL.195: __C000H */
-    SET_ENTRY_POINT( 179, 0xd0000 );  /* KERNEL.179: __D000H */
-    SET_ENTRY_POINT( 190, 0xe0000 );  /* KERNEL.190: __E000H */
-    SET_ENTRY_POINT( 173, 0xf0000 );  /* KERNEL.173: __ROMBIOS */
-    SET_ENTRY_POINT( 194, 0xf0000 );  /* KERNEL.194: __F000H */
-    MODULE_SetEntryPoint(hKernel, 193,DOSMEM_BiosSeg); /* KERNEL.193: __0040H */
-
-#undef SET_ENTRY_POINT
-}
 
 /***********************************************************************
  *           DOSMEM_Tick
@@ -272,7 +252,7 @@ LPVOID DOSMEM_GetBlock(UINT32 size, UINT16* pseg)
 #ifdef __DOSMEM_DEBUG__
        if( (dm->size & DM_BLOCK_DEBUG) != DM_BLOCK_DEBUG )
        {
-	    fprintf(stderr,"DOSMEM_GetBlock: MCB overrun! [prev = 0x%08x]\n", 4 + (UINT32)prev);
+	    WARN(dosmem,"MCB overrun! [prev = 0x%08x]\n", 4 + (UINT32)prev);
 	    return NULL;
        }
        prev = dm;

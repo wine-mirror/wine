@@ -368,7 +368,7 @@ COLORREF WINAPI SetPixel32( HDC32 hdc, INT32 x, INT32 y, COLORREF color )
 }
 
 /***********************************************************************
- *           SetPixel32    (GDI32.329)
+ *           SetPixelV32    (GDI32.329)
  */
 BOOL32 WINAPI SetPixelV32( HDC32 hdc, INT32 x, INT32 y, COLORREF color )
 {
@@ -404,6 +404,104 @@ COLORREF WINAPI GetPixel32( HDC32 hdc, INT32 x, INT32 y )
     if (!PtVisible32( hdc, x, y )) return 0;
     if (!dc || !dc->funcs->pGetPixel) return 0;
     return dc->funcs->pGetPixel(dc,x,y);
+}
+
+
+/******************************************************************************
+ * ChoosePixelFormat [GDI32.13]
+ * Matches a pixel format to given format
+ *
+ * PARAMS
+ *    hdc  [I] Device context to search for best pixel match
+ *    ppfd [I] Pixel format for which a match is sought
+ *
+ * RETURNS
+ *    Success: Pixel format index closest to given format
+ *    Failure: 0
+ */
+INT32 WINAPI ChoosePixelFormat( HDC32 hdc, PIXELFORMATDESCRIPTOR *ppfd )
+{
+    FIXME(gdi, "(%d,%p): stub\n",hdc,ppfd);
+    ppfd->nSize = sizeof(PIXELFORMATDESCRIPTOR);
+    ppfd->nVersion = 1;
+    return 1;
+}
+
+
+/******************************************************************************
+ * SetPixelFormat [GDI32.328]
+ * Sets pixel format of device context
+ *
+ * PARAMS
+ *    hdc          [I] Device context to search for best pixel match
+ *    iPixelFormat [I] Pixel format index
+ *    ppfd         [I] Pixel format for which a match is sought
+ *
+ * RETURNS STD
+ */
+BOOL32 WINAPI SetPixelFormat( HDC32 hdc, int iPixelFormat, 
+                              PIXELFORMATDESCRIPTOR * ppfd)
+{
+    FIXME(gdi, "(%d,%d,%p): stub\n",hdc,iPixelFormat,ppfd);
+    return TRUE;
+}
+
+
+/******************************************************************************
+ * GetPixelFormat [GDI32.212]
+ * Gets index of pixel format of DC
+ *
+ * PARAMETERS
+ *    hdc [I] Device context whose pixel format index is sought
+ *
+ * RETURNS
+ *    Success: Currently selected pixel format
+ *    Failure: 0
+ */
+int WINAPI GetPixelFormat( HDC32 hdc )
+{
+    FIXME(gdi, "(%d): stub\n",hdc);
+    return 1;
+}
+
+
+/******************************************************************************
+ * DescribePixelFormat [GDI32.71]
+ * Gets info about pixel format from DC
+ *
+ * PARAMS
+ *    hdc          [I] Device context
+ *    iPixelFormat [I] Pixel format selector
+ *    nBytes       [I] Size of buffer
+ *    ppfd         [O] Pointer to structure to receive pixel format data
+ *
+ * RETURNS
+ *    Success: Maximum pixel format index of the device context
+ *    Failure: 0
+ */
+int WINAPI DescribePixelFormat( HDC32 hdc, int iPixelFormat, UINT32 nBytes,
+                                LPPIXELFORMATDESCRIPTOR ppfd )
+{
+    FIXME(gdi, "(%d,%d,%d,%p): stub\n",hdc,iPixelFormat,nBytes,ppfd);
+    ppfd->nSize = nBytes;
+    ppfd->nVersion = 1;
+    return 3;
+}
+
+
+/******************************************************************************
+ * SwapBuffers [GDI32.354]
+ * Exchanges front and back buffers of window
+ *
+ * PARAMS
+ *    hdc [I] Device context whose buffers get swapped
+ *
+ * RETURNS STD
+ */
+BOOL32 WINAPI SwapBuffers( HDC32 hdc )
+{
+    FIXME(gdi, "(%d): stub\n",hdc);
+    return TRUE;
 }
 
 
@@ -645,6 +743,18 @@ BOOL32 WINAPI PolyPolygon32( HDC32 hdc, LPPOINT32 pt, LPINT32 counts,
 
     return dc && dc->funcs->pPolyPolygon &&
     	   dc->funcs->pPolyPolygon(dc,pt,counts,polygons);
+}
+
+/**********************************************************************
+ *          PolyPolyline32  (GDI32.272)
+ */
+BOOL32 WINAPI PolyPolyline32( HDC32 hdc, LPPOINT32 pt, LPINT32 counts,
+                             UINT32 polylines )
+{
+    DC * dc = DC_GetDCPtr( hdc );
+
+    return dc && dc->funcs->pPolyPolyline &&
+    	   dc->funcs->pPolyPolyline(dc,pt,counts,polylines);
 }
 
 /**********************************************************************
@@ -935,3 +1045,31 @@ BOOL16 WINAPI DrawState16(HDC16 hdc, HBRUSH16 hbr,
 {
     return PAINTING_DrawState32(hdc, hbr, (DRAWSTATEPROC32)func, ldata, wdata, x, y, cx, cy, flags, FALSE, FALSE);
 }
+
+
+/******************************************************************************
+ * PolyBezier16 [GDI.502]
+ */
+BOOL16 WINAPI PolyBezier16( HDC16 hDc, LPPOINT16 lppt, INT16 cPoints )
+{
+    FIXME(gdi, "(%x,%p,%d): stub\n",hDc,lppt,cPoints);
+    return TRUE;
+}
+
+/******************************************************************************
+ * PolyBezier32 [GDI32.268]
+ * Draws one or more Bezier curves
+ *
+ * PARAMS
+ *    hDc     [I] Handle to device context
+ *    lppt    [I] Pointer to endpoints and control points
+ *    cPoints [I] Count of endpoints and control points
+ *
+ * RETURNS STD
+ */
+BOOL32 WINAPI PolyBezier32( HDC32 hDc, LPPOINT32 lppt, DWORD cPoints )
+{
+    FIXME(gdi, "(%x,%p,%ld): stub\n",hDc,lppt,cPoints);
+    return TRUE;
+}
+

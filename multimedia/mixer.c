@@ -150,18 +150,18 @@ static DWORD MIX_GetLineInfo(WORD wDevID, LPMIXERLINE16 lpml, DWORD fdwInfo)
 			lpml->fdwLine	|= MIXERLINE_LINEF_SOURCE;
 			break;
 		default:
-			fprintf(stderr,"MIX_GetLineInfo:mixertype %d not handle.\n",i);
+			ERR(mmaux,"Mixertype %d not handle.\n",i);
 			break;
 		}
 		break;
 	case MIXER_GETLINEINFOF_LINEID:
-		fprintf(stderr,"MIX_GetLineInfo: _LINEID (%ld) not implemented yet.\n",lpml->dwLineID);
+		FIXME(mmaux,"_LINEID (%ld) not implemented yet.\n",lpml->dwLineID);
 		break;
 	case MIXER_GETLINEINFOF_COMPONENTTYPE:
-		fprintf(stderr,"MIX_GetLineInfo: _COMPONENTTYPE not implemented yet.\n");
+		FIXME(mmaux," _COMPONENTTYPE not implemented yet.\n");
 		break;
 	case MIXER_GETLINEINFOF_TARGETTYPE:
-		fprintf(stderr,"MIX_GetLineInfo: _TARGETTYPE not implemented yet.\n");
+		FIXME(mmaux,"_TARGETTYPE not implemented yet.\n");
 		break;
 	}
 	lpml->Target.dwType = MIXERLINE_TARGETTYPE_AUX;

@@ -29,7 +29,7 @@ void CLIPPING_UpdateGCRegion( DC * dc )
 
     if (!dc->w.hVisRgn)
     {
-        fprintf( stderr, "UpdateGCRegion: hVisRgn is zero. Please report this.\n" );
+        ERR(region, "hVisRgn is zero. Please report this.\n" );
         exit(1);
     }
 
@@ -463,7 +463,7 @@ HRGN16 WINAPI SaveVisRgn( HDC16 hdc )
     TRACE(clipping, "%04x\n", hdc );
     if (!dc->w.hVisRgn)
     {
-        fprintf( stderr, "SaveVisRgn: hVisRgn is zero. Please report this.\n" );
+        ERR(region, "hVisRgn is zero. Please report this.\n" );
         exit(1);
     }
     if( dc->w.flags & DC_DIRTY ) UPDATE_DIRTY_DC(dc);

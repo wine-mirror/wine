@@ -28,6 +28,6 @@ CreateFileMoniker16(
 	LPCOLESTR16 lpszPathName,	/* [in] pathname */
 	LPMONIKER * ppmk		/* [out] new moniker object */
 ) {
-	fprintf(stderr,"CreateFileMoniker(%s,%p),stub!\n",lpszPathName,ppmk);
+	FIXME(ole,"(%s,%p),stub!\n",lpszPathName,ppmk);
 	return E_FAIL;
 }

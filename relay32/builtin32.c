@@ -9,6 +9,7 @@
 #include <string.h>
 #include "builtin32.h"
 #include "module.h"
+#include "heap.h"
 #include "task.h"
 #include "process.h"
 #include "debug.h"
@@ -46,6 +47,7 @@ extern const BUILTIN32_DESCRIPTOR DCIMAN32_Descriptor;
 extern const BUILTIN32_DESCRIPTOR DDRAW_Descriptor;
 extern const BUILTIN32_DESCRIPTOR DINPUT_Descriptor;
 extern const BUILTIN32_DESCRIPTOR DPLAY_Descriptor;
+extern const BUILTIN32_DESCRIPTOR DPLAYX_Descriptor;
 extern const BUILTIN32_DESCRIPTOR DSOUND_Descriptor;
 extern const BUILTIN32_DESCRIPTOR GDI32_Descriptor;
 extern const BUILTIN32_DESCRIPTOR KERNEL32_Descriptor;
@@ -54,6 +56,7 @@ extern const BUILTIN32_DESCRIPTOR MPR_Descriptor;
 extern const BUILTIN32_DESCRIPTOR MSVFW32_Descriptor;
 extern const BUILTIN32_DESCRIPTOR NTDLL_Descriptor;
 extern const BUILTIN32_DESCRIPTOR OLE32_Descriptor;
+extern const BUILTIN32_DESCRIPTOR OLEAUT32_Descriptor;
 extern const BUILTIN32_DESCRIPTOR OLECLI32_Descriptor;
 extern const BUILTIN32_DESCRIPTOR OLESVR32_Descriptor;
 extern const BUILTIN32_DESCRIPTOR SHELL32_Descriptor;
@@ -76,6 +79,7 @@ static BUILTIN32_DLL BuiltinDLLs[] =
     { &DDRAW_Descriptor,    NULL, TRUE  },
     { &DINPUT_Descriptor,   NULL, TRUE  },
     { &DPLAY_Descriptor,    NULL, TRUE  },
+    { &DPLAYX_Descriptor,   NULL, TRUE  },
     { &DSOUND_Descriptor,   NULL, TRUE  },
     { &GDI32_Descriptor,    NULL, TRUE  },
     { &KERNEL32_Descriptor, NULL, TRUE  },
@@ -84,6 +88,7 @@ static BUILTIN32_DLL BuiltinDLLs[] =
     { &MSVFW32_Descriptor,  NULL, FALSE },
     { &NTDLL_Descriptor,    NULL, TRUE  },
     { &OLE32_Descriptor,    NULL, FALSE },
+    { &OLEAUT32_Descriptor, NULL, FALSE },
     { &OLECLI32_Descriptor, NULL, FALSE },
     { &OLESVR32_Descriptor, NULL, FALSE },
     { &SHELL32_Descriptor,  NULL, TRUE  },
@@ -93,7 +98,7 @@ static BUILTIN32_DLL BuiltinDLLs[] =
     { &W32SKRNL_Descriptor, NULL, TRUE  },
     { &WINMM_Descriptor,    NULL, TRUE  },
     { &WINSPOOL_Descriptor, NULL, TRUE  },
-    { &WOW32_Descriptor,    NULL, TRUE },
+    { &WOW32_Descriptor,    NULL, TRUE  },
     { &WSOCK32_Descriptor,  NULL, TRUE  },
     /* Last entry */
     { NULL, NULL, FALSE }
@@ -122,6 +127,7 @@ static HMODULE32 BUILTIN32_DoLoadModule( BUILTIN32_DLL *dll, PDB32 *pdb )
     LPSTR *names;
     DEBUG_ENTRY_POINT *debug;
     REG_ENTRY_POINT *regs;
+    WINE_MODREF *wm;
     PE_MODREF *pem;
     INT32 i, size;
     BYTE *addr;
@@ -212,7 +218,7 @@ static HMODULE32 BUILTIN32_DoLoadModule( BUILTIN32_DLL *dll, PDB32 *pdb )
 
     /* Build the exports section data */
 
-    exp->Name                  = (BYTE *)dll->descr->name - addr;  /*??*/
+    exp->Name                  = ((BYTE *)dll->descr->name) - addr;  /*??*/
     exp->Base                  = dll->descr->base;
     exp->NumberOfFunctions     = dll->descr->nb_funcs;
     exp->NumberOfNames         = dll->descr->nb_names;
@@ -276,12 +282,16 @@ static HMODULE32 BUILTIN32_DoLoadModule( BUILTIN32_DLL *dll, PDB32 *pdb )
             *names = (LPSTR)((BYTE *)dll->descr->names[i] - addr);
 
     /* Create a modref */
+    wm = (WINE_MODREF *)HeapAlloc( pdb->heap, HEAP_ZERO_MEMORY, sizeof(*wm) );
+    wm->type = MODULE32_PE;
+    pem = &(wm->binfmt.pe);
+    wm->module		= (HMODULE32)addr;
+    wm->next		= pdb->modref_list;
+    pdb->modref_list	= wm;
+    wm->modname		= HEAP_strdupA(pdb->heap,0,dll->descr->name);
 
-    pem = (PE_MODREF *)HeapAlloc( pdb->heap, HEAP_ZERO_MEMORY, sizeof(*pem) );
-    pem->module = (HMODULE32)addr;
-    pem->pe_export = exp;
-    pem->next = pdb->modref_list;
-    pdb->modref_list = pem;
+    pem->pe_export	= exp;
+    pem->flags		= PE_MODREF_INTERNAL;
 
     /* Create a Win16 dummy module */
 

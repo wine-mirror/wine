@@ -101,6 +101,25 @@ typedef struct
 
 #pragma pack(4)
 
+/* internal representation of 32bit modules. per process. */
+typedef enum { MODULE32_PE=1, MODULE32_ELF, /* ... */ } MODULE32_TYPE;
+typedef struct _wine_modref
+{
+	struct _wine_modref	*next;
+	MODULE32_TYPE		type;
+	union {
+		PE_MODREF	pe;
+		/* ELF_MODREF 	elf; */
+	} binfmt;
+
+	HMODULE32		module;
+
+	char			*modname;
+	char 			*fullname;
+	char			*shortname;
+	char			*unixname;
+} WINE_MODREF;
+
 /* Resource types */
 typedef struct resource_typeinfo_s NE_TYPEINFO;
 typedef struct resource_nameinfo_s NE_NAMEINFO;
@@ -114,31 +133,47 @@ typedef struct resource_nameinfo_s NE_NAMEINFO;
 #define NE_MODULE_NAME(pModule) \
     (((OFSTRUCT *)((char*)(pModule) + (pModule)->fileinfo))->szPathName)
 
-#define NE_WIN32_MODULE(pModule) \
-    ((((pModule)->flags & NE_FFLAGS_WIN32) ? \
-                    ((NE_WIN32_EXTRAINFO *)((pModule) + 1))->module32 : 0))
-
 /* module.c */
-extern NE_MODULE *MODULE_GetPtr( HMODULE32 hModule );
+extern NE_MODULE *MODULE_GetPtr16( HMODULE16 hModule );
+extern NE_MODULE *MODULE_GetPtr32( HMODULE32 hModule );
 extern HMODULE16 MODULE_HANDLEtoHMODULE16( HANDLE32 handle );
-extern HMODULE32 MODULE_HANDLEtoHMODULE32( HANDLE32 handle );
-extern void MODULE_DumpModule( HMODULE32 hmodule );
-extern void MODULE_WalkModules(void);
 extern int MODULE_OpenFile( HMODULE32 hModule );
 extern LPSTR MODULE_GetModuleName( HMODULE32 hModule );
-extern void MODULE_RegisterModule( NE_MODULE *pModule );
-extern HMODULE32 MODULE_FindModule( LPCSTR path );
-extern HINSTANCE16 MODULE_CreateInstance( HMODULE16 hModule, BOOL32 lib_only );
-extern HINSTANCE16 MODULE_GetInstance( HMODULE32 hModule );
+extern FARPROC32 MODULE_GetProcAddress32( struct _PDB32*pdb,HMODULE32 hModule,LPCSTR function );
+extern WINE_MODREF *MODULE32_LookupHMODULE( struct _PDB32 *process, HMODULE32 hModule );
+extern HMODULE32 MODULE_FindModule16( LPCSTR path );
+extern HMODULE32 MODULE_FindModule32( struct _PDB32 *process, LPCSTR path );
+extern HINSTANCE16 MODULE_CreateInstance( HMODULE16 hModule, HINSTANCE16 *prev,
+                                          BOOL32 lib_only );
 extern HMODULE32 MODULE_CreateDummyModule( const OFSTRUCT *ofs );
 extern HINSTANCE16 MODULE_Load( LPCSTR name, UINT16 uFlags, LPCSTR cmd_line,
                                 LPCSTR env, UINT32 show_cmd );
-extern WORD MODULE_GetOrdinal( HMODULE32 hModule, const char *name );
-extern FARPROC16 MODULE_GetEntryPoint( HMODULE32 hModule, WORD ordinal );
-extern BOOL16 MODULE_SetEntryPoint( HMODULE32 hModule, WORD ordinal,
-                                    WORD offset );
 extern FARPROC16 MODULE_GetWndProcEntry16( const char *name );
 extern FARPROC16 WINAPI WIN32_GetProcAddress16( HMODULE32 hmodule, LPSTR name );
+
+typedef HGLOBAL16 (CALLBACK *RESOURCEHANDLER16)(HGLOBAL16,HMODULE16,HRSRC16);
+
+/* loader/ne/module.c */
+extern void NE_DumpModule( HMODULE16 hModule );
+extern void NE_WalkModules(void);
+extern void NE_RegisterModule( NE_MODULE *pModule );
+extern WORD NE_GetOrdinal( HMODULE16 hModule, const char *name );
+extern FARPROC16 NE_GetEntryPoint( HMODULE16 hModule, WORD ordinal );
+extern BOOL16 NE_SetEntryPoint( HMODULE16 hModule, WORD ordinal, WORD offset );
+extern HINSTANCE16 NE_LoadModule( HFILE32 hFile, OFSTRUCT *ofs, UINT16 flags,
+                                  LPCSTR cmd_line, LPCSTR env,
+                                  UINT32 show_cmd );
+
+/* loader/ne/resource.c */
+extern HGLOBAL16 WINAPI NE_DefResourceHandler(HGLOBAL16,HMODULE16,HRSRC16);
+extern BOOL32 NE_InitResourceHandler( HMODULE16 hModule );
+
+/* loader/ne/segment.c */
+extern BOOL32 NE_LoadSegment( NE_MODULE *pModule, WORD segnum );
+extern BOOL32 NE_LoadAllSegments( NE_MODULE *pModule );
+extern void NE_FixupPrologs( NE_MODULE *pModule );
+extern void NE_InitializeDLLs( HMODULE16 hModule );
+extern BOOL32 NE_CreateSegments( HMODULE16 hModule );
 
 /* builtin.c */
 extern BOOL32 BUILTIN_Init(void);
@@ -148,13 +183,6 @@ extern FARPROC32 BUILTIN_GetEntryPoint32( char *buffer, void *relay,
                                           DWORD *typemask );
 extern BOOL32 BUILTIN_ParseDLLOptions( const char *str );
 extern void BUILTIN_PrintDLLs(void);
-
-/* ne_image.c */
-extern BOOL32 NE_LoadSegment( NE_MODULE *pModule, WORD segnum );
-extern BOOL32 NE_LoadAllSegments( NE_MODULE *pModule );
-extern BOOL32 NE_LoadDLLs( NE_MODULE *pModule );
-extern void NE_FixupPrologs( NE_MODULE *pModule );
-extern void NE_InitializeDLLs( HMODULE16 hModule );
 
 /* relay32/builtin.c */
 extern HMODULE32 BUILTIN32_LoadModule( LPCSTR name, BOOL32 force,

@@ -2,12 +2,12 @@ name	ole2disp
 type	win16
 
 1 stub DLLGETCLASSOBJECT
-2 pascal SysAllocString(str)		SysAllocString
-3 pascal SysReallocString(ptr str)	SysReAllocString
-4 pascal SysAllocStringLen(str word)	SysAllocStringLen
-5 pascal SysReAllocStringLen(ptr str word) SysReAllocStringLen
-6 pascal SysFreeString(segstr)		SysFreeString
-7 pascal SysStringLen(segstr)		SysStringLen
+2 pascal SysAllocString(str)		SysAllocString16
+3 pascal SysReallocString(ptr str)	SysReAllocString16
+4 pascal SysAllocStringLen(str word)	SysAllocStringLen16
+5 pascal SysReAllocStringLen(ptr str word) SysReAllocStringLen16
+6 pascal SysFreeString(segstr)		SysFreeString16
+7 pascal SysStringLen(segstr)		SysStringLen16
 8 stub VARIANTINIT
 9 stub VARIANTCLEAR
 10 stub VARIANTCOPY

@@ -6,6 +6,7 @@
 
 #include <stdio.h>
 #include <stdlib.h>
+#include "debug.h"
 #include "libres.h"
 #include "heap.h"
 #include "windows.h"
@@ -31,57 +32,9 @@ void LIBRES_RegisterResources(const struct resource* const * Res)
 }
 
 /**********************************************************************
- *	    LIBRES_FindResource16    
+ *	    LIBRES_FindResource
  */
-HRSRC32 LIBRES_FindResource16( HINSTANCE32 hModule, LPCSTR name, LPCSTR type )
-{
-  int nameid=0,typeid;
-  ResListE* ResBlock;
-  const struct resource* const * Res;
-
-  if(HIWORD(name))
-  {
-    if(*name=='#')
-    {
-      nameid=atoi(name+1);
-      name=NULL;
-    }
-  }
-  else
-  {
-    nameid=LOWORD(name);
-    name=NULL;
-  }
-  if(HIWORD(type))
-  {
-    if(*type=='#')
-      typeid=atoi(type+1);
-    else
-    {
-      fprintf(stderr,"LIBRES_FindResource16(*,*,type=string)");
-      return 0;
-    }
-  }
-  else
-    typeid=LOWORD(type);
-  
-  for(ResBlock=ResourceList; ResBlock; ResBlock=ResBlock->next)
-    for(Res=ResBlock->Resources; *Res; Res++)
-      if(name)
-      {
-	if((*Res)->type==typeid && !lstrcmpi32A((*Res)->name,name))
-	  return (HRSRC32)*Res;
-      }
-      else
-	if((*Res)->type==typeid && (*Res)->id==nameid)
-	  return (HRSRC32)*Res;
-  return 0;
-}
-
-/**********************************************************************
- *	    LIBRES_FindResource32    
- */
-HRSRC32 LIBRES_FindResource32( HINSTANCE32 hModule, LPCWSTR name, LPCWSTR type )
+HRSRC32 LIBRES_FindResource( HINSTANCE32 hModule, LPCWSTR name, LPCWSTR type )
 {
   int nameid=0,typeid;
   ResListE* ResBlock;
@@ -112,7 +65,7 @@ HRSRC32 LIBRES_FindResource32( HINSTANCE32 hModule, LPCWSTR name, LPCWSTR type )
     }
     else
     {
-      fprintf(stderr,"LIBRES_FindResource32(*,*,type=string)");
+      TRACE(resource, "(*,*,type=string): Returning 0\n");
       return 0;
     }
   }
@@ -143,48 +96,9 @@ HGLOBAL32 LIBRES_LoadResource( HINSTANCE32 hModule, HRSRC32 hRsrc )
 
 
 /**********************************************************************
- *	    LIBRES_LockResource    
- */
-LPVOID LIBRES_LockResource( HGLOBAL32 handle )
-{
-  return (LPVOID)handle;
-}
-
-
-/**********************************************************************
- *	    LIBRES_FreeResource    
- */
-BOOL32 LIBRES_FreeResource( HGLOBAL32 handle )
-{
-  return 0; /* Obsolete in Win32 */
-}
-
-
-/**********************************************************************
- *	    LIBRES_AccessResource    
- */
-INT32 LIBRES_AccessResource( HINSTANCE32 hModule, HRSRC32 hRsrc )
-{
-  fprintf(stderr,"LIBRES_AccessResource()");
-  return -1; /* Obsolete in Win32 */
-}
-
-
-/**********************************************************************
  *	    LIBRES_SizeofResource    
  */
 DWORD LIBRES_SizeofResource( HINSTANCE32 hModule, HRSRC32 hRsrc )
 {
   return (DWORD)(((struct resource*)hRsrc)->size);
 }
-
-
-/**********************************************************************
- *	    LIBRES_AllocResource    
- */
-HGLOBAL32 LIBRES_AllocResource( HINSTANCE32 hModule, HRSRC32 hRsrc, DWORD size)
-{
-  fprintf(stderr,"LIBRES_AllocResource()");
-  return 0; /* Obsolete in Win32 */
-}
-

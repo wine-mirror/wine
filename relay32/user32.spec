@@ -79,8 +79,8 @@ type	win32
  76 stdcall CreateIconFromResource (ptr long long long) CreateIconFromResource32
  77 stdcall CreateIconFromResourceEx(ptr long long long long long long) CreateIconFromResourceEx32
  78 stdcall CreateIconIndirect(ptr) CreateIconIndirect
- 79 stub CreateMDIWindowA
- 80 stub CreateMDIWindowW
+ 79 stdcall CreateMDIWindowA(ptr ptr long long long long long long long long) CreateMDIWindowA
+ 80 stdcall CreateMDIWindowW(ptr ptr long long long long long long long long) CreateMDIWindowW
  81 stdcall CreateMenu() CreateMenu32
  82 stdcall CreatePopupMenu() CreatePopupMenu32
  83 stdcall CreateWindowExA(long str str long long long long long 
@@ -95,16 +95,16 @@ type	win32
  90 stdcall DdeClientTransaction(ptr long long long long long long ptr) DdeClientTransaction32
  91 stub DdeCmpStringHandles
  92 stdcall DdeConnect(long long long ptr) DdeConnect32
- 93 stub DdeConnectList
+ 93 stdcall DdeConnectList(long long long long ptr) DdeConnectList32
  94 stub DdeCreateDataHandle
  95 stdcall DdeCreateStringHandleA(long ptr long) DdeCreateStringHandle32A
  96 stdcall DdeCreateStringHandleW(long ptr long) DdeCreateStringHandle32W
  97 stdcall DdeDisconnect(long) DdeDisconnect32
- 98 stub DdeDisconnectList
+ 98 stdcall DdeDisconnectList(long) DdeDisconnectList32
  99 stub DdeEnableCallback
 100 stdcall DdeFreeDataHandle(long) DdeFreeDataHandle32
 101 stdcall DdeFreeStringHandle(long long) DdeFreeStringHandle32
-102 stub DdeGetData
+102 stdcall DdeGetData(long ptr long long) DdeGetData32
 103 stdcall DdeGetLastError(long) DdeGetLastError32
 104 stub DdeGetQualityOfService
 105 stub DdeImpersonateClient
@@ -112,7 +112,7 @@ type	win32
 107 stdcall DdeInitializeW(ptr ptr long long) DdeInitialize32W
 108 stdcall DdeKeepStringHandle(long long) DdeKeepStringHandle32
 109 stdcall DdeNameService(long long long long) DdeNameService32
-110 stub DdePostAdvise
+110 stdcall DdePostAdvise(long long long) DdePostAdvise32
 111 stub DdeQueryConvInfo
 112 stub DdeQueryNextServer
 113 stub DdeQueryStringA
@@ -282,7 +282,7 @@ type	win32
 277 stdcall GetOpenClipboardWindow() GetOpenClipboardWindow32
 278 stdcall GetParent(long) GetParent32
 279 stdcall GetPriorityClipboardFormat(ptr long) GetPriorityClipboardFormat32
-280 stub GetProcessWindowStation
+280 stdcall GetProcessWindowStation() GetProcessWindowStation
 281 stdcall GetPropA(long ptr) GetProp32A
 282 stdcall GetPropW(long ptr) GetProp32W
 283 stdcall GetQueueStatus(long) GetQueueStatus32
@@ -297,7 +297,7 @@ type	win32
 292 stdcall GetSystemMetrics(long) GetSystemMetrics32
 293 stdcall GetTabbedTextExtentA(long str long long ptr) GetTabbedTextExtent32A
 294 stdcall GetTabbedTextExtentW(long wstr long long ptr) GetTabbedTextExtent32W
-295 stub GetThreadDesktop
+295 stdcall GetThreadDesktop(long) GetThreadDesktop
 296 stdcall GetTopWindow(long) GetTopWindow32
 297 stdcall GetUpdateRect(long ptr long) GetUpdateRect32
 298 stdcall GetUpdateRgn(long long long) GetUpdateRgn32
@@ -477,7 +477,7 @@ type	win32
 472 stdcall SetCursor(long) SetCursor32
 473 stub SetCursorContents
 474 stdcall SetCursorPos(long long) SetCursorPos32
-475 stub SetDebugErrorLevel
+475 stdcall SetDebugErrorLevel(long) SetDebugErrorLevel
 476 stdcall SetDeskWallPaper(str) SetDeskWallPaper32
 477 stdcall SetDlgItemInt(long long long long) SetDlgItemInt32
 478 stdcall SetDlgItemTextA(long long str) SetDlgItemText32A
@@ -597,10 +597,10 @@ type	win32
 591 stub EnumDesktopWindows
 592 stdcall EnumDisplaySettingsA(str long ptr) EnumDisplaySettings32A
 593 stub EnumDisplaySettingsW
-594 stub GetWindowRgn
+594 stdcall GetWindowRgn(long long) GetWindowRgn32
 595 stub MapVirtualKeyExW
 596 stub RegisterServicesProcess
-597 stub SetWindowRgn
+597 stdcall SetWindowRgn(long long long) SetWindowRgn32
 598 stub ToUnicodeEx
 599 stdcall DrawCaptionTempA(long long ptr long long str long) DrawCaptionTemp32A
 600 stub RegisterNetworkCapabilities
@@ -609,3 +609,4 @@ type	win32
 603 stub IsHungAppWindow
 604 stub ChangeDisplaySettingsA
 605 stub ChangeDisplaySettingsW
+606 stdcall SetWindowText(long str) SetWindowText32A

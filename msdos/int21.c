@@ -83,7 +83,7 @@ static BOOL32 INT21_CreateHeap(void)
 {
     if (!(DosHeapHandle = GlobalAlloc16(GMEM_FIXED,sizeof(struct DosHeap))))
     {
-        fprintf( stderr, "INT21_Init: Out of memory\n");
+        WARN(int21, "Out of memory\n");
         return FALSE;
     }
     heap = (struct DosHeap *) GlobalLock16(DosHeapHandle);
@@ -100,7 +100,8 @@ static BYTE *GetCurrentDTA(void)
 }
 
 
-void CreateBPB(int drive, BYTE *data)
+void CreateBPB(int drive, BYTE *data, BOOL16 limited)
+/* limited == TRUE is used with INT 0x21/0x440d */
 {
 	if (drive > 1) {
 		setword(data, 512);
@@ -114,9 +115,11 @@ void CreateBPB(int drive, BYTE *data)
 		setword(&data[0x0d], 56);
 		setword(&data[0x0f], 2);
 		setword(&data[0x11], 0);
-		setword(&data[0x1f], 800);
-		data[0x21] = 5;
-		setword(&data[0x22], 1);
+		if (!limited) {
+		    setword(&data[0x1f], 800);
+		    data[0x21] = 5;
+		    setword(&data[0x22], 1);
+		}
 	} else { /* 1.44mb */
 		setword(data, 512);
 		data[2] = 2;
@@ -129,9 +132,11 @@ void CreateBPB(int drive, BYTE *data)
 		setword(&data[0x0d], 18);
 		setword(&data[0x0f], 2);
 		setword(&data[0x11], 0);
-		setword(&data[0x1f], 80);
-		data[0x21] = 7;
-		setword(&data[0x22], 2);
+		if (!limited) {
+		    setword(&data[0x1f], 80);
+		    data[0x21] = 7;
+		    setword(&data[0x22], 2);
+		}
 	}	
 }
 
@@ -215,6 +220,8 @@ static void ioctlGetDeviceInfo( CONTEXT *context )
      * bit 6 - file has NOT been written..FIXME: correct?
      * bit 8 - generate int24 if no diskspace on write/ read past end of file
      * bit 11 - media not removable
+     * bit 14 - don't set file date/time on closing
+     * bit 15 - file is remote
      */
     RESET_CFLAG(context);
 }
@@ -244,7 +251,7 @@ static BOOL32 ioctlGenericBlkDevReq( CONTEXT *context )
 
 		case 0x60: /* get device parameters */
 			   /* used by w4wgrp's winfile */
-			memset(dataptr, 0, 0x26);
+			memset(dataptr, 0, 0x20); /* DOS 6.22 uses 0x20 bytes */
 			dataptr[0] = 0x04;
 			dataptr[6] = 0; /* media type */
 			if (drive > 1) 
@@ -259,7 +266,7 @@ static BOOL32 ioctlGenericBlkDevReq( CONTEXT *context )
 				setword(&dataptr[2], 0x02); /* removable */
 				setword(&dataptr[4], 80); /* # of cylinders */
 			}
-			CreateBPB(drive, &dataptr[7]);			
+			CreateBPB(drive, &dataptr[7], TRUE);
 			RESET_CFLAG(context);
 			break;
 
@@ -589,7 +596,7 @@ static int INT21_FindNext( CONTEXT *context )
     }
     if ((int)dta->count + count > 0xffff)
     {
-        fprintf( stderr, "Too many directory entries in %s\n", dta->unixPath );
+        WARN(int21, "Too many directory entries in %s\n", dta->unixPath );
         HeapFree( GetProcessHeap(), 0, dta->unixPath );
         dta->unixPath = NULL;
         return 0;
@@ -1632,6 +1639,7 @@ void WINAPI DOS3Call( CONTEXT *context )
 	    *(WORD*)(dataptr+1) = 41;
 	    *(WORD*)(dataptr+3) = WINE_LanguageId;
 	    *(WORD*)(dataptr+5) = CodePage;
+	    *(DWORD*)(dataptr+0x19) = NULL; /* FIXME: ptr to case map routine */
 	    break;
 	case 0x06:
 	    TRACE(int21,"\tget pointer to collating sequence table\n");

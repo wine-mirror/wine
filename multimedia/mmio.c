@@ -375,8 +375,9 @@ UINT16 WINAPI mmioSetInfo(HMMIO16 hmmio, const MMIOINFO16 * lpmmioinfo, UINT16 u
 UINT16 WINAPI mmioSetBuffer(HMMIO16 hmmio, LPSTR pchBuffer, 
                             LONG cchBuffer, UINT16 uFlags)
 {
-	FIXME(mmio, "empty stub \n");
-	return 0;
+	FIXME(mmio, "(hmmio=%d, pchBuf=%p, cchBuf=%d, uFlags=%#08x): stub\n",
+	      hmmio, pchBuffer, cchBuffer, uFlags);
+	return MMIOERR_OUTOFMEMORY;
 }
 
 /**************************************************************************

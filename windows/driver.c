@@ -119,9 +119,9 @@ HDRVR16 WINAPI OpenDriver(LPSTR lpDriverName, LPSTR lpSectionName, LPARAM lParam
     lpnewdrv->dis.hDriver = hDrvr;
     lstrcpy32A( lpnewdrv->dis.szAliasName, lpDriverName );
     lpnewdrv->count = 1;
-    ordinal = MODULE_GetOrdinal( lpnewdrv->dis.hModule, "DRIVERPROC" );
+    ordinal = NE_GetOrdinal( lpnewdrv->dis.hModule, "DRIVERPROC" );
     if (!ordinal ||
-        !(lpnewdrv->lpDrvProc = (DRIVERPROC16)MODULE_GetEntryPoint(
+        !(lpnewdrv->lpDrvProc = (DRIVERPROC16)NE_GetEntryPoint(
                                              lpnewdrv->dis.hModule, ordinal )))
     {
 	FreeModule16( lpnewdrv->dis.hModule );

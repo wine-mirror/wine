@@ -283,17 +283,20 @@ VOID WINAPI SetFileApisToOEM(void)
  */
 VOID WINAPI SetFileApisToANSI(void)
 {
-    /*FIXME(file,"(): stub!\n");*/
+    /*FIXME(file,"(): stub\n");*/
 }
 
 
-/**************************************************************************
- *              AreFileApisANSI   (KERNEL32.105)
+/******************************************************************************
+ * AreFileApisANSI [KERNEL32.105]  Determines if file functions are using ANSI
+ *
+ * RETURNS
+ *    TRUE:  Set of file functions is using ANSI code page
+ *    FALSE: Set of file functions is using OEM code page
  */
 BOOL32 WINAPI AreFileApisANSI(void)
 {
-    FIXME(file,"(): stub!\n");
+    FIXME(file,"(void): stub\n");
     return TRUE;
 }
-
 

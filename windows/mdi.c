@@ -1466,12 +1466,51 @@ LRESULT WINAPI DefMDIChildProc32W( HWND32 hwnd, UINT32 message,
 
 
 /**********************************************************************
- *              CreateMDIWindowA (USER32.79)
+ * CreateMDIWindowA [USER32.79]
  */
+HWND32 WINAPI CreateMDIWindowA(
+    LPCSTR lpClassName,
+    LPCSTR lpWindowName,
+    DWORD dwStyle,
+    INT32 X,
+    INT32 Y,
+    INT32 nWidth,
+    INT32 nHeight,
+    HWND32 hWndParent,
+    HINSTANCE32 hInstance,
+    LPARAM lParam)
+{
+    FIXME(mdi, "(%s,%s,%ld,...): stub\n",debugstr_a(lpClassName),
+          debugstr_a(lpWindowName),dwStyle);
+    return (HWND32)NULL;
+}
 
-/**********************************************************************
- *              CreateMDIWindowW (USER32.80)
+
+/******************************************************************************
+ * CreateMDIWindowW [USER32.80]  Creates a MDI child window
+ *
+ * RETURNS
+ *    Success: Handle to created window
+ *    Failure: NULL
  */
+HWND32 WINAPI CreateMDIWindowW(
+    LPCWSTR lpClassName,   /* [in] Pointer to registered child class name */
+    LPCWSTR lpWindowName,  /* [in] Pointer to window name */
+    DWORD dwStyle,         /* [in] Window style */
+    INT32 X,               /* [in] Horizontal position of window */
+    INT32 Y,               /* [in] Vertical position of window */
+    INT32 nWidth,          /* [in] Width of window */
+    INT32 nHeight,         /* [in] Height of window */
+    HWND32 hWndParent,     /* [in] Handle to parent window */
+    HINSTANCE32 hInstance, /* [in] Handle to application instance */
+    LPARAM lParam)         /* [in] Application-defined value */
+{
+    FIXME(mdi, "(%s,%s,%ld,%d,%d,%d,%d,%x,%d,%ld): stub\n",
+          debugstr_w(lpClassName),debugstr_w(lpWindowName),dwStyle,X,Y,
+          nWidth,nHeight,hWndParent,hInstance,lParam);
+    return (HWND32)NULL;
+}
+
 
 /**********************************************************************
  *             TranslateMDISysAccel32   (USER32.555)

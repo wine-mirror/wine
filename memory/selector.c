@@ -13,9 +13,6 @@
 #include "debug.h"
 
 
-#define FIRST_LDT_ENTRY_TO_ALLOC  17
-
-
 /***********************************************************************
  *           AllocSelectorArray   (KERNEL.206)
  */
@@ -179,7 +176,7 @@ void SELECTOR_FreeBlock( WORD sel, WORD count )
         GET_FS(fs);
         if ((fs >= sel) && (fs < nextsel))
         {
-            fprintf( stderr, "SELECTOR_FreeBlock: freeing %%fs selector (%04x), not good.\n", fs );
+            WARN(selector, "Freeing %%fs selector (%04x), not good.\n", fs );
             SET_FS( 0 );
         }
         GET_GS(gs);
@@ -788,6 +785,5 @@ LPVOID WINAPI UTSelectorOffsetToLinear(SEGPTR sptr)
  */
 SEGPTR WINAPI UTLinearToSelectorOffset(LPVOID lptr)
 {
-    fprintf( stderr, "UTLinearToSelectorOffset(%p): stub\n", lptr );
     return (SEGPTR)lptr;
 }

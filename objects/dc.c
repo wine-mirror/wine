@@ -428,7 +428,7 @@ BOOL32 DC_SetupGCForText( DC * dc )
 		   GCFont, &val );
 	return TRUE;
     } 
-    fprintf( stderr, "DC_SetupGCForText: physical font failure\n" );
+    WARN(dc, "Physical font failure\n" );
     return FALSE;
 }
 
@@ -911,7 +911,7 @@ BOOL32 WINAPI DeleteDC32( HDC32 hdc )
  */
 HDC16 WINAPI ResetDC16( HDC16 hdc, const DEVMODE16 *devmode )
 {
-    fprintf( stderr, "ResetDC16: empty stub!\n" );
+    FIXME(dc, "stub\n" );
     return hdc;
 }
 
@@ -921,7 +921,7 @@ HDC16 WINAPI ResetDC16( HDC16 hdc, const DEVMODE16 *devmode )
  */
 HDC32 WINAPI ResetDC32A( HDC32 hdc, const DEVMODE32A *devmode )
 {
-    fprintf( stderr, "ResetDC32A: empty stub!\n" );
+    FIXME(dc, "stub\n" );
     return hdc;
 }
 
@@ -931,7 +931,7 @@ HDC32 WINAPI ResetDC32A( HDC32 hdc, const DEVMODE32A *devmode )
  */
 HDC32 WINAPI ResetDC32W( HDC32 hdc, const DEVMODE32W *devmode )
 {
-    fprintf( stderr, "ResetDC32A: empty stub!\n" );
+    FIXME(dc, "stub\n" );
     return hdc;
 }
 

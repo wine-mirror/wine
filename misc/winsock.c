@@ -57,7 +57,7 @@
 
 #define DEBUG_SOCKADDR 0
 #define dump_sockaddr(a) \
-        fprintf(stderr, "sockaddr_in: family %d, address %s, port %d\n", \
+        DUMP("sockaddr_in: family %d, address %s, port %d\n", \
                         ((struct sockaddr_in *)a)->sin_family, \
                         inet_ntoa(((struct sockaddr_in *)a)->sin_addr), \
                         ntohs(((struct sockaddr_in *)a)->sin_port))
@@ -116,7 +116,7 @@ static void convert_sockopt(INT32 *level, INT32 *optname)
         for(i=0; _ws_sock_ops[i]; i++)
             if( _ws_sock_ops[i] == *optname ) break;
         if( _ws_sock_ops[i] ) *optname = _px_sock_ops[i];
-        else fprintf(stderr, "convert_sockopt() unknown optname %d\n", *optname);
+        else WARN(winsock, "Unknown optname %d\n", *optname);
         break;
      case WS_IPPROTO_TCP:
         *optname = IPPROTO_TCP;
@@ -136,7 +136,7 @@ static LPWSINFO wsi_find(HTASK16 hTask)
 	    LPWSINFO pwsi = _wsi_list;
 	    while( pwsi && pwsi->tid != hTask ) pwsi = pwsi->next;
 	    if( pwsi )
-		fprintf(stderr,"loose wsi struct! pwsi=0x%08x, task=0x%04x\n", 
+		WARN(winsock,"(pwsi=0x%08x,task=0x%04x):Loose wsi struct! \n", 
 					(unsigned)pwsi, hTask );
 	    return pwsi; 
 	}
@@ -326,7 +326,7 @@ INT16 WINAPI WSAStartup16(UINT16 wVersionRequested, LPWSADATA lpWSAData)
 	_WSHeap = HeapCreate(HEAP_ZERO_MEMORY, 8120, 32768);
 	if( !(_ws_stub = WS_ALLOC(0x10)) )
 	{
-	    fprintf(stderr,"Fatal: failed to create WinSock heap\n");
+	    ERR(winsock,"Fatal: failed to create WinSock heap\n");
 	    return 0;
 	}
     }
@@ -919,7 +919,7 @@ INT32 WINAPI WINSOCK_ioctlsocket32(SOCKET32 s, UINT32 cmd, UINT32 *argp)
 		break;
 
 	case WS_IOW('f',125,u_long): 
-		fprintf(stderr,"Warning: WS1.1 shouldn't be using async I/O\n");
+		WARN(winsock,"Warning: WS1.1 shouldn't be using async I/O\n");
 		pwsi->err = WSAEINVAL; 
 		return SOCKET_ERROR;
 
@@ -1033,7 +1033,7 @@ INT32 WINAPI WINSOCK_recvfrom32(SOCKET32 s, char *buf, INT32 len, INT32 flags,
 		    len, flags);
 #if DEBUG_SOCKADDR
     if( from ) dump_sockaddr(from);
-    else fprintf(stderr, "\tfrom = NULL\n");
+    else DUMP("from = NULL\n");
 #endif
 
     if( _check_ws(pwsi, pws) )
@@ -1396,7 +1396,7 @@ SOCKET32 WINAPI WINSOCK_socket32(INT32 af, INT32 type, INT32 protocol)
 
     if (errno == EPERM) /* raw socket denied */
     {
-        fprintf(stderr, "WS_SOCKET: not enough privileges\n");
+        WARN(winsock, "WS_SOCKET: not enough privileges\n");
         pwsi->err = WSAESOCKTNOSUPPORT;
     } else pwsi->err = wsaErrno();
   }
@@ -2648,7 +2648,7 @@ UINT16 wsaErrno(void)
        /* just in case we ever get here and there are no problems */
 	case 0:			return 0;
         default:
-		fprintf(stderr, "winsock: unknown errno %d!\n", errno);
+		WARN(winsock, "Unknown errno %d!\n", errno);
 		return WSAEOPNOTSUPP;
     }
 }
@@ -2673,7 +2673,7 @@ UINT16 wsaHerrno(void)
 
 	case 0:			return 0;
         default:
-		fprintf(stderr, "winsock: unknown h_errno %d!\n", h_errno);
+		WARN(winsock,"Unknown h_errno %d!\n", h_errno);
 		return WSAEOPNOTSUPP;
     }
 }

@@ -2820,6 +2820,7 @@ else
 #line 2821 "configure"
 #include "confdefs.h"
 
+	#include <sys/types.h>
 	#ifdef HAVE_SYS_PARAM_H
 	# include <sys/param.h>
 	#endif
@@ -2841,7 +2842,7 @@ int main() {
 	
 ; return 0; }
 EOF
-if { (eval echo configure:2845: \"$ac_compile\") 1>&5; (eval $ac_compile) 2>&5; }; then
+if { (eval echo configure:2846: \"$ac_compile\") 1>&5; (eval $ac_compile) 2>&5; }; then
   rm -rf conftest*
   wine_cv_statfs_bavail=yes
 else
@@ -2865,7 +2866,7 @@ EOF
 fi
 
 echo $ac_n "checking "for statfs.f_bfree"""... $ac_c" 1>&6
-echo "configure:2869: checking "for statfs.f_bfree"" >&5
+echo "configure:2870: checking "for statfs.f_bfree"" >&5
 if eval "test \"`echo '$''{'wine_cv_statfs_bfree'+set}'`\" = set"; then
   echo $ac_n "(cached) $ac_c" 1>&6
 else
@@ -2874,9 +2875,10 @@ else
         wine_cv_statfs_bfree=no
     else
     	cat > conftest.$ac_ext <<EOF
-#line 2878 "configure"
+#line 2879 "configure"
 #include "confdefs.h"
 
+	#include <sys/types.h>
 	#ifdef HAVE_SYS_PARAM_H
 	# include <sys/param.h>
 	#endif
@@ -2898,7 +2900,7 @@ int main() {
 	
 ; return 0; }
 EOF
-if { (eval echo configure:2902: \"$ac_compile\") 1>&5; (eval $ac_compile) 2>&5; }; then
+if { (eval echo configure:2904: \"$ac_compile\") 1>&5; (eval $ac_compile) 2>&5; }; then
   rm -rf conftest*
   wine_cv_statfs_bfree=yes
 else
@@ -3043,6 +3045,7 @@ ipc/Makefile
 library/Makefile
 libtest/Makefile
 loader/Makefile
+loader/ne/Makefile
 memory/Makefile
 misc/Makefile
 miscemu/Makefile
@@ -3172,6 +3175,7 @@ ipc/Makefile
 library/Makefile
 libtest/Makefile
 loader/Makefile
+loader/ne/Makefile
 memory/Makefile
 misc/Makefile
 miscemu/Makefile

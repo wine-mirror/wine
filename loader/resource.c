@@ -5,6 +5,7 @@
  * Copyright 1995 Alexandre Julliard
  */
 
+#include <assert.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -18,6 +19,7 @@
 #include "heap.h"
 #include "neexe.h"
 #include "task.h"
+#include "process.h"
 #include "module.h"
 #include "resource.h"
 #include "debug.h"
@@ -26,65 +28,11 @@
 
 extern WORD WINE_LanguageId;
 
-/* error message when 16-bit resource function is called for Win32 module */
-static const char* NEWin32FailureString = "fails with Win32 module\n";
-/* error message when 32-bit resource function is called for Win16 module */
-static const char* PEWin16FailureString = "fails with Win16 module\n";
-
-/**********************************************************************
- *	    FindResource16    (KERNEL.60)
- */
-HRSRC16 WINAPI FindResource16( HMODULE16 hModule, SEGPTR name, SEGPTR type )
-{
-    NE_MODULE *pModule;
-
-    hModule = MODULE_HANDLEtoHMODULE16( hModule ); 
-
-    if (HIWORD(name))  /* Check for '#xxx' name */
-    {
-	char *ptr = PTR_SEG_TO_LIN( name );
-	if (ptr[0] == '#')
-	    if (!(name = (SEGPTR)atoi( ptr + 1 ))) {
-	      WARN(resource, "Incorrect resource name: %s\n", ptr);
-	      return 0;
-	    }
-    }
-
-    if (HIWORD(type))  /* Check for '#xxx' type */
-    {
-	char *ptr = PTR_SEG_TO_LIN( type );
-	if (ptr[0] == '#')
-	  if (!(type = (SEGPTR)atoi( ptr + 1 ))){
-	    WARN(resource, "Incorrect resource type: %s\n", ptr);
-	    return 0;
-	  }
-    }
-
-    TRACE(resource, "module=%04x name=%s type=%s\n", 
-		 hModule, debugres_a(PTR_SEG_TO_LIN(name)), 
-		 debugres_a(PTR_SEG_TO_LIN(type)) );
-
-    if ((pModule = MODULE_GetPtr( hModule )))
-    {
-        if (!__winelib)
-        {
-            if (pModule->flags & NE_FFLAGS_WIN32)
-                fprintf(stderr,"FindResource16: %s", NEWin32FailureString);
-            else
-                return NE_FindResource( hModule, type, name );
-        }
-        else return LIBRES_FindResource16( hModule,
-                                           (LPCSTR)PTR_SEG_TO_LIN(name),
-                                           (LPCSTR)PTR_SEG_TO_LIN(type) );
-    }
-    return 0;
-}
-
 
 /**********************************************************************
  *	    FindResource32A    (KERNEL32.128)
  */
-HANDLE32 WINAPI FindResource32A( HINSTANCE32 hModule, LPCSTR name, LPCSTR type)
+HANDLE32 WINAPI FindResource32A( HMODULE32 hModule, LPCSTR name, LPCSTR type)
 {
     return FindResourceEx32A(hModule,name,type,WINE_LanguageId);
 }
@@ -92,9 +40,9 @@ HANDLE32 WINAPI FindResource32A( HINSTANCE32 hModule, LPCSTR name, LPCSTR type)
 /**********************************************************************
  *	    FindResourceEx32A    (KERNEL32.129)
  */
-HANDLE32 WINAPI FindResourceEx32A( HINSTANCE32 hModule, LPCSTR name,
-                                   LPCSTR type, WORD lang )
-{
+HANDLE32 WINAPI FindResourceEx32A( HMODULE32 hModule, LPCSTR name, LPCSTR type,
+				   WORD lang
+) {
     LPWSTR xname,xtype;
     HANDLE32 ret;
 
@@ -116,26 +64,33 @@ HANDLE32 WINAPI FindResourceEx32A( HINSTANCE32 hModule, LPCSTR name,
 /**********************************************************************
  *	    FindResourceEx32W    (KERNEL32.130)
  */
-HRSRC32 WINAPI FindResourceEx32W( HINSTANCE32 hModule, LPCWSTR name,
+HRSRC32 WINAPI FindResourceEx32W( HMODULE32 hModule, LPCWSTR name,
                                   LPCWSTR type, WORD lang )
 {
-    if (!__winelib)
-    {
-        NE_MODULE *pModule;
+    WINE_MODREF	*wm = MODULE32_LookupHMODULE(PROCESS_Current(),hModule);
+    HRSRC32	hrsrc;
 
-        if (!hModule) hModule = GetTaskDS();
-        hModule = MODULE_HANDLEtoHMODULE32( hModule );
-        TRACE(resource, "module=%08x "
-			 "type=%s%p name=%s%p\n", hModule,
-			 (HIWORD(type))? "" : "#", type, 
-			 (HIWORD(name))? "" : "#", name);
-
-        if (!(pModule = MODULE_GetPtr( hModule ))) return 0;
-        if (!(pModule->flags & NE_FFLAGS_WIN32)) return 0;
-        return PE_FindResourceEx32W(hModule,name,type,lang);
+    TRACE(resource, "module=%08x "
+		     "type=%s%p name=%s%p\n", wm->module,
+		     (HIWORD(type))? "" : "#", type,
+		     (HIWORD(name))? "" : "#", name);
+    if (__winelib) {
+    	hrsrc = LIBRES_FindResource( hModule, name, type );
+	if (hrsrc)
+	    return hrsrc;
     }
-    else return LIBRES_FindResource32( hModule, name, type );
+    if (wm) {
+    	switch (wm->type) {
+	case MODULE32_PE:
+	    return PE_FindResourceEx32W(wm,name,type,lang);
+	default:
+	    ERR(module,"unknown module type %d\n",wm->type);
+	    break;
+	}
+    }
+    return (HRSRC32)0;
 }
+
 
 /**********************************************************************
  *	    FindResource32W    (KERNEL32.131)
@@ -147,98 +102,35 @@ HRSRC32 WINAPI FindResource32W(HINSTANCE32 hModule, LPCWSTR name, LPCWSTR type)
 
 
 /**********************************************************************
- *	    LoadResource16    (KERNEL.61)
- */
-HGLOBAL16 WINAPI LoadResource16( HMODULE16 hModule, HRSRC16 hRsrc )
-{
-    NE_MODULE *pModule;
-
-    hModule = MODULE_HANDLEtoHMODULE16( hModule );
-    TRACE(resource, "module=%04x res=%04x\n",
-                     hModule, hRsrc );
-    if (!hRsrc) return 0;
-    if ((pModule = MODULE_GetPtr( hModule )))
-    {
-        if (!__winelib)
-        {
-            if (pModule->flags & NE_FFLAGS_WIN32)
-                fprintf(stderr,"LoadResource16: %s", NEWin32FailureString);
-            else
-                return NE_LoadResource( hModule, hRsrc );
-        }
-        else return LIBRES_LoadResource( hModule, hRsrc );
-    }
-    return 0;
-}
-
-/**********************************************************************
  *	    LoadResource32    (KERNEL32.370)
+ * 'loads' a resource. The current implementation just returns a pointer
+ * into the already mapped image.
+ * RETURNS
+ *	pointer into the mapped resource of the passed module
  */
-HGLOBAL32 WINAPI LoadResource32( HINSTANCE32 hModule, HRSRC32 hRsrc )
+HGLOBAL32 WINAPI LoadResource32( 
+	HINSTANCE32 hModule,	/* [in] module handle */
+	HRSRC32 hRsrc )		/* [in] resource handle */
 {
-    if (!__winelib)
-    {
-        NE_MODULE *pModule;
+    WINE_MODREF	*wm = MODULE32_LookupHMODULE(PROCESS_Current(),hModule);
 
-        if (!hModule) hModule = GetTaskDS(); /* FIXME: see FindResource32W */
-        hModule = MODULE_HANDLEtoHMODULE32( hModule );
-        TRACE(resource, "module=%04x res=%04x\n",
-                         hModule, hRsrc );
-        if (!hRsrc) return 0;
-
-        if (!(pModule = MODULE_GetPtr( hModule ))) return 0;
-        if (!(pModule->flags & NE_FFLAGS_WIN32))
-        {
-            fprintf(stderr,"LoadResource32: %s", PEWin16FailureString );
-            return 0;  /* FIXME? */
-        }
-        return PE_LoadResource32(hModule,hRsrc);
+    TRACE(resource, "module=%04x res=%04x\n",
+		     hModule, hRsrc );
+    if (!hRsrc) {
+    	ERR(resource,"hRsrc is 0, return 0.\n");
+	return 0;
     }
-    else return LIBRES_LoadResource( hModule, hRsrc );
-}
-
-
-/**********************************************************************
- *	    LockResource    (KERNEL.62)
- */
-/* 16-bit version */
-SEGPTR WINAPI WIN16_LockResource16(HGLOBAL16 handle)
-{
-    HMODULE16 hModule;
-    NE_MODULE *pModule;
-
-    TRACE(resource, "handle=%04x\n", handle );
-    if (!handle) return (SEGPTR)0;
-    hModule = MODULE_HANDLEtoHMODULE16( handle );
-    if (!(pModule = MODULE_GetPtr( hModule ))) return 0;
-    if (pModule->flags & NE_FFLAGS_WIN32)
-    {
-        fprintf(stderr,"LockResource16: %s", NEWin32FailureString);
-        return 0;
-    }
-    return NE_LockResource( hModule, handle );
-}
-
-/* Winelib 16-bit version */
-LPVOID WINAPI LockResource16( HGLOBAL16 handle )
-{
-    if (!__winelib)
-    {
-        HMODULE16 hModule;
-        NE_MODULE *pModule;
-
-        TRACE(resource, "handle=%04x\n", handle );
-        if (!handle) return NULL;
-        hModule = MODULE_HANDLEtoHMODULE16( handle );
-        if (!(pModule = MODULE_GetPtr( hModule ))) return 0;
-        if (pModule->flags & NE_FFLAGS_WIN32)
-        {
-            fprintf(stderr,"LockResource16: %s", NEWin32FailureString);
-            return 0;
-        }
-        return (LPSTR)PTR_SEG_TO_LIN( NE_LockResource( hModule, handle ) );
-    }
-    else return LIBRES_LockResource( handle );
+    if (wm)
+    	switch (wm->type) {
+	case MODULE32_PE:
+            return PE_LoadResource32(wm,hRsrc);
+	default:
+	    ERR(resource,"unknown module type %d\n",wm->type);
+	    break;
+	}
+    if (__winelib)
+    	return LIBRES_LoadResource( hModule, hRsrc );
+    return 0;
 }
 
 
@@ -252,30 +144,6 @@ LPVOID WINAPI LockResource32( HGLOBAL32 handle )
 
 
 /**********************************************************************
- *	    FreeResource16    (KERNEL.63)
- */
-BOOL16 WINAPI FreeResource16( HGLOBAL16 handle )
-{
-    if (!__winelib)
-    {
-        HMODULE16 hModule;
-        NE_MODULE *pModule;
-
-        TRACE(resource, "handle=%04x\n", handle );
-        if (!handle) return FALSE;
-        hModule = MODULE_HANDLEtoHMODULE16( handle );
-        if (!(pModule = MODULE_GetPtr( hModule ))) return 0;
-        if (pModule->flags & NE_FFLAGS_WIN32)
-        {
-            fprintf(stderr,"FreeResource16: %s", NEWin32FailureString);
-            return 0;
-        }
-        return NE_FreeResource( hModule, handle );
-    }
-    else return LIBRES_FreeResource( handle );
-}
-
-/**********************************************************************
  *	    FreeResource32    (KERNEL32.145)
  */
 BOOL32 WINAPI FreeResource32( HGLOBAL32 handle )
@@ -286,65 +154,12 @@ BOOL32 WINAPI FreeResource32( HGLOBAL32 handle )
 
 
 /**********************************************************************
- *	    AccessResource16    (KERNEL.64)
- */
-INT16 WINAPI AccessResource16( HINSTANCE16 hModule, HRSRC16 hRsrc )
-{
-    NE_MODULE *pModule;
-
-    hModule = MODULE_HANDLEtoHMODULE16( hModule );
-    TRACE(resource, "module=%04x res=%04x\n",
-                     hModule, hRsrc );
-    if (!hRsrc) return 0;
-    if (!(pModule = MODULE_GetPtr( hModule ))) return 0;
-    if (!__winelib)
-    {
-        if (pModule->flags & NE_FFLAGS_WIN32)
-        {
-            fprintf(stderr,"AccessResource16: %s", NEWin32FailureString);
-            return 0;
-        }
-        return NE_AccessResource( hModule, hRsrc );
-    }
-    else return LIBRES_AccessResource( hModule, hRsrc );
-}
-
-
-/**********************************************************************
  *	    AccessResource32    (KERNEL32.64)
  */
-INT32 WINAPI AccessResource32( HINSTANCE32 hModule, HRSRC32 hRsrc )
+INT32 WINAPI AccessResource32( HMODULE32 hModule, HRSRC32 hRsrc )
 {
-    hModule = MODULE_HANDLEtoHMODULE32( hModule );
-    TRACE(resource, "module=%04x res=%04x\n",
-                     hModule, hRsrc );
-    if (!hRsrc) return 0;
-    fprintf(stderr,"AccessResource32: not implemented\n");
+    FIXME(resource,"(module=%08x res=%08x),not implemented\n", hModule, hRsrc);
     return 0;
-}
-
-
-/**********************************************************************
- *	    SizeofResource16    (KERNEL.65)
- */
-DWORD WINAPI SizeofResource16( HMODULE16 hModule, HRSRC16 hRsrc )
-{
-    NE_MODULE *pModule;
-
-    hModule = MODULE_HANDLEtoHMODULE16( hModule );
-    TRACE(resource, "module=%04x res=%04x\n",
-                     hModule, hRsrc );
-    if (!(pModule = MODULE_GetPtr( hModule ))) return 0;
-    if (!__winelib)
-    {
-        if (pModule->flags & NE_FFLAGS_WIN32)
-        {
-            fprintf(stderr,"SizeOfResource16: %s", NEWin32FailureString);
-            return 0;
-        }
-        return NE_SizeofResource( hModule, hRsrc );
-    }
-    else return LIBRES_SizeofResource( hModule, hRsrc );
 }
 
 
@@ -353,58 +168,27 @@ DWORD WINAPI SizeofResource16( HMODULE16 hModule, HRSRC16 hRsrc )
  */
 DWORD WINAPI SizeofResource32( HINSTANCE32 hModule, HRSRC32 hRsrc )
 {
-    hModule = MODULE_HANDLEtoHMODULE32( hModule );
-    TRACE(resource, "module=%04x res=%04x\n",
-                     hModule, hRsrc );
-    if (!__winelib) return PE_SizeofResource32(hModule,hRsrc);
-    else
-    {
-        fprintf(stderr,"SizeofResource32: not implemented\n");
-        return 0;
-    }
-}
+    WINE_MODREF	*wm = MODULE32_LookupHMODULE(PROCESS_Current(),hModule);
 
-
-/**********************************************************************
- *	    AllocResource16    (KERNEL.66)
- */
-HGLOBAL16 WINAPI AllocResource16( HMODULE16 hModule, HRSRC16 hRsrc, DWORD size)
-{
-    NE_MODULE *pModule;
-
-    hModule = MODULE_HANDLEtoHMODULE16( hModule );
-    TRACE(resource, "module=%04x res=%04x size=%ld\n",
-                     hModule, hRsrc, size );
-    if (!hRsrc) return 0;
-    if (!(pModule = MODULE_GetPtr( hModule ))) return 0;
-    if (!__winelib)
-    {
-        if (pModule->flags & NE_FFLAGS_WIN32)
+    TRACE(resource, "module=%08x res=%08x\n", hModule, hRsrc );
+    if (wm)
+        switch (wm->type)
         {
-            fprintf(stderr,"AllocResource16: %s", NEWin32FailureString);
-            return 0;
-        }
-        return NE_AllocResource( hModule, hRsrc, size );
-    }
-    else return LIBRES_AllocResource( hModule, hRsrc, size );
-}
-
-/**********************************************************************
- *      DirectResAlloc    (KERNEL.168)
- *
- * Check Schulman, p. 232 for details
- */
-HGLOBAL16 WINAPI DirectResAlloc( HINSTANCE16 hInstance, WORD wType,
-                                 UINT16 wSize )
-{
-    TRACE(resource,"(%04x,%04x,%04x)\n",
-                     hInstance, wType, wSize );
-    hInstance = MODULE_HANDLEtoHMODULE16(hInstance);
-    if(!hInstance)return 0;
-    if(wType != 0x10)	/* 0x10 is the only observed value, passed from
-                           CreateCursorIndirect. */
-        fprintf(stderr, "DirectResAlloc: wType = %x\n", wType);
-    return GLOBAL_Alloc(GMEM_MOVEABLE, wSize, hInstance, FALSE, FALSE, FALSE);
+	case MODULE32_PE:
+            {
+                DWORD ret;
+                ret = PE_SizeofResource32(hModule,hRsrc);
+                if (ret) 
+                    return ret;
+                break;
+            }
+	default:
+	    ERR(module,"unknown module type %d\n",wm->type);
+	    break;
+	}
+    if (__winelib)
+        fprintf(stderr,"SizeofResource32: not implemented for WINELIB\n");
+    return 0;
 }
 
 
@@ -576,14 +360,22 @@ HACCEL32 WINAPI CreateAcceleratorTable32A(LPACCEL32 lpaccel, INT32 cEntries)
   return hAccel;
 }
 
-/**********************************************************************
- *             DestroyAcceleratorTable   (USER32.130)
+
+/******************************************************************************
+ * DestroyAcceleratorTable [USER32.130]
+ * Destroys an accelerator table
  *
- * By mortene@pvv.org 980321
+ * NOTES
+ *    By mortene@pvv.org 980321
+ *
+ * PARAMS
+ *    handle [I] Handle to accelerator table
+ *
+ * RETURNS STD
  */
 BOOL32 WINAPI DestroyAcceleratorTable( HACCEL32 handle )
 {
-  FIXME(accel, "stub (handle 0x%x)\n", handle);
+    FIXME(accel, "(0x%x): stub\n", handle);
 
 
   /* Weird.. I thought this should work. According to the API
@@ -647,8 +439,7 @@ INT16 WINAPI LoadString16( HINSTANCE16 instance, UINT16 resource_id,
 	    buffer[0] = '\0';
 	    return 0;
 	}
-	fprintf(stderr,"LoadString // I dont know why , but caller give buflen=%d *p=%d !\n", buflen, *p);
-	fprintf(stderr,"LoadString // and try to obtain string '%s'\n", p + 1);
+	WARN(resource,"Dont know why caller give buflen=%d *p=%d trying to obtain string '%s'\n", buflen, *p, p + 1);
     }
     FreeResource16( hmem );
 
@@ -698,8 +489,7 @@ INT32 WINAPI LoadString32W( HINSTANCE32 instance, UINT32 resource_id,
 	    return 0;
 	}
 #if 0
-	fprintf(stderr,"LoadString // I dont know why , but caller give buflen=%d *p=%d !\n", buflen, *p);
-	fprintf(stderr,"LoadString // and try to obtain string '%s'\n", p + 1);
+	WARN(resource,"Dont know why caller give buflen=%d *p=%d trying to obtain string '%s'\n", buflen, *p, p + 1);
 #endif
     }
 
@@ -757,7 +547,7 @@ INT32 WINAPI LoadString32A( HINSTANCE32 instance, UINT32 resource_id,
 /**********************************************************************
  *	LoadMessage32A		(internal)
  */
-INT32 LoadMessage32A( HINSTANCE32 instance, UINT32 id, WORD lang,
+INT32 LoadMessage32A( HMODULE32 instance, UINT32 id, WORD lang,
                       LPSTR buffer, INT32 buflen )
 {
     HGLOBAL32	hmem;
@@ -824,7 +614,7 @@ INT32 LoadMessage32A( HINSTANCE32 instance, UINT32 id, WORD lang,
 /**********************************************************************
  *	LoadMessage32W	(internal)
  */
-INT32 LoadMessage32W( HINSTANCE32 instance, UINT32 id, WORD lang,
+INT32 LoadMessage32W( HMODULE32 instance, UINT32 id, WORD lang,
                       LPWSTR buffer, INT32 buflen )
 {
     INT32 retval;
@@ -845,35 +635,12 @@ INT32 LoadMessage32W( HINSTANCE32 instance, UINT32 id, WORD lang,
 
 
 /**********************************************************************
- *	SetResourceHandler	(KERNEL.43)
- */
-FARPROC16 WINAPI SetResourceHandler( HMODULE16 hModule, SEGPTR s,
-                                     FARPROC16 resourceHandler )
-{
-    NE_MODULE *pModule;
-
-    hModule = GetExePtr( hModule );
-
-    TRACE(resource, "module=%04x type=%s\n", 
-		 hModule, debugres_a(PTR_SEG_TO_LIN(s)) );
-
-    if ((pModule = MODULE_GetPtr( hModule )))
-    {
-	if (pModule->flags & NE_FFLAGS_WIN32)
-	    fprintf(stderr,"SetResourceHandler: %s\n", NEWin32FailureString);
-	else if (pModule->res_table)
-	    return NE_SetResourceHandler( hModule, s, resourceHandler );
-    }
-    return NULL;
-}
-
-
-/**********************************************************************
  *	EnumResourceTypesA	(KERNEL32.90)
  */
 BOOL32 WINAPI EnumResourceTypes32A( HMODULE32 hmodule,ENUMRESTYPEPROC32A lpfun,
                                     LONG lParam)
 {
+	/* FIXME: move WINE_MODREF stuff here */
     return PE_EnumResourceTypes32A(hmodule,lpfun,lParam);
 }
 
@@ -883,6 +650,7 @@ BOOL32 WINAPI EnumResourceTypes32A( HMODULE32 hmodule,ENUMRESTYPEPROC32A lpfun,
 BOOL32 WINAPI EnumResourceTypes32W( HMODULE32 hmodule,ENUMRESTYPEPROC32W lpfun,
                                     LONG lParam)
 {
+	/* FIXME: move WINE_MODREF stuff here */
     return PE_EnumResourceTypes32W(hmodule,lpfun,lParam);
 }
 
@@ -892,6 +660,7 @@ BOOL32 WINAPI EnumResourceTypes32W( HMODULE32 hmodule,ENUMRESTYPEPROC32W lpfun,
 BOOL32 WINAPI EnumResourceNames32A( HMODULE32 hmodule, LPCSTR type,
                                     ENUMRESNAMEPROC32A lpfun, LONG lParam )
 {
+	/* FIXME: move WINE_MODREF stuff here */
     return PE_EnumResourceNames32A(hmodule,type,lpfun,lParam);
 }
 /**********************************************************************
@@ -900,6 +669,7 @@ BOOL32 WINAPI EnumResourceNames32A( HMODULE32 hmodule, LPCSTR type,
 BOOL32 WINAPI EnumResourceNames32W( HMODULE32 hmodule, LPCWSTR type,
                                     ENUMRESNAMEPROC32W lpfun, LONG lParam )
 {
+	/* FIXME: move WINE_MODREF stuff here */
     return PE_EnumResourceNames32W(hmodule,type,lpfun,lParam);
 }
 
@@ -910,6 +680,7 @@ BOOL32 WINAPI EnumResourceLanguages32A( HMODULE32 hmodule, LPCSTR type,
                                         LPCSTR name, ENUMRESLANGPROC32A lpfun,
                                         LONG lParam)
 {
+	/* FIXME: move WINE_MODREF stuff here */
     return PE_EnumResourceLanguages32A(hmodule,type,name,lpfun,lParam);
 }
 /**********************************************************************
@@ -919,5 +690,6 @@ BOOL32 WINAPI EnumResourceLanguages32W( HMODULE32 hmodule, LPCWSTR type,
                                         LPCWSTR name, ENUMRESLANGPROC32W lpfun,
                                         LONG lParam)
 {
+	/* FIXME: move WINE_MODREF stuff here */
     return PE_EnumResourceLanguages32W(hmodule,type,name,lpfun,lParam);
 }

@@ -77,10 +77,10 @@ void COMM_Init(void)
 			}
 			stat(temp, &st);
 			if (!S_ISCHR(st.st_mode)) 
-				fprintf(stderr,"comm: can't use `%s' as %s !\n", temp, option);
+				WARN(comm,"Can't use `%s' as %s !\n", temp, option);
 			else
 				if ((COM[x].devicename = malloc(strlen(temp)+1)) == NULL) 
-					fprintf(stderr,"comm: can't malloc for device info!\n");
+					WARN(comm,"Can't malloc for device info!\n");
 				else {
 					COM[x].fd = 0;
 					strcpy(COM[x].devicename, temp);
@@ -99,10 +99,10 @@ void COMM_Init(void)
 		else {
 			stat(temp, &st);
 			if (!S_ISCHR(st.st_mode)) 
-				fprintf(stderr,"comm: can't use `%s' as %s !\n", temp, option);
+				WARN(comm,"Can't use `%s' as %s !\n", temp, option);
 			else 
 				if ((LPT[x].devicename = malloc(strlen(temp)+1)) == NULL) 
-					fprintf(stderr,"comm: can't malloc for device info!\n");
+					WARN(comm,"Can't malloc for device info!\n");
 				else {
 					LPT[x].fd = 0;
 					strcpy(LPT[x].devicename, temp);
@@ -177,7 +177,7 @@ BOOL16 WINAPI BuildCommDCB16(LPCSTR device, LPDCB16 lpdcb)
 	
 
 		if (port-- == 0) {
-			fprintf(stderr, "comm: BUG ! COM0 can't exists!.\n");
+			ERR(comm, "BUG ! COM0 can't exists!.\n");
 			commerror = IE_BADID;
 		}
 
@@ -229,7 +229,7 @@ BOOL16 WINAPI BuildCommDCB16(LPCSTR device, LPDCB16 lpdcb)
 				lpdcb->Parity = ODDPARITY;
 				break;			
 			default:
-				fprintf(stderr,"comm: unknown parity `%c'!\n", *ptr);
+				WARN(comm,"Unknown parity `%c'!\n", *ptr);
 				return -1;
 		}
 
@@ -247,7 +247,7 @@ BOOL16 WINAPI BuildCommDCB16(LPCSTR device, LPDCB16 lpdcb)
 				lpdcb->StopBits = TWOSTOPBITS;
 				break;			
 			default:
-				fprintf(stderr,"comm: unknown # of stopbits `%c'!\n", *ptr);
+				WARN(comm,"Unknown # of stopbits `%c'!\n", *ptr);
 				return -1;
 		}
 	}	
@@ -278,7 +278,7 @@ BOOL32 WINAPI BuildCommDCBAndTimeouts32A(LPCSTR device, LPDCB32 lpdcb,
 	if (!lstrncmpi32A(device,"COM",3)) {
 		port=device[3]-'0';
 		if (port--==0) {
-			fprintf(stderr,"comm:BUG! COM0 can't exists!.\n");
+			ERR(comm,"BUG! COM0 can't exists!.\n");
 			return FALSE;
 		}
 		if (!ValidCOMPort(port))
@@ -346,19 +346,19 @@ BOOL32 WINAPI BuildCommDCBAndTimeouts32A(LPCSTR device, LPDCB32 lpdcb,
 		flag=0;
 		if (!strncmp("baud=",ptr,5)) {
 			if (!sscanf(ptr+5,"%ld",&x))
-				fprintf(stderr,"BuildCommDCB32A:Couldn't parse %s\n",ptr);
+				WARN(comm,"Couldn't parse %s\n",ptr);
 			lpdcb->BaudRate = x;
 			flag=1;
 		}
 		if (!strncmp("stop=",ptr,5)) {
 			if (!sscanf(ptr+5,"%ld",&x))
-				fprintf(stderr,"BuildCommDCB32A:Couldn't parse %s\n",ptr);
+				WARN(comm,"Couldn't parse %s\n",ptr);
 			lpdcb->StopBits = x;
 			flag=1;
 		}
 		if (!strncmp("data=",ptr,5)) {
 			if (!sscanf(ptr+5,"%ld",&x))
-				fprintf(stderr,"BuildCommDCB32A:Couldn't parse %s\n",ptr);
+				WARN(comm,"Couldn't parse %s\n",ptr);
 			lpdcb->ByteSize = x;
 			flag=1;
 		}
@@ -382,7 +382,7 @@ BOOL32 WINAPI BuildCommDCBAndTimeouts32A(LPCSTR device, LPDCB32 lpdcb,
 			flag=1;
 		}
 		if (!flag)
-			fprintf(stderr,"BuildCommDCB32A: Unhandled specifier '%s', please report.\n",ptr);
+			ERR(comm,"Unhandled specifier '%s', please report.\n",ptr);
 		ptr=strtok(NULL," ");
 	}
 	if (lpdcb->BaudRate==110)
@@ -428,7 +428,7 @@ INT16 WINAPI OpenComm(LPCSTR device,UINT16 cbInQueue,UINT16 cbOutQueue)
 		port = device[3] - '0';
 
 		if (port-- == 0) {
-			fprintf(stderr, "comm: BUG ! COM0 doesn't exist !\n");
+			ERR(comm, "BUG ! COM0 doesn't exist !\n");
 			commerror = IE_BADID;
 		}
 
@@ -636,8 +636,7 @@ LONG WINAPI EscapeCommFunction16(UINT16 fd,UINT16 nFunction)
 			break;
 
 		default:
-			fprintf(stderr,
-			"EscapeCommFunction fd: %d, unknown function: %d\n", 
+			WARN(comm,"(fd=%d,nFunction=%d): Unknown function\n", 
 			fd, nFunction);
 			break;				
 	}
@@ -709,8 +708,7 @@ BOOL32 WINAPI EscapeCommFunction32(INT32 fd,UINT32 nFunction)
 			ptr->suspended = 0;
 			break;
 		default:
-			fprintf(stderr,
-			"EscapeCommFunction32 fd: %d, unknown function: %d\n", 
+			WARN(comm,"(fd=%d,nFunction=%d): Unknown function\n", 
 			fd, nFunction);
 			break;				
 	}
@@ -737,8 +735,7 @@ INT16 WINAPI FlushComm(INT16 fd,INT16 fnQueue)
 			break;
 		case 1:	queue = TCIFLUSH;
 			break;
-		default:fprintf(stderr,
-				"FlushComm fd: %d, UNKNOWN queue: %d\n", 
+		default:WARN(comm,"(fd=%d,fnQueue=%d):Unknown queue\n", 
 				fd, fnQueue);
 			return -1;
 		}
@@ -774,11 +771,11 @@ INT16 WINAPI GetCommError(INT16 fd,LPCOMSTAT lpStat)
 		lpStat->status = 0;
 
 		rc = ioctl(fd, TIOCOUTQ, &cnt);
-		if (rc) fprintf(stderr, "Error !\n");
+		if (rc) WARN(comm, "Error !\n");
 		lpStat->cbOutQue = cnt;
 
 		rc = ioctl(fd, TIOCINQ, &cnt);
-                if (rc) fprintf(stderr, "Error !\n");
+                if (rc) WARN(comm, "Error !\n");
 		lpStat->cbInQue = cnt;
 
     		TRACE(comm, "fd %d, error %d, lpStat %d %d %d\n",
@@ -1727,9 +1724,7 @@ INT16 WINAPI WriteComm(INT16 fd, LPSTR lpvBuf, INT16 cbWrite)
  */
 BOOL32 WINAPI GetCommTimeouts(INT32 fd,LPCOMMTIMEOUTS lptimeouts)
 {
-	fprintf(stderr,"GetCommTimeouts(%x,%p), empty stub.\n",
-		fd,lptimeouts
-	);
+	FIXME(comm,"(%x,%p):stub.\n",fd,lptimeouts);
 	return TRUE;
 }
 
@@ -1737,9 +1732,7 @@ BOOL32 WINAPI GetCommTimeouts(INT32 fd,LPCOMMTIMEOUTS lptimeouts)
  *	SetCommTimeouts		(KERNEL32.453)
  */
 BOOL32 WINAPI SetCommTimeouts(INT32 fd,LPCOMMTIMEOUTS lptimeouts) {
-	fprintf(stderr,"SetCommTimeouts(%x,%p), empty stub.\n",
-		fd,lptimeouts
-	);
+	FIXME(comm,"(%x,%p):stub.\n",fd,lptimeouts);
 	return TRUE;
 }
 
@@ -1749,7 +1742,7 @@ BOOL32 WINAPI SetCommTimeouts(INT32 fd,LPCOMMTIMEOUTS lptimeouts) {
 BOOL16 WINAPI EnableCommNotification( INT16 fd, HWND16 hwnd,
                                       INT16 cbWriteNotify, INT16 cbOutQueue )
 {
-	fprintf(stderr, "EnableCommNotification(%d, %x, %d, %d), empty stub.\n", fd, hwnd, cbWriteNotify, cbOutQueue);
+	FIXME(comm, "(%d, %x, %d, %d):stub.\n", fd, hwnd, cbWriteNotify, cbOutQueue);
 	return TRUE;
 }
 

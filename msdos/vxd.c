@@ -12,7 +12,7 @@
 
 
 #define VXD_BARF(context,name) \
-    fprintf( stderr, "vxd %s: unknown/not implemented parameters:\n" \
+    DUMP( "vxd %s: unknown/not implemented parameters:\n" \
                      "vxd %s: AX %04x, BX %04x, CX %04x, DX %04x, " \
                      "SI %04x, DI %04x, DS %04x, ES %04x\n", \
              (name), (name), AX_reg(context), BX_reg(context), \

@@ -443,7 +443,8 @@ LRESULT WINAPI DefWindowProc16( HWND16 hwnd, UINT16 msg, WPARAM16 wParam,
 
 
 /***********************************************************************
- *           DefWindowProc32A   (USER32.126)
+ *  DefWindowProc32A [USER32.126] 
+ *
  */
 LRESULT WINAPI DefWindowProc32A( HWND32 hwnd, UINT32 msg, WPARAM32 wParam,
                                  LPARAM lParam )
@@ -504,10 +505,19 @@ LRESULT WINAPI DefWindowProc32A( HWND32 hwnd, UINT32 msg, WPARAM32 wParam,
 
 
 /***********************************************************************
- *           DefWindowProc32W   (USER32.127)
- */
-LRESULT WINAPI DefWindowProc32W( HWND32 hwnd, UINT32 msg, WPARAM32 wParam,
-                                 LPARAM lParam )
+ * DefWindowProc32W [USER32.127] Calls default window message handler
+ * 
+ * Calls default window procedure for messages not processed 
+ *  by application.
+ *
+ *  RETURNS
+ *     Return value is dependent upon the message.
+*/
+LRESULT WINAPI DefWindowProc32W( 
+    HWND32 hwnd,      /* [in] window procedure recieving message */
+    UINT32 msg,       /* [in] message identifier */
+    WPARAM32 wParam,  /* [in] first message parameter */
+    LPARAM lParam )   /* [in] second message parameter */
 {
     LRESULT result;
 

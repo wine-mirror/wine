@@ -85,14 +85,13 @@ struct  wine_locals {
 typedef struct wine_locals WineLocals;
 
 
-#define DBG_FIX_ADDR_SEG(addr,default) \
-    { WORD cs, ds; GET_CS(cs); GET_DS(ds); \
+#define DBG_FIX_ADDR_SEG(addr,default) { \
       if ((addr)->seg == 0xffffffff) (addr)->seg = (default); \
-      if (((addr)->seg == cs) || (addr)->seg == ds) (addr)->seg = 0; }
+      if (IS_SELECTOR_SYSTEM((addr)->seg)) (addr)->seg = 0; }
 
 #define DBG_ADDR_TO_LIN(addr) \
-    ((addr)->seg ? (char *)PTR_SEG_OFF_TO_LIN((addr)->seg,(addr)->off) \
-                 : (char *)(addr)->off)
+    (IS_SELECTOR_SYSTEM((addr)->seg) ? (char *)(addr)->off \
+      : (char *)PTR_SEG_OFF_TO_LIN((addr)->seg,(addr)->off))
 
 #define DBG_CHECK_READ_PTR(addr,len) \
     (!DEBUG_IsBadReadPtr((addr),(len)) || \

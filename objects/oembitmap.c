@@ -410,7 +410,7 @@ HBITMAP16 OBM_LoadBitmap( WORD id )
     if (!CALL_LARGE_STACK( OBM_CreateBitmaps, &descr ))
     {
         LeaveCriticalSection( &X11DRV_CritSection );
-        fprintf( stderr, "Error creating OEM bitmap %d\n", OBM_FIRST+id );
+        WARN(bitmap, "Error creating OEM bitmap %d\n", OBM_FIRST+id );
         return 0;
     }
     LeaveCriticalSection( &X11DRV_CritSection );
@@ -462,7 +462,7 @@ HGLOBAL16 OBM_LoadCursorIcon( WORD id, BOOL32 fCursor )
     if (!CALL_LARGE_STACK( OBM_CreateBitmaps, &descr ))
     {
         LeaveCriticalSection( &X11DRV_CritSection );
-        fprintf( stderr, "Error creating OEM cursor/icon %d\n", id );
+        WARN(cursor, "Error creating OEM cursor/icon %d\n", id );
         return 0;
     }
     LeaveCriticalSection( &X11DRV_CritSection );

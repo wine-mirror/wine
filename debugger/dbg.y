@@ -17,6 +17,7 @@
 #include "win.h"
 #include "winnt.h"
 #include "debugger.h"
+#include "neexe.h"
 
 #include "expr.h"
 
@@ -253,7 +254,7 @@ info_command:
     | tINFO tCLASS expr_value tEOL    { CLASS_DumpClass( (CLASS *)$3 ); 
  					     DEBUG_FreeExprMem(); }
     | tINFO tSHARE tEOL		{ DEBUG_InfoShare(); }
-    | tINFO tMODULE expr_value tEOL   { MODULE_DumpModule( $3 ); 
+    | tINFO tMODULE expr_value tEOL   { NE_DumpModule( $3 ); 
  					     DEBUG_FreeExprMem(); }
     | tINFO tQUEUE expr_value tEOL    { QUEUE_DumpQueue( $3 ); 
  					     DEBUG_FreeExprMem(); }
@@ -270,7 +271,7 @@ info_command:
 
 walk_command:
       tWALK tCLASS tEOL         { CLASS_WalkClasses(); }
-    | tWALK tMODULE tEOL        { MODULE_WalkModules(); }
+    | tWALK tMODULE tEOL        { NE_WalkModules(); }
     | tWALK tQUEUE tEOL         { QUEUE_WalkQueues(); }
     | tWALK tWND tEOL           { WIN_WalkWindows( 0, 0 ); }
     | tWALK tWND tNUM tEOL      { WIN_WalkWindows( $3, 0 ); }
@@ -476,9 +477,7 @@ static void DEBUG_Main( int signal )
         XUngrabServer( display );
         XFlush( display );
 
-        if (!addr.seg) newmode = 32;
-        else newmode = (GET_SEL_FLAGS(addr.seg) & LDT_FLAGS_32BIT) ? 32 : 16;
-
+        newmode = IS_SELECTOR_32BIT(addr.seg) ? 32 : 16;
         if (newmode != dbg_mode)
             fprintf(stderr,"In %d bit mode.\n", dbg_mode = newmode);
 

@@ -31,11 +31,13 @@ typedef BOOL32 HANDLER_ROUTINE(WORD);
 #define BACKGROUND_RED       0x0040 /* background color contains red. */
 #define BACKGROUND_INTENSITY 0x0080 /* background color is intensified. */
 
+/*
 typedef struct tagCOORD
 {
     INT16 x;
     INT16 y;
 } COORD,*LPCOORD;
+*/
 
 typedef struct tagSMALL_RECT
 {

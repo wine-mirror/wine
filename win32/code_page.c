@@ -13,13 +13,19 @@
 #include "debug.h"
 
 
-/***********************************************************************
- *           GetACP               (KERNEL32.148)
+/******************************************************************************
+ * GetACP [KERNEL32.276]  Gets current ANSI code-page identifier.
+ *
+ * RETURNS
+ *    Current ANSI code-page identifier, default if no current defined
  */
 UINT32 WINAPI GetACP(void)
 {
+    /* This introduces too many messages */
+/*    FIXME(win32, "(void): stub\n"); */
     return 1252;    /* Windows 3.1 ISO Latin */
 }
+
 
 /***********************************************************************
  *           GetCPInfo            (KERNEL32.154)
@@ -82,7 +88,34 @@ BOOL32 WINAPI IsValidCodePage(UINT32 CodePage)
 
 
 /***********************************************************************
- *              MultiByteToWideChar                (KERNEL32.392)
+ *              MultiByteToWideChar                (KERNEL32.534)
+ *
+ * PARAMS
+ *   page [in]   Codepage character set to convert from
+ *   flags [in]  Character mapping flags
+ *   src [in]     Source string buffer
+ *   srclen [in]  Length of source string buffer
+ *   dst [in]     Destination buffer
+ *   dstlen [in]  Length of destination buffer
+ *
+ * NOTES
+ *   The returned length includes the null terminator character.
+ *
+ * RETURNS
+ *   Success: If dstlen > 0, number of characters written to destination
+ *            buffer.  If dstlen == 0, number of characters needed to do
+ *            conversion.
+ *   Failure: 0. Occurs if not enough space is available.
+ *
+ * ERRORS
+ *   ERROR_INSUFFICIENT_BUFFER
+ *   ERROR_INVALID_FLAGS (not yet implemented)
+ *   ERROR_INVALID_PARAMETER (not yet implemented)
+ *
+ * BUGS
+ *   Does not properly handle codepage conversions.
+ *   Does not properly handle flags.
+ *
  */
 INT32 WINAPI MultiByteToWideChar(UINT32 page, DWORD flags,
 			         LPCSTR src, INT32 srclen,
@@ -91,25 +124,56 @@ INT32 WINAPI MultiByteToWideChar(UINT32 page, DWORD flags,
     int ret;
 
     if (srclen == -1)
-	srclen = lstrlen32A(src);
+	srclen = lstrlen32A(src)+1;
     if (!dstlen || !dst)
 	return srclen;
 
     ret = srclen;
-    while (srclen > 0 && dstlen > 0) {
+    while (srclen && dstlen) {
 	*dst = (WCHAR)(unsigned char)*src;
-	if (!*src)
-	    return ret;
 	dst++;    src++;
 	dstlen--; srclen--;
     }
-    if ((dstlen == 0) && *src) {
+    if (!dstlen && srclen) {
 	SetLastError(ERROR_INSUFFICIENT_BUFFER);
 	return 0;
     }
     return ret;
 }
 
+/***********************************************************************
+ *              WideCharToMultiByte                (KERNEL32.727)
+ *
+ * PARAMS
+ *   page [in]    Codepage character set to convert to
+ *   flags [in]   Character mapping flags
+ *   src [in]     Source string buffer
+ *   srclen [in]  Length of source string buffer
+ *   dst [in]     Destination buffer
+ *   dstlen [in]  Length of destination buffer
+ *   defchar [in] Default character to use for conversion if no exact
+ *		    conversion can be made
+ *   used [out]   Set if default character was used in the conversion
+ *
+ * NOTES
+ *   The returned length includes the null terminator character.
+ *
+ * RETURNS
+ *   Success: If dstlen > 0, number of characters written to destination
+ *            buffer.  If dstlen == 0, number of characters needed to do
+ *            conversion.
+ *   Failure: 0. Occurs if not enough space is available.
+ *
+ * ERRORS
+ *   ERROR_INSUFFICIENT_BUFFER
+ *   ERROR_INVALID_FLAGS (not yet implemented)
+ *   ERROR_INVALID_PARAMETER (not yet implemented)
+ *
+ * BUGS
+ *   Does not properly handle codepage conversions.
+ *   Does not properly handle flags.
+ *
+ */
 INT32 WINAPI WideCharToMultiByte(UINT32 page, DWORD flags, LPCWSTR src,
 				 INT32 srclen,LPSTR dst, INT32 dstlen,
 				 LPCSTR defchar, BOOL32 *used)

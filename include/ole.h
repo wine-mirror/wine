@@ -7,23 +7,28 @@
 
 #include "windows.h"
 
-typedef CHAR	OLECHAR16;
-typedef LPSTR	LPOLESTR16;
-typedef LPCSTR	LPCOLESTR16;
-typedef WCHAR	OLECHAR32;
-typedef LPWSTR	LPOLESTR32;
-typedef LPCWSTR	LPCOLESTR32;
+typedef CHAR		OLECHAR16;
+typedef OLECHAR16	*BSTR16;
+typedef BSTR16		*LPBSTR16;
+typedef LPSTR		LPOLESTR16;
+typedef LPCSTR		LPCOLESTR16;
+typedef WCHAR		OLECHAR32;
+typedef OLECHAR32	*BSTR32;
+typedef BSTR32		*LPBSTR32;
+typedef LPWSTR		LPOLESTR32;
+typedef LPCWSTR		LPCOLESTR32;
 DECL_WINELIB_TYPE(OLECHAR);
 DECL_WINELIB_TYPE(LPOLESTR);
 DECL_WINELIB_TYPE(LPCOLESTR);
+DECL_WINELIB_TYPE(BSTR);
+DECL_WINELIB_TYPE(LPBSTR);
 
 #define OLESTR16(x) x
-#define OLESTR32(x) L##x
+#define OLESTR32(x) L##x	/* probably wrong */
 #define OLESTR WINELIB_NAME(OLESTR)
 
 typedef unsigned short VARTYPE;
 typedef LONG DISPID;
-
 
 /* object types */
 #define OT_LINK		1

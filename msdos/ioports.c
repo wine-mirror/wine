@@ -236,7 +236,7 @@ DWORD IO_inport( int port, int count )
             b = cmosimage[cmosaddress & 0x3f];
             break;
         default:
-            fprintf( stderr, "Direct I/O read attempted from port %x\n", port);
+            WARN( int, "Direct I/O read attempted from port %x\n", port);
             b = 0xff;
             break;
         }
@@ -274,7 +274,7 @@ void IO_outport( int port, int count, DWORD value )
                 case 2: outw( LOWORD(value), port ); break;
                 case 4: outl( value, port ); break;
                 default:
-                    fprintf( stderr, "IO_outport: invalid count %d\n", count);
+                    WARN(int, "Invalid count %d\n", count);
             }
             iopl(0);
             return;
@@ -295,8 +295,7 @@ void IO_outport( int port, int count, DWORD value )
             cmosimage[cmosaddress & 0x3f] = b;
             break;
         default:
-            fprintf( stderr, "Direct I/O write attempted "
-                     "to port %x\n", port );
+            WARN(int, "Direct I/O write attempted to port %x\n", port );
             break;
         }
 	port++;

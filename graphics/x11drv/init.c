@@ -47,6 +47,7 @@ static const DC_FUNCTIONS X11DRV_Funcs =
     X11DRV_PatBlt,                   /* pPatBlt */
     X11DRV_Pie,                      /* pPie */
     X11DRV_PolyPolygon,              /* pPolyPolygon */
+    X11DRV_PolyPolyline,             /* pPolyPolyline */
     X11DRV_Polygon,                  /* pPolygon */
     X11DRV_Polyline,                 /* pPolyline */
     NULL,                            /* pRealizePalette */

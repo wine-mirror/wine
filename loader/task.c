@@ -208,7 +208,7 @@ static void TASK_CallToStart(void)
 {
     int exit_code = 1;
     TDB *pTask = (TDB *)GlobalLock16( hCurrentTask );
-    NE_MODULE *pModule = MODULE_GetPtr( pTask->hModule );
+    NE_MODULE *pModule = MODULE_GetPtr16( pTask->hModule );
     SEGTABLEENTRY *pSegTable = NE_SEG_TABLE( pModule );
 
     SET_CUR_THREAD( pTask->thdb );
@@ -262,7 +262,7 @@ static void TASK_CallToStart(void)
 
         Callbacks->CallRegisterShortProc( &context, 0 );
         /* This should never return */
-        fprintf( stderr, "TASK_CallToStart: Main program returned!\n" );
+        ERR( task, "Main program returned! (should never happen)\n" );
         TASK_KillCurrentTask( 1 );
     }
 }
@@ -331,7 +331,7 @@ HTASK16 TASK_Create( THDB *thdb, NE_MODULE *pModule, HINSTANCE16 hInstance,
 
     pTask->pdb.int20 = 0x20cd;
     pTask->pdb.dispatcher[0] = 0x9a;  /* ljmp */
-    PUT_DWORD(&pTask->pdb.dispatcher[1], (DWORD)MODULE_GetEntryPoint(
+    PUT_DWORD(&pTask->pdb.dispatcher[1], (DWORD)NE_GetEntryPoint(
            GetModuleHandle16("KERNEL"), 102 ));  /* KERNEL.102 is DOS3Call() */
     pTask->pdb.savedint22 = INT_GetHandler( 0x22 );
     pTask->pdb.savedint23 = INT_GetHandler( 0x23 );
@@ -509,7 +509,7 @@ void TASK_KillCurrentTask( INT16 exitCode )
 
     /* We should never return from this Yield() */
 
-    fprintf(stderr,"Return of the living dead %04x!!!\n", hCurrentTask);
+    ERR(task,"Return of the living dead %04x!!!\n", hCurrentTask);
     exit(1);
 }
 
@@ -660,7 +660,7 @@ void WINAPI InitTask( CONTEXT *context )
 
     if (context) EAX_reg(context) = 0;
     if (!(pTask = (TDB *)GlobalLock16( hCurrentTask ))) return;
-    if (!(pModule = MODULE_GetPtr( pTask->hModule ))) return;
+    if (!(pModule = MODULE_GetPtr16( pTask->hModule ))) return;
 
     /* This is a hack to install task USER signal handler before 
      * implicitly loaded DLLs are initialized (see windows/user.c) */
@@ -681,7 +681,6 @@ void WINAPI InitTask( CONTEXT *context )
          * es:bx  pointer to command-line inside PSP
          */
         EAX_reg(context) = 1;
-        EBX_reg(context) = pTask->pdb.cmdLine[0] ? 0x81 : 0x80;
         
 	if (!pTask->pdb.cmdLine[0]) EBX_reg(context) = 0x80;
 	else
@@ -857,7 +856,6 @@ FARPROC16 WINAPI MakeProcInstance16( FARPROC16 func, HANDLE16 hInstance )
     SEGPTR thunkaddr;
 
     if (!hInstance) return 0;
-    if (__winelib) return func; /* func can be called directly in Winelib */
     thunkaddr = TASK_AllocThunk( hCurrentTask );
     if (!thunkaddr) return (FARPROC16)0;
     thunk = PTR_SEG_TO_LIN( thunkaddr );
@@ -868,7 +866,7 @@ FARPROC16 WINAPI MakeProcInstance16( FARPROC16 func, HANDLE16 hInstance )
     if (((lfunc[0]==0x8c) && (lfunc[1]==0xd8)) ||
     	((lfunc[0]==0x1e) && (lfunc[1]==0x58))
     ) {
-    	fprintf(stderr,"FIXME: MakeProcInstance16 thunk would be useless for %p, overwriting with nop;nop;\n", func );
+    	FIXME(task,"thunk would be useless for %p, overwriting with nop;nop;\n", func );
 	lfunc[0]=0x90; /* nop */
 	lfunc[1]=0x90; /* nop */
     }
@@ -888,7 +886,7 @@ FARPROC16 WINAPI MakeProcInstance16( FARPROC16 func, HANDLE16 hInstance )
 void WINAPI FreeProcInstance16( FARPROC16 func )
 {
     TRACE(task, "(%08lx)\n", (DWORD)func );
-    if (!__winelib) TASK_FreeThunk( hCurrentTask, (SEGPTR)func );
+    TASK_FreeThunk( hCurrentTask, (SEGPTR)func );
 }
 
 
@@ -899,8 +897,6 @@ HANDLE16 WINAPI GetCodeHandle( FARPROC16 proc )
 {
     HANDLE16 handle;
     BYTE *thunk = (BYTE *)PTR_SEG_TO_LIN( proc );
-
-    if (__winelib) return 0;
 
     /* Return the code segment containing 'proc'. */
     /* Not sure if this is really correct (shouldn't matter that much). */
@@ -1015,7 +1011,7 @@ void WINAPI SwitchStackBack(void)
         return;
     if (!pData->old_ss_sp)
     {
-        fprintf( stderr, "SwitchStackBack: no previous SwitchStackTo\n" );
+        WARN( task, "No previous SwitchStackTo\n" );
         return;
     }
     TRACE(task, "restoring stack %04x:%04x\n",

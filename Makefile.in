@@ -34,6 +34,7 @@ LIBSUBDIRS = \
 	ipc \
 	library \
 	loader \
+	loader/ne \
 	memory \
 	misc \
 	msdos \
@@ -78,6 +79,7 @@ LIBOBJS = \
 	graphics/x11drv/x11drv.o \
 	ipc/ipc.o \
 	loader/loader.o \
+	loader/ne/ne.o \
 	memory/memory.o \
 	misc/misc.o \
 	msdos/msdos.o \
@@ -148,6 +150,10 @@ TAGS etags:
 manpages:
 	-$(MKDIR) $(TOPOBJDIR)/documentation/man3w
 	for i in $(LIBSUBDIRS); do (cd $$i && $(MAKE) man); done
+
+htmlpages:
+	-$(MKDIR) $(TOPOBJDIR)/documentation/html
+	for i in $(LIBSUBDIRS); do (cd $$i && $(MAKE) html); done
 
 clean::
 	for i in $(ALLSUBDIRS); do (cd $$i; $(MAKE) clean) || exit 1; done

@@ -19,14 +19,14 @@
  */
 
 static ULONG WINAPI IEnumIDList_AddRef(LPENUMIDLIST this) {
-	fprintf(stderr,"IEnumIDList(%p)->AddRef()\n",this);
+	TRACE(ole,"(%p)->()\n",this);
 	return ++(this->ref);
 }
 
 static ULONG WINAPI IEnumIDList_Release(LPENUMIDLIST this) {
-	fprintf(stderr,"IEnumIDList(%p)->Release()\n",this);
+	TRACE(ole,"(%p)->()\n",this);
 	if (!--(this->ref)) {
-		fprintf(stderr,"	-> freeing IEnumIDList(%p)\n",this);
+		WARN(ole," freeing IEnumIDList(%p)\n",this);
 		HeapFree(GetProcessHeap(),0,this);
 		return 0;
 	}
@@ -36,7 +36,7 @@ static ULONG WINAPI IEnumIDList_Release(LPENUMIDLIST this) {
 static HRESULT WINAPI IEnumIDList_Next(
 	LPENUMIDLIST this,ULONG celt,LPITEMIDLIST *rgelt,ULONG *pceltFetched
 ) {
-	fprintf(stderr,"IEnumIDList(%p)->Next(%ld,%p,%p),stub!\n",
+	FIXME(ole,"(%p)->(%ld,%p,%p),stub!\n",
 		this,celt,rgelt,pceltFetched
 	);
 	*pceltFetched = 0; /* we don't have any ... */
@@ -66,9 +66,9 @@ LPENUMIDLIST IEnumIDList_Constructor() {
  * IShellFolder implementation
  */
 static ULONG WINAPI IShellFolder_Release(LPSHELLFOLDER this) {
-	fprintf(stderr,"IShellFolder(%p)->Release()\n",this);
+	TRACE(ole,"(%p)->()\n",this);
 	if (!--(this->ref)) {
-		fprintf(stderr,"	-> freeing IShellFolder(%p)\n",this);
+		WARN(ole," freeing IShellFolder(%p)\n",this);
 		HeapFree(GetProcessHeap(),0,this);
 		return 0;
 	}
@@ -76,14 +76,14 @@ static ULONG WINAPI IShellFolder_Release(LPSHELLFOLDER this) {
 }
 
 static ULONG WINAPI IShellFolder_AddRef(LPSHELLFOLDER this) {
-	fprintf(stderr,"IShellFolder(%p)->AddRef()\n",this);
+	TRACE(ole,"(%p)->()\n",this);
 	return ++(this->ref);
 }
 
 static HRESULT WINAPI IShellFolder_GetAttributesOf(
 	LPSHELLFOLDER this,UINT32 cidl,LPCITEMIDLIST *apidl,DWORD *rgfInOut
 ) {
-	fprintf(stderr,"IShellFolder(%p)->GetAttributesOf(%d,%p,%p),stub!\n",
+	FIXME(ole,"(%p)->(%d,%p,%p),stub!\n",
 		this,cidl,apidl,rgfInOut
 	);
 	return 0;
@@ -95,7 +95,7 @@ static HRESULT WINAPI IShellFolder_BindToObject(
 	char	xclsid[50];
 
 	WINE_StringFromCLSID(riid,xclsid);
-	fprintf(stderr,"IShellFolder(%p)->BindToObject(%p,%p,%s,%p),stub!\n",
+	FIXME(ole,"(%p)->(%p,%p,%s,%p),stub!\n",
 		this,pidl,pbcReserved,xclsid,ppvOut
 	);
 	*ppvOut = IShellFolder_Constructor();
@@ -107,7 +107,7 @@ static HRESULT WINAPI IShellFolder_ParseDisplayName(
 	LPOLESTR32 lpszDisplayName,DWORD *pchEaten,LPITEMIDLIST *ppidl,
 	DWORD *pdwAttributes
 ) {
-	fprintf(stderr,"IShellFolder(%p)->ParseDisplayName(%08x,%p,%p,%p,%p,%p),stub!\n",
+	FIXME(ole,"(%p)->(%08x,%p,%p,%p,%p,%p),stub!\n",
 		this,hwndOwner,pbcReserved,lpszDisplayName,pchEaten,ppidl,pdwAttributes
 	);
 	*(DWORD*)pbcReserved = 0;
@@ -118,7 +118,7 @@ static HRESULT WINAPI IShellFolder_EnumObjects(
 	LPSHELLFOLDER this,HWND32 hwndOwner,DWORD grfFlags,
 	LPENUMIDLIST* ppenumIDList
 ) {
-	fprintf(stderr,"IShellFolder(%p)->EnumObjects(0x%04x,0x%08lx,%p),stub!\n",
+	FIXME(ole,"(%p)->(0x%04x,0x%08lx,%p),stub!\n",
 		this,hwndOwner,grfFlags,ppenumIDList
 	);
 	*ppenumIDList = IEnumIDList_Constructor();
@@ -131,7 +131,7 @@ static HRESULT WINAPI IShellFolder_CreateViewObject(
 	char	xclsid[50];
 
 	WINE_StringFromCLSID(riid,xclsid);
-	fprintf(stderr,"IShellFolder(%p)->CreateViewObject(0x%04x,%s,%p),stub!\n",
+	FIXME(ole,"(%p)->(0x%04x,%s,%p),stub!\n",
 		this,hwndOwner,xclsid,ppv
 	);
 	*(DWORD*)ppv = 0;

@@ -1,10 +1,11 @@
 /*
- * NE modules
+ * NE segment loading
  *
  * Copyright 1993 Robert J. Amstadt
  * Copyright 1995 Alexandre Julliard
  */
 
+#include <assert.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <sys/types.h>
@@ -160,8 +161,11 @@ BOOL32 NE_LoadSegment( NE_MODULE *pModule, WORD segnum )
     read( fd, &count, sizeof(count) );
     if (!count) return TRUE;
 
-    TRACE(fixup, "Fixups for %*.*s, segment %d, selector %04x\n",
+    TRACE(fixup, "Fixups for %.*s, segment %d, selector %04x\n",
                    *((BYTE *)pModule + pModule->name_table),
+                   (char *)pModule + pModule->name_table + 1,
+                   segnum, pSeg->selector );
+    TRACE(segment, "Fixups for %.*s, segment %d, selector %04x\n",
                    *((BYTE *)pModule + pModule->name_table),
                    (char *)pModule + pModule->name_table + 1,
                    segnum, pSeg->selector );
@@ -194,10 +198,10 @@ BOOL32 NE_LoadSegment( NE_MODULE *pModule, WORD segnum )
 	  case NE_RELTYPE_ORDINAL:
             module = pModuleTable[rep->target1-1];
 	    ordinal = rep->target2;
-            address = MODULE_GetEntryPoint( module, ordinal );
+            address = NE_GetEntryPoint( module, ordinal );
             if (!address)
             {
-                NE_MODULE *pTarget = MODULE_GetPtr( module );
+                NE_MODULE *pTarget = MODULE_GetPtr16( module );
                 if (!pTarget)
                     fprintf( stderr, "Module not found: %04x, reference %d of module %*.*s\n",
                              module, rep->target1, 
@@ -212,7 +216,7 @@ BOOL32 NE_LoadSegment( NE_MODULE *pModule, WORD segnum )
             }
             if (TRACE_ON(fixup))
             {
-                NE_MODULE *pTarget = MODULE_GetPtr( module );
+                NE_MODULE *pTarget = MODULE_GetPtr16( module );
                 TRACE( fixup, "%d: %.*s.%d=%04x:%04x %s\n", i + 1, 
                        *((BYTE *)pTarget + pTarget->name_table),
                        (char *)pTarget + pTarget->name_table + 1,
@@ -227,20 +231,19 @@ BOOL32 NE_LoadSegment( NE_MODULE *pModule, WORD segnum )
             memcpy( buffer, func_name+1, *func_name );
             buffer[*func_name] = '\0';
             func_name = buffer;
-            ordinal = MODULE_GetOrdinal( module, func_name );
-
-            address = MODULE_GetEntryPoint( module, ordinal );
+            ordinal = NE_GetOrdinal( module, func_name );
+            address = NE_GetEntryPoint( module, ordinal );
 
             if (ERR_ON(fixup) && !address)
             {
-                NE_MODULE *pTarget = MODULE_GetPtr( module );
+                NE_MODULE *pTarget = MODULE_GetPtr16( module );
                 ERR(fixup, "Warning: no handler for %.*s.%s, setting to 0:0\n",
                     *((BYTE *)pTarget + pTarget->name_table),
                     (char *)pTarget + pTarget->name_table + 1, func_name );
             }
             if (TRACE_ON(fixup))
             {
-	        NE_MODULE *pTarget = MODULE_GetPtr( module );
+	        NE_MODULE *pTarget = MODULE_GetPtr16( module );
                 TRACE( fixup, "%d: %.*s.%s=%04x:%04x %s\n", i + 1, 
                        *((BYTE *)pTarget + pTarget->name_table),
                        (char *)pTarget + pTarget->name_table + 1,
@@ -252,7 +255,7 @@ BOOL32 NE_LoadSegment( NE_MODULE *pModule, WORD segnum )
 	  case NE_RELTYPE_INTERNAL:
 	    if ((rep->target1 & 0xff) == 0xff)
 	    {
-		address  = MODULE_GetEntryPoint( pModule->self, rep->target2 );
+		address  = NE_GetEntryPoint( pModule->self, rep->target2 );
 	    }
 	    else
 	    {
@@ -310,6 +313,7 @@ BOOL32 NE_LoadSegment( NE_MODULE *pModule, WORD segnum )
                     ERR(fixup,"Additive selector to %04x.Please report\n",*sp);
 		else
                     *sp = HIWORD(address);
+                break;
             default:
                 goto unknown;
             }
@@ -383,9 +387,9 @@ BOOL32 NE_LoadAllSegments( NE_MODULE *pModule )
         if (!NE_LoadSegment( pModule, 1 )) return FALSE;
         selfloadheader = (SELFLOADHEADER *)
                           PTR_SEG_OFF_TO_LIN(pSegTable->selector, 0);
-        selfloadheader->EntryAddrProc = MODULE_GetEntryPoint(hselfload,27);
-        selfloadheader->MyAlloc  = MODULE_GetEntryPoint(hselfload,28);
-        selfloadheader->SetOwner = MODULE_GetEntryPoint(GetModuleHandle16("KERNEL"),403);
+        selfloadheader->EntryAddrProc = NE_GetEntryPoint(hselfload,27);
+        selfloadheader->MyAlloc  = NE_GetEntryPoint(hselfload,28);
+        selfloadheader->SetOwner = NE_GetEntryPoint(GetModuleHandle16("KERNEL"),403);
         pModule->self_loading_sel = GlobalHandleToSel(GLOBAL_Alloc(GMEM_ZEROINIT, 0xFF00, pModule->self, FALSE, FALSE, FALSE));
         oldstack = thdb->cur_stack;
         thdb->cur_stack = PTR_SEG_OFF_TO_SEGPTR(pModule->self_loading_sel,
@@ -414,63 +418,6 @@ BOOL32 NE_LoadAllSegments( NE_MODULE *pModule )
     {
         for (i = 1; i <= pModule->seg_count; i++)
             if (!NE_LoadSegment( pModule, i )) return FALSE;
-    }
-    return TRUE;
-}
-
-
-/***********************************************************************
- *           NE_LoadDLLs
- */
-BOOL32 NE_LoadDLLs( NE_MODULE *pModule )
-{
-    int i;
-    WORD *pModRef = (WORD *)((char *)pModule + pModule->modref_table);
-    WORD *pDLLs = (WORD *)GlobalLock16( pModule->dlls_to_init );
-
-    for (i = 0; i < pModule->modref_count; i++, pModRef++)
-    {
-        char buffer[256];
-        BYTE *pstr = (BYTE *)pModule + pModule->import_table + *pModRef;
-        memcpy( buffer, pstr + 1, *pstr );
-        strcpy( buffer + *pstr, ".dll" );
-        TRACE(module, "Loading '%s'\n", buffer );
-        if (!(*pModRef = MODULE_FindModule( buffer )))
-        {
-            /* If the DLL is not loaded yet, load it and store */
-            /* its handle in the list of DLLs to initialize.   */
-            HMODULE16 hDLL;
-
-            if ((hDLL = MODULE_Load( buffer, NE_FFLAGS_IMPLICIT,
-                                     NULL, NULL, 0 )) == 2)
-            {
-                /* file not found */
-                char *p;
-
-                /* Try with prepending the path of the current module */
-                GetModuleFileName16( pModule->self, buffer, sizeof(buffer) );
-                if (!(p = strrchr( buffer, '\\' ))) p = buffer;
-                memcpy( p + 1, pstr + 1, *pstr );
-                strcpy( p + 1 + *pstr, ".dll" );
-                hDLL = MODULE_Load( buffer, NE_FFLAGS_IMPLICIT, NULL, NULL, 0);
-            }
-            if (hDLL < 32)
-            {
-                /* FIXME: cleanup what was done */
-
-                fprintf( stderr, "Could not load '%s' required by '%.*s', error = %d\n",
-                         buffer, *((BYTE*)pModule + pModule->name_table),
-                         (char *)pModule + pModule->name_table + 1, hDLL );
-                return FALSE;
-            }
-            *pModRef = MODULE_HANDLEtoHMODULE16( hDLL );
-            *pDLLs++ = *pModRef;
-        }
-        else  /* Increment the reference count of the DLL */
-        {
-            NE_MODULE *pOldDLL = MODULE_GetPtr( *pModRef );
-            if (pOldDLL) pOldDLL->count++;
-        }
     }
     return TRUE;
 }
@@ -589,7 +536,7 @@ static BOOL32 NE_InitDLL( TDB* pTask, HMODULE16 hModule )
      * es:si  command line (always 0)
      */
 
-    if (!(pModule = MODULE_GetPtr( hModule ))) return FALSE;
+    if (!(pModule = MODULE_GetPtr16( hModule ))) return FALSE;
     pSegTable = NE_SEG_TABLE( pModule );
 
     if (!(pModule->flags & NE_FFLAGS_LIBMODULE) ||
@@ -666,7 +613,7 @@ void NE_InitializeDLLs( HMODULE16 hModule )
     NE_MODULE *pModule;
     HMODULE16 *pDLL;
 
-    if (!(pModule = MODULE_GetPtr( hModule ))) return;
+    if (!(pModule = MODULE_GetPtr16( hModule ))) return;
     if (pModule->flags & NE_FFLAGS_WIN32) return;
 
     if (pModule->dlls_to_init)
@@ -693,4 +640,73 @@ void NE_InitializeDLLs( HMODULE16 hModule )
 void WINAPI PatchCodeHandle(HANDLE16 hSel)
 {
 	fprintf(stderr,"PatchCodeHandle(%04x),stub!\n",hSel);
+}
+
+
+/***********************************************************************
+ *           NE_Ne2MemFlags
+ *
+ * This function translates NE segment flags to GlobalAlloc flags
+ */
+static WORD NE_Ne2MemFlags(WORD flags)
+{ 
+    WORD memflags = 0;
+#if 0
+    if (flags & NE_SEGFLAGS_DISCARDABLE) 
+      memflags |= GMEM_DISCARDABLE;
+    if (flags & NE_SEGFLAGS_MOVEABLE || 
+	( ! (flags & NE_SEGFLAGS_DATA) &&
+	  ! (flags & NE_SEGFLAGS_LOADED) &&
+	  ! (flags & NE_SEGFLAGS_ALLOCATED)
+	 )
+	)
+      memflags |= GMEM_MOVEABLE;
+    memflags |= GMEM_ZEROINIT;
+#else
+    memflags = GMEM_ZEROINIT | GMEM_FIXED;
+    return memflags;
+#endif
+}
+
+/***********************************************************************
+ *           NE_AllocateSegment (WPROCS.26)
+ */
+DWORD WINAPI NE_AllocateSegment( WORD wFlags, WORD wSize, WORD wElem )
+{
+    WORD size = wSize << wElem;
+    HANDLE16 hMem = GlobalAlloc16( NE_Ne2MemFlags(wFlags), size);
+    return MAKELONG( hMem, GlobalHandleToSel(hMem) );
+}
+
+
+/***********************************************************************
+ *           NE_CreateSegments
+ */
+BOOL32 NE_CreateSegments( HMODULE16 hModule )
+{
+    SEGTABLEENTRY *pSegment;
+    NE_MODULE *pModule;
+    int i, minsize;
+
+    if (!(pModule = MODULE_GetPtr16( hModule ))) return FALSE;
+    assert( !(pModule->flags & NE_FFLAGS_WIN32) );
+
+    pSegment = NE_SEG_TABLE( pModule );
+    for (i = 1; i <= pModule->seg_count; i++, pSegment++)
+    {
+        minsize = pSegment->minsize ? pSegment->minsize : 0x10000;
+        if (i == pModule->ss) minsize += pModule->stack_size;
+	/* The DGROUP is allocated by MODULE_CreateInstance */
+        if (i == pModule->dgroup) continue;
+        pSegment->selector = GLOBAL_Alloc( NE_Ne2MemFlags(pSegment->flags),
+                                      minsize, hModule,
+                                      !(pSegment->flags & NE_SEGFLAGS_DATA),
+                                      FALSE,
+                            FALSE /*pSegment->flags & NE_SEGFLAGS_READONLY*/ );
+        if (!pSegment->selector) return FALSE;
+    }
+
+    pModule->dgroup_entry = pModule->dgroup ? pModule->seg_table +
+                            (pModule->dgroup - 1) * sizeof(SEGTABLEENTRY) : 0;
+    return TRUE;
 }

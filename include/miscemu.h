@@ -15,7 +15,6 @@ extern HANDLE16 DOSMEM_BiosSeg;
 extern DWORD DOSMEM_CollateTable;
 
 extern BOOL32 DOSMEM_Init(void);
-extern void   DOSMEM_InitExports(HMODULE16);
 extern void   DOSMEM_Tick(void);
 extern WORD   DOSMEM_AllocSelector(WORD);
 extern LPVOID DOSMEM_GetBlock(UINT32 size, UINT16* p);

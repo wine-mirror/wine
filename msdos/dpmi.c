@@ -16,10 +16,14 @@
 #include "msdos.h"
 #include "toolhelp.h"
 #include "debug.h"
+#include "selectors.h"
+#include "thread.h"
+#include "stackframe.h"
+#include "callback.h"
 
 #define DOS_GET_DRIVE(reg) ((reg) ? (reg) - 1 : DRIVE_GetCurrentDrive())
 
-void CreateBPB(int drive, BYTE *data);  /* defined in int21.c */
+void CreateBPB(int drive, BYTE *data, BOOL16 limited);  /* defined in int21.c */
 
 
 /* Structure for real-mode callbacks */
@@ -45,6 +49,14 @@ typedef struct
 } REALMODECALL;
 
 
+
+typedef struct tagRMCB {
+    DWORD address;
+    struct tagRMCB *next;
+
+} RMCB;
+
+static RMCB *FirstRMCB = NULL;
 
 /**********************************************************************
  *	    INT_GetRealModeContext
@@ -189,7 +201,7 @@ static void INT_DoRealModeInt( CONTEXT *context )
                             setword(&dataptr[2], 0x02); /* removable */
                             setword(&dataptr[4], 80); /* # of cylinders */
                         }
-                        CreateBPB(drive, &dataptr[7]);
+                        CreateBPB(drive, &dataptr[7], FALSE);
                         break;
                     default:
                         SET_CFLAG(context);
@@ -220,6 +232,130 @@ static void INT_DoRealModeInt( CONTEXT *context )
 	    ESI_reg(&realmode_ctx), EDI_reg(&realmode_ctx), 
 	    DS_reg(&realmode_ctx), ES_reg(&realmode_ctx) );
     INT_SetRealModeContext( call, &realmode_ctx );
+}
+
+
+static void CallRMProcFar( CONTEXT *context )
+{
+    REALMODECALL *p = (REALMODECALL *)PTR_SEG_OFF_TO_LIN( ES_reg(context), DI_reg(context) );
+    CONTEXT context16;
+    THDB *thdb = THREAD_Current();
+    WORD argsize, sel;
+    LPVOID addr;
+    SEGPTR seg_addr;
+
+    TRACE(int31, "RealModeCall: EAX=%08lx EBX=%08lx ECX=%08lx EDX=%08lx\n",
+	p->eax, p->ebx, p->ecx, p->edx);
+    TRACE(int31, "              ESI=%08lx EDI=%08lx ES=%04x DS=%04x CS:IP=%04x:%04x, %d WORD arguments\n",
+	p->esi, p->edi, p->es, p->ds, p->cs, p->ip, CX_reg(context) );
+
+    if (!(p->cs) && !(p->ip)) { /* remove this check
+                                   if Int21/6501 case map function
+                                   has been implemented */
+	SET_CFLAG(context);
+	return;
+    }
+    INT_GetRealModeContext(p, &context16);
+
+    addr = DOSMEM_MapRealToLinear(MAKELONG(p->ip, p->cs));
+    sel = SELECTOR_AllocBlock( addr, 0x10000, SEGMENT_CODE, FALSE, FALSE );
+    seg_addr = PTR_SEG_OFF_TO_SEGPTR( sel, 0 );
+
+    CS_reg(&context16) = HIWORD(seg_addr);
+    IP_reg(&context16) = LOWORD(seg_addr);
+    EBP_reg(&context16) = OFFSETOF( thdb->cur_stack )
+                               + (WORD)&((STACK16FRAME*)0)->bp;
+
+    argsize = CX_reg(context)*sizeof(WORD);
+    memcpy( ((LPBYTE)THREAD_STACK16(thdb))-argsize,
+    (LPBYTE)PTR_SEG_OFF_TO_LIN(SS_reg(context), SP_reg(context))+6, argsize );
+
+    Callbacks->CallRegisterShortProc(&context16, argsize);
+
+    UnMapLS(seg_addr);
+    INT_SetRealModeContext(p, &context16);
+}
+
+
+void WINAPI RMCallbackProc( FARPROC16 pmProc, REALMODECALL *rmc )
+{
+    CONTEXT ctx;
+    INT_GetRealModeContext(rmc, &ctx);
+    Callbacks->CallRegisterShortProc(&ctx, 0);
+}
+
+
+static void AllocRMCB( CONTEXT *context )
+{
+    RMCB *NewRMCB = HeapAlloc(GetProcessHeap(), 0, sizeof(RMCB));
+    REALMODECALL *p = (REALMODECALL *)PTR_SEG_OFF_TO_LIN( ES_reg(context), DI_reg(context) );
+    UINT16 uParagraph;
+
+    FIXME(int31, "EAX=%08lx EBX=%08lx ECX=%08lx EDX=%08lx\n", p->eax, p->ebx, p->ecx, p->edx);
+    FIXME(int31, "           ESI=%08lx EDI=%08lx ES=%04x DS=%04x CS:IP=%04x:%04x\n", p->esi, p->edi, p->es, p->ds, p->cs, p->ip);
+    FIXME(int31, "           Function to call: %04x:%04x\n",
+         (WORD)DS_reg(context), SI_reg(context) );
+
+    if (NewRMCB)
+    {
+	LPVOID RMCBmem = DOSMEM_GetBlock(20, &uParagraph);
+	LPBYTE p = RMCBmem;
+
+	*p++ = 0x68; /* pushl */
+	*(FARPROC16 *)p =
+	PTR_SEG_OFF_TO_LIN(ES_reg(context), SI_reg(context)); /* pmode proc to call */
+	p+=4;
+	*p++ = 0x68; /* pushl */
+	*(LPVOID *)p =
+	PTR_SEG_OFF_TO_LIN(ES_reg(context), DI_reg(context));
+	p+=4;
+	*p++ = 0x9a; /* lcall */
+	*(FARPROC16 *)p = (FARPROC16)RMCallbackProc; /* FIXME ? */
+	p+=4;
+	GET_CS(*(WORD *)p);
+	p+=2;
+	*p++=0xc3; /* retf */
+	NewRMCB->address = MAKELONG(0, uParagraph);
+	NewRMCB->next = FirstRMCB;
+	FirstRMCB = NewRMCB;
+	CX_reg(context) = uParagraph;
+	DX_reg(context) = 0;
+    }
+    else
+    {
+	AX_reg(context) = 0x8015; /* callback unavailable */
+	SET_CFLAG(context);
+    }
+}
+
+
+static void FreeRMCB( CONTEXT *context )
+{
+    RMCB *CurrRMCB = FirstRMCB;
+    RMCB *PrevRMCB = NULL;
+
+    FIXME(int31, "callback address: %04x:%04x\n",
+          CX_reg(context), DX_reg(context));
+
+    while (CurrRMCB && (CurrRMCB->address != MAKELONG(DX_reg(context), CX_reg(context))))
+    {
+	PrevRMCB = CurrRMCB;
+	CurrRMCB = CurrRMCB->next;
+    }
+    if (CurrRMCB)
+    {
+	if (PrevRMCB)
+	PrevRMCB->next = CurrRMCB->next;
+	    else
+	FirstRMCB = CurrRMCB->next;
+	DOSMEM_FreeBlock(DOSMEM_MapRealToLinear(CurrRMCB->address));
+	HeapFree(GetProcessHeap(), 0, CurrRMCB);
+    }
+    else
+    {
+	AX_reg(context) = 0x8024; /* invalid callback address */
+	SET_CFLAG(context);
+    }
 }
 
 
@@ -280,7 +416,7 @@ void WINAPI INT_Int31Handler( CONTEXT *context )
                 break;
             }
             if (entryPoint) 
-                AX_reg(context) = LOWORD(MODULE_GetEntryPoint( 
+                AX_reg(context) = LOWORD(NE_GetEntryPoint( 
                                                  GetModuleHandle16( "KERNEL" ),
                                                  entryPoint ));
         }
@@ -382,15 +518,8 @@ void WINAPI INT_Int31Handler( CONTEXT *context )
         break;
 
     case 0x0301:  /* Call real mode procedure with far return */
-        {
-            REALMODECALL *p = (REALMODECALL *)PTR_SEG_OFF_TO_LIN( ES_reg(context), DI_reg(context) );
-            FIXME(int31, "RealModeCall: EAX=%08lx EBX=%08lx ECX=%08lx EDX=%08lx\n",
-		p->eax, p->ebx, p->ecx, p->edx);
-            FIXME(int31, "              ESI=%08lx EDI=%08lx ES=%04x DS=%04x CS:IP=%04x:%04x\n",
-		p->esi, p->edi, p->es, p->ds, p->cs, p->ip );
-            SET_CFLAG(context);
-        }
-        break;
+	CallRMProcFar( context );
+	break;
 
     case 0x0302:  /* Call real mode procedure with interrupt return */
         {
@@ -402,22 +531,11 @@ void WINAPI INT_Int31Handler( CONTEXT *context )
         break;
 
     case 0x0303:  /* Allocate Real Mode Callback Address */
-        {
-            REALMODECALL *p = (REALMODECALL *)PTR_SEG_OFF_TO_LIN( ES_reg(context), DI_reg(context) );
-            FIXME(int31, "AllocRMCB: EAX=%08lx EBX=%08lx ECX=%08lx EDX=%08lx\n", p->eax, p->ebx, p->ecx, p->edx);
-	    FIXME(int31, "           ESI=%08lx EDI=%08lx ES=%04x DS=%04x CS:IP=%04x:%04x\n", p->esi, p->edi, p->es, p->ds, p->cs, p->ip);
-	    FIXME(int31, "           Function to call: %04x:%04x\n",
-		(WORD)DS_reg(context), SI_reg(context) );
-            SET_CFLAG(context);
-        }
-        break;
+	AllocRMCB( context );
+	break;
 
     case 0x0304:  /* Free Real Mode Callback Address */
-	{
-	    FIXME(int31, "FreeRMCB: callback address: %04x:%04x\n",
-		  CX_reg(context), DX_reg(context));
-	    SET_CFLAG(context);
-	}
+	FreeRMCB( context );
 	break;
 
     case 0x0400:  /* Get DPMI version */

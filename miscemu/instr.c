@@ -9,14 +9,19 @@
 #include "ldt.h"
 #include "miscemu.h"
 #include "sig_context.h"
+#include "debug.h"
 
 
 #define STACK_sig(context) \
-   ((GET_SEL_FLAGS(SS_sig(context)) & LDT_FLAGS_32BIT) ? \
-                   ESP_sig(context) : SP_sig(context))
+   (IS_SELECTOR_32BIT(SS_sig(context)) ? ESP_sig(context) : SP_sig(context))
+
+#define MAKE_PTR(seg,off) \
+   (IS_SELECTOR_SYSTEM(seg) ? (void *)(off) : PTR_SEG_OFF_TO_LIN(seg,off))
 
 #define STACK_PTR(context) \
-    (PTR_SEG_OFF_TO_LIN(SS_sig(context),STACK_sig(context)))
+   (IS_SELECTOR_SYSTEM(SS_sig(context)) ? (void *)ESP_sig(context) : \
+    (PTR_SEG_OFF_TO_LIN(SS_sig(context),STACK_sig(context))))
+
 
 /***********************************************************************
  *           INSTR_ReplaceSelector
@@ -191,6 +196,7 @@ static BYTE *INSTR_GetOperandAddr( SIGCONTEXT *context, BYTE *instr,
     if (segprefix != -1) seg = segprefix;
 
     /* Make sure the segment and offset are valid */
+    if (IS_SELECTOR_SYSTEM(seg)) return (BYTE *)(base + (index << ss));
     if (((seg & 7) != 7) || IS_SELECTOR_FREE(seg)) return NULL;
     if (GET_SEL_LIMIT(seg) < (base + (index << ss))) return NULL;
     return (BYTE *)PTR_SEG_OFF_TO_LIN( seg, (base + (index << ss)) );
@@ -291,8 +297,8 @@ BOOL32 INSTR_EmulateInstruction( SIGCONTEXT *context )
     int prefix, segprefix, prefixlen, len, repX, long_op, long_addr;
     BYTE *instr;
 
-    long_op = long_addr = (GET_SEL_FLAGS(CS_sig(context)) & LDT_FLAGS_32BIT) != 0;
-    instr = (BYTE *) PTR_SEG_OFF_TO_LIN( CS_sig(context), EIP_sig(context) );
+    long_op = long_addr = IS_SELECTOR_32BIT(CS_sig(context));
+    instr = (BYTE *)MAKE_PTR(CS_sig(context),EIP_sig(context));
 
     /* First handle any possible prefix */
 
@@ -456,14 +462,14 @@ BOOL32 INSTR_EmulateInstruction( SIGCONTEXT *context )
 		  void *data;
 		  if (outp)
                   {
-		      data = PTR_SEG_OFF_TO_LIN (seg,
+		      data = MAKE_PTR(seg,
                                long_addr ? ESI_sig(context) : SI_sig(context));
 		      if (long_addr) ESI_sig(context) += step;
 		      else SI_sig(context) += step;
                   }
 		  else
                   {
-		      data = PTR_SEG_OFF_TO_LIN (seg,
+		      data = MAKE_PTR(seg,
                                long_addr ? EDI_sig(context) : DI_sig(context));
 		      if (long_addr) EDI_sig(context) += step;
 		      else DI_sig(context) += step;
@@ -554,7 +560,7 @@ BOOL32 INSTR_EmulateInstruction( SIGCONTEXT *context )
         case 0xcd: /* int <XX> */
             if (long_op)
             {
-                fprintf(stderr, "int xx from 32-bit code is not supported.\n");
+                ERR(int, "int xx from 32-bit code is not supported.\n");
                 break;  /* Unable to emulate it */
             }
             else
@@ -643,7 +649,7 @@ BOOL32 INSTR_EmulateInstruction( SIGCONTEXT *context )
   	    EIP_sig(context) += prefixlen + 1;
             return TRUE;
     }
-    fprintf(stderr, "Unexpected Windows program segfault"
+    MSG("Unexpected Windows program segfault"
                     " - opcode = %x\n", *instr);
     return FALSE;  /* Unable to emulate it */
 }

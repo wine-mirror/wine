@@ -11,40 +11,52 @@
 #include "ddeml.h"
 #include "debug.h"
 
+/* FIXME: What are these values? */
+#define DMLERR_NO_ERROR		0
 
 static LONG     DDE_current_handle;
 
 
-/*****************************************************************
+/******************************************************************************
  *            DdeInitialize16   (DDEML.2)
  */
 UINT16 WINAPI DdeInitialize16( LPDWORD pidInst, PFNCALLBACK16 pfnCallback,
                                DWORD afCmd, DWORD ulRes)
 {
-    FIXME( ddeml, "empty stub\n" );
-    return 0;
+    return (UINT16)DdeInitialize32A(pidInst,(PFNCALLBACK32)pfnCallback,
+                                    afCmd, ulRes);
 }
 
 
-/*****************************************************************
+/******************************************************************************
  *            DdeInitialize32A   (USER32.106)
  */
 UINT32 WINAPI DdeInitialize32A( LPDWORD pidInst, PFNCALLBACK32 pfnCallback,
                                 DWORD afCmd, DWORD ulRes )
 {
-    FIXME( ddeml, "empty stub\n" );
-    return 0;
+    return DdeInitialize32W(pidInst,pfnCallback,afCmd,ulRes);
 }
 
 
-/*****************************************************************
- *            DdeInitialize32W   (USER32.107)
+/******************************************************************************
+ * DdeInitialize32W [USER32.107]
+ * Registers an application with the DDEML
+ *
+ * PARAMS
+ *    pidInst     [I] Pointer to instance identifier
+ *    pfnCallback [I] Pointer to callback function
+ *    afCmd       [I] Set of command and filter flags
+ *    ulRes       [I] Reserved
+ *
+ * RETURNS
+ *    Success: DMLERR_NO_ERROR
+ *    Failure: DMLERR_DLL_USAGE, DMLERR_INVALIDPARAMETER, DMLERR_SYS_ERROR
  */
 UINT32 WINAPI DdeInitialize32W( LPDWORD pidInst, PFNCALLBACK32 pfnCallback,
                                 DWORD afCmd, DWORD ulRes )
 {
-    FIXME( ddeml, "empty stub\n" );
-    return 0;
+    FIXME(ddeml, "(%p,%p,%ld,%ld): stub\n",pidInst,pfnCallback,afCmd,ulRes);
+    return DMLERR_NO_ERROR;
 }
 
 
@@ -58,23 +70,55 @@ BOOL16 WINAPI DdeUninitialize16( DWORD idInst )
 
 
 /*****************************************************************
- *            DdeUninitialize32   (USER32.119)
+ * DdeUninitialize32 [USER32.119]  Frees DDEML resources
+ *
+ * PARAMS
+ *    idInst [I] Instance identifier
+ *
+ * RETURNS
+ *    Success: TRUE
+ *    Failure: FALSE
  */
 BOOL32 WINAPI DdeUninitialize32( DWORD idInst )
 {
-    FIXME( ddeml, "empty stub\n" );
+    FIXME(ddeml, "(%ld): stub\n", idInst);
     return TRUE;
 }
 
+
 /*****************************************************************
- *            DdeConnectList (DDEML.4)
+ * DdeConnectList16 [DDEML.4]
  */
-HCONVLIST WINAPI DdeConnectList( DWORD idInst, HSZ hszService, HSZ hszTopic,
-        HCONVLIST hConvList, LPCONVCONTEXT16 pCC )
+HCONVLIST WINAPI DdeConnectList16( DWORD idInst, HSZ hszService, HSZ hszTopic,
+                 HCONVLIST hConvList, LPCONVCONTEXT16 pCC )
 {
-    FIXME( ddeml, "empty stub\n" );
-    return 0;
+    return DdeConnectList32(idInst, hszService, hszTopic, hConvList, 
+                            (LPCONVCONTEXT32)pCC);
 }
+
+
+/******************************************************************************
+ * DdeConnectList32 [USER32.93]  Establishes conversation with DDE servers
+ *
+ * PARAMS
+ *    idInst     [I] Instance identifier
+ *    hszService [I] Handle to service name string
+ *    hszTopic   [I] Handle to topic name string
+ *    hConvList  [I] Handle to conversation list
+ *    pCC        [I] Pointer to structure with context data
+ *
+ * RETURNS
+ *    Success: Handle to new conversation list
+ *    Failure: 0
+ */
+HCONVLIST WINAPI DdeConnectList32( DWORD idInst, HSZ hszService, HSZ hszTopic,
+                 HCONVLIST hConvList, LPCONVCONTEXT32 pCC )
+{
+    FIXME(ddeml, "(%ld,%ld,%ld,%ld,%p): stub\n", idInst, hszService, hszTopic,
+          hConvList,pCC);
+    return 1;
+}
+
 
 /*****************************************************************
  *            DdeQueryNextServer (DDEML.5)
@@ -88,11 +132,26 @@ HCONV WINAPI DdeQueryNextServer( HCONVLIST hConvList, HCONV hConvPrev )
 /*****************************************************************
  *            DdeDisconnectList (DDEML.6)
  */
-BOOL16 WINAPI DdeDisconnectList( HCONVLIST hConvList )
+BOOL16 WINAPI DdeDisconnectList16( HCONVLIST hConvList )
 {
-    FIXME( ddeml, "empty stub\n" );
-    return 0;
+    return (BOOL16)DdeDisconnectList32(hConvList);
 }
+
+
+/******************************************************************************
+ * DdeDisconnectList32 [USER32.98]  Destroys list and terminates conversations
+ *
+ * RETURNS
+ *    Success: TRUE
+ *    Failure: FALSE
+ */
+BOOL32 WINAPI DdeDisconnectList32(
+    HCONVLIST hConvList) /* [in] Handle to conversation list */
+{
+    FIXME(ddeml, "(%ld): stub\n", hConvList);
+    return TRUE;
+}
+
 
 /*****************************************************************
  *            DdeConnect16   (DDEML.7)
@@ -111,7 +170,7 @@ HCONV WINAPI DdeConnect16( DWORD idInst, HSZ hszService, HSZ hszTopic,
 HCONV WINAPI DdeConnect32( DWORD idInst, HSZ hszService, HSZ hszTopic,
                            LPCONVCONTEXT32 pCC )
 {
-    FIXME( ddeml, "empty stub\n" );
+    FIXME( ddeml, "(...): stub\n");
     return 0;
 }
 
@@ -172,22 +231,29 @@ HSZ WINAPI DdeCreateStringHandle16( DWORD idInst, LPCSTR str, INT16 codepage )
 
 
 /*****************************************************************
- *            DdeCreateStringHandle32A   (USER32.95)
+ * DdeCreateStringHandle32A [USER32.95]
  */
 HSZ WINAPI DdeCreateStringHandle32A( DWORD idInst, LPCSTR psz, INT32 codepage )
 {
-    FIXME( ddeml, "empty stub\n" );
+    FIXME(ddeml, "(...): stub\n" );
     DDE_current_handle++;
     return DDE_current_handle;
 }
 
 
-/*****************************************************************
- *            DdeCreateStringHandle32W   (USER32.96)
+/******************************************************************************
+ * DdeCreateStringHandle32W [USER32.96]  Creates handle to identify string
+ *
+ * RETURNS
+ *    Success: String handle
+ *    Failure: 0
  */
-HSZ WINAPI DdeCreateStringHandle32W( DWORD idInst, LPCWSTR psz, INT32 codepage)
+HSZ WINAPI DdeCreateStringHandle32W(
+    DWORD idInst,   /* [in] Instance identifier */
+    LPCWSTR psz,    /* [in] Pointer to string */
+    INT32 codepage) /* [in] Code page identifier */
 {
-    FIXME( ddeml, "empty stub\n" );
+    FIXME(ddeml, "(%ld,%s,%d): stub\n",idInst,debugstr_w(psz),codepage);
     DDE_current_handle++;
     return DDE_current_handle;
 }
@@ -285,14 +351,32 @@ BOOL16 WINAPI DdeAbandonTransaction( DWORD idInst, HCONV hConv,
     return 0;
 }
 
+
 /*****************************************************************
- *            DdePostAdvise (DDEML.13)
+ * DdePostAdvise16 [DDEML.13]
  */
-BOOL16 WINAPI DdePostAdvise( DWORD idInst, HSZ hszTopic, HSZ hszItem )
+BOOL16 WINAPI DdePostAdvise16( DWORD idInst, HSZ hszTopic, HSZ hszItem )
 {
-    FIXME( ddeml, "empty stub\n" );
-    return 0;
+    return (BOOL16)DdePostAdvise32(idInst, hszTopic, hszItem);
 }
+
+
+/******************************************************************************
+ * DdePostAdvise32 [USER32.110]  Send transaction to DDE callback function.
+ *
+ * RETURNS
+ *    Success: TRUE
+ *    Failure: FALSE
+ */
+BOOL32 WINAPI DdePostAdvise32(
+    DWORD idInst, /* [in] Instance identifier */
+    HSZ hszTopic, /* [in] Handle to topic name string */
+    HSZ hszItem)  /* [in] Handle to item name string */
+{
+    FIXME(ddeml, "(%ld,%ld,%ld): stub\n",idInst,hszTopic,hszItem);
+    return TRUE;
+}
+
 
 /*****************************************************************
  *            DdeAddData (DDEML.15)
@@ -304,15 +388,36 @@ HDDEDATA WINAPI DdeAddData( HDDEDATA hData, LPBYTE pSrc, DWORD cb,
     return 0;
 }
 
-/*****************************************************************
- *            DdeGetData (DDEML.16)
+
+/******************************************************************************
+ * DdeGetData32 [USER32.102]  Copies data from DDE object ot local buffer
+ *
+ * RETURNS
+ *    Size of memory object associated with handle
  */
-DWORD WINAPI DdeGetData( HDDEDATA hData, LPBYTE pDst, DWORD cbMax, 
-                         DWORD cbOff )
+DWORD WINAPI DdeGetData32(
+    HDDEDATA hData, /* [in] Handle to DDE object */
+    LPBYTE pDst,    /* [in] Pointer to destination buffer */
+    DWORD cbMax,    /* [in] Amount of data to copy */
+    DWORD cbOff)    /* [in] Offset to beginning of data */
 {
-    FIXME( ddeml, "empty stub\n" );
-    return 0;
+    FIXME(ddeml, "(%ld,%p,%ld,%ld): stub\n",hData,pDst,cbMax,cbOff);
+    return cbMax;
 }
+
+
+/*****************************************************************
+ * DdeGetData16 [DDEML.16]
+ */
+DWORD WINAPI DdeGetData16(
+    HDDEDATA hData,
+    LPBYTE pDst,
+    DWORD cbMax, 
+    DWORD cbOff)
+{
+    return DdeGetData32(hData, pDst, cbMax, cbOff);
+}
+
 
 /*****************************************************************
  *            DdeAccessData (DDEML.17)
@@ -351,14 +456,24 @@ HDDEDATA WINAPI DdeNameService16( DWORD idInst, HSZ hsz1, HSZ hsz2,
 }
 
 
-/*****************************************************************
- *            DdeNameService32  (USER32.109)
+/******************************************************************************
+ * DdeNameService32 [USER32.109]  {Un}registers service name of DDE server
+ *
+ * PARAMS
+ *    idInst [I] Instance identifier
+ *    hsz1   [I] Handle to service name string
+ *    hsz2   [I] Reserved
+ *    afCmd  [I] Service name flags
+ *
+ * RETURNS
+ *    Success: Non-zero
+ *    Failure: 0
  */
 HDDEDATA WINAPI DdeNameService32( DWORD idInst, HSZ hsz1, HSZ hsz2,
-                                  UINT32 afCmd )
+                UINT32 afCmd )
 {
-    FIXME( ddeml, "empty stub\n" );
-    return 0;
+    FIXME(ddeml, "(%ld,%ld,%ld,%d): stub\n",idInst,hsz1,hsz2,afCmd);
+    return 1;
 }
 
 
@@ -371,14 +486,21 @@ UINT16 WINAPI DdeGetLastError16( DWORD idInst )
 }
 
 
-/*****************************************************************
- *            DdeGetLastError32  (USER32.103)
+/******************************************************************************
+ * DdeGetLastError32 [USER32.103]  Gets most recent error code
+ *
+ * PARAMS
+ *    idInst [I] Instance identifier
+ *
+ * RETURNS
+ *    Last error code
  */
 UINT32 WINAPI DdeGetLastError32( DWORD idInst )
 {
-    FIXME( ddeml, "empty stub\n" );
+    FIXME(ddeml, "(%ld): stub\n",idInst);
     return 0;
 }
+
 
 /*****************************************************************
  *            DdeCmpStringHandles (DDEML.36)

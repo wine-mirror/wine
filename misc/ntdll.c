@@ -36,8 +36,11 @@ DWORD WINAPI RtlLengthSid(LPSID sid)
 
 /**************************************************************************
  *                 RtlCreateAcl				[NTDLL]
+ *
+ * NOTES
+ *    This should return NTSTATUS
  */
-DWORD /* NTSTATUS */ WINAPI RtlCreateAcl(LPACL acl,DWORD size,DWORD rev)
+DWORD WINAPI RtlCreateAcl(LPACL acl,DWORD size,DWORD rev)
 {
 	if (rev!=ACL_REVISION)
 		return STATUS_INVALID_PARAMETER;

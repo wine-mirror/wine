@@ -12,10 +12,10 @@ type	win16
 12  pascal16 ReplaceText(segptr) ReplaceText16
 13  pascal   FindTextDlgProc(word word word long) FindTextDlgProc16
 14  pascal   ReplaceTextDlgProc(word word word long) ReplaceTextDlgProc16
-15  pascal16 ChooseFont(ptr) ChooseFont
-16  pascal16 FormatCharDlgProc(word word word long) FormatCharDlgProc
-18  pascal16 FontStyleEnumProc(ptr ptr word long)   FontStyleEnumProc
-19  pascal16 FontFamilyEnumProc(ptr ptr word long)  FontFamilyEnumProc
+15  pascal16 ChooseFont(ptr) ChooseFont16
+16  pascal16 FormatCharDlgProc(word word word long) FormatCharDlgProc16
+18  pascal16 FontStyleEnumProc(ptr ptr word long)   FontStyleEnumProc16
+19  pascal16 FontFamilyEnumProc(ptr ptr word long)  FontFamilyEnumProc16
 20  pascal16 PrintDlg(segptr) PrintDlg16
 21  pascal   PrintDlgProc(word word word long) PrintDlgProc
 22  pascal   PrintSetupDlgProc(word word word long) PrintSetupDlgProc

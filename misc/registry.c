@@ -250,7 +250,7 @@ SHELL_Init() {
 
 	ADD_ROOT_KEY(key_local_machine);
 	if (RegCreateKey16(HKEY_LOCAL_MACHINE,"\\SOFTWARE\\Classes",&cl_r_hkey)!=ERROR_SUCCESS) {
-		fprintf(stderr,"couldn't create HKEY_LOCAL_MACHINE\\SOFTWARE\\Classes. This is impossible.\n");
+		ERR(reg,"couldn't create HKEY_LOCAL_MACHINE\\SOFTWARE\\Classes. This is impossible.\n");
 		exit(1);
 	}
 	key_classes_root = lookup_hkey(cl_r_hkey);
@@ -439,7 +439,7 @@ _savereg(LPKEYSTRUCT lpkey,char *fn,int all) {
 
 	F=fopen(fn,"w");
 	if (F==NULL) {
-		fprintf(stddeb,__FILE__":_savereg:Couldn't open %s for writing: %s\n",
+		WARN(reg,"Couldn't open %s for writing: %s\n",
 			fn,strerror(errno)
 		);
 		return FALSE;
@@ -447,7 +447,7 @@ _savereg(LPKEYSTRUCT lpkey,char *fn,int all) {
 	if (!_savesubreg(F,lpkey,all)) {
 		fclose(F);
 		unlink(fn);
-		fprintf(stddeb,__FILE__":_savereg:Failed to save keys, perhaps no more diskspace for %s?\n",fn);
+		WARN(reg,"Failed to save keys, perhaps no more diskspace for %s?\n",fn);
 		return FALSE;
 	}
 	fclose(F);
@@ -519,7 +519,7 @@ SHELL_SaveRegistry() {
 		free(tmp);
 		free(fn);
 	} else
-		fprintf(stderr,"SHELL_SaveRegistry:failed to get homedirectory of UID %d.\n",getuid());
+		WARN(reg,"Failed to get homedirectory of UID %d.\n",getuid());
 }
 
 /************************ LOAD Registry Function ****************************/
@@ -669,7 +669,7 @@ _wine_read_USTRING(char *buf,LPWSTR *str) {
 				continue;
 			}
 			if (*s!='u') {
-				fprintf(stderr,"_wine_read_USTRING:Non unicode escape sequence \\%c found in |%s|\n",*s,buf);
+				WARN(reg,"Non unicode escape sequence \\%c found in |%s|\n",*s,buf);
 				*ws++='\\';
 				*ws++=*s++;
 			} else {
@@ -679,7 +679,7 @@ _wine_read_USTRING(char *buf,LPWSTR *str) {
 				s++;
 				memcpy(xbuf,s,4);xbuf[4]='\0';
 				if (!sscanf(xbuf,"%x",&wc))
-					fprintf(stderr,"_wine_read_USTRING:strange escape sequence %s found in |%s|\n",xbuf,buf);
+					WARN(reg,"Strange escape sequence %s found in |%s|\n",xbuf,buf);
 				s+=4;
 				*ws++	=(unsigned short)wc;
 			}
@@ -716,7 +716,7 @@ _wine_loadsubkey(
 		}
 		if (i>level) {
 			if (lpxkey==NULL) {
-				fprintf(stderr,"_load_subkey:Got a subhierarchy without resp. key?\n");
+				WARN(reg,"Got a subhierarchy without resp. key?\n");
 				return 0;
 			}
 			_wine_loadsubkey(F,lpxkey,level+1,buf,buflen,optflag);
@@ -739,12 +739,12 @@ _wine_loadsubkey(
 				int		len,lastmodified,type;
 
 				if (*s!='=') {
-					fprintf(stderr,"_wine_load_subkey:unexpected character: %c\n",*s);
+					WARN(reg,"Unexpected character: %c\n",*s);
 					break;
 				}
 				s++;
 				if (2!=sscanf(s,"%d,%d,",&type,&lastmodified)) {
-					fprintf(stderr,"_wine_load_subkey: haven't understood possible value in |%s|, skipping.\n",*buf);
+					WARN(reg,"Haven't understood possible value in |%s|, skipping.\n",*buf);
 					break;
 				}
 				/* skip the 2 , */
@@ -764,16 +764,16 @@ _wine_loadsubkey(
 						if (*s>='0' && *s<='9')
 							data[i]=(*s-'0')<<4;
 						if (*s>='a' && *s<='f')
-							data[i]=(*s-'a')<<4;
+							data[i]=(*s-'a'+'\xa')<<4;
 						if (*s>='A' && *s<='F')
-							data[i]=(*s-'A')<<4;
+							data[i]=(*s-'A'+'\xa')<<4;
 						s++;
 						if (*s>='0' && *s<='9')
 							data[i]|=*s-'0';
 						if (*s>='a' && *s<='f')
-							data[i]|=*s-'a';
+							data[i]|=*s-'a'+'\xa';
 						if (*s>='A' && *s<='F')
-							data[i]|=*s-'A';
+							data[i]|=*s-'A'+'\xa';
 						s++;
 					}
 				}
@@ -1173,7 +1173,7 @@ _w95_loadreg(char* fn,LPKEYSTRUCT lpkey) {
 	if (4!=_lread32(hfd,magic,4))
 		return;
 	if (strcmp(magic,"CREG")) {
-		fprintf(stddeb,"%s is not a w95 registry.\n",fn);
+		WARN(reg,"%s is not a w95 registry.\n",fn);
 		return;
 	}
 	if (4!=_lread32(hfd,&version,4))
@@ -1479,7 +1479,7 @@ SHELL_LoadRegistry() {
 		_wine_loadreg(key_local_machine,fn,REG_OPTION_TAINTED);
 		free(fn);
 	} else
-		fprintf(stderr,"SHELL_LoadRegistry:failed to get homedirectory of UID %d.\n",getuid());
+		WARN(reg,"Failed to get homedirectory of UID %d.\n",getuid());
 	if (ERROR_SUCCESS==RegCreateKey16(HKEY_CURRENT_USER,KEY_REGISTRY,&hkey)) {
 		DWORD	junk,type,len;
 		char	data[5];
@@ -2266,7 +2266,7 @@ DWORD WINAPI RegSetValue32W(
 	} else
 		xhkey=hkey;
 	if (dwType!=REG_SZ) {
-		fprintf(stddeb,"RegSetValueX called with dwType=%ld!\n",dwType);
+		TRACE(reg,"RegSetValueX called with dwType=%ld!\n",dwType);
 		dwType=REG_SZ;
 	}
 	if (cbData!=2*lstrlen32W(lpszData)+2) {
@@ -2799,12 +2799,24 @@ DWORD WINAPI RegDeleteValue16(HKEY hkey,LPSTR lpszValue)
 	return RegDeleteValue32A(hkey,lpszValue);
 }
 
-/* RegFlushKey			[ADVAPI32.143] [KERNEL.227] */
-DWORD WINAPI RegFlushKey(HKEY hkey)
+
+/******************************************************************************
+ * RegFlushKey [KERNEL.227] [ADVAPI32.143]
+ * Writes key to registry
+ *
+ * PARAMS
+ *    hkey [I] Handle of key to write
+ *
+ * RETURNS
+ *    Success: ERROR_SUCCESS
+ *    Failure: Error code
+ */
+DWORD WINAPI RegFlushKey( HKEY hkey )
 {
-	FIXME(reg, "(%x), STUB.\n", hkey);
-	return SHELL_ERROR_SUCCESS;
+    FIXME(reg, "(%x): stub\n", hkey);
+    return ERROR_SUCCESS;
 }
+
 
 /* FIXME: lpcchXXXX ... is this counting in WCHARS or in BYTEs ?? */
 
@@ -2940,8 +2952,29 @@ DWORD WINAPI RegQueryInfoKey32A(
 /* RegConnectRegistryA		[ADVAPI32.127] */
 DWORD WINAPI RegConnectRegistry32A(LPCSTR machine,HKEY hkey,LPHKEY reskey)
 {
-	fprintf(stderr,"RegConnectRegistry32A(%s,%08x,%p), STUB.\n",
-		machine,hkey,reskey
-	);
+	FIXME(reg,"(%s,%08x,%p):stub.\n",machine,hkey,reskey);
 	return ERROR_FILE_NOT_FOUND; /* FIXME */
 }
+
+
+/******************************************************************************
+ * RegGetKeySecurity [ADVAPI32.144]
+ * Retrieves a copy of security descriptor protecting the registry key
+ *
+ * NOTES
+ *    pSecurityDescriptor should be PSECURITY_DESCRIPTOR
+ *
+ * RETURNS
+ *    Success: ERROR_SUCCESS
+ *    Failure: Error code
+ */
+LONG WINAPI RegGetKeySecurity( HKEY hKey, 
+                               SECURITY_INFORMATION SecurityInformation,
+                               LPVOID pSecurityDescriptor,
+                               LPDWORD lpcbSecurityDescriptor )
+{
+    FIXME(reg, "(%d,%ld,%p,%p): stub\n", hKey, SecurityInformation,
+          pSecurityDescriptor, lpcbSecurityDescriptor);
+    return ERROR_SUCCESS;
+}
+

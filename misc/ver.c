@@ -297,7 +297,7 @@ static int read_xx_header(HFILE32 lzfd) {
 	if (magic[0] == 'P' && magic[1] == 'E')
 		return IMAGE_NT_SIGNATURE;
 	magic[2]='\0';
-	fprintf(stderr,"misc/ver.c:read_ne_header:can't handle %s files.\n",magic);
+	WARN(ver,"Can't handle %s files.\n",magic);
 	return 0;
 }
 
@@ -447,7 +447,7 @@ find_pe_resource(
 	resdir = pehd.OptionalHeader.DataDirectory[IMAGE_FILE_RESOURCE_DIRECTORY];
 	TRACE(ver,"(.,%p,%p,....)\n",typeid,resid);
 	if (!resdir.Size) {
-		fprintf(stderr,"misc/ver.c:find_pe_resource() no resource directory found in PE file.\n");
+		WARN(ver,"No resource directory found in PE file.\n");
 		return 0;
 	}
 	imagesize = pehd.OptionalHeader.SizeOfImage;
@@ -474,8 +474,10 @@ find_pe_resource(
 		LZSeek32(lzfd,sections[i].PointerToRawData,SEEK_SET);
 		if (	sections[i].SizeOfRawData!=
 			LZRead32(lzfd,image+sections[i].VirtualAddress,sections[i].SizeOfRawData)
-		)
-			continue;
+		) {
+			HeapFree(GetProcessHeap(),0,image);
+			return 0;
+		}
 	}
 	resourcedir = (LPIMAGE_RESOURCE_DIRECTORY)(image+resdir.VirtualAddress);
 	xresdir = GetResDirEntryW(resourcedir,typeid,(DWORD)resourcedir,FALSE);
@@ -620,7 +622,7 @@ DWORD WINAPI GetFileVersionInfoSize16(LPCSTR filename,LPDWORD handle)
 			isuni = 1;
 			vffi = (VS_FIXEDFILEINFO*)(buf+0x28);
 		} else {
-			fprintf(stderr,"vffi->dwSignature is 0x%08lx, but not 0x%08lx!\n",
+			WARN(ver,"vffi->dwSignature is 0x%08lx, but not 0x%08lx!\n",
 				vffi->dwSignature,VS_FFI_SIGNATURE
 			);
 			return 0;
@@ -898,7 +900,6 @@ DWORD WINAPI VerInstallFile16(
     return ret;
 }
 
-/* VerInstallFileA				[VERSION.7] */
 static LPBYTE
 _fetch_versioninfo(LPSTR fn,VS_FIXEDFILEINFO **vffi) {
     DWORD	alloclen;
@@ -922,7 +923,7 @@ _fetch_versioninfo(LPSTR fn,VS_FIXEDFILEINFO **vffi) {
 	    if ((*vffi)->dwSignature == 0x004f0049) /* hack to detect unicode */
 	    	*vffi = (VS_FIXEDFILEINFO*)(buf+0x28);
 	    if ((*vffi)->dwSignature != VS_FFI_SIGNATURE)
-	    	fprintf(stderr,"_fetch_versioninfo:bad VS_FIXEDFILEINFO signature 0x%08lx\n",(*vffi)->dwSignature);
+	    	WARN(ver,"Bad VS_FIXEDFILEINFO signature 0x%08lx\n",(*vffi)->dwSignature);
 	    return buf;
 	}
     }
@@ -940,9 +941,10 @@ _error2vif(DWORD error) {
     }
 }
 
-/* VerInstallFile32A
- */
 
+/******************************************************************************
+ * VerInstallFile32A [VERSION.7]
+ */
 DWORD WINAPI VerInstallFile32A(
 	UINT32 flags,LPCSTR srcfilename,LPCSTR destfilename,LPCSTR srcdir,
  	LPCSTR destdir,LPCSTR curdir,LPSTR tmpfile,UINT32 *tmpfilelen )
@@ -954,7 +956,7 @@ DWORD WINAPI VerInstallFile32A(
     LPBYTE	buf1,buf2;
     OFSTRUCT	ofs;
 
-    fprintf(stddeb,"VerInstallFile(%x,%s,%s,%s,%s,%s,%p,%d)\n",
+    TRACE(ver,"(%x,%s,%s,%s,%s,%s,%p,%d)\n",
 	    flags,srcfilename,destfilename,srcdir,destdir,curdir,tmpfile,*tmpfilelen
     );
     xret = 0;
@@ -1105,6 +1107,7 @@ DWORD WINAPI VerInstallFile32A(
     LZClose32(hfsrc);
     return xret;
 }
+
 
 /* VerInstallFileW				[VERSION.8] */
 DWORD WINAPI VerInstallFile32W(
@@ -1302,7 +1305,7 @@ DWORD WINAPI VerQueryValue16(SEGPTR segblock,LPCSTR subblock,SEGPTR *buffer,
 		b=_find_dataW(block,wstr,*(WORD*)block);
 		HeapFree(GetProcessHeap(),0,wstr);
 		if (!b) {
-			fprintf(stderr,"key %s not found in versionresource.\n",s);
+			WARN(ver,"key %s not found in versionresource.\n",s);
 			*buflen=0;
 			free (s);
 			return 0;
@@ -1320,7 +1323,7 @@ DWORD WINAPI VerQueryValue16(SEGPTR segblock,LPCSTR subblock,SEGPTR *buffer,
 		struct	dbA	*db;
 		b=_find_dataA(block,s,*(WORD*)block);
 		if (!b) {
-			fprintf(stderr,"key %s not found in versionresource.\n",s);
+			WARN(ver,"key %s not found in versionresource.\n",s);
 			*buflen=0;
 			free (s);
 			return 0;
@@ -1364,7 +1367,7 @@ DWORD WINAPI VerQueryValue32A(LPVOID vblock,LPCSTR subblock,
 		b=_find_dataW(block,wstr,*(WORD*)block);
 		HeapFree(GetProcessHeap(),0,wstr);
 		if (!b) {
-			fprintf(stderr,"key %s not found in versionresource.\n",s);
+			WARN(ver,"key %s not found in versionresource.\n",s);
 			*buflen=0;
 			free (s);
 			return 0;
@@ -1384,7 +1387,7 @@ DWORD WINAPI VerQueryValue32A(LPVOID vblock,LPCSTR subblock,
 		struct	dbA	*db;
 		b=_find_dataA(block,s,*(WORD*)block);
 		if (!b) {
-			fprintf(stderr,"key %s not found in versionresource.\n",subblock);
+			WARN(ver,"key %s not found in versionresource.\n",subblock);
 			*buflen=0;
 			free (s);
 			return 0;
