@@ -371,7 +371,7 @@ init	MAIN_KernelInit
 353 stub GetNamedPipeHandleStateW
 354 stub GetNamedPipeInfo
 355 stdcall GetNumberFormatA(long long str ptr ptr long) GetNumberFormat32A
-356 stub GetNumberFormatW
+356 stdcall GetNumberFormatW(long long wstr ptr ptr long) GetNumberFormat32W
 357 stdcall GetNumberOfConsoleInputEvents(long ptr) GetNumberOfConsoleInputEvents
 358 stdcall GetNumberOfConsoleMouseButtons(long ptr) GetNumberOfConsoleMouseButtons
 359 stdcall GetOEMCP() GetOEMCP
