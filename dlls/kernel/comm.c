@@ -702,29 +702,25 @@ INT16 WINAPI ClearCommBreak16(INT16 cid)
  */
 LONG WINAPI EscapeCommFunction16(UINT16 cid,UINT16 nFunction)
 {
-	int	r,fd;
-	struct DosDeviceStruct *ptr;
-	struct termios port;
+	struct  DosDeviceStruct *ptr;
+	int	max;
 
     	TRACE("cid=%d, function=%d\n", cid, nFunction);
 
-	if (nFunction == GETMAXCOM) {
-		int	max;
+	switch(nFunction) {
+	case GETMAXCOM:
 	        TRACE("GETMAXCOM\n"); 
 		for (max = MAX_PORTS;!COM[max].devicename;max--)
 			;
 		return max;
-	}
 
-	if (nFunction == GETMAXLPT) {
-		int	max;
+	case GETMAXLPT:
 		TRACE("GETMAXLPT\n"); 
 		for (max = MAX_PORTS;!LPT[max].devicename;max--)
 			;
 		return FLAG_LPT + max;
-	}
 
-	if (nFunction == GETBASEIRQ) {
+	case GETBASEIRQ:
 		TRACE("GETBASEIRQ\n"); 
 		/* FIXME: use tables */
 		/* just fake something for now */
@@ -743,79 +739,28 @@ LONG WINAPI EscapeCommFunction16(UINT16 cid,UINT16 nFunction)
 		return -1;
 	}
 
-	/* FIXME: replace with a call to EscapeCommFunction */
-
-	if ( (fd = FILE_GetUnixHandle(ptr->handle,GENERIC_READ)) == 0 )
-		return -1;
-
-	if (tcgetattr(fd,&port) == -1) {
-	        TRACE("tcgetattr failed\n");
-		close(fd);
-		ptr->commerror=WinError();	
-		return -1;
-	}
-
 	switch (nFunction) {
-		case RESETDEV:
-		        TRACE("RESETDEV\n");
-			break;					
+	case RESETDEV:
+	case CLRDTR:
+	case CLRRTS:
+	case SETDTR:
+	case SETRTS:
+	case SETXOFF:
+	case SETXON:
+		if(EscapeCommFunction(ptr->handle,nFunction))
+			return 0;
+		else {
+			ptr->commerror = WinError();
+			return -1;
+		}
 
-		case CLRDTR:
-		        TRACE("CLRDTR\n"); 
-#ifdef TIOCM_DTR
-			r = COMM_WhackModem(fd, ~TIOCM_DTR, 0);
-			close(fd);
-			return r;
-#endif
-		case CLRRTS:
-		        TRACE("CLRRTS\n"); 
-#ifdef TIOCM_RTS
-			r = COMM_WhackModem(fd, ~TIOCM_RTS, 0);
-			close(fd);
-			return r;
-#endif
-	
-		case SETDTR:
-		        TRACE("SETDTR\n"); 
-#ifdef TIOCM_DTR
-			r = COMM_WhackModem(fd, 0, TIOCM_DTR);
-			close(fd);
-			return r;
-#endif
-
-		case SETRTS:
-		        TRACE("SETRTS\n"); 
-#ifdef TIOCM_RTS			
-			r = COMM_WhackModem(fd, 0, TIOCM_RTS);
-			close(fd);
-			return r;
-#endif
-
-		case SETXOFF:
-		        TRACE("SETXOFF\n"); 
-			port.c_iflag |= IXOFF;
-			break;
-
-		case SETXON:
-		        TRACE("SETXON\n"); 
-			port.c_iflag |= IXON;
-			break;
-
-		default:
-			WARN("(cid=%d,nFunction=%d): Unknown function\n", 
+	case CLRBREAK:
+	case SETBREAK:
+	default:
+		WARN("(cid=%d,nFunction=%d): Unknown function\n", 
 			cid, nFunction);
-			break;				
 	}
-	
-	r = tcsetattr(fd, TCSADRAIN, &port);
-	close(fd);
-	if (r<0) {
-		ptr->commerror = WinError();
-		return -1;	
-	} else {
-		ptr->commerror = 0;
-		return 0;
-	}
+	return -1;
 }
 
 /*****************************************************************************
