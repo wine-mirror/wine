@@ -1085,15 +1085,16 @@ end_of_mci_open:
                 strcatW(cmdW, (WCHAR *)lParam);
 
                 mwi->lasterror = mciSendStringW(cmdW, NULL, 0, 0);
+
+                /* fix the range tracking according to the new time format */
+                if (!mwi->lasterror)
+                    SendDlgItemMessageW(hWnd, CTL_TRACKBAR, TBM_SETRANGEMAX, 1,
+                                        SendMessageW(hWnd, MCIWNDM_GETLENGTH, 0, 0));
             }
 
             if (wMsg == MCIWNDM_SETTIMEFORMATA)
                 HeapFree(GetProcessHeap(), 0, (void *)lParam);
 
-            /* fix the range tracking according to the new time format */
-            if (!mwi->lasterror)
-                SendDlgItemMessageW(hWnd, CTL_TRACKBAR, TBM_SETRANGEMAX, 1,
-                                    SendMessageW(hWnd, MCIWNDM_GETLENGTH, 0, 0));
             return 0;
         }
 
@@ -1159,9 +1160,12 @@ end_of_mci_open:
         {
             MCI_SET_PARMS mci_set;
 
+            mci_set.dwCallback = (DWORD_PTR)hWnd;
             mwi->lasterror = mciSendCommandW(mwi->mci, MCI_SET,
                                              MCI_SET_DOOR_OPEN | MCI_NOTIFY,
                                              (DWORD_PTR)&mci_set);
+            MCIWND_notify_mode(mwi);
+            MCIWND_UpdateState(mwi);
             return mwi->lasterror;
         }
 
