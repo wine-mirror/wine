@@ -265,24 +265,6 @@ VOID WINAPI SetDebugErrorLevel( DWORD dwLevel )
 
 
 /******************************************************************************
- * WaitForDebugEvent [KERNEL32.720]
- * Waits for a debugging event to occur in a process being debugged
- *
- * PARAMS
- *    lpDebugEvent   [I] Address of structure for event information
- *    dwMilliseconds [I] Number of milliseconds to wait for event
- *
- * RETURNS STD
- */
-BOOL WINAPI WaitForDebugEvent( LPDEBUG_EVENT lpDebugEvent, 
-                                 DWORD dwMilliseconds )
-{
-    FIXME_(win32)("(%p,%ld): stub\n", lpDebugEvent, dwMilliseconds);
-    return FALSE;
-}
-
-
-/******************************************************************************
  * SetComputerName32A [KERNEL32.621]  
  */
 BOOL WINAPI SetComputerNameA( LPCSTR lpComputerName )

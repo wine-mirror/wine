@@ -173,41 +173,6 @@ SEGPTR WINAPI AnsiPrev16( SEGPTR start, SEGPTR current )
 
 
 /***********************************************************************
- *           OutputDebugString16   (KERNEL.115)
- */
-void WINAPI OutputDebugString16( LPCSTR str )
-{
-    char module[10];
-    if (!GetModuleName16( GetCurrentTask(), module, sizeof(module) ))
-        strcpy( module, "???" );
-
-    DUMP( "%s says %s\n", module, debugstr_a(str) );
-}
-
-
-/***********************************************************************
- *           OutputDebugString32A   (KERNEL32
- */
-void WINAPI OutputDebugStringA( LPCSTR str )
-{
-    OutputDebugString16( str );
-}
-
-
-
-/***********************************************************************
- *           OutputDebugString32W   (KERNEL32
- */
-void WINAPI OutputDebugStringW( LPCWSTR str )
-{
-    LPSTR p = HEAP_strdupWtoA( GetProcessHeap(), 0, str );
-    OutputDebugStringA( p );
-    HeapFree( GetProcessHeap(), 0, p );
-}
-
-
-
-/***********************************************************************
  *           CharNext32A   (USER32.29)
  */
 LPSTR WINAPI CharNextA( LPCSTR ptr )

@@ -41,7 +41,7 @@ static void CLIENT_Die( THDB *thdb )
 /***********************************************************************
  *           CLIENT_ProtocolError
  */
-static void CLIENT_ProtocolError( const char *err, ... )
+void CLIENT_ProtocolError( const char *err, ... )
 {
     THDB *thdb = THREAD_Current();
     va_list args;

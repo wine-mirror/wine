@@ -21,14 +21,6 @@
 DEFAULT_DEBUG_CHANNEL(win32)
 
 
-/**********************************************************************
- *  ContinueDebugEvent [KERNEL32.146]
- */
-BOOL WINAPI ContinueDebugEvent(DWORD pid,DWORD tid,DWORD contstatus) {
-    FIXME("(0x%lx,%ld,%ld): stub\n",pid,tid,contstatus);
-	return TRUE;
-}
-
 /*********************************************************************
  *      Process_ClockTimeToFileTime
  *      (olorin@fandra.org, 20-Sep-1998)
