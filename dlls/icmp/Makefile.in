@@ -1,0 +1,19 @@
+DEFS      = @DLLFLAGS@ -D__WINE__
+TOPSRCDIR = @top_srcdir@
+TOPOBJDIR = ../..
+SRCDIR    = @srcdir@
+VPATH     = @srcdir@
+MODULE    = icmp
+
+SPEC_SRCS = icmp.spec
+
+C_SRCS = icmp_main.c 
+
+all: $(MODULE).o
+
+@MAKE_RULES@
+
+### Dependencies:
+
+
+

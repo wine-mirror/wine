@@ -7,6 +7,7 @@ SUBDIRS = \
 	dciman32 \
 	dplayx \
 	dsound \
+	icmp \
 	imagehlp \
 	imm32 \
 	lzexpand \

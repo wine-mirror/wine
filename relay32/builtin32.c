@@ -60,6 +60,7 @@ extern const BUILTIN32_DESCRIPTOR DPLAY_Descriptor;
 extern const BUILTIN32_DESCRIPTOR DPLAYX_Descriptor;
 extern const BUILTIN32_DESCRIPTOR DSOUND_Descriptor;
 extern const BUILTIN32_DESCRIPTOR GDI32_Descriptor;
+extern const BUILTIN32_DESCRIPTOR ICMP_Descriptor;
 extern const BUILTIN32_DESCRIPTOR IMAGEHLP_Descriptor;
 extern const BUILTIN32_DESCRIPTOR IMM32_Descriptor;
 extern const BUILTIN32_DESCRIPTOR KERNEL32_Descriptor;
@@ -116,6 +117,7 @@ static BUILTIN32_DLL BuiltinDLLs[] =
     { &DPLAYX_Descriptor,   0, 0, NULL },
     { &DSOUND_Descriptor,   0, 0, NULL },
     { &GDI32_Descriptor,    0, 0, NULL },
+    { &ICMP_Descriptor,    0, 0, NULL },
     { &IMAGEHLP_Descriptor, BI32_DANGER, 0, NULL },
     { &IMM32_Descriptor,    0, 0, NULL },
     { &KERNEL32_Descriptor, 0, 0, NULL },
