@@ -29,7 +29,6 @@
 #include "winnls.h"
 #include "console.h"
 #include "monitor.h"
-#include "keyboard.h"
 #include "gdi.h"
 #include "user.h"
 #include "windef.h"
@@ -586,31 +585,13 @@ void MAIN_WineInit(void)
 }
 
 /***********************************************************************
- *           MessageBeep16   (USER.104)
- */
-void WINAPI MessageBeep16( UINT16 i )
-{
-    MessageBeep( i );
-}
-
-
-/***********************************************************************
- *           MessageBeep   (USER32.390)
- */
-BOOL WINAPI MessageBeep( UINT i )
-{
-    KEYBOARD_Beep();
-    return TRUE;
-}
-
-
-/***********************************************************************
  *           Beep   (KERNEL32.11)
  */
 BOOL WINAPI Beep( DWORD dwFreq, DWORD dwDur )
 {
+    static char beep = '\a';
     /* dwFreq and dwDur are ignored by Win95 */
-    KEYBOARD_Beep();
+    if (isatty(2)) write( 2, &beep, 1 );
     return TRUE;
 }
 

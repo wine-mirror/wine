@@ -19,6 +19,7 @@
 #include "color.h"
 #include "palette.h"
 #include "debugtools.h"
+#include "callback.h"
 #include "winerror.h"
 
 DEFAULT_DEBUG_CHANNEL(palette)
@@ -766,25 +767,17 @@ HPALETTE WINAPI SelectPalette(
     HPALETTE hPal,         /* [in] Handle of logical color palette */
     BOOL bForceBackground) /* [in] Foreground/background mode */
 {
-    WORD	wBkgPalette = 1;
-    PALETTEOBJ* lpt = (PALETTEOBJ*) GDI_GetObjPtr( hPal, PALETTE_MAGIC );
+    WORD wBkgPalette = 1;
 
-    TRACE("dc=%04x,pal=%04x,force=%i\n", hDC, hPal, bForceBackground);
-    if( !lpt ) return 0;
-
-    TRACE(" entries = %d\n", lpt->logpalette.palNumEntries);
-    GDI_HEAP_UNLOCK( hPal );
-
-    if( hPal != STOCK_DEFAULT_PALETTE )
+    if (!bForceBackground && (hPal != STOCK_DEFAULT_PALETTE))
     {
-	HWND hWnd = WindowFromDC( hDC );
-	HWND hActive = GetActiveWindow();
-	
-	/* set primary palette if it's related to current active */
-
-	if((!hWnd || (hActive == hWnd || IsChild16(hActive,hWnd))) &&
-            !bForceBackground )
-	    wBkgPalette = 0;
+	HWND hwnd = Callout.WindowFromDC( hDC );
+        if (hwnd)
+        {
+            HWND hForeground = Callout.GetForegroundWindow();
+            /* set primary palette if it's related to current active */
+            if (hForeground == hwnd || Callout.IsChild(hForeground,hwnd)) wBkgPalette = 0;
+        }
     }
     return GDISelectPalette16( hDC, hPal, wBkgPalette);
 }
@@ -824,8 +817,8 @@ UINT WINAPI RealizePalette(
 	/* Send palette change notification */
 
 	HWND hWnd;
- 	if( (hWnd = WindowFromDC( hDC )) )
-            SendMessage16( HWND_BROADCAST, WM_PALETTECHANGED, hWnd, 0L);
+ 	if( (hWnd = Callout.WindowFromDC( hDC )) )
+            Callout.SendMessageA( HWND_BROADCAST, WM_PALETTECHANGED, hWnd, 0L);
     }
 
     GDI_HEAP_UNLOCK( hDC );
@@ -843,13 +836,13 @@ INT16 WINAPI UpdateColors16( HDC16 hDC )
 
     if (!(dc = (DC *) GDI_GetObjPtr( hDC, DC_MAGIC ))) return 0;
 
-    hWnd = WindowFromDC( hDC );
+    hWnd = Callout.WindowFromDC( hDC );
 
     /* Docs say that we have to remap current drawable pixel by pixel
      * but it would take forever given the speed of XGet/PutPixel.
      */
-    if (hWnd && dc->w.devCaps->sizePalette ) 
-	InvalidateRect( hWnd, NULL, FALSE );
+    if (hWnd && dc->w.devCaps->sizePalette )
+        Callout.RedrawWindow( hWnd, NULL, 0, RDW_INVALIDATE );
 
     GDI_HEAP_UNLOCK( hDC );
 

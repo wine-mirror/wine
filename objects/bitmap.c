@@ -16,11 +16,9 @@
 #include "global.h"
 #include "cursoricon.h"
 #include "debugtools.h"
-#include "monitor.h"
 #include "wine/winuser16.h"
 
-DEFAULT_DEBUG_CHANNEL(bitmap)
-DECLARE_DEBUG_CHANNEL(resource)
+DEFAULT_DEBUG_CHANNEL(bitmap);
 
 BITMAP_DRIVER *BITMAP_Driver = NULL;
 
@@ -74,7 +72,10 @@ HBITMAP16 WINAPI CreateUserBitmap16( INT16 width, INT16 height, UINT16 planes,
 HBITMAP16 WINAPI CreateUserDiscardableBitmap16( WORD dummy, 
                                                 INT16 width, INT16 height )
 {
-    return CreateUserBitmap16( width, height, 1, MONITOR_GetDepth(&MONITOR_PrimaryMonitor), NULL );
+    HDC hdc = CreateDCA( "DISPLAY", NULL, NULL, NULL );
+    HBITMAP16 ret = CreateCompatibleBitmap16( hdc, width, height );
+    DeleteDC( hdc );
+    return ret;
 }
 
 

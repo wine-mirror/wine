@@ -274,10 +274,18 @@ void KEYBOARD_SetBeepActive(BOOL bActivate)
 }
 
 /***********************************************************************
- *		KEYBOARD_Beep
+ *           MessageBeep16   (USER.104)
  */
-void KEYBOARD_Beep(void)
+void WINAPI MessageBeep16( UINT16 i )
 {
-    USER_Driver->pBeep();
+    MessageBeep( i );
 }
 
+/***********************************************************************
+ *           MessageBeep   (USER32.390)
+ */
+BOOL WINAPI MessageBeep( UINT i )
+{
+    USER_Driver->pBeep();
+    return TRUE;
+}

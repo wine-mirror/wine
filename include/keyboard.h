@@ -31,7 +31,6 @@ VOID WINAPI KEYBOARD_Disable(VOID);
 
 extern BOOL KEYBOARD_GetBeepActive(void);
 extern void KEYBOARD_SetBeepActive(BOOL bActivate);
-extern void KEYBOARD_Beep(void);
 
 extern void KEYBOARD_SendEvent(BYTE bVk, BYTE bScan, DWORD dwFlags, DWORD posX, DWORD posY, DWORD time);
 

@@ -190,6 +190,10 @@ void THUNK_InitCallout(void)
         GETADDR( DispatchMessageA );
         GETADDR( RedrawWindow );
         GETADDR( WaitForInputIdle );
+        GETADDR( MsgWaitForMultipleObjects );
+        GETADDR( WindowFromDC );
+        GETADDR( GetForegroundWindow );
+        GETADDR( IsChild );
         GETADDR( MessageBoxA );
         GETADDR( MessageBoxW );
 #undef GETADDR

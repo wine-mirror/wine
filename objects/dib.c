@@ -10,10 +10,9 @@
 #include "callback.h"
 #include "dc.h"
 #include "debugtools.h"
-#include "monitor.h"
 #include "palette.h"
 
-DEFAULT_DEBUG_CHANNEL(bitmap)
+DEFAULT_DEBUG_CHANNEL(bitmap);
 
 /***********************************************************************
  *           DIB_GetDIBWidthBytes
@@ -849,8 +848,14 @@ HBITMAP WINAPI CreateDIBitmap( HDC hdc, const BITMAPINFOHEADER *header,
 
     /* Now create the bitmap */
 
-    handle = fColor ? CreateBitmap( width, height, 1, MONITOR_GetDepth(&MONITOR_PrimaryMonitor), NULL ) :
-                      CreateBitmap( width, height, 1, 1, NULL );
+    if (fColor)
+    {
+        HDC tmpdc = CreateDCA( "DISPLAY", NULL, NULL, NULL );
+        handle = CreateCompatibleBitmap( tmpdc, width, height );
+        DeleteDC( tmpdc );
+    }
+    else handle = CreateBitmap( width, height, 1, 1, NULL );
+
     if (!handle) return 0;
 
     if (init == CBM_INIT)

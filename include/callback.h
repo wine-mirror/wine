@@ -100,6 +100,12 @@ typedef struct
     void WINAPI (*UserYield16)( void );
     WORD WINAPI (*DestroyIcon32)( HGLOBAL16 handle, UINT16 flags );
     DWORD WINAPI (*WaitForInputIdle)( HANDLE hProcess, DWORD dwTimeOut );
+    DWORD WINAPI (*MsgWaitForMultipleObjects)( DWORD nCount, HANDLE *pHandles,
+                                               BOOL fWaitAll, DWORD dwMilliseconds,
+                                               DWORD dwWakeMask );
+    HWND WINAPI (*WindowFromDC)( HDC hDC );
+    HWND WINAPI (*GetForegroundWindow)(void);
+    BOOL WINAPI (*IsChild)( HWND parent, HWND child );
 
     INT WINAPI (*MessageBoxA)( HWND hWnd, LPCSTR text, LPCSTR title, UINT type );
     INT WINAPI (*MessageBoxW)( HWND hwnd, LPCWSTR text, LPCWSTR title, UINT type );

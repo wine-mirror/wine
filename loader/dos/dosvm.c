@@ -431,7 +431,7 @@ void DOSVM_Wait( int read_pipe, HANDLE hObject )
 	break;
     }
     /* nothing yet, block while waiting for something to do */
-    waitret=MsgWaitForMultipleObjects(objc,objs,FALSE,INFINITE,QS_ALLINPUT);
+    waitret=Callout.MsgWaitForMultipleObjects(objc,objs,FALSE,INFINITE,QS_ALLINPUT);
     if (waitret==(DWORD)-1) {
       ERR_(module)("dosvm wait error=%ld\n",GetLastError());
     }
