@@ -18,6 +18,13 @@
 #include "winbase.h"
 #include "thread.h"
 
+static int init_done;
+
+void PTHREAD_init_done(void)
+{
+    init_done = 1;
+}
+
 /* Currently this probably works only for glibc2,
  * which checks for the presence of double-underscore-prepended
  * pthread primitives, and use them if available.
@@ -86,13 +93,6 @@ typedef const void *key_data;
 #define MAX_KEYS 16 /* libc6 doesn't use that many, but... */
 
 #define P_OUTPUT(stuff) write(2,stuff,strlen(stuff))
-
-static int init_done;
-
-void PTHREAD_init_done(void)
-{
-    init_done = 1;
-}
 
 void __pthread_initialize(void)
 {
