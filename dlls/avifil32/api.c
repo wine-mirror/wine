@@ -24,10 +24,13 @@
 #include "winuser.h"
 #include "winreg.h"
 #include "winerror.h"
+#include "windowsx.h"
 
 #include "ole2.h"
 #include "shellapi.h"
 #include "vfw.h"
+
+#include "avifile_private.h"
 
 #include "wine/debug.h"
 #include "wine/unicode.h"
@@ -125,6 +128,25 @@ static HRESULT AVIFILE_CLSIDFromString(LPCSTR idstr, LPCLSID id)
   return S_OK;
 }
 
+static BOOL AVIFILE_GetFileHandlerByExtension(LPCWSTR szFile, LPCLSID lpclsid)
+{
+  CHAR   szRegKey[25];
+  CHAR   szValue[100];
+  LPWSTR szExt = strrchrW(szFile, '.');
+  LONG   len = sizeof(szValue) / sizeof(szValue[0]);
+
+  if (szExt == NULL)
+    return FALSE;
+
+  szExt++;
+
+  wsprintfA(szRegKey, "AVIFile\\Extensions\\%.3ls", szExt);
+  if (RegQueryValueA(HKEY_CLASSES_ROOT, szRegKey, szValue, &len) != ERROR_SUCCESS)
+    return FALSE;
+
+  return (AVIFILE_CLSIDFromString(szValue, lpclsid) == S_OK);
+}
+
 /***********************************************************************
  *		AVIFileInit		(AVIFIL32.@)
  *		AVIFileInit		(AVIFILE.100)
@@ -190,7 +212,7 @@ HRESULT WINAPI AVIFileOpenW(PAVIFILE *ppfile, LPCWSTR szFile, UINT uMode,
   CLSID         clsidHandler;
   HRESULT       hr;
 
-  FIXME("(%p,%s,0x%X,%s): stub!\n", ppfile, debugstr_w(szFile), uMode,
+  TRACE("(%p,%s,0x%X,%s)\n", ppfile, debugstr_w(szFile), uMode,
 	debugstr_guid(lpHandler));
 
   /* check parameters */
@@ -201,7 +223,8 @@ HRESULT WINAPI AVIFileOpenW(PAVIFILE *ppfile, LPCWSTR szFile, UINT uMode,
 
   /* if no handler then try guessing it by extension */
   if (lpHandler == NULL) {
-    FIXME(": must read HKEY_CLASSES_ROOT\\AVIFile\\Extensions\\%s\n", debugstr_w(strrchrW(szFile, L'.')));
+    if (! AVIFILE_GetFileHandlerByExtension(szFile, &clsidHandler))
+      return AVIERR_UNSUPPORTED;
   } else
     memcpy(&clsidHandler, lpHandler, sizeof(clsidHandler));
 
@@ -599,8 +622,9 @@ PGETFRAME WINAPI AVIStreamGetFrameOpen(PAVISTREAM pstream,
 
   if (FAILED(IAVIStream_QueryInterface(pstream, &IID_IGetFrame, (LPVOID*)&pg)) ||
       pg == NULL) {
-    FIXME(": need internal class for IGetFrame!\n");
-    return NULL;
+    pg = AVIFILE_CreateGetFrame(pstream);
+    if (pg == NULL)
+      return NULL;
   }
 
   if (FAILED(IGetFrame_SetFormat(pg, lpbiWanted, NULL, 0, 0, -1, -1))) {
@@ -760,7 +784,7 @@ LONG WINAPI AVIStreamStart(PAVISTREAM pstream)
   if (FAILED(IAVIStream_Info(pstream, &asiw, sizeof(asiw))))
     return 0;
 
-  return asiw.dwLength;
+  return asiw.dwStart;
 }
 
 /***********************************************************************
@@ -819,4 +843,84 @@ LONG WINAPI AVIStreamTimeToSample(PAVISTREAM pstream, LONG lTime)
     return -1;
 
   return (LONG)(((float)lTime * asiw.dwRate) / asiw.dwScale / 1000.0);
+}
+
+/***********************************************************************
+ *		AVIBuildFilterA		(AVIFIL32.@)
+ */
+HRESULT WINAPI AVIBuildFilterA(LPSTR szFilter, LONG cbFilter, BOOL fSaving)
+{
+  FIXME("(%p,%ld,%d): stub\n", szFilter, cbFilter, fSaving);
+
+  /* check parameters */
+  if (szFilter == NULL)
+    return AVIERR_BADPARAM;
+  if (cbFilter < 2)
+    return AVIERR_BADSIZE;
+
+  szFilter[0] = 0;
+  szFilter[1] = 0;
+
+  return AVIERR_UNSUPPORTED;
+}
+
+/***********************************************************************
+ *		AVIBuildFilterW		(AVIFIL32.@)
+ */
+HRESULT WINAPI AVIBuildFilterW(LPWSTR szFilter, LONG cbFilter, BOOL fSaving)
+{
+  FIXME("(%p,%ld,%d): stub\n", szFilter, cbFilter, fSaving);
+
+  /* check parameters */
+  if (szFilter == NULL)
+    return AVIERR_BADPARAM;
+  if (cbFilter < 2)
+    return AVIERR_BADSIZE;
+
+  szFilter[0] = 0;
+  szFilter[1] = 0;
+
+  return AVIERR_UNSUPPORTED;
+}
+
+/***********************************************************************
+ *		AVISaveOptions		(AVIFIL32.@)
+ */
+BOOL WINAPI AVISaveOptions(HWND hWnd, UINT uFlags, INT nStream,
+			   PAVISTREAM *ppavi, LPAVICOMPRESSOPTIONS *ppOptions)
+{
+  FIXME("(0x%X,0x%X,%d,%p,%p): stub\n", hWnd, uFlags, nStream,
+	ppavi, ppOptions);
+
+  return FALSE;
+}
+
+/***********************************************************************
+ *		AVISaveOptionsFree	(AVIFIL32.@)
+ */
+HRESULT WINAPI AVISaveOptionsFree(INT nStreams,LPAVICOMPRESSOPTIONS*ppOptions)
+{
+  TRACE("(%d,%p)\n", nStreams, ppOptions);
+
+  if (nStreams < 0 || ppOptions == NULL)
+    return AVIERR_BADPARAM;
+
+  for (; nStreams > 0; nStreams--) {
+    if (ppOptions[nStreams] != NULL) {
+      ppOptions[nStreams]->dwFlags &= ~AVICOMPRESSF_VALID;
+
+      if (ppOptions[nStreams]->lpParms != NULL) {
+	GlobalFreePtr(ppOptions[nStreams]->lpParms);
+	ppOptions[nStreams]->lpParms = NULL;
+	ppOptions[nStreams]->cbParms = 0;
+      }
+      if (ppOptions[nStreams]->lpFormat != NULL) {
+	GlobalFreePtr(ppOptions[nStreams]->lpFormat);
+	ppOptions[nStreams]->lpFormat = NULL;
+	ppOptions[nStreams]->cbFormat = 0;
+      }
+    }
+  }
+
+  return AVIERR_OK;
 }

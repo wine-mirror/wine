@@ -1,0 +1,61 @@
+/*
+ * Top level resource file for avifil32.dll
+ *
+ * Copyright 2002 Michael Günnewig
+ *
+ * This library is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU Lesser General Public
+ * License as published by the Free Software Foundation; either
+ * version 2.1 of the License, or (at your option) any later version.
+ *
+ * This library is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this library; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+ */
+
+#include "windef.h"
+#include "winuser.h"
+#include "winver.h"
+#include "avifile_private.h"
+
+LANGUAGE LANG_NEUTRAL, SUBLANG_NEUTRAL
+
+1 VERSIONINFO
+FILEVERSION	4, 3, 0, 1998
+PRODUCTVERSION	4, 3, 0, 1998
+FILEFLAGSMASK	VS_FFI_FILEFLAGSMASK
+#ifdef NDEBUG
+FILEFLAGS	0
+#else
+FILEFLAGS	VS_FF_DEBUG
+#endif
+FILEOS		VOS_DOS_WINDOWS32
+FILETYPE	VFT_DLL
+{
+  BLOCK "StringFileInfo"
+  {
+    BLOCK "040604B0" /* Deutschland (Standard) */
+    {
+      VALUE "CompanyName", "Wine Developer Team\000"
+      VALUE "FileDescription", "Wine Bibliothek zur Unterstützung von AVI-Dateien\000"
+      VALUE "FileVersion", "4.03.1998\000"
+      VALUE "InternalName", "AVIFIL32\000"
+      VALUE "LegalCopyright", "Copyright \251 Michael Günnewig 2002\000"
+      VALUE "OriginalFileName", "AVIFIL32.DLL\000"
+      VALUE "ProductName", "Wine\000"
+      VALUE "ProductVersion", "1.00\000"
+    }
+  }
+}
+
+/*
+ * Everything specific to any language goes
+ * in one of the specific files.
+ */
+#include "avifile_De.rc"
+#include "avifile_En.rc"

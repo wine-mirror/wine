@@ -2,3 +2,4 @@ Makefile
 avifil32.dll.dbg.c
 avifil32.spec.c
 avifile.spec.c
+rsrc.res

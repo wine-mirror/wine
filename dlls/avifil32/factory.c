@@ -19,6 +19,7 @@
 #include <assert.h>
 
 #include "winbase.h"
+#include "winnls.h"
 #include "winerror.h"
 
 #include "ole2.h"
@@ -126,7 +127,8 @@ static HRESULT WINAPI IClassFactory_fnCreateInstance(LPCLASSFACTORY iface,
 {
   ICOM_THIS(IClassFactoryImpl,iface);
 
-  FIXME("(%p,%p,%s,%p): stub!\n", iface, pOuter, debugstr_guid(riid), ppobj);
+  FIXME("(%p,%p,%s,%p): partial stub!\n", iface, pOuter, debugstr_guid(riid),
+	ppobj);
 
   if (ppobj == NULL || pOuter != NULL)
     return E_FAIL;
@@ -134,11 +136,11 @@ static HRESULT WINAPI IClassFactory_fnCreateInstance(LPCLASSFACTORY iface,
 
   if (IsEqualGUID(&CLSID_AVIFile, &This->clsid))
     return AVIFILE_CreateAVIFile(riid,ppobj);
-/*   if (IsEqualGUID(&CLSID_ICMStream, This->clsid)) */
+/*   if (IsEqualGUID(&CLSID_ICMStream, &This->clsid)) */
 /*     return AVIFILE_CreateICMStream(riid,ppobj); */
-/*   if (IsEqualGUID(&CLSID_WAVFile, This->clsid)) */
-/*     return AVIFILE_CreateWAVFile(riid,ppobj); */
-/*   if (IsEqualGUID(&CLSID_ACMStream, This->clsid)) */
+  if (IsEqualGUID(&CLSID_WAVFile, &This->clsid))
+    return AVIFILE_CreateWAVFile(riid,ppobj);
+/*   if (IsEqualGUID(&CLSID_ACMStream, &This->clsid)) */
 /*     return AVIFILE_CreateACMStream(riid,ppobj); */
 
   return E_NOINTERFACE;
@@ -153,6 +155,23 @@ static HRESULT WINAPI IClassFactory_fnLockServer(LPCLASSFACTORY iface,BOOL doloc
   return S_OK;
 }
 
+LPCWSTR AVIFILE_BasenameW(LPCWSTR szPath)
+{
+#define SLASH(w) ((w) == '/' || (w) == '\\')
+
+  LPCWSTR szCur;
+
+  for (szCur = szPath + lstrlenW(szPath);
+       szCur > szPath && !SLASH(*szCur) && *szCur != ':';)
+    szCur--;
+
+  if (szCur == szPath)
+    return szCur;
+  else
+    return szCur + 1;
+
+#undef SLASH
+}
 
 /***********************************************************************
  *		DllGetClassObject (AVIFIL32.@)
@@ -181,7 +200,7 @@ DWORD WINAPI AVIFILE_DllCanUnloadNow(void)
 BOOL WINAPI AVIFILE_DllMain(HINSTANCE hInstDll, DWORD fdwReason,
 			    LPVOID lpvReserved)
 {
-  TRACE("(%d,%lu,%p)\n", hInstDll, fdwReason, lpvReserved);
+  TRACE("(0x%X,%lu,%p)\n", hInstDll, fdwReason, lpvReserved);
 
   switch (fdwReason) {
   case DLL_PROCESS_ATTACH:

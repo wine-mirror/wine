@@ -1,6 +1,8 @@
+init AVIFILE_DllMain
+
 @ stub    AVIBuildFilter
-@ stub    AVIBuildFilterA
-@ stub    AVIBuildFilterW
+@ stdcall AVIBuildFilterA(str long long) AVIBuildFilterA
+@ stdcall AVIBuildFilterW(wstr long long) AVIBuildFilterW
 @ stub    AVIClearClipboard
 @ stdcall AVIFileAddRef(ptr) AVIFileAddRef
 @ stub    AVIFileCreateStream
@@ -26,8 +28,8 @@
 @ stub    AVIPutFileOnClipboard
 @ stub    AVISave
 @ stub    AVISaveA
-@ stub    AVISaveOptions
-@ stub    AVISaveOptionsFree
+@ stdcall AVISaveOptions(long long long ptr ptr) AVISaveOptions
+@ stdcall AVISaveOptionsFree(long ptr) AVISaveOptionsFree
 @ stub    AVISaveV
 @ stub    AVISaveVA
 @ stub    AVISaveVW
@@ -59,8 +61,8 @@
 @ stdcall AVIStreamWriteData(ptr long ptr long) AVIStreamWriteData
 @ stub    CLSID_AVISimpleUnMarshal
 @ stub    CreateEditableStream
-@ stub    DllCanUnloadNow
-@ stub    DllGetClassObject
+@ stdcall DllCanUnloadNow() AVIFILE_DllCanUnloadNow
+@ stdcall DllGetClassObject(ptr ptr ptr) AVIFILE_DllGetClassObject
 @ stub    EditStreamClone
 @ stub    EditStreamCopy
 @ stub    EditStreamCut
@@ -71,7 +73,7 @@
 @ stub    EditStreamSetName
 @ stub    EditStreamSetNameA
 @ stub    EditStreamSetNameW
-@ stub    IID_IAVIEditStream
-@ stub    IID_IAVIFile
-@ stub    IID_IAVIStream
-@ stub    IID_IGetFrame
+@ extern  IID_IAVIEditStream IID_IAVIEditStream
+@ extern  IID_IAVIFile IID_IAVIFile
+@ extern  IID_IAVIStream IID_IAVIStream
+@ extern  IID_IGetFrame IID_IGetFrame

@@ -23,6 +23,23 @@
 #define MAX_AVISTREAMS 4
 #endif
 
+#ifndef comptypeDIB
+#define comptypeDIB  mmioFOURCC('D','I','B',' ')
+#endif
+
+#ifndef DIBWIDTHBYTES
+#define WIDTHBYTES(i)     (((i+31)&(~31))/8)
+#define DIBWIDTHBYTES(bi) WIDTHBYTES((bi).biWidth * (bi).biBitCount)
+#endif
+
+#define IDS_WAVESTREAMFORMAT 0x0100
+#define IDS_WAVEFILETYPE     0x0101
+#define IDS_VIDEO            0x0189
+#define IDS_AUDIO            0x0190
+#define IDS_AVISTREAMFORMAT  0x0191
+#define IDS_AVIFILETYPE      0x0192
+#define IDS_UNCOMPRESSED     0x0193
+
 DEFINE_AVIGUID(CLSID_ICMStream, 0x00020001, 0, 0);
 DEFINE_AVIGUID(CLSID_WAVFile,   0x00020003, 0, 0);
 DEFINE_AVIGUID(CLSID_ACMStream, 0x0002000F, 0, 0);
@@ -33,5 +50,8 @@ extern HRESULT AVIFILE_CreateAVIFile(REFIID riid, LPVOID *ppobj);
 extern HRESULT AVIFILE_CreateWAVFile(REFIID riid, LPVOID *ppobj);
 extern HRESULT AVIFILE_CreateACMStream(REFIID riid, LPVOID *ppobj);
 extern HRESULT AVIFILE_CreateICMStream(REFIID riid, LPVOID *ppobj);
+extern PGETFRAME AVIFILE_CreateGetFrame(PAVISTREAM pstream);
+
+extern LPCWSTR  AVIFILE_BasenameW(LPCWSTR szFileName);
 
 #endif

@@ -763,8 +763,8 @@ x11drv/__install__: x11drv.dll$(DLLEXT)
 
 advapi32: kernel32.dll$(DLLEXT) ntdll.dll$(DLLEXT)
 avicap32: ntdll.dll$(DLLEXT)
-avifil32: msvfw32.dll$(DLLEXT) shell32.dll$(DLLEXT) user32.dll$(DLLEXT) advapi32.dll$(DLLEXT) \
-          kernel32.dll$(DLLEXT)
+avifil32: msvfw32.dll$(DLLEXT) shell32.dll$(DLLEXT) winmm.dll$(DLLEXT) user32.dll$(DLLEXT) \
+          advapi32.dll$(DLLEXT) kernel32.dll$(DLLEXT)
 comcat:   ole32.dll$(DLLEXT) user32.dll$(DLLEXT) advapi32.dll$(DLLEXT) kernel32.dll$(DLLEXT)
 comctl32: user32.dll$(DLLEXT) gdi32.dll$(DLLEXT) advapi32.dll$(DLLEXT) kernel32.dll$(DLLEXT) \
           winmm.dll$(DLLEXT)
