@@ -536,7 +536,7 @@ void setupTextureStates(LPDIRECT3DDEVICE8 iface, DWORD Stage) {
     checkGLcall("glActiveTextureARB");
 
     TRACE("-----------------------> Updating the texture at stage %ld to have new texture state information\n", Stage);
-    for (i=1; i<29; i++) {
+    for (i=1; i<HIGHEST_TEXTURE_STATE; i++) {
         IDirect3DDevice8Impl_SetTextureStageState(iface, Stage, i, This->StateBlock.texture_state[Stage][i]);
     }
 
@@ -2239,7 +2239,11 @@ HRESULT  WINAPI  IDirect3DDevice8Impl_ApplyStateBlock(LPDIRECT3DDEVICE8 iface, D
                     IDirect3DDevice8Impl_SetTextureStageState(iface, j, i, pSB->texture_state[j][i]);
             }
 
+            if (pSB->Set.textures[j] && pSB->Changed.textures[j]) {
+                IDirect3DDevice8Impl_SetTexture(iface, j, pSB->textures[j]);
+            } 
         }
+
 
     } else if (pSB->blockType == D3DSBT_PIXELSTATE) {
 
@@ -2410,6 +2414,11 @@ HRESULT  WINAPI  IDirect3DDevice8Impl_CaptureStateBlock(LPDIRECT3DDEVICE8 iface,
                    TRACE("Updating texturestagestate %d,%d to %ld (was %ld)\n", j,i, This->StateBlock.texture_state[j][i], 
                                updateBlock->texture_state[j][i]);
                    updateBlock->texture_state[j][i] =  This->StateBlock.texture_state[j][i];
+               }
+
+               if (updateBlock->Set.textures[j] && (updateBlock->textures[j] != This->StateBlock.textures[j])) {
+                   TRACE("Updating texture %d to %p (was %p)\n", j, This->StateBlock.textures[j],  updateBlock->textures[j]);
+                   updateBlock->textures[j] =  This->StateBlock.textures[j];
                }
            }
 
@@ -2976,16 +2985,14 @@ HRESULT  WINAPI  IDirect3DDevice8Impl_GetCurrentTexturePalette(LPDIRECT3DDEVICE8
 HRESULT  WINAPI  IDirect3DDevice8Impl_DrawPrimitive(LPDIRECT3DDEVICE8 iface, D3DPRIMITIVETYPE PrimitiveType,UINT StartVertex,UINT PrimitiveCount) {
 
     IDirect3DVertexBuffer8     *pVB;
-    D3DVERTEXBUFFER_DESC        VtxBufDsc;
 
     ICOM_THIS(IDirect3DDevice8Impl,iface);
     pVB = This->StateBlock.stream_source[0];
 
     TRACE("(%p) : Type=%d, Start=%d, Count=%d\n", This, PrimitiveType, StartVertex, PrimitiveCount);
 
-    IDirect3DVertexBuffer8Impl_GetDesc(pVB, &VtxBufDsc);
     DrawPrimitiveI(iface, PrimitiveType, PrimitiveCount, FALSE,
-                   VtxBufDsc.FVF, ((IDirect3DVertexBuffer8Impl *)pVB)->allocatedMemory, StartVertex, -1, 0, NULL);
+                   This->StateBlock.VertexShader, ((IDirect3DVertexBuffer8Impl *)pVB)->allocatedMemory, StartVertex, -1, 0, NULL);
 
     return D3D_OK;
 }
@@ -2995,7 +3002,6 @@ HRESULT  WINAPI  IDirect3DDevice8Impl_DrawIndexedPrimitive(LPDIRECT3DDEVICE8 ifa
     IDirect3DIndexBuffer8      *pIB;
     IDirect3DVertexBuffer8     *pVB;
     D3DINDEXBUFFER_DESC         IdxBufDsc;
-    D3DVERTEXBUFFER_DESC        VtxBufDsc;
 
     ICOM_THIS(IDirect3DDevice8Impl,iface);
     pIB = This->StateBlock.pIndexData;
@@ -3011,8 +3017,7 @@ HRESULT  WINAPI  IDirect3DDevice8Impl_DrawIndexedPrimitive(LPDIRECT3DDEVICE8 ifa
         idxStride = 4;
     }
 
-    IDirect3DVertexBuffer8Impl_GetDesc(pVB, &VtxBufDsc);
-    DrawPrimitiveI(iface, PrimitiveType, primCount, TRUE, VtxBufDsc.FVF, ((IDirect3DVertexBuffer8Impl *)pVB)->allocatedMemory,
+    DrawPrimitiveI(iface, PrimitiveType, primCount, TRUE, This->StateBlock.VertexShader, ((IDirect3DVertexBuffer8Impl *)pVB)->allocatedMemory,
                    This->StateBlock.baseVertexIndex, startIndex, idxStride, ((IDirect3DIndexBuffer8Impl *) pIB)->allocatedMemory);
 
     return D3D_OK;
@@ -3482,8 +3487,14 @@ void CreateStateBlock(LPDIRECT3DDEVICE8 iface) {
        bound. We emulate this by creating 8 dummy textures and binding them to each
        texture stage, but disable all stages by default. Hence if a stage is enabled
        then the default texture will kick in until replaced by a SetTexture call     */
+
     for (i=0; i<8; i++) {
         GLubyte white = 255;
+
+        /* Note this avoids calling settexture, so pretend it has been called */
+        This->StateBlock.Set.textures[i] = TRUE;
+        This->StateBlock.Changed.textures[i] = TRUE;
+        This->StateBlock.textures[i] = NULL;
 
         /* Make appropriate texture active */
         glActiveTextureARB(GL_TEXTURE0_ARB + i);
