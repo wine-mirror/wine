@@ -116,6 +116,12 @@ int DIR_Init(void)
 
     PROFILE_GetWineIniString("wine", "path", "c:\\windows;c:\\windows\\system",
                              path, sizeof(path) );
+    if (strchr(path, '/'))
+    {
+	MESSAGE("No '/' allowed in [wine] 'Path=' statement of wine.conf !\n");
+	PROFILE_UsageWineIni();
+	ExitProcess(1);
+    }
 
     /* Set the environment variables */
 
