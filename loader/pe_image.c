@@ -841,7 +841,6 @@ WINE_MODREF *PE_LoadLibraryExA (LPCSTR name, DWORD flags, DWORD *err)
 	HMODULE16	hModule16;
 	NE_MODULE	*pModule;
 	WINE_MODREF	*wm;
-	BOOL		builtin = TRUE;
 	char        	dllname[256], *p;
 	HFILE		hFile;
 
@@ -879,7 +878,7 @@ WINE_MODREF *PE_LoadLibraryExA (LPCSTR name, DWORD flags, DWORD *err)
 	pModule->module32 = hModule32;
 
 	/* Create 32-bit MODREF */
-	if ( !(wm = PE_CreateModule( hModule32, &ofs, flags, builtin )) )
+	if ( !(wm = PE_CreateModule( hModule32, &ofs, flags, FALSE )) )
 	{
 		ERR_(win32)("can't load %s\n",ofs.szPathName);
 		FreeLibrary16( hModule16 );
