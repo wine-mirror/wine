@@ -259,11 +259,11 @@ static int file_flush( struct object *obj )
 
 static int file_get_info( struct object *obj, struct get_file_info_request *req )
 {
-    struct stat64 st;
+    struct stat st;
     struct file *file = (struct file *)obj;
     assert( obj->ops == &file_ops );
 
-    if (fstat64( file->obj.fd, &st ) == -1)
+    if (fstat( file->obj.fd, &st ) == -1)
     {
         file_set_error();
         return 0;
@@ -343,12 +343,12 @@ struct file *get_file_obj( struct process *process, handle_t handle, unsigned in
 static int set_file_pointer( handle_t handle, unsigned int *low, int *high, int whence )
 {
     struct file *file;
-    off64_t result,xto;
+    off_t result,xto;
 
-    xto = *low+((off64_t)*high<<32);
+    xto = *low+((off_t)*high<<32);
     if (!(file = get_file_obj( current->process, handle, 0 )))
         return 0;
-    if ((result = lseek64(file->obj.fd,xto,whence))==-1)
+    if ((result = lseek(file->obj.fd,xto,whence))==-1)
     {
         /* Check for seek before start of file */
 
@@ -370,17 +370,18 @@ static int set_file_pointer( handle_t handle, unsigned int *low, int *high, int 
 static int truncate_file( handle_t handle )
 {
     struct file *file;
-    off64_t result;
+    off_t result;
 
     if (!(file = get_file_obj( current->process, handle, GENERIC_WRITE )))
         return 0;
-    if (((result = lseek64( file->obj.fd, 0, SEEK_CUR )) == -1) ||
-        (ftruncate64( file->obj.fd, result ) == -1))
+    if (((result = lseek( file->obj.fd, 0, SEEK_CUR )) == -1) ||
+        (ftruncate( file->obj.fd, result ) == -1))
     {
         file_set_error();
         release_object( file );
         return 0;
     }
+    fprintf(stderr,"server:truncated to %Ld\n",result);
     release_object( file );
     return 1;
 }
@@ -388,16 +389,16 @@ static int truncate_file( handle_t handle )
 /* try to grow the file to the specified size */
 int grow_file( struct file *file, int size_high, int size_low )
 {
-    struct stat64 st;
-    off64_t size = size_low + (((off64_t)size_high)<<32);
+    struct stat st;
+    off_t size = size_low + (((off_t)size_high)<<32);
 
-    if (fstat64( file->obj.fd, &st ) == -1)
+    if (fstat( file->obj.fd, &st ) == -1)
     {
         file_set_error();
         return 0;
     }
     if (st.st_size >= size) return 1;  /* already large enough */
-    if (ftruncate64( file->obj.fd, size ) != -1) return 1;
+    if (ftruncate( file->obj.fd, size ) != -1) return 1;
     file_set_error();
     return 0;
 }

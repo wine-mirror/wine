@@ -3,6 +3,10 @@
  * defined in the 'configure' script.
  */
 
+/* This is for glibc on Linux, it will turn on 64 bit file support at compile time */
+#define _FILE_OFFSET_BITS 64
+@TOP@
+
 /* Define if .type asm directive must be inside a .def directive */
 #undef NEED_TYPE_IN_DEF
 
@@ -125,9 +129,3 @@
 
 /* Define if FreeType 2 is installed */
 #undef HAVE_FREETYPE
-
-/* Define if we have 64 bit file offsets */
-#undef HAVE_OFF64_T
-
-/* Define if we have struct stat64 */
-#undef HAVE_STRUCT_STAT64

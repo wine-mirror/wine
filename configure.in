@@ -781,7 +781,6 @@ AC_CHECK_FUNCS(\
 	ecvt \
 	finite \
 	fpclass \
-	fstat64 \
 	ftruncate64 \
 	getnetbyaddr \
 	getnetbyname \
@@ -794,7 +793,6 @@ AC_CHECK_FUNCS(\
 	inet_network \
 	lseek64 \
 	lstat \
-	lstat64 \
 	memmove \
 	mmap \
 	rfork \
@@ -802,7 +800,6 @@ AC_CHECK_FUNCS(\
 	sendmsg \
 	settimeofday \
 	sigaltstack \
-	stat64 \
 	statfs \
 	strcasecmp \
 	strerror \
@@ -878,43 +875,6 @@ AC_C_CONST()
 AC_C_INLINE()
 AC_TYPE_SIZE_T()
 AC_CHECK_SIZEOF(long long,0)
-
-AC_CACHE_CHECK("for off64_t",
-	wine_cv_off64_t,
-	AC_TRY_COMPILE([
-		#define _LARGEFILE64_SOURCE
-		#include <sys/types.h>
-	],[
-		off64_t testoffset;
-	],
-	wine_cv_off64_t="yes",
-	wine_cv_off64_t="no",
-	wine_cv_off64_t="yes"
-	)
-    )
-    if test "$wine_cv_off64_t" = "yes"
-    then
-        AC_DEFINE(HAVE_OFF64_T)
-    fi
-
-AC_CACHE_CHECK("for struct stat64",
-	wine_cv_struct_stat64,
-	AC_TRY_COMPILE([
-		#define _LARGEFILE64_SOURCE
-		#include <sys/types.h>
-		#include <sys/stat.h>
-	],[
-		struct stat64 tst64;
-	],
-	wine_cv_struct_stat64="yes",
-	wine_cv_struct_stat64="no",
-	wine_cv_struct_stat64="yes"
-	)
-    )
-    if test "$wine_cv_struct_stat64" = "yes"
-    then
-        AC_DEFINE(HAVE_STRUCT_STAT64)
-    fi
 
 AC_CACHE_CHECK("whether linux/input.h is for real",
 	wine_cv_linux_input_h,

@@ -491,7 +491,7 @@ HANDLE WINAPI CreateFileW( LPCWSTR filename, DWORD access, DWORD sharing,
  *
  * Fill a file information from a struct stat.
  */
-static void FILE_FillInfo( struct stat64 *st, BY_HANDLE_FILE_INFORMATION *info )
+static void FILE_FillInfo( struct stat *st, BY_HANDLE_FILE_INFORMATION *info )
 {
     if (S_ISDIR(st->st_mode))
         info->dwFileAttributes = FILE_ATTRIBUTE_DIRECTORY;
@@ -524,9 +524,9 @@ static void FILE_FillInfo( struct stat64 *st, BY_HANDLE_FILE_INFORMATION *info )
  */
 BOOL FILE_Stat( LPCSTR unixName, BY_HANDLE_FILE_INFORMATION *info )
 {
-    struct stat64 st;
+    struct stat st;
 
-    if (lstat64( unixName, &st ) == -1)
+    if (lstat( unixName, &st ) == -1)
     {
         FILE_SetDosError();
         return FALSE;
@@ -536,7 +536,7 @@ BOOL FILE_Stat( LPCSTR unixName, BY_HANDLE_FILE_INFORMATION *info )
     {
         /* do a "real" stat to find out
 	   about the type of the symlink destination */
-        if (stat64( unixName, &st ) == -1)
+        if (stat( unixName, &st ) == -1)
         {
             FILE_SetDosError();
             return FALSE;
@@ -2010,9 +2010,7 @@ BOOL WINAPI MoveFileExW( LPCWSTR fn1, LPCWSTR fn2, DWORD flag )
 BOOL WINAPI MoveFileA( LPCSTR fn1, LPCSTR fn2 )
 {
     DOS_FULL_NAME full_name1, full_name2;
-    /* Even though we do not need the size, stat will fail for large files, 
-     * so we need to use stat64 here. */
-    struct stat64 fstat;
+    struct stat fstat;
 
 
     TRACE("(%s,%s)\n", fn1, fn2 );
@@ -2033,7 +2031,7 @@ BOOL WINAPI MoveFileA( LPCSTR fn1, LPCSTR fn2 )
     }
       else return TRUE;
     else /*copy */ {
-      if (stat64(  full_name1.long_name, &fstat ))
+      if (stat(  full_name1.long_name, &fstat ))
 	{
 	  WARN("Invalid source file %s\n",
 			full_name1.long_name);
