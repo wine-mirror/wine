@@ -1,5 +1,5 @@
 /*
- * Copyright 2002 Rok Mandeljc <rok.mandeljc@gimb.org>
+ * Copyright 2002-2003 Rok Mandeljc <rok.mandeljc@gimb.org>
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -429,6 +429,6 @@ Vnesite število med %d in %d."
     PD32_PRINTER_STATUS_USER_INTERVENTION "Poseg uporabnika; "
     PD32_PRINTER_STATUS_OUT_OF_MEMORY     "Zmanjkalo je pomnilnika; "
     PD32_PRINTER_STATUS_DOOR_OPEN         "Odprto ohišje; "
-    PD32_PRINTER_STATUS_SERVER_UNKNOWN    "Neznan strežnik; " /* not */
-    PD32_PRINTER_STATUS_POWER_SAVE        "V pripravljenosti; " /* not */
+    PD32_PRINTER_STATUS_SERVER_UNKNOWN    "Neznan strežnik; "
+    PD32_PRINTER_STATUS_POWER_SAVE        "V pripravljenosti; "
 }

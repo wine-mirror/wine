@@ -1,7 +1,5 @@
 /*
- * Top level resource file for wineps
- *
- * Copyright 2000 Huw D M Davies
+ * Copyright 2003 Rok Mandeljc <rok.mandeljc@gimb.org>
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -18,30 +16,19 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
-#include "windef.h"
-#include "winuser.h"
-#include "winnls.h"
-#include "psdlg.h"
+LANGUAGE LANG_SLOVENIAN, SUBLANG_DEFAULT
 
-/*
- * Everything that does not depend on language,
- * like textless bitmaps etc, go into the
- * neutral language. This will prevent them from
- * being duplicated for each language.
- */
-#include "wps_xx.rc"
-
-/*
- * Everything specific to any language goes
- * in one of the specific files.
- * Note that you can and may override resources
- * which also have a neutral version. This is to
- * get localized bitmaps for example.
- */
-#include "wps_En.rc"
-#include "wps_Ru.rc"
-#include "wps_Sk.rc"
-#include "wps_De.rc"
-#include "wps_Ko.rc"
-#include "wps_Fr.rc"
-#include "wps_Si.rc"
+PAPER DIALOG LOADONCALL MOVEABLE DISCARDABLE 5, 43, 227, 215
+STYLE  WS_POPUP | WS_CAPTION | WS_CLIPSIBLINGS | WS_VISIBLE
+CAPTION "Papir"
+FONT 8, "MS Sans Serif"
+{
+ LTEXT "Veli&kost papirja:", -1, 10, 6, 100, 8
+ LISTBOX IDD_PAPERS, 10, 15, 200, 45, LBS_STANDARD | LBS_HASSTRINGS |
+	 WS_TABSTOP
+ GROUPBOX "Usmerjenost", -1, 10, 80, 200, 50
+ CONTROL "P&okonèna", IDD_ORIENT_PORTRAIT, "Button", BS_AUTORADIOBUTTON |
+	WS_TABSTOP, 20, 90, 60, 10
+ CONTROL "L&ežeèa", IDD_ORIENT_LANDSCAPE, "Button", BS_AUTORADIOBUTTON,
+	 20, 110, 60, 10
+}

@@ -60,3 +60,4 @@ FILETYPE	VFT_DLL
 #include "avifile_De.rc"
 #include "avifile_En.rc"
 #include "avifile_Ru.rc"
+#include "avifile_Si.rc"
