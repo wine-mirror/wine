@@ -508,7 +508,7 @@ static void sort_names(void)
  *
  * Parse a spec file.
  */
-SPEC_TYPE ParseTopLevel( FILE *file )
+SPEC_TYPE ParseTopLevel( FILE *file, int def_only )
 {
     const char *token;
 
@@ -582,12 +582,16 @@ SPEC_TYPE ParseTopLevel( FILE *file )
                 }
                 else fatal_error( "Unknown option '%s' for import directive\n", name );
             }
-            add_import_dll( name, delay );
+            if (!def_only) add_import_dll( name, delay );
         }
         else if (strcmp(token, "rsrc") == 0)
         {
-            if (SpecType != SPEC_WIN16) load_res32_file( GetToken(0) );
-            else load_res16_file( GetToken(0) );
+            if (!def_only)
+            {
+                if (SpecType != SPEC_WIN16) load_res32_file( GetToken(0) );
+                else load_res16_file( GetToken(0) );
+            }
+            else GetToken(0);  /* skip it */
         }
         else if (strcmp(token, "owner") == 0)
         {

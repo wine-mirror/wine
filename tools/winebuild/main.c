@@ -270,7 +270,7 @@ int main(int argc, char **argv)
     switch(exec_mode)
     {
     case MODE_SPEC:
-        switch (ParseTopLevel( input_file ))
+        switch (ParseTopLevel( input_file, 0 ))
         {
             case SPEC_WIN16:
                 BuildSpec16File( output_file );
@@ -282,7 +282,7 @@ int main(int argc, char **argv)
         }
         break;
     case MODE_DEF:
-        switch (ParseTopLevel( input_file ))
+        switch (ParseTopLevel( input_file, 1 ))
         {
             case SPEC_WIN16:
                 fatal_error( "Cannot yet build .def file for 16-bit dlls\n" );

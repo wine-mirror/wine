@@ -223,7 +223,7 @@ extern void BuildRelays32( FILE *outfile );
 extern void BuildSpec16File( FILE *outfile );
 extern void BuildSpec32File( FILE *outfile );
 extern void BuildDef32File( FILE *outfile );
-extern SPEC_TYPE ParseTopLevel( FILE *file );
+extern SPEC_TYPE ParseTopLevel( FILE *file, int def_only );
 
 /* global variables */
 
