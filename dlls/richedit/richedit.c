@@ -118,8 +118,13 @@ static LRESULT WINAPI RICHED32_WindowProc(HWND hwnd, UINT uMsg, WPARAM wParam,
     switch (uMsg)
     {
 
-    case WM_CREATE :
-	    DPRINTF_EDIT_MSG32("WM_CREATE");
+    case WM_CREATE:
+            DPRINTF_EDIT_MSG32("WM_CREATE Passed to default");
+            DefWindowProcA( hwnd,uMsg,wParam,lParam);
+            return 0 ;
+        
+    case WM_NCCREATE :
+	    DPRINTF_EDIT_MSG32("WM_NCCREATE");
 
 	    /* remove SCROLLBARS from the current window style */
 	    hwndParent = ((LPCREATESTRUCTA) lParam)->hwndParent;
@@ -129,6 +134,7 @@ static LRESULT WINAPI RICHED32_WindowProc(HWND hwnd, UINT uMsg, WPARAM wParam,
             newstyle &= ~WS_VSCROLL;
             newstyle &= ~ES_AUTOHSCROLL;
             newstyle &= ~ES_AUTOVSCROLL;
+	    SetWindowLongA(hwnd,GWL_STYLE, newstyle);
 
     TRACE("previous hwndEdit: %p\n",hwndEdit);
             hwndEdit = CreateWindowA ("edit", ((LPCREATESTRUCTA) lParam)->lpszName,
@@ -137,8 +143,10 @@ static LRESULT WINAPI RICHED32_WindowProc(HWND hwnd, UINT uMsg, WPARAM wParam,
                                    ((LPCREATESTRUCTA) lParam)->hInstance, NULL) ;
     TRACE("hwndEdit: %p hwnd: %p\n",hwndEdit,hwnd);
 
-	    SetWindowLongA(hwnd,GWL_STYLE, newstyle);
-            return 0 ;
+            if (hwndEdit)
+                return TRUE ;
+            else
+                return FALSE ;
 
     case WM_SETFOCUS :
 	    DPRINTF_EDIT_MSG32("WM_SETFOCUS");
@@ -612,9 +620,6 @@ static LRESULT WINAPI RICHED32_WindowProc(HWND hwnd, UINT uMsg, WPARAM wParam,
      case WM_STYLECHANGED:
             DPRINTF_EDIT_MSG32("WM_STYLECHANGED Passed to edit control");
 	    return SendMessageA( hwndEdit, uMsg, wParam, lParam);
-     case WM_NCCALCSIZE:
-            DPRINTF_EDIT_MSG32("WM_NCCALCSIZE Passed to edit control");
-	    return SendMessageA( hwndEdit, uMsg, wParam, lParam);
      case WM_GETTEXT:
             DPRINTF_EDIT_MSG32("WM_GETTEXT Passed to edit control");
 	    return SendMessageA( hwndEdit, uMsg, wParam, lParam);
@@ -635,6 +640,28 @@ static LRESULT WINAPI RICHED32_WindowProc(HWND hwnd, UINT uMsg, WPARAM wParam,
 	    return SendMessageA( hwndEdit, uMsg, wParam, lParam);
 
     /* Messages passed to default handler. */
+    case WM_NCCALCSIZE:
+        /* A fundamental problem with embedding an edit control within another
+           window to emulate the richedit control, is that normally, the 
+           WM_NCCALCSIZE message window would return the client area of the 
+           edit control.
+           
+           While we could send a message to the edit control here to get that size
+           and return that value, this causes problems with the WM_SIZE message.
+           That is because the WM_SIZE message uses the returned value of
+           WM_NCCALCSIZE (via X11DRV_SetWindowSize) to determine the size to make 
+           the edit control. If we return the size of the edit control client area
+           here, the result is the symptom of the edit control being inset on the 
+           right and bottom by the width of any existing scrollbars.
+           
+           The easy fix is to have WM_NCCALCSIZE return the true size of this 
+           enclosing window, which is what we have done here. The more difficult 
+           fix is to create a custom Richedit MoveWindow procedure for use in the 
+           WM_SIZE message above. Since it is very unlikely that an app would call
+           and use the WM_NCCALCSIZE message, we stick with the easy fix for now.
+         */
+        DPRINTF_EDIT_MSG32("WM_NCCALCSIZE Passed to default");
+	return DefWindowProcA( hwnd,uMsg,wParam,lParam);
     case WM_NCPAINT:
         DPRINTF_EDIT_MSG32("WM_NCPAINT Passed to default");
         return DefWindowProcA( hwnd,uMsg,wParam,lParam);
@@ -674,9 +701,6 @@ static LRESULT WINAPI RICHED32_WindowProc(HWND hwnd, UINT uMsg, WPARAM wParam,
         return DefWindowProcA( hwnd,uMsg,wParam,lParam);
     case WM_SHOWWINDOW:
         DPRINTF_EDIT_MSG32("WM_SHOWWINDOW Passed to default");
-        return DefWindowProcA( hwnd,uMsg,wParam,lParam);
-    case WM_NCCREATE:
-        DPRINTF_EDIT_MSG32("WM_NCCREATE Passed to default");
         return DefWindowProcA( hwnd,uMsg,wParam,lParam);
     case WM_PARENTNOTIFY:
         DPRINTF_EDIT_MSG32("WM_PARENTNOTIFY Passed to default");
