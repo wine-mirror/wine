@@ -24,20 +24,30 @@
 #include "winetest.h"
 
 SOCKET
-open_http (const char *ipnum)
+open_http (const char *server)
 {
     WSADATA wsad;
     struct sockaddr_in sa;
     SOCKET s;
 
-    report (R_STATUS, "Opening HTTP connection to %s", ipnum);
+    report (R_STATUS, "Opening HTTP connection to %s", server);
     if (WSAStartup (MAKEWORD (2,2), &wsad)) return INVALID_SOCKET;
 
     s = socket (AF_INET, SOCK_STREAM, IPPROTO_TCP);
     if (s != INVALID_SOCKET) {
+        unsigned long addr = inet_addr(server);
+
         sa.sin_family = AF_INET;
         sa.sin_port = htons (80);
-        sa.sin_addr.s_addr = inet_addr (ipnum);
+        if (addr != INADDR_NONE)
+            sa.sin_addr.s_addr = addr;
+        else
+        {
+            struct hostent *host;
+
+            if ((host = gethostbyname(server)) != NULL)
+                addr = ((struct in_addr *)host->h_addr)->s_addr;
+        }
         if (!connect (s, (struct sockaddr*)&sa,
                       sizeof (struct sockaddr_in)))
             return s;
@@ -113,7 +123,7 @@ send_file (const char *name)
         "--" SEP "--\r\n";
 
     buffer = xmalloc (BUFLEN + 1);
-    s = open_http ("198.144.15.226");
+    s = open_http ("www.winehq.org");
     if (s == INVALID_SOCKET) {
         report (R_WARNING, "Can't open network connection: %d",
                 WSAGetLastError ());
