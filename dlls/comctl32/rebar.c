@@ -569,13 +569,18 @@ REBAR_DrawBand (HDC hdc, REBAR_INFO *infoPtr, REBAR_BAND *lpBand)
 	/* need to handle CDRF_NEWFONT here */
 	INT oldBkMode = SetBkMode (hdc, TRANSPARENT);
 	COLORREF oldcolor = CLR_NONE;
-	oldcolor = SetTextColor (hdc, (lpBand->clrFore != CLR_NONE) ?
-				 lpBand->clrFore : infoPtr->clrBtnText);
+	COLORREF new;
+	if (lpBand->clrFore != CLR_NONE) {
+	    new = (lpBand->clrFore == CLR_DEFAULT) ? infoPtr->clrBtnText :
+		    lpBand->clrFore;
+	    oldcolor = SetTextColor (hdc, new);
+	}
 	DrawTextW (hdc, lpBand->lpText, -1, &lpBand->rcCapText,
 		   DT_CENTER | DT_VCENTER | DT_SINGLELINE);
 	if (oldBkMode != TRANSPARENT)
 	    SetBkMode (hdc, oldBkMode);
-	SetTextColor (hdc, oldcolor);
+	if (lpBand->clrFore != CLR_NONE) 
+	    SetTextColor (hdc, oldcolor);
 	SelectObject (hdc, hOldFont);
     }
 
@@ -2078,7 +2083,7 @@ REBAR_InternalEraseBkGnd (REBAR_INFO *infoPtr, WPARAM wParam, LPARAM lParam, REC
     INT i, oldrow;
     HDC hdc = (HDC)wParam;
     RECT rect;
-    COLORREF old, new;
+    COLORREF old = CLR_NONE, new;
 
     oldrow = -1;
     for(i=0; i<infoPtr->uNumBands; i++) {
@@ -2124,25 +2129,28 @@ REBAR_InternalEraseBkGnd (REBAR_INFO *infoPtr, WPARAM wParam, LPARAM lParam, REC
 	}
 
 	/* draw the actual background */
-	if (lpBand->clrBack != CLR_NONE)
-	    new = lpBand->clrBack;
-	else
-	    new = infoPtr->clrBtnFace;
-	rect = lpBand->rcBand;
+	if (lpBand->clrBack != CLR_NONE) {
+	    new = (lpBand->clrBack == CLR_DEFAULT) ? infoPtr->clrBtnFace :
+		    lpBand->clrBack;
 #if GLATESTING
-	/* testing only - make background green to see it */
-	new = RGB(0,128,0);
+	    /* testing only - make background green to see it */
+	    new = RGB(0,128,0);
 #endif
-	old = SetBkColor (hdc, new);
+	    old = SetBkColor (hdc, new);
+	}
+
+	rect = lpBand->rcBand;
 	TRACE("%s background color=0x%06lx, band (%d,%d)-(%d,%d), clip (%d,%d)-(%d,%d)\n",
-	      (lpBand->clrBack == CLR_NONE) ? "std" : "",
-	      new,
+	      (lpBand->clrBack == CLR_NONE) ? "none" : 
+	        ((lpBand->clrBack == CLR_DEFAULT) ? "dft" : ""),
+	      GetBkColor(hdc),
 	      lpBand->rcBand.left,lpBand->rcBand.top,
 	      lpBand->rcBand.right,lpBand->rcBand.bottom,
 	      clip->left, clip->top,
 	      clip->right, clip->bottom);
 	ExtTextOutA (hdc, 0, 0, ETO_OPAQUE, &rect, NULL, 0, 0);
-	SetBkColor (hdc, old);
+	if (lpBand->clrBack != CLR_NONE)
+	    SetBkColor (hdc, old);
     }
     return TRUE;
 }
@@ -2589,7 +2597,7 @@ REBAR_GetBandInfoA (REBAR_INFO *infoPtr, WPARAM wParam, LPARAM lParam)
     if (lprbbi->fMask & RBBIM_COLORS) {
 	lprbbi->clrFore = lpBand->clrFore;
 	lprbbi->clrBack = lpBand->clrBack;
-	if (lprbbi->clrBack == CLR_NONE)
+	if (lprbbi->clrBack == CLR_DEFAULT)
 	    lprbbi->clrBack = infoPtr->clrBtnFace;
     }
 
@@ -2675,7 +2683,7 @@ REBAR_GetBandInfoW (REBAR_INFO *infoPtr, WPARAM wParam, LPARAM lParam)
     if (lprbbi->fMask & RBBIM_COLORS) {
 	lprbbi->clrFore = lpBand->clrFore;
 	lprbbi->clrBack = lpBand->clrBack;
-	if (lprbbi->clrBack == CLR_NONE)
+	if (lprbbi->clrBack == CLR_DEFAULT)
 	    lprbbi->clrBack = infoPtr->clrBtnFace;
     }
 
@@ -2773,7 +2781,7 @@ REBAR_GetBkColor (REBAR_INFO *infoPtr)
 {
     COLORREF clr = infoPtr->clrBk;
 
-    if (clr == CLR_NONE)
+    if (clr == CLR_DEFAULT)
       clr = infoPtr->clrBtnFace;
 
     TRACE("background color 0x%06lx!\n", clr);
