@@ -182,8 +182,8 @@
           Often a package will only work on the distribution which it
 	  has been compiled for.  We'll cover
           <link linkend="getting-dist-debian">Debian Linux</link>, 
-          <link linkend="getting-dist-redhat">Red Hat Linux</link>,
-          <link linkend="getting-freebsd">FreeBSD</link>, and 
+          <link linkend="getting-dist-linux">Red Hat, Mandrake, Suse and Slackware Linux</link>,
+          <link linkend="getting-freebsd">FreeBSD</link>, and
           <link linkend="getting-other">other</link> distributions.
         </para>
         <para>
@@ -267,14 +267,14 @@
 	</para>
       </sect2>
 
-      <sect2 id="getting-dist-redhat">
-        <title>Red Hat Linux</title>
+      <sect2 id="getting-dist-linux">
+        <title>Linux Red Hat, Mandrake, Suse, and Slackware</title>
 
         <para>
-          Red Hat users can use the
+          Red Hat, Mandrake, Suse and Slackware users can download
+	  a wine binary from the
           <ulink url="http://sourceforge.net/project/showfiles.php?group_id=6241">
-          sourceforge.net Wine page</ulink> to get the RPM most suitable for
-          their system.
+          sourceforge.net Wine download page</ulink>
         </para>
       </sect2>
 
@@ -319,6 +319,11 @@
 	   Wine files on your system; you may then proceed to the <link
 	   linkend="config-wine-main">Configuration section</link>.
 	 </para>
+	 <para>
+	 You can also download a Freebsd package of wine from the
+	 <ulink url="http://sourceforge.net/project/showfiles.php?group_id=6241">
+          sourceforge.net Wine download page</ulink>
+	  </para>
       </sect2>
 
       <sect2 id="getting-other">
@@ -338,17 +343,8 @@
             Google</ulink> to track down miscellaneous distribution packages.
         </para>
 
-        <note>
-        <para>
-          If you are running a Mandrake system, please see the page
-          on how to get Wine for a 
-          <link linkend="getting-dist-redhat">Red Hat</link> system,
-          as Mandrake is based on Red Hat.
-        </para>
-        </note>
-
       </sect2>
-      <!-- *** Add other distributions, e.g., SuSE, Slackware *** -->
+      <!-- *** Add other distributions, e.g., Lindows, Lycoris, Xandros *** -->
 
     </sect1>
 
@@ -396,11 +392,11 @@
 
         <para>
           The safest way to grab the source is from one of the official
-          FTP archives.  An up to date listing is in the <ulink
+          archives.  An up to date listing is in the <ulink
           url="http://www.winehq.org/source/ANNOUNCE">ANNOUNCE</ulink>
           file in the Wine distribution (which you would have if you
           already downloaded it).  Here is a list
-          of FTP servers carrying Wine:
+          of servers carrying Wine:
         </para>
         <itemizedlist>
           <listitem>
@@ -412,8 +408,8 @@
           </listitem>
           <listitem>
             <para>
-              <ulink url="http://prdownloads.sourceforge.net/wine/">
-                http://prdownloads.sourceforge.net/wine/
+              <ulink url="http://sourceforge.net/project/showfiles.php?group_id=6241&amp;package_id=77449">
+                sourceforge.net download page
               </ulink>
             </para>
           </listitem>
@@ -537,10 +533,16 @@ checkout -P
 	    Once CVS is installed and the Wine specific CVS
 	    configuration is done, you can now do a login on our CVS
 	    server and checkout (download) the Wine source code.
-	    First, let's do the server login:
+	    First, let's do the server login, to connect to the US server:
 	  </para>
-  <screen>
+	  <screen>
   <prompt>$ </><userinput>cvs -d :pserver:cvs@cvs.winehq.org:/home/wine login</>
+  </screen>
+  <para>
+  To connect to the EU server:
+  </para>
+  <screen>
+  <prompt>$ </><userinput>cvs -d :pserver:cvs@rhlx01.fht-esslingen.de:/home/wine login</>
   </screen>
 	  <para>
 	    If <command>cvs</command> successfully connects to the CVS server,
@@ -557,10 +559,17 @@ checkout -P
 	    directory, since the subdirectory is named after the CVS module
 	    that we want to check out). We assume that your current directory
 	    might be your user's home directory.
-	    To download the Wine tree into the subdirectory <filename>wine/</filename>, run:
+	    To download the Wine tree into the subdirectory <filename>wine/</filename>, run,
+	    to download from the US server:
 	  </para>
   <screen>
   <prompt>$ </><userinput>cvs -d :pserver:cvs@cvs.winehq.org:/home/wine checkout wine</>
+  </screen>
+  <para>
+  Or, to download from the EU server:
+  </para>
+  <screen>
+  <prompt>$ </><userinput>cvs -d :pserver:cvs@rhlx01.fht-esslingen.de:/home/wine checkout wine</>
   </screen>
 	  <para>
 	    Downloading the CVS tree might take a while (some minutes
@@ -610,11 +619,18 @@ checkout -P
 	</para>
 	<para>
 	  To proceed with updating Wine, simply <command>cd</command>
-	  to the Wine CVS tree directory, then run:
+	  to the Wine CVS tree directory, then run, if you're using the US server:
 	</para>
   <screen>
   <prompt>$ </><userinput>make distclean</>
   <prompt>$ </><userinput>cvs -d :pserver:cvs@cvs.winehq.org:/home/wine update</>
+  </screen>
+  <para>
+  or if you're using the EU server:
+  </para>
+  <screen>
+  <prompt>$ </><userinput>make distclean</>
+  <prompt>$ </><userinput>cvs -d :pserver:cvs@rhlx01.fht-esslingen.de:/home/wine update</>
   </screen>
 	<para>
 	  The <command>make distclean</command> part is optional, but

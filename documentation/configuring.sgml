@@ -103,18 +103,20 @@
 	  used for configuring the Wine environment after having
 	  installed the Wine files.
 	  It has been written by CodeWeavers in 2000 as part of a host
-	  of other efforts to make Wine more desktop oriented.
+	  of other efforts to make Wine more desktop oriented, and updated
+	  in 2003 by Vincent Béron, Alex Pasadyn and Ivan Leo Murray-Smith.
 	</para>
 	<para>
-	  If you're using Debian, simply install the winesetuptk
+	  If you're using Debian, simply install the WineSetupTk
 	  package (as root):
 	</para>
   <screen>
   <prompt># </prompt><userinput>apt-get install winesetuptk</userinput>
   </screen>
 	<para>
-	  If you're using another distribution, search for the package on
-	  the net.
+	  If you're using another distribution, you can get WineSetupTk from the
+	  <ulink url="http://sourceforge.net/project/showfiles.php?group_id=6241">
+          sourceforge.net Wine download page</ulink>
 	</para>
       </sect2>
       
@@ -142,8 +144,10 @@
 	  partition or by creating a properly configured no-windows
 	  directory environment).
 	</para>
-      </sect2>
 
+      </sect2>
+<!--
+      Commenting out until winecfg doesn't actually do something.
       <sect2 id="config-helper-winecfg">
         <title>winecfg</title>
 	<para>
@@ -154,6 +158,7 @@
 	  configuration file.
 	</para>
       </sect2>
+-->
     </sect1>
 
     <sect1 id="config-verify">
